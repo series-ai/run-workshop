@@ -97,4 +97,4 @@ Maintainers may decline or request changes to any contribution that does not mee
 
 ## Branch protection
 
-The default branch requires the **Contribution Certification** status check to pass before merge. Enable this in GitHub under **Settings → Branches → Branch protection rules** (or **Rulesets**) and add **Contribution Certification** as a required status check after the workflow has run once on the default branch.
+The default branch requires a pull request with at least one approving review before merge. Required status checks: **Contribution Certification** and **Secret Scan**. New commits after approval require re-review.
