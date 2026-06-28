@@ -85,6 +85,26 @@ The shared `.githooks/pre-commit` hook runs it after the required secret scan
 and passes the staged file paths as arguments. The `.githooks.local/` directory
 is gitignored, so scripts in it stay private to your clone.
 
+## Large files (Git LFS)
+
+Binary assets (audio, images, video, 3D models, archives) are stored with
+[Git LFS](https://git-lfs.com). The tracked patterns live in `.gitattributes`.
+Install Git LFS once per machine before cloning or contributing assets:
+
+```bash
+git lfs install
+git config core.hooksPath .githooks
+```
+
+`git lfs install` configures the clean/smudge filters, and `core.hooksPath`
+points Git at the shared `.githooks/` hooks (`post-checkout`, `post-commit`,
+`post-merge`, `pre-push`) that keep LFS objects in sync. Without these, asset
+files check out as small text pointers instead of real binaries, and pushes can
+fail to upload LFS objects.
+
+When adding a new binary type, add its glob to `.gitattributes` so it is tracked
+by LFS rather than committed directly into Git history.
+
 ## Pull requests
 
 Use the pull request template and confirm all required certification checkboxes before requesting review.
