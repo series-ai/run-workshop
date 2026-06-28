@@ -1,0 +1,85 @@
+# Contributing
+
+Thanks for helping improve run-workshop.
+
+## Before you contribute
+
+You may submit a contribution only if you qualify as **"You"** under the [RUN Repository Supplemental License v1.0](LICENSE.md):
+
+- You have an active, registered RUN Platform account in good standing.
+- You have agreed to and remain bound by the applicable [RUN Terms](https://policy.run.world/eula.html).
+
+Cloning, forking, or opening a pull request does not by itself grant rights under the license.
+
+## Developer Certificate of Origin
+
+By submitting a contribution, you accept the [Developer Certificate of Origin (DCO) v1.1](https://developercertificate.org/) and certify that:
+
+1. The contribution was created in whole or in part by you and you have the right to submit it under the repository license.
+2. The contribution is based on previous work that, to the best of your knowledge, is covered by an appropriate open source license and you have the right under that license to submit that work with modifications.
+3. You understand and agree that this project and the contribution are public and that a record of the contribution is maintained indefinitely and may be redistributed consistent with this project or the open source license(s) involved.
+
+You accept the DCO by checking the certification boxes in the pull request template. You do not need to add a `Signed-off-by` trailer to your commits, so you are not required to publish a name or email in commit history.
+
+Pull requests without all certification boxes checked should not be merged.
+
+## License for contributions
+
+Unless Series Entertainment has a separate written agreement with you, any contribution you submit is licensed under the [RUN Repository Supplemental License v1.0](LICENSE.md), including its automatic conversion to the MIT License on January 1, 2028.
+
+By submitting a contribution, you represent that:
+
+- You have all rights necessary to license the contribution under this license.
+- The contribution is your original work, or you otherwise have permission to submit it.
+- The contribution does not include third-party code, assets, or other materials unless they are clearly identified and accompanied by a license that permits inclusion and onward licensing under this license.
+- The contribution does not contain confidential information and does not infringe or misappropriate anyone else's rights.
+- You are not subject to any agreement, obligation, or restriction that conflicts with these representations.
+
+## Third-party materials
+
+Do not add third-party software, assets, or other materials unless:
+
+- Their license permits inclusion and redistribution under this repository's license terms.
+- You add the required attribution to [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- You include the applicable license notice or SPDX identifier on the affected files.
+
+## Secrets and credentials
+
+Never commit secrets. This includes API keys, deploy tokens, and per-account
+RUN configuration:
+
+- Real keys belong in `.env` (gitignored). Commit a placeholder `.env.example`
+  instead. CI reads keys from GitHub Actions secrets.
+- `game.config.*.json` files are per-account RUN game bindings created by
+  `rundot init` and the sandbox plugin. They are gitignored — run `rundot init`
+  to generate your own rather than committing one.
+- `RUNDOT_API_KEY` (`rk_…`) and publishable keys (`pk_…`) must never be
+  committed.
+
+A secret scanner enforces this in two places:
+
+- **Locally** via a pre-commit hook. Enable it once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+- **In CI** via the **Secret Scan** workflow, which blocks the pull request if a
+  likely secret is found.
+
+Both run the same detector, `scripts/secret-scan.sh`. If it flags a confirmed
+false positive, append `# secret-scan: allow` to that line.
+
+## Pull requests
+
+Use the pull request template and confirm all required certification checkboxes before requesting review.
+
+Keep changes focused. Clearly describe what changed and why.
+
+## Review and merge
+
+Maintainers may decline or request changes to any contribution that does not meet these requirements or that has not checked all certification boxes.
+
+## Branch protection
+
+The default branch requires the **Contribution Certification** status check to pass before merge. Enable this in GitHub under **Settings → Branches → Branch protection rules** (or **Rulesets**) and add **Contribution Certification** as a required status check after the workflow has run once on the default branch.

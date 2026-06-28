@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#
+# run-workshop pre-commit hook: scans staged files for likely secrets.
+#
+# Enable it once per clone:
+#   git config core.hooksPath .githooks
+#
+# Detection logic lives in scripts/secret-scan.sh (also run in CI).
+
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+
+staged=()
+while IFS= read -r f; do
+  [ -n "$f" ] && staged+=("$f")
+done < <(git diff --cached --name-only --diff-filter=ACM)
+
+if [ "${#staged[@]}" -eq 0 ]; then
+  exit 0
+fi
+
+exec "$repo_root/scripts/secret-scan.sh" "${staged[@]}"

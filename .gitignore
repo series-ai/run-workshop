@@ -141,3 +141,25 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# RUN / rundot — secrets and per-account bindings
+# (.env / .env.* are already ignored above; real RUNDOT_API_KEY lives there)
+# Session tokens written by `rundot login`
+.rundot/session/
+# Per-account game registrations from `rundot init` and the sandbox plugin.
+# These hold a gameId bound to the developer's RUN account, not a shared value —
+# each contributor should run `rundot init` to generate their own.
+game.config.json
+game.config.*.json
+# Generated SDK docs copy
+.rundot-docs/
+# Dev-server temp entry written during `npm run dev`
+.rundot-server-entry.tmp.ts
+
+# Local throwaway work — see scratch/README.md (contents ignored, README tracked)
+/scratch/*
+!/scratch/README.md
+
+# Transient directories anywhere in the tree
+**/tmp/
+**/temp/

@@ -1,0 +1,59 @@
+name: Contribution Certification
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+
+permissions:
+  pull-requests: read
+
+jobs:
+  certification:
+    name: Contribution Certification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require contribution certification checkboxes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || "";
+            const visibleBody = body
+              .replace(/<!--[\s\S]*?-->/g, "")
+              .replace(/```[\s\S]*?```/g, "");
+
+            const sectionMatch = visibleBody.match(
+              /^## Contribution certification\s*\n(?<section>[\s\S]*?)(?=\n## )/m,
+            );
+            const section = sectionMatch?.groups?.section || "";
+            const checkedLines = new Set(
+              section
+                .split("\n")
+                .map((line) => line.trim())
+                .filter((line) => line.startsWith("- [x] ") || line.startsWith("- [X] ")),
+            );
+
+            const requiredLines = [
+              {
+                label: "eligibility and DCO acceptance for all authors",
+                line: "- [x] I certify that I am eligible to contribute under the [RUN Repository Supplemental License v1.0](LICENSE.md), accept the [Developer Certificate of Origin](https://developercertificate.org/) for this contribution, and that every author of every commit in this pull request is likewise eligible and accepts the DCO for their commits.",
+              },
+              {
+                label: "original work and no third-party or confidential material",
+                line: "- [x] I certify that this contribution is my original work or I otherwise have permission to submit it, does not incorporate code, assets, or other materials owned by any third party (including any current or former employer) unless clearly identified and properly licensed for inclusion here, does not contain confidential information, does not infringe or misappropriate anyone else's rights, and that I am not subject to any agreement or obligation that conflicts with these certifications.",
+              },
+            ];
+
+            const missing = requiredLines.filter(({ line }) => (
+              !checkedLines.has(line) && !checkedLines.has(line.replace("- [x] ", "- [X] "))
+            ));
+
+            if (missing.length > 0) {
+              const labels = missing.map(({ label }) => `- ${label}`).join("\n");
+              core.setFailed(
+                `Check all contribution certification boxes in the pull request description before this contribution can be reviewed or merged.\n\nMissing:\n${labels}`,
+              );
+            }
