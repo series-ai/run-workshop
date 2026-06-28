@@ -7,7 +7,7 @@ Thanks for helping improve run-workshop.
 You may submit a contribution only if you qualify as **"You"** under the [RUN Repository Supplemental License v1.0](LICENSE.md):
 
 - You have an active, registered RUN Platform account in good standing.
-- You have agreed to and remain bound by the applicable [RUN Terms](https://policy.run.world/eula.html).
+- You have agreed to and remain bound by the applicable [RUN Terms](https://policy.run.world/eula.html) (User Terms, Creator Terms, Community Standards, and Privacy Policy).
 
 Cloning, forking, or opening a pull request does not by itself grant rights under the license.
 
