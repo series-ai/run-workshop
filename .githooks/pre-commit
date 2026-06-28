@@ -6,10 +6,12 @@
 #   git config core.hooksPath .githooks
 #
 # Detection logic lives in scripts/secret-scan.sh (also run in CI).
+# Optional personal checks can live in .githooks.local/pre-commit.
 
 set -euo pipefail
 
 repo_root="$(git rev-parse --show-toplevel)"
+local_hook="$repo_root/.githooks.local/pre-commit"
 
 staged=()
 while IFS= read -r f; do
@@ -20,4 +22,14 @@ if [ "${#staged[@]}" -eq 0 ]; then
   exit 0
 fi
 
-exec "$repo_root/scripts/secret-scan.sh" "${staged[@]}"
+"$repo_root/scripts/secret-scan.sh" "${staged[@]}"
+
+if [ -e "$local_hook" ]; then
+  if [ ! -x "$local_hook" ]; then
+    echo "Local pre-commit hook exists but is not executable: $local_hook" >&2
+    echo "Run: chmod +x .githooks.local/pre-commit" >&2
+    exit 1
+  fi
+
+  "$local_hook" "${staged[@]}"
+fi

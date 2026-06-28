@@ -159,6 +159,8 @@ game.config.*.json
 # Local throwaway work — see scratch/README.md (contents ignored, README tracked)
 /scratch/*
 !/scratch/README.md
+# Personal Git hooks chained by .githooks/pre-commit
+/.githooks.local/
 
 # Transient directories anywhere in the tree
 **/tmp/

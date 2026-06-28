@@ -70,6 +70,21 @@ git config core.hooksPath .githooks
 Both run the same detector, `scripts/secret-scan.sh`. If it flags a confirmed
 false positive, append `# secret-scan: allow` to that line.
 
+### Personal pre-commit checks
+
+You may add your own local-only checks without requiring other contributors to
+run them. Create an executable `.githooks.local/pre-commit` script in your clone:
+
+```bash
+mkdir -p .githooks.local
+$EDITOR .githooks.local/pre-commit
+chmod +x .githooks.local/pre-commit
+```
+
+The shared `.githooks/pre-commit` hook runs it after the required secret scan
+and passes the staged file paths as arguments. The `.githooks.local/` directory
+is gitignored, so scripts in it stay private to your clone.
+
 ## Pull requests
 
 Use the pull request template and confirm all required certification checkboxes before requesting review.
