@@ -1,0 +1,521 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ── Tailwind semantic aliases ──────────────────────────────────────────────
+   Product UI is renderer-backed through src/modules/ui/skin/ and the active `--ui-*`
+   variables. The aliases below keep raw shadcn semantic classes available for
+   infrastructure primitives, but the semantic renderer remains the source of
+   truth for feature-facing UI.
+   ─────────────────────────────────────────────────────────────────────────── */
+@theme {
+  --color-background: var(--background, #0a0a0f);
+  --color-foreground: var(--foreground, #ffffff);
+  --color-primary: var(--primary, #667eea);
+  --color-primary-foreground: var(--primary-foreground, #ffffff);
+  --color-secondary: var(--secondary, #764ba2);
+  --color-secondary-foreground: var(--secondary-foreground, #ffffff);
+  --color-accent: var(--accent, #ffd700);
+  --color-accent-foreground: var(--accent-foreground, #000000);
+  --color-muted: var(--muted, #111118);
+  --color-muted-foreground: var(--muted-foreground, rgba(255,255,255,0.7));
+  --color-border: var(--border, rgba(255,255,255,0.1));
+  --color-destructive: var(--destructive, #ef4444);
+  --color-destructive-foreground: var(--destructive-foreground, #ffffff);
+
+  /* Font aliases resolve to the active renderer first */
+  --font-display: var(--ui-font-display, var(--font-family-display, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif));
+  --font-body: var(--ui-font-body, var(--font-family-body, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif));
+}
+
+/* ── Raw shadcn vars ────────────────────────────────────────────────────────
+   Raw shadcn installs still expect `--primary`, `--background`, and related
+   variables. We publish those directly here so imported primitives keep
+   working, but product-facing UI should prefer semantic `src/modules/ui/skin/`
+   components and renderer-owned `--ui-*` variables directly.
+   ─────────────────────────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --background: #0a0a0f;
+    --foreground: var(--ui-text-primary, #ffffff);
+    --primary: #667eea;
+    --primary-foreground: #ffffff;
+    --secondary: #764ba2;
+    --secondary-foreground: #ffffff;
+    --accent: #ffd700;
+    --accent-foreground: #000000;
+    --muted: #111118;
+    --muted-foreground: var(--ui-text-muted, rgba(255,255,255,0.7));
+    --border: var(--ui-panel-card-border, rgba(255,255,255,0.1));
+    --ring: var(--ui-focus-ring, rgba(102,126,234,0.4));
+    --radius: var(--radius-md, 12px);
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --info: #4361ee;
+  }
+}
+
+html,
+body {
+  font-family: var(--ui-font-body, var(--font-family-body, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif));
+  background: var(--ui-page-bg, #0a0a0f);
+  color: var(--ui-text-primary, #ffffff);
+  min-height: 100dvh;
+}
+
+body {
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* Shared shell and utility fallbacks.
+   The canonical product UI contract lives under `src/modules/ui/skin/` and the
+   active renderer's `--ui-*` variables. */
+:root {
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  --font-xs: 11px;
+  --font-sm: 13px;
+  --font-md: 16px;
+  --font-lg: 18px;
+  --font-xl: 24px;
+  --font-xxl: 48px;
+
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  --font-family-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --font-family-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+
+  --animation-fast: 150ms;
+  --animation-normal: 200ms;
+  --animation-slow: 300ms;
+}
+
+/* ── Game Shell — Zone Layout ───────────────────────────────────────────────
+   Column by default (portrait). Row when data-layout="landscape".
+   Layout is detected at boot and on resize in main.tsx (sets
+   document.documentElement.dataset.layout). Components adapt via
+   container queries on .game-zone and .nav-zone.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.game-shell {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--ui-page-bg, #0a0a0f);
+}
+
+[data-layout="landscape"] .game-shell {
+  flex-direction: row;
+}
+
+[data-layout="landscape"] .nav-zone {
+  order: -1;
+  flex-shrink: 0;
+}
+
+[data-layout="landscape"] .nav-zone[data-desktop-nav="sidebar"] {
+  width: 208px;
+}
+
+[data-layout="landscape"] .nav-zone[data-desktop-nav="rail"] {
+  width: 64px;
+}
+
+.game-zone {
+  container-type: size;
+  container-name: game;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.nav-zone {
+  container-type: inline-size;
+  container-name: nav;
+}
+
+/* ── Safe-Area Utilities ─────────────────────────────────────────────────────
+   Two composable classes for the foreground/background split. Consumers
+   place them inside a `position: relative` container (e.g., the screen root
+   or the game shell).
+
+   `.ui-background-bleed` — full-bleed layer for world canvas, wallpaper art,
+   fullscreen video. Extends under notches and home indicators. No safe-area
+   padding.
+
+   `.ui-safe-region` — foreground layer for HUD, buttons, controls. Pads
+   children away from the host's safe-area insets on bottom, left, and right
+   so UI stays tappable on notched phones. Top is omitted by default because
+   Rundot's top inset is typically 0; games that need top padding add it
+   explicitly. Rundot-provided `--safe-*` vars (set at boot by
+   `SafeAreaService.refreshSafeArea()`) take precedence over browser
+   `env(safe-area-inset-*)` via `max()` so the service's zero default falls
+   back to the browser's native value when the host has not populated the
+   vars yet.
+
+   `pointer-events: none` on the wrapper lets clicks in the padded dead zone
+   pass through to the background. Interactive children set
+   `pointer-events: auto`.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.ui-background-bleed {
+  position: absolute;
+  inset: 0;
+}
+
+.ui-safe-region {
+  position: absolute;
+  inset: 0;
+  padding-right: max(var(--safe-right, 0px), env(safe-area-inset-right, 0px));
+  padding-bottom: max(var(--safe-bottom, 0px), env(safe-area-inset-bottom, 0px));
+  padding-left: max(var(--safe-left, 0px), env(safe-area-inset-left, 0px));
+  pointer-events: none;
+}
+
+.ui-safe-region > * {
+  pointer-events: auto;
+}
+
+/* ── Content Area ───────────────────────────────────────────────────────────── */
+
+.content-area {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.tab-content {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.home-screen__scroll {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.home-screen__action-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+  align-items: stretch;
+}
+
+.home-screen__action-grid > * {
+  min-width: 0;
+}
+
+.tab-fade-in {
+  animation: fadeIn var(--animation-normal) ease-in;
+}
+
+.screen-fade-in {
+  animation: screenFadeIn var(--animation-normal) ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes screenFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.screen-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.screen-scroll {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Semantic Nav Adaptation ────────────────────────────────────────────────
+   Semantic UI owns the nav chrome. The shell only provides layout constraints
+   and a compact rail mode for narrow landscape side rails.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.template-nav-rail--compact {
+  gap: 8px;
+  padding: 8px;
+}
+
+.template-nav-rail--sidebar {
+  gap: 6px;
+  padding: 12px 10px;
+}
+
+.template-nav-rail--sidebar .ui-rail-button {
+  min-height: 44px;
+}
+
+.template-nav-rail--sidebar .ui-rail-button__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  /* Wrap trailing badges onto a second row rather than silently overflow the rail. */
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+.template-nav-rail--sidebar .ui-rail-button__top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.template-nav-rail--sidebar .ui-rail-button__label {
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.template-nav-rail--sidebar .ui-rail-button__meta {
+  width: auto;
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+
+.template-nav-rail--compact .ui-rail-button {
+  min-height: 56px;
+}
+
+.template-nav-rail--compact .ui-rail-button__content {
+  padding: 10px 0;
+}
+
+.template-nav-rail--compact .ui-rail-button__label,
+.template-nav-rail--compact .ui-rail-button__meta {
+  display: none;
+}
+
+/* ── 3D Scene ───────────────────────────────────────────────────────────────── */
+
+.scene-container {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  margin: calc(-1 * var(--spacing-lg));
+  width: calc(100% + 2 * var(--spacing-lg));
+  touch-action: none;
+}
+
+/* ── FTUE Overlay ───────────────────────────────────────────────────────── */
+.ftue-backdrop {
+  background: color-mix(in srgb, var(--ui-text-primary, #ffffff) 55%, transparent);
+}
+
+.ftue-spotlight-target {
+  position: relative;
+  z-index: 501;
+}
+
+/* ── Text Selection Override ───────────────────────────────────────────────
+   .game-zone disables user-select globally to prevent drag artifacts.
+   Re-enable for elements that need text selection (inputs, textareas, chat). */
+input,
+textarea,
+[contenteditable],
+.selectable {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* ── BeatBoard motion vocabulary ───────────────────────────────────────────
+   The visual design references two animations directly:
+     - beat-pulse: 1.4s ambient tick on idle pad-grid dots (84 BPM bar).
+     - record-pulse: ~0.71s capture indicator (matches 84 BPM beat).
+   Real implementation drives these via juice/beat-sequencer; the CSS
+   keyframes here exist so the visual design preview shows the cadence
+   without importing the audio engine.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@keyframes beat-pulse {
+  0%,
+  60%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  20% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 2px currentColor;
+  }
+}
+
+@keyframes record-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(232, 88, 96, 0.55);
+  }
+  35% {
+    box-shadow: 0 0 0 8px rgba(232, 88, 96, 0);
+  }
+}
+
+/* PadCell visual feedback keyframes ────────────────────────────────────────
+   - pad-latch-pulse: persistent slow scale-breath while a pad is latched.
+     Communicates "this pad is held on" — Groovepad parity
+     (research/groovepad/features.md:7,30).
+   - pad-activation-bloom: 1-bar radial-gradient overlay that fades in then
+     out when a pad activates. Used for both gestures: it's the only
+     positive feedback a one-shot fire gets after the initial punch.
+   - pad-first-session-bloom: bigger first-tap bloom, used once per session
+     on the very first pad the player triggers.
+   ──────────────────────────────────────────────────────────────────────── */
+
+@keyframes pad-latch-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.025);
+  }
+}
+
+@keyframes pad-activation-bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  18% {
+    opacity: 0.85;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes pad-first-session-bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  16% {
+    opacity: 1;
+    transform: scale(1.0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+/* Active pad — soft glow breath replaces the static white "latch dot".
+   The glow color is supplied inline (palette.activeRing); CSS animates
+   the strength of the existing box-shadow without re-asserting color. */
+@keyframes pad-active-glow {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.08);
+  }
+}
+
+/* Outgoing pad in a queued block — soft 1Hz outline pulse to telegraph
+   "this slot is leaving when the queue lands." */
+@keyframes pad-outgoing-pulse {
+  0%, 100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Queue fill — vertical scaleY 0→1 over the wait window. */
+@keyframes pad-queue-fill {
+  0% {
+    transform: scaleY(0);
+    opacity: 0.18;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 0.4;
+  }
+}
+
+/* Fire flash — sharp 250ms white overlay, peaks at ~30ms. */
+@keyframes pad-fire-flash {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.65;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Queue circular sweep (legacy — kept for compatibility while the new
+   QueueFillBar rolls out). */
+@keyframes pad-queue-sweep {
+  0% {
+    stroke-dashoffset: 289;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}

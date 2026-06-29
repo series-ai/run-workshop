@@ -1,0 +1,361 @@
+{
+  "$comment": "Midnight Synthwave pack — retro 80s neon, 102 BPM, D minor. Gated reverb drums, DX7 bell pads, glittering arps, italo bass. 32 8-bar loops + 16 one-shots. Constraints per docs/audio-kits.md.",
+  "version": 1,
+  "kitId": "midnight_synthwave",
+  "tempo": 102,
+  "key": "D minor",
+  "outputDir": "/Users/pany/dev/run-workshop/games/beat-board/public/cdn-assets/audio/midnight_synthwave",
+  "barSec": 2.3529411765,
+  "trimSec": 18.8235294118,
+  "rawSec": 32,
+  "voices": {
+    "femaleSoft": "21m00Tcm4TlvDq8ikWAM",
+    "maleSoft": "TxGEqnHWrfWFTfGW9XjX"
+  },
+  "items": [
+    {
+      "file": "drums-1.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Synthwave drum loop with gated reverb, 102 BPM, D minor key context, 8 bars. Punchy 80s drum machine kick on beats 1 and 3, gated-reverb snare on beats 2 and 4 (huge cavernous tail cut short by gate), closed hi-hat on every off-beat 8th. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Classic 1985 LinnDrum mix. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-2.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Italo-disco synthwave drum loop, 102 BPM, D minor key context, 8 bars. Four-on-the-floor punchy kick, hand-clap on beats 2 and 4, hi-hat 16ths throughout, occasional cowbell. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Italo-disco aesthetic. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-3.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Outrun synthwave drum loop, 102 BPM, D minor key context, 8 bars. Heavy kick on beats 1 and 3, big gated snare on beats 2 and 4, sparse off-beat hi-hat. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Cinematic outrun aesthetic. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-4.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "80s electro drum loop, 102 BPM, D minor key context, 8 bars. Punchy kick on every beat, snappy clap on beats 2 and 4, percussive electronic shaker 16ths. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. 808-driven electro feel. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-0.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Sparse synthwave half-time drum loop, 102 BPM, D minor key context, 8 bars. Kick on beat 1, big gated snare on beat 3, deep noise floor, sparse high-frequency shimmer. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same heavy half-time pocket with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Cinematic synthwave atmosphere. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-1.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "New-wave punchy drum loop, 102 BPM, D minor key context, 8 bars. Tight punchy kick on beats 1 and 3, electronic snare on beats 2 and 4, occasional tom roll on beat 4. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. 1984 new-wave feel. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-2.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Driving synthwave drum loop, 102 BPM, D minor key context, 8 bars. Four-on-the-floor punchy kick, layered electronic clap on beats 2 and 4, ride cymbal 8ths throughout. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Driving cinematic synthwave. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-3.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Synthwave with vocoder-clap drum loop, 102 BPM, D minor key context, 8 bars. Punchy kick on beats 1 and 3, vocoder-style hand-clap stack on beats 2 and 4, off-beat hi-hat 16ths. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Talk-box-flavoured synthwave. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "bass-1.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Italo-disco synth bass loop, 102 BPM, in D minor, 8 bars. Strong, accented attack on D1 at the downbeat of bar 1 (loudest moment of the loop). Punchy plucked synth bass plays a syncopated D-D-A-D-A-D-rest pattern across each bar. All 8 bars repeat the same pattern. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-2.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Synthwave sustained sub bass loop, 102 BPM, in D minor, 8 bars. Strong, accented attack on D1 at the downbeat of bar 1 (loudest moment of the loop). Warm round sub bass holds D1 sustained for the rest of the loop with subtle filter modulation. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-3.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Walking synth bass synthwave loop, 102 BPM, in D minor, 8 bars. Strong, accented attack on D1 at the downbeat of bar 1 (loudest moment of the loop). Synth bass walks D → F → A → C across each bar, one note per beat. All 8 bars repeat the same walk. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-4.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Pulsing synthwave saw bass loop, 102 BPM, in D minor, 8 bars. Strong, accented attack on D1 at the downbeat of bar 1 (loudest moment of the loop). Pulsing detuned saw-bass on D1 with 8th-note rhythm: D-D-D-D-D-D-D-D pattern across each bar. All 8 bars repeat. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-0.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Detuned dual-saw synth bass synthwave loop, 102 BPM, in D minor, 8 bars. Strong, accented attack on D1 at the downbeat of bar 1 (loudest moment of the loop). Detuned dual-saw bass on D1 sustained for all 8 bars with subtle filter movement. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-1.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Plucked synthwave bass loop, 102 BPM, in D minor, 8 bars. Strong, accented plucked attack on D1 at the downbeat of bar 1 (loudest moment of the loop). Punchy plucked synth bass plays D1 on beat 1, A1 on beat 3 of every bar. All 8 bars repeat the same pulse. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-2.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Filtered analog synth bass loop, 102 BPM, in D minor, 8 bars. Strong, accented attack on D1 at the downbeat of bar 1 (loudest moment of the loop). Low-pass-filtered round bass plays a syncopated D-rest-A-rest-D-F-rest-A pattern across each bar. All 8 bars repeat. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-3.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Bouncy synthwave acid bass loop, 102 BPM, in D minor, 8 bars. Strong, accented attack on D1 at the downbeat of bar 1 (loudest moment of the loop). 303-style acid bass bounces around D minor pentatonic with subtle filter cutoff modulation across each bar. All 8 bars repeat. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "melody-1.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "DX7 bell pad synthwave loop, 102 BPM, in D minor, 8 bars. Strong, accented bell hit on the downbeat of bar 1 (loudest moment of the loop). Glassy DX7-style bell pad sustains a D minor chord progression: Dm → Bb → F → C across 2 bars, repeating across all 8 bars. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Crystalline 80s digital pad. Just bell pads, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-2.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Glittering arpeggio synthwave loop, 102 BPM, in D minor, 8 bars. Strong, accented arp note on the downbeat of bar 1 (loudest moment of the loop). Bright arpeggio synth plays D minor 7 chord arpeggio in 16th notes across each bar. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Glittering shimmery synth. Just arp synth, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-3.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Saw-lead synthwave riff loop, 102 BPM, in D minor, 8 bars. Strong, accented saw-lead attack on the downbeat of bar 1 (loudest moment of the loop). Bright detuned saw-lead synth plays a hooky melodic riff in D minor across each bar. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Classic synthwave lead. Just lead synth, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-4.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Wide string-pad synthwave loop, 102 BPM, in D minor, 8 bars. Strong, accented string attack on the downbeat of bar 1 (loudest moment of the loop). Lush wide string-pad synth sustains Dm - Am - F - C chord progression across 2 bars, repeating across all 8 bars. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Cinematic 80s strings. Just string pad, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-0.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Plucked DX synthwave riff loop, 102 BPM, in D minor, 8 bars. Strong, accented plucked attack on the downbeat of bar 1 (loudest moment of the loop). Bright plucked digital synth plays a four-note motif D-F-A-C across each bar in D minor. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just plucked synth, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-1.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Saw-lead melodic synthwave loop, 102 BPM, in D minor, 8 bars. Strong, accented saw attack on the downbeat of bar 1 (loudest moment of the loop). Bright detuned saw lead plays a melodic phrase climbing the D minor scale across each bar. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Classic synthwave melodic lead. Just synth lead, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-2.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Choir-pad synthwave loop, 102 BPM, in D minor, 8 bars. Strong, accented pad attack on the downbeat of bar 1 (loudest moment of the loop). Vocoder-style choir pad sustains Dm - F - Am - Bb chord progression across 2 bars, repeating across all 8 bars. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just choir pad, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-3.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Bell-pluck synthwave loop, 102 BPM, in D minor, 8 bars. Strong, accented bell pluck on the downbeat of bar 1 (loudest moment of the loop). Bright bell-pluck synth arpeggiates Dm - F chord patterns in 16th notes across each bar. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bell synth, no drums, no bass, no vocals."
+    },
+    {
+      "file": "vocals-A-0.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "Heavily VOCODED robotic synthwave male hook (MIDNIGHT DRIVE), 102 BPM, D minor, 8 bars. The voice is processed through a CLASSIC 80s VOCODER — robotic, formant-modulated, synthesized-vowel timbre — NOT a clean sung voice. Think generic 80s electronic vocoder vocals — synthesizer-style, robot delivery, sci-fi soundtrack. NOT a human-sung melody, NOT lounge, NOT a soft ballad — robotic processed vocal that sits midway between voice and synth. STRICTLY VOCAL TRACK ONLY — no kick drum, no snare, no hi-hat, no bass, no synth, no piano, no rhythmic backing. NOTHING below 100 Hz. Pattern: vocoded sustained MIDNIGHT on D root for bars 1-2, vocoded DRIVE on F third for bars 3-4, vocoded MIDNIGHT on A fifth for bars 5-6, vocoded DRIVE resolving to D for bars 7-8. The vocoder texture is the defining feature — every word should read clearly as machine-processed. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-A-1.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "Heavily REVERB-DRENCHED ETHEREAL synthwave female pad-vocal (ETHEREAL), 102 BPM, D minor, 8 bars. The ONLY syllables are OOOH and AHHH — no words, no melodic phrasing. Vast 80s plate-reverb wash drowns the voice in a dreamy halo, layered chorus and detuning blur the pitch identity, ghostly retrowave / dream-pop atmospheric texture — NOT a clean sung melody, NOT a pop hook, more like a synth pad that happens to be made of voices. The voice should sit BEHIND a wall of reverb so it reads as atmospheric texture, not lead. STRICTLY VOCAL TRACK ONLY — no kick drum, no snare, no hi-hat, no bass, no synth, no piano, no rhythmic backing. NOTHING below 100 Hz. Pattern: drowned OOOH on D root for bars 1-2, drowned AHHH on F third for bars 3-4, drowned OOOH on A fifth for bars 5-6, drowned AHHH resolving to D for bars 7-8. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-A-2.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "Heavily VOCODED robotic synthwave hook repeating NEON NIGHTS, 102 BPM, D minor, 16 bars. The voice is processed through a CLASSIC 80s VOCODER — robotic, formant-modulated, synthesized-vowel timbre — NOT a clean sung voice. Think generic 80s electronic / retrowave robot vocal, talkbox-adjacent, futuristic-android delivery. NOT a human-sung melody, NOT a pop hook, NOT lounge — robotic processed vocal that sits midway between voice and synth. STRICTLY VOCAL TRACK ONLY — no kick drum, no snare, no hi-hat, no bass, no synth, no piano, no rhythmic backing. NOTHING below 100 Hz. Pattern: vocoded NEON NIGHTS once every 2 bars across 16 bars (8 repetitions), each with subtle pitch variation — bars 1-4 NEON NIGHTS on D root, bars 5-8 NEON NIGHTS climbing the D minor scale, bars 9-12 NEON NIGHTS at the octave with full robot intensity, bars 13-16 NEON NIGHTS descending. The vocoder texture is the defining feature — every word should read clearly as machine-processed. Continuous vocal energy across all 16 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 16
+    },
+    {
+      "file": "vocals-A-3.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella sung female DREAMY AHHS sustained vocal pad, 102 BPM, D minor, 16 bars. The ONLY syllables in the entire 16-bar loop are AHH and OOH — never any words, never lyrics, never a melody beyond simple sustained tones. PURE VOCAL ONLY — absolutely no instruments, no drums, no bass, no synth, no piano, no beat, no instrumental backing whatsoever. Dreamy ethereal female voice sustaining long AHHHH notes over a chord progression: bars 1-4 sustain AHHH on D root with airy breathy 80s reverb-style delivery, bars 5-8 sustain AHHH on F (third) climbing softly, bars 9-12 sustain AHHH on A (fifth) with growing dreamy intensity, bars 13-16 layered AHHH OOOH descending back to D root. Synthwave dream-pop ethereal vocal pad texture. NOT a chorus, NOT lyrics like night-is-young or forever — only sustained AHH/OOH tones. Continuous vocal energy across all 16 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 16
+    },
+    {
+      "file": "vocals-B-0.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella sung female aaah pad, 102 BPM, D minor, 8 bars. PURE VOCAL ONLY — absolutely no instruments, no drums, no bass, no synth, no piano, no beat, no instrumental backing whatsoever. One voice, recorded a cappella in a vocal booth. Sung MELODICALLY (not spoken) with this evolving structure: bars 1-2 sustain ahhh on D root, bars 3-4 sustain ahhh on F third, bars 5-6 sustain ahhh on A fifth, bars 7-8 layered ahhh resolving to D. Dreamy 80s sustained vocal pad. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-B-1.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "Heavily TALKBOX / VOCODER processed synthwave hook repeating THE NIGHT IS YOUNG, 102 BPM, D minor, 8 bars. The voice is processed through a CLASSIC 80s TALKBOX or VOCODER — robotic, formant-modulated, synth-vowel timbre, somewhere between a human voice and a synthesizer lead. NOT a clean sung voice, NOT lounge, NOT a soft ballad — futuristic-android delivery, distinctly machine-processed. STRICTLY VOCAL TRACK ONLY — no kick drum, no snare, no hi-hat, no bass, no synth, no piano, no rhythmic backing. NOTHING below 100 Hz. Pattern: talkbox THE NIGHT IS YOUNG once per 2 bars across 8 bars (4 repetitions), each starting on the D minor root and rising to the fifth A. The talkbox/vocoder texture is the defining feature — every word should read clearly as machine-processed. NOT a clean sung female voice. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-B-2.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella pitched-up female HEY stab repeated rhythmically (PITCHED HEY), 102 BPM, D minor, 16 bars. The ONLY syllable in the entire 16-bar loop is the word HEY — never any other lyrics, never sustained ahhh, never a melody. PURE VOCAL ONLY — absolutely no instruments, no drums, no bass, no synth, no piano, no beat, no instrumental backing whatsoever. Each HEY is a SHORT pitched-up percussive stab less than 200 ms long, pitched higher than natural register so it sits on top of an 80s synthwave beat. Pattern: HEY on beats 1 and 3 of every bar, occasional HEY-HEY pair on the and-of-4 of every 4th bar, identical stab pattern repeats across all 16 bars. NOT a sung hook, NOT a chorus — only the single syllable HEY repeating on the rhythm grid. Continuous vocal energy across all 16 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 16
+    },
+    {
+      "file": "vocals-B-3.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "Heavily VOCODED robotic synthwave hook repeating FOREVER, 102 BPM, D minor, 16 bars. The voice is processed through a CLASSIC 80s VOCODER — robotic, formant-modulated, synthesized-vowel timbre — NOT a clean sung voice. Think generic 80s electronic / retrowave robot vocal, futuristic-android delivery, the VO sits midway between voice and synth. NOT a human-sung pop hook, NOT lounge, NOT a soft ballad. STRICTLY VOCAL TRACK ONLY — no kick drum, no snare, no hi-hat, no bass, no synth, no piano, no rhythmic backing. NOTHING below 100 Hz. Pattern: vocoded FOREVER once every 2 bars across 16 bars (8 repetitions) with subtle pitch variation — bars 1-4 FOREVER on D root, bars 5-8 FOREVER climbing the D minor scale, bars 9-12 FOREVER on the octave with full robot intensity, bars 13-16 FOREVER descending back to D. The vocoder texture is the defining feature — every word should read clearly as machine-processed. Continuous vocal energy across all 16 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 16
+    },
+    {
+      "file": "fills-A-0.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1,
+      "prompt": "Single short snare drum roll one-shot, 1 second. 80s gated-reverb snare crescendo into a final hit. LinnDrum-style. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-A-1.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single descending tom-tom drum fill one-shot, 1.2 seconds. High tom, mid tom, low tom in quick succession. 80s electronic drumkit. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-A-2.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.5,
+      "prompt": "Single open hi-hat cymbal one-shot with long natural decay tail, 1.5 seconds. 80s electronic drumkit. No bass, no melody, no vocals. Just one cymbal hit."
+    },
+    {
+      "file": "fills-A-3.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.8,
+      "prompt": "Single big crash cymbal one-shot with gated reverb tail, 1.8 seconds. 80s electronic drumkit. No bass, no melody, no vocals. Just one crash hit."
+    },
+    {
+      "file": "fills-B-0.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1,
+      "prompt": "Single hand-clap stack one-shot, 1 second. Building 80s claps into a final clap. 80s electronic mix. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-1.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 0.8,
+      "prompt": "Single very fast 4-stroke drum fill across kick, snare, toms, and crash, 0.8 seconds. 80s electronic drumkit. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-2.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single rolling tom-tom fill one-shot, 1.2 seconds. 80s electronic toms rolling. No melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-3.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 0.6,
+      "prompt": "Single cowbell hit one-shot, 0.6 seconds. Bright 80s cowbell. No bass, no melody, no vocals. Just one cowbell hit."
+    },
+    {
+      "file": "fx-1.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.5,
+      "prompt": "Laser sweep descending pitch sweep, 1.5 seconds, fades naturally. Classic 80s synth effect. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-2.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.2,
+      "prompt": "Reverse cymbal swell rising into nothing, 1.2 seconds, fades naturally. Classic synthwave riser. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-3.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1,
+      "prompt": "Retro arcade beep ascending, 1 second, fades naturally. 8-bit-style synth bleep. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-4.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 0.8,
+      "prompt": "Spring-reverb hit, 0.8 seconds, fades naturally. Classic spring-reverb spring sound. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-0.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 0.8,
+      "prompt": "Cassette tape rewind, 0.8 seconds, fades naturally. Mechanical analog tape rewind sound. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-1.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1,
+      "prompt": "Synth zap descending downward sweep, 1 second, fades naturally. Bright 80s synth effect. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-2.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.8,
+      "prompt": "Distant thunder rumble, 1.8 seconds, fades naturally. Cinematic atmospheric texture. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-3.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.5,
+      "prompt": "Neon-pad swell rising and falling, 1.5 seconds. Atmospheric synthwave swell. No instruments, no music. Just one effect."
+    }
+  ]
+}

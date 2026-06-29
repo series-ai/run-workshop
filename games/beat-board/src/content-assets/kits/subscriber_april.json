@@ -1,0 +1,20 @@
+{
+  "$comment": "Coming soon — subscriber-exclusive monthly drop. No audio shipped yet. Subscriber kits ship with ownership='paid' and surface only in the Subscriber Exclusive section when the user holds an active CORE subscription.",
+  "id": "subscriber-april",
+  "name": "Slow Drift · April",
+  "bpm": 88,
+  "key": "Gmin",
+  "flavor": "This month's subscriber-only generated kit.",
+  "bpmRange": "88",
+  "layers": 8,
+  "ownership": "paid",
+  "priceRunbucks": 0,
+  "tier": "subscriber",
+  "heroGradient": [
+    "#bce0ff",
+    "#3a7ab8"
+  ],
+  "comingSoon": true,
+  "pads": [],
+  "coverArt": "images/packs/subscriber_april.png"
+}

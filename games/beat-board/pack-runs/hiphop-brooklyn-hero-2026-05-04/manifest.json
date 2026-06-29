@@ -1,0 +1,361 @@
+{
+  "$comment": "Hip-hop boom-bap pack v3 — 90 BPM, F minor. 32 8-bar loops + 16 one-shots. Prompts revised per docs/audio-kits.md: 'all 8 bars locked, no fades' for loops, PURE vocals (no backing track), and explicit one-shot prompts.",
+  "version": 3,
+  "kitId": "hiphop_brooklyn_hero",
+  "tempo": 90,
+  "key": "F minor",
+  "outputDir": "/Users/pany/dev/run-workshop/games/beat-board/public/cdn-assets/audio/hiphop_brooklyn_hero",
+  "barSec": 2.6666666667,
+  "trimSec": 21.3333333333,
+  "rawSec": 40,
+  "voices": {
+    "femaleSoft": "21m00Tcm4TlvDq8ikWAM",
+    "maleSoft": "TxGEqnHWrfWFTfGW9XjX"
+  },
+  "items": [
+    {
+      "file": "drums-1.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Boom-bap hip-hop drum loop, 90 BPM, F minor key context, 8 bars. Punchy MPC-style kick on beat 1 of every bar plus the and-of-3, crisp snare on beats 2 and 4, closed hi-hat 8th notes throughout. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Mono kick, slightly stereo hats. Gritty 90s NY hip-hop, sampled-from-vinyl character, dusty SP-1200 feel. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-2.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Swung boom-bap drum loop, 90 BPM, F minor key context, 8 bars. Heavy kick on beat 1, syncopated kick on the and-of-2, dusty snare on beats 2 and 4, swung hi-hat 8ths with subtle ghost notes. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked swung pocket with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Sampled-from-vinyl character, slight tape saturation, MPC60 timing feel. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-3.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Hard-hitting east-coast hip-hop drum loop, 90 BPM, F minor key context, 8 bars. Driving kick on beats 1 and 3, clap-layered snare on beats 2 and 4, half-time-feel hi-hat with shaker overlay. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Punchy, gritty, rugged, head-nodding NY hip-hop feel. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-4.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Sparse golden-era hip-hop drum loop, 90 BPM, F minor key context, 8 bars. Kick on beat 1 and the and-of-3, dusty rim-clicked snare on beats 2 and 4, closed hi-hat 8ths only on the off-beats. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same sparse pocket with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Heavy vinyl crackle texture, dusty 1990s NY style. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-0.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Trap-influenced hip-hop drum loop, 90 BPM, F minor key context, 8 bars. Booming 808-style kick on beats 1 and 3, snap-snare on beats 2 and 4, rolling 16th-note hi-hats with occasional triplet hi-hat fills. Strong, accented 808 kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Modern boom-bap hybrid, slightly compressed. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-1.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Dilla-style swung hip-hop drum loop, 90 BPM, F minor key context, 8 bars. Drunken-feel kick on beat 1 and a slightly-late and-of-3, brushed snare on beats 2 and 4 placed slightly behind the grid, swung shaker 8ths. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same loose pocket with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Loose, human, behind-the-beat feel. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-2.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Half-time hip-hop drum loop, 90 BPM, F minor key context, 8 bars. Kick on beat 1, big snare on beat 3, sparse hi-hat 8ths, deep noise floor. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same heavy half-time pocket with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Cinematic, dark, slow-feeling NY hip-hop atmosphere. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-3.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Boom-bap with conga-percussion drum loop, 90 BPM, F minor key context, 8 bars. Kick on beats 1 and 3, snare on 2 and 4, conga and bongo accents weaving through the 16th-note grid. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same polyrhythm with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Latin-tinged east-coast hip-hop. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "bass-1.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Hip-hop sub bass loop, 90 BPM, in F minor, 8 bars. Strong, accented attack on F1 at the downbeat of bar 1 (loudest moment of the loop), then deep round sub bass holding root note F1 sustained for the rest of the loop. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-2.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Walking upright bass hip-hop loop, 90 BPM, in F minor, 8 bars. Strong, accented attack on F1 at the downbeat of bar 1 (loudest moment of the loop). Acoustic upright bass walks F → Ab → C → Eb across each bar, one note per beat. All 8 bars repeat the same walk. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Warm woody tone, slight tape saturation. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-3.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Plucked synth bass hip-hop loop, 90 BPM, in F minor, 8 bars. Strong, accented plucked attack on F1 at the downbeat of bar 1 (loudest moment of the loop). Punchy plucked synth bass plays F1 on beat 1, F1 on beat 2.5, C2 on beat 3, F1 on beat 4. All 8 bars repeat the same pattern. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-4.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Hip-hop electric bass loop with a strong, accented attack on the downbeat of bar 1, 90 BPM, in F minor, 8 bars. Warm-toned electric bass: bar 1 starts with a punchy plucked F1 hit on beat 1 (clearly the loudest moment of the loop), then the syncopated F-rest-Ab-rest-F-C-rest groove. All 8 bars repeat the same groove with continuous bass energy; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-0.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "808 sub bass hip-hop loop, 90 BPM, in F minor, 8 bars. Strong, accented 808 attack on F1 at the downbeat of bar 1 (loudest moment of the loop). Long-tail 808 plays root F1 sustained through beats 1-2 of every bar, then C2 sustained through beats 3-4. All 8 bars repeat the same pattern. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-1.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Hip-hop slap-funk electric bass loop, 90 BPM, in F minor, 8 bars. Bar 1 opens with a strong slap-attack on F1 at beat 1 (the loudest moment of the loop). Slap-and-pop syncopated 16th-note groove rooted on F continues immediately and never goes silent. All 8 bars cycle the same groove. Continuous bass energy across all 8 bars; absolutely no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-2.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Filtered round synth bass hip-hop loop, 90 BPM, in F minor, 8 bars. Strong, accented attack on F1 at the downbeat of bar 1 (loudest moment of the loop). Low-pass-filtered round bass plays F1 on beat 1, C2 on beat 3 — half-note pulse, all 8 bars repeat the same pattern. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-3.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Detuned dual-saw synth bass hip-hop loop, 90 BPM, in F minor, 8 bars. Strong, accented attack on F1 at the downbeat of bar 1 (loudest moment of the loop). Warm detuned-saw bass on root F1 sustained for all 8 bars with subtle filter movement. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "melody-1.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Jazz piano hip-hop melody loop, 90 BPM, in F minor, 8 bars. Strong, accented piano hit on the downbeat of bar 1 (loudest moment of the loop). Dusty sampled-from-vinyl jazz piano plays a four-note motif Ab-C-Eb-Db across each bar in F minor. All 8 bars repeat the same motif with continuous melodic energy; no fades, no silent bars, no intro, no outro. Loopable. Warm vinyl crackle, slight tape wow, sampled feel. Just piano, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-2.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Soul horn-section hip-hop melody loop, 90 BPM, in F minor, 8 bars. Strong, accented horn stab on the downbeat of bar 1 (loudest moment of the loop). A small horn ensemble plays a sustained F minor pad-like progression: F minor → Ab major → C minor → Bb minor across bars 1 and 2, repeating across all 8 bars. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Warm sampled tone, slight tape saturation. Just horns, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-3.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Dusty Rhodes hip-hop melody loop, 90 BPM, in F minor, 8 bars. Strong, accented Rhodes hit on the downbeat of bar 1 (loudest moment of the loop). Warm Rhodes electric piano plays a chord progression Fm7 → Bbm7 → Eb7 → Abmaj7 over 2 bars, repeating across all 8 bars. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Tape saturation, slight pitch wobble. Just Rhodes, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-4.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Vibraphone hip-hop melody loop, 90 BPM, in F minor, 8 bars. Strong, accented vibe hit on the downbeat of bar 1 (loudest moment of the loop). Sampled vibraphone plays a four-note descending motif Ab-G-F-Eb across each bar in F minor. All 8 bars repeat the same motif with continuous melodic energy; no fades, no silent bars, no intro, no outro. Loopable. Slow tremolo, warm sampled tone. Just vibraphone, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-0.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Acoustic guitar arpeggio hip-hop melody loop, 90 BPM, in F minor, 8 bars. Strong, accented guitar pluck on the downbeat of bar 1 (loudest moment of the loop). Nylon-string guitar arpeggiates F minor → Bb minor chord patterns across each bar. All 8 bars repeat the same pattern with continuous melodic energy; no fades, no silent bars, no intro, no outro. Loopable. Warm woody tone, slight room reverb. Just guitar, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-1.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Plucked synth lead hip-hop melody loop, 90 BPM, in F minor, 8 bars. Strong, accented plucked attack on the downbeat of bar 1 (loudest moment of the loop). Bright plucked synth plays a melodic riff in F minor pentatonic across each bar — F, Ab, C, Eb. All 8 bars repeat the riff with continuous melodic energy; no fades, no silent bars, no intro, no outro. Loopable. Bright but warm, slight tape saturation. Just lead, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-2.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Strings sample hip-hop melody loop, 90 BPM, in F minor, 8 bars. Strong, accented string-section attack on the downbeat of bar 1 (loudest moment of the loop). Sampled string section sustains an F minor chord progression: Fm → Cm → Eb → Bb across 2 bars, repeating across all 8 bars. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Warm vinyl-sampled feel, soft tape compression. Just strings, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-3.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Saxophone sample hip-hop melody loop, 90 BPM, in F minor, 8 bars. Strong, accented sax hit on the downbeat of bar 1 (loudest moment of the loop). Sampled tenor saxophone plays a four-note motif F-Ab-C-Eb across each bar with natural vibrato. All 8 bars repeat the same motif with continuous melodic energy; no fades, no silent bars, no intro, no outro. Loopable. Warm jazz tone, slight room reverb. Just sax, no drums, no bass, no vocals."
+    },
+    {
+      "file": "vocals-A-0.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella rapped male MC vocal hook, 90 BPM, F minor, 8 bars. PURE VOCAL ONLY — absolutely no instruments, no drums, no bass, no piano, no synth, no melody, no beat, no instrumental backing whatsoever. One voice, recorded a cappella in a vocal booth. Rapped/chanted with rhythmic flow (not flat-spoken) with this evolving structure: bars 1-2 chant yeah uh yeah uh percussively, bars 3-4 chant check it out with a syncopated cadence, bars 5-6 chant yeah uh yeah uh higher and louder, bars 7-8 chant uh yeah resolving back. Gritty 90s NY rap delivery, dusty character. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-A-1.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella male hip-hop chopped chant repeating the phrase OH YEAH, 90 BPM, F minor, 8 bars. PURE VOCAL ONLY — absolutely no instruments, no drums, no bass, no piano, no synth, no melody, no beat, no instrumental backing whatsoever. One voice, recorded a cappella in a vocal booth. The ONLY syllables in the entire 8-bar loop are the words OH and YEAH — never any other lyrics. Bars 1-2 chant OH YEAH OH YEAH on beats 1 and 3 with a pitched-up percussive delivery. Bars 3-4 chant OH YEAH OH YEAH again with the SAME rhythm but pitched up half an octave. Bars 5-6 chant OH YEAH OH YEAH with extra emphasis. Bars 7-8 close with OH YEAH OH YEAH OH YEAH OH YEAH. Like a chopped sample of a 70s soul vocal where only those two syllables loop. NOT a sung melody, NOT a sustained ohhh, NOT a soul hook — short percussive syllables only. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-A-2.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella ISOLATED sung female soul hook with evolving structure, 90 BPM, F minor, 16 bars. STRICTLY VOCAL TRACK ONLY — absolutely no kick drum, no snare, no hi-hat, no bass, no sub-bass, no synth, no piano, no pad, no rhythmic backing of any kind. NOTHING below 100 Hz must be present in the output. The female voice sings continuously every single bar — there must be no silent bar, no breath gap longer than 200 ms, no break in the vocal at any point in the 16 bars. Sung MELODICALLY in vintage 70s soul style: bars 1-4 sing MMM YEAH OHHH sustained on F minor root, bars 5-8 sing OH OH OH ascending the F minor scale, bars 9-12 sing MMM YEAH OHHH an octave higher with intensity, bars 13-16 melismatic ad-lib resolve descending back to root. Imagine an a cappella vocal stem isolated from a track — only the voice exists in the file, and it sings unbroken across all 16 bars. No fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 16
+    },
+    {
+      "file": "vocals-A-3.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella ISOLATED male hip-hop ad-lib chant alternating UHH and YEAH, 90 BPM, F minor, 16 bars. The ONLY sound in the entire 16-bar loop is the male voice saying UHH and YEAH — no other syllables, no other words. STRICTLY VOCAL TRACK ONLY — absolutely no kick drum, no snare, no hi-hat, no bass, no sub-bass, no synth, no piano, no pad, no rhythmic backing of any kind. NOTHING below 100 Hz must be present in the output — no thump, no boom, no rumble, no low-end. Imagine an a cappella vocal stem isolated from a track in audio software — only the voice exists in the file. Each UHH and each YEAH is a short percussive ad-lib stab less than 250 ms long, gritty 90s NY hip-hop producer ad-lib style. Pattern: UHH on beat 1, YEAH on beat 3 of every bar, occasional UHH-YEAH pair on the and-of-4 for swing. Identical pattern repeats across all 16 bars. Continuous vocal energy across all 16 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 16
+    },
+    {
+      "file": "vocals-B-0.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella ISOLATED female chopped soul vocal sample, 90 BPM, F minor, 8 bars. STRICTLY VOCAL TRACK ONLY — absolutely no kick drum, no snare, no hi-hat, no bass, no sub-bass, no synth, no piano, no pad, no rhythmic backing of any kind. NOTHING below 100 Hz must be present in the output — no thump, no boom, no rumble, no low-end. Imagine an a cappella vocal stem isolated from a track in audio software — only the voice exists in the file. One female voice in mono, recorded dry in a vocal booth. Each 2-bar chunk plays a SHORT one-syllable vocal stab on each of beats 1, 2.5, 3, and 4 — fragments like LOVE, BABY, YEAH, OOH, MMM, AHH — never a sung phrase, never a sustained note longer than one beat, never a melodic line. The same chopped pattern repeats every 2 bars across the 8 bars. Vintage soul sample texture: dusty, slightly pitched-up, percussive — but the voice is the ONLY thing in the file. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-B-1.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella rapped male hip-hop hype-chant, 90 BPM, F minor, 8 bars. PURE VOCAL ONLY — absolutely no instruments, no drums, no bass, no piano, no synth, no melody, no beat, no instrumental backing whatsoever. One voice, recorded a cappella in a vocal booth. Rapped/chanted with rhythmic energy (not flat-spoken) with this evolving structure: bars 1-2 chant hey hey hey ho percussively, bars 3-4 chant lets go lets go syncopated, bars 5-6 chant hey hey hey ho louder and higher, bars 7-8 chant lets go resolving. Energetic hype-man delivery. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-B-2.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella stacked soul background vocal harmonies in 70s Motown / Stax style, 90 BPM, F minor, 16 bars. ABSOLUTELY NO CHURCH, NO GOSPEL, NO SACRED, NO HYMN, NO CHOIR style — secular 70s soul ballad backing vocals only (smooth Motown / Stax / Philadelphia-soul background-singer style). PURE VOCAL ONLY — absolutely no instruments, no drums, no bass, no piano, no synth, no melody, no beat, no instrumental backing whatsoever. Stacked female harmony vocals (3 voices in 3rds and 5ths) singing nonsense soul syllables OOH, OHH, MMM, AHH, BABY across F minor 7 chord inversions. Smooth, smoky, dusty soul-sample texture — the kind of layered backing vocals chopped out of a vintage soul record by a hip-hop producer. Phrase structure: bars 1-4 OOH AHH on F minor 7, bars 5-8 OOH BABY on Ab major 7 climbing, bars 9-12 MMM OHH on C minor with intensity, bars 13-16 AHH AHH descending back to F. Continuous vocal energy across all 16 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 16
+    },
+    {
+      "file": "vocals-B-3.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella pitched-up female HEY stab repeated rhythmically, 90 BPM, F minor, 16 bars. The ONLY syllable in the entire 16-bar loop is the word HEY — never any other lyrics, never a sustained note, never a melody. PURE VOCAL ONLY — absolutely no instruments, no drums, no bass, no piano, no synth, no melody, no beat, no instrumental backing whatsoever. Each HEY is a SHORT pitched-up percussive stab less than 200 ms long. Pattern: HEY on beats 1 and 3 of every bar, sometimes HEY on the and-of-2 for syncopation, identical pattern repeats across all 16 bars. Pitched-up sample texture (like a producer chopped a soul vocal HEY and pitched it up for a hip-hop beat). NOT a sung hook, NOT a chorus, NOT yeah-I-feel-it lyrics — only the single syllable HEY repeating on the rhythm grid. Continuous vocal energy across all 16 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 16
+    },
+    {
+      "file": "fills-A-0.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1,
+      "prompt": "Single short snare drum roll one-shot, 1 second. Building snare crescendo into a final hit. Punchy SP-1200-style snare, gritty 90s NY hip-hop. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-A-1.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single descending tom-tom drum fill one-shot, 1.2 seconds. High tom, mid tom, low tom in quick succession. Vintage MPC drumkit, sampled-from-vinyl character. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-A-2.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.5,
+      "prompt": "Single open hi-hat cymbal one-shot with long natural decay tail, 1.5 seconds. Gritty sampled, dusty 90s NY hip-hop. No bass, no melody, no vocals. Just one cymbal hit."
+    },
+    {
+      "file": "fills-A-3.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.8,
+      "prompt": "Single soft crash cymbal one-shot with natural decay, 1.8 seconds. Sampled, vinyl-warmth, hip-hop character. No bass, no melody, no vocals. Just one crash hit."
+    },
+    {
+      "file": "fills-B-0.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1,
+      "prompt": "Single rim-shot snare drum roll one-shot, 1 second. Building rimshots into a final hit. SP-1200 sample, punchy hip-hop. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-1.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 0.8,
+      "prompt": "Single very fast 4-stroke drum fill across kick, snare, toms, and crash, 0.8 seconds. MPC-style hip-hop. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-2.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single 808 bass drum roll fill one-shot, 1.2 seconds. Deep sub-kick rolling. Modern boom-bap. No melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-3.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 0.6,
+      "prompt": "Single cymbal crash with immediate hand-choke, 0.6 seconds. Very short cymbal tail. Dusty hip-hop sampler character. No bass, no melody, no vocals. Just one choked cymbal hit."
+    },
+    {
+      "file": "fx-1.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.5,
+      "prompt": "Vinyl rewind scratch and rewind sound effect, 1.5 seconds, fades naturally. Classic hip-hop turntablism, sharp and bright. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-2.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.2,
+      "prompt": "Reverse cymbal swell rising into nothing, 1.2 seconds, fades naturally. Classic hip-hop transition effect, soft white-noise-like. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-3.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1,
+      "prompt": "Short tape stop pitch-down sliding to silence, 1 second. Classic hip-hop tape stop effect, warm. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-4.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 0.8,
+      "prompt": "Vinyl scratch zigga-zigga, three or four quick scratches in 0.8 seconds. Bright, aggressive, hip-hop turntablism. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-0.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 0.8,
+      "prompt": "Cassette tape mechanism click and brief tape stop sound, 0.8 seconds, fades naturally. Naturalistic foley, close-mic, mechanical. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-1.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1,
+      "prompt": "Boxing-bell ding with natural metallic decay, 1 second. Bright, clear bell tone, hip-hop sample style. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-2.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.8,
+      "prompt": "Distant city traffic with one car horn honk, 1.8 seconds, fades naturally. NYC street ambience, cinematic. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-3.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.5,
+      "prompt": "Subway train passing with a brief brake squeal, 1.5 seconds, fades naturally. NYC subway character, lifestyle texture. No instruments, no music. Just one effect."
+    }
+  ]
+}

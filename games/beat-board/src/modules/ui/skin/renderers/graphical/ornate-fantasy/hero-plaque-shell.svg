@@ -1,0 +1,67 @@
+<svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="hop-frame" x1="360" y1="6" x2="360" y2="214" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8edbe"/>
+      <stop offset="0.22" stop-color="#d8bd74"/>
+      <stop offset="0.52" stop-color="#9b6f2f"/>
+      <stop offset="0.78" stop-color="#c8a459"/>
+      <stop offset="1" stop-color="#6c451a"/>
+    </linearGradient>
+    <linearGradient id="hop-core" x1="360" y1="24" x2="360" y2="196" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1d3661"/>
+      <stop offset="0.28" stop-color="#2a4f88"/>
+      <stop offset="0.5" stop-color="#121d33"/>
+      <stop offset="0.78" stop-color="#090f19"/>
+      <stop offset="1" stop-color="#140d0d"/>
+    </linearGradient>
+    <linearGradient id="hop-lip" x1="360" y1="30" x2="360" y2="190" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff7d7" stop-opacity="0.82"/>
+      <stop offset="1" stop-color="#7d5c24" stop-opacity="0.42"/>
+    </linearGradient>
+    <radialGradient id="hop-glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(360 64) rotate(90) scale(104 268)">
+      <stop offset="0" stop-color="#7aa0de" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#7aa0de" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <path
+    d="M70 28H278L334 10H386L442 28H650L698 62V158L650 192H442L386 210H334L278 192H70L22 158V62L70 28Z"
+    fill="#120c0b"
+    opacity="0.7"
+    transform="translate(0 8)"
+  />
+  <path
+    d="M70 20H278L334 2H386L442 20H650L698 54V150L650 184H442L386 202H334L278 184H70L22 150V54L70 20Z"
+    fill="url(#hop-frame)"
+    stroke="#f6e8b0"
+    stroke-linejoin="round"
+    stroke-width="4"
+  />
+  <path
+    d="M114 46H292L340 30H380L428 46H606L660 78V126L606 158H428L380 174H340L292 158H114L60 126V78L114 46Z"
+    fill="url(#hop-core)"
+    stroke="url(#hop-lip)"
+    stroke-linejoin="round"
+    stroke-width="3"
+  />
+  <path
+    d="M114 46H292L340 30H380L428 46H606L660 78V126L606 158H428L380 174H340L292 158H114L60 126V78L114 46Z"
+    fill="url(#hop-glow)"
+  />
+
+  <g fill="#f3d88d" opacity="0.95">
+    <circle cx="132" cy="32" r="8"/>
+    <circle cx="174" cy="28" r="6"/>
+    <circle cx="546" cy="28" r="6"/>
+    <circle cx="588" cy="32" r="8"/>
+    <circle cx="132" cy="188" r="8"/>
+    <circle cx="174" cy="192" r="6"/>
+    <circle cx="546" cy="192" r="6"/>
+    <circle cx="588" cy="188" r="8"/>
+  </g>
+
+  <path d="M334 14H386L398 26H322L334 14Z" fill="#f4df9d" opacity="0.9"/>
+  <path d="M334 206H386L398 194H322L334 206Z" fill="#8d6225" opacity="0.88"/>
+  <path d="M88 52L126 78H88L58 58L88 52Z" fill="#f2d284" opacity="0.82"/>
+  <path d="M632 52L594 78H632L662 58L632 52Z" fill="#f2d284" opacity="0.82"/>
+</svg>

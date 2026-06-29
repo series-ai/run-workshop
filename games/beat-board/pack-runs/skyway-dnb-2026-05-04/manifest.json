@@ -1,0 +1,361 @@
+{
+  "$comment": "Skyway D&B pack — drum & bass / jungle, 174 BPM, G minor. Frenetic chopped breaks, deep reese sub bass, atmospheric pads, MC vocal stabs. 32 8-bar loops + 16 one-shots. Constraints per docs/audio-kits.md.",
+  "version": 1,
+  "kitId": "skyway_dnb",
+  "tempo": 174,
+  "key": "G minor",
+  "outputDir": "/Users/pany/dev/run-workshop/games/beat-board/public/cdn-assets/audio/skyway_dnb",
+  "barSec": 1.3793103448,
+  "trimSec": 11.0344827586,
+  "rawSec": 25,
+  "voices": {
+    "femaleSoft": "21m00Tcm4TlvDq8ikWAM",
+    "maleSoft": "TxGEqnHWrfWFTfGW9XjX"
+  },
+  "items": [
+    {
+      "file": "drums-1.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Drum & bass amen-break loop, 174 BPM, G minor key context, 8 bars. Chopped amen break: rolling kick on beats 1 and 3, snare on beats 2 and 4, ghost notes between, hi-hat 16ths. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same chopped break with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Classic jungle amen feel. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-2.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Tech-step drum & bass loop, 174 BPM, G minor key context, 8 bars. Punchy two-step kick: kick on beat 1, snare on beat 3, tight 16th hi-hats throughout. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Modern tech-step feel. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-3.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Liquid drum & bass loop, 174 BPM, G minor key context, 8 bars. Smooth two-step kick on beat 1 and the and-of-2, snare on beat 3, soft shaker 16ths, occasional ride cymbal. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Smooth liquid funk feel. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-4.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Jungle break-chop drum loop, 174 BPM, G minor key context, 8 bars. Chopped vinyl break: rolling kick patterns, snare on beats 2 and 4, scattered ghost notes, vinyl crackle background. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same chopped break with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Classic jungle amen-style. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-0.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Neurofunk drum & bass loop, 174 BPM, G minor key context, 8 bars. Tight punchy kick on beat 1, snappy snare on beat 3, percussive 16th hi-hats with occasional tom hits. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Modern neurofunk punch. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-1.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Half-time drum & bass loop, 174 BPM, G minor key context, 8 bars. Half-time felt: heavy kick on beat 1, big snare on beat 3, busy 16th-note hi-hat texture. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same heavy half-time pocket with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Modern half-time D&B. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-2.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Atmospheric drum & bass loop, 174 BPM, G minor key context, 8 bars. Sparse two-step kick on beat 1, soft brushed snare on beat 3, atmospheric ride cymbal 8ths. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Atmospheric D&B feel. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-3.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Breakbeat-driven drum & bass loop, 174 BPM, G minor key context, 8 bars. Chopped funk break: rolling kick patterns, snare with funk swing on beats 2 and 4, busy hi-hat 16ths. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same chopped break with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Funky drummer-style breaks. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "bass-1.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Reese sub bass D&B loop, 174 BPM, in G minor, 8 bars. Strong, accented attack on G1 at the downbeat of bar 1 (loudest moment of the loop). Detuned dual-saw reese bass on G1 sustained for all 8 bars with subtle filter movement and vibrato. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-2.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Sub bass two-step D&B loop, 174 BPM, in G minor, 8 bars. Strong, accented attack on G1 at the downbeat of bar 1 (loudest moment of the loop). Deep round sub bass plays G1 on beat 1, D1 on beat 3 of every bar — half-note pulse. All 8 bars repeat. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-3.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Wobble bass D&B loop, 174 BPM, in G minor, 8 bars. Strong, accented attack on G1 at the downbeat of bar 1 (loudest moment of the loop). Modulated dubstep-style wobble bass on G1, with LFO wobble at the 8th-note rate. All 8 bars repeat the same wobble. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-4.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Plucked synth bass D&B loop, 174 BPM, in G minor, 8 bars. Strong, accented plucked attack on G1 at the downbeat of bar 1 (loudest moment of the loop). Punchy plucked synth bass plays G1 on beat 1, G1 on beat 2.5, D2 on beat 3, G1 on beat 4 of every bar. All 8 bars repeat. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-0.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Distorted neuro bass D&B loop, 174 BPM, in G minor, 8 bars. Strong, accented attack on G1 at the downbeat of bar 1 (loudest moment of the loop). Distorted growling synth bass on G1 with subtle pitch movement across 8 bars. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-1.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Liquid funk smooth bass D&B loop, 174 BPM, in G minor, 8 bars. Strong, accented attack on G1 at the downbeat of bar 1 (loudest moment of the loop). Smooth fingered electric bass walks G → Bb → D → F across each bar, one note per beat. All 8 bars repeat. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-2.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Filtered round sub bass D&B loop, 174 BPM, in G minor, 8 bars. Strong, accented attack on G1 at the downbeat of bar 1 (loudest moment of the loop). Low-pass-filtered round sub bass plays G1 on beat 1, D1 on beat 3 of every bar. All 8 bars repeat. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-3.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Rolling bassline D&B loop, 174 BPM, in G minor, 8 bars. Strong, accented attack on G1 at the downbeat of bar 1 (loudest moment of the loop). Rolling 16th-note synth bass on G minor pentatonic with subtle pitch movement across each bar. All 8 bars repeat. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "melody-1.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Atmospheric pad D&B loop, 174 BPM, in G minor, 8 bars. Strong, accented pad attack on the downbeat of bar 1 (loudest moment of the loop). Lush atmospheric pad sustains G minor chord progression: Gm → Eb → Bb → F across 2 bars, repeating across all 8 bars. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Cinematic atmospheric texture. Just pad, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-2.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Plucked synth melody D&B loop, 174 BPM, in G minor, 8 bars. Strong, accented plucked attack on the downbeat of bar 1 (loudest moment of the loop). Bright plucked synth plays a four-note motif G-Bb-D-F across each bar in G minor. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just plucked synth, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-3.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Soulful Rhodes D&B loop, 174 BPM, in G minor, 8 bars. Strong, accented Rhodes hit on the downbeat of bar 1 (loudest moment of the loop). Warm Rhodes electric piano plays Gm7 → Cm7 → Dm7 → Fmaj7 chord progression across 2 bars, repeating across all 8 bars. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Soulful liquid-funk Rhodes. Just Rhodes, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-4.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "String-stab D&B melody loop, 174 BPM, in G minor, 8 bars. Strong, accented string stab on the downbeat of bar 1 (loudest moment of the loop). Cinematic string section plays staccato G minor chord stabs on beats 1 and 3 of every bar. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just strings, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-0.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Saw-lead D&B riff loop, 174 BPM, in G minor, 8 bars. Strong, accented saw-lead attack on the downbeat of bar 1 (loudest moment of the loop). Bright detuned saw lead plays a hooky melodic riff in G minor pentatonic across each bar. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Modern D&B lead. Just synth lead, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-1.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Bell-pluck arpeggio D&B loop, 174 BPM, in G minor, 8 bars. Strong, accented bell hit on the downbeat of bar 1 (loudest moment of the loop). Bright bell synth arpeggiates G minor 7 chord in 16th notes across each bar. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bell synth, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-2.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Flute melody D&B loop, 174 BPM, in G minor, 8 bars. Strong, accented flute attack on the downbeat of bar 1 (loudest moment of the loop). Sampled flute plays a melodic motif G-Bb-D-Eb across each bar in G minor with breath texture. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Atmospheric jungle-style flute. Just flute, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-3.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Wide pad D&B loop, 174 BPM, in G minor, 8 bars. Strong, accented pad attack on the downbeat of bar 1 (loudest moment of the loop). Lush analog pad sustains an evolving Gm chord with subtle filter modulation across all 8 bars. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Atmospheric D&B pad. Just pad, no drums, no bass, no vocals."
+    },
+    {
+      "file": "vocals-A-0.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella rapped male MC vocal stabs, 174 BPM, G minor, 8 bars. PURE VOCAL ONLY — no instruments, no drums, no bass, no synth, no beat, no instrumental backing. One voice, recorded a cappella in a vocal booth. Rapped/chanted with rhythmic energy (not flat-spoken) with this evolving structure: bars 1-2 chant yo yo yo yo percussively on offbeats, bars 3-4 chant uh uh uh syncopated, bars 5-6 chant yo yo louder higher pitch, bars 7-8 chant uh resolving. Energetic jungle/D&B MC stab delivery. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-A-1.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella rapped male MC chant, 174 BPM, G minor, 8 bars. PURE VOCAL ONLY — no instruments, no drums, no bass, no synth, no beat, no instrumental backing. One voice, recorded a cappella in a vocal booth. Rapped with rhythmic energy (not flat-spoken) with this evolving structure: bars 1-2 chant come on come on percussively, bars 3-4 chant lets go lets go syncopated, bars 5-6 chant come on come on higher, bars 7-8 chant lets go resolving. High-energy D&B MC delivery. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-A-2.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella sung female liquid D&B vocal hook with evolving structure, 174 BPM, G minor, 16 bars. PURE VOCAL ONLY — no instruments, no drums, no bass, no synth, no beat, no instrumental backing. One voice, recorded a cappella in a vocal booth. Sung MELODICALLY (not spoken) with verse structure: bars 1-4 sing oooh sustained on G root, bars 5-8 sing ahhh climbing the G minor scale, bars 9-12 sing oooh an octave up with intensity, bars 13-16 melismatic ahhh resolve descending. Classic liquid funk female vocal with phrase variation. Continuous vocal energy across all 16 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 16
+    },
+    {
+      "file": "vocals-A-3.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella rapped male jungle MC full verse, 174 BPM, G minor, 32 bars. PURE VOCAL ONLY — no instruments, no drums, no bass, no synth, no beat, no instrumental backing. One voice, recorded a cappella in a vocal booth. Rapped with rhythmic energy (not flat-spoken) with full verse structure: bars 1-8 chant the opening phrase jungle jungle with steady cadence, bars 9-16 chant a building section yo yo come on with denser rhythm, bars 17-24 chant a hook section big up big up sing-song melodic, bars 25-32 chant a resolving outro jungle sparse delivery. Classic jungle MC full verse with varied flow across the 32 bars. Continuous vocal energy across all 32 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 32
+    },
+    {
+      "file": "vocals-B-0.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella chopped AAAH vocal stab repeated rhythmically in jungle / liquid D&B style, 174 BPM, G minor, 8 bars. The ONLY syllable in the entire 8-bar loop is AAAH — never any words, never any other vowels, never melodic phrases. PURE VOCAL ONLY — absolutely no instruments, no drums, no bass, no synth, no beat, no instrumental backing whatsoever. Each AAAH is a SHORT pitched-up female vocal stab less than 250 ms long, like a producer chopped a single syllable from a soul or reggae record and pitched it up. Pattern: AAAH on every beat (4 stabs per bar), occasionally doubled on the and-of-2, identical pattern repeats across all 8 bars. Stutter / pitched-up texture, NOT a sung pad, NOT a sustained ahhh, NOT a melodic line — short percussive chopped stabs only. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-B-1.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella rapped male hype-chant, 174 BPM, G minor, 8 bars. PURE VOCAL ONLY — no instruments, no drums, no bass, no synth, no beat, no instrumental backing. One voice, recorded a cappella in a vocal booth. Rapped with rhythmic energy (not flat-spoken) with this evolving structure: bars 1-2 chant hey hey hey ho, bars 3-4 chant get up get up syncopated, bars 5-6 chant hey hey hey ho higher, bars 7-8 chant get up resolving. High-energy D&B hype delivery. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-B-2.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella jungle / liquid D&B chopped soul vocal stabs, 174 BPM, G minor, 16 bars. Producer-chopped one-syllable vocal fragments in early-2000s liquid funk D&B style. PURE VOCAL ONLY — absolutely no instruments, no drums, no bass, no synth, no beat, no instrumental backing whatsoever. Each chop is a SHORT pitched soul-vocal stab less than 250 ms long, fragments like LOVE, BABY, OOH, YEAH, MMM — never sung lines, never sustained notes, never melodies. Pattern: 4-6 chops per bar at jungle rhythm grid (16th-note swing), the same chop pattern repeats every 2 bars across all 16 bars. Pitched-up smoky soul texture, like a producer chopped a vintage soul record at 174 BPM. NOT a sung hook, NOT a sustained ahhh, NOT a melodic phrase — strictly short percussive chopped stabs. Continuous vocal energy across all 16 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 16
+    },
+    {
+      "file": "vocals-B-3.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella ISOLATED pitched-up female HEY stab repeated rhythmically, 174 BPM, G minor, 32 bars. The ONLY sound in the entire 32-bar loop is the word HEY in a female voice — never any other syllables, never any instrument whatsoever. STRICTLY VOCAL TRACK ONLY — absolutely no kick drum, no snare, no hi-hat, no bass, no sub-bass, no synth, no piano, no pad, no ambience, no reverb tail, no rhythmic backing of any kind. NOTHING below 100 Hz must be present in the output — no thump, no boom, no rumble, no low-end. The female voice should sit alone in mono with no accompaniment whatsoever. Each HEY is a SHORT pitched-up vocal-only stab less than 200 ms long. Pattern: HEY on beats 1 and 3 of every bar across all 32 bars. Imagine an a cappella vocal stem isolated from a track in audio software — only the voice exists in the file. Continuous vocal energy across all 32 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 32
+    },
+    {
+      "file": "fills-A-0.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1,
+      "prompt": "Single short snare drum roll one-shot, 1 second. Building rapid snare crescendo into a final hit. Modern D&B kit. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-A-1.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single descending tom-tom drum fill one-shot, 1.2 seconds. High tom, mid tom, low tom in quick succession. Modern D&B kit. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-A-2.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.5,
+      "prompt": "Single open hi-hat cymbal one-shot with long natural decay tail, 1.5 seconds. Bright modern D&B kit. No bass, no melody, no vocals. Just one cymbal hit."
+    },
+    {
+      "file": "fills-A-3.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.8,
+      "prompt": "Single big crash cymbal one-shot with natural decay, 1.8 seconds. Modern D&B kit. No bass, no melody, no vocals. Just one crash hit."
+    },
+    {
+      "file": "fills-B-0.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1,
+      "prompt": "Single rim-shot snare crescendo one-shot, 1 second. Building rimshots into a final hit. Modern D&B kit. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-1.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 0.8,
+      "prompt": "Single very fast 4-stroke drum fill across kick, snare, toms, and crash, 0.8 seconds. Modern D&B kit. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-2.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single rolling tom fill one-shot, 1.2 seconds. Modern D&B toms rolling. No melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-3.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 0.6,
+      "prompt": "Single cymbal crash with immediate hand-choke, 0.6 seconds. Very short cymbal tail. Modern D&B kit. No bass, no melody, no vocals. Just one choked cymbal hit."
+    },
+    {
+      "file": "fx-1.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.5,
+      "prompt": "White-noise riser building upward, 1.5 seconds, fades into nothing at the end. Classic D&B transition. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-2.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.2,
+      "prompt": "Reverse cymbal swell rising into nothing, 1.2 seconds, fades naturally. Classic D&B riser. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-3.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1,
+      "prompt": "Vinyl scratch zigga-zigga, three or four quick scratches in 1 second. Bright jungle/D&B turntablism. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-4.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 0.8,
+      "prompt": "Air-horn jungle blast, 0.8 seconds, fades naturally. Classic jungle MC siren. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-0.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 0.8,
+      "prompt": "Filter sweep on white noise, sweeping from closed to open, 0.8 seconds. D&B transition. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-1.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1,
+      "prompt": "Synth zap downward sweep, 1 second, fades naturally. Modern D&B effect. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-2.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.8,
+      "prompt": "Distant rain ambience with thunder rumble, 1.8 seconds, fades naturally. Atmospheric jungle texture. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-3.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.5,
+      "prompt": "Tape stop pitch-down sliding to silence, 1.5 seconds. Classic D&B effect. No instruments, no music. Just one effect."
+    }
+  ]
+}

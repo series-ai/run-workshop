@@ -1,0 +1,11 @@
+# Git LFS tracking for large binary assets in cdn-assets
+public/cdn-assets/**/*.png filter=lfs diff=lfs merge=lfs -text
+public/cdn-assets/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+public/cdn-assets/**/*.webp filter=lfs diff=lfs merge=lfs -text
+public/cdn-assets/**/*.mp3 filter=lfs diff=lfs merge=lfs -text
+public/cdn-assets/**/*.ogg filter=lfs diff=lfs merge=lfs -text
+public/cdn-assets/**/*.glb filter=lfs diff=lfs merge=lfs -text
+public/cdn-assets/**/*.gltf filter=lfs diff=lfs merge=lfs -text
+public/cdn-assets/**/*.hdr filter=lfs diff=lfs merge=lfs -text
+public/cdn-assets/**/*.exr filter=lfs diff=lfs merge=lfs -text
+public/cdn-assets/**/*.cube filter=lfs diff=lfs merge=lfs -text

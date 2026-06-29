@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment — all real keys stay local; CI reads from GitHub Actions secrets.
+# .env.example is the committed template (see below).
+.env
+.env.production
+.env.local
+
+# Rundot session
+.rundot/session/
+
+# Local sandbox backend registration. The sandbox plugin recreates this on first
+# `npm run dev`; keep prod config tracked, but do not pin a playground app.
+game.config.playground.json
+
+# Test artifacts
+test-results/
+playwright-report/
+e2e/playwright/test-results.json
+
+# Coverage
+coverage/
+
+# Pack-authoring run workspaces. `rundot generate` writes raw clips and
+# logs under pack-runs/<kit>-<date>/ as intermediate artifacts; only the
+# curated manifest.json belongs in version control. Ephemeral timestamp
+# workspaces (pack-runs/<ts>/) are never tracked.
+pack-runs/*/raw/
+pack-runs/*/logs/
+pack-runs/*/trimmed/
+pack-runs/*/candidates/
+pack-runs/[0-9]*/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+.rundot-docs

@@ -1,0 +1,44 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="ms-frame" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(100 66) rotate(90) scale(100)">
+      <stop offset="0" stop-color="#f8ebbf"/>
+      <stop offset="0.34" stop-color="#d0b36a"/>
+      <stop offset="0.68" stop-color="#986a28"/>
+      <stop offset="1" stop-color="#60401a"/>
+    </radialGradient>
+    <radialGradient id="ms-core" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(100 86) rotate(90) scale(70)">
+      <stop offset="0" stop-color="#355794"/>
+      <stop offset="0.28" stop-color="#1e3157"/>
+      <stop offset="0.66" stop-color="#101622"/>
+      <stop offset="1" stop-color="#130d0c"/>
+    </radialGradient>
+  </defs>
+
+  <path
+    d="M100 10L140 20L176 48L190 100L176 152L140 180L100 190L60 180L24 152L10 100L24 48L60 20L100 10Z"
+    fill="#110b0a"
+    opacity="0.72"
+    transform="translate(0 6)"
+  />
+  <path
+    d="M100 4L140 14L176 42L190 100L176 158L140 186L100 196L60 186L24 158L10 100L24 42L60 14L100 4Z"
+    fill="url(#ms-frame)"
+    stroke="#f8e9b2"
+    stroke-linejoin="round"
+    stroke-width="4"
+  />
+  <circle cx="100" cy="100" r="58" fill="url(#ms-core)" stroke="#fbefc9" stroke-opacity="0.48" stroke-width="3"/>
+
+  <g fill="#f2d98c">
+    <circle cx="100" cy="24" r="9"/>
+    <circle cx="176" cy="100" r="9"/>
+    <circle cx="100" cy="176" r="9"/>
+    <circle cx="24" cy="100" r="9"/>
+    <circle cx="54" cy="54" r="7"/>
+    <circle cx="146" cy="54" r="7"/>
+    <circle cx="146" cy="146" r="7"/>
+    <circle cx="54" cy="146" r="7"/>
+  </g>
+
+  <path d="M100 54L112 74H132L116 88L122 108L100 96L78 108L84 88L68 74H88L100 54Z" fill="#f5e2a3" opacity="0.94"/>
+</svg>

@@ -1,0 +1,47 @@
+<svg width="520" height="128" viewBox="0 0 520 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="banner-face" x1="260" y1="4" x2="260" y2="112" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4A8FF6"/>
+      <stop offset="0.5" stop-color="#3781EF"/>
+      <stop offset="0.5" stop-color="#2B71DA"/>
+      <stop offset="1" stop-color="#2360C3"/>
+    </linearGradient>
+    <linearGradient id="banner-highlight" x1="260" y1="8" x2="260" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#A9D4FF" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#A9D4FF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <path
+    d="M18 18C18 11.3726 23.3726 6 30 6H490C496.627 6 502 11.3726 502 18V87L451 96L446 92L291 118L260 122L229 118L74 92L69 96L18 87V18Z"
+    fill="#132D5D"
+    opacity="0.92"
+    transform="translate(0 6)"
+  />
+
+  <path
+    d="M18 18C18 11.3726 23.3726 6 30 6H490C496.627 6 502 11.3726 502 18V87L451 96L446 92L291 118L260 122L229 118L74 92L69 96L18 87V18Z"
+    fill="url(#banner-face)"
+    stroke="#173A73"
+    stroke-width="4"
+  />
+
+  <path
+    d="M28 19C28 14.5817 31.5817 11 36 11H484C488.418 11 492 14.5817 492 19V30C492 34.4183 488.418 38 484 38H36C31.5817 38 28 34.4183 28 30V19Z"
+    fill="url(#banner-highlight)"
+  />
+
+  <path
+    d="M73 92L84 88L96 94L73 92Z"
+    fill="#15376F"
+  />
+  <path
+    d="M447 92L436 88L424 94L447 92Z"
+    fill="#15376F"
+  />
+  <path
+    d="M259 121L288 113L260 125L232 113L259 121Z"
+    fill="#102955"
+    opacity="0.72"
+  />
+</svg>

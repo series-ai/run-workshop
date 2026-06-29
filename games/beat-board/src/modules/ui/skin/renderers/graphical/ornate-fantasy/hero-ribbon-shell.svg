@@ -1,0 +1,62 @@
+<svg viewBox="0 0 1200 260" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="hor-frame" x1="600" y1="8" x2="600" y2="230" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f7ebba"/>
+      <stop offset="0.2" stop-color="#d5bc74"/>
+      <stop offset="0.5" stop-color="#936727"/>
+      <stop offset="0.8" stop-color="#c7a253"/>
+      <stop offset="1" stop-color="#68421a"/>
+    </linearGradient>
+    <linearGradient id="hor-core" x1="600" y1="34" x2="600" y2="208" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1f3562"/>
+      <stop offset="0.3" stop-color="#30538d"/>
+      <stop offset="0.52" stop-color="#131d33"/>
+      <stop offset="0.86" stop-color="#0a0f18"/>
+      <stop offset="1" stop-color="#170d0c"/>
+    </linearGradient>
+    <linearGradient id="hor-lip" x1="600" y1="38" x2="600" y2="206" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff6d5" stop-opacity="0.88"/>
+      <stop offset="1" stop-color="#7a5822" stop-opacity="0.38"/>
+    </linearGradient>
+  </defs>
+
+  <path
+    d="M148 52L54 70L76 182L148 198H274L320 114H482L554 24H646L718 114H880L926 198H1052L1124 182L1146 70L1052 52H756L704 84H496L444 52H148Z"
+    fill="#110b0b"
+    opacity="0.68"
+    transform="translate(0 10)"
+  />
+  <path
+    d="M148 42L54 60L76 172L148 188H274L320 104H482L554 14H646L718 104H880L926 188H1052L1124 172L1146 60L1052 42H756L704 74H496L444 42H148Z"
+    fill="url(#hor-frame)"
+    stroke="#f4e6ac"
+    stroke-linejoin="round"
+    stroke-width="4"
+  />
+  <path
+    d="M212 70H456L534 42H666L744 70H992L1062 90L1078 152L1010 164H770L722 150H478L430 164H190L122 152L138 90L208 70Z"
+    fill="url(#hor-core)"
+    stroke="url(#hor-lip)"
+    stroke-linejoin="round"
+    stroke-width="3"
+  />
+
+  <g fill="#f1d68a" opacity="0.96">
+    <circle cx="236" cy="48" r="7"/>
+    <circle cx="282" cy="42" r="5"/>
+    <circle cx="918" cy="42" r="5"/>
+    <circle cx="964" cy="48" r="7"/>
+    <circle cx="544" cy="28" r="8"/>
+    <circle cx="600" cy="18" r="10"/>
+    <circle cx="656" cy="28" r="8"/>
+    <circle cx="544" cy="176" r="7"/>
+    <circle cx="600" cy="186" r="9"/>
+    <circle cx="656" cy="176" r="7"/>
+  </g>
+
+  <path d="M546 24H654L666 36H534L546 24Z" fill="#fff4cc" opacity="0.9"/>
+  <path d="M546 180H654L666 168H534L546 180Z" fill="#835a22" opacity="0.86"/>
+  <path d="M120 78L164 96L124 116L96 106L120 78Z" fill="#f0cf7d" opacity="0.8"/>
+  <path d="M1080 78L1036 96L1076 116L1104 106L1080 78Z" fill="#f0cf7d" opacity="0.8"/>
+  <path d="M344 104H854" fill="none" opacity="0.52" stroke="#f5e1a4" stroke-dasharray="1 18" stroke-linecap="round" stroke-width="10"/>
+</svg>

@@ -1,0 +1,58 @@
+{
+  "kitId": "phonk_midnight",
+  "audioDir": "/Users/pany/dev/run-workshop/games/beat-board/public/cdn-assets/audio/phonk_midnight",
+  "scannedAt": "2026-06-29T22:52:09.426Z",
+  "summary": {
+    "total": 48,
+    "cutOff": 0,
+    "barViolation": 0,
+    "lengthMismatch": 0,
+    "cycleDrift": 0,
+    "phraseLocked": 0,
+    "sustainGap": 0,
+    "sustainClick": 0,
+    "silentAttack": 0,
+    "clipped": 0,
+    "suspicious": 2,
+    "vocalHasBackground": 0,
+    "bar1NoAttack": 0,
+    "loopTailFade": 1,
+    "loudnessOutlier": 0,
+    "errors": 0
+  },
+  "failing": [
+    {
+      "file": "melody-B-0.mp3",
+      "path": "/Users/pany/dev/run-workshop/games/beat-board/public/cdn-assets/audio/phonk_midnight/melody-B-0.mp3",
+      "verdict": "LOOP_TAIL_FADE",
+      "reason": "last 20ms RMS=0.0899 is 97% of the prior 20ms (0.0924). Tail does not decay — wrap click likely on every loop iteration even though sample-0/sample-N wrap is forced. Author the loop with a natural release on the last beat.",
+      "color": "melody",
+      "layerName": "Music Box",
+      "isOneShot": false,
+      "durationS": 12.8,
+      "resolvedBars": 8
+    },
+    {
+      "file": "melody-B-2.mp3",
+      "path": "/Users/pany/dev/run-workshop/games/beat-board/public/cdn-assets/audio/phonk_midnight/melody-B-2.mp3",
+      "verdict": "SUSPICIOUS",
+      "reason": "tail rms=0.072 + wrap=0.096",
+      "color": "melody",
+      "layerName": "Dark Synth",
+      "isOneShot": false,
+      "durationS": 12.8,
+      "resolvedBars": 8
+    },
+    {
+      "file": "melody-B-3.mp3",
+      "path": "/Users/pany/dev/run-workshop/games/beat-board/public/cdn-assets/audio/phonk_midnight/melody-B-3.mp3",
+      "verdict": "SUSPICIOUS",
+      "reason": "tail rms=0.075 + wrap=0.101",
+      "color": "melody",
+      "layerName": "Vibraphone",
+      "isOneShot": false,
+      "durationS": 12.8,
+      "resolvedBars": 8
+    }
+  ]
+}

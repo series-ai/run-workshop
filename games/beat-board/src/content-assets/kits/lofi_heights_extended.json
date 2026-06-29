@@ -1,0 +1,20 @@
+{
+  "$comment": "Coming soon — eight-pad welcome-pack expansion of the Lofi Heights hero kit. No audio shipped yet; comingSoon flag disables tap.",
+  "id": "lofi-heights-extended",
+  "name": "Lofi Heights · Extended",
+  "bpm": 84,
+  "key": "Cmin",
+  "flavor": "Eight new pads, two extra layers from the welcome pack.",
+  "bpmRange": "84",
+  "layers": 2,
+  "ownership": "paid",
+  "priceRunbucks": 99,
+  "tier": "genre",
+  "heroGradient": [
+    "#b9a6ff",
+    "#9277e0"
+  ],
+  "comingSoon": true,
+  "pads": [],
+  "coverArt": "images/packs/lofi_heights_extended.png"
+}

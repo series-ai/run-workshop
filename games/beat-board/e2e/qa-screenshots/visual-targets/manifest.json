@@ -1,0 +1,31 @@
+{
+  "gameId": "beat-board",
+  "capturedAt": "2026-04-25T18:30:00.000Z",
+  "rendererHash": "6eb2d530eea85c78",
+  "targets": [
+    {
+      "screenSlug": "play",
+      "previewRef": "play",
+      "mobilePath": "e2e/qa-screenshots/visual-targets/play-mobile.png",
+      "desktopPath": "e2e/qa-screenshots/visual-targets/play-desktop.png",
+      "mobileViewport": { "width": 390, "height": 844 },
+      "desktopViewport": { "width": 1280, "height": 800 }
+    },
+    {
+      "screenSlug": "mixes",
+      "previewRef": "mixes",
+      "mobilePath": "e2e/qa-screenshots/visual-targets/mixes-mobile.png",
+      "desktopPath": "e2e/qa-screenshots/visual-targets/mixes-desktop.png",
+      "mobileViewport": { "width": 390, "height": 844 },
+      "desktopViewport": { "width": 1280, "height": 800 }
+    },
+    {
+      "screenSlug": "packs",
+      "previewRef": "packs",
+      "mobilePath": "e2e/qa-screenshots/visual-targets/packs-mobile.png",
+      "desktopPath": "e2e/qa-screenshots/visual-targets/packs-desktop.png",
+      "mobileViewport": { "width": 390, "height": 844 },
+      "desktopViewport": { "width": 1280, "height": 800 }
+    }
+  ]
+}

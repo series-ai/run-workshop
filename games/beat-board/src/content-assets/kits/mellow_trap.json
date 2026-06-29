@@ -1,0 +1,20 @@
+{
+  "$comment": "Coming soon — half-time trap pack. No audio shipped yet.",
+  "id": "mellow-trap",
+  "name": "Mellow Trap",
+  "bpm": 76,
+  "key": "Fmin",
+  "flavor": "Slow 808s, tape hiss, half-time hats.",
+  "bpmRange": "74–78",
+  "layers": 8,
+  "ownership": "paid",
+  "priceRunbucks": 299,
+  "tier": "genre",
+  "heroGradient": [
+    "#a6e3c0",
+    "#3d8e6b"
+  ],
+  "comingSoon": true,
+  "pads": [],
+  "coverArt": "images/packs/mellow_trap.png"
+}

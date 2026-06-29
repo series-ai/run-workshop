@@ -1,0 +1,361 @@
+{
+  "$comment": "Midnight Phonk pack — Memphis / drift phonk, 150 BPM, C minor. Cowbell leads, distorted 808s, cassette grit. FULL PACK: 48 items (32 loops = 8 each of drums/bass/melody/vocals across banks A+B; 16 one-shots = 8 drumFills + 8 fx). Structural prompt envelope per docs/authoring-packs.md § Prompt templates; constraints per docs/audio-kits.md. Bank A drums/bass/melody/fx use the legacy 1-indexed names (drums-1..4, fx-1..4); everything else uses <color>-<bank>-<index>. The first 9 items (drums-1/2, bass-1/2, melody-1/2, vocals-A-0, fills-A-0, fx-1) were the original representative-subset run and are kept verbatim.",
+  "version": 4,
+  "kitId": "phonk_midnight",
+  "tempo": 150,
+  "key": "C minor",
+  "outputDir": "/Users/pany/dev/run-workshop/games/beat-board/public/cdn-assets/audio/phonk_midnight",
+  "barSec": 1.6,
+  "trimSec": 12.8,
+  "rawSec": 30,
+  "voices": {
+    "femaleSoft": "21m00Tcm4TlvDq8ikWAM",
+    "maleSoft": "TxGEqnHWrfWFTfGW9XjX"
+  },
+  "items": [
+    {
+      "file": "drums-1.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Memphis phonk drum loop, 150 BPM, C minor key context, 8 bars. Punchy kick on beats 1 and 3, hard clap and snare on beats 2 and 4, fast trap hi-hats with occasional 16th-note rolls, signature metallic cowbell ticking the off-beats. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Distorted, gritty cassette-tape texture. Classic Memphis drift-phonk character. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-2.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Drift phonk drum loop, 150 BPM, C minor key context, 8 bars. Hard-hitting kick on beat 1 and the and-of-2, punchy snare on beats 2 and 4, aggressive triplet hi-hat rolls, driving cowbell pattern on every off-beat 8th. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Crunchy, saturated, lo-fi tape distortion. High-energy drift-phonk character. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-3.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Cowbell-heavy phonk drum loop, 150 BPM, C minor key context, 8 bars. Booming kick on beats 1 and 3, tight rimshot snare on beats 2 and 4, busy trap hi-hats with stuttered 32nd-note rolls, a loud metallic cowbell driving a galloping off-beat pattern throughout. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Saturated cassette-tape grit. Memphis drift-phonk character. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-4.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Half-time phonk drum loop, 150 BPM, C minor key context, 8 bars. Heavy slow kick on beat 1, massive crushed snare landing on beat 3 (half-time feel), sparse trap hi-hats with the occasional fast roll, cowbell accents on the off-beats. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Crunchy, overdriven lo-fi tape distortion. Dark drift-phonk character. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "bass-1.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Phonk distorted 808 bass loop, 150 BPM, in C minor, 8 bars. A continuous sustained distorted 808 sub holds the root C1 unbroken through all 8 bars and never drops to silence, but it is RE-STRUCK with a hard accented attack exactly on beat 1 of every bar so the single loudest moment of each bar is its downbeat. The downbeat of bar 1 is the loudest moment of the whole loop. No gaps, no silence between notes, fully continuous and even in level between downbeats. Continuous bass energy across all 8 bars; no fades, no silent bars, no gaps, no intro, no outro. Loopable. Saturated, overdriven 808 with cassette grit. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-2.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Phonk sub bass loop, 150 BPM, in C minor, 8 bars. A deep round analog sub holds the root C1 continuous and unbroken through all 8 bars and never drops to silence, but it is RE-STRUCK with a hard accented attack exactly on beat 1 of every bar so the single loudest moment of each bar is its downbeat. The downbeat of bar 1 is the loudest moment of the whole loop. No gaps, no silence between notes, fully continuous and even in level between downbeats. Continuous bass energy across all 8 bars; no fades, no silent bars, no gaps, no intro, no outro. Loopable. Warm, dark analog sub. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-3.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Phonk gliding 808 bass loop, 150 BPM, in C minor, 8 bars. A distorted 808 holds the root C1 continuous and unbroken through all 8 bars and never drops to silence, re-struck with a hard accented attack exactly on beat 1 of every bar, with a short pitch glide up to the C1 root at the start of each bar. The downbeat of bar 1 is the loudest moment of the whole loop. No gaps, no silence between notes, fully continuous and even in level between downbeats. Continuous bass energy across all 8 bars; no fades, no silent bars, no gaps, no intro, no outro. Loopable. Saturated, overdriven 808 with tape grit. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-4.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Phonk detuned reese bass loop, 150 BPM, in C minor, 8 bars. A growling detuned reese sub holds the root C1 continuous and unbroken through all 8 bars and never drops to silence, but it is RE-STRUCK with a hard accented attack exactly on beat 1 of every bar so the single loudest moment of each bar is its downbeat. The downbeat of bar 1 is the loudest moment of the whole loop. No gaps, no silence between notes, fully continuous and even in level between downbeats. Continuous bass energy across all 8 bars; no fades, no silent bars, no gaps, no intro, no outro. Loopable. Dark, gritty, slightly distorted analog reese. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "melody-1.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Phonk cowbell melody loop, 150 BPM, in C minor, 8 bars. A clean, smooth cowbell lead plays a dark minor-pentatonic riff in C minor (C-Eb-G-Eb-F-Eb-C) across each bar with gentle rounded note attacks. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Bars 1 through 6 keep this exact pattern locked. Bar 7 adds a single ghost grace note. Bar 8 is a turnaround that lands back on the C minor root. Continuous melody across all 8 bars; no silent bars, no fades. Loopable. Smooth, mellow cowbell with light tape warmth and no digital distortion or clipping. Just cowbell, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-2.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Phonk dark piano loop, 150 BPM, in C minor, 8 bars. A haunting muted grand piano plays a somber Cm-Ab-Bb-Gm chord progression with a single-note melody on top. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Bars 1 through 6 keep this exact pattern locked. Bar 7 adds a single ghost high note. Bar 8 is a turnaround that lands on the C minor chord. Continuous melody across all 8 bars; no silent bars, no fades. Loopable. Lo-fi, dusty, detuned cassette piano. Just piano, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-3.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Phonk detuned bell loop, 150 BPM, in C minor, 8 bars. A dusty detuned bell / music-box lead plays a melancholic minor melody in C minor with soft rounded note attacks. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Bars 1 through 6 keep this exact pattern locked. Bar 7 adds a single ghost grace note. Bar 8 is a turnaround that lands back on the C minor root. Continuous melody across all 8 bars; no silent bars, no fades. Loopable. Lo-fi, detuned, cassette-warm bells with no harsh distortion or clipping. Just bells, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-4.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Phonk dark choir pad loop, 150 BPM, in C minor, 8 bars. A ghostly wordless choir / vocal-synth pad sustains a slow Cm-Ab-Bb-Gm chord progression, one chord every two bars, with smooth swelling note attacks. Strong, accented swell on the downbeat of bar 1 (loudest moment of the loop). The pad sustains continuously and never drops to silence between chords. Continuous across all 8 bars; no silent bars, no fades. Loopable. Lo-fi, dusty, reverb-drenched cassette choir, no harsh distortion or clipping. Just choir pad, no drums, no bass, no spoken or sung words."
+    },
+    {
+      "file": "vocals-A-0.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "PURE vocal — no background music, no instruments, no drums, no bass, no melody, no sub-bass, no 808, no synth, no piano. Voice only. Dark Memphis-style phonk vocal chant in C minor, 150 BPM, 8 bars. STRICTLY VOCAL TRACK ONLY — absolutely no instruments or rhythmic backing of any kind; nothing below 120 Hz must be present. A single deep menacing male voice chants the words MEMPHIS and RIDE rhythmically, two syllables per bar on beats 1 and 3, identical pattern repeating across all 8 bars with subtle pitch variation. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Continuous vocal energy across all 8 bars; no fades, no silent bars. Loopable. Pitched-down, dark, reverb-drenched Memphis phonk voice. Voice only — nothing else.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-A-1.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "PURE vocal — no background music, no instruments, no drums, no bass, no melody, no sub-bass, no 808, no synth, no piano. Voice only. Dark Memphis-style phonk vocal chant in C minor, 150 BPM, 8 bars. STRICTLY VOCAL TRACK ONLY — absolutely no instruments or rhythmic backing of any kind; nothing below 120 Hz must be present. A single deep menacing male voice chants the words SLOW DOWN rhythmically, two syllables per bar on beats 1 and 3, identical pattern repeating across all 8 bars with subtle pitch variation. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Continuous vocal energy across all 8 bars; no fades, no silent bars. Loopable. Pitched-down, dark, reverb-drenched Memphis phonk voice. Voice only — nothing else.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-A-2.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "PURE vocal — no background music, no instruments, no drums, no bass, no melody, no sub-bass, no 808, no synth, no piano. Voice only. Dark Memphis-style phonk vocal ad-lib in C minor, 150 BPM, 8 bars. STRICTLY VOCAL TRACK ONLY — absolutely no instruments or rhythmic backing of any kind; nothing below 120 Hz must be present. A single deep menacing male voice throws short ad-libs YEAH and UH rhythmically, one per bar landing on beat 1, identical pattern repeating across all 8 bars with subtle pitch variation. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Continuous vocal presence across all 8 bars; no fades, no silent bars. Loopable. Pitched-down, dark, reverb-drenched Memphis phonk voice. Voice only — nothing else.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-A-3.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "PURE vocal — no background music, no instruments, no drums, no bass, no melody, no sub-bass, no 808, no synth, no piano. Voice only. Dark Memphis-style phonk whispered chant in C minor, 150 BPM, 8 bars. STRICTLY VOCAL TRACK ONLY — absolutely no instruments or rhythmic backing of any kind; nothing below 120 Hz must be present. A single sinister whispering male voice breathes the word MIDNIGHT rhythmically, two syllables per bar on beats 1 and 3, identical pattern repeating across all 8 bars with subtle pitch variation. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Continuous vocal energy across all 8 bars; no fades, no silent bars. Loopable. Pitched-down, dark, reverb-drenched Memphis phonk whisper. Voice only — nothing else.",
+      "barCount": 8
+    },
+    {
+      "file": "fills-A-0.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single fast trap hi-hat and snare roll building into a final crash, 1.2 seconds. Gritty, distorted Memphis phonk drumkit. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-A-1.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single accelerating snare buildup roll ending on a hard downbeat hit, 1.2 seconds. Gritty, distorted Memphis phonk snare. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-A-2.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single stuttering triplet hi-hat fill with a cowbell accent, 1.2 seconds. Gritty, distorted Memphis phonk drumkit. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-A-3.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single tom-roll fill cascading down into a crash cymbal, 1.2 seconds. Gritty, distorted Memphis phonk drumkit. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fx-1.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.2,
+      "prompt": "Distorted white-noise riser sweeping upward into a tape stop, 1.2 seconds, fades naturally. Saturated cassette-tape warmth with vinyl crackle. Atmospheric, not musical."
+    },
+    {
+      "file": "fx-2.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.2,
+      "prompt": "Cassette tape stop slowing to a halt with a pitch-down warble, 1.2 seconds, fades naturally. Saturated tape warmth with vinyl crackle. Atmospheric, not musical."
+    },
+    {
+      "file": "fx-3.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.2,
+      "prompt": "Reverse cymbal swell rising into a soft impact, 1.2 seconds, fades naturally. Dark, reverb-drenched, lo-fi cassette texture. Atmospheric, not musical."
+    },
+    {
+      "file": "fx-4.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.2,
+      "prompt": "Vinyl crackle swell with a deep sub drop impact, 1.2 seconds, fades naturally. Dusty, saturated cassette-tape texture. Atmospheric, not musical."
+    },
+    {
+      "file": "drums-B-0.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Boom-bap phonk drum loop, 150 BPM, C minor key context, 8 bars. Dusty boom-bap kick on beats 1 and 3, fat snare on beats 2 and 4, swung lo-fi hi-hats, light cowbell ticks on the off-beats. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Dusty, saturated cassette-tape grit. Old-school drift-phonk character. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-1.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Double-time phonk drum loop, 150 BPM, C minor key context, 8 bars. Rapid kick pattern, snappy snare on beats 2 and 4, very fast double-time trap hi-hats with constant 16th and 32nd rolls, aggressive cowbell gallop on the off-beats. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Crunchy, overdriven tape distortion. High-energy drift-phonk character. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-2.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Sparse knock phonk drum loop, 150 BPM, C minor key context, 8 bars. Hard knocking kick on beats 1 and 3, heavy crushed snare on beats 2 and 4, minimal sparse hi-hats with the occasional roll, sparse cowbell accents. Plenty of space between hits but percussion is present in every bar. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove — no fades, no silent bars, no intro, no outro. Loopable. Saturated, gritty cassette-tape texture. Dark drift-phonk character. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-3.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Cowbell-gallop phonk drum loop, 150 BPM, C minor key context, 8 bars. Driving kick on beats 1 and 3, tight snare on beats 2 and 4, busy trap hi-hats, a relentless galloping cowbell triplet pattern leading the groove. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Crunchy, saturated lo-fi tape distortion. Classic drift-phonk character. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-0.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Phonk round sub bass loop, 150 BPM, in C minor, 8 bars. A deep round sine sub holds the root C1 continuous and unbroken through all 8 bars and never drops to silence, but it is RE-STRUCK with a hard accented attack exactly on beat 1 of every bar so the single loudest moment of each bar is its downbeat. The downbeat of bar 1 is the loudest moment of the whole loop. No gaps, no silence between notes, fully continuous and even in level between downbeats. Continuous bass energy across all 8 bars; no fades, no silent bars, no gaps, no intro, no outro. Loopable. Warm, clean, dark sine sub. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-1.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Phonk punchy 808 bass loop, 150 BPM, in C minor, 8 bars. A punchy distorted 808 holds the root C1 continuous and unbroken through all 8 bars and never drops to silence, but it is RE-STRUCK with a hard accented attack exactly on beat 1 of every bar so the single loudest moment of each bar is its downbeat. The downbeat of bar 1 is the loudest moment of the whole loop. No gaps, no silence between notes, fully continuous and even in level between downbeats. Continuous bass energy across all 8 bars; no fades, no silent bars, no gaps, no intro, no outro. Loopable. Punchy, saturated, overdriven 808 with cassette grit. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-2.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Phonk growling bass loop, 150 BPM, in C minor, 8 bars. A heavily distorted growling sub holds the root C1 continuous and unbroken through all 8 bars and never drops to silence, but it is RE-STRUCK with a hard accented attack exactly on beat 1 of every bar so the single loudest moment of each bar is its downbeat. The downbeat of bar 1 is the loudest moment of the whole loop. No gaps, no silence between notes, fully continuous and even in level between downbeats. Continuous bass energy across all 8 bars; no fades, no silent bars, no gaps, no intro, no outro. Loopable. Aggressive, dark, distorted growl. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-3.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Phonk muted pluck bass loop, 150 BPM, in C minor, 8 bars. A short muted plucked bass holds the root C1 groove continuous through all 8 bars and never drops to full silence, re-struck with a hard accented attack exactly on beat 1 of every bar so the single loudest moment of each bar is its downbeat, with quieter muted plucks filling the rest of each bar. The downbeat of bar 1 is the loudest moment of the whole loop. No long gaps, fully continuous groove, even in level between downbeats. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Dark, gritty, lo-fi plucked bass. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "melody-B-0.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Phonk music-box melody loop, 150 BPM, in C minor, 8 bars. A delicate detuned music-box plays a melancholic minor-pentatonic melody in C minor with soft rounded note attacks. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Bars 1 through 6 keep this exact pattern locked. Bar 7 adds a single ghost grace note. Bar 8 is a turnaround that lands back on the C minor root, and the final note rings out with a natural release that gently decays into the very end of the loop. Continuous melody across bars 1 through 7 with no silent bars and no fades mid-phrase. Loopable. Lo-fi, dusty, detuned cassette music-box with no harsh distortion or clipping. Just music-box, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-1.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Phonk detuned guitar melody loop, 150 BPM, in C minor, 8 bars. A lonely detuned clean electric guitar plays a somber minor melody in C minor with gentle note attacks. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Bars 1 through 6 keep this exact pattern locked. Bar 7 adds a single ghost grace note. Bar 8 is a turnaround that lands back on the C minor root, and the final note rings out with a natural release that gently decays into the very end of the loop. Continuous melody across bars 1 through 7 with no silent bars and no fades mid-phrase. Loopable. Lo-fi, dusty, detuned cassette guitar, no harsh distortion or clipping. Just guitar, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-2.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Phonk dark synth lead loop, 150 BPM, in C minor, 8 bars. A smooth dark saw synth lead plays a minor-pentatonic riff in C minor with rounded note attacks. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Bars 1 through 6 keep this exact pattern locked. Bar 7 adds a single ghost grace note. Bar 8 is a turnaround that lands back on the C minor root, and the final note rings out with a natural release that gently decays into the very end of the loop. Continuous melody across bars 1 through 7 with no silent bars and no fades mid-phrase. Loopable. Lo-fi, cassette-warm synth, no harsh distortion or clipping. Just synth lead, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-3.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Phonk vibraphone melody loop, 150 BPM, in C minor, 8 bars. A mellow detuned vibraphone plays a dreamy minor melody in C minor with soft rounded note attacks. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Bars 1 through 6 keep this exact pattern locked. Bar 7 adds a single ghost grace note. Bar 8 is a turnaround that lands back on the C minor root, and the final note rings out with a natural release that gently decays into the very end of the loop. Continuous melody across bars 1 through 7 with no silent bars and no fades mid-phrase. Loopable. Lo-fi, dusty, reverb-touched cassette vibraphone, no harsh distortion or clipping. Just vibraphone, no drums, no bass, no vocals."
+    },
+    {
+      "file": "vocals-B-0.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "PURE vocal — no background music, no instruments, no drums, no bass, no melody, no sub-bass, no 808, no synth, no piano. Voice only. Dark Memphis-style phonk vocal hook chanting the word NIGHTRIDER, in C minor, 150 BPM, 8 bars. STRICTLY VOCAL TRACK ONLY — absolutely no instruments or rhythmic backing of any kind; nothing below 120 Hz must be present. A single pitched-down male voice sing-chants this short menacing NIGHTRIDER hook, two syllables per bar on beats 1 and 3, identical pattern repeating across all 8 bars with subtle pitch variation. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Continuous vocal energy across all 8 bars; no fades, no silent bars. Loopable. Pitched-down, dark, reverb-drenched Memphis phonk voice. Voice only — nothing else.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-B-1.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "PURE vocal — no background music, no instruments, no drums, no bass, no melody, no sub-bass, no 808, no synth, no piano. Voice only. Dark Memphis-style phonk menace chant in C minor, 150 BPM, 8 bars. STRICTLY VOCAL TRACK ONLY — absolutely no instruments or rhythmic backing of any kind; nothing below 120 Hz must be present. A single deep menacing male voice chants the words NO MERCY rhythmically, two syllables per bar on beats 1 and 3, identical pattern repeating across all 8 bars with subtle pitch variation. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Continuous vocal energy across all 8 bars; no fades, no silent bars. Loopable. Pitched-down, dark, reverb-drenched Memphis phonk voice. Voice only — nothing else.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-B-2.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "PURE vocal — no background music, no instruments, no drums, no bass, no melody, no sub-bass, no 808, no synth, no piano. Voice only. Dark Memphis-style phonk ghost vocal in C minor, 150 BPM, 8 bars. STRICTLY VOCAL TRACK ONLY — absolutely no instruments or rhythmic backing of any kind; nothing below 120 Hz must be present. A single haunting male voice holds a wordless ghostly AHH tone, one long note per bar restruck on beat 1, identical pattern repeating across all 8 bars with subtle pitch variation. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Continuous vocal energy across all 8 bars; no fades, no silent bars. Loopable. Pitched-down, dark, reverb-drenched Memphis phonk voice. Voice only — nothing else.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-B-3.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "PURE vocal — no background music, no instruments, no drums, no bass, no melody, no sub-bass, no 808, no synth, no piano. Voice only. Dark Memphis-style phonk spoken tag in C minor, 150 BPM, 8 bars. STRICTLY VOCAL TRACK ONLY — absolutely no instruments or rhythmic backing of any kind; nothing below 120 Hz must be present. A single deep menacing male voice speaks the tag PULL UP rhythmically, two syllables per bar on beats 1 and 3, identical pattern repeating across all 8 bars with subtle pitch variation. Strong, accented attack on the downbeat of bar 1 (loudest moment of the loop). Continuous vocal presence across all 8 bars; no fades, no silent bars. Loopable. Pitched-down, dark, reverb-drenched Memphis phonk voice. Voice only — nothing else.",
+      "barCount": 8
+    },
+    {
+      "file": "fills-B-0.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single descending tom roll landing on a kick, 1.2 seconds. Gritty, distorted Memphis phonk drumkit. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-1.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single reverse snare swell snapping into a downbeat hit, 1.2 seconds. Gritty, distorted Memphis phonk snare. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-2.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single fast triplet snare-and-hat roll building to a crash, 1.2 seconds. Gritty, distorted Memphis phonk drumkit. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-3.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single hard impact stop with a short crushed snare flam, 1.2 seconds. Gritty, distorted Memphis phonk drumkit. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fx-B-0.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.2,
+      "prompt": "Deep sub bass drop impact with a short tail, 1.2 seconds, fades naturally. Dark, saturated cassette-tape texture. Atmospheric, not musical."
+    },
+    {
+      "file": "fx-B-1.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.2,
+      "prompt": "Burst of distorted static and vinyl crackle, 1.2 seconds, fades naturally. Dusty, saturated cassette-tape texture. Atmospheric, not musical."
+    },
+    {
+      "file": "fx-B-2.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.2,
+      "prompt": "Telephone-filtered vocal-style noise sweep with radio crackle, 1.2 seconds, fades naturally. Lo-fi, gritty cassette texture. Atmospheric, not musical, no real words."
+    },
+    {
+      "file": "fx-B-3.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.2,
+      "prompt": "Ghostly reverse noise riser swelling into a dark whoosh, 1.2 seconds, fades naturally. Dark, reverb-drenched, lo-fi cassette texture. Atmospheric, not musical."
+    }
+  ]
+}

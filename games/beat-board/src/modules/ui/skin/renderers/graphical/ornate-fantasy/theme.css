@@ -1,0 +1,1649 @@
+[data-ui-theme='ornate-fantasy'] {
+  --ui-font-display: 'Cinzel', 'Source Serif 4', 'Palatino Linotype', Georgia, serif;
+  --ui-page-bg:
+    radial-gradient(circle at 50% -10%, rgba(243, 217, 146, 0.16) 0%, rgba(243, 217, 146, 0) 30%),
+    radial-gradient(circle at 12% 18%, rgba(48, 78, 132, 0.34) 0%, rgba(48, 78, 132, 0) 28%),
+    radial-gradient(circle at 88% 22%, rgba(75, 25, 24, 0.22) 0%, rgba(75, 25, 24, 0) 26%),
+    linear-gradient(180deg, #10131c 0%, #0b0d13 44%, #07080d 100%);
+  --ui-page-bg-mode: dark;
+  --ui-text-primary: #eee4cf;
+  --ui-text-muted: rgba(210, 198, 173, 0.74);
+  --ui-text-strong: #fff6e1;
+  --ui-focus-ring: rgba(233, 205, 140, 0.54);
+  --ui-text-shadow: 0 2px 0 rgba(15, 10, 8, 0.7);
+  --ui-fantasy-gold-100: #fbeec0;
+  --ui-fantasy-gold-200: #f4d785;
+  --ui-fantasy-gold-400: #d4a84a;
+  --ui-fantasy-gold-500: #b88a32;
+  --ui-fantasy-gold-700: #6e5119;
+  --ui-fantasy-gold-900: #2e2008;
+  --ui-fantasy-surface-1: #0d1226;
+  --ui-fantasy-surface-2: #141a35;
+  --ui-fantasy-surface-3: #1c2348;
+  --ui-fantasy-gold-line:
+    linear-gradient(
+      180deg,
+      var(--ui-fantasy-gold-200) 0%,
+      var(--ui-fantasy-gold-400) 25%,
+      var(--ui-fantasy-gold-700) 56%,
+      var(--ui-fantasy-gold-400) 82%,
+      var(--ui-fantasy-gold-200) 100%
+    );
+  --ui-fantasy-gold-line-h:
+    linear-gradient(
+      90deg,
+      rgba(110, 81, 25, 0) 0%,
+      var(--ui-fantasy-gold-700) 8%,
+      var(--ui-fantasy-gold-400) 27%,
+      var(--ui-fantasy-gold-100) 50%,
+      var(--ui-fantasy-gold-400) 73%,
+      var(--ui-fantasy-gold-700) 92%,
+      rgba(110, 81, 25, 0) 100%
+    );
+  --ui-fantasy-gold-bevel:
+    linear-gradient(
+      180deg,
+      var(--ui-fantasy-gold-100) 0%,
+      var(--ui-fantasy-gold-400) 34%,
+      var(--ui-fantasy-gold-500) 64%,
+      var(--ui-fantasy-gold-900) 100%
+    );
+  --ui-fantasy-gold-glow:
+    0 0 0 1px rgba(244, 215, 133, 0.14),
+    0 0 22px -6px rgba(212, 168, 74, 0.38);
+  --ui-fantasy-corner-line: rgba(244, 215, 133, 0.58);
+  --ui-fantasy-corner-shadow: rgba(46, 32, 8, 0.72);
+  --ui-fantasy-corner-filigree-tl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 38 38' fill='none'%3E%3Cpath d='M4 38C4 16 16 4 38 4' stroke='%23d4a84a' stroke-width='1' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M8 38C8 18 18 8 38 8' stroke='%23f4d785' stroke-width='.7' stroke-linecap='round' opacity='.85'/%3E%3Cpath d='M12 12Q14 10 16 12Q17 14 15 16Q12 17 11 14Q10 12 12 12Z' fill='%23d4a84a' opacity='.9'/%3E%3Ccircle cx='20' cy='8' r='.9' fill='%23f4d785' opacity='.95'/%3E%3Ccircle cx='8' cy='20' r='.9' fill='%23f4d785' opacity='.95'/%3E%3Cpath d='M18 12Q22 10 24 14Q22 14 20 14Q19 13 18 12Z' fill='%23d4a84a' opacity='.8'/%3E%3Cpath d='M12 18Q10 22 14 24Q14 22 14 20Q13 19 12 18Z' fill='%23d4a84a' opacity='.8'/%3E%3C/svg%3E");
+  --ui-fantasy-corner-filigree-tr: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 38 38' fill='none'%3E%3Cg transform='translate(38 0) scale(-1 1)'%3E%3Cpath d='M4 38C4 16 16 4 38 4' stroke='%23d4a84a' stroke-width='1' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M8 38C8 18 18 8 38 8' stroke='%23f4d785' stroke-width='.7' stroke-linecap='round' opacity='.85'/%3E%3Cpath d='M12 12Q14 10 16 12Q17 14 15 16Q12 17 11 14Q10 12 12 12Z' fill='%23d4a84a' opacity='.9'/%3E%3Ccircle cx='20' cy='8' r='.9' fill='%23f4d785' opacity='.95'/%3E%3Ccircle cx='8' cy='20' r='.9' fill='%23f4d785' opacity='.95'/%3E%3Cpath d='M18 12Q22 10 24 14Q22 14 20 14Q19 13 18 12Z' fill='%23d4a84a' opacity='.8'/%3E%3Cpath d='M12 18Q10 22 14 24Q14 22 14 20Q13 19 12 18Z' fill='%23d4a84a' opacity='.8'/%3E%3C/g%3E%3C/svg%3E");
+  --ui-fantasy-corner-filigree-bl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 38 38' fill='none'%3E%3Cg transform='translate(0 38) scale(1 -1)'%3E%3Cpath d='M4 38C4 16 16 4 38 4' stroke='%23d4a84a' stroke-width='1' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M8 38C8 18 18 8 38 8' stroke='%23f4d785' stroke-width='.7' stroke-linecap='round' opacity='.85'/%3E%3Cpath d='M12 12Q14 10 16 12Q17 14 15 16Q12 17 11 14Q10 12 12 12Z' fill='%23d4a84a' opacity='.9'/%3E%3Ccircle cx='20' cy='8' r='.9' fill='%23f4d785' opacity='.95'/%3E%3Ccircle cx='8' cy='20' r='.9' fill='%23f4d785' opacity='.95'/%3E%3Cpath d='M18 12Q22 10 24 14Q22 14 20 14Q19 13 18 12Z' fill='%23d4a84a' opacity='.8'/%3E%3Cpath d='M12 18Q10 22 14 24Q14 22 14 20Q13 19 12 18Z' fill='%23d4a84a' opacity='.8'/%3E%3C/g%3E%3C/svg%3E");
+  --ui-fantasy-corner-filigree-br: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 38 38' fill='none'%3E%3Cg transform='translate(38 38) scale(-1 -1)'%3E%3Cpath d='M4 38C4 16 16 4 38 4' stroke='%23d4a84a' stroke-width='1' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M8 38C8 18 18 8 38 8' stroke='%23f4d785' stroke-width='.7' stroke-linecap='round' opacity='.85'/%3E%3Cpath d='M12 12Q14 10 16 12Q17 14 15 16Q12 17 11 14Q10 12 12 12Z' fill='%23d4a84a' opacity='.9'/%3E%3Ccircle cx='20' cy='8' r='.9' fill='%23f4d785' opacity='.95'/%3E%3Ccircle cx='8' cy='20' r='.9' fill='%23f4d785' opacity='.95'/%3E%3Cpath d='M18 12Q22 10 24 14Q22 14 20 14Q19 13 18 12Z' fill='%23d4a84a' opacity='.8'/%3E%3Cpath d='M12 18Q10 22 14 24Q14 22 14 20Q13 19 12 18Z' fill='%23d4a84a' opacity='.8'/%3E%3C/g%3E%3C/svg%3E");
+  --ui-fantasy-radius-hard: 4px;
+  --ui-fantasy-radius-control: 6px;
+  --ui-fantasy-radius-panel: 8px;
+  --ui-fantasy-hard-clip: polygon(
+    8px 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    0 calc(100% - 8px),
+    0 8px
+  );
+  --ui-button-label-shadow:
+    0 1px 0 rgba(255, 247, 218, 0.18),
+    0 2px 0 rgba(18, 11, 8, 0.84),
+    0 8px 18px rgba(0, 0, 0, 0.34);
+  --ui-button-label-shadow-on-light:
+    0 1px 0 rgba(255, 248, 223, 0.42),
+    0 1px 2px rgba(57, 33, 11, 0.2);
+  --ui-button-label-stroke-width: 0.55px;
+  --ui-button-label-stroke-color: rgba(63, 39, 17, 0.72);
+  --ui-fantasy-shell-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.08),
+    0 18px 34px rgba(0, 0, 0, 0.42);
+  --ui-fantasy-deep-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.08),
+    0 28px 56px rgba(0, 0, 0, 0.48);
+  --ui-fantasy-support-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.06),
+    0 12px 20px rgba(0, 0, 0, 0.28);
+  --ui-fantasy-inner-rim:
+    inset 0 1px 0 rgba(255, 247, 218, 0.14),
+    inset 0 0 0 1px rgba(247, 226, 167, 0.06),
+    inset 0 -8px 14px rgba(7, 8, 11, 0.28);
+  --ui-fantasy-button-outer-shape: polygon(
+    26px 0,
+    calc(50% - 18px) 0,
+    50% 8px,
+    calc(50% + 18px) 0,
+    calc(100% - 26px) 0,
+    100% 18px,
+    100% calc(100% - 18px),
+    calc(100% - 26px) 100%,
+    26px 100%,
+    0 calc(100% - 18px),
+    0 18px
+  );
+  --ui-fantasy-button-inner-shape: polygon(
+    18px 0,
+    calc(100% - 18px) 0,
+    100% 13px,
+    100% calc(100% - 13px),
+    calc(100% - 18px) 100%,
+    18px 100%,
+    0 calc(100% - 13px),
+    0 13px
+  );
+  --ui-fantasy-art-hero-plaque: url('./hero-plaque-shell.svg');
+  --ui-fantasy-art-hero-ribbon: url('./hero-ribbon-shell.svg');
+  --ui-fantasy-art-plaque: url('./plaque-shell.png');
+  --ui-fantasy-art-button-plaque: url('./button-plaque-shell.svg');
+  --ui-fantasy-art-tab: url('./tab-shell.svg');
+  --ui-fantasy-art-highlight-divider: url('./highlight-wing-divider.svg');
+  --ui-fantasy-art-medallion: url('./medallion-shell.svg');
+  --ui-fantasy-art-track: url('./track-shell.svg');
+  --ui-fantasy-art-ticket: url('./ticket-shell.svg');
+  --ui-fantasy-lapis-fill:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.22) 0%, rgba(255, 248, 225, 0) 18%),
+    linear-gradient(180deg, #2d4f89 0%, #4668ab 24%, #171f34 56%, #0b0d13 100%);
+  --ui-fantasy-oxblood-fill:
+    linear-gradient(180deg, rgba(255, 242, 236, 0.18) 0%, rgba(255, 242, 236, 0) 18%),
+    linear-gradient(180deg, #7f2b2a 0%, #b24d49 24%, #51181d 56%, #12080a 100%);
+  --ui-fantasy-iron-fill:
+    linear-gradient(180deg, rgba(243, 247, 252, 0.16) 0%, rgba(243, 247, 252, 0) 18%),
+    linear-gradient(180deg, #28313d 0%, #4a5563 24%, #1a2027 56%, #090b0e 100%);
+  --ui-fantasy-inkwell-fill:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.08) 0%, rgba(255, 248, 225, 0) 18%),
+    linear-gradient(180deg, var(--ui-fantasy-surface-2) 0%, var(--ui-fantasy-surface-1) 44%, #090c14 100%);
+  --ui-fantasy-plate-fill:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.08) 0%, rgba(255, 248, 225, 0) 16%),
+    linear-gradient(180deg, var(--ui-fantasy-surface-3) 0%, var(--ui-fantasy-surface-2) 44%, var(--ui-fantasy-surface-1) 100%);
+  --ui-fantasy-yellow-fill:
+    linear-gradient(180deg, rgba(255, 248, 223, 0.2) 0%, rgba(255, 248, 223, 0) 18%),
+    linear-gradient(180deg, #b28a42 0%, #d8b46f 24%, #825d28 56%, #1e1208 100%);
+  --ui-fantasy-green-fill:
+    linear-gradient(180deg, rgba(237, 249, 239, 0.18) 0%, rgba(237, 249, 239, 0) 18%),
+    linear-gradient(180deg, #2f675e 0%, #5e9b8e 24%, #25443d 56%, #0c1412 100%);
+  --ui-fantasy-gray-fill:
+    linear-gradient(180deg, rgba(245, 247, 249, 0.18) 0%, rgba(245, 247, 249, 0) 18%),
+    linear-gradient(180deg, #59636e 0%, #85909d 24%, #434b55 56%, #0f1215 100%);
+  --ui-fantasy-purple-fill:
+    linear-gradient(180deg, rgba(247, 239, 255, 0.18) 0%, rgba(247, 239, 255, 0) 18%),
+    linear-gradient(180deg, #624787 0%, #8d67b6 24%, #452b61 56%, #120d17 100%);
+  --ui-fantasy-track-well:
+    linear-gradient(180deg, rgba(245, 233, 191, 0.08) 0%, rgba(245, 233, 191, 0) 22%),
+    linear-gradient(180deg, #111722 0%, #0b0e14 100%);
+  --ui-button-primary-fill: var(--ui-fantasy-lapis-fill);
+  --ui-button-primary-text: #fff5e1;
+  --ui-button-secondary-fill: var(--ui-fantasy-oxblood-fill);
+  --ui-button-secondary-text: #fff1df;
+  --ui-button-ghost-fill: var(--ui-fantasy-iron-fill);
+  --ui-button-ghost-text: #e7dcc5;
+  --ui-button-pill-fill:
+    linear-gradient(180deg, #1d355d 0%, #4f7db8 25%, #eaf3ff 38%, #25446f 63%, #5e89c1 87%, #1d355d 100%);
+  --ui-button-pill-border: rgba(214, 186, 118, 0.36);
+  --ui-button-pill-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.26),
+    0 3px 0 rgba(76, 54, 18, 0.72),
+    0 10px 18px rgba(0, 0, 0, 0.26);
+  --ui-button-pill-active-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.14),
+    0 1px 0 rgba(76, 54, 18, 0.72),
+    0 5px 10px rgba(0, 0, 0, 0.24);
+  --ui-button-pill-text: #fff6e5;
+  --ui-button-pill-padding: 0 18px;
+  --ui-button-pill-radius: var(--ui-fantasy-radius-control);
+  --ui-button-icon-fill:
+    radial-gradient(circle at 36% 32%, rgba(255, 248, 223, 0.78) 0%, rgba(255, 248, 223, 0) 40%),
+    linear-gradient(180deg, #29487a 0%, #16223b 55%, #0d1016 100%);
+  --ui-button-icon-text: #f7e6bd;
+  --ui-button-tab-fill: var(--ui-fantasy-inkwell-fill);
+  --ui-button-tab-active-fill:
+    linear-gradient(180deg, rgba(255, 249, 226, 0.18) 0%, rgba(255, 249, 226, 0) 16%),
+    linear-gradient(180deg, #27467a 0%, #182840 42%, #0d1118 100%);
+  --ui-button-tab-highlight-image:
+    radial-gradient(circle at 50% 50%, rgba(246, 226, 168, 1) 0 18%, rgba(246, 226, 168, 0) 19%),
+    linear-gradient(90deg, rgba(215, 181, 111, 0) 0%, rgba(215, 181, 111, 0.82) 20%, rgba(255, 242, 208, 1) 50%, rgba(215, 181, 111, 0.82) 80%, rgba(215, 181, 111, 0) 100%);
+  --ui-button-tab-highlight-size: 14px 14px, 100% 3px;
+  --ui-button-tab-highlight-position: center center, center center;
+  --ui-button-tab-highlight-width: 92px;
+  --ui-button-tab-highlight-height: 10px;
+  --ui-button-grid-fill:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.08) 0%, rgba(255, 248, 225, 0) 18%),
+    linear-gradient(180deg, var(--ui-fantasy-surface-3) 0%, var(--ui-fantasy-surface-1) 100%);
+  --ui-button-grid-text: #efe5d1;
+  --ui-button-leading-tile-size: 50px;
+  --ui-button-visual-fill: transparent;
+  --ui-button-visual-border-width: 0px;
+  --ui-button-visual-border: transparent;
+  --ui-button-visual-shadow: none;
+  --ui-panel-card-fill: var(--ui-fantasy-plate-fill);
+  --ui-panel-card-shadow: var(--ui-fantasy-deep-shadow);
+  --ui-panel-section-fill: var(--ui-fantasy-inkwell-fill);
+  --ui-panel-section-shadow: var(--ui-fantasy-shell-shadow);
+  --ui-settings-row-fill:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.06) 0%, rgba(255, 248, 225, 0) 22%),
+    linear-gradient(180deg, rgba(28, 35, 72, 0.92) 0%, rgba(13, 18, 38, 0.98) 100%);
+  --ui-settings-row-border: rgba(212, 168, 74, 0.28);
+  --ui-settings-row-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.1);
+  --ui-panel-overlay-fill:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.12) 0%, rgba(255, 248, 225, 0) 16%),
+    linear-gradient(180deg, #1c2941 0%, #10151d 44%, #090b10 100%);
+  --ui-panel-overlay-shadow: 0 34px 64px rgba(0, 0, 0, 0.52);
+  --ui-panel-section-text: #ebe1cb;
+  --ui-panel-subtitle-text: rgba(203, 190, 163, 0.72);
+  --ui-panel-card-overlay-image:
+    radial-gradient(circle at 50% 0, rgba(82, 116, 173, 0.18) 0%, rgba(82, 116, 173, 0) 42%),
+    linear-gradient(90deg, rgba(242, 219, 155, 0) 0%, rgba(242, 219, 155, 0.24) 50%, rgba(242, 219, 155, 0) 100%);
+  --ui-panel-card-overlay-size: 100% 100%, calc(100% - 100px) 1px;
+  --ui-panel-card-overlay-position: center, center 54px;
+  --ui-panel-card-overlay-repeat: no-repeat, no-repeat;
+  --ui-panel-section-secondary-overlay-image:
+    linear-gradient(90deg, rgba(240, 220, 162, 0) 0%, rgba(240, 220, 162, 0.3) 50%, rgba(240, 220, 162, 0) 100%);
+  --ui-panel-section-secondary-overlay-size: calc(100% - 80px) 1px;
+  --ui-panel-section-secondary-overlay-position: center 42px;
+  --ui-panel-section-secondary-overlay-repeat: no-repeat;
+  --ui-header-text: #fff6e2;
+  --ui-header-subtitle-text: rgba(233, 222, 197, 0.82);
+  --ui-ticket-text: #fff4df;
+  --ui-ticket-subtitle-text: rgba(233, 220, 191, 0.82);
+  --ui-icon-frame-fill: transparent;
+  --ui-badge-status-fill:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.08) 0%, rgba(255, 248, 225, 0) 18%),
+    linear-gradient(180deg, #223a35 0%, #121b18 100%);
+  --ui-badge-status-border: rgba(178, 174, 120, 0.28);
+  --ui-badge-counter-fill:
+    radial-gradient(circle at 34% 30%, rgba(255, 250, 232, 0.82) 0%, rgba(255, 250, 232, 0) 32%),
+    linear-gradient(180deg, #f0d289 0%, #bb8337 56%, #6a3e14 100%);
+  --ui-badge-counter-border: rgba(111, 63, 18, 0.62);
+  --ui-badge-counter-text: #2d1808;
+  --ui-badge-new-fill:
+    radial-gradient(circle at 34% 30%, rgba(255, 238, 235, 0.76) 0%, rgba(255, 238, 235, 0) 34%),
+    linear-gradient(180deg, #a24a4d 0%, #6a2528 58%, #341114 100%);
+  --ui-badge-new-border: rgba(235, 183, 146, 0.3);
+  --ui-badge-new-text: #fff1e8;
+  --ui-badge-chip-fill:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.1) 0%, rgba(255, 248, 225, 0) 20%),
+    linear-gradient(180deg, #1b2432 0%, #0f141c 100%);
+  --ui-badge-chip-border: rgba(214, 186, 118, 0.24);
+  --ui-badge-shadow: var(--ui-fantasy-support-shadow);
+  --ui-tag-fill: var(--ui-fantasy-inkwell-fill);
+  --ui-tag-border: rgba(214, 186, 118, 0.28);
+  --ui-tag-shadow: var(--ui-fantasy-support-shadow);
+  --ui-tag-text: #f3e8d2;
+  --ui-progress-track-fill: transparent;
+  --ui-progress-track-border: transparent;
+  --ui-progress-fill: linear-gradient(90deg, #f8e9b9 0%, #d8ad60 46%, #8f5b22 100%);
+  --ui-progress-track-height: 30px;
+  --ui-progress-track-padding: 0px;
+  --ui-progress-bar-inset: 9px 16px;
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(255, 247, 220, 0.38),
+    inset 0 -1px 0 rgba(78, 46, 20, 0.58),
+    0 0 16px rgba(216, 173, 96, 0.18);
+  --ui-progress-thumb:
+    radial-gradient(circle at 36% 32%, #fff7dd 0%, #f0ddb0 36%, #cca460 70%, #80501c 100%);
+  --ui-input-fill: transparent;
+  --ui-input-border: transparent;
+  --ui-input-height: 62px;
+  --ui-input-padding: 14px 18px;
+  --ui-input-radius: 0px;
+  --ui-input-surface-inset: 10px 12px;
+  --ui-input-surface-radius: 18px;
+  --ui-input-surface-fill:
+    linear-gradient(180deg, rgba(255, 247, 218, 0.08) 0%, rgba(255, 247, 218, 0) 18%),
+    linear-gradient(180deg, #131926 0%, #0b0f15 100%);
+  --ui-input-text: #efe5d2;
+  --ui-input-placeholder: rgba(205, 192, 168, 0.44);
+  --ui-select-chevron-size: 30px;
+  --ui-select-chevron-radius: 999px;
+  --ui-select-chevron-fill:
+    radial-gradient(circle at 34% 32%, rgba(255, 248, 224, 0.34) 0%, rgba(255, 248, 224, 0) 36%),
+    linear-gradient(180deg, #2c4473 0%, #121926 100%);
+  --ui-select-chevron-border: rgba(214, 186, 118, 0.3);
+  --ui-select-chevron-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.1),
+    0 3px 8px rgba(0, 0, 0, 0.26);
+  --ui-select-chevron-color: #ecd7a3;
+  --ui-select-chevron-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ui-select-chevron-offset-inline-end: 18px;
+  --ui-input-visual-fill:
+    linear-gradient(180deg, rgba(255, 246, 218, 0.08) 0%, rgba(255, 246, 218, 0) 18%),
+    linear-gradient(180deg, #22304c 0%, #10151f 100%);
+  --ui-input-visual-border: rgba(211, 182, 112, 0.2);
+  --ui-input-visual-shadow: inset 0 1px 0 rgba(255, 244, 210, 0.06);
+  --ui-slider-track-height: 34px;
+  --ui-slider-bar-inset: 9px 16px;
+  --ui-slider-thumb-width: 34px;
+  --ui-slider-thumb-height: 34px;
+  --ui-slider-thumb-border-width: 0px;
+  --ui-slider-thumb-shadow: 0 10px 20px rgba(0, 0, 0, 0.34);
+  --ui-scrollbar-track-fill:
+    linear-gradient(180deg, rgba(21, 27, 37, 0.98) 0%, rgba(10, 13, 18, 1) 100%);
+  --ui-scrollbar-track-border: rgba(158, 121, 61, 0.42);
+  --ui-scrollbar-track-shadow:
+    inset 0 1px 0 rgba(255, 242, 204, 0.06),
+    0 10px 18px rgba(0, 0, 0, 0.28);
+  --ui-scrollbar-track-overlay:
+    linear-gradient(90deg, rgba(242, 219, 160, 0) 0%, rgba(242, 219, 160, 0.1) 50%, rgba(242, 219, 160, 0) 100%);
+  --ui-scrollbar-thumb-fill:
+    linear-gradient(180deg, #f8e9b9 0%, #d8ad60 50%, #aa7333 100%);
+  --ui-scrollbar-thumb-border: rgba(110, 72, 28, 0.92);
+  --ui-scrollbar-thumb-shadow:
+    inset 0 1px 0 rgba(255, 247, 220, 0.42),
+    inset 0 -1px 0 rgba(78, 46, 20, 0.58),
+    0 10px 20px rgba(0, 0, 0, 0.24);
+  --ui-scrollbar-thumb-overlay:
+    linear-gradient(180deg, rgba(255, 246, 218, 0.24) 0%, rgba(255, 246, 218, 0) 52%);
+  --ui-scrollbar-radius: 14px;
+  --ui-scrollbar-thickness: 18px;
+  --ui-scrollbar-thumb-inset: 3px;
+  --ui-scrollbar-active-glow: 0 0 18px rgba(216, 173, 96, 0.12);
+  --ui-pagination-fill: rgba(0, 0, 0, 0);
+  --ui-pagination-active-fill: rgba(0, 0, 0, 0);
+  --ui-pagination-border: transparent;
+  --ui-pagination-active-border: transparent;
+  --ui-pagination-shadow: var(--ui-fantasy-support-shadow);
+  --ui-rail-fill: transparent;
+  --ui-rail-border: transparent;
+  --ui-rail-shadow: none;
+  --ui-rail-button-shadow: var(--ui-fantasy-support-shadow);
+}
+
+[data-ui-theme='ornate-fantasy'].ui-theme-root {
+  background-color: #07080d;
+  background-image: var(--ui-page-bg);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header__art img,
+[data-ui-theme='ornate-fantasy'] .ui-ticket__art img,
+[data-ui-theme='ornate-fantasy'] .ui-icon-frame__art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.42));
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button,
+[data-ui-theme='ornate-fantasy'] .ui-badge__content,
+[data-ui-theme='ornate-fantasy'] .ui-tag__content,
+[data-ui-theme='ornate-fantasy'] .ui-rail-button__label,
+[data-ui-theme='ornate-fantasy'] .ui-progress__overlay {
+  text-shadow: var(--ui-button-label-shadow);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button {
+  --ui-button-label-shadow:
+    0 1px 0 rgba(255, 247, 218, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.22);
+  --ui-button-label-stroke-width: 0.42px;
+  --ui-button-label-stroke-color: rgba(28, 17, 7, 0.72);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button__label,
+[data-ui-theme='ornate-fantasy'] .ui-button__currency-title,
+[data-ui-theme='ornate-fantasy'] .ui-button__currency-amount,
+[data-ui-theme='ornate-fantasy'] .ui-rail-button__label {
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+@keyframes ornate-button-gilded-sheen {
+  0%, 22% {
+    background-position: -180% 0, center;
+  }
+  34%, 58% {
+    background-position: 0% 0, center;
+  }
+  78%, 100% {
+    background-position: 180% 0, center;
+  }
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-tone='yellow'] {
+  --ui-button-fill: var(--ui-fantasy-yellow-fill);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-tone='green'] {
+  --ui-button-fill: var(--ui-fantasy-green-fill);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-tone='blue'] {
+  --ui-button-fill: var(--ui-fantasy-lapis-fill);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-tone='red'] {
+  --ui-button-fill: var(--ui-fantasy-oxblood-fill);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-tone='gray'] {
+  --ui-button-fill: var(--ui-fantasy-gray-fill);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-tone='purple'] {
+  --ui-button-fill: var(--ui-fantasy-purple-fill);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button:not([data-variant='icon']):not([data-variant='close']):not([data-variant='back']):not([data-variant='tab']):not([data-variant='grid']):not([data-variant='pill']):not([data-variant='segment']):not([data-variant='toggle']) {
+  min-height: 56px;
+  padding: 0 20px;
+  font-size: 17px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button:not([data-variant='icon']):not([data-variant='close']):not([data-variant='back']):not([data-variant='tab']):not([data-variant='grid']):not([data-variant='pill']):not([data-variant='segment']):not([data-variant='toggle']) .ui-button__content {
+  padding: 10px 0;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button:not([data-variant='icon']):not([data-variant='close']):not([data-variant='back']):not([data-variant='tab']):not([data-variant='grid']):not([data-variant='pill']):not([data-variant='segment']):not([data-variant='toggle'])::before {
+  border: 1px solid rgba(110, 81, 25, 0.86);
+  border-radius: var(--ui-fantasy-radius-control);
+  clip-path: var(--ui-fantasy-hard-clip);
+  background:
+    linear-gradient(180deg, rgba(255, 250, 236, 0.58) 0%, rgba(255, 250, 236, 0) 12%) top / 100% 100% no-repeat,
+    var(--ui-fantasy-gold-bevel);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 248, 225, 0.42),
+    inset 0 -1px 0 rgba(87, 51, 19, 0.42),
+    var(--ui-fantasy-gold-glow),
+    0 10px 18px rgba(0, 0, 0, 0.24);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button:not([data-variant='icon']):not([data-variant='close']):not([data-variant='back']):not([data-variant='tab']):not([data-variant='grid']):not([data-variant='pill']):not([data-variant='segment']):not([data-variant='toggle'])::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: var(--ui-fantasy-radius-hard);
+  clip-path: polygon(
+    5px 0,
+    calc(100% - 5px) 0,
+    100% 5px,
+    100% calc(100% - 5px),
+    calc(100% - 5px) 100%,
+    5px 100%,
+    0 calc(100% - 5px),
+    0 5px
+  );
+  background: var(--ui-button-fill);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 0 0 1px rgba(244, 215, 133, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.26);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-state='active']:not([data-variant='tab']) {
+  transform: translateY(3px);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='primary'],
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='secondary'] {
+  min-height: 56px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button:hover::after,
+[data-ui-theme='ornate-fantasy'] .ui-rail-button:hover::after {
+  filter: brightness(1.04) saturate(1.05);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-highlighted='true']:not([data-variant='tab']):not([data-variant='icon']):not([data-variant='close']):not([data-variant='back']):not([data-variant='grid']):not([data-variant='pill']):not([data-variant='segment']):not([data-variant='toggle']):not([data-state='disabled']) {
+  filter: drop-shadow(0 10px 18px rgba(64, 36, 12, 0.18));
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-highlighted='true']:not([data-variant='tab']):not([data-variant='icon']):not([data-variant='close']):not([data-variant='back']):not([data-variant='grid']):not([data-variant='pill']):not([data-variant='segment']):not([data-variant='toggle']):not([data-state='disabled'])::after {
+  background:
+    linear-gradient(105deg,
+      rgba(255, 255, 255, 0) 28%,
+      rgba(255, 250, 236, 0.16) 40%,
+      rgba(255, 241, 186, 0.86) 50%,
+      rgba(214, 170, 92, 0.24) 62%,
+      rgba(255, 255, 255, 0) 74%) -180% 0 / 220% 100% no-repeat,
+    var(--ui-button-fill);
+  animation: ornate-button-gilded-sheen 3.2s ease-in-out infinite;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-state='active']::after,
+[data-ui-theme='ornate-fantasy'] .ui-rail-button[data-state='active']::after {
+  filter: brightness(0.94);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='ghost'],
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='grid'] {
+  color: var(--ui-button-ghost-text);
+}
+
+/* ── Button ribbon — ornate crimson tag ── */
+[data-ui-theme='ornate-fantasy'] .ui-button__ribbon {
+  background: linear-gradient(180deg, #e04040 0%, #a82020 100%);
+  color: #fff0d0;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 200, 150, 0.25);
+  padding: 4px 14px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  border: 1px solid rgba(200, 150, 80, 0.4);
+  transform: rotate(-2deg);
+  top: -12px;
+  right: -8px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-input-shell::before,
+[data-ui-theme='ornate-fantasy'] .ui-nav-rail[data-has-shell='true']::before {
+  border: none;
+  border-radius: 0;
+  background: center / 100% 100% no-repeat var(--ui-fantasy-art-plaque);
+  box-shadow: var(--ui-fantasy-shell-shadow);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-panel {
+  border-radius: var(--ui-panel-radius, var(--ui-fantasy-radius-panel));
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='card']::before,
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='section']::before,
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='grid']::before {
+  border-radius: var(--ui-panel-radius, var(--ui-fantasy-radius-panel));
+  clip-path: var(--ui-fantasy-hard-clip);
+  background:
+    radial-gradient(circle at 50% 0, rgba(82, 116, 173, 0.16) 0%, rgba(82, 116, 173, 0) 48%),
+    linear-gradient(180deg, rgba(255, 248, 225, 0.1) 0%, rgba(255, 248, 225, 0) 20%),
+    var(--ui-panel-fill, var(--ui-button-fill));
+  border: 1px solid rgba(212, 168, 74, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.1),
+    inset 0 0 0 1px rgba(110, 81, 25, 0.18),
+    var(--ui-fantasy-support-shadow);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='grid']::before {
+  --ui-panel-radius: var(--ui-fantasy-radius-panel);
+  --ui-panel-fill: var(--ui-button-fill);
+}
+
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.section']::before,
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.row']::before {
+  border-radius: var(--ui-panel-radius, var(--ui-fantasy-radius-panel));
+  clip-path: var(--ui-fantasy-hard-clip);
+  background:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.08) 0%, rgba(255, 248, 225, 0) 18%),
+    var(--ui-panel-fill);
+  border: 1px solid var(--ui-panel-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.08),
+    inset 0 0 0 1px rgba(110, 81, 25, 0.12),
+    var(--ui-panel-shadow);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-panel::after,
+[data-ui-theme='ornate-fantasy'] .ui-input-shell::after,
+[data-ui-theme='ornate-fantasy'] .ui-nav-rail[data-has-shell='true']::after {
+  content: '';
+  position: absolute;
+  inset: 10px 12px 14px;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: var(--ui-fantasy-radius-panel);
+  background: var(--ui-panel-fill, var(--ui-button-ghost-fill));
+  box-shadow: var(--ui-fantasy-inner-rim);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-panel::after {
+  background: none;
+  box-shadow: none;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='card']::after,
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='section']::after {
+  inset: 6px;
+  border-radius: max(4px, calc(var(--ui-panel-radius, 8px) - 4px));
+  clip-path: var(--ui-fantasy-hard-clip);
+  background-image: var(--ui-fantasy-gold-line-h);
+  background-size: calc(100% - 40px) 1px;
+  background-position: center top;
+  background-repeat: no-repeat;
+  opacity: 0.62;
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 74, 0.18);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='card'] .ui-panel__chrome,
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='section'] .ui-panel__chrome {
+  inset: 7px;
+  height: auto;
+  border-radius: max(4px, calc(var(--ui-panel-radius, 8px) - 4px));
+  opacity: 0.95;
+  background-image:
+    var(--ui-fantasy-corner-filigree-tl),
+    var(--ui-fantasy-corner-filigree-tr),
+    var(--ui-fantasy-corner-filigree-bl),
+    var(--ui-fantasy-corner-filigree-br),
+    linear-gradient(var(--ui-fantasy-corner-line), var(--ui-fantasy-corner-line)),
+    linear-gradient(var(--ui-fantasy-corner-line), var(--ui-fantasy-corner-line)),
+    linear-gradient(var(--ui-fantasy-corner-line), var(--ui-fantasy-corner-line)),
+    linear-gradient(var(--ui-fantasy-corner-line), var(--ui-fantasy-corner-line)),
+    linear-gradient(var(--ui-fantasy-corner-line), var(--ui-fantasy-corner-line)),
+    linear-gradient(var(--ui-fantasy-corner-line), var(--ui-fantasy-corner-line)),
+    linear-gradient(var(--ui-fantasy-corner-line), var(--ui-fantasy-corner-line)),
+    linear-gradient(var(--ui-fantasy-corner-line), var(--ui-fantasy-corner-line));
+  background-size:
+    38px 38px,
+    38px 38px,
+    38px 38px,
+    38px 38px,
+    34px 1px,
+    1px 34px,
+    34px 1px,
+    1px 34px,
+    34px 1px,
+    1px 34px,
+    34px 1px,
+    1px 34px;
+  background-position:
+    top left,
+    top right,
+    bottom left,
+    bottom right,
+    top left,
+    top left,
+    top right,
+    top right,
+    bottom left,
+    bottom left,
+    bottom right,
+    bottom right;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 1px 0 var(--ui-fantasy-corner-shadow));
+}
+
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.section']::after,
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.row']::after {
+  inset: 5px;
+  border-radius: max(4px, calc(var(--ui-panel-radius, 8px) - 4px));
+  background-image: var(--ui-panel-overlay-image), var(--ui-fantasy-gold-line-h);
+  background-size: var(--ui-panel-overlay-size, 100% 100%), calc(100% - 36px) 1px;
+  background-position: var(--ui-panel-overlay-position, center), center top;
+  background-repeat: var(--ui-panel-overlay-repeat, no-repeat), no-repeat;
+  opacity: 1;
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 74, 0.12);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-nav-rail[data-has-shell='true'] {
+  padding: 44px 32px 42px;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-nav-rail[data-has-shell='true'] > * {
+  position: relative;
+  z-index: 1;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='modal'],
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='sheet'],
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='dialog-confirmation'],
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='dialog-reward'] {
+  overflow: visible;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='modal']::before,
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='sheet']::before,
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='dialog-confirmation']::before,
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='dialog-reward']::before {
+  --ppu: 1.6;
+  inset: -12.5% -2.5%;
+  background: none;
+  border-style: solid;
+  border-color: transparent;
+  border-image-source: url('./plaque-shell.png');
+  border-image-slice: 276 860 276 860 fill;
+  border-image-width: calc(276px * var(--ppu)) calc(860px * var(--ppu)) calc(276px * var(--ppu)) calc(860px * var(--ppu));
+  border-image-outset: 0;
+  border-image-repeat: stretch;
+  box-shadow: var(--ui-fantasy-deep-shadow);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='modal']::after,
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='sheet']::after,
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='dialog-confirmation']::after,
+[data-ui-theme='ornate-fantasy'] .ui-panel[data-variant='dialog-reward']::after {
+  background: var(--ui-panel-overlay-fill);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-panel__chrome {
+  inset: 52px 34px auto;
+  height: 1px;
+  border-radius: 999px;
+  background-image: linear-gradient(90deg, rgba(240, 220, 162, 0) 0%, rgba(240, 220, 162, 0.3) 50%, rgba(240, 220, 162, 0) 100%);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-panel__content {
+  gap: 12px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-panel__title,
+[data-ui-theme='ornate-fantasy'] .ui-header__title,
+[data-ui-theme='ornate-fantasy'] .ui-ticket__title {
+  color: var(--ui-text-strong);
+  letter-spacing: 0.04em;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-panel__title {
+  font-size: 22px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-panel__subtitle,
+[data-ui-theme='ornate-fantasy'] .ui-input__hint,
+[data-ui-theme='ornate-fantasy'] .ui-slider__hint,
+[data-ui-theme='ornate-fantasy'] .ui-control__hint,
+[data-ui-theme='ornate-fantasy'] .ui-rail-button__meta,
+[data-ui-theme='ornate-fantasy'] .ui-header__subtitle,
+[data-ui-theme='ornate-fantasy'] .ui-ticket__subtitle {
+  font-family: var(--ui-font-body);
+  letter-spacing: 0.02em;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-input-shell {
+  min-height: 62px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-input-shell::before {
+  border: 1px solid rgba(214, 186, 118, 0.3);
+  border-radius: var(--ui-fantasy-radius-panel);
+  clip-path: var(--ui-fantasy-hard-clip);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(244, 223, 158, 0.96) 0 28%, rgba(244, 223, 158, 0) 29%) top 3px center / 18px 18px no-repeat,
+    linear-gradient(90deg, rgba(214, 186, 118, 0) 0%, rgba(214, 186, 118, 0) calc(50% - 30px), rgba(214, 186, 118, 0.46) calc(50% - 30px), rgba(214, 186, 118, 0.46) calc(50% - 10px), rgba(214, 186, 118, 0) calc(50% - 10px), rgba(214, 186, 118, 0) calc(50% + 10px), rgba(214, 186, 118, 0.46) calc(50% + 10px), rgba(214, 186, 118, 0.46) calc(50% + 30px), rgba(214, 186, 118, 0) calc(50% + 30px)) top 11px center / 100% 1px no-repeat,
+    linear-gradient(180deg, #253141 0%, #171d26 42%, #0b0f14 100%);
+  box-shadow:
+    0 14px 24px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 244, 210, 0.08);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-input-shell::after {
+  inset: 5px;
+  border-radius: var(--ui-fantasy-radius-hard);
+  clip-path: var(--ui-fantasy-hard-clip);
+  background:
+    linear-gradient(180deg, rgba(255, 247, 218, 0.06) 0%, rgba(255, 247, 218, 0) 16%),
+    linear-gradient(180deg, #111722 0%, #0a0d12 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.06),
+    inset 0 -10px 14px rgba(6, 8, 12, 0.36);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-input-shell__content {
+  gap: 10px;
+  padding: 14px 16px 12px;
+}
+
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.section'] {
+  --ui-panel-content-padding: 12px 14px 14px;
+  --ui-panel-secondary-overlay-opacity: 0;
+}
+
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.row'] {
+  --ui-panel-content-padding: 6px 10px;
+}
+
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.section'] .ui-panel__title {
+  font-size: 17px;
+}
+
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.section'] .ui-panel__subtitle {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.row'] .ui-panel__title {
+  font-size: 15px;
+}
+
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.row'] .ui-panel__subtitle {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.section'] .ui-panel__content {
+  padding: 10px 12px 12px;
+}
+
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.row'] .ui-panel__content {
+  padding: 6px 10px;
+}
+
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.section'] .ui-panel__chrome,
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.row'] .ui-panel__chrome {
+  opacity: 0;
+}
+
+[data-ui-theme='ornate-fantasy'] [data-ui-skin-role='settings.section'] .ui-panel__body {
+  gap: 6px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-input__visual {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 34% 32%, rgba(255, 248, 224, 0.46) 0%, rgba(255, 248, 224, 0) 36%),
+    linear-gradient(180deg, #2c4473 0%, #121926 100%);
+  border: 1px solid rgba(214, 186, 118, 0.24);
+  box-shadow: inset 0 1px 0 rgba(255, 244, 210, 0.08);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-checkbox::before,
+[data-ui-theme='ornate-fantasy'] .ui-radio::before,
+[data-ui-theme='ornate-fantasy'] .ui-switch::before {
+  background: var(--ui-fantasy-inkwell-fill);
+  border-color: rgba(213, 184, 113, 0.32);
+  box-shadow: var(--ui-fantasy-support-shadow), inset 0 1px 0 rgba(255, 244, 210, 0.08);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-checkbox[data-state='active']::before,
+[data-ui-theme='ornate-fantasy'] .ui-control__row:has(.ui-control__native:checked) .ui-checkbox::before,
+[data-ui-theme='ornate-fantasy'] .ui-radio[data-state='active']::before,
+[data-ui-theme='ornate-fantasy'] .ui-control__row:has(.ui-control__native:checked) .ui-radio::before,
+[data-ui-theme='ornate-fantasy'] .ui-switch[data-state='active']::before,
+[data-ui-theme='ornate-fantasy'] .ui-control__row:has(.ui-control__native:checked) .ui-switch::before {
+  border-color: rgba(241, 213, 136, 0.5);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-progress__track::before,
+[data-ui-theme='ornate-fantasy'] .ui-slider__track::before {
+  background: linear-gradient(180deg, #273243 0%, #141a23 44%, #0b0f14 100%);
+  border: 1px solid rgba(214, 186, 118, 0.24);
+  border-radius: 999px;
+  box-shadow:
+    0 12px 20px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 244, 210, 0.06);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-progress__track::after,
+[data-ui-theme='ornate-fantasy'] .ui-slider__track::after {
+  content: '';
+  position: absolute;
+  inset: 6px 20px auto;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(214, 186, 118, 0) 0%, rgba(214, 186, 118, 0.36) 18%, rgba(255, 243, 206, 0.32) 50%, rgba(214, 186, 118, 0.36) 82%, rgba(214, 186, 118, 0) 100%);
+  pointer-events: none;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-progress__well,
+[data-ui-theme='ornate-fantasy'] .ui-slider__well {
+  inset: 5px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 247, 218, 0.04) 0%, rgba(255, 247, 218, 0) 18%),
+    linear-gradient(180deg, #10161f 0%, #0a0d11 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 244, 210, 0.04), inset 0 -8px 12px rgba(6, 8, 12, 0.34);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-progress__bar,
+[data-ui-theme='ornate-fantasy'] .ui-slider__bar {
+  inset: 6px;
+  border-radius: 999px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-progress__overlay {
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-slider__thumb {
+  box-shadow:
+    0 10px 18px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 248, 224, 0.72),
+    inset 0 -1px 0 rgba(97, 61, 23, 0.44);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header {
+  gap: 14px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header__ribbon {
+  width: fit-content;
+  max-width: 100%;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header:not([data-variant='banner']):not([data-variant='ribbon']) .ui-header__ribbon {
+  width: min(100%, 360px);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header__content {
+  min-height: 84px;
+  padding: 24px 34px 26px;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='banner'] .ui-header__ribbon {
+  --ui-header-variant-width: 448px;
+}
+
+/* Ribbon — ornate plate with gold side flourishes */
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='ribbon'] {
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='ribbon'] .ui-header__ribbon {
+  --ui-header-variant-width: 100%;
+  background: var(--ui-fantasy-plate-fill);
+  border: 2px solid rgba(200, 164, 89, 0.5);
+  border-top: none;
+  border-radius: 0;
+  overflow: visible;
+  box-shadow:
+    inset 0 -8px 14px rgba(7, 8, 11, 0.28),
+    inset 0 0 0 1px rgba(247, 226, 167, 0.06);
+  clip-path: polygon(
+    10px 0, calc(100% - 10px) 0,
+    100% 10px, 100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    10px 100%,
+    0 calc(100% - 10px), 0 10px
+  );
+}
+
+/* Gold line flourishes extending from each side */
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='ribbon'] .ui-header__ribbon::before,
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='ribbon'] .ui-header__ribbon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 28px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(200, 164, 89, 0) 0%, rgba(200, 164, 89, 0.6) 100%);
+  z-index: -1;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='ribbon'] .ui-header__ribbon::before {
+  right: 100%;
+  background: linear-gradient(90deg, rgba(200, 164, 89, 0) 0%, rgba(200, 164, 89, 0.6) 100%);
+  box-shadow: -32px 0 0 2px rgba(200, 164, 89, 0.25);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='ribbon'] .ui-header__ribbon::after {
+  left: 100%;
+  background: linear-gradient(90deg, rgba(200, 164, 89, 0.6) 0%, rgba(200, 164, 89, 0) 100%);
+  box-shadow: 32px 0 0 2px rgba(200, 164, 89, 0.25);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='ribbon'] .ui-header__content {
+  min-height: 0;
+  padding: 10px 28px;
+  gap: 0;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='ribbon'] .ui-header__title {
+  font-size: 16px;
+  color: #f0d99a;
+}
+
+/* Banner — shield/pennant shape with pointed bottom and gold frame */
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='banner'] {
+  filter:
+    drop-shadow(0 0 0.5px rgba(200, 164, 89, 0.7))
+    drop-shadow(0 0 0.5px rgba(200, 164, 89, 0.7))
+    drop-shadow(0 5px 10px rgba(0, 0, 0, 0.5));
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='banner'] .ui-header__ribbon {
+  --ui-header-variant-width: 340px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='banner'] .ui-header__ribbon::before {
+  background: var(--ui-fantasy-plate-fill);
+  border: none;
+  border-radius: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(247, 226, 167, 0.1),
+    inset 0 0 0 1px rgba(247, 226, 167, 0.06),
+    inset 0 -12px 20px rgba(7, 8, 11, 0.35);
+  clip-path: polygon(
+    8px 0, calc(100% - 8px) 0,
+    100% 8px,
+    100% 55%,
+    50% 100%,
+    0 55%,
+    0 8px
+  );
+}
+
+/* Decorative gold filigree lines extending from banner sides */
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='banner'] .ui-header__ribbon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -20%;
+  right: -20%;
+  height: 1px;
+  z-index: -1;
+  background:
+    linear-gradient(90deg,
+      rgba(200, 164, 89, 0) 0%,
+      rgba(200, 164, 89, 0.4) 15%,
+      rgba(200, 164, 89, 0) 30%,
+      transparent 30%,
+      transparent 70%,
+      rgba(200, 164, 89, 0) 70%,
+      rgba(200, 164, 89, 0.4) 85%,
+      rgba(200, 164, 89, 0) 100%
+    );
+  box-shadow:
+    0 -4px 0 0 rgba(200, 164, 89, 0.08),
+    0 4px 0 0 rgba(200, 164, 89, 0.08);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='banner'] .ui-header__content {
+  min-height: 0;
+  padding: 12px 28px 36px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='ribbon'] .ui-header__content {
+  min-height: 0;
+  padding: 8px 20px;
+  gap: 0;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header[data-variant='ribbon'] .ui-header__title {
+  font-size: 16px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header:not([data-variant='banner']):not([data-variant='ribbon']) .ui-header__content {
+  min-height: 58px;
+  padding: 12px 22px 14px;
+  gap: 2px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header__eyebrow,
+[data-ui-theme='ornate-fantasy'] .ui-ticket__eyebrow {
+  color: #f0d99a;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header__title {
+  font-size: 28px;
+  text-transform: uppercase;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-header:not([data-variant='banner']):not([data-variant='ribbon']) .ui-header__title {
+  font-size: 22px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-ticket {
+  color: var(--ui-ticket-text);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-ticket__content {
+  gap: 6px;
+  padding: 52px 58px 48px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-ticket__title {
+  font-size: 32px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-icon-frame {
+  overflow: hidden;
+  border-radius: 6px;
+  border: 2px solid rgba(211, 182, 112, 0.35);
+  background: linear-gradient(180deg, #22304c 0%, #10151f 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.1),
+    0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-icon-frame .ui-icon-frame__art {
+  display: none;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-icon-frame__content {
+  color: #d4b86a;
+}
+
+/* Circle Frame — ornate medallion: gold gradient rim, dark core, inner glow */
+[data-ui-theme='ornate-fantasy'] .ui-circle-frame {
+  border-width: 3px;
+  border-color: var(--ui-circle-frame-color, #c8a459);
+  background:
+    radial-gradient(circle at 40% 30%, rgba(122, 160, 222, 0.12) 0%, transparent 60%),
+    linear-gradient(180deg, #1a2230 0%, #090f19 100%);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(247, 226, 167, 0.12),
+    0 0 0 1px rgba(200, 164, 89, 0.3),
+    0 -1px 0 1px rgba(240, 217, 154, 0.2),
+    0 1px 0 1px rgba(100, 70, 20, 0.4),
+    0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-badge {
+  min-height: 30px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-badge::before {
+  border-width: 1px;
+  border-radius: var(--ui-fantasy-radius-hard);
+  clip-path: var(--ui-fantasy-hard-clip);
+  box-shadow:
+    0 10px 16px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 244, 210, 0.08);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-badge[data-variant='status'] {
+  color: #efe5d1;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-badge[data-variant='counter'] {
+  color: var(--ui-badge-counter-text);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-badge[data-variant='new'] {
+  color: #f8e9bf;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-badge__content {
+  position: relative;
+  z-index: 1;
+  padding: 7px 12px;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-badge[data-variant='counter'] .ui-badge__content,
+[data-ui-theme='ornate-fantasy'] .ui-badge[data-variant='new'] .ui-badge__content {
+  min-width: 30px;
+  justify-content: center;
+  padding: 7px 9px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-badge[data-variant='counter'] .ui-badge__content {
+  text-shadow: var(--ui-button-label-shadow-on-light);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-badge[data-variant='counter']::before,
+[data-ui-theme='ornate-fantasy'] .ui-badge[data-variant='new']::before {
+  border-radius: 999px;
+  box-shadow:
+    0 10px 16px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 248, 223, 0.2),
+    inset 0 -1px 0 rgba(74, 34, 10, 0.4);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-tag {
+  min-height: 42px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-tag::before {
+  border: 1px solid rgba(212, 168, 74, 0.32);
+  border-radius: var(--ui-fantasy-radius-control);
+  clip-path: var(--ui-fantasy-hard-clip);
+  background:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.08) 0%, rgba(255, 248, 225, 0) 18%),
+    var(--ui-fantasy-inkwell-fill);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.08),
+    inset 0 0 0 1px rgba(110, 81, 25, 0.14),
+    var(--ui-fantasy-support-shadow);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-tag::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: var(--ui-fantasy-radius-hard);
+  clip-path: var(--ui-fantasy-hard-clip);
+  background: var(--ui-fantasy-gold-line-h) center top / calc(100% - 28px) 1px no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 74, 0.12);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-tag__content {
+  padding: 10px 18px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-tag[data-variant='callout'] .ui-tag__content {
+  padding-bottom: 10px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-pagination-dot {
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
+  min-height: 22px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-pagination-dot::before {
+  border: none;
+  border-radius: 0;
+  background: center / 100% 100% no-repeat var(--ui-fantasy-art-medallion);
+  box-shadow: var(--ui-fantasy-support-shadow);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-pagination-dot__content {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(244, 234, 207, 0.34);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-pagination-dot[data-state='active'] .ui-pagination-dot__content {
+  background: #f4df9c;
+  box-shadow: 0 0 10px rgba(244, 223, 156, 0.26);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='icon']::before,
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='close']::before,
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='back']::before,
+[data-ui-theme='ornate-fantasy'] .ui-icon-frame:not([data-ui-renderer-backed='true'])::before {
+  border: none;
+  border-radius: 0;
+  background: center / 100% 100% no-repeat var(--ui-fantasy-art-medallion);
+  box-shadow: var(--ui-fantasy-support-shadow);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='icon']::after,
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='close']::after,
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='back']::after,
+[data-ui-theme='ornate-fantasy'] .ui-icon-frame:not([data-ui-renderer-backed='true'])::after {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 999px;
+  background: var(--ui-button-icon-fill);
+  box-shadow: inset 0 1px 0 rgba(255, 247, 220, 0.18), inset 0 -10px 14px rgba(7, 8, 11, 0.42);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='icon'],
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='close'],
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='back'] {
+  color: var(--ui-button-icon-text);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-tabs {
+  gap: 6px;
+  padding: 6px 8px 0;
+  border-radius: var(--ui-fantasy-radius-panel);
+  clip-path: var(--ui-fantasy-hard-clip);
+  background:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.06) 0%, rgba(255, 248, 225, 0) 18%),
+    linear-gradient(180deg, rgba(20, 26, 53, 0.96) 0%, rgba(9, 12, 17, 0.96) 100%);
+  border: 1px solid rgba(212, 168, 74, 0.24);
+  box-shadow:
+    var(--ui-fantasy-gold-glow),
+    0 14px 24px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 244, 210, 0.04);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='tab'],
+[data-ui-theme='ornate-fantasy'] .ui-rail-button {
+  color: #e8dcc4;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='tab'] {
+  min-height: 44px;
+  padding: 6px 12px 10px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.52);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='tab']::before,
+[data-ui-theme='ornate-fantasy'] .ui-rail-button::before {
+  border: none;
+  border-radius: 0;
+  background: center / 100% 100% no-repeat var(--ui-fantasy-art-tab);
+  box-shadow: var(--ui-fantasy-support-shadow);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='tab']::before {
+  content: '';
+  border: 1px solid transparent;
+  border-radius: var(--ui-fantasy-radius-hard);
+  clip-path: var(--ui-fantasy-hard-clip);
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='tab']::after,
+[data-ui-theme='ornate-fantasy'] .ui-rail-button::after {
+  content: '';
+  position: absolute;
+  inset: 9px 12px 11px;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: var(--ui-fantasy-radius-hard);
+  clip-path: var(--ui-fantasy-hard-clip);
+  background: var(--ui-button-tab-fill);
+  box-shadow: inset 0 1px 0 rgba(255, 244, 210, 0.1), inset 0 -10px 14px rgba(6, 8, 12, 0.42);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='tab']::after {
+  content: none;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='tab'][data-state='active']::after,
+[data-ui-theme='ornate-fantasy'] .ui-rail-button[data-state='active']::after {
+  background: var(--ui-button-tab-active-fill);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='tab'][data-state='active']::after {
+  content: '';
+  inset: 6px 8px 10px;
+  border-radius: var(--ui-fantasy-radius-hard);
+  clip-path: var(--ui-fantasy-hard-clip);
+  background:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.1) 0%, rgba(255, 248, 225, 0) 18%),
+    var(--ui-button-tab-active-fill);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.12),
+    inset 0 0 0 1px rgba(244, 215, 133, 0.16);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='tab'][data-state='active'],
+[data-ui-theme='ornate-fantasy'] .ui-rail-button[data-state='active'] {
+  color: #fff8e3;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.56),
+    0 0 12px rgba(212, 168, 74, 0.22);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='tab'] .ui-button__content {
+  position: relative;
+  padding-bottom: 10px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='tab'] .ui-button__content::after {
+  content: none;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='tab'][data-state='active'] .ui-button__content::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -12px;
+  width: min(124px, calc(100% + 24px));
+  height: 28px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: center / 100% 100% no-repeat var(--ui-fantasy-art-highlight-divider);
+  opacity: 0.94;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='tab'] .ui-button__label {
+  font-size: 0.84em;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-rail-button {
+  min-height: 78px;
+}
+
+/* ── Segmented Control ── */
+
+[data-ui-theme='ornate-fantasy'] .ui-segmented-control {
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: var(--ui-fantasy-radius-panel);
+  clip-path: var(--ui-fantasy-hard-clip);
+  background:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.05) 0%, rgba(255, 248, 225, 0) 18%),
+    linear-gradient(180deg, rgba(20, 26, 53, 0.96) 0%, rgba(9, 12, 17, 0.96) 100%);
+  border: 1px solid rgba(212, 168, 74, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 244, 210, 0.05), var(--ui-fantasy-gold-glow);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-toggle-group {
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: var(--ui-fantasy-radius-panel);
+  clip-path: var(--ui-fantasy-hard-clip);
+  background:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.05) 0%, rgba(255, 248, 225, 0) 18%),
+    linear-gradient(180deg, rgba(20, 26, 53, 0.96) 0%, rgba(9, 12, 17, 0.96) 100%);
+  border: 1px solid rgba(212, 168, 74, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 244, 210, 0.05), var(--ui-fantasy-gold-glow);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='segment'] {
+  min-height: var(--ui-button-segment-height, 44px);
+  padding: 0 16px;
+  border-radius: var(--ui-fantasy-radius-hard);
+  color: #a8977a;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='segment']::before {
+  border: 1px solid transparent;
+  border-radius: var(--ui-fantasy-radius-hard);
+  clip-path: var(--ui-fantasy-hard-clip);
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='segment']::after {
+  content: none;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='segment'][data-state='active'] {
+  color: #fff4df;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='segment'][data-state='active']::before {
+  border-color: rgba(244, 215, 133, 0.42);
+  background:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.08) 0%, rgba(255, 248, 225, 0) 20%),
+    linear-gradient(180deg, rgba(184, 138, 50, 0.24) 0%, rgba(46, 32, 8, 0.16) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 244, 210, 0.12), 0 0 12px rgba(212, 168, 74, 0.1);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='toggle'] {
+  min-height: var(--ui-button-segment-height, 44px);
+  padding: 0 16px;
+  border-radius: var(--ui-fantasy-radius-hard);
+  color: #a8977a;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='toggle']::before {
+  border: 1px solid transparent;
+  border-radius: var(--ui-fantasy-radius-hard);
+  clip-path: var(--ui-fantasy-hard-clip);
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='toggle']::after {
+  content: none;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='toggle'][data-state='active'] {
+  color: #fff4df;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-button[data-variant='toggle'][data-state='active']::before {
+  border-color: rgba(214, 186, 118, 0.45);
+  background: transparent;
+  box-shadow: 0 0 8px rgba(214, 186, 118, 0.08);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-rail-button__content {
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-rail-button__frame {
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.24));
+}
+
+/* ── Bottom Tab Bar ─────────────────────────────────────────────────────── */
+
+[data-ui-theme='ornate-fantasy'] .ui-tab-bar {
+  --ui-tab-bar-fill: linear-gradient(180deg, #1a2238 0%, #10151f 100%);
+  --ui-tab-bar-border: rgba(211, 182, 112, 0.18);
+  --ui-tab-bar-text: rgba(210, 198, 173, 0.5);
+  --ui-tab-bar-active-text: #f3d992;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-list-row {
+  --ui-list-row-fill:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.06) 0%, rgba(255, 248, 225, 0) 20%),
+    linear-gradient(180deg, var(--ui-fantasy-surface-3) 0%, var(--ui-fantasy-surface-1) 100%);
+  --ui-list-row-border: rgba(212, 168, 74, 0.28);
+  --ui-list-row-highlight-fill: linear-gradient(180deg, rgba(243, 217, 146, 0.18) 0%, rgba(211, 182, 112, 0.12) 100%);
+  --ui-list-row-highlight-border: rgba(243, 217, 146, 0.4);
+  border-radius: var(--ui-fantasy-radius-hard);
+  clip-path: var(--ui-fantasy-hard-clip);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.08),
+    inset 0 0 0 1px rgba(110, 81, 25, 0.12),
+    0 8px 14px rgba(0, 0, 0, 0.2);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-list-row__score {
+  font-variant-numeric: tabular-nums;
+  color: #f4d785;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.48);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-avatar-frame {
+  border-radius: var(--ui-fantasy-radius-hard);
+  border: 2px solid rgba(211, 182, 112, 0.35);
+  background: linear-gradient(180deg, #22304c 0%, #10151f 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.1),
+    0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-avatar-frame__icon {
+  opacity: 0.5;
+  color: #d4b86a;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-rank-badge[data-rank='1'] { color: #f3d992; }
+[data-ui-theme='ornate-fantasy'] .ui-rank-badge[data-rank='2'] { color: #b8c4d8; }
+[data-ui-theme='ornate-fantasy'] .ui-rank-badge[data-rank='3'] { color: #c4a06a; }
+
+[data-ui-theme='ornate-fantasy'] .ui-rank-badge__number {
+  background: linear-gradient(180deg, #22304c 0%, #10151f 100%);
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--ui-fantasy-radius-hard);
+  color: #eee4cf;
+  border: 1px solid rgba(211, 182, 112, 0.25);
+  font-size: 14px;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-promo-badge {
+  border-radius: var(--ui-fantasy-radius-hard);
+  border: 1px solid rgba(211, 182, 112, 0.3);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-promo-badge[data-tone='value'] {
+  --ui-promo-badge-fill: linear-gradient(180deg, #c4882e 0%, #8a5c1a 100%);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-promo-badge[data-tone='best'] {
+  --ui-promo-badge-fill: linear-gradient(180deg, #8b2020 0%, #5a1010 100%);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-promo-badge[data-tone='special'] {
+  --ui-promo-badge-fill: linear-gradient(180deg, #d4b86a 0%, #a08838 100%);
+  --ui-promo-badge-text: #1a1208;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-countdown__time {
+  color: #f3d992;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-price-label {
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-shop-card {
+  --ui-shop-card-border: rgba(212, 168, 74, 0.42);
+  --ui-shop-card-border-width: 1px;
+  --ui-shop-card-banner-fill: rgba(8, 12, 24, 0.62);
+  --ui-shop-card-price-fill: rgba(8, 12, 24, 0.52);
+  --ui-shop-card-radius: var(--ui-fantasy-radius-hard);
+  clip-path: var(--ui-fantasy-hard-clip);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.12),
+    inset 0 0 0 1px rgba(110, 81, 25, 0.14),
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    var(--ui-fantasy-gold-glow);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-shop-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-shop-card::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: var(--ui-fantasy-radius-hard);
+  background-image:
+    var(--ui-fantasy-gold-line-h),
+    linear-gradient(var(--ui-fantasy-corner-line), var(--ui-fantasy-corner-line)),
+    linear-gradient(var(--ui-fantasy-corner-line), var(--ui-fantasy-corner-line)),
+    linear-gradient(var(--ui-fantasy-corner-line), var(--ui-fantasy-corner-line)),
+    linear-gradient(var(--ui-fantasy-corner-line), var(--ui-fantasy-corner-line));
+  background-size:
+    calc(100% - 36px) 1px,
+    22px 1px,
+    1px 22px,
+    22px 1px,
+    1px 22px;
+  background-position:
+    center top,
+    bottom right,
+    bottom right,
+    top left,
+    top left;
+  background-repeat: no-repeat;
+  opacity: 0.66;
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 74, 0.12);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-shop-card[data-tint='subscription'] {
+  --ui-shop-card-fill:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.08) 0%, rgba(255, 248, 225, 0) 18%),
+    linear-gradient(180deg, #3b1f5e 0%, #2a1545 100%);
+  --ui-shop-card-border: rgba(160, 100, 220, 0.4);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-shop-card[data-tint='special'] {
+  --ui-shop-card-fill:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.08) 0%, rgba(255, 248, 225, 0) 18%),
+    linear-gradient(180deg, #1a3a2a 0%, #0f2518 100%);
+  --ui-shop-card-border: rgba(100, 200, 140, 0.35);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-shop-card[data-tint='chest'] {
+  --ui-shop-card-fill:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.08) 0%, rgba(255, 248, 225, 0) 18%),
+    linear-gradient(180deg, #1a2a4a 0%, #0f1a32 100%);
+  --ui-shop-card-border: rgba(100, 150, 220, 0.35);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-shop-card[data-tint='currency'] {
+  --ui-shop-card-fill:
+    linear-gradient(180deg, rgba(255, 248, 225, 0.1) 0%, rgba(255, 248, 225, 0) 18%),
+    linear-gradient(180deg, #3a2a10 0%, #251a08 100%);
+  --ui-shop-card-border: rgba(211, 182, 112, 0.45);
+}
+
+/* ── Nav Icons ── */
+
+[data-ui-theme='ornate-fantasy'] .ui-nav-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  background: rgba(16, 21, 31, 0.7);
+  color: rgba(210, 198, 173, 0.7);
+  border: 1px solid rgba(211, 182, 112, 0.2);
+}
+
+[data-ui-theme='ornate-fantasy'] .ui-nav-icon:hover {
+  background: rgba(16, 21, 31, 0.9);
+  color: #eee4cf;
+}
