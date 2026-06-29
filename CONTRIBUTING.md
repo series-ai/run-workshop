@@ -111,10 +111,74 @@ Use the pull request template and confirm all required certification checkboxes 
 
 Keep changes focused. Clearly describe what changed and why.
 
+If your change is security-sensitive (workflows, dependencies, credentials), check the
+matching boxes in the template so reviewers can prioritize it.
+
+## Security
+
+Report vulnerabilities privately. See [SECURITY.md](SECURITY.md).
+
+### CI safety for community pull requests
+
+Community pull request workflows are untrusted. This repository encodes several
+guardrails:
+
+- **Secret Scan** blocks likely secrets in tracked files.
+- **Workflow Security** blocks unpinned GitHub Actions and `pull_request_target`.
+- **Dependency Review** runs when dependency manifests or lockfiles change.
+- **Contribution Certification** requires legal attestations in the PR description.
+
+Forked pull requests do not receive repository secrets. Do not add workflows that
+need secrets to run on every community pull request.
+
+### GitHub Actions pinning
+
+Pin third-party actions to a full 40-character commit SHA, not a moving tag:
+
+```yaml
+uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+```
+
+`scripts/workflow-security-check.sh` enforces this in CI. Local actions, Docker
+images, and runner images (`ubuntu-latest`) produce warnings when they cannot be
+SHA-pinned; prefer fixed runners such as `ubuntu-24.04` and image digests when
+possible.
+
+Dependabot opens weekly pull requests to refresh pinned GitHub Actions.
+
+### AI-assisted review
+
+Maintainers may use AI to help review pull requests. To do that safely:
+
+- Do not run AI review automatically on fork pull requests with repository secrets.
+- Prefer `workflow_dispatch` or a maintainer-triggered comment workflow that verifies the actor before using secrets.
+- Send only the diff and metadata to the model; do not execute untrusted pull request code in secret-backed jobs.
+- Treat AI output as advisory; a human maintainer remains responsible for merge decisions.
+
 ## Review and merge
 
 Maintainers may decline or request changes to any contribution that does not meet these requirements or that has not checked all certification boxes.
 
+Changes to security-sensitive paths listed in [.github/CODEOWNERS](.github/CODEOWNERS) require review from the listed owners.
+
 ## Branch protection
 
-The default branch requires a pull request with at least one approving review before merge. Required status checks: **Contribution Certification** and **Secret Scan**. New commits after approval require re-review.
+The default branch requires a pull request with at least one approving review before merge. Required status checks:
+
+- **Contribution Certification**
+- **Secret Scan**
+- **Workflow Security**
+
+Add **Dependency Review** as a required check once dependency manifests exist in the repository.
+
+New commits after approval require re-review.
+
+### Repository settings to verify (not encoded in git)
+
+Confirm these GitHub settings manually or via org policy:
+
+- Require approval for first-time contributors before workflows run.
+- Default `GITHUB_TOKEN` permissions: read-only.
+- Secret scanning and push protection enabled.
+- Dependabot alerts enabled.
+- Restrict who can approve and merge pull requests.

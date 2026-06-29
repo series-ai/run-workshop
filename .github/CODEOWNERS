@@ -1,0 +1,9 @@
+# Security-sensitive paths require review from @series-ai/devops.
+# Update team assignments here if repository ownership changes.
+
+/.github/ @series-ai/devops
+/scripts/ @series-ai/devops
+/SECURITY.md @series-ai/devops
+/CONTRIBUTING.md @series-ai/devops
+/LICENSE.md @series-ai/devops
+/THIRD_PARTY_NOTICES.md @series-ai/devops

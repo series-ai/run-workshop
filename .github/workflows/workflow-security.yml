@@ -1,0 +1,27 @@
+name: Workflow Security
+
+on:
+  pull_request:
+    paths:
+      - .github/**
+      - scripts/workflow-security-check.sh
+  push:
+    branches:
+      - main
+    paths:
+      - .github/**
+      - scripts/workflow-security-check.sh
+
+permissions:
+  contents: read
+
+jobs:
+  workflow-security:
+    name: Workflow Security
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Validate workflow safety and action pinning
+        run: bash scripts/workflow-security-check.sh
