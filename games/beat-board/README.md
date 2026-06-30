@@ -134,6 +134,7 @@ internals (validator thresholds, trim math, the fix decision table) see
 - [Audio Kits](docs/audio-kits.md) — audio internals reference
 - [Preload](docs/preload.md) — asset preload guide
 - [Product Requirements](docs/prd.md)
+- [Roadmap](ROADMAP.md)
 
 ## License
 
