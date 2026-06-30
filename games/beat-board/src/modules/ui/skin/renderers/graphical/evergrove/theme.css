@@ -1,0 +1,812 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Evergrove — Cozy nature farm theme
+   Warm parchment panels with wooden borders, teal action buttons,
+   amber secondary buttons, nature green page background.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Righteous&display=swap');
+
+[data-ui-theme='evergrove'] {
+
+  /* ── Fonts — Righteous: bold rounded display, great for cozy games ── */
+  --ui-font-body: 'Righteous', 'Trebuchet MS', -apple-system, BlinkMacSystemFont, sans-serif;
+  --ui-font-display: var(--ui-font-body);
+  --ui-font-weight-display: 800;
+  --ui-font-weight-body: 600;
+  --ui-font-weight-heading: 800;
+  --ui-font-weight-label: 700;
+
+  /* ── Page — nature green with depth ── */
+  --ui-page-bg:
+    radial-gradient(ellipse 120% 60% at 50% 0%, rgba(80, 140, 50, 0.5) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 20% 90%, rgba(40, 90, 20, 0.4) 0%, transparent 50%),
+    linear-gradient(180deg, #3a6228 0%, #2c4e1e 100%);
+  --ui-page-bg-mode: dark;
+
+  /* ── Text — dark brown on light panels, cream on dark ── */
+  --ui-text-primary: #3d1e08;
+  --ui-text-muted: rgba(90, 55, 20, 0.7);
+  --ui-text-strong: #1e0c02;
+  --ui-focus-ring: rgba(60, 180, 160, 0.55);
+
+  /* ── Text shadow — none on light, subtle drop on dark ── */
+  --ui-text-shadow: none;
+  --ui-text-shadow-on-dark: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --ui-text-shadow-on-light: none;
+  --ui-button-label-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+
+  /* (button pill shape applied via selector override below) */
+
+  /* ── Border widths — thick wooden feel ── */
+  --ui-button-border-width: 1px;
+  --ui-panel-border-width: 3px;
+  --ui-header-border-width: 3px;
+  --ui-icon-frame-border-width: 2px;
+  --ui-input-border-width: 2px;
+  --ui-checkbox-border-width: 2px;
+  --ui-switch-border-width: 2px;
+  --ui-progress-border-width: 2px;
+  --ui-slider-border-width: 2px;
+  --ui-slider-thumb-border-width: 2px;
+  --ui-pagination-border-width: 2px;
+  --ui-rail-border-width: 2px;
+  --ui-rail-button-border-width: 2px;
+
+  /* ══════════════════════════════════════════════
+     BUTTONS
+     ══════════════════════════════════════════════ */
+
+  /* ── Primary — teal layered button ── */
+  /* background=face, inset shadows paint rings from edge inward: dark→white→medium */
+  --ui-button-primary-fill: #4ABFAB;
+  --ui-button-primary-border: #552D14;
+  --ui-button-primary-shadow:
+    inset 0 0 0 4px #318B7C,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.32),
+    inset 0 0 0 8px #3FB19E,
+    0 3px 0 #552D14,
+    0 5px 9px rgba(0, 0, 0, 0.2);
+  --ui-button-primary-active-shadow:
+    inset 0 0 0 4px #318B7C,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.25),
+    inset 0 0 0 8px #3FB19E,
+    0 2px 0 #552D14;
+  --ui-button-primary-text: #ffffff;
+
+  /* ── Secondary — yellow layered button ── */
+  --ui-button-secondary-fill: #FFB92E;
+  --ui-button-secondary-border: #552D14;
+  --ui-button-secondary-shadow:
+    inset 0 0 0 4px #C78500,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.28),
+    inset 0 0 0 8px #FAA700,
+    0 3px 0 #552D14,
+    0 5px 9px rgba(0, 0, 0, 0.2);
+  --ui-button-secondary-active-shadow:
+    inset 0 0 0 4px #C78500,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.22),
+    inset 0 0 0 8px #FAA700,
+    0 2px 0 #552D14;
+  --ui-button-secondary-text: #3d1e08;
+
+  /* ── Ghost / Tertiary — warm white layered rings ── */
+  --ui-button-ghost-fill: #FFF4DF;
+  --ui-button-ghost-border: #552D14;
+  --ui-button-ghost-shadow:
+    inset 0 0 0 4px #FFDC96,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.5),
+    inset 0 0 0 8px #FFE7B8,
+    0 3px 0 #552D14,
+    0 5px 9px rgba(0, 0, 0, 0.2);
+  --ui-button-ghost-active-shadow:
+    inset 0 0 0 4px #FFDC96,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.4),
+    inset 0 0 0 8px #FFE7B8,
+    0 1px 0 #552D14;
+  --ui-button-ghost-text: #4a2808;
+
+  /* ── Pill — tertiary inactive, teal active ── */
+  --ui-button-pill-fill: #FFF4DF;
+  --ui-button-pill-border: #552D14;
+  --ui-button-pill-shadow:
+    inset 0 0 0 4px #FFDC96,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.5),
+    inset 0 0 0 8px #FFE7B8,
+    0 3px 0 #552D14,
+    0 5px 9px rgba(0, 0, 0, 0.2);
+  --ui-button-pill-active-shadow:
+    inset 0 0 0 4px #318B7C,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.32),
+    inset 0 0 0 8px #3FB19E,
+    0 2px 0 #552D14;
+  --ui-button-pill-text: #4a2808;
+  --ui-button-pill-padding: 0 18px;
+  --ui-button-pill-radius: 999px;
+
+  /* ── Icon button — warm white, layered rings ── */
+  --ui-button-icon-fill: #FFF4DF;
+  --ui-button-icon-border: #552D14;
+  --ui-button-icon-shadow:
+    inset 0 0 0 4px #FFDC96,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.5),
+    inset 0 0 0 8px #FFE7B8,
+    0 3px 0 #552D14,
+    0 5px 9px rgba(0, 0, 0, 0.2);
+  --ui-button-icon-text: #3d1e08;
+
+  /* ── Grid button — yellow layering ── */
+  --ui-button-grid-fill: #FFB92E;
+  --ui-button-grid-border: #552D14;
+  --ui-button-grid-shadow:
+    inset 0 0 0 4px #C78500,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.28),
+    inset 0 0 0 8px #FAA700,
+    0 3px 0 #552D14,
+    0 5px 9px rgba(0, 0, 0, 0.2);
+  --ui-button-grid-active-shadow:
+    inset 0 0 0 4px #C78500,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.22),
+    inset 0 0 0 8px #FAA700,
+    0 2px 0 #552D14;
+  --ui-button-grid-text: #3d1e08;
+
+  /* ── Tab button — tertiary/white rings inactive, teal rings active ── */
+  --ui-button-tab-fill: #FFF4DF;
+  --ui-button-tab-border: #552D14;
+  --ui-button-tab-active-fill: #4ABFAB;
+  --ui-button-tab-active-border: #552D14;
+  --ui-button-tab-shadow:
+    inset 0 0 0 4px #FFDC96,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.5),
+    inset 0 0 0 8px #FFE7B8,
+    0 3px 0 #552D14,
+    0 5px 9px rgba(0, 0, 0, 0.2);
+  --ui-button-tab-text: #4a2808;
+  --ui-button-tab-active-text: #ffffff;
+  --ui-button-tab-highlight-image: none;
+  --ui-button-tab-highlight-width: 0px;
+  --ui-button-tab-highlight-height: 0px;
+
+  /* ══════════════════════════════════════════════
+     PANELS — warm parchment with wooden borders
+     ══════════════════════════════════════════════ */
+
+  --ui-panel-card-fill:
+    linear-gradient(180deg,
+      #f5e4ba 0%,
+      #edd5a0 100%);
+  --ui-panel-card-border: rgba(140, 88, 28, 0.7);
+  --ui-panel-card-shadow:
+    inset 0 1px 0 rgba(255, 248, 225, 0.6),
+    0 5px 14px rgba(60, 30, 5, 0.25);
+  /* Subtle warm top shine */
+  --ui-panel-card-overlay-image:
+    linear-gradient(180deg,
+      rgba(255, 248, 220, 0.4) 0%,
+      rgba(255, 248, 220, 0) 30%);
+  --ui-panel-card-overlay-size: 100% 100%;
+  --ui-panel-card-overlay-position: center top;
+  --ui-panel-card-overlay-repeat: no-repeat;
+  --ui-panel-card-overlay-opacity: 1;
+
+  --ui-panel-section-fill:
+    linear-gradient(180deg,
+      #f2deb2 0%,
+      #e8ce98 100%);
+  --ui-panel-section-border: rgba(135, 82, 22, 0.65);
+  --ui-panel-section-shadow:
+    inset 0 1px 0 rgba(255, 244, 215, 0.5),
+    0 4px 10px rgba(60, 30, 5, 0.2);
+  --ui-panel-section-overlay-image:
+    linear-gradient(180deg,
+      rgba(255, 244, 215, 0.35) 0%,
+      rgba(255, 244, 215, 0) 28%);
+  --ui-panel-section-overlay-size: 100% 100%;
+  --ui-panel-section-overlay-position: center top;
+  --ui-panel-section-overlay-repeat: no-repeat;
+  --ui-panel-section-overlay-opacity: 1;
+
+  --ui-panel-overlay-fill:
+    linear-gradient(180deg,
+      #f5e4ba 0%,
+      #e8ce98 100%);
+  --ui-panel-overlay-border: rgba(140, 88, 28, 0.7);
+  --ui-panel-overlay-shadow:
+    inset 0 1px 0 rgba(255, 248, 225, 0.5),
+    0 24px 48px rgba(40, 20, 5, 0.45);
+
+  --ui-panel-radius: 14px;
+
+  /* ── Header — golden brown banner ── */
+  --ui-header-fill:
+    linear-gradient(180deg,
+      #e8a840 0%,
+      #c87a18 45%,
+      #a86010 45%,
+      #884808 100%);
+  --ui-header-border: rgba(78, 38, 4, 0.88);
+  --ui-header-shadow:
+    inset 0 1px 0 rgba(255, 220, 140, 0.38),
+    0 5px 0 rgba(60, 28, 2, 0.88),
+    0 12px 20px rgba(0, 0, 0, 0.28);
+  --ui-header-text: #ffffff;
+
+  /* ── Icon frame — parchment well ── */
+  --ui-icon-frame-fill:
+    linear-gradient(145deg,
+      rgba(238, 208, 148, 0.95) 0%,
+      rgba(218, 182, 118, 0.95) 100%);
+  --ui-icon-frame-border: rgba(130, 78, 20, 0.5);
+  --ui-icon-frame-shadow:
+    inset 0 1px 0 rgba(255, 240, 200, 0.5),
+    0 3px 8px rgba(60, 30, 5, 0.2);
+
+  /* ══════════════════════════════════════════════
+     BADGES, TAGS, CHIPS
+     ══════════════════════════════════════════════ */
+
+  --ui-badge-status-fill:
+    linear-gradient(180deg, #5de8d8 0%, #1ea898 100%);
+  --ui-badge-status-border: rgba(6, 68, 60, 0.8);
+  --ui-badge-counter-fill:
+    linear-gradient(180deg, #ffe070 0%, #f0a820 100%);
+  --ui-badge-counter-border: rgba(120, 72, 8, 0.75);
+  --ui-badge-new-fill:
+    linear-gradient(180deg, #ff8070 0%, #e83820 100%);
+  --ui-badge-new-border: rgba(130, 28, 10, 0.8);
+  --ui-badge-chip-fill:
+    linear-gradient(180deg,
+      rgba(240, 215, 165, 0.95) 0%,
+      rgba(220, 192, 138, 0.95) 100%);
+  --ui-badge-chip-border: rgba(130, 78, 20, 0.4);
+  --ui-badge-shadow:
+    0 2px 6px rgba(60, 30, 5, 0.22);
+  --ui-badge-radius: 100px;
+
+  --ui-tag-fill:
+    linear-gradient(180deg, #5de8d8 0%, #1ea898 100%);
+  --ui-tag-border: rgba(6, 68, 60, 0.82);
+  --ui-tag-shadow:
+    0 3px 0 rgba(4, 50, 44, 0.7),
+    0 8px 12px rgba(0, 0, 0, 0.18);
+  --ui-tag-text: #ffffff;
+
+  --ui-chip-text: #3d1e08;
+
+  /* ══════════════════════════════════════════════
+     PROGRESS — recessed track, teal fill
+     ══════════════════════════════════════════════ */
+
+  --ui-progress-track-fill:
+    linear-gradient(180deg,
+      rgba(100, 65, 20, 0.35) 0%,
+      rgba(80, 50, 12, 0.45) 100%);
+  --ui-progress-track-border: rgba(120, 78, 18, 0.4);
+  --ui-progress-track-shadow:
+    inset 0 3px 5px rgba(60, 30, 5, 0.35),
+    0 1px 0 rgba(255, 230, 180, 0.2);
+  --ui-progress-fill:
+    linear-gradient(180deg,
+      #5de8d8 0%,
+      #2ec4b4 50%,
+      #1ea898 100%);
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(180, 255, 245, 0.4),
+    0 0 8px rgba(46, 196, 180, 0.3);
+  --ui-progress-track-height: 16px;
+  --ui-progress-track-padding: 3px;
+  --ui-progress-bar-inset: 3px;
+  --ui-progress-bar-inset-left: 3px;
+  --ui-progress-bar-inset-right: 3px;
+  --ui-progress-bar-inset-top: 3px;
+  --ui-progress-bar-inset-bottom: 3px;
+  --ui-progress-label-color: #3d1e08;
+  --ui-progress-label-size: 13px;
+  --ui-progress-thumb:
+    linear-gradient(180deg, #ffffff 0%, #f0e8d8 100%);
+
+  /* ── Slider ── */
+  --ui-slider-track-height: 16px;
+  --ui-slider-track-padding: 3px;
+  --ui-slider-bar-inset: 3px;
+  --ui-slider-thumb-width: 28px;
+  --ui-slider-thumb-height: 28px;
+  --ui-slider-thumb-shadow:
+    0 3px 7px rgba(60, 30, 5, 0.28),
+    inset 0 1px 0 rgba(255, 245, 225, 0.5);
+
+  /* ── Scrollbar — warm wood tones ── */
+  --ui-scrollbar-track-fill:
+    linear-gradient(180deg, rgba(210, 178, 118, 0.98) 0%, rgba(188, 155, 92, 0.98) 100%);
+  --ui-scrollbar-track-border: rgba(140, 88, 22, 0.45);
+  --ui-scrollbar-track-shadow:
+    inset 0 1px 0 rgba(255, 240, 200, 0.18),
+    inset 0 3px 7px rgba(60, 30, 5, 0.32),
+    0 8px 14px rgba(0, 0, 0, 0.18);
+  --ui-scrollbar-track-overlay:
+    linear-gradient(180deg, rgba(255, 235, 175, 0.18) 0%, rgba(255, 235, 175, 0) 50%);
+  --ui-scrollbar-thumb-fill:
+    linear-gradient(180deg, #f8c060 0%, #e89828 50%, #d07e18 50%, #a85c08 100%);
+  --ui-scrollbar-thumb-border: rgba(98, 52, 6, 0.92);
+  --ui-scrollbar-thumb-shadow:
+    inset 0 1px 0 rgba(255, 228, 160, 0.38),
+    0 4px 0 rgba(78, 42, 4, 0.82),
+    0 8px 14px rgba(0, 0, 0, 0.22);
+  --ui-scrollbar-thumb-overlay:
+    linear-gradient(180deg, rgba(255, 245, 200, 0.22) 0%, rgba(255, 245, 200, 0) 46%);
+  --ui-scrollbar-radius: 10px;
+  --ui-scrollbar-thickness: 16px;
+  --ui-scrollbar-thumb-inset: 2px;
+  --ui-scrollbar-active-glow:
+    0 0 0 1px rgba(46, 196, 180, 0.35),
+    0 0 16px rgba(46, 196, 180, 0.2);
+
+  /* ══════════════════════════════════════════════
+     INPUTS — recessed warm wells
+     ══════════════════════════════════════════════ */
+
+  --ui-input-fill:
+    linear-gradient(180deg,
+      rgba(160, 110, 50, 0.18) 0%,
+      rgba(140, 90, 30, 0.25) 100%);
+  --ui-input-border: rgba(130, 78, 20, 0.4);
+  --ui-input-shadow:
+    inset 0 3px 5px rgba(60, 30, 5, 0.3);
+  --ui-input-height: 50px;
+  --ui-input-padding: 12px 14px;
+  --ui-input-text: #3d1e08;
+  --ui-input-placeholder: rgba(100, 62, 22, 0.45);
+  --ui-select-chevron-size: 30px;
+  --ui-select-chevron-radius: 10px;
+  --ui-select-chevron-fill:
+    linear-gradient(180deg,
+      rgba(200, 140, 50, 0.98) 0%,
+      rgba(160, 100, 20, 0.98) 100%);
+  --ui-select-chevron-border: rgba(140, 88, 20, 0.45);
+  --ui-select-chevron-shadow:
+    inset 0 1px 0 rgba(255, 220, 150, 0.2),
+    0 3px 0 rgba(80, 48, 8, 0.7);
+  --ui-select-chevron-color: #fff8e8;
+  --ui-select-chevron-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --ui-select-chevron-offset-inline-end: 14px;
+
+  /* ── Pagination dots ── */
+  --ui-pagination-fill: rgba(140, 88, 28, 0.25);
+  --ui-pagination-active-fill:
+    linear-gradient(180deg, #5de8d8 0%, #1ea898 100%);
+  --ui-pagination-border: rgba(130, 78, 20, 0.25);
+  --ui-pagination-active-border: rgba(6, 68, 60, 0.75);
+  --ui-pagination-shadow: 0 2px 5px rgba(60, 30, 5, 0.18);
+
+  /* ── Side rail ── */
+  --ui-rail-fill:
+    linear-gradient(180deg,
+      rgba(240, 215, 162, 0.94) 0%,
+      rgba(218, 188, 128, 0.97) 100%);
+  --ui-rail-border: rgba(140, 88, 28, 0.35);
+  --ui-rail-shadow:
+    inset 0 1px 0 rgba(255, 244, 215, 0.3),
+    0 16px 32px rgba(40, 20, 5, 0.28);
+
+  /* ── Ticket ── */
+  --ui-ticket-text: #3d1e08;
+  --ui-ticket-subtitle-text: rgba(90, 55, 20, 0.72);
+
+  /* ── Switch thumb ── */
+  --ui-switch-thumb-shadow:
+    0 2px 5px rgba(60, 30, 5, 0.28),
+    inset 0 1px 0 rgba(255, 245, 220, 0.4);
+}
+
+/* ── Segmented Control / Toggle Group ──────────────────────────────────── */
+
+[data-ui-theme='evergrove'] .ui-segmented-control {
+  background: rgba(210, 180, 120, 0.35);
+  border: 2px solid rgba(140, 88, 28, 0.4);
+  border-radius: 12px;
+}
+
+[data-ui-theme='evergrove'] .ui-toggle-group {
+  background: rgba(210, 180, 120, 0.25);
+  border: 2px solid rgba(140, 88, 28, 0.3);
+  border-radius: 12px;
+}
+
+[data-ui-theme='evergrove'] .ui-button[data-variant='segment'] {
+  color: rgba(90, 55, 20, 0.7);
+  border-radius: 9px;
+}
+
+[data-ui-theme='evergrove'] .ui-button[data-variant='segment'][data-state='active']::before {
+  background: rgba(255, 245, 220, 0.75);
+  border-radius: 9px;
+  box-shadow: 0 2px 6px rgba(60, 30, 5, 0.18);
+}
+
+[data-ui-theme='evergrove'] .ui-button[data-variant='segment'][data-state='active'] {
+  color: #3d1e08;
+}
+
+[data-ui-theme='evergrove'] .ui-button[data-variant='toggle'] {
+  color: rgba(90, 55, 20, 0.7);
+  border-radius: 9px;
+}
+
+[data-ui-theme='evergrove'] .ui-button[data-variant='toggle'][data-state='active']::before {
+  border: 2px solid rgba(60, 180, 160, 0.6);
+  border-radius: 9px;
+  background: transparent;
+}
+
+[data-ui-theme='evergrove'] .ui-button[data-variant='toggle'][data-state='active'] {
+  color: #3d1e08;
+}
+
+/* ── Bottom Tab Bar ─────────────────────────────────────────────────────── */
+
+[data-ui-theme='evergrove'] .ui-tab-bar {
+  --ui-tab-bar-fill:
+    linear-gradient(180deg,
+      rgba(195, 148, 72, 0.97) 0%,
+      rgba(158, 112, 42, 0.99) 100%);
+  --ui-tab-bar-border: rgba(120, 72, 12, 0.45);
+  --ui-tab-bar-shadow:
+    0 -3px 16px rgba(40, 20, 5, 0.3),
+    inset 0 1px 0 rgba(255, 220, 140, 0.18);
+  --ui-tab-bar-text: rgba(255, 230, 175, 0.55);
+  --ui-tab-bar-active-text: #ffffff;
+}
+
+/* ── List rows ──────────────────────────────────────────────────────────── */
+
+[data-ui-theme='evergrove'] .ui-list-row {
+  --ui-list-row-fill:
+    linear-gradient(180deg,
+      rgba(245, 225, 175, 0.7) 0%,
+      rgba(228, 204, 148, 0.8) 100%);
+  --ui-list-row-border: rgba(140, 88, 28, 0.2);
+  --ui-list-row-highlight-fill:
+    linear-gradient(180deg,
+      rgba(46, 196, 180, 0.18) 0%,
+      rgba(30, 168, 152, 0.28) 100%);
+  --ui-list-row-highlight-border: rgba(46, 196, 180, 0.4);
+}
+
+/* ── Button tone overrides ──────────────────────────────────────────────── */
+
+[data-ui-theme='evergrove'] .ui-progress[data-tone='yellow'],
+[data-ui-theme='evergrove'] .ui-button[data-tone='yellow'] {
+  --ui-progress-fill:
+    linear-gradient(180deg, #ffe070 0%, #f0a820 50%, #d07808 100%);
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(255, 235, 175, 0.38),
+    0 0 8px rgba(240, 168, 32, 0.22);
+}
+
+[data-ui-theme='evergrove'] .ui-button[data-tone='yellow'] {
+  --ui-button-fill:
+    linear-gradient(180deg, #ffe070 0%, #f0a820 50%, #d07808 50%, #a85808 100%);
+  --ui-button-border: rgba(110, 58, 4, 0.9);
+  --ui-button-shadow:
+    inset 0 1px 0 rgba(255, 235, 175, 0.36),
+    0 5px 0 rgba(88, 46, 2, 0.9),
+    0 13px 20px rgba(0, 0, 0, 0.28);
+  --ui-button-active-shadow:
+    0 1px 0 rgba(88, 46, 2, 0.9),
+    inset 0 2px 5px rgba(0, 0, 0, 0.22);
+  --ui-button-text: #ffffff;
+}
+
+[data-ui-theme='evergrove'] .ui-progress[data-tone='green'],
+[data-ui-theme='evergrove'] .ui-button[data-tone='green'] {
+  --ui-progress-fill:
+    linear-gradient(180deg, #80e870 0%, #42c832 50%, #28a018 100%);
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(200, 255, 188, 0.35),
+    0 0 8px rgba(66, 200, 50, 0.2);
+}
+
+[data-ui-theme='evergrove'] .ui-button[data-tone='green'] {
+  --ui-button-fill: #4ABFAB;
+  --ui-button-border: #552D14;
+  --ui-button-shadow:
+    inset 0 0 0 4px #318B7C,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.32),
+    inset 0 0 0 8px #3FB19E,
+    0 3px 0 #552D14,
+    0 5px 9px rgba(0, 0, 0, 0.2);
+  --ui-button-active-shadow:
+    inset 0 0 0 4px #318B7C,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.25),
+    inset 0 0 0 8px #3FB19E,
+    0 2px 0 #552D14;
+  --ui-button-text: #ffffff;
+}
+
+[data-ui-theme='evergrove'] .ui-progress[data-tone='blue'],
+[data-ui-theme='evergrove'] .ui-button[data-tone='blue'] {
+  --ui-progress-fill:
+    linear-gradient(180deg, #5de8d8 0%, #2ec4b4 50%, #1ea898 100%);
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(180, 255, 245, 0.4),
+    0 0 8px rgba(46, 196, 180, 0.28);
+}
+
+[data-ui-theme='evergrove'] .ui-button[data-tone='blue'] {
+  --ui-button-fill:
+    linear-gradient(180deg, #5de8d8 0%, #2ec4b4 50%, #1ea898 50%, #0e8878 100%);
+  --ui-button-border: rgba(6, 68, 60, 0.9);
+  --ui-button-shadow:
+    inset 0 1px 0 rgba(180, 255, 245, 0.35),
+    0 5px 0 rgba(5, 52, 46, 0.9),
+    0 13px 20px rgba(0, 0, 0, 0.28);
+  --ui-button-active-shadow:
+    0 1px 0 rgba(5, 52, 46, 0.9),
+    inset 0 2px 5px rgba(0, 0, 0, 0.22);
+  --ui-button-text: #ffffff;
+}
+
+[data-ui-theme='evergrove'] .ui-progress[data-tone='red'],
+[data-ui-theme='evergrove'] .ui-button[data-tone='red'] {
+  --ui-progress-fill:
+    linear-gradient(180deg, #ff8878 0%, #e84830 50%, #c02818 100%);
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(255, 210, 200, 0.3),
+    0 0 8px rgba(232, 72, 48, 0.2);
+}
+
+[data-ui-theme='evergrove'] .ui-button[data-tone='red'] {
+  --ui-button-fill:
+    linear-gradient(180deg, #ff8878 0%, #e84830 50%, #c82818 50%, #a01808 100%);
+  --ui-button-border: rgba(110, 20, 8, 0.92);
+  --ui-button-shadow:
+    inset 0 1px 0 rgba(255, 208, 198, 0.3),
+    0 5px 0 rgba(78, 14, 5, 0.92),
+    0 13px 20px rgba(0, 0, 0, 0.28);
+  --ui-button-active-shadow:
+    0 1px 0 rgba(78, 14, 5, 0.92),
+    inset 0 2px 5px rgba(0, 0, 0, 0.22);
+  --ui-button-text: #ffffff;
+}
+
+[data-ui-theme='evergrove'] .ui-progress[data-tone='gray'],
+[data-ui-theme='evergrove'] .ui-button[data-tone='gray'] {
+  --ui-progress-fill:
+    linear-gradient(180deg, #c8b898 0%, #a09070 50%, #786848 100%);
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(225, 210, 185, 0.28),
+    0 0 8px rgba(160, 144, 112, 0.15);
+}
+
+[data-ui-theme='evergrove'] .ui-button[data-tone='gray'] {
+  --ui-button-fill:
+    linear-gradient(180deg, #c8b898 0%, #a09070 50%, #887858 50%, #605840 100%);
+  --ui-button-border: rgba(68, 55, 35, 0.9);
+  --ui-button-shadow:
+    inset 0 1px 0 rgba(225, 210, 185, 0.28),
+    0 5px 0 rgba(48, 38, 22, 0.9),
+    0 13px 20px rgba(0, 0, 0, 0.28);
+  --ui-button-active-shadow:
+    0 1px 0 rgba(48, 38, 22, 0.9),
+    inset 0 2px 5px rgba(0, 0, 0, 0.24);
+  --ui-button-text: #fff8ee;
+}
+
+[data-ui-theme='evergrove'] .ui-progress[data-tone='purple'],
+[data-ui-theme='evergrove'] .ui-button[data-tone='purple'] {
+  --ui-progress-fill:
+    linear-gradient(180deg, #c890ff 0%, #9858e8 50%, #6828c0 100%);
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(230, 210, 255, 0.28),
+    0 0 8px rgba(152, 88, 232, 0.2);
+}
+
+[data-ui-theme='evergrove'] .ui-button[data-tone='purple'] {
+  --ui-button-fill:
+    linear-gradient(180deg, #c890ff 0%, #9858e8 50%, #7838c8 50%, #5618a8 100%);
+  --ui-button-border: rgba(60, 22, 120, 0.92);
+  --ui-button-shadow:
+    inset 0 1px 0 rgba(230, 210, 255, 0.28),
+    0 5px 0 rgba(38, 14, 78, 0.92),
+    0 13px 20px rgba(0, 0, 0, 0.28);
+  --ui-button-active-shadow:
+    0 1px 0 rgba(38, 14, 78, 0.92),
+    inset 0 2px 5px rgba(0, 0, 0, 0.24);
+  --ui-button-text: #ffffff;
+}
+
+/* ── Switch / Toggle ────────────────────────────────────────────────────── */
+
+[data-ui-theme='evergrove'] .ui-control__row:has(.ui-switch) .ui-control__label {
+  color: rgba(100, 62, 22, 0.6);
+  transition: color 140ms ease, opacity 140ms ease;
+}
+
+[data-ui-theme='evergrove'] .ui-control__row:has(.ui-switch) .ui-switch::before {
+  background:
+    linear-gradient(180deg,
+      rgba(160, 110, 50, 0.3) 0%,
+      rgba(140, 90, 30, 0.4) 100%);
+  border-color: rgba(130, 78, 20, 0.45);
+  box-shadow:
+    inset 0 2px 4px rgba(60, 30, 5, 0.32),
+    inset 0 1px 0 rgba(255, 220, 150, 0.08);
+}
+
+[data-ui-theme='evergrove'] .ui-switch[data-state='active']::before,
+[data-ui-theme='evergrove'] .ui-control__row:has(.ui-control__native:checked) .ui-switch::before {
+  background:
+    linear-gradient(180deg,
+      #5de8d8 0%,
+      #2ec4b4 46%,
+      #1ea898 100%);
+  border-color: rgba(6, 68, 60, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(180, 255, 245, 0.38),
+    0 0 10px rgba(46, 196, 180, 0.16);
+}
+
+[data-ui-theme='evergrove'] .ui-control__row:has(.ui-control__native:checked):has(.ui-switch) .ui-control__label {
+  color: #1a7268;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+[data-ui-theme='evergrove'] .ui-header[data-variant='banner'],
+[data-ui-theme='evergrove'] .ui-header[data-variant='ribbon'] {
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 210, 120, 0.15))
+    drop-shadow(0 8px 18px rgba(40, 20, 5, 0.32));
+}
+
+[data-ui-theme='evergrove'] .ui-header[data-variant='banner'] .ui-header__ribbon {
+  min-width: min(100%, 300px);
+}
+
+[data-ui-theme='evergrove'] .ui-header[data-variant='banner'] .ui-header__ribbon::before {
+  border-radius: 12px 12px 0 0;
+  background:
+    linear-gradient(180deg, rgba(255, 230, 160, 0.18) 0%, rgba(255, 230, 160, 0) 22%),
+    linear-gradient(180deg, #e8a840 0%, #c07818 58%, #905408 100%);
+  border: none;
+  box-shadow: none;
+  clip-path: polygon(0 0, 100% 0, 100% 74%, 86% 84%, 50% 100%, 14% 84%, 0 74%);
+}
+
+[data-ui-theme='evergrove'] .ui-header[data-variant='banner'] .ui-header__content {
+  min-height: 82px;
+  padding: 14px 28px 22px;
+}
+
+[data-ui-theme='evergrove'] .ui-header[data-variant='banner'] .ui-header__eyebrow {
+  color: rgba(255, 235, 180, 0.88);
+}
+
+[data-ui-theme='evergrove'] .ui-header[data-variant='banner'] .ui-header__title {
+  text-shadow: 0 2px 5px rgba(60, 25, 2, 0.4);
+}
+
+[data-ui-theme='evergrove'] .ui-header[data-variant='banner'] .ui-header__subtitle {
+  color: rgba(255, 228, 175, 0.9);
+}
+
+[data-ui-theme='evergrove'] .ui-header[data-variant='ribbon'] {
+  --ui-evergrove-ribbon-tab-width: 1.7em;
+  --ui-evergrove-ribbon-fold-depth: 0.6em;
+  --ui-evergrove-ribbon-notch-size: 0.8em;
+}
+
+[data-ui-theme='evergrove'] .ui-header[data-variant='ribbon'] .ui-header__ribbon {
+  min-width: min(100%, 320px);
+  overflow: visible;
+  background:
+    conic-gradient(
+      at left var(--ui-evergrove-ribbon-tab-width) bottom var(--ui-evergrove-ribbon-fold-depth),
+      #0000 25%,
+      rgba(80, 42, 4, 0.58) 0 37.5%,
+      rgba(80, 42, 4, 0.24) 0
+    ) 0 / 50% 100% no-repeat,
+    conic-gradient(
+      at right var(--ui-evergrove-ribbon-tab-width) bottom var(--ui-evergrove-ribbon-fold-depth),
+      rgba(80, 42, 4, 0.24) 62.5%,
+      rgba(80, 42, 4, 0.58) 0 75%,
+      #0000 0
+    ) 100% / 50% 100% no-repeat,
+    linear-gradient(180deg, #e8a840 0%, #c07818 58%, #905408 100%);
+  clip-path: polygon(
+    0 var(--ui-evergrove-ribbon-fold-depth),
+    var(--ui-evergrove-ribbon-tab-width) var(--ui-evergrove-ribbon-fold-depth),
+    var(--ui-evergrove-ribbon-tab-width) 0,
+    calc(100% - var(--ui-evergrove-ribbon-tab-width)) 0,
+    calc(100% - var(--ui-evergrove-ribbon-tab-width)) var(--ui-evergrove-ribbon-fold-depth),
+    100% var(--ui-evergrove-ribbon-fold-depth),
+    calc(100% - var(--ui-evergrove-ribbon-notch-size)) calc(50% + var(--ui-evergrove-ribbon-fold-depth) / 2),
+    100% 100%,
+    calc(100% - var(--ui-evergrove-ribbon-tab-width) - var(--ui-evergrove-ribbon-fold-depth)) 100%,
+    calc(100% - var(--ui-evergrove-ribbon-tab-width) - var(--ui-evergrove-ribbon-fold-depth)) calc(100% - var(--ui-evergrove-ribbon-fold-depth)),
+    calc(var(--ui-evergrove-ribbon-tab-width) + var(--ui-evergrove-ribbon-fold-depth)) calc(100% - var(--ui-evergrove-ribbon-fold-depth)),
+    calc(var(--ui-evergrove-ribbon-tab-width) + var(--ui-evergrove-ribbon-fold-depth)) 100%,
+    0 100%,
+    var(--ui-evergrove-ribbon-notch-size) calc(50% + var(--ui-evergrove-ribbon-fold-depth) / 2)
+  );
+}
+
+[data-ui-theme='evergrove'] .ui-header[data-variant='ribbon'] .ui-header__ribbon::before {
+  content: none;
+}
+
+[data-ui-theme='evergrove'] .ui-header[data-variant='ribbon'] .ui-header__content {
+  min-height: 0;
+  padding:
+    0
+    calc(var(--ui-evergrove-ribbon-tab-width) + 1.6em)
+    calc(var(--ui-evergrove-ribbon-fold-depth) + 8px);
+  line-height: 1.6;
+  gap: 0;
+}
+
+[data-ui-theme='evergrove'] .ui-header[data-variant='ribbon'] .ui-header__eyebrow {
+  color: rgba(255, 228, 170, 0.82);
+}
+
+[data-ui-theme='evergrove'] .ui-header[data-variant='ribbon'] .ui-header__title {
+  font-size: 17px;
+  text-shadow: 0 1px 4px rgba(60, 25, 2, 0.38);
+}
+
+[data-ui-theme='evergrove'] .ui-header[data-variant='ribbon'] .ui-header__subtitle {
+  color: rgba(255, 232, 180, 0.92);
+}
+
+/* ── Pill-shaped buttons ────────────────────────────────────────────────── */
+
+[data-ui-theme='evergrove'] .ui-button:not([data-variant='icon']):not([data-variant='back']):not([data-variant='close']):not([data-variant='grid']):not([data-variant='tab']):not([data-variant='segment']):not([data-variant='toggle'])::before {
+  border-radius: 999px;
+}
+
+/* ── No text shadow on brown-text buttons ───────────────────────────────── */
+
+[data-ui-theme='evergrove'] .ui-button[data-variant='secondary'],
+[data-ui-theme='evergrove'] .ui-button[data-variant='ghost'],
+[data-ui-theme='evergrove'] .ui-button[data-variant='icon'],
+[data-ui-theme='evergrove'] .ui-button[data-variant='grid'],
+[data-ui-theme='evergrove'] .ui-button[data-variant='tab']:not([data-state='active']),
+[data-ui-theme='evergrove'] .ui-button[data-variant='pill']:not([data-state='active']) {
+  --ui-button-label-shadow: none;
+}
+
+/* ── Active pill — switch fill to teal ──────────────────────────────────── */
+
+[data-ui-theme='evergrove'] .ui-button[data-variant='pill'][data-state='active'] {
+  --ui-button-fill: #4ABFAB;
+  --ui-button-text: #ffffff;
+}
+
+/* ── Active tab — teal ring override ────────────────────────────────────── */
+
+[data-ui-theme='evergrove'] .ui-button[data-variant='tab'][data-state='active'] {
+  box-shadow:
+    inset 0 0 0 4px #318B7C,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.32),
+    inset 0 0 0 8px #3FB19E,
+    0 3px 0 #552D14,
+    0 5px 9px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Buy button (currency layout) — green ───────────────────────────────── */
+
+[data-ui-theme='evergrove'] .ui-button[data-layout='currency-stack'] {
+  --ui-button-secondary-fill: #96BF4A;
+  --ui-button-secondary-shadow:
+    inset 0 0 0 4px #66842F,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.28),
+    inset 0 0 0 8px #89B13F,
+    0 3px 0 #552D14,
+    0 5px 9px rgba(0, 0, 0, 0.2);
+  --ui-button-secondary-active-shadow:
+    inset 0 0 0 4px #66842F,
+    inset 0 0 0 5px rgba(255, 255, 255, 0.22),
+    inset 0 0 0 8px #89B13F,
+    0 2px 0 #552D14;
+  --ui-button-secondary-text: #ffffff;
+}

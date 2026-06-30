@@ -1,0 +1,40 @@
+<svg viewBox="0 0 1000 240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mainPlate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#69B3FF" />
+      <stop offset="50%" stop-color="#4C93F5" />
+      <stop offset="50%" stop-color="#347AE4" />
+      <stop offset="100%" stop-color="#235FC3" />
+    </linearGradient>
+
+    <linearGradient id="wingPlate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2D79E0" />
+      <stop offset="100%" stop-color="#184792" />
+    </linearGradient>
+
+    <clipPath id="shineClip">
+      <rect x="150" y="50" width="700" height="110" rx="6" />
+    </clipPath>
+  </defs>
+
+  <g stroke="#173A73" stroke-width="2" stroke-linejoin="round">
+    <path d="M 170,70 L 60,60 L 90,180 L 170,180 Z" fill="url(#wingPlate)" />
+    <path d="M 830,70 L 940,60 L 910,180 L 830,180 Z" fill="url(#wingPlate)" />
+  </g>
+
+  <g fill="#15386E" stroke="#173A73" stroke-width="2" stroke-linejoin="round">
+    <path d="M 150,160 L 170,180 L 170,160 Z" />
+    <path d="M 850,160 L 830,180 L 830,160 Z" />
+  </g>
+
+  <rect x="150" y="50" width="700" height="110" rx="6" fill="url(#mainPlate)" stroke="#173A73" stroke-width="2" stroke-linejoin="round" />
+
+  <rect x="154" y="54" width="692" height="102" rx="4" fill="none" stroke="#FFFFFF" stroke-width="2" opacity="0.34" />
+
+  <path d="M 400,30 L 600,190 H 750 L 550,30 Z" fill="#FFFFFF" opacity="0.12" clip-path="url(#shineClip)" />
+
+  <g fill="#FFEA70" stroke="#D0A51B" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M 230,88 l 5,12 h 13 l -10,8 4,13 -12,-9 -12,9 4,-13 -10,-8 h 13 z" />
+    <path d="M 770,88 l 5,12 h 13 l -10,8 4,13 -12,-9 -12,9 4,-13 -10,-8 h 13 z" />
+  </g>
+</svg>

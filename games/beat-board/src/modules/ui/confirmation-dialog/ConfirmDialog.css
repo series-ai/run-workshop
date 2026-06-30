@@ -1,0 +1,122 @@
+/**
+ * Confirmation-dialog styles.
+ *
+ * `ConfirmDialogRoot.tsx` renders class names like `.ui-confirm-dialog`
+ * and `.ui-confirm-dialog__panel`. This stylesheet ships the rules so
+ * the dialog actually renders. Without it the dialog opens in state
+ * but as zero-size invisible content, which presents as "the
+ * destructive button does nothing."
+ *
+ * Z-index 9000 sits above the typical navigation modal stack so the
+ * confirm dialog always renders ON TOP of any modal that triggered it
+ * (RecordingReview, paywall, settings sheet, etc.).
+ *
+ * Tokens consumed (all owned by the active UI renderer at
+ * `src/modules/ui/skin/`):
+ *   --ui-radius-md, --ui-panel-card-fill, --ui-panel-card-border,
+ *   --ui-panel-card-shadow, --ui-text-strong, --ui-text-muted,
+ *   --ui-button-primary-fill, --ui-button-primary-text,
+ *   --ui-button-primary-border, --ui-button-primary-shadow,
+ *   --ui-color-danger
+ */
+
+.ui-confirm-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  pointer-events: auto;
+}
+
+.ui-confirm-dialog__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+
+.ui-confirm-dialog__panel {
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 360px);
+  padding: 20px;
+  border-radius: var(--ui-radius-md, 14px);
+  background: var(--ui-panel-card-fill);
+  border: 1px solid var(--ui-panel-card-border);
+  box-shadow: var(--ui-panel-card-shadow);
+  color: var(--ui-text-strong);
+  display: grid;
+  gap: 12px;
+}
+
+.ui-confirm-dialog__title {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--ui-text-strong);
+}
+
+.ui-confirm-dialog__message {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ui-text-muted);
+}
+
+.ui-confirm-dialog__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.ui-confirm-dialog__cancel,
+.ui-confirm-dialog__confirm {
+  appearance: none;
+  font: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 120ms ease-out, border-color 120ms ease-out, transform 80ms ease-out;
+}
+
+.ui-confirm-dialog__cancel {
+  background: transparent;
+  color: var(--ui-text-strong);
+  border-color: var(--ui-panel-card-border);
+}
+
+.ui-confirm-dialog__cancel:hover {
+  background: var(--ui-panel-card-fill);
+}
+
+.ui-confirm-dialog__confirm {
+  background: var(--ui-button-primary-fill);
+  color: var(--ui-button-primary-text);
+  border-color: var(--ui-button-primary-border);
+  box-shadow: var(--ui-button-primary-shadow);
+}
+
+.ui-confirm-dialog__confirm:hover {
+  filter: brightness(1.06);
+}
+
+.ui-confirm-dialog__confirm:active {
+  transform: translateY(1px);
+}
+
+.ui-confirm-dialog__confirm[data-destructive] {
+  background: var(--ui-color-danger, #ef4444);
+  border-color: var(--ui-color-danger, #ef4444);
+  color: #ffffff;
+}
+
+.ui-confirm-dialog__confirm[data-destructive]:hover {
+  filter: brightness(1.08);
+}

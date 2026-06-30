@@ -1,5 +1,10 @@
 # Third-Party Notices
 
-No third-party materials are included in this repository at this time.
+Third-party software, assets, and other materials are tracked per sub-project,
+next to the code that uses them. Each sub-project that includes third-party
+materials maintains its own `THIRD_PARTY_NOTICES.md` listing the applicable
+licenses and attributions.
 
-When third-party software, assets, or other materials are added, they will be listed here with their license and attribution requirements.
+## Sub-project notices
+
+- BeatBoard — [`games/beat-board/THIRD_PARTY_NOTICES.md`](games/beat-board/THIRD_PARTY_NOTICES.md)

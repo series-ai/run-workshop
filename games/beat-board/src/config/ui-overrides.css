@@ -1,0 +1,689 @@
+/*
+ * BeatBoard — Neon Arcade identity.
+ *
+ * Aesthetic: deep purple-black backdrop, four neon accents (rose / violet /
+ * amber / cyan) used per instrument family, glowing borders and outer
+ * halos on active pads, blurred translucent header / FX bar / panels.
+ * Single-color tokens that used to be warm amber now carry cyan as the
+ * "system accent" (focus rings, switches, progress fills) while the per-
+ * category accents flow through PAD_PALETTE → PadBlock cells.
+ *
+ * Imported AFTER the renderer's neutral-base theme.css so every variable
+ * here overrides whatever the renderer set.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ── Typography ───────────────────────────────────────────────────── */
+  --ui-font-body: 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --ui-font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --ui-font-mono: 'JetBrains Mono', ui-monospace, 'Menlo', monospace;
+  --ui-font-weight-display: 700;
+  --ui-font-weight-body: 500;
+  --ui-font-weight-heading: 700;
+  --ui-font-weight-label: 600;
+
+  /* ── Neon Arcade palette ──────────────────────────────────────────── */
+  --ls-bg-page: #0a0612;          /* deep purple-black backdrop */
+  --ls-bg-elevated: #100a1a;      /* card / panel surface */
+  --ls-bg-recessed: #06030c;      /* inputs / wells */
+  --ls-bg-translucent: rgba(15, 9, 24, 0.7); /* blurred chrome panels */
+  --ls-stroke: #241636;           /* default 1px line, dark purple */
+  --ls-stroke-strong: #2a1b40;
+  --ls-text: #ffffff;             /* primary copy, full white on dark */
+  --ls-text-muted: #a594d0;       /* secondary purple-gray */
+  --ls-text-faint: #7a6e9c;
+  --ls-text-subtle: #5d4f7e;
+  --ls-accent: #3CE5FF;           /* cyan system accent (switches / focus) */
+  --ls-accent-soft: rgba(60, 229, 255, 0.18);
+  --ls-accent-muted: rgba(60, 229, 255, 0.50);
+  --ls-danger: #FF3CB6;           /* rose for record / destructive */
+  --ls-danger-soft: rgba(255, 60, 182, 0.18);
+
+  /* Neon accents the per-pad palette draws from. Exposed here so other
+     widgets (toggles, status pips) can match. */
+  --na-rose: #FF3CB6;
+  --na-rose-soft: rgba(255, 60, 182, 0.18);
+  --na-rose-glow: rgba(255, 60, 182, 0.85);
+  --na-violet: #B05CFF;
+  --na-violet-soft: rgba(176, 92, 255, 0.18);
+  --na-violet-glow: rgba(176, 92, 255, 0.85);
+  --na-amber: #FFD23C;
+  --na-amber-soft: rgba(255, 210, 60, 0.16);
+  --na-amber-glow: rgba(255, 210, 60, 0.85);
+  --na-cyan: #3CE5FF;
+  --na-cyan-soft: rgba(60, 229, 255, 0.18);
+  --na-cyan-glow: rgba(60, 229, 255, 0.85);
+
+  /* ── Override every renderer token that drives the AI-blue look. ── */
+
+  /* Page + text */
+  --ui-page-bg: var(--ls-bg-page);
+  --ui-page-bg-mode: dark;
+  --ui-text-primary: var(--ls-text);
+  --ui-text-strong: #ffffff;
+  --ui-text-muted: var(--ls-text-muted);
+  --ui-focus-ring: var(--ls-accent-muted);
+  --ui-text-shadow: none;
+  --ui-text-shadow-on-dark: none;
+  --ui-text-shadow-on-light: none;
+  --ui-button-label-shadow: none;
+
+  --ui-color-bg: var(--ls-bg-page);
+  --ui-color-border: var(--ls-stroke);
+  --ui-color-accent: var(--ls-accent);
+  --ui-color-accent-soft: var(--ls-accent-soft);
+  --ui-color-danger: var(--ls-danger);
+  --ui-color-danger-soft: var(--ls-danger-soft);
+
+  /* Borders are 1px everywhere — kill the 2px chunky-game-UI look. */
+  --ui-button-border-width: 1px;
+  --ui-panel-border-width: 1px;
+  --ui-header-border-width: 1px;
+  --ui-icon-frame-border-width: 1px;
+  --ui-input-border-width: 1px;
+  --ui-checkbox-border-width: 1px;
+  --ui-switch-border-width: 1px;
+  --ui-progress-border-width: 1px;
+  --ui-slider-border-width: 1px;
+  --ui-slider-thumb-border-width: 1px;
+  --ui-pagination-border-width: 1px;
+  --ui-rail-border-width: 1px;
+  --ui-rail-button-border-width: 1px;
+
+  /* Buttons — flat surfaces, single 1px border, neon glow accent. */
+  --ui-button-primary-fill: #ffffff;
+  --ui-button-primary-border: #ffffff;
+  --ui-button-primary-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --ui-button-primary-active-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
+  --ui-button-primary-text: #0a0612;
+
+  --ui-button-secondary-fill: var(--ls-bg-elevated);
+  --ui-button-secondary-border: var(--ls-stroke-strong);
+  --ui-button-secondary-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ui-button-secondary-active-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
+  --ui-button-secondary-text: var(--ls-text);
+
+  --ui-button-ghost-fill: transparent;
+  --ui-button-ghost-border: var(--ls-stroke);
+  --ui-button-ghost-shadow: none;
+  --ui-button-ghost-active-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
+  --ui-button-ghost-text: var(--ls-text-muted);
+
+  --ui-button-pill-fill: var(--ls-bg-recessed);
+  --ui-button-pill-border: var(--ls-stroke-strong);
+  --ui-button-pill-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ui-button-pill-active-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
+  --ui-button-pill-text: var(--ls-text);
+  --ui-button-pill-padding: 0 14px;
+  --ui-button-pill-radius: 999px;
+
+  --ui-button-icon-fill: var(--ls-bg-elevated);
+  --ui-button-icon-border: var(--ls-stroke-strong);
+  --ui-button-icon-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ui-button-icon-text: var(--ls-text);
+
+  /* Grid button — base surface for pads. The PadBlock cell overrides the
+     `--ui-button-fill` inline per pad so we don't paint a single accent
+     gradient here. Defaults to a flat dark elevated surface. */
+  --ui-button-grid-fill: var(--ls-bg-elevated);
+  --ui-button-grid-border: var(--ls-stroke);
+  --ui-button-grid-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --ui-button-grid-active-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
+  --ui-button-grid-text: var(--ls-text);
+
+  /* Tabs — quiet text labels with a thin cyan underline on active. */
+  --ui-button-tab-fill: transparent;
+  --ui-button-tab-active-fill: transparent;
+  --ui-button-tab-text: var(--ls-text-muted);
+  --ui-button-tab-active-text: var(--ls-text);
+  --ui-button-tab-highlight-image: linear-gradient(90deg, var(--ls-accent), var(--ls-accent));
+  --ui-button-tab-highlight-size: 100% 2px;
+  --ui-button-tab-highlight-width: 28px;
+  --ui-button-tab-highlight-height: 2px;
+
+  /* Panels — dark translucent surfaces with a hairline border. NO accent
+     strip. The pad-grid panels are translucent so the radial backdrop
+     bleeds through. */
+  --ui-panel-card-fill: var(--ls-bg-translucent);
+  --ui-panel-card-border: var(--ls-stroke-strong);
+  --ui-panel-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --ui-panel-card-overlay-image: none;
+  --ui-panel-card-overlay-size: 0 0;
+  --ui-panel-card-overlay-position: 0 0;
+  --ui-panel-card-overlay-repeat: no-repeat;
+  --ui-panel-card-overlay-opacity: 0;
+
+  --ui-panel-section-fill: var(--ls-bg-translucent);
+  --ui-panel-section-border: var(--ls-stroke-strong);
+  --ui-panel-section-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ui-panel-section-overlay-image: none;
+  --ui-panel-section-overlay-size: 0 0;
+  --ui-panel-section-overlay-position: 0 0;
+  --ui-panel-section-overlay-repeat: no-repeat;
+  --ui-panel-section-overlay-opacity: 0;
+
+  --ui-panel-overlay-fill: rgba(10, 6, 18, 0.96);
+  --ui-panel-overlay-border: var(--ls-stroke-strong);
+  --ui-panel-overlay-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+
+  --ui-panel-radius: 14px;
+
+  /* Header / banner / ribbon — translucent dark with backdrop blur. */
+  --ui-header-fill: var(--ls-bg-translucent);
+  --ui-header-border: var(--ls-stroke-strong);
+  --ui-header-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ui-header-text: var(--ls-text);
+
+  --ui-icon-frame-fill: var(--ls-bg-recessed);
+  --ui-icon-frame-border: var(--ls-stroke-strong);
+  --ui-icon-frame-shadow: none;
+
+  /* Badges, tags, chips — flat dark with cyan for status. */
+  --ui-badge-status-fill: var(--ls-accent);
+  --ui-badge-status-border: var(--ls-accent);
+  --ui-badge-counter-fill: var(--ls-accent);
+  --ui-badge-counter-border: var(--ls-accent);
+  --ui-badge-new-fill: var(--ls-danger);
+  --ui-badge-new-border: var(--ls-danger);
+  --ui-badge-chip-fill: var(--ls-bg-elevated);
+  --ui-badge-chip-border: var(--ls-stroke-strong);
+  --ui-badge-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --ui-badge-radius: 999px;
+
+  --ui-tag-fill: var(--ls-bg-elevated);
+  --ui-tag-border: var(--ls-stroke-strong);
+  --ui-tag-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --ui-tag-text: var(--ls-text);
+  --ui-chip-text: var(--ls-text);
+
+  /* Progress + slider — quiet recessed track + cyan fill. */
+  --ui-progress-track-fill: var(--ls-bg-recessed);
+  --ui-progress-track-border: var(--ls-stroke);
+  --ui-progress-track-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.4);
+  --ui-progress-fill: var(--ls-accent);
+  --ui-progress-fill-shadow: none;
+  --ui-progress-track-height: 6px;
+  --ui-progress-track-padding: 0;
+  --ui-progress-bar-inset: 0;
+  --ui-progress-bar-inset-left: 0;
+  --ui-progress-bar-inset-right: 0;
+  --ui-progress-bar-inset-top: 0;
+  --ui-progress-bar-inset-bottom: 0;
+  --ui-progress-label-color: var(--ls-text);
+  --ui-progress-label-size: 11px;
+  --ui-progress-thumb: var(--ls-accent);
+
+  --ui-slider-track-height: 6px;
+  --ui-slider-track-padding: 0;
+  --ui-slider-bar-inset: 0;
+  --ui-slider-thumb-width: 14px;
+  --ui-slider-thumb-height: 14px;
+  --ui-slider-thumb-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  /* Inputs — recessed dark wells with a hairline border. */
+  --ui-input-fill: var(--ls-bg-recessed);
+  --ui-input-border: var(--ls-stroke-strong);
+  --ui-input-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.45);
+  --ui-input-height: 40px;
+  --ui-input-padding: 10px 12px;
+  --ui-input-text: var(--ls-text);
+  --ui-input-placeholder: var(--ls-text-faint);
+  --ui-select-chevron-size: 24px;
+  --ui-select-chevron-radius: 6px;
+  --ui-select-chevron-fill: var(--ls-bg-elevated);
+  --ui-select-chevron-border: var(--ls-stroke-strong);
+  --ui-select-chevron-shadow: none;
+  --ui-select-chevron-color: var(--ls-text-muted);
+  --ui-select-chevron-text-shadow: none;
+  --ui-select-chevron-offset-inline-end: 10px;
+
+  /* Pagination dots */
+  --ui-pagination-fill: var(--ls-stroke);
+  --ui-pagination-active-fill: var(--ls-accent);
+  --ui-pagination-border: var(--ls-stroke);
+  --ui-pagination-active-border: var(--ls-accent);
+  --ui-pagination-shadow: none;
+
+  --ui-rail-fill: var(--ls-bg-elevated);
+  --ui-rail-border: var(--ls-stroke);
+  --ui-rail-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  --ui-ticket-text: var(--ls-text);
+  --ui-ticket-subtitle-text: var(--ls-text-muted);
+
+  --ui-switch-thumb-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  /* ── Per-instrument neon accents — applied by PadBlock to the pad
+     surface. The `activeBg` is a subtle 22% top-down gradient bleeding
+     into transparency (mock-style); the `activeRing` carries the full
+     glow color. The actual values live in stores/padGridStore.ts
+     PAD_PALETTE — these tokens are diagnostic / fallback handles. */
+
+  --ui-pad-drums-cool: var(--na-rose);
+  --ui-pad-drums-warm: var(--na-rose);
+  --ui-pad-bass-cool: var(--na-violet);
+  --ui-pad-bass-warm: var(--na-violet);
+  --ui-pad-melody-cool: var(--na-amber);
+  --ui-pad-melody-warm: var(--na-amber);
+  --ui-pad-fx-cool: var(--na-cyan);
+  --ui-pad-fx-warm: var(--na-cyan);
+  --ui-pad-bank-cool: var(--ls-bg-elevated);
+  --ui-pad-bank-warm: var(--ls-bg-elevated);
+
+  /* Pad-cell base surface (the dark idle surface). PadBlock reads this
+     when computing surface fill at idle. Mock uses this exact value. */
+  --ui-pad-cell-fill: #100a1a;
+
+  /* FX-toggle sliver — flat off / cyan on fallback. Block panel paints
+     the per-category color when FX is on. */
+  --ui-pad-fx-off: rgba(255, 255, 255, 0.025);
+  --ui-pad-fx-on: var(--ls-accent-soft);
+
+  /* Label / dot legibility (tighter shadows than before). */
+  --ui-pad-label-shadow: 0 1px 1px rgba(0, 0, 0, 0.65);
+  --ui-pad-dot-shadow: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+
+  /* Playhead-bar tokens (see widgets/PlayheadBar.tsx). */
+  --ls-playhead-track: rgba(255, 255, 255, 0.10);
+  --ls-playhead-tick: rgba(255, 255, 255, 0.32);
+
+  /* Pad waveform — idle bar color. Quiet near-white at low alpha so the
+     thumbnail shape reads as a static spectrogram against the dark pad
+     surface without competing with active neon-colored bars. */
+  --na-wave-idle: rgba(255, 255, 255, 0.10);
+}
+
+/*
+ * The renderer (neutral-base) re-asserts page bg + button-grid fill +
+ * panel overlays inside its own `[data-ui-theme='neutral-base']` block.
+ * Re-assert every neon-arcade token inside the theme scope so we
+ * definitively win the cascade.
+ */
+[data-ui-theme='neutral-base'],
+[data-ui-theme] {
+  --ui-page-bg: var(--ls-bg-page);
+  --ui-page-bg-mode: dark;
+  --ui-text-primary: var(--ls-text);
+  --ui-text-strong: #ffffff;
+  --ui-text-muted: var(--ls-text-muted);
+  --ui-focus-ring: var(--ls-accent-muted);
+  --ui-text-shadow: none;
+  --ui-button-label-shadow: none;
+
+  --ui-button-primary-fill: #ffffff;
+  --ui-button-primary-border: #ffffff;
+  --ui-button-primary-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --ui-button-primary-active-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
+  --ui-button-primary-text: #0a0612;
+
+  --ui-button-secondary-fill: var(--ls-bg-elevated);
+  --ui-button-secondary-border: var(--ls-stroke-strong);
+  --ui-button-secondary-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ui-button-secondary-text: var(--ls-text);
+
+  --ui-button-ghost-fill: transparent;
+  --ui-button-ghost-border: var(--ls-stroke);
+  --ui-button-ghost-text: var(--ls-text-muted);
+
+  --ui-button-pill-fill: var(--ls-bg-recessed);
+  --ui-button-pill-border: var(--ls-stroke-strong);
+  --ui-button-pill-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ui-button-pill-text: var(--ls-text);
+
+  --ui-button-icon-fill: var(--ls-bg-elevated);
+  --ui-button-icon-border: var(--ls-stroke-strong);
+  --ui-button-icon-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ui-button-icon-text: var(--ls-text);
+
+  --ui-button-grid-fill: var(--ls-bg-elevated);
+  --ui-button-grid-border: var(--ls-stroke);
+  --ui-button-grid-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --ui-button-grid-active-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
+  --ui-button-grid-text: var(--ls-text);
+
+  --ui-button-tab-fill: transparent;
+  --ui-button-tab-active-fill: transparent;
+  --ui-button-tab-text: var(--ls-text-muted);
+  --ui-button-tab-active-text: var(--ls-text);
+  --ui-button-tab-highlight-image: linear-gradient(90deg, var(--ls-accent), var(--ls-accent));
+
+  --ui-panel-card-fill: var(--ls-bg-translucent);
+  --ui-panel-card-border: var(--ls-stroke-strong);
+  --ui-panel-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --ui-panel-card-overlay-image: none;
+  --ui-panel-card-overlay-size: 0 0;
+  --ui-panel-card-overlay-opacity: 0;
+
+  --ui-panel-section-fill: var(--ls-bg-translucent);
+  --ui-panel-section-border: var(--ls-stroke-strong);
+  --ui-panel-section-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ui-panel-section-overlay-image: none;
+  --ui-panel-section-overlay-opacity: 0;
+
+  --ui-panel-overlay-fill: rgba(10, 6, 18, 0.96);
+  --ui-panel-overlay-border: var(--ls-stroke-strong);
+
+  --ui-header-fill: var(--ls-bg-translucent);
+  --ui-header-border: var(--ls-stroke-strong);
+  --ui-header-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ui-header-text: var(--ls-text);
+
+  --ui-icon-frame-fill: var(--ls-bg-recessed);
+  --ui-icon-frame-border: var(--ls-stroke-strong);
+  --ui-icon-frame-shadow: none;
+
+  --ui-badge-status-fill: var(--ls-accent);
+  --ui-badge-status-border: var(--ls-accent);
+  --ui-badge-counter-fill: var(--ls-accent);
+  --ui-badge-counter-border: var(--ls-accent);
+  --ui-badge-new-fill: var(--ls-danger);
+  --ui-badge-new-border: var(--ls-danger);
+  --ui-badge-chip-fill: var(--ls-bg-elevated);
+  --ui-badge-chip-border: var(--ls-stroke-strong);
+  --ui-tag-fill: var(--ls-bg-elevated);
+  --ui-tag-border: var(--ls-stroke-strong);
+  --ui-tag-text: var(--ls-text);
+  --ui-chip-text: var(--ls-text);
+
+  --ui-progress-track-fill: var(--ls-bg-recessed);
+  --ui-progress-track-border: var(--ls-stroke);
+  --ui-progress-track-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.4);
+  --ui-progress-fill: var(--ls-accent);
+  --ui-progress-fill-shadow: none;
+  --ui-progress-thumb: var(--ls-accent);
+
+  --ui-slider-thumb-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  --ui-input-fill: var(--ls-bg-recessed);
+  --ui-input-border: var(--ls-stroke-strong);
+  --ui-input-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.45);
+  --ui-input-text: var(--ls-text);
+  --ui-input-placeholder: var(--ls-text-faint);
+  --ui-select-chevron-fill: var(--ls-bg-elevated);
+  --ui-select-chevron-border: var(--ls-stroke-strong);
+  --ui-select-chevron-shadow: none;
+  --ui-select-chevron-color: var(--ls-text-muted);
+
+  --ui-pagination-fill: var(--ls-stroke);
+  --ui-pagination-active-fill: var(--ls-accent);
+  --ui-pagination-border: var(--ls-stroke);
+  --ui-pagination-active-border: var(--ls-accent);
+  --ui-pagination-shadow: none;
+
+  --ui-rail-fill: var(--ls-bg-elevated);
+  --ui-rail-border: var(--ls-stroke);
+  --ui-rail-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  --ui-scrollbar-track-fill: var(--ls-bg-recessed);
+  --ui-scrollbar-track-border: var(--ls-stroke);
+  --ui-scrollbar-track-shadow: none;
+  --ui-scrollbar-track-overlay: none;
+  --ui-scrollbar-thumb-fill: var(--ls-stroke-strong);
+  --ui-scrollbar-thumb-border: var(--ls-stroke-strong);
+  --ui-scrollbar-thumb-shadow: none;
+  --ui-scrollbar-thumb-overlay: none;
+  --ui-scrollbar-active-glow: none;
+}
+
+/* Force the page bg via a high-specificity selector — some shells paint
+   the bg on the app root, not body. Cover all bases. The radial gradient
+   layered on top of body adds the corner-glow backdrop the mock uses. */
+html,
+body,
+#root,
+[data-rundot-game-app-root] {
+  background-color: var(--ls-bg-page) !important;
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(255, 60, 180, 0.12), transparent 50%),
+    radial-gradient(circle at 80% 100%, rgba(60, 210, 255, 0.10), transparent 50%) !important;
+  background-attachment: fixed !important;
+}
+
+/* Tab gloss / segment overrides (renderer's deeper rules). */
+
+[data-ui-theme='neutral-base'] .ui-tabs {
+  border-bottom: 1px solid var(--ls-stroke);
+  box-shadow: none;
+  gap: 4px;
+  padding: 0 4px;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='tab'] {
+  min-height: 36px;
+  padding: 6px 10px 10px;
+  color: var(--ls-text-muted);
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='tab']::before {
+  background: transparent;
+  background-image: none;
+  border: none;
+  box-shadow: none;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='tab']::after {
+  left: 50%;
+  right: auto;
+  bottom: 0;
+  width: 28px;
+  height: 2px;
+  transform: translateX(-50%);
+  background-image: linear-gradient(90deg, var(--ls-accent), var(--ls-accent));
+  border-radius: 0;
+  opacity: 0;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='tab'][data-state='active'] {
+  margin-bottom: 0;
+  color: var(--ls-text);
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='tab'][data-state='active']::before {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='tab'][data-state='active']::after {
+  opacity: 1;
+}
+
+/* Segmented control / toggle group — flat dark with white-pill active
+   (matches the mock's A/B bank pill in the header). */
+[data-ui-theme='neutral-base'] .ui-segmented-control,
+[data-ui-theme='neutral-base'] .ui-toggle-group {
+  background: var(--ls-bg-recessed);
+  border: 1px solid var(--ls-stroke-strong);
+  border-radius: 999px;
+  padding: 3px;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='segment'],
+[data-ui-theme='neutral-base'] .ui-button[data-variant='toggle'] {
+  color: var(--ls-text-faint);
+  border-radius: 999px;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='segment'][data-state='active']::before,
+[data-ui-theme='neutral-base'] .ui-button[data-variant='toggle'][data-state='active']::before {
+  background: #ffffff;
+  border: none;
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='segment'][data-state='active'],
+[data-ui-theme='neutral-base'] .ui-button[data-variant='toggle'][data-state='active'] {
+  color: var(--ls-bg-page);
+}
+
+/* Bottom tab bar — flat near-black with a hairline top stroke; active
+   tab is full white (not cyan), matching the mock. */
+[data-ui-theme='neutral-base'] .ui-tab-bar {
+  --ui-tab-bar-fill: var(--ls-bg-page);
+  --ui-tab-bar-border: var(--ls-stroke-strong);
+  --ui-tab-bar-shadow: 0 -1px 0 var(--ls-stroke-strong);
+  --ui-tab-bar-text: var(--ls-text-faint);
+  --ui-tab-bar-active-text: var(--ls-text);
+}
+
+/* List rows — dark with hairline. */
+[data-ui-theme='neutral-base'] .ui-list-row {
+  --ui-list-row-fill: var(--ls-bg-elevated);
+  --ui-list-row-border: var(--ls-stroke);
+  --ui-list-row-highlight-fill: var(--ls-accent-soft);
+  --ui-list-row-highlight-border: var(--ls-accent-muted);
+  --ui-settings-row-fill: var(--ls-bg-elevated);
+  --ui-settings-row-border: var(--ls-stroke);
+  --ui-settings-row-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+/* Switch — flat off / cyan on. */
+[data-ui-theme='neutral-base'] .ui-control__row:has(.ui-switch) .ui-control__label {
+  color: var(--ls-text-muted);
+}
+
+[data-ui-theme='neutral-base'] .ui-control__row:has(.ui-switch) .ui-switch::before {
+  background: var(--ls-bg-recessed);
+  border-color: var(--ls-stroke-strong);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+[data-ui-theme='neutral-base'] .ui-switch[data-state='active']::before,
+[data-ui-theme='neutral-base'] .ui-control__row:has(.ui-control__native:checked) .ui-switch::before {
+  background: var(--ls-accent);
+  border-color: var(--ls-accent);
+  box-shadow: 0 0 14px var(--ls-accent-muted);
+}
+
+[data-ui-theme='neutral-base'] .ui-control__row:has(.ui-control__native:checked):has(.ui-switch) .ui-control__label {
+  color: var(--ls-text);
+  text-shadow: none;
+}
+
+/* Highlighted button modifier — replace the underglow with a cyan halo. */
+[data-ui-theme='neutral-base'] .ui-button[data-highlighted='true']:not([data-variant='tab']):not([data-variant='icon']):not([data-variant='close']):not([data-variant='back']):not([data-variant='grid']):not([data-variant='segment']):not([data-variant='toggle']):not([data-state='disabled'])[data-state='default'] {
+  filter: drop-shadow(0 0 12px var(--ls-accent-muted));
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-highlighted='true']:not([data-variant='tab']):not([data-variant='icon']):not([data-variant='close']):not([data-variant='back']):not([data-variant='grid']):not([data-variant='segment']):not([data-variant='toggle']):not([data-state='disabled'])[data-state='default']::after {
+  content: none;
+}
+
+/* Header banner — flat translucent dark, no clip-path ribbon. */
+[data-ui-theme='neutral-base'] .ui-header[data-variant='banner'],
+[data-ui-theme='neutral-base'] .ui-header[data-variant='ribbon'] {
+  filter: none;
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='banner'] .ui-header__ribbon::before {
+  background: var(--ls-bg-translucent);
+  border: 1px solid var(--ls-stroke-strong);
+  clip-path: none;
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='ribbon'] .ui-header__ribbon {
+  background: var(--ls-bg-translucent);
+  border: 1px solid var(--ls-stroke-strong);
+  clip-path: none;
+}
+
+/* ── Project-local utility classes ──────────────────────────────────── */
+
+.recording-review-handle {
+  width: 44px;
+  height: 4px;
+  min-height: 4px;
+  padding: 0;
+  border-radius: 2px;
+  background: var(--ls-stroke-strong);
+  cursor: pointer;
+}
+
+.recording-review-poster {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--ui-radius-lg, 14px);
+  overflow: hidden;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center;
+  background: var(--ls-bg-elevated);
+  border: 1px solid var(--ls-stroke-strong);
+}
+
+.recording-review-error-panel {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--ui-radius-lg, 14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+  background: var(--ls-danger-soft);
+  border: 1px solid var(--ls-danger);
+}
+
+.my-mixes-row-tap {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 80px;
+  bottom: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.pad-grid-pack-chip {
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pad-grid-skeleton-bar {
+  flex: 1;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--ls-bg-elevated);
+  animation: pad-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.pad-grid-error-banner {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--ls-danger-soft);
+  border: 1px solid var(--ls-danger);
+  color: var(--ls-text);
+  font-size: 12px;
+}
+
+/* Apply Space Grotesk to the body so unstyled text picks it up. */
+body {
+  font-family: var(--ui-font-body) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Pulsing dot used in active pad cells — the mock's wfpulse keyframe. */
+@keyframes na-wfpulse {
+  from { opacity: 0.4; }
+  to   { opacity: 1; }
+}

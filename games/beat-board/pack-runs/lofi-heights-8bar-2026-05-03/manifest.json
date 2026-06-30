@@ -1,0 +1,236 @@
+{
+  "version": 2,
+  "tempo": 84,
+  "key": "C minor",
+  "outputDir": "/Users/pany/dev/run-workshop/games/beat-board/public/cdn-assets/audio/lofi_heights_hero",
+  "barSec": 2.857142857,
+  "trimSec": 22.857142857,
+  "rawSec": 40,
+  "items": [
+    {
+      "file": "drums-1.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Lofi hip-hop drum loop, 84 BPM, 8 bars, in C minor key context. Straight four-on-the-floor kick on every beat with closed hi-hat 8th notes throughout, snare on beats 2 and 4. Bars 1 through 6 keep this exact pattern locked. Bar 7 adds a single ghost snare and one open hi-hat. Bar 8 is a turnaround drum fill: a tom roll across beats 3 and 4 leading back to a strong kick on bar 1. No silent bars — continuous percussion across all 8 bars. Mono kick, slightly stereo hats. Warm, slightly tape-saturated, dusty lofi mix. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-2.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Lofi boom-bap drum loop, 84 BPM, 8 bars, in C minor key context. Kick on beat 1 of every bar with one syncopated kick on the and-of-3, brushed snare on beats 2 and 4, sparse closed hi-hat 8ths. Bars 1 through 6 are the same locked groove. Bar 7 adds a brushed-snare ghost note. Bar 8 is a brush-fill turnaround across beats 3 and 4 leading into a strong bar-1 kick. Continuous percussion across all 8 bars. Mono low end, slightly stereo brushes. Warm, slightly tape-saturated, dusty. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-3.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Vintage tape-saturated lofi drum loop, 84 BPM, 8 bars, in C minor key context. Swung 8th-note groove with kick on beat 1 of every bar, swung snare on beats 2 and 4, swung hi-hat 8ths. Bars 1 through 6 hold the swung pattern. Bar 7 has a small variation with an open hat on the and-of-4. Bar 8 is a tape-flutter drum fill across beats 3 and 4 leading into a clean bar-1 kick. Continuous energy across all 8 bars. Heavy tape saturation, slight wobble, warm dust. Mono low end. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-4.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Lofi drum loop with persistent vinyl crackle texture underneath, 84 BPM, 8 bars, in C minor key context. Soft kick on beat 1 of every bar, soft snare on beats 2 and 4, sparse closed hi-hat 8th notes. Continuous vinyl crackle across all 8 bars. Bars 1 through 6 are the same pattern. Bar 7 has a single ghost snare. Bar 8 is a gentle drum fill leading back to a clean bar-1 kick. Continuous percussion + crackle across all 8 bars. Mono low end. Warm, dusty, intimate. Just drums and crackle, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-0.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Classic 90s boom-bap lofi drum loop, 84 BPM, 8 bars, in C minor key context. Swung kick-snare pattern: kick on beat 1 and the and-of-2, snare on beats 2 and 4, swung closed hi-hat 8ths. Bars 1 through 6 lock this groove. Bar 7 has a ghost snare and an open hat. Bar 8 turnaround: snare roll across beat 4 into a hard bar-1 kick. Continuous drumming across all 8 bars. Warm, slightly tape-saturated, dusty MPC feel. Mono low end. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-1.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Trap-flavored lofi drum loop, 84 BPM, 8 bars, in C minor key context. 808-style soft kick on beat 1 of every bar, rolled hi-hats — fast 16th-note hat rolls on beats 2 and 4 — closed hi-hat 8ths elsewhere, soft clap on beats 2 and 4. Bars 1 through 6 are the same locked pattern. Bar 7 adds an extra hat roll on beat 4. Bar 8 is a hat-roll fill across the whole bar leading back to a strong bar-1 kick. Continuous percussion across all 8 bars. Mono 808, slightly stereo hats. Warm, slightly tape-saturated. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-2.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Jazz-flavored brushed lofi drum loop, 84 BPM, 8 bars, in C minor key context. Soft kick on beat 1 of every bar, brushed snare on beats 2 and 4, swung ride cymbal pattern across all bars. Bars 1 through 6 hold the brush groove. Bar 7 adds a ride bell accent. Bar 8 turnaround: brush sweep across beats 3 and 4 leading back to a kick on bar 1. Continuous brushes and ride across all 8 bars. Warm, slightly tape-saturated, intimate jazz kit. Mono low end. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-3.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "MPC-bounced lofi drum loop, 84 BPM, 8 bars, in C minor key context. Slightly off-grid swung kick-snare with kick on beat 1 of every bar, snare on beats 2 and 4, choppy closed hi-hat 8ths with subtle timing humanization. Bars 1 through 6 hold the pattern. Bar 7 has a ghost snare on the and-of-3. Bar 8 is an MPC-bounced drum fill across beats 3 and 4 into a hard bar-1 kick. Continuous percussion across all 8 bars. Warm, dusty, slightly tape-saturated MPC feel. Mono low end. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "bass-1.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "phaseAlign": true,
+      "prompt": "Lofi sub bass loop, 84 BPM, 8 bars, in C minor (Cmin natural). Sustained sub-bass holding the root note (C) on beat 1 of every bar with very slow movement — bars 1 to 4 hold C, bars 5 and 6 move to A♭ (♭VI) and B♭ (♭VII) respectively, bar 7 returns to F (iv) and bar 8 walks back to C as a turnaround. Each chord change happens on beat 1. Continuous sustained bass tone across all 8 bars, no silence. Round, warm, slightly tape-saturated sub frequency. Mono. Just sub bass, no drums, no instruments, no melody, no vocals."
+    },
+    {
+      "file": "bass-2.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "phaseAlign": true,
+      "prompt": "Lofi walking bass loop, 84 BPM, 8 bars, in C minor (Cmin natural). Upright-bass-style quarter-note walking line. Beat 1 of every bar lands on the chord root: bars 1 and 2 root C (i), bar 3 F (iv), bar 4 G (v), bar 5 A♭ (♭VI), bar 6 B♭ (♭VII), bar 7 E♭ (♭III) with a chromatic passing tone, bar 8 walks chromatically C-B-B♭-A back to C on bar 1. Continuous quarter-note walking across all 8 bars. Warm, woody, slightly tape-saturated upright tone. Mono. Just walking bass, no drums, no instruments, no melody, no vocals."
+    },
+    {
+      "file": "bass-3.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "phaseAlign": true,
+      "prompt": "Lofi sine bass loop, 84 BPM, 8 bars, in C minor (Cmin natural). Round sine-wave bass with slow attack envelope on each note. Root-fifth-root pattern: bars 1 and 2 play C-G-C, bar 3 plays F-C-F, bar 4 plays G-D-G, bars 5 and 6 play A♭-E♭-A♭, bar 7 plays B♭-F-B♭, bar 8 walks back to C with a passing G on the and-of-4. Each note lands on a strong beat with smooth slow envelopes. Continuous bass across all 8 bars. Warm, round, slightly tape-saturated. Mono. Just sine bass, no drums, no instruments, no melody, no vocals."
+    },
+    {
+      "file": "bass-4.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "phaseAlign": true,
+      "prompt": "Lofi muted electric bass loop, 84 BPM, 8 bars, in C minor (Cmin natural). Palm-muted electric bass playing percussive 16th-note groove led by the chord root on beat 1 of every bar. Bars 1 and 2 root C (i), bar 3 F (iv), bar 4 G (v), bars 5 and 6 A♭ (♭VI), bar 7 B♭ (♭VII), bar 8 a passing-tone walk-up back to C on bar 1. Each bar has muted root on beat 1 plus 16th-note ghost notes filling the bar. Continuous percussive bass across all 8 bars. Warm, slightly tape-saturated. Mono. Just muted bass, no drums, no instruments, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-0.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "phaseAlign": true,
+      "prompt": "Lofi plucked acoustic bass loop, 84 BPM, 8 bars, in C minor (Cmin natural). Plucked acoustic bass playing a root + fifth pattern. Bars 1 and 2 alternate C and G, bar 3 alternates F and C, bar 4 alternates G and D, bars 5 and 6 alternate A♭ and E♭, bar 7 alternates B♭ and F, bar 8 walks back chromatically B-B♭-A-C to bar 1. Each bar has a plucked attack on beat 1. Continuous plucking across all 8 bars. Warm, woody, slightly tape-saturated. Mono. Just acoustic bass, no drums, no instruments, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-1.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "phaseAlign": true,
+      "prompt": "Lofi syncopated funk bass loop, 84 BPM, 8 bars, in C minor (Cmin natural). Slap-style funk bass with a percussive slap on beat 1 of every bar followed by syncopated 16th-note funk fills. Bars 1 and 2 root on C (i), bar 3 root on F (iv), bar 4 root on G (v), bars 5 and 6 root on A♭ (♭VI), bar 7 root on B♭ (♭VII), bar 8 a syncopated walk-up back to C. Continuous funky bass across all 8 bars. Warm, slightly tape-saturated. Mono. Just funk bass, no drums, no instruments, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-2.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "phaseAlign": true,
+      "prompt": "Lofi round sub bass loop, 84 BPM, 8 bars, in C minor (Cmin natural). Round sustained sub-bass with slow envelope movement throughout. Bars 1 and 2 hold root C (i), bar 3 holds F (iv), bar 4 holds G (v), bars 5 and 6 hold A♭ (♭VI), bar 7 holds B♭ (♭VII), bar 8 returns to C with a slow glissando from B♭ down to C on beat 4. Each chord change starts on beat 1. Continuous sustained sub-bass across all 8 bars. Warm, round, slightly tape-saturated. Mono. Just sub bass, no drums, no instruments, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-3.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "phaseAlign": true,
+      "prompt": "Lofi reese-style detuned bass loop, 84 BPM, 8 bars, in C minor (Cmin natural). Detuned reese bass with strong attack on beat 1 of every bar then sustained detuned drone for the rest of the bar. Bars 1 and 2 attack on C, bar 3 on F, bar 4 on G, bars 5 and 6 on A♭, bar 7 on B♭, bar 8 attacks on E♭ (♭III) with a passing-tone walk back to C. Continuous bass drone across all 8 bars. Warm, slightly tape-saturated, gently detuned. Mono. Just reese bass, no drums, no instruments, no melody, no vocals."
+    },
+    {
+      "file": "melody-1.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "phaseAlign": true,
+      "prompt": "Lofi Rhodes piano melody loop, 84 BPM, 8 bars, in C minor (Cmin natural). Antecedent (bars 1 to 4) plays a question motif: a four-note phrase using C, E♭, G, B♭ that rises and pauses on bar 4. Consequent (bars 5 to 8) plays the answer: same rhythm but resolves down the scale ending on C on bar 8. Notes have space between them so vocals can sit on top. Continuous Rhodes notes across all 8 bars (no full silent bars). Slightly stereo Rhodes sound, warm, tape-saturated, dusty. Just Rhodes piano, no drums, no bass, no other instruments, no vocals."
+    },
+    {
+      "file": "melody-2.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "phaseAlign": true,
+      "prompt": "Lofi wind synth pad loop, 84 BPM, 8 bars, in C minor (Cmin natural). Soft airy wind-like synth pad playing sustained chord progression: bars 1 and 2 Cmin (i), bar 3 Fmin (iv), bar 4 Gmin (v), bars 5 and 6 A♭maj (♭VI), bar 7 B♭maj (♭VII), bar 8 returns to Cmin with a brief E♭ pickup on beat 4. Each chord change starts on beat 1 of its bar. Continuous sustained wind-pad across all 8 bars. Slightly stereo, soft, warm, slightly tape-saturated. Just wind pad, no drums, no bass, no other instruments, no vocals."
+    },
+    {
+      "file": "melody-3.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "phaseAlign": true,
+      "prompt": "Lofi soft synth lead loop, 84 BPM, 8 bars, in C minor (Cmin natural). Soft warm synth lead playing a simple 4-bar question (bars 1 to 4) using notes G, F, E♭, D, C — a descending question that pauses on bar 4. Bars 5 to 8 answer with a related descending phrase that resolves on C on bar 8. Notes are spaced with rest beats so vocals fit on top. Continuous lead notes across all 8 bars. Slightly stereo, soft, warm, slightly tape-saturated. Just synth lead, no drums, no bass, no other instruments, no vocals."
+    },
+    {
+      "file": "melody-4.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "phaseAlign": true,
+      "prompt": "Lofi felt-muted piano loop, 84 BPM, 8 bars, in C minor (Cmin natural). Felt-muted upright piano playing a sparse arpeggio — three notes per bar — outlining the chord progression: bars 1 and 2 Cmin arp (C-E♭-G), bar 3 Fmin arp (F-A♭-C), bar 4 Gmin arp (G-B♭-D), bars 5 and 6 A♭maj arp (A♭-C-E♭), bar 7 B♭maj arp (B♭-D-F), bar 8 Cmin arp resolving on C on beat 4. Each arp lands on beat 1 with notes on beats 1, 2.5, and 4. Continuous arpeggio across all 8 bars. Slightly stereo, soft, warm, slightly tape-saturated. Just felt piano, no drums, no bass, no other instruments, no vocals."
+    },
+    {
+      "file": "melody-B-0.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "phaseAlign": true,
+      "prompt": "Lofi bright Wurlitzer/Rhodes melody loop, 84 BPM, 8 bars, in C minor (Cmin natural). Bright Wurli plays an ascending 4-bar question (bars 1 to 4) using C, E♭, G, B♭, C ascending across bars and pausing on bar 4. Bars 5 to 8 answer with a descending response that resolves on C on bar 8. Notes are spaced so vocals can sit on top. Continuous Wurli notes across all 8 bars. Slightly stereo, bright, warm, slightly tape-saturated. Just Wurli/Rhodes, no drums, no bass, no other instruments, no vocals."
+    },
+    {
+      "file": "melody-B-1.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "phaseAlign": true,
+      "prompt": "Lofi plucked synth lead loop, 84 BPM, 8 bars, in C minor (Cmin natural). Plucked synth lead with short pizzicato attacks. Antecedent (bars 1 to 4) plays a question motif on Cmin scale notes — three plucks per bar with a note on beat 1, beat 2.5, and beat 4 — that pauses on bar 4. Consequent (bars 5 to 8) answers with the same rhythm but a contour that resolves on C on bar 8. Notes are spaced for vocals on top. Continuous plucks across all 8 bars. Slightly stereo, warm, slightly tape-saturated. Just plucked synth, no drums, no bass, no other instruments, no vocals."
+    },
+    {
+      "file": "melody-B-2.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "phaseAlign": true,
+      "prompt": "Lofi music-box melody loop, 84 BPM, 8 bars, in C minor (Cmin natural). Bell-like music-box tone plays a simple two-phrase melody. Antecedent (bars 1 to 4): a 4-bar question using only Cmin scale notes C, E♭, G, A♭, B♭ — three soft bell strikes per bar — pausing on bar 4. Consequent (bars 5 to 8) answers with the same rhythm and resolves on C on bar 8. Notes spaced with rests so vocals fit. Continuous bell notes across all 8 bars. Slightly stereo, soft, warm, slightly tape-saturated. Just music box, no drums, no bass, no other instruments, no vocals."
+    },
+    {
+      "file": "melody-B-3.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "phaseAlign": true,
+      "prompt": "Lofi tenor saxophone loop, 84 BPM, 8 bars, in C minor (Cmin natural). Soft breathy tenor sax plays a two-phrase melody. Antecedent (bars 1 to 4): a 4-bar question using Cmin scale (C, D, E♭, F, G, A♭, B♭) with sustained notes that pause on bar 4. Consequent (bars 5 to 8) answers with a related descending phrase resolving on C on bar 8. Notes are sustained but with breathing space so vocals can sit on top. Continuous sax across all 8 bars. Slightly stereo, breathy, warm, slightly tape-saturated. Just tenor sax, no drums, no bass, no other instruments, no vocals."
+    },
+    {
+      "file": "vocals-A-0.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "phaseAlign": false,
+      "prompt": "Lofi sustained vocal pad loop, 84 BPM, 8 bars, in C minor (Cmin natural). Soft breathy female vocal humming a sustained 'ooh' and 'ahh' on a Cmin chord across all 8 bars — wordless, no syllables, no recognizable phrase, no narrative. Bars 1 through 8 carry uniform energy with subtle bar-by-bar evolution (gentle dynamic swells) but no peak, no climax, no silence. Position-agnostic: every bar can be entered from any phrase position. Slightly tape-saturated, warm, intimate, centered. Just sustained vocals, no drums, no instruments, no bass, no other instruments."
+    },
+    {
+      "file": "vocals-A-1.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "phaseAlign": false,
+      "prompt": "Lofi wordless syllabic vocal chop loop, 84 BPM, 8 bars, in C minor (Cmin natural). Female voice singing wordless syllables (la, da, na) on Cmin scale notes — one repeating short 1-bar motif of two syllables per bar, identical across all 8 bars. No words, no narrative phrase, no climax. Every bar has the same energy and downbeat pattern. Position-agnostic. Slightly tape-saturated, warm, intimate, centered. Just vocal chops, no drums, no instruments, no bass, no other instruments."
+    },
+    {
+      "file": "vocals-A-2.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "phaseAlign": false,
+      "prompt": "Lofi whispered vocal chop loop, 84 BPM, 8 bars, in C minor (Cmin natural). Female voice whispering wordless melodic chops on Cmin scale — one short whispered syllable (mm, sh, hh, na) per beat, no recognizable words. Repeats a 1-bar motif identically across all 8 bars so every bar carries the same energy. Position-agnostic — no phrase structure, no climax. Slightly tape-saturated, warm, intimate, centered. Just whispered chops, no drums, no instruments, no bass, no other instruments."
+    },
+    {
+      "file": "vocals-A-3.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "phaseAlign": false,
+      "postProcess": "reverse",
+      "prompt": "Lofi reversed-air vocal texture loop, 84 BPM, 8 bars, in C minor (Cmin natural). Continuous backwards vocal swells — wordless reversed vowel sounds layered into a sustained airy texture across all 8 bars with uniform energy throughout. No silent bars, no peaks, no phrase structure, no climax. Treat as ambient reversed-air vocal pad, not a phrase. Position-agnostic — every bar is equivalent. Slightly tape-saturated, dreamy, warm, centered. Just reversed vocal swells, no drums, no instruments, no bass, no other instruments."
+    },
+    {
+      "file": "vocals-B-0.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "phaseAlign": false,
+      "prompt": "Lofi doo-wop vocal chop loop, 84 BPM, 8 bars, in C minor (Cmin natural). Female voice singing the wordless syllables 'doo wop doo wop' as a 1-bar motif that repeats identically across all 8 bars — every bar has the same energy and the same downbeat 'doo' on beat 1. No lyrical phrase, no narrative, no climax. Position-agnostic. Slightly tape-saturated, warm, soulful, centered. Just doo-wop syllables, no drums, no instruments, no bass, no other instruments."
+    },
+    {
+      "file": "vocals-B-1.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "phaseAlign": false,
+      "prompt": "Lofi spoken-rhythm vocal chop loop, 84 BPM, 8 bars, in C minor (Cmin natural). Female voice in wordless spoken-rhythm chops — short percussive vocal syllables (mm, na, dah, ya) following a 1-bar motif that repeats identically across all 8 bars. No recognizable words, no narrative phrase, no story. Every bar carries equal energy and the same downbeat. Position-agnostic. Slightly tape-saturated, intimate, dusty, centered. Just spoken vocal chops, no drums, no instruments, no bass, no other instruments."
+    },
+    {
+      "file": "vocals-B-2.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "phaseAlign": false,
+      "prompt": "Lofi sustained choir pad loop, 84 BPM, 8 bars, in C minor (Cmin natural). Sustained female and male choir voices on a held 'aah' on a Cmin chord — slowly evolving sustained texture with uniform energy across all 8 bars. No peak, no climax, no phrase, no silent bars, no rhythmic pulse. Position-agnostic — every bar is equivalent. Slightly tape-saturated, warm, dreamy, centered. Just sustained choir, no drums, no instruments, no bass, no other instruments."
+    },
+    {
+      "file": "vocals-B-3.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "phaseAlign": false,
+      "prompt": "Lofi pitched vocal chop loop, 84 BPM, 8 bars, in C minor (Cmin natural). Female voice singing single 'aa' syllable repeats on Cmin scale notes — same syllable every beat, attack on each downbeat, no words. Repeats a 1-bar motif identically across all 8 bars so every bar has the same energy and the same downbeat attack. No phrase structure, no narrative, no climax. Position-agnostic. Slightly tape-saturated, soulful, dusty, centered. Just pitched vocal chops, no drums, no instruments, no bass, no other instruments."
+    }
+  ]
+}

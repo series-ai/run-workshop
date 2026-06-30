@@ -1,0 +1,883 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Flexible Baseline — Game-ready embossed baseline theme
+   Genre-neutral with saturated accents, candy-gradient buttons, thick ledge
+   shadows, and bold typography. Pure CSS, no custom assets.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
+
+@keyframes neutral-button-highlight-underglow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.86;
+    transform: scale(1.02);
+  }
+}
+
+[data-ui-theme='neutral-base'] {
+
+  /* ── Fonts — Nunito: rounded geometric, game-friendly weight ── */
+  --ui-font-body: 'Nunito', 'Trebuchet MS', -apple-system, BlinkMacSystemFont, sans-serif;
+  --ui-font-display: var(--ui-font-body);
+  --ui-font-weight-display: 900;
+  --ui-font-weight-body: 700;
+  --ui-font-weight-heading: 900;
+  --ui-font-weight-label: 800;
+
+  /* ── Page — dark with radial accent wash ── */
+  --ui-page-bg:
+    radial-gradient(ellipse 140% 90% at 50% 15%, rgba(28, 58, 110, 0.6) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 60% at 80% 80%, rgba(18, 35, 65, 0.4) 0%, transparent 50%),
+    linear-gradient(180deg, #070d18 0%, #0c1628 100%);
+  --ui-page-bg-mode: dark;
+
+  /* ── Text ── */
+  --ui-text-primary: #f0f4fa;
+  --ui-text-muted: rgba(190, 210, 235, 0.78);
+  --ui-text-strong: #ffffff;
+  --ui-focus-ring: rgba(100, 180, 255, 0.55);
+
+  /* ── Text shadow — subtle drop for readability ── */
+  --ui-text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --ui-text-shadow-on-dark: var(--ui-text-shadow);
+  --ui-text-shadow-on-light: none;
+  --ui-button-label-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+
+  /* ── Border widths — thick for game feel ── */
+  --ui-button-border-width: 2px;
+  --ui-panel-border-width: 2px;
+  --ui-header-border-width: 2px;
+  --ui-icon-frame-border-width: 2px;
+  --ui-input-border-width: 2px;
+  --ui-checkbox-border-width: 2px;
+  --ui-switch-border-width: 2px;
+  --ui-progress-border-width: 2px;
+  --ui-slider-border-width: 2px;
+  --ui-slider-thumb-border-width: 2px;
+  --ui-pagination-border-width: 2px;
+  --ui-rail-border-width: 2px;
+  --ui-rail-button-border-width: 2px;
+
+  /* ══════════════════════════════════════════════
+     BUTTONS — candy gradient with hard midpoint
+     5px ledge shadow, inset highlight, 4px press
+     ══════════════════════════════════════════════ */
+
+  /* ── Primary — saturated blue accent ── */
+  --ui-button-primary-fill:
+    linear-gradient(180deg,
+      #7cc8ff 0%,
+      #4a9ef0 50%,
+      #2d7de0 50%,
+      #1a56b8 100%);
+  --ui-button-primary-border: rgba(16, 52, 108, 0.9);
+  --ui-button-primary-shadow:
+    inset 0 1px 0 rgba(180, 220, 255, 0.3),
+    0 5px 0 rgba(12, 40, 85, 0.9),
+    0 13px 20px rgba(0, 0, 0, 0.35);
+  --ui-button-primary-active-shadow:
+    0 1px 0 rgba(12, 40, 85, 0.9),
+    inset 0 2px 5px rgba(0, 0, 0, 0.25);
+  --ui-button-primary-text: #ffffff;
+
+  /* ── Secondary — warm orange/amber ── */
+  --ui-button-secondary-fill:
+    linear-gradient(180deg,
+      #ffd06a 0%,
+      #f0a830 50%,
+      #e08e20 50%,
+      #c06810 100%);
+  --ui-button-secondary-border: rgba(120, 58, 10, 0.88);
+  --ui-button-secondary-shadow:
+    inset 0 1px 0 rgba(255, 230, 170, 0.35),
+    0 5px 0 rgba(95, 45, 8, 0.9),
+    0 13px 20px rgba(0, 0, 0, 0.35);
+  --ui-button-secondary-active-shadow:
+    0 1px 0 rgba(95, 45, 8, 0.9),
+    inset 0 2px 5px rgba(0, 0, 0, 0.25);
+  --ui-button-secondary-text: #ffffff;
+
+  /* ── Ghost — dark surface, subtle panel feel ── */
+  --ui-button-ghost-fill:
+    linear-gradient(180deg,
+      rgba(35, 50, 75, 0.95) 0%,
+      rgba(28, 40, 60, 0.95) 50%,
+      rgba(22, 32, 50, 0.95) 50%,
+      rgba(14, 22, 38, 0.95) 100%);
+  --ui-button-ghost-border: rgba(80, 110, 160, 0.3);
+  --ui-button-ghost-shadow:
+    inset 0 1px 0 rgba(120, 160, 220, 0.12),
+    0 5px 0 rgba(6, 10, 20, 0.8),
+    0 13px 20px rgba(0, 0, 0, 0.3);
+  --ui-button-ghost-active-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.35);
+  --ui-button-ghost-text: rgba(200, 215, 235, 0.85);
+
+  /* ── Pill — teal/cyan accent ── */
+  --ui-button-pill-fill:
+    linear-gradient(180deg,
+      #6af0e0 0%,
+      #30c8b8 50%,
+      #20a898 50%,
+      #148070 100%);
+  --ui-button-pill-border: rgba(10, 65, 58, 0.88);
+  --ui-button-pill-shadow:
+    inset 0 1px 0 rgba(160, 255, 240, 0.3),
+    0 5px 0 rgba(8, 50, 45, 0.9),
+    0 13px 20px rgba(0, 0, 0, 0.35);
+  --ui-button-pill-active-shadow:
+    0 1px 0 rgba(8, 50, 45, 0.9),
+    inset 0 2px 5px rgba(0, 0, 0, 0.25);
+  --ui-button-pill-text: #ffffff;
+  --ui-button-pill-padding: 0 18px;
+  --ui-button-pill-radius: 999px;
+
+  /* ── Icon button — dark raised square ── */
+  --ui-button-icon-fill:
+    linear-gradient(180deg,
+      rgba(30, 45, 70, 0.98) 0%,
+      rgba(18, 28, 48, 0.98) 100%);
+  --ui-button-icon-border: rgba(70, 100, 150, 0.3);
+  --ui-button-icon-shadow:
+    inset 0 1px 0 rgba(120, 160, 220, 0.12),
+    0 5px 0 rgba(6, 10, 20, 0.8),
+    0 10px 18px rgba(0, 0, 0, 0.28);
+  --ui-button-icon-text: #d8efff;
+
+  /* ── Grid button ── */
+  --ui-button-grid-fill:
+    linear-gradient(180deg,
+      #7cc8ff 0%,
+      #4a9ef0 50%,
+      #2d7de0 50%,
+      #1a56b8 100%);
+  --ui-button-grid-border: rgba(16, 52, 108, 0.88);
+  --ui-button-grid-shadow:
+    0 4px 0 rgba(12, 40, 85, 0.85),
+    0 10px 16px rgba(0, 0, 0, 0.28);
+  --ui-button-grid-active-shadow:
+    0 2px 0 rgba(12, 40, 85, 0.85),
+    0 5px 10px rgba(0, 0, 0, 0.22);
+  --ui-button-grid-text: #ffffff;
+
+  /* ── Tab button ── */
+  --ui-button-tab-fill: transparent;
+  --ui-button-tab-active-fill:
+    linear-gradient(180deg,
+      rgba(60, 130, 220, 0.2) 0%,
+      rgba(40, 100, 180, 0.08) 100%);
+  --ui-button-tab-text: rgba(140, 170, 210, 0.55);
+  --ui-button-tab-active-text: #b8dcff;
+  --ui-button-tab-highlight-image:
+    linear-gradient(90deg,
+      rgba(80, 170, 255, 0) 0%,
+      rgba(80, 170, 255, 0.9) 20%,
+      rgba(200, 235, 255, 1) 50%,
+      rgba(80, 170, 255, 0.9) 80%,
+      rgba(80, 170, 255, 0) 100%);
+  --ui-button-tab-highlight-size: 100% 100%;
+  --ui-button-tab-highlight-width: 84px;
+  --ui-button-tab-highlight-height: 4px;
+
+  /* ══════════════════════════════════════════════
+     PANELS — solid raised dark surfaces
+     Accent strip via overlay gradient at top edge
+     ══════════════════════════════════════════════ */
+
+  --ui-panel-card-fill:
+    linear-gradient(180deg,
+      rgba(28, 42, 68, 0.96) 0%,
+      rgba(16, 26, 44, 0.98) 100%);
+  --ui-panel-card-border: rgba(70, 100, 155, 0.28);
+  --ui-panel-card-shadow:
+    inset 0 1px 0 rgba(120, 165, 230, 0.15),
+    0 5px 14px rgba(0, 0, 0, 0.35);
+  /* Accent strip — horizontal gradient bar at top of card */
+  --ui-panel-card-overlay-image:
+    linear-gradient(90deg,
+      rgba(60, 140, 240, 0) 0%,
+      rgba(60, 140, 240, 0.5) 15%,
+      rgba(120, 190, 255, 0.6) 50%,
+      rgba(60, 140, 240, 0.5) 85%,
+      rgba(60, 140, 240, 0) 100%);
+  --ui-panel-card-overlay-size: 100% 3px;
+  --ui-panel-card-overlay-position: center top;
+  --ui-panel-card-overlay-repeat: no-repeat;
+  --ui-panel-card-overlay-opacity: 1;
+
+  --ui-panel-section-fill:
+    linear-gradient(180deg,
+      rgba(25, 38, 62, 0.95) 0%,
+      rgba(14, 22, 40, 0.97) 100%);
+  --ui-panel-section-border: rgba(65, 95, 145, 0.25);
+  --ui-panel-section-shadow:
+    inset 0 1px 0 rgba(110, 155, 220, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+  /* Accent strip on sections too */
+  --ui-panel-section-overlay-image:
+    linear-gradient(90deg,
+      rgba(60, 140, 240, 0) 0%,
+      rgba(60, 140, 240, 0.45) 15%,
+      rgba(120, 190, 255, 0.55) 50%,
+      rgba(60, 140, 240, 0.45) 85%,
+      rgba(60, 140, 240, 0) 100%);
+  --ui-panel-section-overlay-size: 100% 3px;
+  --ui-panel-section-overlay-position: center top;
+  --ui-panel-section-overlay-repeat: no-repeat;
+  --ui-panel-section-overlay-opacity: 1;
+
+  --ui-panel-overlay-fill:
+    linear-gradient(180deg,
+      rgba(22, 34, 56, 0.96) 0%,
+      rgba(10, 16, 30, 0.98) 100%);
+  --ui-panel-overlay-border: rgba(75, 105, 160, 0.3);
+  --ui-panel-overlay-shadow:
+    inset 0 1px 0 rgba(120, 165, 230, 0.12),
+    0 24px 48px rgba(0, 0, 0, 0.5);
+
+  --ui-panel-radius: 12px;
+
+  /* ── Header (section title bar) — green accent ── */
+  --ui-header-fill:
+    linear-gradient(180deg,
+      #5ae048 0%,
+      #38c828 42%,
+      #28b018 42%,
+      #1a8810 100%);
+  --ui-header-border: rgba(16, 80, 8, 0.85);
+  --ui-header-shadow:
+    inset 0 1px 0 rgba(180, 255, 160, 0.3),
+    0 5px 0 rgba(12, 60, 6, 0.85),
+    0 12px 20px rgba(0, 0, 0, 0.3);
+  --ui-header-text: #ffffff;
+
+  /* ── Icon frame — gradient-filled dark well ── */
+  --ui-icon-frame-fill:
+    linear-gradient(145deg,
+      rgba(20, 38, 72, 0.95) 0%,
+      rgba(28, 52, 90, 0.95) 100%);
+  --ui-icon-frame-border: rgba(60, 95, 150, 0.4);
+  --ui-icon-frame-shadow:
+    inset 0 1px 0 rgba(100, 155, 230, 0.18),
+    0 3px 8px rgba(0, 0, 0, 0.25);
+
+  /* ══════════════════════════════════════════════
+     BADGES, TAGS, CHIPS
+     ══════════════════════════════════════════════ */
+
+  --ui-badge-status-fill:
+    linear-gradient(180deg, #60c8ff 0%, #2890e8 100%);
+  --ui-badge-status-border: rgba(16, 55, 110, 0.8);
+  --ui-badge-counter-fill:
+    linear-gradient(180deg, #ffe680 0%, #f0b020 100%);
+  --ui-badge-counter-border: rgba(120, 75, 10, 0.75);
+  --ui-badge-new-fill:
+    linear-gradient(180deg, #ff7090 0%, #e83860 100%);
+  --ui-badge-new-border: rgba(130, 22, 55, 0.8);
+  --ui-badge-chip-fill:
+    linear-gradient(180deg,
+      rgba(28, 42, 68, 0.95) 0%,
+      rgba(16, 26, 44, 0.95) 100%);
+  --ui-badge-chip-border: rgba(65, 95, 145, 0.3);
+  --ui-badge-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3);
+  --ui-badge-radius: 100px;
+
+  --ui-tag-fill:
+    linear-gradient(180deg, #50a8f8 0%, #2878e0 100%);
+  --ui-tag-border: rgba(14, 50, 100, 0.82);
+  --ui-tag-shadow:
+    0 3px 0 rgba(10, 40, 85, 0.7),
+    0 8px 14px rgba(0, 0, 0, 0.22);
+  --ui-tag-text: #ffffff;
+
+  --ui-chip-text: #ffffff;
+
+  /* ══════════════════════════════════════════════
+     PROGRESS — thick track, inset well,
+     accent fill with glow + top shine
+     ══════════════════════════════════════════════ */
+
+  --ui-progress-track-fill:
+    linear-gradient(180deg,
+      rgba(6, 10, 20, 0.88) 0%,
+      rgba(14, 22, 38, 0.94) 100%);
+  --ui-progress-track-border: rgba(60, 90, 140, 0.3);
+  --ui-progress-track-shadow:
+    inset 0 3px 6px rgba(0, 0, 0, 0.45),
+    0 1px 0 rgba(100, 150, 220, 0.08);
+  --ui-progress-fill:
+    linear-gradient(180deg,
+      #7cc8ff 0%,
+      #4a9ef0 50%,
+      #2d7de0 100%);
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(180, 230, 255, 0.4),
+    0 0 10px rgba(50, 140, 240, 0.35);
+  --ui-progress-track-height: 16px;
+  --ui-progress-track-padding: 3px;
+  --ui-progress-bar-inset: 3px;
+  --ui-progress-bar-inset-left: 3px;
+  --ui-progress-bar-inset-right: 3px;
+  --ui-progress-bar-inset-top: 3px;
+  --ui-progress-bar-inset-bottom: 3px;
+  --ui-progress-label-color: #ffffff;
+  --ui-progress-label-size: 13px;
+  --ui-progress-thumb:
+    linear-gradient(180deg, #ffffff 0%, #dce8ff 100%);
+
+  /* ── Slider ── */
+  --ui-slider-track-height: 16px;
+  --ui-slider-track-padding: 3px;
+  --ui-slider-bar-inset: 3px;
+  --ui-slider-thumb-width: 28px;
+  --ui-slider-thumb-height: 28px;
+  --ui-slider-thumb-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  --ui-scrollbar-track-fill:
+    linear-gradient(180deg, rgba(16, 28, 48, 0.98) 0%, rgba(8, 14, 28, 0.98) 100%);
+  --ui-scrollbar-track-border: rgba(72, 118, 185, 0.42);
+  --ui-scrollbar-track-shadow:
+    inset 0 1px 0 rgba(132, 184, 255, 0.12),
+    inset 0 3px 8px rgba(0, 0, 0, 0.42),
+    0 10px 18px rgba(0, 0, 0, 0.24);
+  --ui-scrollbar-track-overlay:
+    linear-gradient(180deg, rgba(120, 190, 255, 0.16) 0%, rgba(120, 190, 255, 0) 52%);
+  --ui-scrollbar-thumb-fill:
+    linear-gradient(180deg, #7cc8ff 0%, #4a9ef0 50%, #2d7de0 50%, #1a56b8 100%);
+  --ui-scrollbar-thumb-border: rgba(16, 52, 108, 0.92);
+  --ui-scrollbar-thumb-shadow:
+    inset 0 1px 0 rgba(180, 220, 255, 0.34),
+    0 4px 0 rgba(12, 40, 85, 0.82),
+    0 10px 16px rgba(0, 0, 0, 0.28);
+  --ui-scrollbar-thumb-overlay:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 46%);
+  --ui-scrollbar-radius: 10px;
+  --ui-scrollbar-thickness: 16px;
+  --ui-scrollbar-thumb-inset: 2px;
+  --ui-scrollbar-active-glow:
+    0 0 0 1px rgba(100, 180, 255, 0.35),
+    0 0 18px rgba(66, 155, 255, 0.24);
+
+  /* ══════════════════════════════════════════════
+     INPUTS — recessed dark wells
+     ══════════════════════════════════════════════ */
+
+  --ui-input-fill:
+    linear-gradient(180deg,
+      rgba(6, 10, 20, 0.85) 0%,
+      rgba(12, 20, 34, 0.92) 100%);
+  --ui-input-border: rgba(60, 90, 140, 0.32);
+  --ui-input-shadow:
+    inset 0 3px 6px rgba(0, 0, 0, 0.4);
+  --ui-input-height: 50px;
+  --ui-input-padding: 12px 14px;
+  --ui-input-text: var(--ui-text-primary);
+  --ui-input-placeholder: rgba(140, 170, 210, 0.45);
+  --ui-select-chevron-size: 30px;
+  --ui-select-chevron-radius: 10px;
+  --ui-select-chevron-fill:
+    linear-gradient(180deg,
+      rgba(58, 95, 150, 0.98) 0%,
+      rgba(28, 52, 92, 0.98) 100%);
+  --ui-select-chevron-border: rgba(126, 175, 240, 0.34);
+  --ui-select-chevron-shadow:
+    inset 0 1px 0 rgba(216, 236, 255, 0.18),
+    0 3px 0 rgba(8, 20, 44, 0.76);
+  --ui-select-chevron-color: #e0f2ff;
+  --ui-select-chevron-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.34);
+  --ui-select-chevron-offset-inline-end: 14px;
+
+  /* ── Pagination dots ── */
+  --ui-pagination-fill: rgba(60, 90, 140, 0.3);
+  --ui-pagination-active-fill:
+    linear-gradient(180deg, #70c0ff 0%, #3890e0 100%);
+  --ui-pagination-border: rgba(60, 90, 140, 0.25);
+  --ui-pagination-active-border: rgba(20, 60, 115, 0.75);
+  --ui-pagination-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+
+  /* ── Side rail ── */
+  --ui-rail-fill:
+    linear-gradient(180deg,
+      rgba(22, 34, 56, 0.94) 0%,
+      rgba(10, 18, 32, 0.97) 100%);
+  --ui-rail-border: rgba(65, 95, 145, 0.25);
+  --ui-rail-shadow:
+    inset 0 1px 0 rgba(110, 155, 220, 0.1),
+    0 16px 32px rgba(0, 0, 0, 0.35);
+
+  /* ── Ticket ── */
+  --ui-ticket-text: #ffffff;
+  --ui-ticket-subtitle-text: rgba(180, 210, 245, 0.82);
+
+  /* ── Switch thumb ── */
+  --ui-switch-thumb-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* ── Tabs ──────────────────────────────────────────────────────────────── */
+
+[data-ui-theme='neutral-base'] .ui-tabs {
+  align-items: end;
+  gap: 8px;
+  padding: 0 6px;
+  border-bottom: 1px solid rgba(78, 114, 170, 0.32);
+  box-shadow: inset 0 -1px 0 rgba(120, 170, 235, 0.08);
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='tab'] {
+  min-height: 44px;
+  padding: 8px 14px 11px;
+  color: rgba(160, 188, 220, 0.82);
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='tab']::before {
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(180deg, rgba(23, 36, 58, 0.88) 0%, rgba(12, 20, 35, 0.96) 100%);
+  border: 1px solid rgba(78, 114, 170, 0.22);
+  border-bottom-color: rgba(32, 48, 76, 0.95);
+  box-shadow: inset 0 1px 0 rgba(140, 190, 255, 0.08);
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='tab']::after {
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  width: auto;
+  height: 2px;
+  transform: none;
+  border-radius: 999px;
+  background-image: linear-gradient(90deg, rgba(120, 190, 255, 0) 0%, rgba(120, 190, 255, 0.18) 24%, rgba(120, 190, 255, 0.34) 50%, rgba(120, 190, 255, 0.18) 76%, rgba(120, 190, 255, 0) 100%);
+  opacity: 1;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='tab'][data-state='active'] {
+  margin-bottom: -1px;
+  color: #eef7ff;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='tab'][data-state='active']::before {
+  background: linear-gradient(180deg, rgba(47, 74, 115, 0.98) 0%, rgba(23, 39, 66, 0.96) 100%);
+  border-color: rgba(116, 176, 245, 0.45);
+  border-bottom-color: rgba(47, 74, 115, 0.98);
+  box-shadow:
+    inset 0 1px 0 rgba(214, 236, 255, 0.16),
+    0 12px 18px rgba(8, 15, 28, 0.2);
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='tab'][data-state='active']::after {
+  background-image: linear-gradient(90deg, rgba(120, 190, 255, 0) 0%, rgba(120, 190, 255, 0.68) 20%, rgba(214, 236, 255, 0.98) 50%, rgba(120, 190, 255, 0.68) 80%, rgba(120, 190, 255, 0) 100%);
+}
+
+/* ── Segmented Control / Toggle Group ──────────────────────────────────── */
+
+[data-ui-theme='neutral-base'] .ui-segmented-control {
+  background: rgba(12, 22, 42, 0.7);
+  border: 2px solid rgba(65, 100, 155, 0.25);
+  border-radius: 14px;
+}
+
+[data-ui-theme='neutral-base'] .ui-toggle-group {
+  background: rgba(12, 22, 42, 0.5);
+  border: 2px solid rgba(65, 100, 155, 0.2);
+  border-radius: 14px;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='segment'] {
+  color: rgba(190, 210, 235, 0.78);
+  border-radius: 10px;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='segment'][data-state='active']::before {
+  background: rgba(100, 180, 255, 0.18);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='segment'][data-state='active'] {
+  color: #f0f4fa;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='toggle'] {
+  color: rgba(190, 210, 235, 0.78);
+  border-radius: 10px;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='toggle'][data-state='active']::before {
+  border: 2px solid rgba(100, 180, 255, 0.55);
+  border-radius: 10px;
+  background: transparent;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-variant='toggle'][data-state='active'] {
+  color: #f0f4fa;
+}
+
+/* ── Bottom Tab Bar ─────────────────────────────────────────────────────── */
+
+[data-ui-theme='neutral-base'] .ui-tab-bar {
+  --ui-tab-bar-fill:
+    linear-gradient(180deg,
+      rgba(20, 32, 52, 0.96) 0%,
+      rgba(8, 14, 26, 0.98) 100%);
+  --ui-tab-bar-border: rgba(65, 100, 155, 0.25);
+  --ui-tab-bar-shadow:
+    0 -4px 20px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(110, 155, 220, 0.12);
+  --ui-tab-bar-text: rgba(130, 165, 210, 0.5);
+  --ui-tab-bar-active-text: #b0d8ff;
+}
+
+/* ── List rows ──────────────────────────────────────────────────────────── */
+
+[data-ui-theme='neutral-base'] .ui-list-row {
+  --ui-list-row-fill:
+    linear-gradient(180deg,
+      rgba(25, 38, 62, 0.8) 0%,
+      rgba(14, 22, 40, 0.9) 100%);
+  --ui-list-row-border: rgba(60, 90, 140, 0.2);
+  --ui-list-row-highlight-fill:
+    linear-gradient(180deg,
+      rgba(50, 130, 230, 0.25) 0%,
+      rgba(30, 100, 200, 0.35) 100%);
+  --ui-list-row-highlight-border: rgba(80, 160, 255, 0.4);
+  --ui-settings-row-fill:
+    linear-gradient(180deg,
+      rgba(21, 33, 54, 0.46) 0%,
+      rgba(13, 22, 38, 0.58) 100%);
+  --ui-settings-row-border: rgba(68, 104, 162, 0.1);
+  --ui-settings-row-shadow:
+    inset 0 1px 0 rgba(110, 155, 220, 0.05),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Button / progress tone contract ────────────────────────────────────── */
+
+[data-ui-theme='neutral-base'] .ui-progress[data-tone='yellow'],
+[data-ui-theme='neutral-base'] .ui-button[data-tone='yellow'] {
+  --ui-progress-fill:
+    linear-gradient(180deg, #ffe17a 0%, #f5ba3a 50%, #d78318 100%);
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(255, 240, 192, 0.38),
+    0 0 10px rgba(245, 184, 58, 0.24);
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-tone='yellow'] {
+  --ui-button-fill:
+    linear-gradient(180deg, #ffe17a 0%, #f5ba3a 50%, #d78318 50%, #b85d0f 100%);
+  --ui-button-border: rgba(117, 61, 10, 0.9);
+  --ui-button-shadow:
+    inset 0 1px 0 rgba(255, 239, 186, 0.36),
+    0 5px 0 rgba(90, 44, 8, 0.9),
+    0 13px 20px rgba(0, 0, 0, 0.34);
+  --ui-button-active-shadow:
+    0 1px 0 rgba(90, 44, 8, 0.9),
+    inset 0 2px 5px rgba(0, 0, 0, 0.24);
+  --ui-button-text: #ffffff;
+}
+
+[data-ui-theme='neutral-base'] .ui-progress[data-tone='green'],
+[data-ui-theme='neutral-base'] .ui-button[data-tone='green'] {
+  --ui-progress-fill:
+    linear-gradient(180deg, #77f1c9 0%, #33cd9e 50%, #168a68 100%);
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(204, 255, 240, 0.32),
+    0 0 10px rgba(51, 205, 158, 0.22);
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-tone='green'] {
+  --ui-button-fill:
+    linear-gradient(180deg, #77f1c9 0%, #33cd9e 50%, #1d9b76 50%, #156f57 100%);
+  --ui-button-border: rgba(9, 70, 54, 0.9);
+  --ui-button-shadow:
+    inset 0 1px 0 rgba(200, 255, 238, 0.34),
+    0 5px 0 rgba(7, 52, 40, 0.9),
+    0 13px 20px rgba(0, 0, 0, 0.34);
+  --ui-button-active-shadow:
+    0 1px 0 rgba(7, 52, 40, 0.9),
+    inset 0 2px 5px rgba(0, 0, 0, 0.24);
+  --ui-button-text: #ffffff;
+}
+
+[data-ui-theme='neutral-base'] .ui-progress[data-tone='blue'],
+[data-ui-theme='neutral-base'] .ui-button[data-tone='blue'] {
+  --ui-progress-fill:
+    linear-gradient(180deg, #7cc8ff 0%, #4a9ef0 50%, #2d7de0 100%);
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(180, 230, 255, 0.4),
+    0 0 10px rgba(50, 140, 240, 0.35);
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-tone='blue'] {
+  --ui-button-fill:
+    linear-gradient(180deg, #7cc8ff 0%, #4a9ef0 50%, #2d7de0 50%, #1a56b8 100%);
+  --ui-button-border: rgba(16, 52, 108, 0.9);
+  --ui-button-shadow:
+    inset 0 1px 0 rgba(180, 220, 255, 0.3),
+    0 5px 0 rgba(12, 40, 85, 0.9),
+    0 13px 20px rgba(0, 0, 0, 0.35);
+  --ui-button-active-shadow:
+    0 1px 0 rgba(12, 40, 85, 0.9),
+    inset 0 2px 5px rgba(0, 0, 0, 0.25);
+  --ui-button-text: #ffffff;
+}
+
+[data-ui-theme='neutral-base'] .ui-progress[data-tone='red'],
+[data-ui-theme='neutral-base'] .ui-button[data-tone='red'] {
+  --ui-progress-fill:
+    linear-gradient(180deg, #ff8f95 0%, #f05b64 50%, #bf273a 100%);
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(255, 218, 222, 0.3),
+    0 0 10px rgba(240, 91, 100, 0.22);
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-tone='red'] {
+  --ui-button-fill:
+    linear-gradient(180deg, #ff8f95 0%, #f05b64 50%, #cf3648 50%, #a61f34 100%);
+  --ui-button-border: rgba(114, 25, 37, 0.92);
+  --ui-button-shadow:
+    inset 0 1px 0 rgba(255, 215, 220, 0.3),
+    0 5px 0 rgba(82, 16, 26, 0.92),
+    0 13px 20px rgba(0, 0, 0, 0.35);
+  --ui-button-active-shadow:
+    0 1px 0 rgba(82, 16, 26, 0.92),
+    inset 0 2px 5px rgba(0, 0, 0, 0.25);
+  --ui-button-text: #ffffff;
+}
+
+[data-ui-theme='neutral-base'] .ui-progress[data-tone='gray'],
+[data-ui-theme='neutral-base'] .ui-button[data-tone='gray'] {
+  --ui-progress-fill:
+    linear-gradient(180deg, #9eb0c8 0%, #6f81a2 50%, #41526f 100%);
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(221, 231, 245, 0.28),
+    0 0 10px rgba(111, 129, 162, 0.16);
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-tone='gray'] {
+  --ui-button-fill:
+    linear-gradient(180deg, #9eb0c8 0%, #6f81a2 50%, #51627f 50%, #37465e 100%);
+  --ui-button-border: rgba(40, 53, 75, 0.92);
+  --ui-button-shadow:
+    inset 0 1px 0 rgba(225, 233, 245, 0.24),
+    0 5px 0 rgba(23, 30, 44, 0.9),
+    0 13px 20px rgba(0, 0, 0, 0.34);
+  --ui-button-active-shadow:
+    0 1px 0 rgba(23, 30, 44, 0.9),
+    inset 0 2px 5px rgba(0, 0, 0, 0.26);
+  --ui-button-text: #f3f7fc;
+}
+
+[data-ui-theme='neutral-base'] .ui-progress[data-tone='purple'],
+[data-ui-theme='neutral-base'] .ui-button[data-tone='purple'] {
+  --ui-progress-fill:
+    linear-gradient(180deg, #c99bff 0%, #9f6ef4 50%, #6a36c9 100%);
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(240, 226, 255, 0.28),
+    0 0 10px rgba(159, 110, 244, 0.22);
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-tone='purple'] {
+  --ui-button-fill:
+    linear-gradient(180deg, #c99bff 0%, #9f6ef4 50%, #7a49d8 50%, #5824ad 100%);
+  --ui-button-border: rgba(63, 28, 124, 0.92);
+  --ui-button-shadow:
+    inset 0 1px 0 rgba(239, 221, 255, 0.28),
+    0 5px 0 rgba(40, 18, 79, 0.92),
+    0 13px 20px rgba(0, 0, 0, 0.35);
+  --ui-button-active-shadow:
+    0 1px 0 rgba(40, 18, 79, 0.92),
+    inset 0 2px 5px rgba(0, 0, 0, 0.25);
+  --ui-button-text: #ffffff;
+}
+
+/* ── Switch / Toggle emphasis ───────────────────────────────────────────── */
+
+[data-ui-theme='neutral-base'] .ui-control__row:has(.ui-switch) .ui-control__label {
+  color: rgba(156, 181, 215, 0.62);
+  transition: color 140ms ease, opacity 140ms ease, text-shadow 140ms ease;
+}
+
+[data-ui-theme='neutral-base'] .ui-control__row:has(.ui-switch) .ui-switch::before {
+  background:
+    linear-gradient(180deg,
+      rgba(8, 14, 26, 0.92) 0%,
+      rgba(18, 28, 48, 0.98) 100%);
+  border-color: rgba(60, 90, 140, 0.42);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(120, 160, 220, 0.08);
+}
+
+[data-ui-theme='neutral-base'] .ui-switch[data-state='active']::before,
+[data-ui-theme='neutral-base'] .ui-control__row:has(.ui-control__native:checked) .ui-switch::before {
+  background:
+    linear-gradient(180deg,
+      #7cc8ff 0%,
+      #4a9ef0 46%,
+      #2d7de0 100%);
+  border-color: rgba(16, 52, 108, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(190, 230, 255, 0.36),
+    0 0 12px rgba(74, 158, 240, 0.18);
+}
+
+[data-ui-theme='neutral-base'] .ui-control__row:has(.ui-control__native:checked):has(.ui-switch) .ui-control__label {
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(45, 125, 224, 0.28);
+}
+
+/* ── Highlighted button modifier ────────────────────────────────────────── */
+
+[data-ui-theme='neutral-base'] .ui-button[data-highlighted='true']:not([data-variant='tab']):not([data-variant='icon']):not([data-variant='close']):not([data-variant='back']):not([data-variant='grid']):not([data-variant='segment']):not([data-variant='toggle']):not([data-state='disabled'])[data-state='default'] {
+  filter: drop-shadow(0 14px 24px rgba(74, 158, 240, 0.16));
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-highlighted='true']:not([data-variant='tab']):not([data-variant='icon']):not([data-variant='close']):not([data-variant='back']):not([data-variant='grid']):not([data-variant='segment']):not([data-variant='toggle']):not([data-state='disabled'])[data-state='default']::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse 58% 56% at 18% 18%,
+      rgba(164, 222, 255, 0.78) 0%,
+      rgba(104, 182, 246, 0.4) 34%,
+      rgba(74, 158, 240, 0.12) 56%,
+      rgba(74, 158, 240, 0) 74%),
+    radial-gradient(ellipse 62% 58% at 82% 84%,
+      rgba(116, 194, 255, 0.72) 0%,
+      rgba(74, 158, 240, 0.38) 34%,
+      rgba(74, 158, 240, 0.1) 56%,
+      rgba(74, 158, 240, 0) 76%);
+  filter: blur(8px);
+  animation: neutral-button-highlight-underglow 2.2s ease-in-out infinite;
+}
+
+[data-ui-theme='neutral-base'] .ui-button[data-highlighted='true']:not([data-variant='tab']):not([data-variant='icon']):not([data-variant='close']):not([data-variant='back']):not([data-variant='grid']):not([data-variant='segment']):not([data-variant='toggle']):not([data-state='disabled'])::before {
+  box-shadow:
+    var(--ui-button-shadow, var(--ui-button-primary-shadow)),
+    0 0 0 1px rgba(199, 234, 255, 0.18);
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='banner'],
+[data-ui-theme='neutral-base'] .ui-header[data-variant='ribbon'] {
+  filter:
+    drop-shadow(0 1px 0 rgba(170, 255, 160, 0.12))
+    drop-shadow(0 8px 18px rgba(0, 0, 0, 0.34));
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='banner'] .ui-header__ribbon {
+  min-width: min(100%, 300px);
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='banner'] .ui-header__ribbon::before {
+  border-radius: 12px 12px 0 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 24%),
+    linear-gradient(180deg, #5ce24d 0%, #35c326 58%, #239016 100%);
+  border: none;
+  box-shadow: none;
+  clip-path: polygon(0 0, 100% 0, 100% 74%, 86% 84%, 50% 100%, 14% 84%, 0 74%);
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='banner'] .ui-header__content {
+  min-height: 82px;
+  padding: 14px 28px 22px;
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='banner'] .ui-header__eyebrow {
+  color: rgba(232, 255, 228, 0.88);
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='banner'] .ui-header__title {
+  text-shadow: 0 2px 6px rgba(6, 36, 8, 0.38);
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='banner'] .ui-header__subtitle {
+  color: rgba(225, 255, 216, 0.9);
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='ribbon'] {
+  --ui-neutral-ribbon-tab-width: 1.7em;
+  --ui-neutral-ribbon-fold-depth: 0.6em;
+  --ui-neutral-ribbon-notch-size: 0.8em;
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='ribbon'] .ui-header__ribbon {
+  min-width: min(100%, 320px);
+  overflow: visible;
+  background:
+    conic-gradient(
+      at left var(--ui-neutral-ribbon-tab-width) bottom var(--ui-neutral-ribbon-fold-depth),
+      #0000 25%,
+      rgba(8, 44, 9, 0.58) 0 37.5%,
+      rgba(8, 44, 9, 0.24) 0
+    ) 0 / 50% 100% no-repeat,
+    conic-gradient(
+      at right var(--ui-neutral-ribbon-tab-width) bottom var(--ui-neutral-ribbon-fold-depth),
+      rgba(8, 44, 9, 0.24) 62.5%,
+      rgba(8, 44, 9, 0.58) 0 75%,
+      #0000 0
+    ) 100% / 50% 100% no-repeat,
+    linear-gradient(180deg, #56dd49 0%, #2cad1f 58%, #218615 100%);
+  clip-path: polygon(
+    0 var(--ui-neutral-ribbon-fold-depth),
+    var(--ui-neutral-ribbon-tab-width) var(--ui-neutral-ribbon-fold-depth),
+    var(--ui-neutral-ribbon-tab-width) 0,
+    calc(100% - var(--ui-neutral-ribbon-tab-width)) 0,
+    calc(100% - var(--ui-neutral-ribbon-tab-width)) var(--ui-neutral-ribbon-fold-depth),
+    100% var(--ui-neutral-ribbon-fold-depth),
+    calc(100% - var(--ui-neutral-ribbon-notch-size)) calc(50% + var(--ui-neutral-ribbon-fold-depth) / 2),
+    100% 100%,
+    calc(100% - var(--ui-neutral-ribbon-tab-width) - var(--ui-neutral-ribbon-fold-depth)) 100%,
+    calc(100% - var(--ui-neutral-ribbon-tab-width) - var(--ui-neutral-ribbon-fold-depth)) calc(100% - var(--ui-neutral-ribbon-fold-depth)),
+    calc(var(--ui-neutral-ribbon-tab-width) + var(--ui-neutral-ribbon-fold-depth)) calc(100% - var(--ui-neutral-ribbon-fold-depth)),
+    calc(var(--ui-neutral-ribbon-tab-width) + var(--ui-neutral-ribbon-fold-depth)) 100%,
+    0 100%,
+    var(--ui-neutral-ribbon-notch-size) calc(50% + var(--ui-neutral-ribbon-fold-depth) / 2)
+  );
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='ribbon'] .ui-header__ribbon::before {
+  content: none;
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='ribbon'] .ui-header__content {
+  min-height: 0;
+  padding:
+    0
+    calc(var(--ui-neutral-ribbon-tab-width) + 1.6em)
+    calc(var(--ui-neutral-ribbon-fold-depth) + 8px);
+  line-height: 1.6;
+  gap: 0;
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='ribbon'] .ui-header__eyebrow {
+  color: rgba(232, 255, 228, 0.82);
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='ribbon'] .ui-header__title {
+  font-size: 17px;
+  text-shadow: 0 1px 4px rgba(6, 36, 8, 0.35);
+}
+
+[data-ui-theme='neutral-base'] .ui-header[data-variant='ribbon'] .ui-header__subtitle {
+  color: rgba(235, 255, 236, 0.92);
+}
+
+[data-ui-theme='neutral-base'] .ui-shop-card[data-ribbon='corner'] {
+  --ui-ribbon-corner-top: 26px;
+  --ui-ribbon-corner-right: -34px;
+  --ui-ribbon-corner-width: 150px;
+  --ui-ribbon-corner-font-size: 9px;
+  --ui-ribbon-corner-letter-spacing: 0.03em;
+}

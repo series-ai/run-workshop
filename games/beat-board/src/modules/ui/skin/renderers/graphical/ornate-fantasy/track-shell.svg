@@ -1,0 +1,52 @@
+<svg viewBox="0 0 1200 160" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="trs-frame" x1="600" y1="12" x2="600" y2="148" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8ebbd"/>
+      <stop offset="0.24" stop-color="#d2b96f"/>
+      <stop offset="0.5" stop-color="#926827"/>
+      <stop offset="0.8" stop-color="#c19a4d"/>
+      <stop offset="1" stop-color="#5e3c18"/>
+    </linearGradient>
+    <linearGradient id="trs-core" x1="600" y1="34" x2="600" y2="126" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#17284a"/>
+      <stop offset="0.3" stop-color="#27416f"/>
+      <stop offset="0.56" stop-color="#131824"/>
+      <stop offset="1" stop-color="#0d1017"/>
+    </linearGradient>
+  </defs>
+
+  <path
+    d="M66 18H1134L1180 52V108L1134 142H66L20 108V52L66 18Z"
+    fill="#0f0a09"
+    opacity="0.68"
+    transform="translate(0 8)"
+  />
+  <path
+    d="M66 10H1134L1180 44V100L1134 134H66L20 100V44L66 10Z"
+    fill="url(#trs-frame)"
+    stroke="#f5e5a8"
+    stroke-linejoin="round"
+    stroke-width="4"
+  />
+  <path
+    d="M114 36H1086L1130 64V80L1086 108H114L70 80V64L114 36Z"
+    fill="url(#trs-core)"
+    stroke="#f7efca"
+    stroke-opacity="0.52"
+    stroke-linejoin="round"
+    stroke-width="2.5"
+  />
+
+  <g fill="#f1d588" opacity="0.96">
+    <circle cx="106" cy="24" r="8"/>
+    <circle cx="154" cy="18" r="6"/>
+    <circle cx="1046" cy="18" r="6"/>
+    <circle cx="1094" cy="24" r="8"/>
+    <circle cx="106" cy="120" r="8"/>
+    <circle cx="154" cy="126" r="6"/>
+    <circle cx="1046" cy="126" r="6"/>
+    <circle cx="1094" cy="120" r="8"/>
+  </g>
+
+  <path d="M172 72H1028" fill="none" opacity="0.42" stroke="#f6e2a4" stroke-dasharray="1 20" stroke-linecap="round" stroke-width="10"/>
+</svg>

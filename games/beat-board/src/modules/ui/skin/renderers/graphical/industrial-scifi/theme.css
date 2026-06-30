@@ -1,0 +1,2352 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Industrial Sci-Fi — Matte industrial hardware UI renderer
+   Tactile beveled surfaces, physical press states, warm neutrals on dark
+   housing. No glow, no blur, no transparency. Every element is a hardware
+   control.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Custom properties ─────────────────────────────────────────────────── */
+
+[data-ui-theme='industrial-scifi'] {
+  /* ── Engineering-specific tokens ── */
+  --ui-eng-housing: #171717;
+  --ui-eng-housing-light: #1e1e1e;
+  --ui-eng-housing-dark: #0e0e0e;
+  --ui-eng-surface-light: #c7c3c0;
+  --ui-eng-surface-dark: #545251;
+  --ui-eng-accent: #d42a02;
+  --ui-eng-accent-bright: #fb702c;
+  --ui-eng-accent-dim: #a12000;
+  --ui-eng-icon-fill: #5f5f5f;
+  --ui-eng-text-on-light: #2a2a2a;
+  --ui-eng-text-on-dark: #e0dedd;
+  --ui-eng-text-muted: #8a8a8a;
+  --ui-eng-highlight: #ffffff;
+  --ui-eng-shadow-cast: rgba(0, 0, 0, 0.377);
+  --ui-eng-radius: 10px;
+  --ui-eng-radius-tight: 5px;
+
+  /* ── Depth recipes ── */
+  --ui-eng-raised-light:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #ffffff 1.5px 1.5px 2px 0px inset,
+    #c7c3c0 -3.2px -3.2px 8px 0px inset;
+  --ui-eng-pressed-light:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #c7c3c0 -3.2px -3.2px 8px 0px inset;
+  --ui-eng-raised-dark:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #a8a6a4 1.5px 1.5px 2px 0px inset,
+    #545251 -3.2px -3.2px 8px 0px inset;
+  --ui-eng-pressed-dark:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #545251 -3.2px -3.2px 8px 0px inset;
+  --ui-eng-raised-accent:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #fb702c 1.5px 1.5px 2px 0px inset,
+    #d42a02 -3.2px -3.2px 8px 0px inset;
+  --ui-eng-pressed-accent:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #d42a02 -3.2px -3.2px 8px 0px inset;
+  --ui-eng-raised-housing:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    rgba(255, 255, 255, 0.06) 1.5px 1.5px 2px 0px inset,
+    #171717 -3.2px -3.2px 8px 0px inset;
+  --ui-eng-pressed-housing:
+    rgba(0, 0, 0, 0.5) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #171717 -2px -2px 6px 0px inset;
+  --ui-eng-recessed:
+    inset 1px 1px 4px rgba(0, 0, 0, 0.6),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.03);
+
+  /* ── Fonts ── */
+  --ui-font-body: 'Montserrat', 'Trebuchet MS', 'Segoe UI', sans-serif;
+  --ui-font-display: 'Montserrat', 'Trebuchet MS', 'Segoe UI', sans-serif;
+
+  /* ── Page background — EP-133 K.O. II light mode, warm matte device surface ── */
+  --ui-page-bg:
+    linear-gradient(
+      168deg,
+      #ccc8c5 0%,
+      #c7c3c0 25%,
+      #c2bebb 50%,
+      #bdb9b6 75%,
+      #c4c0bd 100%
+    );
+  --ui-page-bg-mode: light;
+
+  /* ── Text — dark on light surfaces ── */
+  --ui-text-primary: #2a2a2a;
+  --ui-text-muted: #5a5654;
+  --ui-text-strong: #1a1a1a;
+  --ui-focus-ring: rgba(212, 42, 2, 0.5);
+  --ui-text-shadow: none;
+
+  /* ── Button label chrome ── */
+  --ui-button-label-shadow: none;
+  --ui-button-label-stroke-width: 0px;
+  --ui-button-label-stroke-color: transparent;
+
+  /* ── Border widths — shadows provide depth, not borders ── */
+  --ui-button-border-width: 0px;
+  --ui-panel-border-width: 0px;
+  --ui-input-border-width: 0px;
+  --ui-checkbox-border-width: 0px;
+  --ui-switch-border-width: 0px;
+  --ui-progress-border-width: 0px;
+  --ui-slider-border-width: 0px;
+  --ui-slider-thumb-border-width: 0px;
+  --ui-pagination-border-width: 0px;
+  --ui-rail-border-width: 0px;
+  --ui-rail-button-border-width: 0px;
+
+  /* ── Button tokens (::before reads these through base CSS var() chains) ── */
+  --ui-button-primary-fill: #c7c3c0;
+  --ui-button-primary-border: transparent;
+  --ui-button-primary-text: #2a2a2a;
+  --ui-button-primary-shadow: var(--ui-eng-raised-light);
+  --ui-button-primary-active-shadow: var(--ui-eng-pressed-light);
+  --ui-button-secondary-fill: #2a8c4a;
+  --ui-button-secondary-border: transparent;
+  --ui-button-secondary-text: #ffffff;
+  --ui-button-secondary-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #4cb870 1.5px 1.5px 2px 0px inset,
+    #2a8c4a -3.2px -3.2px 8px 0px inset;
+  --ui-button-secondary-active-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #2a8c4a -3.2px -3.2px 8px 0px inset;
+  --ui-button-ghost-fill: var(--ui-eng-housing);
+  --ui-button-ghost-border: transparent;
+  --ui-button-ghost-text: #d0d0d0;
+  --ui-button-ghost-shadow: var(--ui-eng-raised-housing);
+  --ui-button-ghost-active-shadow: var(--ui-eng-pressed-housing);
+  --ui-button-icon-fill: #c7c3c0;
+  --ui-button-icon-border: transparent;
+  --ui-button-icon-text: #5f5f5f;
+  --ui-button-icon-shadow: var(--ui-eng-raised-light);
+  --ui-button-back-width: 52px;
+  --ui-button-back-height: 52px;
+  --ui-button-back-icon-width: 18px;
+  --ui-button-back-icon-height: 18px;
+  --ui-button-pill-fill: #c7c3c0;
+  --ui-button-pill-border: transparent;
+  --ui-button-pill-text: #2a2a2a;
+  --ui-button-pill-shadow: var(--ui-eng-raised-light);
+  --ui-button-pill-active-shadow: var(--ui-eng-pressed-light);
+  --ui-button-pill-padding: 0 18px;
+  --ui-button-pill-radius: var(--ui-eng-radius);
+
+  /* ── Tab tokens — TE style: surface tabs ── */
+  --ui-button-tab-fill: #a5a19e;
+  --ui-button-tab-active-fill: #c7c3c0;
+  --ui-button-tab-border: transparent;
+  --ui-button-tab-active-border: transparent;
+  --ui-button-tab-text: #7a7673;
+  --ui-button-tab-active-text: #ffffff;
+  --ui-button-tab-highlight-image:
+    linear-gradient(90deg, transparent 0%, #d42a02 30%, #d42a02 70%, transparent 100%);
+  --ui-button-tab-highlight-width: 80px;
+  --ui-button-tab-highlight-height: 3px;
+
+  /* ── Grid button ── */
+  --ui-button-grid-fill: #c7c3c0;
+  --ui-button-grid-border: transparent;
+  --ui-button-grid-text: #2a2a2a;
+  --ui-button-grid-shadow: var(--ui-eng-raised-light);
+  --ui-button-grid-active-shadow: var(--ui-eng-pressed-light);
+
+  /* ── Visual button ── */
+  --ui-button-visual-fill: transparent;
+  --ui-button-visual-border: transparent;
+  --ui-button-visual-shadow: none;
+
+  /* ── Panel card — raised surface with contact shadow ── */
+  --ui-panel-card-fill: #b8b4b1;
+  --ui-panel-card-border: transparent;
+  --ui-panel-card-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.08),
+    0 2px 2px rgba(0, 0, 0, 0.06),
+    0 4px 8px rgba(0, 0, 0, 0.06),
+    0 8px 16px rgba(0, 0, 0, 0.04);
+  --ui-panel-card-overlay-image: none;
+  --ui-panel-card-overlay-size: 100% 100%;
+  --ui-panel-card-overlay-position: center;
+  --ui-panel-card-overlay-repeat: no-repeat;
+  --ui-panel-card-overlay-opacity: 0;
+
+  /* ── Panel section — slightly darker, raised ── */
+  --ui-panel-section-fill: #b0aca9;
+  --ui-panel-section-border: transparent;
+  --ui-panel-section-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.06),
+    0 2px 2px rgba(0, 0, 0, 0.05),
+    0 4px 8px rgba(0, 0, 0, 0.04);
+  --ui-panel-section-text: #2a2a2a;
+  --ui-panel-subtitle-text: #5a5654;
+  --ui-settings-row-fill: #c4c0bc;
+  --ui-settings-row-border: rgba(0, 0, 0, 0.12);
+  --ui-settings-row-shadow:
+    inset 0.75px 0.75px 1px rgba(255, 255, 255, 0.32),
+    inset -0.75px -0.75px 1px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.12),
+    0 2px 4px rgba(0, 0, 0, 0.08);
+  --ui-panel-section-overlay-image: none;
+  --ui-panel-section-overlay-size: 100% 100%;
+  --ui-panel-section-overlay-position: center;
+  --ui-panel-section-overlay-repeat: no-repeat;
+  --ui-panel-section-overlay-opacity: 0;
+  --ui-panel-section-secondary-overlay-image:
+    linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 20%, rgba(255, 255, 255, 0.06) 80%, transparent 100%);
+  --ui-panel-section-secondary-overlay-size: calc(100% - 40px) 1px;
+  --ui-panel-section-secondary-overlay-position: center 16px;
+  --ui-panel-section-secondary-overlay-repeat: no-repeat;
+
+  /* ── Panel overlay (modal/sheet backdrop) ── */
+  --ui-panel-overlay-fill: rgba(184, 180, 177, 0.96);
+  --ui-panel-overlay-border: transparent;
+  --ui-panel-overlay-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    0 8px 16px rgba(0, 0, 0, 0.06),
+    0 16px 32px rgba(0, 0, 0, 0.04);
+
+  /* ── Panel body ── */
+  --ui-panel-body-padding: 8px 12px;
+  --ui-panel-body-fill: #b0aca9;
+  --ui-panel-body-border-width: 0px;
+  --ui-panel-body-border: transparent;
+  --ui-panel-body-shadow: none;
+
+  /* ── Header — raised with contact shadow ── */
+  --ui-header-fill: #b8b4b1;
+  --ui-header-border: transparent;
+  --ui-header-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.08),
+    0 2px 2px rgba(0, 0, 0, 0.06),
+    0 4px 8px rgba(0, 0, 0, 0.06),
+    0 8px 16px rgba(0, 0, 0, 0.04);
+  --ui-header-text: #1a1a1a;
+  --ui-header-subtitle-text: #5a5654;
+
+  /* ── Ticket ── */
+  --ui-ticket-text: #1a1a1a;
+  --ui-ticket-subtitle-text: #5a5654;
+
+  /* ── Icon frame — slightly recessed ── */
+  --ui-icon-frame-fill: #a5a19e;
+  --ui-icon-frame-border: transparent;
+  --ui-icon-frame-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.12),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.25);
+
+  /* ── Badges — EP-133 canonical materials ── */
+  --ui-badge-status-fill: #545251;
+  --ui-badge-status-border: transparent;
+  --ui-badge-status-text: #e0dedd;
+  --ui-badge-counter-fill: #d42a02;
+  --ui-badge-counter-border: transparent;
+  --ui-badge-counter-text: #ffffff;
+  --ui-badge-new-fill: #d42a02;
+  --ui-badge-new-border: transparent;
+  --ui-badge-chip-fill: #545251;
+  --ui-badge-chip-border: transparent;
+  --ui-badge-shadow: none;
+  --ui-badge-radius: var(--ui-eng-radius-tight);
+
+  /* ── Tags — EP-133 dark surface with accent stripe ── */
+  --ui-tag-fill: #545251;
+  --ui-tag-border: transparent;
+  --ui-tag-shadow: none;
+  --ui-tag-text: #e0dedd;
+  --ui-tag-outline-width: 0px;
+
+  /* ── Progress — recessed track in warm gray, green fill ── */
+  --ui-progress-track-fill: #9e9a97;
+  --ui-progress-track-border: transparent;
+  --ui-progress-track-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.18),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.25);
+  --ui-progress-fill: #c64d1d;
+  --ui-progress-track-height: 30px;
+  --ui-progress-track-padding: 0px;
+  --ui-progress-bar-inset: 4px;
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    inset 1px 0 0 rgba(255, 255, 255, 0.05);
+  --ui-progress-label-color: #1a1a1a;
+  --ui-progress-label-size: 13px;
+
+  /* ── Input — recessed light gray field ── */
+  --ui-input-fill: #a5a19e;
+  --ui-input-border: transparent;
+  --ui-input-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.15),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.2);
+  --ui-input-height: 56px;
+  --ui-input-padding: 12px 16px 12px;
+  --ui-input-radius: var(--ui-eng-radius);
+  --ui-input-surface-inset: 3px;
+  --ui-input-surface-radius: var(--ui-eng-radius-tight);
+  --ui-input-surface-fill: #9a9693;
+  --ui-input-text: #1a1a1a;
+  --ui-input-placeholder: #6e6a67;
+  --ui-select-chevron-size: 30px;
+  --ui-select-chevron-radius: var(--ui-eng-radius-tight);
+  --ui-select-chevron-fill: linear-gradient(180deg, #beb9b5 0%, #8b8782 100%);
+  --ui-select-chevron-border: rgba(91, 84, 78, 0.82);
+  --ui-select-chevron-shadow:
+    inset 1px 1px 2px rgba(255, 255, 255, 0.32),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.18),
+    0 2px 4px rgba(0, 0, 0, 0.18);
+  --ui-select-chevron-color: #c64d1d;
+  --ui-select-chevron-offset-inline-end: 16px;
+  --ui-input-visual-size: 26px;
+  --ui-input-visual-radius: var(--ui-eng-radius-tight);
+  --ui-input-visual-fill: #b3afac;
+  --ui-input-visual-border: transparent;
+  --ui-input-visual-shadow: none;
+  --ui-input-visual-color: #5a5654;
+
+  /* ── Slider / progress thumb ── */
+  --ui-progress-thumb: #c7c3c0;
+  --ui-slider-track-height: 32px;
+  --ui-slider-track-padding: 0px;
+  --ui-slider-bar-inset: 4px;
+  --ui-slider-thumb-width: 32px;
+  --ui-slider-thumb-height: 32px;
+  --ui-slider-thumb-shadow:
+    rgba(0, 0, 0, 0.4) 6px 6px 10px,
+    #ffffff 1px 1px 1px 0px inset,
+    #c7c3c0 -2px -2px 4px 0px inset;
+  --ui-scrollbar-track-fill: #94908d;
+  --ui-scrollbar-track-border: transparent;
+  --ui-scrollbar-track-shadow:
+    inset 1px 1px 4px rgba(0, 0, 0, 0.45),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.05);
+  --ui-scrollbar-track-overlay:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 56%);
+  --ui-scrollbar-thumb-fill: #c7c3c0;
+  --ui-scrollbar-thumb-border: transparent;
+  --ui-scrollbar-thumb-shadow:
+    rgba(0, 0, 0, 0.34) 6px 6px 10px,
+    #ffffff 1px 1px 1px 0px inset,
+    #c7c3c0 -2px -2px 4px 0px inset;
+  --ui-scrollbar-thumb-overlay:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 60%);
+  --ui-scrollbar-radius: 6px;
+  --ui-scrollbar-thickness: 16px;
+  --ui-scrollbar-thumb-inset: 2px;
+  --ui-scrollbar-active-glow: none;
+
+  /* ── Pagination ── */
+  --ui-pagination-fill: #a5a19e;
+  --ui-pagination-active-fill: #2a2a2a;
+  --ui-pagination-border: transparent;
+  --ui-pagination-active-border: transparent;
+  --ui-pagination-shadow:
+    rgba(0, 0, 0, 0.3) 3px 3px 5px,
+    rgba(255, 255, 255, 0.04) 0.5px 0.5px 0px 0px inset;
+
+  /* ── Nav rail — raised with contact shadow ── */
+  --ui-rail-fill: #b8b4b1;
+  --ui-rail-border: transparent;
+  --ui-rail-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.08),
+    0 2px 2px rgba(0, 0, 0, 0.06),
+    0 4px 8px rgba(0, 0, 0, 0.06),
+    0 8px 16px rgba(0, 0, 0, 0.04);
+  --ui-rail-button-shadow: var(--ui-eng-raised-light);
+}
+
+/* ── Page root ─────────────────────────────────────────────────────────── */
+
+[data-ui-theme='industrial-scifi'].ui-theme-root {
+  background-color: #c7c3c0;
+  background-image: var(--ui-page-bg);
+}
+
+
+/* ── Typography overrides ──────────────────────────────────────────────── */
+
+[data-ui-theme='industrial-scifi'] .ui-button__label,
+[data-ui-theme='industrial-scifi'] .ui-panel__title,
+[data-ui-theme='industrial-scifi'] .ui-header__title,
+[data-ui-theme='industrial-scifi'] .ui-header__eyebrow,
+[data-ui-theme='industrial-scifi'] .ui-ticket__title,
+[data-ui-theme='industrial-scifi'] .ui-ticket__eyebrow,
+[data-ui-theme='industrial-scifi'] .ui-badge__content,
+[data-ui-theme='industrial-scifi'] .ui-tag__content,
+[data-ui-theme='industrial-scifi'] .ui-progress__overlay,
+[data-ui-theme='industrial-scifi'] .ui-rail-button__label {
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button,
+[data-ui-theme='industrial-scifi'] .ui-panel__title,
+[data-ui-theme='industrial-scifi'] .ui-header__title,
+[data-ui-theme='industrial-scifi'] .ui-ticket__title,
+[data-ui-theme='industrial-scifi'] .ui-badge__content,
+[data-ui-theme='industrial-scifi'] .ui-tag__content,
+[data-ui-theme='industrial-scifi'] .ui-input__label,
+[data-ui-theme='industrial-scifi'] .ui-slider__label,
+[data-ui-theme='industrial-scifi'] .ui-control__label {
+  font-weight: 600;
+}
+
+/* ── Global border-radius ─────────────────────────────────────────────── */
+
+[data-ui-theme='industrial-scifi'] .ui-button,
+[data-ui-theme='industrial-scifi'] .ui-panel,
+[data-ui-theme='industrial-scifi'] .ui-input-shell,
+[data-ui-theme='industrial-scifi'] .ui-progress__track,
+[data-ui-theme='industrial-scifi'] .ui-progress__well,
+[data-ui-theme='industrial-scifi'] .ui-progress__bar,
+[data-ui-theme='industrial-scifi'] .ui-progress__fill,
+[data-ui-theme='industrial-scifi'] .ui-slider__track,
+[data-ui-theme='industrial-scifi'] .ui-slider__well,
+[data-ui-theme='industrial-scifi'] .ui-slider__bar,
+[data-ui-theme='industrial-scifi'] .ui-slider__fill,
+[data-ui-theme='industrial-scifi'] .ui-slider__thumb,
+[data-ui-theme='industrial-scifi'] .ui-icon-frame,
+[data-ui-theme='industrial-scifi'] .ui-badge,
+[data-ui-theme='industrial-scifi'] .ui-pagination-dot,
+[data-ui-theme='industrial-scifi'] .ui-rail-button,
+[data-ui-theme='industrial-scifi'] .ui-checkbox,
+[data-ui-theme='industrial-scifi'] .ui-switch,
+[data-ui-theme='industrial-scifi'] .ui-tag {
+  border-radius: var(--ui-eng-radius);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button::before,
+[data-ui-theme='industrial-scifi'] .ui-button::after,
+[data-ui-theme='industrial-scifi'] .ui-panel::before,
+[data-ui-theme='industrial-scifi'] .ui-panel::after,
+[data-ui-theme='industrial-scifi'] .ui-input-shell::before,
+[data-ui-theme='industrial-scifi'] .ui-input-shell::after,
+[data-ui-theme='industrial-scifi'] .ui-progress__track::before,
+[data-ui-theme='industrial-scifi'] .ui-slider__track::before,
+[data-ui-theme='industrial-scifi'] .ui-rail-button::before,
+[data-ui-theme='industrial-scifi'] .ui-rail-button::after,
+[data-ui-theme='industrial-scifi'] .ui-icon-frame::before,
+[data-ui-theme='industrial-scifi'] .ui-badge::before,
+[data-ui-theme='industrial-scifi'] .ui-tag::before,
+[data-ui-theme='industrial-scifi'] .ui-tag::after,
+[data-ui-theme='industrial-scifi'] .ui-checkbox::before,
+[data-ui-theme='industrial-scifi'] .ui-switch::before,
+[data-ui-theme='industrial-scifi'] .ui-pagination-dot::before {
+  border-radius: var(--ui-eng-radius);
+}
+
+@keyframes industrial-button-indicator {
+  0%, 100% {
+    opacity: 0.38;
+    background-position: 0 0;
+    box-shadow:
+      0 0 0 1px #171717,
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 0 6px rgba(198, 77, 29, 0.12);
+  }
+  50% {
+    opacity: 0.9;
+    background-position: 0 10px;
+    box-shadow:
+      0 0 0 1px #171717,
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 0 10px rgba(198, 77, 29, 0.18);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUTTONS — EP-133 tactile hardware keys
+   The ::before pseudo IS the button surface. The button element is transparent
+   so the housing (#171717 page) shows through as the socket around the key.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* EP-133 K.O. II button.
+   Button = dark well (#171717, radius 5px).
+   ::before = face (#c7c3c0, radius 10px) at inset:0.
+   Dark only visible at corners where 10px curves past 5px. */
+[data-ui-theme='industrial-scifi'] .ui-button {
+  background: #171717;
+  border: none;
+  border-radius: 5px;
+  box-shadow: none;
+  overflow: visible;
+  padding: 2px;
+  -webkit-tap-highlight-color: transparent;
+  transition: 0.1s ease-in-out;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button::before {
+  inset: 2px;
+  border-radius: 10px;
+  background: #c7c3c0;
+  border: none;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #ffffff 1.5px 1.5px 2px 0px inset,
+    #c7c3c0 -3.2px -3.2px 8px 0px inset;
+  transition: 0.1s ease-in-out;
+}
+
+/* No corner accent — clean hardware look */
+[data-ui-theme='industrial-scifi'] .ui-button::after {
+  display: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-highlighted='true']:not([data-variant='tab']):not([data-variant='icon']):not([data-variant='close']):not([data-variant='back']):not([data-variant='grid']):not([data-variant='segment']):not([data-variant='toggle']):not([data-state='disabled'])::after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  right: 10px;
+  width: 4px;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: 3px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 100%),
+    repeating-linear-gradient(180deg, rgba(198, 77, 29, 0.92) 0 10px, rgba(198, 77, 29, 0.2) 10px 16px);
+  animation: industrial-button-indicator 1.8s steps(4, end) infinite;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button .ui-button__content {
+  min-height: inherit;
+  padding: 0 18px;
+  justify-content: center;
+  transform: none;
+  text-shadow: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button .ui-button__content > * {
+  position: relative;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button:not([data-variant='icon']):not([data-variant='close']):not([data-variant='back']):not([data-variant='grid']):not([data-variant='tab']):not([data-variant='segment']):not([data-variant='toggle']) {
+  min-height: 44px;
+  padding: 0 16px;
+}
+
+/* ── Button variants — each gets its own surface color + shadow recipe ── */
+
+/* .button1/.button2 — light matte surface */
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='primary']::before {
+  background: #c7c3c0;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #ffffff 1.5px 1.5px 2px 0px inset,
+    #c7c3c0 -3.2px -3.2px 8px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='primary'] {
+  color: var(--ui-eng-text-on-light);
+}
+
+/* .button4 pattern adapted for green */
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='secondary']::before {
+  background: #2a8c4a;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #4cb870 1.5px 1.5px 2px 0px inset,
+    #2a8c4a -3.2px -3.2px 8px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='secondary'][data-state='active']::before {
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #2a8c4a -3.2px -3.2px 8px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='secondary'] {
+  color: #ffffff;
+}
+
+/* .button4 equivalent — dark matte surface */
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='ghost']::before {
+  background: #545251;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #a8a6a4 1.5px 1.5px 2px 0px inset,
+    #545251 -3.2px -3.2px 8px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='ghost'] {
+  color: #ffffff;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='pill'] {
+  min-height: 44px;
+  padding: 0 20px;
+  color: var(--ui-eng-text-on-light);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='pill']::before {
+  background: var(--ui-eng-surface-light);
+  box-shadow: var(--ui-eng-raised-light);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-layout='currency-stack'] {
+  min-height: 68px;
+  padding: 0;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-layout='grid-stack'] {
+  min-width: 92px;
+  min-height: 92px;
+  padding: 0;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-layout='currency-stack'] .ui-button__content {
+  padding: 8px 16px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-layout='leading-visual'] .ui-button__content,
+[data-ui-theme='industrial-scifi'] .ui-button[data-layout='leading-tile'] .ui-button__content,
+[data-ui-theme='industrial-scifi'] .ui-button[data-layout='trailing-visual'] .ui-button__content {
+  gap: 12px;
+  padding: 0 18px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button__currency-stack {
+  gap: 4px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button {
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+/* EP-133: labeled buttons align text to top-center (plain layout only) */
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='primary']:not([data-layout]) .ui-button__content,
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='secondary']:not([data-layout]) .ui-button__content {
+  align-items: flex-start;
+  padding-top: 0.55em;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button__label {
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+  font-size: 0.7em;
+  font-weight: 400;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button__currency-title {
+  color: #1a1a1a;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+  font-size: 0.72em;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button__currency-row {
+  gap: 9px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button__currency-amount {
+  font-size: 1.24em;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button__supporting {
+  color: #5a5654;
+  font-size: 0.66em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button__visual {
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button__grid-icon {
+  border-radius: var(--ui-eng-radius-tight);
+  background: #a5a19e;
+  border: none;
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.12),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.25);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-layout='leading-visual'] .ui-button__visual,
+[data-ui-theme='industrial-scifi'] .ui-button[data-layout='trailing-visual'] .ui-button__visual {
+  width: 38px;
+  height: 38px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-layout='leading-tile'] .ui-button__visual {
+  width: 46px;
+  height: 46px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button__grid-icon {
+  width: 42px;
+  height: 42px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='grid'] .ui-button__grid-label {
+  font-size: 0.72em;
+}
+
+/* ── Button hover ── */
+
+[data-ui-theme='industrial-scifi'] .ui-button:hover:not([data-state='disabled']):not([data-variant='tab'])::before {
+  filter: brightness(1.05);
+}
+
+/* ── Button active — shadow collapses to pressed-in, no scale ── */
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-state='active']:not([data-variant='tab']) {
+  transform: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='primary'][data-state='active']::before,
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='pill'][data-state='active']::before,
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='grid'][data-state='active']::before {
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #c7c3c0 -3.2px -3.2px 8px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='ghost'][data-state='active']::before {
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #545251 -3.2px -3.2px 8px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='secondary'][data-state='active']::before {
+  box-shadow: var(--ui-eng-pressed-dark);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='ghost'][data-state='active']::before {
+  box-shadow: var(--ui-eng-pressed-housing);
+}
+
+/* ── Button disabled ── */
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-state='disabled'] {
+  opacity: 0.4;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-state='disabled']::before {
+  box-shadow:
+    rgba(0, 0, 0, 0.2) 4px 4px 6px,
+    rgba(255, 255, 255, 0.04) 0.5px 0.5px 0px 0px inset;
+}
+
+/* ── Icon / close / back buttons ── */
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='icon']::before,
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='back']::before {
+  background: #c7c3c0;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #ffffff 1.5px 1.5px 2px 0px inset,
+    #c7c3c0 -3.2px -3.2px 8px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='icon'],
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='back'] {
+  color: var(--ui-eng-icon-fill);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='icon'],
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='close'] {
+  min-width: 52px;
+  width: 52px;
+  min-height: 52px;
+  height: 52px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='back'] {
+  min-width: 52px;
+  width: 52px;
+  min-height: 52px;
+  height: 52px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='icon'] .ui-button__content,
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='close'] .ui-button__content,
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='back'] .ui-button__content {
+  padding: 0;
+  justify-content: center;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='icon'] .ui-button__icon,
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='close'] .ui-button__icon,
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='back'] .ui-button__icon {
+  width: 20px;
+  height: 20px;
+  color: var(--ui-eng-icon-fill);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='icon'][data-state='active']::before,
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='back'][data-state='active']::before {
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #c7c3c0 -3.2px -3.2px 8px 0px inset;
+}
+
+/* Close button — red accent */
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='close']::before {
+  background: #d42a02;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #fb702c 1.5px 1.5px 2px 0px inset,
+    #d42a02 -3.2px -3.2px 8px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='close'] {
+  color: #ffffff;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='close'] .ui-button__icon {
+  color: #ffffff;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='close'][data-state='active']::before {
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #d42a02 -3.2px -3.2px 8px 0px inset;
+}
+
+/* ── Tab buttons — housing-colored keys, active tab lights up ── */
+
+/* Tabs container — recessed matte housing strip */
+[data-ui-theme='industrial-scifi'] .ui-tabs {
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--ui-eng-radius);
+  background: var(--ui-eng-housing);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(0, 0, 0, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='tab'] {
+  min-height: 44px;
+  padding: 4px 8px 6px;
+  background: transparent;
+  box-shadow: none;
+  border-radius: var(--ui-eng-radius-tight);
+  color: var(--ui-eng-text-muted);
+  transition: color 0.1s ease;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='tab']::before {
+  border-radius: var(--ui-eng-radius-tight);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  transition: background 0.1s ease, box-shadow 0.1s ease;
+}
+
+/* Active indicator: small LED dot at bottom center */
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='tab']::after {
+  width: 6px;
+  height: 6px;
+  left: 50%;
+  bottom: 3px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  transition: background 0.1s ease, box-shadow 0.1s ease;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-tab-button .ui-button__content {
+  min-width: 0;
+  gap: 4px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-tab-button .ui-button__label,
+[data-ui-theme='industrial-scifi'] .ui-tab-button__label {
+  font-size: 0.78em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-tab-button__badge {
+  --ui-tab-button-badge-scale: 0.74;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='tab'][data-state='active'] {
+  color: #ffffff;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='tab'][data-state='active']::before {
+  background: var(--ui-eng-surface-dark);
+  box-shadow: none;
+}
+
+/* Active LED — red accent dot */
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='tab'][data-state='active']::after {
+  background-color: var(--ui-eng-accent);
+  box-shadow: 0 0 4px var(--ui-eng-accent-bright), 0 0 1px var(--ui-eng-accent);
+}
+
+/* ── Segmented Control ── */
+
+[data-ui-theme='industrial-scifi'] .ui-segmented-control {
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--ui-eng-radius);
+  background: var(--ui-eng-housing);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(0, 0, 0, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-toggle-group {
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--ui-eng-radius);
+  background: var(--ui-eng-housing);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(0, 0, 0, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='segment'] {
+  min-height: max(44px, var(--ui-button-segment-height, 44px));
+  padding: 0 12px;
+  background: transparent;
+  box-shadow: none;
+  border-radius: var(--ui-eng-radius-tight);
+  --ui-button-text: #ffffff;
+  color: #ffffff;
+  transition: color 0.1s ease;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='segment'] .ui-button__content,
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='segment'] .ui-button__label,
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='segment'] .ui-button__supporting {
+  color: #ffffff;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='segment']::before {
+  border-radius: var(--ui-eng-radius-tight);
+  background: #3f3c39;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.24),
+    0 1px 1px rgba(0, 0, 0, 0.18);
+  transition: background 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='segment']::after {
+  content: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='segment'][data-state='active'] {
+  --ui-button-text: #ffffff;
+  color: #ffffff;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='segment'][data-state='active']::before {
+  background: var(--ui-eng-surface-dark);
+  border: 1px solid rgba(255, 190, 60, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 190, 60, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.26),
+    0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='segment'][data-state='active']::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  width: 18px;
+  height: 2px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--ui-eng-accent);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='toggle'] {
+  min-height: max(44px, var(--ui-button-segment-height, 44px));
+  padding: 0 12px;
+  background: transparent;
+  box-shadow: none;
+  border-radius: var(--ui-eng-radius-tight);
+  --ui-button-text: #ffffff;
+  color: #ffffff;
+  transition: color 0.1s ease;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='toggle'] .ui-button__content,
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='toggle'] .ui-button__label,
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='toggle'] .ui-button__supporting {
+  color: #ffffff;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='toggle']::before {
+  border-radius: var(--ui-eng-radius-tight);
+  background: #3f3c39;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.24),
+    0 1px 1px rgba(0, 0, 0, 0.18);
+  transition: background 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='toggle']::after {
+  content: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='toggle'][data-state='active'] {
+  --ui-button-text: #ffffff;
+  color: #ffffff;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='toggle'][data-state='active']::before {
+  background: transparent;
+  border: 2px solid var(--ui-eng-accent);
+  box-shadow:
+    0 0 6px rgba(255, 190, 60, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-variant='toggle'][data-state='active']::after {
+  content: none;
+}
+
+/* ── Button ribbon — embossed matte label strip ── */
+[data-ui-theme='industrial-scifi'] .ui-button__ribbon {
+  background: var(--ui-eng-accent);
+  color: #ffffff;
+  border-radius: 3px;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  padding: 3px 12px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  transform: none;
+  top: -9px;
+  right: -6px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NAV RAIL
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-nav-rail {
+  gap: 12px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-nav-rail[data-has-shell='true'] {
+  padding: 14px;
+  border-radius: var(--ui-eng-radius);
+  background: #b8b4b1;
+  border: none;
+  box-shadow: var(--ui-rail-shadow);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-rail-button {
+  min-height: 110px;
+  border-radius: var(--ui-eng-radius);
+  transition: box-shadow 0.1s ease-in-out, transform 0.1s ease-in-out;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-rail-button::before {
+  border-radius: var(--ui-eng-radius);
+  background: var(--ui-eng-surface-light);
+  border: none;
+  box-shadow: var(--ui-eng-raised-light);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-rail-button::after {
+  display: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-rail-button[data-state='active']::before {
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 6px 6px 8px,
+    #ffffff 1px 1px 1px 0px inset,
+    #c7c3c0 -2px -2px 4px 0px inset;
+}
+
+/* Active rail button accent indicator */
+[data-ui-theme='industrial-scifi'] .ui-rail-button[data-state='active']::after {
+  content: '';
+  display: block;
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ui-eng-accent);
+  z-index: 1;
+  pointer-events: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-rail-button__content {
+  justify-items: center;
+  gap: 10px;
+  padding: 14px 12px 16px;
+  color: var(--ui-eng-text-on-light);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-rail-button__top {
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-rail-button__label {
+  font-size: 12px;
+  line-height: 1;
+  text-align: center;
+  color: var(--ui-eng-text-on-light);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-rail-button__meta {
+  top: 10px;
+  right: 10px;
+  gap: 6px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-rail-button__frame {
+  --ui-icon-frame-size: 44px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PANELS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-panel {
+  border-radius: var(--ui-eng-radius);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-panel::before {
+  border-radius: var(--ui-eng-radius);
+  background: #b8b4b1;
+  border: none;
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.08),
+    0 2px 2px rgba(0, 0, 0, 0.06),
+    0 4px 8px rgba(0, 0, 0, 0.06),
+    0 8px 16px rgba(0, 0, 0, 0.04);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-panel::after {
+  display: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-panel__chrome {
+  display: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-panel__content {
+  gap: 12px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-panel__header {
+  align-items: flex-start;
+  gap: 12px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-panel__titles {
+  gap: 4px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-panel__title {
+  color: #1a1a1a;
+  font-size: 18px;
+  text-shadow: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-panel__subtitle,
+[data-ui-theme='industrial-scifi'] .ui-input__hint,
+[data-ui-theme='industrial-scifi'] .ui-slider__hint,
+[data-ui-theme='industrial-scifi'] .ui-control__hint,
+[data-ui-theme='industrial-scifi'] .ui-header__subtitle,
+[data-ui-theme='industrial-scifi'] .ui-ticket__subtitle {
+  letter-spacing: 0.02em;
+}
+
+/* ── Panel body ── */
+
+[data-ui-theme='industrial-scifi'] .ui-panel__body {
+  padding: var(--ui-panel-body-padding, 8px 12px);
+  border-radius: var(--ui-eng-radius-tight);
+  background: var(--ui-panel-body-fill);
+  border: none;
+  box-shadow: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-panel[data-variant='modal'] .ui-panel__body,
+[data-ui-theme='industrial-scifi'] .ui-panel[data-variant='sheet'] .ui-panel__body,
+[data-ui-theme='industrial-scifi'] .ui-panel[data-variant='dialog-confirmation'] .ui-panel__body,
+[data-ui-theme='industrial-scifi'] .ui-panel[data-variant='dialog-reward'] .ui-panel__body,
+[data-ui-theme='industrial-scifi'] .ui-panel[data-variant='popover'] .ui-panel__body {
+  padding: 8px 12px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-panel[data-variant='modal'],
+[data-ui-theme='industrial-scifi'] .ui-panel[data-variant='sheet'],
+[data-ui-theme='industrial-scifi'] .ui-panel[data-variant='dialog-confirmation'],
+[data-ui-theme='industrial-scifi'] .ui-panel[data-variant='dialog-reward'],
+[data-ui-theme='industrial-scifi'] .ui-panel[data-variant='popover'] {
+  --ui-panel-content-padding: 14px;
+}
+
+[data-ui-theme='industrial-scifi'] [data-ui-skin-role='settings.section'] .ui-panel__body {
+  gap: 8px;
+}
+
+[data-ui-theme='industrial-scifi'] [data-ui-skin-role='settings.row'] .ui-panel__body {
+  align-items: center;
+  gap: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INPUTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-input-shell {
+  min-height: 56px;
+  border-radius: var(--ui-eng-radius);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-input-shell::before {
+  border-radius: var(--ui-eng-radius);
+  background: #a5a19e;
+  border: none;
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.12),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.2);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-input-shell::after {
+  inset: 3px;
+  border-radius: var(--ui-eng-radius-tight);
+  background: #9a9693;
+  box-shadow:
+    inset 1px 1px 2px rgba(0, 0, 0, 0.1),
+    inset -0.5px -0.5px 1px rgba(255, 255, 255, 0.15);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-input-shell:focus-within::before {
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.12),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.2),
+    0 0 0 2px rgba(212, 42, 2, 0.3);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-input-shell__content {
+  gap: 12px;
+  padding: 12px 16px 10px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-input__visual {
+  border-radius: var(--ui-eng-radius-tight);
+  border: none;
+  box-shadow: var(--ui-eng-recessed);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-input[data-disabled='true'] .ui-input__label,
+[data-ui-theme='industrial-scifi'] .ui-input[data-disabled='true'] .ui-input__hint {
+  color: #5f5f5f;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-input-shell[data-disabled='true']::before {
+  background: #b0aca9;
+  opacity: 0.6;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-input[data-disabled='true'] .ui-input__field,
+[data-ui-theme='industrial-scifi'] .ui-input[data-disabled='true'] .ui-select__field,
+[data-ui-theme='industrial-scifi'] .ui-input[data-disabled='true'] .ui-textarea__field,
+[data-ui-theme='industrial-scifi'] .ui-input[data-disabled='true'] .ui-input__field::placeholder,
+[data-ui-theme='industrial-scifi'] .ui-input[data-disabled='true'] .ui-textarea__field::placeholder,
+[data-ui-theme='industrial-scifi'] .ui-input[data-disabled='true'] .ui-input__visual,
+[data-ui-theme='industrial-scifi'] .ui-input[data-disabled='true'] .ui-select__chevron {
+  color: #9e9a97;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHECKBOX / RADIO / SWITCH
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-checkbox,
+[data-ui-theme='industrial-scifi'] .ui-radio {
+  border-radius: var(--ui-eng-radius-tight);
+  transition: box-shadow 0.1s ease-in-out;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-checkbox::before {
+  border-radius: var(--ui-eng-radius-tight);
+  background: #a5a19e;
+  border: none;
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.12),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.25);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-checkbox__check {
+  color: transparent;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-checkbox[data-state='active'] .ui-checkbox__check,
+[data-ui-theme='industrial-scifi'] .ui-control__row:has(.ui-control__native:checked) .ui-checkbox__check {
+  color: var(--ui-eng-accent);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-radio::before {
+  background: #a5a19e;
+  border: none;
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.12),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.25);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-radio__dot {
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-radio[data-state='active'] .ui-radio__dot,
+[data-ui-theme='industrial-scifi'] .ui-control__row:has(.ui-control__native:checked) .ui-radio__dot {
+  background: var(--ui-eng-accent);
+  box-shadow:
+    rgba(0, 0, 0, 0.3) 2px 2px 4px,
+    rgba(255, 255, 255, 0.15) 0.5px 0.5px 0px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-switch {
+  width: 62px;
+  border-radius: 999px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-control__row:has(.ui-switch) .ui-control__label {
+  color: #5f5b58;
+  transition: color 0.14s ease-in-out, text-shadow 0.14s ease-in-out;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-switch::before {
+  border-radius: 999px;
+  background: #9e9a97;
+  border: none;
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.12),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.2);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-switch[data-state='active']::before,
+[data-ui-theme='industrial-scifi'] .ui-control__row:has(.ui-control__native:checked) .ui-switch::before {
+  background:
+    linear-gradient(
+      90deg,
+      #9e9a97 0%,
+      #9e9a97 54%,
+      var(--ui-eng-accent-dim) 54%,
+      var(--ui-eng-accent) 82%,
+      var(--ui-eng-accent-bright) 100%
+    );
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.12),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.2);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-switch__thumb {
+  border-radius: var(--ui-eng-radius-tight);
+  background: var(--ui-eng-surface-light);
+  border: none;
+  box-shadow:
+    rgba(0, 0, 0, 0.35) 4px 4px 6px,
+    #ffffff 0.5px 0.5px 1px 0px inset,
+    #c7c3c0 -1.5px -1.5px 3px 0px inset;
+  transition: box-shadow 0.1s ease-in-out;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-switch[data-state='active'] .ui-switch__thumb,
+[data-ui-theme='industrial-scifi'] .ui-control__row:has(.ui-control__native:checked) .ui-switch__thumb {
+  background: var(--ui-eng-surface-light);
+  box-shadow:
+    rgba(0, 0, 0, 0.35) 4px 4px 6px,
+    #ffffff 0.5px 0.5px 1px 0px inset,
+    #c7c3c0 -1.5px -1.5px 3px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-control__row:has(.ui-control__native:checked):has(.ui-switch) .ui-control__label {
+  color: #1a1a1a;
+  text-shadow: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROGRESS + SLIDER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-progress__track,
+[data-ui-theme='industrial-scifi'] .ui-slider__track {
+  border-radius: var(--ui-eng-radius);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-progress__track::before,
+[data-ui-theme='industrial-scifi'] .ui-slider__track::before {
+  border-radius: var(--ui-eng-radius);
+  background: #9e9a97;
+  border: none;
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.15),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.2);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-progress__track::after,
+[data-ui-theme='industrial-scifi'] .ui-slider__track::after {
+  display: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-progress__well,
+[data-ui-theme='industrial-scifi'] .ui-slider__well {
+  inset: 4px;
+  border-radius: var(--ui-eng-radius-tight);
+  background: #0a0a0a;
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.5),
+    inset -0.5px -0.5px 1px rgba(255, 255, 255, 0.02);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-progress__bar,
+[data-ui-theme='industrial-scifi'] .ui-slider__bar {
+  inset: 4px;
+  border-radius: var(--ui-eng-radius-tight);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-progress__fill,
+[data-ui-theme='industrial-scifi'] .ui-slider__fill {
+  border-radius: var(--ui-eng-radius-tight);
+  background: var(--ui-progress-fill);
+  box-shadow: var(--ui-progress-fill-shadow);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-progress__fill::before,
+[data-ui-theme='industrial-scifi'] .ui-slider__fill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.03) 28%, transparent 28%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 18px);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-progress__overlay {
+  font-size: 12px;
+  text-shadow: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-slider__thumb {
+  border-radius: var(--ui-eng-radius);
+  border: none;
+  background: var(--ui-eng-surface-light);
+  box-shadow: var(--ui-slider-thumb-shadow);
+  transition: box-shadow 0.1s ease-in-out;
+}
+
+/* ── Progress / button tone overrides ── */
+
+[data-ui-theme='industrial-scifi'] .ui-progress[data-tone='yellow'],
+[data-ui-theme='industrial-scifi'] .ui-button[data-tone='yellow'] {
+  --ui-progress-fill: #c49a2e;
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    inset 1px 0 0 rgba(255, 255, 255, 0.05);
+  --ui-industrial-tone-face:
+    linear-gradient(180deg, #d2b36b 0%, #b48f40 48%, #7f6328 100%);
+  --ui-industrial-tone-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #f3e0ad 1.5px 1.5px 2px 0px inset,
+    #a37f3c -3.2px -3.2px 8px 0px inset;
+  --ui-industrial-tone-pressed-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #8f6f32 -3.2px -3.2px 8px 0px inset;
+  --ui-industrial-tone-text: var(--ui-eng-text-on-light);
+  --ui-industrial-tone-supporting-text: rgba(26, 26, 26, 0.68);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-progress[data-tone='green'],
+[data-ui-theme='industrial-scifi'] .ui-button[data-tone='green'] {
+  --ui-progress-fill: #2f8e57;
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    inset 1px 0 0 rgba(255, 255, 255, 0.05);
+  --ui-industrial-tone-face:
+    linear-gradient(180deg, #5f8f74 0%, #426c56 48%, #294738 100%);
+  --ui-industrial-tone-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #b7d0c1 1.5px 1.5px 2px 0px inset,
+    #476a58 -3.2px -3.2px 8px 0px inset;
+  --ui-industrial-tone-pressed-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #395646 -3.2px -3.2px 8px 0px inset;
+  --ui-industrial-tone-text: var(--ui-eng-text-on-light);
+  --ui-industrial-tone-supporting-text: rgba(26, 26, 26, 0.68);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-progress[data-tone='blue'],
+[data-ui-theme='industrial-scifi'] .ui-button[data-tone='blue'] {
+  --ui-progress-fill: #356b91;
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    inset 1px 0 0 rgba(255, 255, 255, 0.05);
+  --ui-industrial-tone-face:
+    linear-gradient(180deg, #6a8098 0%, #4b6178 48%, #314151 100%);
+  --ui-industrial-tone-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #afbcc8 1.5px 1.5px 2px 0px inset,
+    #4b6076 -3.2px -3.2px 8px 0px inset;
+  --ui-industrial-tone-pressed-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #3e5062 -3.2px -3.2px 8px 0px inset;
+  --ui-industrial-tone-text: var(--ui-eng-text-on-dark);
+  --ui-industrial-tone-supporting-text: rgba(255, 255, 255, 0.76);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-progress[data-tone='red'],
+[data-ui-theme='industrial-scifi'] .ui-button[data-tone='red'] {
+  --ui-progress-fill: #c64d1d;
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    inset 1px 0 0 rgba(255, 255, 255, 0.05);
+  --ui-industrial-tone-face:
+    linear-gradient(180deg, #b56649 0%, #934834 48%, #5f2b20 100%);
+  --ui-industrial-tone-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #d29b88 1.5px 1.5px 2px 0px inset,
+    #7a3929 -3.2px -3.2px 8px 0px inset;
+  --ui-industrial-tone-pressed-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #683123 -3.2px -3.2px 8px 0px inset;
+  --ui-industrial-tone-text: #ffffff;
+  --ui-industrial-tone-supporting-text: rgba(255, 255, 255, 0.76);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-progress[data-tone='gray'],
+[data-ui-theme='industrial-scifi'] .ui-button[data-tone='gray'] {
+  --ui-progress-fill: #66615d;
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    inset 1px 0 0 rgba(255, 255, 255, 0.04);
+  --ui-industrial-tone-face:
+    linear-gradient(180deg, #8b8680 0%, #67625e 48%, #403b38 100%);
+  --ui-industrial-tone-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #bbb6b0 1.5px 1.5px 2px 0px inset,
+    #55504c -3.2px -3.2px 8px 0px inset;
+  --ui-industrial-tone-pressed-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #47423f -3.2px -3.2px 8px 0px inset;
+  --ui-industrial-tone-text: var(--ui-eng-text-on-dark);
+  --ui-industrial-tone-supporting-text: rgba(255, 255, 255, 0.76);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-progress[data-tone='purple'],
+[data-ui-theme='industrial-scifi'] .ui-button[data-tone='purple'] {
+  --ui-progress-fill: #7652a4;
+  --ui-progress-fill-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    inset 1px 0 0 rgba(255, 255, 255, 0.05);
+  --ui-industrial-tone-face:
+    linear-gradient(180deg, #7d6b95 0%, #605079 48%, #3b3249 100%);
+  --ui-industrial-tone-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #b1a3c4 1.5px 1.5px 2px 0px inset,
+    #54456a -3.2px -3.2px 8px 0px inset;
+  --ui-industrial-tone-pressed-shadow:
+    rgba(0, 0, 0, 0.377) 0px 0px 0px,
+    inset 0.5px 0.5px 4px #000000,
+    #453a58 -3.2px -3.2px 8px 0px inset;
+  --ui-industrial-tone-text: var(--ui-eng-text-on-dark);
+  --ui-industrial-tone-supporting-text: rgba(255, 255, 255, 0.76);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-tone] {
+  --ui-button-text: var(--ui-industrial-tone-text);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-tone]::before {
+  background: var(--ui-industrial-tone-face);
+  box-shadow: var(--ui-industrial-tone-shadow);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-tone][data-state='active']::before {
+  box-shadow: var(--ui-industrial-tone-pressed-shadow);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-button[data-tone] .ui-button__supporting,
+[data-ui-theme='industrial-scifi'] .ui-button[data-tone] .ui-button__currency-title {
+  color: var(--ui-industrial-tone-supporting-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HEADERS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-header {
+  gap: 10px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-header__ribbon {
+  min-width: min(100%, 240px);
+  border-radius: var(--ui-eng-radius);
+  overflow: hidden;
+}
+
+/* Elevated warm gray header */
+[data-ui-theme='industrial-scifi'] .ui-header__ribbon::before {
+  border-radius: var(--ui-eng-radius);
+  background: #b8b4b1;
+  border: none;
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.08),
+    0 2px 2px rgba(0, 0, 0, 0.06),
+    0 4px 8px rgba(0, 0, 0, 0.06),
+    0 8px 16px rgba(0, 0, 0, 0.04);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-header__ribbon::after {
+  display: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-header__content {
+  position: relative;
+  min-height: 68px;
+  padding: 18px 24px 20px;
+}
+
+/* Accent line at bottom of header */
+[data-ui-theme='industrial-scifi'] .ui-header__content::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20px;
+  right: 20px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ui-eng-accent);
+}
+
+/* No title underline pseudo */
+[data-ui-theme='industrial-scifi'] .ui-header__title::after {
+  display: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-header__eyebrow,
+[data-ui-theme='industrial-scifi'] .ui-ticket__eyebrow {
+  color: var(--ui-eng-accent);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-header__title {
+  font-size: 24px;
+  line-height: 0.96;
+  color: #ffffff;
+  text-shadow: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-header__subtitle {
+  color: var(--ui-eng-text-muted);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+/* ── Banner variant ── */
+
+[data-ui-theme='industrial-scifi'] .ui-header[data-variant='banner'] .ui-header__ribbon,
+[data-ui-theme='industrial-scifi'] .ui-header[data-variant='ribbon'] .ui-header__ribbon {
+  display: block;
+  width: min(100%, var(--ui-header-variant-width, 520px));
+  min-width: 0;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-header[data-variant='banner'] .ui-header__ribbon::before,
+[data-ui-theme='industrial-scifi'] .ui-header[data-variant='ribbon'] .ui-header__ribbon::before {
+  content: '';
+}
+
+[data-ui-theme='industrial-scifi'] .ui-header[data-variant='banner'] .ui-header__ribbon {
+  --ui-header-variant-width: 416px;
+  border-radius: var(--ui-eng-radius);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-header[data-variant='banner'] .ui-header__content {
+  padding: 14px 32px 20px;
+  justify-items: center;
+  text-align: center;
+}
+
+/* Ribbon variant */
+[data-ui-theme='industrial-scifi'] .ui-header[data-variant='ribbon'] .ui-header__ribbon {
+  --ui-header-variant-width: 100%;
+  border-radius: var(--ui-eng-radius);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-header[data-variant='ribbon'] .ui-header__content {
+  min-height: 0;
+  padding: 8px 20px;
+  justify-items: center;
+  text-align: center;
+  gap: 0;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-header[data-variant='banner'] .ui-header__title {
+  font-size: 28px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-header[data-variant='ribbon'] .ui-header__title {
+  font-size: 16px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-header[data-variant='banner'] .ui-header__subtitle,
+[data-ui-theme='industrial-scifi'] .ui-header[data-variant='ribbon'] .ui-header__subtitle {
+  max-width: 44ch;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TICKETS — Access plate cartridge
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-ticket {
+  --ui-ticket-text: #1a1a1a;
+  --ui-ticket-subtitle-text: #5a5654;
+  position: relative;
+  border-radius: 14px;
+  background: var(--ui-eng-housing);
+  border: none;
+  box-shadow: var(--ui-eng-raised-housing);
+  overflow: hidden;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-ticket::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 11px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 18%),
+    linear-gradient(180deg, #cac6c3 0%, #b7b2ae 100%);
+  box-shadow:
+    rgba(0, 0, 0, 0.28) 7px 7px 8px,
+    rgba(255, 255, 255, 0.7) 1px 1px 1px 0px inset,
+    rgba(171, 166, 162, 0.92) -2px -2px 4px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-ticket::after {
+  content: '';
+  position: absolute;
+  top: 16px;
+  right: 14px;
+  bottom: 16px;
+  width: 10px;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 4px;
+  background:
+    linear-gradient(
+      180deg,
+      var(--ui-eng-accent) 0 18%,
+      transparent 18% 31%,
+      var(--ui-eng-accent) 31% 46%,
+      transparent 46% 59%,
+      var(--ui-eng-accent) 59% 74%,
+      transparent 74% 87%,
+      var(--ui-eng-accent) 87% 100%
+    );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-ticket__content::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 22px;
+  right: 36px;
+  height: 8px;
+  border-radius: 3px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(42, 42, 42, 0.9) 0 26%,
+      var(--ui-eng-accent) 26% 34%,
+      rgba(95, 91, 88, 0.74) 34% 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-ticket__content {
+  position: relative;
+  align-content: start;
+  justify-items: start;
+  gap: 8px;
+  padding: 30px 42px 22px 22px;
+  text-align: left;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-ticket__title {
+  margin-top: 10px;
+  font-size: 26px;
+  line-height: 0.92;
+  color: #1a1a1a;
+  text-shadow: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-ticket__subtitle {
+  margin-top: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #4f4b48;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-ticket__eyebrow {
+  margin-top: 2px;
+  color: var(--ui-eng-accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ICON FRAMES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-icon-frame {
+  border-radius: var(--ui-eng-radius);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-icon-frame::before {
+  border-radius: var(--ui-eng-radius);
+  background: #a5a19e;
+  border: none;
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.12),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.25);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-icon-frame__content {
+  color: #5a5654;
+}
+
+/* Circle Frame — matte well with colored border ring, bevel shadows */
+[data-ui-theme='industrial-scifi'] .ui-circle-frame {
+  border-width: 2px;
+  border-style: solid;
+  background: var(--ui-eng-surface-light);
+  box-shadow:
+    inset 1.5px 1.5px 3px rgba(0, 0, 0, 0.15),
+    inset -1.5px -1.5px 2px rgba(255, 255, 255, 0.3),
+    0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BADGES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-badge {
+  border-radius: var(--ui-eng-radius-tight);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-badge::before {
+  border-radius: var(--ui-eng-radius-tight);
+  border: none;
+  box-shadow: var(--ui-badge-shadow);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-badge__content {
+  gap: 7px;
+  padding: 7px 12px;
+  font-size: 11px;
+  color: #ffffff;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-badge[data-variant='counter'] .ui-badge__content {
+  color: #ffffff;
+  text-shadow: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TAGS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-tag {
+  min-height: 38px;
+  border-radius: var(--ui-eng-radius-tight);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-tag::before {
+  border-radius: var(--ui-eng-radius-tight);
+  box-shadow: var(--ui-tag-shadow);
+}
+
+/* Tags use a left-edge accent instead of polygon clip-path */
+[data-ui-theme='industrial-scifi'] .ui-tag[data-variant='status']::before,
+[data-ui-theme='industrial-scifi'] .ui-tag[data-variant='value']::before {
+  clip-path: none;
+  border-left: 3px solid var(--ui-eng-accent);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-tag[data-variant='status']::after,
+[data-ui-theme='industrial-scifi'] .ui-tag[data-variant='value']::after {
+  clip-path: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-tag[data-variant='callout']::before {
+  clip-path: none;
+  border-left: 3px solid var(--ui-eng-accent);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-tag__content {
+  padding: 8px 16px;
+  font-size: 11px;
+}
+
+/* Tag accents use EP-133 canonical colors */
+[data-ui-theme='industrial-scifi'] .ui-tag[data-variant='status'][data-tone='blue']::before,
+[data-ui-theme='industrial-scifi'] .ui-tag[data-variant='status']:not([data-tone])::before {
+  border-left-color: #545251;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-tag[data-variant='status'][data-tone='green']::before {
+  border-left-color: #c7c3c0;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-tag[data-variant='status'][data-tone='yellow']::before,
+[data-ui-theme='industrial-scifi'] .ui-tag[data-variant='value']::before,
+[data-ui-theme='industrial-scifi'] .ui-tag[data-variant='value']:not([data-tone])::before {
+  border-left-color: #d42a02;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-tag[data-variant='status'][data-tone='purple']::before {
+  border-left-color: #545251;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-tag[data-variant='status'][data-tone='orange']::before {
+  border-left-color: #d42a02;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-tag[data-variant='callout'] {
+  --ui-tag-fill: #b0aca9;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PAGINATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-pagination-dot {
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  border-radius: var(--ui-eng-radius-tight);
+  transition: box-shadow 0.1s ease-in-out;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-pagination-dot::before {
+  border-radius: var(--ui-eng-radius-tight);
+  border: none;
+  box-shadow: var(--ui-pagination-shadow);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-pagination-dot[data-state='active']::before {
+  background: #312f2d;
+  box-shadow:
+    rgba(0, 0, 0, 0.28) 3px 3px 5px,
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.24);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-pagination-dot[data-state='active']::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background: var(--ui-eng-accent);
+  box-shadow:
+    0 0 0 2px #312f2d,
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOASTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-toast {
+  border-radius: var(--ui-eng-radius);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-toast::before {
+  border-radius: var(--ui-eng-radius);
+  border: none;
+  box-shadow:
+    rgba(0, 0, 0, 0.5) 8px 8px 12px,
+    rgba(255, 255, 255, 0.04) 1px 1px 1px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-toast .ui-panel__body {
+  padding: 12px 14px 14px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-toast__icon {
+  color: #5a5654;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-toast__dismiss-button,
+[data-ui-theme='industrial-scifi'] .ui-toast__action-button {
+  border-radius: var(--ui-eng-radius-tight);
+  background: #c7c3c0;
+  border: none;
+  color: #2a2a2a;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #ffffff 1.5px 1.5px 2px 0px inset,
+    #c7c3c0 -3.2px -3.2px 8px 0px inset;
+  transition: box-shadow 0.1s ease-in-out;
+}
+
+/* Severity left-stripe accent via border-left on ::before */
+[data-ui-theme='industrial-scifi'] .ui-toast[data-severity='info']::before {
+  border-left: 4px solid #2a6cd4;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-toast[data-severity='success']::before {
+  border-left: 4px solid #2a8c4a;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-toast[data-severity='warning']::before {
+  border-left: 4px solid #c4a22e;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-toast[data-severity='error']::before {
+  border-left: 4px solid var(--ui-eng-accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LABELS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-label {
+  color: #5a5654;
+  text-shadow: none;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-label[data-variant='title'] {
+  font-size: 18px;
+  color: #1a1a1a;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-label[data-variant='section'] {
+  font-size: 13px;
+  color: #5a5654;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-label[data-variant='value'] {
+  font-size: 14px;
+  color: #1a1a1a;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHIPS (currency / value badges)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-badge[data-variant='currency'],
+[data-ui-theme='industrial-scifi'] .ui-badge[data-variant='value'] {
+  border-radius: var(--ui-eng-radius-tight);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-badge[data-variant='currency']::before,
+[data-ui-theme='industrial-scifi'] .ui-badge[data-variant='value']::before {
+  border-radius: var(--ui-eng-radius-tight);
+  background: #b0aca9;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-badge[data-variant='currency'] .ui-badge__content,
+[data-ui-theme='industrial-scifi'] .ui-badge[data-variant='value'] .ui-badge__content {
+  color: #2a2a2a;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DIALOGS (Confirmation / Reward)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-panel[data-variant='dialog-confirmation'],
+[data-ui-theme='industrial-scifi'] .ui-panel[data-variant='dialog-reward'] {
+  border-radius: var(--ui-eng-radius);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-panel[data-variant='dialog-confirmation']::after,
+[data-ui-theme='industrial-scifi'] .ui-panel[data-variant='dialog-reward']::after {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATES (Empty / Loading / Error)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-state__icon {
+  color: #5a5654;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-state__title {
+  color: #1a1a1a;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-state__message {
+  color: var(--ui-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FTUE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-ui-theme='industrial-scifi'] .ui-ftue-callout__title {
+  color: #1a1a1a;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-ftue-callout__message {
+  color: var(--ui-text-muted);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-ftue-highlight-frame {
+  border: 2px solid var(--ui-eng-accent);
+  box-shadow:
+    rgba(0, 0, 0, 0.5) 6px 6px 10px;
+  border-radius: var(--ui-eng-radius);
+}
+
+/* ── Bottom Tab Bar ─────────────────────────────────────────────────────── */
+
+[data-ui-theme='industrial-scifi'] .ui-tab-bar {
+  --ui-tab-bar-fill: #b8b4b1;
+  --ui-tab-bar-border: rgba(0, 0, 0, 0.1);
+  --ui-tab-bar-text: #8a8683;
+  --ui-tab-bar-active-text: #1a1a1a;
+  box-shadow:
+    0 -1px 1px rgba(0, 0, 0, 0.06),
+    0 -2px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* ── New components — industrial-scifi (EP-133) treatment ─────────────── */
+
+[data-ui-theme='industrial-scifi'] .ui-list-row {
+  --ui-list-row-fill: #b8b4b1;
+  --ui-list-row-border: rgba(0, 0, 0, 0.06);
+  --ui-list-row-highlight-fill: #66615d;
+  --ui-list-row-highlight-border: rgba(0, 0, 0, 0.28);
+  --ui-list-row-radius: 5px;
+  box-shadow:
+    inset 0.5px 0.5px 1px rgba(255, 255, 255, 0.2),
+    inset -0.5px -0.5px 1px rgba(0, 0, 0, 0.08),
+    0 1px 1px rgba(0, 0, 0, 0.08),
+    0 2px 2px rgba(0, 0, 0, 0.06);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-list-row[data-highlight='self'] {
+  padding-right: 34px;
+  color: #f4f2f0;
+  box-shadow:
+    inset 1px 1px 2px rgba(255, 255, 255, 0.08),
+    inset -1px -1px 3px rgba(0, 0, 0, 0.32),
+    0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-list-row[data-highlight='self']::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  pointer-events: none;
+  transform: translateY(-50%);
+  background: var(--ui-eng-accent);
+  box-shadow:
+    0 0 0 2px #312f2d,
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-list-row[data-highlight='self'] .ui-list-row__name,
+[data-ui-theme='industrial-scifi'] .ui-list-row[data-highlight='self'] .ui-list-row__score {
+  color: #f4f2f0;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-avatar-frame {
+  border-radius: 5px;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-rank-badge[data-rank='1'] { color: #c4a22e; }
+[data-ui-theme='industrial-scifi'] .ui-rank-badge[data-rank='2'] { color: #8a8a8a; }
+[data-ui-theme='industrial-scifi'] .ui-rank-badge[data-rank='3'] { color: #a06830; }
+
+[data-ui-theme='industrial-scifi'] .ui-rank-badge__number {
+  background: #171717;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  color: var(--ui-eng-text-on-dark);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-promo-badge {
+  border-radius: 5px;
+  font-weight: 400;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 4px 4px 6px,
+    rgba(255, 255, 255, 0.3) 0.5px 0.5px 1px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-promo-badge[data-tone='value'] {
+  --ui-promo-badge-fill: #2a8c4a;
+  --ui-promo-badge-text: #ffffff;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-promo-badge[data-tone='best'] {
+  --ui-promo-badge-fill: #d42a02;
+  --ui-promo-badge-text: #ffffff;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-promo-badge[data-tone='special'] {
+  --ui-promo-badge-fill: #545251;
+  --ui-promo-badge-text: #e0dedd;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-countdown {
+  color: #5a5654;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-countdown__time {
+  color: var(--ui-eng-accent);
+}
+
+[data-ui-theme='industrial-scifi'] .ui-price-label {
+  color: #1a1a1a;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-shop-card {
+  --ui-shop-card-fill: #c7c3c0;
+  --ui-shop-card-border: transparent;
+  --ui-shop-card-banner-fill: rgba(0, 0, 0, 0.05);
+  --ui-shop-card-price-fill: rgba(0, 0, 0, 0.05);
+  --ui-shop-card-radius: 10px;
+  --ui-shop-card-border-width: 0px;
+  color: #2a2a2a;
+  text-shadow: none;
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    #ffffff 1.5px 1.5px 2px 0px inset,
+    #c7c3c0 -3.2px -3.2px 8px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-shop-card[data-tint='subscription'] {
+  --ui-shop-card-fill: #8b5cf6;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    rgba(167, 139, 250, 0.6) 1.5px 1.5px 2px 0px inset,
+    rgba(109, 40, 217, 0.5) -3.2px -3.2px 8px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-shop-card[data-tint='special'] {
+  --ui-shop-card-fill: #16a34a;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    rgba(74, 222, 128, 0.6) 1.5px 1.5px 2px 0px inset,
+    rgba(21, 128, 61, 0.5) -3.2px -3.2px 8px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-shop-card[data-tint='chest'] {
+  --ui-shop-card-fill: #2563eb;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    rgba(96, 165, 250, 0.6) 1.5px 1.5px 2px 0px inset,
+    rgba(29, 78, 216, 0.5) -3.2px -3.2px 8px 0px inset;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-shop-card[data-tint='currency'] {
+  --ui-shop-card-fill: #d97706;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    rgba(0, 0, 0, 0.377) 10px 10px 8px,
+    rgba(251, 191, 36, 0.6) 1.5px 1.5px 2px 0px inset,
+    rgba(180, 83, 9, 0.5) -3.2px -3.2px 8px 0px inset;
+}
+
+/* ── Nav Icons — EP-133 compact matte buttons ── */
+
+[data-ui-theme='industrial-scifi'] .ui-nav-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
+  background: #545251;
+  color: #e0dedd;
+  box-shadow: none;
+}
+
+[data-ui-theme='industrial-scifi'] .ui-nav-icon:hover {
+  background: #5f5d5c;
+  color: #ffffff;
+}

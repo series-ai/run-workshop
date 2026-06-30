@@ -1,0 +1,60 @@
+<svg viewBox="0 0 720 420" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ps-frame" x1="360" y1="10" x2="360" y2="410" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8ebbc"/>
+      <stop offset="0.18" stop-color="#d4b96d"/>
+      <stop offset="0.48" stop-color="#8d6328"/>
+      <stop offset="0.78" stop-color="#c49a4d"/>
+      <stop offset="1" stop-color="#5e3c17"/>
+    </linearGradient>
+    <linearGradient id="ps-core" x1="360" y1="42" x2="360" y2="378" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1a2747"/>
+      <stop offset="0.26" stop-color="#22375f"/>
+      <stop offset="0.5" stop-color="#121825"/>
+      <stop offset="0.78" stop-color="#0b0e15"/>
+      <stop offset="1" stop-color="#140d0d"/>
+    </linearGradient>
+    <linearGradient id="ps-lip" x1="360" y1="46" x2="360" y2="374" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff5d2" stop-opacity="0.76"/>
+      <stop offset="1" stop-color="#7a5924" stop-opacity="0.34"/>
+    </linearGradient>
+  </defs>
+
+  <path
+    d="M72 30H292L330 10H390L428 30H648L694 76V344L648 390H428L390 410H330L292 390H72L26 344V76L72 30Z"
+    fill="#100b0a"
+    opacity="0.7"
+    transform="translate(0 10)"
+  />
+  <path
+    d="M72 20H292L330 0H390L428 20H648L694 66V334L648 380H428L390 400H330L292 380H72L26 334V66L72 20Z"
+    fill="url(#ps-frame)"
+    stroke="#f5e6ad"
+    stroke-linejoin="round"
+    stroke-width="4"
+  />
+  <path
+    d="M114 54H302L336 36H384L418 54H606L660 108V292L606 346H418L384 364H336L302 346H114L60 292V108L114 54Z"
+    fill="url(#ps-core)"
+    stroke="url(#ps-lip)"
+    stroke-linejoin="round"
+    stroke-width="3"
+  />
+
+  <g fill="#f3d98d" opacity="0.96">
+    <circle cx="136" cy="40" r="8"/>
+    <circle cx="182" cy="30" r="6"/>
+    <circle cx="538" cy="30" r="6"/>
+    <circle cx="584" cy="40" r="8"/>
+    <circle cx="136" cy="360" r="8"/>
+    <circle cx="182" cy="370" r="6"/>
+    <circle cx="538" cy="370" r="6"/>
+    <circle cx="584" cy="360" r="8"/>
+  </g>
+
+  <path d="M330 16H390L402 28H318L330 16Z" fill="#fff3ca" opacity="0.92"/>
+  <path d="M330 384H390L402 372H318L330 384Z" fill="#825922" opacity="0.88"/>
+  <path d="M96 88L124 112L96 136L74 112L96 88Z" fill="#f1cf7a" opacity="0.84"/>
+  <path d="M624 88L646 112L624 136L596 112L624 88Z" fill="#f1cf7a" opacity="0.84"/>
+  <path d="M126 210H594" fill="none" opacity="0.44" stroke="#f4e1a3" stroke-dasharray="1 18" stroke-linecap="round" stroke-width="8"/>
+</svg>

@@ -1,0 +1,2 @@
+export interface ConfirmDialogOptions { title: string; message: string; confirmLabel?: string; cancelLabel?: string; cost?: { amount: number; currency: string }; destructive?: boolean }
+export interface ConfirmDialogStore { isOpen: boolean; options: ConfirmDialogOptions | null; resolve: ((confirmed: boolean) => void) | null; show(options: ConfirmDialogOptions): Promise<boolean>; confirm(): void; cancel(): void }

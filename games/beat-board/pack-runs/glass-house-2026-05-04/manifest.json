@@ -1,0 +1,361 @@
+{
+  "$comment": "Glass House pack — filtered house, 120 BPM, A minor. Four-on-the-floor kick, plucked sub bass, wide pads, soulful vocal stabs. 32 8-bar loops + 16 one-shots. Constraints per docs/audio-kits.md.",
+  "version": 1,
+  "kitId": "glass_house",
+  "tempo": 120,
+  "key": "A minor",
+  "outputDir": "/Users/pany/dev/run-workshop/games/beat-board/public/cdn-assets/audio/glass_house",
+  "barSec": 2,
+  "trimSec": 16,
+  "rawSec": 30,
+  "voices": {
+    "femaleSoft": "21m00Tcm4TlvDq8ikWAM",
+    "maleSoft": "TxGEqnHWrfWFTfGW9XjX"
+  },
+  "items": [
+    {
+      "file": "drums-1.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Filtered house drum loop, 120 BPM, A minor key context, 8 bars. Punchy four-on-the-floor kick on every beat, crisp clap on beats 2 and 4, closed hi-hat on every off-beat 8th, open hi-hat on the and-of-4 of every bar. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Bright modern house mix. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-2.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Deep house drum loop, 120 BPM, A minor key context, 8 bars. Soft four-on-the-floor kick on every beat, soft snare on beats 2 and 4, shaker 16ths throughout, ride cymbal on every beat. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Warm late-night deep house mix. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-3.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Tech-house drum loop, 120 BPM, A minor key context, 8 bars. Tight punchy kick on every beat, snappy clap on beats 2 and 4, percussive shaker pattern on the 16th-note grid, congas weaving through. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Modern tech-house punch. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-4.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Disco-house drum loop, 120 BPM, A minor key context, 8 bars. Four-on-the-floor kick, tambourine on every off-beat 8th, snare on 2 and 4, hat opens on the and-of-4. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Disco-influenced house with vinyl warmth. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-0.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Garage-influenced house drum loop, 120 BPM, A minor key context, 8 bars. Two-step kick pattern: kick on beat 1 and beat 3.5, snare on beats 2 and 4, swung shaker 16ths. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same locked swung groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. UK garage flavour. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-1.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Afro-house drum loop, 120 BPM, A minor key context, 8 bars. Four-on-the-floor kick, congas on every 8th, shaker 16ths, occasional log drum accent. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same polyrhythmic groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Warm Afro-house texture. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-2.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Minimal house drum loop, 120 BPM, A minor key context, 8 bars. Sparse kick on beats 1 and 3, hi-hat 16ths only, occasional rim-click on beats 2 and 4. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same minimal groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Stripped-back minimal house. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "drums-B-3.mp3",
+      "kind": "drum",
+      "color": "drums",
+      "phaseAlign": true,
+      "prompt": "Big-room house drum loop, 120 BPM, A minor key context, 8 bars. Heavy four-on-the-floor kick, layered clap on 2 and 4, white-noise snare hits on every off-beat. Strong, accented kick attack on the downbeat of bar 1 (loudest moment of the loop). All 8 bars play the same big groove with continuous percussion — no fades, no silent bars, no intro, no outro. Loopable. Festival-style big-room house. Just drums, no instruments, no bass, no melody, no vocals."
+    },
+    {
+      "file": "bass-1.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Plucked sub bass house loop, 120 BPM, in A minor, 8 bars. Strong, accented attack on A1 at the downbeat of bar 1 (loudest moment of the loop). Punchy plucked sub bass plays root A1 on beat 1 and beat 3 of every bar. All 8 bars repeat the same pulse. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-2.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Filtered house bass loop, 120 BPM, in A minor, 8 bars. Strong, accented attack on A1 at the downbeat of bar 1 (loudest moment of the loop). Warm filtered analog bass plays a syncopated A-rest-A-C-rest-A-E-rest groove that repeats across all 8 bars. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-3.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Pumping sidechain bass loop, 120 BPM, in A minor, 8 bars. Strong, accented attack on A1 at the downbeat of bar 1 (loudest moment of the loop). Sustained sub bass on A1 with strong four-on-the-floor sidechain pumping (the bass ducks every beat as if a kick is hitting). All 8 bars repeat the same pump. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-4.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Walking acid bass loop, 120 BPM, in A minor, 8 bars. Strong, accented attack on A1 at the downbeat of bar 1 (loudest moment of the loop). 303-style acid bass walks A → C → E → G across every bar with subtle filter cutoff modulation. All 8 bars repeat the same walk. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-0.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Detuned dual-saw bass house loop, 120 BPM, in A minor, 8 bars. Strong, accented attack on A1 at the downbeat of bar 1 (loudest moment of the loop). Detuned dual-saw sub bass on A1 sustained for all 8 bars with subtle filter movement. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-1.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Slap-funk bass house loop, 120 BPM, in A minor, 8 bars. Strong, accented slap-attack on A1 at beat 1 (loudest moment of the loop). Slap-and-pop electric bass with a syncopated 16th-note groove rooted on A. All 8 bars repeat the same groove. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-2.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Garage-style bass loop, 120 BPM, in A minor, 8 bars. Strong, accented attack on A1 at the downbeat of bar 1 (loudest moment of the loop). Bouncy two-step UK-garage sub bass: A1 on beat 1, A1 on beat 2.5, E2 on beat 3, A1 on beat 4. All 8 bars repeat the same pattern. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "bass-B-3.mp3",
+      "kind": "bass",
+      "color": "bass",
+      "prompt": "Rolling bassline house loop, 120 BPM, in A minor, 8 bars. Strong, accented attack on A1 at the downbeat of bar 1 (loudest moment of the loop). Rolling 16th-note bassline on A pentatonic with subtle pitch movement, classic UK bassline-house style. All 8 bars repeat the same roll. Continuous bass energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bass, no drums, no melody, no vocals."
+    },
+    {
+      "file": "melody-1.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Wide pad chord loop, 120 BPM, in A minor, 8 bars. Strong, accented chord stab on the downbeat of bar 1 (loudest moment of the loop). Lush analog pad sustains an A minor chord progression: Am → F → C → G across 2 bars, repeating across all 8 bars. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Wide stereo, slightly detuned. Just pads, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-2.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Plucked synth chord stabs house loop, 120 BPM, in A minor, 8 bars. Strong, accented stab on the downbeat of bar 1 (loudest moment of the loop). Bright plucked synth plays Am - F - C - G chord stabs on beats 1 and 3 of each bar. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Filtered, classic house stabs. Just stabs, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-3.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Filtered piano riff house loop, 120 BPM, in A minor, 8 bars. Strong, accented piano hit on the downbeat of bar 1 (loudest moment of the loop). Filtered grand piano plays a four-note motif A-C-E-G across each bar in A minor, classic French house piano. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just piano, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-4.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Saw-lead house riff loop, 120 BPM, in A minor, 8 bars. Strong, accented saw-lead attack on the downbeat of bar 1 (loudest moment of the loop). Bright saw-wave synth plays a hooky melodic riff in A minor pentatonic across each bar. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just synth lead, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-0.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Organ chord stabs house loop, 120 BPM, in A minor, 8 bars. Strong, accented organ stab on the downbeat of bar 1 (loudest moment of the loop). Hammond-style organ plays Am - Dm - Em - Am chord stabs on beats 1 and 3 of each bar. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Warm soulful organ. Just organ, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-1.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Plucked guitar house riff loop, 120 BPM, in A minor, 8 bars. Strong, accented guitar pluck on the downbeat of bar 1 (loudest moment of the loop). Single-note plucked clean guitar plays a melodic riff in A minor across each bar, four-on-the-floor friendly. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just guitar, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-2.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Bell pluck arpeggio house loop, 120 BPM, in A minor, 8 bars. Strong, accented bell hit on the downbeat of bar 1 (loudest moment of the loop). Bright bell synth arpeggiates A minor 7 chord across each bar in 16th notes. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just bell synth, no drums, no bass, no vocals."
+    },
+    {
+      "file": "melody-B-3.mp3",
+      "kind": "melody",
+      "color": "melody",
+      "prompt": "Brass stab house loop, 120 BPM, in A minor, 8 bars. Strong, accented brass stab on the downbeat of bar 1 (loudest moment of the loop). Synth brass section plays A minor stabs on beats 1 and 3, F major stabs on the and-of-2 and and-of-4 of every bar. All 8 bars repeat. Continuous melodic energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable. Just brass, no drums, no bass, no vocals."
+    },
+    {
+      "file": "vocals-A-0.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella ISOLATED sung female filtered-house DIVA hook (SOUL HOOK), 120 BPM, A minor, 8 bars. Modern French-house / Ibiza club diva delivery — anthemic, bright, energetic, four-on-the-floor club energy. NOT 70s soul, NOT lounge, NOT dusty — think 2000s filtered-house club anthem vocal samples, peak Saturday-night Ibiza terrace anthem. STRICTLY VOCAL TRACK ONLY — absolutely no kick drum, no snare, no hi-hat, no bass, no sub-bass, no synth, no piano, no pad, no rhythmic backing of any kind. NOTHING below 100 Hz must be present. The female voice sings continuously every single bar — no silent bars, no break longer than 200 ms. Bars 1-2 belt OH I FEEL IT on the root note A with bright forward attack, bars 3-4 climb LET IT GO climbing the A minor scale anthem-style, bars 5-6 belt OH I FEEL IT octave up at peak intensity, bars 7-8 sustained AHHH ad-lib resolving back. Bright, anthemic, modern club-diva delivery — projected like a peak-time anthem, NOT a smoky lounge. Imagine a vocal stem isolated from a 2000s filtered-house anthem — only the voice exists in the file. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-A-1.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella sung female chant repeating COME ON, 120 BPM, A minor, 8 bars. The ONLY phrase in the entire 8-bar loop is the words COME ON — never any other lyrics, never sustained ahhh, never la la la, never any other words. PURE VOCAL ONLY — absolutely no instruments, no drums, no bass, no piano, no synth, no melody, no beat, no instrumental backing whatsoever. Pattern: COME ON sung on beats 1 and 3 of every bar, identical pattern repeats across all 8 bars with subtle pitch and energy variation. Hooky house-diva delivery, every COME ON is a short two-syllable percussive stab less than 600 ms long. NOT a sung melody, NOT la-la-la, NOT a hook with other lyrics — only the literal phrase COME ON repeating. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-A-2.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella ISOLATED sung female filtered-house DIVA anthem repeating TAKE ME HIGHER, 120 BPM, A minor, 16 bars. Modern French-house / Ibiza club diva delivery — anthemic, bright, energetic, peak-time terrace vibe. NOT 70s soul, NOT smoky, NOT lounge — think classic 90s/2000s house club anthem. STRICTLY VOCAL TRACK ONLY — absolutely no kick drum, no snare, no hi-hat, no bass, no sub-bass, no synth, no piano, no pad, no rhythmic backing of any kind. NOTHING below 100 Hz must be present. The female voice sings continuously every single bar — no silent bars, no break longer than 200 ms. Bars 1-4 belt TAKE ME HIGHER on the root note A with bright forward attack, bars 5-8 climb OH OH OH ascending the A minor scale, bars 9-12 belt TAKE ME HIGHER octave up at peak intensity, bars 13-16 melismatic ad-lib resolve. Bright, anthemic, modern club-diva delivery — peak-time energy, NOT bedroom soul. Imagine a vocal stem isolated from a 2000s filtered-house anthem. Loopable.",
+      "barCount": 16
+    },
+    {
+      "file": "vocals-A-3.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella pitched-up female HEY stab repeated rhythmically (HEY STABS), 120 BPM, A minor, 16 bars. The ONLY syllable in the entire 16-bar loop is the word HEY — never any other lyrics, never sustained ahhh, never a melody. PURE VOCAL ONLY — absolutely no instruments, no drums, no bass, no piano, no synth, no melody, no beat, no instrumental backing whatsoever. Each HEY is a SHORT pitched-up percussive stab less than 200 ms long, like a producer chopped a soul vocal HEY and pitched it up for a house track. Pattern: HEY on beats 1 and 3 of every bar, sometimes HEY on the and-of-2 for syncopation, identical stab pattern repeats across all 16 bars. NOT a sung hook, NOT a chorus, NOT feel-the-music lyrics — only the single syllable HEY repeating on the rhythm grid. Continuous vocal energy across all 16 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 16
+    },
+    {
+      "file": "vocals-B-0.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella ISOLATED sung female bright AAAH vocal pad in modern filtered-house style (AAAH PAD), 120 BPM, A minor, 8 bars. The ONLY syllable in the entire 8-bar loop is AAAH — sustained female AAAH tones building a wide, anthemic Ibiza-style chord pad. NOT dreamy, NOT smoky, NOT lounge — think peak-time terrace anthem AAAH stacks (classic 2000s filtered-house era), bright and forward like sunrise on the dancefloor. STRICTLY VOCAL TRACK ONLY — absolutely no kick drum, no snare, no hi-hat, no bass, no sub-bass, no synth, no piano, no pad, no rhythmic backing of any kind. NOTHING below 100 Hz must be present. Stacked female harmonies (3 voices in 3rds and 5ths) sustain AAAH continuously: bars 1-2 AAAH on root A, bars 3-4 AAAH on third C, bars 5-6 AAAH on fifth E with growing brightness, bars 7-8 AAAH descending back to A. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Imagine an a cappella stem isolated from a French-house anthem. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-B-1.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella sung male hip-house chopped vocal stab, 120 BPM, A minor, 8 bars. PURE VOCAL ONLY — absolutely no instruments, no drums, no bass, no piano, no synth, no melody, no beat, no instrumental backing whatsoever. One voice, recorded a cappella in a vocal booth. Sung MELODICALLY (not spoken) with this evolving structure: bars 1-2 sing yeah yeah on offbeats, bars 3-4 sing oh yeah on the downbeat, bars 5-6 sing yeah yeah hey hey rhythmically, bars 7-8 sing oh yeah resolving. Hooky, percussive, classic hip-house chant. Continuous vocal energy across all 8 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 8
+    },
+    {
+      "file": "vocals-B-2.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella ISOLATED sung male filtered-house vocal hook repeating FEEL THE MUSIC, 120 BPM, A minor, 16 bars. Modern French-house / Ibiza club male diva delivery — bright, anthemic, four-on-the-floor energy. NOT 70s soul, NOT gospel, NOT smoky lounge — think 2000s filtered-house male vocal samples (classic 2000s filtered-house era), peak-time club energy. STRICTLY VOCAL TRACK ONLY — absolutely no kick drum, no snare, no hi-hat, no bass, no sub-bass, no synth, no piano, no pad, no rhythmic backing of any kind. NOTHING below 100 Hz must be present. The male voice sings continuously every single bar — no silent bars, no break longer than 200 ms. Bars 1-4 belt FEEL THE MUSIC on the A minor root with bright forward attack, bars 5-8 climb YEAH YEAH YEAH ascending the scale anthem-style, bars 9-12 belt FEEL THE MUSIC octave up at peak intensity, bars 13-16 sustained AHHH resolve. Bright, anthemic, modern club-diva delivery — peak-time energy. Imagine a vocal stem isolated from a 2000s filtered-house anthem. Loopable.",
+      "barCount": 16
+    },
+    {
+      "file": "vocals-B-3.mp3",
+      "kind": "vocal",
+      "color": "vocals",
+      "type": "music",
+      "prompt": "A cappella pitched-up female HEY stab repeated rhythmically (PITCHED HEY), 120 BPM, A minor, 16 bars. The ONLY syllable in the entire 16-bar loop is the word HEY — never any other lyrics, never sustained ahhh, never a melody. PURE VOCAL ONLY — absolutely no instruments, no drums, no bass, no piano, no synth, no melody, no beat, no instrumental backing whatsoever. Each HEY is a SHORT pitched-up percussive stab less than 200 ms long, pitched higher than natural register so it sits on top of a beat. Pattern: HEY on every beat (4 stabs per bar), occasionally doubled HEY HEY on the and-of-2 of every 4th bar, identical stab pattern repeats across all 16 bars. NOT a sung hook, NOT love-is-the-music lyrics — only the single syllable HEY repeating on the rhythm grid. Continuous vocal energy across all 16 bars; no fades, no silent bars, no intro, no outro. Loopable.",
+      "barCount": 16
+    },
+    {
+      "file": "fills-A-0.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1,
+      "prompt": "Single short white-noise snare crescendo one-shot, 1 second. Building snare roll into a final hit. Modern house mix. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-A-1.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single tom-tom drum fill one-shot, 1.2 seconds. High tom, mid tom, low tom in quick succession. Modern house drumkit. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-A-2.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.5,
+      "prompt": "Single open hi-hat cymbal one-shot with long natural decay tail, 1.5 seconds. Bright modern house mix. No bass, no melody, no vocals. Just one cymbal hit."
+    },
+    {
+      "file": "fills-A-3.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.8,
+      "prompt": "Single soft crash cymbal one-shot with natural decay, 1.8 seconds. Modern house mix. No bass, no melody, no vocals. Just one crash hit."
+    },
+    {
+      "file": "fills-B-0.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1,
+      "prompt": "Single clap stack one-shot building into a final clap, 1 second. Big-room house clap. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-1.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 0.8,
+      "prompt": "Single very fast 4-stroke drum fill across kick, snare, toms, and crash, 0.8 seconds. Modern house drumkit. No bass, no melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-2.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 1.2,
+      "prompt": "Single rolling kick fill one-shot, 1.2 seconds. Punchy modern house kick rolling. No melody, no vocals. Just one drum fill."
+    },
+    {
+      "file": "fills-B-3.mp3",
+      "kind": "oneShot",
+      "color": "drumFills",
+      "type": "music",
+      "targetSec": 0.6,
+      "prompt": "Single cymbal crash with immediate hand-choke, 0.6 seconds. Very short cymbal tail. Modern house mix. No bass, no melody, no vocals. Just one choked cymbal hit."
+    },
+    {
+      "file": "fx-1.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.5,
+      "prompt": "White-noise riser building upward, 1.5 seconds, fades into nothing at the end. Classic house transition. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-2.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.2,
+      "prompt": "Reverse cymbal swell rising into nothing, 1.2 seconds, fades naturally. Classic house riser. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-3.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1,
+      "prompt": "Vinyl scratch zigga-zigga, three or four quick scratches in 1 second. Bright, classic house turntablism. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-4.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 0.8,
+      "prompt": "Air-horn club blast, 0.8 seconds, fades naturally. Classic house club siren. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-0.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 0.8,
+      "prompt": "Filter sweep on white noise, sweeping from closed to open, 0.8 seconds. House transition. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-1.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1,
+      "prompt": "Synth zap downward sweep, 1 second, fades naturally. Bright modern house effect. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-2.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.8,
+      "prompt": "Crowd cheer sample, 1.8 seconds, fades naturally. Festival house ambience. No instruments, no music. Just one effect."
+    },
+    {
+      "file": "fx-B-3.mp3",
+      "kind": "oneShot",
+      "color": "fx",
+      "type": "sfx",
+      "targetSec": 1.5,
+      "prompt": "Tape stop pitch-down sliding to silence, 1.5 seconds. Classic house effect. No instruments, no music. Just one effect."
+    }
+  ]
+}

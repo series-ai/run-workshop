@@ -40,7 +40,7 @@ By submitting a contribution, you represent that:
 Do not add third-party software, assets, or other materials unless:
 
 - Their license permits inclusion and redistribution under this repository's license terms.
-- You add the required attribution to [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- You add the required attribution to the affected sub-project's `THIRD_PARTY_NOTICES.md` (indexed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
 - You include the applicable license notice or SPDX identifier on the affected files.
 
 ## Secrets and credentials

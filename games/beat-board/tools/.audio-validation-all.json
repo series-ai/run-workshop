@@ -1,0 +1,149 @@
+{
+  "scannedAt": "2026-06-29T22:49:46.126Z",
+  "audited": [
+    {
+      "kitId": "glass_house",
+      "exitStatus": 1,
+      "summary": {
+        "total": 48,
+        "cutOff": 1,
+        "barViolation": 0,
+        "lengthMismatch": 0,
+        "cycleDrift": 0,
+        "phraseLocked": 0,
+        "sustainGap": 1,
+        "sustainClick": 0,
+        "silentAttack": 0,
+        "clipped": 0,
+        "suspicious": 4,
+        "vocalHasBackground": 0,
+        "bar1NoAttack": 0,
+        "loopTailFade": 0,
+        "loudnessOutlier": 0,
+        "errors": 0
+      },
+      "failingCount": 6
+    },
+    {
+      "kitId": "hiphop_brooklyn_hero",
+      "exitStatus": 1,
+      "summary": {
+        "total": 48,
+        "cutOff": 0,
+        "barViolation": 0,
+        "lengthMismatch": 0,
+        "cycleDrift": 5,
+        "phraseLocked": 0,
+        "sustainGap": 0,
+        "sustainClick": 0,
+        "silentAttack": 0,
+        "clipped": 0,
+        "suspicious": 0,
+        "vocalHasBackground": 0,
+        "bar1NoAttack": 0,
+        "loopTailFade": 0,
+        "loudnessOutlier": 0,
+        "errors": 0
+      },
+      "failingCount": 5
+    },
+    {
+      "kitId": "lofi_heights_hero",
+      "exitStatus": 0,
+      "summary": {
+        "total": 48,
+        "cutOff": 0,
+        "barViolation": 0,
+        "lengthMismatch": 0,
+        "cycleDrift": 0,
+        "phraseLocked": 0,
+        "sustainGap": 0,
+        "sustainClick": 0,
+        "silentAttack": 0,
+        "clipped": 0,
+        "suspicious": 0,
+        "vocalHasBackground": 0,
+        "bar1NoAttack": 0,
+        "loopTailFade": 0,
+        "loudnessOutlier": 0,
+        "errors": 0
+      },
+      "failingCount": 0
+    },
+    {
+      "kitId": "midnight_synthwave",
+      "exitStatus": 1,
+      "summary": {
+        "total": 48,
+        "cutOff": 1,
+        "barViolation": 0,
+        "lengthMismatch": 0,
+        "cycleDrift": 1,
+        "phraseLocked": 0,
+        "sustainGap": 0,
+        "sustainClick": 1,
+        "silentAttack": 0,
+        "clipped": 0,
+        "suspicious": 1,
+        "vocalHasBackground": 0,
+        "bar1NoAttack": 0,
+        "loopTailFade": 0,
+        "loudnessOutlier": 0,
+        "errors": 0
+      },
+      "failingCount": 4
+    },
+    {
+      "kitId": "phonk_midnight",
+      "exitStatus": 1,
+      "summary": {
+        "total": 48,
+        "cutOff": 0,
+        "barViolation": 0,
+        "lengthMismatch": 0,
+        "cycleDrift": 0,
+        "phraseLocked": 0,
+        "sustainGap": 0,
+        "sustainClick": 0,
+        "silentAttack": 0,
+        "clipped": 0,
+        "suspicious": 2,
+        "vocalHasBackground": 0,
+        "bar1NoAttack": 0,
+        "loopTailFade": 1,
+        "loudnessOutlier": 0,
+        "errors": 0
+      },
+      "failingCount": 3
+    },
+    {
+      "kitId": "skyway_dnb",
+      "exitStatus": 1,
+      "summary": {
+        "total": 48,
+        "cutOff": 2,
+        "barViolation": 0,
+        "lengthMismatch": 0,
+        "cycleDrift": 1,
+        "phraseLocked": 1,
+        "sustainGap": 0,
+        "sustainClick": 1,
+        "silentAttack": 0,
+        "clipped": 0,
+        "suspicious": 1,
+        "vocalHasBackground": 0,
+        "bar1NoAttack": 0,
+        "loopTailFade": 0,
+        "loudnessOutlier": 0,
+        "errors": 0
+      },
+      "failingCount": 6
+    }
+  ],
+  "notAudited": [
+    "lofi_heights_extended",
+    "mellow_trap",
+    "subscriber_april"
+  ],
+  "totalFailures": 24
+}

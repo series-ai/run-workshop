@@ -1,0 +1,77 @@
+import type { ComponentType } from 'react'
+import {
+  ArchiveBoxIcon,
+  ArrowLeftIcon,
+  BanknotesIcon,
+  BuildingStorefrontIcon,
+  ChatBubbleLeftRightIcon,
+  CheckCircleIcon,
+  CheckIcon,
+  ClockIcon,
+  Cog6ToothIcon,
+  EnvelopeIcon,
+  ExclamationTriangleIcon,
+  FireIcon,
+  GiftIcon,
+  HeartIcon,
+  HomeIcon,
+  InformationCircleIcon,
+  LockClosedIcon,
+  LockOpenIcon,
+  MagnifyingGlassIcon,
+  MegaphoneIcon,
+  PlayIcon,
+  RectangleGroupIcon,
+  QuestionMarkCircleIcon,
+  ShieldCheckIcon,
+  ShoppingBagIcon,
+  SparklesIcon,
+  StarIcon,
+  TrophyIcon,
+  XCircleIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/solid'
+import { adaptUiSkinExternalIcon, createUiSkinIconPack } from './runtime'
+
+function heroicon<Props extends Record<string, unknown>>(Component: ComponentType<Props>) {
+  return adaptUiSkinExternalIcon(Component)
+}
+
+const HEROICONS_STYLE_ICON_COMPONENTS = {
+  home: heroicon(HomeIcon),
+  coin: heroicon(BanknotesIcon),
+  heart: heroicon(HeartIcon),
+  star: heroicon(StarIcon),
+  sparkles: heroicon(SparklesIcon),
+  flame: heroicon(FireIcon),
+  play: heroicon(PlayIcon),
+  shield: heroicon(ShieldCheckIcon),
+  trophy: heroicon(TrophyIcon),
+  gift: heroicon(GiftIcon),
+  bag: heroicon(ShoppingBagIcon),
+  shop: heroicon(BuildingStorefrontIcon),
+  cards: heroicon(RectangleGroupIcon),
+  package: heroicon(ArchiveBoxIcon),
+  lock: heroicon(LockClosedIcon),
+  unlock: heroicon(LockOpenIcon),
+  check: heroicon(CheckIcon),
+  close: heroicon(XMarkIcon),
+  back: heroicon(ArrowLeftIcon),
+  info: heroicon(InformationCircleIcon),
+  question: heroicon(QuestionMarkCircleIcon),
+  warning: heroicon(ExclamationTriangleIcon),
+  success: heroicon(CheckCircleIcon),
+  error: heroicon(XCircleIcon),
+  mail: heroicon(EnvelopeIcon),
+  chat: heroicon(ChatBubbleLeftRightIcon),
+  search: heroicon(MagnifyingGlassIcon),
+  megaphone: heroicon(MegaphoneIcon),
+  settings: heroicon(Cog6ToothIcon),
+  clock: heroicon(ClockIcon),
+} as const
+
+export const heroiconsUiSkinIconPack = createUiSkinIconPack({
+  id: 'heroicons',
+  label: 'Heroicons',
+  icons: HEROICONS_STYLE_ICON_COMPONENTS,
+})
