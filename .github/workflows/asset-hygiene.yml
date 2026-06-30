@@ -1,0 +1,40 @@
+name: Asset Hygiene
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  asset-hygiene:
+    name: Asset Hygiene
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan changed assets for third-party / scratch material
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ] && [ -n "${BASE_SHA:-}" ]; then
+            echo "Scanning files added/changed in this PR (${BASE_SHA}..${HEAD_SHA})"
+            mapfile -d '' -t files < <(git diff -z --name-only --diff-filter=ACMR "$BASE_SHA" "$HEAD_SHA")
+          else
+            echo "Scanning all tracked files (backstop)"
+            mapfile -d '' -t files < <(git ls-files -z)
+          fi
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No files to scan."
+            exit 0
+          fi
+          bash scripts/asset-hygiene.sh "${files[@]}"

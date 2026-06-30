@@ -1,0 +1,10 @@
+# Asset-hygiene allowlist.
+#
+# Paths here are exempt from scripts/asset-hygiene.sh. Use for media that lives
+# in a reference/scratch location (or has a download-ish name) but is genuinely
+# our own original work. One entry per line; a trailing "/" matches a directory
+# prefix, and shell globs (*, ?) are supported. '#' starts a comment.
+
+# Our own generated UI templates / annotated reference sheets (original work).
+games/beat-board/references/ui-references/
+games/beat-board/references/ui-set-templates/
