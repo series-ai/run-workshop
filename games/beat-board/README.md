@@ -139,4 +139,4 @@ internals (validator thresholds, trim math, the fix decision table) see
 
 This game is part of [run-workshop](../../README.md) and is licensed under the
 [RUN Repository Supplemental License v1.0](../../LICENSE.md). Third-party
-attributions are listed in [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md).
+attributions are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -1,13 +1,10 @@
 # Third-Party Notices
 
-When third-party software, assets, or other materials are added, they will be listed here with their license and attribution requirements.
+Third-party software, assets, and other materials are tracked per sub-project,
+next to the code that uses them. Each sub-project that includes third-party
+materials maintains its own `THIRD_PARTY_NOTICES.md` listing the applicable
+licenses and attributions.
 
-## BeatBoard
+## Sub-project notices
 
-BeatBoard includes Lilita One:
-
-- File: `games/beat-board/src/modules/ui/skin/theme/fonts/bright-casual-lilita-one.ttf`
-- License: SIL Open Font License, Version 1.1
-- Source: https://github.com/google/fonts/tree/main/ofl/lilitaone
-
-BeatBoard audio loops under `games/beat-board/public/cdn-assets/audio/` are original workshop content authored for this repository, not third-party materials.
+- BeatBoard — [`games/beat-board/THIRD_PARTY_NOTICES.md`](games/beat-board/THIRD_PARTY_NOTICES.md)
