@@ -6,8 +6,11 @@ requirements.
 
 ## Ninja Adventure Asset Pack (pixel art)
 
-- Files: pixel-art tilesets, character sprites, and map tilesheets under
-  `public/world/` (16×16 pixel art), including edits and additions by Barker.
+- Files: pixel-art tilesets, character sprites, and map tilesheets used
+  throughout the editor's sample data (16×16 pixel art), including edits and
+  additions by Barker. This covers the assets under `public/world/` as well as
+  the bundled spritesheet inside the Sprite Fusion project export at
+  `SpriteFusion_Source/TemplateMap.zip`.
 - Author: pixel-boy
 - License: CC0 1.0 Universal (public domain dedication)
 - Source: https://pixel-boy.itch.io/ninja-adventure-asset-pack
