@@ -1,0 +1,41 @@
+{
+  "id": "disciple-daichi",
+  "name": "Daichi the Stoneheart",
+  "character": "NinjaGray",
+  "stationary": true,
+  "dialogue": [
+    "Discipline. That’s the first pillar.",
+    "Stone doesn’t flinch. Steel doesn’t bend. Obsidian doesn’t forgive.",
+    "Show me you can take a hit without breaking."
+  ],
+  "preBattleLine": "Daichi stamps the floor. Cracks spider outward. His team rises from the stone.",
+  "postDefeatDialogue": [
+    "Daichi nods once. The cracks in the floor seal shut.",
+    "You held the line. Tsubaki waits by the water basin — she’ll test your endurance."
+  ],
+  "trainerParty": [
+    {
+      "specId": "mossgraft_brute",
+      "element": "stone",
+      "rarity": "uncommon",
+      "level": 13
+    },
+    {
+      "specId": "gloombark_prism",
+      "element": "obsidian",
+      "rarity": "rare",
+      "level": 14
+    },
+    {
+      "specId": "rivet_gremlin",
+      "element": "steel",
+      "rarity": "rare",
+      "level": 15
+    }
+  ],
+  "trainerReward": 400,
+  "homeMapId": "interior_dojo",
+  "moodEmotes": [
+    "emote7"
+  ]
+}

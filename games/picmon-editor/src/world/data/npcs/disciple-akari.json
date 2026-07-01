@@ -1,0 +1,42 @@
+{
+  "id": "disciple-akari",
+  "name": "Akari the Lightbringer",
+  "character": "NinjaMageOrange",
+  "stationary": true,
+  "dialogue": [
+    "Wisdom. The fifth and final pillar.",
+    "Light reveals truth. Spirit endures beyond the body. And mirrors… mirrors show you who you really are.",
+    "If you’ve made it this far, you’re ready for the question: are you tuff enough?"
+  ],
+  "preBattleLine": "Akari opens her eyes. The room fills with blinding light.",
+  "postDefeatDialogue": [
+    "Akari closes her eyes. The light fades to warmth.",
+    "You answered the question. Master Kenji waits in the inner sanctum.",
+    "Five pillars. One challenger. This is your moment."
+  ],
+  "trainerParty": [
+    {
+      "specId": "halo_prowler",
+      "element": "light",
+      "rarity": "rare",
+      "level": 19
+    },
+    {
+      "specId": "blizzard_wisp",
+      "element": "spirit",
+      "rarity": "epic",
+      "level": 19
+    },
+    {
+      "specId": "prism_maw",
+      "element": "mirror",
+      "rarity": "epic",
+      "level": 19
+    }
+  ],
+  "trainerReward": 1200,
+  "homeMapId": "interior_dojo",
+  "moodEmotes": [
+    "emote7"
+  ]
+}

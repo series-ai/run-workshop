@@ -1,0 +1,15 @@
+{
+  "id": "trainer-mqzuilf9",
+  "name": "Forest Elder",
+  "character": "CamouflageGreen",
+  "stationary": true,
+  "faceDirection": "down",
+  "homeMapId": "Forest2",
+  "dialogue": [
+    "You're at the crossroads, friend. Take the path on the right and it'll lead you down to the local farm — good folk,",
+    "The trail to the left winds up toward the old cave. Best have a strong team before you head that way."
+  ],
+  "moodEmotes": [
+    "emote11"
+  ]
+}

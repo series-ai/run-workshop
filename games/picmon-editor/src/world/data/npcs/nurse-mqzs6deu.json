@@ -1,0 +1,12 @@
+{
+  "id": "nurse-mqzs6deu",
+  "name": "nurse",
+  "character": "Woman",
+  "stationary": true,
+  "faceDirection": "left",
+  "homeMapId": "interior_hospital5",
+  "dialogue": [
+    "Take a seat if you're waiting — the doctor will be with you shortly.",
+    "Don't fret about your Picmon. They're in good hands here."
+  ]
+}

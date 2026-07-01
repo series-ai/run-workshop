@@ -1,0 +1,31 @@
+{
+  "id": "gen-snow-7",
+  "name": "Gladiator Joss",
+  "character": "KnightGold",
+  "dialogue": [
+    "Step up and face me."
+  ],
+  "preBattleLine": "Hold up. Let’s see what you’ve got.",
+  "trainerParty": [
+    {
+      "element": "crystal",
+      "rarity": "epic",
+      "level": 56,
+      "environment": "snow"
+    },
+    {
+      "element": "mist",
+      "rarity": "epic",
+      "level": 58,
+      "environment": "snow"
+    },
+    {
+      "element": "crystal",
+      "rarity": "mythic",
+      "level": 60,
+      "environment": "snow"
+    }
+  ],
+  "trainerReward": 260,
+  "homeMapId": "snow_town"
+}

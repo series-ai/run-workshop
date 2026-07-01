@@ -1,0 +1,23 @@
+{
+  "id": "thornwall-rex",
+  "name": "Thornwall Rex",
+  "character": "KnightGold",
+  "homeMapId": "villageruin",
+  "dialogue": [
+    "I\u2019ve stood at this fence for three years.",
+    "Nothing gets past unless it earns the right.",
+    "You want through? Fight."
+  ],
+  "preBattleLine": "Rex draws a blade etched with thorn-marks. His team roars.",
+  "trainerParty": [
+    { "element": "crystal", "rarity": "epic", "level": 30 },
+    { "element": "shadow", "rarity": "mythic", "level": 31 },
+    { "element": "spirit", "rarity": "mythic", "level": 31 },
+    { "element": "steel", "rarity": "legendary", "level": 32 }
+  ],
+  "trainerReward": 1200,
+  "postDefeatDialogue": [
+    "Three years. Nobody\u2019s done that before.",
+    "The last guardian waits at the far edge. Nightveil. She\u2019s\u2026 different."
+  ]
+}

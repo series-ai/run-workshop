@@ -1,0 +1,19 @@
+{
+  "id": "trainer-mqzxqgnc",
+  "name": "Gladiator Castor",
+  "character": "GladiatorBlue",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "That passage behind me drops into the deep caves — cave2, the locals call it. Only the bold venture down.",
+    "Are you bold, traveler? Prove it against me first."
+  ],
+  "postDefeatDialogue": [
+    "Strong enough for the dark, clearly. Go on, then."
+  ],
+  "trainerParty": [
+    { "element": "stone", "rarity": "rare", "level": 31 },
+    { "element": "martial", "rarity": "rare", "level": 31 },
+    { "element": "steel", "rarity": "superior", "level": 32 }
+  ],
+  "trainerReward": 900
+}

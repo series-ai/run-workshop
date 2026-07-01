@@ -1,0 +1,14 @@
+{
+  "id": "tileguy-mr19f3i8",
+  "name": "tileguy",
+  "character": "EggBoy",
+  "stationary": true,
+  "homeMapId": "TemplateMap",
+  "dialogue": [
+    "You can always set certain tiles to be blockers on the map specific image export.",
+    "This map uses TemplateMap_water.json as a sidecar file.",
+    "This isn't automatic and you will need to ask claude to set it up.",
+    "in this example we are just blocking the water tile but we could also select the shore tiles as blockers.",
+    "Barker uses a tool called Layout Manager to single out water tiles."
+  ]
+}

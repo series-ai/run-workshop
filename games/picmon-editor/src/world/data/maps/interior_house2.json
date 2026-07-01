@@ -1,0 +1,9 @@
+{
+  "id": "interior_house2",
+  "spawns": {
+    "default": { "tileX": 4, "tileY": 3 }
+  },
+  "placements": [
+    { "npcId": "neighbor-mqzs42fx", "tileX": 2, "tileY": 3 }
+  ]
+}

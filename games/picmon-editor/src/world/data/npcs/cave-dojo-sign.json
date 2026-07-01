@@ -1,0 +1,9 @@
+{
+  "id": "cave-dojo-sign",
+  "name": "Stone Sanctum",
+  "character": "Statue",
+  "dialogue": [
+    "STONE SANCTUM \u2014 Cave Dojo",
+    "Three disciples and a master await within. Step inside if your team is ready."
+  ]
+}

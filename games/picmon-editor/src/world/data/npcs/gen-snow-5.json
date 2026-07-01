@@ -1,0 +1,31 @@
+{
+  "id": "gen-snow-5",
+  "name": "Hunter Nimm",
+  "character": "Villager4",
+  "dialogue": [
+    "Step up and face me."
+  ],
+  "preBattleLine": "Hold up. Let’s see what you’ve got.",
+  "trainerParty": [
+    {
+      "element": "ice",
+      "rarity": "superior",
+      "level": 49,
+      "environment": "snow"
+    },
+    {
+      "element": "spirit",
+      "rarity": "superior",
+      "level": 51,
+      "environment": "snow"
+    },
+    {
+      "element": "wind",
+      "rarity": "epic",
+      "level": 53,
+      "environment": "snow"
+    }
+  ],
+  "trainerReward": 193,
+  "homeMapId": "snow_town"
+}

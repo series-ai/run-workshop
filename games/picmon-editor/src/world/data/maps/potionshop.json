@@ -1,0 +1,9 @@
+{
+  "id": "potionshop",
+  "spawns": {
+    "default": { "tileX": 20, "tileY": 16 }
+  },
+  "placements": [
+    { "npcId": "gary", "tileX": 18, "tileY": 14 }
+  ]
+}

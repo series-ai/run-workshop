@@ -1,0 +1,11 @@
+{
+  "id": "guard-mqzpnv4h",
+  "name": "guard",
+  "character": "Knight",
+  "stationary": true,
+  "faceDirection": "down",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "I used to roam the wilds catching Picmon like you. Then I took up a post at the capital gate."
+  ]
+}

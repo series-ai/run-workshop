@@ -1,0 +1,10 @@
+{
+  "id": "interior_shop3",
+  "spawns": {
+    "default": { "tileX": 6, "tileY": 5 }
+  },
+  "placements": [
+    { "npcId": "apprentice-mq1vy1d8", "tileX": 10, "tileY": 4 },
+    { "npcId": "alchemist-mq1w07xz", "tileX": 6, "tileY": 2 }
+  ]
+}

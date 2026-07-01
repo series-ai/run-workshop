@@ -1,0 +1,10 @@
+{
+  "id": "trainer-mqzv5th2",
+  "name": "cave diver",
+  "character": "Inuit",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "I dive the flooded tunnels below, sifting the silt for fossils.",
+    "They say a perfect fossil can restore an extinct Picmon to life. That's the dream I'm chasing down here."
+  ]
+}

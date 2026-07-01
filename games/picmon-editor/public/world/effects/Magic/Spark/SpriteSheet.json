@@ -1,0 +1,180 @@
+{
+  "guide": {
+    "coordinateSystem": "Origin is top-left. X increases rightward. Y increases downward. Standard screen/canvas coordinates.",
+    "frame": "Clip rect on the sprite sheet PNG: {x, y, w, h}. Use these coordinates to cut this sprite from the matching .png file.",
+    "corners": "The 4 corner positions of the sprite after rotation is applied. Order: top-left, top-right, bottom-right, bottom-left. Use these if you want to avoid rotation math.",
+    "sourceSize": "Original dimensions of the source image before any scaling. Metadata only — not needed for rendering.",
+    "rotation": "Rotation in degrees. Pivot point is the center of the frame rect.",
+    "parent": "Sprite name of this element's parent in the rig hierarchy.",
+    "children": "Array of sprite names that are children of this element.",
+    "offset": "Delta from the sprite's sheet position (frame) to its equipped/dressed position. Apply as: dressedX = frame.x + offset.dx, dressedY = frame.y + offset.dy, etc. The dressed position may be outside the canvas — that is expected.",
+    "layerOrder": "\"above\" = render this child on top of the parent. \"below\" = render behind the parent.",
+    "replacesParent": "When true, this child is a visual replacement for the parent. When this child is active, hide the parent but still render other children as normal."
+  },
+  "frames": {
+    "Spark01": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 54,
+        "h": 35
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 54,
+          "y": 0
+        },
+        {
+          "x": 54,
+          "y": 35
+        },
+        {
+          "x": 0,
+          "y": 35
+        }
+      ],
+      "sourceSize": {
+        "w": 270,
+        "h": 35
+      }
+    },
+    "Spark02": {
+      "frame": {
+        "x": 54,
+        "y": 0,
+        "w": 54,
+        "h": 35
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 54,
+          "y": 0
+        },
+        {
+          "x": 108,
+          "y": 0
+        },
+        {
+          "x": 108,
+          "y": 35
+        },
+        {
+          "x": 54,
+          "y": 35
+        }
+      ],
+      "sourceSize": {
+        "w": 270,
+        "h": 35
+      }
+    },
+    "Spark03": {
+      "frame": {
+        "x": 108,
+        "y": 0,
+        "w": 54,
+        "h": 35
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 108,
+          "y": 0
+        },
+        {
+          "x": 162,
+          "y": 0
+        },
+        {
+          "x": 162,
+          "y": 35
+        },
+        {
+          "x": 108,
+          "y": 35
+        }
+      ],
+      "sourceSize": {
+        "w": 270,
+        "h": 35
+      }
+    },
+    "Spark04": {
+      "frame": {
+        "x": 162,
+        "y": 0,
+        "w": 54,
+        "h": 35
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 162,
+          "y": 0
+        },
+        {
+          "x": 216,
+          "y": 0
+        },
+        {
+          "x": 216,
+          "y": 35
+        },
+        {
+          "x": 162,
+          "y": 35
+        }
+      ],
+      "sourceSize": {
+        "w": 270,
+        "h": 35
+      }
+    },
+    "Spark05": {
+      "frame": {
+        "x": 216,
+        "y": 0,
+        "w": 54,
+        "h": 35
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 216,
+          "y": 0
+        },
+        {
+          "x": 270,
+          "y": 0
+        },
+        {
+          "x": 270,
+          "y": 35
+        },
+        {
+          "x": 216,
+          "y": 35
+        }
+      ],
+      "sourceSize": {
+        "w": 270,
+        "h": 35
+      }
+    }
+  },
+  "meta": {
+    "app": "LayoutManager",
+    "image": "See matching .png file",
+    "size": {
+      "w": 270,
+      "h": 35
+    },
+    "scale": "1"
+  }
+}

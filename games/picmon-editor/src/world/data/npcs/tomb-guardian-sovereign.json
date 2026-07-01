@@ -1,0 +1,38 @@
+{
+  "id": "tomb-guardian-sovereign",
+  "name": "The Lost Pharaoh",
+  "character": "Sultan2",
+  "stationary": true,
+  "dialogue": [
+    "Khepri tested your patience. Seshat tested your reason. Sekhmet-Ra tested your fire.",
+    "All three reported. All three said the same word.",
+    "Worthy.",
+    "I have slept a long time, trainer. I am awake now. Let us see if 'worthy' was a lie.",
+    "Strike like the sun. I will strike like the tomb."
+  ],
+  "preBattleLine": "The Pharaoh's crown ignites with a slow, ancient light. The room remembers his name.",
+  "postDefeatDialogue": [
+    "The Pharaoh laughs \u2014 not a king's laugh, a friend's.",
+    "\"The desert is yours. The hieroglyphs are yours. The trial is closed.\"",
+    "\"Carry my mark on every PicMon you make from this day. The Tomb remembers.\""
+  ],
+  "trainerParty": [
+    { "element": "light",   "rarity": "epic",      "level": 40, "environment": "desert" },
+    { "element": "fire",    "rarity": "epic",      "level": 40, "environment": "desert" },
+    { "element": "furnace", "rarity": "legendary", "level": 41, "environment": "desert" },
+    { "element": "lava",    "rarity": "legendary", "level": 41, "environment": "desert" },
+    { "element": "stellar", "rarity": "legendary", "level": 42, "environment": "pharaohs_cache" },
+    { "element": "light",   "rarity": "mythic",    "level": 43, "environment": "pharaohs_cache" }
+  ],
+  "trainerReward": 2500,
+  "homeMapId": "desert_dojo",
+  "requiredTrainerDefeats": [
+    "tomb-guardian-endurance",
+    "tomb-guardian-wisdom",
+    "tomb-guardian-strength"
+  ],
+  "prereqBlockedMessage": "The Pharaoh does not stir. Three trial-guardians must speak your name first.",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

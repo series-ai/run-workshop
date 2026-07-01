@@ -1,0 +1,17 @@
+{
+  "id": "trainer-mqzv535p",
+  "name": "trainer",
+  "character": "NinjaDark",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "Crystals, bones, and battle — that's cave life. Step up!"
+  ],
+  "postDefeatDialogue": [
+    "Heh. You'd survive down here just fine."
+  ],
+  "trainerParty": [
+    { "element": "fungus", "rarity": "rare", "level": 24, "environment": "cave" },
+    { "element": "crystal", "rarity": "rare", "level": 24, "environment": "cave" }
+  ],
+  "trainerReward": 420
+}

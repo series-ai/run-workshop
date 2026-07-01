@@ -1,0 +1,17 @@
+{
+  "id": "trainer-mqzw3vdt",
+  "name": "Scout Pyra",
+  "character": "CamouflageRed",
+  "homeMapId": "OrangeRoute",
+  "dialogue": [
+    "I train on this orange trail every single day. One morning I'll be strong enough for the capital dojo!"
+  ],
+  "postDefeatDialogue": [
+    "...Not strong enough yet. But I'll keep at it."
+  ],
+  "trainerParty": [
+    { "element": "venom", "rarity": "uncommon", "level": 15, "environment": "forest" },
+    { "element": "nature", "rarity": "uncommon", "level": 16, "environment": "forest" }
+  ],
+  "trainerReward": 260
+}

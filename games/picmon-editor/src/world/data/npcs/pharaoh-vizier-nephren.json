@@ -1,0 +1,35 @@
+{
+  "id": "pharaoh-vizier-nephren",
+  "name": "Vizier Nephren",
+  "character": "Sultan2",
+  "stationary": true,
+  "dialogue": [
+    "You bested my king. I watched it from the antechamber.",
+    "He calls you 'worthy.' I call you a problem that needs ledger work.",
+    "I have served the Pharaoh longer than you have drawn breath. I will not pass on his throne to a sand-walker without a final accounting.",
+    "Show me you can balance the books."
+  ],
+  "preBattleLine": "Nephren snaps her ledger shut. Light leaks from the seams.",
+  "postDefeatDialogue": [
+    "Nephren bows once, ledger tucked under her arm.",
+    "\"The accounts balance. You are entered as the Pharaoh's true heir.\"",
+    "She does not smile, but the corner of her mouth twitches \u2014 that is enough."
+  ],
+  "trainerParty": [
+    { "element": "light",   "rarity": "epic",      "level": 42, "environment": "desert" },
+    { "element": "mirror",  "rarity": "epic",      "level": 42, "environment": "desert" },
+    { "element": "crystal", "rarity": "legendary", "level": 43, "environment": "desert" },
+    { "element": "stellar", "rarity": "legendary", "level": 43, "environment": "pharaohs_cache" },
+    { "element": "neon",    "rarity": "legendary", "level": 43, "environment": "pharaohs_cache" },
+    { "specId": "halo_prowler",  "element": "light",   "rarity": "mythic",    "level": 44 }
+  ],
+  "trainerReward": 2000,
+  "homeMapId": "desert_dojo",
+  "requiredTrainerDefeats": [
+    "tomb-guardian-sovereign"
+  ],
+  "prereqBlockedMessage": "Nephren does not rise from her ledger. \"The Pharaoh has not called my name. Return when he has.\"",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

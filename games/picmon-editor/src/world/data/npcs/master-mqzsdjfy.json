@@ -1,0 +1,22 @@
+{
+  "id": "master-mqzsdjfy",
+  "name": "master",
+  "character": "Tengu",
+  "stationary": true,
+  "faceDirection": "down",
+  "homeMapId": "interior_farmlandsdojo",
+  "dialogue": [
+    "A strong bond with your Picmon is worth more than any technique. Train them with patience, never force."
+  ],
+  "preBattleLine": "The master rises, fists settling into a practiced stance.",
+  "postDefeatDialogue": [
+    "The master bows deeply.",
+    "\"Your bond is true. Carry what you've learned beyond these walls.\""
+  ],
+  "trainerParty": [
+    { "element": "martial", "rarity": "rare", "level": 31, "environment": "martial" },
+    { "element": "martial", "rarity": "superior", "level": 32, "environment": "martial" },
+    { "element": "martial", "rarity": "epic", "level": 34, "environment": "martial" }
+  ],
+  "trainerReward": 1500
+}

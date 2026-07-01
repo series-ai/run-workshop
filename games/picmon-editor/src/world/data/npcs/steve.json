@@ -1,0 +1,28 @@
+{
+  "id": "steve",
+  "name": "steve",
+  "character": "Boy",
+  "dialogue": [
+    "You smell like feet and regret. "
+  ],
+  "postDefeatDialogue": [
+    "Whatever Foot Sad. "
+  ],
+  "trainerParty": [
+    {
+      "element": "fire",
+      "rarity": "rare",
+      "level": 1
+    },
+    {
+      "element": "acid",
+      "rarity": "rare",
+      "level": 1
+    },
+    {
+      "element": "venom",
+      "rarity": "uncommon",
+      "level": 1
+    }
+  ]
+}

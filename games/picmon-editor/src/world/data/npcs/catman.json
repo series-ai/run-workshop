@@ -1,0 +1,31 @@
+{
+  "id": "catman",
+  "name": "Glads",
+  "character": "GladiatorBlue",
+  "dialogue": [
+    "Think you can handle the forest? Let's find out."
+  ],
+  "preBattleLine": "Glads draws his blade. The trees go quiet.",
+  "postDefeatDialogue": [
+    "Not bad. The forest gets tougher from here.",
+    "Faye patrols the west path — she'll test your endurance."
+  ],
+  "trainerParty": [
+    {
+      "element": "steel",
+      "rarity": "rare",
+      "level": 21
+    },
+    {
+      "element": "obsidian",
+      "rarity": "rare",
+      "level": 22
+    },
+    {
+      "element": "crystal",
+      "rarity": "superior",
+      "level": 23
+    }
+  ],
+  "trainerReward": 250
+}

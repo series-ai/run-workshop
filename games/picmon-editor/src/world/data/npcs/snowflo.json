@@ -1,0 +1,21 @@
+{
+  "id": "snowflo",
+  "name": "Snowflo",
+  "character": "Inuit",
+  "dialogue": [
+    "The arch behind me hums with old cold.",
+    "I am the first half of the seal. Beat me — and Snowpro still stands.",
+    "But you have to start somewhere."
+  ],
+  "preBattleLine": "Snowflo plants her feet. Frost crawls up the walls behind her.",
+  "trainerParty": [
+    { "element": "steam", "rarity": "rare", "level": 21 },
+    { "element": "ice", "rarity": "rare", "level": 22 },
+    { "element": "water", "rarity": "superior", "level": 23 }
+  ],
+  "trainerReward": 450,
+  "postDefeatDialogue": [
+    "Half the seal cracks. You feel it more than you see it.",
+    "My elder waits ahead. Bring everything you have left."
+  ]
+}

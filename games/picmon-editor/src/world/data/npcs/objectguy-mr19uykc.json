@@ -1,0 +1,10 @@
+{
+  "id": "objectguy-mr19uykc",
+  "name": "objectguy",
+  "character": "EggGirl",
+  "stationary": true,
+  "homeMapId": "TemplateMap",
+  "dialogue": [
+    "Animated objects can be sorted on 3 different layers. under, on player, overlay"
+  ]
+}

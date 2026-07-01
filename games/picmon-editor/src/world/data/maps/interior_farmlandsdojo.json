@@ -1,0 +1,13 @@
+{
+  "id": "interior_farmlandsdojo",
+  "spawns": {
+    "default": { "tileX": 6, "tileY": 12 }
+  },
+  "placements": [
+    { "npcId": "ninja-mqzsd581", "tileX": 5, "tileY": 7 },
+    { "npcId": "ninja-mqzsd8ys", "tileX": 9, "tileY": 6 },
+    { "npcId": "ninja-mqzsdclm", "tileX": 9, "tileY": 10 },
+    { "npcId": "ninja-mqzsdful", "tileX": 4, "tileY": 10 },
+    { "npcId": "master-mqzsdjfy", "tileX": 6, "tileY": 4 }
+  ]
+}

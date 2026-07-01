@@ -1,0 +1,9 @@
+{
+  "id": "BambooRoute1",
+  "spawns": {
+    "default": { "tileX": 19, "tileY": 9 }
+  },
+  "placements": [
+
+  ]
+}

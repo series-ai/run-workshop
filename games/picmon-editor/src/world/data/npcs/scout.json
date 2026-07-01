@@ -1,0 +1,21 @@
+{
+  "id": "scout",
+  "name": "Scout Toren",
+  "character": "CamouflageGreen",
+  "dialogue": [
+    "Keep low. The tall grass gives you away.",
+    "You think you can sneak past me?",
+    "Let's see what your team can do."
+  ],
+  "preBattleLine": "Toren whistles — a creature emerges from the grass!",
+  "postDefeatDialogue": [
+    "Not bad. Maybe I underestimated you.",
+    "Head east if you want a real hunt."
+  ],
+  "trainerParty": [
+    { "specId": "frost_mite", "element": "ice", "rarity": "common", "level": 2 },
+    { "specId": "thornveil_hex", "element": "venom", "rarity": "common", "level": 1 },
+    { "specId": "thunderfluff_warden", "element": "cloud", "rarity": "common", "level": 1 }
+  ],
+  "trainerReward": 30
+}

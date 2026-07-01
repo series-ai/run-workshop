@@ -1,0 +1,10 @@
+{
+  "id": "juno-mq1w1nxx",
+  "name": "Juno",
+  "character": "NinjaBomb",
+  "stationary": true,
+  "homeMapId": "community_dojo",
+  "dialogue": [
+    "Master says true power lies not in strength, but in unseen agility."
+  ]
+}

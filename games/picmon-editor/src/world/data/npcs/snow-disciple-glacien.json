@@ -1,0 +1,41 @@
+{
+  "id": "snow-disciple-glacien",
+  "name": "Glacien the Ice Sculptor",
+  "character": "NinjaInuit",
+  "stationary": true,
+  "dialogue": [
+    "Glacien. Second of three.",
+    "Mist hides. Ice STAYS. What I shape down here, the thaw never undoes.",
+    "Show me your team can hold a line longer than the Veil holds the cold."
+  ],
+  "preBattleLine": "Glacien hammers his fist down. The dojo floor sheets over with frost.",
+  "postDefeatDialogue": [
+    "Glacien shatters his own ice with a flick. Steam rises.",
+    "\"Tindra waits in the back. She doesn’t do mercy.\""
+  ],
+  "trainerParty": [
+    {
+      "element": "ice",
+      "rarity": "rare",
+      "level": 52,
+      "environment": "snow"
+    },
+    {
+      "element": "water",
+      "rarity": "epic",
+      "level": 54,
+      "environment": "snow"
+    },
+    {
+      "element": "crystal",
+      "rarity": "epic",
+      "level": 56,
+      "environment": "snow"
+    }
+  ],
+  "trainerReward": 1600,
+  "homeMapId": "snow_town",
+  "moodEmotes": [
+    "emote7"
+  ]
+}

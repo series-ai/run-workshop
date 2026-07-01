@@ -1,0 +1,335 @@
+{
+  "guide": {
+    "coordinateSystem": "Origin is top-left. X increases rightward. Y increases downward. Standard screen/canvas coordinates.",
+    "frame": "Clip rect on the sprite sheet PNG: {x, y, w, h}. Use these coordinates to cut this sprite from the matching .png file.",
+    "corners": "The 4 corner positions of the sprite after rotation is applied. Order: top-left, top-right, bottom-right, bottom-left. Use these if you want to avoid rotation math.",
+    "sourceSize": "Original dimensions of the source image before any scaling. Metadata only — not needed for rendering.",
+    "rotation": "Rotation in degrees. Pivot point is the center of the frame rect.",
+    "parent": "Sprite name of this element's parent in the rig hierarchy.",
+    "children": "Array of sprite names that are children of this element.",
+    "offset": "Delta from the sprite's sheet position (frame) to its equipped/dressed position. Apply as: dressedX = frame.x + offset.dx, dressedY = frame.y + offset.dy, etc. The dressed position may be outside the canvas — that is expected.",
+    "layerOrder": "\"above\" = render this child on top of the parent. \"below\" = render behind the parent.",
+    "replacesParent": "When true, this child is a visual replacement for the parent. When this child is active, hide the parent but still render other children as normal."
+  },
+  "frames": {
+    "Water01": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 44,
+        "h": 33
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 44,
+          "y": 0
+        },
+        {
+          "x": 44,
+          "y": 33
+        },
+        {
+          "x": 0,
+          "y": 33
+        }
+      ],
+      "sourceSize": {
+        "w": 440,
+        "h": 33
+      }
+    },
+    "Water02": {
+      "frame": {
+        "x": 44,
+        "y": 0,
+        "w": 44,
+        "h": 33
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 44,
+          "y": 0
+        },
+        {
+          "x": 88,
+          "y": 0
+        },
+        {
+          "x": 88,
+          "y": 33
+        },
+        {
+          "x": 44,
+          "y": 33
+        }
+      ],
+      "sourceSize": {
+        "w": 440,
+        "h": 33
+      }
+    },
+    "Water03": {
+      "frame": {
+        "x": 88,
+        "y": 0,
+        "w": 44,
+        "h": 33
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 88,
+          "y": 0
+        },
+        {
+          "x": 132,
+          "y": 0
+        },
+        {
+          "x": 132,
+          "y": 33
+        },
+        {
+          "x": 88,
+          "y": 33
+        }
+      ],
+      "sourceSize": {
+        "w": 440,
+        "h": 33
+      }
+    },
+    "Water04": {
+      "frame": {
+        "x": 132,
+        "y": 0,
+        "w": 44,
+        "h": 33
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 132,
+          "y": 0
+        },
+        {
+          "x": 176,
+          "y": 0
+        },
+        {
+          "x": 176,
+          "y": 33
+        },
+        {
+          "x": 132,
+          "y": 33
+        }
+      ],
+      "sourceSize": {
+        "w": 440,
+        "h": 33
+      }
+    },
+    "Water05": {
+      "frame": {
+        "x": 176,
+        "y": 0,
+        "w": 44,
+        "h": 33
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 176,
+          "y": 0
+        },
+        {
+          "x": 220,
+          "y": 0
+        },
+        {
+          "x": 220,
+          "y": 33
+        },
+        {
+          "x": 176,
+          "y": 33
+        }
+      ],
+      "sourceSize": {
+        "w": 440,
+        "h": 33
+      }
+    },
+    "Water06": {
+      "frame": {
+        "x": 220,
+        "y": 0,
+        "w": 44,
+        "h": 33
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 220,
+          "y": 0
+        },
+        {
+          "x": 264,
+          "y": 0
+        },
+        {
+          "x": 264,
+          "y": 33
+        },
+        {
+          "x": 220,
+          "y": 33
+        }
+      ],
+      "sourceSize": {
+        "w": 440,
+        "h": 33
+      }
+    },
+    "Water07": {
+      "frame": {
+        "x": 264,
+        "y": 0,
+        "w": 44,
+        "h": 33
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 264,
+          "y": 0
+        },
+        {
+          "x": 308,
+          "y": 0
+        },
+        {
+          "x": 308,
+          "y": 33
+        },
+        {
+          "x": 264,
+          "y": 33
+        }
+      ],
+      "sourceSize": {
+        "w": 440,
+        "h": 33
+      }
+    },
+    "Water08": {
+      "frame": {
+        "x": 308,
+        "y": 0,
+        "w": 44,
+        "h": 33
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 308,
+          "y": 0
+        },
+        {
+          "x": 352,
+          "y": 0
+        },
+        {
+          "x": 352,
+          "y": 33
+        },
+        {
+          "x": 308,
+          "y": 33
+        }
+      ],
+      "sourceSize": {
+        "w": 440,
+        "h": 33
+      }
+    },
+    "Water09": {
+      "frame": {
+        "x": 352,
+        "y": 0,
+        "w": 44,
+        "h": 33
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 352,
+          "y": 0
+        },
+        {
+          "x": 396,
+          "y": 0
+        },
+        {
+          "x": 396,
+          "y": 33
+        },
+        {
+          "x": 352,
+          "y": 33
+        }
+      ],
+      "sourceSize": {
+        "w": 440,
+        "h": 33
+      }
+    },
+    "Water10": {
+      "frame": {
+        "x": 396,
+        "y": 0,
+        "w": 44,
+        "h": 33
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 396,
+          "y": 0
+        },
+        {
+          "x": 440,
+          "y": 0
+        },
+        {
+          "x": 440,
+          "y": 33
+        },
+        {
+          "x": 396,
+          "y": 33
+        }
+      ],
+      "sourceSize": {
+        "w": 440,
+        "h": 33
+      }
+    }
+  },
+  "meta": {
+    "app": "LayoutManager",
+    "image": "See matching .png file",
+    "size": {
+      "w": 440,
+      "h": 33
+    },
+    "scale": "1"
+  }
+}

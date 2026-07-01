@@ -1,0 +1,24 @@
+{
+  "id": "firefrank",
+  "name": "Fire Frank",
+  "character": "CamouflageRed",
+  "dialogue": [
+    "Heh. Wasn't expectin' company down here.",
+    "Watch the sparks — these tunnels burn faster than you'd think.",
+    "You ready, kid? Last chance to walk."
+  ],
+  "preBattleLine": "Frank flicks a lighter open. The cave gets a few degrees warmer.",
+  "trainerParty": [
+    { "element": "fire", "rarity": "rare", "level": 17 },
+    { "element": "fire", "rarity": "rare", "level": 18 },
+    { "element": "fire", "rarity": "superior", "level": 19 }
+  ],
+  "trainerReward": 320,
+  "moodEmotes": [
+    "emote4"
+  ],
+  "postDefeatDialogue": [
+    "Ha! Burnt me good. Take the win.",
+    "Tell the snow sisters at the gate I said hi."
+  ]
+}

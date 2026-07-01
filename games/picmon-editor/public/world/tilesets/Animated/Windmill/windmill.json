@@ -1,0 +1,149 @@
+{
+  "guide": {
+    "coordinateSystem": "Origin is top-left. X increases rightward. Y increases downward. Standard screen/canvas coordinates.",
+    "frame": "Clip rect on the sprite sheet PNG: {x, y, w, h}. Use these coordinates to cut this sprite from the matching .png file.",
+    "corners": "The 4 corner positions of the sprite after rotation is applied. Order: top-left, top-right, bottom-right, bottom-left. Use these if you want to avoid rotation math.",
+    "sourceSize": "Original dimensions of the source image before any scaling. Metadata only — not needed for rendering.",
+    "rotation": "Rotation in degrees. Pivot point is the center of the frame rect.",
+    "parent": "Sprite name of this element's parent in the rig hierarchy.",
+    "children": "Array of sprite names that are children of this element.",
+    "offset": "Delta from the sprite's sheet position (frame) to its equipped/dressed position. Apply as: dressedX = frame.x + offset.dx, dressedY = frame.y + offset.dy, etc. The dressed position may be outside the canvas — that is expected.",
+    "layerOrder": "\"above\" = render this child on top of the parent. \"below\" = render behind the parent.",
+    "replacesParent": "When true, this child is a visual replacement for the parent. When this child is active, hide the parent but still render other children as normal."
+  },
+  "frames": {
+    "windmill01": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 64,
+          "y": 0
+        },
+        {
+          "x": 64,
+          "y": 64
+        },
+        {
+          "x": 0,
+          "y": 64
+        }
+      ],
+      "sourceSize": {
+        "w": 256,
+        "h": 64
+      }
+    },
+    "windmill02": {
+      "frame": {
+        "x": 64,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 64,
+          "y": 0
+        },
+        {
+          "x": 128,
+          "y": 0
+        },
+        {
+          "x": 128,
+          "y": 64
+        },
+        {
+          "x": 64,
+          "y": 64
+        }
+      ],
+      "sourceSize": {
+        "w": 256,
+        "h": 64
+      }
+    },
+    "windmill03": {
+      "frame": {
+        "x": 128,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 128,
+          "y": 0
+        },
+        {
+          "x": 192,
+          "y": 0
+        },
+        {
+          "x": 192,
+          "y": 64
+        },
+        {
+          "x": 128,
+          "y": 64
+        }
+      ],
+      "sourceSize": {
+        "w": 256,
+        "h": 64
+      }
+    },
+    "windmill04": {
+      "frame": {
+        "x": 192,
+        "y": 0,
+        "w": 64,
+        "h": 64
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 192,
+          "y": 0
+        },
+        {
+          "x": 256,
+          "y": 0
+        },
+        {
+          "x": 256,
+          "y": 64
+        },
+        {
+          "x": 192,
+          "y": 64
+        }
+      ],
+      "sourceSize": {
+        "w": 256,
+        "h": 64
+      }
+    }
+  },
+  "meta": {
+    "app": "LayoutManager",
+    "image": "See matching .png file",
+    "size": {
+      "w": 256,
+      "h": 64
+    },
+    "scale": "1"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "sentinel-lion",
+  "name": "Sentinel Cub",
+  "character": "CaveLion",
+  "dialogue": [
+    "*a tamed cave lion regards you calmly*",
+    "*it nuzzles your hand, then returns to its watch*"
+  ],
+  "moodEmotes": [
+    "emote12"
+  ]
+}

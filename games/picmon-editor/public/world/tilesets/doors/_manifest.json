@@ -1,0 +1,16 @@
+{
+  "doors": [
+    "Cave_Boards.png",
+    "Cave_BossDoor.png",
+    "Cave_Boulder.png",
+    "Cave_Opening.png",
+    "Desert_Boards.png",
+    "Desert_BossDoor.png",
+    "Desert_Boulder.png",
+    "Desert_Opening.png",
+    "Stone_Boards.png",
+    "Stone_BossDoor.png",
+    "Stone_Boulder.png",
+    "Stone_Opening.png"
+  ]
+}

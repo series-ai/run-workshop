@@ -1,0 +1,304 @@
+{
+  "guide": {
+    "coordinateSystem": "Origin is top-left. X increases rightward. Y increases downward. Standard screen/canvas coordinates.",
+    "frame": "Clip rect on the sprite sheet PNG: {x, y, w, h}. Use these coordinates to cut this sprite from the matching .png file.",
+    "corners": "The 4 corner positions of the sprite after rotation is applied. Order: top-left, top-right, bottom-right, bottom-left. Use these if you want to avoid rotation math.",
+    "sourceSize": "Original dimensions of the source image before any scaling. Metadata only — not needed for rendering.",
+    "rotation": "Rotation in degrees. Pivot point is the center of the frame rect.",
+    "parent": "Sprite name of this element's parent in the rig hierarchy.",
+    "children": "Array of sprite names that are children of this element.",
+    "offset": "Delta from the sprite's sheet position (frame) to its equipped/dressed position. Apply as: dressedX = frame.x + offset.dx, dressedY = frame.y + offset.dy, etc. The dressed position may be outside the canvas — that is expected.",
+    "layerOrder": "\"above\" = render this child on top of the parent. \"below\" = render behind the parent.",
+    "replacesParent": "When true, this child is a visual replacement for the parent. When this child is active, hide the parent but still render other children as normal."
+  },
+  "frames": {
+    "Explodion01": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 40
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 40,
+          "y": 0
+        },
+        {
+          "x": 40,
+          "y": 40
+        },
+        {
+          "x": 0,
+          "y": 40
+        }
+      ],
+      "sourceSize": {
+        "w": 360,
+        "h": 40
+      }
+    },
+    "Explodion02": {
+      "frame": {
+        "x": 40,
+        "y": 0,
+        "w": 40,
+        "h": 40
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 40,
+          "y": 0
+        },
+        {
+          "x": 80,
+          "y": 0
+        },
+        {
+          "x": 80,
+          "y": 40
+        },
+        {
+          "x": 40,
+          "y": 40
+        }
+      ],
+      "sourceSize": {
+        "w": 360,
+        "h": 40
+      }
+    },
+    "Explodion03": {
+      "frame": {
+        "x": 80,
+        "y": 0,
+        "w": 40,
+        "h": 40
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 80,
+          "y": 0
+        },
+        {
+          "x": 120,
+          "y": 0
+        },
+        {
+          "x": 120,
+          "y": 40
+        },
+        {
+          "x": 80,
+          "y": 40
+        }
+      ],
+      "sourceSize": {
+        "w": 360,
+        "h": 40
+      }
+    },
+    "Explodion04": {
+      "frame": {
+        "x": 120,
+        "y": 0,
+        "w": 40,
+        "h": 40
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 120,
+          "y": 0
+        },
+        {
+          "x": 160,
+          "y": 0
+        },
+        {
+          "x": 160,
+          "y": 40
+        },
+        {
+          "x": 120,
+          "y": 40
+        }
+      ],
+      "sourceSize": {
+        "w": 360,
+        "h": 40
+      }
+    },
+    "Explodion05": {
+      "frame": {
+        "x": 160,
+        "y": 0,
+        "w": 40,
+        "h": 40
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 160,
+          "y": 0
+        },
+        {
+          "x": 200,
+          "y": 0
+        },
+        {
+          "x": 200,
+          "y": 40
+        },
+        {
+          "x": 160,
+          "y": 40
+        }
+      ],
+      "sourceSize": {
+        "w": 360,
+        "h": 40
+      }
+    },
+    "Explodion06": {
+      "frame": {
+        "x": 200,
+        "y": 0,
+        "w": 40,
+        "h": 40
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 200,
+          "y": 0
+        },
+        {
+          "x": 240,
+          "y": 0
+        },
+        {
+          "x": 240,
+          "y": 40
+        },
+        {
+          "x": 200,
+          "y": 40
+        }
+      ],
+      "sourceSize": {
+        "w": 360,
+        "h": 40
+      }
+    },
+    "Explodion07": {
+      "frame": {
+        "x": 240,
+        "y": 0,
+        "w": 40,
+        "h": 40
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 240,
+          "y": 0
+        },
+        {
+          "x": 280,
+          "y": 0
+        },
+        {
+          "x": 280,
+          "y": 40
+        },
+        {
+          "x": 240,
+          "y": 40
+        }
+      ],
+      "sourceSize": {
+        "w": 360,
+        "h": 40
+      }
+    },
+    "Explodion08": {
+      "frame": {
+        "x": 280,
+        "y": 0,
+        "w": 40,
+        "h": 40
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 280,
+          "y": 0
+        },
+        {
+          "x": 320,
+          "y": 0
+        },
+        {
+          "x": 320,
+          "y": 40
+        },
+        {
+          "x": 280,
+          "y": 40
+        }
+      ],
+      "sourceSize": {
+        "w": 360,
+        "h": 40
+      }
+    },
+    "Explodion09": {
+      "frame": {
+        "x": 320,
+        "y": 0,
+        "w": 40,
+        "h": 40
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 320,
+          "y": 0
+        },
+        {
+          "x": 360,
+          "y": 0
+        },
+        {
+          "x": 360,
+          "y": 40
+        },
+        {
+          "x": 320,
+          "y": 40
+        }
+      ],
+      "sourceSize": {
+        "w": 360,
+        "h": 40
+      }
+    }
+  },
+  "meta": {
+    "app": "LayoutManager",
+    "image": "See matching .png file",
+    "size": {
+      "w": 360,
+      "h": 40
+    },
+    "scale": "1"
+  }
+}

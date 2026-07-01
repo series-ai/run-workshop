@@ -1,0 +1,17 @@
+{
+  "id": "trainer-mqzuicht",
+  "name": "Ranger Dax",
+  "character": "Hunter",
+  "homeMapId": "Forest2",
+  "dialogue": [
+    "These woods are crawling with wild Picmon. A perfect hunting ground for a sharp-eyed trainer."
+  ],
+  "postDefeatDialogue": [
+    "Hah! You've got a hunter's instincts yourself. Well played."
+  ],
+  "trainerParty": [
+    { "element": "nature", "rarity": "uncommon", "level": 10, "environment": "forest" },
+    { "element": "venom", "rarity": "uncommon", "level": 11, "environment": "forest" }
+  ],
+  "trainerReward": 180
+}

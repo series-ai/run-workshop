@@ -1,0 +1,16 @@
+{
+  "id": "igloo2",
+  "spawns": {
+    "default": { "tileX": 4, "tileY": 5 }
+  },
+  "placements": [],
+  "animals": [
+    { "type": "CatCyclop", "tileX": 2, "tileY": 2, "wanderTiles": 3 },
+    { "type": "CatBlack", "sheet": "SpriteSheetYellow", "tileX": 3, "tileY": 2, "wanderTiles": 3 },
+    { "type": "CatBlack", "tileX": 4, "tileY": 2, "wanderTiles": 3 },
+    { "type": "CatWhite", "tileX": 1, "tileY": 3, "wanderTiles": 3 },
+    { "type": "CatWhite", "sheet": "SpriteSheetGray", "tileX": 6, "tileY": 2, "wanderTiles": 3 },
+    { "type": "CatOrange", "tileX": 5, "tileY": 2, "wanderTiles": 3 }
+  ],
+  "battleBgFrame": "snowtown"
+}

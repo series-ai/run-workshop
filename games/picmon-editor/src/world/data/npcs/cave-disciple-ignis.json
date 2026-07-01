@@ -1,0 +1,41 @@
+{
+  "id": "cave-disciple-ignis",
+  "name": "Ignis the Magmasmith",
+  "character": "NinjaFire",
+  "stationary": true,
+  "dialogue": [
+    "Ignis. Last of the Master's three.",
+    "Stone holds. Crystal sees. Fire MOVES. Hesitate down here and the magma takes you.",
+    "Don't hesitate."
+  ],
+  "preBattleLine": "Ignis's hands ignite. The cave walls glow red.",
+  "postDefeatDialogue": [
+    "Ignis cools the room with a wave of his hand.",
+    "\"You're ready. Master Vorgath’s waiting at the back of the chamber.\""
+  ],
+  "trainerParty": [
+    {
+      "element": "fire",
+      "rarity": "rare",
+      "level": 32,
+      "environment": "cave"
+    },
+    {
+      "element": "lava",
+      "rarity": "rare",
+      "level": 34,
+      "environment": "cave"
+    },
+    {
+      "element": "ember",
+      "rarity": "epic",
+      "level": 36,
+      "environment": "cave"
+    }
+  ],
+  "trainerReward": 700,
+  "homeMapId": "cave1",
+  "moodEmotes": [
+    "emote4"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "greg",
+  "name": "greg",
+  "character": "GladiatorBlue",
+  "stationary": true,
+  "dialogue": [
+    "You hungry?"
+  ],
+  "moodEmotes": [
+    "emote8"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "desert_dojo",
+  "spawns": {
+    "default": { "tileX": 7, "tileY": 9 }
+  },
+  "placements": [
+    { "npcId": "tomb-guardian-sovereign", "tileX": 7,  "tileY": 3  },
+    { "npcId": "pharaoh-vizier-nephren",  "tileX": 3,  "tileY": 4  },
+    { "npcId": "pharaoh-anpu",            "tileX": 6,  "tileY": 4  },
+    { "npcId": "pharaoh-setem",           "tileX": 10, "tileY": 4  },
+    { "npcId": "pharaoh-mehet",           "tileX": 4,  "tileY": 11 },
+    { "npcId": "pharaoh-sphinx",          "tileX": 10, "tileY": 11 }
+  ]
+}

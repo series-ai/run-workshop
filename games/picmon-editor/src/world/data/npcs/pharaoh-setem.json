@@ -1,0 +1,35 @@
+{
+  "id": "pharaoh-setem",
+  "name": "Setem the Sun-Smith",
+  "character": "KnightGold",
+  "stationary": true,
+  "dialogue": [
+    "Every sword in the Pharaoh's tomb came out of my forge. Every one.",
+    "I shaped weapons for the army that took the desert from the old gods. The desert remembers my hammer.",
+    "The sun is my anvil. You are the iron.",
+    "Let us see what you fold into."
+  ],
+  "preBattleLine": "Setem cracks his knuckles. The ground around his boots glows molten.",
+  "postDefeatDialogue": [
+    "Setem laughs, deep and rolling.",
+    "\"Folded a thousand times and never broke. The sun would forge a king of you.\"",
+    "He hands you a still-warm ember. \"Show this to the smith in any city. They will know my mark.\""
+  ],
+  "trainerParty": [
+    { "element": "fire",    "rarity": "epic",      "level": 44, "environment": "desert" },
+    { "element": "furnace", "rarity": "epic",      "level": 44, "environment": "desert" },
+    { "specId": "cinderjack_imp",     "element": "ember",  "rarity": "epic",      "level": 44 },
+    { "specId": "emberbloom_golem",   "element": "lava",   "rarity": "legendary", "level": 45 },
+    { "element": "thunder", "rarity": "legendary", "level": 45, "environment": "desert" },
+    { "specId": "cinder_crown_titan", "element": "lava",   "rarity": "mythic",    "level": 46 }
+  ],
+  "trainerReward": 2500,
+  "homeMapId": "desert_dojo",
+  "requiredTrainerDefeats": [
+    "tomb-guardian-sovereign"
+  ],
+  "prereqBlockedMessage": "Setem's forge is cold. \"No iron until the Pharaoh has set his seal on you.\"",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

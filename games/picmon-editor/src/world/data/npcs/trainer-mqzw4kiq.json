@@ -1,0 +1,18 @@
+{
+  "id": "trainer-mqzw4kiq",
+  "name": "Crimson Kael",
+  "character": "NinjaRed",
+  "homeMapId": "OrangeRoute",
+  "dialogue": [
+    "The strong climb north to the capital. The rest stay here and train. Which are you?"
+  ],
+  "postDefeatDialogue": [
+    "...The capital it is, then. For you, anyway."
+  ],
+  "trainerParty": [
+    { "element": "venom", "rarity": "rare", "level": 24, "environment": "forest" },
+    { "element": "spirit", "rarity": "rare", "level": 24, "environment": "forest" },
+    { "element": "nature", "rarity": "rare", "level": 23, "environment": "forest" }
+  ],
+  "trainerReward": 540
+}

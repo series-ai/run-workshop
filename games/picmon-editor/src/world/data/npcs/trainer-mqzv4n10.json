@@ -1,0 +1,27 @@
+{
+  "id": "trainer-mqzv4n10",
+  "name": "trainer",
+  "character": "SamuraiBlue",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "These tunnels toughen a trainer. Let's see if you've got the grit."
+  ],
+  "postDefeatDialogue": [
+    "Solid. The cave's made you sharp, I'll give you that."
+  ],
+  "trainerParty": [
+    {
+      "element": "obsidian",
+      "rarity": "uncommon",
+      "level": 21,
+      "environment": "cave"
+    },
+    {
+      "element": "stone",
+      "rarity": "rare",
+      "level": 21,
+      "environment": "cave"
+    }
+  ],
+  "trainerReward": 350
+}

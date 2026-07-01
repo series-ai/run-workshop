@@ -1,0 +1,12 @@
+{
+  "id": "interior_tinyhome",
+  "spawns": {
+    "default": { "tileX": 9, "tileY": 7 }
+  },
+  "placements": [
+    { "npcId": "leo", "tileX": 7, "tileY": 5 }
+  ],
+  "animals": [
+    { "type": "Dog2", "tileX": 10, "tileY": 7, "wanderTiles": 4 }
+  ]
+}

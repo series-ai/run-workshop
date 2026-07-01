@@ -1,0 +1,273 @@
+{
+  "guide": {
+    "coordinateSystem": "Origin is top-left. X increases rightward. Y increases downward. Standard screen/canvas coordinates.",
+    "frame": "Clip rect on the sprite sheet PNG: {x, y, w, h}. Use these coordinates to cut this sprite from the matching .png file.",
+    "corners": "The 4 corner positions of the sprite after rotation is applied. Order: top-left, top-right, bottom-right, bottom-left. Use these if you want to avoid rotation math.",
+    "sourceSize": "Original dimensions of the source image before any scaling. Metadata only — not needed for rendering.",
+    "rotation": "Rotation in degrees. Pivot point is the center of the frame rect.",
+    "parent": "Sprite name of this element's parent in the rig hierarchy.",
+    "children": "Array of sprite names that are children of this element.",
+    "offset": "Delta from the sprite's sheet position (frame) to its equipped/dressed position. Apply as: dressedX = frame.x + offset.dx, dressedY = frame.y + offset.dy, etc. The dressed position may be outside the canvas — that is expected.",
+    "layerOrder": "\"above\" = render this child on top of the parent. \"below\" = render behind the parent.",
+    "replacesParent": "When true, this child is a visual replacement for the parent. When this child is active, hide the parent but still render other children as normal."
+  },
+  "frames": {
+    "Flam01": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 25,
+        "h": 30
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 25,
+          "y": 0
+        },
+        {
+          "x": 25,
+          "y": 30
+        },
+        {
+          "x": 0,
+          "y": 30
+        }
+      ],
+      "sourceSize": {
+        "w": 200,
+        "h": 30
+      }
+    },
+    "Flam02": {
+      "frame": {
+        "x": 25,
+        "y": 0,
+        "w": 25,
+        "h": 30
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 25,
+          "y": 0
+        },
+        {
+          "x": 50,
+          "y": 0
+        },
+        {
+          "x": 50,
+          "y": 30
+        },
+        {
+          "x": 25,
+          "y": 30
+        }
+      ],
+      "sourceSize": {
+        "w": 200,
+        "h": 30
+      }
+    },
+    "Flam03": {
+      "frame": {
+        "x": 50,
+        "y": 0,
+        "w": 25,
+        "h": 30
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 50,
+          "y": 0
+        },
+        {
+          "x": 75,
+          "y": 0
+        },
+        {
+          "x": 75,
+          "y": 30
+        },
+        {
+          "x": 50,
+          "y": 30
+        }
+      ],
+      "sourceSize": {
+        "w": 200,
+        "h": 30
+      }
+    },
+    "Flam04": {
+      "frame": {
+        "x": 75,
+        "y": 0,
+        "w": 25,
+        "h": 30
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 75,
+          "y": 0
+        },
+        {
+          "x": 100,
+          "y": 0
+        },
+        {
+          "x": 100,
+          "y": 30
+        },
+        {
+          "x": 75,
+          "y": 30
+        }
+      ],
+      "sourceSize": {
+        "w": 200,
+        "h": 30
+      }
+    },
+    "Flam05": {
+      "frame": {
+        "x": 100,
+        "y": 0,
+        "w": 25,
+        "h": 30
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 100,
+          "y": 0
+        },
+        {
+          "x": 125,
+          "y": 0
+        },
+        {
+          "x": 125,
+          "y": 30
+        },
+        {
+          "x": 100,
+          "y": 30
+        }
+      ],
+      "sourceSize": {
+        "w": 200,
+        "h": 30
+      }
+    },
+    "Flam06": {
+      "frame": {
+        "x": 125,
+        "y": 0,
+        "w": 25,
+        "h": 30
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 125,
+          "y": 0
+        },
+        {
+          "x": 150,
+          "y": 0
+        },
+        {
+          "x": 150,
+          "y": 30
+        },
+        {
+          "x": 125,
+          "y": 30
+        }
+      ],
+      "sourceSize": {
+        "w": 200,
+        "h": 30
+      }
+    },
+    "Flam07": {
+      "frame": {
+        "x": 150,
+        "y": 0,
+        "w": 25,
+        "h": 30
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 150,
+          "y": 0
+        },
+        {
+          "x": 175,
+          "y": 0
+        },
+        {
+          "x": 175,
+          "y": 30
+        },
+        {
+          "x": 150,
+          "y": 30
+        }
+      ],
+      "sourceSize": {
+        "w": 200,
+        "h": 30
+      }
+    },
+    "Flam08": {
+      "frame": {
+        "x": 175,
+        "y": 0,
+        "w": 25,
+        "h": 30
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 175,
+          "y": 0
+        },
+        {
+          "x": 200,
+          "y": 0
+        },
+        {
+          "x": 200,
+          "y": 30
+        },
+        {
+          "x": 175,
+          "y": 30
+        }
+      ],
+      "sourceSize": {
+        "w": 200,
+        "h": 30
+      }
+    }
+  },
+  "meta": {
+    "app": "LayoutManager",
+    "image": "See matching .png file",
+    "size": {
+      "w": 200,
+      "h": 30
+    },
+    "scale": "1"
+  }
+}

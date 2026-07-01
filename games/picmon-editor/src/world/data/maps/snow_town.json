@@ -1,0 +1,30 @@
+{
+  "id": "snow_town",
+  "spawns": {
+    "default": { "tileX": 33, "tileY": 24 }
+  },
+  "levelOriginTile": { "tileX": 83, "tileY": 42 },
+  "placements": [
+    { "npcId": "gen-snow-1", "tileX": 33, "tileY": 34 },
+    { "npcId": "gen-snow-2", "tileX": 47, "tileY": 15 },
+    { "npcId": "gen-snow-3", "tileX": 44, "tileY": 28 },
+    { "npcId": "gen-snow-4", "tileX": 25, "tileY": 60 },
+    { "npcId": "gen-snow-5", "tileX": 26, "tileY": 14 },
+    { "npcId": "gen-snow-6", "tileX": 60, "tileY": 61 },
+    { "npcId": "gen-snow-7", "tileX": 16, "tileY": 44 },
+    { "npcId": "healer", "tileX": 36, "tileY": 25 },
+    { "npcId": "rival-3", "tileX": 40, "tileY": 28 },
+    { "npcId": "lively-dragon", "tileX": 60, "tileY": 26 }
+  ],
+  "grassPatchLevels": {
+    "75,14": { "min": 50, "max": 99 },
+    "76,30": { "min": 50, "max": 99 },
+    "87,21": { "min": 50, "max": 99 }
+  },
+  "grassPatchXpMultipliers": {
+    "75,14": 3,
+    "76,30": 3,
+    "87,21": 3
+  },
+  "battleBgFrame": "snowtown"
+}

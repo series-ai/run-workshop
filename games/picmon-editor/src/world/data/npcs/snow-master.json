@@ -1,0 +1,55 @@
+{
+  "id": "snow-master",
+  "name": "Master Aurora the Frost-Veiled",
+  "character": "Inuit",
+  "stationary": true,
+  "dialogue": [
+    "So. Brisa, Glacien, and Tindra all stepped aside.",
+    "Few do. Most freeze long before they reach this hall — the cold here remembers every winter the world has known.",
+    "I founded the Frost Veil after the long thaw, when even the snow was forgetting itself.",
+    "Show me what you carried through the storm. Don't waste my breath."
+  ],
+  "preBattleLine": "Aurora rises. The dojo lanterns dim. Frost flowers bloom across every wooden beam.",
+  "postDefeatDialogue": [
+    "Aurora bows once, the lanterns flaring back to gold.",
+    "\"You walk through the Veil now. The mountain knows your name.\"",
+    "She sets her hand on your shoulder. The cold withdraws."
+  ],
+  "trainerParty": [
+    {
+      "element": "ice",
+      "rarity": "epic",
+      "level": 60,
+      "environment": "snow"
+    },
+    {
+      "element": "water",
+      "rarity": "legendary",
+      "level": 62,
+      "environment": "snow"
+    },
+    {
+      "element": "wind",
+      "rarity": "legendary",
+      "level": 63,
+      "environment": "snow"
+    },
+    {
+      "element": "storm",
+      "rarity": "mythic",
+      "level": 64,
+      "environment": "snow"
+    },
+    {
+      "element": "spirit",
+      "rarity": "mythic",
+      "level": 65,
+      "environment": "snow"
+    }
+  ],
+  "trainerReward": 5000,
+  "homeMapId": "snow_town",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

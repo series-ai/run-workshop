@@ -1,0 +1,9 @@
+{
+  "id": "interior_shop4",
+  "spawns": {
+    "default": { "tileX": 6, "tileY": 5 }
+  },
+  "placements": [
+    { "npcId": "paul-mqzs9bj4", "tileX": 6, "tileY": 2 }
+  ]
+}

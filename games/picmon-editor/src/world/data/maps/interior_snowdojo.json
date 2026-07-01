@@ -1,0 +1,13 @@
+{
+  "id": "interior_snowdojo",
+  "spawns": {
+    "default": { "tileX": 17, "tileY": 14 }
+  },
+  "placements": [
+    { "npcId": "snow-disciple-brisa", "tileX": 15, "tileY": 13 },
+    { "npcId": "snow-disciple-glacien", "tileX": 18, "tileY": 10 },
+    { "npcId": "snow-disciple-tindra", "tileX": 21, "tileY": 13 },
+    { "npcId": "snow-master", "tileX": 17, "tileY": 6 }
+  ],
+  "battleBgFrame": "snowtown"
+}

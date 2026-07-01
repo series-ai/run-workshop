@@ -1,0 +1,27 @@
+{
+  "id": "cave2",
+  "spawns": {
+    "default": { "tileX": 43, "tileY": 5 }
+  },
+  "placements": [
+    { "npcId": "bandit-mqzv117h", "tileX": 52, "tileY": 32 },
+    { "npcId": "cave-fishermen-mqzv1d8p", "tileX": 43, "tileY": 30 },
+    { "npcId": "cave-explorer-mqzv1uu0", "tileX": 8, "tileY": 5 },
+    { "npcId": "sadam-husain-mqzv2flp", "tileX": 26, "tileY": 18 },
+    { "npcId": "trainer-mqzv48s0", "tileX": 16, "tileY": 22 },
+    { "npcId": "trainer-mqzv4dpk", "tileX": 38, "tileY": 11 },
+    { "npcId": "trainer-mqzv4jdx", "tileX": 32, "tileY": 5 },
+    { "npcId": "trainer-mqzv4n10", "tileX": 28, "tileY": 33 },
+    { "npcId": "trainer-mqzv4t5f", "tileX": 44, "tileY": 18 },
+    { "npcId": "trainer-mqzv4yai", "tileX": 61, "tileY": 14 },
+    { "npcId": "trainer-mqzv535p", "tileX": 67, "tileY": 5 },
+    { "npcId": "trainer-mqzv58ps", "tileX": 67, "tileY": 25 },
+    { "npcId": "trainer-mqzv5g0h", "tileX": 54, "tileY": 31 },
+    { "npcId": "trainer-mqzv5ms1", "tileX": 5, "tileY": 27 },
+    { "npcId": "trainer-mqzv5th2", "tileX": 6, "tileY": 10 },
+    { "npcId": "alien-mqzv6n8p", "tileX": 28, "tileY": 19 }
+  ],
+  "animals": [
+    { "type": "DogYellow", "tileX": 50, "tileY": 34, "wanderTiles": 7 }
+  ]
+}

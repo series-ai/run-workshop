@@ -1,0 +1,30 @@
+{
+  "id": "tomb-guardian-wisdom",
+  "name": "Seshat the Silent-Eyed",
+  "character": "Shaman",
+  "stationary": true,
+  "dialogue": [
+    "Few who reach this hall remember why they came.",
+    "The sun erases names. The wind unmakes the path. Only the careful arrive.",
+    "This is the Trial of Wisdom. I will not crush you. I will let you crush yourself.",
+    "Watch your choices, trainer. The mirror watches with me."
+  ],
+  "preBattleLine": "Seshat closes her eyes. Her party already knows your weaknesses.",
+  "postDefeatDialogue": [
+    "Seshat opens her eyes one at a time. They are not the eyes she started with.",
+    "\"You read the wind. The Pharaoh writes your name in it.\"",
+    "She bows once. The sandstorm in the corner of the room settles to a whisper."
+  ],
+  "trainerParty": [
+    { "element": "spirit", "rarity": "epic",      "level": 34, "environment": "desert" },
+    { "element": "mirror", "rarity": "epic",      "level": 34, "environment": "desert" },
+    { "element": "mist",   "rarity": "epic",      "level": 35, "environment": "desert" },
+    { "element": "shadow", "rarity": "legendary", "level": 35, "environment": "desert" },
+    { "element": "venom",  "rarity": "legendary", "level": 36, "environment": "desert" }
+  ],
+  "trainerReward": 900,
+  "homeMapId": "desert_city",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

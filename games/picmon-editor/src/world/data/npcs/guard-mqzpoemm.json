@@ -1,0 +1,11 @@
+{
+  "id": "guard-mqzpoemm",
+  "name": "guard",
+  "character": "Knight",
+  "stationary": true,
+  "faceDirection": "down",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "Eyes open, blade ready. A guard's work is never done."
+  ]
+}

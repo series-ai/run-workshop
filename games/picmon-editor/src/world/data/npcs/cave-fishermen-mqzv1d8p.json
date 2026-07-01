@@ -1,0 +1,15 @@
+{
+  "id": "cave-fishermen-mqzv1d8p",
+  "name": "cave fishermen",
+  "character": "NinjaBlue2",
+  "stationary": true,
+  "faceDirection": "down",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "Quiet now — the blind cave fish bite best in the dark.",
+    "You'd be surprised what swims in these underground pools. Hooked a Picmon down here once, I swear it."
+  ],
+  "moodEmotes": [
+    "emote6"
+  ]
+}

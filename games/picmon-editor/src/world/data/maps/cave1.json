@@ -1,0 +1,43 @@
+{
+  "id": "cave1",
+  "spawns": {
+    "default": { "tileX": 31, "tileY": 37 }
+  },
+  "levelOriginTile": { "tileX": 27, "tileY": 37 },
+  "placements": [
+    { "npcId": "healer", "tileX": 25, "tileY": 34 },
+    { "npcId": "ironbeck", "tileX": 18, "tileY": 28 },
+    { "npcId": "ironmacey", "tileX": 9, "tileY": 16 },
+    { "npcId": "snowpro", "tileX": 28, "tileY": 9 },
+    { "npcId": "snowflo", "tileX": 26, "tileY": 9 },
+    { "npcId": "firefrank", "tileX": 39, "tileY": 21 },
+    { "npcId": "cave-dojo-sign", "tileX": 15, "tileY": 6 }
+  ],
+  "animals": [
+    { "type": "Cat", "tileX": 58, "tileY": 42, "wanderTiles": 9 },
+    { "type": "Dog", "tileX": 18, "tileY": 38, "wanderTiles": 3 },
+    { "type": "Racoon", "tileX": 25, "tileY": 21, "wanderTiles": 3 },
+    { "type": "Chicken", "sheet": "SpriteSheetBlack", "tileX": 73, "tileY": 25, "wanderTiles": 3 },
+    { "type": "Chicken", "sheet": "SpriteSheetBrown", "tileX": 75, "tileY": 26, "wanderTiles": 3 },
+    { "type": "Frog", "tileX": 13, "tileY": 57, "wanderTiles": 3 },
+    { "type": "Parrot", "sheet": "SpriteSheetBlue", "tileX": 37, "tileY": 71, "wanderTiles": 3 },
+    { "type": "Dog2", "tileX": 49, "tileY": 78, "wanderTiles": 3 }
+  ],
+  "battleBgFrame": "cave",
+  "grassPatchBackgrounds": {
+    "89,69": "fencepath",
+    "72,71": "fencepath",
+    "79,73": "fencepath",
+    "83,76": "fencepath",
+    "98,75": "fencepath",
+    "95,78": "fencepath",
+    "72,80": "fencepath",
+    "83,84": "fencepath",
+    "88,83": "fencepath",
+    "28,79": "villageruin",
+    "54,68": "villageruin",
+    "76,19": "town",
+    "68,44": "town",
+    "85,49": "town"
+  }
+}

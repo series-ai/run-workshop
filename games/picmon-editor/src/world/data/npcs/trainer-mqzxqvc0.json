@@ -1,0 +1,18 @@
+{
+  "id": "trainer-mqzxqvc0",
+  "name": "Lady Seraphine",
+  "character": "Princess",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "Do not mistake silk for softness. My Picmon are as sharp as any blade in this city."
+  ],
+  "postDefeatDialogue": [
+    "Hmph. Well fought. You have more steel in you than most courtiers."
+  ],
+  "trainerParty": [
+    { "element": "light", "rarity": "rare", "level": 34 },
+    { "element": "spirit", "rarity": "superior", "level": 34 },
+    { "element": "mirror", "rarity": "rare", "level": 35 }
+  ],
+  "trainerReward": 1000
+}

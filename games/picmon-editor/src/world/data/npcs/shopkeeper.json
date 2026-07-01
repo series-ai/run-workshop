@@ -1,0 +1,11 @@
+{
+  "id": "shopkeeper",
+  "name": "Shopkeeper",
+  "character": "Inspector",
+  "stationary": true,
+  "dialogue": [
+    "Welcome to the shop!",
+    "We're still getting our stock together.",
+    "Check back soon — great items are on the way!"
+  ]
+}

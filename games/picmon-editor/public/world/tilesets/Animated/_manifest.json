@@ -1,0 +1,94 @@
+{
+  "objects": [
+    {
+      "image": "Animated/Flag/FlagBlack16x16.png",
+      "frameW": 16,
+      "frameH": 16
+    },
+    {
+      "image": "Animated/Flag/FlagBlue16x16.png",
+      "frameW": 16,
+      "frameH": 16
+    },
+    {
+      "image": "Animated/Flag/FlagBrown16x16.png",
+      "frameW": 16,
+      "frameH": 16
+    },
+    {
+      "image": "Animated/Flag/FlagGray16x16.png",
+      "frameW": 16,
+      "frameH": 16
+    },
+    {
+      "image": "Animated/Flag/FlagGreen16x16.png",
+      "frameW": 16,
+      "frameH": 16
+    },
+    {
+      "image": "Animated/Flag/FlagRed16x16.png",
+      "frameW": 16,
+      "frameH": 16
+    },
+    {
+      "image": "Animated/Flag/FlagWhite16x16.png",
+      "frameW": 16,
+      "frameH": 16
+    },
+    {
+      "image": "Animated/Flag/FlagYellow16x16.png",
+      "frameW": 16,
+      "frameH": 16
+    },
+    {
+      "image": "Animated/Flower/flower.png",
+      "frameW": 10,
+      "frameH": 8
+    },
+    {
+      "image": "Animated/Plant/plant.png",
+      "frameW": 16,
+      "frameH": 16
+    },
+    {
+      "image": "Animated/QuickSand/quicksand.png",
+      "frameW": 32,
+      "frameH": 32
+    },
+    {
+      "image": "Animated/waterfall/BottomSheet16x16.png",
+      "frameW": 16,
+      "frameH": 16
+    },
+    {
+      "image": "Animated/waterfall/MiddleSheet16x16.png",
+      "frameW": 16,
+      "frameH": 16
+    },
+    {
+      "image": "Animated/waterfall/TopSheet16x16.png",
+      "frameW": 16,
+      "frameH": 16
+    },
+    {
+      "image": "Animated/waterripples/waterripples1.png",
+      "frameW": 16,
+      "frameH": 16
+    },
+    {
+      "image": "Animated/waterripples/waterripples2.png",
+      "frameW": 16,
+      "frameH": 16
+    },
+    {
+      "image": "Animated/Windmill/windmill1.png",
+      "frameW": 64,
+      "frameH": 64
+    },
+    {
+      "image": "Animated/Windmill/windmill2.png",
+      "frameW": 64,
+      "frameH": 64
+    }
+  ]
+}

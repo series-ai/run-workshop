@@ -1,0 +1,18 @@
+{
+  "id": "trainer-mqzxqcaq",
+  "name": "Dame Aurelia",
+  "character": "KnightGold",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "I am sworn to the capital's defense. Show me you're no threat to these streets."
+  ],
+  "postDefeatDialogue": [
+    "A worthy heart. The capital is safer with travelers like you in it."
+  ],
+  "trainerParty": [
+    { "element": "light", "rarity": "rare", "level": 30 },
+    { "element": "steel", "rarity": "rare", "level": 30 },
+    { "element": "crystal", "rarity": "superior", "level": 31 }
+  ],
+  "trainerReward": 850
+}

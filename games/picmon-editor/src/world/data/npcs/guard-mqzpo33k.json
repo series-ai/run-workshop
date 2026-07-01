@@ -1,0 +1,11 @@
+{
+  "id": "guard-mqzpo33k",
+  "name": "guard",
+  "character": "Knight",
+  "stationary": true,
+  "faceDirection": "down",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "No trouble in the capital today. Let's keep it that way, citizen."
+  ]
+}

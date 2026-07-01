@@ -1,0 +1,11 @@
+{
+  "id": "guard-mqzpnr24",
+  "name": "guard",
+  "character": "Knight",
+  "stationary": true,
+  "faceDirection": "down",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "Halt. ...Ah, just a traveler. Carry on, then."
+  ]
+}

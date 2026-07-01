@@ -1,0 +1,12 @@
+{
+  "id": "league-herald",
+  "name": "Coach Marek",
+  "character": "NinjaRed",
+  "kind": "pvp",
+  "stationary": true,
+  "dialogue": [
+    "Here to test your team against other trainers?",
+    "Bronze through Champion leagues are open — pick your level.",
+    "Winning earns Fusion Shards and Statue Fragments."
+  ]
+}

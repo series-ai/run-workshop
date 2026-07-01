@@ -1,0 +1,26 @@
+{
+  "id": "snowpro",
+  "name": "Snowpro",
+  "character": "Inuit",
+  "dialogue": [
+    "Snowflo is my apprentice. I am the seal.",
+    "Beyond me lies a town that has not seen a stranger in a generation.",
+    "Earn it, or turn around."
+  ],
+  "preBattleLine": "Snowpro raises a hand. The ice arch behind him groans.",
+  "trainerParty": [
+    { "element": "ice", "rarity": "rare", "level": 24 },
+    { "element": "water", "rarity": "superior", "level": 25 },
+    { "element": "ice", "rarity": "superior", "level": 26 },
+    { "element": "ice", "rarity": "superior", "level": 27 }
+  ],
+  "trainerReward": 600,
+  "moodEmotes": [
+    "emote7"
+  ],
+  "postDefeatDialogue": [
+    "The arch is yours.",
+    "Snow Town has been waiting. Walk through.",
+    "And try not to freeze."
+  ]
+}

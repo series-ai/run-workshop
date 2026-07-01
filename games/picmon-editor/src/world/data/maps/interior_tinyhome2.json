@@ -1,0 +1,9 @@
+{
+  "id": "interior_tinyhome2",
+  "spawns": {
+    "default": { "tileX": 9, "tileY": 6 }
+  },
+  "placements": [
+    { "npcId": "bookworm", "tileX": 12, "tileY": 8 }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": "tomb-guardian-strength",
+  "name": "Sekhmet-Ra the Lion-Forged",
+  "character": "GoldStatue",
+  "stationary": true,
+  "dialogue": [
+    "I am a hammer that did not weather.",
+    "The Trial of Strength is the simplest of the three. It is also the cruelest.",
+    "Hit me \u2014 or I will hit harder, longer, until the desert keeps you.",
+    "No riddles. Only thunder."
+  ],
+  "preBattleLine": "Sekhmet-Ra cracks his gilded knuckles. The room shudders.",
+  "postDefeatDialogue": [
+    "Sekhmet-Ra falls to one knee, gold flaking from his shoulders.",
+    "\"The hammer fell harder than the anvil. The Pharaoh has marked you.\"",
+    "He laughs once \u2014 a sound like a temple bell."
+  ],
+  "trainerParty": [
+    { "element": "fire",    "rarity": "epic",      "level": 36, "environment": "desert" },
+    { "element": "lava",    "rarity": "epic",      "level": 36, "environment": "desert" },
+    { "element": "thunder", "rarity": "epic",      "level": 37, "environment": "desert" },
+    { "element": "ash",     "rarity": "legendary", "level": 37, "environment": "desert" },
+    { "element": "ember",   "rarity": "legendary", "level": 38, "environment": "desert" }
+  ],
+  "trainerReward": 1000,
+  "homeMapId": "desert_city",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "id": "TreeHome",
+  "spawns": {
+    "default": { "tileX": 5, "tileY": 5 }
+  },
+  "placements": [
+    { "npcId": "mentor-mqzt1dvw", "tileX": 5, "tileY": 4 }
+  ]
+}

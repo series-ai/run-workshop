@@ -1,0 +1,22 @@
+{
+  "id": "fence-scout-mira",
+  "name": "Scout Mira",
+  "character": "CamouflageGreen",
+  "homeMapId": "villageruin",
+  "dialogue": [
+    "Past the fence, the wilds don\u2019t play fair.",
+    "I patrol this stretch so nothing slips through.",
+    "You look like you can handle it. Let\u2019s see."
+  ],
+  "preBattleLine": "Mira drops into a battle stance \u2014 her team is already moving!",
+  "trainerParty": [
+    { "element": "wind", "rarity": "rare", "level": 20 },
+    { "element": "nature", "rarity": "rare", "level": 21 },
+    { "element": "venom", "rarity": "epic", "level": 22 }
+  ],
+  "trainerReward": 400,
+  "postDefeatDialogue": [
+    "You\u2019re fast. The wilds will respect that.",
+    "Keep heading south \u2014 Ironjaw Kade holds the next stretch."
+  ]
+}

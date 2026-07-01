@@ -1,0 +1,10 @@
+{
+  "id": "pany-mq1w5sug",
+  "name": "Pany",
+  "character": "Hunter",
+  "stationary": true,
+  "homeMapId": "community_dojo",
+  "dialogue": [
+    "Anticipate and react; the mind is sharper than any blade"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "stan-mqzp45tl",
+  "name": "Stan",
+  "character": "GreenPig",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "Ah, a traveler! First time within the capital walls?",
+    "That palace crowning the hill is where the royal court holds audience. ",
+    "Commoners like us only get as far as the gates.",
+    "Still, there's no finer place to be. The markets, the banners, the music in the plaza...",
+    "Keep your Picmon close, though — the streets get rowdy once the morning markets open."
+  ]
+}

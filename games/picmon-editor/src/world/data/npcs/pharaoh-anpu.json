@@ -1,0 +1,35 @@
+{
+  "id": "pharaoh-anpu",
+  "name": "Anpu the Jackal-Forged",
+  "character": "CaveLion",
+  "stationary": true,
+  "dialogue": [
+    "I am the one who measures hearts.",
+    "Every trainer who survives the Pharaoh comes through me next. None pass on the first hour.",
+    "Your heart against the feather. Lighter wins. Heavier becomes sand.",
+    "Begin."
+  ],
+  "preBattleLine": "Anpu lowers the bronze scales. The needle trembles toward you.",
+  "postDefeatDialogue": [
+    "Anpu lifts the scales. The needle holds.",
+    "\"Lighter than the feather. Rare.\"",
+    "He presses a black scarab into your palm. \"Show this in the lower halls. They will not bar you.\""
+  ],
+  "trainerParty": [
+    { "element": "bone",   "rarity": "epic",      "level": 43, "environment": "desert" },
+    { "element": "shadow", "rarity": "epic",      "level": 43, "environment": "desert" },
+    { "element": "ash",    "rarity": "epic",      "level": 43, "environment": "desert" },
+    { "element": "void",   "rarity": "legendary", "level": 44, "environment": "desert" },
+    { "specId": "blizzard_wisp",  "element": "spirit", "rarity": "legendary", "level": 44 },
+    { "element": "bone",   "rarity": "mythic",    "level": 45, "environment": "pharaohs_cache" }
+  ],
+  "trainerReward": 2200,
+  "homeMapId": "desert_dojo",
+  "requiredTrainerDefeats": [
+    "tomb-guardian-sovereign"
+  ],
+  "prereqBlockedMessage": "Anpu's scales lie still. \"The Pharaoh has not weighed you yet. Return to him first.\"",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "id": "pharaoh-mehet",
+  "name": "Mehet the Mirror Queen",
+  "character": "Princess",
+  "stationary": true,
+  "dialogue": [
+    "Three turns from now you will swap your front mon. I have seen this already.",
+    "Six turns from now you will reach for a heal. I have seen this too.",
+    "I am Mehet, and I do not play the game in front of me. I play the game three turns ahead.",
+    "Show me a move I haven't already counted."
+  ],
+  "preBattleLine": "Mehet's mirror-shawl twists. A dozen of her stand at once, then five, then one.",
+  "postDefeatDialogue": [
+    "Every mirror shatters at once. Mehet is left in the middle, breathing hard.",
+    "\"You did something I didn't predict. That hasn't happened in two hundred years.\"",
+    "She presses a sliver of mirror into your hand. \"Keep it. So I never lose your move again.\""
+  ],
+  "trainerParty": [
+    { "specId": "prism_maw",  "element": "mirror",  "rarity": "epic",      "level": 45 },
+    { "element": "crystal", "rarity": "epic",      "level": 45, "environment": "desert" },
+    { "element": "mist",    "rarity": "legendary", "level": 46, "environment": "desert" },
+    { "element": "spirit",  "rarity": "legendary", "level": 46, "environment": "desert" },
+    { "specId": "prism_wyrm", "element": "neon",    "rarity": "mythic",    "level": 46 },
+    { "element": "mirror",  "rarity": "mythic",    "level": 47, "environment": "pharaohs_cache" }
+  ],
+  "trainerReward": 2800,
+  "homeMapId": "desert_dojo",
+  "requiredTrainerDefeats": [
+    "tomb-guardian-sovereign"
+  ],
+  "prereqBlockedMessage": "Mehet's mirrors stay dark. \"I have not seen your face in them yet. Return when the Pharaoh has shown me.\"",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

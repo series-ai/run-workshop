@@ -1,0 +1,30 @@
+{
+  "id": "tomb-guardian-endurance",
+  "name": "Khepri the Unworn",
+  "character": "Skeleton",
+  "stationary": true,
+  "dialogue": [
+    "The sand has buried me a thousand times. I have stood up a thousand times.",
+    "This is the Trial of Endurance. Not strength, not cleverness \u2014 the wearing of stone by the patient sea.",
+    "Last longer than I can. That is all I ask.",
+    "Begin."
+  ],
+  "preBattleLine": "Khepri's joints click into place. The sand around his feet doesn't move.",
+  "postDefeatDialogue": [
+    "Khepri kneels \u2014 not in defeat, but in recognition.",
+    "\"The hourglass turns. You outlasted the dune.\"",
+    "He presses a sun-warmed scarab into your palm. \"Take it. The Pharaoh is watching.\""
+  ],
+  "trainerParty": [
+    { "element": "stone",   "rarity": "epic",      "level": 32, "environment": "desert" },
+    { "element": "bone",    "rarity": "epic",      "level": 32, "environment": "desert" },
+    { "element": "crystal", "rarity": "epic",      "level": 33, "environment": "desert" },
+    { "element": "sand",    "rarity": "legendary", "level": 33, "environment": "desert" },
+    { "element": "steel",   "rarity": "legendary", "level": 34, "environment": "desert" }
+  ],
+  "trainerReward": 800,
+  "homeMapId": "desert_city",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

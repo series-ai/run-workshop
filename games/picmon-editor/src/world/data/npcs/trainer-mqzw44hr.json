@@ -1,0 +1,17 @@
+{
+  "id": "trainer-mqzw44hr",
+  "name": "Leo",
+  "character": "LionOrange",
+  "homeMapId": "OrangeRoute",
+  "dialogue": [
+    "Roar! The amber leaves hide my Picmon well. You didn't see that one coming, did you?"
+  ],
+  "postDefeatDialogue": [
+    "Grrr... my camouflage failed me this time."
+  ],
+  "trainerParty": [
+    { "element": "nature", "rarity": "uncommon", "level": 18, "environment": "forest" },
+    { "element": "coral", "rarity": "rare", "level": 18, "environment": "forest" }
+  ],
+  "trainerReward": 340
+}

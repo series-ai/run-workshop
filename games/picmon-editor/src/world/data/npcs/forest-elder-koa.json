@@ -1,0 +1,27 @@
+{
+  "id": "forest-elder-koa",
+  "name": "Elder Koa",
+  "character": "OldMan2",
+  "homeMapId": "Forest1",
+  "dialogue": [
+    "The cave behind me eats trainers who aren\u2019t ready.",
+    "I lost three friends in there \u2014 still hear them sometimes when the wind sits right.",
+    "Prove you can stand the gauntlet, and I\u2019ll let you pass."
+  ],
+  "preBattleLine": "Koa removes his hat. The clearing falls silent. His team forms a shield.",
+  "trainerParty": [
+    { "element": "stone",   "rarity": "rare",     "level": 21 },
+    { "element": "nature",  "rarity": "epic",     "level": 22 },
+    { "element": "spirit",  "rarity": "epic",     "level": 23 },
+    { "element": "shadow",  "rarity": "epic",     "level": 24 },
+    { "element": "wind",    "rarity": "mythic",   "level": 25 }
+  ],
+  "trainerReward": 1600,
+  "postDefeatDialogue": [
+    "Pass, then. You\u2019ve earned the path.",
+    "The Five Pillars Dojo lies beyond the cave. Five masters guard the throne \u2014 fire, ice, shadow, stone, and wind.",
+    "Every trainer in this forest talks about it. None of them have beaten it.",
+    "You might be the one. Are you tuff enough?",
+    "The cave will test what the forest only suggested. Bring more potions than you think you need."
+  ]
+}

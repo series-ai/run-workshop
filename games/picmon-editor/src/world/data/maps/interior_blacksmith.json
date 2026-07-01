@@ -1,0 +1,9 @@
+{
+  "id": "interior_blacksmith",
+  "spawns": {
+    "default": { "tileX": 4, "tileY": 4 }
+  },
+  "placements": [
+    { "npcId": "andre", "tileX": 6, "tileY": 2 }
+  ]
+}

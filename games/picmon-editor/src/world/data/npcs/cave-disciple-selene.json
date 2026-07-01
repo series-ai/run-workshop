@@ -1,0 +1,41 @@
+{
+  "id": "cave-disciple-selene",
+  "name": "Selene the Geode",
+  "character": "NinjaMageOrange",
+  "stationary": true,
+  "dialogue": [
+    "Selene. The Master's second.",
+    "Crystal answers light, and light answers truth. Cheap tricks won't work in this room.",
+    "Bring me a clean fight or none at all."
+  ],
+  "preBattleLine": "Selene's hands glow soft amber. The cavern walls catch the light.",
+  "postDefeatDialogue": [
+    "Selene bows. The light dims.",
+    "\"Not bad, traveler. The Master will see you when the third has finished with you.\""
+  ],
+  "trainerParty": [
+    {
+      "element": "crystal",
+      "rarity": "rare",
+      "level": 30,
+      "environment": "cave"
+    },
+    {
+      "element": "light",
+      "rarity": "rare",
+      "level": 32,
+      "environment": "cave"
+    },
+    {
+      "element": "spirit",
+      "rarity": "epic",
+      "level": 34,
+      "environment": "cave"
+    }
+  ],
+  "trainerReward": 500,
+  "homeMapId": "cave1",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

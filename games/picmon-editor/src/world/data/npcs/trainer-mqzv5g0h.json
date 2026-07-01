@@ -1,0 +1,18 @@
+{
+  "id": "trainer-mqzv5g0h",
+  "name": "trainer",
+  "character": "Samurai",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "My team was forged in the dark. Think yours can match it?"
+  ],
+  "postDefeatDialogue": [
+    "Forged brighter than mine, it seems. Impressive."
+  ],
+  "trainerParty": [
+    { "element": "stone", "rarity": "rare", "level": 26, "environment": "cave" },
+    { "element": "crystal", "rarity": "rare", "level": 26, "environment": "cave" },
+    { "element": "spirit", "rarity": "rare", "level": 25, "environment": "cave" }
+  ],
+  "trainerReward": 550
+}

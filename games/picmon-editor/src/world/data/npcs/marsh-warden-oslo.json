@@ -1,0 +1,23 @@
+{
+  "id": "marsh-warden-oslo",
+  "name": "Marsh Warden Oslo",
+  "character": "CamouflageGreen",
+  "dialogue": [
+    "Step lightly. The marsh drinks the careless.",
+    "The Lost Ruins lie past the boat \u2014 and past me.",
+    "My team knows every puddle between here and there. Show me you can stand your ground on wet earth."
+  ],
+  "preBattleLine": "Oslo drives his staff into the mire \u2014 his team surfaces!",
+  "trainerParty": [
+    { "specId": "caustic_nibbler", "element": "acid",   "rarity": "epic",      "level": 38 },
+    { "specId": "mossfang_sprite", "element": "venom",  "rarity": "epic",      "level": 40 },
+    { "specId": "prism_wyrm",      "element": "neon",   "rarity": "mythic",    "level": 42 },
+    { "specId": "mossfang_sprite", "element": "fungus", "rarity": "mythic",    "level": 43 },
+    { "specId": "basalt_gnasher",  "element": "stone",  "rarity": "legendary", "level": 45 }
+  ],
+  "trainerReward": 2400,
+  "postDefeatDialogue": [
+    "Huh. Dry feet and sharp instincts.",
+    "Half the seal cracks. Find Umbra to finish what you've started \u2014 then the boatman will speak."
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "trainer-mqzuiunr",
+  "name": "Forager Nettle",
+  "character": "Villager3",
+  "homeMapId": "Forest2",
+  "dialogue": [
+    "Careful on the trails after dark. The Picmon out here grow bolder once the sun dips below the trees."
+  ],
+  "postDefeatDialogue": [
+    "The forest favors the bold. You earned that one."
+  ],
+  "trainerParty": [
+    { "element": "nature", "rarity": "uncommon", "level": 14, "environment": "forest" },
+    { "element": "coral", "rarity": "uncommon", "level": 15, "environment": "forest" },
+    { "element": "wind", "rarity": "rare", "level": 15, "environment": "forest" }
+  ],
+  "trainerReward": 350
+}

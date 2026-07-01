@@ -1,0 +1,10 @@
+{
+  "id": "betty",
+  "name": "betty",
+  "character": "SorcererOrange",
+  "stationary": true,
+  "dialogue": [
+    "Let me check my files..."
+  ],
+  "homeMapId": "interior_hospital3"
+}

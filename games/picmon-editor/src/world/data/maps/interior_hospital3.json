@@ -1,0 +1,9 @@
+{
+  "id": "interior_hospital3",
+  "spawns": {
+    "default": { "tileX": 15, "tileY": 15 }
+  },
+  "placements": [
+    { "npcId": "betty", "tileX": 13, "tileY": 14 }
+  ]
+}

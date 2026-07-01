@@ -1,0 +1,17 @@
+{
+  "id": "trainer-mqzv4t5f",
+  "name": "trainer",
+  "character": "Caveman2",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "Echoes carry far down here. I heard you coming a mile off — ready?"
+  ],
+  "postDefeatDialogue": [
+    "You move quieter than you sound. Well fought."
+  ],
+  "trainerParty": [
+    { "element": "crystal", "rarity": "rare", "level": 22, "environment": "cave" },
+    { "element": "spirit", "rarity": "uncommon", "level": 22, "environment": "cave" }
+  ],
+  "trainerReward": 380
+}

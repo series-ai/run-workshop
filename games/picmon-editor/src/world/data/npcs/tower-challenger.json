@@ -1,0 +1,16 @@
+{
+  "id": "tower-challenger",
+  "name": "Tower Challenger",
+  "character": "FighterWhite",
+  "kind": "tower-challenger",
+  "stationary": true,
+  "dialogue": [
+    "Step forward when you're ready.",
+    "Next floor. Same rules. Mons remember what they've taken.",
+    "The climb gets steeper from here."
+  ],
+  "homeMapId": "trainertowerarena1",
+  "moodEmotes": [
+    "emote7"
+  ]
+}

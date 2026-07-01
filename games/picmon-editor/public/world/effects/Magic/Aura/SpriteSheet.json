@@ -1,0 +1,180 @@
+{
+  "guide": {
+    "coordinateSystem": "Origin is top-left. X increases rightward. Y increases downward. Standard screen/canvas coordinates.",
+    "frame": "Clip rect on the sprite sheet PNG: {x, y, w, h}. Use these coordinates to cut this sprite from the matching .png file.",
+    "corners": "The 4 corner positions of the sprite after rotation is applied. Order: top-left, top-right, bottom-right, bottom-left. Use these if you want to avoid rotation math.",
+    "sourceSize": "Original dimensions of the source image before any scaling. Metadata only — not needed for rendering.",
+    "rotation": "Rotation in degrees. Pivot point is the center of the frame rect.",
+    "parent": "Sprite name of this element's parent in the rig hierarchy.",
+    "children": "Array of sprite names that are children of this element.",
+    "offset": "Delta from the sprite's sheet position (frame) to its equipped/dressed position. Apply as: dressedX = frame.x + offset.dx, dressedY = frame.y + offset.dy, etc. The dressed position may be outside the canvas — that is expected.",
+    "layerOrder": "\"above\" = render this child on top of the parent. \"below\" = render behind the parent.",
+    "replacesParent": "When true, this child is a visual replacement for the parent. When this child is active, hide the parent but still render other children as normal."
+  },
+  "frames": {
+    "Aura01": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 25,
+        "h": 24
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 25,
+          "y": 0
+        },
+        {
+          "x": 25,
+          "y": 24
+        },
+        {
+          "x": 0,
+          "y": 24
+        }
+      ],
+      "sourceSize": {
+        "w": 125,
+        "h": 24
+      }
+    },
+    "Aura02": {
+      "frame": {
+        "x": 25,
+        "y": 0,
+        "w": 25,
+        "h": 24
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 25,
+          "y": 0
+        },
+        {
+          "x": 50,
+          "y": 0
+        },
+        {
+          "x": 50,
+          "y": 24
+        },
+        {
+          "x": 25,
+          "y": 24
+        }
+      ],
+      "sourceSize": {
+        "w": 125,
+        "h": 24
+      }
+    },
+    "Aura03": {
+      "frame": {
+        "x": 50,
+        "y": 0,
+        "w": 25,
+        "h": 24
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 50,
+          "y": 0
+        },
+        {
+          "x": 75,
+          "y": 0
+        },
+        {
+          "x": 75,
+          "y": 24
+        },
+        {
+          "x": 50,
+          "y": 24
+        }
+      ],
+      "sourceSize": {
+        "w": 125,
+        "h": 24
+      }
+    },
+    "Aura04": {
+      "frame": {
+        "x": 75,
+        "y": 0,
+        "w": 25,
+        "h": 24
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 75,
+          "y": 0
+        },
+        {
+          "x": 100,
+          "y": 0
+        },
+        {
+          "x": 100,
+          "y": 24
+        },
+        {
+          "x": 75,
+          "y": 24
+        }
+      ],
+      "sourceSize": {
+        "w": 125,
+        "h": 24
+      }
+    },
+    "Aura05": {
+      "frame": {
+        "x": 100,
+        "y": 0,
+        "w": 25,
+        "h": 24
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 100,
+          "y": 0
+        },
+        {
+          "x": 125,
+          "y": 0
+        },
+        {
+          "x": 125,
+          "y": 24
+        },
+        {
+          "x": 100,
+          "y": 24
+        }
+      ],
+      "sourceSize": {
+        "w": 125,
+        "h": 24
+      }
+    }
+  },
+  "meta": {
+    "app": "LayoutManager",
+    "image": "See matching .png file",
+    "size": {
+      "w": 125,
+      "h": 24
+    },
+    "scale": "1"
+  }
+}

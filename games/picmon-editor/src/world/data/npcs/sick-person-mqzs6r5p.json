@@ -1,0 +1,12 @@
+{
+  "id": "sick-person-mqzs6r5p",
+  "name": "Sick Kid",
+  "character": "Child",
+  "stationary": true,
+  "faceDirection": "right",
+  "homeMapId": "interior_hospital5",
+  "dialogue": [
+    "Achoo! ...Sorry. I caught a nasty cold and Mama brought me here to rest.",
+    "The doctor's really nice, though. He says I'll be all better by harvest time!"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "id": "trainer-mqzw3z56",
+  "name": "Blaze",
+  "character": "NinjaFire",
+  "homeMapId": "OrangeRoute",
+  "dialogue": [
+    "North leads up to the royal capital, south down to the farmlands. ",
+    "But I'm not leaving till I've won a hundred battles here."
+  ],
+  "postDefeatDialogue": [
+    "Ninety-nine to go... well, ninety-eight now. Thanks for that."
+  ],
+  "trainerParty": [
+    {
+      "element": "fungus",
+      "rarity": "uncommon",
+      "level": 17,
+      "environment": "forest"
+    },
+    {
+      "element": "spirit",
+      "rarity": "rare",
+      "level": 17,
+      "environment": "forest"
+    }
+  ],
+  "trainerReward": 300
+}

@@ -1,0 +1,22 @@
+{
+  "id": "guide2-mr1980ko",
+  "name": "guide2",
+  "character": "Boy",
+  "homeMapId": "TemplateMap",
+  "dialogue": [
+    "dialogue, hello!\nI like to wander by default",
+    "you can configure tall grass  by chunk in the editor.",
+    "You can change battle background image and the level range."
+  ],
+  "postDefeatDialogue": [
+    "post-defeat dialogue... sad"
+  ],
+  "trainerParty": [
+    {
+      "element": "stone",
+      "rarity": "common",
+      "level": 1,
+      "specId": "basalt_brawler"
+    }
+  ]
+}

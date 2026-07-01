@@ -1,0 +1,147 @@
+{
+  "quests": [
+    {
+      "id": "gen-snow-duel-1",
+      "title": "Duel: Ranger Mel",
+      "description": "A snow trainer waiting in the wild. Defeat Ranger Mel.",
+      "icon": "⚔️",
+      "objective": {
+        "kind": "specific_trainer_defeated",
+        "target": 1,
+        "trainerId": "gen-snow-1"
+      },
+      "reward": {
+        "stardust": 30,
+        "coins": 60,
+        "fusionShards": 4
+      }
+    },
+    {
+      "id": "gen-snow-duel-2",
+      "title": "Duel: Warden Roon",
+      "description": "A snow trainer waiting in the wild. Defeat Warden Roon.",
+      "icon": "⚔️",
+      "objective": {
+        "kind": "specific_trainer_defeated",
+        "target": 1,
+        "trainerId": "gen-snow-2"
+      },
+      "reward": {
+        "stardust": 40,
+        "coins": 93,
+        "fusionShards": 5
+      }
+    },
+    {
+      "id": "gen-snow-duel-3",
+      "title": "Duel: Captain Vex",
+      "description": "A snow trainer waiting in the wild. Defeat Captain Vex.",
+      "icon": "⚔️",
+      "objective": {
+        "kind": "specific_trainer_defeated",
+        "target": 1,
+        "trainerId": "gen-snow-3"
+      },
+      "reward": {
+        "stardust": 50,
+        "coins": 127,
+        "fusionShards": 6
+      }
+    },
+    {
+      "id": "gen-snow-duel-4",
+      "title": "Duel: Mage Tess",
+      "description": "A snow trainer waiting in the wild. Defeat Mage Tess.",
+      "icon": "⚔️",
+      "objective": {
+        "kind": "specific_trainer_defeated",
+        "target": 1,
+        "trainerId": "gen-snow-4"
+      },
+      "reward": {
+        "stardust": 60,
+        "coins": 160,
+        "fusionShards": 7
+      }
+    },
+    {
+      "id": "gen-snow-duel-5",
+      "title": "Duel: Hunter Nimm",
+      "description": "A snow trainer waiting in the wild. Defeat Hunter Nimm.",
+      "icon": "⚔️",
+      "objective": {
+        "kind": "specific_trainer_defeated",
+        "target": 1,
+        "trainerId": "gen-snow-5"
+      },
+      "reward": {
+        "stardust": 70,
+        "coins": 193,
+        "fusionShards": 8
+      }
+    },
+    {
+      "id": "gen-snow-duel-6",
+      "title": "Duel: Sage Ezra",
+      "description": "A snow trainer waiting in the wild. Defeat Sage Ezra.",
+      "icon": "⚔️",
+      "objective": {
+        "kind": "specific_trainer_defeated",
+        "target": 1,
+        "trainerId": "gen-snow-6"
+      },
+      "reward": {
+        "stardust": 80,
+        "coins": 227,
+        "fusionShards": 9
+      }
+    },
+    {
+      "id": "gen-snow-duel-7",
+      "title": "Duel: Gladiator Joss",
+      "description": "A snow trainer waiting in the wild. Defeat Gladiator Joss.",
+      "icon": "⚔️",
+      "objective": {
+        "kind": "specific_trainer_defeated",
+        "target": 1,
+        "trainerId": "gen-snow-7"
+      },
+      "reward": {
+        "stardust": 90,
+        "coins": 260,
+        "fusionShards": 10
+      }
+    },
+    {
+      "id": "gen-snow-capstone",
+      "title": "Snow Trial",
+      "description": "Defeat every trainer in the snow (7 total).",
+      "icon": "🏆",
+      "objective": {
+        "kind": "trainers_defeated",
+        "target": 0
+      },
+      "prereq": [
+        "gen-snow-duel-1",
+        "gen-snow-duel-2",
+        "gen-snow-duel-3",
+        "gen-snow-duel-4",
+        "gen-snow-duel-5",
+        "gen-snow-duel-6",
+        "gen-snow-duel-7"
+      ],
+      "reward": {
+        "stardust": 250,
+        "coins": 300,
+        "fusionShards": 30,
+        "filmCharges": 5,
+        "consumables": {
+          "prismatic_core": 1,
+          "pure_crystal": 1
+        },
+        "unlockLabel": "Champion of the snow"
+      },
+      "flavorOnComplete": "The snow bows. You are its champion."
+    }
+  ]
+}

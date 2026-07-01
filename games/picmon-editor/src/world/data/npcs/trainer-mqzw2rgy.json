@@ -1,0 +1,17 @@
+{
+  "id": "trainer-mqzw2rgy",
+  "name": "Huntsman Bo",
+  "character": "Hunter",
+  "homeMapId": "OrangeRoute",
+  "dialogue": [
+    "This whole forest burns orange in the autumn — finest hunting grounds on the route. En garde!"
+  ],
+  "postDefeatDialogue": [
+    "Hah! Sharp eyes. You'd thrive out here."
+  ],
+  "trainerParty": [
+    { "element": "nature", "rarity": "uncommon", "level": 14, "environment": "forest" },
+    { "element": "wind", "rarity": "uncommon", "level": 14, "environment": "forest" }
+  ],
+  "trainerReward": 220
+}

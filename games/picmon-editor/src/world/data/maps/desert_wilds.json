@@ -1,0 +1,14 @@
+{
+  "id": "desert_wilds",
+  "spawns": {
+    "default": { "tileX": 1, "tileY": 10 },
+    "from_city": { "tileX": 1, "tileY": 10 }
+  },
+  "placements": [],
+  "battleBgFrame": "desert",
+  "grassPatchLevels": {
+    "4,6":   { "min": 18, "max": 22 },
+    "13,11": { "min": 22, "max": 26 },
+    "17,3":  { "min": 24, "max": 28 }
+  }
+}

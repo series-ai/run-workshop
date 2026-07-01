@@ -1,0 +1,18 @@
+{
+  "id": "trainer-mqzxqqnj",
+  "name": "Sultan Rashid",
+  "character": "Sultan",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "Few earn an audience in the royal capital. Fewer still best its champions. Let us see which you are."
+  ],
+  "postDefeatDialogue": [
+    "Magnificent. The capital will remember your name."
+  ],
+  "trainerParty": [
+    { "element": "crystal", "rarity": "superior", "level": 36 },
+    { "element": "mirror", "rarity": "rare", "level": 36 },
+    { "element": "light", "rarity": "epic", "level": 37 }
+  ],
+  "trainerReward": 1100
+}

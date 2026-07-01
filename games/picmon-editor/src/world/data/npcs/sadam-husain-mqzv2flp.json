@@ -1,0 +1,11 @@
+{
+  "id": "sadam-husain-mqzv2flp",
+  "name": "sadam",
+  "character": "OldMan2",
+  "stationary": true,
+  "faceDirection": "right",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "entrance hidden by bricks and rubble"
+  ]
+}
