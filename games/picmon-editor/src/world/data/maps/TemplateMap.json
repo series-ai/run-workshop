@@ -1,0 +1,27 @@
+{
+  "id": "TemplateMap",
+  "spawns": {
+    "default": { "tileX": 7, "tileY": 7 }
+  },
+  "placements": [
+    { "npcId": "guide1-mr195b42", "tileX": 7, "tileY": 5 },
+    { "npcId": "guide2-mr1980ko", "tileX": 16, "tileY": 5 },
+    { "npcId": "credit-mr19btt7", "tileX": 27, "tileY": 13 },
+    { "npcId": "tileguy-mr19f3i8", "tileX": 16, "tileY": 10 },
+    { "npcId": "animalfriend-mr19ruvp", "tileX": 27, "tileY": 10 },
+    { "npcId": "objectguy-mr19uykc", "tileX": 14, "tileY": 15 },
+    { "npcId": "doorman-mr19with", "tileX": 26, "tileY": 6 }
+  ],
+  "animals": [
+    { "type": "Cat", "tileX": 23, "tileY": 9, "wanderTiles": 10 },
+    { "type": "Dog", "tileX": 28, "tileY": 7, "wanderTiles": 1 }
+  ],
+  "objects": [
+    { "image": "Animated/Flag/FlagBlack16x16.png", "tileX": 17, "tileY": 16, "drawOrder": "sort" },
+    { "image": "Animated/Plant/plant.png", "tileX": 15, "tileY": 16 },
+    { "image": "Animated/Windmill/windmill1.png", "tileX": 20, "tileY": 16, "drawOrder": "overlay" }
+  ],
+  "grassPatchBackgrounds": {
+    "17,3": "snowtown"
+  }
+}

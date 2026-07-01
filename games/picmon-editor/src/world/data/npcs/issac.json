@@ -1,0 +1,29 @@
+{
+  "id": "issac",
+  "name": "isaac",
+  "character": "NinjaDark",
+  "dialogue": [],
+  "trainerParty": [
+    {
+      "element": "lava",
+      "rarity": "omega",
+      "level": 10
+    },
+    {
+      "element": "fire",
+      "rarity": "omega",
+      "level": 10
+    },
+    {
+      "element": "stone",
+      "rarity": "omega",
+      "level": 10
+    },
+    {
+      "element": "obsidian",
+      "rarity": "omega",
+      "level": 10
+    }
+  ],
+  "homeMapId": "villageruin"
+}

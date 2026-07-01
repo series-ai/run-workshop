@@ -1,0 +1,15 @@
+{
+  "id": "interior_dojo",
+  "spawns": {
+    "default": { "tileX": 7, "tileY": 9 }
+  },
+  "placements": [
+    { "npcId": "master", "tileX": 5, "tileY": 6 },
+    { "npcId": "disciple-daichi",  "tileX": 3,  "tileY": 10 },
+    { "npcId": "disciple-tsubaki", "tileX": 10, "tileY": 10 },
+    { "npcId": "disciple-kaen",    "tileX": 3,  "tileY": 7 },
+    { "npcId": "disciple-hayate",  "tileX": 10, "tileY": 7 },
+    { "npcId": "disciple-akari",   "tileX": 8,  "tileY": 5 }
+  ],
+  "battleBgFrame": "dojo"
+}

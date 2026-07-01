@@ -1,0 +1,11 @@
+{
+  "id": "doctor-mqzs68kn",
+  "name": "doctor",
+  "character": "Master",
+  "homeMapId": "interior_hospital5",
+  "dialogue": [
+    "Welcome to the clinic. We see plenty of folk here — farm work is hard on the body.",
+    "Is your Picmon feeling poorly? We treat trainer and companion alike under this roof.",
+    "Rest, clean water, and a little patience. That's the best medicine, more often than not."
+  ]
+}

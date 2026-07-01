@@ -1,0 +1,41 @@
+{
+  "id": "pharaoh-sphinx",
+  "name": "The Sleepless Sphinx",
+  "character": "LionOrange",
+  "stationary": true,
+  "dialogue": [
+    "Nephren counted you. Anpu weighed you. Setem forged you. Mehet predicted you.",
+    "Four trials \u2014 four answers. Now there is only the riddle.",
+    "What walks on four legs in the morning, two at noon, and asks the desert for permission at dusk?",
+    "You. The answer is you. I do not need to hear it.",
+    "I have been awake for six thousand years waiting for this fight. Try not to bore me."
+  ],
+  "preBattleLine": "The Sphinx stretches once, slow. The sand under her paws turns to glass.",
+  "postDefeatDialogue": [
+    "The Sphinx settles back onto her paws, yawning.",
+    "\"Six thousand years. Worth it.\"",
+    "\"The Pharaoh is yours. The Court is yours. The Tomb is yours. I will sleep again now \u2014 wake me only if a worthier hand comes through.\"",
+    "She closes her eyes. The desert exhales."
+  ],
+  "trainerParty": [
+    { "element": "stone",   "rarity": "mythic",  "level": 47, "environment": "desert" },
+    { "element": "bone",    "rarity": "mythic",  "level": 47, "environment": "desert" },
+    { "element": "void",    "rarity": "mythic",  "level": 48, "environment": "desert" },
+    { "element": "stellar", "rarity": "mythic",  "level": 48, "environment": "pharaohs_cache" },
+    { "element": "shadow",  "rarity": "mythic",  "level": 49, "environment": "pharaohs_cache" },
+    { "element": "light",   "rarity": "ancient", "level": 49, "environment": "pharaohs_cache" },
+    { "element": "lava",    "rarity": "ancient", "level": 50, "environment": "pharaohs_cache" }
+  ],
+  "trainerReward": 4000,
+  "homeMapId": "desert_dojo",
+  "requiredTrainerDefeats": [
+    "pharaoh-vizier-nephren",
+    "pharaoh-anpu",
+    "pharaoh-setem",
+    "pharaoh-mehet"
+  ],
+  "prereqBlockedMessage": "The Sphinx's eyes stay closed. \"Four trials. Four names. Return when the Court has spoken every one.\"",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

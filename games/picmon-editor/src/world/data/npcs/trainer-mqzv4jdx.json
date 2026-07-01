@@ -1,0 +1,17 @@
+{
+  "id": "trainer-mqzv4jdx",
+  "name": "trainer",
+  "character": "NinjaGray",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "Lost, are you? Beat me and maybe I'll point you the right way."
+  ],
+  "postDefeatDialogue": [
+    "A deal's a deal — the exit's past the next chamber."
+  ],
+  "trainerParty": [
+    { "element": "shadow", "rarity": "uncommon", "level": 20, "environment": "cave" },
+    { "element": "fungus", "rarity": "rare", "level": 20, "environment": "cave" }
+  ],
+  "trainerReward": 320
+}

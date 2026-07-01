@@ -1,0 +1,15 @@
+{
+  "id": "move-tutor",
+  "name": "Master Tutor Sora",
+  "character": "Shaman",
+  "kind": "tutor",
+  "dialogue": [
+    "Most trainers think a PicMon's moves are set in stone. They aren't.",
+    "I keep a private library of tutor scrolls — the kind no shopkeeper carries.",
+    "If your Stardust is heavy enough, I can teach your PicMon things even its parents never knew."
+  ],
+  "moodEmotes": [
+    "emote15",
+    "emote23"
+  ]
+}

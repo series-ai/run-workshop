@@ -1,0 +1,44 @@
+{
+  "id": "OrangeRoute",
+  "spawns": {
+    "default": { "tileX": 14, "tileY": 79 }
+  },
+  "placements": [
+    { "npcId": "trainer-mqzw2rgy", "tileX": 23, "tileY": 57 },
+    { "npcId": "trainer-mqzw3vdt", "tileX": 7, "tileY": 60 },
+    { "npcId": "trainer-mqzw3z56", "tileX": 5, "tileY": 74 },
+    { "npcId": "trainer-mqzw44hr", "tileX": 23, "tileY": 31 },
+    { "npcId": "trainer-mqzw489g", "tileX": 7, "tileY": 34 },
+    { "npcId": "trainer-mqzw4ct7", "tileX": 23, "tileY": 41 },
+    { "npcId": "trainer-mqzw4gkz", "tileX": 17, "tileY": 15 },
+    { "npcId": "trainer-mqzw4kiq", "tileX": 8, "tileY": 8 },
+    { "npcId": "trainer-mqzw53n6", "tileX": 15, "tileY": 77 }
+  ],
+  "objects": [
+    { "image": "Animated/Flower/flower.png", "tileX": 23, "tileY": 41 },
+    { "image": "Animated/Flower/flower.png", "tileX": 14, "tileY": 41 },
+    { "image": "Animated/Flower/flower.png", "tileX": 20, "tileY": 44 },
+    { "image": "Animated/Flower/flower.png", "tileX": 20, "tileY": 58 },
+    { "image": "Animated/Flower/flower.png", "tileX": 23, "tileY": 57 },
+    { "image": "Animated/Flower/flower.png", "tileX": 10, "tileY": 58 },
+    { "image": "Animated/Flower/flower.png", "tileX": 7, "tileY": 60 },
+    { "image": "Animated/Flower/flower.png", "tileX": 9, "tileY": 62 },
+    { "image": "Animated/Flower/flower.png", "tileX": 14, "tileY": 77 },
+    { "image": "Animated/Flower/flower.png", "tileX": 11, "tileY": 81 },
+    { "image": "Animated/Flower/flower.png", "tileX": 16, "tileY": 83 },
+    { "image": "Animated/Flower/flower.png", "tileX": 24, "tileY": 31 },
+    { "image": "Animated/Flower/flower.png", "tileX": 9, "tileY": 37 },
+    { "image": "Animated/Flower/flower.png", "tileX": 8, "tileY": 24 },
+    { "image": "Animated/Flower/flower.png", "tileX": 11, "tileY": 25 },
+    { "image": "Animated/Flower/flower.png", "tileX": 16, "tileY": 14 },
+    { "image": "Animated/Flower/flower.png", "tileX": 24, "tileY": 13 },
+    { "image": "Animated/Flower/flower.png", "tileX": 24, "tileY": 17 },
+    { "image": "Animated/Flower/flower.png", "tileX": 24, "tileY": 25 },
+    { "image": "Animated/Flower/flower.png", "tileX": 10, "tileY": 20 },
+    { "image": "Animated/Flower/flower.png", "tileX": 8, "tileY": 16 },
+    { "image": "Animated/Flower/flower.png", "tileX": 7, "tileY": 13 },
+    { "image": "Animated/Flower/flower.png", "tileX": 8, "tileY": 8 },
+    { "image": "Animated/Flower/flower.png", "tileX": 14, "tileY": 7 },
+    { "image": "Animated/Flower/flower.png", "tileX": 16, "tileY": 5 }
+  ]
+}

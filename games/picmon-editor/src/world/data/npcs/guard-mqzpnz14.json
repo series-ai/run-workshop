@@ -1,0 +1,11 @@
+{
+  "id": "guard-mqzpnz14",
+  "name": "guard",
+  "character": "Knight",
+  "stationary": true,
+  "faceDirection": "down",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "Keep your Picmon close in the plaza. We don't need a stampede on market day."
+  ]
+}

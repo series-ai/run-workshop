@@ -1,0 +1,266 @@
+{
+  "portals": [
+    {
+      "id": "portal-2",
+      "a": { "mapId": "villageruin", "rect": { "tileX": 29, "tileY": 45, "w": 1, "h": 1 }, "spawn": { "tileX": 29, "tileY": 46 }, "facing": "down" },
+      "b": { "mapId": "interior_house", "rect": { "tileX": 3, "tileY": 7, "w": 1, "h": 1 }, "spawn": { "tileX": 3, "tileY": 6 }, "facing": "up" }
+    },
+    {
+      "id": "portal-3",
+      "a": { "mapId": "villageruin", "rect": { "tileX": 49, "tileY": 37, "w": 1, "h": 1 }, "spawn": { "tileX": 49, "tileY": 38 }, "facing": "down" },
+      "b": { "mapId": "interior_shop", "rect": { "tileX": 5, "tileY": 8, "w": 1, "h": 1 }, "spawn": { "tileX": 5, "tileY": 7 }, "facing": "up" }
+    },
+    {
+      "id": "portal-4",
+      "a": { "mapId": "villageruin", "rect": { "tileX": 57, "tileY": 34, "w": 1, "h": 1 }, "spawn": { "tileX": 57, "tileY": 35 }, "facing": "down" },
+      "b": { "mapId": "interior_lab", "rect": { "tileX": 5, "tileY": 9, "w": 1, "h": 1 }, "spawn": { "tileX": 5, "tileY": 8 }, "facing": "up" }
+    },
+    {
+      "id": "portal-5",
+      "a": { "mapId": "villageruin", "rect": { "tileX": 60, "tileY": 34, "w": 1, "h": 1 }, "spawn": { "tileX": 60, "tileY": 35 }, "facing": "down" },
+      "b": { "mapId": "interior_hospital", "rect": { "tileX": 5, "tileY": 8, "w": 1, "h": 1 }, "spawn": { "tileX": 5, "tileY": 7 }, "facing": "up" }
+    },
+    {
+      "id": "portal-6",
+      "a": { "mapId": "villageruin", "rect": { "tileX": 112, "tileY": 23, "w": 1, "h": 1 }, "spawn": { "tileX": 112, "tileY": 24 }, "facing": "down" },
+      "b": { "mapId": "Forest1", "rect": { "tileX": 33, "tileY": 49, "w": 1, "h": 1 }, "spawn": { "tileX": 33, "tileY": 48 }, "facing": "up" }
+    },
+    {
+      "id": "portal-9",
+      "a": { "mapId": "villageruin", "rect": { "tileX": 66, "tileY": 36, "w": 1, "h": 1 }, "spawn": { "tileX": 66, "tileY": 37 }, "facing": "down" },
+      "b": { "mapId": "interior_dojo", "rect": { "tileX": 6, "tileY": 16, "w": 1, "h": 1 }, "spawn": { "tileX": 6, "tileY": 15 }, "facing": "up" }
+    },
+    {
+      "id": "portal-10",
+      "a": { "mapId": "cave2", "rect": { "tileX": 8, "tileY": 34, "w": 1, "h": 1 }, "spawn": { "tileX": 8, "tileY": 33 }, "facing": "up" },
+      "b": { "mapId": "snow_town", "rect": { "tileX": 80, "tileY": 13, "w": 1, "h": 1 }, "spawn": { "tileX": 80, "tileY": 14 }, "facing": "down" }
+    },
+    {
+      "id": "portal-11",
+      "a": { "mapId": "snow_town", "rect": { "tileX": 16, "tileY": 61, "w": 1, "h": 1 }, "spawn": { "tileX": 16, "tileY": 60 }, "facing": "up" },
+      "b": { "mapId": "cave1", "rect": { "tileX": 27, "tileY": 8, "w": 1, "h": 1 }, "spawn": { "tileX": 27, "tileY": 9 }, "facing": "down" },
+      "gate": {
+        "fromMapId": "cave1",
+        "requiredTrainerDefeats": ["snowflo","snowpro"],
+        "blockedMessage": "A guardian voice rings out: \"Snow Town is sealed. Defeat Snowflo and Snowpro to break the ice.\"",
+        "doorImage": "world/tilesets/doors/Cave_BossDoor.png"
+      }
+    },
+    {
+      "id": "portal-12",
+      "a": { "mapId": "snow_town", "rect": { "tileX": 18, "tileY": 20, "w": 1, "h": 1 }, "spawn": { "tileX": 18, "tileY": 21 }, "facing": "down" },
+      "b": { "mapId": "igloo1", "rect": { "tileX": 4, "tileY": 10, "w": 1, "h": 1 }, "spawn": { "tileX": 4, "tileY": 9 }, "facing": "up" }
+    },
+    {
+      "id": "portal-13",
+      "a": { "mapId": "snow_town", "rect": { "tileX": 22, "tileY": 13, "w": 1, "h": 1 }, "spawn": { "tileX": 22, "tileY": 14 }, "facing": "down" },
+      "b": { "mapId": "igloo2", "rect": { "tileX": 4, "tileY": 10, "w": 1, "h": 1 }, "spawn": { "tileX": 4, "tileY": 9 }, "facing": "up" }
+    },
+    {
+      "id": "portal-14",
+      "a": { "mapId": "interior_snowdojo", "rect": { "tileX": 17, "tileY": 20, "w": 1, "h": 1 }, "spawn": { "tileX": 17, "tileY": 19 }, "facing": "up" },
+      "b": { "mapId": "snow_town", "rect": { "tileX": 35, "tileY": 17, "w": 1, "h": 1 }, "spawn": { "tileX": 35, "tileY": 18 }, "facing": "down" }
+    },
+    {
+      "id": "portal-16",
+      "a": { "mapId": "cave1", "rect": { "tileX": 16, "tileY": 5, "w": 1, "h": 1 }, "spawn": { "tileX": 16, "tileY": 6 }, "facing": "down" },
+      "b": { "mapId": "interior_cave_dojo", "rect": { "tileX": 6, "tileY": 11, "w": 2, "h": 1 }, "spawn": { "tileX": 7, "tileY": 10 }, "facing": "up" }
+    },
+    {
+      "id": "portal-17",
+      "a": { "mapId": "snow_town", "rect": { "tileX": 27, "tileY": 17, "w": 1, "h": 1 }, "spawn": { "tileX": 27, "tileY": 18 }, "facing": "down" },
+      "b": { "mapId": "potionshop", "rect": { "tileX": 17, "tileY": 20, "w": 1, "h": 1 }, "spawn": { "tileX": 17, "tileY": 19 }, "facing": "up" }
+    },
+    {
+      "id": "portal-18",
+      "a": { "mapId": "snow_town", "rect": { "tileX": 39, "tileY": 25, "w": 1, "h": 1 }, "spawn": { "tileX": 39, "tileY": 26 }, "facing": "down" },
+      "b": { "mapId": "interior_hospital2", "rect": { "tileX": 13, "tileY": 20, "w": 1, "h": 1 }, "spawn": { "tileX": 13, "tileY": 19 }, "facing": "up" }
+    },
+    {
+      "id": "portal-19",
+      "a": { "mapId": "snow_town", "rect": { "tileX": 43, "tileY": 12, "w": 1, "h": 1 }, "spawn": { "tileX": 43, "tileY": 13 }, "facing": "down" },
+      "b": { "mapId": "interior_blacksmith", "rect": { "tileX": 3, "tileY": 7, "w": 1, "h": 1 }, "spawn": { "tileX": 3, "tileY": 6 }, "facing": "up" }
+    },
+    {
+      "id": "portal-20",
+      "a": { "mapId": "snow_town", "rect": { "tileX": 29, "tileY": 30, "w": 1, "h": 1 }, "spawn": { "tileX": 29, "tileY": 31 }, "facing": "down" },
+      "b": { "mapId": "interior_chowhall", "rect": { "tileX": 5, "tileY": 14, "w": 1, "h": 1 }, "spawn": { "tileX": 5, "tileY": 13 }, "facing": "up" }
+    },
+    {
+      "id": "portal-21",
+      "a": { "mapId": "villageruin", "rect": { "tileX": 62, "tileY": 45, "w": 1, "h": 1 }, "spawn": { "tileX": 62, "tileY": 46 }, "facing": "down" },
+      "b": { "mapId": "interior_tinyhome", "rect": { "tileX": 9, "tileY": 10, "w": 1, "h": 1 }, "spawn": { "tileX": 9, "tileY": 9 }, "facing": "up" }
+    },
+    {
+      "id": "portal-22",
+      "a": { "mapId": "villageruin", "rect": { "tileX": 53, "tileY": 45, "w": 1, "h": 1 }, "spawn": { "tileX": 53, "tileY": 46 }, "facing": "down" },
+      "b": { "mapId": "interior_tinyhome2", "rect": { "tileX": 9, "tileY": 10, "w": 1, "h": 1 }, "spawn": { "tileX": 9, "tileY": 9 }, "facing": "up" }
+    },
+    {
+      "id": "portal-desert-city",
+      "a": { "mapId": "villageruin", "rect": { "tileX": 29, "tileY": 49, "w": 1, "h": 1 }, "spawn": { "tileX": 29, "tileY": 48 }, "facing": "up" },
+      "b": { "mapId": "desert_city", "rect": { "tileX": 37, "tileY": 38, "w": 1, "h": 1 }, "spawn": { "tileX": 37, "tileY": 39 }, "facing": "down" },
+      "gate": {
+        "fromMapId": "villageruin",
+        "requiredTrainerDefeats": [],
+        "eventId": "desert_pharaoh",
+        "blockedMessage": "The dunes are silent today. Pharaoh's Awakening has ended — the portal will open again when the event returns."
+      }
+    },
+    {
+      "id": "portal-desert-wilds",
+      "a": { "mapId": "desert_city", "rect": { "tileX": 37, "tileY": 46, "w": 1, "h": 1 }, "spawn": { "tileX": 36, "tileY": 46 }, "facing": "left" },
+      "b": { "mapId": "desert_wilds", "rect": { "tileX": 0, "tileY": 10, "w": 1, "h": 1 }, "spawn": { "tileX": 1, "tileY": 10 }, "facing": "right" }
+    },
+    {
+      "id": "portal-8",
+      "a": { "mapId": "desert_city", "rect": { "tileX": 34, "tileY": 13, "w": 1, "h": 1 }, "spawn": { "tileX": 34, "tileY": 14 }, "facing": "down" },
+      "b": { "mapId": "desert_dojo", "rect": { "tileX": 7, "tileY": 16, "w": 1, "h": 1 }, "spawn": { "tileX": 7, "tileY": 15 }, "facing": "up" }
+    },
+    {
+      "id": "portal-23",
+      "a": { "mapId": "desert_city", "rect": { "tileX": 21, "tileY": 19, "w": 1, "h": 1 }, "spawn": { "tileX": 21, "tileY": 20 }, "facing": "down" },
+      "b": { "mapId": "interior_hospital3", "rect": { "tileX": 13, "tileY": 20, "w": 1, "h": 1 }, "spawn": { "tileX": 13, "tileY": 19 }, "facing": "up" }
+    },
+    {
+      "id": "portal-24",
+      "a": { "mapId": "interior_hospital3", "rect": { "tileX": 19, "tileY": 16, "w": 1, "h": 1 }, "spawn": { "tileX": 18, "tileY": 16 }, "facing": "left" },
+      "b": { "mapId": "interior_hospital3", "rect": { "tileX": 29, "tileY": 13, "w": 1, "h": 1 }, "spawn": { "tileX": 30, "tileY": 13 }, "facing": "right" }
+    },
+    {
+      "id": "portal-25",
+      "a": { "mapId": "desert_city", "rect": { "tileX": 63, "tileY": 16, "w": 1, "h": 1 }, "spawn": { "tileX": 63, "tileY": 17 }, "facing": "down" },
+      "b": { "mapId": "interior_shop2", "rect": { "tileX": 5, "tileY": 9, "w": 1, "h": 1 }, "spawn": { "tileX": 5, "tileY": 8 }, "facing": "up" }
+    },
+    {
+      "id": "portal-26",
+      "a": { "mapId": "villageruin", "rect": { "tileX": 84, "tileY": 96, "w": 3, "h": 1 }, "spawn": { "tileX": 85, "tileY": 93 }, "facing": "up" },
+      "b": { "mapId": "trainertowerlobby", "rect": { "tileX": 11, "tileY": 22, "w": 2, "h": 1 }, "spawn": { "tileX": 12, "tileY": 19 }, "facing": "up" }
+    },
+    {
+      "id": "portal-28",
+      "a": { "mapId": "trainertowerlobby", "rect": { "tileX": 11, "tileY": 3, "w": 2, "h": 1 }, "spawn": { "tileX": 12, "tileY": 4 }, "facing": "down" },
+      "b": { "mapId": "trainertowerlobby1", "rect": { "tileX": 11, "tileY": 7, "w": 2, "h": 1 }, "spawn": { "tileX": 12, "tileY": 6 }, "facing": "up" }
+    },
+    {
+      "id": "portal-29",
+      "a": { "mapId": "trainertowerlobby1", "rect": { "tileX": 11, "tileY": 17, "w": 1, "h": 1 }, "spawn": { "tileX": 11, "tileY": 18 }, "facing": "down" },
+      "b": { "mapId": "trainertowerarena", "rect": { "tileX": 7, "tileY": 14, "w": 1, "h": 1 }, "spawn": { "tileX": 7, "tileY": 13 }, "facing": "up" }
+    },
+    {
+      "id": "portal-30",
+      "a": { "mapId": "trainertowerarena", "rect": { "tileX": 8, "tileY": 3, "w": 1, "h": 1 }, "spawn": { "tileX": 8, "tileY": 4 }, "facing": "down" },
+      "b": { "mapId": "trainertowerarena1", "rect": { "tileX": 7, "tileY": 14, "w": 1, "h": 1 }, "spawn": { "tileX": 7, "tileY": 13 }, "facing": "up" }
+    },
+    {
+      "id": "portal-31",
+      "a": { "mapId": "trainertowerarena1", "rect": { "tileX": 8, "tileY": 3, "w": 1, "h": 1 }, "spawn": { "tileX": 8, "tileY": 4 }, "facing": "down" },
+      "b": { "mapId": "trainertowerarena2", "rect": { "tileX": 7, "tileY": 14, "w": 1, "h": 1 }, "spawn": { "tileX": 7, "tileY": 13 }, "facing": "up" }
+    },
+    {
+      "id": "portal-32",
+      "a": { "mapId": "trainertowerarena2", "rect": { "tileX": 8, "tileY": 3, "w": 1, "h": 1 }, "spawn": { "tileX": 8, "tileY": 4 }, "facing": "down" },
+      "b": { "mapId": "trainertowerarena3", "rect": { "tileX": 7, "tileY": 14, "w": 1, "h": 1 }, "spawn": { "tileX": 7, "tileY": 13 }, "facing": "up" }
+    },
+    {
+      "id": "portal-33",
+      "a": { "mapId": "trainertowerarena3", "rect": { "tileX": 8, "tileY": 3, "w": 1, "h": 1 }, "spawn": { "tileX": 8, "tileY": 4 }, "facing": "down" },
+      "b": { "mapId": "trainertowerarenafinal", "rect": { "tileX": 7, "tileY": 14, "w": 1, "h": 1 }, "spawn": { "tileX": 7, "tileY": 13 }, "facing": "up" }
+    },
+    {
+      "id": "portal-34",
+      "a": { "mapId": "Forest1", "rect": { "tileX": 59, "tileY": 44, "w": 1, "h": 1 }, "spawn": { "tileX": 59, "tileY": 43 }, "facing": "up" },
+      "b": { "mapId": "community", "rect": { "tileX": 9, "tileY": 21, "w": 1, "h": 1 }, "spawn": { "tileX": 9, "tileY": 22 }, "facing": "down" }
+    },
+    {
+      "id": "portal-35",
+      "a": { "mapId": "community", "rect": { "tileX": 48, "tileY": 31, "w": 1, "h": 1 }, "spawn": { "tileX": 48, "tileY": 32 }, "facing": "down" },
+      "b": { "mapId": "interior_hospital4", "rect": { "tileX": 13, "tileY": 20, "w": 1, "h": 1 }, "spawn": { "tileX": 13, "tileY": 19 }, "facing": "up" }
+    },
+    {
+      "id": "portal-36",
+      "a": { "mapId": "community", "rect": { "tileX": 32, "tileY": 40, "w": 1, "h": 1 }, "spawn": { "tileX": 32, "tileY": 41 }, "facing": "down" },
+      "b": { "mapId": "interior_shop3", "rect": { "tileX": 5, "tileY": 8, "w": 1, "h": 1 }, "spawn": { "tileX": 5, "tileY": 7 }, "facing": "up" }
+    },
+    {
+      "id": "portal-37",
+      "a": { "mapId": "community", "rect": { "tileX": 31, "tileY": 19, "w": 1, "h": 1 }, "spawn": { "tileX": 31, "tileY": 20 }, "facing": "down" },
+      "b": { "mapId": "interior_longhouse", "rect": { "tileX": 5, "tileY": 14, "w": 1, "h": 1 }, "spawn": { "tileX": 5, "tileY": 13 }, "facing": "up" }
+    },
+    {
+      "id": "portal-38",
+      "a": { "mapId": "community", "rect": { "tileX": 36, "tileY": 11, "w": 1, "h": 1 }, "spawn": { "tileX": 36, "tileY": 12 }, "facing": "down" },
+      "b": { "mapId": "community_dojo", "rect": { "tileX": 19, "tileY": 37, "w": 1, "h": 1 }, "spawn": { "tileX": 19, "tileY": 36 }, "facing": "up" }
+    },
+    {
+      "id": "portal-15",
+      "a": { "mapId": "Forest2", "rect": { "tileX": 26, "tileY": 49, "w": 1, "h": 1 }, "spawn": { "tileX": 26, "tileY": 48 }, "facing": "up" },
+      "b": { "mapId": "Forest1", "rect": { "tileX": 29, "tileY": 8, "w": 1, "h": 1 }, "spawn": { "tileX": 29, "tileY": 9 }, "facing": "down" }
+    },
+    {
+      "id": "portal-27",
+      "a": { "mapId": "farmlands", "rect": { "tileX": 34, "tileY": 68, "w": 1, "h": 1 }, "spawn": { "tileX": 34, "tileY": 67 }, "facing": "up" },
+      "b": { "mapId": "Forest2", "rect": { "tileX": 60, "tileY": 21, "w": 1, "h": 1 }, "spawn": { "tileX": 60, "tileY": 22 }, "facing": "down" }
+    },
+    {
+      "id": "portal-39",
+      "a": { "mapId": "Forest2", "rect": { "tileX": 22, "tileY": 10, "w": 1, "h": 1 }, "spawn": { "tileX": 22, "tileY": 11 }, "facing": "down" },
+      "b": { "mapId": "cave1", "rect": { "tileX": 27, "tileY": 38, "w": 1, "h": 1 }, "spawn": { "tileX": 27, "tileY": 37 }, "facing": "up" }
+    },
+    {
+      "id": "portal-1",
+      "a": { "mapId": "OrangeRoute", "rect": { "tileX": 15, "tileY": 87, "w": 1, "h": 1 }, "spawn": { "tileX": 15, "tileY": 86 }, "facing": "up" },
+      "b": { "mapId": "farmlands", "rect": { "tileX": 77, "tileY": 3, "w": 1, "h": 1 }, "spawn": { "tileX": 77, "tileY": 4 }, "facing": "down" }
+    },
+    {
+      "id": "portal-40",
+      "a": { "mapId": "CapitalGrounds", "rect": { "tileX": 81, "tileY": 96, "w": 1, "h": 1 }, "spawn": { "tileX": 81, "tileY": 95 }, "facing": "up" },
+      "b": { "mapId": "OrangeRoute", "rect": { "tileX": 15, "tileY": 2, "w": 1, "h": 1 }, "spawn": { "tileX": 15, "tileY": 3 }, "facing": "down" }
+    },
+    {
+      "id": "portal-41",
+      "a": { "mapId": "cave2", "rect": { "tileX": 77, "tileY": 34, "w": 1, "h": 1 }, "spawn": { "tileX": 77, "tileY": 33 }, "facing": "up" },
+      "b": { "mapId": "CapitalGrounds", "rect": { "tileX": 3, "tileY": 48, "w": 1, "h": 1 }, "spawn": { "tileX": 3, "tileY": 49 }, "facing": "down" }
+    },
+    {
+      "id": "portal-42",
+      "a": { "mapId": "BambooRoute1", "rect": { "tileX": 27, "tileY": 10, "w": 1, "h": 1 }, "spawn": { "tileX": 27, "tileY": 9 }, "facing": "up" },
+      "b": { "mapId": "cave2", "rect": { "tileX": 41, "tileY": 3, "w": 1, "h": 1 }, "spawn": { "tileX": 41, "tileY": 4 }, "facing": "down" }
+    },
+    {
+      "id": "portal-43",
+      "a": { "mapId": "trainertower", "rect": { "tileX": 57, "tileY": 9, "w": 1, "h": 1 }, "spawn": { "tileX": 57, "tileY": 10 }, "facing": "down" },
+      "b": { "mapId": "BambooRoute1", "rect": { "tileX": 11, "tileY": 55, "w": 1, "h": 1 }, "spawn": { "tileX": 11, "tileY": 54 }, "facing": "up" }
+    },
+    {
+      "id": "portal-44",
+      "a": { "mapId": "interior_house2", "rect": { "tileX": 3, "tileY": 7, "w": 1, "h": 1 }, "spawn": { "tileX": 3, "tileY": 6 }, "facing": "up" },
+      "b": { "mapId": "farmlands", "rect": { "tileX": 38, "tileY": 20, "w": 1, "h": 1 }, "spawn": { "tileX": 38, "tileY": 21 }, "facing": "down" }
+    },
+    {
+      "id": "portal-45",
+      "a": { "mapId": "interior_shop4", "rect": { "tileX": 5, "tileY": 8, "w": 1, "h": 1 }, "spawn": { "tileX": 5, "tileY": 7 }, "facing": "up" },
+      "b": { "mapId": "farmlands", "rect": { "tileX": 68, "tileY": 31, "w": 1, "h": 1 }, "spawn": { "tileX": 68, "tileY": 32 }, "facing": "down" }
+    },
+    {
+      "id": "portal-46",
+      "a": { "mapId": "interior_hospital5", "rect": { "tileX": 13, "tileY": 20, "w": 1, "h": 1 }, "spawn": { "tileX": 13, "tileY": 19 }, "facing": "up" },
+      "b": { "mapId": "farmlands", "rect": { "tileX": 58, "tileY": 32, "w": 1, "h": 1 }, "spawn": { "tileX": 58, "tileY": 33 }, "facing": "down" }
+    },
+    {
+      "id": "portal-47",
+      "a": { "mapId": "interior_farmlandsdojo", "rect": { "tileX": 6, "tileY": 16, "w": 1, "h": 1 }, "spawn": { "tileX": 6, "tileY": 15 }, "facing": "up" },
+      "b": { "mapId": "farmlands", "rect": { "tileX": 77, "tileY": 29, "w": 1, "h": 1 }, "spawn": { "tileX": 77, "tileY": 30 }, "facing": "down" }
+    },
+    {
+      "id": "portal-48",
+      "a": { "mapId": "TreeHome", "rect": { "tileX": 5, "tileY": 9, "w": 1, "h": 1 }, "spawn": { "tileX": 5, "tileY": 8 }, "facing": "up" },
+      "b": { "mapId": "farmlands", "rect": { "tileX": 41, "tileY": 46, "w": 1, "h": 1 }, "spawn": { "tileX": 41, "tileY": 47 }, "facing": "down" }
+    },
+    {
+      "id": "portal-7",
+      "a": { "mapId": "TemplateMap", "rect": { "tileX": 27, "tileY": 5, "w": 1, "h": 1 }, "spawn": { "tileX": 27, "tileY": 6 }, "facing": "down" },
+      "b": { "mapId": "TemplateMap", "rect": { "tileX": 5, "tileY": 14, "w": 1, "h": 1 }, "spawn": { "tileX": 5, "tileY": 13 }, "facing": "up" }
+    }
+  ]
+}

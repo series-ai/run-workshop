@@ -1,0 +1,22 @@
+{
+  "id": "ruin-keeper-vesh",
+  "name": "Ruin Keeper Vesh",
+  "character": "Cavegirl2",
+  "dialogue": [
+    "I keep what was broken. My team is what was salvaged.",
+    "Don't mistake reclaimed for weakened.",
+    "Prove you deserve to walk among these stones."
+  ],
+  "preBattleLine": "Vesh's team rises from the rubble — they've been waiting.",
+  "trainerParty": [
+    { "specId": "basalt_gnasher",     "element": "stone", "rarity": "epic",   "level": 8 },
+    { "specId": "prism_wyrm",         "element": "neon",  "rarity": "epic",   "level": 8 },
+    { "specId": "caustic_nibbler",    "element": "acid",  "rarity": "rare",   "level": 9 },
+    { "specId": "cinder_crown_titan", "element": "lava",  "rarity": "mythic", "level": 9 }
+  ],
+  "trainerReward": 320,
+  "postDefeatDialogue": [
+    "The keeper's duty ends when the worthy arrive.",
+    "Somewhere in the far reaches, something worse is waiting for you."
+  ]
+}

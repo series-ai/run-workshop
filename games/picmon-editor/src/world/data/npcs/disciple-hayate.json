@@ -1,0 +1,41 @@
+{
+  "id": "disciple-hayate",
+  "name": "Hayate the Stormblade",
+  "character": "NinjaThunder",
+  "stationary": true,
+  "dialogue": [
+    "Courage. The fourth pillar.",
+    "The storm doesn’t wait for you to be ready. Wind, thunder, and tempest — they strike first.",
+    "Can you stand in the eye and still fight?"
+  ],
+  "preBattleLine": "Lightning arcs between Hayate’s fingers. Thunder shakes the rafters.",
+  "postDefeatDialogue": [
+    "Hayate sheathes his blade. The storm calms.",
+    "You stood in it. Akari is the last — she guards wisdom, and she shows no mercy."
+  ],
+  "trainerParty": [
+    {
+      "specId": "galefern_sprite",
+      "element": "wind",
+      "rarity": "rare",
+      "level": 21
+    },
+    {
+      "specId": "gleamjaw_voltbeast",
+      "element": "thunder",
+      "rarity": "rare",
+      "level": 22
+    },
+    {
+      "specId": "thunderwisp_tyrant",
+      "element": "storm",
+      "rarity": "epic",
+      "level": 21
+    }
+  ],
+  "trainerReward": 1000,
+  "homeMapId": "interior_dojo",
+  "moodEmotes": [
+    "emote7"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "trainer-mqzv48s0",
+  "name": "trainer",
+  "character": "Caveman",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "You there! No one crosses my stretch of the cave without a battle!"
+  ],
+  "postDefeatDialogue": [
+    "Tch. You're tougher than the rockslides down here."
+  ],
+  "trainerParty": [
+    { "element": "stone", "rarity": "uncommon", "level": 18, "environment": "cave" }
+  ],
+  "trainerReward": 250
+}

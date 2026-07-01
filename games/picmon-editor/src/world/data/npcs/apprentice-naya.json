@@ -1,0 +1,31 @@
+{
+  "id": "apprentice-naya",
+  "name": "Apprentice Naya",
+  "character": "GoldStatue",
+  "dialogue": [
+    "You've got the look of a first-timer.",
+    "Don't feel bad — everyone starts somewhere.",
+    "But I started yesterday. Let's see what you've got."
+  ],
+  "preBattleLine": "Naya flicks dust off her sleeves — here she comes!",
+  "postDefeatDialogue": [
+    "Wow. You've done this before.",
+    "Have you seen the poster? The Five Pillars Dojo is looking for challengers.",
+    "I'm not strong enough yet\u2026 but you might be. Keep going."
+  ],
+  "trainerParty": [
+    {
+      "specId": "basalt_brawler",
+      "element": "stone",
+      "rarity": "common",
+      "level": 2
+    },
+    {
+      "specId": "cinder_mite",
+      "element": "fire",
+      "rarity": "uncommon",
+      "level": 3
+    }
+  ],
+  "trainerReward": 50
+}

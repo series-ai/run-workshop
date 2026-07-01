@@ -1,0 +1,17 @@
+{
+  "id": "trainer-mqzw489g",
+  "name": "Fern",
+  "character": "NinjaLeaf",
+  "homeMapId": "OrangeRoute",
+  "dialogue": [
+    "Every leaf that falls, I take another step toward the dojo. Care to slow me down?"
+  ],
+  "postDefeatDialogue": [
+    "A setback, nothing more. The dojo can wait one more day."
+  ],
+  "trainerParty": [
+    { "element": "wind", "rarity": "rare", "level": 19, "environment": "forest" },
+    { "element": "nature", "rarity": "rare", "level": 20, "environment": "forest" }
+  ],
+  "trainerReward": 380
+}

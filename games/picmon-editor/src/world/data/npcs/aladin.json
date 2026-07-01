@@ -1,0 +1,13 @@
+{
+  "id": "aladin",
+  "name": "aladin",
+  "character": "CamouflageRed",
+  "stationary": true,
+  "dialogue": [
+    "I got nothin... come back later."
+  ],
+  "homeMapId": "interior_shop2",
+  "moodEmotes": [
+    "emote11"
+  ]
+}

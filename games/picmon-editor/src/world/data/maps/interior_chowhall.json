@@ -1,0 +1,9 @@
+{
+  "id": "interior_chowhall",
+  "spawns": {
+    "default": { "tileX": 4, "tileY": 8 }
+  },
+  "placements": [
+
+  ]
+}

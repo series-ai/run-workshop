@@ -1,0 +1,10 @@
+{
+  "id": "bandit-mqzv117h",
+  "name": "bandit",
+  "character": "NinjaMasked",
+  "dialogue": [
+    "Heh. Not many are brave — or foolish — enough to wander this deep.",
+    "Keep your coin close, friend. These tunnels aren't as empty as they look."
+  ],
+  "homeMapId": "cave2"
+}

@@ -1,0 +1,12 @@
+{
+  "id": "professor",
+  "name": "Prof. Mira",
+  "character": "Cavegirl2",
+  "stationary": true,
+  "dialogue": [
+    "Fascinating! Every Picmon is unique.",
+    "Snap a photo of anything — even a rock or a snack.",
+    "The AI reads its essence and builds a Picmon from it.",
+    "The world is full of monsters waiting to be discovered."
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "credit-mr19btt7",
+  "name": "credit",
+  "character": "Cavegirl",
+  "homeMapId": "TemplateMap",
+  "dialogue": [
+    "credit to pixel-boy for making this great 16 x 16 pixel art asset pack!",
+    "It's the Ninja Adventure pack with some edits and new stuff by Barker.",
+    "It's CC0 but you should be a nice dev and credit them.",
+    "https://pixel-boy.itch.io/ninja-adventure-asset-pack"
+  ],
+  "moodEmotes": [
+    "emote11"
+  ]
+}

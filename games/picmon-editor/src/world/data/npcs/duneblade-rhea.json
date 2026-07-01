@@ -1,0 +1,21 @@
+{
+  "id": "duneblade-rhea",
+  "name": "Duneblade Rhea",
+  "character": "CamouflageRed",
+  "dialogue": [
+    "The sand remembers every boot that pressed it.",
+    "Yours are still clean. Mine are buried to the ankle.",
+    "Draw steel, trainer."
+  ],
+  "preBattleLine": "Rhea's blade arcs into the sun — the duel begins!",
+  "trainerParty": [
+    { "specId": "cinder_mite",        "element": "fire",  "rarity": "uncommon", "level": 6 },
+    { "specId": "basalt_gnasher",     "element": "stone", "rarity": "epic",     "level": 6 },
+    { "specId": "cinder_crown_titan", "element": "lava",  "rarity": "mythic",   "level": 7 }
+  ],
+  "trainerReward": 200,
+  "postDefeatDialogue": [
+    "A proper duel. Steel sings when it's answered.",
+    "Travel east if you want to feel small again."
+  ]
+}

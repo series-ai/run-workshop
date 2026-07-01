@@ -1,0 +1,18 @@
+{
+  "id": "trainer-mqzv58ps",
+  "name": "trainer",
+  "character": "FighterRed",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "Few make it this deep. Fewer make it past me."
+  ],
+  "postDefeatDialogue": [
+    "...Then you're one of the few. Go on."
+  ],
+  "trainerParty": [
+    { "element": "obsidian", "rarity": "rare", "level": 25, "environment": "cave" },
+    { "element": "bone", "rarity": "rare", "level": 25, "environment": "cave" },
+    { "element": "shadow", "rarity": "rare", "level": 24, "environment": "cave" }
+  ],
+  "trainerReward": 500
+}

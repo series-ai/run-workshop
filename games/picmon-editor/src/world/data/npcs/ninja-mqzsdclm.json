@@ -1,0 +1,18 @@
+{
+  "id": "ninja-mqzsdclm",
+  "name": "ninja",
+  "character": "ShamanLion",
+  "homeMapId": "interior_farmlandsdojo",
+  "dialogue": [
+    "I came to these quiet farmlands to sharpen my spirit. The dojo gives me the stillness I need."
+  ],
+  "postDefeatDialogue": [
+    "My spirit stays calm, even in defeat. Well fought, traveler."
+  ],
+  "trainerParty": [
+    { "element": "martial", "rarity": "rare", "level": 24, "environment": "martial" },
+    { "element": "martial", "rarity": "rare", "level": 25, "environment": "martial" },
+    { "element": "martial", "rarity": "rare", "level": 26, "environment": "martial" }
+  ],
+  "trainerReward": 500
+}

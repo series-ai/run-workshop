@@ -1,0 +1,12 @@
+{
+  "id": "wild-lion",
+  "name": "Wild Cave Lion",
+  "character": "CaveLion2",
+  "dialogue": [
+    "*a cave lion eyes you warily*",
+    "*it snorts, unimpressed, and paces away*"
+  ],
+  "moodEmotes": [
+    "emote12"
+  ]
+}

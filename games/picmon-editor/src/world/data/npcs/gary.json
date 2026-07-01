@@ -1,0 +1,14 @@
+{
+  "id": "gary",
+  "name": "gary",
+  "character": "OldMan2",
+  "dialogue": [
+    "Welcome to my potion shop!",
+    "I don't feel like working right now so...",
+    ";)"
+  ],
+  "homeMapId": "potionshop",
+  "moodEmotes": [
+    "emote2"
+  ]
+}

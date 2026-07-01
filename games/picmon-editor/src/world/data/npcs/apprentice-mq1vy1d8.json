@@ -1,0 +1,12 @@
+{
+  "id": "apprentice-mq1vy1d8",
+  "name": "Apprentice",
+  "character": "EggBoy",
+  "homeMapId": "interior_shop3",
+  "dialogue": [
+    "Did you know? Mixing these herbs just right creates the most marvelous effects!"
+  ],
+  "moodEmotes": [
+    "emote11"
+  ]
+}

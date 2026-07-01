@@ -1,0 +1,28 @@
+{
+  "id": "trainertower",
+  "spawns": {
+    "default": { "tileX": 54, "tileY": 31 }
+  },
+  "placements": [
+
+  ],
+  "objects": [
+    { "image": "Animated/Flower/flower.png", "tileX": 36, "tileY": 27 },
+    { "image": "Animated/Flower/flower.png", "tileX": 40, "tileY": 28 },
+    { "image": "Animated/Flower/flower.png", "tileX": 41, "tileY": 32 },
+    { "image": "Animated/Flower/flower.png", "tileX": 49, "tileY": 27 },
+    { "image": "Animated/Flower/flower.png", "tileX": 66, "tileY": 32 },
+    { "image": "Animated/Flower/flower.png", "tileX": 68, "tileY": 28 },
+    { "image": "Animated/Flower/flower.png", "tileX": 21, "tileY": 32 },
+    { "image": "Animated/Flower/flower.png", "tileX": 17, "tileY": 22 },
+    { "image": "Animated/Flower/flower.png", "tileX": 6, "tileY": 17 },
+    { "image": "Animated/Flower/flower.png", "tileX": 30, "tileY": 34 },
+    { "image": "Animated/Flower/flower.png", "tileX": 46, "tileY": 41 },
+    { "image": "Animated/Flower/flower.png", "tileX": 57, "tileY": 39 },
+    { "image": "Animated/Flower/flower.png", "tileX": 63, "tileY": 37 },
+    { "image": "Animated/Flower/flower.png", "tileX": 55, "tileY": 21 },
+    { "image": "Animated/Flower/flower.png", "tileX": 59, "tileY": 12 },
+    { "image": "Animated/Flag/FlagBlack16x16.png", "tileX": 19, "tileY": 18, "drawOrder": "overlay" },
+    { "image": "Animated/Flag/FlagBlack16x16.png", "tileX": 19, "tileY": 17, "drawOrder": "overlay" }
+  ]
+}

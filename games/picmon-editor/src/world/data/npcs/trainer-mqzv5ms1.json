@@ -1,0 +1,18 @@
+{
+  "id": "trainer-mqzv5ms1",
+  "name": "trainer",
+  "character": "SkeletonDemon",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "End of the line, trainer. Prove you belong down here!"
+  ],
+  "postDefeatDialogue": [
+    "You've earned your way through. The depths are yours."
+  ],
+  "trainerParty": [
+    { "element": "shadow", "rarity": "rare", "level": 27, "environment": "cave" },
+    { "element": "obsidian", "rarity": "superior", "level": 28, "environment": "cave" },
+    { "element": "bone", "rarity": "rare", "level": 27, "environment": "cave" }
+  ],
+  "trainerReward": 650
+}

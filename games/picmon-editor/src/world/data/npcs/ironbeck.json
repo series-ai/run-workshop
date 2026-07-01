@@ -1,0 +1,21 @@
+{
+  "id": "ironbeck",
+  "name": "Ironbeck",
+  "character": "EggGirl",
+  "dialogue": [
+    "These walls are mineral and bone — same as my picmon.",
+    "If you can't read the rock, you can't read the fight.",
+    "Show me what your team's made of."
+  ],
+  "preBattleLine": "Ironbeck cracks her knuckles. The crystals on her belt hum.",
+  "trainerParty": [
+    { "element": "steel", "rarity": "rare", "level": 10 },
+    { "element": "crystal", "rarity": "rare", "level": 11 },
+    { "element": "obsidian", "rarity": "rare", "level": 12 }
+  ],
+  "trainerReward": 250,
+  "postDefeatDialogue": [
+    "Hmph. You read the rock just fine.",
+    "Deeper in, the cave gets meaner. Don't let your guard down."
+  ]
+}

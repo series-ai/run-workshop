@@ -1,0 +1,18 @@
+{
+  "id": "trainer-mqzxqzj8",
+  "name": "Sir Garrick",
+  "character": "Knight",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "So — you made it up Orange Route in one piece. Welcome to the royal capital, traveler.",
+    "But the capital tests its visitors all the same. Show me what that gauntlet taught you!"
+  ],
+  "postDefeatDialogue": [
+    "Ha! You've earned your place within these walls. Well met."
+  ],
+  "trainerParty": [
+    { "element": "steel", "rarity": "rare", "level": 28 },
+    { "element": "crystal", "rarity": "rare", "level": 29 }
+  ],
+  "trainerReward": 700
+}

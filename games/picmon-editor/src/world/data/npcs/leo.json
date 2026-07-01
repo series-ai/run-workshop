@@ -1,0 +1,12 @@
+{
+  "id": "leo",
+  "name": "leo",
+  "character": "Hunter",
+  "dialogue": [
+    "I have been fishing and hunting in these parts for years."
+  ],
+  "homeMapId": "interior_tinyhome",
+  "moodEmotes": [
+    "emote14"
+  ]
+}

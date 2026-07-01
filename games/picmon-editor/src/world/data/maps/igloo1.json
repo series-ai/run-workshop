@@ -1,0 +1,8 @@
+{
+  "id": "igloo1",
+  "spawns": {
+    "default": { "tileX": 4, "tileY": 5 }
+  },
+  "placements": [],
+  "battleBgFrame": "snowtown"
+}

@@ -1,0 +1,18 @@
+{
+  "id": "trainer-mqzw53n6",
+  "name": "Ronin Akio",
+  "character": "Samurai",
+  "homeMapId": "OrangeRoute",
+  "dialogue": [
+    "I've battled this route for years, waiting for the day I'm worthy of the capital dojo. Show me your resolve."
+  ],
+  "postDefeatDialogue": [
+    "Such resolve... perhaps it is your name they'll call at the dojo, not mine."
+  ],
+  "trainerParty": [
+    { "element": "spirit", "rarity": "rare", "level": 25, "environment": "forest" },
+    { "element": "nature", "rarity": "superior", "level": 26, "environment": "forest" },
+    { "element": "venom", "rarity": "rare", "level": 25, "environment": "forest" }
+  ],
+  "trainerReward": 620
+}

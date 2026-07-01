@@ -1,0 +1,10 @@
+{
+  "id": "trainertowerlobby1",
+  "battleBgFrame": "tower",
+  "spawns": {
+    "default": { "tileX": 11, "tileY": 2 }
+  },
+  "placements": [
+
+  ]
+}

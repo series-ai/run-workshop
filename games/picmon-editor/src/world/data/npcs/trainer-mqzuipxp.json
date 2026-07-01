@@ -1,0 +1,18 @@
+{
+  "id": "trainer-mqzuipxp",
+  "name": "Brother Magnus",
+  "character": "Monk",
+  "homeMapId": "Forest2",
+  "dialogue": [
+    "I wander these forest trails seeking strong opponents. Care to test your bond against mine?"
+  ],
+  "postDefeatDialogue": [
+    "A worthy bond. May it carry you far down the trail."
+  ],
+  "trainerParty": [
+    { "element": "spirit", "rarity": "uncommon", "level": 16, "environment": "forest" },
+    { "element": "venom", "rarity": "rare", "level": 17, "environment": "forest" },
+    { "element": "nature", "rarity": "rare", "level": 18, "environment": "forest" }
+  ],
+  "trainerReward": 500
+}

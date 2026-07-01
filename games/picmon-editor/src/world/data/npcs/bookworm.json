@@ -1,0 +1,14 @@
+{
+  "id": "bookworm",
+  "name": "bookworm",
+  "character": "Shaman",
+  "dialogue": [
+    "I wish I could just eat and read books all day.",
+    "Feel free to borrow from my collection...",
+    "but none of the books from behind the curtain. "
+  ],
+  "homeMapId": "interior_tinyhome2",
+  "moodEmotes": [
+    "emote18"
+  ]
+}

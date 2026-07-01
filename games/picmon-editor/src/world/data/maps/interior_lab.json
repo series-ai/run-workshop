@@ -1,0 +1,9 @@
+{
+  "id": "interior_lab",
+  "spawns": {
+    "default": { "tileX": 5, "tileY": 6 }
+  },
+  "placements": [
+    { "npcId": "professor", "tileX": 3, "tileY": 4 }
+  ]
+}

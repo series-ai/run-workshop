@@ -1,0 +1,41 @@
+{
+  "id": "snow-disciple-tindra",
+  "name": "Tindra the Aurora",
+  "character": "NinjaMageOrange",
+  "stationary": true,
+  "dialogue": [
+    "Tindra. Third — last.",
+    "Mist obscures, ice endures, but the AURORA decides. Light is the verdict the cold delivers.",
+    "Brisa and Glacien made you wait. I won't."
+  ],
+  "preBattleLine": "Ribbons of green and violet light snap into the dojo above Tindra's shoulders.",
+  "postDefeatDialogue": [
+    "Tindra dims the lights with a slow exhale.",
+    "\"Master Aurora is in the hall beyond. The Veil opens for you now.\""
+  ],
+  "trainerParty": [
+    {
+      "element": "spark",
+      "rarity": "epic",
+      "level": 55,
+      "environment": "snow"
+    },
+    {
+      "element": "light",
+      "rarity": "epic",
+      "level": 57,
+      "environment": "snow"
+    },
+    {
+      "element": "storm",
+      "rarity": "legendary",
+      "level": 58,
+      "environment": "snow"
+    }
+  ],
+  "trainerReward": 2000,
+  "homeMapId": "snow_town",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

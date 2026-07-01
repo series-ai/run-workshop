@@ -1,0 +1,17 @@
+{
+  "id": "trainer-mqzw4gkz",
+  "name": "Bruiser Hal",
+  "character": "FighterRed",
+  "homeMapId": "OrangeRoute",
+  "dialogue": [
+    "Beat me here and you might just survive the capital dojo. Come on, then!"
+  ],
+  "postDefeatDialogue": [
+    "Tch! Maybe you're the one bound for the dojo, not me."
+  ],
+  "trainerParty": [
+    { "element": "nature", "rarity": "rare", "level": 22, "environment": "forest" },
+    { "element": "fungus", "rarity": "rare", "level": 23, "environment": "forest" }
+  ],
+  "trainerReward": 460
+}

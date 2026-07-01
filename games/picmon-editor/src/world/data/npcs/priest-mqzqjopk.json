@@ -1,0 +1,11 @@
+{
+  "id": "priest-mqzqjopk",
+  "name": "priest",
+  "character": "CamouflageRed",
+  "homeMapId": "farmlands",
+  "dialogue": [
+    "Welcome, traveler. Tread softly — this ground is hallowed.",
+    "Here we lay our friends to rest beneath the open farmland sky.",
+    "Even the smallest Picmon is mourned when its time comes. All who lived are honored here."
+  ]
+}

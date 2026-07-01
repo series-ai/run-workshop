@@ -1,0 +1,31 @@
+{
+  "id": "gen-snow-6",
+  "name": "Sage Ezra",
+  "character": "EggBoy",
+  "dialogue": [
+    "Step up and face me."
+  ],
+  "preBattleLine": "Hold up. Let’s see what you’ve got.",
+  "trainerParty": [
+    {
+      "element": "crystal",
+      "rarity": "epic",
+      "level": 53,
+      "environment": "snow"
+    },
+    {
+      "element": "light",
+      "rarity": "epic",
+      "level": 55,
+      "environment": "snow"
+    },
+    {
+      "element": "spirit",
+      "rarity": "mythic",
+      "level": 57,
+      "environment": "snow"
+    }
+  ],
+  "trainerReward": 227,
+  "homeMapId": "snow_town"
+}

@@ -1,0 +1,50 @@
+{
+  "id": "conqueror-umbra",
+  "name": "Conqueror Umbra",
+  "character": "CaveLion",
+  "stationary": true,
+  "dialogue": [
+    "Every trainer you beat to reach me is a name I know.",
+    "Past the boat lies the Lost Ruins — and I am the second seal.",
+    "Begin."
+  ],
+  "preBattleLine": "Umbra doesn't speak — she simply moves.",
+  "postDefeatDialogue": [
+    "My name was the last on the list. Yours is the only one left.",
+    "The seal breaks. The boatman will take you across — the Lost Ruins answer to you now."
+  ],
+  "trainerParty": [
+    {
+      "specId": "basalt_gnasher",
+      "element": "stone",
+      "rarity": "mythic",
+      "level": 46
+    },
+    {
+      "specId": "prism_wyrm",
+      "element": "neon",
+      "rarity": "mythic",
+      "level": 47
+    },
+    {
+      "specId": "cinder_crown_titan",
+      "element": "lava",
+      "rarity": "legendary",
+      "level": 48
+    },
+    {
+      "specId": "mossfang_sprite",
+      "element": "shadow",
+      "rarity": "legendary",
+      "level": 49
+    },
+    {
+      "specId": "arc_lightning_golem",
+      "element": "static",
+      "rarity": "ancient",
+      "level": 50
+    }
+  ],
+  "trainerReward": 4500,
+  "blocksPassage": true
+}

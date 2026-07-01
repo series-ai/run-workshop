@@ -1,0 +1,14 @@
+{
+  "id": "nurse1",
+  "name": "Debbi",
+  "character": "Woman",
+  "kind": "heal",
+  "dialogue": [
+    "Let me heal you up \u2014 a few Coins per HP and your party walks out fresh.",
+    "First visit's on the house. After that just a small fee per wound."
+  ],
+  "homeMapId": "interior_hospital2",
+  "moodEmotes": [
+    "emote27"
+  ]
+}

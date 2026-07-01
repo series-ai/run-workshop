@@ -1,0 +1,39 @@
+{
+  "id": "rival",
+  "name": "Hunter Ryx",
+  "character": "CamouflageRed",
+  "dialogue": [
+    "You again? Think you can match my count?",
+    "Three monsters before sunrise. I'm headed to the Five Pillars Dojo.",
+    "Going to be the youngest trainer to crack their gauntlet. You in my way or beside me?",
+    "Prove it. Now."
+  ],
+  "preBattleLine": "Hunter Ryx unleashes the pack!",
+  "postDefeatDialogue": [
+    "Tch. Beginner's luck.",
+    "I'll see you at the dojo gates."
+  ],
+  "trainerParty": [
+    {
+      "element": "dust",
+      "rarity": "rare",
+      "level": 3
+    },
+    {
+      "specId": "sporecap_lurker",
+      "element": "fungus",
+      "rarity": "rare",
+      "level": 3
+    },
+    {
+      "specId": "briarspike_viper",
+      "element": "venom",
+      "rarity": "rare",
+      "level": 1
+    }
+  ],
+  "trainerReward": 75,
+  "moodEmotes": [
+    "emote28"
+  ]
+}

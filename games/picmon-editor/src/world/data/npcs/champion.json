@@ -1,0 +1,22 @@
+{
+  "id": "champion",
+  "name": "Champion Kaev",
+  "character": "CamouflageRed",
+  "dialogue": [
+    "You’ve cleaved a path here. Few do.",
+    "I am the last gate before the deep ruins.",
+    "Convince me you belong in them."
+  ],
+  "preBattleLine": "Champion Kaev takes a stance — this is it!",
+  "trainerParty": [
+    { "specId": "basalt_gnasher",      "element": "stone",  "rarity": "epic",      "level": 6 },
+    { "specId": "prism_wyrm",          "element": "neon",   "rarity": "epic",      "level": 7 },
+    { "specId": "cinder_crown_titan",  "element": "lava",   "rarity": "mythic",    "level": 7 },
+    { "specId": "arc_lightning_golem", "element": "static", "rarity": "legendary", "level": 8 }
+  ],
+  "trainerReward": 500,
+  "postDefeatDialogue": [
+    "Champion no longer. The title is yours, traveler.",
+    "The deep ruins await. May they fear you."
+  ]
+}

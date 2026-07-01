@@ -1,0 +1,19 @@
+{
+  "id": "trainer-mqzxql99",
+  "name": "Warden Mortis",
+  "character": "SorcererBlack",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "Turn back. The road behind me leads to the Deadlands — sealed by royal decree, and for good reason.",
+    "You wish to test the one who guards the gate? ...Very well. Do not say you weren't warned."
+  ],
+  "postDefeatDialogue": [
+    "...Strength alone won't save you beyond that gate. Pray it stays shut a while longer."
+  ],
+  "trainerParty": [
+    { "element": "shadow", "rarity": "superior", "level": 40 },
+    { "element": "bone", "rarity": "superior", "level": 41 },
+    { "element": "void", "rarity": "epic", "level": 42 }
+  ],
+  "trainerReward": 1500
+}

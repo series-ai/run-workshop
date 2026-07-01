@@ -1,0 +1,13 @@
+{
+  "id": "historian-mq1vpny3",
+  "name": "Historian",
+  "character": "Lion",
+  "stationary": true,
+  "homeMapId": "interior_longhouse",
+  "dialogue": [
+    "Legend speaks of ancient battles fought on these very shores by colossal beings"
+  ],
+  "moodEmotes": [
+    "emote12"
+  ]
+}

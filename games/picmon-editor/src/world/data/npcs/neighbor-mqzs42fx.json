@@ -1,0 +1,11 @@
+{
+  "id": "neighbor-mqzs42fx",
+  "name": "Otis",
+  "character": "MaskRacoon",
+  "homeMapId": "interior_house2",
+  "dialogue": [
+    "Oh, hello there! Don't mind the mess — I wasn't expecting company today.",
+    "I live just down the lane. Been neighbors with this little row of farmhouses my whole life.",
+    "If you ever need a cup of sugar or a hand mending a fence, you know where to find me."
+  ]
+}

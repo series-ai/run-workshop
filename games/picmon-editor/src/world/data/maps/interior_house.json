@@ -1,0 +1,9 @@
+{
+  "id": "interior_house",
+  "spawns": {
+    "default": { "tileX": 4, "tileY": 4 }
+  },
+  "placements": [
+    { "npcId": "homeowner", "tileX": 5, "tileY": 2 }
+  ]
+}

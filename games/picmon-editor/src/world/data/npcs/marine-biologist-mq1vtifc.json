@@ -1,0 +1,9 @@
+{
+  "id": "marine-biologist-mq1vtifc",
+  "name": "Marine Biologist",
+  "character": "OldMan2",
+  "homeMapId": "interior_longhouse",
+  "dialogue": [
+    "I’m certain there's still undiscovered creatures deep in the trenches offshore."
+  ]
+}

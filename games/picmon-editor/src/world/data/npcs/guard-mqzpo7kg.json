@@ -1,0 +1,11 @@
+{
+  "id": "guard-mqzpo7kg",
+  "name": "guard",
+  "character": "Knight",
+  "stationary": true,
+  "faceDirection": "down",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "Move along. The palace steps are no place to loiter."
+  ]
+}

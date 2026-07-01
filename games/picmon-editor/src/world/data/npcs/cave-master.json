@@ -1,0 +1,55 @@
+{
+  "id": "cave-master",
+  "name": "Master Vorgath the Stone-Forged",
+  "character": "Caveman2",
+  "stationary": true,
+  "dialogue": [
+    "So. Veyra, Selene, and Ignis stepped aside for you.",
+    "Most who reach this stone don't. The cave eats them, or my students do.",
+    "I forged this sanctum from rubble after the surface burned. Down here we test what lasts.",
+    "Show me what the cave taught you. Don't insult me with anything less."
+  ],
+  "preBattleLine": "Vorgath rises. The chamber goes still. Even the dripping water seems to hold its breath.",
+  "postDefeatDialogue": [
+    "Vorgath kneels and pounds his fist into the cave floor once.",
+    "\"You’re forged. The sanctum recognizes you.\"",
+    "He stands. \"The road from here is your own — but the stone remembers your name.\""
+  ],
+  "trainerParty": [
+    {
+      "element": "stone",
+      "rarity": "epic",
+      "level": 36,
+      "environment": "cave"
+    },
+    {
+      "element": "obsidian",
+      "rarity": "epic",
+      "level": 37,
+      "environment": "cave"
+    },
+    {
+      "element": "crystal",
+      "rarity": "rare",
+      "level": 37,
+      "environment": "cave"
+    },
+    {
+      "element": "lava",
+      "rarity": "epic",
+      "level": 38,
+      "environment": "cave"
+    },
+    {
+      "element": "steel",
+      "rarity": "legendary",
+      "level": 40,
+      "environment": "cave"
+    }
+  ],
+  "trainerReward": 2500,
+  "homeMapId": "cave1",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

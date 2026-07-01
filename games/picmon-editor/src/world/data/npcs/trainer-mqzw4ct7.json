@@ -1,0 +1,17 @@
+{
+  "id": "trainer-mqzw4ct7",
+  "name": "Brother Tomas",
+  "character": "Monk2",
+  "homeMapId": "OrangeRoute",
+  "dialogue": [
+    "I walk this path between capital and farm, seeking battles to temper my spirit."
+  ],
+  "postDefeatDialogue": [
+    "A humbling loss. I am grateful for the lesson."
+  ],
+  "trainerParty": [
+    { "element": "spirit", "rarity": "rare", "level": 21, "environment": "forest" },
+    { "element": "venom", "rarity": "rare", "level": 21, "environment": "forest" }
+  ],
+  "trainerReward": 420
+}

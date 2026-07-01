@@ -1,0 +1,62 @@
+{
+  "id": "master",
+  "name": "Master Kenji",
+  "character": "FighterWhite",
+  "stationary": true,
+  "dialogue": [
+    "So. The Five Pillars stepped aside for you.",
+    "Daichi for discipline. Tsubaki for endurance. Kaen for focus. Hayate for courage. Akari for wisdom.",
+    "What they teach in pieces, I will test in full.",
+    "Show me what the road taught you. No shortcuts. No mercy.",
+    "Begin."
+  ],
+  "preBattleLine": "Master Kenji rises from his mat without a sound. The room goes still.",
+  "postDefeatDialogue": [
+    "Kenji exhales, then bows — deeper than tradition demands.",
+    "There is nothing more I can teach you. The road from here is yours to draw.",
+    "The dojo — and the title — belong to you now."
+  ],
+  "trainerParty": [
+    {
+      "specId": "cinder_crown_titan",
+      "element": "fire",
+      "rarity": "epic",
+      "level": 25
+    },
+    {
+      "specId": "basalt_gnasher",
+      "element": "stone",
+      "rarity": "epic",
+      "level": 24
+    },
+    {
+      "specId": "prism_wyrm",
+      "element": "crystal",
+      "rarity": "legendary",
+      "level": 20
+    },
+    {
+      "specId": "arc_lightning_golem",
+      "element": "thunder",
+      "rarity": "legendary",
+      "level": 20
+    },
+    {
+      "specId": "mossfang_sprite",
+      "element": "nature",
+      "rarity": "epic",
+      "level": 21
+    },
+    {
+      "specId": "caustic_nibbler",
+      "element": "venom",
+      "rarity": "mythic",
+      "level": 21
+    }
+  ],
+  "trainerReward": 5000,
+  "homeMapId": "interior_dojo",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

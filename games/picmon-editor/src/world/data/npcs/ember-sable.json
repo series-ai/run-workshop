@@ -1,0 +1,23 @@
+{
+  "id": "ember-sable",
+  "name": "Ember Sable",
+  "character": "SorcererOrange",
+  "homeMapId": "villageruin",
+  "dialogue": [
+    "Fire doesn\u2019t ask permission. Neither do I.",
+    "Everything past this fence belongs to the old world.",
+    "Burn or be burned."
+  ],
+  "preBattleLine": "Sable\u2019s staff erupts \u2014 heat ripples off her team!",
+  "trainerParty": [
+    { "element": "fire", "rarity": "epic", "level": 27 },
+    { "element": "lava", "rarity": "epic", "level": 28 },
+    { "element": "ember", "rarity": "mythic", "level": 28 },
+    { "element": "furnace", "rarity": "epic", "level": 29 }
+  ],
+  "trainerReward": 900,
+  "postDefeatDialogue": [
+    "The flames remember you now. That\u2019s rare.",
+    "Thornwall Rex guards the deep fence. Steel nerves required."
+  ]
+}

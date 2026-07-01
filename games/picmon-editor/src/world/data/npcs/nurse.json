@@ -1,0 +1,12 @@
+{
+  "id": "nurse",
+  "name": "Nurse Lena",
+  "character": "Cavegirl",
+  "kind": "heal",
+  "stationary": true,
+  "dialogue": [
+    "Rest your PicMon here and they'll recover fully.",
+    "First visit's on the house — after that just a few Coins for a full restore.",
+    "Come back any time the wilds bite too deep!"
+  ]
+}

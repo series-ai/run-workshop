@@ -1,0 +1,10 @@
+{
+  "id": "animalfriend-mr19ruvp",
+  "name": "animalfriend",
+  "character": "GreenPig",
+  "stationary": true,
+  "homeMapId": "TemplateMap",
+  "dialogue": [
+    "Animals can be configured to run around randomly or stick to a small area."
+  ]
+}

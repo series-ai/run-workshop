@@ -1,0 +1,78 @@
+{
+  "signs": [
+    { "id": "dojo-flier-villageruin", "mapId": "villageruin", "tileX": 27, "tileY": 37, "sprite": "sign_wide2", "kind": "dojo-poster" },
+    {
+      "id": "sign-1",
+      "mapId": "villageruin",
+      "tileX": 82,
+      "tileY": 30,
+      "sprite": "sign_1",
+      "kind": "text-dialogue",
+      "text": [
+      "Forest Path ->"
+      ]
+    },
+    {
+      "id": "sign-2",
+      "mapId": "villageruin",
+      "tileX": 75,
+      "tileY": 14,
+      "sprite": "no_sprite",
+      "kind": "text-dialogue",
+      "text": [
+      "Statue of April"
+      ]
+    },
+    {
+      "id": "sign-3",
+      "mapId": "villageruin",
+      "tileX": 21,
+      "tileY": 39,
+      "sprite": "no_sprite",
+      "kind": "mirror",
+      "label": "Mirror",
+      "text": [
+      "Who are you?"
+      ]
+    },
+    {
+      "id": "lively-dragon-warning",
+      "mapId": "snow_town",
+      "tileX": 60,
+      "tileY": 24,
+      "sprite": "sign_1",
+      "kind": "text-dialogue",
+      "label": "Lively Dragon",
+      "text": [
+      "❄ THE LIVELY DRAGON ❄",
+      "Wilds Lv. 50-99. Three times the XP for any creature that falls here.",
+      "The Champion stands further in. She does not lose. Travelers say her party is the strongest in any zone.",
+      "Turn back if you are not ready."
+      ]
+    },
+    {
+      "id": "sign-4",
+      "mapId": "Forest2",
+      "tileX": 15,
+      "tileY": 31,
+      "sprite": "sign_1",
+      "kind": "text-dialogue",
+      "text": [
+      "<-- Cave",
+      "Farmlands -->"
+      ]
+    },
+    {
+      "id": "sign-5",
+      "mapId": "TemplateMap",
+      "tileX": 14,
+      "tileY": 3,
+      "sprite": "sign_1",
+      "kind": "text-dialogue",
+      "text": [
+      "You saw the sign",
+      "and read the sign"
+      ]
+    }
+  ]
+}

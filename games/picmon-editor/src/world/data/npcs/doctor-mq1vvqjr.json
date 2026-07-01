@@ -1,0 +1,10 @@
+{
+  "id": "doctor-mq1vvqjr",
+  "name": "Doctor",
+  "character": "NinjaMageBlack",
+  "stationary": true,
+  "homeMapId": "interior_hospital4",
+  "dialogue": [
+    "Rest is just as important as any medicine; take your time recovering."
+  ]
+}

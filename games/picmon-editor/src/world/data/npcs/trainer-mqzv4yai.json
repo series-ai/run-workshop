@@ -1,0 +1,18 @@
+{
+  "id": "trainer-mqzv4yai",
+  "name": "trainer",
+  "character": "Cavegirl2",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "The deeper you go, the stronger we get. Care to find out?"
+  ],
+  "postDefeatDialogue": [
+    "Stronger than I reckoned. Press on, trainer."
+  ],
+  "trainerParty": [
+    { "element": "bone", "rarity": "rare", "level": 23, "environment": "cave" },
+    { "element": "shadow", "rarity": "rare", "level": 23, "environment": "cave" },
+    { "element": "stone", "rarity": "uncommon", "level": 22, "environment": "cave" }
+  ],
+  "trainerReward": 450
+}

@@ -1,0 +1,14 @@
+{
+  "id": "guard-mqzy22qh",
+  "name": "guard",
+  "character": "Knight",
+  "stationary": true,
+  "faceDirection": "down",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "..."
+  ],
+  "moodEmotes": [
+    "emote28"
+  ]
+}

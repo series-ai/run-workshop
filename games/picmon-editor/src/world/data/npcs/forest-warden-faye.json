@@ -1,0 +1,33 @@
+{
+  "id": "forest-warden-faye",
+  "name": "Warden Faye",
+  "character": "Villager3",
+  "dialogue": [
+    "You wandered far from the path, traveler.",
+    "I keep watch where the brambles grow thickest — the deeper forest doesn’t take kindly to strangers.",
+    "Show me your team holds together."
+  ],
+  "preBattleLine": "Faye snaps her fingers — a sapling-curled wolf bounds from the underbrush!",
+  "postDefeatDialogue": [
+    "You hold a line. Good.",
+    "Saw a poster nailed to the old oak near the ridge — the Five Pillars Dojo is calling for challengers.",
+    "\"Are You Tuff Enough?\" it said. Hah. Most trainers who walk in don’t walk out.",
+    "Press on — Jin keeps the eastern thickets. Beat him and you might actually be ready."
+  ],
+  "trainerParty": [
+    {
+      "specId": "briarglow_stag",
+      "element": "nature",
+      "rarity": "common",
+      "level": 18
+    },
+    {
+      "specId": "thornveil_hex",
+      "element": "venom",
+      "rarity": "common",
+      "level": 19
+    }
+  ],
+  "trainerReward": 200,
+  "homeMapId": "Forest1"
+}

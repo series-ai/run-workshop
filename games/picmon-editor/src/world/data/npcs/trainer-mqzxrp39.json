@@ -1,0 +1,18 @@
+{
+  "id": "trainer-mqzxrp39",
+  "name": "Gladiator Titus",
+  "character": "RedGladiator",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "The capital's arena forged me. Step up, challenger — be forged, or be broken!"
+  ],
+  "postDefeatDialogue": [
+    "Hah! The arena would roar for you. Go claim your glory."
+  ],
+  "trainerParty": [
+    { "element": "fire", "rarity": "superior", "level": 38 },
+    { "element": "martial", "rarity": "rare", "level": 38 },
+    { "element": "steel", "rarity": "epic", "level": 39 }
+  ],
+  "trainerReward": 1200
+}

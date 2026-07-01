@@ -1,0 +1,21 @@
+{
+  "id": "ironmacey",
+  "name": "Icemacey",
+  "character": "NinjaInuit",
+  "dialogue": [
+    "Iron forged in ice cuts twice.",
+    "Most who reach me leave colder than they came.",
+    "Step into the ring. Or don't."
+  ],
+  "preBattleLine": "Icemacey's breath fogs the air. Her shuriken glints frost.",
+  "trainerParty": [
+    { "element": "ice", "rarity": "rare", "level": 14 },
+    { "element": "ice", "rarity": "rare", "level": 15 },
+    { "element": "ice", "rarity": "superior", "level": 16 }
+  ],
+  "trainerReward": 380,
+  "postDefeatDialogue": [
+    "Tch. The ice broke first.",
+    "Snowflo and Snowpro guard the arch beyond. They will not break as easily."
+  ]
+}

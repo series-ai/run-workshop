@@ -1,0 +1,41 @@
+{
+  "id": "disciple-tsubaki",
+  "name": "Tsubaki the Tidebound",
+  "character": "NinjaWater",
+  "stationary": true,
+  "dialogue": [
+    "Endurance. The second pillar.",
+    "Water outlasts stone. Ice outlasts fire. Mist outlasts sight.",
+    "Can your team survive a war of attrition?"
+  ],
+  "preBattleLine": "Tsubaki draws a circle in the air. Frost crawls across the mat.",
+  "postDefeatDialogue": [
+    "Tsubaki bows. The frost melts to nothing.",
+    "You weathered the storm. Kaen burns in the east wing — his focus is absolute."
+  ],
+  "trainerParty": [
+    {
+      "specId": "brinefin_trickster",
+      "element": "water",
+      "rarity": "uncommon",
+      "level": 17
+    },
+    {
+      "specId": "blizzard_warden",
+      "element": "ice",
+      "rarity": "rare",
+      "level": 18
+    },
+    {
+      "specId": "glacier_wisp",
+      "element": "mist",
+      "rarity": "rare",
+      "level": 19
+    }
+  ],
+  "trainerReward": 600,
+  "homeMapId": "interior_dojo",
+  "moodEmotes": [
+    "emote7"
+  ]
+}

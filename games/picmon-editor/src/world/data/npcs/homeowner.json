@@ -1,0 +1,11 @@
+{
+  "id": "homeowner",
+  "name": "Villager Tomas",
+  "character": "CamouflageGreen",
+  "kind": "starter-pick",
+  "dialogue": [
+    "This place has seen better days, but we\u2019re still here. That\u2019s something.",
+    "I\u2019ve been raising a few PicMon under the porch \u2014 found their eggs in the ruins.",
+    "Pick one to take with you. The road needs a friend more than my porch does."
+  ]
+}

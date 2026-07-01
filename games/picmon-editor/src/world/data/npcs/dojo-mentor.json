@@ -1,0 +1,17 @@
+{
+  "id": "dojo-mentor",
+  "name": "Sensei Hiro",
+  "character": "Monk",
+  "homeMapId": "villageruin",
+  "dialogue": [
+    "Five Pillars Dojo, eh? I trained there long ago.",
+    "Their masters don't go easy on rookies — Earth, Fire, Water, Wind, and Void each demand a different answer.",
+    "Don't walk in green. Grind the grasslands, sharpen your bench, build a team that covers every type.",
+    "Push your mons past level 20 before you knock on their door. Higher if you can manage it.",
+    "When you're ready, the cave sanctum is north of here. Make us proud."
+  ],
+  "moodEmotes": [
+    "emote5",
+    "emote18"
+  ]
+}

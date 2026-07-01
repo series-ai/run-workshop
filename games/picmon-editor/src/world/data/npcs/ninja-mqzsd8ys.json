@@ -1,0 +1,17 @@
+{
+  "id": "ninja-mqzsd8ys",
+  "name": "ninja",
+  "character": "MonkeyBoxerBlue",
+  "homeMapId": "interior_farmlandsdojo",
+  "dialogue": [
+    "Footwork first, fists second. The dojo teaches you to master the body before the battle."
+  ],
+  "postDefeatDialogue": [
+    "Solid footing. The master will want to meet you."
+  ],
+  "trainerParty": [
+    { "element": "martial", "rarity": "uncommon", "level": 22, "environment": "martial" },
+    { "element": "martial", "rarity": "rare", "level": 23, "environment": "martial" }
+  ],
+  "trainerReward": 380
+}

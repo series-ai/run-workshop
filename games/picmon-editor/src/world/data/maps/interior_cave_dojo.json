@@ -1,0 +1,13 @@
+{
+  "id": "interior_cave_dojo",
+  "spawns": {
+    "default": { "tileX": 8, "tileY": 7 }
+  },
+  "placements": [
+    { "npcId": "cave-master", "tileX": 5, "tileY": 5 },
+    { "npcId": "cave-disciple-veyra", "tileX": 4, "tileY": 8 },
+    { "npcId": "cave-disciple-selene", "tileX": 10, "tileY": 8 },
+    { "npcId": "cave-disciple-ignis", "tileX": 8, "tileY": 3 }
+  ],
+  "battleBgFrame": "cave"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "steven-mq1mzx0u",
+  "name": "steven",
+  "character": "Villager6",
+  "stationary": true,
+  "faceDirection": "right",
+  "homeMapId": "community",
+  "dialogue": [
+    "The sea is as fickle as the weather, but patience reels in the big catches!"
+  ]
+}

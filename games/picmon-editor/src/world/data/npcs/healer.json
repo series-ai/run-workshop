@@ -1,0 +1,12 @@
+{
+  "id": "healer",
+  "name": "Mira the Healer",
+  "character": "Cavegirl",
+  "kind": "heal",
+  "stationary": true,
+  "dialogue": [
+    "Rest here, traveler. The ruins drain the unready.",
+    "Your monsters look tired — let me mend them for a few Coins.",
+    "Come back whenever the wilds bite too deep."
+  ]
+}

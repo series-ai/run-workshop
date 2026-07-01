@@ -1,0 +1,18 @@
+{
+  "id": "ninja-mqzsdful",
+  "name": "ninja",
+  "character": "NinjaDark",
+  "homeMapId": "interior_farmlandsdojo",
+  "dialogue": [
+    "Move silently, strike surely. That is the way we train within these walls."
+  ],
+  "postDefeatDialogue": [
+    "...You moved like a shadow yourself. Impressive."
+  ],
+  "trainerParty": [
+    { "element": "martial", "rarity": "rare", "level": 26, "environment": "martial" },
+    { "element": "martial", "rarity": "rare", "level": 27, "environment": "martial" },
+    { "element": "martial", "rarity": "superior", "level": 28, "environment": "martial" }
+  ],
+  "trainerReward": 600
+}

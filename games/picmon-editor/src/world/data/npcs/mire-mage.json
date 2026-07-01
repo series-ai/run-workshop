@@ -1,0 +1,23 @@
+{
+  "id": "mire-mage",
+  "name": "Mage Sylvi",
+  "character": "OldWoman",
+  "dialogue": [
+    "The mire whispers your future, child.",
+    "It says you stumble. It says you fall.",
+    "Care to disprove it?"
+  ],
+  "preBattleLine": "Sylvi murmurs — the air shimmers!",
+  "postDefeatDialogue": [
+    "Hm. The mire was wrong about you.",
+    "Take this — earned, not whispered."
+  ],
+  "trainerParty": [
+    { "specId": "arc_snail",        "element": "plasma", "rarity": "common",   "level": 2 },
+    { "specId": "mossfang_sprite",  "element": "nature", "rarity": "common",   "level": 3 }
+  ],
+  "trainerReward": 100,
+  "moodEmotes": [
+    "emote2"
+  ]
+}

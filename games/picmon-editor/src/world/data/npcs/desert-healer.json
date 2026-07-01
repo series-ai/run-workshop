@@ -1,0 +1,16 @@
+{
+  "id": "desert-healer",
+  "name": "Hapsa the Oasis-Keeper",
+  "character": "Princess",
+  "kind": "heal",
+  "stationary": true,
+  "dialogue": [
+    "Drink before you fight, traveler. The sun is hungrier than any guardian.",
+    "Lay your friends in the shade \u2014 a small Coin keeps the spring flowing.",
+    "Return whenever the dunes leave you parched. The oasis remembers every face."
+  ],
+  "homeMapId": "desert_city",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "trainertowerlobby",
+  "battleBgFrame": "tower",
+  "spawns": {
+    "default": { "tileX": 12, "tileY": 14 }
+  },
+  "placements": [
+    { "npcId": "tower-marshal-vance", "tileX": 12, "tileY": 11 }
+  ],
+  "objects": [
+    { "image": "Animated/QuickSand/quicksand.png", "tileX": 11, "tileY": 22 },
+    { "image": "Animated/QuickSand/quicksand.png", "tileX": 12, "tileY": 22 }
+  ]
+}

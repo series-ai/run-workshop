@@ -1,0 +1,27 @@
+{
+  "name": "picmon-editor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Standalone visual tile-map / world editor extracted from picmon-rpg. Edit maps, NPCs, portals, signs, and object colliders against a Sprite Fusion + JSON data model.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.3.5"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
+  }
+}

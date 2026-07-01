@@ -1,0 +1,13 @@
+{
+  "id": "mentor-mqzt1dvw",
+  "name": "mentor",
+  "character": "OldMan3",
+  "stationary": true,
+  "faceDirection": "down",
+  "homeMapId": "TreeHome",
+  "dialogue": [
+    "Ah, there you are. Every trainer needs a guiding hand now and then.",
+    "Take your time out here — the quiet of the trees has taught me more than any battle ever did.",
+    "Come speak with me whenever you need counsel. My door is always open."
+  ]
+}

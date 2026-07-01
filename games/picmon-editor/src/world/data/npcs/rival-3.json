@@ -1,0 +1,51 @@
+{
+  "id": "rival-3",
+  "name": "Hunter Ryx",
+  "character": "CamouflageRed",
+  "homeMapId": "snow_town",
+  "dialogue": [
+    "Followed you all the way to the snow.",
+    "Lost in the dojo. Master Kenji's still in my head. I won't end the journey on that.",
+    "Out here in the cold I'm sharper. Built my pack from the ground up. Five mons. Real ones.",
+    "One more fight. Whoever wins this is the better hunter \u2014 for keeps."
+  ],
+  "preBattleLine": "Hunter Ryx \u2014 final hunt.",
+  "postDefeatDialogue": [
+    "Heh. You always were ahead of me.",
+    "Take this \u2014 it's yours. You earned every step.",
+    "Until next time, hunter."
+  ],
+  "trainerParty": [
+    {
+      "specId": "briarspike_viper",
+      "element": "venom",
+      "rarity": "superior",
+      "level": 32
+    },
+    {
+      "specId": "sporecap_lurker",
+      "element": "fungus",
+      "rarity": "superior",
+      "level": 33
+    },
+    {
+      "element": "dust",
+      "rarity": "superior",
+      "level": 34
+    },
+    {
+      "element": "stone",
+      "rarity": "superior",
+      "level": 35
+    },
+    {
+      "element": "shadow",
+      "rarity": "epic",
+      "level": 36
+    }
+  ],
+  "trainerReward": 600,
+  "moodEmotes": [
+    "emote28"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "id": "Forest1",
+  "spawns": {
+    "default": { "tileX": 32, "tileY": 29 }
+  },
+  "levelOriginTile": { "tileX": 33, "tileY": 48 },
+  "placements": [
+    { "npcId": "greg", "tileX": 13, "tileY": 41 },
+    { "npcId": "catman", "tileX": 36, "tileY": 29 },
+    { "npcId": "forest-warden-faye", "tileX": 22, "tileY": 35 },
+    { "npcId": "forest-archer-jin", "tileX": 45, "tileY": 32 },
+    { "npcId": "forest-druid-ren", "tileX": 16, "tileY": 22 },
+    { "npcId": "forest-elder-koa", "tileX": 32, "tileY": 13 },
+    { "npcId": "healer", "tileX": 27, "tileY": 45 }
+  ],
+  "animals": [
+    { "type": "Frog", "tileX": 49, "tileY": 24, "wanderTiles": 3 },
+    { "type": "WildBoar", "tileX": 17, "tileY": 17, "wanderTiles": 3 },
+    { "type": "Racoon", "tileX": 20, "tileY": 44, "wanderTiles": 3 },
+    { "type": "Cat", "tileX": 29, "tileY": 30, "wanderTiles": 3 },
+    { "type": "Chicken", "sheet": "SpriteSheetBlack", "tileX": 45, "tileY": 45, "wanderTiles": 3 }
+  ],
+  "objects": [
+    { "image": "Animated/Flower/flower.png", "tileX": 35, "tileY": 44 },
+    { "image": "Animated/Flower/flower.png", "tileX": 15, "tileY": 37 },
+    { "image": "Animated/Flower/flower.png", "tileX": 17, "tileY": 29 },
+    { "image": "Animated/Flower/flower.png", "tileX": 34, "tileY": 31 },
+    { "image": "Animated/Flower/flower.png", "tileX": 34, "tileY": 35 },
+    { "image": "Animated/Flower/flower.png", "tileX": 40, "tileY": 32 },
+    { "image": "Animated/Flower/flower.png", "tileX": 48, "tileY": 32 },
+    { "image": "Animated/Flower/flower.png", "tileX": 49, "tileY": 36 },
+    { "image": "Animated/Flower/flower.png", "tileX": 46, "tileY": 40 },
+    { "image": "Animated/Flower/flower.png", "tileX": 50, "tileY": 26 },
+    { "image": "Animated/Flower/flower.png", "tileX": 47, "tileY": 18 },
+    { "image": "Animated/Flower/flower.png", "tileX": 36, "tileY": 23 },
+    { "image": "Animated/Flower/flower.png", "tileX": 27, "tileY": 21 },
+    { "image": "Animated/Flower/flower.png", "tileX": 15, "tileY": 18 },
+    { "image": "Animated/Flower/flower.png", "tileX": 28, "tileY": 10 },
+    { "image": "Animated/Flower/flower.png", "tileX": 33, "tileY": 11 }
+  ],
+  "grassPatchLevels": {
+    "29,41": { "min": 15, "max": 15 },
+    "19,35": { "min": 1, "max": 17 },
+    "19,31": { "min": 12, "max": 20 },
+    "39,33": { "min": 18, "max": 21 },
+    "39,11": { "min": 2, "max": 99 },
+    "25,12": { "min": 2, "max": 25 },
+    "13,17": { "min": 2, "max": 27 },
+    "14,11": { "min": 2, "max": 29 }
+  }
+}

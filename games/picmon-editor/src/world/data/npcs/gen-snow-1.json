@@ -1,0 +1,31 @@
+{
+  "id": "gen-snow-1",
+  "name": "Ranger Mel",
+  "character": "Village6",
+  "dialogue": [
+    "Step up and face me."
+  ],
+  "preBattleLine": "Hold up. Let’s see what you’ve got.",
+  "trainerParty": [
+    {
+      "element": "cloud",
+      "rarity": "rare",
+      "level": 40,
+      "environment": "snow"
+    },
+    {
+      "element": "cloud",
+      "rarity": "rare",
+      "level": 40,
+      "environment": "snow"
+    },
+    {
+      "element": "crystal",
+      "rarity": "rare",
+      "level": 40,
+      "environment": "snow"
+    }
+  ],
+  "trainerReward": 60,
+  "homeMapId": "snow_town"
+}

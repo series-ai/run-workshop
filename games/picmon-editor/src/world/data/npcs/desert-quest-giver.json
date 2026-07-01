@@ -1,0 +1,19 @@
+{
+  "id": "desert-quest-giver",
+  "name": "Sun-Scribe Tahir",
+  "character": "Sultan",
+  "stationary": true,
+  "dialogue": [
+    "Welcome, welcome \u2014 your boots are clean, which means you just arrived.",
+    "I am Tahir. I translate. I read the dunes the way some read clouds.",
+    "A tomb has surfaced beneath this city. Four guardians stand inside it.",
+    "Defeat the three trial-keepers \u2014 Khepri, Seshat, Sekhmet-Ra \u2014 and the Pharaoh himself will rise to meet you.",
+    "Watch your team! The desert sun blesses Fire and Light, but smothers Shadow and Ice. Bring the right friends.",
+    "And keep an eye out for Scarab Coins. The Pharaoh's currency. Worth more than gold to those who know what it once bought.",
+    "Now go. The sands won't wait forever."
+  ],
+  "homeMapId": "desert_city",
+  "moodEmotes": [
+    "emote29"
+  ]
+}

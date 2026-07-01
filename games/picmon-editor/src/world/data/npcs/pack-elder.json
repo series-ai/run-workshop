@@ -1,0 +1,24 @@
+{
+  "id": "pack-elder",
+  "name": "Pack Elder Brann",
+  "character": "LionOrange",
+  "dialogue": [
+    "The pack and I have hunted these ruins for years.",
+    "You smell of soft sleep and easy days.",
+    "Show us iron."
+  ],
+  "preBattleLine": "Brann’s pack closes in!",
+  "postDefeatDialogue": [
+    "*Brann nods slowly* You earned this ground.",
+    "The deep ruins lie east. Tread aware."
+  ],
+  "trainerParty": [
+    { "specId": "basalt_brawler", "element": "stone", "rarity": "common", "level": 4 },
+    { "specId": "basalt_gnasher", "element": "stone", "rarity": "epic",   "level": 4 },
+    { "specId": "prism_wyrm",     "element": "neon",  "rarity": "epic",   "level": 5 }
+  ],
+  "trainerReward": 150,
+  "moodEmotes": [
+    "emote18"
+  ]
+}

@@ -1,0 +1,552 @@
+{
+  "guide": {
+    "coordinateSystem": "Origin is top-left. X increases rightward. Y increases downward. Standard screen/canvas coordinates.",
+    "frame": "Clip rect on the sprite sheet PNG: {x, y, w, h}. Use these coordinates to cut this sprite from the matching .png file.",
+    "corners": "The 4 corner positions of the sprite after rotation is applied. Order: top-left, top-right, bottom-right, bottom-left. Use these if you want to avoid rotation math.",
+    "sourceSize": "Original dimensions of the source image before any scaling. Metadata only — not needed for rendering.",
+    "rotation": "Rotation in degrees. Pivot point is the center of the frame rect.",
+    "parent": "Sprite name of this element's parent in the rig hierarchy.",
+    "children": "Array of sprite names that are children of this element.",
+    "offset": "Delta from the sprite's sheet position (frame) to its equipped/dressed position. Apply as: dressedX = frame.x + offset.dx, dressedY = frame.y + offset.dy, etc. The dressed position may be outside the canvas — that is expected.",
+    "layerOrder": "\"above\" = render this child on top of the parent. \"below\" = render behind the parent.",
+    "replacesParent": "When true, this child is a visual replacement for the parent. When this child is active, hide the parent but still render other children as normal."
+  },
+  "frames": {
+    "TopLeftFaceset_Corner": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 7,
+        "h": 14
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 7,
+          "y": 0
+        },
+        {
+          "x": 7,
+          "y": 14
+        },
+        {
+          "x": 0,
+          "y": 14
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "BottomLeftFaceset_Corner": {
+      "frame": {
+        "x": 0,
+        "y": 52,
+        "w": 6,
+        "h": 6
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 0,
+          "y": 52
+        },
+        {
+          "x": 6,
+          "y": 52
+        },
+        {
+          "x": 6,
+          "y": 58
+        },
+        {
+          "x": 0,
+          "y": 58
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "Faceset": {
+      "frame": {
+        "x": 6,
+        "y": 14,
+        "w": 38,
+        "h": 38
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 6,
+          "y": 14
+        },
+        {
+          "x": 44,
+          "y": 14
+        },
+        {
+          "x": 44,
+          "y": 52
+        },
+        {
+          "x": 6,
+          "y": 52
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "TopRightFaceset_Corner": {
+      "frame": {
+        "x": 43,
+        "y": 0,
+        "w": 8,
+        "h": 15
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 43,
+          "y": 0
+        },
+        {
+          "x": 51,
+          "y": 0
+        },
+        {
+          "x": 51,
+          "y": 15
+        },
+        {
+          "x": 43,
+          "y": 15
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "bottomRightFaceset_corner": {
+      "frame": {
+        "x": 44,
+        "y": 51,
+        "w": 7,
+        "h": 7
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 44,
+          "y": 51
+        },
+        {
+          "x": 51,
+          "y": 51
+        },
+        {
+          "x": 51,
+          "y": 58
+        },
+        {
+          "x": 44,
+          "y": 58
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "TopTabFacesetWidth": {
+      "frame": {
+        "x": 7,
+        "y": 0,
+        "w": 36,
+        "h": 14
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 7,
+          "y": 0
+        },
+        {
+          "x": 43,
+          "y": 0
+        },
+        {
+          "x": 43,
+          "y": 14
+        },
+        {
+          "x": 7,
+          "y": 14
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "MiddleLeftFacesetHeight": {
+      "frame": {
+        "x": 0,
+        "y": 14,
+        "w": 6,
+        "h": 38
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 0,
+          "y": 14
+        },
+        {
+          "x": 6,
+          "y": 14
+        },
+        {
+          "x": 6,
+          "y": 52
+        },
+        {
+          "x": 0,
+          "y": 52
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "BottomFacesetWidth": {
+      "frame": {
+        "x": 6,
+        "y": 52,
+        "w": 38,
+        "h": 6
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 6,
+          "y": 52
+        },
+        {
+          "x": 44,
+          "y": 52
+        },
+        {
+          "x": 44,
+          "y": 58
+        },
+        {
+          "x": 6,
+          "y": 58
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "MiddleRightFacesetHeight": {
+      "frame": {
+        "x": 44,
+        "y": 15,
+        "w": 7,
+        "h": 36
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 44,
+          "y": 15
+        },
+        {
+          "x": 51,
+          "y": 15
+        },
+        {
+          "x": 51,
+          "y": 51
+        },
+        {
+          "x": 44,
+          "y": 51
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "TopTabEndRightMiddle": {
+      "frame": {
+        "x": 69,
+        "y": 0,
+        "w": 3,
+        "h": 14
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 69,
+          "y": 0
+        },
+        {
+          "x": 72,
+          "y": 0
+        },
+        {
+          "x": 72,
+          "y": 14
+        },
+        {
+          "x": 69,
+          "y": 14
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "TopMiddleTabExtendRight": {
+      "frame": {
+        "x": 51,
+        "y": 0,
+        "w": 18,
+        "h": 14
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 51,
+          "y": 0
+        },
+        {
+          "x": 69,
+          "y": 0
+        },
+        {
+          "x": 69,
+          "y": 14
+        },
+        {
+          "x": 51,
+          "y": 14
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "TextZone": {
+      "frame": {
+        "x": 51,
+        "y": 14,
+        "w": 241,
+        "h": 38
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 51,
+          "y": 14
+        },
+        {
+          "x": 292,
+          "y": 14
+        },
+        {
+          "x": 292,
+          "y": 52
+        },
+        {
+          "x": 51,
+          "y": 52
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "BottomTextZoneWidth": {
+      "frame": {
+        "x": 51,
+        "y": 52,
+        "w": 241,
+        "h": 6
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 51,
+          "y": 52
+        },
+        {
+          "x": 292,
+          "y": 52
+        },
+        {
+          "x": 292,
+          "y": 58
+        },
+        {
+          "x": 51,
+          "y": 58
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "TopTextZoneBorder": {
+      "frame": {
+        "x": 72,
+        "y": 8,
+        "w": 220,
+        "h": 6
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 72,
+          "y": 8
+        },
+        {
+          "x": 292,
+          "y": 8
+        },
+        {
+          "x": 292,
+          "y": 14
+        },
+        {
+          "x": 72,
+          "y": 14
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "TextZoneBorderRightHeight": {
+      "frame": {
+        "x": 292,
+        "y": 16,
+        "w": 8,
+        "h": 34
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 292,
+          "y": 16
+        },
+        {
+          "x": 300,
+          "y": 16
+        },
+        {
+          "x": 300,
+          "y": 50
+        },
+        {
+          "x": 292,
+          "y": 50
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "TopRightCorner": {
+      "frame": {
+        "x": 292,
+        "y": 8,
+        "w": 8,
+        "h": 8
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 292,
+          "y": 7.5
+        },
+        {
+          "x": 300,
+          "y": 7.5
+        },
+        {
+          "x": 300,
+          "y": 15.5
+        },
+        {
+          "x": 292,
+          "y": 15.5
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    },
+    "bottomLeftCorner": {
+      "frame": {
+        "x": 292,
+        "y": 50,
+        "w": 8,
+        "h": 8
+      },
+      "rotation": 0,
+      "corners": [
+        {
+          "x": 292,
+          "y": 50
+        },
+        {
+          "x": 300,
+          "y": 50
+        },
+        {
+          "x": 300,
+          "y": 58
+        },
+        {
+          "x": 292,
+          "y": 58
+        }
+      ],
+      "sourceSize": {
+        "w": 300,
+        "h": 58
+      }
+    }
+  },
+  "meta": {
+    "app": "LayoutManager",
+    "image": "See matching .png file",
+    "size": {
+      "w": 300,
+      "h": 58
+    },
+    "scale": "1"
+  }
+}

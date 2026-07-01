@@ -1,0 +1,12 @@
+{
+  "id": "interior_shop",
+  "spawns": {
+    "default": { "tileX": 5, "tileY": 5 }
+  },
+  "placements": [
+    { "npcId": "shopkeeper", "tileX": 3, "tileY": 2 }
+  ],
+  "animals": [
+    { "type": "Cat", "tileX": 7, "tileY": 5, "wanderTiles": 3 }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "id": "Forest2",
+  "spawns": {
+    "default": { "tileX": 14, "tileY": 33 }
+  },
+  "placements": [
+    { "npcId": "trainer-mqzuicht", "tileX": 11, "tileY": 13 },
+    { "npcId": "trainer-mqzuihai", "tileX": 24, "tileY": 29 },
+    { "npcId": "trainer-mqzuilf9", "tileX": 16, "tileY": 42 },
+    { "npcId": "trainer-mqzuipxp", "tileX": 37, "tileY": 29 },
+    { "npcId": "trainer-mqzuiunr", "tileX": 13, "tileY": 28 }
+  ],
+  "animals": [
+    { "type": "Frog", "tileX": 18, "tileY": 33, "wanderTiles": 9 },
+    { "type": "Racoon", "tileX": 12, "tileY": 17, "wanderTiles": 13 }
+  ],
+  "objects": [
+    { "image": "Animated/Flower/flower.png", "tileX": 34, "tileY": 27 },
+    { "image": "Animated/Flower/flower.png", "tileX": 28, "tileY": 30 },
+    { "image": "Animated/Flower/flower.png", "tileX": 21, "tileY": 33 },
+    { "image": "Animated/Flower/flower.png", "tileX": 10, "tileY": 30 },
+    { "image": "Animated/Flower/flower.png", "tileX": 13, "tileY": 15 },
+    { "image": "Animated/Flower/flower.png", "tileX": 17, "tileY": 40 },
+    { "image": "Animated/Flower/flower.png", "tileX": 30, "tileY": 46 },
+    { "image": "Animated/Plant/plant.png", "tileX": 26, "tileY": 44 },
+    { "image": "Animated/Plant/plant.png", "tileX": 16, "tileY": 44 },
+    { "image": "Animated/Plant/plant.png", "tileX": 12, "tileY": 36 },
+    { "image": "Animated/Plant/plant.png", "tileX": 12, "tileY": 25 },
+    { "image": "Animated/Plant/plant.png", "tileX": 15, "tileY": 11 },
+    { "image": "Animated/Plant/plant.png", "tileX": 18, "tileY": 11 },
+    { "image": "Animated/Plant/plant.png", "tileX": 21, "tileY": 13 },
+    { "image": "Animated/Plant/plant.png", "tileX": 39, "tileY": 28 },
+    { "image": "Animated/Plant/plant.png", "tileX": 42, "tileY": 28 },
+    { "image": "Animated/Plant/plant.png", "tileX": 45, "tileY": 25 },
+    { "image": "Animated/Plant/plant.png", "tileX": 46, "tileY": 25 },
+    { "image": "Animated/Plant/plant.png", "tileX": 30, "tileY": 28 },
+    { "image": "Animated/Plant/plant.png", "tileX": 22, "tileY": 29 },
+    { "image": "Animated/Plant/plant.png", "tileX": 22, "tileY": 33 },
+    { "image": "Animated/Plant/plant.png", "tileX": 25, "tileY": 31 }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "id": "lively-dragon",
+  "name": "The Lively Dragon",
+  "character": "Tengu",
+  "stationary": true,
+  "homeMapId": "snow_town",
+  "dialogue": [
+    "So. You made it past the sign.",
+    "Most trainers see the level range and walk back to the village. The smart ones, anyway.",
+    "I'm Lively Dragon. I named this patch. I rule it.",
+    "Six of mine. All above seventy-five. None of yours have seen anything like them.",
+    "Last chance to turn around. ... Suit yourself."
+  ],
+  "preBattleLine": "Lively Dragon doesn't pose. She just lets her party out and the storm rolls in.",
+  "postDefeatDialogue": [
+    "Hm. You actually did it.",
+    "Take the patch. Take the XP. Take the bragging rights.",
+    "I'll be back when you're not looking. Sleep on that."
+  ],
+  "trainerParty": [
+    {
+      "specId": "glacier_wisp",
+      "element": "ice",
+      "rarity": "ancient",
+      "level": 75,
+      "environment": "snow"
+    },
+    {
+      "specId": "blizzard_warden",
+      "element": "ice",
+      "rarity": "celestial",
+      "level": 80,
+      "environment": "snow"
+    },
+    {
+      "specId": "arc_lightning_golem",
+      "element": "static",
+      "rarity": "transcendent",
+      "level": 85
+    },
+    {
+      "specId": "prism_wyrm",
+      "element": "neon",
+      "rarity": "eternal",
+      "level": 90
+    },
+    {
+      "specId": "cinder_crown_titan",
+      "element": "lava",
+      "rarity": "prismatic",
+      "level": 95
+    },
+    {
+      "element": "storm",
+      "rarity": "divine",
+      "level": 99,
+      "environment": "snow",
+      "name": "Lively Dragon's Crown"
+    }
+  ],
+  "trainerReward": 15000,
+  "moodEmotes": [
+    "emote29"
+  ]
+}

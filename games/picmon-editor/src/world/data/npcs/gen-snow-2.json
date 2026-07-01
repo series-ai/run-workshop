@@ -1,0 +1,31 @@
+{
+  "id": "gen-snow-2",
+  "name": "Warden Roon",
+  "character": "OldMan3",
+  "dialogue": [
+    "Step up and face me."
+  ],
+  "preBattleLine": "Hold up. Let’s see what you’ve got.",
+  "trainerParty": [
+    {
+      "element": "ice",
+      "rarity": "rare",
+      "level": 40,
+      "environment": "snow"
+    },
+    {
+      "element": "cloud",
+      "rarity": "rare",
+      "level": 41,
+      "environment": "snow"
+    },
+    {
+      "element": "spirit",
+      "rarity": "superior",
+      "level": 43,
+      "environment": "snow"
+    }
+  ],
+  "trainerReward": 93,
+  "homeMapId": "snow_town"
+}

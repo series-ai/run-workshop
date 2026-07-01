@@ -1,0 +1,24 @@
+{
+  "id": "shadowcarl",
+  "name": "shadowcarl",
+  "character": "Samurai",
+  "dialogue": [],
+  "preBattleLine": "Darkness Eclipses Light",
+  "trainerParty": [
+    {
+      "element": "shadow",
+      "rarity": "superior",
+      "level": 1
+    },
+    {
+      "element": "shadow",
+      "rarity": "superior",
+      "level": 1
+    },
+    {
+      "element": "shadow",
+      "rarity": "superior",
+      "level": 1
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "id": "snow-disciple-brisa",
+  "name": "Brisa the Mistwalker",
+  "character": "NinjaGray",
+  "stationary": true,
+  "dialogue": [
+    "Brisa. First test of the Frost Veil.",
+    "The cold takes the unprepared first. Mist hides what comes next.",
+    "Move sharp, traveler — or don't move at all."
+  ],
+  "preBattleLine": "Brisa exhales. White mist coils around her shoulders.",
+  "postDefeatDialogue": [
+    "Brisa nods once, the mist clearing.",
+    "\"Glacien is next. He hits harder than the cold itself.\""
+  ],
+  "trainerParty": [
+    {
+      "element": "mist",
+      "rarity": "rare",
+      "level": 50,
+      "environment": "snow"
+    },
+    {
+      "element": "cloud",
+      "rarity": "rare",
+      "level": 52,
+      "environment": "snow"
+    },
+    {
+      "element": "wind",
+      "rarity": "epic",
+      "level": 54,
+      "environment": "snow"
+    }
+  ],
+  "trainerReward": 1200,
+  "homeMapId": "snow_town",
+  "moodEmotes": [
+    "emote12"
+  ]
+}

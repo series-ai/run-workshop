@@ -1,0 +1,17 @@
+{
+  "id": "guide1-mr195b42",
+  "name": "guide1",
+  "character": "CamouflageGreen",
+  "stationary": true,
+  "faceDirection": "down",
+  "homeMapId": "TemplateMap",
+  "dialogue": [
+    "Sprite Fusion Layers:\noverlay, tall grass, Blockers, bushes_flowers, under, floor details, ground",
+    "toggle on \"Set as collision layer\" on Blockers",
+    "Save your source file. Don't lose it.",
+    "Export as a JSON and it will spit out a zip file with the json and the map tilemap."
+  ],
+  "moodEmotes": [
+    "emote22"
+  ]
+}

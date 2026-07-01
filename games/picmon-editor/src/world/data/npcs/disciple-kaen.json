@@ -1,0 +1,35 @@
+{
+  "id": "disciple-kaen",
+  "name": "Kaen the Emberheart",
+  "character": "NinjaFire",
+  "stationary": true,
+  "dialogue": [
+    "Focus. The third pillar.",
+    "Fire burns brightest in a single point. Lava moves with purpose. Embers never waste a spark.",
+    "Let’s see if your strikes land where they should."
+  ],
+  "preBattleLine": "Kaen’s fists ignite. The room temperature doubles.",
+  "postDefeatDialogue": [
+    "Kaen extinguishes his fists. A wisp of smoke rises.",
+    "Precision. You have it. Hayate guards the storm terrace — he’ll test your courage."
+  ],
+  "trainerParty": [
+    {
+      "specId": "cinderjack_imp",
+      "element": "ember",
+      "rarity": "rare",
+      "level": 21
+    },
+    {
+      "specId": "emberbloom_golem",
+      "element": "lava",
+      "rarity": "epic",
+      "level": 23
+    }
+  ],
+  "trainerReward": 800,
+  "homeMapId": "interior_dojo",
+  "moodEmotes": [
+    "emote7"
+  ]
+}

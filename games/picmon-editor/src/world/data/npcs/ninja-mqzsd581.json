@@ -1,0 +1,17 @@
+{
+  "id": "ninja-mqzsd581",
+  "name": "ninja",
+  "character": "MonkeyBoxerRed",
+  "homeMapId": "interior_farmlandsdojo",
+  "dialogue": [
+    "Hah! My fists are quick, but my Picmon's strikes are quicker. Care to see for yourself?"
+  ],
+  "postDefeatDialogue": [
+    "Hah! Fast hands, faster Picmon. You've earned that one."
+  ],
+  "trainerParty": [
+    { "element": "martial", "rarity": "uncommon", "level": 20, "environment": "martial" },
+    { "element": "martial", "rarity": "uncommon", "level": 21, "environment": "martial" }
+  ],
+  "trainerReward": 300
+}

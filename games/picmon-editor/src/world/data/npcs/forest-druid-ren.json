@@ -1,0 +1,23 @@
+{
+  "id": "forest-druid-ren",
+  "name": "Druid Ren",
+  "character": "Shaman",
+  "homeMapId": "Forest1",
+  "dialogue": [
+    "The grove remembers every step you took to get here.",
+    "Most travelers never reach my circle. Most don\u2019t leave it standing, either.",
+    "Begin."
+  ],
+  "preBattleLine": "Ren plants her staff \u2014 the forest answers in three voices!",
+  "trainerParty": [
+    { "element": "nature",  "rarity": "rare",     "level": 16 },
+    { "element": "spirit",  "rarity": "rare",     "level": 17 },
+    { "element": "venom",   "rarity": "rare",     "level": 18 },
+    { "element": "fungus",  "rarity": "epic",     "level": 19 }
+  ],
+  "trainerReward": 900,
+  "postDefeatDialogue": [
+    "The grove yields. You earned this.",
+    "Koa stands at the edge \u2014 past him, the cave begins. Pack heavily."
+  ]
+}

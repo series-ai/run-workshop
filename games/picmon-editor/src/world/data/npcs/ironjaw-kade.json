@@ -1,0 +1,22 @@
+{
+  "id": "ironjaw-kade",
+  "name": "Ironjaw Kade",
+  "character": "FighterRed",
+  "homeMapId": "villageruin",
+  "dialogue": [
+    "I chew rocks for breakfast. Literally.",
+    "My team hits like a landslide \u2014 slow but final.",
+    "Ready?"
+  ],
+  "preBattleLine": "Kade cracks his knuckles. The ground shakes.",
+  "trainerParty": [
+    { "element": "stone", "rarity": "epic", "level": 24 },
+    { "element": "steel", "rarity": "epic", "level": 25 },
+    { "element": "obsidian", "rarity": "epic", "level": 26 }
+  ],
+  "trainerReward": 600,
+  "postDefeatDialogue": [
+    "Huh. You hit harder than a rockslide.",
+    "There\u2019s a witch further down the path. Ember Sable. Watch for fire."
+  ]
+}

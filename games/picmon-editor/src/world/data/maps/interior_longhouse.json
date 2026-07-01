@@ -1,0 +1,11 @@
+{
+  "id": "interior_longhouse",
+  "spawns": {
+    "default": { "tileX": 5, "tileY": 8 }
+  },
+  "placements": [
+    { "npcId": "historian-mq1vpny3", "tileX": 7, "tileY": 6 },
+    { "npcId": "shopkeep-mq1vrpe7", "tileX": 2, "tileY": 2 },
+    { "npcId": "marine-biologist-mq1vtifc", "tileX": 2, "tileY": 7 }
+  ]
+}

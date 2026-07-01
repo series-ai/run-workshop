@@ -1,0 +1,10 @@
+{
+  "id": "alchemist-mq1w07xz",
+  "name": "Alchemist",
+  "character": "Monk2",
+  "stationary": true,
+  "homeMapId": "interior_shop3",
+  "dialogue": [
+    "I'm working on perfecting an elixir with extraordinary healing powers."
+  ]
+}

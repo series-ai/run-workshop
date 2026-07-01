@@ -1,0 +1,45 @@
+{
+  "id": "rival-2",
+  "name": "Hunter Ryx",
+  "character": "CamouflageRed",
+  "homeMapId": "cave1",
+  "dialogue": [
+    "Heh. Knew you'd make it this far.",
+    "Been hunting since we last met \u2014 deeper woods, harder grass. My pack's bigger now.",
+    "Dojo's right there. But I'm not letting you walk in until you beat me.",
+    "Show me you've earned the climb."
+  ],
+  "preBattleLine": "Hunter Ryx readies his hunt party \u2014 sharper than before.",
+  "postDefeatDialogue": [
+    "Damn. You really did train.",
+    "The Five Pillars are gonna chew us both up. I'll see you in there."
+  ],
+  "trainerParty": [
+    {
+      "specId": "briarspike_viper",
+      "element": "venom",
+      "rarity": "rare",
+      "level": 16
+    },
+    {
+      "specId": "sporecap_lurker",
+      "element": "fungus",
+      "rarity": "rare",
+      "level": 16
+    },
+    {
+      "element": "dust",
+      "rarity": "superior",
+      "level": 17
+    },
+    {
+      "element": "stone",
+      "rarity": "rare",
+      "level": 18
+    }
+  ],
+  "trainerReward": 220,
+  "moodEmotes": [
+    "emote28"
+  ]
+}

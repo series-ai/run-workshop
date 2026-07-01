@@ -1,0 +1,10 @@
+{
+  "id": "cave-explorer-mqzv1uu0",
+  "name": "cave expert",
+  "character": "Inspector",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "I'm a fossil expert. Buried deep in this cave are the remains of Picmon long extinct.",
+    "With the right fossil, we could bring one back — imagine standing beside a creature lost to time!"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "merge-alchemist",
+  "name": "Alchemist Voda",
+  "character": "Cavegirl2",
+  "kind": "merge",
+  "stationary": true,
+  "dialogue": [
+    "Two PicMon, one altar. Their essences combine into something new.",
+    "Pick carefully — the parents are consumed in the ritual.",
+    "Takes Fusion Shards. Earn them in PvP."
+  ]
+}

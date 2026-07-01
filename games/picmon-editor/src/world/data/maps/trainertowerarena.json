@@ -1,0 +1,10 @@
+{
+  "id": "trainertowerarena",
+  "battleBgFrame": "tower",
+  "spawns": {
+    "default": { "tileX": 7, "tileY": 9 }
+  },
+  "placements": [
+    { "npcId": "tower-challenger", "tileX": 7, "tileY": 4 }
+  ]
+}

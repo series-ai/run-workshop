@@ -1,0 +1,11 @@
+{
+  "id": "alien-mqzv6n8p",
+  "name": "alien",
+  "character": "DemonGreen",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "Greetings, earthling. I crossed the stars and crash-landed in this very cave.",
+    "Tell me — have you seen the Helix Fossil? A spiral shell, turned to stone. My people believe it holds great power.",
+    "Bring one to me and I shall reward you. Then, perhaps, I can finally go home."
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": "gen-snow-3",
+  "name": "Captain Vex",
+  "character": "Villager5",
+  "dialogue": [
+    "Step up and face me."
+  ],
+  "preBattleLine": "Hold up. Let’s see what you’ve got.",
+  "trainerParty": [
+    {
+      "element": "wind",
+      "rarity": "rare",
+      "level": 43,
+      "environment": "snow"
+    },
+    {
+      "element": "cloud",
+      "rarity": "rare",
+      "level": 45,
+      "environment": "snow"
+    },
+    {
+      "element": "crystal",
+      "rarity": "superior",
+      "level": 47,
+      "environment": "snow"
+    }
+  ],
+  "trainerReward": 127,
+  "homeMapId": "snow_town"
+}

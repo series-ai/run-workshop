@@ -1,0 +1,11 @@
+{
+  "id": "guard-mqzpob8a",
+  "name": "guard",
+  "character": "Knight",
+  "stationary": true,
+  "faceDirection": "down",
+  "homeMapId": "CapitalGrounds",
+  "dialogue": [
+    "Let me guess — someone made off with your lunch. Take it up with the market watch."
+  ]
+}

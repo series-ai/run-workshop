@@ -1,0 +1,25 @@
+{
+  "id": "nightveil",
+  "name": "Nightveil",
+  "character": "NinjaDark",
+  "homeMapId": "villageruin",
+  "dialogue": [
+    "You made it this far. I\u2019m impressed.",
+    "But the fence ends here, and so does mercy.",
+    "This is the last test before the deep ruins."
+  ],
+  "preBattleLine": "Nightveil vanishes into shadow. Her team appears from nowhere.",
+  "trainerParty": [
+    { "element": "shadow", "rarity": "mythic", "level": 32 },
+    { "element": "void", "rarity": "mythic", "level": 33 },
+    { "element": "mirror", "rarity": "legendary", "level": 33 },
+    { "element": "neon", "rarity": "legendary", "level": 34 },
+    { "element": "stellar", "rarity": "legendary", "level": 34 }
+  ],
+  "trainerReward": 2000,
+  "postDefeatDialogue": [
+    "The fence guardians bow to you.",
+    "Past the bridge, the Warden and the Conqueror wait. They don\u2019t bow to anyone.",
+    "Good luck."
+  ]
+}

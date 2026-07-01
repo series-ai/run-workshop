@@ -1,0 +1,17 @@
+{
+  "id": "trainer-mqzuihai",
+  "name": "Stalker Reed",
+  "character": "NinjaLeaf",
+  "homeMapId": "Forest2",
+  "dialogue": [
+    "Shh — listen. You can hear the Picmon rustling up in the canopy. Train your ears as well as your team."
+  ],
+  "postDefeatDialogue": [
+    "You heard them before I did. Sharp ears, sharper team."
+  ],
+  "trainerParty": [
+    { "element": "fungus", "rarity": "uncommon", "level": 12, "environment": "forest" },
+    { "element": "spirit", "rarity": "rare", "level": 13, "environment": "forest" }
+  ],
+  "trainerReward": 250
+}

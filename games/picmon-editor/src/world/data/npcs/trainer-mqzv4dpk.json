@@ -1,0 +1,17 @@
+{
+  "id": "trainer-mqzv4dpk",
+  "name": "trainer",
+  "character": "Cavegirl",
+  "homeMapId": "cave2",
+  "dialogue": [
+    "I've trained in the dark so long, my Picmon strike by sound alone."
+  ],
+  "postDefeatDialogue": [
+    "Heh, even blind training has its limits, I suppose."
+  ],
+  "trainerParty": [
+    { "element": "crystal", "rarity": "uncommon", "level": 19, "environment": "cave" },
+    { "element": "bone", "rarity": "uncommon", "level": 19, "environment": "cave" }
+  ],
+  "trainerReward": 300
+}

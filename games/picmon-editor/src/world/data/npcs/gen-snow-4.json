@@ -1,0 +1,31 @@
+{
+  "id": "gen-snow-4",
+  "name": "Mage Tess",
+  "character": "NinjaBlue2",
+  "dialogue": [
+    "Step up and face me."
+  ],
+  "preBattleLine": "Hold up. Let’s see what you’ve got.",
+  "trainerParty": [
+    {
+      "element": "cloud",
+      "rarity": "superior",
+      "level": 46,
+      "environment": "snow"
+    },
+    {
+      "element": "wind",
+      "rarity": "superior",
+      "level": 48,
+      "environment": "snow"
+    },
+    {
+      "element": "ice",
+      "rarity": "epic",
+      "level": 50,
+      "environment": "snow"
+    }
+  ],
+  "trainerReward": 160,
+  "homeMapId": "snow_town"
+}

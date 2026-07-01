@@ -1,0 +1,10 @@
+{
+  "id": "andre",
+  "name": "andre",
+  "character": "Master",
+  "dialogue": [
+    "Most weapons and armor are mighty sturdy indeed.",
+    "But every hunk of metal has its breaking point."
+  ],
+  "homeMapId": "interior_blacksmith"
+}

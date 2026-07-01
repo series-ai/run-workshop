@@ -8,3 +8,4 @@ licenses and attributions.
 ## Sub-project notices
 
 - BeatBoard — [`games/beat-board/THIRD_PARTY_NOTICES.md`](games/beat-board/THIRD_PARTY_NOTICES.md)
+- Picmon Map Editor — [`games/picmon-editor/THIRD_PARTY_NOTICES.md`](games/picmon-editor/THIRD_PARTY_NOTICES.md)

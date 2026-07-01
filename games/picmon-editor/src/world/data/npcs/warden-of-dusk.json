@@ -1,0 +1,50 @@
+{
+  "id": "warden-of-dusk",
+  "name": "Warden of Dusk",
+  "character": "CaveLion2",
+  "stationary": true,
+  "dialogue": [
+    "The sun has not touched me in forty years.",
+    "I am the last warning before the deep.",
+    "Turn back, or be tested."
+  ],
+  "preBattleLine": "Twilight pools around the Warden's feet — she's ready.",
+  "postDefeatDialogue": [
+    "The dusk recognizes you. I do too.",
+    "Only one trainer remains beyond this point. She does not recognize mercy."
+  ],
+  "trainerParty": [
+    {
+      "specId": "arc_snail",
+      "element": "plasma",
+      "rarity": "uncommon",
+      "level": 11
+    },
+    {
+      "specId": "prism_wyrm",
+      "element": "neon",
+      "rarity": "epic",
+      "level": 11
+    },
+    {
+      "specId": "basalt_gnasher",
+      "element": "stone",
+      "rarity": "epic",
+      "level": 12
+    },
+    {
+      "specId": "cinder_crown_titan",
+      "element": "lava",
+      "rarity": "mythic",
+      "level": 12
+    },
+    {
+      "specId": "arc_lightning_golem",
+      "element": "static",
+      "rarity": "legendary",
+      "level": 13
+    }
+  ],
+  "trainerReward": 700,
+  "blocksPassage": true
+}

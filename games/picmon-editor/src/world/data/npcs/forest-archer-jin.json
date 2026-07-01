@@ -1,0 +1,39 @@
+{
+  "id": "forest-archer-jin",
+  "name": "Archer Jin",
+  "character": "Hunter",
+  "dialogue": [
+    "You move quiet — I’ll give you that.",
+    "But quiet doesn’t mean ready. The brambles are full of things that bite.",
+    "Let’s see if your team can keep up."
+  ],
+  "preBattleLine": "Jin nocks a phantom arrow — his team springs from the canopy!",
+  "postDefeatDialogue": [
+    "Solid shooting. Solid team.",
+    "You’ve heard about the Five Pillars Dojo? Five masters, five elements, one throne.",
+    "Nobody from this forest has beaten them yet. Maybe you’re different.",
+    "Ren is up the ridge. She’ll test more than your reflexes."
+  ],
+  "trainerParty": [
+    {
+      "specId": "galebloom_spriggan",
+      "element": "wind",
+      "rarity": "common",
+      "level": 17
+    },
+    {
+      "specId": "lantern_wisp",
+      "element": "spirit",
+      "rarity": "uncommon",
+      "level": 18
+    },
+    {
+      "specId": "mossmire_bloom",
+      "element": "fungus",
+      "rarity": "uncommon",
+      "level": 19
+    }
+  ],
+  "trainerReward": 350,
+  "homeMapId": "Forest1"
+}

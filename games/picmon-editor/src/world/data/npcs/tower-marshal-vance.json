@@ -1,0 +1,18 @@
+{
+  "id": "tower-marshal-vance",
+  "name": "Marshal Vance",
+  "character": "KnightGold",
+  "kind": "tower",
+  "stationary": true,
+  "gateTilesLR": 1,
+  "dialogue": [
+    "Welcome to the Tower.",
+    "Pick a bracket. Climb as far as you can. Best run of the day takes the board.",
+    "Each climb costs one ticket. Daily free one's on the house — more in the shop.",
+    "Elevator's behind me. Good luck up there."
+  ],
+  "homeMapId": "trainertowerlobby",
+  "moodEmotes": [
+    "emote7"
+  ]
+}

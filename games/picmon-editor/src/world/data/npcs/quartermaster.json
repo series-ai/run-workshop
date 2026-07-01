@@ -1,0 +1,12 @@
+{
+  "id": "quartermaster",
+  "name": "Quartermaster Rell",
+  "character": "ManGreen",
+  "kind": "shop",
+  "stationary": true,
+  "dialogue": [
+    "Need more Film Charges for the hunt?",
+    "I trade them for Stardust — collected from wild battles.",
+    "Pick your bundle, traveler."
+  ]
+}

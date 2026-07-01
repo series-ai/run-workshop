@@ -1,0 +1,16 @@
+{
+  "id": "doorman-mr19with",
+  "name": "doorman",
+  "character": "Samurai",
+  "stationary": true,
+  "faceDirection": "right",
+  "homeMapId": "TemplateMap",
+  "dialogue": [
+    "Put doorways on the \"under\" layer for players to easily pass.",
+    "when you create a \"portal\" you can set the spawn direction N S E W.",
+    "If you walk in from the south it should spit out at the north."
+  ],
+  "moodEmotes": [
+    "emote28"
+  ]
+}
