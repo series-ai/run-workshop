@@ -6,6 +6,11 @@ in a pack shares BPM and key, so they always play cleanly together. Genre packs
 (lofi-hiphop, hip-hop, synthwave, house, drum-and-bass, …) unlock new content,
 and a session can be recorded and shared as audio/video.
 
+> New to RUN or run-workshop? Start with the shared
+> **[Getting Started guide](../../GETTING_STARTED.md)** for platform basics,
+> one-time repo setup (Git LFS + hooks), and CLI authentication. The steps below
+> cover what's specific to BeatBoard.
+
 ## Prerequisites
 
 - Node.js 20+
