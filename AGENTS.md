@@ -1,8 +1,10 @@
 # AGENTS.md
 
 Guidance for AI coding agents working in **run-workshop**. This is the canonical
-instructions file; `CLAUDE.md` and `GEMINI.md` are symlinks to it so every tool
-reads the same content.
+instructions file. `CLAUDE.md` (Claude Code) and `GEMINI.md` (Gemini CLI) are
+one-line stubs that import this file, so every tool reads the same content
+without duplicating it — and without symlinks, which don't check out reliably on
+Windows.
 
 ## Opening a pull request
 
