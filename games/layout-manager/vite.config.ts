@@ -14,6 +14,16 @@ function imageProxyPlugin(): Plugin {
       // even in browsers without the File System Access API (Brave, Firefox).
       server.middlewares.use('/__save-layout', async (req, res) => {
         if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
+        // The target path comes from the request, so only accept same-origin
+        // browser requests: Origin must match the dev server's Host (browsers
+        // always send Origin on POST), and requiring a JSON content type keeps
+        // cross-origin pages from reaching this without a CORS preflight.
+        const origin = req.headers.origin;
+        const host = req.headers.host;
+        if (!req.headers['content-type']?.includes('application/json') ||
+            !origin || !host || (origin !== `http://${host}` && origin !== `https://${host}`)) {
+          res.writeHead(403); res.end('Cross-origin request rejected'); return;
+        }
         try {
           const chunks: Buffer[] = [];
           for await (const chunk of req) chunks.push(Buffer.from(chunk));
