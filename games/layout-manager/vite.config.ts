@@ -6,6 +6,19 @@ import { rundotGameLibrariesPlugin } from '@series-inc/rundot-game-sdk/vite';
 
 // CDN assets in cdn/ folder are automatically served in dev mode
 
+/** True for browser-initiated cross-origin requests. Same-origin GETs carry no
+ * Origin header, so this checks Origin when present and falls back to
+ * Sec-Fetch-Site — keeping the local proxies unusable from other pages while
+ * never blocking the app's own fetches. */
+function isCrossOriginRequest(req: import('node:http').IncomingMessage): boolean {
+  const host = req.headers.host;
+  const origin = req.headers.origin;
+  if (origin && (!host || (origin !== `http://${host}` && origin !== `https://${host}`))) return true;
+  const site = req.headers['sec-fetch-site'];
+  if (typeof site === 'string' && site !== 'same-origin' && site !== 'none') return true;
+  return false;
+}
+
 function imageProxyPlugin(): Plugin {
   return {
     name: 'image-proxy',
@@ -49,6 +62,7 @@ function imageProxyPlugin(): Plugin {
       });
 
       server.middlewares.use('/__proxy', async (req, res) => {
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         const url = new URL(req.url ?? '', 'http://localhost').searchParams.get('url');
         if (!url) { res.writeHead(400); res.end('Missing url param'); return; }
         try {
@@ -675,6 +689,7 @@ function comfyPlugin(): Plugin {
 
       // Dynamic HTTP proxy to user's ComfyUI server (target URL via ?target= query param)
       server.middlewares.use('/__comfy', async (req, res) => {
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         const reqUrl = new URL(req.url ?? '', 'http://localhost');
         const target = reqUrl.searchParams.get('target');
         if (!target) { res.writeHead(400); res.end('Missing target query param'); return; }
