@@ -1,0 +1,3 @@
+export function createPfxDebrisBurstStyleTreatment(styleEdgeHardness: number): { fragmentTopology: 'broad-chiseled-slabs' | 'sharp-cut-fragments'; materialResponse: 'soft-stone-facets' | 'edge-lit-fractures'; breakupCadence: 'staggered-chunk-fan' | 'synchronized-shatter'; fractureProfile: 'rounded-break' | 'split-break' } {
+  return styleEdgeHardness >= .5 ? { fragmentTopology: 'sharp-cut-fragments', materialResponse: 'edge-lit-fractures', breakupCadence: 'synchronized-shatter', fractureProfile: 'split-break' } : { fragmentTopology: 'broad-chiseled-slabs', materialResponse: 'soft-stone-facets', breakupCadence: 'staggered-chunk-fan', fractureProfile: 'rounded-break' }
+}

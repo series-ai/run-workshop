@@ -1,0 +1,79 @@
+name: PFX Viewer Pages
+
+# Builds the 3D PFX Library viewer (tools/3d-pfx-library) and deploys it to
+# GitHub Pages so the effect catalog can be browsed without a local checkout.
+# The capture/profiling endpoints the viewer optionally calls are dev-server
+# features; the static site degrades gracefully without them.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - tools/3d-pfx-library/**
+      - .github/workflows/pfx-pages.yml
+  workflow_dispatch:
+
+# Granted workflow-wide (not just on the deploy job) because
+# actions/upload-pages-artifact runs in the build job and needs Pages access.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pfx-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build viewer
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: tools/3d-pfx-library/package-lock.json
+
+      - name: Install dependencies
+        working-directory: tools/3d-pfx-library
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: tools/3d-pfx-library
+        run: npm run typecheck
+
+      - name: Test
+        working-directory: tools/3d-pfx-library
+        run: npm run test
+
+      - name: Build static viewer
+        working-directory: tools/3d-pfx-library
+        env:
+          PFX_BASE_PATH: /${{ github.event.repository.name }}/
+        run: npm run build
+
+      - name: Configure Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: tools/3d-pfx-library/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

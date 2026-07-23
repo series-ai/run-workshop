@@ -1,0 +1,3 @@
+export function createPfxGlyphTrailStyleTreatment(styleEdgeHardness: number): { strokeTopology: 'rounded-calligraphic-strokes' | 'cut-arcane-strokes'; materialResponse: 'soft-ink-facets' | 'edge-lit-rune-facets'; writeCadence: 'staggered-handwriting' | 'synchronized-inscription'; erosionProfile: 'feathered-ink-cooling' | 'hard-script-dissolve' } {
+  return styleEdgeHardness >= .65 ? { strokeTopology: 'cut-arcane-strokes', materialResponse: 'edge-lit-rune-facets', writeCadence: 'synchronized-inscription', erosionProfile: 'hard-script-dissolve' } : { strokeTopology: 'rounded-calligraphic-strokes', materialResponse: 'soft-ink-facets', writeCadence: 'staggered-handwriting', erosionProfile: 'feathered-ink-cooling' }
+}
