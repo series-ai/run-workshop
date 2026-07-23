@@ -1,0 +1,46 @@
+{
+  "name": "layout-manager",
+  "version": "1.0.0",
+  "description": "Browser-based image layout, composition, and AI-assisted generation tool",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "_build": "tsc && vite build",
+    "build": "npm run _build",
+    "build:bundled": "cross-env RUNDOT_GAME_DISABLE_EMBEDDED_LIBS=true npm run _build",
+    "preview": "vite preview",
+    "deploy": "npm run build && rundot deploy",
+    "format": "prettier \"{src,public}/**/*.{ts,tsx,js,jsx,json,css,html}\" --write",
+    "format:check": "prettier \"{src,public}/**/*.{ts,tsx,js,jsx,json,css,html}\" --check"
+  },
+  "keywords": [
+    "react",
+    "vite",
+    "typescript",
+    "RUN.game"
+  ],
+  "author": "",
+  "devDependencies": {
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "cross-env": "^7.0.3",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3",
+    "vite": "^6.3.5",
+    "vite-plugin-wasm": "^3.6.0"
+  },
+  "dependencies": {
+    "@jsquash/oxipng": "^2.3.0",
+    "@series-inc/rundot-game-sdk": "^5.3.0",
+    "gifenc": "^1.0.3",
+    "lucide-react": "^1.7.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@series-inc/rundot-game-sdk"
+    ]
+  }
+}

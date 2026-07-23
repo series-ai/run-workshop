@@ -9,3 +9,4 @@ licenses and attributions.
 
 - BeatBoard — [`games/beat-board/THIRD_PARTY_NOTICES.md`](games/beat-board/THIRD_PARTY_NOTICES.md)
 - Picmon Map Editor — [`games/picmon-editor/THIRD_PARTY_NOTICES.md`](games/picmon-editor/THIRD_PARTY_NOTICES.md)
+- Layout Manager — [`games/layout-manager/THIRD_PARTY_NOTICES.md`](games/layout-manager/THIRD_PARTY_NOTICES.md)
