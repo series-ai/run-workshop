@@ -1,0 +1,253 @@
+{
+  "76": {
+    "inputs": {
+      "value": "cat"
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "$Prompt"
+    }
+  },
+  "115": {
+    "inputs": {
+      "images": [
+        "125",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "$Output"
+    }
+  },
+  "118": {
+    "inputs": {
+      "value": 1024
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "$Width"
+    }
+  },
+  "119": {
+    "inputs": {
+      "value": 1024
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "$Height"
+    }
+  },
+  "120": {
+    "inputs": {
+      "value": 1024
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "$Seed"
+    }
+  },
+  "121": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "122": {
+    "inputs": {
+      "steps": 20,
+      "width": [
+        "128",
+        0
+      ],
+      "height": [
+        "129",
+        0
+      ]
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "Flux2Scheduler"
+    }
+  },
+  "123": {
+    "inputs": {
+      "cfg": 5,
+      "model": [
+        "131",
+        0
+      ],
+      "positive": [
+        "134",
+        0
+      ],
+      "negative": [
+        "127",
+        0
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFGGuider"
+    }
+  },
+  "124": {
+    "inputs": {
+      "noise": [
+        "130",
+        0
+      ],
+      "guider": [
+        "123",
+        0
+      ],
+      "sampler": [
+        "121",
+        0
+      ],
+      "sigmas": [
+        "122",
+        0
+      ],
+      "latent_image": [
+        "126",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "125": {
+    "inputs": {
+      "samples": [
+        "124",
+        0
+      ],
+      "vae": [
+        "133",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "126": {
+    "inputs": {
+      "width": [
+        "128",
+        0
+      ],
+      "height": [
+        "129",
+        0
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "Empty Flux 2 Latent"
+    }
+  },
+  "127": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "132",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Negative Prompt)"
+    }
+  },
+  "128": {
+    "inputs": {
+      "value": [
+        "118",
+        0
+      ]
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "Width"
+    }
+  },
+  "129": {
+    "inputs": {
+      "value": [
+        "119",
+        0
+      ]
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "Height"
+    }
+  },
+  "130": {
+    "inputs": {
+      "noise_seed": [
+        "120",
+        0
+      ]
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "131": {
+    "inputs": {
+      "unet_name": "flux-2-klein-4b.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "132": {
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "133": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "134": {
+    "inputs": {
+      "text": [
+        "76",
+        0
+      ],
+      "clip": [
+        "132",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  }
+}

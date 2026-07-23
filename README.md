@@ -8,6 +8,7 @@ A community-centric set of game starters, tools & tutorials for building on RUN.
 ## Tools
 
 - [Picmon Map Editor](games/picmon-editor/) — a standalone, browser-based visual tile-map / world editor (Vite + React + TypeScript). Edit NPCs, portals, signs, object colliders, and animal placements against a Sprite Fusion + JSON data model, with a live "Play map" mode. Ships with sample Picmon data and a CC0 pixel-art asset pack; repurpose it for your own game by swapping the assets and data. See [games/picmon-editor/README.md](games/picmon-editor/README.md).
+- [Layout Manager](games/layout-manager/) — a browser-based image layout, composition, and AI-assisted generation tool (Vite + React + TypeScript). Arrange, align, mask, and paint over images on a freeform workspace, with optional AI helpers: text-to-image via your own provider API keys, ComfyUI workflow integration (including background removal), and multi-provider AI chat. See [games/layout-manager/README.md](games/layout-manager/README.md).
 
 ## License
 

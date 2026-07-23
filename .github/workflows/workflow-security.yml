@@ -1,10 +1,10 @@
 name: Workflow Security
 
 on:
+  # Run on every PR (not path-filtered): this is a required status check, and
+  # a path-filtered required check never reports on PRs outside its paths,
+  # leaving them stuck on "Expected" and unable to merge.
   pull_request:
-    paths:
-      - .github/**
-      - scripts/workflow-security-check.sh
   push:
     branches:
       - main
