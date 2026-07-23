@@ -28,6 +28,8 @@ export function ensureGoogleFont(family: string | undefined | null): void {
   loaded.add(family);
   const link = document.createElement('link');
   link.rel = 'stylesheet';
+  // CORS mode so the dev server's COEP: require-corp doesn't block the request
+  link.crossOrigin = 'anonymous';
   link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family).replace(/%20/g, '+')}:ital,wght@0,400;0,700;1,400;1,700&display=swap`;
   document.head.appendChild(link);
 }
