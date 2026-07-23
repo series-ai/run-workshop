@@ -189,8 +189,10 @@ All AI tools are accessible from the toolbar. They can be hidden entirely from *
 - Persistent prompt across sessions
 
 #### Remove Background
-- Runs through the ComfyUI integration (see below), using the bundled workflow source at `comfy-workflows_source/BackgroundRemoval_API_LM.json` (built on the [ComfyUI-RMBG](https://github.com/1038lab/ComfyUI-RMBG) BiRefNet node)
-- One-time setup: install ComfyUI-RMBG in your ComfyUI, load the workflow source there, then **Save (API Format)** into `comfy-workflows/` — see [`docs/comfyui-integration.md`](docs/comfyui-integration.md)
+- One-click local background removal — runs in your browser via ONNX Runtime (no API key, no uploads, nothing installed)
+- Two engines: Quality (ISNet, ~170 MB one-time model download, cached) and Fast (U2-Net small, ~5 MB)
+- Loaded models show in the MEM tool and are evicted by Free Memory
+- Alternative: the ComfyUI integration (see below) with the bundled workflow source at `comfy-workflows_source/BackgroundRemoval_API_LM.json` (built on the [ComfyUI-RMBG](https://github.com/1038lab/ComfyUI-RMBG) BiRefNet node) — see [`docs/comfyui-integration.md`](docs/comfyui-integration.md)
 
 #### AI Chat
 - Multi-provider chat: Claude, Gemini, OpenAI, Grok

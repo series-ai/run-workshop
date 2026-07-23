@@ -8,6 +8,12 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
+    /* onnxruntime-web 1.21 doesn't expose its types through package.json
+       "exports" under bundler resolution — point at them directly */
+    "paths": {
+      "onnxruntime-web": ["./node_modules/onnxruntime-web/types.d.ts"],
+      "onnxruntime-web/wasm": ["./node_modules/onnxruntime-web/types.d.ts"]
+    },
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
