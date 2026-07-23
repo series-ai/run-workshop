@@ -448,7 +448,7 @@ function productionImplementationBatchSheetCommand(
   markdownOutputFile: string,
 ): string {
   return [
-    'npm --prefix tools/3d-pfx-library/viewer run verify:implementation',
+    'npm --prefix kits/juice/r3f-pfx-browser run verify:implementation',
     `-- --implementation-batch-id ${batchId}`,
     `--implementation-batch-sheet-output ${outputFile}`,
     `--implementation-batch-sheet-markdown-output ${markdownOutputFile}`,
@@ -457,7 +457,7 @@ function productionImplementationBatchSheetCommand(
 
 function productionImplementationBulkBatchSheetCommand(outputDirectory: string): string {
   return [
-    'npm --prefix tools/3d-pfx-library/viewer run verify:implementation',
+    'npm --prefix kits/juice/r3f-pfx-browser run verify:implementation',
     `-- --implementation-batch-sheet-directory ${outputDirectory}`,
     '--implementation-batch-sheet-index-output .context/r3f-pfx-production-implementation-batch-sheet-index.json',
     '--implementation-batch-sheet-index-markdown-output .context/r3f-pfx-production-implementation-batch-sheet-index.md',

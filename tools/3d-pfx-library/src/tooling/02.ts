@@ -265,7 +265,7 @@ export function createPfxObjectiveReadinessReport(
       nextActions: taxonomyReviewed
         ? []
         : [
-            'Fill .context/r3f-pfx-taxonomy-review.json, then run `npm --prefix tools/3d-pfx-library/viewer run verify:taxonomy` and `npm --prefix tools/3d-pfx-library/viewer run verify:acceptance`.',
+            'Fill .context/r3f-pfx-taxonomy-review.json, then run `npm --prefix kits/juice/r3f-pfx-browser run verify:taxonomy` and `npm --prefix kits/juice/r3f-pfx-browser run verify:acceptance`.',
           ],
     }),
     localObjectiveRequirement(
@@ -354,9 +354,9 @@ export function createPfxObjectiveReadinessReport(
         : [
             'Review real-device capture progress: .context/r3f-pfx-real-device-capture-batch-progress.md',
             'Review real-device capture batch sheet index: .context/r3f-pfx-real-device-capture-batch-sheet-index.md',
-            'Start real-device capture server: npm --prefix tools/3d-pfx-library/viewer run serve:real-device',
+            'Start real-device capture server: npm --prefix kits/juice/r3f-pfx-browser run serve:real-device',
             ...operatorLaunchActions,
-            'Rerun real-device capture audit: npm --prefix tools/3d-pfx-library/viewer run verify:real-device',
+            'Rerun real-device capture audit: npm --prefix kits/juice/r3f-pfx-browser run verify:real-device',
           ],
     }),
     localObjectiveRequirement(
@@ -405,8 +405,8 @@ export function createPfxObjectiveReadinessReport(
             'Review red-team dossier: .context/r3f-pfx-red-team-dossier.md',
             'Review red-team batch sheet index: .context/r3f-pfx-red-team-review-batch-sheet-index.md',
             'Complete red-team signoff in .context/r3f-pfx-red-team-review.json',
-            'Rerun red-team verifier: npm --prefix tools/3d-pfx-library/viewer run verify:red-team',
-            'Rerun acceptance verifier: npm --prefix tools/3d-pfx-library/viewer run verify:acceptance',
+            'Rerun red-team verifier: npm --prefix kits/juice/r3f-pfx-browser run verify:red-team',
+            'Rerun acceptance verifier: npm --prefix kits/juice/r3f-pfx-browser run verify:acceptance',
           ],
     }),
     objectiveRequirement({
@@ -432,7 +432,7 @@ export function createPfxObjectiveReadinessReport(
             'Review production approval readiness: .context/r3f-pfx-production-approval-readiness.md',
             'Review production approval batch sheet index: .context/r3f-pfx-production-approval-batch-sheet-index.md',
             'Complete final production approvals in .context/r3f-pfx-production-approvals.json',
-            'Rerun final acceptance: npm --prefix tools/3d-pfx-library/viewer run verify:final-acceptance',
+            'Rerun final acceptance: npm --prefix kits/juice/r3f-pfx-browser run verify:final-acceptance',
           ],
     }),
   ]
@@ -1580,7 +1580,7 @@ export function externalEvidenceBatchSheetMarkdownOutputFile(batchId: string, ou
 
 export function externalEvidenceBatchSheetCommand(batchId: string, outputFile: string, markdownOutputFile: string): string {
   return [
-    'npm --prefix tools/3d-pfx-library/viewer run export:external-evidence',
+    'npm --prefix kits/juice/r3f-pfx-browser run export:external-evidence',
     `-- --external-evidence-batch-id ${batchId}`,
     `--external-evidence-batch-sheet-output ${outputFile}`,
     `--external-evidence-batch-sheet-markdown-output ${markdownOutputFile}`,
@@ -1594,7 +1594,7 @@ export function externalEvidenceCommandRemainderHasProtectedFlag(remainder: stri
 
 export function externalEvidenceBulkBatchSheetCommand(outputDirectory: string): string {
   return [
-    'npm --prefix tools/3d-pfx-library/viewer run export:external-evidence',
+    'npm --prefix kits/juice/r3f-pfx-browser run export:external-evidence',
     '-- --external-evidence-work-order-output .context/r3f-pfx-external-evidence-work-order.json',
     '--external-evidence-work-order-markdown-output .context/r3f-pfx-external-evidence-work-order.md',
     '--external-evidence-batch-plan-output .context/r3f-pfx-external-evidence-batch-plan.json',

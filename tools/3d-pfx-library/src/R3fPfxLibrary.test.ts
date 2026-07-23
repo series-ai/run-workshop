@@ -75,12 +75,12 @@ import {
   isPfxSurfaceCameraFacing,
 } from './index'
 
-const CANONICAL_FINAL_ACCEPTANCE_COMMAND = 'npm --prefix tools/3d-pfx-library/viewer run verify:final-acceptance'
-const CANONICAL_LOCAL_ACCEPTANCE_COMMAND = 'npm --prefix tools/3d-pfx-library/viewer run verify:acceptance'
+const CANONICAL_FINAL_ACCEPTANCE_COMMAND = 'npm --prefix kits/juice/r3f-pfx-browser run verify:final-acceptance'
+const CANONICAL_LOCAL_ACCEPTANCE_COMMAND = 'npm --prefix kits/juice/r3f-pfx-browser run verify:acceptance'
 const CANONICAL_LAN_PRODUCTION_HANDOFF_COMMAND =
-  'PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:lan'
+  'PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:lan'
 const CANONICAL_BASE_URL_PRODUCTION_HANDOFF_COMMAND =
-  'PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:base-url'
+  'PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:base-url'
 
 function completedImplementationRows(effectId: string, implementedBy = 'pfx-implementer') {
   const template = createPfxProductionImplementationTemplate()
@@ -13259,7 +13259,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       expect.arrayContaining([
         launchAction,
         launchTemplateAction,
-        'Rerun real-device capture audit: npm --prefix tools/3d-pfx-library/viewer run verify:real-device',
+        'Rerun real-device capture audit: npm --prefix kits/juice/r3f-pfx-browser run verify:real-device',
       ]),
     )
 
@@ -13291,11 +13291,11 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(markdown).toContain('- 500 effects lack market-reviewed taxonomy approval')
     expect(markdown).toContain('Next actions:')
     expect(markdown).toContain(
-      '- Fill .context/r3f-pfx-taxonomy-review.json, then run `npm --prefix tools/3d-pfx-library/viewer run verify:taxonomy` and `npm --prefix tools/3d-pfx-library/viewer run verify:acceptance`.',
+      '- Fill .context/r3f-pfx-taxonomy-review.json, then run `npm --prefix kits/juice/r3f-pfx-browser run verify:taxonomy` and `npm --prefix kits/juice/r3f-pfx-browser run verify:acceptance`.',
     )
     expect(markdown).toContain('- Complete red-team signoff in .context/r3f-pfx-red-team-review.json')
-    expect(markdown).toContain('- Rerun red-team verifier: npm --prefix tools/3d-pfx-library/viewer run verify:red-team')
-    expect(markdown).toContain('- Rerun acceptance verifier: npm --prefix tools/3d-pfx-library/viewer run verify:acceptance')
+    expect(markdown).toContain('- Rerun red-team verifier: npm --prefix kits/juice/r3f-pfx-browser run verify:red-team')
+    expect(markdown).toContain('- Rerun acceptance verifier: npm --prefix kits/juice/r3f-pfx-browser run verify:acceptance')
     expect(markdown).toContain('## Locally Satisfied')
     expect(markdown).toContain('Requirement ID: `runtime-optimization-contract`')
     expect(markdown).toContain('Final acceptance command:')
@@ -13582,8 +13582,8 @@ describe('r3f-pfx-library catalog contracts', () => {
     })
     expect(mobileSafariCapture?.instructions).toEqual(
       expect.arrayContaining([
-        'This capture URL is local-only; do not assign it to a phone operator until the production handoff is regenerated with `PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:lan`.',
-        'Tunnel/base URL alternative: `PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:base-url`.',
+        'This capture URL is local-only; do not assign it to a phone operator until the production handoff is regenerated with `PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:lan`.',
+        'Tunnel/base URL alternative: `PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:base-url`.',
       ]),
     )
     expect(markdown).toContain('Next ready item: Fireball (`fireball`) - Mobile Safari capture')
@@ -13605,10 +13605,10 @@ describe('r3f-pfx-library catalog contracts', () => {
     )
     expect(markdown).toContain('Next ready capture URL reachability: `local-only`')
     expect(markdown).toContain(
-      'This capture URL is local-only; do not assign it to a phone operator until the production handoff is regenerated with `PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:lan`.',
+      'This capture URL is local-only; do not assign it to a phone operator until the production handoff is regenerated with `PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:lan`.',
     )
     expect(markdown).toContain(
-      'Tunnel/base URL alternative: `PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:base-url`.',
+      'Tunnel/base URL alternative: `PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:base-url`.',
     )
     expect(markdown).toContain('Next ready output: `.context/mobile-safari/fireball.json`')
   })
@@ -13996,7 +13996,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       missingBatchScopedAutoUploadUrlItems: 1000,
       outputDirectory: '.context/external-evidence-batches',
       approvalStatus: 'non-approving-external-evidence-batch-sheet-index',
-      bulkCommand: expect.stringContaining('npm --prefix tools/3d-pfx-library/viewer run export:external-evidence'),
+      bulkCommand: expect.stringContaining('npm --prefix kits/juice/r3f-pfx-browser run export:external-evidence'),
     })
     expect(index.summary.bulkCommand).toContain('--external-evidence-batch-sheet-directory .context/external-evidence-batches')
     expect(index.summary.bulkCommand).not.toContain('verify:evidence')
@@ -14020,7 +14020,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       markdownOutputFile: '.context/external-evidence-batches/external-evidence-batch-001.md',
       command: expect.stringContaining('--external-evidence-batch-id external-evidence-batch-001'),
     })
-    expect(index.sheets[0].command).toContain('npm --prefix tools/3d-pfx-library/viewer run export:external-evidence')
+    expect(index.sheets[0].command).toContain('npm --prefix kits/juice/r3f-pfx-browser run export:external-evidence')
     expect(index.sheets[0].command).not.toContain('verify:evidence')
     expect(markdown).toContain('# R3F PFX External Evidence Batch Sheet Index')
     expect(markdown).toContain('Total open work items: 3000')
@@ -15441,10 +15441,10 @@ describe('r3f-pfx-library catalog contracts', () => {
 
     expect(localOnlyMarkdown).toContain('Mobile Safari reachability: `local-only`')
     expect(localOnlyMarkdown).toContain(
-      'Mobile Safari capture URL is local-only; do not assign it to a phone operator until the production handoff is regenerated with `PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:lan`.',
+      'Mobile Safari capture URL is local-only; do not assign it to a phone operator until the production handoff is regenerated with `PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:lan`.',
     )
     expect(localOnlyMarkdown).toContain(
-      'Mobile Safari tunnel/base URL alternative: `PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:base-url`.',
+      'Mobile Safari tunnel/base URL alternative: `PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:base-url`.',
     )
   })
 
@@ -16546,10 +16546,10 @@ describe('r3f-pfx-library catalog contracts', () => {
     const localOnlyMarkdown = exportPfxProductionAcceptanceGapAuditMarkdown(localOnlyAudit)
     expect(localOnlyMarkdown).toContain('  - Reachability: `local-only`')
     expect(localOnlyMarkdown).toContain(
-      '  - This capture URL is local-only; do not assign it to a phone operator until the production handoff is regenerated with `PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:lan`.',
+      '  - This capture URL is local-only; do not assign it to a phone operator until the production handoff is regenerated with `PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:lan`.',
     )
     expect(localOnlyMarkdown).toContain(
-      '  - Tunnel/base URL alternative: `PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:base-url`.',
+      '  - Tunnel/base URL alternative: `PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:base-url`.',
     )
 
     const partiallyApproved = createPfxProductionAcceptanceGapAudit({
@@ -17121,16 +17121,16 @@ describe('r3f-pfx-library catalog contracts', () => {
     const markdown = exportMarkdown(sheet)
 
     expect(markdown).toContain(
-      '- Mobile Safari capture URL is local-only; do not assign it to a phone operator until the production handoff is regenerated with `PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:lan`.',
+      '- Mobile Safari capture URL is local-only; do not assign it to a phone operator until the production handoff is regenerated with `PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:lan`.',
     )
     expect(markdown).toContain(
-      '- Mobile Safari tunnel/base URL alternative: `PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:base-url`.',
+      '- Mobile Safari tunnel/base URL alternative: `PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:base-url`.',
     )
     expect(markdown).toContain(
-      '- Chrome Android capture URL is local-only; do not assign it to a phone operator until the production handoff is regenerated with `PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:lan`.',
+      '- Chrome Android capture URL is local-only; do not assign it to a phone operator until the production handoff is regenerated with `PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:lan`.',
     )
     expect(markdown).toContain(
-      '- Chrome Android tunnel/base URL alternative: `PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:base-url`.',
+      '- Chrome Android tunnel/base URL alternative: `PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:base-url`.',
     )
   })
 

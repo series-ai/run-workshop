@@ -255,7 +255,7 @@ function productionApprovalBatchSheetMarkdownOutputFile(batchId: string, outputD
 
 function productionApprovalBatchSheetCommand(batchId: string, outputFile: string, markdownOutputFile: string): string {
   return [
-    'npm --prefix tools/3d-pfx-library/viewer run verify:approvals',
+    'npm --prefix kits/juice/r3f-pfx-browser run verify:approvals',
     `-- --approval-batch-id ${batchId}`,
     `--approval-batch-sheet-output ${outputFile}`,
     `--approval-batch-sheet-markdown-output ${markdownOutputFile}`,
@@ -264,7 +264,7 @@ function productionApprovalBatchSheetCommand(batchId: string, outputFile: string
 
 function productionApprovalBulkBatchSheetCommand(outputDirectory: string): string {
   return [
-    'npm --prefix tools/3d-pfx-library/viewer run verify:approvals',
+    'npm --prefix kits/juice/r3f-pfx-browser run verify:approvals',
     `-- --approval-batch-sheet-directory ${outputDirectory}`,
     '--approval-batch-sheet-index-output .context/r3f-pfx-production-approval-batch-sheet-index.json',
     '--approval-batch-sheet-index-markdown-output .context/r3f-pfx-production-approval-batch-sheet-index.md',
@@ -281,7 +281,7 @@ export function redTeamReviewBatchSheetMarkdownOutputFile(batchId: string, outpu
 
 export function redTeamReviewBatchSheetCommand(batchId: string, outputFile: string, markdownOutputFile: string): string {
   return [
-    'npm --prefix tools/3d-pfx-library/viewer run verify:red-team',
+    'npm --prefix kits/juice/r3f-pfx-browser run verify:red-team',
     `-- --red-team-batch-id ${batchId}`,
     `--red-team-batch-sheet-output ${outputFile}`,
     `--red-team-batch-sheet-markdown-output ${markdownOutputFile}`,
@@ -290,7 +290,7 @@ export function redTeamReviewBatchSheetCommand(batchId: string, outputFile: stri
 
 export function redTeamReviewBulkBatchSheetCommand(outputDirectory: string): string {
   return [
-    'npm --prefix tools/3d-pfx-library/viewer run verify:red-team',
+    'npm --prefix kits/juice/r3f-pfx-browser run verify:red-team',
     `-- --red-team-batch-sheet-directory ${outputDirectory}`,
     '--red-team-batch-sheet-index-output .context/r3f-pfx-red-team-review-batch-sheet-index.json',
     '--red-team-batch-sheet-index-markdown-output .context/r3f-pfx-red-team-review-batch-sheet-index.md',
@@ -758,7 +758,7 @@ function taxonomyReviewBatchSheetMarkdownOutputFile(batchId: string, outputDirec
 
 function taxonomyReviewBatchSheetCommand(batchId: string, outputFile: string, markdownOutputFile: string): string {
   return [
-    'npm --prefix tools/3d-pfx-library/viewer run verify:taxonomy',
+    'npm --prefix kits/juice/r3f-pfx-browser run verify:taxonomy',
     `-- --taxonomy-batch-id ${batchId}`,
     `--taxonomy-batch-sheet-output ${outputFile}`,
     `--taxonomy-batch-sheet-markdown-output ${markdownOutputFile}`,
@@ -767,7 +767,7 @@ function taxonomyReviewBatchSheetCommand(batchId: string, outputFile: string, ma
 
 function taxonomyReviewBulkBatchSheetCommand(outputDirectory: string): string {
   return [
-    'npm --prefix tools/3d-pfx-library/viewer run verify:taxonomy',
+    'npm --prefix kits/juice/r3f-pfx-browser run verify:taxonomy',
     `-- --taxonomy-batch-sheet-directory ${outputDirectory}`,
     '--taxonomy-batch-sheet-index-output .context/r3f-pfx-taxonomy-review-batch-sheet-index.json',
     '--taxonomy-batch-sheet-index-markdown-output .context/r3f-pfx-taxonomy-review-batch-sheet-index.md',

@@ -231,16 +231,16 @@ export function parseExportedPreset(jsonPreset: string): Record<string, unknown>
 }
 
 export const PFX_FINAL_ACCEPTANCE_COMMAND =
-  'npm --prefix tools/3d-pfx-library/viewer run verify:final-acceptance'
+  'npm --prefix kits/juice/r3f-pfx-browser run verify:final-acceptance'
 
 export const PFX_LOCAL_ACCEPTANCE_COMMAND =
-  'npm --prefix tools/3d-pfx-library/viewer run verify:acceptance'
+  'npm --prefix kits/juice/r3f-pfx-browser run verify:acceptance'
 
 export const PFX_LAN_PRODUCTION_HANDOFF_COMMAND =
-  'PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:lan'
+  'PFX_CAPTURE_LAN_HOST=<LAN-IP> npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:lan'
 
 export const PFX_BASE_URL_PRODUCTION_HANDOFF_COMMAND =
-  'PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix tools/3d-pfx-library/viewer run verify:production-handoff:base-url'
+  'PFX_CAPTURE_BASE_URL=https://<tunnel-host>/ npm --prefix kits/juice/r3f-pfx-browser run verify:production-handoff:base-url'
 
 export function objectiveRequirement(input: {
   id: string
