@@ -117,7 +117,8 @@ function aiDirectPlugin(): Plugin {
     name: 'ai-direct',
     configureServer(server) {
       // Cancel all in-flight direct API requests
-      server.middlewares.use('/__ai-cancel', (_req, res) => {
+      server.middlewares.use('/__ai-cancel', (req, res) => {
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         const n = activeAborts.size;
         for (const a of activeAborts) a.abort();
         activeAborts.clear();
@@ -155,6 +156,7 @@ function aiDirectPlugin(): Plugin {
 
       // ====== Google GenAI (Nano Banana / Gemini) ======
       server.middlewares.use('/__ai-generate-google', async (req, res) => {
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
         const params = await readJsonBody(req);
         if (!params) { res.writeHead(400); res.end('Invalid JSON'); return; }
@@ -244,6 +246,7 @@ function aiDirectPlugin(): Plugin {
 
       // ====== OpenAI (gpt-image-1, gpt-image-2) ======
       server.middlewares.use('/__ai-generate-openai', async (req, res) => {
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
         const params = await readJsonBody(req);
         if (!params) { res.writeHead(400); res.end('Invalid JSON'); return; }
@@ -356,6 +359,7 @@ function aiDirectPlugin(): Plugin {
 
       // ====== AI Chat (multi-provider) ======
       server.middlewares.use('/__ai-chat', async (req, res) => {
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
         const chunks: Buffer[] = [];
         for await (const chunk of req) chunks.push(Buffer.from(chunk));
@@ -595,7 +599,8 @@ function comfyPlugin(): Plugin {
     name: 'comfy',
     configureServer(server) {
       // List all workflow JSONs from comfy-workflows/ at request time
-      server.middlewares.use('/__comfy-workflows', async (_req, res) => {
+      server.middlewares.use('/__comfy-workflows', async (req, res) => {
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         try {
           const fs = await import('node:fs');
           const path = await import('node:path');
@@ -625,6 +630,7 @@ function comfyPlugin(): Plugin {
       // Side file format: { version: 1, samples: { "<dimsKey>": [{duration, ts}, ...] } }
       // Capped at 20 samples per dim key (FIFO).
       server.middlewares.use('/__comfy-timings', async (req, res) => {
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         try {
           const fs = await import('node:fs');
           const path = await import('node:path');
