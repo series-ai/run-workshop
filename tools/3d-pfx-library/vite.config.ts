@@ -10,6 +10,10 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url))
 // safety net so react/three resolve to a single instance (R3F hooks crash if
 // two `three` copies load).
 export default defineConfig({
+  // Base path is configurable so the static build can be served from a
+  // project GitHub Pages URL (https://<org>.github.io/<repo>/). Local dev and
+  // preview keep the default root base.
+  base: process.env.PFX_BASE_PATH ?? '/',
   plugins: [react()],
   resolve: {
     alias: {
