@@ -114,7 +114,7 @@ Open **Preferences > AI** in Layout Manager and paste your API keys, or click **
 | **xAI (Grok)** | `XAI_API_KEY` | AI chat (text only, no image support) |
 | **Anthropic (Claude)** | `ANTHROPIC_API_KEY` | AI chat |
 
-Not all keys are required. Only add the providers you plan to use. Background removal runs locally in the browser with no API key needed.
+Not all keys are required. Only add the providers you plan to use.
 
 #### No-Key Providers (AI Chat)
 
@@ -189,8 +189,8 @@ All AI tools are accessible from the toolbar. They can be hidden entirely from *
 - Persistent prompt across sessions
 
 #### Remove Background
-- Background removal via the bundled ComfyUI workflow (`comfy-workflows/` — see the ComfyUI section below)
-- Creates a new element — original is preserved
+- Runs through the ComfyUI integration (see below), using the bundled workflow source at `comfy-workflows_source/BackgroundRemoval_API_LM.json` (built on the [ComfyUI-RMBG](https://github.com/1038lab/ComfyUI-RMBG) BiRefNet node)
+- One-time setup: install ComfyUI-RMBG in your ComfyUI, load the workflow source there, then **Save (API Format)** into `comfy-workflows/` — see [`docs/comfyui-integration.md`](docs/comfyui-integration.md)
 
 #### AI Chat
 - Multi-provider chat: Claude, Gemini, OpenAI, Grok
@@ -327,16 +327,15 @@ src/
     ai/
       AiChatPanel.tsx      Multi-provider AI chat
       TextToImageModal.tsx Text/reference-to-image generation modal
-      RemoveBgModal.tsx    Background removal modal
       ComfyModal.tsx       ComfyUI local workflow runner
       aiClient.ts          Direct provider API communication (SSE streaming)
       comfyClient.ts       ComfyUI server communication (HTTP + WebSocket)
-      backgroundRemoval.ts Local WASM background removal
       completionSound.ts   Audio feedback
       flattenNode.ts       Paint layer compositing for AI input
       useDraggableModal.ts Shared drag behavior for panels
     paint/                 Paint editor subsystem
 comfy-workflows/           Drop your ComfyUI workflow JSONs here (API format)
+comfy-workflows_source/    UI-format workflow sources (load in ComfyUI, re-export as API)
 vite.config.ts             Dev server + direct AI API proxies + ComfyUI proxy
 ```
 

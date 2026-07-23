@@ -29,10 +29,11 @@ font files are bundled in this repository.
 ## ComfyUI workflows
 
 The JSON files under `comfy-workflows/` and `comfy-workflows_source/` are
-original workflow definitions. They reference model checkpoints (e.g.
-FLUX.2 Klein) that are **not** included here — users download those into their
-own ComfyUI installation and are responsible for complying with each model's
-license.
+original workflow definitions. They reference custom nodes (e.g.
+[ComfyUI-RMBG](https://github.com/1038lab/ComfyUI-RMBG)) and model checkpoints
+(e.g. FLUX.2 Klein, BiRefNet) that are **not** included here — users install
+those into their own ComfyUI installation and are responsible for complying
+with each project's license.
 
 ## Design references
 
