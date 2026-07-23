@@ -4,7 +4,7 @@ import type { WorkspaceAction, CanvasRect, ImageNode, ScaleFilter, RulerGuide } 
 import { adjustmentsFilter } from './types';
 import { cssFontFamily, loadFontForCanvas } from './googleFonts';
 import { ColorPicker } from './paint/ColorPicker';
-import { getCanvasOverlappingImages, findDuplicateSpriteNames, findUnnamedImages, findOverlappingElements, findOffBasePoseImages, buildCanvasInfoJson, getSpriteName } from './canvasInfo';
+import { getCanvasOverlappingImages, overlapsCanvas, findDuplicateSpriteNames, findUnnamedImages, findOverlappingElements, findOffBasePoseImages, buildCanvasInfoJson, getSpriteName } from './canvasInfo';
 import { buildProjectBlob } from './projectFile';
 import { writePngScaleFilter } from './pngChunks';
 import optimise from '@jsquash/oxipng/optimise';
@@ -157,9 +157,7 @@ export function CanvasMenu({ canvas, dispatch, images, scaleFilter, selectedIds,
     const sorted = [...images].sort((a, b) => a.zIndex - b.zIndex);
 
     for (const img of sorted) {
-      const imgRight = img.x + img.width;
-      const imgBottom = img.y + img.height;
-      if (imgRight <= 0 || img.x >= canvas.width || imgBottom <= 0 || img.y >= canvas.height) {
+      if (!overlapsCanvas(img, canvas)) {
         continue;
       }
 

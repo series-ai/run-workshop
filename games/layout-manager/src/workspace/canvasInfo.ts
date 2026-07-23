@@ -8,13 +8,27 @@ export function getSpriteName(img: ImageNode): string {
   return img.fileName.replace(/\.[^.]+$/, '');
 }
 
+/** Rotation-aware canvas overlap test (canvas is at 0,0). Rendering rotates
+ * around the element's center, so membership must use the rotated bounding
+ * box — the unrotated rect can sit off-canvas while the sprite is visible. */
+export function overlapsCanvas(img: ImageNode, canvas: CanvasRect): boolean {
+  let left = img.x;
+  let top = img.y;
+  let right = img.x + img.width;
+  let bottom = img.y + img.height;
+  if (img.rotation % 360 !== 0) {
+    const corners = computeCorners(img);
+    left = Math.min(...corners.map((c) => c.x));
+    right = Math.max(...corners.map((c) => c.x));
+    top = Math.min(...corners.map((c) => c.y));
+    bottom = Math.max(...corners.map((c) => c.y));
+  }
+  return !(right <= 0 || left >= canvas.width || bottom <= 0 || top >= canvas.height);
+}
+
 /** Return images that overlap the canvas rect (canvas is at 0,0). */
 export function getCanvasOverlappingImages(images: ImageNode[], canvas: CanvasRect): ImageNode[] {
-  return images.filter((img) => {
-    const imgRight = img.x + img.width;
-    const imgBottom = img.y + img.height;
-    return !(imgRight <= 0 || img.x >= canvas.width || imgBottom <= 0 || img.y >= canvas.height);
-  });
+  return images.filter((img) => overlapsCanvas(img, canvas));
 }
 
 /** Find rigged images whose current transform differs from their saved base position.
