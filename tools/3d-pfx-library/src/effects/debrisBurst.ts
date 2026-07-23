@@ -1,0 +1,42 @@
+import * as THREE from 'three'
+import { roundMetric } from '../constants/03'
+import { PFX_DEBRIS_BURST_FRAGMENT, PFX_DEBRIS_BURST_VERTEX } from '../constants/06'
+import type { PfxDebrisBurstRuntimeState } from '../types/02'
+
+export function createPfxDebrisBurstLifecycle(cycle: number): { progress: number; opacity: number; fracture: number; eject: number; fall: number; darken: number; stage: 'fracture' | 'eject' | 'fall' } {
+  const progress = THREE.MathUtils.clamp(cycle, 0, 1)
+  if (progress < 0.12) { const crack = progress / 0.12; return { progress, opacity: roundMetric(0.82 + crack * 0.18), fracture: roundMetric(crack), eject: 0, fall: 0, darken: 0, stage: 'fracture' } }
+  if (progress < 0.65) { const release = (progress - 0.12) / 0.53; return { progress, opacity: 1, fracture: 1, eject: roundMetric(release), fall: 0, darken: 0, stage: 'eject' } }
+  const tail = (progress - 0.65) / 0.35; return { progress, opacity: Math.max(0, roundMetric(1 - Math.pow(tail, 0.72))), fracture: 1, eject: 1, fall: roundMetric(tail), darken: roundMetric(tail), stage: 'fall' }
+}
+
+export function createPfxDebrisBurstRuntimeState(elapsedSeconds: number, timing: number, lifetime: number, tempo: number, motionMultiplier: number, target?: PfxDebrisBurstRuntimeState): PfxDebrisBurstRuntimeState {
+  const rate = Math.max(.05, timing) * Math.max(.1, tempo) * Math.max(.1, motionMultiplier); const periodSeconds = 1.4 * Math.max(.25, lifetime); const cycle = roundMetric(THREE.MathUtils.clamp((Math.max(0, elapsedSeconds) * rate) / periodSeconds, 0, 1)); const lifecycle = createPfxDebrisBurstLifecycle(cycle)
+  const state = target ?? { cycle: 0, periodSeconds: 0, progress: 0, opacity: 0, fracture: 0, eject: 0, fall: 0, darken: 0, stage: 'fracture' }; Object.assign(state, lifecycle, { cycle, periodSeconds }); return state
+}
+
+export function createPfxDebrisBurstMaterial(opacity: number, colorA: THREE.ColorRepresentation='#7c8796', colorB: THREE.ColorRepresentation='#c7a676', density=.66, styleEdgeHardness=.22): THREE.ShaderMaterial {
+  const primary=new THREE.Color(colorA); const secondary=new THREE.Color(colorB); const material=new THREE.ShaderMaterial({uniforms:{uOpacity:{value:THREE.MathUtils.clamp(opacity,0,1)},uProgress:{value:0},uFracture:{value:0},uEject:{value:0},uFall:{value:0},uDarken:{value:0},uDensity:{value:THREE.MathUtils.clamp(density,.05,1)},uStyleEdgeHardness:{value:THREE.MathUtils.clamp(styleEdgeHardness,0,1)},uColorA:{value:new THREE.Vector3(primary.r,primary.g,primary.b)},uColorB:{value:new THREE.Vector3(secondary.r,secondary.g,secondary.b)}},transparent:false,blending:THREE.NormalBlending,depthWrite:true,depthTest:true,side:THREE.DoubleSide,toneMapped:false,vertexShader:PFX_DEBRIS_BURST_VERTEX,fragmentShader:PFX_DEBRIS_BURST_FRAGMENT})
+  material.userData['pfxDebrisBurstMaterial']=true; material.userData['pfxDebrisBurstDrawCalls']=1; material.userData['pfxDebrisBurstParticleCount']=0; material.userData['pfxDebrisBurstFragmentTextureSamples']=0; material.userData['pfxDebrisBurstTransientAllocationsPerFrame']=0; material.userData['pfxDebrisBurstMeshJustification']='asymmetric-ballistic-breakup-with-hero-slabs-mid-chips-and-hard-splinters'; return material
+}
+
+export function createPfxDebrisBurstGeometry(): THREE.BufferGeometry {
+  const positions:number[]=[]; const normals:number[]=[]; const parts:number[]=[]; const origins:number[]=[]; const directions:number[]=[]; const axes:number[]=[]; const seeds:number[]=[]; const point=new THREE.Vector3(); const normal=new THREE.Vector3(); const quaternion=new THREE.Quaternion(); const scaleVector=new THREE.Vector3(); const matrix=new THREE.Matrix4(); const normalMatrix=new THREE.Matrix3()
+  const append=(source:THREE.BufferGeometry,origin:[number,number,number],scale:[number,number,number],rotation:[number,number,number],direction:[number,number,number],axis:[number,number,number],part:number,seed:number)=>{const geometry=source.index?source.toNonIndexed():source;quaternion.setFromEuler(new THREE.Euler(...rotation));scaleVector.set(...scale);matrix.compose(new THREE.Vector3(...origin),quaternion,scaleVector);normalMatrix.getNormalMatrix(matrix);const attribute=geometry.getAttribute('position');const normalAttribute=geometry.getAttribute('normal');for(let index=0;index<attribute.count;index+=1){point.fromBufferAttribute(attribute,index).applyMatrix4(matrix);normal.fromBufferAttribute(normalAttribute,index).applyMatrix3(normalMatrix).normalize();positions.push(point.x,point.y,point.z);normals.push(normal.x,normal.y,normal.z);parts.push(part);origins.push(...origin);directions.push(...direction);axes.push(...axis);seeds.push(seed)}if(geometry!==source)geometry.dispose();source.dispose()}
+  const heroes:Array<{origin:[number,number,number];scale:[number,number,number];rotation:[number,number,number];direction:[number,number,number];axis:[number,number,number];seed:number}>=[
+    {origin:[-.46,.38,.26],scale:[.3,.27,.17],rotation:[.22,-.4,.16],direction:[-.19,.22,.1],axis:[.3,.8,.5],seed:.06},
+    {origin:[.42,.5,-.28],scale:[.28,.17,.3],rotation:[-.28,.52,-.18],direction:[-.75,.3,1.05],axis:[-.5,.7,.4],seed:.24},
+    {origin:[-.18,.9,-.38],scale:[.16,.25,.27],rotation:[.38,.14,.42],direction:[-1.31,.38,1.35],axis:[.7,.2,-.6],seed:.42},
+    {origin:[.26,1.14,.32],scale:[.28,.26,.17],rotation:[-.2,-.36,.3],direction:[-1.88,.46,2.35],axis:[-.3,.6,.8],seed:.6},
+  ]
+  heroes.forEach((piece)=>append(new THREE.DodecahedronGeometry(1,0),piece.origin,piece.scale,piece.rotation,piece.direction,piece.axis,0,piece.seed))
+  const mids:Array<{origin:[number,number,number];direction:[number,number,number];axis:[number,number,number];seed:number}>=[
+    {origin:[-.66,.72,-.08],direction:[-.34,.18,.25],axis:[.2,.9,-.4],seed:.12},{origin:[.65,.78,.12],direction:[-.6,.24,.88],axis:[-.7,.3,.6],seed:.29},{origin:[-.08,.58,.58],direction:[-.86,.28,.82],axis:[.8,.4,.2],seed:.37},{origin:[.12,.66,-.62],direction:[-1.13,.32,1.5],axis:[-.2,.8,.5],seed:.51},{origin:[-.48,1.22,.18],direction:[-1.39,.38,1.45],axis:[.5,-.3,.8],seed:.68},{origin:[.5,1.34,-.12],direction:[-1.65,.42,2.1],axis:[-.4,.5,.7],seed:.79},{origin:[.02,1.52,.06],direction:[-1.91,.48,2.08],axis:[.6,.7,-.2],seed:.9},
+  ]
+  mids.forEach((piece,index)=>append(new THREE.IcosahedronGeometry(1,0),piece.origin,[.16+(index%2)*.035,.2+(index%3)*.025,.15+((index+1)%2)*.04],[index*.19,-index*.27,index*.14],piece.direction,piece.axis,1,piece.seed))
+  const splinters:Array<{origin:[number,number,number];direction:[number,number,number];axis:[number,number,number];seed:number}>=[
+    {origin:[-.74,.42,.38],direction:[-.53,.12,.35],axis:[.2,.7,.6],seed:.18},{origin:[.78,.48,-.34],direction:[-.83,.16,1.25],axis:[-.5,.8,.2],seed:.33},{origin:[-.38,.3,-.64],direction:[-1.13,.2,1],axis:[.7,.1,-.6],seed:.47},{origin:[.4,.36,.66],direction:[-1.43,.24,1.95],axis:[-.2,.9,.3],seed:.56},{origin:[-.7,1.1,-.32],direction:[-1.73,.3,1.72],axis:[.6,.5,.4],seed:.65},{origin:[.7,1.18,.3],direction:[-2.03,.34,2.65],axis:[-.6,.4,.7],seed:.74},{origin:[-.24,1.62,.2],direction:[-2.33,.4,2.43],axis:[.3,-.5,.8],seed:.86},{origin:[.3,1.72,-.18],direction:[-2.63,.44,3.35],axis:[-.7,.6,.2],seed:.96},
+  ]
+  splinters.forEach((piece,index)=>append(new THREE.TetrahedronGeometry(1,0),piece.origin,[.075+(index%2)*.018,.13+(index%3)*.024,.065+((index+1)%2)*.02],[index*.33,index*.21,-index*.17],piece.direction,piece.axis,2,piece.seed))
+  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));geometry.setAttribute('aDebrisPart',new THREE.Float32BufferAttribute(parts,1));geometry.setAttribute('aDebrisOrigin',new THREE.Float32BufferAttribute(origins,3));geometry.setAttribute('aDebrisDirection',new THREE.Float32BufferAttribute(directions,3));geometry.setAttribute('aDebrisAxis',new THREE.Float32BufferAttribute(axes,3));geometry.setAttribute('aDebrisSeed',new THREE.Float32BufferAttribute(seeds,1));geometry.computeBoundingBox();geometry.computeBoundingSphere();geometry.userData['pfxDebrisBurstGeometry']=true;geometry.userData['pfxDebrisBurstClosedComponents']=true;geometry.userData['pfxDebrisBurstHeroSlabCount']=4;geometry.userData['pfxDebrisBurstMidChipCount']=7;geometry.userData['pfxDebrisBurstSplinterCount']=8;geometry.userData['pfxDebrisBurstConnectedComponents']=19;geometry.userData['pfxDebrisBurstTriangles']=positions.length/9;geometry.userData['pfxDebrisBurstDrawCalls']=1;return geometry
+}

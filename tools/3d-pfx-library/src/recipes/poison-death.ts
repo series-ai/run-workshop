@@ -1,0 +1,9 @@
+import { authoredRecipe } from '../constants/01'
+
+// Mirror of enemy-death-poof (poison element): toxic skirt hugs the
+// ground, spores rise as the essence-leaves read (poison-cloud language).
+export default authoredRecipe('poison-death', 'Poison death', 'Downward toxic collapse replaces the body with a grounded poison cloud before sparse spores rise through the recovery.', [
+  { kind: 'particles', role: 'impact', opacity: 0.76, scale: 1.2, phase: 'poison-death-downward-collapse', tuning: { motion: 'impact-burst', sprite: 'smoke', blend: 'alpha', colorOverride: '#a9e85a', ramp: 'pigment', death: 'erode', delay: 0, window: 0.3, lifeScale: 0.62, countScale: 0.82, speedScale: 2.6, speedJitter: 0.38, drag: 1.1, gravity: -0.55, spawnScale: 0.48, spawnLift: 0.5, depthScale: 2.8, stretch: 0.18, spinScale: 0.12, turbulenceScale: 0.12, impactVector: [0, -1, 0], spreadAngle: 0.62, size: [0.22, 0.62, 0.16], positionOffset: [0, 0.5, 0] } },
+  { kind: 'particles', role: 'volume', opacity: 0.66, scale: 1.52, phase: 'poison-death-grounded-body-cloud', tuning: { motion: 'drift-cloud', sprite: 'smoke', blend: 'alpha', colorOverride: '#56782a', ramp: 'pigment', death: 'erode', delay: 0.08, window: 0.58, lifeScale: 1.02, countScale: 1.35, speedScale: 0.82, speedJitter: 0.45, drag: 1.4, gravity: -0.08, spawnScale: 0.74, depthScale: 3.4, spinScale: 0.18, turbulenceScale: 0.24, size: [0.36, 0.96, 0.24], positionOffset: [0, -0.18, 0] } },
+  { kind: 'particles', role: 'aura', opacity: 0.82, scale: 1.05, phase: 'poison-death-rising-spore-recovery', tuning: { motion: 'column-rise', sprite: 'bubble', blend: 'alpha', colorOverride: '#b8ff5c', ramp: 'held', delay: 0.2, window: 0.54, lifeScale: 1.08, countScale: 0.62, speedScale: 0.72, speedJitter: 0.48, drag: 0.82, gravity: 0, spawnScale: 0.72, depthScale: 3.2, spinScale: 0, turbulenceScale: 0.3, size: [0.08, 0.36, 0.14], flicker: 0.34, positionOffset: [0, -0.14, 0] } },
+], 2, 1.08)

@@ -1933,7 +1933,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(heroShardMaterial.transparent).toBe(true)
     expect(heroShardMaterial.userData['pfxImpactShardBurstMaterial']).toBe('solid-faceted-heat-ramp')
     heroShardMaterial.dispose()
-    const librarySource = fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), 'index.tsx'), 'utf8')
+    const librarySource = (() => { const d = path.dirname(new URL(import.meta.url).pathname); const out = []; const walk = (dir) => { for (const e of fs.readdirSync(dir, { withFileTypes: true })) { const f = path.join(dir, e.name); if (e.isDirectory()) walk(f); else if (/\.tsx?$/.test(e.name) && !e.name.includes('.test.')) out.push(fs.readFileSync(f, 'utf8')) } }; walk(d); return out.join('\n') })()
     expect(librarySource).toContain('createPfxImpactShardBurstGeometry()')
     expect(librarySource).toContain('createPfxImpactShardBurstMaterial(materialProps.opacity, materialProps.color)')
     expect(librarySource).toContain("if (surface.kind === 'impact-shards')")
@@ -3533,7 +3533,7 @@ describe('r3f-pfx-library catalog contracts', () => {
   })
 
   it('applies semantic camera-facing rotation inside the shader-surface animation path', () => {
-    const source = fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), 'index.tsx'), 'utf8')
+    const source = (() => { const d = path.dirname(new URL(import.meta.url).pathname); const out = []; const walk = (dir) => { for (const e of fs.readdirSync(dir, { withFileTypes: true })) { const f = path.join(dir, e.name); if (e.isDirectory()) walk(f); else if (/\.tsx?$/.test(e.name) && !e.name.includes('.test.')) out.push(fs.readFileSync(f, 'utf8')) } }; walk(d); return out.join('\n') })()
     const branchStart = source.indexOf('if (meshShaderMaterial) {')
     const shaderBranch = source.slice(branchStart, source.indexOf('\n      return\n    }\n    const motion =', branchStart))
     expect(shaderBranch).toContain('shouldApplyPfxSurfaceCameraFacing(surface, feelVersion, parentCameraPinned)')
@@ -12290,7 +12290,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(material.fragmentShader).not.toContain('fresnel')
     expect(material.fragmentShader).not.toContain('texture2D(')
     expect(material.userData).toMatchObject({ pfxGlyphTrailMaterial: true, pfxGlyphTrailDrawCalls: 1, pfxGlyphTrailParticleCount: 0, pfxGlyphTrailFragmentTextureSamples: 0, pfxGlyphTrailFragmentNormalizeOps: 1, pfxGlyphTrailTransientAllocationsPerFrame: 0, pfxGlyphTrailMeshJustification: 'integrated-arcane-nib-with-sequential-closed-prism-handwriting-wake' })
-    const librarySource = fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), 'index.tsx'), 'utf8')
+    const librarySource = (() => { const d = path.dirname(new URL(import.meta.url).pathname); const out = []; const walk = (dir) => { for (const e of fs.readdirSync(dir, { withFileTypes: true })) { const f = path.join(dir, e.name); if (e.isDirectory()) walk(f); else if (/\.tsx?$/.test(e.name) && !e.name.includes('.test.')) out.push(fs.readFileSync(f, 'utf8')) } }; walk(d); return out.join('\n') })()
     const glyphTrailMaterialMemo = librarySource.slice(librarySource.indexOf('const impactShardMaterial = useMemo('), librarySource.indexOf('useEffect(() => () => impactShardMaterial?.dispose()'))
     expect(glyphTrailMaterialMemo).toContain("controls.color[0], controls.color[1], controls.color[2], controls.density, materialProps.color, materialProps.opacity, styleProfile.edgeHardness")
     PfxLibrary.applyPfxGlyphTrailMaterialOpacity(material, 0.31)
@@ -13088,7 +13088,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     })
     expect(flecks!.tuning!.countScale).toBeGreaterThanOrEqual(0.6)
     expect(flecks!.tuning!.spawnScale).toBe(1)
-    const source = fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), 'index.tsx'), 'utf8')
+    const source = (() => { const d = path.dirname(new URL(import.meta.url).pathname); const out = []; const walk = (dir) => { for (const e of fs.readdirSync(dir, { withFileTypes: true })) { const f = path.join(dir, e.name); if (e.isDirectory()) walk(f); else if (/\.tsx?$/.test(e.name) && !e.name.includes('.test.')) out.push(fs.readFileSync(f, 'utf8')) } }; walk(d); return out.join('\n') })()
     expect(source).toContain('const PFX_SCREEN_VIGNETTE_VERTEX')
     expect(source).toContain('gl_Position = vec4(position.xy, 0.0, 1.0)')
     expect(source).toContain('float edge = max(edgeX, edgeY)')
@@ -13097,7 +13097,7 @@ describe('r3f-pfx-library catalog contracts', () => {
   })
 
   it('accepts an explicit preview time so multi-angle review shares one simulation instant', () => {
-    const source = fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), 'index.tsx'), 'utf8')
+    const source = (() => { const d = path.dirname(new URL(import.meta.url).pathname); const out = []; const walk = (dir) => { for (const e of fs.readdirSync(dir, { withFileTypes: true })) { const f = path.join(dir, e.name); if (e.isDirectory()) walk(f); else if (/\.tsx?$/.test(e.name) && !e.name.includes('.test.')) out.push(fs.readFileSync(f, 'utf8')) } }; walk(d); return out.join('\n') })()
     expect(source).toContain('previewTimeSeconds?: number')
     expect(source).toContain('previewTimeSeconds ?? state.clock.elapsedTime')
     expect(source).toContain('const PFX_BURST_CYCLE_MULTIPLIER = 1.65')
@@ -18437,7 +18437,7 @@ describe('r3f-pfx-library particle simulation', () => {
       const gaps = sorted.slice(1).map((value, index) => value - sorted[index]!)
       expect(Math.max(...gaps)).toBeLessThan(0.55)
     }
-    const source = fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), 'index.tsx'), 'utf8')
+    const source = (() => { const d = path.dirname(new URL(import.meta.url).pathname); const out = []; const walk = (dir) => { for (const e of fs.readdirSync(dir, { withFileTypes: true })) { const f = path.join(dir, e.name); if (e.isDirectory()) walk(f); else if (/\.tsx?$/.test(e.name) && !e.name.includes('.test.')) out.push(fs.readFileSync(f, 'utf8')) } }; walk(d); return out.join('\n') })()
     expect(source).toContain('gl_Position = vec4(worldOffset.xy')
     expect(source).toContain('float bloodBody =')
     expect(source).toContain('float bloodDrip =')
@@ -18624,7 +18624,7 @@ describe('r3f-pfx-library surface tuning (reference-derived recipes)', () => {
     const deposit = surfaces.find((surface) => surface.phase === 'coin-pickup-deposit-glint')
     expect(deposit?.tuning?.delay).toBeGreaterThanOrEqual(0.5)
     expect(deposit?.tuning?.spawnOffset?.[1]).toBeGreaterThan(0.5)
-    const source = fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), 'index.tsx'), 'utf8')
+    const source = (() => { const d = path.dirname(new URL(import.meta.url).pathname); const out = []; const walk = (dir) => { for (const e of fs.readdirSync(dir, { withFileTypes: true })) { const f = path.join(dir, e.name); if (e.isDirectory()) walk(f); else if (/\.tsx?$/.test(e.name) && !e.name.includes('.test.')) out.push(fs.readFileSync(f, 'utf8')) } }; walk(d); return out.join('\n') })()
     expect(source).toContain('createPfxCoinGoldMaterial')
     expect(source).toContain('metalness: 0.82')
     expect(source).toContain('pfx-coin-crest')
