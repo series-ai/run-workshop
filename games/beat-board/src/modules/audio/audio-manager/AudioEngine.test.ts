@@ -74,7 +74,7 @@ function setupMockAudioContext() {
     destination: {},
     currentTime: 0,
   };
-  vi.stubGlobal('AudioContext', vi.fn(() => mockAudioContext));
+  vi.stubGlobal('AudioContext', vi.fn(function () { return mockAudioContext; }));
 }
 
 beforeEach(() => {
