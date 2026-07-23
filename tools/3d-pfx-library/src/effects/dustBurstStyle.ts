@@ -1,0 +1,3 @@
+export function createPfxDustBurstStyleTreatment(styleEdgeHardness: number): { crownTopology: 'eight-broad-roll-lobes' | 'twelve-cut-roll-lobes'; materialResponse: 'matte-pigment-bands' | 'edge-lit-pigment-facets'; rolloutCadence: 'staggered-ground-roll' | 'synchronized-ground-roll'; crownProfile: 'rounded-crown' | 'split-crown' } {
+  return styleEdgeHardness >= .5 ? { crownTopology: 'twelve-cut-roll-lobes', materialResponse: 'edge-lit-pigment-facets', rolloutCadence: 'synchronized-ground-roll', crownProfile: 'split-crown' } : { crownTopology: 'eight-broad-roll-lobes', materialResponse: 'matte-pigment-bands', rolloutCadence: 'staggered-ground-roll', crownProfile: 'rounded-crown' }
+}

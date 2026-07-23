@@ -1,0 +1,921 @@
+:root {
+  color-scheme: dark;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.pfx-shell {
+  display: block;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(34, 211, 238, 0.08), transparent 36%),
+    #0f172a;
+}
+
+.pfx-shell-feed {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.pfx-browser {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.pfx-toolbar {
+  position: relative;
+  padding: 10px 14px;
+  background: rgba(15, 23, 42, 0.92);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.pfx-toolbar-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pfx-search {
+  flex: 0 1 320px;
+  min-width: 160px;
+}
+
+.pfx-active-filters {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-self: end;
+  min-height: 28px;
+  align-items: center;
+}
+
+.pfx-filter-chip {
+  border: 1px solid rgba(34, 211, 238, 0.4);
+  border-radius: 999px;
+  background: rgba(8, 47, 73, 0.55);
+  color: #a5f3fc;
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pfx-filter-chip:hover {
+  border-color: #22d3ee;
+  background: rgba(14, 116, 144, 0.5);
+}
+
+.pfx-filters-toggle {
+  align-self: end;
+  min-height: 40px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.85);
+  color: #e2e8f0;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 18px;
+  cursor: pointer;
+}
+
+.pfx-filters-toggle[aria-expanded="true"] {
+  border-color: #22d3ee;
+  color: #a5f3fc;
+}
+
+.pfx-filter-popover {
+  position: absolute;
+  top: calc(100% + 1px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px 10px;
+  padding: 14px;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.98);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.6);
+}
+
+.pfx-back {
+  position: sticky;
+  top: 10px;
+  z-index: 20;
+  margin: 10px 0 0 14px;
+  width: fit-content;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #7dd3fc;
+  font-size: 13px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.pfx-back:hover {
+  border-color: rgba(125, 211, 252, 0.7);
+}
+
+.pfx-feed {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.pfx-feed-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.pfx-feed-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  z-index: 2;
+}
+
+.pfx-feed-rows {
+  position: relative;
+}
+
+.pfx-feed-cell {
+  position: absolute;
+  width: calc(100% / 3);
+  height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding-bottom: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+
+.pfx-feed-cell:hover .pfx-feed-label {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(148, 163, 184, 0.7);
+}
+
+/* URL-driven audit marker (?mark=ids&markLabel=...) — high-contrast tag
+   pinned to the top of the cell so flagged effects pop while scrolling. */
+.pfx-feed-mark {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  background: #dc2626;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 6px;
+  padding: 3px 8px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 2px 10px rgba(220, 38, 38, 0.55);
+  pointer-events: none;
+}
+
+.pfx-filter-chip-static {
+  border-color: rgba(220, 38, 38, 0.6);
+  background: rgba(69, 10, 10, 0.65);
+  color: #fecaca;
+  cursor: default;
+  align-self: end;
+}
+
+.pfx-feed-label {
+  max-width: 92%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #e2e8f0;
+  font-size: 12px;
+  padding: 3px 12px;
+}
+
+.pfx-toolbar label,
+.pfx-controls label,
+.pfx-export {
+  display: grid;
+  gap: 6px;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.pfx-check {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  align-self: end;
+  min-height: 40px;
+}
+
+.pfx-quick-searches {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pfx-quick-searches button {
+  min-height: 36px;
+  border: 1px solid rgba(34, 211, 238, 0.34);
+  border-radius: 8px;
+  background: rgba(8, 47, 73, 0.48);
+  color: #cffafe;
+  padding: 7px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pfx-quick-searches button:hover,
+.pfx-quick-searches button:focus-visible {
+  border-color: #22d3ee;
+  background: rgba(14, 116, 144, 0.54);
+}
+
+.pfx-toolbar input,
+.pfx-toolbar select,
+.pfx-controls select,
+.pfx-export textarea,
+.pfx-capture textarea {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 8px;
+  background: #111827;
+  color: #f8fafc;
+  padding: 8px 10px;
+}
+
+.pfx-result-count {
+  padding: 8px 14px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.pfx-preview {
+  display: grid;
+  grid-template-rows: minmax(320px, 52vh) minmax(0, 1fr);
+  min-width: 0;
+}
+
+.pfx-stage {
+  min-height: 320px;
+  background: #111827;
+  position: relative;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+}
+
+.pfx-stage:active {
+  cursor: grabbing;
+}
+
+.pfx-stage:focus-visible {
+  box-shadow: inset 0 0 0 2px #38bdf8;
+}
+
+.pfx-stage-hint {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  pointer-events: none;
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.72);
+  color: #cbd5e1;
+  padding: 6px 10px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(8px);
+}
+
+.pfx-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 18px;
+  align-content: start;
+  align-items: start;
+  padding: 18px;
+}
+
+/* Main column: everything stacks in column 1... */
+.pfx-detail > * {
+  grid-column: 1;
+  min-width: 0;
+}
+
+/* ...except the global controls, pinned as a full-height side rail — grid
+   auto-placement used to park the tall controls in row 1, leaving a giant
+   void under the title. */
+.pfx-detail > .pfx-controls {
+  grid-column: 2;
+  grid-row: 1 / span 24;
+}
+
+.pfx-detail h1 {
+  margin: 0 0 6px;
+  font-size: clamp(26px, 4vw, 44px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.pfx-detail p {
+  margin: 0;
+  color: #a5b4fc;
+}
+
+.pfx-controls,
+.pfx-metrics {
+  display: grid;
+  gap: 12px;
+}
+
+.pfx-controls {
+  max-height: 52vh;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.pfx-controls input {
+  width: 100%;
+}
+
+.pfx-controls input[type="color"] {
+  width: 42px;
+  min-height: 34px;
+  padding: 2px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 8px;
+  background: #111827;
+}
+
+.pfx-color-list > span:last-child {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pfx-controls select[multiple] {
+  min-height: 84px;
+}
+
+.pfx-metrics {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin: 0;
+}
+
+.pfx-metrics div {
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(30, 41, 59, 0.72);
+  padding: 10px;
+}
+
+.pfx-metrics dt {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.pfx-metrics dd {
+  margin: 4px 0 0;
+  color: #f8fafc;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.pfx-readiness {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+  border-left: 3px solid #f59e0b;
+  background: rgba(120, 53, 15, 0.22);
+  padding: 12px 14px;
+}
+
+.pfx-readiness > div {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.pfx-readiness strong {
+  color: #fef3c7;
+}
+
+.pfx-readiness span,
+.pfx-readiness li {
+  color: #fde68a;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.pfx-readiness ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.pfx-capture {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+  border-left: 3px solid #22d3ee;
+  background: rgba(8, 47, 73, 0.28);
+  padding: 12px 14px;
+}
+
+.pfx-capture > div {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.pfx-capture strong {
+  color: #cffafe;
+}
+
+.pfx-capture span {
+  color: #bae6fd;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.pfx-export {
+  grid-column: 1 / -1;
+}
+
+.pfx-export-title {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 240px);
+  gap: 12px;
+  align-items: center;
+}
+
+.pfx-export-title select {
+  min-height: 36px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 8px;
+  background: #111827;
+  color: #f8fafc;
+  padding: 6px 10px;
+}
+
+.pfx-export textarea,
+.pfx-capture textarea {
+  min-height: 220px;
+  resize: vertical;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.pfx-empty {
+  padding: 18px;
+}
+
+.pfx-transport {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+}
+
+.pfx-transport button {
+  min-width: 34px;
+  padding: 6px 10px;
+  background: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.pfx-transport button:hover {
+  border-color: #22d3ee;
+}
+
+.pfx-transport .pfx-transport-play {
+  background: #164e63;
+  border-color: #22d3ee;
+}
+
+.pfx-transport .pfx-transport-live[aria-pressed='true'] {
+  background: #164e63;
+  border-color: #22d3ee;
+  color: #7dd3fc;
+}
+
+.pfx-transport input[type='range'] {
+  flex: 1;
+  min-width: 120px;
+  accent-color: #22d3ee;
+}
+
+.pfx-transport-time {
+  min-width: 52px;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 12px;
+  color: #7dd3fc;
+  text-align: right;
+}
+
+.pfx-transport-speed,
+.pfx-transport-loop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.pfx-transport-loop input {
+  accent-color: #22d3ee;
+}
+
+.pfx-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pfx-effect-flip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.pfx-effect-flip button {
+  padding: 6px 12px;
+  background: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.pfx-effect-flip button:hover {
+  border-color: #22d3ee;
+}
+
+.pfx-effect-flip-position {
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 12px;
+  color: #7dd3fc;
+}
+
+.pfx-control-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 6px;
+}
+
+.pfx-control-row-modified > label > span:first-child {
+  color: #fbbf24;
+}
+
+.pfx-control-reset {
+  padding: 4px 8px;
+  background: #1f2937;
+  color: #fbbf24;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pfx-controls-reset-all {
+  padding: 8px 12px;
+  background: #1f2937;
+  color: #fbbf24;
+  border: 1px solid #78350f;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.pfx-hidden-matches {
+  margin-left: 12px;
+  padding: 4px 10px;
+  background: #422006;
+  color: #fbbf24;
+  border: 1px solid #78350f;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.pfx-hidden-matches:hover {
+  border-color: #fbbf24;
+}
+
+.pfx-feed-type {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.pfx-feed-unsafe,
+.pfx-detail-unsafe {
+  color: #fbbf24;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid #78350f;
+  border-radius: 6px;
+  padding: 1px 5px;
+}
+
+.pfx-detail-unsafe {
+  margin-left: 10px;
+  font-size: 11px;
+  vertical-align: middle;
+}
+
+.pfx-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.pfx-sort select {
+  background: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+.pfx-feed-replay {
+  margin-left: 10px;
+  padding: 4px 10px;
+  background: #1f2937;
+  color: #7dd3fc;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.pfx-feed-replay:hover {
+  border-color: #22d3ee;
+}
+
+.pfx-emitters {
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  background: #111827;
+  padding: 10px 12px;
+}
+
+.pfx-emitters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.pfx-emitters-header h2 {
+  margin: 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #7dd3fc;
+}
+
+.pfx-emitters-header button {
+  margin-left: 8px;
+  padding: 4px 10px;
+  background: #1f2937;
+  color: #7dd3fc;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.pfx-emitter {
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: #0f172a;
+}
+
+.pfx-emitter summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.pfx-emitter summary::-webkit-details-marker {
+  display: none;
+}
+
+.pfx-emitter-toggle {
+  accent-color: #22d3ee;
+}
+
+.pfx-emitter-name {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.pfx-emitter-kind {
+  color: #64748b;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.pfx-emitter-off {
+  opacity: 0.45;
+}
+
+.pfx-emitter-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 8px;
+  padding: 4px 10px 10px;
+}
+
+.pfx-emitter-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.pfx-emitter-fields input,
+.pfx-emitter-fields select {
+  background: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 12px;
+  width: 100%;
+}
+
+.pfx-compare-live-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 16px;
+  margin-top: 6px;
+  background: #111827;
+  border: 1px solid #78350f;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.pfx-compare-live-labels span:first-child {
+  color: #fbbf24;
+}
+
+.pfx-compare-live-labels span:last-child {
+  color: #7dd3fc;
+}
+
+.pfx-compare-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.pfx-compare-controls button {
+  padding: 6px 12px;
+  background: #1f2937;
+  color: #7dd3fc;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.pfx-compare-controls button[aria-pressed='true'] {
+  background: #164e63;
+  border-color: #22d3ee;
+}
+
+.pfx-compare-hint {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.pfx-export-title button {
+  padding: 4px 10px;
+  background: #1f2937;
+  color: #7dd3fc;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+@media (max-width: 860px) {
+  .pfx-preview {
+    grid-template-rows: 340px auto;
+  }
+
+  .pfx-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .pfx-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .pfx-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .pfx-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .pfx-export-title {
+    grid-template-columns: 1fr;
+  }
+
+  .pfx-quick-searches {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -1,0 +1,7 @@
+import { authoredRecipe } from '../constants/01'
+
+export default authoredRecipe('combo-loop', 'Combo loop', 'Combo-state loop with score ring and screen-safe pips.', [
+  { kind: 'ring-field', role: 'aura', opacity: 0.85, scale: 0.75, phase: 'combo-loop-ground-circle', tuning: { meshMotion: 'pulse', ringPurpose: 'reticle', colorOverride: '#ffc21f' } },
+  { kind: 'particles', role: 'aura', opacity: 0.9, scale: 0.62, phase: 'combo-loop-element-traffic', tuning: { sprite: 'sparkle', size: [0.35, 0.5, 0.3], colorOverride: '#ffc21f', ramp: 'held', countScale: 0.45, speedScale: 0.6, speedJitter: 0.15, turbulenceScale: 0, motion: 'column-rise', gravity: 0.3, spinScale: 0 } },
+  { kind: 'core-sphere', role: 'body', opacity: 0.5, scale: 0.4, phase: 'combo-loop-core-presence', tuning: { meshMotion: 'glow', colorOverride: '#ffc21f' } },
+], 2, 0.8)

@@ -1,0 +1,120 @@
+{
+  "schema": "game-bot.generated-vfx-asset-provenance.v1",
+  "assetId": "muzzle-flash-atlas-v1",
+  "createdAt": "2026-07-14T07:26:41.000Z",
+  "generator": {
+    "surface": "Codex built-in image generation",
+    "mode": "text-to-image",
+    "modelIdentifier": "not exposed by built-in surface"
+  },
+  "inputs": {
+    "thirdPartyImages": [],
+    "proprietaryArt": [],
+    "prompt": "Use case: stylized-concept\nAsset type: high-end real-time mobile game VFX texture atlas for a Three.js particle system\nPrimary request: create one clean 4-by-2 sprite atlas containing eight distinct stylized firearm muzzle-flash sprites: top row four forward-facing directional flame cones viewed from the side, bottom row four compact radial muzzle bursts viewed down the barrel axis. Every cell must contain exactly one isolated flash centered in its cell with generous padding and no overlap.\nScene/backdrop: perfectly flat solid #00ff00 chroma-key background across the entire canvas for background removal; absolutely uniform, no shadows, gradients, texture, reflections, floor, or lighting variation.\nStyle/medium: best-in-class Unity/Unreal mobile-game VFX texture art, painterly high-frequency flame edges with a crisp readable silhouette and smooth alpha-ready falloff; hot white core, saturated yellow mid, orange/red outer tongues; refined rather than photorealistic.\nComposition/framing: exact 4 columns by 2 rows, equal cells, all flashes fully contained and separated. Directional flashes point left-to-right, with the hot ignition base on the left and tapered flame on the right. Radial flashes are asymmetric four-to-six-lobed bursts, not perfect stars.\nColor palette: white-hot, yellow, orange, restrained red; never use green inside any sprite.\nConstraints: no weapons, no smoke, no sparks outside the sprite silhouettes, no rings, no lens flares, no text, no labels, no borders, no watermark. Keep every sprite opaque enough for chroma extraction with crisp antialiased edges. Do not use #00ff00 anywhere in the sprites."
+  },
+  "processing": [
+    "remove_chroma_key.py --auto-key border --soft-matte --transparent-threshold 12 --opaque-threshold 220 --despill",
+    "resample to 1024x512 RGBA",
+    "clamp residual green RGB to max(red, blue) for alpha-filter-safe chroma despill"
+  ],
+  "validation": {
+    "transparentCorners": true,
+    "cellCount": 8,
+    "nonEmptyPixelsPerCell": [
+      9436,
+      15103,
+      11598,
+      10992,
+      12488,
+      15029,
+      12925,
+      12849
+    ],
+    "transparentFringe": {
+      "translucentPixels": 5198,
+      "greenDominantPixels": 0,
+      "maximumGreenDominantRatio": 0.005
+    }
+  },
+  "files": {
+    "source": {
+      "path": "assets/source/muzzle-flash-atlas-v1-chroma.png",
+      "sha256": "b3bc72b4d0df30c9b51632a75dc25d0de895b41ecf2003b20e706c2259550f3d"
+    },
+    "runtime": {
+      "path": "assets/runtime/muzzle-flash-atlas-v1.png",
+      "sha256": "edc0027b2a8c63671de3c4473c8381e9139b4dee37c9dc7eeb7b15af828cdb0c",
+      "width": 1024,
+      "height": 512,
+      "format": "PNG RGBA"
+    }
+  },
+  "runtimeEvaluation": {
+    "status": "active-remediation-candidate",
+    "retainedFor": "active connected directional volume using directional-2 plus an axial radial-3 cap",
+    "evidence": [
+      {
+        "batchId": "quality-review-muzzle-068-connected-smoke-midpoint",
+        "grade": "B",
+        "reason": "connected flame volume held gameplay readability, volume, silhouette, and temporal arc at 4 in the first independent review"
+      },
+      {
+        "batchId": "quality-review-muzzle-069-connected-smoke-midpoint",
+        "grade": "B",
+        "reason": "second distinct capture confirmed stable multi-angle behavior and coherent onset-to-decay timing"
+      },
+      {
+        "batchId": "quality-review-muzzle-070-connected-smoke-midpoint",
+        "grade": "C",
+        "reason": "third adversarial review retained rework findings for generic glow dots and recovery cohesion"
+      },
+      {
+        "batchId": "quality-review-muzzle-073-tumbling-embers",
+        "grade": "B",
+        "reason": "first fresh review raised semantic identity, volume, temporal arc, and emitter quality while isolating cool smoke and axial ember readability"
+      },
+      {
+        "batchId": "quality-review-muzzle-074-tumbling-embers",
+        "grade": "B",
+        "reason": "second distinct capture confirmed four-point axial volume, coherent timing, and clean ending with remaining glyph-like ember and smoke-contrast findings"
+      },
+      {
+        "batchId": "quality-review-muzzle-075-tumbling-embers",
+        "grade": "C",
+        "reason": "third adversarial review preserved volume and multi-angle gains while flagging weak axial ember visibility and an amorphous cool decay puff"
+      },
+      {
+        "batchId": "quality-review-muzzle-079-tight-hot-band",
+        "grade": "B",
+        "reason": "first fresh heat-ramp review raised gameplay readability, silhouette, material quality, and overall polish to 4 while preserving volume and scale"
+      },
+      {
+        "batchId": "quality-review-muzzle-080-tight-hot-band",
+        "grade": "C",
+        "reason": "second distinct capture confirmed gameplay readability at 4 while exposing the generic axial asterisk silhouette as the next geometry defect"
+      },
+      {
+        "batchId": "quality-review-muzzle-081-tight-hot-band",
+        "grade": "B",
+        "reason": "third adversarial review preserved volume, emitter structure, temporal arc, and scale while flagging residual olive mid-body color and cross-angle similarity"
+      },
+      {
+        "batchId": "quality-review-muzzle-084-compact-curved-shell",
+        "grade": "B",
+        "reason": "first fresh geometry review raised volume and multi-angle resilience to 5 and all remaining rubric dimensions to at least 4"
+      },
+      {
+        "batchId": "quality-review-muzzle-085-compact-curved-shell",
+        "grade": "B",
+        "reason": "second distinct capture preserved semantic identity, gameplay readability, volume, multi-angle behavior, timing, and scale while isolating the thin tail as a polish note"
+      },
+      {
+        "batchId": "quality-review-muzzle-086-compact-curved-shell",
+        "grade": "B",
+        "reason": "third adversarial review confirmed a median visual floor of 4 with temporal arc at 5 and generic decay smoke as the remaining local weakness"
+      }
+    ],
+    "activeRenderer": "single connected compact curved volume, directional-1 atlas body with a tight yellow-core-to-saturated-orange shader ramp, procedural soft ignition axial cap sourced from radial-1, view-angle directional crossfade, delayed tumbling procedural ember chips, and a lobed procedural smoke billow"
+  },
+  "rightsNote": "Original generated output made for this project; no third-party or proprietary input image was supplied. This record does not relicense the separate Kenney CC0 particle atlas."
+}

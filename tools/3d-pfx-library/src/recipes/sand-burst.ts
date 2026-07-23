@@ -1,0 +1,7 @@
+import { authoredRecipe } from '../constants/01'
+
+export default authoredRecipe('sand-burst', 'Sand burst', 'Three-layer asymmetric sand dome: texture-varied warm dust clumps rise over an expanding ground-impact wave while two hundred thirty-two smooth closed granules travel on balanced ballistic arcs.', [
+  { kind: 'particles', role: 'volume', opacity: 0.84, scale: 1.95, phase: 'sand-burst-dense-dust-body', tuning: { motion: 'radial-burst', sprite: 'smoke-variants', blend: 'alpha', lifecycle: 'sand-burst-ballistic', colorOverride: '#d8b77f', ramp: 'pigment', alphaGamma: 0.82, spriteColorMix: 0.58, window: 0.2, lifeScale: 0.9, countScale: 2.4, speedScale: 3.2, speedJitter: 0.32, drag: 1.1, turbulenceScale: 0.12, spawnScale: 0.42, spawnLift: 0.04, depthScale: 3.2, gravity: -0.4, spinScale: 0.4, stretch: 0, size: [0.18, 0.45, 0.62], positionOffset: [0, -0.9, 0] } },
+  { kind: 'shockwave-ring', role: 'impact', opacity: 0.62, scale: 2.3, phase: 'sand-burst-ground-impact-wave', tuning: { meshMotion: 'shockwave', ringPurpose: 'shockwave', colorOverride: '#d2ae75', delay: 0.035, window: 0.55, positionOffset: [0, -0.89, 0] } },
+  { kind: 'impact-shards', role: 'impact', opacity: 0.82, scale: 2.35, phase: 'sand-burst-ballistic-fan', tuning: { meshGeometry: 'sand-burst-sculpted-fan', meshMotion: 'flash', lifecycle: 'sand-burst-ballistic', blend: 'alpha', colorOverride: '#d6ae6a', positionOffset: [0, -0.9, 0] } },
+], 3, 1.25)
