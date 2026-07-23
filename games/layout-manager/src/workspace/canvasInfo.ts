@@ -17,6 +17,26 @@ export function getCanvasOverlappingImages(images: ImageNode[], canvas: CanvasRe
   });
 }
 
+/** Find rigged images whose current transform differs from their saved base position.
+ * The exported PNG and frame rects use current positions, so exporting while a
+ * child sits on its dressed pose bakes the wrong sheet rect and a ~zero offset. */
+export function findOffBasePoseImages(images: ImageNode[]): string[] {
+  const EPS = 0.5;
+  return images
+    .filter((img) => {
+      const bp = img.basePosition;
+      if (!bp) return false;
+      return (
+        Math.abs(img.x - bp.x) > EPS ||
+        Math.abs(img.y - bp.y) > EPS ||
+        Math.abs(img.width - bp.width) > EPS ||
+        Math.abs(img.height - bp.height) > EPS ||
+        Math.abs(img.rotation - bp.rotation) > 0.05
+      );
+    })
+    .map((img) => img.id);
+}
+
 /** Find images without a custom sprite name (using filename fallback). Returns array of image ids. */
 export function findUnnamedImages(images: ImageNode[]): string[] {
   return images.filter((img) => !img.spriteName || !img.spriteName.trim()).map((img) => img.id);

@@ -1913,6 +1913,7 @@ export function Workspace() {
             if (canvasInfoIssues.duplicateIds.has(img.id)) highlightColor = '#e74c3c';
             else if (canvasInfoIssues.unnamedIds.has(img.id)) highlightColor = '#f1c40f';
             else if (canvasInfoIssues.overlappingIds.has(img.id)) highlightColor = '#e67e22';
+            else if (canvasInfoIssues.offBasePoseIds.has(img.id)) highlightColor = '#e74c3c';
           }
           return (
             <ImageNodeComponent

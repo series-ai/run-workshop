@@ -4,7 +4,7 @@ import type { WorkspaceAction, CanvasRect, ImageNode, ScaleFilter, RulerGuide } 
 import { adjustmentsFilter } from './types';
 import { cssFontFamily, loadFontForCanvas } from './googleFonts';
 import { ColorPicker } from './paint/ColorPicker';
-import { getCanvasOverlappingImages, findDuplicateSpriteNames, findUnnamedImages, findOverlappingElements, buildCanvasInfoJson, getSpriteName } from './canvasInfo';
+import { getCanvasOverlappingImages, findDuplicateSpriteNames, findUnnamedImages, findOverlappingElements, findOffBasePoseImages, buildCanvasInfoJson, getSpriteName } from './canvasInfo';
 import { buildProjectBlob } from './projectFile';
 import { writePngScaleFilter } from './pngChunks';
 import optimise from '@jsquash/oxipng/optimise';
@@ -29,6 +29,7 @@ export interface CanvasInfoIssues {
   duplicateNames: Map<string, string[]>;
   overlappingIds: Set<string>;
   overlappingPairs: [string, string][];
+  offBasePoseIds: Set<string>;
 }
 
 interface CanvasMenuProps {
@@ -583,8 +584,9 @@ export function CanvasMenu({ canvas, dispatch, images, scaleFilter, selectedIds,
     const duplicateNames = findDuplicateSpriteNames(overlapping);
     const unnamedIdList = findUnnamedImages(overlapping);
     const { pairs: overlappingPairs, ids: overlappingIds } = findOverlappingElements(overlapping);
+    const offBasePoseList = findOffBasePoseImages(overlapping);
 
-    const hasIssues = duplicateNames.size > 0 || unnamedIdList.length > 0 || overlappingPairs.length > 0;
+    const hasIssues = duplicateNames.size > 0 || unnamedIdList.length > 0 || overlappingPairs.length > 0 || offBasePoseList.length > 0;
 
     if (hasIssues) {
       const duplicateIds = new Set<string>();
@@ -597,6 +599,7 @@ export function CanvasMenu({ canvas, dispatch, images, scaleFilter, selectedIds,
         duplicateNames,
         overlappingIds,
         overlappingPairs,
+        offBasePoseIds: new Set(offBasePoseList),
       };
       setShowIssues(issues);
       onCanvasInfoIssues(issues);
@@ -867,6 +870,29 @@ export function CanvasMenu({ canvas, dispatch, images, scaleFilter, selectedIds,
                       <div className="canvas-info-issue-hint">
                         These elements overlap and may cause clipping issues.
                         Highlighted orange on the page.
+                      </div>
+                    </div>
+                  )}
+                  {showIssues.offBasePoseIds.size > 0 && (
+                    <div className="canvas-info-issue-section">
+                      <div className="canvas-info-issue-title canvas-info-issue-title-error">
+                        <span className="canvas-info-issue-dot canvas-info-issue-dot-error" />
+                        Not at Base Position ({showIssues.offBasePoseIds.size})
+                      </div>
+                      <div className="canvas-info-issue-body">
+                        {Array.from(showIssues.offBasePoseIds).map((id) => {
+                          const img = images.find((i) => i.id === id);
+                          return (
+                            <div key={id} className="canvas-info-issue-item">
+                              {img ? getSpriteName(img) : '?'}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="canvas-info-issue-hint">
+                        The sheet rect and offset are computed from current positions, so
+                        exporting from the dressed pose produces wrong rig data. Use
+                        &quot;Base Pos&quot; in the Info Panel to return these elements first.
                       </div>
                     </div>
                   )}
