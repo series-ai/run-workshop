@@ -734,7 +734,9 @@ function buildInfoDefines(): Record<string, string> {
   try {
     // %x09 = tab (pretty-format code). The date format is strftime, where %x
     // would mean "locale date" — so the space needs real quoting instead.
-    const raw = execSync('git log -80 --no-merges --date=format:"%B %Y" --pretty=format:%ad%x09%s', { encoding: 'utf8' });
+    // Scope to this directory — in the monorepo, repo-wide history would pull
+    // in unrelated sub-projects' commits.
+    const raw = execSync('git log -80 --no-merges --date=format:"%B %Y" --pretty=format:%ad%x09%s -- .', { encoding: 'utf8' });
     const skip = /readme|document\b|call out|^rename |typo|^merge|^wip\b/i;
     const byMonth = new Map<string, string[]>();
     for (const line of raw.split('\n')) {
@@ -750,7 +752,7 @@ function buildInfoDefines(): Record<string, string> {
     notes = Array.from(byMonth, ([date, items]) => ({ date, items })).slice(0, 3);
   } catch { /* not a git checkout */ }
   try {
-    build = execSync('git rev-list --count HEAD', { encoding: 'utf8' }).trim();
+    build = execSync('git rev-list --count HEAD -- .', { encoding: 'utf8' }).trim();
   } catch { /* not a git checkout */ }
   return {
     __UPDATE_NOTES__: JSON.stringify(notes.length ? notes : null),
