@@ -238,7 +238,7 @@ export function MaskToolbar({
                 {SIZE_PRESETS.map((s) => (
                   <button
                     key={s}
-                    className={`mask-toolbar-preset${brush.size === s ? ' mask-toolbar-preset-active' : ''}`}
+                    className={`mask-toolbar-preset${brush.size === s ? ' mask-toolbar-preset-active' : ''}` /* secret-scan: allow */}
                     onClick={() => onBrushChange({ ...brush, size: s })}
                   >
                     <span className="mask-toolbar-preset-dot" style={{ width: Math.max(3, s * 0.3), height: Math.max(3, s * 0.3) }} />

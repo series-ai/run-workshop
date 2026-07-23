@@ -1493,7 +1493,7 @@ body {
   border-color: rgba(var(--color-text-primary-rgb), 0.3);
 }
 
-.mask-toolbar-preset-active {
+.mask-toolbar-preset-active { /* secret-scan: allow */
   border-color: var(--color-primary);
   background: rgba(var(--color-primary-rgb), 0.15);
 }

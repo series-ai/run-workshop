@@ -392,7 +392,7 @@ function AISettings({
       const text = reader.result as string;
       const lines = text.split('\n');
       const keyMap: Record<string, keyof UserConfig> = {
-        'GOOGLE_GENAI_API_KEY': 'googleGenaiApiKey',
+        'GOOGLE_GENAI_API_KEY': 'googleGenaiApiKey', // secret-scan: allow
         'OPENAI_API_KEY': 'openaiApiKey',
         'XAI_API_KEY': 'xaiApiKey',
         'ANTHROPIC_API_KEY': 'anthropicApiKey',
