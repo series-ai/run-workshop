@@ -1,0 +1,42 @@
+{
+  "schema": "game-bot.generated-vfx-asset-provenance.v1",
+  "assetId": "plasma-impact-flipbook-v1",
+  "createdAt": "2026-07-17T23:02:00.000Z",
+  "generator": {
+    "surface": "Codex built-in image generation",
+    "mode": "text-to-image",
+    "modelIdentifier": "not exposed by built-in surface"
+  },
+  "inputs": {
+    "thirdPartyImages": [],
+    "proprietaryArt": [],
+    "prompt": "Create one original 4-by-4 sprite sheet showing a single plasma impact evolving over 16 sequential frames in row-major order on a perfectly uniform pure black background. Show an instantaneous hot-white contact flash, rapidly expanding cyan and ultraviolet turbulent ionized gas, short forked electrical streamers, a clear directional rebound splash, fragmented glowing droplets, and a clean dissipating recovery. Use a fixed orthographic front camera, consistent centered anchor and scale, generous black cell padding, and no bleed. Avoid projectiles in flight, solid shards, crystals, feathers, wings, insects, antennae, hard polygon cards, smoke, fire, complete rings, text, labels, borders, watermarks, scenery, characters, and weapons. Original artwork only."
+  },
+  "processing": [
+    "built-in image generation on additive-black background",
+    "resample from 1254x1254 to 512x512 with ImageMagick",
+    "strip ancillary metadata and PNG compression level 9"
+  ],
+  "validation": {
+    "additiveBlackCorners": true,
+    "cellCount": 16,
+    "maximumRuntimeBytes": 262144,
+    "mobileTextureSize": "512x512"
+  },
+  "files": {
+    "source": {
+      "path": "assets/source/plasma-impact-flipbook-v1.png",
+      "sha256": "421254482685dc052d93b81e1c093a875b72b02803991082f34295d92a2c104a",
+      "bytes": 1143968
+    },
+    "runtime": {
+      "path": "assets/runtime/plasma-impact-flipbook-v1.png",
+      "sha256": "dd47b95d22828380a9cd4f917e282ad61248237260035431bfdbdfd4f86a4f4c",
+      "bytes": 208381,
+      "width": 512,
+      "height": 512,
+      "format": "PNG RGB"
+    }
+  },
+  "rightsNote": "Original generated output made for this project. No third-party or proprietary input image was supplied."
+}

@@ -9,6 +9,7 @@ A community-centric set of game starters, tools & tutorials for building on RUN.
 
 - [Picmon Map Editor](games/picmon-editor/) — a standalone, browser-based visual tile-map / world editor (Vite + React + TypeScript). Edit NPCs, portals, signs, object colliders, and animal placements against a Sprite Fusion + JSON data model, with a live "Play map" mode. Ships with sample Picmon data and a CC0 pixel-art asset pack; repurpose it for your own game by swapping the assets and data. See [games/picmon-editor/README.md](games/picmon-editor/README.md).
 - [Layout Manager](games/layout-manager/) — a browser-based image layout, composition, and AI-assisted generation tool (Vite + React + TypeScript). Arrange, align, mask, and paint over images on a freeform workspace, with optional AI helpers: text-to-image via your own provider API keys, ComfyUI workflow integration (including background removal), and multi-provider AI chat. See [games/layout-manager/README.md](games/layout-manager/README.md).
+- [3D PFX Library](tools/3d-pfx-library/) — a React Three Fiber particle-effects library: a catalog of 500 ranked presets with a drop-in `GamePfx` runtime component, plus a browser to search, preview and performance-profile effects (Vite + React + TypeScript). Effects are authored-preview grade. Ships with CC0 sprite/flipbook assets. See [tools/3d-pfx-library/README.md](tools/3d-pfx-library/README.md).
 
 ## License
 
