@@ -14,8 +14,12 @@ on:
       - .github/workflows/pfx-pages.yml
   workflow_dispatch:
 
+# Granted workflow-wide (not just on the deploy job) because
+# actions/upload-pages-artifact runs in the build job and needs Pages access.
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: pfx-pages
@@ -66,9 +70,6 @@ jobs:
     name: Deploy to GitHub Pages
     needs: build
     runs-on: ubuntu-24.04
-    permissions:
-      pages: write
-      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
