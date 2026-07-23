@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMemorySnapshot, formatBytes } from './memoryStats';
+import { residentAiSessions, releaseAiSessions } from './ai/aiSessionRegistry';
 
 interface MemoryMonitorProps {
   imageCount: number;
@@ -17,6 +18,8 @@ export function MemoryMonitor({ imageCount, historyPast, historyFuture, historyM
   const snap = useMemorySnapshot(1000);
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  // snap re-renders every second, so this stays current while the popover is open
+  const aiSessions = residentAiSessions();
 
   useEffect(() => {
     if (!open) return;
@@ -96,13 +99,24 @@ export function MemoryMonitor({ imageCount, historyPast, historyFuture, historyM
             <Row label="Redo depth" value={`${historyFuture} / ${historyMax}`} />
           </div>
 
+          {aiSessions.length > 0 && (
+            <div className="memory-monitor-section">
+              <div className="memory-monitor-section-title">Loaded AI Models</div>
+              {aiSessions.map((s) => (
+                <Row key={s.id} label={s.label} value={s.sizeHint} />
+              ))}
+            </div>
+          )}
+
           <button
             className="memory-monitor-purge"
-            disabled={historyPast === 0 && historyFuture === 0}
-            title="Deleted images stay in memory so they can be undone. Purging the undo/redo history releases them."
+            disabled={historyPast === 0 && historyFuture === 0 && aiSessions.length === 0}
+            title="Deleted images stay in memory so they can be undone — purging the undo/redo history releases them. Loaded AI models are also evicted (they reload from browser cache on next use)."
             onClick={() => {
-              if (window.confirm('Clear undo/redo history to free memory?\n\nYour current workspace is untouched, but you will not be able to undo past this point.')) {
+              const modelNote = aiSessions.length > 0 ? '\nLoaded AI models are also evicted (they reload quickly on next use).' : '';
+              if (window.confirm(`Clear undo/redo history to free memory?${modelNote}\n\nYour current workspace is untouched, but you will not be able to undo past this point.`)) {
                 onClearHistory();
+                void releaseAiSessions();
               }
             }}
           >

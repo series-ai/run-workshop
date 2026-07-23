@@ -27,6 +27,7 @@ import { loadConfig, saveConfig, type UserConfig } from './userConfig';
 import { themes } from '../theme/themes';
 import { applyTheme } from '../theme/applyTheme';
 import { TextToImageModal } from './ai/TextToImageModal';
+import { RemoveBgModal } from './ai/RemoveBgModal';
 import { ComfyModal } from './ai/ComfyModal';
 import { useAlignedPosition } from './ai/useDraggableModal';
 import { AiChatPanel, type ChatMessage } from './ai/AiChatPanel';
@@ -106,6 +107,7 @@ export function Workspace() {
 
   // AI feature state
   const [aiTextToImageOpen, setAiTextToImageOpen] = useState(false);
+  const [aiRemoveBgOpen, setAiRemoveBgOpen] = useState(false);
   const [aiComfyOpen, setAiComfyOpen] = useState(false);
   const [aiComfyWorkflow, setAiComfyWorkflow] = useState<string>('');
   const [aiComfyInputs, setAiComfyInputs] = useState<Record<string, string | number>>({});
@@ -322,7 +324,7 @@ export function Workspace() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Block all workspace shortcuts when AI modals are open
-      if (aiTextToImageOpen || aiChatOpen || aiComfyOpen) {
+      if (aiTextToImageOpen || aiRemoveBgOpen || aiChatOpen || aiComfyOpen) {
         const tag = (document.activeElement as HTMLElement)?.tagName;
         const typing = tag === 'TEXTAREA' || tag === 'INPUT' || (document.activeElement as HTMLElement)?.isContentEditable;
         // Exception: Ctrl+Arrow alignment still works while AI panels are open —
@@ -1246,6 +1248,13 @@ export function Workspace() {
     },
     [dispatch],
   );
+
+  // --- AI: Background removal ---
+  const handleAiBgRemoval = useCallback(() => {
+    if (!aiProgress) {
+      setAiRemoveBgOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiComfyOpen(false); } return !v; });
+    }
+  }, [aiProgress]);
 
   const handleNewProject = useCallback(() => {
     setCurrentFileHandle(null);
@@ -2179,7 +2188,7 @@ export function Workspace() {
       })}
 
       {/* Screen-space node action buttons (lock, onion, attach, delete) */}
-      {!maskMode && (() => { const anyAiOpen = aiTextToImageOpen || aiChatOpen || aiComfyOpen; return state.images.map((img) => {
+      {!maskMode && (() => { const anyAiOpen = aiTextToImageOpen || aiRemoveBgOpen || aiChatOpen || aiComfyOpen; return state.images.map((img) => {
         const isSelected = state.selectedIds.has(img.id);
         const isSingle = state.selectedIds.size === 1;
         const showLocked = img.locked;
@@ -2501,11 +2510,13 @@ export function Workspace() {
         onMenuOpenChange={setHamburgerOpen}
         editMode={!!maskMode}
         aiHidden={userConfig.aiHidden}
-        onAiTextToImage={() => { if (!aiProgress) { setAiTextToImageOpen((v) => { if (!v) { setAiComfyOpen(false); } return !v; }); } }}
-        onAiComfy={() => { if (!aiProgress) { setAiComfyOpen((v) => { if (!v) { setAiTextToImageOpen(false); } return !v; }); } }}
+        onAiTextToImage={() => { if (!aiProgress) { setAiTextToImageOpen((v) => { if (!v) { setAiRemoveBgOpen(false); setAiComfyOpen(false); } return !v; }); } }}
+        onAiBgRemoval={handleAiBgRemoval}
+        onAiComfy={() => { if (!aiProgress) { setAiComfyOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiRemoveBgOpen(false); } return !v; }); } }}
         aiComfyOpen={aiComfyOpen}
         onAiChat={() => setAiChatOpen((v) => !v)}
         aiTextToImageOpen={aiTextToImageOpen}
+        aiRemoveBgOpen={aiRemoveBgOpen}
         aiChatOpen={aiChatOpen}
         historyPast={historyDepth.past}
         historyFuture={historyDepth.future}
@@ -2605,6 +2616,47 @@ export function Workspace() {
         />
       )}
 
+      {aiRemoveBgOpen && (
+        <RemoveBgModal
+          sourceNodes={state.images.filter((i) => state.selectedIds.has(i.id) && i.nodeType !== 'text')}
+          position={aiModalPosition}
+          onGenerated={(results) => {
+            dispatch({ type: 'SNAPSHOT' });
+            results.forEach(({ localUrl, node, w, h }, i) => {
+              const pos = placeAiOutput(node.width, node.height, i);
+              dispatch({
+                type: 'ADD_IMAGE',
+                image: {
+                  id: crypto.randomUUID(),
+                  src: localUrl,
+                  fileName: node.fileName.replace(/\.\w+$/, '_nobg.png'),
+                  x: pos.x,
+                  y: pos.y,
+                  width: node.width,
+                  height: node.height,
+                  naturalWidth: w,
+                  naturalHeight: h,
+                  rotation: node.rotation,
+                  zIndex: 0,
+                  locked: false,
+                  opacity: 1,
+                  spriteName: '',
+                  parentId: null,
+                  basePosition: null,
+                  offsetPosition: null,
+                  layerOrder: 'above',
+                  replacesParent: false,
+                  flipH: false,
+                  flipV: false,
+                },
+              });
+            });
+            setAiRemoveBgOpen(false);
+          }}
+          onProgress={setAiProgress}
+          onClose={() => setAiRemoveBgOpen(false)}
+        />
+      )}
 
       {aiComfyOpen && (
         <ComfyModal

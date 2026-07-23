@@ -15,10 +15,25 @@ install time:
 | gifenc | MIT |
 | @jsquash/oxipng | Apache-2.0 |
 | lucide-react | ISC |
+| onnxruntime-web | MIT |
 | @series-inc/rundot-game-sdk | Series Inc. (first-party) |
 
 Dev dependencies (Vite, TypeScript, Prettier, etc.) are standard MIT/Apache
 tooling; see `package-lock.json` for the full tree.
+
+## Background-removal models
+
+The local Remove Background tool downloads segmentation models at runtime
+(cached by the browser; no model weights are bundled in this repository):
+
+| Model | License | Source |
+| --- | --- | --- |
+| ISNet (general use) | Apache-2.0 | [xuebinqin/DIS](https://github.com/xuebinqin/DIS) |
+| U2-Net (u2netp) | Apache-2.0 | [xuebinqin/U-2-Net](https://github.com/xuebinqin/U-2-Net) |
+
+ONNX exports of both models are fetched from the
+[rembg](https://github.com/danielgatis/rembg) project's model releases (rembg
+itself is MIT; no rembg code is used).
 
 ## Google Fonts
 
