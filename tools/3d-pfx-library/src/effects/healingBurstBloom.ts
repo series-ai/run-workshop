@@ -140,9 +140,9 @@ export function createPfxHealingBurstBloomGeometry(): THREE.BufferGeometry {
 
 export function createPfxHealingBurstBloomMaterial(
   opacity: number,
-  primaryColor = '#37d982',
-  secondaryColor = '#ffd166',
-  accentColor = '#b7f7d0',
+  primaryColor: THREE.ColorRepresentation = '#37d982',
+  secondaryColor: THREE.ColorRepresentation = '#ffd166',
+  accentColor: THREE.ColorRepresentation = '#b7f7d0',
   density = 0.52,
   styleEdgeHardness = 0.48,
 ): THREE.ShaderMaterial {

@@ -165,3 +165,6 @@ game.config.*.json
 # Transient directories anywhere in the tree
 **/tmp/
 **/temp/
+
+# playwright-cli session artifacts (snapshots, console logs, screenshots)
+.playwright-cli/

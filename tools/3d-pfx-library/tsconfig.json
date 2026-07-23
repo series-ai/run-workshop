@@ -18,7 +18,7 @@
     "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@pfx": ["./src/index.tsx"],
+      "@pfx": ["./src/index.ts"],
       "@pfx/*": ["./src/*"]
     }
   },

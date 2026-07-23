@@ -1790,4 +1790,5 @@ export type PfxRenderSurfaceKind =
   | 'projectile-comet'
   | 'projectile-head'
   | 'smoke-billows'
+  | 'toxic-billows'
   | 'tapered-trail'
