@@ -850,7 +850,7 @@ describe('r3f-pfx-library catalog contracts', () => {
         'shield-loop-ground-circle',
         'dash-loop-ground-circle',
         'pickup-loop-ground-circle',
-        'ui-loop-ground-circle',
+        'ui-loop-confirm-ring',
       ]),
     )
     expect(new Set(phases).size).toBeGreaterThanOrEqual(60)
@@ -892,12 +892,12 @@ describe('r3f-pfx-library catalog contracts', () => {
 
     expect(phases).toEqual(
       expect.arrayContaining([
-        'target-loop-ground-circle',
+        'target-loop-reticle-orbit',
         'marker-loop-ground-circle',
         'scan-loop-ground-circle',
         'hologram-loop-ground-circle',
         'engine-loop-ambient-haze',
-        'thruster-loop-ground-circle',
+        'thruster-loop-sustained-plume',
         'embers-trail-wake-stream',
         'flame-trail-wake-stream',
         'meteor-trail-wake-stream',
@@ -1168,7 +1168,7 @@ describe('r3f-pfx-library catalog contracts', () => {
 
     expect(phases).toEqual(
       expect.arrayContaining([
-        'wind-idle-element-traffic',
+        'wind-idle-ribbon-flow',
         'leaf-idle-element-traffic',
         'petal-idle-element-traffic',
         'sand-idle-element-traffic',
@@ -1182,8 +1182,8 @@ describe('r3f-pfx-library catalog contracts', () => {
         'blood-idle-element-traffic',
         'ghost-idle-element-traffic',
         'portal-idle-vortex-disc',
-        'warp-idle-element-traffic',
-        'teleport-idle-element-traffic',
+        'warp-idle-displaced-motes',
+        'teleport-idle-shimmer-pips',
         'shield-idle-element-traffic',
         'reflect-idle-element-traffic',
         'parry-idle-element-traffic',
@@ -1232,14 +1232,14 @@ describe('r3f-pfx-library catalog contracts', () => {
         'pickup-idle-element-traffic',
         'reward-idle-element-traffic',
         'combo-idle-element-traffic',
-        'ui-idle-element-traffic',
-        'target-idle-element-traffic',
-        'warning-idle-element-traffic',
+        'ui-idle-interface-pips',
+        'target-idle-lock-pips',
+        'warning-idle-tick-particles',
         'marker-idle-element-traffic',
         'scan-idle-element-traffic',
         'hologram-idle-element-traffic',
         'engine-idle-element-traffic',
-        'thruster-idle-element-traffic',
+        'thruster-idle-ignition-flicker',
         'exhaust-idle-element-traffic',
         'embers-charge-gather-inflow',
         'meteor-charge-gather-inflow',

@@ -14,6 +14,10 @@ export default defineConfig({
   // project GitHub Pages URL (https://<org>.github.io/<repo>/). Local dev and
   // preview keep the default root base.
   base: process.env.PFX_BASE_PATH ?? '/',
+  // High, uncommon port so parallel worktrees/dev servers don't collide
+  // (strictPort: fall back to an error instead of silently roaming).
+  server: { port: 48373, strictPort: true },
+  preview: { port: 48374, strictPort: true },
   plugins: [react()],
   resolve: {
     alias: {

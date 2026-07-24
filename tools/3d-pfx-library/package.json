@@ -6,8 +6,10 @@
   "license": "SEE LICENSE IN ../../LICENSE.md",
   "description": "React Three Fiber particle-effects library (500 ranked presets, GamePfx runtime) with a browser to preview, search and profile effects. Imported from game-bot; effects are authored-preview grade.",
   "scripts": {
+    "predev": "node viewer/scripts/free-port.mjs 48373",
     "dev": "vite",
     "build": "vite build",
+    "prepreview": "node viewer/scripts/free-port.mjs 48374",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
