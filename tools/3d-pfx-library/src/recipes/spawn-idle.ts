@@ -1,6 +1,6 @@
 import { authoredRecipe } from '../constants/01'
 
 export default authoredRecipe('spawn-idle', 'Spawn idle', 'Spawn point idle with ready mote field and origin glow.', [
-  { kind: 'particles', role: 'aura', opacity: 0.85, scale: 0.62, phase: 'spawn-idle-element-traffic', tuning: { sprite: 'sparkle', size: [0.35, 0.5, 0.3], colorOverride: '#0077ff', ramp: 'held', countScale: 0.3, speedScale: 0.6, speedJitter: 0.15, turbulenceScale: 0, motion: 'column-rise', gravity: 0.3, spinScale: 0 } },
-  { kind: 'core-sphere', role: 'body', opacity: 0.45, scale: 0.4, phase: 'spawn-idle-core-presence', tuning: { meshMotion: 'glow', colorOverride: '#0077ff' } },
+  { kind: 'particles', role: 'aura', opacity: 0.75, scale: 0.6, phase: 'spawn-idle-ready-motes', tuning: { sprite: 'glow', blend: 'additive', size: [0.24, 0.34, 0.2], colorOverride: '#0077ff', ramp: 'held', countScale: 0.24, speedScale: 0.35, speedJitter: 0.2, turbulenceScale: 0.1, motion: 'ground-ring', gravity: 0, spinScale: 0 } },
+  { kind: 'core-sphere', role: 'body', opacity: 0.5, scale: 0.36, phase: 'spawn-idle-origin-glow', tuning: { meshMotion: 'breathe', blend: 'additive', colorOverride: '#4d9fff' } },
 ], 2, 0.68)

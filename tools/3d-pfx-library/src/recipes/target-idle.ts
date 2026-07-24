@@ -1,6 +1,6 @@
 import { authoredRecipe } from '../constants/01'
 
 export default authoredRecipe('target-idle', 'Target idle', 'Targeting idle with reticle scan and lock pips.', [
-  { kind: 'particles', role: 'aura', opacity: 0.85, scale: 0.62, phase: 'target-idle-element-traffic', tuning: { sprite: 'sparkle', size: [0.35, 0.5, 0.3], colorOverride: '#0080ff', ramp: 'held', countScale: 0.3, speedScale: 0.6, speedJitter: 0.15, turbulenceScale: 0, motion: 'column-rise', gravity: 0.3, spinScale: 0 } },
-  { kind: 'core-sphere', role: 'body', opacity: 0.45, scale: 0.4, phase: 'target-idle-core-presence', tuning: { meshMotion: 'glow', colorOverride: '#0080ff' } },
+  { kind: 'telegraph-disc', role: 'aura', opacity: 0.55, scale: 0.7, phase: 'target-idle-reticle-scan', tuning: { meshMotion: 'pulse', blend: 'alpha', colorOverride: '#0080ff', positionOffset: [0, -0.7, 0] } },
+  { kind: 'particles', role: 'aura', opacity: 0.85, scale: 0.55, phase: 'target-idle-lock-pips', tuning: { sprite: 'sparkle', blend: 'additive', size: [0.24, 0.34, 0.2], colorOverride: '#66b3ff', ramp: 'held', countScale: 0.16, speedScale: 0.55, speedJitter: 0.1, turbulenceScale: 0, motion: 'orbit-ring', gravity: 0, spinScale: 0 } },
 ], 2, 0.68)
