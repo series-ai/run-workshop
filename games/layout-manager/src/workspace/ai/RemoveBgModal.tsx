@@ -144,11 +144,11 @@ export function RemoveBgModal({ sourceNodes, position, onGenerated, onProgress, 
             if (cancelled) return;
             entry = { matte, base: imageData, w, h };
             matteCacheRef.current.set(cacheKey, entry);
+            setPreviewStatus(null);
           } catch (e) {
+            // No finally here — it would immediately wipe this failure message
             if (!cancelled) { setPreviewStatus(`Preview failed: ${e instanceof Error ? e.message : 'unknown error'}`); setPreviewLoading(false); }
             return;
-          } finally {
-            if (!cancelled) setPreviewStatus(null);
           }
         }
         const { refineMatte, applyMatteToImageData, applyMatteWithShadows } = await import('./matteOps');
@@ -211,7 +211,10 @@ export function RemoveBgModal({ sourceNodes, position, onGenerated, onProgress, 
           resultBlob = await removeImageBackground(blob, (phase, pct) => {
             const prefix = imageNodes.length > 1 ? `(${i + 1}/${imageNodes.length}) ` : '';
             onProgress({ message: prefix + phase, progress: Math.round(pct * 100) });
-          }, model, { hardness: aiHardness, contract: edgeContract, smooth: edgeSmooth, feather: edgeFeather, opsScaleRef: previewRes === 'full' ? undefined : parseInt(previewRes, 10), keepShadows: model === 'birefnet' && aiKeepShadows });
+            // Scale edge px from the preview resolution ONLY when the user
+            // actually tuned against a capped preview — otherwise treat the
+            // values as full-resolution pixels
+          }, model, { hardness: aiHardness, contract: edgeContract, smooth: edgeSmooth, feather: edgeFeather, opsScaleRef: livePreviewOn && previewRes !== 'full' ? parseInt(previewRes, 10) : undefined, keepShadows: model === 'birefnet' && aiKeepShadows });
         }
         const resultUrl = URL.createObjectURL(resultBlob);
         const img = await new Promise<HTMLImageElement>((resolve) => {
@@ -231,7 +234,7 @@ export function RemoveBgModal({ sourceNodes, position, onGenerated, onProgress, 
       alert(`Background removal failed: ${e instanceof Error ? e.message : String(e)}`);
     }
     setProcessing(false);
-  }, [processing, imageNodes, onGenerated, onProgress, model, shadowMode, shadowTolerance, chromaKey, keepShadows, aiKeepShadows, edgeContract, edgeSmooth, edgeFeather, aiHardness]);
+  }, [processing, imageNodes, onGenerated, onProgress, model, shadowMode, shadowTolerance, chromaKey, keepShadows, aiKeepShadows, edgeContract, edgeSmooth, edgeFeather, aiHardness, livePreviewOn, previewRes]);
 
   if (imageNodes.length === 0) return null;
 
