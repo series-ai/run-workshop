@@ -20,6 +20,9 @@ export interface ShadowCutoutOptions {
   smooth?: number;
   /** Edge blur px (engine default 1). */
   feather?: number;
+  /** When set, edge px were tuned against a preview capped at this long
+   * side — scale them up so full-res output matches the preview. */
+  opsScaleRef?: number;
 }
 
 /** Remove the background from an image blob, keeping soft shadows.
@@ -39,13 +42,15 @@ export async function removeBackgroundShadowKeep(
   const imageData = ctx.getImageData(0, 0, w, h);
   const img = { w, h, data: imageData.data };
 
+  const opsScale = opts.opsScaleRef ? Math.max(1, Math.max(w, h) / opts.opsScaleRef) : 1;
+  const scalePx = (v: number | undefined) => (v === undefined ? undefined : Math.round(v * opsScale));
   const common = {
     tolerance: opts.tolerance,
     shadow: opts.shadowStrength > 0,
     shadowStrength: opts.shadowStrength,
-    contract: opts.contract,
-    smooth: opts.smooth,
-    feather: opts.feather,
+    contract: scalePx(opts.contract),
+    smooth: scalePx(opts.smooth),
+    feather: scalePx(opts.feather),
   };
   if (opts.mode === 'chroma') {
     chromaCutout(img, [], { ...common, key: opts.key });

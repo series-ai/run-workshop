@@ -142,7 +142,9 @@ export function RemoveBgModal({ sourceNodes, position, onGenerated, onProgress, 
               if (!cancelled) setPreviewStatus(phase);
             });
             if (cancelled) return;
-            entry = { matte, base: imageData, w, h };
+            // Snapshot the pristine pixels — applying the matte below mutates
+            // imageData, and a shared reference would corrupt the cache
+            entry = { matte, base: new ImageData(imageData.data.slice(), w, h), w, h };
             matteCacheRef.current.set(cacheKey, entry);
             setPreviewStatus(null);
           } catch (e) {
@@ -206,6 +208,8 @@ export function RemoveBgModal({ sourceNodes, position, onGenerated, onProgress, 
             contract: edgeContract,
             smooth: edgeSmooth,
             feather: edgeFeather,
+            // Same preview-to-full-res scaling rule as the AI engines
+            opsScaleRef: livePreviewOn && previewRes !== 'full' ? parseInt(previewRes, 10) : undefined,
           });
         } else {
           resultBlob = await removeImageBackground(blob, (phase, pct) => {

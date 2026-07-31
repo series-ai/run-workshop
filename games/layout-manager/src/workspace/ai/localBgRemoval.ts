@@ -104,6 +104,17 @@ async function fetchModel(spec: ModelSpec, onProgress?: ProgressCallback): Promi
 
 const sessions = new Map<BgModelId, Promise<ort.InferenceSession>>();
 
+// In-flight inference per model — every release path awaits this first so a
+// session is never freed under an active run on the shared WASM heap
+const inFlight = new Map<BgModelId, Promise<unknown>>();
+
+async function safeRelease(model: BgModelId, p: Promise<ort.InferenceSession>): Promise<void> {
+  let session: ort.InferenceSession;
+  try { session = await p; } catch { return; } // never finished loading
+  try { await inFlight.get(model); } catch { /* failed runs still finish */ }
+  try { await session.release(); } catch { /* already released */ }
+}
+
 // Idle auto-unload: a loaded model holds hundreds of MB of WASM heap, so if
 // it hasn't been used for a while, release it. Weights stay in the browser
 // cache — the next use reloads in seconds, no re-download.
@@ -124,7 +135,7 @@ function ensureIdleTimer(): void {
       sessions.delete(model);
       lastUsed.delete(model);
       unregisterAiSession(`bg-${model}`);
-      p.then((s) => s.release()).catch(() => { /* never loaded */ });
+      void safeRelease(model, p);
     }
     if (sessions.size === 0 && idleTimer) {
       clearInterval(idleTimer);
@@ -150,7 +161,7 @@ function getSession(model: BgModelId, onProgress?: ProgressCallback): Promise<or
         if (other === model) continue;
         sessions.delete(other);
         unregisterAiSession(`bg-${other}`);
-        try { (await p).release(); } catch { /* was never loaded */ }
+        await safeRelease(other, p);
       }
       ort.env.wasm.wasmPaths = { wasm: ortWasmUrl, mjs: ortMjsUrl };
       // Run inference in a dedicated worker so the UI thread stays responsive;
@@ -182,6 +193,7 @@ function getSession(model: BgModelId, onProgress?: ProgressCallback): Promise<or
         ...SESSION_LABELS[model],
         release: async () => {
           sessions.delete(model);
+          try { await inFlight.get(model); } catch { /* ignore */ }
           await session.release();
         },
       });
@@ -212,7 +224,7 @@ export async function releaseBgSessions(): Promise<void> {
   for (const [model, p] of Array.from(sessions.entries())) {
     sessions.delete(model);
     unregisterAiSession(`bg-${model}`);
-    try { (await p).release(); } catch { /* never loaded */ }
+    await safeRelease(model, p);
   }
 }
 
@@ -248,7 +260,9 @@ export async function computeMatte(
 
   onProgress?.('Removing background...', 0.2);
   const tensor = new ort.Tensor('float32', input, [1, 3, size, size]);
-  const outputs = await session.run({ [session.inputNames[0]!]: tensor });
+  const runPromise = session.run({ [session.inputNames[0]!]: tensor });
+  inFlight.set(model, runPromise.catch(() => { /* tracked only for release ordering */ }));
+  const outputs = await runPromise;
   const out = outputs[session.outputNames[0]!]!.data as Float32Array;
 
   // Postprocess: (sigmoid for models that output logits, then) min-max
