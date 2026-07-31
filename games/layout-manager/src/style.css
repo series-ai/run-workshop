@@ -4843,6 +4843,29 @@ button.btn-large {
   flex-shrink: 0;
 }
 
+.color-picker-eyedropper {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: rgba(var(--color-text-primary-rgb), 0.08);
+  color: var(--color-text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.color-picker-eyedropper:hover {
+  background: rgba(var(--color-text-primary-rgb), 0.18);
+}
+
+.color-picker-eyedropper-active {
+  background: rgba(var(--color-primary-rgb), 0.3);
+  color: var(--color-primary);
+}
+
 .color-info-values {
   flex: 1;
   display: flex;
@@ -5549,6 +5572,21 @@ button.btn-large {
   color: var(--color-primary);
 }
 
+/* Live Preview On state — solid accent so the active cost is unmissable */
+.ai-modal-preview-toggle-on {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Off state — accent outline so the toggle is discoverable when idle */
+.ai-modal-preview-toggle-off {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
 .ai-modal-ratio-btn-disabled,
 .ai-modal-ratio-btn-disabled:hover {
   opacity: 0.35;
@@ -5600,6 +5638,41 @@ button.btn-large {
   font-size: 11px;
   color: var(--color-text-muted);
   margin-top: 2px;
+}
+
+.ai-modal-stepper-btn {
+  width: 18px;
+  height: 12px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: rgba(var(--color-text-primary-rgb), 0.08);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.ai-modal-stepper-btn:hover:not(:disabled) {
+  background: rgba(var(--color-text-primary-rgb), 0.18);
+}
+
+.ai-modal-stepper-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ai-modal-error {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(231, 76, 60, 0.5);
+  background: rgba(231, 76, 60, 0.12);
+  color: #e74c3c;
+  font-size: 12px;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .comfy-estimate {

@@ -16,6 +16,26 @@ interface TextToImageModalProps {
   onClose: () => void;
 }
 
+/** Turn a raw provider error into something a user can act on. */
+export function friendlyAiError(raw: string): string {
+  if (/503|UNAVAILABLE|overloaded|deadline expired/i.test(raw)) {
+    return 'The provider is overloaded right now — wait a moment and try again. (503)';
+  }
+  if (/429|RESOURCE_EXHAUSTED|rate.?limit|quota|billing/i.test(raw)) {
+    return 'Rate limit or quota reached — wait a bit, or check your plan/billing with the provider. (429)';
+  }
+  if (/401|403|invalid.*key|API key|PERMISSION_DENIED|unauthorized/i.test(raw)) {
+    return 'API key was rejected — check it in Preferences > AI.';
+  }
+  if (/safety|blocked|content policy|moderation/i.test(raw)) {
+    return 'The provider blocked this prompt (content policy). Try rewording it.';
+  }
+  if (/fetch failed|network|ECONNREFUSED|ETIMEDOUT/i.test(raw)) {
+    return 'Could not reach the provider — check your internet connection and try again.';
+  }
+  return `Generation failed: ${raw}`;
+}
+
 const PROVIDERS = [
   { id: 'nano-banana', label: 'Nano Banana', configKey: 'googleGenaiApiKey' as keyof UserConfig },
   { id: 'nano-banana-lite', label: 'Nano Banana 2 Lite', configKey: 'googleGenaiApiKey' as keyof UserConfig },
@@ -62,6 +82,8 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
   const isOpenAiV2 = providerId === 'gpt-image-2';
 
   const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
+  const hadErrorRef = useRef(false);
 
   const clampedRefs = refNodes.slice(0, 5);
   const hasRefs = clampedRefs.length > 0;
@@ -78,9 +100,11 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
     if (!prompt.trim() || generating) return;
     const provider = PROVIDERS.find((p) => p.id === providerId);
     if (provider && !config[provider.configKey]) {
-      alert(`Add your ${provider.label} API key in Preferences > AI to use this feature.`);
+      setGenError(`Add your ${provider.label} API key in Preferences > AI to use this feature.`);
       return;
     }
+    setGenError(null);
+    hadErrorRef.current = false;
     setGenerating(true);
     imageCount.current = 0;
     onProgress({ message: 'Starting generation...' });
@@ -124,11 +148,17 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
             }
           },
           onProgress: (msg) => onProgress({ message: msg }),
-          onError: (error) => alert(`Generation failed: ${error}`),
+          onError: (error) => {
+            hadErrorRef.current = true;
+            setGenError(friendlyAiError(error));
+          },
           onDone: () => {
             onProgress(null);
             setGenerating(false);
-            import('./completionSound').then((m) => m.playCompletionSound());
+            // No success ding on failure — the error line is the feedback
+            if (!hadErrorRef.current) {
+              import('./completionSound').then((m) => m.playCompletionSound());
+            }
           },
           onCancelled: () => {
             onProgress(null);
@@ -138,7 +168,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
       );
     } catch (e) {
       onProgress(null);
-      alert(`Generation failed: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      setGenError(friendlyAiError(e instanceof Error ? e.message : 'Unknown error'));
       setGenerating(false);
     }
   }, [prompt, providerId, count, aspectRatio, imageSize, openaiSize, openaiQuality, transparentBg, generating, config, hasRefs, clampedRefs, onGenerated, onProgress, isGoogle, isOpenAi]);
@@ -376,6 +406,12 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
         </label>
 
         <span className="ai-modal-size-hint">{outputHint}</span>
+
+        {genError && (
+          <div className="ai-modal-error" role="alert">
+            {genError}
+          </div>
+        )}
       </div>
 
       <div className="prefs-footer">

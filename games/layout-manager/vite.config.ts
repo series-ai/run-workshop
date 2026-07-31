@@ -97,9 +97,19 @@ function imageProxyPlugin(): Plugin {
             });
           }
           const contentType = resp.headers.get('content-type') || 'image/png';
-          res.writeHead(resp.ok ? 200 : resp.status, { 'Content-Type': contentType, 'Cache-Control': 'max-age=3600' });
-          const buffer = Buffer.from(await resp.arrayBuffer());
-          res.end(buffer);
+          // Stream instead of buffering — large files (AI models) would
+          // otherwise sit at 0 bytes client-side until fully fetched here,
+          // which reads as a dead download (and costs the file's size in RAM)
+          const headers: Record<string, string> = { 'Content-Type': contentType, 'Cache-Control': 'max-age=3600' };
+          const len = resp.headers.get('content-length');
+          if (len) headers['Content-Length'] = len;
+          res.writeHead(resp.ok ? 200 : resp.status, headers);
+          if (resp.body) {
+            for await (const chunk of resp.body) res.write(chunk);
+            res.end();
+          } else {
+            res.end(Buffer.from(await resp.arrayBuffer()));
+          }
         } catch {
           res.writeHead(502); res.end('Fetch failed');
         }

@@ -31,6 +31,8 @@ import { RemoveBgModal } from './ai/RemoveBgModal';
 import { ComfyModal } from './ai/ComfyModal';
 import { useAlignedPosition } from './ai/useDraggableModal';
 import { AiChatPanel, type ChatMessage } from './ai/AiChatPanel';
+import { registerWorkspaceSampler } from './workspaceSampler';
+import { drawNodeToCtx } from './renderNode';
 
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml'];
 // The browser sometimes reports an empty MIME type for valid images
@@ -103,6 +105,76 @@ export function Workspace() {
   const guideDragRef = useRef<{ guideId: string; axis: 'x' | 'y' } | null>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
+
+  // Workspace pixel sampler for the ColorPicker eyedropper — renders the
+  // topmost node under the cursor through the shared export compositor
+  // (crop/mask/paint/flip/rotation correct), no page required.
+  useEffect(() => {
+    // Keyed on the node object itself — reducer updates replace the object,
+    // so any edit (move, paint, crop) naturally invalidates the entry
+    const cache = new WeakMap<object, { canvas: HTMLCanvasElement; bx: number; by: number }>();
+    const unregister = registerWorkspaceSampler(async (clientX, clientY) => {
+      const vp = viewportRef.current;
+      if (!vp) return null;
+      const s = stateRef.current;
+      const r = vp.getBoundingClientRect();
+      const wx = (clientX - r.left - s.pan.x) / s.zoom;
+      const wy = (clientY - r.top - s.pan.y) / s.zoom;
+
+      const sorted = [...s.images].sort((a, b) => b.zIndex - a.zIndex);
+      for (const img of sorted) {
+        // Rotation-aware hit test: rotate the point into node-local space
+        const cx = img.x + img.width / 2;
+        const cy = img.y + img.height / 2;
+        const rad = (-img.rotation * Math.PI) / 180;
+        const dx = wx - cx;
+        const dy = wy - cy;
+        const lx = dx * Math.cos(rad) - dy * Math.sin(rad);
+        const ly = dx * Math.sin(rad) + dy * Math.cos(rad);
+        if (Math.abs(lx) > img.width / 2 || Math.abs(ly) > img.height / 2) continue;
+
+        let entry = cache.get(img);
+        if (!entry) {
+          // Render the node alone into its rotated bounding box
+          const corners = [
+            [-img.width / 2, -img.height / 2], [img.width / 2, -img.height / 2],
+            [-img.width / 2, img.height / 2], [img.width / 2, img.height / 2],
+          ].map(([px, py]) => {
+            const a = (img.rotation * Math.PI) / 180;
+            return [cx + px! * Math.cos(a) - py! * Math.sin(a), cy + px! * Math.sin(a) + py! * Math.cos(a)];
+          });
+          const bx = Math.floor(Math.min(...corners.map((c) => c[0]!)));
+          const by = Math.floor(Math.min(...corners.map((c) => c[1]!)));
+          const bw = Math.ceil(Math.max(...corners.map((c) => c[0]!))) - bx;
+          const bh = Math.ceil(Math.max(...corners.map((c) => c[1]!))) - by;
+          if (bw <= 0 || bh <= 0 || bw * bh > 64_000_000) continue;
+          const canvas = document.createElement('canvas');
+          canvas.width = bw;
+          canvas.height = bh;
+          const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+          ctx.translate(-bx, -by);
+          try {
+            await drawNodeToCtx(ctx, img, s.scaleFilter);
+          } catch { continue; }
+          entry = { canvas, bx, by };
+          cache.set(img, entry);
+        }
+        const px = Math.floor(wx - entry.bx);
+        const py = Math.floor(wy - entry.by);
+        if (px < 0 || py < 0 || px >= entry.canvas.width || py >= entry.canvas.height) continue;
+        const d = entry.canvas.getContext('2d')!.getImageData(px, py, 1, 1).data;
+        if (!d[3]) continue; // transparent pixel — fall through to nodes below
+        return '#' + [d[0], d[1], d[2]].map((v) => (v ?? 0).toString(16).padStart(2, '0')).join('');
+      }
+
+      // No node hit — the page background if the point is on the page
+      if (s.canvas && wx >= 0 && wy >= 0 && wx < s.canvas.width && wy < s.canvas.height) {
+        return s.canvasBgColor ?? '#ffffff';
+      }
+      return null;
+    });
+    return unregister;
+  }, []);
   const prevSelectionRef = useRef<string>('');
 
   // AI feature state
@@ -167,6 +239,14 @@ export function Workspace() {
       setScaleFilterPrompt(detected);
     }
   }, []);
+
+  // The prompt offers to switch to the file's filter — if the current filter
+  // becomes that filter through any other path, the offer is moot; dismiss it
+  useEffect(() => {
+    if (scaleFilterPrompt && scaleFilterPrompt === state.scaleFilter) {
+      setScaleFilterPrompt(null);
+    }
+  }, [scaleFilterPrompt, state.scaleFilter]);
 
   const handleImageSize = useCallback((w: number, h: number) => {
     if (!userConfig.scaleOverride) return;

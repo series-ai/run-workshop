@@ -28,12 +28,23 @@ The local Remove Background tool downloads segmentation models at runtime
 
 | Model | License | Source |
 | --- | --- | --- |
+| BiRefNet (512x512, fp16) | MIT | [ZhengPeng7/BiRefNet](https://github.com/ZhengPeng7/BiRefNet) |
 | ISNet (general use) | Apache-2.0 | [xuebinqin/DIS](https://github.com/xuebinqin/DIS) |
 | U2-Net (u2netp) | Apache-2.0 | [xuebinqin/U-2-Net](https://github.com/xuebinqin/U-2-Net) |
 
-ONNX exports of both models are fetched from the
+ONNX exports: ISNet and U2-Net from the
 [rembg](https://github.com/danielgatis/rembg) project's model releases (rembg
-itself is MIT; no rembg code is used).
+itself is MIT; no rembg code is used); BiRefNet from
+[onnx-community/BiRefNet_512x512-ONNX](https://huggingface.co/onnx-community/BiRefNet_512x512-ONNX)
+on Hugging Face.
+
+## Cutout engine (Simple background removal)
+
+`src/workspace/ai/cutoutEngine.mjs` is vendored from the
+[rundot_template](https://github.com/LorenzGit/rundot_template) repository's
+`bg-removal-softshadows` skill (© Series Entertainment, Inc., RUN Repository
+Supplemental License v1.0 — the same license family as this repository), with
+the Node-only PNG codec and CLI removed for in-browser use.
 
 ## Google Fonts
 
