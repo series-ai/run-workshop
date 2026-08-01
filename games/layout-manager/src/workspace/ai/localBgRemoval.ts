@@ -150,20 +150,44 @@ const SESSION_LABELS: Record<BgModelId, { label: string; sizeHint: string }> = {
   birefnet: { label: 'Bg removal — Best (BiRefNet)', sizeHint: '~1 GB' },
 };
 
+// Serializes evict+create critical sections: overlapping loads of different
+// models would otherwise race and release each other mid-load
+let loadChain: Promise<unknown> = Promise.resolve();
+
 function getSession(model: BgModelId, onProgress?: ProgressCallback): Promise<ort.InferenceSession> {
   let s = sessions.get(model);
   if (!s) {
     s = (async () => {
-      // All models share ONE WASM heap (the proxy worker) with a hard size
-      // ceiling — two resident models can't fit, so evict the others first.
-      // Their weights stay in the browser cache; re-loading takes seconds.
-      for (const [other, p] of Array.from(sessions.entries())) {
-        if (other === model) continue;
-        sessions.delete(other);
-        unregisterAiSession(`bg-${other}`);
-        await safeRelease(other, p);
+      // Wait for any in-progress load/eviction to fully settle first
+      const prev = loadChain;
+      let release!: () => void;
+      loadChain = new Promise<void>((r) => { release = r; });
+      try {
+        await prev.catch(() => { /* prior load failed — heap is free */ });
+        // All models share ONE WASM heap (the proxy worker) with a hard size
+        // ceiling — two resident models can't fit, so evict the others first.
+        // Their weights stay in the browser cache; re-loading takes seconds.
+        for (const [other, p] of Array.from(sessions.entries())) {
+          if (other === model) continue;
+          sessions.delete(other);
+          unregisterAiSession(`bg-${other}`);
+          await safeRelease(other, p);
+        }
+        return await createSession(model, onProgress);
+      } finally {
+        release();
       }
-      ort.env.wasm.wasmPaths = { wasm: ortWasmUrl, mjs: ortMjsUrl };
+    })();
+    sessions.set(model, s);
+    s.catch(() => sessions.delete(model)); // let a failed load retry
+    ensureIdleTimer();
+  }
+  touchSession(model);
+  return s;
+}
+
+async function createSession(model: BgModelId, onProgress?: ProgressCallback): Promise<ort.InferenceSession> {
+  ort.env.wasm.wasmPaths = { wasm: ortWasmUrl, mjs: ortMjsUrl };
       // Run inference in a dedicated worker so the UI thread stays responsive;
       // clamp threads to what the machine actually has (0/undefined can
       // deadlock the pthread pool in some environments).
@@ -189,22 +213,17 @@ function getSession(model: BgModelId, onProgress?: ProgressCallback): Promise<or
       }
       // Let the MEM tool see and evict the resident model (reloads from
       // browser cache on next use — a few seconds, no re-download)
-      registerAiSession(`bg-${model}`, {
-        ...SESSION_LABELS[model],
-        release: async () => {
-          sessions.delete(model);
-          try { await inFlight.get(model); } catch { /* ignore */ }
-          await session.release();
-        },
-      });
-      return session;
-    })();
-    sessions.set(model, s);
-    s.catch(() => sessions.delete(model)); // let a failed load retry
-    ensureIdleTimer();
-  }
-  touchSession(model);
-  return s;
+  // Let the MEM tool see and evict the resident model (reloads from
+  // browser cache on next use — a few seconds, no re-download)
+  registerAiSession(`bg-${model}`, {
+    ...SESSION_LABELS[model],
+    release: async () => {
+      sessions.delete(model);
+      try { await inFlight.get(model); } catch { /* ignore */ }
+      await session.release();
+    },
+  });
+  return session;
 }
 
 /** True when generating with this model won't trigger a fresh download —
