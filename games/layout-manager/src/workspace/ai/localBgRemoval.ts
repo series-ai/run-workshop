@@ -260,29 +260,43 @@ export async function computeMatte(
   const spec = MODELS[model];
   const session = await getSession(model, onProgress);
 
-  // Preprocess: stretch-resize to the model's square input, normalize NCHW
-  onProgress?.('Preparing image...', 0);
-  const size = spec.inputSize;
-  const pre = document.createElement('canvas');
-  pre.width = size;
-  pre.height = size;
-  const pctx = pre.getContext('2d', { willReadFrequently: true })!;
-  pctx.drawImage(source, 0, 0, size, size);
-  const px = pctx.getImageData(0, 0, size, size).data;
-  const input = new Float32Array(3 * size * size);
-  const plane = size * size;
-  for (let i = 0; i < plane; i++) {
-    input[i] = (px[i * 4]! / 255 - spec.mean[0]) / spec.std[0];
-    input[plane + i] = (px[i * 4 + 1]! / 255 - spec.mean[1]) / spec.std[1];
-    input[plane * 2 + i] = (px[i * 4 + 2]! / 255 - spec.mean[2]) / spec.std[2];
-  }
+  // Guard the ENTIRE session-use window (preprocess through run) so an
+  // eviction from another model's load can't free this session between
+  // getSession returning and the run starting
+  let finishUse!: () => void;
+  const useGuard = new Promise<void>((r) => { finishUse = r; });
+  const prevFlight = inFlight.get(model);
+  inFlight.set(model, prevFlight ? prevFlight.then(() => useGuard) : useGuard);
 
-  onProgress?.('Removing background...', 0.2);
-  const tensor = new ort.Tensor('float32', input, [1, 3, size, size]);
-  const runPromise = session.run({ [session.inputNames[0]!]: tensor });
-  inFlight.set(model, runPromise.catch(() => { /* tracked only for release ordering */ }));
-  const outputs = await runPromise;
-  const out = outputs[session.outputNames[0]!]!.data as Float32Array;
+  let out: Float32Array;
+  try {
+    // Preprocess: stretch-resize to the model's square input, normalize NCHW
+    onProgress?.('Preparing image...', 0);
+    const size = spec.inputSize;
+    const pre = document.createElement('canvas');
+    pre.width = size;
+    pre.height = size;
+    const pctx0 = pre.getContext('2d', { willReadFrequently: true })!;
+    pctx0.drawImage(source, 0, 0, size, size);
+    const px = pctx0.getImageData(0, 0, size, size).data;
+    const input = new Float32Array(3 * size * size);
+    const plane0 = size * size;
+    for (let i = 0; i < plane0; i++) {
+      input[i] = (px[i * 4]! / 255 - spec.mean[0]) / spec.std[0];
+      input[plane0 + i] = (px[i * 4 + 1]! / 255 - spec.mean[1]) / spec.std[1];
+      input[plane0 * 2 + i] = (px[i * 4 + 2]! / 255 - spec.mean[2]) / spec.std[2];
+    }
+
+    onProgress?.('Removing background...', 0.2);
+    const tensor = new ort.Tensor('float32', input, [1, 3, size, size]);
+    const outputs = await session.run({ [session.inputNames[0]!]: tensor });
+    out = outputs[session.outputNames[0]!]!.data as Float32Array;
+  } finally {
+    finishUse();
+  }
+  const size = spec.inputSize;
+  const plane = size * size;
+  const pctx = document.createElement('canvas').getContext('2d')!;
 
   // Postprocess: (sigmoid for models that output logits, then) min-max
   // normalize the first output map to a 0..255 mask

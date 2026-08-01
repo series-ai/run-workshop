@@ -75,6 +75,14 @@ export function RemoveBgModal({ sourceNodes, position, onGenerated, onProgress, 
 
   const previewCap = previewRes === 'full' ? Infinity : parseInt(previewRes, 10);
 
+  // Remember the preview resolution the user last TUNED against — the full
+  // run scales edge px from it even if the preview is toggled off afterwards
+  const [tunedScaleRef, setTunedScaleRef] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    setTunedScaleRef(livePreviewOn && previewRes !== 'full' ? parseInt(previewRes, 10) : undefined);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [edgeContract, edgeSmooth, edgeFeather, aiHardness]);
+
   // Engine switch — the old engine's preview is instantly misleading; blank
   // it until the new engine produces its own
   useEffect(() => {
@@ -91,7 +99,8 @@ export function RemoveBgModal({ sourceNodes, position, onGenerated, onProgress, 
     const timer = setTimeout(async () => {
       const src = new Image();
       await new Promise<void>((resolve, reject) => { src.onload = () => resolve(); src.onerror = reject; src.src = previewUrls[0]!; }).catch(() => {});
-      if (cancelled || !src.naturalWidth) return;
+      if (cancelled) return;
+      if (!src.naturalWidth) { setPreviewLoading(false); return; }
       const s = Math.min(1, previewCap / Math.max(src.naturalWidth, src.naturalHeight));
       const w = Math.max(1, Math.round(src.naturalWidth * s));
       const h = Math.max(1, Math.round(src.naturalHeight * s));
@@ -208,17 +217,15 @@ export function RemoveBgModal({ sourceNodes, position, onGenerated, onProgress, 
             contract: edgeContract,
             smooth: edgeSmooth,
             feather: edgeFeather,
-            // Same preview-to-full-res scaling rule as the AI engines
-            opsScaleRef: livePreviewOn && previewRes !== 'full' ? parseInt(previewRes, 10) : undefined,
+            // Scale edge px from the preview resolution the values were
+            // tuned against (undefined = tuned at full res / no preview)
+            opsScaleRef: tunedScaleRef,
           });
         } else {
           resultBlob = await removeImageBackground(blob, (phase, pct) => {
             const prefix = imageNodes.length > 1 ? `(${i + 1}/${imageNodes.length}) ` : '';
             onProgress({ message: prefix + phase, progress: Math.round(pct * 100) });
-            // Scale edge px from the preview resolution ONLY when the user
-            // actually tuned against a capped preview — otherwise treat the
-            // values as full-resolution pixels
-          }, model, { hardness: aiHardness, contract: edgeContract, smooth: edgeSmooth, feather: edgeFeather, opsScaleRef: livePreviewOn && previewRes !== 'full' ? parseInt(previewRes, 10) : undefined, keepShadows: model === 'birefnet' && aiKeepShadows });
+          }, model, { hardness: aiHardness, contract: edgeContract, smooth: edgeSmooth, feather: edgeFeather, opsScaleRef: tunedScaleRef, keepShadows: model === 'birefnet' && aiKeepShadows });
         }
         const resultUrl = URL.createObjectURL(resultBlob);
         const img = await new Promise<HTMLImageElement>((resolve) => {
@@ -238,7 +245,7 @@ export function RemoveBgModal({ sourceNodes, position, onGenerated, onProgress, 
       alert(`Background removal failed: ${e instanceof Error ? e.message : String(e)}`);
     }
     setProcessing(false);
-  }, [processing, imageNodes, onGenerated, onProgress, model, shadowMode, shadowTolerance, chromaKey, keepShadows, aiKeepShadows, edgeContract, edgeSmooth, edgeFeather, aiHardness, livePreviewOn, previewRes]);
+  }, [processing, imageNodes, onGenerated, onProgress, model, shadowMode, shadowTolerance, chromaKey, keepShadows, aiKeepShadows, edgeContract, edgeSmooth, edgeFeather, aiHardness, tunedScaleRef]);
 
   if (imageNodes.length === 0) return null;
 
@@ -468,7 +475,7 @@ export function RemoveBgModal({ sourceNodes, position, onGenerated, onProgress, 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, flexWrap: 'wrap' }}>
             <span style={{ opacity: 0.7 }}>Edge</span>
             {([['Contract', edgeContract, setEdgeContract, -20], ['Smooth', edgeSmooth, setEdgeSmooth, 0], ['Feather', edgeFeather, setEdgeFeather, 0]] as const).map(([label, val, set, min]) => (
-              <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }} title={label === 'Contract' ? 'Positive removes more (eats fringe), negative removes less (keeps a margin)' : undefined}>
+              <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }} title={label === 'Contract' ? 'Positive removes less (keeps a margin), negative removes more (eats fringe)' : undefined}>
                 {label}
                 <EdgeNumberInput value={val} onCommit={set} min={min} max={20} disabled={processing} />
               </span>
