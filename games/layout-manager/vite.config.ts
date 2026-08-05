@@ -105,15 +105,32 @@ function imageProxyPlugin(): Plugin {
           if (len) headers['Content-Length'] = len;
           res.writeHead(resp.ok ? 200 : resp.status, headers);
           if (resp.body) {
+            let clientGone = false;
+            res.once('close', () => { clientGone = true; });
             for await (const chunk of resp.body) {
+              // Client aborted (tab closed mid-download) — stop reading;
+              // breaking the loop cancels the upstream fetch stream
+              if (clientGone || res.destroyed) break;
               // Respect backpressure: if the browser drains slower than the
               // fetch (a 475 MB model download), pause until the socket
-              // catches up instead of buffering the difference in memory
+              // catches up instead of buffering the difference in memory.
+              // Also wake on close/error so an aborted client can't leave
+              // this await hanging forever with the upstream held open.
               if (!res.write(chunk)) {
-                await new Promise<void>((resolve) => res.once('drain', resolve));
+                await new Promise<void>((resolve) => {
+                  const done = () => {
+                    res.off('drain', done);
+                    res.off('close', done);
+                    res.off('error', done);
+                    resolve();
+                  };
+                  res.once('drain', done);
+                  res.once('close', done);
+                  res.once('error', done);
+                });
               }
             }
-            res.end();
+            if (!clientGone && !res.destroyed) res.end();
           } else {
             res.end(Buffer.from(await resp.arrayBuffer()));
           }
