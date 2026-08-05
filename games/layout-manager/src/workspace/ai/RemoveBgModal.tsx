@@ -88,6 +88,10 @@ export function RemoveBgModal({ sourceNodes, position, onGenerated, onProgress, 
   useEffect(() => {
     if (!livePreviewOn) return;
     setPreviewLoading(true);
+    // Clear the previous engine's status — e.g. an AI "needs the ~N MB
+    // model" message is meaningless once Simple is selected
+    setPreviewStatus(null);
+    setPreviewNeedsLoad(false);
     const out = shadowPreviewRef.current;
     if (out) { const w2 = out.width; out.width = w2; } // resets = clears to transparent
   }, [model]); // eslint-disable-line react-hooks/exhaustive-deps

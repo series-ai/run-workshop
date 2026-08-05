@@ -105,13 +105,26 @@ function imageProxyPlugin(): Plugin {
           if (len) headers['Content-Length'] = len;
           res.writeHead(resp.ok ? 200 : resp.status, headers);
           if (resp.body) {
-            for await (const chunk of resp.body) res.write(chunk);
+            for await (const chunk of resp.body) {
+              // Respect backpressure: if the browser drains slower than the
+              // fetch (a 475 MB model download), pause until the socket
+              // catches up instead of buffering the difference in memory
+              if (!res.write(chunk)) {
+                await new Promise<void>((resolve) => res.once('drain', resolve));
+              }
+            }
             res.end();
           } else {
             res.end(Buffer.from(await resp.arrayBuffer()));
           }
         } catch {
-          res.writeHead(502); res.end('Fetch failed');
+          // Mid-transfer failures reach here with headers already sent —
+          // writeHead would throw; just kill the socket so the client errors
+          if (res.headersSent) {
+            res.destroy();
+          } else {
+            res.writeHead(502); res.end('Fetch failed');
+          }
         }
       });
     },
