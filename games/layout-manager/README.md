@@ -190,8 +190,9 @@ All AI tools are accessible from the toolbar. They can be hidden entirely from *
 
 #### Remove Background
 - One-click local background removal — runs in your browser via ONNX Runtime (no API key, no uploads, nothing installed)
-- Two engines: Quality (ISNet, ~170 MB one-time model download, cached) and Fast (U2-Net small, ~5 MB)
-- Loaded models show in the MEM tool and are evicted by Free Memory
+- Four engines, lightest to heaviest: Simple (instant color-based cutout, no AI), Fast (U2-Net small, ~5 MB one-time model download), Quality (ISNet, ~170 MB), and Best (BiRefNet, ~475 MB)
+- Matte hardness + edge (contract/smooth/feather) fine-tuning with an opt-in live preview; Best and Simple can keep soft contact shadows as translucent black
+- Models download once and cache in the browser; only one stays loaded at a time, idle models auto-unload after 15 minutes, and the MEM tool lists/evicts them
 - Alternative: the ComfyUI integration (see below) with the bundled workflow source at `comfy-workflows_source/BackgroundRemoval_API_LM.json` (built on the [ComfyUI-RMBG](https://github.com/1038lab/ComfyUI-RMBG) BiRefNet node) — see [`docs/comfyui-integration.md`](docs/comfyui-integration.md)
 
 #### AI Chat

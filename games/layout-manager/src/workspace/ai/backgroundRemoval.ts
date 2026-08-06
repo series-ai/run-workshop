@@ -12,6 +12,7 @@ export async function removeImageBackground(
   imageBlob: Blob,
   onProgress?: ProgressCallback,
   model: BgModelId = 'isnet',
+  opts?: { hardness?: number; contract?: number; smooth?: number; feather?: number; opsScaleRef?: number; keepShadows?: boolean },
 ): Promise<Blob> {
-  return removeBackgroundLocal(imageBlob, model, onProgress);
+  return removeBackgroundLocal(imageBlob, model, onProgress, opts);
 }

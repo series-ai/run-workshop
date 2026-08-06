@@ -97,11 +97,51 @@ function imageProxyPlugin(): Plugin {
             });
           }
           const contentType = resp.headers.get('content-type') || 'image/png';
-          res.writeHead(resp.ok ? 200 : resp.status, { 'Content-Type': contentType, 'Cache-Control': 'max-age=3600' });
-          const buffer = Buffer.from(await resp.arrayBuffer());
-          res.end(buffer);
+          // Stream instead of buffering — large files (AI models) would
+          // otherwise sit at 0 bytes client-side until fully fetched here,
+          // which reads as a dead download (and costs the file's size in RAM)
+          const headers: Record<string, string> = { 'Content-Type': contentType, 'Cache-Control': 'max-age=3600' };
+          const len = resp.headers.get('content-length');
+          if (len) headers['Content-Length'] = len;
+          res.writeHead(resp.ok ? 200 : resp.status, headers);
+          if (resp.body) {
+            let clientGone = false;
+            res.once('close', () => { clientGone = true; });
+            for await (const chunk of resp.body) {
+              // Client aborted (tab closed mid-download) — stop reading;
+              // breaking the loop cancels the upstream fetch stream
+              if (clientGone || res.destroyed) break;
+              // Respect backpressure: if the browser drains slower than the
+              // fetch (a 475 MB model download), pause until the socket
+              // catches up instead of buffering the difference in memory.
+              // Also wake on close/error so an aborted client can't leave
+              // this await hanging forever with the upstream held open.
+              if (!res.write(chunk)) {
+                await new Promise<void>((resolve) => {
+                  const done = () => {
+                    res.off('drain', done);
+                    res.off('close', done);
+                    res.off('error', done);
+                    resolve();
+                  };
+                  res.once('drain', done);
+                  res.once('close', done);
+                  res.once('error', done);
+                });
+              }
+            }
+            if (!clientGone && !res.destroyed) res.end();
+          } else {
+            res.end(Buffer.from(await resp.arrayBuffer()));
+          }
         } catch {
-          res.writeHead(502); res.end('Fetch failed');
+          // Mid-transfer failures reach here with headers already sent —
+          // writeHead would throw; just kill the socket so the client errors
+          if (res.headersSent) {
+            res.destroy();
+          } else {
+            res.writeHead(502); res.end('Fetch failed');
+          }
         }
       });
     },
