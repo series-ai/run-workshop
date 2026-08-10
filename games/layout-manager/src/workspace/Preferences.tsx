@@ -393,6 +393,7 @@ function AISettings({
       const lines = text.split('\n');
       const keyMap: Record<string, keyof UserConfig> = {
         'GOOGLE_GENAI_API_KEY': 'googleGenaiApiKey', // secret-scan: allow
+        'FAL_API_KEY': 'falApiKey',
         'OPENAI_API_KEY': 'openaiApiKey',
         'XAI_API_KEY': 'xaiApiKey',
         'ANTHROPIC_API_KEY': 'anthropicApiKey',
@@ -419,7 +420,7 @@ function AISettings({
       if (imported > 0) {
         alert(`Imported ${imported} key${imported > 1 ? 's' : ''} from .env file`);
       } else {
-        alert('No recognized API keys found in file.\nExpected keys: GOOGLE_GENAI_API_KEY, OPENAI_API_KEY, XAI_API_KEY, ANTHROPIC_API_KEY');
+        alert('No recognized API keys found in file.\nExpected keys: GOOGLE_GENAI_API_KEY, FAL_API_KEY, OPENAI_API_KEY, XAI_API_KEY, ANTHROPIC_API_KEY');
       }
     };
     reader.readAsText(file);
@@ -488,6 +489,14 @@ function AISettings({
         label="Google GenAI"
         value={draft.googleGenaiApiKey}
         onChange={(v) => onChange('googleGenaiApiKey', v)}
+        placeholder="API key"
+        secret
+      />
+
+      <TextInputSetting
+        label="Fal.ai"
+        value={draft.falApiKey}
+        onChange={(v) => onChange('falApiKey', v)}
         placeholder="API key"
         secret
       />

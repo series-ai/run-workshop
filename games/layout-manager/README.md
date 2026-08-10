@@ -110,6 +110,7 @@ Open **Preferences > AI** in Layout Manager and paste your API keys, or click **
 | Provider | Key | Used For |
 |---|---|---|
 | **Google GenAI** (Nano Banana) | `GOOGLE_GENAI_API_KEY` | Text/reference-to-image generation, AI chat |
+| **Fal.ai** | `FAL_API_KEY` | Split to Layers (Seedream Layerize) |
 | **OpenAI** | `OPENAI_API_KEY` | Text-to-image generation, AI chat |
 | **xAI (Grok)** | `XAI_API_KEY` | AI chat (text only, no image support) |
 | **Anthropic (Claude)** | `ANTHROPIC_API_KEY` | AI chat |
@@ -187,6 +188,11 @@ All AI tools are accessible from the toolbar. They can be hidden entirely from *
 - Batch generation (configurable count)
 - Provider picker with API key status
 - Persistent prompt across sessions
+
+#### Split to Layers
+- Splits a selected image into 2–17 transparent PNG layers (background + separate elements) via Fal.ai Seedream Layerize — each layer lands as a named, z-ordered element beside the source
+- Optional guidance prompt: name the elements to separate, or use `<bbox>left top right bottom</bbox>` tags (normalized 0–999) for precise targeting
+- Priced per generated layer by Fal.ai; the provider's content filter blocks depictions of people/characters unless your fal account is authorized to disable it
 
 #### Remove Background
 - One-click local background removal — runs in your browser via ONNX Runtime (no API key, no uploads, nothing installed)
@@ -309,7 +315,7 @@ See [`docs/comfyui-integration.md`](docs/comfyui-integration.md) for full setup,
 
 - **React** 18 + **TypeScript**
 - **Vite** 6 (dev server, bundler, and AI backend proxy)
-- Direct provider APIs: Google GenAI (Gemini / Nano Banana), OpenAI (gpt-image-1), Anthropic (Claude), xAI (Grok)
+- Direct provider APIs: Google GenAI (Gemini / Nano Banana), OpenAI (gpt-image-1), Fal.ai (Seedream Layerize), Anthropic (Claude), xAI (Grok)
 - DOM-based rendering with CSS transforms (not HTML5 Canvas)
 - State management via `useReducer` (no external libraries)
 - API keys obfuscated with XOR + base64 in localStorage
