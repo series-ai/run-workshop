@@ -43,7 +43,7 @@ function deobfuscate(encoded: string): string {
 }
 
 const SECRET_KEYS: (keyof UserConfig)[] = [
-  'googleGenaiApiKey', 'openaiApiKey', 'xaiApiKey', 'anthropicApiKey',
+  'googleGenaiApiKey', 'falApiKey', 'openaiApiKey', 'xaiApiKey', 'anthropicApiKey',
 ];
 
 export interface UserConfig {
@@ -77,6 +77,8 @@ export interface UserConfig {
   showWelcome: boolean;
   /** Google GenAI API key (for nano-banana / Gemini image generation) */
   googleGenaiApiKey: string;
+  /** Fal.ai API key (for Seedream Layerize) */
+  falApiKey: string;
   /** OpenAI API key */
   openaiApiKey: string;
   /** xAI (Grok) API key */
@@ -114,6 +116,7 @@ const defaultConfig: UserConfig = {
   aiHidden: false,
   showWelcome: true,
   googleGenaiApiKey: '',
+  falApiKey: '',
   openaiApiKey: '',
   xaiApiKey: '',
   anthropicApiKey: '',

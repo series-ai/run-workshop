@@ -397,6 +397,120 @@ function aiDirectPlugin(): Plugin {
         res.end();
       });
 
+      // ====== Fal.ai Seedream Layerize (image → editable layers) ======
+      server.middlewares.use('/__ai-layerize', async (req, res) => {
+        if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const params = await readJsonBody(req);
+        if (!params) { res.writeHead(400); res.end('Invalid JSON'); return; }
+
+        const apiKey = ((params.apiKey as string) || '').trim();
+        const sourceImage = params.sourceImage as string;
+        const prompt = (params.prompt as string) || '';
+
+        if (!apiKey) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing Fal.ai API key' }));
+          return;
+        }
+        if (!sourceImage) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing source image' }));
+          return;
+        }
+        // After validation — detectMime throws on undefined input
+        const sourceMime = (params.sourceMime as string) || detectMime(sourceImage);
+
+        const abort = new AbortController();
+        activeAborts.add(abort);
+
+        try {
+          console.log('[ai-direct] Fal.ai Seedream Layerize submit');
+          const submitResp = await fetch('https://queue.fal.run/bytedance/seedream/v5/pro/layerize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Key ${apiKey}` },
+            body: JSON.stringify({
+              image_url: `data:${sourceMime};base64,${sourceImage}`,
+              ...(prompt ? { prompt } : {}),
+              enable_safety_checker: params.disableSafety ? false : true,
+            }),
+            signal: abort.signal,
+          });
+          if (!submitResp.ok) {
+            const text = await submitResp.text();
+            throw new Error(`Fal.ai submit ${submitResp.status}: ${text}`);
+          }
+          const submitJson = await submitResp.json();
+          const requestId = submitJson.request_id as string;
+          if (!requestId) throw new Error('Fal.ai: no request_id in response');
+
+          // Nested model paths poll at the app root (bytedance/seedream)
+          const statusUrl = `https://queue.fal.run/bytedance/seedream/requests/${requestId}/status`;
+          const resultUrl = `https://queue.fal.run/bytedance/seedream/requests/${requestId}`;
+          let attempts = 0;
+          let completed = false;
+          while (attempts < 150) {
+            attempts++;
+            await new Promise((r) => setTimeout(r, 2000));
+            const statusResp = await fetch(statusUrl, { headers: { 'Authorization': `Key ${apiKey}` }, signal: abort.signal });
+            if (!statusResp.ok) continue;
+            const statusJson = await statusResp.json();
+            if (statusJson.status === 'COMPLETED') { completed = true; break; }
+            if (statusJson.status === 'FAILED' || statusJson.status === 'ERROR') {
+              throw new Error(`Fal.ai layerize failed: ${JSON.stringify(statusJson)}`);
+            }
+          }
+          if (!completed) throw new Error('Fal.ai layerize timed out after 5 minutes');
+
+          const resultResp = await fetch(resultUrl, { headers: { 'Authorization': `Key ${apiKey}` }, signal: abort.signal });
+          if (!resultResp.ok) {
+            const text = await resultResp.text();
+            throw new Error(`Fal.ai result ${resultResp.status}: ${text}`);
+          }
+          const resultJson = await resultResp.json();
+          const rawLayers = (resultJson.layers ?? []) as {
+            image?: { url?: string; content_type?: string };
+            z_index?: number;
+            bounding_box?: { absolute?: number[] } | null;
+            name?: string | null;
+          }[];
+          if (!rawLayers.length) throw new Error('Fal.ai: no layers in result');
+
+          // Download each layer server-side (fal's CDN lacks CORP headers, so
+          // the COEP-isolated browser can't fetch them directly)
+          const layers = [];
+          for (const layer of rawLayers) {
+            const imgUrl = layer.image?.url;
+            if (!imgUrl) continue;
+            const imgResp = await fetch(imgUrl, { signal: abort.signal });
+            if (!imgResp.ok) continue;
+            const buf = Buffer.from(await imgResp.arrayBuffer());
+            const mime = layer.image?.content_type || 'image/png';
+            layers.push({
+              dataUrl: `data:${mime};base64,${buf.toString('base64')}`,
+              zIndex: layer.z_index ?? layers.length,
+              name: layer.name ?? null,
+              bbox: layer.bounding_box?.absolute ?? null,
+            });
+          }
+          if (!layers.length) throw new Error('Fal.ai: layer downloads failed — no layers could be retrieved');
+          console.log(`[ai-direct] Layerize returned ${layers.length} layers`);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ layers }));
+        } catch (e) {
+          if (e instanceof Error && e.name === 'AbortError') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ cancelled: true }));
+          } else {
+            console.error('[ai-direct] Layerize error:', e);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: e instanceof Error ? e.message : 'Unknown error' }));
+          }
+        } finally {
+          activeAborts.delete(abort);
+        }
+      });
+
       // ====== AI Chat (multi-provider) ======
       server.middlewares.use('/__ai-chat', async (req, res) => {
         if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
