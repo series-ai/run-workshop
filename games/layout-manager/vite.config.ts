@@ -448,17 +448,19 @@ function aiDirectPlugin(): Plugin {
           const statusUrl = `https://queue.fal.run/bytedance/seedream/requests/${requestId}/status`;
           const resultUrl = `https://queue.fal.run/bytedance/seedream/requests/${requestId}`;
           let attempts = 0;
+          let completed = false;
           while (attempts < 150) {
             attempts++;
             await new Promise((r) => setTimeout(r, 2000));
             const statusResp = await fetch(statusUrl, { headers: { 'Authorization': `Key ${apiKey}` }, signal: abort.signal });
             if (!statusResp.ok) continue;
             const statusJson = await statusResp.json();
-            if (statusJson.status === 'COMPLETED') break;
+            if (statusJson.status === 'COMPLETED') { completed = true; break; }
             if (statusJson.status === 'FAILED' || statusJson.status === 'ERROR') {
               throw new Error(`Fal.ai layerize failed: ${JSON.stringify(statusJson)}`);
             }
           }
+          if (!completed) throw new Error('Fal.ai layerize timed out after 5 minutes');
 
           const resultResp = await fetch(resultUrl, { headers: { 'Authorization': `Key ${apiKey}` }, signal: abort.signal });
           if (!resultResp.ok) {
@@ -491,6 +493,7 @@ function aiDirectPlugin(): Plugin {
               bbox: layer.bounding_box?.absolute ?? null,
             });
           }
+          if (!layers.length) throw new Error('Fal.ai: layer downloads failed — no layers could be retrieved');
           console.log(`[ai-direct] Layerize returned ${layers.length} layers`);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ layers }));
