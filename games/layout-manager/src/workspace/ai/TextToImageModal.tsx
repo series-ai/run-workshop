@@ -38,6 +38,9 @@ export function friendlyAiError(raw: string): string {
 
 const PROVIDERS = [
   { id: 'nano-banana', label: 'Nano Banana', configKey: 'googleGenaiApiKey' as keyof UserConfig },
+  // Grok Imagine via the local hermes agent (SuperGrok login, no API key) —
+  // shown only when the availability probe confirms it's configured
+  { id: 'hermes-grok', label: 'Grok (Hermes)', configKey: null as keyof UserConfig | null },
   { id: 'nano-banana-lite', label: 'Nano Banana 2 Lite', configKey: 'googleGenaiApiKey' as keyof UserConfig },
   { id: 'gpt-image', label: 'GPT Image 1', configKey: 'openaiApiKey' as keyof UserConfig },
   { id: 'gpt-image-2', label: 'GPT Image 2', configKey: 'openaiApiKey' as keyof UserConfig },
@@ -46,6 +49,7 @@ const PROVIDERS = [
 type ProviderId = (typeof PROVIDERS)[number]['id'];
 
 const GOOGLE_ASPECT_RATIOS = ['1:1', '3:2', '2:3', '4:3', '3:4', '16:9', '9:16'] as const;
+const XAI_ASPECT_RATIOS = ['1:1', '3:2', '2:3', '4:3', '3:4', '16:9', '9:16'] as const;
 const GOOGLE_IMAGE_SIZES = ['1K', '2K', '4K'] as const;
 const OPENAI_SIZES = [
   { label: 'Square', value: '1024x1024' },
@@ -65,9 +69,19 @@ const OPENAI_QUALITIES = ['low', 'medium', 'high'] as const;
 export function TextToImageModal({ config, prompt, onPromptChange, refNodes, position, onGenerated, onProgress, onClose }: TextToImageModalProps) {
   const { panelRef, onPointerDown, onPointerMove, onPointerUp } = useDraggableModal();
   const [providerId, setProviderId] = useState<ProviderId>(() => {
-    const found = PROVIDERS.find((p) => config[p.configKey]);
+    const found = PROVIDERS.find((p) => p.configKey && config[p.configKey]);
     return (found?.id ?? PROVIDERS[0]!.id) as ProviderId;
   });
+  // Grok (Hermes) availability — needs hermes with an image_gen backend configured
+  const [hermesGrokUp, setHermesGrokUp] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/__ai-local-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      .then((r) => r.json())
+      .then((st) => { if (!cancelled) setHermesGrokUp(!!st.hermesImageGen?.up && config.hermesEnabled); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
   const [count, setCount] = useState(1);
   // Google params
   const [aspectRatio, setAspectRatio] = useState<string>('1:1');
@@ -76,6 +90,8 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
   const [openaiSize, setOpenaiSize] = useState<string>('1024x1024');
   const [openaiQuality, setOpenaiQuality] = useState<'low' | 'medium' | 'high'>('medium');
   const [transparentBg, setTransparentBg] = useState(false);
+  // Grok (Hermes) model tier
+  const [hermesGrokModel, setHermesGrokModel] = useState<'grok-imagine-image' | 'grok-imagine-image-quality'>('grok-imagine-image');
 
   const isGoogle = providerId === 'nano-banana' || providerId === 'nano-banana-lite';
   const isOpenAi = providerId === 'gpt-image' || providerId === 'gpt-image-2';
@@ -99,7 +115,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim() || generating) return;
     const provider = PROVIDERS.find((p) => p.id === providerId);
-    if (provider && !config[provider.configKey]) {
+    if (provider?.configKey && !config[provider.configKey]) {
       setGenError(`Add your ${provider.label} API key in Preferences > AI to use this feature.`);
       return;
     }
@@ -122,7 +138,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
         {
           prompt: prompt.trim(),
           api: providerId,
-          aspectRatio: isGoogle ? aspectRatio : undefined,
+          aspectRatio: isGoogle || providerId === 'hermes-grok' ? aspectRatio : undefined,
           imageSize: isGoogle ? imageSize : undefined,
           size: isOpenAi ? openaiSize : undefined,
           quality: isOpenAi ? openaiQuality : undefined,
@@ -130,6 +146,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
           background: providerId === 'gpt-image' && transparentBg ? 'transparent' : undefined,
           refImages,
           count,
+          hermesModel: providerId === 'hermes-grok' ? hermesGrokModel : undefined,
         },
         {
           onImage: async (dataUrl) => {
@@ -171,7 +188,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
       setGenError(friendlyAiError(e instanceof Error ? e.message : 'Unknown error'));
       setGenerating(false);
     }
-  }, [prompt, providerId, count, aspectRatio, imageSize, openaiSize, openaiQuality, transparentBg, generating, config, hasRefs, clampedRefs, onGenerated, onProgress, isGoogle, isOpenAi]);
+  }, [prompt, providerId, count, aspectRatio, imageSize, openaiSize, openaiQuality, transparentBg, hermesGrokModel, generating, config, hasRefs, clampedRefs, onGenerated, onProgress, isGoogle, isOpenAi]);
 
   // Compute output dimensions hint
   let outputHint = '';
@@ -220,8 +237,8 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
         <label className="ai-modal-label">
           Provider
           <div className="ai-modal-ratio-row">
-            {PROVIDERS.map((p) => {
-              const hasKey = !!config[p.configKey];
+            {PROVIDERS.filter((p) => p.id !== 'hermes-grok' || hermesGrokUp).map((p) => {
+              const hasKey = p.configKey ? !!config[p.configKey] : true;
               return (
                 <button
                   key={p.id}
@@ -234,7 +251,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
                       setOpenaiSize('1024x1024');
                     }
                   }}
-                  title={hasKey ? p.label : 'Needs API key'}
+                  title={!hasKey ? 'Needs API key' : p.id === 'hermes-grok' ? 'Grok Imagine through your local Hermes agent (SuperGrok login) — slower than API providers, no size options' : p.label}
                   disabled={!hasKey}
                 >
                   {p.label}
@@ -315,6 +332,57 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
           </label>
         ) : null}
 
+        {providerId === 'hermes-grok' && (
+          <label className="ai-modal-label">
+            Model
+            <div className="ai-modal-ratio-row">
+              <button
+                className={`ai-modal-ratio-btn${hermesGrokModel === 'grok-imagine-image' ? ' ai-modal-ratio-btn-active' : ''}`}
+                onClick={() => setHermesGrokModel('grok-imagine-image')}
+                disabled={generating}
+                title="Faster, standard quality"
+              >
+                Standard
+              </button>
+              <button
+                className={`ai-modal-ratio-btn${hermesGrokModel === 'grok-imagine-image-quality' ? ' ai-modal-ratio-btn-active' : ''}`}
+                onClick={() => setHermesGrokModel('grok-imagine-image-quality')}
+                disabled={generating}
+                title="Slower, higher quality"
+              >
+                Quality
+              </button>
+            </div>
+            {hasRefs && (
+              <span className="ai-modal-size-hint">
+                With reference images, Grok always uses the Quality model (up to 3 references)
+              </span>
+            )}
+            <span className="ai-modal-size-hint">
+              Uses your SuperGrok / X Premium+ subscription limits (shared with grok.com and the Grok app)
+            </span>
+          </label>
+        )}
+
+        {providerId === 'hermes-grok' && (
+          <label className="ai-modal-label">
+            Aspect Ratio
+            <div className="ai-modal-ratio-row">
+              {XAI_ASPECT_RATIOS.map((r) => (
+                <button
+                  key={r}
+                  className={`ai-modal-ratio-btn${r === aspectRatio ? ' ai-modal-ratio-btn-active' : ''}`}
+                  onClick={() => setAspectRatio(r)}
+                  disabled={generating}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+            <span className="ai-modal-size-hint">Resolution (1K/2K) follows your Hermes image settings</span>
+          </label>
+        )}
+
         {/* Provider-specific size controls */}
         {isGoogle ? (
           <>
@@ -348,7 +416,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
               </div>
             </label>
           </>
-        ) : (
+        ) : isOpenAi ? (
           <>
             <label className="ai-modal-label">
               Size
@@ -387,7 +455,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
               </label>
             )}
           </>
-        )}
+        ) : null}
 
         <label className="ai-modal-label">
           Count

@@ -155,6 +155,8 @@ export async function textToImage(
     refImages?: string[];
     count?: number;
     seed?: number;
+    /** hermes-grok only: grok-imagine-image | grok-imagine-image-quality */
+    hermesModel?: string;
   },
   callbacks: StreamCallbacks,
 ): Promise<void> {
@@ -201,6 +203,20 @@ export async function textToImage(
         background: params.background,
         count: params.count || 1,
         referenceImages,
+      }),
+    });
+    await consumeSSE(resp, callbacks);
+  } else if (api === 'hermes-grok') {
+    // No API key — the hermes agent generates via the user's SuperGrok login
+    const resp = await fetch('/__ai-generate-hermes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: params.prompt,
+        count: params.count || 1,
+        refImages: referenceImages,
+        model: params.hermesModel,
+        aspectRatio: params.aspectRatio,
       }),
     });
     await consumeSSE(resp, callbacks);

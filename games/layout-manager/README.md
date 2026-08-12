@@ -123,7 +123,9 @@ These chat providers need no API key at all:
 
 | Provider | Requirement | Notes |
 |---|---|---|
-| **Claude Code** | [Claude Code](https://claude.com/claude-code) installed and logged in on the machine running Layout Manager | Chats through the local CLI using your Claude Pro/Max login. Text only, no model choice, and usage counts against your subscription's rate limits (shared with claude.ai and Claude Code itself) — the chat panel shows a disclaimer to this effect. All CLI tools are disabled, so it behaves as pure chat. |
+| **Claude Code** | [Claude Code](https://claude.com/claude-code) installed and logged in on the machine running Layout Manager | Chats through the local CLI using your Claude Pro/Max login with a model picker (sonnet recommended). Text only, and usage counts against your subscription's rate limits (shared with claude.ai and Claude Code itself) — the chat panel shows a disclaimer to this effect. All CLI tools are disabled, so it behaves as pure chat. |
+| **Hermes (Grok)** | [Hermes Agent](https://hermes-agent.nousresearch.com) installed with a SuperGrok / X Premium+ OAuth login (`hermes auth add xai-oauth --type oauth`) | Streaming Grok chat via Hermes' local proxy with a live model dropdown — Layout Manager auto-starts the proxy on first use. Supports image attachments. Usage shares your SuperGrok limits. |
+| **Hermes (GPT)** | Hermes Agent with an OpenAI Codex OAuth login | GPT chat (gpt-5.6 family; luna recommended — currently unlimited) via one-shot Hermes CLI runs. Replies arrive whole rather than streaming; supports image attachments. Usage shares your Codex subscription limits. |
 | **KoboldCpp** | A local KoboldCpp server (default `http://127.0.0.1:5001`) | Chats with whatever model is loaded. URL configurable in **Preferences > AI > Local Models**. |
 | **Ollama** | A local Ollama server (default `http://127.0.0.1:11434`) | Uses the model set in Preferences, or auto-picks your first installed model if left blank. |
 
@@ -181,7 +183,7 @@ Local models support images if the loaded model is multimodal (e.g. llava); text
 All AI tools are accessible from the toolbar. They can be hidden entirely from **Preferences > AI > Hide AI Features**.
 
 #### Text to Image / Reference to Image
-- Generate images from text prompts using Nano Banana (Google GenAI) or OpenAI
+- Generate images from text prompts using Nano Banana (Google GenAI), OpenAI, or Grok Imagine via Hermes (no API key — uses your SuperGrok subscription; Standard/Quality models, seven aspect ratios, reference-image editing)
 - **Nano Banana**: aspect ratio picker (1:1, 3:2, 2:3, 4:3, 3:4, 16:9, 9:16) + image size (1K / 2K / 4K)
 - **OpenAI gpt-image-1**: size variants (1024², 1024×1536, 1536×1024), quality (low/medium/high), transparent background option
 - Select images on the workspace as style references (up to 5) — this covers image-to-image: the reference images carry the source, the prompt describes the change. Paint layers are flattened and included
@@ -204,7 +206,9 @@ All AI tools are accessible from the toolbar. They can be hidden entirely from *
 #### AI Chat
 - Multi-provider chat: Claude, Gemini, OpenAI, Grok
 - **Claude Code provider** — no API key: chats through your locally installed Claude Code CLI using its Claude Pro/Max login (text only, tools disabled; an in-panel disclaimer notes that usage shares your subscription limits)
-- **Local LLM providers** — KoboldCpp and Ollama servers running on your own machine, configured under **Preferences > AI > Local Models**
+- **Hermes Agent providers** — Grok (streaming, via auto-started local proxy) and GPT (one-shot CLI) using your SuperGrok / Codex subscription logins; **Preferences > AI > Connections** shows live status with Connect/Disconnect controls
+- **Local LLM providers** — KoboldCpp and Ollama servers running on your own machine, configured under **Preferences > AI**
+- The provider row only shows providers that are actually available (API key present, server reachable, or CLI installed)
 - Streaming responses
 - Drag images into chat or attach selected workspace images (up to 5)
 - Auto-describe mode: sends image-only messages with a generation-focused prompt
