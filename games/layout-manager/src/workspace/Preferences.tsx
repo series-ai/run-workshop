@@ -610,7 +610,11 @@ function AISettings({
             onChange('hermesEnabled', next);
             if (!next) {
               // Kill any background proxy right away — disconnect means stopped
-              fetch('/__hermes-proxy-stop', { method: 'POST' }).catch(() => {});
+              fetch('/__hermes-proxy-stop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hermesUrl: draft.hermesUrl }),
+              }).catch(() => {});
             }
           }}
         >

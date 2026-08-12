@@ -73,9 +73,13 @@ export function AiChatPanel({ config, messages, onMessagesChange, providerId, on
   // Selecting Hermes (Grok) with no model list (proxy was down) — ask the
   // server to spin the proxy up and hand back the live models
   useEffect(() => {
-    if (providerId !== 'hermes' || !localStatus || localStatus.hermes.models.length > 0) return;
+    if (providerId !== 'hermes' || !config.hermesEnabled || !localStatus || localStatus.hermes.models.length > 0) return;
     let cancelled = false;
-    fetch('/__hermes-ensure', { method: 'POST' })
+    fetch('/__hermes-ensure', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hermesUrl: config.hermesUrl }),
+    })
       .then((r) => r.json())
       .then((st) => {
         if (cancelled || !st.up) return;
@@ -84,7 +88,7 @@ export function AiChatPanel({ config, messages, onMessagesChange, providerId, on
       .catch(() => {});
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [providerId, localStatus]);
+  }, [providerId, localStatus, config.hermesEnabled, config.hermesUrl]);
 
   // Default Grok model: everyday chat tier — skip reasoning (slow/expensive),
   // multi-agent, and build (code) variants unless the user picks them
@@ -122,7 +126,7 @@ export function AiChatPanel({ config, messages, onMessagesChange, providerId, on
       if (first) setProviderId(first.id);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localStatus]);
+  }, [localStatus, providerId, config.hermesEnabled, config.claudeCodeEnabled]);
 
   const providerAvailable = (p: (typeof PROVIDERS)[number]): boolean => {
     if (p.configKey) return !!config[p.configKey];
@@ -330,7 +334,7 @@ export function AiChatPanel({ config, messages, onMessagesChange, providerId, on
     abortRef.current = null;
     setStreaming(false);
     textareaRef.current?.focus();
-  }, [input, attachedImages, messages, streaming, providerId, config, autoDescribe]);
+  }, [input, attachedImages, messages, streaming, providerId, config, autoDescribe, hermesModel, hermesCliModel, claudeModel]);
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort();

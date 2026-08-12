@@ -491,10 +491,16 @@ function aiDirectPlugin(): Plugin {
       // Ensure the hermes proxy is running (spawn detached if not) — Grok chat
       // is always offered when hermes has an xAI login; the proxy spins up on
       // demand the first time it's needed
-      const hermesProxyUrl = 'http://127.0.0.1:8645';
-      async function hermesProxyModels(): Promise<string[] | null> {
+      const HERMES_PROXY_DEFAULT = 'http://127.0.0.1:8645';
+      const normalizeHermesUrl = (u?: unknown): string => {
+        let url = String(u || '').trim() || HERMES_PROXY_DEFAULT;
+        if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
+        // 0.0.0.0 is a listen address, not a connect address
+        return url.replace(/\/+$/, '').replace('//0.0.0.0', '//127.0.0.1');
+      };
+      async function hermesProxyModels(baseUrl: string = HERMES_PROXY_DEFAULT): Promise<string[] | null> {
         try {
-          const r = await fetch(`${hermesProxyUrl}/v1/models`, { headers: { 'Authorization': 'Bearer layout-manager' }, signal: AbortSignal.timeout(1200) });
+          const r = await fetch(`${baseUrl}/v1/models`, { headers: { 'Authorization': 'Bearer layout-manager' }, signal: AbortSignal.timeout(1200) });
           if (!r.ok) return null;
           const j = await r.json();
           return ((j?.data ?? []) as { id?: string }[])
@@ -503,8 +509,8 @@ function aiDirectPlugin(): Plugin {
         } catch { return null; }
       }
       let proxySpawnAt = 0;
-      async function ensureHermesProxy(): Promise<string[] | null> {
-        const models = await hermesProxyModels();
+      async function ensureHermesProxy(baseUrl: string = HERMES_PROXY_DEFAULT): Promise<string[] | null> {
+        const models = await hermesProxyModels(baseUrl);
         if (models) return models;
         // Don't spawn-storm: at most one attempt per 30s
         if (Date.now() - proxySpawnAt > 30_000) {
@@ -518,7 +524,7 @@ function aiDirectPlugin(): Plugin {
         }
         for (let i = 0; i < 12; i++) {
           await new Promise((r) => setTimeout(r, 1000));
-          const m = await hermesProxyModels();
+          const m = await hermesProxyModels(baseUrl);
           if (m) return m;
         }
         return null;
@@ -527,18 +533,27 @@ function aiDirectPlugin(): Plugin {
       // Disconnect: kill any running hermes proxy (user opted out)
       server.middlewares.use('/__hermes-proxy-stop', async (req, res) => {
         if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const params = (await readJsonBody(req)) ?? {};
         try {
           const { execSync } = await import('node:child_process');
-          execSync("pkill -f 'hermes [p]roxy'", { timeout: 5000 });
+          if (process.platform === 'win32') {
+            // pkill doesn't exist on Windows — match the proxy by command line
+            execSync('powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match \'hermes(\\.exe)?.* proxy\' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"', { timeout: 10000 });
+          } else {
+            execSync("pkill -f 'hermes [p]roxy'", { timeout: 5000 });
+          }
         } catch { /* nothing running */ }
+        // Report honestly: probe whether the proxy is actually gone
+        const stillUp = await hermesProxyModels(normalizeHermesUrl(params.hermesUrl));
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ stopped: true }));
+        res.end(JSON.stringify({ stopped: !stillUp }));
       });
 
       // On-demand proxy ensure for the chat panel (returns live model list)
       server.middlewares.use('/__hermes-ensure', async (req, res) => {
         if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
-        const models = await ensureHermesProxy();
+        const params = (await readJsonBody(req)) ?? {};
+        const models = await ensureHermesProxy(normalizeHermesUrl(params.hermesUrl));
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ up: !!models, models: models ?? [] }));
       });
@@ -915,7 +930,7 @@ function aiDirectPlugin(): Plugin {
                 // it injects the real OAuth credentials itself. Spin the
                 // proxy up if it isn't running.
                 headers['Authorization'] = 'Bearer layout-manager';
-                await ensureHermesProxy();
+                await ensureHermesProxy(baseUrl);
                 if (!model) {
                   const list = await fetch(`${baseUrl}/v1/models`, { headers }).then((r) => r.json()).catch(() => null);
                   model = list?.data?.[0]?.id;
