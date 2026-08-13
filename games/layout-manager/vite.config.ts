@@ -406,9 +406,28 @@ function aiDirectPlugin(): Plugin {
         const prompt = String(params.prompt || '').trim();
         if (!prompt) { res.writeHead(400); res.end('Missing prompt'); return; }
         const count = Math.max(1, Math.min(4, Number(params.count) || 1));
-        const model = params.model === 'grok-imagine-image-quality' ? 'grok-imagine-image-quality' : 'grok-imagine-image';
+        // Grok models ride in the agent instruction; GPT Image tiers are picked
+        // via the OPENAI_IMAGE_MODEL env override the codex plugin checks first
+        const model = params.model === 'grok-imagine-image-quality' ? 'grok-imagine-image-quality'
+          : params.model === 'grok-imagine-image' ? 'grok-imagine-image'
+          : null;
+        const gptTier = /^gpt-image-2-(low|medium|high)$/.test(String(params.model)) ? String(params.model) : null;
+        // The active hermes image backend lives in config.yaml — flip it to
+        // match the requested provider so both can be offered side by side
+        const backend = model ? 'xai' : gptTier ? 'openai-codex' : null;
+        if (backend) {
+          try {
+            const { execFileSync } = await import('node:child_process');
+            execFileSync('hermes', ['config', 'set', 'image_gen.provider', backend], { timeout: 10000, stdio: 'ignore' });
+          } catch (e) {
+            console.warn('[ai-direct] Could not switch hermes image_gen.provider:', e);
+          }
+        }
         const XAI_ASPECTS = ['16:9', '1:1', '9:16', '4:3', '3:4', '3:2', '2:3'];
-        const aspect = XAI_ASPECTS.includes(String(params.aspectRatio)) ? String(params.aspectRatio) : null;
+        const CODEX_ASPECTS = ['square', 'landscape', 'portrait'];
+        const aspect = model && XAI_ASPECTS.includes(String(params.aspectRatio)) ? String(params.aspectRatio)
+          : gptTier && CODEX_ASPECTS.includes(String(params.aspectRatio)) ? String(params.aspectRatio)
+          : null;
 
         const send = (event: string, data: unknown) => {
           res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
@@ -424,24 +443,38 @@ function aiDirectPlugin(): Plugin {
         // Reference images ride as temp files the agent hands to the tool
         const tmpFiles: string[] = [];
         const refs = (params.refImages ?? []) as { base64: string; mimeType?: string }[];
-        // xAI /v1/images/edits accepts up to 3 total source images
-        for (const img of refs.slice(0, 3)) {
+        // xAI /v1/images/edits accepts up to 3 total source images; the codex
+        // backend takes up to 16 reference images
+        for (const img of refs.slice(0, gptTier ? 16 : 3)) {
           const ext = /jpe?g/.test(img.mimeType || '') ? 'jpg' : /webp/.test(img.mimeType || '') ? 'webp' : 'png';
           const f = pathMod.join(os.tmpdir(), `lm-hgi-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`);
           await fsMod.writeFile(f, Buffer.from(img.base64, 'base64'));
           tmpFiles.push(f);
         }
 
-        let instruction = `Call the image_generate tool with model ${model} and prompt: ${prompt}`;
+        let instruction = model
+          ? `Call the image_generate tool with model ${model} and prompt: ${prompt}`
+          : `Call the image_generate tool with prompt: ${prompt}`;
         if (aspect) instruction += `\nSet aspect_ratio to ${aspect}.`;
-        if (count > 1) instruction += `\nSet num_images to ${count}.`;
+        if (count > 1) {
+          // The codex backend generates one image per call; batching means
+          // calling the tool once per image. xAI takes num_images directly.
+          instruction += gptTier
+            ? `\nGenerate ${count} images total by calling the image_generate tool ${count} times with the same arguments.`
+            : `\nSet num_images to ${count}.`;
+        }
         if (tmpFiles.length) {
           instruction += `\nUse ${tmpFiles[0]} as the image_url source image.`;
           if (tmpFiles.length > 1) instruction += ` Use ${tmpFiles.slice(1).join(', ')} as reference_image_urls.`;
         }
         instruction += '\nWhen it finishes, reply with ONLY the absolute file path(s) or URL(s) of the generated image(s), one per line, nothing else.';
 
-        const child = spawn('hermes', ['--yolo', '-z', instruction, '-t', 'image_gen'], { stdio: ['ignore', 'pipe', 'pipe'] });
+        const child = spawn('hermes', ['--yolo', '-z', instruction, '-t', 'image_gen'], {
+          stdio: ['ignore', 'pipe', 'pipe'],
+          // Tier override for the openai-codex image plugin — it checks this
+          // env var before config.yaml, so the UI choice wins per-run
+          env: gptTier ? { ...process.env, OPENAI_IMAGE_MODEL: gptTier } : process.env,
+        });
         const cleanupTmp = () => { for (const f of tmpFiles) fsMod.unlink(f).catch(() => {}); };
         res.on('close', () => { child.kill('SIGTERM'); cleanupTmp(); });
         let out = '';
@@ -592,22 +625,27 @@ function aiDirectPlugin(): Plugin {
         // proxy auto-spawns on demand)
         let hermesCli: { up: boolean; models: string[] } = { up: false, models: [] };
         let hermesXaiLogin = false;
+        let hermesCodexLogin = false;
         try {
           const { execSync } = await import('node:child_process');
           const authList = execSync('hermes auth list', { encoding: 'utf8', timeout: 8000 });
-          if (/openai-codex/.test(authList)) {
+          hermesCodexLogin = /openai-codex/.test(authList);
+          if (hermesCodexLogin) {
             hermesCli = { up: true, models: ['gpt-5.6-luna', 'gpt-5.6-luna-pro', 'gpt-5.6-sol', 'gpt-5.6-sol-pro', 'gpt-5.6-terra', 'gpt-5.6-terra-pro', 'gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini'] };
           }
           hermesXaiLogin = /xai-oauth/.test(authList);
         } catch { /* hermes not installed */ }
-        // Grok Imagine via the hermes agent — needs the image_gen backend
-        // selected once in `hermes tools`
-        let hermesImageGen = false;
+        // Image generation via the hermes agent — needs the image_gen backend
+        // selected once in `hermes tools`. The provider (xai, openai-codex, …)
+        // decides which UI the Text to Image panel shows.
+        let hermesImageGenProvider: string | null = null;
         try {
           const fsMod = await import('node:fs/promises');
           const os = await import('node:os');
           const cfg = await fsMod.readFile(`${os.homedir()}/.hermes/config.yaml`, 'utf8');
-          hermesImageGen = /^image_gen:[\s\S]*?provider:\s*\S+/m.test(cfg);
+          // Match provider inside the top-level image_gen block only
+          const block = cfg.match(/^image_gen:\n((?:[ \t]+.*\n?)*)/m)?.[1] ?? '';
+          hermesImageGenProvider = block.match(/^[ \t]+provider:[ \t]*(\S+)/m)?.[1] ?? null;
         } catch { /* no hermes config */ }
         const hermesModels = ((hermes?.data ?? []) as { id?: string }[])
           .map((m) => m.id)
@@ -618,7 +656,14 @@ function aiDirectPlugin(): Plugin {
           ollama: { up: !!ollama },
           hermes: { up: !!hermes || hermesXaiLogin, models: hermesModels },
           hermesCli,
-          hermesImageGen: { up: hermesImageGen },
+          hermesImageGen: {
+            up: !!hermesImageGenProvider,
+            provider: hermesImageGenProvider,
+            // Which backends LM can offer — the generate endpoint switches
+            // image_gen.provider on the fly via `hermes config set`
+            xai: hermesXaiLogin,
+            codex: hermesCodexLogin,
+          },
           claude: { up: claudeCliCache },
         }));
       });

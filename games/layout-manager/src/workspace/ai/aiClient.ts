@@ -206,8 +206,9 @@ export async function textToImage(
       }),
     });
     await consumeSSE(resp, callbacks);
-  } else if (api === 'hermes-grok') {
-    // No API key — the hermes agent generates via the user's SuperGrok login
+  } else if (api === 'hermes-grok' || api === 'hermes-gpt') {
+    // No API key — the hermes agent generates via the user's SuperGrok or
+    // Codex login; the model value tells the server which backend to use
     const resp = await fetch('/__ai-generate-hermes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
