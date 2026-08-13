@@ -413,14 +413,19 @@ function aiDirectPlugin(): Plugin {
           : null;
         const gptTier = /^gpt-image-2-(low|medium|high)$/.test(String(params.model)) ? String(params.model) : null;
         // The active hermes image backend lives in config.yaml — flip it to
-        // match the requested provider so both can be offered side by side
+        // match the requested provider so both can be offered side by side.
+        // A failed switch must abort: generating anyway would silently hit
+        // (and bill) whichever backend is currently configured.
         const backend = model ? 'xai' : gptTier ? 'openai-codex' : null;
         if (backend) {
           try {
             const { execFileSync } = await import('node:child_process');
             execFileSync('hermes', ['config', 'set', 'image_gen.provider', backend], { timeout: 10000, stdio: 'ignore' });
           } catch (e) {
-            console.warn('[ai-direct] Could not switch hermes image_gen.provider:', e);
+            console.error('[ai-direct] Could not switch hermes image_gen.provider:', e);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: `Could not switch the Hermes image backend to ${backend} — generation aborted so the wrong provider isn't used. Is the hermes CLI on PATH?` }));
+            return;
           }
         }
         const XAI_ASPECTS = ['16:9', '1:1', '9:16', '4:3', '3:4', '3:2', '2:3'];
