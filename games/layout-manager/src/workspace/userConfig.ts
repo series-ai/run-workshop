@@ -89,6 +89,12 @@ export interface UserConfig {
   aiMaxCount: number;
   /** Local KoboldCpp server URL */
   koboldUrl: string;
+  /** Hermes Agent local proxy URL (OpenAI-compatible, OAuth-backed) */
+  hermesUrl: string;
+  /** Offer Hermes chat/image providers (and allow auto-starting its proxy) */
+  hermesEnabled: boolean;
+  /** Offer the Claude Code chat provider */
+  claudeCodeEnabled: boolean;
   /** Local Ollama server URL */
   ollamaUrl: string;
   /** Ollama model name (empty = use first installed model) */
@@ -122,6 +128,9 @@ const defaultConfig: UserConfig = {
   anthropicApiKey: '',
   aiMaxCount: 10,
   koboldUrl: 'http://127.0.0.1:5001',
+  hermesUrl: 'http://127.0.0.1:8645',
+  hermesEnabled: true,
+  claudeCodeEnabled: true,
   ollamaUrl: 'http://127.0.0.1:11434',
   ollamaModel: '',
   comfyUrl: 'http://127.0.0.1:8188',

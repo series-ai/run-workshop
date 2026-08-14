@@ -26,6 +26,8 @@ const PROVIDERS = [
   // Uses the local Claude Code CLI with a claude.ai Pro/Max login — no API key.
   { id: 'claude-account', label: 'Claude Code', configKey: null, model: '', noImages: true },
   // Local LLM servers — no API keys; URLs configurable in Preferences > AI
+  { id: 'hermes', label: 'Hermes (Grok)', configKey: null, model: '', noImages: false },
+  { id: 'hermes-cli', label: 'Hermes (GPT)', configKey: null, model: '', noImages: false },
   { id: 'kobold', label: 'KoboldCpp', configKey: null, model: '', noImages: false },
   { id: 'ollama', label: 'Ollama', configKey: null, model: '', noImages: false },
   { id: 'google', label: 'Gemini', configKey: 'googleGenaiApiKey' as keyof UserConfig, model: 'gemini-2.5-flash', noImages: false },
@@ -53,6 +55,89 @@ export function AiChatPanel({ config, messages, onMessagesChange, providerId, on
   const [streaming, setStreaming] = useState(false);
   const setProviderId = onProviderChange;
   const [attachedImages, setAttachedImages] = useState<string[]>([]);
+  // Availability of no-key providers (local servers + claude CLI) — probed on
+  // open so the provider row only shows what can actually respond
+  const [localStatus, setLocalStatus] = useState<{
+    kobold: { up: boolean };
+    ollama: { up: boolean };
+    hermes: { up: boolean; models: string[] };
+    hermesCli: { up: boolean; models: string[] };
+    claude: { up: boolean };
+  } | null>(null);
+  const [hermesModel, setHermesModel] = useState('');
+  const [hermesCliModel, setHermesCliModel] = useState('');
+  // Claude Code model alias — the CLI resolves these to the latest of each tier
+  const CLAUDE_MODELS = ['sonnet', 'fable', 'opus', 'haiku'];
+  const [claudeModel, setClaudeModel] = useState('sonnet');
+
+  // Selecting Hermes (Grok) with no model list (proxy was down) — ask the
+  // server to spin the proxy up and hand back the live models
+  useEffect(() => {
+    if (providerId !== 'hermes' || !config.hermesEnabled || !localStatus || localStatus.hermes.models.length > 0) return;
+    let cancelled = false;
+    fetch('/__hermes-ensure', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hermesUrl: config.hermesUrl }),
+    })
+      .then((r) => r.json())
+      .then((st) => {
+        if (cancelled || !st.up) return;
+        setLocalStatus((prev) => prev ? { ...prev, hermes: { up: true, models: st.models } } : prev);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [providerId, localStatus, config.hermesEnabled, config.hermesUrl]);
+
+  // Default Grok model: everyday chat tier — skip reasoning (slow/expensive),
+  // multi-agent, and build (code) variants unless the user picks them
+  useEffect(() => {
+    const models = localStatus?.hermes.models ?? [];
+    if (!hermesModel && models.length) {
+      const preferred = models.find((m) => /non-reasoning/i.test(m))
+        ?? models.find((m) => !/reasoning|multi-agent|build|code/i.test(m))
+        ?? models[0]!;
+      setHermesModel(preferred);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localStatus]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/__ai-local-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ koboldUrl: config.koboldUrl, ollamaUrl: config.ollamaUrl, hermesUrl: config.hermesUrl }),
+    })
+      .then((r) => r.json())
+      .then((st) => { if (!cancelled) setLocalStatus(st); })
+      .catch(() => { if (!cancelled) setLocalStatus({ kobold: { up: false }, ollama: { up: false }, hermes: { up: false, models: [] }, hermesCli: { up: false, models: [] }, claude: { up: false } }); });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // If the selected provider turns out to be unavailable, hop to the first one that isn't
+  useEffect(() => {
+    if (!localStatus) return;
+    const current = PROVIDERS.find((p) => p.id === providerId);
+    if (current && !providerAvailable(current)) {
+      const first = PROVIDERS.find(providerAvailable);
+      if (first) setProviderId(first.id);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localStatus, providerId, config.hermesEnabled, config.claudeCodeEnabled]);
+
+  const providerAvailable = (p: (typeof PROVIDERS)[number]): boolean => {
+    if (p.configKey) return !!config[p.configKey];
+    if (!localStatus) return p.id !== 'kobold' && p.id !== 'ollama' && p.id !== 'hermes' && p.id !== 'hermes-cli' && p.id !== 'claude-account';
+    if (p.id === 'kobold') return localStatus.kobold.up;
+    if (p.id === 'ollama') return localStatus.ollama.up;
+    if (p.id === 'hermes') return config.hermesEnabled && localStatus.hermes.up;
+    if (p.id === 'hermes-cli') return config.hermesEnabled && (localStatus.hermesCli?.up ?? false);
+    if (p.id === 'claude-account') return config.claudeCodeEnabled && localStatus.claude.up;
+    return true;
+  };
   const currentProvider = PROVIDERS.find((p) => p.id === providerId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -156,9 +241,14 @@ export function AiChatPanel({ config, messages, onMessagesChange, providerId, on
         signal: abort.signal,
         body: JSON.stringify({
           provider: providerId,
-          model: providerId === 'ollama' ? (config.ollamaModel || '') : provider?.model,
+          model: providerId === 'ollama' ? (config.ollamaModel || '')
+            : providerId === 'hermes' ? (hermesModel || '')
+            : providerId === 'hermes-cli' ? (hermesCliModel || 'gpt-5.6-luna')
+            : providerId === 'claude-account' ? claudeModel
+            : provider?.model,
           localUrl: providerId === 'kobold' ? config.koboldUrl
             : providerId === 'ollama' ? config.ollamaUrl
+            : providerId === 'hermes' ? config.hermesUrl
             : undefined,
           apiKey,
           messages: newMessages.map((m) => ({
@@ -244,7 +334,7 @@ export function AiChatPanel({ config, messages, onMessagesChange, providerId, on
     abortRef.current = null;
     setStreaming(false);
     textareaRef.current?.focus();
-  }, [input, attachedImages, messages, streaming, providerId, config, autoDescribe]);
+  }, [input, attachedImages, messages, streaming, providerId, config, autoDescribe, hermesModel, hermesCliModel, claudeModel]);
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort();
@@ -294,10 +384,12 @@ export function AiChatPanel({ config, messages, onMessagesChange, providerId, on
           </button>
         )}
         <div className="ai-chat-providers-right">
-        {PROVIDERS.map((p) => {
+        {PROVIDERS.filter(providerAvailable).map((p) => {
           const hasKey = p.configKey ? !!config[p.configKey] : true;
           const title = !hasKey ? 'Needs API key'
             : p.id === 'claude-account' ? 'Chats through your locally installed Claude Code CLI using its login (text only, tools disabled)'
+            : p.id === 'hermes' ? 'Hermes Agent local proxy (SuperGrok / Nous Portal login) — run `hermes proxy start` first'
+            : p.id === 'hermes-cli' ? 'Runs the Hermes CLI with your OpenAI (Codex) login — replies arrive whole rather than streaming'
             : p.id === 'kobold' ? 'Local KoboldCpp server — set the URL in Preferences > AI'
             : p.id === 'ollama' ? 'Local Ollama server — set URL and model in Preferences > AI'
             : p.label;
@@ -316,12 +408,78 @@ export function AiChatPanel({ config, messages, onMessagesChange, providerId, on
         </div>
       </div>
 
+      {providerId === 'claude-account' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', fontSize: 12 }}>
+          Model
+          <select
+            value={claudeModel}
+            onChange={(e) => setClaudeModel(e.target.value)}
+            disabled={streaming}
+            style={{ flex: 1, minWidth: 0 }}
+          >
+            {CLAUDE_MODELS.map((m) => (
+              <option key={m} value={m}>{m === 'sonnet' ? 'sonnet (recommended — fast, light on limits)' : m}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {providerId === 'hermes-cli' && (localStatus?.hermesCli?.models.length ?? 0) > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', fontSize: 12 }}>
+          Model
+          <select
+            value={hermesCliModel || localStatus!.hermesCli.models[0]}
+            onChange={(e) => setHermesCliModel(e.target.value)}
+            disabled={streaming}
+            style={{ flex: 1, minWidth: 0 }}
+          >
+            {localStatus!.hermesCli.models.map((m) => (
+              <option key={m} value={m}>{m === 'gpt-5.6-luna' ? `${m} (recommended — unlimited)` : m}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {providerId === 'hermes' && (localStatus?.hermes.models.length ?? 0) > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', fontSize: 12 }}>
+          Model
+          <select
+            value={hermesModel || localStatus!.hermes.models[0]}
+            onChange={(e) => setHermesModel(e.target.value)}
+            disabled={streaming}
+            style={{ flex: 1, minWidth: 0 }}
+          >
+            {localStatus!.hermes.models.map((m) => (
+              <option key={m} value={m}>{/non-reasoning/i.test(m) ? `${m} (recommended)` : m}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {providerId === 'hermes' && (
+        <div className="ai-chat-disclaimer">
+          Runs on your SuperGrok / X Premium+ subscription via the Hermes proxy — usage
+          counts against the same limits as grok.com and the Grok app. Recommended model:
+          a non-reasoning tier for everyday chat (reasoning models are slower and burn
+          quota faster).
+        </div>
+      )}
+
+      {providerId === 'hermes-cli' && (
+        <div className="ai-chat-disclaimer">
+          Runs through the Hermes CLI on your OpenAI (Codex) subscription — usage shares
+          that login&apos;s limits. Replies arrive whole rather than streaming. Recommended
+          model: gpt-5.6-luna (currently unlimited on Codex plans).
+        </div>
+      )}
+
       {/* Claude Code provider disclaimer */}
       {providerId === 'claude-account' && (
         <div className="ai-chat-disclaimer">
           Runs through your local Claude Code CLI and its login — usage counts against
           your Claude Pro/Max limits (shared with claude.ai and Claude Code). Text only,
-          no images, no model choice, and replies may start a bit slower than API providers.
+          no images, and replies may start a bit slower than API providers. Bigger models
+          (fable, opus) burn limits much faster than sonnet.
         </div>
       )}
 

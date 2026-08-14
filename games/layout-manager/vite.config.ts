@@ -397,6 +397,282 @@ function aiDirectPlugin(): Plugin {
         res.end();
       });
 
+      // ====== Hermes Grok Imagine (SuperGrok sub via hermes agent) ======
+      server.middlewares.use('/__ai-generate-hermes', async (req, res) => {
+        if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const params = await readJsonBody(req);
+        if (!params) { res.writeHead(400); res.end('Invalid JSON'); return; }
+        const prompt = String(params.prompt || '').trim();
+        if (!prompt) { res.writeHead(400); res.end('Missing prompt'); return; }
+        const count = Math.max(1, Math.min(4, Number(params.count) || 1));
+        // Grok models ride in the agent instruction; GPT Image tiers are picked
+        // via the OPENAI_IMAGE_MODEL env override the codex plugin checks first
+        const model = params.model === 'grok-imagine-image-quality' ? 'grok-imagine-image-quality'
+          : params.model === 'grok-imagine-image' ? 'grok-imagine-image'
+          : null;
+        const gptTier = /^gpt-image-2-(low|medium|high)$/.test(String(params.model)) ? String(params.model) : null;
+        // The active hermes image backend lives in config.yaml — flip it to
+        // match the requested provider so both can be offered side by side.
+        // A failed switch must abort: generating anyway would silently hit
+        // (and bill) whichever backend is currently configured.
+        const backend = model ? 'xai' : gptTier ? 'openai-codex' : null;
+        if (backend) {
+          try {
+            const { execFileSync } = await import('node:child_process');
+            execFileSync('hermes', ['config', 'set', 'image_gen.provider', backend], { timeout: 10000, stdio: 'ignore' });
+          } catch (e) {
+            console.error('[ai-direct] Could not switch hermes image_gen.provider:', e);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: `Could not switch the Hermes image backend to ${backend} — generation aborted so the wrong provider isn't used. Is the hermes CLI on PATH?` }));
+            return;
+          }
+        }
+        const XAI_ASPECTS = ['16:9', '1:1', '9:16', '4:3', '3:4', '3:2', '2:3'];
+        const CODEX_ASPECTS = ['square', 'landscape', 'portrait'];
+        const aspect = model && XAI_ASPECTS.includes(String(params.aspectRatio)) ? String(params.aspectRatio)
+          : gptTier && CODEX_ASPECTS.includes(String(params.aspectRatio)) ? String(params.aspectRatio)
+          : null;
+
+        const send = (event: string, data: unknown) => {
+          res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+        };
+        res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+        send('progress', { saved: 0 });
+
+        const os = await import('node:os');
+        const fsMod = await import('node:fs/promises');
+        const pathMod = await import('node:path');
+        const { spawn } = await import('node:child_process');
+
+        // Reference images ride as temp files the agent hands to the tool
+        const tmpFiles: string[] = [];
+        const refs = (params.refImages ?? []) as { base64: string; mimeType?: string }[];
+        // xAI /v1/images/edits accepts up to 3 total source images; the codex
+        // backend takes up to 16 reference images
+        for (const img of refs.slice(0, gptTier ? 16 : 3)) {
+          const ext = /jpe?g/.test(img.mimeType || '') ? 'jpg' : /webp/.test(img.mimeType || '') ? 'webp' : 'png';
+          const f = pathMod.join(os.tmpdir(), `lm-hgi-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`);
+          await fsMod.writeFile(f, Buffer.from(img.base64, 'base64'));
+          tmpFiles.push(f);
+        }
+
+        let instruction = model
+          ? `Call the image_generate tool with model ${model} and prompt: ${prompt}`
+          : `Call the image_generate tool with prompt: ${prompt}`;
+        if (aspect) instruction += `\nSet aspect_ratio to ${aspect}.`;
+        if (count > 1) {
+          // The codex backend generates one image per call; batching means
+          // calling the tool once per image. xAI takes num_images directly.
+          instruction += gptTier
+            ? `\nGenerate ${count} images total by calling the image_generate tool ${count} times with the same arguments.`
+            : `\nSet num_images to ${count}.`;
+        }
+        if (tmpFiles.length) {
+          instruction += `\nUse ${tmpFiles[0]} as the image_url source image.`;
+          if (tmpFiles.length > 1) instruction += ` Use ${tmpFiles.slice(1).join(', ')} as reference_image_urls.`;
+        }
+        instruction += '\nWhen it finishes, reply with ONLY the absolute file path(s) or URL(s) of the generated image(s), one per line, nothing else.';
+
+        const child = spawn('hermes', ['--yolo', '-z', instruction, '-t', 'image_gen'], {
+          stdio: ['ignore', 'pipe', 'pipe'],
+          // Tier override for the openai-codex image plugin — it checks this
+          // env var before config.yaml, so the UI choice wins per-run
+          env: gptTier ? { ...process.env, OPENAI_IMAGE_MODEL: gptTier } : process.env,
+        });
+        const cleanupTmp = () => { for (const f of tmpFiles) fsMod.unlink(f).catch(() => {}); };
+        res.on('close', () => { child.kill('SIGTERM'); cleanupTmp(); });
+        let out = '';
+        let errBuf = '';
+        child.stdout.on('data', (d: Buffer) => { out += d.toString(); });
+        child.stderr.on('data', (d: Buffer) => { errBuf += d.toString(); });
+        child.on('close', async (code: number | null) => {
+          cleanupTmp();
+          try {
+            // Strip ANSI, collect image URLs/paths from the reply
+            const clean = out.replace(/\x1b\[[0-9;]*m/g, '');
+            const urls = Array.from(new Set(clean.match(/https?:\/\/[^\s"']+\.(?:png|jpe?g|webp)(?:\?[^\s"']*)?/gi) ?? []));
+            const paths = Array.from(new Set(clean.match(/(?:~\/|\/)[\w.\/-]+\.(?:png|jpe?g|webp)/gi) ?? []))
+              .filter((p) => !tmpFiles.includes(p));
+            if (!urls.length && !paths.length) {
+              send('error', { error: `Hermes returned no image${code ? ` (exit ${code})` : ''}: ${(clean.trim() || errBuf).slice(0, 300)}` });
+              send('done', {});
+              res.end();
+              return;
+            }
+            let saved = 0;
+            for (const u of urls) {
+              const r = await fetch(u).catch(() => null);
+              if (!r?.ok) continue;
+              const buf = Buffer.from(await r.arrayBuffer());
+              const mime = r.headers.get('content-type') || 'image/png';
+              send('image', { dataUrl: `data:${mime};base64,${buf.toString('base64')}` });
+              send('progress', { saved: ++saved });
+            }
+            for (const p of paths) {
+              const buf = await fsMod.readFile(p.replace(/^~/, os.homedir())).catch(() => null);
+              if (!buf) continue;
+              const mime = /\.jpe?g$/i.test(p) ? 'image/jpeg' : /\.webp$/i.test(p) ? 'image/webp' : 'image/png';
+              send('image', { dataUrl: `data:${mime};base64,${buf.toString('base64')}` });
+              send('progress', { saved: ++saved });
+            }
+            if (!saved) send('error', { error: 'Hermes reported images but none could be fetched.' });
+            send('done', {});
+          } catch (e) {
+            send('error', { error: e instanceof Error ? e.message : 'Unknown error' });
+            send('done', {});
+          }
+          res.end();
+        });
+      });
+
+      // Ensure the hermes proxy is running (spawn detached if not) — Grok chat
+      // is always offered when hermes has an xAI login; the proxy spins up on
+      // demand the first time it's needed
+      const HERMES_PROXY_DEFAULT = 'http://127.0.0.1:8645';
+      const normalizeHermesUrl = (u?: unknown): string => {
+        let url = String(u || '').trim() || HERMES_PROXY_DEFAULT;
+        if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
+        // 0.0.0.0 is a listen address, not a connect address
+        return url.replace(/\/+$/, '').replace('//0.0.0.0', '//127.0.0.1');
+      };
+      async function hermesProxyModels(baseUrl: string = HERMES_PROXY_DEFAULT): Promise<string[] | null> {
+        try {
+          const r = await fetch(`${baseUrl}/v1/models`, { headers: { 'Authorization': 'Bearer layout-manager' }, signal: AbortSignal.timeout(1200) });
+          if (!r.ok) return null;
+          const j = await r.json();
+          return ((j?.data ?? []) as { id?: string }[])
+            .map((m) => m.id)
+            .filter((id): id is string => !!id && !/imagine|image|video/i.test(id));
+        } catch { return null; }
+      }
+      let proxySpawnAt = 0;
+      async function ensureHermesProxy(baseUrl: string = HERMES_PROXY_DEFAULT): Promise<string[] | null> {
+        const models = await hermesProxyModels(baseUrl);
+        if (models) return models;
+        // Don't spawn-storm: at most one attempt per 30s
+        if (Date.now() - proxySpawnAt > 30_000) {
+          proxySpawnAt = Date.now();
+          try {
+            const { spawn } = await import('node:child_process');
+            const child = spawn('hermes', ['proxy', 'start', '--provider', 'xai'], { detached: true, stdio: 'ignore' });
+            child.unref();
+            console.log('[ai-direct] Spawned hermes proxy (detached)');
+          } catch { return null; }
+        }
+        for (let i = 0; i < 12; i++) {
+          await new Promise((r) => setTimeout(r, 1000));
+          const m = await hermesProxyModels(baseUrl);
+          if (m) return m;
+        }
+        return null;
+      }
+
+      // Disconnect: kill any running hermes proxy (user opted out)
+      server.middlewares.use('/__hermes-proxy-stop', async (req, res) => {
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const params = (await readJsonBody(req)) ?? {};
+        try {
+          const { execSync } = await import('node:child_process');
+          if (process.platform === 'win32') {
+            // pkill doesn't exist on Windows — match the proxy by command line
+            execSync('powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match \'hermes(\\.exe)?.* proxy\' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"', { timeout: 10000 });
+          } else {
+            execSync("pkill -f 'hermes [p]roxy'", { timeout: 5000 });
+          }
+        } catch { /* nothing running */ }
+        // Report honestly: probe whether the proxy is actually gone
+        const stillUp = await hermesProxyModels(normalizeHermesUrl(params.hermesUrl));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ stopped: !stillUp }));
+      });
+
+      // On-demand proxy ensure for the chat panel (returns live model list)
+      server.middlewares.use('/__hermes-ensure', async (req, res) => {
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const params = (await readJsonBody(req)) ?? {};
+        const models = await ensureHermesProxy(normalizeHermesUrl(params.hermesUrl));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ up: !!models, models: models ?? [] }));
+      });
+
+      // ====== Local AI provider availability probe ======
+      let claudeCliCache: boolean | null = null;
+      server.middlewares.use('/__ai-local-status', async (req, res) => {
+        if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const params = await readJsonBody(req) ?? {};
+        const norm = (u: unknown, fallback: string) => {
+          let url = String(u || '').trim() || fallback;
+          if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
+          return url.replace(/\/+$/, '').replace('//0.0.0.0', '//127.0.0.1');
+        };
+        const probe = async (url: string, headers?: Record<string, string>) => {
+          try {
+            const r = await fetch(url, { headers, signal: AbortSignal.timeout(1200) });
+            return r.ok ? await r.json().catch(() => ({})) : null;
+          } catch { return null; }
+        };
+        if (claudeCliCache === null) {
+          try {
+            const { execSync } = await import('node:child_process');
+            execSync('claude --version', { stdio: 'ignore', timeout: 5000 });
+            claudeCliCache = true;
+          } catch { claudeCliCache = false; }
+        }
+        const [kobold, ollama, hermes] = await Promise.all([
+          probe(`${norm(params.koboldUrl, 'http://127.0.0.1:5001')}/v1/models`),
+          probe(`${norm(params.ollamaUrl, 'http://127.0.0.1:11434')}/api/tags`),
+          probe(`${norm(params.hermesUrl, 'http://127.0.0.1:8645')}/v1/models`, { 'Authorization': 'Bearer layout-manager' }),
+        ]);
+        // Hermes logins: Codex → GPT chat via one-shot agent runs; xai-oauth →
+        // Grok chat via the proxy (offered whenever the login exists — the
+        // proxy auto-spawns on demand)
+        let hermesCli: { up: boolean; models: string[] } = { up: false, models: [] };
+        let hermesXaiLogin = false;
+        let hermesCodexLogin = false;
+        try {
+          const { execSync } = await import('node:child_process');
+          const authList = execSync('hermes auth list', { encoding: 'utf8', timeout: 8000 });
+          hermesCodexLogin = /openai-codex/.test(authList);
+          if (hermesCodexLogin) {
+            hermesCli = { up: true, models: ['gpt-5.6-luna', 'gpt-5.6-luna-pro', 'gpt-5.6-sol', 'gpt-5.6-sol-pro', 'gpt-5.6-terra', 'gpt-5.6-terra-pro', 'gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini'] };
+          }
+          hermesXaiLogin = /xai-oauth/.test(authList);
+        } catch { /* hermes not installed */ }
+        // Image generation via the hermes agent — needs the image_gen backend
+        // selected once in `hermes tools`. The provider (xai, openai-codex, …)
+        // decides which UI the Text to Image panel shows.
+        let hermesImageGenProvider: string | null = null;
+        try {
+          const fsMod = await import('node:fs/promises');
+          const os = await import('node:os');
+          const cfg = await fsMod.readFile(`${os.homedir()}/.hermes/config.yaml`, 'utf8');
+          // Match provider inside the top-level image_gen block only
+          const block = cfg.match(/^image_gen:\n((?:[ \t]+.*\n?)*)/m)?.[1] ?? '';
+          hermesImageGenProvider = block.match(/^[ \t]+provider:[ \t]*(\S+)/m)?.[1] ?? null;
+        } catch { /* no hermes config */ }
+        const hermesModels = ((hermes?.data ?? []) as { id?: string }[])
+          .map((m) => m.id)
+          .filter((id): id is string => !!id && !/imagine|image|video/i.test(id));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          kobold: { up: !!kobold },
+          ollama: { up: !!ollama },
+          hermes: { up: !!hermes || hermesXaiLogin, models: hermesModels },
+          hermesCli,
+          hermesImageGen: {
+            up: !!hermesImageGenProvider,
+            provider: hermesImageGenProvider,
+            // Which backends LM can offer — the generate endpoint switches
+            // image_gen.provider on the fly via `hermes config set`
+            xai: hermesXaiLogin,
+            codex: hermesCodexLogin,
+          },
+          claude: { up: claudeCliCache },
+        }));
+      });
+
       // ====== Fal.ai Seedream Layerize (image → editable layers) ======
       server.middlewares.use('/__ai-layerize', async (req, res) => {
         if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
@@ -529,6 +805,54 @@ function aiDirectPlugin(): Plugin {
         try {
           // Claude via local Claude Code CLI (claude.ai Pro/Max subscription login,
           // no API key). Streams tokens from `claude -p --output-format stream-json`.
+          if (params.provider === 'hermes-cli') {
+            const { spawn } = await import('node:child_process');
+            const sendChat = (event: string, data: string) => {
+              res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+            };
+            // Documented one-shot form: `hermes chat -q <prompt> --image <path>
+            // --safe-mode` (see Hermes CLI reference). --safe-mode strips the
+            // agent machinery so output is pure text; -Q suppresses chrome.
+            // --image takes a single path — the newest image rides the flag,
+            // any earlier ones are referenced by path in the prompt text.
+            const os = await import('node:os');
+            const fsMod = await import('node:fs/promises');
+            const pathMod = await import('node:path');
+            const tmpFiles: string[] = [];
+            const parts: string[] = [];
+            for (const m of params.messages) {
+              let line = `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.content}`;
+              for (const img of m.images ?? []) {
+                const ext = /jpe?g/.test(img.mimeType || '') ? 'jpg' : /webp/.test(img.mimeType || '') ? 'webp' : 'png';
+                const f = pathMod.join(os.tmpdir(), `lm-hermes-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`);
+                await fsMod.writeFile(f, Buffer.from(img.base64, 'base64'));
+                tmpFiles.push(f);
+                line += `\n(Attached image: ${f})`;
+              }
+              parts.push(line);
+            }
+            const prompt = parts.join('\n\n');
+            const args = ['chat', '-q', prompt, '--safe-mode', '-Q', '--provider', 'openai-codex'];
+            if (tmpFiles.length) args.push('--image', tmpFiles[tmpFiles.length - 1]!);
+            if (params.model) args.push('-m', params.model);
+            const child = spawn('hermes', args, { stdio: ['ignore', 'pipe', 'pipe'] });
+            const cleanupTmp = () => { for (const f of tmpFiles) fsMod.unlink(f).catch(() => {}); };
+            res.on('close', () => { child.kill('SIGTERM'); cleanupTmp(); });
+            let out = '';
+            let errBuf = '';
+            child.stdout.on('data', (d: Buffer) => { out += d.toString(); });
+            child.stderr.on('data', (d: Buffer) => { errBuf += d.toString(); });
+            child.on('close', (code: number | null) => {
+              cleanupTmp();
+              const text = out.replace(/^session_id:[^\n]*\n?/, '').trim();
+              if (text) sendChat('text', text);
+              else sendChat('text', `Hermes CLI error${code ? ` (exit ${code})` : ''}: ${(errBuf || 'no output').slice(0, 400)}`);
+              sendChat('done', '');
+              res.end();
+            });
+            return;
+          }
+
           if (params.provider === 'claude-account') {
             const { spawn } = await import('node:child_process');
             const sendChat = (event: string, data: string) => {
@@ -548,6 +872,7 @@ function aiDirectPlugin(): Plugin {
               '--disallowedTools', 'Bash,Read,Write,Edit,Glob,Grep,WebFetch,WebSearch,Task,NotebookEdit,TodoWrite,KillShell,BashOutput,Skill,Workflow,ToolSearch,Agent,EnterWorktree,ExitWorktree,Monitor,SendMessage,TaskCreate,TaskGet,TaskList,TaskOutput,TaskStop,TaskUpdate,CronCreate,CronDelete,CronList,PushNotification,RemoteTrigger,ScheduleWakeup',
               // Ignore project/user MCP configs (e.g. ComfyUI Cloud) — chat only
               '--strict-mcp-config',
+              ...(params.model ? ['--model', String(params.model)] : []),
             ], { stdio: ['pipe', 'pipe', 'pipe'] });
             child.stdin.write(prompt);
             child.stdin.end();
@@ -638,16 +963,30 @@ function aiDirectPlugin(): Plugin {
           } else {
             // Local servers (KoboldCpp, Ollama) speak the OpenAI chat-completions
             // format too — same endpoint shape, no auth header.
-            const isLocal = params.provider === 'kobold' || params.provider === 'ollama';
+            const isLocal = params.provider === 'kobold' || params.provider === 'ollama' || params.provider === 'hermes';
             let baseUrl: string;
             let model = params.model;
             const headers: Record<string, string> = { 'Content-Type': 'application/json' };
             if (isLocal) {
               let url = (params.localUrl || '').trim()
-                || (params.provider === 'kobold' ? 'http://127.0.0.1:5001' : 'http://127.0.0.1:11434');
+                || (params.provider === 'kobold' ? 'http://127.0.0.1:5001'
+                  : params.provider === 'hermes' ? 'http://127.0.0.1:8645'
+                  : 'http://127.0.0.1:11434');
               if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
               // 0.0.0.0 is a listen address, not a connect address
               baseUrl = url.replace(/\/+$/, '').replace('//0.0.0.0', '//127.0.0.1');
+              if (params.provider === 'hermes') {
+                // The proxy requires a bearer header but accepts any token —
+                // it injects the real OAuth credentials itself. Spin the
+                // proxy up if it isn't running.
+                headers['Authorization'] = 'Bearer layout-manager';
+                await ensureHermesProxy(baseUrl);
+                if (!model) {
+                  const list = await fetch(`${baseUrl}/v1/models`, { headers }).then((r) => r.json()).catch(() => null);
+                  model = list?.data?.[0]?.id;
+                  if (!model) throw new Error('Hermes proxy has no models. Start it with `hermes proxy start` (and log in via `hermes login` first).');
+                }
+              }
               if (params.provider === 'ollama' && !model) {
                 // No model configured — use the first installed one
                 const tags = await fetch(`${baseUrl}/api/tags`).then((r) => r.json()).catch(() => null);
