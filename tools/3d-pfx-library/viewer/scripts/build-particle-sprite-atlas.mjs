@@ -1,4 +1,4 @@
-// Builds a 4x5 512x640px sprite atlas from curated Kenney Particle Pack sprites (CC0)
+// Builds a four-column sprite atlas from curated Kenney Particle Pack sprites (CC0)
 // plus procedural effect-specific cells (the Kenney pack has no clean soft glow —
 // light_02/circle_01 have ring edges that read as donuts at particle scale).
 import fs from 'node:fs'
@@ -301,6 +301,13 @@ const SPRITES = [
   ['snowflake-01', 'procedural:snowflake-a'],
   ['snowflake-02', 'procedural:snowflake-b'],
   ['snowflake-03', 'procedural:snowflake-c'],
+  // Seven irregular vertical CC0 traces provide a conventional energy-flow
+  // vocabulary. Keeping the complete family contiguous lets one particle
+  // draw vary its silhouette without returning to repeated straight rods.
+  ...Array.from({ length: 7 }, (_, index) => [
+    `trace-variant-${String(index + 1).padStart(2, '0')}`,
+    `trace_${String(index + 1).padStart(2, '0')}.png`,
+  ]),
 ]
 
 function proceduralCell(kind) {
@@ -409,8 +416,8 @@ SPRITES.forEach(([name, file], index) => {
 // to smoke_08. Explicit start/direction metadata prevents later atlas cells
 // (currently snowflakes) from being sampled as smoke variants.
 slices['smoke-variants'] = {
-  u: 0,
-  v: 2 / ROWS,
+  u: slices['smoke-variant-01'].u - 1 / COLS,
+  v: slices['smoke-variant-01'].v,
   w: 1 / COLS,
   h: 1 / ROWS,
   source: 'kenney-particle-pack/smoke_01..08.png',
@@ -427,6 +434,15 @@ slices.snowflakes = {
   variantColumns: 3,
 }
 slices.snowflake = { ...slices['snowflake-01'], source: 'compat-alias:snowflakes' }
+
+slices['trace-variants'] = {
+  ...slices['trace-variant-01'],
+  source: 'kenney-particle-pack/trace_01..07.png',
+  variantCount: 7,
+  variantColumns: 4,
+  variantStartIndex: 0,
+  variantRowDirection: -1,
+}
 
 // Preserve the original public sprite key after its now-unused physical cell
 // became the ember vocabulary. New recipes should use the semantic `ember`

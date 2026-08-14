@@ -18,6 +18,7 @@ export function GamePfx({ preset, position = [0, 0, 0], reducedMotion = false, p
         ? {
             ...preset,
             controls: createReducedMotionControls(preset.controls),
+            reducedMotion: true,
           }
         : preset,
     [preset, reducedMotion],
@@ -124,6 +125,7 @@ export function GamePfx({ preset, position = [0, 0, 0], reducedMotion = false, p
           cycleScale={planCycleScale}
           tempo={plan.tempo}
           parentCameraPinned={effectSpace === 'ui'}
+          reducedMotion={reducedMotion}
         />
       ))}
     </group>
@@ -243,12 +245,15 @@ export function createPfxChoreographyAudit(
   const hasOpeningBeat = burstBeats.some(
     (beat) => beat.startFraction <= 0.02 && beat.spawnEndFraction - beat.startFraction <= 0.3,
   )
-  // Anticipation-first archetype (spawn/telegraph spec): a continuous
-  // anchor layer (ring/aura, window 1) opens the effect quietly and the
-  // sharp climax lands LATE by design — Riot doctrine leads anticipation,
-  // then overloads. Demanding a t=0 pop there would break the grammar.
+  // Anticipation-first archetype (spawn/telegraph spec): a sustained gather
+  // opens the effect quietly and the sharp climax lands LATE by design.
+  // The gather may be a finite particle window; requiring a continuous mesh
+  // anchor would force traditional particle warnings back into ring geometry.
   const hasAnticipationOpen =
-    beats.some((beat) => beat.spawnEndFraction - beat.startFraction >= 1 && beat.startFraction === 0) &&
+    beats.some((beat) =>
+      beat.startFraction === 0 &&
+      beat.spawnEndFraction - beat.startFraction >= 0.35
+    ) &&
     sharpBeats.some((beat) => beat.startFraction >= 0.3)
   if (!microBurst && !hasOpeningBeat && !hasAnticipationOpen) {
     findings.push('no opening beat: nothing short and sharp owns the first instant (flash/spark pop)')

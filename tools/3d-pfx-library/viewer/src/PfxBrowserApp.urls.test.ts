@@ -9,6 +9,7 @@ type UrlHelpers = typeof app & {
   ) => string
   withProfileDeviceLabel?: (profileUrl: string, deviceLabel?: string | null) => string
   withProfileAutoUpload?: (profileUrl: string, deviceLabel?: string | null) => string
+  readPfxReviewCaptureToken?: (search?: string) => string | null
 }
 
 const helpers = app as UrlHelpers
@@ -106,5 +107,24 @@ describe('real-device capture URL helpers', () => {
     ).toBe(
       'http://192.168.86.174:4765/?profileEffectIds=hit-spark&profilePlatform=chrome-android&profileAutoUpload=1',
     )
+  })
+})
+
+describe('quality capture render handshake', () => {
+  it('accepts an exact bounded capture token only on review-capture URLs', () => {
+    expect(typeof helpers.readPfxReviewCaptureToken).toBe('function')
+
+    expect(helpers.readPfxReviewCaptureToken?.(
+      '?reviewCapture=1&reviewCaptureToken=spawn-telegraph%3Apeak%3A767%3A42',
+    )).toBe('spawn-telegraph:peak:767:42')
+    expect(helpers.readPfxReviewCaptureToken?.(
+      '?reviewCaptureToken=spawn-telegraph%3Apeak%3A767%3A42',
+    )).toBeNull()
+    expect(helpers.readPfxReviewCaptureToken?.(
+      `?reviewCapture=1&reviewCaptureToken=${'x'.repeat(201)}`,
+    )).toBeNull()
+    expect(helpers.readPfxReviewCaptureToken?.(
+      '?reviewCapture=1&reviewCaptureToken=bad%20token',
+    )).toBeNull()
   })
 })

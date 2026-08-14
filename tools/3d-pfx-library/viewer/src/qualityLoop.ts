@@ -1,11 +1,33 @@
 export type PfxQualityTargetGrade = 'A+' | 'A'
 export type PfxObservedGrade = PfxQualityTargetGrade | 'B' | 'C' | 'D' | 'F' | null
+export type PfxQualityAction =
+  | 'refine-primitive'
+  | 'refine-recipe'
+  | 'request-review'
+  | 'request-device-evidence'
+  | 'adjudicate-review'
+  | 'stop'
+
+export interface PfxQualityActionRoute {
+  action: PfxQualityAction
+  ownerPath: string | null
+  docAnchor: string
+  reason: string
+}
+
+export interface PfxQualityActionRouteInput {
+  effectIds: readonly string[]
+  defectKey: string | null
+  targetPassed: boolean
+  reviewerDisagreement: boolean
+}
 
 export interface PfxQualityLoopEffect {
   effectId: string
   rank: number
   currentGrade: PfxObservedGrade
   worstVisualScore: number | null
+  visualScores?: Record<string, number> | null
   weightedScore: number | null
   visualBlockers: string[]
   systemicDefectKeys: string[]
@@ -18,6 +40,10 @@ export interface PfxQualityImprovementWorkItem {
   defectKey: string | null
   effectIds: string[]
   priority: number
+  action: PfxQualityAction
+  ownerPath: string | null
+  docAnchor: string
+  reason: string
 }
 
 export interface PfxQualityLoopSnapshot {
@@ -53,6 +79,86 @@ export interface CreatePfxQualityImprovementLedgerInput {
   previous?: PfxQualityImprovementLedger
 }
 
+export function routePfxQualityAction(input: PfxQualityActionRouteInput): PfxQualityAction {
+  return createPfxQualityActionRoute(input).action
+}
+
+export function createPfxQualityActionRoute(input: PfxQualityActionRouteInput): PfxQualityActionRoute {
+  const effectIds = [...new Set(input.effectIds)]
+  const effectId = effectIds[0]
+  if (input.reviewerDisagreement) {
+    return {
+      action: 'adjudicate-review',
+      ownerPath: null,
+      docAnchor: 'docs/quality-review-workflow.md#reviewer-disagreement',
+      reason: `Independent reviewers disagree on ${summarizePfxEffectIds(effectIds)}`,
+    }
+  }
+  if (input.targetPassed) {
+    return {
+      action: 'stop',
+      ownerPath: null,
+      docAnchor: 'docs/production-pfx-standard.md#acceptance',
+      reason: `The assigned quality target is met for ${summarizePfxEffectIds(effectIds)}`,
+    }
+  }
+  if (input.defectKey === 'evidence:independent-visual-review' || input.defectKey == null) {
+    return {
+      action: 'request-review',
+      ownerPath: null,
+      docAnchor: 'docs/quality-review-workflow.md#independent-review',
+      reason: `Independent visual review is missing for ${summarizePfxEffectIds(effectIds)}`,
+    }
+  }
+  if (input.defectKey === 'performance:real-device') {
+    return {
+      action: 'request-device-evidence',
+      ownerPath: null,
+      docAnchor: 'docs/quality-review-workflow.md#real-device-evidence',
+      reason: `Physical mobile Safari and Chrome Android evidence is missing for ${summarizePfxEffectIds(effectIds)}`,
+    }
+  }
+  if (effectIds.length >= 2) {
+    return {
+      action: 'refine-primitive',
+      ownerPath: 'src/PfxSurface.tsx',
+      docAnchor: `docs/pfx-craft-guide.md#${defectAnchor(input.defectKey)}`,
+      reason: `${input.defectKey} affects ${effectIds.length} effects and belongs to a shared renderer/runtime surface`,
+    }
+  }
+  return {
+    action: 'refine-recipe',
+    ownerPath: effectId ? `src/recipes/${effectId}.ts` : null,
+    docAnchor: `docs/pfx-craft-guide.md#${defectAnchor(input.defectKey)}`,
+    reason: `${input.defectKey} is isolated to ${effectId ?? 'one effect'}`,
+  }
+}
+
+function defectAnchor(defectKey: string): string {
+  const dimension = defectKey.slice('visual:'.length)
+  if (dimension === 'temporalArcAndDecay') return '2-timing-the-temporal-sentence'
+  if (dimension === 'materialAndShaderQuality') return '3-blend-modes-have-opposite-death-rules'
+  if (dimension === 'cc0AssetIntegration') return '4-color-ramps-not-tints'
+  if ([
+    'volumeAndDepth',
+    'multiAngleResilience',
+    'silhouetteAndComposition',
+    'distinctivenessAndRingDiscipline',
+    'scaleAndVisualHierarchy',
+  ].includes(dimension)) return '5-shape-and-silhouette'
+  if (dimension === 'meshStructureAndEmitterQuality') return '1-anatomy-effects-are-stacks-not-emitters'
+  if (dimension === 'semanticIdentity' || dimension === 'gameplayReadability') {
+    return '8-readability-and-restraint'
+  }
+  return '9-verify-with-instruments-and-hostile-eyes'
+}
+
+function summarizePfxEffectIds(effectIds: readonly string[]): string {
+  if (effectIds.length === 0) return 'the effect'
+  if (effectIds.length <= 5) return effectIds.join(', ')
+  return `${effectIds.slice(0, 5).join(', ')}, and ${effectIds.length - 5} more effects`
+}
+
 export function pfxTargetGradeForRank(rank: number): PfxQualityTargetGrade {
   if (!Number.isInteger(rank) || rank < 1 || rank > 500) throw new Error(`Invalid PFX taxonomy rank: ${rank}`)
   return rank <= 50 ? 'A+' : 'A'
@@ -74,7 +180,7 @@ export function createPfxQualityImprovementLedger(
       visualBlockers: [...new Set(effect.visualBlockers)].sort(),
       systemicDefectKeys: [...new Set(effect.systemicDefectKeys)].sort(),
     }))
-    .sort((left, right) => left.rank - right.rank || left.effectId.localeCompare(right.effectId))
+    .sort((left, right) => right.rank - left.rank || left.effectId.localeCompare(right.effectId))
   const effectIds = new Set<string>()
   for (const effect of effects) {
     pfxTargetGradeForRank(effect.rank)
@@ -87,9 +193,11 @@ export function createPfxQualityImprovementLedger(
   const regressedEffectIds = effects
     .filter((effect) => {
       const previous = previousEffects.get(effect.effectId)
-      if (!previous || !pfxEffectMeetsTarget(previous)) return false
-      return !pfxEffectMeetsTarget(effect) ||
+      if (!previous) return false
+      return (pfxEffectMeetsTarget(previous) && !pfxEffectMeetsTarget(effect)) ||
+        observedGradeRegressed(previous.currentGrade, effect.currentGrade) ||
         nullableMetricRegressed(previous.worstVisualScore, effect.worstVisualScore) ||
+        visualDimensionRegressed(previous.visualScores, effect.visualScores) ||
         nullableMetricRegressed(previous.weightedScore, effect.weightedScore) ||
         nullableMetricRegressed(previous.performanceHeadroomMs, effect.performanceHeadroomMs)
     })
@@ -102,7 +210,10 @@ export function createPfxQualityImprovementLedger(
   const summary: PfxQualityLoopSnapshot = {
     iteration: input.iteration,
     targetPasses: effects.filter(pfxEffectMeetsTarget).length,
-    blockerCount: effects.reduce((total, effect) => total + effect.visualBlockers.length, 0),
+    // Reviewer prose is evidence, not a stable convergence unit: reviewers may
+    // combine or split the same finding between iterations. Count canonical
+    // defect keys so wording changes cannot manufacture apparent progress.
+    blockerCount: effects.reduce((total, effect) => total + effect.systemicDefectKeys.length, 0),
     visualEvidenceCount: effects.filter((effect) => effect.worstVisualScore != null).length,
     performanceEvidenceCount: effects.filter((effect) => effect.performanceHeadroomMs != null).length,
     worstVisualScore: visualScores.length > 0 ? Math.min(...visualScores) : 0,
@@ -131,6 +242,12 @@ export function createPfxQualityImprovementLedger(
 function normalizePfxQualityLoopSnapshot(ledger: PfxQualityImprovementLedger): PfxQualityLoopSnapshot {
   return {
     ...ledger.summary,
+    // Early v1 ledgers counted free-form reviewer findings. Recompute from
+    // canonical defect keys so those ledgers compare on the current metric.
+    blockerCount: ledger.effects.reduce(
+      (total, effect) => total + effect.systemicDefectKeys.length,
+      0,
+    ),
     // v1 ledgers written before evidence-coverage tracking remain resumable.
     visualEvidenceCount: ledger.summary.visualEvidenceCount ?? ledger.effects.filter((effect) => effect.worstVisualScore != null).length,
     performanceEvidenceCount: ledger.summary.performanceEvidenceCount ?? ledger.effects.filter((effect) => effect.performanceHeadroomMs != null).length,
@@ -139,6 +256,23 @@ function normalizePfxQualityLoopSnapshot(ledger: PfxQualityImprovementLedger): P
 
 function nullableMetricRegressed(previous: number | null, current: number | null): boolean {
   return previous != null && (current == null || current < previous)
+}
+
+function visualDimensionRegressed(
+  previous: Readonly<Record<string, number>> | null | undefined,
+  current: Readonly<Record<string, number>> | null | undefined,
+): boolean {
+  if (!previous) return false
+  if (!current) return true
+  return Object.entries(previous).some(
+    ([dimension, score]) =>
+      !Number.isFinite(current[dimension]) ||
+      current[dimension]! < score,
+  )
+}
+
+function observedGradeRegressed(previous: PfxObservedGrade, current: PfxObservedGrade): boolean {
+  return previous != null && (current == null || PFX_GRADE_ORDER[current] < PFX_GRADE_ORDER[previous])
 }
 
 function roundQualityMetric(value: number): number {
@@ -160,7 +294,7 @@ export function createPfxQualityImprovementQueue(
   const systemicItems = [...effectsByDefect.entries()]
     .filter(([, affected]) => affected.length >= 2)
     .map(([defectKey, affected]): PfxQualityImprovementWorkItem => {
-      const ordered = [...affected].sort((left, right) => left.rank - right.rank || left.effectId.localeCompare(right.effectId))
+      const ordered = [...affected].sort((left, right) => right.rank - left.rank || left.effectId.localeCompare(right.effectId))
       ordered.forEach((effect) => systemicEffectIds.add(effect.effectId))
       return {
         kind: 'systemic',
@@ -168,7 +302,13 @@ export function createPfxQualityImprovementQueue(
         effectIds: ordered.map((effect) => effect.effectId),
         priority: pfxSystemicDefectPriorityBase(defectKey) +
           ordered.length * 1_000 -
-          Math.min(...ordered.map((effect) => effect.rank)),
+          (500 - Math.max(...ordered.map((effect) => effect.rank))),
+        ...createPfxQualityActionRoute({
+          effectIds: ordered.map((effect) => effect.effectId),
+          defectKey,
+          targetPassed: false,
+          reviewerDisagreement: defectKey === 'evidence:peer-review-disagreement',
+        }),
       }
     })
   const systemicDefectKeys = new Set(systemicItems.map((item) => item.defectKey).filter((key): key is string => key != null))
@@ -184,7 +324,13 @@ export function createPfxQualityImprovementQueue(
         defectKey: uniqueDefectKey ?? null,
         effectIds: [effect.effectId],
         priority: (uniqueDefectKey ? pfxSystemicDefectPriorityBase(uniqueDefectKey) : 10_000) +
-          effect.visualBlockers.length * 100 - effect.rank,
+          effect.visualBlockers.length * 100 - (500 - effect.rank),
+        ...createPfxQualityActionRoute({
+          effectIds: [effect.effectId],
+          defectKey: uniqueDefectKey ?? null,
+          targetPassed: false,
+          reviewerDisagreement: uniqueDefectKey === 'evidence:peer-review-disagreement',
+        }),
       }
     })
     .filter((item): item is PfxQualityImprovementWorkItem => item != null)
@@ -195,6 +341,7 @@ export function createPfxQualityImprovementQueue(
 }
 
 function pfxSystemicDefectPriorityBase(defectKey: string): number {
+  if (defectKey === 'evidence:peer-review-disagreement') return 2_000_000
   if (defectKey.startsWith('visual:')) return 1_000_000 + pfxVisualDefectPriorityBonus(defectKey)
   if (defectKey.startsWith('evidence:')) return 100_000
   if (defectKey === 'performance:real-device') return 50_000
@@ -280,6 +427,14 @@ export function evaluatePfxQualityConvergence(
     previous.minimumPerformanceHeadroomMs
   ) {
     return { converging: true, reason: 'performance-headroom-increased' }
+  }
+
+  if (current.visualEvidenceCount > previous.visualEvidenceCount) {
+    return { converging: true, reason: 'visual-evidence-coverage-increased' }
+  }
+
+  if (current.performanceEvidenceCount > previous.performanceEvidenceCount) {
+    return { converging: true, reason: 'performance-evidence-coverage-increased' }
   }
 
   return { converging: false, reason: 'quality-plateau' }

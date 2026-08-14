@@ -9,6 +9,8 @@ import { getPfxSpriteVariantLayout } from './spriteVariant'
 import type { PfxControls } from '../types/01'
 import type { PfxParticleEmission, PfxRenderSurface, PfxSurfaceMaterialProps } from '../types/02'
 
+export const PFX_MATERIALIZE_RELEASE_GATHER_SPRITE_ASPECT = 0.68
+
 export function createPfxSpriteEmissionMaterial(
   emission: PfxParticleEmission,
   controls: PfxControls,
@@ -101,6 +103,12 @@ export function createPfxSpriteEmissionMaterial(
   if (emission.motionKind === 'beam-telegraph-flow') defines.MOTION_BEAM_TELEGRAPH_FLOW = true
   if (emission.motionKind === 'laser-spray-ricochet') defines.MOTION_LASER_SPRAY_RICOCHET = true
   if (emission.motionKind === 'asymmetric-converge') defines.MOTION_FLAME_CHARGE_GATHER = true
+  if (
+    emission.motionKind === 'materialize-gather' ||
+    emission.motionKind === 'materialize-release'
+  ) defines.MOTION_MATERIALIZE = true
+  if (emission.motionKind === 'materialize-gather') defines.MOTION_MATERIALIZE_GATHER = true
+  if (emission.motionKind === 'materialize-release') defines.MOTION_MATERIALIZE_RELEASE = true
   const material = new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
@@ -164,13 +172,24 @@ export function createPfxSpriteEmissionMaterial(
       uFlipbookTemperatureGrade: {
         value: usesAuthoredFlipbook && flipbookAtlas.id === PFX_FIREBALL_FLIPBOOK_ATLAS.id ? 1 : 0,
       },
+      uMaterializeEnergyGrade: {
+        value:
+          (emission.motionKind === 'materialize-gather' ||
+            emission.motionKind === 'materialize-release')
+            ? 1
+            : 0,
+      },
       uFlipbookTurbulentCells: {
         value: usesAuthoredFlipbook && flipbookAtlas.id === PFX_FIREBALL_FLIPBOOK_ATLAS.id ? 1 : 0,
       },
       uSpriteAspect: {
-        value: usesAuthoredFlipbook
-          ? (flipbookAtlas.width / flipbookAtlas.columns) /
-            (flipbookAtlas.height / flipbookAtlas.rows)
+        value: emission.motionKind === 'materialize-release'
+          ? PFX_MATERIALIZE_RELEASE_GATHER_SPRITE_ASPECT
+          : usesAuthoredFlipbook
+          ? emission.motionKind === 'materialize-gather'
+            ? 0.72
+            : (flipbookAtlas.width / flipbookAtlas.columns) /
+              (flipbookAtlas.height / flipbookAtlas.rows)
           : 1,
       },
       uColorHot: { value: new THREE.Vector3(...ramp.hot) },

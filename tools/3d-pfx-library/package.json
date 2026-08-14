@@ -17,7 +17,10 @@
     "profile:authored": "node --import tsx viewer/scripts/profile-browser.ts --suite authored --output=.profiles/r3f-pfx-authored-profile.json",
     "profile:profile-backed": "node --import tsx viewer/scripts/profile-browser.ts --suite profile-backed --output=.profiles/r3f-pfx-profile-backed-profile.json",
     "profile:catalog-stress": "node --import tsx viewer/scripts/profile-browser.ts --suite catalog-stress --output=.profiles/r3f-pfx-catalog-stress-profile.json",
-    "profile:all": "npm run profile && npm run profile:authored && npm run profile:profile-backed && npm run profile:catalog-stress"
+    "profile:all": "npm run profile && npm run profile:authored && npm run profile:profile-backed && npm run profile:catalog-stress",
+    "quality:capture": "node --import tsx viewer/scripts/quality-review.ts capture",
+    "quality:assemble": "node --import tsx viewer/scripts/quality-review.ts assemble",
+    "quality:status": "node --import tsx viewer/scripts/quality-review.ts status"
   },
   "dependencies": {
     "@react-three/fiber": "^8.17.0",

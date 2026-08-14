@@ -305,10 +305,11 @@ export function createPfxProductionApprovalTemplate(
     decision: 'production-ready',
     approvedBy: 'TODO:final-production-approver',
     approvedAt: 'TODO:ISO-8601',
-    rationale: 'TODO:describe taxonomy review, production implementation, measured mobile performance, and red-team signoff.',
+    rationale: 'TODO:describe taxonomy review, production implementation, visual quality, measured mobile performance, and red-team signoff.',
     evidence: [
       `taxonomy-review:.context/r3f-pfx-taxonomy-review.json#${effect.id}`,
       `production-implementation:.context/r3f-pfx-production-implementation.json#${effect.id}`,
+      `quality-matrix:.context/r3f-pfx-quality-matrix.json#${effect.id}`,
       `mobile-safari-profile:.context/mobile-safari/${effect.id}.json`,
       `chrome-android-profile:.context/chrome-android/${effect.id}.json`,
       `red-team-signoff:.context/r3f-pfx-red-team-review.json#${effect.id}`,
@@ -326,11 +327,12 @@ export function createPfxProductionApprovalTemplate(
       approvedDeferrals: approvals.filter((approval) => approval.decision === 'approved-deferral').length,
       submittedApprovals: 0,
       pendingMetadataApprovals: approvals.length,
-      evidenceSlotsPerEffect: 5,
+      evidenceSlotsPerEffect: 6,
       approvalStatus: 'non-approving-production-approval-template',
     },
     instructions: {
       implementationManifestFile: '.context/r3f-pfx-production-implementation.json',
+      qualityMatrixFile: '.context/r3f-pfx-quality-matrix.json',
       realDeviceAuditFile: '.context/r3f-pfx-real-device-capture-audit.json',
       redTeamReviewFile: '.context/r3f-pfx-red-team-review.json',
       taxonomyReviewFile: '.context/r3f-pfx-taxonomy-review.json',
@@ -338,6 +340,7 @@ export function createPfxProductionApprovalTemplate(
       productionReadyEvidenceSlots: [
         'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#<effectId>',
         'production-implementation:.context/r3f-pfx-production-implementation.json#<effectId>',
+        'quality-matrix:.context/r3f-pfx-quality-matrix.json#<effectId>',
         'mobile-safari-profile:.context/mobile-safari/<effectId>.json',
         'chrome-android-profile:.context/chrome-android/<effectId>.json',
         'red-team-signoff:.context/r3f-pfx-red-team-review.json#<effectId>',
@@ -349,12 +352,13 @@ export function createPfxProductionApprovalTemplate(
       ],
       operatorChecklist: [
         'Replace every TODO metadata field before submitting the approval manifest.',
-        'Keep all five canonical evidence references on production-ready rows for the same effect.',
+        'Keep all six canonical evidence references on production-ready rows for the same effect.',
+        'Require the quality-matrix row to pass visual, independent-consensus, performance, and current-source fingerprint gates.',
         'Use captureHandoff links only to collect missing real-device evidence; they never replace canonical evidence references or final approval metadata.',
         'Use a final approver identity that is distinct from the implementation actor and red-team reviewer.',
         'Use approved-deferral only when an explicit deferral decision and red-team evidence exist for the same effect.',
         'Do not cite side-channel manifests as substitutes for approval-row evidence references.',
-        'Run the final acceptance command and keep this template failing until all taxonomy, implementation, device, red-team, and approval metadata gates pass.',
+        'Run the final acceptance command and keep this template failing until all taxonomy, implementation, quality-matrix, device, red-team, and approval metadata gates pass.',
       ],
     },
     approvals,
@@ -811,6 +815,7 @@ export function createPfxProductionAcceptanceGapAudit(
       missingApprovalMetadata: countProductionGaps(effects, 'approval-metadata'),
       missingTaxonomyReview: countProductionGaps(effects, 'taxonomy-review'),
       missingProductionImplementation: countProductionGaps(effects, 'production-implementation'),
+      missingQualityMatrix: countProductionGaps(effects, 'quality-matrix'),
       missingMobileSafariProfiles: countProductionGaps(effects, 'mobile-safari-profile'),
       missingChromeAndroidProfiles: countProductionGaps(effects, 'chrome-android-profile'),
       missingRedTeamSignoff: countProductionGaps(effects, 'red-team-signoff'),
@@ -841,6 +846,7 @@ export function exportPfxProductionAcceptanceGapAuditMarkdown(
     `Total effects: ${audit.summary.totalEffects}`,
     `Effects with open gaps: ${audit.summary.effectsWithOpenGaps}`,
     `Missing approval metadata: ${audit.summary.missingApprovalMetadata}`,
+    `Missing quality-matrix rows: ${audit.summary.missingQualityMatrix}`,
     `Missing mobile Safari profiles: ${audit.summary.missingMobileSafariProfiles}`,
     `Missing Chrome Android profiles: ${audit.summary.missingChromeAndroidProfiles}`,
     `Missing red-team signoff: ${audit.summary.missingRedTeamSignoff}`,
@@ -898,10 +904,12 @@ export function createPfxProductionApprovalReadinessReport(
     ...fullyRealDeviceProfiledEffectIds,
     ...(options.chromeAndroidProfiledEffectIds ?? []),
   ])
+  const qualityMatrixApprovedEffectIds = new Set(options.qualityMatrixApprovedEffectIds ?? [])
   const effects = readiness.effects.map((effect): PfxProductionApprovalReadinessEffect => {
     const missingPrerequisites = productionApprovalMissingPrerequisites(
       effect,
       taxonomyReviewedEffectIds.has(effect.effectId),
+      qualityMatrixApprovedEffectIds.has(effect.effectId),
       mobileSafariProfiledEffectIds.has(effect.effectId),
       chromeAndroidProfiledEffectIds.has(effect.effectId),
     )
@@ -1325,7 +1333,7 @@ export function createPfxProductionImplementationTemplate(): PfxProductionImplem
     status: 'pending',
     implementedBy: 'TODO:implementer',
     implementedAt: 'TODO:ISO-8601',
-    sourcePath: `tools/3d-pfx-library/src/index.tsx#${effect.id}`,
+    sourcePath: `tools/3d-pfx-library/src/recipes/${effect.id}.ts`,
     criteria: createPendingProductionImplementationCriteria(),
     blockerFindings: ['TODO:record implementation blockers or leave empty only after production-ready approval.'],
     notes: 'TODO:record production implementation notes, exported component evidence, and safe customization decisions.',
@@ -1385,7 +1393,7 @@ export function createPfxProductionImplementationDossier(): PfxProductionImpleme
       name: effect.name,
       approvalStatus: 'needs-review',
       productionReady: false,
-      sourcePath: `tools/3d-pfx-library/src/index.tsx#${effect.id}`,
+      sourcePath: `tools/3d-pfx-library/src/recipes/${effect.id}.ts`,
       reviewAnchor: `.context/r3f-pfx-production-implementation.json#${effect.id}`,
       component: {
         componentName: component.componentName,
@@ -1464,6 +1472,7 @@ function productionAcceptanceGapsForEffect(
     | 'realDeviceProfiledEffectIds'
     | 'mobileSafariProfiledEffectIds'
     | 'chromeAndroidProfiledEffectIds'
+    | 'qualityMatrixApprovedEffectIds'
   > = {},
 ): PfxProductionAcceptanceGap[] {
   if (readinessEffect.productionReady || readinessEffect.approvedDeferral) return []
@@ -1525,6 +1534,7 @@ function productionAcceptanceGapsForEffect(
     gaps.push(productionGapFromEvidence('taxonomy-review', readinessEffect.effectId))
   }
   addEvidenceGapIfNeeded('production-implementation', readinessEffect.productionImplemented)
+  addEvidenceGapIfNeeded('quality-matrix', readinessEffect.qualityMatrixApproved)
   addPlatformProfileGapIfNeeded('mobile-safari-profile', mobileSafariProfiledEffectIds.has(readinessEffect.effectId))
   addPlatformProfileGapIfNeeded('chrome-android-profile', chromeAndroidProfiledEffectIds.has(readinessEffect.effectId))
   addEvidenceGapIfNeeded('red-team-signoff', readinessEffect.redTeamSignedOff)
@@ -1565,6 +1575,7 @@ function productionGapCaptureHandoff(
 function productionGapLabel(kind: Exclude<PfxProductionAcceptanceGapKind, 'approval-metadata'>): string {
   if (kind === 'taxonomy-review') return 'Market-reviewed taxonomy evidence'
   if (kind === 'production-implementation') return 'Production implementation evidence'
+  if (kind === 'quality-matrix') return 'Current passing quality-matrix evidence'
   if (kind === 'mobile-safari-profile') return 'Real-device mobile Safari profile'
   if (kind === 'chrome-android-profile') return 'Real-device Chrome Android profile'
   if (kind === 'approved-deferral') return 'Approved deferral evidence'
@@ -1587,6 +1598,7 @@ function countProductionGaps(
 function productionApprovalMissingPrerequisites(
   effect: PfxProductionReadinessEffect,
   taxonomyReviewed: boolean,
+  qualityMatrixApproved: boolean,
   mobileSafariProfiled: boolean,
   chromeAndroidProfiled: boolean,
 ): PfxProductionApprovalReadinessMissingPrerequisite[] {
@@ -1594,6 +1606,7 @@ function productionApprovalMissingPrerequisites(
   if (!taxonomyReviewed) missing.push('taxonomy-review')
   if (effect.productionReady || effect.approvedDeferral) return missing
   if (!effect.productionImplemented) missing.push('production-implementation')
+  if (!qualityMatrixApproved) missing.push('quality-review')
   if (!effect.realDeviceProfiled) {
     if (!mobileSafariProfiled && !chromeAndroidProfiled) {
       missing.push('real-device-profile')
@@ -1641,6 +1654,7 @@ function productionApprovalRecommendedEvidence(
   return [
     `taxonomy-review:.context/r3f-pfx-taxonomy-review.json#${effectId}`,
     `production-implementation:.context/r3f-pfx-production-implementation.json#${effectId}`,
+    `quality-matrix:.context/r3f-pfx-quality-matrix.json#${effectId}`,
     `mobile-safari-profile:.context/mobile-safari/${effectId}.json`,
     `chrome-android-profile:.context/chrome-android/${effectId}.json`,
     `red-team-signoff:.context/r3f-pfx-red-team-review.json#${effectId}`,
@@ -1746,6 +1760,7 @@ function formatProductionApprovalPrerequisites(
   const labels: Record<PfxProductionApprovalReadinessMissingPrerequisite, string> = {
     'taxonomy-review': 'taxonomy review',
     'production-implementation': 'production implementation',
+    'quality-review': 'current passing quality review',
     'real-device-profile': 'real-device profile',
     'mobile-safari-profile': 'Mobile Safari profile',
     'chrome-android-profile': 'Chrome Android profile',

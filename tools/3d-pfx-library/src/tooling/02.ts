@@ -35,6 +35,7 @@ export function createPfxProductionReadinessReport(
     ...(options.chromeAndroidProfiledEffectIds ?? []),
   ])
   const taxonomyReviewedEffectIds = new Set(options.taxonomyReviewedEffectIds ?? [])
+  const qualityMatrixApprovedEffectIds = new Set(options.qualityMatrixApprovedEffectIds ?? [])
   const duplicateImplementationEffectIds = new Set(duplicateValues(implementations.map((implementation) => implementation.effectId)))
   const implementationManifestHasUnknownRows = implementations.some(
     (implementation) => !acceptedEffectIds.has(implementation.effectId),
@@ -57,10 +58,15 @@ export function createPfxProductionReadinessReport(
     options.chromeAndroidProfiledEffectIds ?? [],
     acceptedEffectIds,
   )
+  const unknownQualityMatrixApprovedEffectIds = valuesOutsideAcceptedEffectIds(
+    options.qualityMatrixApprovedEffectIds ?? [],
+    acceptedEffectIds,
+  )
   const duplicateTaxonomyReviewedEffectIds = duplicateValues(options.taxonomyReviewedEffectIds ?? [])
   const duplicateRealDeviceProfiledEffectIds = duplicateValues(options.realDeviceProfiledEffectIds ?? [])
   const duplicateMobileSafariProfiledEffectIds = duplicateValues(options.mobileSafariProfiledEffectIds ?? [])
   const duplicateChromeAndroidProfiledEffectIds = duplicateValues(options.chromeAndroidProfiledEffectIds ?? [])
+  const duplicateQualityMatrixApprovedEffectIds = duplicateValues(options.qualityMatrixApprovedEffectIds ?? [])
   const implementedEffectIds = new Set(
     implementationManifestHasUnknownRows
       ? []
@@ -88,6 +94,7 @@ export function createPfxProductionReadinessReport(
     const chromeAndroidProfiled = chromeAndroidProfiledEffectIds.has(effect.id)
     const realDeviceProfiled = mobileSafariProfiled && chromeAndroidProfiled
     const taxonomyReviewed = taxonomyReviewedEffectIds.has(effect.id)
+    const qualityMatrixApproved = qualityMatrixApprovedEffectIds.has(effect.id)
     const redTeamSignedOff = independentRedTeamReview && redTeamReview.status === 'signed-off' && realDeviceProfiled
     const redTeamApprovedDeferral = independentRedTeamReview && redTeamReview.status === 'approved-deferral'
     const hasProductionImplementation = implementedEffectIds.has(effect.id)
@@ -108,6 +115,7 @@ export function createPfxProductionReadinessReport(
       hasIndependentFinalApproval &&
       hasProductionReadyApprovalEvidence &&
       hasProductionImplementation &&
+      qualityMatrixApproved &&
       realDeviceProfiled &&
       redTeamSignedOff
     const readinessStatus = resolveProductionReadinessStatus({
@@ -128,6 +136,7 @@ export function createPfxProductionReadinessReport(
       acceptanceStatus: effect.acceptanceStatus,
       readinessStatus,
       productionImplemented: hasProductionImplementation,
+      qualityMatrixApproved,
       productionReady,
       approvedDeferral,
       realDeviceProfiled,
@@ -140,6 +149,7 @@ export function createPfxProductionReadinessReport(
         productionReady,
         approvedDeferral,
         hasProductionImplementation,
+        qualityMatrixApproved,
         realDeviceProfiled,
         mobileSafariProfiled,
         chromeAndroidProfiled,
@@ -156,6 +166,7 @@ export function createPfxProductionReadinessReport(
   })
   const taxonomyReviewedEffects = effects.filter((effect) => taxonomyReviewedEffectIds.has(effect.effectId)).length
   const productionImplementedEffects = effects.filter((effect) => effect.productionImplemented).length
+  const qualityMatrixApprovedEffects = effects.filter((effect) => effect.qualityMatrixApproved).length
   const productionReadyEffects = effects.filter((effect) => effect.productionReady).length
   const approvedDeferrals = effects.filter((effect) => effect.approvedDeferral).length
   const realDeviceProfiledEffects = effects.filter((effect) => effect.realDeviceProfiled).length
@@ -173,6 +184,7 @@ export function createPfxProductionReadinessReport(
     ...createStandaloneEvidenceIdFindings('real-device profile evidence', unknownRealDeviceProfiledEffectIds),
     ...createStandaloneEvidenceIdFindings('mobile Safari profile evidence', unknownMobileSafariProfiledEffectIds),
     ...createStandaloneEvidenceIdFindings('Chrome Android profile evidence', unknownChromeAndroidProfiledEffectIds),
+    ...createStandaloneEvidenceIdFindings('quality-matrix evidence', unknownQualityMatrixApprovedEffectIds),
     ...createStandaloneEvidenceDuplicateFindings('taxonomy review evidence', duplicateTaxonomyReviewedEffectIds),
     ...createStandaloneEvidenceDuplicateFindings('real-device profile evidence', duplicateRealDeviceProfiledEffectIds),
     ...createStandaloneEvidenceDuplicateFindings(
@@ -183,6 +195,10 @@ export function createPfxProductionReadinessReport(
       'Chrome Android profile evidence',
       duplicateChromeAndroidProfiledEffectIds,
     ),
+    ...createStandaloneEvidenceDuplicateFindings(
+      'quality-matrix evidence',
+      duplicateQualityMatrixApprovedEffectIds,
+    ),
     ...createPartialRealDeviceProfileEvidenceFindings(
       mobileSafariProfiledEffectIds,
       chromeAndroidProfiledEffectIds,
@@ -192,6 +208,7 @@ export function createPfxProductionReadinessReport(
       effectsRequiringDecision,
       missingTaxonomyReview: effects.length - taxonomyReviewedEffects,
       missingProductionImplementations: effects.length - productionImplementedEffects - approvedDeferrals,
+      missingQualityMatrixRows: effects.length - qualityMatrixApprovedEffects - approvedDeferrals,
       missingDeviceProfiles: effects.length - realDeviceProfiledEffects,
       missingMobileSafariProfiles,
       missingChromeAndroidProfiles,
@@ -205,12 +222,14 @@ export function createPfxProductionReadinessReport(
     summary: {
       totalEffects: effects.length,
       productionImplementedEffects,
+      qualityMatrixApprovedEffects,
       productionReadyEffects,
       approvedDeferrals,
       effectsRequiringDecision,
       realDeviceProfiledEffects,
       missingMobileSafariProfiles,
       missingChromeAndroidProfiles,
+      missingQualityMatrixRows: effects.length - qualityMatrixApprovedEffects,
       redTeamSignedOffEffects,
       byReadinessStatus,
     },

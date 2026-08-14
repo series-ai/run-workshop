@@ -140,6 +140,28 @@ function OrbitCameraRig({ orbit, autoRotate }: { orbit: RefObject<PfxOrbitState>
   return null
 }
 
+function PfxReviewCaptureHandshake({ token }: { token: string }) {
+  const { gl } = useThree()
+  const committedFrames = useRef(0)
+  useEffect(() => {
+    committedFrames.current = 0
+    delete gl.domElement.dataset.pfxReviewCaptureToken
+    return () => {
+      delete gl.domElement.dataset.pfxReviewCaptureToken
+    }
+  }, [gl, token])
+  useFrame(() => {
+    committedFrames.current += 1
+    // Do not acknowledge URL parsing alone. The token appears only after
+    // several R3F frames have consumed the frozen review time, which keeps a
+    // newly navigated capture from reusing the previous WebGL framebuffer.
+    if (committedFrames.current >= 3) {
+      gl.domElement.dataset.pfxReviewCaptureToken = token
+    }
+  })
+  return null
+}
+
 function PfxGameplayContext({ effectId }: { effectId?: string }) {
   if (effectId === 'hit-spark') {
     return (
@@ -744,6 +766,8 @@ export function PfxBrowserApp() {
   const reviewCameraLocked = readReviewCamera() !== null
   const reviewFraming = readReviewFraming()
   const reviewTimeSeconds = readReviewTimeSeconds()
+  const reviewCapture = readReviewCapture()
+  const reviewCaptureToken = readPfxReviewCaptureToken()
   const initialProfileEffectIds = useMemo(() => readProfileEffectIds(), [])
   const initialProfileEffectId = initialProfileEffectIds?.[0]
   const initialProfileConcurrency = useMemo(() => readProfileConcurrency(), [])
@@ -1386,7 +1410,7 @@ export function PfxBrowserApp() {
               antialias: PFX_MOBILE_RUNTIME_POLICY.webgl.antialias,
               alpha: PFX_MOBILE_RUNTIME_POLICY.webgl.alpha,
               powerPreference: PFX_MOBILE_RUNTIME_POLICY.webgl.powerPreference,
-              preserveDrawingBuffer: Boolean(realDeviceCapture),
+              preserveDrawingBuffer: Boolean(realDeviceCapture || reviewCapture),
             }}
           >
             <PfxStageEnvironment effectId={selected?.effect.id} reviewFraming={reviewFraming} />
@@ -1416,6 +1440,7 @@ export function PfxBrowserApp() {
                   />
                 ))
               : null}
+            {reviewCaptureToken ? <PfxReviewCaptureHandshake token={reviewCaptureToken} /> : null}
           </Canvas>
           {!reviewCameraLocked ? <span className="pfx-stage-hint">Drag to orbit · Wheel to zoom · Human reference = 1.8m</span> : null}
         </div>
@@ -2969,6 +2994,26 @@ function readReviewFraming(): PfxReviewFraming {
   if (typeof window === 'undefined') return 'gameplay-context'
   const value = new URLSearchParams(window.location.search).get('reviewFraming')
   return value === 'isolated' ? 'isolated' : 'gameplay-context'
+}
+
+function readReviewCapture(): boolean {
+  if (typeof window === 'undefined') return false
+  return new URLSearchParams(window.location.search).get('reviewCapture') === '1'
+}
+
+export function readPfxReviewCaptureToken(search?: string): string | null {
+  const resolvedSearch = search ??
+    (typeof window === 'undefined' ? '' : window.location.search)
+  const params = new URLSearchParams(resolvedSearch)
+  if (params.get('reviewCapture') !== '1') return null
+  const token = params.get('reviewCaptureToken')
+  if (
+    token == null ||
+    token.length < 1 ||
+    token.length > 200 ||
+    !/^[A-Za-z0-9._:-]+$/.test(token)
+  ) return null
+  return token
 }
 
 function readReviewTimeSeconds(): number | undefined {

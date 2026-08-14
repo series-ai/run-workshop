@@ -1473,7 +1473,7 @@ export function createPresetFromEffect(effect: PfxTaxonomyEffect): PfxPreset {
       ? 'point'
       : spawnShapeFor(effect),
     texture: textureFor(effect.effectType),
-    flipbook: flipbookFor(effect.effectType),
+    flipbook: effect.id === 'spawn-telegraph' ? 'flame-8' : flipbookFor(effect.effectType),
     blendMode: effect.effectType === 'smoke' || effect.effectType === 'weather' ? 'alpha' : 'additive',
     emissiveBloom: effect.effectType === 'ui' || effect.effectType === 'loot' ? 0.75 : 0.45,
     trailLength: effect.implementationProfile === 'trail-ribbon' ? 1.25 : 0.2,

@@ -44,7 +44,10 @@ import { createPfxSlimeRingLifecycle } from '../effects/slimeRing'
 import { createPfxSnowBurstLifecycle } from '../effects/snowBurst'
 import { createPfxSnowIdleLifecycle } from '../effects/snowIdle'
 import { createPfxSpawnScreenLifecycle } from '../effects/spawnScreen'
-import { createPfxTeleportHitLifecycle } from '../effects/teleportHit'
+import {
+  PFX_TELEPORT_ARRIVAL_CYCLE_MULTIPLIER,
+  createPfxTeleportHitLifecycle,
+} from '../effects/teleportHit'
 import { createPfxWaterColumnLifecycle } from '../effects/waterColumn'
 import { createPfxWaterConeLifecycle } from '../effects/waterCone'
 import { createPfxWindBeamLifecycle } from '../effects/windBeam'
@@ -113,12 +116,123 @@ export function getPfxSurfaceAnimationProps(
       signature: `jump-pickup:${lifecycle.stage}`,
     }
   }
+  if (surface.tuning?.lifecycle === 'spawn-telegraph-assembly') {
+    const timeScale = Math.max(0.05, controls.timing) * styleProfile.motionMultiplier * Math.max(0.1, tempo)
+    const period = Math.max(0.3, Math.max(0.25, controls.lifetime)) * PFX_BURST_CYCLE_MULTIPLIER
+    const cycle = ((elapsedSeconds * timeScale) % (period * Math.max(1, cycleScale))) / period
+    const lifecycle = createPfxSpawnScreenLifecycle(cycle)
+    const layer = surface.phase?.includes('ground-boundary')
+      ? 'boundary'
+      : surface.phase?.includes('avatar-materialization')
+        ? 'avatar'
+        : surface.phase?.includes('release-wake')
+          ? 'wake'
+        : 'cage'
+    if (lifecycle.stage === 'rest') {
+      return {
+        rotationZ: 0,
+        xOffset: 0,
+        yOffset: 0,
+        scaleMultiplier: 0,
+        opacityMultiplier: 0,
+        signature: `spawn-telegraph:${layer}:rest`,
+      }
+    }
+    const releaseProgress = lifecycle.stage === 'release'
+      ? THREE.MathUtils.clamp(1 - lifecycle.energy / 0.85, 0, 1)
+      : 0
+    const release = Math.sqrt(releaseProgress)
+    const acquireProgress = lifecycle.stage === 'acquire'
+      ? THREE.MathUtils.clamp((lifecycle.energy - 0.46) / 0.54, 0, 1)
+      : 1
+    const materializeProgress = lifecycle.stage === 'materialize'
+      ? THREE.MathUtils.clamp((cycle - 0.18) / 0.32, 0, 1)
+      : 1
+    const opacityMultiplier = layer === 'boundary'
+      ? lifecycle.stage === 'release'
+        ? 0.28 * Math.pow(1 - releaseProgress, 0.95)
+        : lifecycle.stage === 'acquire'
+          ? 1.1 + acquireProgress * 0.2
+          : lifecycle.stage === 'materialize'
+            ? 1.28 - materializeProgress * 0.74
+            : 0.54
+      : layer === 'wake'
+        ? lifecycle.stage === 'acquire'
+          ? 0.16 + acquireProgress * 0.14
+          : lifecycle.stage === 'materialize'
+            ? 0.16 + Math.pow(materializeProgress, 1.2) * 0.76
+            : lifecycle.stage === 'confirm'
+              ? 0.9
+              : lifecycle.stage === 'release'
+                ? 0.92 * Math.pow(1 - releaseProgress, 0.42)
+                : 0
+      : layer === 'avatar'
+        ? lifecycle.stage === 'acquire'
+          ? 0.42 + Math.pow(acquireProgress, 0.9) * 0.48
+          : lifecycle.stage === 'materialize'
+            ? 0.76 - materializeProgress * 0.44
+          : lifecycle.stage === 'confirm'
+            ? 0.44
+          : lifecycle.stage === 'release'
+            ? 0.44 * Math.pow(1 - releaseProgress, 0.55)
+            : Math.pow(lifecycle.energy, 1.35)
+        : lifecycle.stage === 'acquire'
+          ? 0.12 + acquireProgress * 0.88
+          : lifecycle.stage === 'release'
+            ? Math.pow(1 - release, 1.85)
+            : 0.58 + lifecycle.energy * 0.42
+    const scaleMultiplier = layer === 'boundary'
+      ? lifecycle.stage === 'release'
+        ? 1 - release * 0.12
+        : lifecycle.stage === 'acquire'
+          ? 0.78 + acquireProgress * 0.22
+          : 0.76 + lifecycle.energy * 0.24
+      : layer === 'wake'
+        ? lifecycle.stage === 'acquire'
+          ? 1.3 - acquireProgress * 0.15
+          : lifecycle.stage === 'materialize'
+            ? 1.15 - Math.pow(materializeProgress, 2) * 0.82
+          : lifecycle.stage === 'confirm'
+              ? 0.78
+              : lifecycle.stage === 'release'
+                ? 0.9 + releaseProgress * 0.3
+                : 0
+      : layer === 'avatar'
+        ? lifecycle.stage === 'acquire'
+          ? 1
+          : lifecycle.stage === 'materialize'
+            ? 1 + materializeProgress * 0.2
+            : lifecycle.stage === 'confirm'
+              ? 0.96
+            : lifecycle.stage === 'release'
+              ? 0.96 + release * 0.08
+              : 1
+        : lifecycle.stage === 'release' ? 1 - release * 0.32 : 0.72 + lifecycle.energy * 0.28
+    const yOffset = layer === 'avatar'
+      ? releaseProgress * 0.12
+      : layer === 'wake'
+        ? releaseProgress * 0.16
+      : layer === 'cage'
+        ? release * 0.05
+        : 0
+    return {
+      rotationZ: 0,
+      xOffset: 0,
+      yOffset: roundMetric(yOffset),
+      scaleMultiplier: roundMetric(scaleMultiplier),
+      opacityMultiplier: roundMetric(opacityMultiplier),
+      signature: `spawn-telegraph:${layer}:${lifecycle.stage}`,
+    }
+  }
   if (surface.tuning?.lifecycle === 'spawn-screen-transition') {
     const timeScale = Math.max(0.05, controls.timing) * styleProfile.motionMultiplier * Math.max(0.1, tempo)
     const period = Math.max(0.3, Math.max(0.25, controls.lifetime)) * PFX_BURST_CYCLE_MULTIPLIER
     const cycle = ((elapsedSeconds * timeScale) % (period * Math.max(1, cycleScale))) / period
     const lifecycle = createPfxSpawnScreenLifecycle(cycle)
-    const isReticle = surface.tuning?.meshGeometry === 'spawn-screen-reticle'
+    const isReticle = surface.tuning?.meshGeometry === 'spawn-screen-reticle' ||
+      surface.tuning?.meshGeometry === 'spawn-telegraph-volumetric-reticle' ||
+      surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-cage' ||
+      surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-avatar'
     const isBloom = surface.kind === 'screen-plane'
     const isSeed = surface.phase?.includes('materialization-seed') ?? false
     const surfaceScale = isReticle
@@ -734,7 +848,8 @@ export function getPfxSurfaceAnimationProps(
   }
   if ((surface.tuning?.lifecycle as string | undefined) === 'teleport-hit-arrival') {
     const timeScale = Math.max(0.05, controls.timing) * styleProfile.motionMultiplier * Math.max(0.1, tempo)
-    const period = Math.max(0.3, Math.max(0.25, controls.lifetime)) * PFX_BURST_CYCLE_MULTIPLIER
+    const period = Math.max(0.3, Math.max(0.25, controls.lifetime)) *
+      PFX_TELEPORT_ARRIVAL_CYCLE_MULTIPLIER
     const cycle = ((elapsedSeconds * timeScale) % (period * Math.max(1, cycleScale))) / period
     const lifecycle = createPfxTeleportHitLifecycle(cycle)
     return {

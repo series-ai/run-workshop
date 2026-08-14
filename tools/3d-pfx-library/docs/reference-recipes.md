@@ -200,6 +200,48 @@ Entry mirrors exit exactly (same palette; beam first, un-dissolve top-down,
 sparkles fall). The 2-step noise band IS the glowing dissolve edge; everything
 brightest lives inside a 0.15s window.
 
+## Spawn / materialization telegraph (particle-first)
+
+Sources: Brackeys `vfx-in-godot` project and VFX Bundle (CC0); three.quarks
+particle system for three.js (MIT); Bevy Hanabi firework example (MIT);
+Effekseer editor/runtime (MIT); Marinho's Godot visual-effects collection
+(MIT). These are technique references; shipped sprite art remains the bundled
+CC0 Kenney atlas and implementation code remains ours.
+
+- Brackeys `vfx-in-godot`: https://github.com/Brackeys/vfx-in-godot
+- three.quarks examples: https://github.com/Alchemist0823/three.quarks
+- Bevy Hanabi examples: https://github.com/djeedai/bevy_hanabi
+- Effekseer samples and runtime: https://github.com/effekseer/Effekseer
+- Marinho Godot visual effects: https://github.com/marinho/godot-visual-effects
+
+1. **Inward gather** — a sustained 3D volume of stretched streak particles,
+   distributed through front and back depth lanes and converging on the spawn
+   locus. Randomize speed, size, lifetime, and azimuth so the warning reads as
+   organized energy rather than a rigid cage. This layer owns the actionable
+   lead time.
+2. **Materialization flash** — a compact, short-lived radial sprite burst
+   triggered near the end of the gather. It is the brightest and largest beat,
+   but exists only long enough to declare the exact spawn instant.
+3. **Release wake** — a sparser upward/outward particle layer beginning after
+   the flash, with slower particles and a longer, varied lifetime. It carries
+   energy away from the locus and proves decay instead of freezing or popping
+   out.
+
+The reusable pattern across these references is multiple purpose-built
+emitters, not one emitter with every behavior mixed together. Brackeys'
+CC0 scenes separate fire, smoke, sparks, debris, and shock layers and vary
+their lifetime, velocity, size, and alpha curves. Hanabi uses parent death
+events to trigger trail and explosion children. three.quarks and Effekseer
+likewise expose billboard/stretched-billboard modes, emitter shapes, and
+over-life modules as distinct composition tools.
+
+Use one deterministic lifecycle clock for all three layers. Review onset,
+peak, and decay from front, three-quarter, and side at one honest camera
+distance. Do not place a completed character, proxy body, cage, or decorative
+closed mesh in the warning frame. A mesh is appropriate only when the effect
+actually communicates a material surface or semantic boundary (for example a
+force field), not as a substitute for traditional particle structure.
+
 ## Healing aura (loop, 2.0s cadence)
 
 Sources: RealtimeVFX healing feedback thread (t/6617 — "activation, buildup,
