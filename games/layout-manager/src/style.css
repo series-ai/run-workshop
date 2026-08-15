@@ -5675,6 +5675,38 @@ button.btn-large {
   word-break: break-word;
 }
 
+/* Category buttons sit where the cursor lands when the Unity panel opens, and
+   the shared teal hover border reads as "selected" — keep their hover neutral
+   so only the genuinely active category shows teal */
+.ai-modal-cat-btn:hover:not(.ai-modal-ratio-btn-active) {
+  border-color: var(--color-border);
+  background: rgba(var(--color-text-primary-rgb), 0.12);
+  color: var(--color-text-primary);
+}
+
+.ai-modal-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: rgba(var(--color-text-primary-rgb), 0.04);
+  color: var(--color-text-primary);
+  font-size: 12px;
+}
+
+.ai-modal-status-ok {
+  border-color: rgba(46, 204, 113, 0.5);
+  background: rgba(46, 204, 113, 0.1);
+}
+
+.ai-modal-status-bad {
+  border-color: rgba(231, 76, 60, 0.5);
+  background: rgba(231, 76, 60, 0.1);
+}
+
 .comfy-estimate {
   font-size: 13px;
   color: var(--color-text-primary);

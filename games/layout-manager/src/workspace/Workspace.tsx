@@ -30,6 +30,7 @@ import { TextToImageModal } from './ai/TextToImageModal';
 import { RemoveBgModal } from './ai/RemoveBgModal';
 import { LayerizeModal } from './ai/LayerizeModal';
 import { ComfyModal } from './ai/ComfyModal';
+import { UnityAiModal } from './ai/UnityAiModal';
 import { useAlignedPosition } from './ai/useDraggableModal';
 import { AiChatPanel, type ChatMessage } from './ai/AiChatPanel';
 import { registerWorkspaceSampler } from './workspaceSampler';
@@ -186,6 +187,8 @@ export function Workspace() {
   const [aiComfyWorkflow, setAiComfyWorkflow] = useState<string>('');
   const [aiComfyInputs, setAiComfyInputs] = useState<Record<string, string | number>>({});
   const [aiChatOpen, setAiChatOpen] = useState(false);
+  const [aiUnityOpen, setAiUnityOpen] = useState(false);
+  const [aiUnityPrompt, setAiUnityPrompt] = useState('');
   // Last AI output's placement — batch outputs chain to the right of it
   const lastAiOutputRef = useRef<{ x: number; y: number; w: number } | null>(null);
   // Per-element rasterize-preview snapshots (display-resolution renders shown
@@ -406,7 +409,7 @@ export function Workspace() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Block all workspace shortcuts when AI modals are open
-      if (aiTextToImageOpen || aiRemoveBgOpen || aiLayerizeOpen || aiChatOpen || aiComfyOpen) {
+      if (aiTextToImageOpen || aiRemoveBgOpen || aiLayerizeOpen || aiChatOpen || aiComfyOpen || aiUnityOpen) {
         const tag = (document.activeElement as HTMLElement)?.tagName;
         const typing = tag === 'TEXTAREA' || tag === 'INPUT' || (document.activeElement as HTMLElement)?.isContentEditable;
         // Exception: Ctrl+Arrow alignment still works while AI panels are open —
@@ -2270,7 +2273,7 @@ export function Workspace() {
       })}
 
       {/* Screen-space node action buttons (lock, onion, attach, delete) */}
-      {!maskMode && (() => { const anyAiOpen = aiTextToImageOpen || aiRemoveBgOpen || aiLayerizeOpen || aiChatOpen || aiComfyOpen; return state.images.map((img) => {
+      {!maskMode && (() => { const anyAiOpen = aiTextToImageOpen || aiRemoveBgOpen || aiLayerizeOpen || aiChatOpen || aiComfyOpen || aiUnityOpen; return state.images.map((img) => {
         const isSelected = state.selectedIds.has(img.id);
         const isSingle = state.selectedIds.size === 1;
         const showLocked = img.locked;
@@ -2592,14 +2595,16 @@ export function Workspace() {
         onMenuOpenChange={setHamburgerOpen}
         editMode={!!maskMode}
         aiHidden={userConfig.aiHidden}
-        onAiTextToImage={() => { if (!aiProgress) { setAiTextToImageOpen((v) => { if (!v) { setAiRemoveBgOpen(false); setAiLayerizeOpen(false); setAiComfyOpen(false); } return !v; }); } }}
+        onAiTextToImage={() => { if (!aiProgress) { setAiTextToImageOpen((v) => { if (!v) { setAiRemoveBgOpen(false); setAiLayerizeOpen(false); setAiComfyOpen(false); setAiUnityOpen(false); } return !v; }); } }}
         onAiBgRemoval={handleAiBgRemoval}
-        onAiComfy={() => { if (!aiProgress) { setAiComfyOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiRemoveBgOpen(false); setAiLayerizeOpen(false); } return !v; }); } }}
+        onAiComfy={() => { if (!aiProgress) { setAiComfyOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiRemoveBgOpen(false); setAiLayerizeOpen(false); setAiUnityOpen(false); } return !v; }); } }}
         aiComfyOpen={aiComfyOpen}
+        onAiUnity={() => { if (!aiProgress) { setAiUnityOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiRemoveBgOpen(false); setAiLayerizeOpen(false); setAiComfyOpen(false); } return !v; }); } }}
+        aiUnityOpen={aiUnityOpen}
         onAiChat={() => setAiChatOpen((v) => !v)}
         aiTextToImageOpen={aiTextToImageOpen}
         aiRemoveBgOpen={aiRemoveBgOpen}
-        onAiLayerize={() => { if (!aiProgress) { setAiLayerizeOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiRemoveBgOpen(false); setAiComfyOpen(false); } return !v; }); } }}
+        onAiLayerize={() => { if (!aiProgress) { setAiLayerizeOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiRemoveBgOpen(false); setAiComfyOpen(false); setAiUnityOpen(false); } return !v; }); } }}
         aiLayerizeOpen={aiLayerizeOpen}
         aiChatOpen={aiChatOpen}
         historyPast={historyDepth.past}
@@ -2697,6 +2702,56 @@ export function Workspace() {
           }}
           onProgress={setAiProgress}
           onClose={() => setAiTextToImageOpen(false)}
+        />
+      )}
+
+      {aiUnityOpen && (
+        <UnityAiModal
+          config={userConfig}
+          prompt={aiUnityPrompt}
+          onPromptChange={setAiUnityPrompt}
+          position={aiModalPosition}
+          refNodes={state.images.filter((i) => state.selectedIds.has(i.id) && i.nodeType !== 'text')}
+          onGenerated={(localUrl, w, h, prompts, batchIndex) => {
+            const MAX = 1024;
+            let dw = w, dh = h;
+            if (dw > MAX || dh > MAX) {
+              const s = MAX / Math.max(dw, dh);
+              dw = Math.round(dw * s);
+              dh = Math.round(dh * s);
+            }
+            const pos = placeAiOutput(dw, dh, batchIndex);
+            dispatch({ type: 'SNAPSHOT' });
+            dispatch({
+              type: 'ADD_IMAGE',
+              image: {
+                id: crypto.randomUUID(),
+                src: localUrl,
+                fileName: 'unity_ai.png',
+                x: pos.x,
+                y: pos.y,
+                width: dw,
+                height: dh,
+                naturalWidth: w,
+                naturalHeight: h,
+                rotation: 0,
+                zIndex: 0,
+                locked: false,
+                opacity: 1,
+                spriteName: '',
+                parentId: null,
+                basePosition: null,
+                offsetPosition: null,
+                layerOrder: 'above',
+                replacesParent: false,
+                flipH: false,
+                flipV: false,
+                prompts: prompts.length > 0 ? prompts : undefined,
+              },
+            });
+          }}
+          onProgress={setAiProgress}
+          onClose={() => setAiUnityOpen(false)}
         />
       )}
 

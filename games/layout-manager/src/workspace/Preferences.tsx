@@ -649,6 +649,13 @@ function AISettings({
         onChange={(v) => onChange('ollamaModel', v)}
         placeholder="Blank = first installed model"
       />
+
+      <TextInputSetting
+        label="Unity project path"
+        value={draft.unityProjectPath}
+        onChange={(v) => onChange('unityProjectPath', v)}
+        placeholder="Blank = auto-detect the running Editor (set only if several are open)"
+      />
     </div>
   );
 }
