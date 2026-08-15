@@ -69,6 +69,9 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
 
   const [status, setStatus] = useState<UnityStatus>({ checking: true });
   const [models, setModels] = useState<UnityModel[] | null>(null);
+  // Which project the catalog was fetched from — a re-check or Preferences
+  // override can switch Editors, and the old catalog must not survive that
+  const [modelsProject, setModelsProject] = useState<string | null>(null);
   const [modelsError, setModelsError] = useState<string | null>(null);
   const [modelId, setModelId] = useState('');
   const [search, setSearch] = useState('');
@@ -95,12 +98,13 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
 
   // Model list: fetched once the Editor is confirmed up (server caches it)
   useEffect(() => {
-    if (status.checking || !status.up || models) return;
+    const target = status.project ?? projectPath;
+    if (status.checking || !status.up || (models && modelsProject === target)) return;
     let cancelled = false;
     fetch('/__unity-models', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectPath: status.project ?? projectPath }),
+      body: JSON.stringify({ projectPath: target }),
     })
       .then((r) => r.json())
       .then((j) => {
@@ -108,6 +112,7 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
         if (j.error) { setModelsError(j.error); return; }
         const list = (j.models as UnityModel[]).filter(isImageModel);
         setModels(list);
+        setModelsProject(target);
         if (!list.some((m) => m.id === modelId)) {
           setModelId(list.find((m) => m.id === 'gemini-3.1-flash')?.id ?? list[0]?.id ?? '');
         }
@@ -115,7 +120,7 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
       .catch((e) => { if (!cancelled) setModelsError(e instanceof Error ? e.message : 'Could not load models'); });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, projectPath]);
+  }, [status, projectPath, modelsProject]);
 
   // The status probe resolves which project/Editor to talk to (auto-detected
   // when no path is configured) — models and generation follow it
@@ -165,9 +170,10 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeGroup?.name, searching, shownModels.length]);
 
-  // Utilities (upscale, recolor, bg removal) transform the reference image —
-  // no prompt needed as long as a usable reference is attached
-  const canGenerate = !!prompt.trim() || useRefImage;
+  // Utilities transform the reference image: upscalers REQUIRE a reference
+  // (running one without an image would spend points on nothing), while for
+  // other models a reference makes the prompt optional
+  const canGenerate = UPSCALERS.has(modelId) ? useRefImage : (!!prompt.trim() || useRefImage);
 
   const handleGenerate = useCallback(async () => {
     if (!canGenerate || generating || !modelId) return;
@@ -419,6 +425,9 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
             )}
             {refNodes.length > 0 && !supportsRefs && selected && (
               <span className="ai-modal-size-hint">Selected model does not support reference images</span>
+            )}
+            {UPSCALERS.has(modelId) && !useRefImage && (
+              <span className="ai-modal-size-hint">This upscaler needs an image — select one on the canvas first</span>
             )}
 
             {/* div for the same reason: empty-space clicks would hit the copy button */}

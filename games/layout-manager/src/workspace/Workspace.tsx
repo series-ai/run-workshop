@@ -1337,7 +1337,7 @@ export function Workspace() {
   // --- AI: Background removal ---
   const handleAiBgRemoval = useCallback(() => {
     if (!aiProgress) {
-      setAiRemoveBgOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiLayerizeOpen(false); setAiComfyOpen(false); } return !v; });
+      setAiRemoveBgOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiLayerizeOpen(false); setAiComfyOpen(false); setAiUnityOpen(false); } return !v; });
     }
   }, [aiProgress]);
 
