@@ -472,7 +472,11 @@ var msgsVal = handleType.GetProperty("Messages", flags).GetValue(handle);
 if (msgsVal is System.Collections.IEnumerable en && !(msgsVal is string)) { foreach (var m in en) msgs += m + " | "; }
 else if (msgsVal != null) msgs = msgsVal.ToString();
 var cost = handleType.GetProperty("PointCost", flags).GetValue(handle);
-return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" + stat("DownloadTask") + " cost=" + cost + (msgs.Length > 0 ? " msgs=" + msgs.TrimEnd(' ', '|') : "");`;
+// Where Unity is ACTUALLY writing — can differ from the requested SavePath
+var ph = handleType.GetProperty("Placeholder", flags).GetValue(handle);
+var ppath = "";
+if (ph is UnityEngine.Object po) ppath = UnityEditor.AssetDatabase.GetAssetPath(po) ?? "";
+return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" + stat("DownloadTask") + " cost=" + cost + " path=" + ppath + (msgs.Length > 0 ? " msgs=" + msgs.TrimEnd(' ', '|') : "");`;
 
           // Poll: the file size moving away from both the pre-existing size
           // and the generator's blank placeholder — then holding steady — is
@@ -481,6 +485,11 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
           const maxWaitMs = 15 * 60 * 1000;
           const startAt = Date.now();
           let placeholderBytes = -1, lastBytes = -1, lastStage = '';
+          // Follow the file Unity is ACTUALLY writing (the handle's Placeholder
+          // asset), not just the path we asked for — some generators redirect
+          let watchRel = outRel;
+          let watchAbs = absOut;
+          let watchPre = preBytes;
           let done = false;
           while (Date.now() - startAt < maxWaitMs) {
             if (clientGone) break;
@@ -490,6 +499,15 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
             if (poll.includes('FAULTED:')) throw new Error(`Unity generation failed after ${elapsed}s: ${poll}`);
             const cost = poll.match(/cost=(\S+)/)?.[1];
             const msgs = poll.match(/ msgs=(.*)$/)?.[1];
+            // path= runs to the next marker (project paths can contain spaces)
+            const phPath = poll.match(/ path=(.*?)(?= msgs=|$)/)?.[1]?.trim();
+            if (phPath && phPath !== watchRel) {
+              watchRel = phPath;
+              watchAbs = pathMod.join(projectPath, watchRel);
+              watchPre = -1;
+              placeholderBytes = -1;
+              lastBytes = -1;
+            }
             const stage = poll.includes('v=Running') ? 'Validating prompt/model'
               : poll.includes('g=Running') ? 'Generating on Unity servers'
               : poll.includes('dl=Done') ? 'Finalizing'
@@ -499,11 +517,11 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
               send('progress', { message: `${stage}...`, elapsed, cost, serverMessage: msgs });
               lastStage = stage;
             }
-            const bytes = await fsMod.stat(absOut).then((s) => s.size, () => -1);
+            const bytes = await fsMod.stat(watchAbs).then((s) => s.size, () => -1);
             const dlDone = poll.includes('dl=Done');
-            if (dlDone && bytes > 0 && bytes !== preBytes) { done = true; break; }
+            if (dlDone && bytes > 0 && bytes !== watchPre) { done = true; break; }
             if (placeholderBytes < 0 && bytes >= 0) placeholderBytes = bytes;
-            if (bytes > 0 && bytes !== preBytes && bytes !== placeholderBytes) {
+            if (bytes > 0 && bytes !== watchPre && bytes !== placeholderBytes) {
               if (bytes === lastBytes) { done = true; break; }
               lastBytes = bytes;
               await new Promise((r) => setTimeout(r, 3000));
@@ -513,7 +531,7 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
           }
           if (clientGone) return;
           if (!done) throw new Error('No result after 15 minutes — the job may still finish inside the Editor; check there before regenerating (it costs points).');
-          const buf = await fsMod.readFile(absOut);
+          const buf = await fsMod.readFile(watchAbs);
           send('image', { dataUrl: `data:image/png;base64,${buf.toString('base64')}` });
           send('done', {});
         } catch (e) {
