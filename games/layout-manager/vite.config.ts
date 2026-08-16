@@ -521,7 +521,12 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
             const dlDone = poll.includes('dl=Done');
             if (dlDone && bytes > 0 && bytes !== watchPre) { done = true; break; }
             if (placeholderBytes < 0 && bytes >= 0) placeholderBytes = bytes;
-            if (bytes > 0 && bytes !== watchPre && bytes !== placeholderBytes) {
+            // A file already at real-image size when first seen (late path
+            // discovery, atomic write) would wrongly become the "blank
+            // placeholder" baseline — blank placeholders are ~18KB, so a
+            // large stable file counts as done even when it equals the
+            // baseline and DownloadTask never reports Done
+            if (bytes > 0 && bytes !== watchPre && (bytes !== placeholderBytes || bytes >= 80_000)) {
               if (bytes === lastBytes) { done = true; break; }
               lastBytes = bytes;
               await new Promise((r) => setTimeout(r, 3000));
