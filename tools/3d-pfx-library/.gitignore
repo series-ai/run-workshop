@@ -3,3 +3,9 @@ dist/
 .profiles/
 *.tsbuildinfo
 .context/
+
+# A/B visual review output (clips, sheets, page)
+.ab-review/
+
+# Local burger-shop capture output
+.previews/

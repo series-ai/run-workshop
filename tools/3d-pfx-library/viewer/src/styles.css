@@ -23,6 +23,79 @@ textarea {
   font: inherit;
 }
 
+.burger-review {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  background: #1a2230;
+}
+
+.burger-review-bar {
+  position: relative;
+  z-index: 5;
+  flex: 0 0 auto;
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  background: #0f172a;
+  border-bottom: 1px solid #334155;
+}
+
+.burger-review-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+
+.burger-review-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: baseline;
+  color: #e5e7eb;
+}
+
+.burger-review-title span {
+  font-size: 12px;
+  opacity: 0.72;
+}
+
+.burger-review-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.burger-review-actions button,
+.burger-review-nav button {
+  border: 1px solid #475569;
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 999px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.burger-review-nav {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.burger-review-nav button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.burger-review-nav button.is-active,
+.burger-review-actions button:hover,
+.burger-review-nav button:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #f8fafc;
+}
+
 .pfx-shell {
   display: block;
   min-height: 100vh;

@@ -41,3 +41,10 @@ courtesy. First-party original assets in this tool
 embedded muzzle-flash / plasma-impact data in `src/`) were generated for this
 project — see the matching `assets/*.provenance.json` records
 (`thirdPartyImages: []`, `proprietaryArt: []`).
+
+## Burger Shop VFX sheets (first-party transfer)
+
+- Files: `assets/burger-shop/T_FX_*.png`
+- Source: BurgerTimeVFX `Assets/Series Burger Shop/Textures`
+- Rights: same owner as this repository; recorded in
+  `assets/burger-shop/provenance.json`. These sheets are not Kenney CC0.

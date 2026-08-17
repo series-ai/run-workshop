@@ -28,6 +28,12 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(rootDir, 'index.html'),
+        burgerShop: path.resolve(rootDir, 'burger-shop.html'),
+      },
+    },
   },
   test: {
     include: ['src/**/*.test.{ts,tsx}', 'viewer/src/**/*.test.{ts,tsx}'],
