@@ -12,7 +12,6 @@ import star02 from '../../assets/burger-shop/T_FX_Star_02.png'
 import sign from '../../assets/burger-shop/T_FX_Sign_01.png'
 import arrow from '../../assets/burger-shop/T_FX_Arrow_01.png'
 import glow from '../../assets/burger-shop/T_FX_Glow_01.png'
-import coin from '../../assets/burger-shop/T_FX_Coin_01.png'
 import sunshine from '../../assets/burger-shop/T_FX_Sunshine_02.png'
 import confetti from '../../assets/burger-shop/T_FX_Confetti_01.png'
 
@@ -30,7 +29,6 @@ export const BURGER_SHOP_TEXTURE_URLS: Record<BurgerShopTextureId, string> = {
   sign,
   arrow,
   glow,
-  coin,
   sunshine,
   confetti,
 }

@@ -12,7 +12,6 @@ export type BurgerShopTextureId =
   | 'sign'
   | 'arrow'
   | 'glow'
-  | 'coin'
   | 'sunshine'
   | 'confetti'
 
@@ -34,7 +33,7 @@ export interface BurgerShopRange {
 
 export interface BurgerShopEmitter {
   name: string
-  texture: BurgerShopTextureId
+  texture: string
   sheet: { columns: number; rows: number }
   billboard: BurgerShopBillboard
   blend: BurgerShopBlend
@@ -51,6 +50,8 @@ export interface BurgerShopEmitter {
   shape: BurgerShopShape
   sizeOverLife?: [number, number]
   sizeCurve?: { t: number; v: number }[]
+  /** Keep a random sheet cell instead of playing the grid as a flipbook. */
+  sheetVariant?: boolean
   rotateOverLife?: boolean
   startRotation?: BurgerShopRange
   noise?: BurgerShopRange
@@ -61,6 +62,8 @@ export interface BurgerShopEmitter {
   localPosition?: [number, number, number]
   localScale?: [number, number, number]
   minHeight?: number
+  /** Unity Velocity over Lifetime, world space. */
+  worldVelocity?: [number, number, number]
 }
 
 export interface BurgerShopRecipe {

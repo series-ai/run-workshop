@@ -1,0 +1,127 @@
+{
+  "schema": "3d-pfx-library.third-party-transfer.v1",
+  "assetId": "pirate-nation-mit-vfx-stamps-v1",
+  "license": "MIT",
+  "spdxLicense": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "licenseFile": "LICENSE",
+  "upstream": {
+    "project": "Pirate Nation Unity game client",
+    "copyrightHolder": "Proof of Play, Inc.",
+    "repository": "https://github.com/proofofplay/piratenation-game",
+    "pinnedCommit": "dc921b650c8a1d7c449b2a3553949d3e7c8266e9",
+    "license": "MIT"
+  },
+  "rightsNote": "MIT. Keep LICENSE with redistributed copies. These are Proof of Play original VFX stamps from the open-source client. Commercial Unity Asset Store packages (Synty POLYGON Particle FX, Cartoon FX Remaster / CFXR, Epic Toon FX) were not copied.",
+  "files": [
+    {
+      "file": "ui-rarities-grayscale-confetti.png",
+      "sourceRelativePath": "Assets/UI_Assets/Rarities/grayscale_confetti.png"
+    },
+    {
+      "file": "ui-general-vfx-godrays-01.png",
+      "sourceRelativePath": "Assets/UI_Assets/VFX/vfx_godrays_01.png"
+    },
+    {
+      "file": "ui-general-vfx-circle-soft.png",
+      "sourceRelativePath": "Assets/UI_Assets/VFX/vfx_circle_soft.png"
+    },
+    {
+      "file": "ui-general-vfx-sheen.png",
+      "sourceRelativePath": "Assets/UI_Assets/NOT_ORGANIZED/StarBasedLeaderboards/vfx_sheen.png"
+    },
+    {
+      "file": "T_Smoke_Big_2x2.png",
+      "sourceRelativePath": "Assets/_PirateNation_/Game/VFX/Materials/T_Smoke_Big_2x2.png"
+    },
+    {
+      "file": "T_Glow_Heptagon_Soft.png",
+      "sourceRelativePath": "Assets/_PirateNation_/Game/VFX/Materials/T_Glow_Heptagon_Soft.png"
+    },
+    {
+      "file": "T_VFX_CloudCards.png",
+      "sourceRelativePath": "Assets/_PirateNation_/Game/Combat/Assets/Textures/T_VFX_CloudCards.png"
+    },
+    {
+      "file": "T_VFX_CloudVR.png",
+      "sourceRelativePath": "Assets/_PirateNation_/Game/Combat/Assets/Textures/T_VFX_CloudVR.png"
+    },
+    {
+      "file": "T_VoxelNoise.png",
+      "sourceRelativePath": "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/Textures/T_VoxelNoise.png"
+    },
+    {
+      "file": "shield_fx.png",
+      "sourceRelativePath": "Assets/_PirateNation_/Game/Combat/Assets/FX/shield_fx.png"
+    },
+    {
+      "file": "vfx_sparkle.png",
+      "sourceRelativePath": "Assets/_PirateNation_/Game/Combat/Assets/Prefabs/Results_Updated/vfx_sparkle.png"
+    },
+    {
+      "file": "T_Status_Buff_BC.png",
+      "sourceRelativePath": "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/Textures/T_Status_Buff_BC.png"
+    },
+    {
+      "file": "T_Status_Debuff_BC.png",
+      "sourceRelativePath": "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/Textures/T_Status_Debuff_BC.png"
+    },
+    {
+      "file": "T_Status_Buff_Attack_BC.png",
+      "sourceRelativePath": "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/Textures/T_Status_Buff_Attack_BC.png"
+    },
+    {
+      "file": "T_Status_Buff_Up_BC.png",
+      "sourceRelativePath": "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/Textures/T_Status_Buff_Up_BC.png"
+    },
+    {
+      "file": "T_CrossedSabers.png",
+      "sourceRelativePath": "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/Textures/T_CrossedSabers.png"
+    },
+    {
+      "file": "T_Status_Shield_Broken.png",
+      "sourceRelativePath": "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/Textures/shield_broken.png"
+    }
+  ],
+  "unityPrefabsUsedForRecipes": [
+    "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/PF_VFX_Status_Buff.prefab",
+    "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/PF_VFX_Status_Debuff.prefab",
+    "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/PF_VFX_Status_BuffAttack.prefab",
+    "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/PF_VFX_Status_Buff_Heal.prefab",
+    "Assets/_PirateNation_/Game/Combat/Assets/FX/Shield.prefab",
+    "Assets/_PirateNation_/Prefabs/World/Harverstables/VFX/SparkleVFX.prefab",
+    "Assets/_PirateNation_/Game/VFX/Prefabs/VFX_Combat_Rain.prefab",
+    "Assets/_PirateNation_/Game/VFX/Prefabs/VFX_Combat_Snow.prefab",
+    "Assets/_PirateNation_/Game/VFX/Prefabs/VFX_Combat_Ash.prefab",
+    "Assets/_PirateNation_/Game/VFX/Prefabs/VFX_CombatArena_Clouds.prefab",
+    "Assets/_PirateNation_/Game/VFX/Prefabs/VFX_Disappear_Ship_Standalone.prefab",
+    "Assets/_PirateNation_/Game/VFX/Prefabs/Water/ShipTrail/ShipTrail.prefab",
+    "Assets/_PirateNation_/Game/VFX/Prefabs/VFX_CombatResults_Smoke.prefab"
+  ],
+  "notExtracted": [
+    {
+      "path": "Assets/_PirateNation_/Game/BattleVFX/Particles/Textures/PolygonParticles_*.png",
+      "reason": "Synty POLYGON Particle FX. Commercial Asset Store pack. License does not permit redistribution here."
+    },
+    {
+      "path": "Assets/_PirateNation_/Game/BattleVFX/Particles/Prefabs/FX_*.prefab",
+      "reason": "Synty POLYGON Particle FX prefabs, including FX_Heal_02 used by PF_VFX_Status_Buff_Heal."
+    },
+    {
+      "path": "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Shaders/CFXR/",
+      "reason": "Cartoon FX Remaster (Jean Moreno) shaders. Commercial. First-party status textures those shaders sample were copied; the shaders were not."
+    },
+    {
+      "path": "Assets/_PirateNation_/Game/Combat/Assets/FX/Lightning.prefab",
+      "reason": "Uses Synty PolygonParticleFX materials."
+    },
+    {
+      "path": "Assets/_PirateNation_/Game/Combat/Assets/FX/Canon Fire VFX.prefab",
+      "reason": "Uses Synty FX_CannonShot_01."
+    },
+    {
+      "path": "Assets/ThirdPartyResources/Epic Toon FX/",
+      "reason": "Removed from the open-source release. Commercial."
+    }
+  ]
+}

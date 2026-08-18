@@ -135,6 +135,11 @@ export function spawnParticle(
     color: pickColor(emitter.color, random),
     sheetIndex: Math.floor(random() * sheetCount),
   }
+  if (emitter.worldVelocity) {
+    particle.vx += emitter.worldVelocity[0]
+    particle.vy += emitter.worldVelocity[1]
+    particle.vz += emitter.worldVelocity[2]
+  }
   if (emitter.minHeight != null && particle.y < emitter.minHeight) particle.y = emitter.minHeight
   return particle
 }
@@ -173,6 +178,7 @@ export function liveSize(particle: BurgerShopParticle, emitter: BurgerShopEmitte
 export function sheetFrame(particle: BurgerShopParticle, emitter: BurgerShopEmitter): number {
   const count = Math.max(1, emitter.sheet.columns * emitter.sheet.rows)
   if (count === 1) return 0
+  if (emitter.sheetVariant) return Math.min(count - 1, particle.sheetIndex)
   return Math.min(count - 1, Math.floor((particle.age / particle.life) * count))
 }
 

@@ -27,7 +27,6 @@ describe('BurgerTime faithful shop pack', () => {
       'poof-02',
       'smoke',
       'sunshine',
-      'storefront',
       'table-first-purchase',
       'table-upgrade',
       'unlock-area',
@@ -43,7 +42,6 @@ describe('BurgerTime faithful shop pack', () => {
       'FX_Poof_02',
       'FX_Smoke_01',
       'FX_Sunshine_01',
-      'FX_Storefront',
       'FX_Table_Station_First_Purchase_01',
       'FX_Table_Station_Upgrade_01',
       'FX_Unlock_Area_01',
@@ -108,15 +106,11 @@ describe('BurgerTime faithful shop pack', () => {
     }
   })
 
-  it('keeps fly art as one sprite and coin art as a 4x3 spin sheet', () => {
+  it('keeps fly art as one sprite and shop sheets as authored Unity cuts', () => {
     const flies = BURGER_SHOP_RECIPES.find((recipe) => recipe.id === 'flies')
     expect(flies?.emitters[0]?.sheet).toEqual({ columns: 1, rows: 1 })
     expect(flies?.emitters[0]?.texture).toBe('flies')
     expect(flies?.emitters[0]?.blend).toBe('cutout')
-    const storefront = BURGER_SHOP_RECIPES.find((recipe) => recipe.id === 'storefront')
-    const coin = storefront?.emitters.find((emitter) => emitter.name === 'Coin')
-    expect(coin?.sheet).toEqual({ columns: 4, rows: 3 })
-    expect(coin?.trailLife).toBeUndefined()
     const tableUpgrade = BURGER_SHOP_RECIPES.find((recipe) => recipe.id === 'table-upgrade')
     for (const emitter of tableUpgrade?.emitters ?? []) {
       expect(emitter.sheet).toEqual({ columns: 1, rows: 1 })

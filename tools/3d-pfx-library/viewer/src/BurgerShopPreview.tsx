@@ -64,7 +64,6 @@ export function BurgerShopPreview() {
 
   const camera = useMemo(() => {
     if (effectId === 'sunshine') return { position: [0.2, 1.6, 5.8] as const, target: [0, 1.1, 0] as const, fov: 40 }
-    if (effectId === 'storefront') return { position: [3.4, 3.8, 8.2] as const, target: [0.4, 2.2, 0] as const, fov: 42 }
     if (effectId === 'smoke') return { position: [1.8, 1.8, 3.0] as const, target: [0, 1.1, 0] as const, fov: 40 }
     if (effectId === 'flies') return { position: [1.2, 0.95, 1.8] as const, target: [0, 0.4, 0] as const, fov: 36 }
     if (effectId === 'confetti-02') return { position: [1.15, 0.85, 1.85] as const, target: [0, 0.2, 0] as const, fov: 36 }

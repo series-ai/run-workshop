@@ -2,7 +2,7 @@
   "schema": "3d-pfx-library.first-party-transfer.v1",
   "assetId": "burger-shop-unity-sheets-v1",
   "createdAt": "2026-08-15",
-  "sourceRepo": "/Users/pany/dev/BurgerTimeVFX",
+  "sourceRepo": "BurgerTimeVFX (first-party sibling project; same owner as this repository)",
   "sourcePath": "Assets/Series Burger Shop/Textures",
   "rightsNote": "First-party transfer. The same owner holds BurgerTimeVFX and this library. These sheets are not Kenney CC0 and must stay attributed as BurgerTimeVFX original art.",
   "thirdPartyImages": [],
