@@ -133,6 +133,10 @@ describe('inspect packs', () => {
       'Glow',
     ])
     expect(getPirateUnityRecipe('pirate-confetti').emitters[0]?.burst).toEqual({ min: 28, max: 28 })
+    expect(getPirateUnityRecipe('pirate-confetti').emitters[0]?.sheetVariant).toBe(true)
+    expect(getPirateUnityRecipe('pirate-confetti').emitters.find((emitter) => emitter.name === 'Clouds')?.sheetVariant).toBe(
+      true,
+    )
     expect(getPirateUnityRecipe('pirate-disappear').emitters[0]?.speed.max).toBeLessThan(8)
     expect(getPirateUnityRecipe('pirate-ship-wake').emitters[0]?.billboard).toBe('horizontal')
     const sparkle = getPirateUnityRecipe('pirate-sparkle')
