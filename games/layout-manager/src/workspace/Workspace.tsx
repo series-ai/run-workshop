@@ -1492,7 +1492,32 @@ export function Workspace() {
   );
 
   // Save selected images as individual files
-  const handleSaveImages = useCallback(async (ids: string[], mode: '1:1' | 'display') => {
+  const handleSaveImages = useCallback((ids: string[], mode: '1:1' | 'display') => {
+    // Downloads must start inside the user's click — compositing takes long
+    // enough that the gesture expires and the browser holds the downloads
+    // until the next interaction ("wiggle the mouse" bug). Start every
+    // download NOW against a rendezvous ticket the dev server holds open,
+    // then composite and stream the bytes into it.
+    const jobs = ids.flatMap((id) => {
+      const node = state.images.find((i) => i.id === id);
+      if (!node) return [];
+      const baseName = node.spriteName || node.fileName.replace(/\.[^.]+$/, '') || 'image';
+      return [{ id, ticket: crypto.randomUUID(), baseName }];
+    });
+    for (const job of jobs) {
+      const a = document.createElement('a');
+      a.href = `/__download/${job.ticket}/${encodeURIComponent(job.baseName)}.png`;
+      a.download = `${job.baseName}.png`;
+      a.click();
+    }
+
+    void saveImagesAsync(jobs, mode);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.images, state.scaleFilter]);
+
+  const saveImagesAsync = useCallback(async (jobs: { id: string; ticket: string; baseName: string }[], mode: '1:1' | 'display') => {
+    const fulfill = (ticket: string, body: Blob | null) =>
+      fetch(`/__download-fulfill/${ticket}`, { method: 'POST', body: body ?? new Blob([]) }).catch(() => {});
     const loadImg = (src: string): Promise<HTMLImageElement> => new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve(img);
@@ -1506,9 +1531,9 @@ export function Workspace() {
       img.src = src;
     });
 
-    for (const id of ids) {
-      const node = state.images.find((i) => i.id === id);
-      if (!node) continue;
+    for (const job of jobs) {
+      const node = state.images.find((i) => i.id === job.id);
+      if (!node) { void fulfill(job.ticket, null); continue; }
 
       let srcX = 0, srcY = 0, srcW = node.naturalWidth, srcH = node.naturalHeight;
       if (node.cropRect) {
@@ -1597,17 +1622,11 @@ export function Workspace() {
         const blob = await new Promise<Blob | null>((resolve) => {
           offscreen.toBlob((b) => resolve(b), 'image/png');
         });
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          const baseName = node.spriteName || node.fileName.replace(/\.[^.]+$/, '') || 'image';
-          a.download = `${baseName}.png`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }
+        // Stream into the download that started at click time (null aborts it)
+        await fulfill(job.ticket, blob);
       } catch (e) {
         console.error('Failed to save image:', node.fileName, e);
+        void fulfill(job.ticket, null);
       }
     }
   }, [state.images, state.scaleFilter]);

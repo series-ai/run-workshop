@@ -61,6 +61,79 @@ function imageProxyPlugin(): Plugin {
         }
       });
 
+      // ====== Gesture-safe downloads (ticket rendezvous) ======
+      // Browser downloads must start inside a user gesture, but image
+      // compositing finishes long after the gesture expires. The client
+      // clicks a download link to /__download/<ticket>/<name> synchronously
+      // in the gesture (dialog appears immediately), then composites and
+      // POSTs the bytes to /__download-fulfill/<ticket>; we stream them into
+      // the already-started download. Tickets are client-minted UUIDs.
+      interface DownloadTicket { res?: import('node:http').ServerResponse; data?: Buffer; failed?: boolean; timer: NodeJS.Timeout }
+      const downloadTickets = new Map<string, DownloadTicket>();
+      const ticketCleanup = (id: string) => {
+        const t = downloadTickets.get(id);
+        if (t) { clearTimeout(t.timer); downloadTickets.delete(id); }
+      };
+      const newTicket = (id: string): DownloadTicket => {
+        const t: DownloadTicket = {
+          // 3 minutes: enough for the largest composites, short enough that
+          // abandoned tickets don't pin sockets
+          timer: setTimeout(() => {
+            const cur = downloadTickets.get(id);
+            cur?.res?.destroy();
+            ticketCleanup(id);
+          }, 3 * 60 * 1000),
+        };
+        downloadTickets.set(id, t);
+        return t;
+      };
+      const TICKET_RE = /^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/([^/]+))?$/i;
+
+      server.middlewares.use('/__download', (req, res) => {
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const m = (req.url ?? '').split('?')[0]!.match(TICKET_RE);
+        if (!m) { res.writeHead(400); res.end('Bad ticket'); return; }
+        const [, id, rawName] = m;
+        const name = decodeURIComponent(rawName || 'image.png').replace(/[/\\"\r\n]/g, '_');
+        const t = downloadTickets.get(id!) ?? newTicket(id!);
+        if (t.failed) { ticketCleanup(id!); res.writeHead(500); res.end('Render failed'); return; }
+        res.writeHead(200, {
+          'Content-Type': 'image/png',
+          'Content-Disposition': `attachment; filename="${name}"`,
+          'Cache-Control': 'no-store',
+        });
+        if (t.data) {
+          res.end(t.data);
+          ticketCleanup(id!);
+        } else {
+          t.res = res;
+          res.on('close', () => { if (downloadTickets.get(id!)?.res === res && !res.writableEnded) ticketCleanup(id!); });
+        }
+      });
+
+      server.middlewares.use('/__download-fulfill', async (req, res) => {
+        if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const m = (req.url ?? '').split('?')[0]!.match(TICKET_RE);
+        if (!m) { res.writeHead(400); res.end('Bad ticket'); return; }
+        const id = m[1]!;
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(Buffer.from(chunk));
+        const data = Buffer.concat(chunks);
+        const t = downloadTickets.get(id) ?? newTicket(id);
+        if (data.length === 0) {
+          // Empty body = the client's render failed; kill the pending download
+          t.failed = true;
+          if (t.res) { t.res.destroy(); ticketCleanup(id); }
+        } else if (t.res) {
+          t.res.end(data);
+          ticketCleanup(id);
+        } else {
+          t.data = data; // download request hasn't arrived yet — hold the bytes
+        }
+        res.writeHead(200); res.end('ok');
+      });
+
       server.middlewares.use('/__proxy', async (req, res) => {
         if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         const url = new URL(req.url ?? '', 'http://localhost').searchParams.get('url');
