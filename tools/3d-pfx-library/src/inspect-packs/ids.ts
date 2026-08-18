@@ -1,5 +1,5 @@
 import { BURGER_SHOP_RECIPES } from '../burger-shop/recipes'
-import { PIRATE_UNITY_IDS } from './pirateRecipes'
+import { PIRATE_IDS } from './pirateRecipes'
 import { DUELYST_SHEET_DEFS } from './textures'
 
 export const INSPECT_SHEETS_MARK_ID = 'inspect-sheets'
@@ -19,7 +19,7 @@ export const BURGER_SHOP_INSPECT_IDS = BURGER_SHOP_RECIPES.map((recipe) => burge
 
 export const DUELYST_INSPECT_IDS = DUELYST_SHEET_DEFS.map((sheet) => sheet.id)
 
-export const PIRATE_INSPECT_IDS = PIRATE_UNITY_IDS
+export const PIRATE_INSPECT_IDS = PIRATE_IDS
 
 export const INSPECT_PACK_IDS = [...BURGER_SHOP_INSPECT_IDS, ...DUELYST_INSPECT_IDS, ...PIRATE_INSPECT_IDS]
 

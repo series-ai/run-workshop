@@ -16,7 +16,7 @@ import {
 } from './simulate'
 
 describe('BurgerTime faithful shop pack', () => {
-  it('covers every Unity prefab we inspected', () => {
+  it('covers every shop effect we inspected', () => {
     expect(BURGER_SHOP_RECIPE_IDS).toEqual([
       'character-footsteps',
       'character-upgrade',
@@ -32,7 +32,7 @@ describe('BurgerTime faithful shop pack', () => {
       'table-upgrade',
       'unlock-area',
     ])
-    expect(BURGER_SHOP_RECIPES.map((recipe) => recipe.unityPrefab)).toEqual([
+    expect(BURGER_SHOP_RECIPES.map((recipe) => recipe.sourcePrefab)).toEqual([
       'FX_Character_FootSteps_01',
       'FX_Character_Upgrade_01',
       'FX_Confetti_01',
@@ -49,7 +49,7 @@ describe('BurgerTime faithful shop pack', () => {
     ])
   })
 
-  it('locks Unity numbers for the unique shop verbs', () => {
+  it('locks source numbers for the unique shop verbs', () => {
     const flies = BURGER_SHOP_RECIPES.find((recipe) => recipe.id === 'flies')
     expect(flies?.emitters[0]).toMatchObject({
       rate: 2,
@@ -83,7 +83,7 @@ describe('BurgerTime faithful shop pack', () => {
     expect(ringCount).toBe(1)
   })
 
-  it('keeps range picks inside the Unity interval', () => {
+  it('keeps range picks inside the authored interval', () => {
     const random = createSeededRandom(3)
     for (let index = 0; index < 20; index += 1) {
       const value = pickRange({ min: 0.35, max: 0.9 }, random)
@@ -107,7 +107,7 @@ describe('BurgerTime faithful shop pack', () => {
     }
   })
 
-  it('keeps fly art as one sprite and shop sheets as authored Unity cuts', () => {
+  it('keeps fly art as one sprite and shop sheets as authored cuts', () => {
     const flies = BURGER_SHOP_RECIPES.find((recipe) => recipe.id === 'flies')
     expect(flies?.emitters[0]?.sheet).toEqual({ columns: 1, rows: 1 })
     expect(flies?.emitters[0]?.texture).toBe('flies')
@@ -136,7 +136,7 @@ describe('BurgerTime faithful shop pack', () => {
     expect(nextBurgerShopRecipeId('poof-01')).toBe('poof-02')
   })
 
-  it('emits Unity cones along local +Z, which a -90 X rotation turns into world +Y', () => {
+  it('emits cones along local +Z, which a -90 X rotation turns into world +Y', () => {
     const eating = BURGER_SHOP_RECIPES.find((recipe) => recipe.id === 'eating')
     if (!eating) throw new Error('missing eating')
     const random = createSeededRandom(11)
@@ -162,7 +162,7 @@ describe('BurgerTime faithful shop pack', () => {
     }
   })
 
-  it('keeps Unity vertical icons upright with no random roll', () => {
+  it('keeps vertical icons upright with no random roll', () => {
     const unlock = BURGER_SHOP_RECIPES.find((recipe) => recipe.id === 'unlock-area')
     const arrow = unlock?.emitters.find((emitter) => emitter.name === 'Arrow')
     if (!arrow) throw new Error('missing arrow')
@@ -194,7 +194,7 @@ describe('BurgerTime faithful shop pack', () => {
     expect(spreadZ).toBeGreaterThan(0.25)
   })
 
-  it('pops the upgrade sign from zero size then shrinks, matching Unity SizeOverLifetime', () => {
+  it('pops the upgrade sign from zero size then shrinks', () => {
     const upgrade = BURGER_SHOP_RECIPES.find((recipe) => recipe.id === 'character-upgrade')
     const sign = upgrade?.emitters.find((emitter) => emitter.name === 'Upgrade')
     if (!sign) throw new Error('missing upgrade sign')

@@ -4,7 +4,7 @@ import type { BurgerShopRecipe } from '../burger-shop/types'
 import { getDuelystSpriteRecipe } from './duelystRecipes'
 import { burgerShopRecipeIdFromInspectId } from './ids'
 import { DuelystSheetEffect } from './DuelystSheetEffect'
-import { getPirateUnityRecipe, isPirateUnityId } from './pirateRecipes'
+import { getPirateRecipe, isPirateId } from './pirateRecipes'
 import { PIRATE_TEXTURE_URLS } from './pirateTextures'
 import { DUELYST_SHEET_URLS, type DuelystSheetId } from './textures'
 
@@ -26,7 +26,7 @@ function BurgerInspect({ recipeId }: { recipeId: string }) {
 }
 
 function PirateInspect({ id }: { id: string }) {
-  const recipe = useMemo(() => loopingInspectRecipe(getPirateUnityRecipe(id)), [id])
+  const recipe = useMemo(() => loopingInspectRecipe(getPirateRecipe(id)), [id])
   return (
     <group scale={4.2} position={[0, -1.05, 0]}>
       <BurgerShopEffect recipe={recipe} textureUrls={PIRATE_TEXTURE_URLS} />
@@ -48,6 +48,6 @@ export function InspectPackEffect({ id }: { id: string }) {
   const burgerRecipeId = burgerShopRecipeIdFromInspectId(id)
   if (burgerRecipeId) return <BurgerInspect recipeId={burgerRecipeId} />
   if (id in DUELYST_SHEET_URLS) return <DuelystInspect id={id as DuelystSheetId} />
-  if (isPirateUnityId(id)) return <PirateInspect id={id} />
+  if (isPirateId(id)) return <PirateInspect id={id} />
   throw new Error(`Unknown inspect pack effect: ${id}`)
 }

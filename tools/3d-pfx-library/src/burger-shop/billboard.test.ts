@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { toLocalCameraPosition, verticalBillboardYaw } from './billboard'
 
-describe('Unity-style particle facing', () => {
+describe('particle facing', () => {
   it('converts the world camera into the scaled effect space', () => {
     const local = toLocalCameraPosition(1.2, 0.96, 1.8, 0.24)
     expect(local[0]).toBeCloseTo(5)

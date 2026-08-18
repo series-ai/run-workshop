@@ -49,7 +49,7 @@ const confettiColors = [
 export type PirateEffectType = PfxTaxonomyEffect['effectType']
 export type PirateRole = PfxTaxonomyEffect['role']
 
-export interface PirateUnityRecipe extends BurgerShopRecipe {
+export interface PirateRecipe extends BurgerShopRecipe {
   effectType: PirateEffectType
   role: PirateRole
 }
@@ -57,15 +57,15 @@ export interface PirateUnityRecipe extends BurgerShopRecipe {
 function statusRecipe(
   id: string,
   label: string,
-  unityPrefab: string,
+  sourcePrefab: string,
   iconTexture: string,
   splashColor: number[],
   ringColor: number[],
-): PirateUnityRecipe {
+): PirateRecipe {
   return {
     id,
     label,
-    unityPrefab,
+    sourcePrefab,
     duration: 2,
     looping: false,
     effectType: 'status',
@@ -180,7 +180,7 @@ function statusRecipe(
   }
 }
 
-export const PIRATE_UNITY_RECIPES: PirateUnityRecipe[] = [
+export const PIRATE_RECIPES: PirateRecipe[] = [
   statusRecipe(
     'pirate-status-buff',
     'Pirate Nation status buff',
@@ -216,7 +216,7 @@ export const PIRATE_UNITY_RECIPES: PirateUnityRecipe[] = [
   {
     id: 'pirate-shield',
     label: 'Pirate Nation shield',
-    unityPrefab: 'Shield',
+    sourcePrefab: 'Shield',
     duration: 2,
     looping: false,
     effectType: 'shield',
@@ -247,7 +247,7 @@ export const PIRATE_UNITY_RECIPES: PirateUnityRecipe[] = [
   {
     id: 'pirate-sparkle',
     label: 'Pirate Nation harvest sparkle',
-    unityPrefab: 'SparkleVFX',
+    sourcePrefab: 'SparkleVFX',
     duration: 3,
     looping: true,
     effectType: 'loot',
@@ -278,7 +278,7 @@ export const PIRATE_UNITY_RECIPES: PirateUnityRecipe[] = [
   {
     id: 'pirate-rain',
     label: 'Pirate Nation combat rain',
-    unityPrefab: 'VFX_Combat_Rain',
+    sourcePrefab: 'VFX_Combat_Rain',
     duration: 6,
     looping: true,
     effectType: 'weather',
@@ -328,7 +328,7 @@ export const PIRATE_UNITY_RECIPES: PirateUnityRecipe[] = [
   {
     id: 'pirate-snow',
     label: 'Pirate Nation combat snow',
-    unityPrefab: 'VFX_Combat_Snow',
+    sourcePrefab: 'VFX_Combat_Snow',
     duration: 30,
     looping: true,
     effectType: 'weather',
@@ -360,7 +360,7 @@ export const PIRATE_UNITY_RECIPES: PirateUnityRecipe[] = [
   {
     id: 'pirate-ash',
     label: 'Pirate Nation combat ash',
-    unityPrefab: 'VFX_Combat_Ash',
+    sourcePrefab: 'VFX_Combat_Ash',
     duration: 30,
     looping: true,
     effectType: 'weather',
@@ -412,7 +412,7 @@ export const PIRATE_UNITY_RECIPES: PirateUnityRecipe[] = [
   {
     id: 'pirate-clouds',
     label: 'Pirate Nation arena clouds',
-    unityPrefab: 'VFX_CombatArena_Clouds',
+    sourcePrefab: 'VFX_CombatArena_Clouds',
     duration: 20,
     looping: true,
     effectType: 'weather',
@@ -443,7 +443,7 @@ export const PIRATE_UNITY_RECIPES: PirateUnityRecipe[] = [
   {
     id: 'pirate-disappear',
     label: 'Pirate Nation disappear splash',
-    unityPrefab: 'VFX_Disappear_Ship_Standalone',
+    sourcePrefab: 'VFX_Disappear_Ship_Standalone',
     duration: 2,
     looping: false,
     effectType: 'dissolve',
@@ -495,7 +495,7 @@ export const PIRATE_UNITY_RECIPES: PirateUnityRecipe[] = [
   {
     id: 'pirate-ship-wake',
     label: 'Pirate Nation ship wake',
-    unityPrefab: 'ShipTrail',
+    sourcePrefab: 'ShipTrail',
     duration: 10.5,
     looping: true,
     effectType: 'trail',
@@ -525,7 +525,7 @@ export const PIRATE_UNITY_RECIPES: PirateUnityRecipe[] = [
   {
     id: 'pirate-confetti',
     label: 'Pirate Nation confetti blast',
-    unityPrefab: 'FastConfettiBlastRainbow',
+    sourcePrefab: 'FastConfettiBlastRainbow',
     duration: 3,
     looping: false,
     effectType: 'ui',
@@ -599,7 +599,7 @@ export const PIRATE_UNITY_RECIPES: PirateUnityRecipe[] = [
   {
     id: 'pirate-results-smoke',
     label: 'Pirate Nation results smoke',
-    unityPrefab: 'VFX_CombatResults_Smoke',
+    sourcePrefab: 'VFX_CombatResults_Smoke',
     duration: 3,
     looping: true,
     effectType: 'smoke',
@@ -632,7 +632,7 @@ export const PIRATE_UNITY_RECIPES: PirateUnityRecipe[] = [
   {
     id: 'pirate-godrays',
     label: 'Pirate Nation godrays',
-    unityPrefab: 'vfx_godrays_01',
+    sourcePrefab: 'vfx_godrays_01',
     duration: 4,
     looping: true,
     effectType: 'ui',
@@ -660,16 +660,16 @@ export const PIRATE_UNITY_RECIPES: PirateUnityRecipe[] = [
   },
 ]
 
-export function getPirateUnityRecipe(id: string): PirateUnityRecipe {
-  const recipe = PIRATE_UNITY_RECIPES.find((entry) => entry.id === id)
+export function getPirateRecipe(id: string): PirateRecipe {
+  const recipe = PIRATE_RECIPES.find((entry) => entry.id === id)
   if (!recipe) throw new Error(`Unknown Pirate Nation effect: ${id}`)
   return recipe
 }
 
-export const PIRATE_UNITY_IDS = PIRATE_UNITY_RECIPES.map((recipe) => recipe.id)
+export const PIRATE_IDS = PIRATE_RECIPES.map((recipe) => recipe.id)
 
-export function isPirateUnityId(id: string): boolean {
-  return PIRATE_UNITY_IDS.includes(id)
+export function isPirateId(id: string): boolean {
+  return PIRATE_IDS.includes(id)
 }
 
 export type { BurgerShopEmitter }

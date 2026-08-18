@@ -7,5 +7,5 @@ dist/
 # A/B visual review output (clips, sheets, page)
 .ab-review/
 
-# Local burger-shop capture output
+# Local inspect capture output
 .previews/

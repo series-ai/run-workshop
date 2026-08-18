@@ -6,7 +6,7 @@
   "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
   "licenseFile": "LICENSE",
   "upstream": {
-    "project": "Pirate Nation Unity game client",
+    "project": "Pirate Nation game client",
     "copyrightHolder": "Proof of Play, Inc.",
     "repository": "https://github.com/proofofplay/piratenation-game",
     "pinnedCommit": "dc921b650c8a1d7c449b2a3553949d3e7c8266e9",
@@ -83,7 +83,7 @@
       "sourceRelativePath": "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/Textures/shield_broken.png"
     }
   ],
-  "unityPrefabsUsedForRecipes": [
+  "sourcePrefabsUsedForRecipes": [
     "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/PF_VFX_Status_Buff.prefab",
     "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/PF_VFX_Status_Debuff.prefab",
     "Assets/_PirateNation_/Game/Combat/Assets/FX/VFX/Status/PF_VFX_Status_BuffAttack.prefab",

@@ -31,7 +31,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(rootDir, 'index.html'),
-        burgerShop: path.resolve(rootDir, 'burger-shop.html'),
       },
     },
   },

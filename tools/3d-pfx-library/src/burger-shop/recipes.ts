@@ -69,7 +69,7 @@ const shrink = [
 export const burgerShopFootsteps: BurgerShopRecipe = {
   id: 'character-footsteps',
   label: 'Character footsteps',
-  unityPrefab: 'FX_Character_FootSteps_01',
+  sourcePrefab: 'FX_Character_FootSteps_01',
   duration: 5,
   looping: true,
   emitters: [
@@ -98,7 +98,7 @@ export const burgerShopFootsteps: BurgerShopRecipe = {
 export const burgerShopCharacterUpgrade: BurgerShopRecipe = {
   id: 'character-upgrade',
   label: 'Character upgrade',
-  unityPrefab: 'FX_Character_Upgrade_01',
+  sourcePrefab: 'FX_Character_Upgrade_01',
   duration: 2,
   looping: false,
   emitters: [
@@ -169,7 +169,7 @@ export const burgerShopCharacterUpgrade: BurgerShopRecipe = {
 export const burgerShopConfetti01: BurgerShopRecipe = {
   id: 'confetti-01',
   label: 'Confetti cone',
-  unityPrefab: 'FX_Confetti_01',
+  sourcePrefab: 'FX_Confetti_01',
   duration: 2,
   looping: false,
   emitters: [
@@ -239,7 +239,7 @@ export const burgerShopConfetti01: BurgerShopRecipe = {
 export const burgerShopConfetti02: BurgerShopRecipe = {
   id: 'confetti-02',
   label: 'Confetti explosion',
-  unityPrefab: 'FX_Confetti_02',
+  sourcePrefab: 'FX_Confetti_02',
   duration: 2,
   looping: false,
   emitters: [
@@ -313,7 +313,7 @@ export const burgerShopConfetti02: BurgerShopRecipe = {
 export const burgerShopEating: BurgerShopRecipe = {
   id: 'eating',
   label: 'Eating scraps',
-  unityPrefab: 'FX_Eating_01',
+  sourcePrefab: 'FX_Eating_01',
   duration: 0.8,
   looping: false,
   emitters: [
@@ -365,7 +365,7 @@ export const burgerShopEating: BurgerShopRecipe = {
 export const burgerShopFlies: BurgerShopRecipe = {
   id: 'flies',
   label: 'Flies',
-  unityPrefab: 'FX_Flies_01',
+  sourcePrefab: 'FX_Flies_01',
   duration: 2,
   looping: true,
   emitters: [
@@ -396,7 +396,7 @@ export const burgerShopFlies: BurgerShopRecipe = {
 export const burgerShopPoof01: BurgerShopRecipe = {
   id: 'poof-01',
   label: 'Poof',
-  unityPrefab: 'FX_Poof_01',
+  sourcePrefab: 'FX_Poof_01',
   duration: 2,
   looping: false,
   emitters: [
@@ -443,7 +443,7 @@ export const burgerShopPoof01: BurgerShopRecipe = {
 export const burgerShopPoof02: BurgerShopRecipe = {
   id: 'poof-02',
   label: 'Poof large',
-  unityPrefab: 'FX_Poof_02',
+  sourcePrefab: 'FX_Poof_02',
   duration: 2,
   looping: false,
   emitters: [
@@ -510,7 +510,7 @@ export const burgerShopPoof02: BurgerShopRecipe = {
 export const burgerShopSmoke: BurgerShopRecipe = {
   id: 'smoke',
   label: 'Grill smoke',
-  unityPrefab: 'FX_Smoke_01',
+  sourcePrefab: 'FX_Smoke_01',
   duration: 6.83,
   looping: true,
   emitters: [
@@ -558,7 +558,7 @@ export const burgerShopSmoke: BurgerShopRecipe = {
 export const burgerShopSunshine: BurgerShopRecipe = {
   id: 'sunshine',
   label: 'Sunshine',
-  unityPrefab: 'FX_Sunshine_01',
+  sourcePrefab: 'FX_Sunshine_01',
   duration: 3,
   looping: false,
   emitters: [
@@ -608,7 +608,7 @@ export const burgerShopSunshine: BurgerShopRecipe = {
 export const burgerShopTableFirstPurchase: BurgerShopRecipe = {
   id: 'table-first-purchase',
   label: 'Table first purchase',
-  unityPrefab: 'FX_Table_Station_First_Purchase_01',
+  sourcePrefab: 'FX_Table_Station_First_Purchase_01',
   duration: 2,
   looping: false,
   emitters: [
@@ -696,7 +696,7 @@ export const burgerShopTableFirstPurchase: BurgerShopRecipe = {
 export const burgerShopTableUpgrade: BurgerShopRecipe = {
   id: 'table-upgrade',
   label: 'Table upgrade',
-  unityPrefab: 'FX_Table_Station_Upgrade_01',
+  sourcePrefab: 'FX_Table_Station_Upgrade_01',
   duration: 2,
   looping: false,
   emitters: [
@@ -784,7 +784,7 @@ export const burgerShopTableUpgrade: BurgerShopRecipe = {
 export const burgerShopUnlock: BurgerShopRecipe = {
   id: 'unlock-area',
   label: 'Unlock area',
-  unityPrefab: 'FX_Unlock_Area_01',
+  sourcePrefab: 'FX_Unlock_Area_01',
   duration: 2,
   looping: false,
   emitters: [

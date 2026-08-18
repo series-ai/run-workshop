@@ -62,14 +62,14 @@ export interface BurgerShopEmitter {
   localPosition?: [number, number, number]
   localScale?: [number, number, number]
   minHeight?: number
-  /** Unity Velocity over Lifetime, world space. */
+  /** World-space velocity over life. */
   worldVelocity?: [number, number, number]
 }
 
 export interface BurgerShopRecipe {
   id: string
   label: string
-  unityPrefab: string
+  sourcePrefab: string
   duration: number
   looping: boolean
   emitters: BurgerShopEmitter[]

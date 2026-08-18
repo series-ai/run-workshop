@@ -10,7 +10,7 @@ import {
 } from './ids'
 import { INSPECT_PACK_ITEMS, selectInspectPackItems } from './items'
 import { getDuelystSpriteRecipe } from './duelystRecipes'
-import { getPirateUnityRecipe, PIRATE_UNITY_RECIPES } from './pirateRecipes'
+import { getPirateRecipe, PIRATE_RECIPES } from './pirateRecipes'
 import { DUELYST_SHEET_DEFS } from './textures'
 
 describe('inspect packs', () => {
@@ -23,10 +23,10 @@ describe('inspect packs', () => {
       DUELYST_SHEET_DEFS.length,
     )
     expect(INSPECT_PACK_ITEMS.filter((item) => item.effect.id.startsWith('pirate-'))).toHaveLength(
-      PIRATE_UNITY_RECIPES.length,
+      PIRATE_RECIPES.length,
     )
     expect(INSPECT_PACK_IDS).toHaveLength(
-      BURGER_SHOP_RECIPES.length + DUELYST_SHEET_DEFS.length + PIRATE_UNITY_RECIPES.length,
+      BURGER_SHOP_RECIPES.length + DUELYST_SHEET_DEFS.length + PIRATE_RECIPES.length,
     )
   })
 
@@ -83,8 +83,8 @@ describe('inspect packs', () => {
     expect(getDuelystSpriteRecipe('duelyst-projectile-trail').emitters[0]?.count).toBe(16)
   })
 
-  it('rebuilds Pirate Nation prefabs as multi-emitter Unity recipes', () => {
-    expect(PIRATE_UNITY_RECIPES.map((recipe) => recipe.unityPrefab)).toEqual([
+  it('rebuilds Pirate Nation effects as multi-emitter recipes', () => {
+    expect(PIRATE_RECIPES.map((recipe) => recipe.sourcePrefab)).toEqual([
       'PF_VFX_Status_Buff',
       'PF_VFX_Status_Debuff',
       'PF_VFX_Status_BuffAttack',
@@ -101,7 +101,7 @@ describe('inspect packs', () => {
       'VFX_CombatResults_Smoke',
       'vfx_godrays_01',
     ])
-    const buff = getPirateUnityRecipe('pirate-status-buff')
+    const buff = getPirateRecipe('pirate-status-buff')
     expect(buff.emitters.map((emitter) => emitter.name)).toEqual([
       'WaterSplashes',
       'Icon',
@@ -110,42 +110,42 @@ describe('inspect packs', () => {
       'BoilingVoxels',
     ])
     expect(buff.emitters.find((emitter) => emitter.name === 'Icon')?.texture).toBe('status-buff')
-    expect(getPirateUnityRecipe('pirate-status-debuff').emitters.find((emitter) => emitter.name === 'Icon')?.texture).toBe(
+    expect(getPirateRecipe('pirate-status-debuff').emitters.find((emitter) => emitter.name === 'Icon')?.texture).toBe(
       'status-debuff',
     )
-    expect(getPirateUnityRecipe('pirate-status-attack').emitters.find((emitter) => emitter.name === 'Icon')?.texture).toBe(
+    expect(getPirateRecipe('pirate-status-attack').emitters.find((emitter) => emitter.name === 'Icon')?.texture).toBe(
       'status-attack',
     )
-    expect(getPirateUnityRecipe('pirate-status-heal').emitters.find((emitter) => emitter.name === 'Icon')?.texture).toBe(
+    expect(getPirateRecipe('pirate-status-heal').emitters.find((emitter) => emitter.name === 'Icon')?.texture).toBe(
       'status-up',
     )
     expect(buff.emitters.find((emitter) => emitter.name === 'WaterSplashes')?.burst).toEqual({ min: 16, max: 16 })
     expect(buff.emitters.find((emitter) => emitter.name === 'WaterSplashes')?.speed.max).toBeLessThan(6)
     expect(buff.emitters.find((emitter) => emitter.name === 'WaterSplashes')?.texture).toBe('glow')
-    const rain = getPirateUnityRecipe('pirate-rain')
+    const rain = getPirateRecipe('pirate-rain')
     expect(rain.emitters[0]?.worldVelocity).toEqual([0.18, -1.9, 0])
     expect(rain.emitters[0]?.texture).toBe('glow')
     expect(rain.emitters[0]?.color[0]?.slice(0, 3)).toEqual([0, 0.92, 1])
-    expect(getPirateUnityRecipe('pirate-snow').emitters[0]?.worldVelocity).toEqual([0, -1.1, 0])
-    expect(getPirateUnityRecipe('pirate-confetti').emitters.map((emitter) => emitter.name)).toEqual([
+    expect(getPirateRecipe('pirate-snow').emitters[0]?.worldVelocity).toEqual([0, -1.1, 0])
+    expect(getPirateRecipe('pirate-confetti').emitters.map((emitter) => emitter.name)).toEqual([
       'FastConfettiBlastRainbow',
       'Clouds',
       'Glow',
     ])
-    expect(getPirateUnityRecipe('pirate-confetti').emitters[0]?.burst).toEqual({ min: 28, max: 28 })
-    expect(getPirateUnityRecipe('pirate-confetti').emitters[0]?.sheetVariant).toBe(true)
-    expect(getPirateUnityRecipe('pirate-confetti').emitters.find((emitter) => emitter.name === 'Clouds')?.sheetVariant).toBe(
+    expect(getPirateRecipe('pirate-confetti').emitters[0]?.burst).toEqual({ min: 28, max: 28 })
+    expect(getPirateRecipe('pirate-confetti').emitters[0]?.sheetVariant).toBe(true)
+    expect(getPirateRecipe('pirate-confetti').emitters.find((emitter) => emitter.name === 'Clouds')?.sheetVariant).toBe(
       true,
     )
-    expect(getPirateUnityRecipe('pirate-disappear').emitters[0]?.speed.max).toBeLessThan(8)
-    expect(getPirateUnityRecipe('pirate-ship-wake').emitters[0]?.billboard).toBe('horizontal')
-    const sparkle = getPirateUnityRecipe('pirate-sparkle')
+    expect(getPirateRecipe('pirate-disappear').emitters[0]?.speed.max).toBeLessThan(8)
+    expect(getPirateRecipe('pirate-ship-wake').emitters[0]?.billboard).toBe('horizontal')
+    const sparkle = getPirateRecipe('pirate-sparkle')
     expect(sparkle.emitters[0]?.burst?.min).toBeGreaterThan(0)
     expect((sparkle.emitters[0]?.rate ?? 0) * sparkle.emitters[0]!.duration).toBeGreaterThan(1)
-    const smoke = getPirateUnityRecipe('pirate-results-smoke')
+    const smoke = getPirateRecipe('pirate-results-smoke')
     expect(smoke.emitters[0]?.gravity).toBeGreaterThan(-0.2)
     expect(smoke.emitters[0]?.speed.max).toBeLessThan(0.3)
-    const clouds = getPirateUnityRecipe('pirate-clouds')
+    const clouds = getPirateRecipe('pirate-clouds')
     expect(clouds.emitters[0]?.billboard).toBe('camera')
     expect(clouds.emitters[0]?.sheetVariant).toBe(true)
   })

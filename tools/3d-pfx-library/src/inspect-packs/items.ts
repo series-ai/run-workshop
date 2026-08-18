@@ -10,7 +10,7 @@ import {
   INSPECT_SHEETS_MARK_ID,
   isInspectPackId,
 } from './ids'
-import { PIRATE_UNITY_RECIPES } from './pirateRecipes'
+import { PIRATE_RECIPES } from './pirateRecipes'
 import { DUELYST_SHEET_DEFS } from './textures'
 
 function inspectPreset(effect: PfxTaxonomyEffect): PfxPreset {
@@ -74,7 +74,7 @@ function burgerShopInspectItems(): PfxCatalogItem[] {
       effectType: 'environment',
       role: recipe.looping ? 'loop' : 'burst',
       loopMode: recipe.looping ? 'loop' : 'burst',
-      notes: `BurgerTime shop sheet. Unity prefab ${recipe.unityPrefab}.`,
+      notes: 'BurgerTime shop sheet.',
       assetRequirements: ['inspect-sheet', 'burger-shop', 'burgertime'],
     })
     return { effect, preset: inspectPreset(effect) }
@@ -98,7 +98,7 @@ function duelystInspectItems(): PfxCatalogItem[] {
 }
 
 function pirateInspectItems(): PfxCatalogItem[] {
-  return PIRATE_UNITY_RECIPES.map((recipe, index) => {
+  return PIRATE_RECIPES.map((recipe, index) => {
     const effect = inspectEffect({
       id: recipe.id,
       name: recipe.label,
@@ -106,7 +106,7 @@ function pirateInspectItems(): PfxCatalogItem[] {
       effectType: recipe.effectType,
       role: recipe.role,
       loopMode: recipe.looping ? 'loop' : 'burst',
-      notes: `Pirate Nation MIT prefab ${recipe.unityPrefab}.`,
+      notes: 'Pirate Nation MIT stamp pack.',
       assetRequirements: ['inspect-sheet', 'pirate-nation', 'mit'],
     })
     return { effect, preset: inspectPreset(effect) }
