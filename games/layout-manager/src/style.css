@@ -5736,6 +5736,34 @@ button.btn-large {
   flex-wrap: wrap;
 }
 
+.ai-modal-ref-cell {
+  position: relative;
+  display: inline-flex;
+  border-radius: 6px;
+}
+
+.ai-modal-ref-cell-main {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.ai-modal-ref-badge {
+  position: absolute;
+  left: 2px;
+  bottom: 2px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 9px;
+  line-height: 14px;
+  pointer-events: none;
+}
+
+.ai-modal-ref-cell-main .ai-modal-ref-badge {
+  background: var(--color-primary);
+}
+
 .ai-modal-ref-thumb {
   width: 52px;
   height: 52px;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { UserConfig } from '../userConfig';
 import type { ImageNode } from '../types';
@@ -114,8 +114,29 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
   const [genError, setGenError] = useState<string | null>(null);
   const hadErrorRef = useRef(false);
 
-  const clampedRefs = refNodes.slice(0, 5);
+  // Reference caps are per provider: Grok's edit API takes 3 images total
+  // (1 main + 2 style refs), GPT Image via Hermes takes up to 16, the rest 5
+  const refCap = providerId === 'hermes-gpt' ? 16 : providerId === 'hermes-grok' ? 3 : 5;
+  const isGrokRefs = providerId === 'hermes-grok';
+  // Grok treats the FIRST image as the one being edited (main) and the rest
+  // as style hints — selection order isn't controllable, so let the user pick
+  const [mainRefId, setMainRefId] = useState<string | null>(null);
+  // Grok workaround: a flat blank Main at the chosen aspect ratio makes the
+  // edit endpoint output that size, with selected images as style refs only
+  const [grokBlankMain, setGrokBlankMain] = useState<'none' | 'white' | 'black'>('none');
+  const useBlankMain = isGrokRefs && grokBlankMain !== 'none';
+  const orderedRefNodes = useMemo(() => {
+    if (!isGrokRefs || !mainRefId) return refNodes;
+    const main = refNodes.find((n) => n.id === mainRefId);
+    return main ? [main, ...refNodes.filter((n) => n.id !== mainRefId)] : refNodes;
+  }, [refNodes, mainRefId, isGrokRefs]);
+  // With a blank Main, the blank occupies the main slot: 2 style refs remain
+  const clampedRefs = orderedRefNodes.slice(0, useBlankMain ? 2 : refCap);
   const hasRefs = clampedRefs.length > 0;
+  // Keep the main valid as the selection changes
+  useEffect(() => {
+    if (mainRefId && !refNodes.some((n) => n.id === mainRefId)) setMainRefId(null);
+  }, [refNodes, mainRefId]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -144,6 +165,21 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
       if (hasRefs) {
         onProgress({ message: 'Preparing reference images...' });
         refImages = await Promise.all(clampedRefs.map(flattenNode));
+        if (useBlankMain) {
+          // Blank Main at the chosen aspect ratio: Grok's edit endpoint sizes
+          // its output from the main image, so this controls the output size
+          const [aw, ah] = aspectRatio.split(':').map(Number) as [number, number];
+          const long = 1024;
+          const w = aw >= ah ? long : Math.round(long * (aw / ah));
+          const h = aw >= ah ? Math.round(long * (ah / aw)) : long;
+          const c = document.createElement('canvas');
+          c.width = w;
+          c.height = h;
+          const cx = c.getContext('2d')!;
+          cx.fillStyle = grokBlankMain === 'white' ? '#ffffff' : '#000000';
+          cx.fillRect(0, 0, w, h);
+          refImages = [c.toDataURL('image/png'), ...refImages];
+        }
       }
 
       await textToImage(
@@ -205,7 +241,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
       setGenError(friendlyAiError(e instanceof Error ? e.message : 'Unknown error'));
       setGenerating(false);
     }
-  }, [prompt, providerId, count, aspectRatio, imageSize, openaiSize, openaiQuality, transparentBg, hermesGrokModel, hermesGptQuality, hermesGptAspect, generating, config, hasRefs, clampedRefs, onGenerated, onProgress, isGoogle, isOpenAi]);
+  }, [prompt, providerId, count, aspectRatio, imageSize, openaiSize, openaiQuality, transparentBg, hermesGrokModel, hermesGptQuality, hermesGptAspect, useBlankMain, grokBlankMain, generating, config, hasRefs, clampedRefs, onGenerated, onProgress, isGoogle, isOpenAi]);
 
   // Compute output dimensions hint
   let outputHint = '';
@@ -337,19 +373,54 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
 
         {hasRefs ? (
           <label className="ai-modal-label">
-            References ({clampedRefs.length}/5)
-            {refNodes.length > 5 && (
-              <span className="ai-modal-size-hint">Only the first 5 selected images are used</span>
+            References ({clampedRefs.length}/{refCap})
+            {refNodes.length > refCap && (
+              <span className="ai-modal-size-hint">Only the first {refCap} selected images are used</span>
+            )}
+            {isGrokRefs && (
+              <>
+                <span className="ai-modal-size-hint">
+                  Grok edits the <b>Main</b> image; the others are style references. Click a thumbnail to make it Main,
+                  or use a blank Main to control the output size with the aspect ratio below.
+                </span>
+                <div className="ai-modal-ratio-row">
+                  {([['none', 'Selected image'], ['white', 'Blank white'], ['black', 'Blank black']] as const).map(([val, lbl]) => (
+                    <button
+                      key={val}
+                      className={`ai-modal-ratio-btn${grokBlankMain === val ? ' ai-modal-ratio-btn-active' : ''}`}
+                      onClick={() => setGrokBlankMain(val)}
+                      disabled={generating}
+                      title={val === 'none' ? 'The first selected image is edited' : `A flat ${val} canvas at the chosen aspect ratio becomes the Main`}
+                    >
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
             <div className="ai-modal-ref-grid">
-              {clampedRefs.map((node) => (
-                <img
-                  key={node.id}
-                  src={node.paintCompositeUrl || node.src}
-                  alt={node.fileName}
-                  className="ai-modal-ref-thumb"
-                  title={node.fileName}
-                />
+              {useBlankMain && (
+                <div className="ai-modal-ref-cell ai-modal-ref-cell-main">
+                  <div
+                    className="ai-modal-ref-thumb"
+                    style={{ background: grokBlankMain === 'white' ? '#fff' : '#000', border: '1px solid var(--color-border)' }}
+                    title={`Blank ${grokBlankMain} main at ${aspectRatio}`}
+                  />
+                  <span className="ai-modal-ref-badge">Main</span>
+                </div>
+              )}
+              {clampedRefs.map((node, i) => (
+                <div key={node.id} className={`ai-modal-ref-cell${isGrokRefs && !useBlankMain && i === 0 ? ' ai-modal-ref-cell-main' : ''}`}>
+                  <img
+                    src={node.paintCompositeUrl || node.src}
+                    alt={node.fileName}
+                    className="ai-modal-ref-thumb"
+                    title={isGrokRefs && !useBlankMain ? `${node.fileName} — click to make Main` : node.fileName}
+                    style={isGrokRefs && !useBlankMain ? { cursor: 'pointer' } : undefined}
+                    onClick={isGrokRefs && !useBlankMain ? () => setMainRefId(node.id) : undefined}
+                  />
+                  {isGrokRefs && <span className="ai-modal-ref-badge">{useBlankMain || i !== 0 ? 'Style' : 'Main'}</span>}
+                </div>
               ))}
             </div>
           </label>
@@ -433,19 +504,29 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
         {providerId === 'hermes-grok' && (
           <label className="ai-modal-label">
             Aspect Ratio
-            <div className="ai-modal-ratio-row">
-              {XAI_ASPECT_RATIOS.map((r) => (
-                <button
-                  key={r}
-                  className={`ai-modal-ratio-btn${r === aspectRatio ? ' ai-modal-ratio-btn-active' : ''}`}
-                  onClick={() => setAspectRatio(r)}
-                  disabled={generating}
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-            <span className="ai-modal-size-hint">Resolution (1K/2K) follows your Hermes image settings</span>
+            {hasRefs && !useBlankMain ? (
+              // xAI's /images/edits endpoint takes no aspect_ratio — with
+              // references the output always matches the Main image's size
+              <span className="ai-modal-size-hint">
+                With references, Grok's output matches the Main image's size — aspect ratio only applies to text-only generation, or switch to a blank Main above
+              </span>
+            ) : (
+              <>
+                <div className="ai-modal-ratio-row">
+                  {XAI_ASPECT_RATIOS.map((r) => (
+                    <button
+                      key={r}
+                      className={`ai-modal-ratio-btn${r === aspectRatio ? ' ai-modal-ratio-btn-active' : ''}`}
+                      onClick={() => setAspectRatio(r)}
+                      disabled={generating}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+                <span className="ai-modal-size-hint">Resolution (1K/2K) follows your Hermes image settings</span>
+              </>
+            )}
           </label>
         )}
 
