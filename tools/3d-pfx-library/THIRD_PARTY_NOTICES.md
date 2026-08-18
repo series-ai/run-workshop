@@ -47,7 +47,7 @@ project — see the matching `assets/*.provenance.json` records
 - Files: `assets/burger-shop/T_FX_*.png`
 - Source: BurgerTimeVFX `Assets/Series Burger Shop/Textures`
 - Rights: same owner as this repository; recorded in
-  `assets/burger-shop/provenance.json`. These sheets are not Kenney CC0.
+  `assets/burger-shop/provenance.json`.
 
 ## Duelyst / OpenDuelyst FX and particle sheets
 
@@ -57,8 +57,7 @@ project — see the matching `assets/*.provenance.json` records
 - License: CC0 1.0 Universal (public domain dedication)
 - Source: https://github.com/open-duelyst/duelyst (`app/resources/particles`)
 - Provenance: `assets/duelyst/provenance.json`. Generic combat flipbooks and
-  particle stamps only. Faction-named spells, units, portraits, and HUD art
-  are not imported.
+  particle stamps.
 
 ## Pirate Nation VFX stamps (MIT)
 
@@ -69,6 +68,4 @@ project — see the matching `assets/*.provenance.json` records
 - Source: https://github.com/proofofplay/piratenation-game
   (`dc921b650c8a1d7c449b2a3553949d3e7c8266e9`)
 - Provenance: `assets/pirate-nation/provenance.json`. Keep the copyright
-  notice with redistributed copies. Only Proof of Play first-party stamps
-  are included. Synty POLYGON Particle FX, Cartoon FX Remaster (CFXR)
-  shaders, and Epic Toon FX were not copied.
+  notice with redistributed copies.

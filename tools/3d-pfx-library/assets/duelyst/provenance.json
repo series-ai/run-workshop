@@ -7,7 +7,7 @@
   "licenseFile": "LICENSE",
   "url": "https://github.com/open-duelyst/duelyst",
   "author": "Counterplay Games / Bandai Namco Studios Vancouver",
-  "rightsNote": "Public-domain dedication (CC0 1.0). These sheets are not Kenney and are not BurgerTime art. Matching Cocos sprite-atlas plists and particle emitter plists ship beside the PNGs. Generic combat flipbooks and particle stamps only. Faction-named spells, units, portraits, and HUD art are not imported.",
+  "rightsNote": "Public-domain dedication (CC0 1.0). Generic combat flipbooks and particle stamps. Matching Cocos sprite-atlas plists and particle emitter plists ship beside the PNGs.",
   "pngSourcePath": "app/resources/particles",
   "plistSourcePath": "app/resources/particles",
   "files": [
