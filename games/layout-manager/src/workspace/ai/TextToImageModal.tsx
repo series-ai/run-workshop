@@ -80,6 +80,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
   // image_gen.provider to match before each generation.
   const [hermesXaiUp, setHermesXaiUp] = useState(false);
   const [hermesCodexUp, setHermesCodexUp] = useState(false);
+  const [hermesGrok2Up, setHermesGrok2Up] = useState(false);
   useEffect(() => {
     let cancelled = false;
     fetch('/__ai-local-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
@@ -88,6 +89,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
         if (cancelled) return;
         setHermesXaiUp(!!st.hermesImageGen?.xai && config.hermesEnabled);
         setHermesCodexUp(!!st.hermesImageGen?.codex && config.hermesEnabled);
+        setHermesGrok2Up(!!st.hermesImageGen?.grok2);
       })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -101,7 +103,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
   const [openaiQuality, setOpenaiQuality] = useState<'low' | 'medium' | 'high'>('medium');
   const [transparentBg, setTransparentBg] = useState(false);
   // Grok (Hermes) model tier
-  const [hermesGrokModel, setHermesGrokModel] = useState<'grok-imagine-image' | 'grok-imagine-image-quality'>('grok-imagine-image');
+  const [hermesGrokModel, setHermesGrokModel] = useState<'grok-imagine-image' | 'grok-imagine-image-quality' | 'grok-imagine-image-2.0'>('grok-imagine-image');
   // GPT Image (Hermes) quality tier + aspect (codex backend: 3 fixed sizes)
   const [hermesGptQuality, setHermesGptQuality] = useState<'low' | 'medium' | 'high'>('medium');
   const [hermesGptAspect, setHermesGptAspect] = useState<'square' | 'landscape' | 'portrait'>('square');
@@ -115,8 +117,10 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
   const hadErrorRef = useRef(false);
 
   // Reference caps are per provider: Grok's edit API takes 3 images total
-  // (1 main + 2 style refs), GPT Image via Hermes takes up to 16, the rest 5
-  const refCap = providerId === 'hermes-gpt' ? 16 : providerId === 'hermes-grok' ? 3 : 5;
+  // (1 main + 2 style refs; Imagine 2.0 takes 5), GPT via Hermes 16, the rest 5
+  const refCap = providerId === 'hermes-gpt' ? 16
+    : providerId === 'hermes-grok' ? (hermesGrokModel === 'grok-imagine-image-2.0' ? 5 : 3)
+    : 5;
   const isGrokRefs = providerId === 'hermes-grok';
   // Grok treats the FIRST image as the one being edited (main) and the rest
   // as style hints — selection order isn't controllable, so let the user pick
@@ -130,8 +134,8 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
     const main = refNodes.find((n) => n.id === mainRefId);
     return main ? [main, ...refNodes.filter((n) => n.id !== mainRefId)] : refNodes;
   }, [refNodes, mainRefId, isGrokRefs]);
-  // With a blank Main, the blank occupies the main slot: 2 style refs remain
-  const clampedRefs = orderedRefNodes.slice(0, useBlankMain ? 2 : refCap);
+  // With a blank Main, the blank occupies the main slot
+  const clampedRefs = orderedRefNodes.slice(0, useBlankMain ? refCap - 1 : refCap);
   const hasRefs = clampedRefs.length > 0;
   // Keep the main valid as the selection changes
   useEffect(() => {
@@ -489,10 +493,22 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
               >
                 Quality
               </button>
+              {hermesGrok2Up && (
+                <button
+                  className={`ai-modal-ratio-btn${hermesGrokModel === 'grok-imagine-image-2.0' ? ' ai-modal-ratio-btn-active' : ''}`}
+                  onClick={() => setHermesGrokModel('grok-imagine-image-2.0')}
+                  disabled={generating}
+                  title="Next-gen: best instruction following and typography; edits with up to 5 images"
+                >
+                  Imagine 2.0
+                </button>
+              )}
             </div>
             {hasRefs && (
               <span className="ai-modal-size-hint">
-                With reference images, Grok always uses the Quality model (up to 3 references)
+                {hermesGrokModel === 'grok-imagine-image-2.0'
+                  ? 'Imagine 2.0 edits with up to 5 images (1 main + 4 style references)'
+                  : 'With reference images, Grok uses the Quality model (up to 3 images total)'}
               </span>
             )}
             <span className="ai-modal-size-hint">

@@ -849,8 +849,8 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         const count = Math.max(1, Math.min(4, Number(params.count) || 1));
         // Grok models ride in the agent instruction; GPT Image tiers are picked
         // via the OPENAI_IMAGE_MODEL env override the codex plugin checks first
-        const model = params.model === 'grok-imagine-image-quality' ? 'grok-imagine-image-quality'
-          : params.model === 'grok-imagine-image' ? 'grok-imagine-image'
+        const model = ['grok-imagine-image', 'grok-imagine-image-quality', 'grok-imagine-image-2.0'].includes(String(params.model))
+          ? String(params.model)
           : null;
         const gptTier = /^gpt-image-2-(low|medium|high)$/.test(String(params.model)) ? String(params.model) : null;
         // The active hermes image backend lives in config.yaml — flip it to
@@ -891,7 +891,7 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         const refs = (params.refImages ?? []) as { base64: string; mimeType?: string }[];
         // xAI /v1/images/edits accepts up to 3 total source images; the codex
         // backend takes up to 16 reference images
-        for (const img of refs.slice(0, gptTier ? 16 : 3)) {
+        for (const img of refs.slice(0, gptTier ? 16 : model === 'grok-imagine-image-2.0' ? 5 : 3)) {
           const ext = /jpe?g/.test(img.mimeType || '') ? 'jpg' : /webp/.test(img.mimeType || '') ? 'webp' : 'png';
           const f = pathMod.join(os.tmpdir(), `lm-hgi-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`);
           await fsMod.writeFile(f, Buffer.from(img.base64, 'base64'));
@@ -915,11 +915,26 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         }
         instruction += '\nWhen it finishes, reply with ONLY the absolute file path(s) or URL(s) of the generated image(s), one per line, nothing else.';
 
-        const child = spawn('hermes', ['--yolo', '-z', instruction, '-t', 'image_gen'], {
+        // Pin the AGENT model explicitly — never inherit the user's hermes
+        // model.default, which they're free to point at anything (including
+        // image models that can't run the agent). Grok runs get a live chat
+        // model from the proxy; codex runs get the documented recommendation.
+        const agentArgs = ['--yolo', '-z', instruction, '-t', 'image_gen'];
+        if (gptTier) {
+          agentArgs.push('-m', 'gpt-5.6-luna', '--provider', 'openai-codex');
+        } else {
+          const chatModels = await hermesProxyModels().catch(() => null);
+          if (chatModels?.length) agentArgs.push('-m', chatModels[0]!, '--provider', 'xai-oauth');
+        }
+        const child = spawn('hermes', agentArgs, {
           stdio: ['ignore', 'pipe', 'pipe'],
-          // Tier override for the openai-codex image plugin — it checks this
-          // env var before config.yaml, so the UI choice wins per-run
-          env: gptTier ? { ...process.env, OPENAI_IMAGE_MODEL: gptTier } : process.env,
+          // Model overrides ride env vars the hermes plugins check before
+          // config.yaml. The xai plugin's image_generate tool takes NO model
+          // argument — XAI_IMAGE_MODEL is the only way the Standard/Quality
+          // choice actually reaches it (the instruction text alone did nothing).
+          env: gptTier ? { ...process.env, OPENAI_IMAGE_MODEL: gptTier }
+            : model ? { ...process.env, XAI_IMAGE_MODEL: model }
+            : process.env,
         });
         const cleanupTmp = () => { for (const f of tmpFiles) fsMod.unlink(f).catch(() => {}); };
         res.on('close', () => { child.kill('SIGTERM'); cleanupTmp(); });
@@ -1085,9 +1100,15 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         // selected once in `hermes tools`. The provider (xai, openai-codex, …)
         // decides which UI the Text to Image panel shows.
         let hermesImageGenProvider: string | null = null;
+        // Whether the installed hermes xai plugin knows Imagine 2.0 — its
+        // catalog is a hard allowlist that silently substitutes unknown
+        // models, so the 2.0 button only shows when it would actually work
+        let hermesGrok2 = false;
         try {
           const fsMod = await import('node:fs/promises');
           const os = await import('node:os');
+          const plugin = await fsMod.readFile(`${os.homedir()}/.hermes/hermes-agent/plugins/image_gen/xai/__init__.py`, 'utf8').catch(() => '');
+          hermesGrok2 = plugin.includes('"grok-imagine-image-2.0"');
           const cfg = await fsMod.readFile(`${os.homedir()}/.hermes/config.yaml`, 'utf8');
           // Match provider inside the top-level image_gen block only
           const block = cfg.match(/^image_gen:\n((?:[ \t]+.*\n?)*)/m)?.[1] ?? '';
@@ -1109,6 +1130,7 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
             // image_gen.provider on the fly via `hermes config set`
             xai: hermesXaiLogin,
             codex: hermesCodexLogin,
+            grok2: hermesGrok2,
           },
           claude: { up: claudeCliCache },
         }));
