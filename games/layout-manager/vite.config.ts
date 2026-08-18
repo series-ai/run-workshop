@@ -74,16 +74,22 @@ function imageProxyPlugin(): Plugin {
         const t = downloadTickets.get(id);
         if (t) { clearTimeout(t.timer); downloadTickets.delete(id); }
       };
+      const ticketTimer = (id: string) => setTimeout(() => {
+        const cur = downloadTickets.get(id);
+        cur?.res?.destroy();
+        ticketCleanup(id);
+      }, 3 * 60 * 1000);
+      // Batch saves fulfill sequentially, so a later ticket's clock must not
+      // run while earlier composites are still working — any save activity
+      // refreshes every pending ticket. Timeout = 3 min of total inactivity.
+      const touchAllTickets = () => {
+        for (const [id, t] of downloadTickets) {
+          clearTimeout(t.timer);
+          t.timer = ticketTimer(id);
+        }
+      };
       const newTicket = (id: string): DownloadTicket => {
-        const t: DownloadTicket = {
-          // 3 minutes: enough for the largest composites, short enough that
-          // abandoned tickets don't pin sockets
-          timer: setTimeout(() => {
-            const cur = downloadTickets.get(id);
-            cur?.res?.destroy();
-            ticketCleanup(id);
-          }, 3 * 60 * 1000),
-        };
+        const t: DownloadTicket = { timer: ticketTimer(id) };
         downloadTickets.set(id, t);
         return t;
       };
@@ -120,6 +126,7 @@ function imageProxyPlugin(): Plugin {
         const chunks: Buffer[] = [];
         for await (const chunk of req) chunks.push(Buffer.from(chunk));
         const data = Buffer.concat(chunks);
+        touchAllTickets();
         const t = downloadTickets.get(id) ?? newTicket(id);
         if (data.length === 0) {
           // Empty body = the client's render failed; kill the pending download
