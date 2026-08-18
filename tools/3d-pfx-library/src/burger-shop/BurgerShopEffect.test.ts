@@ -10,6 +10,7 @@ import {
   createSeededRandom,
   liveSize,
   pickRange,
+  sheetFrame,
   spawnParticle,
   stepBurgerShopSimulation,
 } from './simulate'
@@ -216,5 +217,54 @@ describe('BurgerTime faithful shop pack', () => {
     expect(liveSize({ ...particle, age: 0 }, sign)).toBeLessThan(0.5)
     expect(liveSize({ ...particle, age: 0.09 }, sign)).toBeGreaterThan(4)
     expect(liveSize({ ...particle, age: 0.75 }, sign)).toBeLessThan(1.2)
+  })
+
+  it('keeps looping rate emission after the first duration', () => {
+    const flies = BURGER_SHOP_RECIPES.find((recipe) => recipe.id === 'flies')
+    if (!flies) throw new Error('missing flies')
+    const simulation = createBurgerShopSimulation(flies)
+    const random = createSeededRandom(8)
+    const duration = flies.emitters[0]!.duration
+    for (let step = 0; step < Math.ceil((duration + 0.25) / 0.05); step += 1) {
+      stepBurgerShopSimulation(simulation, 0.05, random)
+    }
+    let births = 0
+    let previousCount = simulation.particles.length
+    for (let step = 0; step < 24; step += 1) {
+      stepBurgerShopSimulation(simulation, 0.05, random)
+      if (simulation.particles.length > previousCount) {
+        births += simulation.particles.length - previousCount
+      }
+      previousCount = simulation.particles.length
+    }
+    expect(births).toBeGreaterThan(0)
+  })
+
+  it('spawns footstep dust at the walker, not the origin', () => {
+    const footsteps = BURGER_SHOP_RECIPES.find((recipe) => recipe.id === 'character-footsteps')
+    if (!footsteps) throw new Error('missing footsteps')
+    const simulation = createBurgerShopSimulation(footsteps)
+    const random = createSeededRandom(6)
+    for (let step = 0; step < 80; step += 1) {
+      stepBurgerShopSimulation(simulation, 0.05, random)
+    }
+    expect(simulation.particles.length).toBeGreaterThan(0)
+    const walkerR = Math.hypot(simulation.walker.x, simulation.walker.z)
+    expect(walkerR).toBeGreaterThan(0.2)
+    const meanR =
+      simulation.particles.reduce((sum, particle) => sum + Math.hypot(particle.x, particle.z), 0) /
+      simulation.particles.length
+    expect(meanR).toBeGreaterThan(walkerR * 0.4)
+  })
+
+  it('offsets flipbook start by the rolled sheet index', () => {
+    const confetti = BURGER_SHOP_RECIPES.find((recipe) => recipe.id === 'confetti-01')
+    const emitter = confetti?.emitters[0]
+    if (!emitter) throw new Error('missing confetti')
+    const particle = spawnParticle(emitter, 0, createSeededRandom(3))
+    particle.age = 0
+    particle.life = 1
+    particle.sheetIndex = 2
+    expect(sheetFrame(particle, emitter)).toBe(2)
   })
 })

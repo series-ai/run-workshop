@@ -179,7 +179,9 @@ export function sheetFrame(particle: BurgerShopParticle, emitter: BurgerShopEmit
   const count = Math.max(1, emitter.sheet.columns * emitter.sheet.rows)
   if (count === 1) return 0
   if (emitter.sheetVariant) return Math.min(count - 1, particle.sheetIndex)
-  return Math.min(count - 1, Math.floor((particle.age / particle.life) * count))
+  const start = ((particle.sheetIndex % count) + count) % count
+  const played = Math.floor((particle.age / Math.max(0.0001, particle.life)) * count)
+  return (start + played) % count
 }
 
 export function createSeededRandom(seed: number): () => number {
@@ -214,7 +216,12 @@ function emitBurst(
   count: number,
 ): void {
   for (let index = 0; index < count; index += 1) {
-    simulation.particles.push(spawnParticle(emitter, emitterIndex, random))
+    const particle = spawnParticle(emitter, emitterIndex, random)
+    if (simulation.recipe.id === 'character-footsteps') {
+      particle.x += simulation.walker.x
+      particle.z += simulation.walker.z
+    }
+    simulation.particles.push(particle)
   }
 }
 
@@ -242,9 +249,13 @@ export function stepBurgerShopSimulation(
     if (emitter.burst && (crossedStart || loopRestart)) {
       emitBurst(simulation, emitter, emitterIndex, random, Math.round(pickRange(emitter.burst, random)))
     }
-    if (emitter.rate > 0 && cycle >= 0 && (emitter.looping || localTime <= emitter.duration)) {
-      const expected = Math.floor(cycle * emitter.rate)
-      const previousExpected = Math.floor(Math.max(0, previousCycle) * emitter.rate)
+    if (emitter.rate > 0 && (emitter.looping || localTime <= emitter.duration)) {
+      const current = emitter.looping ? Math.max(0, localTime) : Math.min(Math.max(0, localTime), emitter.duration)
+      const prior = emitter.looping
+        ? Math.max(0, previousCycle)
+        : Math.min(Math.max(0, previousCycle), emitter.duration)
+      const expected = Math.floor(current * emitter.rate)
+      const previousExpected = Math.floor(prior * emitter.rate)
       emitBurst(simulation, emitter, emitterIndex, random, Math.max(0, expected - previousExpected))
     }
     if (emitter.rateOverDistance && simulation.recipe.id === 'character-footsteps') {

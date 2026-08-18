@@ -198,6 +198,13 @@ export function BurgerShopEffect({
               verticalBillboardYaw(cameraLocal.x, cameraLocal.z, particle.x, particle.z),
               0,
             )
+          } else if (layer.emitter.billboard === 'mesh') {
+            const euler = layer.emitter.localEuler ?? [0, 0, 0]
+            dummy.rotation.set(
+              (euler[0] * Math.PI) / 180,
+              (euler[1] * Math.PI) / 180,
+              (euler[2] * Math.PI) / 180 + particle.roll,
+            )
           } else {
             dummy.quaternion.copy(cameraQuat)
             dummy.rotateZ(particle.roll)
