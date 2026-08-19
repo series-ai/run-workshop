@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { sampleWorkspacePixel } from '../workspaceSampler';
 
 interface ColorPickerProps {
   color: string;
@@ -68,9 +70,103 @@ export function addRecentColor(hex: string): void {
   } catch {}
 }
 
+const toHex2 = (n: number) => n.toString(16).padStart(2, '0');
+const rgbToHexStr = (r: number, g: number, b: number) => `#${toHex2(r)}${toHex2(g)}${toHex2(b)}`;
+
+/** Sample the color under a client point from whatever is rendered there —
+ * <img> pixels, <canvas> pixels, or an element's solid background color.
+ * In-app fallback for browsers without the native EyeDropper API (Brave). */
+/** True when the topmost *visible* element at a point belongs to the
+ * workspace page rather than a floating panel above it. Transparent
+ * full-screen wrappers (picker/modal backdrops) are see-through. */
+function pointIsOnWorkspace(x: number, y: number, skip: (el: Element) => boolean): boolean {
+  for (const el of document.elementsFromPoint(x, y)) {
+    if (skip(el)) continue;
+    if (el.closest('.workspace-viewport')) return true;
+    const cs = getComputedStyle(el);
+    const m = cs.backgroundColor.match(/rgba?\(\d+,\s*\d+,\s*\d+(?:,\s*([\d.]+))?\)/);
+    const opaque = m ? (m[1] === undefined || parseFloat(m[1]!) > 0.1) : false;
+    if (opaque || (el instanceof HTMLImageElement) || (el instanceof HTMLCanvasElement)) return false;
+  }
+  return false;
+}
+
+/** Sample the color under a client point. Over the workspace page this uses
+ * the export compositor (crops, flips, rotation, paint layers all correct);
+ * over panels it falls back to DOM sampling of imgs/canvases/backgrounds. */
+export async function sampleScreenColor(x: number, y: number, skip: (el: Element) => boolean): Promise<string | null> {
+  if (pointIsOnWorkspace(x, y, skip)) {
+    const hex = await sampleWorkspacePixel(x, y);
+    if (hex) return hex;
+  }
+  return sampleColorAt(x, y, skip);
+}
+
+export function sampleColorAt(x: number, y: number, skip: (el: Element) => boolean): string | null {
+  for (const el of document.elementsFromPoint(x, y)) {
+    if (skip(el)) continue;
+    if (el instanceof HTMLImageElement && el.naturalWidth > 0) {
+      const r = el.getBoundingClientRect();
+      // Respect object-fit — thumbnails use `contain`, which letterboxes the
+      // image inside its box; naive box-ratio mapping samples the padding.
+      const fit = getComputedStyle(el).objectFit || 'fill';
+      const nw = el.naturalWidth;
+      const nh = el.naturalHeight;
+      let sx = r.width / nw;
+      let sy = r.height / nh;
+      if (fit === 'contain' || fit === 'scale-down') { const s = Math.min(sx, sy); sx = s; sy = s; }
+      else if (fit === 'cover') { const s = Math.max(sx, sy); sx = s; sy = s; }
+      else if (fit === 'none') { sx = 1; sy = 1; }
+      const ox = (r.width - nw * sx) / 2;   // object-position defaults to center
+      const oy = (r.height - nh * sy) / 2;
+      const px = (x - r.left - ox) / sx;
+      const py = (y - r.top - oy) / sy;
+      if (px >= 0 && py >= 0 && px < nw && py < nh) {
+        try {
+          const c = document.createElement('canvas');
+          c.width = 1; c.height = 1;
+          const ctx = c.getContext('2d', { willReadFrequently: true })!;
+          ctx.drawImage(el, Math.floor(px), Math.floor(py), 1, 1, 0, 0, 1, 1);
+          const d = ctx.getImageData(0, 0, 1, 1).data;
+          if (d[3]! > 0) return rgbToHexStr(d[0]!, d[1]!, d[2]!);
+        } catch { /* tainted (cross-origin) image — fall through */ }
+      }
+      continue;
+    }
+    if (el instanceof HTMLCanvasElement) {
+      const r = el.getBoundingClientRect();
+      const px = Math.floor(((x - r.left) / r.width) * el.width);
+      const py = Math.floor(((y - r.top) / r.height) * el.height);
+      try {
+        const d = el.getContext('2d')?.getImageData(px, py, 1, 1).data;
+        if (d && d[3]! > 0) return rgbToHexStr(d[0]!, d[1]!, d[2]!);
+      } catch { /* webgl/tainted — fall through */ }
+      continue;
+    }
+    const bg = getComputedStyle(el).backgroundColor;
+    const m = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    if (m && (m[4] === undefined || parseFloat(m[4]!) > 0.5)) {
+      return rgbToHexStr(Number(m[1]), Number(m[2]), Number(m[3]));
+    }
+  }
+  return null;
+}
+
 export function ColorPicker({ color, onChange, onClose, recentColors: recentColorsProp, onAddRecentColor }: ColorPickerProps) {
   const [rgb] = useState(() => hexToRgb(color));
   const [hsv, setHsv] = useState<[number, number, number]>(() => rgbToHsv(rgb[0], rgb[1], rgb[2]));
+  const [sampling, setSampling] = useState(false);
+  const [samplePreview, setSamplePreview] = useState<{ x: number; y: number; hex: string | null } | null>(null);
+
+  // Escape cancels in-app eyedropper sampling
+  useEffect(() => {
+    if (!sampling) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.stopPropagation(); setSampling(false); setSamplePreview(null); }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [sampling]);
   const [recentColorsLocal, setRecentColorsLocal] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem('paint_recent_colors');
@@ -310,6 +406,35 @@ export function ColorPicker({ color, onChange, onClose, recentColors: recentColo
 
       <div className="color-info-row">
         <div className="color-info-preview" style={{ backgroundColor: currentHex }} />
+        <button
+          className={`color-picker-eyedropper${sampling ? ' color-picker-eyedropper-active' : ''}`}
+          title="Pick a color from the app (images, canvases, UI)"
+          onClick={async () => {
+            const applyHex = (hex: string) => {
+              const [r, g, b] = hexToRgb(hex);
+              setHsv(rgbToHsv(r, g, b));
+              onChange(hex.toLowerCase());
+              addToRecent(hex.toLowerCase());
+            };
+            if ('EyeDropper' in window) {
+              // Native screen-wide picker (Chrome; Brave disables it)
+              try {
+                const picker = new (window as unknown as { EyeDropper: new () => { open: () => Promise<{ sRGBHex: string }> } }).EyeDropper();
+                const result = await picker.open();
+                applyHex(result.sRGBHex);
+              } catch { /* user cancelled */ }
+            } else {
+              setSampling(true);
+            }
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 22l1-1h3l9-9" />
+            <path d="M3 21v-3l9-9" />
+            <path d="M15 6l3-3a2.12 2.12 0 0 1 3 3l-3 3" />
+            <path d="M12 3l9 9" />
+          </svg>
+        </button>
         <div className="color-info-values">
           <div className="color-hex-input-row">
             <span className="color-label">HEX</span>
@@ -348,6 +473,55 @@ export function ColorPicker({ color, onChange, onClose, recentColors: recentColo
             ))}
           </div>
         </div>
+      )}
+
+      {sampling && createPortal(
+        <div
+          className="eyedropper-overlay"
+          style={{ position: 'fixed', inset: 0, zIndex: 200000, cursor: 'crosshair' }}
+          onPointerMove={async (e) => {
+            const { clientX, clientY } = e;
+            const hex = await sampleScreenColor(clientX, clientY, (el) => !!el.closest('.eyedropper-overlay'));
+            setSamplePreview({ x: clientX, y: clientY, hex });
+          }}
+          onPointerDown={async (e) => {
+            e.stopPropagation();
+            if (e.button !== 0) { setSampling(false); setSamplePreview(null); return; }
+            const hex = await sampleScreenColor(e.clientX, e.clientY, (el) => !!el.closest('.eyedropper-overlay'));
+            if (hex) {
+              const [r, g, b] = hexToRgb(hex);
+              setHsv(rgbToHsv(r, g, b));
+              onChange(hex);
+              addToRecent(hex);
+            }
+            setSampling(false);
+            setSamplePreview(null);
+          }}
+          onContextMenu={(e) => { e.preventDefault(); setSampling(false); setSamplePreview(null); }}
+        >
+          {samplePreview && (
+            <div
+              style={{
+                position: 'absolute',
+                left: Math.min(samplePreview.x + 16, window.innerWidth - 90),
+                top: Math.min(samplePreview.y + 16, window.innerHeight - 40),
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 8px',
+                borderRadius: 6,
+                background: 'rgba(20, 20, 20, 0.9)',
+                color: '#fff',
+                fontSize: 11,
+                pointerEvents: 'none',
+              }}
+            >
+              <span style={{ width: 16, height: 16, borderRadius: 3, border: '1px solid rgba(255,255,255,0.4)', background: samplePreview.hex ?? 'transparent' }} />
+              {samplePreview.hex ? samplePreview.hex.toUpperCase() : '—'}
+            </div>
+          )}
+        </div>,
+        document.body,
       )}
     </div>
   );

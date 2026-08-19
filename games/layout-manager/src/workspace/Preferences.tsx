@@ -378,6 +378,31 @@ function AISettings({
   draft: UserConfig;
   onChange: <K extends keyof UserConfig>(key: K, value: UserConfig[K]) => void;
 }) {
+  // Live status for the no-key chat providers (Hermes + Claude Code)
+  const [hermesStatus, setHermesStatus] = useState<{ up: boolean; models: string[] } | null>(null);
+  const [claudeStatus, setClaudeStatus] = useState<boolean | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const t = setTimeout(() => {
+      fetch('/__ai-local-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hermesUrl: draft.hermesUrl }),
+      })
+        .then((r) => r.json())
+        .then((st) => {
+          if (cancelled) return;
+          setHermesStatus(st.hermes);
+          setClaudeStatus(!!st.claude?.up);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setHermesStatus({ up: false, models: [] });
+          setClaudeStatus(false);
+        });
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [draft.hermesUrl]);
   const envInputRef = useRef<HTMLInputElement>(null);
 
   const handleEnvImport = useCallback(() => {
@@ -393,6 +418,7 @@ function AISettings({
       const lines = text.split('\n');
       const keyMap: Record<string, keyof UserConfig> = {
         'GOOGLE_GENAI_API_KEY': 'googleGenaiApiKey', // secret-scan: allow
+        'FAL_API_KEY': 'falApiKey',
         'OPENAI_API_KEY': 'openaiApiKey',
         'XAI_API_KEY': 'xaiApiKey',
         'ANTHROPIC_API_KEY': 'anthropicApiKey',
@@ -419,7 +445,7 @@ function AISettings({
       if (imported > 0) {
         alert(`Imported ${imported} key${imported > 1 ? 's' : ''} from .env file`);
       } else {
-        alert('No recognized API keys found in file.\nExpected keys: GOOGLE_GENAI_API_KEY, OPENAI_API_KEY, XAI_API_KEY, ANTHROPIC_API_KEY');
+        alert('No recognized API keys found in file.\nExpected keys: GOOGLE_GENAI_API_KEY, FAL_API_KEY, OPENAI_API_KEY, XAI_API_KEY, ANTHROPIC_API_KEY');
       }
     };
     reader.readAsText(file);
@@ -493,6 +519,14 @@ function AISettings({
       />
 
       <TextInputSetting
+        label="Fal.ai"
+        value={draft.falApiKey}
+        onChange={(v) => onChange('falApiKey', v)}
+        placeholder="API key"
+        secret
+      />
+
+      <TextInputSetting
         label="OpenAI"
         value={draft.openaiApiKey}
         onChange={(v) => onChange('openaiApiKey', v)}
@@ -520,10 +554,80 @@ function AISettings({
 
       <div className="prefs-toggle-row" style={{ cursor: 'default' }}>
         <div className="prefs-toggle-text">
-          <span className="prefs-toggle-label">Local Models</span>
-          <span className="prefs-toggle-desc">Chat with LLMs running on your own machine. No API keys needed.</span>
+          <span className="prefs-toggle-label">Connections</span>
+          <span className="prefs-toggle-desc">Apps you're logged into that Layout Manager can use — no API keys needed.</span>
         </div>
       </div>
+
+      <div className="prefs-toggle-row" style={{ cursor: 'default' }}>
+        <div className="prefs-toggle-text">
+          <span className="prefs-toggle-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{
+              width: 8, height: 8, borderRadius: '50%',
+              background: !draft.claudeCodeEnabled ? 'var(--color-text-muted)' : claudeStatus === null ? 'var(--color-text-muted)' : claudeStatus ? 'var(--color-success)' : 'var(--color-error)',
+            }} />
+            Claude Code {!draft.claudeCodeEnabled ? '— disconnected' : claudeStatus === null ? '— checking...' : claudeStatus ? 'connected' : 'not found'}
+          </span>
+          <span className="prefs-toggle-desc">
+            {!draft.claudeCodeEnabled
+              ? 'Disabled — Layout Manager will not offer or run the Claude Code CLI.'
+              : claudeStatus
+                ? 'Ready — pick Claude Code in AI Chat to use your Claude Pro/Max login with no API key.'
+                : 'Chat on your Claude Pro/Max subscription with no API key: install Claude Code (claude.com/claude-code) and log in, then it appears in AI Chat.'}
+          </span>
+        </div>
+        <button
+          className="prefs-btn prefs-btn-secondary"
+          style={{ flexShrink: 0 }}
+          onClick={() => onChange('claudeCodeEnabled', !draft.claudeCodeEnabled)}
+        >
+          {draft.claudeCodeEnabled ? 'Disconnect' : 'Connect'}
+        </button>
+      </div>
+
+      <div className="prefs-toggle-row" style={{ cursor: 'default' }}>
+        <div className="prefs-toggle-text">
+          <span className="prefs-toggle-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{
+              width: 8, height: 8, borderRadius: '50%',
+              background: !draft.hermesEnabled ? 'var(--color-text-muted)' : hermesStatus === null ? 'var(--color-text-muted)' : hermesStatus.up ? 'var(--color-success)' : 'var(--color-error)',
+            }} />
+            Hermes {!draft.hermesEnabled ? '— disconnected' : hermesStatus === null ? '— checking...' : hermesStatus.up ? 'connected' : 'not connected'}
+          </span>
+          <span className="prefs-toggle-desc">
+            {!draft.hermesEnabled
+              ? 'Disabled — Layout Manager will not offer Hermes providers or run its proxy in the background.'
+              : hermesStatus?.up
+                ? 'Ready — Hermes chat and Grok image generation are available with no API key.'
+                : 'Chat and generate images through the Hermes Agent with no API key: install Hermes and log in (e.g. `hermes auth add xai-oauth --type oauth` for SuperGrok).'}
+          </span>
+        </div>
+        <button
+          className="prefs-btn prefs-btn-secondary"
+          style={{ flexShrink: 0 }}
+          onClick={() => {
+            const next = !draft.hermesEnabled;
+            onChange('hermesEnabled', next);
+            if (!next) {
+              // Kill any background proxy right away — disconnect means stopped
+              fetch('/__hermes-proxy-stop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hermesUrl: draft.hermesUrl }),
+              }).catch(() => {});
+            }
+          }}
+        >
+          {draft.hermesEnabled ? 'Disconnect' : 'Connect'}
+        </button>
+      </div>
+
+      <TextInputSetting
+        label="Hermes proxy URL"
+        value={draft.hermesUrl}
+        onChange={(v) => onChange('hermesUrl', v)}
+        placeholder="http://127.0.0.1:8645"
+      />
 
       <TextInputSetting
         label="KoboldCpp URL"

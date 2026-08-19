@@ -110,6 +110,7 @@ Open **Preferences > AI** in Layout Manager and paste your API keys, or click **
 | Provider | Key | Used For |
 |---|---|---|
 | **Google GenAI** (Nano Banana) | `GOOGLE_GENAI_API_KEY` | Text/reference-to-image generation, AI chat |
+| **Fal.ai** | `FAL_API_KEY` | Split to Layers (Seedream Layerize) |
 | **OpenAI** | `OPENAI_API_KEY` | Text-to-image generation, AI chat |
 | **xAI (Grok)** | `XAI_API_KEY` | AI chat (text only, no image support) |
 | **Anthropic (Claude)** | `ANTHROPIC_API_KEY` | AI chat |
@@ -122,7 +123,9 @@ These chat providers need no API key at all:
 
 | Provider | Requirement | Notes |
 |---|---|---|
-| **Claude Code** | [Claude Code](https://claude.com/claude-code) installed and logged in on the machine running Layout Manager | Chats through the local CLI using your Claude Pro/Max login. Text only, no model choice, and usage counts against your subscription's rate limits (shared with claude.ai and Claude Code itself) — the chat panel shows a disclaimer to this effect. All CLI tools are disabled, so it behaves as pure chat. |
+| **Claude Code** | [Claude Code](https://claude.com/claude-code) installed and logged in on the machine running Layout Manager | Chats through the local CLI using your Claude Pro/Max login with a model picker (sonnet recommended). Text only, and usage counts against your subscription's rate limits (shared with claude.ai and Claude Code itself) — the chat panel shows a disclaimer to this effect. All CLI tools are disabled, so it behaves as pure chat. |
+| **Hermes (Grok)** | [Hermes Agent](https://hermes-agent.nousresearch.com) installed with a SuperGrok / X Premium+ OAuth login (`hermes auth add xai-oauth --type oauth`) | Streaming Grok chat via Hermes' local proxy with a live model dropdown — Layout Manager auto-starts the proxy on first use. Supports image attachments. Usage shares your SuperGrok limits. |
+| **Hermes (GPT)** | Hermes Agent with an OpenAI Codex OAuth login | GPT chat (gpt-5.6 family; luna recommended — currently unlimited) via one-shot Hermes CLI runs. Replies arrive whole rather than streaming; supports image attachments. Usage shares your Codex subscription limits. |
 | **KoboldCpp** | A local KoboldCpp server (default `http://127.0.0.1:5001`) | Chats with whatever model is loaded. URL configurable in **Preferences > AI > Local Models**. |
 | **Ollama** | A local Ollama server (default `http://127.0.0.1:11434`) | Uses the model set in Preferences, or auto-picks your first installed model if left blank. |
 
@@ -180,7 +183,7 @@ Local models support images if the loaded model is multimodal (e.g. llava); text
 All AI tools are accessible from the toolbar. They can be hidden entirely from **Preferences > AI > Hide AI Features**.
 
 #### Text to Image / Reference to Image
-- Generate images from text prompts using Nano Banana (Google GenAI) or OpenAI
+- Generate images from text prompts using Nano Banana (Google GenAI), OpenAI, or Grok Imagine via Hermes (no API key — uses your SuperGrok subscription; Standard/Quality models, seven aspect ratios, reference-image editing)
 - **Nano Banana**: aspect ratio picker (1:1, 3:2, 2:3, 4:3, 3:4, 16:9, 9:16) + image size (1K / 2K / 4K)
 - **OpenAI gpt-image-1**: size variants (1024², 1024×1536, 1536×1024), quality (low/medium/high), transparent background option
 - Select images on the workspace as style references (up to 5) — this covers image-to-image: the reference images carry the source, the prompt describes the change. Paint layers are flattened and included
@@ -188,16 +191,24 @@ All AI tools are accessible from the toolbar. They can be hidden entirely from *
 - Provider picker with API key status
 - Persistent prompt across sessions
 
+#### Split to Layers
+- Splits a selected image into 2–17 transparent PNG layers (background + separate elements) via Fal.ai Seedream Layerize — each layer lands as a named, z-ordered element beside the source
+- Optional guidance prompt: name the elements to separate, or use `<bbox>left top right bottom</bbox>` tags (normalized 0–999) for precise targeting
+- Priced per generated layer by Fal.ai; the provider's content filter blocks depictions of people/characters unless your fal account is authorized to disable it
+
 #### Remove Background
 - One-click local background removal — runs in your browser via ONNX Runtime (no API key, no uploads, nothing installed)
-- Two engines: Quality (ISNet, ~170 MB one-time model download, cached) and Fast (U2-Net small, ~5 MB)
-- Loaded models show in the MEM tool and are evicted by Free Memory
+- Four engines, lightest to heaviest: Simple (instant color-based cutout, no AI), Fast (U2-Net small, ~5 MB one-time model download), Quality (ISNet, ~170 MB), and Best (BiRefNet, ~475 MB)
+- Matte hardness + edge (contract/smooth/feather) fine-tuning with an opt-in live preview; Best and Simple can keep soft contact shadows as translucent black
+- Models download once and cache in the browser; only one stays loaded at a time, idle models auto-unload after 15 minutes, and the MEM tool lists/evicts them
 - Alternative: the ComfyUI integration (see below) with the bundled workflow source at `comfy-workflows_source/BackgroundRemoval_API_LM.json` (built on the [ComfyUI-RMBG](https://github.com/1038lab/ComfyUI-RMBG) BiRefNet node) — see [`docs/comfyui-integration.md`](docs/comfyui-integration.md)
 
 #### AI Chat
 - Multi-provider chat: Claude, Gemini, OpenAI, Grok
 - **Claude Code provider** — no API key: chats through your locally installed Claude Code CLI using its Claude Pro/Max login (text only, tools disabled; an in-panel disclaimer notes that usage shares your subscription limits)
-- **Local LLM providers** — KoboldCpp and Ollama servers running on your own machine, configured under **Preferences > AI > Local Models**
+- **Hermes Agent providers** — Grok (streaming, via auto-started local proxy) and GPT (one-shot CLI) using your SuperGrok / Codex subscription logins; **Preferences > AI > Connections** shows live status with Connect/Disconnect controls
+- **Local LLM providers** — KoboldCpp and Ollama servers running on your own machine, configured under **Preferences > AI**
+- The provider row only shows providers that are actually available (API key present, server reachable, or CLI installed)
 - Streaming responses
 - Drag images into chat or attach selected workspace images (up to 5)
 - Auto-describe mode: sends image-only messages with a generation-focused prompt
@@ -308,7 +319,7 @@ See [`docs/comfyui-integration.md`](docs/comfyui-integration.md) for full setup,
 
 - **React** 18 + **TypeScript**
 - **Vite** 6 (dev server, bundler, and AI backend proxy)
-- Direct provider APIs: Google GenAI (Gemini / Nano Banana), OpenAI (gpt-image-1), Anthropic (Claude), xAI (Grok)
+- Direct provider APIs: Google GenAI (Gemini / Nano Banana), OpenAI (gpt-image-1), Fal.ai (Seedream Layerize), Anthropic (Claude), xAI (Grok)
 - DOM-based rendering with CSS transforms (not HTML5 Canvas)
 - State management via `useReducer` (no external libraries)
 - API keys obfuscated with XOR + base64 in localStorage

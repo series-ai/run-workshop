@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Menu, FilePlus, FolderOpen, LayoutGrid, Save, Upload, Download, Image, Settings, Undo2, Redo2, Minus, Plus, Film, Magnet, Ruler, Type, Sparkles, Eraser, MessageSquare, Workflow } from 'lucide-react';
+import { Menu, FilePlus, FolderOpen, LayoutGrid, Save, Upload, Download, Image, Settings, Undo2, Redo2, Minus, Plus, Film, Magnet, Ruler, Type, Sparkles, Eraser, MessageSquare, Workflow, Layers } from 'lucide-react';
 import type { WorkspaceAction, ImageNode, CanvasRect, ScaleFilter, RulerGuide } from './types';
 import { saveProject, saveProjectAs, loadProject, setCurrentFileHandle } from './projectFile';
 import { CanvasMenu } from './CanvasMenu';
@@ -42,10 +42,12 @@ interface ToolbarProps {
   aiHidden?: boolean;
   onAiTextToImage?: () => void;
   onAiBgRemoval?: () => void;
+  onAiLayerize?: () => void;
   onAiChat?: () => void;
   onAiComfy?: () => void;
   aiTextToImageOpen?: boolean;
   aiRemoveBgOpen?: boolean;
+  aiLayerizeOpen?: boolean;
   aiChatOpen?: boolean;
   aiComfyOpen?: boolean;
   historyPast: number;
@@ -53,7 +55,7 @@ interface ToolbarProps {
   historyMax: number;
 }
 
-export function Toolbar({ zoom, dispatch, pan, onImport, onImportSpriteSheet, images, canUndo, canRedo, canvas, scaleFilter, snapEnabled, projectName, onNewProject, selectedIds, onCanvasInfoIssues, guides, rulersVisible, onToggleRulers, canvasBgColor, onOpenFlipbook, activeTool, onSetActiveTool, exportOpen, onExportClosed, onUndo, onRedo, onOpenPreferences, onExportStatus, onMenuOpenChange, editMode, aiHidden, onAiTextToImage, onAiBgRemoval, onAiChat, onAiComfy, aiTextToImageOpen, aiRemoveBgOpen, aiChatOpen, aiComfyOpen, historyPast, historyFuture, historyMax }: ToolbarProps) {
+export function Toolbar({ zoom, dispatch, pan, onImport, onImportSpriteSheet, images, canUndo, canRedo, canvas, scaleFilter, snapEnabled, projectName, onNewProject, selectedIds, onCanvasInfoIssues, guides, rulersVisible, onToggleRulers, canvasBgColor, onOpenFlipbook, activeTool, onSetActiveTool, exportOpen, onExportClosed, onUndo, onRedo, onOpenPreferences, onExportStatus, onMenuOpenChange, editMode, aiHidden, onAiTextToImage, onAiBgRemoval, onAiLayerize, onAiChat, onAiComfy, aiTextToImageOpen, aiRemoveBgOpen, aiLayerizeOpen, aiChatOpen, aiComfyOpen, historyPast, historyFuture, historyMax }: ToolbarProps) {
   const zoomPercent = Math.round(zoom * 100);
   const [menuOpen, setMenuOpenRaw] = useState(false);
   const setMenuOpen = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
@@ -348,6 +350,14 @@ export function Toolbar({ zoom, dispatch, pan, onImport, onImportSpriteSheet, im
             disabled={!!editMode || selectedIds.size === 0}
           >
             <Eraser size={16} />
+          </button>
+          <button
+            className={`toolbar-btn toolbar-btn-icon${aiLayerizeOpen ? ' toolbar-btn-active' : ''}`}
+            onClick={onAiLayerize}
+            title="Split to Layers (AI)"
+            disabled={!!editMode || selectedIds.size === 0}
+          >
+            <Layers size={16} />
           </button>
           <button
             className={`toolbar-btn toolbar-btn-icon${aiChatOpen ? ' toolbar-btn-active' : ''}`}

@@ -4,7 +4,7 @@
 import type { UserConfig } from '../userConfig';
 
 export interface AiConfig {
-  apiKeys?: Pick<UserConfig, 'googleGenaiApiKey' | 'openaiApiKey' | 'xaiApiKey' | 'anthropicApiKey'>;
+  apiKeys?: Pick<UserConfig, 'googleGenaiApiKey' | 'falApiKey' | 'openaiApiKey' | 'xaiApiKey' | 'anthropicApiKey'>;
 }
 
 export interface StreamCallbacks {
@@ -13,6 +13,44 @@ export interface StreamCallbacks {
   onError?: (error: string) => void;
   onDone?: () => void;
   onCancelled?: () => void;
+}
+
+export interface LayerizeLayer {
+  dataUrl: string;
+  zIndex: number;
+  name: string | null;
+  /** [left, top, right, bottom] in base-image pixels; null for the base layer */
+  bbox: number[] | null;
+}
+
+/** Split an image into editable transparent layers via Fal.ai Seedream Layerize. */
+export async function layerizeImage(
+  config: AiConfig,
+  params: { sourceImageUrl: string; prompt?: string; disableSafety?: boolean },
+  onProgress?: (msg: string) => void,
+): Promise<{ layers: LayerizeLayer[]; cancelled?: boolean }> {
+  const apiKey = config.apiKeys?.falApiKey;
+  if (!apiKey) throw new Error('Missing Fal.ai API key');
+
+  onProgress?.('Preparing source image...');
+  const source = await blobUrlToBase64(params.sourceImageUrl);
+
+  onProgress?.('Splitting into layers (this can take a minute)...');
+  const resp = await fetch('/__ai-layerize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      apiKey,
+      sourceImage: source.base64,
+      sourceMime: source.mimeType,
+      prompt: params.prompt,
+      disableSafety: params.disableSafety,
+    }),
+  });
+  const result = await resp.json();
+  if (result.cancelled) return { layers: [], cancelled: true };
+  if (!resp.ok || result.error) throw new Error(result.error || 'Layerize failed');
+  return { layers: result.layers };
 }
 
 /** Cancel all in-flight direct API requests. */
@@ -117,6 +155,8 @@ export async function textToImage(
     refImages?: string[];
     count?: number;
     seed?: number;
+    /** hermes-grok only: grok-imagine-image | grok-imagine-image-quality */
+    hermesModel?: string;
   },
   callbacks: StreamCallbacks,
 ): Promise<void> {
@@ -163,6 +203,21 @@ export async function textToImage(
         background: params.background,
         count: params.count || 1,
         referenceImages,
+      }),
+    });
+    await consumeSSE(resp, callbacks);
+  } else if (api === 'hermes-grok' || api === 'hermes-gpt') {
+    // No API key — the hermes agent generates via the user's SuperGrok or
+    // Codex login; the model value tells the server which backend to use
+    const resp = await fetch('/__ai-generate-hermes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: params.prompt,
+        count: params.count || 1,
+        refImages: referenceImages,
+        model: params.hermesModel,
+        aspectRatio: params.aspectRatio,
       }),
     });
     await consumeSSE(resp, callbacks);
