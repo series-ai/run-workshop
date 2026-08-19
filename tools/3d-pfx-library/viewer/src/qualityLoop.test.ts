@@ -61,7 +61,9 @@ describe('PFX continuous quality loop', () => {
     expect(queue[0]).toMatchObject({
       kind: 'systemic',
       defectKey: 'flat-card-volume',
-      effectIds: ['shared-a', 'shared-b', 'shared-c'],
+      effectIds: ['shared-c', 'shared-b', 'shared-a'],
+      action: 'refine-primitive',
+      ownerPath: 'src/PfxSurface.tsx',
     })
     expect(queue.some((item) => item.effectIds.includes('already-great'))).toBe(false)
     expect(queue.at(-1)).toMatchObject({ kind: 'effect', effectIds: ['local-hero'] })
@@ -85,6 +87,32 @@ describe('PFX continuous quality loop', () => {
       'visual:volumeAndDepth',
       'performance:real-device',
     ])
+  })
+
+  it('routes a disputed effect to adjudication before visual remediation', () => {
+    const queue = createPfxQualityImprovementQueue([
+      effect({
+        effectId: 'disputed-teleport',
+        rank: 499,
+        systemicDefectKeys: [
+          'evidence:peer-review-disagreement',
+          'visual:volumeAndDepth',
+          'performance:real-device',
+        ],
+      }),
+      effect({
+        effectId: 'device-blocked-spawn',
+        rank: 500,
+        systemicDefectKeys: ['performance:real-device'],
+      }),
+    ])
+
+    expect(queue.find((item) => item.effectIds.includes('disputed-teleport')))
+      .toMatchObject({
+        defectKey: 'evidence:peer-review-disagreement',
+        action: 'adjudicate-review',
+        ownerPath: null,
+      })
   })
 
   it('prioritizes a reviewed shared visual defect over a large unreviewed backlog', () => {
@@ -125,6 +153,8 @@ describe('PFX continuous quality loop', () => {
       kind: 'effect',
       defectKey: 'visual:semanticIdentity',
       effectIds: ['reviewed-muzzle'],
+      action: 'refine-recipe',
+      ownerPath: 'src/recipes/reviewed-muzzle.ts',
     })
   })
 
@@ -197,7 +227,7 @@ describe('PFX continuous quality loop', () => {
     expect(ledger.queue[0]).toMatchObject({
       kind: 'systemic',
       defectKey: 'visual:volumeAndDepth',
-      effectIds: ['hero-needs-a-plus', 'shared-volume-defect'],
+      effectIds: ['shared-volume-defect', 'hero-needs-a-plus'],
     })
     expect(ledger.queue.some((item) => item.effectIds.includes('accepted-a'))).toBe(false)
   })
@@ -216,6 +246,82 @@ describe('PFX continuous quality loop', () => {
     expect(ledger.summary.weightedScore).toBe(3.5)
   })
 
+  it('rejects a reviewed visual-score regression even when textual blocker count decreases', () => {
+    const previous = createPfxQualityImprovementLedger({
+      iteration: 1,
+      effects: [effect({
+        effectId: 'spawn-telegraph',
+        rank: 500,
+        currentGrade: 'C',
+        worstVisualScore: 2,
+        weightedScore: 3,
+        visualBlockers: ['identity', 'depth', 'decay'],
+      })],
+    })
+    const legacyPrevious = {
+      ...previous,
+      summary: {
+        ...previous.summary,
+        // Older v1 ledgers counted free-form reviewer sentences.
+        blockerCount: previous.effects[0]!.visualBlockers.length,
+      },
+    }
+    const current = createPfxQualityImprovementLedger({
+      iteration: 2,
+      previous: legacyPrevious,
+      effects: [effect({
+        effectId: 'spawn-telegraph',
+        rank: 500,
+        currentGrade: 'D',
+        worstVisualScore: 2,
+        weightedScore: 2.33,
+        visualBlockers: ['identity'],
+      })],
+    })
+
+    expect(current.convergence).toEqual({
+      converging: false,
+      reason: 'quality-regression:spawn-telegraph',
+    })
+  })
+
+  it('rejects a dimension regression hidden by an unchanged worst score and average', () => {
+    const previous = createPfxQualityImprovementLedger({
+      iteration: 1,
+      effects: [effect({
+        effectId: 'spawn-telegraph',
+        rank: 500,
+        worstVisualScore: 3,
+        weightedScore: 3.33,
+        visualScores: {
+          semanticIdentity: 4,
+          temporalArcAndDecay: 3,
+          cc0AssetIntegration: 3,
+        },
+      })],
+    })
+    const current = createPfxQualityImprovementLedger({
+      iteration: 2,
+      previous,
+      effects: [effect({
+        effectId: 'spawn-telegraph',
+        rank: 500,
+        worstVisualScore: 3,
+        weightedScore: 3.33,
+        visualScores: {
+          semanticIdentity: 3,
+          temporalArcAndDecay: 4,
+          cc0AssetIntegration: 3,
+        },
+      })],
+    })
+
+    expect(current.convergence).toEqual({
+      converging: false,
+      reason: 'quality-regression:spawn-telegraph',
+    })
+  })
+
   it('continues only on strict improvement and fails closed on regressions', () => {
     const previous = snapshot()
 
@@ -226,6 +332,14 @@ describe('PFX continuous quality loop', () => {
     expect(evaluatePfxQualityConvergence(previous, snapshot({ iteration: 2, weightedScore: 2.7 }))).toEqual({
       converging: true,
       reason: 'weighted-score-increased',
+    })
+    expect(evaluatePfxQualityConvergence(previous, snapshot({ iteration: 2, visualEvidenceCount: 11 }))).toEqual({
+      converging: true,
+      reason: 'visual-evidence-coverage-increased',
+    })
+    expect(evaluatePfxQualityConvergence(previous, snapshot({ iteration: 2, performanceEvidenceCount: 11 }))).toEqual({
+      converging: true,
+      reason: 'performance-evidence-coverage-increased',
     })
     expect(evaluatePfxQualityConvergence(previous, snapshot({ iteration: 2 }))).toEqual({
       converging: false,
@@ -248,6 +362,59 @@ describe('PFX continuous quality loop', () => {
     ).toEqual({
       converging: false,
       reason: 'evidence-coverage-regressed:performance',
+    })
+  })
+
+  it('does not treat fewer reviewer finding sentences as blocker convergence', () => {
+    const previous = createPfxQualityImprovementLedger({
+      iteration: 1,
+      effects: [effect({
+        effectId: 'teleport-telegraph',
+        rank: 499,
+        visualBlockers: [
+          'peer consensus verdict: rework',
+          'The destination identity is generic.',
+          'The plume needs a stronger terminal event.',
+          'The destination lock needs clearer visual hierarchy.',
+        ],
+        systemicDefectKeys: [
+          'visual:semanticIdentity',
+          'visual:temporalArcAndDecay',
+          'performance:real-device',
+        ],
+      })],
+    })
+    const legacyPrevious = {
+      ...previous,
+      summary: {
+        ...previous.summary,
+        // Older v1 ledgers counted free-form reviewer sentences.
+        blockerCount: previous.effects[0]!.visualBlockers.length,
+      },
+    }
+    const current = createPfxQualityImprovementLedger({
+      iteration: 2,
+      previous: legacyPrevious,
+      effects: [effect({
+        effectId: 'teleport-telegraph',
+        rank: 499,
+        visualBlockers: [
+          'peer consensus verdict: rework',
+          'The same destination identity remains generic.',
+        ],
+        systemicDefectKeys: [
+          'visual:semanticIdentity',
+          'visual:temporalArcAndDecay',
+          'performance:real-device',
+        ],
+      })],
+    })
+
+    expect(legacyPrevious.summary.blockerCount).toBe(4)
+    expect(previous.summary.blockerCount).toBe(current.summary.blockerCount)
+    expect(current.convergence).toEqual({
+      converging: false,
+      reason: 'quality-plateau',
     })
   })
 })

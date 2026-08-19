@@ -1,6 +1,10 @@
 import * as THREE from 'three'
 import { PFX_PLASMA_IMPACT_FLIPBOOK_ATLAS } from '../plasmaImpactFlipbook'
-import { sharedGradientTextureCache } from './04'
+import {
+  PFX_MATERIALIZE_GATHER_BIRTH_PROGRESS_END,
+  PFX_MATERIALIZE_GATHER_BIRTH_VISIBILITY,
+  sharedGradientTextureCache,
+} from './04'
 import type { PfxComboRingMultiplier, PfxGradientTextureKind, PfxSurfaceTuning } from '../types/02'
 
 export const PFX_SCREEN_VIGNETTE_VERTEX = /* glsl */ `
@@ -1615,6 +1619,7 @@ uniform float uFlipbookRows;
 uniform float uFlipbookFrameCount;
 uniform float uFlipbookFrameRate;
 uniform float uFlipbookTemperatureGrade;
+uniform float uMaterializeEnergyGrade;
 uniform float uFlipbookTurbulentCells;
 uniform vec3 uColorHot;
 uniform vec3 uColorBase;
@@ -1627,6 +1632,7 @@ uniform float uTailSnap;
 uniform float uAdditiveShrinkF;
 uniform float uBands;
 uniform float uErode;
+uniform float uStretch;
 
 varying vec2 vUv;
 varying float vProgress;
@@ -1641,20 +1647,84 @@ void main() {
   float variantRow = floor(variantIndex / uVariantColumns);
   vec2 variantOffset = vec2(variantColumn, variantRow * uVariantRowDirection) * uUvCellStep;
   float flipbookFrame = 0.0;
+  vec2 spriteUv = vUv;
+  #ifdef MOTION_MATERIALIZE
+    // Per-particle curl, width, and phase keep one flipbook sheet from
+    // exposing the same card silhouette across the materialization volume.
+    float materializeUvCurl =
+      sin(
+        spriteUv.y * (5.0 + fract(vVariant * 7.31) * 3.0) +
+        vProgress * 4.0 +
+        vVariant * 29.0
+      ) *
+      mix(0.025, 0.075, fract(vVariant * 13.17));
+    float materializeUvWidth = mix(0.82, 1.12, fract(vVariant * 19.73));
+    spriteUv.x =
+      clamp(
+        0.5 + (spriteUv.x - 0.5) * materializeUvWidth + materializeUvCurl,
+        0.018,
+        0.982
+      );
+  #endif
   vec4 sprite;
   if (uFlipbookFrameCount > 1.5) {
     // Each particle advances at the authored rate from its own age. A stable
     // variant phase prevents a stack of identical flames from pulsing in lockstep.
-    flipbookFrame = floor(mod(vProgress * uLifetime * uFlipbookFrameRate + floor(vVariant * 11.0), uFlipbookFrameCount));
+    float flipbookPhase =
+      mod(
+        vProgress * uLifetime * uFlipbookFrameRate + floor(vVariant * 11.0),
+        uFlipbookFrameCount
+      );
+    flipbookFrame = floor(flipbookPhase);
     float flipbookColumn = mod(flipbookFrame, uFlipbookColumns);
     float flipbookRow = floor(flipbookFrame / uFlipbookColumns);
     vec2 flipbookCell = vec2(1.0 / uFlipbookColumns, 1.0 / uFlipbookRows);
     vec2 flipbookOrigin = vec2(flipbookColumn, uFlipbookRows - 1.0 - flipbookRow) * flipbookCell;
-    vec2 flipbookUv = flipbookOrigin + mix(vec2(0.018), vec2(0.982), vUv) * flipbookCell;
+    vec2 flipbookUv = flipbookOrigin + mix(vec2(0.018), vec2(0.982), spriteUv) * flipbookCell;
     sprite = texture2D(uAtlas, flipbookUv);
+    #ifdef MOTION_MATERIALIZE
+      // Frame blending is the conventional flipbook-particle solution to
+      // stepped cards: it preserves authored motion while removing the
+      // frozen, repeated-frame rack visible in deterministic captures.
+      float materializeNextFrame =
+        mod(flipbookFrame + 1.0, uFlipbookFrameCount);
+      float materializeNextColumn =
+        mod(materializeNextFrame, uFlipbookColumns);
+      float materializeNextRow =
+        floor(materializeNextFrame / uFlipbookColumns);
+      vec2 materializeNextOrigin =
+        vec2(
+          materializeNextColumn,
+          uFlipbookRows - 1.0 - materializeNextRow
+        ) *
+        flipbookCell;
+      vec4 materializeNextSprite = texture2D(
+        uAtlas,
+        materializeNextOrigin +
+          mix(vec2(0.018), vec2(0.982), spriteUv) * flipbookCell
+      );
+      float materializeFrameBlend =
+        smoothstep(0.0, 1.0, fract(flipbookPhase));
+      sprite = mix(sprite, materializeNextSprite, materializeFrameBlend);
+    #endif
   } else {
-    sprite = texture2D(uAtlas, uUvOffset + variantOffset + vUv * uUvScale);
+    sprite = texture2D(uAtlas, uUvOffset + variantOffset + spriteUv * uUvScale);
   }
+  #ifdef MOTION_MATERIALIZE_RELEASE
+    // Bright contact particles sample the radial atlas cell while gather and
+    // release particles retain the tapered streak. One batched draw therefore
+    // has a compact ignition core without a mesh or a fourth material layer.
+    float materializeReleaseCore = step(1.44, vBrightness);
+    vec4 materializeReleaseCoreSprite = texture2D(
+      uAtlas,
+      vec2(0.0125, 0.905) + vUv * vec2(0.225, 0.09)
+    );
+    sprite = mix(
+      sprite,
+      materializeReleaseCoreSprite,
+      materializeReleaseCore
+    );
+  #endif
   #ifdef MOTION_DANGER_PULSE
     // Analytic, antialiased blood marks avoid magnifying the generic atlas
     // splat into a blocky repeated stamp. vVariant shifts the body, lobe and
@@ -1689,6 +1759,115 @@ void main() {
   float borderFade = smoothstep(0.0, 0.09, vUv.x) * smoothstep(1.0, 0.91, vUv.x) *
     smoothstep(0.0, 0.09, vUv.y) * smoothstep(1.0, 0.91, vUv.y);
   sprite.a *= borderFade;
+  #ifdef MOTION_MATERIALIZE_GATHER_TEXTURED
+    // The CC0 flipbook supplies time-varying internal breakup, while seeded
+    // analytic ribbons own the outer silhouette. This is still a conventional
+    // textured particle material, but the source flame card can no longer
+    // expose a tiled rack of identical outer contours.
+    vec2 materializeP = vUv * 2.0 - 1.0;
+    float materializeSourceLuma =
+      clamp(dot(sprite.rgb, vec3(0.299, 0.587, 0.114)), 0.0, 1.0);
+    float materializeSourceBreakup =
+      mix(0.1, 1.0, smoothstep(0.04, 0.82, sprite.a));
+    float materializeSeed = fract(vVariant * 17.731 + 0.137);
+    float materializeCurl = sin(
+      materializeP.y * mix(2.8, 4.8, materializeSeed) +
+      vProgress * 4.0 +
+      vVariant * 19.0
+    ) * mix(0.035, 0.1, fract(vVariant * 31.0));
+    float materializeSoftAspect =
+      mix(0.82, 1.24, fract(vVariant * 23.17));
+    float materializeSoftDistance =
+      length(
+        vec2(
+          (materializeP.x + materializeCurl) * materializeSoftAspect,
+          materializeP.y * mix(0.72, 0.94, materializeSeed)
+        )
+      );
+    float materializeSoftBody =
+      1.0 -
+      smoothstep(
+        mix(0.18, 0.32, fract(vVariant * 11.37)),
+        1.0,
+        materializeSoftDistance
+      );
+    float materializeRibbonPrimary = materializeSoftBody;
+    float materializeSatelliteSide =
+      mix(-0.46, 0.46, fract(vVariant * 43.11));
+    float materializeSatelliteDistance =
+      length(
+        vec2(
+          (materializeP.x - materializeSatelliteSide) * 1.35,
+          (materializeP.y + 0.2) * 1.15
+        )
+      );
+    float materializeRibbonSecondary =
+      (
+        1.0 -
+        smoothstep(0.08, 0.62, materializeSatelliteDistance)
+      ) *
+      step(0.64, materializeSeed) *
+      0.32;
+    float materializeFilament = max(
+      materializeRibbonPrimary,
+      materializeRibbonSecondary
+    );
+    float materializeBreakup =
+      clamp(
+        0.88 +
+        0.07 * sin(materializeP.y * 13.0 + vVariant * 37.0) +
+        0.05 * sin(
+          (materializeP.x - materializeP.y) * 9.0 +
+          vProgress * 11.0
+        ),
+        0.68,
+        1.0
+      );
+    float materializeErosion =
+      smoothstep(0.06, 0.74, sprite.a * materializeBreakup);
+    float materializeFilamentBody =
+      materializeFilament *
+      materializeBreakup;
+    float materializeSourceBody =
+      pow(materializeSourceBreakup, 0.78);
+    float materializeFlipbookBody =
+      materializeSourceBody *
+      materializeSoftBody *
+      materializeBreakup *
+      mix(0.76, 1.0, materializeErosion);
+    float materializeParticleEnergyCeiling = 0.56;
+    float materializeParticleEnergy =
+      clamp(
+        0.14 +
+        materializeFilament * 0.48 +
+        materializeBreakup * 0.12 +
+        materializeSourceLuma * 0.06,
+        0.18,
+        materializeParticleEnergyCeiling
+      );
+    sprite = vec4(
+      vec3(materializeParticleEnergy),
+      clamp(materializeFlipbookBody * borderFade, 0.0, 1.0)
+    );
+  #endif
+  #ifdef MOTION_MATERIALIZE_RELEASE
+    // Preserve the authored SmallFlame01 cell silhouette. A small seeded
+    // erosion variation breaks synchronized repetition without replacing
+    // the CC0 flipbook with analytic geometry.
+    float materializeReleaseErosion =
+      mix(
+        0.84,
+        1.0,
+        fract(sin(dot(floor(vUv * 7.0), vec2(12.9898, 78.233)) +
+          vVariant * 17.13) * 43758.5453)
+      );
+    float materializeReleaseResolvedAlpha =
+      sprite.a * materializeReleaseErosion * borderFade;
+    sprite = vec4(
+      vec3(1.0),
+      clamp(materializeReleaseResolvedAlpha, 0.0, 1.0)
+    );
+  #endif
   // Preserve the source animation's internal heat detail without allowing
   // its white core to flatten into an overexposed patch. The highest value
   // resolves to gold, not white; red and orange retain the turbulent edge.
@@ -1711,6 +1890,27 @@ void main() {
     vec3 gradedFlame = mix(flameRed, flameOrange, smoothstep(0.04, 0.46, flameHeat));
     gradedFlame = mix(gradedFlame, flameGold, smoothstep(0.46, 0.94, flameHeat));
     sprite.rgb = mix(sprite.rgb, gradedFlame, 0.86);
+  }
+  // SmallFlame01 is authored as orange fire. Materialization reuses its
+  // phase-varied flame motion and breakup, then maps source luminance into
+  // the effect's blue energy family so the CC0 sheet supports the semantic
+  // material instead of leaking an unrelated fire color.
+  if (uMaterializeEnergyGrade > 0.5) {
+    float materializeEnergyLuma =
+      clamp(dot(sprite.rgb, vec3(0.299, 0.587, 0.114)), 0.0, 1.0);
+    vec3 materializeEnergyDeep = vec3(0.12, 0.5, 0.94);
+    vec3 materializeEnergyCyan = vec3(0.32, 0.9, 1.0);
+    vec3 materializeEnergyWhite = vec3(0.68, 0.94, 1.0);
+    vec3 materializeEnergyColor = mix(
+      materializeEnergyDeep,
+      materializeEnergyCyan,
+      smoothstep(0.03, 0.52, materializeEnergyLuma)
+    );
+    sprite.rgb = mix(
+      materializeEnergyColor,
+      materializeEnergyWhite,
+      smoothstep(0.52, 0.94, materializeEnergyLuma)
+    );
   }
   // Erosion death: matter breaks apart through chunky cells whose survival
   // threshold rises over life — consumed, not ghost-faded. Value and
@@ -1746,6 +1946,16 @@ void main() {
   // the luminance-floor attempt, which itself dimmed soft sprite edges.
   float fadeOutTerm = 1.0 - smoothstep(min(uFadeWindow.y, 0.98), 1.0, vProgress);
   float alphaLife = smoothstep(0.0, uFadeWindow.x, vProgress) * mix(pow(fadeOutTerm, uTailSnap), 1.0, uAdditiveShrinkF);
+  #ifdef MOTION_MATERIALIZE_GATHER
+    float materializeGatherBirthFloor =
+      (1.0 - smoothstep(
+        0.0,
+        ${PFX_MATERIALIZE_GATHER_BIRTH_PROGRESS_END},
+        vProgress
+      )) *
+      ${PFX_MATERIALIZE_GATHER_BIRTH_VISIBILITY};
+    alphaLife = max(alphaLife, materializeGatherBirthFloor);
+  #endif
   #ifdef MOTION_FLAME_CHARGE_GATHER
     alphaLife = max(alphaLife, 0.72);
   #endif
@@ -1756,6 +1966,25 @@ void main() {
   // Gamma < 1 thickens soft smoke bodies: authored opacities were rendering
   // at ~1/3 strength once sprite alpha, life fade, and opacity multiplied out.
   float alpha = pow(sprite.a, uAlphaGamma) * alphaLife * uOpacity;
+  #ifdef MOTION_MATERIALIZE_GATHER
+    // Only velocity-stretched filaments have a meaningful head/tail axis.
+    // Applying this ramp to randomly rolled unstretched motes dimmed most of
+    // every chip and broke the body silhouette, especially in reduced motion.
+    float materializeGatherFlowHead = smoothstep(0.08, 0.88, vUv.y);
+    float materializeGatherDirectionalRamp = step(0.001, uStretch);
+    alpha *= mix(
+      1.0,
+      mix(0.2, 1.0, materializeGatherFlowHead),
+      materializeGatherDirectionalRamp
+    );
+  #endif
+  #ifdef MOTION_MATERIALIZE_RELEASE
+    // A restrained base-to-tip value ramp reinforces upward flow without
+    // replacing the CC0 flame animation. The authored cell remains visible
+    // end to end and supplies its own turbulent silhouette.
+    float materializeFlowHead = smoothstep(0.08, 0.88, vUv.y);
+    alpha *= mix(0.48, 1.0, materializeFlowHead);
+  #endif
   #ifdef MOTION_FLAME_CHARGE_GATHER
     alpha *= mix(0.55, 1.0, vChargeEnvelope);
   #endif

@@ -3,6 +3,7 @@ import {
   createPfxProductionApprovalReadinessReport,
   createPfxProductionReadinessReport,
   filterPfxCatalog,
+  validateQualityMatrixApprovalEvidence,
   PFX_MOBILE_RUNTIME_POLICY,
   PFX_TAXONOMY,
   PFX_TAXONOMY_REVIEW_CRITERIA,
@@ -2187,6 +2188,35 @@ export type PfxMobileQualityDimension = (typeof PFX_MOBILE_QUALITY_DIMENSIONS)[n
 export type PfxMatrixQualityScores = Record<PfxVisualQualityDimension | PfxMobileQualityDimension, number>
 export type PfxMatrixGrade = 'A+' | 'A' | 'B' | 'C' | 'D' | 'F'
 
+export interface PfxRenderSourceFingerprintInput {
+  path: string
+  contents: string
+}
+
+export function createPfxRenderSourceFingerprint(
+  sources: readonly PfxRenderSourceFingerprintInput[],
+): string {
+  if (sources.length === 0) throw new Error('PFX render-source fingerprint requires at least one source file')
+  const normalized = sources
+    .map((source) => ({
+      path: source.path.replaceAll('\\', '/').replace(/^\.\//, ''),
+      contents: source.contents.replaceAll('\r\n', '\n'),
+    }))
+    .sort((left, right) => left.path.localeCompare(right.path))
+  if (new Set(normalized.map((source) => source.path)).size !== normalized.length) {
+    throw new Error('PFX render-source fingerprint paths must be unique')
+  }
+  let hash = 0xcbf29ce484222325n
+  for (const source of normalized) {
+    const value = `${source.path}\0${source.contents}\0`
+    for (let index = 0; index < value.length; index += 1) {
+      hash ^= BigInt(value.charCodeAt(index))
+      hash = BigInt.asUintN(64, hash * 0x100000001b3n)
+    }
+  }
+  return `pfx-source-v1:${hash.toString(16).padStart(16, '0')}`
+}
+
 export interface PfxMatrixEffectInput {
   effectId: string
   rank: number
@@ -2197,6 +2227,7 @@ export interface PfxMatrixEffectInput {
 
 export interface PfxMatrixVisualReviewInput {
   effectId: string
+  sourceFingerprint: string
   reviewer: string
   reviewerConfidence: number
   scores: Record<PfxVisualQualityDimension, number>
@@ -2259,6 +2290,7 @@ export interface PfxMatrixPerformanceReportSource {
 
 export interface PfxQualityMatrixEffect {
   effectId: string
+  sourceFingerprint: string | null
   rank: number
   name: string
   performanceTier: PerformanceTier
@@ -2315,9 +2347,31 @@ export interface PfxVisualLifecycleSample {
   phase: PfxVisualLifecyclePhase
   sampleMs: number
   aggregateActivePixels: number
+  aggregateVisualEnergy?: number
 }
 
 const PFX_VISUAL_LIFECYCLE_MINIMUM_PHASE_SEPARATION_MS = 40
+
+/**
+ * Uses the authored runtime clock for one-shot review instead of trusting the
+ * catalog's generic preview clip. The latter may predate recipe-level tempo,
+ * stagger, and particle lifetime extensions and can therefore cut decay off.
+ */
+export function createPfxVisualReviewCycleMs(
+  previewDurationMs: number,
+  burstCycleSeconds: number,
+  loopMode: 'loop' | 'burst',
+): number {
+  if (!Number.isFinite(previewDurationMs) || previewDurationMs <= 0) {
+    throw new Error('Visual-review preview duration must be finite and positive')
+  }
+  if (!Number.isFinite(burstCycleSeconds) || burstCycleSeconds <= 0) {
+    throw new Error('Visual-review burst cycle must be finite and positive')
+  }
+  return loopMode === 'burst'
+    ? Math.max(Math.ceil(previewDurationMs), Math.ceil(burstCycleSeconds * 1_000))
+    : Math.ceil(previewDurationMs)
+}
 
 export function pfxQualityReviewContactSheetColumns(effectCount: number): number {
   if (!Number.isFinite(effectCount) || effectCount < 1) {
@@ -2337,20 +2391,74 @@ export function countPfxReviewActivePixels(
   if (width < 1 || height < 1 || pixels.length < width * height * 4) return 0
   let count = 0
   for (let index = 0; index < width * height * 4; index += 4) {
-    if ((pixels[index + 3] ?? 0) === 0) continue
-    const red = pixels[index] ?? 17
-    const green = pixels[index + 1] ?? 24
-    const blue = pixels[index + 2] ?? 39
-    const backgroundDelta = Math.max(
-      Math.abs(red - 17),
-      Math.abs(green - 24),
-      Math.abs(blue - 39),
-    )
-    const brightness = Math.max(red, green, blue)
-    const chroma = brightness - Math.min(red, green, blue)
-    if (backgroundDelta > 10 || brightness > 150 || (brightness > 80 && chroma > 48)) count += 1
+    if (isPfxReviewActivePixel(pixels, index)) count += 1
   }
   return count
+}
+
+/** Weights visible contrast quadratically so a compact emissive action beat
+ * can outrank a wider low-value telegraph boundary without losing the
+ * coverage metric used for framing, onset, and decay. */
+export function sumPfxReviewVisualEnergy(
+  pixels: Uint8Array,
+  width: number,
+  height: number,
+): number {
+  if (width < 1 || height < 1 || pixels.length < width * height * 4) return 0
+  let energy = 0
+  for (let index = 0; index < width * height * 4; index += 4) {
+    if (!isPfxReviewActivePixel(pixels, index)) continue
+    const contrast = Math.max(
+      Math.abs((pixels[index] ?? 17) - 17),
+      Math.abs((pixels[index + 1] ?? 24) - 24),
+      Math.abs((pixels[index + 2] ?? 39) - 39),
+    )
+    energy += contrast * contrast
+  }
+  return energy
+}
+
+/** A frame may briefly expose the previous WebGL camera while a SPA
+ * navigation is settling. Active pixels alone cannot distinguish that
+ * transient from valid evidence, so reject frames whose entire visible result
+ * is stranded in the outer edge band and let the browser capture retry. */
+export function collectPfxReviewFramingDefects(
+  pixels: Uint8Array,
+  width: number,
+  height: number,
+): string[] {
+  if (width < 1 || height < 1 || pixels.length < width * height * 4) return []
+  let activePixels = 0
+  let xTotal = 0
+  let yTotal = 0
+  for (let pixel = 0; pixel < width * height; pixel += 1) {
+    const index = pixel * 4
+    if (!isPfxReviewActivePixel(pixels, index)) continue
+    activePixels += 1
+    xTotal += pixel % width
+    yTotal += Math.floor(pixel / width)
+  }
+  if (activePixels === 0) return []
+  const normalizedX = xTotal / activePixels / width
+  const normalizedY = yTotal / activePixels / height
+  return normalizedX < 0.08 || normalizedX > 0.92 || normalizedY < 0.08 || normalizedY > 0.92
+    ? ['capture active content is stranded at the canvas edge']
+    : []
+}
+
+function isPfxReviewActivePixel(pixels: Uint8Array, index: number): boolean {
+  if ((pixels[index + 3] ?? 0) === 0) return false
+  const red = pixels[index] ?? 17
+  const green = pixels[index + 1] ?? 24
+  const blue = pixels[index + 2] ?? 39
+  const backgroundDelta = Math.max(
+    Math.abs(red - 17),
+    Math.abs(green - 24),
+    Math.abs(blue - 39),
+  )
+  const brightness = Math.max(red, green, blue)
+  const chroma = brightness - Math.min(red, green, blue)
+  return backgroundDelta > 10 || brightness > 150 || (brightness > 80 && chroma > 48)
 }
 
 /** Persistent effects should always retain a visible baseline. A single
@@ -2439,8 +2547,19 @@ export function createPfxReviewCameraDistance(
 }
 
 export function createPfxVisualLifecycleSchedule(
-  samples: readonly { sampleMs: number; aggregateActivePixels: number }[],
-  options: { preferEarlyImpulse?: boolean; preferDestructiveTransition?: boolean; persistentLoop?: boolean; burstCycleMs?: number } = {},
+  samples: readonly {
+    sampleMs: number
+    aggregateActivePixels: number
+    aggregateVisualEnergy?: number
+  }[],
+  options: {
+    preferEarlyImpulse?: boolean
+    preferDestructiveTransition?: boolean
+    persistentLoop?: boolean
+    burstCycleMs?: number
+    minimumOnsetSampleMs?: number
+    minimumDecaySampleMs?: number
+  } = {},
 ): PfxVisualLifecycleSample[] {
   const burstCycleMs = Number.isFinite(options.burstCycleMs) && (options.burstCycleMs ?? 0) > 0
     ? options.burstCycleMs
@@ -2506,9 +2625,18 @@ export function createPfxVisualLifecycleSchedule(
   // the pre-spawn stage at 0ms.
   const ambientFloor = Math.min(...ordered.map((sample) => sample.aggregateActivePixels))
   const activityThreshold = ambientFloor + Math.max(150, ambientFloor * 0.15)
-  const globalPeak = ordered.slice(1, -1).reduce((best, sample) =>
+  const coveragePeak = ordered.slice(1, -1).reduce((best, sample) =>
     sample.aggregateActivePixels > best.aggregateActivePixels ? sample : best,
   )
+  const peakStrength = (
+    sample: (typeof ordered)[number],
+  ) => Number.isFinite(sample.aggregateVisualEnergy)
+    ? sample.aggregateVisualEnergy!
+    : sample.aggregateActivePixels
+  const energyPeak = ordered.slice(1, -1).reduce((best, sample) =>
+    peakStrength(sample) > peakStrength(best) ? sample : best,
+  )
+  const globalPeak = options.preferDestructiveTransition ? coveragePeak : energyPeak
   // Screen coverage alone cannot distinguish a decisive emissive impulse
   // from a broader alpha-blended smoke handoff. Preserve the first strong
   // local crest when it carries at least 40% of global activity; this keeps
@@ -2518,9 +2646,9 @@ export function createPfxVisualLifecycleSchedule(
   const prominentImpulse = ordered.slice(1, -1).find((sample, index) => {
     const orderedIndex = index + 1
     return sample.aggregateActivePixels > activityThreshold &&
-      sample.aggregateActivePixels >= globalPeak.aggregateActivePixels * prominentImpulseMinimum &&
-      sample.aggregateActivePixels >= ordered[orderedIndex - 1]!.aggregateActivePixels &&
-      sample.aggregateActivePixels > ordered[orderedIndex + 1]!.aggregateActivePixels
+      peakStrength(sample) >= peakStrength(globalPeak) * prominentImpulseMinimum &&
+      peakStrength(sample) >= peakStrength(ordered[orderedIndex - 1]!) &&
+      peakStrength(sample) > peakStrength(ordered[orderedIndex + 1]!)
   })
   // Destructive effects communicate their action while coverage is being
   // removed. Maximum active area is the intact subject, not the dissolve
@@ -2533,11 +2661,35 @@ export function createPfxVisualLifecycleSchedule(
     : undefined
   const peak = destructiveTransition ?? prominentImpulse ?? globalPeak
   const peakIndex = ordered.indexOf(peak)
+  const minimumOnsetSampleMs = Number.isFinite(options.minimumOnsetSampleMs)
+    ? Math.max(0, options.minimumOnsetSampleMs ?? 0)
+    : 0
+  // Telegraphs provide an explicit minimum onset time because their review
+  // cell must communicate a warning, not merely prove that one early fleck
+  // rendered. Energy-aware capture can accept a restrained warning at eight
+  // percent of a much brighter payoff because the independent active-pixel
+  // gate already proves spatial readability. Coverage-only callers retain
+  // the stricter quarter-peak fallback.
+  const hasTelegraphVisualEnergy =
+    minimumOnsetSampleMs > 0 &&
+    Number.isFinite(peak.aggregateVisualEnergy)
+  const meaningfulTelegraphOnsetStrength = minimumOnsetSampleMs > 0
+    ? peakStrength(peak) * (hasTelegraphVisualEnergy ? 0.08 : 0.25)
+    : 0
   const firstActive = ordered.find(
-    (sample, index) => index < peakIndex && sample.aggregateActivePixels > activityThreshold,
+    (sample, index) =>
+      index < peakIndex &&
+      sample.sampleMs >= minimumOnsetSampleMs &&
+      sample.aggregateActivePixels > activityThreshold &&
+      peakStrength(sample) >= meaningfulTelegraphOnsetStrength,
   )
   const onset = firstActive ?? ordered[peakIndex - 1] ?? ordered[0]!
-  const afterPeak = ordered.slice(peakIndex + 1)
+  const minimumDecaySampleMs = Number.isFinite(options.minimumDecaySampleMs)
+    ? Math.max(peak.sampleMs, options.minimumDecaySampleMs ?? peak.sampleMs)
+    : peak.sampleMs
+  const afterPeak = ordered.slice(peakIndex + 1).filter(
+    (sample) => sample.sampleMs >= minimumDecaySampleMs,
+  )
   // Adaptive refinement may add samples only 10-20ms after the peak. Those
   // frames describe the same impulse shoulder and cannot prove a distinct
   // decay beat. Prefer the first samples at least 40ms later; if a caller
@@ -2568,6 +2720,63 @@ export function createPfxVisualLifecycleSchedule(
   ]
 }
 
+export function createPfxReducedMotionReviewSampleMs(
+  standardSampleMs: number,
+  standardTiming: number,
+  reducedTiming: number,
+  previewCycleMs: number,
+): number {
+  if (
+    !Number.isFinite(standardSampleMs) ||
+    standardSampleMs < 0 ||
+    !Number.isFinite(standardTiming) ||
+    standardTiming <= 0 ||
+    !Number.isFinite(reducedTiming) ||
+    reducedTiming <= 0 ||
+    !Number.isFinite(previewCycleMs) ||
+    previewCycleMs <= 0
+  ) {
+    throw new Error('Reduced-motion review timing must be finite and positive')
+  }
+  if (standardSampleMs >= previewCycleMs) {
+    throw new Error('Standard review sample must remain inside the preview cycle')
+  }
+  const retimedSampleMs = Math.round(standardSampleMs * standardTiming / reducedTiming)
+  return retimedSampleMs
+}
+
+export function createPfxTelegraphMinimumDecaySampleMs(previewCycleMs: number): number {
+  if (!Number.isFinite(previewCycleMs) || previewCycleMs <= 0) {
+    throw new Error('Telegraph review cycle must be finite and positive')
+  }
+  // The full preview cycle includes the delayed release particles and its
+  // trailing rest. Waiting until 45% can therefore land after the first
+  // authored release has ended. Thirty-five percent remains post-peak while
+  // keeping long particle telegraphs inside their readable handoff.
+  return Math.round(previewCycleMs * 0.35)
+}
+
+export function createPfxTelegraphMinimumOnsetSampleMs(previewCycleMs: number): number {
+  if (!Number.isFinite(previewCycleMs) || previewCycleMs <= 0) {
+    throw new Error('Telegraph review cycle must be finite and positive')
+  }
+  return Math.round(previewCycleMs * 0.1)
+}
+
+export function createPfxVisualReviewFramingTimes(
+  lifecycle: readonly PfxVisualLifecycleSample[],
+): number[] {
+  const phases = ['onset', 'peak', 'decay'] as const
+  const times = phases.map((phase) => lifecycle.filter((sample) => sample.phase === phase))
+  if (
+    times.some((matches) => matches.length !== 1) ||
+    times.some((matches) => !Number.isFinite(matches[0]?.sampleMs))
+  ) {
+    throw new Error('Review framing requires one onset, peak, and decay sample')
+  }
+  return times.map((matches) => matches[0]!.sampleMs)
+}
+
 /** Returns one deterministic midpoint to probe when the coarse lifecycle
  * schedule jumps directly from its peak to an ambient-only frame. Repeating
  * this bounded refinement gives short bursts a real decay frame without
@@ -2575,6 +2784,7 @@ export function createPfxVisualLifecycleSchedule(
 export function selectPfxVisualLifecycleRefinementTime(
   samples: readonly { sampleMs: number; aggregateActivePixels: number }[],
   minimumGapMs = 16,
+  minimumDecaySampleMs = 0,
 ): number | null {
   const ordered = [...samples]
     .filter((sample) => Number.isFinite(sample.sampleMs) && sample.sampleMs >= 0 && Number.isFinite(sample.aggregateActivePixels))
@@ -2589,11 +2799,18 @@ export function selectPfxVisualLifecycleRefinementTime(
   const afterPeak = ordered.slice(peakIndex + 1)
   const firstQuietIndex = afterPeak.findIndex((sample) => sample.aggregateActivePixels <= activityThreshold)
   if (firstQuietIndex < 0) return null
-  if (afterPeak.slice(0, firstQuietIndex).some((sample) => sample.aggregateActivePixels > activityThreshold)) return null
+  const visibleBeforeQuiet = afterPeak.slice(0, firstQuietIndex)
+    .filter((sample) => sample.aggregateActivePixels > activityThreshold)
+  const readableDecayThreshold = Math.max(activityThreshold, peak.aggregateActivePixels * 0.7)
+  if (visibleBeforeQuiet.some((sample) =>
+    sample.sampleMs >= minimumDecaySampleMs &&
+    sample.aggregateActivePixels <= readableDecayThreshold,
+  )) return null
   const firstQuiet = afterPeak[firstQuietIndex]!
-  if (firstQuiet.sampleMs - peak.sampleMs <= minimumGapMs) return null
-  const midpoint = Math.round((peak.sampleMs + firstQuiet.sampleMs) / 2)
-  return midpoint > peak.sampleMs && midpoint < firstQuiet.sampleMs ? midpoint : null
+  const bracketStart = visibleBeforeQuiet.at(-1) ?? peak
+  if (firstQuiet.sampleMs - bracketStart.sampleMs <= minimumGapMs) return null
+  const midpoint = Math.round((bracketStart.sampleMs + firstQuiet.sampleMs) / 2)
+  return midpoint > bracketStart.sampleMs && midpoint < firstQuiet.sampleMs ? midpoint : null
 }
 
 const PFX_PEER_REVIEW_DIMENSION_MAP: Record<string, PfxVisualQualityDimension> = {
@@ -2618,6 +2835,7 @@ export interface PfxPeerVisualReviewEffectRow {
   grade: PfxMatrixGrade
   verdict: 'pass' | 'rework'
   findings: string[]
+  reducedMotionReadable?: boolean
 }
 
 export interface PfxPeerVisualReviewReport {
@@ -2636,8 +2854,11 @@ export interface PfxVisualCaptureManifest {
   effects: Array<{
     effectId: string
     sourceFingerprint?: string
+    cameraDistance?: number
+    lifecycleSamples?: Array<{ phase: PfxVisualLifecyclePhase; sampleMs: number }>
     lifecycleCaptures: Array<{ angle: 'front' | 'three-quarter' | 'side'; phase: PfxVisualLifecyclePhase; file: string }>
     gameplayContextCaptures: Array<{ angle: 'front' | 'three-quarter' | 'side'; phase: PfxVisualLifecyclePhase; file: string }>
+    reducedMotionCapture?: { angle: 'front' | 'three-quarter' | 'side'; phase: PfxVisualLifecyclePhase; file: string }
   }>
 }
 
@@ -2731,10 +2952,13 @@ export function assemblePfxQualityMatrixVisualReviews(
       if (effect.verdict !== 'pass') {
         blockers.push('peer verdict: rework', ...effect.findings)
       }
-      const hasReducedMotionEvidence = reducedMotionReadable.has(effect.effectId)
+      const hasReducedMotionEvidence =
+        reducedMotionReadable.has(effect.effectId) &&
+        effect.reducedMotionReadable === true
       if (!hasReducedMotionEvidence) blockers.push('reduced-motion readability unverified')
       rows.push({
         effectId: effect.effectId,
+        sourceFingerprint: capturedSourceFingerprint,
         reviewer: `peer:${review.peerRuntime}`,
         reviewerConfidence: effect.reviewerConfidence,
         scores,
@@ -2755,8 +2979,8 @@ export const PFX_VISUAL_REVIEW_CONSENSUS_COUNT = 3
  * Converts repeated independent reviews of the same fresh render source into
  * one deterministic matrix row. A lone stochastic reviewer can neither grant
  * nor revoke a catalog grade: three distinct review batches are required, the
- * score is the median, and a spread greater than one point remains an explicit
- * adjudication blocker.
+ * score is the median, and either a split verdict or a spread greater than one
+ * point remains an explicit adjudication blocker.
  */
 export function assemblePfxQualityMatrixVisualReviewConsensus(
   sources: readonly PfxPeerReviewAssemblySource[],
@@ -2801,6 +3025,14 @@ export function assemblePfxQualityMatrixVisualReviewConsensus(
     }
     const reworkEntries = entries.filter((entry) => entry.row.blockers.includes('peer verdict: rework'))
     const blockers: string[] = []
+    if (reworkEntries.length > 0 && reworkEntries.length < entries.length) {
+      blockers.push(
+        `peer consensus disagreement: split verdicts (${entries.length - reworkEntries.length} pass, ${reworkEntries.length} rework)`,
+      )
+      blockers.push(...new Set(reworkEntries.flatMap((entry) =>
+        entry.row.blockers.filter((blocker) => blocker !== 'peer verdict: rework' && blocker !== 'reduced-motion readability unverified'),
+      )))
+    }
     if (reworkEntries.length >= Math.floor(entries.length / 2) + 1) {
       blockers.push('peer consensus verdict: rework')
       blockers.push(...new Set(reworkEntries.flatMap((entry) =>
@@ -2810,18 +3042,20 @@ export function assemblePfxQualityMatrixVisualReviewConsensus(
     if (disputedDimensions.length > 0) {
       blockers.push(`peer consensus disagreement exceeds one point: ${disputedDimensions.join(', ')}`)
     }
-    if (!latest.reducedMotionReadable) blockers.push('reduced-motion readability unverified')
+    const consensusReducedMotionReadable = entries.every((entry) => entry.row.reducedMotionReadable)
+    if (!consensusReducedMotionReadable) blockers.push('reduced-motion readability unverified')
     const runtimes = [...new Set(entries.map((entry) => entry.peerRuntime))].sort().join('+')
     const confidences = entries.map((entry) => entry.row.reviewerConfidence).sort((left, right) => left - right)
     consensus.push({
       effectId,
+      sourceFingerprint: latest.sourceFingerprint,
       reviewer: `peer-consensus:${runtimes}`,
       reviewerConfidence: confidences[Math.floor(confidences.length / 2)]!,
       scores,
       cameraEvidence: latest.cameraEvidence,
       lifecycleEvidence: latest.lifecycleEvidence,
       gameplayContextEvidence: latest.gameplayContextEvidence,
-      reducedMotionReadable: latest.reducedMotionReadable,
+      reducedMotionReadable: consensusReducedMotionReadable,
       blockers,
     })
   }
@@ -3100,6 +3334,7 @@ export function createPfxQualityMatrix(input: PfxQualityMatrixInput): PfxQuality
 
     return {
       effectId: effect.effectId,
+      sourceFingerprint: visual?.sourceFingerprint ?? null,
       rank: effect.rank,
       name: effect.name,
       performanceTier: effect.performanceTier,
@@ -3190,17 +3425,28 @@ export function createPfxQualityImprovementLedgerFromMatrix(
         rank: effect.rank,
         currentGrade: effect.afterGrade,
         worstVisualScore: completeVisualScores ? Math.min(...visualScores) : null,
+        visualScores: completeVisualScores
+          ? Object.fromEntries(
+              PFX_VISUAL_QUALITY_DIMENSIONS.map((dimension) => [dimension, effect.scores[dimension]!]),
+            )
+          : null,
         // Final matrix weighting still fails closed until mobile evidence is
         // complete. The loop keeps the visual-only mean so art iterations can
         // demonstrate strict progress before physical-device profiling.
         weightedScore: effect.weightedScore ?? visualWeightedScore,
         visualBlockers: [...effect.blockers],
         systemicDefectKeys: [
+          ...(effect.blockers.some((blocker) => blocker.startsWith('peer consensus disagreement'))
+            ? ['evidence:peer-review-disagreement']
+            : []),
           ...(completeVisualScores
             ? PFX_VISUAL_QUALITY_DIMENSIONS
                 .filter((dimension) => effect.scores[dimension]! < effect.requiredQualityThreshold.minimumVisualDimension)
                 .map((dimension) => `visual:${dimension}`)
             : ['evidence:independent-visual-review']),
+          ...(effect.reducedMotionReadable === false
+            ? ['visual:gameplayReadability']
+            : []),
           ...(!effect.performancePass ? ['performance:real-device'] : []),
         ],
         performancePassed: effect.performancePass,
@@ -3358,6 +3604,8 @@ export interface PfxBrowserAcceptanceEvidenceInput extends PfxMeasuredProfileEvi
     Record<string, Partial<Record<'mobile-safari' | 'chrome-android', string>>>
   >
   taxonomyReview?: PfxTaxonomyReviewTemplate
+  qualityMatrix?: unknown
+  currentSourceFingerprints?: Readonly<Record<string, string>>
 }
 
 export interface PfxTaxonomyReviewEvidenceSummary {
@@ -3449,6 +3697,13 @@ export interface PfxProductionApprovalInvalidProfileEvidence {
 }
 
 export interface PfxProductionApprovalInvalidTextEvidence {
+  effectId: string
+  evidence: string
+  filePath: string
+  reason: string
+}
+
+export interface PfxProductionApprovalInvalidQualityMatrixEvidence {
   effectId: string
   evidence: string
   filePath: string
@@ -3560,10 +3815,32 @@ function expectedProductionReadyApprovalEvidence(effectId: string): string[] {
   return [
     `taxonomy-review:.context/r3f-pfx-taxonomy-review.json#${effectId}`,
     `production-implementation:.context/r3f-pfx-production-implementation.json#${effectId}`,
+    `quality-matrix:.context/r3f-pfx-quality-matrix.json#${effectId}`,
     `mobile-safari-profile:.context/mobile-safari/${effectId}.json`,
     `chrome-android-profile:.context/chrome-android/${effectId}.json`,
     `red-team-signoff:.context/r3f-pfx-red-team-review.json#${effectId}`,
   ]
+}
+
+export function collectInvalidPfxProductionApprovalQualityMatrixEvidence(
+  approvals: readonly Pick<PfxProductionApproval, 'effectId' | 'decision'>[],
+  matrix: unknown,
+  currentSourceFingerprints: Readonly<Record<string, string>>,
+): PfxProductionApprovalInvalidQualityMatrixEvidence[] {
+  return approvals.flatMap((approval) => {
+    if (approval.decision !== 'production-ready') return []
+    const evidence = `quality-matrix:.context/r3f-pfx-quality-matrix.json#${approval.effectId}`
+    const currentSourceFingerprint = currentSourceFingerprints[approval.effectId]
+    const findings = currentSourceFingerprint
+      ? validateQualityMatrixApprovalEvidence(matrix, approval.effectId, currentSourceFingerprint)
+      : ['current render-source fingerprint is unavailable']
+    return findings.map((reason) => ({
+      effectId: approval.effectId,
+      evidence,
+      filePath: '.context/r3f-pfx-quality-matrix.json',
+      reason,
+    }))
+  })
 }
 
 function expectedApprovedDeferralEvidence(effectId: string): string[] {
@@ -4036,6 +4313,26 @@ export function createPfxBrowserAcceptanceEvidence(
   const taxonomyReview = createPfxTaxonomyReviewEvidence(input.taxonomyReview)
   const productionApprovalRowFindings =
     input.productionApprovals === undefined ? [] : collectInvalidPfxProductionApprovalRows(input.productionApprovals)
+  const qualityMatrixCandidateApprovals = input.productionApprovals ??
+    (isRecord(input.qualityMatrix) && Array.isArray(input.qualityMatrix.effects)
+      ? input.qualityMatrix.effects.flatMap((row) =>
+          isRecord(row) && typeof row.effectId === 'string'
+            ? [{ effectId: row.effectId, decision: 'production-ready' as const }]
+            : [],
+        )
+      : [])
+  const qualityMatrixFindings = collectInvalidPfxProductionApprovalQualityMatrixEvidence(
+        qualityMatrixCandidateApprovals,
+        input.qualityMatrix,
+        input.currentSourceFingerprints ?? {},
+      )
+  const qualityMatrixApprovedEffectIds = qualityMatrixCandidateApprovals
+    .filter(
+      (approval) =>
+        approval.decision === 'production-ready' &&
+        !qualityMatrixFindings.some((finding) => finding.effectId === approval.effectId),
+    )
+    .map((approval) => approval.effectId)
   const realDeviceAuditValidation = validatePfxRealDeviceCaptureAudit(input.realDeviceCaptureAudit)
   const realDeviceProfiledEffectIds = realDeviceAuditValidation.creditedEffectIds
   const mobileSafariProfiledEffectIds = realDeviceAuditValidation.findings.length
@@ -4062,6 +4359,7 @@ export function createPfxBrowserAcceptanceEvidence(
     mobileSafariProfiledEffectIds,
     chromeAndroidProfiledEffectIds,
     taxonomyReviewedEffectIds,
+    qualityMatrixApprovedEffectIds,
   })
   const productionGapAudit = createPfxProductionAcceptanceGapAudit({
     approvals: input.productionApprovals,
@@ -4071,6 +4369,7 @@ export function createPfxBrowserAcceptanceEvidence(
     mobileSafariProfiledEffectIds,
     chromeAndroidProfiledEffectIds,
     taxonomyReviewedEffectIds,
+    qualityMatrixApprovedEffectIds,
     realDeviceCaptureBaseUrl: input.realDeviceCaptureBaseUrl,
     realDeviceCaptureBatchIdsByEffectId: input.realDeviceCaptureBatchIdsByEffectId,
   })
@@ -4084,11 +4383,13 @@ export function createPfxBrowserAcceptanceEvidence(
     realDeviceCaptureBaseUrl: input.realDeviceCaptureBaseUrl,
     realDeviceCaptureBatchIdsByEffectId: input.realDeviceCaptureBatchIdsByEffectId,
     taxonomyReviewedEffectIds,
+    qualityMatrixApprovedEffectIds,
   })
   const blockingFindings = [
     ...measuredProfileEvidence.failures.map((failure) => `measured-profile: ${failure}`),
     ...taxonomyReview.blockingFindings.map((finding) => `taxonomy-review: ${finding}`),
     ...productionApprovalRowFindings.map((finding) => `production-approvals: ${finding}`),
+    ...qualityMatrixFindings.map((finding) => `quality-matrix: ${finding.effectId}: ${finding.reason}`),
     ...realDeviceAuditValidation.findings.map((finding) => `real-device-audit: ${finding}`),
     ...productionReadiness.blockingFindings.map((finding) => `production-readiness: ${finding}`),
   ]
@@ -4099,6 +4400,7 @@ export function createPfxBrowserAcceptanceEvidence(
       measuredProfileEvidence.passed &&
       taxonomyReview.passed &&
       productionApprovalRowFindings.length === 0 &&
+      qualityMatrixFindings.length === 0 &&
       realDeviceAuditValidation.passed &&
       productionReadiness.passed,
     measuredProfileEvidence,

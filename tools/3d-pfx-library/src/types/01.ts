@@ -50,6 +50,45 @@ export interface PfxTextureAtlasDescriptor {
 
 export type PfxQualityRubricKey = (typeof PFX_QUALITY_RUBRIC_KEYS)[number]
 
+export type PfxApprovalVisualQualityDimension =
+  | 'semanticIdentity'
+  | 'gameplayReadability'
+  | 'volumeAndDepth'
+  | 'multiAngleResilience'
+  | 'silhouetteAndComposition'
+  | 'temporalArcAndDecay'
+  | 'materialAndShaderQuality'
+  | 'meshStructureAndEmitterQuality'
+  | 'cc0AssetIntegration'
+  | 'distinctivenessAndRingDiscipline'
+  | 'scaleAndVisualHierarchy'
+  | 'overallProductionPolish'
+
+export interface PfxQualityMatrixApprovalRow {
+  effectId: string
+  rank: number
+  sourceFingerprint: string | null
+  finalPass: boolean
+  visualPass: boolean
+  scores: Partial<Record<PfxApprovalVisualQualityDimension, number>>
+  weightedScore: number | null
+  requiredQualityThreshold: {
+    minimumVisualDimension: number
+    minimumWeightedScore: number
+  }
+  cameraEvidence: Partial<Record<'front' | 'threeQuarter' | 'side', string[]>>
+  lifecycleEvidence: Partial<Record<'onset' | 'peak' | 'decay', string[]>>
+  gameplayContextEvidence: string[]
+  reviewer: string | null
+  reviewerConfidence: number | null
+  reducedMotionReadable: boolean | null
+}
+
+export interface PfxQualityMatrixApprovalEvidence {
+  schema: 'game-bot.r3f-pfx-quality-matrix.v1'
+  effects: PfxQualityMatrixApprovalRow[]
+}
+
 export type PfxQualityScores = Record<PfxQualityRubricKey, number>
 
 export interface StyleVariantProfile {
@@ -1058,6 +1097,7 @@ export interface PfxProductionReadinessEffect {
   acceptanceStatus: PfxAcceptanceStatus
   readinessStatus: PfxProductionReadinessStatus
   productionImplemented: boolean
+  qualityMatrixApproved: boolean
   productionReady: boolean
   approvedDeferral: boolean
   realDeviceProfiled: boolean
@@ -1075,12 +1115,14 @@ export interface PfxProductionReadinessReport {
   summary: {
     totalEffects: number
     productionImplementedEffects: number
+    qualityMatrixApprovedEffects: number
     productionReadyEffects: number
     approvedDeferrals: number
     effectsRequiringDecision: number
     realDeviceProfiledEffects: number
     missingMobileSafariProfiles: number
     missingChromeAndroidProfiles: number
+    missingQualityMatrixRows: number
     redTeamSignedOffEffects: number
     byReadinessStatus: Record<PfxProductionReadinessStatus, number>
   }
@@ -1092,6 +1134,7 @@ export type PfxProductionAcceptanceGapKind =
   | 'approval-metadata'
   | 'taxonomy-review'
   | 'production-implementation'
+  | 'quality-matrix'
   | 'mobile-safari-profile'
   | 'chrome-android-profile'
   | 'red-team-signoff'
@@ -1122,6 +1165,7 @@ export interface PfxProductionAcceptanceGapAudit {
     missingApprovalMetadata: number
     missingTaxonomyReview: number
     missingProductionImplementation: number
+    missingQualityMatrix: number
     missingMobileSafariProfiles: number
     missingChromeAndroidProfiles: number
     missingRedTeamSignoff: number
@@ -1141,6 +1185,7 @@ export type PfxProductionApprovalReadinessStatus =
 export type PfxProductionApprovalReadinessMissingPrerequisite =
   | 'taxonomy-review'
   | 'production-implementation'
+  | 'quality-review'
   | 'real-device-profile'
   | 'mobile-safari-profile'
   | 'chrome-android-profile'
@@ -1248,6 +1293,7 @@ export interface PfxProductionApprovalTemplate {
   }
   instructions: {
     implementationManifestFile: string
+    qualityMatrixFile: string
     realDeviceAuditFile: string
     redTeamReviewFile: string
     taxonomyReviewFile: string
@@ -1538,6 +1584,7 @@ export interface PfxProductionReadinessOptions {
   mobileSafariProfiledEffectIds?: readonly string[]
   chromeAndroidProfiledEffectIds?: readonly string[]
   taxonomyReviewedEffectIds?: readonly string[]
+  qualityMatrixApprovedEffectIds?: readonly string[]
   realDeviceCaptureBaseUrl?: string
   realDeviceCaptureBatchIdsByEffectId?: Readonly<
     Record<string, Partial<Record<'mobile-safari' | 'chrome-android', string>>>

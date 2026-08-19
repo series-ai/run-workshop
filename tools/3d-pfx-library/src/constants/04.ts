@@ -385,6 +385,7 @@ export function requiredProductionActions(input: {
   approvedDeferral: boolean
   taxonomyReviewed: boolean
   hasProductionImplementation: boolean
+  qualityMatrixApproved: boolean
   realDeviceProfiled: boolean
   mobileSafariProfiled: boolean
   chromeAndroidProfiled: boolean
@@ -407,6 +408,9 @@ export function requiredProductionActions(input: {
   if (!input.hasProductionImplementation) {
     actions.push('Promote authored-preview coverage to a production implementation or record an approved deferral.')
   }
+  if (!input.qualityMatrixApproved) {
+    actions.push('Attach a current passing quality-matrix row with independent visual-review consensus.')
+  }
   if (!input.realDeviceProfiled) {
     if (!input.mobileSafariProfiled && !input.chromeAndroidProfiled) {
       actions.push('Attach measured mobile Safari and Chrome Android profile evidence.')
@@ -426,6 +430,7 @@ export function createProductionBlockingFindings(input: {
   effectsRequiringDecision: number
   missingTaxonomyReview: number
   missingProductionImplementations: number
+  missingQualityMatrixRows: number
   missingDeviceProfiles: number
   missingMobileSafariProfiles: number
   missingChromeAndroidProfiles: number
@@ -437,6 +442,9 @@ export function createProductionBlockingFindings(input: {
   }
   if (input.missingProductionImplementations > 0) {
     findings.push(`${input.missingProductionImplementations} effects lack production implementation or approved deferral`)
+  }
+  if (input.missingQualityMatrixRows > 0) {
+    findings.push(`${input.missingQualityMatrixRows} effects lack a current passing quality-matrix row`)
   }
   if (input.missingDeviceProfiles > 0) {
     if (
@@ -1367,14 +1375,24 @@ export function getPfxParticleShapeProfile(motionKind: PfxParticleMotionKind): P
       return { sizeFrom: 0.9, sizeTo: 0.72, fadeIn: 0.06, fadeOut: 0.76, stretch: 0 }
     case 'shadow-claw':
       return { sizeFrom: 0.95, sizeTo: 0.34, fadeIn: 0.03, fadeOut: 0.82, stretch: 0.42 }
+    case 'telegraph-boundary-drift':
+      return { sizeFrom: 0.95, sizeTo: 0.72, fadeIn: 0.01, fadeOut: 0.9, stretch: 0.48 }
     case 'converge-center':
       return { sizeFrom: 0.55, sizeTo: 1.15, fadeIn: 0.06, fadeOut: 0.72, stretch: 1.2 }
+    case 'materialize-gather':
+      return { sizeFrom: 0.78, sizeTo: 0.28, fadeIn: 0.04, fadeOut: 0.84, stretch: 0.82 }
+    case 'materialize-release':
+      return { sizeFrom: 0.78, sizeTo: 0.24, fadeIn: 0.03, fadeOut: 0.82, stretch: 0.95 }
     case 'spherical-converge':
       return { sizeFrom: 0.62, sizeTo: 0.34, fadeIn: 0.04, fadeOut: 0.82, stretch: 0.72 }
     case 'braided-converge':
       return { sizeFrom: 0.52, sizeTo: 0.28, fadeIn: 0.04, fadeOut: 0.84, stretch: 0.08 }
+    case 'phase-transfer-column':
+      return { sizeFrom: 0.68, sizeTo: 0.22, fadeIn: 0.05, fadeOut: 0.82, stretch: 0.16 }
     case 'asymmetric-converge':
       return { sizeFrom: 0.9, sizeTo: 0.62, fadeIn: 0.04, fadeOut: 0.84, stretch: 0.65 }
+    case 'warp-vortex':
+      return { sizeFrom: 0.85, sizeTo: 0.3, fadeIn: 0.04, fadeOut: 0.82, stretch: 0.7 }
     case 'portal-flow':
       return { sizeFrom: 0.72, sizeTo: 0.28, fadeIn: 0.08, fadeOut: 0.62, stretch: 0.35 }
     case 'trail-stream':
@@ -1408,6 +1426,172 @@ export function getPfxParticleShapeProfile(motionKind: PfxParticleMotionKind): P
 }
 
 export const PFX_BURST_CYCLE_MULTIPLIER = 1.65
+export const PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_CEILING = 2.32
+export const PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_FLOOR = 0.24
+export const PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_RANGE = 2.08
+export const PFX_MATERIALIZE_GATHER_CORE_RADIAL_RETENTION = 0.14
+export const PFX_MATERIALIZE_GATHER_CORE_VALUE_THRESHOLD = 0.96
+export const PFX_MATERIALIZE_GATHER_GROUND_RADIAL_RETENTION = 0.84
+export const PFX_MATERIALIZE_GATHER_TARGET_RADIAL_RETENTION = 0.9
+export const PFX_MATERIALIZE_GATHER_UPPER_RADIAL_RETENTION = 0.5
+export const PFX_MATERIALIZE_GATHER_CORE_HEIGHT_FLOOR = 0.9
+export const PFX_MATERIALIZE_GATHER_CORE_HEIGHT_RANGE = 0.35
+export const PFX_MATERIALIZE_GATHER_HERO_STRETCH_RETENTION = 0.5
+export const PFX_MATERIALIZE_GATHER_TARGET_RADIUS_SCALE = 1.08
+export const PFX_MATERIALIZE_GATHER_ARC_BEND = 0.4
+export const PFX_MATERIALIZE_GATHER_PEAK_CONVERGENCE = 0.96
+export const PFX_MATERIALIZE_GATHER_ASSEMBLY_START = 0.2
+export const PFX_MATERIALIZE_GATHER_ASSEMBLY_END = 0.48
+export const PFX_MATERIALIZE_GATHER_MASTER_CONVERGENCE_END = 0.5
+export const PFX_MATERIALIZE_GATHER_BIRTH_PROGRESS_END = 0.1
+export const PFX_MATERIALIZE_GATHER_BIRTH_VISIBILITY = 0.55
+export const PFX_MATERIALIZE_GATHER_DISPERSAL_START = 0.62
+export const PFX_MATERIALIZE_GATHER_DISPERSAL_END = 0.8
+export const PFX_MATERIALIZE_GATHER_DECAY_HEIGHT_RETENTION = 0.42
+export const PFX_MATERIALIZE_GATHER_DECAY_DISTANCE_MIN = 0.32
+export const PFX_MATERIALIZE_GATHER_DECAY_DISTANCE_MAX = 0.72
+const PFX_MATERIALIZE_GATHER_FOOT_RADIUS = 0.22
+const PFX_MATERIALIZE_GATHER_HIP_RADIUS = 0.46
+const PFX_MATERIALIZE_GATHER_WAIST_RADIUS = 0.3
+const PFX_MATERIALIZE_GATHER_SHOULDER_RADIUS = 0.68
+const PFX_MATERIALIZE_GATHER_NECK_RADIUS = 0.2
+const PFX_MATERIALIZE_GATHER_HEAD_RADIUS = 0.4
+const PFX_MATERIALIZE_GATHER_CROWN_RADIUS = 0.06
+export const PFX_MATERIALIZE_GATHER_LEG_MASK_START = 0.22
+export const PFX_MATERIALIZE_GATHER_LEG_MASK_END = 0.32
+export const PFX_MATERIALIZE_GATHER_LEG_CENTER_OFFSET = 0.18
+export const PFX_MATERIALIZE_GATHER_LEG_RADIAL_RETENTION = 0.28
+export const PFX_MATERIALIZE_GATHER_LEG_DEPTH_RETENTION = 0.42
+// Sustain travel long enough for the five distributed source lanes to remain
+// readable as inward arcs at the shared peak. The old short convergence
+// collapsed every live particle into one narrow vertical plume.
+export const PFX_MATERIALIZE_GATHER_CONVERGENCE_END = 0.96
+
+export function getPfxMaterializeSilhouetteRadialRetention(
+  heightUnit: number,
+  core = false,
+): number {
+  if (core) return PFX_MATERIALIZE_GATHER_CORE_RADIAL_RETENTION
+  const height = THREE.MathUtils.clamp(heightUnit, 0, 1)
+  const interpolate = (
+    startHeight: number,
+    endHeight: number,
+    startRadius: number,
+    endRadius: number,
+  ) => THREE.MathUtils.lerp(
+    startRadius,
+    endRadius,
+    THREE.MathUtils.smoothstep(height, startHeight, endHeight),
+  )
+
+  if (height < 0.2) {
+    return interpolate(
+      0,
+      0.2,
+      PFX_MATERIALIZE_GATHER_FOOT_RADIUS,
+      PFX_MATERIALIZE_GATHER_HIP_RADIUS,
+    )
+  }
+  if (height < 0.42) {
+    return interpolate(
+      0.2,
+      0.42,
+      PFX_MATERIALIZE_GATHER_HIP_RADIUS,
+      PFX_MATERIALIZE_GATHER_WAIST_RADIUS,
+    )
+  }
+  if (height < 0.62) {
+    return interpolate(
+      0.42,
+      0.62,
+      PFX_MATERIALIZE_GATHER_WAIST_RADIUS,
+      PFX_MATERIALIZE_GATHER_SHOULDER_RADIUS,
+    )
+  }
+  if (height < 0.76) {
+    return interpolate(
+      0.62,
+      0.76,
+      PFX_MATERIALIZE_GATHER_SHOULDER_RADIUS,
+      PFX_MATERIALIZE_GATHER_NECK_RADIUS,
+    )
+  }
+  if (height < 0.88) {
+    return interpolate(
+      0.76,
+      0.88,
+      PFX_MATERIALIZE_GATHER_NECK_RADIUS,
+      PFX_MATERIALIZE_GATHER_HEAD_RADIUS,
+    )
+  }
+  return interpolate(
+    0.88,
+    1,
+    PFX_MATERIALIZE_GATHER_HEAD_RADIUS,
+    PFX_MATERIALIZE_GATHER_CROWN_RADIUS,
+  )
+}
+
+export function getPfxMaterializeSilhouetteRadialScale(
+  heightUnit: number,
+  fillUnit: number,
+  core = false,
+): number {
+  const fill = THREE.MathUtils.clamp(fillUnit, 0, 1)
+  const fillScale = 0.12 + Math.pow(fill, 0.7) * 0.88
+  return getPfxMaterializeSilhouetteRadialRetention(heightUnit, core) * fillScale
+}
+
+export function getPfxMaterializeTargetHeight(
+  heightUnit: number,
+  core = false,
+): number {
+  const height = THREE.MathUtils.clamp(heightUnit, 0, 1)
+  return core
+    ? PFX_MATERIALIZE_GATHER_CORE_HEIGHT_FLOOR +
+      height * PFX_MATERIALIZE_GATHER_CORE_HEIGHT_RANGE
+    : PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_FLOOR +
+      height * PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_RANGE
+}
+
+export function getPfxMaterializeAssemblyHeightScale(cycle: number): number {
+  const assembly = THREE.MathUtils.smoothstep(
+    cycle,
+    PFX_MATERIALIZE_GATHER_ASSEMBLY_START,
+    PFX_MATERIALIZE_GATHER_ASSEMBLY_END,
+  )
+  return 0.12 + assembly * 0.88
+}
+
+export function getPfxMaterializeGatherConvergence(
+  cycle: number,
+  particleProgress: number,
+): number {
+  const particleConvergence = THREE.MathUtils.smoothstep(
+    particleProgress,
+    0.02,
+    PFX_MATERIALIZE_GATHER_CONVERGENCE_END,
+  ) * 0.35
+  const masterConvergence = THREE.MathUtils.smoothstep(
+    cycle,
+    PFX_MATERIALIZE_GATHER_ASSEMBLY_START,
+    PFX_MATERIALIZE_GATHER_MASTER_CONVERGENCE_END,
+  )
+  const peakConvergence = THREE.MathUtils.lerp(
+    0.42,
+    PFX_MATERIALIZE_GATHER_PEAK_CONVERGENCE,
+    getPfxMaterializeAssemblyHeightScale(cycle),
+  )
+  return Math.max(particleConvergence, masterConvergence) * peakConvergence
+}
+
+export function getPfxMaterializeDispersal(cycle: number): number {
+  return THREE.MathUtils.smoothstep(
+    cycle,
+    PFX_MATERIALIZE_GATHER_DISPERSAL_START,
+    PFX_MATERIALIZE_GATHER_DISPERSAL_END,
+  )
+}
 
 export const PFX_SPRITE_PARTICLE_VERTEX = /* glsl */ `
 attribute vec3 aSpawn;
@@ -1583,6 +1767,122 @@ void main() {
     float hRadius = aOrbit.y * (1.0 - progress * 0.82);
     worldOffset = vec3(aSpawn.x - aSpeed * progress, cos(hAngle) * hRadius, sin(hAngle) * hRadius) + wobble * 0.35;
     velocity = vec3(-aSpeed * 0.5, -sin(hAngle) * hRadius * 2.8, cos(hAngle) * hRadius * 2.8);
+  #elif defined(MOTION_MATERIALIZE_GATHER)
+    // Textured billboards travel from distributed front/back boundary lanes
+    // through a curved inward flow, then retire into the separate contact
+    // flash. This is a conventional sprite-particle motion field, never a
+    // geometry proxy.
+    float materializeGatherAssemblyHeight =
+      0.12 +
+      smoothstep(
+        ${PFX_MATERIALIZE_GATHER_ASSEMBLY_START},
+        ${PFX_MATERIALIZE_GATHER_ASSEMBLY_END},
+        masterCycle
+      ) *
+      0.88;
+    float materializeGatherDispersal = smoothstep(
+      ${PFX_MATERIALIZE_GATHER_DISPERSAL_START},
+      ${PFX_MATERIALIZE_GATHER_DISPERSAL_END},
+      masterCycle
+    );
+    float materializeGatherParticleConvergence =
+      smoothstep(
+        0.02,
+        ${PFX_MATERIALIZE_GATHER_CONVERGENCE_END},
+        progress
+      ) *
+      0.35;
+    float materializeGatherMasterConvergence = smoothstep(
+      ${PFX_MATERIALIZE_GATHER_ASSEMBLY_START},
+      ${PFX_MATERIALIZE_GATHER_MASTER_CONVERGENCE_END},
+      masterCycle
+    );
+    float materializeGatherProgress =
+      max(materializeGatherParticleConvergence, materializeGatherMasterConvergence);
+    float materializeGatherPeakConvergence = mix(
+      0.42,
+      ${PFX_MATERIALIZE_GATHER_PEAK_CONVERGENCE},
+      materializeGatherAssemblyHeight
+    );
+    materializeGatherProgress *= materializeGatherPeakConvergence;
+    float materializeGatherHeightUnit = pow(aOrbit.y, 1.1);
+    float materializeGatherFillUnit = fract(aWobble.x * 1.37);
+    vec3 materializeGatherSourceRadial = normalize(vec3(
+      aSpawn.x,
+      0.0,
+      aSpawn.z
+    ));
+    // Map the distributed reservoir into shallow front/back lanes. The
+    // warning must show energy travelling toward a spawn point, not particles
+    // resolving into a proxy character or a tall flame-shaped cage.
+    vec3 materializeGatherSource = vec3(
+      aSpawn.x,
+      0.12 + materializeGatherHeightUnit * 0.42,
+      aSpawn.z
+    );
+    float materializeGatherLocusHeight =
+      0.44 + materializeGatherHeightUnit * 0.18;
+    vec3 materializeGatherLocus = vec3(
+      materializeGatherSourceRadial.x *
+        mix(0.035, 0.13, materializeGatherFillUnit),
+      materializeGatherLocusHeight,
+      materializeGatherSourceRadial.z *
+        mix(0.035, 0.13, fract(materializeGatherFillUnit * 1.61803398875))
+    );
+    vec3 materializeGatherTarget = materializeGatherLocus;
+    vec3 materializeGatherTangent = vec3(
+      -materializeGatherSourceRadial.z,
+      0.0,
+      materializeGatherSourceRadial.x
+    );
+    vec3 materializeGatherArcOffset =
+      materializeGatherTangent *
+      ${PFX_MATERIALIZE_GATHER_ARC_BEND} *
+      mix(0.65, 1.0, materializeGatherFillUnit) *
+      sin(materializeGatherProgress * 3.14159265359);
+    worldOffset =
+      mix(materializeGatherSource, materializeGatherLocus, materializeGatherProgress) +
+      materializeGatherArcOffset +
+      wobble * 0.08;
+    worldOffset.y *= mix(
+      1.0,
+      ${PFX_MATERIALIZE_GATHER_DECAY_HEIGHT_RETENTION},
+      materializeGatherDispersal
+    );
+    vec3 materializeGatherDispersalDirection = normalize(vec3(
+      cos(aOrbit.x + aWobble.x * 0.07),
+      0.5 + materializeGatherHeightUnit * 0.42,
+      sin(aOrbit.x + aWobble.x * 0.07)
+    ));
+    worldOffset +=
+      materializeGatherDispersalDirection *
+      materializeGatherDispersal *
+      mix(
+        ${PFX_MATERIALIZE_GATHER_DECAY_DISTANCE_MIN},
+        ${PFX_MATERIALIZE_GATHER_DECAY_DISTANCE_MAX},
+        materializeGatherFillUnit
+      );
+    vec3 materializeGatherFlowDirection = normalize(mix(
+      normalize(
+        materializeGatherLocus -
+        materializeGatherSource +
+        materializeGatherTangent *
+          ${PFX_MATERIALIZE_GATHER_ARC_BEND} *
+          (1.0 - materializeGatherProgress)
+      ),
+      materializeGatherDispersalDirection,
+      materializeGatherDispersal
+    ));
+    // Retire the actionable gather as the separate contact/release population
+    // takes over. Keeping both at full weight created the rejected electrical
+    // shrub at peak.
+    float materializeGatherContactRetirement =
+      smoothstep(0.44, 0.6, masterCycle);
+    velocity = normalize(mix(
+      materializeGatherFlowDirection,
+      materializeGatherDispersalDirection,
+      materializeGatherDispersal
+    )) * aSpeed;
   #elif defined(MOTION_FLAME_CHARGE_GATHER)
     // Three authored 3D lanes contract together instead of recycling as
     // unrelated fire blobs. The outer cage remains visible at onset, then
@@ -1643,6 +1943,16 @@ void main() {
   // peak collapse, so the texture dims the particle the alpha no longer does.
   if (uAdditiveShrink > 0.5 && shrink < 0.42) shrink = 0.0;
   float appear = smoothstep(0.0, uFadeWindow.x, progress) * shrink;
+  #ifdef MOTION_MATERIALIZE_GATHER
+    float materializeGatherBirthFloor =
+      (1.0 - smoothstep(
+        0.0,
+        ${PFX_MATERIALIZE_GATHER_BIRTH_PROGRESS_END},
+        progress
+      )) *
+      ${PFX_MATERIALIZE_GATHER_BIRTH_VISIBILITY};
+    appear = max(appear, materializeGatherBirthFloor);
+  #endif
   #ifdef MOTION_FLAME_CHARGE_GATHER
     appear = max(appear, 0.72) * mix(0.68, 1.08, chargeEnvelope);
   #endif
@@ -1659,6 +1969,37 @@ void main() {
     dustSizeAppear = mix(0.72, 1.0, appear);
   #endif
   float size = uSize * aVariance.x * freshScale * sizeLife * dustSizeAppear * modelScale;
+  #ifdef MOTION_MATERIALIZE_GATHER
+    // Gather cards strengthen while travelling inward, then retire as the
+    // separate contact/release population takes over. This prevents both
+    // populations from forming one unchanged scribble at peak.
+    float materializeGatherCardScale = mix(
+      0.68,
+      1.28,
+      materializeGatherAssemblyHeight
+    );
+    materializeGatherCardScale = mix(
+      materializeGatherCardScale,
+      0.68,
+      materializeGatherDispersal
+    );
+    materializeGatherCardScale *= mix(
+      1.12,
+      0.72,
+      materializeGatherHeightUnit
+    );
+    materializeGatherCardScale *=
+      1.0 - materializeGatherContactRetirement * 0.75;
+    size *= materializeGatherCardScale;
+  #endif
+  #ifdef MOTION_MATERIALIZE_RELEASE
+    // The high-value contact cohort is the ignition core. Keep it compact
+    // and round while increasing its screen footprint enough to survive the
+    // canonical gameplay camera; directional stretch belongs to the
+    // surrounding gather and release particles.
+    float materializeReleaseCoreVertex = step(1.44, aVariance.y);
+    size *= mix(1.0, 1.35, materializeReleaseCoreVertex);
+  #endif
 
   vec3 instancePosition = (modelMatrix * vec4(worldOffset, 1.0)).xyz;
   // Freshness: new initial rotation and ±40% spin-speed re-roll per cycle.
@@ -1674,6 +2015,10 @@ void main() {
   vec3 up;
   vec3 right;
   vec3 eye = normalize(cameraPosition - instancePosition);
+  float materializeReleaseCohort = 0.0;
+  #ifdef MOTION_MATERIALIZE_RELEASE
+    materializeReleaseCohort = step(0.18, aLife.x);
+  #endif
   if (uStretch > 0.001) {
     // Stalled streaks keep their emission axis — the billboard fallback
     // applied a random static roll, rendering scribble blades (rounds 8-9).
@@ -1683,19 +2028,63 @@ void main() {
     // |v| re-stretched dying sparks into parallel falling bars.
     float launchSpeed = aSpeed * exp(-max(uDrag, 0.35) * age);
     vec3 projected = worldVelocity - dot(worldVelocity, eye) * eye;
-    up = length(projected) > 0.001 ? normalize(projected) : worldVelocity;
+    // A velocity parallel to the eye has no screen-space projection. Using
+    // that same velocity as billboard-up made cross(up, eye) degenerate and
+    // stretched tangent particles into endpoint starbursts. Select a stable
+    // camera-plane axis for the view-aligned case.
+    vec3 viewAlignedStretchFallbackAxis =
+      abs(eye.y) < 0.95 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+    vec3 viewAlignedStretchFallback = normalize(
+      viewAlignedStretchFallbackAxis -
+      dot(viewAlignedStretchFallbackAxis, eye) * eye
+    );
+    up = length(projected) > 0.001
+      ? normalize(projected)
+      : viewAlignedStretchFallback;
     right = normalize(cross(up, eye));
     localPosition = position.xy;
     // Clamp stretched WORLD length: multiplier-only clamps let large quads
-    // smear into 300px out-of-focus flare bars (rounds 8-9).
-    float stretchFactor = 1.0 + min(launchSpeed * uStretch, 2.6);
+    // smear into 300px out-of-focus flare bars (rounds 8-9). A direction
+    // pointing toward the camera also has no visible screen-space length;
+    // taper its elongation instead of forming a tuft at ring extrema.
+    float viewAlignedStretchVisibility =
+      smoothstep(0.12, 0.45, length(projected));
+    float materializeStretchScale = 1.0;
+    #ifdef MOTION_MATERIALIZE_GATHER
+      // Fine support motes become directional filaments while the rare,
+      // contact-anchored hero cohort stays round enough to fuse into a core.
+      materializeStretchScale = mix(
+        1.0,
+        ${PFX_MATERIALIZE_GATHER_HERO_STRETCH_RETENTION},
+        smoothstep(1.08, 1.12, aVariance.x)
+      );
+    #endif
+    #ifdef MOTION_MATERIALIZE_RELEASE
+      // The later cohort keeps the same tapered spark cell but shortens its
+      // velocity stretch so a perimeter front does not turn into radial bars.
+      materializeStretchScale *= mix(
+        1.0,
+        0.35,
+        materializeReleaseCohort
+      );
+    #endif
+    float stretchFactor =
+      1.0 + min(launchSpeed * uStretch * materializeStretchScale, 2.6) *
+      viewAlignedStretchVisibility;
+    #ifdef MOTION_MATERIALIZE_RELEASE
+      stretchFactor = mix(stretchFactor, 1.0, materializeReleaseCoreVertex);
+    #endif
     localPosition.y *= min(stretchFactor, 0.55 / max(size, 0.001));
   } else {
     vec3 worldUp = vec3(0.0, 1.0, 0.0);
     right = normalize(cross(worldUp, eye));
     up = cross(eye, right);
   }
-  localPosition.x *= uSpriteAspect;
+  localPosition.x *= mix(
+    uSpriteAspect,
+    1.0,
+    materializeReleaseCohort
+  );
 
   vec3 vertexWorld = instancePosition + (right * localPosition.x + up * localPosition.y) * size;
   gl_Position = projectionMatrix * viewMatrix * vec4(vertexWorld, 1.0);

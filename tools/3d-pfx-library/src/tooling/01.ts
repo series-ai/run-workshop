@@ -5,9 +5,16 @@ import { AUTHORED_EFFECT_RECIPES } from '../constants/02'
 import { PFX_CC0_ASSET_SOURCES, SEED_EFFECTS, createPerformanceMetadata, createPfxStyleRender, createPresetFromEffect, createProfileBackedPhase, createQualityScore, derivePfxBehaviorRole, generatedPairQueue, generatedSeed, normalizePfxRenderSurfaces, previewForEffect, roundMetric, slug } from '../constants/03'
 import { PFX_BUDGET_AFFECTING_CONTROL_KEYS, PFX_FORBIDDEN_EXPORT_TERMS, PFX_PRODUCTION_IMPLEMENTATION_NOTE_TERMS, PFX_RED_TEAM_NOTE_ACTION_TERMS, PFX_RENDER_AFFECTING_CONTROL_KEYS, PFX_STRUCTURAL_SURFACE_KINDS, applyStyleVariant, clipMotionPath, controlDefaultWithinBounds, controlDefinitionIsBounded, createControlVariantOverride, createReducedMotionControls, developerDocsIntegrationChecklist, developerDocsProductionCaveat, developerDocsQualityLabel, duplicateValues, escapeXml, getPfxParticleMotionKind, getPfxSharedGeometry, getPfxSharedParticleTexture, hashPfxSurfaceKey, matchesPfxSearchQuery, normalizeThumbnailColors, overlaps, parseExportedPreset, redTeamNoteDimensionCoverage, roundSvg, seededRandom, validatePfxPreset, withoutSeed } from '../constants/04'
 import { createPfxMobileRuntimePolicy } from '../effects/mobileRuntimePolicy'
-import { createPfxParticleSimulation } from '../effects/particleSimulation'
+import {
+  PFX_MATERIALIZE_GATHER_COHORT_FRACTION,
+  PFX_MATERIALIZE_RELEASE_CONTACT_FRACTION,
+  PFX_MATERIALIZE_RELEASE_GROUND_FRACTION,
+  PFX_MATERIALIZE_GROUND_STREAM_LANES,
+  PFX_TELEGRAPH_BOUNDARY_OUTER_FRACTION,
+  createPfxParticleSimulation,
+} from '../effects/particleSimulation'
 import { getPfxSpriteForSurface } from '../effects/spriteForSurface'
-import type { ArtStyleCluster, ExportSnippetOptions, LoopMode, PerformanceTier, PfxCatalogItem, PfxClipAsset, PfxComponentDefinition, PfxContactSheetAsset, PfxControlDefinition, PfxControlSafetyControlEvidence, PfxControlSafetyEffectEvidence, PfxControlSafetyMatrix, PfxControls, PfxDeveloperDocsEffect, PfxDeveloperDocsManifest, PfxExportCleanlinessAudit, PfxExportCleanlinessAuditEffect, PfxFilterQuery, PfxPerformanceSummary, PfxPreset, PfxPresetOverrides, PfxPreviewAssetAudit, PfxPreviewAssetAuditEffect, PfxPreviewManifest, PfxPreviewManifestEntry, PfxProductionAcceptanceGapKind, PfxProductionApproval, PfxProductionApprovalDecision, PfxProductionImplementationReview, PfxProductionReadinessStatus, PfxRedTeamEffectReview, PfxRuntimeOptimizationAudit, PfxRuntimeOptimizationAuditEffect, PfxStressScenario, PfxStressScenarioOptions, PfxStyleDifferentiationEffectEvidence, PfxStyleDifferentiationMatrix, PfxStyleDifferentiationVariantEvidence, PfxTaxonomyEffect, PfxThumbnailAsset } from '../types/01'
+import type { ArtStyleCluster, ExportSnippetOptions, LoopMode, PerformanceTier, PfxApprovalVisualQualityDimension, PfxCatalogItem, PfxClipAsset, PfxComponentDefinition, PfxContactSheetAsset, PfxControlDefinition, PfxControlSafetyControlEvidence, PfxControlSafetyEffectEvidence, PfxControlSafetyMatrix, PfxControls, PfxDeveloperDocsEffect, PfxDeveloperDocsManifest, PfxExportCleanlinessAudit, PfxExportCleanlinessAuditEffect, PfxFilterQuery, PfxPerformanceSummary, PfxPreset, PfxPresetOverrides, PfxPreviewAssetAudit, PfxPreviewAssetAuditEffect, PfxPreviewManifest, PfxPreviewManifestEntry, PfxProductionAcceptanceGapKind, PfxProductionApproval, PfxProductionApprovalDecision, PfxProductionImplementationReview, PfxProductionReadinessStatus, PfxQualityMatrixApprovalEvidence, PfxRedTeamEffectReview, PfxRuntimeOptimizationAudit, PfxRuntimeOptimizationAuditEffect, PfxStressScenario, PfxStressScenarioOptions, PfxStyleDifferentiationEffectEvidence, PfxStyleDifferentiationMatrix, PfxStyleDifferentiationVariantEvidence, PfxTaxonomyEffect, PfxThumbnailAsset } from '../types/01'
 import type { PfxParticleEmission, PfxRenderPlan, PfxRenderPlanOptions, PfxRenderSurface, PfxStructuralQualityAudit, PfxStructuralQualityAuditEffect } from '../types/02'
 
 export const PFX_TAXONOMY: PfxTaxonomyEffect[] = buildTaxonomy()
@@ -35,10 +42,18 @@ export function createPfxStructuralQualityAudit(): PfxStructuralQualityAudit {
     // particle-backed effects must resolve at least one bundled CC0 sprite.
     const cc0AssetBacked = particleSurfaces.length === 0 || particleSurfaces.some((surface) => {
       const motion = getPfxParticleMotionKind(surface, preset)
-      const sprite = getPfxSpriteForSurface(preset, surface, motion)
-      return PFX_SPRITE_SLICES[sprite].source.startsWith('kenney-particle-pack/')
+      const inferredSprite = getPfxSpriteForSurface(preset, surface, motion)
+      const candidateSprites = surface.tuning?.sprite
+        ? [surface.tuning.sprite, inferredSprite]
+        : [inferredSprite]
+      return candidateSprites.some((sprite) =>
+        PFX_SPRITE_SLICES[sprite].source.startsWith('kenney-particle-pack/'))
     })
-    const structuredMesh = plan.surfaces.some((surface) => PFX_STRUCTURAL_SURFACE_KINDS.has(surface.kind))
+    const structuredMesh = plan.surfaces.some(
+      (surface) =>
+        PFX_STRUCTURAL_SURFACE_KINDS.has(surface.kind) ||
+        surface.tuning?.meshGeometry !== undefined,
+    )
     const findings = decorativeRings.map((surface) => `decorative-ring:${surface.phase ?? surface.kind}`)
     return {
       effectId: preset.effectId,
@@ -964,7 +979,7 @@ function isCanonicalPendingProductionApprovalTemplateRow(approval: PfxProduction
     approval.approvedBy === 'TODO:final-production-approver' &&
     approval.approvedAt === 'TODO:ISO-8601' &&
     approval.rationale ===
-      'TODO:describe taxonomy review, production implementation, measured mobile performance, and red-team signoff.' &&
+      'TODO:describe taxonomy review, production implementation, visual quality, measured mobile performance, and red-team signoff.' &&
     hasRequiredProductionReadyApprovalEvidence(approval)
   )
 }
@@ -1202,6 +1217,9 @@ export function expectedProductionEvidence(
   if (kind === 'production-implementation') {
     return `production-implementation:.context/r3f-pfx-production-implementation.json#${effectId}`
   }
+  if (kind === 'quality-matrix') {
+    return `quality-matrix:.context/r3f-pfx-quality-matrix.json#${effectId}`
+  }
   if (kind === 'mobile-safari-profile') return `mobile-safari-profile:.context/mobile-safari/${effectId}.json`
   if (kind === 'chrome-android-profile') return `chrome-android-profile:.context/chrome-android/${effectId}.json`
   if (kind === 'approved-deferral') return `approved-deferral:.context/r3f-pfx-red-team-review.json#${effectId}`
@@ -1214,10 +1232,100 @@ export function hasRequiredProductionReadyApprovalEvidence(approval: PfxProducti
   return approvalEvidenceExactlyMatches(approval, [
     expectedProductionEvidence('taxonomy-review', effectId),
     expectedProductionEvidence('production-implementation', effectId),
+    expectedProductionEvidence('quality-matrix', effectId),
     expectedProductionEvidence('mobile-safari-profile', effectId),
     expectedProductionEvidence('chrome-android-profile', effectId),
     expectedProductionEvidence('red-team-signoff', effectId),
   ])
+}
+
+const PFX_APPROVAL_VISUAL_QUALITY_DIMENSIONS: readonly PfxApprovalVisualQualityDimension[] = [
+  'semanticIdentity',
+  'gameplayReadability',
+  'volumeAndDepth',
+  'multiAngleResilience',
+  'silhouetteAndComposition',
+  'temporalArcAndDecay',
+  'materialAndShaderQuality',
+  'meshStructureAndEmitterQuality',
+  'cc0AssetIntegration',
+  'distinctivenessAndRingDiscipline',
+  'scaleAndVisualHierarchy',
+  'overallProductionPolish',
+]
+
+export function validateQualityMatrixApprovalEvidence(
+  input: unknown,
+  effectId: string,
+  currentSourceFingerprint: string,
+): string[] {
+  if (
+    input == null ||
+    typeof input !== 'object' ||
+    (input as { schema?: unknown }).schema !== 'game-bot.r3f-pfx-quality-matrix.v1' ||
+    !Array.isArray((input as { effects?: unknown }).effects)
+  ) {
+    return ['quality matrix evidence must use schema game-bot.r3f-pfx-quality-matrix.v1']
+  }
+  const matrix = input as PfxQualityMatrixApprovalEvidence
+  const rows = matrix.effects.filter((row) => row?.effectId === effectId)
+  if (rows.length !== 1) {
+    return [`quality matrix must contain exactly one row for ${effectId}`]
+  }
+  const row = rows[0]
+  const minimumVisualDimension = row.requiredQualityThreshold?.minimumVisualDimension
+  const minimumWeightedScore = row.requiredQualityThreshold?.minimumWeightedScore
+  const expectedWeightedScore = Number.isInteger(row.rank) && row.rank >= 1 && row.rank <= 500
+    ? row.rank <= 50 ? 4.7 : 4
+    : null
+  return [
+    ...(row.finalPass === true ? [] : ['quality matrix row finalPass must be true']),
+    ...(row.visualPass === true ? [] : ['quality matrix row visualPass must be true']),
+    ...(row.sourceFingerprint === currentSourceFingerprint
+      ? []
+      : ['quality matrix row source fingerprint is stale']),
+    ...(minimumVisualDimension === 4
+      ? []
+      : ['quality matrix row minimum visual threshold is invalid']),
+    ...(minimumWeightedScore === expectedWeightedScore
+      ? []
+      : ['quality matrix row rank target is invalid']),
+    ...(PFX_APPROVAL_VISUAL_QUALITY_DIMENSIONS.every((dimension) => {
+      const score = row.scores?.[dimension]
+      return Number.isFinite(score) && score! >= minimumVisualDimension
+    })
+      ? []
+      : ['quality matrix row has a visual score below its required floor']),
+    ...(Number.isFinite(row.weightedScore) &&
+    Number.isFinite(minimumWeightedScore) &&
+    row.weightedScore! >= minimumWeightedScore
+      ? []
+      : ['quality matrix row weighted score is below its rank target']),
+    ...((['front', 'threeQuarter', 'side'] as const).every(
+      (camera) => (row.cameraEvidence?.[camera]?.length ?? 0) >= 3,
+    )
+      ? []
+      : ['quality matrix row camera evidence is incomplete']),
+    ...((['onset', 'peak', 'decay'] as const).every(
+      (phase) => (row.lifecycleEvidence?.[phase]?.length ?? 0) >= 3,
+    )
+      ? []
+      : ['quality matrix row lifecycle evidence is incomplete']),
+    ...((row.gameplayContextEvidence?.length ?? 0) >= 1
+      ? []
+      : ['quality matrix row gameplay-context evidence is incomplete']),
+    ...(typeof row.reviewer === 'string' && row.reviewer.startsWith('peer-consensus:')
+      ? []
+      : ['quality matrix row independent peer consensus is incomplete']),
+    ...(typeof row.reviewerConfidence === 'number' &&
+    row.reviewerConfidence >= 0 &&
+    row.reviewerConfidence <= 1
+      ? []
+      : ['quality matrix row reviewer confidence is invalid']),
+    ...(row.reducedMotionReadable === true
+      ? []
+      : ['quality matrix row reduced-motion evidence is incomplete']),
+  ]
 }
 
 export function hasRequiredDeferralApprovalEvidence(approval: PfxProductionApproval | undefined): boolean {
@@ -1299,7 +1407,7 @@ export function isProductionImplementationReady(implementation: PfxProductionImp
 }
 
 function canonicalProductionImplementationSourcePath(effectId: string): string {
-  return `tools/3d-pfx-library/src/index.tsx#${effectId}`
+  return `tools/3d-pfx-library/src/recipes/${effectId}.ts`
 }
 
 function hasSubstantiveProductionImplementationNotes(value: string | undefined): boolean {
@@ -1662,7 +1770,7 @@ function getPfxEffectLoopMode(effectId: string): LoopMode {
 }
 
 export function createPfxParticleEmission(
-  preset: Pick<PfxPreset, 'effectId' | 'controls' | 'implementationProfile'>,
+  preset: Pick<PfxPreset, 'effectId' | 'controls' | 'implementationProfile' | 'reducedMotion'>,
   surface: Pick<PfxRenderSurface, 'kind' | 'role' | 'phase' | 'tuning'>,
 ): PfxParticleEmission {
   const simulation = createPfxParticleSimulation(preset, surface)
@@ -1678,6 +1786,7 @@ export function createPfxParticleEmission(
         ? 0.22
         : 1)
   const spinScale = tuning?.spinScale ?? 1
+  const sizeJitter = Math.max(0, Math.min(0.95, tuning?.sizeJitter ?? 0.45))
   const lifeScale = tuning?.lifeScale ?? 1
   const lifeRand = seededRandom((preset.controls.seed || 1) * 197 + hashPfxSurfaceKey(surface) * 3 + 17)
 
@@ -1698,6 +1807,39 @@ export function createPfxParticleEmission(
     } else {
       life[i * 2] = motionKind === 'healing-spiral'
         ? simulation.lifeOffset[i]! * emissionWindow
+        : motionKind === 'telegraph-boundary-drift'
+          // Exact azimuth strata make index order spatially meaningful. A
+          // monotonic birth clock therefore lit the ring as one sweeping
+          // semicircle. Golden-ratio permutation spreads every age cohort
+          // around the whole boundary while staying deterministic.
+          ? ((i + 0.5) * 0.61803398875 % 1) * emissionWindow
+        : motionKind === 'materialize-gather'
+          // The gather's golden-angle azimuth advances by the complement of
+          // 0.618..., so using that same number for births activates one
+          // camera-side arc at a time. A different irrational step keeps
+          // every birth cohort distributed through all four world quadrants.
+          ? ((i + 0.5) * 0.7548776662466927 % 1) * emissionWindow
+        : motionKind === 'materialize-release'
+          ? i < Math.floor(count * PFX_MATERIALIZE_GATHER_COHORT_FRACTION)
+            // The gather is fully present during onset, then expires before
+            // the later release cohort is born.
+            ? ((i + 0.5) * 0.7548776662466927 % 1) * 0.07
+            : preset.reducedMotion
+              // The reduced preset holds its sparse glow cohort together as
+              // one static contact proof at the retimed confirmation sample.
+              // Normal motion retains the separated contact/release clocks.
+              ? 0.22 +
+                ((i + 0.5) * 0.61803398875 % 1) * 0.08
+            : i < Math.floor(count * PFX_MATERIALIZE_RELEASE_GROUND_FRACTION)
+              ? 0.22 +
+                ((i + 0.5) * 0.61803398875 % 1) * 0.08
+              : 0.24 +
+                ((i + 0.5) * 0.61803398875 % 1) * 0.1
+        : motionKind === 'phase-transfer-column'
+          // Keep every birth cohort distributed across the full tapered
+          // column. Sequential births light one horizontal slice at a time
+          // and collapse the teleport read back into a sparse knot.
+          ? ((i + 0.5) * 0.7548776662466927 % 1) * emissionWindow
         : motionKind === 'healing-cross' || motionKind === 'shadow-claw'
           ? (i % 3) * 0.004
         : (i / count) * emissionWindow
@@ -1715,12 +1857,43 @@ export function createPfxParticleEmission(
         ? lifeScale
         : (0.7 + lifeRand() * 0.6) * lifeScale
     }
+    if (motionKind === 'materialize-release') {
+      const gatherCount = Math.floor(
+        count * PFX_MATERIALIZE_GATHER_COHORT_FRACTION,
+      )
+      const groundCount = Math.floor(
+        count * PFX_MATERIALIZE_RELEASE_GROUND_FRACTION,
+      )
+      const contactEnd = gatherCount + Math.floor(
+        (groundCount - gatherCount) * PFX_MATERIALIZE_RELEASE_CONTACT_FRACTION,
+      )
+      life[i * 2 + 1] = i < gatherCount
+        ? 1.04 + lifeRand() * 0.18
+        : i < contactEnd
+          ? 0.23 + lifeRand() * 0.1
+          : i < groundCount
+            ? 0.28 + lifeRand() * 0.12
+            // Keep a sparse elevated cohort alive through the canonical decay
+            // sample so the arrival resolves as outward-moving particle
+            // remnants instead of every layer dimming away at once.
+            : 1.14 + lifeRand() * 0.26
+    } else if (motionKind === 'telegraph-boundary-drift') {
+      // The gameplay-authoritative outer radius retires as one coherent
+      // particle current. Random duration variance previously punched
+      // isolated holes through decay and left static hot knots.
+      const boundaryOuterCount = Math.floor(
+        count * PFX_TELEGRAPH_BOUNDARY_OUTER_FRACTION,
+      )
+      life[i * 2 + 1] = i < boundaryOuterCount
+        ? lifeScale
+        : lifeScale * (0.84 + ((i - boundaryOuterCount) % 4) * 0.025)
+    }
     // Explicit spinScale 0 means axis-locked: random initial roll pointed
     // the muzzle flash card in a new direction every shot.
     const lockedRoll = tuning?.spinScale === 0
     rotation[i * 2] = lockedRoll ? 0 : rand() * Math.PI * 2
     rotation[i * 2 + 1] = (rand() - 0.5) * 3.2 * spinScale
-    variance[i * 2] = 0.55 + rand() * 0.9
+    variance[i * 2] = 1 + (rand() - 0.5) * sizeJitter * 2
     variance[i * 2 + 1] = 0.75 + rand() * 0.5
     if (motionKind === 'meteor-impact' && i < meteorIncomingCount) {
       const trailProgress = i / Math.max(1, meteorIncomingCount - 1)
@@ -1730,6 +1903,113 @@ export function createPfxParticleEmission(
       const ejectaIndex = i - meteorIncomingCount
       variance[i * 2] = 0.34 + ((ejectaIndex * 5) % 11) / 10 * 1.42
       variance[i * 2 + 1] = 0.5 + ((ejectaIndex * 7) % 9) / 8 * 0.72
+    } else if (motionKind === 'materialize-release') {
+      const gatherCount = Math.floor(
+        count * PFX_MATERIALIZE_GATHER_COHORT_FRACTION,
+      )
+      const groundCount = Math.floor(
+        count * PFX_MATERIALIZE_RELEASE_GROUND_FRACTION,
+      )
+      const contactEnd = gatherCount + Math.floor(
+        (groundCount - gatherCount) * PFX_MATERIALIZE_RELEASE_CONTACT_FRACTION,
+      )
+      if (i < gatherCount) {
+        const gatherStep = Math.floor(i / PFX_MATERIALIZE_GROUND_STREAM_LANES)
+        const gatherStepCount = Math.max(
+          1,
+          Math.ceil(gatherCount / PFX_MATERIALIZE_GROUND_STREAM_LANES),
+        )
+        const gatherProgress = (gatherStep + 0.5) / gatherStepCount
+        variance[i * 2] = 0.72 + (1 - gatherProgress) * 0.18 + rand() * 0.04
+        variance[i * 2 + 1] = 0.88 + (1 - gatherProgress) * 0.12 + rand() * 0.04
+      } else if (i < contactEnd) {
+        const contactRadius = Math.hypot(
+          simulation.spawn[i * 3]!,
+          simulation.spawn[i * 3 + 2]!,
+        )
+        const isCoreContact = contactRadius <= 0.09
+        variance[i * 2] = isCoreContact
+          ? 0.72 + rand() * 0.16
+          : 0.26 + rand() * 0.22
+        variance[i * 2 + 1] = isCoreContact
+          ? 1.46 + rand() * 0.04
+          : 0.88 + rand() * 0.22
+      } else if (i < groundCount) {
+        variance[i * 2] = 0.58 + rand() * 0.34
+        variance[i * 2 + 1] = 0.72 + rand() * 0.42
+      } else {
+        // Late wake particles keep a soft hierarchy while inheriting the
+        // release reservoir. Size and value scatter avoid another row of
+        // clone-like dashes as the rooted funnel fragments.
+        const elevatedIndex = i - groundCount
+        const elevatedSizeUnit =
+          ((elevatedIndex + 0.5) * 0.6180339887498948) % 1
+        variance[i * 2] = 0.3 + elevatedSizeUnit * 0.48
+        variance[i * 2 + 1] = 0.52 + rand() * 0.48
+      }
+      if (preset.reducedMotion && i >= gatherCount) {
+        // Preserve a static two-material peak: bright radial-glow contact
+        // particles overlap at the center while shorter, lower-value streaks
+        // break the outer silhouette into authored fragments.
+        const contactRadius = Math.hypot(
+          simulation.spawn[i * 3]!,
+          simulation.spawn[i * 3 + 2]!,
+        )
+        const isCoreContact = i < contactEnd && contactRadius <= 0.09
+        variance[i * 2] = isCoreContact
+          ? 0.8 + rand() * 0.16
+          : i < contactEnd
+            ? 0.55 + rand() * 0.24
+            : 0.55 + rand() * 0.34
+        variance[i * 2 + 1] = isCoreContact
+          ? 1.46 + rand() * 0.04
+          : i < contactEnd
+            ? 0.88 + rand() * 0.18
+            : 0.78 + rand() * 0.22
+      }
+    } else if (motionKind === 'materialize-gather') {
+      // Keep every quartile of the resolved particle envelope visible.
+      // Birth-height grading hid the upper half after convergence because
+      // source height and target height are intentionally independent.
+      const heightUnit = Math.pow(
+        (simulation.orbitAngle[i]! * 0.61803398875) % 1,
+        1.1,
+      )
+      const scaleUnit = ((i + 0.5) * 0.6180339887498948) % 1
+      const valueUnit = ((i + 0.5) * 0.7548776662466927) % 1
+      const isCyanMid = valueUnit < 0.28
+      variance[i * 2] = 0.62 + scaleUnit * 0.62 + rand() * 0.04
+      variance[i * 2 + 1] = isCyanMid
+        ? 0.82 + rand() * 0.14
+        : 0.34 + rand() * 0.2 + heightUnit * 0.04
+    } else if (surface.phase === 'spawn-telegraph-materialization-flash') {
+      // A low-discrepancy arrival cohort creates scale hierarchy inside the
+      // same particle draw. Keep both cohorts narrow enough that braided
+      // convergence cannot turn into a radial combat burst or a faux core.
+      const isContactParticle =
+        ((i + 0.5) * 0.6180339887498948 % 1) < 0.24
+      variance[i * 2] = isContactParticle
+        ? 1.05 + rand() * 0.2
+        : 0.42 + rand() * 0.3
+      variance[i * 2 + 1] = isContactParticle
+        ? 0.98 + rand() * 0.1
+        : 0.78 + rand() * 0.16
+    } else if (
+      motionKind === 'telegraph-boundary-drift' &&
+      i >= Math.floor(count * PFX_TELEGRAPH_BOUNDARY_OUTER_FRACTION)
+    ) {
+      // The inner support field is a sparse directional accent, not a second
+      // authoritative radius or a rack of long radial bars. Compact,
+      // mid-value cards keep the inward travel legible without forming the
+      // bright ground-center knot that obscured the materializing body.
+      variance[i * 2] = 0.18 + rand() * 0.22
+      variance[i * 2 + 1] = 0.55 + rand() * 0.19
+    } else if (motionKind === 'telegraph-boundary-drift') {
+      // The authoritative boundary is still densely overlapping, but broad
+      // deterministic scale/value variation keeps it from reading as a
+      // necklace of cloned segments.
+      variance[i * 2] = 0.58 + rand() * 0.34
+      variance[i * 2 + 1] = 0.52 + rand() * 0.22
     }
   }
 
@@ -1806,7 +2086,9 @@ export function createPfxParticleEmission(
   return {
     count,
     motionKind,
-    sprite: tuning?.sprite ?? getPfxSpriteForSurface(preset, surface, motionKind),
+    sprite: preset.reducedMotion && tuning?.reducedMotionSprite
+      ? tuning.reducedMotionSprite
+      : tuning?.sprite ?? getPfxSpriteForSurface(preset, surface, motionKind),
     emissionWindow,
     spawn: simulation.spawn,
     direction: simulation.direction,

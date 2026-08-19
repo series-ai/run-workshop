@@ -4,8 +4,9 @@ export function applyPfxSurfaceRotation(
   object: THREE.Object3D,
   cameraQuaternion: THREE.Quaternion,
   cameraFacing: boolean,
-  rotationZ: number,
+  rotation: number,
   parentWorldQuaternion?: THREE.Quaternion,
+  rotationAxis: 'y' | 'z' = 'z',
 ): void {
   if (cameraFacing) {
     object.quaternion.copy(cameraQuaternion)
@@ -20,5 +21,9 @@ export function applyPfxSurfaceRotation(
     if (!authoredQuaternion) object.userData['pfxAuthoredQuaternion'] = object.quaternion.clone()
     object.quaternion.copy(object.userData['pfxAuthoredQuaternion'] as THREE.Quaternion)
   }
-  object.rotateZ(rotationZ)
+  if (rotationAxis === 'y') {
+    object.rotateY(rotation)
+  } else {
+    object.rotateZ(rotation)
+  }
 }

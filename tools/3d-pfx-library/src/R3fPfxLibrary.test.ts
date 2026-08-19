@@ -6,6 +6,55 @@ import * as THREE from 'three'
 import * as PfxLibrary from './index'
 import { PFX_SPRITE_SLICES } from './particleSprites'
 import {
+  PFX_BURST_CYCLE_MULTIPLIER,
+  PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_CEILING,
+  PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_FLOOR,
+  PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_RANGE,
+  PFX_MATERIALIZE_GATHER_ASSEMBLY_END,
+  PFX_MATERIALIZE_GATHER_ASSEMBLY_START,
+  PFX_MATERIALIZE_GATHER_BIRTH_PROGRESS_END,
+  PFX_MATERIALIZE_GATHER_BIRTH_VISIBILITY,
+  PFX_MATERIALIZE_GATHER_MASTER_CONVERGENCE_END,
+  PFX_MATERIALIZE_GATHER_ARC_BEND,
+  PFX_MATERIALIZE_GATHER_CORE_RADIAL_RETENTION,
+  PFX_MATERIALIZE_GATHER_CORE_HEIGHT_FLOOR,
+  PFX_MATERIALIZE_GATHER_CORE_HEIGHT_RANGE,
+  PFX_MATERIALIZE_GATHER_CONVERGENCE_END,
+  PFX_MATERIALIZE_GATHER_CORE_VALUE_THRESHOLD,
+  PFX_MATERIALIZE_GATHER_DECAY_DISTANCE_MAX,
+  PFX_MATERIALIZE_GATHER_DECAY_DISTANCE_MIN,
+  PFX_MATERIALIZE_GATHER_DECAY_HEIGHT_RETENTION,
+  PFX_MATERIALIZE_GATHER_DISPERSAL_END,
+  PFX_MATERIALIZE_GATHER_DISPERSAL_START,
+  PFX_MATERIALIZE_GATHER_HERO_STRETCH_RETENTION,
+  PFX_MATERIALIZE_GATHER_PEAK_CONVERGENCE,
+  PFX_MATERIALIZE_GATHER_GROUND_RADIAL_RETENTION,
+  PFX_MATERIALIZE_GATHER_TARGET_RADIAL_RETENTION,
+  PFX_MATERIALIZE_GATHER_TARGET_RADIUS_SCALE,
+  PFX_MATERIALIZE_GATHER_UPPER_RADIAL_RETENTION,
+  PFX_SPRITE_PARTICLE_VERTEX,
+  getPfxMaterializeAssemblyHeightScale,
+  getPfxMaterializeGatherConvergence,
+  getPfxMaterializeDispersal,
+  getPfxMaterializeSilhouetteRadialRetention,
+  getPfxMaterializeSilhouetteRadialScale,
+  getPfxMaterializeTargetHeight,
+} from './constants/04'
+import { PFX_SPRITE_PARTICLE_FRAGMENT } from './constants/05'
+import {
+  PFX_MATERIALIZE_GATHER_COHORT_FRACTION,
+  PFX_MATERIALIZE_GATHER_FLOW_LANES,
+  PFX_MATERIALIZE_GATHER_SOURCE_RADIUS_MAX,
+  PFX_MATERIALIZE_GATHER_SOURCE_RADIUS_MIN,
+  PFX_MATERIALIZE_GROUND_STREAM_LANES,
+  PFX_MATERIALIZE_RELEASE_CONTACT_FRACTION,
+  PFX_MATERIALIZE_RELEASE_GROUND_FRACTION,
+  PFX_TELEGRAPH_BOUNDARY_OUTER_FRACTION,
+} from './effects/particleSimulation'
+import {
+  PFX_MATERIALIZE_RELEASE_GATHER_SPRITE_ASPECT,
+} from './effects/spriteEmission'
+import {
   ART_STYLE_CLUSTERS,
   EFFECT_TYPE_FILTERS,
   PFX_CONTROL_DEFINITIONS,
@@ -121,6 +170,104 @@ function completedRedTeamRows(
 }
 
 describe('r3f-pfx-library catalog contracts', () => {
+  it('requires a current passing quality-matrix row as the sixth production-ready evidence slot', () => {
+    const hasRequiredEvidence = (PfxLibrary as Record<string, unknown>)
+      .hasRequiredProductionReadyApprovalEvidence as ((approval: unknown) => boolean) | undefined
+    const validateMatrix = (PfxLibrary as Record<string, unknown>)
+      .validateQualityMatrixApprovalEvidence as
+        ((matrix: unknown, effectId: string, currentSourceFingerprint: string) => string[]) | undefined
+    expect(hasRequiredEvidence).toBeTypeOf('function')
+    expect(validateMatrix).toBeTypeOf('function')
+    if (!hasRequiredEvidence || !validateMatrix) return
+
+    const fiveSlotApproval = {
+      effectId: 'fireball',
+      decision: 'production-ready',
+      approvedBy: 'production-approver',
+      approvedAt: '2026-07-03T12:00:00.000Z',
+      rationale: 'Final approval reviewed taxonomy, implementation, visual quality, mobile profiles, and red-team evidence.',
+      evidence: [
+        'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#fireball',
+        'production-implementation:.context/r3f-pfx-production-implementation.json#fireball',
+        'mobile-safari-profile:.context/mobile-safari/fireball.json',
+        'chrome-android-profile:.context/chrome-android/fireball.json',
+        'red-team-signoff:.context/r3f-pfx-red-team-review.json#fireball',
+      ],
+    }
+    expect(hasRequiredEvidence(fiveSlotApproval)).toBe(false)
+    expect(hasRequiredEvidence({
+      ...fiveSlotApproval,
+      evidence: [
+        ...fiveSlotApproval.evidence.slice(0, 2),
+        'quality-matrix:.context/r3f-pfx-quality-matrix.json#fireball',
+        ...fiveSlotApproval.evidence.slice(2),
+      ],
+    })).toBe(true)
+
+    const visualScores = Object.fromEntries([
+      'semanticIdentity',
+      'gameplayReadability',
+      'volumeAndDepth',
+      'multiAngleResilience',
+      'silhouetteAndComposition',
+      'temporalArcAndDecay',
+      'materialAndShaderQuality',
+      'meshStructureAndEmitterQuality',
+      'cc0AssetIntegration',
+      'distinctivenessAndRingDiscipline',
+      'scaleAndVisualHierarchy',
+      'overallProductionPolish',
+    ].map((dimension) => [dimension, 5]))
+    const row = {
+      effectId: 'fireball',
+      rank: 1,
+      sourceFingerprint: 'pfx-source-v1:current',
+      finalPass: true,
+      visualPass: true,
+      scores: visualScores,
+      weightedScore: 5,
+      requiredQualityThreshold: {
+        minimumVisualDimension: 4,
+        minimumWeightedScore: 4.7,
+        performanceHeadroomRequired: true,
+      },
+      cameraEvidence: {
+        front: ['front-onset.png', 'front-peak.png', 'front-decay.png'],
+        threeQuarter: ['three-quarter-onset.png', 'three-quarter-peak.png', 'three-quarter-decay.png'],
+        side: ['side-onset.png', 'side-peak.png', 'side-decay.png'],
+      },
+      lifecycleEvidence: {
+        onset: ['front-onset.png', 'three-quarter-onset.png', 'side-onset.png'],
+        peak: ['front-peak.png', 'three-quarter-peak.png', 'side-peak.png'],
+        decay: ['front-decay.png', 'three-quarter-decay.png', 'side-decay.png'],
+      },
+      gameplayContextEvidence: ['gameplay-context.png'],
+      reviewer: 'peer-consensus:review-a+review-b+review-c',
+      reviewerConfidence: 0.9,
+      reducedMotionReadable: true,
+    }
+    const matrix = {
+      schema: 'game-bot.r3f-pfx-quality-matrix.v1',
+      effects: [row],
+    }
+    expect(validateMatrix({ ...matrix, effects: [{ ...row, finalPass: false }] }, 'fireball', row.sourceFingerprint))
+      .toContain('quality matrix row finalPass must be true')
+    expect(validateMatrix({
+      ...matrix,
+      effects: [{
+        ...row,
+        requiredQualityThreshold: {
+          ...row.requiredQualityThreshold,
+          minimumWeightedScore: 1,
+        },
+      }],
+    }, 'fireball', row.sourceFingerprint)).toContain('quality matrix row rank target is invalid')
+    expect(validateMatrix(matrix, 'fireball', 'pfx-source-v1:newer')).toContain(
+      'quality matrix row source fingerprint is stale',
+    )
+    expect(validateMatrix(matrix, 'fireball', row.sourceFingerprint)).toEqual([])
+  })
+
   it('publishes a ranked 500-effect game PFX taxonomy with production-critical staples', () => {
     expect(PFX_TAXONOMY).toHaveLength(500)
     expect(new Set(PFX_TAXONOMY.map((effect) => effect.id)).size).toBe(500)
@@ -177,6 +324,43 @@ describe('r3f-pfx-library catalog contracts', () => {
     ))).toBe(true)
     expect(new Set(authoredPlans.map((plan) => plan.signature)).size).toBeGreaterThanOrEqual(410)
     expect(filterPfxCatalog({ coverage: ['profile-backed'] })).toHaveLength(0)
+  })
+
+  it('declares erode death on every additive particle layer across the catalog (craft guide §3)', () => {
+    // Additive layers must never alpha-fade to zero — that produces the dim
+    // mustard/khaki smear (craft guide §3). They die by scale/coverage: the
+    // erode death scatters the sprite into chunky dissolving cells instead of
+    // crossfading through ugliness. Every additive particle layer must declare
+    // it so the shader turns on the erosion path.
+    const offenders: Array<{ effect: string; phase: string }> = []
+    for (const effect of PFX_TAXONOMY) {
+      const plan = getPfxRenderPlan(createPfxPreset(effect.id))
+      for (const surface of plan.surfaces) {
+        if (surface.kind !== 'particles') continue
+        if (surface.tuning?.blend !== 'additive') continue
+        if (surface.tuning?.death !== 'erode') {
+          offenders.push({ effect: effect.id, phase: surface.phase })
+        }
+      }
+    }
+    expect(offenders).toEqual([])
+  })
+
+  it('never attaches erode death to a non-particle surface across the catalog (craft guide §3)', () => {
+    // Erode is a particle-sprite scattering death; mesh/ring surfaces have no
+    // sprite uv to erode. Guard against authored recipes strapping it onto a
+    // mesh layer where the uniform resolves to nothing.
+    const offenders: Array<{ effect: string; phase: string }> = []
+    for (const effect of PFX_TAXONOMY) {
+      const plan = getPfxRenderPlan(createPfxPreset(effect.id))
+      for (const surface of plan.surfaces) {
+        if (surface.kind === 'particles') continue
+        if (surface.tuning?.death === 'erode') {
+          offenders.push({ effect: effect.id, phase: surface.phase })
+        }
+      }
+    }
+    expect(offenders).toEqual([])
   })
 
   it('exports a pending market-review template for the accepted 500-effect taxonomy', () => {
@@ -850,7 +1034,7 @@ describe('r3f-pfx-library catalog contracts', () => {
         'shield-loop-ground-circle',
         'dash-loop-ground-circle',
         'pickup-loop-ground-circle',
-        'ui-loop-ground-circle',
+        'ui-loop-confirm-ring',
       ]),
     )
     expect(new Set(phases).size).toBeGreaterThanOrEqual(60)
@@ -892,12 +1076,12 @@ describe('r3f-pfx-library catalog contracts', () => {
 
     expect(phases).toEqual(
       expect.arrayContaining([
-        'target-loop-ground-circle',
+        'target-loop-reticle-orbit',
         'marker-loop-ground-circle',
         'scan-loop-ground-circle',
         'hologram-loop-ground-circle',
         'engine-loop-ambient-haze',
-        'thruster-loop-ground-circle',
+        'thruster-loop-sustained-plume',
         'embers-trail-wake-stream',
         'flame-trail-wake-stream',
         'meteor-trail-wake-stream',
@@ -1168,7 +1352,7 @@ describe('r3f-pfx-library catalog contracts', () => {
 
     expect(phases).toEqual(
       expect.arrayContaining([
-        'wind-idle-element-traffic',
+        'wind-idle-ribbon-flow',
         'leaf-idle-element-traffic',
         'petal-idle-element-traffic',
         'sand-idle-element-traffic',
@@ -1182,8 +1366,8 @@ describe('r3f-pfx-library catalog contracts', () => {
         'blood-idle-element-traffic',
         'ghost-idle-element-traffic',
         'portal-idle-vortex-disc',
-        'warp-idle-element-traffic',
-        'teleport-idle-element-traffic',
+        'warp-idle-displaced-motes',
+        'teleport-idle-shimmer-pips',
         'shield-idle-element-traffic',
         'reflect-idle-element-traffic',
         'parry-idle-element-traffic',
@@ -1232,14 +1416,14 @@ describe('r3f-pfx-library catalog contracts', () => {
         'pickup-idle-element-traffic',
         'reward-idle-element-traffic',
         'combo-idle-element-traffic',
-        'ui-idle-element-traffic',
-        'target-idle-element-traffic',
-        'warning-idle-element-traffic',
+        'ui-idle-interface-pips',
+        'target-idle-lock-pips',
+        'warning-idle-tick-particles',
         'marker-idle-element-traffic',
         'scan-idle-element-traffic',
         'hologram-idle-element-traffic',
         'engine-idle-element-traffic',
-        'thruster-idle-element-traffic',
+        'thruster-idle-ignition-flicker',
         'exhaust-idle-element-traffic',
         'embers-charge-gather-inflow',
         'meteor-charge-gather-inflow',
@@ -1571,9 +1755,12 @@ describe('r3f-pfx-library catalog contracts', () => {
         'shadow-telegraph-warning-ring',
         'blood-telegraph-warning-ring',
         'ghost-telegraph-warning-ring',
-        'warp-telegraph-ground-stamp',
-        'teleport-telegraph-ground-stamp',
-        'spawn-telegraph-warning-ring',
+        'warp-telegraph-ground-boundary',
+        'teleport-telegraph-ground-boundary',
+        'teleport-telegraph-phase-convergence',
+        'spawn-telegraph-ground-boundary',
+        'spawn-telegraph-avatar-materialization',
+        'spawn-telegraph-release-wake',
       ]),
     )
     expect(new Set(phases).size).toBeGreaterThanOrEqual(62)
@@ -1845,7 +2032,8 @@ describe('r3f-pfx-library catalog contracts', () => {
     const smokeVariants = PfxLibrary.getPfxSpriteVariantLayout('smoke-variants')
     expect(smokeVariants).toMatchObject({ count: 8, columns: 4, startIndex: 1, rowDirection: -1 })
     expect(smokeVariants.cellScale.x).toBeCloseTo(0.25)
-    expect(smokeVariants.cellScale.y).toBeCloseTo(0.125)
+    expect(smokeVariants.cellScale.y)
+      .toBeCloseTo(PfxLibrary.PFX_SPRITE_SLICES['smoke-variant-01'].h)
     const resolvedSmokeVariantUvs = Array.from({ length: smokeVariants.count }, (_, index) => {
       const linearIndex = smokeVariants.startIndex + index
       return {
@@ -1858,11 +2046,27 @@ describe('r3f-pfx-library catalog contracts', () => {
       const slice = PfxLibrary.PFX_SPRITE_SLICES[`smoke-variant-0${index + 1}` as keyof typeof PfxLibrary.PFX_SPRITE_SLICES]
       return { u: slice.u, v: slice.v }
     })
-    expect(resolvedSmokeVariantUvs).toEqual(authoredSmokeVariantUvs)
+    resolvedSmokeVariantUvs.forEach((resolved, index) => {
+      expect(resolved.u).toBeCloseTo(authoredSmokeVariantUvs[index]!.u)
+      expect(resolved.v).toBeCloseTo(authoredSmokeVariantUvs[index]!.v)
+    })
     const smokeVariantSources = Object.values(PfxLibrary.PFX_SPRITE_SLICES)
       .map((slice) => slice.source)
       .filter((source) => /smoke_0[1-8]\.png$/.test(source))
     expect(new Set(smokeVariantSources).size).toBe(8)
+    const traceVariants = PfxLibrary.getPfxSpriteVariantLayout('trace-variants')
+    expect(traceVariants).toMatchObject({
+      count: 7,
+      columns: 4,
+      startIndex: 0,
+      rowDirection: -1,
+    })
+    expect(traceVariants.cellScale.y)
+      .toBeCloseTo(PfxLibrary.PFX_SPRITE_SLICES['trace-variant-01'].h)
+    const traceVariantSources = Object.values(PfxLibrary.PFX_SPRITE_SLICES)
+      .map((slice) => slice.source)
+      .filter((source) => /trace_0[1-7]\.png$/.test(source))
+    expect(new Set(traceVariantSources).size).toBe(7)
 
     const explosion = getPfxRenderPlan(createPfxPreset('explosion'))
     const afterglow = explosion.surfaces.find((surface) => surface.phase === 'ember-afterglow')
@@ -2381,6 +2585,25 @@ describe('r3f-pfx-library catalog contracts', () => {
     applyPfxSurfaceRotation(object, new THREE.Quaternion(), false, Math.PI / 4)
     const expected = authored.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 4))
     expect(object.quaternion.angleTo(expected)).toBeLessThan(1e-6)
+  })
+
+  it('rotates world-particle burst freshness around world up instead of tilting ground and column emitters', () => {
+    const object = new THREE.Object3D()
+
+    applyPfxSurfaceRotation(
+      object,
+      new THREE.Quaternion(),
+      false,
+      Math.PI / 3,
+      undefined,
+      'y',
+    )
+
+    const rotatedUp = new THREE.Vector3(0, 1, 0).applyQuaternion(object.quaternion)
+    const rotatedForward = new THREE.Vector3(0, 0, 1).applyQuaternion(object.quaternion)
+    expect(rotatedUp.distanceTo(new THREE.Vector3(0, 1, 0))).toBeLessThan(1e-6)
+    expect(rotatedForward.x).toBeCloseTo(Math.sin(Math.PI / 3))
+    expect(rotatedForward.y).toBeCloseTo(0)
   })
 
   it('compensates a transformed parent when a surface faces the world camera', () => {
@@ -3196,6 +3419,15 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(audit.summary.cc0AssetBackedEffectRatio).toBeGreaterThanOrEqual(
       audit.thresholds.minimumCc0AssetBackedEffectRatio,
     )
+    expect(
+      audit.effects.find((effect) => effect.effectId === 'spawn-telegraph'),
+    ).toMatchObject({
+      structuredMesh: false,
+      // The materialization body now renders bundled Kenney trace variants.
+      // That is genuine CC0-backed particle artwork, not reference-only
+      // provenance or a mesh proxy.
+      cc0AssetBacked: true,
+    })
     expect(audit.effects.filter((effect) => effect.findings.length > 0)).toEqual([])
   })
 
@@ -3902,6 +4134,2389 @@ describe('r3f-pfx-library catalog contracts', () => {
 
     const facetColors = PfxLibrary.getPfxRewardGemFacetColors('#ffd34f')
     expect(new Set(Object.values(facetColors)).size).toBe(3)
+  })
+
+  it('authors teleport telegraph as a traditional-particle phase-transfer sentence', () => {
+    const preset = createPfxPreset('teleport-telegraph')
+    const plan = getPfxRenderPlan(preset)
+    const boundary = plan.surfaces.find((surface) =>
+      surface.phase === 'teleport-telegraph-ground-boundary')
+    const convergence = plan.surfaces.find((surface) =>
+      surface.phase === 'teleport-telegraph-phase-convergence')
+    const veil = plan.surfaces.find((surface) =>
+      surface.phase === 'teleport-telegraph-phase-veil')
+    const wake = plan.surfaces.find((surface) =>
+      surface.phase === 'teleport-telegraph-transfer-wake')
+
+    expect(plan.surfaces).toHaveLength(4)
+    expect(plan.estimatedDrawCalls).toBeLessThanOrEqual(4)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry == null)).toBe(true)
+    expect(boundary).toMatchObject({
+      kind: 'particles',
+      role: 'aura',
+      tuning: {
+        motion: 'telegraph-boundary-drift',
+        sprite: 'streak',
+        blend: 'additive',
+        ringPurpose: 'boundary',
+        death: 'erode',
+      },
+    })
+    expect(boundary!.tuning!.lifeScale).toBeGreaterThanOrEqual(0.9)
+    expect(boundary!.tuning!.lifeScale).toBeLessThanOrEqual(1)
+    expect(boundary!.opacity).toBeGreaterThanOrEqual(0.74)
+    expect(boundary!.tuning!.countScale).toBeGreaterThanOrEqual(1.8)
+    expect(boundary!.tuning!.alphaGamma).toBeLessThanOrEqual(0.28)
+    expect(convergence).toMatchObject({
+      kind: 'particles',
+      role: 'body',
+      tuning: {
+        motion: 'phase-transfer-column',
+        sprite: 'trace-variants',
+        blend: 'additive',
+        ramp: 'held',
+        death: 'erode',
+      },
+    })
+    expect(PFX_SPRITE_SLICES[convergence!.tuning!.sprite!].source)
+      .toBe('kenney-particle-pack/trace_01..07.png')
+    expect(PfxLibrary.getPfxSpriteVariantLayout(convergence!.tuning!.sprite!).count)
+      .toBe(7)
+    expect(convergence!.tuning!.depthScale).toBeGreaterThanOrEqual(2.4)
+    expect(convergence!.tuning!.countScale).toBeGreaterThanOrEqual(3.2)
+    expect(convergence!.tuning!.countScale).toBeLessThanOrEqual(3.5)
+    expect(convergence!.tuning!.lifeScale).toBeGreaterThanOrEqual(0.78)
+    expect(convergence!.tuning!.lifeScale).toBeLessThanOrEqual(0.9)
+    expect(convergence!.tuning!.size![1]).toBeGreaterThanOrEqual(0.22)
+    expect(convergence!.tuning!.size![1]).toBeLessThanOrEqual(0.28)
+    expect(convergence!.tuning!.positionOffset![1]).toBeGreaterThanOrEqual(-0.7)
+    expect(convergence!.tuning!.positionOffset![1]).toBeLessThanOrEqual(-0.45)
+    expect(veil).toMatchObject({
+      kind: 'particles',
+      role: 'volume',
+      tuning: {
+        motion: 'phase-transfer-column',
+        sprite: 'smoke-variants',
+        reducedMotionSprite: 'smoke-variants',
+        blend: 'alpha',
+        ramp: 'held',
+        death: 'erode',
+      },
+    })
+    expect(PFX_SPRITE_SLICES[veil!.tuning!.sprite!].source)
+      .toBe('kenney-particle-pack/smoke_01..08.png')
+    expect(PfxLibrary.getPfxSpriteVariantLayout(veil!.tuning!.sprite!).count)
+      .toBe(8)
+    expect(veil!.opacity).toBeGreaterThanOrEqual(0.18)
+    expect(veil!.opacity).toBeLessThanOrEqual(0.3)
+    expect(veil!.tuning!.window).toBeGreaterThanOrEqual(0.5)
+    expect(veil!.tuning!.lifeScale).toBeGreaterThanOrEqual(0.95)
+    expect(veil!.tuning!.countScale).toBeGreaterThanOrEqual(1.8)
+    expect(veil!.tuning!.countScale).toBeLessThanOrEqual(2.6)
+    expect(veil!.tuning!.depthScale).toBeGreaterThanOrEqual(3)
+    expect(veil!.tuning!.size![1]).toBeGreaterThanOrEqual(0.18)
+    expect(veil!.tuning!.size![1]).toBeLessThanOrEqual(0.3)
+    expect(wake).toMatchObject({
+      kind: 'particles',
+      role: 'volume',
+      tuning: {
+        motion: 'column-rise',
+        sprite: 'streak',
+        blend: 'additive',
+        ramp: 'held',
+        death: 'erode',
+      },
+    })
+    expect(wake!.tuning!.delay).toBeGreaterThanOrEqual(0.2)
+    expect(wake!.tuning!.delay).toBeLessThanOrEqual(0.3)
+    expect(wake!.tuning!.lifeScale).toBeGreaterThan(convergence!.tuning!.lifeScale ?? 0)
+    expect(wake!.tuning!.positionOffset![1]).toBeGreaterThanOrEqual(-0.55)
+    expect(wake!.tuning!.positionOffset![1]).toBeLessThanOrEqual(-0.25)
+    expect(wake!.tuning!.stretch).toBeGreaterThanOrEqual(0.7)
+    expect(plan.surfaces.every((surface) =>
+      /CC0|MIT/.test(surface.tuning?.referenceLicense ?? ''))).toBe(true)
+    expect(plan.tempo).toBeGreaterThanOrEqual(0.7)
+    expect(plan.tempo).toBeLessThanOrEqual(0.9)
+  })
+
+  it('authors warp telegraph as a particle-first spatial-fold sentence', () => {
+    const plan = getPfxRenderPlan(createPfxPreset('warp-telegraph'))
+    const boundary = plan.surfaces.find((surface) =>
+      surface.phase === 'warp-telegraph-ground-boundary')
+    const ribbons = plan.surfaces.find((surface) =>
+      surface.phase === 'warp-telegraph-folding-ribbons')
+    const veil = plan.surfaces.find((surface) =>
+      surface.phase === 'warp-telegraph-refraction-veil')
+    const release = plan.surfaces.find((surface) =>
+      surface.phase === 'warp-telegraph-release-shear')
+
+    expect(plan.surfaces).toHaveLength(6)
+    expect(plan.estimatedDrawCalls).toBeLessThanOrEqual(6)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry == null)).toBe(true)
+    expect(plan.surfaces.some((surface) => surface.tuning?.sprite === 'sparkle')).toBe(false)
+    expect(plan.surfaces.filter((surface) => surface.tuning?.sprite === 'streak')).toEqual([boundary])
+    expect(boundary).toMatchObject({
+      role: 'aura',
+      tuning: {
+        motion: 'telegraph-boundary-drift',
+        sprite: 'streak',
+        blend: 'additive',
+        ringPurpose: 'boundary',
+        death: 'erode',
+      },
+    })
+    expect(boundary!.tuning!.countScale).toBeGreaterThanOrEqual(2.8)
+    expect(boundary!.tuning!.size![1]).toBeLessThanOrEqual(0.18)
+    expect(boundary!.tuning!.alphaGamma).toBeLessThanOrEqual(0.32)
+    expect(ribbons).toMatchObject({
+      role: 'body',
+      tuning: {
+        motion: 'warp-vortex',
+        sprite: 'spark',
+        reducedMotionSprite: 'spark',
+        blend: 'additive',
+        ramp: 'held',
+        death: 'erode',
+      },
+    })
+    expect(PFX_SPRITE_SLICES[ribbons!.tuning!.sprite!].source)
+      .toBe('kenney-particle-pack/spark_06.png')
+    expect(ribbons!.tuning!.countScale).toBeGreaterThanOrEqual(4.5)
+    expect(ribbons!.tuning!.depthScale).toBeGreaterThanOrEqual(4.5)
+    expect(ribbons!.scale).toBeLessThanOrEqual(1.8)
+    expect(ribbons!.tuning!.spawnScale).toBeGreaterThanOrEqual(1.15)
+    expect(ribbons!.tuning!.spawnScale).toBeLessThanOrEqual(1.3)
+    expect(ribbons!.tuning!.lifeScale).toBeGreaterThanOrEqual(1)
+    // Iteration-36 rework consensus rejected the v11 high-speed hair-thin
+    // streak tangle; the calm-funnel bounds now live in the v12 contract
+    // test below (speed 2–2.8, stretch 0.4–0.7, readable particle size).
+    expect(ribbons!.tuning!.speedScale).toBeGreaterThanOrEqual(2)
+    expect(ribbons!.tuning!.window).toBeLessThanOrEqual(0.36)
+    expect(ribbons!.tuning!.size![1]).toBeGreaterThanOrEqual(0.14)
+    expect(ribbons!.tuning!.stretch).toBeLessThanOrEqual(0.7)
+    expect(ribbons!.tuning!.reducedMotionCountScale).toBeLessThanOrEqual(1.5)
+    expect(veil).toMatchObject({
+      role: 'volume',
+      tuning: {
+        motion: 'warp-vortex',
+        sprite: 'smoke-variants',
+        reducedMotionSprite: 'smoke-variants',
+        blend: 'alpha',
+        death: 'erode',
+      },
+    })
+    expect(PFX_SPRITE_SLICES[veil!.tuning!.sprite!].source)
+      .toBe('kenney-particle-pack/smoke_01..08.png')
+    expect(PfxLibrary.getPfxSpriteVariantLayout(veil!.tuning!.sprite!).count)
+      .toBe(8)
+    expect(veil!.opacity).toBeLessThanOrEqual(0.2)
+    expect(veil!.tuning!.countScale).toBeGreaterThanOrEqual(3.2)
+    expect(veil!.scale).toBeLessThanOrEqual(1.7)
+    expect(veil!.tuning!.spawnScale).toBeLessThanOrEqual(1.2)
+    expect(veil!.tuning!.depthScale).toBeGreaterThanOrEqual(4.5)
+    expect(veil!.tuning!.lifeScale).toBeGreaterThanOrEqual(1.2)
+    expect(veil!.tuning!.window).toBeLessThanOrEqual(0.45)
+    expect(veil!.tuning!.speedScale).toBeGreaterThanOrEqual(2)
+    expect(veil!.tuning!.size![1]).toBeLessThanOrEqual(0.24)
+    expect(veil!.tuning!.spinScale).toBeGreaterThanOrEqual(0.75)
+    expect(veil!.tuning!.reducedMotionCountScale).toBeLessThanOrEqual(1.2)
+    expect(release).toMatchObject({
+      role: 'impact',
+      tuning: {
+        motion: 'spherical-converge',
+        sprite: 'spark',
+        reducedMotionSprite: 'spark',
+        blend: 'additive',
+        death: 'erode',
+      },
+    })
+    expect(PFX_SPRITE_SLICES[release!.tuning!.sprite!].source)
+      .toBe('kenney-particle-pack/spark_06.png')
+    expect(release!.tuning!.delay).toBeGreaterThanOrEqual(0.3)
+    expect(release!.tuning!.lifeScale).toBeGreaterThanOrEqual(1.25)
+    expect(release!.tuning!.countScale).toBeGreaterThanOrEqual(3.2)
+    expect(release!.tuning!.depthScale).toBeGreaterThanOrEqual(2)
+    expect(release!.tuning!.size![1]).toBeLessThanOrEqual(0.12)
+    expect(release!.tuning!.stretch).toBeGreaterThanOrEqual(1.3)
+    expect(release!.tuning!.reducedMotionCountScale).toBeLessThanOrEqual(0.7)
+    expect(plan.surfaces.every((surface) =>
+      /CC0|MIT/.test(surface.tuning?.referenceLicense ?? ''))).toBe(true)
+    expect(plan.tempo).toBeGreaterThanOrEqual(0.8)
+    expect(plan.tempo).toBeLessThanOrEqual(0.9)
+  })
+
+  it('folds the warp telegraph into a single-chirality vortex without mirror stamping', () => {
+    // Iteration-35 adjudication (3/3 rework, unanimous): the four discrete
+    // convergence lanes read as mirrored bowtie/wing pairs at peak, the
+    // center is hollow, and onset is too dim. The remediation must replace
+    // lane streams with one volumetric single-chirality vortex.
+    const plan = getPfxRenderPlan(createPfxPreset('warp-telegraph'))
+    const body = plan.surfaces.find((surface) =>
+      surface.phase === 'warp-telegraph-folding-ribbons')
+    const veil = plan.surfaces.find((surface) =>
+      surface.phase === 'warp-telegraph-refraction-veil')
+    expect(body!.tuning!.motion).toBe('warp-vortex')
+    expect(veil!.tuning!.motion).toBe('warp-vortex')
+
+    const preset = createPfxPreset('warp-telegraph')
+    const simulation = PfxLibrary.createPfxParticleSimulation(preset, body!)
+    const { spawn, direction, speed } = simulation
+    const count = speed.length
+
+    // Single chirality: every particle's tangential flow shares one
+    // handedness, so the peak cannot resolve into mirrored wing pairs.
+    const handedness = new Set<number>()
+    for (let i = 0; i < count; i++) {
+      const cross = spawn[i * 3]! * direction[i * 3 + 2]! - spawn[i * 3 + 2]! * direction[i * 3]!
+      if (Math.abs(cross) > 1e-4) handedness.add(Math.sign(cross))
+    }
+    expect(handedness.size).toBe(1)
+
+    // No mirror pairs in the outer structure: particles away from the
+    // legitimate central lock cluster may not have a near-exact reflection
+    // across the camera-facing vertical axis — the reviewed bowtie failure.
+    let mirrorPairs = 0
+    const outer = []
+    for (let i = 0; i < count; i++) {
+      if (Math.hypot(spawn[i * 3]!, spawn[i * 3 + 2]!) >= 0.2) {
+        outer.push([spawn[i * 3]!, spawn[i * 3 + 1]!, spawn[i * 3 + 2]!])
+      }
+    }
+    for (let i = 0; i < outer.length; i++) {
+      for (let j = i + 1; j < outer.length; j++) {
+        if (Math.abs(outer[i]![0]! + outer[j]![0]!) < 0.02 &&
+          Math.abs(outer[i]![1]! - outer[j]![1]!) < 0.02 &&
+          Math.abs(outer[i]![2]! - outer[j]![2]!) < 0.02) mirrorPairs++
+      }
+    }
+    // Systematic symmetry (the bowtie) pairs nearly every outer particle;
+    // coherent jittered arms may produce a few chance near-reflections.
+    expect(mirrorPairs).toBeLessThanOrEqual(Math.max(2, outer.length * 0.03))
+
+    // Continuous angular coverage: a vortex fills most sectors rather than
+    // concentrating into discrete lanes.
+    const sectors = new Set<number>()
+    for (let i = 0; i < count; i++) {
+      const angle = Math.atan2(spawn[i * 3 + 2]!, spawn[i * 3]!)
+      sectors.add(Math.floor(((angle + Math.PI) / (Math.PI * 2)) * 16))
+    }
+    expect(sectors.size).toBeGreaterThanOrEqual(13)
+
+    // Real vertical extent: a funnel with a tall outer wall, not a flat disc.
+    let minY = Infinity
+    let maxY = -Infinity
+    for (let i = 0; i < count; i++) {
+      minY = Math.min(minY, spawn[i * 3 + 1]!)
+      maxY = Math.max(maxY, spawn[i * 3 + 1]!)
+    }
+    expect(maxY - minY).toBeGreaterThan(0.4)
+
+    // Converges to the destination: a meaningful inner cohort reaches the
+    // ground lock point inside the footprint.
+    let innerCount = 0
+    for (let i = 0; i < count; i++) {
+      if (Math.hypot(spawn[i * 3]!, spawn[i * 3 + 2]!) < 0.25) innerCount++
+    }
+    expect(innerCount).toBeGreaterThan(count * 0.06)
+  })
+
+  it('fills the warp telegraph interior with a countdown pool and a bright vertical lock core', () => {
+    // Iteration-36 consensus (3/3 rework, no disagreement): the vortex
+    // removed the mirrored bowtie, but the ring interior still reads empty
+    // at gameplay distance, there is no bright focal core, the streak burst
+    // is a chaotic hair-thin tangle, and the volume is a shallow disc. The
+    // remediation must fill the interior with a countdown cue, anchor the
+    // hierarchy with a focal vertical core, calm the streaks into readable
+    // particles, and raise the funnel into a tall column.
+    const plan = getPfxRenderPlan(createPfxPreset('warp-telegraph'))
+    const boundary = plan.surfaces.find((surface) =>
+      surface.phase === 'warp-telegraph-ground-boundary')
+    const pool = plan.surfaces.find((surface) =>
+      surface.phase === 'warp-telegraph-interior-pool')
+    const core = plan.surfaces.find((surface) =>
+      surface.phase === 'warp-telegraph-lock-core')
+    const body = plan.surfaces.find((surface) =>
+      surface.phase === 'warp-telegraph-folding-ribbons')
+
+    // Interior countdown pool: a soft additive fill that lives strictly
+    // inside the boundary ring and drifts inward as the arrival approaches,
+    // with enough shimmer to read as a pulse rather than a static disc.
+    expect(pool).toMatchObject({
+      kind: 'particles',
+      role: 'aura',
+      tuning: {
+        motion: 'converge-center',
+        sprite: 'glow',
+        reducedMotionSprite: 'glow',
+        blend: 'additive',
+        ramp: 'held',
+        death: 'erode',
+      },
+    })
+    expect(pool!.opacity).toBeGreaterThanOrEqual(0.3)
+    expect(pool!.scale!).toBeLessThan(boundary!.scale!)
+    expect(pool!.tuning!.delay).toBe(0)
+    expect(pool!.tuning!.countScale).toBeGreaterThanOrEqual(2)
+    expect(pool!.tuning!.flicker).toBeGreaterThanOrEqual(0.25)
+
+    // Focal lock core: a bright narrow vertical column at the ring center —
+    // the warp-arrival signature motif and the visual hierarchy anchor the
+    // reviewers found missing.
+    expect(core).toMatchObject({
+      kind: 'particles',
+      role: 'body',
+      tuning: {
+        motion: 'column-rise',
+        sprite: 'glow',
+        reducedMotionSprite: 'glow',
+        blend: 'additive',
+        ramp: 'held',
+        death: 'erode',
+      },
+    })
+    expect(core!.opacity).toBeGreaterThanOrEqual(0.7)
+    expect(core!.scale!).toBeLessThanOrEqual(1.1)
+    expect(core!.scale!).toBeLessThan(body!.scale!)
+    expect(core!.tuning!.countScale).toBeGreaterThanOrEqual(1.8)
+
+    // The boundary must hold a decisive early-warning read: near-full
+    // opacity and enough density to separate from a dark scene at onset.
+    expect(boundary!.opacity).toBeGreaterThanOrEqual(0.95)
+    expect(boundary!.tuning!.countScale).toBeGreaterThanOrEqual(3.4)
+
+    // Calm authored funnel: sparks read as coherent spiral particles, not
+    // hair-thin high-speed scribble.
+    expect(body!.tuning!.speedScale).toBeLessThanOrEqual(2.8)
+    expect(body!.tuning!.stretch).toBeGreaterThanOrEqual(0.4)
+    expect(body!.tuning!.turbulenceScale).toBeLessThanOrEqual(0.06)
+
+    // Tall funnel: the vortex occupies a real vertical column, not a
+    // shallow disc hovering just above the ring.
+    const simulation = PfxLibrary.createPfxParticleSimulation(
+      createPfxPreset('warp-telegraph'), body!)
+    const { spawn, speed } = simulation
+    let minY = Infinity
+    let maxY = -Infinity
+    for (let i = 0; i < speed.length; i++) {
+      minY = Math.min(minY, spawn[i * 3 + 1]!)
+      maxY = Math.max(maxY, spawn[i * 3 + 1]!)
+    }
+    expect(maxY - minY).toBeGreaterThan(1)
+
+    expect(plan.surfaces.every((surface) =>
+      /CC0|MIT/.test(surface.tuning?.referenceLicense ?? ''))).toBe(true)
+  })
+
+  it('connects the teleport gather to a restrained vertical particle wake', () => {
+    const plan = getPfxRenderPlan(createPfxPreset('teleport-telegraph'))
+    const convergence = plan.surfaces.find((surface) =>
+      surface.phase === 'teleport-telegraph-phase-convergence')
+    const wake = plan.surfaces.find((surface) =>
+      surface.phase === 'teleport-telegraph-transfer-wake')
+
+    expect(convergence).toMatchObject({
+      kind: 'particles',
+      role: 'body',
+      tuning: {
+        motion: 'phase-transfer-column',
+        sprite: 'trace-variants',
+        reducedMotionSprite: 'trace-variants',
+        ramp: 'held',
+      },
+    })
+    expect(convergence!.opacity).toBeGreaterThanOrEqual(0.82)
+    expect(convergence!.opacity).toBeLessThanOrEqual(0.88)
+    expect(convergence!.scale).toBeGreaterThanOrEqual(1.65)
+    expect(convergence!.tuning!.spawnScale).toBeGreaterThanOrEqual(0.8)
+    expect(convergence!.tuning!.spawnScale).toBeLessThanOrEqual(0.84)
+    expect(convergence!.tuning!.countScale).toBeGreaterThanOrEqual(3.2)
+    expect(convergence!.tuning!.reducedMotionCountScale).toBeGreaterThanOrEqual(1.8)
+    expect(convergence!.tuning!.depthScale).toBeGreaterThanOrEqual(2.8)
+    expect(convergence!.tuning!.window).toBeGreaterThanOrEqual(0.45)
+    expect(convergence!.tuning!.size![1]).toBeGreaterThanOrEqual(0.22)
+    expect(convergence!.tuning!.size![1]).toBeLessThanOrEqual(0.28)
+    expect(convergence!.tuning!.alphaGamma).toBeLessThanOrEqual(0.5)
+    expect(convergence!.tuning!.stretch).toBeGreaterThanOrEqual(0.68)
+    expect(convergence!.tuning!.stretch).toBeLessThanOrEqual(0.82)
+
+    expect(wake).toMatchObject({
+      kind: 'particles',
+      role: 'volume',
+      opacity: expect.any(Number),
+      tuning: {
+        motion: 'column-rise',
+        sprite: 'streak',
+        reducedMotionSprite: 'streak',
+        ramp: 'held',
+      },
+    })
+    expect(wake!.opacity).toBeLessThanOrEqual(0.5)
+    expect(wake!.tuning!.delay).toBeGreaterThanOrEqual(0.2)
+    expect(wake!.tuning!.delay).toBeLessThanOrEqual(0.3)
+    expect(
+      (wake!.tuning!.delay ?? 0) + (wake!.tuning!.window ?? 0),
+    ).toBeGreaterThanOrEqual(0.58)
+    expect(wake!.tuning!.window).toBeGreaterThanOrEqual(0.46)
+    expect(wake!.tuning!.countScale).toBeGreaterThanOrEqual(1.1)
+    expect(wake!.tuning!.countScale).toBeLessThanOrEqual(1.4)
+    expect(wake!.tuning!.size![1]).toBeLessThanOrEqual(0.09)
+    expect(wake!.tuning!.stretch).toBeGreaterThanOrEqual(1.1)
+    expect(wake!.tuning!.stretch).toBeLessThanOrEqual(1.5)
+    expect(wake!.tuning!.colorOverride).toBe('#78bfff')
+  })
+
+  it('keeps teleport-hit as a bounded broken arrival scar', () => {
+    const preset = createPfxPreset('teleport-hit')
+    const plan = getPfxRenderPlan(preset)
+    const lattice = plan.surfaces.find((surface) =>
+      surface.phase === 'teleport-hit-arrival-scar')!
+    const lifecycleSamples = [72, 418, 648].map((sampleMs) =>
+      PfxLibrary.getPfxSurfaceAnimationProps(
+        lattice,
+        preset.controls,
+        sampleMs / 1_000,
+        1,
+        plan.tempo,
+        plan.feelVersion,
+      ))
+    expect(lifecycleSamples.map((sample) => sample.signature)).toEqual([
+      'teleport-hit:land',
+      'teleport-hit:afterimage',
+      'teleport-hit:rest',
+    ])
+    expect(lifecycleSamples[1]!.opacityMultiplier - lifecycleSamples[2]!.opacityMultiplier)
+      .toBeGreaterThanOrEqual(0.8)
+    const geometry = PfxLibrary.createPfxTeleportHitGeometry()
+    expect(geometry.userData).toMatchObject({
+      pfxTeleportHitGroundApertureCount: 1,
+      pfxTeleportHitAfterimageSpineCount: 2,
+      pfxTeleportHitRadialFractureCount: 8,
+      pfxTeleportHitCardinalPylonCount: 4,
+      pfxTeleportHitDepthLaneCount: 4,
+      pfxTeleportHitBillboardCount: 0,
+    })
+    expect(geometry.boundingBox!.max.y - geometry.boundingBox!.min.y).toBeGreaterThanOrEqual(1.4)
+    geometry.dispose()
+  })
+
+  it('stages the spawn center as a converging traditional-particle arrival volume', () => {
+    const preset = createPfxPreset('spawn-telegraph')
+    const plan = getPfxRenderPlan(preset)
+    const [footprint, body, wake] = plan.surfaces
+
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry == null)).toBe(true)
+
+    expect(footprint!.opacity).toBeGreaterThanOrEqual(0.72)
+    expect(footprint!.opacity).toBeLessThanOrEqual(0.8)
+    expect(footprint!.tuning!.countScale).toBeGreaterThanOrEqual(1.75)
+    expect(footprint!.tuning!.countScale).toBeLessThanOrEqual(1.85)
+    expect(footprint!.tuning!.reducedMotionCountScale).toBeGreaterThanOrEqual(3.1)
+    expect(footprint!.tuning!.reducedMotionCountScale).toBeLessThanOrEqual(3.3)
+    expect(footprint!.tuning!.alphaGamma).toBeGreaterThanOrEqual(0.24)
+    expect(footprint!.tuning!.alphaGamma).toBeLessThanOrEqual(0.32)
+    expect(footprint!.tuning!.size![1]).toBeGreaterThanOrEqual(0.28)
+    expect(footprint!.tuning!.size![1]).toBeLessThanOrEqual(0.36)
+    const onsetBoundary = getPfxSurfaceAnimationProps(
+      footprint!,
+      preset.controls,
+      0.278,
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    expect(onsetBoundary.scaleMultiplier).toBeGreaterThanOrEqual(0.78)
+    expect(onsetBoundary.opacityMultiplier).toBeGreaterThanOrEqual(1.15)
+    const onsetBody = getPfxSurfaceAnimationProps(
+      body!,
+      preset.controls,
+      0.278,
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const onsetWake = getPfxSurfaceAnimationProps(
+      wake!,
+      preset.controls,
+      0.278,
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    expect(onsetBody.opacityMultiplier).toBeGreaterThanOrEqual(0.3)
+    expect(onsetWake.opacityMultiplier).toBeLessThanOrEqual(0.25)
+    const peakBoundary = getPfxSurfaceAnimationProps(
+      footprint!,
+      preset.controls,
+      0.779,
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const peakBody = getPfxSurfaceAnimationProps(
+      body!,
+      preset.controls,
+      0.779,
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const peakWake = getPfxSurfaceAnimationProps(
+      wake!,
+      preset.controls,
+      0.779,
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    expect(peakBoundary.opacityMultiplier).toBeLessThanOrEqual(0.58)
+    expect(body!.opacity * peakBody.opacityMultiplier)
+      .toBeGreaterThan(footprint!.opacity * peakBoundary.opacityMultiplier * 0.65)
+    expect(body!.opacity * peakBody.opacityMultiplier)
+      .toBeLessThan(footprint!.opacity * peakBoundary.opacityMultiplier)
+    expect(wake!.opacity * peakWake.opacityMultiplier)
+      .toBeGreaterThan(footprint!.opacity * peakBoundary.opacityMultiplier * 0.9)
+    expect(wake!.opacity * peakWake.opacityMultiplier)
+      .toBeGreaterThan(body!.opacity * peakBody.opacityMultiplier)
+
+    expect(body!.tuning!.sprite).toBe('trace-variants')
+    expect(body!.tuning!.reducedMotionSprite).toBe('trace-variants')
+    expect(body!.tuning!.blend).toBe('additive')
+    expect(PfxLibrary.getPfxSpriteVariantLayout(body!.tuning!.sprite!).count).toBe(7)
+    expect(PFX_SPRITE_SLICES[body!.tuning!.sprite!].source)
+      .toBe('kenney-particle-pack/trace_01..07.png')
+    expect(body!.tuning!.colorOverride).toBe('#55d6ef')
+    expect(body!.opacity).toBeGreaterThanOrEqual(0.88)
+    expect(body!.opacity).toBeLessThanOrEqual(0.92)
+    expect(body!.tuning!.countScale).toBeGreaterThanOrEqual(4)
+    expect(body!.tuning!.countScale).toBeLessThanOrEqual(4.4)
+    expect(body!.tuning!.size![0]).toBeGreaterThanOrEqual(0.032)
+    expect(body!.tuning!.size![0]).toBeLessThanOrEqual(0.038)
+    expect(body!.tuning!.size![1]).toBeGreaterThanOrEqual(0.22)
+    expect(body!.tuning!.size![1]).toBeLessThanOrEqual(0.26)
+    expect(body!.tuning!.size![2]).toBeLessThanOrEqual(body!.tuning!.size![0]!)
+    expect(body!.tuning!.stretch).toBeGreaterThanOrEqual(1.25)
+    expect(body!.tuning!.stretch).toBeLessThanOrEqual(1.45)
+    expect(body!.tuning!.death).toBe('erode')
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT)
+      .not.toContain('materializeGatherCoreSprite')
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT)
+      .not.toContain('float materializeStreakCohort = step(0.82, materializeMixedSeed);')
+
+    const bodySimulation = PfxLibrary.createPfxParticleSimulation(preset, body!)
+    expect(bodySimulation.count).toBeGreaterThanOrEqual(100)
+    expect(bodySimulation.count).toBeLessThanOrEqual(104)
+    const materializeHeightUnits = Array.from(bodySimulation.orbitRadius)
+    expect(Math.min(...materializeHeightUnits)).toBeLessThanOrEqual(0.04)
+    expect(Math.max(...materializeHeightUnits)).toBeGreaterThanOrEqual(0.96)
+    const materializeHeightBandSectors = Array.from(
+      { length: 6 },
+      () => new Set<number>(),
+    )
+    for (let index = 0; index < bodySimulation.count; index += 1) {
+      const heightBand = Math.min(
+        materializeHeightBandSectors.length - 1,
+        Math.floor(materializeHeightUnits[index]! * materializeHeightBandSectors.length),
+      )
+      const angle = (
+        bodySimulation.orbitAngle[index]! + Math.PI * 2
+      ) % (Math.PI * 2)
+      materializeHeightBandSectors[heightBand]!.add(
+        Math.floor(angle / (Math.PI * 2) * 12),
+      )
+    }
+    expect(
+      materializeHeightBandSectors.every((sectors) => sectors.size >= 8),
+    ).toBe(true)
+    expect(PFX_MATERIALIZE_GATHER_FLOW_LANES).toBeGreaterThanOrEqual(12)
+    expect(PFX_MATERIALIZE_GATHER_FLOW_LANES).toBeLessThanOrEqual(18)
+    expect(PFX_MATERIALIZE_GATHER_SOURCE_RADIUS_MIN).toBeGreaterThanOrEqual(0.5)
+    expect(PFX_MATERIALIZE_GATHER_SOURCE_RADIUS_MAX).toBeLessThanOrEqual(0.94)
+    expect(PFX_MATERIALIZE_GATHER_TARGET_RADIUS_SCALE).toBeGreaterThanOrEqual(0.82)
+    expect(PFX_MATERIALIZE_GATHER_SOURCE_RADIUS_MIN)
+      .toBeGreaterThan(getPfxMaterializeSilhouetteRadialScale(0.42, 1))
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('materializeGatherCardScale *= mix(')
+    expect(PFX_SPRITE_PARTICLE_VERTEX).toContain(
+      `float materializeGatherCardScale = mix(
+      0.68,
+      1.28,`,
+    )
+    expect(PFX_SPRITE_PARTICLE_VERTEX).toContain(
+      `materializeGatherCardScale *= mix(
+      1.12,
+      0.72,`,
+    )
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('materializeGatherHeightUnit')
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('pow(aOrbit.y, 1.1)')
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .not.toContain('pow(fract(aOrbit.x * 0.61803398875), 1.1)')
+    const bodyAngularSectors = Array.from({ length: 12 }, () => 0)
+    for (let index = 0; index < bodySimulation.count; index += 1) {
+      const x = bodySimulation.spawn[index * 3]!
+      const z = bodySimulation.spawn[index * 3 + 2]!
+      const angle = (Math.atan2(z, x) + Math.PI * 2) % (Math.PI * 2)
+      bodyAngularSectors[Math.floor(angle / (Math.PI * 2) * bodyAngularSectors.length)]! += 1
+    }
+    expect(bodyAngularSectors.every((count) => count >= 3)).toBe(true)
+    expect(PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_CEILING)
+      .toBeGreaterThanOrEqual(1.9)
+    expect(PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_CEILING)
+      .toBeLessThanOrEqual(2.4)
+    expect(PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_RANGE)
+      .toBeGreaterThanOrEqual(1.65)
+    expect(getPfxMaterializeTargetHeight(1, false))
+      .toBeGreaterThanOrEqual(1.9)
+    const reducedPreset = createReducedMotionPfxPreset(preset)
+    const reducedBodySimulation = PfxLibrary.createPfxParticleSimulation(
+      reducedPreset,
+      body!,
+    )
+    expect(reducedBodySimulation.count).toBeGreaterThanOrEqual(58)
+    expect(reducedBodySimulation.count).toBeLessThanOrEqual(62)
+
+    expect(wake!.tuning!.sprite).toBe('spark')
+    expect(PFX_SPRITE_SLICES[wake!.tuning!.sprite!].source)
+      .toBe('kenney-particle-pack/spark_06.png')
+    expect(wake!.tuning!.flipbookAtlas).toBeUndefined()
+    expect(wake!.tuning!.colorOverride).toBe('#8eeeff')
+    expect(wake!.opacity).toBeGreaterThanOrEqual(0.82)
+    expect(wake!.opacity).toBeLessThanOrEqual(0.86)
+    expect(wake!.tuning!.countScale).toBeGreaterThanOrEqual(2.7)
+    expect(wake!.tuning!.countScale).toBeLessThanOrEqual(2.9)
+    expect(wake!.tuning!.size![0]).toBeGreaterThanOrEqual(0.045)
+    expect(wake!.tuning!.size![0]).toBeLessThanOrEqual(0.055)
+    expect(wake!.tuning!.size![1]).toBeGreaterThanOrEqual(0.28)
+    expect(wake!.tuning!.size![1]).toBeLessThanOrEqual(0.32)
+    expect(wake!.tuning!.size![2]).toBeLessThanOrEqual(0.055)
+    expect(wake!.tuning!.stretch).toBeGreaterThanOrEqual(0.6)
+    expect(PFX_MATERIALIZE_RELEASE_GATHER_SPRITE_ASPECT)
+      .toBeGreaterThanOrEqual(0.62)
+    expect(PFX_MATERIALIZE_RELEASE_GATHER_SPRITE_ASPECT)
+      .toBeLessThanOrEqual(0.78)
+
+    const wakeSimulation = PfxLibrary.createPfxParticleSimulation(preset, wake!)
+    expect(wakeSimulation.count).toBeGreaterThanOrEqual(65)
+    expect(wakeSimulation.count).toBeLessThanOrEqual(69)
+    const reducedWakeSimulation = PfxLibrary.createPfxParticleSimulation(
+      reducedPreset,
+      wake!,
+    )
+    expect(reducedWakeSimulation.count).toBeGreaterThanOrEqual(31)
+    expect(reducedWakeSimulation.count).toBeLessThanOrEqual(35)
+    const wakeEmission = PfxLibrary.createPfxParticleEmission(preset, wake!)
+    expect(PFX_MATERIALIZE_GATHER_COHORT_FRACTION).toBeGreaterThanOrEqual(0.16)
+    expect(PFX_MATERIALIZE_GATHER_COHORT_FRACTION).toBeLessThanOrEqual(0.22)
+    const gatherCount = Math.floor(
+      wakeSimulation.count * PFX_MATERIALIZE_GATHER_COHORT_FRACTION,
+    )
+    const gatherBirthHeights = Array.from(
+      { length: gatherCount },
+      (_, index) => wakeSimulation.spawn[index * 3 + 1]!,
+    )
+    const gatherSizeScales = Array.from(
+      { length: gatherCount },
+      (_, index) => wakeEmission.variance[index * 2]!,
+    )
+    const gatherValueScales = Array.from(
+      { length: gatherCount },
+      (_, index) => wakeEmission.variance[index * 2 + 1]!,
+    )
+    expect(Math.min(...gatherBirthHeights)).toBeLessThanOrEqual(0.2)
+    expect(Math.max(...gatherBirthHeights)).toBeGreaterThanOrEqual(1.7)
+    expect(Math.min(...gatherSizeScales)).toBeGreaterThanOrEqual(0.65)
+    expect(Math.max(...gatherSizeScales)).toBeLessThanOrEqual(1)
+    expect(Math.min(...gatherValueScales)).toBeGreaterThanOrEqual(0.82)
+    expect(Math.max(...gatherValueScales)).toBeLessThanOrEqual(1.08)
+    const hotContactIndices = Array.from(
+      { length: wakeSimulation.count },
+      (_, index) => index,
+    ).filter((index) => wakeEmission.variance[index * 2 + 1]! >= 1.44)
+    expect(hotContactIndices.length).toBeGreaterThanOrEqual(4)
+    expect(hotContactIndices.length).toBeLessThanOrEqual(7)
+    expect(Math.max(...hotContactIndices.map((index) => Math.hypot(
+      wakeSimulation.spawn[index * 3]!,
+      wakeSimulation.spawn[index * 3 + 2]!,
+    )))).toBeLessThanOrEqual(0.09)
+  })
+
+  it('gives spawn materialization distinct boundary, inward-flow, and CC0 release populations', () => {
+    const preset = createPfxPreset('spawn-telegraph')
+    const plan = getPfxRenderPlan(preset)
+    const [footprint, body, wake] = plan.surfaces
+
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry == null)).toBe(true)
+    expect(new Set(plan.surfaces.map((surface) => surface.tuning?.motion)).size).toBe(3)
+
+    expect(body).toMatchObject({
+      role: 'body',
+      tuning: {
+        motion: 'materialize-gather',
+        sprite: 'trace-variants',
+        reducedMotionSprite: 'trace-variants',
+        blend: 'additive',
+        death: 'erode',
+      },
+    })
+    expect(PFX_SPRITE_SLICES[body!.tuning!.sprite!].source)
+      .toBe('kenney-particle-pack/trace_01..07.png')
+    expect(PfxLibrary.getPfxSpriteVariantLayout(body!.tuning!.sprite!).count).toBe(7)
+    expect(body!.tuning!.size![1]).toBeGreaterThan(body!.tuning!.size![0]!)
+    expect(body!.tuning!.stretch).toBeGreaterThanOrEqual(1.25)
+    expect(body!.tuning!.stretch).toBeLessThanOrEqual(1.45)
+    expect(body!.tuning!.ramp).toBe('held')
+    expect(body!.tuning!.window).toBeGreaterThanOrEqual(0.22)
+    expect(body!.tuning!.window).toBeLessThanOrEqual(0.3)
+
+    expect(wake).toMatchObject({
+      role: 'volume',
+      tuning: {
+        motion: 'materialize-release',
+        sprite: 'spark',
+        reducedMotionSprite: 'spark',
+        blend: 'additive',
+        death: 'erode',
+      },
+    })
+    expect(PFX_SPRITE_SLICES[wake!.tuning!.sprite!].source)
+      .toBe('kenney-particle-pack/spark_06.png')
+    expect(PfxLibrary.getPfxSpriteVariantLayout(wake!.tuning!.sprite!).count).toBe(1)
+    expect(wake!.tuning!.stretch).toBeGreaterThanOrEqual(0.55)
+    expect(wake!.tuning!.size![1]).toBeGreaterThan(wake!.tuning!.size![0]!)
+    expect(wake!.tuning!.window).toBeGreaterThanOrEqual(0.14)
+    expect(wake!.tuning!.window).toBeLessThanOrEqual(0.18)
+    expect(wake!.tuning!.lifeScale).toBeGreaterThanOrEqual(2)
+    expect(wake!.tuning!.lifeScale).toBeLessThanOrEqual(2.2)
+
+    expect(footprint).toMatchObject({
+      role: 'aura',
+      tuning: {
+        motion: 'telegraph-boundary-drift',
+        sprite: 'streak',
+        ringPurpose: 'boundary',
+      },
+    })
+    expect(PFX_SPRITE_SLICES[footprint!.tuning!.sprite!].source)
+      .toBe('procedural:streak-line')
+    expect(footprint!.opacity).toBeGreaterThanOrEqual(0.72)
+    expect(footprint!.opacity).toBeLessThanOrEqual(0.8)
+    expect(footprint!.tuning!.countScale).toBeGreaterThanOrEqual(1.75)
+    expect(footprint!.tuning!.countScale).toBeLessThanOrEqual(1.85)
+    expect(footprint!.tuning!.reducedMotionCountScale).toBeGreaterThanOrEqual(3.1)
+    expect(footprint!.tuning!.reducedMotionCountScale).toBeLessThanOrEqual(3.3)
+    expect(footprint!.tuning!.sizeJitter).toBeGreaterThanOrEqual(0.35)
+    expect(footprint!.tuning!.stretch).toBeGreaterThanOrEqual(0.7)
+    expect(footprint!.tuning!.stretch).toBeLessThanOrEqual(0.9)
+    expect(footprint!.tuning!.flicker).toBeGreaterThanOrEqual(0.2)
+    expect(footprint!.tuning!.flicker).toBeLessThanOrEqual(0.4)
+    expect(body!.tuning!.referenceLicense).toContain('CC0-1.0')
+    expect(wake!.tuning!.referenceLicense).toContain('CC0-1.0')
+  })
+
+  it('converges spawn warning streaks into a compact locus without a proxy body', () => {
+    expect(PFX_SPRITE_PARTICLE_VERTEX).toContain(
+      'float materializeGatherLocusHeight =',
+    )
+    expect(PFX_SPRITE_PARTICLE_VERTEX).toContain(
+      'vec3 materializeGatherLocus = vec3(',
+    )
+    expect(PFX_SPRITE_PARTICLE_VERTEX).toContain(
+      'mix(materializeGatherSource, materializeGatherLocus',
+    )
+    expect(PFX_SPRITE_PARTICLE_VERTEX).toContain(
+      'float materializeGatherContactRetirement =',
+    )
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .not.toContain('materializeGatherLegTarget')
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .not.toContain('materializeGatherContourDirection')
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .not.toContain('materializeGatherHeightBands')
+  })
+
+  it('keeps every spawn-telegraph surface inside the authoritative boundary ring', () => {
+    const preset = createPfxPreset('spawn-telegraph')
+    const plan = getPfxRenderPlan(preset)
+    const boundary = plan.surfaces.find(
+      (surface) => surface.tuning?.ringPurpose === 'boundary',
+    )
+    expect(boundary).toBeDefined()
+    const boundarySimulation = PfxLibrary.createPfxParticleSimulation(preset, boundary!)
+    const ringRadius = Math.max(
+      ...Array.from({ length: boundarySimulation.count }, (_, index) =>
+        Math.hypot(
+          boundarySimulation.spawn[index * 3]!,
+          boundarySimulation.spawn[index * 3 + 2]!,
+        )),
+    )
+    expect(ringRadius).toBeGreaterThanOrEqual(1)
+    for (const surface of plan.surfaces) {
+      if (surface.tuning?.ringPurpose === 'boundary') continue
+      const simulation = PfxLibrary.createPfxParticleSimulation(preset, surface)
+      const maxRadius = Math.max(
+        ...Array.from({ length: simulation.count }, (_, index) =>
+          Math.hypot(
+            simulation.spawn[index * 3]!,
+            simulation.spawn[index * 3 + 2]!,
+          )),
+      )
+      // The gameplay-authoritative ring owns the footprint: no supporting
+      // layer may birth energy beyond it (craft guide §2 boundary authority).
+      expect(maxRadius).toBeLessThanOrEqual(ringRadius * 1.05)
+    }
+    const reducedPreset = createReducedMotionPfxPreset(preset)
+    const reducedBoundarySimulation = PfxLibrary.createPfxParticleSimulation(
+      reducedPreset,
+      boundary!,
+    )
+    const reducedRingRadius = Math.max(
+      ...Array.from({ length: reducedBoundarySimulation.count }, (_, index) =>
+        Math.hypot(
+          reducedBoundarySimulation.spawn[index * 3]!,
+          reducedBoundarySimulation.spawn[index * 3 + 2]!,
+        )),
+    )
+    for (const surface of getPfxRenderPlan(reducedPreset).surfaces) {
+      if (surface.tuning?.ringPurpose === 'boundary') continue
+      const simulation = PfxLibrary.createPfxParticleSimulation(
+        reducedPreset,
+        surface,
+      )
+      const maxRadius = Math.max(
+        ...Array.from({ length: simulation.count }, (_, index) =>
+          Math.hypot(
+            simulation.spawn[index * 3]!,
+            simulation.spawn[index * 3 + 2]!,
+          )),
+      )
+      expect(maxRadius).toBeLessThanOrEqual(reducedRingRadius * 1.05)
+    }
+  })
+
+  it('keeps every teleport-telegraph surface inside its authoritative boundary ring', () => {
+    const preset = createPfxPreset('teleport-telegraph')
+    const plan = getPfxRenderPlan(preset)
+    const boundary = plan.surfaces.find(
+      (surface) => surface.tuning?.ringPurpose === 'boundary',
+    )
+    expect(boundary).toBeDefined()
+    const boundarySimulation = PfxLibrary.createPfxParticleSimulation(preset, boundary!)
+    const ringRadius = Math.max(
+      ...Array.from({ length: boundarySimulation.count }, (_, index) =>
+        Math.hypot(
+          boundarySimulation.spawn[index * 3]!,
+          boundarySimulation.spawn[index * 3 + 2]!,
+        )),
+    )
+    expect(ringRadius).toBeGreaterThanOrEqual(0.9)
+    for (const surface of plan.surfaces) {
+      if (surface.tuning?.ringPurpose === 'boundary') continue
+      const simulation = PfxLibrary.createPfxParticleSimulation(preset, surface)
+      const maxRadius = Math.max(
+        ...Array.from({ length: simulation.count }, (_, index) =>
+          Math.hypot(
+            simulation.spawn[index * 3]!,
+            simulation.spawn[index * 3 + 2]!,
+          )),
+      )
+      // The phase-lock convergence column and its depth-elongated lanes must
+      // stay inside the destination-ground ring (craft guide §2 boundary
+      // authority) so energy never reads as spilling past the teleport pad.
+      expect(maxRadius).toBeLessThanOrEqual(ringRadius * 1.05)
+    }
+    const reducedPreset = createReducedMotionPfxPreset(preset)
+    const reducedBoundarySimulation = PfxLibrary.createPfxParticleSimulation(
+      reducedPreset,
+      boundary!,
+    )
+    const reducedRingRadius = Math.max(
+      ...Array.from({ length: reducedBoundarySimulation.count }, (_, index) =>
+        Math.hypot(
+          reducedBoundarySimulation.spawn[index * 3]!,
+          reducedBoundarySimulation.spawn[index * 3 + 2]!,
+        )),
+    )
+    for (const surface of getPfxRenderPlan(reducedPreset).surfaces) {
+      if (surface.tuning?.ringPurpose === 'boundary') continue
+      const simulation = PfxLibrary.createPfxParticleSimulation(
+        reducedPreset,
+        surface,
+      )
+      const maxRadius = Math.max(
+        ...Array.from({ length: simulation.count }, (_, index) =>
+          Math.hypot(
+            simulation.spawn[index * 3]!,
+            simulation.spawn[index * 3 + 2]!,
+          )),
+      )
+      expect(maxRadius).toBeLessThanOrEqual(reducedRingRadius * 1.05)
+    }
+  })
+
+  it('keeps the canonical spawn samples legible with dense inward streaks and a broad spark handoff', () => {
+    const preset = createPfxPreset('spawn-telegraph')
+    const plan = getPfxRenderPlan(preset)
+    const [boundary, gather, release] = plan.surfaces
+
+    expect(boundary!.tuning!.countScale).toBeGreaterThanOrEqual(1.75)
+
+    expect(gather).toMatchObject({
+      kind: 'particles',
+      role: 'body',
+      tuning: {
+        motion: 'materialize-gather',
+        sprite: 'trace-variants',
+        reducedMotionSprite: 'trace-variants',
+        blend: 'additive',
+      },
+    })
+    expect(PFX_SPRITE_SLICES[gather!.tuning!.sprite!].source)
+      .toBe('kenney-particle-pack/trace_01..07.png')
+    expect(PfxLibrary.getPfxSpriteVariantLayout(gather!.tuning!.sprite!).count).toBe(7)
+    expect(gather!.opacity).toBeGreaterThanOrEqual(0.88)
+    expect(gather!.tuning!.delay).toBeLessThanOrEqual(0.01)
+    expect(gather!.tuning!.window).toBeGreaterThanOrEqual(0.22)
+    expect(gather!.tuning!.window).toBeLessThanOrEqual(0.3)
+    expect(gather!.tuning!.stretch).toBeGreaterThanOrEqual(1.25)
+    expect(gather!.tuning!.stretch).toBeLessThanOrEqual(1.45)
+    expect(gather!.tuning!.size![1]).toBeGreaterThanOrEqual(0.22)
+    expect(gather!.tuning!.size![1]).toBeLessThanOrEqual(0.26)
+
+    expect(release).toMatchObject({
+      kind: 'particles',
+      role: 'volume',
+      tuning: {
+        motion: 'materialize-release',
+        sprite: 'spark',
+        reducedMotionSprite: 'spark',
+        blend: 'additive',
+        death: 'erode',
+      },
+    })
+    expect(release!.tuning!.window).toBeLessThanOrEqual(0.18)
+    expect(release!.tuning!.lifeScale).toBeGreaterThanOrEqual(2)
+    expect(release!.tuning!.countScale).toBeGreaterThanOrEqual(2.7)
+    expect(release!.opacity).toBeLessThanOrEqual(0.86)
+    expect(release!.tuning!.depthScale).toBeGreaterThanOrEqual(3.1)
+    expect(release!.tuning!.stretch).toBeGreaterThanOrEqual(0.55)
+    expect(release!.tuning!.size![1]).toBeGreaterThanOrEqual(0.28)
+    expect(release!.tuning!.size![1]).toBeLessThanOrEqual(0.32)
+    expect(release!.scale).toBeGreaterThanOrEqual(3.55)
+    expect(release!.scale).toBeLessThanOrEqual(3.8)
+    expect(PFX_MATERIALIZE_GATHER_COHORT_FRACTION)
+      .toBeLessThanOrEqual(0.22)
+  })
+
+  it('stages spawn with a restrained footprint, broad particle contact, and a lower-volume decay', () => {
+    const preset = createPfxPreset('spawn-telegraph')
+    const plan = getPfxRenderPlan(preset)
+    const [footprint, body, wake] = plan.surfaces
+
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry == null)).toBe(true)
+
+    expect(footprint).toMatchObject({
+      role: 'aura',
+      tuning: {
+        motion: 'telegraph-boundary-drift',
+        sprite: 'streak',
+        ringPurpose: 'boundary',
+        lifecycle: 'spawn-telegraph-assembly',
+        delay: 0,
+      },
+    })
+    expect(footprint!.opacity).toBeGreaterThanOrEqual(0.72)
+    expect(footprint!.opacity).toBeLessThanOrEqual(0.8)
+    expect(footprint!.tuning!.countScale).toBeGreaterThanOrEqual(1.75)
+    expect(footprint!.tuning!.countScale).toBeLessThanOrEqual(1.85)
+    expect(footprint!.tuning!.reducedMotionCountScale).toBeGreaterThanOrEqual(3.1)
+    expect(footprint!.tuning!.reducedMotionCountScale).toBeLessThanOrEqual(3.3)
+    expect(footprint!.tuning!.lifeScale).toBeGreaterThanOrEqual(1.8)
+    expect(footprint!.tuning!.lifeScale).toBeLessThanOrEqual(2.2)
+    expect(PfxLibrary.getPfxParticleShapeProfile('telegraph-boundary-drift')).toMatchObject({
+      fadeIn: 0.01,
+      fadeOut: 0.9,
+    })
+    expect(footprint!.tuning!.spawnScale).toBeGreaterThanOrEqual(1.1)
+    expect(footprint!.tuning!.alphaGamma).toBeGreaterThanOrEqual(0.24)
+    expect(footprint!.tuning!.alphaGamma).toBeLessThanOrEqual(0.32)
+    expect(footprint!.tuning!.size![1]).toBeGreaterThanOrEqual(0.28)
+    expect(footprint!.tuning!.size![1]).toBeLessThanOrEqual(0.36)
+    expect(footprint!.tuning!.stretch).toBeLessThanOrEqual(0.9)
+    const footprintSimulation = PfxLibrary.createPfxParticleSimulation(preset, footprint!)
+    expect(PFX_TELEGRAPH_BOUNDARY_OUTER_FRACTION).toBeGreaterThanOrEqual(0.9)
+    expect(PFX_TELEGRAPH_BOUNDARY_OUTER_FRACTION).toBeLessThanOrEqual(0.94)
+    const footprintBoundaryCount = Math.floor(
+      footprintSimulation.count * PFX_TELEGRAPH_BOUNDARY_OUTER_FRACTION,
+    )
+    expect(footprintBoundaryCount).toBeLessThan(footprintSimulation.count)
+    const footprintRadii = Array.from({ length: footprintSimulation.count }, (_, index) =>
+      Math.hypot(
+        footprintSimulation.spawn[index * 3]!,
+        footprintSimulation.spawn[index * 3 + 2]!,
+      ))
+    const footprintHeights = Array.from(
+      { length: footprintSimulation.count },
+      (_, index) => footprintSimulation.spawn[index * 3 + 1]!,
+    )
+    expect(Math.max(...footprintRadii)).toBeGreaterThanOrEqual(1)
+    expect(Math.max(...footprintRadii)).toBeLessThanOrEqual(1.15)
+    const boundaryRadii = footprintRadii.slice(0, footprintBoundaryCount)
+    const radialSupportRadii = footprintRadii.slice(footprintBoundaryCount)
+    expect(Math.min(...boundaryRadii)).toBeGreaterThanOrEqual(0.98)
+    expect(Math.max(...boundaryRadii) - Math.min(...boundaryRadii)).toBeLessThanOrEqual(0.04)
+    const boundaryAngles = Array.from(
+      { length: footprintBoundaryCount },
+      (_, index) => (
+        Math.atan2(
+          footprintSimulation.spawn[index * 3 + 2]!,
+          footprintSimulation.spawn[index * 3]!,
+        ) +
+        Math.PI * 2
+      ) % (Math.PI * 2),
+    ).sort((left, right) => left - right)
+    const boundaryAngularGaps = boundaryAngles.map((angle, index) => {
+      const nextAngle =
+        boundaryAngles[(index + 1) % boundaryAngles.length]! +
+        (index === boundaryAngles.length - 1 ? Math.PI * 2 : 0)
+      return nextAngle - angle
+    })
+    expect(Math.max(...boundaryAngularGaps)).toBeLessThanOrEqual(0.25)
+    expect(Math.min(...radialSupportRadii)).toBeGreaterThanOrEqual(0.28)
+    expect(Math.max(...radialSupportRadii)).toBeLessThanOrEqual(1)
+    expect(Math.max(...radialSupportRadii) - Math.min(...radialSupportRadii))
+      .toBeGreaterThanOrEqual(0.25)
+    const radialSupportAngles = Array.from(
+      { length: radialSupportRadii.length },
+      (_, supportIndex) => {
+        const particleIndex = footprintBoundaryCount + supportIndex
+        return (
+          Math.atan2(
+            footprintSimulation.spawn[particleIndex * 3 + 2]!,
+            footprintSimulation.spawn[particleIndex * 3]!,
+          ) +
+          Math.PI * 2
+        ) % (Math.PI * 2)
+      },
+    ).sort((left, right) => left - right)
+    const radialSupportSectors = Array.from({ length: 12 }, () => 0)
+    for (const angle of radialSupportAngles) {
+      const sector = Math.floor(angle / (Math.PI * 2) * radialSupportSectors.length)
+      radialSupportSectors[sector]! += 1
+    }
+    expect(radialSupportSectors.filter((count) => count >= 1).length)
+      .toBeGreaterThanOrEqual(3)
+    const radialSupportAngularGaps = radialSupportAngles.map((angle, index) => {
+      const nextAngle =
+        radialSupportAngles[(index + 1) % radialSupportAngles.length]! +
+        (index === radialSupportAngles.length - 1 ? Math.PI * 2 : 0)
+      return nextAngle - angle
+    })
+    expect(Math.max(...radialSupportAngularGaps)).toBeLessThanOrEqual(2.6)
+    const boundaryHeights = footprintHeights.slice(0, footprintBoundaryCount)
+    const radialSupportHeights = footprintHeights.slice(footprintBoundaryCount)
+    expect(Math.max(...boundaryHeights)).toBeGreaterThanOrEqual(0.04)
+    expect(Math.max(...boundaryHeights)).toBeLessThanOrEqual(0.1)
+    expect(Math.max(...radialSupportHeights)).toBeGreaterThanOrEqual(0.2)
+    expect(Math.max(...radialSupportHeights)).toBeLessThanOrEqual(0.28)
+    const footprintParticleIndices = Array.from(
+      { length: footprintSimulation.count },
+      (_, index) => index,
+    )
+    const radialVelocities = footprintParticleIndices.map((index) => {
+      const radius = footprintRadii[index]!
+      const x = footprintSimulation.spawn[index * 3]!
+      const z = footprintSimulation.spawn[index * 3 + 2]!
+      return (
+        footprintSimulation.direction[index * 3]! * x +
+        footprintSimulation.direction[index * 3 + 2]! * z
+      ) / radius
+    })
+    const boundaryRadialVelocities = radialVelocities.slice(0, footprintBoundaryCount)
+    const radialSupportVelocities = radialVelocities.slice(footprintBoundaryCount)
+    expect(Math.max(...boundaryRadialVelocities.map(Math.abs))).toBeLessThanOrEqual(0.05)
+    expect(Math.max(...radialSupportVelocities)).toBeLessThanOrEqual(-0.85)
+    expect(Math.min(...radialSupportVelocities)).toBeGreaterThanOrEqual(-0.97)
+    const radialSupportSpeeds = Array.from(
+      footprintSimulation.speed.slice(footprintBoundaryCount),
+    )
+    expect(Math.min(...radialSupportSpeeds)).toBeGreaterThanOrEqual(0.17)
+    expect(Math.max(...radialSupportSpeeds)).toBeLessThanOrEqual(0.75)
+    const footprintEmission = PfxLibrary.createPfxParticleEmission(preset, footprint!)
+    const footprintValueScales = footprintParticleIndices.map(
+      (index) => footprintEmission.variance[index * 2 + 1]!,
+    )
+    const footprintSizeScales = footprintParticleIndices.map(
+      (index) => footprintEmission.variance[index * 2]!,
+    )
+    const boundaryValueScales = footprintValueScales.slice(0, footprintBoundaryCount)
+    const radialSupportValueScales = footprintValueScales.slice(footprintBoundaryCount)
+    const boundarySizeScales = footprintSizeScales.slice(0, footprintBoundaryCount)
+    const radialSupportSizeScales = footprintSizeScales.slice(footprintBoundaryCount)
+    expect(Math.max(...boundaryValueScales) - Math.min(...boundaryValueScales))
+      .toBeGreaterThanOrEqual(0.18)
+    expect(Math.max(...boundaryValueScales) - Math.min(...boundaryValueScales))
+      .toBeLessThanOrEqual(0.28)
+    expect(Math.max(...boundarySizeScales) - Math.min(...boundarySizeScales))
+      .toBeGreaterThanOrEqual(0.25)
+    expect(Math.max(...boundarySizeScales) - Math.min(...boundarySizeScales))
+      .toBeLessThanOrEqual(0.38)
+    expect(Math.max(...radialSupportValueScales) - Math.min(...radialSupportValueScales))
+      .toBeGreaterThanOrEqual(0.03)
+    expect(Math.max(...radialSupportSizeScales) - Math.min(...radialSupportSizeScales))
+      .toBeGreaterThanOrEqual(0.13)
+    expect(Math.max(...radialSupportValueScales)).toBeLessThanOrEqual(0.74)
+    expect(Math.max(...radialSupportSizeScales)).toBeLessThanOrEqual(0.42)
+    const boundaryMeanValue =
+      boundaryValueScales.reduce((sum, value) => sum + value, 0) /
+      boundaryValueScales.length
+    const radialSupportMeanValue =
+      radialSupportValueScales.reduce((sum, value) => sum + value, 0) /
+      radialSupportValueScales.length
+    const boundaryMeanSize =
+      boundarySizeScales.reduce((sum, value) => sum + value, 0) /
+      boundarySizeScales.length
+    const radialSupportMeanSize =
+      radialSupportSizeScales.reduce((sum, value) => sum + value, 0) /
+      radialSupportSizeScales.length
+    expect(Math.abs(radialSupportMeanValue - boundaryMeanValue))
+      .toBeLessThanOrEqual(0.08)
+    expect(radialSupportMeanSize).toBeLessThanOrEqual(0.34)
+    expect(boundaryMeanSize - radialSupportMeanSize).toBeGreaterThanOrEqual(0.4)
+
+    expect(body).toMatchObject({
+      role: 'body',
+      tuning: {
+        motion: 'materialize-gather',
+        sprite: 'trace-variants',
+        reducedMotionSprite: 'trace-variants',
+        blend: 'additive',
+        ramp: 'held',
+        lifecycle: 'spawn-telegraph-assembly',
+        death: 'erode',
+      },
+    })
+    expect(body!.opacity).toBeGreaterThanOrEqual(0.88)
+    expect(body!.opacity).toBeLessThanOrEqual(0.92)
+    expect(body!.scale).toBeGreaterThanOrEqual(3.15)
+    expect(body!.scale).toBeLessThanOrEqual(3.3)
+    expect(body!.tuning!.delay).toBeGreaterThanOrEqual(0)
+    expect(body!.tuning!.delay).toBeLessThanOrEqual(0.01)
+    expect(body!.tuning!.window).toBeGreaterThanOrEqual(0.22)
+    expect(body!.tuning!.window).toBeLessThanOrEqual(0.3)
+    expect(body!.tuning!.lifeScale).toBeGreaterThanOrEqual(2)
+    expect(body!.tuning!.lifeScale).toBeLessThanOrEqual(2.2)
+    expect(body!.tuning!.countScale).toBeGreaterThanOrEqual(4)
+    expect(body!.tuning!.countScale).toBeLessThanOrEqual(4.4)
+    expect(body!.tuning!.reducedMotionCountScale).toBeGreaterThanOrEqual(2.2)
+    expect(body!.tuning!.reducedMotionCountScale).toBeLessThanOrEqual(2.6)
+    expect(body!.tuning!.alphaGamma).toBeGreaterThanOrEqual(0.24)
+    expect(body!.tuning!.alphaGamma).toBeLessThanOrEqual(0.32)
+    expect(body!.tuning!.colorOverride).toBe('#55d6ef')
+    expect(body!.tuning!.depthScale).toBeGreaterThanOrEqual(3)
+    expect(PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_CEILING).toBeGreaterThanOrEqual(1.9)
+    expect(PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_CEILING).toBeLessThanOrEqual(2.4)
+    expect(PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_FLOOR).toBeGreaterThanOrEqual(0.2)
+    expect(PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_FLOOR).toBeLessThanOrEqual(0.28)
+    expect(PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_RANGE).toBeGreaterThanOrEqual(1.65)
+    expect(PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_RANGE).toBeLessThanOrEqual(2.2)
+    expect(PFX_MATERIALIZE_GATHER_TARGET_RADIAL_RETENTION).toBeGreaterThanOrEqual(0.86)
+    expect(PFX_MATERIALIZE_GATHER_TARGET_RADIAL_RETENTION).toBeLessThanOrEqual(0.94)
+    expect(PFX_MATERIALIZE_GATHER_GROUND_RADIAL_RETENTION).toBeGreaterThanOrEqual(0.8)
+    expect(PFX_MATERIALIZE_GATHER_GROUND_RADIAL_RETENTION).toBeLessThanOrEqual(0.88)
+    expect(PFX_MATERIALIZE_GATHER_CORE_RADIAL_RETENTION).toBeGreaterThanOrEqual(0.12)
+    expect(PFX_MATERIALIZE_GATHER_CORE_RADIAL_RETENTION).toBeLessThanOrEqual(0.18)
+    expect(PFX_MATERIALIZE_GATHER_CORE_RADIAL_RETENTION)
+      .toBeLessThan(PFX_MATERIALIZE_GATHER_GROUND_RADIAL_RETENTION)
+    expect(PFX_MATERIALIZE_GATHER_GROUND_RADIAL_RETENTION)
+      .toBeLessThan(PFX_MATERIALIZE_GATHER_TARGET_RADIAL_RETENTION)
+    expect(PFX_MATERIALIZE_GATHER_UPPER_RADIAL_RETENTION).toBeGreaterThanOrEqual(0.46)
+    expect(PFX_MATERIALIZE_GATHER_UPPER_RADIAL_RETENTION).toBeLessThanOrEqual(0.54)
+    expect(PFX_MATERIALIZE_GATHER_TARGET_RADIUS_SCALE).toBeGreaterThanOrEqual(1.04)
+    expect(PFX_MATERIALIZE_GATHER_TARGET_RADIUS_SCALE).toBeLessThanOrEqual(1.12)
+    const lowerSilhouetteRadius = getPfxMaterializeSilhouetteRadialRetention(0)
+    const hipSilhouetteRadius = getPfxMaterializeSilhouetteRadialRetention(0.2)
+    const waistSilhouetteRadius = getPfxMaterializeSilhouetteRadialRetention(0.42)
+    const shoulderSilhouetteRadius = getPfxMaterializeSilhouetteRadialRetention(0.62)
+    const neckSilhouetteRadius = getPfxMaterializeSilhouetteRadialRetention(0.76)
+    const headSilhouetteRadius = getPfxMaterializeSilhouetteRadialRetention(0.88)
+    const crownSilhouetteRadius = getPfxMaterializeSilhouetteRadialRetention(1)
+    const silhouetteRadii = [
+      lowerSilhouetteRadius,
+      hipSilhouetteRadius,
+      waistSilhouetteRadius,
+      shoulderSilhouetteRadius,
+      neckSilhouetteRadius,
+      headSilhouetteRadius,
+      crownSilhouetteRadius,
+    ]
+    expect(lowerSilhouetteRadius).toBeGreaterThanOrEqual(0.18)
+    expect(lowerSilhouetteRadius).toBeLessThanOrEqual(0.26)
+    expect(hipSilhouetteRadius).toBeGreaterThan(lowerSilhouetteRadius)
+    expect(hipSilhouetteRadius).toBeGreaterThanOrEqual(0.42)
+    expect(waistSilhouetteRadius).toBeLessThan(hipSilhouetteRadius)
+    expect(waistSilhouetteRadius).toBeLessThanOrEqual(0.34)
+    expect(shoulderSilhouetteRadius).toBeGreaterThanOrEqual(0.62)
+    expect(shoulderSilhouetteRadius).toBeGreaterThan(waistSilhouetteRadius)
+    expect(neckSilhouetteRadius).toBeLessThanOrEqual(0.24)
+    expect(neckSilhouetteRadius).toBeLessThan(shoulderSilhouetteRadius)
+    expect(headSilhouetteRadius).toBeGreaterThanOrEqual(0.36)
+    expect(headSilhouetteRadius).toBeGreaterThan(neckSilhouetteRadius)
+    expect(crownSilhouetteRadius).toBeLessThanOrEqual(0.12)
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('float materializeGatherLocusHeight =')
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('mix(materializeGatherSource, materializeGatherLocus')
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('vec3 materializeGatherFlowDirection = normalize(mix(')
+    expect(PFX_MATERIALIZE_GATHER_ARC_BEND).toBeGreaterThanOrEqual(0.36)
+    expect(PFX_MATERIALIZE_GATHER_ARC_BEND).toBeLessThanOrEqual(0.44)
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('vec3 materializeGatherArcOffset')
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('sin(materializeGatherProgress * 3.14159265359)')
+    expect(PFX_MATERIALIZE_GATHER_ASSEMBLY_START).toBeGreaterThanOrEqual(0.18)
+    expect(PFX_MATERIALIZE_GATHER_ASSEMBLY_START).toBeLessThanOrEqual(0.22)
+    expect(PFX_MATERIALIZE_GATHER_ASSEMBLY_END).toBeGreaterThanOrEqual(0.46)
+    expect(PFX_MATERIALIZE_GATHER_ASSEMBLY_END).toBeLessThanOrEqual(0.5)
+    expect(PFX_MATERIALIZE_GATHER_MASTER_CONVERGENCE_END)
+      .toBeGreaterThanOrEqual(0.48)
+    expect(PFX_MATERIALIZE_GATHER_MASTER_CONVERGENCE_END)
+      .toBeLessThanOrEqual(0.52)
+    expect(PFX_MATERIALIZE_GATHER_BIRTH_PROGRESS_END)
+      .toBeGreaterThanOrEqual(0.08)
+    expect(PFX_MATERIALIZE_GATHER_BIRTH_PROGRESS_END)
+      .toBeLessThanOrEqual(0.12)
+    expect(PFX_MATERIALIZE_GATHER_BIRTH_VISIBILITY)
+      .toBeGreaterThanOrEqual(0.5)
+    expect(PFX_MATERIALIZE_GATHER_BIRTH_VISIBILITY)
+      .toBeLessThanOrEqual(0.6)
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('float materializeGatherBirthFloor =')
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT)
+      .toContain('float materializeGatherBirthFloor =')
+    expect(PFX_MATERIALIZE_GATHER_DISPERSAL_START).toBeGreaterThanOrEqual(0.6)
+    expect(PFX_MATERIALIZE_GATHER_DISPERSAL_START).toBeLessThanOrEqual(0.64)
+    expect(PFX_MATERIALIZE_GATHER_DISPERSAL_END).toBeGreaterThanOrEqual(0.78)
+    expect(PFX_MATERIALIZE_GATHER_DISPERSAL_END).toBeLessThanOrEqual(0.82)
+    expect(PFX_MATERIALIZE_GATHER_DECAY_HEIGHT_RETENTION)
+      .toBeGreaterThanOrEqual(0.35)
+    expect(PFX_MATERIALIZE_GATHER_DECAY_HEIGHT_RETENTION)
+      .toBeLessThanOrEqual(0.5)
+    expect(PFX_MATERIALIZE_GATHER_DECAY_DISTANCE_MIN)
+      .toBeGreaterThanOrEqual(0.28)
+    expect(PFX_MATERIALIZE_GATHER_DECAY_DISTANCE_MIN)
+      .toBeLessThanOrEqual(0.36)
+    expect(PFX_MATERIALIZE_GATHER_DECAY_DISTANCE_MAX)
+      .toBeGreaterThanOrEqual(0.65)
+    expect(PFX_MATERIALIZE_GATHER_DECAY_DISTANCE_MAX)
+      .toBeLessThanOrEqual(0.8)
+    const onsetAssemblyHeight = getPfxMaterializeAssemblyHeightScale(0.319)
+    const canonicalPeakAssemblyHeight =
+      getPfxMaterializeAssemblyHeightScale(0.495)
+    const peakAssemblyHeight = getPfxMaterializeAssemblyHeightScale(0.715)
+    const peakDispersal = getPfxMaterializeDispersal(0.57)
+    const decayDispersal = getPfxMaterializeDispersal(0.712)
+    const finalDecayDispersal = getPfxMaterializeDispersal(0.895)
+    expect(onsetAssemblyHeight).toBeGreaterThanOrEqual(0.42)
+    expect(onsetAssemblyHeight).toBeLessThanOrEqual(0.62)
+    expect(canonicalPeakAssemblyHeight).toBeGreaterThanOrEqual(0.98)
+    expect(getPfxMaterializeGatherConvergence(0.319, 0.5))
+      .toBeGreaterThanOrEqual(0.2)
+    expect(getPfxMaterializeGatherConvergence(0.319, 0.5))
+      .toBeLessThanOrEqual(0.4)
+    expect(getPfxMaterializeGatherConvergence(0.495, 0.5))
+      .toBeGreaterThanOrEqual(0.92)
+    expect(peakAssemblyHeight).toBeGreaterThanOrEqual(0.98)
+    expect(peakDispersal).toBe(0)
+    expect(decayDispersal).toBeGreaterThanOrEqual(0.35)
+    expect(decayDispersal).toBeLessThanOrEqual(0.75)
+    expect(finalDecayDispersal).toBeGreaterThanOrEqual(0.98)
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('float materializeGatherAssemblyHeight')
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('float materializeGatherDispersal')
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('materializeGatherDispersalDirection')
+    expect(getPfxMaterializeSilhouetteRadialRetention(0.5, true))
+      .toBeLessThan(lowerSilhouetteRadius)
+    expect(getPfxMaterializeSilhouetteRadialScale(0.5, 0))
+      .toBeLessThan(waistSilhouetteRadius * 0.2)
+    expect(getPfxMaterializeSilhouetteRadialScale(0.5, 1))
+      .toBeCloseTo(getPfxMaterializeSilhouetteRadialRetention(0.5))
+    expect(PFX_MATERIALIZE_GATHER_CORE_HEIGHT_FLOOR).toBeGreaterThanOrEqual(0.85)
+    expect(PFX_MATERIALIZE_GATHER_CORE_HEIGHT_FLOOR).toBeLessThanOrEqual(0.95)
+    expect(PFX_MATERIALIZE_GATHER_CORE_HEIGHT_RANGE).toBeGreaterThanOrEqual(0.3)
+    expect(PFX_MATERIALIZE_GATHER_CORE_HEIGHT_RANGE).toBeLessThanOrEqual(0.4)
+    expect(getPfxMaterializeTargetHeight(0.5, true)).toBeGreaterThanOrEqual(1)
+    expect(getPfxMaterializeTargetHeight(0.5, true)).toBeLessThanOrEqual(1.15)
+    expect(getPfxMaterializeTargetHeight(0.5, false)).toBeGreaterThanOrEqual(1.1)
+    expect(getPfxMaterializeTargetHeight(0.5, false)).toBeLessThanOrEqual(1.35)
+    const boundaryGroundY = PfxLibrary.getPfxSurfacePositionOffset(footprint!)[1]
+    expect(Math.abs(
+      body!.tuning!.positionOffset![1] +
+        PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_FLOOR -
+        boundaryGroundY,
+    )).toBeLessThanOrEqual(0.08)
+    expect(body!.tuning!.flipbookAtlas).toBeUndefined()
+    expect(body!.tuning!.size![1]).toBeGreaterThanOrEqual(0.22)
+    expect(body!.tuning!.size![1]).toBeLessThanOrEqual(0.26)
+    expect(body!.tuning!.size![0]).toBeGreaterThanOrEqual(0.032)
+    expect(body!.tuning!.size![0]).toBeLessThanOrEqual(0.038)
+    expect(body!.tuning!.size![2]).toBeLessThanOrEqual(body!.tuning!.size![0]!)
+    expect(body!.tuning!.sizeJitter).toBeGreaterThanOrEqual(0.84)
+    expect(body!.tuning!.sizeJitter).toBeLessThanOrEqual(0.92)
+    expect(body!.tuning!.stretch).toBeGreaterThanOrEqual(1.25)
+    expect(body!.tuning!.stretch).toBeLessThanOrEqual(1.45)
+    expect(body!.tuning!.spinScale).toBeGreaterThanOrEqual(0.04)
+    expect(body!.tuning!.spinScale).toBeLessThanOrEqual(0.08)
+    expect(body!.tuning!.death).toBe('erode')
+    expect(PFX_SPRITE_SLICES[body!.tuning!.sprite!]).toMatchObject({
+      source: 'kenney-particle-pack/trace_01..07.png',
+    })
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT).toContain('uniform float uStretch;')
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT)
+      .toContain(
+        'float materializeGatherDirectionalRamp = step(0.001, uStretch);',
+      )
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT)
+      .toContain(
+        'mix(0.2, 1.0, materializeGatherFlowHead)',
+      )
+    expect(PFX_MATERIALIZE_GATHER_HERO_STRETCH_RETENTION).toBeGreaterThanOrEqual(0.4)
+    expect(PFX_MATERIALIZE_GATHER_HERO_STRETCH_RETENTION).toBeLessThanOrEqual(0.6)
+    // Broad azimuth coverage prevents the deterministic gather from
+    // resolving into a small rack of repeated columns.
+    expect(PFX_MATERIALIZE_GATHER_FLOW_LANES).toBeGreaterThanOrEqual(12)
+    expect(PFX_MATERIALIZE_GATHER_FLOW_LANES).toBeLessThanOrEqual(18)
+    expect(PFX_MATERIALIZE_GATHER_SOURCE_RADIUS_MIN).toBeGreaterThanOrEqual(0.5)
+    expect(PFX_MATERIALIZE_GATHER_SOURCE_RADIUS_MAX).toBeLessThanOrEqual(0.94)
+    expect(PFX_MATERIALIZE_GATHER_SOURCE_RADIUS_MAX)
+      .toBeGreaterThan(PFX_MATERIALIZE_GATHER_SOURCE_RADIUS_MIN)
+    expect(PFX_MATERIALIZE_GATHER_CONVERGENCE_END).toBeGreaterThanOrEqual(0.92)
+    expect(PFX_MATERIALIZE_GATHER_CONVERGENCE_END).toBeLessThanOrEqual(1)
+    expect(PFX_MATERIALIZE_GATHER_PEAK_CONVERGENCE).toBeGreaterThanOrEqual(0.95)
+    expect(PFX_MATERIALIZE_GATHER_PEAK_CONVERGENCE).toBeLessThanOrEqual(0.97)
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('float materializeGatherPeakConvergence')
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('float materializeGatherMasterConvergence = smoothstep(')
+    expect(PFX_SPRITE_PARTICLE_VERTEX).toContain(
+      `float materializeGatherMasterConvergence = smoothstep(
+      ${PFX_MATERIALIZE_GATHER_ASSEMBLY_START},
+      ${PFX_MATERIALIZE_GATHER_MASTER_CONVERGENCE_END},`,
+    )
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain(
+        'max(materializeGatherParticleConvergence, materializeGatherMasterConvergence)',
+      )
+    expect(body!.tuning!.spawnScale).toBeGreaterThanOrEqual(0.7)
+    expect(body!.tuning!.spawnScale).toBeLessThanOrEqual(0.74)
+    const bodySimulation = PfxLibrary.createPfxParticleSimulation(preset, body!)
+    expect(bodySimulation.count).toBeGreaterThanOrEqual(100)
+    expect(bodySimulation.count).toBeLessThanOrEqual(104)
+    const bodyHorizontalRadii = Array.from(
+      { length: bodySimulation.count },
+      (_, index) => Math.hypot(
+        bodySimulation.spawn[index * 3]!,
+        bodySimulation.spawn[index * 3 + 2]!,
+      ),
+    )
+    const bodyDirectionsY = Array.from(
+      { length: bodySimulation.count },
+      (_, index) => bodySimulation.direction[index * 3 + 1]!,
+    )
+    const bodyBirthHeights = Array.from(
+      { length: bodySimulation.count },
+      (_, index) => bodySimulation.spawn[index * 3 + 1]!,
+    )
+    expect(Math.min(...bodyHorizontalRadii)).toBeGreaterThanOrEqual(0.42)
+    expect(Math.max(...bodyHorizontalRadii)).toBeGreaterThanOrEqual(0.9)
+    expect(Math.max(...bodyHorizontalRadii)).toBeLessThanOrEqual(1.15)
+    expect(Math.min(...bodyBirthHeights)).toBeGreaterThanOrEqual(0.14)
+    expect(Math.min(...bodyBirthHeights)).toBeLessThanOrEqual(0.3)
+    expect(Math.max(...bodyBirthHeights)).toBeGreaterThanOrEqual(1.8)
+    expect(Math.max(...bodyBirthHeights)).toBeLessThanOrEqual(2.2)
+    expect(Math.max(...bodyBirthHeights) - Math.min(...bodyBirthHeights))
+      .toBeGreaterThanOrEqual(1.6)
+    expect(Math.min(...bodyDirectionsY)).toBeLessThanOrEqual(-0.1)
+    expect(Math.max(...bodyDirectionsY)).toBeGreaterThanOrEqual(0.1)
+    expect(Math.max(...bodyDirectionsY.map(Math.abs))).toBeLessThanOrEqual(0.9)
+    const reducedPreset = createReducedMotionPfxPreset(preset)
+    const reducedBodySimulation = PfxLibrary.createPfxParticleSimulation(
+      reducedPreset,
+      body!,
+    )
+    const reducedBodyRadii = Array.from(
+      { length: reducedBodySimulation.count },
+      (_, index) => Math.hypot(
+        reducedBodySimulation.spawn[index * 3]!,
+        reducedBodySimulation.spawn[index * 3 + 2]!,
+      ),
+    )
+    const reducedBodyHeights = Array.from(
+      { length: reducedBodySimulation.count },
+      (_, index) => reducedBodySimulation.spawn[index * 3 + 1]!,
+    )
+    expect(reducedBodySimulation.count).toBeGreaterThanOrEqual(58)
+    expect(reducedBodySimulation.count).toBeLessThanOrEqual(62)
+    expect(Math.min(...reducedBodyRadii)).toBeGreaterThanOrEqual(0.42)
+    expect(Math.max(...reducedBodyRadii)).toBeLessThanOrEqual(1.15)
+    expect(Math.min(...reducedBodyHeights)).toBeGreaterThanOrEqual(0.14)
+    expect(Math.max(...reducedBodyHeights)).toBeGreaterThanOrEqual(1.8)
+    expect(Math.max(...reducedBodyHeights)).toBeLessThanOrEqual(2.2)
+    const reducedBodyDirectionsY = Array.from(
+      { length: reducedBodySimulation.count },
+      (_, index) => reducedBodySimulation.direction[index * 3 + 1]!,
+    )
+    expect(Math.min(...reducedBodyDirectionsY)).toBeLessThanOrEqual(-0.1)
+    expect(Math.max(...reducedBodyDirectionsY)).toBeGreaterThanOrEqual(0.1)
+    expect(PfxLibrary.createPfxParticleEmission(reducedPreset, body!).sprite)
+      .toBe('trace-variants')
+    const bodyInwardVelocities = Array.from(
+      { length: bodySimulation.count },
+      (_, index) => {
+        const radius = bodyHorizontalRadii[index]!
+        const x = bodySimulation.spawn[index * 3]!
+        const z = bodySimulation.spawn[index * 3 + 2]!
+        return (
+          bodySimulation.direction[index * 3]! * x +
+          bodySimulation.direction[index * 3 + 2]! * z
+        ) / radius
+      },
+    )
+    expect(Math.min(...bodyInwardVelocities)).toBeGreaterThanOrEqual(-1)
+    expect(Math.max(...bodyInwardVelocities)).toBeLessThanOrEqual(-0.7)
+    expect(
+      bodyInwardVelocities.reduce((sum, velocity) => sum + velocity, 0) /
+        bodyInwardVelocities.length,
+    ).toBeLessThanOrEqual(-0.85)
+    const bodyEmission = PfxLibrary.createPfxParticleEmission(preset, body!)
+    const bodySizeScales = Array.from(
+      { length: bodySimulation.count },
+      (_, index) => bodyEmission.variance[index * 2]!,
+    )
+    const bodyValueScales = Array.from(
+      { length: bodySimulation.count },
+      (_, index) => bodyEmission.variance[index * 2 + 1]!,
+    )
+    expect(Math.min(...bodyValueScales)).toBeGreaterThanOrEqual(0.32)
+    expect(Math.min(...bodyValueScales)).toBeLessThanOrEqual(0.4)
+    expect(Math.max(...bodyValueScales)).toBeGreaterThanOrEqual(0.9)
+    expect(Math.max(...bodyValueScales)).toBeLessThanOrEqual(1)
+    expect(
+      bodyValueScales.filter((valueScale) => valueScale >= 0.88).length /
+        bodyValueScales.length,
+    ).toBeGreaterThanOrEqual(0.12)
+    expect(
+      bodyValueScales.filter((valueScale) => valueScale >= 0.88).length /
+        bodyValueScales.length,
+    ).toBeLessThanOrEqual(0.45)
+    const bodyTargetHeightUnits = Array.from(
+      { length: bodySimulation.count },
+      (_, index) => Math.pow(
+        (bodyEmission.orbit[index * 2]! * 0.61803398875) % 1,
+        1.1,
+      ),
+    )
+    const bodyAverage = (values: readonly number[]) =>
+      values.reduce((sum, value) => sum + value, 0) / values.length
+    for (let quartile = 0; quartile < 4; quartile += 1) {
+      const cohort = bodyValueScales.filter(
+        (_, index) =>
+          bodyTargetHeightUnits[index]! >= quartile / 4 &&
+          bodyTargetHeightUnits[index]! < (quartile + 1) / 4,
+      )
+      expect(cohort.length).toBeGreaterThanOrEqual(2)
+      expect(bodyAverage(cohort)).toBeGreaterThanOrEqual(0.45)
+    }
+    expect(PFX_MATERIALIZE_GATHER_CORE_VALUE_THRESHOLD)
+      .toBeGreaterThanOrEqual(0.95)
+    expect(PFX_MATERIALIZE_GATHER_CORE_VALUE_THRESHOLD)
+      .toBeLessThanOrEqual(0.97)
+    expect(PFX_SPRITE_PARTICLE_VERTEX).not.toContain(
+      'float materializeGatherCoreUnit = fract(',
+    )
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT).not.toContain(
+      'materializeGatherCoreSprite',
+    )
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT).not.toContain(
+      'float materializeStreakCohort = step(0.82, materializeMixedSeed);',
+    )
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT).toContain(
+      'float materializeReleaseCore = step(1.44, vBrightness);',
+    )
+    expect(PFX_SPRITE_PARTICLE_VERTEX).toContain(
+      'float materializeReleaseCoreVertex = step(1.44, aVariance.y);',
+    )
+    expect(PFX_SPRITE_PARTICLE_VERTEX).toContain(
+      'size *= mix(1.0, 1.35, materializeReleaseCoreVertex);',
+    )
+    expect(PFX_SPRITE_PARTICLE_VERTEX).toContain(
+      'mix(stretchFactor, 1.0, materializeReleaseCoreVertex)',
+    )
+    expect(Math.min(...bodySizeScales)).toBeGreaterThanOrEqual(0.44)
+    expect(Math.min(...bodySizeScales)).toBeLessThanOrEqual(0.68)
+    expect(Math.max(...bodySizeScales)).toBeGreaterThanOrEqual(1.15)
+    expect(Math.max(...bodySizeScales)).toBeLessThanOrEqual(1.27)
+    expect(
+      bodySizeScales.filter((sizeScale) => sizeScale >= 1.08),
+    ).not.toHaveLength(0)
+    expect(
+      bodySizeScales.filter((sizeScale) => sizeScale < 0.82).length /
+        bodySizeScales.length,
+    ).toBeGreaterThanOrEqual(0.25)
+    expect(new Set(bodySizeScales.map((sizeScale) => sizeScale.toFixed(2))).size)
+      .toBeGreaterThanOrEqual(12)
+    expect(wake).toMatchObject({
+      role: 'volume',
+      tuning: {
+        motion: 'materialize-release',
+        sprite: 'spark',
+        reducedMotionSprite: 'spark',
+        blend: 'additive',
+        ramp: 'held',
+        lifecycle: 'spawn-telegraph-assembly',
+        death: 'erode',
+      },
+    })
+    expect(wake!.tuning!.delay).toBeGreaterThan(body!.tuning!.delay!)
+    expect(wake!.tuning!.delay).toBeGreaterThanOrEqual(0.03)
+    expect(wake!.tuning!.delay).toBeLessThanOrEqual(0.08)
+    expect(wake!.tuning!.window).toBeGreaterThanOrEqual(0.12)
+    expect(wake!.tuning!.window).toBeLessThanOrEqual(0.16)
+    expect(wake!.tuning!.lifeScale).toBeGreaterThanOrEqual(2)
+    expect(wake!.tuning!.lifeScale).toBeLessThanOrEqual(2.2)
+    expect(wake!.tuning!.speedScale).toBeGreaterThanOrEqual(1.3)
+    expect(wake!.tuning!.speedScale).toBeLessThanOrEqual(1.5)
+    expect(wake!.tuning!.size![1]).toBeGreaterThan(wake!.tuning!.size![0])
+    expect(PFX_SPRITE_SLICES[wake!.tuning!.sprite!].source)
+      .toBe('kenney-particle-pack/spark_06.png')
+    expect(wake!.tuning!.flipbookAtlas).toBeUndefined()
+    expect(wake!.tuning!.size![1]).toBeGreaterThanOrEqual(0.28)
+    expect(wake!.tuning!.size![1]).toBeLessThanOrEqual(0.32)
+    expect(wake!.tuning!.size![0]).toBeGreaterThanOrEqual(0.045)
+    expect(wake!.tuning!.size![0]).toBeLessThanOrEqual(0.055)
+    expect(wake!.tuning!.size![2]).toBeLessThanOrEqual(0.055)
+    expect(wake!.tuning!.stretch).toBeGreaterThanOrEqual(0.6)
+    expect(PFX_MATERIALIZE_RELEASE_GATHER_SPRITE_ASPECT)
+      .toBeGreaterThanOrEqual(0.62)
+    expect(PFX_MATERIALIZE_RELEASE_GATHER_SPRITE_ASPECT)
+      .toBeLessThanOrEqual(0.78)
+    expect(wake!.opacity).toBeGreaterThanOrEqual(0.82)
+    expect(wake!.opacity).toBeLessThanOrEqual(0.88)
+    expect(wake!.scale).toBeGreaterThanOrEqual(3.55)
+    expect(wake!.scale).toBeLessThanOrEqual(3.8)
+    expect(wake!.tuning!.countScale).toBeGreaterThanOrEqual(2.7)
+    expect(wake!.tuning!.countScale).toBeLessThanOrEqual(2.9)
+    expect(PFX_MATERIALIZE_GROUND_STREAM_LANES).toBe(6)
+    expect(PFX_MATERIALIZE_GATHER_COHORT_FRACTION).toBeGreaterThanOrEqual(0.16)
+    expect(PFX_MATERIALIZE_GATHER_COHORT_FRACTION).toBeLessThanOrEqual(0.22)
+    // Independent v366 review found that the former 82% ground / 82% contact
+    // split photographed as a broad luminous disc. Reserve enough particles
+    // for a rising traditional-particle column and keep the contact cohort
+    // subordinate to that vertical handoff.
+    expect(PFX_MATERIALIZE_RELEASE_CONTACT_FRACTION).toBeGreaterThanOrEqual(0.58)
+    expect(PFX_MATERIALIZE_RELEASE_CONTACT_FRACTION).toBeLessThanOrEqual(0.68)
+    expect(PFX_MATERIALIZE_RELEASE_GROUND_FRACTION).toBeGreaterThanOrEqual(0.66)
+    expect(PFX_MATERIALIZE_RELEASE_GROUND_FRACTION).toBeLessThanOrEqual(0.72)
+    expect(wake!.tuning!.reducedMotionCountScale).toBeGreaterThanOrEqual(1.9)
+    expect(wake!.tuning!.reducedMotionCountScale).toBeLessThanOrEqual(2.1)
+    expect(wake!.tuning!.alphaGamma).toBeGreaterThanOrEqual(0.28)
+    expect(wake!.tuning!.alphaGamma).toBeLessThanOrEqual(0.36)
+    expect(wake!.tuning!.spawnScale).toBeGreaterThanOrEqual(1.1)
+    expect(wake!.tuning!.depthScale).toBeGreaterThanOrEqual(2.4)
+    expect(wake!.tuning!.colorOverride).toBe('#8eeeff')
+    expect(wake!.tuning!.randomizeAzimuth).toBe(false)
+    expect(Math.abs(wake!.tuning!.positionOffset![1] - boundaryGroundY))
+      .toBeLessThanOrEqual(0.12)
+
+    const wakeSimulation = PfxLibrary.createPfxParticleSimulation(preset, wake!)
+    const reducedWakeSimulation = PfxLibrary.createPfxParticleSimulation(
+      reducedPreset,
+      wake!,
+    )
+    expect(reducedWakeSimulation.count).toBeGreaterThanOrEqual(31)
+    expect(reducedWakeSimulation.count).toBeLessThanOrEqual(35)
+    const reducedWakeEmission = PfxLibrary.createPfxParticleEmission(
+      reducedPreset,
+      wake!,
+    )
+    expect(reducedWakeEmission.sprite).toBe('spark')
+    expect(PFX_SPRITE_SLICES[reducedWakeEmission.sprite].source)
+      .toBe('kenney-particle-pack/spark_06.png')
+    const reducedWakeDirections = Array.from(
+      { length: reducedWakeSimulation.count },
+      (_, index) => ({
+        x: reducedWakeSimulation.direction[index * 3]!,
+        y: reducedWakeSimulation.direction[index * 3 + 1]!,
+        z: reducedWakeSimulation.direction[index * 3 + 2]!,
+      }),
+    )
+    const reducedWakeGatherCount = Math.floor(
+      reducedWakeSimulation.count * PFX_MATERIALIZE_GATHER_COHORT_FRACTION,
+    )
+    const reducedReleaseBirths = Array.from(
+      { length: reducedWakeSimulation.count - reducedWakeGatherCount },
+      (_, index) =>
+        reducedWakeEmission.life[(reducedWakeGatherCount + index) * 2]!,
+    )
+    expect(Math.min(...reducedReleaseBirths)).toBeGreaterThanOrEqual(0.2)
+    expect(Math.max(...reducedReleaseBirths)).toBeLessThanOrEqual(0.34)
+    const reducedReleaseSizeScales = Array.from(
+      { length: reducedWakeSimulation.count - reducedWakeGatherCount },
+      (_, index) =>
+        reducedWakeEmission.variance[
+          (reducedWakeGatherCount + index) * 2
+        ]!,
+    )
+    expect(Math.min(...reducedReleaseSizeScales)).toBeGreaterThanOrEqual(0.54)
+    expect(Math.max(...reducedReleaseSizeScales)).toBeGreaterThanOrEqual(0.86)
+    expect(Math.max(...reducedReleaseSizeScales)).toBeLessThanOrEqual(0.96)
+    expect(
+      Math.max(...reducedReleaseSizeScales) -
+        Math.min(...reducedReleaseSizeScales),
+    ).toBeGreaterThanOrEqual(0.18)
+    const reducedGroundDirections = reducedWakeDirections.slice(
+      reducedWakeGatherCount,
+    )
+    expect(Math.max(...reducedGroundDirections.map(({ y }) => Math.abs(y))))
+      .toBeLessThanOrEqual(0.2)
+    expect(Math.max(...reducedGroundDirections.map(({ x, z }) => Math.hypot(x, z))))
+      .toBeGreaterThanOrEqual(0.8)
+    const reducedReleaseRadii = Array.from(
+      { length: reducedWakeSimulation.count - reducedWakeGatherCount },
+      (_, index) => {
+        const particleIndex = reducedWakeGatherCount + index
+        return Math.hypot(
+          reducedWakeSimulation.spawn[particleIndex * 3]!,
+          reducedWakeSimulation.spawn[particleIndex * 3 + 2]!,
+        )
+      },
+    )
+    const reducedContactCount = Math.floor(
+      (
+        Math.floor(
+          reducedWakeSimulation.count *
+            PFX_MATERIALIZE_RELEASE_GROUND_FRACTION,
+        ) - reducedWakeGatherCount
+      ) * PFX_MATERIALIZE_RELEASE_CONTACT_FRACTION,
+    )
+    const reducedContactRadii = reducedReleaseRadii
+      .slice(0, reducedContactCount)
+      .sort((left, right) => left - right)
+    expect(Math.min(...reducedContactRadii)).toBeLessThanOrEqual(0.14)
+    expect(
+      reducedContactRadii[Math.floor(reducedContactRadii.length / 2)]!,
+    ).toBeLessThanOrEqual(0.4)
+    expect(Math.max(...reducedReleaseRadii)).toBeGreaterThanOrEqual(0.52)
+    expect(Math.max(...reducedReleaseRadii)).toBeLessThanOrEqual(1)
+    expect(Math.max(
+      ...Array.from(reducedWakeSimulation.speed.slice(
+        reducedWakeGatherCount,
+      )),
+    )).toBeLessThanOrEqual(0.35)
+    const wakeGatherCount = Math.floor(
+      wakeSimulation.count * PFX_MATERIALIZE_GATHER_COHORT_FRACTION,
+    )
+    const wakeGroundCount = Math.floor(
+      wakeSimulation.count * PFX_MATERIALIZE_RELEASE_GROUND_FRACTION,
+    )
+    expect(wakeSimulation.count - wakeGroundCount).toBeGreaterThanOrEqual(19)
+    expect(wakeSimulation.count - wakeGroundCount).toBeLessThanOrEqual(24)
+    const wakeDirectionsY = Array.from({ length: wakeSimulation.count }, (_, index) =>
+      wakeSimulation.direction[index * 3 + 1]!)
+    const average = (values: readonly number[]) =>
+      values.reduce((sum, value) => sum + value, 0) / values.length
+    expect(Math.min(...wakeDirectionsY)).toBeGreaterThanOrEqual(0.05)
+    expect(Math.max(...wakeDirectionsY)).toBeLessThanOrEqual(0.95)
+    expect(average(wakeDirectionsY.slice(0, wakeGatherCount)))
+      .toBeGreaterThanOrEqual(0.84)
+    expect(average(wakeDirectionsY.slice(0, wakeGatherCount)))
+      .toBeLessThanOrEqual(0.9)
+    const elevatedWakeDirectionsY = wakeDirectionsY.slice(wakeGroundCount)
+    expect(average(elevatedWakeDirectionsY)).toBeGreaterThanOrEqual(0.72)
+    expect(average(elevatedWakeDirectionsY)).toBeLessThanOrEqual(0.9)
+    expect(
+      Math.max(...elevatedWakeDirectionsY) -
+        Math.min(...elevatedWakeDirectionsY),
+    ).toBeGreaterThanOrEqual(0.03)
+    const gatherWakeSpeeds = Array.from(
+      wakeSimulation.speed.slice(0, wakeGatherCount),
+    )
+    const elevatedWakeSpeeds = Array.from(
+      wakeSimulation.speed.slice(wakeGroundCount),
+    )
+    expect(average(elevatedWakeSpeeds))
+      .toBeGreaterThan(average(gatherWakeSpeeds) * 1.25)
+    expect(average(elevatedWakeSpeeds))
+      .toBeLessThan(average(gatherWakeSpeeds) * 2)
+    const wakeEmission = PfxLibrary.createPfxParticleEmission(preset, wake!)
+    const wakeSizeScales = Array.from(
+      { length: wakeSimulation.count },
+      (_, index) => wakeEmission.variance[index * 2]!,
+    )
+    const groundReleaseBirths = Array.from(
+      { length: wakeGroundCount - wakeGatherCount },
+      (_, index) => wakeEmission.life[(wakeGatherCount + index) * 2]!,
+    )
+    const elevatedReleaseBirths = Array.from(
+      { length: wakeSimulation.count - wakeGroundCount },
+      (_, index) => wakeEmission.life[(wakeGroundCount + index) * 2]!,
+    )
+    const groundReleaseDurations = Array.from(
+      { length: wakeGroundCount - wakeGatherCount },
+      (_, index) => wakeEmission.life[(wakeGatherCount + index) * 2 + 1]!,
+    )
+    const elevatedReleaseDurations = Array.from(
+      { length: wakeSimulation.count - wakeGroundCount },
+      (_, index) => wakeEmission.life[(wakeGroundCount + index) * 2 + 1]!,
+    )
+    expect(Math.min(...groundReleaseBirths)).toBeGreaterThanOrEqual(0.2)
+    expect(Math.max(...groundReleaseBirths)).toBeLessThanOrEqual(0.32)
+    expect(Math.min(...elevatedReleaseBirths)).toBeGreaterThanOrEqual(0.22)
+    expect(Math.max(...elevatedReleaseBirths)).toBeLessThanOrEqual(0.36)
+    expect(average(elevatedReleaseBirths))
+      .toBeLessThan(average(groundReleaseBirths) + 0.06)
+    const groundContactDurationCount = Math.floor(
+      groundReleaseDurations.length * PFX_MATERIALIZE_RELEASE_CONTACT_FRACTION,
+    )
+    const contactReleaseDurations = groundReleaseDurations.slice(
+      0,
+      groundContactDurationCount,
+    )
+    const risingReleaseDurations = groundReleaseDurations.slice(
+      groundContactDurationCount,
+    )
+    expect(Math.min(...contactReleaseDurations)).toBeGreaterThanOrEqual(0.22)
+    expect(Math.max(...contactReleaseDurations)).toBeLessThanOrEqual(0.34)
+    expect(Math.min(...risingReleaseDurations)).toBeGreaterThanOrEqual(0.26)
+    expect(Math.max(...risingReleaseDurations)).toBeLessThanOrEqual(0.42)
+    expect(Math.min(...elevatedReleaseDurations)).toBeGreaterThanOrEqual(1.12)
+    expect(Math.max(...elevatedReleaseDurations)).toBeLessThanOrEqual(1.42)
+    const contactReleaseValueScales = Array.from(
+      { length: groundContactDurationCount },
+      (_, index) =>
+        wakeEmission.variance[(wakeGatherCount + index) * 2 + 1]!,
+    )
+    expect(Math.min(...contactReleaseValueScales)).toBeGreaterThanOrEqual(0.85)
+    expect(Math.max(...contactReleaseValueScales)).toBeGreaterThanOrEqual(1.46)
+    expect(Math.max(...contactReleaseValueScales)).toBeLessThanOrEqual(1.5)
+    expect(Math.min(...wakeSizeScales)).toBeGreaterThanOrEqual(0.28)
+    expect(Math.min(...wakeSizeScales)).toBeLessThanOrEqual(0.4)
+    expect(Math.max(...wakeSizeScales)).toBeGreaterThanOrEqual(0.8)
+    const gatherSizeScales = wakeSizeScales.slice(0, wakeGatherCount)
+    const groundReleaseSizeScales = wakeSizeScales.slice(
+      wakeGatherCount,
+      wakeGroundCount,
+    )
+    const elevatedReleaseSizeScales = wakeSizeScales.slice(wakeGroundCount)
+    expect(Math.min(...elevatedReleaseSizeScales)).toBeGreaterThanOrEqual(0.28)
+    expect(Math.min(...elevatedReleaseSizeScales)).toBeLessThanOrEqual(0.6)
+    expect(Math.max(...elevatedReleaseSizeScales)).toBeGreaterThanOrEqual(0.7)
+    expect(Math.max(...elevatedReleaseSizeScales)).toBeLessThanOrEqual(0.9)
+    const wakeHorizontalRadii = Array.from(
+      { length: wakeSimulation.count },
+      (_, index) => Math.hypot(
+        wakeSimulation.spawn[index * 3]!,
+        wakeSimulation.spawn[index * 3 + 2]!,
+      ),
+    )
+    const gatherWakeRadii = wakeHorizontalRadii.slice(0, wakeGatherCount)
+    expect(Math.min(...gatherWakeRadii)).toBeGreaterThanOrEqual(0.2)
+    expect(Math.max(...gatherWakeRadii)).toBeGreaterThanOrEqual(0.72)
+    expect(Math.max(...gatherWakeRadii)).toBeLessThanOrEqual(1.05)
+    const wakeBirthHeights = Array.from(
+      { length: wakeSimulation.count },
+      (_, index) => wakeSimulation.spawn[index * 3 + 1]!,
+    )
+    const wakeContactCount = wakeGatherCount + Math.floor(
+      (wakeGroundCount - wakeGatherCount) *
+        PFX_MATERIALIZE_RELEASE_CONTACT_FRACTION,
+    )
+    const contactWakeRadii = wakeHorizontalRadii.slice(
+      wakeGatherCount,
+      wakeContactCount,
+    )
+    const sortedContactWakeRadii = [...contactWakeRadii]
+      .sort((left, right) => left - right)
+    const contactWakeMedian =
+      sortedContactWakeRadii[Math.floor(sortedContactWakeRadii.length / 2)]!
+    expect(Math.min(...contactWakeRadii)).toBeLessThanOrEqual(0.14)
+    expect(contactWakeMedian).toBeLessThanOrEqual(0.4)
+    expect(Math.max(...contactWakeRadii)).toBeGreaterThanOrEqual(0.4)
+    expect(Math.max(...contactWakeRadii)).toBeLessThanOrEqual(0.64)
+    const risingWakeRadii = wakeHorizontalRadii.slice(
+      wakeContactCount,
+      wakeGroundCount,
+    )
+    const sortedRisingWakeRadii = [...risingWakeRadii]
+      .sort((left, right) => left - right)
+    expect(
+      sortedRisingWakeRadii[Math.floor(sortedRisingWakeRadii.length / 2)]!,
+    ).toBeGreaterThanOrEqual(0.3)
+    expect(Math.max(...risingWakeRadii)).toBeGreaterThanOrEqual(0.45)
+    expect(Math.max(...risingWakeRadii)).toBeLessThanOrEqual(0.75)
+    expect(Math.min(...wakeBirthHeights)).toBeLessThanOrEqual(0.12)
+    expect(Math.max(...wakeBirthHeights)).toBeGreaterThanOrEqual(1.7)
+    expect(Math.max(...wakeBirthHeights)).toBeLessThanOrEqual(2)
+    const elevatedWakeBirthHeights = wakeBirthHeights.slice(wakeGroundCount)
+    // Decay must visibly grow out of the peak's contact area. Starting the
+    // late wisps halfway up the column photographs as detached floating
+    // dashes instead of an exhausted particle funnel.
+    expect(Math.min(...elevatedWakeBirthHeights)).toBeLessThanOrEqual(0.14)
+    expect(Math.max(...elevatedWakeBirthHeights)).toBeGreaterThanOrEqual(0.28)
+    expect(Math.max(...elevatedWakeBirthHeights)).toBeLessThanOrEqual(0.46)
+    expect(
+      Math.max(...elevatedWakeBirthHeights) -
+        Math.min(...elevatedWakeBirthHeights),
+    ).toBeGreaterThanOrEqual(0.03)
+    expect(
+      wakeBirthHeights.filter((height) => height < 0.25).length /
+        wakeBirthHeights.length,
+    ).toBeGreaterThanOrEqual(0.5)
+    expect(
+      wakeBirthHeights
+        .slice(wakeGatherCount, wakeGroundCount)
+        .every((height) => height <= 0.24),
+    ).toBe(true)
+    expect(Math.max(...wakeSimulation.speed)).toBeLessThanOrEqual(3.5)
+    expect(Math.max(...wakeHorizontalRadii)).toBeGreaterThanOrEqual(0.58)
+    expect(Math.max(...wakeHorizontalRadii)).toBeLessThanOrEqual(1.05)
+    const lowerWakeRadii = wakeHorizontalRadii.filter(
+      (_, index) => wakeBirthHeights[index]! < 0.25,
+    )
+    expect(Math.max(...lowerWakeRadii)).toBeGreaterThanOrEqual(0.5)
+    const elevatedWakeRadii = wakeHorizontalRadii.slice(wakeGroundCount)
+    expect(Math.min(...elevatedWakeRadii)).toBeLessThanOrEqual(0.18)
+    expect(Math.max(...elevatedWakeRadii)).toBeLessThanOrEqual(0.3)
+    const nonCoreContactSizeScales = contactWakeRadii
+      .map((radius, index) => ({
+        radius,
+        sizeScale: wakeSizeScales[wakeGatherCount + index]!,
+      }))
+      .filter(({ radius }) => radius > 0.09)
+      .map(({ sizeScale }) => sizeScale)
+    expect(nonCoreContactSizeScales).not.toHaveLength(0)
+    expect(Math.max(...nonCoreContactSizeScales)).toBeLessThanOrEqual(0.5)
+    // Radius must be independent from azimuth. Complementary low-discrepancy
+    // sequences place one narrow radius band in each angular sector, which
+    // photographs as a spiral instead of a broad radial particle field.
+    const groundWakeCount = wakeGroundCount
+    const groundWakeRadialBins = Array.from({ length: 6 }, () => [] as number[])
+    for (let index = 0; index < groundWakeCount; index += 1) {
+      const x = wakeSimulation.spawn[index * 3]!
+      const z = wakeSimulation.spawn[index * 3 + 2]!
+      const azimuth = (Math.atan2(z, x) + Math.PI * 2) % (Math.PI * 2)
+      const bin = Math.floor(azimuth / (Math.PI * 2) * groundWakeRadialBins.length)
+      groundWakeRadialBins[bin]!.push(Math.hypot(x, z))
+    }
+    expect(groundWakeRadialBins.every((radii) => radii.length >= 1)).toBe(true)
+    const groundWakeRadii = groundWakeRadialBins.flat()
+    expect(Math.max(...groundWakeRadii) - Math.min(...groundWakeRadii))
+      .toBeGreaterThanOrEqual(0.45)
+    const wakeRadialVelocities = Array.from(
+      { length: wakeSimulation.count },
+      (_, index) => {
+        const radius = wakeHorizontalRadii[index]!
+        const x = wakeSimulation.spawn[index * 3]!
+        const z = wakeSimulation.spawn[index * 3 + 2]!
+        return (
+          wakeSimulation.direction[index * 3]! * x +
+          wakeSimulation.direction[index * 3 + 2]! * z
+        ) / radius
+      },
+    )
+    expect(Math.max(...wakeRadialVelocities.slice(0, wakeGatherCount)))
+      .toBeLessThanOrEqual(-0.25)
+    const groundReleaseRadialVelocities = wakeRadialVelocities.slice(
+      wakeGatherCount,
+      wakeGroundCount,
+    )
+    const groundReleaseVerticalVelocities = wakeDirectionsY.slice(
+      wakeGatherCount,
+      wakeGroundCount,
+    )
+    // A deterministic contact sub-cohort remains broad and horizontal while
+    // the following velocity-stretched shards rise from it. Making every
+    // release particle horizontal creates the clone-like radial flower seen
+    // in the v263 review packet.
+    const contactReleaseCount = Math.floor(
+      groundReleaseRadialVelocities.length * PFX_MATERIALIZE_RELEASE_CONTACT_FRACTION,
+    )
+    const contactRadialVelocities = groundReleaseRadialVelocities.slice(
+      0,
+      contactReleaseCount,
+    )
+    const contactVerticalVelocities = groundReleaseVerticalVelocities.slice(
+      0,
+      contactReleaseCount,
+    )
+    const risingRadialVelocities = groundReleaseRadialVelocities.slice(
+      contactReleaseCount,
+    )
+    const risingVerticalVelocities = groundReleaseVerticalVelocities.slice(
+      contactReleaseCount,
+    )
+    expect(Math.min(...contactRadialVelocities)).toBeGreaterThanOrEqual(0.6)
+    expect(Math.max(...contactRadialVelocities)).toBeLessThanOrEqual(0.93)
+    expect(Math.max(...contactVerticalVelocities)).toBeLessThanOrEqual(0.65)
+    expect(Math.min(...risingRadialVelocities)).toBeGreaterThanOrEqual(0.18)
+    expect(Math.max(...risingRadialVelocities)).toBeLessThanOrEqual(0.94)
+    expect(Math.min(...risingVerticalVelocities)).toBeGreaterThanOrEqual(0.25)
+    expect(Math.max(...risingVerticalVelocities)).toBeLessThanOrEqual(0.8)
+    const elevatedWakeRadialVelocities = wakeRadialVelocities.slice(wakeGroundCount)
+    expect(average(elevatedWakeRadialVelocities.map(Math.abs)))
+      .toBeGreaterThanOrEqual(0.42)
+    expect(Math.max(...elevatedWakeRadialVelocities.map(Math.abs)))
+      .toBeLessThanOrEqual(0.65)
+    const elevatedPeakHeights = Array.from(
+      { length: wakeSimulation.count - wakeGroundCount },
+      (_, cohortIndex) => {
+        const index = wakeGroundCount + cohortIndex
+        const ageFraction =
+          0.77 -
+          wakeEmission.life[index * 2]! -
+          wake!.tuning!.delay!
+        const age = Math.max(0, ageFraction) *
+          preset.controls.lifetime *
+          PFX_BURST_CYCLE_MULTIPLIER
+        const travel = (
+          1 - Math.exp(-wake!.tuning!.drag! * age)
+        ) / wake!.tuning!.drag!
+        return (
+          wakeSimulation.spawn[index * 3 + 1]! +
+          wakeSimulation.direction[index * 3 + 1]! *
+            wakeSimulation.speed[index]! *
+            travel
+        )
+      },
+    )
+    expect(Math.max(...elevatedPeakHeights)).toBeGreaterThanOrEqual(0.5)
+    expect(
+      Math.max(...elevatedPeakHeights) -
+        Math.min(...elevatedPeakHeights),
+    ).toBeGreaterThanOrEqual(0.32)
+    const gatherTangentialVelocities = Array.from(
+      { length: wakeGatherCount },
+      (_, index) => {
+        const radius = wakeHorizontalRadii[index]!
+        const x = wakeSimulation.spawn[index * 3]!
+        const z = wakeSimulation.spawn[index * 3 + 2]!
+        return (
+          -z * wakeSimulation.direction[index * 3]! +
+          x * wakeSimulation.direction[index * 3 + 2]!
+        ) / radius
+      },
+    )
+    expect(average(gatherTangentialVelocities.map(Math.abs)))
+      .toBeGreaterThanOrEqual(0.18)
+    expect(average(gatherTangentialVelocities.map(Math.abs)))
+      .toBeLessThanOrEqual(0.35)
+    expect(Math.min(...gatherTangentialVelocities))
+      .toBeGreaterThanOrEqual(-0.18)
+    expect(Math.max(...gatherTangentialVelocities))
+      .toBeGreaterThanOrEqual(0.1)
+    const gatherVerticalVelocities = Array.from(
+      { length: wakeGatherCount },
+      (_, index) => wakeSimulation.direction[index * 3 + 1]!,
+    )
+    expect(average(gatherVerticalVelocities)).toBeGreaterThanOrEqual(0.12)
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT)
+      .toContain('float materializeGatherFlowHead = smoothstep(0.08, 0.88, vUv.y)')
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT)
+      .toContain('mix(0.2, 1.0, materializeGatherFlowHead)')
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT)
+      .toContain('materializeGatherDirectionalRamp')
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT).toContain('materializeGatherFlowHead')
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT).toContain('materializeFlowHead')
+    const gatherRadiiAndSizes = gatherSizeScales
+      .map((sizeScale, index) => ({
+        radius: wakeHorizontalRadii[index]!,
+        sizeScale,
+        valueScale: wakeEmission.variance[index * 2 + 1]!,
+      }))
+      .sort((left, right) => left.radius - right.radius)
+    const gatherQuartile = Math.max(1, Math.floor(gatherRadiiAndSizes.length / 4))
+    const outerGather = gatherRadiiAndSizes.slice(-gatherQuartile)
+    expect(Math.min(...groundReleaseSizeScales)).toBeLessThanOrEqual(0.65)
+    expect(Math.max(...groundReleaseSizeScales)).toBeGreaterThanOrEqual(0.8)
+    expect(Math.max(...groundReleaseSizeScales)).toBeLessThanOrEqual(1.15)
+    expect(average(groundReleaseSizeScales)).toBeGreaterThanOrEqual(0.48)
+    expect(average(groundReleaseSizeScales)).toBeLessThanOrEqual(0.65)
+    const groundReleaseValueScales = Array.from(
+      { length: wakeGroundCount - wakeGatherCount },
+      (_, index) =>
+        wakeEmission.variance[(wakeGatherCount + index) * 2 + 1]!,
+    )
+    expect(Math.min(...groundReleaseValueScales)).toBeLessThanOrEqual(0.95)
+    expect(Math.max(...groundReleaseValueScales)).toBeGreaterThanOrEqual(1.42)
+    expect(Math.min(...gatherSizeScales)).toBeGreaterThanOrEqual(0.65)
+    expect(Math.max(...gatherSizeScales)).toBeLessThanOrEqual(1)
+    expect(average(outerGather.map((particle) => particle.sizeScale)))
+      .toBeGreaterThanOrEqual(0.7)
+    expect(average(outerGather.map((particle) => particle.sizeScale)))
+      .toBeLessThanOrEqual(0.95)
+    expect(average(outerGather.map((particle) => particle.valueScale)))
+      .toBeGreaterThanOrEqual(0.9)
+    const gatherSpeeds = Array.from(
+      wakeSimulation.speed.slice(0, wakeGatherCount),
+    )
+    const groundReleaseSpeeds = Array.from(
+      wakeSimulation.speed.slice(wakeGatherCount, wakeGroundCount),
+    )
+    const contactReleaseSpeeds = groundReleaseSpeeds.slice(
+      0,
+      contactReleaseCount,
+    )
+    const risingReleaseSpeeds = groundReleaseSpeeds.slice(
+      contactReleaseCount,
+    )
+    expect(average(contactReleaseSpeeds))
+      .toBeLessThan(average(risingReleaseSpeeds) * 0.45)
+    expect(average(risingReleaseSpeeds))
+      .toBeGreaterThan(average(gatherSpeeds) * 2)
+
+    const spawnTimeScale =
+      preset.controls.timing *
+      getPfxStyleRenderProfile(preset.controls.style).motionMultiplier *
+      plan.tempo
+    const spawnPeriod =
+      Math.max(0.3, preset.controls.lifetime) *
+      PFX_BURST_CYCLE_MULTIPLIER
+    const elapsedAtSpawnCycle = (cycle: number) =>
+      cycle * spawnPeriod / spawnTimeScale
+    const wakeReleaseStart = getPfxSurfaceAnimationProps(
+      wake!,
+      preset.controls,
+      elapsedAtSpawnCycle(0.65),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const wakeReleaseLate = getPfxSurfaceAnimationProps(
+      wake!,
+      preset.controls,
+      elapsedAtSpawnCycle(0.82),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const bodyReleaseLate = getPfxSurfaceAnimationProps(
+      body!,
+      preset.controls,
+      elapsedAtSpawnCycle(0.82),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const bodyAcquireMid = getPfxSurfaceAnimationProps(
+      body!,
+      preset.controls,
+      elapsedAtSpawnCycle(0.12),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const bodyMaterializeOnset = getPfxSurfaceAnimationProps(
+      body!,
+      preset.controls,
+      elapsedAtSpawnCycle(0.2),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const wakeMaterializeMid = getPfxSurfaceAnimationProps(
+      wake!,
+      preset.controls,
+      elapsedAtSpawnCycle(0.34),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const boundaryReleaseLate = getPfxSurfaceAnimationProps(
+      footprint!,
+      preset.controls,
+      elapsedAtSpawnCycle(0.82),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const bodyConfirm = getPfxSurfaceAnimationProps(
+      body!,
+      preset.controls,
+      elapsedAtSpawnCycle(0.56),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const wakeConfirm = getPfxSurfaceAnimationProps(
+      wake!,
+      preset.controls,
+      elapsedAtSpawnCycle(0.56),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    expect(bodyConfirm.scaleMultiplier).toBeGreaterThanOrEqual(0.9)
+    expect(bodyConfirm.scaleMultiplier).toBeLessThanOrEqual(1)
+    expect(bodyConfirm.opacityMultiplier).toBeGreaterThanOrEqual(0.38)
+    expect(bodyConfirm.opacityMultiplier).toBeLessThanOrEqual(0.48)
+    expect(wakeConfirm.scaleMultiplier).toBeGreaterThanOrEqual(0.7)
+    expect(wakeConfirm.opacityMultiplier)
+      .toBeGreaterThan(bodyConfirm.opacityMultiplier * 1.8)
+    expect(bodyAcquireMid.opacityMultiplier).toBeGreaterThanOrEqual(0.32)
+    expect(bodyMaterializeOnset.opacityMultiplier).toBeGreaterThanOrEqual(0.52)
+    expect(bodyMaterializeOnset.opacityMultiplier).toBeLessThanOrEqual(0.76)
+    // Keep the spark-release cohort subordinate while the warning boundary
+    // and inward streaks establish the spawn footprint; it becomes the hot
+    // accent at confirmation and release instead of competing with the onset.
+    expect(wakeMaterializeMid.opacityMultiplier).toBeGreaterThanOrEqual(0.45)
+    expect(wakeMaterializeMid.opacityMultiplier).toBeLessThanOrEqual(0.7)
+    expect(wakeReleaseStart.opacityMultiplier).toBeGreaterThanOrEqual(0.72)
+    expect(wakeReleaseStart.opacityMultiplier).toBeLessThanOrEqual(0.94)
+    expect(wakeReleaseLate.opacityMultiplier)
+      .toBeLessThan(wakeReleaseStart.opacityMultiplier)
+    expect(wakeReleaseLate.opacityMultiplier).toBeGreaterThanOrEqual(0.28)
+    expect(wakeReleaseLate.opacityMultiplier).toBeLessThanOrEqual(0.6)
+    expect(bodyReleaseLate.opacityMultiplier).toBeGreaterThanOrEqual(0.18)
+    expect(bodyReleaseLate.opacityMultiplier).toBeLessThanOrEqual(0.28)
+    expect(wakeReleaseLate.opacityMultiplier)
+      .toBeGreaterThan(bodyReleaseLate.opacityMultiplier * 1.1)
+    expect(wakeReleaseStart.scaleMultiplier).toBeGreaterThanOrEqual(0.88)
+    expect(wakeReleaseLate.scaleMultiplier).toBeLessThanOrEqual(1.25)
+    expect(boundaryReleaseLate.opacityMultiplier).toBeGreaterThanOrEqual(0.05)
+    expect(boundaryReleaseLate.opacityMultiplier).toBeLessThanOrEqual(0.14)
+    const wavefrontMasterCycle = 0.77
+    const wavefrontPeriod = preset.controls.lifetime * 1.65
+    const wavefrontRadii = Array.from(
+      { length: contactReleaseCount },
+      (_, cohortIndex) => {
+        const index = wakeGatherCount + cohortIndex
+        const ageFraction =
+          wavefrontMasterCycle -
+          wakeEmission.life[index * 2]! -
+          wake!.tuning!.delay!
+        const age = Math.max(0, ageFraction) * wavefrontPeriod
+        const travel = (
+          1 - Math.exp(-wake!.tuning!.drag! * age)
+        ) / wake!.tuning!.drag!
+        const x =
+          wakeSimulation.spawn[index * 3]! +
+          wakeSimulation.direction[index * 3]! *
+            wakeSimulation.speed[index]! *
+            travel
+        const z =
+          wakeSimulation.spawn[index * 3 + 2]! +
+          wakeSimulation.direction[index * 3 + 2]! *
+            wakeSimulation.speed[index]! *
+            travel
+        return Math.hypot(x, z)
+      },
+    ).sort((left, right) => left - right)
+    const wavefrontP10 = wavefrontRadii[Math.floor(wavefrontRadii.length * 0.1)]!
+    const wavefrontP90 = wavefrontRadii[Math.floor(wavefrontRadii.length * 0.9)]!
+    // Only the contact sub-cohort owns the coherent ground wavefront. Its
+    // bounded radial depth prevents a clone-like spoke row while giving the
+    // peak enough area to read from the gameplay camera.
+    expect(wavefrontP90 - wavefrontP10).toBeLessThanOrEqual(0.41)
+    const gatherBirths = Array.from(
+      { length: wakeGatherCount },
+      (_, index) => wakeEmission.life[index * 2]!,
+    )
+    const gatherDurations = Array.from(
+      { length: wakeGatherCount },
+      (_, index) => wakeEmission.life[index * 2 + 1]!,
+    )
+    const releaseBirths = Array.from(
+      { length: wakeSimulation.count - wakeGatherCount },
+      (_, index) => wakeEmission.life[(wakeGatherCount + index) * 2]!,
+    )
+    expect(Math.max(...gatherBirths)).toBeLessThanOrEqual(0.12)
+    expect(Math.min(...gatherDurations)).toBeGreaterThanOrEqual(1.02)
+    expect(Math.max(...gatherDurations)).toBeLessThanOrEqual(1.24)
+    expect(Math.min(...releaseBirths)).toBeGreaterThanOrEqual(0.2)
+    expect(Math.min(...releaseBirths)).toBeLessThanOrEqual(0.24)
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT)
+      .not.toContain('materializeReleaseHeadTail')
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT)
+      .not.toContain('materializeReleaseTaperedWidth')
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT)
+      .not.toContain('uMaterializeReleaseUvOffset')
+    expect(PFX_SPRITE_PARTICLE_FRAGMENT)
+      .not.toContain('uMaterializeReleaseUvScale')
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toContain('materializeReleaseCohort')
+    expect(PFX_SPRITE_PARTICLE_VERTEX)
+      .toMatch(/mix\(\s*uSpriteAspect,\s*1\.0,\s*materializeReleaseCohort\s*\)/)
+
+    const timeScale =
+      Math.max(0.05, preset.controls.timing) *
+      getPfxStyleRenderProfile(preset.controls.style).motionMultiplier *
+      Math.max(0.1, plan.tempo)
+    const period =
+      Math.max(0.3, Math.max(0.25, preset.controls.lifetime)) * 1.65
+    const elapsedAtCycle = (cycle: number) => cycle * period / timeScale
+    const boundaryOnset = getPfxSurfaceAnimationProps(
+      footprint!,
+      preset.controls,
+      elapsedAtCycle(0.08),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const boundaryPeak = getPfxSurfaceAnimationProps(
+      footprint!,
+      preset.controls,
+      elapsedAtCycle(0.24),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const boundaryDecay = getPfxSurfaceAnimationProps(
+      footprint!,
+      preset.controls,
+      elapsedAtCycle(0.8),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const bodyOnset = getPfxSurfaceAnimationProps(
+      body!,
+      preset.controls,
+      elapsedAtCycle(0.08),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const bodyPeak = getPfxSurfaceAnimationProps(
+      body!,
+      preset.controls,
+      elapsedAtCycle(0.54),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const bodyEarlyMaterialize = getPfxSurfaceAnimationProps(
+      body!,
+      preset.controls,
+      elapsedAtCycle(0.2),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const bodyMidMaterialize = getPfxSurfaceAnimationProps(
+      body!,
+      preset.controls,
+      elapsedAtCycle(0.34),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const bodyDecay = getPfxSurfaceAnimationProps(
+      body!,
+      preset.controls,
+      elapsedAtCycle(0.8),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const wakeOnset = getPfxSurfaceAnimationProps(
+      wake!,
+      preset.controls,
+      elapsedAtCycle(0.08),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const wakeRelease = getPfxSurfaceAnimationProps(
+      wake!,
+      preset.controls,
+      elapsedAtCycle(0.76),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const wakePeak = getPfxSurfaceAnimationProps(
+      wake!,
+      preset.controls,
+      elapsedAtCycle(0.54),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const wakeMidMaterialize = getPfxSurfaceAnimationProps(
+      wake!,
+      preset.controls,
+      elapsedAtCycle(0.34),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    const wakeRest = getPfxSurfaceAnimationProps(
+      wake!,
+      preset.controls,
+      elapsedAtCycle(0.9),
+      1,
+      plan.tempo,
+      plan.feelVersion,
+    )
+    expect(boundaryOnset.opacityMultiplier).toBeGreaterThanOrEqual(1.15)
+    // The boundary must remain strong through peak, but the onset may carry a
+    // slight warning emphasis so the first readable frame is not underexposed.
+    expect(boundaryPeak.opacityMultiplier)
+      .toBeGreaterThanOrEqual(boundaryOnset.opacityMultiplier * 0.95)
+    expect(boundaryOnset.scaleMultiplier).toBeGreaterThanOrEqual(0.78)
+    expect(boundaryPeak.scaleMultiplier).toBeGreaterThanOrEqual(0.98)
+    expect(boundaryDecay.opacityMultiplier).toBeGreaterThanOrEqual(0.05)
+    expect(boundaryDecay.opacityMultiplier).toBeLessThanOrEqual(0.18)
+    expect(bodyOnset.opacityMultiplier).toBeGreaterThanOrEqual(0.4)
+    expect(bodyOnset.opacityMultiplier).toBeLessThanOrEqual(0.68)
+    expect(bodyOnset.scaleMultiplier).toBeGreaterThanOrEqual(0.95)
+    expect(bodyOnset.scaleMultiplier).toBeLessThanOrEqual(1.05)
+    expect(bodyEarlyMaterialize.opacityMultiplier).toBeGreaterThanOrEqual(0.52)
+    expect(bodyEarlyMaterialize.opacityMultiplier).toBeLessThanOrEqual(0.76)
+    expect(bodyEarlyMaterialize.scaleMultiplier).toBeGreaterThanOrEqual(1)
+    expect(bodyEarlyMaterialize.scaleMultiplier).toBeLessThanOrEqual(1.08)
+    expect(bodyMidMaterialize.opacityMultiplier).toBeGreaterThanOrEqual(0.5)
+    expect(bodyMidMaterialize.opacityMultiplier).toBeLessThanOrEqual(0.58)
+    expect(bodyMidMaterialize.scaleMultiplier).toBeGreaterThanOrEqual(1.08)
+    expect(bodyMidMaterialize.scaleMultiplier).toBeLessThanOrEqual(1.15)
+    expect(bodyPeak.opacityMultiplier).toBeGreaterThanOrEqual(0.38)
+    expect(bodyPeak.opacityMultiplier).toBeLessThanOrEqual(0.48)
+    expect(bodyPeak.scaleMultiplier).toBeGreaterThanOrEqual(0.9)
+    expect(bodyPeak.scaleMultiplier).toBeLessThanOrEqual(1)
+    expect(bodyDecay.opacityMultiplier).toBeLessThan(bodyPeak.opacityMultiplier * 0.7)
+    expect(bodyDecay.opacityMultiplier).toBeGreaterThanOrEqual(0.18)
+    expect(bodyDecay.opacityMultiplier).toBeLessThanOrEqual(0.28)
+    expect(bodyDecay.yOffset).toBeGreaterThanOrEqual(0.05)
+    expect(wakeOnset.opacityMultiplier).toBeGreaterThanOrEqual(0.16)
+    expect(wakeOnset.opacityMultiplier).toBeLessThanOrEqual(0.3)
+    expect(wakeOnset.scaleMultiplier).toBeGreaterThanOrEqual(1)
+    expect(wakeMidMaterialize.scaleMultiplier).toBeGreaterThanOrEqual(0.8)
+    expect(wakePeak.opacityMultiplier).toBeGreaterThanOrEqual(0.5)
+    expect(wakeMidMaterialize.opacityMultiplier)
+      .toBeGreaterThanOrEqual(wakePeak.opacityMultiplier * 0.45)
+    expect(wakeMidMaterialize.opacityMultiplier)
+      .toBeLessThanOrEqual(wakePeak.opacityMultiplier * 0.65)
+    expect(wakePeak.scaleMultiplier).toBeGreaterThanOrEqual(0.7)
+    expect(wakePeak.scaleMultiplier).toBeLessThanOrEqual(0.85)
+    expect(wakeRelease.opacityMultiplier).toBeGreaterThanOrEqual(0.3)
+    expect(wakeRelease.opacityMultiplier).toBeLessThanOrEqual(0.8)
+    expect(wakeRelease.scaleMultiplier).toBeGreaterThanOrEqual(1)
+    expect(wakeRelease.scaleMultiplier).toBeLessThanOrEqual(1.25)
+    expect(wakeRelease.scaleMultiplier)
+      .toBeGreaterThan(wakePeak.scaleMultiplier)
+    expect(wakeRest.opacityMultiplier).toBeLessThanOrEqual(0.15)
+    expect(wakeRest.scaleMultiplier).toBeLessThanOrEqual(2)
   })
 
   it('authors hologram aura as an object-local scan volume instead of a glow orb over an orphaned ring', () => {
@@ -10069,6 +12684,23 @@ describe('r3f-pfx-library catalog contracts', () => {
     })
     expect(arrival!.scale).toBeCloseTo(1.058)
     expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(arrival!, 2, false)).toBe(false)
+    const reviewLifecycle = [72, 302, 590, 648].map((sampleMs) =>
+      PfxLibrary.getPfxSurfaceAnimationProps(
+        arrival!,
+        preset.controls,
+        sampleMs / 1_000,
+        1,
+        plan.tempo,
+        plan.feelVersion,
+      ))
+    expect(reviewLifecycle.map((sample) => sample.signature)).toEqual([
+      'teleport-hit:land',
+      'teleport-hit:afterimage',
+      'teleport-hit:dissolve',
+      'teleport-hit:rest',
+    ])
+    expect(reviewLifecycle[1]!.opacityMultiplier - reviewLifecycle[2]!.opacityMultiplier)
+      .toBeGreaterThanOrEqual(0.2)
 
     const geometry = PfxLibrary.createPfxTeleportHitGeometry()
     expect(geometry.userData).toMatchObject({
@@ -14268,6 +16900,7 @@ describe('r3f-pfx-library catalog contracts', () => {
 
     const workOrder = createWorkOrder({
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
       implementations,
       realDeviceProfiledEffectIds: ['force-field'],
       redTeamReviews,
@@ -14282,6 +16915,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -14447,6 +17081,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -14457,6 +17092,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       realDeviceProfiledEffectIds: ['force-field'],
       redTeamReviews: completedRedTeamRows('force-field'),
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
 
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
@@ -14496,6 +17132,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -14506,6 +17143,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       realDeviceProfiledEffectIds: ['force-field'],
       redTeamReviews: completedRedTeamRows('force-field'),
       taxonomyReviewedEffectIds: [],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
 
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
@@ -14569,6 +17207,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -14580,6 +17219,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       realDeviceProfiledEffectIds: ['force-field'],
       redTeamReviews: completedRedTeamRows('force-field'),
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
 
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
@@ -14618,6 +17258,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -14628,6 +17269,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       realDeviceProfiledEffectIds: ['force-field'],
       redTeamReviews,
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
 
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
@@ -14768,6 +17410,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -14777,6 +17420,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       implementations: completedImplementationRows('force-field'),
       redTeamReviews: completedRedTeamRows('force-field'),
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
 
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
@@ -14800,6 +17444,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       mobileSafariProfiledEffectIds: ['force-field'],
       redTeamReviews: completedRedTeamRows('force-field'),
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
 
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
@@ -14841,6 +17486,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -14851,6 +17497,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       realDeviceProfiledEffectIds: ['force-field'],
       redTeamReviews: completedRedTeamRows('force-field', 'red-team-lead', 'approved-deferral'),
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
 
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
@@ -14876,6 +17523,7 @@ describe('r3f-pfx-library catalog contracts', () => {
             'Final approval reviewed taxonomy, implementation, mobile profile evidence, and red-team signoff for force-field, but this row intentionally omits the taxonomy evidence reference.',
           evidence: [
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -14886,6 +17534,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       realDeviceProfiledEffectIds: ['force-field'],
       redTeamReviews: completedRedTeamRows('force-field'),
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
 
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
@@ -14909,6 +17558,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -15002,6 +17652,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -15093,12 +17744,14 @@ describe('r3f-pfx-library catalog contracts', () => {
       redTeamReviews: redTeamTemplate.reviews,
       realDeviceProfiledEffectIds: ['force-field'],
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
     const gapAudit = createPfxProductionAcceptanceGapAudit({
       implementations: implementationTemplate.implementations,
       redTeamReviews: redTeamTemplate.reviews,
       realDeviceProfiledEffectIds: ['force-field'],
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
 
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
@@ -15204,12 +17857,14 @@ describe('r3f-pfx-library catalog contracts', () => {
       redTeamReviews: redTeamTemplate.reviews,
       realDeviceProfiledEffectIds: ['force-field'],
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
     const gapAudit = createPfxProductionAcceptanceGapAudit({
       implementations: implementationTemplate.implementations,
       redTeamReviews: redTeamTemplate.reviews,
       realDeviceProfiledEffectIds: ['force-field'],
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
 
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
@@ -15280,6 +17935,7 @@ describe('r3f-pfx-library catalog contracts', () => {
 
     const report = createPfxProductionApprovalReadinessReport({
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
       implementations: implementationTemplate.implementations,
       redTeamReviews: redTeamTemplate.reviews,
       realDeviceProfiledEffectIds: ['force-field'],
@@ -15302,6 +17958,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       recommendedApprovalEvidence: [
         'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
         'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+        'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
         'mobile-safari-profile:.context/mobile-safari/force-field.json',
         'chrome-android-profile:.context/chrome-android/force-field.json',
         'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -15310,7 +17967,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     const fireball = report.effects.find((effect) => effect.effectId === 'fireball')
     expect(fireball).toMatchObject({
       status: 'missing-prerequisites',
-      missingPrerequisites: ['taxonomy-review', 'production-implementation', 'real-device-profile', 'red-team-signoff'],
+      missingPrerequisites: ['taxonomy-review', 'production-implementation', 'quality-review', 'real-device-profile', 'red-team-signoff'],
     })
   })
 
@@ -15319,6 +17976,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       implementations: completedImplementationRows('force-field'),
       redTeamReviews: completedRedTeamRows('force-field'),
       realDeviceProfiledEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
 
@@ -15333,6 +17991,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       recommendedApprovalEvidence: [
         'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
         'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+        'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
         'mobile-safari-profile:.context/mobile-safari/force-field.json',
         'chrome-android-profile:.context/chrome-android/force-field.json',
         'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -15343,6 +18002,7 @@ describe('r3f-pfx-library catalog contracts', () => {
   it('reports only the exact missing approval prerequisites in remaining actions', () => {
     const report = createPfxProductionApprovalReadinessReport({
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
       implementations: completedImplementationRows('force-field'),
       realDeviceCaptureBaseUrl: 'http://192.0.2.55:4765/',
       realDeviceCaptureBatchIdsByEffectId: {
@@ -15400,6 +18060,7 @@ describe('r3f-pfx-library catalog contracts', () => {
 
     const onePlatformReport = createPfxProductionApprovalReadinessReport({
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
       implementations: completedImplementationRows('force-field'),
       mobileSafariProfiledEffectIds: ['force-field'],
       realDeviceCaptureBaseUrl: 'http://192.0.2.55:4765/',
@@ -15434,6 +18095,7 @@ describe('r3f-pfx-library catalog contracts', () => {
 
     const localOnlyReport = createPfxProductionApprovalReadinessReport({
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
       implementations: completedImplementationRows('force-field'),
       realDeviceCaptureBaseUrl: 'http://127.0.0.1:4765/',
     })
@@ -15511,7 +18173,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       implementation.effectId === 'force-field'
         ? {
             ...implementation,
-            sourcePath: 'tools/3d-pfx-library/src/index.tsx#fireball',
+            sourcePath: 'tools/3d-pfx-library/src/recipes/fireball.ts',
           }
         : implementation,
     )
@@ -15530,7 +18192,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(report.summary.productionImplementedEffects).toBe(0)
     expect(report.blockingFindings).toEqual(
       expect.arrayContaining([
-        'production implementation for force-field sourcePath must be tools/3d-pfx-library/src/index.tsx#force-field',
+        'production implementation for force-field sourcePath must be tools/3d-pfx-library/src/recipes/force-field.ts',
       ]),
     )
   })
@@ -15631,6 +18293,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -15648,6 +18311,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       realDeviceProfiledEffectIds: ['force-field'],
       redTeamReviews: completedRedTeamRows('force-field'),
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
 
@@ -15680,6 +18344,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -15696,6 +18361,7 @@ describe('r3f-pfx-library catalog contracts', () => {
         },
       ],
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
 
@@ -15728,6 +18394,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -15744,6 +18411,7 @@ describe('r3f-pfx-library catalog contracts', () => {
         },
       ],
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
 
@@ -15768,6 +18436,7 @@ describe('r3f-pfx-library catalog contracts', () => {
 
     const report = createPfxProductionApprovalReadinessReport({
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
       implementations: completedImplementationRows('force-field'),
       redTeamReviews: completedRedTeamRows('force-field'),
       realDeviceProfiledEffectIds: ['force-field'],
@@ -15792,7 +18461,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(markdown).toContain('`red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field`')
     expect(markdown).toContain('## Missing Prerequisites')
     expect(markdown).toContain('### Fireball (`fireball`)')
-    expect(markdown).toContain('Missing: `taxonomy-review`, `production-implementation`, `real-device-profile`, `red-team-signoff`')
+    expect(markdown).toContain('Missing: `taxonomy-review`, `production-implementation`, `quality-review`, `real-device-profile`, `red-team-signoff`')
     expect(markdown).toContain('Final acceptance still requires final approval metadata and the strict verifier inputs.')
   })
 
@@ -15836,10 +18505,11 @@ describe('r3f-pfx-library catalog contracts', () => {
       approved: false,
       approvalAnchor: '.context/r3f-pfx-production-approvals.json#force-field',
       status: 'missing-prerequisites',
-      missingPrerequisites: ['taxonomy-review', 'production-implementation', 'real-device-profile', 'red-team-signoff'],
+      missingPrerequisites: ['taxonomy-review', 'production-implementation', 'quality-review', 'real-device-profile', 'red-team-signoff'],
       recommendedApprovalEvidence: [
         'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
         'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+        'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
         'mobile-safari-profile:.context/mobile-safari/force-field.json',
         'chrome-android-profile:.context/chrome-android/force-field.json',
         'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -15866,7 +18536,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(markdown).toContain('Output file: `.context/r3f-pfx-production-approvals.json`')
     expect(markdown).toContain('## Force Field (`force-field`)')
     expect(markdown).toContain('Status: `missing-prerequisites`')
-    expect(markdown).toContain('Missing: `taxonomy-review`, `production-implementation`, `real-device-profile`, `red-team-signoff`')
+    expect(markdown).toContain('Missing: `taxonomy-review`, `production-implementation`, `quality-review`, `real-device-profile`, `red-team-signoff`')
     expect(markdown).toContain('Approval anchor: `.context/r3f-pfx-production-approvals.json#force-field`')
     expect(markdown).toContain('### Visual Inspection Targets')
     expect(markdown).toContain('- Thumbnail: `.context/r3f-pfx-preview-assets/thumbnails/force-field.svg`')
@@ -15897,6 +18567,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     const sheet = createBatchSheet({
       batchId: 'production-approval-batch-001',
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
       implementations: completedImplementationRows('force-field'),
       redTeamReviews: completedRedTeamRows('force-field'),
       realDeviceProfiledEffectIds: ['force-field'],
@@ -15913,6 +18584,7 @@ describe('r3f-pfx-library catalog contracts', () => {
         evidence: [
           'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
           'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+          'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
           'mobile-safari-profile:.context/mobile-safari/force-field.json',
           'chrome-android-profile:.context/chrome-android/force-field.json',
           'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -16044,6 +18716,8 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -16054,6 +18728,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       realDeviceProfiledEffectIds: ['force-field'],
       redTeamReviews: completedRedTeamRows('force-field'),
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
 
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
@@ -16077,6 +18752,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -16115,6 +18791,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -16125,6 +18802,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       realDeviceProfiledEffectIds: ['force-field'],
       redTeamReviews: completedRedTeamRows('force-field'),
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
 
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
@@ -16197,6 +18875,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       evidence: [
         'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
         'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+        'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
         'mobile-safari-profile:.context/mobile-safari/force-field.json',
         'chrome-android-profile:.context/chrome-android/force-field.json',
         'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -16215,6 +18894,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       realDeviceProfiledEffectIds: ['force-field'],
       redTeamReviews: completedRedTeamRows('force-field'),
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
 
@@ -16243,6 +18923,7 @@ describe('r3f-pfx-library catalog contracts', () => {
           evidence: [
             'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
             'chrome-android-profile:.context/chrome-android/force-field.json',
             'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -16262,6 +18943,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       realDeviceProfiledEffectIds: ['force-field'],
       redTeamReviews: completedRedTeamRows('force-field'),
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
     const forceField = report.effects.find((effect) => effect.effectId === 'force-field')
 
@@ -16321,6 +19003,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       ],
       redTeamReviews: completedRedTeamRows('force-field', 'red-team-lead', 'approved-deferral'),
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
 
     const deferredForceField = evidenceBackedDeferral.effects.find((effect) => effect.effectId === 'force-field')
@@ -16357,11 +19040,12 @@ describe('r3f-pfx-library catalog contracts', () => {
       approvedDeferrals: 0,
       submittedApprovals: 0,
       pendingMetadataApprovals: 500,
-      evidenceSlotsPerEffect: 5,
+      evidenceSlotsPerEffect: 6,
       approvalStatus: 'non-approving-production-approval-template',
     })
     expect(template.instructions).toMatchObject({
       implementationManifestFile: '.context/r3f-pfx-production-implementation.json',
+      qualityMatrixFile: '.context/r3f-pfx-quality-matrix.json',
       realDeviceAuditFile: '.context/r3f-pfx-real-device-capture-audit.json',
       redTeamReviewFile: '.context/r3f-pfx-red-team-review.json',
       finalAcceptanceCommand: CANONICAL_FINAL_ACCEPTANCE_COMMAND,
@@ -16370,7 +19054,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(template.instructions.operatorChecklist).toEqual(
       expect.arrayContaining([
         'Replace every TODO metadata field before submitting the approval manifest.',
-        'Keep all five canonical evidence references on production-ready rows for the same effect.',
+        'Keep all six canonical evidence references on production-ready rows for the same effect.',
         'Use captureHandoff links only to collect missing real-device evidence; they never replace canonical evidence references or final approval metadata.',
         'Use approved-deferral only when an explicit deferral decision and red-team evidence exist for the same effect.',
       ]),
@@ -16378,6 +19062,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(template.instructions.productionReadyEvidenceSlots).toEqual([
       'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#<effectId>',
       'production-implementation:.context/r3f-pfx-production-implementation.json#<effectId>',
+      'quality-matrix:.context/r3f-pfx-quality-matrix.json#<effectId>',
       'mobile-safari-profile:.context/mobile-safari/<effectId>.json',
       'chrome-android-profile:.context/chrome-android/<effectId>.json',
       'red-team-signoff:.context/r3f-pfx-red-team-review.json#<effectId>',
@@ -16393,10 +19078,11 @@ describe('r3f-pfx-library catalog contracts', () => {
       decision: 'production-ready',
       approvedBy: 'TODO:final-production-approver',
       approvedAt: 'TODO:ISO-8601',
-      rationale: 'TODO:describe taxonomy review, production implementation, measured mobile performance, and red-team signoff.',
+      rationale: 'TODO:describe taxonomy review, production implementation, visual quality, measured mobile performance, and red-team signoff.',
       evidence: [
         'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#fireball',
         'production-implementation:.context/r3f-pfx-production-implementation.json#fireball',
+        'quality-matrix:.context/r3f-pfx-quality-matrix.json#fireball',
         'mobile-safari-profile:.context/mobile-safari/fireball.json',
         'chrome-android-profile:.context/chrome-android/fireball.json',
         'red-team-signoff:.context/r3f-pfx-red-team-review.json#fireball',
@@ -16425,6 +19111,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       evidence: [
         'taxonomy-review:.context/r3f-pfx-taxonomy-review.json#force-field',
         'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+        'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
         'mobile-safari-profile:.context/mobile-safari/force-field.json',
         'chrome-android-profile:.context/chrome-android/force-field.json',
         'red-team-signoff:.context/r3f-pfx-red-team-review.json#force-field',
@@ -16433,7 +19120,7 @@ describe('r3f-pfx-library catalog contracts', () => {
 
     const exported = JSON.parse(exportPfxProductionApprovalTemplateJson(template))
     expect(exported.approvals).toHaveLength(500)
-    expect(exported.summary.evidenceSlotsPerEffect).toBe(5)
+    expect(exported.summary.evidenceSlotsPerEffect).toBe(6)
     expect(exported.approvals.every((approval: { approvedBy: string }) => approval.approvedBy !== 'TODO:red-team-reviewer')).toBe(
       true,
     )
@@ -16457,6 +19144,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       missingApprovalMetadata: 500,
       missingProductionImplementation: 500,
       missingTaxonomyReview: 0,
+      missingQualityMatrix: 500,
       missingMobileSafariProfiles: 500,
       missingChromeAndroidProfiles: 500,
       missingRedTeamSignoff: 500,
@@ -16468,7 +19156,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(audit.effects[0]).toMatchObject({
       effectId: 'fireball',
       readinessStatus: 'needs-production-implementation',
-      openGapCount: 5,
+      openGapCount: 6,
       gaps: [
         {
           kind: 'approval-metadata',
@@ -16481,6 +19169,12 @@ describe('r3f-pfx-library catalog contracts', () => {
           label: 'Production implementation evidence',
           evidence: 'production-implementation:.context/r3f-pfx-production-implementation.json#fireball',
           filePath: '.context/r3f-pfx-production-implementation.json',
+        },
+        {
+          kind: 'quality-matrix',
+          label: 'Current passing quality-matrix evidence',
+          evidence: 'quality-matrix:.context/r3f-pfx-quality-matrix.json#fireball',
+          filePath: '.context/r3f-pfx-quality-matrix.json',
         },
         {
           kind: 'mobile-safari-profile',
@@ -16563,6 +19257,7 @@ describe('r3f-pfx-library catalog contracts', () => {
             'Partial approval fixture records production implementation evidence while taxonomy review, mobile profile evidence, and red-team signoff remain intentionally open.',
           evidence: [
             'production-implementation:.context/r3f-pfx-production-implementation.json#force-field',
+            'quality-matrix:.context/r3f-pfx-quality-matrix.json#force-field',
             'mobile-safari-profile:.context/mobile-safari/force-field.json',
           ],
         },
@@ -16570,9 +19265,10 @@ describe('r3f-pfx-library catalog contracts', () => {
       implementations: completedImplementationRows('force-field'),
     })
     const forceField = partiallyApproved.effects.find((effect) => effect.effectId === 'force-field')
-    expect(forceField?.openGapCount).toBe(4)
+    expect(forceField?.openGapCount).toBe(5)
     expect(forceField?.gaps.map((gap) => gap.kind)).toEqual([
       'taxonomy-review',
+      'quality-matrix',
       'mobile-safari-profile',
       'chrome-android-profile',
       'red-team-signoff',
@@ -16581,6 +19277,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       effectsWithOpenGaps: 500,
       missingApprovalMetadata: 499,
       missingProductionImplementation: 499,
+      missingQualityMatrix: 500,
       missingMobileSafariProfiles: 500,
       missingChromeAndroidProfiles: 500,
       missingRedTeamSignoff: 500,
@@ -16590,6 +19287,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       implementations: completedImplementationRows('force-field'),
       mobileSafariProfiledEffectIds: ['force-field'],
       taxonomyReviewedEffectIds: ['force-field'],
+      qualityMatrixApprovedEffectIds: ['force-field'],
     })
     const onePlatformForceField = onePlatformProfiled.effects.find((effect) => effect.effectId === 'force-field')
     expect(onePlatformForceField?.gaps.map((gap) => gap.kind)).not.toContain('mobile-safari-profile')
@@ -16642,10 +19340,11 @@ describe('r3f-pfx-library catalog contracts', () => {
         approvedBy: 'TODO:final-production-approver',
         approvedAt: 'TODO:ISO-8601',
         rationale:
-          'TODO:describe taxonomy review, production implementation, measured mobile performance, and red-team signoff.',
+          'TODO:describe taxonomy review, production implementation, visual quality, measured mobile performance, and red-team signoff.',
         evidence: [
           `taxonomy-review:.context/r3f-pfx-taxonomy-review.json#${effect.id}`,
           `production-implementation:.context/r3f-pfx-production-implementation.json#${effect.id}`,
+          `quality-matrix:.context/r3f-pfx-quality-matrix.json#${effect.id}`,
           `mobile-safari-profile:.context/mobile-safari/${effect.id}.json`,
           `chrome-android-profile:.context/chrome-android/${effect.id}.json`,
           `red-team-signoff:.context/r3f-pfx-red-team-review.json#${effect.id}`,
@@ -16660,13 +19359,14 @@ describe('r3f-pfx-library catalog contracts', () => {
       missingRedTeamSignoff: 500,
     })
     expect(audit.effects.find((effect) => effect.effectId === 'fireball')).toMatchObject({
-      openGapCount: 5,
+      openGapCount: 6,
       gaps: expect.arrayContaining([
         expect.objectContaining({ kind: 'approval-metadata' }),
         expect.objectContaining({ kind: 'mobile-safari-profile' }),
         expect.objectContaining({ kind: 'chrome-android-profile' }),
         expect.objectContaining({ kind: 'red-team-signoff' }),
         expect.objectContaining({ kind: 'production-implementation' }),
+        expect.objectContaining({ kind: 'quality-matrix' }),
       ]),
     })
   })
@@ -17221,7 +19921,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       status: 'pending',
       implementedBy: 'TODO:implementer',
       implementedAt: 'TODO:ISO-8601',
-      sourcePath: 'tools/3d-pfx-library/src/index.tsx#fireball',
+      sourcePath: 'tools/3d-pfx-library/src/recipes/fireball.ts',
       criteria: {
         'drop-in-r3f-component': 'pending',
         'authored-render-recipe': 'pending',
@@ -17308,7 +20008,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       rank: 1,
       name: 'Fireball',
       approvalStatus: 'needs-review',
-      sourcePath: 'tools/3d-pfx-library/src/index.tsx#fireball',
+      sourcePath: 'tools/3d-pfx-library/src/recipes/fireball.ts',
       reviewAnchor: '.context/r3f-pfx-production-implementation.json#fireball',
       component: {
         componentName: 'FireballPfx',
@@ -17353,7 +20053,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(markdown).toContain('Candidate report: `.context/r3f-pfx-production-implementation-candidates.json`')
     expect(markdown).toContain('## Fireball (`fireball`)')
     expect(markdown).toContain('Review anchor: `.context/r3f-pfx-production-implementation.json#fireball`')
-    expect(markdown).toContain('Source path: `tools/3d-pfx-library/src/index.tsx#fireball`')
+    expect(markdown).toContain('Source path: `tools/3d-pfx-library/src/recipes/fireball.ts`')
     expect(markdown).toContain('Component: `FireballPfx`')
     expect(markdown).toContain('Authored recipe: `fireball:authored-preview-v1`')
     expect(markdown).toContain('Preview assets: `fireball.svg`, `fireball-clip.svg`')
@@ -17447,7 +20147,7 @@ describe('r3f-pfx-library catalog contracts', () => {
       status: 'production-ready',
       implementedBy: 'game-bot-code-audit',
       implementedAt: '2026-07-03T12:00:00.000Z',
-      sourcePath: 'tools/3d-pfx-library/src/index.tsx#force-field',
+      sourcePath: 'tools/3d-pfx-library/src/recipes/force-field.ts',
       blockerFindings: [],
       notes:
         'Code-derived production implementation evidence for Force Field: component, authored recipe, safe controls, mobile budget, preview assets, docs, and render-plan depth are present.',
@@ -18388,6 +21088,63 @@ describe('r3f-pfx-library particle simulation', () => {
     for (const motion of ['drift-cloud', 'trail-stream'] as const) {
       expect(maxSpawnDepth(motion, 4)).toBeGreaterThan(maxSpawnDepth(motion, 1) * 3.5)
     }
+  })
+
+  it('builds a depth-bearing phase-transfer lock with opposed inward particle flows', () => {
+    const teleport = createPfxPreset('teleport-telegraph')
+    const surface = {
+      kind: 'particles' as const,
+      role: 'body' as const,
+      phase: 'teleport-telegraph-phase-convergence',
+      tuning: {
+        motion: 'phase-transfer-column' as never,
+        countScale: 1.8,
+        spawnScale: 0.9,
+        depthScale: 3,
+        speedScale: 0.8,
+        window: 0.5,
+        lifeScale: 0.9,
+      },
+    }
+    const simulation = PfxLibrary.createPfxParticleSimulation(teleport, surface)
+    const points = Array.from({ length: simulation.count }, (_, index) => ({
+      x: simulation.spawn[index * 3]!,
+      y: simulation.spawn[index * 3 + 1]!,
+      z: simulation.spawn[index * 3 + 2]!,
+      dx: simulation.direction[index * 3]!,
+      dy: simulation.direction[index * 3 + 1]!,
+      dz: simulation.direction[index * 3 + 2]!,
+    }))
+    const heightExtent = Math.max(...points.map(({ y }) => y)) - Math.min(...points.map(({ y }) => y))
+    const depthExtent = Math.max(...points.map(({ z }) => z)) - Math.min(...points.map(({ z }) => z))
+    const byHeight = points.toSorted((left, right) => left.y - right.y)
+    const cohortSize = Math.max(1, Math.floor(points.length * 0.2))
+    const lockY = (byHeight[0]!.y + byHeight.at(-1)!.y) / 2
+    const lower = points.filter(({ y }) => y < lockY - heightExtent * 0.12)
+    const upper = points.filter(({ y }) => y > lockY + heightExtent * 0.12)
+    const lockBand = points.filter(({ y }) => Math.abs(y - lockY) <= heightExtent * 0.12)
+    const meanRadius = (cohort: typeof points) =>
+      cohort.reduce((sum, point) => sum + Math.hypot(point.x, point.z), 0) / cohort.length
+
+    expect(simulation.motionKind).toBe('phase-transfer-column')
+    expect(heightExtent).toBeGreaterThan(1.1)
+    expect(depthExtent).toBeGreaterThan(0.7)
+    expect(lower.length).toBeGreaterThan(points.length * 0.3)
+    expect(upper.length).toBeGreaterThan(points.length * 0.3)
+    expect(meanRadius(lockBand)).toBeLessThan(meanRadius(byHeight.slice(0, cohortSize)) * 0.55)
+    expect(meanRadius(lockBand)).toBeLessThan(meanRadius(byHeight.slice(-cohortSize)) * 0.55)
+    expect(lower.filter(({ dy }) => dy > 0.35).length).toBeGreaterThan(lower.length * 0.9)
+    expect(upper.filter(({ dy }) => dy < -0.35).length).toBeGreaterThan(upper.length * 0.9)
+    expect(
+      points.filter(({ x, z, dx, dz }) => x * dx + z * dz < -0.02).length,
+      ).toBeGreaterThan(points.length * 0.9)
+
+    const emission = PfxLibrary.createPfxParticleEmission(teleport, surface)
+    const earlyBirthBands = new Set(
+      Array.from({ length: Math.min(15, emission.count) }, (_, index) =>
+        Math.floor((emission.life[index * 2]! / 0.5) * 5)),
+    )
+    expect(earlyBirthBands.size).toBeGreaterThanOrEqual(4)
   })
 
   it('builds snow gusts as broad lateral squalls instead of projectile trails', () => {
