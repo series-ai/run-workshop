@@ -1,3 +1,6 @@
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { BURGER_SHOP_RECIPES } from '../burger-shop/recipes'
 import { PFX_TAXONOMY } from '../tooling/01'
@@ -13,7 +16,30 @@ import { getDuelystSpriteRecipe } from './duelystRecipes'
 import { getPirateRecipe, PIRATE_RECIPES } from './pirateRecipes'
 import { DUELYST_SHEET_DEFS } from './textures'
 
+const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+
+function pngFilesUnder(dir: string): string[] {
+  const out: string[] = []
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name)
+    if (entry.isDirectory()) out.push(...pngFilesUnder(path))
+    else if (entry.name.endsWith('.png')) out.push(path)
+  }
+  return out
+}
+
 describe('inspect packs', () => {
+  it('ships inspect-pack textures as PNG images, not Git LFS pointers', () => {
+    const assetsRoot = fileURLToPath(new URL('../../assets', import.meta.url))
+    const pngs = ['burger-shop', 'duelyst', 'pirate-nation'].flatMap((folder) =>
+      pngFilesUnder(join(assetsRoot, folder)),
+    )
+    expect(pngs.length).toBeGreaterThan(20)
+    for (const path of pngs) {
+      expect(readFileSync(path).subarray(0, 8).equals(PNG_MAGIC), path).toBe(true)
+    }
+  })
+
   it('covers every BurgerTime recipe and every imported Duelyst sheet', () => {
     expect(BURGER_SHOP_INSPECT_IDS).toEqual(BURGER_SHOP_RECIPES.map((recipe) => `burger-shop-${recipe.id}`))
     expect(INSPECT_PACK_ITEMS.filter((item) => item.effect.id.startsWith('burger-shop-'))).toHaveLength(

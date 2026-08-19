@@ -2846,6 +2846,9 @@ function RealDevicePlatformProgressLine({
 }
 
 async function loadCaptureServerProgress(): Promise<RealDeviceCaptureServerProgress | null> {
+  // These endpoints exist only on the Vite dev server. Static GitHub Pages
+  // has no capture process; skip the probe so the browser does not log a 404.
+  if (!import.meta.env.DEV) return null
   try {
     const response = await fetch('/__r3f-pfx-capture-progress')
     const result = response.ok ? ((await response.json()) as RealDeviceCaptureServerProgressResult) : null
@@ -2856,6 +2859,7 @@ async function loadCaptureServerProgress(): Promise<RealDeviceCaptureServerProgr
 }
 
 async function loadExternalEvidenceHandoff(): Promise<ExternalEvidenceHandoff | null> {
+  if (!import.meta.env.DEV) return null
   try {
     const response = await fetch('/__r3f-pfx-evidence-handoff')
     const result = response.ok ? ((await response.json()) as ExternalEvidenceHandoff) : null
@@ -2866,6 +2870,7 @@ async function loadExternalEvidenceHandoff(): Promise<ExternalEvidenceHandoff | 
 }
 
 async function loadExternalEvidenceHandoffHealth(): Promise<ExternalEvidenceHandoffHealth | null> {
+  if (!import.meta.env.DEV) return null
   try {
     const response = await fetch('/__r3f-pfx-evidence-handoff-health')
     const result = response.ok ? ((await response.json()) as ExternalEvidenceHandoffHealth) : null
