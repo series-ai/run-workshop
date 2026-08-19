@@ -31,6 +31,16 @@ describe('mark filter URL helpers', () => {
     expect(helpers.readPfxMarkFilter?.('')).toBeNull()
   })
 
+  it('expands the inspect-sheets mark alias to every imported sheet id', () => {
+    const filter = helpers.readPfxMarkFilter?.('?mark=inspect-sheets&markLabel=SHEETS&markOnly=1')
+    expect(filter?.label).toBe('SHEETS')
+    expect(filter?.only).toBe(true)
+    expect(filter?.ids.has('burger-shop-flies')).toBe(true)
+    expect(filter?.ids.has('duelyst-impact')).toBe(true)
+    expect(filter?.ids.has('inspect-sheets')).toBe(false)
+    expect(filter?.ids.size).toBeGreaterThan(30)
+  })
+
   it('filters items only when markOnly is set', () => {
     expect(typeof helpers.applyPfxMarkFilter).toBe('function')
 

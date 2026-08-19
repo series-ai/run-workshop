@@ -58,6 +58,13 @@ import {
   type BrowserProfileCapturePlatform,
   type WebglProfile,
 } from './profiling'
+import { InspectPackEffect } from '../../src/inspect-packs/InspectPackEffect'
+import {
+  expandInspectSheetMarkIds,
+  INSPECT_PACK_ITEMS,
+  isInspectPackId,
+  selectInspectPackItems,
+} from '../../src/inspect-packs/items'
 
 const TIERS: PerformanceTier[] = ['low', 'medium', 'high', 'cinematic']
 const LOOP_MODES: LoopMode[] = ['burst', 'loop']
@@ -72,6 +79,7 @@ type PfxReviewFraming = 'isolated' | 'gameplay-context'
 export function createPfxReviewReferencePosition(effectId?: string): [number, number, number] {
   if (effectId === 'muzzle-flash') return [-2.3, -0.48, -0.45]
   if (effectId === 'healing-aura' || effectId === 'frost-aura' || effectId === 'shield-break' || effectId === 'barrier-low-health' || effectId === 'flame-charge' || effectId === 'electric-critical') return [0, -0.48, 0]
+  if (effectId?.startsWith('pirate-status-')) return [0, -0.48, 0]
   // Put the near arm on the origin so contact effects prove an actual hit
   // rather than floating between the effect and a distant scale mannequin.
   if (effectId === 'hit-spark' || effectId === 'ghost-critical') return [-0.28, -0.48, -0.18]
@@ -300,7 +308,9 @@ function FeedTiles({
     () => items.slice(firstRow * FEED_COLUMNS, (lastRow + 1) * FEED_COLUMNS).map((item, sliceIndex) => ({
       item,
       index: firstRow * FEED_COLUMNS + sliceIndex,
-      preset: createPfxPreset(item.effect.id, { seed: item.preset.seed }),
+      preset: isInspectPackId(item.effect.id)
+        ? item.preset
+        : createPfxPreset(item.effect.id, { seed: item.preset.seed }),
     })),
     [firstRow, items, lastRow],
   )
@@ -323,9 +333,11 @@ function FeedTiles({
         return (
           <group key={item.effect.id} position={[x, y, 0]} scale={scale}>
             <PfxGalleryTileStage />
-            {/* Gallery tiles: billboard-only for screen effects — a full
-                camera pin drags every ui-space tile onto one spot. */}
-            <GamePfx preset={preset} reducedMotion={reducedMotion} screenAnchor={false} />
+            {isInspectPackId(item.effect.id) ? (
+              <InspectPackEffect id={item.effect.id} />
+            ) : (
+              <GamePfx preset={preset} reducedMotion={reducedMotion} screenAnchor={false} />
+            )}
           </group>
         )
       })}
@@ -793,7 +805,13 @@ export function PfxBrowserApp() {
   // back. The Mobile safe checkbox still filters by the legacy tag until the
   // catalog-wide perf pass replaces it everywhere.
   const mobileSafeIds = useMemo(
-    () => new Set(filterPfxCatalog({}).filter((item) => getPfxComputedMobileSafety(item.effect.id) === 'safe').map((item) => item.effect.id)),
+    () =>
+      new Set([
+        ...filterPfxCatalog({})
+          .filter((item) => getPfxComputedMobileSafety(item.effect.id) === 'safe')
+          .map((item) => item.effect.id),
+        ...INSPECT_PACK_ITEMS.filter((item) => item.effect.mobileSafety === 'safe').map((item) => item.effect.id),
+      ]),
     [],
   )
   // Capture/profile URLs must open on the exact single-effect detail scene;
@@ -835,7 +853,7 @@ export function PfxBrowserApp() {
     orbitRef.current.distance = MathUtils.clamp(orbitRef.current.distance + event.deltaY * 0.004, 3.2, 10)
   }
 
-  const allItems = useMemo(() => filterPfxCatalog({}), [])
+  const allItems = useMemo(() => [...INSPECT_PACK_ITEMS, ...filterPfxCatalog({})], [])
   const useCases = useMemo(
     () => [...new Set(allItems.flatMap((item) => item.effect.gameplayUseCases))].sort(),
     [allItems],
@@ -900,7 +918,12 @@ export function PfxBrowserApp() {
     mobileSafeOnly ? { key: 'mobileSafe', label: 'Mobile safe', clear: () => setMobileSafeOnly(false) } : null,
   ].filter((chip): chip is { key: string; label: string; clear: () => void } => chip !== null)
 
-  const allMatchingItems = useMemo(() => filterPfxCatalog(activeQuery), [activeQuery])
+  const catalogItems = useMemo(() => filterPfxCatalog(activeQuery), [activeQuery])
+  const inspectPackItems = useMemo(() => selectInspectPackItems(activeQuery), [activeQuery])
+  const allMatchingItems = useMemo(
+    () => [...inspectPackItems, ...catalogItems],
+    [catalogItems, inspectPackItems],
+  )
   // Searching with Mobile safe on silently hid matches (e.g. "explosion"
   // returned zero results) — surface how many hits the filter is hiding.
   const mobileSafeHiddenMatches = useMemo(() => {
@@ -935,8 +958,9 @@ export function PfxBrowserApp() {
     return counts
   }, [markedItems])
   const feed = useMemo(() => createPfxFeedScope(markedItems, feedRole), [feedRole, markedItems])
-  const selected = items.find((item) => item.effect.id === selectedId) ?? items[0]
-  const selectedIndex = selected ? items.findIndex((item) => item.effect.id === selected.effect.id) : -1
+  const browseItems = markedItems
+  const selected = browseItems.find((item) => item.effect.id === selectedId) ?? browseItems[0]
+  const selectedIndex = selected ? browseItems.findIndex((item) => item.effect.id === selected.effect.id) : -1
   const transportPreviewSeconds = pfxTransportPreviewSeconds(transport)
   const [emitterEdits, setEmitterEdits] = useState<Record<string, PfxEmitterEdit>>({})
   const [disabledEmitters, setDisabledEmitters] = useState<ReadonlySet<string>>(new Set())
@@ -967,10 +991,10 @@ export function PfxBrowserApp() {
   // filters, and control overrides all survive so effects stay comparable.
   // While playing, the new effect restarts from t=0 (fresh burst on arrival).
   const flipSelectedEffect = (direction: 1 | -1) => {
-    if (items.length === 0) return
+    if (browseItems.length === 0) return
     const currentIndex = selectedIndex >= 0 ? selectedIndex : 0
-    const nextIndex = (currentIndex + direction + items.length) % items.length
-    setSelectedId(items[nextIndex]!.effect.id)
+    const nextIndex = (currentIndex + direction + browseItems.length) % browseItems.length
+    setSelectedId(browseItems[nextIndex]!.effect.id)
     setTransport((current) => (current.status === 'playing' ? restartPfxTransport(current) : current))
   }
 
@@ -1023,6 +1047,7 @@ export function PfxBrowserApp() {
     : undefined
   const preset = useMemo(() => {
     if (!selected) return null
+    if (isInspectPackId(selected.effect.id)) return selected.preset
     return createPfxPreset(selected.effect.id, {
       seed: selected.preset.seed,
       ...controlOverrides,
@@ -1418,14 +1443,16 @@ export function PfxBrowserApp() {
             <OrbitCameraRig orbit={orbitRef} autoRotate={!reducedMotion && !reviewCameraLocked && orbitDragRef.current == null} />
             {preset && previewMode === 'single' ? (
               <group position={createPfxReviewEffectPosition(selected?.effect.id, reviewFraming)}>
-                {/* The review pipeline's frozen frame (reviewTimeMs) always
-                    wins over the interactive transport. */}
-                <GamePfx
-                  preset={preset}
-                  reducedMotion={reducedMotion}
-                  previewTimeSeconds={reviewTimeSeconds ?? transportPreviewSeconds}
-                  recipeOverride={editedRecipe}
-                />
+                {selected && isInspectPackId(selected.effect.id) ? (
+                  <InspectPackEffect id={selected.effect.id} />
+                ) : (
+                  <GamePfx
+                    preset={preset}
+                    reducedMotion={reducedMotion}
+                    previewTimeSeconds={reviewTimeSeconds ?? transportPreviewSeconds}
+                    recipeOverride={editedRecipe}
+                  />
+                )}
               </group>
             ) : null}
             
@@ -1471,7 +1498,7 @@ export function PfxBrowserApp() {
                   ← Prev
                 </button>
                 <span data-testid="pfx-effect-flip-position" className="pfx-effect-flip-position">
-                  {selectedIndex + 1} / {items.length}
+                  {selectedIndex + 1} / {browseItems.length}
                 </span>
                 <button
                   type="button"
@@ -2940,10 +2967,12 @@ export function readPfxMarkFilter(search?: string): PfxMarkFilter | null {
   const params = new URLSearchParams(rawSearch)
   const raw = params.get('mark')
   if (!raw) return null
-  const ids = raw
-    .split(',')
-    .map((id) => id.trim())
-    .filter(Boolean)
+  const ids = expandInspectSheetMarkIds(
+    raw
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean),
+  )
   if (ids.length === 0) return null
   const label = params.get('markLabel')?.trim() || 'MARKED'
   return { ids: new Set(ids), label, only: params.get('markOnly') === '1' }

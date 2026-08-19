@@ -1,0 +1,28 @@
+{
+  "schema": "3d-pfx-library.first-party-transfer.v1",
+  "assetId": "burger-shop-unity-sheets-v1",
+  "createdAt": "2026-08-15",
+  "sourceRepo": "BurgerTimeVFX (first-party sibling project; same owner as this repository)",
+  "sourcePath": "Assets/Series Burger Shop/Textures",
+  "rightsNote": "First-party transfer. The same owner holds BurgerTimeVFX and this library.",
+  "thirdPartyImages": [],
+  "files": [
+    "T_FX_Arrow_01.png",
+    "T_FX_Coin_01.png",
+    "T_FX_Confetti_01.png",
+    "T_FX_Flies_01.png",
+    "T_FX_Food_Scraps_01.png",
+    "T_FX_Glow_01.png",
+    "T_FX_Mask_01.png",
+    "T_FX_Mask_02.png",
+    "T_FX_Poof_01.png",
+    "T_FX_Poof_02.png",
+    "T_FX_Ring_01.png",
+    "T_FX_Sign_01.png",
+    "T_FX_Smoke_01.png",
+    "T_FX_Sparkle_01.png",
+    "T_FX_Star_01.png",
+    "T_FX_Star_02.png",
+    "T_FX_Sunshine_02.png"
+  ]
+}
