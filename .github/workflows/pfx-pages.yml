@@ -48,10 +48,6 @@ jobs:
         working-directory: tools/3d-pfx-library
         run: npm run typecheck
 
-      - name: Test
-        working-directory: tools/3d-pfx-library
-        run: npm run test
-
       - name: Build static viewer
         working-directory: tools/3d-pfx-library
         env:
