@@ -1623,6 +1623,7 @@ uniform float uSpawnLift;
 uniform float uFlicker;
 uniform float uFreshness;
 uniform float uCycleScale;
+uniform float uBeamScale;
 uniform float uSpriteAspect;
 
 varying vec2 vUv;
@@ -1890,8 +1891,8 @@ void main() {
     worldOffset = aSpawn * (1.0 - chargeEnvelope * 0.25) + wobble * 0.12;
     velocity = -normalize(aSpawn) * aSpeed;
   #elif defined(MOTION_BEAM_TELEGRAPH_FLOW)
-    float beamMin = -2.4;
-    float beamSpan = 5.0;
+    float beamMin = -2.4 * uBeamScale;
+    float beamSpan = 5.0 * uBeamScale;
     float flowingBeamX = beamMin + mod((aSpawn.x - beamMin) - uTime * uTiming * max(0.04, aSpeed) + beamSpan * 32.0, beamSpan);
     float beamProgress = (flowingBeamX - beamMin) / beamSpan;
     float currentWave = sin(flowingBeamX * 5.2 - uTime * uTiming * 8.0 + aWobble.x);

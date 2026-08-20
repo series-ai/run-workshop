@@ -14661,6 +14661,19 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'beam-telegraph-particle-countdown')).toBe(true)
     expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
     expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+    expect(PFX_SPRITE_PARTICLE_VERTEX).toContain('uniform float uBeamScale;')
+    expect(PFX_SPRITE_PARTICLE_VERTEX).toContain('float beamMin = -2.4 * uBeamScale;')
+    expect(PFX_SPRITE_PARTICLE_VERTEX).toContain('float beamSpan = 5.0 * uBeamScale;')
+    const lane = plan.surfaces[0]!
+    const laneEmission = PfxLibrary.createPfxParticleEmission(preset, lane)
+    const laneMaterial = PfxLibrary.createPfxSpriteEmissionMaterial(
+      laneEmission,
+      preset.controls,
+      lane,
+      PfxLibrary.getPfxSurfaceMaterialProps(lane, preset.controls),
+    )
+    expect(laneMaterial.uniforms['uBeamScale']!.value).toBeCloseTo(preset.controls.scale)
+    laneMaterial.dispose()
   })
 
   it('keeps the unused beam-telegraph lane factory as a closed warning volume', () => {
@@ -20728,6 +20741,48 @@ describe('r3f-pfx-library particle simulation', () => {
     const launchTight = maxLateral('jump-launch', 0.12)
     expect(launchTight).toBeGreaterThan(launchUnit * 0.08)
     expect(launchTight).toBeLessThan(launchUnit * 0.18)
+  })
+
+  it('applies spawnScale once to authored ring and trail footprints', () => {
+    const pointPreset = {
+      ...preset,
+      controls: { ...preset.controls, spawnShape: 'point' as const },
+    }
+    const maxGroundRadius = (spawnScale: number) => {
+      const surface = {
+        kind: 'particles' as const,
+        role: 'impact' as const,
+        phase: 'ring-scale-test',
+        tuning: { motion: 'ground-ring' as const, spawnScale },
+      }
+      const simulation = PfxLibrary.createPfxParticleSimulation(pointPreset, surface)
+      return Math.max(
+        ...Array.from({ length: simulation.count }, (_, index) =>
+          Math.hypot(simulation.spawn[index * 3]!, simulation.spawn[index * 3 + 2]!),
+        ),
+      )
+    }
+    const trailSpan = (spawnScale: number) => {
+      const surface = {
+        kind: 'particles' as const,
+        role: 'trail' as const,
+        phase: 'trail-scale-test',
+        tuning: { motion: 'trail-stream' as const, spawnScale },
+      }
+      const simulation = PfxLibrary.createPfxParticleSimulation(pointPreset, surface)
+      const x = Array.from(
+        { length: simulation.count },
+        (_, index) => simulation.spawn[index * 3]!,
+      )
+      return Math.max(...x) - Math.min(...x)
+    }
+
+    const ringRatio = maxGroundRadius(1.65) / maxGroundRadius(1)
+    const trailRatio = trailSpan(1.65) / trailSpan(1)
+    expect(ringRatio).toBeGreaterThan(1.5)
+    expect(ringRatio).toBeLessThan(1.8)
+    expect(trailRatio).toBeGreaterThan(1.5)
+    expect(trailRatio).toBeLessThan(1.8)
   })
 
   it('builds a depth-bearing phase-transfer lock with opposed inward particle flows', () => {

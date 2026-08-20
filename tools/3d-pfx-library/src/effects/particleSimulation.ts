@@ -965,8 +965,9 @@ export function createPfxParticleSimulation(
     }
 
     const spawnScale = tuning?.spawnScale ?? 1
-    // snow-gust consumes spawnScale while authoring its wind-axis footprint;
-    // applying the generic multiplier again made the area scale quadratically.
+    // These motions consume spawnScale while authoring their footprint or
+    // body span. Applying the generic multiplier again makes them scale
+    // quadratically.
     if (
       spawnScale !== 1 &&
       motionKind !== 'snow-gust' &&
@@ -975,7 +976,10 @@ export function createPfxParticleSimulation(
       motionKind !== 'beam-telegraph-flow' &&
       motionKind !== 'telegraph-boundary-drift' &&
       motionKind !== 'materialize-gather' &&
-      motionKind !== 'materialize-release'
+      motionKind !== 'materialize-release' &&
+      motionKind !== 'ground-ring' &&
+      motionKind !== 'orbit-ring' &&
+      motionKind !== 'trail-stream'
     ) {
       spawn[index] = spawn[index]! * spawnScale
       spawn[index + 1] = spawn[index + 1]! * spawnScale
