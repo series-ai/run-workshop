@@ -474,6 +474,10 @@ export function isPfxSurfaceCameraFacing(
     (surface.tuning?.meshGeometry as string | undefined) === 'dust-burst-grounded-crown' ||
     (surface.tuning?.meshGeometry as string | undefined) === 'debris-burst-fractured-mass' ||
     surface.tuning?.meshGeometry === 'flame-charge-trefoil-crucible' ||
+    surface.tuning?.meshGeometry === 'spawn-telegraph-volumetric-reticle' ||
+    surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-footprint' ||
+    surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-cage' ||
+    surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-avatar' ||
     surface.tuning?.meshGeometry === 'curse-twisted-spire' ||
     surface.tuning?.meshGeometry === 'curse-binding-seal'
   return policy.cameraFacing || (!authoredPortalSurface && (
@@ -626,8 +630,8 @@ export function updatePfxParticleSimulation(
     }
 
     if (simulation.motionKind === 'beam-telegraph-flow') {
-      const laneMin = -1.55 * controls.scale
-      const laneMax = 1.55 * controls.scale
+      const laneMin = -2.4 * controls.scale
+      const laneMax = 2.6 * controls.scale
       const laneSpan = laneMax - laneMin
       const unwrapped = simulation.spawn[index]! - simulation.speed[i]! * age
       const wrapped = ((unwrapped - laneMin) % laneSpan + laneSpan) % laneSpan

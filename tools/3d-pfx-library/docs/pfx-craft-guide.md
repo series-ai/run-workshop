@@ -60,8 +60,11 @@ baseline.
 Every effect is anticipation → peak → dissipation, and the peak lands exactly
 on the gameplay beat (the frame of contact, the frame the coin is collected).
 
-- **Anticipation** is optional and short (0–120 ms): a converging shimmer, a
-  brightening pre-glow. Skip it for reactive effects like hits.
+- **Anticipation** is optional and short (0–120 ms) for reactive effects: a
+  converging shimmer or brightening pre-glow. Gameplay telegraphs are the
+  deliberate exception: their warning layer must remain readable for the
+  contract-defined lead time before the peak. Do not shorten a telegraph into
+  an unreactable hit merely to match burst timing.
 - **The peak is one decisive moment**, not a plateau. Flash cards and rings
   fire here. A peak that "fades in" reads as mush; birth at or near full
   intensity, decay from there.
@@ -84,6 +87,20 @@ Two timing traps found the hard way:
 - **Very short layers need dense verification sampling.** A 130 ms flash is
   invisible to a 250 ms screenshot cadence; reviewers will report the layer
   as absent when it is merely between samples (§9).
+- **A telegraph must warn before it reveals the outcome.** Keep the completed
+  target, spawned subject, or impact result out of the onset frame. Establish
+  the actionable boundary and converging energy first, resolve the subject at
+  the gameplay beat, then hand off through directional dissipation.
+- **A particle-authored boundary must stay authoritative while it retires.**
+  Use many small, evenly stratified particles rather than a few large additive
+  blobs. Preserve the radius through onset and peak, then give the particles a
+  restrained outward/upward drift during decay. Simply deleting a static ring
+  produces gaps, hot knots, and a thin side-view line; replacing it with a
+  solid mesh ring only hides the emitter problem.
+- **A one-shot review clip must contain the whole semantic sentence.** Do not
+  inherit a longer ambient particle clock for an arrival, impact, or release:
+  deterministic onset, peak, and decay sampling must reach a visibly retired
+  state before the preview wraps.
 
 ## 3. Blend modes have opposite death rules
 
@@ -152,6 +169,11 @@ edges and death.
   near-frontal camera, radial bursts must live in the screen plane (a circle
   in X/Y with slight depth jitter). A hemisphere or X/Z ground dome hides
   half its energy behind foreshortening and reads as a weak, lopsided puff.
+- **Randomize world-space patterns around world up.** Azimuth freshness for
+  a world particle system rotates around Y; rotating around camera Z tilts
+  ground footprints and vertical columns into arbitrary planes. Screen-space
+  particles are the exception: their pattern rotation belongs in the camera
+  plane.
 - **Velocity stretch is for fast, hot things only** — sparks and tracers, at
   around 2× elongation. Never put it on debris: gravity aligns every chunk's
   velocity within a few frames, and stretched debris collapses into a single
@@ -159,6 +181,11 @@ edges and death.
 - **Stretch must decay with launch speed, not current speed.** Gravity
   re-accelerates dying sparks, and if stretch tracks current velocity the
   spent sparks re-elongate into parallel falling bars.
+- **Stretch must also respect screen-space visibility.** A velocity aimed
+  nearly at the camera has no useful projected length. Build the billboard
+  from a stable camera-plane fallback and taper elongation with the projected
+  velocity magnitude; otherwise tangent fields bunch into starbursts where
+  their motion turns toward the eye.
 - **Audit every sprite sheet cell before binding it.** A cell that contains a
   whole pre-drawn fan of sparks, when spawned twenty times as "individual
   particles," produces twenty identical overlapping fans — the classic
@@ -256,6 +283,20 @@ huge, stacked, low-alpha quads costs more than a hundred small sparks.
   frame hitches long before raw draw cost does.
 
 ## Quick diagnostic table
+
+The quality workflow records canonical defect keys. Treat evidence defects as
+handoff work, not visual-remediation prompts:
+
+| Defect key | Canonical owner |
+| --- | --- |
+| `visual:<dimension>` on multiple effects | Shared renderer/runtime owner named by the ledger, usually `src/PfxSurface.tsx`; add a RED test or deterministic validator |
+| `visual:<dimension>` on one effect | `src/recipes/<effectId>.ts` |
+| `evidence:independent-visual-review` | Independent reviewers; do not change art merely to close missing evidence |
+| `evidence:peer-review-disagreement` | Reviewer adjudication |
+| `performance:real-device` | Physical mobile Safari and Chrome Android evidence collection |
+
+See [quality-review-workflow.md](quality-review-workflow.md) for action routing,
+source-fingerprint invalidation, and durable decision records.
 
 | Symptom | Likely cause | Fix section |
 | --- | --- | --- |

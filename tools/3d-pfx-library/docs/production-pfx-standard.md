@@ -21,6 +21,17 @@ average cannot compensate for an unreadable silhouette, missing decay,
 unverified reduced motion, or a failed device profile. A grade written into a
 preset, implementation note, or generated dossier is not acceptance evidence.
 
+The executable process is defined in
+[quality-review-workflow.md](quality-review-workflow.md). A final
+`production-ready` approval must carry exactly six canonical references:
+taxonomy review, production implementation, quality matrix, mobile Safari,
+Chrome Android, and red-team signoff. Its
+`quality-matrix:.context/r3f-pfx-quality-matrix.json#<effectId>` row must be
+unique, have `finalPass: true`, meet every visual floor and the rank-weighted
+target, contain complete independent consensus and visual evidence, and match
+the current per-effect render-source fingerprint. Approved deferrals retain
+their separate existing evidence contract.
+
 The 12 visual dimensions are semantic identity, gameplay readability, volume
 and depth, multi-angle resilience, silhouette and composition, temporal arc
 and decay, material and shader quality, mesh structure and emitter quality,

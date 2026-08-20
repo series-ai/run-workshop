@@ -1,7 +1,13 @@
 import * as THREE from 'three'
 
+export interface PfxSpawnScreenReticleGeometryOptions {
+  crossedVolume?: boolean
+  includeDataFragments?: boolean
+}
+
 export function createPfxSpawnScreenReticleGeometry(
   color: THREE.ColorRepresentation = '#35d8ff',
+  options: PfxSpawnScreenReticleGeometryOptions = {},
 ): THREE.BufferGeometry {
   const positions: number[] = []
   const colors: number[] = []
@@ -107,21 +113,35 @@ export function createPfxSpawnScreenReticleGeometry(
 
   // Twelve converging data fragments form mirrored assembly traffic. Their
   // slanted silhouettes point toward the avatar without becoming aim arrows.
-  for (let fragment = 0; fragment < 12; fragment += 1) {
-    const side = fragment % 2 === 0 ? -1 : 1
-    const row = Math.floor(fragment / 2)
-    const y = 0.64 - row * 0.255
-    const x = side * (0.5 + (row % 3) * 0.085)
-    const inward = -side * 0.12
-    quad(
-      [x, y + 0.035],
-      [x + inward, y + 0.012],
-      [x + inward, y - 0.012],
-      [x, y - 0.035],
-      fragment % 4 < 2 ? base : pale,
-      0.7 + (row % 3) * 0.12,
-      fragment % 4 < 2 ? -0.005 : 0.045,
-    )
+  const includeDataFragments = options.includeDataFragments !== false
+  if (includeDataFragments) {
+    for (let fragment = 0; fragment < 12; fragment += 1) {
+      const side = fragment % 2 === 0 ? -1 : 1
+      const row = Math.floor(fragment / 2)
+      const y = 0.64 - row * 0.255
+      const x = side * (0.5 + (row % 3) * 0.085)
+      const inward = -side * 0.12
+      quad(
+        [x, y + 0.035],
+        [x + inward, y + 0.012],
+        [x + inward, y - 0.012],
+        [x, y - 0.035],
+        fragment % 4 < 2 ? base : pale,
+        0.7 + (row % 3) * 0.12,
+        fragment % 4 < 2 ? -0.005 : 0.045,
+      )
+    }
+  }
+  if (options.crossedVolume) {
+    const planePositions = [...positions]
+    const planeColors = [...colors]
+    for (let index = 0; index < planePositions.length; index += 3) {
+      const x = planePositions[index]!
+      const y = planePositions[index + 1]!
+      const z = planePositions[index + 2]!
+      positions.push(z, y, -x)
+      colors.push(planeColors[index]!, planeColors[index + 1]!, planeColors[index + 2]!)
+    }
   }
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
@@ -133,7 +153,8 @@ export function createPfxSpawnScreenReticleGeometry(
     avatarPartCount: 7,
     assemblyRailCount: 2,
     depthBandCount: 3,
-    fragmentCount: 12,
+    crossedVolume: options.crossedVolume === true,
+    fragmentCount: includeDataFragments ? 12 : 0,
     ghostShellCount: 2,
     scanSliceCount: 5,
   }

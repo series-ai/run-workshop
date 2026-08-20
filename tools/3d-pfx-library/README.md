@@ -37,6 +37,25 @@ npm run profile:catalog-stress
 npm run profile:all
 ```
 
+## Review visual quality
+
+The quality harness turns deterministic captures, three independent peer
+reviews, and physical-device evidence into the canonical matrix and improvement
+ledger:
+
+```bash
+npm run quality:status
+npm run quality:capture -- --effect fireball --batch review-001
+npm run quality:assemble -- --iteration 1 --reviews review-a.json,review-b.json,review-c.json
+```
+
+Start with [the quality-review workflow](docs/quality-review-workflow.md).
+[The production standard](docs/production-pfx-standard.md) defines acceptance;
+[the craft guide](docs/pfx-craft-guide.md) covers authoring and remediation.
+Raw screenshots, review packets, and device profiles stay in ignored
+`.context/`; the compact resumable handoff is tracked under `quality/`.
+Scripts package and validate evidence but never award visual scores.
+
 ## Use the library in a game
 
 Import from the library entry (`src/index.ts`):

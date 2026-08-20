@@ -174,6 +174,8 @@ import { createPfxSnowSpawnCradleGeometry, createPfxSnowSpawnCradleMaterial } fr
 import { applyPfxSparkConeMaterialOpacity } from './effects/sparkConeMaterial'
 import { createPfxSparkConeStreakGeometry, createPfxSparkConeStreakMaterial } from './effects/sparkConeStreak'
 import { createPfxSpawnScreenReticleGeometry, createPfxSpawnScreenReticleMaterial } from './effects/spawnScreenReticle'
+import { createPfxSpawnArrivalAppearance, createPfxSpawnArrivalAvatarGeometry, createPfxSpawnArrivalCageGeometry, createPfxSpawnArrivalFootprintGeometry, createPfxSpawnArrivalVolumeMaterial, type PfxSpawnArrivalMaterialRole } from './effects/spawnArrivalVolume'
+import { createPfxSpawnVoxelMaterial, getPfxSpawnVoxelMaterialRole } from './effects/spawnVoxels'
 import { createPfxSpriteEmissionMaterial } from './effects/spriteEmission'
 import { getPfxSurfaceMaterialProps } from './effects/surfaceMaterialProps'
 import { getPfxSurfacePositionOffset } from './effects/surfacePositionOffset'
@@ -182,7 +184,11 @@ import { getPfxSurfaceSpatialPolicy } from './effects/surfaceSpatialPolicy'
 import { createPfxTargetBreakFragmentGeometry, createPfxTargetBreakFragmentMaterial } from './effects/targetBreakFragment'
 import { createPfxTargetBreakReticleGeometry, createPfxTargetBreakReticleMaterial } from './effects/targetBreakReticle'
 import { createPfxTargetLockShellGeometry } from './effects/targetLockShell'
-import { createPfxTeleportHitGeometry, createPfxTeleportHitMaterial } from './effects/teleportHit'
+import {
+  PFX_TELEPORT_ARRIVAL_CYCLE_MULTIPLIER,
+  createPfxTeleportHitGeometry,
+  createPfxTeleportHitMaterial,
+} from './effects/teleportHit'
 import { applyPfxTeleportHitMaterialAppearance } from './effects/teleportHitMaterial'
 import { createPfxWarpSprayFacetGeometry, createPfxWarpSprayFacetMaterial } from './effects/warpSprayFacet'
 import { createPfxWaterColumnGeometry, createPfxWaterColumnMaterial } from './effects/waterColumn'
@@ -216,6 +222,7 @@ export function PfxSurface({
   cycleScale = 1,
   tempo = 1,
   parentCameraPinned = false,
+  reducedMotion = false,
 }: {
   surface: PfxRenderSurface
   geometry: THREE.BufferGeometry
@@ -235,6 +242,8 @@ export function PfxSurface({
   tempo?: number
   /** UI-space parents already own the camera quaternion. */
   parentCameraPinned?: boolean
+  /** Retain semantic count floors while reduced-motion controls lower motion. */
+  reducedMotion?: boolean
 }) {
   const object = useRef<THREE.Object3D>(null)
   const comboRuntimeState = useRef<PfxComboRingRuntimeState>({
@@ -362,9 +371,14 @@ export function PfxSurface({
   const emission = useMemo(
     () =>
       isSimulatedPoints
-        ? createPfxParticleEmission({ effectId, controls, implementationProfile: profile }, surface)
+        ? createPfxParticleEmission({
+            effectId,
+            controls,
+            implementationProfile: profile,
+            reducedMotion,
+          }, surface)
         : null,
-    [controls, effectId, isSimulatedPoints, profile, surface],
+    [controls, effectId, isSimulatedPoints, profile, reducedMotion, surface],
   )
   const isMeteorChunkEmission = emission?.motionKind === 'meteor-impact'
   const spriteGeometry = useMemo(
@@ -709,15 +723,39 @@ export function PfxSurface({
     [magicCircleStyle, materialProps.opacity, surface.kind],
   )
   const spawnScreenReticleGeometry = useMemo(
-    () => surface.tuning?.meshGeometry === 'spawn-screen-reticle'
-      ? createPfxSpawnScreenReticleGeometry(materialProps.color)
-      : null,
+    () => surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-footprint'
+      ? createPfxSpawnArrivalFootprintGeometry(materialProps.color)
+      : surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-cage'
+      ? createPfxSpawnArrivalCageGeometry(materialProps.color)
+      : surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-avatar'
+        ? createPfxSpawnArrivalAvatarGeometry(materialProps.color)
+        : surface.tuning?.meshGeometry === 'spawn-screen-reticle' ||
+        surface.tuning?.meshGeometry === 'spawn-telegraph-volumetric-reticle'
+        ? createPfxSpawnScreenReticleGeometry(
+          materialProps.color,
+          surface.tuning?.meshGeometry === 'spawn-telegraph-volumetric-reticle'
+            ? { crossedVolume: true, includeDataFragments: false }
+            : undefined,
+        )
+        : null,
     [materialProps.color, surface.tuning?.meshGeometry],
   )
   const spawnScreenReticleMaterial = useMemo(
-    () => surface.tuning?.meshGeometry === 'spawn-screen-reticle'
-      ? createPfxSpawnScreenReticleMaterial(materialProps.opacity)
-      : null,
+    () => surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-footprint' ||
+      surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-cage' ||
+      surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-avatar'
+      ? createPfxSpawnArrivalVolumeMaterial(
+          materialProps.opacity,
+          (surface.tuning.meshGeometry === 'spawn-telegraph-arrival-avatar'
+            ? 'avatar'
+            : surface.tuning.meshGeometry === 'spawn-telegraph-arrival-cage'
+              ? 'ribbon'
+              : 'footprint') satisfies PfxSpawnArrivalMaterialRole,
+        )
+      : surface.tuning?.meshGeometry === 'spawn-screen-reticle' ||
+        surface.tuning?.meshGeometry === 'spawn-telegraph-volumetric-reticle'
+        ? createPfxSpawnScreenReticleMaterial(materialProps.opacity)
+        : null,
     [materialProps.opacity, surface.tuning?.meshGeometry],
   )
   const jumpPickupCradleGeometry = useMemo(
@@ -861,6 +899,13 @@ export function PfxSurface({
     return next
   }, [accentMaterial, materialProps.blending, materialProps.color, materialProps.edgeHardness, materialProps.opacity, surface.kind])
   useEffect(() => () => accentSurfaceMaterial.dispose(), [accentSurfaceMaterial])
+  const spawnVoxelMaterial = useMemo(
+    () => surface.kind === 'spawn-voxels'
+      ? createPfxSpawnVoxelMaterial(materialProps.color, materialProps.opacity)
+      : null,
+    [materialProps.color, materialProps.opacity, surface.kind],
+  )
+  useEffect(() => () => spawnVoxelMaterial?.dispose(), [spawnVoxelMaterial])
   const plasmaAmbientCoreMaterial = useMemo(
     () => surface.tuning?.meshGeometry === 'plasma-ambient-contained-core'
       ? createPfxPlasmaAmbientCoreMaterial(materialProps.opacity)
@@ -2015,6 +2060,7 @@ export function PfxSurface({
       cameraFacing,
       cameraFacing ? motion.rotationZ * groupWobble : continuousSpin + patternSpin,
       parentWorldQuaternion,
+      feelVersion >= 2 && isSimulatedPoints && !cameraFacing ? 'y' : 'z',
     )
     const baseScale = object.current.userData['baseScale'] as THREE.Vector3 | undefined
     if (!baseScale) {
@@ -2120,9 +2166,43 @@ export function PfxSurface({
     }
 
     if (spawnScreenReticleMaterial) {
-      spawnScreenReticleMaterial.uniforms.uOpacity!.value =
-        materialProps.opacity * motion.opacityMultiplier * flipbook.opacityMultiplier
       spawnScreenReticleMaterial.uniforms.uTime!.value = elapsed * Math.max(0.05, controls.timing)
+      const arrivalRole: PfxSpawnArrivalMaterialRole | null =
+        surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-footprint'
+          ? 'footprint'
+          : surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-cage'
+            ? 'ribbon'
+            : surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-avatar'
+              ? 'avatar'
+              : null
+      if (arrivalRole) {
+        const appearance = createPfxSpawnArrivalAppearance({
+          role: arrivalRole,
+          baseOpacity: materialProps.opacity,
+          motionOpacityMultiplier: motion.opacityMultiplier,
+          flipbookOpacityMultiplier: flipbook.opacityMultiplier,
+          scaleMultiplier: motion.scaleMultiplier,
+        })
+        spawnScreenReticleMaterial.uniforms.uOpacity!.value = appearance.opacity
+        if (spawnScreenReticleMaterial.uniforms.uRelease) {
+          spawnScreenReticleMaterial.uniforms.uRelease.value = appearance.release
+        }
+        const arrivalBaseScale = object.current.userData['baseScale'] as THREE.Vector3 | undefined
+        if (arrivalBaseScale) {
+          object.current.scale.copy(arrivalBaseScale.clone().multiplyScalar(appearance.scaleMultiplier))
+        }
+      } else {
+        spawnScreenReticleMaterial.uniforms.uOpacity!.value =
+          materialProps.opacity * motion.opacityMultiplier * flipbook.opacityMultiplier
+        if (spawnScreenReticleMaterial.uniforms.uRelease) {
+          const releaseScale = surface.phase?.includes('converging-arrival-cage') ? 0.42 : 0.18
+          spawnScreenReticleMaterial.uniforms.uRelease.value = THREE.MathUtils.clamp(
+            (motion.scaleMultiplier - 1) / releaseScale,
+            0,
+            1,
+          )
+        }
+      }
       return
     }
 
@@ -2286,7 +2366,8 @@ export function PfxSurface({
       impactShardMaterial.userData['pfxTeleportHitMaterial']
     ) {
       const teleportTimeScale = Math.max(0.05, controls.timing) * styleProfile.motionMultiplier * Math.max(0.1, tempo)
-      const teleportPeriod = Math.max(0.3, Math.max(0.25, controls.lifetime)) * PFX_BURST_CYCLE_MULTIPLIER
+      const teleportPeriod = Math.max(0.3, Math.max(0.25, controls.lifetime)) *
+        PFX_TELEPORT_ARRIVAL_CYCLE_MULTIPLIER
       const teleportCycle = ((elapsed * teleportTimeScale) % (teleportPeriod * Math.max(1, cycleScale))) / teleportPeriod
       applyPfxTeleportHitMaterialAppearance(
         impactShardMaterial,
@@ -3753,7 +3834,14 @@ export function PfxSurface({
     )
   }
 
-  if (surface.kind === 'ring-field' && surface.tuning?.meshGeometry === 'spawn-screen-reticle') {
+  if (
+    surface.kind === 'ring-field' &&
+    (surface.tuning?.meshGeometry === 'spawn-screen-reticle' ||
+      surface.tuning?.meshGeometry === 'spawn-telegraph-volumetric-reticle' ||
+      surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-footprint' ||
+      surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-cage' ||
+      surface.tuning?.meshGeometry === 'spawn-telegraph-arrival-avatar')
+  ) {
     return (
       <mesh
         ref={object as RefObject<THREE.Mesh>}
@@ -3891,17 +3979,20 @@ export function PfxSurface({
   }
 
   if (surface.kind === 'spawn-voxels') {
+    const voxelMaterial = getPfxSpawnVoxelMaterialRole(surface) === 'accent'
+      ? spawnVoxelMaterial ?? accentSurfaceMaterial
+      : coreSurfaceMaterial
     return (
       <group ref={object as RefObject<THREE.Group>} scale={surface.scale}>
         {PFX_SPAWN_VOXEL_LAYOUT.map(([x, y, z, size], index) => (
           <mesh
             key={index}
-            material={coreSurfaceMaterial}
+            material={voxelMaterial}
             position={[x, y, z]}
             rotation={[index * 0.37, index * 0.61, index * 0.23]}
-            scale={size * 0.12}
+            scale={[size * 0.075, size * 0.16, size * 0.075]}
           >
-            <boxGeometry args={[1, 1, 1]} />
+            <octahedronGeometry args={[1, 0]} />
           </mesh>
         ))}
       </group>

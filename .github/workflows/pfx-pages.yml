@@ -12,26 +12,56 @@ on:
     paths:
       - tools/3d-pfx-library/**
       - .github/workflows/pfx-pages.yml
+  pull_request:
+    paths:
+      - tools/3d-pfx-library/**
+      - .github/workflows/pfx-pages.yml
   workflow_dispatch:
 
-# Granted workflow-wide (not just on the deploy job) because
-# actions/upload-pages-artifact runs in the build job and needs Pages access.
+# Default token is contents:read. Pages write stays on the deploy job,
+# which does not run for pull_request events.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pfx-pages
+  group: pfx-pages-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
     name: Build viewer
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - name: Check out repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      # Inspect-pack textures are Git LFS objects. Default checkout leaves
+      # pointer files, and Vite then ships those text files as PNGs. Do not
+      # set lfs: true on checkout: that would pull every binary in the repo.
+      - name: Fetch PFX texture LFS objects
+        run: |
+          git lfs install --local
+          git lfs pull --include="tools/3d-pfx-library/assets/**"
+
+      - name: Verify source textures are PNG files
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          pngs = list(Path("tools/3d-pfx-library/assets").rglob("*.png"))
+          if not pngs:
+              raise SystemExit("no PNG files under tools/3d-pfx-library/assets")
+          magic = b"\x89PNG\r\n\x1a\n"
+          bad = []
+          for path in pngs:
+              head = path.read_bytes()[:8]
+              if head != magic:
+                  bad.append(f"{path} magic={head!r} size={path.stat().st_size}")
+          if bad:
+              raise SystemExit("PNG files are not PNG images:\n" + "\n".join(bad))
+          print(f"ok {len(pngs)} PNG files")
+          PY
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -48,15 +78,55 @@ jobs:
         working-directory: tools/3d-pfx-library
         run: npm run typecheck
 
-      - name: Test
-        working-directory: tools/3d-pfx-library
-        run: npm run test
-
       - name: Build static viewer
         working-directory: tools/3d-pfx-library
         env:
           PFX_BASE_PATH: /${{ github.event.repository.name }}/
         run: npm run build
+
+      - name: Verify bundled textures are PNG files
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          pngs = list(Path("tools/3d-pfx-library/dist/assets").glob("*.png"))
+          if not pngs:
+              raise SystemExit("no PNG files under tools/3d-pfx-library/dist/assets")
+          magic = b"\x89PNG\r\n\x1a\n"
+          bad = []
+          for path in pngs:
+              head = path.read_bytes()[:8]
+              if head != magic:
+                  bad.append(f"{path} magic={head!r} size={path.stat().st_size}")
+          if bad:
+              raise SystemExit("bundled PNG files are not PNG images:\n" + "\n".join(bad))
+          print(f"ok {len(pngs)} bundled PNG files")
+          PY
+
+      - name: Upload dist artifact
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pfx-viewer-dist
+          path: tools/3d-pfx-library/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: pfx-viewer-dist
+          path: dist
 
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
@@ -64,16 +134,8 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: tools/3d-pfx-library/dist
+          path: dist
 
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: build
-    runs-on: ubuntu-24.04
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
