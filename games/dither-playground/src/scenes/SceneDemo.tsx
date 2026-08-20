@@ -107,7 +107,7 @@ function CheckChip({ checked, onChange, label }: { checked: boolean; onChange: (
 
 export function SceneDemo() {
   const [config, setConfig] = useState<DitherEffectConfig>(PRESET_GAMEBOY_CLASSIC.config);
-  const [mode, setMode] = useState<Mode>('single');
+  const [mode, setMode] = useState<Mode>('compare');
   const [resolveOn, setResolveOn] = useState(false);
   const [pointer, setPointer] = useState<[number, number]>([0.5, 0.5]);
   const effectRef = useRef<DitherEffect | null>(null);
