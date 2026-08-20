@@ -10,6 +10,10 @@ nothing is uploaded.
 > New to run-workshop? Start with [Getting Started](../../GETTING_STARTED.md)
 > for the shared prerequisites (Node 20+, npm 10+, Git LFS, the `rundot` CLI).
 
+## Demo video
+
+Watch the [dithered.mp4 demo](public/dithered.mp4) to see the effect in motion.
+
 ## Local setup
 
 ```bash
