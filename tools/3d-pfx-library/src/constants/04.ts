@@ -1890,16 +1890,15 @@ void main() {
     worldOffset = aSpawn * (1.0 - chargeEnvelope * 0.25) + wobble * 0.12;
     velocity = -normalize(aSpawn) * aSpeed;
   #elif defined(MOTION_BEAM_TELEGRAPH_FLOW)
-    float beamMin = -1.55;
-    float beamSpan = 3.1;
+    float beamMin = -2.4;
+    float beamSpan = 5.0;
     float flowingBeamX = beamMin + mod((aSpawn.x - beamMin) - uTime * uTiming * max(0.04, aSpeed) + beamSpan * 32.0, beamSpan);
-    float contractedBeamX = mix(-1.42, flowingBeamX, chargeEnvelope);
-    float beamProgress = (contractedBeamX - beamMin) / beamSpan;
-    float currentWave = sin(contractedBeamX * 5.2 - uTime * uTiming * 8.0 + aWobble.x);
+    float beamProgress = (flowingBeamX - beamMin) / beamSpan;
+    float currentWave = sin(flowingBeamX * 5.2 - uTime * uTiming * 8.0 + aWobble.x);
     worldOffset = vec3(
-      contractedBeamX,
-      aSpawn.y * chargeEnvelope + currentWave * 0.28 * chargeEnvelope,
-      (aSpawn.z * (0.42 + beamProgress * 0.58) + cos(currentWave + aWobble.x) * 0.018) * chargeEnvelope
+      flowingBeamX,
+      aSpawn.y + currentWave * 0.08 * chargeEnvelope,
+      aSpawn.z * (0.42 + beamProgress * 0.58) + cos(currentWave + aWobble.x) * 0.018
     );
     velocity = vec3(-max(0.04, aSpeed), currentWave * 0.08, 0.0);
   #elif defined(MOTION_LASER_SPRAY_RICOCHET)
@@ -1928,7 +1927,7 @@ void main() {
     ? mix(uSizeRange.x, uSizeMid, sizeT * 2.0)
     : mix(uSizeMid, uSizeRange.y, sizeT * 2.0 - 1.0);
   #ifdef MOTION_BEAM_TELEGRAPH_FLOW
-    sizeLife *= mix(0.28, 1.0, chargeEnvelope);
+    sizeLife *= mix(0.78, 1.0, chargeEnvelope);
   #endif
   #ifdef MOTION_LASER_SPRAY_RICOCHET
     sizeLife *= mix(0.04, 1.0, chargeEnvelope);

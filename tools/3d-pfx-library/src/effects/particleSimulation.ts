@@ -88,11 +88,12 @@ export function createPfxParticleSimulation(
         const chargeCrown = surface.phase === 'flame-charge-lick-crown'
         const fireballVolume = chargePlume && tuning?.flipbookAtlas === 'unity-fireball-64'
         const chargeFireLayer = chargePlume || chargeCrown
-        const chargeSpread = chargeFireLayer ? tuning?.spawnScale ?? 1 : 1
-        spawn[index] = (rand() - 0.5) * (chargeCrown ? 0.2 * chargeSpread : chargePlume ? 0.26 * chargeSpread : 0.2) * scale
+        const authoredSpread = tuning?.spawnScale ?? 1
+        const riseSpread = chargeFireLayer ? authoredSpread : Math.max(0.35, authoredSpread)
+        spawn[index] = (rand() - 0.5) * (chargeCrown ? 0.2 * riseSpread : chargePlume ? 0.26 * riseSpread : 0.2 * riseSpread) * scale
         spawn[index + 1] = (chargeCrown ? 0.12 + rand() * 0.2 : fireballVolume ? -0.05 + rand() * 0.1 : chargePlume ? -0.12 + rand() * 0.26 : -0.35 + rand() * 0.55) * scale
         spawn[index + 2] = (rand() - 0.5)
-          * (chargeCrown ? 0.2 * Math.sqrt(depthScale) * chargeSpread : chargePlume ? 0.25 * Math.sqrt(depthScale) * chargeSpread : 0.2 * depthScale)
+          * (chargeCrown ? 0.2 * Math.sqrt(depthScale) * riseSpread : chargePlume ? 0.25 * Math.sqrt(depthScale) * riseSpread : 0.2 * depthScale * riseSpread)
           * scale
         // Lateral jitter: perfectly parallel up-vectors turned rising motes
         // into a single-file conveyor.
@@ -103,7 +104,8 @@ export function createPfxParticleSimulation(
         break
       }
       case 'jump-launch': {
-        const radius = (0.16 + rand() * 0.18) * scale
+        const launchSpread = Math.max(0.35, tuning?.spawnScale ?? 1)
+        const radius = (0.16 + rand() * 0.18) * scale * launchSpread
         const depthScale = tuning?.depthScale ?? 1
         spawn[index] = Math.cos(angle) * radius
         spawn[index + 1] = (0.01 + rand() * 0.28) * scale
@@ -133,8 +135,9 @@ export function createPfxParticleSimulation(
       }
       case 'beam-telegraph-flow': {
         const progress = (i + 0.5) / count
-        const halfWidth = 0.1 + progress * 0.34
-        spawn[index] = (-1.55 + progress * 3.1) * scale
+        const laneSpread = Math.max(1, tuning?.spawnScale ?? 1)
+        const halfWidth = (0.1 + progress * 0.34) * laneSpread
+        spawn[index] = (-2.4 + progress * 5.0) * scale
         spawn[index + 1] = (0.05 + rand() * 0.08) * scale
         spawn[index + 2] = (rand() - 0.5) * halfWidth * scale
         direction[index] = -1

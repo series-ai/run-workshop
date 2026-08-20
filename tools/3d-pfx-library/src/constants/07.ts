@@ -630,8 +630,8 @@ export function updatePfxParticleSimulation(
     }
 
     if (simulation.motionKind === 'beam-telegraph-flow') {
-      const laneMin = -1.55 * controls.scale
-      const laneMax = 1.55 * controls.scale
+      const laneMin = -2.4 * controls.scale
+      const laneMax = 2.6 * controls.scale
       const laneSpan = laneMax - laneMin
       const unwrapped = simulation.spawn[index]! - simulation.speed[i]! * age
       const wrapped = ((unwrapped - laneMin) % laneSpan + laneSpan) % laneSpan

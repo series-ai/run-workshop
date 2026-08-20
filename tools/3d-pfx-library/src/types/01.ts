@@ -1653,6 +1653,7 @@ export interface PfxFilterQuery {
   space?: EffectSpace[]
   mobileSafeOnly?: boolean
   coverage?: PfxAcceptanceStatus[]
+  reviewSet?: string[]
 }
 
 export interface PfxPresetOverrides {

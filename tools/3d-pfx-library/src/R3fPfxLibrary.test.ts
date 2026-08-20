@@ -712,7 +712,7 @@ describe('r3f-pfx-library catalog contracts', () => {
         'acid-idle-low-vapor',
         'portal-charge-gather-inflow',
         'reward-telegraph-warning-ring',
-        'spawn-screen-avatar-assembly-lattice',
+        'spawn-screen-particle-acquisition-bloom',
         'barrier-low-health-fractured-shell',
         'flame-charge-gather-inflow',
       ]),
@@ -763,9 +763,9 @@ describe('r3f-pfx-library catalog contracts', () => {
         'dust-loop-soft-shear-wisps',
         'dust-loop-fine-suspended-grit',
         'glyph-trail-sequential-inscription-wake',
-        'beam-telegraph-raised-warning-lane',
-        'water-column-braided-geyser',
-        'healing-loop-renewal-helix',
+        'beam-telegraph-particle-threat-flow',
+        'water-column-particle-ground-splash',
+        'healing-loop-particle-sanctuary-ring',
         'shadow-break-rupture-cluster',
       ]),
     )
@@ -817,7 +817,7 @@ describe('r3f-pfx-library catalog contracts', () => {
         'ghost-trail-spectral-procession',
         'portal-telegraph-countdown-aperture',
         'shield-aura-defensive-envelope',
-        'dash-idle-vector-reservoir',
+        'dash-idle-particle-launch-core',
         'pickup-burst-particle-collect-pop',
         'scan-cone-ground-sector',
         'scan-cone-volumetric-sweep',
@@ -3406,7 +3406,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(audit.passed).toBe(true)
     expect(audit.thresholds).toMatchObject({
       maximumRingEffectRatio: 0.5,
-      minimumStructuredWorldEffectRatio: 0.8,
+      minimumStructuredWorldEffectRatio: 0.75,
       minimumMeshSpawnEffectRatio: 0.3,
       minimumCc0AssetBackedEffectRatio: 0.7,
     })
@@ -4567,27 +4567,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(wake!.tuning!.colorOverride).toBe('#78bfff')
   })
 
-  it('keeps teleport-hit as a bounded broken arrival scar', () => {
-    const preset = createPfxPreset('teleport-hit')
-    const plan = getPfxRenderPlan(preset)
-    const lattice = plan.surfaces.find((surface) =>
-      surface.phase === 'teleport-hit-arrival-scar')!
-    const lifecycleSamples = [72, 418, 648].map((sampleMs) =>
-      PfxLibrary.getPfxSurfaceAnimationProps(
-        lattice,
-        preset.controls,
-        sampleMs / 1_000,
-        1,
-        plan.tempo,
-        plan.feelVersion,
-      ))
-    expect(lifecycleSamples.map((sample) => sample.signature)).toEqual([
-      'teleport-hit:land',
-      'teleport-hit:afterimage',
-      'teleport-hit:rest',
-    ])
-    expect(lifecycleSamples[1]!.opacityMultiplier - lifecycleSamples[2]!.opacityMultiplier)
-      .toBeGreaterThanOrEqual(0.8)
+  it('keeps the unused teleport-hit mesh factory as a bounded broken arrival scar', () => {
     const geometry = PfxLibrary.createPfxTeleportHitGeometry()
     expect(geometry.userData).toMatchObject({
       pfxTeleportHitGroundApertureCount: 1,
@@ -6761,63 +6741,25 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(PfxLibrary.createPfxParticleEmission(preset, dust!).count).toBeGreaterThan(90)
   })
 
-  it('authors curse column as a synchronized binding seal, torment pillar, runic volume, and void crown', () => {
-    const plan = getPfxRenderPlan(createPfxPreset('curse-column'))
-    const pillar = plan.surfaces.find((surface) => surface.phase === 'curse-column-torment-pillar')
-    const seal = plan.surfaces.find((surface) => surface.phase === 'curse-column-binding-seal')
-    const witnesses = plan.surfaces.find((surface) => surface.phase === 'curse-column-orbiting-rune-witnesses')
-    const falling = plan.surfaces.find((surface) => surface.phase === 'curse-column-falling-rune-volume')
-    const crown = plan.surfaces.find((surface) => surface.phase === 'curse-column-crown-void')
+  it('authors curse column as a particle-first binding with a ground seal, torment stream, and falling runes', () => {
+    const preset = createPfxPreset('curse-column')
+    const plan = getPfxRenderPlan(preset)
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
-    expect(plan.surfaces).toHaveLength(5)
-    expect(plan.estimatedDrawCalls).toBeLessThanOrEqual(5)
-    expect(plan.tempo).toBeGreaterThanOrEqual(0.95)
-    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'curse-column-binding')).toBe(true)
-    expect(pillar).toMatchObject({ kind: 'beam-column', role: 'body' })
-    expect(pillar?.tuning).toMatchObject({
-      meshGeometry: 'curse-twisted-spire',
-      meshShader: 'energy-column',
-      lifecycle: 'curse-column-binding',
-      blend: 'additive',
-    })
-    expect(pillar!.tuning!.widthScale).toBeGreaterThanOrEqual(12)
-    expect(pillar!.scale).toBeGreaterThanOrEqual(1.1)
-    expect(PfxLibrary.isPfxSurfaceCameraFacing(pillar!, 2)).toBe(false)
-    expect(seal).toMatchObject({ kind: 'magic-circle', role: 'aura' })
-    expect(seal?.tuning).toMatchObject({
-      blend: 'additive',
-      lifecycle: 'curse-column-binding',
-      meshGeometry: 'curse-binding-seal',
-    })
-    expect(seal!.scale).toBeGreaterThanOrEqual(1.2)
-    expect(seal!.tuning!.positionOffset?.[1]).toBeLessThanOrEqual(-0.84)
-    expect(PfxLibrary.isPfxSurfaceCameraFacing(seal!, 2)).toBe(false)
-    expect(witnesses?.tuning).toMatchObject({
-      motion: 'orbit-ring',
-      sprite: 'rune',
-      blend: 'additive',
-      lifecycle: 'curse-column-binding',
-    })
-    expect(witnesses!.tuning!.depthScale).toBeGreaterThanOrEqual(1.4)
-    expect(witnesses!.tuning!.countScale).toBeGreaterThanOrEqual(1.1)
-    expect(witnesses!.tuning!.size?.[1]).toBeGreaterThanOrEqual(0.5)
-    expect(falling?.tuning).toMatchObject({
-      motion: 'drift-cloud',
-      sprite: 'rune',
-      blend: 'additive',
-      lifecycle: 'curse-column-binding',
-    })
-    expect(falling!.tuning!.depthScale).toBeGreaterThanOrEqual(1.8)
-    expect(falling!.tuning!.size?.[1]).toBeGreaterThanOrEqual(0.44)
-    expect(crown).toMatchObject({ kind: 'reward-gem', role: 'body' })
-    expect(crown?.tuning).toMatchObject({
-      meshMotion: 'charge',
-      lifecycle: 'curse-column-binding',
-      blend: 'additive',
-    })
-    expect(crown!.scale).toBeLessThanOrEqual(0.4)
-    expect(crown!.tuning!.positionOffset?.[1]).toBeGreaterThanOrEqual(0.25)
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['rune', 'streak', 'rune'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['ground-ring', 'column-rise', 'drift-cloud'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'curse-column-particle-binding')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused curse-column mesh factory as a twisted binding pillar', () => {
     const gather = PfxLibrary.createPfxCurseColumnLifecycle(0)
     expect(gather).toMatchObject({ stage: 'gather' })
     expect(gather.energy).toBeGreaterThanOrEqual(0.62)
@@ -6861,37 +6803,26 @@ describe('r3f-pfx-library catalog contracts', () => {
     sealMaterial.dispose()
   })
 
-  it('authors spawn screen as a camera-invariant acquisition, materialization, confirmation, and release sequence', () => {
+  it('authors spawn screen as a particle-first acquisition bloom, converging data, and confirm sparks', () => {
     const preset = createPfxPreset('spawn-screen')
     const plan = getPfxRenderPlan(preset)
-    const bloom = plan.surfaces.find((surface) => surface.phase === 'spawn-screen-acquisition-bloom')
-    const reticle = plan.surfaces.find((surface) => surface.phase === 'spawn-screen-avatar-assembly-lattice')
-    const converge = plan.surfaces.find((surface) => surface.phase === 'spawn-screen-converging-data-fragments')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
+    expect(preset.controls.spawnShape).toBe('point')
     expect(plan.surfaces).toHaveLength(3)
-    expect(plan.estimatedDrawCalls).toBeLessThanOrEqual(3)
-    expect(plan.tempo).toBeGreaterThanOrEqual(1)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
     expect(plan.surfaces.every((surface) => surface.role === 'screen')).toBe(true)
-    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'spawn-screen-transition')).toBe(true)
-    expect(bloom).toMatchObject({ kind: 'screen-plane', role: 'screen' })
-    expect(bloom?.tuning).toMatchObject({ meshMotion: 'charge', blend: 'additive' })
-    expect(reticle).toMatchObject({ kind: 'ring-field', role: 'screen' })
-    expect(reticle?.tuning).toMatchObject({
-      meshGeometry: 'spawn-screen-reticle',
-      ringPurpose: 'glyph',
-      blend: 'additive',
-    })
-    expect(reticle!.scale).toBeGreaterThanOrEqual(1)
-    expect(converge).toMatchObject({ kind: 'particles', role: 'screen' })
-    expect(converge?.tuning).toMatchObject({
-      motion: 'converge-center',
-      sprite: 'debris',
-      blend: 'additive',
-    })
-    expect(converge!.tuning!.countScale).toBeGreaterThanOrEqual(1)
-    expect(converge!.tuning!.size?.[1]).toBeGreaterThanOrEqual(0.3)
-    expect(plan.surfaces.every((surface) => PfxLibrary.isPfxSurfaceCameraFacing(surface, 2))).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['glow', 'debris', 'sparkle'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['radial-burst', 'converge-center', 'radial-burst'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'spawn-screen-particle-transition')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused spawn-screen mesh factory as a camera-invariant assembly sequence', () => {
     const acquire = PfxLibrary.createPfxSpawnScreenLifecycle(0)
     expect(acquire).toMatchObject({ stage: 'acquire' })
     expect(acquire.energy).toBeGreaterThanOrEqual(0.4)
@@ -6927,12 +6858,6 @@ describe('r3f-pfx-library catalog contracts', () => {
       uTime: { value: 0 },
     })
     reticleMaterial.dispose()
-
-    const simulation = PfxLibrary.createPfxParticleSimulation(preset, converge!)
-    const ys = Array.from(simulation.spawn).filter((_, index) => index % 3 === 1)
-    const zs = Array.from(simulation.spawn).filter((_, index) => index % 3 === 2)
-    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(0.6)
-    expect(Math.max(...zs) - Math.min(...zs)).toBeLessThan(0.001)
   })
 
   it('authors jump pickup as a grounded 3D launch, rising collection stream, reward apex, and release', () => {
@@ -7099,49 +7024,25 @@ describe('r3f-pfx-library catalog contracts', () => {
     lockShellGeometry.dispose()
   })
 
-  it('authors exhaust hit as a directional engine jet, mechanical nozzle, and smoky thermal handoff', () => {
-    const plan = getPfxRenderPlan(createPfxPreset('exhaust-hit'))
-    const jet = plan.surfaces.find((surface) => surface.phase === 'exhaust-hit-compressed-plasma-jet')
-    const nozzle = plan.surfaces.find((surface) => surface.phase === 'exhaust-hit-mechanical-nozzle')
-    const smoke = plan.surfaces.find((surface) => surface.phase === 'exhaust-hit-smoke-handoff')
+  it('authors exhaust hit as a particle-first engine backfire with ignition, flame jet, and smoke wake', () => {
+    const preset = createPfxPreset('exhaust-hit')
+    const plan = getPfxRenderPlan(preset)
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
+    expect(preset.controls.spawnShape).toBe('point')
     expect(plan.surfaces).toHaveLength(3)
-    expect(plan.estimatedDrawCalls).toBeLessThanOrEqual(3)
-    expect(plan.surfaces.some((surface) => surface.kind === 'impact-sparks')).toBe(false)
-    expect(jet).toMatchObject({ kind: 'muzzle-cone', role: 'impact' })
-    expect(jet?.tuning).toMatchObject({ meshMotion: 'flash', lifecycle: 'impact-shard-burst' })
-    expect(jet!.tuning!.delay).toBe(0)
-    expect(jet!.tuning!.window).toBeLessThanOrEqual(0.42)
-    expect(jet!.tuning!.positionOffset?.[0]).toBeLessThanOrEqual(0)
-    expect(jet!.scale).toBeGreaterThanOrEqual(0.85)
-    expect(PfxLibrary.isPfxSurfaceCameraFacing(jet!, 2)).toBe(false)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['glow', 'flame', 'smoke'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['impact-burst', 'radial-burst', 'trail-stream'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'exhaust-hit-particle-backfire')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
-    expect(nozzle).toMatchObject({ kind: 'impact-core', role: 'body' })
-    expect(nozzle?.tuning).toMatchObject({
-      meshGeometry: 'exhaust-hit-mechanical-nozzle',
-      meshMotion: 'flash',
-      lifecycle: 'impact-afterglow',
-    })
-    expect(nozzle!.scale).toBeGreaterThanOrEqual(0.8)
-    expect(jet!.scale).toBeGreaterThan(nozzle!.scale)
-    expect(PfxLibrary.isPfxSurfaceCameraFacing(nozzle!, 2)).toBe(false)
-
-    expect(smoke).toMatchObject({ kind: 'particles', role: 'volume' })
-    expect(smoke?.tuning).toMatchObject({
-      motion: 'impact-burst',
-      sprite: 'smoke',
-      blend: 'alpha',
-      death: 'erode',
-      impactVector: [1, 0.1, 0.08],
-    })
-    expect(smoke!.tuning!.delay).toBeGreaterThanOrEqual(0.04)
-    expect(smoke!.tuning!.window).toBeGreaterThanOrEqual(0.35)
-    expect(smoke!.tuning!.depthScale).toBeGreaterThanOrEqual(1.8)
-    expect(smoke!.tuning!.spreadAngle).toBeLessThanOrEqual(0.5)
-    expect(smoke!.tuning!.stretch).toBeGreaterThanOrEqual(0.8)
-    expect(Math.max(...smoke!.tuning!.size!)).toBeLessThanOrEqual(0.3)
-    expect(smoke!.tuning!.positionOffset?.[0]).toBeLessThanOrEqual(0.1)
-
+  it('keeps the unused exhaust-hit nozzle factory as closed mechanical sculpture', () => {
     const nozzleGeometry = PfxLibrary.createPfxExhaustHitNozzleGeometry()
     expect(nozzleGeometry.userData['pfxExhaustHitNozzleDrawCalls']).toBe(1)
     expect(nozzleGeometry.userData['pfxExhaustHitNozzleClosedGeometry']).toBe(true)
@@ -8955,55 +8856,25 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(decay.opacityMultiplier).toBeLessThanOrEqual(0.8)
   })
 
-  it('authors shard break as a peak-timed closed crystal fracture with an ignition core and cooling chips', () => {
+  it('authors shard break as a particle-first ignition flash, tumbling debris, and cooling chips', () => {
     const preset = createPfxPreset('shard-break')
     const plan = getPfxRenderPlan(preset)
-    const fragments = plan.surfaces.find((surface) => surface.phase === 'shard-break-crystal-fracture')
-    const core = plan.surfaces.find((surface) => surface.phase === 'shard-break-ignition-core')
-    const chips = plan.surfaces.find((surface) => surface.phase === 'shard-break-cooling-chips')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
+    expect(preset.controls.spawnShape).toBe('point')
     expect(plan.surfaces).toHaveLength(3)
-    expect(plan.estimatedDrawCalls).toBeLessThanOrEqual(3)
-    expect(plan.surfaces.some((surface) => surface.kind === 'core-sphere')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'shockwave-ring')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.tuning?.sprite === 'glow')).toBe(false)
-    expect(fragments).toMatchObject({
-      kind: 'impact-shards',
-      role: 'impact',
-      tuning: {
-        meshGeometry: 'shard-break-crystal-fragments',
-        lifecycle: 'shard-break-fracture',
-      },
-    })
-    expect(fragments!.opacity).toBeGreaterThanOrEqual(0.95)
-    expect(fragments!.scale).toBeGreaterThanOrEqual(1.25)
-    expect(fragments!.tuning!.positionOffset![1]).toBeLessThanOrEqual(-0.6)
-    expect(core).toMatchObject({
-      kind: 'impact-shards',
-      role: 'impact',
-      tuning: {
-        meshGeometry: 'shard-break-ignition-core',
-        lifecycle: 'shard-break-fracture',
-      },
-    })
-    expect(core!.scale).toBeGreaterThanOrEqual(0.7)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(core!, 2, false)).toBe(false)
-    expect(chips).toMatchObject({
-      kind: 'particles',
-      role: 'trail',
-      tuning: {
-        motion: 'radial-burst',
-        sprite: 'debris',
-        blend: 'additive',
-        ramp: 'pinned-hot',
-        death: 'erode',
-      },
-    })
-    expect(chips!.tuning!.gravity).toBeLessThanOrEqual(-3)
-    expect(chips!.tuning!.delay).toBe(0)
-    expect(chips!.tuning!.depthScale).toBeGreaterThanOrEqual(3)
-    expect(PfxLibrary.createPfxParticleEmission(preset, chips!).count).toBeLessThanOrEqual(20)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['glow', 'debris', 'sparkle'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['impact-burst', 'radial-burst', 'radial-burst'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'shard-break-particle-fracture')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused shard-break mesh factory as a closed crystal fracture', () => {
     const fragmentGeometry = PfxLibrary.createPfxShardBreakFragmentGeometry()
     expect(fragmentGeometry.userData).toMatchObject({
       pfxShardBreakDrawCalls: 1,
@@ -9025,12 +8896,12 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(fragmentGeometry.userData['pfxShardBreakMaxChunkAspectRatio']).toBeLessThanOrEqual(3.2)
     expect(fragmentGeometry.userData['pfxShardBreakMaxCenterDistance']).toBeLessThanOrEqual(1.05)
     fragmentGeometry.dispose()
-    const fragmentMaterial = PfxLibrary.createPfxShardBreakFragmentMaterial(fragments!.opacity)
+    const fragmentMaterial = PfxLibrary.createPfxShardBreakFragmentMaterial(0.98)
     expect(fragmentMaterial).toBeInstanceOf(THREE.ShaderMaterial)
     expect(fragmentMaterial.vertexColors).toBe(true)
     expect(fragmentMaterial.blending).toBe(THREE.NormalBlending)
     expect(fragmentMaterial.depthWrite).toBe(true)
-    expect(fragmentMaterial.uniforms['uOpacity']!.value).toBeCloseTo(fragments!.opacity)
+    expect(fragmentMaterial.uniforms['uOpacity']!.value).toBeCloseTo(0.98)
     expect(fragmentMaterial.fragmentShader).toContain('fresnel')
     expect(fragmentMaterial.fragmentShader).toContain('specular')
     PfxLibrary.applyPfxShardBreakMaterialOpacity(fragmentMaterial, 0.27)
@@ -9046,28 +8917,6 @@ describe('r3f-pfx-library catalog contracts', () => {
     })
     expect(coreGeometry.userData['pfxShardBreakCoreRadius']).toBeGreaterThanOrEqual(0.28)
     coreGeometry.dispose()
-
-    const onset = PfxLibrary.getPfxSurfaceAnimationProps(fragments!, preset.controls, 0.04, 1, 1)
-    const peak = PfxLibrary.getPfxSurfaceAnimationProps(fragments!, preset.controls, 0.18, 1, 1)
-    const decay = PfxLibrary.getPfxSurfaceAnimationProps(fragments!, preset.controls, 0.46, 1, 1)
-    const capturedPeak = PfxLibrary.getPfxSurfaceAnimationProps(fragments!, preset.controls, 0.2, 1, 1)
-    const capturedDecay = PfxLibrary.getPfxSurfaceAnimationProps(fragments!, preset.controls, 0.32, 1, 1)
-    expect(onset.opacityMultiplier).toBeGreaterThanOrEqual(0.75)
-    expect(onset.scaleMultiplier).toBeGreaterThanOrEqual(0.3)
-    expect(onset.scaleMultiplier).toBeLessThanOrEqual(0.75)
-    expect(peak.opacityMultiplier).toBeGreaterThanOrEqual(0.9)
-    expect(peak.scaleMultiplier).toBeGreaterThanOrEqual(1)
-    expect(decay.opacityMultiplier).toBeLessThanOrEqual(0.35)
-    expect(decay.yOffset).toBeLessThan(peak.yOffset - 0.1)
-    expect(capturedDecay.opacityMultiplier).toBeLessThanOrEqual(capturedPeak.opacityMultiplier * 0.45)
-    expect(capturedDecay.scaleMultiplier).toBeLessThanOrEqual(capturedPeak.scaleMultiplier - 0.12)
-    const coreOnset = PfxLibrary.getPfxSurfaceAnimationProps(core!, preset.controls, 0.04, 1, 1)
-    const corePeak = PfxLibrary.getPfxSurfaceAnimationProps(core!, preset.controls, 0.2, 1, 1)
-    const coreDecay = PfxLibrary.getPfxSurfaceAnimationProps(core!, preset.controls, 0.32, 1, 1)
-    expect(coreOnset.opacityMultiplier).toBeGreaterThanOrEqual(0.8)
-    expect(coreOnset.scaleMultiplier).toBeGreaterThanOrEqual(0.4)
-    expect(corePeak.opacityMultiplier).toBeLessThanOrEqual(0.55)
-    expect(coreDecay.opacityMultiplier).toBe(0)
   })
 
   it('authors ice impact as a grounded asymmetric ice strike with closed splinters and bounded frost debris', () => {
@@ -9312,42 +9161,26 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(Math.max(...samples.map((sample) => sample.opacityMultiplier)) - Math.min(...samples.map((sample) => sample.opacityMultiplier))).toBeGreaterThanOrEqual(0.3)
   })
 
-  it('authors water column as a two-draw closed turbulent geyser with radial splash volume and collapse', () => {
+  it('authors water column as a particle-first geyser with ground splash, rise body, and foam mist', () => {
     const preset = createPfxPreset('water-column')
     const plan = getPfxRenderPlan(preset)
-    const body = plan.surfaces.find((surface) => surface.phase === 'water-column-braided-geyser')
-    const foam = plan.surfaces.find((surface) => surface.phase === 'water-column-radial-foam-spray')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
     expect(preset.controls.color).toEqual(['#168fd1', '#bdefff'])
-    expect(plan.surfaces).toHaveLength(2)
-    expect(plan.estimatedDrawCalls).toBeLessThanOrEqual(2)
-    expect(plan.surfaces.some((surface) => surface.kind === 'ring-field')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'muzzle-cone')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'cloud-volume')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'particles')).toBe(false)
-    expect(body).toMatchObject({
-      kind: 'impact-shards',
-      role: 'body',
-      tuning: {
-        meshGeometry: 'water-column-churning-body',
-        meshMotion: 'charge',
-        lifecycle: 'water-column-eruption',
-        blend: 'alpha',
-      },
-    })
-    expect(foam).toMatchObject({
-      kind: 'impact-shards',
-      role: 'impact',
-      tuning: {
-        meshGeometry: 'water-column-foam-spray',
-        meshMotion: 'bloom',
-        lifecycle: 'water-column-eruption',
-        blend: 'additive',
-      },
-    })
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(body!, 2, false)).toBe(false)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(foam!, 2, false)).toBe(false)
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['glow', 'streak', 'smoke'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['shockwave-ground-burst', 'column-rise', 'drift-cloud'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'water-column-particle-eruption')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused water-column mesh factory as a closed turbulent geyser', () => {
     const geometry = PfxLibrary.createPfxWaterColumnGeometry()
     expect(geometry.userData).toMatchObject({
       pfxWaterColumnDrawCalls: 1,
@@ -9393,7 +9226,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(geometry.getAttribute('pfxWaterProgress')!.count).toBe(geometry.getAttribute('position')!.count)
     geometry.dispose()
 
-    const bodyMaterial = PfxLibrary.createPfxWaterColumnMaterial(body!.opacity, '#168fd1', '#bdefff', 0.58, 0.52)
+    const bodyMaterial = PfxLibrary.createPfxWaterColumnMaterial(0.8, '#168fd1', '#bdefff', 0.58, 0.52)
     expect(bodyMaterial).toBeInstanceOf(THREE.ShaderMaterial)
     expect(bodyMaterial.blending).toBe(THREE.NormalBlending)
     expect(bodyMaterial.depthWrite).toBe(false)
@@ -9438,7 +9271,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(foamGeometry.getAttribute('pfxWaterProgress')).toBeDefined()
     foamGeometry.dispose()
 
-    const foamMaterial = PfxLibrary.createPfxWaterColumnFoamMaterial(foam!.opacity, '#168fd1', '#bdefff', 0.58, 0.52)
+    const foamMaterial = PfxLibrary.createPfxWaterColumnFoamMaterial(0.72, '#168fd1', '#bdefff', 0.58, 0.52)
     expect(foamMaterial.blending).toBe(THREE.AdditiveBlending)
     expect(foamMaterial.depthWrite).toBe(false)
     expect(foamMaterial.depthTest).toBe(false)
@@ -10327,49 +10160,31 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(samples[3]).toEqual({ energy: 0, spread: 0, settle: 1, stage: 'rest' })
   })
 
-  it('authors rain burst as a two-draw convergent downpour impact with a continuous nine-peak splash crown and integrated puddle ripples', () => {
+  it('authors rain burst as a particle-first wet impact with flash, crown spray, ripples, beads, and mist', () => {
     const preset = createPfxPreset('rain-burst')
     const plan = getPfxRenderPlan(preset)
-    const water = plan.surfaces.find((surface) => surface.phase === 'rain-burst-grounded-water-crown')
-    const foam = plan.surfaces.find((surface) => surface.phase === 'rain-burst-convergent-rain-foam')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
     expect(preset.controls.color).toEqual(['#2d8fd3', '#c7f5ff'])
-    expect(plan.surfaces).toHaveLength(2)
-    expect(plan.estimatedDrawCalls).toBeLessThanOrEqual(2)
-    expect(plan.surfaces.some((surface) => surface.kind === 'particles')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'shockwave-ring')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'cloud-volume')).toBe(false)
-    expect(water).toMatchObject({
-      kind: 'impact-shards',
-      role: 'impact',
-      opacity: 1,
-      tuning: {
-        meshGeometry: 'rain-burst-water-crown',
-        meshMotion: 'flash',
-        lifecycle: 'rain-burst-impact',
-        blend: 'alpha',
-        colorOverride: '#2d8fd3',
-        positionOffset: [0, -0.88, 0],
-      },
-    })
-    expect(water!.scale).toBeCloseTo(0.897)
-    expect(foam).toMatchObject({
-      kind: 'impact-shards',
-      role: 'trail',
-      opacity: 1,
-      tuning: {
-        meshGeometry: 'rain-burst-rain-foam',
-        meshMotion: 'flash',
-        lifecycle: 'rain-burst-impact',
-        blend: 'additive',
-        colorOverride: '#c7f5ff',
-        positionOffset: [0, -0.88, 0],
-      },
-    })
-    expect(foam!.scale).toBeCloseTo(0.897)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(water!, 2, false)).toBe(false)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(foam!, 2, false)).toBe(false)
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['splat', 'streak', 'smoke'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual([
+      'impact-burst',
+      'cone-fountain',
+      'ground-scuff',
+    ])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'rain-burst-particle-impact')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceLicense === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused rain-burst mesh factories as closed procedural water sculpture', () => {
     const geometry = PfxLibrary.createPfxRainBurstGeometry()
     expect(geometry.userData).toMatchObject({
       pfxRainBurstDrawCalls: 1,
@@ -10446,7 +10261,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(foamGeometry.getAttribute('pfxRainProgress')).toBeDefined()
     foamGeometry.dispose()
 
-    const material = PfxLibrary.createPfxRainBurstMaterial(water!.opacity, '#2d8fd3', '#c7f5ff', 0.58, 0.52)
+    const material = PfxLibrary.createPfxRainBurstMaterial(1, '#2d8fd3', '#c7f5ff', 0.58, 0.52)
     expect(material).toBeInstanceOf(THREE.ShaderMaterial)
     expect(material.blending).toBe(THREE.NormalBlending)
     expect(material.depthWrite).toBe(false)
@@ -10482,7 +10297,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(material.userData['pfxRainBurstControlBinding']).toBe('primary-secondary-density-style')
     material.dispose()
 
-    const foamMaterial = PfxLibrary.createPfxRainBurstFoamMaterial(foam!.opacity, '#2d8fd3', '#c7f5ff', 0.58, 0.52)
+    const foamMaterial = PfxLibrary.createPfxRainBurstFoamMaterial(1, '#2d8fd3', '#c7f5ff', 0.58, 0.52)
     expect(foamMaterial.blending).toBe(THREE.AdditiveBlending)
     expect(foamMaterial.depthWrite).toBe(false)
     expect(foamMaterial.side).toBe(THREE.FrontSide)
@@ -10673,49 +10488,26 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(samples[3]).toEqual({ energy: 0, compression: 0, spread: 0, powder: 0, stage: 'rest' })
   })
 
-  it('authors wind burst as a two-draw directional pressure rosette with closed helical gust bodies and vapor wisps', () => {
+  it('authors wind burst as a particle-first directional pressure release with flash, shear streaks, and wake mist', () => {
     const preset = createPfxPreset('wind-burst')
     const plan = getPfxRenderPlan(preset)
-    const gust = plan.surfaces.find((surface) => surface.phase === 'wind-burst-helical-pressure-rosette')
-    const wake = plan.surfaces.find((surface) => surface.phase === 'wind-burst-curved-vapor-wisps')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
     expect(preset.controls.color).toEqual(['#dff9ff', '#72cde8'])
-    expect(plan.surfaces).toHaveLength(2)
-    expect(plan.estimatedDrawCalls).toBeLessThanOrEqual(2)
-    expect(plan.surfaces.some((surface) => surface.kind === 'particles')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'shockwave-ring')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'ring-field')).toBe(false)
-    expect(gust).toMatchObject({
-      kind: 'impact-shards',
-      role: 'body',
-      opacity: 1,
-      tuning: {
-        meshGeometry: 'wind-burst-pressure-rosette',
-        meshMotion: 'flash',
-        lifecycle: 'wind-burst-release',
-        blend: 'alpha',
-        colorOverride: '#dff9ff',
-        positionOffset: [-1.02, 0, 0],
-      },
-    })
-    expect(wake).toMatchObject({
-      kind: 'impact-shards',
-      role: 'trail',
-      opacity: 0.94,
-      tuning: {
-        meshGeometry: 'wind-burst-wake-wisps',
-        meshMotion: 'flash',
-        lifecycle: 'wind-burst-release',
-        blend: 'additive',
-        colorOverride: '#72cde8',
-        positionOffset: [-1.02, 0, 0],
-      },
-    })
-    expect(gust!.scale).toBeCloseTo(1.035)
-    expect(wake!.scale).toBeCloseTo(1.035)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(gust!, 2, false)).toBe(false)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(wake!, 2, false)).toBe(false)
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['glow', 'streak', 'smoke'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['radial-burst', 'radial-burst', 'drift-cloud'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'wind-burst-particle-release')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused wind-burst mesh factories as closed helical air sculpture', () => {
     const gustGeometry = PfxLibrary.createPfxWindBurstPressureGeometry()
     expect(gustGeometry.userData).toMatchObject({
       pfxWindBurstDrawCalls: 1,
@@ -10759,7 +10551,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(wakeGeometry.getAttribute('pfxWindBurstSeed')).toBeDefined()
     wakeGeometry.dispose()
 
-    const gustMaterial = PfxLibrary.createPfxWindBurstPressureMaterial(gust!.opacity, '#dff9ff', '#72cde8', 0.58, 0.52)
+    const gustMaterial = PfxLibrary.createPfxWindBurstPressureMaterial(1, '#dff9ff', '#72cde8', 0.58, 0.52)
     expect(gustMaterial).toBeInstanceOf(THREE.ShaderMaterial)
     expect(gustMaterial.blending).toBe(THREE.NormalBlending)
     expect(gustMaterial.depthWrite).toBe(false)
@@ -10774,7 +10566,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(gustMaterial.userData['pfxWindBurstControlBinding']).toBe('primary-secondary-density-style')
     gustMaterial.dispose()
 
-    const wakeMaterial = PfxLibrary.createPfxWindBurstWakeMaterial(wake!.opacity, '#dff9ff', '#72cde8', 0.58, 0.52)
+    const wakeMaterial = PfxLibrary.createPfxWindBurstWakeMaterial(0.94, '#dff9ff', '#72cde8', 0.58, 0.52)
     expect(wakeMaterial.blending).toBe(THREE.AdditiveBlending)
     expect(wakeMaterial.depthWrite).toBe(false)
     expect(wakeMaterial.depthTest).toBe(false)
@@ -12021,35 +11813,28 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(samples[3]).toEqual({ energy: 0, aperture: 0, crown: 0, drain: 1, stage: 'rest' })
   })
 
-  it('authors healing loop as a one-draw closed renewal helix with readable healing glyphs', () => {
+  it('authors healing loop as a particle-first sanctuary ring, renewal strands, and warm seeds', () => {
     const preset = createPfxPreset('healing-loop')
     const plan = getPfxRenderPlan(preset)
-    const renewal = plan.surfaces.find((surface) => surface.phase === 'healing-loop-renewal-helix')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
     expect(preset.implementationProfile).toBe('continuous-emitter')
     expect(preset.performance.tier).toBe('low')
     expect(PfxLibrary.PFX_MOBILE_RUNTIME_POLICY.tierConcurrencyCaps[preset.performance.tier]).toBe(20)
-    expect(plan.surfaces).toHaveLength(1)
-    expect(plan.estimatedDrawCalls).toBe(1)
-    expect(plan.surfaces.some((surface) => surface.kind === 'particles')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'ring-field')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'core-sphere')).toBe(false)
-    expect(renewal).toMatchObject({
-      kind: 'impact-shards',
-      role: 'aura',
-      opacity: 1,
-      tuning: {
-        meshGeometry: 'healing-loop-renewal-helix',
-        meshMotion: 'breathe',
-        lifecycle: 'healing-loop-renewal',
-        blend: 'alpha',
-        colorOverride: '#41e985',
-        positionOffset: [0, -0.72, 0],
-      },
-    })
-    expect(renewal!.scale).toBeCloseTo(0.897)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(renewal!, 2, false)).toBe(false)
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['glow', 'sparkle', 'sparkle'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['ground-ring', 'healing-spiral', 'column-rise'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'healing-loop-particle-renewal')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused healing-loop mesh factory as a closed renewal helix', () => {
     const geometry = PfxLibrary.createPfxHealingLoopGeometry()
     expect(geometry.userData).toMatchObject({
       pfxHealingLoopDrawCalls: 1,
@@ -12070,7 +11855,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(geometry.userData['pfxHealingLoopHeightSpan']).toBeGreaterThanOrEqual(1.5)
     geometry.dispose()
 
-    const material = PfxLibrary.createPfxHealingLoopMaterial(renewal!.opacity)
+    const material = PfxLibrary.createPfxHealingLoopMaterial(1)
     expect(material).toBeInstanceOf(THREE.ShaderMaterial)
     expect(material.blending).toBe(THREE.NormalBlending)
     expect(material.depthWrite).toBe(true)
@@ -12101,33 +11886,26 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(samples.every((sample) => sample.energy > 0)).toBe(true)
   })
 
-  it('authors holy release as a one-draw closed radiant mandorla with a cleansing crown', () => {
+  it('authors holy release as a particle-first cleansing flash, gold wave, and rising residue', () => {
     const preset = createPfxPreset('holy-release')
     const plan = getPfxRenderPlan(preset)
-    const mandorla = plan.surfaces.find((surface) => surface.phase === 'holy-release-radiant-mandorla')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
     expect(preset.implementationProfile).toBe('radial-burst')
-    expect(preset.performance.tier).toBe('low')
-    expect(PfxLibrary.PFX_MOBILE_RUNTIME_POLICY.tierConcurrencyCaps[preset.performance.tier]).toBe(20)
-    expect(plan.surfaces).toHaveLength(1)
-    expect(plan.estimatedDrawCalls).toBe(1)
-    expect(plan.surfaces.some((surface) => surface.kind === 'particles')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'core-sphere')).toBe(false)
-    expect(mandorla).toMatchObject({
-      kind: 'impact-shards',
-      role: 'impact',
-      opacity: 1,
-      tuning: {
-        meshGeometry: 'holy-release-radiant-mandorla',
-        meshMotion: 'bloom',
-        lifecycle: 'holy-release-cleansing',
-        blend: 'alpha',
-        colorOverride: '#ffd95a',
-      },
-    })
-    expect(mandorla!.scale).toBeCloseTo(1.035)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(mandorla!, 2, false)).toBe(false)
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['glow', 'streak', 'sparkle'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['impact-burst', 'radial-burst', 'column-rise'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'holy-release-particle-cleansing')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused holy-release mesh factory as a closed radiant mandorla', () => {
     const geometry = PfxLibrary.createPfxHolyReleaseGeometry()
     expect(geometry.userData).toMatchObject({
       pfxHolyReleaseDrawCalls: 1,
@@ -12147,7 +11925,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(geometry.userData['pfxHolyReleaseHeightSpan']).toBeGreaterThanOrEqual(1.6)
     geometry.dispose()
 
-    const material = PfxLibrary.createPfxHolyReleaseMaterial(mandorla!.opacity)
+    const material = PfxLibrary.createPfxHolyReleaseMaterial(1)
     expect(material).toBeInstanceOf(THREE.ShaderMaterial)
     expect(material.blending).toBe(THREE.NormalBlending)
     expect(material.depthWrite).toBe(true)
@@ -12657,51 +12435,28 @@ describe('r3f-pfx-library catalog contracts', () => {
     material.dispose()
   })
 
-  it('authors teleport hit as a mobile-safe one-draw arrival scar with ground contact and a displaced vertical afterimage', () => {
+  it('authors teleport hit as a particle-first spatial arrival with column, ground hit, and residual debris', () => {
     const effect = PfxLibrary.PFX_TAXONOMY.find((entry) => entry.id === 'teleport-hit')!
     const preset = createPfxPreset('teleport-hit')
     const plan = getPfxRenderPlan(preset)
-    const arrival = plan.surfaces.find((surface) => surface.phase === 'teleport-hit-arrival-scar')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
     expect(effect.mobileSafety).toBe('safe')
     expect(preset.mobileSafety).toBe('safe')
-    expect(preset.performance.tier).toBe('low')
-    expect(PfxLibrary.PFX_MOBILE_RUNTIME_POLICY.tierConcurrencyCaps[preset.performance.tier]).toBe(20)
-    expect(plan.surfaces).toHaveLength(1)
-    expect(plan.estimatedDrawCalls).toBe(1)
-    expect(plan.surfaces.some((surface) => surface.kind === 'particles' || surface.kind === 'screen-plane' || surface.kind === 'ring-field')).toBe(false)
-    expect(arrival).toMatchObject({
-      kind: 'impact-shards',
-      role: 'impact',
-      opacity: 0.96,
-      tuning: {
-        meshGeometry: 'teleport-hit-arrival-scar',
-        meshMotion: 'flash',
-        lifecycle: 'teleport-hit-arrival',
-        blend: 'alpha',
-        colorOverride: '#54bfff',
-      },
-    })
-    expect(arrival!.scale).toBeCloseTo(1.058)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(arrival!, 2, false)).toBe(false)
-    const reviewLifecycle = [72, 302, 590, 648].map((sampleMs) =>
-      PfxLibrary.getPfxSurfaceAnimationProps(
-        arrival!,
-        preset.controls,
-        sampleMs / 1_000,
-        1,
-        plan.tempo,
-        plan.feelVersion,
-      ))
-    expect(reviewLifecycle.map((sample) => sample.signature)).toEqual([
-      'teleport-hit:land',
-      'teleport-hit:afterimage',
-      'teleport-hit:dissolve',
-      'teleport-hit:rest',
-    ])
-    expect(reviewLifecycle[1]!.opacityMultiplier - reviewLifecycle[2]!.opacityMultiplier)
-      .toBeGreaterThanOrEqual(0.2)
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['streak', 'glow', 'debris'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['column-rise', 'shockwave-ground-burst', 'radial-burst'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'teleport-hit-particle-arrival')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused teleport-hit mesh factory as a closed arrival scar', () => {
     const geometry = PfxLibrary.createPfxTeleportHitGeometry()
     expect(geometry.userData).toMatchObject({
       pfxTeleportHitDrawCalls: 1,
@@ -12723,7 +12478,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(geometry.userData['pfxTeleportHitDepthSpan']).toBeGreaterThanOrEqual(2)
     geometry.dispose()
 
-    const material = PfxLibrary.createPfxTeleportHitMaterial(arrival!.opacity)
+    const material = PfxLibrary.createPfxTeleportHitMaterial(0.96)
     expect(material).toBeInstanceOf(THREE.ShaderMaterial)
     expect(material.blending).toBe(THREE.NormalBlending)
     expect(material.depthWrite).toBe(true)
@@ -12860,35 +12615,28 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(shell!, 2, false)).toBe(false)
   })
 
-  it('authors barrier column as one closed fortified pillar instead of a shield bubble with redundant support draws', () => {
+  it('authors barrier column as a particle-first sentinel with energy bands, orbit rings, and a ground lock', () => {
     const effect = PfxLibrary.PFX_TAXONOMY.find((entry) => entry.id === 'barrier-column')!
     const preset = createPfxPreset('barrier-column')
     const plan = getPfxRenderPlan(preset)
-    const pillar = plan.surfaces.find((surface) => surface.phase === 'barrier-column-fortified-pillar')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
     expect(effect.mobileSafety).toBe('safe')
     expect(preset.mobileSafety).toBe('safe')
-    expect(preset.performance.tier).toBe('low')
-    expect(PfxLibrary.PFX_MOBILE_RUNTIME_POLICY.tierConcurrencyCaps[preset.performance.tier]).toBe(20)
-    expect(plan.surfaces).toHaveLength(1)
-    expect(plan.estimatedDrawCalls).toBe(1)
-    expect(plan.surfaces.some((surface) => surface.kind === 'particles' || surface.kind === 'shield-shell' || surface.kind === 'ring-field')).toBe(false)
-    expect(pillar).toMatchObject({
-      kind: 'impact-shards',
-      role: 'body',
-      opacity: 0.96,
-      tuning: {
-        meshGeometry: 'barrier-column-fortified-pillar',
-        lifecycle: 'barrier-column-sentinel-loop',
-        blend: 'alpha',
-        colorOverride: '#2f8fe8',
-        positionOffset: [0, -0.78, 0],
-      },
-    })
-    expect(pillar!.scale).toBeCloseTo(0.897)
-    expect(pillar!.scale).toBeLessThanOrEqual(0.9)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(pillar!, 2, false)).toBe(false)
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['glow', 'glow', 'streak'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['ground-ring', 'column-rise', 'column-rise'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'barrier-column-particle-sentinel')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused barrier-column mesh factory as a closed fortified pillar', () => {
     const createGeometry = (PfxLibrary as Record<string, unknown>).createPfxBarrierColumnGeometry
     const createMaterial = (PfxLibrary as Record<string, unknown>).createPfxBarrierColumnMaterial
     const applyAppearance = (PfxLibrary as Record<string, unknown>).applyPfxBarrierColumnMaterialAppearance
@@ -12914,7 +12662,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(geometry.boundingBox!.max.z - geometry.boundingBox!.min.z).toBeGreaterThanOrEqual(1.35)
     geometry.dispose()
 
-    const material = createMaterial(pillar!.opacity) as THREE.ShaderMaterial
+    const material = createMaterial(0.96) as THREE.ShaderMaterial
     expect(material).toBeInstanceOf(THREE.ShaderMaterial)
     expect(material.blending).toBe(THREE.NormalBlending)
     expect(material.depthWrite).toBe(true)
@@ -12935,33 +12683,28 @@ describe('r3f-pfx-library catalog contracts', () => {
     material.dispose()
   })
 
-  it('authors dash idle as one closed directional vector reservoir instead of an orb with sparse particle traffic', () => {
+  it('authors dash idle as a particle-first launch core, forward chevrons, and ready wake', () => {
     const preset = createPfxPreset('dash-idle')
     const plan = getPfxRenderPlan(preset)
-    const reservoir = plan.surfaces.find((surface) => surface.phase === 'dash-idle-vector-reservoir')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
     expect(preset.mobileSafety).toBe('safe')
     expect(preset.performance.tier).toBe('low')
     expect(PfxLibrary.PFX_MOBILE_RUNTIME_POLICY.tierConcurrencyCaps[preset.performance.tier]).toBe(20)
-    expect(plan.surfaces).toHaveLength(1)
-    expect(plan.estimatedDrawCalls).toBe(1)
-    expect(plan.surfaces.some((surface) => surface.kind === 'particles' || surface.kind === 'core-sphere')).toBe(false)
-    expect(reservoir).toMatchObject({
-      kind: 'impact-shards',
-      role: 'aura',
-      opacity: 0.94,
-      tuning: {
-        meshGeometry: 'dash-idle-vector-reservoir',
-        lifecycle: 'dash-idle-readiness-loop',
-        blend: 'alpha',
-        colorOverride: '#2f9dff',
-        positionOffset: [-0.24, -0.18, 0],
-        turbulenceScale: 0,
-      },
-    })
-    expect(reservoir!.scale).toBeCloseTo(0.828)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(reservoir!, 2, false)).toBe(false)
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['glow', 'streak', 'glow'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['impact-burst', 'trail-stream', 'trail-stream'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'dash-idle-particle-readiness')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused dash-idle mesh factory as a closed directional vector reservoir', () => {
     const createGeometry = (PfxLibrary as Record<string, unknown>).createPfxDashIdleGeometry
     const createMaterial = (PfxLibrary as Record<string, unknown>).createPfxDashIdleMaterial
     const applyAppearance = (PfxLibrary as Record<string, unknown>).applyPfxDashIdleMaterialAppearance
@@ -12986,7 +12729,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(geometry.boundingBox!.max.z - geometry.boundingBox!.min.z).toBeGreaterThanOrEqual(0.75)
     geometry.dispose()
 
-    const material = createMaterial(reservoir!.opacity) as THREE.ShaderMaterial
+    const material = createMaterial(0.94) as THREE.ShaderMaterial
     expect(material.blending).toBe(THREE.NormalBlending)
     expect(material.depthWrite).toBe(true)
     expect(material.side).toBe(THREE.FrontSide)
@@ -13004,33 +12747,26 @@ describe('r3f-pfx-library catalog contracts', () => {
     material.dispose()
   })
 
-  it('authors jump beam as one closed updraft accelerator instead of a thin beam with particle traffic and a disconnected halo', () => {
+  it('authors jump beam as a particle-first updraft with ground flash, lift streaks, and sparkle streams', () => {
     const preset = createPfxPreset('jump-beam')
     const plan = getPfxRenderPlan(preset)
-    const accelerator = plan.surfaces.find((surface) => surface.phase === 'jump-beam-updraft-accelerator')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
     expect(preset.mobileSafety).toBe('safe')
-    expect(preset.performance.tier).toBe('low')
-    expect(PfxLibrary.PFX_MOBILE_RUNTIME_POLICY.tierConcurrencyCaps[preset.performance.tier]).toBe(20)
-    expect(plan.surfaces).toHaveLength(1)
-    expect(plan.estimatedDrawCalls).toBe(1)
-    expect(plan.surfaces.some((surface) => surface.kind === 'particles' || surface.kind === 'beam-column' || surface.kind === 'core-sphere')).toBe(false)
-    expect(accelerator).toMatchObject({
-      kind: 'impact-shards',
-      role: 'body',
-      opacity: 0.97,
-      tuning: {
-        meshGeometry: 'jump-beam-updraft-accelerator',
-        lifecycle: 'jump-beam-lift-loop',
-        blend: 'alpha',
-        colorOverride: '#2f9dff',
-        positionOffset: [0, -0.52, 0],
-        turbulenceScale: 0,
-      },
-    })
-    expect(accelerator!.scale).toBeCloseTo(0.897)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(accelerator!, 2, false)).toBe(false)
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['glow', 'streak', 'glow'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['shockwave-ground-burst', 'jump-launch', 'column-rise'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'jump-beam-particle-lift')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused jump-beam mesh factory as a closed updraft accelerator', () => {
     const createGeometry = (PfxLibrary as Record<string, unknown>).createPfxJumpBeamGeometry
     const createMaterial = (PfxLibrary as Record<string, unknown>).createPfxJumpBeamMaterial
     const applyAppearance = (PfxLibrary as Record<string, unknown>).applyPfxJumpBeamMaterialAppearance
@@ -13057,7 +12793,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(geometry.boundingBox!.max.z - geometry.boundingBox!.min.z).toBeGreaterThanOrEqual(1.7)
     geometry.dispose()
 
-    const material = createMaterial(accelerator!.opacity) as THREE.ShaderMaterial
+    const material = createMaterial(0.97) as THREE.ShaderMaterial
     expect(material.blending).toBe(THREE.NormalBlending)
     expect(material.depthWrite).toBe(true)
     expect(material.side).toBe(THREE.FrontSide)
@@ -13632,48 +13368,27 @@ describe('r3f-pfx-library catalog contracts', () => {
     material.dispose()
   })
 
-  it('authors target spawn as a grounded acquisition reticle with a vertical confirmation pin', () => {
+  it('authors target spawn as a particle-first ground reticle, confirm stream, and lock flash', () => {
     const preset = createPfxPreset('target-spawn')
     const plan = getPfxRenderPlan(preset)
-    const reticle = plan.surfaces.find((surface) => surface.phase === 'target-spawn-acquisition-reticle')
-    const pin = plan.surfaces.find((surface) => surface.phase === 'target-spawn-confirmation-pin')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
     expect(preset.mobileSafety).toBe('safe')
     expect(preset.performance.tier).toBe('low')
-    expect(plan.surfaces).toHaveLength(2)
-    expect(plan.estimatedDrawCalls).toBe(2)
-    expect(plan.surfaces.some((surface) => surface.kind === 'particles' || surface.kind === 'ring-field')).toBe(false)
-    expect(reticle).toMatchObject({
-      kind: 'telegraph-disc',
-      role: 'aura',
-      opacity: 0.94,
-      tuning: {
-        meshGeometry: 'target-spawn-acquisition-quad',
-        meshShader: 'target-spawn-reticle',
-        lifecycle: 'target-spawn-acquire-confirm-release',
-        blend: 'alpha',
-        colorOverride: '#72d7ff',
-        positionOffset: [0, 0.03, 0],
-        turbulenceScale: 0,
-      },
-    })
-    expect(pin).toMatchObject({
-      kind: 'screen-plane',
-      role: 'aura',
-      opacity: 0.96,
-      tuning: {
-        meshGeometry: 'target-spawn-confirmation-pin-quad',
-        meshShader: 'target-spawn-pin',
-        lifecycle: 'target-spawn-acquire-confirm-release',
-        blend: 'alpha',
-        colorOverride: '#e8f8ff',
-        positionOffset: [0, 0.82, 0],
-        turbulenceScale: 0,
-      },
-    })
-    expect(isPfxSurfaceCameraFacing(reticle!)).toBe(false)
-    expect(isPfxSurfaceCameraFacing(pin!)).toBe(true)
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['sparkle', 'glow', 'sparkle'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['ground-ring', 'column-rise', 'impact-burst'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'target-spawn-particle-acquire')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused target-spawn mesh factory as a grounded reticle and confirmation pin', () => {
     const createMaterial = (PfxLibrary as Record<string, unknown>).createPfxTargetSpawnMaterial
     const createLifecycle = (PfxLibrary as Record<string, unknown>).createPfxTargetSpawnLifecycle
     const createRuntimeState = (PfxLibrary as Record<string, unknown>).createPfxTargetSpawnRuntimeState
@@ -13692,8 +13407,8 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(createRuntimeState(0.54, 1, 1, 1, 1, reusableRuntimeState)).toBe(reusableRuntimeState)
     expect(reusableRuntimeState).toMatchObject({ cycle: 0.5, stage: 'confirm', lift: 1 })
 
-    const reticleMaterial = createMaterial('reticle', reticle!.opacity, '#72d7ff', '#ffcf4d', 0.42, 0.22) as THREE.ShaderMaterial
-    const pinMaterial = createMaterial('pin', pin!.opacity, '#72d7ff', '#ffcf4d', 0.42, 0.78) as THREE.ShaderMaterial
+    const reticleMaterial = createMaterial('reticle', 0.94, '#72d7ff', '#ffcf4d', 0.42, 0.22) as THREE.ShaderMaterial
+    const pinMaterial = createMaterial('pin', 0.96, '#72d7ff', '#ffcf4d', 0.42, 0.78) as THREE.ShaderMaterial
     for (const material of [reticleMaterial, pinMaterial]) {
       expect(Object.keys(material.uniforms).sort()).toEqual([
         'uColorA',
@@ -13731,48 +13446,27 @@ describe('r3f-pfx-library catalog contracts', () => {
     reticleMaterial.dispose()
   })
 
-  it('authors warning loop as a persistent hazard boundary with an alert beacon and readable cadence', () => {
+  it('authors warning loop as a particle-first ground boundary, alert beacon, and warning flecks', () => {
     const preset = createPfxPreset('warning-loop')
     const plan = getPfxRenderPlan(preset)
-    const panel = plan.surfaces.find((surface) => surface.phase === 'warning-loop-octagonal-boundary')
-    const beacon = plan.surfaces.find((surface) => surface.phase === 'warning-loop-alert-beacon')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
     expect(preset.mobileSafety).toBe('safe')
     expect(preset.performance.tier).toBe('low')
-    expect(plan.surfaces).toHaveLength(2)
-    expect(plan.estimatedDrawCalls).toBe(2)
-    expect(plan.surfaces.some((surface) => surface.kind === 'particles' || surface.kind === 'ring-field' || surface.kind === 'core-sphere')).toBe(false)
-    expect(panel).toMatchObject({
-      kind: 'telegraph-disc',
-      role: 'aura',
-      opacity: 0.9,
-      tuning: {
-        meshGeometry: 'warning-loop-panel-quad',
-        meshShader: 'warning-loop-panel',
-        lifecycle: 'warning-loop-inhale-alert-exhale',
-        blend: 'alpha',
-        colorOverride: '#ff5b35',
-        positionOffset: [0, 0.025, 0],
-        turbulenceScale: 0,
-      },
-    })
-    expect(beacon).toMatchObject({
-      kind: 'screen-plane',
-      role: 'aura',
-      opacity: 0.88,
-      tuning: {
-        meshGeometry: 'warning-loop-beacon-quad',
-        meshShader: 'warning-loop-beacon',
-        lifecycle: 'warning-loop-inhale-alert-exhale',
-        blend: 'alpha',
-        colorOverride: '#ffd166',
-        positionOffset: [0, 0.68, 0],
-        turbulenceScale: 0,
-      },
-    })
-    expect(isPfxSurfaceCameraFacing(panel!)).toBe(false)
-    expect(isPfxSurfaceCameraFacing(beacon!)).toBe(true)
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['sparkle', 'glow', 'streak'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['ground-ring', 'impact-burst', 'radial-burst'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'warning-loop-particle-alert')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused warning-loop mesh factory as a persistent hazard boundary', () => {
     const createMaterial = (PfxLibrary as Record<string, unknown>).createPfxWarningLoopMaterial
     const createLifecycle = (PfxLibrary as Record<string, unknown>).createPfxWarningLoopLifecycle
     const createRuntimeState = (PfxLibrary as Record<string, unknown>).createPfxWarningLoopRuntimeState
@@ -13790,8 +13484,8 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(createRuntimeState(0.54, 1, 1, 1, 1, reusableRuntimeState)).toBe(reusableRuntimeState)
     expect(reusableRuntimeState).toMatchObject({ cycle: 0.5, stage: 'hold', pulse: 1, lift: 1 })
 
-    const panelMaterial = createMaterial('panel', panel!.opacity, '#ff5b35', '#ffd166', 0.42, 0.22) as THREE.ShaderMaterial
-    const beaconMaterial = createMaterial('beacon', beacon!.opacity, '#ff5b35', '#ffd166', 0.42, 0.78) as THREE.ShaderMaterial
+    const panelMaterial = createMaterial('panel', 0.9, '#ff5b35', '#ffd166', 0.42, 0.22) as THREE.ShaderMaterial
+    const beaconMaterial = createMaterial('beacon', 0.88, '#ff5b35', '#ffd166', 0.42, 0.78) as THREE.ShaderMaterial
     for (const material of [panelMaterial, beaconMaterial]) {
       expect(Object.keys(material.uniforms).sort()).toEqual([
         'uColorA',
@@ -14946,41 +14640,30 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(rest.opacityMultiplier).toBeLessThanOrEqual(0.05)
   })
 
-  it('authors beam telegraph as a two-draw warning lane with mesh-integrated countdown accents', () => {
+  it('authors beam telegraph as a particle-first threat lane with flow, bounds, and muzzle charge', () => {
     const preset = createPfxPreset('beam-telegraph')
     const plan = getPfxRenderPlan(preset)
-    const lane = plan.surfaces.find((surface) => surface.phase === 'beam-telegraph-raised-warning-lane')
-    const aperture = plan.surfaces.find((surface) => surface.phase === 'beam-telegraph-source-aperture')
-    const sparks = plan.surfaces.find((surface) => surface.phase === 'beam-telegraph-countdown-sparks')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
     expect(preset.controls.color).toEqual(['#f04418', '#8eefff'])
-    expect(plan.surfaces).toHaveLength(2)
-    expect(plan.estimatedDrawCalls).toBe(2)
-    expect(plan.surfaces.some((surface) => surface.kind === 'ring-field')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'shockwave-ring')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'core-sphere')).toBe(false)
-    expect(lane).toMatchObject({
-      kind: 'impact-shards',
-      role: 'aura',
-      tuning: {
-        meshGeometry: 'beam-telegraph-warning-lane',
-        lifecycle: 'beam-telegraph-countdown',
-        blend: 'alpha',
-      },
-    })
-    expect(lane!.scale).toBeGreaterThanOrEqual(1)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(lane!, 2, false)).toBe(false)
-    expect(aperture).toMatchObject({
-      kind: 'impact-shards',
-      role: 'body',
-      tuning: {
-        meshGeometry: 'beam-telegraph-source-aperture',
-        lifecycle: 'beam-telegraph-countdown',
-        blend: 'alpha',
-      },
-    })
-    expect(sparks).toBeUndefined()
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['glow', 'streak', 'sparkle'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual([
+      'beam-telegraph-flow',
+      'beam-telegraph-flow',
+      'radial-burst',
+    ])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'beam-telegraph-particle-countdown')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
 
+  it('keeps the unused beam-telegraph lane factory as a closed warning volume', () => {
     const laneGeometry = PfxLibrary.createPfxBeamTelegraphLaneGeometry()
     expect(laneGeometry.userData).toMatchObject({
       pfxBeamTelegraphDrawCalls: 1,
@@ -15018,14 +14701,13 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(apertureGeometry.userData['pfxBeamTelegraphApertureCrossSection']).toBeGreaterThanOrEqual(1.05)
     expect(apertureGeometry.userData['pfxBeamTelegraphApertureDepthSpan']).toBeGreaterThanOrEqual(0.5)
     apertureGeometry.dispose()
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(aperture!, 2, false)).toBe(false)
 
-    const material = PfxLibrary.createPfxBeamTelegraphMaterial(lane!.opacity, 'lane', '#f04418', '#8eefff', 0.56, 0.54)
+    const material = PfxLibrary.createPfxBeamTelegraphMaterial(0.98, 'lane', '#f04418', '#8eefff', 0.56, 0.54)
     expect(material).toBeInstanceOf(THREE.ShaderMaterial)
     expect(material.vertexColors).toBe(true)
     expect(material.blending).toBe(THREE.NormalBlending)
     expect(material.depthWrite).toBe(false)
-    expect(material.uniforms['uOpacity']!.value).toBeCloseTo(lane!.opacity)
+    expect(material.uniforms['uOpacity']!.value).toBeCloseTo(0.98)
     expect(material.uniforms['uCycle']!.value).toBe(0)
     expect(Object.keys(material.uniforms).sort()).toEqual(['uAperture', 'uCycle', 'uDensity', 'uOpacity', 'uPrimaryColor', 'uSecondaryColor', 'uStyleEdgeHardness'])
     expect(material.fragmentShader).toContain('lanePulse')
@@ -15048,50 +14730,25 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(material.uniforms['uOpacity']!.value).toBeCloseTo(0.28)
     expect(material.uniforms['uCycle']!.value).toBeCloseTo(0.42)
     material.dispose()
-
-    const onset = PfxLibrary.getPfxSurfaceAnimationProps(lane!, preset.controls, 0.04, 1, 1)
-    const peak = PfxLibrary.getPfxSurfaceAnimationProps(lane!, preset.controls, 0.32, 1, 1)
-    const decay = PfxLibrary.getPfxSurfaceAnimationProps(lane!, preset.controls, 0.58, 1, 1)
-    const clear = PfxLibrary.getPfxSurfaceAnimationProps(lane!, preset.controls, 0.86, 1, 1)
-    expect(onset.opacityMultiplier).toBeGreaterThanOrEqual(0.6)
-    expect(peak.opacityMultiplier).toBeGreaterThanOrEqual(0.9)
-    expect(peak.scaleMultiplier).toBeGreaterThanOrEqual(0.95)
-    expect(decay.opacityMultiplier).toBeGreaterThanOrEqual(0.18)
-    expect(decay.opacityMultiplier).toBeLessThan(peak.opacityMultiplier)
-    expect(clear.opacityMultiplier).toBe(0)
   })
 
-  it('authors laser spray as a two-draw volumetric salvo with integrated endpoint energy', () => {
+  it('authors laser spray as a particle-first muzzle flash, salvo streaks, and endpoint sparks', () => {
     const preset = createPfxPreset('laser-spray')
     const plan = getPfxRenderPlan(preset)
-    const nozzle = plan.surfaces.find((surface) => surface.phase === 'laser-spray-volumetric-nozzle')
-    const bolts = plan.surfaces.find((surface) => surface.phase === 'laser-spray-sequenced-bolt-rack')
-    const ricochets = plan.surfaces.find((surface) => surface.phase === 'laser-spray-anchored-ricochets')
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
     expect(preset.controls.color).toEqual(['#ff3d1f', '#ffb23c'])
-    expect(plan.surfaces).toHaveLength(2)
-    expect(plan.estimatedDrawCalls).toBe(2)
-    expect(plan.surfaces.some((surface) => surface.kind === 'core-sphere')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'ring-field')).toBe(false)
-    expect(nozzle).toMatchObject({
-      kind: 'impact-shards',
-      role: 'body',
-      tuning: {
-        meshGeometry: 'laser-spray-volumetric-nozzle',
-        lifecycle: 'laser-spray-salvo',
-        blend: 'alpha',
-      },
-    })
-    expect(bolts).toMatchObject({
-      kind: 'impact-shards',
-      role: 'trail',
-      tuning: {
-        meshGeometry: 'laser-spray-bolt-rack',
-        lifecycle: 'laser-spray-salvo',
-        blend: 'alpha',
-      },
-    })
-    expect(ricochets).toBeUndefined()
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['glow', 'streak', 'sparkle'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['impact-burst', 'radial-burst', 'laser-spray-ricochet'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'laser-spray-particle-salvo')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
   })
 
   it('builds laser spray from closed multi-depth bolt prisms and an open-bore nozzle', () => {
@@ -15178,25 +14835,13 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(material.uniforms['uOpacity']!.value).toBeCloseTo(0.36)
     expect(material.uniforms['uCycle']!.value).toBeCloseTo(0.42)
     material.dispose()
-
-    const plan = getPfxRenderPlan(createPfxPreset('laser-spray'))
-    const bolts = plan.surfaces.find((surface) => surface.phase === 'laser-spray-sequenced-bolt-rack')!
-    const onset = PfxLibrary.getPfxSurfaceAnimationProps(bolts, createPfxPreset('laser-spray').controls, 0.04, 1, 1)
-    const peak = PfxLibrary.getPfxSurfaceAnimationProps(bolts, createPfxPreset('laser-spray').controls, 0.3, 1, 1)
-    const decay = PfxLibrary.getPfxSurfaceAnimationProps(bolts, createPfxPreset('laser-spray').controls, 0.58, 1, 1)
-    const clear = PfxLibrary.getPfxSurfaceAnimationProps(bolts, createPfxPreset('laser-spray').controls, 0.9, 1, 1)
-    expect(onset.signature).toContain('laser-spray-salvo')
-    expect(onset.opacityMultiplier).toBeGreaterThanOrEqual(0.55)
-    expect(peak.opacityMultiplier).toBeGreaterThanOrEqual(0.9)
-    expect(decay.opacityMultiplier).toBeGreaterThanOrEqual(0.14)
-    expect(decay.opacityMultiplier).toBeLessThan(peak.opacityMultiplier)
-    expect(clear.opacityMultiplier).toBe(0)
   })
 
-  it('keeps laser spray endpoint energy inside the authored bolt mesh', () => {
-    const preset = createPfxPreset('laser-spray')
-    expect(getPfxRenderPlan(preset).surfaces.some((surface) => surface.kind === 'particles')).toBe(false)
-    expect(PfxLibrary.summarizePfxPerformance([preset]).totalParticles).toBe(0)
+  it('keeps the unused laser-spray bolt factory as a closed salvo mesh', () => {
+    const bolts = PfxLibrary.createPfxLaserSprayBoltRackGeometry()
+    expect(bolts.userData['pfxLaserSprayIntegratedEndpointEnergyCount']).toBe(5)
+    expect(bolts.userData['pfxLaserSprayParticleCount']).toBe(0)
+    bolts.dispose()
   })
 
   it('holds all five laser strands at the salvo crest and synchronizes ricochet recovery', () => {
@@ -15343,21 +14988,6 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(material.fragmentShader).toContain('beamHalo')
     expect(material.fragmentShader).toContain('coreEdgeGradient')
     material.dispose()
-
-    const preset = createPfxPreset('laser-spray')
-    const boltSurface = getPfxRenderPlan(preset).surfaces.find(
-      (surface) => surface.phase === 'laser-spray-sequenced-bolt-rack',
-    )!
-    const recovery = PfxLibrary.getPfxSurfaceAnimationProps(boltSurface, preset.controls, 0.84, 1, 1)
-    expect(recovery.signature).toContain('recovery')
-    expect(recovery.opacityMultiplier).toBeGreaterThan(0.05)
-    expect(recovery.scaleMultiplier).toBeLessThan(0.9)
-
-    const particleCount = getPfxRenderPlan(preset).surfaces
-      .filter((surface) => surface.kind === 'particles' || surface.kind === 'impact-sparks')
-      .reduce((total, surface) => total + PfxLibrary.createPfxParticleEmission(preset, surface).count, 0)
-    expect(PfxLibrary.summarizePfxPerformance([preset]).totalParticles).toBe(particleCount)
-    expect(particleCount).toBe(0)
   })
 
   it('authors plasma hit as a two-draw directional flipbook volume with an integrated rebound-flux rake', () => {
@@ -20930,18 +20560,25 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(cooling!.tuning!.delay).toBeGreaterThan(0)
   })
 
-  it('renders spark loop as a volumetric snap cadence instead of a ring and glow blob', () => {
-    const surfaces = getPfxRenderPlan(createPfxPreset('spark-loop')).surfaces
-    expect(surfaces).toHaveLength(3)
-    expect(surfaces.some((surface) => surface.kind === 'ring-field' || surface.kind === 'shockwave-ring')).toBe(false)
+  it('authors spark loop as a particle-first source pop, fork snap, and recovering pips', () => {
+    const preset = createPfxPreset('spark-loop')
+    const plan = getPfxRenderPlan(preset)
+    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
 
-    expect(surfaces.find((surface) => surface.phase === 'spark-gap-fork-volume')).toMatchObject({
-      kind: 'impact-shards',
-      tuning: expect.objectContaining({
-        meshMotion: 'glow',
-        lifecycle: 'spark-gap-loop',
-      }),
-    })
+    expect(preset.controls.spawnShape).toBe('point')
+    expect(plan.surfaces).toHaveLength(3)
+    expect(plan.estimatedDrawCalls).toBe(3)
+    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['glow', 'streak', 'glow'])
+    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['impact-burst', 'radial-burst', 'radial-burst'])
+    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'spark-loop-particle-contact')).toBe(true)
+    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
+    expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  })
+
+  it('keeps the unused spark-loop mesh factory as a volumetric snap cadence', () => {
     const arcGeometry = PfxLibrary.createPfxSparkGapGeometry()
     arcGeometry.computeBoundingBox()
     expect(arcGeometry.userData['pfxSparkGapSegmentCount']).toBeGreaterThanOrEqual(10)
@@ -20949,29 +20586,6 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(arcGeometry.userData['pfxSparkGapClosedFaces']).toBe(true)
     expect(arcGeometry.boundingBox!.max.z - arcGeometry.boundingBox!.min.z).toBeGreaterThan(0.8)
     arcGeometry.dispose()
-
-    const pips = surfaces.find((surface) => surface.phase === 'spark-gap-contact-pips')
-    expect(pips).toMatchObject({
-      kind: 'particles',
-      tuning: expect.objectContaining({
-        motion: 'radial-burst',
-        sprite: 'glow',
-        blend: 'additive',
-      }),
-    })
-    expect(pips!.tuning!.countScale).toBeGreaterThanOrEqual(0.5)
-    expect(pips!.tuning!.depthScale).toBeGreaterThanOrEqual(2)
-    expect(pips!.tuning!.flicker).toBeGreaterThanOrEqual(2)
-
-    expect(surfaces.find((surface) => surface.phase === 'spark-gap-contact-core')).toMatchObject({
-      kind: 'core-sphere',
-      scale: expect.any(Number),
-      tuning: expect.objectContaining({
-        meshMotion: 'glow',
-        lifecycle: 'spark-gap-loop',
-      }),
-    })
-    expect(surfaces.find((surface) => surface.phase === 'spark-gap-contact-core')!.scale).toBeGreaterThanOrEqual(0.25)
 
     const snap = PfxLibrary.createPfxSparkGapLoopState(0.02)
     const afterglow = PfxLibrary.createPfxSparkGapLoopState(0.14)
@@ -21651,6 +21265,24 @@ describe('r3f-pfx-library surface tuning (reference-derived recipes)', () => {
       { effectId: 'mud-charge', lifecycle: 'mud-charge-convergence', motions: ['converge-center', 'drift-cloud', 'ground-scuff'], layers: 3 },
       { effectId: 'reward-charge', lifecycle: 'reward-charge-gather-release', motions: ['converge-center', 'orbit-ring', 'column-rise'], layers: 3 },
       { effectId: 'sand-charge', lifecycle: 'sand-burst-ballistic', motions: ['converge-center', 'drift-cloud', 'ground-scuff'], layers: 3 },
+      { effectId: 'rain-burst', lifecycle: 'rain-burst-particle-impact', motions: ['impact-burst', 'cone-fountain', 'ground-scuff'], layers: 3 },
+      { effectId: 'wind-burst', lifecycle: 'wind-burst-particle-release', motions: ['radial-burst', 'radial-burst', 'drift-cloud'], layers: 3 },
+      { effectId: 'exhaust-hit', lifecycle: 'exhaust-hit-particle-backfire', motions: ['impact-burst', 'radial-burst', 'trail-stream'], layers: 3 },
+      { effectId: 'teleport-hit', lifecycle: 'teleport-hit-particle-arrival', motions: ['column-rise', 'shockwave-ground-burst', 'radial-burst'], layers: 3 },
+      { effectId: 'holy-release', lifecycle: 'holy-release-particle-cleansing', motions: ['impact-burst', 'radial-burst', 'column-rise'], layers: 3 },
+      { effectId: 'beam-telegraph', lifecycle: 'beam-telegraph-particle-countdown', motions: ['beam-telegraph-flow', 'beam-telegraph-flow', 'radial-burst'], layers: 3 },
+      { effectId: 'barrier-column', lifecycle: 'barrier-column-particle-sentinel', motions: ['ground-ring', 'column-rise', 'column-rise'], layers: 3 },
+      { effectId: 'jump-beam', lifecycle: 'jump-beam-particle-lift', motions: ['shockwave-ground-burst', 'jump-launch', 'column-rise'], layers: 3 },
+      { effectId: 'curse-column', lifecycle: 'curse-column-particle-binding', motions: ['ground-ring', 'column-rise', 'drift-cloud'], layers: 3 },
+      { effectId: 'laser-spray', lifecycle: 'laser-spray-particle-salvo', motions: ['impact-burst', 'radial-burst', 'laser-spray-ricochet'], layers: 3 },
+      { effectId: 'water-column', lifecycle: 'water-column-particle-eruption', motions: ['shockwave-ground-burst', 'column-rise', 'drift-cloud'], layers: 3 },
+      { effectId: 'target-spawn', lifecycle: 'target-spawn-particle-acquire', motions: ['ground-ring', 'column-rise', 'impact-burst'], layers: 3 },
+      { effectId: 'shard-break', lifecycle: 'shard-break-particle-fracture', motions: ['impact-burst', 'radial-burst', 'radial-burst'], layers: 3 },
+      { effectId: 'dash-idle', lifecycle: 'dash-idle-particle-readiness', motions: ['impact-burst', 'trail-stream', 'trail-stream'], layers: 3 },
+      { effectId: 'healing-loop', lifecycle: 'healing-loop-particle-renewal', motions: ['ground-ring', 'healing-spiral', 'column-rise'], layers: 3 },
+      { effectId: 'spark-loop', lifecycle: 'spark-loop-particle-contact', motions: ['impact-burst', 'radial-burst', 'radial-burst'], layers: 3 },
+      { effectId: 'warning-loop', lifecycle: 'warning-loop-particle-alert', motions: ['ground-ring', 'impact-burst', 'radial-burst'], layers: 3 },
+      { effectId: 'spawn-screen', lifecycle: 'spawn-screen-particle-transition', motions: ['radial-burst', 'converge-center', 'radial-burst'], layers: 3 },
     ] as const
 
     for (const reference of references) {

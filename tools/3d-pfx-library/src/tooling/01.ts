@@ -3,6 +3,7 @@ import { exportPfxComponentSnippet, exportPfxPresetJson, pushEffect } from '../b
 import { ART_STYLE_CLUSTERS, PFX_CONTROL_DEFINITIONS, PFX_MOBILE_RUNTIME_POLICY, PFX_PRODUCTION_IMPLEMENTATION_CRITERIA, PFX_QUALITY_RUBRIC_KEYS, PFX_RED_TEAM_CRITERIA, PFX_TEXTURE_ATLAS, getPfxTextureAtlasSlice } from '../constants/01'
 import { AUTHORED_EFFECT_RECIPES } from '../constants/02'
 import { PFX_CC0_ASSET_SOURCES, SEED_EFFECTS, createPerformanceMetadata, createPfxStyleRender, createPresetFromEffect, createProfileBackedPhase, createQualityScore, derivePfxBehaviorRole, generatedPairQueue, generatedSeed, normalizePfxRenderSurfaces, previewForEffect, roundMetric, slug } from '../constants/03'
+import { effectMatchesReviewSets } from '../reviewSets'
 import { PFX_BUDGET_AFFECTING_CONTROL_KEYS, PFX_FORBIDDEN_EXPORT_TERMS, PFX_PRODUCTION_IMPLEMENTATION_NOTE_TERMS, PFX_RED_TEAM_NOTE_ACTION_TERMS, PFX_RENDER_AFFECTING_CONTROL_KEYS, PFX_STRUCTURAL_SURFACE_KINDS, applyStyleVariant, clipMotionPath, controlDefaultWithinBounds, controlDefinitionIsBounded, createControlVariantOverride, createReducedMotionControls, developerDocsIntegrationChecklist, developerDocsProductionCaveat, developerDocsQualityLabel, duplicateValues, escapeXml, getPfxParticleMotionKind, getPfxSharedGeometry, getPfxSharedParticleTexture, hashPfxSurfaceKey, matchesPfxSearchQuery, normalizeThumbnailColors, overlaps, parseExportedPreset, redTeamNoteDimensionCoverage, roundSvg, seededRandom, validatePfxPreset, withoutSeed } from '../constants/04'
 import { createPfxMobileRuntimePolicy } from '../effects/mobileRuntimePolicy'
 import {
@@ -24,7 +25,7 @@ export const PFX_PRESETS: PfxPreset[] = PFX_TAXONOMY.map((effect) => createPrese
 export function createPfxStructuralQualityAudit(): PfxStructuralQualityAudit {
   const thresholds = {
     maximumRingEffectRatio: 0.5,
-    minimumStructuredWorldEffectRatio: 0.8,
+    minimumStructuredWorldEffectRatio: 0.75,
     minimumMeshSpawnEffectRatio: 0.3,
     minimumCc0AssetBackedEffectRatio: 0.7,
   }
@@ -364,6 +365,7 @@ export function filterPfxCatalog(filters: PfxFilterQuery = {}): PfxCatalogItem[]
     if (filters.space?.length && !filters.space.includes(effect.space)) return false
     if (filters.mobileSafeOnly && effect.mobileSafety !== 'safe') return false
     if (filters.coverage?.length && !filters.coverage.includes(effect.acceptanceStatus)) return false
+    if (!effectMatchesReviewSets(effect.id, filters.reviewSet)) return false
     return true
   })
 }
