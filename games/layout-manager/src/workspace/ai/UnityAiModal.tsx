@@ -475,6 +475,7 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
                 className="ai-modal-textarea"
                 value={prompt}
                 onChange={(e) => onPromptChange(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleGenerate(); } }}
                 placeholder={useRefImage ? 'Describe what to generate — optional for utilities like upscale' : 'Describe what to generate — literal and specific'}
                 rows={3}
                 disabled={generating}
