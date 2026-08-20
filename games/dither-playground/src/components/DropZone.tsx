@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { colors, fonts } from './ui';
+import { colors, fonts, useIsMobile } from './ui';
 
 interface DropZoneProps {
   accept: string; // e.g. 'image/*' or 'video/*'
@@ -17,6 +17,8 @@ interface DropZoneProps {
 export function DropZone({ accept, onFile, children }: DropZoneProps) {
   const [over, setOver] = useState(false);
   const [rejected, setRejected] = useState(false);
+  const isMobile = useIsMobile();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = (files: FileList | null) => {
     const file = files?.[0];
@@ -39,6 +41,8 @@ export function DropZone({ accept, onFile, children }: DropZoneProps) {
     >
       {children ?? (
         <div
+          onClick={isMobile ? () => inputRef.current?.click() : undefined}
+          role={isMobile ? 'button' : undefined}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -54,12 +58,26 @@ export function DropZone({ accept, onFile, children }: DropZoneProps) {
             letterSpacing: '0.08em',
             textAlign: 'center',
             padding: 16,
+            cursor: isMobile ? 'pointer' : undefined,
             transition: 'border-color 120ms ease, background 120ms ease',
           }}
         >
-          Drop a file here, or use the Choose file button above — it never leaves your browser
+          {isMobile
+            ? 'Tap to choose a file — it never leaves your browser'
+            : 'Drop a file here, or use the Choose file button above — it never leaves your browser'}
         </div>
       )}
+      {/* Mobile has no drag-and-drop: the empty state taps through to this. */}
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          handleFiles(e.target.files);
+          e.target.value = '';
+        }}
+      />
       {over && (
         <div
           style={{

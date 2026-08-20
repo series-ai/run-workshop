@@ -49,15 +49,17 @@ function Slider({ label, value, min, max, step, onChange, visible = true }: Slid
 export interface DitherControlsProps {
   config: DitherEffectConfig;
   onChange: (config: DitherEffectConfig) => void;
+  /** Stretch to the container width with no panel chrome (mobile drawer). */
+  fill?: boolean;
 }
 
-export function DitherControls({ config, onChange }: DitherControlsProps) {
+export function DitherControls({ config, onChange, fill = false }: DitherControlsProps) {
   const set = (partial: Partial<DitherEffectConfig>) => onChange({ ...config, ...partial });
   const isHalftone = config.algorithm.startsWith('halftone');
   const isBayer = config.algorithm === 'bayer' || isHalftone;
 
   return (
-    <div style={styles.panel}>
+    <div style={fill ? styles.panelFill : styles.panel}>
       <h3 style={styles.sectionTitle}>Preset</h3>
       <select
         value=""
@@ -141,18 +143,28 @@ export function DitherControls({ config, onChange }: DitherControlsProps) {
   );
 }
 
+const panelBase: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 8,
+  background: colors.panel,
+};
+
 const styles: Record<string, CSSProperties> = {
   panel: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
+    ...panelBase,
     padding: '12px 14px 20px',
     width: 236,
     minWidth: 236,
     height: '100%',
     overflowY: 'auto',
-    background: colors.panel,
     borderRight: `1px solid ${colors.border}`,
+  },
+  // Inside the mobile bottom sheet: full width; the drawer scrolls, not the panel.
+  panelFill: {
+    ...panelBase,
+    padding: '12px 14px 20px',
+    width: '100%',
   },
   sectionTitle: {
     fontFamily: fonts.mono,

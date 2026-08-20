@@ -8,7 +8,7 @@ import { DitherEffectUpdater } from '../components/DitherEffectUpdater';
 import { DitherControls } from '../components/DitherControls';
 import { DitherPostProcess, type DitherEffect } from '../dither/DitherPostProcess';
 import { ALL_PRESETS } from '../dither/presets';
-import { FileButton, errorTextStyle, toolbarStyle } from '../components/ui';
+import { ControlsDrawer, FileButton, errorTextStyle, toolbarStyle, useIsMobile } from '../components/ui';
 import type { DitherEffectConfig } from '../dither/DitherEffect';
 
 function ImageStage({ url, aspect, config }: { url: string; aspect: number; config: DitherEffectConfig }) {
@@ -36,6 +36,7 @@ export function ImageDemo() {
   const [image, setImage] = useState<{ url: string; aspect: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [config, setConfig] = useState<DitherEffectConfig>(ALL_PRESETS[0]!.config);
+  const isMobile = useIsMobile();
 
   const handleFile = (url: string) => {
     const img = new Image();
@@ -49,12 +50,22 @@ export function ImageDemo() {
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>
-      <DitherControls config={config} onChange={setConfig} />
+      {isMobile ? (
+        <ControlsDrawer>
+          <DitherControls config={config} onChange={setConfig} fill />
+        </ControlsDrawer>
+      ) : (
+        <DitherControls config={config} onChange={setConfig} />
+      )}
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         {/* Persistent file controls — mobile has no drag-and-drop, and users
             must be able to swap media after one is already loaded. */}
         <div style={toolbarStyle}>
-          <FileButton accept="image/*" onFile={(f) => handleFile(URL.createObjectURL(f))}>
+          <FileButton
+            accept="image/*"
+            onFile={(f) => handleFile(URL.createObjectURL(f))}
+            style={isMobile ? { flex: 1, textAlign: 'center' } : undefined}
+          >
             Choose file
           </FileButton>
           {error && <span style={errorTextStyle}>{error}</span>}

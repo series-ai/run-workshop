@@ -8,7 +8,7 @@ import { DitherEffectUpdater } from '../components/DitherEffectUpdater';
 import { DitherControls } from '../components/DitherControls';
 import { DitherPostProcess, type DitherEffect } from '../dither/DitherPostProcess';
 import { ALL_PRESETS } from '../dither/presets';
-import { Button, FileButton, errorTextStyle, toolbarStyle } from '../components/ui';
+import { Button, ControlsDrawer, FileButton, errorTextStyle, toolbarStyle, useIsMobile } from '../components/ui';
 import type { DitherEffectConfig } from '../dither/DitherEffect';
 
 // CC-BY 3.0, (c) Blender Foundation — see THIRD_PARTY_NOTICES.md.
@@ -72,19 +72,35 @@ export function VideoDemo() {
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [config, setConfig] = useState<DitherEffectConfig>(ALL_PRESETS[0]!.config);
+  const isMobile = useIsMobile();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        <DitherControls config={config} onChange={setConfig} />
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        {isMobile ? (
+          <ControlsDrawer>
+            <DitherControls config={config} onChange={setConfig} fill />
+          </ControlsDrawer>
+        ) : (
+          <DitherControls config={config} onChange={setConfig} />
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, minWidth: 0 }}>
           {/* Persistent file controls — always visible so users can swap media
               or return to the sample clip after loading their own. */}
           <div style={toolbarStyle}>
-            <FileButton accept="video/*" onFile={(f) => setUrl(URL.createObjectURL(f))}>
+            <FileButton
+              accept="video/*"
+              onFile={(f) => setUrl(URL.createObjectURL(f))}
+              style={isMobile ? { flex: 1, textAlign: 'center' } : undefined}
+            >
               Choose file
             </FileButton>
-            <Button onClick={() => setUrl(SAMPLE_VIDEO_URL)}>Load sample clip (Big Buck Bunny, CC-BY)</Button>
+            <Button
+              onClick={() => setUrl(SAMPLE_VIDEO_URL)}
+              style={isMobile ? { flex: 1 } : undefined}
+            >
+              {isMobile ? 'Load sample clip' : 'Load sample clip (Big Buck Bunny, CC-BY)'}
+            </Button>
             {error && <span style={errorTextStyle}>{error}</span>}
           </div>
           <DropZone accept="video/*" onFile={(u) => setUrl(u)}>

@@ -9,7 +9,7 @@ import { DitherControls } from '../components/DitherControls';
 import { DitherEffectUpdater } from '../components/DitherEffectUpdater';
 import { DitherPostProcess, type DitherEffect } from '../dither/DitherPostProcess';
 import { PRESET_GAMEBOY_CLASSIC } from '../dither/presets';
-import { Button, buttonStyle, colors, fonts, useHover } from '../components/ui';
+import { Button, ControlsDrawer, buttonStyle, colors, fonts, useHover, useIsMobile } from '../components/ui';
 import type { CompareCellAlgorithm, DitherEffectConfig } from '../dither/DitherEffect';
 import type { Mesh } from 'three';
 
@@ -92,7 +92,7 @@ function CheckChip({ checked, onChange, label }: { checked: boolean; onChange: (
   return (
     <label
       {...hoverProps}
-      style={{ ...buttonStyle(checked, hovered), display: 'inline-flex', alignItems: 'center', gap: 7 }}
+      style={{ ...buttonStyle(checked, hovered), display: 'inline-flex', alignItems: 'center', gap: 7, flexShrink: 0, whiteSpace: 'nowrap' }}
     >
       <input
         type="checkbox"
@@ -111,6 +111,23 @@ export function SceneDemo() {
   const [resolveOn, setResolveOn] = useState(false);
   const [pointer, setPointer] = useState<[number, number]>([0.5, 0.5]);
   const effectRef = useRef<DitherEffect | null>(null);
+  const isMobile = useIsMobile();
+
+  const modeButtons = (
+    <>
+      {MODES.map((m) => (
+        <Button
+          key={m.id}
+          active={mode === m.id}
+          onClick={() => setMode(m.id)}
+          style={isMobile ? { flexShrink: 0 } : undefined}
+        >
+          {m.label}
+        </Button>
+      ))}
+      <CheckChip checked={resolveOn} onChange={setResolveOn} label="Resolve mask" />
+    </>
+  );
 
   let effective = config;
   if (mode === 'compare') {
@@ -136,18 +153,17 @@ export function SceneDemo() {
 
   return (
     <div style={styles.container}>
-      <div style={styles.sidebar}>
-        <DitherControls config={config} onChange={setConfig} />
-      </div>
-      <div style={styles.main}>
-        <div style={styles.toolbar}>
-          {MODES.map((m) => (
-            <Button key={m.id} active={mode === m.id} onClick={() => setMode(m.id)}>
-              {m.label}
-            </Button>
-          ))}
-          <CheckChip checked={resolveOn} onChange={setResolveOn} label="Resolve mask" />
+      {isMobile ? (
+        <ControlsDrawer>
+          <DitherControls config={config} onChange={setConfig} fill />
+        </ControlsDrawer>
+      ) : (
+        <div style={styles.sidebar}>
+          <DitherControls config={config} onChange={setConfig} />
         </div>
+      )}
+      <div style={styles.main}>
+        {!isMobile && <div style={styles.toolbar}>{modeButtons}</div>}
         <div style={styles.canvasArea} onPointerMove={handlePointerMove}>
           <Canvas
             camera={{ position: [3, 2, 5], fov: 50 }}
@@ -178,11 +194,15 @@ export function SceneDemo() {
             // reverse row order: top row = cells 4-7, bottom row = cells 0-3.
             <div style={styles.compareOverlay}>
               {[...COMPARE_ALGORITHMS.slice(4), ...COMPARE_ALGORITHMS.slice(0, 4)].map((algo, i) => (
-                <div key={i} style={styles.compareLabel}>{COMPARE_LABELS[algo]}</div>
+                <div key={i} style={isMobile ? styles.compareLabelMobile : styles.compareLabel}>{COMPARE_LABELS[algo]}</div>
               ))}
             </div>
           )}
         </div>
+        {isMobile && (
+          // Horizontally scrollable chip row just above the bottom task bar.
+          <div style={styles.chipRow}>{modeButtons}</div>
+        )}
       </div>
     </div>
   );
@@ -227,5 +247,30 @@ const styles: Record<string, CSSProperties> = {
     letterSpacing: '0.1em',
     textTransform: 'uppercase',
     borderRadius: 3,
+  },
+  compareLabelMobile: {
+    alignSelf: 'start',
+    justifySelf: 'start',
+    margin: 4,
+    padding: '2px 5px',
+    background: 'rgba(13, 15, 10, 0.72)',
+    border: '1px solid rgba(155, 188, 15, 0.35)',
+    color: colors.accentHi,
+    fontFamily: fonts.mono,
+    fontSize: 8,
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+    borderRadius: 3,
+  },
+  chipRow: {
+    display: 'flex',
+    gap: 8,
+    alignItems: 'center',
+    padding: '8px 12px',
+    background: colors.panel,
+    borderTop: `1px solid ${colors.border}`,
+    overflowX: 'auto',
+    flexShrink: 0,
+    WebkitOverflowScrolling: 'touch',
   },
 };
