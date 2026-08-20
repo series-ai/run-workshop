@@ -20,7 +20,7 @@ export default authoredRecipe('water-column', 'Water column', 'Particle-first ge
       motion: 'column-rise', sprite: 'streak', blend: 'alpha', colorOverride: '#168fd1', ramp: 'held',
       lifecycle: 'water-column-particle-eruption', delay: 0.02, window: 0.68, lifeScale: 1.25,
       countScale: 3.6, speedScale: 9.2, speedJitter: 0.22, drag: 0.82, gravity: 0,
-      spawnScale: 0.6, depthScale: 2.3, size: [0.1, 0.34, 0.1], spinScale: 0.12,
+      spawnScale: 0.36, depthScale: 2.3, size: [0.1, 0.34, 0.1], spinScale: 0.12,
       stretch: 0.62, randomizeAzimuth: true, death: 'erode', ease: 'snap', turbulenceScale: 0.05,
       positionOffset: [0, -0.22, 0],
       referenceSource: 'water-column-braided-streams-and-CC0-streak-sprite-language',

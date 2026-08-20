@@ -20704,6 +20704,32 @@ describe('r3f-pfx-library particle simulation', () => {
     }
   })
 
+  it('lets column-rise and jump-launch honor spawnScale below 0.35 without a second multiply', () => {
+    const maxLateral = (motion: 'column-rise' | 'jump-launch', spawnScale: number) => {
+      const surface = {
+        kind: 'particles' as const,
+        role: 'body' as const,
+        phase: `${motion}-spread`,
+        tuning: { motion, spawnScale, depthScale: 1 },
+      }
+      const simulation = PfxLibrary.createPfxParticleSimulation(preset, surface)
+      return Math.max(
+        ...Array.from({ length: simulation.count }, (_, index) =>
+          Math.hypot(simulation.spawn[index * 3]!, simulation.spawn[index * 3 + 2]!)),
+      )
+    }
+
+    const columnUnit = maxLateral('column-rise', 1)
+    const columnTight = maxLateral('column-rise', 0.12)
+    expect(columnTight).toBeGreaterThan(columnUnit * 0.08)
+    expect(columnTight).toBeLessThan(columnUnit * 0.18)
+
+    const launchUnit = maxLateral('jump-launch', 1)
+    const launchTight = maxLateral('jump-launch', 0.12)
+    expect(launchTight).toBeGreaterThan(launchUnit * 0.08)
+    expect(launchTight).toBeLessThan(launchUnit * 0.18)
+  })
+
   it('builds a depth-bearing phase-transfer lock with opposed inward particle flows', () => {
     const teleport = createPfxPreset('teleport-telegraph')
     const surface = {

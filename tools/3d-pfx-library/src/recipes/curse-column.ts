@@ -20,7 +20,7 @@ export default authoredRecipe('curse-column', 'Curse column', 'Particle-first da
       motion: 'column-rise', sprite: 'streak', blend: 'additive', colorOverride: '#8534d4', ramp: 'held',
       lifecycle: 'curse-column-particle-binding', delay: 0, window: 0.96, lifeScale: 1.65,
       countScale: 4.0, speedScale: 8.4, speedJitter: 0.18, drag: 0.9, gravity: 0,
-      spawnScale: 0.55, depthScale: 2.2, size: [0.1, 0.32, 0.1], spinScale: 0.08,
+      spawnScale: 0.3, depthScale: 2.2, size: [0.1, 0.32, 0.1], spinScale: 0.08,
       stretch: 0.7, death: 'erode', flicker: 0.12, turbulenceScale: 0.04, positionOffset: [0, -0.28, 0],
       referenceSource: 'curse-column-twisted-spire-and-CC0-streak-sprite-language',
       referenceAdaptation: 'the torment pillar becomes a narrow rising purple stream',
