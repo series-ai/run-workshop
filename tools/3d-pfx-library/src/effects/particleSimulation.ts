@@ -133,8 +133,9 @@ export function createPfxParticleSimulation(
       }
       case 'beam-telegraph-flow': {
         const progress = (i + 0.5) / count
-        const halfWidth = 0.1 + progress * 0.34
-        spawn[index] = (-1.55 + progress * 3.1) * scale
+        const laneSpread = Math.max(1, tuning?.spawnScale ?? 1)
+        const halfWidth = (0.1 + progress * 0.34) * laneSpread
+        spawn[index] = (-2.4 + progress * 5.0) * scale
         spawn[index + 1] = (0.05 + rand() * 0.08) * scale
         spawn[index + 2] = (rand() - 0.5) * halfWidth * scale
         direction[index] = -1
@@ -964,8 +965,9 @@ export function createPfxParticleSimulation(
     }
 
     const spawnScale = tuning?.spawnScale ?? 1
-    // snow-gust consumes spawnScale while authoring its wind-axis footprint;
-    // applying the generic multiplier again made the area scale quadratically.
+    // These motions consume spawnScale while authoring their footprint or
+    // body span. Applying the generic multiplier again makes them scale
+    // quadratically.
     if (
       spawnScale !== 1 &&
       motionKind !== 'snow-gust' &&
@@ -974,7 +976,10 @@ export function createPfxParticleSimulation(
       motionKind !== 'beam-telegraph-flow' &&
       motionKind !== 'telegraph-boundary-drift' &&
       motionKind !== 'materialize-gather' &&
-      motionKind !== 'materialize-release'
+      motionKind !== 'materialize-release' &&
+      motionKind !== 'ground-ring' &&
+      motionKind !== 'orbit-ring' &&
+      motionKind !== 'trail-stream'
     ) {
       spawn[index] = spawn[index]! * spawnScale
       spawn[index + 1] = spawn[index + 1]! * spawnScale

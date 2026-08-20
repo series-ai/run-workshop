@@ -41,6 +41,17 @@ describe('mark filter URL helpers', () => {
     expect(filter?.ids.size).toBeGreaterThan(30)
   })
 
+  it('expands the mesh-stunted mark alias and defaults the badge label', () => {
+    const filter = helpers.readPfxMarkFilter?.('?mark=mesh-stunted&markOnly=1')
+    expect(filter?.label).toBe('MESH')
+    expect(filter?.only).toBe(true)
+    expect(filter?.ids.has('rain-burst')).toBe(true)
+    expect(filter?.ids.has('healing-loop')).toBe(true)
+    expect(filter?.ids.has('spawn-screen')).toBe(true)
+    expect(filter?.ids.has('mesh-stunted')).toBe(false)
+    expect(filter?.ids.size).toBe(18)
+  })
+
   it('filters items only when markOnly is set', () => {
     expect(typeof helpers.applyPfxMarkFilter).toBe('function')
 
