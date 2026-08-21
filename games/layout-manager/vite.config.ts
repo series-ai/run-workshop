@@ -957,7 +957,8 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
             // Strip ANSI, collect image URLs/paths from the reply
             const clean = out.replace(/\x1b\[[0-9;]*m/g, '');
             const urls = Array.from(new Set(clean.match(/https?:\/\/[^\s"']+\.(?:png|jpe?g|webp)(?:\?[^\s"']*)?/gi) ?? []));
-            const paths = Array.from(new Set(clean.match(/(?:~\/|\/)[\w.\/-]+\.(?:png|jpe?g|webp)/gi) ?? []))
+            // Unix (/… or ~/…) and Windows (C:\…) absolute paths
+            const paths = Array.from(new Set(clean.match(/(?:~\/|\/|[A-Za-z]:[\\/])[\w.\\\/ -]*?\.(?:png|jpe?g|webp)/gi) ?? []))
               .filter((p) => !tmpFiles.includes(p));
             if (!urls.length && !paths.length) {
               send('error', { error: `Hermes returned no image${code ? ` (exit ${code})` : ''}: ${(clean.trim() || errBuf).slice(0, 300)}` });
@@ -1056,7 +1057,8 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
           try {
             const clean = out.replace(/\x1b\[[0-9;]*m/g, '');
             const urls = Array.from(new Set(clean.match(/https?:\/\/[^\s"']+\.(?:mp4|webm|mov)(?:\?[^\s"']*)?/gi) ?? []));
-            const paths = Array.from(new Set(clean.match(/(?:~\/|\/)[\w.\/-]+\.(?:mp4|webm|mov)/gi) ?? []));
+            // Unix (/… or ~/…) and Windows (C:\…) absolute paths
+            const paths = Array.from(new Set(clean.match(/(?:~\/|\/|[A-Za-z]:[\\/])[\w.\\\/ -]*?\.(?:mp4|webm|mov)/gi) ?? []));
             let buf: Buffer | null = null;
             for (const u of urls) {
               const r = await fetch(u).catch(() => null);

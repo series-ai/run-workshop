@@ -85,6 +85,10 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
   const [hermesXaiUp, setHermesXaiUp] = useState(false);
   const [hermesCodexUp, setHermesCodexUp] = useState(false);
   const [hermesGrok2Up, setHermesGrok2Up] = useState(false);
+  // Hermes availability is only known once the probe answers; until then a
+  // Hermes default provider can't generate, and afterwards an unavailable
+  // one must hop to a working provider
+  const [hermesStatusKnown, setHermesStatusKnown] = useState(false);
   useEffect(() => {
     let cancelled = false;
     fetch('/__ai-local-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
@@ -94,10 +98,21 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
         setHermesXaiUp(!!st.hermesImageGen?.xai && config.hermesEnabled);
         setHermesCodexUp(!!st.hermesImageGen?.codex && config.hermesEnabled);
         setHermesGrok2Up(!!st.hermesImageGen?.grok2);
+        setHermesStatusKnown(true);
       })
-      .catch(() => {});
+      .catch(() => { if (!cancelled) setHermesStatusKnown(true); });
     return () => { cancelled = true; };
   }, []);
+  const isHermesProvider = providerId === 'hermes-grok' || providerId === 'hermes-gpt';
+  // A Hermes default that turns out unavailable falls back to Auto behavior
+  useEffect(() => {
+    if (!hermesStatusKnown) return;
+    if ((providerId === 'hermes-grok' && !hermesXaiUp) || (providerId === 'hermes-gpt' && !hermesCodexUp)) {
+      const found = PROVIDERS.find((p) => p.configKey && config[p.configKey]);
+      setProviderId((found?.id ?? PROVIDERS[0]!.id) as ProviderId);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hermesStatusKnown, hermesXaiUp, hermesCodexUp, providerId]);
   const [count, setCount] = useState(1);
   // Google params
   const [aspectRatio, setAspectRatio] = useState<string>('1:1');
@@ -656,7 +671,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
         <button
           className="prefs-btn prefs-btn-primary"
           onClick={handleGenerate}
-          disabled={!prompt.trim() || generating}
+          disabled={!prompt.trim() || generating || (isHermesProvider && !hermesStatusKnown)}
         >
           {generating ? 'Generating...' : 'Generate'}
         </button>
