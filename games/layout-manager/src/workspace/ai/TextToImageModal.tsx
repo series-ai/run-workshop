@@ -72,6 +72,10 @@ const OPENAI_QUALITIES = ['low', 'medium', 'high'] as const;
 export function TextToImageModal({ config, prompt, onPromptChange, refNodes, position, onGenerated, onProgress, onClose }: TextToImageModalProps) {
   const { panelRef, onPointerDown, onPointerMove, onPointerUp } = useDraggableModal();
   const [providerId, setProviderId] = useState<ProviderId>(() => {
+    // User-chosen default wins (Preferences > AI); Auto falls back to the
+    // first provider with an API key
+    const preferred = PROVIDERS.find((p) => p.id === config.defaultImageProvider);
+    if (preferred && (!preferred.configKey || config[preferred.configKey])) return preferred.id as ProviderId;
     const found = PROVIDERS.find((p) => p.configKey && config[p.configKey]);
     return (found?.id ?? PROVIDERS[0]!.id) as ProviderId;
   });

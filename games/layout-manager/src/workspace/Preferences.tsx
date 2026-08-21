@@ -650,6 +650,22 @@ function AISettings({
         placeholder="Blank = first installed model"
       />
 
+      <SelectSetting
+        label="Default image provider"
+        description="Preselected when Text to Image opens. Auto picks the first provider with an API key."
+        value={draft.defaultImageProvider}
+        onChange={(v) => onChange('defaultImageProvider', v)}
+        options={[
+          { value: '', label: 'Auto' },
+          { value: 'nano-banana', label: 'Nano Banana' },
+          { value: 'nano-banana-lite', label: 'Nano Banana 2 Lite' },
+          { value: 'hermes-grok', label: 'Grok (Hermes)' },
+          { value: 'hermes-gpt', label: 'GPT Image 2 (Hermes)' },
+          { value: 'gpt-image', label: 'GPT Image 1' },
+          { value: 'gpt-image-2', label: 'GPT Image 2' },
+        ]}
+      />
+
       <TextInputSetting
         label="Unity project path"
         value={draft.unityProjectPath}

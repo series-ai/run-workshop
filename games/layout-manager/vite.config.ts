@@ -19,6 +19,59 @@ function isCrossOriginRequest(req: import('node:http').IncomingMessage): boolean
   return false;
 }
 
+// ====== Gesture-safe download tickets (shared) ======
+// Browser downloads must start inside a user gesture, but the payload (a
+// composited image, a generated video) finishes long after the gesture
+// expires. The client clicks a download link to /__download/<ticket>/<name>
+// synchronously in the gesture (dialog appears immediately), then the
+// producer POSTs the bytes to /__download-fulfill/<ticket> (or the server
+// fulfills directly, e.g. video generation); we stream them into the
+// already-started download. Tickets are client-minted UUIDs. Module scope so
+// both the image-proxy and AI plugins can fulfill.
+interface DownloadTicket { res?: import('node:http').ServerResponse; data?: Buffer; failed?: boolean; timer: NodeJS.Timeout }
+const downloadTickets = new Map<string, DownloadTicket>();
+const ticketCleanup = (id: string) => {
+  const t = downloadTickets.get(id);
+  if (t) { clearTimeout(t.timer); downloadTickets.delete(id); }
+};
+// 10 minutes: long enough for a video generation to hold its ticket from
+// click to first bytes; save activity refreshes all pending tickets
+const ticketTimer = (id: string) => setTimeout(() => {
+  const cur = downloadTickets.get(id);
+  cur?.res?.destroy();
+  ticketCleanup(id);
+}, 10 * 60 * 1000);
+const touchAllTickets = () => {
+  for (const [id, t] of downloadTickets) {
+    clearTimeout(t.timer);
+    t.timer = ticketTimer(id);
+  }
+};
+const newTicket = (id: string): DownloadTicket => {
+  const t: DownloadTicket = { timer: ticketTimer(id) };
+  downloadTickets.set(id, t);
+  return t;
+};
+const TICKET_RE = /^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/([^/]+))?$/i;
+const DOWNLOAD_MIMES: Record<string, string> = {
+  png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif',
+  mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime',
+};
+/** Deliver bytes into a waiting download (or park them for a not-yet-arrived one). Empty/null aborts. */
+function fulfillTicket(id: string, data: Buffer | null): void {
+  touchAllTickets();
+  const t = downloadTickets.get(id) ?? newTicket(id);
+  if (!data || data.length === 0) {
+    t.failed = true;
+    if (t.res) { t.res.destroy(); ticketCleanup(id); }
+  } else if (t.res) {
+    t.res.end(data);
+    ticketCleanup(id);
+  } else {
+    t.data = data;
+  }
+}
+
 function imageProxyPlugin(): Plugin {
   return {
     name: 'image-proxy',
@@ -61,40 +114,6 @@ function imageProxyPlugin(): Plugin {
         }
       });
 
-      // ====== Gesture-safe downloads (ticket rendezvous) ======
-      // Browser downloads must start inside a user gesture, but image
-      // compositing finishes long after the gesture expires. The client
-      // clicks a download link to /__download/<ticket>/<name> synchronously
-      // in the gesture (dialog appears immediately), then composites and
-      // POSTs the bytes to /__download-fulfill/<ticket>; we stream them into
-      // the already-started download. Tickets are client-minted UUIDs.
-      interface DownloadTicket { res?: import('node:http').ServerResponse; data?: Buffer; failed?: boolean; timer: NodeJS.Timeout }
-      const downloadTickets = new Map<string, DownloadTicket>();
-      const ticketCleanup = (id: string) => {
-        const t = downloadTickets.get(id);
-        if (t) { clearTimeout(t.timer); downloadTickets.delete(id); }
-      };
-      const ticketTimer = (id: string) => setTimeout(() => {
-        const cur = downloadTickets.get(id);
-        cur?.res?.destroy();
-        ticketCleanup(id);
-      }, 3 * 60 * 1000);
-      // Batch saves fulfill sequentially, so a later ticket's clock must not
-      // run while earlier composites are still working — any save activity
-      // refreshes every pending ticket. Timeout = 3 min of total inactivity.
-      const touchAllTickets = () => {
-        for (const [id, t] of downloadTickets) {
-          clearTimeout(t.timer);
-          t.timer = ticketTimer(id);
-        }
-      };
-      const newTicket = (id: string): DownloadTicket => {
-        const t: DownloadTicket = { timer: ticketTimer(id) };
-        downloadTickets.set(id, t);
-        return t;
-      };
-      const TICKET_RE = /^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/([^/]+))?$/i;
-
       server.middlewares.use('/__download', (req, res) => {
         if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         const m = (req.url ?? '').split('?')[0]!.match(TICKET_RE);
@@ -103,8 +122,9 @@ function imageProxyPlugin(): Plugin {
         const name = decodeURIComponent(rawName || 'image.png').replace(/[/\\"\r\n]/g, '_');
         const t = downloadTickets.get(id!) ?? newTicket(id!);
         if (t.failed) { ticketCleanup(id!); res.writeHead(500); res.end('Render failed'); return; }
+        const ext = name.split('.').pop()?.toLowerCase() ?? 'png';
         res.writeHead(200, {
-          'Content-Type': 'image/png',
+          'Content-Type': DOWNLOAD_MIMES[ext] ?? 'application/octet-stream',
           'Content-Disposition': `attachment; filename="${name}"`,
           'Cache-Control': 'no-store',
         });
@@ -125,19 +145,8 @@ function imageProxyPlugin(): Plugin {
         const id = m[1]!;
         const chunks: Buffer[] = [];
         for await (const chunk of req) chunks.push(Buffer.from(chunk));
-        const data = Buffer.concat(chunks);
-        touchAllTickets();
-        const t = downloadTickets.get(id) ?? newTicket(id);
-        if (data.length === 0) {
-          // Empty body = the client's render failed; kill the pending download
-          t.failed = true;
-          if (t.res) { t.res.destroy(); ticketCleanup(id); }
-        } else if (t.res) {
-          t.res.end(data);
-          ticketCleanup(id);
-        } else {
-          t.data = data; // download request hasn't arrived yet — hold the bytes
-        }
+        // Empty body = the producer failed; fulfillTicket aborts the download
+        fulfillTicket(id, Buffer.concat(chunks));
         res.writeHead(200); res.end('ok');
       });
 
@@ -982,6 +991,103 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         });
       });
 
+      // ====== Hermes Grok Imagine Video (text-to-video / image-to-video) ======
+      // The agent's video_generate tool auto-routes: image attached →
+      // grok-imagine-video-1.5 (image-to-video), text only → grok-imagine-video.
+      // LM can't display video, so the result streams into a gesture-safe
+      // download ticket the client claimed at click time.
+      server.middlewares.use('/__ai-generate-hermes-video', async (req, res) => {
+        if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const params = await readJsonBody(req);
+        if (!params) { res.writeHead(400); res.end('Invalid JSON'); return; }
+        const prompt = String(params.prompt || '').trim();
+        const ticket = String(params.ticket || '');
+        if (!prompt || !/^[0-9a-f-]{36}$/i.test(ticket)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing prompt or download ticket' }));
+          return;
+        }
+        // Hermes xai video plugin: duration 1-15s, 480p/720p, 7 aspect ratios
+        const duration = Math.max(1, Math.min(15, Number(params.duration) || 8));
+        const VIDEO_ASPECTS = ['1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3'];
+        const aspect = VIDEO_ASPECTS.includes(String(params.aspectRatio)) ? String(params.aspectRatio) : '16:9';
+        const resolution = ['480p', '720p', '1080p'].includes(String(params.resolution)) ? String(params.resolution) : '720p';
+        const image = params.image as { base64: string; mimeType?: string } | undefined;
+
+        const send = makeSSE(res);
+        let clientGone = false;
+        res.on('close', () => { clientGone = true; });
+
+        const os = await import('node:os');
+        const fsMod = await import('node:fs/promises');
+        const pathMod = await import('node:path');
+        const { spawn } = await import('node:child_process');
+
+        // Source image for image-to-video rides as a temp file (the plugin
+        // converts local paths to data URIs itself)
+        let tmpFile: string | null = null;
+        if (image?.base64) {
+          const ext = /jpe?g/.test(image.mimeType || '') ? 'jpg' : 'png';
+          tmpFile = pathMod.join(os.tmpdir(), `lm-hgv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`);
+          await fsMod.writeFile(tmpFile, Buffer.from(image.base64, 'base64'));
+        }
+
+        let instruction = `Call the video_generate tool with prompt: ${prompt}`;
+        instruction += `\nSet duration to ${duration}, aspect_ratio to ${aspect}, and resolution to ${resolution}.`;
+        if (tmpFile) instruction += `\nUse ${tmpFile} as the image_url to animate.`;
+        instruction += '\nWhen it finishes, reply with ONLY the absolute file path(s) or URL(s) of the generated video, one per line, nothing else.';
+
+        // Pin the agent model like the image endpoint — never inherit model.default
+        const agentArgs = ['--yolo', '-z', instruction, '-t', 'video_gen'];
+        const chatModels = await hermesProxyModels().catch(() => null);
+        if (chatModels?.length) agentArgs.push('-m', chatModels[0]!, '--provider', 'xai-oauth');
+
+        const child = spawn('hermes', agentArgs, { stdio: ['ignore', 'pipe', 'pipe'] });
+        const cleanupTmp = () => { if (tmpFile) fsMod.unlink(tmpFile).catch(() => {}); };
+        res.on('close', () => { child.kill('SIGTERM'); cleanupTmp(); });
+        send('progress', { message: `Generating ${duration}s video on Grok (${resolution}, ${aspect}) — typically 1-4 minutes...` });
+        let out = '';
+        let errBuf = '';
+        child.stdout.on('data', (d: Buffer) => { out += d.toString(); });
+        child.stderr.on('data', (d: Buffer) => { errBuf += d.toString(); });
+        child.on('close', async (code: number | null) => {
+          cleanupTmp();
+          try {
+            const clean = out.replace(/\x1b\[[0-9;]*m/g, '');
+            const urls = Array.from(new Set(clean.match(/https?:\/\/[^\s"']+\.(?:mp4|webm|mov)(?:\?[^\s"']*)?/gi) ?? []));
+            const paths = Array.from(new Set(clean.match(/(?:~\/|\/)[\w.\/-]+\.(?:mp4|webm|mov)/gi) ?? []));
+            let buf: Buffer | null = null;
+            for (const u of urls) {
+              const r = await fetch(u).catch(() => null);
+              if (r?.ok) { buf = Buffer.from(await r.arrayBuffer()); break; }
+            }
+            if (!buf) {
+              for (const p of paths) {
+                const b = await fsMod.readFile(p.replace(/^~/, os.homedir())).catch(() => null);
+                if (b) { buf = b; break; }
+              }
+            }
+            if (!buf) {
+              fulfillTicket(ticket, null); // abort the waiting download
+              send('error', { error: `Hermes returned no video${code ? ` (exit ${code})` : ''}: ${(clean.trim() || errBuf).slice(0, 300)}` });
+              send('done', {});
+              res.end();
+              return;
+            }
+            fulfillTicket(ticket, buf); // stream into the click-time download
+            send('progress', { message: `Saving video (${(buf.length / 1048576).toFixed(1)} MB)...` });
+            send('video', { bytes: buf.length });
+            send('done', {});
+          } catch (e) {
+            fulfillTicket(ticket, null);
+            send('error', { error: e instanceof Error ? e.message : 'Unknown error' });
+            send('done', {});
+          }
+          res.end();
+        });
+      });
+
       // Ensure the hermes proxy is running (spawn detached if not) — Grok chat
       // is always offered when hermes has an xAI login; the proxy spins up on
       // demand the first time it's needed
@@ -1104,11 +1210,16 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         // catalog is a hard allowlist that silently substitutes unknown
         // models, so the 2.0 button only shows when it would actually work
         let hermesGrok2 = false;
+        // Same detection story for 1080p video — hermes clamps unknown
+        // resolutions, so the button only shows when it would actually apply
+        let hermesVideo1080 = false;
         try {
           const fsMod = await import('node:fs/promises');
           const os = await import('node:os');
           const plugin = await fsMod.readFile(`${os.homedir()}/.hermes/hermes-agent/plugins/image_gen/xai/__init__.py`, 'utf8').catch(() => '');
           hermesGrok2 = plugin.includes('"grok-imagine-image-2.0"');
+          const videoPlugin = await fsMod.readFile(`${os.homedir()}/.hermes/hermes-agent/plugins/video_gen/xai/__init__.py`, 'utf8').catch(() => '');
+          hermesVideo1080 = videoPlugin.includes('"1080p"');
           const cfg = await fsMod.readFile(`${os.homedir()}/.hermes/config.yaml`, 'utf8');
           // Match provider inside the top-level image_gen block only
           const block = cfg.match(/^image_gen:\n((?:[ \t]+.*\n?)*)/m)?.[1] ?? '';
@@ -1131,6 +1242,7 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
             xai: hermesXaiLogin,
             codex: hermesCodexLogin,
             grok2: hermesGrok2,
+            video1080: hermesVideo1080,
           },
           claude: { up: claudeCliCache },
         }));
