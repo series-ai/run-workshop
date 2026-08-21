@@ -1,5 +1,5 @@
 {
-  "$comment": "Hero-pack manifest, Groovepad 6-block model. Bank A blocks 0-2 + 5 ship audio (16 loops); blocks 3-4 in A and all of B are stubbed pending asset-bot.",
+  "$comment": "Hero-pack manifest, Groovepad 6-block model. Bank A blocks 0-2 + 5 ship audio (16 loops); blocks 3-4 in A and all of B are stubbed pending audio generation.",
   "id": "lofi_heights_hero",
   "name": "Lofi Heights",
   "bpm": 84,

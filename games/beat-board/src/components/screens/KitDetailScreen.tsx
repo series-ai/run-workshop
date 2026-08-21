@@ -304,7 +304,7 @@ export function KitDetailScreen() {
 // ── Hero panel ────────────────────────────────────────────────────────────
 
 function KitHero({ kit }: { kit: KitMeta }) {
-  // Cover art (asset-bot-generated /images/packs/<id>.png) takes
+  // Cover art (rundot-generated /images/packs/<id>.png) takes
   // priority over the placeholder gradient. Same pattern KitHeroArt
   // uses on the Pack Drawer tile — keep the gradient as the underlay
   // so the slot reads as deliberate while the image loads, and as
