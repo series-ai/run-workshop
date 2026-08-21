@@ -1,5 +1,5 @@
 {
-  "$comment": "Hip-hop pack — Brooklyn boom-bap aesthetic, 90 BPM, F minor. 32 8-bar loops + 16 one-shots (8 drum fills + 8 SFX). Generated via .asset-bot/runs/hiphop-brooklyn-hero-2026-05-04 with run-full.sh.",
+  "$comment": "Hip-hop pack — Brooklyn boom-bap aesthetic, 90 BPM, F minor. 32 8-bar loops + 16 one-shots (8 drum fills + 8 SFX). Generated via pack-runs/hiphop-brooklyn-hero-2026-05-04 with tools/generate-kit.ts.",
   "id": "hiphop_brooklyn_hero",
   "name": "Brooklyn Boom-Bap",
   "bpm": 90,
