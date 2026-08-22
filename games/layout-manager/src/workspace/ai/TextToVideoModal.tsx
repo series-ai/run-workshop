@@ -284,6 +284,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
                 <option key={f.id} value={f.id}>{f.display}</option>
               ))}
             </select>
+            {isFal && !fam && <span className="ai-modal-size-hint">Loading Fal model list...</span>}
             {fam && (
               <span className="ai-modal-size-hint">
                 Pay-per-video on your Fal account ({fam.tier === 'cheap' ? 'budget model' : 'premium pricing'})
@@ -477,7 +478,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
         <button
           className="prefs-btn prefs-btn-primary"
           onClick={handleGenerate}
-          disabled={!prompt.trim() || generating || !providerUp || (famNeedsImage && !sourceNode)}
+          disabled={!prompt.trim() || generating || !providerUp || (isFal && !fam) || (famNeedsImage && !sourceNode)}
         >
           {generating ? 'Generating...' : 'Generate'}
         </button>
