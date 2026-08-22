@@ -1,3 +1,4 @@
+import { uuid } from '../uuid';
 /**
  * ComfyUI integration client.
  *
@@ -205,7 +206,7 @@ export async function runWorkflow(
     }
   }
 
-  const clientId = crypto.randomUUID();
+  const clientId = uuid();
   activeComfyUrl = comfyUrl;
 
   // Open WebSocket first so we don't miss early events

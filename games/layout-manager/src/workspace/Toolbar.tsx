@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Menu, FilePlus, FolderOpen, LayoutGrid, Save, Upload, Download, Image, Settings, Undo2, Redo2, Minus, Plus, Film, Magnet, Ruler, Type, Sparkles, Eraser, MessageSquare, Workflow, Layers, Box } from 'lucide-react';
+import { Menu, FilePlus, FolderOpen, LayoutGrid, Save, Upload, Download, Image, Settings, Undo2, Redo2, Minus, Plus, Film, Magnet, Ruler, Type, Sparkles, Eraser, MessageSquare, Workflow, Layers, Box, Clapperboard } from 'lucide-react';
 import type { WorkspaceAction, ImageNode, CanvasRect, ScaleFilter, RulerGuide } from './types';
 import { saveProject, saveProjectAs, loadProject, setCurrentFileHandle } from './projectFile';
 import { CanvasMenu } from './CanvasMenu';
@@ -46,18 +46,20 @@ interface ToolbarProps {
   onAiChat?: () => void;
   onAiComfy?: () => void;
   onAiUnity?: () => void;
+  onAiVideo?: () => void;
   aiTextToImageOpen?: boolean;
   aiRemoveBgOpen?: boolean;
   aiLayerizeOpen?: boolean;
   aiChatOpen?: boolean;
   aiComfyOpen?: boolean;
   aiUnityOpen?: boolean;
+  aiVideoOpen?: boolean;
   historyPast: number;
   historyFuture: number;
   historyMax: number;
 }
 
-export function Toolbar({ zoom, dispatch, pan, onImport, onImportSpriteSheet, images, canUndo, canRedo, canvas, scaleFilter, snapEnabled, projectName, onNewProject, selectedIds, onCanvasInfoIssues, guides, rulersVisible, onToggleRulers, canvasBgColor, onOpenFlipbook, activeTool, onSetActiveTool, exportOpen, onExportClosed, onUndo, onRedo, onOpenPreferences, onExportStatus, onMenuOpenChange, editMode, aiHidden, onAiTextToImage, onAiBgRemoval, onAiLayerize, onAiChat, onAiComfy, onAiUnity, aiTextToImageOpen, aiRemoveBgOpen, aiLayerizeOpen, aiChatOpen, aiComfyOpen, aiUnityOpen, historyPast, historyFuture, historyMax }: ToolbarProps) {
+export function Toolbar({ zoom, dispatch, pan, onImport, onImportSpriteSheet, images, canUndo, canRedo, canvas, scaleFilter, snapEnabled, projectName, onNewProject, selectedIds, onCanvasInfoIssues, guides, rulersVisible, onToggleRulers, canvasBgColor, onOpenFlipbook, activeTool, onSetActiveTool, exportOpen, onExportClosed, onUndo, onRedo, onOpenPreferences, onExportStatus, onMenuOpenChange, editMode, aiHidden, onAiTextToImage, onAiBgRemoval, onAiLayerize, onAiChat, onAiComfy, onAiUnity, onAiVideo, aiTextToImageOpen, aiRemoveBgOpen, aiLayerizeOpen, aiChatOpen, aiComfyOpen, aiUnityOpen, aiVideoOpen, historyPast, historyFuture, historyMax }: ToolbarProps) {
   const zoomPercent = Math.round(zoom * 100);
   const [menuOpen, setMenuOpenRaw] = useState(false);
   const setMenuOpen = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
@@ -382,6 +384,14 @@ export function Toolbar({ zoom, dispatch, pan, onImport, onImportSpriteSheet, im
             disabled={!!editMode}
           >
             <Box size={16} />
+          </button>
+          <button
+            className={`toolbar-btn toolbar-btn-icon${aiVideoOpen ? ' toolbar-btn-active' : ''}`}
+            onClick={onAiVideo}
+            title="Text to Video / Image to Video (Grok via Hermes) — saves to disk"
+            disabled={!!editMode}
+          >
+            <Clapperboard size={16} />
           </button>
         </>
       )}

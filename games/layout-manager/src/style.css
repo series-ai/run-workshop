@@ -5624,6 +5624,18 @@ button.btn-large {
   margin: 0;
 }
 
+/* Native <select> popups ignore the themed text color's context and paint
+   options on the browser's default white — give options the theme's surface */
+select.ai-modal-size-input {
+  color-scheme: var(--color-scheme, dark);
+}
+
+select.ai-modal-size-input option,
+select.ai-modal-size-input optgroup {
+  background: rgb(var(--color-surface-rgb));
+  color: var(--color-text-primary);
+}
+
 .ai-modal-size-input:focus {
   border-color: var(--color-primary);
 }
