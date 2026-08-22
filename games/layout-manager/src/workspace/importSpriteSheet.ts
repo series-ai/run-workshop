@@ -1,3 +1,4 @@
+import { uuid } from './uuid';
 import type { ImageNode, CanvasRect } from './types';
 import type { CanvasInfoJson } from './canvasInfo';
 
@@ -31,7 +32,7 @@ export async function importSpriteSheet(
   // First pass: assign IDs to all sprite names
   const nameToId = new Map<string, string>();
   for (const spriteName of Object.keys(data.frames)) {
-    nameToId.set(spriteName, crypto.randomUUID());
+    nameToId.set(spriteName, uuid());
   }
 
   // Second pass: build ImageNodes

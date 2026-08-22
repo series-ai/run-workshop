@@ -1,3 +1,4 @@
+import { uuid } from './uuid';
 import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { VideoExtractModal } from './VideoExtractModal';
@@ -186,7 +187,7 @@ export function FlipbookViewer({ onImportFiles, viewCenter, onClose }: FlipbookV
     if (accepted.length === 0) return;
 
     const loaded: FlipbookFile[] = accepted.map((file) => ({
-      id: crypto.randomUUID(),
+      id: uuid(),
       name: file.name,
       src: URL.createObjectURL(file),
       thumbSrc: '', // placeholder — generated async below

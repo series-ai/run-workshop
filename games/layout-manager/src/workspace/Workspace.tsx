@@ -1,3 +1,4 @@
+import { uuid } from './uuid';
 import { useRef, useCallback, useState, useEffect, useLayoutEffect } from 'react';
 import { useWorkspaceState } from './useWorkspaceState';
 import { ImageNodeComponent } from './ImageNode';
@@ -1505,7 +1506,7 @@ export function Workspace() {
       const node = state.images.find((i) => i.id === id);
       if (!node) return [];
       const baseName = node.spriteName || node.fileName.replace(/\.[^.]+$/, '') || 'image';
-      return [{ id, ticket: crypto.randomUUID(), baseName }];
+      return [{ id, ticket: uuid(), baseName }];
     });
     for (const job of jobs) {
       const a = document.createElement('a');
@@ -2699,7 +2700,7 @@ export function Workspace() {
             dispatch({
               type: 'ADD_IMAGE',
               image: {
-                id: crypto.randomUUID(),
+                id: uuid(),
                 src: localUrl,
                 fileName: 'ai_generated.png',
                 x: pos.x,
@@ -2749,7 +2750,7 @@ export function Workspace() {
             dispatch({
               type: 'ADD_IMAGE',
               image: {
-                id: crypto.randomUUID(),
+                id: uuid(),
                 src: localUrl,
                 fileName: 'unity_ai.png',
                 x: pos.x,
@@ -2802,7 +2803,7 @@ export function Workspace() {
               dispatch({
                 type: 'ADD_IMAGE',
                 image: {
-                  id: crypto.randomUUID(),
+                  id: uuid(),
                   src: localUrl,
                   fileName: node.fileName.replace(/\.\w+$/, '_nobg.png'),
                   x: pos.x,
@@ -2846,7 +2847,7 @@ export function Workspace() {
             dispatch({ type: 'SNAPSHOT' });
             const ids: string[] = [];
             for (const layer of layers) {
-              const id = crypto.randomUUID();
+              const id = uuid();
               ids.push(id);
               dispatch({
                 type: 'ADD_IMAGE',
@@ -2904,7 +2905,7 @@ export function Workspace() {
             dispatch({
               type: 'ADD_IMAGE',
               image: {
-                id: crypto.randomUUID(),
+                id: uuid(),
                 src: dataUrl,
                 fileName,
                 x: gx,
@@ -2997,7 +2998,7 @@ export function Workspace() {
             dispatch({
               type: 'ADD_IMAGE',
               image: {
-                id: crypto.randomUUID(),
+                id: uuid(),
                 src: snap.url,
                 fileName: node.fileName.replace(/\.\w+$/, '') + '_raster.png',
                 x: node.x + 20,

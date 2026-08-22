@@ -1,3 +1,4 @@
+import { uuid } from '../uuid';
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { UserConfig } from '../userConfig';
@@ -97,7 +98,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
 
     // Claim the download ticket NOW, inside the click — the save dialog
     // appears immediately; the video streams into it when generation ends
-    const ticket = crypto.randomUUID();
+    const ticket = uuid();
     const slug = prompt.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').split('-').slice(0, 5).join('-') || 'grok-video';
     const a = document.createElement('a');
     a.href = `/__download/${ticket}/${encodeURIComponent(slug)}.mp4`;

@@ -1,3 +1,4 @@
+import { uuid } from './uuid';
 import { useReducer, useCallback, useState } from 'react';
 import type { WorkspaceState, WorkspaceAction, ImageNode } from './types';
 import { readPngScaleFilter } from './pngChunks';
@@ -1028,7 +1029,7 @@ function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): Works
       const maxZ = state.images.reduce((max, img) => Math.max(max, img.zIndex), -1);
       const newImages: ImageNode[] = toDuplicate.map((img, i) => ({
         ...img,
-        id: crypto.randomUUID(),
+        id: uuid(),
         x: img.x + 20,
         y: img.y + 20,
         zIndex: maxZ + 1 + i,
@@ -1550,7 +1551,7 @@ export function useWorkspaceState() {
         for (let c = 0; c < row.length; c++) {
           const item = row[c]!;
           nodes.push({
-            id: crypto.randomUUID(),
+            id: uuid(),
             src: item.src,
             fileName: item.file.name,
             x: curX,
@@ -1599,7 +1600,7 @@ export function useWorkspaceState() {
       if (onImageSize) onImageSize(loaded.nw, loaded.nh);
 
       const node: ImageNode = {
-        id: crypto.randomUUID(),
+        id: uuid(),
         src: loaded.src,
         fileName: file.name,
         x: dropX ?? 100,
@@ -1644,7 +1645,7 @@ export function useWorkspaceState() {
         c.toBlob((blob) => {
           const src = blob ? URL.createObjectURL(blob) : proxyUrl;
           const node: ImageNode = {
-            id: crypto.randomUUID(),
+            id: uuid(),
             src,
             fileName: (() => {
               const raw = imageUrl.split('/').pop()?.split('?')[0] || 'image.png';

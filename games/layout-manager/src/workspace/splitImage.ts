@@ -1,3 +1,4 @@
+import { uuid } from './uuid';
 import type { ImageNode } from './types';
 
 /**
@@ -60,7 +61,7 @@ export function splitImage(
       const fileExt = image.fileName.split('.').pop() ?? 'png';
 
       pieces.push({
-        id: crypto.randomUUID(),
+        id: uuid(),
         src: image.src,
         fileName: `${baseName}_${row + 1}x${col + 1}.${fileExt}`,
         x,
@@ -112,7 +113,7 @@ export function sliceImage(
     h: number,
     suffix: string,
   ): ImageNode => ({
-    id: crypto.randomUUID(),
+    id: uuid(),
     src: image.src,
     fileName: `${baseName}_${suffix}.${ext}`,
     x,
