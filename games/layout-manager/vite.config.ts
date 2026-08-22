@@ -1090,6 +1090,154 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         });
       });
 
+      // ====== Fal.ai video (all families) ======
+      // One generic endpoint driven by a family table (mirrors fal's current
+      // video catalog; specs cross-checked against fal's endpoint docs).
+      // Same queue submit/poll pattern as Layerize; the finished MP4 is
+      // fetched server-side and streamed into the client's download ticket.
+      interface FalVideoFamily {
+        id: string; display: string; tier: 'cheap' | 'premium';
+        textEndpoint: string | null; imageEndpoint: string;
+        /** [min,max] range, explicit list, or null = endpoint default only */
+        durations: [number, number] | number[] | null;
+        durationInt?: boolean; durationSuffix?: string;
+        aspects: string[] | null; resolutions: string[] | null;
+        resolutionAliases?: Record<string, string>;
+        /** i2v endpoints that reject aspect_ratio (derive from the image) */
+        imageDropsAspect?: boolean;
+        imageParamKey?: string; audio: boolean; negative: boolean; note?: string;
+      }
+      const FAL_VIDEO_FAMILIES: FalVideoFamily[] = [
+        { id: 'pixverse-v6', display: 'Pixverse v6', tier: 'cheap', textEndpoint: 'fal-ai/pixverse/v6/text-to-video', imageEndpoint: 'fal-ai/pixverse/v6/image-to-video', durations: [1, 15], aspects: null, resolutions: ['360p', '540p', '720p', '1080p'], audio: true, negative: true },
+        { id: 'seedance-2.0-mini', display: 'Seedance 2.0 Mini', tier: 'cheap', textEndpoint: 'bytedance/seedance-2.0/mini/text-to-video', imageEndpoint: 'bytedance/seedance-2.0/mini/image-to-video', durations: [4, 15], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['480p', '720p'], audio: true, negative: false },
+        { id: 'ltx-2.3', display: 'LTX 2.3 (22B)', tier: 'cheap', textEndpoint: 'fal-ai/ltx-2.3-22b/text-to-video', imageEndpoint: 'fal-ai/ltx-2.3-22b/image-to-video', durations: null, aspects: null, resolutions: null, audio: true, negative: true, note: 'Endpoint defaults for duration/aspect/resolution' },
+        { id: 'kling-v3-4k', display: 'Kling v3 4K', tier: 'premium', textEndpoint: 'fal-ai/kling-video/v3/4k/text-to-video', imageEndpoint: 'fal-ai/kling-video/v3/4k/image-to-video', imageParamKey: 'start_image_url', imageDropsAspect: true, durations: [3, 15], aspects: ['16:9', '9:16', '1:1'], resolutions: null, audio: true, negative: true, note: '4K output (fixed)' },
+        { id: 'veo3.1', display: 'Veo 3.1', tier: 'premium', textEndpoint: 'fal-ai/veo3.1', imageEndpoint: 'fal-ai/veo3.1/image-to-video', durations: [4, 6, 8], durationSuffix: 's', aspects: ['16:9', '9:16'], resolutions: ['720p', '1080p', '4k'], audio: true, negative: true },
+        { id: 'seedance-2.0', display: 'Seedance 2.0', tier: 'premium', textEndpoint: 'bytedance/seedance-2.0/text-to-video', imageEndpoint: 'bytedance/seedance-2.0/image-to-video', durations: [4, 15], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['480p', '720p', '1080p'], audio: true, negative: false },
+        { id: 'seedance-2.5', display: 'Seedance 2.5', tier: 'premium', textEndpoint: 'bytedance/seedance-2.5/text-to-video', imageEndpoint: 'bytedance/seedance-2.5/image-to-video', imageDropsAspect: true, durations: [4, 30], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['480p', '720p'], audio: true, negative: false },
+        { id: 'minimax-h3', display: 'MiniMax H3', tier: 'premium', textEndpoint: 'minimax/h3/text-to-video', imageEndpoint: 'minimax/h3/image-to-video', durationInt: true, imageDropsAspect: true, durations: [5, 15], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['768P', '2K', '4K'], resolutionAliases: { '480p': '768P', '540p': '768P', '720p': '768P', '768p': '768P', '1080p': '2K', '2k': '2K', '4k': '4K' }, audio: false, negative: false, note: 'Audio always on' },
+        { id: 'flux-3', display: 'FLUX 3', tier: 'premium', textEndpoint: 'blackforestlabs/flux-3/text-to-video', imageEndpoint: 'blackforestlabs/flux-3/image-to-video', durationInt: true, durations: [5, 20], aspects: ['21:9', '2:1', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['720p', '1080p'], audio: true, negative: false },
+        { id: 'grok-imagine-1.5', display: 'Grok Imagine 1.5', tier: 'premium', textEndpoint: 'xai/grok-imagine-video/v1.5/text-to-video', imageEndpoint: 'xai/grok-imagine-video/v1.5/image-to-video', durationInt: true, imageDropsAspect: true, durations: [1, 15], aspects: ['16:9', '4:3', '3:2', '1:1', '2:3', '3:4', '9:16'], resolutions: ['480p', '720p', '1080p'], audio: false, negative: false, note: 'Audio always on' },
+        { id: 'gemini-omni-flash', display: 'Gemini Omni Flash', tier: 'premium', textEndpoint: null, imageEndpoint: 'google/gemini-omni-flash/image-to-video', durationInt: true, durations: [3, 10], aspects: ['16:9', '9:16'], resolutions: null, audio: false, negative: false, note: 'Image-to-video only; audio always on' },
+        { id: 'happy-horse', display: 'Happy Horse 1.0', tier: 'premium', textEndpoint: 'alibaba/happy-horse/text-to-video', imageEndpoint: 'alibaba/happy-horse/image-to-video', durations: null, aspects: null, resolutions: null, audio: false, negative: false, note: 'New model, sparse docs — endpoint defaults' },
+      ];
+      server.middlewares.use('/__fal-video-models', (req, res) => {
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ families: FAL_VIDEO_FAMILIES }));
+      });
+
+      server.middlewares.use('/__ai-generate-fal-video', async (req, res) => {
+        if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const params = await readJsonBody(req);
+        if (!params) { res.writeHead(400); res.end('Invalid JSON'); return; }
+        const apiKey = ((params.apiKey as string) || '').trim();
+        const prompt = String(params.prompt || '').trim();
+        const ticket = String(params.ticket || '');
+        const fam = FAL_VIDEO_FAMILIES.find((f) => f.id === params.model);
+        const image = params.image as { base64: string; mimeType?: string } | undefined;
+        if (!apiKey || !prompt || !fam || !/^[0-9a-f-]{36}$/i.test(ticket)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing Fal.ai API key, prompt, model, or download ticket' }));
+          return;
+        }
+        const endpoint = image?.base64 ? fam.imageEndpoint : fam.textEndpoint;
+        if (!endpoint) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: `${fam.display} is image-to-video only — select an image first` }));
+          return;
+        }
+
+        // Build the payload per family (mirrors fal's per-endpoint schemas)
+        const body: Record<string, unknown> = { prompt };
+        if (image?.base64) body[fam.imageParamKey ?? 'image_url'] = `data:${image.mimeType || 'image/png'};base64,${image.base64}`;
+        const reqDur = Number(params.duration);
+        if (fam.durations && Number.isFinite(reqDur)) {
+          let d = Math.round(reqDur);
+          if (fam.durations.length === 2 && (fam.durations[1]! - fam.durations[0]!) > 1 && !(fam.id === 'veo3.1')) {
+            d = Math.max(fam.durations[0]!, Math.min(fam.durations[1]!, d));
+          } else {
+            d = (fam.durations as number[]).reduce((best, v) => Math.abs(v - d) < Math.abs(best - d) ? v : best, fam.durations[0]!);
+          }
+          body.duration = fam.durationInt ? d : `${d}${fam.durationSuffix ?? ''}`;
+        }
+        const reqAspect = String(params.aspectRatio || '');
+        if (fam.aspects && fam.aspects.includes(reqAspect) && !(image?.base64 && fam.imageDropsAspect)) body.aspect_ratio = reqAspect;
+        if (fam.resolutions) {
+          const r = String(params.resolution || '').toLowerCase();
+          const resolved = fam.resolutionAliases?.[r] ?? params.resolution;
+          if (typeof resolved === 'string' && fam.resolutions.includes(resolved)) body.resolution = resolved;
+        }
+        if (fam.audio && typeof params.audio === 'boolean') body.generate_audio = params.audio;
+        if (fam.negative && typeof params.negativePrompt === 'string' && params.negativePrompt.trim()) body.negative_prompt = params.negativePrompt.trim();
+
+        const send = makeSSE(res);
+        let clientGone = false;
+        res.on('close', () => { clientGone = true; });
+        const abort = new AbortController();
+        activeAborts.add(abort);
+        res.on('close', () => abort.abort());
+        try {
+          send('progress', { message: `Submitting to ${fam.display} via Fal...` });
+          const submitResp = await fetch(`https://queue.fal.run/${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Key ${apiKey}` },
+            body: JSON.stringify(body),
+            signal: abort.signal,
+          });
+          if (!submitResp.ok) throw new Error(`Fal.ai submit ${submitResp.status}: ${await submitResp.text()}`);
+          const submitJson = await submitResp.json();
+          const requestId = submitJson.request_id as string;
+          if (!requestId) throw new Error('Fal.ai: no request_id in response');
+          // Status/result live at the app root (owner/app — first two segments)
+          const appRoot = endpoint.split('/').slice(0, 2).join('/');
+          const statusUrl = `https://queue.fal.run/${appRoot}/requests/${requestId}/status`;
+          const resultUrl = `https://queue.fal.run/${appRoot}/requests/${requestId}`;
+          let completed = false;
+          let lastStatus = '';
+          for (let i = 0; i < 240 && !clientGone; i++) {
+            await new Promise((r) => setTimeout(r, 3000));
+            const statusResp = await fetch(statusUrl, { headers: { 'Authorization': `Key ${apiKey}` }, signal: abort.signal });
+            if (!statusResp.ok) continue;
+            const statusJson = await statusResp.json();
+            if (statusJson.status !== lastStatus) {
+              lastStatus = statusJson.status;
+              send('progress', { message: `${fam.display}: ${String(statusJson.status).toLowerCase().replace(/_/g, ' ')}...` });
+            }
+            if (statusJson.status === 'COMPLETED') { completed = true; break; }
+            if (statusJson.status === 'FAILED' || statusJson.status === 'ERROR') {
+              throw new Error(`Fal.ai video failed: ${JSON.stringify(statusJson).slice(0, 300)}`);
+            }
+          }
+          if (clientGone) { fulfillTicket(ticket, null); return; }
+          if (!completed) throw new Error('Fal.ai video timed out after 12 minutes');
+          const resultResp = await fetch(resultUrl, { headers: { 'Authorization': `Key ${apiKey}` }, signal: abort.signal });
+          if (!resultResp.ok) throw new Error(`Fal.ai result ${resultResp.status}: ${await resultResp.text()}`);
+          const resultJson = await resultResp.json();
+          const videoUrl = (resultJson?.video?.url ?? resultJson?.videos?.[0]?.url) as string | undefined;
+          if (!videoUrl) throw new Error('Fal.ai: no video URL in result');
+          send('progress', { message: 'Downloading video from Fal...' });
+          const videoResp = await fetch(videoUrl, { signal: abort.signal });
+          if (!videoResp.ok) throw new Error(`Fal.ai video download ${videoResp.status}`);
+          const buf = Buffer.from(await videoResp.arrayBuffer());
+          fulfillTicket(ticket, buf);
+          send('progress', { message: `Saving video (${(buf.length / 1048576).toFixed(1)} MB)...` });
+          send('video', { bytes: buf.length });
+          send('done', {});
+        } catch (e) {
+          fulfillTicket(ticket, null);
+          if (!clientGone) {
+            console.error('[ai-direct] Fal video error:', e);
+            send('error', { error: e instanceof Error ? e.message : 'Unknown error' });
+            send('done', {});
+          }
+        } finally {
+          activeAborts.delete(abort);
+        }
+        res.end();
+      });
+
       // Ensure the hermes proxy is running (spawn detached if not) — Grok chat
       // is always offered when hermes has an xAI login; the proxy spins up on
       // demand the first time it's needed

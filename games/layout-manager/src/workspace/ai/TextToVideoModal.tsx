@@ -28,7 +28,22 @@ const VIDEO_PROVIDERS = [
     title: 'Grok Imagine video via your local Hermes agent (SuperGrok login, no API key)',
     unavailableTitle: 'Needs the Hermes Agent with a SuperGrok / X Premium+ login',
   },
+  {
+    id: 'fal',
+    label: 'Fal.ai',
+    title: 'Fal-hosted video models (Kling, Veo, Seedance, MiniMax, FLUX, Grok, …) via your Fal.ai API key — pay-per-video',
+    unavailableTitle: 'Needs a Fal.ai API key (Preferences > AI)',
+  },
 ] as const;
+
+/** Fal video family spec, served by the dev server's table (single source of truth) */
+interface FalFamily {
+  id: string; display: string; tier: 'cheap' | 'premium';
+  textEndpoint: string | null; imageEndpoint: string;
+  durations: [number, number] | number[] | null;
+  aspects: string[] | null; resolutions: string[] | null;
+  imageDropsAspect?: boolean; audio: boolean; negative: boolean; note?: string;
+}
 type VideoProviderId = (typeof VIDEO_PROVIDERS)[number]['id'];
 
 /**
@@ -65,16 +80,40 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
   // image's own shape (the API only accepts the 7 fixed ratios) so the
   // animation isn't stretched into whatever ratio happened to be selected
   const [autoAspect, setAutoAspect] = useState(true);
-  const [resolution, setResolution] = useState<'480p' | '720p' | '1080p'>('720p');
+  const [resolution, setResolution] = useState<string>('720p');
+  const [falAudio, setFalAudio] = useState(true);
+  const [falNegative, setFalNegative] = useState('');
+  const [falFamilies, setFalFamilies] = useState<FalFamily[]>([]);
+  const [falModel, setFalModel] = useState('kling-v3-4k');
+  useEffect(() => {
+    fetch('/__fal-video-models').then((r) => r.json()).then((j) => { if (Array.isArray(j.families)) setFalFamilies(j.families); }).catch(() => {});
+  }, []);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
 
   const sourceNode = refNodes[0] ?? null;
+  const isFal = providerId === 'fal';
+  const providerUp = providerId === 'hermes-grok' ? hermesXaiUp : !!config.falApiKey;
+  const fam = isFal ? (falFamilies.find((f) => f.id === falModel) ?? falFamilies[0] ?? null) : null;
+  // Each Fal family declares its own aspect/resolution/duration support;
+  // null means "the endpoint decides" (no control shown)
+  const activeAspects: readonly string[] = isFal ? (fam?.aspects ?? []) : VIDEO_ASPECTS;
+  const famDurations: number[] = (() => {
+    const d = fam?.durations;
+    if (!d) return [];
+    if (d.length === 2 && (d[1]! - d[0]!) > 1 && fam?.id !== 'veo3.1') {
+      // range → sensible presets inside it
+      const [lo, hi] = d as [number, number];
+      return [lo, 4, 5, 6, 8, 10, 15, 20, 30, hi].filter((v, i, a) => v >= lo && v <= hi && a.indexOf(v) === i).sort((a, b) => a - b);
+    }
+    return [...(d as number[])];
+  })();
+  const famNeedsImage = !!fam && !fam.textEndpoint;
   const nearestAspect = (w: number, h: number): string => {
     const target = w / h;
-    let best = VIDEO_ASPECTS[0] as string;
+    let best = activeAspects[0] ?? aspectRatio;
     let bestDiff = Infinity;
-    for (const r of VIDEO_ASPECTS) {
+    for (const r of activeAspects) {
       const [a, b] = r.split(':').map(Number) as [number, number];
       const diff = Math.abs(Math.log(target / (a / b)));
       if (diff < bestDiff) { bestDiff = diff; best = r; }
@@ -83,7 +122,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
   };
   const effectiveAspect = sourceNode && autoAspect
     ? nearestAspect(sourceNode.naturalWidth || sourceNode.width, sourceNode.naturalHeight || sourceNode.height)
-    : aspectRatio;
+    : (activeAspects.includes(aspectRatio) ? aspectRatio : (activeAspects[0] ?? aspectRatio));
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -99,7 +138,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
     // Claim the download ticket NOW, inside the click — the save dialog
     // appears immediately; the video streams into it when generation ends
     const ticket = uuid();
-    const slug = prompt.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').split('-').slice(0, 5).join('-') || 'grok-video';
+    const slug = prompt.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').split('-').slice(0, 5).join('-') || (isFal ? 'fal-video' : 'grok-video');
     const a = document.createElement('a');
     a.href = `/__download/${ticket}/${encodeURIComponent(slug)}.mp4`;
     a.download = `${slug}.mp4`;
@@ -130,11 +169,17 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
         image = { base64: pngUrl.slice(pngUrl.indexOf(',') + 1), mimeType: 'image/png' };
       }
 
-      const resp = await fetch('/__ai-generate-hermes-video', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: prompt.trim(), ticket, duration, aspectRatio: effectiveAspect, resolution, image }),
-      });
+      const resp = isFal
+        ? await fetch('/__ai-generate-fal-video', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ apiKey: config.falApiKey, model: fam?.id, prompt: prompt.trim(), ticket, duration, aspectRatio: effectiveAspect, resolution, audio: falAudio, negativePrompt: falNegative, image }),
+          })
+        : await fetch('/__ai-generate-hermes-video', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: prompt.trim(), ticket, duration, aspectRatio: effectiveAspect, resolution, image }),
+          });
       if (!resp.ok || !resp.body) {
         let msg = `Request failed: ${resp.status}`;
         try { msg = (await resp.json()).error || msg; } catch { /* keep */ }
@@ -176,7 +221,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
     if (!fulfilled) void abortDownload();
     onProgress(null);
     setGenerating(false);
-  }, [prompt, generating, duration, effectiveAspect, resolution, sourceNode, onProgress]);
+  }, [prompt, generating, duration, effectiveAspect, resolution, sourceNode, isFal, fam, falAudio, falNegative, config.falApiKey, onProgress]);
 
   return createPortal(
     <div
@@ -209,7 +254,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
           <div className="ai-modal-ratio-row">
             {/* Single provider today; more video providers slot in here as buttons */}
             {VIDEO_PROVIDERS.map((p) => {
-              const available = p.id === 'hermes-grok' ? hermesXaiUp : false;
+              const available = p.id === 'hermes-grok' ? hermesXaiUp : p.id === 'fal' ? !!config.falApiKey : false;
               return (
                 <button
                   key={p.id}
@@ -225,9 +270,35 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
           </div>
         </label>
 
-        {!hermesXaiUp && (
+        {isFal && (
+          <label className="ai-modal-label">
+            Model
+            <select
+              className="ai-modal-size-input"
+              value={fam?.id ?? ''}
+              onChange={(e) => setFalModel(e.target.value)}
+              disabled={generating}
+              style={{ width: '100%' }}
+            >
+              {[...falFamilies].sort((a, b) => a.display.localeCompare(b.display)).map((f) => (
+                <option key={f.id} value={f.id}>{f.display}</option>
+              ))}
+            </select>
+            {fam && (
+              <span className="ai-modal-size-hint">
+                Pay-per-video on your Fal account ({fam.tier === 'cheap' ? 'budget model' : 'premium pricing'})
+                {fam.note ? ` · ${fam.note}` : ''}
+                {famNeedsImage && !sourceNode ? ' · select an image to use this model' : ''}
+              </span>
+            )}
+          </label>
+        )}
+
+        {!providerUp && (
           <div className="ai-modal-error" role="alert">
-            Needs the Hermes Agent with a SuperGrok / X Premium+ login (see Preferences &gt; AI &gt; Connections).
+            {isFal
+              ? 'Needs a Fal.ai API key (Preferences > AI).'
+              : 'Needs the Hermes Agent with a SuperGrok / X Premium+ login (see Preferences > AI > Connections).'}
           </div>
         )}
 
@@ -259,10 +330,11 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
           </label>
         )}
 
+        {(!isFal || famDurations.length > 0) && (
         <label className="ai-modal-label">
           Duration
           <div className="ai-modal-ratio-row">
-            {[4, 6, 8, 10, 15].map((d) => (
+            {(isFal ? famDurations : [4, 6, 8, 10, 15]).map((d) => (
               <button
                 key={d}
                 className={`ai-modal-ratio-btn${duration === d ? ' ai-modal-ratio-btn-active' : ''}`}
@@ -274,7 +346,14 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
             ))}
           </div>
         </label>
+        )}
 
+        {isFal && activeAspects.length === 0 ? null : isFal && sourceNode && fam?.imageDropsAspect ? (
+          <label className="ai-modal-label">
+            Aspect Ratio
+            <span className="ai-modal-size-hint">{fam?.display} image-to-video follows the source image's shape — no ratio setting</span>
+          </label>
+        ) : (
         <label className="ai-modal-label">
           Aspect Ratio
           <div className="ai-modal-ratio-row">
@@ -288,7 +367,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
                 Auto
               </button>
             )}
-            {VIDEO_ASPECTS.map((r) => (
+            {activeAspects.map((r) => (
               <button
                 key={r}
                 className={`ai-modal-ratio-btn${!(sourceNode && autoAspect) && r === aspectRatio ? ' ai-modal-ratio-btn-active' : ''}`}
@@ -303,26 +382,73 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
             <span className="ai-modal-size-hint">Auto: using {effectiveAspect} to match the source image</span>
           )}
         </label>
+        )}
 
-        <label className="ai-modal-label">
-          Resolution
-          <div className="ai-modal-ratio-row">
-            {([...(['480p', '720p'] as const), ...(has1080 ? (['1080p'] as const) : [])]).map((r) => (
-              <button
-                key={r}
-                className={`ai-modal-ratio-btn${resolution === r ? ' ai-modal-ratio-btn-active' : ''}`}
-                onClick={() => setResolution(r)}
-                disabled={generating}
-                title={r === '480p' ? 'Faster, smaller file' : r === '720p' ? 'Balanced' : 'Native on image-to-video (Video 1.5)'}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-          {/* Hermes' plugin metadata claims no audio support, but verified
-              output MP4s carry a real generated audio track */}
-          <span className="ai-modal-size-hint">Videos include Grok-generated ambient audio</span>
-        </label>
+        {isFal ? (
+          <>
+            {fam?.resolutions && (
+              <label className="ai-modal-label">
+                Resolution
+                <div className="ai-modal-ratio-row">
+                  {fam.resolutions.map((r) => (
+                    <button
+                      key={r}
+                      className={`ai-modal-ratio-btn${resolution === r ? ' ai-modal-ratio-btn-active' : ''}`}
+                      onClick={() => setResolution(r)}
+                      disabled={generating}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+                {!fam.resolutions.includes(resolution) && (
+                  <span className="ai-modal-size-hint">Pick a resolution this model supports (otherwise its default applies)</span>
+                )}
+              </label>
+            )}
+            {fam?.audio && (
+              <label className="ai-modal-label" style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <input type="checkbox" checked={falAudio} onChange={(e) => setFalAudio(e.target.checked)} disabled={generating} />
+                Generate audio
+              </label>
+            )}
+            {fam?.negative && (
+              <label className="ai-modal-label">
+                Negative prompt (optional)
+                <input
+                  type="text"
+                  className="ai-modal-size-input"
+                  style={{ width: '100%' }}
+                  value={falNegative}
+                  onChange={(e) => setFalNegative(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  placeholder="What to avoid — e.g. blur, text, extra limbs"
+                  disabled={generating}
+                />
+              </label>
+            )}
+          </>
+        ) : (
+          <label className="ai-modal-label">
+            Resolution
+            <div className="ai-modal-ratio-row">
+              {([...(['480p', '720p'] as const), ...(has1080 ? (['1080p'] as const) : [])]).map((r) => (
+                <button
+                  key={r}
+                  className={`ai-modal-ratio-btn${resolution === r ? ' ai-modal-ratio-btn-active' : ''}`}
+                  onClick={() => setResolution(r)}
+                  disabled={generating}
+                  title={r === '480p' ? 'Faster, smaller file' : r === '720p' ? 'Balanced' : 'Native on image-to-video (Video 1.5)'}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+            {/* Hermes' plugin metadata claims no audio support, but verified
+                output MP4s carry a real generated audio track */}
+            <span className="ai-modal-size-hint">Videos include Grok-generated ambient audio</span>
+          </label>
+        )}
 
         <label className="ai-modal-label">
           Prompt
@@ -351,7 +477,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
         <button
           className="prefs-btn prefs-btn-primary"
           onClick={handleGenerate}
-          disabled={!prompt.trim() || generating || !hermesXaiUp}
+          disabled={!prompt.trim() || generating || !providerUp || (famNeedsImage && !sourceNode)}
         >
           {generating ? 'Generating...' : 'Generate'}
         </button>
