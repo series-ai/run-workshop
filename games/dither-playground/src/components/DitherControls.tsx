@@ -1,9 +1,9 @@
 // ── Shared Control Panel ──────────────────────────────────────────────
 
 import type { CSSProperties } from 'react';
-import type { DitherEffectConfig, GpuDitherAlgorithm } from '../dither/DitherEffect';
-import { GPU_DITHER_ALGORITHMS } from '../dither/DitherEffect';
-import { ALL_PRESETS, PALETTE_PRESETS } from '../dither/presets';
+import type { DitherEffectConfig, GpuDitherAlgorithm } from 'dither-kit';
+import { GPU_DITHER_ALGORITHMS } from 'dither-kit';
+import { ALL_PRESETS, PALETTE_PRESETS } from 'dither-kit';
 import { colors, fonts } from './ui';
 
 const GPU_ALGO_LABELS: Record<GpuDitherAlgorithm, string> = {
