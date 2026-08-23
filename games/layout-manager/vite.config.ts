@@ -1020,7 +1020,20 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
 
         const send = makeSSE(res);
         let clientGone = false;
-        res.on('close', () => { clientGone = true; });
+        let cancelled = false;
+        // Join the global cancel registry BEFORE any temp-file work so a Stop
+        // during prepare can't slip past; a closed client also counts as a
+        // cancel so a late-finishing agent never fulfills an abandoned download
+        const abort = new AbortController();
+        activeAborts.add(abort);
+        const cancelAll = () => {
+          if (cancelled) return;
+          cancelled = true;
+          fulfillTicket(ticket, null);
+          if (!clientGone) { send('error', { error: 'Cancelled' }); send('done', {}); res.end(); }
+        };
+        abort.signal.addEventListener('abort', cancelAll);
+        res.on('close', () => { clientGone = true; cancelAll(); });
 
         const os = await import('node:os');
         const fsMod = await import('node:fs/promises');
@@ -1052,21 +1065,12 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         const chatModels = await hermesProxyModels().catch(() => null);
         if (chatModels?.length) agentArgs.push('-m', chatModels[0]!, '--provider', 'xai-oauth');
 
+        if (cancelled) { activeAborts.delete(abort); for (const f of tmpFiles) fsMod.unlink(f).catch(() => {}); return; }
         const child = spawn('hermes', agentArgs, { stdio: ['ignore', 'pipe', 'pipe'] });
         const cleanupTmp = () => { for (const f of tmpFiles) fsMod.unlink(f).catch(() => {}); };
+        // Either cancel path (global Stop or client gone) kills the agent
+        abort.signal.addEventListener('abort', () => { child.kill('SIGTERM'); cleanupTmp(); });
         res.on('close', () => { child.kill('SIGTERM'); cleanupTmp(); });
-        // Global Stop (/__ai-cancel): kill the agent, abort the waiting
-        // download, and tell the panel — otherwise a cancelled Grok video
-        // just kept cooking with the panel frozen on "Generating..."
-        const abort = new AbortController();
-        activeAborts.add(abort);
-        let cancelled = false;
-        abort.signal.addEventListener('abort', () => {
-          cancelled = true;
-          child.kill('SIGTERM');
-          fulfillTicket(ticket, null);
-          if (!clientGone) { send('error', { error: 'Cancelled' }); send('done', {}); res.end(); }
-        });
         send('progress', { message: `Generating ${duration}s video on Grok (${resolution}, ${aspect}) — typically 1-4 minutes...` });
         let out = '';
         let errBuf = '';

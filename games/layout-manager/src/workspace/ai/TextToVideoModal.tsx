@@ -167,8 +167,11 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
   const requestAbortRef = useRef<AbortController | null>(null);
   const handleStop = useCallback(() => {
     stopRequestedRef.current = true;
-    requestAbortRef.current?.abort();
+    // Cancel the server-side job FIRST (it kills the agent / aborts the poll
+    // and aborts the pending download), then drop our stream — the other
+    // order lets a job finish after the panel already says Stopped
     import('./aiClient').then((m) => m.cancelGeneration());
+    setTimeout(() => requestAbortRef.current?.abort(), 300);
   }, []);
 
   const handleGenerate = useCallback(async () => {
