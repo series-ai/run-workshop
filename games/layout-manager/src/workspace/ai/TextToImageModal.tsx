@@ -423,7 +423,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
             )}
             <div className="ai-modal-ref-grid">
               {useBlankMain && (
-                <div className="ai-modal-ref-cell ai-modal-ref-cell-main">
+                <div className="ai-modal-ref-cell ai-modal-ref-cell-start">
                   <div
                     className="ai-modal-ref-thumb"
                     style={{ background: grokBlankMain === 'white' ? '#fff' : '#000', border: '1px solid var(--color-border)' }}
@@ -433,7 +433,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
                 </div>
               )}
               {clampedRefs.map((node, i) => (
-                <div key={node.id} className={`ai-modal-ref-cell${isGrokRefs && !useBlankMain && i === 0 ? ' ai-modal-ref-cell-main' : ''}`}>
+                <div key={node.id} className={`ai-modal-ref-cell${isGrokRefs ? (!useBlankMain && i === 0 ? ' ai-modal-ref-cell-start' : ' ai-modal-ref-cell-ref') : ''}`}>
                   <img
                     src={node.paintCompositeUrl || node.src}
                     alt={node.fileName}

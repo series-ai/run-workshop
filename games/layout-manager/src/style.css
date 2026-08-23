@@ -5776,6 +5776,15 @@ select.ai-modal-size-input optgroup {
   background: var(--color-primary);
 }
 
+/* Image-role colors (video + image-ref pickers): Main/Start green, End cyan,
+   Ref/Style/Element yellow */
+.ai-modal-ref-cell-start { outline: 2px solid #2ecc71; outline-offset: 1px; }
+.ai-modal-ref-cell-start .ai-modal-ref-badge { background: #2ecc71; color: #0b2e1a; }
+.ai-modal-ref-cell-end { outline: 2px solid #22d3ee; outline-offset: 1px; }
+.ai-modal-ref-cell-end .ai-modal-ref-badge { background: #22d3ee; color: #08303a; }
+.ai-modal-ref-cell-ref { outline: 2px solid #f1c40f; outline-offset: 1px; }
+.ai-modal-ref-cell-ref .ai-modal-ref-badge { background: #f1c40f; color: #3a2f00; }
+
 .ai-modal-ref-thumb {
   width: 52px;
   height: 52px;

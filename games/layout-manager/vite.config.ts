@@ -1015,6 +1015,8 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         const aspect = VIDEO_ASPECTS.includes(String(params.aspectRatio)) ? String(params.aspectRatio) : '16:9';
         const resolution = ['480p', '720p', '1080p'].includes(String(params.resolution)) ? String(params.resolution) : '720p';
         const image = params.image as { base64: string; mimeType?: string } | undefined;
+        // Extra style/character references (the xai video plugin takes up to 7)
+        const refImages = ((params.refImages as { base64: string; mimeType?: string }[] | undefined) ?? []).filter((r) => r?.base64).slice(0, 7);
 
         const send = makeSSE(res);
         let clientGone = false;
@@ -1025,18 +1027,24 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         const pathMod = await import('node:path');
         const { spawn } = await import('node:child_process');
 
-        // Source image for image-to-video rides as a temp file (the plugin
-        // converts local paths to data URIs itself)
-        let tmpFile: string | null = null;
-        if (image?.base64) {
-          const ext = /jpe?g/.test(image.mimeType || '') ? 'jpg' : 'png';
-          tmpFile = pathMod.join(os.tmpdir(), `lm-hgv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`);
-          await fsMod.writeFile(tmpFile, Buffer.from(image.base64, 'base64'));
-        }
+        // Source + reference images ride as temp files (the plugin converts
+        // local paths to data URIs itself)
+        const tmpFiles: string[] = [];
+        const writeTmp = async (img: { base64: string; mimeType?: string }) => {
+          const ext = /jpe?g/.test(img.mimeType || '') ? 'jpg' : 'png';
+          const f = pathMod.join(os.tmpdir(), `lm-hgv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`);
+          await fsMod.writeFile(f, Buffer.from(img.base64, 'base64'));
+          tmpFiles.push(f);
+          return f;
+        };
+        const tmpFile = image?.base64 ? await writeTmp(image) : null;
+        const refFiles: string[] = [];
+        for (const r of refImages) refFiles.push(await writeTmp(r));
 
         let instruction = `Call the video_generate tool with prompt: ${prompt}`;
         instruction += `\nSet duration to ${duration}, aspect_ratio to ${aspect}, and resolution to ${resolution}.`;
         if (tmpFile) instruction += `\nUse ${tmpFile} as the image_url to animate.`;
+        if (refFiles.length) instruction += `\nUse ${refFiles.join(', ')} as reference_image_urls.`;
         instruction += '\nWhen it finishes, reply with ONLY the absolute file path(s) or URL(s) of the generated video, one per line, nothing else.';
 
         // Pin the agent model like the image endpoint — never inherit model.default
@@ -1045,8 +1053,20 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         if (chatModels?.length) agentArgs.push('-m', chatModels[0]!, '--provider', 'xai-oauth');
 
         const child = spawn('hermes', agentArgs, { stdio: ['ignore', 'pipe', 'pipe'] });
-        const cleanupTmp = () => { if (tmpFile) fsMod.unlink(tmpFile).catch(() => {}); };
+        const cleanupTmp = () => { for (const f of tmpFiles) fsMod.unlink(f).catch(() => {}); };
         res.on('close', () => { child.kill('SIGTERM'); cleanupTmp(); });
+        // Global Stop (/__ai-cancel): kill the agent, abort the waiting
+        // download, and tell the panel — otherwise a cancelled Grok video
+        // just kept cooking with the panel frozen on "Generating..."
+        const abort = new AbortController();
+        activeAborts.add(abort);
+        let cancelled = false;
+        abort.signal.addEventListener('abort', () => {
+          cancelled = true;
+          child.kill('SIGTERM');
+          fulfillTicket(ticket, null);
+          if (!clientGone) { send('error', { error: 'Cancelled' }); send('done', {}); res.end(); }
+        });
         send('progress', { message: `Generating ${duration}s video on Grok (${resolution}, ${aspect}) — typically 1-4 minutes...` });
         let out = '';
         let errBuf = '';
@@ -1054,6 +1074,8 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         child.stderr.on('data', (d: Buffer) => { errBuf += d.toString(); });
         child.on('close', async (code: number | null) => {
           cleanupTmp();
+          activeAborts.delete(abort);
+          if (cancelled) return; // already answered by the abort handler
           try {
             const clean = out.replace(/\x1b\[[0-9;]*m/g, '');
             const urls = Array.from(new Set(clean.match(/https?:\/\/[^\s"']+\.(?:mp4|webm|mov)(?:\?[^\s"']*)?/gi) ?? []));
@@ -1105,21 +1127,28 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         resolutionAliases?: Record<string, string>;
         /** i2v endpoints that reject aspect_ratio (derive from the image) */
         imageDropsAspect?: boolean;
-        imageParamKey?: string; audio: boolean; negative: boolean; note?: string;
+        imageParamKey?: string;
+        /** i2v endpoints that also take a last-frame image */
+        endImageKey?: string;
+        audio: boolean; negative: boolean; note?: string;
+        /** Typical wall-clock time, shown before the user commits */
+        typical?: string;
+        /** Kling-style `elements` (character/object references, @Element1 in the prompt) */
+        elements?: boolean;
       }
       const FAL_VIDEO_FAMILIES: FalVideoFamily[] = [
-        { id: 'pixverse-v6', display: 'Pixverse v6', tier: 'cheap', textEndpoint: 'fal-ai/pixverse/v6/text-to-video', imageEndpoint: 'fal-ai/pixverse/v6/image-to-video', durations: [1, 15], aspects: null, resolutions: ['360p', '540p', '720p', '1080p'], audio: true, negative: true },
-        { id: 'seedance-2.0-mini', display: 'Seedance 2.0 Mini', tier: 'cheap', textEndpoint: 'bytedance/seedance-2.0/mini/text-to-video', imageEndpoint: 'bytedance/seedance-2.0/mini/image-to-video', durations: [4, 15], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['480p', '720p'], audio: true, negative: false },
-        { id: 'ltx-2.3', display: 'LTX 2.3 (22B)', tier: 'cheap', textEndpoint: 'fal-ai/ltx-2.3-22b/text-to-video', imageEndpoint: 'fal-ai/ltx-2.3-22b/image-to-video', durations: null, aspects: null, resolutions: null, audio: true, negative: true, note: 'Endpoint defaults for duration/aspect/resolution' },
-        { id: 'kling-v3-4k', display: 'Kling v3 4K', tier: 'premium', textEndpoint: 'fal-ai/kling-video/v3/4k/text-to-video', imageEndpoint: 'fal-ai/kling-video/v3/4k/image-to-video', imageParamKey: 'start_image_url', imageDropsAspect: true, durations: [3, 15], aspects: ['16:9', '9:16', '1:1'], resolutions: null, audio: true, negative: true, note: '4K output (fixed)' },
-        { id: 'veo3.1', display: 'Veo 3.1', tier: 'premium', textEndpoint: 'fal-ai/veo3.1', imageEndpoint: 'fal-ai/veo3.1/image-to-video', durations: [4, 6, 8], durationSuffix: 's', aspects: ['16:9', '9:16'], resolutions: ['720p', '1080p', '4k'], audio: true, negative: true },
-        { id: 'seedance-2.0', display: 'Seedance 2.0', tier: 'premium', textEndpoint: 'bytedance/seedance-2.0/text-to-video', imageEndpoint: 'bytedance/seedance-2.0/image-to-video', durations: [4, 15], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['480p', '720p', '1080p'], audio: true, negative: false },
-        { id: 'seedance-2.5', display: 'Seedance 2.5', tier: 'premium', textEndpoint: 'bytedance/seedance-2.5/text-to-video', imageEndpoint: 'bytedance/seedance-2.5/image-to-video', imageDropsAspect: true, durations: [4, 30], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['480p', '720p'], audio: true, negative: false },
-        { id: 'minimax-h3', display: 'MiniMax H3', tier: 'premium', textEndpoint: 'minimax/h3/text-to-video', imageEndpoint: 'minimax/h3/image-to-video', durationInt: true, imageDropsAspect: true, durations: [5, 15], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['768P', '2K', '4K'], resolutionAliases: { '480p': '768P', '540p': '768P', '720p': '768P', '768p': '768P', '1080p': '2K', '2k': '2K', '4k': '4K' }, audio: false, negative: false, note: 'Audio always on' },
-        { id: 'flux-3', display: 'FLUX 3', tier: 'premium', textEndpoint: 'blackforestlabs/flux-3/text-to-video', imageEndpoint: 'blackforestlabs/flux-3/image-to-video', durationInt: true, durations: [5, 20], aspects: ['21:9', '2:1', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['720p', '1080p'], audio: true, negative: false },
-        { id: 'grok-imagine-1.5', display: 'Grok Imagine 1.5', tier: 'premium', textEndpoint: 'xai/grok-imagine-video/v1.5/text-to-video', imageEndpoint: 'xai/grok-imagine-video/v1.5/image-to-video', durationInt: true, imageDropsAspect: true, durations: [1, 15], aspects: ['16:9', '4:3', '3:2', '1:1', '2:3', '3:4', '9:16'], resolutions: ['480p', '720p', '1080p'], audio: false, negative: false, note: 'Audio always on' },
-        { id: 'gemini-omni-flash', display: 'Gemini Omni Flash', tier: 'premium', textEndpoint: null, imageEndpoint: 'google/gemini-omni-flash/image-to-video', durationInt: true, durations: [3, 10], aspects: ['16:9', '9:16'], resolutions: null, audio: false, negative: false, note: 'Image-to-video only; audio always on' },
-        { id: 'happy-horse', display: 'Happy Horse 1.0', tier: 'premium', textEndpoint: 'alibaba/happy-horse/text-to-video', imageEndpoint: 'alibaba/happy-horse/image-to-video', durations: null, aspects: null, resolutions: null, audio: false, negative: false, note: 'New model, sparse docs — endpoint defaults' },
+        { id: 'pixverse-v6', display: 'Pixverse v6', tier: 'cheap', textEndpoint: 'fal-ai/pixverse/v6/text-to-video', imageEndpoint: 'fal-ai/pixverse/v6/image-to-video', durations: [1, 15], aspects: null, resolutions: ['360p', '540p', '720p', '1080p'], typical: '~30-90s', audio: true, negative: true },
+        { id: 'seedance-2.0-mini', display: 'Seedance 2.0 Mini', tier: 'cheap', textEndpoint: 'bytedance/seedance-2.0/mini/text-to-video', imageEndpoint: 'bytedance/seedance-2.0/mini/image-to-video', durations: [4, 15], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['480p', '720p'], endImageKey: 'end_image_url', typical: '~30-90s', audio: true, negative: false },
+        { id: 'ltx-2.3', display: 'LTX 2.3 (22B)', tier: 'cheap', textEndpoint: 'fal-ai/ltx-2.3-22b/text-to-video', imageEndpoint: 'fal-ai/ltx-2.3-22b/image-to-video', durations: null, aspects: null, resolutions: null, endImageKey: 'end_image_url', typical: '~30-60s', audio: true, negative: true, note: 'Endpoint defaults for duration/aspect/resolution' },
+        { id: 'kling-v3-4k', display: 'Kling v3 4K', tier: 'premium', textEndpoint: 'fal-ai/kling-video/v3/4k/text-to-video', imageEndpoint: 'fal-ai/kling-video/v3/4k/image-to-video', imageParamKey: 'start_image_url', imageDropsAspect: true, durations: [3, 15], aspects: ['16:9', '9:16', '1:1'], resolutions: null, endImageKey: 'end_image_url', typical: '~2-5 min', elements: true, audio: true, negative: true, note: '4K output (fixed)' },
+        { id: 'veo3.1', display: 'Veo 3.1', tier: 'premium', textEndpoint: 'fal-ai/veo3.1', imageEndpoint: 'fal-ai/veo3.1/image-to-video', durations: [4, 6, 8], durationSuffix: 's', aspects: ['16:9', '9:16'], resolutions: ['720p', '1080p', '4k'], typical: '~2-5 min', audio: true, negative: true },
+        { id: 'seedance-2.0', display: 'Seedance 2.0', tier: 'premium', textEndpoint: 'bytedance/seedance-2.0/text-to-video', imageEndpoint: 'bytedance/seedance-2.0/image-to-video', durations: [4, 15], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['480p', '720p', '1080p'], endImageKey: 'end_image_url', typical: '~1-3 min', audio: true, negative: false },
+        { id: 'seedance-2.5', display: 'Seedance 2.5', tier: 'premium', textEndpoint: 'bytedance/seedance-2.5/text-to-video', imageEndpoint: 'bytedance/seedance-2.5/image-to-video', imageDropsAspect: true, durations: [4, 30], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['480p', '720p'], endImageKey: 'end_image_url', typical: '~1-3 min', audio: true, negative: false },
+        { id: 'minimax-h3', display: 'MiniMax H3', tier: 'premium', textEndpoint: 'minimax/h3/text-to-video', imageEndpoint: 'minimax/h3/image-to-video', durationInt: true, imageDropsAspect: true, durations: [5, 15], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['768P', '2K', '4K'], resolutionAliases: { '480p': '768P', '540p': '768P', '720p': '768P', '768p': '768P', '1080p': '2K', '2k': '2K', '4k': '4K' }, endImageKey: 'end_image_url', typical: '~2-4 min', audio: false, negative: false, note: 'Audio always on' },
+        { id: 'flux-3', display: 'FLUX 3', tier: 'premium', textEndpoint: 'blackforestlabs/flux-3/text-to-video', imageEndpoint: 'blackforestlabs/flux-3/image-to-video', durationInt: true, durations: [5, 20], aspects: ['21:9', '2:1', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['720p', '1080p'], typical: '~1-3 min', audio: true, negative: false },
+        { id: 'grok-imagine-1.5', display: 'Grok Imagine 1.5', tier: 'premium', textEndpoint: 'xai/grok-imagine-video/v1.5/text-to-video', imageEndpoint: 'xai/grok-imagine-video/v1.5/image-to-video', durationInt: true, imageDropsAspect: true, durations: [1, 15], aspects: ['16:9', '4:3', '3:2', '1:1', '2:3', '3:4', '9:16'], resolutions: ['480p', '720p', '1080p'], typical: '~1-4 min', audio: false, negative: false, note: 'Audio always on' },
+        { id: 'gemini-omni-flash', display: 'Gemini Omni Flash', tier: 'premium', textEndpoint: null, imageEndpoint: 'google/gemini-omni-flash/image-to-video', durationInt: true, durations: [3, 10], aspects: ['16:9', '9:16'], resolutions: null, typical: '~1-2 min', audio: false, negative: false, note: 'Image-to-video only; audio always on' },
+        { id: 'happy-horse', display: 'Happy Horse 1.0', tier: 'premium', textEndpoint: 'alibaba/happy-horse/text-to-video', imageEndpoint: 'alibaba/happy-horse/image-to-video', durations: null, aspects: null, resolutions: null, typical: '~1-3 min', audio: false, negative: false, note: 'New model, sparse docs — endpoint defaults' },
       ];
       server.middlewares.use('/__fal-video-models', (req, res) => {
         if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
@@ -1137,6 +1166,8 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         const ticket = String(params.ticket || '');
         const fam = FAL_VIDEO_FAMILIES.find((f) => f.id === params.model);
         const image = params.image as { base64: string; mimeType?: string } | undefined;
+        const endImage = params.endImage as { base64: string; mimeType?: string } | undefined;
+        const refImages = ((params.refImages as { base64: string; mimeType?: string }[] | undefined) ?? []).filter((r) => r?.base64);
         if (!apiKey || !prompt || !fam || !/^[0-9a-f-]{36}$/i.test(ticket)) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Missing Fal.ai API key, prompt, model, or download ticket' }));
@@ -1152,6 +1183,14 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         // Build the payload per family (mirrors fal's per-endpoint schemas)
         const body: Record<string, unknown> = { prompt };
         if (image?.base64) body[fam.imageParamKey ?? 'image_url'] = `data:${image.mimeType || 'image/png'};base64,${image.base64}`;
+        // Start + end frame (families that support it): the video transitions
+        // from the start image to the end image
+        if (image?.base64 && endImage?.base64 && fam.endImageKey) body[fam.endImageKey] = `data:${endImage.mimeType || 'image/png'};base64,${endImage.base64}`;
+        // Kling elements: each extra image is a character/object the prompt
+        // can address as @Element1, @Element2, ...
+        if (fam.elements && refImages.length) {
+          body.elements = refImages.map((r) => ({ frontal_image_url: `data:${r.mimeType || 'image/png'};base64,${r.base64}` }));
+        }
         const reqDur = Number(params.duration);
         if (fam.durations && Number.isFinite(reqDur)) {
           let d = Math.round(reqDur);

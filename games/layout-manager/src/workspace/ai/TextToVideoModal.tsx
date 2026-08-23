@@ -42,7 +42,7 @@ interface FalFamily {
   textEndpoint: string | null; imageEndpoint: string;
   durations: [number, number] | number[] | null;
   aspects: string[] | null; resolutions: string[] | null;
-  imageDropsAspect?: boolean; audio: boolean; negative: boolean; note?: string;
+  imageDropsAspect?: boolean; endImageKey?: string; audio: boolean; negative: boolean; note?: string; typical?: string; elements?: boolean;
 }
 type VideoProviderId = (typeof VIDEO_PROVIDERS)[number]['id'];
 
@@ -91,7 +91,17 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
 
-  const sourceNode = refNodes[0] ?? null;
+  // Which selected image is the Start (main) frame, and — for families that
+  // support it — which (if any) is the End frame. Selection order isn't
+  // controllable, so the user picks by clicking thumbnails; End is opt-in.
+  const [startRefId, setStartRefId] = useState<string | null>(null);
+  const [endRefId, setEndRefId] = useState<string | null>(null);
+  const shownRefs = refNodes.slice(0, 8);
+  const sourceNode = (startRefId && refNodes.find((n) => n.id === startRefId)) || refNodes[0] || null;
+  useEffect(() => {
+    if (startRefId && !refNodes.some((n) => n.id === startRefId)) setStartRefId(null);
+    if (endRefId && !refNodes.some((n) => n.id === endRefId)) setEndRefId(null);
+  }, [refNodes, startRefId, endRefId]);
   const isFal = providerId === 'fal';
   const providerUp = providerId === 'hermes-grok' ? hermesXaiUp : !!config.falApiKey;
   const fam = isFal ? (falFamilies.find((f) => f.id === falModel) ?? falFamilies[0] ?? null) : null;
@@ -109,6 +119,22 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
     return [...(d as number[])];
   })();
   const famNeedsImage = !!fam && !fam.textEndpoint;
+  // Second selected image = end frame, for Fal families that take one
+  const supportsEndFrame = isFal && !!fam?.endImageKey;
+  // End-frame models with 2+ images: the clicked image is Start and another
+  // is End — the explicitly swapped-out one if there is one, else the first
+  // other selected image. Clicking the End swaps the two.
+  // Extra images beyond Start/End become References where the provider takes
+  // them: Grok video (up to 7 reference_image_urls), Kling (elements)
+  const supportsRefs = providerId === 'hermes-grok' || (isFal && !!fam?.elements);
+  const refRole = isFal && fam?.elements ? 'Element' : 'Ref';
+  const endNode = supportsEndFrame && sourceNode && refNodes.length >= 2
+    ? ((endRefId && endRefId !== sourceNode.id ? refNodes.find((n) => n.id === endRefId) : null)
+        ?? refNodes.find((n) => n.id !== sourceNode.id) ?? null)
+    : null;
+  const refNodesExtra = supportsRefs && sourceNode
+    ? shownRefs.filter((n) => n.id !== sourceNode.id && n.id !== endNode?.id).slice(0, 7)
+    : [];
   const nearestAspect = (w: number, h: number): string => {
     const target = w / h;
     let best = activeAspects[0] ?? aspectRatio;
@@ -130,6 +156,13 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
 
+  // Stop a running generation: server-side cancel (kills the Hermes agent /
+  // aborts the Fal poll) plus the pending download. Fal may still bill a
+  // job it already started — this saves time, not necessarily money.
+  const handleStop = useCallback(() => {
+    import('./aiClient').then((m) => m.cancelGeneration());
+  }, []);
+
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim() || generating) return;
     setGenError(null);
@@ -144,17 +177,17 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
     a.download = `${slug}.mp4`;
     a.click();
 
+    const startedAt = Date.now();
+    const elapsed = () => { const s = Math.round((Date.now() - startedAt) / 1000); return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`; };
     onProgress({ message: 'Starting video generation...' });
     // Abort the click-time download on ANY failure — otherwise the browser's
     // download entry sits pending until the server ticket times out
     const abortDownload = () => fetch(`/__download-fulfill/${ticket}`, { method: 'POST', body: new Blob([]) }).catch(() => {});
     let fulfilled = false;
     try {
-      let image: { base64: string; mimeType?: string } | undefined;
-      if (sourceNode) {
-        onProgress({ message: 'Preparing source image...' });
-        // Re-encode through a canvas so blob URLs and WebP sources arrive as PNG
-        const srcUrl = await flattenNode(sourceNode);
+      // Re-encode through a canvas so blob URLs and WebP sources arrive as PNG
+      const toPng = async (node: ImageNode): Promise<{ base64: string; mimeType: string }> => {
+        const srcUrl = await flattenNode(node);
         const img = await new Promise<HTMLImageElement>((resolve, reject) => {
           const el = new Image();
           el.onload = () => resolve(el);
@@ -166,19 +199,28 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
         c.height = img.naturalHeight;
         c.getContext('2d')!.drawImage(img, 0, 0);
         const pngUrl = c.toDataURL('image/png');
-        image = { base64: pngUrl.slice(pngUrl.indexOf(',') + 1), mimeType: 'image/png' };
+        return { base64: pngUrl.slice(pngUrl.indexOf(',') + 1), mimeType: 'image/png' };
+      };
+      let image: { base64: string; mimeType?: string } | undefined;
+      let endImage: { base64: string; mimeType?: string } | undefined;
+      let refImages: { base64: string; mimeType?: string }[] | undefined;
+      if (sourceNode) {
+        onProgress({ message: 'Preparing images...' });
+        image = await toPng(sourceNode);
+        if (endNode) endImage = await toPng(endNode);
+        if (refNodesExtra.length) refImages = await Promise.all(refNodesExtra.map(toPng));
       }
 
       const resp = isFal
         ? await fetch('/__ai-generate-fal-video', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ apiKey: config.falApiKey, model: fam?.id, prompt: prompt.trim(), ticket, duration, aspectRatio: effectiveAspect, resolution, audio: falAudio, negativePrompt: falNegative, image }),
+            body: JSON.stringify({ apiKey: config.falApiKey, model: fam?.id, prompt: prompt.trim(), ticket, duration, aspectRatio: effectiveAspect, resolution, audio: falAudio, negativePrompt: falNegative, image, endImage, refImages }),
           })
         : await fetch('/__ai-generate-hermes-video', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: prompt.trim(), ticket, duration, aspectRatio: effectiveAspect, resolution, image }),
+            body: JSON.stringify({ prompt: prompt.trim(), ticket, duration, aspectRatio: effectiveAspect, resolution, image, refImages }),
           });
       if (!resp.ok || !resp.body) {
         let msg = `Request failed: ${resp.status}`;
@@ -206,7 +248,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
           if (!event || !data) continue;
           let parsed: { message?: string; error?: string };
           try { parsed = JSON.parse(data); } catch { continue; }
-          if (event === 'progress') onProgress({ message: parsed.message ?? 'Working...' });
+          if (event === 'progress') onProgress({ message: `${parsed.message ?? 'Working...'} (${elapsed()})` });
           else if (event === 'video') { gotVideo = true; fulfilled = true; }
           else if (event === 'error') { hadError = true; setGenError(friendlyAiError(parsed.error ?? 'Unknown error')); }
           else if (event === 'done') break readLoop;
@@ -221,7 +263,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
     if (!fulfilled) void abortDownload();
     onProgress(null);
     setGenerating(false);
-  }, [prompt, generating, duration, effectiveAspect, resolution, sourceNode, isFal, fam, falAudio, falNegative, config.falApiKey, onProgress]);
+  }, [prompt, generating, duration, effectiveAspect, resolution, sourceNode, endNode, refNodesExtra, isFal, fam, falAudio, falNegative, config.falApiKey, onProgress]);
 
   return createPortal(
     <div
@@ -288,6 +330,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
             {fam && (
               <span className="ai-modal-size-hint">
                 Pay-per-video on your Fal account ({fam.tier === 'cheap' ? 'budget model' : 'premium pricing'})
+                {fam.typical ? ` · typically ${fam.typical}` : ''}
                 {fam.note ? ` · ${fam.note}` : ''}
                 {famNeedsImage && !sourceNode ? ' · select an image to use this model' : ''}
               </span>
@@ -311,23 +354,73 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
             : ' Select an image first to animate it (image-to-video); with no selection the video comes from the prompt alone.'}
         </span>
 
-        {sourceNode && (
+        {!sourceNode && famNeedsImage && (
           <label className="ai-modal-label">
             Source image
-            <div className="ai-modal-ref-grid">
-              <div className="ai-modal-ref-cell ai-modal-ref-cell-main">
-                <img
-                  src={sourceNode.paintCompositeUrl || sourceNode.src}
-                  alt={sourceNode.fileName}
-                  className="ai-modal-ref-thumb"
-                  title={sourceNode.fileName}
-                />
-                <span className="ai-modal-ref-badge">Main</span>
-              </div>
+            <div className="ai-modal-error" role="alert">
+              {fam?.display} is image-to-video only — select an image on the canvas to animate it.
             </div>
-            {refNodes.length > 1 && (
-              <span className="ai-modal-size-hint">Only the first selected image is animated</span>
-            )}
+          </label>
+        )}
+
+        {sourceNode && (
+          <label className="ai-modal-label">
+            {supportsEndFrame ? (supportsRefs ? 'Start / End / Elements' : 'Start / End frames') : supportsRefs ? 'Source + references' : 'Source image'}
+            <div className="ai-modal-ref-grid">
+              {/* Show only the images the model will actually use: all of them
+                  when extras are references, Start+End for end-frame-only
+                  models, just the one for single-image models */}
+              {(supportsRefs ? shownRefs : supportsEndFrame ? [sourceNode, ...(endNode ? [endNode] : [])] : [sourceNode]).map((node) => {
+                const refIdx = refNodesExtra.findIndex((n) => n.id === node.id);
+                const role = node.id === sourceNode.id ? (supportsEndFrame ? 'Start' : 'Main')
+                  : endNode?.id === node.id ? 'End'
+                  : refIdx >= 0 ? (refRole === 'Element' ? `Element ${refIdx + 1}` : 'Ref')
+                  : null;
+                const clickable = (supportsRefs && shownRefs.length > 1) || (supportsEndFrame && !!endNode);
+                // Whatever you click becomes the Start; with an end-frame model
+                // the other image is the End, and clicking the End swaps them.
+                const onClick = () => {
+                  if (role === 'Main') return;
+                  // Clicking the Start swaps it with the End (if there is one)
+                  if (role === 'Start') { if (endNode) { setStartRefId(endNode.id); setEndRefId(node.id); } return; }
+                  setStartRefId(node.id);
+                  // Clicking the End swaps; clicking a Ref/Element promotes it and
+                  // keeps the current End (or, if no End, the old Start becomes End)
+                  setEndRefId(supportsEndFrame ? (role === 'End' || !endNode ? sourceNode.id : endNode.id) : null);
+                };
+                const tip = !clickable ? node.fileName
+                  : role === 'Start' ? `${node.fileName} — Start${endNode ? ' (click to swap with End)' : ''}`
+                  : role === 'Main' ? `${node.fileName} — Main`
+                  : role === 'End' ? `${node.fileName} — End (click to make it the Start)`
+                  : role ? `${node.fileName} — ${role} (click to make it the Start)`
+                  : `${node.fileName} — click to make it the ${supportsEndFrame ? 'Start' : 'Main'}`;
+                return (
+                  <div key={node.id} className={`ai-modal-ref-cell${role === 'Start' || role === 'Main' ? ' ai-modal-ref-cell-start' : role === 'End' ? ' ai-modal-ref-cell-end' : role ? ' ai-modal-ref-cell-ref' : ''}`}>
+                    <img
+                      src={node.paintCompositeUrl || node.src}
+                      alt={node.fileName}
+                      className="ai-modal-ref-thumb"
+                      title={tip}
+                      style={clickable ? { cursor: 'pointer', opacity: role ? 1 : 0.6 } : undefined}
+                      onClick={clickable ? onClick : undefined}
+                    />
+                    {role && <span className="ai-modal-ref-badge">{role}</span>}
+                  </div>
+                );
+              })}
+            </div>
+            <span className="ai-modal-size-hint">
+              {[
+                supportsEndFrame
+                  ? (endNode ? `${fam?.display} transitions from Start to End — click either to swap${refNodes.length > 2 && !supportsRefs ? ' (other selected images are ignored)' : ''}` : 'Select a second image to use as the End frame')
+                  : shownRefs.length > 1 && !supportsRefs ? 'Only this image is animated (the first selected) — the other selected images are ignored' : '',
+                supportsRefs && refRole === 'Element'
+                  ? (refNodesExtra.length ? 'Extra images are Kling elements — refer to them in the prompt as @Element1, @Element2…' : 'Select more images to add them as Kling elements (characters/objects the prompt can name as @Element1…)')
+                  : supportsRefs
+                    ? (refNodesExtra.length ? `${refNodesExtra.length} extra image${refNodesExtra.length > 1 ? 's' : ''} sent as style/character references (up to 7)` : 'Select more images to send them as style/character references (up to 7)')
+                    : '',
+              ].filter(Boolean).join(' · ')}
+            </span>
           </label>
         )}
 
@@ -472,9 +565,15 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
       </div>
 
       <div className="prefs-footer">
-        <button className="prefs-btn prefs-btn-secondary" onClick={onClose} disabled={generating}>
-          Cancel
-        </button>
+        {generating ? (
+          <button className="prefs-btn prefs-btn-secondary" onClick={handleStop} title="Stop the running generation (a Fal job already started may still be billed)">
+            Stop
+          </button>
+        ) : (
+          <button className="prefs-btn prefs-btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+        )}
         <button
           className="prefs-btn prefs-btn-primary"
           onClick={handleGenerate}
