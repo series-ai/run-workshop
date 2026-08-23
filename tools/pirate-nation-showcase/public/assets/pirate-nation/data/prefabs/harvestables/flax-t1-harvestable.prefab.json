@@ -1,0 +1,135 @@
+{
+  "packId": "pirate-nation",
+  "id": "harvestables/flax-t1-harvestable",
+  "name": "Flax_T1_Harvestable",
+  "category": "harvestables",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/Harverstables/HarvestablePrefabs/Flax_T1_Harvestable.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:1499585613231290555"
+  ],
+  "nodes": {
+    "instance:1499585613231290555": {
+      "id": "instance:1499585613231290555",
+      "name": "Flax_T1_Harvestable",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:2269604106330982812",
+        "instance:3585904495740362579",
+        "instance:4880373453566347744"
+      ],
+      "transform": {
+        "position": [
+          146.01001,
+          0,
+          -56.9
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "a0700ee59815a42d6a6b9e373a2e0e2f"
+    },
+    "instance:2269604106330982812": {
+      "id": "instance:2269604106330982812",
+      "name": "flax_full_lv1",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:1499585613231290555",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "69ccfe9c6645722469b6a368c3f28aaf",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-flax-full-lv1.glb"
+    },
+    "instance:3585904495740362579": {
+      "id": "instance:3585904495740362579",
+      "name": "SparkleVFX",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:1499585613231290555",
+      "children": [],
+      "transform": {
+        "position": [
+          -7.68,
+          28.95,
+          -7.38
+        ],
+        "rotation": [
+          0,
+          0.38268343,
+          0,
+          0.92387956
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "df0d17416ce47d14db4a6c7c22bf9ea1"
+    },
+    "instance:4880373453566347744": {
+      "id": "instance:4880373453566347744",
+      "name": "flax_empty_lv1",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:1499585613231290555",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "dee8f521870989f4e84a3fa8e3814675",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-flax-empty-lv1.glb"
+    }
+  },
+  "guid": "15e081662bd0e1a429b250fa744a1990",
+  "gameplay": {
+    "questId": "0xa022262ccbc9140a8d89940be489092c94805f498733e091a44a955e31464a3d",
+    "resourcePrefabGuid": "54f529c867466c74581e579064d18143",
+    "pickupSfxPath": "assets/pirate-nation/runtime/audio/sfx/sfx-harvest-pn-cotton.mp3"
+  }
+}

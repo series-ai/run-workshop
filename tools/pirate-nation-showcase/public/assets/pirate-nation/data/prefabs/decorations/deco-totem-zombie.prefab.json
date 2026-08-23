@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/deco-totem-zombie",
+  "name": "deco_totem_zombie",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Decos/Undead/prefabs/deco_totem_zombie.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:3313216812624514948"
+  ],
+  "nodes": {
+    "instance:3313216812624514948": {
+      "id": "instance:3313216812624514948",
+      "name": "deco_totem_zombie",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0.5,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.1,
+          0.1,
+          0.1
+        ]
+      },
+      "sourcePrefabGuid": "3310724019c112c4a8b60e26d3eafa0b",
+      "assetPath": "assets/pirate-nation/runtime/models/decorations/decorations-deco-totem-zombie.glb"
+    }
+  },
+  "guid": "1ef00a2c8625aa14d899e5d5aebec49a"
+}

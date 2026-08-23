@@ -1,0 +1,57 @@
+{
+  "packId": "pirate-nation",
+  "id": "islands-terrain/starter-island",
+  "name": "Starter Island",
+  "category": "islands-terrain",
+  "sourcePath": "Assets/_PirateNation_/Game/IslandBuilder/Assets/Prefabs/Main Prefabs/Starter Island.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [],
+  "nodes": {
+    "collider:6461536448800413276": {
+      "id": "collider:6461536448800413276",
+      "name": "collider-6461536448800413276",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:6461536448800413274",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            4.48,
+            -0.81
+          ],
+          "size": [
+            4,
+            7.89,
+            4
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "dca9ffa79f99e41eba151ec91c7a353f"
+}

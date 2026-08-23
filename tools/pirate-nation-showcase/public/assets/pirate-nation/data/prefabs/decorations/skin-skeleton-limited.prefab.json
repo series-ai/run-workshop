@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/skin-skeleton-limited",
+  "name": "skin_skeleton_limited",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/OptimisedAssets/PirateSkins/SkeletonLimited/skin_skeleton_limited.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:9143879221496296277"
+  ],
+  "nodes": {
+    "instance:9143879221496296277": {
+      "id": "instance:9143879221496296277",
+      "name": "skin_skeleton_limited",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          94.29,
+          0.5,
+          101.98
+        ],
+        "rotation": [
+          0,
+          -0.67974895,
+          0,
+          0.7334449
+        ],
+        "scale": [
+          6,
+          6,
+          6
+        ]
+      },
+      "sourcePrefabGuid": "852c9ec8569e3ae46944e17710d562ec",
+      "assetPath": "assets/pirate-nation/runtime/models/characters-skins/characters-skins-skin-skeleton-limited.glb"
+    }
+  },
+  "guid": "3f845839bb4cf7b4cade433362eab247"
+}

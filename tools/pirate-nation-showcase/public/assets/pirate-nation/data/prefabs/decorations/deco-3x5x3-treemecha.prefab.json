@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/deco-3x5x3-treemecha",
+  "name": "deco_3x5x3_treemecha",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Decos/Mecha/Prefabs/deco_3x5x3_treemecha.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:5787073901625240295"
+  ],
+  "nodes": {
+    "instance:5787073901625240295": {
+      "id": "instance:5787073901625240295",
+      "name": "deco_3x5x3_treemecha",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.075,
+          0.075,
+          0.075
+        ]
+      },
+      "sourcePrefabGuid": "05641186a47246f42a5251028b9e79b6",
+      "assetPath": "assets/pirate-nation/runtime/models/decorations/decorations-deco-3x5x3-treemecha.glb"
+    }
+  },
+  "guid": "4a4c75070c11ac24db61bf85a1caf4b5"
+}

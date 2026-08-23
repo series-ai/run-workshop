@@ -1,0 +1,135 @@
+{
+  "packId": "pirate-nation",
+  "id": "harvestables/cotton-t2-harvestable-variant",
+  "name": "Cotton_T2_Harvestable Variant",
+  "category": "harvestables",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/Harverstables/HarvestablePrefabs/Cotton_T2_Harvestable Variant.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:7658181531238220741"
+  ],
+  "nodes": {
+    "instance:4267808638724456611": {
+      "id": "instance:4267808638724456611",
+      "name": "SparkleVFX",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:7658181531238220741",
+      "children": [],
+      "transform": {
+        "position": [
+          -7.6800003,
+          28.950003,
+          -7.38
+        ],
+        "rotation": [
+          0,
+          0.38268343,
+          0,
+          0.92387956
+        ],
+        "scale": [
+          1.4799999,
+          1.3281164,
+          1.1949941
+        ]
+      },
+      "sourcePrefabGuid": "df0d17416ce47d14db4a6c7c22bf9ea1"
+    },
+    "instance:7658181531238220741": {
+      "id": "instance:7658181531238220741",
+      "name": "Cotton_T2_Harvestable Variant",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": null,
+      "children": [
+        "instance:4267808638724456611",
+        "instance:8238091951745537567",
+        "instance:9037483658131808348"
+      ],
+      "transform": {
+        "position": [
+          138.87,
+          0,
+          -56.9
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "a0700ee59815a42d6a6b9e373a2e0e2f"
+    },
+    "instance:8238091951745537567": {
+      "id": "instance:8238091951745537567",
+      "name": "cotton_full_lv2",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:7658181531238220741",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "75845c679d52e3b4cbefed79ee796b0f",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-cotton-full-lv2.glb"
+    },
+    "instance:9037483658131808348": {
+      "id": "instance:9037483658131808348",
+      "name": "cotton_empty_lv2",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:7658181531238220741",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "dcd1dfeaea2b2c045aa90e5293c82058",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-cotton-empty-lv2.glb"
+    }
+  },
+  "guid": "efc606bd1ad5f2e4d8909657586a5c04",
+  "gameplay": {
+    "questId": "0xa25e1f35c24acd628017918f2b098d0635dae50e22b671adecc41ee28721e2d1",
+    "resourcePrefabGuid": "140e02719f14c466087f0afe78b4788a",
+    "pickupSfxPath": "assets/pirate-nation/runtime/audio/sfx/sfx-harvest-pn-cotton.mp3"
+  }
+}

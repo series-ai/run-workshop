@@ -1,0 +1,73 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/resource-prefab-flax",
+  "name": "ResourcePrefab-Flax",
+  "category": "decorations",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/Harverstables/Resources/ResourcePrefab-Flax.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:7460643034902237575"
+  ],
+  "nodes": {
+    "instance:7460643034902237575": {
+      "id": "instance:7460643034902237575",
+      "name": "ResourcePrefab-Flax",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:8928514491053054110"
+      ],
+      "transform": {
+        "position": [
+          41.01,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "47bf6848c95fc4fccb37a33658dec97a"
+    },
+    "instance:8928514491053054110": {
+      "id": "instance:8928514491053054110",
+      "name": "ui_icon_flax",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:7460643034902237575",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "b18bf717ed4aaef4aa835d40ab69be57",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-ui-icon-flax.glb"
+    }
+  },
+  "guid": "54f529c867466c74581e579064d18143"
+}

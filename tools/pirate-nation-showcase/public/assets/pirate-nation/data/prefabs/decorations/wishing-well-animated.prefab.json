@@ -1,0 +1,102 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/wishing-well-animated",
+  "name": "SM_WW_Scrim",
+  "category": "decorations",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/WishingWell_Animated.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:5798430735376535612"
+  ],
+  "nodes": {
+    "instance:5798430735376535612": {
+      "id": "instance:5798430735376535612",
+      "name": "SM_WW_Scrim",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:7581507108423280383",
+        "instance:8052944658044875421"
+      ],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          -0.38268343,
+          0,
+          0.92387956
+        ],
+        "scale": [
+          0.11,
+          0.11,
+          0.11
+        ]
+      },
+      "sourcePrefabGuid": "24ed2c36b965f8443b60d8a78ec7dceb",
+      "assetPath": "assets/pirate-nation/runtime/models/ships/ships-untitled.glb"
+    },
+    "instance:7581507108423280383": {
+      "id": "instance:7581507108423280383",
+      "name": "item_2x2_wishingwell",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:5798430735376535612",
+      "children": [],
+      "transform": {
+        "position": [
+          1.3145279e-8,
+          9.034699e-8,
+          -1.6727536e-10
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.11000001,
+          0.11000001,
+          0.11000001
+        ]
+      },
+      "sourcePrefabGuid": "1e29a73f129d5434caa92ec6a93c96d0",
+      "assetPath": "assets/pirate-nation/runtime/models/props-interactive/props-interactive-item-2x2-wishingwell.glb"
+    },
+    "instance:8052944658044875421": {
+      "id": "instance:8052944658044875421",
+      "name": "CopperGachaToken",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:5798430735376535612",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          5.04,
+          -11.57
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "bb1468a5c7ebcc04ba327b0dfa52b068"
+    }
+  },
+  "guid": "0c839b88f874d8b47a038c3036443c0a"
+}

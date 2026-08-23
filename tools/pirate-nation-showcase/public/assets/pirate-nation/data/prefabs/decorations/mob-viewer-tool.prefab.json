@@ -1,0 +1,57 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/mob-viewer-tool",
+  "name": "MobViewerTool",
+  "category": "decorations",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/MobViewerTool.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [],
+  "nodes": {
+    "collider:5703828368237298596": {
+      "id": "collider:5703828368237298596",
+      "name": "collider-5703828368237298596",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:870983512366298722",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "size": [
+            1,
+            1,
+            1
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "41f90eaa2f73f4fffacb46b6ed707709"
+}

@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/deco-2x1x1-planthauntted",
+  "name": "deco_2x1x1_planthauntted",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Decos/Undead/prefabs/deco_2x1x1_planthauntted.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:4227251855900763993"
+  ],
+  "nodes": {
+    "instance:4227251855900763993": {
+      "id": "instance:4227251855900763993",
+      "name": "deco_2x1x1_planthauntted",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.25,
+          0.25,
+          0.25
+        ]
+      },
+      "sourcePrefabGuid": "507e3d54ff0366a478691563eba8ba21",
+      "assetPath": "assets/pirate-nation/runtime/models/plants-nature/plants-nature-deco-2x1x1-planthauntted.glb"
+    }
+  },
+  "guid": "7a8e00355bd4e294dab3e36a11801fc8"
+}

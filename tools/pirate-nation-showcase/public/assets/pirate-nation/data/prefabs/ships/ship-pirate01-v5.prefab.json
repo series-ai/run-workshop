@@ -1,0 +1,86 @@
+{
+  "packId": "pirate-nation",
+  "id": "ships/ship-pirate01-v5",
+  "name": "Galleon-ship_pirate01",
+  "category": "ships",
+  "sourcePath": "Assets/DemoPlaceholder/Models/ships/prefabs/ship_pirate01_v5.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:3943200810696975331"
+  ],
+  "nodes": {
+    "instance:3943200810696975331": {
+      "id": "instance:3943200810696975331",
+      "name": "Galleon-ship_pirate01",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          -0.7071068,
+          0,
+          0,
+          0.7071067
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "d0f68d814544246d5bffe76e58ff63c4"
+    },
+    "collider:5052864503218844211": {
+      "id": "collider:5052864503218844211",
+      "name": "collider-5052864503218844211",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:6811145253662727170",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            0.97,
+            0
+          ],
+          "size": [
+            6.2,
+            5,
+            11.3
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "e633161a618d56c409a0196898f820cf"
+}

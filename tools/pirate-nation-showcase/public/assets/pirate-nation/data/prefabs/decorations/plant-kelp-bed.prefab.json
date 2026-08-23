@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/plant-kelp-bed",
+  "name": "plant_2x2_kelpBed",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Plants/prefabs/plant_kelpBed.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:4716157235274190983"
+  ],
+  "nodes": {
+    "instance:4716157235274190983": {
+      "id": "instance:4716157235274190983",
+      "name": "plant_2x2_kelpBed",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.07,
+          0.07,
+          0.07
+        ]
+      },
+      "sourcePrefabGuid": "dd44bab4f0dc92d42a5e962fba9e4c77",
+      "assetPath": "assets/pirate-nation/runtime/models/plants-nature/plants-nature-plant-2x2-kelpbed.glb"
+    }
+  },
+  "guid": "63088485c99d69840b79b140b02a2528"
+}

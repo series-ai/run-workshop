@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/deco-6x1x6-lavapooldeco-a",
+  "name": "deco_6x1x6_lavapooldeco_A",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/environment/prefabs/deco_6x1x6_lavapooldeco_A.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:7708232018453947761"
+  ],
+  "nodes": {
+    "instance:7708232018453947761": {
+      "id": "instance:7708232018453947761",
+      "name": "deco_6x1x6_lavapooldeco_A",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.15,
+          0.15,
+          0.15
+        ]
+      },
+      "sourcePrefabGuid": "24f53242591b7784185865aef4213941",
+      "assetPath": "assets/pirate-nation/runtime/models/decorations/decorations-item-6x1x6-lavapooldeco-a.glb"
+    }
+  },
+  "guid": "05df8058d12e102488a59fc21ee7b0c5"
+}

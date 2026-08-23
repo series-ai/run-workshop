@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/skin-ghost-limited",
+  "name": "skin_ghost_limited",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/OptimisedAssets/PirateSkins/ghost_limited/skin_ghost_limited.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:5859215005513954498"
+  ],
+  "nodes": {
+    "instance:5859215005513954498": {
+      "id": "instance:5859215005513954498",
+      "name": "skin_ghost_limited",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          99.82,
+          0.5,
+          99.31
+        ],
+        "rotation": [
+          0,
+          -0.7087949,
+          0,
+          0.7054147
+        ],
+        "scale": [
+          6,
+          6,
+          6
+        ]
+      },
+      "sourcePrefabGuid": "356a05cd788d6d14aa02c8fc0ba52676",
+      "assetPath": "assets/pirate-nation/runtime/models/characters-skins/characters-skins-skin-ghost-limited.glb"
+    }
+  },
+  "guid": "a7c1af6a81c88a843a37127c78bbd2b0"
+}

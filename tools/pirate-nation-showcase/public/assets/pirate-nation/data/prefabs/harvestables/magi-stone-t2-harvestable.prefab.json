@@ -1,0 +1,134 @@
+{
+  "packId": "pirate-nation",
+  "id": "harvestables/magi-stone-t2-harvestable",
+  "name": "MagiStone_T2_Harvestable",
+  "category": "harvestables",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/Harverstables/HarvestablePrefabs/MagiStone_T2_Harvestable.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:2805102750930971799"
+  ],
+  "nodes": {
+    "instance:1084529013351600774": {
+      "id": "instance:1084529013351600774",
+      "name": "magistone_lv2",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:2805102750930971799",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "b30d654e8175b6b43b0c22f41438d123",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-magistone-lv2.glb"
+    },
+    "instance:2805102750930971799": {
+      "id": "instance:2805102750930971799",
+      "name": "MagiStone_T2_Harvestable",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": null,
+      "children": [
+        "instance:1084529013351600774",
+        "instance:5579583746553918502",
+        "instance:6943558517026136830"
+      ],
+      "transform": {
+        "position": [
+          116.909996,
+          0,
+          -45.45
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "a0700ee59815a42d6a6b9e373a2e0e2f"
+    },
+    "instance:5579583746553918502": {
+      "id": "instance:5579583746553918502",
+      "name": "SparkleVFX",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:2805102750930971799",
+      "children": [],
+      "transform": {
+        "position": [
+          -7.68,
+          28.95,
+          -7.38
+        ],
+        "rotation": [
+          0,
+          0.38268343,
+          0,
+          0.92387956
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "df0d17416ce47d14db4a6c7c22bf9ea1"
+    },
+    "instance:6943558517026136830": {
+      "id": "instance:6943558517026136830",
+      "name": "magistone_empty",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:2805102750930971799",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "dd502a9550b8d0344aca3a3cc34398fd",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-magistone-empty.glb"
+    }
+  },
+  "guid": "7d8909f8f78ce3d43a38b3c9ad7a86c1",
+  "gameplay": {
+    "resourcePrefabGuid": "d7e73844c85611e47b8e1db91a58c8ea",
+    "pickupSfxPath": "assets/pirate-nation/runtime/audio/sfx/sfx-harvest-pn-iron.mp3"
+  }
+}

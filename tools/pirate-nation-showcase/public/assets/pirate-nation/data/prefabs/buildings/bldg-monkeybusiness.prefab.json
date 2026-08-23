@@ -1,0 +1,102 @@
+{
+  "packId": "pirate-nation",
+  "id": "buildings/bldg-monkeybusiness",
+  "name": "Monkey Business",
+  "category": "buildings",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Buildings/prefabs/bldg_monkeybusiness.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:3870778326935126694"
+  ],
+  "nodes": {
+    "instance:3870778326935126694": {
+      "id": "instance:3870778326935126694",
+      "name": "Monkey Business",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:7753155775699957462",
+        "instance:8229304332101029925"
+      ],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.1666,
+          0.1666,
+          0.1666
+        ]
+      },
+      "sourcePrefabGuid": "66c5b877e6e03b642999d78718f7cad1",
+      "assetPath": "assets/pirate-nation/runtime/models/buildings/buildings-monkey-business.glb"
+    },
+    "instance:7753155775699957462": {
+      "id": "instance:7753155775699957462",
+      "name": "ShipTrail",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:3870778326935126694",
+      "children": [],
+      "transform": {
+        "position": [
+          22.4,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          6.25,
+          6.25,
+          6.25
+        ]
+      },
+      "sourcePrefabGuid": "038f3006dc10068468b5edcf0ffa79cc"
+    },
+    "instance:8229304332101029925": {
+      "id": "instance:8229304332101029925",
+      "name": "boat",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:3870778326935126694",
+      "children": [],
+      "transform": {
+        "position": [
+          8.13,
+          0,
+          -8.83
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.16666,
+          0.16666,
+          0.16666
+        ]
+      },
+      "sourcePrefabGuid": "c64c0b356e0781c478c13bcb846779d6",
+      "assetPath": "assets/pirate-nation/runtime/models/ships/ships-boat.glb"
+    }
+  },
+  "guid": "1eb05cb3453008943bd370fe449aeff9"
+}

@@ -1,0 +1,143 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/saga-map-spline-and-camera-setup",
+  "name": "Btn_Md_Green (1)",
+  "category": "decorations",
+  "sourcePath": "Assets/_PirateNation_/Game/TheRoad/Prefabs/SagaMapSplineAndCameraSetup.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:3463844464547321367"
+  ],
+  "nodes": {
+    "instance:3463844464547321367": {
+      "id": "instance:3463844464547321367",
+      "name": "Btn_Md_Green (1)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:7861491650575455645",
+        "instance:8766138302578064051"
+      ],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          -1.4901158e-8,
+          -2.9802315e-8,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "651037bc089eb484a9163ef4731e4cc1"
+    },
+    "instance:7861491650575455645": {
+      "id": "instance:7861491650575455645",
+      "name": "Btn_Md_Green",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:3463844464547321367",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "651037bc089eb484a9163ef4731e4cc1"
+    },
+    "instance:8766138302578064051": {
+      "id": "instance:8766138302578064051",
+      "name": "Btn_Close_X",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:3463844464547321367",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "bb1d272a8b2ad4f0e868b05ec89a7d64"
+    },
+    "collider:3844009191711264897": {
+      "id": "collider:3844009191711264897",
+      "name": "collider-3844009191711264897",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:244198566240325090",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "size": [
+            35.61,
+            0.25,
+            33.95
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "c61505684d352b8409caf52138771d07"
+}

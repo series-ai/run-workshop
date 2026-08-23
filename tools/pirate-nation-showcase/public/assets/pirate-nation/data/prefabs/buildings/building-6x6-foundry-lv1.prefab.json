@@ -1,0 +1,101 @@
+{
+  "packId": "pirate-nation",
+  "id": "buildings/building-6x6-foundry-lv1",
+  "name": "building_6x6_foundry_lv1",
+  "category": "buildings",
+  "sourcePath": "Assets/DemoPlaceholder/OptimisedAssets/Buildings/crafting/building_6x6_foundry_lv1.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:5117812544298528350"
+  ],
+  "nodes": {
+    "instance:4918327713096703349": {
+      "id": "instance:4918327713096703349",
+      "name": "VFX_Smokestack",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:5117812544298528350",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          3.216,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "64bf4addb0bde9a4ba309ef8357b08a6"
+    },
+    "instance:5117812544298528350": {
+      "id": "instance:5117812544298528350",
+      "name": "building_6x6_foundry_lv1",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:4918327713096703349",
+        "instance:7906142330430512162"
+      ],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "58c379c9fa39cc744bde2a1f648724e6",
+      "assetPath": "assets/pirate-nation/runtime/models/buildings/buildings-building-6x6-foundry-lv1.glb"
+    },
+    "instance:7906142330430512162": {
+      "id": "instance:7906142330430512162",
+      "name": "VFX_FoundrySparks",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:5117812544298528350",
+      "children": [],
+      "transform": {
+        "position": [
+          -1.3519989,
+          0.2,
+          0.79599917
+        ],
+        "rotation": [
+          -0.7071068,
+          0,
+          0,
+          0.7071068
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "9c9abe6b55b52b743bd841f19cf138ba"
+    }
+  },
+  "guid": "95eda7b27eba1da4dbe45a80a2776a78"
+}

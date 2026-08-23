@@ -1,0 +1,86 @@
+{
+  "packId": "pirate-nation",
+  "id": "buildings/bldg-bulletin-board",
+  "name": "BulletinBoard",
+  "category": "buildings",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Buildings/prefabs/bldg_bulletinBoard.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:7141631010957834625"
+  ],
+  "nodes": {
+    "instance:7141631010957834625": {
+      "id": "instance:7141631010957834625",
+      "name": "BulletinBoard",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0.99,
+          0
+        ],
+        "rotation": [
+          -0.7071068,
+          0,
+          0,
+          0.7071067
+        ],
+        "scale": [
+          5.5,
+          5.5,
+          5.5
+        ]
+      },
+      "sourcePrefabGuid": "e21c2f2b7cb8a478199c4389c1fe0ac6"
+    },
+    "collider:3611519238636653932": {
+      "id": "collider:3611519238636653932",
+      "name": "collider-3611519238636653932",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:7893716002386180598",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            5,
+            0
+          ],
+          "size": [
+            4,
+            10,
+            1
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "90ba7ed490605d8448547025ed14d6d5"
+}

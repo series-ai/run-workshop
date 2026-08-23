@@ -1,0 +1,135 @@
+{
+  "packId": "pirate-nation",
+  "id": "harvestables/pinetree-t1-harvestable",
+  "name": "pinetree_T1_Harvestable",
+  "category": "harvestables",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/Harverstables/HarvestablePrefabs/pinetree_T1_Harvestable.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:3763389642574508561"
+  ],
+  "nodes": {
+    "instance:753140659617665813": {
+      "id": "instance:753140659617665813",
+      "name": "pinetree_full_lv1",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:3763389642574508561",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "a1261f870a30db0429aff118dce333c5",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-pinetree-full-lv1.glb"
+    },
+    "instance:851218757631373739": {
+      "id": "instance:851218757631373739",
+      "name": "SparkleVFX",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:3763389642574508561",
+      "children": [],
+      "transform": {
+        "position": [
+          -7.68,
+          28.95,
+          -7.38
+        ],
+        "rotation": [
+          0,
+          0.38268343,
+          0,
+          0.92387956
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "df0d17416ce47d14db4a6c7c22bf9ea1"
+    },
+    "instance:1252593541211475909": {
+      "id": "instance:1252593541211475909",
+      "name": "pinetree_empty_lv1",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:3763389642574508561",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "d522663f94bdd834dbbac206c6aa85fa",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-pinetree-empty-lv1.glb"
+    },
+    "instance:3763389642574508561": {
+      "id": "instance:3763389642574508561",
+      "name": "pinetree_T1_Harvestable",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": null,
+      "children": [
+        "instance:753140659617665813",
+        "instance:851218757631373739",
+        "instance:1252593541211475909"
+      ],
+      "transform": {
+        "position": [
+          76.59,
+          0,
+          -56.9
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "a0700ee59815a42d6a6b9e373a2e0e2f"
+    }
+  },
+  "guid": "ac8609fd19c5f2044acc73a994257bdb",
+  "gameplay": {
+    "questId": "0x91e28d9e62e964581c495b1d09605c645c9690e46de057075318b00a254c899e",
+    "resourcePrefabGuid": "5f7a3915b8ba3424fa0bdf3c302b3fef",
+    "pickupSfxPath": "assets/pirate-nation/runtime/audio/sfx/sfx-harvest-pn-wood.mp3"
+  }
+}

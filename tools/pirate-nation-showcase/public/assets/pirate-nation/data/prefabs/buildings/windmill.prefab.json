@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "buildings/windmill",
+  "name": "Windmill",
+  "category": "buildings",
+  "sourcePath": "Assets/DemoPlaceholder/OptimisedAssets/Buildings/Windmill/Windmill.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:7219576934632684063"
+  ],
+  "nodes": {
+    "instance:7219576934632684063": {
+      "id": "instance:7219576934632684063",
+      "name": "Windmill",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          77.52014,
+          0.5,
+          112.17868
+        ],
+        "rotation": [
+          -0.7071068,
+          0,
+          0,
+          0.7071067
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "1f3e2ab5a2d194f26ae2d463545176b0",
+      "assetPath": "assets/pirate-nation/runtime/models/buildings/buildings-building-6x6x6-coolwindmill.glb"
+    }
+  },
+  "guid": "cdbc2f0f0a8eb478db46d99fe0a2dd80"
+}

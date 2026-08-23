@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "buildings/building-5x5-markethaunted",
+  "name": "building_5x5_markethaunted",
+  "category": "buildings",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Buildings/haunted/prefabs/building_5x5_markethaunted.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:7391189590962837968"
+  ],
+  "nodes": {
+    "instance:7391189590962837968": {
+      "id": "instance:7391189590962837968",
+      "name": "building_5x5_markethaunted",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0.5,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.14,
+          0.14,
+          0.14
+        ]
+      },
+      "sourcePrefabGuid": "315b9014c640e4b428aa1792e72c91e0",
+      "assetPath": "assets/pirate-nation/runtime/models/buildings/buildings-building-5x5-markethaunted.glb"
+    }
+  },
+  "guid": "89cb28bc44be2c846bda0a819cdf9a33"
+}

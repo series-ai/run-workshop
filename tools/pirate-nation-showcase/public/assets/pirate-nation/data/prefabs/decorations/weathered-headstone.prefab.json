@@ -1,0 +1,87 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/weathered-headstone",
+  "name": "weathered_headstone",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Decos/Undead/prefabs/weathered_headstone.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:8820086885262278727"
+  ],
+  "nodes": {
+    "instance:8820086885262278727": {
+      "id": "instance:8820086885262278727",
+      "name": "weathered_headstone",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          1.625,
+          0
+        ],
+        "rotation": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "scale": [
+          0.15,
+          0.15,
+          0.15
+        ]
+      },
+      "sourcePrefabGuid": "b006d0502f1da6f4784f430b5494993b",
+      "assetPath": "assets/pirate-nation/runtime/models/decorations/decorations-weathered-headstone.glb"
+    },
+    "collider:7823043485470394104": {
+      "id": "collider:7823043485470394104",
+      "name": "collider-7823043485470394104",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:7935664269783324251",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0.00006109942,
+            -1.4999921,
+            3.3527613e-8
+          ],
+          "size": [
+            12.000004,
+            14.999999,
+            5.000002
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "a2d46ba8431485f43b966d15d2f50d8f"
+}

@@ -1,0 +1,135 @@
+{
+  "packId": "pirate-nation",
+  "id": "harvestables/iron-ore-t1-harvestable",
+  "name": "IronOre_T1_Harvestable",
+  "category": "harvestables",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/Harverstables/HarvestablePrefabs/IronOre_T1_Harvestable.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:778196512563985679"
+  ],
+  "nodes": {
+    "instance:778196512563985679": {
+      "id": "instance:778196512563985679",
+      "name": "IronOre_T1_Harvestable",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": null,
+      "children": [
+        "instance:1917628883769250357",
+        "instance:2528593384966383009",
+        "instance:7728787258983788213"
+      ],
+      "transform": {
+        "position": [
+          125.59,
+          0,
+          -45.45
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "a0700ee59815a42d6a6b9e373a2e0e2f"
+    },
+    "instance:1917628883769250357": {
+      "id": "instance:1917628883769250357",
+      "name": "ironore_empty",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:778196512563985679",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "37c1e6d67d85f6a4f90e45546cec1b65",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-ironore-empty.glb"
+    },
+    "instance:2528593384966383009": {
+      "id": "instance:2528593384966383009",
+      "name": "ironore_full_lv1",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:778196512563985679",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "8c07a7d82cec0324583b5ce7104305a9",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-ironore-full-lv1.glb"
+    },
+    "instance:7728787258983788213": {
+      "id": "instance:7728787258983788213",
+      "name": "SparkleVFX",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:778196512563985679",
+      "children": [],
+      "transform": {
+        "position": [
+          -7.68,
+          28.95,
+          -7.38
+        ],
+        "rotation": [
+          0,
+          0.38268343,
+          0,
+          0.92387956
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "df0d17416ce47d14db4a6c7c22bf9ea1"
+    }
+  },
+  "guid": "8f692202c26a6ec4d8d61a3f61245654",
+  "gameplay": {
+    "questId": "0x2595412e49f5c3a705d76fd8bae55683769397b2e41abdc482015f99b2f39617",
+    "resourcePrefabGuid": "d8b8de845d8cc499da1f5e5618d950ad",
+    "pickupSfxPath": "assets/pirate-nation/runtime/audio/sfx/sfx-harvest-pn-iron.mp3"
+  }
+}

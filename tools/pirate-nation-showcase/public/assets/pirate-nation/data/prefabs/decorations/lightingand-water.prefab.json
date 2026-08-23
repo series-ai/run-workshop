@@ -1,0 +1,4002 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/lightingand-water",
+  "name": "deco_boulder_large",
+  "category": "decorations",
+  "sourcePath": "Assets/_PirateNation_/Game/TheRoad/Prefabs/LIghtingandWater.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:144431680409451948"
+  ],
+  "nodes": {
+    "instance:144431680409451948": {
+      "id": "instance:144431680409451948",
+      "name": "deco_boulder_large",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:174494309049816453",
+        "instance:182972463367658286",
+        "instance:185323738983422038",
+        "instance:450276708707736816",
+        "instance:602902847182508046",
+        "instance:669399711282833594",
+        "instance:721359964324581871",
+        "instance:741859947466885306",
+        "instance:877159289310954264",
+        "instance:997934649692423343",
+        "instance:998135886209333003",
+        "instance:1033863281839943507",
+        "instance:1214164070174910648",
+        "instance:1246107748730879169",
+        "instance:1339676844953264127",
+        "instance:1347545514678781598",
+        "instance:1455712667029601055",
+        "instance:1463721913783876155",
+        "instance:1540886940356207579",
+        "instance:1691890379338299401",
+        "instance:1835657983214409288",
+        "instance:1947171119256567271",
+        "instance:2186455621881857895",
+        "instance:2233709747682414834",
+        "instance:2282836495117564856",
+        "instance:2303998719601904953",
+        "instance:2322701364227068741",
+        "instance:2443914260314881878",
+        "instance:2505238845187871701",
+        "instance:2550167636316446536",
+        "instance:2558402212889612776",
+        "instance:2574353831141670373",
+        "instance:2658533506993396247",
+        "instance:2682267931761192102",
+        "instance:2877778130038138000",
+        "instance:2944144054444146911",
+        "instance:2947342224499340526",
+        "instance:2953599117906166502",
+        "instance:2965950481043235508",
+        "instance:2993138815154779694",
+        "instance:3026506641757985707",
+        "instance:3209448724911923839",
+        "instance:3570402465440821428",
+        "instance:3864729875370615565",
+        "instance:4016309476641621128",
+        "instance:4032496151792073126",
+        "instance:4064558699666320525",
+        "instance:4084728106123811519",
+        "instance:4155043801324284147",
+        "instance:4226840640059248805",
+        "instance:4348515508595033788",
+        "instance:4366314888556142451",
+        "instance:4457514095968849275",
+        "instance:4544377714050360904",
+        "instance:4552866295963883105",
+        "instance:4706641556569638407",
+        "instance:4751271661302680684",
+        "instance:4755300189707024068",
+        "instance:4814947065287435251",
+        "instance:4831422209223538085",
+        "instance:4896871883481104560",
+        "instance:5050060992299072873",
+        "instance:5114802442552469251",
+        "instance:5205654759876947291",
+        "instance:5286845993359728631",
+        "instance:5319644189917214857",
+        "instance:5564808033241662147",
+        "instance:5970724252884022105",
+        "instance:6096646575679368780",
+        "instance:6259884745453624224",
+        "instance:6308901013223314310",
+        "instance:6339274420642542900",
+        "instance:6363161057100711977",
+        "instance:6484855344540628917",
+        "instance:6684421137783103929",
+        "instance:6702405685395937347",
+        "instance:6800276428210466290",
+        "instance:6820344765440549484",
+        "instance:6894563488709784941",
+        "instance:6914452021299368352",
+        "instance:6964885137838448164",
+        "instance:7075577366341107942",
+        "instance:7120382670805870778",
+        "instance:7144428822444042389",
+        "instance:7298812741534613143",
+        "instance:7399851855854927926",
+        "instance:7401883059446065975",
+        "instance:7521968035555392566",
+        "instance:7806151263589847893",
+        "instance:7829122838299865223",
+        "instance:7942754487841813366",
+        "instance:7995943675370266671",
+        "instance:8027897023206281764",
+        "instance:8071987935980625086",
+        "instance:8090927406964430479",
+        "instance:8161160778159586666",
+        "instance:8211507665777607084",
+        "instance:8298340400479027641",
+        "instance:8353616362044839144",
+        "instance:8387047979689090531",
+        "instance:8593377137652472963",
+        "instance:8761584565148544714",
+        "instance:8778313531147790992",
+        "instance:8972554606531876019",
+        "instance:9149116784367124640",
+        "instance:9167871832556800472"
+      ],
+      "transform": {
+        "position": [
+          9,
+          2,
+          52
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "b32736a249797954583e5740e76075f3"
+    },
+    "instance:174494309049816453": {
+      "id": "instance:174494309049816453",
+      "name": "deco_fence_bamboo_end_tall (2)",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          24,
+          2,
+          6
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e55ae97409ad27045b6f3304430b22ba"
+    },
+    "instance:182972463367658286": {
+      "id": "instance:182972463367658286",
+      "name": "deco_fence_bamboo_end_tall",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -22,
+          2,
+          -0.3125
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e55ae97409ad27045b6f3304430b22ba"
+    },
+    "instance:185323738983422038": {
+      "id": "instance:185323738983422038",
+      "name": "deco_boulder_large (2)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          3,
+          0,
+          64
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "b32736a249797954583e5740e76075f3"
+    },
+    "instance:450276708707736816": {
+      "id": "instance:450276708707736816",
+      "name": "plant_palmTree_animated (2)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          17.6,
+          -0.06,
+          4.64
+        ],
+        "rotation": [
+          -0.0021220436,
+          0.09147703,
+          -0.023094049,
+          0.9955371
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "eb4aa4be580f04d4ebd48d957163954e"
+    },
+    "instance:602902847182508046": {
+      "id": "instance:602902847182508046",
+      "name": "deco_fence_bamboo_end (1)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          22,
+          2,
+          6
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "72214d21245d5ab4692e927cfead87d9"
+    },
+    "instance:669399711282833594": {
+      "id": "instance:669399711282833594",
+      "name": "skiff_island_02",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e433ad7645f2847229cd3e8f253611b6",
+      "assetPath": "assets/pirate-nation/runtime/models/ships/ships-skiff-island-02.glb"
+    },
+    "instance:721359964324581871": {
+      "id": "instance:721359964324581871",
+      "name": "plant_palmTree_tall_static (2)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          37,
+          2,
+          22
+        ],
+        "rotation": [
+          0.0039534927,
+          0.36241648,
+          0.01016639,
+          0.9319525
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "3c1bb1bf1e3a01440b59e4eaee262607"
+    },
+    "instance:741859947466885306": {
+      "id": "instance:741859947466885306",
+      "name": "plant_hedge_1x1",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          4,
+          2,
+          -2
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:877159289310954264": {
+      "id": "instance:877159289310954264",
+      "name": "plant_bush_bundle (7)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -14.89,
+          1,
+          15.74
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:997934649692423343": {
+      "id": "instance:997934649692423343",
+      "name": "plant_palmTree_animated (5)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          9.74,
+          -0.05,
+          42.99
+        ],
+        "rotation": [
+          -0.052208412,
+          -0.996197,
+          0.0036507726,
+          0.06966097
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "eb4aa4be580f04d4ebd48d957163954e"
+    },
+    "instance:998135886209333003": {
+      "id": "instance:998135886209333003",
+      "name": "StylizedWater2_Ocean",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "915defc4859ebad4789c339184a60ebf"
+    },
+    "instance:1033863281839943507": {
+      "id": "instance:1033863281839943507",
+      "name": "plant_bush_bundle (7)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          15,
+          5,
+          42
+        ],
+        "rotation": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:1214164070174910648": {
+      "id": "instance:1214164070174910648",
+      "name": "deco_fence_bamboo_end_tall (3)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          24,
+          2,
+          -6
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e55ae97409ad27045b6f3304430b22ba"
+    },
+    "instance:1246107748730879169": {
+      "id": "instance:1246107748730879169",
+      "name": "plant_bush_bundle (6)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          8,
+          5,
+          28
+        ],
+        "rotation": [
+          0,
+          0.7071068,
+          0,
+          -0.7071068
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:1339676844953264127": {
+      "id": "instance:1339676844953264127",
+      "name": "plant_palmTree_animated (7)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          49,
+          6,
+          33
+        ],
+        "rotation": [
+          -0.0004567172,
+          -0.008714693,
+          -0.05233391,
+          -0.9985916
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "eb4aa4be580f04d4ebd48d957163954e"
+    },
+    "instance:1347545514678781598": {
+      "id": "instance:1347545514678781598",
+      "name": "deco_totem_fish",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -0.05000019,
+          6.541,
+          -0.24749994
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "578e9a07bafe649419cf7f34911328e7"
+    },
+    "instance:1455712667029601055": {
+      "id": "instance:1455712667029601055",
+      "name": "plant_palmTree_animated (4)",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          5,
+          0,
+          37
+        ],
+        "rotation": [
+          -0.015737707,
+          -0.30029365,
+          0.049913637,
+          0.95241
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "eb4aa4be580f04d4ebd48d957163954e"
+    },
+    "instance:1463721913783876155": {
+      "id": "instance:1463721913783876155",
+      "name": "plant_palmTree_tall_static (1)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          3.41,
+          -0.39,
+          43.81
+        ],
+        "rotation": [
+          0.022126302,
+          0.36176202,
+          0.056897692,
+          0.93026954
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "3c1bb1bf1e3a01440b59e4eaee262607"
+    },
+    "instance:1540886940356207579": {
+      "id": "instance:1540886940356207579",
+      "name": "plant_bush_bundle (8)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -34.99,
+          1,
+          12
+        ],
+        "rotation": [
+          0,
+          0.7071068,
+          0,
+          0.7071068
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:1691890379338299401": {
+      "id": "instance:1691890379338299401",
+      "name": "WishingWell_Animated",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -24.81,
+          0.2,
+          54.93
+        ],
+        "rotation": [
+          1,
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          55,
+          55,
+          55
+        ]
+      },
+      "sourcePrefabGuid": "0c839b88f874d8b47a038c3036443c0a"
+    },
+    "instance:1835657983214409288": {
+      "id": "instance:1835657983214409288",
+      "name": "deco_fence_bamboo_end",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -6,
+          2,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "72214d21245d5ab4692e927cfead87d9"
+    },
+    "instance:1947171119256567271": {
+      "id": "instance:1947171119256567271",
+      "name": "deco_fence_bamboo_segment (7)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -12.5,
+          2,
+          -5.1875
+        ],
+        "rotation": [
+          0,
+          0.7071068,
+          0,
+          0.7071068
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "098a49dd2a9791446a546dc545c01c42"
+    },
+    "instance:2186455621881857895": {
+      "id": "instance:2186455621881857895",
+      "name": "plant_hedge_1x1 (2)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          4,
+          2,
+          -6
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:2233709747682414834": {
+      "id": "instance:2233709747682414834",
+      "name": "plant_bush_bundle",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          5,
+          1,
+          7
+        ],
+        "rotation": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:2282836495117564856": {
+      "id": "instance:2282836495117564856",
+      "name": "plant_hedge_1x1 (15)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          12,
+          2,
+          -8
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:2303998719601904953": {
+      "id": "instance:2303998719601904953",
+      "name": "plant_palmTree_animated (10)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          63,
+          4,
+          14
+        ],
+        "rotation": [
+          -0.036355566,
+          -0.69370633,
+          0.037647296,
+          0.71835405
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "eb4aa4be580f04d4ebd48d957163954e"
+    },
+    "instance:2322701364227068741": {
+      "id": "instance:2322701364227068741",
+      "name": "BossTotem-WorldTooltip",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          -6.19
+        ],
+        "rotation": [
+          0.27781588,
+          0.36497167,
+          -0.1150751,
+          0.8811196
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e3eff1e95949f42e4bd9961b237c6832"
+    },
+    "instance:2443914260314881878": {
+      "id": "instance:2443914260314881878",
+      "name": "boulder_small_1x1",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -28,
+          1,
+          12
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "25b96720cadf7c54b80948c4d4b23c66"
+    },
+    "instance:2505238845187871701": {
+      "id": "instance:2505238845187871701",
+      "name": "deco_boulder_large (7)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          67,
+          2,
+          70
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1.5,
+          3,
+          1.2
+        ]
+      },
+      "sourcePrefabGuid": "b32736a249797954583e5740e76075f3"
+    },
+    "instance:2550167636316446536": {
+      "id": "instance:2550167636316446536",
+      "name": "bldg_tradeship",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -55.99,
+          0,
+          11.1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "3088689cc131d48a68792dd2eeb83abf"
+    },
+    "instance:2558402212889612776": {
+      "id": "instance:2558402212889612776",
+      "name": "bldg_townHall_animated",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          8,
+          0.82,
+          16
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          100,
+          100,
+          100
+        ]
+      },
+      "sourcePrefabGuid": "8f0c9d4be0ade0e4ebfd28c87052b93a"
+    },
+    "instance:2574353831141670373": {
+      "id": "instance:2574353831141670373",
+      "name": "bldg_docks",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          33.14,
+          -1.76,
+          -17.27
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "79acb792fe177bf4caa30cf838a9c9db"
+    },
+    "instance:2658533506993396247": {
+      "id": "instance:2658533506993396247",
+      "name": "deco_mailbox_1x1",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -5.088997,
+          1,
+          -4.1160507
+        ],
+        "rotation": [
+          0,
+          0.7071068,
+          0,
+          -0.7071068
+        ],
+        "scale": [
+          2.5,
+          2.5,
+          2.5
+        ]
+      },
+      "sourcePrefabGuid": "4840f93f53247424b987b0ddc7c8a4ef"
+    },
+    "instance:2682267931761192102": {
+      "id": "instance:2682267931761192102",
+      "name": "deco_fence_bamboo_end (2)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          20,
+          2,
+          6
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "72214d21245d5ab4692e927cfead87d9"
+    },
+    "instance:2877778130038138000": {
+      "id": "instance:2877778130038138000",
+      "name": "plant_bush_bundle (1)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          1,
+          1,
+          7
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:2944144054444146911": {
+      "id": "instance:2944144054444146911",
+      "name": "plant_hedge_1x1 (7)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          12,
+          2,
+          -10
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:2947342224499340526": {
+      "id": "instance:2947342224499340526",
+      "name": "deco_fence_bamboo_end (6)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          16,
+          2,
+          -14
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "72214d21245d5ab4692e927cfead87d9"
+    },
+    "instance:2953599117906166502": {
+      "id": "instance:2953599117906166502",
+      "name": "plant_bush_bundle (4)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -16.2,
+          1,
+          22.09
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:2965950481043235508": {
+      "id": "instance:2965950481043235508",
+      "name": "deco_boulder_large (9)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          28,
+          8,
+          46
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "b32736a249797954583e5740e76075f3"
+    },
+    "instance:2993138815154779694": {
+      "id": "instance:2993138815154779694",
+      "name": "buoy",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -12.300003,
+          -0.9200001,
+          44.5
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "43e534486f33542688e797b832eca9b3"
+    },
+    "instance:3026506641757985707": {
+      "id": "instance:3026506641757985707",
+      "name": "plant_palmTree_animated",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          4.02,
+          -0.14,
+          3.79
+        ],
+        "rotation": [
+          0,
+          0,
+          0.15798928,
+          0.9874409
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "eb4aa4be580f04d4ebd48d957163954e"
+    },
+    "instance:3209448724911923839": {
+      "id": "instance:3209448724911923839",
+      "name": "plant_bush_bundle (2)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          11,
+          1,
+          7
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:3570402465440821428": {
+      "id": "instance:3570402465440821428",
+      "name": "deco_fence_bamboo_segment",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -13,
+          2,
+          -0.3125
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "098a49dd2a9791446a546dc545c01c42"
+    },
+    "instance:3864729875370615565": {
+      "id": "instance:3864729875370615565",
+      "name": "plant_bush_bundle (2)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -23.74,
+          1,
+          21.21
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:4016309476641621128": {
+      "id": "instance:4016309476641621128",
+      "name": "plant_bush_bundle (3)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -19.81,
+          1,
+          22.09
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:4032496151792073126": {
+      "id": "instance:4032496151792073126",
+      "name": "plant_hedge_1x1 (5)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          12,
+          2,
+          -4
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:4064558699666320525": {
+      "id": "instance:4064558699666320525",
+      "name": "boulder_small_1x1 (2)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          11,
+          5,
+          37
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "25b96720cadf7c54b80948c4d4b23c66"
+    },
+    "instance:4084728106123811519": {
+      "id": "instance:4084728106123811519",
+      "name": "boulder_small_1x1 (1)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -28,
+          1,
+          58
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "25b96720cadf7c54b80948c4d4b23c66"
+    },
+    "instance:4155043801324284147": {
+      "id": "instance:4155043801324284147",
+      "name": "plant_bush_bundle (6)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -13.62,
+          1,
+          21.57
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:4226840640059248805": {
+      "id": "instance:4226840640059248805",
+      "name": "plant_hedge_1x1 (12)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          10,
+          2,
+          -2
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:4348515508595033788": {
+      "id": "instance:4348515508595033788",
+      "name": "plant_hedge_1x1 (9)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          6,
+          2,
+          -10
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:4366314888556142451": {
+      "id": "instance:4366314888556142451",
+      "name": "deco_totem_goblin",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -0.05000019,
+          4.123,
+          -0.097
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "db4ed8e269d1f1d46beb7b203776833e"
+    },
+    "instance:4457514095968849275": {
+      "id": "instance:4457514095968849275",
+      "name": "plant_bush_bundle (3)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          15,
+          1,
+          7
+        ],
+        "rotation": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:4544377714050360904": {
+      "id": "instance:4544377714050360904",
+      "name": "deco_fence_bamboo_segment (5)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -12.5,
+          2,
+          -1.2874999
+        ],
+        "rotation": [
+          0,
+          0.7071068,
+          0,
+          0.7071068
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "098a49dd2a9791446a546dc545c01c42"
+    },
+    "instance:4552866295963883105": {
+      "id": "instance:4552866295963883105",
+      "name": "plant_hedge_1x1 (13)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          10,
+          2,
+          -10
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:4706641556569638407": {
+      "id": "instance:4706641556569638407",
+      "name": "deco_boulder_large (5)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          19,
+          0.5,
+          69
+        ],
+        "rotation": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "scale": [
+          0.9,
+          1.5,
+          0.9
+        ]
+      },
+      "sourcePrefabGuid": "b32736a249797954583e5740e76075f3"
+    },
+    "instance:4751271661302680684": {
+      "id": "instance:4751271661302680684",
+      "name": "deco_fence_bamboo_segment (1)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -15,
+          2,
+          -0.3125
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "098a49dd2a9791446a546dc545c01c42"
+    },
+    "instance:4755300189707024068": {
+      "id": "instance:4755300189707024068",
+      "name": "plant_palmTree_animated (3)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          8.09,
+          -0.09,
+          8.4
+        ],
+        "rotation": [
+          -0.04949968,
+          -0.94451135,
+          -0.016994927,
+          -0.3242829
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "eb4aa4be580f04d4ebd48d957163954e"
+    },
+    "instance:4814947065287435251": {
+      "id": "instance:4814947065287435251",
+      "name": "bldg_windmill",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          21,
+          5,
+          34
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "5e460fc13f990984d995b90d0ee453b2"
+    },
+    "instance:4831422209223538085": {
+      "id": "instance:4831422209223538085",
+      "name": "deco_fence_bamboo_end (7)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          20,
+          2,
+          -6
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "72214d21245d5ab4692e927cfead87d9"
+    },
+    "instance:4896871883481104560": {
+      "id": "instance:4896871883481104560",
+      "name": "plant_palmTree_tall_static (4)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          96,
+          0,
+          -5
+        ],
+        "rotation": [
+          0,
+          0.45399043,
+          0,
+          0.8910066
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "3c1bb1bf1e3a01440b59e4eaee262607"
+    },
+    "instance:5050060992299072873": {
+      "id": "instance:5050060992299072873",
+      "name": "plant_palmTree_animated (6)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          31,
+          0,
+          22
+        ],
+        "rotation": [
+          -0.003650778,
+          -0.069661066,
+          -0.052208416,
+          -0.9961969
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "eb4aa4be580f04d4ebd48d957163954e"
+    },
+    "instance:5114802442552469251": {
+      "id": "instance:5114802442552469251",
+      "name": "deco_fence_bamboo_segment (2)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -17,
+          2,
+          -0.3125
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "098a49dd2a9791446a546dc545c01c42"
+    },
+    "instance:5205654759876947291": {
+      "id": "instance:5205654759876947291",
+      "name": "ship_pirate01_v5 (1)",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -57.997524,
+          0,
+          18.514294
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.2,
+          0.2,
+          0.2
+        ]
+      },
+      "sourcePrefabGuid": "e633161a618d56c409a0196898f820cf"
+    },
+    "instance:5286845993359728631": {
+      "id": "instance:5286845993359728631",
+      "name": "deco_boulder_large (1)",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -13,
+          0,
+          44
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "b32736a249797954583e5740e76075f3"
+    },
+    "instance:5319644189917214857": {
+      "id": "instance:5319644189917214857",
+      "name": "bldg_bulletinBoard",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -17,
+          0.82,
+          -4
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          100,
+          100,
+          100
+        ]
+      },
+      "sourcePrefabGuid": "90ba7ed490605d8448547025ed14d6d5"
+    },
+    "instance:5564808033241662147": {
+      "id": "instance:5564808033241662147",
+      "name": "bldg_blacksmith",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          29,
+          1,
+          14
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "af1cd20314c1eab48bf38c41e103d3bd"
+    },
+    "instance:5970724252884022105": {
+      "id": "instance:5970724252884022105",
+      "name": "deco_boulder_large (3)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          12,
+          1.5,
+          72
+        ],
+        "rotation": [
+          0,
+          0.7071068,
+          0,
+          0.7071068
+        ],
+        "scale": [
+          1.25,
+          2.5,
+          1.25
+        ]
+      },
+      "sourcePrefabGuid": "b32736a249797954583e5740e76075f3"
+    },
+    "instance:6096646575679368780": {
+      "id": "instance:6096646575679368780",
+      "name": "plant_hedge_1x1 (14)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          4,
+          2,
+          -8
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:6259884745453624224": {
+      "id": "instance:6259884745453624224",
+      "name": "World Boss Totem POI",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -19.92,
+          1,
+          16.84
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "1bafbdc78be8b401c8eab99f49ac8e91"
+    },
+    "instance:6308901013223314310": {
+      "id": "instance:6308901013223314310",
+      "name": "deco_boulder_large (8)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          76,
+          0,
+          67
+        ],
+        "rotation": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "scale": [
+          1.25,
+          1.5,
+          1.25
+        ]
+      },
+      "sourcePrefabGuid": "b32736a249797954583e5740e76075f3"
+    },
+    "instance:6339274420642542900": {
+      "id": "instance:6339274420642542900",
+      "name": "deco_totem_parrot",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -0.05000019,
+          2.012,
+          -0.24749994
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "1161a3f2aa9c966488e33a66753fac98"
+    },
+    "instance:6363161057100711977": {
+      "id": "instance:6363161057100711977",
+      "name": "plant_hedge_1x1 (1)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          4,
+          2,
+          -4
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:6484855344540628917": {
+      "id": "instance:6484855344540628917",
+      "name": "plant_palmTree_tall_static (3)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          62,
+          4,
+          37
+        ],
+        "rotation": [
+          0.022126302,
+          0.36176202,
+          0.056897692,
+          0.93026954
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "3c1bb1bf1e3a01440b59e4eaee262607"
+    },
+    "instance:6684421137783103929": {
+      "id": "instance:6684421137783103929",
+      "name": "ship_P_variant",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -57.9,
+          0,
+          18.5
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "8226fc4a946a1e74ebf3cfadb619b20c"
+    },
+    "instance:6702405685395937347": {
+      "id": "instance:6702405685395937347",
+      "name": "deco_fence_bamboo_end_tall (1)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -4,
+          2,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e55ae97409ad27045b6f3304430b22ba"
+    },
+    "instance:6800276428210466290": {
+      "id": "instance:6800276428210466290",
+      "name": "plant_palmTree_animated (9)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          65,
+          6,
+          30
+        ],
+        "rotation": [
+          -0.052317966,
+          -0.9982874,
+          -0.0013699929,
+          -0.02614105
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "eb4aa4be580f04d4ebd48d957163954e"
+    },
+    "instance:6820344765440549484": {
+      "id": "instance:6820344765440549484",
+      "name": "plant_hedge_1x1 (6)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          12,
+          2,
+          -6
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:6894563488709784941": {
+      "id": "instance:6894563488709784941",
+      "name": "plant_hedge_1x1 (8)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          6,
+          2,
+          -2
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:6914452021299368352": {
+      "id": "instance:6914452021299368352",
+      "name": "Directional Light",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          81.874054,
+          -9.283058,
+          270.48663
+        ],
+        "rotation": [
+          0.28914475,
+          0.1491236,
+          -0.08200143,
+          0.94203675
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "fb02f63652f7a41fe9be3127cae45c81"
+    },
+    "instance:6964885137838448164": {
+      "id": "instance:6964885137838448164",
+      "name": "deco_statue_tiki (1)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          22,
+          4,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e6f09f48ef5082d44b21fe68274f1a95"
+    },
+    "instance:7075577366341107942": {
+      "id": "instance:7075577366341107942",
+      "name": "deco_fence_bamboo_segment (3)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -19,
+          2,
+          -0.3125
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "098a49dd2a9791446a546dc545c01c42"
+    },
+    "instance:7120382670805870778": {
+      "id": "instance:7120382670805870778",
+      "name": "plant_hedge_1x1 (10)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          8,
+          2,
+          -2
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:7144428822444042389": {
+      "id": "instance:7144428822444042389",
+      "name": "plant_hedge_1x1 (4)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          12,
+          2,
+          -2
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:7298812741534613143": {
+      "id": "instance:7298812741534613143",
+      "name": "deco_fence_bamboo_end (4)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          16,
+          2,
+          2
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "72214d21245d5ab4692e927cfead87d9"
+    },
+    "instance:7399851855854927926": {
+      "id": "instance:7399851855854927926",
+      "name": "deco_fence_bamboo_end (3)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          2,
+          2
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "72214d21245d5ab4692e927cfead87d9"
+    },
+    "instance:7401883059446065975": {
+      "id": "instance:7401883059446065975",
+      "name": "plant_bush_bundle (5)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -15.800001,
+          1,
+          19.3
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:7521968035555392566": {
+      "id": "instance:7521968035555392566",
+      "name": "plant_hedge_1x1 (3)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          4,
+          2,
+          -10
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e361b6eaece64b241a6304e6e6363566"
+    },
+    "instance:7806151263589847893": {
+      "id": "instance:7806151263589847893",
+      "name": "deco_totem_monkey",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -0.05000019,
+          -0.395,
+          -0.24749994
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "010fca0b9baef3d45b79919eab6d4e67"
+    },
+    "instance:7829122838299865223": {
+      "id": "instance:7829122838299865223",
+      "name": "plant_bush_bundle (1)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -25.29,
+          1,
+          17.89
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:7942754487841813366": {
+      "id": "instance:7942754487841813366",
+      "name": "plant_bush_bundle (5)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -1,
+          1,
+          29
+        ],
+        "rotation": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:7995943675370266671": {
+      "id": "instance:7995943675370266671",
+      "name": "deco_statue_tiki",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -8,
+          4,
+          15
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e6f09f48ef5082d44b21fe68274f1a95"
+    },
+    "instance:8027897023206281764": {
+      "id": "instance:8027897023206281764",
+      "name": "deco_fence_bamboo_end (5)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          2,
+          -14
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "72214d21245d5ab4692e927cfead87d9"
+    },
+    "instance:8071987935980625086": {
+      "id": "instance:8071987935980625086",
+      "name": "deco_fence_bamboo_segment (4)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -21,
+          2,
+          -0.3125
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "098a49dd2a9791446a546dc545c01c42"
+    },
+    "instance:8090927406964430479": {
+      "id": "instance:8090927406964430479",
+      "name": "deco_flag_PN_P_animated",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -37.14032,
+          1,
+          -9.978531
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "8de2b968f9e5adb4dbd92f58f898936b"
+    },
+    "instance:8161160778159586666": {
+      "id": "instance:8161160778159586666",
+      "name": "deco_boulder_large (4)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          74,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          2,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "b32736a249797954583e5740e76075f3"
+    },
+    "instance:8211507665777607084": {
+      "id": "instance:8211507665777607084",
+      "name": "plant_bush_bundle (4)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          2,
+          1,
+          25
+        ],
+        "rotation": [
+          0,
+          0.7071068,
+          0,
+          0.7071068
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cb5f6e84ff60bda4191171d7869001f3"
+    },
+    "instance:8298340400479027641": {
+      "id": "instance:8298340400479027641",
+      "name": "plant_palmTree_animated (12)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          97.5,
+          0,
+          -8.5
+        ],
+        "rotation": [
+          -0.05219199,
+          -0.9958836,
+          -0.0038785276,
+          -0.074006796
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "eb4aa4be580f04d4ebd48d957163954e"
+    },
+    "instance:8353616362044839144": {
+      "id": "instance:8353616362044839144",
+      "name": "deco_boulder_large (6)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          65,
+          0,
+          61
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "b32736a249797954583e5740e76075f3"
+    },
+    "instance:8387047979689090531": {
+      "id": "instance:8387047979689090531",
+      "name": "plant_palmTree_animated (8)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          51,
+          6,
+          29
+        ],
+        "rotation": [
+          -0.052317966,
+          -0.9982874,
+          -0.0013699929,
+          -0.02614105
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "eb4aa4be580f04d4ebd48d957163954e"
+    },
+    "instance:8593377137652472963": {
+      "id": "instance:8593377137652472963",
+      "name": "bldg_marketplace",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          34,
+          0.84,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          100,
+          100,
+          100
+        ]
+      },
+      "sourcePrefabGuid": "60a9244c67c464344988cabe38864f91"
+    },
+    "instance:8761584565148544714": {
+      "id": "instance:8761584565148544714",
+      "name": "deco_fence_bamboo_segment (6)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          -12.5,
+          2,
+          -3.1875
+        ],
+        "rotation": [
+          0,
+          0.7071068,
+          0,
+          0.7071068
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "098a49dd2a9791446a546dc545c01c42"
+    },
+    "instance:8778313531147790992": {
+      "id": "instance:8778313531147790992",
+      "name": "plant_palmTree_animated (11)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          69,
+          2,
+          23
+        ],
+        "rotation": [
+          -0.052049205,
+          -0.993159,
+          -0.0054705865,
+          -0.10438511
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "eb4aa4be580f04d4ebd48d957163954e"
+    },
+    "instance:8972554606531876019": {
+      "id": "instance:8972554606531876019",
+      "name": "plant_palmTree_tall_static",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          13.51,
+          1.18,
+          4.19
+        ],
+        "rotation": [
+          0,
+          0.36243805,
+          0,
+          0.9320079
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "3c1bb1bf1e3a01440b59e4eaee262607"
+    },
+    "instance:9149116784367124640": {
+      "id": "instance:9149116784367124640",
+      "name": "DDBuoy - WorldTooltip",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0.27781588,
+          0.36497167,
+          -0.1150751,
+          0.8811196
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e3eff1e95949f42e4bd9961b237c6832"
+    },
+    "instance:9167871832556800472": {
+      "id": "instance:9167871832556800472",
+      "name": "New Island Baked",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:144431680409451948",
+      "children": [],
+      "transform": {
+        "position": [
+          116.7,
+          -0.5,
+          111.7
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "13919f4543faa5d48a1b939c9180ce84"
+    },
+    "collider:1926294269805377548": {
+      "id": "collider:1926294269805377548",
+      "name": "collider-1926294269805377548",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:1028946977093257735",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "size": [
+            16.9,
+            28.61,
+            47.18
+          ]
+        }
+      ]
+    },
+    "collider:1769035659351026903": {
+      "id": "collider:1769035659351026903",
+      "name": "collider-1769035659351026903",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:5409884563349794945",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "size": [
+            1,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    "collider:601004369948550594": {
+      "id": "collider:601004369948550594",
+      "name": "collider-601004369948550594",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:7501880949942811742",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "size": [
+            1,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    "collider:3055405432288825096": {
+      "id": "collider:3055405432288825096",
+      "name": "collider-3055405432288825096",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:8311548406481778183",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            4.123136,
+            0
+          ],
+          "size": [
+            2,
+            9.246272,
+            2
+          ]
+        }
+      ]
+    },
+    "collider:243143605240018705": {
+      "id": "collider:243143605240018705",
+      "name": "collider-243143605240018705",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:9199019717864438964",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0.30183792,
+            19.849773,
+            2.9920197
+          ],
+          "size": [
+            41.080437,
+            42.759544,
+            68.3078
+          ]
+        }
+      ]
+    },
+    "collider:3541881941927720443": {
+      "id": "collider:3541881941927720443",
+      "name": "collider-3541881941927720443",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:6196313715453142402",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            3,
+            0
+          ],
+          "size": [
+            4.17,
+            6.68,
+            2.93
+          ]
+        }
+      ]
+    },
+    "collider:361810178013981080": {
+      "id": "collider:361810178013981080",
+      "name": "collider-361810178013981080",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:5222606864945881377",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0.69532585,
+            5.9516687,
+            0
+          ],
+          "size": [
+            8.649349,
+            17.096354,
+            5.8
+          ]
+        }
+      ]
+    },
+    "collider:2686678205238862321": {
+      "id": "collider:2686678205238862321",
+      "name": "collider-2686678205238862321",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:2892555549950191430",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0.123040795,
+            2.2872608,
+            -0.06784809
+          ],
+          "size": [
+            2.2511013,
+            5.5745215,
+            2.4886858
+          ]
+        }
+      ]
+    },
+    "collider:1418157702785480373": {
+      "id": "collider:1418157702785480373",
+      "name": "collider-1418157702785480373",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:2892555549950191430",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0.123040795,
+            2.2872608,
+            -0.06784809
+          ],
+          "size": [
+            2.2511013,
+            5.5745215,
+            2.4886858
+          ]
+        }
+      ]
+    },
+    "collider:6689484429022176423": {
+      "id": "collider:6689484429022176423",
+      "name": "collider-6689484429022176423",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:2892555549950191430",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0.123040795,
+            2.2872608,
+            -0.06784809
+          ],
+          "size": [
+            2.2511013,
+            5.5745215,
+            2.4886858
+          ]
+        }
+      ]
+    },
+    "collider:3704044770678953823": {
+      "id": "collider:3704044770678953823",
+      "name": "collider-3704044770678953823",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:2892555549950191430",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0.123040795,
+            2.2872608,
+            -0.06784809
+          ],
+          "size": [
+            2.2511013,
+            5.5745215,
+            2.4886858
+          ]
+        }
+      ]
+    },
+    "collider:7369278286831093117": {
+      "id": "collider:7369278286831093117",
+      "name": "collider-7369278286831093117",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:2892555549950191430",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0.123040795,
+            2.2872608,
+            -0.06784809
+          ],
+          "size": [
+            2.2511013,
+            5.5745215,
+            2.4886858
+          ]
+        }
+      ]
+    },
+    "collider:4162316292839059564": {
+      "id": "collider:4162316292839059564",
+      "name": "collider-4162316292839059564",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:4660621866693889541",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            -0.0727005,
+            0.8740239,
+            0.037046432
+          ],
+          "size": [
+            4.0315094,
+            5.1471596,
+            11.061558
+          ]
+        }
+      ]
+    },
+    "collider:2321578338124808848": {
+      "id": "collider:2321578338124808848",
+      "name": "collider-2321578338124808848",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:4660621866693889541",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            -0.0727005,
+            0.8740239,
+            0.037046432
+          ],
+          "size": [
+            4.0315094,
+            5.1471596,
+            11.061558
+          ]
+        }
+      ]
+    },
+    "collider:7451576273990119669": {
+      "id": "collider:7451576273990119669",
+      "name": "collider-7451576273990119669",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:4660621866693889541",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            -0.0727005,
+            0.8740239,
+            0.037046432
+          ],
+          "size": [
+            4.0315094,
+            5.1471596,
+            11.061558
+          ]
+        }
+      ]
+    },
+    "collider:322441461823629200": {
+      "id": "collider:322441461823629200",
+      "name": "collider-322441461823629200",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:4660621866693889541",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            -0.0727005,
+            0.8740239,
+            0.037046432
+          ],
+          "size": [
+            4.0315094,
+            5.1471596,
+            11.061558
+          ]
+        }
+      ]
+    },
+    "collider:3825656006581699793": {
+      "id": "collider:3825656006581699793",
+      "name": "collider-3825656006581699793",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:4660621866693889541",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            -0.0727005,
+            0.8740239,
+            0.037046432
+          ],
+          "size": [
+            4.0315094,
+            5.1471596,
+            11.061558
+          ]
+        }
+      ]
+    },
+    "collider:8153448422004751430": {
+      "id": "collider:8153448422004751430",
+      "name": "collider-8153448422004751430",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:6954117473932892433",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            -0.0727005,
+            6.005507,
+            0.29156542
+          ],
+          "size": [
+            4.0315094,
+            15.410125,
+            10.55252
+          ]
+        }
+      ]
+    },
+    "collider:3232828763432948838": {
+      "id": "collider:3232828763432948838",
+      "name": "collider-3232828763432948838",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:6954117473932892433",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            -0.0727005,
+            6.005507,
+            0.29156542
+          ],
+          "size": [
+            4.0315094,
+            15.410125,
+            10.55252
+          ]
+        }
+      ]
+    },
+    "collider:1695086010776163524": {
+      "id": "collider:1695086010776163524",
+      "name": "collider-1695086010776163524",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:6954117473932892433",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            -0.0727005,
+            6.005507,
+            0.29156542
+          ],
+          "size": [
+            4.0315094,
+            15.410125,
+            10.55252
+          ]
+        }
+      ]
+    },
+    "collider:3932216678909713836": {
+      "id": "collider:3932216678909713836",
+      "name": "collider-3932216678909713836",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:6954117473932892433",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            -0.0727005,
+            6.005507,
+            0.29156542
+          ],
+          "size": [
+            4.0315094,
+            15.410125,
+            10.55252
+          ]
+        }
+      ]
+    },
+    "collider:8096059315021970422": {
+      "id": "collider:8096059315021970422",
+      "name": "collider-8096059315021970422",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:6954117473932892433",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            -0.0727005,
+            6.005507,
+            0.29156542
+          ],
+          "size": [
+            4.0315094,
+            15.410125,
+            10.55252
+          ]
+        }
+      ]
+    },
+    "collider:2207140424143372930": {
+      "id": "collider:2207140424143372930",
+      "name": "collider-2207140424143372930",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:5161089720656129294",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            5,
+            0
+          ],
+          "size": [
+            2,
+            10,
+            3
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "1fe4952ba4179d6419a2f38a7e6c8088"
+}

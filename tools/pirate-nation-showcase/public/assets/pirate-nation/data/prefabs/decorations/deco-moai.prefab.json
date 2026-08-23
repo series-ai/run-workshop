@@ -1,0 +1,87 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/deco-moai",
+  "name": "deco_moai",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Decos/prefabs/deco_moai.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:1542513730552304977"
+  ],
+  "nodes": {
+    "instance:1542513730552304977": {
+      "id": "instance:1542513730552304977",
+      "name": "deco_moai",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.2,
+          0.2,
+          0.2
+        ]
+      },
+      "sourcePrefabGuid": "b6957e3ebbc83494d95ebe6239d4c2e6",
+      "assetPath": "assets/pirate-nation/runtime/models/decorations/decorations-deco-moai.glb"
+    },
+    "collider:8655458487446192465": {
+      "id": "collider:8655458487446192465",
+      "name": "collider-8655458487446192465",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:7841102930394764566",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0.05960852,
+            15.783728,
+            1.6256422
+          ],
+          "size": [
+            12.610669,
+            41.567482,
+            13.251294
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "fe738ceef9e51c947944541b16a2ad95"
+}

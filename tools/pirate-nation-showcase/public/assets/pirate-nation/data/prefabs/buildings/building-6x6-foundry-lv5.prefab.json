@@ -1,0 +1,241 @@
+{
+  "packId": "pirate-nation",
+  "id": "buildings/building-6x6-foundry-lv5",
+  "name": "building_6x6_foundry_lv5",
+  "category": "buildings",
+  "sourcePath": "Assets/DemoPlaceholder/OptimisedAssets/Buildings/crafting/building_6x6_foundry_lv5.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:4688206703924397622"
+  ],
+  "nodes": {
+    "instance:700757800846385368": {
+      "id": "instance:700757800846385368",
+      "name": "VFX_Smokestack_lg (1)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:4688206703924397622",
+      "children": [],
+      "transform": {
+        "position": [
+          -0.003,
+          4.248,
+          0.588
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "dad5e518cffd5a842b077434cdfba1b3"
+    },
+    "instance:1096557478193302685": {
+      "id": "instance:1096557478193302685",
+      "name": "VFX_Smokestack_lg (1)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:4688206703924397622",
+      "children": [],
+      "transform": {
+        "position": [
+          -0.003,
+          4.248,
+          0.588
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "dad5e518cffd5a842b077434cdfba1b3"
+    },
+    "instance:2023201510782675203": {
+      "id": "instance:2023201510782675203",
+      "name": "VFX_FoundrySparks",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:4688206703924397622",
+      "children": [],
+      "transform": {
+        "position": [
+          -4.19,
+          0,
+          0.43
+        ],
+        "rotation": [
+          -0.7071068,
+          0,
+          0,
+          0.7071068
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "9c9abe6b55b52b743bd841f19cf138ba"
+    },
+    "instance:2175277938790102598": {
+      "id": "instance:2175277938790102598",
+      "name": "VFX_Smokestack_lg",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:4688206703924397622",
+      "children": [],
+      "transform": {
+        "position": [
+          -0.003,
+          4.285,
+          -1.164
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "dad5e518cffd5a842b077434cdfba1b3"
+    },
+    "instance:4688206703924397622": {
+      "id": "instance:4688206703924397622",
+      "name": "building_6x6_foundry_lv5",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:700757800846385368",
+        "instance:1096557478193302685",
+        "instance:2023201510782675203",
+        "instance:2175277938790102598",
+        "instance:4742777245571045195",
+        "instance:4835217579369533402",
+        "instance:6221835422225359833"
+      ],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          2.5,
+          2.5,
+          2.5
+        ]
+      },
+      "sourcePrefabGuid": "6cd66062f8cd6d546865adebd4c3fc0b",
+      "assetPath": "assets/pirate-nation/runtime/models/buildings/buildings-building-6x6-foundry-lv5.glb"
+    },
+    "instance:4742777245571045195": {
+      "id": "instance:4742777245571045195",
+      "name": "VFX_Smokestack_lg (1)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:4688206703924397622",
+      "children": [],
+      "transform": {
+        "position": [
+          -0.003,
+          4.248,
+          0.588
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "dad5e518cffd5a842b077434cdfba1b3"
+    },
+    "instance:4835217579369533402": {
+      "id": "instance:4835217579369533402",
+      "name": "VFX_Smokestack_lg",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:4688206703924397622",
+      "children": [],
+      "transform": {
+        "position": [
+          -0.003,
+          4.285,
+          -1.164
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "dad5e518cffd5a842b077434cdfba1b3"
+    },
+    "instance:6221835422225359833": {
+      "id": "instance:6221835422225359833",
+      "name": "VFX_Smokestack_lg",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:4688206703924397622",
+      "children": [],
+      "transform": {
+        "position": [
+          -0.003,
+          4.285,
+          -1.164
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "dad5e518cffd5a842b077434cdfba1b3"
+    }
+  },
+  "guid": "3f91faa1333a6ae47b39b3b72ba5a112"
+}

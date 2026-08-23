@@ -1,0 +1,87 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/deco-totem-monkey",
+  "name": "Building_2x2_Monkey",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Decos/prefabs/deco_totem_monkey.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:8677546657595954381"
+  ],
+  "nodes": {
+    "instance:8677546657595954381": {
+      "id": "instance:8677546657595954381",
+      "name": "Building_2x2_Monkey",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.075,
+          0.075,
+          0.075
+        ]
+      },
+      "sourcePrefabGuid": "aefcf865388d54be78a70ee81498b358",
+      "assetPath": "assets/pirate-nation/runtime/models/decorations/decorations-deco-2x2-totemmonkey.glb"
+    },
+    "collider:8213716470585637762": {
+      "id": "collider:8213716470585637762",
+      "name": "collider-8213716470585637762",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:6406653164252057783",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0.003981173,
+            1.0166949,
+            0.031380862
+          ],
+          "size": [
+            1.6229347,
+            3.0333898,
+            1.876586
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "010fca0b9baef3d45b79919eab6d4e67"
+}

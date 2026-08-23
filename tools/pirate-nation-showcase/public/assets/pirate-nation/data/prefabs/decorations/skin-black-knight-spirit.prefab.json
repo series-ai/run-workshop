@@ -1,0 +1,101 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/skin-black-knight-spirit",
+  "name": "skin_black_knight_spirit",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/OptimisedAssets/PirateSkins/black_knight_spirit/skin_black_knight_spirit.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:3277535790094789496"
+  ],
+  "nodes": {
+    "instance:1333270239801849976": {
+      "id": "instance:1333270239801849976",
+      "name": "VFX_BlackKnightSpirt_Head",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:3277535790094789496",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0.011000101,
+          0.025999261
+        ],
+        "rotation": [
+          -3.716152e-9,
+          2.6076327e-10,
+          -1.4901158e-8,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "dfc3a36f14506f74e98318562756264d"
+    },
+    "instance:3277535790094789496": {
+      "id": "instance:3277535790094789496",
+      "name": "skin_black_knight_spirit",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:1333270239801849976",
+        "instance:6384603501396269999"
+      ],
+      "transform": {
+        "position": [
+          106.43,
+          0.54999995,
+          96.31
+        ],
+        "rotation": [
+          0.00073407753,
+          0.99641836,
+          0.008696691,
+          0.084109046
+        ],
+        "scale": [
+          5,
+          5,
+          5
+        ]
+      },
+      "sourcePrefabGuid": "c75cbd9d3f01d9d43a0a50bed9a4af35",
+      "assetPath": "assets/pirate-nation/runtime/models/characters-skins/characters-skins-skin-black-knight-spirit.glb"
+    },
+    "instance:6384603501396269999": {
+      "id": "instance:6384603501396269999",
+      "name": "VFX_BlackKnightSpirt_Hand",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:3277535790094789496",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "37ac5cd99c1a70f47b03fd1d223b62fd"
+    }
+  },
+  "guid": "893d4ec271401cc4791ba5c76c9178f6"
+}

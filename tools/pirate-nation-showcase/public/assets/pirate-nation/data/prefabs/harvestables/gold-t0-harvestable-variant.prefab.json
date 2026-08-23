@@ -1,0 +1,135 @@
+{
+  "packId": "pirate-nation",
+  "id": "harvestables/gold-t0-harvestable-variant",
+  "name": "Gold_T0_Harvestable Variant",
+  "category": "harvestables",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/Harverstables/HarvestablePrefabs/Gold_T0_Harvestable Variant.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:2434968373599978048"
+  ],
+  "nodes": {
+    "instance:207961242458461868": {
+      "id": "instance:207961242458461868",
+      "name": "chest_common_open",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:2434968373599978048",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          -7.77,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.6999999,
+          0.7,
+          0.6999999
+        ]
+      },
+      "sourcePrefabGuid": "11535b63d34f34ef7a605f93f1276237",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-chest-common-open.glb"
+    },
+    "instance:2049419506395836914": {
+      "id": "instance:2049419506395836914",
+      "name": "SparkleVFX",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:2434968373599978048",
+      "children": [],
+      "transform": {
+        "position": [
+          -5.3,
+          13.2,
+          -7.31
+        ],
+        "rotation": [
+          0,
+          0.38268343,
+          0,
+          0.92387956
+        ],
+        "scale": [
+          1.8,
+          1.1,
+          1.2372969
+        ]
+      },
+      "sourcePrefabGuid": "df0d17416ce47d14db4a6c7c22bf9ea1"
+    },
+    "instance:2434968373599978048": {
+      "id": "instance:2434968373599978048",
+      "name": "Gold_T0_Harvestable Variant",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": null,
+      "children": [
+        "instance:207961242458461868",
+        "instance:2049419506395836914",
+        "instance:6639760393124072928"
+      ],
+      "transform": {
+        "position": [
+          0,
+          1.55,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "a0700ee59815a42d6a6b9e373a2e0e2f"
+    },
+    "instance:6639760393124072928": {
+      "id": "instance:6639760393124072928",
+      "name": "chest_common",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:2434968373599978048",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          -7.77,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.6999999,
+          0.7,
+          0.6999999
+        ]
+      },
+      "sourcePrefabGuid": "b01e2b9824c9c44ff84aaa5363bcea9b",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-chest-common.glb"
+    }
+  },
+  "guid": "aa7c558ef2b3f41b488749158b7ff236",
+  "gameplay": {
+    "questId": "0xec76a041c0e4c2ce7e206c75855632bc59b456ccfe924a270fcea96405e47f4a",
+    "resourcePrefabGuid": "03c9d1328782348d7ad66330d297cae2",
+    "pickupSfxPath": "assets/pirate-nation/runtime/audio/sfx/sfx-harvest-pn-gold.mp3"
+  }
+}

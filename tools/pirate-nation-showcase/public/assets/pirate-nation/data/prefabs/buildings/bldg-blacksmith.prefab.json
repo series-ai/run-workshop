@@ -1,0 +1,144 @@
+{
+  "packId": "pirate-nation",
+  "id": "buildings/bldg-blacksmith",
+  "name": "Building_4x8_Blacksmith",
+  "category": "buildings",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Buildings/prefabs/bldg_blacksmith.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:489122964082945598"
+  ],
+  "nodes": {
+    "instance:489122964082945598": {
+      "id": "instance:489122964082945598",
+      "name": "Building_4x8_Blacksmith",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:5633526378167333911",
+        "instance:5758502669114678315"
+      ],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.0633,
+          0.0633,
+          0.0633
+        ]
+      },
+      "sourcePrefabGuid": "299369608b57c71458071090158f1a32",
+      "assetPath": "assets/pirate-nation/runtime/models/buildings/buildings-building-4x8-blacksmith.glb"
+    },
+    "instance:5633526378167333911": {
+      "id": "instance:5633526378167333911",
+      "name": "Winter Blacksmith",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:489122964082945598",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "8a5c36345398749929fe90c9bc6a79ff"
+    },
+    "instance:5758502669114678315": {
+      "id": "instance:5758502669114678315",
+      "name": "VFX_Smokestack",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:489122964082945598",
+      "children": [],
+      "transform": {
+        "position": [
+          2.44,
+          8.49,
+          0.61
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "64bf4addb0bde9a4ba309ef8357b08a6"
+    },
+    "collider:70178909310917359": {
+      "id": "collider:70178909310917359",
+      "name": "collider-70178909310917359",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:6516788525194144942",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            4,
+            0
+          ],
+          "size": [
+            15,
+            8,
+            10
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "af1cd20314c1eab48bf38c41e103d3bd"
+}

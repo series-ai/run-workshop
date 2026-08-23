@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/animal-pigeon",
+  "name": "animal_pigeon",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Animals/Prefabs/animal_pigeon.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:9197778114746918935"
+  ],
+  "nodes": {
+    "instance:9197778114746918935": {
+      "id": "instance:9197778114746918935",
+      "name": "animal_pigeon",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          2,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.25,
+          0.25,
+          0.25
+        ]
+      },
+      "sourcePrefabGuid": "f9cea8449b0867448ac05fc6a973996d",
+      "assetPath": "assets/pirate-nation/runtime/models/animals/animals-animal-pigeon.glb"
+    }
+  },
+  "guid": "f69a73f8830ee2f48a0cd699db58df22"
+}

@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/skin-jackolantern",
+  "name": "skin_jackolantern",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/OptimisedAssets/PirateSkins/JackOLantern/skin_jackolantern.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:1722745227787744093"
+  ],
+  "nodes": {
+    "instance:1722745227787744093": {
+      "id": "instance:1722745227787744093",
+      "name": "skin_jackolantern",
+      "kind": "mesh",
+      "active": false,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          105.80368,
+          0.49993896,
+          99.71338
+        ],
+        "rotation": [
+          0,
+          -0.6110998,
+          0,
+          0.7915536
+        ],
+        "scale": [
+          6,
+          6,
+          6
+        ]
+      },
+      "sourcePrefabGuid": "3602e8bb1ced88b4580af1d4674a95ba",
+      "assetPath": "assets/pirate-nation/runtime/models/characters-skins/characters-skins-skin-jackolantern.glb"
+    }
+  },
+  "guid": "d67ad63e38fb3704e90379bccf5b042e"
+}

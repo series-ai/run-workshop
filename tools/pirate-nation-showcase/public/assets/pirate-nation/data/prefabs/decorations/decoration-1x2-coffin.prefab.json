@@ -1,0 +1,87 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/decoration-1x2-coffin",
+  "name": "decoration_1x2_coffin",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Decos/Undead/prefabs/decoration_1x2_coffin.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:2431656948937556096"
+  ],
+  "nodes": {
+    "instance:2431656948937556096": {
+      "id": "instance:2431656948937556096",
+      "name": "decoration_1x2_coffin",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.25,
+          0.25,
+          0.25
+        ]
+      },
+      "sourcePrefabGuid": "8c70de9ff9160b1498e0f00ca4158408",
+      "assetPath": "assets/pirate-nation/runtime/models/decorations/decorations-decoration-1x2-coffin.glb"
+    },
+    "collider:89387334163172075": {
+      "id": "collider:89387334163172075",
+      "name": "collider-89387334163172075",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:2467950656685332731",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            -1.4727937,
+            3.0152943,
+            0.740724
+          ],
+          "size": [
+            19.351538,
+            7.0308113,
+            11.227298
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "ff53a888ccf0f564d90eb57441b2c923"
+}

@@ -1,0 +1,74 @@
+{
+  "packId": "pirate-nation",
+  "id": "ships/deco-2x2-shipwreckpeices1",
+  "name": "deco_2x2_shipwreckpeices1",
+  "category": "ships",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Decos/prefabs/deco_2x2_shipwreckpeices1.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:5318383660898666645"
+  ],
+  "nodes": {
+    "instance:5318383660898666645": {
+      "id": "instance:5318383660898666645",
+      "name": "deco_2x2_shipwreckpeices1",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:6550630704808968638"
+      ],
+      "transform": {
+        "position": [
+          0,
+          2,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.22,
+          0.22,
+          0.22
+        ]
+      },
+      "sourcePrefabGuid": "1ca958ee3d378a04d82a49104e1e6a04",
+      "assetPath": "assets/pirate-nation/runtime/models/ships/ships-deco-2x2-shipwreckpeices1.glb"
+    },
+    "instance:6550630704808968638": {
+      "id": "instance:6550630704808968638",
+      "name": "deco_2x2_shipwreckpeices1_COL",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:5318383660898666645",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          -0.7071068,
+          0,
+          0,
+          0.7071067
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "4657b8501c50a71488c0fa5c1c355c42",
+      "assetPath": "assets/pirate-nation/runtime/models/decorations/decorations-rock-a.glb"
+    }
+  },
+  "guid": "979d52990ef4d7a4f9fa74974548a3d6"
+}

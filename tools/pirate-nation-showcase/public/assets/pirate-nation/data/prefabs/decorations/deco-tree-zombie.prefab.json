@@ -1,0 +1,87 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/deco-tree-zombie",
+  "name": "deco_tree_zombie",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Decos/Undead/prefabs/deco_tree_zombie.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:1329499193134731678"
+  ],
+  "nodes": {
+    "instance:1329499193134731678": {
+      "id": "instance:1329499193134731678",
+      "name": "deco_tree_zombie",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0.5,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.175,
+          0.175,
+          0.175
+        ]
+      },
+      "sourcePrefabGuid": "f023c00a0f166a546aab44cf5c24e0c0",
+      "assetPath": "assets/pirate-nation/runtime/models/decorations/decorations-deco-tree-zombie.glb"
+    },
+    "collider:5615022693997479557": {
+      "id": "collider:5615022693997479557",
+      "name": "collider-5615022693997479557",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:7767154623482761689",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            -0.7176849,
+            21.274603,
+            0.5271673
+          ],
+          "size": [
+            11.356902,
+            43.549213,
+            9.860888
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "33092ccb4a9d9ad43be7248e0f5010e9"
+}

@@ -1,0 +1,115 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/old-plant-palm-tree-tall",
+  "name": "effect_shadow_round",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Plants/prefabs/OLD_plant_palmTree_tall.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:5319857785460784790"
+  ],
+  "nodes": {
+    "instance:5319857785460784790": {
+      "id": "instance:5319857785460784790",
+      "name": "effect_shadow_round",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": null,
+      "children": [
+        "instance:6652570502540532627"
+      ],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          2,
+          2,
+          2
+        ]
+      },
+      "sourcePrefabGuid": "e307e376c32f31b43810e5e7cf8e491d"
+    },
+    "instance:6652570502540532627": {
+      "id": "instance:6652570502540532627",
+      "name": "plalnt_palmTree_tall",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:5319857785460784790",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.3,
+          0.3,
+          0.3
+        ]
+      },
+      "sourcePrefabGuid": "aa85a2a5c9ee203468d5ab6de4ceded1"
+    },
+    "collider:1744953033821237866": {
+      "id": "collider:1744953033821237866",
+      "name": "collider-1744953033821237866",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:6041096113449005211",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0.110268354,
+            3.0643327,
+            0.04936689
+          ],
+          "size": [
+            1.5840666,
+            7.1286664,
+            1.6854931
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "d32b75082d5e44847a3fd4215b8ba961"
+}

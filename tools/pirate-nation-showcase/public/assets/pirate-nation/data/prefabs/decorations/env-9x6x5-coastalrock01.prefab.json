@@ -1,0 +1,101 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/env-9x6x5-coastalrock01",
+  "name": "env_9x6x5_coastalrock01",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/environment/prefabs/env_9x6x5_coastalrock01.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:8508812503649943517"
+  ],
+  "nodes": {
+    "instance:3071025315964427977": {
+      "id": "instance:3071025315964427977",
+      "name": "deco_2x2_shipwreckpeices3",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:8508812503649943517",
+      "children": [],
+      "transform": {
+        "position": [
+          -32.614,
+          7.5,
+          20.132
+        ],
+        "rotation": [
+          0.07195446,
+          -0.86846817,
+          0.33686903,
+          -0.3565177
+        ],
+        "scale": [
+          0.5883007,
+          0.5883007,
+          0.5883007
+        ]
+      },
+      "sourcePrefabGuid": "5288cce4edff75048bf02602e1d45e72"
+    },
+    "instance:7530221620226098542": {
+      "id": "instance:7530221620226098542",
+      "name": "deco_2x2_shipwreckpeices2",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:8508812503649943517",
+      "children": [],
+      "transform": {
+        "position": [
+          -26.3,
+          8.1,
+          -13.3
+        ],
+        "rotation": [
+          0.06387193,
+          -0.37848523,
+          0.062108714,
+          0.9213098
+        ],
+        "scale": [
+          1.0882862,
+          1.0882862,
+          1.0882862
+        ]
+      },
+      "sourcePrefabGuid": "0ca45669b9c8ca4459c806e02f705d38"
+    },
+    "instance:8508812503649943517": {
+      "id": "instance:8508812503649943517",
+      "name": "env_9x6x5_coastalrock01",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:3071025315964427977",
+        "instance:7530221620226098542"
+      ],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.4,
+          0.4,
+          0.4
+        ]
+      },
+      "sourcePrefabGuid": "ac52737bd7a66b64cabd6b4881a975aa",
+      "assetPath": "assets/pirate-nation/runtime/models/decorations/decorations-env-9x6x5-coastalrock01.glb"
+    }
+  },
+  "guid": "425abfaf05c59624d9d87930d1124d39"
+}

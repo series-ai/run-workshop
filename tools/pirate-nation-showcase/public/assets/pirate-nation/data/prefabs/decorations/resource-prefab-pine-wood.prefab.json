@@ -1,0 +1,73 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/resource-prefab-pine-wood",
+  "name": "ResourcePrefab-pine_wood Variant",
+  "category": "decorations",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/Harverstables/Resources/ResourcePrefab-PineWood.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:2130705750394406996"
+  ],
+  "nodes": {
+    "instance:2130705750394406996": {
+      "id": "instance:2130705750394406996",
+      "name": "ResourcePrefab-pine_wood Variant",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:9132486212759882742"
+      ],
+      "transform": {
+        "position": [
+          -248.41,
+          2.1745782,
+          66.23
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "47bf6848c95fc4fccb37a33658dec97a"
+    },
+    "instance:9132486212759882742": {
+      "id": "instance:9132486212759882742",
+      "name": "ui_icon_pine_wood",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:2130705750394406996",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "b43711b1a250cd7479349d65ac0cfbc5",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-ui-icon-pine-wood.glb"
+    }
+  },
+  "guid": "5f7a3915b8ba3424fa0bdf3c302b3fef"
+}

@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "buildings/nye-buoy",
+  "name": "item_4x6x4_nyebuoy",
+  "category": "buildings",
+  "sourcePath": "Assets/_PirateNation_/Game/AssetCache/Libraries/Assets/Buildings/NYE Buoy/NYE Buoy.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:2772464402084899744"
+  ],
+  "nodes": {
+    "instance:2772464402084899744": {
+      "id": "instance:2772464402084899744",
+      "name": "item_4x6x4_nyebuoy",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          10.267557,
+          -23.695004,
+          -10.312123
+        ],
+        "rotation": [
+          9.313226e-8,
+          -0.70707273,
+          7.171184e-8,
+          0.70714086
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "ed3bb03514c6c4500b75cca45f6005db",
+      "assetPath": "assets/pirate-nation/runtime/models/buildings/buildings-item-4x6x4-nyebuoy.glb"
+    }
+  },
+  "guid": "6436bbcbf982b4f36a0c884b0a4b77e8"
+}

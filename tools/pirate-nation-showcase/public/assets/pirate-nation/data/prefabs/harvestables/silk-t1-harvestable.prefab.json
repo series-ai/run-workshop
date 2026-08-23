@@ -1,0 +1,135 @@
+{
+  "packId": "pirate-nation",
+  "id": "harvestables/silk-t1-harvestable",
+  "name": "Silk_T1_Harvestable",
+  "category": "harvestables",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/Harverstables/HarvestablePrefabs/Silk_T1_Harvestable.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:3795677923184914931"
+  ],
+  "nodes": {
+    "instance:3795677923184914931": {
+      "id": "instance:3795677923184914931",
+      "name": "Silk_T1_Harvestable",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": null,
+      "children": [
+        "instance:4211193890623238428",
+        "instance:4313998070804992318",
+        "instance:5297411760568492052"
+      ],
+      "transform": {
+        "position": [
+          157.08,
+          0,
+          -56.9
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "a0700ee59815a42d6a6b9e373a2e0e2f"
+    },
+    "instance:4211193890623238428": {
+      "id": "instance:4211193890623238428",
+      "name": "silk_full_lv1",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:3795677923184914931",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "bf657fc42affc3d49b525587a2646674",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-silk-full-lv1.glb"
+    },
+    "instance:4313998070804992318": {
+      "id": "instance:4313998070804992318",
+      "name": "SparkleVFX",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:3795677923184914931",
+      "children": [],
+      "transform": {
+        "position": [
+          -7.68,
+          28.95,
+          -7.38
+        ],
+        "rotation": [
+          0,
+          0.38268343,
+          0,
+          0.92387956
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "df0d17416ce47d14db4a6c7c22bf9ea1"
+    },
+    "instance:5297411760568492052": {
+      "id": "instance:5297411760568492052",
+      "name": "silk_empty_lv1",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:3795677923184914931",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "47f2d3736e957884ca5df8dd38dee55a",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-silk-empty-lv1.glb"
+    }
+  },
+  "guid": "32b12069d0c3467449e6234d1c7edd41",
+  "gameplay": {
+    "questId": "0x1667d0b940cd23aba9d1508cdde0f44c6240aa2390bdc8a48d4f1efc078c3d7f",
+    "resourcePrefabGuid": "ee7ae2a0fb63f4b4c94929ff35319e12",
+    "pickupSfxPath": "assets/pirate-nation/runtime/audio/sfx/sfx-harvest-pn-cotton.mp3"
+  }
+}

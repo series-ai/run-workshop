@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/plant-zombie",
+  "name": "plant_zombie",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Decos/Undead/prefabs/plant_zombie.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:3973056341910592393"
+  ],
+  "nodes": {
+    "instance:3973056341910592393": {
+      "id": "instance:3973056341910592393",
+      "name": "plant_zombie",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.175,
+          0.175,
+          0.175
+        ]
+      },
+      "sourcePrefabGuid": "eba9a615f3caca643917cb97887ba366",
+      "assetPath": "assets/pirate-nation/runtime/models/plants-nature/plants-nature-plant-zombie.glb"
+    }
+  },
+  "guid": "b251e4cabfed2dd4b826853565328d0f"
+}

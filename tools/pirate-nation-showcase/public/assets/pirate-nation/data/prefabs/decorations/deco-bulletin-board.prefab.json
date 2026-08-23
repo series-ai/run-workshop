@@ -1,0 +1,115 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/deco-bulletin-board",
+  "name": "deco_bulletinBoard",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Decos/prefabs/deco_bulletinBoard.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:509053549"
+  ],
+  "nodes": {
+    "instance:509053549": {
+      "id": "instance:509053549",
+      "name": "deco_bulletinBoard",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:611422401203193157"
+      ],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "scale": [
+          0.05,
+          0.05,
+          0.05
+        ]
+      },
+      "sourcePrefabGuid": "7d4927f5f0127864cb3c19b1517efc68"
+    },
+    "instance:611422401203193157": {
+      "id": "instance:611422401203193157",
+      "name": "effect_shadow_round",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:509053549",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          3,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "e307e376c32f31b43810e5e7cf8e491d"
+    },
+    "collider:2323878362349359627": {
+      "id": "collider:2323878362349359627",
+      "name": "collider-2323878362349359627",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:7798674560989973748",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            4,
+            0
+          ],
+          "size": [
+            3,
+            8,
+            1
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "b600fd1f7204f7c43909909b346d06d0"
+}

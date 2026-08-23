@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "buildings/town-hall",
+  "name": "TownHall",
+  "category": "buildings",
+  "sourcePath": "Assets/DemoPlaceholder/OptimisedAssets/Buildings/TownHall/TownHall.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:2439901204485737027"
+  ],
+  "nodes": {
+    "instance:2439901204485737027": {
+      "id": "instance:2439901204485737027",
+      "name": "TownHall",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          102.88362,
+          0.5,
+          115.49042
+        ],
+        "rotation": [
+          -0.7071068,
+          0,
+          0,
+          0.7071067
+        ],
+        "scale": [
+          10,
+          10,
+          10
+        ]
+      },
+      "sourcePrefabGuid": "4544a918edc2948d292bfd9aa1205a26",
+      "assetPath": "assets/pirate-nation/runtime/models/buildings/buildings-building-6x8-townhall.glb"
+    }
+  },
+  "guid": "a8f8dd585fba24b5899dbc22c80415cc"
+}

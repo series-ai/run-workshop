@@ -1,0 +1,371 @@
+{
+  "packId": "pirate-nation",
+  "id": "buildings/world-boss-totem-poi",
+  "name": "TotemPlatformFinal",
+  "category": "buildings",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Buildings/World Boss Totem POI.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:3249697780488597793"
+  ],
+  "nodes": {
+    "instance:3249697780488597793": {
+      "id": "instance:3249697780488597793",
+      "name": "TotemPlatformFinal",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:4068671749123648521",
+        "instance:5400489700495751346",
+        "instance:5400489700970334794",
+        "instance:5400489701060589223",
+        "instance:5400489701805824776",
+        "instance:5400489702251291512",
+        "instance:5666709015737806303"
+      ],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          8.940697e-8,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "a980ce9e719be4752973c0a6c71ae3da",
+      "assetPath": "assets/pirate-nation/runtime/models/buildings/buildings-building-3x3-totemplatform.glb"
+    },
+    "instance:4068671749123648521": {
+      "id": "instance:4068671749123648521",
+      "name": "TotemPlatformTorches",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:3249697780488597793",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "87ea9b94c978f4e6d9bee60e014f97ec",
+      "assetPath": "assets/pirate-nation/runtime/models/buildings/buildings-building-3x3-totemplatform.glb"
+    },
+    "instance:5400489700495751346": {
+      "id": "instance:5400489700495751346",
+      "name": "FX_Fire_01 (1)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:3249697780488597793",
+      "children": [],
+      "transform": {
+        "position": [
+          -47.94667,
+          62.58666,
+          20.666655
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "7c2d45330a7b1894ca1aacb0ebd30599"
+    },
+    "instance:5400489700970334794": {
+      "id": "instance:5400489700970334794",
+      "name": "FX_Fire_01 (2)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:3249697780488597793",
+      "children": [],
+      "transform": {
+        "position": [
+          1.4666492,
+          60.93333,
+          50.13333
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "7c2d45330a7b1894ca1aacb0ebd30599"
+    },
+    "instance:5400489701060589223": {
+      "id": "instance:5400489701060589223",
+      "name": "FX_Fire_01 (4)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:3249697780488597793",
+      "children": [],
+      "transform": {
+        "position": [
+          48.53332,
+          60.93333,
+          22.266666
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "7c2d45330a7b1894ca1aacb0ebd30599"
+    },
+    "instance:5400489701805824776": {
+      "id": "instance:5400489701805824776",
+      "name": "FX_Fire_01",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:3249697780488597793",
+      "children": [],
+      "transform": {
+        "position": [
+          -47.94667,
+          62.58666,
+          -20.800003
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "7c2d45330a7b1894ca1aacb0ebd30599"
+    },
+    "instance:5400489702251291512": {
+      "id": "instance:5400489702251291512",
+      "name": "FX_Fire_01 (3)",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:3249697780488597793",
+      "children": [],
+      "transform": {
+        "position": [
+          48.53332,
+          60.93333,
+          -18.266663
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "7c2d45330a7b1894ca1aacb0ebd30599"
+    },
+    "instance:5666709015737806303": {
+      "id": "instance:5666709015737806303",
+      "name": "WorldBossTotem",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:3249697780488597793",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          17.4,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "0f868784bd79748a6a304edfa0d4ac84"
+    },
+    "collider:3696128492200886208": {
+      "id": "collider:3696128492200886208",
+      "name": "collider-3696128492200886208",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:3696128492200886214",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            3.37,
+            0
+          ],
+          "size": [
+            90,
+            5.3,
+            90
+          ]
+        }
+      ]
+    },
+    "collider:3696128492200886209": {
+      "id": "collider:3696128492200886209",
+      "name": "collider-3696128492200886209",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:3696128492200886214",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            59.7,
+            0
+          ],
+          "size": [
+            35,
+            113.56,
+            35
+          ]
+        }
+      ]
+    },
+    "collider:3696128492200886210": {
+      "id": "collider:3696128492200886210",
+      "name": "collider-3696128492200886210",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:3696128492200886214",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            7.85,
+            0
+          ],
+          "size": [
+            70,
+            5.3,
+            70
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "1bafbdc78be8b401c8eab99f49ac8e91"
+}

@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/creature-parent",
+  "name": "model",
+  "category": "decorations",
+  "sourcePath": "Assets/_PirateNation_/Game/DailyDungeon/Assets/CreatureParent.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:2462116149189876870"
+  ],
+  "nodes": {
+    "instance:2462116149189876870": {
+      "id": "instance:2462116149189876870",
+      "name": "model",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "8d081c619af3f48268d81e82f719d3e1",
+      "assetPath": "assets/pirate-nation/runtime/models/decorations/decorations-model.glb"
+    }
+  },
+  "guid": "ef307c8addc12434190e3e58f7a9858c"
+}

@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "ships/ship-p-variant",
+  "name": "Galleon-ship_pirate01",
+  "category": "ships",
+  "sourcePath": "Assets/DemoPlaceholder/Models/ships/prefabs/ship_P_variant.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:2357906766560104871"
+  ],
+  "nodes": {
+    "instance:2357906766560104871": {
+      "id": "instance:2357906766560104871",
+      "name": "Galleon-ship_pirate01",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          -0.7071068,
+          0,
+          0,
+          0.7071067
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "7b190006e35e640a9854381ddc207965",
+      "assetPath": "assets/pirate-nation/runtime/models/ships/ships-pn-galleon-optimized-x1.glb"
+    }
+  },
+  "guid": "8226fc4a946a1e74ebf3cfadb619b20c"
+}

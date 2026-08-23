@@ -1,0 +1,110 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/buoy",
+  "name": "buoy_dailydungeon",
+  "category": "decorations",
+  "sourcePath": "Assets/_PirateNation_/Game/DailyDungeon/Assets/buoy.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:895465206999735254"
+  ],
+  "nodes": {
+    "instance:895465206999735254": {
+      "id": "instance:895465206999735254",
+      "name": "buoy_dailydungeon",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:8284936505288412802"
+      ],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          -0.7071068,
+          0,
+          0,
+          0.7071067
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "eaf47dd5926bd46048d0d1b9deef90a4"
+    },
+    "instance:8284936505288412802": {
+      "id": "instance:8284936505288412802",
+      "name": "Winter Buoy",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": "instance:895465206999735254",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "1f523591ecb5941aca8e07a39c47c5b4"
+    },
+    "collider:1536207799728020056": {
+      "id": "collider:1536207799728020056",
+      "name": "collider-1536207799728020056",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:4267305755082256467",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "capsule",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0,
+            50,
+            0
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "43e534486f33542688e797b832eca9b3"
+}

@@ -1,0 +1,73 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/resource-prefab-copper-ore",
+  "name": "ResourcePrefab-CopperOre Variant",
+  "category": "decorations",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/Harverstables/Resources/ResourcePrefab-CopperOre.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:2669240469780425349"
+  ],
+  "nodes": {
+    "instance:2669240469780425349": {
+      "id": "instance:2669240469780425349",
+      "name": "ResourcePrefab-CopperOre Variant",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:7541724258733960938"
+      ],
+      "transform": {
+        "position": [
+          367.455,
+          2.1745782,
+          152.58832
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "47bf6848c95fc4fccb37a33658dec97a"
+    },
+    "instance:7541724258733960938": {
+      "id": "instance:7541724258733960938",
+      "name": "ui_icon_copper_ore",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:2669240469780425349",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "9650dc4cf0de911488c8da175060bacf",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-ui-icon-copper-ore.glb"
+    }
+  },
+  "guid": "a19b9b3e91767c441a1fadc303fa7dde"
+}

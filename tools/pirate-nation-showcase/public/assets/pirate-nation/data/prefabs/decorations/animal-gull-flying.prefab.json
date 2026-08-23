@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/animal-gull-flying",
+  "name": "animal_gull_flying",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Animals/Prefabs/animal_gull_flying.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:2226341553420795474"
+  ],
+  "nodes": {
+    "instance:2226341553420795474": {
+      "id": "instance:2226341553420795474",
+      "name": "animal_gull_flying",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.25,
+          0.25,
+          0.25
+        ]
+      },
+      "sourcePrefabGuid": "27e18aa70edf46249a8c5ade6f8cca2d",
+      "assetPath": "assets/pirate-nation/runtime/models/animals/animals-animal-gull-flying.glb"
+    }
+  },
+  "guid": "688859080f64cd24da60825481dce6ac"
+}

@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/deco-hedge-zombie",
+  "name": "deco_hedge_zombie",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Decos/Undead/prefabs/deco_hedge_zombie.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:7711766556424036892"
+  ],
+  "nodes": {
+    "instance:7711766556424036892": {
+      "id": "instance:7711766556424036892",
+      "name": "deco_hedge_zombie",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0.5,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.225,
+          0.225,
+          0.225
+        ]
+      },
+      "sourcePrefabGuid": "47a3aa3fd0e89b84eb8f3ee38605e7b0",
+      "assetPath": "assets/pirate-nation/runtime/models/decorations/decorations-deco-hedge-zombie.glb"
+    }
+  },
+  "guid": "3f14a8ec5e0327647a6d6add49ca526d"
+}

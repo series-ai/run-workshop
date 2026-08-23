@@ -1,0 +1,87 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/plant-banana-tree",
+  "name": "PN-BananaTreeWithBanana",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Plants/prefabs/plant_bananaTree.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:1220592236638898798"
+  ],
+  "nodes": {
+    "instance:1220592236638898798": {
+      "id": "instance:1220592236638898798",
+      "name": "PN-BananaTreeWithBanana",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          1,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.25,
+          0.25,
+          0.25
+        ]
+      },
+      "sourcePrefabGuid": "6339a6008d54dad44ae6ff4c950cb162",
+      "assetPath": "assets/pirate-nation/runtime/models/plants-nature/plants-nature-pn-bananatreewithbanana.glb"
+    },
+    "collider:9125609450224139294": {
+      "id": "collider:9125609450224139294",
+      "name": "collider-9125609450224139294",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:8429032719607712720",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            0.022276878,
+            2.1502638,
+            0.01833132
+          ],
+          "size": [
+            1.4137871,
+            5.3005276,
+            1.3582964
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "7fa2d651226df0043a3aaffbded6580b"
+}

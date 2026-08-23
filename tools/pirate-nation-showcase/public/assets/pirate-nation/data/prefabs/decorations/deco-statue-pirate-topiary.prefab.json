@@ -1,0 +1,87 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/deco-statue-pirate-topiary",
+  "name": "Deco_2x2_piratestatue_topiary",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Decos/prefabs/deco_statue_pirate_topiary.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:3396938061149502435"
+  ],
+  "nodes": {
+    "instance:3396938061149502435": {
+      "id": "instance:3396938061149502435",
+      "name": "Deco_2x2_piratestatue_topiary",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          1,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.1,
+          0.1,
+          0.1
+        ]
+      },
+      "sourcePrefabGuid": "ff03d057d9bbb364497c8a09d9dc3ec5",
+      "assetPath": "assets/pirate-nation/runtime/models/decorations/decorations-deco-2x2-piratestatue-topiary.glb"
+    },
+    "collider:4792414027239698871": {
+      "id": "collider:4792414027239698871",
+      "name": "collider-4792414027239698871",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:3661614241438797050",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            -0.11049843,
+            4.2054663,
+            0.089114666
+          ],
+          "size": [
+            2.5812602,
+            9.410931,
+            2.3725371
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "498ac36954fc21d4db024041af65985c"
+}

@@ -1,0 +1,134 @@
+{
+  "packId": "pirate-nation",
+  "id": "harvestables/copperore-t3-harvestable",
+  "name": "copperore_T3_Harvestable",
+  "category": "harvestables",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/Harverstables/HarvestablePrefabs/copperore_T3_Harvestable.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:8970298830637038032"
+  ],
+  "nodes": {
+    "instance:1576837762980321851": {
+      "id": "instance:1576837762980321851",
+      "name": "SparkleVFX",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:8970298830637038032",
+      "children": [],
+      "transform": {
+        "position": [
+          -7.6800003,
+          28.950003,
+          -7.38
+        ],
+        "rotation": [
+          0,
+          0.38268343,
+          0,
+          0.92387956
+        ],
+        "scale": [
+          1.4799999,
+          1.3281164,
+          1.1949941
+        ]
+      },
+      "sourcePrefabGuid": "df0d17416ce47d14db4a6c7c22bf9ea1"
+    },
+    "instance:2186194574129917954": {
+      "id": "instance:2186194574129917954",
+      "name": "copperore_full_lv3",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:8970298830637038032",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "01b5c37cfbcfba345beb106a78344cd8",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-copperore-full-lv3.glb"
+    },
+    "instance:5273890149301443941": {
+      "id": "instance:5273890149301443941",
+      "name": "copperore_empty_lv3",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:8970298830637038032",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "2ab598d686f043e4f895f6aae47fa619",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-copperore-empty-lv3.glb"
+    },
+    "instance:8970298830637038032": {
+      "id": "instance:8970298830637038032",
+      "name": "copperore_T3_Harvestable",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:1576837762980321851",
+        "instance:2186194574129917954",
+        "instance:5273890149301443941"
+      ],
+      "transform": {
+        "position": [
+          131.29,
+          0,
+          -56.9
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "a0700ee59815a42d6a6b9e373a2e0e2f"
+    }
+  },
+  "guid": "acf4329abc5eae0469610e3802372c0a",
+  "gameplay": {
+    "resourcePrefabGuid": "a19b9b3e91767c441a1fadc303fa7dde",
+    "pickupSfxPath": "assets/pirate-nation/runtime/audio/sfx/sfx-harvest-pn-iron.mp3"
+  }
+}

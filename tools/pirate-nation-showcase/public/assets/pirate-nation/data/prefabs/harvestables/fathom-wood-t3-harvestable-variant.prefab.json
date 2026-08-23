@@ -1,0 +1,134 @@
+{
+  "packId": "pirate-nation",
+  "id": "harvestables/fathom-wood-t3-harvestable-variant",
+  "name": "FathomWood_T3_Harvestable Variant",
+  "category": "harvestables",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/Harverstables/HarvestablePrefabs/FathomWood_T3_Harvestable Variant.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:2580526672060994146"
+  ],
+  "nodes": {
+    "instance:759956853633201482": {
+      "id": "instance:759956853633201482",
+      "name": "Fathomwood_lv3",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:2580526672060994146",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "cdcb79a4ed3f16142bccf59e2801b840",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-fathomwood-lv3.glb"
+    },
+    "instance:2580526672060994146": {
+      "id": "instance:2580526672060994146",
+      "name": "FathomWood_T3_Harvestable Variant",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": null,
+      "children": [
+        "instance:759956853633201482",
+        "instance:6919134083353141530",
+        "instance:7190210547766503550"
+      ],
+      "transform": {
+        "position": [
+          104.39,
+          0.45,
+          91
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "a0700ee59815a42d6a6b9e373a2e0e2f"
+    },
+    "instance:6919134083353141530": {
+      "id": "instance:6919134083353141530",
+      "name": "SparkleVFX",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:2580526672060994146",
+      "children": [],
+      "transform": {
+        "position": [
+          -7.68,
+          28.95,
+          -7.38
+        ],
+        "rotation": [
+          0,
+          0.38268343,
+          0,
+          0.92387956
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "df0d17416ce47d14db4a6c7c22bf9ea1"
+    },
+    "instance:7190210547766503550": {
+      "id": "instance:7190210547766503550",
+      "name": "Fathomwood_empty_lv3",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:2580526672060994146",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "1fa5bcc42811be44491536e31e4e7fe3",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-fathomwood-empty-lv3.glb"
+    }
+  },
+  "guid": "ba050f1c49684eb41b4c8620c7e2cc55",
+  "gameplay": {
+    "resourcePrefabGuid": "28015b7048222e8479948436e6b87445",
+    "pickupSfxPath": "assets/pirate-nation/runtime/audio/sfx/sfx-harvest-pn-wood.mp3"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/deco-boulder-large",
+  "name": "deco_boulder_large",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Decos/prefabs/deco_boulder_large.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:4379729465151347060"
+  ],
+  "nodes": {
+    "instance:4379729465151347060": {
+      "id": "instance:4379729465151347060",
+      "name": "deco_boulder_large",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "scale": [
+          0.33,
+          0.33,
+          0.33
+        ]
+      },
+      "sourcePrefabGuid": "f2f45ad6865073e4a9c290a5e2f93000",
+      "assetPath": "assets/pirate-nation/runtime/models/decorations/decorations-deco-boulder-large.glb"
+    }
+  },
+  "guid": "b32736a249797954583e5740e76075f3"
+}

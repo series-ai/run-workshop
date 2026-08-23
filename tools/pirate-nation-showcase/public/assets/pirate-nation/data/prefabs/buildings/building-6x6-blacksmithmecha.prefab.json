@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "buildings/building-6x6-blacksmithmecha",
+  "name": "building_6x6_blacksmithmecha",
+  "category": "buildings",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Buildings/Mecha/prefabs/building_6x6_blacksmithmecha.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:1322870218294056942"
+  ],
+  "nodes": {
+    "instance:1322870218294056942": {
+      "id": "instance:1322870218294056942",
+      "name": "building_6x6_blacksmithmecha",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.06,
+          0.06,
+          0.06
+        ]
+      },
+      "sourcePrefabGuid": "c567f1224a7ea1b418ea58fe014a8e3f",
+      "assetPath": "assets/pirate-nation/runtime/models/buildings/buildings-building-6x6-blacksmithmecha.glb"
+    }
+  },
+  "guid": "1abcead673104764b8ec2552e21186d1"
+}

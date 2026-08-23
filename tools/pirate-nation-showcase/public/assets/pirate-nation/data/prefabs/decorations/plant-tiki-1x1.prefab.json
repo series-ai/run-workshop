@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/plant-tiki-1x1",
+  "name": "plant_tiki_1x1",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Plants/prefabs/plant_tiki_1x1.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:2745742146288736201"
+  ],
+  "nodes": {
+    "instance:2745742146288736201": {
+      "id": "instance:2745742146288736201",
+      "name": "plant_tiki_1x1",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          21.915785,
+          6.6123967,
+          -236.45694
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.2,
+          0.2,
+          0.2
+        ]
+      },
+      "sourcePrefabGuid": "cea9991432f769643b39aae30c803333",
+      "assetPath": "assets/pirate-nation/runtime/models/plants-nature/plants-nature-plant-tiki-1x1.glb"
+    }
+  },
+  "guid": "6e6d874410d1e1f41bee4c4156ead2fd"
+}

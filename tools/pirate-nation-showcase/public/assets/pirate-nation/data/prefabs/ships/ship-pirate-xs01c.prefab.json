@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "ships/ship-pirate-xs01c",
+  "name": "ship_pirate_XS01C",
+  "category": "ships",
+  "sourcePath": "Assets/DemoPlaceholder/Models/ships/prefabs/ship_pirate_XS01C.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:7328357970531005093"
+  ],
+  "nodes": {
+    "instance:7328357970531005093": {
+      "id": "instance:7328357970531005093",
+      "name": "ship_pirate_XS01C",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          -0.5,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "95c07f1815a74f34393a1b18474216f6",
+      "assetPath": "assets/pirate-nation/runtime/models/ships/ships-ship-pirate-xs01c.glb"
+    }
+  },
+  "guid": "6965fd7bddef1ab40981ff52af95d4e5"
+}

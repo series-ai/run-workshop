@@ -1,0 +1,135 @@
+{
+  "packId": "pirate-nation",
+  "id": "harvestables/gold-harvestable-variant",
+  "name": "Gold-Harvestable Variant",
+  "category": "harvestables",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/Harverstables/HarvestablePrefabs/Gold-Harvestable Variant.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:4715325204109731726"
+  ],
+  "nodes": {
+    "instance:2207091796335391389": {
+      "id": "instance:2207091796335391389",
+      "name": "SparkleVFX",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": "instance:4715325204109731726",
+      "children": [],
+      "transform": {
+        "position": [
+          -826,
+          655,
+          -1713
+        ],
+        "rotation": [
+          0.17388795,
+          0.4244396,
+          -0.33920452,
+          0.82131255
+        ],
+        "scale": [
+          280,
+          280,
+          280
+        ]
+      },
+      "sourcePrefabGuid": "df0d17416ce47d14db4a6c7c22bf9ea1"
+    },
+    "instance:4715325204109731726": {
+      "id": "instance:4715325204109731726",
+      "name": "Gold-Harvestable Variant",
+      "kind": "prefab-instance",
+      "active": false,
+      "parentId": null,
+      "children": [
+        "instance:2207091796335391389",
+        "instance:4888115341874174114",
+        "instance:7288146314787588695"
+      ],
+      "transform": {
+        "position": [
+          0,
+          1.55,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "a0700ee59815a42d6a6b9e373a2e0e2f"
+    },
+    "instance:4888115341874174114": {
+      "id": "instance:4888115341874174114",
+      "name": "chestOpened",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:4715325204109731726",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          -7.77,
+          0
+        ],
+        "rotation": [
+          0,
+          -0.7071068,
+          0,
+          0.7071068
+        ],
+        "scale": [
+          0.7,
+          0.7,
+          0.7
+        ]
+      },
+      "sourcePrefabGuid": "c09a73bbe7a4244e78b5d2d2cab3838f",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-chestopened.glb"
+    },
+    "instance:7288146314787588695": {
+      "id": "instance:7288146314787588695",
+      "name": "chect-closed",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:4715325204109731726",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          -7.77,
+          0
+        ],
+        "rotation": [
+          0,
+          -0.7071068,
+          0,
+          0.7071068
+        ],
+        "scale": [
+          0.7,
+          0.7,
+          0.7
+        ]
+      },
+      "sourcePrefabGuid": "981664d87c5f649d0a16bb1e85e17ce4",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-chestclosed.glb"
+    }
+  },
+  "guid": "00356b8f9d4ce448dafded48fd705407",
+  "gameplay": {
+    "questId": "1",
+    "resourcePrefabGuid": "03c9d1328782348d7ad66330d297cae2",
+    "pickupSfxPath": "assets/pirate-nation/runtime/audio/sfx/sfx-harvest-pn-gold.mp3"
+  }
+}

@@ -168,3 +168,7 @@ game.config.*.json
 
 # playwright-cli session artifacts (snapshots, console logs, screenshots)
 .playwright-cli/
+
+# Playwright test runner artifacts
+test-results/
+playwright-report/

@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "ships/building-4x7-shipwright-lv1",
+  "name": "building_4x7_shipwright_lv1",
+  "category": "ships",
+  "sourcePath": "Assets/DemoPlaceholder/OptimisedAssets/Buildings/crafting/building_4x7_shipwright_lv1.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:2464956134442091603"
+  ],
+  "nodes": {
+    "instance:2464956134442091603": {
+      "id": "instance:2464956134442091603",
+      "name": "building_4x7_shipwright_lv1",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "18db805d8cecaa6459a3f4c81a3ccd59",
+      "assetPath": "assets/pirate-nation/runtime/models/ships/ships-building-4x7-shipwright-lv1.glb"
+    }
+  },
+  "guid": "1f8d28ba893f89447a9cd4ca99f08c5c"
+}

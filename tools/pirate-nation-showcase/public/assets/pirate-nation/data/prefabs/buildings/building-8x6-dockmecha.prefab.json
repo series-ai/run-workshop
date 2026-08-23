@@ -1,0 +1,44 @@
+{
+  "packId": "pirate-nation",
+  "id": "buildings/building-8x6-dockmecha",
+  "name": "building_8x6_dockmecha",
+  "category": "buildings",
+  "sourcePath": "Assets/DemoPlaceholder/Models/Buildings/Mecha/prefabs/building_8x6_dockmecha.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:7825612708192144851"
+  ],
+  "nodes": {
+    "instance:7825612708192144851": {
+      "id": "instance:7825612708192144851",
+      "name": "building_8x6_dockmecha",
+      "kind": "mesh",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          -2.25,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          0.1,
+          0.1,
+          0.1
+        ]
+      },
+      "sourcePrefabGuid": "fc85ec634692db7428f56df237ffdc87",
+      "assetPath": "assets/pirate-nation/runtime/models/buildings/buildings-building-8x6-dockmecha.glb"
+    }
+  },
+  "guid": "7fd37720e69a0d84b908ed02e1ea6f5f"
+}

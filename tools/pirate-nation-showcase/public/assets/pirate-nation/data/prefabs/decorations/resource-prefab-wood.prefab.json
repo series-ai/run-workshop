@@ -1,0 +1,73 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/resource-prefab-wood",
+  "name": "ResourcePrefab-Wood",
+  "category": "decorations",
+  "sourcePath": "Assets/_PirateNation_/Prefabs/World/Harverstables/Resources/ResourcePrefab-Wood.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:1075790003767634410"
+  ],
+  "nodes": {
+    "instance:1075790003767634410": {
+      "id": "instance:1075790003767634410",
+      "name": "ResourcePrefab-Wood",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": null,
+      "children": [
+        "instance:8510341064357742253"
+      ],
+      "transform": {
+        "position": [
+          369.18,
+          2.1745782,
+          152.58832
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "47bf6848c95fc4fccb37a33658dec97a"
+    },
+    "instance:8510341064357742253": {
+      "id": "instance:8510341064357742253",
+      "name": "ui_icon_wood",
+      "kind": "mesh",
+      "active": true,
+      "parentId": "instance:1075790003767634410",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "afd6efc9918c94b378e71e564708fcab",
+      "assetPath": "assets/pirate-nation/runtime/models/harvestables/harvestables-ui-icon-wood.glb"
+    }
+  },
+  "guid": "a136fd60f9c1b44338bb6e43a0246fbe"
+}

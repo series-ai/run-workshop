@@ -1,0 +1,86 @@
+{
+  "packId": "pirate-nation",
+  "id": "decorations/tiki-statue",
+  "name": "TikiStatue",
+  "category": "decorations",
+  "sourcePath": "Assets/DemoPlaceholder/OptimisedAssets/Decos/TikiStatue/TikiStatue.prefab",
+  "kind": "prefab",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "rootNodeIds": [
+    "instance:870837647064957962"
+  ],
+  "nodes": {
+    "instance:870837647064957962": {
+      "id": "instance:870837647064957962",
+      "name": "TikiStatue",
+      "kind": "prefab-instance",
+      "active": true,
+      "parentId": null,
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          -6.123234e-17,
+          1,
+          6.123234e-17,
+          -3.7493994e-33
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "sourcePrefabGuid": "a5e174961629d4875b9ba0f58e15f616"
+    },
+    "collider:1748444576044669896": {
+      "id": "collider:1748444576044669896",
+      "name": "collider-1748444576044669896",
+      "kind": "group",
+      "active": true,
+      "parentId": "go:59883698322225499",
+      "children": [],
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "colliders": [
+        {
+          "type": "box",
+          "enabled": true,
+          "isTrigger": false,
+          "center": [
+            -3.67342e-40,
+            19.5,
+            0.5
+          ],
+          "size": [
+            16,
+            39,
+            17
+          ]
+        }
+      ]
+    }
+  },
+  "guid": "48f62188d2024214e974697ab8ab17ed"
+}
