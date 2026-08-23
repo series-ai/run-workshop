@@ -268,7 +268,12 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
           try { parsed = JSON.parse(data); } catch { continue; }
           if (event === 'progress') onProgress({ message: `${parsed.message ?? 'Working...'} (${elapsed()})` });
           else if (event === 'video') { gotVideo = true; fulfilled = true; }
-          else if (event === 'error') { hadError = true; setGenError(friendlyAiError(parsed.error ?? 'Unknown error')); }
+          else if (event === 'error') {
+            hadError = true;
+            // A Stop arrives as a server 'Cancelled' event on the still-open stream
+            if (stopRequestedRef.current || parsed.error === 'Cancelled') setGenError('Stopped.');
+            else setGenError(friendlyAiError(parsed.error ?? 'Unknown error'));
+          }
           else if (event === 'done') break readLoop;
         }
       }

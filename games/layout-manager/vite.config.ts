@@ -1026,8 +1026,9 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         // cancel so a late-finishing agent never fulfills an abandoned download
         const abort = new AbortController();
         activeAborts.add(abort);
+        let finished = false; // set once the video is delivered (or we've errored out)
         const cancelAll = () => {
-          if (cancelled) return;
+          if (cancelled || finished) return; // a normal end-of-stream close must not abort a delivered download
           cancelled = true;
           fulfillTicket(ticket, null);
           if (!clientGone) { send('error', { error: 'Cancelled' }); send('done', {}); res.end(); }
@@ -1078,8 +1079,7 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         child.stderr.on('data', (d: Buffer) => { errBuf += d.toString(); });
         child.on('close', async (code: number | null) => {
           cleanupTmp();
-          activeAborts.delete(abort);
-          if (cancelled) return; // already answered by the abort handler
+          if (cancelled) { activeAborts.delete(abort); return; } // already answered by the abort handler
           try {
             const clean = out.replace(/\x1b\[[0-9;]*m/g, '');
             const urls = Array.from(new Set(clean.match(/https?:\/\/[^\s"']+\.(?:mp4|webm|mov)(?:\?[^\s"']*)?/gi) ?? []));
@@ -1097,21 +1097,26 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
               }
             }
             if (!buf) {
+              finished = true;
               fulfillTicket(ticket, null); // abort the waiting download
               send('error', { error: `Hermes returned no video${code ? ` (exit ${code})` : ''}: ${(clean.trim() || errBuf).slice(0, 300)}` });
               send('done', {});
+              activeAborts.delete(abort);
               res.end();
               return;
             }
+            finished = true; // from here a close must NOT abort the delivered download
             fulfillTicket(ticket, buf); // stream into the click-time download
             send('progress', { message: `Saving video (${(buf.length / 1048576).toFixed(1)} MB)...` });
             send('video', { bytes: buf.length });
             send('done', {});
           } catch (e) {
+            finished = true;
             fulfillTicket(ticket, null);
             send('error', { error: e instanceof Error ? e.message : 'Unknown error' });
             send('done', {});
           }
+          activeAborts.delete(abort);
           res.end();
         });
       });
