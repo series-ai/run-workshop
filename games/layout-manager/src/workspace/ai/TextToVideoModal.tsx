@@ -1,5 +1,5 @@
 import { uuid } from '../uuid';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { UserConfig } from '../userConfig';
 import type { ImageNode } from '../types';
@@ -92,8 +92,10 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
   const [genError, setGenError] = useState<string | null>(null);
 
   // Which selected image is the Start (main) frame, and — for families that
-  // support it — which (if any) is the End frame. Selection order isn't
-  // controllable, so the user picks by clicking thumbnails; End is opt-in.
+  // support it — which is the End frame. Selection order isn't controllable,
+  // so the user picks by clicking: the clicked image is Start and, with 2+
+  // images on an end-frame model, another image is always the End (the
+  // swapped-out Start if any, else the first other). Clicking either swaps.
   const [startRefId, setStartRefId] = useState<string | null>(null);
   const [endRefId, setEndRefId] = useState<string | null>(null);
   const shownRefs = refNodes.slice(0, 8);
@@ -159,7 +161,13 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
   // Stop a running generation: server-side cancel (kills the Hermes agent /
   // aborts the Fal poll) plus the pending download. Fal may still bill a
   // job it already started — this saves time, not necessarily money.
+  // Local stop state covers the client-side prepare phase (before anything is
+  // registered server-side) and aborts the in-flight request itself
+  const stopRequestedRef = useRef(false);
+  const requestAbortRef = useRef<AbortController | null>(null);
   const handleStop = useCallback(() => {
+    stopRequestedRef.current = true;
+    requestAbortRef.current?.abort();
     import('./aiClient').then((m) => m.cancelGeneration());
   }, []);
 
@@ -167,6 +175,9 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
     if (!prompt.trim() || generating) return;
     setGenError(null);
     setGenerating(true);
+    stopRequestedRef.current = false;
+    const requestAbort = new AbortController();
+    requestAbortRef.current = requestAbort;
 
     // Claim the download ticket NOW, inside the click — the save dialog
     // appears immediately; the video streams into it when generation ends
@@ -210,15 +221,19 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
         if (endNode) endImage = await toPng(endNode);
         if (refNodesExtra.length) refImages = await Promise.all(refNodesExtra.map(toPng));
       }
+      // Stop pressed while preparing: nothing was submitted — just bail
+      if (stopRequestedRef.current) throw new Error('Cancelled');
 
       const resp = isFal
         ? await fetch('/__ai-generate-fal-video', {
             method: 'POST',
+            signal: requestAbort.signal,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ apiKey: config.falApiKey, model: fam?.id, prompt: prompt.trim(), ticket, duration, aspectRatio: effectiveAspect, resolution, audio: falAudio, negativePrompt: falNegative, image, endImage, refImages }),
           })
         : await fetch('/__ai-generate-hermes-video', {
             method: 'POST',
+            signal: requestAbort.signal,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prompt: prompt.trim(), ticket, duration, aspectRatio: effectiveAspect, resolution, image, refImages }),
           });
@@ -258,8 +273,11 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
         import('./completionSound').then((m) => m.playCompletionSound());
       }
     } catch (e) {
-      setGenError(friendlyAiError(e instanceof Error ? e.message : 'Unknown error'));
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      if (stopRequestedRef.current || /abort/i.test(msg) || msg === 'Cancelled') setGenError('Stopped.');
+      else setGenError(friendlyAiError(msg));
     }
+    requestAbortRef.current = null;
     if (!fulfilled) void abortDownload();
     onProgress(null);
     setGenerating(false);
