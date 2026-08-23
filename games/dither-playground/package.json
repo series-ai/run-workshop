@@ -25,6 +25,7 @@
     "three": "~0.170.0"
   },
   "devDependencies": {
+    "@revenuecat/purchases-js": "^1.53.1",
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",
     "@types/three": "~0.170.0",
