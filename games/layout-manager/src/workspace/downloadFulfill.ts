@@ -20,11 +20,17 @@ export function postDownloadFulfill(ticket: string, body: Blob | null): Promise<
   const path = `/__download-fulfill/${ticket}`;
   const payload = new Blob([body ?? new Blob([])]);
   if (sibling && protocol === 'http:') {
+    // If the sibling host is unreachable (e.g. the dev server bound only to
+    // ::1 or only to 127.0.0.1), fall back to same-origin so the ticket is
+    // still fulfilled — that path merely reverts to the old pool-contention
+    // behavior instead of leaving the download hanging.
     return fetch(`http://${sibling}:${port}${path}`, {
       method: 'POST',
       body: payload,
       mode: 'no-cors',
-    }).catch(() => {});
+    }).catch(() =>
+      fetch(path, { method: 'POST', body: payload }).catch(() => {}),
+    );
   }
   return fetch(path, { method: 'POST', body: payload }).catch(() => {});
 }
