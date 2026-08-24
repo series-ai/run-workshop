@@ -1,0 +1,114 @@
+import { expect, test } from '@playwright/test'
+
+// Smoke: every tab renders against the real pack on the dev server. The 3D
+// canvases need WebGL; headless Chromium provides it via SwiftShader, but if
+// a runner has no GL at all the app's error boundary is the correct outcome —
+// both count as "rendered".
+
+test('overview tab renders the pack manifest', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: 'Pirate Nation Art & Audio Pack' })).toBeVisible()
+  await expect(page.getByText('375')).toBeVisible()
+  await expect(page.getByText('World Bosses & Sea Monsters')).toBeVisible()
+})
+
+test('models tab lists the catalog and opens the 3D viewer', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Models' }).click()
+
+  const search = page.getByPlaceholder(/Search 355 models/)
+  await expect(search).toBeVisible()
+
+  // Filter to a known small model, open its detail view.
+  await search.fill('kraken')
+  const card = page.getByRole('button', { name: /Kraken/ }).first()
+  await expect(card).toBeVisible()
+  await card.click()
+
+  await expect(page.getByRole('heading', { name: /Kraken/ })).toBeVisible()
+  // WebGL canvas, or the app's error boundary where GL is unavailable.
+  await expect(page.locator('.model-viewer canvas, .viewer-error').first()).toBeVisible()
+  // Kraken (world-bosses) ships no collision GLB — no toggle.
+  await expect(page.getByRole('button', { name: 'Collision', exact: true })).toHaveCount(0)
+})
+
+test('models with collision geometry offer a viewer toggle', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Models' }).click()
+
+  await page.getByPlaceholder(/Search 355 models/).fill('shipwright lv1')
+  // Card accessible name = model name + metadata text; anchor at the start.
+  await page.getByRole('button', { name: /^Building 4x7 Shipwright Lv1/ }).click()
+
+  // Viewer controls only exist when WebGL is available; where it is not, the
+  // error boundary replaces the viewer (same policy as the smoke test above).
+  if (await page.locator('.viewer-error').isVisible()) {
+    test.skip(true, 'WebGL unavailable — viewer replaced by error boundary')
+  }
+
+  const toggle = page.getByRole('button', { name: 'Collision', exact: true })
+  await expect(toggle).toBeVisible()
+  // Toggling must actually fetch the collision GLB, not just flip a class.
+  const collisionRequest = page.waitForRequest(
+    '**/models/ships/ships-building-4x7-shipwright-lv1-collision.glb',
+  )
+  await toggle.click()
+  await collisionRequest
+  await expect(toggle).toHaveClass(/active/)
+  await toggle.click()
+  await expect(toggle).not.toHaveClass(/active/)
+})
+
+test('avatar lab renders the character creator', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Avatar Lab' }).click()
+
+  await expect(page.getByRole('button', { name: 'Roll a pirate' })).toBeVisible()
+  await expect(page.getByText(/Parts \(326 across 12 slots\)/)).toBeVisible()
+  await expect(page.locator('.avatar-stage canvas, .viewer-error').first()).toBeVisible()
+})
+
+test('sprites tab renders the grid', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Sprites' }).click()
+
+  await expect(page.getByPlaceholder(/Search 513 sprites/)).toBeVisible()
+  const images = page.locator('.sprite-tile img')
+  await expect(images.first()).toBeVisible()
+  expect(await images.count()).toBeGreaterThan(50)
+})
+
+test('audio tab lists tracks with lazy players', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Audio' }).click()
+
+  const players = page.locator('audio[preload="none"]')
+  await expect(players.first()).toBeAttached()
+  expect(await players.count()).toBe(30)
+})
+
+test('model cards show pre-rendered thumbnails', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Models' }).click()
+  const firstThumb = page.locator('.model-card img').first()
+  await expect(firstThumb).toBeVisible()
+  await expect(firstThumb).toHaveJSProperty('naturalWidth', 320)
+})
+
+test('models tab keeps a stage mounted and navigates by keyboard', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Models' }).click()
+
+  // The stage is up before any card is clicked.
+  await expect(page.locator('.model-viewer canvas, .viewer-error').first()).toBeVisible()
+
+  const selectedName = () => page.locator('.model-card.selected .model-card-name').innerText()
+  const first = await selectedName()
+
+  await page.keyboard.press('ArrowRight')
+  await expect.poll(async () => await selectedName()).not.toBe(first)
+
+  const afterArrow = await selectedName()
+  await page.getByRole('button', { name: 'Random' }).click()
+  await expect.poll(async () => await selectedName()).not.toBe(afterArrow)
+})

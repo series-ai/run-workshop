@@ -11,4 +11,4 @@ licenses and attributions.
 - Picmon Map Editor — [`games/picmon-editor/THIRD_PARTY_NOTICES.md`](games/picmon-editor/THIRD_PARTY_NOTICES.md)
 - Layout Manager — [`games/layout-manager/THIRD_PARTY_NOTICES.md`](games/layout-manager/THIRD_PARTY_NOTICES.md)
 - 3D PFX Library — [`tools/3d-pfx-library/THIRD_PARTY_NOTICES.md`](tools/3d-pfx-library/THIRD_PARTY_NOTICES.md)
-- Pirate Nation Art Showcase — [`tools/pirate-nation-showcase/THIRD_PARTY_NOTICES.md`](tools/pirate-nation-showcase/THIRD_PARTY_NOTICES.md)
+- Pirate Nation Art Showcase — [`games/pirate-nation-showcase/THIRD_PARTY_NOTICES.md`](games/pirate-nation-showcase/THIRD_PARTY_NOTICES.md)
