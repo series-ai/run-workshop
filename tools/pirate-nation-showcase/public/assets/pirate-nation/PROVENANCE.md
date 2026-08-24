@@ -106,3 +106,28 @@ Games that use only this pack can keep an MIT (or compatible) license when they:
    `dc921b650c8a1d7c449b2a3553949d3e7c8266e9`.
 
 This pack is a converted extract. It is not the full Unity project.
+
+## 6. Post-extraction repairs
+
+### 2026-08-24 — Y-normalization repair
+
+The extractor normalized each model with a `normalizedShift`. It added that
+shift to the mesh vertex Y coordinates. It must add the shift to the root node
+transform. Composite models hold their parts under rotated pivot nodes. Each
+rotated pivot also rotated the baked shift. As a result, 141 multi-part models
+showed their parts away from the correct position (ships, buildings, world
+bosses). All 279 shifted models were also too high.
+
+The script `scripts/repair-model-normalization.ts` subtracted the shift from
+the POSITION data of each affected GLB. This restores the upstream pose. The
+`--verify` mode compared 5 repaired models with the upstream sources named in
+`sourceRelativePath`. The maximum vertex deviation was less than 1e-3.
+
+The script also refreshed `bounds`, `sizeBytes`, and `normalizedShift` in
+`runtime/models.json`. The `bounds` of a repaired model is the world AABB of
+the assembled pose. For a skinned model it is the bind-pose AABB. The `bounds`
+of a model with no shift is still the extractor's mesh-space union.
+
+The script is idempotent. Run `npm run repair:models` again after a
+re-extract. Check a re-extract against upstream with
+`npm run repair:models -- --verify`.

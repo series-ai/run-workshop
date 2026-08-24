@@ -23,7 +23,7 @@ export default defineConfig({
     emptyOutDir: true,
   },
   test: {
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
     // Node by default: the catalog and avatar-composition tests are pure
     // logic and need no DOM.
     environment: 'node',

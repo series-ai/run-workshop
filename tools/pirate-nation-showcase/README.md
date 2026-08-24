@@ -14,15 +14,19 @@ npm run dev        # http://localhost:5190
 ```
 
 Other scripts: `npm run build`, `npm run preview` (port 4190),
-`npm run typecheck`, `npm test` (vitest), `npm run test:e2e` (playwright).
+`npm run typecheck`, `npm test` (vitest), `npm run test:e2e` (playwright),
+`npm run repair:models` (one-time GLB normalization repair; see
+`public/assets/pirate-nation/PROVENANCE.md` §6).
 
 ## What the showcase shows
 
 - **Overview** — pack manifest, curated collections, provenance/attribution.
-- **Models** — searchable/sortable grid over all 375 GLBs in 10 categories;
-  per-model 3D viewer with orbit, turntable, wireframe, animation-clip
-  playback (~148 models are animated), real dimensions from baked bounds,
-  grid footprint, source path, and license.
+- **Models** — searchable/sortable grid over the 355 visual GLBs in 10
+  categories (the 20 `…-collision` GLBs are not separate entries); per-model
+  3D viewer with orbit, turntable, wireframe, animation-clip playback
+  (~148 models are animated), a Collision toggle that swaps in the collision
+  geometry where the pack ships one, real dimensions from baked bounds, grid
+  footprint, source path, and license.
 - **Avatar Lab** — a full pirate character creator. The shared art file ships
   326 part meshes on one 16-bone rig (12 slots: 19 species, 72 headwear,
   82 tops, …) plus 32 animation clips; the lab composes parts on the client,

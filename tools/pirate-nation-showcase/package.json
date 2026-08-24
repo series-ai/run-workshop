@@ -4,13 +4,14 @@
   "version": "0.1.0",
   "type": "module",
   "license": "SEE LICENSE IN ../../LICENSE.md",
-  "description": "Art & audio showcase for the MIT-licensed Pirate Nation asset pack (Proof of Play). Browse 375 models with animation playback, compose pirates in the Avatar Lab, and preview 513 sprites and 30 audio tracks.",
+  "description": "Art & audio showcase for the MIT-licensed Pirate Nation asset pack (Proof of Play). Browse 355 models (plus 20 collision meshes via a viewer toggle) with animation playback, compose pirates in the Avatar Lab, and preview 513 sprites and 30 audio tracks.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
+    "repair:models": "node --import tsx scripts/repair-model-normalization.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {
