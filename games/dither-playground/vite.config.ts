@@ -32,6 +32,10 @@ export default defineConfig(({ mode }) => {
       exclude: ['@series-inc/rundot-game-sdk'],
     },
     build: { target: 'es2022' }, // Support top-level await for embedded libraries
-    server: { port: 4317, strictPort: true },
+    // fs.allow: the dither-kit file: dependency symlinks outside this
+    // project's root; let the dev server serve its TypeScript source.
+    // Setting `allow` replaces Vite's default list, so '.' (the project
+    // root) must be included explicitly. Paths resolve relative to root.
+    server: { port: 4317, strictPort: true, fs: { allow: ['.', '../../tools/dither-kit'] } },
   };
 });

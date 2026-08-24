@@ -7,9 +7,9 @@ import { MediaPlane } from '../components/MediaPlane';
 import { DitherEffectUpdater } from '../components/DitherEffectUpdater';
 import { DitherControls } from '../components/DitherControls';
 import { DitherPostProcess, type DitherEffect } from '../dither/DitherPostProcess';
-import { ALL_PRESETS } from '../dither/presets';
+import { ALL_PRESETS } from 'dither-kit';
 import { Button, ControlsDrawer, FileButton, errorTextStyle, toolbarStyle, useIsMobile } from '../components/ui';
-import type { DitherEffectConfig } from '../dither/DitherEffect';
+import type { DitherEffectConfig } from 'dither-kit';
 
 // CC-BY 3.0, (c) Blender Foundation — see THIRD_PARTY_NOTICES.md.
 // Plain public/ path, not cdn-assets/ (that dir is CDN-uploaded by `rundot

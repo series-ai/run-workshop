@@ -7,9 +7,9 @@ import { MediaPlane } from '../components/MediaPlane';
 import { DitherEffectUpdater } from '../components/DitherEffectUpdater';
 import { DitherControls } from '../components/DitherControls';
 import { DitherPostProcess, type DitherEffect } from '../dither/DitherPostProcess';
-import { ALL_PRESETS } from '../dither/presets';
+import { ALL_PRESETS } from 'dither-kit';
 import { ControlsDrawer, FileButton, errorTextStyle, toolbarStyle, useIsMobile } from '../components/ui';
-import type { DitherEffectConfig } from '../dither/DitherEffect';
+import type { DitherEffectConfig } from 'dither-kit';
 
 function ImageStage({ url, aspect, config }: { url: string; aspect: number; config: DitherEffectConfig }) {
   const effectRef = useRef<DitherEffect>(null);
