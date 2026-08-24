@@ -121,6 +121,27 @@ export function gridFootprint(id: string): string | null {
   return match ? `${match[1]}×${match[2]}` : null
 }
 
+/** Collision GLBs ship as separate catalog entries with a `-collision` id
+ * suffix, next to their visual counterpart (upstream `Collision/` folders). */
+export function isCollisionModel(entry: Pick<PirateNationModelEntry, 'id'>): boolean {
+  return entry.id.endsWith('-collision')
+}
+
+/** Maps each visual model id to its collision counterpart, for models that
+ * ship one (`foo` ↔ `foo-collision`). Orphan collision entries are skipped. */
+export function buildCollisionIndex(
+  models: PirateNationModelEntry[],
+): Map<string, PirateNationModelEntry> {
+  const ids = new Set(models.map((entry) => entry.id))
+  const index = new Map<string, PirateNationModelEntry>()
+  for (const entry of models) {
+    if (!isCollisionModel(entry)) continue
+    const visualId = entry.id.slice(0, -'-collision'.length)
+    if (ids.has(visualId)) index.set(visualId, entry)
+  }
+  return index
+}
+
 const cache = new Map<string, Promise<unknown>>()
 
 function fetchJson<T>(path: string): Promise<T> {

@@ -1,6 +1,7 @@
 /**
  * Renders one pack model with orbit, turntable, wireframe, and animation
- * playback.
+ * playback; models that ship a `…-collision` GLB also get a Collision toggle
+ * that swaps the rendered geometry.
  *
  * Animation availability is not in the pack catalog, so clips are read from
  * the loaded GLB and reported up through `onAnimations` for the picker UI.
@@ -73,13 +74,19 @@ function ModelScene({ entry, clip, turntable, wireframe, onAnimations }: ModelSc
 
 export interface ModelViewerProps {
   entry: PirateNationModelEntry
+  /** Collision counterpart (`…-collision` GLB) when the pack ships one. */
+  collisionEntry?: PirateNationModelEntry | null
 }
 
-export function ModelViewer({ entry }: ModelViewerProps) {
+export function ModelViewer({ entry, collisionEntry = null }: ModelViewerProps) {
   const [clips, setClips] = useState<string[]>([])
   const [clip, setClip] = useState<string | null>(null)
   const [turntable, setTurntable] = useState(false)
   const [wireframe, setWireframe] = useState(false)
+  const [showCollision, setShowCollision] = useState(false)
+  // The entry the canvas actually renders: the collision GLB when toggled.
+  // Turntable/wireframe intentionally persist across the swap.
+  const activeEntry = showCollision && collisionEntry ? collisionEntry : entry
   // drei tracks the shared three.js loading manager — true while the GLB
   // fetch/parse is in flight. Shown as an overlay so the canvas never sits
   // as a silent black box mid-load.
@@ -96,7 +103,7 @@ export function ModelViewer({ entry }: ModelViewerProps) {
   // with the subject: a fixed ±5-unit frustum would clip big models to a
   // slice, and an unscaled normalBias shows up as diagonal shadow acne on
   // their flat voxel faces.
-  const maxDim = Math.max(...entry.bounds.size)
+  const maxDim = Math.max(...activeEntry.bounds.size)
   const lightDir = new Vector3(5, 8, 6).normalize().multiplyScalar(maxDim * 1.6)
 
   // Reset per-model viewer state; the animation list arrives after load.
@@ -105,6 +112,7 @@ export function ModelViewer({ entry }: ModelViewerProps) {
     setClip(null)
     setTurntable(false)
     setWireframe(false)
+    setShowCollision(false)
   }, [entry.id])
 
   return (
@@ -130,7 +138,7 @@ export function ModelViewer({ entry }: ModelViewerProps) {
         />
         <Suspense fallback={null}>
           <ModelScene
-            entry={entry}
+            entry={activeEntry}
             clip={clip}
             turntable={turntable}
             wireframe={wireframe}
@@ -141,7 +149,7 @@ export function ModelViewer({ entry }: ModelViewerProps) {
           args={[40, 40, stageColors.gridMain, stageColors.gridMinor]}
           position={[0, -0.001, 0]}
         />
-        <FitCamera rootName={MODEL_VIEWER_ROOT_NAME} fitKey={entry.id} />
+        <FitCamera rootName={MODEL_VIEWER_ROOT_NAME} fitKey={activeEntry.id} />
         <OrbitControls makeDefault />
       </Canvas>
 
@@ -173,6 +181,15 @@ export function ModelViewer({ entry }: ModelViewerProps) {
         >
           Wireframe
         </button>
+        {collisionEntry && (
+          <button
+            type="button"
+            className={showCollision ? 'toggle active' : 'toggle'}
+            onClick={() => setShowCollision((value) => !value)}
+          >
+            Collision
+          </button>
+        )}
         <button
           type="button"
           className="toggle"

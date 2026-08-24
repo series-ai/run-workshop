@@ -1,11 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  buildCollisionIndex,
   formatBytes,
   gridFootprint,
+  isCollisionModel,
   loadModels,
   PACK_BASE_URL,
   packAssetUrl,
   runtimeAssetUrl,
+  type PirateNationModelEntry,
 } from './catalog'
 
 describe('asset URL builders', () => {
@@ -65,5 +68,45 @@ describe('catalog loading', () => {
     // manifest.json is not cached yet in this test process.
     const { loadManifest } = await import('./catalog')
     await expect(loadManifest()).rejects.toThrow(/manifest\.json.*404/)
+  })
+})
+
+function fakeModel(id: string): PirateNationModelEntry {
+  return {
+    id,
+    name: id,
+    category: 'ships',
+    filename: `${id}.glb`,
+    relativePath: `models/ships/${id}.glb`,
+    sizeBytes: 1,
+    bounds: { min: [0, 0, 0], max: [1, 1, 1], size: [1, 1, 1] },
+    normalizedShift: 0,
+    sourceRelativePath: `src/${id}.gltf`,
+    license: 'MIT',
+    copyright: 'test',
+  }
+}
+
+describe('isCollisionModel', () => {
+  it('detects the -collision id suffix', () => {
+    expect(isCollisionModel(fakeModel('ships-raft-collision'))).toBe(true)
+    expect(isCollisionModel(fakeModel('ships-raft'))).toBe(false)
+  })
+})
+
+describe('buildCollisionIndex', () => {
+  it('maps visual ids to their collision counterpart', () => {
+    const raft = fakeModel('ships-raft')
+    const raftCollision = fakeModel('ships-raft-collision')
+    const buoy = fakeModel('world-buoy')
+    const index = buildCollisionIndex([raft, raftCollision, buoy])
+    expect(index.get('ships-raft')).toBe(raftCollision)
+    expect(index.has('world-buoy')).toBe(false)
+    expect(index.size).toBe(1)
+  })
+
+  it('skips collision entries with no visual counterpart', () => {
+    const index = buildCollisionIndex([fakeModel('ghost-collision')])
+    expect(index.size).toBe(0)
   })
 })

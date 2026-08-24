@@ -16,7 +16,7 @@ test('models tab lists the catalog and opens the 3D viewer', async ({ page }) =>
   await page.goto('/')
   await page.getByRole('button', { name: 'Models' }).click()
 
-  const search = page.getByPlaceholder(/Search 375 models/)
+  const search = page.getByPlaceholder(/Search 355 models/)
   await expect(search).toBeVisible()
 
   // Filter to a known small model, open its detail view.
@@ -28,6 +28,35 @@ test('models tab lists the catalog and opens the 3D viewer', async ({ page }) =>
   await expect(page.getByRole('heading', { name: /Kraken/ })).toBeVisible()
   // WebGL canvas, or the app's error boundary where GL is unavailable.
   await expect(page.locator('.model-viewer canvas, .viewer-error').first()).toBeVisible()
+  // Kraken (world-bosses) ships no collision GLB — no toggle.
+  await expect(page.getByRole('button', { name: 'Collision', exact: true })).toHaveCount(0)
+})
+
+test('models with collision geometry offer a viewer toggle', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Models' }).click()
+
+  await page.getByPlaceholder(/Search 355 models/).fill('shipwright lv1')
+  // Card accessible name = model name + metadata text; anchor at the start.
+  await page.getByRole('button', { name: /^Building 4x7 Shipwright Lv1/ }).click()
+
+  // Viewer controls only exist when WebGL is available; where it is not, the
+  // error boundary replaces the viewer (same policy as the smoke test above).
+  if (await page.locator('.viewer-error').isVisible()) {
+    test.skip(true, 'WebGL unavailable — viewer replaced by error boundary')
+  }
+
+  const toggle = page.getByRole('button', { name: 'Collision', exact: true })
+  await expect(toggle).toBeVisible()
+  // Toggling must actually fetch the collision GLB, not just flip a class.
+  const collisionRequest = page.waitForRequest(
+    '**/models/ships/ships-building-4x7-shipwright-lv1-collision.glb',
+  )
+  await toggle.click()
+  await collisionRequest
+  await expect(toggle).toHaveClass(/active/)
+  await toggle.click()
+  await expect(toggle).not.toHaveClass(/active/)
 })
 
 test('avatar lab renders the character creator', async ({ page }) => {

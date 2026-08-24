@@ -1,11 +1,14 @@
 /**
- * Browsable grid over the 375 pack models with search, category filters, and
- * sort; selecting a model opens the 3D viewer + provenance detail panel.
+ * Browsable grid over the pack's 355 visual models (collision GLBs surface as
+ * a viewer toggle, not as cards) with search, category filters, and sort;
+ * selecting a model opens the 3D viewer + provenance detail panel.
  */
 import { useEffect, useMemo, useState } from 'react'
 import {
+  buildCollisionIndex,
   formatBytes,
   gridFootprint,
+  isCollisionModel,
   loadModels,
   runtimeAssetUrl,
   type PirateNationModelEntry,
@@ -67,12 +70,18 @@ function formatDims(entry: PirateNationModelEntry): string {
   return `${x.toFixed(1)} × ${y.toFixed(1)} × ${z.toFixed(1)}`
 }
 
-function ModelDetail({ entry }: { entry: PirateNationModelEntry }) {
+function ModelDetail({
+  entry,
+  collisionEntry,
+}: {
+  entry: PirateNationModelEntry
+  collisionEntry: PirateNationModelEntry | null
+}) {
   const footprint = gridFootprint(entry.id)
   return (
     <div className="model-detail">
       <ViewerErrorBoundary>
-        <ModelViewer entry={entry} />
+        <ModelViewer entry={entry} collisionEntry={collisionEntry} />
       </ViewerErrorBoundary>
 
       <dl className="metadata">
@@ -115,6 +124,9 @@ function ModelDetail({ entry }: { entry: PirateNationModelEntry }) {
 
 export function ModelGallery() {
   const [models, setModels] = useState<PirateNationModelEntry[] | null>(null)
+  const [collisionIndex, setCollisionIndex] = useState<Map<string, PirateNationModelEntry>>(
+    new Map(),
+  )
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<string | null>(null)
@@ -122,7 +134,12 @@ export function ModelGallery() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   useEffect(() => {
-    loadModels().then(setModels, (err: Error) => setError(err.message))
+    loadModels().then((all) => {
+      // Collision GLBs are not browsable entries; they surface as a viewer
+      // toggle on their visual counterpart (see ModelViewer).
+      setCollisionIndex(buildCollisionIndex(all))
+      setModels(all.filter((entry) => !isCollisionModel(entry)))
+    }, (err: Error) => setError(err.message))
   }, [])
 
   const categories = useMemo(() => {
@@ -209,7 +226,7 @@ export function ModelGallery() {
               Close
             </button>
           </div>
-          <ModelDetail entry={selected} />
+          <ModelDetail entry={selected} collisionEntry={collisionIndex.get(selected.id) ?? null} />
         </aside>
       )}
     </div>
