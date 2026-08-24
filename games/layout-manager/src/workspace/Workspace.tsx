@@ -37,6 +37,7 @@ import { useAlignedPosition } from './ai/useDraggableModal';
 import { AiChatPanel, type ChatMessage } from './ai/AiChatPanel';
 import { registerWorkspaceSampler } from './workspaceSampler';
 import { drawNodeToCtx } from './renderNode';
+import { postDownloadFulfill } from './downloadFulfill';
 
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml'];
 // The browser sometimes reports an empty MIME type for valid images
@@ -1520,8 +1521,7 @@ export function Workspace() {
   }, [state.images, state.scaleFilter]);
 
   const saveImagesAsync = useCallback(async (jobs: { id: string; ticket: string; baseName: string }[], mode: '1:1' | 'display') => {
-    const fulfill = (ticket: string, body: Blob | null) =>
-      fetch(`/__download-fulfill/${ticket}`, { method: 'POST', body: body ?? new Blob([]) }).catch(() => {});
+    const fulfill = (ticket: string, body: Blob | null) => postDownloadFulfill(ticket, body);
     const loadImg = (src: string): Promise<HTMLImageElement> => new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve(img);

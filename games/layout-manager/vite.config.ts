@@ -19,6 +19,25 @@ function isCrossOriginRequest(req: import('node:http').IncomingMessage): boolean
   return false;
 }
 
+// Fulfill POSTs arrive from the app's sibling loopback host (localhost <->
+// 127.0.0.1) on purpose: every pending /__download GET holds one of the
+// browser's ~6 per-host connections, so a same-host fulfill for a many-image
+// save would queue behind the very downloads it completes and deadlock the
+// whole origin. A sibling loopback origin with the same port is the same
+// local user, so it may fulfill tickets.
+const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
+function isLoopbackSiblingOrigin(req: import('node:http').IncomingMessage): boolean {
+  const host = req.headers.host;
+  const origin = req.headers.origin;
+  if (!host || !origin) return false;
+  let o: URL;
+  try { o = new URL(origin); } catch { return false; }
+  const hostName = host.replace(/:\d+$/, '');
+  const hostPort = host.match(/:(\d+)$/)?.[1] ?? '80';
+  return o.protocol === 'http:' && o.port === hostPort &&
+    LOOPBACK_HOSTNAMES.has(o.hostname) && LOOPBACK_HOSTNAMES.has(hostName);
+}
+
 // ====== Gesture-safe download tickets (shared) ======
 // Browser downloads must start inside a user gesture, but the payload (a
 // composited image, a generated video) finishes long after the gesture
@@ -139,7 +158,7 @@ function imageProxyPlugin(): Plugin {
 
       server.middlewares.use('/__download-fulfill', async (req, res) => {
         if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
-        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        if (isCrossOriginRequest(req) && !isLoopbackSiblingOrigin(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         const m = (req.url ?? '').split('?')[0]!.match(TICKET_RE);
         if (!m) { res.writeHead(400); res.end('Bad ticket'); return; }
         const id = m[1]!;

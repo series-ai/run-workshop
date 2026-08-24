@@ -1,4 +1,5 @@
 import { uuid } from '../uuid';
+import { postDownloadFulfill } from '../downloadFulfill';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { UserConfig } from '../userConfig';
@@ -196,7 +197,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
     onProgress({ message: 'Starting video generation...' });
     // Abort the click-time download on ANY failure — otherwise the browser's
     // download entry sits pending until the server ticket times out
-    const abortDownload = () => fetch(`/__download-fulfill/${ticket}`, { method: 'POST', body: new Blob([]) }).catch(() => {});
+    const abortDownload = () => postDownloadFulfill(ticket, null);
     let fulfilled = false;
     try {
       // Re-encode through a canvas so blob URLs and WebP sources arrive as PNG
