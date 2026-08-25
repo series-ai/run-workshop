@@ -1265,6 +1265,9 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
           let lastStatus = '';
           for (let i = 0; i < 240 && !clientGone; i++) {
             await new Promise((r) => setTimeout(r, 3000));
+            // The poll can run 12 minutes but idle tickets die at 10 — keep
+            // the claimed download alive while the job is still cooking
+            touchAllTickets();
             const statusResp = await fetch(statusUrl, { headers: { 'Authorization': `Key ${apiKey}` }, signal: abort.signal });
             if (!statusResp.ok) continue;
             const statusJson = await statusResp.json();

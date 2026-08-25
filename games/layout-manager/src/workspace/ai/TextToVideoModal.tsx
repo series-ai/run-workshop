@@ -154,10 +154,12 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
     : (activeAspects.includes(aspectRatio) ? aspectRatio : (activeAspects[0] ?? aspectRatio));
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    // While generating, closing would unmount Stop and orphan the running job
+    // (the header close control is disabled for the same reason)
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape' && !generating) onClose(); };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [onClose]);
+  }, [onClose, generating]);
 
   // Stop a running generation: server-side cancel (kills the Hermes agent /
   // aborts the Fal poll) plus the pending download. Fal may still bill a
@@ -176,7 +178,10 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
   }, []);
 
   const handleGenerate = useCallback(async () => {
-    if (!prompt.trim() || generating) return;
+    // Same guards as the Generate button's disabled state — Ctrl+Enter calls
+    // this directly, and claiming a ticket for a request that can't start
+    // opens a save dialog only to abort it
+    if (!prompt.trim() || generating || !providerUp || (isFal && !fam) || (famNeedsImage && !sourceNode)) return;
     setGenError(null);
     setGenerating(true);
     stopRequestedRef.current = false;
@@ -290,7 +295,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
     if (!fulfilled) void abortDownload();
     onProgress(null);
     setGenerating(false);
-  }, [prompt, generating, duration, effectiveAspect, resolution, sourceNode, endNode, refNodesExtra, isFal, fam, falAudio, falNegative, config.falApiKey, onProgress]);
+  }, [prompt, generating, duration, effectiveAspect, resolution, sourceNode, endNode, refNodesExtra, isFal, fam, falAudio, falNegative, config.falApiKey, onProgress, providerUp, famNeedsImage]);
 
   return createPortal(
     <div
