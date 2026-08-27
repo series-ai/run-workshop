@@ -1088,15 +1088,20 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         if (cancelled) { activeAborts.delete(abort); for (const f of tmpFiles) fsMod.unlink(f).catch(() => {}); return; }
         const child = spawn('hermes', agentArgs, { stdio: ['ignore', 'pipe', 'pipe'] });
         const cleanupTmp = () => { for (const f of tmpFiles) fsMod.unlink(f).catch(() => {}); };
+        // The agent can run past the 10-minute idle ticket timeout — keep the
+        // claimed download alive while it works, the same way the Fal poll loop
+        // does, or a slow job's finished MP4 lands in a destroyed ticket.
+        const keepAlive = setInterval(touchAllTickets, 60 * 1000);
         // Either cancel path (global Stop or client gone) kills the agent
-        abort.signal.addEventListener('abort', () => { child.kill('SIGTERM'); cleanupTmp(); });
-        res.on('close', () => { child.kill('SIGTERM'); cleanupTmp(); });
+        abort.signal.addEventListener('abort', () => { clearInterval(keepAlive); child.kill('SIGTERM'); cleanupTmp(); });
+        res.on('close', () => { clearInterval(keepAlive); child.kill('SIGTERM'); cleanupTmp(); });
         send('progress', { message: `Generating ${duration}s video on Grok (${resolution}, ${aspect}) — typically 1-4 minutes...` });
         let out = '';
         let errBuf = '';
         child.stdout.on('data', (d: Buffer) => { out += d.toString(); });
         child.stderr.on('data', (d: Buffer) => { errBuf += d.toString(); });
         child.on('close', async (code: number | null) => {
+          clearInterval(keepAlive);
           cleanupTmp();
           if (cancelled) { activeAborts.delete(abort); return; } // already answered by the abort handler
           try {

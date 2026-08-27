@@ -60,6 +60,10 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
 
   const [providerId, setProviderId] = useState<VideoProviderId>('hermes-grok');
   const [hermesXaiUp, setHermesXaiUp] = useState(false);
+  // The status probe is async — until it answers we don't know whether Hermes
+  // is up, and reporting "not available" on a hunch shows a red alert on every
+  // open even when Hermes is working. Unknown is not the same as down.
+  const [hermesProbed, setHermesProbed] = useState(false);
   const [has1080, setHas1080] = useState(false);
   useEffect(() => {
     let cancelled = false;
@@ -70,7 +74,8 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
         setHermesXaiUp(!!st.hermesImageGen?.xai && config.hermesEnabled);
         setHas1080(!!st.hermesImageGen?.video1080);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setHermesProbed(true); });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -152,6 +157,22 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
   const effectiveAspect = sourceNode && autoAspect
     ? nearestAspect(sourceNode.naturalWidth || sourceNode.width, sourceNode.naturalHeight || sourceNode.height)
     : (activeAspects.includes(aspectRatio) ? aspectRatio : (activeAspects[0] ?? aspectRatio));
+
+  // Switching Fal model must pull the controls into that family's supported
+  // values. Otherwise no button reads as selected while the old value is still
+  // what gets sent, and the server silently clamps or aliases it — the length
+  // and size on screen stop matching what was actually generated.
+  useEffect(() => {
+    if (!isFal || !fam) return;
+    if (famDurations.length > 0 && !famDurations.includes(duration)) {
+      setDuration(famDurations.reduce((best, d) => Math.abs(d - duration) < Math.abs(best - duration) ? d : best, famDurations[0]!));
+    }
+    if (fam.resolutions && !fam.resolutions.includes(resolution)) setResolution(fam.resolutions[0]!);
+    if (activeAspects.length > 0 && !activeAspects.includes(aspectRatio)) setAspectRatio(activeAspects[0]!);
+  // famDurations/activeAspects are derived from fam — keying on its id avoids
+  // re-running on every render from the fresh array identities
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFal, fam?.id, duration, resolution, aspectRatio]);
 
   useEffect(() => {
     // While generating, closing would unmount Stop and orphan the running job
@@ -370,7 +391,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
           </label>
         )}
 
-        {!providerUp && (
+        {!providerUp && (isFal || hermesProbed) && (
           <div className="ai-modal-error" role="alert">
             {isFal
               ? 'Needs a Fal.ai API key (Preferences > AI).'
