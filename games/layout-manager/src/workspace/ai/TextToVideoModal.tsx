@@ -43,6 +43,7 @@ interface FalFamily {
   textEndpoint: string | null; imageEndpoint: string;
   durations: [number, number] | number[] | null;
   aspects: string[] | null; resolutions: string[] | null;
+  resolutionAliases?: Record<string, string>;
   imageDropsAspect?: boolean; endImageKey?: string; audio: boolean; negative: boolean; note?: string; typical?: string; elements?: boolean;
 }
 type VideoProviderId = (typeof VIDEO_PROVIDERS)[number]['id'];
@@ -87,6 +88,8 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
   // animation isn't stretched into whatever ratio happened to be selected
   const [autoAspect, setAutoAspect] = useState(true);
   const [resolution, setResolution] = useState<string>('720p');
+  // Hermes' own ladder — 1080p only when the plugin reports it
+  const hermesResolutions = has1080 ? ['480p', '720p', '1080p'] : ['480p', '720p'];
   const [falAudio, setFalAudio] = useState(true);
   const [falNegative, setFalNegative] = useState('');
   const [falFamilies, setFalFamilies] = useState<FalFamily[]>([]);
@@ -158,21 +161,50 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
     ? nearestAspect(sourceNode.naturalWidth || sourceNode.width, sourceNode.naturalHeight || sourceNode.height)
     : (activeAspects.includes(aspectRatio) ? aspectRatio : (activeAspects[0] ?? aspectRatio));
 
-  // Switching Fal model must pull the controls into that family's supported
-  // values. Otherwise no button reads as selected while the old value is still
-  // what gets sent, and the server silently clamps or aliases it — the length
-  // and size on screen stop matching what was actually generated.
+  // Resolution labels aren't a common scale ('768P', '2K', '4K' vs '720p'),
+  // so compare them by the pixel height they stand for
+  const resHeight = (r: string): number => {
+    const s = r.toLowerCase();
+    if (s === '2k') return 1440;
+    if (s === '4k') return 2160;
+    return Number(s.replace(/[^0-9]/g, '')) || 0;
+  };
+  /** Closest supported stand-in for a resolution: the family's own alias if it
+   *  declares one (the server applies the same table), else nearest by height —
+   *  never just the first entry, which would quietly drop 1080p to 480p. */
+  const snapResolution = (want: string, list: readonly string[], aliases?: Record<string, string>): string => {
+    if (list.includes(want)) return want;
+    const aliased = aliases?.[want.toLowerCase()];
+    if (aliased && list.includes(aliased)) return aliased;
+    const h = resHeight(want);
+    return list.reduce((best, r) => Math.abs(resHeight(r) - h) < Math.abs(resHeight(best) - h) ? r : best, list[0]!);
+  };
+
+  // Switching model must pull the controls into what the new provider actually
+  // supports. Otherwise no button reads as selected while the old value is
+  // still what gets sent and the server silently clamps or aliases it — the
+  // length and size on screen stop matching what was generated. Snap to the
+  // *nearest* supported value: picking the first entry would flip a portrait
+  // ratio to landscape or drop 1080p to 480p behind the user's back.
   useEffect(() => {
-    if (!isFal || !fam) return;
-    if (famDurations.length > 0 && !famDurations.includes(duration)) {
+    if (isFal && !fam) return;
+    if (isFal && famDurations.length > 0 && !famDurations.includes(duration)) {
       setDuration(famDurations.reduce((best, d) => Math.abs(d - duration) < Math.abs(best - duration) ? d : best, famDurations[0]!));
     }
-    if (fam.resolutions && !fam.resolutions.includes(resolution)) setResolution(fam.resolutions[0]!);
-    if (activeAspects.length > 0 && !activeAspects.includes(aspectRatio)) setAspectRatio(activeAspects[0]!);
-  // famDurations/activeAspects are derived from fam — keying on its id avoids
-  // re-running on every render from the fresh array identities
+    // Hermes takes any 1-15s, so only an out-of-range value needs correcting
+    if (!isFal && (duration < 1 || duration > 15)) setDuration(Math.max(1, Math.min(15, duration)));
+    const resList = isFal ? fam?.resolutions : hermesResolutions;
+    if (resList?.length && !resList.includes(resolution)) {
+      setResolution(snapResolution(resolution, resList, isFal ? fam?.resolutionAliases : undefined));
+    }
+    if (activeAspects.length > 0 && !activeAspects.includes(aspectRatio)) {
+      const [a, b] = aspectRatio.split(':').map(Number);
+      setAspectRatio(a && b ? nearestAspect(a, b) : activeAspects[0]!);
+    }
+  // famDurations/activeAspects/hermesResolutions are derived from fam/has1080 —
+  // keying on those avoids re-running on every render from fresh array identities
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFal, fam?.id, duration, resolution, aspectRatio]);
+  }, [isFal, fam?.id, has1080, duration, resolution, aspectRatio]);
 
   useEffect(() => {
     // While generating, closing would unmount Stop and orphan the running job
@@ -579,7 +611,7 @@ export function TextToVideoModal({ config, prompt, onPromptChange, refNodes, pos
           <label className="ai-modal-label">
             Resolution
             <div className="ai-modal-ratio-row">
-              {([...(['480p', '720p'] as const), ...(has1080 ? (['1080p'] as const) : [])]).map((r) => (
+              {hermesResolutions.map((r) => (
                 <button
                   key={r}
                   className={`ai-modal-ratio-btn${resolution === r ? ' ai-modal-ratio-btn-active' : ''}`}
