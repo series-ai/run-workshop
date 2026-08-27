@@ -1,6 +1,6 @@
 import { uuid } from './uuid';
 import { useRef, useCallback, useState, useEffect, useLayoutEffect } from 'react';
-import { useWorkspaceState } from './useWorkspaceState';
+import { useWorkspaceState, persistGeneratedImage } from './useWorkspaceState';
 import { ImageNodeComponent } from './ImageNode';
 import { Toolbar } from './Toolbar';
 import { ContextMenu } from './ContextMenu';
@@ -2737,7 +2737,7 @@ export function Workspace() {
           onPromptChange={setAiUnityPrompt}
           position={aiModalPosition}
           refNodes={state.images.filter((i) => state.selectedIds.has(i.id) && i.nodeType !== 'text')}
-          onGenerated={(localUrl, w, h, prompts, batchIndex) => {
+          onGenerated={async (localUrl, w, h, prompts, batchIndex) => {
             const MAX = 1024;
             let dw = w, dh = h;
             if (dw > MAX || dh > MAX) {
@@ -2746,12 +2746,15 @@ export function Workspace() {
               dh = Math.round(dh * s);
             }
             const pos = placeAiOutput(dw, dh, batchIndex);
+            // Land the result through the same path as an imported file, so the
+            // node holds real blob-backed bytes rather than a base64 string.
+            const src = await persistGeneratedImage(localUrl);
             dispatch({ type: 'SNAPSHOT' });
             dispatch({
               type: 'ADD_IMAGE',
               image: {
                 id: uuid(),
-                src: localUrl,
+                src,
                 fileName: 'unity_ai.png',
                 x: pos.x,
                 y: pos.y,
