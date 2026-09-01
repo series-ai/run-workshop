@@ -273,6 +273,14 @@ export const VALID_FACE_PARTS = AVATAR_PARTS.face.filter((part) =>
 )
 
 /**
+ * Eyebrow parts in the glTF that are genuine eyebrows on the brow ridge (y >= 0.50).
+ * (Indices 2, 5 are misnamed full face decals with mouths, and index 15 is an eye accent decal).
+ */
+export const VALID_EYEBROW_PARTS = AVATAR_PARTS.eyebrow.filter((part) =>
+  [1, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 19].includes(part.index),
+)
+
+/**
  * Rolls a complete, valid avatar selection from the catalog.
  *
  * Uses the supplied RNG so rolls can be replayed in tests.
@@ -330,8 +338,14 @@ export function randomAvatarSelection(rng: Rng = Math.random): AvatarSelection {
       selection.hair = null
       continue
     }
-    if (slot === 'eyebrow' && (faceHasBuiltInEyebrows(selection.face) || speciesHasBuiltInEyebrows(selection.species))) {
-      selection.eyebrow = null
+    if (slot === 'eyebrow') {
+      if (faceHasBuiltInEyebrows(selection.face) || speciesHasBuiltInEyebrows(selection.species)) {
+        selection.eyebrow = null
+      } else if (rng() < chance) {
+        selection.eyebrow = pick(VALID_EYEBROW_PARTS, rng).index
+      } else {
+        selection.eyebrow = null
+      }
       continue
     }
     if (rng() < chance) {

@@ -83,6 +83,12 @@ function getPartLabel(
   if (slot === 'face' && [2, 5, 15, 16].includes(part.index)) {
     return `face ${part.index} (eyebrows only)`
   }
+  if (slot === 'eyebrow' && [2, 5].includes(part.index)) {
+    return `eyebrow ${part.index} (face decal — contains mouth)`
+  }
+  if (slot === 'eyebrow' && part.index === 15) {
+    return `eyebrow 15 (eyes only)`
+  }
   const tint = part.tints.length > 0 ? ` [${part.tints.join(', ')}]` : ''
   return `${slot} ${part.index}${tint}`
 }

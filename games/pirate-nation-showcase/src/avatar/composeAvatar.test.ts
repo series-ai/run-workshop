@@ -113,6 +113,15 @@ describe('randomAvatarSelection', () => {
     }
   })
 
+  it('always rolls genuine eyebrows when eyebrow is equipped', () => {
+    for (let i = 0; i < 100; i++) {
+      const selection = randomAvatarSelection()
+      if (typeof selection.eyebrow === 'number') {
+        expect([2, 5, 15].includes(selection.eyebrow)).toBe(false)
+      }
+    }
+  })
+
   it('omits overlapping clothing slots for full-body skins', () => {
     // Force roll to pick full body species (e.g. species 14)
     const selection = randomAvatarSelection(() => 0.7)
