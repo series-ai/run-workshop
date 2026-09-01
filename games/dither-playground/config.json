@@ -1,0 +1,10 @@
+{
+  "appData": {
+    "id": "dither-playground",
+    "name": "Dither Playground",
+    "description": "Apply retro dithering algorithms and palettes to 3D scenes, images, and video.",
+    "versionTag": "0.1.0",
+    "thumbnailUrl": "",
+    "userState": {}
+  }
+}

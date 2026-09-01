@@ -95,6 +95,8 @@ export interface UserConfig {
   hermesEnabled: boolean;
   /** Offer the Claude Code chat provider */
   claudeCodeEnabled: boolean;
+  /** Unity scratch project path for Unity AI generation (Editor must be open on it) */
+  unityProjectPath: string;
   /** Local Ollama server URL */
   ollamaUrl: string;
   /** Ollama model name (empty = use first installed model) */
@@ -131,6 +133,7 @@ const defaultConfig: UserConfig = {
   hermesUrl: 'http://127.0.0.1:8645',
   hermesEnabled: true,
   claudeCodeEnabled: true,
+  unityProjectPath: '',
   ollamaUrl: 'http://127.0.0.1:11434',
   ollamaModel: '',
   comfyUrl: 'http://127.0.0.1:8188',

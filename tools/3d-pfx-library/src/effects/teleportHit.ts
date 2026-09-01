@@ -1,6 +1,11 @@
 import * as THREE from 'three'
 import { roundMetric } from '../constants/03'
 
+/** Arrival scars are authored to complete one semantic landing sentence inside
+ * the 720 ms review clip, rather than inheriting the longer particle burst
+ * clock and exposing an afterimage as their decay frame. */
+export const PFX_TELEPORT_ARRIVAL_CYCLE_MULTIPLIER = 0.78
+
 export function createPfxTeleportHitLifecycle(cycle: number): {
   energy: number
   ground: number

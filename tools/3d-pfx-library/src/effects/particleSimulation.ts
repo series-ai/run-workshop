@@ -1,17 +1,43 @@
 import * as THREE from 'three'
-import { getPfxParticleMotionKind, hashPfxSurfaceKey, parsePfxHexColor, samplePfxMeshEmitter, seededRandom } from '../constants/04'
+import {
+  PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_FLOOR,
+  PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_RANGE,
+  getPfxParticleMotionKind,
+  hashPfxSurfaceKey,
+  parsePfxHexColor,
+  samplePfxMeshEmitter,
+  seededRandom,
+} from '../constants/04'
 import { getPfxSurfaceColorIndex } from './surfaceColorIndex'
 import type { PfxPreset } from '../types/01'
 import type { PfxParticleSimulation, PfxRenderSurface } from '../types/02'
 
+// Keep enough particles on the gameplay-authoritative perimeter for an
+// unbroken first-frame warning, while reserving a sparse cohort for inward
+// particle currents. The support accents add spawn-specific radial direction
+// without becoming a second bright center or a mesh proxy.
+export const PFX_TELEGRAPH_BOUNDARY_OUTER_FRACTION = 0.92
+export const PFX_MATERIALIZE_GATHER_COHORT_FRACTION = 0.18
+export const PFX_MATERIALIZE_RELEASE_CONTACT_FRACTION = 0.64
+export const PFX_MATERIALIZE_RELEASE_GROUND_FRACTION = 0.69
+export const PFX_MATERIALIZE_GROUND_STREAM_LANES = 6
+export const PFX_MATERIALIZE_GATHER_FLOW_LANES = 16
+export const PFX_MATERIALIZE_GATHER_SOURCE_RADIUS_MIN = 0.54
+export const PFX_MATERIALIZE_GATHER_SOURCE_RADIUS_MAX = 0.9
+
 export function createPfxParticleSimulation(
-  preset: Pick<PfxPreset, 'effectId' | 'controls' | 'implementationProfile'>,
+  preset: Pick<PfxPreset, 'effectId' | 'controls' | 'implementationProfile' | 'reducedMotion'>,
   surface: Pick<PfxRenderSurface, 'kind' | 'role' | 'phase' | 'tuning'>,
 ): PfxParticleSimulation {
   const controls = preset.controls
   const tuning = surface.tuning
   const lodMultiplier = controls.lod.includes('high') ? 1 : controls.lod.includes('medium') ? 0.72 : 0.45
-  const count = Math.max(2, Math.floor(64 * controls.density * lodMultiplier * (tuning?.countScale ?? 1)))
+  const reducedMotionCountScale = preset.reducedMotion
+    ? tuning?.reducedMotionCountScale ?? 1
+    : 1
+  const count = Math.max(2, Math.floor(
+    64 * controls.density * lodMultiplier * (tuning?.countScale ?? 1) * reducedMotionCountScale,
+  ))
   const motionKind = getPfxParticleMotionKind(surface, preset)
   const rand = seededRandom((controls.seed || 1) * 31 + hashPfxSurfaceKey(surface))
   const scale = controls.scale
@@ -107,8 +133,9 @@ export function createPfxParticleSimulation(
       }
       case 'beam-telegraph-flow': {
         const progress = (i + 0.5) / count
-        const halfWidth = 0.1 + progress * 0.34
-        spawn[index] = (-1.55 + progress * 3.1) * scale
+        const laneSpread = Math.max(1, tuning?.spawnScale ?? 1)
+        const halfWidth = (0.1 + progress * 0.34) * laneSpread
+        spawn[index] = (-2.4 + progress * 5.0) * scale
         spawn[index + 1] = (0.05 + rand() * 0.08) * scale
         spawn[index + 2] = (rand() - 0.5) * halfWidth * scale
         direction[index] = -1
@@ -305,6 +332,232 @@ export function createPfxParticleSimulation(
         speed[i] = radius * (0.48 + rand() * 0.18)
         break
       }
+      case 'materialize-gather': {
+        // A player-height cylindrical reservoir converges from inside the
+        // telegraph boundary into the resolved arrival silhouette. Sixteen
+        // azimuth lanes preserve a spatial, particle-authored onset without
+        // exposing repeated columns. An independent low-discrepancy height
+        // sequence prevents head and shoulder bands from clustering on one
+        // azimuth/camera side.
+        orbitRadius[i] =
+          ((i + 0.5) * 0.7320508075688772) % 1
+        const depth = Math.min(1.5, Math.sqrt(tuning?.depthScale ?? 1))
+        const footprintScale = tuning?.spawnScale ?? 1
+        const radialProgress = ((i * 0.6180339887498948 + 0.17) % 1)
+        const heightProgress = ((i * 0.7548776662466927 + 0.09) % 1)
+        const gatherLane = i % PFX_MATERIALIZE_GATHER_FLOW_LANES
+        const gatherLaneIndex = Math.floor(
+          i / PFX_MATERIALIZE_GATHER_FLOW_LANES,
+        )
+        const gatherLaneCount = Math.ceil(
+          count / PFX_MATERIALIZE_GATHER_FLOW_LANES,
+        )
+        const gatherLaneProgress =
+          (gatherLaneIndex + 0.5) / gatherLaneCount
+        const gatherAngle =
+          gatherLane / PFX_MATERIALIZE_GATHER_FLOW_LANES * Math.PI * 2 +
+          (gatherLaneProgress - 0.5) * 0.22 +
+          Math.sin((gatherLaneIndex + 1) * 2.399963229728653) * 0.035
+        const gatherRadius =
+          (
+            PFX_MATERIALIZE_GATHER_SOURCE_RADIUS_MIN +
+            Math.sqrt(radialProgress) *
+              (
+                PFX_MATERIALIZE_GATHER_SOURCE_RADIUS_MAX -
+                PFX_MATERIALIZE_GATHER_SOURCE_RADIUS_MIN
+              )
+          ) * scale * footprintScale
+        const x = Math.cos(gatherAngle) * gatherRadius
+        const z = Math.sin(gatherAngle) * gatherRadius * depth
+        const sourceHeight =
+          0.16 +
+          heightProgress * 1.7 +
+          (rand() - 0.5) * 0.014
+        const y = sourceHeight * scale
+        spawn[index] = x
+        spawn[index + 1] = y
+        spawn[index + 2] = z
+        const inward = preset.reducedMotion ? 0.58 : 0.76
+        const tangent = preset.reducedMotion ? 0.08 : 0.14
+        const horizontalLength = Math.max(0.001, Math.hypot(x, z))
+        const radialX = x / horizontalLength
+        const radialZ = z / horizontalLength
+        const tangentX = -radialZ
+        const tangentZ = radialX
+        const targetHeight =
+          PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_FLOOR +
+          Math.pow(orbitRadius[i]!, 1.1) *
+            PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_RANGE
+        const directionX =
+          -radialX * inward +
+          tangentX * tangent
+        const directionY = THREE.MathUtils.clamp(
+          (targetHeight - sourceHeight) * 0.5,
+          -0.68,
+          0.68,
+        )
+        const directionZ =
+          -radialZ * inward +
+          tangentZ * tangent
+        const inverseDirectionLength = 1 / Math.hypot(
+          directionX,
+          directionY,
+          directionZ,
+        )
+        direction[index] = directionX * inverseDirectionLength
+        direction[index + 1] = directionY * inverseDirectionLength
+        direction[index + 2] = directionZ * inverseDirectionLength
+        speed[i] =
+          (0.68 + radialProgress * 0.16 + rand() * 0.06) *
+          scale *
+          speedScale
+        break
+      }
+      case 'materialize-release': {
+        // One emitter carries two temporally separate traditional-particle
+        // cohorts: early head-tailed lanes travel inward, then later particles
+        // launch outward from the compressed reservoir. A single symmetric
+        // radial field made onset and decay indistinguishable in stills.
+        const depth = Math.min(1.5, Math.sqrt(tuning?.depthScale ?? 1))
+        const gatherCount = Math.floor(
+          count * PFX_MATERIALIZE_GATHER_COHORT_FRACTION,
+        )
+        const groundCount = Math.floor(
+          count * PFX_MATERIALIZE_RELEASE_GROUND_FRACTION,
+        )
+        const groundReleaseCount = Math.max(0, groundCount - gatherCount)
+        const contactReleaseCount = Math.floor(
+          groundReleaseCount * PFX_MATERIALIZE_RELEASE_CONTACT_FRACTION,
+        )
+        const contactEnd = gatherCount + contactReleaseCount
+        const isGather = i < gatherCount
+        const isGroundRelease = i >= gatherCount && i < groundCount
+        const isContactRelease = i >= gatherCount && i < contactEnd
+        const isRisingRelease = i >= contactEnd && i < groundCount
+        const isElevatedRelease = i >= groundCount
+        const gatherProgress = (i + 0.5) / Math.max(1, gatherCount)
+        const gatherLane = i % PFX_MATERIALIZE_GROUND_STREAM_LANES
+        const gatherLaneCurve =
+          (1 - gatherProgress) * 0.58
+        const gatherAngle =
+          gatherLane / PFX_MATERIALIZE_GROUND_STREAM_LANES * Math.PI * 2 +
+          Math.sin((gatherLane + 1) * 2.399963229728653) * 0.08 +
+          gatherLaneCurve
+        const releaseIndex = Math.max(0, i - gatherCount)
+        const releaseBirthPhase =
+          ((i + 0.5) * 0.61803398875 % 1)
+        const releaseAngle =
+          releaseIndex * 2.399963229728653 +
+          Math.sin((releaseIndex + 1) * 1.61803398875) * 0.14
+        const radialProgress =
+          ((releaseIndex * 0.41421356237309503 + 0.31) % 1)
+        const heightProgress = ((i * 0.7548776662466927 + 0.13) % 1)
+        const releaseFootprintScale = tuning?.spawnScale ?? 1
+        const radius = isGather
+          ? (
+            0.2 + Math.sqrt(gatherProgress) * 0.4
+          ) * scale * releaseFootprintScale
+          : isGroundRelease
+            ? (
+              isContactRelease
+                ? 0.035 + Math.pow(radialProgress, 1.8) * 0.285
+                : 0.13 + Math.sqrt(radialProgress) * 0.19
+            ) * scale * releaseFootprintScale
+          : (
+            // Late fragments stay inside the peak footprint. They provide a
+            // short exhaust handoff without overtaking the broad contact as
+            // the largest silhouette in the lifecycle.
+            0.05 + Math.sqrt(radialProgress) * 0.08
+          ) * scale * releaseFootprintScale
+        const radialDirection = isGather
+          ? -0.38
+          : isContactRelease
+            ? 0.05 + radialProgress * 0.04
+            : isRisingRelease
+              ? 0.28 + radialProgress * 0.22
+            : 0.34 + radialProgress * 0.12
+        const tangentDirection = isGather
+          ? 0.28 + radialProgress * 0.08
+          : (0.025 + radialProgress * 0.035) *
+            (i % 2 === 0 ? 1 : -1)
+        const particleAngle = isGather ? gatherAngle : releaseAngle
+        spawn[index] = Math.cos(particleAngle) * radius
+        spawn[index + 1] = isGather
+          ? (
+              0.02 +
+              Math.pow(heightProgress, 1.25) * 1.7
+            ) * scale
+          : isContactRelease
+            ? (0.025 + heightProgress * 0.08) * scale
+          : isRisingRelease
+            ? (0.04 + heightProgress * 0.1) * scale
+          : (
+            0.08 +
+            heightProgress * 0.31 +
+            (rand() - 0.5) * 0.012
+          ) * scale
+        spawn[index + 2] = Math.sin(particleAngle) * radius * depth
+        direction[index] =
+          Math.cos(particleAngle) * radialDirection -
+          Math.sin(particleAngle) * tangentDirection
+        direction[index + 1] = isGather
+          ? 0.76
+          : isContactRelease
+            ? 0.03
+          : isRisingRelease
+            ? 0.14 + heightProgress * 0.18
+          : isElevatedRelease
+            ? 0.44 + heightProgress * 0.18
+            : 0.08
+        direction[index + 2] =
+          (Math.sin(particleAngle) * radialDirection +
+            Math.cos(particleAngle) * tangentDirection) / depth
+        speed[i] = isGroundRelease
+          ? Math.max(0.15, controls.velocity) *
+            0.5 *
+            scale *
+            speedScale *
+            (isContactRelease ? 0.55 : 2.5) *
+            (isContactRelease
+              ? 0.82 + releaseBirthPhase * 0.3
+              : 0.78 + releaseBirthPhase * 0.35) *
+            (isRisingRelease ? 0.78 + heightProgress * 0.25 : 1)
+          : baseSpeed *
+            (0.62 + (1 - radialProgress) * 0.18 + rand() * 0.12) *
+            (isGather ? 0.42 : isElevatedRelease ? 0.82 : 1.05)
+        if (preset.reducedMotion) {
+          if (!isGather) {
+            // Reduced motion preserves the peak's broad layered confirmation
+            // as a static particle burst. Three radial bands retain the same
+            // gameplay footprint and hot-center hierarchy without simulating
+            // the standard launch.
+            const reducedContactRadius =
+              (
+                isContactRelease
+                  ? 0.035 + Math.pow(radialProgress, 1.8) * 0.285
+                  : isGroundRelease
+                    ? 0.32 + radialProgress * 0.22
+                    : 0.38 + radialProgress * 0.22
+              ) * scale
+            spawn[index] = Math.cos(particleAngle) * reducedContactRadius
+            spawn[index + 1] = 0.04 * scale
+            spawn[index + 2] =
+              Math.sin(particleAngle) * reducedContactRadius * depth
+            direction[index] = Math.cos(particleAngle)
+            direction[index + 1] = 0.08
+            direction[index + 2] = Math.sin(particleAngle) / depth
+            speed[i] = Math.min(0.35, speed[i]! * 0.1)
+          } else {
+            spawn[index] = spawn[index]! * 0.18
+            spawn[index + 1] = Math.min(spawn[index + 1]!, 0.12 * scale)
+            spawn[index + 2] = spawn[index + 2]! * 0.18
+            direction[index] = 0
+            direction[index + 1] = isGather ? -1 : 1
+            direction[index + 2] = 0
+          }
+        }
+        break
+      }
       case 'spherical-converge': {
         // Three braided feeder lanes make the inward motion readable in a
         // still frame and break the generic symmetric starburst silhouette.
@@ -353,6 +606,41 @@ export function createPfxParticleSimulation(
         speed[i] = (0.44 + progress * 0.3) * scale * speedScale
         break
       }
+      case 'phase-transfer-column': {
+        // Opposed particle streams compress into a narrow destination plane.
+        // The hourglass silhouette and counter-rotating travel make this a
+        // transfer event rather than another upward spawn plume, while real
+        // depth preserves the read from every review camera without a mesh.
+        const laneCount = 7
+        const lane = i % laneCount
+        const progress = (i + 0.5) / count
+        const distanceFromLock = Math.abs(progress * 2 - 1)
+        const lowerStream = progress < 0.5
+        const depth = Math.min(1.35, Math.sqrt(tuning?.depthScale ?? 1))
+        const footprintScale = tuning?.spawnScale ?? 1
+        const angle =
+          lane / laneCount * Math.PI * 2 +
+          progress * Math.PI * 1.45 +
+          Math.sin((i + 1) * 2.399963229728653) * 0.045
+        const radius = THREE.MathUtils.lerp(
+          0.065,
+          0.6,
+          Math.pow(distanceFromLock, 0.72),
+        ) * scale * footprintScale
+        const radialX = Math.cos(angle)
+        const radialZ = Math.sin(angle)
+        spawn[index] = radialX * radius
+        spawn[index + 1] = (-0.16 + progress * 1.44) * scale
+        spawn[index + 2] = radialZ * radius * depth
+        const twist = lowerStream ? 0.27 : -0.27
+        direction[index] = -radialX * 0.7 - Math.sin(angle) * twist
+        direction[index + 1] = lowerStream ? 0.82 : -0.82
+        direction[index + 2] =
+          (-radialZ * 0.7 + Math.cos(angle) * twist) * depth
+        speed[i] =
+          (0.38 + distanceFromLock * 0.24) * scale * speedScale
+        break
+      }
       case 'asymmetric-converge': {
         // Four deliberately unequal fuel lanes occupy real world-space depth.
         // Uneven phases, sweeps, heights, and radii avoid the screen-facing
@@ -382,6 +670,40 @@ export function createPfxParticleSimulation(
         direction[index + 1] = (-0.03 * scale - y) * inverseLength
         direction[index + 2] = -z * inverseLength
         speed[i] = (0.46 + progress * 0.26) * scale * speedScale
+        break
+      }
+      case 'warp-vortex': {
+        // Five-arm single-chirality inward spiral funnel. An odd arm count
+        // cannot mirror-pair, shared turn geometry keeps the arms legible,
+        // and per-particle radius/height jitter prevents card stamping.
+        // The funnel narrows to the destination lock at ground level so the
+        // vortex visibly roots into the telegraph footprint. The wall rises
+        // to a full column so the volume reads as a warp funnel rather than
+        // a shallow disc, and the arm envelope stays tight enough that each
+        // spiral stream survives as an authored band instead of noise.
+        const depth = Math.min(1.28, Math.sqrt(tuning?.depthScale ?? 1))
+        const arm = i % 5
+        const turns = 1.55
+        const startHeight = 0.42 + rand() * 0.78
+        const startRadius = (0.52 + rand() * 0.42) * scale * (tuning?.spawnScale ?? 1)
+        const progress = rand()
+        const radius = THREE.MathUtils.lerp(startRadius, 0.05 * scale, Math.pow(progress, 0.85))
+        const y = THREE.MathUtils.lerp(startHeight, -0.14, progress) * scale
+        const armAngle = (arm / 5) * Math.PI * 2 + (rand() - 0.5) * 0.09
+        const spiralAngle = armAngle + progress * Math.PI * 2 * turns
+        const radialX = Math.cos(spiralAngle)
+        const radialZ = Math.sin(spiralAngle)
+        spawn[index] = radialX * radius
+        spawn[index + 1] = y
+        spawn[index + 2] = radialZ * radius * depth
+        // Inward pull fades as the funnel tightens: near the lock point the
+        // flow is mostly tangential, so the core spins into a lock instead
+        // of crossing the center and reading as outward radial spokes.
+        const inward = 0.72 * Math.min(1, radius / (0.3 * scale))
+        direction[index] = -radialX * inward - radialZ * 0.62
+        direction[index + 1] = -0.42
+        direction[index + 2] = (-radialZ * inward + radialX * 0.62) * depth
+        speed[i] = (0.5 + progress * 0.3) * scale * speedScale
         break
       }
       case 'shadow-claw': {
@@ -539,6 +861,73 @@ export function createPfxParticleSimulation(
         direction[index + 2] = 0
         break
       }
+      case 'telegraph-boundary-drift': {
+        // This emitter owns only the gameplay-authoritative perimeter.
+        // Materialization recipes layer their own inward flow separately;
+        // mixing it into the boundary exposed large radial bars and made one
+        // surface perform two conflicting visual jobs.
+        const outerCount = Math.floor(count * PFX_TELEGRAPH_BOUNDARY_OUTER_FRACTION)
+        const isOuter = i < outerCount
+        const bandIndex = isOuter ? i : i - outerCount
+        const bandCount = isOuter ? outerCount : count - outerCount
+        const boundaryCell = Math.PI * 2 / bandCount
+        const supportProgress = (bandIndex + 0.5) / bandCount
+        const supportRadialUnit =
+          ((bandIndex + 0.5) * 0.6180339887498948) % 1
+        const boundaryAngle = isOuter
+          ? (
+              (bandIndex + 0.5) * boundaryCell +
+              Math.sin((bandIndex + 1) * 2.399963229728653) *
+              0.012 *
+              boundaryCell
+            )
+          : (
+              bandIndex * 2.3999632297286533 +
+              Math.sin((bandIndex + 1) * 1.61803398875) * 0.09
+            )
+        const footprintScale = tuning?.spawnScale ?? 1
+        const radius =
+          (isOuter
+            ? 0.78 + Math.sin(boundaryAngle * 6) * 0.008
+            : (
+                0.24 +
+                Math.sqrt(supportRadialUnit) * 0.48
+              )) * scale * footprintScale
+        spawn[index] = Math.cos(boundaryAngle) * radius
+        spawn[index + 1] =
+          (
+            (isOuter ? 0.018 : 0.032) +
+            (isOuter
+              ? 0.5 + 0.5 * Math.sin(boundaryAngle * 3 + 0.7)
+              : supportProgress) *
+              (isOuter ? 0.038 : 0.19)
+          ) *
+          scale
+        spawn[index + 2] = Math.sin(boundaryAngle) * radius
+        // A tangent-dominant velocity aligns the streak sprites into short
+        // perimeter strokes. The small radial/upward component keeps the
+        // telegraph retiring naturally instead of becoming a static hoop.
+        const radialDrift = isOuter ? 0 : -0.9
+        const orbitalDrift = isOuter
+          ? 0.8
+          : (bandIndex % 2 === 0 ? 1 : -1) *
+            (0.18 + supportRadialUnit * 0.22)
+        direction[index] =
+          Math.cos(boundaryAngle) * radialDrift -
+          Math.sin(boundaryAngle) * orbitalDrift
+        direction[index + 1] = isOuter
+          ? 0.02 + rand() * 0.02
+          : 0.18 + supportProgress * 0.1
+        direction[index + 2] =
+          Math.sin(boundaryAngle) * radialDrift +
+          Math.cos(boundaryAngle) * orbitalDrift
+        speed[i] = baseSpeed * (
+          isOuter
+            ? 0.14 + rand() * 0.04
+            : 0.72 + rand() * 0.16
+        )
+        break
+      }
       default: {
         spawn[index] = 0
         spawn[index + 1] = 0
@@ -576,9 +965,22 @@ export function createPfxParticleSimulation(
     }
 
     const spawnScale = tuning?.spawnScale ?? 1
-    // snow-gust consumes spawnScale while authoring its wind-axis footprint;
-    // applying the generic multiplier again made the area scale quadratically.
-    if (spawnScale !== 1 && motionKind !== 'snow-gust' && motionKind !== 'danger-pulse' && motionKind !== 'meteor-impact' && motionKind !== 'beam-telegraph-flow') {
+    // These motions consume spawnScale while authoring their footprint or
+    // body span. Applying the generic multiplier again makes them scale
+    // quadratically.
+    if (
+      spawnScale !== 1 &&
+      motionKind !== 'snow-gust' &&
+      motionKind !== 'danger-pulse' &&
+      motionKind !== 'meteor-impact' &&
+      motionKind !== 'beam-telegraph-flow' &&
+      motionKind !== 'telegraph-boundary-drift' &&
+      motionKind !== 'materialize-gather' &&
+      motionKind !== 'materialize-release' &&
+      motionKind !== 'ground-ring' &&
+      motionKind !== 'orbit-ring' &&
+      motionKind !== 'trail-stream'
+    ) {
       spawn[index] = spawn[index]! * spawnScale
       spawn[index + 1] = spawn[index + 1]! * spawnScale
       spawn[index + 2] = spawn[index + 2]! * spawnScale

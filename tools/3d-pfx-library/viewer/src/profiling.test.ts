@@ -64,6 +64,37 @@ describe('PFX browser profiling helpers', () => {
     expect(profiling.createPfxVisualLifecycleSchedule).toBeTypeOf('function')
   })
 
+  it('expands burst review cycles beyond stale generic preview clips', () => {
+    expect(profiling.createPfxVisualReviewCycleMs(720, 1.556245686680469, 'burst')).toBe(1_557)
+    expect(profiling.createPfxVisualReviewCycleMs(1_600, 1.2, 'loop')).toBe(1_600)
+  })
+
+  it('fingerprints normalized per-effect render sources deterministically', () => {
+    const sources = [
+      { path: 'src/PfxSurface.tsx', contents: 'shared-renderer-v1' },
+      { path: 'src/recipes/fireball.ts', contents: 'fireball-v1' },
+    ]
+
+    const first = profiling.createPfxRenderSourceFingerprint(sources)
+    expect(first).toMatch(/^pfx-source-v1:[a-f0-9]{16}$/)
+    expect(profiling.createPfxRenderSourceFingerprint([...sources].reverse())).toBe(first)
+    expect(profiling.createPfxRenderSourceFingerprint([
+      sources[0]!,
+      { ...sources[1]!, contents: 'fireball-v2' },
+    ])).not.toBe(first)
+  })
+
+  it('serializes the reviewed render-source fingerprint on each matrix row', () => {
+    const input = createPassingQualityMatrixInput() as {
+      visualReviews: Array<Record<string, unknown>>
+    }
+    input.visualReviews[0]!.sourceFingerprint = 'pfx-source-v1:0123456789abcdef'
+
+    const matrix = profiling.createPfxQualityMatrix(input as never)
+
+    expect(matrix.effects[0]!.sourceFingerprint).toBe('pfx-source-v1:0123456789abcdef')
+  })
+
   it('makes uncapped simulation opt-in and labels its scheduling overrides deterministically', () => {
     expect(profiling.createPfxUncappedSimulationLaunchArgs(false)).toEqual([])
     expect(profiling.createPfxUncappedSimulationLaunchArgs(true)).toEqual([
@@ -146,6 +177,38 @@ describe('PFX browser profiling helpers', () => {
     expect(profiling.countPfxReviewActivePixels(new Uint8Array(pixels.length), 10, 10)).toBe(0)
   })
 
+  it('rejects a capture transient whose only active content is stranded at the canvas edge', () => {
+    const centered = new Uint8Array(100 * 100 * 4)
+    const stranded = new Uint8Array(100 * 100 * 4)
+    for (const pixels of [centered, stranded]) {
+      for (let index = 0; index < pixels.length; index += 4) {
+        pixels[index] = 17
+        pixels[index + 1] = 24
+        pixels[index + 2] = 39
+        pixels[index + 3] = 255
+      }
+    }
+    for (let y = 45; y < 55; y += 1) {
+      for (let x = 45; x < 55; x += 1) {
+        const index = (y * 100 + x) * 4
+        centered[index] = 90
+        centered[index + 1] = 210
+        centered[index + 2] = 255
+      }
+      for (let x = 96; x < 100; x += 1) {
+        const index = (y * 100 + x) * 4
+        stranded[index] = 90
+        stranded[index + 1] = 210
+        stranded[index + 2] = 255
+      }
+    }
+
+    expect(profiling.collectPfxReviewFramingDefects(centered, 100, 100)).toEqual([])
+    expect(profiling.collectPfxReviewFramingDefects(stranded, 100, 100)).toEqual([
+      'capture active content is stranded at the canvas edge',
+    ])
+  })
+
   it('selects distinct onset, peak, and decay moments from aggregate multi-angle activity', () => {
     const createSchedule = profiling.createPfxVisualLifecycleSchedule as unknown as (
       samples: Array<{ sampleMs: number; aggregateActivePixels: number }>,
@@ -163,6 +226,32 @@ describe('PFX browser profiling helpers', () => {
       { phase: 'decay', sampleMs: 920, aggregateActivePixels: 300 },
     ])
     expect(new Set(schedule.map((sample) => sample.sampleMs)).size).toBe(3)
+  })
+
+  it('selects a compact bright impulse over a wider dim telegraph boundary', () => {
+    const schedule = profiling.createPfxVisualLifecycleSchedule([
+      { sampleMs: 0, aggregateActivePixels: 500, aggregateVisualEnergy: 1_000 },
+      { sampleMs: 200, aggregateActivePixels: 4_000, aggregateVisualEnergy: 7_000 },
+      { sampleMs: 400, aggregateActivePixels: 2_500, aggregateVisualEnergy: 14_000 },
+      { sampleMs: 600, aggregateActivePixels: 3_500, aggregateVisualEnergy: 5_000 },
+      { sampleMs: 900, aggregateActivePixels: 300, aggregateVisualEnergy: 200 },
+    ])
+
+    expect(schedule.map(({ phase, sampleMs }) => ({ phase, sampleMs }))).toEqual([
+      { phase: 'onset', sampleMs: 0 },
+      { phase: 'peak', sampleMs: 400 },
+      { phase: 'decay', sampleMs: 600 },
+    ])
+  })
+
+  it('retimes reduced-motion proof so it captures the same lifecycle phase', () => {
+    expect(profiling.createPfxReducedMotionReviewSampleMs(130, 1, 0.45, 1_400)).toBe(289)
+    expect(profiling.createPfxReducedMotionReviewSampleMs(620, 0.8, 0.4, 1_400)).toBe(1_240)
+    expect(profiling.createPfxReducedMotionReviewSampleMs(620, 1, 0.45, 720)).toBe(1_378)
+    expect(() => profiling.createPfxReducedMotionReviewSampleMs(620, 1, 0, 1_400))
+      .toThrow('Reduced-motion review timing must be finite and positive')
+    expect(() => profiling.createPfxReducedMotionReviewSampleMs(1_400, 1, 0.45, 1_400))
+      .toThrow('Standard review sample must remain inside the preview cycle')
   })
 
   it('captures a persistent loop baseline, first alarm crest, and recovered trough instead of adjacent one-shot frames', () => {
@@ -425,6 +514,84 @@ describe('PFX browser profiling helpers', () => {
     })
   })
 
+  it('keeps telegraph decay sampling inside the authored release window', () => {
+    const createSchedule = profiling.createPfxVisualLifecycleSchedule as unknown as (
+      samples: Array<{ sampleMs: number; aggregateActivePixels: number }>,
+      options?: { burstCycleMs?: number; minimumDecaySampleMs?: number },
+    ) => Array<{ phase: string; sampleMs: number; aggregateActivePixels: number }>
+    const schedule = createSchedule([
+      { sampleMs: 0, aggregateActivePixels: 500 },
+      { sampleMs: 72, aggregateActivePixels: 1_600 },
+      { sampleMs: 302, aggregateActivePixels: 10_000 },
+      { sampleMs: 648, aggregateActivePixels: 6_400 },
+      { sampleMs: 1_080, aggregateActivePixels: 4_800 },
+      { sampleMs: 1_320, aggregateActivePixels: 500 },
+    ], { burstCycleMs: 1_600, minimumDecaySampleMs: 960 })
+
+    expect(schedule.find((sample) => sample.phase === 'decay')).toEqual({
+      phase: 'decay',
+      sampleMs: 1_080,
+      aggregateActivePixels: 4_800,
+    })
+  })
+
+  it('starts telegraph decay review before the final near-empty tail', () => {
+    expect(profiling.createPfxTelegraphMinimumOnsetSampleMs(2_000)).toBe(200)
+    expect(profiling.createPfxTelegraphMinimumDecaySampleMs(2_000)).toBe(700)
+    expect(() => profiling.createPfxTelegraphMinimumOnsetSampleMs(0))
+      .toThrow('Telegraph review cycle must be finite and positive')
+    expect(() => profiling.createPfxTelegraphMinimumDecaySampleMs(0))
+      .toThrow('Telegraph review cycle must be finite and positive')
+  })
+
+  it('does not use the first isolated telegraph fleck as onset evidence', () => {
+    const schedule = profiling.createPfxVisualLifecycleSchedule([
+      { sampleMs: 0, aggregateActivePixels: 100 },
+      { sampleMs: 60, aggregateActivePixels: 800 },
+      { sampleMs: 160, aggregateActivePixels: 2_400 },
+      { sampleMs: 300, aggregateActivePixels: 8_000 },
+      { sampleMs: 520, aggregateActivePixels: 12_000 },
+      { sampleMs: 900, aggregateActivePixels: 5_000 },
+    ], { minimumOnsetSampleMs: 150 })
+    expect(schedule.find((sample) => sample.phase === 'onset')?.sampleMs).toBe(300)
+  })
+
+  it('requires meaningful visual energy for a telegraph onset review cell', () => {
+    const schedule = profiling.createPfxVisualLifecycleSchedule([
+      { sampleMs: 0, aggregateActivePixels: 100, aggregateVisualEnergy: 100 },
+      { sampleMs: 160, aggregateActivePixels: 2_400, aggregateVisualEnergy: 800 },
+      { sampleMs: 300, aggregateActivePixels: 8_000, aggregateVisualEnergy: 4_000 },
+      { sampleMs: 520, aggregateActivePixels: 12_000, aggregateVisualEnergy: 12_000 },
+      { sampleMs: 900, aggregateActivePixels: 5_000, aggregateVisualEnergy: 3_000 },
+    ], { minimumOnsetSampleMs: 150 })
+
+    expect(schedule.find((sample) => sample.phase === 'onset')?.sampleMs).toBe(300)
+  })
+
+  it('keeps a restrained but spatially readable telegraph warning ahead of its bright payoff', () => {
+    const schedule = profiling.createPfxVisualLifecycleSchedule([
+      { sampleMs: 0, aggregateActivePixels: 100, aggregateVisualEnergy: 100 },
+      { sampleMs: 160, aggregateActivePixels: 2_400, aggregateVisualEnergy: 1_200 },
+      { sampleMs: 300, aggregateActivePixels: 8_000, aggregateVisualEnergy: 4_000 },
+      { sampleMs: 520, aggregateActivePixels: 12_000, aggregateVisualEnergy: 12_000 },
+      { sampleMs: 900, aggregateActivePixels: 5_000, aggregateVisualEnergy: 3_000 },
+    ], { minimumOnsetSampleMs: 150 })
+
+    expect(schedule.find((sample) => sample.phase === 'onset')?.sampleMs).toBe(160)
+  })
+
+  it('derives review framing only from the selected lifecycle cells', () => {
+    expect(profiling.createPfxVisualReviewFramingTimes([
+      { phase: 'onset', sampleMs: 77, aggregateActivePixels: 1_200 },
+      { phase: 'peak', sampleMs: 345, aggregateActivePixels: 9_000 },
+      { phase: 'decay', sampleMs: 1_113, aggregateActivePixels: 3_200 },
+    ])).toEqual([77, 345, 1_113])
+    expect(() => profiling.createPfxVisualReviewFramingTimes([
+      { phase: 'onset', sampleMs: 77, aggregateActivePixels: 1_200 },
+      { phase: 'peak', sampleMs: 345, aggregateActivePixels: 9_000 },
+    ])).toThrow('Review framing requires one onset, peak, and decay sample')
+  })
+
   it('keeps an early decisive flash as peak when a larger smoke lobe follows', () => {
     const createSchedule = profiling.createPfxVisualLifecycleSchedule as unknown as (
       samples: Array<{ sampleMs: number; aggregateActivePixels: number }>,
@@ -492,6 +659,44 @@ describe('PFX browser profiling helpers', () => {
       { sampleMs: 140, aggregateActivePixels: 4_000 },
       { sampleMs: 160, aggregateActivePixels: 2_100 },
     ])).toBeNull()
+  })
+
+  it('refines between the last peak shoulder and rest when coarse probes skip readable decay', () => {
+    const selectRefinement = profiling.selectPfxVisualLifecycleRefinementTime as unknown as (
+      samples: Array<{ sampleMs: number; aggregateActivePixels: number }>,
+    ) => number | null
+    const coarse = [
+      { sampleMs: 0, aggregateActivePixels: 2_000 },
+      { sampleMs: 40, aggregateActivePixels: 6_000 },
+      { sampleMs: 120, aggregateActivePixels: 12_000 },
+      { sampleMs: 200, aggregateActivePixels: 11_000 },
+      { sampleMs: 320, aggregateActivePixels: 2_000 },
+    ]
+
+    expect(selectRefinement(coarse)).toBe(260)
+    expect(selectRefinement([
+      ...coarse,
+      { sampleMs: 260, aggregateActivePixels: 7_000 },
+    ])).toBeNull()
+  })
+
+  it('refines after a telegraph minimum when an earlier readable shoulder is ineligible', () => {
+    const selectRefinement = profiling.selectPfxVisualLifecycleRefinementTime as unknown as (
+      samples: Array<{ sampleMs: number; aggregateActivePixels: number }>,
+      minimumGapMs?: number,
+      minimumDecaySampleMs?: number,
+    ) => number | null
+    const coarse = [
+      { sampleMs: 110, aggregateActivePixels: 5_113 },
+      { sampleMs: 276, aggregateActivePixels: 30_201 },
+      { sampleMs: 496, aggregateActivePixels: 65_303 },
+      { sampleMs: 772, aggregateActivePixels: 36_464 },
+      { sampleMs: 1_158, aggregateActivePixels: 0 },
+      { sampleMs: 1_598, aggregateActivePixels: 0 },
+    ]
+
+    expect(selectRefinement(coarse)).toBeNull()
+    expect(selectRefinement(coarse, 16, 965)).toBe(965)
   })
 
   it('samples onset after spawn for slow-building effects instead of an empty stage', () => {
@@ -633,7 +838,11 @@ describe('PFX browser profiling helpers', () => {
       currentSourceFingerprints: { fireball: 'sha256:newer-fireball-source' },
     })).toThrow(/stale|fingerprint/i)
 
-    const readableRows = assemble([{ review, manifest }], {
+    const readableReview = {
+      ...review,
+      effects: [{ ...review.effects[0]!, reducedMotionReadable: true }],
+    }
+    const readableRows = assemble([{ review: readableReview, manifest }], {
       reducedMotionReadableEffectIds: ['fireball'],
       currentSourceFingerprint: 'sha256:current-render-source',
     })
@@ -641,9 +850,17 @@ describe('PFX browser profiling helpers', () => {
 
     const reworkReview = {
       ...review,
-      effects: [{ ...review.effects[0]!, grade: 'C', verdict: 'rework', findings: ['flat fin'] }],
+      effects: [{
+        ...review.effects[0]!,
+        grade: 'C',
+        verdict: 'rework',
+        findings: ['flat fin'],
+        reducedMotionReadable: false,
+      }],
     }
-    expect(assemble([{ review: reworkReview, manifest }])[0]!['blockers']).toEqual([
+    expect(assemble([{ review: reworkReview, manifest }], {
+      reducedMotionReadableEffectIds: ['fireball'],
+    })[0]!['blockers']).toEqual([
       'peer verdict: rework',
       'flat fin',
       'reduced-motion readability unverified',
@@ -775,6 +992,14 @@ describe('PFX browser profiling helpers', () => {
     ], options)
     expect(disputed[0]!.scores.semanticIdentity).toBe(4)
     expect(disputed[0]!.blockers).toContainEqual(expect.stringMatching(/consensus disagreement/i))
+
+    const splitVerdict = assembleConsensus([
+      source('review-1', 3, 'rework'),
+      source('review-2', 4),
+      source('review-3', 4),
+    ], options)
+    expect(splitVerdict[0]!.scores.semanticIdentity).toBe(4)
+    expect(splitVerdict[0]!.blockers).toContainEqual(expect.stringMatching(/consensus disagreement.*verdict/i))
 
     const majorityRework = assembleConsensus([
       source('review-1', 3, 'rework'),
@@ -909,8 +1134,8 @@ describe('PFX browser profiling helpers', () => {
     })
     expect(ledger.queue.some((item) => item.defectKey === 'performance:real-device')).toBe(true)
     expect(ledger.effects[0]).toMatchObject({
-      effectId: 'fireball',
-      rank: 1,
+      effectId: 'spawn-telegraph',
+      rank: 500,
       currentGrade: null,
       worstVisualScore: null,
       weightedScore: null,
@@ -3148,7 +3373,7 @@ describe('PFX browser profiling helpers', () => {
     })
     expect(acceptance.productionGapAudit.effects[0]).toMatchObject({
       effectId: 'fireball',
-      openGapCount: 5,
+      openGapCount: 6,
       gaps: expect.arrayContaining([
         {
           kind: 'approval-metadata',
@@ -3935,6 +4160,7 @@ describe('PFX browser profiling helpers', () => {
         evidence: [
           `taxonomy-review:.context/r3f-pfx-taxonomy-review.json#${preset.effectId}`,
           `production-implementation:.context/r3f-pfx-production-implementation.json#${preset.effectId}`,
+          `quality-matrix:.context/r3f-pfx-quality-matrix.json#${preset.effectId}`,
           `mobile-safari-profile:.context/mobile-safari/${preset.effectId}.json`,
           `chrome-android-profile:.context/chrome-android/${preset.effectId}.json`,
           `red-team-signoff:.context/r3f-pfx-red-team-review.json#${preset.effectId}`,
@@ -3961,6 +4187,7 @@ describe('PFX browser profiling helpers', () => {
         evidence: [
           `taxonomy-review:.context/r3f-pfx-taxonomy-review.json#${preset.effectId}`,
           `production-implementation:.context/r3f-pfx-production-implementation.json#${preset.effectId}`,
+          `quality-matrix:.context/r3f-pfx-quality-matrix.json#${preset.effectId}`,
           `mobile-safari-profile:.context/mobile-safari/${preset.effectId}.json`,
           `chrome-android-profile:.context/chrome-android/${preset.effectId}.json`,
           `red-team-signoff:.context/r3f-pfx-red-team-review.json#${preset.effectId}`,
@@ -4506,8 +4733,13 @@ describe('PFX browser profiling helpers', () => {
       redTeamReview: redTeamTemplate,
       realDeviceCaptureAudit,
       taxonomyReview,
+      qualityMatrix: createPassingQualityMatrixEvidence('fireball', 'pfx-source-v1:fireball-current'),
+      currentSourceFingerprints: {
+        fireball: 'pfx-source-v1:fireball-current',
+      },
     })
 
+    expect(acceptance.blockingFindings.filter((finding) => finding.startsWith('quality-matrix:'))).toEqual([])
     expect(acceptance.productionApprovalReadiness.summary).toMatchObject({
       readyForApprovalEffects: 1,
       missingPrerequisiteEffects: 499,
@@ -4740,6 +4972,7 @@ describe('PFX browser profiling helpers', () => {
         evidence: [
           `taxonomy-review:.context/r3f-pfx-taxonomy-review.json#${preset.effectId}`,
           `production-implementation:.context/r3f-pfx-production-implementation.json#${preset.effectId}`,
+          `quality-matrix:.context/r3f-pfx-quality-matrix.json#${preset.effectId}`,
           `mobile-safari-profile:.context/mobile-safari/${preset.effectId}.json`,
           `chrome-android-profile:.context/chrome-android/${preset.effectId}.json`,
           `red-team-signoff:.context/r3f-pfx-red-team-review.json#${preset.effectId}`,
@@ -6742,6 +6975,33 @@ function createPassingQualityMatrixInput(
       blockers: [],
     }],
   }
+}
+
+function createPassingQualityMatrixEvidence(effectId: string, sourceFingerprint: string): unknown {
+  const input = createPassingQualityMatrixInput() as {
+    effects: Array<Record<string, unknown>>
+    visualReviews: Array<Record<string, unknown>>
+    performanceReviews: Array<Record<string, unknown>>
+  }
+  input.effects[0] = {
+    ...input.effects[0],
+    effectId,
+    rank: 1,
+    name: 'Fireball',
+  }
+  input.visualReviews[0] = {
+    ...input.visualReviews[0],
+    effectId,
+    sourceFingerprint,
+    reviewer: 'peer-consensus:review-a+review-b+review-c',
+    scores: Object.fromEntries(PFX_MATRIX_VISUAL_KEYS.map((key) => [key, 5])),
+  }
+  input.performanceReviews[0] = {
+    ...input.performanceReviews[0],
+    effectId,
+    scores: Object.fromEntries(PFX_MATRIX_PERFORMANCE_KEYS.map((key) => [key, 5])),
+  }
+  return profiling.createPfxQualityMatrix(input as never)
 }
 
 describe('shouldRepairPfxBlankSample', () => {

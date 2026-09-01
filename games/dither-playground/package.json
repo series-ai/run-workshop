@@ -1,0 +1,38 @@
+{
+  "name": "dither-playground",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Interactive dithering playground: retro palettes and dither algorithms over 3D scenes, dropped images, and video.",
+  "type": "module",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "keywords": ["RUN.game"],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "deploy": "npm run build && rundot deploy"
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.121.0",
+    "@react-three/fiber": "^8.17.0",
+    "@react-three/postprocessing": "^2.16.0",
+    "@series-inc/rundot-game-sdk": "5.24.0",
+    "dither-kit": "file:../../tools/dither-kit",
+    "firebase": "^12.7.0",
+    "postprocessing": "^6.36.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "~0.170.0"
+  },
+  "devDependencies": {
+    "@revenuecat/purchases-js": "^1.53.1",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@types/three": "~0.170.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.4.2",
+    "vitest": "^4.1.10"
+  }
+}

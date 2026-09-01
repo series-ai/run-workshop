@@ -8,6 +8,7 @@ licenses and attributions.
 ## Sub-project notices
 
 - BeatBoard — [`games/beat-board/THIRD_PARTY_NOTICES.md`](games/beat-board/THIRD_PARTY_NOTICES.md)
+- Dither Playground — [`games/dither-playground/THIRD_PARTY_NOTICES.md`](games/dither-playground/THIRD_PARTY_NOTICES.md)
 - Picmon Map Editor — [`games/picmon-editor/THIRD_PARTY_NOTICES.md`](games/picmon-editor/THIRD_PARTY_NOTICES.md)
 - Layout Manager — [`games/layout-manager/THIRD_PARTY_NOTICES.md`](games/layout-manager/THIRD_PARTY_NOTICES.md)
 - 3D PFX Library — [`tools/3d-pfx-library/THIRD_PARTY_NOTICES.md`](tools/3d-pfx-library/THIRD_PARTY_NOTICES.md)

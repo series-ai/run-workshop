@@ -1,4 +1,5 @@
 import { PFX_PLASMA_IMPACT_FLIPBOOK_ATLAS } from '../plasmaImpactFlipbook'
+import { reviewSetTagsForEffect } from '../reviewSets'
 import { PERFORMANCE_TIER_BUDGETS, PFX_QUALITY_RUBRIC_KEYS, getPfxStyleRenderProfile, getPfxStyleRenderSignature, getPfxTextureAtlasSlice } from './01'
 import { AUTHORED_EFFECT_RECIPES } from './02'
 import type { ArtStyleCluster, EffectSpace, EffectType, LoopMode, MobileSafety, PerformanceTier, PfxBehaviorRole, PfxControls, PfxMarketSourceFamily, PfxPerformanceBudget, PfxPerformanceMetadata, PfxPreset, PfxPreviewDescriptor, PfxQualityScore, PfxQualityScores, PfxStyleRenderProfile, PfxTaxonomyEffect, SpawnShape } from '../types/01'
@@ -1469,11 +1470,11 @@ export function createPresetFromEffect(effect: PfxTaxonomyEffect): PfxPreset {
     turbulence: effect.effectType === 'magic' || effect.effectType === 'portal' ? 0.8 : 0.35,
     // Audited particle-authored references keep point emission so the generic
     // mesh-emitter control cannot silently replace their authored silhouettes.
-    spawnShape: ['mud-burst', 'healing-burst', 'holy-burst', 'shadow-burst', 'acid-burst', 'barrier-burst', 'blast-burst', 'curse-cone', 'pickup-burst', 'poison-burst', 'curse-burst', 'critical-hit-burst', 'electric-critical', 'embers-burst', 'flame-burst', 'ice-burst', 'ghost-critical', 'jump-burst', 'landing-burst', 'meteor-burst', 'slime-burst', 'spark-cone', 'hit-spark', 'wind-impact', 'debris-release', 'acid-charge', 'blood-charge', 'flame-charge', 'mud-charge', 'reward-charge', 'sand-charge'].includes(effect.id)
+    spawnShape: ['mud-burst', 'healing-burst', 'holy-burst', 'shadow-burst', 'acid-burst', 'barrier-burst', 'blast-burst', 'curse-cone', 'pickup-burst', 'poison-burst', 'curse-burst', 'critical-hit-burst', 'electric-critical', 'embers-burst', 'flame-burst', 'ice-burst', 'ghost-critical', 'jump-burst', 'landing-burst', 'meteor-burst', 'slime-burst', 'spark-cone', 'hit-spark', 'wind-impact', 'debris-release', 'acid-charge', 'blood-charge', 'flame-charge', 'mud-charge', 'reward-charge', 'sand-charge', 'rain-burst', 'wind-burst', 'exhaust-hit', 'teleport-hit', 'holy-release', 'beam-telegraph', 'barrier-column', 'jump-beam', 'curse-column', 'laser-spray', 'water-column', 'target-spawn', 'shard-break', 'dash-idle', 'healing-loop', 'spark-loop', 'warning-loop', 'spawn-screen'].includes(effect.id)
       ? 'point'
       : spawnShapeFor(effect),
     texture: textureFor(effect.effectType),
-    flipbook: flipbookFor(effect.effectType),
+    flipbook: effect.id === 'spawn-telegraph' ? 'flame-8' : flipbookFor(effect.effectType),
     blendMode: effect.effectType === 'smoke' || effect.effectType === 'weather' ? 'alpha' : 'additive',
     emissiveBloom: effect.effectType === 'ui' || effect.effectType === 'loot' ? 0.75 : 0.45,
     trailLength: effect.implementationProfile === 'trail-ribbon' ? 1.25 : 0.2,
@@ -1488,7 +1489,7 @@ export function createPresetFromEffect(effect: PfxTaxonomyEffect): PfxPreset {
     id: `${effect.id}-default`,
     effectId: effect.id,
     name: `${effect.name} Default`,
-    tags: [effect.effectType, ...effect.gameplayUseCases, ...effect.styleAffinity],
+    tags: [effect.effectType, ...effect.gameplayUseCases, ...effect.styleAffinity, ...reviewSetTagsForEffect(effect.id)],
     controls: styledControls,
     textureAtlas: getPfxTextureAtlasSlice(styledControls.texture),
     styleRender: createPfxStyleRender(styledControls),

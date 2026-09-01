@@ -9,6 +9,7 @@ type UrlHelpers = typeof app & {
   ) => string
   withProfileDeviceLabel?: (profileUrl: string, deviceLabel?: string | null) => string
   withProfileAutoUpload?: (profileUrl: string, deviceLabel?: string | null) => string
+  readPfxReviewCaptureToken?: (search?: string) => string | null
 }
 
 const helpers = app as UrlHelpers
@@ -28,6 +29,27 @@ describe('mark filter URL helpers', () => {
     expect(helpers.readPfxMarkFilter?.('?mark=,%20,')).toBeNull()
     expect(helpers.readPfxMarkFilter?.('?markLabel=REDO')).toBeNull()
     expect(helpers.readPfxMarkFilter?.('')).toBeNull()
+  })
+
+  it('expands the inspect-sheets mark alias to every imported sheet id', () => {
+    const filter = helpers.readPfxMarkFilter?.('?mark=inspect-sheets&markLabel=SHEETS&markOnly=1')
+    expect(filter?.label).toBe('SHEETS')
+    expect(filter?.only).toBe(true)
+    expect(filter?.ids.has('burger-shop-flies')).toBe(true)
+    expect(filter?.ids.has('duelyst-impact')).toBe(true)
+    expect(filter?.ids.has('inspect-sheets')).toBe(false)
+    expect(filter?.ids.size).toBeGreaterThan(30)
+  })
+
+  it('expands the mesh-stunted mark alias and defaults the badge label', () => {
+    const filter = helpers.readPfxMarkFilter?.('?mark=mesh-stunted&markOnly=1')
+    expect(filter?.label).toBe('MESH')
+    expect(filter?.only).toBe(true)
+    expect(filter?.ids.has('rain-burst')).toBe(true)
+    expect(filter?.ids.has('healing-loop')).toBe(true)
+    expect(filter?.ids.has('spawn-screen')).toBe(true)
+    expect(filter?.ids.has('mesh-stunted')).toBe(false)
+    expect(filter?.ids.size).toBe(18)
   })
 
   it('filters items only when markOnly is set', () => {
@@ -106,5 +128,24 @@ describe('real-device capture URL helpers', () => {
     ).toBe(
       'http://192.168.86.174:4765/?profileEffectIds=hit-spark&profilePlatform=chrome-android&profileAutoUpload=1',
     )
+  })
+})
+
+describe('quality capture render handshake', () => {
+  it('accepts an exact bounded capture token only on review-capture URLs', () => {
+    expect(typeof helpers.readPfxReviewCaptureToken).toBe('function')
+
+    expect(helpers.readPfxReviewCaptureToken?.(
+      '?reviewCapture=1&reviewCaptureToken=spawn-telegraph%3Apeak%3A767%3A42',
+    )).toBe('spawn-telegraph:peak:767:42')
+    expect(helpers.readPfxReviewCaptureToken?.(
+      '?reviewCaptureToken=spawn-telegraph%3Apeak%3A767%3A42',
+    )).toBeNull()
+    expect(helpers.readPfxReviewCaptureToken?.(
+      `?reviewCapture=1&reviewCaptureToken=${'x'.repeat(201)}`,
+    )).toBeNull()
+    expect(helpers.readPfxReviewCaptureToken?.(
+      '?reviewCapture=1&reviewCaptureToken=bad%20token',
+    )).toBeNull()
   })
 })

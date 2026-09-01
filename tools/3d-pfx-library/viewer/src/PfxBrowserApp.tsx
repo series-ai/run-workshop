@@ -58,6 +58,19 @@ import {
   type BrowserProfileCapturePlatform,
   type WebglProfile,
 } from './profiling'
+import { InspectPackEffect } from '../../src/inspect-packs/InspectPackEffect'
+import {
+  expandInspectSheetMarkIds,
+  INSPECT_PACK_ITEMS,
+  isInspectPackId,
+  selectInspectPackItems,
+} from '../../src/inspect-packs/items'
+import {
+  defaultPfxMarkLabel,
+  expandPfxMarkIds,
+  PFX_REVIEW_SETS,
+  reviewSetBadgeForEffect,
+} from '../../src/reviewSets'
 
 const TIERS: PerformanceTier[] = ['low', 'medium', 'high', 'cinematic']
 const LOOP_MODES: LoopMode[] = ['burst', 'loop']
@@ -72,6 +85,7 @@ type PfxReviewFraming = 'isolated' | 'gameplay-context'
 export function createPfxReviewReferencePosition(effectId?: string): [number, number, number] {
   if (effectId === 'muzzle-flash') return [-2.3, -0.48, -0.45]
   if (effectId === 'healing-aura' || effectId === 'frost-aura' || effectId === 'shield-break' || effectId === 'barrier-low-health' || effectId === 'flame-charge' || effectId === 'electric-critical') return [0, -0.48, 0]
+  if (effectId?.startsWith('pirate-status-')) return [0, -0.48, 0]
   // Put the near arm on the origin so contact effects prove an actual hit
   // rather than floating between the effect and a distant scale mannequin.
   if (effectId === 'hit-spark' || effectId === 'ghost-critical') return [-0.28, -0.48, -0.18]
@@ -136,6 +150,28 @@ function OrbitCameraRig({ orbit, autoRotate }: { orbit: RefObject<PfxOrbitState>
     )
     camera.lookAt(PFX_STAGE_TARGET)
     camera.updateProjectionMatrix()
+  })
+  return null
+}
+
+function PfxReviewCaptureHandshake({ token }: { token: string }) {
+  const { gl } = useThree()
+  const committedFrames = useRef(0)
+  useEffect(() => {
+    committedFrames.current = 0
+    delete gl.domElement.dataset.pfxReviewCaptureToken
+    return () => {
+      delete gl.domElement.dataset.pfxReviewCaptureToken
+    }
+  }, [gl, token])
+  useFrame(() => {
+    committedFrames.current += 1
+    // Do not acknowledge URL parsing alone. The token appears only after
+    // several R3F frames have consumed the frozen review time, which keeps a
+    // newly navigated capture from reusing the previous WebGL framebuffer.
+    if (committedFrames.current >= 3) {
+      gl.domElement.dataset.pfxReviewCaptureToken = token
+    }
   })
   return null
 }
@@ -278,7 +314,9 @@ function FeedTiles({
     () => items.slice(firstRow * FEED_COLUMNS, (lastRow + 1) * FEED_COLUMNS).map((item, sliceIndex) => ({
       item,
       index: firstRow * FEED_COLUMNS + sliceIndex,
-      preset: createPfxPreset(item.effect.id, { seed: item.preset.seed }),
+      preset: isInspectPackId(item.effect.id)
+        ? item.preset
+        : createPfxPreset(item.effect.id, { seed: item.preset.seed }),
     })),
     [firstRow, items, lastRow],
   )
@@ -301,13 +339,38 @@ function FeedTiles({
         return (
           <group key={item.effect.id} position={[x, y, 0]} scale={scale}>
             <PfxGalleryTileStage />
-            {/* Gallery tiles: billboard-only for screen effects — a full
-                camera pin drags every ui-space tile onto one spot. */}
-            <GamePfx preset={preset} reducedMotion={reducedMotion} screenAnchor={false} />
+            {isInspectPackId(item.effect.id) ? (
+              <InspectPackEffect id={item.effect.id} />
+            ) : (
+              <GamePfx preset={preset} reducedMotion={reducedMotion} screenAnchor={false} />
+            )}
           </group>
         )
       })}
     </group>
+  )
+}
+
+function PfxFeedMark({
+  effectId,
+  markFilter,
+}: {
+  effectId: string
+  markFilter: PfxMarkFilter | null
+}) {
+  if (markFilter?.ids.has(effectId)) {
+    return (
+      <span className="pfx-feed-mark" data-testid="pfx-feed-mark">
+        {markFilter.label}
+      </span>
+    )
+  }
+  const reviewBadge = reviewSetBadgeForEffect(effectId)
+  if (!reviewBadge) return null
+  return (
+    <span className="pfx-feed-mark pfx-feed-mark-review" data-testid="pfx-feed-review-mark">
+      {reviewBadge}
+    </span>
   )
 }
 
@@ -378,11 +441,7 @@ function PfxFeed({
               }}
               onClick={() => onSelect(item.effect.id)}
             >
-              {markFilter?.ids.has(item.effect.id) ? (
-                <span className="pfx-feed-mark" data-testid="pfx-feed-mark">
-                  {markFilter.label}
-                </span>
-              ) : null}
+              <PfxFeedMark effectId={item.effect.id} markFilter={markFilter} />
               <span className="pfx-feed-label">
                 {item.effect.name}
                 <span className="pfx-feed-type">
@@ -744,6 +803,8 @@ export function PfxBrowserApp() {
   const reviewCameraLocked = readReviewCamera() !== null
   const reviewFraming = readReviewFraming()
   const reviewTimeSeconds = readReviewTimeSeconds()
+  const reviewCapture = readReviewCapture()
+  const reviewCaptureToken = readPfxReviewCaptureToken()
   const initialProfileEffectIds = useMemo(() => readProfileEffectIds(), [])
   const initialProfileEffectId = initialProfileEffectIds?.[0]
   const initialProfileConcurrency = useMemo(() => readProfileConcurrency(), [])
@@ -760,6 +821,7 @@ export function PfxBrowserApp() {
   const [emotionMood, setEmotionMood] = useState<string>('all')
   const [colorFamily, setColorFamily] = useState<string>('all')
   const [assetRequirement, setAssetRequirement] = useState<string>('all')
+  const [reviewSet, setReviewSet] = useState<string>('all')
   // Everything is viewable by default — non-mobile-safe effects are shown
   // with an explicit badge instead of being silently filtered out. The
   // Mobile safe checkbox remains as an opt-in filter.
@@ -769,7 +831,13 @@ export function PfxBrowserApp() {
   // back. The Mobile safe checkbox still filters by the legacy tag until the
   // catalog-wide perf pass replaces it everywhere.
   const mobileSafeIds = useMemo(
-    () => new Set(filterPfxCatalog({}).filter((item) => getPfxComputedMobileSafety(item.effect.id) === 'safe').map((item) => item.effect.id)),
+    () =>
+      new Set([
+        ...filterPfxCatalog({})
+          .filter((item) => getPfxComputedMobileSafety(item.effect.id) === 'safe')
+          .map((item) => item.effect.id),
+        ...INSPECT_PACK_ITEMS.filter((item) => item.effect.mobileSafety === 'safe').map((item) => item.effect.id),
+      ]),
     [],
   )
   // Capture/profile URLs must open on the exact single-effect detail scene;
@@ -811,7 +879,7 @@ export function PfxBrowserApp() {
     orbitRef.current.distance = MathUtils.clamp(orbitRef.current.distance + event.deltaY * 0.004, 3.2, 10)
   }
 
-  const allItems = useMemo(() => filterPfxCatalog({}), [])
+  const allItems = useMemo(() => [...INSPECT_PACK_ITEMS, ...filterPfxCatalog({})], [])
   const useCases = useMemo(
     () => [...new Set(allItems.flatMap((item) => item.effect.gameplayUseCases))].sort(),
     [allItems],
@@ -844,6 +912,7 @@ export function PfxBrowserApp() {
       colorFamily: colorFamily === 'all' ? undefined : [colorFamily],
       assetRequirements: assetRequirement === 'all' ? undefined : [assetRequirement],
       mobileSafeOnly,
+      reviewSet: reviewSet === 'all' ? undefined : [reviewSet],
     }),
     [
       assetRequirement,
@@ -854,6 +923,7 @@ export function PfxBrowserApp() {
       loopMode,
       mobileSafeOnly,
       query,
+      reviewSet,
       space,
       style,
       tier,
@@ -871,12 +941,24 @@ export function PfxBrowserApp() {
     assetRequirement !== 'all'
       ? { key: 'assets', label: `Assets: ${assetRequirement}`, clear: () => setAssetRequirement('all') }
       : null,
+    reviewSet !== 'all'
+      ? {
+          key: 'reviewSet',
+          label: `Review: ${PFX_REVIEW_SETS.find((set) => set.id === reviewSet)?.label ?? reviewSet}`,
+          clear: () => setReviewSet('all'),
+        }
+      : null,
     loopMode !== 'all' ? { key: 'loop', label: `Loop: ${loopMode}`, clear: () => setLoopMode('all') } : null,
     space !== 'all' ? { key: 'space', label: `Space: ${space}`, clear: () => setSpace('all') } : null,
     mobileSafeOnly ? { key: 'mobileSafe', label: 'Mobile safe', clear: () => setMobileSafeOnly(false) } : null,
   ].filter((chip): chip is { key: string; label: string; clear: () => void } => chip !== null)
 
-  const allMatchingItems = useMemo(() => filterPfxCatalog(activeQuery), [activeQuery])
+  const catalogItems = useMemo(() => filterPfxCatalog(activeQuery), [activeQuery])
+  const inspectPackItems = useMemo(() => selectInspectPackItems(activeQuery), [activeQuery])
+  const allMatchingItems = useMemo(
+    () => [...inspectPackItems, ...catalogItems],
+    [catalogItems, inspectPackItems],
+  )
   // Searching with Mobile safe on silently hid matches (e.g. "explosion"
   // returned zero results) — surface how many hits the filter is hiding.
   const mobileSafeHiddenMatches = useMemo(() => {
@@ -911,8 +993,9 @@ export function PfxBrowserApp() {
     return counts
   }, [markedItems])
   const feed = useMemo(() => createPfxFeedScope(markedItems, feedRole), [feedRole, markedItems])
-  const selected = items.find((item) => item.effect.id === selectedId) ?? items[0]
-  const selectedIndex = selected ? items.findIndex((item) => item.effect.id === selected.effect.id) : -1
+  const browseItems = markedItems
+  const selected = browseItems.find((item) => item.effect.id === selectedId) ?? browseItems[0]
+  const selectedIndex = selected ? browseItems.findIndex((item) => item.effect.id === selected.effect.id) : -1
   const transportPreviewSeconds = pfxTransportPreviewSeconds(transport)
   const [emitterEdits, setEmitterEdits] = useState<Record<string, PfxEmitterEdit>>({})
   const [disabledEmitters, setDisabledEmitters] = useState<ReadonlySet<string>>(new Set())
@@ -943,10 +1026,10 @@ export function PfxBrowserApp() {
   // filters, and control overrides all survive so effects stay comparable.
   // While playing, the new effect restarts from t=0 (fresh burst on arrival).
   const flipSelectedEffect = (direction: 1 | -1) => {
-    if (items.length === 0) return
+    if (browseItems.length === 0) return
     const currentIndex = selectedIndex >= 0 ? selectedIndex : 0
-    const nextIndex = (currentIndex + direction + items.length) % items.length
-    setSelectedId(items[nextIndex]!.effect.id)
+    const nextIndex = (currentIndex + direction + browseItems.length) % browseItems.length
+    setSelectedId(browseItems[nextIndex]!.effect.id)
     setTransport((current) => (current.status === 'playing' ? restartPfxTransport(current) : current))
   }
 
@@ -999,6 +1082,7 @@ export function PfxBrowserApp() {
     : undefined
   const preset = useMemo(() => {
     if (!selected) return null
+    if (isInspectPackId(selected.effect.id)) return selected.preset
     return createPfxPreset(selected.effect.id, {
       seed: selected.preset.seed,
       ...controlOverrides,
@@ -1221,6 +1305,17 @@ export function PfxBrowserApp() {
             </select>
           </label>
           <label>
+            Review set
+            <select value={reviewSet} onChange={(event) => setReviewSet(event.target.value)}>
+              <option value="all">All review sets</option>
+              {PFX_REVIEW_SETS.map((set) => (
+                <option key={set.id} value={set.id}>
+                  {set.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
             Mood
             <select value={emotionMood} onChange={(event) => setEmotionMood(event.target.value)}>
               <option value="all">All moods</option>
@@ -1386,7 +1481,7 @@ export function PfxBrowserApp() {
               antialias: PFX_MOBILE_RUNTIME_POLICY.webgl.antialias,
               alpha: PFX_MOBILE_RUNTIME_POLICY.webgl.alpha,
               powerPreference: PFX_MOBILE_RUNTIME_POLICY.webgl.powerPreference,
-              preserveDrawingBuffer: Boolean(realDeviceCapture),
+              preserveDrawingBuffer: Boolean(realDeviceCapture || reviewCapture),
             }}
           >
             <PfxStageEnvironment effectId={selected?.effect.id} reviewFraming={reviewFraming} />
@@ -1394,14 +1489,16 @@ export function PfxBrowserApp() {
             <OrbitCameraRig orbit={orbitRef} autoRotate={!reducedMotion && !reviewCameraLocked && orbitDragRef.current == null} />
             {preset && previewMode === 'single' ? (
               <group position={createPfxReviewEffectPosition(selected?.effect.id, reviewFraming)}>
-                {/* The review pipeline's frozen frame (reviewTimeMs) always
-                    wins over the interactive transport. */}
-                <GamePfx
-                  preset={preset}
-                  reducedMotion={reducedMotion}
-                  previewTimeSeconds={reviewTimeSeconds ?? transportPreviewSeconds}
-                  recipeOverride={editedRecipe}
-                />
+                {selected && isInspectPackId(selected.effect.id) ? (
+                  <InspectPackEffect id={selected.effect.id} />
+                ) : (
+                  <GamePfx
+                    preset={preset}
+                    reducedMotion={reducedMotion}
+                    previewTimeSeconds={reviewTimeSeconds ?? transportPreviewSeconds}
+                    recipeOverride={editedRecipe}
+                  />
+                )}
               </group>
             ) : null}
             
@@ -1416,6 +1513,7 @@ export function PfxBrowserApp() {
                   />
                 ))
               : null}
+            {reviewCaptureToken ? <PfxReviewCaptureHandshake token={reviewCaptureToken} /> : null}
           </Canvas>
           {!reviewCameraLocked ? <span className="pfx-stage-hint">Drag to orbit · Wheel to zoom · Human reference = 1.8m</span> : null}
         </div>
@@ -1446,7 +1544,7 @@ export function PfxBrowserApp() {
                   ← Prev
                 </button>
                 <span data-testid="pfx-effect-flip-position" className="pfx-effect-flip-position">
-                  {selectedIndex + 1} / {items.length}
+                  {selectedIndex + 1} / {browseItems.length}
                 </span>
                 <button
                   type="button"
@@ -2794,6 +2892,9 @@ function RealDevicePlatformProgressLine({
 }
 
 async function loadCaptureServerProgress(): Promise<RealDeviceCaptureServerProgress | null> {
+  // These endpoints exist only on the Vite dev server. Static GitHub Pages
+  // has no capture process; skip the probe so the browser does not log a 404.
+  if (!import.meta.env.DEV) return null
   try {
     const response = await fetch('/__r3f-pfx-capture-progress')
     const result = response.ok ? ((await response.json()) as RealDeviceCaptureServerProgressResult) : null
@@ -2804,6 +2905,7 @@ async function loadCaptureServerProgress(): Promise<RealDeviceCaptureServerProgr
 }
 
 async function loadExternalEvidenceHandoff(): Promise<ExternalEvidenceHandoff | null> {
+  if (!import.meta.env.DEV) return null
   try {
     const response = await fetch('/__r3f-pfx-evidence-handoff')
     const result = response.ok ? ((await response.json()) as ExternalEvidenceHandoff) : null
@@ -2814,6 +2916,7 @@ async function loadExternalEvidenceHandoff(): Promise<ExternalEvidenceHandoff | 
 }
 
 async function loadExternalEvidenceHandoffHealth(): Promise<ExternalEvidenceHandoffHealth | null> {
+  if (!import.meta.env.DEV) return null
   try {
     const response = await fetch('/__r3f-pfx-evidence-handoff-health')
     const result = response.ok ? ((await response.json()) as ExternalEvidenceHandoffHealth) : null
@@ -2908,19 +3011,21 @@ export interface PfxMarkFilter {
  * URL-driven review marker: `?mark=id1,id2&markLabel=REDO&markOnly=1` tags
  * every matching gallery cell with a visible badge so audit findings can be
  * shared as a link. `markOnly=1` additionally narrows the gallery to the
- * marked set. Pure parsing so the contract is testable without the browser.
+ * marked set. Named aliases (`inspect-sheets`, `mesh-stunted`) expand to
+ * the tagged ids. Pure parsing so the contract is testable without the browser.
  */
 export function readPfxMarkFilter(search?: string): PfxMarkFilter | null {
   const rawSearch = search ?? (typeof window === 'undefined' ? '' : window.location.search)
   const params = new URLSearchParams(rawSearch)
   const raw = params.get('mark')
   if (!raw) return null
-  const ids = raw
+  const rawIds = raw
     .split(',')
     .map((id) => id.trim())
     .filter(Boolean)
+  const ids = expandInspectSheetMarkIds(expandPfxMarkIds(rawIds))
   if (ids.length === 0) return null
-  const label = params.get('markLabel')?.trim() || 'MARKED'
+  const label = params.get('markLabel')?.trim() || defaultPfxMarkLabel(rawIds)
   return { ids: new Set(ids), label, only: params.get('markOnly') === '1' }
 }
 
@@ -2969,6 +3074,26 @@ function readReviewFraming(): PfxReviewFraming {
   if (typeof window === 'undefined') return 'gameplay-context'
   const value = new URLSearchParams(window.location.search).get('reviewFraming')
   return value === 'isolated' ? 'isolated' : 'gameplay-context'
+}
+
+function readReviewCapture(): boolean {
+  if (typeof window === 'undefined') return false
+  return new URLSearchParams(window.location.search).get('reviewCapture') === '1'
+}
+
+export function readPfxReviewCaptureToken(search?: string): string | null {
+  const resolvedSearch = search ??
+    (typeof window === 'undefined' ? '' : window.location.search)
+  const params = new URLSearchParams(resolvedSearch)
+  if (params.get('reviewCapture') !== '1') return null
+  const token = params.get('reviewCaptureToken')
+  if (
+    token == null ||
+    token.length < 1 ||
+    token.length > 200 ||
+    !/^[A-Za-z0-9._:-]+$/.test(token)
+  ) return null
+  return token
 }
 
 function readReviewTimeSeconds(): number | undefined {

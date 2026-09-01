@@ -61,6 +61,86 @@ function imageProxyPlugin(): Plugin {
         }
       });
 
+      // ====== Gesture-safe downloads (ticket rendezvous) ======
+      // Browser downloads must start inside a user gesture, but image
+      // compositing finishes long after the gesture expires. The client
+      // clicks a download link to /__download/<ticket>/<name> synchronously
+      // in the gesture (dialog appears immediately), then composites and
+      // POSTs the bytes to /__download-fulfill/<ticket>; we stream them into
+      // the already-started download. Tickets are client-minted UUIDs.
+      interface DownloadTicket { res?: import('node:http').ServerResponse; data?: Buffer; failed?: boolean; timer: NodeJS.Timeout }
+      const downloadTickets = new Map<string, DownloadTicket>();
+      const ticketCleanup = (id: string) => {
+        const t = downloadTickets.get(id);
+        if (t) { clearTimeout(t.timer); downloadTickets.delete(id); }
+      };
+      const ticketTimer = (id: string) => setTimeout(() => {
+        const cur = downloadTickets.get(id);
+        cur?.res?.destroy();
+        ticketCleanup(id);
+      }, 3 * 60 * 1000);
+      // Batch saves fulfill sequentially, so a later ticket's clock must not
+      // run while earlier composites are still working — any save activity
+      // refreshes every pending ticket. Timeout = 3 min of total inactivity.
+      const touchAllTickets = () => {
+        for (const [id, t] of downloadTickets) {
+          clearTimeout(t.timer);
+          t.timer = ticketTimer(id);
+        }
+      };
+      const newTicket = (id: string): DownloadTicket => {
+        const t: DownloadTicket = { timer: ticketTimer(id) };
+        downloadTickets.set(id, t);
+        return t;
+      };
+      const TICKET_RE = /^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/([^/]+))?$/i;
+
+      server.middlewares.use('/__download', (req, res) => {
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const m = (req.url ?? '').split('?')[0]!.match(TICKET_RE);
+        if (!m) { res.writeHead(400); res.end('Bad ticket'); return; }
+        const [, id, rawName] = m;
+        const name = decodeURIComponent(rawName || 'image.png').replace(/[/\\"\r\n]/g, '_');
+        const t = downloadTickets.get(id!) ?? newTicket(id!);
+        if (t.failed) { ticketCleanup(id!); res.writeHead(500); res.end('Render failed'); return; }
+        res.writeHead(200, {
+          'Content-Type': 'image/png',
+          'Content-Disposition': `attachment; filename="${name}"`,
+          'Cache-Control': 'no-store',
+        });
+        if (t.data) {
+          res.end(t.data);
+          ticketCleanup(id!);
+        } else {
+          t.res = res;
+          res.on('close', () => { if (downloadTickets.get(id!)?.res === res && !res.writableEnded) ticketCleanup(id!); });
+        }
+      });
+
+      server.middlewares.use('/__download-fulfill', async (req, res) => {
+        if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const m = (req.url ?? '').split('?')[0]!.match(TICKET_RE);
+        if (!m) { res.writeHead(400); res.end('Bad ticket'); return; }
+        const id = m[1]!;
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(Buffer.from(chunk));
+        const data = Buffer.concat(chunks);
+        touchAllTickets();
+        const t = downloadTickets.get(id) ?? newTicket(id);
+        if (data.length === 0) {
+          // Empty body = the client's render failed; kill the pending download
+          t.failed = true;
+          if (t.res) { t.res.destroy(); ticketCleanup(id); }
+        } else if (t.res) {
+          t.res.end(data);
+          ticketCleanup(id);
+        } else {
+          t.data = data; // download request hasn't arrived yet — hold the bytes
+        }
+        res.writeHead(200); res.end('ok');
+      });
+
       server.middlewares.use('/__proxy', async (req, res) => {
         if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         const url = new URL(req.url ?? '', 'http://localhost').searchParams.get('url');
@@ -193,6 +273,367 @@ function aiDirectPlugin(): Plugin {
         if (b64.startsWith('UklGR')) return 'image/webp';
         return fallback;
       }
+
+      // ====== Unity AI (generation inside a live Unity Editor) ======
+      // The com.unity.pipeline package runs a token-authenticated server on
+      // localhost:7800; the official `unity` CLI is the only sanctioned way in
+      // (no CORS, token auth — the browser can never talk to it directly).
+      // Generation goes through `unity command eval` → reflection into the
+      // internal Unity.AI.Generators.Tools.AssetGenerators API.
+      const unityCli = async (projectPath: string, args: string[], timeoutMs: number): Promise<Record<string, unknown>> => {
+        const { execFile } = await import('node:child_process');
+        return await new Promise((resolve, reject) => {
+          execFile('unity', ['--no-banner', '--format', 'json', ...args, ...(projectPath ? ['--project-path', projectPath] : [])],
+            { timeout: timeoutMs, maxBuffer: 16 * 1024 * 1024 },
+            (err, stdout) => {
+              // The CLI writes JSON even on failures; prefer parsing over err
+              try { resolve(JSON.parse(stdout)); } catch { reject(err ?? new Error('unity CLI produced no JSON')); }
+            });
+        });
+      };
+      const unityEval = async (projectPath: string, code: string, timeoutSec = 60): Promise<string> => {
+        const json = await unityCli(projectPath, ['command', 'eval', '--timeout', String(timeoutSec), '--code', code], (timeoutSec + 30) * 1000);
+        const result = (json as { data?: { result?: { result?: unknown, error?: string } } }).data?.result;
+        if (json.success !== true && json.success !== 'True') {
+          const errs = (json as { errors?: { message?: string }[] }).errors ?? [];
+          throw new Error(result?.error || errs[0]?.message || `unity eval failed: ${JSON.stringify(json).slice(0, 500)}`);
+        }
+        return String(result?.result ?? '');
+      };
+      const unityFlagsDecl = 'var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;';
+      const csStr = (s: string) => JSON.stringify(s); // C# string literal == JSON string literal for our inputs
+
+      server.middlewares.use('/__unity-status', async (req, res) => {
+        if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const params = await readJsonBody(req) ?? {};
+        // Empty path = auto-detect: no-arg `unity status` lists every running
+        // Editor with the Pipeline package; the Preferences path is only an
+        // override for when more than one Editor is open
+        const projectPath = String(params.projectPath || '').trim();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        try {
+          const json = await unityCli(projectPath, ['status'], 20000);
+          const instances = ((json as { data?: { instances?: { port?: number; project?: string; version?: string; state?: string }[] } }).data?.instances) ?? [];
+          const inst = instances.find((i) => i.state === 'ready') ?? instances[0];
+          if (!inst) {
+            res.end(JSON.stringify({ up: false, error: projectPath
+              ? 'No running Unity Editor with the Pipeline package on this project. Open it in Unity 6+.'
+              : 'No running Unity Editor with the Pipeline package found. Open your project in Unity 6+.' }));
+            return;
+          }
+          // Live Unity AI points balance (best-effort — status still reports up on failure)
+          let points: { available: number; allocated: number } | null = null;
+          if (inst.state === 'ready' && inst.project) {
+            try {
+              const bal = await unityEval(inst.project, `
+${unityFlagsDecl}
+var acct = System.Type.GetType("Unity.AI.Toolkit.Accounts.Services.Account, Unity.AI.Toolkit.Accounts");
+if (acct == null) return "NO_API";
+var state = acct.GetField("pointsBalance", flags).GetValue(null);
+var val = state.GetType().GetProperty("Value", flags).GetValue(state);
+if (val == null) return "NO_VALUE";
+var vt = val.GetType();
+return vt.GetField("PointsAvailable", flags).GetValue(val) + "/" + vt.GetField("PointsAllocated", flags).GetValue(val);`, 30);
+              const m = bal.match(/^(\d+)\/(\d+)$/);
+              if (m) points = { available: Number(m[1]), allocated: Number(m[2]) };
+            } catch { /* balance unavailable — not fatal */ }
+          }
+          res.end(JSON.stringify({ up: inst.state === 'ready', project: inst.project, version: inst.version, port: inst.port, state: inst.state, points }));
+        } catch (e) {
+          res.end(JSON.stringify({ up: false, error: e instanceof Error ? e.message : 'unity CLI not available' }));
+        }
+      });
+
+      // Model list: kicked off as a background task inside the Editor (the
+      // call is async there), polled to completion here, cached per project.
+      const unityModelsCache = new Map<string, { at: number; models: unknown[] }>();
+      server.middlewares.use('/__unity-models', async (req, res) => {
+        if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const params = await readJsonBody(req) ?? {};
+        const projectPath = String(params.projectPath || '').trim();
+        if (!projectPath) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing projectPath' })); return; }
+        const cached = unityModelsCache.get(projectPath);
+        if (cached && !params.refresh && Date.now() - cached.at < 60 * 60 * 1000) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ models: cached.models }));
+          return;
+        }
+        try {
+          const startCode = `
+${unityFlagsDecl}
+var genType = System.Type.GetType("Unity.AI.Generators.Tools.AssetGenerators, Unity.AI.Generators.Tools");
+if (genType == null) return "NO_API";
+var existing = System.AppDomain.CurrentDomain.GetData("lm_unity_models") as System.Threading.Tasks.Task;
+if (existing == null || existing.IsFaulted) {
+  var method = genType.GetMethod("GetAvailableModelsAsync", flags);
+  existing = (System.Threading.Tasks.Task)method.Invoke(null, new object[] { true, System.Threading.CancellationToken.None });
+  System.AppDomain.CurrentDomain.SetData("lm_unity_models", existing);
+}
+if (!existing.IsCompleted) return "PENDING";
+if (existing.IsFaulted) return "FAULTED:" + existing.Exception.GetBaseException().Message;
+var list = existing.GetType().GetProperty("Result").GetValue(existing);
+var sb = new System.Text.StringBuilder();
+foreach (var item in (System.Collections.IEnumerable)list) {
+  var t = item.GetType();
+  sb.Append(t.GetField("ModelId").GetValue(item)).Append("\\t").Append(t.GetField("Description").GetValue(item)).Append("\\n");
+}
+return sb.ToString();`;
+          let out = '';
+          for (let i = 0; i < 40; i++) {
+            out = await unityEval(projectPath, startCode, 60);
+            if (out === 'NO_API') throw new Error('Unity.AI.Generators.Tools is not in this project. Add com.unity.ai.assistant.');
+            if (out.startsWith('FAULTED:')) throw new Error(out.slice(8));
+            if (out !== 'PENDING') break;
+            await new Promise((r) => setTimeout(r, 2000));
+          }
+          if (out === 'PENDING' || !out) throw new Error('Timed out fetching the Unity model list');
+          // "Description" bundles the display name, blurb, modalities, and
+          // Supports* capability flags into one string — parse it apart
+          const models = out.trim().split('\n').map((line) => {
+            const [id, desc = ''] = line.split('\t');
+            const caps = Array.from(desc.matchAll(/Supports[A-Za-z0-9]+/g)).map((m) => m[0]);
+            const modalities = (desc.match(/Modalities:\s*([^,.]+(?:,\s*[^,.]+)*?)(?=,\s*Supports|\.$|$)/)?.[1] ?? '')
+              .split(',').map((s) => s.trim()).filter(Boolean);
+            const displayName = desc.split(',')[0]?.trim() || id;
+            const blurb = desc.replace(/,?\s*Modalities:.*$/, '').split(',').slice(1).join(',').trim();
+            return { id: id!.trim(), displayName, blurb, modalities, caps };
+          }).filter((m) => m.id);
+          unityModelsCache.set(projectPath, { at: Date.now(), models });
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ models }));
+        } catch (e) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: e instanceof Error ? e.message : 'Unknown error' }));
+        }
+      });
+
+      server.middlewares.use('/__unity-generate', async (req, res) => {
+        if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const params = await readJsonBody(req);
+        if (!params) { res.writeHead(400); res.end('Invalid JSON'); return; }
+        const projectPath = String(params.projectPath || '').trim();
+        const prompt = String(params.prompt || '').trim();
+        const kind = params.kind === 'sprite' ? 'sprite' : 'image';
+        const model = String(params.model || '').trim();
+        const width = Math.max(0, Math.min(4096, Number(params.width) || 0));
+        const height = Math.max(0, Math.min(4096, Number(params.height) || 0));
+        const refImage = params.refImage as { base64: string; mimeType?: string } | undefined;
+        // Utility models (upscale, recolor, bg removal) transform the
+        // reference image — the prompt is optional when a reference rides
+        // along. Unity's validator still demands a non-empty prompt string,
+        // so substitute a neutral instruction.
+        if (!projectPath || !model || (!prompt && !refImage?.base64)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing projectPath or model, or neither prompt nor reference image provided' }));
+          return;
+        }
+        const effectivePrompt = prompt || 'Process the reference image.';
+
+        const fsMod = await import('node:fs/promises');
+        const pathMod = await import('node:path');
+        const send = makeSSE(res);
+        let clientGone = false;
+        res.on('close', () => { clientGone = true; });
+
+        // Output path: dated folder, kind_time_model name, never overwrite
+        const now = new Date();
+        // Local date, not UTC — evening generations must not jump to tomorrow's folder
+        const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const hms = now.toTimeString().slice(0, 8).replace(/:/g, '');
+        const modelSlug = model.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
+        let outRel = `Assets/AIGenerated/${day}/${kind}_${hms}_${modelSlug}.png`;
+        const stampKey = `${day.replace(/-/g, '')}_${hms}_${Math.random().toString(36).slice(2, 6)}`;
+        // Reference image temp asset — cleaned up in finally so failed runs
+        // don't strand files in the Unity project
+        let refRel: string | null = null;
+        try {
+          await fsMod.mkdir(pathMod.join(projectPath, `Assets/AIGenerated/${day}`), { recursive: true });
+          let n = 2;
+          const base = outRel.slice(0, -4);
+          while (await fsMod.stat(pathMod.join(projectPath, outRel)).then(() => true, () => false)) {
+            outRel = `${base}_${n}.png`; n++;
+          }
+
+          // Reference image: Unity only reads references that exist as assets
+          // inside the project, and only the first one is used
+          if (refImage?.base64) {
+            // Extension must match the actual bytes or Unity's importer chokes
+            const refMime = refImage.mimeType || detectMime(refImage.base64);
+            const refExt = /jpe?g/.test(refMime) ? 'jpg' : /webp/.test(refMime) ? 'webp' : /gif/.test(refMime) ? 'gif' : 'png';
+            refRel = `Assets/AIGenerated/_lm_refs/ref_${stampKey}.${refExt}`;
+            await fsMod.mkdir(pathMod.join(projectPath, 'Assets/AIGenerated/_lm_refs'), { recursive: true });
+            await fsMod.writeFile(pathMod.join(projectPath, refRel), Buffer.from(refImage.base64, 'base64'));
+          }
+
+          await unityCli(projectPath, ['command', 'set_autotick', 'enabled=true'], 15000).catch(() => {});
+
+          const settingsType = kind === 'sprite' ? 'SpriteSettings' : 'ImageSettings';
+          const removeBg = kind === 'sprite';
+          const handleKey = `lm_unity_gen_${stampKey}`;
+          const refSetup = refRel ? `
+// The ref file (and possibly its folder) was just written from outside the
+// Editor — Refresh so Unity discovers them before importing
+UnityEditor.AssetDatabase.Refresh(UnityEditor.ImportAssetOptions.ForceSynchronousImport);
+UnityEditor.AssetDatabase.ImportAsset(${csStr(refRel)}, UnityEditor.ImportAssetOptions.ForceSynchronousImport);
+var refTex = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Texture2D>(${csStr(refRel)});
+if (refTex == null) {
+  UnityEditor.AssetDatabase.Refresh(UnityEditor.ImportAssetOptions.ForceSynchronousImport);
+  refTex = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Texture2D>(${csStr(refRel)});
+}
+if (refTex == null) {
+  var fi = new System.IO.FileInfo(${csStr(refRel)});
+  return "REF_LOAD_FAILED exists=" + fi.Exists + " bytes=" + (fi.Exists ? fi.Length : -1)
+    + " importer=" + (UnityEditor.AssetImporter.GetAtPath(${csStr(refRel)}) == null ? "null" : UnityEditor.AssetImporter.GetAtPath(${csStr(refRel)}).GetType().Name);
+}
+var orType = System.Type.GetType("Unity.AI.Generators.Tools.ObjectReference, Unity.AI.Generators.Tools");
+var objRef = System.Activator.CreateInstance(orType);
+orType.GetField("Image", flags).SetValue(objRef, refTex);
+orType.GetField("Label", flags).SetValue(objRef, "reference");
+var refArr = System.Array.CreateInstance(orType, 1);
+refArr.SetValue(objRef, 0);
+settingsType.GetField("ImageReferences", flags).SetValue(settings, refArr);` : '';
+          const startCode = `
+${unityFlagsDecl}
+var genType = System.Type.GetType("Unity.AI.Generators.Tools.AssetGenerators, Unity.AI.Generators.Tools");
+if (genType == null) return "NO_API";
+var settingsType = System.Type.GetType("Unity.AI.Generators.Tools.${settingsType}, Unity.AI.Generators.Tools");
+var settings = System.Activator.CreateInstance(settingsType);
+var removeF = settingsType.GetField("RemoveBackground", flags);
+if (removeF != null) removeF.SetValue(settings, ${removeBg});
+var wF = settingsType.GetField("Width", flags);
+var hF = settingsType.GetField("Height", flags);
+if (wF != null) wF.SetValue(settings, ${width});
+if (hF != null) hF.SetValue(settings, ${height});${refSetup}
+var paramOpen = System.Type.GetType("Unity.AI.Generators.Tools.GenerationParameters\`1, Unity.AI.Generators.Tools");
+var paramType = paramOpen.MakeGenericType(settingsType);
+var parameters = System.Activator.CreateInstance(paramType);
+paramType.GetField("AssetType", flags).SetValue(parameters, typeof(UnityEngine.Texture2D));
+paramType.GetField("Prompt", flags).SetValue(parameters, ${csStr(effectivePrompt)});
+paramType.GetField("SavePath", flags).SetValue(parameters, ${csStr(outRel)});
+paramType.GetField("ModelId", flags).SetValue(parameters, ${csStr(model)});
+paramType.GetField("Settings", flags).SetValue(parameters, settings);
+var generate = System.Linq.Enumerable.First(genType.GetMethods(flags), m => m.Name == "GenerateAsync" && m.IsGenericMethodDefinition);
+var handle = generate.MakeGenericMethod(settingsType).Invoke(null, new object[] { parameters, System.Threading.CancellationToken.None });
+System.AppDomain.CurrentDomain.SetData(${csStr(handleKey)}, handle);
+return "started";`;
+
+          const absOut = pathMod.join(projectPath, outRel);
+          const preBytes = await fsMod.stat(absOut).then((s) => s.size, () => -1);
+
+          const started = await unityEval(projectPath, startCode, 60);
+          if (started === 'NO_API') throw new Error('Unity.AI.Generators.Tools is not in this project. Add com.unity.ai.assistant.');
+          if (started.startsWith('REF_LOAD_FAILED')) {
+            // Keep the temp file for diagnosis — this failure means Unity saw
+            // the file but couldn't import it, and the bytes are the evidence
+            const diag = started.slice('REF_LOAD_FAILED'.length).trim();
+            refRel = null; // skip cleanup
+            throw new Error(`Reference image could not be imported into the Unity project (${diag || 'no details'}). The file was kept in Assets/AIGenerated/_lm_refs/ for inspection.`);
+          }
+          if (started !== 'started') throw new Error(`Unity generation did not start: ${started}`);
+          send('progress', { message: 'Generation started in Unity...' });
+
+          const pollCode = `
+${unityFlagsDecl}
+var handle = System.AppDomain.CurrentDomain.GetData(${csStr(handleKey)});
+if (handle == null) return "NO_HANDLE";
+var handleType = handle.GetType();
+System.Func<string, string> stat = name => {
+  var t = handleType.GetProperty(name, flags).GetValue(handle) as System.Threading.Tasks.Task;
+  if (t == null) return "null";
+  if (t.IsFaulted) return "FAULTED:" + t.Exception.GetBaseException().Message;
+  if (t.IsCanceled) return "Canceled";
+  return t.IsCompleted ? "Done" : "Running";
+};
+var msgs = "";
+var msgsVal = handleType.GetProperty("Messages", flags).GetValue(handle);
+if (msgsVal is System.Collections.IEnumerable en && !(msgsVal is string)) { foreach (var m in en) msgs += m + " | "; }
+else if (msgsVal != null) msgs = msgsVal.ToString();
+var cost = handleType.GetProperty("PointCost", flags).GetValue(handle);
+// Where Unity is ACTUALLY writing — can differ from the requested SavePath
+var ph = handleType.GetProperty("Placeholder", flags).GetValue(handle);
+var ppath = "";
+if (ph is UnityEngine.Object po) ppath = UnityEditor.AssetDatabase.GetAssetPath(po) ?? "";
+return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" + stat("DownloadTask") + " cost=" + cost + " path=" + ppath + (msgs.Length > 0 ? " msgs=" + msgs.TrimEnd(' ', '|') : "");`;
+
+          // Poll: the file size moving away from both the pre-existing size
+          // and the generator's blank placeholder — then holding steady — is
+          // the only reliable completion signal (DownloadTask.Status can sit
+          // at WaitingForActivation the whole time while succeeding)
+          const maxWaitMs = 15 * 60 * 1000;
+          const startAt = Date.now();
+          let placeholderBytes = -1, lastBytes = -1, lastStage = '';
+          // Follow the file Unity is ACTUALLY writing (the handle's Placeholder
+          // asset), not just the path we asked for — some generators redirect
+          let watchRel = outRel;
+          let watchAbs = absOut;
+          let watchPre = preBytes;
+          let done = false;
+          while (Date.now() - startAt < maxWaitMs) {
+            if (clientGone) break;
+            const poll = await unityEval(projectPath, pollCode, 30).catch((e) => `POLL_ERR:${e instanceof Error ? e.message : e}`);
+            const elapsed = Math.round((Date.now() - startAt) / 1000);
+            if (poll === 'NO_HANDLE') throw new Error('Generation lost (Unity domain reload — Play mode or a script recompile). Retry.');
+            if (poll.includes('FAULTED:')) throw new Error(`Unity generation failed after ${elapsed}s: ${poll}`);
+            const cost = poll.match(/cost=(\S+)/)?.[1];
+            const msgs = poll.match(/ msgs=(.*)$/)?.[1];
+            // path= runs to the next marker (project paths can contain spaces)
+            const phPath = poll.match(/ path=(.*?)(?= msgs=|$)/)?.[1]?.trim();
+            if (phPath && phPath !== watchRel) {
+              watchRel = phPath;
+              watchAbs = pathMod.join(projectPath, watchRel);
+              watchPre = -1;
+              placeholderBytes = -1;
+              lastBytes = -1;
+            }
+            const stage = poll.includes('v=Running') ? 'Validating prompt/model'
+              : poll.includes('g=Running') ? 'Generating on Unity servers'
+              : poll.includes('dl=Done') ? 'Finalizing'
+              : poll.startsWith('POLL_ERR') ? 'Waiting for Editor'
+              : 'Downloading result 🐌';
+            if (stage !== lastStage) {
+              send('progress', { message: `${stage}...`, elapsed, cost, serverMessage: msgs });
+              lastStage = stage;
+            }
+            const bytes = await fsMod.stat(watchAbs).then((s) => s.size, () => -1);
+            const dlDone = poll.includes('dl=Done');
+            if (dlDone && bytes > 0 && bytes !== watchPre) { done = true; break; }
+            if (placeholderBytes < 0 && bytes >= 0) placeholderBytes = bytes;
+            // A file already at real-image size when first seen (late path
+            // discovery, atomic write) would wrongly become the "blank
+            // placeholder" baseline — blank placeholders are ~18KB, so a
+            // large stable file counts as done even when it equals the
+            // baseline and DownloadTask never reports Done
+            if (bytes > 0 && bytes !== watchPre && (bytes !== placeholderBytes || bytes >= 80_000)) {
+              if (bytes === lastBytes) { done = true; break; }
+              lastBytes = bytes;
+              await new Promise((r) => setTimeout(r, 3000));
+              continue;
+            }
+            await new Promise((r) => setTimeout(r, 5000));
+          }
+          if (clientGone) return;
+          if (!done) throw new Error('No result after 15 minutes — the job may still finish inside the Editor; check there before regenerating (it costs points).');
+          const buf = await fsMod.readFile(watchAbs);
+          send('image', { dataUrl: `data:image/png;base64,${buf.toString('base64')}` });
+          send('done', {});
+        } catch (e) {
+          if (!clientGone) {
+            console.error('[ai-direct] Unity error:', e);
+            send('error', { error: e instanceof Error ? e.message : 'Unknown error' });
+            send('done', {});
+          }
+        } finally {
+          // Clean up the temp reference asset (file + .meta) on every path
+          if (refRel) {
+            fsMod.unlink(pathMod.join(projectPath, refRel)).catch(() => {});
+            fsMod.unlink(pathMod.join(projectPath, refRel + '.meta')).catch(() => {});
+          }
+        }
+        res.end();
+      });
 
       // ====== Google GenAI (Nano Banana / Gemini) ======
       server.middlewares.use('/__ai-generate-google', async (req, res) => {
@@ -408,8 +849,8 @@ function aiDirectPlugin(): Plugin {
         const count = Math.max(1, Math.min(4, Number(params.count) || 1));
         // Grok models ride in the agent instruction; GPT Image tiers are picked
         // via the OPENAI_IMAGE_MODEL env override the codex plugin checks first
-        const model = params.model === 'grok-imagine-image-quality' ? 'grok-imagine-image-quality'
-          : params.model === 'grok-imagine-image' ? 'grok-imagine-image'
+        const model = ['grok-imagine-image', 'grok-imagine-image-quality', 'grok-imagine-image-2.0'].includes(String(params.model))
+          ? String(params.model)
           : null;
         const gptTier = /^gpt-image-2-(low|medium|high)$/.test(String(params.model)) ? String(params.model) : null;
         // The active hermes image backend lives in config.yaml — flip it to
@@ -450,7 +891,7 @@ function aiDirectPlugin(): Plugin {
         const refs = (params.refImages ?? []) as { base64: string; mimeType?: string }[];
         // xAI /v1/images/edits accepts up to 3 total source images; the codex
         // backend takes up to 16 reference images
-        for (const img of refs.slice(0, gptTier ? 16 : 3)) {
+        for (const img of refs.slice(0, gptTier ? 16 : model === 'grok-imagine-image-2.0' ? 5 : 3)) {
           const ext = /jpe?g/.test(img.mimeType || '') ? 'jpg' : /webp/.test(img.mimeType || '') ? 'webp' : 'png';
           const f = pathMod.join(os.tmpdir(), `lm-hgi-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`);
           await fsMod.writeFile(f, Buffer.from(img.base64, 'base64'));
@@ -474,11 +915,26 @@ function aiDirectPlugin(): Plugin {
         }
         instruction += '\nWhen it finishes, reply with ONLY the absolute file path(s) or URL(s) of the generated image(s), one per line, nothing else.';
 
-        const child = spawn('hermes', ['--yolo', '-z', instruction, '-t', 'image_gen'], {
+        // Pin the AGENT model explicitly — never inherit the user's hermes
+        // model.default, which they're free to point at anything (including
+        // image models that can't run the agent). Grok runs get a live chat
+        // model from the proxy; codex runs get the documented recommendation.
+        const agentArgs = ['--yolo', '-z', instruction, '-t', 'image_gen'];
+        if (gptTier) {
+          agentArgs.push('-m', 'gpt-5.6-luna', '--provider', 'openai-codex');
+        } else {
+          const chatModels = await hermesProxyModels().catch(() => null);
+          if (chatModels?.length) agentArgs.push('-m', chatModels[0]!, '--provider', 'xai-oauth');
+        }
+        const child = spawn('hermes', agentArgs, {
           stdio: ['ignore', 'pipe', 'pipe'],
-          // Tier override for the openai-codex image plugin — it checks this
-          // env var before config.yaml, so the UI choice wins per-run
-          env: gptTier ? { ...process.env, OPENAI_IMAGE_MODEL: gptTier } : process.env,
+          // Model overrides ride env vars the hermes plugins check before
+          // config.yaml. The xai plugin's image_generate tool takes NO model
+          // argument — XAI_IMAGE_MODEL is the only way the Standard/Quality
+          // choice actually reaches it (the instruction text alone did nothing).
+          env: gptTier ? { ...process.env, OPENAI_IMAGE_MODEL: gptTier }
+            : model ? { ...process.env, XAI_IMAGE_MODEL: model }
+            : process.env,
         });
         const cleanupTmp = () => { for (const f of tmpFiles) fsMod.unlink(f).catch(() => {}); };
         res.on('close', () => { child.kill('SIGTERM'); cleanupTmp(); });
@@ -644,9 +1100,15 @@ function aiDirectPlugin(): Plugin {
         // selected once in `hermes tools`. The provider (xai, openai-codex, …)
         // decides which UI the Text to Image panel shows.
         let hermesImageGenProvider: string | null = null;
+        // Whether the installed hermes xai plugin knows Imagine 2.0 — its
+        // catalog is a hard allowlist that silently substitutes unknown
+        // models, so the 2.0 button only shows when it would actually work
+        let hermesGrok2 = false;
         try {
           const fsMod = await import('node:fs/promises');
           const os = await import('node:os');
+          const plugin = await fsMod.readFile(`${os.homedir()}/.hermes/hermes-agent/plugins/image_gen/xai/__init__.py`, 'utf8').catch(() => '');
+          hermesGrok2 = plugin.includes('"grok-imagine-image-2.0"');
           const cfg = await fsMod.readFile(`${os.homedir()}/.hermes/config.yaml`, 'utf8');
           // Match provider inside the top-level image_gen block only
           const block = cfg.match(/^image_gen:\n((?:[ \t]+.*\n?)*)/m)?.[1] ?? '';
@@ -668,6 +1130,7 @@ function aiDirectPlugin(): Plugin {
             // image_gen.provider on the fly via `hermes config set`
             xai: hermesXaiLogin,
             codex: hermesCodexLogin,
+            grok2: hermesGrok2,
           },
           claude: { up: claudeCliCache },
         }));
