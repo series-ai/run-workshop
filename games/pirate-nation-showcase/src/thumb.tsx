@@ -8,9 +8,9 @@ import { StrictMode, Suspense, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Canvas } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
-import { FitCamera } from './components/FitCamera'
+import { FitCamera, getModelPreviewYaw } from './pack3d'
 import { MODEL_VIEWER_ROOT_NAME } from './components/ModelViewer'
-import { loadModels, runtimeAssetPath, type PirateNationModelEntry } from './catalog'
+import { loadModels, modelAssetReference, type PirateNationModelEntry } from './catalog'
 import { useAssetUrl } from './useAssetUrl'
 
 declare global {
@@ -20,8 +20,11 @@ declare global {
   }
 }
 
-function LoadedModel({ url, id }: { url: string; id: string }) {
+function LoadedModel({ url, id, category }: { url: string; id: string; category?: string }) {
   const { scene } = useGLTF(url)
+  const yawParam = new URLSearchParams(window.location.search).get('yaw')
+  const defaultYaw = getModelPreviewYaw(category)
+  const yaw = yawParam !== null ? Number(yawParam) : defaultYaw
 
   useEffect(() => {
     // FitCamera needs a frame to measure the subject, so signal readiness two
@@ -41,9 +44,9 @@ function LoadedModel({ url, id }: { url: string; id: string }) {
   return (
     <>
       {/* FitCamera always frames from straight ahead, so yaw the model
-          instead: a three-quarter view reads far better in a grid than a
-          front elevation, and FitCamera measures the rotated bounds. */}
-      <group name={MODEL_VIEWER_ROOT_NAME} rotation={[0, -Math.PI / 5, 0]}>
+          instead. The source models face away from that camera direction;
+          turn the three-quarter view around by 180 degrees to show fronts. */}
+      <group name={MODEL_VIEWER_ROOT_NAME} rotation={[0, yaw, 0]}>
         <primitive object={scene} />
       </group>
       <FitCamera rootName={MODEL_VIEWER_ROOT_NAME} fitKey={id} />
@@ -52,9 +55,9 @@ function LoadedModel({ url, id }: { url: string; id: string }) {
 }
 
 function ThumbModel({ entry }: { entry: PirateNationModelEntry }) {
-  const url = useAssetUrl(runtimeAssetPath(entry))
+  const url = useAssetUrl(modelAssetReference(entry))
   if (!url) return null
-  return <LoadedModel url={url} id={entry.id} />
+  return <LoadedModel url={url} id={entry.id} category={entry.category} />
 }
 
 function ThumbApp() {
@@ -90,7 +93,7 @@ function ThumbApp() {
       // matches what the stage shows. The pack's nested shells z-fight
       // without the logarithmic depth buffer.
       gl={{ preserveDrawingBuffer: true, antialias: true, logarithmicDepthBuffer: true }}
-      style={{ width: 320, height: 320 }}
+      style={{ width: 512, height: 512 }}
     >
       <color attach="background" args={['#10141c']} />
       <ambientLight intensity={1.1} />

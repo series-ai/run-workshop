@@ -5,9 +5,11 @@
  * loads it once, clones the rig per avatar, keeps only the selected parts,
  * tints the skin and hair materials, and plays a named clip.
  */
-import { useAnimations, useGLTF } from '@react-three/drei'
-import { useEffect, useMemo, useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { useGLTF } from '@react-three/drei'
+import { useEffect, useMemo } from 'react'
 import {
+  AnimationMixer,
   Color,
   Mesh,
   MeshStandardMaterial,
@@ -61,19 +63,114 @@ function isRenderable(object: Object3D): object is Mesh | SkinnedMesh {
   return (object as Mesh).isMesh === true
 }
 
+const KNOWN_SLOT_PREFIXES = new Set([
+  'species',
+  'ears',
+  'bottoms',
+  'shoes',
+  'tops',
+  'back',
+  'face',
+  'eyebrow',
+  'facialhair',
+  'hair',
+  'eyewear',
+  'headwear',
+])
+
+function getPartPrefix(object: Object3D, root: Object3D): string {
+  let curr: Object3D | null = object
+  while (curr && curr !== root) {
+    if (curr.name) {
+      const normalized = curr.name.replace(/_/g, ' ').trim().toLowerCase()
+      const prefix = normalized.split(' ')[0]
+      if (prefix && KNOWN_SLOT_PREFIXES.has(prefix)) {
+        return prefix
+      }
+    }
+    curr = curr.parent
+  }
+  return ''
+}
+
+/**
+ * Physical 12-tier layering hierarchy matching anatomical depth.
+ * Every slot receives a distinct renderOrder and negative polygonOffset
+ * so that coplanar voxel shells never compete in the depth buffer.
+ */
+interface LayerConfig {
+  renderOrder: number
+  offsetFactor: number
+  offsetUnits: number
+}
+
+function getLayerConfig(prefix: string): LayerConfig {
+  switch (prefix) {
+    case 'species':
+      // Base body mesh: rendered underneath all clothing layers
+      return { renderOrder: 0, offsetFactor: 10.0, offsetUnits: 10.0 }
+    case 'ears':
+      // Side head attachments: sit on side of skull beneath hair
+      return { renderOrder: 1, offsetFactor: 8.0, offsetUnits: 8.0 }
+    case 'bottoms':
+      // Pants / bottoms: rendered over body, but underneath shoes/boots cuffs and top tails
+      return { renderOrder: 2, offsetFactor: 6.0, offsetUnits: 6.0 }
+    case 'shoes':
+      // Shoes / boots: cuffs wrap over pant legs
+      return { renderOrder: 3, offsetFactor: 4.0, offsetUnits: 4.0 }
+    case 'tops':
+      // Tops / shirts / coats: hem hangs over pants waistband
+      return { renderOrder: 4, offsetFactor: 2.0, offsetUnits: 2.0 }
+    case 'back':
+      // Back items / capes / backpacks / weapons: worn over tops
+      return { renderOrder: 5, offsetFactor: 0.0, offsetUnits: 0.0 }
+    case 'face':
+      // Base face plate decal: eyes, mouth, face paint
+      return { renderOrder: 6, offsetFactor: -4.0, offsetUnits: -4.0 }
+    case 'eyebrow':
+      // Eyebrows: layered over base face decal
+      return { renderOrder: 7, offsetFactor: -8.0, offsetUnits: -8.0 }
+    case 'hair':
+      // 3D hair and bangs: sits on skull over forehead and eyebrows
+      return { renderOrder: 8, offsetFactor: -12.0, offsetUnits: -12.0 }
+    case 'facialhair':
+      // 3D beards, mustaches, and face coverings (gas masks): layered over cheeks, jaw, and hair sides
+      return { renderOrder: 9, offsetFactor: -16.0, offsetUnits: -16.0 }
+    case 'eyewear':
+      // Glasses, goggles, eyepatches: worn over face, eyes, and hair sides
+      return { renderOrder: 10, offsetFactor: -20.0, offsetUnits: -20.0 }
+    case 'headwear':
+      // Hats, helmets, bandanas, crowns: sit on top of head, hair, and eyewear straps
+      return { renderOrder: 11, offsetFactor: -24.0, offsetUnits: -24.0 }
+    default:
+      return { renderOrder: 4, offsetFactor: 0.0, offsetUnits: 0.0 }
+  }
+}
+
 /**
  * Clones the rig and drops every part the selection leaves out.
  *
  * Removing rather than hiding keeps the scene graph proportional to the
  * avatar instead of to the 326-part source file.
  */
-function buildAvatarScene(source: Group, selection: AvatarSelection): Group {
+export function buildAvatarScene(source: Group, selection: AvatarSelection): Group {
   const root = cloneSkeleton(source) as Group
   const keep = new Set(resolveThreePartNodes(selection))
 
   const discard: Object3D[] = []
   root.traverse((object) => {
-    if (isRenderable(object) && !keep.has(object.name)) discard.push(object)
+    if (isRenderable(object)) {
+      let isKept = false
+      let curr: Object3D | null = object
+      while (curr && curr !== root) {
+        if (keep.has(curr.name)) {
+          isKept = true
+          break
+        }
+        curr = curr.parent
+      }
+      if (!isKept) discard.push(object)
+    }
   })
   for (const object of discard) object.removeFromParent()
 
@@ -82,17 +179,28 @@ function buildAvatarScene(source: Group, selection: AvatarSelection): Group {
 
   root.traverse((object) => {
     if (!isRenderable(object)) return
-    object.castShadow = true
+    // Match Unity IPFSAvatarMaterialController: disable internal sub-mesh shadow casting
+    // to prevent shadow map self-shadow acne on coplanar voxel shells.
+    object.castShadow = false
     object.receiveShadow = true
 
-    // Clone materials so tinting one avatar never bleeds into another.
+    const prefix = getPartPrefix(object, root)
+    const layer = getLayerConfig(prefix)
+
+    object.renderOrder = layer.renderOrder
+
+    // Clone materials so tinting one avatar never bleeds into another,
+    // and apply polygonOffset per layer to eliminate depth-buffer z-fighting.
     const materials = Array.isArray(object.material) ? object.material : [object.material]
     const tinted = materials.map((material) => {
       const field = TINT_MATERIAL_FIELDS[material.name as keyof typeof TINT_MATERIAL_FIELDS]
-      if (!field) return material
-
       const copy = material.clone() as MeshStandardMaterial
-      copy.color = field === 'skinColor' ? skinColor.clone() : hairColor.clone()
+      if (field) {
+        copy.color = field === 'skinColor' ? skinColor.clone() : hairColor.clone()
+      }
+      copy.polygonOffset = true
+      copy.polygonOffsetFactor = layer.offsetFactor
+      copy.polygonOffsetUnits = layer.offsetUnits
       return copy
     })
     object.material = Array.isArray(object.material) ? tinted : tinted[0]!
@@ -109,43 +217,50 @@ export function PirateAvatar({
   rotationY = AVATAR_FORWARD_YAW,
 }: PirateAvatarProps) {
   const { scene, animations } = useGLTF(modelUrl)
-  const group = useRef<Group>(null)
 
   const avatar = useMemo(
     () => buildAvatarScene(scene as Group, selection),
     [scene, selection],
   )
 
-  const { actions } = useAnimations(animations, group)
+  // Direct AnimationMixer bound to the active cloned avatar instance.
+  // Re-creates when avatar changes so rolling or changing traits never freezes animation.
+  const mixer = useMemo(() => new AnimationMixer(avatar), [avatar])
+
+  useEffect(() => {
+    return () => {
+      mixer.stopAllAction()
+      mixer.uncacheRoot(avatar)
+    }
+  }, [mixer, avatar])
+
+  useFrame((_, delta) => {
+    mixer.update(delta)
+  })
 
   useEffect(() => {
     if (!animation) return
-    const action = actions[animation]
-    if (!action) {
+    const clip = animations.find((c) => c.name === animation)
+    if (!clip) {
       throw new Error(
         `Pirate Nation avatar has no animation "${animation}". ` +
-          `Available: ${Object.keys(actions).join(', ')}`,
+          `Available: ${animations.map((a) => a.name).join(', ')}`,
       )
     }
+    const action = mixer.clipAction(clip)
     action.reset().fadeIn(0.2).play()
     return () => {
       action.fadeOut(0.2)
     }
-  }, [actions, animation])
+  }, [mixer, animations, animation])
+
+  useEffect(() => {
+    ;(window as unknown as { __testAvatar?: Group }).__testAvatar = avatar
+  }, [avatar])
 
   return (
-    <group
-      ref={group}
-      name={PIRATE_AVATAR_ROOT_NAME}
-      scale={scale}
-      rotation={[0, rotationY, 0]}
-      dispose={null}
-    >
+    <group name={PIRATE_AVATAR_ROOT_NAME} scale={scale} rotation={[0, rotationY, 0]}>
       <primitive object={avatar} />
     </group>
   )
-}
-
-export function preloadPirateAvatar(modelUrl: string): void {
-  useGLTF.preload(modelUrl)
 }

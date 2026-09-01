@@ -10,12 +10,12 @@ import {
   gridFootprint,
   isCollisionModel,
   loadModels,
-  runtimeAssetPath,
-  thumbnailPath,
+  modelAssetReference,
+  thumbnailAssetReference,
   type PirateNationModelEntry,
 } from '../catalog'
 import { ModelViewer } from '../components/ModelViewer'
-import { ViewerErrorBoundary } from '../components/ViewerErrorBoundary'
+import { ViewerErrorBoundary } from '../pack3d/ViewerErrorBoundary'
 import { useAssetUrl } from '../useAssetUrl'
 
 type SortKey = 'name' | 'size-desc' | 'size-asc' | 'footprint'
@@ -73,7 +73,7 @@ function formatDims(entry: PirateNationModelEntry): string {
 }
 
 function ModelThumb({ entry }: { entry: PirateNationModelEntry }) {
-  const src = useAssetUrl(thumbnailPath(entry.id))
+  const src = useAssetUrl(thumbnailAssetReference(entry))
   const [failed, setFailed] = useState(false)
 
   // A model with no thumbnail renders as the plain text card it was before.
@@ -86,15 +86,15 @@ function ModelThumb({ entry }: { entry: PirateNationModelEntry }) {
       src={src}
       alt=""
       loading="lazy"
-      width={320}
-      height={320}
+      width={512}
+      height={512}
       onError={() => setFailed(true)}
     />
   )
 }
 
 function DownloadLink({ entry }: { entry: PirateNationModelEntry }) {
-  const href = useAssetUrl(runtimeAssetPath(entry))
+  const href = useAssetUrl(modelAssetReference(entry))
   if (!href) return null
   return (
     <a className="download-link" href={href} download={entry.filename}>
@@ -187,6 +187,8 @@ export function ModelGallery() {
     return sortModels(filterModels(models, search, category), sort)
   }, [models, search, category, sort])
 
+  const [mobileViewerOpen, setMobileViewerOpen] = useState(false)
+
   const selected = models?.find((entry) => entry.id === selectedId) ?? null
 
   // The stage is never empty: selection follows the filtered list.
@@ -217,6 +219,7 @@ export function ModelGallery() {
       next = visible[Math.floor(Math.random() * visible.length)]!.id
     }
     setSelectedId(next)
+    setMobileViewerOpen(true)
   }, [visible, selectedId])
 
   useEffect(() => {
@@ -234,6 +237,7 @@ export function ModelGallery() {
         event.preventDefault()
         step(-1)
       } else if (event.key === 'Escape') {
+        setMobileViewerOpen(false)
         setSearch('')
       }
     }
@@ -292,7 +296,10 @@ export function ModelGallery() {
               key={entry.id}
               type="button"
               className={entry.id === selectedId ? 'model-card selected' : 'model-card'}
-              onClick={() => setSelectedId(entry.id)}
+              onClick={() => {
+                setSelectedId(entry.id)
+                setMobileViewerOpen(true)
+              }}
             >
               <ModelThumb entry={entry} />
               <span className="model-card-name">{entry.name}</span>
@@ -307,14 +314,48 @@ export function ModelGallery() {
         </div>
       </section>
 
-      <aside className="gallery-detail">
+      {/* Backdrop for mobile drawer/modal */}
+      <div
+        className={mobileViewerOpen ? 'gallery-modal-backdrop open' : 'gallery-modal-backdrop'}
+        onClick={() => setMobileViewerOpen(false)}
+      />
+
+      <aside className={mobileViewerOpen ? 'gallery-detail open' : 'gallery-detail'}>
         {selected ? (
           <>
             <div className="gallery-detail-header">
               <h2>{selected.name}</h2>
-              <span className="gallery-detail-position">
-                {visible.findIndex((entry) => entry.id === selected.id) + 1} / {visible.length}
-              </span>
+              <div className="gallery-detail-actions">
+                <div className="gallery-detail-nav">
+                  <button
+                    type="button"
+                    className="nav-arrow"
+                    title="Previous model (←)"
+                    onClick={() => step(-1)}
+                  >
+                    ‹
+                  </button>
+                  <span className="gallery-detail-position">
+                    {visible.findIndex((entry) => entry.id === selected.id) + 1} / {visible.length}
+                  </span>
+                  <button
+                    type="button"
+                    className="nav-arrow"
+                    title="Next model (→)"
+                    onClick={() => step(1)}
+                  >
+                    ›
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="modal-close-btn"
+                  aria-label="Close 3D viewer"
+                  onClick={() => setMobileViewerOpen(false)}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
             <ModelDetail
               entry={selected}

@@ -17,7 +17,13 @@ import {
   type AvatarSlot,
 } from '../avatar/avatarCatalog.generated'
 import {
+  faceHasBuiltInEyebrows,
+  FULL_BODY_SPECIES,
   HAIR_COLORS,
+  HEADWEAR_HAIR_MAP,
+  headwearHidesHair,
+  isFullBodySpecies,
+  isSlotSupportedForSpecies,
   randomAvatarSelection,
   REQUIRED_SLOTS,
   SKIN_COLORS,
@@ -28,10 +34,10 @@ import {
   PIRATE_AVATAR_ASSET_PATH,
   PIRATE_AVATAR_ROOT_NAME,
 } from '../avatar/PirateAvatar'
-import { packAssetPath } from '../catalog'
+import { avatarAssetReference } from '../catalog'
 import { useAssetUrl } from '../useAssetUrl'
-import { FitCamera } from '../components/FitCamera'
-import { ViewerErrorBoundary } from '../components/ViewerErrorBoundary'
+import { FitCamera } from '../pack3d/FitCamera'
+import { ViewerErrorBoundary } from '../pack3d/ViewerErrorBoundary'
 
 /**
  * A source pirate stands about 0.59 units tall. Scale it to roughly human
@@ -43,6 +49,44 @@ const CAMERA_FOV = 32
 
 const REQUIRED = new Set<string>(REQUIRED_SLOTS)
 
+const SPECIES_NAMES: Record<number, string> = {
+  1: 'Human',
+  2: 'Piratetron',
+  3: 'Vampire',
+  4: 'Zombie',
+  5: 'Ghost · Full Body',
+  6: 'Gold · Full Body',
+  7: 'Shark · Full Body',
+  8: 'Druid · Full Body',
+  9: 'Crusty · Full Body',
+  10: 'Berserker · Full Body',
+  11: 'Mage · Full Body',
+  12: 'Catrina',
+  13: 'Deep Diver',
+  14: 'Ghost Captain A · Full Body',
+  15: 'Ghost Captain B · Full Body',
+  16: 'Ghost Outfit A · Full Body',
+  17: 'Ghost Outfit B · Full Body',
+  18: 'Skeleton · Full Body',
+  19: 'Scarecrow · Full Body',
+}
+
+function getPartLabel(
+  slot: AvatarSlot,
+  part: { nodeName: string; index: number; tints: readonly string[] },
+): string {
+  if (slot === 'species' && SPECIES_NAMES[part.index]) {
+    const name = SPECIES_NAMES[part.index]
+    const full = isFullBodySpecies(part.index) ? ' (full-body)' : ''
+    return `${part.index}: ${name}${full}`
+  }
+  if (slot === 'face' && [2, 5, 15, 16].includes(part.index)) {
+    return `face ${part.index} (eyebrows only)`
+  }
+  const tint = part.tints.length > 0 ? ` [${part.tints.join(', ')}]` : ''
+  return `${slot} ${part.index}${tint}`
+}
+
 function SlotRow({
   slot,
   selection,
@@ -50,11 +94,65 @@ function SlotRow({
 }: {
   slot: AvatarSlot
   selection: AvatarSelection
-  onChange: (slot: AvatarSlot, value: number | null) => void
+  onChange: (slot: AvatarSlot, index: number | null) => void
 }) {
   const parts = AVATAR_PARTS[slot]
   const current = selection[slot]
-  const optional = !REQUIRED.has(slot)
+  const isSupported = isSlotSupportedForSpecies(slot, selection.species)
+  const isFullSkin = isFullBodySpecies(selection.species)
+  const isHiddenByHat = slot === 'hair' && headwearHidesHair(selection.headwear)
+  const hatHairRule = selection.headwear ? HEADWEAR_HAIR_MAP[selection.headwear] : undefined
+  const isTailoredByHat = slot === 'hair' && typeof hatHairRule === 'number' && hatHairRule > 0
+  const isBuiltInToFace = slot === 'eyebrow' && faceHasBuiltInEyebrows(selection.face)
+  const optional = slot !== 'species' && (!REQUIRED.has(slot) || isFullSkin)
+
+  if (!isSupported) {
+    return (
+      <label className="slot-row slot-row-disabled" style={{ opacity: 0.45 }}>
+        <span className="slot-row-label">{slot}</span>
+        <select disabled value="">
+          <option value="">— built-in to skin —</option>
+        </select>
+        <span className="slot-row-count">—</span>
+      </label>
+    )
+  }
+
+  if (isHiddenByHat) {
+    return (
+      <label className="slot-row slot-row-disabled" style={{ opacity: 0.45 }}>
+        <span className="slot-row-label">{slot}</span>
+        <select disabled value="">
+          <option value="">— hidden by hat —</option>
+        </select>
+        <span className="slot-row-count">—</span>
+      </label>
+    )
+  }
+
+  if (isTailoredByHat) {
+    return (
+      <label className="slot-row slot-row-disabled" style={{ opacity: 0.45 }}>
+        <span className="slot-row-label">{slot}</span>
+        <select disabled value="">
+          <option value="">— tailored to hat —</option>
+        </select>
+        <span className="slot-row-count">—</span>
+      </label>
+    )
+  }
+
+  if (isBuiltInToFace) {
+    return (
+      <label className="slot-row slot-row-disabled" style={{ opacity: 0.45 }}>
+        <span className="slot-row-label">{slot}</span>
+        <select disabled value="">
+          <option value="">— built-in to face —</option>
+        </select>
+        <span className="slot-row-count">—</span>
+      </label>
+    )
+  }
 
   return (
     <label className="slot-row">
@@ -68,8 +166,7 @@ function SlotRow({
         {optional && <option value="">— none —</option>}
         {parts.map((part) => (
           <option key={part.nodeName} value={part.index}>
-            {part.nodeName}
-            {part.tints.length > 0 ? ` · ${part.tints.join('+')}` : ''}
+            {getPartLabel(slot, part)}
           </option>
         ))}
       </select>
@@ -109,30 +206,52 @@ function Swatches({
 }
 
 export function AvatarLab() {
-  const avatarModelUrl = useAssetUrl(packAssetPath(PIRATE_AVATAR_ASSET_PATH))
   const [selection, setSelection] = useState<AvatarSelection>(() => randomAvatarSelection())
   const [animation, setAnimation] = useState<AvatarAnimationName>('01_Idle_1')
   const [copied, setCopied] = useState(false)
-  // The 12.4 MB avatar GLB takes a moment — show progress instead of a
-  // black stage.
+  const avatarModelUrl = useAssetUrl(avatarAssetReference(PIRATE_AVATAR_ASSET_PATH))
+
+  // zwei/drei loading manager tracks in-flight glTF requests.
   const loading = useProgress((state) => state.active)
-  // Translucent species (the ghost) and dark outfits vanish on the dark
-  // stage; the light backdrop keeps them inspectable.
   const [backdrop, setBackdrop] = useState<'dark' | 'light'>('dark')
-  const stageColors =
-    backdrop === 'dark' ? { bg: '#0b1220', floor: '#1b2432' } : { bg: '#dfe5ee', floor: '#c7cedb' }
+  const stageColors = {
+    dark: { floor: '#141a24' },
+    light: { floor: '#d8dee9' },
+  }[backdrop]
 
-  const setSlot = useCallback((slot: AvatarSlot, value: number | null) => {
-    setSelection((previous) => ({ ...previous, [slot]: value }))
-  }, [])
-
-  /** Remounts the avatar and retriggers the camera fit on any change. */
+  /** Remounts the camera fit on any change. */
   const selectionKey = useMemo(() => JSON.stringify(selection), [selection])
 
   const partCount = useMemo(
-    () => AVATAR_SLOTS.reduce((sum, slot) => sum + AVATAR_PARTS[slot].length, 0),
+    () => Object.values(AVATAR_PARTS).reduce((sum, list) => sum + list.length, 0),
     [],
   )
+
+  const handleSlotChange = useCallback((slot: AvatarSlot, value: number | null) => {
+    setSelection((previous) => {
+      const next = { ...previous, [slot]: value }
+      if (slot === 'species') {
+        if (isFullBodySpecies(value)) {
+          // Clear clothing and hair when switching to a full body skin to avoid z-fighting
+          next.tops = null
+          next.bottoms = null
+          next.shoes = null
+          next.hair = null
+          next.headwear = null
+          next.facialhair = null
+          next.eyebrow = null
+          next.face = null
+        } else if (isFullBodySpecies(previous.species)) {
+          // Restore default required clothing when switching back to base bodies
+          next.face = next.face ?? 1
+          next.tops = next.tops ?? 1
+          next.bottoms = next.bottoms ?? 1
+          next.shoes = next.shoes ?? 1
+        }
+      }
+      return next
+    })
+  }, [])
 
   const copySelection = useCallback(() => {
     navigator.clipboard.writeText(JSON.stringify(selection, null, 2)).then(() => {
@@ -188,9 +307,16 @@ export function AvatarLab() {
           <span className="control-label">
             Parts ({partCount} across {AVATAR_SLOTS.length} slots)
           </span>
-          {AVATAR_SLOTS.map((slot) => (
-            <SlotRow key={slot} slot={slot} selection={selection} onChange={setSlot} />
-          ))}
+          <div className="slot-grid">
+            {AVATAR_SLOTS.map((slot) => (
+              <SlotRow
+                key={slot}
+                slot={slot}
+                selection={selection}
+                onChange={handleSlotChange}
+              />
+            ))}
+          </div>
         </div>
       </aside>
 
@@ -198,25 +324,22 @@ export function AvatarLab() {
         {loading && <div className="viewer-loading">Loading avatar…</div>}
         <button
           type="button"
-          className="toggle stage-backdrop-toggle"
+          className="stage-backdrop-toggle"
           onClick={() => setBackdrop((value) => (value === 'dark' ? 'light' : 'dark'))}
         >
           {backdrop === 'dark' ? 'Light stage' : 'Dark stage'}
         </button>
-        <ViewerErrorBoundary>
-          {/* Logarithmic depth: the art file nests part shells with ~0.0001-unit
-              offsets (face plate front x=0.0900 vs head front x=0.0899), which
-              a linear depth buffer cannot separate at orbit distances — the
-              classic avatar z-fighting. Unity masked this with reversed-Z. */}
-          <Canvas shadows gl={{ logarithmicDepthBuffer: true }} camera={{ fov: CAMERA_FOV, position: [0, 1.2, 4.5] }}>
-            <color attach="background" args={[stageColors.bg]} />
-            <ambientLight intensity={1.2} />
-            <hemisphereLight intensity={0.65} groundColor="#26303f" color="#ffffff" />
-            {/* normalBias kills shadow acne (diagonal moiré) on the flat voxel
-                faces; 2048 keeps the map dense at avatar scale. */}
+        <ViewerErrorBoundary key={PIRATE_AVATAR_ASSET_PATH}>
+          <Canvas
+            camera={{ position: [0, 0.85, 3.2], fov: CAMERA_FOV, near: 0.3, far: 6.0 }}
+            gl={{ preserveDrawingBuffer: true, antialias: true, logarithmicDepthBuffer: true }}
+            shadows
+          >
+            <ambientLight intensity={1.1} />
+            <hemisphereLight intensity={0.6} groundColor="#26303f" color="#ffffff" />
             <directionalLight
               castShadow
-              intensity={2.2}
+              intensity={2.0}
               position={[5, 8, 6]}
               shadow-mapSize={[2048, 2048]}
               shadow-normalBias={0.03}
@@ -224,7 +347,6 @@ export function AvatarLab() {
             <Suspense fallback={null}>
               {avatarModelUrl && (
                 <PirateAvatar
-                  key={selectionKey}
                   selection={selection}
                   animation={animation}
                   modelUrl={avatarModelUrl}
@@ -238,8 +360,19 @@ export function AvatarLab() {
               <planeGeometry args={[40, 40]} />
               <meshStandardMaterial color={stageColors.floor} />
             </mesh>
-            <FitCamera rootName={PIRATE_AVATAR_ROOT_NAME} fitKey={selectionKey} />
-            <OrbitControls makeDefault enablePan={false} maxDistance={12} minDistance={1.5} />
+            <FitCamera
+              rootName={PIRATE_AVATAR_ROOT_NAME}
+              fitKey="avatar-lab-stage"
+              targetMode="center"
+              margin={1.25}
+            />
+            <OrbitControls
+              makeDefault
+              target={[0, 0.85, 0]}
+              enablePan={false}
+              maxDistance={12}
+              minDistance={1.5}
+            />
           </Canvas>
         </ViewerErrorBoundary>
       </div>

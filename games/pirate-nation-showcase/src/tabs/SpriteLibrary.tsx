@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   formatBytes,
   loadSprites,
-  runtimeAssetPath,
+  spriteAssetReference,
   type PirateNationSpriteEntry,
 } from '../catalog'
 import { useAssetUrl } from '../useAssetUrl'
@@ -46,7 +46,7 @@ function SpriteImage({
   sprite: PirateNationSpriteEntry
   tileSize: number
 }) {
-  const src = useAssetUrl(runtimeAssetPath(sprite))
+  const src = useAssetUrl(spriteAssetReference(sprite))
   if (!src) return null
   return (
     <img

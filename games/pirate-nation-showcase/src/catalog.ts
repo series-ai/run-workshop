@@ -1,42 +1,13 @@
 /**
  * Typed access to the Pirate Nation pack catalogs.
  *
- * The pack ships three JSON catalogs under `public/cdn-assets/pirate-nation/`
- * (`runtime/models.json`, `runtime/audio.json`, `runtime/sprites.json`) plus a
- * top-level `manifest.json`. Every entry carries its provenance (source path
- * in the upstream Unity repo, license, copyright), which the showcase surfaces
- * per asset.
+ * The app keeps four JSON catalogs under `public/catalog/pirate-nation/`.
+ * Binary files are resolved from the pinned RUN asset-library packs. Every
+ * entry carries its provenance (source path in the upstream Unity repo,
+ * license, copyright), which the showcase surfaces per asset.
  */
 
-import RundotGameAPI from '@series-inc/rundot-game-sdk/api'
-
-/** Folder inside `public/cdn-assets/` that holds the whole pack. */
-export const PACK_CDN_PREFIX = 'pirate-nation'
-
-let runSdkReady = false
-
-/**
- * Records whether `initializeAsync()` succeeded. `main.tsx` calls this once,
- * before anything renders, and nothing else does.
- */
-export function setRunSdkReady(ready: boolean): void {
-  runSdkReady = ready
-}
-
-/**
- * Resolves a pack path to a loadable URL.
- *
- * Inside a RUN host the SDK maps the logical path onto the content-hashed CDN
- * copy. With no host — a plain browser, `vite preview`, any static server —
- * the SDK is never initialized, so we use the same relative path its own mock
- * returns, which serves straight from `public/cdn-assets/`. Once the SDK is
- * live, a resolution failure means a real problem (missing asset, missing
- * entitlement) and propagates to the caller.
- */
-export async function resolvePackAssetUrl(cdnPath: string): Promise<string> {
-  if (!runSdkReady) return `cdn-assets/${cdnPath}`
-  return RundotGameAPI.cdn.resolveAssetUrl(cdnPath)
-}
+import type { AssetReference } from './assetLibrary'
 
 export interface Vec3Tuple extends Array<number> {
   0: number
@@ -126,19 +97,51 @@ export interface PackManifest {
   collections: PackCollection[]
 }
 
-/** Catalog entries address files under `runtime/`; the avatar catalog uses
- * pack-relative paths that already include `runtime/`. */
-export function runtimeAssetPath(entry: { relativePath: string }): string {
-  return `${PACK_CDN_PREFIX}/runtime/${entry.relativePath}`
+export function modelAssetReference(
+  entry: Pick<PirateNationModelEntry, 'relativePath'>,
+): AssetReference {
+  return { pack: 'models', path: entry.relativePath.replace(/^models\//, '') }
 }
 
-export function packAssetPath(packRelativePath: string): string {
-  return `${PACK_CDN_PREFIX}/${packRelativePath}`
+export function avatarAssetReference(packRelativePath: string): AssetReference {
+  return { pack: 'models', path: packRelativePath.replace(/^runtime\/models\//, '') }
 }
 
-/** Pre-rendered grid thumbnail for a model id (see `npm run thumbnails`). */
-export function thumbnailPath(modelId: string): string {
-  return `${PACK_CDN_PREFIX}/thumbnails/${modelId}.jpg`
+export function thumbnailAssetReference(
+  entry: Pick<PirateNationModelEntry, 'id' | 'relativePath'>,
+): AssetReference {
+  const modelPath = modelAssetReference(entry).path
+  const slash = modelPath.lastIndexOf('/')
+  if (slash < 1) throw new Error(`${entry.id}: model path has no category directory`)
+  return {
+    pack: 'models',
+    path: `${modelPath.slice(0, slash)}/Previews/${entry.id}.jpg`,
+  }
+}
+
+export function spriteAssetReference(
+  entry: Pick<PirateNationSpriteEntry, 'relativePath' | 'category'>,
+): AssetReference {
+  if (entry.category === 'icons') {
+    return { pack: 'icons', path: entry.relativePath.replace(/^sprites\/icons\//, '') }
+  }
+  return {
+    pack: 'ui',
+    path: entry.relativePath.replace(/^sprites\/(?:ui|branding)\//, ''),
+  }
+}
+
+export function audioAssetReference(
+  entry: Pick<PirateNationAudioEntry, 'relativePath'>,
+): AssetReference {
+  return {
+    pack: 'audio',
+    path: entry.relativePath.replace(/^audio\//, '').replace(/\.wav$/i, '.mp3'),
+  }
+}
+
+export function menuBackgroundAssetReference(): AssetReference {
+  return { pack: 'ui', path: 'branding-menu-background.png' }
 }
 
 export function formatBytes(sizeBytes: number): string {
@@ -179,8 +182,7 @@ const cache = new Map<string, Promise<unknown>>()
 function fetchJson<T>(path: string): Promise<T> {
   let pending = cache.get(path)
   if (!pending) {
-    pending = resolvePackAssetUrl(packAssetPath(path))
-      .then((url) => fetch(url))
+    pending = fetch(`catalog/pirate-nation/${path}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Failed to load Pirate Nation catalog "${path}": HTTP ${response.status}`)
@@ -197,13 +199,13 @@ export function loadManifest(): Promise<PackManifest> {
 }
 
 export function loadModels(): Promise<PirateNationModelEntry[]> {
-  return fetchJson<PirateNationModelEntry[]>('runtime/models.json')
+  return fetchJson<PirateNationModelEntry[]>('models.json')
 }
 
 export function loadAudio(): Promise<PirateNationAudioEntry[]> {
-  return fetchJson<PirateNationAudioEntry[]>('runtime/audio.json')
+  return fetchJson<PirateNationAudioEntry[]>('audio.json')
 }
 
 export function loadSprites(): Promise<PirateNationSpriteEntry[]> {
-  return fetchJson<PirateNationSpriteEntry[]>('runtime/sprites.json')
+  return fetchJson<PirateNationSpriteEntry[]>('sprites.json')
 }

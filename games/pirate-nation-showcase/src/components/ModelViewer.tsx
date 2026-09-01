@@ -7,12 +7,18 @@
  * the loaded GLB and reported up through `onAnimations` for the picker UI.
  */
 import { OrbitControls, useAnimations, useGLTF, useProgress } from '@react-three/drei'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
-import { Mesh, MeshStandardMaterial, Vector3, type Group } from 'three'
-import { runtimeAssetPath, type PirateNationModelEntry } from '../catalog'
+import { useFrame } from '@react-three/fiber'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import { Vector3, type Group } from 'three'
+import { modelAssetReference, type PirateNationModelEntry } from '../catalog'
 import { useAssetUrl } from '../useAssetUrl'
-import { FitCamera } from './FitCamera'
+import {
+  FitCamera,
+  getModelPreviewYaw,
+  PackCanvas,
+  PackModel,
+  STAGE_COLORS,
+} from '../pack3d'
 
 export const MODEL_VIEWER_ROOT_NAME = 'showcase-model-root'
 
@@ -24,35 +30,22 @@ interface ModelSceneProps {
   onAnimations: (names: string[]) => void
 }
 
-function ModelScene({ entry, clip, turntable, wireframe, onAnimations }: ModelSceneProps) {
-  const url = useAssetUrl(runtimeAssetPath(entry))
+function ModelScene(props: ModelSceneProps) {
+  const url = useAssetUrl(modelAssetReference(props.entry))
   if (!url) return null
-  return (
-    <LoadedModelScene
-      url={url}
-      entry={entry}
-      clip={clip}
-      turntable={turntable}
-      wireframe={wireframe}
-      onAnimations={onAnimations}
-    />
-  )
+  return <AnimatedModelScene {...props} url={url} />
 }
 
-function LoadedModelScene({
-  url,
+function AnimatedModelScene({
   entry,
   clip,
   turntable,
   wireframe,
   onAnimations,
+  url,
 }: ModelSceneProps & { url: string }) {
-  const { scene, animations } = useGLTF(url)
   const group = useRef<Group>(null)
-
-  // The cached scene is shared per URL, so work on a clone: wireframe
-  // toggling and shadow flags must never leak into the next viewer.
-  const model = useMemo(() => scene.clone(true), [scene])
+  const { animations } = useGLTF(url)
 
   useEffect(() => {
     onAnimations(animations.map((animation) => animation.name))
@@ -70,27 +63,19 @@ function LoadedModelScene({
     }
   }, [actions, clip])
 
-  useEffect(() => {
-    model.traverse((object) => {
-      const mesh = object as Mesh
-      if (mesh.isMesh !== true) return
-      mesh.castShadow = true
-      mesh.receiveShadow = true
-      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-      for (const material of materials) {
-        ;(material as MeshStandardMaterial).wireframe = wireframe
-      }
-    })
-  }, [model, wireframe])
-
   useFrame((_, delta) => {
     if (turntable && group.current) group.current.rotation.y += delta * 0.6
   })
 
   return (
-    <group ref={group} name={MODEL_VIEWER_ROOT_NAME} dispose={null}>
-      <primitive object={model} />
-    </group>
+    <PackModel
+      entry={entry}
+      name={MODEL_VIEWER_ROOT_NAME}
+      wireframe={wireframe}
+      rotationY={getModelPreviewYaw(entry.category)}
+      anchor="native"
+      groupRef={group}
+    />
   )
 }
 
@@ -106,6 +91,7 @@ export function ModelViewer({ entry, collisionEntry = null }: ModelViewerProps) 
   const [turntable, setTurntable] = useState(false)
   const [wireframe, setWireframe] = useState(false)
   const [showCollision, setShowCollision] = useState(false)
+  const [showPivot, setShowPivot] = useState(false)
   // The entry the canvas actually renders: the collision GLB when toggled.
   // Turntable/wireframe intentionally persist across the swap.
   const activeEntry = showCollision && collisionEntry ? collisionEntry : entry
@@ -116,10 +102,7 @@ export function ModelViewer({ entry, collisionEntry = null }: ModelViewerProps) 
   // Translucent and dark art (e.g. the ghost species) disappears on the dark
   // stage — the light backdrop makes it inspectable.
   const [backdrop, setBackdrop] = useState<'dark' | 'light'>('dark')
-  const stageColors =
-    backdrop === 'dark'
-      ? { bg: '#0b1220', gridMain: '#26303f', gridMinor: '#1a2331' }
-      : { bg: '#dfe5ee', gridMain: '#9aa5b5', gridMinor: '#c2cad6' }
+  const stageColors = STAGE_COLORS[backdrop]
 
   // Pack models span a buoy to a 256-unit kraken, so the shadow rig scales
   // with the subject: a fixed ±5-unit frustum would clip big models to a
@@ -135,29 +118,33 @@ export function ModelViewer({ entry, collisionEntry = null }: ModelViewerProps) 
     setTurntable(false)
     setWireframe(false)
     setShowCollision(false)
+    setShowPivot(false)
   }, [entry.id])
 
   return (
     <div className="model-viewer">
       {loading && <div className="viewer-loading">Loading model…</div>}
-      {/* Logarithmic depth: pack models nest detail shells with hair-thin
-          offsets; a linear depth buffer z-fights on them at orbit distance. */}
-      <Canvas shadows gl={{ logarithmicDepthBuffer: true }} camera={{ fov: 32, position: [0, 1.2, 4.5] }}>
-        <color attach="background" args={[stageColors.bg]} />
-        <ambientLight intensity={1.1} />
-        <hemisphereLight intensity={0.6} groundColor="#26303f" color="#ffffff" />
-        <directionalLight
-          castShadow
-          intensity={2.0}
-          position={[lightDir.x, lightDir.y, lightDir.z]}
-          shadow-mapSize={[2048, 2048]}
-          shadow-normalBias={maxDim * 0.004}
-          shadow-camera-left={-maxDim}
-          shadow-camera-right={maxDim}
-          shadow-camera-top={maxDim}
-          shadow-camera-bottom={-maxDim}
-          shadow-camera-far={maxDim * 8}
-        />
+      <PackCanvas
+        backdrop={backdrop}
+        lights={
+          <>
+            <ambientLight intensity={1.1} />
+            <hemisphereLight intensity={0.6} groundColor="#26303f" color="#ffffff" />
+            <directionalLight
+              castShadow
+              intensity={2.0}
+              position={[lightDir.x, lightDir.y, lightDir.z]}
+              shadow-mapSize={[2048, 2048]}
+              shadow-normalBias={maxDim * 0.004}
+              shadow-camera-left={-maxDim}
+              shadow-camera-right={maxDim}
+              shadow-camera-top={maxDim}
+              shadow-camera-bottom={-maxDim}
+              shadow-camera-far={maxDim * 8}
+            />
+          </>
+        }
+      >
         <Suspense fallback={null}>
           <ModelScene
             entry={activeEntry}
@@ -171,9 +158,10 @@ export function ModelViewer({ entry, collisionEntry = null }: ModelViewerProps) 
           args={[40, 40, stageColors.gridMain, stageColors.gridMinor]}
           position={[0, -0.001, 0]}
         />
-        <FitCamera rootName={MODEL_VIEWER_ROOT_NAME} fitKey={activeEntry.id} />
+        {showPivot && <axesHelper args={[Math.max(maxDim * 0.25, 2)]} position={[0, 0, 0]} />}
+        <FitCamera rootName={MODEL_VIEWER_ROOT_NAME} fitKey={activeEntry.id} targetMode="pivot" />
         <OrbitControls makeDefault />
-      </Canvas>
+      </PackCanvas>
 
       <div className="viewer-controls">
         {clips.length > 0 && (
@@ -202,6 +190,13 @@ export function ModelViewer({ entry, collisionEntry = null }: ModelViewerProps) 
           onClick={() => setWireframe((value) => !value)}
         >
           Wireframe
+        </button>
+        <button
+          type="button"
+          className={showPivot ? 'toggle active' : 'toggle'}
+          onClick={() => setShowPivot((value) => !value)}
+        >
+          Pivot
         </button>
         {collisionEntry && (
           <button

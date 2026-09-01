@@ -2,7 +2,6 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import RundotAPI from '@series-inc/rundot-game-sdk/api'
 import { App } from './App'
-import { setRunSdkReady } from './catalog'
 import './styles.css'
 
 async function boot(): Promise<void> {
@@ -18,11 +17,9 @@ async function boot(): Promise<void> {
         setTimeout(() => reject(new Error('RUN SDK init timed out')), 5000),
       ),
     ])
-    setRunSdkReady(true)
   } catch (error) {
-    // Not fatal: `resolvePackAssetUrl` then serves cdn-assets/ directly.
-    setRunSdkReady(false)
-    console.warn('RUN SDK initialization failed; continuing standalone.', error)
+    // Catalog metadata remains usable, but remote assets may be unavailable.
+    console.warn('RUN SDK initialization failed; remote assets may be unavailable.', error)
   }
 
   createRoot(rootElement).render(

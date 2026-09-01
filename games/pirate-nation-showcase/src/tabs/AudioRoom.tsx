@@ -5,9 +5,9 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import {
+  audioAssetReference,
   formatBytes,
   loadAudio,
-  runtimeAssetPath,
   type PirateNationAudioEntry,
 } from '../catalog'
 import { useAssetUrl } from '../useAssetUrl'
@@ -31,7 +31,7 @@ function groupBySubCategory(
 }
 
 function TrackPlayer({ track }: { track: PirateNationAudioEntry }) {
-  const src = useAssetUrl(runtimeAssetPath(track))
+  const src = useAssetUrl(audioAssetReference(track))
   if (!src) return null
   return <audio controls preload="none" src={src} />
 }
@@ -87,7 +87,7 @@ export function AudioRoom() {
         </section>
       ))}
       <p className="audio-note">
-        Music ships as the original WAV masters. Files stream from the local dev server; nothing
+        The catalog keeps the original WAV metadata. The asset library serves MP3 files. Nothing
         downloads until you press play.
       </p>
     </section>

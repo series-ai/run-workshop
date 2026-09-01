@@ -1,69 +1,66 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  audioAssetReference,
+  avatarAssetReference,
   buildCollisionIndex,
   formatBytes,
   gridFootprint,
   isCollisionModel,
   loadModels,
-  PACK_CDN_PREFIX,
-  packAssetPath,
-  resolvePackAssetUrl,
-  runtimeAssetPath,
-  setRunSdkReady,
-  thumbnailPath,
+  menuBackgroundAssetReference,
+  modelAssetReference,
+  spriteAssetReference,
+  thumbnailAssetReference,
   type PirateNationModelEntry,
 } from './catalog'
-
-const resolveAssetUrl = vi.fn()
-
-vi.mock('@series-inc/rundot-game-sdk/api', () => ({
-  default: {
-    get cdn() {
-      return { resolveAssetUrl }
-    },
-  },
-}))
-
-// `runSdkReady` is module-level state, so reset it for every test — otherwise
-// a suite that turns the SDK on leaks into the ones after it.
-beforeEach(() => {
-  resolveAssetUrl.mockReset()
-  setRunSdkReady(false)
-})
-
-describe('pack paths', () => {
-  it('builds runtime, pack, and thumbnail paths under the pack prefix', () => {
-    expect(runtimeAssetPath({ relativePath: 'models/ships/ships-boat.glb' })).toBe(
-      `${PACK_CDN_PREFIX}/runtime/models/ships/ships-boat.glb`,
-    )
-    expect(packAssetPath('runtime/models/characters-skins/x.glb')).toBe(
-      `${PACK_CDN_PREFIX}/runtime/models/characters-skins/x.glb`,
-    )
-    expect(thumbnailPath('ships-boat')).toBe(`${PACK_CDN_PREFIX}/thumbnails/ships-boat.jpg`)
-  })
-})
-
-describe('resolvePackAssetUrl', () => {
-  it('serves cdn-assets/ directly when the SDK never initialized', async () => {
-    await expect(resolvePackAssetUrl('pirate-nation/manifest.json')).resolves.toBe(
-      'cdn-assets/pirate-nation/manifest.json',
-    )
-    expect(resolveAssetUrl).not.toHaveBeenCalled()
+describe('asset references', () => {
+  it('maps a model entry to the models pack', () => {
+    expect(modelAssetReference({ relativePath: 'models/ships/ship.glb' })).toEqual({
+      pack: 'models',
+      path: 'ships/ship.glb',
+    })
   })
 
-  it('returns the URL the SDK resolves once it is ready', async () => {
-    setRunSdkReady(true)
-    resolveAssetUrl.mockResolvedValue('https://cdn.example/abc123/manifest.json')
-    await expect(resolvePackAssetUrl('pirate-nation/manifest.json')).resolves.toBe(
-      'https://cdn.example/abc123/manifest.json',
-    )
-    expect(resolveAssetUrl).toHaveBeenCalledWith('pirate-nation/manifest.json')
+  it('maps an avatar path to the models pack', () => {
+    expect(avatarAssetReference('runtime/models/characters-skins/avatar.glb')).toEqual({
+      pack: 'models',
+      path: 'characters-skins/avatar.glb',
+    })
   })
 
-  it('propagates a resolution failure once the SDK is ready', async () => {
-    setRunSdkReady(true)
-    resolveAssetUrl.mockRejectedValue(new Error('ASSET_NOT_FOUND'))
-    await expect(resolvePackAssetUrl('pirate-nation/nope.json')).rejects.toThrow(/ASSET_NOT_FOUND/)
+  it('derives a model preview path beside its category', () => {
+    expect(thumbnailAssetReference({
+      id: 'ships-ship-pirate-xl',
+      relativePath: 'models/ships/ships-ship-pirate-xl.glb',
+    })).toEqual({
+      pack: 'models',
+      path: 'ships/Previews/ships-ship-pirate-xl.jpg',
+    })
+  })
+
+  it('maps icons and UI sprites to their respective packs', () => {
+    expect(spriteAssetReference({
+      category: 'icons',
+      relativePath: 'sprites/icons/coin.png',
+    })).toEqual({ pack: 'icons', path: 'coin.png' })
+    expect(spriteAssetReference({
+      category: 'ui',
+      relativePath: 'sprites/ui/button.png',
+    })).toEqual({ pack: 'ui', path: 'button.png' })
+  })
+
+  it('maps audio metadata to the CDN MP3 path', () => {
+    expect(audioAssetReference({ relativePath: 'audio/music/track.wav' })).toEqual({
+      pack: 'audio',
+      path: 'music/track.mp3',
+    })
+  })
+
+  it('maps the Home menu background to the pinned UI pack', () => {
+    expect(menuBackgroundAssetReference()).toEqual({
+      pack: 'ui',
+      path: 'branding-menu-background.png',
+    })
   })
 })
 
@@ -91,7 +88,7 @@ describe('catalog loading', () => {
     vi.unstubAllGlobals()
   })
 
-  it('fetches the models catalog from the pack base URL', async () => {
+  it('fetches the models catalog from the local catalog path', async () => {
     const payload = [{ id: 'ships-boat' }]
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -101,7 +98,7 @@ describe('catalog loading', () => {
 
     // Cache is module-level; use a unique path via loadModels once.
     const result = await loadModels()
-    expect(fetchMock).toHaveBeenCalledWith('cdn-assets/pirate-nation/runtime/models.json')
+    expect(fetchMock).toHaveBeenCalledWith('catalog/pirate-nation/models.json')
     expect(result).toEqual(payload)
   })
 

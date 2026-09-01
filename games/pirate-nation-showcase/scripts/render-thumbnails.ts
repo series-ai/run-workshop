@@ -2,24 +2,23 @@
  * Renders one grid thumbnail per catalogued model.
  *
  * Starts a Vite dev server, drives the `thumb.html` route with headless
- * Chromium, and writes a 320x320 JPEG per model to
- * `public/cdn-assets/pirate-nation/thumbnails/<id>.jpg`. Existing thumbnails
- * are skipped unless `--force` is passed. Every failure is reported by model
- * id and the process exits non-zero if any model failed.
+ * Chromium, and writes a 320x320 JPEG per model to the caller-selected output
+ * directory. Existing thumbnails are skipped unless `--force` is passed.
+ * Every failure is reported by model id and the process exits non-zero if any
+ * model failed.
  *
  * Usage:
- *   node --import tsx scripts/render-thumbnails.ts [--force] [--limit N]
+ *   node --import tsx scripts/render-thumbnails.ts --out <dir> [--force] [--limit N]
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from '@playwright/test'
 import { createServer } from 'vite'
 
 const SHOWCASE_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
-const PACK = join(SHOWCASE_ROOT, 'public/cdn-assets/pirate-nation')
-const THUMBS = join(PACK, 'thumbnails')
-const SIZE = 320
+const CATALOG = join(SHOWCASE_ROOT, 'public/catalog/pirate-nation/models.json')
+const SIZE = 512
 const PORT = 5191
 const READY_TIMEOUT_MS = 30_000
 
@@ -34,16 +33,20 @@ function isCollisionModel(id: string): boolean {
 
 async function main(): Promise<void> {
   const force = process.argv.includes('--force')
+  const outFlag = process.argv.indexOf('--out')
+  const outputArg = outFlag === -1 ? undefined : process.argv[outFlag + 1]
+  if (!outputArg || outputArg.startsWith('--')) throw new Error('--out <dir> is required')
+  const output = resolve(outputArg)
   const limitFlag = process.argv.indexOf('--limit')
   const limit = limitFlag === -1 ? Infinity : Number(process.argv[limitFlag + 1])
 
   const models = (
-    JSON.parse(readFileSync(join(PACK, 'runtime/models.json'), 'utf8')) as ModelEntry[]
+    JSON.parse(readFileSync(CATALOG, 'utf8')) as ModelEntry[]
   ).filter((model) => !isCollisionModel(model.id))
 
-  mkdirSync(THUMBS, { recursive: true })
+  mkdirSync(output, { recursive: true })
   const pending = models
-    .filter((model) => force || !existsSync(join(THUMBS, `${model.id}.jpg`)))
+    .filter((model) => force || !existsSync(join(output, `${model.id}.jpg`)))
     .slice(0, limit)
 
   console.log(`${models.length} visual models, ${pending.length} to render`)
@@ -72,8 +75,8 @@ async function main(): Promise<void> {
         const renderError = await page.evaluate(() => window.__thumbError)
         if (renderError) throw new Error(renderError)
 
-        const shot = await page.locator('#thumb-root').screenshot({ type: 'jpeg', quality: 82 })
-        writeFileSync(join(THUMBS, `${model.id}.jpg`), shot)
+        const shot = await page.locator('#thumb-root').screenshot({ type: 'jpeg', quality: 92 })
+        writeFileSync(join(output, `${model.id}.jpg`), shot)
       } catch (error) {
         failures.push({ id: model.id, reason: (error as Error).message })
       }
