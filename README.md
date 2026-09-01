@@ -17,6 +17,7 @@ first game starter. Each sub-project then documents its own specifics in its
 ## Games
 
 - [BeatBoard](games/beat-board/) — a 4×4 pad-grid music maker where each pad fires a seamless loop layer (drums / bass / melody / FX) at a fixed BPM. Ships several genre packs and a documented pack-authoring pipeline powered by the `rundot` CLI. See [Creating New Packs](games/beat-board/README.md) and [docs/authoring-packs.md](games/beat-board/docs/authoring-packs.md).
+- [Pirate Nation Art Showcase](games/pirate-nation-showcase/) — a browsable showcase over the MIT-licensed Pirate Nation asset pack (Proof of Play): a thumbnail grid and 3D viewer over 355 models with animation playback and a collision-geometry toggle, a full pirate Avatar Lab, plus sprite and audio browsers. See [games/pirate-nation-showcase/README.md](games/pirate-nation-showcase/README.md).
 - [Dither Playground](games/dither-playground/) — apply retro dithering algorithms and palettes to 3D scenes, images, and video. Includes a split-screen algorithm comparison grid, a static-vs-animated crawl test, and a cursor-following resolve mask. See [games/dither-playground/README.md](games/dither-playground/README.md).
 
 ## Tools
