@@ -7,8 +7,8 @@
  * bounds rather than the loaded geometry, so the transform is known before the
  * GLB arrives and does not pop when it does.
  */
-import { useGLTF } from '@react-three/drei'
-import { useEffect, useMemo, type Ref } from 'react'
+import { useAnimations, useGLTF } from '@react-three/drei'
+import { useEffect, useMemo, useRef, type Ref } from 'react'
 import { Mesh, MeshStandardMaterial, type Group } from 'three'
 import { modelAssetReference, type PirateNationModelEntry } from '../catalog'
 import { useAssetUrl } from '../useAssetUrl'
@@ -36,11 +36,20 @@ function LoadedPackModel({
   groupRef,
   ...transform
 }: PackModelProps & { url: string }) {
-  const { scene } = useGLTF(url)
+  const { scene, animations } = useGLTF(url)
   const model = useMemo(() => scene.clone(true), [scene])
-  // Plain arithmetic on six numbers — memoising it would cost more than it saves,
-  // and `at` arrives as a fresh array each render so a memo would miss anyway.
   const placement = modelTransform(entry.bounds, transform)
+  const animRef = useRef<Group>(null)
+  const { actions } = useAnimations(animations, animRef)
+
+  useEffect(() => {
+    if (animations.length > 0 && actions) {
+      const firstClip = animations[0]?.name
+      if (firstClip && actions[firstClip]) {
+        actions[firstClip].reset().fadeIn(0.2).play()
+      }
+    }
+  }, [actions, animations])
 
   useEffect(() => {
     model.traverse((object) => {
@@ -62,7 +71,9 @@ function LoadedPackModel({
       scale={placement.scale}
       dispose={null}
     >
-      <primitive object={model} />
+      <group ref={animRef}>
+        <primitive object={model} />
+      </group>
     </group>
   )
 }
