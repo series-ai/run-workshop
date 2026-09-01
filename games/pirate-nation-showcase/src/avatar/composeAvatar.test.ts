@@ -6,6 +6,7 @@ import {
   FULL_BODY_SPECIES,
   REQUIRED_SLOTS,
   isFullBodySpecies,
+  speciesHasBuiltInFace,
   makeSequenceRng,
   randomAvatarSelection,
   resolvePartNodes,
@@ -103,9 +104,11 @@ describe('randomAvatarSelection', () => {
   it('always rolls a valid face with eyes and mouth', () => {
     for (let i = 0; i < 100; i++) {
       const selection = randomAvatarSelection()
-      if (!isFullBodySpecies(selection.species)) {
+      if (!isFullBodySpecies(selection.species) && !speciesHasBuiltInFace(selection.species)) {
         expect(typeof selection.face).toBe('number')
         expect([2, 5, 15, 16].includes(selection.face!)).toBe(false)
+      } else if (speciesHasBuiltInFace(selection.species)) {
+        expect(selection.face).toBeNull()
       }
     }
   })

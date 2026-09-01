@@ -14,10 +14,24 @@ import {
 } from './avatarCatalog.generated'
 
 /** Full-body character skins that already include integrated outfit, pants, shoes, and face. */
-export const FULL_BODY_SPECIES = new Set([5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17, 18, 19])
+export const FULL_BODY_SPECIES = new Set([7, 8, 9, 10, 11, 14, 15, 16, 17, 18, 19])
 
 export function isFullBodySpecies(speciesIndex?: number | null): boolean {
   return typeof speciesIndex === 'number' && FULL_BODY_SPECIES.has(speciesIndex)
+}
+
+/** Species skins that have built-in facial expressions (eyes & mouth) in their base mesh. */
+export const SPECIES_WITH_BUILTIN_FACE = new Set([5, 6])
+
+export function speciesHasBuiltInFace(speciesIndex?: number | null): boolean {
+  return typeof speciesIndex === 'number' && SPECIES_WITH_BUILTIN_FACE.has(speciesIndex)
+}
+
+/** Species skins that already contain integral stylized 3D eyebrows modeled into the skull. */
+export const SPECIES_WITH_BUILTIN_EYEBROWS = new Set([3, 4, 5, 6])
+
+export function speciesHasBuiltInEyebrows(speciesIndex?: number | null): boolean {
+  return typeof speciesIndex === 'number' && SPECIES_WITH_BUILTIN_EYEBROWS.has(speciesIndex)
 }
 
 /**
@@ -62,21 +76,18 @@ export function faceHasBuiltInEyebrows(faceIndex?: number | null): boolean {
   return typeof faceIndex === 'number' && FACES_WITH_BUILTIN_EYEBROWS.has(faceIndex)
 }
 
-/** Species skins that already contain integral stylized 3D eyebrows modeled into the skull. */
-export const SPECIES_WITH_BUILTIN_EYEBROWS = new Set([3, 4])
-
-export function speciesHasBuiltInEyebrows(speciesIndex?: number | null): boolean {
-  return typeof speciesIndex === 'number' && SPECIES_WITH_BUILTIN_EYEBROWS.has(speciesIndex)
-}
-
 /**
  * Validates whether a modular slot applies to a particular species.
  * Full-body character models have integral 3D geometry for faces, clothing, and hair.
- * Species with built-in 3D eyebrows (Vampire, Zombie) do not take modular eyebrow decals.
+ * Ghost and Gold support clothing and hair, but have built-in faces.
+ * Species with built-in 3D eyebrows (Vampire, Zombie, Ghost, Gold) do not take modular eyebrow decals.
  */
 export function isSlotSupportedForSpecies(slot: AvatarSlot, speciesIndex?: number | null): boolean {
   if (slot === 'species' || slot === 'back') return true
   if (isFullBodySpecies(speciesIndex)) {
+    return false
+  }
+  if (slot === 'face' && speciesHasBuiltInFace(speciesIndex)) {
     return false
   }
   if (slot === 'eyebrow' && speciesHasBuiltInEyebrows(speciesIndex)) {
@@ -88,6 +99,7 @@ export function isSlotSupportedForSpecies(slot: AvatarSlot, speciesIndex?: numbe
 /**
  * Slots a base body avatar cannot render without.
  * Full-body skins (species 7..11, 14..19) only require 'species'.
+ * Ghost/Gold (species 5, 6) only require 'species', 'tops', 'bottoms', 'shoes'.
  */
 export const REQUIRED_SLOTS = ['species', 'face', 'tops', 'bottoms', 'shoes'] as const
 
@@ -96,6 +108,9 @@ export type RequiredSlot = (typeof REQUIRED_SLOTS)[number]
 export function getRequiredSlots(speciesIndex?: number | null): readonly AvatarSlot[] {
   if (isFullBodySpecies(speciesIndex)) {
     return ['species']
+  }
+  if (speciesHasBuiltInFace(speciesIndex)) {
+    return ['species', 'tops', 'bottoms', 'shoes']
   }
   return REQUIRED_SLOTS
 }
@@ -166,7 +181,8 @@ export function resolvePartNodes(selection: AvatarSelection): string[] {
   }
 
   const effectiveHair = getEffectiveHairForHeadwear(selection.headwear, selection.hair)
-  const hideEyebrows = faceHasBuiltInEyebrows(selection.face)
+  const hideEyebrows =
+    faceHasBuiltInEyebrows(selection.face) || speciesHasBuiltInEyebrows(selection.species)
 
   const nodes: string[] = []
   for (const slot of AVATAR_SLOTS) {
@@ -220,6 +236,35 @@ function pick<T>(items: readonly T[], rng: Rng): T {
 }
 
 /**
+ * Weighted distribution for avatar rolls matching Pirate Nation metadata.
+ * Prioritizes fully customizable mannequins (Human, Vampire, Zombie, Frankenstein, Ghost, Gold)
+ * over static monolithic full-body skins.
+ */
+const SPECIES_ROLL_WEIGHTS: Record<number, number> = {
+  1: 50,  // Human
+  2: 5,   // Piratetron
+  3: 7,   // Vampire
+  4: 7,   // Zombie
+  5: 4,   // Ghost
+  6: 4,   // Gold
+  12: 8,  // Frankenstein
+  13: 5,  // Deep Diver
+  // Rare full-body monolithic character skins (1 each):
+  7: 1, 8: 1, 9: 1, 10: 1, 11: 1, 14: 1, 15: 1, 16: 1, 17: 1, 18: 1, 19: 1,
+}
+
+function pickWeightedSpecies(rng: Rng): number {
+  let total = 0
+  for (const w of Object.values(SPECIES_ROLL_WEIGHTS)) total += w
+  let r = rng() * total
+  for (const [sp, w] of Object.entries(SPECIES_ROLL_WEIGHTS)) {
+    r -= w
+    if (r <= 0) return Number(sp)
+  }
+  return 1
+}
+
+/**
  * Face parts in the glTF that are actual faces with eyes and mouth.
  * (Indices 2, 5, 15, 16 are loose eyebrow scratch models with no eyes or mouth).
  */
@@ -234,7 +279,7 @@ export const VALID_FACE_PARTS = AVATAR_PARTS.face.filter((part) =>
  */
 export function randomAvatarSelection(rng: Rng = Math.random): AvatarSelection {
   const selection: AvatarSelection = {
-    species: pick(AVATAR_PARTS.species, rng).index,
+    species: pickWeightedSpecies(rng),
     skinColor: pick(SKIN_COLORS, rng),
     hairColor: pick(HAIR_COLORS, rng),
   }
@@ -257,15 +302,17 @@ export function randomAvatarSelection(rng: Rng = Math.random): AvatarSelection {
     return selection
   }
 
-  // Base bodies require face, tops, bottoms, and shoes
-  for (const slot of REQUIRED_SLOTS) {
-    if (slot === 'species') continue
-    if (slot === 'face') {
-      selection.face = pick(VALID_FACE_PARTS, rng).index
-      continue
-    }
-    selection[slot] = pick(AVATAR_PARTS[slot], rng).index
+  // Ghost and Gold have built-in faces, so face is null
+  if (speciesHasBuiltInFace(selection.species)) {
+    selection.face = null
+  } else {
+    selection.face = pick(VALID_FACE_PARTS, rng).index
   }
+
+  // Base bodies & Ghost/Gold require tops, bottoms, and shoes
+  selection.tops = pick(AVATAR_PARTS.tops, rng).index
+  selection.bottoms = pick(AVATAR_PARTS.bottoms, rng).index
+  selection.shoes = pick(AVATAR_PARTS.shoes, rng).index
 
   // Roll headwear first to check if hair is hidden or tailored
   if (rng() < OPTIONAL_SLOT_CHANCE.headwear) {
@@ -283,7 +330,7 @@ export function randomAvatarSelection(rng: Rng = Math.random): AvatarSelection {
       selection.hair = null
       continue
     }
-    if (slot === 'eyebrow' && faceHasBuiltInEyebrows(selection.face)) {
+    if (slot === 'eyebrow' && (faceHasBuiltInEyebrows(selection.face) || speciesHasBuiltInEyebrows(selection.species))) {
       selection.eyebrow = null
       continue
     }

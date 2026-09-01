@@ -46,9 +46,13 @@ test.describe('Avatar Mesh & Depth Layer Complete Audit', () => {
         }
       } else {
         expect(isFull).toBe(false)
-        // All slots allowed on base bodies, except eyebrow on species with built-in 3D brows (3, 4)
+        // All slots allowed on base bodies, except:
+        // - face on species with built-in face (5, 6)
+        // - eyebrow on species with built-in 3D brows (3, 4, 5, 6)
         for (const slot of AVATAR_SLOTS) {
-          if (slot === 'eyebrow' && (sp === 3 || sp === 4)) {
+          if (slot === 'face' && (sp === 5 || sp === 6)) {
+            expect(isSlotSupportedForSpecies(slot, sp)).toBe(false)
+          } else if (slot === 'eyebrow' && (sp === 3 || sp === 4 || sp === 5 || sp === 6)) {
             expect(isSlotSupportedForSpecies(slot, sp)).toBe(false)
           } else {
             expect(isSlotSupportedForSpecies(slot, sp)).toBe(true)
@@ -72,7 +76,9 @@ test.describe('Avatar Mesh & Depth Layer Complete Audit', () => {
       } else {
         // Base bodies must contain required slots
         expect(nodes.some((n) => n.startsWith('species'))).toBe(true)
-        expect(nodes.some((n) => n.startsWith('face'))).toBe(true)
+        if (selection.species !== 5 && selection.species !== 6) {
+          expect(nodes.some((n) => n.startsWith('face'))).toBe(true)
+        }
         expect(nodes.some((n) => n.startsWith('tops'))).toBe(true)
         expect(nodes.some((n) => n.startsWith('bottoms'))).toBe(true)
         expect(nodes.some((n) => n.startsWith('shoes'))).toBe(true)
