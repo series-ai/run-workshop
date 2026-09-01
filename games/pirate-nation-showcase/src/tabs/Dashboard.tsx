@@ -162,9 +162,7 @@ export function Dashboard({ onNavigate, visited }: DashboardProps) {
         </div>
       </section>
 
-      <p className="landing-license">
-        MIT · Copyright (c) 2026 Proof of Play, Inc. · <a href={sourceRepo}>View source</a>
-      </p>
+      <p className="landing-license">MIT · Copyright (c) 2026 Proof of Play, Inc.</p>
     </section>
   )
 }

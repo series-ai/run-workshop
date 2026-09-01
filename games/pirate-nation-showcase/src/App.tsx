@@ -62,8 +62,7 @@ export function App() {
 
       <footer className="app-footer">
         Pirate Nation art © 2026 Proof of Play, Inc. — MIT license. Thank you to Proof of Play for
-        sharing this work so others can build with it.{' '}
-        <a href="https://github.com/proofofplay/piratenation-game">View the source release</a>.
+        sharing this work so others can build with it.
       </footer>
     </div>
   )
