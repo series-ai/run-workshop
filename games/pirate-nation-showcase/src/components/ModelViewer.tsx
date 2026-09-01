@@ -8,7 +8,7 @@
  */
 import { OrbitControls, useAnimations, useGLTF, useProgress } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Vector3, type Group } from 'three'
 import { modelAssetReference, type PirateNationModelEntry } from '../catalog'
 import { useAssetUrl } from '../useAssetUrl'
@@ -111,6 +111,11 @@ export function ModelViewer({ entry, collisionEntry = null }: ModelViewerProps) 
   const maxDim = Math.max(...activeEntry.bounds.size)
   const lightDir = new Vector3(5, 8, 6).normalize().multiplyScalar(maxDim * 1.6)
 
+  const handleAnimations = useCallback((availableClips: string[]) => {
+    setClips(availableClips)
+    setClip((current) => (current && availableClips.includes(current) ? current : availableClips[0] ?? null))
+  }, [])
+
   // Reset per-model viewer state; the animation list arrives after load.
   useEffect(() => {
     setClips([])
@@ -151,7 +156,7 @@ export function ModelViewer({ entry, collisionEntry = null }: ModelViewerProps) 
             clip={clip}
             turntable={turntable}
             wireframe={wireframe}
-            onAnimations={setClips}
+            onAnimations={handleAnimations}
           />
         </Suspense>
         <gridHelper
