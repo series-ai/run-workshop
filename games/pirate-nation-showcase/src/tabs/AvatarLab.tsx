@@ -22,6 +22,8 @@ import {
   HAIR_COLORS,
   HEADWEAR_HAIR_MAP,
   headwearHidesHair,
+  headwearHidesEyebrows,
+  headwearHidesFacialHair,
   isFullBodySpecies,
   isSlotSupportedForSpecies,
   randomAvatarSelection,
@@ -106,7 +108,10 @@ function SlotRow({
   const current = selection[slot]
   const isSupported = isSlotSupportedForSpecies(slot, selection.species)
   const isFullSkin = isFullBodySpecies(selection.species)
-  const isHiddenByHat = slot === 'hair' && headwearHidesHair(selection.headwear)
+  const isHiddenByHat =
+    (slot === 'hair' && headwearHidesHair(selection.headwear)) ||
+    (slot === 'eyebrow' && headwearHidesEyebrows(selection.headwear)) ||
+    (slot === 'facialhair' && headwearHidesFacialHair(selection.headwear))
   const hatHairRule = selection.headwear ? HEADWEAR_HAIR_MAP[selection.headwear] : undefined
   const isTailoredByHat = slot === 'hair' && typeof hatHairRule === 'number' && hatHairRule > 0
   const isBuiltInToFace = slot === 'eyebrow' && faceHasBuiltInEyebrows(selection.face)

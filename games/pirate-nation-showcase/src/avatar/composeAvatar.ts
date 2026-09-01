@@ -69,6 +69,31 @@ export function headwearHidesHair(headwearIndex?: number | null): boolean {
   return rule <= 0
 }
 
+/**
+ * Headwear models that extend down over the forehead brow line (y <= 0.545, x >= 0.085).
+ * Enclosing helmets, masks, and combo hats with built-in hair bangs hide modular eyebrows.
+ */
+export const HEADWEAR_HIDES_EYEBROWS = new Set([
+  6, 10, 17, 18, 19, 21, 22, 24, 25, 28, 30, 31, 37, 38, 44, 48,
+  59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+])
+
+export function headwearHidesEyebrows(headwearIndex?: number | null): boolean {
+  return typeof headwearIndex === 'number' && HEADWEAR_HIDES_EYEBROWS.has(headwearIndex)
+}
+
+/**
+ * Combo headwear models that already include built-in 3D beards/chins (y <= 0.35, x >= 0.085).
+ * Hide modular facial hair to prevent double-beard mesh collision.
+ */
+export const HEADWEAR_HIDES_FACIALHAIR = new Set([
+  18, 24, 28, 31, 37, 38, 60, 61, 63, 64, 65, 66, 67, 68, 69, 70,
+])
+
+export function headwearHidesFacialHair(headwearIndex?: number | null): boolean {
+  return typeof headwearIndex === 'number' && HEADWEAR_HIDES_FACIALHAIR.has(headwearIndex)
+}
+
 /** Face decals that already include integral eyebrows or are eyebrow decals themselves. */
 export const FACES_WITH_BUILTIN_EYEBROWS = new Set([2, 5, 15, 16, 17, 18])
 
@@ -182,7 +207,10 @@ export function resolvePartNodes(selection: AvatarSelection): string[] {
 
   const effectiveHair = getEffectiveHairForHeadwear(selection.headwear, selection.hair)
   const hideEyebrows =
-    faceHasBuiltInEyebrows(selection.face) || speciesHasBuiltInEyebrows(selection.species)
+    faceHasBuiltInEyebrows(selection.face) ||
+    speciesHasBuiltInEyebrows(selection.species) ||
+    headwearHidesEyebrows(selection.headwear)
+  const hideFacialHair = headwearHidesFacialHair(selection.headwear)
 
   const nodes: string[] = []
   for (const slot of AVATAR_SLOTS) {
@@ -194,6 +222,7 @@ export function resolvePartNodes(selection: AvatarSelection): string[] {
       continue
     }
     if (slot === 'eyebrow' && hideEyebrows) continue
+    if (slot === 'facialhair' && hideFacialHair) continue
     const index = selection[slot]
     if (typeof index !== 'number') continue
     nodes.push(findPart(slot, index))
@@ -339,13 +368,21 @@ export function randomAvatarSelection(rng: Rng = Math.random): AvatarSelection {
       continue
     }
     if (slot === 'eyebrow') {
-      if (faceHasBuiltInEyebrows(selection.face) || speciesHasBuiltInEyebrows(selection.species)) {
+      if (
+        faceHasBuiltInEyebrows(selection.face) ||
+        speciesHasBuiltInEyebrows(selection.species) ||
+        headwearHidesEyebrows(selection.headwear)
+      ) {
         selection.eyebrow = null
       } else if (rng() < chance) {
         selection.eyebrow = pick(VALID_EYEBROW_PARTS, rng).index
       } else {
         selection.eyebrow = null
       }
+      continue
+    }
+    if (slot === 'facialhair' && headwearHidesFacialHair(selection.headwear)) {
+      selection.facialhair = null
       continue
     }
     if (rng() < chance) {

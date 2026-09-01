@@ -62,6 +62,26 @@ describe('resolvePartNodes', () => {
     expect(nodes.some((n) => n.startsWith('hair'))).toBe(false)
   })
 
+  it('omits eyebrows when wearing a forehead-covering combo hat (e.g. headwear 68)', () => {
+    const nodes = resolvePartNodes({
+      ...MINIMAL,
+      headwear: 68,
+      eyebrow: 10,
+    })
+    expect(nodes).toContain('headwear 68')
+    expect(nodes.some((n) => n.startsWith('eyebrow'))).toBe(false)
+  })
+
+  it('omits facial hair when wearing a beard-covering combo hat (e.g. headwear 68)', () => {
+    const nodes = resolvePartNodes({
+      ...MINIMAL,
+      headwear: 68,
+      facialhair: 4,
+    })
+    expect(nodes).toContain('headwear 68')
+    expect(nodes.some((n) => n.startsWith('facialhair'))).toBe(false)
+  })
+
   it('omits a slot the selection leaves out', () => {
     const nodes = resolvePartNodes(MINIMAL)
     expect(nodes.some((name) => name.startsWith('headwear'))).toBe(false)
