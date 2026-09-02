@@ -11,4 +11,14 @@ describe('latest operation', () => {
         expect(operations.settle(send, null)).toBe(false);
         expect(operations.retry()).toBe('reset');
     });
+
+    it('drops a load value that resolves after a newer operation starts', async () => {
+        const operations = createLatestOperation<string>();
+        const load = operations.begin();
+        const messages = operations.capture(load, Promise.resolve(['old message']));
+
+        operations.begin();
+
+        await expect(messages).resolves.toBeUndefined();
+    });
 });

@@ -46,12 +46,15 @@ export function useNpcChat() {
         dispatch({ type: 'connecting' });
         try {
             const runtime = reopen ? await reopenNpcRuntime() : await getNpcRuntime();
-            if (!operationRef.current.isCurrent(operation)) return;
+            const storedMessages = await operationRef.current.capture(
+                operation,
+                runtime.session.getMessages(),
+            );
+            if (storedMessages === undefined) return;
             sessionRef.current = runtime.session;
-            const messages = displayMessages(await runtime.session.getMessages());
             dispatch({
                 type: 'ready',
-                messages,
+                messages: displayMessages(storedMessages),
                 interruptions: runtime.session.state.interruptions
                     .filter((item) => item.status === 'pending'),
             });
