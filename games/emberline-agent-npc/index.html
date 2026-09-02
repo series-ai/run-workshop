@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <!-- Locked viewport: RUN games are fullscreen mobile apps; never let the page zoom or scroll. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- ADAPT: game title -->
+    <meta name="theme-color" content="#100d19" />
+    <title>Emberline — NPC Agent Reference</title>
+    <style>
+        /* Boot cover: inlined (not in the bundle's CSS) so the screen is black
+           from the very first paint, before any JS or bundled CSS loads. */
+        #boot-cover {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #100d19;
+            opacity: 1;
+            transition: opacity 0.35s ease-out;
+            pointer-events: none; /* if boot hangs, taps still reach the app */
+        }
+        #boot-cover.hidden { opacity: 0; }
+    </style>
+</head>
+<body>
+    <div id="boot-cover"></div>
+    <script>
+        // Safety net: never leave the player staring at a black screen. If the
+        // module bundle fails to load or boot throws before lifting the cover,
+        // fade it out anyway after 4s so whatever rendered is visible.
+        setTimeout(function () {
+            var c = document.getElementById('boot-cover');
+            if (c && !c.classList.contains('hidden')) c.classList.add('hidden');
+        }, 4000);
+    </script>
+    <div id="root"></div>
+    <script type="module" src="./src/main.tsx"></script>
+</body>
+</html>

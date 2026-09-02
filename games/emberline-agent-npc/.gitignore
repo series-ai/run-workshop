@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.DS_Store
+Thumbs.db
+.env
+.env.local
+game.config.json
+game.config.*.json
+.rundot/session/
+test-results/
+playwright-report/
+.playwright-cli/
