@@ -21,4 +21,17 @@ describe('latest operation', () => {
 
         await expect(messages).resolves.toBeUndefined();
     });
+
+    it('blocks another transition until the current transition ends', () => {
+        const operations = createLatestOperation<string>();
+
+        expect(operations.beginTransition()).toBe(1);
+        expect(operations.isTransitioning()).toBe(true);
+        expect(operations.beginTransition()).toBeUndefined();
+
+        operations.endTransition();
+
+        expect(operations.isTransitioning()).toBe(false);
+        expect(operations.beginTransition()).toBe(2);
+    });
 });

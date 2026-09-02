@@ -42,7 +42,8 @@ export function useNpcChat() {
     const operationRef = useRef(createLatestOperation<RetryAction>());
 
     const loadRuntime = useCallback(async (reopen: boolean): Promise<void> => {
-        const operation = operationRef.current.begin();
+        const operation = operationRef.current.beginTransition();
+        if (operation === undefined) return;
         dispatch({ type: 'connecting' });
         try {
             const runtime = reopen ? await reopenNpcRuntime() : await getNpcRuntime();
@@ -65,6 +66,8 @@ export function useNpcChat() {
                 type: 'failed',
                 message: error instanceof Error ? error.message : 'The conversation could not open.',
             });
+        } finally {
+            operationRef.current.endTransition();
         }
     }, []);
 
@@ -125,7 +128,7 @@ export function useNpcChat() {
         operation: number,
         action: (session: AgentSession, signal: AbortSignal) => Promise<AgentRunResult>,
     ): Promise<RunOutcome> => {
-        if (abortRef.current !== null) return 'busy';
+        if (abortRef.current !== null || operationRef.current.isTransitioning()) return 'busy';
         const controller = new AbortController();
         abortRef.current = controller;
         if (operationRef.current.isCurrent(operation)) {
@@ -197,6 +200,7 @@ export function useNpcChat() {
         if (
             !prompt ||
             abortRef.current !== null ||
+            operationRef.current.isTransitioning() ||
             state.connection === 'thinking' ||
             state.interruptions.length > 0
         ) return;
@@ -223,6 +227,7 @@ export function useNpcChat() {
         if (
             decisions.length === 0 ||
             abortRef.current !== null ||
+            operationRef.current.isTransitioning() ||
             state.connection === 'thinking'
         ) return;
         const operation = operationRef.current.begin();
@@ -240,7 +245,8 @@ export function useNpcChat() {
 
     const reset = useCallback(async (): Promise<void> => {
         const previousRun = abortRef.current;
-        const operation = operationRef.current.begin();
+        const operation = operationRef.current.beginTransition();
+        if (operation === undefined) return;
         previousRun?.abort('Conversation reset.');
         dispatch({ type: 'connecting' });
         try {
@@ -255,12 +261,18 @@ export function useNpcChat() {
                 type: 'failed',
                 message: error instanceof Error ? error.message : 'The conversation could not reset.',
             });
+        } finally {
+            operationRef.current.endTransition();
         }
     }, []);
 
     const retry = useCallback(async (): Promise<void> => {
         const action = operationRef.current.retry();
-        if (action === null || abortRef.current !== null) return;
+        if (
+            action === null ||
+            abortRef.current !== null ||
+            operationRef.current.isTransitioning()
+        ) return;
         switch (action.type) {
             case 'load':
                 await loadRuntime(action.reopen);
