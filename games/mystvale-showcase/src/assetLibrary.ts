@@ -1,11 +1,34 @@
 import RundotGameAPI from '@series-inc/rundot-game-sdk/api'
 
-export const MYSTVALE_PACK = {
-  id: 'series-ai/mystvale',
-  version: '04811e1dd830',
+export const MYSTVALE_PACKS = {
+  '2d': {
+    id: 'series-ai-mystvale/2D/top-down-rpg',
+    version: '772c5adf50fb',
+  },
+  ui: {
+    id: 'series-ai-mystvale/ui',
+    version: '15af28714f4d',
+  },
+  icons: {
+    id: 'series-ai-mystvale/icons',
+    version: 'f4d3822f6da3',
+  },
+  audio: {
+    id: 'series-ai-mystvale/audio',
+    version: '700bc6650a6d',
+  },
 } as const
 
-let baseUrlPromise: Promise<string> | undefined
+export type MystvalePackKey = keyof typeof MYSTVALE_PACKS
+
+export const MYSTVALE_PACK = MYSTVALE_PACKS['2d']
+
+export interface AssetReference {
+  pack: MystvalePackKey
+  path: string
+}
+
+const baseUrls = new Map<MystvalePackKey, Promise<string>>()
 let initialization: Promise<unknown> | undefined
 
 function ensureInitialized(): Promise<unknown> {
@@ -19,25 +42,45 @@ function ensureInitialized(): Promise<unknown> {
 }
 
 export function clearAssetLibraryCacheForTests(): void {
-  baseUrlPromise = undefined
+  baseUrls.clear()
   initialization = undefined
 }
 
-export async function resolveAssetUrl(path: string): Promise<string> {
+export function inferPackAndPath(inputPath: string): { pack: MystvalePackKey; relativePath: string } {
+  const clean = inputPath.replace(/^\/+/, '')
+  if (clean.startsWith('ui/')) {
+    return { pack: 'ui', relativePath: clean.slice(3) }
+  }
+  if (clean.startsWith('icons/')) {
+    return { pack: 'icons', relativePath: clean.slice(6) }
+  }
+  if (clean.startsWith('audio/')) {
+    return { pack: 'audio', relativePath: clean.slice(6) }
+  }
+  return { pack: '2d', relativePath: clean }
+}
+
+export async function resolveAssetUrl(input: string | AssetReference): Promise<string> {
   await ensureInitialized()
-  if (!baseUrlPromise) {
-    baseUrlPromise = RundotGameAPI.assetLibrary
-      .getPackBaseUrl(MYSTVALE_PACK.id, MYSTVALE_PACK.version)
+  const ref =
+    typeof input === 'string'
+      ? inferPackAndPath(input)
+      : { pack: input.pack, relativePath: input.path.replace(/^\/+/, '') }
+  const pack = MYSTVALE_PACKS[ref.pack]
+  let base = baseUrls.get(ref.pack)
+  if (!base) {
+    base = RundotGameAPI.assetLibrary
+      .getPackBaseUrl(pack.id, pack.version)
       .then((url: string | null | undefined) => {
-        if (!url) throw new Error('Asset library returned empty URL')
+        if (!url) throw new Error(`Asset library returned empty URL for pack ${pack.id}`)
         return url.replace(/\/+$/, '')
       })
       .catch((error: unknown) => {
-        baseUrlPromise = undefined
+        baseUrls.delete(ref.pack)
         throw error
       })
+    baseUrls.set(ref.pack, base)
   }
-  const cleanPath = path.replace(/^\/+/, '')
-  const base = await baseUrlPromise
-  return `${base}/${cleanPath}`
+  const resolvedBase = await base
+  return `${resolvedBase}/${ref.relativePath}`
 }
