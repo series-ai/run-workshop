@@ -1,0 +1,46 @@
+{
+  "name": "emberline-agent-npc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RUN agent NPC reference app with durable chat, tools, approvals, and multiple-tab safety.",
+  "type": "module",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "keywords": [
+    "RUN.game",
+    "agent",
+    "NPC",
+    "React",
+    "Vite"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "dev:offline": "vite --mode offline",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run src",
+    "test:e2e": "playwright test",
+    "build": "tsc --noEmit && vite build",
+    "ci": "npm run typecheck && npm test && vite build",
+    "ci:full": "npm run ci && npm run test:e2e",
+    "deploy": "npm run build && rundot deploy",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@series-inc/rundot-agent": "0.1.0-beta.2",
+    "@series-inc/rundot-game-sdk": "5.28.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@revenuecat/purchases-js": "^1.39.1",
+    "@tailwindcss/vite": "^4.1.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.4.1",
+    "firebase": "^12.16.0",
+    "tailwindcss": "^4.1.5",
+    "typescript": "^5.8.0",
+    "vite": "^6.3.5",
+    "vitest": "4.0.18"
+  }
+}
