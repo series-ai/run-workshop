@@ -17,6 +17,7 @@ import {
     initialChatState,
     type ChatMessage,
 } from './chatState.ts';
+import { createLatestOperation } from './latestOperation.ts';
 
 const id = (prefix: string): string => `${prefix}-${crypto.randomUUID()}`;
 
@@ -38,12 +39,14 @@ export function useNpcChat() {
     const [state, dispatch] = useReducer(chatReducer, initialChatState);
     const sessionRef = useRef<AgentSession | null>(null);
     const abortRef = useRef<AbortController | null>(null);
-    const retryRef = useRef<RetryAction | null>(null);
+    const operationRef = useRef(createLatestOperation<RetryAction>());
 
     const loadRuntime = useCallback(async (reopen: boolean): Promise<void> => {
+        const operation = operationRef.current.begin();
         dispatch({ type: 'connecting' });
         try {
             const runtime = reopen ? await reopenNpcRuntime() : await getNpcRuntime();
+            if (!operationRef.current.isCurrent(operation)) return;
             sessionRef.current = runtime.session;
             const messages = displayMessages(await runtime.session.getMessages());
             dispatch({
@@ -52,9 +55,9 @@ export function useNpcChat() {
                 interruptions: runtime.session.state.interruptions
                     .filter((item) => item.status === 'pending'),
             });
-            retryRef.current = null;
+            operationRef.current.settle(operation, null);
         } catch (error) {
-            retryRef.current = { type: 'load', reopen };
+            if (!operationRef.current.settle(operation, { type: 'load', reopen })) return;
             dispatch({
                 type: 'failed',
                 message: error instanceof Error ? error.message : 'The conversation could not open.',
@@ -116,25 +119,30 @@ export function useNpcChat() {
     }, []);
 
     const run = useCallback(async (
+        operation: number,
         action: (session: AgentSession, signal: AbortSignal) => Promise<AgentRunResult>,
     ): Promise<RunOutcome> => {
         if (abortRef.current !== null) return 'busy';
         const controller = new AbortController();
         abortRef.current = controller;
-        dispatch({
-            type: 'assistant_started',
-            message: {
-                id: id('assistant'),
-                role: 'assistant',
-                text: '',
-                createdAt: Date.now(),
-                status: 'streaming',
-            },
-        });
+        if (operationRef.current.isCurrent(operation)) {
+            dispatch({
+                type: 'assistant_started',
+                message: {
+                    id: id('assistant'),
+                    role: 'assistant',
+                    text: '',
+                    createdAt: Date.now(),
+                    status: 'streaming',
+                },
+            });
+        }
         try {
             const session = sessionRef.current ?? (await getNpcRuntime()).session;
             sessionRef.current = session;
-            const unsubscribe = session.subscribe(applyEvent);
+            const unsubscribe = session.subscribe((event) => {
+                if (operationRef.current.isCurrent(operation)) applyEvent(event);
+            });
             let result: AgentRunResult;
             try {
                 result = await action(session, controller.signal);
@@ -142,30 +150,38 @@ export function useNpcChat() {
                 unsubscribe();
             }
             if (result.finishReason === 'error') {
-                dispatch({
-                    type: 'failed',
-                    message: result.error?.message ?? 'Mira could not answer.',
-                });
+                if (operationRef.current.isCurrent(operation)) {
+                    dispatch({
+                        type: 'failed',
+                        message: result.error?.message ?? 'Mira could not answer.',
+                    });
+                }
                 return 'error';
             }
-            dispatch({
-                type: 'assistant_finished',
-                text: result.text,
-                interruptions: result.interruptions,
-            });
+            if (operationRef.current.isCurrent(operation)) {
+                dispatch({
+                    type: 'assistant_finished',
+                    text: result.text,
+                    interruptions: result.interruptions,
+                });
+            }
             return 'complete';
         } catch (error) {
             if (errorCode(error) === 'CONFLICT') {
-                dispatch({ type: 'conflict' });
+                if (operationRef.current.isCurrent(operation)) dispatch({ type: 'conflict' });
                 return 'conflict';
             } else if (controller.signal.aborted) {
-                dispatch({ type: 'assistant_finished', text: 'Stopped.', interruptions: [] });
+                if (operationRef.current.isCurrent(operation)) {
+                    dispatch({ type: 'assistant_finished', text: 'Stopped.', interruptions: [] });
+                }
                 return 'aborted';
             } else {
-                dispatch({
-                    type: 'failed',
-                    message: error instanceof Error ? error.message : 'Mira could not answer.',
-                });
+                if (operationRef.current.isCurrent(operation)) {
+                    dispatch({
+                        type: 'failed',
+                        message: error instanceof Error ? error.message : 'Mira could not answer.',
+                    });
+                }
                 return 'error';
             }
         } finally {
@@ -188,9 +204,16 @@ export function useNpcChat() {
             createdAt: Date.now(),
             status: 'complete',
         };
+        const operation = operationRef.current.begin();
         dispatch({ type: 'user_submitted', message });
-        const outcome = await run((session, signal) => session.send({ text: prompt }, { signal }));
-        retryRef.current = outcome === 'error' ? { type: 'send', text: prompt } : null;
+        const outcome = await run(
+            operation,
+            (session, signal) => session.send({ text: prompt }, { signal }),
+        );
+        operationRef.current.settle(
+            operation,
+            outcome === 'error' ? { type: 'send', text: prompt } : null,
+        );
     }, [run, state.connection, state.interruptions.length]);
 
     const resume = useCallback(async (decisions: AgentDecision[]): Promise<void> => {
@@ -199,24 +222,32 @@ export function useNpcChat() {
             abortRef.current !== null ||
             state.connection === 'thinking'
         ) return;
-        const outcome = await run((session, signal) => session.resume(decisions, { signal }));
-        retryRef.current = outcome === 'error'
-            ? { type: 'resume', decisions: [...decisions] }
-            : null;
+        const operation = operationRef.current.begin();
+        const outcome = await run(
+            operation,
+            (session, signal) => session.resume(decisions, { signal }),
+        );
+        operationRef.current.settle(
+            operation,
+            outcome === 'error' ? { type: 'resume', decisions: [...decisions] } : null,
+        );
     }, [run, state.connection]);
 
     const reopen = useCallback(async (): Promise<void> => loadRuntime(true), [loadRuntime]);
 
     const reset = useCallback(async (): Promise<void> => {
-        abortRef.current?.abort('Conversation reset.');
+        const previousRun = abortRef.current;
+        const operation = operationRef.current.begin();
+        previousRun?.abort('Conversation reset.');
         dispatch({ type: 'connecting' });
         try {
             const runtime = await resetNpcRuntime();
+            if (!operationRef.current.isCurrent(operation)) return;
             sessionRef.current = runtime.session;
-            retryRef.current = null;
+            operationRef.current.settle(operation, null);
             dispatch({ type: 'ready', messages: [] });
         } catch (error) {
-            retryRef.current = { type: 'reset' };
+            if (!operationRef.current.settle(operation, { type: 'reset' })) return;
             dispatch({
                 type: 'failed',
                 message: error instanceof Error ? error.message : 'The conversation could not reset.',
@@ -225,7 +256,7 @@ export function useNpcChat() {
     }, []);
 
     const retry = useCallback(async (): Promise<void> => {
-        const action = retryRef.current;
+        const action = operationRef.current.retry();
         if (action === null || abortRef.current !== null) return;
         switch (action.type) {
             case 'load':
