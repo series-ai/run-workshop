@@ -43,7 +43,6 @@ export function useNpcChat() {
 
     const loadRuntime = useCallback(async (reopen: boolean): Promise<void> => {
         const operation = operationRef.current.beginTransition();
-        if (operation === undefined) return;
         dispatch({ type: 'connecting' });
         try {
             const runtime = reopen ? await reopenNpcRuntime() : await getNpcRuntime();
@@ -67,7 +66,7 @@ export function useNpcChat() {
                 message: error instanceof Error ? error.message : 'The conversation could not open.',
             });
         } finally {
-            operationRef.current.endTransition();
+            operationRef.current.endTransition(operation);
         }
     }, []);
 
@@ -246,7 +245,6 @@ export function useNpcChat() {
     const reset = useCallback(async (): Promise<void> => {
         const previousRun = abortRef.current;
         const operation = operationRef.current.beginTransition();
-        if (operation === undefined) return;
         previousRun?.abort('Conversation reset.');
         dispatch({ type: 'connecting' });
         try {
@@ -262,7 +260,7 @@ export function useNpcChat() {
                 message: error instanceof Error ? error.message : 'The conversation could not reset.',
             });
         } finally {
-            operationRef.current.endTransition();
+            operationRef.current.endTransition(operation);
         }
     }, []);
 

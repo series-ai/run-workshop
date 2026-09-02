@@ -22,16 +22,22 @@ describe('latest operation', () => {
         await expect(messages).resolves.toBeUndefined();
     });
 
-    it('blocks another transition until the current transition ends', () => {
+    it('keeps the busy lock while a newer transition supersedes an older one', () => {
         const operations = createLatestOperation<string>();
+        const load = operations.beginTransition();
+        const reset = operations.beginTransition();
 
-        expect(operations.beginTransition()).toBe(1);
+        expect(load).toBe(1);
+        expect(reset).toBe(2);
+        expect(operations.isCurrent(reset)).toBe(true);
         expect(operations.isTransitioning()).toBe(true);
-        expect(operations.beginTransition()).toBeUndefined();
 
-        operations.endTransition();
+        operations.endTransition(load);
+
+        expect(operations.isTransitioning()).toBe(true);
+
+        operations.endTransition(reset);
 
         expect(operations.isTransitioning()).toBe(false);
-        expect(operations.beginTransition()).toBe(2);
     });
 });

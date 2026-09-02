@@ -1,8 +1,8 @@
 export interface LatestOperation<Retry> {
     begin(): number;
-    beginTransition(): number | undefined;
+    beginTransition(): number;
     capture<Value>(operation: number, value: Promise<Value>): Promise<Value | undefined>;
-    endTransition(): void;
+    endTransition(operation: number): void;
     isCurrent(operation: number): boolean;
     isTransitioning(): boolean;
     retry(): Retry | null;
@@ -12,7 +12,7 @@ export interface LatestOperation<Retry> {
 export const createLatestOperation = <Retry>(): LatestOperation<Retry> => {
     let current = 0;
     let retry: Retry | null = null;
-    let transitioning = false;
+    const transitions = new Set<number>();
 
     const begin = (): number => {
         current += 1;
@@ -23,19 +23,19 @@ export const createLatestOperation = <Retry>(): LatestOperation<Retry> => {
     return {
         begin,
         beginTransition: () => {
-            if (transitioning) return undefined;
-            transitioning = true;
-            return begin();
+            const operation = begin();
+            transitions.add(operation);
+            return operation;
         },
         capture: async (operation, value) => {
             const resolved = await value;
             return operation === current ? resolved : undefined;
         },
-        endTransition: () => {
-            transitioning = false;
+        endTransition: (operation) => {
+            transitions.delete(operation);
         },
         isCurrent: (operation) => operation === current,
-        isTransitioning: () => transitioning,
+        isTransitioning: () => transitions.size > 0,
         retry: () => retry,
         settle: (operation, nextRetry) => {
             if (operation !== current) return false;
