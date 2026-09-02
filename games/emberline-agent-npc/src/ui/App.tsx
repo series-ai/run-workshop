@@ -24,6 +24,7 @@ export default function App() {
     const { state, send, resume, retry, reopen, reset, stop, dismissError } = useNpcChat();
     const [showReset, setShowReset] = useState(false);
     const endRef = useRef<HTMLDivElement>(null);
+    const decisionPending = state.interruptions.length > 0;
 
     useEffect(() => {
         endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -168,7 +169,14 @@ export default function App() {
 
                 <ChatComposer
                     busy={state.connection === 'thinking'}
-                    disabled={state.connection === 'connecting' || state.connection === 'conflict'}
+                    disabled={
+                        state.connection === 'connecting' ||
+                        state.connection === 'conflict' ||
+                        decisionPending
+                    }
+                    disabledPlaceholder={decisionPending
+                        ? 'Answer Mira above'
+                        : 'Load the latest conversation first'}
                     onSend={send}
                     onStop={stop}
                 />

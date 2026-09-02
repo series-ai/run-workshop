@@ -3,11 +3,18 @@ import { useRef, useState, type KeyboardEvent } from 'react';
 interface ChatComposerProps {
     busy: boolean;
     disabled: boolean;
+    disabledPlaceholder: string;
     onSend(text: string): Promise<void>;
     onStop(): void;
 }
 
-export default function ChatComposer({ busy, disabled, onSend, onStop }: ChatComposerProps) {
+export default function ChatComposer({
+    busy,
+    disabled,
+    disabledPlaceholder,
+    onSend,
+    onStop,
+}: ChatComposerProps) {
     const [text, setText] = useState('');
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -35,7 +42,7 @@ export default function ChatComposer({ busy, disabled, onSend, onStop }: ChatCom
                     disabled={disabled}
                     maxLength={1_200}
                     aria-label="Message Mira"
-                    placeholder={disabled ? 'Load the latest conversation first' : 'Say something…'}
+                    placeholder={disabled ? disabledPlaceholder : 'Say something…'}
                     onChange={(event) => setText(event.target.value)}
                     onKeyDown={keyDown}
                 />

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { AgentDecision, AgentInterruption } from '@series-inc/rundot-agent';
 
 interface DecisionTrayProps {
@@ -12,14 +12,19 @@ type Choice = 'approve' | 'reject';
 export default function DecisionTray({ interruptions, disabled, onSubmit }: DecisionTrayProps) {
     const [choices, setChoices] = useState<Record<string, Choice>>({});
     const [answers, setAnswers] = useState<Record<string, string>>({});
+    const submittingRef = useRef(false);
+    const [submitting, setSubmitting] = useState(false);
     const needsApproval = interruptions.some((item) => item.kind === 'tool_approval');
+    const blocked = disabled || submitting;
 
     const complete = useMemo(() => interruptions.every((item) => item.kind === 'ask_user'
         ? (answers[item.id]?.trim().length ?? 0) > 0
         : choices[item.id] !== undefined), [answers, choices, interruptions]);
 
-    const submit = (): void => {
-        if (!complete || disabled) return;
+    const submit = async (): Promise<void> => {
+        if (!complete || disabled || submittingRef.current) return;
+        submittingRef.current = true;
+        setSubmitting(true);
         const decisions: AgentDecision[] = interruptions.map((item) => {
             const decisionId = `decision-${crypto.randomUUID()}`;
             if (item.kind === 'ask_user') {
@@ -39,7 +44,12 @@ export default function DecisionTray({ interruptions, disabled, onSubmit }: Deci
                     reason: 'The player declined this action.',
                 };
         });
-        void onSubmit(decisions);
+        try {
+            await onSubmit(decisions);
+        } finally {
+            submittingRef.current = false;
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -63,6 +73,7 @@ export default function DecisionTray({ interruptions, disabled, onSubmit }: Deci
                             value={answers[item.id] ?? ''}
                             placeholder="Type your answer"
                             aria-label="Answer Mira"
+                            disabled={blocked}
                             onChange={(event) => setAnswers((current) => ({
                                 ...current,
                                 [item.id]: event.target.value,
@@ -72,6 +83,7 @@ export default function DecisionTray({ interruptions, disabled, onSubmit }: Deci
                         <div className="choice-row">
                             <button
                                 type="button"
+                                disabled={blocked}
                                 className={choices[item.id] === 'reject' ? 'selected' : ''}
                                 onClick={() => setChoices((current) => ({ ...current, [item.id]: 'reject' }))}
                             >
@@ -79,6 +91,7 @@ export default function DecisionTray({ interruptions, disabled, onSubmit }: Deci
                             </button>
                             <button
                                 type="button"
+                                disabled={blocked}
                                 className={choices[item.id] === 'approve' ? 'selected primary-choice' : 'primary-choice'}
                                 onClick={() => setChoices((current) => ({ ...current, [item.id]: 'approve' }))}
                             >
@@ -92,7 +105,12 @@ export default function DecisionTray({ interruptions, disabled, onSubmit }: Deci
                     </details>
                 </div>
             ))}
-            <button className="continue-button" type="button" disabled={!complete || disabled} onClick={submit}>
+            <button
+                className="continue-button"
+                type="button"
+                disabled={!complete || blocked}
+                onClick={() => { void submit(); }}
+            >
                 Continue conversation
             </button>
         </section>

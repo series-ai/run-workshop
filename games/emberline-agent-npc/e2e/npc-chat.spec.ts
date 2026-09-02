@@ -70,17 +70,20 @@ test('runs text, tool, question, reload, rejection, and approval flows', async (
     await expect(page.getByText('Which route should we use through the marsh?', { exact: true }))
         .toBeVisible();
     await expect(page.getByText('No reply')).toHaveCount(0);
+    await expect(messageBox(page)).toBeDisabled();
 
     await page.reload();
     await expect(page.getByRole('region', { name: 'Mira needs your input' })).toBeVisible();
     await page.getByRole('textbox', { name: 'Answer Mira' }).fill('The lit boardwalk');
-    await page.getByRole('button', { name: 'Continue conversation' }).click();
+    await page.getByRole('button', { name: 'Continue conversation' }).dblclick();
     await expect(page.getByText(/we will use the lit boardwalk/i)).toBeVisible();
+    await expect(page.getByText(/we will use the lit boardwalk/i)).toHaveCount(1);
     await expect(page.getByText('At the fire')).toBeVisible();
 
     await messageBox(page).fill('I want to take the signal job.');
     await messageBox(page).press('Enter');
     await expect(page.getByText('CONFIRM ACTION')).toBeVisible();
+    await expect(messageBox(page)).toBeDisabled();
     await page.getByRole('button', { name: 'Not now' }).click();
     await page.getByRole('button', { name: 'Continue conversation' }).click();
     await expect(page.getByText(/leave the signal route unmarked/i)).toBeVisible();

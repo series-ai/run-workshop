@@ -26,11 +26,19 @@ const toolLabel = (name: string): string => ({
     ask_user: 'Waiting for your answer',
 }[name] ?? `Using ${name.replaceAll('_', ' ')}`);
 
+type RunOutcome = 'complete' | 'error' | 'conflict' | 'aborted' | 'busy';
+
+type RetryAction =
+    | { type: 'load'; reopen: boolean }
+    | { type: 'send'; text: string }
+    | { type: 'resume'; decisions: AgentDecision[] }
+    | { type: 'reset' };
+
 export function useNpcChat() {
     const [state, dispatch] = useReducer(chatReducer, initialChatState);
     const sessionRef = useRef<AgentSession | null>(null);
     const abortRef = useRef<AbortController | null>(null);
-    const lastPromptRef = useRef<string | null>(null);
+    const retryRef = useRef<RetryAction | null>(null);
 
     const loadRuntime = useCallback(async (reopen: boolean): Promise<void> => {
         dispatch({ type: 'connecting' });
@@ -44,7 +52,9 @@ export function useNpcChat() {
                 interruptions: runtime.session.state.interruptions
                     .filter((item) => item.status === 'pending'),
             });
+            retryRef.current = null;
         } catch (error) {
+            retryRef.current = { type: 'load', reopen };
             dispatch({
                 type: 'failed',
                 message: error instanceof Error ? error.message : 'The conversation could not open.',
@@ -107,7 +117,10 @@ export function useNpcChat() {
 
     const run = useCallback(async (
         action: (session: AgentSession, signal: AbortSignal) => Promise<AgentRunResult>,
-    ): Promise<void> => {
+    ): Promise<RunOutcome> => {
+        if (abortRef.current !== null) return 'busy';
+        const controller = new AbortController();
+        abortRef.current = controller;
         dispatch({
             type: 'assistant_started',
             message: {
@@ -118,8 +131,6 @@ export function useNpcChat() {
                 status: 'streaming',
             },
         });
-        const controller = new AbortController();
-        abortRef.current = controller;
         try {
             const session = sessionRef.current ?? (await getNpcRuntime()).session;
             sessionRef.current = session;
@@ -135,23 +146,27 @@ export function useNpcChat() {
                     type: 'failed',
                     message: result.error?.message ?? 'Mira could not answer.',
                 });
-                return;
+                return 'error';
             }
             dispatch({
                 type: 'assistant_finished',
                 text: result.text,
                 interruptions: result.interruptions,
             });
+            return 'complete';
         } catch (error) {
             if (errorCode(error) === 'CONFLICT') {
                 dispatch({ type: 'conflict' });
+                return 'conflict';
             } else if (controller.signal.aborted) {
                 dispatch({ type: 'assistant_finished', text: 'Stopped.', interruptions: [] });
+                return 'aborted';
             } else {
                 dispatch({
                     type: 'failed',
                     message: error instanceof Error ? error.message : 'Mira could not answer.',
                 });
+                return 'error';
             }
         } finally {
             if (abortRef.current === controller) abortRef.current = null;
@@ -160,8 +175,12 @@ export function useNpcChat() {
 
     const send = useCallback(async (text: string): Promise<void> => {
         const prompt = text.trim();
-        if (!prompt || state.connection === 'thinking') return;
-        lastPromptRef.current = prompt;
+        if (
+            !prompt ||
+            abortRef.current !== null ||
+            state.connection === 'thinking' ||
+            state.interruptions.length > 0
+        ) return;
         const message: ChatMessage = {
             id: id('user'),
             role: 'user',
@@ -170,17 +189,21 @@ export function useNpcChat() {
             status: 'complete',
         };
         dispatch({ type: 'user_submitted', message });
-        await run((session, signal) => session.send({ text: prompt }, { signal }));
-    }, [run, state.connection]);
+        const outcome = await run((session, signal) => session.send({ text: prompt }, { signal }));
+        retryRef.current = outcome === 'error' ? { type: 'send', text: prompt } : null;
+    }, [run, state.connection, state.interruptions.length]);
 
     const resume = useCallback(async (decisions: AgentDecision[]): Promise<void> => {
-        if (decisions.length === 0 || state.connection === 'thinking') return;
-        await run((session, signal) => session.resume(decisions, { signal }));
+        if (
+            decisions.length === 0 ||
+            abortRef.current !== null ||
+            state.connection === 'thinking'
+        ) return;
+        const outcome = await run((session, signal) => session.resume(decisions, { signal }));
+        retryRef.current = outcome === 'error'
+            ? { type: 'resume', decisions: [...decisions] }
+            : null;
     }, [run, state.connection]);
-
-    const retry = useCallback(async (): Promise<void> => {
-        if (lastPromptRef.current) await send(lastPromptRef.current);
-    }, [send]);
 
     const reopen = useCallback(async (): Promise<void> => loadRuntime(true), [loadRuntime]);
 
@@ -190,15 +213,35 @@ export function useNpcChat() {
         try {
             const runtime = await resetNpcRuntime();
             sessionRef.current = runtime.session;
-            lastPromptRef.current = null;
+            retryRef.current = null;
             dispatch({ type: 'ready', messages: [] });
         } catch (error) {
+            retryRef.current = { type: 'reset' };
             dispatch({
                 type: 'failed',
                 message: error instanceof Error ? error.message : 'The conversation could not reset.',
             });
         }
     }, []);
+
+    const retry = useCallback(async (): Promise<void> => {
+        const action = retryRef.current;
+        if (action === null || abortRef.current !== null) return;
+        switch (action.type) {
+            case 'load':
+                await loadRuntime(action.reopen);
+                break;
+            case 'send':
+                await send(action.text);
+                break;
+            case 'resume':
+                await resume(action.decisions);
+                break;
+            case 'reset':
+                await reset();
+                break;
+        }
+    }, [loadRuntime, reset, resume, send]);
 
     return {
         state,
