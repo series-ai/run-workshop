@@ -85,6 +85,14 @@ Key exports:
 - Chunky pieces (dominoes, dice, mahjong) use `BoxPiece` with lit
   `meshStandardMaterial`. The scene must include an ambient light and a
   directional light.
+- Every painted piece carries its own shading, because the lighting alone
+  cannot show detail cut into a face: a gradient body, a bevelled rim, and
+  pips drilled with a countersunk ring and a lit far edge. `lighten` and
+  `darken` derive those tints and expect `#rrggbb`, so any color option
+  passed to a painter must be in that form.
+- Dominoes carry the brass spinner a real set has. Mahjong faces are carved
+  and painted (a dark offset under the colored glyph), bamboo pips are jointed
+  cane with leaves, and one bamboo is the traditional bird.
 - Mahjong CJK faces use the `TILE_CJK_FONT` system stack
   (`"Songti SC", "STSong", "PingFang SC", serif`) — verified on macOS. Check
   Windows/Android fallbacks before shipping.
