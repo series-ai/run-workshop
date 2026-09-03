@@ -278,6 +278,11 @@ textarea {
   pointer-events: none;
 }
 
+.pfx-feed-mark-review {
+  background: #d97706;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 2px 10px rgba(217, 119, 6, 0.55);
+}
+
 .pfx-filter-chip-static {
   border-color: rgba(220, 38, 38, 0.6);
   background: rgba(69, 10, 10, 0.65);

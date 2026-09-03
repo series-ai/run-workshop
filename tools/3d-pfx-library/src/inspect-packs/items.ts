@@ -1,5 +1,6 @@
 import { BURGER_SHOP_RECIPES } from '../burger-shop/recipes'
 import { matchesPfxSearchQuery, overlaps } from '../constants/04'
+import { effectMatchesReviewSets } from '../reviewSets'
 import { PFX_PRESETS } from '../tooling/01'
 import type { PfxCatalogItem, PfxFilterQuery, PfxPreset, PfxTaxonomyEffect } from '../types/01'
 import {
@@ -157,6 +158,7 @@ export function selectInspectPackItems(
     if (options.space?.length && !options.space.includes(effect.space)) return false
     if (options.mobileSafeOnly && effect.mobileSafety !== 'safe') return false
     if (options.coverage?.length && !options.coverage.includes(effect.acceptanceStatus)) return false
+    if (!effectMatchesReviewSets(effect.id, options.reviewSet)) return false
     return true
   })
 }

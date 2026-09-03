@@ -59,7 +59,7 @@ export function cancelGeneration(): void {
 }
 
 /** Convert a blob URL or object URL to a base64 string (no data URL prefix). */
-async function blobUrlToBase64(url: string): Promise<{ base64: string; mimeType: string }> {
+export async function blobUrlToBase64(url: string): Promise<{ base64: string; mimeType: string }> {
   if (url.startsWith('data:')) {
     const match = url.match(/^data:([^;]+);base64,(.+)$/);
     if (match) return { base64: match[2]!, mimeType: match[1]! };

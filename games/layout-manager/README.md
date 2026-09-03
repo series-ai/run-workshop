@@ -101,7 +101,7 @@ Open `http://localhost:5173` in your browser. (`npm install` / `npx vite` works 
 
 ### AI Features Setup (Optional)
 
-AI features call provider APIs directly — no extra CLI install needed. You only need API keys for whichever providers you want to use.
+Most AI features call provider APIs directly — you only need API keys for whichever providers you want to use. (The exceptions are the no-key providers below, which use locally installed tools instead.)
 
 Open **Preferences > AI** in Layout Manager and paste your API keys, or click **Import .env** to load them from a file.
 
@@ -130,6 +130,22 @@ These chat providers need no API key at all:
 | **Ollama** | A local Ollama server (default `http://127.0.0.1:11434`) | Uses the model set in Preferences, or auto-picks your first installed model if left blank. |
 
 Local models support images if the loaded model is multimodal (e.g. llava); text-only models will ignore or reject them.
+
+#### Unity AI (No API Key — Unity Subscription)
+
+The **Unity AI** panel generates images with Unity's ~60 hosted models (Flux 2, GPT Image, Nano Banana 2, Seedream 4.5, plus game-specialized icon/UI/environment/texture models), billed to your Unity organization's AI points instead of an API key. Three things must be in place:
+
+1. **Unity AI working inside Unity** — a Unity 6+ Editor, signed into an account whose organization has Unity AI points, with the `com.unity.ai.assistant` package in the project. Verify by generating anything from Unity's own Generators window first; if it doesn't work there, Layout Manager can't fix it.
+2. **The official `unity` CLI** installed and signed in (this is a standalone tool, not the Editor executable — Layout Manager drives the Editor through it):
+   - **macOS**: `brew install --cask unity-cli`
+   - **Windows / Linux**: `curl -fsSL https://public-cdn.cloud.unity3d.com/hub/prod/cli/install.sh | UNITY_CLI_CHANNEL=beta bash`
+   - Then: `unity auth login`, and once per project: `unity pipeline install --project-path /path/to/project` (adds the `com.unity.pipeline` bridge package). See [Unity's CLI docs](https://docs.unity3d.com/Packages/com.unity.pipeline@latest) for details.
+3. **The Unity Editor open on that project** whenever you generate — generation runs inside the live Editor; there is no headless mode.
+
+Layout Manager auto-detects the running Editor (project, port, and your live points balance appear in the panel's connection banner). Set **Preferences > AI > Unity project path** only if you have more than one Editor open. Use a dedicated scratch project rather than your real game project — generated files land in its `Assets/AIGenerated/` folder.
+
+> **Linux note:** on immutable distros (Bazzite, Silverblue), launch the Editor from a Unity Hub installed inside a distrobox — the Flatpak Hub sandboxes the Editor's PID, which breaks the CLI's Editor detection with no workaround.
+
 
 
 ## Features
@@ -190,6 +206,13 @@ All AI tools are accessible from the toolbar. They can be hidden entirely from *
 - Batch generation (configurable count)
 - Provider picker with API key status
 - Persistent prompt across sessions
+
+#### Unity AI
+- Generate with Unity's hosted model catalog (~60 models) through a running Unity Editor — no API key, billed to your Unity org's AI points (live balance shown in the panel)
+- Models grouped by purpose (General / Utilities / Icons & UI / Environments / Textures & Materials) with search and capability badges parsed from live metadata; defaults to Nano Banana 2
+- Custom width/height when the model supports it; single reference image slot (Unity's API uses only the first reference); the four upscaler utilities do a 2× upscale of the reference per run
+- Staged progress (validating → generating → downloading) with elapsed time and per-job point cost; results land on the canvas like other providers
+- Requires the `unity` CLI and an open Unity 6+ Editor — see **AI Features Setup > Unity AI** above
 
 #### Split to Layers
 - Splits a selected image into 2–17 transparent PNG layers (background + separate elements) via Fal.ai Seedream Layerize — each layer lands as a named, z-ordered element beside the source
@@ -320,6 +343,7 @@ See [`docs/comfyui-integration.md`](docs/comfyui-integration.md) for full setup,
 - **React** 18 + **TypeScript**
 - **Vite** 6 (dev server, bundler, and AI backend proxy)
 - Direct provider APIs: Google GenAI (Gemini / Nano Banana), OpenAI (gpt-image-1), Fal.ai (Seedream Layerize), Anthropic (Claude), xAI (Grok)
+- **Unity AI** via the official `unity` CLI: the dev server drives a running Unity 6+ Editor with `unity command eval` (reflection into the internal `Unity.AI.Generators.Tools` API — Unity's Pipeline server on localhost:7800 is token-authenticated with no CORS, so the browser never talks to it directly). Editor auto-detection, live model catalog, points balance, and staged-progress polling with placeholder-safe completion detection all ride the same CLI bridge
 - DOM-based rendering with CSS transforms (not HTML5 Canvas)
 - State management via `useReducer` (no external libraries)
 - API keys obfuscated with XOR + base64 in localStorage
@@ -341,6 +365,7 @@ src/
       AiChatPanel.tsx      Multi-provider AI chat
       TextToImageModal.tsx Text/reference-to-image generation modal
       ComfyModal.tsx       ComfyUI local workflow runner
+      UnityAiModal.tsx     Unity AI panel (model catalog, categories, refs, points)
       aiClient.ts          Direct provider API communication (SSE streaming)
       comfyClient.ts       ComfyUI server communication (HTTP + WebSocket)
       completionSound.ts   Audio feedback
@@ -349,7 +374,7 @@ src/
     paint/                 Paint editor subsystem
 comfy-workflows/           Drop your ComfyUI workflow JSONs here (API format)
 comfy-workflows_source/    UI-format workflow sources (load in ComfyUI, re-export as API)
-vite.config.ts             Dev server + direct AI API proxies + ComfyUI proxy
+vite.config.ts             Dev server + direct AI API proxies + ComfyUI proxy + Unity CLI bridge (/__unity-*)
 ```
 
 ## License

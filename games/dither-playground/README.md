@@ -29,13 +29,16 @@ is only needed for headless/CI usage.
 
 - `npm run dev` — local dev server with the RUN sandbox
 - `npm run build` — typecheck + production build
-- `npm test` — unit tests (dither uniforms, shader contents, presets)
+- `npm test` — unit tests (the dither-core tests live in
+  [tools/dither-kit](../../tools/dither-kit/))
 - `npm run deploy` — build and deploy with the `rundot` CLI (requires `rundot login`)
 
 ## Where things live
 
-- `src/dither/` — the dithering core: `DitherEffect.ts` (pure-TS config →
-  uniforms → GLSL), `DitherPostProcess.tsx` (bridge into
-  `@react-three/postprocessing`), `presets.ts` (palettes + named presets).
+- `src/dither/` — `DitherPostProcess.tsx`, the bridge into
+  `@react-three/postprocessing`. The dithering core itself (pure-TS config →
+  uniforms → GLSL, palettes, named presets) lives in
+  [tools/dither-kit](../../tools/dither-kit/) and is imported as the
+  `dither-kit` package.
 - `src/scenes/` — the three tabs: `SceneDemo` (3D), `ImageDemo`, `VideoDemo`.
 - `src/components/` — shared controls, drop zone, media plane, frame updater.

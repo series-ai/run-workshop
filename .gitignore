@@ -167,7 +167,9 @@ game.config.*.json
 **/temp/
 
 # playwright-cli session artifacts (snapshots, console logs, screenshots)
-.playwright-cli/
+# Playwright test runner artifacts
+test-results/
+playwright-report/
 
 # Agent-session debris (not part of the repo)
 .pi/

@@ -1,0 +1,135 @@
+{
+  "packId": "pirate-nation",
+  "displayName": "Pirate Nation Art & Audio Pack",
+  "version": "1.0.0",
+  "dimension": "3d",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Proof of Play, Inc.",
+  "provenance": {
+    "sourceRepo": "https://github.com/proofofplay/piratenation-game",
+    "sourceCommit": "dc921b650c8a1d7c449b2a3553949d3e7c8266e9",
+    "sourceAuthor": "Proof of Play, Inc.",
+    "provenanceDoc": "PROVENANCE.md",
+    "licenseFile": "LICENSE",
+    "openSourceStatus": "Converted from the archival MIT release",
+    "downstreamLicenseCompatibility": [
+      "MIT",
+      "Apache-2.0",
+      "BSD-3-Clause",
+      "GPL-3.0",
+      "AGPL-3.0"
+    ]
+  },
+  "counts": {
+    "totalModels": 375,
+    "totalAudioTracks": 30,
+    "totalSprites": 513,
+    "modelCategories": [
+      "animals",
+      "buildings",
+      "characters-skins",
+      "decorations",
+      "harvestables",
+      "islands-terrain",
+      "plants-nature",
+      "props-interactive",
+      "ships",
+      "world-bosses"
+    ],
+    "audioCategories": [
+      "music",
+      "sfx"
+    ],
+    "spriteCategories": [
+      "branding",
+      "icons",
+      "ui"
+    ]
+  },
+  "collections": [
+    {
+      "id": "buildings",
+      "name": "Buildings & Structures",
+      "description": "Voxel buildings including Town Halls, Windmills, Blacksmiths, Markets, Docks, and themed variants.",
+      "count": 70
+    },
+    {
+      "id": "ships",
+      "name": "Ships & Vessels",
+      "description": "Voxel pirate vessels from skiffs to large pirate ships.",
+      "count": 37
+    },
+    {
+      "id": "world-bosses",
+      "name": "World Bosses & Sea Monsters",
+      "description": "Sea creatures including Kraken, Megalodon, Giant Turtle, and Sea Serpent.",
+      "count": 7
+    },
+    {
+      "id": "harvestables",
+      "name": "Harvestables & Resources",
+      "description": "Tiered chests, trees, ores, silk, cotton, and flax.",
+      "count": 79
+    },
+    {
+      "id": "decorations",
+      "name": "Decorations & Island Props",
+      "description": "Island props, totems, statues, lamps, cargo, and festive decorations.",
+      "count": 118
+    },
+    {
+      "id": "plants-nature",
+      "name": "Plants & Flora",
+      "description": "Palm trees, kelp beds, algae blooms, and tropical flora.",
+      "count": 26
+    },
+    {
+      "id": "islands-terrain",
+      "name": "Islands & Terrain",
+      "description": "Modular islands, volcanoes, marine geysers, and terrain blocks.",
+      "count": 12
+    },
+    {
+      "id": "characters-skins",
+      "name": "Characters & Pirate Skins",
+      "description": "Voxel pirate character models and skin variants.",
+      "count": 19
+    },
+    {
+      "id": "animals",
+      "name": "Animals & Fauna",
+      "description": "Gulls and pigeons in flying and idle states.",
+      "count": 4
+    },
+    {
+      "id": "props-interactive",
+      "name": "Interactive Props",
+      "description": "Wishing wells, mailboxes, dungeon buoys, and interactive props.",
+      "count": 3
+    },
+    {
+      "id": "music",
+      "name": "Music & Soundtracks",
+      "description": "Original Combat, Exploration, and Main Theme tracks with loops and intros.",
+      "count": 11
+    },
+    {
+      "id": "sfx",
+      "name": "Sound Effects (SFX)",
+      "description": "Proof of Play game SFX: harvest, ship movement, combat status, and UI thuds.",
+      "count": 19
+    },
+    {
+      "id": "pixel-art-icons",
+      "name": "Game Icons",
+      "description": "Proof of Play UI icons and skill icons from the game client.",
+      "count": 151
+    },
+    {
+      "id": "ui-sprites",
+      "name": "UI Sprites & Frames",
+      "description": "Proof of Play UI buttons, frames, rarity banners, and portraits.",
+      "count": 362
+    }
+  ]
+}

@@ -1,0 +1,371 @@
+/**
+ * Browsable grid over the pack's 355 visual models (collision GLBs surface as
+ * a viewer toggle, not as cards) with search, category filters, and sort;
+ * selecting a model opens the 3D viewer + provenance detail panel.
+ */
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  buildCollisionIndex,
+  formatBytes,
+  gridFootprint,
+  isCollisionModel,
+  loadModels,
+  modelAssetReference,
+  thumbnailAssetReference,
+  type PirateNationModelEntry,
+} from '../catalog'
+import { ModelViewer } from '../components/ModelViewer'
+import { ViewerErrorBoundary } from '../pack3d/ViewerErrorBoundary'
+import { useAssetUrl } from '../useAssetUrl'
+
+type SortKey = 'name' | 'size-desc' | 'size-asc' | 'footprint'
+
+const SORTS: { id: SortKey; label: string }[] = [
+  { id: 'name', label: 'Name A–Z' },
+  { id: 'size-desc', label: 'Largest first' },
+  { id: 'size-asc', label: 'Smallest first' },
+  { id: 'footprint', label: 'Footprint (largest)' },
+]
+
+function footprintArea(entry: PirateNationModelEntry): number {
+  return entry.bounds.size[0] * entry.bounds.size[2]
+}
+
+function sortModels(models: PirateNationModelEntry[], sort: SortKey): PirateNationModelEntry[] {
+  const sorted = [...models]
+  switch (sort) {
+    case 'name':
+      sorted.sort((a, b) => a.name.localeCompare(b.name))
+      break
+    case 'size-desc':
+      sorted.sort((a, b) => b.sizeBytes - a.sizeBytes)
+      break
+    case 'size-asc':
+      sorted.sort((a, b) => a.sizeBytes - b.sizeBytes)
+      break
+    case 'footprint':
+      sorted.sort((a, b) => footprintArea(b) - footprintArea(a))
+      break
+  }
+  return sorted
+}
+
+export function filterModels(
+  models: PirateNationModelEntry[],
+  search: string,
+  category: string | null,
+): PirateNationModelEntry[] {
+  const needle = search.trim().toLowerCase()
+  return models.filter((entry) => {
+    if (category && entry.category !== category) return false
+    if (!needle) return true
+    return (
+      entry.name.toLowerCase().includes(needle) ||
+      entry.id.toLowerCase().includes(needle) ||
+      entry.category.includes(needle)
+    )
+  })
+}
+
+function formatDims(entry: PirateNationModelEntry): string {
+  const [x, y, z] = entry.bounds.size
+  return `${x.toFixed(1)} × ${y.toFixed(1)} × ${z.toFixed(1)}`
+}
+
+function ModelThumb({ entry }: { entry: PirateNationModelEntry }) {
+  const src = useAssetUrl(thumbnailAssetReference(entry))
+  const [failed, setFailed] = useState(false)
+
+  // A model with no thumbnail renders as the plain text card it was before.
+  if (failed) return null
+  // Still resolving: hold the tile's shape so the grid does not jump.
+  if (!src) return <span className="model-card-thumb model-card-thumb-empty" />
+  return (
+    <img
+      className="model-card-thumb"
+      src={src}
+      alt=""
+      loading="lazy"
+      width={512}
+      height={512}
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
+function DownloadLink({ entry }: { entry: PirateNationModelEntry }) {
+  const href = useAssetUrl(modelAssetReference(entry))
+  if (!href) return null
+  return (
+    <a className="download-link" href={href} download={entry.filename}>
+      Download {entry.filename}
+    </a>
+  )
+}
+
+function ModelDetail({
+  entry,
+  collisionEntry,
+}: {
+  entry: PirateNationModelEntry
+  collisionEntry: PirateNationModelEntry | null
+}) {
+  const footprint = gridFootprint(entry.id)
+  return (
+    <div className="model-detail">
+      {/* Keyed by model: the boundary must reset when the stage swaps, or one
+          failed asset would leave the viewer dead for the rest of the visit. */}
+      <ViewerErrorBoundary key={entry.id}>
+        <ModelViewer entry={entry} collisionEntry={collisionEntry} />
+      </ViewerErrorBoundary>
+
+      <dl className="metadata">
+        <div>
+          <dt>Category</dt>
+          <dd>{entry.category}</dd>
+        </div>
+        <div>
+          <dt>Dimensions</dt>
+          <dd>{formatDims(entry)} units</dd>
+        </div>
+        {footprint && (
+          <div>
+            <dt>Grid footprint</dt>
+            <dd>{footprint}</dd>
+          </div>
+        )}
+        <div>
+          <dt>File size</dt>
+          <dd>{formatBytes(entry.sizeBytes)}</dd>
+        </div>
+        <div>
+          <dt>Source</dt>
+          <dd className="mono">{entry.sourceRelativePath}</dd>
+        </div>
+        <div>
+          <dt>License</dt>
+          <dd>
+            {entry.license} — {entry.copyright}
+          </dd>
+        </div>
+      </dl>
+
+      <DownloadLink entry={entry} />
+    </div>
+  )
+}
+
+export function ModelGallery() {
+  const [models, setModels] = useState<PirateNationModelEntry[] | null>(null)
+  const [collisionIndex, setCollisionIndex] = useState<Map<string, PirateNationModelEntry>>(
+    new Map(),
+  )
+  const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState<string | null>(null)
+  const [sort, setSort] = useState<SortKey>('name')
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadModels().then((all) => {
+      // Collision GLBs are not browsable entries; they surface as a viewer
+      // toggle on their visual counterpart (see ModelViewer).
+      setCollisionIndex(buildCollisionIndex(all))
+      setModels(all.filter((entry) => !isCollisionModel(entry)))
+    }, (err: Error) => setError(err.message))
+  }, [])
+
+  const categories = useMemo(() => {
+    if (!models) return []
+    const counts = new Map<string, number>()
+    for (const entry of models) counts.set(entry.category, (counts.get(entry.category) ?? 0) + 1)
+    return [...counts.entries()].sort((a, b) => b[1] - a[1])
+  }, [models])
+
+  const visible = useMemo(() => {
+    if (!models) return []
+    return sortModels(filterModels(models, search, category), sort)
+  }, [models, search, category, sort])
+
+  const [mobileViewerOpen, setMobileViewerOpen] = useState(false)
+
+  const selected = models?.find((entry) => entry.id === selectedId) ?? null
+
+  // The stage is never empty: selection follows the filtered list.
+  useEffect(() => {
+    if (visible.length === 0) {
+      if (selectedId !== null) setSelectedId(null)
+      return
+    }
+    if (!visible.some((entry) => entry.id === selectedId)) {
+      setSelectedId(visible[0]!.id)
+    }
+  }, [visible, selectedId])
+
+  const step = useCallback(
+    (delta: number) => {
+      if (visible.length === 0) return
+      const index = visible.findIndex((entry) => entry.id === selectedId)
+      const next = (index + delta + visible.length) % visible.length
+      setSelectedId(visible[next]!.id)
+    },
+    [visible, selectedId],
+  )
+
+  const pickRandom = useCallback(() => {
+    if (visible.length < 2) return
+    let next = selectedId
+    while (next === selectedId) {
+      next = visible[Math.floor(Math.random() * visible.length)]!.id
+    }
+    setSelectedId(next)
+    setMobileViewerOpen(true)
+  }, [visible, selectedId])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      // Never steal keys from the search box or the sort/animation selects.
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) {
+        if (event.key === 'Escape' && target.tagName === 'INPUT') setSearch('')
+        return
+      }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        step(1)
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        step(-1)
+      } else if (event.key === 'Escape') {
+        setMobileViewerOpen(false)
+        setSearch('')
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [step])
+
+  if (error) return <div className="load-error">Could not load the model catalog: {error}</div>
+  if (!models) return <div className="loading">Loading model catalog…</div>
+
+  return (
+    <div className="gallery with-detail">
+      <section className="gallery-list">
+        <div className="gallery-toolbar">
+          <input
+            type="search"
+            placeholder={`Search ${models.length} models…`}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <select value={sort} onChange={(event) => setSort(event.target.value as SortKey)}>
+            {SORTS.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <button type="button" className="chip" onClick={pickRandom}>
+            Random
+          </button>
+        </div>
+
+        <div className="chip-row">
+          <button
+            type="button"
+            className={category === null ? 'chip active' : 'chip'}
+            onClick={() => setCategory(null)}
+          >
+            All ({models.length})
+          </button>
+          {categories.map(([name, count]) => (
+            <button
+              key={name}
+              type="button"
+              className={category === name ? 'chip active' : 'chip'}
+              onClick={() => setCategory(category === name ? null : name)}
+            >
+              {name} ({count})
+            </button>
+          ))}
+        </div>
+
+        <div className="model-grid">
+          {visible.map((entry) => (
+            <button
+              key={entry.id}
+              type="button"
+              className={entry.id === selectedId ? 'model-card selected' : 'model-card'}
+              onClick={() => {
+                setSelectedId(entry.id)
+                setMobileViewerOpen(true)
+              }}
+            >
+              <ModelThumb entry={entry} />
+              <span className="model-card-name">{entry.name}</span>
+              <span className="model-card-meta">
+                {entry.category} · {formatDims(entry)}
+                {gridFootprint(entry.id) ? ` · ${gridFootprint(entry.id)}` : ''} ·{' '}
+                {formatBytes(entry.sizeBytes)}
+              </span>
+            </button>
+          ))}
+          {visible.length === 0 && <p className="empty">No models match this filter.</p>}
+        </div>
+      </section>
+
+      {/* Backdrop for mobile drawer/modal */}
+      <div
+        className={mobileViewerOpen ? 'gallery-modal-backdrop open' : 'gallery-modal-backdrop'}
+        onClick={() => setMobileViewerOpen(false)}
+      />
+
+      <aside className={mobileViewerOpen ? 'gallery-detail open' : 'gallery-detail'}>
+        {selected ? (
+          <>
+            <div className="gallery-detail-header">
+              <h2>{selected.name}</h2>
+              <div className="gallery-detail-actions">
+                <div className="gallery-detail-nav">
+                  <button
+                    type="button"
+                    className="nav-arrow"
+                    title="Previous model (←)"
+                    onClick={() => step(-1)}
+                  >
+                    ‹
+                  </button>
+                  <span className="gallery-detail-position">
+                    {visible.findIndex((entry) => entry.id === selected.id) + 1} / {visible.length}
+                  </span>
+                  <button
+                    type="button"
+                    className="nav-arrow"
+                    title="Next model (→)"
+                    onClick={() => step(1)}
+                  >
+                    ›
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="modal-close-btn"
+                  aria-label="Close 3D viewer"
+                  onClick={() => setMobileViewerOpen(false)}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <ModelDetail
+              entry={selected}
+              collisionEntry={collisionIndex.get(selected.id) ?? null}
+            />
+          </>
+        ) : (
+          <p className="empty">No models match this filter.</p>
+        )}
+      </aside>
+    </div>
+  )
+}

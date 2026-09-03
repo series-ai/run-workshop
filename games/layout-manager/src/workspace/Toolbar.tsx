@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Menu, FilePlus, FolderOpen, LayoutGrid, Save, Upload, Download, Image, Settings, Undo2, Redo2, Minus, Plus, Film, Magnet, Ruler, Type, Sparkles, Eraser, MessageSquare, Workflow, Layers } from 'lucide-react';
+import { Menu, FilePlus, FolderOpen, LayoutGrid, Save, Upload, Download, Image, Settings, Undo2, Redo2, Minus, Plus, Film, Magnet, Ruler, Type, Sparkles, Eraser, MessageSquare, Workflow, Layers, Box } from 'lucide-react';
 import type { WorkspaceAction, ImageNode, CanvasRect, ScaleFilter, RulerGuide } from './types';
 import { saveProject, saveProjectAs, loadProject, setCurrentFileHandle } from './projectFile';
 import { CanvasMenu } from './CanvasMenu';
@@ -45,17 +45,19 @@ interface ToolbarProps {
   onAiLayerize?: () => void;
   onAiChat?: () => void;
   onAiComfy?: () => void;
+  onAiUnity?: () => void;
   aiTextToImageOpen?: boolean;
   aiRemoveBgOpen?: boolean;
   aiLayerizeOpen?: boolean;
   aiChatOpen?: boolean;
   aiComfyOpen?: boolean;
+  aiUnityOpen?: boolean;
   historyPast: number;
   historyFuture: number;
   historyMax: number;
 }
 
-export function Toolbar({ zoom, dispatch, pan, onImport, onImportSpriteSheet, images, canUndo, canRedo, canvas, scaleFilter, snapEnabled, projectName, onNewProject, selectedIds, onCanvasInfoIssues, guides, rulersVisible, onToggleRulers, canvasBgColor, onOpenFlipbook, activeTool, onSetActiveTool, exportOpen, onExportClosed, onUndo, onRedo, onOpenPreferences, onExportStatus, onMenuOpenChange, editMode, aiHidden, onAiTextToImage, onAiBgRemoval, onAiLayerize, onAiChat, onAiComfy, aiTextToImageOpen, aiRemoveBgOpen, aiLayerizeOpen, aiChatOpen, aiComfyOpen, historyPast, historyFuture, historyMax }: ToolbarProps) {
+export function Toolbar({ zoom, dispatch, pan, onImport, onImportSpriteSheet, images, canUndo, canRedo, canvas, scaleFilter, snapEnabled, projectName, onNewProject, selectedIds, onCanvasInfoIssues, guides, rulersVisible, onToggleRulers, canvasBgColor, onOpenFlipbook, activeTool, onSetActiveTool, exportOpen, onExportClosed, onUndo, onRedo, onOpenPreferences, onExportStatus, onMenuOpenChange, editMode, aiHidden, onAiTextToImage, onAiBgRemoval, onAiLayerize, onAiChat, onAiComfy, onAiUnity, aiTextToImageOpen, aiRemoveBgOpen, aiLayerizeOpen, aiChatOpen, aiComfyOpen, aiUnityOpen, historyPast, historyFuture, historyMax }: ToolbarProps) {
   const zoomPercent = Math.round(zoom * 100);
   const [menuOpen, setMenuOpenRaw] = useState(false);
   const setMenuOpen = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
@@ -372,6 +374,14 @@ export function Toolbar({ zoom, dispatch, pan, onImport, onImportSpriteSheet, im
             title="ComfyUI Workflows"
           >
             <Workflow size={16} />
+          </button>
+          <button
+            className={`toolbar-btn toolbar-btn-icon${aiUnityOpen ? ' toolbar-btn-active' : ''}`}
+            onClick={onAiUnity}
+            title="Unity AI (generate via a running Unity Editor)"
+            disabled={!!editMode}
+          >
+            <Box size={16} />
           </button>
         </>
       )}

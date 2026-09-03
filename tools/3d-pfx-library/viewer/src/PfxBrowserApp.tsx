@@ -65,6 +65,12 @@ import {
   isInspectPackId,
   selectInspectPackItems,
 } from '../../src/inspect-packs/items'
+import {
+  defaultPfxMarkLabel,
+  expandPfxMarkIds,
+  PFX_REVIEW_SETS,
+  reviewSetBadgeForEffect,
+} from '../../src/reviewSets'
 
 const TIERS: PerformanceTier[] = ['low', 'medium', 'high', 'cinematic']
 const LOOP_MODES: LoopMode[] = ['burst', 'loop']
@@ -345,6 +351,29 @@ function FeedTiles({
   )
 }
 
+function PfxFeedMark({
+  effectId,
+  markFilter,
+}: {
+  effectId: string
+  markFilter: PfxMarkFilter | null
+}) {
+  if (markFilter?.ids.has(effectId)) {
+    return (
+      <span className="pfx-feed-mark" data-testid="pfx-feed-mark">
+        {markFilter.label}
+      </span>
+    )
+  }
+  const reviewBadge = reviewSetBadgeForEffect(effectId)
+  if (!reviewBadge) return null
+  return (
+    <span className="pfx-feed-mark pfx-feed-mark-review" data-testid="pfx-feed-review-mark">
+      {reviewBadge}
+    </span>
+  )
+}
+
 function PfxFeed({
   items,
   reducedMotion,
@@ -412,11 +441,7 @@ function PfxFeed({
               }}
               onClick={() => onSelect(item.effect.id)}
             >
-              {markFilter?.ids.has(item.effect.id) ? (
-                <span className="pfx-feed-mark" data-testid="pfx-feed-mark">
-                  {markFilter.label}
-                </span>
-              ) : null}
+              <PfxFeedMark effectId={item.effect.id} markFilter={markFilter} />
               <span className="pfx-feed-label">
                 {item.effect.name}
                 <span className="pfx-feed-type">
@@ -796,6 +821,7 @@ export function PfxBrowserApp() {
   const [emotionMood, setEmotionMood] = useState<string>('all')
   const [colorFamily, setColorFamily] = useState<string>('all')
   const [assetRequirement, setAssetRequirement] = useState<string>('all')
+  const [reviewSet, setReviewSet] = useState<string>('all')
   // Everything is viewable by default — non-mobile-safe effects are shown
   // with an explicit badge instead of being silently filtered out. The
   // Mobile safe checkbox remains as an opt-in filter.
@@ -886,6 +912,7 @@ export function PfxBrowserApp() {
       colorFamily: colorFamily === 'all' ? undefined : [colorFamily],
       assetRequirements: assetRequirement === 'all' ? undefined : [assetRequirement],
       mobileSafeOnly,
+      reviewSet: reviewSet === 'all' ? undefined : [reviewSet],
     }),
     [
       assetRequirement,
@@ -896,6 +923,7 @@ export function PfxBrowserApp() {
       loopMode,
       mobileSafeOnly,
       query,
+      reviewSet,
       space,
       style,
       tier,
@@ -912,6 +940,13 @@ export function PfxBrowserApp() {
     colorFamily !== 'all' ? { key: 'color', label: `Color: ${colorFamily}`, clear: () => setColorFamily('all') } : null,
     assetRequirement !== 'all'
       ? { key: 'assets', label: `Assets: ${assetRequirement}`, clear: () => setAssetRequirement('all') }
+      : null,
+    reviewSet !== 'all'
+      ? {
+          key: 'reviewSet',
+          label: `Review: ${PFX_REVIEW_SETS.find((set) => set.id === reviewSet)?.label ?? reviewSet}`,
+          clear: () => setReviewSet('all'),
+        }
       : null,
     loopMode !== 'all' ? { key: 'loop', label: `Loop: ${loopMode}`, clear: () => setLoopMode('all') } : null,
     space !== 'all' ? { key: 'space', label: `Space: ${space}`, clear: () => setSpace('all') } : null,
@@ -1265,6 +1300,17 @@ export function PfxBrowserApp() {
               {useCases.map((value) => (
                 <option key={value} value={value}>
                   {value}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Review set
+            <select value={reviewSet} onChange={(event) => setReviewSet(event.target.value)}>
+              <option value="all">All review sets</option>
+              {PFX_REVIEW_SETS.map((set) => (
+                <option key={set.id} value={set.id}>
+                  {set.label}
                 </option>
               ))}
             </select>
@@ -2965,21 +3011,21 @@ export interface PfxMarkFilter {
  * URL-driven review marker: `?mark=id1,id2&markLabel=REDO&markOnly=1` tags
  * every matching gallery cell with a visible badge so audit findings can be
  * shared as a link. `markOnly=1` additionally narrows the gallery to the
- * marked set. Pure parsing so the contract is testable without the browser.
+ * marked set. Named aliases (`inspect-sheets`, `mesh-stunted`) expand to
+ * the tagged ids. Pure parsing so the contract is testable without the browser.
  */
 export function readPfxMarkFilter(search?: string): PfxMarkFilter | null {
   const rawSearch = search ?? (typeof window === 'undefined' ? '' : window.location.search)
   const params = new URLSearchParams(rawSearch)
   const raw = params.get('mark')
   if (!raw) return null
-  const ids = expandInspectSheetMarkIds(
-    raw
-      .split(',')
-      .map((id) => id.trim())
-      .filter(Boolean),
-  )
+  const rawIds = raw
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean)
+  const ids = expandInspectSheetMarkIds(expandPfxMarkIds(rawIds))
   if (ids.length === 0) return null
-  const label = params.get('markLabel')?.trim() || 'MARKED'
+  const label = params.get('markLabel')?.trim() || defaultPfxMarkLabel(rawIds)
   return { ids: new Set(ids), label, only: params.get('markOnly') === '1' }
 }
 

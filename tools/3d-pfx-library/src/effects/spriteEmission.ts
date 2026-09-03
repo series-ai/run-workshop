@@ -219,6 +219,10 @@ export function createPfxSpriteEmissionMaterial(
       uFlicker: { value: tuning?.flicker ?? 0 },
       uFreshness: { value: feelVersion >= 2 ? 1 : 0 },
       uCycleScale: { value: cycleScale },
+      // The CPU emitter writes the telegraph lane in controls.scale space.
+      // Keep the GPU wrap interval in that same space or particles jump at
+      // the unscaled boundary when the effect is enlarged.
+      uBeamScale: { value: controls.scale },
     },
     defines,
     vertexShader: PFX_SPRITE_PARTICLE_VERTEX,

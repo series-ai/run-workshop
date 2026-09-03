@@ -9,7 +9,7 @@ import {
   getDitherUniforms,
   DITHER_FRAGMENT_SHADER,
   type DitherEffectConfig,
-} from './DitherEffect';
+} from 'dither-kit';
 
 export class DitherEffect extends Effect {
   constructor(config: DitherEffectConfig) {

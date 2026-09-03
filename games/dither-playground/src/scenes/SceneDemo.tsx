@@ -8,9 +8,9 @@ import { EffectComposer } from '@react-three/postprocessing';
 import { DitherControls } from '../components/DitherControls';
 import { DitherEffectUpdater } from '../components/DitherEffectUpdater';
 import { DitherPostProcess, type DitherEffect } from '../dither/DitherPostProcess';
-import { PRESET_GAMEBOY_CLASSIC } from '../dither/presets';
+import { PRESET_GAMEBOY_CLASSIC } from 'dither-kit';
 import { Button, ControlsDrawer, buttonStyle, colors, fonts, useHover, useIsMobile } from '../components/ui';
-import type { CompareCellAlgorithm, DitherEffectConfig } from '../dither/DitherEffect';
+import type { CompareCellAlgorithm, DitherEffectConfig } from 'dither-kit';
 import type { Mesh } from 'three';
 
 const COMPARE_ALGORITHMS: CompareCellAlgorithm[] = [
