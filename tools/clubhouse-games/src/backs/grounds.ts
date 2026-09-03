@@ -261,6 +261,108 @@ const moire: Ground = (ctx, _theme, { x, y, w, h, scale: s }) => {
   }
 }
 
+// --- additional grounds -----------------------------------------------------
+
+// Herringbone: short strokes alternating direction, row by row.
+const herringbone: Ground = (ctx, _theme, { x, y, w, h, scale: s }) => {
+  const run = 18 * s
+  const rise = 9 * s
+  ctx.globalAlpha = 0.6
+  ctx.lineWidth = Math.max(0.8, 1.6 * s)
+  let row = 0
+  for (let gy = y; gy < y + h + rise; gy += rise, row++) {
+    for (let gx = x - run; gx < x + w + run; gx += run) {
+      const up = (row + Math.round((gx - x) / run)) % 2 === 0
+      ctx.beginPath()
+      ctx.moveTo(gx, gy + (up ? rise : 0))
+      ctx.lineTo(gx + run, gy + (up ? 0 : rise))
+      ctx.stroke()
+    }
+  }
+}
+
+// A fine grid of pinhead dots, the plainest security ground there is.
+const pinhead: Ground = (ctx, theme, { x, y, w, h, scale: s }) => {
+  const step = 9 * s
+  ctx.globalAlpha = 0.55
+  ctx.fillStyle = theme.patternColor
+  for (let gy = y; gy < y + h; gy += step) {
+    const offset = Math.round((gy - y) / step) % 2 === 0 ? 0 : step / 2
+    for (let gx = x + offset; gx < x + w; gx += step) {
+      ctx.beginPath()
+      ctx.arc(gx, gy, 1.5 * s, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }
+}
+
+// Straight cross-hatch on the square, weighted every fifth line.
+const crosshatch: Ground = (ctx, _theme, { x, y, w, h, scale: s }) => {
+  const step = 9 * s
+  let i = 0
+  for (let gx = x; gx < x + w; gx += step, i++) {
+    ctx.globalAlpha = i % 5 === 0 ? 0.7 : 0.34
+    ctx.beginPath()
+    ctx.moveTo(gx, y)
+    ctx.lineTo(gx, y + h)
+    ctx.stroke()
+  }
+  i = 0
+  for (let gy = y; gy < y + h; gy += step, i++) {
+    ctx.globalAlpha = i % 5 === 0 ? 0.7 : 0.34
+    ctx.beginPath()
+    ctx.moveTo(x, gy)
+    ctx.lineTo(x + w, gy)
+    ctx.stroke()
+  }
+}
+
+// A vine scrolling across the panel, with a leaf at each turn.
+const vine: Ground = (ctx, theme, { x, y, w, h, scale: s }) => {
+  const step = 34 * s
+  const amp = 13 * s
+  ctx.globalAlpha = 0.6
+  ctx.lineWidth = Math.max(0.8, 1.5 * s)
+  for (let gy = y; gy < y + h + step; gy += step) {
+    ctx.beginPath()
+    for (let gx = x; gx <= x + w; gx += 3 * s) {
+      const yy = gy + Math.sin(((gx - x) / step) * Math.PI) * amp
+      if (gx === x) ctx.moveTo(gx, yy)
+      else ctx.lineTo(gx, yy)
+    }
+    ctx.stroke()
+    ctx.fillStyle = theme.patternColor
+    for (let gx = x + step / 2; gx < x + w; gx += step) {
+      const yy = gy + Math.sin(((gx - x) / step) * Math.PI) * amp
+      const up = Math.round((gx - x) / step) % 2 === 0 ? -1 : 1
+      ctx.beginPath()
+      ctx.ellipse(gx, yy + up * 6 * s, 7 * s, 3.4 * s, up * 0.6, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }
+}
+
+// Running bond brickwork.
+const brick: Ground = (ctx, _theme, { x, y, w, h, scale: s }) => {
+  const bw = 34 * s
+  const bh = 15 * s
+  ctx.globalAlpha = 0.55
+  let row = 0
+  for (let gy = y; gy < y + h + bh; gy += bh, row++) {
+    ctx.beginPath()
+    ctx.moveTo(x, gy)
+    ctx.lineTo(x + w, gy)
+    ctx.stroke()
+    const offset = row % 2 === 0 ? 0 : bw / 2
+    for (let gx = x + offset; gx < x + w; gx += bw) {
+      ctx.beginPath()
+      ctx.moveTo(gx, gy)
+      ctx.lineTo(gx, gy + bh)
+      ctx.stroke()
+    }
+  }
+}
+
 const GROUNDS: Record<BackPattern, Ground> = {
   waves,
   lattice,
@@ -274,6 +376,11 @@ const GROUNDS: Record<BackPattern, Ground> = {
   spiral,
   ogee,
   moire,
+  herringbone,
+  pinhead,
+  crosshatch,
+  vine,
+  brick,
 }
 
 export function drawGround(
@@ -289,3 +396,4 @@ export function drawGround(
   ground(ctx, theme, area)
   ctx.restore()
 }
+

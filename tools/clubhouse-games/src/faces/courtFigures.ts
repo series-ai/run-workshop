@@ -14,6 +14,20 @@ export const COURT_LINEN = '#f7f1e3'
 export const COURT_HAIR_DARK = '#4a3526'
 export const COURT_HAIR_FAIR = '#8a5f30'
 
+// Real decks dress each court differently. Keeping one palette for all three
+// was most of why they read as the same figure in three hats.
+interface Costume {
+  body: string
+  sleeve: string
+  hair: string
+}
+
+const COSTUMES: Record<'J' | 'Q' | 'K', Costume> = {
+  K: { body: COURT_RED, sleeve: COURT_BLUE, hair: COURT_HAIR_DARK },
+  Q: { body: COURT_BLUE, sleeve: COURT_RED, hair: COURT_HAIR_FAIR },
+  J: { body: '#1f6b46', sleeve: COURT_BLUE, hair: COURT_HAIR_DARK },
+}
+
 export interface CourtBox {
   x: number
   y: number
@@ -51,21 +65,47 @@ export function drawCourtHalf(
     scale,
   }
 
-  drawProp(ctx, rank, suit, f)
-  drawRobe(ctx, rank, suit, suitColor, f)
+  const costume = COSTUMES[rank]
+  drawRobe(ctx, suit, suitColor, costume, f)
   drawCollar(ctx, rank, f)
-  drawHead(ctx, rank, f)
-  drawHeadwear(ctx, rank, f)
-  drawPropForeground(ctx, rank, f)
+  if (rank === 'Q') drawCarcanet(ctx, f)
+  drawHead(ctx, rank, costume, f)
+  drawHeadwear(ctx, rank, costume, f)
+  // The prop crosses in front of the body, held in a visible hand. Behind the
+  // robe it would be a floating hilt with nothing attached to it.
+  drawRegalia(ctx, rank, suit, f)
+}
+
+// A queen wears a jewelled carcanet over the ruff.
+function drawCarcanet(ctx: CanvasRenderingContext2D, { ux, vy, un, scale }: Frame): void {
+  ctx.beginPath()
+  ctx.moveTo(ux(-0.3), vy(0.52))
+  ctx.quadraticCurveTo(ux(0), vy(0.62), ux(0.3), vy(0.52))
+  ctx.strokeStyle = COURT_GOLD
+  ctx.lineWidth = 4 * scale
+  ctx.stroke()
+  ctx.strokeStyle = COURT_INK
+  ctx.lineWidth = 1.2 * scale
+  ctx.stroke()
+  for (let i = -2; i <= 2; i++) {
+    const u = i * 0.11
+    const v = 0.545 + (1 - Math.abs(i) / 2.6) * 0.035
+    ctx.beginPath()
+    ctx.arc(ux(u), vy(v), un(i === 0 ? 0.045 : 0.03), 0, Math.PI * 2)
+    ctx.fillStyle = i === 0 ? COURT_RED : COURT_BLUE
+    ctx.fill()
+    ctx.lineWidth = 1.4 * scale
+    ctx.stroke()
+  }
 }
 
 // ---------------------------------------------------------------- costume --
 
 function drawRobe(
   ctx: CanvasRenderingContext2D,
-  rank: 'J' | 'Q' | 'K',
   suit: Suit,
   suitColor: string,
+  costume: Costume,
   { ux, vy, un, vn, scale }: Frame,
 ): void {
   const shoulders = () => {
@@ -82,7 +122,7 @@ function drawRobe(
   }
 
   shoulders()
-  ctx.fillStyle = COURT_RED
+  ctx.fillStyle = costume.body
   ctx.fill()
 
   ctx.save()
@@ -91,7 +131,7 @@ function drawRobe(
 
   // Blue sleeves either side of the crimson body.
   for (const side of [-1, 1]) {
-    ctx.fillStyle = COURT_BLUE
+    ctx.fillStyle = costume.sleeve
     ctx.beginPath()
     ctx.moveTo(ux(side * 0.4), vy(0.5))
     ctx.quadraticCurveTo(ux(side * 0.7), vy(0.56), ux(side * 1.05), vy(0.63))
@@ -153,9 +193,9 @@ function drawRobe(
 
   // Suit mark on the breast.
   ctx.save()
-  ctx.translate(ux(0), vy(0.62))
+  ctx.translate(ux(0), vy(0.66))
   ctx.fillStyle = suitColor
-  drawSuitPath(ctx, suit, un(0.1))
+  drawSuitPath(ctx, suit, un(0.125))
   ctx.restore()
 
   // Gold shoulder cord, and a cuff at each sleeve opening.
@@ -168,7 +208,6 @@ function drawRobe(
   ctx.strokeStyle = COURT_INK
   ctx.lineWidth = 1 * scale
   ctx.stroke()
-  void rank
 }
 
 // Diamond net with a small four-petal fleuron at each crossing.
@@ -309,9 +348,10 @@ function drawCollar(
 function drawHead(
   ctx: CanvasRenderingContext2D,
   rank: 'J' | 'Q' | 'K',
+  costume: Costume,
   { ux, vy, un, scale }: Frame,
 ): void {
-  const hair = rank === 'Q' ? COURT_HAIR_FAIR : COURT_HAIR_DARK
+  const hair = costume.hair
   const cx = ux(0)
   const cy = vy(0.31)
   const rx = un(0.215)
@@ -461,6 +501,7 @@ function drawFeatures(
 function drawHeadwear(
   ctx: CanvasRenderingContext2D,
   rank: 'J' | 'Q' | 'K',
+  costume: Costume,
   { ux, vy, un, scale }: Frame,
 ): void {
   ctx.strokeStyle = COURT_INK
@@ -473,7 +514,7 @@ function drawHeadwear(
     ctx.bezierCurveTo(ux(-0.44), vy(0.05), ux(0.1), vy(0.02), ux(0.3), vy(0.13))
     ctx.quadraticCurveTo(ux(0.4), vy(0.19), ux(0.36), vy(0.24))
     ctx.closePath()
-    ctx.fillStyle = COURT_RED
+    ctx.fillStyle = costume.body
     ctx.fill()
     ctx.stroke()
     ctx.save()
@@ -499,25 +540,42 @@ function drawHeadwear(
     ctx.strokeStyle = COURT_INK
     ctx.lineWidth = 1.8 * scale
     ctx.stroke()
-    // Feather.
+    // Plume: a filled vane with a quill through it, so it reads against the
+    // pale panel instead of vanishing into it.
+    const spine = (tt: number) => ({
+      x: ux(0.18 + tt * 0.46),
+      y: vy(0.11 - Math.sin(tt * Math.PI) * 0.055),
+    })
     ctx.beginPath()
-    ctx.moveTo(ux(0.24), vy(0.1))
-    ctx.quadraticCurveTo(ux(0.7), vy(-0.03), ux(0.82), vy(0.13))
-    ctx.strokeStyle = COURT_LINEN
-    ctx.lineWidth = 7 * scale
-    ctx.stroke()
+    for (let i = 0; i <= 12; i++) {
+      const s0 = spine(i / 12)
+      const w = Math.sin((i / 12) * Math.PI) * 8 * scale + 1.5 * scale
+      if (i === 0) ctx.moveTo(s0.x, s0.y - w)
+      else ctx.lineTo(s0.x, s0.y - w)
+    }
+    for (let i = 12; i >= 0; i--) {
+      const s0 = spine(i / 12)
+      const w = Math.sin((i / 12) * Math.PI) * 5 * scale + 1.5 * scale
+      ctx.lineTo(s0.x, s0.y + w)
+    }
+    ctx.closePath()
+    ctx.fillStyle = COURT_LINEN
+    ctx.fill()
     ctx.strokeStyle = COURT_INK
-    ctx.lineWidth = 1.4 * scale
+    ctx.lineWidth = 1.6 * scale
     ctx.stroke()
-    for (let i = 1; i < 7; i++) {
-      const t = i / 7
-      const x = ux(0.24 + t * 0.58)
-      const y = vy(0.1 - Math.sin(t * Math.PI) * 0.075)
+    ctx.save()
+    ctx.globalAlpha = 0.5
+    ctx.lineWidth = 1.2 * scale
+    for (let i = 1; i < 10; i++) {
+      const s0 = spine(i / 12)
+      const w = Math.sin((i / 12) * Math.PI) * 10 * scale
       ctx.beginPath()
-      ctx.moveTo(x, y)
-      ctx.lineTo(x + 5 * scale, y - 7 * scale)
+      ctx.moveTo(s0.x, s0.y)
+      ctx.lineTo(s0.x + 3 * scale, s0.y - w)
       ctx.stroke()
     }
+    ctx.restore()
     return
   }
 
@@ -579,124 +637,231 @@ function drawHeadwear(
 
 // ---------------------------------------------------------------- regalia --
 
-// Long props sit behind the body so the robe overlaps the shaft.
-function drawProp(
+// The prop is drawn over the robe along its whole length and gripped by a
+// hand at the sleeve, so nothing floats unattached.
+function drawRegalia(
   ctx: CanvasRenderingContext2D,
   rank: 'J' | 'Q' | 'K',
   suit: Suit,
-  { ux, vy, un, scale }: Frame,
+  f: Frame,
 ): void {
   if (rank === 'K') {
-    const wid = un(0.05)
-    ctx.beginPath()
-    ctx.moveTo(ux(0.74), vy(0.05))
-    ctx.lineTo(ux(0.74) + wid, vy(0.14))
-    ctx.lineTo(ux(0.8) + wid, vy(0.92))
-    ctx.lineTo(ux(0.8) - wid, vy(0.92))
-    ctx.lineTo(ux(0.74) - wid, vy(0.14))
-    ctx.closePath()
-    const steel = ctx.createLinearGradient(ux(0.74) - wid, 0, ux(0.8) + wid, 0)
-    steel.addColorStop(0, '#9aa1ad')
-    steel.addColorStop(0.45, '#e2e6ec')
-    steel.addColorStop(1, '#7f8794')
-    ctx.fillStyle = steel
-    ctx.fill()
-    ctx.strokeStyle = COURT_INK
-    ctx.lineWidth = 2 * scale
-    ctx.stroke()
+    drawSword(ctx, f)
+    drawHand(ctx, f, 0.735, 0.75, -0.12)
     return
   }
   if (rank === 'J') {
-    ctx.beginPath()
-    ctx.moveTo(ux(0.76), vy(0.18))
-    ctx.lineTo(ux(0.82), vy(0.94))
-    ctx.strokeStyle = '#8a6a44'
-    ctx.lineWidth = 7 * scale
-    ctx.stroke()
-    ctx.strokeStyle = COURT_INK
-    ctx.lineWidth = 1.4 * scale
-    ctx.stroke()
-    ctx.save()
-    ctx.translate(ux(0.76), vy(0.11))
-    ctx.fillStyle = COURT_GOLD
-    drawSuitPath(ctx, suit, un(0.13))
-    ctx.restore()
+    drawStaff(ctx, suit, f)
+    drawHand(ctx, f, 0.755, 0.72, -0.1)
     return
   }
-  // Queen: a stem for the rose drawn in front.
-  ctx.beginPath()
-  ctx.moveTo(ux(0.8), vy(0.92))
-  ctx.quadraticCurveTo(ux(0.88), vy(0.56), ux(0.78), vy(0.31))
-  ctx.strokeStyle = '#3f7a45'
-  ctx.lineWidth = 4.5 * scale
-  ctx.stroke()
-  // A leaf on the stem.
-  ctx.beginPath()
-  ctx.moveTo(ux(0.84), vy(0.62))
-  ctx.quadraticCurveTo(ux(1.0), vy(0.56), ux(0.98), vy(0.7))
-  ctx.quadraticCurveTo(ux(0.9), vy(0.68), ux(0.84), vy(0.62))
-  ctx.fillStyle = '#3f7a45'
-  ctx.fill()
+  drawRose(ctx, f)
+  drawHand(ctx, f, 0.79, 0.74, 0.08)
 }
 
-// Details that must sit over the robe.
-function drawPropForeground(
-  ctx: CanvasRenderingContext2D,
-  rank: 'J' | 'Q' | 'K',
-  { ux, vy, un, scale }: Frame,
-): void {
+function drawSword(ctx: CanvasRenderingContext2D, { ux, vy, un, scale }: Frame): void {
+  const wid = un(0.05)
+  // Blade, tapering to a point above the shoulder.
+  ctx.beginPath()
+  ctx.moveTo(ux(0.7), vy(0.05))
+  ctx.lineTo(ux(0.7) + wid, vy(0.14))
+  ctx.lineTo(ux(0.76) + wid, vy(0.64))
+  ctx.lineTo(ux(0.76) - wid, vy(0.64))
+  ctx.lineTo(ux(0.7) - wid, vy(0.14))
+  ctx.closePath()
+  const steel = ctx.createLinearGradient(ux(0.7) - wid, 0, ux(0.76) + wid, 0)
+  steel.addColorStop(0, '#8f96a3')
+  steel.addColorStop(0.45, '#e6eaf0')
+  steel.addColorStop(1, '#7a828f')
+  ctx.fillStyle = steel
+  ctx.fill()
   ctx.strokeStyle = COURT_INK
   ctx.lineWidth = 2 * scale
+  ctx.stroke()
 
-  if (rank === 'K') {
-    // Nothing: the blade passes behind the shoulder and the hilt with it.
-    return
-  }
-
-  if (rank === 'Q') {
-    // A rose, built from layered petals rather than a ring of ellipses.
-    const cx = ux(0.78)
-    const cy = vy(0.27)
-    const r = un(0.135)
-    for (const [ring, count, size] of [
-      [1, 6, 1],
-      [0.62, 5, 0.72],
-    ] as const) {
-      for (let i = 0; i < count; i++) {
-        const a = (i / count) * Math.PI * 2 + ring
-        ctx.beginPath()
-        ctx.ellipse(
-          cx + Math.cos(a) * r * ring * 0.5,
-          cy + Math.sin(a) * r * ring * 0.5,
-          r * size * 0.62,
-          r * size * 0.44,
-          a,
-          0,
-          Math.PI * 2,
-        )
-        ctx.fillStyle = ring === 1 ? COURT_LINEN : lighten(COURT_RED, 0.6)
-        ctx.fill()
-        ctx.strokeStyle = COURT_INK
-        ctx.lineWidth = 1.5 * scale
-        ctx.stroke()
-      }
-    }
-    ctx.beginPath()
-    ctx.arc(cx, cy, r * 0.26, 0, Math.PI * 2)
-    ctx.fillStyle = COURT_GOLD
-    ctx.fill()
-    ctx.stroke()
-    return
-  }
-
-  // Jack: a gloved grip on the staff.
+  // Crossguard, grip, pommel.
   ctx.beginPath()
-  ctx.moveTo(ux(0.68), vy(0.66))
-  ctx.lineTo(ux(0.92), vy(0.7))
+  ctx.moveTo(ux(0.62), vy(0.64))
+  ctx.lineTo(ux(0.94), vy(0.662))
   ctx.strokeStyle = COURT_GOLD
-  ctx.lineWidth = 7 * scale
+  ctx.lineWidth = 8 * scale
+  ctx.lineCap = 'round'
   ctx.stroke()
   ctx.strokeStyle = COURT_INK
   ctx.lineWidth = 1.6 * scale
   ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(ux(0.765), vy(0.66))
+  ctx.lineTo(ux(0.785), vy(0.9))
+  ctx.strokeStyle = '#6b4a2c'
+  ctx.lineWidth = 8 * scale
+  ctx.stroke()
+  ctx.strokeStyle = COURT_INK
+  ctx.lineWidth = 1.5 * scale
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.arc(ux(0.79), vy(0.92), un(0.05), 0, Math.PI * 2)
+  ctx.fillStyle = COURT_GOLD
+  ctx.fill()
+  ctx.stroke()
+}
+
+function drawStaff(ctx: CanvasRenderingContext2D, suit: Suit, { ux, vy, un, scale }: Frame): void {
+  ctx.beginPath()
+  ctx.moveTo(ux(0.73), vy(0.14))
+  ctx.lineTo(ux(0.79), vy(0.94))
+  ctx.strokeStyle = '#8a6a44'
+  ctx.lineWidth = 8 * scale
+  ctx.lineCap = 'round'
+  ctx.stroke()
+  ctx.strokeStyle = COURT_INK
+  ctx.lineWidth = 1.5 * scale
+  ctx.stroke()
+  // Head: the suit mark in a gold collar.
+  ctx.beginPath()
+  ctx.moveTo(ux(0.66), vy(0.19))
+  ctx.lineTo(ux(0.81), vy(0.2))
+  ctx.strokeStyle = COURT_GOLD
+  ctx.lineWidth = 6 * scale
+  ctx.stroke()
+  ctx.strokeStyle = COURT_INK
+  ctx.lineWidth = 1.4 * scale
+  ctx.stroke()
+  ctx.save()
+  ctx.translate(ux(0.73), vy(0.1))
+  ctx.fillStyle = COURT_GOLD
+  drawSuitPath(ctx, suit, un(0.13))
+  ctx.restore()
+}
+
+function drawRose(ctx: CanvasRenderingContext2D, { ux, vy, un, scale }: Frame): void {
+  ctx.beginPath()
+  ctx.moveTo(ux(0.82), vy(0.94))
+  ctx.quadraticCurveTo(ux(0.9), vy(0.6), ux(0.8), vy(0.32))
+  ctx.strokeStyle = '#3f7a45'
+  ctx.lineWidth = 5 * scale
+  ctx.lineCap = 'round'
+  ctx.stroke()
+  ctx.strokeStyle = COURT_INK
+  ctx.lineWidth = 1.3 * scale
+  ctx.stroke()
+  // A leaf on the stem.
+  ctx.beginPath()
+  ctx.moveTo(ux(0.86), vy(0.56))
+  ctx.quadraticCurveTo(ux(1.02), vy(0.5), ux(1.0), vy(0.64))
+  ctx.quadraticCurveTo(ux(0.92), vy(0.62), ux(0.86), vy(0.56))
+  ctx.fillStyle = '#3f7a45'
+  ctx.fill()
+  ctx.strokeStyle = COURT_INK
+  ctx.lineWidth = 1.3 * scale
+  ctx.stroke()
+
+  // Layered petals rather than a ring of ellipses.
+  const cx = ux(0.8)
+  const cy = vy(0.27)
+  const r = un(0.145)
+  for (const [ring, count, size] of [
+    [1, 6, 1],
+    [0.62, 5, 0.72],
+  ] as const) {
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2 + ring
+      ctx.beginPath()
+      ctx.ellipse(
+        cx + Math.cos(a) * r * ring * 0.5,
+        cy + Math.sin(a) * r * ring * 0.5,
+        r * size * 0.62,
+        r * size * 0.44,
+        a,
+        0,
+        Math.PI * 2,
+      )
+      ctx.fillStyle = ring === 1 ? COURT_LINEN : lighten(COURT_RED, 0.6)
+      ctx.fill()
+      ctx.strokeStyle = COURT_INK
+      ctx.lineWidth = 1.5 * scale
+      ctx.stroke()
+    }
+  }
+  ctx.beginPath()
+  ctx.arc(cx, cy, r * 0.26, 0, Math.PI * 2)
+  ctx.fillStyle = COURT_GOLD
+  ctx.fill()
+  ctx.stroke()
+}
+
+// A closed fist around the shaft. Knuckles and a thumb are what stop it
+// reading as a smooth lump of skin.
+function drawHand(
+  ctx: CanvasRenderingContext2D,
+  { ux, vy, un, scale }: Frame,
+  u: number,
+  v: number,
+  tilt: number,
+): void {
+  const w = un(0.1)
+  const h = un(0.105)
+
+  ctx.save()
+  ctx.translate(ux(u), vy(v))
+  ctx.rotate(tilt)
+  ctx.strokeStyle = COURT_INK
+  ctx.lineJoin = 'round'
+
+  // Gauntlet cuff below the hand.
+  ctx.beginPath()
+  ctx.moveTo(-w * 1.25, h * 0.6)
+  ctx.lineTo(w * 1.25, h * 0.6)
+  ctx.lineTo(w * 1.05, h * 1.5)
+  ctx.lineTo(-w * 1.05, h * 1.5)
+  ctx.closePath()
+  ctx.fillStyle = COURT_GOLD
+  ctx.fill()
+  ctx.lineWidth = 1.8 * scale
+  ctx.stroke()
+
+  const skin = ctx.createLinearGradient(-w, -h, w, h)
+  skin.addColorStop(0, lighten(COURT_SKIN, 0.22))
+  skin.addColorStop(1, darken(COURT_SKIN, 0.16))
+
+  // Palm block, with the knuckle line bumped along the top.
+  ctx.beginPath()
+  ctx.moveTo(-w, h * 0.62)
+  ctx.lineTo(-w, -h * 0.25)
+  for (let i = 0; i < 4; i++) {
+    const x0 = -w + (i * 2 * w) / 4
+    const x1 = -w + ((i + 1) * 2 * w) / 4
+    ctx.quadraticCurveTo((x0 + x1) / 2, -h * 0.72, x1, -h * 0.25)
+  }
+  ctx.lineTo(w, h * 0.62)
+  ctx.closePath()
+  ctx.fillStyle = skin
+  ctx.fill()
+  ctx.lineWidth = 1.9 * scale
+  ctx.stroke()
+
+  // Finger creases running down from between the knuckles.
+  ctx.lineWidth = 1.2 * scale
+  ctx.globalAlpha = 0.35
+  for (let i = 1; i < 4; i++) {
+    const x = -w + (i * 2 * w) / 4
+    ctx.beginPath()
+    ctx.moveTo(x, -h * 0.16)
+    ctx.lineTo(x, h * 0.06)
+    ctx.stroke()
+  }
+  ctx.globalAlpha = 1
+
+  // Thumb folded across the front.
+  ctx.beginPath()
+  ctx.moveTo(-w * 1.05, h * 0.1)
+  ctx.quadraticCurveTo(-w * 0.2, h * 0.05, w * 0.35, h * 0.34)
+  ctx.quadraticCurveTo(-w * 0.2, h * 0.5, -w * 1.05, h * 0.42)
+  ctx.closePath()
+  ctx.fillStyle = skin
+  ctx.fill()
+  ctx.lineWidth = 1.7 * scale
+  ctx.stroke()
+
+  ctx.restore()
 }

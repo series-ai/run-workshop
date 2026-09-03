@@ -79,11 +79,16 @@ Key exports:
   disposes `card-`-prefixed keys only).
 - Cards render with `meshBasicMaterial` — printed cards take no lighting. They
   still cast a shadow when given `castShadow`.
-- Card backs are engraved procedurally: an ivory margin, an all-over ground,
-  a central ornament, a medallion, and corner fleurons. A theme picks one of
-  12 grounds (`BACK_PATTERNS`) and one of 4 ornaments (`BACK_ORNAMENTS`), and
-  may switch the medallion off; 16 presets ship. Each preset's rosette ripple
-  counts are derived from its id, so no two roses match.
+- Card backs are assembled from parts, so two backs differ in structure and
+  not only in color. A theme picks a ground (`BACK_PATTERNS`, 17), a central
+  ornament (`BACK_ORNAMENTS`, 4), a margin (`BACK_LAYOUTS`: centered,
+  fullbleed, bordered, or an ivory cameo), a border (`BACK_FRAMES`: keyline,
+  rope beading, greek meander, notched), a corner ornament (`BACK_CORNERS`),
+  and a seal outline (`BACK_SEALS`); the seal can be switched off entirely.
+  28 presets ship, no two sharing a combination. Each preset's rosette ripple
+  counts come from its id, so no two roses match either.
+- Corner ornaments only get 180-degree symmetry, since that is all a back
+  needs; only brackets are turned through all four quarters.
 - Two traps in `drawGuillocheBand`. Spinning the copies by a full ripple
   (`2*PI / waves`) cancels the phase offset and collapses them onto one path.
   And phase-shifting a single frequency is only a rotation, so the copies

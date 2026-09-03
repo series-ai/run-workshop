@@ -2,6 +2,7 @@ import { CARD_H, CARD_RADIUS, CARD_W } from '../constants'
 import { drawCircleRosette, drawGuillocheBand, roundRectPath } from '../canvasUtils'
 import { BackTheme } from './backThemes'
 import { drawGround } from './grounds'
+import { drawCorners, drawFrame } from './frames'
 
 export interface PaintBackOptions {
   scale?: number
@@ -19,9 +20,9 @@ function idHash(id: string): number {
 }
 
 // Ivory margin around the printed panel, in unscaled canvas units. Real decks
-// leave this white border, and it is most of what makes a back look printed
-// instead of drawn.
-const MARGIN = 26
+// leave this white border, and how wide it is changes the whole character of
+// a back, so it is one of the things a theme picks.
+const MARGINS = { centered: 26, fullbleed: 8, bordered: 46, cartouche: 26 } as const
 const PANEL_RADIUS = 22
 
 export function paintBack(theme: BackTheme, opts: PaintBackOptions = {}): HTMLCanvasElement {
@@ -44,15 +45,18 @@ export function paintBack(theme: BackTheme, opts: PaintBackOptions = {}): HTMLCa
   ctx.strokeStyle = '#cfc9ba'
   ctx.stroke()
 
-  const px = MARGIN * s
-  const py = MARGIN * s
-  const pw = W - 2 * MARGIN * s
-  const ph = H - 2 * MARGIN * s
+  const layout = theme.layout ?? 'centered'
+  const margin = MARGINS[layout] * s
+  const px = margin
+  const py = margin
+  const pw = W - 2 * margin
+  const ph = H - 2 * margin
+  const radius = (layout === 'fullbleed' ? CARD_RADIUS - 6 : PANEL_RADIUS) * s
   const cx = px + pw / 2
   const cy = py + ph / 2
 
   ctx.save()
-  roundRectPath(ctx, px, py, pw, ph, PANEL_RADIUS * s)
+  roundRectPath(ctx, px, py, pw, ph, radius)
   ctx.clip()
   ctx.fillStyle = theme.base
   ctx.fillRect(px, py, pw, ph)
@@ -61,20 +65,15 @@ export function paintBack(theme: BackTheme, opts: PaintBackOptions = {}): HTMLCa
   drawGround(ctx, theme, { x: px, y: py, w: pw, h: ph, scale: s })
   drawFieldOrnament(ctx, theme, cx, cy, pw, ph, s)
   drawVignette(ctx, px, py, pw, ph)
+  // A cartouche is an ivory cameo the seal sits on, instead of the seal
+  // sitting straight on the printed ground.
+  if (layout === 'cartouche') drawCartouche(ctx, theme, cx, cy, Math.min(pw, ph) * 0.34, s)
   if (theme.medallion ?? true) drawMedallion(ctx, theme, cx, cy, Math.min(pw, ph) * 0.25, s)
-  drawFleurons(ctx, theme, px, py, pw, ph, s)
+  const area = { x: px, y: py, w: pw, h: ph, radius, scale: s }
+  drawCorners(ctx, theme, area, (fx, fy) => drawCornerRosette(ctx, theme, fx, fy, s))
   ctx.restore()
 
-  // Keylines: a weighted outer rule with a hairline companion inside it.
-  ctx.strokeStyle = theme.borderColor
-  roundRectPath(ctx, px + 5 * s, py + 5 * s, pw - 10 * s, ph - 10 * s, (PANEL_RADIUS - 5) * s)
-  ctx.lineWidth = 3 * s
-  ctx.stroke()
-  roundRectPath(ctx, px + 12 * s, py + 12 * s, pw - 24 * s, ph - 24 * s, (PANEL_RADIUS - 12) * s)
-  ctx.lineWidth = 1 * s
-  ctx.globalAlpha = 0.75
-  ctx.stroke()
-  ctx.globalAlpha = 1
+  drawFrame(ctx, theme, area)
 
   return canvas
 }
@@ -197,9 +196,27 @@ function drawMedallion(
   s: number,
 ): void {
   const waves = 5 + (idHash(theme.id) % 7)
+  const seal = theme.seal ?? 'circle'
+  const outline = (grow: number) => {
+    ctx.beginPath()
+    if (seal === 'oval') {
+      ctx.ellipse(cx, cy, r + grow, (r + grow) * 1.3, 0, 0, Math.PI * 2)
+    } else if (seal === 'lozenge') {
+      const a = r + grow
+      const b = a * 1.35
+      ctx.moveTo(cx, cy - b)
+      ctx.quadraticCurveTo(cx + a * 0.35, cy - b * 0.35, cx + a, cy)
+      ctx.quadraticCurveTo(cx + a * 0.35, cy + b * 0.35, cx, cy + b)
+      ctx.quadraticCurveTo(cx - a * 0.35, cy + b * 0.35, cx - a, cy)
+      ctx.quadraticCurveTo(cx - a * 0.35, cy - b * 0.35, cx, cy - b)
+      ctx.closePath()
+    } else {
+      ctx.arc(cx, cy, r + grow, 0, Math.PI * 2)
+    }
+  }
+
   ctx.save()
-  ctx.beginPath()
-  ctx.arc(cx, cy, r, 0, Math.PI * 2)
+  outline(0)
   ctx.fillStyle = theme.base
   ctx.fill()
 
@@ -223,53 +240,70 @@ function drawMedallion(
   ctx.globalAlpha = 1
   ctx.strokeStyle = theme.accent
   ctx.lineWidth = 3.5 * s
-  ctx.beginPath()
-  ctx.arc(cx, cy, r, 0, Math.PI * 2)
+  outline(0)
   ctx.stroke()
   ctx.lineWidth = 1.2 * s
-  ctx.beginPath()
-  ctx.arc(cx, cy, r - 8 * s, 0, Math.PI * 2)
+  outline(-8 * s)
   ctx.stroke()
 
-  // Beading around the outer ring.
-  ctx.fillStyle = theme.accent
-  for (let i = 0; i < 32; i++) {
-    const a = (i / 32) * Math.PI * 2
-    ctx.beginPath()
-    ctx.arc(cx + Math.cos(a) * (r + 8 * s), cy + Math.sin(a) * (r + 8 * s), 2.4 * s, 0, Math.PI * 2)
-    ctx.fill()
+  // Beading around the outer ring. A circle takes it evenly; the other
+  // outlines would space it unevenly, so they get a plain second rule.
+  if (seal === 'circle') {
+    ctx.fillStyle = theme.accent
+    for (let i = 0; i < 32; i++) {
+      const a = (i / 32) * Math.PI * 2
+      ctx.beginPath()
+      ctx.arc(cx + Math.cos(a) * (r + 8 * s), cy + Math.sin(a) * (r + 8 * s), 2.4 * s, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  } else {
+    ctx.lineWidth = 1.4 * s
+    outline(8 * s)
+    ctx.stroke()
   }
   ctx.restore()
 }
 
-// Quarter rosettes tucked into the four panel corners.
-function drawFleurons(
+// The default corner ornament: a small ring of overlapping circles.
+function drawCornerRosette(
   ctx: CanvasRenderingContext2D,
   theme: BackTheme,
-  px: number,
-  py: number,
-  pw: number,
-  ph: number,
+  x: number,
+  y: number,
   s: number,
 ): void {
-  const inset = 44 * s
-  const r = 20 * s
-  const corners: [number, number][] = [
-    [px + inset, py + inset],
-    [px + pw - inset, py + inset],
-    [px + pw - inset, py + ph - inset],
-    [px + inset, py + ph - inset],
-  ]
   ctx.save()
   ctx.strokeStyle = theme.accent
   ctx.lineWidth = 1.4 * s
   ctx.globalAlpha = 0.9
-  for (const [x, y] of corners) {
-    drawCircleRosette(ctx, x, y, r, 8, 0.66)
-    ctx.beginPath()
-    ctx.arc(x, y, 4 * s, 0, Math.PI * 2)
-    ctx.fillStyle = theme.accent
-    ctx.fill()
-  }
+  drawCircleRosette(ctx, x, y, 20 * s, 8, 0.66)
+  ctx.beginPath()
+  ctx.arc(x, y, 4 * s, 0, Math.PI * 2)
+  ctx.fillStyle = theme.accent
+  ctx.fill()
+  ctx.restore()
+}
+
+// An ivory cameo behind the seal.
+function drawCartouche(
+  ctx: CanvasRenderingContext2D,
+  theme: BackTheme,
+  cx: number,
+  cy: number,
+  r: number,
+  s: number,
+): void {
+  ctx.save()
+  ctx.beginPath()
+  ctx.ellipse(cx, cy, r, r * 1.24, 0, 0, Math.PI * 2)
+  ctx.fillStyle = '#f7f4ec'
+  ctx.fill()
+  ctx.strokeStyle = theme.accent
+  ctx.lineWidth = 3 * s
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.ellipse(cx, cy, r - 7 * s, r * 1.24 - 7 * s, 0, 0, Math.PI * 2)
+  ctx.lineWidth = 1.2 * s
+  ctx.stroke()
   ctx.restore()
 }

@@ -14,7 +14,7 @@ const backUrls = import.meta.glob('../assets/backs/*.png', {
   import: 'default',
 }) as Record<string, string>
 
-const COLS = 6
+const COLS = 7
 const CARD_SCALE = 0.28
 const STEP_X = 2.5 * CARD_SCALE + 0.25
 const STEP_Y = 3.5 * CARD_SCALE + 0.25
@@ -157,8 +157,9 @@ export function BacksGallery() {
       >
         {selected
           ? backName(selected)
-          : backs.map(backName).join('  ·  ') ||
-            'no backs — run: npm run generate:back -- --name my-back --prompt "..."'}
+          : backs.length > 0
+            ? 'click a back to inspect it'
+            : 'no backs — run: npm run generate:back -- --name my-back --prompt "..."'}
       </div>
     </SceneShell>
   )
