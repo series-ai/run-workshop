@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { BACK_PRESETS, getBackPreset } from './backThemes'
 
 const HEX = /^#[0-9a-f]{6}$/i
-const PATTERNS = ['lattice', 'stripes', 'dots']
+const PATTERNS = ['guilloche', 'rosette', 'lattice']
 
 describe('BACK_PRESETS', () => {
   it('have unique ids and well-formed fields', () => {
@@ -12,6 +12,7 @@ describe('BACK_PRESETS', () => {
       expect(HEX.test(p.base)).toBe(true)
       expect(HEX.test(p.patternColor)).toBe(true)
       expect(HEX.test(p.borderColor)).toBe(true)
+      expect(HEX.test(p.accent)).toBe(true)
       expect(PATTERNS).toContain(p.pattern)
     }
   })

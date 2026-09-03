@@ -165,3 +165,43 @@ export function facesForDie(kind: DieKind, radius = 1): DieFaceGeom[] {
     value: f.value,
   }))
 }
+
+const vertexCache = new Map<DieKind, THREE.Vector3[]>()
+
+// Corner points of the solid, used as the contact set for the toss physics.
+export function dieVertices(kind: DieKind, radius = 1): THREE.Vector3[] {
+  let unit = vertexCache.get(kind)
+  if (!unit) {
+    const geom = dieGeometry(kind, 1)
+    const pos = geom.getAttribute('position')
+    const seen: THREE.Vector3[] = []
+    for (let i = 0; i < pos.count; i++) {
+      const v = new THREE.Vector3().fromBufferAttribute(pos, i)
+      if (!seen.some((s) => s.distanceToSquared(v) < 1e-8)) seen.push(v)
+    }
+    if (seen.length === 0) throw new Error(`d${kind} geometry produced no vertices`)
+    unit = seen
+    vertexCache.set(kind, unit)
+    geom.dispose()
+  }
+  return unit.map((v) => v.clone().multiplyScalar(radius))
+}
+
+// Distance from the center to a face, which is how high the center sits when
+// the die lies flat. A cube gives back its half-size; a d20 sits much lower
+// than its circumradius.
+export function dieRestHeight(kind: DieKind, radius = 1): number {
+  const faces = facesForDie(kind, 1)
+  let min = Infinity
+  for (const f of faces) {
+    const d = Math.abs(f.centroid.dot(f.normal))
+    if (d < min) min = d
+  }
+  return min * radius
+}
+
+// Scalar moment of inertia for a unit-mass solid. A cube of half-size a is
+// exactly (2/3)a²; the rounder solids are close to a sphere's (2/5)r².
+export function dieInertia(kind: DieKind, radius: number): number {
+  return (kind === 6 ? 2 / 3 : 0.4) * radius * radius
+}

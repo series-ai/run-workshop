@@ -26,13 +26,15 @@ npm run dev            # http://localhost:4319
 
 - **Flip** — one card; pick rank/suit/back, click to flip.
 - **Deck** — all 52 cards; click any card to flip it.
-- **Backs** — every back the app can render: the 3 procedural presets plus
+- **Backs** — every back the app can render: the 5 procedural presets plus
   any PNG in `src/assets/backs/`.
-- **Table** — a 12-card stack with shuffle (scatter + restack), deal
-  (staggered, lands face-up), and reset animations.
+- **Table** — a 12-card deck lying on the felt. Shuffle runs three real
+  riffles (cut, interleave, square up), deal sends the cards into a fan and
+  turns them over on the way, and gather squares the deck back up.
 - **Dominoes** — full double-six set (28 tiles); click a tile to flip it.
-- **Dice** — toss d4–d20 onto the felt (bounce, then snap to a face). Pip,
-  ornate, or numeral styles and six colorways.
+- **Dice** — throw d4–d20 onto the felt. The dice tumble on their corners,
+  knock into each other, and settle where they land. Pip, ornate, or numeral
+  styles and six colorways.
 - **Mahjong** — gallery of the 42 unique faces of a 144-tile set; click a
   tile to flip it.
 

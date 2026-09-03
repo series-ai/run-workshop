@@ -71,12 +71,17 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export function Button({ active = false, style, ...rest }: ButtonProps) {
   const { hovered, hoverProps } = useHover()
+  const disabled = rest.disabled === true
   return (
     <button
       type="button"
       {...hoverProps}
       {...rest}
-      style={{ ...buttonStyle(active, hovered), ...style }}
+      style={{
+        ...buttonStyle(active, hovered && !disabled),
+        ...(disabled ? { opacity: 0.35, cursor: 'default' } : null),
+        ...style,
+      }}
     />
   )
 }

@@ -19,6 +19,9 @@ export interface PlayingCardProps extends Omit<ComponentProps<'group'>, 'ref'> {
   flipDuration?: number
   // Art resolution multiplier for the procedural painters (default 1).
   artScale?: number
+  // Casts a shadow onto whatever is below. The planes are rectangles, so the
+  // shadow squares off the rounded corners.
+  castShadow?: boolean
 }
 
 function easeInOutCubic(t: number): number {
@@ -44,6 +47,7 @@ export function PlayingCard({
   faceUp = true,
   flipDuration = 0.6,
   artScale = 1,
+  castShadow = false,
   ...groupProps
 }: PlayingCardProps) {
   const group = useRef<THREE.Group>(null)
@@ -93,13 +97,13 @@ export function PlayingCard({
   return (
     <group ref={group} {...groupProps}>
       {/* Front face: plane at +z, viewed from its front. */}
-      <mesh position={[0, 0, Z_OFF]}>
+      <mesh position={[0, 0, Z_OFF]} castShadow={castShadow}>
         <planeGeometry args={[WORLD_W, WORLD_H]} />
         <meshBasicMaterial map={faceTex} transparent side={THREE.FrontSide} />
       </mesh>
       {/* Back face: plane at -z rotated 180° so its front faces -z; the back
           art reads un-mirrored after the flip (spike-verified). */}
-      <mesh position={[0, 0, -Z_OFF]} rotation={[0, Math.PI, 0]}>
+      <mesh position={[0, 0, -Z_OFF]} rotation={[0, Math.PI, 0]} castShadow={castShadow}>
         <planeGeometry args={[WORLD_W, WORLD_H]} />
         <meshBasicMaterial map={backTex} transparent side={THREE.FrontSide} />
       </mesh>

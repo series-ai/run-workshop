@@ -1,10 +1,16 @@
 import { CARD_H, CARD_RADIUS, CARD_W } from '../constants'
-import { roundRectPath } from '../canvasUtils'
+import { drawCircleRosette, drawGuillocheBand, roundRectPath } from '../canvasUtils'
 import { BackTheme } from './backThemes'
 
 export interface PaintBackOptions {
   scale?: number
 }
+
+// Ivory margin around the printed panel, in unscaled canvas units. Real decks
+// leave this white border, and it is most of what makes a back look printed
+// instead of drawn.
+const MARGIN = 26
+const PANEL_RADIUS = 22
 
 export function paintBack(theme: BackTheme, opts: PaintBackOptions = {}): HTMLCanvasElement {
   const scale = opts.scale ?? 1
@@ -14,79 +20,279 @@ export function paintBack(theme: BackTheme, opts: PaintBackOptions = {}): HTMLCa
   canvas.width = W
   canvas.height = H
   const ctx = canvas.getContext('2d')!
+  const s = scale
 
   ctx.clearRect(0, 0, W, H)
-  roundRectPath(ctx, 2 * scale, 2 * scale, W - 4 * scale, H - 4 * scale, CARD_RADIUS * scale)
-  ctx.fillStyle = theme.base
+
+  // Ivory card body.
+  roundRectPath(ctx, 2 * s, 2 * s, W - 4 * s, H - 4 * s, CARD_RADIUS * s)
+  ctx.fillStyle = '#f7f4ec'
   ctx.fill()
+  ctx.lineWidth = 2 * s
+  ctx.strokeStyle = '#cfc9ba'
+  ctx.stroke()
 
-  // Clip to the card body so the pattern respects the rounded corners.
+  const px = MARGIN * s
+  const py = MARGIN * s
+  const pw = W - 2 * MARGIN * s
+  const ph = H - 2 * MARGIN * s
+  const cx = px + pw / 2
+  const cy = py + ph / 2
+
   ctx.save()
-  roundRectPath(ctx, 2 * scale, 2 * scale, W - 4 * scale, H - 4 * scale, CARD_RADIUS * scale)
+  roundRectPath(ctx, px, py, pw, ph, PANEL_RADIUS * s)
   ctx.clip()
-  drawPattern(ctx, theme, W, H, scale)
+  ctx.fillStyle = theme.base
+  ctx.fillRect(px, py, pw, ph)
+  ctx.lineJoin = 'round'
 
-  // Double border inset.
-  roundRectPath(ctx, 24 * scale, 24 * scale, W - 48 * scale, H - 48 * scale, 22 * scale)
-  ctx.strokeStyle = theme.borderColor
-  ctx.lineWidth = 6 * scale
-  ctx.stroke()
-  roundRectPath(ctx, 36 * scale, 36 * scale, W - 72 * scale, H - 72 * scale, 14 * scale)
-  ctx.lineWidth = 2 * scale
-  ctx.stroke()
+  drawGround(ctx, theme, px, py, pw, ph, s)
+  drawFieldOrnament(ctx, theme, cx, cy, pw, ph, s)
+  drawVignette(ctx, px, py, pw, ph)
+  drawMedallion(ctx, theme, cx, cy, Math.min(pw, ph) * 0.25, s)
+  drawFleurons(ctx, theme, px, py, pw, ph, s)
   ctx.restore()
+
+  // Keylines: a weighted outer rule with a hairline companion inside it.
+  ctx.strokeStyle = theme.borderColor
+  roundRectPath(ctx, px + 5 * s, py + 5 * s, pw - 10 * s, ph - 10 * s, (PANEL_RADIUS - 5) * s)
+  ctx.lineWidth = 3 * s
+  ctx.stroke()
+  roundRectPath(ctx, px + 12 * s, py + 12 * s, pw - 24 * s, ph - 24 * s, (PANEL_RADIUS - 12) * s)
+  ctx.lineWidth = 1 * s
+  ctx.globalAlpha = 0.75
+  ctx.stroke()
+  ctx.globalAlpha = 1
 
   return canvas
 }
 
-function drawPattern(
+// Fine all-over texture under the ornament, so no part of the panel is a flat
+// field of color.
+function drawGround(
   ctx: CanvasRenderingContext2D,
   theme: BackTheme,
-  W: number,
-  H: number,
-  scale: number,
+  px: number,
+  py: number,
+  pw: number,
+  ph: number,
+  s: number,
 ): void {
-  switch (theme.pattern) {
-    case 'lattice': {
-      ctx.strokeStyle = theme.patternColor
-      ctx.lineWidth = 4 * scale
-      const step = 44 * scale
-      for (let x = -H; x < W + H; x += step) {
-        ctx.beginPath()
-        ctx.moveTo(x, 0)
-        ctx.lineTo(x + H, H)
-        ctx.stroke()
-        ctx.beginPath()
-        ctx.moveTo(x + H, 0)
-        ctx.lineTo(x, H)
-        ctx.stroke()
-      }
-      break
+  ctx.save()
+  ctx.strokeStyle = theme.patternColor
+  ctx.lineWidth = Math.max(0.7, 1.1 * s)
+
+  if (theme.pattern === 'lattice') {
+    const step = 14 * s
+    let i = 0
+    for (let x = px - ph; x < px + pw + ph; x += step, i++) {
+      const heavy = i % 4 === 0
+      ctx.globalAlpha = heavy ? 0.8 : 0.42
+      ctx.lineWidth = heavy ? 2.2 * s : Math.max(0.7, 1 * s)
+      ctx.beginPath()
+      ctx.moveTo(x, py)
+      ctx.lineTo(x + ph, py + ph)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(x + ph, py)
+      ctx.lineTo(x, py + ph)
+      ctx.stroke()
     }
-    case 'stripes': {
-      ctx.strokeStyle = theme.patternColor
-      ctx.lineWidth = 6 * scale
-      const step = 36 * scale
-      for (let x = step / 2; x < W; x += step) {
-        ctx.beginPath()
-        ctx.moveTo(x, 0)
-        ctx.lineTo(x, H)
-        ctx.stroke()
-      }
-      break
-    }
-    case 'dots': {
-      ctx.fillStyle = theme.patternColor
-      const step = 40 * scale
-      const r = 5 * scale
-      for (let y = step / 2; y < H; y += step) {
-        for (let x = step / 2; x < W; x += step) {
-          ctx.beginPath()
-          ctx.arc(x, y, r, 0, Math.PI * 2)
-          ctx.fill()
-        }
-      }
-      break
-    }
+    ctx.restore()
+    return
   }
+
+  // Interlaced sine rules running both ways: the engraved wave ground.
+  const step = 12 * s
+  const amp = 6 * s
+  const wave = 44 * s
+  ctx.globalAlpha = 0.68
+  for (let y = py - amp; y < py + ph + amp; y += step) {
+    ctx.beginPath()
+    for (let x = px; x <= px + pw; x += 3 * s) {
+      const yy = y + Math.sin((x / wave) * Math.PI) * amp
+      if (x === px) ctx.moveTo(x, yy)
+      else ctx.lineTo(x, yy)
+    }
+    ctx.stroke()
+  }
+  ctx.globalAlpha = 0.4
+  for (let x = px - amp; x < px + pw + amp; x += step * 1.5) {
+    ctx.beginPath()
+    for (let y = py; y <= py + ph; y += 3 * s) {
+      const xx = x + Math.sin((y / wave) * Math.PI) * amp
+      if (y === py) ctx.moveTo(xx, y)
+      else ctx.lineTo(xx, y)
+    }
+    ctx.stroke()
+  }
+  ctx.restore()
+}
+
+// The large lacework over the middle of the panel.
+function drawFieldOrnament(
+  ctx: CanvasRenderingContext2D,
+  theme: BackTheme,
+  cx: number,
+  cy: number,
+  pw: number,
+  ph: number,
+  s: number,
+): void {
+  const R = Math.min(pw, ph) * 0.47
+  ctx.save()
+  ctx.lineWidth = Math.max(0.7, 1.1 * s)
+
+  if (theme.pattern === 'rosette') {
+    ctx.strokeStyle = theme.patternColor
+    ctx.globalAlpha = 0.9
+    drawCircleRosette(ctx, cx, cy, R * 0.62, 24, 0.72)
+    ctx.strokeStyle = theme.accent
+    ctx.globalAlpha = 0.4
+    drawCircleRosette(ctx, cx, cy, R * 0.94, 18, 0.5)
+    ctx.restore()
+    return
+  }
+
+  // Copies at evenly spread phases cross each other and read as lacework.
+  ctx.strokeStyle = theme.patternColor
+  ctx.globalAlpha = 0.45
+  drawGuillocheBand(ctx, {
+    cx,
+    cy,
+    radius: R * 0.72,
+    amplitude: R * 0.22,
+    waves: 9,
+    amplitude2: R * 0.05,
+    waves2: 18,
+    lines: 18,
+  })
+  ctx.globalAlpha = 0.34
+  drawGuillocheBand(ctx, {
+    cx,
+    cy,
+    radius: R * 0.44,
+    amplitude: R * 0.13,
+    waves: 14,
+    amplitude2: R * 0.035,
+    waves2: 28,
+    lines: 14,
+  })
+  ctx.strokeStyle = theme.accent
+  ctx.globalAlpha = 0.28
+  drawGuillocheBand(ctx, {
+    cx,
+    cy,
+    radius: R * 1.02,
+    amplitude: R * 0.05,
+    waves: 22,
+    amplitude2: R * 0.015,
+    waves2: 44,
+    lines: 10,
+  })
+  ctx.restore()
+}
+
+// Darkens the panel edges so the print reads as inked rather than flat.
+function drawVignette(
+  ctx: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  pw: number,
+  ph: number,
+): void {
+  const cx = px + pw / 2
+  const cy = py + ph / 2
+  const grad = ctx.createRadialGradient(cx, cy, Math.min(pw, ph) * 0.15, cx, cy, Math.max(pw, ph) * 0.72)
+  grad.addColorStop(0, 'rgba(255,255,255,0.08)')
+  grad.addColorStop(0.55, 'rgba(0,0,0,0)')
+  grad.addColorStop(1, 'rgba(0,0,0,0.34)')
+  ctx.fillStyle = grad
+  ctx.fillRect(px, py, pw, ph)
+}
+
+// Central seal: a ringed disc carrying its own small band of lacework.
+function drawMedallion(
+  ctx: CanvasRenderingContext2D,
+  theme: BackTheme,
+  cx: number,
+  cy: number,
+  r: number,
+  s: number,
+): void {
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, 0, Math.PI * 2)
+  ctx.fillStyle = theme.base
+  ctx.fill()
+
+  ctx.save()
+  ctx.clip()
+  ctx.strokeStyle = theme.accent
+  ctx.globalAlpha = 0.6
+  ctx.lineWidth = Math.max(0.7, 1 * s)
+  drawGuillocheBand(ctx, {
+    cx,
+    cy,
+    radius: r * 0.44,
+    amplitude: r * 0.32,
+    waves: 7,
+    amplitude2: r * 0.07,
+    waves2: 14,
+    lines: 14,
+  })
+  ctx.restore()
+
+  ctx.globalAlpha = 1
+  ctx.strokeStyle = theme.accent
+  ctx.lineWidth = 3.5 * s
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.lineWidth = 1.2 * s
+  ctx.beginPath()
+  ctx.arc(cx, cy, r - 8 * s, 0, Math.PI * 2)
+  ctx.stroke()
+
+  // Beading around the outer ring.
+  ctx.fillStyle = theme.accent
+  for (let i = 0; i < 32; i++) {
+    const a = (i / 32) * Math.PI * 2
+    ctx.beginPath()
+    ctx.arc(cx + Math.cos(a) * (r + 8 * s), cy + Math.sin(a) * (r + 8 * s), 2.4 * s, 0, Math.PI * 2)
+    ctx.fill()
+  }
+  ctx.restore()
+}
+
+// Quarter rosettes tucked into the four panel corners.
+function drawFleurons(
+  ctx: CanvasRenderingContext2D,
+  theme: BackTheme,
+  px: number,
+  py: number,
+  pw: number,
+  ph: number,
+  s: number,
+): void {
+  const inset = 44 * s
+  const r = 20 * s
+  const corners: [number, number][] = [
+    [px + inset, py + inset],
+    [px + pw - inset, py + inset],
+    [px + pw - inset, py + ph - inset],
+    [px + inset, py + ph - inset],
+  ]
+  ctx.save()
+  ctx.strokeStyle = theme.accent
+  ctx.lineWidth = 1.4 * s
+  ctx.globalAlpha = 0.9
+  for (const [x, y] of corners) {
+    drawCircleRosette(ctx, x, y, r, 8, 0.66)
+    ctx.beginPath()
+    ctx.arc(x, y, 4 * s, 0, Math.PI * 2)
+    ctx.fillStyle = theme.accent
+    ctx.fill()
+  }
+  ctx.restore()
 }

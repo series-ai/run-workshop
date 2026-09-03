@@ -18,7 +18,7 @@ In this repo, consumers alias `src/index.ts` (the playground aliases it as
 ```tsx
 import { Canvas } from '@react-three/fiber'
 import {
-  BACK_PRESETS, Die, DominoPiece, MahjongPiece, PlayingCard, TossedDie, useCardBackTexture,
+  BACK_PRESETS, DiceTray, Die, DominoPiece, MahjongPiece, PlayingCard, useCardBackTexture,
 } from '@clubhouse'
 
 // Playing card (procedural theme back):
@@ -36,7 +36,10 @@ const texture = useCardBackTexture('/backs/deco-navy.png')
 <DominoPiece domino={{ left: 6, right: 3 }} faceUp />
 <Die />
 <Die kind={20} style="ornate" colorway="obsidian" />
-<TossedDie kind={6} style="ornate" colorway="ruby" tossToken={n} onSettle={setValue} />
+// A thrown set. The dice collide with each other and with the table rails,
+// then settle on whatever face they land on.
+<DiceTray kind={6} style="ornate" colorway="ruby" count={2}
+          tossToken={n} onSettle={setValues} />
 <MahjongPiece tile={{ kind: 'dragon', dragon: 'red', copy: 1 }} faceUp />
 ```
 
@@ -45,13 +48,22 @@ Key exports:
 - Cards: `fullDeck` / `cardId` / `parseCardId`, `paintFace` / `paintBack`,
   `BACK_PRESETS` / `getBackPreset`, `toTexture` / `getFaceTexture` /
   `getBackTexture` / `loadBackTexture`, `PlayingCard` / `useCardBackTexture`.
+- Shuffling: `riffle` (one cut-and-interleave pass, Gilbert-Shannon-Reeds),
+  `riffleShuffle` (several passes), `riffleTraced` (the same pass plus the cut
+  point and which half each card fell from, for animating the interleave).
 - Dominoes: `doubleSixSet` / `dominoId` / `parseDominoId`, `paintDomino`,
   `DominoPiece`.
-- Dice: `DIE_FACES` / `paintDieFace` / `paintDieNumeral`, `Die` / `TossedDie`
-  (d4–d20, pip / ornate / numeral, colorways, gravity toss with bounce).
+- Dice: `DIE_FACES` / `paintDieFace` / `paintDieNumeral`, `Die` / `DiceTray`
+  (d4–d20, pip / ornate / numeral, colorways). The throw is a rigid-body
+  simulation: `startToss` / `stepToss` resolve impulses at the die's own
+  corners, so it tips and rolls instead of bouncing like a ball, and
+  `resolvePairs` keeps thrown dice out of each other. Supporting geometry:
+  `dieVertices` / `dieRestHeight` / `dieInertia` / `facesForDie`.
 - Mahjong: `fullMahjongSet` / `mahjongFaceId` / `mahjongTileId`,
   `paintMahjongFace` / `paintMahjongBack`, `MahjongPiece`.
-- Shared: `BoxPiece` / `useFlipY` / `toTexture`.
+- Shared: `BoxPiece` / `useFlipY` / `toTexture`, and the engraving helpers
+  `drawGuillocheBand` / `drawCircleRosette` / `roundRectPath` used by the card
+  backs and the ace.
 
 ## Conventions
 
@@ -62,7 +74,14 @@ Key exports:
 - Face/back textures are cached and shared across meshes; call
   `disposeCardTextureCaches()` only after unmounting all card meshes (it
   disposes `card-`-prefixed keys only).
-- Cards render with `meshBasicMaterial` — printed cards take no lighting.
+- Cards render with `meshBasicMaterial` — printed cards take no lighting. They
+  still cast a shadow when given `castShadow`.
+- Card backs are engraved procedurally: an ivory margin, a fine ground, a
+  woven `drawGuillocheBand` rosette, a medallion, and corner fleurons. Note
+  that spinning a band's copies by a full ripple (`2*PI / waves`) cancels the
+  phase offset and collapses them onto one path.
+- Court cards print from one fixed regal palette in every suit, the way a real
+  deck's plates do; only the pips and indices take the suit color.
 - Chunky pieces (dominoes, dice, mahjong) use `BoxPiece` with lit
   `meshStandardMaterial`. The scene must include an ambient light and a
   directional light.

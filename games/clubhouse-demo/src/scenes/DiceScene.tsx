@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import {
   DIE_COLORWAYS,
@@ -6,7 +6,7 @@ import {
   DieColorway,
   DieKind,
   DieStyle,
-  TossedDie,
+  DiceTray,
 } from '@clubhouse'
 import { SceneShell } from '../components/SceneShell'
 import { Button, ControlLabel, Select } from '../components/ui'
@@ -28,17 +28,11 @@ export function DiceScene() {
   const [tossToken, setTossToken] = useState(0)
   const [values, setValues] = useState<(number | null)[]>(() => [null, null])
 
-  const homes = useMemo(() => {
-    const gap = 0.85
-    const origin = -((count - 1) * gap) / 2
-    return Array.from({ length: count }, (_, i) => [origin + i * gap, 0, 0] as [number, number, number])
-  }, [count])
-
   const styles = STYLES_FOR[kind]
   const resolvedStyle = styles.includes(style) ? style : styles[0]
 
   const settled = values.every((v) => v !== null)
-  const total = settled ? values.reduce((s, v) => s + (v ?? 0), 0) : null
+  const total = settled ? values.reduce((s: number, v) => s + (v ?? 0), 0) : null
 
   const setKindSafe = (k: DieKind) => {
     setKind(k)
@@ -61,7 +55,7 @@ export function DiceScene() {
   return (
     <SceneShell
       title="Dice"
-      blurb="Toss onto the felt — gravity, bounce, then snap to a face. RPG set plus decorative colorways."
+      blurb="Throw onto the felt: the dice tumble on their corners and settle where they land. RPG set plus decorative colorways."
       controls={
         <>
           <ControlLabel>Kind</ControlLabel>
@@ -102,7 +96,7 @@ export function DiceScene() {
       <Canvas
         dpr={[1, 2]}
         shadows
-        camera={{ position: [0, 4.4, 2.4], fov: 36 }}
+        camera={{ position: [0, 6.4, 4.2], fov: 34 }}
         style={{ background: 'transparent' }}
       >
         <ambientLight intensity={0.55} />
@@ -124,24 +118,18 @@ export function DiceScene() {
           <planeGeometry args={[40, 40]} />
           <shadowMaterial opacity={0.38} />
         </mesh>
-        {homes.map((home, i) => (
-          <TossedDie
-            key={`${kind}-${count}-${i}`}
-            kind={kind}
-            style={resolvedStyle}
-            colorway={colorway}
-            size={kind === 20 ? 0.72 : 0.6}
-            home={home}
-            tossToken={tossToken}
-            onSettle={(value) => {
-              setValues((prev) => {
-                const next = prev.slice()
-                next[i] = value
-                return next
-              })
-            }}
-          />
-        ))}
+        <DiceTray
+          key={`${kind}-${count}`}
+          kind={kind}
+          style={resolvedStyle}
+          colorway={colorway}
+          size={kind === 20 ? 0.72 : 0.6}
+          count={count}
+          spread={1.05}
+          bounds={1.05}
+          tossToken={tossToken}
+          onSettle={setValues}
+        />
       </Canvas>
     </SceneShell>
   )
