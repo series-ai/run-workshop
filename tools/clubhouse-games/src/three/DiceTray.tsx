@@ -2,9 +2,9 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { DieColorway } from '../dice/colorways'
-import { dieInertia, dieRestHeight, dieVertices } from '../dice/geometry'
+import { dieInertia, dieRestHeight, dieVertices, facesForDie } from '../dice/geometry'
 import { DieKind, DieStyle } from '../dice/kinds'
-import { readTopFace, snapToFace } from '../dice/readTopFace'
+import { readTopFace } from '../dice/readTopFace'
 import { resolvePairs, startToss, stepToss, TossBody, TossVec } from '../dice/toss'
 import { Die } from './Die'
 
@@ -29,14 +29,6 @@ export interface DiceTrayProps {
 // die tunnel through the table.
 const STEP = 1 / 180
 const MAX_CATCHUP = 0.05
-// Time spent easing a settled die onto an exactly flat face.
-const ALIGN_TIME = 0.14
-
-interface Align {
-  from: THREE.Quaternion
-  to: THREE.Quaternion
-  t: number
-}
 
 export function DiceTray({
   kind = 6,
@@ -52,7 +44,6 @@ export function DiceTray({
 }: DiceTrayProps) {
   const groups = useRef<(THREE.Group | null)[]>([])
   const bodies = useRef<TossBody[]>([])
-  const aligns = useRef<(Align | null)[]>([])
   const lastToken = useRef(tossToken)
   const reported = useRef(false)
   const acc = useRef(0)
@@ -63,6 +54,10 @@ export function DiceTray({
   const vertices = useMemo<TossVec[]>(
     () => dieVertices(kind, radius).map((v) => ({ x: v.x, y: v.y, z: v.z })),
     [kind, radius],
+  )
+  const faceNormals = useMemo<TossVec[]>(
+    () => facesForDie(kind, 1).map((f) => ({ x: f.normal.x, y: f.normal.y, z: f.normal.z })),
+    [kind],
   )
   const homes = useMemo(
     () =>
@@ -83,15 +78,11 @@ export function DiceTray({
       bodies.current = homes.map((h) =>
         startToss({ homeX: h.x, homeZ: h.z, height: restHeight }),
       )
-      aligns.current = homes.map(() => null)
       reported.current = false
       acc.current = 0
     }
 
-    if (bodies.current.length !== count) {
-      bodies.current = []
-      aligns.current = homes.map(() => null)
-    }
+    if (bodies.current.length !== count) bodies.current = []
 
     if (bodies.current.length === 0) {
       homes.forEach((h, i) => {
@@ -109,6 +100,7 @@ export function DiceTray({
           stepToss(bodies.current[i], STEP, {
             tableY: 0,
             vertices,
+            faceNormals,
             inertia,
             homeX: homes[i].x,
             homeZ: homes[i].z,
@@ -122,28 +114,14 @@ export function DiceTray({
       }
     }
 
+    // The simulation finishes level on its own, so the rendered orientation is
+    // simply the body's. Nothing is rotated into place after the fact.
     for (let i = 0; i < bodies.current.length; i++) {
       const b = bodies.current[i]
       const g = groups.current[i]
       if (!g) continue
       g.position.set(b.position.x, b.position.y, b.position.z)
-
-      if (b.settled && !aligns.current[i]) {
-        // A simulated landing is already nearly flat, so this is a small
-        // correction rather than a jump to a canned pose.
-        quat.set(b.quaternion.x, b.quaternion.y, b.quaternion.z, b.quaternion.w)
-        aligns.current[i] = { from: quat.clone(), to: snapToFace(kind, quat), t: 0 }
-      }
-      if (!b.settled && aligns.current[i]) aligns.current[i] = null
-
-      const a = aligns.current[i]
-      if (a) {
-        a.t = Math.min(1, a.t + dt / ALIGN_TIME)
-        const k = a.t * a.t * (3 - 2 * a.t)
-        g.quaternion.slerpQuaternions(a.from, a.to, k)
-      } else {
-        g.quaternion.set(b.quaternion.x, b.quaternion.y, b.quaternion.z, b.quaternion.w)
-      }
+      g.quaternion.set(b.quaternion.x, b.quaternion.y, b.quaternion.z, b.quaternion.w)
     }
 
     if (!reported.current && bodies.current.every((b) => b.settled)) {

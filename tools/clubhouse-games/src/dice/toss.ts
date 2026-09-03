@@ -18,8 +18,10 @@ export interface TossBody {
   angularVelocity: TossVec
   settled: boolean
   bounces: number
-  // Seconds spent continuously slow and touching the table.
+  // Seconds spent continuously slow, level, and touching the table.
   restTime: number
+  // Seconds spent continuously touching the table, however fast.
+  contactTime: number
 }
 
 export interface TossOptions {
@@ -29,6 +31,10 @@ export interface TossOptions {
   // Contact points in body space, already scaled to world size. Every corner
   // of the die goes in here: corner contacts are what make it tip and tumble.
   vertices: readonly TossVec[]
+  // Unit face normals in body space. A die is only allowed to fall asleep once
+  // one of these is parallel to the table, so it never has to be rotated onto
+  // a face after the fact.
+  faceNormals: readonly TossVec[]
   // Scalar moment of inertia. A cube of half-size a wants (2/3)a².
   inertia: number
   gravity?: number
@@ -40,6 +46,13 @@ export interface TossOptions {
   // Extra spin decay applied only while a corner touches the table.
   rollingFriction?: number
   settleSpeed?: number
+  // How hard gravity tips a die that is resting off-face, and how strongly
+  // that tipping is damped as it comes level.
+  settleTorque?: number
+  settleDamping?: number
+  // How parallel a face must be to the table before the die may sleep, as
+  // |dot(normal, up)|. 0.9997 is about 1.4 degrees.
+  flatDot?: number
   // Half-width of the invisible walls that keep the die on the table.
   bounds?: number
   homeX?: number
@@ -53,9 +66,17 @@ const DEFAULT_LINEAR_DAMPING = 0.25
 const DEFAULT_ANGULAR_DAMPING = 0.45
 const DEFAULT_ROLLING_FRICTION = 3.2
 const DEFAULT_SETTLE = 0.32
+const DEFAULT_SETTLE_TORQUE = 42
+const DEFAULT_SETTLE_DAMPING = 7
+const DEFAULT_FLAT_DOT = 0.9997
 const DEFAULT_BOUNDS = 1.35
-// Time the body must stay slow and in contact before it counts as asleep.
-const SLEEP_TIME = 0.12
+// Time the body must stay slow, level, and in contact before it counts as
+// asleep.
+const SLEEP_TIME = 0.1
+// Contact time after which a die that still has not come level is brought
+// level directly. The tipping torque always converges in practice; this only
+// bounds the worst case.
+const SETTLE_TIMEOUT = 3
 
 export function mulQuat(a: TossQuat, b: TossQuat): TossQuat {
   return {
@@ -127,6 +148,7 @@ export function startToss(opts: StartTossOptions): TossBody {
     settled: false,
     bounces: 0,
     restTime: 0,
+    contactTime: 0,
   }
 }
 
@@ -134,6 +156,7 @@ export function stepToss(body: TossBody, dt: number, opts: TossOptions): void {
   if (body.settled) return
   if (dt <= 0) throw new Error(`stepToss dt must be positive, got ${dt}`)
   if (opts.vertices.length === 0) throw new Error('stepToss needs at least one contact vertex')
+  if (opts.faceNormals.length === 0) throw new Error('stepToss needs at least one face normal')
   if (opts.inertia <= 0) throw new Error(`stepToss inertia must be positive, got ${opts.inertia}`)
 
   const gravity = opts.gravity ?? DEFAULT_GRAVITY
@@ -143,6 +166,9 @@ export function stepToss(body: TossBody, dt: number, opts: TossOptions): void {
   const angularDamping = opts.angularDamping ?? DEFAULT_ANGULAR_DAMPING
   const rollingFriction = opts.rollingFriction ?? DEFAULT_ROLLING_FRICTION
   const settleSpeed = opts.settleSpeed ?? DEFAULT_SETTLE
+  const settleTorque = opts.settleTorque ?? DEFAULT_SETTLE_TORQUE
+  const settleDamping = opts.settleDamping ?? DEFAULT_SETTLE_DAMPING
+  const flatDot = opts.flatDot ?? DEFAULT_FLAT_DOT
   const bounds = opts.bounds ?? DEFAULT_BOUNDS
   const homeX = opts.homeX ?? 0
   const homeZ = opts.homeZ ?? 0
@@ -163,7 +189,29 @@ export function stepToss(body: TossBody, dt: number, opts: TossOptions): void {
 
   const speed = Math.hypot(body.velocity.x, body.velocity.y, body.velocity.z)
   const spin = Math.hypot(body.angularVelocity.x, body.angularVelocity.y, body.angularVelocity.z)
-  if (touching && speed < settleSpeed && spin < settleSpeed * 2.5) {
+  const level = levelness(body, opts.faceNormals)
+
+  // A die propped on an edge is not in equilibrium: gravity turns it about
+  // that edge until a face lies flat. Rolling this into the simulation is what
+  // keeps the end of a throw continuous.
+  if (touching && spin < 9) {
+    body.angularVelocity.x += level.axis.x * settleTorque * dt
+    body.angularVelocity.y += level.axis.y * settleTorque * dt
+    body.angularVelocity.z += level.axis.z * settleTorque * dt
+    const damp = Math.max(0, 1 - settleDamping * dt)
+    body.angularVelocity.x *= damp
+    body.angularVelocity.y *= damp
+    body.angularVelocity.z *= damp
+  }
+
+  if (touching) {
+    body.contactTime += dt
+    if (body.contactTime > SETTLE_TIMEOUT) seatOnFace(body, opts)
+  } else {
+    body.contactTime = 0
+  }
+
+  if (touching && speed < settleSpeed && spin < settleSpeed * 2.5 && level.dot >= flatDot) {
     body.restTime += dt
   } else {
     body.restTime = 0
@@ -175,8 +223,67 @@ export function stepToss(body: TossBody, dt: number, opts: TossOptions): void {
     body.angularVelocity.x = 0
     body.angularVelocity.y = 0
     body.angularVelocity.z = 0
+    seatOnFace(body, opts)
     body.settled = true
   }
+}
+
+export interface Levelness {
+  // |dot| between the table normal and the face closest to parallel with it.
+  // 1 means that face is lying flat.
+  dot: number
+  // Rotation that would bring that face parallel, as an axis whose length is
+  // the sine of the remaining angle.
+  axis: TossVec
+}
+
+// A die may rest on any face, so the face nearest to parallel counts whether
+// it points up or down. A tetrahedron settles with a face pointing straight
+// down, never up.
+export function levelness(body: TossBody, faceNormals: readonly TossVec[]): Levelness {
+  let bestDot = -1
+  let bestY = 0
+  let best: TossVec = faceNormals[0]
+  for (const n of faceNormals) {
+    const w = rotateVec(body.quaternion, n)
+    const d = Math.abs(w.y)
+    if (d > bestDot) {
+      bestDot = d
+      bestY = w.y
+      best = w
+    }
+  }
+  // Turn the chosen face toward whichever pole it already leans to.
+  const sign = bestY >= 0 ? 1 : -1
+  // cross(best, (0, sign, 0)) — its length is the sine of the angle left.
+  return {
+    dot: bestDot,
+    axis: { x: -best.z * sign, y: 0, z: best.x * sign },
+  }
+}
+
+// Turns the body the last fraction of a degree onto its nearest face and
+// drops it back onto the table, since rotating about the center lifts it.
+function seatOnFace(body: TossBody, opts: TossOptions): void {
+  const { dot, axis } = levelness(body, opts.faceNormals)
+  const sin = Math.hypot(axis.x, axis.y, axis.z)
+  if (sin > 1e-6) {
+    const angle = Math.atan2(sin, dot)
+    const s = Math.sin(angle / 2) / sin
+    const q: TossQuat = { x: axis.x * s, y: axis.y * s, z: axis.z * s, w: Math.cos(angle / 2) }
+    const next = mulQuat(q, body.quaternion)
+    body.quaternion.x = next.x
+    body.quaternion.y = next.y
+    body.quaternion.z = next.z
+    body.quaternion.w = next.w
+    normQuat(body.quaternion)
+  }
+  let lowest = Infinity
+  for (const local of opts.vertices) {
+    const y = rotateVec(body.quaternion, local).y
+    if (y < lowest) lowest = y
+  }
+  body.position.y = opts.tableY - lowest
 }
 
 function integrate(body: TossBody, dt: number, gravity: number): void {

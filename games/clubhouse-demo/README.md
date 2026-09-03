@@ -26,7 +26,7 @@ npm run dev            # http://localhost:4319
 
 - **Flip** — one card; pick rank/suit/back, click to flip.
 - **Deck** — all 52 cards; click any card to flip it.
-- **Backs** — every back the app can render: the 5 procedural presets plus
+- **Backs** — every back the app can render: the 16 procedural presets plus
   any PNG in `src/assets/backs/`.
 - **Table** — a 12-card deck lying on the felt. Shuffle runs three real
   riffles (cut, interleave, square up), deal sends the cards into a fan and

@@ -1,9 +1,21 @@
 import { CARD_H, CARD_RADIUS, CARD_W } from '../constants'
 import { drawCircleRosette, drawGuillocheBand, roundRectPath } from '../canvasUtils'
 import { BackTheme } from './backThemes'
+import { drawGround } from './grounds'
 
 export interface PaintBackOptions {
   scale?: number
+}
+
+// Every preset gets its own rose by deriving the ripple counts from its id,
+// so two backs in the same palette still differ in the middle.
+function idHash(id: string): number {
+  let h = 2166136261
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return Math.abs(h)
 }
 
 // Ivory margin around the printed panel, in unscaled canvas units. Real decks
@@ -46,10 +58,10 @@ export function paintBack(theme: BackTheme, opts: PaintBackOptions = {}): HTMLCa
   ctx.fillRect(px, py, pw, ph)
   ctx.lineJoin = 'round'
 
-  drawGround(ctx, theme, px, py, pw, ph, s)
+  drawGround(ctx, theme, { x: px, y: py, w: pw, h: ph, scale: s })
   drawFieldOrnament(ctx, theme, cx, cy, pw, ph, s)
   drawVignette(ctx, px, py, pw, ph)
-  drawMedallion(ctx, theme, cx, cy, Math.min(pw, ph) * 0.25, s)
+  if (theme.medallion ?? true) drawMedallion(ctx, theme, cx, cy, Math.min(pw, ph) * 0.25, s)
   drawFleurons(ctx, theme, px, py, pw, ph, s)
   ctx.restore()
 
@@ -67,69 +79,7 @@ export function paintBack(theme: BackTheme, opts: PaintBackOptions = {}): HTMLCa
   return canvas
 }
 
-// Fine all-over texture under the ornament, so no part of the panel is a flat
-// field of color.
-function drawGround(
-  ctx: CanvasRenderingContext2D,
-  theme: BackTheme,
-  px: number,
-  py: number,
-  pw: number,
-  ph: number,
-  s: number,
-): void {
-  ctx.save()
-  ctx.strokeStyle = theme.patternColor
-  ctx.lineWidth = Math.max(0.7, 1.1 * s)
-
-  if (theme.pattern === 'lattice') {
-    const step = 14 * s
-    let i = 0
-    for (let x = px - ph; x < px + pw + ph; x += step, i++) {
-      const heavy = i % 4 === 0
-      ctx.globalAlpha = heavy ? 0.8 : 0.42
-      ctx.lineWidth = heavy ? 2.2 * s : Math.max(0.7, 1 * s)
-      ctx.beginPath()
-      ctx.moveTo(x, py)
-      ctx.lineTo(x + ph, py + ph)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(x + ph, py)
-      ctx.lineTo(x, py + ph)
-      ctx.stroke()
-    }
-    ctx.restore()
-    return
-  }
-
-  // Interlaced sine rules running both ways: the engraved wave ground.
-  const step = 12 * s
-  const amp = 6 * s
-  const wave = 44 * s
-  ctx.globalAlpha = 0.68
-  for (let y = py - amp; y < py + ph + amp; y += step) {
-    ctx.beginPath()
-    for (let x = px; x <= px + pw; x += 3 * s) {
-      const yy = y + Math.sin((x / wave) * Math.PI) * amp
-      if (x === px) ctx.moveTo(x, yy)
-      else ctx.lineTo(x, yy)
-    }
-    ctx.stroke()
-  }
-  ctx.globalAlpha = 0.4
-  for (let x = px - amp; x < px + pw + amp; x += step * 1.5) {
-    ctx.beginPath()
-    for (let y = py; y <= py + ph; y += 3 * s) {
-      const xx = x + Math.sin((y / wave) * Math.PI) * amp
-      if (y === py) ctx.moveTo(xx, y)
-      else ctx.lineTo(xx, y)
-    }
-    ctx.stroke()
-  }
-  ctx.restore()
-}
-
-// The large lacework over the middle of the panel.
+// The large motif over the middle of the panel.
 function drawFieldOrnament(
   ctx: CanvasRenderingContext2D,
   theme: BackTheme,
@@ -139,17 +89,43 @@ function drawFieldOrnament(
   ph: number,
   s: number,
 ): void {
+  const ornament = theme.ornament ?? 'band'
+  if (ornament === 'none') return
   const R = Math.min(pw, ph) * 0.47
+  const h = idHash(theme.id)
   ctx.save()
   ctx.lineWidth = Math.max(0.7, 1.1 * s)
 
-  if (theme.pattern === 'rosette') {
+  if (ornament === 'rosette') {
     ctx.strokeStyle = theme.patternColor
     ctx.globalAlpha = 0.9
     drawCircleRosette(ctx, cx, cy, R * 0.62, 24, 0.72)
     ctx.strokeStyle = theme.accent
     ctx.globalAlpha = 0.4
     drawCircleRosette(ctx, cx, cy, R * 0.94, 18, 0.5)
+    ctx.restore()
+    return
+  }
+
+  if (ornament === 'star') {
+    // A star polygon: every vertex joined to one several steps around.
+    for (const [points, skip, radius, alpha, color] of [
+      [16, 7, R * 0.92, 0.5, theme.patternColor],
+      [12, 5, R * 0.62, 0.45, theme.accent],
+    ] as const) {
+      ctx.strokeStyle = color
+      ctx.globalAlpha = alpha
+      ctx.beginPath()
+      for (let i = 0; i <= points; i++) {
+        const a = ((i * skip) / points) * Math.PI * 2 - Math.PI / 2
+        const x = cx + Math.cos(a) * radius
+        const y = cy + Math.sin(a) * radius
+        if (i === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      }
+      ctx.closePath()
+      ctx.stroke()
+    }
     ctx.restore()
     return
   }
@@ -162,9 +138,9 @@ function drawFieldOrnament(
     cy,
     radius: R * 0.72,
     amplitude: R * 0.22,
-    waves: 9,
+    waves: 7 + (h % 6),
     amplitude2: R * 0.05,
-    waves2: 18,
+    waves2: (7 + (h % 6)) * 2,
     lines: 18,
   })
   ctx.globalAlpha = 0.34
@@ -173,9 +149,9 @@ function drawFieldOrnament(
     cy,
     radius: R * 0.44,
     amplitude: R * 0.13,
-    waves: 14,
+    waves: 12 + ((h >> 3) % 7),
     amplitude2: R * 0.035,
-    waves2: 28,
+    waves2: (12 + ((h >> 3) % 7)) * 2,
     lines: 14,
   })
   ctx.strokeStyle = theme.accent
@@ -220,6 +196,7 @@ function drawMedallion(
   r: number,
   s: number,
 ): void {
+  const waves = 5 + (idHash(theme.id) % 7)
   ctx.save()
   ctx.beginPath()
   ctx.arc(cx, cy, r, 0, Math.PI * 2)
@@ -236,9 +213,9 @@ function drawMedallion(
     cy,
     radius: r * 0.44,
     amplitude: r * 0.32,
-    waves: 7,
+    waves,
     amplitude2: r * 0.07,
-    waves2: 14,
+    waves2: waves * 2,
     lines: 14,
   })
   ctx.restore()

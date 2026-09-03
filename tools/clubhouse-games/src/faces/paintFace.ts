@@ -207,6 +207,24 @@ function drawCourt(
   ctx.save()
   ctx.clip()
 
+  // A faint ground under the figure. Printed courts leave no dead white in
+  // the panel, and the empty corners were most of what read as thin.
+  ctx.save()
+  ctx.strokeStyle = 'rgba(120,102,66,0.16)'
+  ctx.lineWidth = 1 * scale
+  const step = 20 * scale
+  for (let x = fx - fh; x < fx + fw + fh; x += step) {
+    ctx.beginPath()
+    ctx.moveTo(x, fy)
+    ctx.lineTo(x + fh, fy + fh)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(x + fh, fy)
+    ctx.lineTo(x, fy + fh)
+    ctx.stroke()
+  }
+  ctx.restore()
+
   const half = { x: fx, y: fy, w: fw, h: fh / 2 }
   drawCourtHalf(ctx, rank, card.suit, color, half, scale)
 

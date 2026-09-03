@@ -57,7 +57,10 @@ Key exports:
   (d4–d20, pip / ornate / numeral, colorways). The throw is a rigid-body
   simulation: `startToss` / `stepToss` resolve impulses at the die's own
   corners, so it tips and rolls instead of bouncing like a ball, and
-  `resolvePairs` keeps thrown dice out of each other. Supporting geometry:
+  `resolvePairs` keeps thrown dice out of each other. A die may only fall
+  asleep once a face is actually level, and gravity tips it there during the
+  throw, so the end of a roll is continuous — nothing is rotated onto a face
+  after the fact. Supporting geometry:
   `dieVertices` / `dieRestHeight` / `dieInertia` / `facesForDie`.
 - Mahjong: `fullMahjongSet` / `mahjongFaceId` / `mahjongTileId`,
   `paintMahjongFace` / `paintMahjongBack`, `MahjongPiece`.
@@ -76,12 +79,21 @@ Key exports:
   disposes `card-`-prefixed keys only).
 - Cards render with `meshBasicMaterial` — printed cards take no lighting. They
   still cast a shadow when given `castShadow`.
-- Card backs are engraved procedurally: an ivory margin, a fine ground, a
-  woven `drawGuillocheBand` rosette, a medallion, and corner fleurons. Note
-  that spinning a band's copies by a full ripple (`2*PI / waves`) cancels the
-  phase offset and collapses them onto one path.
+- Card backs are engraved procedurally: an ivory margin, an all-over ground,
+  a central ornament, a medallion, and corner fleurons. A theme picks one of
+  12 grounds (`BACK_PATTERNS`) and one of 4 ornaments (`BACK_ORNAMENTS`), and
+  may switch the medallion off; 16 presets ship. Each preset's rosette ripple
+  counts are derived from its id, so no two roses match.
+- Two traps in `drawGuillocheBand`. Spinning the copies by a full ripple
+  (`2*PI / waves`) cancels the phase offset and collapses them onto one path.
+  And phase-shifting a single frequency is only a rotation, so the copies
+  smear into a solid ring — the second, fixed harmonic is what makes them
+  interlace.
 - Court cards print from one fixed regal palette in every suit, the way a real
-  deck's plates do; only the pips and indices take the suit color.
+  deck's plates do; only the pips and indices take the suit color. The figure
+  is built the way an engraving is: a diapered robe, ermine, a pleated ruff,
+  and a face made of a few fine strokes. Rounder, larger features read as a
+  cartoon at card size.
 - Chunky pieces (dominoes, dice, mahjong) use `BoxPiece` with lit
   `meshStandardMaterial`. The scene must include an ambient light and a
   directional light.

@@ -14,7 +14,7 @@ const backUrls = import.meta.glob('../assets/backs/*.png', {
   import: 'default',
 }) as Record<string, string>
 
-const COLS = 5
+const COLS = 6
 const CARD_SCALE = 0.28
 const STEP_X = 2.5 * CARD_SCALE + 0.25
 const STEP_Y = 3.5 * CARD_SCALE + 0.25
