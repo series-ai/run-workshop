@@ -75,12 +75,20 @@ function PngBackCard({ url, position, scale = CARD_SCALE, onClick }: CommonCardP
   )
 }
 
-function BackCard({ backRef, position, scale, onClick }: CommonCardProps & { backRef: BackRef }) {
+function BackCard({
+  backRef,
+  position,
+  scale = CARD_SCALE,
+  onClick,
+}: CommonCardProps & { backRef: BackRef }) {
   // Group carries the position so the shadow sits behind the card at the
-  // same spot (shadows must not flip with the card).
+  // same spot (shadows must not flip with the card). The shadow is sized for
+  // a 1x card, so it rides its own group at the card's scale.
   return (
     <group position={position}>
-      <CardShadow />
+      <group scale={scale}>
+        <CardShadow />
+      </group>
       {backRef.kind === 'theme' ? (
         <ThemeBackCard id={backRef.id} position={[0, 0, 0]} scale={scale} onClick={onClick} />
       ) : (
@@ -125,7 +133,6 @@ export function BacksGallery() {
         {selected ? (
           <>
             <FitCamera fitWidth={2.7} fitHeight={3.9} />
-            <CardShadow />
             <BackCard backRef={selected} position={[0, 0, 0]} scale={0.85} onClick={() => setSelected(null)} />
           </>
         ) : (

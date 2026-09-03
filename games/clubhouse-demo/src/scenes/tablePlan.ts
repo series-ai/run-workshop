@@ -150,6 +150,7 @@ export function shufflePlan(order: Card[], from: Pose[], passes = 3): TablePlan 
       nextPose.set(card, target)
       const index = current.indexOf(card)
       const dropStart = t0 + SPLIT + (k / n) * DROP * 0.8
+      const dropEnd = dropStart + DROP * 0.32
       legs[index].push({
         start: t0,
         end: t0 + SPLIT,
@@ -159,13 +160,16 @@ export function shufflePlan(order: Card[], from: Pose[], passes = 3): TablePlan 
       })
       legs[index].push({
         start: dropStart,
-        end: dropStart + DROP * 0.32,
+        end: dropEnd,
         from: splitPose.get(card)!,
         to: { ...target, y: target.y + 0.03 },
         lift: 0.18,
       })
+      // Each card squares up from the moment its own drop lands. A fixed
+      // start would overlap the drop for the last cards of the pass, and
+      // poseAt would leave the drop part way into the square-up.
       legs[index].push({
-        start: t0 + SPLIT + DROP,
+        start: dropEnd,
         end: t0 + PASS,
         from: { ...target, y: target.y + 0.03 },
         to: target,
