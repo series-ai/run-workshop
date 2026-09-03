@@ -18,12 +18,14 @@ first game starter. Each sub-project then documents its own specifics in its
 
 - [BeatBoard](games/beat-board/) — a 4×4 pad-grid music maker where each pad fires a seamless loop layer (drums / bass / melody / FX) at a fixed BPM. Ships several genre packs and a documented pack-authoring pipeline powered by the `rundot` CLI. See [Creating New Packs](games/beat-board/README.md) and [docs/authoring-packs.md](games/beat-board/docs/authoring-packs.md).
 - [Dither Playground](games/dither-playground/) — apply retro dithering algorithms and palettes to 3D scenes, images, and video. Includes a split-screen algorithm comparison grid, a static-vs-animated crawl test, and a cursor-following resolve mask. See [games/dither-playground/README.md](games/dither-playground/README.md).
+- [Clubhouse Demo](games/clubhouse-demo/) — showroom for the Clubhouse Games pack: playing cards, dominoes, dice, and mahjong tiles as procedural R3F pieces (Vite + React + R3F). Includes a `rundot generate image` pipeline for authoring card backs. See [games/clubhouse-demo/README.md](games/clubhouse-demo/README.md).
 
 ## Tools
 
 - [Picmon Map Editor](games/picmon-editor/) — a standalone, browser-based visual tile-map / world editor (Vite + React + TypeScript). Edit NPCs, portals, signs, object colliders, and animal placements against a Sprite Fusion + JSON data model, with a live "Play map" mode. Ships with sample Picmon data and a CC0 pixel-art asset pack; repurpose it for your own game by swapping the assets and data. See [games/picmon-editor/README.md](games/picmon-editor/README.md).
 - [Layout Manager](games/layout-manager/) — a browser-based image layout, composition, and AI-assisted generation tool (Vite + React + TypeScript). Arrange, align, mask, and paint over images on a freeform workspace, with optional AI helpers: text-to-image via your own provider API keys, ComfyUI workflow integration (including background removal), and multi-provider AI chat. See [games/layout-manager/README.md](games/layout-manager/README.md).
 - [3D PFX Library](tools/3d-pfx-library/) — a React Three Fiber particle-effects library: a catalog of 500 ranked presets with a drop-in `GamePfx` runtime component, plus a browser to search, preview and performance-profile effects (Vite + React + TypeScript). Effects are authored-preview grade. Ships with CC0 sprite/flipbook assets. See [tools/3d-pfx-library/README.md](tools/3d-pfx-library/README.md).
+- [Clubhouse Games](tools/clubhouse-games/) — a React Three Fiber tabletop asset pack: procedural playing cards, dominoes, dice, and mahjong tiles painted on canvas (no asset files, no third-party licenses), with flat and chunky piece components. See [tools/clubhouse-games/README.md](tools/clubhouse-games/README.md).
 
 ## License
 

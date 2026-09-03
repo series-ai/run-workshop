@@ -1,0 +1,10 @@
+{
+  "appData": {
+    "id": "card-asset-demo",
+    "name": "Clubhouse Demo",
+    "description": "Showcase and test app for clubhouse-games: procedural playing cards, dominoes, dice, and mahjong tiles as R3F pieces.",
+    "versionTag": "0.1.0",
+    "thumbnailUrl": "",
+    "userState": {}
+  }
+}

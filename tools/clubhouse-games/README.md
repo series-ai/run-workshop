@@ -1,0 +1,91 @@
+# Clubhouse Games
+
+Procedural tabletop art + React Three Fiber rendering. Four families — playing
+cards, dominoes, dice, and mahjong tiles — painted onto 2D canvases (no asset
+files, no third-party art licenses) and rendered as 3D pieces. PNG backs are
+supported for custom/AI-generated **card** art.
+
+Source-consumed in this repo: import from `src/index.ts` (the playground
+aliases it as `@clubhouse`). Consumers must dedupe `react`, `react-dom`,
+`three`, `@react-three/fiber` in their bundler config.
+
+## Usage
+
+In this repo, consumers alias `src/index.ts` (the playground aliases it as
+`@clubhouse`); installed as a package, the same imports resolve from
+`clubhouse-games` via the `exports` field:
+
+```tsx
+import { Canvas } from '@react-three/fiber'
+import {
+  BACK_PRESETS, Die, DominoPiece, MahjongPiece, PlayingCard, TossedDie, useCardBackTexture,
+} from '@clubhouse'
+
+// Playing card (procedural theme back):
+<PlayingCard card={{ rank: 'A', suit: 'spades' }}
+             back={{ kind: 'theme', theme: BACK_PRESETS[0] }}
+             faceUp={faceUp} onClick={() => setFaceUp(v => !v)} />
+
+// PNG card back (inside the Canvas):
+const texture = useCardBackTexture('/backs/deco-navy.png')
+<PlayingCard card={...} back={{ kind: 'texture', texture }} faceUp={false} />
+
+// Domino, die, mahjong tile (chunky BoxPiece — scene needs lights):
+<ambientLight intensity={0.7} />
+<directionalLight position={[3, 4, 6]} intensity={1.1} />
+<DominoPiece domino={{ left: 6, right: 3 }} faceUp />
+<Die />
+<Die kind={20} style="ornate" colorway="obsidian" />
+<TossedDie kind={6} style="ornate" colorway="ruby" tossToken={n} onSettle={setValue} />
+<MahjongPiece tile={{ kind: 'dragon', dragon: 'red', copy: 1 }} faceUp />
+```
+
+Key exports:
+
+- Cards: `fullDeck` / `cardId` / `parseCardId`, `paintFace` / `paintBack`,
+  `BACK_PRESETS` / `getBackPreset`, `toTexture` / `getFaceTexture` /
+  `getBackTexture` / `loadBackTexture`, `PlayingCard` / `useCardBackTexture`.
+- Dominoes: `doubleSixSet` / `dominoId` / `parseDominoId`, `paintDomino`,
+  `DominoPiece`.
+- Dice: `DIE_FACES` / `paintDieFace` / `paintDieNumeral`, `Die` / `TossedDie`
+  (d4–d20, pip / ornate / numeral, colorways, gravity toss with bounce).
+- Mahjong: `fullMahjongSet` / `mahjongFaceId` / `mahjongTileId`,
+  `paintMahjongFace` / `paintMahjongBack`, `MahjongPiece`.
+- Shared: `BoxPiece` / `useFlipY` / `toTexture`.
+
+## Conventions
+
+- Card art is painted at 512×716 (5:7 poker ratio) by default; painters take
+  `scale` for lower-res grids.
+- Suit pips are drawn with canvas paths, never font glyphs (unicode suits
+  render as color emoji on macOS).
+- Face/back textures are cached and shared across meshes; call
+  `disposeCardTextureCaches()` only after unmounting all card meshes (it
+  disposes `card-`-prefixed keys only).
+- Cards render with `meshBasicMaterial` — printed cards take no lighting.
+- Chunky pieces (dominoes, dice, mahjong) use `BoxPiece` with lit
+  `meshStandardMaterial`. The scene must include an ambient light and a
+  directional light.
+- Mahjong CJK faces use the `TILE_CJK_FONT` system stack
+  (`"Songti SC", "STSong", "PingFang SC", serif`) — verified on macOS. Check
+  Windows/Android fallbacks before shipping.
+
+## PNG back format
+
+Any square-ish portrait PNG works, but the house standard is **512×716
+(5:7)** with opaque corners (the library draws its own rounded-corner alpha
+only for procedural backs — PNGs should include their own corner radius or
+ship square). Generate one with
+`games/clubhouse-demo/scripts/generate-back.mjs`. PNG backs apply to playing
+cards only.
+
+## Tests
+
+```bash
+npm install
+npm test          # vitest, pure-logic suites (deck, pips, themes, sets)
+npm run typecheck
+```
+
+Visual verification happens in `games/clubhouse-demo` (node has no real 2D
+canvas, so painters/components are not unit-tested).
