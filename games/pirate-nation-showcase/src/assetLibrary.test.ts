@@ -28,10 +28,10 @@ beforeEach(() => {
 describe('PIRATE_PACKS', () => {
   it('pins the four jam-ready-assets packs', () => {
     expect(PIRATE_PACKS).toEqual({
-      models: { id: '3D/pirate/proofofplay-pirate-nation-models', version: '2ae870ead5c1' },
-      icons: { id: 'ui/proofofplay-pirate-nation-icons', version: 'ec3e46dfcd27' },
-      ui: { id: 'ui/proofofplay-pirate-nation-ui', version: '97835c36f9f1' },
-      audio: { id: 'audio/proofofplay-pirate-nation-audio', version: '064b51d95ed5' },
+      models: { id: 'proofofplay-pirate-nation/3D/pirate', version: '2ae870ead5c1' },
+      icons: { id: 'proofofplay-pirate-nation/icons', version: 'ec3e46dfcd27' },
+      ui: { id: 'proofofplay-pirate-nation/ui', version: '97835c36f9f1' },
+      audio: { id: 'proofofplay-pirate-nation/audio', version: '064b51d95ed5' },
     })
   })
 })
@@ -51,7 +51,7 @@ describe('resolveAssetUrl', () => {
       .resolves.toBe('https://cdn.example/packs/models/ships/Previews/ship%20%281%29.jpg')
     expect(order).toEqual(['initialize', 'resolve'])
     expect(sdk.getPackBaseUrl).toHaveBeenCalledWith(
-      '3D/pirate/proofofplay-pirate-nation-models',
+      'proofofplay-pirate-nation/3D/pirate',
       '2ae870ead5c1',
     )
   })

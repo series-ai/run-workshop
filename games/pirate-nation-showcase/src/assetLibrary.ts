@@ -1,20 +1,27 @@
 import RundotGameAPI from '@series-inc/rundot-game-sdk/api'
 
+/**
+ * The four pinned packs, addressed by their post-reorg ids. `jam-ready-assets`
+ * moved from `<bucket>/<theme>/<pack>/` to `<pack>/<bucket>/<theme>/` (PR #8,
+ * a423ddd4), which collapsed the four Pirate Nation packs into one top-level
+ * dir with one leaf per bucket. Versions are unchanged: the manifest hashes
+ * pack-RELATIVE paths, and the move preserved every one of them.
+ */
 export const PIRATE_PACKS = {
   models: {
-    id: '3D/pirate/proofofplay-pirate-nation-models',
+    id: 'proofofplay-pirate-nation/3D/pirate',
     version: '2ae870ead5c1',
   },
   icons: {
-    id: 'ui/proofofplay-pirate-nation-icons',
+    id: 'proofofplay-pirate-nation/icons',
     version: 'ec3e46dfcd27',
   },
   ui: {
-    id: 'ui/proofofplay-pirate-nation-ui',
+    id: 'proofofplay-pirate-nation/ui',
     version: '97835c36f9f1',
   },
   audio: {
-    id: 'audio/proofofplay-pirate-nation-audio',
+    id: 'proofofplay-pirate-nation/audio',
     version: '064b51d95ed5',
   },
 } as const

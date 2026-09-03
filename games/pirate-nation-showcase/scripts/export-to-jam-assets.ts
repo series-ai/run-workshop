@@ -3,8 +3,13 @@
  * CI accepts, so RUN.studio can list and import it.
  *
  * Four packs, not one: `build-manifest.mjs` decides a pack's category from its
- * top-level bucket, and only ships `.glb` for a 3D pack. Models, sprites and
- * audio in one tree would silently drop the sprites and the audio.
+ * bucket dir, and only ships `.glb` for a 3D pack. Models, sprites and audio in
+ * one bucket would silently drop the sprites and the audio.
+ *
+ * Post-reorg layout (jam-ready-assets PR #8, a423ddd4): packs are top-level and
+ * buckets sit inside them — `<pack>/2D|3D/<theme>/` for themed content, and
+ * `<pack>/ui|icons|fonts|audio/` flat. One pack dir spanning several buckets is
+ * one catalog pack per leaf, which is why these four share a `destDir` root.
  *
  * Usage:
  *   node --import tsx scripts/export-to-jam-assets.ts --source <dir> --out <dir>
@@ -53,11 +58,15 @@ export interface JamPack {
  * build-manifest.mjs calls `fatal()` on a collision, because studio imports
  * write to `assets/<slug>/`), and each is prefixed with the creator key so
  * `creatorOf()` resolves it to "Proof of Play".
+ *
+ * These must match what build-manifest.mjs derives, since a pack spanning
+ * several buckets is slugged `<packDir>-<bucket>`. That is why the 3D pack is
+ * `-3d` and not `-models`.
  */
 export const JAM_PACKS: JamPack[] = [
   {
-    slug: 'proofofplay-pirate-nation-models',
-    destDir: '3D/pirate/proofofplay-pirate-nation-models',
+    slug: 'proofofplay-pirate-nation-3d',
+    destDir: 'proofofplay-pirate-nation/3D/pirate',
     category: '3d',
     sources: ['runtime/models'],
     expectedFiles: 375,
@@ -68,7 +77,7 @@ export const JAM_PACKS: JamPack[] = [
   },
   {
     slug: 'proofofplay-pirate-nation-icons',
-    destDir: 'ui/proofofplay-pirate-nation-icons',
+    destDir: 'proofofplay-pirate-nation/icons',
     category: 'ui',
     sources: ['runtime/sprites/icons'],
     expectedFiles: 151,
@@ -76,7 +85,7 @@ export const JAM_PACKS: JamPack[] = [
   },
   {
     slug: 'proofofplay-pirate-nation-ui',
-    destDir: 'ui/proofofplay-pirate-nation-ui',
+    destDir: 'proofofplay-pirate-nation/ui',
     category: 'ui',
     sources: ['runtime/sprites/ui', 'runtime/sprites/branding'],
     expectedFiles: 362,
@@ -84,7 +93,7 @@ export const JAM_PACKS: JamPack[] = [
   },
   {
     slug: 'proofofplay-pirate-nation-audio',
-    destDir: 'audio/proofofplay-pirate-nation-audio',
+    destDir: 'proofofplay-pirate-nation/audio',
     category: 'audio',
     sources: ['runtime/audio'],
     expectedFiles: 30,
