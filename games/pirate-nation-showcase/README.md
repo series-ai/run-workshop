@@ -46,10 +46,16 @@ The four pins are defined in `src/assetLibrary.ts`:
 
 | Key | Pack | Version |
 |---|---|---|
-| models | `3D/pirate/proofofplay-pirate-nation-models` | `2ae870ead5c1` |
-| icons | `ui/proofofplay-pirate-nation-icons` | `ec3e46dfcd27` |
-| ui | `ui/proofofplay-pirate-nation-ui` | `97835c36f9f1` |
-| audio | `audio/proofofplay-pirate-nation-audio` | `064b51d95ed5` |
+| models | `proofofplay-pirate-nation/3D/pirate` | `2ae870ead5c1` |
+| icons | `proofofplay-pirate-nation/icons` | `ec3e46dfcd27` |
+| ui | `proofofplay-pirate-nation/ui` | `97835c36f9f1` |
+| audio | `proofofplay-pirate-nation/audio` | `064b51d95ed5` |
+
+`jam-ready-assets` PR #8 (`a423ddd4`) moved packs from `<bucket>/<theme>/<pack>/`
+to `<pack>/<bucket>/<theme>/`, so all four ids changed. The versions did not: the
+manifest hashes pack-relative paths, which the move preserved. The pre-move
+prefixes are still served — the GCS mirror never deletes a `packs/` prefix — so
+this is a catch-up, not a break.
 
 Release order: merge the preview addition in `jam-ready-assets`, wait for its
 mirror workflow, verify the live pack version, then publish this app.

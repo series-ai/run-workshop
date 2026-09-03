@@ -12,10 +12,10 @@ describe('JAM_PACKS', () => {
 
   it('places each pack at a path build-manifest.mjs walks', () => {
     expect(JAM_PACKS.map((pack) => pack.destDir)).toEqual([
-      '3D/pirate/proofofplay-pirate-nation-models',
-      'ui/proofofplay-pirate-nation-icons',
-      'ui/proofofplay-pirate-nation-ui',
-      'audio/proofofplay-pirate-nation-audio',
+      'proofofplay-pirate-nation/3D/pirate',
+      'proofofplay-pirate-nation/icons',
+      'proofofplay-pirate-nation/ui',
+      'proofofplay-pirate-nation/audio',
     ])
   })
 
@@ -30,8 +30,8 @@ describe('JAM_PACKS', () => {
   it('attaches thumbnails to the existing model pack', () => {
     expect(JAM_PACKS).toHaveLength(4)
     expect(JAM_PACKS[0]).toMatchObject({
-      slug: 'proofofplay-pirate-nation-models',
-      destDir: '3D/pirate/proofofplay-pirate-nation-models',
+      slug: 'proofofplay-pirate-nation-3d',
+      destDir: 'proofofplay-pirate-nation/3D/pirate',
       category: '3d',
       expectedFiles: 375,
       expectedThumbnailFiles: 355,

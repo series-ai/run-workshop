@@ -1,9 +1,9 @@
 import { expect, test, type Page } from '@playwright/test'
 
-const MODEL_PACK = '/packs/3D/pirate/proofofplay-pirate-nation-models@2ae870ead5c1/'
-const ICON_PACK = '/packs/ui/proofofplay-pirate-nation-icons@ec3e46dfcd27/'
-const UI_PACK = '/packs/ui/proofofplay-pirate-nation-ui@97835c36f9f1/'
-const AUDIO_PACK = '/packs/audio/proofofplay-pirate-nation-audio@064b51d95ed5/'
+const MODEL_PACK = '/packs/proofofplay-pirate-nation/3D/pirate@2ae870ead5c1/'
+const ICON_PACK = '/packs/proofofplay-pirate-nation/icons@ec3e46dfcd27/'
+const UI_PACK = '/packs/proofofplay-pirate-nation/ui@97835c36f9f1/'
+const AUDIO_PACK = '/packs/proofofplay-pirate-nation/audio@064b51d95ed5/'
 const AVATAR_MODEL = 'characters-skins/characters-skins-avatar-animation-all-023.glb'
 
 function requestUrls(page: Page): string[] {
