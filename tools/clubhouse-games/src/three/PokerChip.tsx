@@ -51,6 +51,7 @@ export function PokerChip({
         castShadow
         receiveShadow
         rotation={[0, Math.PI / 2, 0]}
+        position={[0, height / 2, 0]}
       />
     </group>
   )

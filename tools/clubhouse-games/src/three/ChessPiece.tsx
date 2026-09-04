@@ -1,4 +1,4 @@
-import { ComponentProps, useMemo } from 'react'
+import { ComponentProps, useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { CHESS_HEIGHTS, CHESS_PALETTES, ChessColor, ChessType } from '../chess/pieces'
 import { chessProfile, profileTop } from '../chess/profiles'
@@ -31,7 +31,10 @@ export function ChessPiece({
     [pal.body, pal.roughness],
   )
 
-  useMemo(() => () => geometry.dispose(), [geometry])
+  // Geometry and materials are built per piece, so this component owns them.
+  // Textures are the shared, cached things and are never disposed here.
+  useEffect(() => () => geometry.dispose(), [geometry])
+  useEffect(() => () => material.dispose(), [material])
 
   return (
     <group {...groupProps}>
@@ -202,7 +205,7 @@ function KnightHead({
     return geom
   }, [height])
 
-  useMemo(() => () => geometry.dispose(), [geometry])
+  useEffect(() => () => geometry.dispose(), [geometry])
 
   return (
     <mesh
