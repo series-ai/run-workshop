@@ -337,7 +337,7 @@ function installSource(
   const source = ctx.createBufferSource()
   source.buffer = entry.buffer
   source.loop = true
-  // Asset-bot trims every loop to an exact integer-bar length (1 bar for
+  // The pack pipeline trims every loop to an exact integer-bar length (1 bar for
   // most pads; 4 bars for vocal pads). The whole buffer is the musical
   // loop, so leaving loopStart=0 + loopEnd at the default (buffer end) is
   // what we want — no trailing silence to skip. The phase-locked start

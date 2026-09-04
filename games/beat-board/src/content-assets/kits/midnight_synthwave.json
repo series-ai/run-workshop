@@ -1,5 +1,5 @@
 {
-  "$comment": "Midnight Synthwave pack — retro 80s neon, 102 BPM, D minor. 32 8-bar loops + 16 one-shots. Generated via .asset-bot/runs/midnight-synthwave-2026-05-04 with tools/generate-kit.ts. comingSoon stays true until the audio run finishes; flip after audio-fix-issues clears.",
+  "$comment": "Midnight Synthwave pack — retro 80s neon, 102 BPM, D minor. 32 8-bar loops + 16 one-shots. Generated via pack-runs/midnight-synthwave-2026-05-04 with tools/generate-kit.ts. comingSoon stays true until the audio run finishes; flip after audio-fix-issues clears.",
   "id": "midnight-synthwave",
   "name": "Midnight Synthwave",
   "bpm": 102,

@@ -1,5 +1,5 @@
 {
-  "$comment": "Glass House pack — filtered house, 120 BPM, A minor. 32 8-bar loops + 16 one-shots. Generated via .asset-bot/runs/glass-house-2026-05-04 with tools/generate-kit.ts. comingSoon stays true until the audio run finishes; flip after audio-fix-issues clears.",
+  "$comment": "Glass House pack — filtered house, 120 BPM, A minor. 32 8-bar loops + 16 one-shots. Generated via pack-runs/glass-house-2026-05-04 with tools/generate-kit.ts. comingSoon stays true until the audio run finishes; flip after audio-fix-issues clears.",
   "id": "glass-house",
   "name": "Glass House",
   "bpm": 120,

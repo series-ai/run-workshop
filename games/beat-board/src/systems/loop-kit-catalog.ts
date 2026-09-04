@@ -1,6 +1,6 @@
 /**
  * loop-kit-catalog — BeatBoard's project-side wrapper around the loop-kit
- * pipeline shipped by asset-bot (PR #122).
+ * pipeline.
  *
  * Issue beat-board-04-loop-kit-catalog owns this file. Responsibilities:
  *   - Discover available kit ids via the catalog index (`kits/index.json`),

@@ -26,7 +26,6 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 // Pre-flight contract validator. Module is plain ESM JS so we import
 // it via .mjs path; tsx loads it without configuration.
-// @ts-expect-error — sibling .mjs has no .d.ts; the runtime resolution works.
 import { validateManifest } from './validate-kit-manifest.mjs'
 
 type ItemKind = 'drum' | 'bass' | 'melody' | 'vocal' | 'oneShot'

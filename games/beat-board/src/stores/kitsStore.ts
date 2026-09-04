@@ -59,7 +59,7 @@ export interface KitMeta extends Kit {
    * Optional cover-art URL (under `/images/packs/<kit-id>.png` by
    * convention). When set, KitHeroArt renders the image cropped to fill
    * the card; falls back to `heroGradient` when the field is absent or
-   * the asset fails to load. Generated via `asset-bot generate image`
+   * the asset fails to load. Generated via `rundot generate image`
    * — see `tools/generate-pack-covers.sh`.
    */
   coverArt?: string

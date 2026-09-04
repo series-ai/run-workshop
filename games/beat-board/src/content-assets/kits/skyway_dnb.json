@@ -1,5 +1,5 @@
 {
-  "$comment": "Skyway D&B pack — drum & bass / jungle, 174 BPM, G minor. 32 8-bar loops + 16 one-shots. Generated via .asset-bot/runs/skyway-dnb-2026-05-04 with tools/generate-kit.ts. comingSoon stays true until the audio run finishes; flip after audio-fix-issues clears.",
+  "$comment": "Skyway D&B pack — drum & bass / jungle, 174 BPM, G minor. 32 8-bar loops + 16 one-shots. Generated via pack-runs/skyway-dnb-2026-05-04 with tools/generate-kit.ts. comingSoon stays true until the audio run finishes; flip after audio-fix-issues clears.",
   "id": "skyway-dnb",
   "name": "Skyway D&B",
   "bpm": 174,

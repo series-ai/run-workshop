@@ -2,7 +2,7 @@
  * Loop-kit data types.
  *
  * Issue beat-board-04-loop-kit-catalog owns this file. It defines the *runtime*
- * shape of a kit as ingested from the asset-bot loop-kit pipeline (PR #122):
+ * shape of a kit as ingested from the pack-authoring pipeline:
  * a kit is a BPM + musical key + a list of pad descriptors, each pointing at
  * a per-layer wav buffer the audio engine decodes into the master graph.
  *
