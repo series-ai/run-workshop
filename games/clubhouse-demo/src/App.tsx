@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { Button, colors, fonts } from './components/ui'
 import { BacksGallery } from './scenes/BacksGallery'
 import { DeckGrid } from './scenes/DeckGrid'
+import { CheckersScene } from './scenes/CheckersScene'
+import { ChessScene } from './scenes/ChessScene'
+import { ChipsScene } from './scenes/ChipsScene'
 import { DiceScene } from './scenes/DiceScene'
 import { DominoesScene } from './scenes/DominoesScene'
 import { FlipDemo } from './scenes/FlipDemo'
@@ -16,6 +19,9 @@ const TABS = [
   { id: 'dominoes', label: 'Dominoes' },
   { id: 'dice', label: 'Dice' },
   { id: 'mahjong', label: 'Mahjong' },
+  { id: 'checkers', label: 'Checkers' },
+  { id: 'chess', label: 'Chess' },
+  { id: 'chips', label: 'Chips' },
 ] as const
 
 type TabId = (typeof TABS)[number]['id']
@@ -87,6 +93,9 @@ export default function App() {
         {tab === 'dominoes' && <DominoesScene />}
         {tab === 'dice' && <DiceScene />}
         {tab === 'mahjong' && <MahjongScene />}
+        {tab === 'checkers' && <CheckersScene />}
+        {tab === 'chess' && <ChessScene />}
+        {tab === 'chips' && <ChipsScene />}
       </div>
     </div>
   )

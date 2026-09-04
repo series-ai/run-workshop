@@ -37,6 +37,10 @@ npm run dev            # http://localhost:4319
   styles and six colorways.
 - **Mahjong** — gallery of the 42 unique faces of a 144-tile set; click a
   tile to flip it.
+- **Checkers** — turned draughts with reeded rims; click one to crown it.
+- **Chess** — both sides of a Staunton set on a turntable.
+- **Chips** — a full rack, or the change for an amount paid in the fewest
+  chips.
 
 ## Generating card backs
 

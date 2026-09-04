@@ -1,9 +1,10 @@
 # Clubhouse Games
 
-Procedural tabletop art + React Three Fiber rendering. Four families — playing
-cards, dominoes, dice, and mahjong tiles — painted onto 2D canvases (no asset
-files, no third-party art licenses) and rendered as 3D pieces. PNG backs are
-supported for custom/AI-generated **card** art.
+Procedural tabletop art + React Three Fiber rendering. Seven families — playing
+cards, dominoes, dice, mahjong tiles, checkers, chess, and betting chips —
+built with no asset files and no third-party art licenses. Flat and chunky
+pieces are painted onto 2D canvases; the chess set is turned geometry. PNG
+backs are supported for custom/AI-generated **card** art.
 
 Source-consumed in this repo: import from `src/index.ts` (the playground
 aliases it as `@clubhouse`). Consumers must dedupe `react`, `react-dom`,
@@ -41,6 +42,12 @@ const texture = useCardBackTexture('/backs/deco-navy.png')
 <DiceTray kind={6} style="ornate" colorway="ruby" count={2}
           tossToken={n} onSettle={setValues} />
 <MahjongPiece tile={{ kind: 'dragon', dragon: 'red', copy: 1 }} faceUp />
+
+// Draughts, chess, and chips:
+<CheckerPiece piece={{ color: 'red', king: true }} />
+<ChessPiece type="knight" color="black" scale={1.2} />
+<PokerChip value={100} />
+<ChipStack value={25} count={5} />
 ```
 
 Key exports:
@@ -64,7 +71,16 @@ Key exports:
   `dieVertices` / `dieRestHeight` / `dieInertia` / `facesForDie`.
 - Mahjong: `fullMahjongSet` / `mahjongFaceId` / `mahjongTileId`,
   `paintMahjongFace` / `paintMahjongBack`, `MahjongPiece`.
-- Shared: `BoxPiece` / `useFlipY` / `toTexture`, and the engraving helpers
+- Checkers: `CHECKER_PALETTES` / `startingCheckers` / `playableSquares`,
+  `paintCheckerFace` / `paintCheckerEdge`, `CheckerPiece`. A crowned piece is
+  rendered as two draughts stacked, because that is what it is.
+- Chess: `CHESS_TYPES` / `CHESS_HEIGHTS` (Staunton proportions, king = 1) /
+  `startingChessSide`, `chessProfile`, `ChessPiece`.
+- Chips: `CHIP_DENOMINATIONS` / `chipDenomination` / `chipsForAmount` (pays an
+  amount in the fewest chips), `paintChipFace` / `paintChipEdge`, `PokerChip` /
+  `ChipStack`.
+- Shared: `BoxPiece` (dominoes, dice, mahjong), `DiscPiece` (checkers, chips),
+  `useFlipY` / `toTexture`, and the engraving helpers
   `drawGuillocheBand` / `drawCircleRosette` / `roundRectPath` used by the card
   backs and the ace.
 
@@ -110,6 +126,16 @@ Key exports:
 - Dominoes carry the brass spinner a real set has. Mahjong faces are carved
   and painted (a dark offset under the colored glyph), bamboo pips are jointed
   cane with leaves, and one bamboo is the traditional bird.
+- Chess pieces are turned, not painted: each body is a lathe profile in
+  `chess/profiles.ts`, given as [radius, height] fractions of the piece's own
+  height. A profile must rise monotonically or the lathe folds through itself,
+  and its widest point must be at the foot or the piece will not stand. Tests
+  hold both. The battlements, mitre, coronet, cross, and the knight are carved
+  on top, because a lathe cannot cut them.
+- A cylinder maps its cap texture in the XZ plane, so a face painted upright
+  arrives turned a quarter turn when seen from above. `PokerChip` and
+  `CheckerPiece` correct for that with a rotation; anything else built on
+  `DiscPiece` will need to as well.
 - Mahjong CJK faces use the `TILE_CJK_FONT` system stack
   (`"Songti SC", "STSong", "PingFang SC", serif`) — verified on macOS. Check
   Windows/Android fallbacks before shipping.

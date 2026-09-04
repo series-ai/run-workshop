@@ -68,3 +68,31 @@ export type { MahjongPieceProps } from './three/MahjongPiece'
 // Shared piece plumbing
 export { BoxPiece, BOX_FACE, useFlipY } from './three/BoxPiece'
 export type { BoxFaceMap, BoxFaceName, BoxPieceProps } from './three/BoxPiece'
+
+// Checkers
+export { CHECKER_COLORS, CHECKER_PALETTES, checkerId, parseCheckerColor, playableSquares, startingCheckers } from './checkers/pieces'
+export type { Checker, CheckerColor, CheckerPalette, CheckerSquare } from './checkers/pieces'
+export { paintCheckerEdge, paintCheckerFace } from './checkers/paintChecker'
+export type { PaintCheckerOptions } from './checkers/paintChecker'
+export { CheckerPiece } from './three/CheckerPiece'
+export type { CheckerPieceProps } from './three/CheckerPiece'
+
+// Chess
+export { CHESS_COLORS, CHESS_COUNTS, CHESS_HEIGHTS, CHESS_PALETTES, CHESS_TYPES, chessPieceId, parseChessType, startingChessSide } from './chess/pieces'
+export type { ChessColor, ChessPalette, ChessPieceModel, ChessType } from './chess/pieces'
+export { chessProfile, profileTop } from './chess/profiles'
+export type { ProfilePoint } from './chess/profiles'
+export { ChessPiece } from './three/ChessPiece'
+export type { ChessPieceProps } from './three/ChessPiece'
+
+// Betting chips
+export { CHIP_DENOMINATIONS, chipDenomination, chipsForAmount } from './chips/denominations'
+export type { ChipDenomination, ChipStackEntry } from './chips/denominations'
+export { paintChipEdge, paintChipFace } from './chips/paintChip'
+export type { PaintChipOptions } from './chips/paintChip'
+export { ChipStack, PokerChip } from './three/PokerChip'
+export type { ChipStackProps, PokerChipProps } from './three/PokerChip'
+
+// Shared disc plumbing (checkers, chips)
+export { DiscPiece, DISC_FACE } from './three/DiscPiece'
+export type { DiscFaceMap, DiscFaceName, DiscPieceProps } from './three/DiscPiece'
