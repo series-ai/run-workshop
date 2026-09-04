@@ -1,3 +1,4 @@
+import { uuid } from './uuid';
 import { useRef, useCallback, useEffect, useState } from 'react';
 import type { RulerGuide, WorkspaceAction } from './types';
 
@@ -271,7 +272,7 @@ export function Rulers({ pan, zoom, guides, dispatch, themeName }: RulersProps) 
         if (!inRuler) {
           dispatch({
             type: 'ADD_GUIDE',
-            guide: { id: crypto.randomUUID(), axis: ref.guideAxis, position: pos },
+            guide: { id: uuid(), axis: ref.guideAxis, position: pos },
           });
         }
       }

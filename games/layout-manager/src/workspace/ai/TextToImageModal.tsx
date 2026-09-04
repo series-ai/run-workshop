@@ -72,6 +72,10 @@ const OPENAI_QUALITIES = ['low', 'medium', 'high'] as const;
 export function TextToImageModal({ config, prompt, onPromptChange, refNodes, position, onGenerated, onProgress, onClose }: TextToImageModalProps) {
   const { panelRef, onPointerDown, onPointerMove, onPointerUp } = useDraggableModal();
   const [providerId, setProviderId] = useState<ProviderId>(() => {
+    // User-chosen default wins (Preferences > AI); Auto falls back to the
+    // first provider with an API key
+    const preferred = PROVIDERS.find((p) => p.id === config.defaultImageProvider);
+    if (preferred && (!preferred.configKey || config[preferred.configKey])) return preferred.id as ProviderId;
     const found = PROVIDERS.find((p) => p.configKey && config[p.configKey]);
     return (found?.id ?? PROVIDERS[0]!.id) as ProviderId;
   });
@@ -81,6 +85,10 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
   const [hermesXaiUp, setHermesXaiUp] = useState(false);
   const [hermesCodexUp, setHermesCodexUp] = useState(false);
   const [hermesGrok2Up, setHermesGrok2Up] = useState(false);
+  // Hermes availability is only known once the probe answers; until then a
+  // Hermes default provider can't generate, and afterwards an unavailable
+  // one must hop to a working provider
+  const [hermesStatusKnown, setHermesStatusKnown] = useState(false);
   useEffect(() => {
     let cancelled = false;
     fetch('/__ai-local-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
@@ -90,10 +98,21 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
         setHermesXaiUp(!!st.hermesImageGen?.xai && config.hermesEnabled);
         setHermesCodexUp(!!st.hermesImageGen?.codex && config.hermesEnabled);
         setHermesGrok2Up(!!st.hermesImageGen?.grok2);
+        setHermesStatusKnown(true);
       })
-      .catch(() => {});
+      .catch(() => { if (!cancelled) setHermesStatusKnown(true); });
     return () => { cancelled = true; };
   }, []);
+  const isHermesProvider = providerId === 'hermes-grok' || providerId === 'hermes-gpt';
+  // A Hermes default that turns out unavailable falls back to Auto behavior
+  useEffect(() => {
+    if (!hermesStatusKnown) return;
+    if ((providerId === 'hermes-grok' && !hermesXaiUp) || (providerId === 'hermes-gpt' && !hermesCodexUp)) {
+      const found = PROVIDERS.find((p) => p.configKey && config[p.configKey]);
+      setProviderId((found?.id ?? PROVIDERS[0]!.id) as ProviderId);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hermesStatusKnown, hermesXaiUp, hermesCodexUp, providerId]);
   const [count, setCount] = useState(1);
   // Google params
   const [aspectRatio, setAspectRatio] = useState<string>('1:1');
@@ -404,7 +423,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
             )}
             <div className="ai-modal-ref-grid">
               {useBlankMain && (
-                <div className="ai-modal-ref-cell ai-modal-ref-cell-main">
+                <div className="ai-modal-ref-cell ai-modal-ref-cell-start">
                   <div
                     className="ai-modal-ref-thumb"
                     style={{ background: grokBlankMain === 'white' ? '#fff' : '#000', border: '1px solid var(--color-border)' }}
@@ -414,7 +433,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
                 </div>
               )}
               {clampedRefs.map((node, i) => (
-                <div key={node.id} className={`ai-modal-ref-cell${isGrokRefs && !useBlankMain && i === 0 ? ' ai-modal-ref-cell-main' : ''}`}>
+                <div key={node.id} className={`ai-modal-ref-cell${isGrokRefs ? (!useBlankMain && i === 0 ? ' ai-modal-ref-cell-start' : ' ai-modal-ref-cell-ref') : ''}`}>
                   <img
                     src={node.paintCompositeUrl || node.src}
                     alt={node.fileName}
@@ -652,7 +671,7 @@ export function TextToImageModal({ config, prompt, onPromptChange, refNodes, pos
         <button
           className="prefs-btn prefs-btn-primary"
           onClick={handleGenerate}
-          disabled={!prompt.trim() || generating}
+          disabled={!prompt.trim() || generating || (isHermesProvider && !hermesStatusKnown)}
         >
           {generating ? 'Generating...' : 'Generate'}
         </button>

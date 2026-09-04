@@ -1,3 +1,4 @@
+import { uuid } from './uuid';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import type { WorkspaceAction, CanvasRect, ImageNode, ScaleFilter, RulerGuide } from './types';
@@ -268,7 +269,7 @@ export function CanvasMenu({ canvas, dispatch, images, scaleFilter, selectedIds,
         const img = new Image();
         img.onload = () => {
           const node: ImageNode = {
-            id: crypto.randomUUID(),
+            id: uuid(),
             src,
             fileName: 'canvas-flatten.png',
             x: 0,

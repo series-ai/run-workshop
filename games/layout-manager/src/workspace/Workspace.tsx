@@ -1,5 +1,6 @@
+import { uuid } from './uuid';
 import { useRef, useCallback, useState, useEffect, useLayoutEffect } from 'react';
-import { useWorkspaceState } from './useWorkspaceState';
+import { useWorkspaceState, persistGeneratedImage } from './useWorkspaceState';
 import { ImageNodeComponent } from './ImageNode';
 import { Toolbar } from './Toolbar';
 import { ContextMenu } from './ContextMenu';
@@ -31,10 +32,12 @@ import { RemoveBgModal } from './ai/RemoveBgModal';
 import { LayerizeModal } from './ai/LayerizeModal';
 import { ComfyModal } from './ai/ComfyModal';
 import { UnityAiModal } from './ai/UnityAiModal';
+import { TextToVideoModal } from './ai/TextToVideoModal';
 import { useAlignedPosition } from './ai/useDraggableModal';
 import { AiChatPanel, type ChatMessage } from './ai/AiChatPanel';
 import { registerWorkspaceSampler } from './workspaceSampler';
 import { drawNodeToCtx } from './renderNode';
+import { postDownloadFulfill } from './downloadFulfill';
 
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml'];
 // The browser sometimes reports an empty MIME type for valid images
@@ -189,6 +192,8 @@ export function Workspace() {
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const [aiUnityOpen, setAiUnityOpen] = useState(false);
   const [aiUnityPrompt, setAiUnityPrompt] = useState('');
+  const [aiVideoOpen, setAiVideoOpen] = useState(false);
+  const [aiVideoPrompt, setAiVideoPrompt] = useState('');
   // Last AI output's placement — batch outputs chain to the right of it
   const lastAiOutputRef = useRef<{ x: number; y: number; w: number } | null>(null);
   // Per-element rasterize-preview snapshots (display-resolution renders shown
@@ -409,7 +414,7 @@ export function Workspace() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Block all workspace shortcuts when AI modals are open
-      if (aiTextToImageOpen || aiRemoveBgOpen || aiLayerizeOpen || aiChatOpen || aiComfyOpen || aiUnityOpen) {
+      if (aiTextToImageOpen || aiRemoveBgOpen || aiLayerizeOpen || aiChatOpen || aiComfyOpen || aiUnityOpen || aiVideoOpen) {
         const tag = (document.activeElement as HTMLElement)?.tagName;
         const typing = tag === 'TEXTAREA' || tag === 'INPUT' || (document.activeElement as HTMLElement)?.isContentEditable;
         // Exception: Ctrl+Arrow alignment still works while AI panels are open —
@@ -1337,7 +1342,7 @@ export function Workspace() {
   // --- AI: Background removal ---
   const handleAiBgRemoval = useCallback(() => {
     if (!aiProgress) {
-      setAiRemoveBgOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiLayerizeOpen(false); setAiComfyOpen(false); setAiUnityOpen(false); } return !v; });
+      setAiRemoveBgOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiLayerizeOpen(false); setAiComfyOpen(false); setAiUnityOpen(false); setAiVideoOpen(false); } return !v; });
     }
   }, [aiProgress]);
 
@@ -1502,7 +1507,7 @@ export function Workspace() {
       const node = state.images.find((i) => i.id === id);
       if (!node) return [];
       const baseName = node.spriteName || node.fileName.replace(/\.[^.]+$/, '') || 'image';
-      return [{ id, ticket: crypto.randomUUID(), baseName }];
+      return [{ id, ticket: uuid(), baseName }];
     });
     for (const job of jobs) {
       const a = document.createElement('a');
@@ -1516,8 +1521,7 @@ export function Workspace() {
   }, [state.images, state.scaleFilter]);
 
   const saveImagesAsync = useCallback(async (jobs: { id: string; ticket: string; baseName: string }[], mode: '1:1' | 'display') => {
-    const fulfill = (ticket: string, body: Blob | null) =>
-      fetch(`/__download-fulfill/${ticket}`, { method: 'POST', body: body ?? new Blob([]) }).catch(() => {});
+    const fulfill = (ticket: string, body: Blob | null) => postDownloadFulfill(ticket, body);
     const loadImg = (src: string): Promise<HTMLImageElement> => new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve(img);
@@ -2292,7 +2296,7 @@ export function Workspace() {
       })}
 
       {/* Screen-space node action buttons (lock, onion, attach, delete) */}
-      {!maskMode && (() => { const anyAiOpen = aiTextToImageOpen || aiRemoveBgOpen || aiLayerizeOpen || aiChatOpen || aiComfyOpen || aiUnityOpen; return state.images.map((img) => {
+      {!maskMode && (() => { const anyAiOpen = aiTextToImageOpen || aiRemoveBgOpen || aiLayerizeOpen || aiChatOpen || aiComfyOpen || aiUnityOpen || aiVideoOpen; return state.images.map((img) => {
         const isSelected = state.selectedIds.has(img.id);
         const isSingle = state.selectedIds.size === 1;
         const showLocked = img.locked;
@@ -2614,16 +2618,18 @@ export function Workspace() {
         onMenuOpenChange={setHamburgerOpen}
         editMode={!!maskMode}
         aiHidden={userConfig.aiHidden}
-        onAiTextToImage={() => { if (!aiProgress) { setAiTextToImageOpen((v) => { if (!v) { setAiRemoveBgOpen(false); setAiLayerizeOpen(false); setAiComfyOpen(false); setAiUnityOpen(false); } return !v; }); } }}
+        onAiTextToImage={() => { if (!aiProgress) { setAiTextToImageOpen((v) => { if (!v) { setAiRemoveBgOpen(false); setAiLayerizeOpen(false); setAiComfyOpen(false); setAiUnityOpen(false); setAiVideoOpen(false); } return !v; }); } }}
         onAiBgRemoval={handleAiBgRemoval}
-        onAiComfy={() => { if (!aiProgress) { setAiComfyOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiRemoveBgOpen(false); setAiLayerizeOpen(false); setAiUnityOpen(false); } return !v; }); } }}
+        onAiComfy={() => { if (!aiProgress) { setAiComfyOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiRemoveBgOpen(false); setAiLayerizeOpen(false); setAiUnityOpen(false); setAiVideoOpen(false); } return !v; }); } }}
         aiComfyOpen={aiComfyOpen}
-        onAiUnity={() => { if (!aiProgress) { setAiUnityOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiRemoveBgOpen(false); setAiLayerizeOpen(false); setAiComfyOpen(false); } return !v; }); } }}
+        onAiUnity={() => { if (!aiProgress) { setAiUnityOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiRemoveBgOpen(false); setAiLayerizeOpen(false); setAiComfyOpen(false); setAiVideoOpen(false); } return !v; }); } }}
+        onAiVideo={() => { if (!aiProgress) { setAiVideoOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiRemoveBgOpen(false); setAiLayerizeOpen(false); setAiComfyOpen(false); setAiUnityOpen(false); } return !v; }); } }}
+        aiVideoOpen={aiVideoOpen}
         aiUnityOpen={aiUnityOpen}
         onAiChat={() => setAiChatOpen((v) => !v)}
         aiTextToImageOpen={aiTextToImageOpen}
         aiRemoveBgOpen={aiRemoveBgOpen}
-        onAiLayerize={() => { if (!aiProgress) { setAiLayerizeOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiRemoveBgOpen(false); setAiComfyOpen(false); setAiUnityOpen(false); } return !v; }); } }}
+        onAiLayerize={() => { if (!aiProgress) { setAiLayerizeOpen((v) => { if (!v) { setAiTextToImageOpen(false); setAiRemoveBgOpen(false); setAiComfyOpen(false); setAiUnityOpen(false); setAiVideoOpen(false); } return !v; }); } }}
         aiLayerizeOpen={aiLayerizeOpen}
         aiChatOpen={aiChatOpen}
         historyPast={historyDepth.past}
@@ -2694,7 +2700,7 @@ export function Workspace() {
             dispatch({
               type: 'ADD_IMAGE',
               image: {
-                id: crypto.randomUUID(),
+                id: uuid(),
                 src: localUrl,
                 fileName: 'ai_generated.png',
                 x: pos.x,
@@ -2731,7 +2737,7 @@ export function Workspace() {
           onPromptChange={setAiUnityPrompt}
           position={aiModalPosition}
           refNodes={state.images.filter((i) => state.selectedIds.has(i.id) && i.nodeType !== 'text')}
-          onGenerated={(localUrl, w, h, prompts, batchIndex) => {
+          onGenerated={async (localUrl, w, h, prompts, batchIndex) => {
             const MAX = 1024;
             let dw = w, dh = h;
             if (dw > MAX || dh > MAX) {
@@ -2740,12 +2746,15 @@ export function Workspace() {
               dh = Math.round(dh * s);
             }
             const pos = placeAiOutput(dw, dh, batchIndex);
+            // Land the result through the same path as an imported file, so the
+            // node holds real blob-backed bytes rather than a base64 string.
+            const src = await persistGeneratedImage(localUrl);
             dispatch({ type: 'SNAPSHOT' });
             dispatch({
               type: 'ADD_IMAGE',
               image: {
-                id: crypto.randomUUID(),
-                src: localUrl,
+                id: uuid(),
+                src,
                 fileName: 'unity_ai.png',
                 x: pos.x,
                 y: pos.y,
@@ -2774,6 +2783,18 @@ export function Workspace() {
         />
       )}
 
+      {aiVideoOpen && (
+        <TextToVideoModal
+          config={userConfig}
+          prompt={aiVideoPrompt}
+          onPromptChange={setAiVideoPrompt}
+          position={aiModalPosition}
+          refNodes={state.images.filter((i) => state.selectedIds.has(i.id) && i.nodeType !== 'text')}
+          onProgress={setAiProgress}
+          onClose={() => setAiVideoOpen(false)}
+        />
+      )}
+
       {aiRemoveBgOpen && (
         <RemoveBgModal
           sourceNodes={state.images.filter((i) => state.selectedIds.has(i.id) && i.nodeType !== 'text')}
@@ -2785,7 +2806,7 @@ export function Workspace() {
               dispatch({
                 type: 'ADD_IMAGE',
                 image: {
-                  id: crypto.randomUUID(),
+                  id: uuid(),
                   src: localUrl,
                   fileName: node.fileName.replace(/\.\w+$/, '_nobg.png'),
                   x: pos.x,
@@ -2829,7 +2850,7 @@ export function Workspace() {
             dispatch({ type: 'SNAPSHOT' });
             const ids: string[] = [];
             for (const layer of layers) {
-              const id = crypto.randomUUID();
+              const id = uuid();
               ids.push(id);
               dispatch({
                 type: 'ADD_IMAGE',
@@ -2887,7 +2908,7 @@ export function Workspace() {
             dispatch({
               type: 'ADD_IMAGE',
               image: {
-                id: crypto.randomUUID(),
+                id: uuid(),
                 src: dataUrl,
                 fileName,
                 x: gx,
@@ -2980,7 +3001,7 @@ export function Workspace() {
             dispatch({
               type: 'ADD_IMAGE',
               image: {
-                id: crypto.randomUUID(),
+                id: uuid(),
                 src: snap.url,
                 fileName: node.fileName.replace(/\.\w+$/, '') + '_raster.png',
                 x: node.x + 20,

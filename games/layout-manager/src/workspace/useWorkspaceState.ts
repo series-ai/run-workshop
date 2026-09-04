@@ -1,3 +1,4 @@
+import { uuid } from './uuid';
 import { useReducer, useCallback, useState } from 'react';
 import type { WorkspaceState, WorkspaceAction, ImageNode } from './types';
 import { readPngScaleFilter } from './pngChunks';
@@ -29,7 +30,7 @@ function toBlobUrl(url: string | null | undefined): string | null {
  * Losslessly optimise a PNG file on import via oxipng WASM.
  * Returns an object URL for the optimised (or original) image.
  */
-async function optimiseAndCreateUrl(file: File): Promise<string> {
+async function optimiseAndCreateUrl(file: Blob): Promise<string> {
   if (file.type !== 'image/png') return URL.createObjectURL(file);
   try {
     const buf = await file.arrayBuffer();
@@ -39,6 +40,21 @@ async function optimiseAndCreateUrl(file: File): Promise<string> {
     }
   } catch { /* fall through */ }
   return URL.createObjectURL(file);
+}
+
+/** Persist a generated image the same way an imported file is persisted: the
+ *  bytes move out of the JS heap into browser-managed Blob storage, PNGs get
+ *  the same lossless oxipng pass, and the node ends up holding a short blob:
+ *  URL instead of a multi-megabyte base64 string that every history snapshot
+ *  would otherwise retain. Falls back to the original URL if anything fails —
+ *  a displayable image beats a broken one. */
+export async function persistGeneratedImage(dataUrl: string): Promise<string> {
+  if (!dataUrl.startsWith('data:')) return dataUrl;
+  try {
+    return await optimiseAndCreateUrl(dataUrlToBlob(dataUrl));
+  } catch {
+    return dataUrl;
+  }
 }
 
 interface LoadedImage {
@@ -1028,7 +1044,7 @@ function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): Works
       const maxZ = state.images.reduce((max, img) => Math.max(max, img.zIndex), -1);
       const newImages: ImageNode[] = toDuplicate.map((img, i) => ({
         ...img,
-        id: crypto.randomUUID(),
+        id: uuid(),
         x: img.x + 20,
         y: img.y + 20,
         zIndex: maxZ + 1 + i,
@@ -1550,7 +1566,7 @@ export function useWorkspaceState() {
         for (let c = 0; c < row.length; c++) {
           const item = row[c]!;
           nodes.push({
-            id: crypto.randomUUID(),
+            id: uuid(),
             src: item.src,
             fileName: item.file.name,
             x: curX,
@@ -1599,7 +1615,7 @@ export function useWorkspaceState() {
       if (onImageSize) onImageSize(loaded.nw, loaded.nh);
 
       const node: ImageNode = {
-        id: crypto.randomUUID(),
+        id: uuid(),
         src: loaded.src,
         fileName: file.name,
         x: dropX ?? 100,
@@ -1644,7 +1660,7 @@ export function useWorkspaceState() {
         c.toBlob((blob) => {
           const src = blob ? URL.createObjectURL(blob) : proxyUrl;
           const node: ImageNode = {
-            id: crypto.randomUUID(),
+            id: uuid(),
             src,
             fileName: (() => {
               const raw = imageUrl.split('/').pop()?.split('?')[0] || 'image.png';

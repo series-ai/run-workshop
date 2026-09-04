@@ -19,6 +19,78 @@ function isCrossOriginRequest(req: import('node:http').IncomingMessage): boolean
   return false;
 }
 
+// Fulfill POSTs arrive from the app's sibling loopback host (localhost <->
+// 127.0.0.1) on purpose: every pending /__download GET holds one of the
+// browser's ~6 per-host connections, so a same-host fulfill for a many-image
+// save would queue behind the very downloads it completes and deadlock the
+// whole origin. A sibling loopback origin with the same port is the same
+// local user, so it may fulfill tickets.
+const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
+function isLoopbackSiblingOrigin(req: import('node:http').IncomingMessage): boolean {
+  const host = req.headers.host;
+  const origin = req.headers.origin;
+  if (!host || !origin) return false;
+  let o: URL;
+  try { o = new URL(origin); } catch { return false; }
+  const hostName = host.replace(/:\d+$/, '');
+  const hostPort = host.match(/:(\d+)$/)?.[1] ?? '80';
+  return o.protocol === 'http:' && o.port === hostPort &&
+    LOOPBACK_HOSTNAMES.has(o.hostname) && LOOPBACK_HOSTNAMES.has(hostName);
+}
+
+// ====== Gesture-safe download tickets (shared) ======
+// Browser downloads must start inside a user gesture, but the payload (a
+// composited image, a generated video) finishes long after the gesture
+// expires. The client clicks a download link to /__download/<ticket>/<name>
+// synchronously in the gesture (dialog appears immediately), then the
+// producer POSTs the bytes to /__download-fulfill/<ticket> (or the server
+// fulfills directly, e.g. video generation); we stream them into the
+// already-started download. Tickets are client-minted UUIDs. Module scope so
+// both the image-proxy and AI plugins can fulfill.
+interface DownloadTicket { res?: import('node:http').ServerResponse; data?: Buffer; failed?: boolean; timer: NodeJS.Timeout }
+const downloadTickets = new Map<string, DownloadTicket>();
+const ticketCleanup = (id: string) => {
+  const t = downloadTickets.get(id);
+  if (t) { clearTimeout(t.timer); downloadTickets.delete(id); }
+};
+// 10 minutes: long enough for a video generation to hold its ticket from
+// click to first bytes; save activity refreshes all pending tickets
+const ticketTimer = (id: string) => setTimeout(() => {
+  const cur = downloadTickets.get(id);
+  cur?.res?.destroy();
+  ticketCleanup(id);
+}, 10 * 60 * 1000);
+const touchAllTickets = () => {
+  for (const [id, t] of downloadTickets) {
+    clearTimeout(t.timer);
+    t.timer = ticketTimer(id);
+  }
+};
+const newTicket = (id: string): DownloadTicket => {
+  const t: DownloadTicket = { timer: ticketTimer(id) };
+  downloadTickets.set(id, t);
+  return t;
+};
+const TICKET_RE = /^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/([^/]+))?$/i;
+const DOWNLOAD_MIMES: Record<string, string> = {
+  png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif',
+  mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime',
+};
+/** Deliver bytes into a waiting download (or park them for a not-yet-arrived one). Empty/null aborts. */
+function fulfillTicket(id: string, data: Buffer | null): void {
+  touchAllTickets();
+  const t = downloadTickets.get(id) ?? newTicket(id);
+  if (!data || data.length === 0) {
+    t.failed = true;
+    if (t.res) { t.res.destroy(); ticketCleanup(id); }
+  } else if (t.res) {
+    t.res.end(data);
+    ticketCleanup(id);
+  } else {
+    t.data = data;
+  }
+}
+
 function imageProxyPlugin(): Plugin {
   return {
     name: 'image-proxy',
@@ -61,40 +133,6 @@ function imageProxyPlugin(): Plugin {
         }
       });
 
-      // ====== Gesture-safe downloads (ticket rendezvous) ======
-      // Browser downloads must start inside a user gesture, but image
-      // compositing finishes long after the gesture expires. The client
-      // clicks a download link to /__download/<ticket>/<name> synchronously
-      // in the gesture (dialog appears immediately), then composites and
-      // POSTs the bytes to /__download-fulfill/<ticket>; we stream them into
-      // the already-started download. Tickets are client-minted UUIDs.
-      interface DownloadTicket { res?: import('node:http').ServerResponse; data?: Buffer; failed?: boolean; timer: NodeJS.Timeout }
-      const downloadTickets = new Map<string, DownloadTicket>();
-      const ticketCleanup = (id: string) => {
-        const t = downloadTickets.get(id);
-        if (t) { clearTimeout(t.timer); downloadTickets.delete(id); }
-      };
-      const ticketTimer = (id: string) => setTimeout(() => {
-        const cur = downloadTickets.get(id);
-        cur?.res?.destroy();
-        ticketCleanup(id);
-      }, 3 * 60 * 1000);
-      // Batch saves fulfill sequentially, so a later ticket's clock must not
-      // run while earlier composites are still working — any save activity
-      // refreshes every pending ticket. Timeout = 3 min of total inactivity.
-      const touchAllTickets = () => {
-        for (const [id, t] of downloadTickets) {
-          clearTimeout(t.timer);
-          t.timer = ticketTimer(id);
-        }
-      };
-      const newTicket = (id: string): DownloadTicket => {
-        const t: DownloadTicket = { timer: ticketTimer(id) };
-        downloadTickets.set(id, t);
-        return t;
-      };
-      const TICKET_RE = /^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/([^/]+))?$/i;
-
       server.middlewares.use('/__download', (req, res) => {
         if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         const m = (req.url ?? '').split('?')[0]!.match(TICKET_RE);
@@ -103,8 +141,9 @@ function imageProxyPlugin(): Plugin {
         const name = decodeURIComponent(rawName || 'image.png').replace(/[/\\"\r\n]/g, '_');
         const t = downloadTickets.get(id!) ?? newTicket(id!);
         if (t.failed) { ticketCleanup(id!); res.writeHead(500); res.end('Render failed'); return; }
+        const ext = name.split('.').pop()?.toLowerCase() ?? 'png';
         res.writeHead(200, {
-          'Content-Type': 'image/png',
+          'Content-Type': DOWNLOAD_MIMES[ext] ?? 'application/octet-stream',
           'Content-Disposition': `attachment; filename="${name}"`,
           'Cache-Control': 'no-store',
         });
@@ -119,25 +158,14 @@ function imageProxyPlugin(): Plugin {
 
       server.middlewares.use('/__download-fulfill', async (req, res) => {
         if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
-        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        if (isCrossOriginRequest(req) && !isLoopbackSiblingOrigin(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         const m = (req.url ?? '').split('?')[0]!.match(TICKET_RE);
         if (!m) { res.writeHead(400); res.end('Bad ticket'); return; }
         const id = m[1]!;
         const chunks: Buffer[] = [];
         for await (const chunk of req) chunks.push(Buffer.from(chunk));
-        const data = Buffer.concat(chunks);
-        touchAllTickets();
-        const t = downloadTickets.get(id) ?? newTicket(id);
-        if (data.length === 0) {
-          // Empty body = the client's render failed; kill the pending download
-          t.failed = true;
-          if (t.res) { t.res.destroy(); ticketCleanup(id); }
-        } else if (t.res) {
-          t.res.end(data);
-          ticketCleanup(id);
-        } else {
-          t.data = data; // download request hasn't arrived yet — hold the bytes
-        }
+        // Empty body = the producer failed; fulfillTicket aborts the download
+        fulfillTicket(id, Buffer.concat(chunks));
         res.writeHead(200); res.end('ok');
       });
 
@@ -948,7 +976,8 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
             // Strip ANSI, collect image URLs/paths from the reply
             const clean = out.replace(/\x1b\[[0-9;]*m/g, '');
             const urls = Array.from(new Set(clean.match(/https?:\/\/[^\s"']+\.(?:png|jpe?g|webp)(?:\?[^\s"']*)?/gi) ?? []));
-            const paths = Array.from(new Set(clean.match(/(?:~\/|\/)[\w.\/-]+\.(?:png|jpe?g|webp)/gi) ?? []))
+            // Unix (/… or ~/…) and Windows (C:\…) absolute paths
+            const paths = Array.from(new Set(clean.match(/(?:~\/|\/|[A-Za-z]:[\\/])[\w.\\\/ -]*?\.(?:png|jpe?g|webp)/gi) ?? []))
               .filter((p) => !tmpFiles.includes(p));
             if (!urls.length && !paths.length) {
               send('error', { error: `Hermes returned no image${code ? ` (exit ${code})` : ''}: ${(clean.trim() || errBuf).slice(0, 300)}` });
@@ -980,6 +1009,308 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
           }
           res.end();
         });
+      });
+
+      // ====== Hermes Grok Imagine Video (text-to-video / image-to-video) ======
+      // The agent's video_generate tool auto-routes: image attached →
+      // grok-imagine-video-1.5 (image-to-video), text only → grok-imagine-video.
+      // LM can't display video, so the result streams into a gesture-safe
+      // download ticket the client claimed at click time.
+      server.middlewares.use('/__ai-generate-hermes-video', async (req, res) => {
+        if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const params = await readJsonBody(req);
+        if (!params) { res.writeHead(400); res.end('Invalid JSON'); return; }
+        const prompt = String(params.prompt || '').trim();
+        const ticket = String(params.ticket || '');
+        if (!prompt || !/^[0-9a-f-]{36}$/i.test(ticket)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing prompt or download ticket' }));
+          return;
+        }
+        // Hermes xai video plugin: duration 1-15s, 480p/720p, 7 aspect ratios
+        const duration = Math.max(1, Math.min(15, Number(params.duration) || 8));
+        const VIDEO_ASPECTS = ['1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3'];
+        const aspect = VIDEO_ASPECTS.includes(String(params.aspectRatio)) ? String(params.aspectRatio) : '16:9';
+        const resolution = ['480p', '720p', '1080p'].includes(String(params.resolution)) ? String(params.resolution) : '720p';
+        const image = params.image as { base64: string; mimeType?: string } | undefined;
+        // Extra style/character references (the xai video plugin takes up to 7)
+        const refImages = ((params.refImages as { base64: string; mimeType?: string }[] | undefined) ?? []).filter((r) => r?.base64).slice(0, 7);
+
+        const send = makeSSE(res);
+        let clientGone = false;
+        let cancelled = false;
+        // Join the global cancel registry BEFORE any temp-file work so a Stop
+        // during prepare can't slip past; a closed client also counts as a
+        // cancel so a late-finishing agent never fulfills an abandoned download
+        const abort = new AbortController();
+        activeAborts.add(abort);
+        let finished = false; // set once the video is delivered (or we've errored out)
+        const cancelAll = () => {
+          if (cancelled || finished) return; // a normal end-of-stream close must not abort a delivered download
+          cancelled = true;
+          fulfillTicket(ticket, null);
+          if (!clientGone) { send('error', { error: 'Cancelled' }); send('done', {}); res.end(); }
+        };
+        abort.signal.addEventListener('abort', cancelAll);
+        res.on('close', () => { clientGone = true; cancelAll(); });
+
+        const os = await import('node:os');
+        const fsMod = await import('node:fs/promises');
+        const pathMod = await import('node:path');
+        const { spawn } = await import('node:child_process');
+
+        // Source + reference images ride as temp files (the plugin converts
+        // local paths to data URIs itself)
+        const tmpFiles: string[] = [];
+        const writeTmp = async (img: { base64: string; mimeType?: string }) => {
+          const ext = /jpe?g/.test(img.mimeType || '') ? 'jpg' : 'png';
+          const f = pathMod.join(os.tmpdir(), `lm-hgv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`);
+          await fsMod.writeFile(f, Buffer.from(img.base64, 'base64'));
+          tmpFiles.push(f);
+          return f;
+        };
+        const tmpFile = image?.base64 ? await writeTmp(image) : null;
+        const refFiles: string[] = [];
+        for (const r of refImages) refFiles.push(await writeTmp(r));
+
+        let instruction = `Call the video_generate tool with prompt: ${prompt}`;
+        instruction += `\nSet duration to ${duration}, aspect_ratio to ${aspect}, and resolution to ${resolution}.`;
+        if (tmpFile) instruction += `\nUse ${tmpFile} as the image_url to animate.`;
+        if (refFiles.length) instruction += `\nUse ${refFiles.join(', ')} as reference_image_urls.`;
+        instruction += '\nWhen it finishes, reply with ONLY the absolute file path(s) or URL(s) of the generated video, one per line, nothing else.';
+
+        // Pin the agent model like the image endpoint — never inherit model.default
+        const agentArgs = ['--yolo', '-z', instruction, '-t', 'video_gen'];
+        const chatModels = await hermesProxyModels().catch(() => null);
+        if (chatModels?.length) agentArgs.push('-m', chatModels[0]!, '--provider', 'xai-oauth');
+
+        if (cancelled) { activeAborts.delete(abort); for (const f of tmpFiles) fsMod.unlink(f).catch(() => {}); return; }
+        const child = spawn('hermes', agentArgs, { stdio: ['ignore', 'pipe', 'pipe'] });
+        const cleanupTmp = () => { for (const f of tmpFiles) fsMod.unlink(f).catch(() => {}); };
+        // The agent can run past the 10-minute idle ticket timeout — keep the
+        // claimed download alive while it works, the same way the Fal poll loop
+        // does, or a slow job's finished MP4 lands in a destroyed ticket.
+        const keepAlive = setInterval(touchAllTickets, 60 * 1000);
+        // Either cancel path (global Stop or client gone) kills the agent
+        abort.signal.addEventListener('abort', () => { clearInterval(keepAlive); child.kill('SIGTERM'); cleanupTmp(); });
+        res.on('close', () => { clearInterval(keepAlive); child.kill('SIGTERM'); cleanupTmp(); });
+        send('progress', { message: `Generating ${duration}s video on Grok (${resolution}, ${aspect}) — typically 1-4 minutes...` });
+        let out = '';
+        let errBuf = '';
+        child.stdout.on('data', (d: Buffer) => { out += d.toString(); });
+        child.stderr.on('data', (d: Buffer) => { errBuf += d.toString(); });
+        child.on('close', async (code: number | null) => {
+          clearInterval(keepAlive);
+          cleanupTmp();
+          if (cancelled) { activeAborts.delete(abort); return; } // already answered by the abort handler
+          try {
+            const clean = out.replace(/\x1b\[[0-9;]*m/g, '');
+            const urls = Array.from(new Set(clean.match(/https?:\/\/[^\s"']+\.(?:mp4|webm|mov)(?:\?[^\s"']*)?/gi) ?? []));
+            // Unix (/… or ~/…) and Windows (C:\…) absolute paths
+            const paths = Array.from(new Set(clean.match(/(?:~\/|\/|[A-Za-z]:[\\/])[\w.\\\/ -]*?\.(?:mp4|webm|mov)/gi) ?? []));
+            let buf: Buffer | null = null;
+            for (const u of urls) {
+              const r = await fetch(u).catch(() => null);
+              if (r?.ok) { buf = Buffer.from(await r.arrayBuffer()); break; }
+            }
+            if (!buf) {
+              for (const p of paths) {
+                const b = await fsMod.readFile(p.replace(/^~/, os.homedir())).catch(() => null);
+                if (b) { buf = b; break; }
+              }
+            }
+            if (!buf) {
+              finished = true;
+              fulfillTicket(ticket, null); // abort the waiting download
+              send('error', { error: `Hermes returned no video${code ? ` (exit ${code})` : ''}: ${(clean.trim() || errBuf).slice(0, 300)}` });
+              send('done', {});
+              activeAborts.delete(abort);
+              res.end();
+              return;
+            }
+            finished = true; // from here a close must NOT abort the delivered download
+            fulfillTicket(ticket, buf); // stream into the click-time download
+            send('progress', { message: `Saving video (${(buf.length / 1048576).toFixed(1)} MB)...` });
+            send('video', { bytes: buf.length });
+            send('done', {});
+          } catch (e) {
+            finished = true;
+            fulfillTicket(ticket, null);
+            send('error', { error: e instanceof Error ? e.message : 'Unknown error' });
+            send('done', {});
+          }
+          activeAborts.delete(abort);
+          res.end();
+        });
+      });
+
+      // ====== Fal.ai video (all families) ======
+      // One generic endpoint driven by a family table (mirrors fal's current
+      // video catalog; specs cross-checked against fal's endpoint docs).
+      // Same queue submit/poll pattern as Layerize; the finished MP4 is
+      // fetched server-side and streamed into the client's download ticket.
+      interface FalVideoFamily {
+        id: string; display: string; tier: 'cheap' | 'premium';
+        textEndpoint: string | null; imageEndpoint: string;
+        /** [min,max] range, explicit list, or null = endpoint default only */
+        durations: [number, number] | number[] | null;
+        durationInt?: boolean; durationSuffix?: string;
+        aspects: string[] | null; resolutions: string[] | null;
+        resolutionAliases?: Record<string, string>;
+        /** i2v endpoints that reject aspect_ratio (derive from the image) */
+        imageDropsAspect?: boolean;
+        imageParamKey?: string;
+        /** i2v endpoints that also take a last-frame image */
+        endImageKey?: string;
+        audio: boolean; negative: boolean; note?: string;
+        /** Typical wall-clock time, shown before the user commits */
+        typical?: string;
+        /** Kling-style `elements` (character/object references, @Element1 in the prompt) */
+        elements?: boolean;
+      }
+      const FAL_VIDEO_FAMILIES: FalVideoFamily[] = [
+        { id: 'pixverse-v6', display: 'Pixverse v6', tier: 'cheap', textEndpoint: 'fal-ai/pixverse/v6/text-to-video', imageEndpoint: 'fal-ai/pixverse/v6/image-to-video', durations: [1, 15], aspects: null, resolutions: ['360p', '540p', '720p', '1080p'], typical: '~30-90s', audio: true, negative: true },
+        { id: 'seedance-2.0-mini', display: 'Seedance 2.0 Mini', tier: 'cheap', textEndpoint: 'bytedance/seedance-2.0/mini/text-to-video', imageEndpoint: 'bytedance/seedance-2.0/mini/image-to-video', durations: [4, 15], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['480p', '720p'], endImageKey: 'end_image_url', typical: '~30-90s', audio: true, negative: false },
+        { id: 'ltx-2.3', display: 'LTX 2.3 (22B)', tier: 'cheap', textEndpoint: 'fal-ai/ltx-2.3-22b/text-to-video', imageEndpoint: 'fal-ai/ltx-2.3-22b/image-to-video', durations: null, aspects: null, resolutions: null, endImageKey: 'end_image_url', typical: '~30-60s', audio: true, negative: true, note: 'Endpoint defaults for duration/aspect/resolution' },
+        { id: 'kling-v3-4k', display: 'Kling v3 4K', tier: 'premium', textEndpoint: 'fal-ai/kling-video/v3/4k/text-to-video', imageEndpoint: 'fal-ai/kling-video/v3/4k/image-to-video', imageParamKey: 'start_image_url', imageDropsAspect: true, durations: [3, 15], aspects: ['16:9', '9:16', '1:1'], resolutions: null, endImageKey: 'end_image_url', typical: '~2-5 min', elements: true, audio: true, negative: true, note: '4K output (fixed)' },
+        { id: 'veo3.1', display: 'Veo 3.1', tier: 'premium', textEndpoint: 'fal-ai/veo3.1', imageEndpoint: 'fal-ai/veo3.1/image-to-video', durations: [4, 6, 8], durationSuffix: 's', aspects: ['16:9', '9:16'], resolutions: ['720p', '1080p', '4k'], typical: '~2-5 min', audio: true, negative: true },
+        { id: 'seedance-2.0', display: 'Seedance 2.0', tier: 'premium', textEndpoint: 'bytedance/seedance-2.0/text-to-video', imageEndpoint: 'bytedance/seedance-2.0/image-to-video', durations: [4, 15], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['480p', '720p', '1080p'], endImageKey: 'end_image_url', typical: '~1-3 min', audio: true, negative: false },
+        { id: 'seedance-2.5', display: 'Seedance 2.5', tier: 'premium', textEndpoint: 'bytedance/seedance-2.5/text-to-video', imageEndpoint: 'bytedance/seedance-2.5/image-to-video', imageDropsAspect: true, durations: [4, 30], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['480p', '720p'], endImageKey: 'end_image_url', typical: '~1-3 min', audio: true, negative: false },
+        { id: 'minimax-h3', display: 'MiniMax H3', tier: 'premium', textEndpoint: 'minimax/h3/text-to-video', imageEndpoint: 'minimax/h3/image-to-video', durationInt: true, imageDropsAspect: true, durations: [5, 15], aspects: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['768P', '2K', '4K'], resolutionAliases: { '480p': '768P', '540p': '768P', '720p': '768P', '768p': '768P', '1080p': '2K', '2k': '2K', '4k': '4K' }, endImageKey: 'end_image_url', typical: '~2-4 min', audio: false, negative: false, note: 'Audio always on' },
+        { id: 'flux-3', display: 'FLUX 3', tier: 'premium', textEndpoint: 'blackforestlabs/flux-3/text-to-video', imageEndpoint: 'blackforestlabs/flux-3/image-to-video', durationInt: true, durations: [5, 20], aspects: ['21:9', '2:1', '16:9', '4:3', '1:1', '3:4', '9:16'], resolutions: ['720p', '1080p'], typical: '~1-3 min', audio: true, negative: false },
+        { id: 'grok-imagine-1.5', display: 'Grok Imagine 1.5', tier: 'premium', textEndpoint: 'xai/grok-imagine-video/v1.5/text-to-video', imageEndpoint: 'xai/grok-imagine-video/v1.5/image-to-video', durationInt: true, imageDropsAspect: true, durations: [1, 15], aspects: ['16:9', '4:3', '3:2', '1:1', '2:3', '3:4', '9:16'], resolutions: ['480p', '720p', '1080p'], typical: '~1-4 min', audio: false, negative: false, note: 'Audio always on' },
+        { id: 'gemini-omni-flash', display: 'Gemini Omni Flash', tier: 'premium', textEndpoint: null, imageEndpoint: 'google/gemini-omni-flash/image-to-video', durationInt: true, durations: [3, 10], aspects: ['16:9', '9:16'], resolutions: null, typical: '~1-2 min', audio: false, negative: false, note: 'Image-to-video only; audio always on' },
+        { id: 'happy-horse', display: 'Happy Horse 1.0', tier: 'premium', textEndpoint: 'alibaba/happy-horse/text-to-video', imageEndpoint: 'alibaba/happy-horse/image-to-video', durations: null, aspects: null, resolutions: null, typical: '~1-3 min', audio: false, negative: false, note: 'New model, sparse docs — endpoint defaults' },
+      ];
+      server.middlewares.use('/__fal-video-models', (req, res) => {
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ families: FAL_VIDEO_FAMILIES }));
+      });
+
+      server.middlewares.use('/__ai-generate-fal-video', async (req, res) => {
+        if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
+        if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
+        const params = await readJsonBody(req);
+        if (!params) { res.writeHead(400); res.end('Invalid JSON'); return; }
+        const apiKey = ((params.apiKey as string) || '').trim();
+        const prompt = String(params.prompt || '').trim();
+        const ticket = String(params.ticket || '');
+        const fam = FAL_VIDEO_FAMILIES.find((f) => f.id === params.model);
+        const image = params.image as { base64: string; mimeType?: string } | undefined;
+        const endImage = params.endImage as { base64: string; mimeType?: string } | undefined;
+        const refImages = ((params.refImages as { base64: string; mimeType?: string }[] | undefined) ?? []).filter((r) => r?.base64);
+        if (!apiKey || !prompt || !fam || !/^[0-9a-f-]{36}$/i.test(ticket)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing Fal.ai API key, prompt, model, or download ticket' }));
+          return;
+        }
+        const endpoint = image?.base64 ? fam.imageEndpoint : fam.textEndpoint;
+        if (!endpoint) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: `${fam.display} is image-to-video only — select an image first` }));
+          return;
+        }
+
+        // Build the payload per family (mirrors fal's per-endpoint schemas)
+        const body: Record<string, unknown> = { prompt };
+        if (image?.base64) body[fam.imageParamKey ?? 'image_url'] = `data:${image.mimeType || 'image/png'};base64,${image.base64}`;
+        // Start + end frame (families that support it): the video transitions
+        // from the start image to the end image
+        if (image?.base64 && endImage?.base64 && fam.endImageKey) body[fam.endImageKey] = `data:${endImage.mimeType || 'image/png'};base64,${endImage.base64}`;
+        // Kling elements: each extra image is a character/object the prompt
+        // can address as @Element1, @Element2, ...
+        if (fam.elements && refImages.length) {
+          body.elements = refImages.map((r) => ({ frontal_image_url: `data:${r.mimeType || 'image/png'};base64,${r.base64}` }));
+        }
+        const reqDur = Number(params.duration);
+        if (fam.durations && Number.isFinite(reqDur)) {
+          let d = Math.round(reqDur);
+          if (fam.durations.length === 2 && (fam.durations[1]! - fam.durations[0]!) > 1 && !(fam.id === 'veo3.1')) {
+            d = Math.max(fam.durations[0]!, Math.min(fam.durations[1]!, d));
+          } else {
+            d = (fam.durations as number[]).reduce((best, v) => Math.abs(v - d) < Math.abs(best - d) ? v : best, fam.durations[0]!);
+          }
+          body.duration = fam.durationInt ? d : `${d}${fam.durationSuffix ?? ''}`;
+        }
+        const reqAspect = String(params.aspectRatio || '');
+        if (fam.aspects && fam.aspects.includes(reqAspect) && !(image?.base64 && fam.imageDropsAspect)) body.aspect_ratio = reqAspect;
+        if (fam.resolutions) {
+          const r = String(params.resolution || '').toLowerCase();
+          const resolved = fam.resolutionAliases?.[r] ?? params.resolution;
+          if (typeof resolved === 'string' && fam.resolutions.includes(resolved)) body.resolution = resolved;
+        }
+        if (fam.audio && typeof params.audio === 'boolean') body.generate_audio = params.audio;
+        if (fam.negative && typeof params.negativePrompt === 'string' && params.negativePrompt.trim()) body.negative_prompt = params.negativePrompt.trim();
+
+        const send = makeSSE(res);
+        let clientGone = false;
+        res.on('close', () => { clientGone = true; });
+        const abort = new AbortController();
+        activeAborts.add(abort);
+        res.on('close', () => abort.abort());
+        try {
+          send('progress', { message: `Submitting to ${fam.display} via Fal...` });
+          const submitResp = await fetch(`https://queue.fal.run/${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Key ${apiKey}` },
+            body: JSON.stringify(body),
+            signal: abort.signal,
+          });
+          if (!submitResp.ok) throw new Error(`Fal.ai submit ${submitResp.status}: ${await submitResp.text()}`);
+          const submitJson = await submitResp.json();
+          const requestId = submitJson.request_id as string;
+          if (!requestId) throw new Error('Fal.ai: no request_id in response');
+          // Status/result live at the app root (owner/app — first two segments)
+          const appRoot = endpoint.split('/').slice(0, 2).join('/');
+          const statusUrl = `https://queue.fal.run/${appRoot}/requests/${requestId}/status`;
+          const resultUrl = `https://queue.fal.run/${appRoot}/requests/${requestId}`;
+          let completed = false;
+          let lastStatus = '';
+          for (let i = 0; i < 240 && !clientGone; i++) {
+            await new Promise((r) => setTimeout(r, 3000));
+            // The poll can run 12 minutes but idle tickets die at 10 — keep
+            // the claimed download alive while the job is still cooking
+            touchAllTickets();
+            const statusResp = await fetch(statusUrl, { headers: { 'Authorization': `Key ${apiKey}` }, signal: abort.signal });
+            if (!statusResp.ok) continue;
+            const statusJson = await statusResp.json();
+            if (statusJson.status !== lastStatus) {
+              lastStatus = statusJson.status;
+              send('progress', { message: `${fam.display}: ${String(statusJson.status).toLowerCase().replace(/_/g, ' ')}...` });
+            }
+            if (statusJson.status === 'COMPLETED') { completed = true; break; }
+            if (statusJson.status === 'FAILED' || statusJson.status === 'ERROR') {
+              throw new Error(`Fal.ai video failed: ${JSON.stringify(statusJson).slice(0, 300)}`);
+            }
+          }
+          if (clientGone) { fulfillTicket(ticket, null); return; }
+          if (!completed) throw new Error('Fal.ai video timed out after 12 minutes');
+          const resultResp = await fetch(resultUrl, { headers: { 'Authorization': `Key ${apiKey}` }, signal: abort.signal });
+          if (!resultResp.ok) throw new Error(`Fal.ai result ${resultResp.status}: ${await resultResp.text()}`);
+          const resultJson = await resultResp.json();
+          const videoUrl = (resultJson?.video?.url ?? resultJson?.videos?.[0]?.url) as string | undefined;
+          if (!videoUrl) throw new Error('Fal.ai: no video URL in result');
+          send('progress', { message: 'Downloading video from Fal...' });
+          const videoResp = await fetch(videoUrl, { signal: abort.signal });
+          if (!videoResp.ok) throw new Error(`Fal.ai video download ${videoResp.status}`);
+          const buf = Buffer.from(await videoResp.arrayBuffer());
+          fulfillTicket(ticket, buf);
+          send('progress', { message: `Saving video (${(buf.length / 1048576).toFixed(1)} MB)...` });
+          send('video', { bytes: buf.length });
+          send('done', {});
+        } catch (e) {
+          fulfillTicket(ticket, null);
+          if (!clientGone) {
+            console.error('[ai-direct] Fal video error:', e);
+            send('error', { error: e instanceof Error ? e.message : 'Unknown error' });
+            send('done', {});
+          }
+        } finally {
+          activeAborts.delete(abort);
+        }
+        res.end();
       });
 
       // Ensure the hermes proxy is running (spawn detached if not) — Grok chat
@@ -1104,11 +1435,16 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
         // catalog is a hard allowlist that silently substitutes unknown
         // models, so the 2.0 button only shows when it would actually work
         let hermesGrok2 = false;
+        // Same detection story for 1080p video — hermes clamps unknown
+        // resolutions, so the button only shows when it would actually apply
+        let hermesVideo1080 = false;
         try {
           const fsMod = await import('node:fs/promises');
           const os = await import('node:os');
           const plugin = await fsMod.readFile(`${os.homedir()}/.hermes/hermes-agent/plugins/image_gen/xai/__init__.py`, 'utf8').catch(() => '');
           hermesGrok2 = plugin.includes('"grok-imagine-image-2.0"');
+          const videoPlugin = await fsMod.readFile(`${os.homedir()}/.hermes/hermes-agent/plugins/video_gen/xai/__init__.py`, 'utf8').catch(() => '');
+          hermesVideo1080 = videoPlugin.includes('"1080p"');
           const cfg = await fsMod.readFile(`${os.homedir()}/.hermes/config.yaml`, 'utf8');
           // Match provider inside the top-level image_gen block only
           const block = cfg.match(/^image_gen:\n((?:[ \t]+.*\n?)*)/m)?.[1] ?? '';
@@ -1131,6 +1467,7 @@ return "v=" + stat("ValidationTask") + " g=" + stat("GenerationTask") + " dl=" +
             xai: hermesXaiLogin,
             codex: hermesCodexLogin,
             grok2: hermesGrok2,
+            video1080: hermesVideo1080,
           },
           claude: { up: claudeCliCache },
         }));
