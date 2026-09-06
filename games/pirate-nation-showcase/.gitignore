@@ -5,4 +5,5 @@ playwright-report
 .env
 game.config.*.json
 .rundot/session/
-.rundot-docs
+rundot/docs/
+.rundot-docs/

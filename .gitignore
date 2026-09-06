@@ -152,7 +152,8 @@ vite.config.ts.timestamp-*
 game.config.json
 game.config.*.json
 # Generated SDK docs copy
-.rundot-docs/
+rundot/docs/
+.rundot-docs//
 # Dev-server temp entry written during `npm run dev`
 .rundot-server-entry.tmp.ts
 

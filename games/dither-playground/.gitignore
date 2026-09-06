@@ -3,4 +3,5 @@ dist
 .env
 game.config.playground.json
 .rundot/session/
-.rundot-docs
+rundot/docs/
+.rundot-docs/
