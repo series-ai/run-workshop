@@ -7,7 +7,8 @@ dist-ssr/
 .vscode/
 .idea/
 coverage/
-.rundot-docs
+rundot/docs/
+.rundot-docs/
 export/
 .runstudio/conversations/
 .runstudio/chat-index.json
