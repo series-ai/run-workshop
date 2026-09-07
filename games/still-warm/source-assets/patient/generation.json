@@ -1,0 +1,11 @@
+{
+  "referenceKey": "patient-reference-v1.png",
+  "provider": "hunyuan3d-v3.1-pro",
+  "quality": "standard",
+  "generationId": "6eeefe1a-e495-4bc0-906f-b9bfd781cd07",
+  "seed": 1175116700,
+  "modelUrl": "https://storage.googleapis.com/venus-app-a037a.firebasestorage.app/threedgen/bfPHLM5hhYbVKwGSEMQB/6eeefe1a-e495-4bc0-906f-b9bfd781cd07/model.compressed.glb",
+  "rigId": "5da74b5c-1f6d-4b83-88f2-19b4308c1dfb",
+  "height": 1.8,
+  "creditsBefore": 260950
+}

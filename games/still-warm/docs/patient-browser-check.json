@@ -1,0 +1,137 @@
+{
+  "pinned": {
+    "touching": false,
+    "contactDistance": 1.1454016138958734,
+    "phase": "playing",
+    "stage": "pinned",
+    "pending": false,
+    "paused": false,
+    "lantern": true,
+    "parts": {
+      "WoundCovered": true,
+      "WoundOpen": false,
+      "EmbeddedShard": false,
+      "WoundClosed": false,
+      "WoundDressed": false,
+      "LegBrace": true
+    },
+    "crush": 1,
+    "beamY": -0.6092769999999998
+  },
+  "cancelled": {
+    "touching": false,
+    "contactDistance": 0.46487483803353963,
+    "phase": "playing",
+    "stage": "pinned",
+    "pending": false,
+    "paused": true,
+    "lantern": true,
+    "parts": {
+      "WoundCovered": true,
+      "WoundOpen": false,
+      "EmbeddedShard": false,
+      "WoundClosed": false,
+      "WoundDressed": false,
+      "LegBrace": true
+    },
+    "crush": 0.8942442873535481,
+    "beamY": -0.5245105518674127
+  },
+  "reset": {
+    "touching": false,
+    "contactDistance": 0.8662517984142647,
+    "phase": "playing",
+    "stage": "pinned",
+    "pending": false,
+    "paused": false,
+    "lantern": true,
+    "parts": {
+      "WoundCovered": true,
+      "WoundOpen": false,
+      "EmbeddedShard": false,
+      "WoundClosed": false,
+      "WoundDressed": false,
+      "LegBrace": true
+    },
+    "crush": 0.9997110114363597,
+    "beamY": -0.6092551510015309
+  },
+  "exposed": {
+    "touching": false,
+    "contactDistance": 0.8181163193599112,
+    "phase": "playing",
+    "stage": "exposed",
+    "pending": false,
+    "paused": false,
+    "lantern": true,
+    "parts": {
+      "WoundCovered": false,
+      "WoundOpen": true,
+      "EmbeddedShard": true,
+      "WoundClosed": false,
+      "WoundDressed": false,
+      "LegBrace": true
+    },
+    "crush": 1.2675836733396153e-12,
+    "beamY": -0.759999999999423
+  },
+  "extracted": {
+    "touching": false,
+    "contactDistance": 0.862654460887124,
+    "phase": "playing",
+    "stage": "extracted",
+    "pending": false,
+    "paused": false,
+    "lantern": true,
+    "parts": {
+      "WoundCovered": false,
+      "WoundOpen": true,
+      "EmbeddedShard": false,
+      "WoundClosed": false,
+      "WoundDressed": false,
+      "LegBrace": true
+    },
+    "crush": 3.9419095569784815e-42,
+    "beamY": -0.76
+  },
+  "closed": {
+    "touching": false,
+    "contactDistance": 0.8482711451650156,
+    "phase": "playing",
+    "stage": "closed",
+    "pending": false,
+    "paused": false,
+    "lantern": true,
+    "parts": {
+      "WoundCovered": false,
+      "WoundOpen": false,
+      "EmbeddedShard": false,
+      "WoundClosed": true,
+      "WoundDressed": false,
+      "LegBrace": true
+    },
+    "crush": 6.506509535197342e-73,
+    "beamY": -0.76
+  },
+  "dressed": {
+    "touching": false,
+    "contactDistance": 0.8430264665817722,
+    "phase": "playing",
+    "stage": "dressed",
+    "pending": false,
+    "paused": false,
+    "lantern": true,
+    "parts": {
+      "WoundCovered": false,
+      "WoundOpen": false,
+      "EmbeddedShard": false,
+      "WoundClosed": false,
+      "WoundDressed": true,
+      "LegBrace": true
+    },
+    "crush": 5.520173860681694e-86,
+    "beamY": -0.76
+  },
+  "closestContact": 0.013308619094205314,
+  "errors": []
+}

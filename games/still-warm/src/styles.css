@@ -1,0 +1,516 @@
+:root {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #bdc0b7;
+  background: #050509;
+  color-scheme: dark;
+  font-synthesis: none;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  overflow: hidden;
+}
+button,
+input {
+  font: inherit;
+}
+button {
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+button:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 1px solid #a6a9a3;
+  outline-offset: 5px;
+}
+button:hover {
+  color: #ecebdd;
+}
+h1,
+h2,
+p {
+  margin: 0;
+}
+button,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+.game-shell {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  min-height: 400px;
+  overflow: hidden;
+  background: #050509;
+}
+.scene-wrap {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+.scene-wrap canvas {
+  display: block;
+}
+.vignette,
+.screen-grain,
+.blood-loss {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.vignette {
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    transparent 32%,
+    #03030850 76%,
+    #030308dc 100%
+  );
+}
+.screen-grain {
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
+}
+.blood-loss {
+  box-shadow: inset 0 0 160px #230817;
+  opacity: calc(var(--blood-loss) * 1.8 + var(--pain) * 0.22);
+  background: radial-gradient(ellipse, transparent 30%, #020207ad);
+  transition: opacity 2s;
+}
+.at-title .vignette {
+  background: #030308b0;
+}
+.intro {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, 90%);
+  text-align: center;
+}
+.eyebrow {
+  font:
+    10px "Courier New",
+    monospace;
+  letter-spacing: 0.28em;
+  color: #85828d;
+}
+.intro h1 {
+  font-size: clamp(55px, 8vw, 105px);
+  font-weight: normal;
+  letter-spacing: -0.065em;
+  line-height: 1.2;
+  margin: 21px 0;
+}
+.premise {
+  font-size: 17px;
+  font-style: italic;
+  color: #8e8b93;
+}
+.begin {
+  display: block;
+  margin: 50px auto 13px;
+  padding: 14px 25px;
+  border-bottom: 1px solid #8c858752;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+}
+.quiet {
+  font:
+    10px "Courier New",
+    monospace;
+  opacity: 0.55;
+  padding: 12px;
+}
+.pause-button {
+  position: absolute;
+  right: 20px;
+  top: 18px;
+  font:
+    13px "Courier New",
+    monospace;
+  padding: 12px;
+  opacity: 0.4;
+}
+.pause-button:hover {
+  opacity: 1;
+}
+.inner-voice {
+  position: absolute;
+  top: 70%;
+  left: 50%;
+  width: min(550px, 86%);
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 17px;
+  font-style: italic;
+  line-height: 1.6;
+  color: #b0aeb4;
+  text-shadow: 0 2px 15px #000;
+  pointer-events: none;
+  animation: thought-in 2s both;
+}
+.creature-speech {
+  position: absolute;
+  bottom: 13%;
+  left: 50%;
+  width: min(670px, 86%);
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 20px;
+  line-height: 1.5;
+  color: #ccd0c5;
+  text-shadow: 0 2px 12px #000;
+  pointer-events: none;
+}
+.creature-speech p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+.controls {
+  position: absolute;
+  bottom: 23px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+  font:
+    10px "Courier New",
+    monospace;
+  color: #8d8b98;
+  transition: opacity 3s;
+}
+.controls button {
+  font: inherit;
+  padding: 10px 4px;
+}
+.controls.subdued {
+  opacity: 0.4;
+}
+.controls:hover,
+.controls:focus-within {
+  opacity: 1;
+}
+.controls .listening {
+  color: #d1c2c5;
+  opacity: 1;
+}
+.stop-button {
+  position: absolute;
+  right: 22px;
+  bottom: 26px;
+  font:
+    11px "Courier New",
+    monospace;
+  color: #af7e8d;
+  padding: 10px;
+}
+.command-form {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(630px, 88%);
+  display: flex;
+  border-bottom: 1px solid #78717b80;
+  background: #09090edc;
+}
+.command-form input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: #d2d3c8;
+  padding: 16px;
+  font-size: 16px;
+  outline: 0;
+}
+.command-form input::placeholder {
+  color: #686371;
+  font-style: italic;
+}
+.command-form button {
+  width: 48px;
+  font-size: 21px;
+}
+.transcript,
+.voice-error {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  width: 80%;
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 13px;
+  color: #b8a8b3;
+}
+.voice-error {
+  font:
+    11px "Courier New",
+    monospace;
+  line-height: 1.6;
+}
+.modal-shade {
+  position: absolute;
+  inset: 0;
+  background: #04040ad9;
+  backdrop-filter: blur(9px);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  z-index: 20;
+}
+.modal {
+  width: min(430px, 100%);
+  text-align: center;
+  max-height: 90dvh;
+  overflow: auto;
+  padding: 22px;
+}
+.modal h2 {
+  font-size: 40px;
+  font-weight: normal;
+  letter-spacing: -0.04em;
+  margin-bottom: 24px;
+}
+.modal > p {
+  color: #8e8a97;
+  font-size: 15px;
+  line-height: 1.65;
+  margin: 16px 0;
+}
+.modal button {
+  display: block;
+  margin: 4px auto;
+  padding: 12px 15px;
+  font-size: 14px;
+}
+.modal button:first-of-type {
+  color: #e0dfd0;
+}
+.modal .small {
+  font:
+    10px/1.8 "Courier New",
+    monospace;
+  color: #716c7b;
+  margin-top: 26px;
+}
+.modal details {
+  border-top: 1px solid #49404c50;
+  margin: 15px 0;
+  padding-top: 12px;
+  font-size: 12px;
+  color: #8e8395;
+}
+.modal summary {
+  cursor: pointer;
+  padding: 8px;
+}
+.modal details button {
+  font-size: 12px;
+}
+.blackout-cover {
+  position: absolute;
+  inset: 0;
+  background: #010103;
+  display: grid;
+  place-items: center;
+  z-index: 15;
+  animation: darken 1.5s both;
+}
+.blackout-cover p {
+  font-size: 16px;
+  font-style: italic;
+  color: #44404c;
+}
+.blackout-cover button {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  color: #73616b;
+  font-size: 12px;
+  padding: 12px;
+}
+.hallucination {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  color: #b8a0af;
+  opacity: calc((var(--sedation) - 0.3) * 0.2);
+  font-style: italic;
+  font-size: 37px;
+  filter: blur(3px);
+  transform: rotate(-5deg);
+  animation: drift 10s infinite;
+}
+.ending {
+  background: #030308ec;
+}
+.ending h2 {
+  font-size: 60px;
+}
+.reduce-motion * {
+  animation: none !important;
+  transition: none !important;
+}
+@keyframes thought-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes darken {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes drift {
+  50% {
+    transform: translate(15px, -10px) rotate(3deg);
+  }
+}
+@media (max-width: 600px) {
+  .intro h1 {
+    font-size: 65px;
+  }
+  .premise {
+    font-size: 15px;
+  }
+  .inner-voice {
+    font-size: 15px;
+    top: 65%;
+  }
+  .creature-speech {
+    font-size: 17px;
+    bottom: 17%;
+  }
+  .controls {
+    bottom: 22px;
+    gap: 7px;
+    font-size: 9px;
+  }
+  .controls.subdued {
+    opacity: 0.6;
+  }
+  .stop-button {
+    bottom: 64px;
+    right: 15px;
+    font-size: 11px;
+  }
+  .command-form {
+    bottom: 22px;
+  }
+  .pause-button {
+    right: 10px;
+    top: 10px;
+  }
+  .modal-shade {
+    padding: 15px;
+  }
+  .modal h2 {
+    font-size: 34px;
+  }
+  .hallucination {
+    font-size: 25px;
+  }
+}
+
+/* The eyelids reveal the unlit room. Narration remains separate from speech. */
+.awakening {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+}
+.eyelid {
+  position: absolute;
+  left: -5%;
+  width: 110%;
+  height: calc(51% * (1 - var(--eye-open)));
+  background: #000;
+  box-shadow: 0 0 35px 24px #000;
+}
+.eyelid.upper {
+  top: 0;
+  border-radius: 0 0 45% 45%;
+}
+.eyelid.lower {
+  bottom: 0;
+  border-radius: 45% 45% 0 0;
+}
+.opening-story {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  padding: 32px;
+}
+.opening-narration {
+  max-width: 620px;
+  color: #a7a295;
+  font:
+    italic clamp(17px, 2vw, 23px)/1.85 Georgia,
+    serif;
+  text-align: center;
+  white-space: pre-line;
+  animation: story-appear 1.3s ease both;
+}
+.opening-son {
+  color: #d4cbb6;
+  font:
+    600 clamp(23px, 3vw, 36px)/1.5 "Courier New",
+    monospace;
+  letter-spacing: 0.075em;
+  text-align: center;
+  animation: story-appear 0.5s ease both;
+}
+.creature-speech {
+  font-family: "Courier New", monospace;
+  font-weight: 600;
+  letter-spacing: 0.045em;
+}
+.at-title .intro {
+  z-index: 20;
+}
+@keyframes story-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .opening-narration,
+  .opening-son {
+    animation: none;
+  }
+}
+.awakening::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: calc(1 - var(--eye-open) * 4);
+}

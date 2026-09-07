@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
+<title>Still Warm — Player body</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#090b09;color:#c9c6af;font:17px/1.6 Georgia,serif}main{max-width:1100px;margin:auto;padding:44px 24px}h1{font-weight:400;font-size:clamp(36px,6vw,64px);line-height:1.1}h2{font-weight:400;margin-top:42px}p{max-width:760px}a{color:#e0d8b6}figure{margin:25px 0 36px}img{display:block;width:100%;border:1px solid #33382d}figcaption{color:#9da58f;padding:10px 0;font-size:15px}.label{font:12px/1.5 monospace;letter-spacing:.12em;text-transform:uppercase;color:#9da58f}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.grid figure{margin-top:0}li{margin:8px 0}code{font-size:14px}@media(max-width:700px){.grid{grid-template-columns:1fr}}</style>
+<main><p class="label">Still Warm · Updated playable · 6 September 2026</p>
+<h1>The player is on the floor.</h1>
+<p>The playable now uses a textured patient based on the approved mock: an open linen shirt, bare abdomen, brown trousers, and natural hands. The body and camera sit at floor level. The operating table is removed.</p>
+<figure><img src="patient-pinned.png" alt="The patient trapped beneath the heavy support"><figcaption>The lantern reveals the support across the player's chest.</figcaption></figure>
+<h2>A body the game can change</h2>
+<p>The chest has separate breathing and compression shapes. Arms and hands have local joint pivots. The wound, embedded fragment, stitches, dressing, and brace remain separate objects. The son must remove the support before treatment can begin.</p>
+<figure><img src="patient-exposed.png" alt="The open shirt and abdomen after the support is removed"><figcaption>The support is clear. The player directs the son through treatment.</figcaption></figure>
+<div class="grid"><figure><img src="patient-closed.png" alt="Closed wound with stitches"><figcaption>Closure follows extraction and preparation of the suture.</figcaption></figure><figure><img src="patient-dressed.png" alt="The dressing covers the closed wound"><figcaption>The dressing covers the closed wound.</figcaption></figure></div>
+<h2>Checked in the playable</h2><ul><li>121 tests and the production build pass.</li><li>The browser sequence passed from trapped body through dressing.</li><li>Cancelling the lift restored the beam and chest to their trapped pose.</li><li>The son's hand came within 1.34 cm of the wound during treatment.</li><li>No browser errors occurred in the final check.</li></ul>
+<p>The mesh and rig came from RUN. Blender sets the pose, joint pivots, compression shapes, and treatment opening. The shipped body asset is about 2.2 MB.</p>
+<p>The voice is unchanged in this pass. The low, wordless sound remains a starting point and still needs a less electronic character.</p>
+<p><a href="../source-assets/patient/patient.blend">Editable Blender body</a> · <a href="../scripts/prepare-patient.py">Rebuild script</a> · <a href="VERIFICATION.md">Verification record</a></p>
+</main></html>

@@ -1,0 +1,3 @@
+Draco decoder files copied from Three.js 0.170.0, examples/jsm/libs/draco.
+Draco copyright Google. Licensed under Apache-2.0. See LICENSE.
+Three.js copyright its authors. See THREE-LICENSE.txt.

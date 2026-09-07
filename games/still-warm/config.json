@@ -1,0 +1,10 @@
+{
+  "appData": {
+    "id": "still-warm",
+    "name": "Still Warm",
+    "description": "Talk a reanimated corpse through surgery on your own body.",
+    "versionTag": "0.1.0",
+    "thumbnailUrl": "",
+    "userState": {}
+  }
+}

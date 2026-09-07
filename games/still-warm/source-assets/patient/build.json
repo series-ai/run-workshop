@@ -1,0 +1,28 @@
+{
+  "asset": "public/assets/patient.glb",
+  "bytes": 2281980,
+  "parts": [
+    "Torso",
+    "LeftArm",
+    "LeftHand",
+    "LeftLeg",
+    "RightArm",
+    "RightHand",
+    "RightLeg"
+  ],
+  "wound": [
+    0,
+    -0.6797082166671753,
+    0.08
+  ],
+  "beam": [
+    0,
+    -0.6092769241333008,
+    -0.1
+  ],
+  "source": "RUN rig posed and partitioned in Blender",
+  "morphs": [
+    "Breath",
+    "Crushed"
+  ]
+}

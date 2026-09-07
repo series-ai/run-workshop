@@ -1,0 +1,72 @@
+[
+  {
+    "file": "anim_111.glb",
+    "clipName": "Armature|Injured_Walk|baselayer",
+    "tracks": 72,
+    "bones": 24,
+    "sha256": "1eefb358528c7238152da7c0716a8846823e0beef25b658f7a9a11e61708d8e9"
+  },
+  {
+    "file": "anim_112.glb",
+    "clipName": "Armature|Monster_Walk|baselayer",
+    "tracks": 72,
+    "bones": 24,
+    "sha256": "c8643fb6003ba6d5d12b846143d0625ed833b7f110d115d2fff762c06632954b"
+  },
+  {
+    "file": "anim_119.glb",
+    "clipName": "Armature|Slow_Orc_Walk|baselayer",
+    "tracks": 72,
+    "bones": 24,
+    "sha256": "11ded25b2507343b258a07ebd826a72c4887dbf13e1bef7317b851e3fee5556c"
+  },
+  {
+    "file": "anim_262.glb",
+    "clipName": "Armature|Crouch_and_Push_Forward|baselayer",
+    "tracks": 72,
+    "bones": 24,
+    "sha256": "22e70e987a37f318fe33cb093a70cea6695b9dd29ba7bf0eff0d0038172461e8"
+  },
+  {
+    "file": "anim_276.glb",
+    "clipName": "Armature|Male_Bend_Over_Pick_Up|baselayer",
+    "tracks": 72,
+    "bones": 24,
+    "sha256": "8a3a7ff36e58c9549a5604177a47c24c637210b5b02abff15cb478a397eaac02"
+  },
+  {
+    "file": "anim_284.glb",
+    "clipName": "Armature|Collect_Object|baselayer",
+    "tracks": 72,
+    "bones": 24,
+    "sha256": "21011ee43f681c0239f8cb93332ea679d49d8b1bd0d6a8fd4f2417ae43bd05a9"
+  },
+  {
+    "file": "anim_365.glb",
+    "clipName": "Armature|Kneel_on_One_Knee_and_Stand|baselayer",
+    "tracks": 72,
+    "bones": 24,
+    "sha256": "7fb3b1cb3fb4fad160ef203a549671bed3849263d01eccb1def71cd797436f7a"
+  },
+  {
+    "file": "anim_386.glb",
+    "clipName": "Armature|Zombie_Scream|baselayer",
+    "tracks": 72,
+    "bones": 24,
+    "sha256": "cb383346d5e43488854cefa1662a7fe0db0611a5b12357d2fa55d1cfca1f0976"
+  },
+  {
+    "file": "anim_576.glb",
+    "clipName": "Armature|Idle_Turn_Left|baselayer",
+    "tracks": 72,
+    "bones": 24,
+    "sha256": "4b1593ae74f629ff1832ea1ae6d25260a7086de909e2462751bbb76432765f9b"
+  },
+  {
+    "file": "anim_586.glb",
+    "clipName": "Armature|Idle_Turn_Right|baselayer",
+    "tracks": 72,
+    "bones": 24,
+    "sha256": "1b9f78bda29fe55fcc271ab31062990adf83075293cc351936929486e2b492cb"
+  }
+]

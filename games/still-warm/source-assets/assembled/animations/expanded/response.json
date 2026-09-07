@@ -1,0 +1,46 @@
+{
+  "clips": [
+    {
+      "animation": "112",
+      "modelUrl": "https://storage.googleapis.com/venus-app-a037a.firebasestorage.app/threedgen/bfPHLM5hhYbVKwGSEMQB/f6b98841-3bba-4c4b-8dfa-121c94335174/anim_112.glb"
+    },
+    {
+      "animation": "119",
+      "modelUrl": "https://storage.googleapis.com/venus-app-a037a.firebasestorage.app/threedgen/bfPHLM5hhYbVKwGSEMQB/260a01ed-1940-46f1-87ab-6054b8bcc88b/anim_119.glb"
+    },
+    {
+      "animation": "111",
+      "modelUrl": "https://storage.googleapis.com/venus-app-a037a.firebasestorage.app/threedgen/bfPHLM5hhYbVKwGSEMQB/c55b1447-c1ba-4670-9861-3f89f78e93a7/anim_111.glb"
+    },
+    {
+      "animation": "276",
+      "modelUrl": "https://storage.googleapis.com/venus-app-a037a.firebasestorage.app/threedgen/bfPHLM5hhYbVKwGSEMQB/21619413-aa2b-4f1c-9463-4b64748c3049/anim_276.glb"
+    },
+    {
+      "animation": "284",
+      "modelUrl": "https://storage.googleapis.com/venus-app-a037a.firebasestorage.app/threedgen/bfPHLM5hhYbVKwGSEMQB/98fb506f-dc34-4d72-a2ae-5248a6ab4352/anim_284.glb"
+    },
+    {
+      "animation": "262",
+      "modelUrl": "https://storage.googleapis.com/venus-app-a037a.firebasestorage.app/threedgen/bfPHLM5hhYbVKwGSEMQB/46276735-73ee-4d7e-98a7-fa73eba117e4/anim_262.glb"
+    },
+    {
+      "animation": "365",
+      "modelUrl": "https://storage.googleapis.com/venus-app-a037a.firebasestorage.app/threedgen/bfPHLM5hhYbVKwGSEMQB/0652537d-0e66-4d37-a206-3cc3ee489753/anim_365.glb"
+    },
+    {
+      "animation": "386",
+      "modelUrl": "https://storage.googleapis.com/venus-app-a037a.firebasestorage.app/threedgen/bfPHLM5hhYbVKwGSEMQB/790292a2-8be5-4ca5-a07a-ac8b2757d5a4/anim_386.glb"
+    },
+    {
+      "animation": "576",
+      "modelUrl": "https://storage.googleapis.com/venus-app-a037a.firebasestorage.app/threedgen/bfPHLM5hhYbVKwGSEMQB/8698cd5c-2a98-4fb0-aeb0-04805f653dcd/anim_576.glb"
+    },
+    {
+      "animation": "586",
+      "modelUrl": "https://storage.googleapis.com/venus-app-a037a.firebasestorage.app/threedgen/bfPHLM5hhYbVKwGSEMQB/a13cd93a-6ded-4247-ab4a-fa080e0cf326/anim_586.glb"
+    }
+  ],
+  "riggedModelUrl": "https://storage.googleapis.com/venus-app-a037a.firebasestorage.app/threedgen/bfPHLM5hhYbVKwGSEMQB/4220b9be-93b8-4fe6-98cb-43ba8fb51536/rigged.glb",
+  "provider": "meshy"
+}

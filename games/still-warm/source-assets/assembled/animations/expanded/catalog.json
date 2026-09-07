@@ -1,0 +1,68 @@
+{
+  "library": "https://docs.meshy.ai/en/api/animation-library",
+  "creditsBefore": 223400,
+  "clips": [
+    {
+      "actionId": 112,
+      "label": "Monster walk",
+      "category": "Movement",
+      "candidateUse": "Main walking candidate."
+    },
+    {
+      "actionId": 119,
+      "label": "Slow orc walk",
+      "category": "Movement",
+      "candidateUse": "Heavy walking candidate."
+    },
+    {
+      "actionId": 111,
+      "label": "Injured walk",
+      "category": "Movement",
+      "candidateUse": "Walking after an injury."
+    },
+    {
+      "actionId": 276,
+      "label": "Bend and pick up",
+      "category": "Interaction",
+      "candidateUse": "Pick up an object below the hand."
+    },
+    {
+      "actionId": 284,
+      "label": "Collect object",
+      "category": "Interaction",
+      "candidateUse": "Alternative object pickup."
+    },
+    {
+      "actionId": 262,
+      "label": "Crouch and push",
+      "category": "Interaction",
+      "candidateUse": "Push the fallen beam."
+    },
+    {
+      "actionId": 365,
+      "label": "Kneel and stand",
+      "category": "Interaction",
+      "candidateUse": "Move down beside the patient."
+    },
+    {
+      "actionId": 386,
+      "label": "Zombie scream",
+      "category": "Reaction",
+      "candidateUse": "Fear or anger response."
+    },
+    {
+      "actionId": 576,
+      "label": "Turn left",
+      "category": "Movement",
+      "candidateUse": "Turn while standing."
+    },
+    {
+      "actionId": 586,
+      "label": "Turn right",
+      "category": "Movement",
+      "candidateUse": "Turn while standing."
+    }
+  ],
+  "creditsAfter": 223400,
+  "billingNote": "The CLI credit balance was unchanged immediately after completion. This does not confirm a zero charge."
+}

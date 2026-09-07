@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env*
+!.env.example
+game.config*.json
+.playwright-cli/
+dist-proof/
+__pycache__/
+*.pyc
