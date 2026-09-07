@@ -5,6 +5,7 @@ import { Object3D, Vector3, MathUtils } from "three";
 import type { SpotLight, Group } from "three";
 import { COLORS } from "./palette";
 
+import { LAMP_HANDLE } from "./types";
 import { PATIENT_LAYOUT } from "./patientLayout";
 
 const CAST_IRON = "#252124";
@@ -128,6 +129,28 @@ export const Lamp: FC<LampProps> = ({
             color={BRASS_OLD}
             metalness={0.72}
             roughness={0.42}
+          />
+        </mesh>
+      </group>
+
+      {/* The son can pull this control from beside the patient. */}
+      <group position={[...LAMP_HANDLE]} name="lamp-pull-control">
+        <mesh position={[0, (mountPos[1] - LAMP_HANDLE[1]) / 2, 0]}>
+          <cylinderGeometry
+            args={[0.006, 0.006, mountPos[1] - LAMP_HANDLE[1], 6]}
+          />
+          <meshStandardMaterial
+            color={CAST_IRON}
+            metalness={0.5}
+            roughness={0.7}
+          />
+        </mesh>
+        <mesh castShadow>
+          <torusGeometry args={[0.035, 0.009, 6, 12]} />
+          <meshStandardMaterial
+            color={BRASS_OLD}
+            metalness={0.6}
+            roughness={0.55}
           />
         </mesh>
       </group>

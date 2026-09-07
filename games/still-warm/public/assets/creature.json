@@ -1,0 +1,50 @@
+{
+  "clips": [
+    {
+      "name": "idle",
+      "source": "source-assets/assembled/animations/anim_idle.glb",
+      "duration": 4.033333333333333
+    },
+    {
+      "name": "walk",
+      "source": "source-assets/assembled/animations/expanded/anim_112.glb",
+      "duration": 4.133333333333334
+    },
+    {
+      "name": "pickup",
+      "source": "source-assets/assembled/animations/expanded/anim_276.glb",
+      "duration": 7.233333333333333
+    },
+    {
+      "name": "collect",
+      "source": "source-assets/assembled/animations/expanded/anim_284.glb",
+      "duration": 6.033333333333333
+    },
+    {
+      "name": "push",
+      "source": "source-assets/assembled/animations/expanded/anim_262.glb",
+      "duration": 3.7333333333333334
+    },
+    {
+      "name": "kneel",
+      "source": "source-assets/assembled/animations/expanded/anim_365.glb",
+      "duration": 2.6
+    },
+    {
+      "name": "scream",
+      "source": "source-assets/assembled/animations/expanded/anim_386.glb",
+      "duration": 2.8333333333333335
+    },
+    {
+      "name": "left",
+      "source": "source-assets/assembled/animations/expanded/anim_576.glb",
+      "duration": 0.9666666666666667
+    },
+    {
+      "name": "right",
+      "source": "source-assets/assembled/animations/expanded/anim_586.glb",
+      "duration": 1.1333333333333333
+    }
+  ],
+  "bytes": 18237188
+}

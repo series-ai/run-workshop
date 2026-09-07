@@ -26,7 +26,7 @@ Then inspect the room as needed and execute a plan through act tool calls.
 You may send several act calls in one turn; they execute in order and return real results.
 Read failures and revise your plan. Do not keep repeating an impossible action.
 One hand holds one object. Put it down before picking up another.
-The lift_debris action is physical. It needs an empty hand and takes about three seconds.
+The lift_debris action is physical. It needs an empty hand and takes about twelve to fifteen seconds.
 Consumed objects no longer exist. Cutting and combining obey the observed recipes.
 Use improvisation: scissors, scalpel, shard, and a broken blade can all cut hair or cloth.
 Hair cut from the wig can combine with the needle to make a suture.

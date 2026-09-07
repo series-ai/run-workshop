@@ -192,3 +192,21 @@ and shared scene positions. The script checks the exported GLB.
 Start the local server, open it with `playwright-cli`, then pass the script contents
 to `playwright-cli run-code`. The check uses offline rehearsal controls.
 It writes captures under `/tmp/patient-floor-*.png` and returns the observed stages.
+
+## Gameplay room review
+
+Open `http://127.0.0.1:4320/scene.html` after `npm run proof`.
+This page uses the playable scene and game rules. It has no RUN login or model calls.
+Drag to look. Use the controls to light the lantern, lift the beam, and move tools.
+The review stops the patient clock between actions. The playable game keeps it running.
+
+The playable character uses `public/assets/creature.glb`. It contains one body,
+three shape keys, and nine named clips. The old leg, arm, and walking overrides
+have been removed. The action timer allows the generated motion to finish.
+
+Run `scripts/prepare-game-creature.py` with Blender to rebuild this file.
+The script transfers world poses from each source rig. Do not copy bone-local
+curves between these GLBs. Their rest transforms differ after export.
+With the proof server open in Playwright, run
+`scripts/check-game-clips.playwright.js` to compare the exported bone positions
+against the source animations. The check fails above 0.1 mm.

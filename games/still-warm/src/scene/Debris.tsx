@@ -3,17 +3,33 @@ import { useFrame } from "@react-three/fiber";
 import { Group, MathUtils } from "three";
 import { createBeamTexture } from "./beamTexture";
 import { PATIENT_LAYOUT } from "./patientLayout";
+import type { LiveHandSocket } from "./types";
 import type { GameState } from "../game/model";
 
-export function Debris({ state }: { state: GameState }) {
+export function Debris({
+  state,
+  socket,
+}: {
+  state: GameState;
+  socket: LiveHandSocket;
+}) {
   const beam = useRef<Group>(null!);
   const wood = useMemo(createBeamTexture, []);
   useEffect(() => () => wood.dispose(), [wood]);
   useFrame((_, dt) => {
     if (state.paused) return;
+    const lifting = state.pending?.action.kind === "lift_debris";
     const lift =
-      state.pending?.action.kind === "lift_debris" ? state.pending.progress : 0;
-    const cleared = state.stage !== "pinned";
+      lifting && socket.actionContact
+        ? MathUtils.clamp(
+            socket.gripPosition.y - PATIENT_LAYOUT.beamGripY,
+            0,
+            0.85,
+          )
+        : 0;
+    const cleared =
+      state.stage !== "pinned" ||
+      (lifting && (state.pending?.progress ?? 0) > 0.8);
     beam.current.position.x = MathUtils.damp(
       beam.current.position.x,
       cleared ? 1.2 : 0,
@@ -22,7 +38,7 @@ export function Debris({ state }: { state: GameState }) {
     );
     beam.current.position.y = MathUtils.damp(
       beam.current.position.y,
-      cleared ? -0.76 : PATIENT_LAYOUT.beam[1] + lift * 0.7,
+      cleared ? -0.76 : PATIENT_LAYOUT.beam[1] + lift,
       7,
       dt,
     );

@@ -24,6 +24,7 @@ export interface LiveHandSocket {
   gripPosition: Vector3;
   quaternion: Quaternion;
   isTracking: boolean;
+  actionContact: boolean;
 }
 
 export function createHandSocket(): LiveHandSocket {
@@ -32,10 +33,13 @@ export function createHandSocket(): LiveHandSocket {
     gripPosition: new Vector3(-0.42, 0.14, 0.22),
     quaternion: new Quaternion(),
     isTracking: false,
+    actionContact: false,
   };
 }
 
-export const INSTRUMENT_TRAY: Vec3 = [-0.5, -0.02, 0.05];
+export const LAMP_HANDLE: Vec3 = [-0.15, 0.36, 0.3];
+
+export const INSTRUMENT_TRAY: Vec3 = [-0.9, -0.57, -0.3];
 
 // Default slot positions for locations
 export const DEFAULT_SLOTS: Record<Location | string, Vec3> = {

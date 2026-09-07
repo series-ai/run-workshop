@@ -486,8 +486,14 @@ export const Room: FC<RoomProps> = ({
 
 export function InstrumentStand() {
   return (
-    <group position={[-0.72, -0.05, -0.25]}>
-      <mesh position={[0, -0.82, 0]} castShadow receiveShadow>
+    <group
+      position={[
+        INSTRUMENT_TRAY[0],
+        INSTRUMENT_TRAY[1] - 0.03,
+        INSTRUMENT_TRAY[2],
+      ]}
+    >
+      <mesh position={[0, -0.27, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[0.25, 0.28, 0.06, 12]} />
         <meshStandardMaterial
           color="#292b2b"
@@ -495,8 +501,8 @@ export function InstrumentStand() {
           roughness={0.58}
         />
       </mesh>
-      <mesh position={[0, -0.42, 0]} castShadow>
-        <cylinderGeometry args={[0.035, 0.045, 0.8, 12]} />
+      <mesh position={[0, -0.14, 0]} castShadow>
+        <cylinderGeometry args={[0.035, 0.045, 0.25, 12]} />
         <meshStandardMaterial
           color="#4d4b44"
           metalness={0.58}
@@ -515,9 +521,7 @@ export function InstrumentStand() {
         <boxGeometry args={[0.07, 0.06, 0.43]} />
         <meshStandardMaterial color="#4d4b44" metalness={0.5} roughness={0.6} />
       </mesh>
-      <group
-        position={[INSTRUMENT_TRAY[0] + 0.72, 0, INSTRUMENT_TRAY[2] + 0.25]}
-      >
+      <group position={[0, 0, 0]}>
         {/* A shallow basin and thick rim make the tray readable at a distance. */}
         <mesh position={[-0.02, 0.0, 0]} castShadow receiveShadow>
           <boxGeometry args={[0.4, 0.035, 0.64]} />

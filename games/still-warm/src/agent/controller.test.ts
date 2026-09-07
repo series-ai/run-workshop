@@ -1081,9 +1081,14 @@ describe("CreatureController", () => {
       const controller = new CreatureController(store, hooks, factory);
       await controller.start("live");
 
-      // Set up world state: adjust lamp and pick up tool
-      await store.run({ kind: "adjust_lamp", position: "wound" });
-      await store.run({ kind: "pick_up", item: "scalpel" });
+      vi.useFakeTimers();
+      const lampAction = store.run({ kind: "adjust_lamp", position: "wound" });
+      await vi.advanceTimersByTimeAsync(25000);
+      await lampAction;
+      const pickupAction = store.run({ kind: "pick_up", item: "scalpel" });
+      await vi.advanceTimersByTimeAsync(25000);
+      await pickupAction;
+      vi.useRealTimers();
       expect(store.getSnapshot().holding).toBe("scalpel");
       expect(store.getSnapshot().lamp).toBe("wound");
 

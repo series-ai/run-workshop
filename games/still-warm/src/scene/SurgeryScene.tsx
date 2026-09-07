@@ -126,7 +126,7 @@ export const SurgeryScene: FC<SurgeryScenePropsInterface> = ({
         {/* Reclined Patient Torso, Legs, and Dynamic Stage Wound */}
         <PatientTorso state={state} reducedMotion={reducedMotion} />
 
-        <Debris state={state} />
+        <Debris state={state} socket={socket} />
 
         {/* Articulated Surgical Lamp with Dynamic Aim following state.lamp */}
         <WorkbenchLantern lit={lit} paused={isPaused} />

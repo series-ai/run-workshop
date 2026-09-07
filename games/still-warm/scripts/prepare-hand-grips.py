@@ -104,7 +104,8 @@ def build(action_id, hands):
             'timings': hands, 'bytes': filepath.stat().st_size}
 
 
-OUTPUT.mkdir(parents=True, exist_ok=True)
-records = [build(action_id, hands) for action_id, hands in TIMINGS.items()]
-(OUTPUT / 'build.json').write_text(json.dumps(records, indent=2) + '\n')
-print(json.dumps(records, indent=2))
+if __name__ == '__main__':
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    records = [build(action_id, hands) for action_id, hands in TIMINGS.items()]
+    (OUTPUT / 'build.json').write_text(json.dumps(records, indent=2) + '\n')
+    print(json.dumps(records, indent=2))

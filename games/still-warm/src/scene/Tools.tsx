@@ -591,6 +591,8 @@ interface SingleItemProps {
   id: string;
   location: string;
   isHeld: boolean;
+  collectAtContact: boolean;
+  releaseAtContact: boolean;
   onInspect?: () => void;
   reducedMotion?: boolean;
 }
@@ -602,6 +604,8 @@ const SingleItem: FC<SingleItemProps> = ({
   id,
   location,
   isHeld,
+  collectAtContact,
+  releaseAtContact,
   onInspect,
   reducedMotion = false,
 }) => {
@@ -610,7 +614,7 @@ const SingleItem: FC<SingleItemProps> = ({
 
   const targetPos = useMemo(() => {
     const slot = getItemSlot(location);
-    const offset = isHeld ? [0, 0, 0] : getItemOffset(id);
+    const offset = getItemOffset(id);
     return new Vector3(
       slot[0] + offset[0],
       slot[1] + offset[1],
@@ -622,7 +626,10 @@ const SingleItem: FC<SingleItemProps> = ({
     if (!groupRef.current || paused) return;
 
     // When held by the character, bind dynamically to live hand socket in world space
-    if (isHeld) {
+    if (
+      (isHeld && !(releaseAtContact && socket.actionContact)) ||
+      (collectAtContact && socket.actionContact)
+    ) {
       if (socket.isTracking) {
         groupRef.current.position.copy(socket.gripPosition);
         groupRef.current.quaternion.copy(socket.quaternion);
@@ -703,7 +710,13 @@ export const Tools: FC<ToolsProps> = ({
         }
 
         const isHeld = state.holding === id;
-        const currentLocation = isHeld ? "hand" : itemState.location;
+        const action = state.pending?.action;
+        const collectAtContact =
+          action?.kind === "pick_up" && action.item === id;
+        const releaseAtContact = action?.kind === "place" && action.item === id;
+        const currentLocation = releaseAtContact
+          ? action.location
+          : itemState.location;
 
         return (
           <SingleItem
@@ -714,6 +727,8 @@ export const Tools: FC<ToolsProps> = ({
             id={id}
             location={currentLocation}
             isHeld={isHeld}
+            collectAtContact={collectAtContact}
+            releaseAtContact={releaseAtContact}
             onInspect={() => onInspectItem?.(id)}
             reducedMotion={reducedMotion}
           />

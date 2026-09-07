@@ -64,7 +64,7 @@ export async function createLiveSession(
         'Perform one physical action, speak, record guidance, set a standing rule, or react to the player. Effects are real and validated. You must inspect the outcome before claiming success.',
       inputSchema: z.toJSONSchema(actionSchema),
       validate: validator(actionSchema),
-      timeoutMs: 12000,
+      timeoutMs: 25000,
       idempotency: 'none',
       execute: async (action: GameAction, context: AgentToolContext) => {
         context.signal.throwIfAborted();

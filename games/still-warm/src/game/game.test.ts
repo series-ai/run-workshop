@@ -1263,11 +1263,11 @@ describe("Still Warm - Domain Rules & Transitions", () => {
 
       // Speed profile tests
       expect(EMOTION_PROFILES.angry.speedMultiplier).toBe(0.85);
-      expect(getActionDuration(pickAction, "angry")).toBe(1020);
-      expect(getActionDuration(pickAction, "happy")).toBe(1080);
-      expect(getActionDuration(pickAction, "focused")).toBe(1200);
-      expect(getActionDuration(pickAction, "anxious")).toBe(1560);
-      expect(getActionDuration(pickAction, "scared")).toBe(1800);
+      expect(getActionDuration(pickAction, "angry")).toBe(11234);
+      expect(getActionDuration(pickAction, "happy")).toBe(11234);
+      expect(getActionDuration(pickAction, "focused")).toBe(11234);
+      expect(getActionDuration(pickAction, "anxious")).toBe(13404);
+      expect(getActionDuration(pickAction, "scared")).toBe(14850);
 
       // Angry hurried contact causes extra pain and trauma unless protected
       let sAngry: GameState = {
@@ -1619,8 +1619,11 @@ describe("GameStore Controller", () => {
     expect(store.getSnapshot().pending).not.toBeNull();
     expect(store.getSnapshot().holding).toBeNull();
 
-    // Fast-forward fake timer
-    vi.advanceTimersByTime(2000);
+    // The source pickup clip must finish before the item changes hands.
+    vi.advanceTimersByTime(7000);
+    expect(store.getSnapshot().holding).toBeNull();
+    expect(store.getSnapshot().pending).not.toBeNull();
+    vi.advanceTimersByTime(18000);
     const res = await runPromise;
     expect(res.ok).toBe(true);
     expect(store.getSnapshot().holding).toBe("cloth");
@@ -1637,14 +1640,14 @@ describe("GameStore Controller", () => {
     };
     const lift: PhysicalAction = { kind: "lift_debris", style: "gentle" };
 
-    // Scared / Anxious / Sad is 1.5x
-    expect(getActionDuration(gentlePick, "scared")).toBe(1800);
-    expect(getActionDuration(roughUse, "scared")).toBe(1050);
+    // Fear slows the clip. The approach time stays fixed.
+    expect(getActionDuration(gentlePick, "scared")).toBe(14850);
+    expect(getActionDuration(roughUse, "scared")).toBe(14850);
 
     // Focused is baseline
-    expect(getActionDuration(gentlePick, "focused")).toBe(1200);
-    expect(getActionDuration(roughUse, "focused")).toBe(700);
-    expect(getActionDuration(lift, "scared")).toBe(3000);
+    expect(getActionDuration(gentlePick, "focused")).toBe(11234);
+    expect(getActionDuration(roughUse, "focused")).toBe(11234);
+    expect(getActionDuration(lift, "scared")).toBe(14850);
   });
 
   it("cancels a pending lift and leaves the creator pinned", async () => {
@@ -1665,7 +1668,7 @@ describe("GameStore Controller", () => {
     expect(result.message).toBe("Player shouted STOP");
     expect(store.getSnapshot().stage).toBe("pinned");
 
-    vi.advanceTimersByTime(3000);
+    vi.advanceTimersByTime(25000);
     expect(store.getSnapshot().stage).toBe("pinned");
   });
 
@@ -1683,7 +1686,7 @@ describe("GameStore Controller", () => {
     expect(store.getSnapshot().pending).toBeNull();
 
     // Advance time to ensure no stale commit
-    vi.advanceTimersByTime(3000);
+    vi.advanceTimersByTime(25000);
     expect(store.getSnapshot().holding).toBeNull();
   });
 
@@ -1834,7 +1837,7 @@ describe("GameStore Controller", () => {
     );
 
     // Advance timers to commit time
-    vi.advanceTimersByTime(3000);
+    vi.advanceTimersByTime(25000);
     const res = await runPromise;
     // Commit must be rejected because patient entered blackout and waitBlackout rule is enabled!
     expect(res.ok).toBe(false);
@@ -1859,7 +1862,7 @@ describe("GameStore Controller", () => {
     store.tick(1);
     expect(store.getSnapshot().phase).toBe("blackout");
 
-    vi.advanceTimersByTime(3000);
+    vi.advanceTimersByTime(25000);
     const result = await runPromise;
     expect(result.ok).toBe(false);
     expect(result.message).toMatch(/wait-in-blackout/i);

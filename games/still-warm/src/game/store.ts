@@ -10,19 +10,15 @@ import {
 } from "./model";
 import { applyAction, tickPatient, validateAction } from "./transitions";
 import { EMOTION_PROFILES } from "./emotions";
+import { actionPerformance, APPROACH_SECONDS } from "./performance";
 
 export function getActionDuration(
   action: PhysicalAction,
   emotion: Emotion,
 ): number {
-  if (action.kind === "lift_debris") {
-    return 3000;
-  }
-  const isRough = action.kind === "use" && action.style === "rough";
-  const base = isRough ? 700 : 1200;
-  const profile = EMOTION_PROFILES[emotion];
-  const mult = profile ? profile.speedMultiplier : 1.0;
-  return Math.round(base * mult);
+  const performance = actionPerformance(action);
+  const speed = Math.max(1, EMOTION_PROFILES[emotion].speedMultiplier);
+  return Math.ceil((APPROACH_SECONDS + performance.seconds * speed) * 1000);
 }
 
 function isPhysicalAction(action: GameAction): action is PhysicalAction {
