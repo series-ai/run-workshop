@@ -1,4 +1,9 @@
-import { CATALOG, type GameAction, type GameState, type ItemId } from "./model";
+import {
+  CATALOG,
+  type GameAction,
+  type GameState,
+  type PortableItemId,
+} from "./model";
 
 export function sceneThought(state: GameState): { id: string; text: string } {
   if (!state.environment.lanternLit)
@@ -71,7 +76,7 @@ export interface PreviewChoice {
   actions: GameAction[];
 }
 
-function take(state: GameState, item: ItemId): GameAction[] {
+function take(state: GameState, item: PortableItemId): GameAction[] {
   if (state.holding === item) return [];
   return [
     ...(state.holding
@@ -88,7 +93,7 @@ function take(state: GameState, item: ItemId): GameAction[] {
 }
 function treat(
   state: GameState,
-  item: ItemId,
+  item: PortableItemId,
   target: "wound" | "patient",
 ): GameAction[] {
   return [

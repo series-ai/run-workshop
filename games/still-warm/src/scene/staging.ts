@@ -32,6 +32,7 @@ const ROOM_BOUNDS = {
   maxZ: 2.4,
 } as const;
 const ROUTE_CLEARANCE = 0.12;
+const ROOM_EDGE_CLEARANCE = 0.01;
 
 function distance(a: FloorPoint, b: FloorPoint): number {
   return Math.hypot(b.x - a.x, b.z - a.z);
@@ -84,18 +85,29 @@ function findSafeRoute(
   end: FloorPoint,
 ): FloorPoint[] | null {
   if (!segmentCrossesPatient(start, end)) return [];
-  const left = PATIENT_ZONE.minX - ROUTE_CLEARANCE;
-  const right = PATIENT_ZONE.maxX + ROUTE_CLEARANCE;
-  const head = PATIENT_ZONE.minZ - ROUTE_CLEARANCE;
-  const foot = PATIENT_ZONE.maxZ + ROUTE_CLEARANCE;
-  const points = [
-    start,
-    end,
+  const left = Math.max(
+    PATIENT_ZONE.minX - ROUTE_CLEARANCE,
+    ROOM_BOUNDS.minX + ROOM_EDGE_CLEARANCE,
+  );
+  const right = Math.min(
+    PATIENT_ZONE.maxX + ROUTE_CLEARANCE,
+    ROOM_BOUNDS.maxX - ROOM_EDGE_CLEARANCE,
+  );
+  const head = Math.max(
+    PATIENT_ZONE.minZ - ROUTE_CLEARANCE,
+    ROOM_BOUNDS.minZ + ROOM_EDGE_CLEARANCE,
+  );
+  const foot = Math.min(
+    PATIENT_ZONE.maxZ + ROUTE_CLEARANCE,
+    ROOM_BOUNDS.maxZ - ROOM_EDGE_CLEARANCE,
+  );
+  const corners = [
     { x: left, z: head },
     { x: right, z: head },
     { x: left, z: foot },
     { x: right, z: foot },
-  ];
+  ].filter(isInsideRoom);
+  const points = [start, end, ...corners];
   const costs = points.map(() => Number.POSITIVE_INFINITY);
   const previous = points.map(() => -1);
   const visited = points.map(() => false);

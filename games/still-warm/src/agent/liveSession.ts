@@ -7,14 +7,14 @@ import {
   type AgentToolContext,
 } from "@series-inc/rundot-agent";
 import { createTextGenTransport } from "@series-inc/rundot-agent/venus";
-import { actionSchema, type GameAction } from "../game/model";
+import { actionSchema, type GameAction, type VocalCue } from "../game/model";
 import { GameStore } from "../game/store";
 import { observeRoom, observeStatus } from "../game/transitions";
 import { CREATURE_INSTRUCTIONS } from "./instructions";
 import { initializeRun } from "./runtime";
 
 export interface LiveHooks {
-  onSpeech(text: string): void;
+  onVocalize(cue: VocalCue): void;
   onPause(): void;
   onAction(): void;
 }
@@ -87,9 +87,10 @@ export async function createLiveSession(
         hooks.onAction();
         const result = await store.run(action, context.signal);
         context.signal.throwIfAborted();
-        if (result.ok && action.kind === "vocalize") hooks.onSpeech(action.cue);
+        if (result.ok && action.kind === "vocalize")
+          hooks.onVocalize(action.cue);
         if (result.ok && action.kind === "signal_intent")
-          hooks.onSpeech("effort");
+          hooks.onVocalize("effort");
         return { ...result, observation: observeStatus(store.getSnapshot()) };
       },
     }),

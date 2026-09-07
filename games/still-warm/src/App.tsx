@@ -1,6 +1,7 @@
 // @refresh reset
 import {
   useEffect,
+  useCallback,
   useRef,
   useState,
   useSyncExternalStore,
@@ -13,9 +14,10 @@ import { sceneThought, previewChoices } from "./game/experience";
 import { contactThought, EMOTION_THOUGHTS } from "./game/perception";
 import { openingAt } from "./game/opening";
 import { GameStore } from "./game/store";
-import { RULE_IDS, RULES, type GameAction } from "./game/model";
+import { RULE_IDS, RULES, type GameAction, type VocalCue } from "./game/model";
 import { CreatureController, type PlayMode } from "./agent/controller";
 import { DEFAULT_MUTED, SurgerySound } from "./audio/sound";
+import type { CreatureCall } from "./audio/creatureVoice";
 import { VoiceInput, type VoiceStatus } from "./audio/voice";
 import { FullscreenController } from "./platform/fullscreen";
 
@@ -23,6 +25,19 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const listening = useRef(false);
   const [store] = useState(() => new GameStore());
   const [sound] = useState(() => new SurgerySound());
+  const [call, setCall] = useState<CreatureCall | null>(null);
+  const callSequence = useRef(0);
+  const vocalize = useCallback(
+    (cue: VocalCue) => {
+      setCall({ cue, id: ++callSequence.current });
+      if (!listening.current) sound.vocalize(cue);
+    },
+    [sound],
+  );
+  const silenceCall = useCallback(() => {
+    sound.stopSpeech();
+    setCall(null);
+  }, [sound]);
   const [look] = useState(() => new LookInput());
   const [fullscreen] = useState(
     () => new FullscreenController((dx, dy) => look.move(dx, dy), preview),
@@ -30,10 +45,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const [controller] = useState(
     () =>
       new CreatureController(store, {
-        speak: (text) => {
-          if (!listening.current) sound.speak(text);
-        },
-        silence: () => sound.stopSpeech(),
+        vocalize,
+        silence: silenceCall,
       }),
   );
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
@@ -151,7 +164,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
     look.enabled = active && !typing && opening.eyes > 0;
     if (!active) {
       voice.cancel();
-      sound.stopSpeech();
+      silenceCall();
       void fullscreen.release();
     }
     if (terminal) controller.stop();
@@ -162,6 +175,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
     look,
     opening.eyes,
     sound,
+    silenceCall,
     terminal,
     typing,
     voice,
@@ -208,9 +222,9 @@ export default function App({ preview = false }: { preview?: boolean }) {
       opening.call !== lastOpeningCall.current
     ) {
       lastOpeningCall.current = opening.call;
-      sound.call();
+      vocalize("fear");
     }
-  }, [started, state.paused, opening.call, sound]);
+  }, [started, state.paused, opening.call, vocalize]);
   useEffect(() => {
     if (typing) inputRef.current?.focus();
   }, [typing]);
@@ -235,12 +249,16 @@ export default function App({ preview = false }: { preview?: boolean }) {
   };
   const speak = () => {
     if (!canSpeak) return;
-    sound.stopSpeech();
+    silenceCall();
     voice.start();
   };
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
-      const input = event.target instanceof HTMLInputElement;
+      const interactive =
+        event.target instanceof HTMLElement &&
+        !!event.target.closest(
+          "input, textarea, button, select, summary, a, [contenteditable]",
+        );
       if (event.key === "Escape") {
         event.preventDefault();
         voice.cancel();
@@ -249,12 +267,12 @@ export default function App({ preview = false }: { preview?: boolean }) {
         void fullscreen.release();
         return;
       }
-      if (event.code === "Space" && !input && !event.repeat && canSpeak) {
+      if (event.code === "Space" && !interactive && !event.repeat && canSpeak) {
         event.preventDefault();
-        sound.stopSpeech();
+        silenceCall();
         voice.start();
       }
-      if (event.key === "Enter" && !input && canSpeak) {
+      if (event.key === "Enter" && !interactive && canSpeak) {
         event.preventDefault();
         setTyping(true);
         void fullscreen.release();
@@ -264,7 +282,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
           event.key === "ArrowRight" ||
           event.key === "ArrowUp" ||
           event.key === "ArrowDown") &&
-        !input &&
+        !interactive &&
         active
       ) {
         event.preventDefault();
@@ -283,7 +301,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, [active, canSpeak, controller, fullscreen, look, sound, voice]);
+  }, [active, canSpeak, controller, fullscreen, look, silenceCall, voice]);
 
   const start = (mode: PlayMode) => {
     void fullscreen.enter(mode === "live");
@@ -367,7 +385,12 @@ export default function App({ preview = false }: { preview?: boolean }) {
           drag.current = null;
         }}
       >
-        <SurgeryScene state={state} look={look} reducedMotion={reducedMotion} />
+        <SurgeryScene
+          state={state}
+          look={look}
+          call={call}
+          reducedMotion={reducedMotion}
+        />
       </div>
       {(!started || introPlaying) && (
         <div
@@ -511,6 +534,20 @@ export default function App({ preview = false }: { preview?: boolean }) {
                     }}
                     onPointerUp={() => voice.stop()}
                     onPointerCancel={() => voice.cancel()}
+                    onKeyDown={(event) => {
+                      if (event.code !== "Space" && event.key !== "Enter")
+                        return;
+                      event.preventDefault();
+                      event.stopPropagation();
+                      if (!event.repeat) speak();
+                    }}
+                    onKeyUp={(event) => {
+                      if (event.code !== "Space" && event.key !== "Enter")
+                        return;
+                      event.preventDefault();
+                      event.stopPropagation();
+                      voice.stop();
+                    }}
                   >
                     {voiceStatus === "listening"
                       ? "Listening…"

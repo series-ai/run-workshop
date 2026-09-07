@@ -4,6 +4,7 @@ import {
   createInitialState,
   GameState,
   PhysicalAction,
+  actionSchema,
 } from "./model";
 import {
   applyAction,
@@ -190,6 +191,55 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       }
     });
 
+    it("keeps patient out of place destinations", () => {
+      expect(
+        actionSchema.safeParse({
+          kind: "place",
+          item: "cloth",
+          location: "patient",
+        }).success,
+      ).toBe(false);
+      expect(
+        actionSchema.safeParse({
+          kind: "place",
+          item: "cloth",
+          location: "tray",
+        }).success,
+      ).toBe(true);
+    });
+
+    it.each(["cloth", "bandage"] as const)(
+      "keeps an applied %s dressing on the patient after closure",
+      (item) => {
+        const dressedState: GameState = {
+          ...state,
+          stage: "dressed",
+          holding: null,
+          items: {
+            ...state.items,
+            [item]: { ...state.items[item], location: "patient" },
+          },
+        };
+
+        const error = validateAction(dressedState, {
+          kind: "pick_up",
+          item,
+        });
+        expect(error).toMatchObject({
+          reason: expect.stringMatching(/already applied as the dressing/i),
+          thought: "That dressing needs to stay in place.",
+        });
+
+        const result = applyAction(dressedState, {
+          kind: "pick_up",
+          item,
+        });
+        expect(result).toEqual({ ok: false, ...error });
+        expect(dressedState.items[item].location).toBe("patient");
+        expect(dressedState.stage).toBe("dressed");
+      },
+    );
+
     it("rejects picking up another item when hand is full", () => {
       const heldState = {
         ...state,
@@ -360,7 +410,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         }),
       ).toMatchObject({
         ok: false,
-        reason: expect.stringMatching(/not holding clean cloth/i),
+        reason: expect.stringMatching(/not holding linen cloth/i),
       });
 
       expect(
@@ -2923,5 +2973,190 @@ describe("GameStore Controller", () => {
     expect(result.ok).toBe(false);
     expect(result.message).toMatch(/wait-in-blackout/i);
     expect(store.getSnapshot().stage).toBe("pinned");
+  });
+});
+
+describe("Fixed lamp and candle contract", () => {
+  function heldCandle(overrides: Partial<GameState> = {}): GameState {
+    const initial = createPostAccidentState();
+    return {
+      ...initial,
+      holding: "candle",
+      candleLit: false,
+      items: {
+        ...initial.items,
+        candle: { ...initial.items.candle, location: "hand" },
+      },
+      ...overrides,
+    };
+  }
+
+  it("keeps the examination lamp fixed and rejects it at the action schema", () => {
+    expect(
+      actionSchema.safeParse({ kind: "pick_up", item: "lamp" }).success,
+    ).toBe(false);
+    expect(
+      actionSchema.safeParse({
+        kind: "place",
+        item: "lamp",
+        location: "stand",
+      }).success,
+    ).toBe(false);
+    expect(
+      actionSchema.safeParse({
+        kind: "use",
+        item: "lamp",
+        target: "wound",
+        style: "gentle",
+      }).success,
+    ).toBe(false);
+    expect(
+      actionSchema.safeParse({ kind: "adjust_lamp", position: "wound" })
+        .success,
+    ).toBe(true);
+  });
+
+  it("treats mirror and bowl use on the lamp as alignment practice", () => {
+    const initial = createPostAccidentState();
+    const mirrorState: GameState = {
+      ...initial,
+      holding: "mirror",
+      items: {
+        ...initial.items,
+        mirror: { ...initial.items.mirror, location: "hand" },
+      },
+    };
+    const result = applyAction(mirrorState, {
+      kind: "use",
+      item: "mirror",
+      target: "lamp",
+      style: "gentle",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.message).toMatch(/alignment practice|aligning/i);
+    expect(result.message).not.toMatch(/illuminat|bounce.*light/i);
+  });
+
+  it("seats the existing door bars and keeps the tool held", () => {
+    const initial = createPostAccidentState();
+    const state: GameState = {
+      ...initial,
+      holding: "forceps",
+      items: {
+        ...initial.items,
+        forceps: { ...initial.items.forceps, location: "hand" },
+      },
+    };
+    const result = applyAction(state, {
+      kind: "use",
+      item: "forceps",
+      target: "door",
+      style: "gentle",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.environment.door).toBe("barricaded");
+    expect(result.state.holding).toBe("forceps");
+    expect(result.message).toMatch(/existing locking bars/i);
+    expect(result.message).not.toMatch(/jammed|wedge/i);
+  });
+
+  it("lights the candle from the lantern and from an existing fire", () => {
+    expect(observeStatus(createInitialState()).candleLit).toBe(false);
+    const darkLantern = heldCandle({
+      environment: {
+        ...createPostAccidentState().environment,
+        lanternLit: false,
+      },
+    });
+    const blocked = validateAction(darkLantern, {
+      kind: "use",
+      item: "candle",
+      target: "lamp",
+      style: "gentle",
+    });
+    expect(blocked?.reason).toMatch(/lantern must be lit/i);
+
+    const fromLantern = applyAction(heldCandle(), {
+      kind: "use",
+      item: "candle",
+      target: "lamp",
+      style: "gentle",
+    });
+    expect(fromLantern.ok).toBe(true);
+    if (!fromLantern.ok) return;
+    expect(fromLantern.state.candleLit).toBe(true);
+
+    const fromFire = applyAction(
+      heldCandle({
+        environment: { ...createPostAccidentState().environment, fire: 20 },
+      }),
+      {
+        kind: "use",
+        item: "candle",
+        target: "fire",
+        style: "gentle",
+      },
+    );
+    expect(fromFire.ok).toBe(true);
+    if (!fromFire.ok) return;
+    expect(fromFire.state.candleLit).toBe(true);
+    expect(fromFire.state.environment.fire).toBe(20);
+  });
+
+  it("uses one water portion when a lit candle is quenched in the bowl", () => {
+    const state = heldCandle({
+      candleLit: true,
+      waterPortions: 2,
+      environment: { ...createPostAccidentState().environment, fire: 30 },
+      items: {
+        ...createPostAccidentState().items,
+        candle: { ...createPostAccidentState().items.candle, location: "hand" },
+        bowl: { ...createPostAccidentState().items.bowl, clean: true },
+      },
+    });
+    const result = applyAction(state, {
+      kind: "use",
+      item: "candle",
+      target: "bowl",
+      style: "gentle",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.environment.fire).toBe(30);
+    expect(result.state.candleLit).toBe(false);
+    expect(result.state.waterPortions).toBe(1);
+    expect(result.state.items.bowl.clean).toBe(false);
+
+    const noWater = validateAction(
+      { ...state, waterPortions: 0 },
+      { kind: "use", item: "candle", target: "bowl", style: "gentle" },
+    );
+    expect(noWater?.reason).toMatch(/no water/i);
+  });
+
+  it("uses a lit candle for diagnosis without healing or surgery progress", () => {
+    const state = heldCandle({
+      candleLit: true,
+      declaredContact: {
+        kind: "use",
+        item: "candle",
+        target: "patient",
+        style: "gentle",
+      },
+    });
+    const patient = { ...state.patient };
+    const result = applyAction(state, {
+      kind: "use",
+      item: "candle",
+      target: "patient",
+      style: "gentle",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.patient).toEqual(patient);
+    expect(result.state.stage).toBe(state.stage);
+    expect(result.message).toMatch(/candle check/i);
   });
 });

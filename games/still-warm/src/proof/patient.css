@@ -1,0 +1,234 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  background: #171916;
+  color: #e6e3d2;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  min-width: 320px;
+}
+
+button,
+select,
+input {
+  font: inherit;
+}
+
+.patient-page {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.patient-header {
+  margin-bottom: 18px;
+}
+
+.patient-eyebrow {
+  margin: 0 0 7px;
+  color: #a8ad91;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 29px;
+  font-weight: 500;
+}
+
+.patient-intro,
+.patient-note {
+  max-width: 700px;
+  margin: 0;
+  color: #b6b6a6;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.patient-controls {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 12px;
+  padding: 13px;
+  border: 1px solid #41443a;
+  background: #20231f;
+}
+
+.patient-controls > label,
+.patient-control-group {
+  display: grid;
+  gap: 6px;
+  color: #a8ad91;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.patient-controls select,
+.patient-buttons button {
+  border: 1px solid #4c5146;
+  border-radius: 3px;
+  background: #292c27;
+  color: #dedcc9;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.patient-controls select {
+  min-width: 124px;
+  padding: 7px 8px;
+}
+
+.patient-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.patient-buttons button {
+  padding: 7px 9px;
+}
+
+.patient-buttons button[aria-pressed="true"] {
+  border-color: #c5c19a;
+  background: #c5c19a;
+  color: #1c201b;
+}
+
+.patient-checks {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  min-height: 31px;
+  margin-left: auto;
+  color: #d3cfb4;
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.patient-checks label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.patient-summary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 10px;
+  color: #b6b6a6;
+  font-size: 12px;
+}
+
+.patient-summary strong {
+  color: #ddd9bb;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.patient-summary span + span {
+  padding-left: 9px;
+  border-left: 1px solid #4b4e43;
+}
+
+.patient-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.patient-canvas {
+  position: relative;
+  min-width: 0;
+  height: min(56vw, 570px);
+  min-height: 330px;
+  overflow: hidden;
+  border: 1px solid #4d5145;
+  background: #090a09;
+}
+
+.patient-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.patient-canvas-label {
+  position: absolute;
+  top: 10px;
+  left: 11px;
+  padding: 5px 7px;
+  border: 1px solid #53584a;
+  background: #171916cc;
+  color: #e4e1cb;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.patient-note {
+  margin-top: 10px;
+  color: #9da18f;
+  font-size: 11px;
+}
+
+@media (max-width: 780px) {
+  .patient-page {
+    padding: 14px;
+  }
+
+  .patient-panels {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-canvas {
+    height: min(86vw, 500px);
+  }
+
+  .patient-checks {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .patient-page {
+    padding: 11px;
+  }
+
+  h1 {
+    font-size: 25px;
+  }
+
+  .patient-controls {
+    align-items: stretch;
+    gap: 11px;
+  }
+
+  .patient-controls > label,
+  .patient-control-group {
+    width: 100%;
+  }
+
+  .patient-buttons button {
+    flex: 1;
+  }
+
+  .patient-canvas {
+    min-height: 270px;
+  }
+}

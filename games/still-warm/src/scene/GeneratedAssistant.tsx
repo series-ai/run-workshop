@@ -21,22 +21,30 @@ import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { ASSET_PATHS, DRACO_PATH } from "./assets";
 import { ProceduralAssistant } from "./ProceduralAssistant";
 import { PATIENT_LAYOUT } from "./patientLayout";
-import { LAMP_HANDLE, getItemOffset, getItemSlot, type LiveHandSocket } from "./types";
+import {
+  LAMP_HANDLE,
+  getItemOffset,
+  getItemSlot,
+  type LiveHandSocket,
+} from "./types";
 import { planSafeRoute, selectContactStance } from "./staging";
 import { actionPerformance, APPROACH_SECONDS } from "../game/performance";
 import { getActionDuration } from "../game/store";
 import type { GameState } from "../game/model";
+import { callEnvelope, type CreatureCall } from "../audio/creatureVoice";
+import { MorphOverlay } from "./morphOverlay";
 
 interface Props {
   state: GameState;
   reducedMotion?: boolean;
   socket: LiveHandSocket;
+  call?: CreatureCall | null;
 }
 const SCALE = 0.9;
 const FLOOR = PATIENT_LAYOUT.floorY;
 const HOME = [-0.72, FLOOR, 0.48] as const;
 const WORK_YAW = 2.1;
-const RETURN_METERS_PER_WALK_CYCLE = 1.1;
+const RETURN_METERS_PER_WALK_CLIP = 2.9;
 const RETURN_TURN_SECONDS = 0.65;
 const BEAM_GRIP = new Vector3(-0.25, 0.12, -0.14)
   .applyEuler(new Euler(0.07, 0.25, 0.08))
@@ -98,6 +106,10 @@ function actionTarget(state: GameState, out: Vector3): boolean {
     return true;
   }
   if (action.kind === "use") {
+    if (action.item === "candle" && action.target === "lamp") {
+      out.set(-1, 0.4, 0.4);
+      return true;
+    }
     switch (action.target) {
       case "wound":
         out.set(...PATIENT_LAYOUT.wound);
@@ -135,8 +147,9 @@ function actionTarget(state: GameState, out: Vector3): boolean {
   return false;
 }
 
-function RiggedAssistant({ state, socket }: Props) {
+function RiggedAssistant({ state, socket, call = null }: Props) {
   const root = useRef<Group>(null!);
+  const activeCall = useRef<(CreatureCall & { age: number }) | null>(null);
   const source = useGLTF(ASSET_PATHS.assistantGlb, DRACO_PATH);
   const scene = useMemo(() => {
     const instance = clone(source.scene);
@@ -207,6 +220,7 @@ function RiggedAssistant({ state, socket }: Props) {
       mixer,
       actions,
       samples,
+      morphs: new MorphOverlay(mesh),
     };
   }, [scene, source.animations]);
   const active = useRef<AnimationAction | null>(null);
@@ -246,6 +260,10 @@ function RiggedAssistant({ state, socket }: Props) {
 
   useFrame((_, dt) => {
     if (!root.current || state.paused) return;
+    if (!call) activeCall.current = null;
+    else if (activeCall.current?.id !== call.id)
+      activeCall.current = { ...call, age: 0 };
+    else activeCall.current.age += dt;
     elapsed.current += dt;
     if (state.phase === "ready") {
       root.current.position.set(...HOME);
@@ -282,11 +300,7 @@ function RiggedAssistant({ state, socket }: Props) {
         preferredYaw: WORK_YAW,
         candidateYaws: STANCE_YAWS,
       });
-      const end = new Vector3(
-        stance.position.x,
-        FLOOR,
-        stance.position.z,
-      );
+      const end = new Vector3(stance.position.x, FLOOR, stance.position.z);
       const route = [
         root.current.position.clone(),
         ...stance.waypoints.map(
@@ -398,7 +412,7 @@ function RiggedAssistant({ state, socket }: Props) {
           routeEnds,
           routeDistance,
           travelSeconds:
-            (routeDistance * walkCycle) / RETURN_METERS_PER_WALK_CYCLE,
+            (routeDistance * walkCycle) / RETURN_METERS_PER_WALK_CLIP,
           elapsed: 0,
           turnYaw: null,
         };
@@ -415,21 +429,16 @@ function RiggedAssistant({ state, socket }: Props) {
           const traveled =
             (returning.elapsed / returning.travelSeconds) *
             returning.routeDistance;
-          const found = returning.routeEnds.findIndex(
-            (end) => traveled <= end,
-          );
+          const found = returning.routeEnds.findIndex((end) => traveled <= end);
           const index = found < 0 ? returning.route.length - 2 : found;
-          const segmentStart =
-            index === 0 ? 0 : returning.routeEnds[index - 1];
+          const segmentStart = index === 0 ? 0 : returning.routeEnds[index - 1];
           const segmentLength = returning.routeEnds[index] - segmentStart;
           const from = returning.route[index];
           const to = returning.route[index + 1];
           root.current.position.lerpVectors(
             from,
             to,
-            segmentLength > 0
-              ? (traveled - segmentStart) / segmentLength
-              : 1,
+            segmentLength > 0 ? (traveled - segmentStart) / segmentLength : 1,
           );
           const yaw = Math.atan2(to.x - from.x, to.z - from.z);
           root.current.rotation.y +=
@@ -443,8 +452,7 @@ function RiggedAssistant({ state, socket }: Props) {
           returning.turnYaw ??= root.current.rotation.y;
           const turnProgress = Math.min(
             1,
-            (returning.elapsed - returning.travelSeconds) /
-              RETURN_TURN_SECONDS,
+            (returning.elapsed - returning.travelSeconds) / RETURN_TURN_SECONDS,
           );
           const turn = Math.atan2(
             Math.sin(WORK_YAW - returning.turnYaw),
@@ -467,21 +475,12 @@ function RiggedAssistant({ state, socket }: Props) {
     }
     next.paused = clipTime !== null;
     if (clipTime !== null) next.time = clipTime;
-    rig.mixer.update(dt);
-    // Keep the instrument inside the hand after the authored grip releases.
-    if (
-      state.holding &&
-      rig.mesh.morphTargetDictionary &&
-      rig.mesh.morphTargetInfluences
-    ) {
-      rig.mesh.morphTargetInfluences[rig.mesh.morphTargetDictionary.RightGrip] =
-        Math.max(
-          rig.mesh.morphTargetInfluences[
-            rig.mesh.morphTargetDictionary.RightGrip
-          ],
-          0.8,
-        );
-    }
+    rig.morphs.update(rig.mixer, dt, {
+      ScreamOpen: activeCall.current
+        ? callEnvelope(activeCall.current.cue, activeCall.current.age) * 0.18
+        : 0,
+      RightGrip: state.holding ? 0.8 : 0,
+    });
     root.current.updateMatrixWorld(true);
     rig.hand.getWorldPosition(socket.position);
     socket.gripPosition.copy(rig.palm);

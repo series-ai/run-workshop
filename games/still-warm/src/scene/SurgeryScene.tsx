@@ -15,6 +15,7 @@ import { CameraController } from "./CameraController";
 import { DitherBridge } from "./DitherBridge";
 import { Debris } from "./Debris";
 import type { LookInput } from "./look";
+import type { CreatureCall } from "../audio/creatureVoice";
 
 export { GeneratedAssistant } from "./GeneratedAssistant";
 export { ProceduralAssistant } from "./ProceduralAssistant";
@@ -31,6 +32,7 @@ export interface SurgeryScenePropsInterface {
   look: LookInput;
   reducedMotion?: boolean;
   onInspectItem?: (item: string) => void;
+  call?: CreatureCall | null;
 }
 
 // ── SurgeryScene: First-Person Gothic Horror Operating Cellar ──
@@ -39,18 +41,11 @@ export const SurgeryScene: FC<SurgeryScenePropsInterface> = ({
   look,
   reducedMotion = false,
   onInspectItem,
+  call = null,
 }) => {
   const socket = useMemo(createHandSocket, []);
-  const patient = state.patient ?? {
-    health: 100,
-    pain: 0,
-    sedation: 0,
-    blood: 100,
-    blackoutRemaining: 0,
-    blackoutCount: 0,
-  };
-
-  const isPaused = state.paused ?? false;
+  const patient = state.patient;
+  const isPaused = state.paused;
   const lit = state.environment.lanternLit;
 
   return (
@@ -111,7 +106,7 @@ export const SurgeryScene: FC<SurgeryScenePropsInterface> = ({
         <Lamp
           lit={lit && state.lamp !== "away"}
           paused={isPaused}
-          mode={state.lamp ?? "wound"}
+          mode={state.lamp}
           reducedMotion={reducedMotion}
         />
 
@@ -120,6 +115,7 @@ export const SurgeryScene: FC<SurgeryScenePropsInterface> = ({
           socket={socket}
           state={state}
           reducedMotion={reducedMotion}
+          call={call}
         />
 
         {/* Identifiable 3D Instruments with Smooth Position Interpolation */}

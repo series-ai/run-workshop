@@ -35,6 +35,15 @@ The dev server uses port 4318. The **rehearsal** controls run fixed actions.
 The **live operation** uses RUN model calls and accepts free text.
 These modes are labeled in the game.
 
+If port 4318 is occupied, use the existing server or run
+`npm run dev -- --port 4319`. The alternate port stays bound to localhost.
+
+## Build review
+
+Run `npm run proof`, then open `http://127.0.0.1:4320/review.html`.
+The review links to the guided game, room, patient, object, sound, and source-motion pages.
+All review pages work without RUN sign-in. Sound starts off.
+
 ## Raw animation proof
 
 Run `npm run proof` from this directory. Open `http://127.0.0.1:4320/proof.html`.
@@ -170,7 +179,9 @@ npm test
 npm run build
 ```
 
-See [the verification record](docs/VERIFICATION.md) for live checks and captures.
+See [the current live operation record](public/review/live-operation.html)
+for the five-command rescue and server-error recovery.
+The [earlier verification record](docs/VERIFICATION.md) is historical.
 
 Tests cover stage changes, material combinations, contamination, emotion effects,
 blackout restrictions, cancellation, late voice results, and timed rescue paths.
@@ -202,7 +213,7 @@ This page has the complete opening, patient clock, threats, and endings.
 It uses fixed actions through the same game rules. It does not connect to RUN or use a model.
 Sound starts off. Drag or use arrow keys to look. Select a short spoken choice to act.
 
-The full route takes about six minutes. Light the lantern and lift the beam.
+The full route takes about five to eight minutes. Light the lantern and lift the beam.
 Expose the wound, give some relief, and bar the door. Remove the metal.
 Put out the fire. Cut hair from the wig and thread the needle. Close and dress
 the wound. Release the brace. Other choices can cause pain or use supplies.
@@ -247,3 +258,19 @@ Open `http://127.0.0.1:4320/objects.html` with the proof server running.
 This page compares the actual room objects with raw shading and game dithering.
 Select an item and a camera view. The bowl also has full and empty states.
 The inspection light is fixed. It differs from the cellar light.
+
+## Patient and sound reviews
+
+Open `http://127.0.0.1:4320/patient.html` to inspect the actual body, crushed
+chest, wound stages, blood loss, and dressing. Raw and dithered views use the
+same state. The fixture has no patient clock or agent connection.
+
+Open `http://127.0.0.1:4320/voice.html` to inspect the five wordless call patterns.
+Enable sound, then select Listen. No sound plays on load. The game uses these
+same calls. Small mouth movements use the same timing. The full scream still
+uses its approved source clip and mouth shape.
+
+The fixed examination lamp cannot be picked up. Use `adjust_lamp` to aim it.
+The candle starts unlit. The son can light it from the workbench lantern or an
+existing fire. Quenching the candle uses one water portion and dirties the bowl.
+Door tools seat the existing bars and remain in the son's hand.

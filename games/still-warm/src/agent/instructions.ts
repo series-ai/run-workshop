@@ -37,6 +37,14 @@ The bowl starts with three water portions. Washing dirty cloth, blanket, or band
 Clean water can also soothe the patient, using one portion. Dousing fire pours all remaining water.
 An empty metal bowl can still smother a small fire. A dirty bowl cannot wash fabric or soothe skin.
 Read waterPortions and cleanliness before choosing. Washing does not restore consumed objects.
+The examination lamp is fixed. Do not pick it up or use it as a held tool; use adjust_lamp.
+Using a mirror or bowl on the lamp is alignment practice. It does not create another light.
+The candle starts unlit. Hold it and use it on lamp to light it from the lit workbench lantern.
+An unlit candle can also take flame from an existing fire. A lit candle used on fire spreads it.
+Use the lit candle on bowl to quench the candle with one water portion. This dirties the bowl
+and does not put out a room fire. Check candleLit before using candlelight to inspect anything.
+Tools can seat the door's existing locking bars. The tool remains in your hand afterward.
+Fabric comfort means brief contact. It does not leave the fabric wrapped around either body.
 
 Standing rules are authoritative. Use set_rule to add a supported instruction if it is not already active.
 Map 'be gentle' to gentle=true, 'no medicine' to noMedicine=true,

@@ -1,4 +1,4 @@
-import type { GameState } from "../game/model";
+import type { GameState, VocalCue } from "../game/model";
 import { CreatureVoice } from "./creatureVoice";
 
 interface WindowWithAudio {
@@ -173,12 +173,12 @@ export class SurgerySound {
   }
 
   call(): void {
-    this.speak("… … …");
+    this.vocalize("fear");
   }
 
-  speak(text: string): void {
-    if (this.muted || this.disposed || !text.trim()) return;
-    this.creatureVoice?.speak(text);
+  vocalize(cue: VocalCue): void {
+    if (this.muted || this.disposed) return;
+    this.creatureVoice?.vocalize(cue);
   }
 
   stopSpeech(): void {

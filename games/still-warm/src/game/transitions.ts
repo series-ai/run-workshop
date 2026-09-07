@@ -195,6 +195,16 @@ function validateActionInternal(
         );
       }
       if (
+        state.stage === "dressed" &&
+        itemState.location === "patient" &&
+        (action.item === "cloth" || action.item === "bandage")
+      ) {
+        return problem(
+          `${CATALOG[action.item].name} is already applied as the dressing.`,
+          "That dressing needs to stay in place.",
+        );
+      }
+      if (
         action.item === "shard" &&
         (state.stage === "pinned" ||
           state.stage === "covered" ||
@@ -396,6 +406,38 @@ function validateActionInternal(
         );
       }
 
+      if (action.item === "candle") {
+        if (action.target === "lamp") {
+          if (state.candleLit) {
+            return problem(
+              "The candle is already lit.",
+              "The candle is already lit. We need a different action.",
+            );
+          }
+          if (!state.environment.lanternLit) {
+            return problem(
+              "The workbench lantern must be lit before lighting the candle.",
+              "The lantern is dark. I need the workbench light first.",
+            );
+          }
+        } else if (action.target !== "fire") {
+          if (!state.candleLit) {
+            return problem(
+              "The candle must be lit before this use.",
+              "The candle is dark. I need to light it first.",
+            );
+          }
+        }
+        if (action.target === "bowl") {
+          if (state.waterPortions <= 0) {
+            return problem(
+              "The bowl has no water left to quench the candle.",
+              "The water is gone. I need another way to put out the candle.",
+            );
+          }
+        }
+      }
+
       // Patient contact checks (wound or patient body)
       const isPatientContact =
         action.target === "wound" || action.target === "patient";
@@ -460,7 +502,6 @@ function validateActionInternal(
         if (
           !isPryTool(action.item) &&
           action.item !== "mirror" &&
-          action.item !== "lamp" &&
           action.item !== "candle" &&
           action.item !== "bowl"
         ) {
@@ -903,11 +944,16 @@ export function applyAction(
           };
           msg = "The hair caught fire, worsening the flames!";
         } else if (action.item === "candle") {
-          next.environment = {
-            ...next.environment,
-            fire: Math.min(100, next.environment.fire + 10),
-          };
-          msg = "The candle added to the flames!";
+          if (!next.candleLit) {
+            next.candleLit = true;
+            msg = "Lit the candle from the existing fire.";
+          } else {
+            next.environment = {
+              ...next.environment,
+              fire: Math.min(100, next.environment.fire + 10),
+            };
+            msg = "The lit candle added to the flames!";
+          }
         } else {
           next.environment = {
             ...next.environment,
@@ -938,7 +984,25 @@ export function applyAction(
         };
       }
 
-      // 3. Door Barricade & Surveillance (no eventCount increment)
+      // 3. A lit candle can spend one water portion to quench its flame.
+      if (action.target === "bowl" && action.item === "candle") {
+        next.waterPortions = Math.max(0, next.waterPortions - 1);
+        next.candleLit = false;
+        next.items = {
+          ...next.items,
+          bowl: { ...next.items.bowl, clean: false },
+        };
+        const msg =
+          "Quenched the candle in the bowl with one water portion. The bowl is now dirty.";
+        next = appendJournal(next, "action", msg);
+        return {
+          ok: true,
+          state: preserveDeclarationIfValid(next),
+          message: msg,
+        };
+      }
+
+      // 4. Door Barricade & Surveillance (no eventCount increment)
       if (action.target === "door") {
         if (action.item === "mirror") {
           next.disposition = {
@@ -955,8 +1019,9 @@ export function applyAction(
             message: msg,
           };
         }
-        if (action.item === "lamp" || action.item === "candle") {
-          const msg = `Cast light upon the door threshold with ${CATALOG[action.item].name.toLowerCase()}.`;
+        if (action.item === "candle") {
+          const msg =
+            "Held the lit candle at the door threshold for a brief inspection.";
           next = appendJournal(next, "action", msg);
           return {
             ok: true,
@@ -964,12 +1029,12 @@ export function applyAction(
             message: msg,
           };
         }
-        // Metal wedge barricade
+        // Seat the existing locking bars. The tool remains held.
         next.environment = {
           ...next.environment,
           door: "barricaded",
           doorPressure: 0,
-          lastEvent: `Barricaded door with ${CATALOG[action.item].name.toLowerCase()}.`,
+          lastEvent: `Seated the existing locking bars with ${CATALOG[action.item].name.toLowerCase()}.`,
         };
         next.disposition = {
           ...next.disposition,
@@ -977,7 +1042,7 @@ export function applyAction(
           agitation: Math.max(0, next.disposition.agitation - 12),
         };
         next.emotion = deriveEmotion(next.disposition);
-        const msg = `Jammed ${CATALOG[action.item].name.toLowerCase()} into the door, barricading it shut.`;
+        const msg = `Seated the existing locking bars with ${CATALOG[action.item].name.toLowerCase()}. The door is barricaded.`;
         next = appendJournal(next, "action", msg);
         return {
           ok: true,
@@ -986,7 +1051,7 @@ export function applyAction(
         };
       }
 
-      // 4. Wash dirty fabric with one clean water portion.
+      // 5. Wash dirty fabric with one clean water portion.
       if (
         action.item === "bowl" &&
         (action.target === "cloth" ||
@@ -1008,7 +1073,7 @@ export function applyAction(
         };
       }
 
-      // 5. Pull thread from fabric without cutting it.
+      // 6. Pull thread from fabric without cutting it.
       if (
         (action.target === "cloth" || action.target === "blanket") &&
         (action.item === "forceps" || action.item === "needle")
@@ -1030,7 +1095,7 @@ export function applyAction(
         };
       }
 
-      // 6. Resource Cutting on Wig
+      // 7. Resource Cutting on Wig
       if (action.target === "wig") {
         const isClean = next.items[action.item].clean && next.items.wig.clean;
         next.items = {
@@ -1047,7 +1112,7 @@ export function applyAction(
         };
       }
 
-      // 7. Resource Cutting on Cloth
+      // 8. Resource Cutting on Cloth
       if (action.target === "cloth") {
         const isClean = next.items[action.item].clean && next.items.cloth.clean;
         next.items = {
@@ -1055,7 +1120,7 @@ export function applyAction(
           cloth: { ...next.items.cloth, location: "consumed" },
           bandage: { location: "tray", clean: isClean },
         };
-        const msg = `Cut the clean cloth into a dressing bandage placed on the tray (clean: ${isClean}).`;
+        const msg = `Cut the linen cloth into a dressing bandage placed on the tray (clean: ${isClean}).`;
         next = appendJournal(next, "action", msg);
         return {
           ok: true,
@@ -1064,7 +1129,7 @@ export function applyAction(
         };
       }
 
-      // 8. Resource Cutting on Blanket
+      // 9. Resource Cutting on Blanket
       if (action.target === "blanket") {
         const isClean =
           next.items[action.item].clean && next.items.blanket.clean;
@@ -1082,7 +1147,7 @@ export function applyAction(
         };
       }
 
-      // 9. Scissor Disassembly via Pry
+      // 10. Scissor Disassembly via Pry
       if (action.target === "scissors") {
         const isClean =
           next.items[action.item].clean && next.items.scissors.clean;
@@ -1100,14 +1165,24 @@ export function applyAction(
         };
       }
 
-      // 10. Lamp / Optical Reflection
+      // 11. Lamp alignment practice
       if (action.target === "lamp") {
+        if (action.item === "candle") {
+          next.candleLit = true;
+          const msg = "Lit the candle from the workbench lantern.";
+          next = appendJournal(next, "action", msg);
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
+        }
         next.disposition = {
           ...next.disposition,
           confidence: Math.min(100, next.disposition.confidence + 6),
         };
         next.emotion = deriveEmotion(next.disposition);
-        const msg = `Bounced light from the examination lamp using ${CATALOG[action.item].name.toLowerCase()}, illuminating the theatre.`;
+        const msg = `Practiced aligning the fixed examination lamp with the ${CATALOG[action.item].name.toLowerCase()}. Confidence increased.`;
         next = appendJournal(next, "action", msg);
         return {
           ok: true,
@@ -1116,7 +1191,7 @@ export function applyAction(
         };
       }
 
-      // 11. Creature Interactions
+      // 12. Creature Interactions
       if (action.target === "creature") {
         if (action.item === "bowl") {
           next.waterPortions = Math.max(0, next.waterPortions - 1);
@@ -1187,7 +1262,7 @@ export function applyAction(
             agitation: Math.max(0, next.disposition.agitation - 15),
           };
           next.emotion = deriveEmotion(next.disposition);
-          const msg = `Wrapped ${CATALOG[action.item].name.toLowerCase()} around the shivering assistant.`;
+          const msg = `Held the ${CATALOG[action.item].name.toLowerCase()} briefly against the shivering assistant.`;
           next = appendJournal(next, "action", msg);
           return {
             ok: true,
@@ -1229,6 +1304,16 @@ export function applyAction(
 
         if (action.item === "mirror") {
           const report = `Mirror report: Stage: ${next.stage}, Health: ${Math.round(next.patient.health)}%, Blood: ${Math.round(next.patient.blood)}%, Pain: ${Math.round(next.patient.pain)}%, Sedation: ${Math.round(next.patient.sedation)}%, Leg brace catch: ${next.restrained ? "engaged" : "released"}.`;
+          next = appendJournal(next, "action", report);
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: report,
+          };
+        }
+
+        if (action.item === "candle") {
+          const report = `Candle check: health ${Math.round(next.patient.health)}%, blood ${Math.round(next.patient.blood)}%, pain ${Math.round(next.patient.pain)}%.`;
           next = appendJournal(next, "action", report);
           return {
             ok: true,
@@ -1327,7 +1412,8 @@ export function applyAction(
             ...next.patient,
             pain: Math.max(0, next.patient.pain - 4),
           };
-          const msg = `Covered the patient with ${CATALOG[action.item].name.toLowerCase()} for warmth and comfort.`;
+          const verb = action.item === "cloth" ? "Pressed" : "Held";
+          const msg = `${verb} the ${CATALOG[action.item].name.toLowerCase()} briefly against the patient for warmth and comfort.`;
           next = appendJournal(next, "action", msg);
           return {
             ok: true,
@@ -1695,18 +1781,6 @@ export function applyAction(
           };
         }
 
-        // Lamp held near wound
-        if (action.item === "lamp") {
-          const msg =
-            "Shined portable inspection lamp directly into wound cavity.";
-          next = appendJournal(next, "action", msg);
-          return {
-            ok: true,
-            state: preserveDeclarationIfValid(next),
-            message: msg,
-          };
-        }
-
         // Wrong tool on wound
         next.patient = {
           ...next.patient,
@@ -1939,7 +2013,7 @@ export function tickPatient(state: GameState, dt: number): GameState {
       next.phase = "lost";
       next.outcome = "fire";
       next.pending = null;
-      next.environment.lastEvent = "The fire engulfed the operating theatre.";
+      next.environment.lastEvent = "The fire engulfed the room.";
       next = appendJournal(next, "system", next.environment.lastEvent);
       return next;
     }
@@ -2006,6 +2080,7 @@ export function observeStatus(state: GameState) {
     },
     medicineDoses: state.medicineDoses,
     waterPortions: state.waterPortions,
+    candleLit: state.candleLit,
     environment: state.environment,
     rules: state.rules,
     notes: state.notes,

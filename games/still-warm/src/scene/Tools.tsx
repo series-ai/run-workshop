@@ -3,6 +3,7 @@ import { useRef, useMemo } from "react";
 import type { FC } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Group, Vector3, Quaternion, MathUtils, CatmullRomCurve3 } from "three";
+import type { PointLight } from "three";
 import type { GameState } from "../game/model";
 import { getItemSlot, getItemOffset } from "./types";
 import { COLORS } from "./palette";
@@ -518,13 +519,25 @@ const BlanketModel: FC<{ clean: boolean }> = ({ clean }) => (
   </group>
 );
 
-const CandleModel: FC<{ lit: boolean }> = ({ lit }) => {
+const CandleModel: FC<{
+  lit: boolean;
+  paused: boolean;
+  reducedMotion: boolean;
+}> = ({ lit, paused, reducedMotion }) => {
   const flameRef = useRef<Group>(null!);
-  useFrame(({ clock }) => {
-    if (flameRef.current) {
-      flameRef.current.scale.y =
-        0.85 + Math.sin(clock.getElapsedTime() * 12) * 0.15;
+  const lightRef = useRef<PointLight>(null!);
+  const time = useRef(0);
+  useFrame((_, dt) => {
+    if (!lit || paused) return;
+    if (reducedMotion) {
+      flameRef.current.scale.y = 0.9;
+      lightRef.current.intensity = 1.05;
+      return;
     }
+    time.current += dt;
+    const flicker = Math.sin(time.current * 12);
+    flameRef.current.scale.y = 0.85 + flicker * 0.15;
+    lightRef.current.intensity = 1.05 + flicker * 0.1;
   });
 
   return (
@@ -559,7 +572,13 @@ const CandleModel: FC<{ lit: boolean }> = ({ lit }) => {
             roughness={0.1}
           />
         </mesh>
-        <pointLight color="#ff9922" intensity={0.4} distance={1.2} decay={2} />
+        <pointLight
+          ref={lightRef}
+          color="#ff9922"
+          intensity={1.05}
+          distance={1.8}
+          decay={2}
+        />
       </group>
     </group>
   );
@@ -595,7 +614,16 @@ export const ItemModel: FC<{
   lit?: boolean;
   waterLevel?: number;
   clean?: boolean;
-}> = ({ id, lit = true, waterLevel = 1, clean = true }) => {
+  paused?: boolean;
+  reducedMotion?: boolean;
+}> = ({
+  id,
+  lit = true,
+  waterLevel = 1,
+  clean = true,
+  paused = false,
+  reducedMotion = false,
+}) => {
   switch (id) {
     case "forceps":
       return <ForcepsModel />;
@@ -630,7 +658,9 @@ export const ItemModel: FC<{
     case "blanket":
       return <BlanketModel clean={clean} />;
     case "candle":
-      return <CandleModel lit={lit} />;
+      return (
+        <CandleModel lit={lit} paused={paused} reducedMotion={reducedMotion} />
+      );
     default:
       return <GenericToolModel />;
   }
@@ -737,7 +767,14 @@ const SingleItem: FC<SingleItemProps> = ({
       }}
       name={`tool-${id}`}
     >
-      <ItemModel id={id} lit={lit} waterLevel={waterLevel} clean={clean} />
+      <ItemModel
+        id={id}
+        lit={lit}
+        waterLevel={waterLevel}
+        clean={clean}
+        paused={paused}
+        reducedMotion={reducedMotion}
+      />
     </group>
   );
 };
@@ -759,6 +796,13 @@ export const Tools: FC<ToolsProps> = ({
       {items.map(([id, itemState]) => {
         if (id === "lamp") return null;
         if (itemState.location === "consumed") return null;
+        // The patient asset owns the attached dressing.
+        if (
+          state.stage === "dressed" &&
+          itemState.location === "patient" &&
+          (id === "cloth" || id === "bandage")
+        )
+          return null;
         if (
           id === "shard" &&
           itemState.location === "patient" &&
@@ -779,7 +823,7 @@ export const Tools: FC<ToolsProps> = ({
         return (
           <SingleItem
             clean={itemState.clean}
-            lit={state.environment.lanternLit}
+            lit={id === "candle" && state.candleLit}
             waterLevel={state.waterPortions / 3}
             key={id}
             socket={socket}

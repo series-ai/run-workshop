@@ -46,6 +46,7 @@ export const STAGES = [
   "dressed",
 ] as const;
 export type ItemId = (typeof ITEM_IDS)[number];
+export type PortableItemId = Exclude<ItemId, "lamp">;
 export type Location = (typeof LOCATIONS)[number];
 export type RuleId = (typeof RULE_IDS)[number];
 export type Stage = (typeof STAGES)[number];
@@ -104,7 +105,7 @@ export const CATALOG: Record<
     capabilities: ["grip", "pry"],
   },
   cloth: {
-    name: "Clean cloth",
+    name: "Linen cloth",
     sharp: false,
     initial: "cabinet",
     material: "fabric",
@@ -247,6 +248,7 @@ export const RULES: Record<RuleId, { label: string; instruction: string }> = {
 };
 
 const item = z.enum(ITEM_IDS);
+const portableItem = item.exclude(["lamp"]);
 const location = z.enum(LOCATIONS);
 const liftActionSchema = z.object({
   kind: z.literal("lift_debris"),
@@ -254,7 +256,7 @@ const liftActionSchema = z.object({
 });
 const useActionSchema = z.object({
   kind: z.literal("use"),
-  item,
+  item: portableItem,
   target: z.enum([
     "wound",
     "patient",
@@ -285,15 +287,16 @@ export const VOCAL_CUES = [
   "anger",
   "relief",
 ] as const;
+export type VocalCue = (typeof VOCAL_CUES)[number];
 
 export const actionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("light_lantern") }),
   liftActionSchema,
-  z.object({ kind: z.literal("pick_up"), item }),
+  z.object({ kind: z.literal("pick_up"), item: portableItem }),
   z.object({
     kind: z.literal("place"),
-    item,
-    location: location.exclude(["hand", "consumed"]),
+    item: portableItem,
+    location: location.exclude(["hand", "consumed", "patient"]),
   }),
   useActionSchema,
   z.object({ kind: z.literal("combine"), first: item, second: item }),
@@ -363,7 +366,7 @@ export interface GameState {
   stage: Stage;
   patient: PatientState;
   items: Record<ItemId, ItemState>;
-  holding: ItemId | null;
+  holding: PortableItemId | null;
   lamp: "wound" | "face" | "away";
   restrained: boolean;
   rules: Record<RuleId, boolean>;
@@ -378,6 +381,7 @@ export interface GameState {
   creatureHealth: number;
   medicineDoses: number;
   waterPortions: number;
+  candleLit: boolean;
   environment: {
     lanternLit: boolean;
     fire: number;
@@ -434,6 +438,7 @@ export function createInitialState(): GameState {
     creatureHealth: 100,
     medicineDoses: 3,
     waterPortions: 3,
+    candleLit: false,
     environment: {
       lanternLit: false,
       fire: 0,

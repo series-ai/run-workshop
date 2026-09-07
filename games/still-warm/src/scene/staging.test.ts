@@ -105,4 +105,32 @@ describe("assistant contact staging", () => {
       expect(segmentCrossesPatient(route[index - 1], route[index])).toBe(false);
     }
   });
+
+  it("routes from a tray pickup to blanket contact inside the room", () => {
+    const home = { x: -0.72, z: 0.48 };
+    const pickup = selectContactStance({
+      target: { x: -0.63, z: -0.01 },
+      palm: { x: -0.337, z: 0.417931 },
+      scale: 0.9,
+      start: home,
+      home,
+      preferredYaw: 2.1,
+      candidateYaws: CANDIDATE_YAWS,
+    });
+    const blanket = selectContactStance({
+      target: { x: 0.32, z: -0.44 },
+      palm: { x: -0.130445, z: 0.620265 },
+      scale: 0.9,
+      start: pickup.position,
+      home,
+      preferredYaw: 2.1,
+      candidateYaws: CANDIDATE_YAWS,
+    });
+    const route = [pickup.position, ...blanket.waypoints, blanket.position];
+    expect(blanket.waypoints.length).toBeGreaterThan(0);
+    expect(blanket.waypoints.every((point) => point.z >= -0.72)).toBe(true);
+    for (let index = 1; index < route.length; index++) {
+      expect(segmentCrossesPatient(route[index - 1], route[index])).toBe(false);
+    }
+  });
 });

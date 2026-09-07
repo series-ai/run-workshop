@@ -48,12 +48,25 @@ function PatientBody({ state, socket, reducedMotion = false }: Props) {
         "RightHand",
       ].map((name) => [name, scene.getObjectByName(name)!]),
     );
+    const dressing: { material: MeshStandardMaterial; color: Color }[] = [];
+    parts.WoundDressed.traverse((node) => {
+      if (
+        node instanceof Mesh &&
+        node.material instanceof MeshStandardMaterial
+      ) {
+        dressing.push({
+          material: node.material,
+          color: node.material.color.clone(),
+        });
+      }
+    });
     return {
       scene,
       skin,
       morphs,
       parts,
       materials,
+      dressing,
       leftHandY: parts.LeftHand.position.y,
       rightHandY: parts.RightHand.position.y,
     };
@@ -76,19 +89,27 @@ function PatientBody({ state, socket, reducedMotion = false }: Props) {
   body.parts.WoundDressed.visible = stage === "dressed";
   body.parts.LegBrace.visible = state.restrained;
   body.parts.BloodLoss.visible = stage !== "dressed";
+  const dirtyDressing = (["cloth", "bandage"] as const).some(
+    (item) =>
+      state.items[item].location === "patient" && !state.items[item].clean,
+  );
+  for (const { material, color } of body.dressing) {
+    material.color.copy(color).multiplyScalar(dirtyDressing ? 0.38 : 1);
+  }
 
   useFrame((_, dt) => {
-    if (state.paused) return;
-    time.current += dt;
-    const { lift, cleared } = supportMotion(state, socket);
-    crush.current = MathUtils.damp(
-      crush.current,
-      cleared ? 0 : 1 - MathUtils.clamp(lift / 0.18, 0, 1),
-      5,
-      dt,
-    );
-    const rate = 1.4 + patient.pain / 60;
-    breathPhase.current += dt * rate;
+    if (!state.paused) {
+      time.current += dt;
+      const { lift, cleared } = supportMotion(state, socket);
+      crush.current = MathUtils.damp(
+        crush.current,
+        cleared ? 0 : 1 - MathUtils.clamp(lift / 0.18, 0, 1),
+        5,
+        dt,
+      );
+      const rate = 1.4 + patient.pain / 60;
+      breathPhase.current += dt * rate;
+    }
     const breath = reducedMotion
       ? 0
       : (Math.sin(breathPhase.current) + 1) * 0.5 * (1 - crush.current * 0.7);

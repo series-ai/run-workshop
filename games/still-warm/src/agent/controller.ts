@@ -1,4 +1,9 @@
-import { RULES, type GameAction, type RuleId } from "../game/model";
+import {
+  RULES,
+  type GameAction,
+  type RuleId,
+  type VocalCue,
+} from "../game/model";
 import { GameStore } from "../game/store";
 import { observeStatus } from "../game/transitions";
 import type { LiveSession } from "./liveSession";
@@ -8,7 +13,6 @@ export interface ConnectionState {
   mode: PlayMode;
   status: "idle" | "connecting" | "thinking" | "acting" | "stopping" | "error";
   error: string | null;
-  speech: string;
   turns: number;
   canResume: boolean;
   needsInstruction: boolean;
@@ -18,13 +22,13 @@ interface Input {
   player: boolean;
 }
 export interface ControllerHooks {
-  speak(text: string): void;
+  vocalize(cue: VocalCue): void;
   silence(): void;
 }
 export type SessionFactory = (
   store: GameStore,
   hooks: {
-    onSpeech(text: string): void;
+    onVocalize(cue: VocalCue): void;
     onPause(): void;
     onAction(): void;
   },
@@ -41,7 +45,6 @@ export class CreatureController {
     mode: "live",
     status: "idle",
     error: null,
-    speech: "",
     turns: 0,
     canResume: false,
     needsInstruction: false,
@@ -86,7 +89,7 @@ export class CreatureController {
     return this.factory(
       this.store,
       {
-        onSpeech: (text) => {
+        onVocalize: (cue) => {
           if (
             token === this.connectionToken &&
             epoch === this.epoch &&
@@ -96,7 +99,7 @@ export class CreatureController {
             !this.runAbort.signal.aborted &&
             !this.store.getSnapshot().paused
           )
-            this.say(text);
+            this.vocalize(cue);
         },
         onPause: () => {
           if (
@@ -141,7 +144,6 @@ export class CreatureController {
       mode,
       status: mode === "live" ? "connecting" : "idle",
       error: null,
-      speech: "",
       turns: 0,
       canResume: false,
       needsInstruction: false,
@@ -184,7 +186,7 @@ export class CreatureController {
       if (abort.signal.aborted || epoch !== this.epoch || this.closed) return;
       this.live = live;
       this.store.start();
-      this.update({ status: "idle", speech: "" });
+      this.update({ status: "idle" });
     } catch (error) {
       if (epoch !== this.epoch || this.closed) return;
       if (abort.signal.aborted && !timedOut) {
@@ -200,9 +202,8 @@ export class CreatureController {
     }
   }
 
-  private say(text: string): void {
-    this.update({ speech: text });
-    this.hooks.speak(text);
+  private vocalize(cue: VocalCue): void {
+    this.hooks.vocalize(cue);
   }
 
   command(raw: string): void {
@@ -266,6 +267,7 @@ export class CreatureController {
     this.pending = null;
     const epoch = this.epoch;
     const live = this.live;
+    const connectionToken = this.connectionToken;
     const abort = new AbortController();
     this.runAbort = abort;
     live.beginInput(input.player);
@@ -275,6 +277,7 @@ export class CreatureController {
     };
     this.interrupted = false;
     this.update({ status: "thinking", error: null, needsInstruction: false });
+    let capped = false;
     let timedOut = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let rejectTimeout!: (error: Error) => void;
@@ -321,15 +324,8 @@ export class CreatureController {
           throw new Error(
             `RUN could not answer (${result.error.code}). Check the RUN sign-in and retry.`,
           );
-        this.update({
-          turns: this.snapshot.turns + result.turns,
-          needsInstruction: result.finishReason === "max_turns",
-        });
-        if (result.finishReason === "max_turns")
-          this.store.note(
-            "system",
-            "He pauses to listen. Give the next instruction.",
-          );
+        capped = result.finishReason === "max_turns";
+        this.update({ turns: this.snapshot.turns + result.turns });
       } catch (error) {
         if (
           epoch === this.epoch &&
@@ -344,11 +340,28 @@ export class CreatureController {
     })();
     this.running = task;
     void task.finally(() => {
-      if (this.running === task) this.running = null;
+      const ownsRun = this.running === task;
+      if (ownsRun) this.running = null;
       if (this.runAbort === abort) this.runAbort = null;
-      if (epoch !== this.epoch || this.closed) return;
-      if (this.snapshot.status !== "error") this.update({ status: "idle" });
-      else
+      if (!ownsRun || epoch !== this.epoch || this.closed) return;
+      if (this.snapshot.status !== "error") {
+        const state = this.store.getSnapshot();
+        const needsInstruction =
+          capped &&
+          this.pending === null &&
+          this.live === live &&
+          connectionToken !== null &&
+          this.connectionToken === connectionToken &&
+          !abort.signal.aborted &&
+          !state.paused &&
+          state.phase === "playing";
+        this.update({ status: "idle", needsInstruction });
+        if (needsInstruction)
+          this.store.note(
+            "system",
+            "He pauses to listen. Give the next instruction.",
+          );
+      } else
         this.update({
           canResume: this.live !== null || this.replaceSessionOnResume,
         });
@@ -497,8 +510,8 @@ export class CreatureController {
           this.update({ error: result.message });
           return;
         }
-        if (action.kind === "vocalize") this.say(action.cue);
-        if (action.kind === "signal_intent") this.say("effort");
+        if (action.kind === "vocalize") this.vocalize(action.cue);
+        if (action.kind === "signal_intent") this.vocalize("effort");
       }
     })();
     this.running = task;

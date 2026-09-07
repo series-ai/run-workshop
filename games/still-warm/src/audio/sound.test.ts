@@ -92,7 +92,7 @@ describe("SurgerySound", () => {
     // None of these should throw in headless/SSR environments
     await expect(sound.unlock()).resolves.toBeUndefined();
     expect(() => sound.setMuted(true)).not.toThrow();
-    expect(() => sound.speak("Test speech")).not.toThrow();
+    expect(() => sound.vocalize("fear")).not.toThrow();
     expect(() => sound.stopSpeech()).not.toThrow();
     expect(() => sound.update(state)).not.toThrow();
     expect(() => sound.dispose()).not.toThrow();

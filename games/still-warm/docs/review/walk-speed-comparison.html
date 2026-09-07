@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Still Warm walk speed comparison</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { color-scheme: dark; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background:#080907; color:#d7d2b7; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:20px; }
+  header { max-width:1100px; margin:0 auto 14px; }
+  h1 { margin:0 0 6px; font-size:20px; }
+  p { margin:3px 0; color:#aaa88f; font-size:13px; line-height:1.45; }
+  #panels { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; max-width:1100px; margin:auto; }
+  section { position:relative; min-height:520px; border:1px solid #555946; background:#10120e; overflow:hidden; }
+  canvas { width:100%; height:100%; display:block; }
+  .label { position:absolute; left:10px; top:10px; z-index:2; padding:7px 9px; background:#080907dd; border:1px solid #64694e; }
+  .label strong { display:block; color:#e5dfbb; }
+  .label span { color:#aaa88f; font-size:11px; }
+  footer { max-width:1100px; margin:12px auto 0; color:#aaa88f; font-size:12px; }
+  @media(max-width:760px){ #panels{grid-template-columns:1fr} section{min-height:390px} }
+</style>
+<script type="importmap">
+{"imports":{"three":"../../node_modules/three/build/three.module.js","three/addons/":"../../node_modules/three/examples/jsm/"}}
+</script>
+</head>
+<body>
+<header>
+  <h1>Approved monster walk · root speed comparison</h1>
+  <p>Actual clip: 4.133 s, three gait cycles. Measured grounded speed: about 0.82 m/s at game scale.</p>
+  <p>All panels play the same source clip at 1×. Only root travel speed changes.</p>
+  <p>Serve the still-warm project directory as a static root, then open this file through that server.</p>
+</header>
+<main id="panels"></main>
+<footer>Ground marks are 0.25 m apart. Each actor repeats across a 3 m path.</footer>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { clone } from 'three/addons/utils/SkeletonUtils.js';
+const speeds=[{speed:0.27,slide:0.39},{speed:0.50,slide:0.23},{speed:0.70,slide:0.09}];
+const panels=document.querySelector('#panels');
+const draco=new DRACOLoader(); draco.setDecoderPath('../../public/draco/');
+const loader=new GLTFLoader(); loader.setDRACOLoader(draco);
+const gltf=await loader.loadAsync('../../public/assets/creature.glb');
+const walk=THREE.AnimationClip.findByName(gltf.animations,'walk');
+const views=speeds.map(({speed,slide})=>{
+  const section=document.createElement('section');
+  section.innerHTML=`<div class="label"><strong>${speed.toFixed(2)} m/s</strong><span>${(speed/0.82*100).toFixed(0)}% of measured pace · ${slide.toFixed(2)} m stance slide</span></div>`;
+  const canvas=document.createElement('canvas'); section.append(canvas); panels.append(section);
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:false}); renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+  const scene=new THREE.Scene(); scene.background=new THREE.Color('#0a0b09');
+  scene.add(new THREE.HemisphereLight('#d7d1aa','#20231b',2.1));
+  const key=new THREE.DirectionalLight('#d8d2b4',2.3); key.position.set(3,5,-2); scene.add(key);
+  const root=new THREE.Group(); root.scale.setScalar(.9); root.rotation.y=Math.PI; root.position.y=-.13; root.add(clone(gltf.scene)); scene.add(root);
+  const mixer=new THREE.AnimationMixer(root.children[0]); mixer.clipAction(walk).play();
+  const grid=new THREE.GridHelper(5,20,'#6e7356','#34372b'); grid.position.y=0; scene.add(grid);
+  const camera=new THREE.OrthographicCamera(-1.8,1.8,1.15,-1.05,.05,20); camera.position.set(5,1.05,0); camera.lookAt(0,.65,0);
+  return {section,renderer,scene,root,mixer,camera,speed};
+});
+const clock=new THREE.Clock(); let elapsed=0;
+function draw(){ const dt=Math.min(clock.getDelta(),.05); elapsed+=dt;
+  for(const view of views){
+    const w=view.section.clientWidth,h=view.section.clientHeight;
+    if(view.renderer.domElement.width!==Math.round(w*view.renderer.getPixelRatio())||view.renderer.domElement.height!==Math.round(h*view.renderer.getPixelRatio())){view.renderer.setSize(w,h,false);view.camera.updateProjectionMatrix();}
+    view.mixer.update(dt); view.root.position.z=((elapsed*view.speed+1.5)%3)-1.5; view.renderer.render(view.scene,view.camera);
+  }
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

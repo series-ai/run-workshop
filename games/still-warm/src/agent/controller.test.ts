@@ -6,7 +6,7 @@ import {
   type AgentSession,
 } from "@series-inc/rundot-agent";
 import { GameStore } from "../game/store";
-import { GameAction } from "../game/model";
+import { GameAction, VocalCue } from "../game/model";
 import {
   ControllerHooks,
   CreatureController,
@@ -149,7 +149,7 @@ describe("CreatureController", () => {
   beforeEach(() => {
     store = new GameStore();
     hooks = {
-      speak: vi.fn(),
+      vocalize: vi.fn(),
       silence: vi.fn(),
     };
   });
@@ -385,7 +385,7 @@ describe("CreatureController", () => {
 
   it("live restart starts while old send and close remain pending", async () => {
     let session1Hooks!: {
-      onSpeech(text: string): void;
+      onVocalize(cue: VocalCue): void;
       onPause(): void;
       onAction(): void;
     };
@@ -428,13 +428,11 @@ describe("CreatureController", () => {
     expect(closeSession1).toHaveBeenCalledTimes(1);
     expect(factory).toHaveBeenCalledTimes(2);
     expect(controller.getSnapshot().turns).toBe(0);
-    expect(controller.getSnapshot().speech).toBe("");
-
     controller.command("command in session 2");
     expect(controller.getSnapshot().status).toBe("thinking");
 
     // Old hooks cannot alter the active replacement session.
-    session1Hooks.onSpeech("Stale hook speech that must be discarded");
+    session1Hooks.onVocalize("fear");
     session1Hooks.onAction();
     session1Hooks.onPause();
     expect(store.getSnapshot().paused).toBe(false);
@@ -449,19 +447,11 @@ describe("CreatureController", () => {
     );
     await deferredSendSession1.promise;
 
-    // Hooks speak must NOT have been called with old speech
-    expect(hooks.speak).not.toHaveBeenCalledWith(
+    // Old session cues must not reach the active hook.
+    expect(hooks.vocalize).not.toHaveBeenCalledWith(
       "Stale session 1 speech that must be discarded",
     );
-    expect(hooks.speak).not.toHaveBeenCalledWith(
-      "Stale hook speech that must be discarded",
-    );
-    expect(controller.getSnapshot().speech).not.toBe(
-      "Stale session 1 speech that must be discarded",
-    );
-    expect(controller.getSnapshot().speech).not.toBe(
-      "Stale hook speech that must be discarded",
-    );
+    expect(hooks.vocalize).not.toHaveBeenCalledWith("fear");
     expect(controller.getSnapshot().turns).toBe(0);
     expect(controller.getSnapshot().status).toBe("thinking");
 
@@ -476,7 +466,7 @@ describe("CreatureController", () => {
 
   it("rehearsal restart starts while old live close remains pending", async () => {
     let oldHooks!: {
-      onSpeech(text: string): void;
+      onVocalize(cue: VocalCue): void;
       onPause(): void;
       onAction(): void;
     };
@@ -504,11 +494,11 @@ describe("CreatureController", () => {
       paused: false,
     });
 
-    oldHooks.onSpeech("Stale live audio");
+    oldHooks.onVocalize("anger");
     oldHooks.onAction();
     oldHooks.onPause();
 
-    expect(hooks.speak).not.toHaveBeenCalledWith("Stale live audio");
+    expect(hooks.vocalize).not.toHaveBeenCalledWith("anger");
     expect(controller.getSnapshot().status).toBe("idle");
     expect(store.getSnapshot().paused).toBe(false);
 
@@ -626,7 +616,7 @@ describe("CreatureController", () => {
   describe("encouragement and state safety", () => {
     it("good, keep going does not abort active", async () => {
       let currentHooks!: {
-        onSpeech(text: string): void;
+        onVocalize(cue: VocalCue): void;
         onPause(): void;
         onAction(): void;
       };
@@ -663,9 +653,9 @@ describe("CreatureController", () => {
       expect(silenceMock).not.toHaveBeenCalled();
       expect(controller.getSnapshot().status).toBe("thinking");
 
-      // 3. Validated speech emitted via tool hook during active execution
-      currentHooks.onSpeech("Incision complete.");
-      expect(hooks.speak).toHaveBeenCalledWith("Incision complete.");
+      // 3. A validated wordless cue emitted via the tool hook.
+      currentHooks.onVocalize("relief");
+      expect(hooks.vocalize).toHaveBeenCalledWith("relief");
 
       // 4. Complete the active task successfully with raw planning thoughts in result.text
       deferredSend.resolve(
@@ -679,11 +669,10 @@ describe("CreatureController", () => {
         expect(controller.getSnapshot().status).toBe("idle");
       });
 
-      // Raw planning text is never spoken; validated tool dialogue is retained
-      expect(hooks.speak).not.toHaveBeenCalledWith(
+      // Raw planning text never emits a cue.
+      expect(hooks.vocalize).not.toHaveBeenCalledWith(
         "Planning thoughts: Cut along guideline.",
       );
-      expect(controller.getSnapshot().speech).toBe("Incision complete.");
     });
 
     it("idle STOP does not claim previousActionInterrupted", async () => {
@@ -767,12 +756,12 @@ describe("CreatureController", () => {
 
     it("new live session can run before stale oldsend settles", async () => {
       let session1Hooks!: {
-        onSpeech(text: string): void;
+        onVocalize(cue: VocalCue): void;
         onPause(): void;
         onAction(): void;
       };
       let session2Hooks!: {
-        onSpeech(text: string): void;
+        onVocalize(cue: VocalCue): void;
         onPause(): void;
         onAction(): void;
       };
@@ -820,16 +809,16 @@ describe("CreatureController", () => {
       controller.command("command on session 2");
       expect(sendMockSession2).toHaveBeenCalledTimes(1);
 
-      // Validated speech emitted on session 2 via tool hook
-      session2Hooks.onSpeech("Fresh session 2 answer");
+      // A validated cue emitted on session 2 via the tool hook.
+      session2Hooks.onVocalize("relief");
 
       await vi.waitFor(() => {
         expect(controller.getSnapshot().turns).toBe(2);
       });
-      expect(hooks.speak).toHaveBeenCalledWith("Fresh session 2 answer");
+      expect(hooks.vocalize).toHaveBeenCalledWith("relief");
 
       // Now stale old send from session 1 settles and attempts hook
-      session1Hooks.onSpeech("Stale ghost words from hook");
+      session1Hooks.onVocalize("fear");
       deferredSendOld.resolve(
         createDefaultRunResult({
           text: "Stale ghost words from raw text",
@@ -839,20 +828,17 @@ describe("CreatureController", () => {
       await deferredSendOld.promise;
       await Promise.resolve();
 
-      // Session 2 state must remain intact; old session cannot speak or mutate
-      expect(hooks.speak).not.toHaveBeenCalledWith(
-        "Stale ghost words from hook",
-      );
-      expect(hooks.speak).not.toHaveBeenCalledWith(
+      // Session 2 state must remain intact; old session cannot emit or mutate.
+      expect(hooks.vocalize).not.toHaveBeenCalledWith("fear");
+      expect(hooks.vocalize).not.toHaveBeenCalledWith(
         "Stale ghost words from raw text",
       );
       expect(controller.getSnapshot().turns).toBe(2);
-      expect(controller.getSnapshot().speech).toBe("Fresh session 2 answer");
     });
 
     it("old connection hooks cannot change new world", async () => {
       let oldHooks!: {
-        onSpeech(text: string): void;
+        onVocalize(cue: VocalCue): void;
         onPause(): void;
         onAction(): void;
       };
@@ -878,15 +864,9 @@ describe("CreatureController", () => {
 
       // Restart into session 2
       await controller.start("live");
-      expect(controller.getSnapshot().speech).toBe("");
-
       // Try invoking old hooks from session 1
-      oldHooks.onSpeech("Ghost speech from previous epoch");
-      expect(hooks.speak).not.toHaveBeenCalledWith(
-        "Ghost speech from previous epoch",
-      );
-      expect(controller.getSnapshot().speech).toBe("");
-
+      oldHooks.onVocalize("pain");
+      expect(hooks.vocalize).not.toHaveBeenCalledWith("pain");
       oldHooks.onPause();
       expect(store.getSnapshot().paused).toBe(false);
 
@@ -894,9 +874,9 @@ describe("CreatureController", () => {
       expect(controller.getSnapshot().status).toBe("idle");
     });
 
-    it("raw result text never displays or speaks but speech tool hook does", async () => {
+    it("raw result text never emits a cue but validated cues do", async () => {
       let connectionHooks!: {
-        onSpeech(text: string): void;
+        onVocalize(cue: VocalCue): void;
         onPause(): void;
         onAction(): void;
       };
@@ -914,17 +894,14 @@ describe("CreatureController", () => {
 
       const controller = new CreatureController(store, hooks, factory);
       await controller.start("live");
-      expect(controller.getSnapshot().speech).toBe("");
-
       // Issue player command
       controller.command("what do you see");
       expect(sendMock).toHaveBeenCalledTimes(1);
       expect(controller.getSnapshot().status).toBe("thinking");
 
-      // Validated speech delivered via liveHooks.onSpeech (validated act({ kind: 'speak' }))
-      connectionHooks.onSpeech("The incision is bleeding.");
-      expect(hooks.speak).toHaveBeenCalledWith("The incision is bleeding.");
-      expect(controller.getSnapshot().speech).toBe("The incision is bleeding.");
+      // A validated cue arrives through liveHooks.onVocalize.
+      connectionHooks.onVocalize("pain");
+      expect(hooks.vocalize).toHaveBeenCalledWith("pain");
 
       // AgentRunResult resolves with raw backend planning/reasoning text
       const planningText =
@@ -938,10 +915,8 @@ describe("CreatureController", () => {
         expect(controller.getSnapshot().status).toBe("idle");
       });
 
-      // Raw result text must never be spoken or displayed as speech
-      expect(hooks.speak).not.toHaveBeenCalledWith(planningText);
-      expect(controller.getSnapshot().speech).toBe("The incision is bleeding.");
-      expect(controller.getSnapshot().speech).not.toContain("planning");
+      // Raw result text must never emit a cue.
+      expect(hooks.vocalize).not.toHaveBeenCalledWith(planningText);
 
       // Raw result text must not be recorded as creature dialogue notes or journal in store
       expect(
@@ -1019,6 +994,99 @@ describe("CreatureController", () => {
       expect(promptsSent[1]).not.toContain("PLAYER COMMAND");
     });
 
+    it("auto-drains a queued room event without a false capped wait hint", async () => {
+      const firstSend = createDeferred<AgentRunResult>();
+      const secondSend = createDeferred<AgentRunResult>();
+      const promptsSent: string[] = [];
+      const sendMock = vi.fn(async (prompt: { text: string }) => {
+        promptsSent.push(prompt.text);
+        return promptsSent.length === 1 ? firstSend.promise : secondSend.promise;
+      });
+      const { liveSession } = createFakeLiveSession({
+        session: { send: sendMock },
+      });
+      const factory: SessionFactory = vi.fn(async () => liveSession);
+      const noteSpy = vi.spyOn(store, "note");
+      const controller = new CreatureController(store, hooks, factory);
+
+      await controller.start("live");
+      controller.command("care for the patient");
+      expect(sendMock).toHaveBeenCalledTimes(1);
+
+      const state = store.getSnapshot();
+      const snapshotSpy = vi.spyOn(store, "getSnapshot").mockReturnValue({
+        ...state,
+        environment: {
+          ...state.environment,
+          eventCount: 1,
+          lastEvent: "A small fire has broken out in the corner!",
+        },
+      });
+      controller.observeEvents();
+      snapshotSpy.mockRestore();
+
+      firstSend.resolve(
+        createDefaultRunResult({ finishReason: "max_turns", turns: 12 }),
+      );
+
+      await vi.waitFor(() => {
+        expect(sendMock).toHaveBeenCalledTimes(2);
+      });
+      expect(promptsSent[1]).toContain("ROOM EVENT");
+      expect(promptsSent[1]).toContain("small fire");
+      expect(controller.getSnapshot()).toMatchObject({
+        status: "thinking",
+        needsInstruction: false,
+      });
+      expect(noteSpy).not.toHaveBeenCalledWith(
+        "system",
+        "He pauses to listen. Give the next instruction.",
+      );
+
+      secondSend.resolve(createDefaultRunResult({ turns: 2 }));
+      await vi.waitFor(() => {
+        expect(controller.getSnapshot().status).toBe("idle");
+      });
+      expect(controller.getSnapshot().needsInstruction).toBe(false);
+      expect(noteSpy).not.toHaveBeenCalledWith(
+        "system",
+        "He pauses to listen. Give the next instruction.",
+      );
+    });
+
+    it("requests a new instruction when a capped run has no queued input", async () => {
+      const send = createDeferred<AgentRunResult>();
+      const sendMock = vi.fn(async () => send.promise);
+      const { liveSession } = createFakeLiveSession({
+        session: { send: sendMock },
+      });
+      const factory: SessionFactory = vi.fn(async () => liveSession);
+      const controller = new CreatureController(store, hooks, factory);
+
+      await controller.start("live");
+      controller.command("care for the patient");
+      send.resolve(
+        createDefaultRunResult({ finishReason: "max_turns", turns: 12 }),
+      );
+
+      await vi.waitFor(() => {
+        expect(controller.getSnapshot().status).toBe("idle");
+      });
+      expect(controller.getSnapshot()).toMatchObject({
+        turns: 12,
+        needsInstruction: true,
+      });
+      expect(
+        store
+          .getSnapshot()
+          .journal.filter(
+            (entry) =>
+              entry.kind === "system" &&
+              entry.text === "He pauses to listen. Give the next instruction.",
+          ),
+      ).toHaveLength(1);
+    });
+
     it("correction then good retainscorrection", async () => {
       const deferredSend1 = createDeferred<AgentRunResult>();
       const promptsSent: string[] = [];
@@ -1087,7 +1155,7 @@ describe("CreatureController", () => {
           });
         let factoryCalls = 0;
         const connectionHooks: Array<{
-          onSpeech(text: string): void;
+          onVocalize(cue: VocalCue): void;
           onPause(): void;
           onAction(): void;
         }> = [];
@@ -1137,10 +1205,10 @@ describe("CreatureController", () => {
         expect(resumedSendMock).toHaveBeenCalledTimes(1);
         expect(controller.getSnapshot().status).toBe("thinking");
 
-        connectionHooks[0].onSpeech("Late old audio");
+        connectionHooks[0].onVocalize("anger");
         connectionHooks[0].onAction();
         connectionHooks[0].onPause();
-        expect(hooks.speak).not.toHaveBeenCalledWith("Late old audio");
+        expect(hooks.vocalize).not.toHaveBeenCalledWith("anger");
         expect(store.getSnapshot().paused).toBe(false);
         expect(controller.getSnapshot().status).toBe("thinking");
 
@@ -1171,7 +1239,7 @@ describe("CreatureController", () => {
       vi.useFakeTimers();
       try {
         let oldConnectionHooks!: {
-          onSpeech(text: string): void;
+          onVocalize(cue: VocalCue): void;
           onPause(): void;
           onAction(): void;
         };
@@ -1209,12 +1277,12 @@ describe("CreatureController", () => {
           expect(controller.getSnapshot().status).toBe("idle");
         });
         const resumedSnapshot = controller.getSnapshot();
-        oldConnectionHooks.onSpeech("Stale timeout audio");
+        oldConnectionHooks.onVocalize("fear");
         oldConnectionHooks.onAction();
         oldConnectionHooks.onPause();
         await vi.advanceTimersByTimeAsync(20000);
 
-        expect(hooks.speak).not.toHaveBeenCalledWith("Stale timeout audio");
+        expect(hooks.vocalize).not.toHaveBeenCalledWith("fear");
         expect(controller.getSnapshot()).toEqual(resumedSnapshot);
         expect(store.getSnapshot().environment.lanternLit).toBe(false);
         expect(store.getSnapshot().pending).toBeNull();
@@ -1383,7 +1451,7 @@ describe("CreatureController", () => {
 it("reports a blocked guided action and clears the error on the next action", async () => {
   const store = new GameStore();
   const controller = new CreatureController(store, {
-    speak: vi.fn(),
+    vocalize: vi.fn(),
     silence: vi.fn(),
   });
   await controller.start("rehearsal");

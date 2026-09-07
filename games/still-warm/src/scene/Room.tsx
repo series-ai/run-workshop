@@ -2,6 +2,7 @@ import { INSTRUMENT_TRAY } from "./types";
 import { useRef } from "react";
 import type { FC } from "react";
 import { useFrame } from "@react-three/fiber";
+import { MathUtils } from "three";
 import type { Group, PointLight } from "three";
 import type { GameState } from "../game/model";
 import { COLORS } from "./palette";
@@ -13,6 +14,21 @@ interface RoomProps {
   paused?: boolean;
 }
 
+const STORED_HORIZONTAL_BAR = {
+  x: 0.63,
+  y: -0.15,
+  z: -0.13,
+  rotation: Math.PI / 2,
+};
+const LOCKED_HORIZONTAL_BAR = { x: 0, y: 0.1, z: -0.13, rotation: 0 };
+const STORED_DIAGONAL_BAR = {
+  x: -0.63,
+  y: -0.13,
+  z: -0.13,
+  rotation: Math.PI / 2,
+};
+const LOCKED_DIAGONAL_BAR = { x: 0, y: -0.1, z: -0.13, rotation: 0.45 };
+
 // Victorian mortuary architecture with gothic masonry, a timber cabinet, Mayo tray,
 // static anatomical dressing, animated environmental fire, and responsive cellar door.
 export const Room: FC<RoomProps> = ({
@@ -20,16 +36,75 @@ export const Room: FC<RoomProps> = ({
   reducedMotion = false,
   paused = false,
 }) => {
+  const fire = environment?.fire ?? 0;
+  const doorState = environment?.door ?? "quiet";
   const doorRef = useRef<Group>(null!);
+  const horizontalBarRef = useRef<Group>(null!);
+  const diagonalBarRef = useRef<Group>(null!);
+  const barricadeProgress = useRef(doorState === "barricaded" ? 1 : 0);
   const fireLightRef = useRef<PointLight>(null!);
   const flameGroupRef = useRef<Group>(null!);
 
-  const fire = environment?.fire ?? 0;
-  const doorState = environment?.door ?? "quiet";
-
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, dt) => {
     if (paused) return;
     const t = clock.getElapsedTime();
+
+    const barricadeTarget = doorState === "barricaded" ? 1 : 0;
+    barricadeProgress.current = reducedMotion
+      ? barricadeTarget
+      : MathUtils.damp(barricadeProgress.current, barricadeTarget, 6, dt);
+    if (Math.abs(barricadeProgress.current - barricadeTarget) < 0.001) {
+      barricadeProgress.current = barricadeTarget;
+    }
+    const barProgress = barricadeProgress.current;
+    if (horizontalBarRef.current) {
+      horizontalBarRef.current.position.set(
+        MathUtils.lerp(
+          STORED_HORIZONTAL_BAR.x,
+          LOCKED_HORIZONTAL_BAR.x,
+          barProgress,
+        ),
+        MathUtils.lerp(
+          STORED_HORIZONTAL_BAR.y,
+          LOCKED_HORIZONTAL_BAR.y,
+          barProgress,
+        ),
+        MathUtils.lerp(
+          STORED_HORIZONTAL_BAR.z,
+          LOCKED_HORIZONTAL_BAR.z,
+          barProgress,
+        ),
+      );
+      horizontalBarRef.current.rotation.z = MathUtils.lerp(
+        STORED_HORIZONTAL_BAR.rotation,
+        LOCKED_HORIZONTAL_BAR.rotation,
+        barProgress,
+      );
+    }
+    if (diagonalBarRef.current) {
+      diagonalBarRef.current.position.set(
+        MathUtils.lerp(
+          STORED_DIAGONAL_BAR.x,
+          LOCKED_DIAGONAL_BAR.x,
+          barProgress,
+        ),
+        MathUtils.lerp(
+          STORED_DIAGONAL_BAR.y,
+          LOCKED_DIAGONAL_BAR.y,
+          barProgress,
+        ),
+        MathUtils.lerp(
+          STORED_DIAGONAL_BAR.z,
+          LOCKED_DIAGONAL_BAR.z,
+          barProgress,
+        ),
+      );
+      diagonalBarRef.current.rotation.z = MathUtils.lerp(
+        STORED_DIAGONAL_BAR.rotation,
+        LOCKED_DIAGONAL_BAR.rotation,
+        barProgress,
+      );
+    }
 
     // Animate door knocking shudder
     if (doorRef.current) {
@@ -176,32 +251,46 @@ export const Room: FC<RoomProps> = ({
           </mesh>
         </group>
 
-        {/* Barricaded state: heavy reinforced wooden cross-beams bolted over door */}
-        {doorState === "barricaded" && (
-          <group position={[0, 0, 0.07]}>
-            {/* Horizontal locking beam */}
-            <mesh position={[0, 0.1, 0]} castShadow>
-              <boxGeometry args={[1.05, 0.12, 0.06]} />
-              <meshStandardMaterial color="#3a2f26" roughness={0.9} />
-            </mesh>
-            {/* Diagonal brace timber */}
-            <mesh position={[0, -0.1, 0]} rotation={[0, 0, 0.45]} castShadow>
-              <boxGeometry args={[1.1, 0.1, 0.05]} />
-              <meshStandardMaterial color="#2d251e" roughness={0.9} />
-            </mesh>
-            {/* Iron wall mounting brackets */}
-            {[-0.45, 0.45].map((x, i) => (
-              <mesh key={i} position={[x, 0.1, 0.03]} castShadow>
-                <boxGeometry args={[0.08, 0.16, 0.03]} />
-                <meshStandardMaterial
-                  color={COLORS.tableMetal}
-                  metalness={0.85}
-                  roughness={0.3}
-                />
-              </mesh>
-            ))}
-          </group>
-        )}
+        {/* The locking bars wait beside the door until a tool seats them. */}
+        <group
+          ref={horizontalBarRef}
+          position={[
+            STORED_HORIZONTAL_BAR.x,
+            STORED_HORIZONTAL_BAR.y,
+            STORED_HORIZONTAL_BAR.z,
+          ]}
+          rotation={[0, 0, STORED_HORIZONTAL_BAR.rotation]}
+        >
+          <mesh castShadow>
+            <boxGeometry args={[1.05, 0.12, 0.06]} />
+            <meshStandardMaterial color="#5b4937" roughness={0.86} />
+          </mesh>
+        </group>
+        <group
+          ref={diagonalBarRef}
+          position={[
+            STORED_DIAGONAL_BAR.x,
+            STORED_DIAGONAL_BAR.y,
+            STORED_DIAGONAL_BAR.z,
+          ]}
+          rotation={[0, 0, STORED_DIAGONAL_BAR.rotation]}
+        >
+          <mesh castShadow>
+            <boxGeometry args={[1.1, 0.1, 0.05]} />
+            <meshStandardMaterial color="#4d3d30" roughness={0.88} />
+          </mesh>
+        </group>
+        {/* Iron brackets show where the horizontal bar locks. */}
+        {[-0.45, 0.45].map((x) => (
+          <mesh key={x} position={[x, 0.1, -0.13]} castShadow>
+            <boxGeometry args={[0.08, 0.16, 0.03]} />
+            <meshStandardMaterial
+              color="#5d6060"
+              metalness={0.85}
+              roughness={0.3}
+            />
+          </mesh>
+        ))}
       </group>
 
       <mesh position={[1.35, -0.889, 2.16]} rotation={[-Math.PI / 2, 0, 0]}>

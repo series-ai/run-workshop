@@ -1,7 +1,19 @@
 // @refresh reset
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { GameStore } from "../game/store";
-import { createInitialState, type GameAction } from "../game/model";
+import {
+  createInitialState,
+  VOCAL_CUES,
+  type GameAction,
+  type VocalCue,
+} from "../game/model";
+import type { CreatureCall } from "../audio/creatureVoice";
 import { SurgeryScene } from "../scene/SurgeryScene";
 import { LookInput } from "../scene/look";
 
@@ -16,6 +28,10 @@ export default function SceneReview() {
     return look;
   }, []);
   const [result, setResult] = useState("");
+  const [call, setCall] = useState<CreatureCall | null>(null);
+  const callSequence = useRef(0);
+  const vocalize = (cue: VocalCue) =>
+    setCall({ cue, id: ++callSequence.current });
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
   useEffect(() => {
     let previous = performance.now();
@@ -37,6 +53,8 @@ export default function SceneReview() {
       const result = await store.run(action);
       setResult(result.message);
       if (!result.ok) break;
+      if (action.kind === "vocalize") vocalize(action.cue);
+      if (action.kind === "signal_intent") vocalize("effort");
     }
   };
   const emptyHand: GameAction[] = state.holding
@@ -70,7 +88,7 @@ export default function SceneReview() {
           if (event.buttons) look.move(event.movementX, event.movementY);
         }}
       >
-        <SurgeryScene state={state} look={look} />
+        <SurgeryScene state={state} look={look} call={call} />
       </div>
       <footer
         style={{
@@ -91,6 +109,7 @@ export default function SceneReview() {
         >
           <button
             onClick={() => {
+              setCall(null);
               store.reset();
               store.start();
               look.reset();
@@ -101,7 +120,12 @@ export default function SceneReview() {
           <button onClick={() => store.pause(!store.getSnapshot().paused)}>
             Pause / resume
           </button>
-          <button onClick={() => store.cancel("Stopped in room review")}>
+          <button
+            onClick={() => {
+              setCall(null);
+              store.cancel("Stopped in room review");
+            }}
+          >
             STOP
           </button>
           <button
@@ -174,6 +198,15 @@ export default function SceneReview() {
             Look at son
           </button>
           <button onClick={() => look.reset()}>Look at chest</button>
+          {VOCAL_CUES.map((cue) => (
+            <button
+              key={cue}
+              disabled={state.paused}
+              onClick={() => vocalize(cue)}
+            >
+              Mouth · {cue}
+            </button>
+          ))}
         </div>
       </footer>
     </main>

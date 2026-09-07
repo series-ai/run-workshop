@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="data:," />
+    <title>Still Warm — Build review</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #10130f;
+        color: #d8d9c5;
+        font:
+          15px/1.6 system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 1160px;
+        margin: auto;
+        padding: 40px 26px 70px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: Georgia, serif;
+        font-weight: 400;
+        line-height: 1.1;
+      }
+      h1 {
+        font-size: clamp(48px, 7vw, 82px);
+        margin: 12px 0 22px;
+      }
+      h2 {
+        font-size: 32px;
+        margin: 0 0 18px;
+      }
+      h3 {
+        font-size: 25px;
+        margin: 0 0 12px;
+      }
+      p {
+        color: #aeb49f;
+      }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 2px;
+        color: #bfc6a4;
+        margin: 0;
+      }
+      .status {
+        display: inline-block;
+        border: 1px solid #46513c;
+        padding: 6px 12px;
+        font-size: 12px;
+        margin: 12px 0 24px;
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: 1fr 1.1fr;
+        gap: 36px;
+        align-items: center;
+        margin-bottom: 45px;
+      }
+      .hero img {
+        display: block;
+        width: 100%;
+        border: 1px solid #37422d;
+      }
+      .hero p {
+        max-width: 460px;
+      }
+      .button {
+        display: inline-block;
+        padding: 11px 17px;
+        background: #c4c8a5;
+        color: #151b11;
+        text-decoration: none;
+        border: 1px solid #c4c8a5;
+        font-weight: 600;
+      }
+      .secondary {
+        background: none;
+        color: #c4c8a5;
+        margin-left: 6px;
+      }
+      a {
+        color: #c4c8a5;
+        text-underline-offset: 4px;
+      }
+      a:focus-visible {
+        outline: 2px solid #d8d9c5;
+        outline-offset: 5px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .card {
+        display: flex;
+        flex-direction: column;
+        background: #1a2116;
+        border: 1px solid #37422d;
+        padding: 24px;
+        min-width: 0;
+      }
+      .card p {
+        margin: 0 0 22px;
+      }
+      .card a {
+        margin-top: auto;
+      }
+      .section {
+        padding: 34px 0;
+        border-top: 1px solid #37422d;
+      }
+      .evidence {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+      }
+      .evidence ul {
+        padding-left: 19px;
+        color: #b9bdaa;
+      }
+      .evidence li {
+        margin: 10px 0;
+      }
+      .note {
+        font-size: 13px;
+        max-width: 780px;
+      }
+      .local {
+        padding: 20px 24px;
+        background: #1a2116;
+        border: 1px solid #37422d;
+      }
+      code {
+        font:
+          13px/1.7 ui-monospace,
+          monospace;
+        overflow-wrap: anywhere;
+      }
+      pre {
+        white-space: pre-wrap;
+        margin: 10px 0;
+      }
+      .small {
+        font-size: 12px;
+        color: #9ba58b;
+      }
+      @media (max-width: 800px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+        .grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .evidence {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 500px) {
+        main {
+          padding: 28px 18px 45px;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .hero {
+          gap: 20px;
+        }
+        .button {
+          margin: 4px 4px 4px 0;
+        }
+        .card {
+          padding: 21px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">STILL WARM / CURRENT BUILD</p>
+      <div class="status">Four-hour improvement pass · In progress</div>
+      <div class="hero">
+        <div>
+          <h1>Keep him<br />with you.</h1>
+          <p>
+            A fallen support pins you to the cellar floor. Your assembled son is
+            the only one who can lift it. Then you must guide his hands through
+            the wound.
+          </p>
+          <p>
+            <a class="button" href="play.html">Play guided preview</a
+            ><a class="button secondary" href="scene.html">Inspect the room</a>
+          </p>
+          <p class="small">
+            Sound starts off. This preview uses fixed choices. The local RUN app
+            accepts voice and free text.
+          </p>
+        </div>
+        <img
+          src="review/room.png"
+          alt="The assembled son stands over the father in the green, dithered cellar."
+        />
+      </div>
+      <section class="section" aria-labelledby="inspect-title">
+        <h2 id="inspect-title">Inspect the actual game assets</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>The patient</h3>
+            <p>
+              All six wound stages. Raw and dithered views. Low blood, a dirty
+              dressing, and the crushed chest.
+            </p>
+            <a href="patient.html">Open patient review →</a>
+          </article>
+          <article class="card">
+            <h3>Room objects</h3>
+            <p>
+              Compare silhouettes and materials. Check water levels and clean or
+              stained cloth.
+            </p>
+            <a href="objects.html">Open object review →</a>
+          </article>
+          <article class="card">
+            <h3>Wordless calls</h3>
+            <p>
+              Fear, effort, pain, anger, and relief. Each has a distinct breath
+              pattern. Audio requires a click to enable it.
+            </p>
+            <a href="voice.html">Open sound review →</a>
+          </article>
+          <article class="card">
+            <h3>Source motion</h3>
+            <p>
+              The approved provider clips remain available. Inspect walking,
+              hand grips, and the full scream.
+            </p>
+            <a href="proof.html">Open animation review →</a>
+          </article>
+          <article class="card">
+            <h3>Action contact</h3>
+            <p>
+              Use the actual room controls to lift the support, move
+              instruments, and check small mouth movements.
+            </p>
+            <a href="scene.html">Open room review →</a>
+          </article>
+          <article class="card">
+            <h3>A live operation</h3>
+            <p>
+              Five player commands reached the saved ending. The son made
+              blanket thread, kept the cloth, and dealt with a fire.
+            </p>
+            <a href="review/live-operation.html">Read the recorded run →</a>
+          </article>
+        </div>
+      </section>
+      <section class="section evidence" aria-labelledby="changes-title">
+        <div>
+          <h2 id="changes-title">What changed</h2>
+          <ul>
+            <li>
+              Exact contact signals let the father understand and stop the next
+              movement.
+            </li>
+            <li>
+              STOP, blackout, pause, and old session callbacks cannot issue
+              stale patient commands.
+            </li>
+            <li>
+              A failed model request can recover without resetting the room.
+            </li>
+            <li>
+              Safe paths keep the son outside the body. His return pace follows
+              the source walk.
+            </li>
+            <li>
+              Thread, cloth, water, and candle flame have consistent state and
+              visible results.
+            </li>
+            <li>
+              The mouth and fingers return to their authored motion after
+              temporary changes.
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h2>Checked in the game</h2>
+          <ul>
+            <li>
+              A full live operation and a full guided route reached the saved
+              ending.
+            </li>
+            <li>
+              HTTP 500 recovery preserved the world. A real STOP canceled
+              contact before it took effect.
+            </li>
+            <li>
+              The mobile route reached blackout and paused. The controls fit at
+              390 pixels.
+            </li>
+            <li>181 tests pass. Production and proof builds pass.</li>
+          </ul>
+          <p class="note">
+            The live run needed a direct pain-relief instruction. It finished
+            with very little blood. This is evidence from one run, not a
+            guarantee that the son will choose the same actions again.
+          </p>
+          <p>
+            <a href="review/mobile-pause.png"
+              >View the mobile blackout pause check →</a
+            >
+          </p>
+        </div>
+      </section>
+      <section class="section" aria-labelledby="local-title">
+        <h2 id="local-title">Run the live game locally</h2>
+        <div class="local">
+          <p>From the repository:</p>
+          <pre><code>cd games/still-warm
+npm ci
+npm run dev</code></pre>
+          <p>
+            Open the localhost URL printed by Vite. Complete RUN sign-in. Keep
+            the Playground server bound to localhost.
+          </p>
+        </div>
+        <p class="note">
+          The approved model and source animations were preserved. No paid asset
+          generation was run during this pass. Four old Still Warm BB threads
+          were archived after their shared work was reconciled.
+        </p>
+        <p class="small">
+          Review updated 7 September 2026, 21:40 UTC. Work is continuing until
+          23:33 UTC.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
