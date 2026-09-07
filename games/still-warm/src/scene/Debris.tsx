@@ -5,6 +5,7 @@ import { createBeamTexture } from "./beamTexture";
 import { PATIENT_LAYOUT } from "./patientLayout";
 import type { LiveHandSocket } from "./types";
 import type { GameState } from "../game/model";
+import { supportMotion } from "./supportMotion";
 
 export function Debris({
   state,
@@ -18,18 +19,7 @@ export function Debris({
   useEffect(() => () => wood.dispose(), [wood]);
   useFrame((_, dt) => {
     if (state.paused) return;
-    const lifting = state.pending?.action.kind === "lift_debris";
-    const lift =
-      lifting && socket.actionContact
-        ? MathUtils.clamp(
-            socket.gripPosition.y - PATIENT_LAYOUT.beamGripY,
-            0,
-            0.85,
-          )
-        : 0;
-    const cleared =
-      state.stage !== "pinned" ||
-      (lifting && (state.pending?.progress ?? 0) > 0.8);
+    const { lift, cleared } = supportMotion(state, socket);
     beam.current.position.x = MathUtils.damp(
       beam.current.position.x,
       cleared ? 1.2 : 0,

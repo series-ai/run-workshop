@@ -20,6 +20,12 @@ interface SystemHarness {
   system: SystemApi;
   emitState(state: { active: boolean; pointerLocked: boolean }): void;
   emitMove(dx: number, dy: number): void;
+  setSafeArea(area: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  }): void;
   stopState: ReturnType<typeof vi.fn>;
   stopInput: ReturnType<typeof vi.fn>;
 }
@@ -125,12 +131,14 @@ function createSystemHarness(
 ): SystemHarness {
   let stateListener: FullscreenStateListener | null = null;
   let inputListener: PointerInputListener | null = null;
+  let safeArea = { top: 0, right: 0, bottom: 0, left: 0 };
   const stopState = vi.fn();
   const stopInput = vi.fn();
   const system = {
     getEnvironment: vi.fn(() => ({
       capabilities: { fullscreen, pointerLock },
     })),
+    getSafeArea: vi.fn(() => ({ ...safeArea })),
     getFullscreenState: vi.fn(async () => ({
       active: false,
       pointerLocked: false,
@@ -158,6 +166,9 @@ function createSystemHarness(
     emitState: (state) => stateListener?.(state),
     emitMove: (movementX, movementY) =>
       inputListener?.({ type: "move", movementX, movementY, buttons: 0 }),
+    setSafeArea: (area) => {
+      safeArea = area;
+    },
     stopState,
     stopInput,
   };
@@ -180,6 +191,7 @@ describe("FullscreenController", () => {
       active: false,
       pointerLocked: false,
       supported: true,
+      safeArea: { top: 0, right: 0, bottom: 0, left: 0 },
     });
 
     await controller.enter();
@@ -190,11 +202,123 @@ describe("FullscreenController", () => {
       active: true,
       pointerLocked: true,
       supported: true,
+      safeArea: { top: 0, right: 0, bottom: 0, left: 0 },
     });
 
     harness.emitState({ active: true, pointerLocked: false });
     expect(controller.getSnapshot().pointerLocked).toBe(false);
     expect(listener).toHaveBeenCalled();
+  });
+
+  it("fulfills an early RUN fullscreen request after initialization", async () => {
+    const harness = createSystemHarness();
+    let resolveRun!: (run: { system: SystemApi }) => void;
+    initializeRunMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveRun = resolve;
+        }),
+    );
+    const controller = new FullscreenController(vi.fn());
+
+    const entering = controller.enter();
+    expect(initializeRunMock).toHaveBeenCalledOnce();
+    expect(harness.system.requestFullscreen).not.toHaveBeenCalled();
+
+    resolveRun({ system: harness.system });
+    await entering;
+
+    expect(harness.system.requestFullscreen).toHaveBeenCalledWith({
+      pointerLock: true,
+    });
+    expect(controller.getSnapshot()).toMatchObject({
+      active: true,
+      pointerLocked: true,
+    });
+  });
+
+  it("does not enter a late local fallback outside the original gesture", async () => {
+    const browser = installLocalBrowser();
+    try {
+      const harness = createSystemHarness("unavailable", false);
+      let resolveRun!: (run: { system: SystemApi }) => void;
+      initializeRunMock.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveRun = resolve;
+          }),
+      );
+      const controller = new FullscreenController(vi.fn());
+
+      const entering = controller.enter();
+      resolveRun({ system: harness.system });
+      await entering;
+
+      expect(browser.requestFullscreen).not.toHaveBeenCalled();
+      expect(browser.requestPointerLock).not.toHaveBeenCalled();
+
+      await controller.enter();
+      expect(browser.requestFullscreen).toHaveBeenCalledOnce();
+      controller.dispose();
+    } finally {
+      browser.restore();
+    }
+  });
+
+  it("refreshes RUN safe areas after host state and viewport changes", async () => {
+    const previousWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
+    const windowTarget = new EventTarget();
+    Object.defineProperty(globalThis, "window", {
+      configurable: true,
+      value: windowTarget,
+    });
+    try {
+      const harness = createSystemHarness();
+      harness.setSafeArea({ top: 72, right: 8, bottom: 24, left: 8 });
+      initializeRunMock.mockResolvedValue({ system: harness.system });
+      const controller = new FullscreenController(vi.fn());
+      const listener = vi.fn();
+      controller.subscribe(listener);
+
+      await controller.initialize();
+      expect(controller.getSnapshot().safeArea).toEqual({
+        top: 72,
+        right: 8,
+        bottom: 24,
+        left: 8,
+      });
+      listener.mockClear();
+
+      harness.setSafeArea({ top: 0, right: 12, bottom: 16, left: 12 });
+      harness.emitState({ active: false, pointerLocked: false });
+      expect(controller.getSnapshot().safeArea).toEqual({
+        top: 0,
+        right: 12,
+        bottom: 16,
+        left: 12,
+      });
+      expect(listener).toHaveBeenCalledOnce();
+
+      harness.setSafeArea({ top: 4, right: 0, bottom: 20, left: 0 });
+      windowTarget.dispatchEvent(new Event("resize"));
+      expect(controller.getSnapshot().safeArea).toEqual({
+        top: 4,
+        right: 0,
+        bottom: 20,
+        left: 0,
+      });
+
+      controller.dispose();
+      harness.setSafeArea({ top: 99, right: 99, bottom: 99, left: 99 });
+      windowTarget.dispatchEvent(new Event("resize"));
+      expect(controller.getSnapshot().safeArea.top).toBe(4);
+    } finally {
+      if (previousWindow) {
+        Object.defineProperty(globalThis, "window", previousWindow);
+      } else {
+        delete (globalThis as { window?: unknown }).window;
+      }
+    }
   });
 
   it("routes only relative move input to the look callback", async () => {
@@ -222,6 +346,7 @@ describe("FullscreenController", () => {
       active: true,
       pointerLocked: false,
       supported: true,
+      safeArea: { top: 0, right: 0, bottom: 0, left: 0 },
     });
     expect(harness.system.requestFullscreen).toHaveBeenCalledWith({});
     expect(harness.system.setPointerLock).not.toHaveBeenCalled();
@@ -255,6 +380,7 @@ describe("FullscreenController", () => {
       active: true,
       pointerLocked: true,
       supported: true,
+      safeArea: { top: 0, right: 0, bottom: 0, left: 0 },
     });
   });
 
@@ -320,6 +446,7 @@ describe("FullscreenController", () => {
       active: false,
       pointerLocked: false,
       supported: false,
+      safeArea: { top: 0, right: 0, bottom: 0, left: 0 },
     });
     expect(harness.system.setPointerLock).not.toHaveBeenCalled();
   });
@@ -356,6 +483,7 @@ describe("FullscreenController", () => {
         active: true,
         pointerLocked: true,
         supported: true,
+        safeArea: { top: 0, right: 0, bottom: 0, left: 0 },
       });
 
       browser.emitMove(8, -3);
@@ -434,6 +562,7 @@ describe("FullscreenController", () => {
         active: true,
         pointerLocked: true,
         supported: true,
+        safeArea: { top: 0, right: 0, bottom: 0, left: 0 },
       });
       expect(browser.requestFullscreen).toHaveBeenCalledOnce();
       expect(browser.requestPointerLock).toHaveBeenCalledOnce();

@@ -107,11 +107,11 @@ The father’s thoughts use italic text. All sound is generated locally with Web
 
 > I am here. Light the lantern on the workbench, son.
 
-> I trust you. Lift the support off me slowly. Tell me before you touch me.
+> I trust you. Lift the support off me slowly. Show me before you touch me.
 
 > Make a thread from the wig. Find something to cut it with, then thread the needle.
 
-> Show me on the pillow first. Be gentle. Tell me before you touch me.
+> Show me on the pillow first. Be gentle. Show me before you touch me.
 
 > If I pass out, wait. If the room catches fire, deal with the fire first.
 
@@ -127,7 +127,7 @@ This is fictional surgery with abstract health and sedation values.
 
 Trust, agitation, and confidence determine six states: scared, anxious, angry,
 sad, happy, and focused. They affect action speed and contact pain. The agent
-uses the same state to select actions and words. The creature starts scared.
+uses the same state to select actions and sounds. The creature starts scared.
 Praise and clear instructions can build confidence. Threats reduce trust.
 
 Door knocking and fire change the room and the creature's state. The agent
@@ -139,12 +139,12 @@ blackout, it acts under the existing rules. The patient cannot issue new orders.
 - `src/game`: pure game rules, affordances, emotion profiles, and delayed actions.
 - `src/agent`: RUN transport, validated tools, and input cancellation.
 - `src/scene`: room geometry, source animation playback, hand attachment, and GPU dithering.
-- `src/audio`: browser voice input, speech, and generated sound.
+- `src/audio`: browser voice input and generated sound.
 - `src/platform`: RUN fullscreen, pointer input, and the local preview fallback.
 
 The agent has `inspect_room` and `act` tools. The game validates each physical
 action before it starts and before it takes effect. STOP clears pending input
-and invalidates the current announcement. The next agent call includes the
+and invalidates the current contact signal. The next agent call includes the
 observed result of the interruption. Agent input uses `concurrency: 'reject'`.
 The app holds only the latest pending correction.
 
@@ -154,8 +154,14 @@ part of its context and is not a fixed engine rule.
 
 Sessions use `InMemoryAgentSessionStore`. Restart clears the operation and the
 agent's history. There is no save, chat storage, or background recording.
-The speech tool produces wordless audio cues. Its text and raw model response
-text are not shown or read aloud.
+The `signal_intent` action declares the exact next patient contact. A signal for
+one tool, target, or movement cannot authorize another. The father gets a short
+private thought before contact. `vocalize` produces wordless audio and cannot
+authorize contact. Raw model text is not shown or read aloud.
+
+Failed actions produce short father thoughts from the game rules. Voice input
+keeps the final recognized words visible for five seconds so the player can
+correct an error.
 
 ## Checks
 
@@ -234,3 +240,10 @@ curves between these GLBs. Their rest transforms differ after export.
 With the proof server open in Playwright, run
 `scripts/check-game-clips.playwright.js` to compare the exported bone positions
 against the source animations. The check fails above 0.1 mm.
+
+## Object review
+
+Open `http://127.0.0.1:4320/objects.html` with the proof server running.
+This page compares the actual room objects with raw shading and game dithering.
+Select an item and a camera view. The bowl also has full and empty states.
+The inspection light is fixed. It differs from the cellar light.

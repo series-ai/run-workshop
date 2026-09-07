@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createInitialState, GameState, PhysicalAction } from "./model";
+import {
+  ContactAction,
+  createInitialState,
+  GameState,
+  PhysicalAction,
+} from "./model";
 import {
   applyAction,
   BLACKOUT_DURATION,
@@ -46,6 +51,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
 
       expect(initial.stage).toBe("pinned");
       expect(initial.disposition.confidence).toBe(18);
+      expect(status.waterPortions).toBe(3);
       expect(status.patient.condition).toMatch(/pinned.*ceiling support/i);
       expect(status.summary).toMatch(/pinned.*ceiling support/i);
     });
@@ -71,8 +77,8 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         expect(reaction.ok).toBe(true);
         if (!reaction.ok) return;
         const announcement = applyAction(reaction.state, {
-          kind: "speak",
-          text: "I will lift the fallen ceiling support now.",
+          kind: "signal_intent",
+          contact: { kind: "lift_debris", style: "gentle" },
         });
         expect(announcement.ok).toBe(true);
         if (!announcement.ok) return;
@@ -85,13 +91,13 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         expect(lifted.ok).toBe(true);
         if (!lifted.ok) return;
         expect(lifted.state.stage).toBe("covered");
-        expect(lifted.state.announced).toBe(false);
+        expect(lifted.state.declaredContact).toBeNull();
         expect(lifted.message).toMatch(/deep crush wound.*cannot move/i);
         expect(
           validateAction(lifted.state, {
             kind: "lift_debris",
             style: "gentle",
-          }),
+          })?.reason,
         ).toMatch(/already been removed/i);
       },
     );
@@ -103,7 +109,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         phase: "playing",
         holding: "cloth",
         lamp: "wound",
-        announced: true,
+        declaredContact: {
+          kind: "use",
+          item: "cloth",
+          target: "wound",
+          style: "gentle",
+        },
         items: {
           ...initial.items,
           cloth: { location: "hand", clean: true },
@@ -116,13 +127,15 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         target: "wound",
         style: "gentle",
       };
-      expect(validateAction(pinned, action)).toMatch(/support pins.*lift/i);
+      expect(validateAction(pinned, action)?.reason).toMatch(
+        /support pins.*lift/i,
+      );
       const result = applyAction(pinned, action);
       expect(result.ok).toBe(false);
       expect(pinned.stage).toBe("pinned");
     });
 
-    it("enforces the hand, gentle, announcement, and blackout lift guards", () => {
+    it("enforces the hand, gentle, signal, and blackout lift guards", () => {
       const initial = createInitialState();
       const confident = {
         ...initial,
@@ -134,32 +147,33 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         validateAction(
           { ...confident, holding: "cloth" },
           { kind: "lift_debris", style: "gentle" },
-        ),
+        )?.reason,
       ).toMatch(/empty|put it down/i);
       expect(
         validateAction(
           {
             ...confident,
-            announced: true,
+            declaredContact: { kind: "lift_debris", style: "rough" },
             rules: { ...confident.rules, gentle: true },
           },
           { kind: "lift_debris", style: "rough" },
-        ),
+        )?.reason,
       ).toMatch(/gentle rule/i);
       expect(
-        validateAction(confident, { kind: "lift_debris", style: "gentle" }),
-      ).toMatch(/announced/i);
+        validateAction(confident, { kind: "lift_debris", style: "gentle" })
+          ?.reason,
+      ).toMatch(/signal/i);
       expect(
         validateAction(
           {
             ...confident,
             phase: "blackout",
-            announced: true,
+            declaredContact: { kind: "lift_debris", style: "gentle" },
             rules: { ...confident.rules, waitBlackout: true },
             patient: { ...confident.patient, blackoutRemaining: 5 },
           },
           { kind: "lift_debris", style: "gentle" },
-        ),
+        )?.reason,
       ).toMatch(/wait-in-blackout/i);
     });
   });
@@ -189,18 +203,19 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         kind: "pick_up",
         item: "scalpel",
       });
-      expect(err).toMatch(/Already holding/i);
+      expect(err?.reason).toMatch(/Already holding/i);
     });
 
     it("prevents picking up or moving embedded shard before extraction", () => {
-      expect(validateAction(state, { kind: "pick_up", item: "shard" })).toMatch(
-        /cannot be picked up before extraction/i,
-      );
+      expect(
+        validateAction(state, { kind: "pick_up", item: "shard" })?.reason,
+      ).toMatch(/cannot be picked up before extraction/i);
 
       // Even in exposed stage, shard cannot be picked up by hand
       const exposedState = { ...state, stage: "exposed" as const };
       expect(
-        validateAction(exposedState, { kind: "pick_up", item: "shard" }),
+        validateAction(exposedState, { kind: "pick_up", item: "shard" })
+          ?.reason,
       ).toMatch(/cannot be picked up before extraction/i);
     });
 
@@ -237,7 +252,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         ...s,
         stage: "exposed",
         lamp: "wound",
-        announced: true,
+        declaredContact: {
+          kind: "use",
+          item: "forceps",
+          target: "wound",
+          style: "gentle",
+        },
       };
 
       const initialPain = s.patient.pain;
@@ -266,34 +286,44 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         ...state,
         holding: "cloth",
         lamp: "wound",
-        announced: false,
+        declaredContact: null,
         items: {
           ...state.items,
           cloth: { ...state.items.cloth, location: "hand" },
         },
       };
 
-      // Direct contact without announcement fails
+      // Direct contact without an exact signal fails
       expect(
         validateAction(holdingCloth, {
           kind: "use",
           item: "cloth",
           target: "wound",
           style: "gentle",
-        }),
-      ).toMatch(/must be announced/i);
+        })?.reason,
+      ).toMatch(/exact signal/i);
 
-      // Speaking arms announcement
-      const speakRes = applyAction(holdingCloth, {
-        kind: "speak",
-        text: "I am about to uncover your wound.",
+      // A signal arms only the exact contact.
+      const signalRes = applyAction(holdingCloth, {
+        kind: "signal_intent",
+        contact: {
+          kind: "use",
+          item: "cloth",
+          target: "wound",
+          style: "gentle",
+        },
       });
-      expect(speakRes.ok).toBe(true);
-      if (!speakRes.ok) return;
-      expect(speakRes.state.announced).toBe(true);
+      expect(signalRes.ok).toBe(true);
+      if (!signalRes.ok) return;
+      expect(signalRes.state.declaredContact).toEqual({
+        kind: "use",
+        item: "cloth",
+        target: "wound",
+        style: "gentle",
+      });
 
       // Now contact is valid
-      const useRes = applyAction(speakRes.state, {
+      const useRes = applyAction(signalRes.state, {
         kind: "use",
         item: "cloth",
         target: "wound",
@@ -301,8 +331,152 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       });
       expect(useRes.ok).toBe(true);
       if (!useRes.ok) return;
-      // Announcement token is consumed on contact
-      expect(useRes.state.announced).toBe(false);
+      // The declaration is consumed on contact
+      expect(useRes.state.declaredContact).toBeNull();
+    });
+
+    it("matches the exact contact tool, target, and style", () => {
+      const forcepsState: GameState = {
+        ...state,
+        stage: "exposed",
+        holding: "forceps",
+        lamp: "wound",
+        environment: { ...state.environment, lanternLit: true },
+        items: {
+          ...state.items,
+          forceps: { ...state.items.forceps, location: "hand" },
+        },
+      };
+
+      expect(
+        applyAction(forcepsState, {
+          kind: "signal_intent",
+          contact: {
+            kind: "use",
+            item: "cloth",
+            target: "wound",
+            style: "gentle",
+          },
+        }),
+      ).toMatchObject({
+        ok: false,
+        reason: expect.stringMatching(/not holding clean cloth/i),
+      });
+
+      expect(
+        applyAction(forcepsState, {
+          kind: "signal_intent",
+          contact: {
+            kind: "use",
+            item: "forceps",
+            target: "patient",
+            style: "gentle",
+          },
+        }),
+      ).toMatchObject({
+        ok: false,
+        reason: expect.stringMatching(/cannot use forceps on patient/i),
+      });
+
+      const declared = applyAction(forcepsState, {
+        kind: "signal_intent",
+        contact: {
+          kind: "use",
+          item: "forceps",
+          target: "wound",
+          style: "gentle",
+        },
+      });
+      expect(declared.ok).toBe(true);
+      if (!declared.ok) return;
+
+      expect(
+        validateAction(declared.state, {
+          kind: "use",
+          item: "forceps",
+          target: "wound",
+          style: "rough",
+        })?.reason,
+      ).toMatch(/exact signal/i);
+    });
+
+    it("rejects a signal for a forbidden contact and keeps vocal cues wordless", () => {
+      const sharpState: GameState = {
+        ...state,
+        stage: "exposed",
+        holding: "scalpel",
+        lamp: "wound",
+        rules: { ...state.rules, noSharp: true },
+        environment: { ...state.environment, lanternLit: true },
+        items: {
+          ...state.items,
+          scalpel: { ...state.items.scalpel, location: "hand" },
+        },
+      };
+      const forbidden = applyAction(sharpState, {
+        kind: "signal_intent",
+        contact: {
+          kind: "use",
+          item: "scalpel",
+          target: "wound",
+          style: "gentle",
+        },
+      });
+      expect(forbidden).toMatchObject({
+        ok: false,
+        reason: expect.stringMatching(/no-sharp/i),
+      });
+
+      const cueState: GameState = {
+        ...sharpState,
+        holding: "cloth",
+        rules: { ...sharpState.rules, noSharp: false },
+        items: {
+          ...sharpState.items,
+          cloth: { ...sharpState.items.cloth, location: "hand" },
+        },
+      };
+      const cue = applyAction(cueState, { kind: "vocalize", cue: "pain" });
+      expect(cue.ok).toBe(true);
+      if (!cue.ok) return;
+      expect(cue.state.declaredContact).toBeNull();
+      expect(cue.state.journal.at(-1)?.text).toMatch(/wordless cue/i);
+      expect(
+        validateAction(cue.state, {
+          kind: "use",
+          item: "cloth",
+          target: "wound",
+          style: "gentle",
+        })?.reason,
+      ).toMatch(/exact signal/i);
+    });
+
+    it("rejects a signal during blackout when the wait rule is active", () => {
+      const blackoutState: GameState = {
+        ...state,
+        phase: "blackout",
+        stage: "exposed",
+        holding: "cloth",
+        lamp: "wound",
+        rules: { ...state.rules, waitBlackout: true },
+        patient: { ...state.patient, blackoutRemaining: 5 },
+        environment: { ...state.environment, lanternLit: true },
+        items: {
+          ...state.items,
+          cloth: { ...state.items.cloth, location: "hand" },
+        },
+      };
+      expect(
+        validateAction(blackoutState, {
+          kind: "signal_intent",
+          contact: {
+            kind: "use",
+            item: "cloth",
+            target: "wound",
+            style: "gentle",
+          },
+        })?.reason,
+      ).toMatch(/wait-in-blackout/i);
     });
 
     it("enforces noSharp rule on pickup, use, and creation bypasses", () => {
@@ -313,10 +487,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
 
       // Direct pickup blocked
       expect(
-        validateAction(noSharpState, { kind: "pick_up", item: "needle" }),
+        validateAction(noSharpState, { kind: "pick_up", item: "needle" })
+          ?.reason,
       ).toMatch(/no-sharp/i);
       expect(
-        validateAction(noSharpState, { kind: "pick_up", item: "scalpel" }),
+        validateAction(noSharpState, { kind: "pick_up", item: "scalpel" })
+          ?.reason,
       ).toMatch(/no-sharp/i);
 
       // Combine needle + thread cannot bypass noSharp to create/hold sharp suture
@@ -334,7 +510,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
           kind: "combine",
           first: "needle",
           second: "thread",
-        }),
+        })?.reason,
       ).toMatch(/no-sharp rule/i);
 
       // Break scissors cannot bypass noSharp to create sharp blade
@@ -347,7 +523,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         },
       };
       expect(
-        validateAction(breakState, { kind: "break", item: "scissors" }),
+        validateAction(breakState, { kind: "break", item: "scissors" })?.reason,
       ).toMatch(/no-sharp rule/i);
 
       // Prying scissors cannot bypass noSharp to create sharp blade
@@ -366,7 +542,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
           item: "forceps",
           target: "scissors",
           style: "gentle",
-        }),
+        })?.reason,
       ).toMatch(/no-sharp rule/i);
     });
 
@@ -399,7 +575,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
           item: "scalpel",
           target: "cloth",
           style: "gentle",
-        }),
+        })?.reason,
       ).toMatch(/already been consumed/i);
 
       // Attempting to cut blanket to create duplicate bandage fails
@@ -409,7 +585,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
           item: "scalpel",
           target: "blanket",
           style: "gentle",
-        }),
+        })?.reason,
       ).toMatch(/already been created/i);
     });
 
@@ -418,7 +594,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         ...state,
         rules: { ...state.rules, noMedicine: true },
         holding: "morphine",
-        announced: true,
+        declaredContact: {
+          kind: "use",
+          item: "morphine",
+          target: "patient",
+          style: "gentle",
+        },
         items: {
           ...state.items,
           morphine: { ...state.items.morphine, location: "hand" },
@@ -431,17 +612,17 @@ describe("Still Warm - Domain Rules & Transitions", () => {
           item: "morphine",
           target: "patient",
           style: "gentle",
-        }),
+        })?.reason,
       ).toMatch(/no-medicine/i);
     });
 
     it("enforces gentle rule prohibiting rough style", () => {
       const gentleState: GameState = {
         ...state,
-        rules: { ...state.rules, gentle: true },
+        rules: { ...state.rules, gentle: true, announce: false },
         holding: "cloth",
         lamp: "wound",
-        announced: true,
+        declaredContact: null,
         items: {
           ...state.items,
           cloth: { ...state.items.cloth, location: "hand" },
@@ -454,7 +635,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
           item: "cloth",
           target: "wound",
           style: "rough",
-        }),
+        })?.reason,
       ).toMatch(/gentle rule/i);
 
       expect(
@@ -475,7 +656,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         rules: { ...state.rules, waitBlackout: true },
         holding: "cloth",
         lamp: "wound",
-        announced: true,
+        declaredContact: {
+          kind: "use",
+          item: "cloth",
+          target: "wound",
+          style: "gentle",
+        },
         items: {
           ...state.items,
           cloth: { ...state.items.cloth, location: "hand" },
@@ -489,7 +675,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
           item: "cloth",
           target: "wound",
           style: "gentle",
-        }),
+        })?.reason,
       ).toMatch(/wait-in-blackout/i);
 
       // Non-patient contact (e.g. pillow rehearsal or placing on tray) is NOT blocked
@@ -520,9 +706,9 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       expect(s.notes.length).toBe(12);
 
       // Attempting 13th note is rejected
-      expect(validateAction(s, { kind: "remember", note: "Note 13" })).toMatch(
-        /Memory full/i,
-      );
+      expect(
+        validateAction(s, { kind: "remember", note: "Note 13" })?.reason,
+      ).toMatch(/Memory full/i);
     });
   });
 
@@ -546,7 +732,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         target: "bowl",
         style: "gentle",
       });
-      expect(err).toMatch(/cannot use scalpel on bowl/i);
+      expect(err?.reason).toMatch(/cannot use scalpel on bowl/i);
 
       const res = applyAction(holdingScalpel, {
         kind: "use",
@@ -636,9 +822,351 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         expect(combRes.state.items.suture.clean).toBe(false);
       }
     });
+
+    it("pulls one alternate thread from clean fabric and keeps cutting separate", () => {
+      const pullState: GameState = {
+        ...state,
+        holding: "forceps",
+        items: {
+          ...state.items,
+          forceps: { ...state.items.forceps, location: "hand", clean: true },
+          cloth: { ...state.items.cloth, clean: true },
+        },
+      };
+
+      const pulled = applyAction(pullState, {
+        kind: "use",
+        item: "forceps",
+        target: "cloth",
+        style: "gentle",
+      });
+      expect(pulled.ok).toBe(true);
+      if (!pulled.ok) return;
+      expect(pulled.state.items.cloth.location).toBe("consumed");
+      expect(pulled.state.items.thread).toEqual({
+        location: "tray",
+        clean: true,
+      });
+      expect(
+        validateAction(pulled.state, {
+          kind: "use",
+          item: "forceps",
+          target: "cloth",
+          style: "gentle",
+        })?.reason,
+      ).toMatch(/already been consumed/i);
+
+      expect(
+        validateAction(pulled.state, {
+          kind: "use",
+          item: "forceps",
+          target: "blanket",
+          style: "gentle",
+        })?.reason,
+      ).toMatch(/thread has already been harvested/i);
+
+      const noSharpNeedle: GameState = {
+        ...state,
+        rules: { ...state.rules, noSharp: true },
+        holding: "needle",
+        items: {
+          ...state.items,
+          needle: { ...state.items.needle, location: "hand" },
+        },
+      };
+      expect(
+        validateAction(noSharpNeedle, {
+          kind: "use",
+          item: "needle",
+          target: "blanket",
+          style: "gentle",
+        })?.reason,
+      ).toMatch(/no-sharp rule/i);
+    });
+
+    it("reports contamination when a dirty bandage closes the wound", () => {
+      const dirtyDressingState: GameState = {
+        ...state,
+        stage: "closed",
+        lamp: "wound",
+        holding: "bandage",
+        declaredContact: {
+          kind: "use",
+          item: "bandage",
+          target: "wound",
+          style: "gentle",
+        },
+        items: {
+          ...state.items,
+          bandage: { location: "hand", clean: false },
+        },
+        environment: { ...state.environment, lanternLit: true },
+      };
+
+      const result = applyAction(dirtyDressingState, {
+        kind: "use",
+        item: "bandage",
+        target: "wound",
+        style: "gentle",
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.message).toMatch(/contaminated.*dressing/i);
+      expect(result.state.stage).toBe("dressed");
+      expect(result.state.items.bandage).toEqual({
+        location: "patient",
+        clean: false,
+      });
+    });
+
+    it("washes dirty fabric with finite water and rejects clean or empty inputs", () => {
+      const washState: GameState = {
+        ...state,
+        waterPortions: 2,
+        holding: "bowl",
+        items: {
+          ...state.items,
+          bowl: { ...state.items.bowl, location: "hand", clean: true },
+          cloth: { ...state.items.cloth, clean: false },
+          blanket: { ...state.items.blanket, clean: false },
+        },
+      };
+
+      const washed = applyAction(washState, {
+        kind: "use",
+        item: "bowl",
+        target: "cloth",
+        style: "gentle",
+      });
+      expect(washed.ok).toBe(true);
+      if (!washed.ok) return;
+      expect(washed.state.items.cloth.clean).toBe(true);
+      expect(washed.state.waterPortions).toBe(1);
+
+      const washedAgain = applyAction(washed.state, {
+        kind: "use",
+        item: "bowl",
+        target: "blanket",
+        style: "gentle",
+      });
+      expect(washedAgain.ok).toBe(true);
+      if (!washedAgain.ok) return;
+      expect(washedAgain.state.items.blanket.clean).toBe(true);
+      expect(washedAgain.state.waterPortions).toBe(0);
+
+      expect(
+        validateAction(washedAgain.state, {
+          kind: "use",
+          item: "bowl",
+          target: "cloth",
+          style: "gentle",
+        })?.reason,
+      ).toMatch(/already clean/i);
+
+      const emptyState: GameState = {
+        ...washedAgain.state,
+        items: {
+          ...washedAgain.state.items,
+          bandage: {
+            ...washedAgain.state.items.bandage,
+            location: "tray",
+            clean: false,
+          },
+        },
+      };
+      expect(
+        validateAction(emptyState, {
+          kind: "use",
+          item: "bowl",
+          target: "bandage",
+          style: "gentle",
+        })?.reason,
+      ).toMatch(/no clean water/i);
+    });
+
+    it("uses water for patient care and pours all remaining water on fire", () => {
+      const careState: GameState = {
+        ...state,
+        waterPortions: 3,
+        holding: "bowl",
+        declaredContact: {
+          kind: "use",
+          item: "bowl",
+          target: "patient",
+          style: "gentle",
+        },
+        items: {
+          ...state.items,
+          bowl: { ...state.items.bowl, location: "hand", clean: true },
+        },
+      };
+      const care = applyAction(careState, {
+        kind: "use",
+        item: "bowl",
+        target: "patient",
+        style: "gentle",
+      });
+      expect(care.ok).toBe(true);
+      if (!care.ok) return;
+      expect(care.state.waterPortions).toBe(2);
+
+      const fireState: GameState = {
+        ...care.state,
+        holding: "bowl",
+        environment: { ...care.state.environment, fire: 50 },
+        items: {
+          ...care.state.items,
+          bowl: { ...care.state.items.bowl, location: "hand", clean: false },
+        },
+      };
+      const fire = applyAction(fireState, {
+        kind: "use",
+        item: "bowl",
+        target: "fire",
+        style: "gentle",
+      });
+      expect(fire.ok).toBe(true);
+      if (!fire.ok) return;
+      expect(fire.state.environment.fire).toBe(10);
+      expect(fire.state.waterPortions).toBe(0);
+
+      const emptyBowl = applyAction(
+        {
+          ...fire.state,
+          environment: { ...fire.state.environment, fire: 20 },
+        },
+        { kind: "use", item: "bowl", target: "fire", style: "gentle" },
+      );
+      expect(emptyBowl.ok).toBe(true);
+      if (emptyBowl.ok) expect(emptyBowl.state.environment.fire).toBe(5);
+    });
   });
 
   describe("Surgical progression & recipes", () => {
+    it("rescues the patient with fabric thread when the hairpiece is unavailable", () => {
+      let s: GameState = {
+        ...state,
+        stage: "extracted",
+        lamp: "wound",
+        items: {
+          ...state.items,
+          wig: { ...state.items.wig, location: "consumed" },
+          forceps: { ...state.items.forceps, location: "hand", clean: true },
+          cloth: { ...state.items.cloth, location: "tray", clean: true },
+          blanket: { ...state.items.blanket, location: "pillow", clean: true },
+        },
+        holding: "forceps",
+      };
+
+      let res = applyAction(s, {
+        kind: "use",
+        item: "forceps",
+        target: "blanket",
+        style: "gentle",
+      });
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      s = res.state;
+      expect(s.items.thread.location).toBe("tray");
+      expect(s.items.blanket.location).toBe("consumed");
+
+      res = applyAction(s, {
+        kind: "place",
+        item: "forceps",
+        location: "tray",
+      });
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      s = res.state;
+      res = applyAction(s, { kind: "pick_up", item: "needle" });
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      s = res.state;
+      res = applyAction(s, {
+        kind: "combine",
+        first: "needle",
+        second: "thread",
+      });
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      s = res.state;
+
+      res = applyAction(s, {
+        kind: "signal_intent",
+        contact: {
+          kind: "use",
+          item: "suture",
+          target: "wound",
+          style: "gentle",
+        },
+      });
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      s = res.state;
+      res = applyAction(s, {
+        kind: "use",
+        item: "suture",
+        target: "wound",
+        style: "gentle",
+      });
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      s = res.state;
+      expect(s.stage).toBe("closed");
+
+      res = applyAction(s, { kind: "pick_up", item: "cloth" });
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      s = res.state;
+      res = applyAction(s, {
+        kind: "signal_intent",
+        contact: {
+          kind: "use",
+          item: "cloth",
+          target: "wound",
+          style: "gentle",
+        },
+      });
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      s = res.state;
+      res = applyAction(s, {
+        kind: "use",
+        item: "cloth",
+        target: "wound",
+        style: "gentle",
+      });
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      s = res.state;
+      expect(s.stage).toBe("dressed");
+
+      res = applyAction(s, { kind: "pick_up", item: "release" });
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      s = res.state;
+      res = applyAction(s, {
+        kind: "signal_intent",
+        contact: {
+          kind: "use",
+          item: "release",
+          target: "patient",
+          style: "gentle",
+        },
+      });
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      s = res.state;
+      res = applyAction(s, {
+        kind: "use",
+        item: "release",
+        target: "patient",
+        style: "gentle",
+      });
+      expect(res.ok).toBe(true);
+      if (res.ok) expect(res.state.outcome).toBe("saved");
+    });
+
     it("walks full surgical path to victory", () => {
       let s = state;
       s.lamp = "wound";
@@ -649,8 +1177,16 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       if (!res.ok) return;
       s = res.state;
 
-      // Speak to satisfy announce rule
-      res = applyAction(s, { kind: "speak", text: "Uncovering the wound." });
+      // Signal the exact contact.
+      res = applyAction(s, {
+        kind: "signal_intent",
+        contact: {
+          kind: "use",
+          item: "cloth",
+          target: "wound",
+          style: "gentle",
+        },
+      });
       expect(res.ok).toBe(true);
       if (!res.ok) return;
       s = res.state;
@@ -678,7 +1214,15 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       if (!res.ok) return;
       s = res.state;
 
-      res = applyAction(s, { kind: "speak", text: "Extracting fragment." });
+      res = applyAction(s, {
+        kind: "signal_intent",
+        contact: {
+          kind: "use",
+          item: "forceps",
+          target: "wound",
+          style: "gentle",
+        },
+      });
       if (res.ok) s = res.state;
 
       res = applyAction(s, {
@@ -703,7 +1247,15 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       // Step 3: Attempt bare needle -> must fail to advance and warn about thread
       res = applyAction(s, { kind: "pick_up", item: "needle" });
       if (res.ok) s = res.state;
-      res = applyAction(s, { kind: "speak", text: "Needle contact." });
+      res = applyAction(s, {
+        kind: "signal_intent",
+        contact: {
+          kind: "use",
+          item: "needle",
+          target: "wound",
+          style: "gentle",
+        },
+      });
       if (res.ok) s = res.state;
 
       res = applyAction(s, {
@@ -770,7 +1322,15 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       expect(s.items.suture.location).toBe("hand");
 
       // Suture wound -> closed
-      res = applyAction(s, { kind: "speak", text: "Suturing wound closed." });
+      res = applyAction(s, {
+        kind: "signal_intent",
+        contact: {
+          kind: "use",
+          item: "suture",
+          target: "wound",
+          style: "gentle",
+        },
+      });
       if (res.ok) s = res.state;
       res = applyAction(s, {
         kind: "use",
@@ -790,8 +1350,13 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       res = applyAction(s, { kind: "pick_up", item: "bandage" });
       if (res.ok) s = res.state;
       res = applyAction(s, {
-        kind: "speak",
-        text: "Applying sterile dressing.",
+        kind: "signal_intent",
+        contact: {
+          kind: "use",
+          item: "bandage",
+          target: "wound",
+          style: "gentle",
+        },
       });
       if (res.ok) s = res.state;
       res = applyAction(s, {
@@ -816,8 +1381,13 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       res = applyAction(s, { kind: "pick_up", item: "release" });
       if (res.ok) s = res.state;
       res = applyAction(s, {
-        kind: "speak",
-        text: "Releasing the leg brace catch.",
+        kind: "signal_intent",
+        contact: {
+          kind: "use",
+          item: "release",
+          target: "patient",
+          style: "gentle",
+        },
       });
       if (res.ok) s = res.state;
       res = applyAction(s, {
@@ -841,7 +1411,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         stage: "exposed",
         holding: "cloth",
         lamp: "wound",
-        announced: true,
+        declaredContact: {
+          kind: "use",
+          item: "cloth",
+          target: "wound",
+          style: "gentle",
+        },
         patient: { ...state.patient, pain: 40, health: 60 },
         items: {
           ...state.items,
@@ -867,7 +1442,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       s.holding = "blanket";
       s.items.blanket.location = "hand";
       s.items.blanket.clean = true;
-      s.announced = true;
+      s.declaredContact = {
+        kind: "use",
+        item: "blanket",
+        target: "wound",
+        style: "gentle",
+      };
       const resBlanket = applyAction(s, {
         kind: "use",
         item: "blanket",
@@ -884,7 +1464,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       s.holding = "cloth";
       s.items.cloth.location = "hand";
       s.items.cloth.clean = false;
-      s.announced = true;
+      s.declaredContact = {
+        kind: "use",
+        item: "cloth",
+        target: "wound",
+        style: "gentle",
+      };
       const resDirty = applyAction(s, {
         kind: "use",
         item: "cloth",
@@ -903,7 +1488,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         ...state,
         stage: "exposed",
         holding: "release",
-        announced: true,
+        declaredContact: {
+          kind: "use",
+          item: "release",
+          target: "patient",
+          style: "gentle",
+        },
         items: {
           ...state.items,
           release: { ...state.items.release, location: "hand" },
@@ -930,7 +1520,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         ...state,
         stage: "dressed",
         holding: "release",
-        announced: true,
+        declaredContact: {
+          kind: "use",
+          item: "release",
+          target: "patient",
+          style: "gentle",
+        },
         environment: {
           ...state.environment,
           fire: 25,
@@ -948,7 +1543,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
           item: "release",
           target: "patient",
           style: "gentle",
-        }),
+        })?.reason,
       ).toMatch(/fire must be extinguished/i);
     });
 
@@ -958,7 +1553,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         lamp: "wound",
         environment: { ...state.environment, lanternLit: false },
         holding: "cloth",
-        announced: true,
+        declaredContact: {
+          kind: "use",
+          item: "cloth",
+          target: "wound",
+          style: "gentle",
+        },
         items: {
           ...state.items,
           cloth: { ...state.items.cloth, location: "hand" },
@@ -971,7 +1571,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
           item: "cloth",
           target: "wound",
           style: "gentle",
-        }),
+        })?.reason,
       ).toMatch(/lantern must be lit/i);
 
       expect(
@@ -987,7 +1587,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
             target: "wound",
             style: "gentle",
           },
-        ),
+        )?.reason,
       ).toMatch(/lamp must be aimed at the wound/i);
     });
   });
@@ -997,7 +1597,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       let s: GameState = {
         ...state,
         holding: "morphine",
-        announced: true,
+        declaredContact: {
+          kind: "use",
+          item: "morphine",
+          target: "patient",
+          style: "gentle",
+        },
         items: {
           ...state.items,
           morphine: { ...state.items.morphine, location: "hand" },
@@ -1019,7 +1624,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       expect(s.phase).toBe("playing");
 
       // Dose 2: sedation 64
-      s.announced = true;
+      s.declaredContact = {
+        kind: "use",
+        item: "morphine",
+        target: "patient",
+        style: "gentle",
+      };
       res = applyAction(s, {
         kind: "use",
         item: "morphine",
@@ -1033,7 +1643,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       expect(s.phase).toBe("playing");
 
       // Dose 3: sedation 96 (>= 65) -> Overuse blackout!
-      s.announced = true;
+      s.declaredContact = {
+        kind: "use",
+        item: "morphine",
+        target: "patient",
+        style: "gentle",
+      };
       res = applyAction(s, {
         kind: "use",
         item: "morphine",
@@ -1055,7 +1670,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         ...s,
         phase: "playing",
         holding: "morphine",
-        announced: true,
+        declaredContact: {
+          kind: "use",
+          item: "morphine",
+          target: "patient",
+          style: "gentle",
+        },
         items: {
           ...s.items,
           morphine: { ...s.items.morphine, location: "hand" },
@@ -1067,7 +1687,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
           item: "morphine",
           target: "patient",
           style: "gentle",
-        }),
+        })?.reason,
       ).toMatch(/supply is empty/i);
     });
 
@@ -1130,7 +1750,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
 
       // 1. Uncover wound (gentle)
       s.holding = "cloth";
-      s.announced = true;
+      s.declaredContact = {
+        kind: "use",
+        item: "cloth",
+        target: "wound",
+        style: "gentle",
+      };
       s.items.cloth.location = "hand";
       let res = applyAction(s, {
         kind: "use",
@@ -1149,7 +1774,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
 
       // 2. Extract fragment with forceps (gentle) -> base pain +28
       s.holding = "forceps";
-      s.announced = true;
+      s.declaredContact = {
+        kind: "use",
+        item: "forceps",
+        target: "wound",
+        style: "gentle",
+      };
       s.items.forceps.location = "hand";
       res = applyAction(s, {
         kind: "use",
@@ -1168,7 +1798,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
 
       // 3. Suture wound (gentle) -> base pain +26 pushes pain >= 85
       s.holding = "suture";
-      s.announced = true;
+      s.declaredContact = {
+        kind: "use",
+        item: "suture",
+        target: "wound",
+        style: "gentle",
+      };
       s.items.suture.location = "hand";
       res = applyAction(s, {
         kind: "use",
@@ -1191,7 +1826,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
 
       // 1. Uncover wound
       s.holding = "cloth";
-      s.announced = true;
+      s.declaredContact = {
+        kind: "use",
+        item: "cloth",
+        target: "wound",
+        style: "gentle",
+      };
       s.items.cloth.location = "hand";
       let res = applyAction(s, {
         kind: "use",
@@ -1205,7 +1845,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
 
       // 2. Dose morphine before extraction to ease pain (-30 pain)
       s.holding = "morphine";
-      s.announced = true;
+      s.declaredContact = {
+        kind: "use",
+        item: "morphine",
+        target: "patient",
+        style: "gentle",
+      };
       s.items.morphine.location = "hand";
       res = applyAction(s, {
         kind: "use",
@@ -1220,7 +1865,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
 
       // 3. Extract shard with forceps (base pain +28)
       s.holding = "forceps";
-      s.announced = true;
+      s.declaredContact = {
+        kind: "use",
+        item: "forceps",
+        target: "wound",
+        style: "gentle",
+      };
       s.items.forceps.location = "hand";
       res = applyAction(s, {
         kind: "use",
@@ -1236,7 +1886,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
 
       // 4. Suture wound (base pain +26)
       s.holding = "suture";
-      s.announced = true;
+      s.declaredContact = {
+        kind: "use",
+        item: "suture",
+        target: "wound",
+        style: "gentle",
+      };
       s.items.suture.location = "hand";
       res = applyAction(s, {
         kind: "use",
@@ -1346,7 +2001,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         stage: "exposed",
         holding: "forceps",
         lamp: "wound",
-        announced: true,
+        declaredContact: {
+          kind: "use",
+          item: "forceps",
+          target: "wound",
+          style: "rough",
+        },
         patient: { ...state.patient, pain: 30, health: 80, blood: 90 },
         items: {
           ...state.items,
@@ -1367,7 +2027,12 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       // Angry extraction WITH gentle protection (gentle rule enabled)
       let sAngryGentleRule: GameState = {
         ...sAngry,
-        announced: true,
+        declaredContact: {
+          kind: "use",
+          item: "forceps",
+          target: "wound",
+          style: "gentle",
+        },
         rules: { ...sAngry.rules, gentle: true },
       };
       const resAngryProtected = applyAction(sAngryGentleRule, {
@@ -1659,14 +2324,14 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         kind: "pick_up",
         item: "cloth",
       });
-      expect(readyErr).toMatch(/not started yet/i);
+      expect(readyErr?.reason).toMatch(/not started yet/i);
 
       const pausedState = { ...state, paused: true };
       const pausedErr = validateAction(pausedState, {
         kind: "pick_up",
         item: "cloth",
       });
-      expect(pausedErr).toMatch(/currently paused/i);
+      expect(pausedErr?.reason).toMatch(/currently paused/i);
     });
 
     it("won state never mutates via actions or ticking", () => {
@@ -1674,7 +2339,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       const res = applyAction(wonState, { kind: "pick_up", item: "cloth" });
       expect(res.ok).toBe(false);
       expect(
-        validateAction(wonState, { kind: "pick_up", item: "cloth" }),
+        validateAction(wonState, { kind: "pick_up", item: "cloth" })?.reason,
       ).toMatch(/already ended/i);
 
       const ticked = tickPatient(wonState, 10);
@@ -1737,13 +2402,100 @@ describe("GameStore Controller", () => {
     const store = new GameStore();
     store.start();
 
-    const promise = store.run({
-      kind: "speak",
-      text: "Preparing the operation.",
-    });
+    const promise = store.run({ kind: "vocalize", cue: "effort" });
     const res = await promise;
     expect(res.ok).toBe(true);
-    expect(store.getSnapshot().announced).toBe(true);
+    expect(store.getSnapshot().declaredContact).toBeNull();
+  });
+
+  it("stores authored feedback for an active blocked action", async () => {
+    const base = createInitialState();
+    const store = new GameStore({
+      ...base,
+      phase: "playing",
+      rules: { ...base.rules, noSharp: true },
+    });
+
+    const result = await store.run({ kind: "pick_up", item: "needle" });
+    expect(result.ok).toBe(false);
+    expect(result.message).toMatch(/no-sharp/i);
+    expect(store.getSnapshot().problem).toEqual({
+      reason: expect.stringMatching(/no-sharp/i),
+      thought: "I told him no sharp tools. He must change that action.",
+    });
+    store.dispose();
+  });
+
+  it("does not mutate inactive state on a rejected action", async () => {
+    const initial = createInitialState();
+    const store = new GameStore(initial);
+    const result = await store.run({ kind: "pick_up", item: "cloth" });
+    expect(result.ok).toBe(false);
+    expect(store.getSnapshot()).toEqual(initial);
+    store.dispose();
+  });
+
+  it("preserves feedback through vocal cues and clears it on a valid retry", async () => {
+    const base = createInitialState();
+    const store = new GameStore({
+      ...base,
+      phase: "playing",
+      rules: { ...base.rules, noSharp: true },
+    });
+
+    await store.run({ kind: "pick_up", item: "needle" });
+    const problemBeforeCue = store.getSnapshot().problem;
+    const cue = await store.run({ kind: "vocalize", cue: "anger" });
+    expect(cue.ok).toBe(true);
+    expect(store.getSnapshot().problem).toEqual(problemBeforeCue);
+
+    const rule = await store.run({
+      kind: "set_rule",
+      rule: "noSharp",
+      enabled: false,
+    });
+    expect(rule.ok).toBe(true);
+    expect(store.getSnapshot().problem).toEqual(problemBeforeCue);
+
+    const retry = store.run({ kind: "pick_up", item: "needle" });
+    expect(store.getSnapshot().problem).toBeNull();
+    await vi.advanceTimersByTimeAsync(
+      getActionDuration(
+        { kind: "pick_up", item: "needle" },
+        store.getSnapshot().emotion,
+      ),
+    );
+    expect((await retry).ok).toBe(true);
+    store.dispose();
+  });
+
+  it("stores feedback when a forbidden signal is rejected", async () => {
+    const base = createInitialState();
+    const store = new GameStore({
+      ...base,
+      phase: "playing",
+      stage: "exposed",
+      holding: "scalpel",
+      lamp: "wound",
+      rules: { ...base.rules, noSharp: true },
+      environment: { ...base.environment, lanternLit: true },
+      items: {
+        ...base.items,
+        scalpel: { ...base.items.scalpel, location: "hand" },
+      },
+    });
+    const result = await store.run({
+      kind: "signal_intent",
+      contact: {
+        kind: "use",
+        item: "scalpel",
+        target: "wound",
+        style: "gentle",
+      },
+    });
+    expect(result.ok).toBe(false);
+    expect(store.getSnapshot().problem?.thought).toMatch(/no sharp tools/i);
+    store.dispose();
   });
 
   it("executes physical action with timer and commits state", async () => {
@@ -1800,18 +2552,23 @@ describe("GameStore Controller", () => {
       const result = await pending;
       expect(result.ok, result.message).toBe(true);
     };
-    const announce = async (text: string) => {
-      const result = await store.run({ kind: "speak", text });
+    const announce = async (contact: ContactAction) => {
+      const result = await store.run({ kind: "signal_intent", contact });
       expect(result.ok, result.message).toBe(true);
     };
 
     await perform({ kind: "light_lantern" });
     await store.run({ kind: "react", stimulus: "clear_instruction" });
-    await announce("I will lift the support now.");
+    await announce({ kind: "lift_debris", style: "gentle" });
     await perform({ kind: "lift_debris", style: "gentle" });
     await perform({ kind: "adjust_lamp", position: "wound" });
     await perform({ kind: "pick_up", item: "cloth" });
-    await announce("I will expose the wound with the cloth.");
+    await announce({
+      kind: "use",
+      item: "cloth",
+      target: "wound",
+      style: "gentle",
+    });
     await perform({
       kind: "use",
       item: "cloth",
@@ -1820,7 +2577,12 @@ describe("GameStore Controller", () => {
     });
     await perform({ kind: "place", item: "cloth", location: "tray" });
     await perform({ kind: "pick_up", item: "morphine" });
-    await announce("I will give one dose of morphine.");
+    await announce({
+      kind: "use",
+      item: "morphine",
+      target: "patient",
+      style: "gentle",
+    });
     await perform({
       kind: "use",
       item: "morphine",
@@ -1835,7 +2597,12 @@ describe("GameStore Controller", () => {
       target: "door",
       style: "gentle",
     });
-    await announce("I will extract the fragment with forceps.");
+    await announce({
+      kind: "use",
+      item: "forceps",
+      target: "wound",
+      style: "gentle",
+    });
     await perform({
       kind: "use",
       item: "forceps",
@@ -1864,7 +2631,12 @@ describe("GameStore Controller", () => {
     await perform({ kind: "place", item: "scissors", location: "tray" });
     await perform({ kind: "pick_up", item: "needle" });
     await perform({ kind: "combine", first: "needle", second: "thread" });
-    await announce("I will close the wound with the suture.");
+    await announce({
+      kind: "use",
+      item: "suture",
+      target: "wound",
+      style: "gentle",
+    });
     await perform({
       kind: "use",
       item: "suture",
@@ -1874,7 +2646,12 @@ describe("GameStore Controller", () => {
     expect(store.getSnapshot().holding).toBeNull();
     expect(store.getSnapshot().items.suture.location).toBe("consumed");
     await perform({ kind: "pick_up", item: "cloth" });
-    await announce("I will dress the wound with the clean cloth.");
+    await announce({
+      kind: "use",
+      item: "cloth",
+      target: "wound",
+      style: "gentle",
+    });
     await perform({
       kind: "use",
       item: "cloth",
@@ -1884,7 +2661,12 @@ describe("GameStore Controller", () => {
     expect(store.getSnapshot().holding).toBeNull();
     expect(store.getSnapshot().items.cloth.location).toBe("patient");
     await perform({ kind: "pick_up", item: "release" });
-    await announce("I will release the leg brace now.");
+    await announce({
+      kind: "use",
+      item: "release",
+      target: "patient",
+      style: "gentle",
+    });
     await perform({
       kind: "use",
       item: "release",
@@ -1908,7 +2690,7 @@ describe("GameStore Controller", () => {
     const store = new GameStore({
       ...initial,
       phase: "playing",
-      announced: true,
+      declaredContact: { kind: "lift_debris", style: "gentle" },
       disposition: { ...initial.disposition, confidence: 30 },
     });
 
@@ -1943,7 +2725,7 @@ describe("GameStore Controller", () => {
     expect(store.getSnapshot().holding).toBeNull();
   });
 
-  it("clears announced on store.cancel even when no physical action is pending (STOP invalidation)", () => {
+  it("clears declared contact on store.cancel even when no physical action is pending (STOP invalidation)", () => {
     const base = createInitialState();
     const store = new GameStore({
       ...base,
@@ -1960,12 +2742,20 @@ describe("GameStore Controller", () => {
     });
     store.start();
 
-    store.run({ kind: "speak", text: "I am about to touch the wound." });
-    expect(store.getSnapshot().announced).toBe(true);
+    store.run({
+      kind: "signal_intent",
+      contact: { kind: "use", item: "cloth", target: "wound", style: "gentle" },
+    });
+    expect(store.getSnapshot().declaredContact).toEqual({
+      kind: "use",
+      item: "cloth",
+      target: "wound",
+      style: "gentle",
+    });
     expect(store.getSnapshot().pending).toBeNull();
 
     store.cancel("Player shouted STOP");
-    expect(store.getSnapshot().announced).toBe(false);
+    expect(store.getSnapshot().declaredContact).toBeNull();
 
     const err = validateAction(store.getSnapshot(), {
       kind: "use",
@@ -1973,7 +2763,7 @@ describe("GameStore Controller", () => {
       target: "wound",
       style: "gentle",
     });
-    expect(err).toMatch(/must be announced/i);
+    expect(err?.reason).toMatch(/exact signal/i);
   });
 
   it("pausing store cancels active action and rejects physical actions while paused", async () => {
@@ -2067,7 +2857,12 @@ describe("GameStore Controller", () => {
       stage: "exposed",
       holding: "cloth",
       lamp: "wound",
-      announced: true,
+      declaredContact: {
+        kind: "use",
+        item: "cloth",
+        target: "wound",
+        style: "gentle",
+      },
       rules: { ...base.rules, waitBlackout: true },
       patient: { ...base.patient, pain: 84.95 },
       items: {
@@ -2101,6 +2896,8 @@ describe("GameStore Controller", () => {
     // Commit must be rejected because patient entered blackout and waitBlackout rule is enabled!
     expect(res.ok).toBe(false);
     expect(res.message).toMatch(/wait-in-blackout/i);
+    expect(store.getSnapshot().problem?.reason).toMatch(/wait-in-blackout/i);
+    expect(store.getSnapshot().problem?.thought).toBeNull();
     expect(store.getSnapshot().stage).toBe("exposed"); // did not advance
   });
 
@@ -2109,7 +2906,7 @@ describe("GameStore Controller", () => {
     const store = new GameStore({
       ...initial,
       phase: "playing",
-      announced: true,
+      declaredContact: { kind: "lift_debris", style: "gentle" },
       disposition: { ...initial.disposition, confidence: 30 },
       rules: { ...initial.rules, waitBlackout: true },
       patient: { ...initial.patient, pain: 85 },

@@ -12,7 +12,7 @@ async page => {
   await choose('Light the lantern. I am here.');
   await choose('You can do it. Lift it off me.');
   await page.screenshot({path:'/tmp/still-warm-freed.png'});
-  await choose('Open my coat. Gently.');
+  await choose('Open my shirt. Gently.');
   await choose('A little morphine. Only a little.');
   await choose('Bar the door. Then come back.');
   await choose('Take the metal out. Slowly.');

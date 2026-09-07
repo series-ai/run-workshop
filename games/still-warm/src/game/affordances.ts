@@ -1,4 +1,9 @@
-import { CATALOG, Capability, ItemId } from './model';
+import {
+  CATALOG,
+  type Capability,
+  type GameAction,
+  type ItemId,
+} from './model';
 
 export interface Recipe {
   id: string;
@@ -41,6 +46,26 @@ export const RECIPES: readonly Recipe[] = [
     outputLocation: 'tray',
   },
   {
+    id: 'pull_thread_cloth',
+    name: 'Pull thread from cloth',
+    description:
+      'Use forceps or a bare needle on cloth to pull a usable suture thread.',
+    kind: 'use',
+    inputs: ['cloth'],
+    output: 'thread',
+    outputLocation: 'tray',
+  },
+  {
+    id: 'pull_thread_blanket',
+    name: 'Pull thread from blanket',
+    description:
+      'Use forceps or a bare needle on the blanket to pull a usable suture thread.',
+    kind: 'use',
+    inputs: ['blanket'],
+    output: 'thread',
+    outputLocation: 'tray',
+  },
+  {
     id: 'break_scissors',
     name: 'Disassemble scissors into blade',
     description:
@@ -54,7 +79,7 @@ export const RECIPES: readonly Recipe[] = [
     id: 'combine_suture',
     name: 'Thread suture needle',
     description:
-      'Combine the surgical needle with hair thread to create a ready suture.',
+      'Combine the surgical needle with suture thread to create a ready suture.',
     kind: 'combine',
     inputs: ['needle', 'thread'],
     output: 'suture',
@@ -82,20 +107,7 @@ export function isReflectiveTool(item: ItemId): boolean {
   return hasCapability(item, 'reflect');
 }
 
-export type UseTarget =
-  | 'wound'
-  | 'patient'
-  | 'pillow'
-  | 'creature'
-  | 'fire'
-  | 'door'
-  | 'wig'
-  | 'cloth'
-  | 'blanket'
-  | 'thread'
-  | 'scissors'
-  | 'lamp'
-  | 'bowl';
+export type UseTarget = Extract<GameAction, { kind: 'use' }>['target'];
 
 export interface SupportedUse {
   item: ItemId;
@@ -104,7 +116,7 @@ export interface SupportedUse {
 }
 
 export const SUPPORTED_USES: readonly SupportedUse[] = [
-  // Forceps (5 uses)
+  // Forceps (7 uses)
   {
     item: 'forceps',
     target: 'wound',
@@ -129,6 +141,16 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
     item: 'forceps',
     target: 'creature',
     description: 'Gentle exploratory touch or contact check',
+  },
+  {
+    item: 'forceps',
+    target: 'cloth',
+    description: 'Pull a suture thread from cloth without cutting it',
+  },
+  {
+    item: 'forceps',
+    target: 'blanket',
+    description: 'Pull a suture thread from the blanket without cutting it',
   },
 
   // Cloth (5 uses)
@@ -155,7 +177,7 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
     description: 'Rehearse swabbing and dressing technique',
   },
 
-  // Needle (3 uses)
+  // Needle (5 uses)
   {
     item: 'needle',
     target: 'wound',
@@ -170,6 +192,16 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
     item: 'needle',
     target: 'pillow',
     description: 'Rehearse precision needle insertion',
+  },
+  {
+    item: 'needle',
+    target: 'cloth',
+    description: 'Pull a suture thread from cloth with the bare needle',
+  },
+  {
+    item: 'needle',
+    target: 'blanket',
+    description: 'Pull a suture thread from the blanket with the bare needle',
   },
 
   // Morphine (3 uses)
@@ -193,7 +225,7 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: 'scalpel',
     target: 'wound',
-    description: 'Surgical contact on wound',
+    description: 'Sharp contact harms the wound without advancing surgery',
   },
   {
     item: 'scalpel',
@@ -304,7 +336,8 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: 'release',
     target: 'patient',
-    description: 'Release patient restraints',
+    description:
+      'Release the brace after dressing; early release injures the patient',
   },
   {
     item: 'release',
@@ -358,7 +391,7 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: 'wig',
     target: 'fire',
-    description: 'Attempt to smother fire with hairpiece',
+    description: 'Hair worsens the fire by 15; the hairpiece remains intact',
   },
   {
     item: 'wig',
@@ -368,21 +401,22 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   { item: 'wig', target: 'patient', description: 'Cover patient for warmth' },
   { item: 'wig', target: 'pillow', description: 'Rest on pillow' },
 
-  // Bowl (6 uses)
+  // Bowl (9 uses)
   {
     item: 'bowl',
     target: 'fire',
-    description: 'Douse fire with water or smother with metal bowl',
+    description:
+      'Pour all remaining water on fire, or smother it with an empty bowl',
   },
   {
     item: 'bowl',
     target: 'patient',
-    description: 'Cool patient brow with clean water compress',
+    description: 'Use one clean water portion to cool the patient brow',
   },
   {
     item: 'bowl',
     target: 'creature',
-    description: 'Offer clean water to calm assistant',
+    description: 'Use one clean water portion to offer water to the assistant',
   },
   {
     item: 'bowl',
@@ -398,6 +432,21 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
     item: 'bowl',
     target: 'pillow',
     description: 'Rehearse sponge basin technique',
+  },
+  {
+    item: 'bowl',
+    target: 'cloth',
+    description: 'Wash dirty cloth with one water portion',
+  },
+  {
+    item: 'bowl',
+    target: 'blanket',
+    description: 'Wash a dirty blanket with one water portion',
+  },
+  {
+    item: 'bowl',
+    target: 'bandage',
+    description: 'Wash a dirty bandage with one water portion',
   },
 
   // Blanket (5 uses)
@@ -508,12 +557,12 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: 'bandage',
     target: 'patient',
-    description: 'Apply dressing wrap to patient limb',
+    description: 'Cover the patient for warmth and comfort',
   },
   {
     item: 'bandage',
     target: 'creature',
-    description: 'Bandage assistant injuries',
+    description: 'Offer the bandage as a gentle comfort object',
   },
   {
     item: 'bandage',

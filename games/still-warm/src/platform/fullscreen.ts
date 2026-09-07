@@ -1,5 +1,6 @@
 import type {
   FullscreenState,
+  SafeArea,
   PointerInput,
   SystemApi,
 } from "@series-inc/rundot-game-sdk";
@@ -9,6 +10,7 @@ export interface FullscreenSnapshot {
   active: boolean;
   pointerLocked: boolean;
   supported: boolean;
+  safeArea: SafeArea;
 }
 
 export type FullscreenListener = () => void;
@@ -17,6 +19,7 @@ const INITIAL_SNAPSHOT: FullscreenSnapshot = {
   active: false,
   pointerLocked: false,
   supported: false,
+  safeArea: { top: 0, right: 0, bottom: 0, left: 0 },
 };
 
 type FullscreenMode = "none" | "run" | "local";
@@ -27,6 +30,7 @@ export class FullscreenController {
   private readonly listeners = new Set<FullscreenListener>();
   private stopState: (() => void) | null = null;
   private stopInput: (() => void) | null = null;
+  private stopResize: (() => void) | null = null;
   private initialization: Promise<FullscreenSnapshot> | null = null;
   private pointerSupported = false;
   private mode: FullscreenMode = "none";
@@ -55,11 +59,29 @@ export class FullscreenController {
   /** Call this before any other awaited work in a direct player action. */
   async enter(capturePointer = true): Promise<FullscreenSnapshot> {
     if (this.mode === "local") return this.enterLocalPreview(capturePointer);
+    if (this.mode === "run") return this.enterRun(capturePointer);
 
+    const initialization = this.initialize();
+    if (this.isLocalMode()) return this.enterLocalPreview(capturePointer);
+    await initialization;
+    return this.enterRunAfterInitialization(capturePointer);
+  }
+
+  private isLocalMode(): boolean {
+    return this.mode === "local";
+  }
+
+  private enterRunAfterInitialization(
+    capturePointer: boolean,
+  ): Promise<FullscreenSnapshot> {
+    if (this.disposed || this.mode !== "run")
+      return Promise.resolve(this.snapshot);
+    return this.enterRun(capturePointer);
+  }
+
+  private async enterRun(capturePointer: boolean): Promise<FullscreenSnapshot> {
     const system = this.system;
-    if (this.mode !== "run" || !system || !this.snapshot.supported) {
-      return this.snapshot;
-    }
+    if (!system || !this.snapshot.supported) return this.snapshot;
 
     try {
       const options =
@@ -129,6 +151,8 @@ export class FullscreenController {
     this.stopInput?.();
     this.stopState = null;
     this.stopInput = null;
+    this.stopResize?.();
+    this.stopResize = null;
     this.listeners.clear();
 
     if (this.mode === "local" && this.snapshot.pointerLocked) {
@@ -147,6 +171,7 @@ export class FullscreenController {
     if (this.disposed) return this.snapshot;
 
     this.system = run.system;
+    const safeArea = this.readSafeArea();
     const capabilities = this.system.getEnvironment().capabilities;
     const supported =
       capabilities.fullscreen === "toggleable" ||
@@ -155,12 +180,14 @@ export class FullscreenController {
 
     if (!supported) {
       if (this.initializeLocalPreview()) return this.snapshot;
-      this.setSnapshot({ ...INITIAL_SNAPSHOT, supported: false });
+      this.installResizeListener();
+      this.setSnapshot({ ...INITIAL_SNAPSHOT, supported: false, safeArea });
       return this.snapshot;
     }
 
     this.mode = "run";
-    this.setSnapshot({ ...this.snapshot, supported: true });
+    this.installResizeListener();
+    this.setSnapshot({ ...this.snapshot, supported: true, safeArea });
 
     let receivedStateEvent = false;
     this.stopState = this.system.onFullscreenStateChange((state) => {
@@ -175,7 +202,7 @@ export class FullscreenController {
 
     const state = await this.system.getFullscreenState();
     if (!this.disposed && !receivedStateEvent) {
-      this.setSnapshot({ ...state, supported: true });
+      this.setFullscreenState(state);
     }
     return this.snapshot;
   }
@@ -271,6 +298,7 @@ export class FullscreenController {
       pointerLocked:
         active && document.pointerLockElement === document.documentElement,
       supported: true,
+      safeArea: INITIAL_SNAPSHOT.safeArea,
     });
   }
 
@@ -281,7 +309,37 @@ export class FullscreenController {
   }
 
   private setFullscreenState(state: FullscreenState): void {
-    this.setSnapshot({ ...state, supported: this.snapshot.supported });
+    this.setSnapshot({
+      active: state.active,
+      pointerLocked: state.pointerLocked,
+      supported: this.snapshot.supported,
+      safeArea: this.readSafeArea(),
+    });
+  }
+
+  private readSafeArea(): SafeArea {
+    if (!this.system || this.mode === "local") return INITIAL_SNAPSHOT.safeArea;
+    try {
+      const { top, right, bottom, left } = this.system.getSafeArea();
+      return { top, right, bottom, left };
+    } catch {
+      return this.snapshot.safeArea;
+    }
+  }
+
+  private refreshSafeArea(): void {
+    this.setSnapshot({ ...this.snapshot, safeArea: this.readSafeArea() });
+  }
+
+  private installResizeListener(): void {
+    if (
+      typeof window === "undefined" ||
+      typeof window.addEventListener !== "function"
+    )
+      return;
+    const resize = () => this.refreshSafeArea();
+    window.addEventListener("resize", resize);
+    this.stopResize = () => window.removeEventListener("resize", resize);
   }
 
   private setSnapshot(next: FullscreenSnapshot): void {
@@ -289,7 +347,11 @@ export class FullscreenController {
     if (
       next.active === this.snapshot.active &&
       next.pointerLocked === this.snapshot.pointerLocked &&
-      next.supported === this.snapshot.supported
+      next.supported === this.snapshot.supported &&
+      next.safeArea.top === this.snapshot.safeArea.top &&
+      next.safeArea.right === this.snapshot.safeArea.right &&
+      next.safeArea.bottom === this.snapshot.safeArea.bottom &&
+      next.safeArea.left === this.snapshot.safeArea.left
     ) {
       return;
     }

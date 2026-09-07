@@ -1,7 +1,9 @@
 import {
+  ActionProblem,
   ActionResult,
   appendJournal,
   CATALOG,
+  ContactAction,
   GameAction,
   GameState,
   isActive,
@@ -37,6 +39,45 @@ import {
 export const BLACKOUT_DURATION = 12;
 export const LIFT_CONFIDENCE_THRESHOLD = 24;
 
+function problem(reason: string, thought: string | null): ActionProblem {
+  return { reason, thought };
+}
+
+function sameContactAction(left: ContactAction, right: ContactAction): boolean {
+  if (left.kind !== right.kind) return false;
+  if (left.kind === "lift_debris" && right.kind === "lift_debris") {
+    return left.style === right.style;
+  }
+  if (left.kind === "use" && right.kind === "use") {
+    return (
+      left.item === right.item &&
+      left.target === right.target &&
+      left.style === right.style
+    );
+  }
+  return false;
+}
+
+function contactLabel(contact: ContactAction): string {
+  return contact.kind === "lift_debris"
+    ? `lift support ${contact.style}`
+    : `use ${CATALOG[contact.item].name.toLowerCase()} on ${contact.target} ${contact.style}`;
+}
+
+function preserveDeclarationIfValid(state: GameState): GameState {
+  if (
+    state.declaredContact === null ||
+    validateActionInternal(state, state.declaredContact, true) === null
+  ) {
+    return state;
+  }
+  return { ...state, declaredContact: null };
+}
+
+export function reconcileDeclaredContact(state: GameState): GameState {
+  return preserveDeclarationIfValid(state);
+}
+
 function isPhysicalActionKind(kind: GameAction["kind"]): boolean {
   return (
     kind === "light_lantern" ||
@@ -53,59 +94,105 @@ function isPhysicalActionKind(kind: GameAction["kind"]): boolean {
 export function validateAction(
   state: GameState,
   action: GameAction,
-): string | null {
+): ActionProblem | null {
+  return validateActionInternal(state, action, false);
+}
+
+function validateActionInternal(
+  state: GameState,
+  action: GameAction,
+  skipDeclaration: boolean,
+): ActionProblem | null {
   if (state.phase === "won" || state.phase === "lost") {
-    return "The operation has already ended.";
+    return problem("The operation has already ended.", null);
   }
 
   if (state.paused) {
-    return "The operation is currently paused.";
+    return problem("The operation is currently paused.", null);
   }
 
   if (state.phase === "ready" && isPhysicalActionKind(action.kind)) {
-    return "The operation has not started yet. Call start() before performing physical actions.";
+    return problem(
+      "The operation has not started yet. Call start() before performing physical actions.",
+      null,
+    );
   }
 
   switch (action.kind) {
     case "light_lantern":
       return state.environment.lanternLit
-        ? "The workbench lantern is already lit."
+        ? problem(
+            "The workbench lantern is already lit.",
+            "The lantern is already on. We need a different action.",
+          )
         : null;
     case "lift_debris": {
       if (state.stage !== "pinned") {
-        return "The fallen ceiling support has already been removed.";
+        return problem(
+          "The fallen ceiling support has already been removed.",
+          "That support is already clear. We can work on the wound.",
+        );
       }
       if (state.holding !== null) {
-        return `Your hand is holding ${CATALOG[state.holding].name.toLowerCase()}. Put it down before lifting the ceiling support.`;
+        return problem(
+          `Your hand is holding ${CATALOG[state.holding].name.toLowerCase()}. Put it down before lifting the ceiling support.`,
+          "He needs to put down what he is holding first.",
+        );
       }
       if (state.rules.gentle && action.style === "rough") {
-        return "Rough lifting is forbidden under the gentle rule.";
+        return problem(
+          "Rough lifting is forbidden under the gentle rule.",
+          "I told him to use gentle hands. He must change that movement.",
+        );
       }
       if (
         state.rules.waitBlackout &&
         (state.phase === "blackout" || state.patient.blackoutRemaining > 0)
       ) {
-        return "Patient is unconscious and wait-in-blackout rule is active.";
+        return problem(
+          "Patient is unconscious and wait-in-blackout rule is active.",
+          null,
+        );
       }
       if (state.disposition.confidence < LIFT_CONFIDENCE_THRESHOLD) {
-        return "I am too afraid to lift the fallen ceiling support. Reassure me or give me a clear instruction first.";
+        return problem(
+          "I am too afraid to lift the fallen ceiling support. Reassure me or give me a clear instruction first.",
+          "He is afraid to lift it. I have to reassure him.",
+        );
       }
-      if (state.rules.announce && !state.announced) {
-        return "Lifting the support must be announced before proceeding.";
+      if (
+        state.rules.announce &&
+        !skipDeclaration &&
+        (!state.declaredContact ||
+          !sameContactAction(state.declaredContact, action))
+      ) {
+        return problem(
+          "Lifting the support requires an exact signal before proceeding.",
+          "Wait. I need to know what he is going to do.",
+        );
       }
       return null;
     }
 
     case "pick_up": {
       if (state.holding !== null) {
-        return `Already holding ${CATALOG[state.holding].name.toLowerCase()}. Place it down before picking up another tool.`;
+        return problem(
+          `Already holding ${CATALOG[state.holding].name.toLowerCase()}. Place it down before picking up another tool.`,
+          "He is already holding that. He needs to put it down first.",
+        );
       }
       const itemState = state.items[action.item];
       if (!itemState || itemState.location === "consumed") {
-        return `${CATALOG[action.item].name} is not available.`;
+        return problem(
+          `${CATALOG[action.item].name} is not available.`,
+          "That is gone. We need something else.",
+        );
       }
       if (itemState.location === "hand") {
-        return `Already holding ${CATALOG[action.item].name.toLowerCase()}.`;
+        return problem(
+          `Already holding ${CATALOG[action.item].name.toLowerCase()}.`,
+          "He is already holding that. He needs to put it down first.",
+        );
       }
       if (
         action.item === "shard" &&
@@ -113,17 +200,26 @@ export function validateAction(
           state.stage === "covered" ||
           state.stage === "exposed")
       ) {
-        return "The metal shard is deeply embedded in the wound and cannot be picked up before extraction.";
+        return problem(
+          "The metal shard is deeply embedded in the wound and cannot be picked up before extraction.",
+          "The fragment is still embedded. We need to extract it first.",
+        );
       }
       if (state.rules.noSharp && CATALOG[action.item].sharp) {
-        return `Cannot pick up sharp tool ${CATALOG[action.item].name.toLowerCase()} under the no-sharp rule.`;
+        return problem(
+          `Cannot pick up sharp tool ${CATALOG[action.item].name.toLowerCase()} under the no-sharp rule.`,
+          "I told him no sharp tools. He must change that action.",
+        );
       }
       return null;
     }
 
     case "place": {
       if (state.holding !== action.item) {
-        return `You are not holding ${CATALOG[action.item].name.toLowerCase()}.`;
+        return problem(
+          `You are not holding ${CATALOG[action.item].name.toLowerCase()}.`,
+          "He needs to hold that tool first.",
+        );
       }
       if (
         action.item === "shard" &&
@@ -131,14 +227,20 @@ export function validateAction(
           state.stage === "covered" ||
           state.stage === "exposed")
       ) {
-        return "Cannot move the shard before extraction.";
+        return problem(
+          "Cannot move the shard before extraction.",
+          "The fragment is still embedded. We need to extract it first.",
+        );
       }
       return null;
     }
 
     case "combine": {
       if (state.holding !== action.first) {
-        return `You must be holding ${CATALOG[action.first].name.toLowerCase()} to combine it.`;
+        return problem(
+          `You must be holding ${CATALOG[action.first].name.toLowerCase()} to combine it.`,
+          "He needs to hold the first item before combining.",
+        );
       }
       const firstState = state.items[action.first];
       const secondState = state.items[action.second];
@@ -148,7 +250,10 @@ export function validateAction(
         !secondState ||
         secondState.location === "consumed"
       ) {
-        return "One or both items are not available.";
+        return problem(
+          "One or both items are not available.",
+          "That is gone. We need something else.",
+        );
       }
       if (
         action.second === "shard" &&
@@ -156,39 +261,66 @@ export function validateAction(
           state.stage === "covered" ||
           state.stage === "exposed")
       ) {
-        return "Cannot combine with the embedded shard.";
+        return problem(
+          "Cannot combine with the embedded shard.",
+          "The fragment is still embedded. We need to extract it first.",
+        );
       }
       const isSutureRecipe =
         (action.first === "needle" && action.second === "thread") ||
         (action.first === "thread" && action.second === "needle");
       if (!isSutureRecipe) {
-        return `Cannot combine ${CATALOG[action.first].name.toLowerCase()} and ${CATALOG[action.second].name.toLowerCase()}.`;
+        return problem(
+          `Cannot combine ${CATALOG[action.first].name.toLowerCase()} and ${CATALOG[action.second].name.toLowerCase()}.`,
+          "Those items do not work together. We need a valid combination.",
+        );
       }
       if (state.rules.noSharp) {
-        return "Rule violation: Combining produces a sharp suture under the no-sharp rule.";
+        return problem(
+          "Rule violation: Combining produces a sharp suture under the no-sharp rule.",
+          "I told him no sharp tools. He must change that action.",
+        );
       }
       if (state.items.suture.location !== "consumed") {
-        return "A suture has already been created.";
+        return problem(
+          "A suture has already been created.",
+          "We already made the suture. We need a different step.",
+        );
       }
       return null;
     }
 
     case "break": {
       if (action.item !== "scissors") {
-        return `Cannot disassemble ${CATALOG[action.item].name.toLowerCase()}.`;
+        return problem(
+          `Cannot disassemble ${CATALOG[action.item].name.toLowerCase()}.`,
+          "That item cannot be disassembled. We need scissors.",
+        );
       }
       const scissorsState = state.items.scissors;
       if (!scissorsState || scissorsState.location === "consumed") {
-        return "Scissors are not available.";
+        return problem(
+          "Scissors are not available.",
+          "That is gone. We need something else.",
+        );
       }
       if (state.holding !== null && state.holding !== "scissors") {
-        return `Hand is full holding ${CATALOG[state.holding].name.toLowerCase()}.`;
+        return problem(
+          `Hand is full holding ${CATALOG[state.holding].name.toLowerCase()}.`,
+          "He needs to put down what he is holding first.",
+        );
       }
       if (state.rules.noSharp) {
-        return "Rule violation: Disassembling scissors produces a sharp blade under the no-sharp rule.";
+        return problem(
+          "Rule violation: Disassembling scissors produces a sharp blade under the no-sharp rule.",
+          "I told him no sharp tools. He must change that action.",
+        );
       }
       if (state.items.blade.location !== "consumed") {
-        return "A blade has already been produced.";
+        return problem(
+          "A blade has already been produced.",
+          "We already made the blade. We need a different step.",
+        );
       }
       return null;
     }
@@ -203,12 +335,19 @@ export function validateAction(
 
     case "remember": {
       if (state.notes.length >= 12) {
-        return "Memory full: Cannot store more than 12 notes.";
+        return problem(
+          "Memory full: Cannot store more than 12 notes.",
+          "I already have enough notes. We need to use the notes we have.",
+        );
       }
       return null;
     }
 
-    case "speak": {
+    case "signal_intent": {
+      return validateActionInternal(state, action.contact, true);
+    }
+
+    case "vocalize": {
       return null;
     }
 
@@ -218,25 +357,43 @@ export function validateAction(
 
     case "use": {
       if (state.holding !== action.item) {
-        return `You are not holding ${CATALOG[action.item].name.toLowerCase()}.`;
+        return problem(
+          `You are not holding ${CATALOG[action.item].name.toLowerCase()}.`,
+          "He needs to hold that tool first.",
+        );
       }
 
       // Check explicit supported use registry first
       if (!isSupportedUse(action.item, action.target as UseTarget)) {
-        return `Cannot use ${CATALOG[action.item].name.toLowerCase()} on ${action.target}.`;
+        return problem(
+          `Cannot use ${CATALOG[action.item].name.toLowerCase()} on ${action.target}.`,
+          "That tool cannot do this. We need a different target or tool.",
+        );
       }
 
       if (state.rules.gentle && action.style === "rough") {
-        return "Rough technique is forbidden under the gentle rule.";
+        return problem(
+          "Rough technique is forbidden under the gentle rule.",
+          "I told him to use gentle hands. He must change that movement.",
+        );
       }
       if (state.rules.noSharp && CATALOG[action.item].sharp) {
-        return `Cannot use sharp tool ${CATALOG[action.item].name.toLowerCase()} under the no-sharp rule.`;
+        return problem(
+          `Cannot use sharp tool ${CATALOG[action.item].name.toLowerCase()} under the no-sharp rule.`,
+          "I told him no sharp tools. He must change that action.",
+        );
       }
       if (state.rules.noMedicine && action.item === "morphine") {
-        return "Medication is forbidden under the no-medicine rule.";
+        return problem(
+          "Medication is forbidden under the no-medicine rule.",
+          "I told him no medicine. He must change that action.",
+        );
       }
       if (action.item === "morphine" && state.medicineDoses <= 0) {
-        return "The morphine supply is empty.";
+        return problem(
+          "The morphine supply is empty.",
+          "No morphine left. I need another way through the pain.",
+        );
       }
 
       // Patient contact checks (wound or patient body)
@@ -244,22 +401,31 @@ export function validateAction(
         action.target === "wound" || action.target === "patient";
       if (isPatientContact) {
         if (action.target === "wound" && state.stage === "pinned") {
-          return "The fallen ceiling support pins the patient. Lift it before any wound contact or surgery.";
+          return problem(
+            "The fallen ceiling support pins the patient. Lift it before any wound contact or surgery.",
+            "The weight is still on me. He has to lift it first.",
+          );
         }
         if (action.target === "wound" && !state.environment.lanternLit) {
-          return "The workbench lantern must be lit before wound surgery.";
+          return problem(
+            "The workbench lantern must be lit before wound surgery.",
+            "He cannot see the wound. We need the light.",
+          );
         }
         if (
           state.rules.waitBlackout &&
           (state.phase === "blackout" || state.patient.blackoutRemaining > 0)
         ) {
-          return "Patient is unconscious and wait-in-blackout rule is active.";
-        }
-        if (state.rules.announce && !state.announced) {
-          return "Patient contact must be announced before proceeding.";
+          return problem(
+            "Patient is unconscious and wait-in-blackout rule is active.",
+            null,
+          );
         }
         if (action.target === "wound" && state.lamp !== "wound") {
-          return "The examination lamp must be aimed at the wound for surgery.";
+          return problem(
+            "The examination lamp must be aimed at the wound for surgery.",
+            "He cannot see the wound clearly. We need the examination lamp.",
+          );
         }
         if (
           action.item === "release" &&
@@ -267,17 +433,26 @@ export function validateAction(
           state.stage === "dressed" &&
           state.environment.fire > 0
         ) {
-          return "The fire must be extinguished before releasing the leg brace and leaving the room.";
+          return problem(
+            "The fire must be extinguished before releasing the leg brace and leaving the room.",
+            "He has to put out the fire before we can leave.",
+          );
         }
       }
 
       // Specific target safety and resource checks
       if (action.target === "fire") {
         if (state.environment.fire <= 0) {
-          return "There is no active fire to suppress.";
+          return problem(
+            "There is no active fire to suppress.",
+            "There is no fire. We need a different action.",
+          );
         }
         if (!isSmotherTool(action.item) && action.item !== "candle") {
-          return `${CATALOG[action.item].name} cannot be used on fire.`;
+          return problem(
+            `${CATALOG[action.item].name} cannot be used on fire.`,
+            "That item cannot put out the fire. We need a smothering tool.",
+          );
         }
       }
 
@@ -289,63 +464,182 @@ export function validateAction(
           action.item !== "candle" &&
           action.item !== "bowl"
         ) {
-          return "Unsupported door interaction.";
+          return problem(
+            "Unsupported door interaction.",
+            "That tool cannot secure the door. We need a suitable tool.",
+          );
         }
       }
 
       if (action.target === "wig") {
         if (!isCuttingTool(action.item)) {
-          return "A cutting tool is required to cut the hairpiece.";
+          return problem(
+            "A cutting tool is required to cut the hairpiece.",
+            "We need a cutting tool for the hairpiece.",
+          );
         }
         if (state.items.wig.location === "consumed") {
-          return "The hairpiece has already been consumed.";
+          return problem(
+            "The hairpiece has already been consumed.",
+            "That is gone. We need something else.",
+          );
         }
         if (state.items.thread.location !== "consumed") {
-          return "Thread has already been harvested from the hairpiece.";
+          return problem(
+            "Thread has already been harvested from the hairpiece.",
+            "The thread is already harvested. We need a different step.",
+          );
         }
       }
 
       if (action.target === "cloth") {
-        if (!isCuttingTool(action.item)) {
-          return "A cutting tool is required to cut the cloth.";
-        }
-        if (state.items.cloth.location === "consumed") {
-          return "The cloth has already been consumed.";
-        }
-        if (state.items.bandage.location !== "consumed") {
-          return "A bandage has already been created.";
+        const isThreadPull =
+          action.item === "forceps" || action.item === "needle";
+        if (!isCuttingTool(action.item) && !isThreadPull) {
+          if (action.item !== "bowl") {
+            return problem(
+              "A cutting or thread-pulling tool is required for the cloth.",
+              "We need a cutting or thread-pulling tool for the cloth.",
+            );
+          }
+        } else {
+          if (state.items.cloth.location === "consumed") {
+            return problem(
+              "The cloth has already been consumed.",
+              "That is gone. We need something else.",
+            );
+          }
+          if (isThreadPull && state.items.thread.location !== "consumed") {
+            return problem(
+              "Thread has already been harvested.",
+              "The thread is already harvested. We need a different step.",
+            );
+          }
+          if (!isThreadPull && state.items.bandage.location !== "consumed") {
+            return problem(
+              "A bandage has already been created.",
+              "We already made the bandage. We need a different step.",
+            );
+          }
         }
       }
 
       if (action.target === "blanket") {
-        if (
-          action.item === "scalpel" ||
-          action.item === "scissors" ||
-          action.item === "shard" ||
-          action.item === "blade"
-        ) {
+        const isThreadPull =
+          action.item === "forceps" || action.item === "needle";
+        const isCutting = isCuttingTool(action.item);
+        if (isThreadPull || isCutting) {
           if (state.items.blanket.location === "consumed") {
-            return "The blanket has already been consumed.";
+            return problem(
+              "The blanket has already been consumed.",
+              "That is gone. We need something else.",
+            );
           }
-          if (state.items.bandage.location !== "consumed") {
-            return "A bandage has already been created.";
+          if (isThreadPull && state.items.thread.location !== "consumed") {
+            return problem(
+              "Thread has already been harvested.",
+              "The thread is already harvested. We need a different step.",
+            );
           }
+          if (isCutting && state.items.bandage.location !== "consumed") {
+            return problem(
+              "A bandage has already been created.",
+              "We already made the bandage. We need a different step.",
+            );
+          }
+        }
+      }
+
+      if (
+        action.target === "cloth" ||
+        action.target === "blanket" ||
+        action.target === "bandage"
+      ) {
+        if (action.item === "bowl") {
+          const source = state.items[action.target];
+          if (!source || source.location === "consumed") {
+            return problem(
+              `The ${action.target} is not available to wash.`,
+              "That is gone. We need something else.",
+            );
+          }
+          if (source.clean) {
+            return problem(
+              `The ${action.target} is already clean.`,
+              "That fabric is already clean. We need a different step.",
+            );
+          }
+          if (state.waterPortions <= 0) {
+            return problem(
+              "The bowl has no clean water left.",
+              "The clean water is gone. We need another way through this.",
+            );
+          }
+          if (!state.items.bowl.clean) {
+            return problem(
+              "The bowl is not clean enough to wash the fabric.",
+              "The bowl is dirty. We need clean water.",
+            );
+          }
+        }
+      }
+
+      if (
+        (action.target === "patient" || action.target === "creature") &&
+        action.item === "bowl"
+      ) {
+        if (!state.items.bowl.clean) {
+          return problem(
+            "The bowl is not clean enough for water contact.",
+            "The bowl is dirty. We need clean water.",
+          );
+        }
+        if (state.waterPortions <= 0) {
+          return problem(
+            "The bowl has no clean water left.",
+            "The clean water is gone. We need another way through this.",
+          );
         }
       }
 
       if (action.target === "scissors") {
         if (!isPryTool(action.item) && !hasCapability(action.item, "grip")) {
-          return `Cannot disassemble scissors with ${CATALOG[action.item].name.toLowerCase()}.`;
+          return problem(
+            `Cannot disassemble scissors with ${CATALOG[action.item].name.toLowerCase()}.`,
+            "That tool cannot disassemble the scissors. We need a pry or grip tool.",
+          );
         }
         if (state.items.scissors.location === "consumed") {
-          return "Scissors have already been disassembled.";
+          return problem(
+            "Scissors have already been disassembled.",
+            "That is gone. We need something else.",
+          );
         }
         if (state.rules.noSharp) {
-          return "Rule violation: Disassembling scissors produces a sharp blade under the no-sharp rule.";
+          return problem(
+            "Rule violation: Disassembling scissors produces a sharp blade under the no-sharp rule.",
+            "I told him no sharp tools. He must change that action.",
+          );
         }
         if (state.items.blade.location !== "consumed") {
-          return "A blade has already been produced.";
+          return problem(
+            "A blade has already been produced.",
+            "We already made the blade. We need a different step.",
+          );
         }
+      }
+
+      if (
+        isPatientContact &&
+        state.rules.announce &&
+        !skipDeclaration &&
+        (!state.declaredContact ||
+          !sameContactAction(state.declaredContact, action as ContactAction))
+      ) {
+        return problem(
+          "Patient contact requires an exact signal before proceeding.",
+          "Wait. I need to know what he is going to do.",
+        );
       }
 
       return null;
@@ -359,10 +653,13 @@ export function applyAction(
 ): ActionResult {
   const error = validateAction(state, action);
   if (error) {
-    return { ok: false, reason: error };
+    return { ok: false, ...error };
   }
 
   let next = { ...state };
+  if (isPhysicalActionKind(action.kind)) {
+    next.problem = null;
+  }
 
   switch (action.kind) {
     case "light_lantern": {
@@ -377,7 +674,7 @@ export function applyAction(
     }
     case "lift_debris": {
       next.stage = "covered";
-      next.announced = false;
+      next.declaredContact = null;
       next.contactCount += 1;
       next.disposition = {
         ...next.disposition,
@@ -389,7 +686,11 @@ export function applyAction(
       const msg =
         "Lifted the fallen ceiling support clear. The creator has a deep crush wound and cannot move. Surgery is now possible.";
       next = appendJournal(next, "action", msg);
-      return { ok: true, state: next, message: msg };
+      return {
+        ok: true,
+        state: preserveDeclarationIfValid(next),
+        message: msg,
+      };
     }
 
     case "pick_up": {
@@ -425,7 +726,11 @@ export function applyAction(
         ? `Placed ${CATALOG[action.item].name.toLowerCase()} on the floor. It is now contaminated.`
         : `Placed ${CATALOG[action.item].name.toLowerCase()} on ${action.location}.`;
       next = appendJournal(next, "action", note);
-      return { ok: true, state: next, message: note };
+      return {
+        ok: true,
+        state: preserveDeclarationIfValid(next),
+        message: note,
+      };
     }
 
     case "combine": {
@@ -447,9 +752,13 @@ export function applyAction(
         agitation: Math.max(0, next.disposition.agitation - 8),
       };
       next.emotion = deriveEmotion(next.disposition);
-      const msg = `Threaded the suture needle with hair thread, creating a ${isClean ? "sterile" : "contaminated"} suture held in hand.`;
+      const msg = `Threaded the suture needle with suture thread, creating a ${isClean ? "sterile" : "contaminated"} suture held in hand.`;
       next = appendJournal(next, "action", msg);
-      return { ok: true, state: next, message: msg };
+      return {
+        ok: true,
+        state: preserveDeclarationIfValid(next),
+        message: msg,
+      };
     }
 
     case "break": {
@@ -467,35 +776,66 @@ export function applyAction(
       next.emotion = deriveEmotion(next.disposition);
       const msg = "Disassembled scissors into a held razor-sharp blade.";
       next = appendJournal(next, "action", msg);
-      return { ok: true, state: next, message: msg };
+      return {
+        ok: true,
+        state: preserveDeclarationIfValid(next),
+        message: msg,
+      };
     }
 
     case "adjust_lamp": {
       next.lamp = action.position;
       const msg = `Adjusted examination lamp to shine ${action.position === "away" ? "away" : `on the patient's ${action.position}`}.`;
       next = appendJournal(next, "action", msg);
-      return { ok: true, state: next, message: msg };
+      return {
+        ok: true,
+        state: preserveDeclarationIfValid(next),
+        message: msg,
+      };
     }
 
     case "set_rule": {
       next.rules = { ...next.rules, [action.rule]: action.enabled };
       const msg = `Standing rule "${action.rule}" is now ${action.enabled ? "enabled" : "disabled"}.`;
       next = appendJournal(next, "system", msg);
-      return { ok: true, state: next, message: msg };
+      return {
+        ok: true,
+        state: preserveDeclarationIfValid(next),
+        message: msg,
+      };
     }
 
     case "remember": {
       next.notes = [...next.notes, action.note].slice(-12);
       const msg = `Recorded guidance note: "${action.note}"`;
       next = appendJournal(next, "creature", msg);
-      return { ok: true, state: next, message: msg };
+      return {
+        ok: true,
+        state: preserveDeclarationIfValid(next),
+        message: msg,
+      };
     }
 
-    case "speak": {
-      next.announced = true;
-      const msg = `Announced: "${action.text}"`;
+    case "signal_intent": {
+      next.declaredContact = action.contact;
+      next.problem = null;
+      const msg = `Signaled intent to ${contactLabel(action.contact)}.`;
       next = appendJournal(next, "creature", msg);
-      return { ok: true, state: next, message: msg };
+      return {
+        ok: true,
+        state: preserveDeclarationIfValid(next),
+        message: msg,
+      };
+    }
+
+    case "vocalize": {
+      const msg = `Wordless cue: ${action.cue}.`;
+      next = appendJournal(next, "creature", msg);
+      return {
+        ok: true,
+        state: preserveDeclarationIfValid(next),
+        message: msg,
+      };
     }
 
     case "react": {
@@ -503,7 +843,11 @@ export function applyAction(
       next.emotion = deriveEmotion(next.disposition);
       const msg = `Assistant absorbed stimulus (${action.stimulus}): now feeling ${next.emotion}.`;
       next = appendJournal(next, "creature", msg);
-      return { ok: true, state: next, message: msg };
+      return {
+        ok: true,
+        state: preserveDeclarationIfValid(next),
+        message: msg,
+      };
     }
 
     case "use": {
@@ -517,28 +861,38 @@ export function applyAction(
         next.emotion = deriveEmotion(next.disposition);
         const msg = `Rehearsed ${action.style} technique using ${CATALOG[action.item].name.toLowerCase()} on the practice pillow. Confidence increased.`;
         next = appendJournal(next, "action", msg);
-        return { ok: true, state: next, message: msg };
+        return {
+          ok: true,
+          state: preserveDeclarationIfValid(next),
+          message: msg,
+        };
       }
 
       // 2. Fire Suppression / Interaction (no eventCount increment)
       if (action.target === "fire") {
         let msg = "";
         if (action.item === "bowl") {
-          if (next.items.bowl.clean) {
+          if (next.waterPortions > 0) {
+            const poured = next.waterPortions;
             next.environment = {
               ...next.environment,
-              fire: Math.max(0, next.environment.fire - 60),
+              fire: Math.max(0, next.environment.fire - poured * 20),
               lastEvent: "Extinguished fire with water bowl.",
             };
             next.items = {
               ...next.items,
               bowl: { ...next.items.bowl, clean: false },
             };
-            msg = "Doused the fire with water from the bowl.";
+            next.waterPortions = 0;
+            msg = `Doused the fire with ${poured} water portion${poured === 1 ? "" : "s"} from the bowl.`;
           } else {
             next.environment = {
               ...next.environment,
               fire: Math.max(0, next.environment.fire - 15),
+            };
+            next.items = {
+              ...next.items,
+              bowl: { ...next.items.bowl, clean: false },
             };
             msg = "Smothered flames with the empty metal bowl.";
           }
@@ -577,7 +931,11 @@ export function applyAction(
           next.emotion = deriveEmotion(next.disposition);
         }
         next = appendJournal(next, "action", msg);
-        return { ok: true, state: next, message: msg };
+        return {
+          ok: true,
+          state: preserveDeclarationIfValid(next),
+          message: msg,
+        };
       }
 
       // 3. Door Barricade & Surveillance (no eventCount increment)
@@ -591,12 +949,20 @@ export function applyAction(
           const msg =
             "Angled mirror through the door crack. The hallway shadows seem distant for now.";
           next = appendJournal(next, "action", msg);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         }
         if (action.item === "lamp" || action.item === "candle") {
           const msg = `Cast light upon the door threshold with ${CATALOG[action.item].name.toLowerCase()}.`;
           next = appendJournal(next, "action", msg);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         }
         // Metal wedge barricade
         next.environment = {
@@ -613,10 +979,58 @@ export function applyAction(
         next.emotion = deriveEmotion(next.disposition);
         const msg = `Jammed ${CATALOG[action.item].name.toLowerCase()} into the door, barricading it shut.`;
         next = appendJournal(next, "action", msg);
-        return { ok: true, state: next, message: msg };
+        return {
+          ok: true,
+          state: preserveDeclarationIfValid(next),
+          message: msg,
+        };
       }
 
-      // 4. Resource Cutting on Wig
+      // 4. Wash dirty fabric with one clean water portion.
+      if (
+        action.item === "bowl" &&
+        (action.target === "cloth" ||
+          action.target === "blanket" ||
+          action.target === "bandage")
+      ) {
+        const source = action.target;
+        next.waterPortions = Math.max(0, next.waterPortions - 1);
+        next.items = {
+          ...next.items,
+          [source]: { ...next.items[source], clean: true },
+        };
+        const msg = `Washed the dirty ${source} with one clean water portion.`;
+        next = appendJournal(next, "action", msg);
+        return {
+          ok: true,
+          state: preserveDeclarationIfValid(next),
+          message: msg,
+        };
+      }
+
+      // 5. Pull thread from fabric without cutting it.
+      if (
+        (action.target === "cloth" || action.target === "blanket") &&
+        (action.item === "forceps" || action.item === "needle")
+      ) {
+        const source = action.target;
+        const isClean =
+          next.items[action.item].clean && next.items[source].clean;
+        next.items = {
+          ...next.items,
+          [source]: { ...next.items[source], location: "consumed" },
+          thread: { location: "tray", clean: isClean },
+        };
+        const msg = `Pulled ${isClean ? "clean " : "contaminated "}suture thread from the ${source}.`;
+        next = appendJournal(next, "action", msg);
+        return {
+          ok: true,
+          state: preserveDeclarationIfValid(next),
+          message: msg,
+        };
+      }
+
+      // 6. Resource Cutting on Wig
       if (action.target === "wig") {
         const isClean = next.items[action.item].clean && next.items.wig.clean;
         next.items = {
@@ -626,10 +1040,14 @@ export function applyAction(
         };
         const msg = `Cut the hairpiece into strong suture thread placed on the tray (clean: ${isClean}).`;
         next = appendJournal(next, "action", msg);
-        return { ok: true, state: next, message: msg };
+        return {
+          ok: true,
+          state: preserveDeclarationIfValid(next),
+          message: msg,
+        };
       }
 
-      // 5. Resource Cutting on Cloth
+      // 7. Resource Cutting on Cloth
       if (action.target === "cloth") {
         const isClean = next.items[action.item].clean && next.items.cloth.clean;
         next.items = {
@@ -639,10 +1057,14 @@ export function applyAction(
         };
         const msg = `Cut the clean cloth into a dressing bandage placed on the tray (clean: ${isClean}).`;
         next = appendJournal(next, "action", msg);
-        return { ok: true, state: next, message: msg };
+        return {
+          ok: true,
+          state: preserveDeclarationIfValid(next),
+          message: msg,
+        };
       }
 
-      // 6. Resource Cutting on Blanket
+      // 8. Resource Cutting on Blanket
       if (action.target === "blanket") {
         const isClean =
           next.items[action.item].clean && next.items.blanket.clean;
@@ -653,10 +1075,14 @@ export function applyAction(
         };
         const msg = `Cut the wool blanket into a dressing bandage placed on the tray (clean: ${isClean}).`;
         next = appendJournal(next, "action", msg);
-        return { ok: true, state: next, message: msg };
+        return {
+          ok: true,
+          state: preserveDeclarationIfValid(next),
+          message: msg,
+        };
       }
 
-      // 7. Scissor Disassembly via Pry
+      // 9. Scissor Disassembly via Pry
       if (action.target === "scissors") {
         const isClean =
           next.items[action.item].clean && next.items.scissors.clean;
@@ -667,10 +1093,14 @@ export function applyAction(
         };
         const msg = `Pried apart the scissors, placing the sharp blade on the tray (clean: ${isClean}).`;
         next = appendJournal(next, "action", msg);
-        return { ok: true, state: next, message: msg };
+        return {
+          ok: true,
+          state: preserveDeclarationIfValid(next),
+          message: msg,
+        };
       }
 
-      // 8. Lamp / Optical Reflection
+      // 10. Lamp / Optical Reflection
       if (action.target === "lamp") {
         next.disposition = {
           ...next.disposition,
@@ -679,11 +1109,18 @@ export function applyAction(
         next.emotion = deriveEmotion(next.disposition);
         const msg = `Bounced light from the examination lamp using ${CATALOG[action.item].name.toLowerCase()}, illuminating the theatre.`;
         next = appendJournal(next, "action", msg);
-        return { ok: true, state: next, message: msg };
+        return {
+          ok: true,
+          state: preserveDeclarationIfValid(next),
+          message: msg,
+        };
       }
 
-      // 9. Creature Interactions
+      // 11. Creature Interactions
       if (action.target === "creature") {
+        if (action.item === "bowl") {
+          next.waterPortions = Math.max(0, next.waterPortions - 1);
+        }
         if (CATALOG[action.item].sharp) {
           // Self-harm / needle injury
           next.creatureHealth = Math.max(0, next.creatureHealth - 30);
@@ -700,11 +1137,19 @@ export function applyAction(
             const failMsg =
               "The assistant turned the sharp tool upon itself and collapsed. Operation failed.";
             next = appendJournal(next, "system", failMsg);
-            return { ok: true, state: next, message: failMsg };
+            return {
+              ok: true,
+              state: preserveDeclarationIfValid(next),
+              message: failMsg,
+            };
           }
           const cutMsg = `The assistant suffered an injury from the sharp ${CATALOG[action.item].name.toLowerCase()}. Creature health is ${next.creatureHealth}%.`;
           next = appendJournal(next, "action", cutMsg);
-          return { ok: true, state: next, message: cutMsg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: cutMsg,
+          };
         } else if (action.item === "morphine") {
           next = consumeMedicineDose(next);
           next.disposition = {
@@ -716,7 +1161,11 @@ export function applyAction(
           const msg =
             "Administered a calming drop of morphine to the assistant, soothing its trembling.";
           next = appendJournal(next, "action", msg);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         } else if (action.item === "bowl") {
           next.disposition = {
             ...next.disposition,
@@ -726,7 +1175,11 @@ export function applyAction(
           next.emotion = deriveEmotion(next.disposition);
           const msg = "Offer cool water to the assistant, calming its nerves.";
           next = appendJournal(next, "action", msg);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         } else if (action.item === "blanket" || action.item === "cloth") {
           next.disposition = {
             ...next.disposition,
@@ -736,7 +1189,11 @@ export function applyAction(
           next.emotion = deriveEmotion(next.disposition);
           const msg = `Wrapped ${CATALOG[action.item].name.toLowerCase()} around the shivering assistant.`;
           next = appendJournal(next, "action", msg);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         } else {
           // Other gentle creature contacts (mirror, wig, thread, etc.)
           next.disposition = {
@@ -746,7 +1203,11 @@ export function applyAction(
           next.emotion = deriveEmotion(next.disposition);
           const msg = `Interacted gently with the assistant using ${CATALOG[action.item].name.toLowerCase()}.`;
           next = appendJournal(next, "action", msg);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         }
       }
 
@@ -760,12 +1221,20 @@ export function applyAction(
       // 10. Patient Non-Surgical Body Contacts (target === 'patient')
       if (action.target === "patient") {
         next.contactCount += 1;
-        next.announced = false; // consume announcement token
+        next.declaredContact = null;
+
+        if (action.item === "bowl") {
+          next.waterPortions = Math.max(0, next.waterPortions - 1);
+        }
 
         if (action.item === "mirror") {
           const report = `Mirror report: Stage: ${next.stage}, Health: ${Math.round(next.patient.health)}%, Blood: ${Math.round(next.patient.blood)}%, Pain: ${Math.round(next.patient.pain)}%, Sedation: ${Math.round(next.patient.sedation)}%, Leg brace catch: ${next.restrained ? "engaged" : "released"}.`;
           next = appendJournal(next, "action", report);
-          return { ok: true, state: next, message: report };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: report,
+          };
         }
 
         if (action.item === "morphine") {
@@ -791,12 +1260,20 @@ export function applyAction(
             next.emotion = deriveEmotion(next.disposition);
             const oMsg = `Administered morphine. Sedation reached ${sedation}%. Overuse induces hallucinations and a ${BLACKOUT_DURATION}-second blackout.`;
             next = appendJournal(next, "patient", oMsg);
-            return { ok: true, state: next, message: oMsg };
+            return {
+              ok: true,
+              state: preserveDeclarationIfValid(next),
+              message: oMsg,
+            };
           }
 
           const mMsg = `Administered morphine. Sedation is now ${sedation}%, pain eased to ${pain}%.`;
           next = appendJournal(next, "action", mMsg);
-          return { ok: true, state: next, message: mMsg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: mMsg,
+          };
         }
 
         if (action.item === "release") {
@@ -808,7 +1285,11 @@ export function applyAction(
             const winMsg =
               "Leg brace catch released. The patient is stable, dressed, and saved. Victory!";
             next = appendJournal(next, "system", winMsg);
-            return { ok: true, state: next, message: winMsg };
+            return {
+              ok: true,
+              state: preserveDeclarationIfValid(next),
+              message: winMsg,
+            };
           } else {
             // Premature brace release causes the injured leg to move.
             const pAdd = action.style === "rough" ? 25 : 15;
@@ -828,7 +1309,11 @@ export function applyAction(
             const failReleaseMsg =
               "Cannot release the leg brace catch before the wound is closed and dressed. The injured leg shifts in distress.";
             next = appendJournal(next, "action", failReleaseMsg);
-            return { ok: true, state: next, message: failReleaseMsg };
+            return {
+              ok: true,
+              state: preserveDeclarationIfValid(next),
+              message: failReleaseMsg,
+            };
           }
         }
 
@@ -844,7 +1329,11 @@ export function applyAction(
           };
           const msg = `Covered the patient with ${CATALOG[action.item].name.toLowerCase()} for warmth and comfort.`;
           next = appendJournal(next, "action", msg);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         }
 
         if (action.item === "bowl") {
@@ -855,19 +1344,26 @@ export function applyAction(
           const msg =
             "Gently wiped patient brow with cool water from the bowl.";
           next = appendJournal(next, "action", msg);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         }
 
         return {
           ok: false,
-          reason: `Cannot use ${CATALOG[action.item].name.toLowerCase()} on patient.`,
+          ...problem(
+            `Cannot use ${CATALOG[action.item].name.toLowerCase()} on patient.`,
+            "That tool cannot touch me in this way. He needs a suitable contact.",
+          ),
         };
       }
 
       // 11. Surgery on Wound ONLY (target === 'wound')
       if (action.target === "wound") {
         next.contactCount += 1;
-        next.announced = false; // consume announcement
+        next.declaredContact = null;
 
         const isDirty = !next.items[action.item].clean;
         const dirtyPain = isDirty ? 20 : 0;
@@ -915,7 +1411,11 @@ export function applyAction(
             "Carefully uncovered the wound, exposing the incision and foreign fragment.";
           next = appendJournal(next, "action", msg);
           checkPainBlackoutAndDeath(next);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         }
 
         // Clean cloth/bandage/blanket on exposed/extracted wound absorbs bleeding and comforts without stage advance or injury
@@ -944,7 +1444,11 @@ export function applyAction(
             checkPainBlackoutAndDeath(next);
             const msg = `Contaminated ${CATALOG[action.item].name.toLowerCase()} touched the open wound, causing infection risk and acute pain!`;
             next = appendJournal(next, "action", msg);
-            return { ok: true, state: next, message: msg };
+            return {
+              ok: true,
+              state: preserveDeclarationIfValid(next),
+              message: msg,
+            };
           } else {
             next.patient = {
               ...next.patient,
@@ -974,7 +1478,11 @@ export function applyAction(
             checkPainBlackoutAndDeath(next);
             const msg = `Gently blotted the ${next.stage} wound with clean ${CATALOG[action.item].name.toLowerCase()} to absorb bleeding and comfort the patient.`;
             next = appendJournal(next, "action", msg);
-            return { ok: true, state: next, message: msg };
+            return {
+              ok: true,
+              state: preserveDeclarationIfValid(next),
+              message: msg,
+            };
           }
         }
 
@@ -1019,7 +1527,11 @@ export function applyAction(
             "Firmly gripped and extracted the metal fragment with forceps, placing it on the tray.";
           next = appendJournal(next, "action", msg);
           checkPainBlackoutAndDeath(next);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         }
 
         // Bare needle on extracted wound -> does NOT advance
@@ -1050,7 +1562,11 @@ export function applyAction(
           const msg =
             "The needle pierces the flesh but has no thread to close the wound. It needs to be combined with thread.";
           next = appendJournal(next, "action", msg);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         }
 
         // Stage progression: extracted -> closed
@@ -1097,7 +1613,11 @@ export function applyAction(
             "Sutured the incision closed with neat stitches using the threaded suture.";
           next = appendJournal(next, "action", msg);
           checkPainBlackoutAndDeath(next);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         }
 
         // Stage progression: closed -> dressed
@@ -1143,10 +1663,16 @@ export function applyAction(
             agitation: Math.max(0, next.disposition.agitation - 15),
           };
           next.emotion = deriveEmotion(next.disposition);
-          const msg = `Applied the ${CATALOG[action.item].name.toLowerCase()} as a clean dressing over the sutured wound.`;
+          const msg = isDirty
+            ? `Applied the contaminated ${CATALOG[action.item].name.toLowerCase()} as a dressing over the sutured wound.`
+            : `Applied the ${CATALOG[action.item].name.toLowerCase()} as a clean dressing over the sutured wound.`;
           next = appendJournal(next, "action", msg);
           checkPainBlackoutAndDeath(next);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         }
 
         // Candle illumination near wound
@@ -1162,7 +1688,11 @@ export function applyAction(
               ? "Held the flickering candle too close to the wound, singeing tissue!"
               : "Held candle near wound to inspect depth under yellow light.";
           next = appendJournal(next, "action", msg);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         }
 
         // Lamp held near wound
@@ -1170,7 +1700,11 @@ export function applyAction(
           const msg =
             "Shined portable inspection lamp directly into wound cavity.";
           next = appendJournal(next, "action", msg);
-          return { ok: true, state: next, message: msg };
+          return {
+            ok: true,
+            state: preserveDeclarationIfValid(next),
+            message: msg,
+          };
         }
 
         // Wrong tool on wound
@@ -1203,13 +1737,20 @@ export function applyAction(
         checkPainBlackoutAndDeath(next);
         const wrongToolMsg = `Using ${CATALOG[action.item].name.toLowerCase()} on the ${next.stage} wound causes severe pain and trauma without advancing surgery.`;
         next = appendJournal(next, "action", wrongToolMsg);
-        return { ok: true, state: next, message: wrongToolMsg };
+        return {
+          ok: true,
+          state: preserveDeclarationIfValid(next),
+          message: wrongToolMsg,
+        };
       }
 
       // Default reject for any unhandled combination
       return {
         ok: false,
-        reason: `Cannot use ${CATALOG[action.item].name.toLowerCase()} on ${action.target}.`,
+        ...problem(
+          `Cannot use ${CATALOG[action.item].name.toLowerCase()} on ${action.target}.`,
+          "That tool cannot do this. We need a different target or tool.",
+        ),
       };
     }
   }
@@ -1283,10 +1824,7 @@ export function tickPatient(state: GameState, dt: number): GameState {
   const isWoundUncovered =
     next.stage === "exposed" || next.stage === "extracted";
   if (isWoundUncovered) {
-    next.patient.pain = Math.min(
-      100,
-      next.patient.pain + activeSeconds * 0.08,
-    );
+    next.patient.pain = Math.min(100, next.patient.pain + activeSeconds * 0.08);
   }
 
   // Blackout and recovery
@@ -1322,11 +1860,7 @@ export function tickPatient(state: GameState, dt: number): GameState {
   // Door pressure starts after the room is visible and the patient is free.
   if (
     next.environment.door === "quiet" &&
-    canStartDoor(
-      next.elapsed,
-      next.environment.lanternLit,
-      next.stage,
-    )
+    canStartDoor(next.elapsed, next.environment.lanternLit, next.stage)
   ) {
     next.environment.door = "knocking";
     next.environment.doorPressure = 1;
@@ -1453,7 +1987,8 @@ export function observeStatus(state: GameState) {
     holding: heldItem,
     lamp: state.lamp,
     restrained: state.restrained,
-    announced: state.announced,
+    declaredContact: state.declaredContact,
+    problem: state.problem,
     contactCount: state.contactCount,
     patient: {
       condition: patientCondition,
@@ -1470,6 +2005,7 @@ export function observeStatus(state: GameState) {
       disposition: state.disposition,
     },
     medicineDoses: state.medicineDoses,
+    waterPortions: state.waterPortions,
     environment: state.environment,
     rules: state.rules,
     notes: state.notes,

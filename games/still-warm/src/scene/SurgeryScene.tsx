@@ -84,7 +84,11 @@ export const SurgeryScene: FC<SurgeryScenePropsInterface> = ({
         />
 
         <SceneLighting lit={lit} paused={isPaused} />
-        <CellarStory lit={lit} paused={isPaused} reducedMotion={reducedMotion} />
+        <CellarStory
+          lit={lit}
+          paused={isPaused}
+          reducedMotion={reducedMotion}
+        />
 
         {/* Cellar Room: Tiled walls, gothic ribs, table, cabinet, tray, environmental fire & door */}
         <Room
@@ -94,7 +98,11 @@ export const SurgeryScene: FC<SurgeryScenePropsInterface> = ({
         />
 
         {/* Reclined Patient Torso, Legs, and Dynamic Stage Wound */}
-        <PatientTorso state={state} reducedMotion={reducedMotion} />
+        <PatientTorso
+          state={state}
+          socket={socket}
+          reducedMotion={reducedMotion}
+        />
 
         <Debris state={state} socket={socket} />
 

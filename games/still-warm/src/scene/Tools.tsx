@@ -2,7 +2,7 @@ import type { LiveHandSocket } from "./types";
 import { useRef, useMemo } from "react";
 import type { FC } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Group, Vector3, Quaternion, MathUtils } from "three";
+import { Group, Vector3, Quaternion, MathUtils, CatmullRomCurve3 } from "three";
 import type { GameState } from "../game/model";
 import { getItemSlot, getItemOffset } from "./types";
 import { COLORS } from "./palette";
@@ -103,37 +103,79 @@ const ScalpelModel: FC = () => (
     </mesh>
     <mesh position={[0, 0.007, -0.063]} rotation={[0, -0.18, 0]} castShadow>
       <boxGeometry args={[0.012, 0.0035, 0.062]} />
-      <meshStandardMaterial color="#a4a59b" metalness={0.7} roughness={0.34} />
+      <meshStandardMaterial color="#c6c5b8" metalness={0.35} roughness={0.4} />
     </mesh>
-    <mesh position={[0, 0.007, -0.098]} rotation={[0, -0.18, 0]} castShadow>
+    <mesh
+      position={[0, 0.007, -0.098]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      castShadow
+    >
       <coneGeometry args={[0.006, 0.022, 4]} />
-      <meshStandardMaterial color="#b2b3a9" metalness={0.72} roughness={0.3} />
+      <meshStandardMaterial color="#d0cfbf" metalness={0.35} roughness={0.4} />
     </mesh>
   </group>
 );
 
-const NeedleModel: FC = () => (
+const SUTURE_TAIL = new CatmullRomCurve3([
+  new Vector3(0.027, 0, 0),
+  new Vector3(0.045, 0.007, 0),
+  new Vector3(0.067, -0.006, 0),
+  new Vector3(0.058, -0.034, 0),
+  new Vector3(0.021, -0.045, 0),
+  new Vector3(0.006, -0.066, 0),
+]);
+
+const NeedleModel: FC<{ threaded?: boolean }> = ({ threaded = false }) => (
   <group rotation={[Math.PI / 2, 0, 0.5]}>
     <mesh castShadow>
-      <torusGeometry args={[0.027, 0.0025, 8, 16, Math.PI * 1.15]} />
-      <meshStandardMaterial
-        color={IRON_HIGHLIGHT}
-        metalness={0.72}
-        roughness={0.35}
-      />
+      <torusGeometry args={[0.027, 0.0025, 6, 24, Math.PI * 1.15]} />
+      <meshStandardMaterial color="#aaa99d" metalness={0.4} roughness={0.4} />
     </mesh>
-    <mesh position={[0.023, -0.021, 0]} rotation={[0, 0, -0.3]} castShadow>
-      <coneGeometry args={[0.0025, 0.014, 5]} />
-      <meshStandardMaterial color="#aaa99d" metalness={0.78} roughness={0.3} />
+    <mesh
+      position={[-0.02134, -0.0176, 0]}
+      rotation={[0, 0, -2.67035]}
+      castShadow
+    >
+      <coneGeometry args={[0.0025, 0.012, 6]} />
+      <meshStandardMaterial color="#c6c5b8" metalness={0.4} roughness={0.4} />
     </mesh>
-    <mesh position={[0.023, -0.015, 0.002]} rotation={[0, 0, -0.3]}>
-      <cylinderGeometry args={[0.001, 0.001, 0.078, 5]} />
-      <meshStandardMaterial color={HAIR} roughness={0.86} />
+    <mesh position={[0.027, 0, 0]} scale={[0.7, 1, 1]}>
+      <torusGeometry args={[0.0038, 0.0013, 5, 8]} />
+      <meshStandardMaterial color="#aaa99d" metalness={0.4} roughness={0.4} />
     </mesh>
+    {threaded && (
+      <mesh name="thread-through-needle-eye" castShadow>
+        <tubeGeometry args={[SUTURE_TAIL, 28, 0.0016, 5, false]} />
+        <meshStandardMaterial color={HAIR} roughness={0.92} />
+      </mesh>
+    )}
   </group>
 );
 
-const ClothModel: FC = () => (
+const FabricStains: FC<{ y: number; scale?: number }> = ({ y, scale = 1 }) => (
+  <group position={[0, y, 0]} scale={scale}>
+    {[
+      [0.012, 0.006, 0.022],
+      [-0.017, -0.019, 0.016],
+      [0.025, -0.024, 0.009],
+    ].map(([x, z, size], index) => (
+      <mesh
+        key={index}
+        position={[x, index * 0.0002, z]}
+        rotation={[-Math.PI / 2, 0, index * 0.7]}
+        scale={[1, 0.7, 1]}
+      >
+        <circleGeometry args={[size, 7]} />
+        <meshStandardMaterial
+          color={index === 1 ? "#26251e" : COLORS.bloodDried}
+          roughness={1}
+        />
+      </mesh>
+    ))}
+  </group>
+);
+
+const ClothModel: FC<{ clean: boolean }> = ({ clean }) => (
   <group>
     <mesh
       position={[0, 0.013, 0]}
@@ -158,6 +200,7 @@ const ClothModel: FC = () => (
         <meshStandardMaterial color={COLORS.bonePale} roughness={0.9} />
       </mesh>
     ))}
+    {!clean && <FabricStains y={0.04} />}
   </group>
 );
 
@@ -204,11 +247,11 @@ const MirrorModel: FC = () => (
       <cylinderGeometry args={[0.023, 0.023, 0.006, 12]} />
       <BrassMaterial />
     </mesh>
-    <mesh position={[0, 0.008, -0.038]}>
+    <mesh position={[0, 0.008, -0.038]} rotation={[-Math.PI / 2, 0, 0]}>
       <circleGeometry args={[0.018, 12]} />
       <meshStandardMaterial color="#697078" metalness={0.55} roughness={0.28} />
     </mesh>
-    <mesh position={[0, 0.011, -0.038]} rotation={[0.1, 0, 0]}>
+    <mesh position={[0, 0.009, -0.038]} rotation={[-Math.PI / 2, 0, 0]}>
       <circleGeometry args={[0.012, 12]} />
       <meshStandardMaterial color="#a6a99e" metalness={0.38} roughness={0.34} />
     </mesh>
@@ -305,27 +348,29 @@ const ScissorsModel: FC = () => (
   </group>
 );
 
+const HAIR_LOCKS = Array.from({ length: 9 }, (_, index) => {
+  const x = (index - 4) * 0.008;
+  return new CatmullRomCurve3([
+    new Vector3(x, 0.012, -0.04),
+    new Vector3(x * 0.85, 0.044 - Math.abs(x) * 0.3, -0.017),
+    new Vector3(x * 1.1, 0.034, 0.018),
+    new Vector3(x + Math.sin(index * 1.7) * 0.009, 0.009, 0.05),
+    new Vector3(x + Math.cos(index) * 0.012, 0.007, 0.065),
+  ]);
+});
+
 const WigModel: FC = () => (
   <group>
-    <mesh position={[0, 0.025, 0]} castShadow>
-      <sphereGeometry args={[0.046, 10, 7]} />
+    <mesh position={[0, 0.019, 0]} scale={[1, 0.48, 1.2]} castShadow>
+      <sphereGeometry args={[0.041, 10, 6]} />
       <meshStandardMaterial color={HAIR} roughness={0.97} />
     </mesh>
-    <mesh position={[0, 0.006, 0]}>
-      <cylinderGeometry args={[0.037, 0.042, 0.012, 10]} />
-      <meshStandardMaterial color={WOOD} roughness={0.9} />
-    </mesh>
-    {[-0.028, 0, 0.028].map((x, i) => (
-      <mesh
-        key={x}
-        position={[x, 0.039, 0.012 * (i - 1)]}
-        rotation={[0.2 * i, 0, 0]}
-        castShadow
-      >
-        <torusGeometry args={[0.019, 0.009, 6, 10]} />
+    {HAIR_LOCKS.map((curve, index) => (
+      <mesh key={index} castShadow>
+        <tubeGeometry args={[curve, 18, 0.0034, 5, false]} />
         <meshStandardMaterial
-          color={i === 1 ? "#3a2f28" : HAIR}
-          roughness={0.94}
+          color={index % 3 === 0 ? "#696250" : "#383229"}
+          roughness={0.95}
         />
       </mesh>
     ))}
@@ -342,7 +387,11 @@ const BladeModel: FC = () => (
         roughness={0.35}
       />
     </mesh>
-    <mesh position={[0, 0.005, -0.068]} rotation={[0, 0.12, 0]} castShadow>
+    <mesh
+      position={[0, 0.005, -0.068]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      castShadow
+    >
       <coneGeometry args={[0.008, 0.03, 4]} />
       <meshStandardMaterial color="#a6a79d" metalness={0.72} roughness={0.32} />
     </mesh>
@@ -357,53 +406,41 @@ const BladeModel: FC = () => (
   </group>
 );
 
+const LOOSE_THREAD = new CatmullRomCurve3([
+  new Vector3(0.024, 0.006, 0),
+  new Vector3(0.033, 0.006, 0.027),
+  new Vector3(0.06, 0.006, 0.032),
+  new Vector3(0.074, 0.006, 0.014),
+]);
+
 const ThreadModel: FC = () => (
   <group>
-    <mesh position={[0, 0.022, 0]} castShadow>
-      <cylinderGeometry args={[0.023, 0.023, 0.034, 12]} />
-      <meshStandardMaterial color={WOOD_LIGHT} roughness={0.83} />
-    </mesh>
-    {[-0.012, 0.005, 0.022].map((y) => (
-      <mesh key={y} position={[0, y + 0.01, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.024, 0.0035, 6, 14]} />
+    {[0, 1, 2].map((index) => (
+      <mesh
+        key={index}
+        position={[index * 0.003, 0.004 + index * 0.002, 0]}
+        rotation={[Math.PI / 2, 0, index * 0.3]}
+        scale={[1, 0.8, 1]}
+        castShadow
+      >
+        <torusGeometry args={[0.024, 0.0018, 5, 20]} />
         <meshStandardMaterial color={HAIR} roughness={0.92} />
       </mesh>
     ))}
-    <mesh position={[0.014, 0.014, 0.014]} rotation={[0, 0, 0.5]}>
-      <cylinderGeometry args={[0.001, 0.001, 0.07, 4]} />
+    <mesh castShadow>
+      <tubeGeometry args={[LOOSE_THREAD, 18, 0.0016, 5, false]} />
       <meshStandardMaterial color={HAIR} roughness={0.92} />
     </mesh>
   </group>
 );
 
-const SutureModel: FC = () => (
-  <group rotation={[Math.PI / 2, 0, 0.3]}>
-    <mesh castShadow>
-      <torusGeometry args={[0.027, 0.0025, 8, 16, Math.PI * 1.15]} />
-      <meshStandardMaterial
-        color={IRON_HIGHLIGHT}
-        metalness={0.72}
-        roughness={0.35}
-      />
-    </mesh>
-    <mesh position={[0.025, -0.01, 0]} rotation={[0, 0, -0.4]}>
-      <cylinderGeometry args={[0.0015, 0.0015, 0.1, 5]} />
-      <meshStandardMaterial color={HAIR} roughness={0.9} />
-    </mesh>
-    <mesh position={[0.055, -0.045, 0]} rotation={[0, 0, -0.4]}>
-      <cylinderGeometry args={[0.001, 0.001, 0.035, 4]} />
-      <meshStandardMaterial color="#6e5844" roughness={0.88} />
-    </mesh>
-  </group>
-);
-
-const BandageModel: FC = () => (
+const BandageModel: FC<{ clean: boolean }> = ({ clean }) => (
   <group>
     <mesh position={[0, 0.021, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
       <cylinderGeometry args={[0.026, 0.026, 0.062, 12]} />
       <meshStandardMaterial color={CLOTH_DARK} roughness={0.95} />
     </mesh>
-    <mesh position={[0, 0.021, 0.002]} rotation={[0, 0, Math.PI / 2]}>
+    <mesh position={[0.031, 0.021, 0.002]} rotation={[0, Math.PI / 2, 0]}>
       <torusGeometry args={[0.026, 0.002, 6, 12]} />
       <meshStandardMaterial color={CLOTH} roughness={0.9} />
     </mesh>
@@ -411,14 +448,15 @@ const BandageModel: FC = () => (
       <boxGeometry args={[0.046, 0.004, 0.054]} />
       <meshStandardMaterial color={CLOTH} roughness={0.94} />
     </mesh>
-    <mesh position={[0.022, 0.009, 0.021]} rotation={[0, -0.2, 0]}>
-      <boxGeometry args={[0.009, 0.001, 0.03]} />
-      <meshStandardMaterial color={COLORS.bloodDried} roughness={0.86} />
-    </mesh>
+    {!clean && (
+      <group position={[0.022, 0, 0.021]}>
+        <FabricStains y={0.0085} scale={0.65} />
+      </group>
+    )}
   </group>
 );
 
-const BowlModel: FC = () => (
+const BowlModel: FC<{ waterLevel: number }> = ({ waterLevel }) => (
   <group>
     <mesh position={[0, 0.025, 0]} castShadow>
       <cylinderGeometry args={[0.066, 0.045, 0.045, 14, 1, true]} />
@@ -433,10 +471,23 @@ const BowlModel: FC = () => (
       <cylinderGeometry args={[0.045, 0.045, 0.006, 14]} />
       <meshStandardMaterial color={IRON} metalness={0.58} roughness={0.48} />
     </mesh>
-    <mesh position={[0, 0.047, 0]}>
-      <cylinderGeometry args={[0.059, 0.059, 0.004, 14]} />
-      <meshStandardMaterial color="#323a38" metalness={0.18} roughness={0.26} />
-    </mesh>
+    {waterLevel > 0 && (
+      <mesh name="bowl-water" position={[0, 0.013 + waterLevel * 0.03, 0]}>
+        <cylinderGeometry
+          args={[
+            0.046 + waterLevel * 0.013,
+            0.046 + waterLevel * 0.013,
+            0.004,
+            14,
+          ]}
+        />
+        <meshStandardMaterial
+          color="#323a38"
+          metalness={0.18}
+          roughness={0.26}
+        />
+      </mesh>
+    )}
     <mesh position={[0, 0.047, 0]} rotation={[Math.PI / 2, 0, 0]}>
       <torusGeometry args={[0.061, 0.003, 6, 14]} />
       <BrassMaterial />
@@ -444,7 +495,7 @@ const BowlModel: FC = () => (
   </group>
 );
 
-const BlanketModel: FC = () => (
+const BlanketModel: FC<{ clean: boolean }> = ({ clean }) => (
   <group>
     <mesh
       position={[0, 0.029, 0]}
@@ -463,6 +514,7 @@ const BlanketModel: FC = () => (
       <boxGeometry args={[0.13, 0.002, 0.17]} />
       <meshStandardMaterial color="#747362" roughness={0.96} />
     </mesh>
+    {!clean && <FabricStains y={0.073} scale={1.6} />}
   </group>
 );
 
@@ -538,10 +590,12 @@ const GenericToolModel: FC = () => (
   </group>
 );
 
-export const ItemModel: FC<{ id: string; lit?: boolean }> = ({
-  id,
-  lit = true,
-}) => {
+export const ItemModel: FC<{
+  id: string;
+  lit?: boolean;
+  waterLevel?: number;
+  clean?: boolean;
+}> = ({ id, lit = true, waterLevel = 1, clean = true }) => {
   switch (id) {
     case "forceps":
       return <ForcepsModel />;
@@ -550,7 +604,7 @@ export const ItemModel: FC<{ id: string; lit?: boolean }> = ({
     case "needle":
       return <NeedleModel />;
     case "cloth":
-      return <ClothModel />;
+      return <ClothModel clean={clean} />;
     case "morphine":
       return <MorphineModel />;
     case "mirror":
@@ -568,13 +622,13 @@ export const ItemModel: FC<{ id: string; lit?: boolean }> = ({
     case "thread":
       return <ThreadModel />;
     case "suture":
-      return <SutureModel />;
+      return <NeedleModel threaded />;
     case "bandage":
-      return <BandageModel />;
+      return <BandageModel clean={clean} />;
     case "bowl":
-      return <BowlModel />;
+      return <BowlModel waterLevel={waterLevel} />;
     case "blanket":
-      return <BlanketModel />;
+      return <BlanketModel clean={clean} />;
     case "candle":
       return <CandleModel lit={lit} />;
     default:
@@ -585,7 +639,9 @@ export const ItemModel: FC<{ id: string; lit?: boolean }> = ({
 // ── Single Item Component ──
 
 interface SingleItemProps {
+  clean: boolean;
   lit: boolean;
+  waterLevel: number;
   paused: boolean;
   socket: LiveHandSocket;
   id: string;
@@ -598,7 +654,9 @@ interface SingleItemProps {
 }
 
 const SingleItem: FC<SingleItemProps> = ({
+  clean,
   lit,
+  waterLevel,
   socket,
   paused,
   id,
@@ -679,7 +737,7 @@ const SingleItem: FC<SingleItemProps> = ({
       }}
       name={`tool-${id}`}
     >
-      <ItemModel id={id} lit={lit} />
+      <ItemModel id={id} lit={lit} waterLevel={waterLevel} clean={clean} />
     </group>
   );
 };
@@ -720,7 +778,9 @@ export const Tools: FC<ToolsProps> = ({
 
         return (
           <SingleItem
+            clean={itemState.clean}
             lit={state.environment.lanternLit}
+            waterLevel={state.waterPortions / 3}
             key={id}
             socket={socket}
             paused={state.paused}

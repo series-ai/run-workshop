@@ -1,3 +1,9 @@
+# Earlier verification records
+
+These records describe earlier revisions. Some scripts and pose controls below
+were removed after the approved source animation rebuild. See the current
+[thread handoff](thread-handoff.html) and [README checks](../README.md#checks).
+
 # Current playable check — 2026-09-06
 
 The current scene uses the approved source clips. The earlier procedural limb

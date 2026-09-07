@@ -9,7 +9,10 @@ export function sceneThought(state: GameState): { id: string; text: string } {
   if (state.environment.fire > 0)
     return {
       id: "fire",
-      text: "Smoke. Water, or the wool blanket. Before it spreads.",
+      text:
+        state.waterPortions > 0
+          ? "Smoke. Water, or the wool blanket. Before it spreads."
+          : "Smoke. He has to cover the flames. The blanket, or the metal bowl.",
     };
   if (state.patient.pain >= 62 && state.patient.sedation < 18)
     return {
@@ -30,7 +33,7 @@ export function sceneThought(state: GameState): { id: string; text: string } {
     case "covered":
       return {
         id: "covered",
-        text: "The weight is gone. My legs won't answer. Open the coat.",
+        text: "The weight is gone. My legs won't answer. Open my shirt.",
       };
     case "exposed":
       return {
@@ -44,8 +47,10 @@ export function sceneThought(state: GameState): { id: string; text: string } {
           state.items.suture.location !== "consumed"
             ? "The needle is ready. Close it. Before I lose more blood."
             : state.items.thread.location !== "consumed"
-              ? "The hair will hold. Thread it through the needle."
-              : "A needle, but no thread. There is hair on the workbench.",
+              ? "The thread will hold. Put it through the needle."
+              : state.items.wig.location !== "consumed"
+                ? "A needle, but no thread. There is hair on the workbench."
+                : "No hair left. There must be thread in all this cloth.",
       };
     case "closed":
       return {
@@ -55,7 +60,7 @@ export function sceneThought(state: GameState): { id: string; text: string } {
     case "dressed":
       return {
         id: "dressed",
-        text: "The brace key. Help me up, son. Don't let go.",
+        text: "The brace release. Help me up, son. Don't let go.",
       };
   }
 }
@@ -91,7 +96,10 @@ function treat(
       ? [{ kind: "adjust_lamp" as const, position: "wound" as const }]
       : []),
     ...take(state, item),
-    { kind: "speak", text: "Slow. Careful." },
+    {
+      kind: "signal_intent",
+      contact: { kind: "use", item, target, style: "gentle" },
+    },
     { kind: "use", item, target, style: "gentle" },
   ];
 }
@@ -104,23 +112,28 @@ export function previewChoices(state: GameState): PreviewChoice[] {
         label: "Light the lantern. I am here.",
         actions: [
           { kind: "light_lantern" },
-          { kind: "speak", text: "The lantern is lit." },
+          { kind: "vocalize", cue: "relief" },
         ],
       },
     ];
   const options: PreviewChoice[] = [];
   if (state.environment.fire > 0) {
-    const item = state.items.bowl.clean ? "bowl" : "blanket";
+    const item =
+      state.waterPortions > 0 || state.items.blanket.location === "consumed"
+        ? "bowl"
+        : "blanket";
     options.push({
       id: "fire",
       label:
         item === "bowl"
-          ? "The fire. Use the water."
+          ? state.waterPortions > 0
+            ? "The fire. Use the water."
+            : "Cover the flames with the bowl."
           : "Smother it with the blanket.",
       actions: [
         ...take(state, item),
         { kind: "use", item, target: "fire", style: "gentle" },
-        { kind: "speak", text: "The fire is out." },
+        { kind: "vocalize", cue: "relief" },
       ],
     });
   }
@@ -140,7 +153,10 @@ export function previewChoices(state: GameState): PreviewChoice[] {
               ]
             : []),
           { kind: "react", stimulus: "reassure" },
-          { kind: "speak", text: "Lifting the support." },
+          {
+            kind: "signal_intent",
+            contact: { kind: "lift_debris", style: "gentle" },
+          },
           { kind: "lift_debris", style: "gentle" },
         ],
       });
@@ -148,7 +164,7 @@ export function previewChoices(state: GameState): PreviewChoice[] {
     case "covered":
       options.push({
         id: "expose",
-        label: "Open my coat. Gently.",
+        label: "Open my shirt. Gently.",
         actions: treat(state, "cloth", "wound"),
       });
       break;
@@ -167,27 +183,37 @@ export function previewChoices(state: GameState): PreviewChoice[] {
           actions: treat(state, "suture", "wound"),
         });
       else {
+        const cutter = (
+          ["scissors", "scalpel", "blade", "shard"] as const
+        ).find((item) => state.items[item].location !== "consumed");
+        const fabric = (["blanket", "cloth"] as const).find(
+          (item) => state.items[item].location !== "consumed",
+        );
+        const fromWig = state.items.wig.location !== "consumed" && cutter;
+        const source = fromWig ? "wig" : fabric;
+        const tool = fromWig ? cutter : "forceps";
+        if (state.items.thread.location === "consumed" && !source) break;
         const cut: GameAction[] =
-          state.items.thread.location === "consumed"
+          state.items.thread.location === "consumed" && source
             ? [
-                ...take(state, "scissors"),
-                {
-                  kind: "use",
-                  item: "scissors",
-                  target: "wig",
-                  style: "gentle",
-                },
-                { kind: "place", item: "scissors", location: "tray" },
+                ...take(state, tool),
+                { kind: "use", item: tool, target: source, style: "gentle" },
+                { kind: "place", item: tool, location: "tray" },
                 { kind: "pick_up", item: "needle" },
               ]
             : take(state, "needle");
         options.push({
           id: "thread",
-          label: "Cut hair from the wig. Thread the needle.",
+          label:
+            state.items.thread.location !== "consumed"
+              ? "Put the thread through the needle."
+              : fromWig
+                ? "Cut hair from the wig. Thread the needle."
+                : `Pull thread from the ${source}. Thread the needle.`,
           actions: [
             ...cut,
             { kind: "combine", first: "needle", second: "thread" },
-            { kind: "speak", text: "The needle is threaded." },
+            { kind: "vocalize", cue: "relief" },
           ],
         });
       }
@@ -214,7 +240,8 @@ export function previewChoices(state: GameState): PreviewChoice[] {
         ).find(
           (item) =>
             state.items[item].location !== "consumed" &&
-            state.items[item].clean,
+            state.items[item].clean &&
+            !state.rules.noSharp,
         );
         if (cutter)
           options.push({
@@ -225,6 +252,31 @@ export function previewChoices(state: GameState): PreviewChoice[] {
               { kind: "use", item: cutter, target: "blanket", style: "gentle" },
             ],
           });
+      }
+      if (
+        !options.some(
+          (choice) => choice.id === "dress" || choice.id === "bandage",
+        )
+      ) {
+        const stained = (["bandage", "cloth"] as const).find(
+          (item) => state.items[item].location !== "consumed",
+        );
+        if (stained && state.items.bowl.clean && state.waterPortions > 0) {
+          options.push({
+            id: "wash",
+            label: `Wash the ${stained}. We still have water.`,
+            actions: [
+              ...take(state, "bowl"),
+              { kind: "use", item: "bowl", target: stained, style: "gentle" },
+            ],
+          });
+        } else if (stained) {
+          options.push({
+            id: "dress",
+            label: `It is all we have. Use the stained ${stained}.`,
+            actions: treat(state, stained, "wound"),
+          });
+        }
       }
       break;
     }
@@ -255,7 +307,7 @@ export function previewChoices(state: GameState): PreviewChoice[] {
       actions: [
         ...take(state, "forceps"),
         { kind: "use", item: "forceps", target: "door", style: "gentle" },
-        { kind: "speak", text: "The door is barred." },
+        { kind: "vocalize", cue: "relief" },
       ],
     });
   if (options.length < 3)
@@ -264,7 +316,7 @@ export function previewChoices(state: GameState): PreviewChoice[] {
       label: "You're doing well. I am here.",
       actions: [
         { kind: "react", stimulus: "reassure" },
-        { kind: "speak", text: "Here." },
+        { kind: "vocalize", cue: "relief" },
       ],
     });
   return options

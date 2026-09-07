@@ -383,25 +383,27 @@ describe("CreatureController", () => {
     expect(obs3.previousActionInterrupted).toBe(false);
   });
 
-  it("restart old send cannot speak/mutate new status", async () => {
+  it("live restart starts while old send and close remain pending", async () => {
     let session1Hooks!: {
       onSpeech(text: string): void;
       onPause(): void;
       onAction(): void;
     };
     const deferredSendSession1 = createDeferred<AgentRunResult>();
+    const deferredCloseSession1 = createDeferred<void>();
+    const deferredSendSession2 = createDeferred<AgentRunResult>();
 
-    const { liveSession: session1 } = createFakeLiveSession({
-      session: {
-        send: vi.fn(async () => deferredSendSession1.promise),
-      },
-    });
+    const { liveSession: session1, closeMock: closeSession1 } =
+      createFakeLiveSession({
+        session: {
+          send: vi.fn(async () => deferredSendSession1.promise),
+        },
+        close: async () => deferredCloseSession1.promise,
+      });
 
     const { liveSession: session2 } = createFakeLiveSession({
       session: {
-        send: vi.fn(async () =>
-          createDefaultRunResult({ text: "Session 2 speech", turns: 1 }),
-        ),
+        send: vi.fn(async () => deferredSendSession2.promise),
       },
     });
 
@@ -423,11 +425,22 @@ describe("CreatureController", () => {
 
     // Restart into session 2 while session 1 send is in-flight
     await controller.start("live");
+    expect(closeSession1).toHaveBeenCalledTimes(1);
+    expect(factory).toHaveBeenCalledTimes(2);
     expect(controller.getSnapshot().turns).toBe(0);
     expect(controller.getSnapshot().speech).toBe("");
 
-    // Now session 1 late resolution arrives and tries to invoke speech hook and settle send
+    controller.command("command in session 2");
+    expect(controller.getSnapshot().status).toBe("thinking");
+
+    // Old hooks cannot alter the active replacement session.
     session1Hooks.onSpeech("Stale hook speech that must be discarded");
+    session1Hooks.onAction();
+    session1Hooks.onPause();
+    expect(store.getSnapshot().paused).toBe(false);
+    expect(controller.getSnapshot().status).toBe("thinking");
+
+    // The old send can settle after restart without changing the new operation.
     deferredSendSession1.resolve(
       createDefaultRunResult({
         text: "Stale session 1 speech that must be discarded",
@@ -450,7 +463,56 @@ describe("CreatureController", () => {
       "Stale hook speech that must be discarded",
     );
     expect(controller.getSnapshot().turns).toBe(0);
+    expect(controller.getSnapshot().status).toBe("thinking");
+
+    deferredSendSession2.resolve(createDefaultRunResult({ turns: 1 }));
+    await vi.waitFor(() => {
+      expect(controller.getSnapshot().status).toBe("idle");
+    });
+    expect(controller.getSnapshot().turns).toBe(1);
+
+    await controller.dispose();
+  });
+
+  it("rehearsal restart starts while old live close remains pending", async () => {
+    let oldHooks!: {
+      onSpeech(text: string): void;
+      onPause(): void;
+      onAction(): void;
+    };
+    const deferredClose = createDeferred<void>();
+    const { liveSession, closeMock } = createFakeLiveSession({
+      close: async () => deferredClose.promise,
+    });
+    const factory: SessionFactory = vi.fn(async (_store, receivedHooks) => {
+      oldHooks = receivedHooks;
+      return liveSession;
+    });
+    const controller = new CreatureController(store, hooks, factory);
+
+    await controller.start("live");
+    await controller.start("rehearsal");
+
+    expect(closeMock).toHaveBeenCalledTimes(1);
+    expect(factory).toHaveBeenCalledTimes(1);
+    expect(controller.getSnapshot()).toMatchObject({
+      mode: "rehearsal",
+      status: "idle",
+    });
+    expect(store.getSnapshot()).toMatchObject({
+      phase: "playing",
+      paused: false,
+    });
+
+    oldHooks.onSpeech("Stale live audio");
+    oldHooks.onAction();
+    oldHooks.onPause();
+
+    expect(hooks.speak).not.toHaveBeenCalledWith("Stale live audio");
     expect(controller.getSnapshot().status).toBe("idle");
+    expect(store.getSnapshot().paused).toBe(false);
+
+    await controller.dispose();
   });
 
   describe("connection abort/timedout late resolution cannot start game", () => {
@@ -1001,6 +1063,172 @@ describe("CreatureController", () => {
         "PLAYER COMMAND: hold clamp instead good, keep going",
       );
       expect(prompt2).toContain("hold clamp instead");
+    });
+
+    it("inactivity timeout preserves the operation and resumes with a replacement session", async () => {
+      vi.useFakeTimers();
+      try {
+        const timedOutSend = createDeferred<AgentRunResult>();
+        const timedOutCloseResult = createDeferred<void>();
+        const resumedSend = createDeferred<AgentRunResult>();
+        const timedOutSendMock = vi.fn(async () => timedOutSend.promise);
+        const resumedSendMock = vi.fn(async () => resumedSend.promise);
+        const {
+          liveSession: timedOutSession,
+          fakeSession: timedOutAgentSession,
+          closeMock: timedOutClose,
+        } = createFakeLiveSession({
+          session: { send: timedOutSendMock },
+          close: async () => timedOutCloseResult.promise,
+        });
+        const { liveSession: resumedSession, closeMock: resumedClose } =
+          createFakeLiveSession({
+            session: { send: resumedSendMock },
+          });
+        let factoryCalls = 0;
+        const connectionHooks: Array<{
+          onSpeech(text: string): void;
+          onPause(): void;
+          onAction(): void;
+        }> = [];
+        const factory: SessionFactory = vi.fn(async (_store, receivedHooks) => {
+          factoryCalls++;
+          connectionHooks.push(receivedHooks);
+          return factoryCalls === 1 ? timedOutSession : resumedSession;
+        });
+        const controller = new CreatureController(store, hooks, factory);
+
+        await controller.start("live");
+        await store.run({ kind: "set_rule", rule: "gentle", enabled: true });
+        controller.command("check the wound");
+
+        await vi.advanceTimersByTimeAsync(45000);
+
+        expect(controller.getSnapshot()).toMatchObject({
+          status: "error",
+          canResume: true,
+        });
+        expect(controller.getSnapshot().error).toContain("took too long");
+        expect(store.getSnapshot().paused).toBe(true);
+        expect(store.getSnapshot().rules.gentle).toBe(true);
+        expect(timedOutAgentSession.abort).toHaveBeenCalledWith(
+          "Connection timeout",
+        );
+        expect(timedOutClose).toHaveBeenCalledTimes(1);
+        expect(resumedClose).not.toHaveBeenCalled();
+        expect(factory).toHaveBeenCalledTimes(1);
+
+        controller.resume();
+        await vi.waitFor(() => {
+          expect(controller.getSnapshot().status).toBe("idle");
+        });
+        expect(store.getSnapshot().paused).toBe(false);
+        expect(controller.getSnapshot()).toMatchObject({
+          status: "idle",
+          error: null,
+          canResume: false,
+          needsInstruction: true,
+        });
+        expect(store.getSnapshot().rules.gentle).toBe(true);
+        expect(factory).toHaveBeenCalledTimes(2);
+
+        controller.command("continue carefully");
+        expect(timedOutSendMock).toHaveBeenCalledTimes(1);
+        expect(resumedSendMock).toHaveBeenCalledTimes(1);
+        expect(controller.getSnapshot().status).toBe("thinking");
+
+        connectionHooks[0].onSpeech("Late old audio");
+        connectionHooks[0].onAction();
+        connectionHooks[0].onPause();
+        expect(hooks.speak).not.toHaveBeenCalledWith("Late old audio");
+        expect(store.getSnapshot().paused).toBe(false);
+        expect(controller.getSnapshot().status).toBe("thinking");
+
+        timedOutSend.resolve(
+          createDefaultRunResult({ turns: 99, text: "Late old result" }),
+        );
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(controller.getSnapshot().status).toBe("thinking");
+        expect(controller.getSnapshot().turns).toBe(0);
+        expect(store.getSnapshot().rules.gentle).toBe(true);
+
+        resumedSend.resolve(createDefaultRunResult({ turns: 2 }));
+        await resumedSend.promise;
+        await vi.waitFor(() => {
+          expect(controller.getSnapshot().status).toBe("idle");
+        });
+        expect(controller.getSnapshot().turns).toBe(2);
+
+        await controller.dispose();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("timeout blocks stale action and old connection hooks after resume", async () => {
+      vi.useFakeTimers();
+      try {
+        let oldConnectionHooks!: {
+          onSpeech(text: string): void;
+          onPause(): void;
+          onAction(): void;
+        };
+        const timedOutSend = createDeferred<AgentRunResult>();
+        const { liveSession: timedOutSession } = createFakeLiveSession({
+          session: { send: vi.fn(async () => timedOutSend.promise) },
+        });
+        const { liveSession: resumedSession } = createFakeLiveSession();
+        let factoryCalls = 0;
+        const factory: SessionFactory = vi.fn(async (_store, receivedHooks) => {
+          factoryCalls++;
+          if (factoryCalls === 1) {
+            oldConnectionHooks = receivedHooks;
+            return timedOutSession;
+          }
+          return resumedSession;
+        });
+        const controller = new CreatureController(store, hooks, factory);
+
+        await controller.start("live");
+        controller.command("light the lantern");
+        await vi.advanceTimersByTimeAsync(44000);
+
+        const staleAction = store.run({ kind: "light_lantern" });
+        expect(store.getSnapshot().pending?.action.kind).toBe("light_lantern");
+        await vi.advanceTimersByTimeAsync(1000);
+
+        await expect(staleAction).resolves.toMatchObject({ ok: false });
+        expect(store.getSnapshot().pending).toBeNull();
+        expect(store.getSnapshot().environment.lanternLit).toBe(false);
+        expect(controller.getSnapshot().canResume).toBe(true);
+
+        controller.resume();
+        await vi.waitFor(() => {
+          expect(controller.getSnapshot().status).toBe("idle");
+        });
+        const resumedSnapshot = controller.getSnapshot();
+        oldConnectionHooks.onSpeech("Stale timeout audio");
+        oldConnectionHooks.onAction();
+        oldConnectionHooks.onPause();
+        await vi.advanceTimersByTimeAsync(20000);
+
+        expect(hooks.speak).not.toHaveBeenCalledWith("Stale timeout audio");
+        expect(controller.getSnapshot()).toEqual(resumedSnapshot);
+        expect(store.getSnapshot().environment.lanternLit).toBe(false);
+        expect(store.getSnapshot().pending).toBeNull();
+
+        timedOutSend.resolve(createDefaultRunResult({ turns: 12 }));
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(controller.getSnapshot()).toEqual(resumedSnapshot);
+        expect(store.getSnapshot().environment.lanternLit).toBe(false);
+
+        await controller.dispose();
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("stale oldrun45s timer cannotcancel newworldaction", async () => {

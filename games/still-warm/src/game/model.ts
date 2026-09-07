@@ -50,11 +50,7 @@ export type Location = (typeof LOCATIONS)[number];
 export type RuleId = (typeof RULE_IDS)[number];
 export type Stage = (typeof STAGES)[number];
 export type Phase = "ready" | "playing" | "blackout" | "won" | "lost";
-export type Outcome =
-  | "saved"
-  | "blood_loss"
-  | "fire"
-  | "creature_lost";
+export type Outcome = "saved" | "blood_loss" | "fire" | "creature_lost";
 export const EMOTIONS = [
   "scared",
   "anxious",
@@ -157,7 +153,7 @@ export const CATALOG: Record<
     capabilities: ["cut", "pry"],
   },
   release: {
-    name: "Leg brace catch",
+    name: "Brace release",
     sharp: false,
     initial: "tray",
     material: "metal",
@@ -178,7 +174,7 @@ export const CATALOG: Record<
     capabilities: ["smother"],
   },
   thread: {
-    name: "Hair thread",
+    name: "Suture thread",
     sharp: false,
     initial: "consumed",
     material: "hair",
@@ -230,8 +226,9 @@ export const CATALOG: Record<
 
 export const RULES: Record<RuleId, { label: string; instruction: string }> = {
   announce: {
-    label: "Explain before contact",
-    instruction: "Announce each patient contact before starting it.",
+    label: "Signal before contact",
+    instruction:
+      "Signal the exact tool, target, and movement before each patient contact.",
   },
   noSharp: {
     label: "No sharp tools",
@@ -251,38 +248,54 @@ export const RULES: Record<RuleId, { label: string; instruction: string }> = {
 
 const item = z.enum(ITEM_IDS);
 const location = z.enum(LOCATIONS);
+const liftActionSchema = z.object({
+  kind: z.literal("lift_debris"),
+  style: z.enum(["gentle", "rough"]),
+});
+const useActionSchema = z.object({
+  kind: z.literal("use"),
+  item,
+  target: z.enum([
+    "wound",
+    "patient",
+    "pillow",
+    "creature",
+    "fire",
+    "door",
+    "wig",
+    "cloth",
+    "blanket",
+    "bandage",
+    "thread",
+    "scissors",
+    "lamp",
+    "bowl",
+  ]),
+  style: z.enum(["gentle", "rough"]),
+});
+export const contactSchema = z.discriminatedUnion("kind", [
+  liftActionSchema,
+  useActionSchema.extend({ target: z.enum(["wound", "patient"]) }),
+]);
+export type ContactAction = z.infer<typeof contactSchema>;
+export const VOCAL_CUES = [
+  "fear",
+  "effort",
+  "pain",
+  "anger",
+  "relief",
+] as const;
+
 export const actionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("light_lantern") }),
-  z.object({
-    kind: z.literal("lift_debris"),
-    style: z.enum(["gentle", "rough"]),
-  }),
+  liftActionSchema,
   z.object({ kind: z.literal("pick_up"), item }),
   z.object({
     kind: z.literal("place"),
     item,
     location: location.exclude(["hand", "consumed"]),
   }),
-  z.object({
-    kind: z.literal("use"),
-    item,
-    target: z.enum([
-      "wound",
-      "patient",
-      "pillow",
-      "creature",
-      "fire",
-      "door",
-      "wig",
-      "cloth",
-      "blanket",
-      "thread",
-      "scissors",
-      "lamp",
-      "bowl",
-    ]),
-    style: z.enum(["gentle", "rough"]),
-  }),
+  useActionSchema,
   z.object({ kind: z.literal("combine"), first: item, second: item }),
   z.object({ kind: z.literal("break"), item }),
   z.object({
@@ -299,15 +312,19 @@ export const actionSchema = z.discriminatedUnion("kind", [
     note: z.string().trim().min(1).max(240),
   }),
   z.object({
-    kind: z.literal("speak"),
-    text: z.string().trim().min(1).max(240),
+    kind: z.literal("signal_intent"),
+    contact: contactSchema,
+  }),
+  z.object({
+    kind: z.literal("vocalize"),
+    cue: z.enum(VOCAL_CUES),
   }),
   z.object({ kind: z.literal("react"), stimulus: z.enum(STIMULI) }),
 ]);
 export type GameAction = z.infer<typeof actionSchema>;
 export type PhysicalAction = Exclude<
   GameAction,
-  { kind: "speak" | "remember" | "set_rule" | "react" }
+  { kind: "signal_intent" | "vocalize" | "remember" | "set_rule" | "react" }
 >;
 
 export interface ItemState {
@@ -334,6 +351,10 @@ export interface PendingAction {
   label: string;
   progress: number;
 }
+export interface ActionProblem {
+  reason: string;
+  thought: string | null;
+}
 export interface GameState {
   phase: Phase;
   outcome: Outcome | null;
@@ -349,12 +370,14 @@ export interface GameState {
   notes: string[];
   journal: JournalEntry[];
   pending: PendingAction | null;
-  announced: boolean;
+  declaredContact: ContactAction | null;
+  problem: ActionProblem | null;
   contactCount: number;
   emotion: Emotion;
   disposition: { trust: number; agitation: number; confidence: number };
   creatureHealth: number;
   medicineDoses: number;
+  waterPortions: number;
   environment: {
     lanternLit: boolean;
     fire: number;
@@ -369,7 +392,7 @@ export interface GameState {
 
 export type ActionResult =
   | { ok: true; state: GameState; message: string }
-  | { ok: false; reason: string };
+  | ({ ok: false } & ActionProblem);
 
 export function createInitialState(): GameState {
   const items = Object.fromEntries(
@@ -403,12 +426,14 @@ export function createInitialState(): GameState {
     notes: [],
     journal: [],
     pending: null,
-    announced: false,
+    declaredContact: null,
+    problem: null,
     contactCount: 0,
     emotion: "scared",
     disposition: { trust: 42, agitation: 48, confidence: 18 },
     creatureHealth: 100,
     medicineDoses: 3,
+    waterPortions: 3,
     environment: {
       lanternLit: false,
       fire: 0,

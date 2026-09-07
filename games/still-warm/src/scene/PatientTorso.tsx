@@ -4,14 +4,20 @@ import { useFrame } from "@react-three/fiber";
 import { Color, Mesh, MeshStandardMaterial, MathUtils } from "three";
 import { DRACO_PATH } from "./assets";
 import type { GameState } from "../game/model";
+import type { LiveHandSocket } from "./types";
+import { supportMotion } from "./supportMotion";
 
 interface Props {
   state: GameState;
+  socket: LiveHandSocket;
   reducedMotion?: boolean;
 }
 
-function PatientBody({ state, reducedMotion = false }: Props) {
-  const source = useGLTF(`${import.meta.env.BASE_URL}assets/patient.glb`, DRACO_PATH);
+function PatientBody({ state, socket, reducedMotion = false }: Props) {
+  const source = useGLTF(
+    `${import.meta.env.BASE_URL}assets/patient.glb`,
+    DRACO_PATH,
+  );
   const body = useMemo(() => {
     const scene = source.scene.clone(true);
     const skin: MeshStandardMaterial[] = [];
@@ -57,11 +63,12 @@ function PatientBody({ state, reducedMotion = false }: Props) {
     [body],
   );
   const time = useRef(0);
+  const breathPhase = useRef(0);
   const crush = useRef(state.stage === "pinned" ? 1 : 0);
   const skinColor = useMemo(() => new Color(), []);
   const weakSkin = useMemo(() => new Color("#a4aab4"), []);
 
-  const { stage, patient, pending } = state;
+  const { stage, patient } = state;
   body.parts.WoundCovered.visible = stage === "pinned" || stage === "covered";
   body.parts.WoundOpen.visible = stage === "exposed" || stage === "extracted";
   body.parts.EmbeddedShard.visible = stage === "exposed";
@@ -73,18 +80,18 @@ function PatientBody({ state, reducedMotion = false }: Props) {
   useFrame((_, dt) => {
     if (state.paused) return;
     time.current += dt;
-    const lifting =
-      pending?.action.kind === "lift_debris" ? pending.progress : 0;
+    const { lift, cleared } = supportMotion(state, socket);
     crush.current = MathUtils.damp(
       crush.current,
-      stage === "pinned" ? 1 - lifting : 0,
+      cleared ? 0 : 1 - MathUtils.clamp(lift / 0.18, 0, 1),
       5,
       dt,
     );
     const rate = 1.4 + patient.pain / 60;
+    breathPhase.current += dt * rate;
     const breath = reducedMotion
       ? 0
-      : (Math.sin(time.current * rate) + 1) * 0.5 * (1 - crush.current * 0.7);
+      : (Math.sin(breathPhase.current) + 1) * 0.5 * (1 - crush.current * 0.7);
     for (const mesh of body.morphs) {
       const keys = mesh.morphTargetDictionary!;
       const weights = mesh.morphTargetInfluences!;

@@ -1,6 +1,7 @@
 import {
   actionLabel,
   appendJournal,
+  ActionProblem,
   createInitialState,
   Emotion,
   GameAction,
@@ -8,7 +9,12 @@ import {
   JournalEntry,
   PhysicalAction,
 } from "./model";
-import { applyAction, tickPatient, validateAction } from "./transitions";
+import {
+  applyAction,
+  reconcileDeclaredContact,
+  tickPatient,
+  validateAction,
+} from "./transitions";
 import { EMOTION_PROFILES } from "./emotions";
 import { actionPerformance, APPROACH_SECONDS } from "./performance";
 
@@ -67,6 +73,17 @@ export class GameStore {
     }
   }
 
+  private recordProblem(problem: ActionProblem): void {
+    if (
+      this.state.paused ||
+      (this.state.phase !== "playing" && this.state.phase !== "blackout")
+    ) {
+      return;
+    }
+    this.state = { ...this.state, problem };
+    this.notify();
+  }
+
   start(): void {
     if (this.disposed) return;
     if (this.state.phase === "ready") {
@@ -106,7 +123,7 @@ export class GameStore {
       return;
     }
 
-    let next = tickPatient(this.state, dt);
+    let next = reconcileDeclaredContact(tickPatient(this.state, dt));
 
     // If game became terminal during tick, cancel pending actions and ensure pending is cleared
     if (next.phase === "won" || next.phase === "lost") {
@@ -156,8 +173,12 @@ export class GameStore {
       this.state = { ...this.state, pending: null };
       shouldNotify = true;
     }
-    if (this.state.announced) {
-      this.state = { ...this.state, announced: false };
+    if (this.state.declaredContact !== null) {
+      this.state = { ...this.state, declaredContact: null };
+      shouldNotify = true;
+    }
+    if (this.state.problem !== null) {
+      this.state = { ...this.state, problem: null };
       shouldNotify = true;
     }
 
@@ -191,7 +212,8 @@ export class GameStore {
     // Initial validation against current state (checks paused, ready, ended, rules, hand, etc.)
     const initialError = validateAction(this.state, action);
     if (initialError) {
-      return Promise.resolve({ ok: false, message: initialError });
+      this.recordProblem(initialError);
+      return Promise.resolve({ ok: false, message: initialError.reason });
     }
 
     // Abstract / Non-physical actions execute immediately
@@ -204,15 +226,20 @@ export class GameStore {
       }
       return Promise.resolve({
         ok: false,
-        message: (result as { ok: false; reason: string }).reason,
+        message: result.reason,
       });
     }
 
     // Only one physical action at a time
     if (this.state.pending !== null) {
+      const pendingProblem: ActionProblem = {
+        reason: "Another physical action is already in progress.",
+        thought: "He is already doing something. I must wait for it to finish.",
+      };
+      this.recordProblem(pendingProblem);
       return Promise.resolve({
         ok: false,
-        message: "Another physical action is already in progress.",
+        message: pendingProblem.reason,
       });
     }
 
@@ -223,6 +250,7 @@ export class GameStore {
 
     this.state = {
       ...this.state,
+      problem: null,
       pending: {
         id: this.actionIdCounter,
         action,
@@ -289,9 +317,13 @@ export class GameStore {
         // Re-validate state at commit time
         const commitError = validateAction(this.state, action);
         if (commitError) {
-          this.state = { ...this.state, pending: null };
+          this.state = {
+            ...this.state,
+            pending: null,
+            problem: commitError,
+          };
           this.notify();
-          safeResolve({ ok: false, message: commitError });
+          safeResolve({ ok: false, message: commitError.reason });
           return;
         }
 
@@ -302,11 +334,15 @@ export class GameStore {
           this.notify();
           safeResolve({ ok: true, message: result.message });
         } else {
-          this.state = { ...this.state, pending: null };
+          this.state = {
+            ...this.state,
+            pending: null,
+            problem: result,
+          };
           this.notify();
           safeResolve({
             ok: false,
-            message: (result as { ok: false; reason: string }).reason,
+            message: result.reason,
           });
         }
       }, this.actionDuration);

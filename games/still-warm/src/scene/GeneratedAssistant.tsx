@@ -11,6 +11,7 @@ import { useFrame } from "@react-three/fiber";
 import {
   AnimationMixer,
   AnimationAction,
+  Euler,
   Group,
   Mesh,
   SkinnedMesh,
@@ -21,6 +22,7 @@ import { ASSET_PATHS, DRACO_PATH } from "./assets";
 import { ProceduralAssistant } from "./ProceduralAssistant";
 import { PATIENT_LAYOUT } from "./patientLayout";
 import { LAMP_HANDLE, getItemOffset, getItemSlot, type LiveHandSocket } from "./types";
+import { planSafeRoute, selectContactStance } from "./staging";
 import { actionPerformance, APPROACH_SECONDS } from "../game/performance";
 import { getActionDuration } from "../game/store";
 import type { GameState } from "../game/model";
@@ -34,7 +36,21 @@ const SCALE = 0.9;
 const FLOOR = PATIENT_LAYOUT.floorY;
 const HOME = [-0.72, FLOOR, 0.48] as const;
 const WORK_YAW = 2.1;
-const UP = new Vector3(0, 1, 0);
+const RETURN_METERS_PER_WALK_CYCLE = 1.1;
+const RETURN_TURN_SECONDS = 0.65;
+const BEAM_GRIP = new Vector3(-0.25, 0.12, -0.14)
+  .applyEuler(new Euler(0.07, 0.25, 0.08))
+  .add(new Vector3(...PATIENT_LAYOUT.beam));
+const STANCE_YAWS = [
+  WORK_YAW,
+  Math.PI / 2,
+  2.5,
+  Math.PI,
+  -Math.PI / 2,
+  0,
+  1.2,
+  -2.1,
+] as const;
 
 class AssistantErrorBoundary extends Component<
   { fallback: ReactNode; children: ReactNode },
@@ -56,11 +72,7 @@ function actionTarget(state: GameState, out: Vector3): boolean {
     return true;
   }
   if (action.kind === "lift_debris") {
-    out.set(
-      -0.25,
-      PATIENT_LAYOUT.beamGripY + (state.pending?.progress ?? 0) * 0.7,
-      PATIENT_LAYOUT.beam[2],
-    );
+    out.copy(BEAM_GRIP);
     return true;
   }
   if (action.kind === "adjust_lamp") {
@@ -200,14 +212,24 @@ function RiggedAssistant({ state, socket }: Props) {
   const active = useRef<AnimationAction | null>(null);
   const plan = useRef<{
     id: number;
-    start: Vector3;
     end: Vector3;
+    route: Vector3[];
+    routeEnds: number[];
+    routeDistance: number;
     yaw: number;
     duration: number;
     contact: number;
     clip: string;
     reverse: boolean;
     hold: boolean;
+  } | null>(null);
+  const returnPlan = useRef<{
+    route: Vector3[];
+    routeEnds: number[];
+    routeDistance: number;
+    travelSeconds: number;
+    elapsed: number;
+    turnYaw: number | null;
   } | null>(null);
   const eventCount = useRef(state.environment.eventCount);
   const screamUntil = useRef(0);
@@ -229,6 +251,7 @@ function RiggedAssistant({ state, socket }: Props) {
       root.current.position.set(...HOME);
       root.current.rotation.y = WORK_YAW;
       plan.current = null;
+      returnPlan.current = null;
     }
     if (eventCount.current !== state.environment.eventCount) {
       eventCount.current = state.environment.eventCount;
@@ -238,28 +261,51 @@ function RiggedAssistant({ state, socket }: Props) {
     }
     const pending = state.pending;
     if (pending && plan.current?.id !== pending.id) {
+      returnPlan.current = null;
       actionTarget(state, target);
       const performance = actionPerformance(pending.action);
-      const yaw = target.x < -0.85 ? -Math.PI / 2 : WORK_YAW;
       const height = (target.y - FLOOR) / SCALE;
       const sample = rig.samples[performance.clip].reduce((best, point) =>
         Math.abs(point.palm.y - height) < Math.abs(best.palm.y - height)
           ? point
           : best,
       );
-      const offset = sample.palm
-        .clone()
-        .multiplyScalar(SCALE)
-        .applyAxisAngle(UP, yaw);
-      const end = new Vector3(target.x - offset.x, FLOOR, target.z - offset.z);
-      // Keep the feet outside the patient's body.
-      if (end.z < 1.25 && Math.abs(end.x) < 0.48)
-        end.x = end.x < 0 ? -0.48 : 0.48;
+      const stance = selectContactStance({
+        target: { x: target.x, z: target.z },
+        palm: { x: sample.palm.x, z: sample.palm.z },
+        scale: SCALE,
+        start: {
+          x: root.current.position.x,
+          z: root.current.position.z,
+        },
+        home: { x: HOME[0], z: HOME[2] },
+        preferredYaw: WORK_YAW,
+        candidateYaws: STANCE_YAWS,
+      });
+      const end = new Vector3(
+        stance.position.x,
+        FLOOR,
+        stance.position.z,
+      );
+      const route = [
+        root.current.position.clone(),
+        ...stance.waypoints.map(
+          (point) => new Vector3(point.x, FLOOR, point.z),
+        ),
+        end,
+      ];
+      let routeDistance = 0;
+      const routeEnds = route.slice(1).map((point, index) => {
+        routeDistance += point.distanceTo(route[index]);
+        return routeDistance;
+      });
       plan.current = {
         id: pending.id,
-        start: root.current.position.clone(),
         end,
-        yaw,
+        route,
+        routeEnds,
+        routeDistance,
+        yaw: stance.yaw,
         duration: getActionDuration(pending.action, state.emotion) / 1000,
         contact: sample.time,
         clip: performance.clip,
@@ -274,15 +320,29 @@ function RiggedAssistant({ state, socket }: Props) {
     if (pending && current) {
       const seconds = pending.progress * current.duration;
       const approach = Math.min(1, seconds / APPROACH_SECONDS);
-      const moving = current.start.distanceToSquared(current.end) > 0.002;
+      const moving = current.routeDistance > 0.045;
       if (approach < 1) {
         name = moving ? "walk" : "idle";
-        root.current.position.lerpVectors(current.start, current.end, approach);
-        const walkYaw = Math.atan2(
-          current.end.x - current.start.x,
-          current.end.z - current.start.z,
-        );
-        const yaw = moving && approach < 0.75 ? walkYaw : current.yaw;
+        let walkYaw = current.yaw;
+        if (moving) {
+          const traveled = approach * current.routeDistance;
+          const segment = Math.min(
+            current.routeEnds.findIndex((end) => traveled <= end),
+            current.route.length - 2,
+          );
+          const index = segment < 0 ? current.route.length - 2 : segment;
+          const segmentStart = index === 0 ? 0 : current.routeEnds[index - 1];
+          const segmentLength = current.routeEnds[index] - segmentStart;
+          const from = current.route[index];
+          const to = current.route[index + 1];
+          root.current.position.lerpVectors(
+            from,
+            to,
+            segmentLength > 0 ? (traveled - segmentStart) / segmentLength : 1,
+          );
+          walkYaw = Math.atan2(to.x - from.x, to.z - from.z);
+        }
+        const yaw = moving && approach < 0.88 ? walkYaw : current.yaw;
         root.current.rotation.y +=
           Math.atan2(
             Math.sin(yaw - root.current.rotation.y),
@@ -316,7 +376,88 @@ function RiggedAssistant({ state, socket }: Props) {
         root.current.rotation.y = current.yaw;
       }
     } else {
-      plan.current = null;
+      if (current) {
+        const home = new Vector3(...HOME);
+        const waypoints = planSafeRoute(
+          { x: root.current.position.x, z: root.current.position.z },
+          { x: HOME[0], z: HOME[2] },
+        );
+        const route = [
+          root.current.position.clone(),
+          ...waypoints.map((point) => new Vector3(point.x, FLOOR, point.z)),
+          home,
+        ];
+        let routeDistance = 0;
+        const routeEnds = route.slice(1).map((point, index) => {
+          routeDistance += point.distanceTo(route[index]);
+          return routeDistance;
+        });
+        const walkCycle = rig.actions.walk.getClip().duration;
+        returnPlan.current = {
+          route,
+          routeEnds,
+          routeDistance,
+          travelSeconds:
+            (routeDistance * walkCycle) / RETURN_METERS_PER_WALK_CYCLE,
+          elapsed: 0,
+          turnYaw: null,
+        };
+        plan.current = null;
+      }
+      const returning = returnPlan.current;
+      if (returning && elapsed.current >= screamUntil.current) {
+        name = "walk";
+        returning.elapsed += dt;
+        if (
+          returning.routeDistance > 0.001 &&
+          returning.elapsed < returning.travelSeconds
+        ) {
+          const traveled =
+            (returning.elapsed / returning.travelSeconds) *
+            returning.routeDistance;
+          const found = returning.routeEnds.findIndex(
+            (end) => traveled <= end,
+          );
+          const index = found < 0 ? returning.route.length - 2 : found;
+          const segmentStart =
+            index === 0 ? 0 : returning.routeEnds[index - 1];
+          const segmentLength = returning.routeEnds[index] - segmentStart;
+          const from = returning.route[index];
+          const to = returning.route[index + 1];
+          root.current.position.lerpVectors(
+            from,
+            to,
+            segmentLength > 0
+              ? (traveled - segmentStart) / segmentLength
+              : 1,
+          );
+          const yaw = Math.atan2(to.x - from.x, to.z - from.z);
+          root.current.rotation.y +=
+            Math.atan2(
+              Math.sin(yaw - root.current.rotation.y),
+              Math.cos(yaw - root.current.rotation.y),
+            ) *
+            (1 - Math.exp(-dt * 5));
+        } else {
+          root.current.position.set(...HOME);
+          returning.turnYaw ??= root.current.rotation.y;
+          const turnProgress = Math.min(
+            1,
+            (returning.elapsed - returning.travelSeconds) /
+              RETURN_TURN_SECONDS,
+          );
+          const turn = Math.atan2(
+            Math.sin(WORK_YAW - returning.turnYaw),
+            Math.cos(WORK_YAW - returning.turnYaw),
+          );
+          root.current.rotation.y = returning.turnYaw + turn * turnProgress;
+          if (turnProgress >= 1) {
+            root.current.rotation.y = WORK_YAW;
+            returnPlan.current = null;
+            name = "idle";
+          }
+        }
+      }
     }
     const next = rig.actions[name];
     if (active.current !== next) {

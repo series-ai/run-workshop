@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Vector3, PerspectiveCamera } from "three";
 import type { PatientState } from "../game/model";
@@ -23,17 +23,19 @@ export function CameraController({
   paused = false,
 }: Props) {
   const target = useMemo(() => new Vector3(), []);
-  useFrame(({ camera, size, clock }) => {
+  const time = useRef(0);
+  const breathPhase = useRef(0);
+  useFrame(({ camera, size }, dt) => {
     if (paused || !(camera instanceof PerspectiveCamera)) return;
+    time.current += dt;
+    breathPhase.current += dt * (1.5 + patient.pain / 65);
     const fov = size.width < size.height ? 82 : 70;
     if (camera.fov !== fov) {
       camera.fov = fov;
       camera.updateProjectionMatrix();
     }
-    const t = clock.elapsedTime;
-    const breath = reducedMotion
-      ? 0
-      : Math.sin(t * (1.5 + patient.pain / 65)) * 0.006;
+    const t = time.current;
+    const breath = reducedMotion ? 0 : Math.sin(breathPhase.current) * 0.006;
     const impact = !reducedMotion && started ? Math.exp(-elapsed * 2.5) : 0;
     const tremor = reducedMotion ? 0 : (patient.pain / 100) * 0.002;
     camera.position.set(

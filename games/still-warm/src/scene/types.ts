@@ -39,7 +39,7 @@ export function createHandSocket(): LiveHandSocket {
 
 export const LAMP_HANDLE: Vec3 = [-0.15, 0.36, 0.3];
 
-export const INSTRUMENT_TRAY: Vec3 = [-0.9, -0.57, -0.3];
+export const INSTRUMENT_TRAY: Vec3 = [-0.55, -0.57, 0.15];
 
 // Default slot positions for locations
 export const DEFAULT_SLOTS: Record<Location | string, Vec3> = {

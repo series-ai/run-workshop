@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { previewChoices } from "./experience";
 import { GameStore } from "./store";
+import { createInitialState } from "./model";
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
@@ -89,4 +90,91 @@ it("makes a fresh dressing from the blanket when the cloth is dirty", () => {
     target: "blanket",
     style: "gentle",
   });
+});
+
+it("washes the remaining dressing and completes care when cutting is forbidden", async () => {
+  const state = createInitialState();
+  const store = new GameStore({
+    ...state,
+    phase: "playing",
+    stage: "closed",
+    lamp: "wound",
+    environment: { ...state.environment, lanternLit: true },
+    rules: { ...state.rules, noSharp: true },
+    items: {
+      ...state.items,
+      cloth: { ...state.items.cloth, clean: false },
+    },
+  });
+  for (const id of ["wash", "dress"]) {
+    const choice = previewChoices(store.getSnapshot()).find(
+      (choice) => choice.id === id,
+    );
+    expect(choice).toBeDefined();
+    for (const action of choice!.actions) {
+      const pending = store.run(action);
+      await vi.advanceTimersByTimeAsync(15000);
+      expect(await pending).toMatchObject({ ok: true });
+    }
+  }
+  expect(store.getSnapshot().stage).toBe("dressed");
+  expect(store.getSnapshot().waterPortions).toBe(2);
+  expect(store.getSnapshot().items.cloth.clean).toBe(true);
+  store.dispose();
+});
+
+it("offers an honest last-resort dressing when all clean materials and water are gone", async () => {
+  const state = createInitialState();
+  const store = new GameStore({
+    ...state,
+    phase: "playing",
+    stage: "closed",
+    lamp: "wound",
+    waterPortions: 0,
+    environment: { ...state.environment, lanternLit: true },
+    items: {
+      ...state.items,
+      cloth: { ...state.items.cloth, clean: false },
+      blanket: { ...state.items.blanket, location: "consumed" },
+    },
+  });
+  const choice = previewChoices(store.getSnapshot()).find(
+    (choice) => choice.id === "dress",
+  );
+  expect(choice?.label).toContain("stained cloth");
+  for (const action of choice!.actions) {
+    const pending = store.run(action);
+    await vi.advanceTimersByTimeAsync(15000);
+    expect(await pending).toMatchObject({ ok: true });
+  }
+  expect(store.getSnapshot().stage).toBe("dressed");
+  expect(store.getSnapshot().patient.health).toBeLessThan(state.patient.health);
+  store.dispose();
+});
+
+it("prepares a suture from the blanket when the wig is gone", async () => {
+  const state = createInitialState();
+  const store = new GameStore({
+    ...state,
+    phase: "playing",
+    stage: "extracted",
+    environment: { ...state.environment, lanternLit: true },
+    items: {
+      ...state.items,
+      wig: { ...state.items.wig, location: "consumed" },
+    },
+  });
+  const choice = previewChoices(store.getSnapshot()).find(
+    (choice) => choice.id === "thread",
+  );
+  expect(choice?.label).toContain("blanket");
+  for (const action of choice!.actions) {
+    const pending = store.run(action);
+    await vi.advanceTimersByTimeAsync(15000);
+    expect(await pending).toMatchObject({ ok: true });
+  }
+  expect(store.getSnapshot().holding).toBe("suture");
+  expect(store.getSnapshot().items.suture.clean).toBe(true);
+  expect(store.getSnapshot().items.blanket.location).toBe("consumed");
+  store.dispose();
 });

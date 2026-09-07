@@ -153,14 +153,17 @@ describe('VoiceInput', () => {
     fakeInstance!.emitResult([
       { transcript: 'cut with scalpel', isFinal: true },
     ]);
-    expect(onFinal).toHaveBeenCalledTimes(1);
-    expect(onFinal).toHaveBeenCalledWith('cut with scalpel');
+    expect(onFinal).not.toHaveBeenCalled();
 
     // Identical 2nd event with same length and index
     fakeInstance!.emitResult([
       { transcript: 'cut with scalpel', isFinal: true },
     ]);
+    expect(onFinal).not.toHaveBeenCalled();
+
+    fakeInstance!.emitEnd();
     expect(onFinal).toHaveBeenCalledTimes(1);
+    expect(onFinal).toHaveBeenCalledWith('cut with scalpel');
   });
 
   it('stop finishes push-to-talk and accepts late final result', () => {
@@ -190,10 +193,49 @@ describe('VoiceInput', () => {
     fakeInstance!.emitResult([
       { transcript: 'clamp the bleeder', isFinal: true },
     ]);
-    expect(onFinal).toHaveBeenCalledWith('clamp the bleeder');
+    expect(onFinal).not.toHaveBeenCalled();
 
     fakeInstance!.emitEnd();
+    expect(onFinal).toHaveBeenCalledWith('clamp the bleeder');
     expect(onStatus).toHaveBeenLastCalledWith('idle', null);
+  });
+
+  it('joins final indexes and delayed stop results into one command', () => {
+    let fakeInstance: FakeSpeechRecognition | null = null;
+    const onFinal = vi.fn();
+    const voice = new VoiceInput({
+      onFinal,
+      onInterim: vi.fn(),
+      onStatus: vi.fn(),
+      onStop: vi.fn(),
+      recognitionFactory: () => {
+        fakeInstance = new FakeSpeechRecognition();
+        return fakeInstance;
+      },
+    });
+
+    voice.start();
+    fakeInstance!.emitResult([
+      { transcript: 'pick up', isFinal: true },
+      { transcript: 'the', isFinal: false },
+    ]);
+    fakeInstance!.emitResult([
+      { transcript: 'pick up', isFinal: true },
+      { transcript: 'the clean', isFinal: true },
+    ], 1);
+    expect(onFinal).not.toHaveBeenCalled();
+
+    voice.stop();
+    fakeInstance!.emitResult([
+      { transcript: 'pick up', isFinal: true },
+      { transcript: 'the clean', isFinal: true },
+      { transcript: 'cloth', isFinal: true },
+    ], 2);
+    expect(onFinal).not.toHaveBeenCalled();
+
+    fakeInstance!.emitEnd();
+    expect(onFinal).toHaveBeenCalledOnce();
+    expect(onFinal).toHaveBeenCalledWith('pick up the clean cloth');
   });
 
   it('cancel invalidates current session and rejects late final result without dispatch', () => {
@@ -215,6 +257,11 @@ describe('VoiceInput', () => {
     voice.start();
     expect(onStatus).toHaveBeenCalledWith('listening', null);
 
+    fakeInstance!.emitResult([
+      { transcript: 'clamp the bleeder', isFinal: true },
+    ]);
+    expect(onFinal).not.toHaveBeenCalled();
+
     // Parent cancels on pause/blackout/restart
     voice.cancel();
     expect(fakeInstance!.aborted).toBe(true);
@@ -224,6 +271,7 @@ describe('VoiceInput', () => {
     fakeInstance!.emitResult([
       { transcript: 'clamp the bleeder', isFinal: true },
     ]);
+    fakeInstance!.emitEnd();
     expect(onFinal).not.toHaveBeenCalled();
   });
 
@@ -296,6 +344,8 @@ describe('VoiceInput', () => {
       { transcript: 'stop the bleeding', isFinal: true },
     ]);
     expect(onStop).not.toHaveBeenCalled();
+    expect(onFinal).not.toHaveBeenCalled();
+    fakeInstance!.emitEnd();
     expect(onFinal).toHaveBeenCalledWith('stop the bleeding');
   });
 
@@ -347,6 +397,35 @@ describe('VoiceInput', () => {
     // Final isolated STOP fires instantly
     fakeInstance!.emitResult([{ transcript: 'stop now!', isFinal: true }]);
     expect(onStop).toHaveBeenCalledTimes(1);
+    expect(onFinal).not.toHaveBeenCalled();
+    fakeInstance!.emitEnd();
+    expect(onFinal).not.toHaveBeenCalled();
+  });
+
+  it('final STOP discards command segments collected in the same hold', () => {
+    let fakeInstance: FakeSpeechRecognition | null = null;
+    const onFinal = vi.fn();
+    const onStop = vi.fn();
+    const voice = new VoiceInput({
+      onFinal,
+      onInterim: vi.fn(),
+      onStatus: vi.fn(),
+      onStop,
+      recognitionFactory: () => {
+        fakeInstance = new FakeSpeechRecognition();
+        return fakeInstance;
+      },
+    });
+
+    voice.start();
+    fakeInstance!.emitResult([
+      { transcript: 'move the clamp', isFinal: true },
+      { transcript: 'stop', isFinal: true },
+    ]);
+
+    expect(onStop).toHaveBeenCalledOnce();
+    expect(onFinal).not.toHaveBeenCalled();
+    fakeInstance!.emitEnd();
     expect(onFinal).not.toHaveBeenCalled();
   });
 

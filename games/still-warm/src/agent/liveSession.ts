@@ -1,17 +1,17 @@
-import { z } from 'zod';
+import { z } from "zod";
 import {
   createAgent,
   defineAgentTool,
   InMemoryAgentSessionStore,
   type AgentSession,
   type AgentToolContext,
-} from '@series-inc/rundot-agent';
-import { createTextGenTransport } from '@series-inc/rundot-agent/venus';
-import { actionSchema, type GameAction } from '../game/model';
-import { GameStore } from '../game/store';
-import { observeRoom, observeStatus } from '../game/transitions';
-import { CREATURE_INSTRUCTIONS } from './instructions';
-import { initializeRun } from './runtime';
+} from "@series-inc/rundot-agent";
+import { createTextGenTransport } from "@series-inc/rundot-agent/venus";
+import { actionSchema, type GameAction } from "../game/model";
+import { GameStore } from "../game/store";
+import { observeRoom, observeStatus } from "../game/transitions";
+import { CREATURE_INSTRUCTIONS } from "./instructions";
+import { initializeRun } from "./runtime";
 
 export interface LiveHooks {
   onSpeech(text: string): void;
@@ -32,7 +32,7 @@ function validator<T>(schema: z.ZodType<T>) {
       : {
           success: false as const,
           issues: parsed.error.issues.map((issue) => ({
-            path: issue.path.join('.'),
+            path: issue.path.join("."),
             message: issue.message,
           })),
         };
@@ -51,7 +51,7 @@ export async function createLiveSession(
   const tools = {
     inspect_room: defineAgentTool({
       description:
-        'Inspect the current patient, objects, emotions, rules, and possible material combinations.',
+        "Inspect the current patient, objects, emotions, rules, and possible material combinations.",
       inputSchema: z.toJSONSchema(empty),
       validate: validator(empty),
       execute: (_input, context) => {
@@ -61,48 +61,50 @@ export async function createLiveSession(
     }),
     act: defineAgentTool<GameAction, unknown>({
       description:
-        'Perform one physical action, speak, record guidance, set a standing rule, or react to the player. Effects are real and validated. You must inspect the outcome before claiming success.',
+        "Perform one physical action, signal an exact patient contact, make a wordless sound, record guidance, set a standing rule, or react to the player. Effects are real and validated. You must inspect the outcome before claiming success.",
       inputSchema: z.toJSONSchema(actionSchema),
       validate: validator(actionSchema),
       timeoutMs: 25000,
-      idempotency: 'none',
+      idempotency: "none",
       execute: async (action: GameAction, context: AgentToolContext) => {
         context.signal.throwIfAborted();
-        if (action.kind === 'set_rule' && !action.enabled) {
+        if (action.kind === "set_rule" && !action.enabled) {
           return {
             ok: false,
             message:
-              'Only the patient can lift a rule in HIS NOTES. Explain which rule conflicts and wait.',
+              "Only the patient can lift a rule under Standing rules in the pause menu. Do not repeat the forbidden action. Wait for the player to change the rule.",
           };
         }
-        if (action.kind === 'react') {
+        if (action.kind === "react") {
           if (!reactionAvailable)
             return {
               ok: false,
               message:
-                'Tone can be interpreted only once for each player command.',
+                "Tone can be interpreted only once for each player command.",
             };
           reactionAvailable = false;
         }
         hooks.onAction();
         const result = await store.run(action, context.signal);
         context.signal.throwIfAborted();
-        if (result.ok && action.kind === 'speak') hooks.onSpeech(action.text);
+        if (result.ok && action.kind === "vocalize") hooks.onSpeech(action.cue);
+        if (result.ok && action.kind === "signal_intent")
+          hooks.onSpeech("effort");
         return { ...result, observation: observeStatus(store.getSnapshot()) };
       },
     }),
   };
   const agent = createAgent({
     model: createTextGenTransport(run.textGen, {
-      mode: 'open',
-      modelClass: 'standard',
+      mode: "open",
+      modelClass: "standard",
     }),
-    models: ['gpt-5.6-luna'],
+    models: ["gpt-5.6-luna"],
     instructions: CREATURE_INSTRUCTIONS,
     tools,
     store: new InMemoryAgentSessionStore(),
-    concurrency: 'reject',
-    maxTurns: 8,
+    concurrency: "reject",
+    maxTurns: 12,
     modelRetry: {
       maxAttempts: 1,
       baseDelayMs: 500,
@@ -119,7 +121,7 @@ export async function createLiveSession(
   });
   const session = await agent.createSession({
     id: `operation-${crypto.randomUUID()}`,
-    name: 'Still Warm',
+    name: "Still Warm",
   });
   if (signal.aborted) {
     await session.close();
@@ -138,7 +140,7 @@ export async function createLiveSession(
     },
     async close() {
       subscriptions.forEach((subscription) => subscription.unsubscribe());
-      session.abort('Operation closed');
+      session.abort("Operation closed");
       await session.close();
     },
   };

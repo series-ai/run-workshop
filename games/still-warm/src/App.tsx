@@ -10,6 +10,7 @@ import {
 import SurgeryScene from "./scene/SurgeryScene";
 import { LookInput } from "./scene/look";
 import { sceneThought, previewChoices } from "./game/experience";
+import { contactThought, EMOTION_THOUGHTS } from "./game/perception";
 import { openingAt } from "./game/opening";
 import { GameStore } from "./game/store";
 import { RULE_IDS, RULES, type GameAction } from "./game/model";
@@ -50,16 +51,21 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const [command, setCommand] = useState("");
   const [typing, setTyping] = useState(false);
   const [muted, setMuted] = useState(DEFAULT_MUTED);
+  const [platformReady, setPlatformReady] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
   const [thought, setThought] = useState("");
   const [roomCaption, setRoomCaption] = useState("");
+  const [reactionThought, setReactionThought] = useState("");
+  const [heard, setHeard] = useState("");
+  const lastEmotion = useRef(state.emotion);
   const [voice] = useState(
     () =>
       new VoiceInput({
         onFinal: (text) => {
           setInterim("");
+          setHeard(text);
           controller.command(text);
         },
         onInterim: setInterim,
@@ -68,7 +74,10 @@ export default function App({ preview = false }: { preview?: boolean }) {
           setVoiceStatus(status);
           setVoiceError(error);
         },
-        onStop: () => controller.stop(),
+        onStop: () => {
+          setHeard("");
+          controller.stop();
+        },
       }),
   );
   const inputRef = useRef<HTMLInputElement>(null);
@@ -85,6 +94,9 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const canSpeak = active && opening.complete && connection.mode === "live";
   const moment = sceneThought(state);
   const choices = previewChoices(state);
+  const intent = state.declaredContact
+    ? contactThought(state.declaredContact, state)
+    : "";
   const toggleSound = () => {
     sound.setMuted(!muted);
     setMuted(!muted);
@@ -101,7 +113,10 @@ export default function App({ preview = false }: { preview?: boolean }) {
   }, [active, controller, screen.pointerLocked, typing, voice]);
 
   useEffect(() => {
-    void fullscreen.initialize();
+    let mounted = true;
+    void fullscreen.initialize().then(() => {
+      if (mounted) setPlatformReady(true);
+    });
     let previous = performance.now();
     const timer = window.setInterval(() => {
       const now = performance.now();
@@ -121,6 +136,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
     return () => {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", hide);
+      mounted = false;
       voice.dispose();
       sound.dispose();
       store.dispose();
@@ -158,6 +174,19 @@ export default function App({ preview = false }: { preview?: boolean }) {
     return () => clearTimeout(timer);
   }, [started, moment.id, moment.text, opening.complete]);
   useEffect(() => {
+    if (!heard) return;
+    const timer = setTimeout(() => setHeard(""), 5000);
+    return () => clearTimeout(timer);
+  }, [heard]);
+  useEffect(() => {
+    const changed = lastEmotion.current !== state.emotion;
+    lastEmotion.current = state.emotion;
+    if (!started || !opening.complete || !changed) return;
+    setReactionThought(EMOTION_THOUGHTS[state.emotion]);
+    const timer = setTimeout(() => setReactionThought(""), 6500);
+    return () => clearTimeout(timer);
+  }, [started, opening.complete, state.emotion]);
+  useEffect(() => {
     if (!state.environment.eventCount) {
       setRoomCaption("");
       return;
@@ -187,6 +216,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
   }, [typing]);
 
   const stop = () => {
+    setHeard("");
+    setCommand("");
     voice.cancel();
     controller.stop();
   };
@@ -260,6 +291,9 @@ export default function App({ preview = false }: { preview?: boolean }) {
     voice.cancel();
     look.reset();
     lastOpeningCall.current = 0;
+    setHeard("");
+    setCommand("");
+    setReactionThought("");
     setTyping(false);
     void controller.start(mode);
   };
@@ -270,7 +304,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!command.trim() || !canSpeak) return;
-    controller.command(command);
+    setHeard(command.trim());
+    controller.command(command.trim());
     setCommand("");
     setTyping(false);
     void fullscreen.capture();
@@ -288,6 +323,10 @@ export default function App({ preview = false }: { preview?: boolean }) {
           "--pain": state.patient.pain / 100,
           "--blood-loss": (100 - state.patient.blood) / 100,
           "--sedation": state.patient.sedation / 100,
+          "--run-safe-top": `${screen.safeArea.top}px`,
+          "--run-safe-right": `${screen.safeArea.right}px`,
+          "--run-safe-bottom": `${screen.safeArea.bottom}px`,
+          "--run-safe-left": `${screen.safeArea.left}px`,
         } as CSSProperties
       }
     >
@@ -371,10 +410,15 @@ export default function App({ preview = false }: { preview?: boolean }) {
           </button>
           <button
             className="begin"
+            disabled={!platformReady}
+            aria-busy={!platformReady}
             onClick={() => start(preview ? "rehearsal" : "live")}
           >
             Begin
           </button>
+          {!platformReady && (
+            <p className="preview-note">Preparing the room…</p>
+          )}
           {preview ? (
             <p className="preview-note">Guided preview · No model connection</p>
           ) : (
@@ -408,7 +452,10 @@ export default function App({ preview = false }: { preview?: boolean }) {
             Ⅱ
           </button>
           <div className="inner-voice" aria-live="polite">
-            {thought ||
+            {state.problem?.thought ||
+              intent ||
+              reactionThought ||
+              thought ||
               (connection.needsInstruction && !busy
                 ? "He is waiting for my voice."
                 : "")}
@@ -418,7 +465,11 @@ export default function App({ preview = false }: { preview?: boolean }) {
               {roomCaption}
             </p>
           )}
-          {interim && <p className="transcript">{interim}</p>}
+          {(interim || heard) && (
+            <p className="transcript" aria-live="polite">
+              {interim || `I said: “${heard}”`}
+            </p>
+          )}
           {connection.mode === "rehearsal" && connection.error && (
             <p className="voice-error" role="status">
               {connection.error}
@@ -515,10 +566,13 @@ export default function App({ preview = false }: { preview?: boolean }) {
         <div className="blackout-cover">
           <p>
             {state.rules.waitBlackout
-              ? "He promised to wait."
+              ? "He should be waiting."
               : "I can still hear him."}
           </p>
           <button onClick={stop}>Stop</button>
+          <button className="blackout-pause" onClick={pause}>
+            Pause operation
+          </button>
         </div>
       )}
       {connection.status === "connecting" && (
@@ -549,6 +603,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
       {state.paused &&
         started &&
         !terminal &&
+        connection.status !== "connecting" &&
         connection.status !== "error" && (
           <div className="modal-shade">
             <section className="modal">

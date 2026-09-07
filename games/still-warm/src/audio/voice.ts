@@ -92,6 +92,7 @@ export class VoiceInput {
   private stopTriggeredForSession = false;
   private sessionHasError = false;
   private deliveredIndexes = new Set<number>();
+  private finalSegments = new Map<number, string>();
   private interimStopTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private readonly options: VoiceInputOptions) {
@@ -128,6 +129,7 @@ export class VoiceInput {
     this.stopTriggeredForSession = false;
     this.sessionHasError = false;
     this.deliveredIndexes.clear();
+    this.finalSegments.clear();
 
     // Teardown any existing active recognition
     if (this.recognition) {
@@ -200,10 +202,11 @@ export class VoiceInput {
             if (isIsolatedStopCommand(text)) {
               if (!this.stopTriggeredForSession) {
                 this.stopTriggeredForSession = true;
+                this.finalSegments.clear();
                 this.options.onStop();
               }
             } else if (!this.stopTriggeredForSession) {
-              this.options.onFinal(text);
+              this.finalSegments.set(i, text);
             }
           }
           this.options.onInterim('');
@@ -235,6 +238,7 @@ export class VoiceInput {
               )
                 return;
               this.stopTriggeredForSession = true;
+              this.finalSegments.clear();
               this.options.onStop();
               this.options.onInterim('');
               this.stop();
@@ -283,7 +287,19 @@ export class VoiceInput {
 
       // Retain recoverable error status rather than overwriting with idle
       if (!this.sessionHasError) {
+        if (!this.stopTriggeredForSession) {
+          const text = [...this.finalSegments.entries()]
+            .sort(([left], [right]) => left - right)
+            .map(([, segment]) => segment)
+            .join(' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if (text) this.options.onFinal(text);
+        }
+        this.finalSegments.clear();
         this.options.onStatus('idle', null);
+      } else {
+        this.finalSegments.clear();
       }
     };
 
@@ -323,6 +339,7 @@ export class VoiceInput {
     this.currentSessionId++;
     this.clearInterimStopDebounce();
     this.deliveredIndexes.clear();
+    this.finalSegments.clear();
     this.stopTriggeredForSession = false;
     this.sessionHasError = false;
     this.isListening = false;

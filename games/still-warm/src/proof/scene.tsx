@@ -45,14 +45,24 @@ export default function SceneReview() {
   return (
     <main
       style={{
-        height: "100vh",
+        height: "100dvh",
+        width: "100%",
+        minWidth: 0,
+        display: "grid",
+        gridTemplateRows: "minmax(0, 1fr) auto",
+        overflow: "hidden",
         background: "#070807",
         color: "#b9af8b",
         fontFamily: "monospace",
       }}
     >
       <div
-        style={{ height: "calc(100% - 96px)" }}
+        style={{
+          minWidth: 0,
+          minHeight: 0,
+          overflow: "hidden",
+          touchAction: "none",
+        }}
         onPointerDown={(event) =>
           event.currentTarget.setPointerCapture(event.pointerId)
         }
@@ -62,7 +72,16 @@ export default function SceneReview() {
       >
         <SurgeryScene state={state} look={look} />
       </div>
-      <footer style={{ padding: 12 }}>
+      <footer
+        style={{
+          boxSizing: "border-box",
+          width: "100%",
+          minWidth: 0,
+          padding: 12,
+          maxHeight: "44dvh",
+          overflowY: "auto",
+        }}
+      >
         <div>
           Room review · Drag to look · {state.stage} ·{" "}
           {state.pending?.label ?? result ?? "Waiting"}
@@ -97,7 +116,10 @@ export default function SceneReview() {
               void run([
                 ...emptyHand,
                 { kind: "react", stimulus: "reassure" },
-                { kind: "speak", text: "Careful." },
+                {
+                  kind: "signal_intent",
+                  contact: { kind: "lift_debris", style: "gentle" },
+                },
                 { kind: "lift_debris", style: "gentle" },
               ])
             }
@@ -128,7 +150,15 @@ export default function SceneReview() {
                 ...emptyHand,
                 { kind: "adjust_lamp", position: "wound" },
                 { kind: "pick_up", item },
-                { kind: "speak", text: "Careful." },
+                {
+                  kind: "signal_intent",
+                  contact: {
+                    kind: "use",
+                    item,
+                    target: "wound",
+                    style: "gentle",
+                  },
+                },
                 { kind: "use", item, target: "wound", style: "gentle" },
               ]);
             }}
