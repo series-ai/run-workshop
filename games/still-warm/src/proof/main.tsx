@@ -5,7 +5,7 @@ import { Html, OrbitControls } from "@react-three/drei";
 import {
   ProviderAssistant,
   RAW_CLIPS,
-  HAND_GRIPS,
+  EDITED_CLIPS,
   type RawClip,
   type ClipInfo,
 } from "./ProviderAssistant";
@@ -19,19 +19,19 @@ const VIEWS = {
 
 function CameraView({
   view,
-  focusHand,
+  focusPart,
 }: {
   view: keyof typeof VIEWS;
-  focusHand: "Left" | "Right" | null;
+  focusPart: "Left" | "Right" | "Head" | null;
 }) {
   const camera = useThree((state) => state.camera);
   useEffect(
     function selectCameraView() {
-      if (focusHand) return;
+      if (focusPart) return;
       camera.position.set(...VIEWS[view]);
       camera.lookAt(0, 1.05, 0);
     },
-    [camera, view, focusHand],
+    [camera, view, focusPart],
   );
   return null;
 }
@@ -39,23 +39,31 @@ function CameraView({
 function RawAnimationProof() {
   const [clip, setClip] = useState<RawClip>(() => {
     const clip = new URLSearchParams(location.search).get("clip");
-    return clip === "action276" || clip === "action284" ? clip : "idle";
+    return clip === "action276" || clip === "action284" || clip === "action386"
+      ? clip
+      : "idle";
   });
-  const [handGrip, setHandGrip] = useState(true);
-  const [focusHand, setFocusHand] = useState<"Left" | "Right" | null>(() => {
-    const hand = new URLSearchParams(location.search).get("hand");
-    return hand === "left" ? "Left" : hand === "right" ? "Right" : null;
-  });
+  const [edited, setEdited] = useState(true);
+  const [focusPart, setFocusPart] = useState<"Left" | "Right" | "Head" | null>(
+    () => {
+      if (new URLSearchParams(location.search).get("view") === "face")
+        return "Head";
+      const hand = new URLSearchParams(location.search).get("hand");
+      return hand === "left" ? "Left" : hand === "right" ? "Right" : null;
+    },
+  );
   const [paused, setPaused] = useState(false);
   const [repeat, setRepeat] = useState(true);
   const [rate, setRate] = useState(1);
   const [restart, setRestart] = useState(0);
   const [view, setView] = useState<keyof typeof VIEWS>("front");
   const [info, setInfo] = useState<ClipInfo | null>(null);
-  const gripAsset =
-    clip === "action276" || clip === "action284" ? HAND_GRIPS[clip] : null;
-  const useGrip = handGrip && gripAsset !== null;
-  const asset = useGrip ? gripAsset : RAW_CLIPS[clip];
+  const editAsset =
+    clip === "action276" || clip === "action284" || clip === "action386"
+      ? EDITED_CLIPS[clip]
+      : null;
+  const useEdit = edited && editAsset !== null;
+  const asset = useEdit ? editAsset : RAW_CLIPS[clip];
   return (
     <main>
       <header>
@@ -87,25 +95,25 @@ function RawAnimationProof() {
             ))}
           </div>
           <p className="clip-purpose">{RAW_CLIPS[clip].note}</p>
-          {gripAsset && (
+          {editAsset && (
             <label>
-              Hand motion
+              {editAsset.control}
               <select
-                aria-label="Hand motion"
-                value={handGrip ? "grip" : "original"}
+                aria-label={editAsset.control}
+                value={edited ? "grip" : "original"}
                 onChange={(event) => {
-                  setHandGrip(event.target.value === "grip");
+                  setEdited(event.target.value === "grip");
                   setInfo(null);
                 }}
               >
-                <option value="grip">Hand grip</option>
+                <option value="grip">{editAsset.label}</option>
                 <option value="original">Original</option>
               </select>
             </label>
           )}
           <p>
-            {useGrip
-              ? "Finger and thumb grip added in Blender. This copy retains the generated body motion."
+            {useEdit
+              ? editAsset.note
               : "Original mesh, rig, materials, and animation tracks. No added poses or movement controls."}
           </p>
           <div className="settings">
@@ -136,7 +144,7 @@ function RawAnimationProof() {
             camera={{ position: VIEWS.front, fov: 42, near: 0.01, far: 100 }}
             dpr={[1, 2]}
           >
-            <CameraView view={view} focusHand={focusHand} />
+            <CameraView view={view} focusPart={focusPart} />
             <color attach="background" args={["#303236"]} />
             <hemisphereLight args={["#ffffff", "#757575", 2]} />
             <directionalLight position={[3, 5, 4]} intensity={2.5} />
@@ -147,16 +155,16 @@ function RawAnimationProof() {
             />
             <Suspense fallback={<Html center>Loading original GLB…</Html>}>
               <ProviderAssistant
-                key={`${clip}-${restart}-${useGrip}`}
+                key={`${clip}-${restart}-${useEdit}`}
                 url={asset.url}
-                focusHand={focusHand}
+                focusPart={focusPart}
                 paused={paused}
                 rate={rate}
                 repeat={repeat}
                 onLoaded={setInfo}
               />
             </Suspense>
-            {!focusHand && (
+            {!focusPart && (
               <OrbitControls
                 target={[0, 1.05, 0]}
                 minDistance={0.4}
@@ -168,9 +176,9 @@ function RawAnimationProof() {
             {(Object.keys(VIEWS) as (keyof typeof VIEWS)[]).map((id) => (
               <button
                 key={id}
-                aria-pressed={!focusHand && view === id}
+                aria-pressed={!focusPart && view === id}
                 onClick={() => {
-                  setFocusHand(null);
+                  setFocusPart(null);
                   setView(id);
                 }}
               >
@@ -178,16 +186,22 @@ function RawAnimationProof() {
               </button>
             ))}
             <button
-              aria-pressed={focusHand === "Right"}
-              onClick={() => setFocusHand("Right")}
+              aria-pressed={focusPart === "Right"}
+              onClick={() => setFocusPart("Right")}
             >
               Right hand
             </button>
             <button
-              aria-pressed={focusHand === "Left"}
-              onClick={() => setFocusHand("Left")}
+              aria-pressed={focusPart === "Left"}
+              onClick={() => setFocusPart("Left")}
             >
               Left hand
+            </button>
+            <button
+              aria-pressed={focusPart === "Head"}
+              onClick={() => setFocusPart("Head")}
+            >
+              Face
             </button>
           </div>
           <footer>

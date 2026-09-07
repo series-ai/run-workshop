@@ -69,6 +69,12 @@ close inspection. Add `?clip=action276&hand=right` or
 source files. Run each with Blender's `--background --python-exit-code 1 --python`
 options. The grip clips are for review; the playable game does not use them yet.
 
+The scream entry has a **Face motion** selector. **Mouth opening** uses a copy
+with an opened lip seam, an animated jaw shape, a dark interior, and worn teeth.
+**Original** plays the provider response. Use the **Face** view, or open
+`?clip=action386&view=face`. `scripts/prepare-scream-mouth.py` builds this copy
+with Blender. The original body animation remains in the derived clip.
+
 `npm run proof:build` writes the static viewer to `dist-proof/`.
 Serve that directory with an HTTP server. Open `proof.html` on that server.
 The playable game is separate from this source review.

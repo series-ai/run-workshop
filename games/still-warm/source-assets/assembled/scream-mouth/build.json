@@ -1,0 +1,9 @@
+{
+  "source": "../animations/expanded/anim_386.glb",
+  "output": "anim_386_mouth.glb",
+  "shape": "ScreamOpen",
+  "removedSeamTriangles": 60,
+  "jawVertices": 4669,
+  "duration": 2.8333333333333335,
+  "bytes": 13169788
+}
