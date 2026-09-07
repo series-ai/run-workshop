@@ -5,6 +5,7 @@ import { Html, OrbitControls } from "@react-three/drei";
 import {
   ProviderAssistant,
   RAW_CLIPS,
+  HAND_GRIPS,
   type RawClip,
   type ClipInfo,
 } from "./ProviderAssistant";
@@ -16,32 +17,51 @@ const VIEWS = {
   back: [0, 1.15, -4.3],
 } satisfies Record<string, [number, number, number]>;
 
-function CameraView({ view }: { view: keyof typeof VIEWS }) {
+function CameraView({
+  view,
+  focusHand,
+}: {
+  view: keyof typeof VIEWS;
+  focusHand: "Left" | "Right" | null;
+}) {
   const camera = useThree((state) => state.camera);
   useEffect(
     function selectCameraView() {
+      if (focusHand) return;
       camera.position.set(...VIEWS[view]);
       camera.lookAt(0, 1.05, 0);
     },
-    [camera, view],
+    [camera, view, focusHand],
   );
   return null;
 }
 
 function RawAnimationProof() {
-  const [clip, setClip] = useState<RawClip>("idle");
+  const [clip, setClip] = useState<RawClip>(() => {
+    const clip = new URLSearchParams(location.search).get("clip");
+    return clip === "action276" || clip === "action284" ? clip : "idle";
+  });
+  const [handGrip, setHandGrip] = useState(true);
+  const [focusHand, setFocusHand] = useState<"Left" | "Right" | null>(() => {
+    const hand = new URLSearchParams(location.search).get("hand");
+    return hand === "left" ? "Left" : hand === "right" ? "Right" : null;
+  });
   const [paused, setPaused] = useState(false);
   const [repeat, setRepeat] = useState(true);
   const [rate, setRate] = useState(1);
   const [restart, setRestart] = useState(0);
   const [view, setView] = useState<keyof typeof VIEWS>("front");
   const [info, setInfo] = useState<ClipInfo | null>(null);
+  const gripAsset =
+    clip === "action276" || clip === "action284" ? HAND_GRIPS[clip] : null;
+  const useGrip = handGrip && gripAsset !== null;
+  const asset = useGrip ? gripAsset : RAW_CLIPS[clip];
   return (
     <main>
       <header>
         <div>
           <p className="eyebrow">STILL WARM / SOURCE REVIEW</p>
-          <h1>Original animation files</h1>
+          <h1>Animation review</h1>
         </div>
         <span className="local">NO RUN SIGN-IN REQUIRED</span>
       </header>
@@ -67,19 +87,32 @@ function RawAnimationProof() {
             ))}
           </div>
           <p className="clip-purpose">{RAW_CLIPS[clip].note}</p>
+          {gripAsset && (
+            <label>
+              Hand motion
+              <select
+                aria-label="Hand motion"
+                value={handGrip ? "grip" : "original"}
+                onChange={(event) => {
+                  setHandGrip(event.target.value === "grip");
+                  setInfo(null);
+                }}
+              >
+                <option value="grip">Hand grip</option>
+                <option value="original">Original</option>
+              </select>
+            </label>
+          )}
           <p>
-            Each file plays with its original mesh, rig, materials, and
-            animation tracks.
-          </p>
-          <p>
-            No added poses, IK, foot controls, movement paths, or dither
-            effects.
+            {useGrip
+              ? "Finger and thumb grip added in Blender. This copy retains the generated body motion."
+              : "Original mesh, rig, materials, and animation tracks. No added poses or movement controls."}
           </p>
           <div className="settings">
             <h2>File details</h2>
             <p>
-              <a href={RAW_CLIPS[clip].url} download={RAW_CLIPS[clip].filename}>
-                Download {RAW_CLIPS[clip].filename}
+              <a href={asset.url} download={asset.filename}>
+                Download {asset.filename}
               </a>
             </p>
             <dl>
@@ -103,7 +136,7 @@ function RawAnimationProof() {
             camera={{ position: VIEWS.front, fov: 42, near: 0.01, far: 100 }}
             dpr={[1, 2]}
           >
-            <CameraView view={view} />
+            <CameraView view={view} focusHand={focusHand} />
             <color attach="background" args={["#303236"]} />
             <hemisphereLight args={["#ffffff", "#757575", 2]} />
             <directionalLight position={[3, 5, 4]} intensity={2.5} />
@@ -114,30 +147,48 @@ function RawAnimationProof() {
             />
             <Suspense fallback={<Html center>Loading original GLB…</Html>}>
               <ProviderAssistant
-                key={`${clip}-${restart}`}
-                clip={clip}
+                key={`${clip}-${restart}-${useGrip}`}
+                url={asset.url}
+                focusHand={focusHand}
                 paused={paused}
                 rate={rate}
                 repeat={repeat}
                 onLoaded={setInfo}
               />
             </Suspense>
-            <OrbitControls
-              target={[0, 1.05, 0]}
-              minDistance={0.4}
-              maxDistance={12}
-            />
+            {!focusHand && (
+              <OrbitControls
+                target={[0, 1.05, 0]}
+                minDistance={0.4}
+                maxDistance={12}
+              />
+            )}
           </Canvas>
           <div className="view-controls">
             {(Object.keys(VIEWS) as (keyof typeof VIEWS)[]).map((id) => (
               <button
                 key={id}
-                aria-pressed={view === id}
-                onClick={() => setView(id)}
+                aria-pressed={!focusHand && view === id}
+                onClick={() => {
+                  setFocusHand(null);
+                  setView(id);
+                }}
               >
                 {id}
               </button>
             ))}
+            <button
+              aria-pressed={focusHand === "Right"}
+              onClick={() => setFocusHand("Right")}
+            >
+              Right hand
+            </button>
+            <button
+              aria-pressed={focusHand === "Left"}
+              onClick={() => setFocusHand("Left")}
+            >
+              Left hand
+            </button>
           </div>
           <footer>
             <button onClick={() => setPaused((value) => !value)}>

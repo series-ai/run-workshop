@@ -58,6 +58,17 @@ request, returned asset URLs, and action selection. No credentials are stored
 with the assets. Names were checked against the
 [Meshy animation library](https://docs.meshy.ai/en/api/animation-library).
 
+The pickup and collect entries also have a **Hand motion** selector. **Hand grip**
+uses Blender-authored finger and thumb shape keys. **Original** plays the
+unchanged provider response. Right and left hand views follow the wrist for
+close inspection. Add `?clip=action276&hand=right` or
+`?clip=action284&hand=left` to the viewer URL to open these views directly.
+
+`scripts/prepare-hand-grips.py` builds the two derived clips.
+`scripts/check-hand-body-motion.py` compares their body transforms against the
+source files. Run each with Blender's `--background --python-exit-code 1 --python`
+options. The grip clips are for review; the playable game does not use them yet.
+
 `npm run proof:build` writes the static viewer to `dist-proof/`.
 Serve that directory with an HTTP server. Open `proof.html` on that server.
 The playable game is separate from this source review.

@@ -1,7 +1,13 @@
 import { useEffect, useMemo } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
-import { AnimationMixer, LoopOnce, LoopRepeat } from "three";
+import {
+  AnimationMixer,
+  LoopOnce,
+  LoopRepeat,
+  SkinnedMesh,
+  Vector3,
+} from "three";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import idleUrl from "../../source-assets/assembled/animations/anim_idle.glb?url";
 import walkUrl from "../../source-assets/assembled/animations/anim_walk.glb?url";
@@ -16,6 +22,13 @@ import clip365Url from "../../source-assets/assembled/animations/expanded/anim_3
 import clip386Url from "../../source-assets/assembled/animations/expanded/anim_386.glb?url";
 import clip576Url from "../../source-assets/assembled/animations/expanded/anim_576.glb?url";
 import clip586Url from "../../source-assets/assembled/animations/expanded/anim_586.glb?url";
+import pickupGripUrl from "../../source-assets/assembled/hand-grips/anim_276_grip.glb?url";
+import collectGripUrl from "../../source-assets/assembled/hand-grips/anim_284_grip.glb?url";
+export const HAND_GRIPS = {
+  action276: { url: pickupGripUrl, filename: "anim_276_grip.glb" },
+  action284: { url: collectGripUrl, filename: "anim_284_grip.glb" },
+};
+
 export const RAW_CLIPS = {
   idle: {
     label: "Idle",
@@ -111,23 +124,66 @@ export interface ClipInfo {
 
 // Use each response's own mesh, skeleton, materials, and animation tracks.
 export function ProviderAssistant({
-  clip,
+  url,
+  focusHand,
   paused,
   rate,
   onLoaded,
   repeat,
 }: {
-  clip: RawClip;
+  url: string;
+  focusHand: "Left" | "Right" | null;
   paused: boolean;
   rate: number;
   repeat: boolean;
   onLoaded: (info: ClipInfo) => void;
 }) {
-  const source = useGLTF(
-    RAW_CLIPS[clip].url,
-    `${import.meta.env.BASE_URL}draco/`,
-  );
+  const source = useGLTF(url, `${import.meta.env.BASE_URL}draco/`);
   const scene = useMemo(() => clone(source.scene), [source.scene]);
+  const camera = useThree((state) => state.camera);
+  const handViews = useMemo(() => {
+    scene.updateMatrixWorld(true);
+    const mesh = scene.getObjectByName("char1");
+    if (!(mesh instanceof SkinnedMesh))
+      throw new Error("The clip has no character mesh.");
+    const result = new Map<
+      string,
+      { bone: (typeof mesh.skeleton.bones)[number]; center: Vector3 }
+    >();
+    for (const side of ["Left", "Right"]) {
+      const index = mesh.skeleton.bones.findIndex(
+        (bone) => bone.name === side + "Hand",
+      );
+      if (index < 0) throw new Error("The clip has no " + side + " wrist.");
+      const positions = mesh.geometry.getAttribute("position");
+      const indices = mesh.geometry.getAttribute("skinIndex");
+      const weights = mesh.geometry.getAttribute("skinWeight");
+      const center = new Vector3();
+      const vertex = new Vector3();
+      let total = 0;
+      for (let i = 0; i < positions.count; i++) {
+        for (let j = 0; j < 4; j++) {
+          if (indices.getComponent(i, j) !== index) continue;
+          const weight = weights.getComponent(i, j);
+          if (weight < 0.6) continue;
+          center.addScaledVector(
+            vertex.fromBufferAttribute(positions, i),
+            weight,
+          );
+          total += weight;
+        }
+      }
+      if (!total) throw new Error("The wrist has no hand vertices.");
+      center
+        .divideScalar(total)
+        .applyMatrix4(mesh.bindMatrix)
+        .applyMatrix4(mesh.skeleton.boneInverses[index]);
+      result.set(side, { bone: mesh.skeleton.bones[index], center });
+    }
+    return result;
+  }, [scene]);
+  const target = useMemo(() => new Vector3(), []);
+  const cameraOffset = useMemo(() => new Vector3(0.32, 0.12, 0.45), []);
   const mixer = useMemo(() => new AnimationMixer(scene), [scene]);
   useEffect(
     function playOriginalClip() {
@@ -152,6 +208,14 @@ export function ProviderAssistant({
   );
   useFrame((_, dt) => {
     if (!paused) mixer.update(dt * rate);
+    if (focusHand) {
+      scene.updateMatrixWorld(true);
+      const hand = handViews.get(focusHand)!;
+      target.copy(hand.center);
+      hand.bone.localToWorld(target);
+      camera.position.copy(target).add(cameraOffset);
+      camera.lookAt(target);
+    }
   });
   return <primitive object={scene} />;
 }

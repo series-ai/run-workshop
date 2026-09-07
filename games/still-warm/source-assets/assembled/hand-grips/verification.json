@@ -1,0 +1,14 @@
+[
+  {
+    "actionId": 276,
+    "maxBonePositionErrorMeters": 1.2442480750421562e-05,
+    "maxBoneAngleErrorRadians": 0,
+    "framesChecked": 44
+  },
+  {
+    "actionId": 284,
+    "maxBonePositionErrorMeters": 1.3087769806968898e-05,
+    "maxBoneAngleErrorRadians": 0,
+    "framesChecked": 37
+  }
+]
