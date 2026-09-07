@@ -1,3 +1,22 @@
+# Current playable check — 2026-09-06
+
+The current scene uses the approved source clips. The earlier procedural limb
+and gait controls described in the older records below have been removed.
+
+- Sound starts muted in the UI and audio engine. Voice also stays muted.
+- 126 tests pass across eight files.
+- The timed domain route reaches rescue after about 316 seconds.
+- `scripts/check-playable.playwright.js` completed the full visible route at
+  normal speed in Chromium. It reached the saved ending with no page errors.
+- The route included the lantern, support lift, exposure, morphine, door bar,
+  extraction, water on the fire, hair suture, dressing, and brace release.
+- The roof damage, dim lighting, body, and tool silhouettes were inspected
+  through the dither renderer.
+- The full guided preview is `play.html`. It does not start the RUN SDK or
+  use model calls. The live agent was not tested again in this pass.
+
+The following records describe earlier versions.
+
 # Current verification record
 
 Verified on 2026-09-06 with Chromium, RUN SDK 5.28.1, and RUN agent 0.1.0-beta.2.

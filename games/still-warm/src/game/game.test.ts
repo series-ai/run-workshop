@@ -22,10 +22,13 @@ type RoomObservation = ReturnType<typeof observeStatus> & {
 };
 
 function createPostAccidentState(): GameState {
+  const initial = createInitialState();
   return {
-    ...createInitialState(),
+    ...initial,
     phase: "playing",
+    elapsed: 22,
     stage: "covered",
+    environment: { ...initial.environment, lanternLit: true },
   };
 }
 
@@ -827,6 +830,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       if (!res.ok) return;
       s = res.state;
       expect(s.phase).toBe("won");
+      expect(s.outcome).toBe("saved");
       expect(s.restrained).toBe(false);
     });
 
@@ -921,10 +925,38 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       }
     });
 
-    it("requires light on wound for surgical contact on wound", () => {
+    it("requires the fire to be out before the final release", () => {
+      const s: GameState = {
+        ...state,
+        stage: "dressed",
+        holding: "release",
+        announced: true,
+        environment: {
+          ...state.environment,
+          fire: 25,
+          fireStarted: true,
+        },
+        items: {
+          ...state.items,
+          release: { ...state.items.release, location: "hand" },
+        },
+      };
+
+      expect(
+        validateAction(s, {
+          kind: "use",
+          item: "release",
+          target: "patient",
+          style: "gentle",
+        }),
+      ).toMatch(/fire must be extinguished/i);
+    });
+
+    it("requires a lit lantern and correct lamp aim for wound contact", () => {
       const noLightState: GameState = {
         ...state,
-        lamp: "away",
+        lamp: "wound",
+        environment: { ...state.environment, lanternLit: false },
         holding: "cloth",
         announced: true,
         items: {
@@ -940,12 +972,28 @@ describe("Still Warm - Domain Rules & Transitions", () => {
           target: "wound",
           style: "gentle",
         }),
+      ).toMatch(/lantern must be lit/i);
+
+      expect(
+        validateAction(
+          {
+            ...noLightState,
+            lamp: "away",
+            environment: { ...noLightState.environment, lanternLit: true },
+          },
+          {
+            kind: "use",
+            item: "cloth",
+            target: "wound",
+            style: "gentle",
+          },
+        ),
       ).toMatch(/lamp must be aimed at the wound/i);
     });
   });
 
   describe("Morphine & Blackout dynamics", () => {
-    it("morphine reduces pain and increases sedation, overuse triggers 8s blackout", () => {
+    it("uses three morphine doses and rejects an empty supply", () => {
       let s: GameState = {
         ...state,
         holding: "morphine",
@@ -999,6 +1047,28 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       expect(s.phase).toBe("blackout");
       expect(s.patient.blackoutRemaining).toBe(BLACKOUT_DURATION);
       expect(s.patient.blackoutCount).toBe(1);
+      expect(s.medicineDoses).toBe(0);
+      expect(s.holding).toBeNull();
+      expect(s.items.morphine.location).toBe("consumed");
+
+      const emptyState: GameState = {
+        ...s,
+        phase: "playing",
+        holding: "morphine",
+        announced: true,
+        items: {
+          ...s.items,
+          morphine: { ...s.items.morphine, location: "hand" },
+        },
+      };
+      expect(
+        validateAction(emptyState, {
+          kind: "use",
+          item: "morphine",
+          target: "patient",
+          style: "gentle",
+        }),
+      ).toMatch(/supply is empty/i);
     });
 
     it("high pain >= 85 causes blackout, and recovery happens without immediate loops", () => {
@@ -1367,6 +1437,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       expect(fatalRes.ok).toBe(true);
       if (fatalRes.ok) {
         expect(fatalRes.state.phase).toBe("lost");
+        expect(fatalRes.state.outcome).toBe("creature_lost");
       }
     });
 
@@ -1404,12 +1475,67 @@ describe("Still Warm - Domain Rules & Transitions", () => {
   });
 
   describe("Environmental timeline & interventions", () => {
-    it("triggers angry door knocking at elapsed 35s", () => {
-      let s = state;
-      s.elapsed = 34;
+    it("protects the authored opening from drain and threats", () => {
+      let s: GameState = {
+        ...createInitialState(),
+        phase: "playing",
+        environment: {
+          ...createInitialState().environment,
+          lanternLit: true,
+        },
+      };
+      const patient = { ...s.patient };
+
+      s = tickPatient(s, 22);
+
+      expect(s.elapsed).toBe(22);
+      expect(s.patient).toEqual(patient);
+      expect(s.environment.door).toBe("quiet");
+      expect(s.environment.fire).toBe(0);
+      expect(s.environment.eventCount).toBe(0);
+
       s = tickPatient(s, 2);
+      expect(s.patient.health).toBeLessThan(patient.health);
+      expect(s.patient.blood).toBeLessThan(patient.blood);
+    });
+
+    it("gates door pressure and caps three hits at 60-second intervals", () => {
+      let s: GameState = {
+        ...state,
+        elapsed: 74,
+        environment: { ...state.environment, lanternLit: false },
+      };
+      s = tickPatient(s, 2);
+      expect(s.environment.door).toBe("quiet");
+
+      s.environment = { ...s.environment, lanternLit: true };
+      s.stage = "pinned";
+      s = tickPatient(s, 1);
+      expect(s.environment.door).toBe("quiet");
+
+      s.stage = "covered";
+      const confidence = s.disposition.confidence;
+      s = tickPatient(s, 1);
       expect(s.environment.door).toBe("knocking");
-      expect(s.environment.eventCount).toBe(1);
+      expect(s.environment.doorPressure).toBe(1);
+      expect(s.environment.lastEvent).toMatch(/1 of 3/i);
+      expect(s.disposition.confidence).toBeLessThan(confidence);
+
+      s = tickPatient(s, 59);
+      expect(s.environment.doorPressure).toBe(1);
+      s = tickPatient(s, 1);
+      expect(s.environment.doorPressure).toBe(2);
+      expect(s.environment.lastEvent).toMatch(/2 of 3/i);
+      s = tickPatient(s, 60);
+      expect(s.environment.doorPressure).toBe(3);
+      expect(s.environment.lastEvent).toMatch(/3 of 3/i);
+      s.environment = { ...s.environment, fireStarted: true };
+      const disposition = { ...s.disposition };
+      const events = s.environment.eventCount;
+      s = tickPatient(s, 180);
+      expect(s.environment.doorPressure).toBe(3);
+      expect(s.environment.eventCount).toBe(events);
+      expect(s.disposition).toEqual(disposition);
     });
 
     it("allows barricading door with metal pry tool", () => {
@@ -1431,14 +1557,31 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       expect(res.ok).toBe(true);
       if (res.ok) {
         expect(res.state.environment.door).toBe("barricaded");
+        expect(res.state.environment.doorPressure).toBe(0);
       }
     });
 
-    it("triggers fire at elapsed 90s and allows extinguishing with bowl", () => {
-      let s = state;
-      s.elapsed = 89;
-      s = tickPatient(s, 2);
-      expect(s.environment.fire).toBeGreaterThan(0);
+    it("starts fire after extraction, waits during blackout, and has a long response window", () => {
+      let s: GameState = {
+        ...state,
+        stage: "extracted",
+        phase: "blackout",
+        patient: { ...state.patient, blackoutRemaining: 20 },
+      };
+      s = tickPatient(s, 1);
+      expect(s.environment.fire).toBe(0);
+
+      s.phase = "playing";
+      s.patient.blackoutRemaining = 0;
+      s = tickPatient(s, 1);
+      expect(s.environment.fire).toBe(15);
+      expect(s.environment.fireStarted).toBe(true);
+
+      const healthAtOnset = s.patient.health;
+      s = tickPatient(s, 90);
+      expect(s.phase).toBe("playing");
+      expect(s.environment.fire).toBeLessThan(50);
+      expect(s.patient.health).toBeCloseTo(healthAtOnset - 90 * 0.12, 5);
 
       // Pick up water bowl and extinguish
       s.holding = "bowl";
@@ -1454,64 +1597,56 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       expect(res.ok).toBe(true);
       if (res.ok) {
         expect(res.state.environment.fire).toBe(0);
-        expect(res.state.items.bowl.clean).toBe(false); // emptied
+        expect(res.state.items.bowl.clean).toBe(false);
       }
     });
 
-    it("eventCount counts only spontaneous world events in tickPatient, not creature extinguish or barricade", () => {
-      let s: GameState = {
-        ...state,
-        holding: "forceps",
-        items: {
-          ...state.items,
-          forceps: { ...state.items.forceps, location: "hand" },
-        },
-      };
-
-      expect(s.environment.eventCount).toBe(0);
-
-      const barRes = applyAction(s, {
-        kind: "use",
-        item: "forceps",
-        target: "door",
-        style: "rough",
-      });
-      expect(barRes.ok).toBe(true);
-      if (barRes.ok) {
-        expect(barRes.state.environment.door).toBe("barricaded");
-        expect(barRes.state.environment.eventCount).toBe(0);
-      }
-
+    it("uses the fallback fire after 240 seconds and dirties fire fabric", () => {
       let fireState: GameState = {
         ...state,
-        holding: "bowl",
-        environment: { ...state.environment, fire: 50, eventCount: 0 },
+        elapsed: 239,
+        holding: "cloth",
+        environment: {
+          ...state.environment,
+          door: "barricaded",
+          fire: 0,
+          fireStarted: false,
+        },
         items: {
           ...state.items,
-          bowl: { ...state.items.bowl, location: "hand", clean: true },
+          cloth: { ...state.items.cloth, location: "hand", clean: true },
         },
       };
-      const extRes = applyAction(fireState, {
+      fireState = tickPatient(fireState, 1);
+      expect(fireState.environment.fire).toBe(15);
+
+      const result = applyAction(fireState, {
         kind: "use",
-        item: "bowl",
+        item: "cloth",
         target: "fire",
         style: "gentle",
       });
-      expect(extRes.ok).toBe(true);
-      if (extRes.ok) {
-        expect(extRes.state.environment.eventCount).toBe(0);
-      }
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.state.environment.fire).toBe(0);
+      expect(result.state.items.cloth.clean).toBe(false);
+      expect(result.state.environment.eventCount).toBe(1);
+    });
 
-      let tickS = state;
-      tickS.elapsed = 34;
-      tickS = tickPatient(tickS, 2);
-      expect(tickS.environment.door).toBe("knocking");
-      expect(tickS.environment.eventCount).toBe(1);
+    it("records fire as the terminal cause", () => {
+      const s: GameState = {
+        ...state,
+        environment: {
+          ...state.environment,
+          fire: 99,
+          fireStarted: true,
+          door: "barricaded",
+        },
+      };
 
-      tickS.elapsed = 89;
-      tickS = tickPatient(tickS, 2);
-      expect(tickS.environment.fire).toBeGreaterThan(0);
-      expect(tickS.environment.eventCount).toBe(2);
+      const result = tickPatient(s, 4);
+      expect(result.phase).toBe("lost");
+      expect(result.outcome).toBe("fire");
     });
   });
 
@@ -1650,6 +1785,124 @@ describe("GameStore Controller", () => {
     expect(getActionDuration(lift, "scared")).toBe(14850);
   });
 
+  it("completes a timed clean path through door and fire pressure", async () => {
+    const store = new GameStore();
+    store.start();
+    store.tick(22);
+
+    const perform = async (action: PhysicalAction) => {
+      const duration = getActionDuration(action, store.getSnapshot().emotion);
+      expect(duration).toBeGreaterThanOrEqual(10_000);
+      expect(duration).toBeLessThanOrEqual(15_000);
+      const pending = store.run(action);
+      store.tick(duration / 1000);
+      await vi.advanceTimersByTimeAsync(duration);
+      const result = await pending;
+      expect(result.ok, result.message).toBe(true);
+    };
+    const announce = async (text: string) => {
+      const result = await store.run({ kind: "speak", text });
+      expect(result.ok, result.message).toBe(true);
+    };
+
+    await perform({ kind: "light_lantern" });
+    await store.run({ kind: "react", stimulus: "clear_instruction" });
+    await announce("I will lift the support now.");
+    await perform({ kind: "lift_debris", style: "gentle" });
+    await perform({ kind: "adjust_lamp", position: "wound" });
+    await perform({ kind: "pick_up", item: "cloth" });
+    await announce("I will expose the wound with the cloth.");
+    await perform({
+      kind: "use",
+      item: "cloth",
+      target: "wound",
+      style: "gentle",
+    });
+    await perform({ kind: "place", item: "cloth", location: "tray" });
+    await perform({ kind: "pick_up", item: "morphine" });
+    await announce("I will give one dose of morphine.");
+    await perform({
+      kind: "use",
+      item: "morphine",
+      target: "patient",
+      style: "gentle",
+    });
+    await perform({ kind: "place", item: "morphine", location: "tray" });
+    await perform({ kind: "pick_up", item: "forceps" });
+    await perform({
+      kind: "use",
+      item: "forceps",
+      target: "door",
+      style: "gentle",
+    });
+    await announce("I will extract the fragment with forceps.");
+    await perform({
+      kind: "use",
+      item: "forceps",
+      target: "wound",
+      style: "gentle",
+    });
+    expect(store.getSnapshot().stage).toBe("extracted");
+    await perform({ kind: "place", item: "forceps", location: "tray" });
+    expect(store.getSnapshot().environment.fire).toBeGreaterThan(0);
+    await perform({ kind: "pick_up", item: "bowl" });
+    await perform({
+      kind: "use",
+      item: "bowl",
+      target: "fire",
+      style: "gentle",
+    });
+    expect(store.getSnapshot().environment.fire).toBe(0);
+    await perform({ kind: "place", item: "bowl", location: "tray" });
+    await perform({ kind: "pick_up", item: "scissors" });
+    await perform({
+      kind: "use",
+      item: "scissors",
+      target: "wig",
+      style: "gentle",
+    });
+    await perform({ kind: "place", item: "scissors", location: "tray" });
+    await perform({ kind: "pick_up", item: "needle" });
+    await perform({ kind: "combine", first: "needle", second: "thread" });
+    await announce("I will close the wound with the suture.");
+    await perform({
+      kind: "use",
+      item: "suture",
+      target: "wound",
+      style: "gentle",
+    });
+    expect(store.getSnapshot().holding).toBeNull();
+    expect(store.getSnapshot().items.suture.location).toBe("consumed");
+    await perform({ kind: "pick_up", item: "cloth" });
+    await announce("I will dress the wound with the clean cloth.");
+    await perform({
+      kind: "use",
+      item: "cloth",
+      target: "wound",
+      style: "gentle",
+    });
+    expect(store.getSnapshot().holding).toBeNull();
+    expect(store.getSnapshot().items.cloth.location).toBe("patient");
+    await perform({ kind: "pick_up", item: "release" });
+    await announce("I will release the leg brace now.");
+    await perform({
+      kind: "use",
+      item: "release",
+      target: "patient",
+      style: "gentle",
+    });
+
+    const final = store.getSnapshot();
+    expect(final.phase).toBe("won");
+    expect(final.outcome).toBe("saved");
+    expect(final.environment.door).toBe("barricaded");
+    expect(final.environment.fire).toBe(0);
+    expect(final.medicineDoses).toBe(2);
+    expect(final.elapsed).toBeGreaterThan(280);
+    expect(final.elapsed).toBeLessThan(360);
+    store.dispose();
+  });
+
   it("cancels a pending lift and leaves the creator pinned", async () => {
     const initial = createInitialState();
     const store = new GameStore({
@@ -1694,6 +1947,7 @@ describe("GameStore Controller", () => {
     const base = createInitialState();
     const store = new GameStore({
       ...base,
+      elapsed: 22,
       stage: "covered",
       holding: "cloth",
       lamp: "wound",
@@ -1702,6 +1956,7 @@ describe("GameStore Controller", () => {
         ...base.items,
         cloth: { ...base.items.cloth, location: "hand" },
       },
+      environment: { ...base.environment, lanternLit: true },
     });
     store.start();
 
@@ -1746,6 +2001,7 @@ describe("GameStore Controller", () => {
     const base = createInitialState();
     const store = new GameStore({
       ...base,
+      elapsed: 22,
       patient: { ...base.patient, health: 0.05, blood: 0.05 },
     });
     store.start();
@@ -1756,6 +2012,7 @@ describe("GameStore Controller", () => {
     // Tick fatal damage
     store.tick(1);
     expect(store.getSnapshot().phase).toBe("lost");
+    expect(store.getSnapshot().outcome).toBe("blood_loss");
     expect(store.getSnapshot().pending).toBeNull();
   });
 
@@ -1806,6 +2063,7 @@ describe("GameStore Controller", () => {
     const readyState: GameState = {
       ...base,
       phase: "playing",
+      elapsed: 22,
       stage: "exposed",
       holding: "cloth",
       lamp: "wound",
@@ -1816,6 +2074,7 @@ describe("GameStore Controller", () => {
         ...base.items,
         cloth: { ...base.items.cloth, location: "hand" },
       },
+      environment: { ...base.environment, lanternLit: true },
     };
     const store = new GameStore(readyState);
     store.start();

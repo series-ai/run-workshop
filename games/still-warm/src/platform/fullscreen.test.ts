@@ -3,18 +3,18 @@ import type {
   FullscreenStateListener,
   PointerInputListener,
   SystemApi,
-} from '@series-inc/rundot-game-sdk';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+} from "@series-inc/rundot-game-sdk";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { initializeRunMock } = vi.hoisted(() => ({
   initializeRunMock: vi.fn(),
 }));
 
-vi.mock('../agent/runtime', () => ({
+vi.mock("../agent/runtime", () => ({
   initializeRun: initializeRunMock,
 }));
 
-import { FullscreenController } from './fullscreen';
+import { FullscreenController } from "./fullscreen";
 
 interface SystemHarness {
   system: SystemApi;
@@ -34,13 +34,13 @@ interface LocalBrowserHarness {
 }
 
 function installLocalBrowser(
-  hostname = 'localhost',
+  hostname = "localhost",
   topLevel = true,
 ): LocalBrowserHarness {
-  const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  const previousWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
   const previousDocument = Object.getOwnPropertyDescriptor(
     globalThis,
-    'document',
+    "document",
   );
   const documentTarget = new EventTarget();
   const root = new EventTarget() as EventTarget & {
@@ -59,15 +59,15 @@ function installLocalBrowser(
 
   const requestFullscreen = vi.fn(async () => {
     browserDocument.fullscreenElement = root;
-    documentTarget.dispatchEvent(new Event('fullscreenchange'));
+    documentTarget.dispatchEvent(new Event("fullscreenchange"));
   });
   const requestPointerLock = vi.fn(async () => {
     browserDocument.pointerLockElement = root;
-    documentTarget.dispatchEvent(new Event('pointerlockchange'));
+    documentTarget.dispatchEvent(new Event("pointerlockchange"));
   });
   const exitPointerLock = vi.fn(() => {
     browserDocument.pointerLockElement = null;
-    documentTarget.dispatchEvent(new Event('pointerlockchange'));
+    documentTarget.dispatchEvent(new Event("pointerlockchange"));
   });
   root.requestFullscreen = requestFullscreen;
   root.requestPointerLock = requestPointerLock;
@@ -78,11 +78,11 @@ function installLocalBrowser(
   } as { location: { hostname: string }; top?: unknown };
   browserWindow.top = topLevel ? browserWindow : {};
 
-  Object.defineProperty(globalThis, 'window', {
+  Object.defineProperty(globalThis, "window", {
     configurable: true,
     value: browserWindow,
   });
-  Object.defineProperty(globalThis, 'document', {
+  Object.defineProperty(globalThis, "document", {
     configurable: true,
     value: browserDocument,
   });
@@ -92,7 +92,7 @@ function installLocalBrowser(
     requestPointerLock,
     exitPointerLock,
     emitMove: (movementX, movementY) => {
-      const event = new Event('mousemove');
+      const event = new Event("mousemove");
       Object.defineProperties(event, {
         movementX: { value: movementX },
         movementY: { value: movementY },
@@ -102,16 +102,16 @@ function installLocalBrowser(
     exitFullscreen: () => {
       browserDocument.fullscreenElement = null;
       browserDocument.pointerLockElement = null;
-      documentTarget.dispatchEvent(new Event('fullscreenchange'));
+      documentTarget.dispatchEvent(new Event("fullscreenchange"));
     },
     restore: () => {
       if (previousWindow) {
-        Object.defineProperty(globalThis, 'window', previousWindow);
+        Object.defineProperty(globalThis, "window", previousWindow);
       } else {
         delete (globalThis as { window?: unknown }).window;
       }
       if (previousDocument) {
-        Object.defineProperty(globalThis, 'document', previousDocument);
+        Object.defineProperty(globalThis, "document", previousDocument);
       } else {
         delete (globalThis as { document?: unknown }).document;
       }
@@ -120,7 +120,7 @@ function installLocalBrowser(
 }
 
 function createSystemHarness(
-  fullscreen: 'unavailable' | 'always-on' | 'toggleable' = 'toggleable',
+  fullscreen: "unavailable" | "always-on" | "toggleable" = "toggleable",
   pointerLock = true,
 ): SystemHarness {
   let stateListener: FullscreenStateListener | null = null;
@@ -157,18 +157,18 @@ function createSystemHarness(
     system,
     emitState: (state) => stateListener?.(state),
     emitMove: (movementX, movementY) =>
-      inputListener?.({ type: 'move', movementX, movementY, buttons: 0 }),
+      inputListener?.({ type: "move", movementX, movementY, buttons: 0 }),
     stopState,
     stopInput,
   };
 }
 
-describe('FullscreenController', () => {
+describe("FullscreenController", () => {
   beforeEach(() => {
     initializeRunMock.mockReset();
   });
 
-  it('enters RUN fullscreen with pointer lock and tracks host state', async () => {
+  it("enters RUN fullscreen with pointer lock and tracks host state", async () => {
     const harness = createSystemHarness();
     initializeRunMock.mockResolvedValue({ system: harness.system });
     const listener = vi.fn();
@@ -197,7 +197,7 @@ describe('FullscreenController', () => {
     expect(listener).toHaveBeenCalled();
   });
 
-  it('routes only relative move input to the look callback', async () => {
+  it("routes only relative move input to the look callback", async () => {
     const harness = createSystemHarness();
     initializeRunMock.mockResolvedValue({ system: harness.system });
     const onMove = vi.fn();
@@ -209,8 +209,8 @@ describe('FullscreenController', () => {
     expect(onMove).toHaveBeenCalledWith(12, -7);
   });
 
-  it('keeps fullscreen available when pointer lock is unavailable', async () => {
-    const harness = createSystemHarness('toggleable', false);
+  it("keeps fullscreen available when pointer lock is unavailable", async () => {
+    const harness = createSystemHarness("toggleable", false);
     initializeRunMock.mockResolvedValue({ system: harness.system });
     const controller = new FullscreenController(vi.fn());
 
@@ -228,7 +228,7 @@ describe('FullscreenController', () => {
     expect(harness.system.onPointerInput).not.toHaveBeenCalled();
   });
 
-  it('keeps support and a host event that arrives during initialization', async () => {
+  it("keeps support and a host event that arrives during initialization", async () => {
     const harness = createSystemHarness();
     let resolveState!: (state: {
       active: boolean;
@@ -258,7 +258,7 @@ describe('FullscreenController', () => {
     });
   });
 
-  it('keeps subscribe bound for useSyncExternalStore', async () => {
+  it("keeps subscribe bound for useSyncExternalStore", async () => {
     const harness = createSystemHarness();
     initializeRunMock.mockResolvedValue({ system: harness.system });
     const controller = new FullscreenController(vi.fn());
@@ -275,7 +275,7 @@ describe('FullscreenController', () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
-  it('releases and recaptures the pointer without leaving fullscreen', async () => {
+  it("releases and recaptures the pointer without leaving fullscreen", async () => {
     const harness = createSystemHarness();
     initializeRunMock.mockResolvedValue({ system: harness.system });
     const controller = new FullscreenController(vi.fn());
@@ -293,8 +293,8 @@ describe('FullscreenController', () => {
     });
   });
 
-  it('does not call unsupported APIs and cleans up host subscriptions', async () => {
-    const harness = createSystemHarness('unavailable', false);
+  it("does not call unsupported APIs and cleans up host subscriptions", async () => {
+    const harness = createSystemHarness("unavailable", false);
     initializeRunMock.mockResolvedValue({ system: harness.system });
     const controller = new FullscreenController(vi.fn());
 
@@ -311,7 +311,7 @@ describe('FullscreenController', () => {
     expect(harness.stopInput).not.toHaveBeenCalled();
   });
 
-  it('can release safely before initialization finishes', async () => {
+  it("can release safely before initialization finishes", async () => {
     const harness = createSystemHarness();
     initializeRunMock.mockResolvedValue({ system: harness.system });
     const controller = new FullscreenController(vi.fn());
@@ -324,7 +324,7 @@ describe('FullscreenController', () => {
     expect(harness.system.setPointerLock).not.toHaveBeenCalled();
   });
 
-  it('stops subscriptions and releases a captured cursor on dispose', async () => {
+  it("stops subscriptions and releases a captured cursor on dispose", async () => {
     const harness = createSystemHarness();
     initializeRunMock.mockResolvedValue({ system: harness.system });
     const controller = new FullscreenController(vi.fn());
@@ -338,10 +338,10 @@ describe('FullscreenController', () => {
     expect(harness.system.setPointerLock).toHaveBeenCalledWith(false);
   });
 
-  it('uses native fullscreen for an unsupported top-level local preview', async () => {
+  it("uses native fullscreen for an unsupported top-level local preview", async () => {
     const browser = installLocalBrowser();
     try {
-      const harness = createSystemHarness('unavailable', false);
+      const harness = createSystemHarness("unavailable", false);
       initializeRunMock.mockResolvedValue({ system: harness.system });
       const onMove = vi.fn();
       const controller = new FullscreenController(onMove);
@@ -385,10 +385,10 @@ describe('FullscreenController', () => {
     }
   });
 
-  it('waits for local fullscreen before it requests pointer lock', async () => {
+  it("waits for local fullscreen before it requests pointer lock", async () => {
     const browser = installLocalBrowser();
     try {
-      const harness = createSystemHarness('unavailable', false);
+      const harness = createSystemHarness("unavailable", false);
       let finishFullscreen!: () => void;
       browser.requestFullscreen.mockImplementationOnce(
         () =>
@@ -413,7 +413,7 @@ describe('FullscreenController', () => {
     }
   });
 
-  it('uses the local fallback when an old host omits fullscreen capabilities', async () => {
+  it("uses the local fallback when an old host omits fullscreen capabilities", async () => {
     const browser = installLocalBrowser();
     try {
       const harness = createSystemHarness();
@@ -423,7 +423,7 @@ describe('FullscreenController', () => {
           purchases: true,
           subscriptions: true,
         },
-      } as unknown as ReturnType<SystemApi['getEnvironment']>);
+      } as unknown as ReturnType<SystemApi["getEnvironment"]>);
       initializeRunMock.mockResolvedValue({ system: harness.system });
       const controller = new FullscreenController(vi.fn());
 
@@ -444,10 +444,27 @@ describe('FullscreenController', () => {
     }
   });
 
-  it('prefers RUN fullscreen over the local browser fallback', async () => {
+  it("keeps the cursor free in the guided preview without starting RUN", async () => {
     const browser = installLocalBrowser();
     try {
-      const harness = createSystemHarness('toggleable', true);
+      const controller = new FullscreenController(vi.fn(), true);
+      await controller.initialize();
+      await controller.enter();
+      await controller.capture();
+      expect(initializeRunMock).not.toHaveBeenCalled();
+      expect(browser.requestFullscreen).toHaveBeenCalledOnce();
+      expect(browser.requestPointerLock).not.toHaveBeenCalled();
+      expect(controller.getSnapshot().pointerLocked).toBe(false);
+      controller.dispose();
+    } finally {
+      browser.restore();
+    }
+  });
+
+  it("prefers RUN fullscreen over the local browser fallback", async () => {
+    const browser = installLocalBrowser();
+    try {
+      const harness = createSystemHarness("toggleable", true);
       initializeRunMock.mockResolvedValue({ system: harness.system });
       const controller = new FullscreenController(vi.fn());
 
@@ -463,24 +480,27 @@ describe('FullscreenController', () => {
   });
 
   it.each([
-    ['a hosted page', 'run.game', true],
-    ['an embedded localhost page', 'localhost', false],
-  ])('does not use native fullscreen for %s', async (_name, hostname, topLevel) => {
-    const browser = installLocalBrowser(hostname, topLevel);
-    try {
-      const harness = createSystemHarness('unavailable', false);
-      initializeRunMock.mockResolvedValue({ system: harness.system });
-      const controller = new FullscreenController(vi.fn());
+    ["a hosted page", "run.game", true],
+    ["an embedded localhost page", "localhost", false],
+  ])(
+    "does not use native fullscreen for %s",
+    async (_name, hostname, topLevel) => {
+      const browser = installLocalBrowser(hostname, topLevel);
+      try {
+        const harness = createSystemHarness("unavailable", false);
+        initializeRunMock.mockResolvedValue({ system: harness.system });
+        const controller = new FullscreenController(vi.fn());
 
-      await controller.initialize();
-      await controller.enter();
+        await controller.initialize();
+        await controller.enter();
 
-      expect(controller.getSnapshot().supported).toBe(false);
-      expect(browser.requestFullscreen).not.toHaveBeenCalled();
-      expect(harness.system.requestFullscreen).not.toHaveBeenCalled();
-      controller.dispose();
-    } finally {
-      browser.restore();
-    }
-  });
+        expect(controller.getSnapshot().supported).toBe(false);
+        expect(browser.requestFullscreen).not.toHaveBeenCalled();
+        expect(harness.system.requestFullscreen).not.toHaveBeenCalled();
+        controller.dispose();
+      } finally {
+        browser.restore();
+      }
+    },
+  );
 });

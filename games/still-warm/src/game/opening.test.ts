@@ -5,15 +5,17 @@ import { GameStore } from "./store";
 import { applyAction, observeStatus } from "./transitions";
 
 describe("Dark opening", () => {
-  it("starts blind, separates narration and son, and opens into darkness", () => {
+  it("starts blind with private thoughts and wordless creature calls", () => {
     expect(openingAt(0).eyes).toBe(0);
-    expect(openingAt(0).narration).toContain("Total blackness");
-    expect(openingAt(7).speech).toBe("Dah? DAH?");
+    expect(openingAt(0).narration).toBe(
+      "Something heavy is pushing down on my chest. Pain everywhere.",
+    );
+    expect(openingAt(7).call).toBe(1);
     expect(openingAt(7).narration).toBe("");
     expect(openingAt(11).eyes).toBeGreaterThan(0);
     expect(openingAt(11).eyes).toBeLessThan(1);
-    expect(openingAt(15).narration).toContain("son");
-    expect(openingAt(18).speech).toBe("DAH? WHERE DAH?");
+    expect(openingAt(15).narration).toBe("It’s my boy. He sounds scared.");
+    expect(openingAt(18).call).toBe(2);
     expect(openingAt(OPENING_DURATION).narration).toContain("lantern");
     expect(openingAt(OPENING_DURATION).complete).toBe(true);
     expect(createInitialState().environment.lanternLit).toBe(false);

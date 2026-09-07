@@ -1,11 +1,12 @@
-import run from '@series-inc/rundot-game-sdk/api';
+type RunApi = typeof import("@series-inc/rundot-game-sdk/api").default;
+let initialization: Promise<RunApi> | undefined;
 
-let initialization: Promise<typeof run> | undefined;
-
-export function initializeRun(): Promise<typeof run> {
-  initialization ??= run
-    .initializeAsync()
-    .then(() => run)
+export function initializeRun(): Promise<RunApi> {
+  initialization ??= import("@series-inc/rundot-game-sdk/api")
+    .then(async ({ default: run }) => {
+      await run.initializeAsync();
+      return run;
+    })
     .catch((error) => {
       initialization = undefined;
       throw error;

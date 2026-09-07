@@ -9,36 +9,22 @@ import {
 } from "react";
 import SurgeryScene from "./scene/SurgeryScene";
 import { LookInput } from "./scene/look";
+import { sceneThought, previewChoices } from "./game/experience";
 import { openingAt } from "./game/opening";
 import { GameStore } from "./game/store";
-import {
-  RULE_IDS,
-  RULES,
-  type GameAction,
-  type ItemId,
-  type Stage,
-} from "./game/model";
+import { RULE_IDS, RULES, type GameAction } from "./game/model";
 import { CreatureController, type PlayMode } from "./agent/controller";
-import { SurgerySound } from "./audio/sound";
+import { DEFAULT_MUTED, SurgerySound } from "./audio/sound";
 import { VoiceInput, type VoiceStatus } from "./audio/voice";
 import { FullscreenController } from "./platform/fullscreen";
 
-const THOUGHTS: Record<Stage, string> = {
-  pinned: "Something's on me. I can't get it off.",
-  covered: "It's off. But my legs… I can't feel my legs.",
-  exposed: "There's something still inside. I need his hands.",
-  extracted: "It's out. Don't let me bleed out here.",
-  closed: "Stay awake. Just a little longer.",
-  dressed: "I need to get up. Ask him to help me.",
-};
-
-export default function App() {
+export default function App({ preview = false }: { preview?: boolean }) {
   const listening = useRef(false);
   const [store] = useState(() => new GameStore());
   const [sound] = useState(() => new SurgerySound());
   const [look] = useState(() => new LookInput());
   const [fullscreen] = useState(
-    () => new FullscreenController((dx, dy) => look.move(dx, dy)),
+    () => new FullscreenController((dx, dy) => look.move(dx, dy), preview),
   );
   const [controller] = useState(
     () =>
@@ -63,12 +49,12 @@ export default function App() {
   const [interim, setInterim] = useState("");
   const [command, setCommand] = useState("");
   const [typing, setTyping] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(DEFAULT_MUTED);
   const [reducedMotion, setReducedMotion] = useState(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
   const [thought, setThought] = useState("");
-  const [speech, setSpeech] = useState("");
+  const [roomCaption, setRoomCaption] = useState("");
   const [voice] = useState(
     () =>
       new VoiceInput({
@@ -91,12 +77,19 @@ export default function App() {
   const started = state.phase !== "ready";
   const opening = openingAt(state.elapsed);
   const introPlaying = started && !opening.complete;
-  const lastOpeningSpeech = useRef("");
+  const lastOpeningCall = useRef(0);
   const terminal = state.phase === "won" || state.phase === "lost";
   const blackout = state.phase === "blackout";
   const busy = ["thinking", "acting", "stopping"].includes(connection.status);
   const active = started && !state.paused && !terminal && !blackout;
   const canSpeak = active && opening.complete && connection.mode === "live";
+  const moment = sceneThought(state);
+  const choices = previewChoices(state);
+  const toggleSound = () => {
+    sound.setMuted(!muted);
+    setMuted(!muted);
+    if (muted) void sound.unlock();
+  };
 
   useEffect(() => {
     const released = hadPointerLock.current && !screen.pointerLocked;
@@ -159,31 +152,36 @@ export default function App() {
   ]);
   useEffect(() => {
     if (!started || !opening.complete) return;
-    setThought(
-      state.environment.lanternLit
-        ? THOUGHTS[state.stage]
-        : openingAt(22).narration,
+    setThought(moment.text);
+    if (moment.id === "light") return;
+    const timer = setTimeout(() => setThought(""), 10000);
+    return () => clearTimeout(timer);
+  }, [started, moment.id, moment.text, opening.complete]);
+  useEffect(() => {
+    if (!state.environment.eventCount) {
+      setRoomCaption("");
+      return;
+    }
+    setRoomCaption(
+      state.environment.lastEvent?.includes("fire")
+        ? "Glass breaks. Something catches fire."
+        : "Heavy blows at the cellar door.",
     );
-    const timer = setTimeout(() => setThought(""), 11000);
+    const timer = setTimeout(() => setRoomCaption(""), 8500);
     return () => clearTimeout(timer);
-  }, [started, state.stage, state.environment.lanternLit, opening.complete]);
+  }, [state.environment.eventCount]);
   useEffect(() => {
-    setSpeech(connection.speech);
-    const timer = setTimeout(() => setSpeech(""), 11000);
-    return () => clearTimeout(timer);
-  }, [connection.speech]);
-  useEffect(() => {
-    if (!started) lastOpeningSpeech.current = "";
+    if (!started) lastOpeningCall.current = 0;
     if (
       started &&
       !state.paused &&
-      opening.speech &&
-      opening.speech !== lastOpeningSpeech.current
+      opening.call &&
+      opening.call !== lastOpeningCall.current
     ) {
-      lastOpeningSpeech.current = opening.speech;
-      sound.speak(opening.speech);
+      lastOpeningCall.current = opening.call;
+      sound.call();
     }
-  }, [started, state.paused, opening.speech, sound]);
+  }, [started, state.paused, opening.call, sound]);
   useEffect(() => {
     if (typing) inputRef.current?.focus();
   }, [typing]);
@@ -257,17 +255,16 @@ export default function App() {
   }, [active, canSpeak, controller, fullscreen, look, sound, voice]);
 
   const start = (mode: PlayMode) => {
-    void fullscreen.enter();
+    void fullscreen.enter(mode === "live");
     void sound.unlock();
     voice.cancel();
     look.reset();
-    lastOpeningSpeech.current = "";
+    lastOpeningCall.current = 0;
     setTyping(false);
-    setSpeech("");
     void controller.start(mode);
   };
   const resume = () => {
-    void fullscreen.capture();
+    if (connection.mode === "live") void fullscreen.capture();
     controller.resume();
   };
   const submit = (event: FormEvent) => {
@@ -278,31 +275,14 @@ export default function App() {
     setTyping(false);
     void fullscreen.capture();
   };
-  const putDown = (): GameAction[] =>
-    state.holding
-      ? [{ kind: "place", item: state.holding, location: "tray" }]
-      : [];
   const rehearse = (actions: GameAction[]) => {
     controller.resume();
     void controller.rehearse(actions);
   };
-  const contact = (item: ItemId) =>
-    rehearse([
-      ...putDown(),
-      { kind: "adjust_lamp", position: "wound" },
-      { kind: "pick_up", item },
-      { kind: "speak", text: "I will be careful." },
-      {
-        kind: "use",
-        item,
-        target: item === "morphine" || item === "release" ? "patient" : "wound",
-        style: "gentle",
-      },
-    ]);
 
   return (
     <main
-      className={`game-shell ${started ? "in-operation" : "at-title"} ${reducedMotion ? "reduce-motion" : ""}`}
+      className={`game-shell ${connection.mode === "rehearsal" ? "guided-preview" : ""} ${started ? "in-operation" : "at-title"} ${reducedMotion ? "reduce-motion" : ""}`}
       style={
         {
           "--pain": state.patient.pain / 100,
@@ -313,8 +293,11 @@ export default function App() {
     >
       <div
         className="scene-wrap"
+        tabIndex={0}
+        aria-label="The cellar. Drag to look around."
         onPointerDown={(event) => {
           if (!active || typing) return;
+          event.currentTarget.focus({ preventScroll: true });
           event.currentTarget.setPointerCapture(event.pointerId);
           drag.current = {
             id: event.pointerId,
@@ -323,6 +306,7 @@ export default function App() {
           };
           if (
             event.pointerType === "mouse" &&
+            connection.mode === "live" &&
             screen.active &&
             !screen.pointerLocked
           )
@@ -363,11 +347,6 @@ export default function App() {
               {opening.narration}
             </p>
           )}
-          {opening.speech && (
-            <p className="opening-son" key={opening.speech}>
-              {opening.speech}
-            </p>
-          )}
         </section>
       )}
       <div className="vignette" aria-hidden="true" />
@@ -383,13 +362,41 @@ export default function App() {
           <p className="eyebrow">A FATHER. A SON. SOMETHING LEFT UNFINISHED.</p>
           <h1>Still Warm</h1>
           <p className="premise">You can hear him in the dark.</p>
-          <button className="begin" onClick={() => start("live")}>
+          <button
+            className="sound-choice"
+            aria-pressed={!muted}
+            onClick={toggleSound}
+          >
+            {muted ? "Sound off · Enable sound" : "Sound on · Mute"}
+          </button>
+          <button
+            className="begin"
+            onClick={() => start(preview ? "rehearsal" : "live")}
+          >
             Begin
           </button>
-          <button className="quiet" onClick={() => start("rehearsal")}>
-            Offline rehearsal
-          </button>
+          {preview ? (
+            <p className="preview-note">Guided preview · No model connection</p>
+          ) : (
+            <button className="quiet" onClick={() => start("rehearsal")}>
+              Offline rehearsal
+            </button>
+          )}
+          <p className="title-controls">
+            {preview
+              ? "Drag to look. Choose what to say. Select Stop to stop his hands."
+              : "Look around. Speak to him. Say “stop” at any time."}
+          </p>
         </section>
+      )}
+      {started && !terminal && (
+        <button
+          className="sound-toggle"
+          aria-pressed={!muted}
+          onClick={toggleSound}
+        >
+          {muted ? "Sound off" : "Sound on"}
+        </button>
       )}
       {active && !introPlaying && (
         <>
@@ -401,12 +408,22 @@ export default function App() {
             Ⅱ
           </button>
           <div className="inner-voice" aria-live="polite">
-            {thought}
+            {thought ||
+              (connection.needsInstruction && !busy
+                ? "He is waiting for my voice."
+                : "")}
           </div>
-          <div className="creature-speech" aria-live="polite">
-            {speech && <p>“{speech}”</p>}
-          </div>
+          {roomCaption && (
+            <p className="room-caption" role="status">
+              {roomCaption}
+            </p>
+          )}
           {interim && <p className="transcript">{interim}</p>}
+          {connection.mode === "rehearsal" && connection.error && (
+            <p className="voice-error" role="status">
+              {connection.error}
+            </p>
+          )}
           {voiceError && (
             <p className="voice-error" role="status">
               {voiceError} Press Enter to type.
@@ -428,7 +445,9 @@ export default function App() {
               </button>
             </form>
           ) : (
-            <div className={`controls ${state.elapsed > 12 ? "subdued" : ""}`}>
+            <div
+              className={`controls ${connection.turns > 0 ? "subdued" : ""}`}
+            >
               {connection.mode === "live" ? (
                 <>
                   <button
@@ -452,10 +471,39 @@ export default function App() {
                   <span>Drag to look</span>
                 </>
               ) : (
-                <button onClick={pause}>Rehearsal controls</button>
+                <span>Guided preview · Choose what to say</span>
               )}
             </div>
           )}
+          {connection.mode === "rehearsal" && !busy && (
+            <div className="preview-choices" aria-label="What to say">
+              {choices.map((choice) => (
+                <button
+                  key={choice.id}
+                  onClick={() => {
+                    setThought(`“${choice.label}”`);
+                    rehearse(choice.actions);
+                  }}
+                >
+                  {choice.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {connection.mode === "live" &&
+            connection.needsInstruction &&
+            !busy && (
+              <button
+                className="continue-task"
+                onClick={() =>
+                  controller.command(
+                    "Continue the task I gave you. Keep all my standing rules.",
+                  )
+                }
+              >
+                Keep going.
+              </button>
+            )}
           {busy && (
             <button className="stop-button" onClick={stop}>
               Stop
@@ -492,7 +540,9 @@ export default function App() {
             {connection.canResume && (
               <button onClick={resume}>Continue this operation</button>
             )}
-            <button onClick={() => start("live")}>Start again</button>
+            <button onClick={() => start(preview ? "rehearsal" : "live")}>
+              Start again
+            </button>
           </section>
         </div>
       )}
@@ -505,16 +555,15 @@ export default function App() {
               <h2>Take a breath.</h2>
               <button onClick={resume}>Continue</button>
               {screen.supported && (
-                <button onClick={() => void fullscreen.enter()}>
+                <button
+                  onClick={() =>
+                    void fullscreen.enter(connection.mode === "live")
+                  }
+                >
                   Fullscreen
                 </button>
               )}
-              <button
-                onClick={() => {
-                  sound.setMuted(!muted);
-                  setMuted(!muted);
-                }}
-              >
+              <button onClick={toggleSound}>
                 {muted ? "Enable sound" : "Mute sound"}
               </button>
               <button onClick={() => setReducedMotion(!reducedMotion)}>
@@ -538,65 +587,7 @@ export default function App() {
                   </button>
                 ))}
               </details>
-              {connection.mode === "rehearsal" && (
-                <details open>
-                  <summary>Offline rehearsal</summary>
-                  <button onClick={() => rehearse([{ kind: "light_lantern" }])}>
-                    Ask him to light the lantern
-                  </button>
-                  <button
-                    onClick={() =>
-                      rehearse([
-                        { kind: "react", stimulus: "reassure" },
-                        { kind: "speak", text: "I will lift it. Stay still." },
-                        { kind: "lift_debris", style: "gentle" },
-                      ])
-                    }
-                  >
-                    Ask him to lift the beam
-                  </button>
-                  <button
-                    onClick={() =>
-                      contact(
-                        state.stage === "covered"
-                          ? "cloth"
-                          : state.stage === "exposed"
-                            ? "forceps"
-                            : state.stage === "extracted"
-                              ? "suture"
-                              : state.stage === "closed"
-                                ? "cloth"
-                                : "release",
-                      )
-                    }
-                  >
-                    Next surgical action
-                  </button>
-                  <button
-                    onClick={() =>
-                      rehearse([
-                        ...putDown(),
-                        { kind: "pick_up", item: "scissors" },
-                        {
-                          kind: "use",
-                          item: "scissors",
-                          target: "wig",
-                          style: "gentle",
-                        },
-                        { kind: "place", item: "scissors", location: "tray" },
-                        { kind: "pick_up", item: "needle" },
-                        { kind: "combine", first: "needle", second: "thread" },
-                      ])
-                    }
-                  >
-                    Prepare suture
-                  </button>
-                  <button onClick={() => contact("morphine")}>
-                    Ask for relief
-                  </button>
-                </details>
-              )}
-              <button onClick={() => start("live")}>
+              <button onClick={() => start(preview ? "rehearsal" : "live")}>
                 Start a new operation
               </button>
               <p className="small">
@@ -610,12 +601,20 @@ export default function App() {
         <div className="modal-shade ending">
           <section className="modal">
             <h2>
-              {state.phase === "won" ? "Still warm." : "The room goes quiet."}
+              {state.outcome === "saved"
+                ? "Still warm."
+                : state.outcome === "creature_lost"
+                  ? "No answer."
+                  : "The room goes quiet."}
             </h2>
             <p>
-              {state.phase === "won"
-                ? "He moves aside. The door is still there."
-                : "You cannot tell him what to do anymore."}
+              {state.outcome === "saved"
+                ? "His hand stays under your head. You can feel each breath. He will not let go."
+                : state.outcome === "fire"
+                  ? "Smoke fills your lungs. His face disappears."
+                  : state.outcome === "creature_lost"
+                    ? "You call for your son. This time, he does not move."
+                    : "Your skin is cold. You try to speak, but no sound comes."}
             </p>
             <button onClick={() => start(connection.mode)}>Begin again</button>
           </section>

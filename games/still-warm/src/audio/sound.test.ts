@@ -45,9 +45,21 @@ class FakeBiquadFilterNode extends FakeAudioNode {
   Q = new FakeAudioParam(1);
 }
 
+class FakeBufferSource extends FakeAudioNode {
+  buffer: unknown = null;
+  onended: (() => void) | null = null;
+  start = vi.fn();
+  stop = vi.fn();
+}
+
 class FakeAudioContext {
   state: "suspended" | "running" | "closed" = "running";
   currentTime = 1.0;
+  sampleRate = 24000;
+  createBuffer = vi.fn((_channels: number, length: number) => ({
+    getChannelData: () => new Float32Array(length),
+  }));
+  createBufferSource = vi.fn(() => new FakeBufferSource());
   destination = new FakeAudioNode();
 
   createGain = vi.fn(() => new FakeGainNode());
@@ -86,6 +98,24 @@ describe("SurgerySound", () => {
     expect(() => sound.dispose()).not.toThrow();
   });
 
+  it("starts silent and blocks speech until sound is enabled", async () => {
+    const ctx = new FakeAudioContext();
+    const sound = new SurgerySound({
+      audioContextFactory: () => ctx as unknown as AudioContext,
+    });
+    await sound.unlock();
+    const master = ctx.createGain.mock.results[0].value;
+    expect(master.gain.value).toBe(0);
+    const count = ctx.createBufferSource.mock.calls.length;
+    sound.call();
+    expect(ctx.createBufferSource).toHaveBeenCalledTimes(count);
+    sound.setMuted(false);
+    expect(master.gain.value).toBe(1);
+    sound.call();
+    expect(ctx.createBufferSource.mock.calls.length).toBeGreaterThan(count);
+    sound.dispose();
+  });
+
   it("lazily unlocks AudioContext and sets up hum graph", async () => {
     let mockCtx: FakeAudioContext | null = null;
     const sound = new SurgerySound({
@@ -115,27 +145,19 @@ describe("SurgerySound", () => {
     sound.setMuted(false);
   });
 
-  it("uses low wordless pulses and cancels all scheduled syllables on STOP", async () => {
+  it("plays a wordless call and disconnects it on STOP", async () => {
     const ctx = new FakeAudioContext();
     const sound = new SurgerySound({
       audioContextFactory: () => ctx as unknown as AudioContext,
     });
+    sound.setMuted(false);
     await sound.unlock();
-    const before = ctx.createOscillator.mock.results.length;
-    sound.speak("Dah? WHERE DAH?");
-    const syllables = ctx.createOscillator.mock.results
-      .slice(before)
-      .map((result) => result.value);
-    expect(syllables).toHaveLength(3);
-    for (const oscillator of syllables) {
-      expect(oscillator.type).toBe("sawtooth");
-      const frequency = oscillator.frequency.setValueAtTime.mock.calls[0][0];
-      expect(frequency).toBeGreaterThanOrEqual(49);
-      expect(frequency).toBeLessThanOrEqual(67);
-    }
+    sound.call();
+    const call = ctx.createBufferSource.mock.results[0].value;
+    expect(call.start).toHaveBeenCalledOnce();
     sound.stopSpeech();
-    for (const oscillator of syllables)
-      expect(oscillator.stop).toHaveBeenLastCalledWith(ctx.currentTime);
+    expect(call.stop).toHaveBeenCalledWith(ctx.currentTime);
+    expect(call.disconnect).toHaveBeenCalledOnce();
     sound.dispose();
   });
 
@@ -144,18 +166,19 @@ describe("SurgerySound", () => {
     const sound = new SurgerySound({
       audioContextFactory: () => ctx as unknown as AudioContext,
     });
+    sound.setMuted(false);
     await sound.unlock();
-    sound.speak("Dah");
-    const vocal = ctx.createOscillator.mock.results.at(-1)!.value;
+    sound.call();
+    const vocal = ctx.createBufferSource.mock.results.at(-1)!.value;
     sound.setMuted(true);
     expect(vocal.stop).toHaveBeenLastCalledWith(ctx.currentTime);
-    const count = ctx.createOscillator.mock.calls.length;
-    sound.speak("Dah");
-    expect(ctx.createOscillator).toHaveBeenCalledTimes(count);
+    const count = ctx.createBufferSource.mock.calls.length;
+    sound.call();
+    expect(ctx.createBufferSource).toHaveBeenCalledTimes(count);
     sound.dispose();
     sound.setMuted(false);
-    sound.speak("Dah");
-    expect(ctx.createOscillator).toHaveBeenCalledTimes(count);
+    sound.call();
+    expect(ctx.createBufferSource).toHaveBeenCalledTimes(count);
   });
 
   it("pauses continuous audio when game is paused or ready or terminal", async () => {
@@ -206,6 +229,7 @@ describe("SurgerySound", () => {
       const sound = new SurgerySound({
         audioContextFactory: () => mockCtx as unknown as AudioContext,
       });
+      sound.setMuted(false);
       await sound.unlock();
 
       const playingState: GameState = {
@@ -250,6 +274,7 @@ describe("SurgerySound", () => {
     const sound = new SurgerySound({
       audioContextFactory: () => mockCtx as unknown as AudioContext,
     });
+    sound.setMuted(false);
     await sound.unlock();
     const ready = createInitialState();
     sound.update(ready);
@@ -274,6 +299,7 @@ describe("SurgerySound", () => {
       },
     });
 
+    sound.setMuted(false);
     await sound.unlock();
 
     let state: GameState = {

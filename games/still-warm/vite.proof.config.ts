@@ -20,13 +20,13 @@ export default defineConfig({
   cacheDir: "node_modules/.vite-proof",
   esbuild: { target: "es2022" },
   optimizeDeps: {
-    entries: ["proof.html", "scene.html"],
+    entries: ["proof.html", "scene.html", "play.html"],
     esbuildOptions: { target: "es2022" },
   },
   build: {
     target: "es2022",
     outDir: "dist-proof",
-    rollupOptions: { input: ["proof.html", "scene.html"] },
+    rollupOptions: { input: ["proof.html", "scene.html", "play.html"] },
   },
   server: {
     host: "127.0.0.1",

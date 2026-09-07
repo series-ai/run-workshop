@@ -1,7 +1,7 @@
 :root {
   font-family: Georgia, "Times New Roman", serif;
   color: #bdc0b7;
-  background: #050509;
+  background: #050605;
   color-scheme: dark;
   font-synthesis: none;
 }
@@ -50,7 +50,7 @@ input {
   height: 100dvh;
   min-height: 400px;
   overflow: hidden;
-  background: #050509;
+  background: #050605;
 }
 .scene-wrap {
   position: absolute;
@@ -80,7 +80,7 @@ input {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
 }
 .blood-loss {
-  box-shadow: inset 0 0 160px #230817;
+  box-shadow: inset 0 0 160px #2b100b;
   opacity: calc(var(--blood-loss) * 1.8 + var(--pain) * 0.22);
   background: radial-gradient(ellipse, transparent 30%, #020207ad);
   transition: opacity 2s;
@@ -101,7 +101,7 @@ input {
     10px "Courier New",
     monospace;
   letter-spacing: 0.28em;
-  color: #85828d;
+  color: #898878;
 }
 .intro h1 {
   font-size: clamp(55px, 8vw, 105px);
@@ -113,7 +113,7 @@ input {
 .premise {
   font-size: 17px;
   font-style: italic;
-  color: #8e8b93;
+  color: #969382;
 }
 .begin {
   display: block;
@@ -153,30 +153,12 @@ input {
   font-size: 17px;
   font-style: italic;
   line-height: 1.6;
-  color: #b0aeb4;
+  color: #c2bcaa;
   text-shadow: 0 2px 15px #000;
   pointer-events: none;
   animation: thought-in 2s both;
 }
-.creature-speech {
-  position: absolute;
-  bottom: 13%;
-  left: 50%;
-  width: min(670px, 86%);
-  transform: translateX(-50%);
-  text-align: center;
-  font-size: 20px;
-  line-height: 1.5;
-  color: #ccd0c5;
-  text-shadow: 0 2px 12px #000;
-  pointer-events: none;
-}
-.creature-speech p {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
-}
+
 .controls {
   position: absolute;
   bottom: 23px;
@@ -189,7 +171,7 @@ input {
   font:
     10px "Courier New",
     monospace;
-  color: #8d8b98;
+  color: #a09e8a;
   transition: opacity 3s;
 }
 .controls button {
@@ -265,7 +247,7 @@ input {
 .modal-shade {
   position: absolute;
   inset: 0;
-  background: #04040ad9;
+  background: #050604ed;
   backdrop-filter: blur(9px);
   display: grid;
   place-items: center;
@@ -286,7 +268,7 @@ input {
   margin-bottom: 24px;
 }
 .modal > p {
-  color: #8e8a97;
+  color: #aaa38e;
   font-size: 15px;
   line-height: 1.65;
   margin: 16px 0;
@@ -304,7 +286,7 @@ input {
   font:
     10px/1.8 "Courier New",
     monospace;
-  color: #716c7b;
+  color: #898473;
   margin-top: 26px;
 }
 .modal details {
@@ -312,7 +294,7 @@ input {
   margin: 15px 0;
   padding-top: 12px;
   font-size: 12px;
-  color: #8e8395;
+  color: #a29c85;
 }
 .modal summary {
   cursor: pointer;
@@ -358,7 +340,7 @@ input {
   animation: drift 10s infinite;
 }
 .ending {
-  background: #030308ec;
+  background: #030403f2;
 }
 .ending h2 {
   font-size: 60px;
@@ -399,10 +381,7 @@ input {
     font-size: 15px;
     top: 65%;
   }
-  .creature-speech {
-    font-size: 17px;
-    bottom: 17%;
-  }
+
   .controls {
     bottom: 22px;
     gap: 7px;
@@ -476,20 +455,7 @@ input {
   white-space: pre-line;
   animation: story-appear 1.3s ease both;
 }
-.opening-son {
-  color: #d4cbb6;
-  font:
-    600 clamp(23px, 3vw, 36px)/1.5 "Courier New",
-    monospace;
-  letter-spacing: 0.075em;
-  text-align: center;
-  animation: story-appear 0.5s ease both;
-}
-.creature-speech {
-  font-family: "Courier New", monospace;
-  font-weight: 600;
-  letter-spacing: 0.045em;
-}
+
 .at-title .intro {
   z-index: 20;
 }
@@ -502,8 +468,7 @@ input {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .opening-narration,
-  .opening-son {
+  .opening-narration {
     animation: none;
   }
 }
@@ -513,4 +478,137 @@ input {
   inset: 0;
   background: #000;
   opacity: calc(1 - var(--eye-open) * 4);
+}
+
+.scene-wrap:focus {
+  outline: none;
+}
+.sound-choice,
+.sound-toggle,
+.preview-note,
+.title-controls,
+.room-caption {
+  font:
+    10px/1.7 "Courier New",
+    monospace;
+  letter-spacing: 0.06em;
+}
+.sound-choice {
+  display: block;
+  margin: 28px auto 0;
+  padding: 12px;
+  color: #aaa38e;
+}
+.begin {
+  margin-top: 12px;
+}
+.preview-note {
+  margin-top: 18px;
+  color: #7b7b6b;
+}
+.title-controls {
+  margin-top: 40px;
+  color: #8a8877;
+}
+.sound-toggle {
+  position: absolute;
+  top: 19px;
+  left: 20px;
+  padding: 12px;
+  color: #a5a08b;
+  z-index: 16;
+  opacity: 0.7;
+}
+.sound-toggle:hover {
+  opacity: 1;
+}
+.room-caption {
+  position: absolute;
+  top: 12%;
+  width: 100%;
+  text-align: center;
+  color: #a39f8a;
+  pointer-events: none;
+  text-shadow: 0 2px 8px #000;
+}
+.preview-choices {
+  position: absolute;
+  bottom: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, 86%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.preview-choices button,
+.continue-task {
+  padding: 9px 16px;
+  color: #d0c5ac;
+  font-size: 15px;
+  font-style: italic;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #060805b8 25%,
+    #060805b8 75%,
+    transparent
+  );
+  text-shadow: 0 2px 8px #000;
+}
+.preview-choices button:hover,
+.continue-task:hover {
+  color: #fff1ce;
+}
+.guided-preview .inner-voice {
+  top: 60%;
+}
+
+.continue-task {
+  position: absolute;
+  bottom: 78px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.ending {
+  animation: darken 3s both;
+}
+.ending .modal {
+  width: min(520px, 100%);
+}
+.ending .modal > p {
+  font-style: italic;
+  font-size: 18px;
+}
+@media (max-height: 600px) {
+  .intro h1 {
+    font-size: 56px;
+    margin: 8px 0;
+  }
+  .title-controls {
+    margin-top: 16px;
+  }
+  .sound-choice {
+    margin-top: 12px;
+  }
+  .preview-choices {
+    bottom: 48px;
+    gap: 0;
+  }
+  .preview-choices button {
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+  .guided-preview .inner-voice {
+    top: 48%;
+    font-size: 14px;
+  }
+}
+
+.guided-preview .voice-error {
+  top: 19%;
+  bottom: auto;
+  color: #c3b496;
+  text-shadow: 0 2px 10px #000;
 }

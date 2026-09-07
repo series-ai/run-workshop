@@ -35,8 +35,9 @@ export const Room: FC<RoomProps> = ({
     if (doorRef.current) {
       if (doorState === "knocking" && !reducedMotion) {
         // Rhythmic violent thumping bursts
-        const thump = Math.sin(t * 16);
-        const impulse = thump > 0.7 ? (thump - 0.7) * 0.08 : 0;
+        const burst = t % 11;
+        const thump = Math.sin(burst * 16);
+        const impulse = burst < 1.6 && thump > 0.7 ? (thump - 0.7) * 0.05 : 0;
         doorRef.current.position.z = -0.07 - impulse;
         doorRef.current.rotation.y = impulse * 0.5;
       } else {
@@ -202,6 +203,11 @@ export const Room: FC<RoomProps> = ({
           </group>
         )}
       </group>
+
+      <mesh position={[1.35, -0.889, 2.16]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[0.66, 0.38]} />
+        <meshBasicMaterial color="#827b54" transparent opacity={0.18} depthWrite={false} />
+      </mesh>
 
       {/* ── Left Wall with Alcove ── */}
       <mesh

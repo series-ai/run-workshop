@@ -4,17 +4,13 @@ export function openingAt(elapsed: number) {
   const eyes = Math.max(0, Math.min(1, (elapsed - 9) / 5));
   const narration =
     elapsed < 6
-      ? "Total blackness. Something heavy is pushing down on your chest. Pain everywhere. Then you hear your boy’s voice."
+      ? "Something heavy is pushing down on my chest. Pain everywhere."
       : elapsed >= 13 && elapsed < 17
-        ? "You can hear the anxiety in your son’s voice."
+        ? "It’s my boy. He sounds scared."
         : elapsed >= 20
-          ? "It’s dark. Maybe you can get him to light the lantern you keep on your workbench."
+          ? "It’s dark. The lantern is on my workbench. He can reach it."
           : "";
-  const speech =
-    elapsed >= 6 && elapsed < 9
-      ? "Dah? DAH?"
-      : elapsed >= 17 && elapsed < 20
-        ? "DAH? WHERE DAH?"
-        : "";
-  return { eyes, narration, speech, complete: elapsed >= OPENING_DURATION };
+  const call =
+    elapsed >= 6 && elapsed < 9 ? 1 : elapsed >= 17 && elapsed < 20 ? 2 : 0;
+  return { eyes, narration, call, complete: elapsed >= OPENING_DURATION };
 }

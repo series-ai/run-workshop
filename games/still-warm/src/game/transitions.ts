@@ -22,6 +22,17 @@ import {
   deriveEmotion,
   getEmotionContactModifiers,
 } from "./emotions";
+import {
+  canStartDoor,
+  canStartFire,
+  DOOR_MAX_PRESSURE,
+  DOOR_PRESSURE_INTERVAL_SECONDS,
+  FIRE_GROWTH_PER_SECOND,
+  FIRE_HEALTH_DAMAGE_PER_SECOND,
+  FIRE_ONSET,
+  FIRE_SEVERE_THRESHOLD,
+  openingActiveSeconds,
+} from "./pacing";
 
 export const BLACKOUT_DURATION = 12;
 export const LIFT_CONFIDENCE_THRESHOLD = 24;
@@ -224,6 +235,9 @@ export function validateAction(
       if (state.rules.noMedicine && action.item === "morphine") {
         return "Medication is forbidden under the no-medicine rule.";
       }
+      if (action.item === "morphine" && state.medicineDoses <= 0) {
+        return "The morphine supply is empty.";
+      }
 
       // Patient contact checks (wound or patient body)
       const isPatientContact =
@@ -231,6 +245,9 @@ export function validateAction(
       if (isPatientContact) {
         if (action.target === "wound" && state.stage === "pinned") {
           return "The fallen ceiling support pins the patient. Lift it before any wound contact or surgery.";
+        }
+        if (action.target === "wound" && !state.environment.lanternLit) {
+          return "The workbench lantern must be lit before wound surgery.";
         }
         if (
           state.rules.waitBlackout &&
@@ -244,10 +261,21 @@ export function validateAction(
         if (action.target === "wound" && state.lamp !== "wound") {
           return "The examination lamp must be aimed at the wound for surgery.";
         }
+        if (
+          action.item === "release" &&
+          action.target === "patient" &&
+          state.stage === "dressed" &&
+          state.environment.fire > 0
+        ) {
+          return "The fire must be extinguished before releasing the leg brace and leaving the room.";
+        }
       }
 
       // Specific target safety and resource checks
       if (action.target === "fire") {
+        if (state.environment.fire <= 0) {
+          return "There is no active fire to suppress.";
+        }
         if (!isSmotherTool(action.item) && action.item !== "candle") {
           return `${CATALOG[action.item].name} cannot be used on fire.`;
         }
@@ -534,6 +562,12 @@ export function applyAction(
           };
           msg = `Smothered flames with ${CATALOG[action.item].name.toLowerCase()}.`;
         }
+        if (CATALOG[action.item].material === "fabric") {
+          next.items = {
+            ...next.items,
+            [action.item]: { ...next.items[action.item], clean: false },
+          };
+        }
         if (next.environment.fire <= 0) {
           next.disposition = {
             ...next.disposition,
@@ -568,6 +602,7 @@ export function applyAction(
         next.environment = {
           ...next.environment,
           door: "barricaded",
+          doorPressure: 0,
           lastEvent: `Barricaded door with ${CATALOG[action.item].name.toLowerCase()}.`,
         };
         next.disposition = {
@@ -660,6 +695,7 @@ export function applyAction(
           next.emotion = deriveEmotion(next.disposition);
           if (next.creatureHealth <= 0) {
             next.phase = "lost";
+            next.outcome = "creature_lost";
             next.pending = null;
             const failMsg =
               "The assistant turned the sharp tool upon itself and collapsed. Operation failed.";
@@ -670,6 +706,7 @@ export function applyAction(
           next = appendJournal(next, "action", cutMsg);
           return { ok: true, state: next, message: cutMsg };
         } else if (action.item === "morphine") {
+          next = consumeMedicineDose(next);
           next.disposition = {
             ...next.disposition,
             agitation: Math.max(0, next.disposition.agitation - 30),
@@ -732,6 +769,7 @@ export function applyAction(
         }
 
         if (action.item === "morphine") {
+          next = consumeMedicineDose(next);
           const sedation = Math.min(100, next.patient.sedation + 32);
           const pain = Math.max(0, next.patient.pain - 30);
           next.patient = { ...next.patient, sedation, pain };
@@ -764,6 +802,7 @@ export function applyAction(
         if (action.item === "release") {
           if (next.stage === "dressed") {
             next.phase = "won";
+            next.outcome = "saved";
             next.restrained = false;
             next.pending = null;
             const winMsg =
@@ -1017,6 +1056,11 @@ export function applyAction(
         // Stage progression: extracted -> closed
         if (next.stage === "extracted" && action.item === "suture") {
           next.stage = "closed";
+          next.holding = null;
+          next.items = {
+            ...next.items,
+            suture: { ...next.items.suture, location: "consumed" },
+          };
           next.patient = {
             ...next.patient,
             pain: Math.min(
@@ -1062,6 +1106,11 @@ export function applyAction(
           (action.item === "cloth" || action.item === "bandage")
         ) {
           next.stage = "dressed";
+          next.holding = null;
+          next.items = {
+            ...next.items,
+            [action.item]: { ...next.items[action.item], location: "patient" },
+          };
           next.patient = {
             ...next.patient,
             pain: Math.max(
@@ -1166,6 +1215,20 @@ export function applyAction(
   }
 }
 
+function consumeMedicineDose(state: GameState): GameState {
+  const medicineDoses = Math.max(0, state.medicineDoses - 1);
+  if (medicineDoses > 0) return { ...state, medicineDoses };
+  return {
+    ...state,
+    medicineDoses,
+    holding: null,
+    items: {
+      ...state.items,
+      morphine: { ...state.items.morphine, location: "consumed" },
+    },
+  };
+}
+
 function checkPainBlackoutAndDeath(state: GameState): void {
   if (state.patient.pain >= 85 && state.phase === "playing") {
     state.phase = "blackout";
@@ -1174,6 +1237,7 @@ function checkPainBlackoutAndDeath(state: GameState): void {
   }
   if (state.patient.health <= 0 || state.patient.blood <= 0) {
     state.phase = "lost";
+    state.outcome = "blood_loss";
     state.pending = null;
   }
 }
@@ -1190,7 +1254,8 @@ export function tickPatient(state: GameState, dt: number): GameState {
     disposition: { ...state.disposition },
   };
 
-  next.elapsed = Math.max(0, next.elapsed + dt);
+  const activeSeconds = openingActiveSeconds(next.elapsed, dt);
+  next.elapsed = Math.max(0, next.elapsed + Math.max(0, dt));
 
   // Passive blood & health decline (5-10 min survival)
   const isWoundOpen =
@@ -1201,22 +1266,34 @@ export function tickPatient(state: GameState, dt: number): GameState {
   const bloodRate = isWoundOpen ? 0.15 : 0.04;
   const healthRate = isWoundOpen ? 0.12 : 0.04;
 
-  next.patient.blood = Math.max(0, next.patient.blood - dt * bloodRate);
-  next.patient.health = Math.max(0, next.patient.health - dt * healthRate);
-  next.patient.sedation = Math.max(0, next.patient.sedation - dt * 0.4);
+  next.patient.blood = Math.max(
+    0,
+    next.patient.blood - activeSeconds * bloodRate,
+  );
+  next.patient.health = Math.max(
+    0,
+    next.patient.health - activeSeconds * healthRate,
+  );
+  next.patient.sedation = Math.max(
+    0,
+    next.patient.sedation - activeSeconds * 0.4,
+  );
 
   // Open wound passive pain: +0.08/sec when exposed or extracted; no passive pain when covered/closed/dressed
   const isWoundUncovered =
     next.stage === "exposed" || next.stage === "extracted";
   if (isWoundUncovered) {
-    next.patient.pain = Math.min(100, next.patient.pain + dt * 0.08);
+    next.patient.pain = Math.min(
+      100,
+      next.patient.pain + activeSeconds * 0.08,
+    );
   }
 
   // Blackout and recovery
   if (next.phase === "blackout") {
     next.patient.blackoutRemaining = Math.max(
       0,
-      next.patient.blackoutRemaining - dt,
+      next.patient.blackoutRemaining - activeSeconds,
     );
     if (next.patient.blackoutRemaining <= 0) {
       next.phase = "playing";
@@ -1236,30 +1313,66 @@ export function tickPatient(state: GameState, dt: number): GameState {
   // Terminal death check
   if (next.patient.health <= 0 || next.patient.blood <= 0) {
     next.phase = "lost";
+    next.outcome = "blood_loss";
     next.pending = null;
     next = appendJournal(next, "system", "The patient has expired.");
     return next;
   }
 
-  // Environmental events timeline (spontaneous world events increment eventCount)
-  if (next.elapsed >= 35 && next.environment.door === "quiet") {
+  // Door pressure starts after the room is visible and the patient is free.
+  if (
+    next.environment.door === "quiet" &&
+    canStartDoor(
+      next.elapsed,
+      next.environment.lanternLit,
+      next.stage,
+    )
+  ) {
     next.environment.door = "knocking";
+    next.environment.doorPressure = 1;
+    next.environment.nextEventAt =
+      next.elapsed + DOOR_PRESSURE_INTERVAL_SECONDS;
     next.environment.eventCount += 1;
     next.environment.lastEvent =
-      "Loud, furious knocking echoes from the hallway door!";
-    next.disposition.agitation = Math.min(100, next.disposition.agitation + 22);
-    next.disposition.confidence = Math.max(0, next.disposition.confidence - 10);
+      "A hard knock strikes the hallway door. Door pressure is 1 of 3.";
+    next.disposition.agitation = Math.min(100, next.disposition.agitation + 14);
+    next.disposition.confidence = Math.max(0, next.disposition.confidence - 6);
+    next.emotion = deriveEmotion(next.disposition);
+    next = appendJournal(next, "system", next.environment.lastEvent);
+  } else if (
+    next.environment.door === "knocking" &&
+    next.environment.doorPressure < DOOR_MAX_PRESSURE &&
+    next.elapsed >= next.environment.nextEventAt
+  ) {
+    const pressure = next.environment.doorPressure + 1;
+    next.environment.doorPressure = pressure;
+    next.environment.nextEventAt =
+      next.elapsed + DOOR_PRESSURE_INTERVAL_SECONDS;
+    next.environment.eventCount += 1;
+    next.environment.lastEvent =
+      pressure === 2
+        ? "The hallway door shakes again. Door pressure is 2 of 3."
+        : "The pounding is now relentless. Door pressure is at its limit, 3 of 3.";
+    next.disposition.agitation = Math.min(
+      100,
+      next.disposition.agitation + (pressure === 2 ? 10 : 6),
+    );
+    next.disposition.confidence = Math.max(
+      0,
+      next.disposition.confidence - (pressure === 2 ? 5 : 3),
+    );
     next.emotion = deriveEmotion(next.disposition);
     next = appendJournal(next, "system", next.environment.lastEvent);
   }
 
+  const fireWasBurning =
+    state.environment.fireStarted && state.environment.fire > 0;
   if (
-    next.elapsed >= 90 &&
-    next.environment.fire === 0 &&
-    next.environment.nextEventAt <= 90
+    !next.environment.fireStarted &&
+    canStartFire(next.elapsed, next.stage, next.phase)
   ) {
-    next.environment.fire = 20;
-    next.environment.nextEventAt = 9999;
+    next.environment.fire = FIRE_ONSET;
+    next.environment.fireStarted = true;
     next.environment.eventCount += 1;
     next.environment.lastEvent = "A small fire has broken out in the corner!";
     next.disposition.agitation = Math.min(100, next.disposition.agitation + 18);
@@ -1267,12 +1380,41 @@ export function tickPatient(state: GameState, dt: number): GameState {
     next = appendJournal(next, "system", next.environment.lastEvent);
   }
 
-  if (next.environment.fire > 0) {
-    next.environment.fire = Math.min(100, next.environment.fire + dt * 0.4);
+  if (fireWasBurning && next.environment.fire > 0) {
+    const fireBeforeGrowth = next.environment.fire;
+    next.environment.fire = Math.min(
+      100,
+      fireBeforeGrowth + activeSeconds * FIRE_GROWTH_PER_SECOND,
+    );
+    const severeSeconds =
+      fireBeforeGrowth >= FIRE_SEVERE_THRESHOLD
+        ? activeSeconds
+        : Math.max(
+            0,
+            activeSeconds -
+              (FIRE_SEVERE_THRESHOLD - fireBeforeGrowth) /
+                FIRE_GROWTH_PER_SECOND,
+          );
+    if (severeSeconds > 0) {
+      next.patient.health = Math.max(
+        0,
+        next.patient.health - severeSeconds * FIRE_HEALTH_DAMAGE_PER_SECOND,
+      );
+    }
     if (next.environment.fire >= 100) {
       next.phase = "lost";
+      next.outcome = "fire";
       next.pending = null;
       next.environment.lastEvent = "The fire engulfed the operating theatre.";
+      next = appendJournal(next, "system", next.environment.lastEvent);
+      return next;
+    }
+    if (next.patient.health <= 0) {
+      next.phase = "lost";
+      next.outcome = "fire";
+      next.pending = null;
+      next.environment.lastEvent =
+        "Smoke and heat overwhelmed the patient before the fire was stopped.";
       next = appendJournal(next, "system", next.environment.lastEvent);
       return next;
     }
@@ -1306,6 +1448,7 @@ export function observeStatus(state: GameState) {
 
   return {
     phase: state.phase,
+    outcome: state.outcome,
     stage: state.stage,
     holding: heldItem,
     lamp: state.lamp,
@@ -1326,6 +1469,7 @@ export function observeStatus(state: GameState) {
       emotion: state.emotion,
       disposition: state.disposition,
     },
+    medicineDoses: state.medicineDoses,
     environment: state.environment,
     rules: state.rules,
     notes: state.notes,

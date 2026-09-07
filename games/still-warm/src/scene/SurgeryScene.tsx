@@ -3,6 +3,8 @@ import { createHandSocket } from "./types";
 import { Canvas } from "@react-three/fiber";
 import type { GameState } from "../game/model";
 import { COLORS } from "./palette";
+import { CellarStory } from "./CellarStory";
+import { SceneLighting } from "./SceneLighting";
 import { Room } from "./Room";
 import { PatientTorso } from "./PatientTorso";
 import { Lamp } from "./Lamp";
@@ -81,40 +83,8 @@ export const SurgeryScene: FC<SurgeryScenePropsInterface> = ({
           reducedMotion={reducedMotion}
         />
 
-        {/* ── Scene Illumination (Balanced so scene is never pitch dark) ── */}
-        <ambientLight intensity={lit ? 0.45 : 0.12} color="#8c9277" />
-        <pointLight
-          position={[0.1, 0.45, -0.65]}
-          intensity={lit ? 0.6 : 0.04}
-          color="#bcc4a3"
-          distance={3.5}
-          decay={1.5}
-        />
-        <pointLight
-          position={[-0.35, 1.15, -1.2]}
-          intensity={lit ? 3.2 : 0.04}
-          color="#bcc3a6"
-          distance={6}
-          decay={2}
-        />
-        <pointLight
-          position={[-1.8, 1.5, 1.2]}
-          intensity={lit ? 1.2 : 0}
-          color="#b49968"
-          distance={5}
-          decay={2}
-        />
-        <directionalLight
-          position={[-2.5, 3, 2]}
-          intensity={lit ? 0.3 : 0.1}
-          color="#68745d"
-        />
-        <pointLight
-          position={[0, -0.6, 0.4]}
-          intensity={lit ? 0.1 : 0}
-          color="#35373d"
-          distance={2.5}
-        />
+        <SceneLighting lit={lit} paused={isPaused} />
+        <CellarStory lit={lit} paused={isPaused} reducedMotion={reducedMotion} />
 
         {/* Cellar Room: Tiled walls, gothic ribs, table, cabinet, tray, environmental fire & door */}
         <Room

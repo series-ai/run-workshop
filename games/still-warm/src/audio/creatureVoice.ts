@@ -1,73 +1,101 @@
-// Subtitles control the rhythm. No intelligible words enter the audio system.
+// Calls use breath, uneven pitch, and throat resonance. They contain no words.
+export function renderCreatureCall(
+  sampleRate: number,
+  seed: number,
+): Float32Array {
+  const samples = new Float32Array(Math.ceil(sampleRate * 2.6));
+  let random = seed >>> 0;
+  let phase = 0;
+  let breath = 0;
+  let previous = 0;
+  let older = 0;
+  const resonance = 260 + (seed % 110);
+  const radius = Math.exp((-Math.PI * 160) / sampleRate);
+  const coefficient =
+    2 * radius * Math.cos((2 * Math.PI * resonance) / sampleRate);
+  const pitch = 46 + (seed % 13);
+  for (let i = 0; i < samples.length; i++) {
+    const time = i / sampleRate;
+    random = (Math.imul(random, 1664525) + 1013904223) >>> 0;
+    const noise = random / 2147483648 - 1;
+    breath +=
+      (1 - Math.exp((-2 * Math.PI * 1450) / sampleRate)) * (noise - breath);
+    const first = Math.max(0, Math.min(1, (time - 0.04) / 0.96));
+    const second = Math.max(0, Math.min(1, (time - 1.3) / 1.2));
+    const envelope =
+      Math.pow(Math.sin(Math.PI * first), 1.4) * 0.75 +
+      Math.pow(Math.sin(Math.PI * second), 1.6);
+    const effort =
+      1 + 0.045 * Math.sin(time * 23) + 0.018 * Math.sin(time * 113);
+    phase += (2 * Math.PI * pitch * (1 - time * 0.075) * effort) / sampleRate;
+    const creak = 0.65 + 0.35 * Math.pow((1 + Math.sin(phase * 0.49)) * 0.5, 4);
+    const throat = Math.tanh(
+      2.2 *
+        (Math.sin(phase) +
+          0.45 * Math.sin(phase * 2) +
+          0.2 * Math.sin(phase * 3)),
+    );
+    const resonant =
+      (1 - radius) * (throat * creak + breath * 0.9) +
+      coefficient * previous -
+      radius * radius * older;
+    older = previous;
+    previous = resonant;
+    const exhale = breath * (0.28 + (0.3 * time) / 2.6);
+    samples[i] =
+      Math.tanh(resonant * 1.7 + Math.sin(phase * 0.5) * 0.2 + exhale) *
+      envelope *
+      0.16;
+  }
+  return samples;
+}
+
 export class CreatureVoice {
-  private active = new Set<{ oscillator: OscillatorNode; gain: GainNode }>();
+  private active: { source: AudioBufferSourceNode; gain: GainNode } | null =
+    null;
+  private calls = 0;
 
   constructor(
     private readonly ctx: AudioContext,
     private readonly output: AudioNode,
   ) {}
 
-  speak(text: string): void {
+  speak(cue: string): void {
     this.stop();
-    const words = text.trim().split(/\s+/).filter(Boolean).slice(0, 16);
-    let time = this.ctx.currentTime + 0.02;
-    for (const [index, word] of words.entries()) {
-      const seed = [...word].reduce(
-        (sum, char) => sum + char.charCodeAt(0),
-        index * 31,
-      );
-      const duration = 0.2 + (seed % 4) * 0.055;
-      const oscillator = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      const throat = this.ctx.createBiquadFilter();
-      const mouth = this.ctx.createBiquadFilter();
-      oscillator.type = "sawtooth";
-      const pitch = 49 + (seed % 19);
-      oscillator.frequency.setValueAtTime(pitch, time);
-      oscillator.frequency.linearRampToValueAtTime(
-        pitch * 0.82,
-        time + duration,
-      );
-      throat.type = "bandpass";
-      throat.frequency.setValueAtTime(280 + (seed % 240), time);
-      throat.frequency.linearRampToValueAtTime(
-        220 + (seed % 130),
-        time + duration,
-      );
-      throat.Q.value = 3;
-      mouth.type = "bandpass";
-      mouth.frequency.setValueAtTime(750 + (seed % 430), time);
-      mouth.Q.value = 5;
-      gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(0.12, time + 0.035);
-      gain.gain.linearRampToValueAtTime(0.055, time + duration * 0.6);
-      gain.gain.linearRampToValueAtTime(0, time + duration);
-      oscillator.connect(throat);
-      oscillator.connect(mouth);
-      throat.connect(gain);
-      mouth.connect(gain);
-      gain.connect(this.output);
-      const syllable = { oscillator, gain };
-      this.active.add(syllable);
-      oscillator.onended = () => {
-        this.active.delete(syllable);
-        oscillator.disconnect();
-        throat.disconnect();
-        mouth.disconnect();
-        gain.disconnect();
-      };
-      oscillator.start(time);
-      oscillator.stop(time + duration + 0.02);
-      time += duration + (/[?.!…]/.test(word) ? 0.28 : 0.09);
-    }
+    // The cue changes texture, not syllables or spoken content.
+    const seed = [...cue].reduce(
+      (value, char) => (Math.imul(value, 31) + char.charCodeAt(0)) >>> 0,
+      ++this.calls,
+    );
+    const samples = renderCreatureCall(this.ctx.sampleRate, seed);
+    const buffer = this.ctx.createBuffer(
+      1,
+      samples.length,
+      this.ctx.sampleRate,
+    );
+    buffer.getChannelData(0).set(samples);
+    const source = this.ctx.createBufferSource();
+    const gain = this.ctx.createGain();
+    source.buffer = buffer;
+    source.connect(gain);
+    gain.connect(this.output);
+    this.active = { source, gain };
+    source.onended = () => {
+      source.disconnect();
+      gain.disconnect();
+      if (this.active?.source === source) this.active = null;
+    };
+    source.start(this.ctx.currentTime + 0.02);
   }
 
   stop(): void {
-    for (const { oscillator, gain } of this.active) {
-      gain.gain.cancelScheduledValues(this.ctx.currentTime);
-      gain.gain.setValueAtTime(0, this.ctx.currentTime);
-      oscillator.stop(this.ctx.currentTime);
-    }
-    this.active.clear();
+    if (!this.active) return;
+    const { source, gain } = this.active;
+    this.active = null;
+    gain.gain.setValueAtTime(0, this.ctx.currentTime);
+    source.stop(this.ctx.currentTime);
+    source.onended = null;
+    source.disconnect();
+    gain.disconnect();
   }
 }

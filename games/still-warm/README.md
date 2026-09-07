@@ -67,7 +67,7 @@ close inspection. Add `?clip=action276&hand=right` or
 `scripts/prepare-hand-grips.py` builds the two derived clips.
 `scripts/check-hand-body-motion.py` compares their body transforms against the
 source files. Run each with Blender's `--background --python-exit-code 1 --python`
-options. The grip clips are for review; the playable game does not use them yet.
+options. The playable character includes these hand grips and the mouth opening.
 
 The scream entry has a **Face motion** selector. **Mouth opening** uses a copy
 with an opened lip seam, an animated jaw shape, a dark interior, and worn teeth.
@@ -94,17 +94,18 @@ the game then uses browser fullscreen. Drag input remains available if capture
 is refused. The dev server stays bound to localhost.
 
 There are no health meters or object panels. Watch your skin, blood, and vision.
-Listen to your breath and his rough calls. Read his words in subtitles. Short thoughts suggest the next need.
-Offline rehearsal actions are in the pause menu.
+Listen to your breath and his wordless calls. Only the father’s private thoughts appear as narrative text. Short thoughts suggest the next need.
+The guided preview shows short spoken choices. The live game accepts your own words.
+Sound starts off. Select **Sound off** to enable it. This also enables the creature voice.
 
 Browser speech recognition needs microphone permission. Support depends on the
 browser. Typed input uses the same agent. The creature uses deep, unintelligible
-Web Audio vocal pulses. It does not use text-to-speech. Subtitles carry his words.
-Narration uses separate italic text. All sound is generated locally with Web Audio.
+Web Audio growls and strained breaths. It does not use text-to-speech or show creature dialogue.
+The father’s thoughts use italic text. All sound is generated locally with Web Audio.
 
 ## Try these instructions
 
-> Dah is here. Light the lantern on the workbench, son.
+> I am here. Light the lantern on the workbench, son.
 
 > I trust you. Lift the support off me slowly. Tell me before you touch me.
 
@@ -137,7 +138,7 @@ blackout, it acts under the existing rules. The patient cannot issue new orders.
 
 - `src/game`: pure game rules, affordances, emotion profiles, and delayed actions.
 - `src/agent`: RUN transport, validated tools, and input cancellation.
-- `src/scene`: room geometry, rig animation, arm reach, and GPU dithering.
+- `src/scene`: room geometry, source animation playback, hand attachment, and GPU dithering.
 - `src/audio`: browser voice input, speech, and generated sound.
 - `src/platform`: RUN fullscreen, pointer input, and the local preview fallback.
 
@@ -153,8 +154,8 @@ part of its context and is not a fixed engine rule.
 
 Sessions use `InMemoryAgentSessionStore`. Restart clears the operation and the
 agent's history. There is no save, chat storage, or background recording.
-The app accepts dialogue only through the speech tool. Raw model response text
-is not shown or read aloud.
+The speech tool produces wordless audio cues. Its text and raw model response
+text are not shown or read aloud.
 
 ## Checks
 
@@ -166,7 +167,7 @@ npm run build
 See [the verification record](docs/VERIFICATION.md) for live checks and captures.
 
 Tests cover stage changes, material combinations, contamination, emotion effects,
-blackout restrictions, cancellation, late voice results, and arm reach.
+blackout restrictions, cancellation, late voice results, and timed rescue paths.
 A production build requires the RUN host for live agent calls.
 
 ## Assets
@@ -188,10 +189,33 @@ The patient source, rig, and Blender file are in `source-assets/patient`.
 Run `scripts/prepare-patient.py` with Blender to rebuild the posed body, treatment parts,
 and shared scene positions. The script checks the exported GLB.
 
-`scripts/check-patient.playwright.js` checks the floor sequence through dressing.
-Start the local server, open it with `playwright-cli`, then pass the script contents
-to `playwright-cli run-code`. The check uses offline rehearsal controls.
-It writes captures under `/tmp/patient-floor-*.png` and returns the observed stages.
+## Full guided preview
+
+Open `http://127.0.0.1:4320/play.html` after `npm run proof`.
+This page has the complete opening, patient clock, threats, and endings.
+It uses fixed actions through the same game rules. It does not connect to RUN or use a model.
+Sound starts off. Drag or use arrow keys to look. Select a short spoken choice to act.
+
+The full route takes about six minutes. Light the lantern and lift the beam.
+Expose the wound, give some relief, and bar the door. Remove the metal.
+Put out the fire. Cut hair from the wig and thread the needle. Close and dress
+the wound. Release the brace. Other choices can cause pain or use supplies.
+
+The opening protects the patient for 22 seconds. Door pressure starts after
+rescue from the beam. The fire gives time to respond. There are three medicine
+doses. Cloth used on fire becomes dirty. The suture is consumed and the dressing
+stays on the patient. Blood loss, fire, and loss of the son have separate endings.
+
+Run the visible control check with the proof server active:
+
+```sh
+playwright-cli -s=cellar open http://127.0.0.1:4320/play.html
+playwright-cli -s=cellar run-code --filename=scripts/check-playable.playwright.js
+playwright-cli -s=cellar close
+```
+
+The check runs at normal game speed. It keeps sound off. It saves captures to
+`/tmp/still-warm-freed.png`, `/tmp/still-warm-operation.png`, and `/tmp/still-warm-saved.png`.
 
 ## Gameplay room review
 

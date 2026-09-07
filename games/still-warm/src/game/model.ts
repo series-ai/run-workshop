@@ -50,6 +50,11 @@ export type Location = (typeof LOCATIONS)[number];
 export type RuleId = (typeof RULE_IDS)[number];
 export type Stage = (typeof STAGES)[number];
 export type Phase = "ready" | "playing" | "blackout" | "won" | "lost";
+export type Outcome =
+  | "saved"
+  | "blood_loss"
+  | "fire"
+  | "creature_lost";
 export const EMOTIONS = [
   "scared",
   "anxious",
@@ -331,6 +336,7 @@ export interface PendingAction {
 }
 export interface GameState {
   phase: Phase;
+  outcome: Outcome | null;
   paused: boolean;
   elapsed: number;
   stage: Stage;
@@ -348,10 +354,13 @@ export interface GameState {
   emotion: Emotion;
   disposition: { trust: number; agitation: number; confidence: number };
   creatureHealth: number;
+  medicineDoses: number;
   environment: {
     lanternLit: boolean;
     fire: number;
+    fireStarted: boolean;
     door: "quiet" | "knocking" | "barricaded";
+    doorPressure: number;
     eventCount: number;
     nextEventAt: number;
     lastEvent: string;
@@ -368,6 +377,7 @@ export function createInitialState(): GameState {
   ) as Record<ItemId, ItemState>;
   return {
     phase: "ready",
+    outcome: null,
     paused: false,
     elapsed: 0,
     stage: "pinned",
@@ -398,12 +408,15 @@ export function createInitialState(): GameState {
     emotion: "scared",
     disposition: { trust: 42, agitation: 48, confidence: 18 },
     creatureHealth: 100,
+    medicineDoses: 3,
     environment: {
       lanternLit: false,
       fire: 0,
+      fireStarted: false,
       door: "quiet",
+      doorPressure: 0,
       eventCount: 0,
-      nextEventAt: 35,
+      nextEventAt: 75,
       lastEvent: "",
     },
   };

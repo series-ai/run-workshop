@@ -382,13 +382,14 @@ export class CreatureController {
     const epoch = this.epoch;
     const abort = new AbortController();
     this.runAbort = abort;
-    this.update({ status: "acting" });
+    this.update({ status: "acting", error: null, needsInstruction: false });
     const task = (async () => {
       for (const action of actions) {
         if (abort.signal.aborted) return;
         const result = await this.store.run(action, abort.signal);
         if (!result.ok) {
           this.store.note("system", result.message);
+          this.update({ error: result.message });
           return;
         }
         if (action.kind === "speak") this.say(action.text);

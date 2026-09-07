@@ -97,7 +97,7 @@ export default function SceneReview() {
               void run([
                 ...emptyHand,
                 { kind: "react", stimulus: "reassure" },
-                { kind: "speak", text: "Dah." },
+                { kind: "speak", text: "Careful." },
                 { kind: "lift_debris", style: "gentle" },
               ])
             }
@@ -128,7 +128,7 @@ export default function SceneReview() {
                 ...emptyHand,
                 { kind: "adjust_lamp", position: "wound" },
                 { kind: "pick_up", item },
-                { kind: "speak", text: "Dah." },
+                { kind: "speak", text: "Careful." },
                 { kind: "use", item, target: "wound", style: "gentle" },
               ]);
             }}

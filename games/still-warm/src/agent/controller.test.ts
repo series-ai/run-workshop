@@ -1151,3 +1151,20 @@ describe("CreatureController", () => {
     });
   });
 });
+
+it("reports a blocked guided action and clears the error on the next action", async () => {
+  const store = new GameStore();
+  const controller = new CreatureController(store, {
+    speak: vi.fn(),
+    silence: vi.fn(),
+  });
+  await controller.start("rehearsal");
+  await store.run({ kind: "set_rule", rule: "noSharp", enabled: true });
+  await controller.rehearse([{ kind: "pick_up", item: "needle" }]);
+  expect(controller.getSnapshot().error).toMatch(/sharp/i);
+  expect(controller.getSnapshot().status).toBe("idle");
+  await controller.rehearse([{ kind: "react", stimulus: "reassure" }]);
+  expect(controller.getSnapshot().error).toBeNull();
+  await controller.dispose();
+  store.dispose();
+});

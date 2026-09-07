@@ -33,6 +33,8 @@ export function getBreathingProfile(
   };
 }
 
+export const DEFAULT_MUTED = true;
+
 export class SurgerySound {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
@@ -42,7 +44,7 @@ export class SurgerySound {
   private humOsc2: OscillatorNode | null = null;
   private creatureVoice: CreatureVoice | null = null;
 
-  private muted = false;
+  private muted = DEFAULT_MUTED;
   private disposed = false;
   private continuousActive = false;
   private heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
@@ -168,6 +170,10 @@ export class SurgerySound {
     } else if (this.continuousActive) {
       this.startContinuous();
     }
+  }
+
+  call(): void {
+    this.speak("… … …");
   }
 
   speak(text: string): void {
