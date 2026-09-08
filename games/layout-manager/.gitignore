@@ -16,3 +16,4 @@ launch.sh
 .env
 .asset-bot/
 comfy-workflows/*.timing.json
+.unity-headless.local.json

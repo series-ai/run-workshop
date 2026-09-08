@@ -378,7 +378,7 @@ export function Toolbar({ zoom, dispatch, pan, onImport, onImportSpriteSheet, im
           <button
             className={`toolbar-btn toolbar-btn-icon${aiUnityOpen ? ' toolbar-btn-active' : ''}`}
             onClick={onAiUnity}
-            title="Unity AI (generate via a running Unity Editor)"
+            title="Unity AI (local Editor or headless server)"
             disabled={!!editMode}
           >
             <Box size={16} />
