@@ -3,6 +3,7 @@ import { execSync } from 'node:child_process';
 import react from '@vitejs/plugin-react';
 import wasm from 'vite-plugin-wasm';
 import { rundotGameLibrariesPlugin } from '@series-inc/rundot-game-sdk/vite';
+import { handleUnityHeadless } from './server/unityHeadless';
 
 // CDN assets in cdn/ folder are automatically served in dev mode
 
@@ -307,6 +308,7 @@ function aiDirectPlugin(): Plugin {
         if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
         if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         const params = await readJsonBody(req) ?? {};
+        if (await handleUnityHeadless('status', params, res, `${server.config.root}/.unity-headless.local.json`)) return;
         // Empty path = auto-detect: no-arg `unity status` lists every running
         // Editor with the Pipeline package; the Preferences path is only an
         // override for when more than one Editor is open
@@ -353,6 +355,7 @@ return vt.GetField("PointsAvailable", flags).GetValue(val) + "/" + vt.GetField("
         if (isCrossOriginRequest(req)) { res.writeHead(403); res.end('Cross-origin request rejected'); return; }
         const params = await readJsonBody(req) ?? {};
         const projectPath = String(params.projectPath || '').trim();
+        if (await handleUnityHeadless('models', params, res, `${server.config.root}/.unity-headless.local.json`)) return;
         if (!projectPath) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing projectPath' })); return; }
         const cached = unityModelsCache.get(projectPath);
         if (cached && !params.refresh && Date.now() - cached.at < 60 * 60 * 1000) {
@@ -415,6 +418,7 @@ return sb.ToString();`;
         const params = await readJsonBody(req);
         if (!params) { res.writeHead(400); res.end('Invalid JSON'); return; }
         const projectPath = String(params.projectPath || '').trim();
+        if (await handleUnityHeadless('generate', params, res, `${server.config.root}/.unity-headless.local.json`)) return;
         const prompt = String(params.prompt || '').trim();
         const kind = params.kind === 'sprite' ? 'sprite' : 'image';
         const model = String(params.model || '').trim();
@@ -1751,6 +1755,11 @@ export default defineConfig({
   base: './',
   server: {
     allowedHosts: true,
+    fs: {
+      // Preserve Vite's default secret denylist and keep the factory key
+      // inaccessible through both ordinary URLs and /@fs/ file requests.
+      deny: ['.env', '.env.*', '*.{crt,pem}', '**/.git/**', '**/.unity-headless.local.json'],
+    },
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp',
