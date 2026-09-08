@@ -348,6 +348,10 @@ export interface JournalEntry {
   kind: "patient" | "creature" | "action" | "system";
   text: string;
 }
+export interface RoomEvent {
+  kind: "door" | "fire";
+  text: string;
+}
 export interface PendingAction {
   id: number;
   action: PhysicalAction;
@@ -388,9 +392,8 @@ export interface GameState {
     fireStarted: boolean;
     door: "quiet" | "knocking" | "barricaded";
     doorPressure: number;
-    eventCount: number;
     nextEventAt: number;
-    lastEvent: string;
+    events: readonly RoomEvent[];
   };
 }
 
@@ -445,9 +448,8 @@ export function createInitialState(): GameState {
       fireStarted: false,
       door: "quiet",
       doorPressure: 0,
-      eventCount: 0,
       nextEventAt: 75,
-      lastEvent: "",
+      events: [],
     },
   };
 }

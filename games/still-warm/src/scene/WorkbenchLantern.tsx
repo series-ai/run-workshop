@@ -9,11 +9,14 @@ export function WorkbenchLantern({
   lit: boolean;
   paused: boolean;
 }) {
+  const initiallyLit = useRef(lit).current;
   const light = useRef<PointLight>(null!);
   const flame = useRef<MeshStandardMaterial>(null!);
-  useFrame(({ clock }, dt) => {
+  const time = useRef(0);
+  useFrame((_, dt) => {
     if (paused) return;
-    const strength = lit ? 7 + Math.sin(clock.elapsedTime * 7) * 0.12 : 0;
+    time.current += dt;
+    const strength = lit ? 7 + Math.sin(time.current * 7) * 0.12 : 0;
     light.current.intensity = MathUtils.damp(
       light.current.intensity,
       strength,
@@ -61,7 +64,7 @@ export function WorkbenchLantern({
           ref={flame}
           color="#362714"
           emissive="#ffd491"
-          emissiveIntensity={0}
+          emissiveIntensity={initiallyLit ? 4.2 : 0}
           roughness={0.3}
         />
       </mesh>
@@ -81,7 +84,7 @@ export function WorkbenchLantern({
         ref={light}
         position={[0, 0.17, 0]}
         color="#efc18a"
-        intensity={0}
+        intensity={initiallyLit ? 7 : 0}
         distance={5}
         decay={1.5}
         castShadow

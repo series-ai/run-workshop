@@ -204,7 +204,7 @@ export class SurgerySound {
 
       // Sync discrete baseline so no backlog triggers on resume
       this.lastDoorState = state.environment.door;
-      this.lastEventCount = state.environment.eventCount;
+      this.lastEventCount = state.environment.events.length;
       this.lastPendingId = state.pending?.id ?? null;
       this.lastHolding = state.holding;
       this.lastContactCount = state.contactCount;
@@ -245,7 +245,9 @@ export class SurgerySound {
     if (
       isKnocking &&
       (this.lastDoorState !== "knocking" ||
-        state.environment.eventCount > this.lastEventCount)
+        state.environment.events
+          .slice(this.lastEventCount)
+          .some((event) => event.kind === "door"))
     ) {
       this.playDoorKnock();
     }
@@ -269,7 +271,7 @@ export class SurgerySound {
 
     // Update trackers
     this.lastDoorState = state.environment.door;
-    this.lastEventCount = state.environment.eventCount;
+    this.lastEventCount = state.environment.events.length;
     this.lastPendingId = currentPendingId;
     this.lastHolding = state.holding;
     this.lastContactCount = state.contactCount;

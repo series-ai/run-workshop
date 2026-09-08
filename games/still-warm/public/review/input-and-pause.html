@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Still Warm — Input and pause checks</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #10130f;
+        color: #d8d9c5;
+        font:
+          15px/1.6 system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 850px;
+        margin: auto;
+        padding: 35px 22px 60px;
+      }
+      h1,
+      h2 {
+        font-family: Georgia, serif;
+        font-weight: 400;
+        line-height: 1.2;
+      }
+      h1 {
+        font-size: clamp(34px, 6vw, 52px);
+      }
+      h2 {
+        margin-top: 35px;
+        font-size: 27px;
+      }
+      a {
+        color: #c4c8a5;
+      }
+      p,
+      li {
+        color: #b9bdaa;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 12px 8px;
+        border-bottom: 1px solid #37422d;
+        text-align: left;
+        vertical-align: top;
+      }
+      img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        border: 1px solid #37422d;
+      }
+      .note {
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a href="../review.html">← Build review</a>
+      <h1>One input at a time.</h1>
+      <p>Checked in Chromium on 7 September 2026. Sound remained off.</p>
+      <h2>Voice to text</h2>
+      <p>
+        Hold Space, then press Enter before releasing it. The text field opens.
+        Before the fix, a late voice result could still send an instruction. The
+        keyboard switch now cancels the recording.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Check</th>
+            <th>Observed result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Late voice result before the fix</td>
+            <td>One unwanted command reached the controller.</td>
+          </tr>
+          <tr>
+            <td>Late voice result after the fix</td>
+            <td>
+              No command reached the controller. The text field stayed open.
+            </td>
+          </tr>
+          <tr>
+            <td>Submit the typed instruction</td>
+            <td>One command reached the controller.</td>
+          </tr>
+          <tr>
+            <td>Compact text view</td>
+            <td>The form fits a 390 × 460 viewport. No horizontal overflow.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="note">
+        This check used the real App and VoiceInput code. Browser recognition
+        was replaced with a controlled test object. The old callbacks were saved
+        before cancellation and invoked after it. Controller commands were
+        recorded instead of sent to a model. This checks the input boundary; it
+        does not measure speech recognition quality.
+      </p>
+      <img
+        src="mobile-typing.png"
+        width="390"
+        height="460"
+        alt="The quiet text field fits a small viewport beneath the father's thought."
+      />
+      <h2>Paused scene state</h2>
+      <p>
+        A controlled browser session also tested a request that never returned,
+        even after abort. The controller retired it after three seconds.
+        Continue opened a second session. The same GameStore and Gentle hands
+        rule remained. The second typed instruction reached the replacement
+        session. Sound stayed off. This used a stalled test transport, not a
+        forced outage of the RUN service.
+      </p>
+      <p>
+        Pause, connection, and ending dialogs now keep keyboard focus inside
+        their controls. Continue receives focus first. Twelve Tab presses stayed
+        within the pause menu. Shift-Tab from Continue reached the last control.
+        Opening Standing rules made its controls available in the same order.
+      </p>
+      <p>
+        A lit scene can now start paused with the correct light levels and lamp
+        aim. The door bars also start in their stored or locked pose. Dust,
+        flame, door motion, and fallback body motion keep their phase during
+        pause.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Actual rendered state</th>
+            <th>Observed result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Initially lit, paused ambient light</td>
+            <td>Intensity 0.34. It previously stayed at 0.16.</td>
+          </tr>
+          <tr>
+            <td>Initially paused lamp aimed at the face</td>
+            <td>Target [0, −0.25, −0.5]. The cowl faces the target.</td>
+          </tr>
+          <tr>
+            <td>Initially lit, paused workbench lantern</td>
+            <td>Light intensity 7. Flame emission 4.2.</td>
+          </tr>
+          <tr>
+            <td>Paused room capture</td>
+            <td>Two captures 2.5 seconds apart matched byte for byte.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="note">
+        The light values came from the actual React Three Fiber scene. No model
+        or source animation was changed.
+      </p>
+    </main>
+  </body>
+</html>

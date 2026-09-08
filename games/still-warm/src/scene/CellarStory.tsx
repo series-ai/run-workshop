@@ -204,15 +204,18 @@ export const CellarStory: FC<CellarStoryProps> = ({
   reducedMotion,
 }) => {
   const dustRef = useRef<Group>(null!);
+  const time = useRef(0);
 
-  useFrame(({ clock }) => {
+  useFrame((_, dt) => {
     if (paused || reducedMotion || !dustRef.current) return;
-    const time = clock.getElapsedTime();
+    time.current += dt;
+    const elapsed = time.current;
     dustRef.current.children.forEach((particle, index) => {
       const [x, y, z] = DUST[index];
-      particle.position.x = x + Math.sin(time * 0.27 + index) * 0.025;
-      particle.position.y = y + Math.sin(time * 0.42 + index * 1.7) * 0.045;
-      particle.position.z = z + Math.cos(time * 0.31 + index) * 0.02;
+      particle.position.x = x + Math.sin(elapsed * 0.27 + index) * 0.025;
+      particle.position.y =
+        y + Math.sin(elapsed * 0.42 + index * 1.7) * 0.045;
+      particle.position.z = z + Math.cos(elapsed * 0.31 + index) * 0.02;
     });
   });
 

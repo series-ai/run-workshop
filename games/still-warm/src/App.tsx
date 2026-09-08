@@ -20,6 +20,7 @@ import { DEFAULT_MUTED, SurgerySound } from "./audio/sound";
 import type { CreatureCall } from "./audio/creatureVoice";
 import { VoiceInput, type VoiceStatus } from "./audio/voice";
 import { FullscreenController } from "./platform/fullscreen";
+import { GameDialog } from "./ui/GameDialog";
 
 export default function App({ preview = false }: { preview?: boolean }) {
   const listening = useRef(false);
@@ -73,6 +74,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const [reactionThought, setReactionThought] = useState("");
   const [heard, setHeard] = useState("");
   const lastEmotion = useRef(state.emotion);
+  const lastRoomEventCount = useRef(0);
   const [voice] = useState(
     () =>
       new VoiceInput({
@@ -201,18 +203,27 @@ export default function App({ preview = false }: { preview?: boolean }) {
     return () => clearTimeout(timer);
   }, [started, opening.complete, state.emotion]);
   useEffect(() => {
-    if (!state.environment.eventCount) {
+    const events = state.environment.events;
+    if (!events.length) {
+      lastRoomEventCount.current = 0;
       setRoomCaption("");
       return;
     }
+    const arrived = events.slice(lastRoomEventCount.current);
+    lastRoomEventCount.current = events.length;
+    if (!arrived.length) return;
     setRoomCaption(
-      state.environment.lastEvent?.includes("fire")
-        ? "Glass breaks. Something catches fire."
-        : "Heavy blows at the cellar door.",
+      arrived
+        .map((event) =>
+          event.kind === "fire"
+            ? "Glass breaks. Something catches fire."
+            : "Heavy blows at the cellar door.",
+        )
+        .join(" "),
     );
     const timer = setTimeout(() => setRoomCaption(""), 8500);
     return () => clearTimeout(timer);
-  }, [state.environment.eventCount]);
+  }, [state.environment.events]);
   useEffect(() => {
     if (!started) lastOpeningCall.current = 0;
     if (
@@ -274,6 +285,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
       }
       if (event.key === "Enter" && !interactive && canSpeak) {
         event.preventDefault();
+        voice.cancel();
         setTyping(true);
         void fullscreen.release();
       }
@@ -613,104 +625,99 @@ export default function App({ preview = false }: { preview?: boolean }) {
         </div>
       )}
       {connection.status === "connecting" && (
-        <div className="modal-shade">
-          <section className="modal">
-            <p>Listen.</p>
-            <p className="small">Connecting to RUN…</p>
-            <button onClick={() => start("rehearsal")}>
-              Use offline rehearsal
-            </button>
-          </section>
-        </div>
+        <GameDialog label="Connecting to RUN">
+          <p>Listen.</p>
+          <p className="small">Connecting to RUN…</p>
+          <button onClick={() => start("rehearsal")}>
+            Use offline rehearsal
+          </button>
+        </GameDialog>
       )}
       {connection.status === "error" && (
-        <div className="modal-shade">
-          <section className="modal">
-            <h2>He cannot hear you.</h2>
-            <p>{connection.error}</p>
-            {connection.canResume && (
-              <button onClick={resume}>Continue this operation</button>
-            )}
-            <button onClick={() => start(preview ? "rehearsal" : "live")}>
-              Start again
-            </button>
-          </section>
-        </div>
+        <GameDialog label="Connection interrupted">
+          <h2>He cannot hear you.</h2>
+          <p>{connection.error}</p>
+          {connection.canResume && (
+            <button onClick={resume}>Continue this operation</button>
+          )}
+          <button onClick={() => start(preview ? "rehearsal" : "live")}>
+            Start again
+          </button>
+        </GameDialog>
       )}
       {state.paused &&
         started &&
         !terminal &&
         connection.status !== "connecting" &&
         connection.status !== "error" && (
-          <div className="modal-shade">
-            <section className="modal">
-              <h2>Take a breath.</h2>
-              <button onClick={resume}>Continue</button>
-              {screen.supported && (
+          <GameDialog label="Operation paused">
+            <h2>Take a breath.</h2>
+            <button
+              onClick={resume}
+              disabled={connection.status === "stopping"}
+            >
+              {connection.status === "stopping" ? "Stopping…" : "Continue"}
+            </button>
+            {screen.supported && (
+              <button
+                onClick={() =>
+                  void fullscreen.enter(connection.mode === "live")
+                }
+              >
+                Fullscreen
+              </button>
+            )}
+            <button onClick={toggleSound}>
+              {muted ? "Enable sound" : "Mute sound"}
+            </button>
+            <button onClick={() => setReducedMotion(!reducedMotion)}>
+              {reducedMotion ? "Enable camera motion" : "Reduce camera motion"}
+            </button>
+            <details>
+              <summary>Standing rules</summary>
+              {RULE_IDS.map((rule) => (
                 <button
-                  onClick={() =>
-                    void fullscreen.enter(connection.mode === "live")
-                  }
+                  key={rule}
+                  aria-pressed={state.rules[rule]}
+                  onClick={() => {
+                    controller.resume();
+                    controller.changeRule(rule, !state.rules[rule]);
+                    controller.pause();
+                  }}
                 >
-                  Fullscreen
+                  {state.rules[rule] ? "✓" : "—"} {RULES[rule].label}
                 </button>
-              )}
-              <button onClick={toggleSound}>
-                {muted ? "Enable sound" : "Mute sound"}
-              </button>
-              <button onClick={() => setReducedMotion(!reducedMotion)}>
-                {reducedMotion
-                  ? "Enable camera motion"
-                  : "Reduce camera motion"}
-              </button>
-              <details>
-                <summary>Standing rules</summary>
-                {RULE_IDS.map((rule) => (
-                  <button
-                    key={rule}
-                    aria-pressed={state.rules[rule]}
-                    onClick={() => {
-                      controller.resume();
-                      controller.changeRule(rule, !state.rules[rule]);
-                      controller.pause();
-                    }}
-                  >
-                    {state.rules[rule] ? "✓" : "—"} {RULES[rule].label}
-                  </button>
-                ))}
-              </details>
-              <button onClick={() => start(preview ? "rehearsal" : "live")}>
-                Start a new operation
-              </button>
-              <p className="small">
-                Drag or use arrow keys to look. Hold Space to speak. Say “stop”
-                to stop his hands. Escape pauses.
-              </p>
-            </section>
-          </div>
+              ))}
+            </details>
+            <button onClick={() => start(preview ? "rehearsal" : "live")}>
+              Start a new operation
+            </button>
+            <p className="small">
+              Drag or use arrow keys to look. Hold Space to speak. Say “stop” to
+              stop his hands. Escape pauses.
+            </p>
+          </GameDialog>
         )}
       {terminal && (
-        <div className="modal-shade ending">
-          <section className="modal">
-            <h2>
-              {state.outcome === "saved"
-                ? "Still warm."
+        <GameDialog label="Operation ended" ending>
+          <h2>
+            {state.outcome === "saved"
+              ? "Still warm."
+              : state.outcome === "creature_lost"
+                ? "No answer."
+                : "The room goes quiet."}
+          </h2>
+          <p>
+            {state.outcome === "saved"
+              ? "His hand stays under your head. You can feel each breath. He will not let go."
+              : state.outcome === "fire"
+                ? "Smoke fills your lungs. His face disappears."
                 : state.outcome === "creature_lost"
-                  ? "No answer."
-                  : "The room goes quiet."}
-            </h2>
-            <p>
-              {state.outcome === "saved"
-                ? "His hand stays under your head. You can feel each breath. He will not let go."
-                : state.outcome === "fire"
-                  ? "Smoke fills your lungs. His face disappears."
-                  : state.outcome === "creature_lost"
-                    ? "You call for your son. This time, he does not move."
-                    : "Your skin is cold. You try to speak, but no sound comes."}
-            </p>
-            <button onClick={() => start(connection.mode)}>Begin again</button>
-          </section>
-        </div>
+                  ? "You call for your son. This time, he does not move."
+                  : "Your skin is cold. You try to speak, but no sound comes."}
+          </p>
+          <button onClick={() => start(connection.mode)}>Begin again</button>
+        </GameDialog>
       )}
     </main>
   );

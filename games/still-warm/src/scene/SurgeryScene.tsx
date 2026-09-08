@@ -17,17 +17,7 @@ import { Debris } from "./Debris";
 import type { LookInput } from "./look";
 import type { CreatureCall } from "../audio/creatureVoice";
 
-export { GeneratedAssistant } from "./GeneratedAssistant";
-export { ProceduralAssistant } from "./ProceduralAssistant";
-export { ASSISTANT_READY, ASSET_PATHS } from "./assets";
-export { PALETTE, COLORS } from "./palette";
-export type {
-  SurgerySceneProps,
-  ExtendedGameState,
-  CreatureEmotion,
-} from "./types";
-
-export interface SurgeryScenePropsInterface {
+interface SurgerySceneProps {
   state: GameState;
   look: LookInput;
   reducedMotion?: boolean;
@@ -36,7 +26,7 @@ export interface SurgeryScenePropsInterface {
 }
 
 // ── SurgeryScene: First-Person Gothic Horror Operating Cellar ──
-export const SurgeryScene: FC<SurgeryScenePropsInterface> = ({
+export const SurgeryScene: FC<SurgerySceneProps> = ({
   state,
   look,
   reducedMotion = false,

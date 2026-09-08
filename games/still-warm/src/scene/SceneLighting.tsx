@@ -19,7 +19,8 @@ export function SceneLighting({
   const body = useRef<PointLight>(null!);
   const rim = useRef<DirectionalLight>(null!);
   const silhouette = useRef<PointLight>(null!);
-  const reveal = useRef(0);
+  const initialLight = useRef(lit ? 1 : 0).current;
+  const reveal = useRef(initialLight);
   useFrame((_, dt) => {
     if (paused) return;
     reveal.current = MathUtils.damp(reveal.current, lit ? 1 : 0, 1.8, dt);
@@ -32,11 +33,15 @@ export function SceneLighting({
   });
   return (
     <group name="cellar-lighting">
-      <ambientLight ref={ambient} intensity={0.16} color="#8b9075" />
+      <ambientLight
+        ref={ambient}
+        intensity={0.16 + initialLight * 0.18}
+        color="#8b9075"
+      />
       <pointLight
         ref={face}
         position={[-0.35, 0.85, -0.85]}
-        intensity={0.42}
+        intensity={0.42 + initialLight * 2.005}
         color="#d1bd8d"
         distance={5}
         decay={2}
@@ -44,7 +49,7 @@ export function SceneLighting({
       <pointLight
         ref={body}
         position={[0.1, -0.08, -0.32]}
-        intensity={0.2}
+        intensity={0.2 + initialLight * 0.45}
         color="#b3b39a"
         distance={2.5}
         decay={2}
@@ -52,13 +57,13 @@ export function SceneLighting({
       <directionalLight
         ref={rim}
         position={[1.5, 2.4, 1.4]}
-        intensity={0.38}
+        intensity={0.38 + initialLight * 0.16}
         color="#89968d"
       />
       <pointLight
         ref={silhouette}
         position={[-1.0, 0.35, 0.95]}
-        intensity={0}
+        intensity={initialLight * 0.8}
         color="#9ba58e"
         distance={2}
         decay={2}

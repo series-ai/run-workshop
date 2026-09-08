@@ -303,6 +303,183 @@ describe("CreatureController", () => {
     expect(sendMock).toHaveBeenCalledTimes(1);
   });
 
+  it("pause retires a send that never settles and resumes in a replacement session", async () => {
+    vi.useFakeTimers();
+    try {
+      const oldSend = createDeferred<AgentRunResult>();
+      const oldClose = createDeferred<void>();
+      const replacementSend = vi.fn(async () => createDefaultRunResult());
+      const { liveSession: oldSession, closeMock } = createFakeLiveSession({
+        session: { send: vi.fn(async () => oldSend.promise) },
+        close: async () => oldClose.promise,
+      });
+      const { liveSession: replacementSession } = createFakeLiveSession({
+        session: { send: replacementSend },
+      });
+      let factoryCalls = 0;
+      const factory: SessionFactory = vi.fn(async () => {
+        factoryCalls++;
+        return factoryCalls === 1 ? oldSession : replacementSession;
+      });
+      const controller = new CreatureController(store, hooks, factory);
+
+      await controller.start("live");
+      await store.run({ kind: "set_rule", rule: "gentle", enabled: true });
+      controller.command("inspect the wound");
+      controller.pause();
+
+      controller.resume();
+      expect(store.getSnapshot().paused).toBe(true);
+      expect(controller.getSnapshot().status).toBe("stopping");
+
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(controller.getSnapshot()).toMatchObject({
+        status: "error",
+        canResume: true,
+      });
+      expect(store.getSnapshot()).toMatchObject({
+        paused: true,
+        rules: { gentle: true },
+      });
+      expect(closeMock).toHaveBeenCalledTimes(1);
+
+      controller.resume();
+      await vi.waitFor(() => {
+        expect(factory).toHaveBeenCalledTimes(2);
+        expect(controller.getSnapshot().status).toBe("idle");
+      });
+      expect(store.getSnapshot()).toMatchObject({
+        paused: false,
+        rules: { gentle: true },
+      });
+
+      controller.command("continue carefully");
+      expect(replacementSend).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("STOP then a new command survives stalled-run retirement", async () => {
+    vi.useFakeTimers();
+    try {
+      const oldSend = createDeferred<AgentRunResult>();
+      const prompts: string[] = [];
+      const { liveSession: oldSession } = createFakeLiveSession({
+        session: { send: vi.fn(async () => oldSend.promise) },
+      });
+      const { liveSession: replacementSession } = createFakeLiveSession({
+        session: {
+          send: vi.fn(async (prompt: { text: string }) => {
+            prompts.push(prompt.text);
+            return createDefaultRunResult();
+          }),
+        },
+      });
+      let factoryCalls = 0;
+      const factory: SessionFactory = vi.fn(async () => {
+        factoryCalls++;
+        return factoryCalls === 1 ? oldSession : replacementSession;
+      });
+      const controller = new CreatureController(store, hooks, factory);
+
+      await controller.start("live");
+      controller.command("start the first task");
+      controller.command("stop");
+      controller.command("check my pulse");
+
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(controller.getSnapshot()).toMatchObject({
+        status: "error",
+        canResume: true,
+      });
+
+      controller.resume();
+      await vi.waitFor(() => expect(prompts).toHaveLength(1));
+      expect(prompts[0]).toContain("PLAYER COMMAND: check my pulse");
+      expect(prompts[0]).not.toContain("start the first task");
+      expect(store.getSnapshot().phase).toBe("playing");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps only the latest correction when an aborted send never settles", async () => {
+    vi.useFakeTimers();
+    try {
+      const oldSend = createDeferred<AgentRunResult>();
+      const prompts: string[] = [];
+      const { liveSession: oldSession } = createFakeLiveSession({
+        session: { send: vi.fn(async () => oldSend.promise) },
+      });
+      const { liveSession: replacementSession } = createFakeLiveSession({
+        session: {
+          send: vi.fn(async (prompt: { text: string }) => {
+            prompts.push(prompt.text);
+            return createDefaultRunResult();
+          }),
+        },
+      });
+      let factoryCalls = 0;
+      const factory: SessionFactory = vi.fn(async () => {
+        factoryCalls++;
+        return factoryCalls === 1 ? oldSession : replacementSession;
+      });
+      const controller = new CreatureController(store, hooks, factory);
+
+      await controller.start("live");
+      controller.command("use the scissors");
+      controller.command("use the scalpel instead");
+      controller.command("take the forceps instead");
+
+      await vi.advanceTimersByTimeAsync(3000);
+      controller.resume();
+      await vi.waitFor(() => expect(prompts).toHaveLength(1));
+
+      expect(prompts[0]).toContain("PLAYER COMMAND: take the forceps instead");
+      expect(prompts[0]).not.toContain("use the scalpel instead");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("a settled abort cancels its retirement timer", async () => {
+    vi.useFakeTimers();
+    try {
+      const firstSend = createDeferred<AgentRunResult>();
+      const secondSend = createDeferred<AgentRunResult>();
+      let sends = 0;
+      const { liveSession, fakeSession } = createFakeLiveSession({
+        session: {
+          send: vi.fn(async () => {
+            sends++;
+            return sends === 1 ? firstSend.promise : secondSend.promise;
+          }),
+        },
+      });
+      const factory: SessionFactory = vi.fn(async () => liveSession);
+      const controller = new CreatureController(store, hooks, factory);
+
+      await controller.start("live");
+      controller.command("first task");
+      controller.command("corrected task");
+      firstSend.resolve(createDefaultRunResult({ finishReason: "aborted" }));
+      await vi.waitFor(() => expect(sends).toBe(2));
+
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(factory).toHaveBeenCalledTimes(1);
+      expect(fakeSession.abort).toHaveBeenCalledTimes(1);
+      expect(controller.getSnapshot()).toMatchObject({
+        status: "thinking",
+        error: null,
+      });
+
+      secondSend.resolve(createDefaultRunResult());
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("aborted next send has previousActionInterrupted observation", async () => {
     const deferredSend1 = createDeferred<AgentRunResult>();
     const deferredSend2 = createDeferred<AgentRunResult>();
@@ -1000,7 +1177,9 @@ describe("CreatureController", () => {
       const promptsSent: string[] = [];
       const sendMock = vi.fn(async (prompt: { text: string }) => {
         promptsSent.push(prompt.text);
-        return promptsSent.length === 1 ? firstSend.promise : secondSend.promise;
+        return promptsSent.length === 1
+          ? firstSend.promise
+          : secondSend.promise;
       });
       const { liveSession } = createFakeLiveSession({
         session: { send: sendMock },
@@ -1018,8 +1197,12 @@ describe("CreatureController", () => {
         ...state,
         environment: {
           ...state.environment,
-          eventCount: 1,
-          lastEvent: "A small fire has broken out in the corner!",
+          events: [
+            {
+              kind: "fire",
+              text: "A small fire has broken out in the corner!",
+            },
+          ],
         },
       });
       controller.observeEvents();
@@ -1052,6 +1235,107 @@ describe("CreatureController", () => {
         "system",
         "He pauses to listen. Give the next instruction.",
       );
+    });
+
+    it("delivers simultaneous room events in order", async () => {
+      const firstSend = createDeferred<AgentRunResult>();
+      const secondSend = createDeferred<AgentRunResult>();
+      const prompts: string[] = [];
+      const sendMock = vi.fn(async (prompt: { text: string }) => {
+        prompts.push(prompt.text);
+        return prompts.length === 1 ? firstSend.promise : secondSend.promise;
+      });
+      const { liveSession } = createFakeLiveSession({
+        session: { send: sendMock },
+      });
+      const controller = new CreatureController(
+        store,
+        hooks,
+        vi.fn(async () => liveSession),
+      );
+
+      await controller.start("live");
+      controller.command("continue care");
+      const state = store.getSnapshot();
+      const snapshotSpy = vi.spyOn(store, "getSnapshot").mockReturnValue({
+        ...state,
+        environment: {
+          ...state.environment,
+          events: [
+            {
+              kind: "door",
+              text: "A hard knock strikes the hallway door.",
+            },
+            {
+              kind: "fire",
+              text: "A small fire has broken out in the corner!",
+            },
+          ],
+        },
+      });
+      controller.observeEvents();
+      snapshotSpy.mockRestore();
+
+      firstSend.resolve(createDefaultRunResult());
+      await vi.waitFor(() => expect(prompts).toHaveLength(2));
+      expect(prompts[1]).toContain("ROOM EVENT");
+      expect(prompts[1].indexOf("hard knock")).toBeLessThan(
+        prompts[1].indexOf("small fire"),
+      );
+
+      secondSend.resolve(createDefaultRunResult());
+    });
+
+    it("preserves encouragement while a room event is queued", async () => {
+      const firstSend = createDeferred<AgentRunResult>();
+      const encouragementSend = createDeferred<AgentRunResult>();
+      const roomSend = createDeferred<AgentRunResult>();
+      const prompts: string[] = [];
+      const sendMock = vi.fn(async (prompt: { text: string }) => {
+        prompts.push(prompt.text);
+        if (prompts.length === 1) return firstSend.promise;
+        if (prompts.length === 2) return encouragementSend.promise;
+        return roomSend.promise;
+      });
+      const { liveSession, fakeSession } = createFakeLiveSession({
+        session: { send: sendMock },
+      });
+      const controller = new CreatureController(
+        store,
+        hooks,
+        vi.fn(async () => liveSession),
+      );
+
+      await controller.start("live");
+      controller.command("continue care");
+      const state = store.getSnapshot();
+      const snapshotSpy = vi.spyOn(store, "getSnapshot").mockReturnValue({
+        ...state,
+        environment: {
+          ...state.environment,
+          events: [
+            {
+              kind: "door",
+              text: "A hard knock strikes the hallway door.",
+            },
+          ],
+        },
+      });
+      controller.observeEvents();
+      snapshotSpy.mockRestore();
+
+      controller.command("good job");
+      expect(fakeSession.abort).not.toHaveBeenCalled();
+      firstSend.resolve(createDefaultRunResult());
+
+      await vi.waitFor(() => expect(prompts).toHaveLength(2));
+      expect(prompts[1]).toContain("PLAYER COMMAND: good job");
+      encouragementSend.resolve(createDefaultRunResult());
+
+      await vi.waitFor(() => expect(prompts).toHaveLength(3));
+      expect(prompts[2]).toContain("ROOM EVENT");
+      expect(prompts[2]).toContain("hard knock");
+      roomSend.resolve(createDefaultRunResult());
     });
 
     it("requests a new instruction when a capped run has no queued input", async () => {

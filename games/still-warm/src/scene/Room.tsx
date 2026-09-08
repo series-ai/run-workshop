@@ -38,16 +38,47 @@ export const Room: FC<RoomProps> = ({
 }) => {
   const fire = environment?.fire ?? 0;
   const doorState = environment?.door ?? "quiet";
+  const initiallyBarricaded = useRef(doorState === "barricaded").current;
+  const initialHorizontalBar = useRef({
+    position: [
+      initiallyBarricaded ? LOCKED_HORIZONTAL_BAR.x : STORED_HORIZONTAL_BAR.x,
+      initiallyBarricaded ? LOCKED_HORIZONTAL_BAR.y : STORED_HORIZONTAL_BAR.y,
+      initiallyBarricaded ? LOCKED_HORIZONTAL_BAR.z : STORED_HORIZONTAL_BAR.z,
+    ] as [number, number, number],
+    rotation: [
+      0,
+      0,
+      initiallyBarricaded
+        ? LOCKED_HORIZONTAL_BAR.rotation
+        : STORED_HORIZONTAL_BAR.rotation,
+    ] as [number, number, number],
+  }).current;
+  const initialDiagonalBar = useRef({
+    position: [
+      initiallyBarricaded ? LOCKED_DIAGONAL_BAR.x : STORED_DIAGONAL_BAR.x,
+      initiallyBarricaded ? LOCKED_DIAGONAL_BAR.y : STORED_DIAGONAL_BAR.y,
+      initiallyBarricaded ? LOCKED_DIAGONAL_BAR.z : STORED_DIAGONAL_BAR.z,
+    ] as [number, number, number],
+    rotation: [
+      0,
+      0,
+      initiallyBarricaded
+        ? LOCKED_DIAGONAL_BAR.rotation
+        : STORED_DIAGONAL_BAR.rotation,
+    ] as [number, number, number],
+  }).current;
   const doorRef = useRef<Group>(null!);
   const horizontalBarRef = useRef<Group>(null!);
   const diagonalBarRef = useRef<Group>(null!);
-  const barricadeProgress = useRef(doorState === "barricaded" ? 1 : 0);
+  const barricadeProgress = useRef(initiallyBarricaded ? 1 : 0);
   const fireLightRef = useRef<PointLight>(null!);
   const flameGroupRef = useRef<Group>(null!);
+  const time = useRef(0);
 
-  useFrame(({ clock }, dt) => {
+  useFrame((_, dt) => {
     if (paused) return;
-    const t = clock.getElapsedTime();
+    time.current += dt;
+    const t = time.current;
 
     const barricadeTarget = doorState === "barricaded" ? 1 : 0;
     barricadeProgress.current = reducedMotion
@@ -254,12 +285,8 @@ export const Room: FC<RoomProps> = ({
         {/* The locking bars wait beside the door until a tool seats them. */}
         <group
           ref={horizontalBarRef}
-          position={[
-            STORED_HORIZONTAL_BAR.x,
-            STORED_HORIZONTAL_BAR.y,
-            STORED_HORIZONTAL_BAR.z,
-          ]}
-          rotation={[0, 0, STORED_HORIZONTAL_BAR.rotation]}
+          position={initialHorizontalBar.position}
+          rotation={initialHorizontalBar.rotation}
         >
           <mesh castShadow>
             <boxGeometry args={[1.05, 0.12, 0.06]} />
@@ -268,12 +295,8 @@ export const Room: FC<RoomProps> = ({
         </group>
         <group
           ref={diagonalBarRef}
-          position={[
-            STORED_DIAGONAL_BAR.x,
-            STORED_DIAGONAL_BAR.y,
-            STORED_DIAGONAL_BAR.z,
-          ]}
-          rotation={[0, 0, STORED_DIAGONAL_BAR.rotation]}
+          position={initialDiagonalBar.position}
+          rotation={initialDiagonalBar.rotation}
         >
           <mesh castShadow>
             <boxGeometry args={[1.1, 0.1, 0.05]} />

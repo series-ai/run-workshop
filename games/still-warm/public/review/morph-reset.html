@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Still Warm — Mouth and grip check</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #10130f;
+        color: #d8d9c5;
+        font:
+          15px/1.6 system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 850px;
+        margin: auto;
+        padding: 36px 22px;
+      }
+      h1,
+      h2 {
+        font-family: Georgia, serif;
+        font-weight: 400;
+      }
+      h1 {
+        font-size: 38px;
+      }
+      p {
+        color: #b1b7a0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 24px 0;
+      }
+      th,
+      td {
+        text-align: left;
+        border-bottom: 1px solid #3c4732;
+        padding: 12px 8px;
+      }
+      th {
+        color: #c4c8a5;
+      }
+      code {
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+      a {
+        color: #c4c8a5;
+      }
+      .pass {
+        color: #c7d8a3;
+      }
+      .note {
+        border-left: 2px solid #66764f;
+        padding-left: 18px;
+      }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 2px;
+      }
+      @media (max-width: 500px) {
+        h1 {
+          font-size: 30px;
+        }
+        table {
+          font-size: 12px;
+        }
+        th,
+        td {
+          padding: 10px 5px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">STILL WARM / REAL SCENE CHECK</p>
+      <h1>The mouth closes. The hand releases.</h1>
+      <p>
+        The runtime uses the existing mouth and grip shapes. Temporary changes
+        must return to the source animation when the call or hold ends.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Check</th>
+            <th>Before</th>
+            <th>After</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fear call peak</td>
+            <td>0.180</td>
+            <td>0.180</td>
+          </tr>
+          <tr>
+            <td>Gap between the two breaths</td>
+            <td>0.135</td>
+            <td class="pass">0</td>
+          </tr>
+          <tr>
+            <td>After the call ends</td>
+            <td>0.180</td>
+            <td class="pass">0</td>
+          </tr>
+          <tr>
+            <td>Grip while holding forceps</td>
+            <td>0.800</td>
+            <td>0.800</td>
+          </tr>
+          <tr>
+            <td>Grip after putting forceps down</td>
+            <td>Not recorded</td>
+            <td class="pass">0</td>
+          </tr>
+          <tr>
+            <td>Mouth after STOP</td>
+            <td>Not recorded</td>
+            <td class="pass">0</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="note">
+        These are weights read from the actual skinned mesh in the room viewer.
+        The browser remained silent. The fear call was sampled every 100
+        milliseconds. The held and released grip used normal game actions.
+      </p>
+      <h2>Cause and fix</h2>
+      <p>
+        Three.js caches values from constant animation tracks. It did not write
+        zero again after the game added an opening. The added shape could
+        remain. The runtime now restores the previous authored values before
+        each mixer update, captures the new authored values, then applies the
+        temporary changes.
+      </p>
+      <p>
+        Tests use the actual Three.js animation mixer. They check a constant
+        closed mouth, a released grip, and a full source scream. The full source
+        scream retains weight 1. No source clips, bone poses, or model files
+        were changed.
+      </p>
+      <p>
+        <a href="../scene.html">Try the room mouth controls</a> ·
+        <a href="../voice.html">Review the call patterns</a> ·
+        <a href="../review.html">Return to build review</a>
+      </p>
+    </main>
+  </body>
+</html>

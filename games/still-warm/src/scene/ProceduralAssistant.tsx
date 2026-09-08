@@ -88,6 +88,7 @@ export const ProceduralAssistant: FC<ProceduralAssistantProps> = ({
   const leftArmRef = useRef<Group>(null!);
   const rightArmRef = useRef<Group>(null!);
   const rightForearmRef = useRef<Group>(null!);
+  const time = useRef(0);
 
   const {
     emotion,
@@ -101,11 +102,12 @@ export const ProceduralAssistant: FC<ProceduralAssistantProps> = ({
   // Injury severity factor (0 = healthy, 1 = severely injured)
   const injuryRatio = Math.min(Math.max((100 - creatureHealth) / 100, 0), 1);
 
-  useFrame(({ clock }, dt) => {
+  useFrame((_, dt) => {
     if (!rootRef.current || !spineRef.current || !headRef.current) return;
     if (paused) return; // Paused state freezes all character motion
 
-    const t = clock.getElapsedTime();
+    time.current += dt;
+    const t = time.current;
 
     if (reducedMotion) {
       spineRef.current.rotation.x = posture.hunch;

@@ -8,6 +8,7 @@ import {
   GameState,
   isActive,
   ItemId,
+  RoomEvent,
 } from "./model";
 import {
   hasCapability,
@@ -909,7 +910,7 @@ export function applyAction(
         };
       }
 
-      // 2. Fire Suppression / Interaction (no eventCount increment)
+      // 2. Fire suppression / interaction (journal only)
       if (action.target === "fire") {
         let msg = "";
         if (action.item === "bowl") {
@@ -918,7 +919,6 @@ export function applyAction(
             next.environment = {
               ...next.environment,
               fire: Math.max(0, next.environment.fire - poured * 20),
-              lastEvent: "Extinguished fire with water bowl.",
             };
             next.items = {
               ...next.items,
@@ -958,7 +958,6 @@ export function applyAction(
           next.environment = {
             ...next.environment,
             fire: Math.max(0, next.environment.fire - 45),
-            lastEvent: `Smothered fire with ${CATALOG[action.item].name.toLowerCase()}.`,
           };
           msg = `Smothered flames with ${CATALOG[action.item].name.toLowerCase()}.`;
         }
@@ -1002,7 +1001,7 @@ export function applyAction(
         };
       }
 
-      // 4. Door Barricade & Surveillance (no eventCount increment)
+      // 4. Door barricade and surveillance (journal only)
       if (action.target === "door") {
         if (action.item === "mirror") {
           next.disposition = {
@@ -1034,7 +1033,6 @@ export function applyAction(
           ...next.environment,
           door: "barricaded",
           doorPressure: 0,
-          lastEvent: `Seated the existing locking bars with ${CATALOG[action.item].name.toLowerCase()}.`,
         };
         next.disposition = {
           ...next.disposition,
@@ -1940,13 +1938,15 @@ export function tickPatient(state: GameState, dt: number): GameState {
     next.environment.doorPressure = 1;
     next.environment.nextEventAt =
       next.elapsed + DOOR_PRESSURE_INTERVAL_SECONDS;
-    next.environment.eventCount += 1;
-    next.environment.lastEvent =
-      "A hard knock strikes the hallway door. Door pressure is 1 of 3.";
+    const doorEvent: RoomEvent = {
+      kind: "door",
+      text: "A hard knock strikes the hallway door. Door pressure is 1 of 3.",
+    };
+    next.environment.events = [...next.environment.events, doorEvent];
     next.disposition.agitation = Math.min(100, next.disposition.agitation + 14);
     next.disposition.confidence = Math.max(0, next.disposition.confidence - 6);
     next.emotion = deriveEmotion(next.disposition);
-    next = appendJournal(next, "system", next.environment.lastEvent);
+    next = appendJournal(next, "system", doorEvent.text);
   } else if (
     next.environment.door === "knocking" &&
     next.environment.doorPressure < DOOR_MAX_PRESSURE &&
@@ -1956,11 +1956,14 @@ export function tickPatient(state: GameState, dt: number): GameState {
     next.environment.doorPressure = pressure;
     next.environment.nextEventAt =
       next.elapsed + DOOR_PRESSURE_INTERVAL_SECONDS;
-    next.environment.eventCount += 1;
-    next.environment.lastEvent =
-      pressure === 2
-        ? "The hallway door shakes again. Door pressure is 2 of 3."
-        : "The pounding is now relentless. Door pressure is at its limit, 3 of 3.";
+    const doorEvent: RoomEvent = {
+      kind: "door",
+      text:
+        pressure === 2
+          ? "The hallway door shakes again. Door pressure is 2 of 3."
+          : "The pounding is now relentless. Door pressure is at its limit, 3 of 3.",
+    };
+    next.environment.events = [...next.environment.events, doorEvent];
     next.disposition.agitation = Math.min(
       100,
       next.disposition.agitation + (pressure === 2 ? 10 : 6),
@@ -1970,7 +1973,7 @@ export function tickPatient(state: GameState, dt: number): GameState {
       next.disposition.confidence - (pressure === 2 ? 5 : 3),
     );
     next.emotion = deriveEmotion(next.disposition);
-    next = appendJournal(next, "system", next.environment.lastEvent);
+    next = appendJournal(next, "system", doorEvent.text);
   }
 
   const fireWasBurning =
@@ -1981,11 +1984,14 @@ export function tickPatient(state: GameState, dt: number): GameState {
   ) {
     next.environment.fire = FIRE_ONSET;
     next.environment.fireStarted = true;
-    next.environment.eventCount += 1;
-    next.environment.lastEvent = "A small fire has broken out in the corner!";
+    const fireEvent: RoomEvent = {
+      kind: "fire",
+      text: "A small fire has broken out in the corner!",
+    };
+    next.environment.events = [...next.environment.events, fireEvent];
     next.disposition.agitation = Math.min(100, next.disposition.agitation + 18);
     next.emotion = deriveEmotion(next.disposition);
-    next = appendJournal(next, "system", next.environment.lastEvent);
+    next = appendJournal(next, "system", fireEvent.text);
   }
 
   if (fireWasBurning && next.environment.fire > 0) {
@@ -2013,17 +2019,18 @@ export function tickPatient(state: GameState, dt: number): GameState {
       next.phase = "lost";
       next.outcome = "fire";
       next.pending = null;
-      next.environment.lastEvent = "The fire engulfed the room.";
-      next = appendJournal(next, "system", next.environment.lastEvent);
+      next = appendJournal(next, "system", "The fire engulfed the room.");
       return next;
     }
     if (next.patient.health <= 0) {
       next.phase = "lost";
       next.outcome = "fire";
       next.pending = null;
-      next.environment.lastEvent =
-        "Smoke and heat overwhelmed the patient before the fire was stopped.";
-      next = appendJournal(next, "system", next.environment.lastEvent);
+      next = appendJournal(
+        next,
+        "system",
+        "Smoke and heat overwhelmed the patient before the fire was stopped.",
+      );
       return next;
     }
   }

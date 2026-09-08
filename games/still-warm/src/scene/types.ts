@@ -1,21 +1,6 @@
 import { Vector3, Quaternion } from "three";
 import { PATIENT_LAYOUT } from "./patientLayout";
-import type {
-  GameState,
-  ItemId,
-  Location,
-  Emotion,
-  Stage,
-} from "../game/model";
-
-export type CreatureEmotion = Emotion;
-export type ExtendedGameState = GameState;
-
-export interface SurgerySceneProps {
-  state: GameState;
-  reducedMotion?: boolean;
-  onInspectItem?: (item: string) => void;
-}
+import type { Location } from "../game/model";
 
 export type Vec3 = [number, number, number];
 
@@ -92,5 +77,3 @@ export function getItemOffset(itemId: string): Vec3 {
   const z = ((Math.abs(hash >> 3) % 20) - 10) * 0.015;
   return [x, 0.015, z];
 }
-
-export type { ItemId, Location, Emotion, Stage };

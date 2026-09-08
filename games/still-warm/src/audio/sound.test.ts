@@ -316,13 +316,31 @@ describe("SurgerySound", () => {
       environment: {
         ...state.environment,
         door: "knocking",
-        eventCount: state.environment.eventCount + 1,
+        events: [
+          ...state.environment.events,
+          { kind: "door", text: "The door shakes." },
+        ],
       },
     };
     sound.update(state);
     expect(mockCtx!.createOscillator.mock.calls.length).toBeGreaterThan(
       initialOscCount,
     );
+
+    const afterKnock = mockCtx!.createOscillator.mock.calls.length;
+    state = {
+      ...state,
+      environment: {
+        ...state.environment,
+        fire: 15,
+        events: [
+          ...state.environment.events,
+          { kind: "fire", text: "A fire starts." },
+        ],
+      },
+    };
+    sound.update(state);
+    expect(mockCtx!.createOscillator.mock.calls.length).toBe(afterKnock);
 
     // Tool clink event
     const countBeforeClink = mockCtx!.createOscillator.mock.calls.length;

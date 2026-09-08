@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Creature asset size review</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+      }
+      body {
+        max-width: 50rem;
+        margin: 0 auto;
+        padding: 2rem 1.25rem;
+        background: #171514;
+        color: #eee8df;
+        line-height: 1.5;
+      }
+      h1 {
+        margin-top: 0;
+        font-size: 1.7rem;
+      }
+      h2 {
+        margin-top: 1.6rem;
+        font-size: 1.1rem;
+        color: #e7b875;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0.75rem 0;
+      }
+      th,
+      td {
+        padding: 0.45rem 0.6rem;
+        border-bottom: 1px solid #51473f;
+        text-align: left;
+      }
+      th {
+        color: #e7b875;
+      }
+      code {
+        color: #f4ca8e;
+      }
+      .result {
+        padding: 0.8rem 1rem;
+        border-left: 3px solid #e7b875;
+        background: #241f1b;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Creature asset size review</h1>
+    <p class="result">
+      <strong>Decision:</strong> Keep the current asset. No asset files changed.
+    </p>
+
+    <h2>Measured file</h2>
+    <p>
+      <code>public/assets/creature.glb</code> is 18,237,188 bytes. The file uses
+      Draco for the base mesh. The three position morph accessors already use
+      glTF sparse accessors.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Gzip level</th>
+          <th>Current file</th>
+          <th>Normal sparse candidate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>7,311,652 bytes</td>
+          <td>8,162,822 bytes</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td>6,600,137 bytes</td>
+          <td>7,507,643 bytes</td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td>6,384,466 bytes</td>
+          <td>7,305,704 bytes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Lossless sparse check</h2>
+    <p>
+      The three normal morph accessors have 47,149, 45,832, and 43,958
+      exact-zero elements. A temporary sparse reconstruction matched every
+      decoded Float32 byte. Each candidate needs 32-bit sparse indices because
+      its data reaches vertex 297,171. The candidate adds about 1.38 MB to the
+      raw file and about 0.92 MB at gzip level 9.
+    </p>
+    <p>
+      The asset keeps all three morph targets and all nine animation clips. It
+      has no tangent morph targets. Three.js 0.170.0 supports sparse accessors,
+      but sparse normals require extra load-time copying and memory.
+    </p>
+
+    <h2>Verification record</h2>
+    <p>
+      The audit parsed the GLB JSON and binary chunks. It rebuilt each normal
+      accessor from sparse indices and values, then compared the decoded bytes.
+      The candidate was temporary and was not copied into the project.
+    </p>
+  </body>
+</html>

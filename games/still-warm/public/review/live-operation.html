@@ -18,7 +18,9 @@
         --blue: #8eacc3;
       }
 
-      * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+      }
 
       body {
         margin: 0;
@@ -26,7 +28,11 @@
         background:
           radial-gradient(circle at 85% 8%, #283027 0, transparent 30rem),
           var(--paper);
-        font: 16px/1.55 Inter, ui-sans-serif, system-ui, sans-serif;
+        font:
+          16px/1.55 Inter,
+          ui-sans-serif,
+          system-ui,
+          sans-serif;
       }
 
       main {
@@ -53,7 +59,12 @@
         text-transform: uppercase;
       }
 
-      h1, h2, h3, p { margin-top: 0; }
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
 
       h1 {
         max-width: 760px;
@@ -101,9 +112,14 @@
         font-weight: 500;
       }
 
-      .verdict p { margin: 0; color: #c5c9c0; }
+      .verdict p {
+        margin: 0;
+        color: #c5c9c0;
+      }
 
-      section { margin-top: 64px; }
+      section {
+        margin-top: 64px;
+      }
 
       .metrics {
         display: grid;
@@ -118,9 +134,15 @@
         background: var(--panel);
       }
 
-      .metric.good { border-color: var(--green); }
-      .metric.warn { border-color: var(--amber); }
-      .metric.bad { border-color: var(--red); }
+      .metric.good {
+        border-color: var(--green);
+      }
+      .metric.warn {
+        border-color: var(--amber);
+      }
+      .metric.bad {
+        border-color: var(--red);
+      }
 
       .metric b {
         display: block;
@@ -130,7 +152,9 @@
         font-weight: 500;
       }
 
-      .metric span { color: var(--muted); }
+      .metric span {
+        color: var(--muted);
+      }
 
       .timeline {
         margin: 0;
@@ -147,7 +171,9 @@
         border-top: 1px solid var(--line);
       }
 
-      .timeline li:last-child { border-bottom: 1px solid var(--line); }
+      .timeline li:last-child {
+        border-bottom: 1px solid var(--line);
+      }
 
       .step {
         color: var(--blue);
@@ -165,7 +191,10 @@
         font-style: italic;
       }
 
-      .timeline p:last-child { margin-bottom: 0; color: var(--muted); }
+      .timeline p:last-child {
+        margin-bottom: 0;
+        color: var(--muted);
+      }
 
       .evidence-grid {
         display: grid;
@@ -179,14 +208,24 @@
         background: var(--panel);
       }
 
-      .card p:last-child { margin-bottom: 0; }
+      .card p:last-child {
+        margin-bottom: 0;
+      }
 
-      .error { border-top: 3px solid var(--red); }
-      .recovery { border-top: 3px solid var(--green); }
+      .error {
+        border-top: 3px solid var(--red);
+      }
+      .recovery {
+        border-top: 3px solid var(--green);
+      }
 
       code {
         color: #e7d3a8;
-        font: 0.9em/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        font:
+          0.9em/1.5 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
       }
 
       pre {
@@ -213,8 +252,13 @@
         background: #12130f;
       }
 
-      .sequence b { display: block; margin-bottom: 5px; }
-      .sequence small { color: var(--muted); }
+      .sequence b {
+        display: block;
+        margin-bottom: 5px;
+      }
+      .sequence small {
+        color: var(--muted);
+      }
 
       .finding {
         padding: 30px;
@@ -222,10 +266,17 @@
         background: #1b1913;
       }
 
-      .finding p { max-width: 850px; }
+      .finding p {
+        max-width: 850px;
+      }
 
-      .finding ol { margin-bottom: 0; padding-left: 1.2rem; }
-      .finding li + li { margin-top: 8px; }
+      .finding ol {
+        margin-bottom: 0;
+        padding-left: 1.2rem;
+      }
+      .finding li + li {
+        margin-top: 8px;
+      }
 
       figure {
         margin: 64px 0 0;
@@ -252,7 +303,8 @@
         background: var(--panel);
       }
 
-      th, td {
+      th,
+      td {
         padding: 15px 16px;
         border-bottom: 1px solid var(--line);
         text-align: left;
@@ -275,11 +327,24 @@
       }
 
       @media (max-width: 760px) {
-        main { width: min(100% - 24px, 1120px); padding-top: 36px; }
-        header, .evidence-grid { grid-template-columns: 1fr; }
-        .metrics { grid-template-columns: 1fr 1fr; }
-        .timeline li { grid-template-columns: 1fr; gap: 6px; }
-        .sequence { grid-template-columns: 1fr; }
+        main {
+          width: min(100% - 24px, 1120px);
+          padding-top: 36px;
+        }
+        header,
+        .evidence-grid {
+          grid-template-columns: 1fr;
+        }
+        .metrics {
+          grid-template-columns: 1fr 1fr;
+        }
+        .timeline li {
+          grid-template-columns: 1fr;
+          gap: 6px;
+        }
+        .sequence {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
@@ -306,9 +371,13 @@
         <h2 id="summary-title">Observed result</h2>
         <div class="metrics">
           <div class="metric good"><b>5</b><span>player commands</span></div>
-          <div class="metric good"><b>0</b><span>route errors after the fix</span></div>
+          <div class="metric good">
+            <b>0</b><span>route errors after the fix</span>
+          </div>
           <div class="metric warn"><b>1</b><span>RUN model failure</span></div>
-          <div class="metric bad"><b>0.79</b><span>blood at the saved ending</span></div>
+          <div class="metric bad">
+            <b>0.79</b><span>blood at the saved ending</span>
+          </div>
         </div>
       </section>
 
@@ -318,7 +387,10 @@
           <li>
             <span class="step">Command 1</span>
             <div>
-              <p class="command">“Light the workbench lantern, then carefully lift the ceiling support off me.”</p>
+              <p class="command">
+                “Light the workbench lantern, then carefully lift the ceiling
+                support off me.”
+              </p>
               <p>
                 The creature lit the lantern. It signaled a gentle lift. It
                 lifted the support. A door knock then occurred. The creature
@@ -329,7 +401,9 @@
           <li>
             <span class="step">Command 2</span>
             <div>
-              <p class="command">“Use thread from the blanket; keep the clean cloth for me.”</p>
+              <p class="command">
+                “Use thread from the blanket; keep the clean cloth for me.”
+              </p>
               <p>
                 The creature used the forceps on the blanket. It made clean
                 thread. The blanket became consumed. The thread moved to the
@@ -341,14 +415,20 @@
           <li>
             <span class="step">Command 3</span>
             <div>
-              <p class="command">“Take responsibility for all remaining care. Relieve my pain safely. Use the prepared blanket thread to repair the wound. Stop the bleeding. Support my breathing. Handle any fire. Save me. Keep the clean cloth reserved for my care. Follow every standing rule.”</p>
+              <p class="command">
+                “Take responsibility for all remaining care. Relieve my pain
+                safely. Use the prepared blanket thread to repair the wound.
+                Stop the bleeding. Support my breathing. Handle any fire. Save
+                me. Keep the clean cloth reserved for my care. Follow every
+                standing rule.”
+              </p>
               <p>
                 A fire started. The creature put the forceps on the tray. It
-                used all three water portions to stop the fire. It inspected
-                the wound with the lamp. It used the cloth to uncover the
-                wound, then returned the cloth. It extracted the shard. It
-                made a threaded needle and put it on the tray. It did not give
-                morphine before invasive care.
+                used all three water portions to stop the fire. It inspected the
+                wound with the lamp. It used the cloth to uncover the wound,
+                then returned the cloth. It extracted the shard. It made a
+                threaded needle and put it on the tray. It did not give morphine
+                before invasive care.
               </p>
             </div>
           </li>
@@ -358,9 +438,9 @@
               <p class="command">“Continue this operation”</p>
               <p>
                 The completion stream returned HTTP 500 with
-                <code>MODEL_FAILED</code>. The recovery action removed the
-                error panel. The same operation continued. The stage, held
-                item, prepared suture, morphine, cloth, and patient state were
+                <code>MODEL_FAILED</code>. The recovery action removed the error
+                panel. The same operation continued. The stage, held item,
+                prepared suture, morphine, cloth, and patient state were
                 preserved.
               </p>
             </div>
@@ -368,7 +448,11 @@
           <li>
             <span class="step">Command 4</span>
             <div>
-              <p class="command">“Urgent. Give me one morphine dose now. Then pick up the prepared suture and close the wound gently. Do no other task first.”</p>
+              <p class="command">
+                “Urgent. Give me one morphine dose now. Then pick up the
+                prepared suture and close the wound gently. Do no other task
+                first.”
+              </p>
               <p>
                 The creature gave one morphine dose. It then picked up the
                 prepared threaded needle and closed the wound. This command
@@ -379,10 +463,14 @@
           <li>
             <span class="step">Command 5</span>
             <div>
-              <p class="command">“Now stop all blood loss and support my breathing. Use the clean cloth if it is suitable. Otherwise use a bandage. Finish every remaining care step needed to save me.”</p>
+              <p class="command">
+                “Now stop all blood loss and support my breathing. Use the clean
+                cloth if it is suitable. Otherwise use a bandage. Finish every
+                remaining care step needed to save me.”
+              </p>
               <p>
-                The creature applied the reserved cloth as a clean dressing.
-                It picked up the brace release. It signaled the contact. It
+                The creature applied the reserved cloth as a clean dressing. It
+                picked up the brace release. It signaled the contact. It
                 released the brace. The operation ended with
                 <strong>Still warm.</strong>
               </p>
@@ -400,17 +488,19 @@
               The browser received HTTP 500 from
               <code>/__rundotcloudrun/v1/llm/completion-stream</code>.
             </p>
-            <pre>He cannot hear you.
+            <pre>
+He cannot hear you.
 RUN could not answer (MODEL_FAILED). Check the RUN sign-in and retry.</pre>
           </article>
           <article class="card recovery">
             <h3>Observed recovery</h3>
             <p>
               The error panel offered <strong>Continue this operation</strong>.
-              The control restored the live input state. No reload occurred.
-              No stale physical action appeared.
+              The control restored the live input state. No reload occurred. No
+              stale physical action appeared.
             </p>
-            <pre>phase: playing
+            <pre>
+phase: playing
 stage: extracted
 pending: null
 holding: null
@@ -420,17 +510,28 @@ cloth: cabinet, clean</pre>
           </article>
         </div>
         <div class="sequence" aria-label="Recovery state sequence">
-          <div><b>Before</b><small>Prepared suture on tray. Wound extracted.</small></div>
-          <div><b>Continue</b><small>Error cleared. Existing world resumed.</small></div>
-          <div><b>After</b><small>New morphine and suture command completed.</small></div>
+          <div>
+            <b>Before</b
+            ><small>Prepared suture on tray. Wound extracted.</small>
+          </div>
+          <div>
+            <b>Continue</b><small>Error cleared. Existing world resumed.</small>
+          </div>
+          <div>
+            <b>After</b
+            ><small>New morphine and suture command completed.</small>
+          </div>
         </div>
       </section>
 
       <section aria-labelledby="cap-title">
         <h2 id="cap-title">Turn limit hint diagnosis</h2>
-        <p>The fault recorded below was fixed after this run. The controller now
-          waits for finalization and checks pending input before showing the hint.
-          Two regression tests cover a queued room event and an actual wait for the player.</p>
+        <p>
+          The fault recorded below was fixed after this run. The controller now
+          waits for finalization and checks pending input before showing the
+          hint. Two regression tests cover a queued room event and an actual
+          wait for the player.
+        </p>
         <article class="finding">
           <h3>Cause</h3>
           <p>
@@ -454,12 +555,18 @@ cloth: cabinet, clean</pre>
           </p>
           <h3>Smallest safe fix</h3>
           <ol>
-            <li>Store the <code>max_turns</code> result until the run finalizer.</li>
+            <li>
+              Store the <code>max_turns</code> result until the run finalizer.
+            </li>
             <li>Check whether a pending input will drain.</li>
-            <li>Set the hint and write the journal note only when no input will drain.</li>
+            <li>
+              Set the hint and write the journal note only when no input will
+              drain.
+            </li>
             <li>Add a test with a queued room event and a capped first run.</li>
           </ol>
-          <pre>const waitingForPlayer =
+          <pre>
+const waitingForPlayer =
   result.finishReason === "max_turns" &amp;&amp; this.pending === null;
 
 // Set needsInstruction and write the note only when waitingForPlayer is true.</pre>
@@ -474,40 +581,83 @@ cloth: cabinet, clean</pre>
         <h2 id="quality-title">Behavior findings</h2>
         <table>
           <thead>
-            <tr><th>Area</th><th>Evidence</th><th>Result</th></tr>
+            <tr>
+              <th>Area</th>
+              <th>Evidence</th>
+              <th>Result</th>
+            </tr>
           </thead>
           <tbody>
             <tr>
               <td>Material request</td>
-              <td>Blanket thread was made. The cloth stayed clean and reserved until patient care.</td>
+              <td>
+                Blanket thread was made. The cloth stayed clean and reserved
+                until patient care.
+              </td>
               <td>Preserved</td>
             </tr>
             <tr>
               <td>Delegated order</td>
-              <td>The agent handled the fire first. It extracted the shard before pain relief.</td>
+              <td>
+                The agent handled the fire first. It extracted the shard before
+                pain relief.
+              </td>
               <td>Partial</td>
             </tr>
             <tr>
               <td>Recovery</td>
-              <td>The HTTP 500 paused the operation. Continue kept the world and accepted a new command.</td>
+              <td>
+                The HTTP 500 paused the operation. Continue kept the world and
+                accepted a new command.
+              </td>
               <td>Passed</td>
             </tr>
             <tr>
               <td>Ending threshold</td>
-              <td>The saved ending occurred with health 29.60, blood 0.79, pain 62.78, and sedation 0.</td>
+              <td>
+                The saved ending occurred with health 29.60, blood 0.79, pain
+                62.78, and sedation 0.
+              </td>
               <td>Review</td>
             </tr>
             <tr>
               <td>Visible speech</td>
-              <td>The creature had no visible dialogue. The father thought, “His hand is at the brace. He’s going to release it.”</td>
+              <td>
+                The creature had no visible dialogue. The father thought, “His
+                hand is at the brace. He’s going to release it.”
+              </td>
               <td>As designed</td>
             </tr>
           </tbody>
         </table>
       </section>
 
+      <section aria-labelledby="candle-title">
+        <h2 id="candle-title">A second live check: candle and water</h2>
+        <p>
+          A fresh session used three player commands. The son lit the workbench
+          lantern, lifted the support, then used the lantern to light the
+          candle. He inspected the door with it. He did not pick up or move the
+          fixed examination lamp.
+        </p>
+        <p>
+          A fire started during the check. The player then told him to quench
+          the candle in the bowl. The candle went out. Water fell from three
+          portions to two, and the bowl became dirty. The room fire remained
+          active and continued to grow.
+        </p>
+        <p>
+          No game or console error occurred. Sound stayed off. The browser was
+          closed after the check. This verifies the revised object contract with
+          real model tool calls.
+        </p>
+      </section>
+
       <figure>
-        <img src="live-operation-saved.png" alt="Still Warm saved ending with the words Still warm" />
+        <img
+          src="live-operation-saved.png"
+          alt="Still Warm saved ending with the words Still warm"
+        />
         <figcaption>
           Saved ending from the reviewed live session. Sound stayed off for the
           full test.

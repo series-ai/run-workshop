@@ -32,26 +32,26 @@ export const Lamp: FC<LampProps> = ({
 }) => {
   const cowlRef = useRef<Group>(null!);
   const lightRef = useRef<SpotLight>(null!);
-  const currentTargetPos = useRef<Vector3>(
-    new Vector3(...PATIENT_LAYOUT.wound),
-  );
+  const initialTarget = useRef(TARGETS[mode]).current;
+  const currentTargetPos = useRef(initialTarget.clone());
 
   // Ephemeral dummy target object for Three.js SpotLight
   const lightTargetObj = useMemo(() => {
     const obj = new Object3D();
-    obj.position.copy(TARGETS.wound);
+    obj.position.copy(initialTarget);
     return obj;
-  }, []);
+  }, [initialTarget]);
 
   useEffect(() => {
     if (lightRef.current) {
       lightRef.current.target = lightTargetObj;
     }
+    cowlRef.current?.lookAt(lightTargetObj.position);
   }, [lightTargetObj]);
 
   useFrame((_, dt) => {
     if (paused || !cowlRef.current || !lightRef.current) return;
-    const dest = TARGETS[mode] ?? TARGETS.wound;
+    const dest = TARGETS[mode];
 
     if (reducedMotion) {
       currentTargetPos.current.copy(dest);

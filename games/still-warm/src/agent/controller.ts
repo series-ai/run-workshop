@@ -54,11 +54,14 @@ export class CreatureController {
   private connectionAbort: AbortController | null = null;
   private runAbort: AbortController | null = null;
   private running: Promise<void> | null = null;
-  private pending: Input | null = null;
+  private pendingPlayer: string | null = null;
+  private pendingRoom: string[] = [];
+  private blackoutPending = false;
+  private scheduleRetirement: (() => void) | null = null;
   private epoch = 0;
   private interrupted = false;
   private closed = false;
-  private eventCount = 0;
+  private eventCursor = 0;
   private blackoutCount = 0;
   private connectionToken: object | null = null;
   private replaceSessionOnResume = false;
@@ -133,10 +136,11 @@ export class CreatureController {
     this.interrupted = false;
     this.running = null;
     this.runAbort = null;
+    this.scheduleRetirement = null;
     const old = this.live;
     this.live = null;
     this.store.reset();
-    this.eventCount = 0;
+    this.eventCursor = 0;
     this.blackoutCount = 0;
     this.connectionToken = null;
     this.replaceSessionOnResume = false;
@@ -230,15 +234,12 @@ export class CreatureController {
         text,
       )
     ) {
-      if (this.pending?.player)
-        this.pending = {
-          ...this.pending,
-          text: `${this.pending.text} ${text}`.slice(0, 1000),
-        };
-      else if (!this.pending) this.pending = { text, player: true };
+      this.pendingPlayer = this.pendingPlayer
+        ? `${this.pendingPlayer} ${text}`.slice(0, 1000)
+        : text;
       return;
     }
-    this.pending = { text, player: true };
+    this.pendingPlayer = text;
     if (this.running) {
       this.interrupted = true;
       this.runAbort?.abort();
@@ -246,25 +247,53 @@ export class CreatureController {
       this.store.cancel();
       this.hooks.silence();
       this.update({ status: "stopping" });
+      this.scheduleRetirement?.();
     } else this.drain();
   }
 
   private drain(): void {
-    if (!this.pending || this.running || !this.live || this.closed) return;
+    if (
+      (!this.blackoutPending &&
+        this.pendingRoom.length === 0 &&
+        this.pendingPlayer === null) ||
+      this.running ||
+      !this.live ||
+      this.closed
+    )
+      return;
     const state = this.store.getSnapshot();
     if (
       state.paused ||
       (state.phase !== "playing" && state.phase !== "blackout")
     ) {
-      this.pending = null;
+      this.pendingPlayer = null;
+      this.pendingRoom = [];
+      this.blackoutPending = false;
       return;
     }
-    if (this.pending.player && state.phase === "blackout") {
-      this.pending = null;
+    if (state.phase === "blackout") this.pendingPlayer = null;
+    if (
+      !this.blackoutPending &&
+      this.pendingRoom.length === 0 &&
+      this.pendingPlayer === null
+    )
       return;
+    let input: Input;
+    if (this.blackoutPending) {
+      const room = [
+        "The patient has lost consciousness. Follow their existing restrictions. Do not invent new instructions.",
+        ...this.pendingRoom,
+      ];
+      this.blackoutPending = false;
+      this.pendingRoom = [];
+      input = { text: room.join("\n"), player: false };
+    } else if (this.pendingPlayer !== null) {
+      input = { text: this.pendingPlayer, player: true };
+      this.pendingPlayer = null;
+    } else {
+      input = { text: this.pendingRoom.join("\n"), player: false };
+      this.pendingRoom = [];
     }
-    const input = this.pending;
-    this.pending = null;
     const epoch = this.epoch;
     const live = this.live;
     const connectionToken = this.connectionToken;
@@ -280,9 +309,14 @@ export class CreatureController {
     let capped = false;
     let timedOut = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let retirementTimer: ReturnType<typeof setTimeout> | undefined;
     let rejectTimeout!: (error: Error) => void;
+    let rejectRetirement!: (error: Error) => void;
     const timeout = new Promise<never>((_resolve, reject) => {
       rejectTimeout = reject;
+    });
+    const retirement = new Promise<never>((_resolve, reject) => {
+      rejectRetirement = reject;
     });
     const resetTimeout = () => {
       clearTimeout(timer);
@@ -303,7 +337,33 @@ export class CreatureController {
     };
     resetTimeout();
     const unsubscribe = live.session.subscribe(resetTimeout);
-    const task = (async () => {
+    let retired = false;
+    let task!: Promise<void>;
+    const scheduleRetirement = () => {
+      if (retirementTimer !== undefined) return;
+      retirementTimer = setTimeout(() => {
+        if (
+          this.running !== task ||
+          epoch !== this.epoch ||
+          this.closed ||
+          this.runAbort !== abort
+        )
+          return;
+        retired = true;
+        if (this.live === live) this.live = null;
+        if (this.connectionToken === connectionToken)
+          this.connectionToken = null;
+        this.replaceSessionOnResume = true;
+        void live.close().catch(() => undefined);
+        rejectRetirement(
+          new Error(
+            "The previous request did not stop. Continue to reconnect.",
+          ),
+        );
+      }, 3000);
+    };
+    this.scheduleRetirement = scheduleRetirement;
+    task = (async () => {
       try {
         const result = await Promise.race([
           live.session.send(
@@ -313,6 +373,7 @@ export class CreatureController {
             { signal: abort.signal },
           ),
           timeout,
+          retirement,
         ]);
         if (epoch !== this.epoch || this.closed) return;
         if (timedOut)
@@ -330,11 +391,12 @@ export class CreatureController {
         if (
           epoch === this.epoch &&
           !this.closed &&
-          (!abort.signal.aborted || timedOut)
+          (!abort.signal.aborted || timedOut || retired)
         )
-          this.fail(error);
+          this.fail(error, retired);
       } finally {
         clearTimeout(timer);
+        clearTimeout(retirementTimer);
         unsubscribe();
       }
     })();
@@ -343,12 +405,16 @@ export class CreatureController {
       const ownsRun = this.running === task;
       if (ownsRun) this.running = null;
       if (this.runAbort === abort) this.runAbort = null;
+      if (this.scheduleRetirement === scheduleRetirement)
+        this.scheduleRetirement = null;
       if (!ownsRun || epoch !== this.epoch || this.closed) return;
       if (this.snapshot.status !== "error") {
         const state = this.store.getSnapshot();
         const needsInstruction =
           capped &&
-          this.pending === null &&
+          this.pendingPlayer === null &&
+          this.pendingRoom.length === 0 &&
+          !this.blackoutPending &&
           this.live === live &&
           connectionToken !== null &&
           this.connectionToken === connectionToken &&
@@ -382,24 +448,27 @@ export class CreatureController {
       (state.phase !== "playing" && state.phase !== "blackout")
     )
       return;
-    let text = "";
+    let changed = false;
     if (state.patient.blackoutCount > this.blackoutCount) {
       this.blackoutCount = state.patient.blackoutCount;
-      if (this.pending?.player) this.pending = null;
-      text =
-        "The patient has lost consciousness. Follow their existing restrictions. Do not invent new instructions.";
+      this.pendingPlayer = null;
+      this.blackoutPending = true;
+      changed = true;
     }
-    if (state.environment.eventCount > this.eventCount) {
-      this.eventCount = state.environment.eventCount;
-      text += ` ${state.environment.lastEvent}`;
+    const events = state.environment.events.slice(this.eventCursor);
+    if (events.length > 0) {
+      this.eventCursor = state.environment.events.length;
+      this.pendingRoom.push(...events.map((event) => event.text));
+      changed = true;
     }
-    if (!text.trim()) return;
-    if (!this.pending?.player) this.pending = { text, player: false };
+    if (!changed) return;
     this.drain();
   }
 
   stop(): void {
-    this.pending = null;
+    this.pendingPlayer = null;
+    this.pendingRoom = [];
+    this.blackoutPending = false;
     this.interrupted ||=
       this.running !== null || this.store.getSnapshot().pending !== null;
     this.connectionAbort?.abort();
@@ -409,6 +478,7 @@ export class CreatureController {
     this.hooks.silence();
     if (!this.closed)
       this.update({ status: this.running ? "stopping" : "idle" });
+    this.scheduleRetirement?.();
   }
 
   pause(): void {
@@ -418,6 +488,7 @@ export class CreatureController {
   resume(): void {
     if (
       this.closed ||
+      (this.running !== null && this.runAbort?.signal.aborted) ||
       (this.snapshot.status === "error" && !this.snapshot.canResume)
     )
       return;
@@ -469,6 +540,7 @@ export class CreatureController {
         canResume: false,
         needsInstruction: true,
       });
+      this.drain();
     } catch (error) {
       if (epoch !== this.epoch || this.closed) return;
       if (abort.signal.aborted && !timedOut) {
@@ -476,7 +548,7 @@ export class CreatureController {
         return;
       }
       this.connectionToken = null;
-      this.fail(error);
+      this.fail(error, true);
     } finally {
       if (timer !== undefined) clearTimeout(timer);
       if (this.connectionAbort === abort) this.connectionAbort = null;
@@ -527,8 +599,12 @@ export class CreatureController {
     }
   }
 
-  private fail(error: unknown): void {
-    this.pending = null;
+  private fail(error: unknown, preservePending = false): void {
+    if (!preservePending) {
+      this.pendingPlayer = null;
+      this.pendingRoom = [];
+      this.blackoutPending = false;
+    }
     this.interrupted = true;
     this.store.cancel();
     this.store.pause(true);

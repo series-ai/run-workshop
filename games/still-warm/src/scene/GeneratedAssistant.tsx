@@ -245,7 +245,7 @@ function RiggedAssistant({ state, socket, call = null }: Props) {
     elapsed: number;
     turnYaw: number | null;
   } | null>(null);
-  const eventCount = useRef(state.environment.eventCount);
+  const eventCount = useRef(state.environment.events.length);
   const screamUntil = useRef(0);
   const elapsed = useRef(0);
   const target = useMemo(() => new Vector3(), []);
@@ -271,12 +271,12 @@ function RiggedAssistant({ state, socket, call = null }: Props) {
       plan.current = null;
       returnPlan.current = null;
     }
-    if (eventCount.current !== state.environment.eventCount) {
-      eventCount.current = state.environment.eventCount;
+    if (eventCount.current < state.environment.events.length) {
       if (!state.pending)
         screamUntil.current =
           elapsed.current + rig.actions.scream.getClip().duration;
     }
+    eventCount.current = state.environment.events.length;
     const pending = state.pending;
     if (pending && plan.current?.id !== pending.id) {
       returnPlan.current = null;

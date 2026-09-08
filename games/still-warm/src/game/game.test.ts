@@ -2207,7 +2207,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       expect(s.patient).toEqual(patient);
       expect(s.environment.door).toBe("quiet");
       expect(s.environment.fire).toBe(0);
-      expect(s.environment.eventCount).toBe(0);
+      expect(s.environment.events).toHaveLength(0);
 
       s = tickPatient(s, 2);
       expect(s.patient.health).toBeLessThan(patient.health);
@@ -2233,24 +2233,56 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       s = tickPatient(s, 1);
       expect(s.environment.door).toBe("knocking");
       expect(s.environment.doorPressure).toBe(1);
-      expect(s.environment.lastEvent).toMatch(/1 of 3/i);
+      expect(s.environment.events.at(-1)?.text).toMatch(/1 of 3/i);
       expect(s.disposition.confidence).toBeLessThan(confidence);
 
       s = tickPatient(s, 59);
       expect(s.environment.doorPressure).toBe(1);
       s = tickPatient(s, 1);
       expect(s.environment.doorPressure).toBe(2);
-      expect(s.environment.lastEvent).toMatch(/2 of 3/i);
+      expect(s.environment.events.at(-1)?.text).toMatch(/2 of 3/i);
       s = tickPatient(s, 60);
       expect(s.environment.doorPressure).toBe(3);
-      expect(s.environment.lastEvent).toMatch(/3 of 3/i);
+      expect(s.environment.events.at(-1)?.text).toMatch(/3 of 3/i);
       s.environment = { ...s.environment, fireStarted: true };
       const disposition = { ...s.disposition };
-      const events = s.environment.eventCount;
+      const events = s.environment.events;
       s = tickPatient(s, 180);
       expect(s.environment.doorPressure).toBe(3);
-      expect(s.environment.eventCount).toBe(events);
+      expect(s.environment.events).toBe(events);
       expect(s.disposition).toEqual(disposition);
+    });
+
+    it("keeps door and fire events in order when both start on one tick", () => {
+      const before: GameState = {
+        ...state,
+        stage: "extracted",
+        elapsed: 239,
+        environment: {
+          ...state.environment,
+          lanternLit: true,
+          door: "quiet",
+          fire: 0,
+          fireStarted: false,
+          events: [],
+        },
+      };
+      const previousEvents = before.environment.events;
+
+      const after = tickPatient(before, 1);
+
+      expect(previousEvents).toEqual([]);
+      expect(before.environment.events).toBe(previousEvents);
+      expect(after.environment.events).toEqual([
+        {
+          kind: "door",
+          text: "A hard knock strikes the hallway door. Door pressure is 1 of 3.",
+        },
+        { kind: "fire", text: "A small fire has broken out in the corner!" },
+      ]);
+      expect(after.journal.slice(-2).map((entry) => entry.text)).toEqual(
+        after.environment.events.map((event) => event.text),
+      );
     });
 
     it("allows barricading door with metal pry tool", () => {
@@ -2273,6 +2305,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       if (res.ok) {
         expect(res.state.environment.door).toBe("barricaded");
         expect(res.state.environment.doorPressure).toBe(0);
+        expect(res.state.environment.events).toBe(s.environment.events);
       }
     });
 
@@ -2313,6 +2346,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       if (res.ok) {
         expect(res.state.environment.fire).toBe(0);
         expect(res.state.items.bowl.clean).toBe(false);
+        expect(res.state.environment.events).toBe(s.environment.events);
       }
     });
 
@@ -2345,7 +2379,8 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       if (!result.ok) return;
       expect(result.state.environment.fire).toBe(0);
       expect(result.state.items.cloth.clean).toBe(false);
-      expect(result.state.environment.eventCount).toBe(1);
+      expect(result.state.environment.events).toHaveLength(1);
+      expect(result.state.environment.events[0].kind).toBe("fire");
     });
 
     it("records fire as the terminal cause", () => {
@@ -2362,6 +2397,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       const result = tickPatient(s, 4);
       expect(result.phase).toBe("lost");
       expect(result.outcome).toBe("fire");
+      expect(result.environment.events).toHaveLength(0);
     });
   });
 

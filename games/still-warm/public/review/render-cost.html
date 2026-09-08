@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Still Warm — Render cost</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #10130f;
+        color: #d8d9c5;
+        font:
+          15px/1.6 system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 1000px;
+        margin: auto;
+        padding: 36px 22px 60px;
+      }
+      h1,
+      h2 {
+        font-family: Georgia, serif;
+        font-weight: 400;
+      }
+      h1 {
+        font-size: 42px;
+      }
+      a {
+        color: #c4c8a5;
+      }
+      p {
+        color: #b9bdaa;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 10px;
+        border-bottom: 1px solid #37422d;
+        text-align: left;
+      }
+      .views {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      figure {
+        margin: 0;
+      }
+      img {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      figcaption {
+        padding: 12px 0;
+      }
+      .table {
+        overflow-x: auto;
+      }
+      @media (max-width: 600px) {
+        .views {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a href="../review.html">← Build review</a>
+      <h1>The cost of the cellar.</h1>
+      <p>
+        These measurements use the actual lit room and approved model. No
+        production render setting or asset was changed after this audit.
+      </p>
+      <div class="table">
+        <table>
+          <thead>
+            <tr>
+              <th>Scene sample</th>
+              <th>Draw calls</th>
+              <th>Triangles</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Desktop, shadows on</td>
+              <td>559</td>
+              <td>3,697,547</td>
+            </tr>
+            <tr>
+              <td>Desktop, shadows off for measurement</td>
+              <td>172–173</td>
+              <td>528,791–528,803</td>
+            </tr>
+            <tr>
+              <td>Mobile, shadows on</td>
+              <td>506</td>
+              <td>3,696,153</td>
+            </tr>
+            <tr>
+              <td>Mobile, shadows off for measurement</td>
+              <td>119</td>
+              <td>527,397</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Shadow passes add 387 draw calls and 3,168,756 triangles. This is about
+        86% of the drawn triangles. The room uses a point-light shadow and a
+        spot-light shadow, both at 1024 pixels. The point light has six shadow
+        faces.
+      </p>
+      <h2>Mobile pixel density</h2>
+      <p>
+        The default pixel ratio reaches 2 on a high-density screen. The measured
+        mobile canvas had a 390 × 658 CSS size and a 780 × 1316 drawing buffer.
+        Ratio 1 uses one quarter as many buffer pixels. These paused images
+        compare the same view.
+      </p>
+      <div class="views">
+        <figure>
+          <img
+            src="render-cost-mobile-dpr2.png"
+            alt="The lit son at pixel ratio 2."
+          />
+          <figcaption>
+            Current default on a high-density screen: ratio 2.
+          </figcaption>
+        </figure>
+        <figure>
+          <img
+            src="render-cost-mobile-dpr1.png"
+            alt="The same lit son at pixel ratio 1."
+          />
+          <figcaption>
+            Measurement variant: ratio 1. The dither pattern is coarser.
+          </figcaption>
+        </figure>
+      </div>
+      <h2>Limits</h2>
+      <p>
+        Counts came from Three.js renderer.info in headless Chromium. They do
+        not measure frame rate on a phone. The separate shadow-light comparison
+        was not completed before the work window ended. The current shadow setup
+        and default pixel ratio remain in the game.
+      </p>
+    </main>
+  </body>
+</html>
