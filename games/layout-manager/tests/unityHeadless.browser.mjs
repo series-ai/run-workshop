@@ -52,9 +52,14 @@ try {
     window.fetch = async (url, init) => {
       if (typeof url !== 'string' || !url.startsWith('/__unity-')) return original(url, init);
       const body = JSON.parse(init.body); window.__qa.calls.push({url,body});
-      if (url === '/__unity-status') return Response.json({ up:true, project:body.backend === 'headless' ? 'http://fixture.invalid:8080' : '/fixture/local-project', version:'fixture',port:7800 });
-      if (url === '/__unity-models') return Response.json({models:[{id:'gemini-3.1-flash', displayName:'QA Image Model', blurb:'Fixture catalog', modalities:['Image'], caps:body.backend === 'headless' ? ['SupportsTextPrompt'] : ['SupportsTextPrompt','SupportsCustomResolutions','SupportsImageReference']}]});
+      if (url === '/__unity-status') return Response.json({ up:true, project:window.__qa.project || (body.backend === 'headless' ? 'http://fixture.invalid:8080' : '/fixture/local-project'), version:'fixture',port:7800 });
+      if (url === '/__unity-models' && window.__qa.holdCatalog) await new Promise(resolve => { window.__qa.finishCatalog = resolve; });
+      if (url === '/__unity-models') return Response.json({models:['gemini-3.1-flash','qa-second'].map(id=>({id, displayName:id === 'qa-second' ? 'QA Second Model' : 'QA Image Model', blurb:'Fixture catalog', modalities:['Image'], caps:body.backend === 'headless' ? ['SupportsTextPrompt'] : ['SupportsTextPrompt','SupportsCustomResolutions','SupportsImageReference']}))});
       if (url === '/__unity-generate') {
+        if (window.__qa.image === 'auth-http') return Response.json({error:'Headless Unity returned HTTP 401. Unauthorized'},{status:401});
+        if (window.__qa.image === 'auth-config') return Response.json({error:'Headless Unity API key is not configured.'},{status:502});
+        if (window.__qa.image === 'auth-sse') return new Response('event: error\\ndata: {"error":"Headless Unity returned HTTP 403. Unauthorized"}\\n\\nevent: done\\ndata: {}\\n\\n',{headers:{'Content-Type':'text/event-stream'}});
+        if (window.__qa.image === 'pending') await new Promise(resolve => { window.__qa.finish = resolve; });
         const c = document.createElement('canvas'); c.width=32;c.height=32;c.getContext('2d').fillRect(0,0,32,32);
         const dataUrl = window.__qa.image === 'invalid' ? 'data:image/png;base64,iVBORw0KGgo=' : c.toDataURL();
         const image = window.__qa.image === 'empty' ? '' : 'event: image\\ndata: '+JSON.stringify({dataUrl})+'\\n\\n';
@@ -94,6 +99,30 @@ try {
   );
   assert.equal(await evaluate(`${button('Generate')}.disabled`), true);
   await evaluate(
+    `{const s=document.querySelector('.ai-modal select');s.value='qa-second';s.dispatchEvent(new Event('change',{bubbles:true}));}`,
+  );
+  await until(`document.querySelector('.ai-modal select').value === 'qa-second'`);
+  const catalogCalls = await evaluate(
+    `window.__qa.calls.filter(c=>c.url==='/__unity-models').length`,
+  );
+  const statusCalls = await evaluate(
+    `window.__qa.calls.filter(c=>c.url==='/__unity-status').length`,
+  );
+  await evaluate(`document.querySelector('button[title="Re-check connection"]').click()`);
+  await until(
+    `window.__qa.calls.filter(c=>c.url==='/__unity-status').length > ${statusCalls} && !!document.querySelector('.ai-modal select option')`,
+  );
+  assert.equal(
+    await evaluate(`document.querySelector('.ai-modal select').value`),
+    'qa-second',
+    'Re-check must preserve the selected model',
+  );
+  assert.equal(
+    await evaluate(`window.__qa.calls.filter(c=>c.url==='/__unity-models').length`),
+    catalogCalls,
+    'Same-connection re-check must preserve the catalog',
+  );
+  await evaluate(
     `{const input=document.querySelector('.ai-modal-textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(input,'QA fixture only');input.dispatchEvent(new Event('input',{bubbles:true}));}`,
   );
   await until(`!${button('Generate')}.disabled`);
@@ -111,7 +140,8 @@ try {
   const image = await evaluate(
     `(()=>{const i=document.querySelector('.image-node-img');return {src:i.src,width:i.naturalWidth,height:i.naturalHeight};})()`,
   );
-  assert.match(image.src, /^blob:/);
+  // Source uses blob storage; the workshop version retains data URLs.
+  assert.match(image.src, /^(blob:|data:image\/png;base64,)/);
   assert.equal(image.width, 32);
   assert.equal(image.height, 32);
   const calls = await evaluate(`window.__qa.calls.filter(c=>c.url==='/__unity-generate')`);
@@ -135,8 +165,24 @@ try {
     await writeFile(path, Buffer.from(shot.data, 'base64'));
     console.log(`Screenshot: ${path}`);
   }
-  // Switch back without closing the Unity panel: it must remount and load
-  // the local catalog rather than reuse the remote connection/capabilities.
+  for (const failure of ['auth-http', 'auth-sse', 'auth-config']) {
+    await evaluate(`window.__qa.image=${JSON.stringify(failure)};${button('Generate')}.click()`);
+    await until(`!!document.querySelector('.ai-modal-error') && !!${button('Generate')}`);
+    const message = await evaluate(`document.querySelector('.ai-modal-error').textContent`);
+    assert.match(
+      message,
+      /\.unity-headless\.local\.json/,
+      'Headless auth errors must identify the server-side config',
+    );
+    assert.doesNotMatch(message, /Preferences/);
+  }
+  const beforePending = await evaluate(
+    `window.__qa.calls.filter(c=>c.url==='/__unity-generate').length`,
+  );
+  // A preference change must not detach the active job or allow a second
+  // submission. Adopt the new connection only once the original job finishes.
+  await evaluate(`window.__qa.image='pending';${button('Generate')}.click()`);
+  await until(`typeof window.__qa.finish === 'function'`);
   await evaluate(`document.querySelector('button[title="Menu"]').click()`);
   await until(`!!${button('Preferences')}`);
   await evaluate(`${button('Preferences')}.click()`);
@@ -148,6 +194,17 @@ try {
   );
   await until(`${select}.value === 'local'`);
   await evaluate(`${button('Save')}.click()`);
+  await until(`!document.querySelector('.prefs-select-row')`);
+  assert.match(await evaluate(`document.querySelector('.ai-modal h2').textContent`), /Headless/);
+  assert.equal(await evaluate(`!!${button('Generating...')}`), true);
+  await evaluate(
+    `document.querySelector('.ai-modal-textarea').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',ctrlKey:true,bubbles:true}))`,
+  );
+  assert.equal(
+    await evaluate(`window.__qa.calls.filter(c=>c.url==='/__unity-generate').length`),
+    beforePending + 1,
+  );
+  await evaluate(`window.__qa.finish()`);
   await until(
     `document.querySelector('.ai-modal')?.innerText.includes('local-project') && !!document.querySelector('.ai-modal input[inputmode="numeric"]')`,
   );
@@ -155,8 +212,35 @@ try {
     await evaluate(`document.querySelector('.ai-modal-textarea').value`),
     'QA fixture only',
   );
+  assert.equal(await evaluate(`document.querySelectorAll('.image-node-img').length`), 2);
+  await evaluate(`window.__qa.image='auth-http';${button('Generate')}.click()`);
+  await until(`!!document.querySelector('.ai-modal-error') && !!${button('Generate')}`);
+  assert.match(
+    await evaluate(`document.querySelector('.ai-modal-error').textContent`),
+    /Preferences/,
+  );
+  const beforeChangedEditor = await evaluate(
+    `window.__qa.calls.filter(c=>c.url==='/__unity-generate').length`,
+  );
+  await evaluate(
+    `window.__qa.project='/fixture/changed-project';window.__qa.holdCatalog=true;document.querySelector('button[title="Re-check connection"]').click()`,
+  );
+  await until(`typeof window.__qa.finishCatalog === 'function'`);
+  assert.equal(await evaluate(`document.querySelectorAll('.ai-modal select option').length`), 0);
+  assert.equal(await evaluate(`${button('Generate')}.disabled`), true);
+  await evaluate(
+    `document.querySelector('.ai-modal-textarea').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',ctrlKey:true,bubbles:true}))`,
+  );
+  assert.equal(
+    await evaluate(`window.__qa.calls.filter(c=>c.url==='/__unity-generate').length`),
+    beforeChangedEditor,
+  );
+  await evaluate(`window.__qa.holdCatalog=false;window.__qa.finishCatalog()`);
+  await until(
+    `!!document.querySelector('.ai-modal select option') && !${button('Generate')}.disabled`,
+  );
   console.log(
-    'PASS: local default, headless selection, prompt-only request, decode/empty errors, persisted canvas image, and switch back to local. All Unity responses were test fixtures.',
+    'PASS: headless/local flow, re-check selection retention, changed-Editor catalog invalidation, HTTP/SSE/config auth guidance, and in-flight backend switching without duplicate submission or lost results. All Unity responses were test fixtures.',
   );
 } finally {
   ws.close();

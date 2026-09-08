@@ -65,8 +65,11 @@ function isImageModel(m: UnityModel): boolean {
 
 export function UnityAiModal({ config, prompt, onPromptChange, refNodes, position, onGenerated, onProgress, onClose }: UnityAiModalProps) {
   const { panelRef, onPointerDown, onPointerMove, onPointerUp } = useDraggableModal();
-  const projectPath = config.unityProjectPath.trim();
-  const backend = config.unityBackend === 'headless' ? 'headless' : 'local';
+  const [connection, setConnection] = useState(() => ({
+    projectPath: config.unityProjectPath.trim(),
+    backend: config.unityBackend === 'headless' ? 'headless' : 'local',
+  }));
+  const { projectPath, backend } = connection;
   const headless = backend === 'headless';
   const statusRequest = useRef<AbortController | null>(null);
 
@@ -85,15 +88,26 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
   const [genError, setGenError] = useState<string | null>(null);
   const [lastCost, setLastCost] = useState<string | null>(null);
 
-  const checkStatus = useCallback(() => {
-    statusRequest.current?.abort();
-    const controller = new AbortController();
-    statusRequest.current = controller;
+  // Keep the modal and its connection alive for the entire job. Preferences
+  // saved mid-generation take effect after the result has been imported.
+  useEffect(() => {
+    const nextBackend = config.unityBackend === 'headless' ? 'headless' : 'local';
+    const nextPath = config.unityProjectPath.trim();
+    if (generating || (backend === nextBackend && projectPath === nextPath)) return;
+    setConnection({ backend: nextBackend, projectPath: nextPath });
     setStatus({ checking: true });
     setModels(null);
     setModelsProject(null);
     setModelsError(null);
     setModelId('');
+  }, [config.unityBackend, config.unityProjectPath, generating, backend, projectPath]);
+
+  const checkStatus = useCallback(() => {
+    statusRequest.current?.abort();
+    const controller = new AbortController();
+    statusRequest.current = controller;
+    setStatus({ checking: true });
+    setModelsError(null);
     fetch('/__unity-status', {
       method: 'POST',
       signal: controller.signal,
@@ -112,6 +126,12 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
   useEffect(() => {
     const target = status.project ?? projectPath;
     if (status.checking || !status.up || (models && modelsProject === target)) return;
+    // A connectivity/points refresh preserves the same Editor's selection.
+    // A different resolved Editor must not keep the previous catalog usable.
+    if (modelsProject !== target) {
+      setModels(null);
+      setModelId('');
+    }
     let cancelled = false;
     fetch('/__unity-models', {
       method: 'POST',
@@ -125,9 +145,8 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
         const list = (j.models as UnityModel[]).filter(isImageModel);
         setModels(list);
         setModelsProject(target);
-        if (!list.some((m) => m.id === modelId)) {
-          setModelId(list.find((m) => m.id === 'gemini-3.1-flash')?.id ?? list[0]?.id ?? '');
-        }
+        setModelId((current) => list.some((m) => m.id === current)
+          ? current : list.find((m) => m.id === 'gemini-3.1-flash')?.id ?? list[0]?.id ?? '');
       })
       .catch((e) => { if (!cancelled) setModelsError(e instanceof Error ? e.message : 'Could not load models'); });
     return () => { cancelled = true; };
@@ -185,7 +204,8 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
   // Utilities transform the reference image: upscalers REQUIRE a reference
   // (running one without an image would spend points on nothing), while for
   // other models a reference makes the prompt optional
-  const canGenerate = UPSCALERS.has(modelId) ? useRefImage : (!!prompt.trim() || useRefImage);
+  const canGenerate = modelsProject === effectiveProject &&
+    (UPSCALERS.has(modelId) ? useRefImage : (!!prompt.trim() || useRefImage));
 
   const handleGenerate = useCallback(async () => {
     if (!canGenerate || generating || !modelId || !status.up || status.checking || !models) return;
@@ -193,6 +213,11 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
     setLastCost(null);
     setGenerating(true);
     onProgress({ message: 'Starting Unity generation...' });
+    const showError = (raw: string) => setGenError(
+      headless && /401|403|invalid.*key|API key|PERMISSION_DENIED|unauthorized/i.test(raw)
+        ? 'Headless Unity access was rejected. Check url and apiKey in .unity-headless.local.json on the Layout Manager dev server, and the service permissions.'
+        : friendlyAiError(raw),
+    );
     try {
       let refImage: { base64: string; mimeType?: string } | undefined;
       if (useRefImage && refNode) {
@@ -271,7 +296,7 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
             gotImage = true;
           } else if (event === 'error') {
             hadError = true;
-            setGenError(friendlyAiError(parsed.error ?? 'Unknown error'));
+            showError(parsed.error ?? 'Unknown error');
           } else if (event === 'done') {
             break readLoop;
           }
@@ -282,11 +307,11 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
         import('./completionSound').then((m) => m.playCompletionSound());
       }
     } catch (e) {
-      setGenError(friendlyAiError(e instanceof Error ? e.message : 'Unknown error'));
+      showError(e instanceof Error ? e.message : 'Unknown error');
     }
     onProgress(null);
     setGenerating(false);
-  }, [prompt, canGenerate, generating, modelId, effectiveProject, backend, width, height, supportsCustomRes, useRefImage, refNode, onGenerated, onProgress, status.up, status.checking, models]);
+  }, [prompt, canGenerate, generating, modelId, effectiveProject, backend, headless, width, height, supportsCustomRes, useRefImage, refNode, onGenerated, onProgress, status.up, status.checking, models]);
 
   const statusText = status.checking ? (headless ? 'Checking headless Unity session...' : 'Checking Unity...')
     : status.up ? (headless ? `Headless Unity connected — ${status.project}` : `Unity connected — ${status.project?.split('/').pop() ?? 'project'} (${status.version ?? '?'}, port ${status.port ?? '?'})`)

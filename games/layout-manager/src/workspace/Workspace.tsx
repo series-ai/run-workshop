@@ -2726,7 +2726,6 @@ export function Workspace() {
 
       {aiUnityOpen && (
         <UnityAiModal
-          key={userConfig.unityBackend}
           config={userConfig}
           prompt={aiUnityPrompt}
           onPromptChange={setAiUnityPrompt}
