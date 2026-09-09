@@ -12,7 +12,7 @@ import {
   CreatureController,
   SessionFactory,
 } from "./controller";
-import { LiveSession } from "./liveSession";
+import { LiveHooks, LiveSession } from "./liveSession";
 
 interface Deferred<T> {
   promise: Promise<T>;
@@ -28,6 +28,32 @@ function createDeferred<T>(): Deferred<T> {
     reject = rej;
   });
   return { promise, resolve, reject };
+}
+
+async function prepareSupine(store: GameStore): Promise<void> {
+  const reassurance = await store.run({
+    kind: "react",
+    stimulus: "reassure",
+  });
+  expect(reassurance.ok).toBe(true);
+
+  const liftSignal = await store.run({
+    kind: "signal_intent",
+    contact: { kind: "lift_debris", style: "gentle" },
+  });
+  expect(liftSignal.ok).toBe(true);
+  const lift = store.run({ kind: "lift_debris", style: "gentle" });
+  await vi.advanceTimersByTimeAsync(25000);
+  await expect(lift).resolves.toMatchObject({ ok: true });
+
+  const rollSignal = await store.run({
+    kind: "signal_intent",
+    contact: { kind: "roll_patient", style: "gentle" },
+  });
+  expect(rollSignal.ok).toBe(true);
+  const roll = store.run({ kind: "roll_patient", style: "gentle" });
+  await vi.advanceTimersByTimeAsync(25000);
+  await expect(roll).resolves.toMatchObject({ ok: true });
 }
 
 function createDefaultRunResult(
@@ -1052,11 +1078,7 @@ describe("CreatureController", () => {
     });
 
     it("raw result text never emits a cue but validated cues do", async () => {
-      let connectionHooks!: {
-        onVocalize(cue: VocalCue): void;
-        onPause(): void;
-        onAction(): void;
-      };
+      let connectionHooks!: LiveHooks;
       const deferredSend = createDeferred<AgentRunResult>();
       const sendMock = vi.fn(async () => deferredSend.promise);
 
@@ -1102,6 +1124,92 @@ describe("CreatureController", () => {
       expect(
         store.getSnapshot().journal.some((j) => j.text.includes(planningText)),
       ).toBe(false);
+      expect(controller.getSnapshot().response).toBeNull();
+    });
+
+    it("retains a validated response until the next validated response", async () => {
+      let connectionHooks!: LiveHooks;
+      const firstSend = createDeferred<AgentRunResult>();
+      const secondSend = createDeferred<AgentRunResult>();
+      const sendMock = vi
+        .fn()
+        .mockImplementationOnce(async () => firstSend.promise)
+        .mockImplementationOnce(async () => secondSend.promise);
+      const { liveSession } = createFakeLiveSession({
+        session: { send: sendMock },
+      });
+      const factory: SessionFactory = vi.fn(async (_store, hooksArg) => {
+        connectionHooks = hooksArg;
+        return liveSession;
+      });
+      const controller = new CreatureController(store, hooks, factory);
+
+      await controller.start("live");
+      expect(controller.getSnapshot().response).toBeNull();
+      controller.command("Are you afraid?");
+      connectionHooks.onResponse("I can hear his concern.");
+      expect(controller.getSnapshot().response).toEqual({
+        text: "I can hear his concern.",
+        id: 1,
+      });
+      firstSend.resolve(createDefaultRunResult());
+      await vi.waitFor(() => expect(controller.getSnapshot().status).toBe("idle"));
+
+      controller.command("Lift it now.");
+      expect(controller.getSnapshot().response?.text).toBe(
+        "I can hear his concern.",
+      );
+      connectionHooks.onResponse("He ordered me, but I am still afraid.");
+      expect(controller.getSnapshot().response).toEqual({
+        text: "He ordered me, but I am still afraid.",
+        id: 2,
+      });
+      secondSend.resolve(
+        createDefaultRunResult({ text: "Raw final text stays hidden." }),
+      );
+      await vi.waitFor(() => expect(controller.getSnapshot().status).toBe("idle"));
+      expect(controller.getSnapshot().response?.text).toBe(
+        "He ordered me, but I am still afraid.",
+      );
+
+      await controller.start("live");
+      expect(controller.getSnapshot().response).toBeNull();
+      await controller.dispose();
+    });
+
+    it("ignores response callbacks without an active run or after an abort", async () => {
+      let connectionHooks!: LiveHooks;
+      const deferredSend = createDeferred<AgentRunResult>();
+      const { liveSession } = createFakeLiveSession({
+        session: { send: vi.fn(async () => deferredSend.promise) },
+      });
+      const factory: SessionFactory = vi.fn(async (_store, hooksArg) => {
+        connectionHooks = hooksArg;
+        return liveSession;
+      });
+      const controller = new CreatureController(store, hooks, factory);
+
+      await controller.start("live");
+      connectionHooks.onResponse("This callback is too early.");
+      expect(controller.getSnapshot().response).toBeNull();
+
+      controller.command("Wait there.");
+      connectionHooks.onResponse("I stop and listen.");
+      expect(controller.getSnapshot().response?.text).toBe(
+        "I stop and listen.",
+      );
+      controller.stop();
+      connectionHooks.onResponse("This callback is too late.");
+      expect(controller.getSnapshot().response?.text).toBe(
+        "I stop and listen.",
+      );
+
+      deferredSend.resolve(createDefaultRunResult({ finishReason: "aborted" }));
+      await vi.waitFor(() => expect(controller.getSnapshot().status).toBe("idle"));
+      expect(controller.getSnapshot().response?.text).toBe(
+        "I stop and listen.",
+      );
+      await controller.dispose();
     });
 
     it("blackout between queued correction and oldsend settlement (no PLAYER COMMAND from unconscious)", async () => {
@@ -1544,6 +1652,7 @@ describe("CreatureController", () => {
         const controller = new CreatureController(store, hooks, factory);
 
         await controller.start("live");
+        await prepareSupine(store);
         controller.command("light the lantern");
         await vi.advanceTimersByTimeAsync(44000);
 
@@ -1662,6 +1771,7 @@ describe("CreatureController", () => {
       await controller.start("live");
 
       vi.useFakeTimers();
+      await prepareSupine(store);
       const lampAction = store.run({ kind: "adjust_lamp", position: "wound" });
       await vi.advanceTimersByTimeAsync(25000);
       await lampAction;

@@ -9,6 +9,7 @@ import {
 import { GameStore } from "../game/store";
 import {
   createInitialState,
+  ROOM_AREAS,
   VOCAL_CUES,
   type GameAction,
   type VocalCue,
@@ -137,6 +138,23 @@ export default function SceneReview() {
           <button
             disabled={!!state.pending}
             onClick={() =>
+              void run([...emptyHand, { kind: "pick_up", item: "lantern" }])
+            }
+          >
+            Take lantern
+          </button>
+          {ROOM_AREAS.map((target) => (
+            <button
+              key={target}
+              disabled={!!state.pending}
+              onClick={() => void run([{ kind: "move_to", target }])}
+            >
+              Go {target === "father" ? "to me" : target}
+            </button>
+          ))}
+          <button
+            disabled={!!state.pending}
+            onClick={() =>
               void run([
                 ...emptyHand,
                 { kind: "react", stimulus: "reassure" },
@@ -148,7 +166,22 @@ export default function SceneReview() {
               ])
             }
           >
-            Lift beam
+            Lift cabinet
+          </button>
+          <button
+            disabled={!!state.pending}
+            onClick={() =>
+              void run([
+                ...emptyHand,
+                {
+                  kind: "signal_intent",
+                  contact: { kind: "roll_patient", style: "gentle" },
+                },
+                { kind: "roll_patient", style: "gentle" },
+              ])
+            }
+          >
+            Roll me over
           </button>
           <button
             disabled={!!state.pending}
@@ -195,7 +228,7 @@ export default function SceneReview() {
               look.pitch = 0.65;
             }}
           >
-            Look at son
+            Look at my boy
           </button>
           <button onClick={() => look.reset()}>Look at chest</button>
           {VOCAL_CUES.map((cue) => (

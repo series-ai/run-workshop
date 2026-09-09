@@ -31,6 +31,8 @@ function isPhysicalAction(action: GameAction): action is PhysicalAction {
   return (
     action.kind === "light_lantern" ||
     action.kind === "lift_debris" ||
+    action.kind === "roll_patient" ||
+    action.kind === "move_to" ||
     action.kind === "pick_up" ||
     action.kind === "place" ||
     action.kind === "use" ||

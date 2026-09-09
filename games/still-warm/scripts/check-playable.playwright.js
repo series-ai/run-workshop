@@ -3,14 +3,18 @@ async page => {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('http://127.0.0.1:4320/play.html');
   await page.getByRole('button', {name:'Begin',exact:true}).click();
+  const nextLine = page.getByRole('button', {name:'Reveal text or continue',exact:true});
+  while (await nextLine.isVisible()) await nextLine.click();
   const choose = async (text) => {
     const button = page.getByRole('button', {name:text,exact:true});
     await button.waitFor({timeout:90000});
     await button.click();
     await page.getByRole('button', {name:'Stop',exact:true}).waitFor({state:'hidden',timeout:90000});
   };
+  await choose('You are safe. I am here.');
+  await choose('Lift the cabinet. Use gentle hands.');
+  await choose('Turn me onto my back.');
   await choose('Light the lantern. I am here.');
-  await choose('You can do it. Lift it off me.');
   await page.screenshot({path:'/tmp/still-warm-freed.png'});
   await choose('Open my shirt. Gently.');
   await choose('A little morphine. Only a little.');

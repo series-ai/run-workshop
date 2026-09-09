@@ -12,9 +12,15 @@ import { GameStore } from "../game/store";
 import { observeRoom, observeStatus } from "../game/transitions";
 import { CREATURE_INSTRUCTIONS } from "./instructions";
 import { initializeRun } from "./runtime";
+import {
+  interpretationSchema,
+  ResponseEvidence,
+  type InterpretationInput,
+} from "./responseEvidence";
 
 export interface LiveHooks {
   onVocalize(cue: VocalCue): void;
+  onResponse(text: string): void;
   onPause(): void;
   onAction(): void;
 }
@@ -47,6 +53,11 @@ export async function createLiveSession(
   const run = await initializeRun();
   signal.throwIfAborted();
   let reactionAvailable = false;
+  const responseEvidence = new ResponseEvidence();
+  const withEvidence = <T extends object>(result: T) => ({
+    ...result,
+    evidenceId: responseEvidence.issue(),
+  });
   const empty = z.strictObject({});
   const tools = {
     inspect_room: defineAgentTool({
@@ -56,7 +67,7 @@ export async function createLiveSession(
       validate: validator(empty),
       execute: (_input, context) => {
         context.signal.throwIfAborted();
-        return observeRoom(store.getSnapshot());
+        return withEvidence(observeRoom(store.getSnapshot()));
       },
     }),
     act: defineAgentTool<GameAction, unknown>({
@@ -69,19 +80,19 @@ export async function createLiveSession(
       execute: async (action: GameAction, context: AgentToolContext) => {
         context.signal.throwIfAborted();
         if (action.kind === "set_rule" && !action.enabled) {
-          return {
+          return withEvidence({
             ok: false,
             message:
               "Only the patient can lift a rule under Standing rules in the pause menu. Do not repeat the forbidden action. Wait for the player to change the rule.",
-          };
+          });
         }
         if (action.kind === "react") {
           if (!reactionAvailable)
-            return {
+            return withEvidence({
               ok: false,
               message:
                 "Tone can be interpreted only once for each player command.",
-            };
+            });
           reactionAvailable = false;
         }
         hooks.onAction();
@@ -91,7 +102,24 @@ export async function createLiveSession(
           hooks.onVocalize(action.cue);
         if (result.ok && action.kind === "signal_intent")
           hooks.onVocalize("effort");
-        return { ...result, observation: observeStatus(store.getSnapshot()) };
+        return withEvidence({
+          ...result,
+          observation: observeStatus(store.getSnapshot()),
+        });
+      },
+    }),
+    interpret_response: defineAgentTool<InterpretationInput, unknown>({
+      description:
+        "Show one brief patient thought about the actual latest tool outcome. Use the latest evidenceId from this input. This cannot change the world.",
+      inputSchema: z.toJSONSchema(interpretationSchema),
+      validate: validator(interpretationSchema),
+      execute: (input, context) => {
+        context.signal.throwIfAborted();
+        const decision = responseEvidence.accept(input);
+        if (!decision.ok) return decision;
+        context.signal.throwIfAborted();
+        hooks.onResponse(decision.text);
+        return { ok: true, message: "Patient thought shown." };
       },
     }),
   };
@@ -138,6 +166,7 @@ export async function createLiveSession(
     session,
     beginInput(isPlayer) {
       reactionAvailable = isPlayer;
+      responseEvidence.beginInput();
     },
     async close() {
       subscriptions.forEach((subscription) => subscription.unsubscribe());

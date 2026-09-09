@@ -12,7 +12,7 @@ import SurgeryScene from "./scene/SurgeryScene";
 import { LookInput } from "./scene/look";
 import { sceneThought, previewChoices } from "./game/experience";
 import { contactThought, EMOTION_THOUGHTS } from "./game/perception";
-import { openingAt } from "./game/opening";
+import { OPENING_BEATS, openingAt, openingTickSeconds, openingClickSeconds } from "./game/opening";
 import { GameStore } from "./game/store";
 import { RULE_IDS, RULES, type GameAction, type VocalCue } from "./game/model";
 import { CreatureController, type PlayMode } from "./agent/controller";
@@ -20,6 +20,9 @@ import { DEFAULT_MUTED, SurgerySound } from "./audio/sound";
 import type { CreatureCall } from "./audio/creatureVoice";
 import { VoiceInput, type VoiceStatus } from "./audio/voice";
 import { FullscreenController } from "./platform/fullscreen";
+import { Typewriter } from "./ui/Typewriter";
+import { useKeyboardInset } from "./ui/useKeyboardInset";
+import { PlayerReply } from "./ui/PlayerReply";
 import { GameDialog } from "./ui/GameDialog";
 
 export default function App({ preview = false }: { preview?: boolean }) {
@@ -64,6 +67,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const [interim, setInterim] = useState("");
   const [command, setCommand] = useState("");
   const [typing, setTyping] = useState(false);
+  const keyboardInset = useKeyboardInset();
   const [muted, setMuted] = useState(DEFAULT_MUTED);
   const [platformReady, setPlatformReady] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(
@@ -73,6 +77,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const [roomCaption, setRoomCaption] = useState("");
   const [reactionThought, setReactionThought] = useState("");
   const [heard, setHeard] = useState("");
+  const [hasSpoken, setHasSpoken] = useState(false);
   const lastEmotion = useRef(state.emotion);
   const lastRoomEventCount = useRef(0);
   const [voice] = useState(
@@ -80,6 +85,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
       new VoiceInput({
         onFinal: (text) => {
           setInterim("");
+          setHasSpoken(true);
           setHeard(text);
           controller.command(text);
         },
@@ -97,35 +103,28 @@ export default function App({ preview = false }: { preview?: boolean }) {
   );
   const inputRef = useRef<HTMLInputElement>(null);
   const drag = useRef<{ id: number; x: number; y: number } | null>(null);
-  const hadPointerLock = useRef(false);
   const started = state.phase !== "ready";
   const opening = openingAt(state.elapsed);
   const introPlaying = started && !opening.complete;
-  const lastOpeningCall = useRef(0);
+  const lastOpeningShuffle = useRef(false);
   const terminal = state.phase === "won" || state.phase === "lost";
   const blackout = state.phase === "blackout";
   const busy = ["thinking", "acting", "stopping"].includes(connection.status);
   const active = started && !state.paused && !terminal && !blackout;
   const canSpeak = active && opening.complete && connection.mode === "live";
+  const liveConversation = connection.mode === "live";
   const moment = sceneThought(state);
   const choices = previewChoices(state);
   const intent = state.declaredContact
     ? contactThought(state.declaredContact, state)
     : "";
+  const contactOrProblemThought = state.problem?.thought || intent;
+  const showRoomCaption = Boolean(roomCaption && !contactOrProblemThought);
   const toggleSound = () => {
     sound.setMuted(!muted);
     setMuted(!muted);
     if (muted) void sound.unlock();
   };
-
-  useEffect(() => {
-    const released = hadPointerLock.current && !screen.pointerLocked;
-    hadPointerLock.current = screen.pointerLocked;
-    if (released && active && !typing) {
-      voice.cancel();
-      controller.pause();
-    }
-  }, [active, controller, screen.pointerLocked, typing, voice]);
 
   useEffect(() => {
     let mounted = true;
@@ -135,7 +134,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
     let previous = performance.now();
     const timer = window.setInterval(() => {
       const now = performance.now();
-      store.tick(Math.min((now - previous) / 1000, 0.25));
+      store.tick(openingTickSeconds(store.getSnapshot().elapsed, Math.min((now - previous) / 1000, 0.25)));
       previous = now;
       if (openingAt(store.getSnapshot().elapsed).complete)
         controller.observeEvents();
@@ -183,12 +182,9 @@ export default function App({ preview = false }: { preview?: boolean }) {
     voice,
   ]);
   useEffect(() => {
-    if (!started || !opening.complete) return;
+    if (liveConversation || !started || !opening.complete) return;
     setThought(moment.text);
-    if (moment.id === "light") return;
-    const timer = setTimeout(() => setThought(""), 10000);
-    return () => clearTimeout(timer);
-  }, [started, moment.id, moment.text, opening.complete]);
+  }, [liveConversation, started, moment.id, moment.text, opening.complete]);
   useEffect(() => {
     if (!heard) return;
     const timer = setTimeout(() => setHeard(""), 5000);
@@ -197,12 +193,13 @@ export default function App({ preview = false }: { preview?: boolean }) {
   useEffect(() => {
     const changed = lastEmotion.current !== state.emotion;
     lastEmotion.current = state.emotion;
-    if (!started || !opening.complete || !changed) return;
+    if (liveConversation || !started || !opening.complete || !changed) return;
     setReactionThought(EMOTION_THOUGHTS[state.emotion]);
     const timer = setTimeout(() => setReactionThought(""), 6500);
     return () => clearTimeout(timer);
-  }, [started, opening.complete, state.emotion]);
+  }, [liveConversation, started, opening.complete, state.emotion]);
   useEffect(() => {
+    if (liveConversation) return;
     const events = state.environment.events;
     if (!events.length) {
       lastRoomEventCount.current = 0;
@@ -221,21 +218,31 @@ export default function App({ preview = false }: { preview?: boolean }) {
         )
         .join(" "),
     );
-    const timer = setTimeout(() => setRoomCaption(""), 8500);
-    return () => clearTimeout(timer);
-  }, [state.environment.events]);
+  }, [liveConversation, state.environment.events]);
   useEffect(() => {
-    if (!started) lastOpeningCall.current = 0;
+    if (!started) lastOpeningShuffle.current = false;
     if (
       started &&
       !state.paused &&
-      opening.call &&
-      opening.call !== lastOpeningCall.current
+      opening.shuffle &&
+      !lastOpeningShuffle.current
     ) {
-      lastOpeningCall.current = opening.call;
-      vocalize("fear");
+      lastOpeningShuffle.current = true;
+      sound.shuffle();
     }
-  }, [started, state.paused, opening.call, vocalize]);
+  }, [started, state.paused, opening.shuffle, sound]);
+  useEffect(() => {
+    if (hasSpoken && !liveConversation) {
+      vocalize("fear");
+      setRoomCaption("A low moan in the darkness.");
+    }
+  }, [hasSpoken, liveConversation, vocalize]);
+  useEffect(() => {
+    if (!roomCaption) return;
+    const duration = roomCaption === "A low moan in the darkness." ? 3500 : 8500;
+    const timer = setTimeout(() => setRoomCaption(""), duration);
+    return () => clearTimeout(timer);
+  }, [roomCaption]);
   useEffect(() => {
     if (typing) inputRef.current?.focus();
   }, [typing]);
@@ -250,12 +257,6 @@ export default function App({ preview = false }: { preview?: boolean }) {
     voice.cancel();
     controller.pause();
     setTyping(false);
-    void fullscreen.release();
-  };
-  const openTyping = () => {
-    if (!canSpeak) return;
-    voice.cancel();
-    setTyping(true);
     void fullscreen.release();
   };
   const speak = () => {
@@ -276,6 +277,12 @@ export default function App({ preview = false }: { preview?: boolean }) {
         controller.pause();
         setTyping(false);
         void fullscreen.release();
+        return;
+      }
+      if (introPlaying && active && !interactive && !event.repeat &&
+          (event.code === "Space" || event.key === "Enter")) {
+        event.preventDefault();
+        store.tick(openingClickSeconds(store.getSnapshot().elapsed, reducedMotion));
         return;
       }
       if (event.code === "Space" && !interactive && !event.repeat && canSpeak) {
@@ -313,14 +320,25 @@ export default function App({ preview = false }: { preview?: boolean }) {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, [active, canSpeak, controller, fullscreen, look, silenceCall, voice]);
+  }, [active, canSpeak, controller, fullscreen, look, silenceCall, voice, introPlaying, reducedMotion, store]);
+
+  useEffect(() => {
+    if (!introPlaying || !active || !screen.pointerLocked) return;
+    const advance = (event: MouseEvent) => {
+      if (event.button !== 0 || (event.target instanceof Element && event.target.closest("button"))) return;
+      store.tick(openingClickSeconds(store.getSnapshot().elapsed, reducedMotion));
+    };
+    window.addEventListener("click", advance);
+    return () => window.removeEventListener("click", advance);
+  }, [introPlaying, active, screen.pointerLocked, reducedMotion, store]);
 
   const start = (mode: PlayMode) => {
-    void fullscreen.enter(mode === "live");
+    void fullscreen.enter(false);
     void sound.unlock();
     voice.cancel();
     look.reset();
-    lastOpeningCall.current = 0;
+    lastOpeningShuffle.current = false;
+    setHasSpoken(false);
     setHeard("");
     setCommand("");
     setReactionThought("");
@@ -328,17 +346,16 @@ export default function App({ preview = false }: { preview?: boolean }) {
     void controller.start(mode);
   };
   const resume = () => {
-    if (connection.mode === "live") void fullscreen.capture();
     controller.resume();
   };
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!command.trim() || !canSpeak) return;
-    setHeard(command.trim());
+    setHasSpoken(true);
+    setHeard("");
     controller.command(command.trim());
     setCommand("");
-    setTyping(false);
-    void fullscreen.capture();
+
   };
   const rehearse = (actions: GameAction[]) => {
     controller.resume();
@@ -350,6 +367,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
       className={`game-shell ${connection.mode === "rehearsal" ? "guided-preview" : ""} ${started ? "in-operation" : "at-title"} ${reducedMotion ? "reduce-motion" : ""}`}
       style={
         {
+          "--keyboard-inset": `${keyboardInset}px`,
           "--pain": state.patient.pain / 100,
           "--blood-loss": (100 - state.patient.blood) / 100,
           "--sedation": state.patient.sedation / 100,
@@ -365,7 +383,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
         tabIndex={0}
         aria-label="The cellar. Drag to look around."
         onPointerDown={(event) => {
-          if (!active || typing) return;
+          if (!active) return;
           event.currentTarget.focus({ preventScroll: true });
           event.currentTarget.setPointerCapture(event.pointerId);
           drag.current = {
@@ -373,13 +391,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
             x: event.clientX,
             y: event.clientY,
           };
-          if (
-            event.pointerType === "mouse" &&
-            connection.mode === "live" &&
-            screen.active &&
-            !screen.pointerLocked
-          )
-            void fullscreen.capture();
+
         }}
         onPointerMove={(event) => {
           if (!active || typing || screen.pointerLocked) return;
@@ -416,11 +428,24 @@ export default function App({ preview = false }: { preview?: boolean }) {
       )}
       {introPlaying && (
         <section className="opening-story" aria-live="polite">
+          <button
+            className="opening-advance"
+            aria-label="Reveal text or continue"
+            disabled={!active}
+            onClick={() => store.tick(openingClickSeconds(store.getSnapshot().elapsed, reducedMotion))}
+          />
           {opening.narration && (
-            <p className="opening-narration" key={opening.narration}>
-              {opening.narration}
+            <p className={`opening-narration ${opening.voice}-voice`} key={opening.narration}>
+              <Typewriter
+                text={opening.narration}
+                seconds={opening.age}
+                paused={state.paused}
+                instant={reducedMotion}
+              />
             </p>
           )}
+          <span className="opening-click-hint" aria-hidden="true"><span className="fine-pointer">Click to continue</span><span className="coarse-pointer">Tap to continue</span></span>
+
         </section>
       )}
       <div className="vignette" aria-hidden="true" />
@@ -433,9 +458,21 @@ export default function App({ preview = false }: { preview?: boolean }) {
       )}
       {!started && connection.status !== "connecting" && (
         <section className="intro">
-          <p className="eyebrow">A FATHER. A SON. SOMETHING LEFT UNFINISHED.</p>
-          <h1>Still Warm</h1>
-          <p className="premise">You can hear him in the dark.</p>
+          <p className="eyebrow">
+            <Typewriter
+              text="IN THE DARK, *IT* IS..."
+              instant={reducedMotion}
+            />
+          </p>
+          <h1>
+            <Typewriter text="Still Warm" instant={reducedMotion} />
+          </h1>
+          <p className="premise">
+            <Typewriter
+              text="But you are slowly bleeding out."
+              instant={reducedMotion}
+            />
+          </p>
           <button
             className="sound-choice"
             aria-pressed={!muted}
@@ -454,17 +491,13 @@ export default function App({ preview = false }: { preview?: boolean }) {
           {!platformReady && (
             <p className="preview-note">Preparing the room…</p>
           )}
-          {preview ? (
+          {preview && (
             <p className="preview-note">Guided preview · No model connection</p>
-          ) : (
-            <button className="quiet" onClick={() => start("rehearsal")}>
-              Offline rehearsal
-            </button>
           )}
           <p className="title-controls">
             {preview
               ? "Drag to look. Choose what to say. Select Stop to stop his hands."
-              : "Look around. Speak to him. Say “stop” at any time."}
+              : "Type or hold to speak."}
           </p>
         </section>
       )}
@@ -486,23 +519,31 @@ export default function App({ preview = false }: { preview?: boolean }) {
           >
             Ⅱ
           </button>
-          <div className="inner-voice" aria-live="polite">
-            {state.problem?.thought ||
-              intent ||
-              reactionThought ||
-              thought ||
-              (connection.needsInstruction && !busy
-                ? "He is waiting for my voice."
-                : "")}
+          <div className={`inner-voice ${!liveConversation && showRoomCaption ? "narrator-voice" : "thought-voice"}`} aria-live="polite">
+            <Typewriter
+              paused={state.paused}
+              instant={reducedMotion || (liveConversation ? !connection.response : !hasSpoken)}
+              text={liveConversation
+                ? connection.response?.text ?? OPENING_BEATS[OPENING_BEATS.length - 1].text
+                : contactOrProblemThought ||
+                roomCaption ||
+                reactionThought ||
+                (!hasSpoken ? OPENING_BEATS[OPENING_BEATS.length - 1].text : thought) ||
+                (connection.needsInstruction && !busy
+                  ? "He is waiting for my voice."
+                  : "")
+              }
+            />
           </div>
-          {roomCaption && (
-            <p className="room-caption" role="status">
-              {roomCaption}
-            </p>
-          )}
           {(interim || heard) && (
             <p className="transcript" aria-live="polite">
-              {interim || `I said: “${heard}”`}
+              {interim || (
+                <Typewriter
+                  text={`“${heard}”`}
+                  paused={state.paused}
+                  instant={reducedMotion}
+                />
+              )}
             </p>
           )}
           {connection.mode === "rehearsal" && connection.error && (
@@ -515,65 +556,24 @@ export default function App({ preview = false }: { preview?: boolean }) {
               {voiceError} Press Enter to type.
             </p>
           )}
-          {typing ? (
-            <form className="command-form" onSubmit={submit}>
-              <input
-                ref={inputRef}
-                aria-label="Instruction for the creature"
-                value={command}
-                onChange={(e) => setCommand(e.target.value)}
-                maxLength={1000}
-                placeholder="Say it quietly…"
-                autoComplete="off"
-              />
-              <button aria-label="Send instruction" disabled={!command.trim()}>
-                ↵
-              </button>
-            </form>
+          {connection.mode === "live" ? (
+            <PlayerReply
+              inputRef={inputRef}
+              value={command}
+              onChange={setCommand}
+              onSubmit={submit}
+              onFocus={() => { voice.cancel(); setTyping(true); }}
+              onBlur={() => setTyping(false)}
+              voiceSupported={voice.supported}
+              listening={voiceStatus === "listening"}
+              busy={busy}
+              onStopWork={stop}
+              onSpeak={speak}
+              onStopSpeaking={() => voice.stop()}
+              onCancelSpeaking={() => voice.cancel()}
+            />
           ) : (
-            <div
-              className={`controls ${connection.turns > 0 ? "subdued" : ""}`}
-            >
-              {connection.mode === "live" ? (
-                <>
-                  <button
-                    aria-label="Hold to speak"
-                    className={voiceStatus === "listening" ? "listening" : ""}
-                    disabled={!voice.supported}
-                    onPointerDown={(e) => {
-                      e.currentTarget.setPointerCapture(e.pointerId);
-                      speak();
-                    }}
-                    onPointerUp={() => voice.stop()}
-                    onPointerCancel={() => voice.cancel()}
-                    onKeyDown={(event) => {
-                      if (event.code !== "Space" && event.key !== "Enter")
-                        return;
-                      event.preventDefault();
-                      event.stopPropagation();
-                      if (!event.repeat) speak();
-                    }}
-                    onKeyUp={(event) => {
-                      if (event.code !== "Space" && event.key !== "Enter")
-                        return;
-                      event.preventDefault();
-                      event.stopPropagation();
-                      voice.stop();
-                    }}
-                  >
-                    {voiceStatus === "listening"
-                      ? "Listening…"
-                      : "Hold Space to speak"}
-                  </button>
-                  <span>·</span>
-                  <button onClick={openTyping}>Enter to type</button>
-                  <span>·</span>
-                  <span>Drag to look</span>
-                </>
-              ) : (
-                <span>Guided preview · Choose what to say</span>
-              )}
-            </div>
+            <div className="controls"><span>Guided preview · Choose an instruction</span></div>
           )}
           {connection.mode === "rehearsal" && !busy && (
             <div className="preview-choices" aria-label="What to say">
@@ -581,11 +581,13 @@ export default function App({ preview = false }: { preview?: boolean }) {
                 <button
                   key={choice.id}
                   onClick={() => {
-                    setThought(`“${choice.label}”`);
+                    setHasSpoken(true);
                     rehearse(choice.actions);
                   }}
                 >
-                  {choice.label}
+                  <span aria-hidden="true" className="reply-marker">›</span>
+                  <Typewriter text={choice.label} instant={reducedMotion} />
+                  <span aria-hidden="true" className="reply-send">↵</span>
                 </button>
               ))}
             </div>
@@ -604,7 +606,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
                 Keep going.
               </button>
             )}
-          {busy && (
+          {busy && connection.mode === "rehearsal" && (
             <button className="stop-button" onClick={stop}>
               Stop
             </button>
@@ -614,9 +616,9 @@ export default function App({ preview = false }: { preview?: boolean }) {
       {blackout && !state.paused && (
         <div className="blackout-cover">
           <p>
-            {state.rules.waitBlackout
+            <Typewriter text={state.rules.waitBlackout
               ? "He should be waiting."
-              : "I can still hear him."}
+              : "I can still hear him."} instant={reducedMotion} />
           </p>
           <button onClick={stop}>Stop</button>
           <button className="blackout-pause" onClick={pause}>
@@ -661,7 +663,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
             {screen.supported && (
               <button
                 onClick={() =>
-                  void fullscreen.enter(connection.mode === "live")
+                  void fullscreen.enter(false)
                 }
               >
                 Fullscreen
@@ -671,7 +673,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
               {muted ? "Enable sound" : "Mute sound"}
             </button>
             <button onClick={() => setReducedMotion(!reducedMotion)}>
-              {reducedMotion ? "Enable camera motion" : "Reduce camera motion"}
+              {reducedMotion ? "Enable motion" : "Reduce motion"}
             </button>
             <details>
               <summary>Standing rules</summary>
@@ -701,20 +703,20 @@ export default function App({ preview = false }: { preview?: boolean }) {
       {terminal && (
         <GameDialog label="Operation ended" ending>
           <h2>
-            {state.outcome === "saved"
+            <Typewriter instant={reducedMotion} text={state.outcome === "saved"
               ? "Still warm."
               : state.outcome === "creature_lost"
                 ? "No answer."
-                : "The room goes quiet."}
+                : "The room goes quiet."} />
           </h2>
           <p>
-            {state.outcome === "saved"
+            <Typewriter instant={reducedMotion} text={state.outcome === "saved"
               ? "His hand stays under your head. You can feel each breath. He will not let go."
               : state.outcome === "fire"
                 ? "Smoke fills your lungs. His face disappears."
                 : state.outcome === "creature_lost"
-                  ? "You call for your son. This time, he does not move."
-                  : "Your skin is cold. You try to speak, but no sound comes."}
+                  ? "I call for my boy. This time, he does not move."
+                  : "Your skin is cold. You try to speak, but no sound comes."} />
           </p>
           <button onClick={() => start(connection.mode)}>Begin again</button>
         </GameDialog>

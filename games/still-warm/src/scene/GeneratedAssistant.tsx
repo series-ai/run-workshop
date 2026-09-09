@@ -11,9 +11,11 @@ import { useFrame } from "@react-three/fiber";
 import {
   AnimationMixer,
   AnimationAction,
-  Euler,
+  LoopOnce,
+  LoopRepeat,
   Group,
   Mesh,
+  Object3D,
   SkinnedMesh,
   Vector3,
 } from "three";
@@ -21,6 +23,7 @@ import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { ASSET_PATHS, DRACO_PATH } from "./assets";
 import { ProceduralAssistant } from "./ProceduralAssistant";
 import { PATIENT_LAYOUT } from "./patientLayout";
+import { CABINET_GRIP } from "./Cabinet";
 import {
   LAMP_HANDLE,
   getItemOffset,
@@ -30,7 +33,7 @@ import {
 import { planSafeRoute, selectContactStance } from "./staging";
 import { actionPerformance, APPROACH_SECONDS } from "../game/performance";
 import { getActionDuration } from "../game/store";
-import type { GameState } from "../game/model";
+import type { GameState, RoomArea } from "../game/model";
 import { callEnvelope, type CreatureCall } from "../audio/creatureVoice";
 import { MorphOverlay } from "./morphOverlay";
 
@@ -44,11 +47,22 @@ const SCALE = 0.9;
 const FLOOR = PATIENT_LAYOUT.floorY;
 const HOME = [-0.72, FLOOR, 0.48] as const;
 const WORK_YAW = 2.1;
-const RETURN_METERS_PER_WALK_CLIP = 2.9;
-const RETURN_TURN_SECONDS = 0.65;
-const BEAM_GRIP = new Vector3(-0.25, 0.12, -0.14)
-  .applyEuler(new Euler(0.07, 0.25, 0.08))
-  .add(new Vector3(...PATIENT_LAYOUT.beam));
+const AREA_POSITIONS: Record<RoomArea, readonly [number, number, number]> = {
+  father: HOME,
+  workbench: [-0.65, FLOOR, 0.85],
+  cabinet: [-0.65, FLOOR, -0.15],
+  door: [1.25, FLOOR, 1.9],
+  fire: [-0.75, FLOOR, 0.85],
+  tray: [-0.75, FLOOR, 0.18],
+};
+const AREA_YAWS: Record<RoomArea, number> = {
+  father: WORK_YAW,
+  workbench: -Math.PI / 2,
+  cabinet: -Math.PI / 2,
+  door: 0,
+  fire: -Math.PI / 2,
+  tray: WORK_YAW,
+};
 const STANCE_YAWS = [
   WORK_YAW,
   Math.PI / 2,
@@ -72,15 +86,24 @@ class AssistantErrorBoundary extends Component<
     return this.state.failed ? this.props.fallback : this.props.children;
   }
 }
-function actionTarget(state: GameState, out: Vector3): boolean {
+function actionTarget(state: GameState, out: Vector3, room: Object3D): boolean {
   const action = state.pending?.action;
   if (!action) return false;
+  if (action.kind === "move_to") {
+    out.set(...AREA_POSITIONS[action.target]);
+    return true;
+  }
   if (action.kind === "light_lantern") {
-    out.set(-1, 0.4, 0.4);
+    room.getObjectByName("tool-lantern")!.getWorldPosition(out);
+    out.y += 0.2;
     return true;
   }
   if (action.kind === "lift_debris") {
-    out.copy(BEAM_GRIP);
+    out.set(...CABINET_GRIP);
+    return true;
+  }
+  if (action.kind === "roll_patient") {
+    out.set(...PATIENT_LAYOUT.care);
     return true;
   }
   if (action.kind === "adjust_lamp") {
@@ -100,14 +123,15 @@ function actionTarget(state: GameState, out: Vector3): boolean {
     const offset = getItemOffset(action.item);
     out.set(
       slot[0] + offset[0],
-      slot[1] + offset[1] + 0.04,
+      slot[1] + offset[1] + (action.item === "lantern" ? 0.38 : 0.04),
       slot[2] + offset[2],
     );
     return true;
   }
   if (action.kind === "use") {
-    if (action.item === "candle" && action.target === "lamp") {
-      out.set(-1, 0.4, 0.4);
+    if (action.item === "candle" && action.target === "lantern") {
+      room.getObjectByName("tool-lantern")!.getWorldPosition(out);
+      out.y += 0.2;
       return true;
     }
     switch (action.target) {
@@ -197,22 +221,26 @@ function RiggedAssistant({ state, socket, call = null }: Props) {
     const actions = Object.fromEntries(
       source.animations.map((clip) => [clip.name, mixer.clipAction(clip)]),
     );
-    // Measure the authored hand path. Move the actor to the object, not the bones.
+    // Sample a separate rig. The visible rig only plays source clips forward.
+    const measurement = clone(scene);
+    const measurementMixer = new AnimationMixer(measurement);
+    const measurementHand = measurement.getObjectByName("RightHand")!;
     const samples: Record<string, { time: number; palm: Vector3 }[]> = {};
     for (const name of ["pickup", "collect"]) {
-      const action = actions[name];
-      action.play();
+      const clip = source.animations.find((clip) => clip.name === name)!;
+      const action = measurementMixer.clipAction(clip).play();
       samples[name] = [];
       for (let frame = 30; frame <= 78; frame++) {
-        mixer.setTime(frame / 30);
-        scene.updateMatrixWorld(true);
+        measurementMixer.setTime(frame / 30);
+        measurement.updateMatrixWorld(true);
         samples[name].push({
           time: frame / 30,
-          palm: mesh.skeleton.bones[index].localToWorld(palm.clone()),
+          palm: measurementHand.localToWorld(palm.clone()),
         });
       }
       action.stop();
     }
+    measurementMixer.uncacheRoot(measurement);
     return {
       mesh,
       hand: mesh.skeleton.bones[index],
@@ -224,6 +252,7 @@ function RiggedAssistant({ state, socket, call = null }: Props) {
     };
   }, [scene, source.animations]);
   const active = useRef<AnimationAction | null>(null);
+  const activeKey = useRef("");
   const plan = useRef<{
     id: number;
     end: Vector3;
@@ -234,16 +263,8 @@ function RiggedAssistant({ state, socket, call = null }: Props) {
     duration: number;
     contact: number;
     clip: string;
-    reverse: boolean;
-    hold: boolean;
-  } | null>(null);
-  const returnPlan = useRef<{
-    route: Vector3[];
-    routeEnds: number[];
-    routeDistance: number;
     travelSeconds: number;
-    elapsed: number;
-    turnYaw: number | null;
+    moveOnly: boolean;
   } | null>(null);
   const eventCount = useRef(state.environment.events.length);
   const screamUntil = useRef(0);
@@ -252,6 +273,7 @@ function RiggedAssistant({ state, socket, call = null }: Props) {
 
   useEffect(() => {
     active.current = null;
+    activeKey.current = "";
     return () => {
       rig.mixer.stopAllAction();
       socket.isTracking = false;
@@ -269,7 +291,6 @@ function RiggedAssistant({ state, socket, call = null }: Props) {
       root.current.position.set(...HOME);
       root.current.rotation.y = WORK_YAW;
       plan.current = null;
-      returnPlan.current = null;
     }
     if (eventCount.current < state.environment.events.length) {
       if (!state.pending)
@@ -279,27 +300,37 @@ function RiggedAssistant({ state, socket, call = null }: Props) {
     eventCount.current = state.environment.events.length;
     const pending = state.pending;
     if (pending && plan.current?.id !== pending.id) {
-      returnPlan.current = null;
-      actionTarget(state, target);
+      actionTarget(state, target, root.current.parent!);
       const performance = actionPerformance(pending.action);
+      const moveOnly = pending.action.kind === "move_to";
       const height = (target.y - FLOOR) / SCALE;
-      const sample = rig.samples[performance.clip].reduce((best, point) =>
-        Math.abs(point.palm.y - height) < Math.abs(best.palm.y - height)
-          ? point
-          : best,
-      );
-      const stance = selectContactStance({
-        target: { x: target.x, z: target.z },
-        palm: { x: sample.palm.x, z: sample.palm.z },
-        scale: SCALE,
-        start: {
-          x: root.current.position.x,
-          z: root.current.position.z,
-        },
-        home: { x: HOME[0], z: HOME[2] },
-        preferredYaw: WORK_YAW,
-        candidateYaws: STANCE_YAWS,
-      });
+      const sample = moveOnly
+        ? { time: 0, palm: new Vector3() }
+        : rig.samples[performance.clip].reduce((best, point) =>
+            Math.abs(point.palm.y - height) < Math.abs(best.palm.y - height)
+              ? point
+              : best,
+          );
+      const start = { x: root.current.position.x, z: root.current.position.z };
+      const destination = { x: target.x, z: target.z };
+      const stance = moveOnly
+        ? {
+            position: destination,
+            yaw:
+              pending.action.kind === "move_to"
+                ? AREA_YAWS[pending.action.target]
+                : WORK_YAW,
+            waypoints: planSafeRoute(start, destination),
+          }
+        : selectContactStance({
+            target: destination,
+            palm: { x: sample.palm.x, z: sample.palm.z },
+            scale: SCALE,
+            start,
+            home: { x: HOME[0], z: HOME[2] },
+            preferredYaw: WORK_YAW,
+            candidateYaws: STANCE_YAWS,
+          });
       const end = new Vector3(stance.position.x, FLOOR, stance.position.z);
       const route = [
         root.current.position.clone(),
@@ -323,17 +354,18 @@ function RiggedAssistant({ state, socket, call = null }: Props) {
         duration: getActionDuration(pending.action, state.emotion) / 1000,
         contact: sample.time,
         clip: performance.clip,
-        reverse: performance.reverse,
-        hold: performance.hold,
+        travelSeconds: moveOnly
+          ? Math.max(0.1, routeDistance / 0.65)
+          : APPROACH_SECONDS,
+        moveOnly,
       };
     }
     let name = elapsed.current < screamUntil.current ? "scream" : "idle";
-    let clipTime: number | null = null;
     socket.actionContact = false;
     const current = plan.current;
     if (pending && current) {
       const seconds = pending.progress * current.duration;
-      const approach = Math.min(1, seconds / APPROACH_SECONDS);
+      const approach = Math.min(1, seconds / current.travelSeconds);
       const moving = current.routeDistance > 0.045;
       if (approach < 1) {
         name = moving ? "walk" : "idle";
@@ -364,117 +396,35 @@ function RiggedAssistant({ state, socket, call = null }: Props) {
           ) *
           (1 - Math.exp(-dt * 5));
       } else {
-        name = current.clip;
-        const progress = Math.min(
-          1,
-          (seconds - APPROACH_SECONDS) / (current.duration - APPROACH_SECONDS),
-        );
-        const duration = rig.actions[name].getClip().duration;
-        clipTime =
-          (current.reverse ? 1 - progress : progress) * (duration - 0.001);
-        if (current.hold) {
-          const reach =
-            progress < 0.3
-              ? progress / 0.3
-              : progress > 0.7
-                ? (1 - progress) / 0.3
-                : 1;
-          clipTime = current.contact * reach;
-        }
-        socket.actionContact = current.hold
-          ? progress >= 0.3 && progress <= 0.7
-          : current.reverse
-            ? clipTime <= current.contact
-            : clipTime >= current.contact;
+        name = current.moveOnly ? "idle" : current.clip;
         root.current.position.copy(current.end);
         root.current.rotation.y = current.yaw;
       }
     } else {
-      if (current) {
-        const home = new Vector3(...HOME);
-        const waypoints = planSafeRoute(
-          { x: root.current.position.x, z: root.current.position.z },
-          { x: HOME[0], z: HOME[2] },
-        );
-        const route = [
-          root.current.position.clone(),
-          ...waypoints.map((point) => new Vector3(point.x, FLOOR, point.z)),
-          home,
-        ];
-        let routeDistance = 0;
-        const routeEnds = route.slice(1).map((point, index) => {
-          routeDistance += point.distanceTo(route[index]);
-          return routeDistance;
-        });
-        const walkCycle = rig.actions.walk.getClip().duration;
-        returnPlan.current = {
-          route,
-          routeEnds,
-          routeDistance,
-          travelSeconds:
-            (routeDistance * walkCycle) / RETURN_METERS_PER_WALK_CLIP,
-          elapsed: 0,
-          turnYaw: null,
-        };
-        plan.current = null;
-      }
-      const returning = returnPlan.current;
-      if (returning && elapsed.current >= screamUntil.current) {
-        name = "walk";
-        returning.elapsed += dt;
-        if (
-          returning.routeDistance > 0.001 &&
-          returning.elapsed < returning.travelSeconds
-        ) {
-          const traveled =
-            (returning.elapsed / returning.travelSeconds) *
-            returning.routeDistance;
-          const found = returning.routeEnds.findIndex((end) => traveled <= end);
-          const index = found < 0 ? returning.route.length - 2 : found;
-          const segmentStart = index === 0 ? 0 : returning.routeEnds[index - 1];
-          const segmentLength = returning.routeEnds[index] - segmentStart;
-          const from = returning.route[index];
-          const to = returning.route[index + 1];
-          root.current.position.lerpVectors(
-            from,
-            to,
-            segmentLength > 0 ? (traveled - segmentStart) / segmentLength : 1,
-          );
-          const yaw = Math.atan2(to.x - from.x, to.z - from.z);
-          root.current.rotation.y +=
-            Math.atan2(
-              Math.sin(yaw - root.current.rotation.y),
-              Math.cos(yaw - root.current.rotation.y),
-            ) *
-            (1 - Math.exp(-dt * 5));
-        } else {
-          root.current.position.set(...HOME);
-          returning.turnYaw ??= root.current.rotation.y;
-          const turnProgress = Math.min(
-            1,
-            (returning.elapsed - returning.travelSeconds) / RETURN_TURN_SECONDS,
-          );
-          const turn = Math.atan2(
-            Math.sin(WORK_YAW - returning.turnYaw),
-            Math.cos(WORK_YAW - returning.turnYaw),
-          );
-          root.current.rotation.y = returning.turnYaw + turn * turnProgress;
-          if (turnProgress >= 1) {
-            root.current.rotation.y = WORK_YAW;
-            returnPlan.current = null;
-            name = "idle";
-          }
-        }
-      }
+      // Remain where the player sent him. Only a new action moves the actor.
+      plan.current = null;
     }
     const next = rig.actions[name];
-    if (active.current !== next) {
-      active.current?.fadeOut(0.35);
-      next.reset().setEffectiveWeight(1).fadeIn(0.35).play();
+    const actionKey = `${name}:${name === "idle" || name === "walk" ? "loop" : (pending?.id ?? screamUntil.current)}`;
+    if (activeKey.current !== actionKey) {
+      // Play one complete source clip at its recorded speed.
+      active.current?.stop();
+      next.reset();
+      next.setLoop(
+        name === "idle" || name === "walk" ? LoopRepeat : LoopOnce,
+        Infinity,
+      );
+      next.clampWhenFinished = true;
+      next.setEffectiveTimeScale(1).setEffectiveWeight(1).play();
       active.current = next;
+      activeKey.current = actionKey;
     }
-    next.paused = clipTime !== null;
-    if (clipTime !== null) next.time = clipTime;
+    socket.actionContact =
+      !!pending &&
+      !!current &&
+      !current.moveOnly &&
+      name === current.clip &&
+      next.time >= current.contact;
     rig.morphs.update(rig.mixer, dt, {
       ScreamOpen: activeCall.current
         ? callEnvelope(activeCall.current.cue, activeCall.current.age) * 0.18
@@ -494,7 +444,7 @@ function RiggedAssistant({ state, socket, call = null }: Props) {
       position={[...HOME]}
       rotation={[0, WORK_YAW, 0]}
       scale={SCALE}
-      name="assembled-son"
+      name="assembled-boy"
     >
       <primitive object={scene} />
     </group>

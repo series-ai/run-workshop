@@ -72,7 +72,7 @@ function VoiceReview() {
     <main>
       <header>
         <p className="eyebrow">STILL WARM / SOUND REVIEW</p>
-        <h1>The son's voice</h1>
+        <h1>My boy’s voice</h1>
         <p>
           Five wordless calls from the game. No speech synthesis or recordings.
         </p>

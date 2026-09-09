@@ -475,8 +475,23 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   },
   {
     item: "candle",
-    target: "lamp",
-    description: "Light the candle from the workbench lantern",
+    target: "lantern",
+    description: "Light the candle from a lit lantern",
+  },
+  {
+    item: "lantern",
+    target: "door",
+    description: "Inspect the door threshold with a lit lantern",
+  },
+  {
+    item: "lantern",
+    target: "patient",
+    description: "Check patient condition with a lit lantern",
+  },
+  {
+    item: "lantern",
+    target: "wound",
+    description: "Inspect the wound with a lit lantern",
   },
   {
     item: "candle",

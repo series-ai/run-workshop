@@ -1,4 +1,5 @@
 import type { LiveHandSocket } from "./types";
+import { LanternModel } from "./WorkbenchLantern";
 import { useRef, useMemo } from "react";
 import type { FC } from "react";
 import { useFrame } from "@react-three/fiber";
@@ -661,6 +662,8 @@ export const ItemModel: FC<{
       return (
         <CandleModel lit={lit} paused={paused} reducedMotion={reducedMotion} />
       );
+    case "lantern":
+      return <LanternModel lit={lit} paused={paused} />;
     default:
       return <GenericToolModel />;
   }
@@ -720,6 +723,11 @@ const SingleItem: FC<SingleItemProps> = ({
     ) {
       if (socket.isTracking) {
         groupRef.current.position.copy(socket.gripPosition);
+        if (id === "lantern") {
+          groupRef.current.position.y -= 0.38;
+          groupRef.current.quaternion.identity();
+          return;
+        }
         groupRef.current.quaternion.copy(socket.quaternion);
         // Point instrument working tip forward/down from palm toward wound
         groupRef.current.rotateX(-0.55);
@@ -823,7 +831,11 @@ export const Tools: FC<ToolsProps> = ({
         return (
           <SingleItem
             clean={itemState.clean}
-            lit={id === "candle" && state.candleLit}
+            lit={
+              id === "lantern"
+                ? state.environment.lanternLit
+                : id === "candle" && state.candleLit
+            }
             waterLevel={state.waterPortions / 3}
             key={id}
             socket={socket}

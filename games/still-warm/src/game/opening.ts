@@ -1,16 +1,48 @@
-export const OPENING_DURATION = 22;
+import { compileText } from "../text";
+
+export const OPENING_BEATS = [
+  { at: 0, voice: "thought", text: "Pitch black. Cold stone against my face." },
+  { at: 6, voice: "thought", text: "I try to move.{{pause(0.250)}}.{{pause(0.250)}}..{{pause(0.750)}} I can't." },
+  { at: 11, voice: "thought", text: "The cabinet. It's pinning me." },
+  { at: 16, voice: "thought", text: "But no pain." },
+  { at: 21, voice: "narrator", text: "You hear shuffling on the stone next to you." },
+  { at: 25, voice: "thought", text: "Oh! My boy is here, in the dark. He must be so scared." },
+] as const;
+export const OPENING_DURATION = 32;
 
 export function openingAt(elapsed: number) {
-  const eyes = Math.max(0, Math.min(1, (elapsed - 9) / 5));
-  const narration =
-    elapsed < 6
-      ? "Something heavy is pushing down on my chest. Pain everywhere."
-      : elapsed >= 13 && elapsed < 17
-        ? "It’s my boy. He sounds scared."
-        : elapsed >= 20
-          ? "It’s dark. The lantern is on my workbench. He can reach it."
-          : "";
-  const call =
-    elapsed >= 6 && elapsed < 9 ? 1 : elapsed >= 17 && elapsed < 20 ? 2 : 0;
-  return { eyes, narration, call, complete: elapsed >= OPENING_DURATION };
+  const beat =
+    [...OPENING_BEATS].reverse().find((beat) => elapsed >= beat.at) ??
+    OPENING_BEATS[0];
+  return {
+    eyes: Math.max(0, Math.min(1, (elapsed - 8) / 6)),
+    narration: elapsed < OPENING_DURATION ? beat.text : "",
+    voice: beat.voice,
+    age: Math.max(0, elapsed - beat.at),
+    shuffle: elapsed >= 21 && elapsed < 25,
+    call: 0,
+    complete: elapsed >= OPENING_DURATION,
+  };
+}
+
+function openingLine(elapsed: number) {
+  const index = Math.max(0, OPENING_BEATS.reduce((found, beat, index) => elapsed >= beat.at ? index : found, 0));
+  const beat = OPENING_BEATS[index];
+  const text = beat.text;
+  return {
+    revealedAt: beat.at + compileText(text).duration,
+    nextAt: OPENING_BEATS[index + 1]?.at ?? OPENING_DURATION,
+  };
+}
+
+// Reading time does not advance the patient clock beyond the current line.
+export function openingTickSeconds(elapsed: number, dt: number): number {
+  if (elapsed >= OPENING_DURATION) return dt;
+  return Math.max(0, Math.min(dt, openingLine(elapsed).revealedAt - elapsed));
+}
+
+export function openingClickSeconds(elapsed: number, instant = false): number {
+  if (elapsed >= OPENING_DURATION) return 0;
+  const line = openingLine(elapsed);
+  return (instant || elapsed + 0.001 >= line.revealedAt ? line.nextAt : line.revealedAt) - elapsed;
 }

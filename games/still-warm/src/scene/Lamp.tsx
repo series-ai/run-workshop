@@ -133,7 +133,7 @@ export const Lamp: FC<LampProps> = ({
         </mesh>
       </group>
 
-      {/* The son can pull this control from beside the patient. */}
+      {/* The boy can pull this control from beside the patient. */}
       <group position={[...LAMP_HANDLE]} name="lamp-pull-control">
         <mesh position={[0, (mountPos[1] - LAMP_HANDLE[1]) / 2, 0]}>
           <cylinderGeometry

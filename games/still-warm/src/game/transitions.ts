@@ -8,6 +8,10 @@ import {
   GameState,
   isActive,
   ItemId,
+  Location,
+  PhysicalAction,
+  ROOM_AREAS,
+  RoomArea,
   RoomEvent,
 } from "./model";
 import {
@@ -39,6 +43,14 @@ import {
 
 export const BLACKOUT_DURATION = 12;
 export const LIFT_CONFIDENCE_THRESHOLD = 24;
+export const LIFT_TRUST_THRESHOLD = 50;
+
+export function isLiftReady(state: Pick<GameState, "disposition">): boolean {
+  return (
+    state.disposition.confidence >= LIFT_CONFIDENCE_THRESHOLD &&
+    state.disposition.trust >= LIFT_TRUST_THRESHOLD
+  );
+}
 
 function problem(reason: string, thought: string | null): ActionProblem {
   return { reason, thought };
@@ -47,6 +59,9 @@ function problem(reason: string, thought: string | null): ActionProblem {
 function sameContactAction(left: ContactAction, right: ContactAction): boolean {
   if (left.kind !== right.kind) return false;
   if (left.kind === "lift_debris" && right.kind === "lift_debris") {
+    return left.style === right.style;
+  }
+  if (left.kind === "roll_patient" && right.kind === "roll_patient") {
     return left.style === right.style;
   }
   if (left.kind === "use" && right.kind === "use") {
@@ -60,9 +75,24 @@ function sameContactAction(left: ContactAction, right: ContactAction): boolean {
 }
 
 function contactLabel(contact: ContactAction): string {
-  return contact.kind === "lift_debris"
-    ? `lift support ${contact.style}`
-    : `use ${CATALOG[contact.item].name.toLowerCase()} on ${contact.target} ${contact.style}`;
+  if (contact.kind === "lift_debris") return `lift cabinet ${contact.style}`;
+  if (contact.kind === "roll_patient") return `roll patient ${contact.style}`;
+  return `use ${CATALOG[contact.item].name.toLowerCase()} on ${contact.target} ${contact.style}`;
+}
+
+const PRONE_CARE_THOUGHT = "Get the cabinet off my back, then roll me over.";
+
+function proneCareProblem(state: GameState): ActionProblem {
+  if (state.stage === "pinned") {
+    return problem(
+      "A cabinet is on my back. Lift it, then roll me onto my back before light or wound care.",
+      PRONE_CARE_THOUGHT,
+    );
+  }
+  return problem(
+    "I am still face down. Roll me onto my back before light or wound care.",
+    "The cabinet is off. Roll me over.",
+  );
 }
 
 function preserveDeclarationIfValid(state: GameState): GameState {
@@ -83,6 +113,8 @@ function isPhysicalActionKind(kind: GameAction["kind"]): boolean {
   return (
     kind === "light_lantern" ||
     kind === "lift_debris" ||
+    kind === "roll_patient" ||
+    kind === "move_to" ||
     kind === "pick_up" ||
     kind === "place" ||
     kind === "use" ||
@@ -90,6 +122,58 @@ function isPhysicalActionKind(kind: GameAction["kind"]): boolean {
     kind === "break" ||
     kind === "adjust_lamp"
   );
+}
+
+export function locationArea(location: Location): RoomArea {
+  if (location === "workbench") return "workbench";
+  if (location === "cabinet") return "cabinet";
+  if (location === "tray") return "tray";
+  return "father";
+}
+
+function lanternDestination(state: GameState): RoomArea {
+  const location = state.items.lantern.location;
+  if (location === "hand") return state.creatureArea;
+  return locationArea(location);
+}
+
+function useDestination(state: GameState, target: UseTarget): RoomArea {
+  if (target === "door") return "door";
+  if (target === "fire") return "fire";
+  if (
+    target === "wound" ||
+    target === "patient" ||
+    target === "pillow" ||
+    target === "creature"
+  ) {
+    return "father";
+  }
+  if (target === "lantern") return lanternDestination(state);
+  return locationArea(state.items[target].location);
+}
+
+export function physicalDestination(
+  state: GameState,
+  action: PhysicalAction,
+): RoomArea {
+  switch (action.kind) {
+    case "light_lantern":
+      return lanternDestination(state);
+    case "lift_debris":
+    case "roll_patient":
+    case "adjust_lamp":
+    case "combine":
+    case "break":
+      return "father";
+    case "pick_up":
+      return locationArea(state.items[action.item].location);
+    case "place":
+      return locationArea(action.location);
+    case "move_to":
+      return action.target;
+    case "use":
+      return useDestination(state, action.target);
+  }
 }
 
 export function validateAction(
@@ -121,22 +205,29 @@ function validateActionInternal(
 
   switch (action.kind) {
     case "light_lantern":
-      return state.environment.lanternLit
-        ? problem(
-            "The workbench lantern is already lit.",
-            "The lantern is already on. We need a different action.",
-          )
-        : null;
+      if (state.environment.lanternLit) {
+        return problem(
+          "The workbench lantern is already lit.",
+          "The lantern is already on. We need a different action.",
+        );
+      }
+      if (state.posture === "prone") {
+        return proneCareProblem(state);
+      }
+      return null;
+    case "move_to":
+      // An interrupted walk can stop between areas. Allow a return to the last area.
+      return null;
     case "lift_debris": {
       if (state.stage !== "pinned") {
         return problem(
-          "The fallen ceiling support has already been removed.",
-          "That support is already clear. We can work on the wound.",
+          "The cabinet has already been lifted off my back.",
+          "The cabinet is already clear. Roll me onto my back.",
         );
       }
       if (state.holding !== null) {
         return problem(
-          `Your hand is holding ${CATALOG[state.holding].name.toLowerCase()}. Put it down before lifting the ceiling support.`,
+          `Your hand is holding ${CATALOG[state.holding].name.toLowerCase()}. Put it down before lifting the cabinet.`,
           "He needs to put down what he is holding first.",
         );
       }
@@ -155,10 +246,10 @@ function validateActionInternal(
           null,
         );
       }
-      if (state.disposition.confidence < LIFT_CONFIDENCE_THRESHOLD) {
+      if (!isLiftReady(state)) {
         return problem(
-          "I am too afraid to lift the fallen ceiling support. Reassure me or give me a clear instruction first.",
-          "He is afraid to lift it. I have to reassure him.",
+          "I am too afraid to lift the cabinet. Reassure me until I trust that it is safe.",
+          "He's afraid of hurting me. I have to calm him first.",
         );
       }
       if (
@@ -168,7 +259,55 @@ function validateActionInternal(
           !sameContactAction(state.declaredContact, action))
       ) {
         return problem(
-          "Lifting the support requires an exact signal before proceeding.",
+          "Lifting the cabinet requires an exact signal before proceeding.",
+          "Wait. I need to know what he is going to do.",
+        );
+      }
+      return null;
+    }
+
+    case "roll_patient": {
+      if (state.stage === "pinned") {
+        return problem(
+          "A cabinet is still on my back. Lift it before you roll me over.",
+          PRONE_CARE_THOUGHT,
+        );
+      }
+      if (state.posture !== "prone") {
+        return problem(
+          "I am already on my back.",
+          "I am already on my back. We can work on the wound.",
+        );
+      }
+      if (state.holding !== null) {
+        return problem(
+          `Your hand is holding ${CATALOG[state.holding].name.toLowerCase()}. Put it down before rolling me over.`,
+          "He needs to put down what he is holding first.",
+        );
+      }
+      if (state.rules.gentle && action.style === "rough") {
+        return problem(
+          "Rough rolling is forbidden under the gentle rule.",
+          "I told him to use gentle hands. He must change that movement.",
+        );
+      }
+      if (
+        state.rules.waitBlackout &&
+        (state.phase === "blackout" || state.patient.blackoutRemaining > 0)
+      ) {
+        return problem(
+          "Patient is unconscious and wait-in-blackout rule is active.",
+          null,
+        );
+      }
+      if (
+        state.rules.announce &&
+        !skipDeclaration &&
+        (!state.declaredContact ||
+          !sameContactAction(state.declaredContact, action))
+      ) {
+        return problem(
+          "Rolling me over requires an exact signal before proceeding.",
           "Wait. I need to know what he is going to do.",
         );
       }
@@ -337,6 +476,9 @@ function validateActionInternal(
     }
 
     case "adjust_lamp": {
+      if (state.posture === "prone") {
+        return proneCareProblem(state);
+      }
       return null;
     }
 
@@ -407,12 +549,27 @@ function validateActionInternal(
         );
       }
 
+      if (action.item === "lantern") {
+        if (!state.environment.lanternLit) {
+          return problem(
+            "The lantern must be lit before it can reveal this.",
+            "The lantern is dark. I need to light it first.",
+          );
+        }
+      }
+
       if (action.item === "candle") {
-        if (action.target === "lamp") {
+        if (action.target === "lantern") {
           if (state.candleLit) {
             return problem(
               "The candle is already lit.",
               "The candle is already lit. We need a different action.",
+            );
+          }
+          if (state.items.lantern.location === "consumed") {
+            return problem(
+              "The lantern is not available to light the candle.",
+              "The lantern is gone. I need another light.",
             );
           }
           if (!state.environment.lanternLit) {
@@ -439,14 +596,22 @@ function validateActionInternal(
         }
       }
 
-      // Patient contact checks (wound or patient body)
+      if (
+        (action.target === "wound" || action.target === "patient") &&
+        state.posture === "prone"
+      ) {
+        return proneCareProblem(state);
+      }
+
+      // Patient contact checks (wound or patient body). Lantern inspection is not surgery.
       const isPatientContact =
-        action.target === "wound" || action.target === "patient";
+        action.item !== "lantern" &&
+        (action.target === "wound" || action.target === "patient");
       if (isPatientContact) {
         if (action.target === "wound" && state.stage === "pinned") {
           return problem(
-            "The fallen ceiling support pins the patient. Lift it before any wound contact or surgery.",
-            "The weight is still on me. He has to lift it first.",
+            "A cabinet is on my back. Lift it, then roll me onto my back before light or wound care.",
+            PRONE_CARE_THOUGHT,
           );
         }
         if (action.target === "wound" && !state.environment.lanternLit) {
@@ -504,6 +669,7 @@ function validateActionInternal(
           !isPryTool(action.item) &&
           action.item !== "mirror" &&
           action.item !== "candle" &&
+          action.item !== "lantern" &&
           action.item !== "bowl"
         ) {
           return problem(
@@ -701,17 +867,27 @@ export function applyAction(
   let next = { ...state };
   if (isPhysicalActionKind(action.kind)) {
     next.problem = null;
+    next.creatureArea = physicalDestination(state, action as PhysicalAction);
   }
 
   switch (action.kind) {
     case "light_lantern": {
       next.environment = { ...state.environment, lanternLit: true };
       const message =
-        "The workbench lantern is lit. Its light reveals the fallen support and the assembled son.";
+        "The workbench lantern is lit. Its light reveals the cellar and the assembled boy.";
       return {
         ok: true,
         state: appendJournal(next, "action", message),
         message,
+      };
+    }
+    case "move_to": {
+      const msg = `Walked to the ${action.target}.`;
+      next = appendJournal(next, "action", msg);
+      return {
+        ok: true,
+        state: preserveDeclarationIfValid(next),
+        message: msg,
       };
     }
     case "lift_debris": {
@@ -726,7 +902,20 @@ export function applyAction(
       };
       next.emotion = deriveEmotion(next.disposition);
       const msg =
-        "Lifted the fallen ceiling support clear. The creator has a deep crush wound and cannot move. Surgery is now possible.";
+        "Lifted the cabinet off his back. He is still face down and cannot move.";
+      next = appendJournal(next, "action", msg);
+      return {
+        ok: true,
+        state: preserveDeclarationIfValid(next),
+        message: msg,
+      };
+    }
+    case "roll_patient": {
+      next.posture = "supine";
+      next.declaredContact = null;
+      next.contactCount += 1;
+      const msg =
+        "Rolled him onto his back. The crush wound is reachable. He still cannot move.";
       next = appendJournal(next, "action", msg);
       return {
         ok: true,
@@ -893,6 +1082,21 @@ export function applyAction(
     }
 
     case "use": {
+      if (action.item === "lantern") {
+        const msg =
+          action.target === "door"
+            ? "Held the lantern at the door. The threshold is visible."
+            : action.target === "patient"
+              ? `Lantern check: health ${Math.round(next.patient.health)}%, blood ${Math.round(next.patient.blood)}%, pain ${Math.round(next.patient.pain)}%.`
+              : "Held the lantern near the wound. The injury is visible.";
+        next = appendJournal(next, "action", msg);
+        return {
+          ok: true,
+          state: preserveDeclarationIfValid(next),
+          message: msg,
+        };
+      }
+
       // 1. Pillow Rehearsal
       if (action.target === "pillow") {
         next.disposition = {
@@ -1163,18 +1367,20 @@ export function applyAction(
         };
       }
 
+      // Light the candle from the portable lantern
+      if (action.target === "lantern") {
+        next.candleLit = true;
+        const msg = "Lit the candle from the lantern.";
+        next = appendJournal(next, "action", msg);
+        return {
+          ok: true,
+          state: preserveDeclarationIfValid(next),
+          message: msg,
+        };
+      }
+
       // 11. Lamp alignment practice
       if (action.target === "lamp") {
-        if (action.item === "candle") {
-          next.candleLit = true;
-          const msg = "Lit the candle from the workbench lantern.";
-          next = appendJournal(next, "action", msg);
-          return {
-            ok: true,
-            state: preserveDeclarationIfValid(next),
-            message: msg,
-          };
-        }
         next.disposition = {
           ...next.disposition,
           confidence: Math.min(100, next.disposition.confidence + 6),
@@ -2056,15 +2262,18 @@ export function observeStatus(state: GameState) {
 
   const patientCondition =
     state.stage === "pinned"
-      ? "Pinned beneath a fallen heavy ceiling support after the laboratory collapse."
-      : state.restrained
-        ? "Unable to stand after the crush injury. The damaged leg brace is still caught."
-        : "Stable and able to move.";
+      ? "A heavy cabinet is on his back after the laboratory collapse."
+      : state.posture === "prone"
+        ? "The cabinet is off. He is still face down."
+        : state.restrained
+          ? "Unable to stand after the crush injury. The damaged leg brace is still caught."
+          : "Stable and able to move.";
 
   return {
     phase: state.phase,
     outcome: state.outcome,
     stage: state.stage,
+    posture: state.posture,
     holding: heldItem,
     lamp: state.lamp,
     restrained: state.restrained,
@@ -2080,6 +2289,8 @@ export function observeStatus(state: GameState) {
       blackoutRemaining: Math.round(state.patient.blackoutRemaining),
       blackoutCount: state.patient.blackoutCount,
     },
+    creatureArea: state.creatureArea,
+    moveDestinations: ROOM_AREAS,
     creature: {
       health: state.creatureHealth,
       emotion: state.emotion,
@@ -2092,7 +2303,7 @@ export function observeStatus(state: GameState) {
     rules: state.rules,
     notes: state.notes,
     items,
-    summary: `Phase: ${state.phase}. Stage: ${state.stage}. ${patientCondition} Holding: ${state.holding ?? "none"}. Lamp: ${state.lamp}. Assistant: ${state.emotion}. Patient: ${Math.round(state.patient.health)}% hp, ${Math.round(state.patient.blood)}% bl, ${Math.round(state.patient.pain)}% pn.`,
+    summary: `Phase: ${state.phase}. Stage: ${state.stage}. Posture: ${state.posture}. ${patientCondition} Holding: ${state.holding ?? "none"}. Lamp: ${state.lamp}. Assistant: ${state.emotion}. Patient: ${Math.round(state.patient.health)}% hp, ${Math.round(state.patient.blood)}% bl, ${Math.round(state.patient.pain)}% pn.`,
   };
 }
 

@@ -1,7 +1,8 @@
 # Still Warm
 
-You wake in darkness under a fallen ceiling support. Your assembled son calls for you.
-Ask him to light the workbench lantern. Then guide his hands while you cannot move.
+You wake face down under a fallen cabinet. You hear your boy in the dark.
+Ask him to lift the cabinet. Then ask him to turn you onto your back.
+Only then does the lantern reveal the room. Guide his hands while you cannot move.
 You lie on the stone floor. The body has a deformable chest and separate parts for each treatment stage.
 
 This RUN app uses the shared `dither-kit` renderer and the RUN agent SDK.
@@ -90,33 +91,35 @@ The playable game is separate from this source review.
 
 ## Controls
 
-- Look with the mouse in fullscreen. Drag or use arrow keys without pointer lock.
+- Drag or use arrow keys to look around.
 - Hold **Space** or **Hold Space to speak**. Release to submit the final transcript.
 - Press **Enter** to type a command. Submit it with Enter.
 - Say **stop** or select **Stop** to cancel his work.
 - Press **Escape** to pause. The pause menu has sound, motion, and standing rules.
 - A hidden browser tab pauses the operation.
 
-The game requests RUN fullscreen and pointer lock from the start button.
+The game requests RUN fullscreen from the start button. The pointer stays free
+for typing, speaking, and the Stop control.
 The local Playground can lack these APIs. On a top-level localhost page only,
-the game then uses browser fullscreen. Drag input remains available if capture
-is refused. The dev server stays bound to localhost.
+the game then uses browser fullscreen. Drag input remains available. The dev server stays bound to localhost.
 
 There are no health meters or object panels. Watch your skin, blood, and vision.
-Listen to your breath and his wordless calls. Only the father’s private thoughts appear as narrative text. Short thoughts suggest the next need.
+Listen to your breath and his wordless calls. After the opening, the live agent can show a brief patient thought about its actual response. The last thought stays until a new response arrives. Live play does not cycle through fixed emotion lines or next-step hints.
 The guided preview shows short spoken choices. The live game accepts your own words.
 Sound starts off. Select **Sound off** to enable it. This also enables the creature voice.
 
 Browser speech recognition needs microphone permission. Support depends on the
 browser. Typed input uses the same agent. The creature uses deep, unintelligible
 Web Audio growls and strained breaths. It does not use text-to-speech or show creature dialogue.
-The father’s thoughts use italic text. All sound is generated locally with Web Audio.
+The patient’s thoughts use italic text. All sound is generated locally with Web Audio.
 
 ## Try these instructions
 
-> I am here. Light the lantern on the workbench, son.
+> I am here, my boy. Lift the cabinet off my back. Slowly.
 
-> I trust you. Lift the support off me slowly. Show me before you touch me.
+> Turn me onto my back. Show me before you touch me.
+
+> Light the lantern on the workbench.
 
 > Make a thread from the wig. Find something to cut it with, then thread the needle.
 
@@ -126,8 +129,17 @@ The father’s thoughts use italic text. All sound is generated locally with Web
 
 > Put that down. Use the blanket for the fire and keep the clean cloth for me.
 
-The first 22 seconds show blackness, narration, and the eyes opening.
-The room stays unlit until the lantern action succeeds. Then remove the fallen support. Then expose the wound, remove the fragment,
+The opening shows private thoughts and the eyes opening toward the floor.
+Click or tap once to finish a line. Click or tap again for the next line.
+The patient clock holds while you read. The final thought stays visible for your reply.
+The same typewriter effect reveals each thought. Whole words keep their line position.
+Author a delay with `{{pause(0.250)}}`. The value is seconds. Markers do not
+appear in visible text or screen-reader text. A reveal click skips all remaining delays.
+For example: `I try to move.{{pause(0.250)}}.{{pause(0.250)}}..{{pause(0.750)}} I can't.`
+Touch devices show a tap hint and wait for a tap before opening the keyboard.
+On desktop, the reply field takes focus when an instruction is needed and after Send.
+Lift the cabinet, roll onto your back, then light the lantern. These are separate actions.
+Then expose the wound, remove the fragment,
 close it, dress it, and free the damaged leg brace. An unthreaded needle cannot close the wound.
 Materials can be consumed or soiled. Wrong tools can hurt the patient.
 This is fictional surgery with abstract health and sedation values.
@@ -151,7 +163,7 @@ blackout, it acts under the existing rules. The patient cannot issue new orders.
 - `src/audio`: browser voice input and generated sound.
 - `src/platform`: RUN fullscreen, pointer input, and the local preview fallback.
 
-The agent has `inspect_room` and `act` tools. The game validates each physical
+The agent has `inspect_room`, `act`, and `interpret_response` tools. An interpretation must refer to the latest tool result from the current input. It is limited to 200 characters and cannot change the world. The game validates each physical
 action before it starts and before it takes effect. STOP clears pending input
 and invalidates the current contact signal. The next agent call includes the
 observed result of the interruption. Agent input uses `concurrency: 'reject'`.
@@ -164,11 +176,12 @@ part of its context and is not a fixed engine rule.
 Sessions use `InMemoryAgentSessionStore`. Restart clears the operation and the
 agent's history. There is no save, chat storage, or background recording.
 The `signal_intent` action declares the exact next patient contact. A signal for
-one tool, target, or movement cannot authorize another. The father gets a short
-private thought before contact. `vocalize` produces wordless audio and cannot
+one tool, target, or movement cannot authorize another. The agent can interpret
+that intended movement before contact. `vocalize` produces wordless audio and cannot
 authorize contact. Raw model text is not shown or read aloud.
 
-Failed actions produce short father thoughts from the game rules. Voice input
+Failed actions return their reason to the agent. It can explain the refusal through
+a patient thought. Rehearsal retains fixed feedback and guided choices. Voice input
 keeps the final recognized words visible for five seconds so the player can
 correct an error.
 
@@ -213,15 +226,15 @@ This page has the complete opening, patient clock, threats, and endings.
 It uses fixed actions through the same game rules. It does not connect to RUN or use a model.
 Sound starts off. Drag or use arrow keys to look. Select a short spoken choice to act.
 
-The full route takes about five to eight minutes. Light the lantern and lift the beam.
+The full route takes about five to eight minutes. Lift the cabinet, roll onto your back, then light the lantern.
 Expose the wound, give some relief, and bar the door. Remove the metal.
 Put out the fire. Cut hair from the wig and thread the needle. Close and dress
 the wound. Release the brace. Other choices can cause pain or use supplies.
 
-The opening protects the patient for 22 seconds. Door pressure starts after
-rescue from the beam. The fire gives time to respond. There are three medicine
+The opening protects the patient for 32 seconds. Door pressure starts after
+rescue from the cabinet. The fire gives time to respond. There are three medicine
 doses. Cloth used on fire becomes dirty. The suture is consumed and the dressing
-stays on the patient. Blood loss, fire, and loss of the son have separate endings.
+stays on the patient. Blood loss, fire, and loss of the boy have separate endings.
 
 Run the visible control check with the proof server active:
 
@@ -238,7 +251,7 @@ The check runs at normal game speed. It keeps sound off. It saves captures to
 
 Open `http://127.0.0.1:4320/scene.html` after `npm run proof`.
 This page uses the playable scene and game rules. It has no RUN login or model calls.
-Drag to look. Use the controls to light the lantern, lift the beam, and move tools.
+Drag to look. Use the controls to lift the cabinet, roll the patient, light the lantern, and move tools.
 The review stops the patient clock between actions. The playable game keeps it running.
 
 The playable character uses `public/assets/creature.glb`. It contains one body,
@@ -271,6 +284,6 @@ same calls. Small mouth movements use the same timing. The full scream still
 uses its approved source clip and mouth shape.
 
 The fixed examination lamp cannot be picked up. Use `adjust_lamp` to aim it.
-The candle starts unlit. The son can light it from the workbench lantern or an
+The candle starts unlit. The boy can light it from the workbench lantern or an
 existing fire. Quenching the candle uses one water portion and dirties the bowl.
-Door tools seat the existing bars and remain in the son's hand.
+Door tools seat the existing bars and remain in the boy's hand.

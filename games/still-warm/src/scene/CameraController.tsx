@@ -1,50 +1,38 @@
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Vector3, PerspectiveCamera } from "three";
-import type { PatientState } from "../game/model";
 import type { LookInput } from "./look";
+import { PRONE_EYES, type PatientPose } from "./PatientPose";
 import { PATIENT_LAYOUT } from "./patientLayout";
 
 interface Props {
-  patient: PatientState;
   look: LookInput;
-  elapsed: number;
-  started: boolean;
-  reducedMotion?: boolean;
+  pose: PatientPose;
   paused?: boolean;
 }
 
-export function CameraController({
-  patient,
-  look,
-  elapsed,
-  started,
-  reducedMotion = false,
-  paused = false,
-}: Props) {
+export function CameraController({ look, pose, paused = false }: Props) {
   const target = useMemo(() => new Vector3(), []);
-  const time = useRef(0);
-  const breathPhase = useRef(0);
-  useFrame(({ camera, size }, dt) => {
-    if (paused || !(camera instanceof PerspectiveCamera)) return;
-    time.current += dt;
-    breathPhase.current += dt * (1.5 + patient.pain / 65);
+  useFrame(({ camera, size }) => {
+    if (!(camera instanceof PerspectiveCamera)) return;
     const fov = size.width < size.height ? 82 : 70;
     if (camera.fov !== fov) {
       camera.fov = fov;
       camera.updateProjectionMatrix();
     }
-    const t = time.current;
-    const breath = reducedMotion ? 0 : Math.sin(breathPhase.current) * 0.006;
-    const impact = !reducedMotion && started ? Math.exp(-elapsed * 2.5) : 0;
-    const tremor = reducedMotion ? 0 : (patient.pain / 100) * 0.002;
-    camera.position.set(
+    if (paused) return;
+    camera.position
+      .set(...PRONE_EYES)
+      .lerp(target.set(...PATIENT_LAYOUT.eyes), pose.roll);
+    camera.up.set(
+      Math.sin(Math.PI * (1 - pose.roll)),
+      Math.cos(Math.PI * (1 - pose.roll)),
       0,
-      PATIENT_LAYOUT.eyes[1] + breath + Math.sin(elapsed * 23) * impact * 0.018,
-      PATIENT_LAYOUT.eyes[2],
     );
-    const yaw = look.yaw + Math.sin(t * 8.7) * tremor;
-    const pitch = look.pitch + Math.sin(t * 11.3) * tremor;
+    const freedom = 0.12 + 0.88 * pose.roll;
+    const yaw = look.yaw * freedom;
+    const pitch =
+      (-0.95 + look.pitch * 0.12) * (1 - pose.roll) + look.pitch * pose.roll;
     target
       .set(
         Math.sin(yaw) * Math.cos(pitch),
@@ -53,11 +41,6 @@ export function CameraController({
       )
       .add(camera.position);
     camera.lookAt(target);
-    if (!reducedMotion)
-      camera.rotateZ(
-        (Math.sin(t * 0.4) * patient.sedation) / 4500 +
-          impact * Math.sin(elapsed * 15) * 0.015,
-      );
   });
   return null;
 }

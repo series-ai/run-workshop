@@ -213,8 +213,7 @@ export const CellarStory: FC<CellarStoryProps> = ({
     dustRef.current.children.forEach((particle, index) => {
       const [x, y, z] = DUST[index];
       particle.position.x = x + Math.sin(elapsed * 0.27 + index) * 0.025;
-      particle.position.y =
-        y + Math.sin(elapsed * 0.42 + index * 1.7) * 0.045;
+      particle.position.y = y + Math.sin(elapsed * 0.42 + index * 1.7) * 0.045;
       particle.position.z = z + Math.cos(elapsed * 0.31 + index) * 0.02;
     });
   });
@@ -284,31 +283,12 @@ export const CellarStory: FC<CellarStoryProps> = ({
       ))}
 
       {lit && (
-        <group name="cold-roof-shaft">
-          {/* The shaft enters only through the collapsed opening. */}
-          <mesh position={[0, 1.1, 0.7]}>
-            <coneGeometry args={[0.48, 1.82, 16, 1, true]} />
-            <meshStandardMaterial
-              color="#b7c3ad"
-              emissive="#64705f"
-              emissiveIntensity={0.35}
-              transparent
-              opacity={0.02}
-              depthWrite={false}
-            />
-          </mesh>
-          <pointLight
-            position={[0, 1.86, 0.7]}
-            color="#b7c3ad"
-            intensity={0.28}
-            distance={3.6}
-            decay={2}
-          />
+        <group name="roof-dust-region">
           <group ref={dustRef} name="roof-dust">
             {DUST.map(([x, y, z], index) => (
               <mesh key={`dust-${index}`} position={[x, y, z]}>
                 <sphereGeometry args={[0.004, 6, 6]} />
-                <meshBasicMaterial
+                <meshStandardMaterial
                   color="#c7cfb7"
                   transparent
                   opacity={0.18}

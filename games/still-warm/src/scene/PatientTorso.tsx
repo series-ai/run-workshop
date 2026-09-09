@@ -1,19 +1,21 @@
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { Color, Mesh, MeshStandardMaterial, MathUtils } from "three";
+import { Group, Color, Mesh, MeshStandardMaterial, MathUtils } from "three";
 import { DRACO_PATH } from "./assets";
 import type { GameState } from "../game/model";
 import type { LiveHandSocket } from "./types";
+import { BODY_ROLL_AXIS_Y, type PatientPose } from "./PatientPose";
 import { supportMotion } from "./supportMotion";
 
 interface Props {
   state: GameState;
+  pose?: PatientPose;
   socket: LiveHandSocket;
   reducedMotion?: boolean;
 }
 
-function PatientBody({ state, socket, reducedMotion = false }: Props) {
+function PatientBody({ state, socket, pose, reducedMotion = false }: Props) {
   const source = useGLTF(
     `${import.meta.env.BASE_URL}assets/patient.glb`,
     DRACO_PATH,
@@ -75,6 +77,7 @@ function PatientBody({ state, socket, reducedMotion = false }: Props) {
     () => () => body.materials.forEach((material) => material.dispose()),
     [body],
   );
+  const rollRoot = useRef<Group>(null!);
   const time = useRef(0);
   const breathPhase = useRef(0);
   const crush = useRef(state.stage === "pinned" ? 1 : 0);
@@ -98,6 +101,8 @@ function PatientBody({ state, socket, reducedMotion = false }: Props) {
   }
 
   useFrame((_, dt) => {
+    rollRoot.current.rotation.z =
+      Math.PI * (1 - (pose?.roll ?? (state.posture === "supine" ? 1 : 0)));
     if (!state.paused) {
       time.current += dt;
       const { lift, cleared } = supportMotion(state, socket);
@@ -110,9 +115,10 @@ function PatientBody({ state, socket, reducedMotion = false }: Props) {
       const rate = 1.4 + patient.pain / 60;
       breathPhase.current += dt * rate;
     }
-    const breath = reducedMotion
-      ? 0
-      : (Math.sin(breathPhase.current) + 1) * 0.5 * (1 - crush.current * 0.7);
+    const breath =
+      reducedMotion || state.stage === "pinned"
+        ? 0
+        : (Math.sin(breathPhase.current) + 1) * 0.5 * (1 - crush.current * 0.7);
     for (const mesh of body.morphs) {
       const keys = mesh.morphTargetDictionary!;
       const weights = mesh.morphTargetInfluences!;
@@ -130,7 +136,17 @@ function PatientBody({ state, socket, reducedMotion = false }: Props) {
     body.parts.LeftHand.position.y = body.leftHandY + tension;
     body.parts.RightHand.position.y = body.rightHandY - tension;
   });
-  return <primitive name="patient-body" object={body.scene} />;
+  return (
+    <group
+      ref={rollRoot}
+      name="patient-posture"
+      position={[0, BODY_ROLL_AXIS_Y, 0]}
+    >
+      <group position={[0, -BODY_ROLL_AXIS_Y, 0]}>
+        <primitive name="patient-body" object={body.scene} />
+      </group>
+    </group>
+  );
 }
 
 export function PatientTorso(props: Props) {

@@ -6,7 +6,7 @@ import {
 } from "../game/model";
 import { GameStore } from "../game/store";
 import { observeStatus } from "../game/transitions";
-import type { LiveSession } from "./liveSession";
+import type { LiveHooks, LiveSession } from "./liveSession";
 
 export type PlayMode = "live" | "rehearsal";
 export interface ConnectionState {
@@ -16,6 +16,7 @@ export interface ConnectionState {
   turns: number;
   canResume: boolean;
   needsInstruction: boolean;
+  response: { text: string; id: number } | null;
 }
 interface Input {
   text: string;
@@ -27,11 +28,7 @@ export interface ControllerHooks {
 }
 export type SessionFactory = (
   store: GameStore,
-  hooks: {
-    onVocalize(cue: VocalCue): void;
-    onPause(): void;
-    onAction(): void;
-  },
+  hooks: LiveHooks,
   signal: AbortSignal,
 ) => Promise<LiveSession>;
 
@@ -48,6 +45,7 @@ export class CreatureController {
     turns: 0,
     canResume: false,
     needsInstruction: false,
+    response: null,
   };
   private listeners = new Set<() => void>();
   private live: LiveSession | null = null;
@@ -65,6 +63,7 @@ export class CreatureController {
   private blackoutCount = 0;
   private connectionToken: object | null = null;
   private replaceSessionOnResume = false;
+  private responseId = 0;
 
   constructor(
     private readonly store: GameStore,
@@ -103,6 +102,18 @@ export class CreatureController {
             !this.store.getSnapshot().paused
           )
             this.vocalize(cue);
+        },
+        onResponse: (text) => {
+          if (
+            token === this.connectionToken &&
+            epoch === this.epoch &&
+            !this.closed &&
+            this.running !== null &&
+            this.runAbort !== null &&
+            !this.runAbort.signal.aborted &&
+            !this.store.getSnapshot().paused
+          )
+            this.update({ response: { text, id: ++this.responseId } });
         },
         onPause: () => {
           if (
@@ -144,6 +155,7 @@ export class CreatureController {
     this.blackoutCount = 0;
     this.connectionToken = null;
     this.replaceSessionOnResume = false;
+    this.responseId = 0;
     this.update({
       mode,
       status: mode === "live" ? "connecting" : "idle",
@@ -151,6 +163,7 @@ export class CreatureController {
       turns: 0,
       canResume: false,
       needsInstruction: false,
+      response: null,
     });
     if (old) void old.close().catch(() => undefined);
     if (epoch !== this.epoch || this.closed) return;

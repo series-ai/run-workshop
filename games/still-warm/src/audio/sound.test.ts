@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createInitialState, GameState } from "../game/model";
-import { getBreathingProfile, SurgerySound } from "./sound";
+import { DEFAULT_MUTED, getBreathingProfile, SurgerySound } from "./sound";
 
 class FakeAudioParam {
   value: number;
@@ -95,6 +95,7 @@ describe("SurgerySound", () => {
     expect(() => sound.vocalize("fear")).not.toThrow();
     expect(() => sound.stopSpeech()).not.toThrow();
     expect(() => sound.update(state)).not.toThrow();
+    expect(() => sound.shuffle()).not.toThrow();
     expect(() => sound.dispose()).not.toThrow();
   });
 
@@ -368,5 +369,114 @@ describe("SurgerySound", () => {
     );
 
     sound.dispose();
+  });
+
+  it("keeps shuffle silent while DEFAULT_MUTED is in effect", async () => {
+    expect(DEFAULT_MUTED).toBe(true);
+    const ctx = new FakeAudioContext();
+    const sound = new SurgerySound({
+      audioContextFactory: () => ctx as unknown as AudioContext,
+    });
+    await sound.unlock();
+    const playing: GameState = {
+      ...createInitialState(),
+      phase: "playing",
+      paused: false,
+    };
+    sound.update(playing);
+    const oscillators = ctx.createOscillator.mock.calls.length;
+    const sources = ctx.createBufferSource.mock.calls.length;
+    const filters = ctx.createBiquadFilter.mock.calls.length;
+    sound.shuffle();
+    expect(ctx.createOscillator).toHaveBeenCalledTimes(oscillators);
+    expect(ctx.createBufferSource).toHaveBeenCalledTimes(sources);
+    expect(ctx.createBiquadFilter).toHaveBeenCalledTimes(filters);
+    sound.dispose();
+  });
+
+  it("permits shuffle after unlock, unmute, and a playing update", async () => {
+    vi.useFakeTimers();
+    try {
+      const ctx = new FakeAudioContext();
+      const sound = new SurgerySound({
+        audioContextFactory: () => ctx as unknown as AudioContext,
+      });
+      sound.setMuted(false);
+      await sound.unlock();
+      const playing: GameState = {
+        ...createInitialState(),
+        phase: "playing",
+        paused: false,
+      };
+      sound.update(playing);
+      const oscillators = ctx.createOscillator.mock.results.length;
+      const filters = ctx.createBiquadFilter.mock.results.length;
+      const timers = vi.getTimerCount();
+      sound.shuffle();
+      expect(vi.getTimerCount()).toBe(timers);
+      expect(ctx.createOscillator.mock.results.length).toBe(oscillators + 2);
+      expect(ctx.createBiquadFilter.mock.results.length).toBe(filters + 2);
+
+      const step = ctx.createOscillator.mock.results[oscillators]!.value;
+      const scrape = ctx.createOscillator.mock.results[oscillators + 1]!.value;
+      expect(step.start).toHaveBeenCalledWith(ctx.currentTime);
+      expect(step.stop).toHaveBeenCalledWith(ctx.currentTime + 0.08);
+      expect(step.frequency.setValueAtTime).toHaveBeenCalledWith(
+        96,
+        ctx.currentTime,
+      );
+      expect(step.frequency.exponentialRampToValueAtTime).toHaveBeenCalled();
+      expect(scrape.start).toHaveBeenCalledWith(ctx.currentTime + 0.02);
+      expect(scrape.stop).toHaveBeenCalledWith(ctx.currentTime + 0.14);
+      expect(scrape.frequency.exponentialRampToValueAtTime).toHaveBeenCalled();
+
+      const stepFilter = ctx.createBiquadFilter.mock.results[filters]!.value;
+      const scrapeFilter =
+        ctx.createBiquadFilter.mock.results[filters + 1]!.value;
+      expect(stepFilter.type).toBe("lowpass");
+      expect(scrapeFilter.type).toBe("bandpass");
+      sound.dispose();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("pause or dispose prevents late shuffle effects", async () => {
+    vi.useFakeTimers();
+    try {
+      const ctx = new FakeAudioContext();
+      const sound = new SurgerySound({
+        audioContextFactory: () => ctx as unknown as AudioContext,
+      });
+      sound.setMuted(false);
+      await sound.unlock();
+      const playing: GameState = {
+        ...createInitialState(),
+        phase: "playing",
+        paused: false,
+      };
+      sound.update(playing);
+      sound.shuffle();
+      const afterShuffle = ctx.createOscillator.mock.calls.length;
+      expect(afterShuffle).toBeGreaterThan(2);
+
+      sound.update({ ...playing, paused: true });
+      const timersAfterPause = vi.getTimerCount();
+      sound.shuffle();
+      expect(ctx.createOscillator).toHaveBeenCalledTimes(afterShuffle);
+      expect(vi.getTimerCount()).toBe(timersAfterPause);
+
+      sound.update(playing);
+      sound.shuffle();
+      const afterResume = ctx.createOscillator.mock.calls.length;
+      expect(afterResume).toBeGreaterThan(afterShuffle);
+
+      sound.dispose();
+      sound.shuffle();
+      expect(ctx.createOscillator).toHaveBeenCalledTimes(afterResume);
+      expect(ctx.close).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

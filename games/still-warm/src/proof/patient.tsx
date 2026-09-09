@@ -43,6 +43,7 @@ function createPatientFixture(
     phase: "playing",
     paused,
     stage,
+    posture: "supine",
     lamp: "wound",
     patient: {
       ...initial.patient,
@@ -116,7 +117,7 @@ function PatientCanvas({
       >
         <color attach="background" args={["#090a09"]} />
         <fog attach="fog" args={["#090a09", 2.4, 7]} />
-        <SceneLighting lit paused={state.paused} />
+        <SceneLighting inspection />
         <mesh
           position={[0, -0.9, 0.35]}
           rotation={[-Math.PI / 2, 0, 0]}
@@ -160,7 +161,7 @@ export default function PatientReview() {
     <main className="patient-page">
       <header className="patient-header">
         <p className="patient-eyebrow">STILL WARM / PATIENT REVIEW</p>
-        <h1>Father's body</h1>
+        <h1>Patient body</h1>
         <p className="patient-intro">
           Inspect the actual patient model at each wound stage. The proof uses
           fixed fixtures and has no clock or game actions.

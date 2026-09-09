@@ -12,6 +12,8 @@ export function contactThought(
   const movement = contact.style === "rough" ? "Too fast." : "Slowly.";
   if (contact.kind === "lift_debris")
     return `He's about to lift the weight. ${movement}`;
+  if (contact.kind === "roll_patient")
+    return `He's going to turn me onto my back. ${movement}`;
   const tool = CATALOG[contact.item].name.toLowerCase();
   if (contact.target === "patient") {
     if (contact.item === "morphine")
@@ -35,7 +37,7 @@ export function contactThought(
 
 export const EMOTION_THOUGHTS: Record<Emotion, string> = {
   scared: "He's afraid. I have to keep my voice steady.",
-  anxious: "He's listening. Still afraid, but listening.",
+  anxious: "He's listening. Still afraid.",
   angry: "He's angry. Those hands could tear me apart.",
   sad: "Does he think I don't want him here? I need him to stay.",
   happy: "He knows he's helping. That's still my boy.",

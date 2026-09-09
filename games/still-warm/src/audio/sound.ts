@@ -176,6 +176,25 @@ export class SurgerySound {
     this.vocalize("fear");
   }
 
+  shuffle(): void {
+    if (
+      this.disposed ||
+      this.muted ||
+      !this.continuousActive ||
+      !this.ctx ||
+      !this.masterGain ||
+      this.ctx.state !== "running"
+    )
+      return;
+    try {
+      const t = this.ctx.currentTime;
+      this.playShuffleGrain(t, 96, 46, 0.02, 0.07, 130, "lowpass");
+      this.playShuffleGrain(t + 0.02, 760, 280, 0.012, 0.11, 1050, "bandpass");
+    } catch {
+      // Safe ignore
+    }
+  }
+
   vocalize(cue: VocalCue): void {
     if (this.muted || this.disposed) return;
     this.creatureVoice?.vocalize(cue);
@@ -476,6 +495,47 @@ export class SurgerySound {
       for (const offset of offsets) {
         this.playKnockTap(baseTime + offset);
       }
+    } catch {
+      // Safe ignore
+    }
+  }
+
+  private playShuffleGrain(
+    time: number,
+    startFreq: number,
+    endFreq: number,
+    volume: number,
+    duration: number,
+    filterFreq: number,
+    filterType: BiquadFilterType,
+  ): void {
+    if (!this.ctx || !this.masterGain) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(startFreq, time);
+      osc.frequency.exponentialRampToValueAtTime(
+        Math.max(1, endFreq),
+        time + duration,
+      );
+
+      filter.type = filterType;
+      filter.frequency.setValueAtTime(filterFreq, time);
+      filter.Q.setValueAtTime(filterType === "bandpass" ? 1.1 : 0.65, time);
+
+      gain.gain.setValueAtTime(0.0001, time);
+      gain.gain.linearRampToValueAtTime(volume, time + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain);
+
+      osc.start(time);
+      osc.stop(time + duration + 0.01);
     } catch {
       // Safe ignore
     }

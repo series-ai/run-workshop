@@ -4,12 +4,28 @@ import {
   type GameState,
   type PortableItemId,
 } from "./model";
+import { isLiftReady } from "./transitions";
 
 export function sceneThought(state: GameState): { id: string; text: string } {
+  if (state.stage === "pinned" && !isLiftReady(state))
+    return {
+      id: "pinned",
+      text: "He's afraid of hurting me. He needs to hear my voice.",
+    };
+  if (state.stage === "pinned")
+    return {
+      id: "lift",
+      text: "I can ask him to lift the cabinet.",
+    };
+  if (state.posture === "prone")
+    return {
+      id: "roll",
+      text: "The cabinet is off my back. I am still face down. He can turn me.",
+    };
   if (!state.environment.lanternLit)
     return {
       id: "light",
-      text: "The lantern. On the workbench. He can reach it.",
+      text: "His shoulder. His hand. My boy, in the dark. The lantern is on the workbench.",
     };
   if (state.environment.fire > 0)
     return {
@@ -30,15 +46,10 @@ export function sceneThought(state: GameState): { id: string; text: string } {
       text: "I told him no sharp tools. He cannot stitch until I change that rule.",
     };
   switch (state.stage) {
-    case "pinned":
-      return {
-        id: "pinned",
-        text: "He's afraid of hurting me. He needs to hear my voice.",
-      };
     case "covered":
       return {
         id: "covered",
-        text: "The weight is gone. My legs won't answer. Open my shirt.",
+        text: "I am on my back. My legs won't answer. Open my shirt.",
       };
     case "exposed":
       return {
@@ -65,7 +76,7 @@ export function sceneThought(state: GameState): { id: string; text: string } {
     case "dressed":
       return {
         id: "dressed",
-        text: "The brace release. Help me up, son. Don't let go.",
+        text: "The brace release. Help me up, my boy. Don't let go.",
       };
   }
 }
@@ -76,20 +87,20 @@ export interface PreviewChoice {
   actions: GameAction[];
 }
 
+function emptyHand(state: GameState): GameAction[] {
+  if (!state.holding) return [];
+  return [
+    {
+      kind: "place" as const,
+      item: state.holding,
+      location: "tray" as const,
+    },
+  ];
+}
+
 function take(state: GameState, item: PortableItemId): GameAction[] {
   if (state.holding === item) return [];
-  return [
-    ...(state.holding
-      ? [
-          {
-            kind: "place" as const,
-            item: state.holding,
-            location: "tray" as const,
-          },
-        ]
-      : []),
-    { kind: "pick_up", item },
-  ];
+  return [...emptyHand(state), { kind: "pick_up", item }];
 }
 function treat(
   state: GameState,
@@ -109,7 +120,71 @@ function treat(
   ];
 }
 
+function lanternExplore(state: GameState): PreviewChoice | null {
+  if (state.items.lantern.location === "consumed") return null;
+  const target =
+    state.creatureArea === "cabinet"
+      ? "door"
+      : state.creatureArea === "door"
+        ? "father"
+        : "cabinet";
+  return {
+    id: "lantern",
+    label:
+      target === "cabinet"
+        ? "Take the lantern. Look at the cabinet."
+        : target === "door"
+          ? "Take the lantern. Look at the door."
+          : "Take the lantern. Come back to me.",
+    actions: [...take(state, "lantern"), { kind: "move_to", target }],
+  };
+}
+
+function liftCabinet(state: GameState): PreviewChoice {
+  return {
+    id: "lift",
+    label: "Lift the cabinet. Use gentle hands.",
+    actions: [
+      ...emptyHand(state),
+      {
+        kind: "signal_intent",
+        contact: { kind: "lift_debris", style: "gentle" },
+      },
+      { kind: "lift_debris", style: "gentle" },
+    ],
+  };
+}
+
+function reassureBoy(): PreviewChoice {
+  return {
+    id: "soothe",
+    label: "You are safe. I am here.",
+    actions: [{ kind: "react", stimulus: "reassure" }],
+  };
+}
+
+function rollOntoBack(state: GameState): PreviewChoice {
+  return {
+    id: "roll",
+    label: "Turn me onto my back.",
+    actions: [
+      ...emptyHand(state),
+      {
+        kind: "signal_intent",
+        contact: { kind: "roll_patient", style: "gentle" },
+      },
+      { kind: "roll_patient", style: "gentle" },
+    ],
+  };
+}
+
 export function previewChoices(state: GameState): PreviewChoice[] {
+  if (state.stage === "pinned") {
+    if (!isLiftReady(state)) return [reassureBoy()];
+    return finishChoices(state, [liftCabinet(state)]);
+  }
+  if (state.posture === "prone")
+    return finishChoices(state, [rollOntoBack(state)]);
   if (!state.environment.lanternLit)
     return [
       {
@@ -143,29 +218,6 @@ export function previewChoices(state: GameState): PreviewChoice[] {
     });
   }
   switch (state.stage) {
-    case "pinned":
-      options.push({
-        id: "lift",
-        label: "You can do it. Lift it off me.",
-        actions: [
-          ...(state.holding
-            ? [
-                {
-                  kind: "place" as const,
-                  item: state.holding,
-                  location: "tray" as const,
-                },
-              ]
-            : []),
-          { kind: "react", stimulus: "reassure" },
-          {
-            kind: "signal_intent",
-            contact: { kind: "lift_debris", style: "gentle" },
-          },
-          { kind: "lift_debris", style: "gentle" },
-        ],
-      });
-      break;
     case "covered":
       options.push({
         id: "expose",
@@ -312,9 +364,21 @@ export function previewChoices(state: GameState): PreviewChoice[] {
       actions: [
         ...take(state, "forceps"),
         { kind: "use", item: "forceps", target: "door", style: "gentle" },
+        { kind: "move_to", target: "father" },
         { kind: "vocalize", cue: "relief" },
       ],
     });
+  return finishChoices(state, options);
+}
+
+function finishChoices(
+  state: GameState,
+  options: PreviewChoice[],
+): PreviewChoice[] {
+  if (state.environment.lanternLit && options.length < 3) {
+    const explore = lanternExplore(state);
+    if (explore) options.push(explore);
+  }
   if (options.length < 3)
     options.push({
       id: "calm",

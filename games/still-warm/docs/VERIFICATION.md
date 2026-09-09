@@ -41,7 +41,7 @@ The actual skin surface defines the wound and arm targets.
 - Browser rehearsal passed from trapped body through dressing on the final compressed asset.
 - Cancelling a lift kept the player trapped. The beam and chest returned to the pinned pose on resume.
 - The embedded fragment disappeared after extraction. Closure and dressing appeared at their correct stages.
-- The son crouched for floor treatment. His hand reached within 1.34 cm of the wound during an active contact.
+- The boy crouched for floor treatment. His hand reached within 1.34 cm of the wound during an active contact.
 - The browser reported zero page errors during the final check.
 
 See [the body review](patient-review.html), [observed states](patient-browser-check.json),

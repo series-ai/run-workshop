@@ -8,6 +8,7 @@ export const ITEM_IDS = [
   "scalpel",
   "mirror",
   "lamp",
+  "lantern",
   "shard",
   "release",
   "scissors",
@@ -26,9 +27,18 @@ export const LOCATIONS = [
   "hand",
   "patient",
   "stand",
+  "workbench",
   "pillow",
   "floor",
   "consumed",
+] as const;
+export const ROOM_AREAS = [
+  "father",
+  "workbench",
+  "cabinet",
+  "door",
+  "fire",
+  "tray",
 ] as const;
 export const RULE_IDS = [
   "announce",
@@ -45,11 +55,14 @@ export const STAGES = [
   "closed",
   "dressed",
 ] as const;
+export const POSTURES = ["prone", "supine"] as const;
 export type ItemId = (typeof ITEM_IDS)[number];
 export type PortableItemId = Exclude<ItemId, "lamp">;
 export type Location = (typeof LOCATIONS)[number];
+export type RoomArea = (typeof ROOM_AREAS)[number];
 export type RuleId = (typeof RULE_IDS)[number];
 export type Stage = (typeof STAGES)[number];
+export type Posture = (typeof POSTURES)[number];
 export type Phase = "ready" | "playing" | "blackout" | "won" | "lost";
 export type Outcome = "saved" | "blood_loss" | "fire" | "creature_lost";
 export const EMOTIONS = [
@@ -143,6 +156,13 @@ export const CATALOG: Record<
     name: "Examination lamp",
     sharp: false,
     initial: "stand",
+    material: "metal",
+    capabilities: ["light"],
+  },
+  lantern: {
+    name: "Lantern",
+    sharp: false,
+    initial: "workbench",
     material: "metal",
     capabilities: ["light"],
   },
@@ -254,6 +274,10 @@ const liftActionSchema = z.object({
   kind: z.literal("lift_debris"),
   style: z.enum(["gentle", "rough"]),
 });
+const rollActionSchema = z.object({
+  kind: z.literal("roll_patient"),
+  style: z.enum(["gentle", "rough"]),
+});
 const useActionSchema = z.object({
   kind: z.literal("use"),
   item: portableItem,
@@ -271,12 +295,14 @@ const useActionSchema = z.object({
     "thread",
     "scissors",
     "lamp",
+    "lantern",
     "bowl",
   ]),
   style: z.enum(["gentle", "rough"]),
 });
 export const contactSchema = z.discriminatedUnion("kind", [
   liftActionSchema,
+  rollActionSchema,
   useActionSchema.extend({ target: z.enum(["wound", "patient"]) }),
 ]);
 export type ContactAction = z.infer<typeof contactSchema>;
@@ -292,6 +318,11 @@ export type VocalCue = (typeof VOCAL_CUES)[number];
 export const actionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("light_lantern") }),
   liftActionSchema,
+  rollActionSchema,
+  z.object({
+    kind: z.literal("move_to"),
+    target: z.enum(ROOM_AREAS),
+  }),
   z.object({ kind: z.literal("pick_up"), item: portableItem }),
   z.object({
     kind: z.literal("place"),
@@ -368,9 +399,11 @@ export interface GameState {
   paused: boolean;
   elapsed: number;
   stage: Stage;
+  posture: Posture;
   patient: PatientState;
   items: Record<ItemId, ItemState>;
   holding: PortableItemId | null;
+  creatureArea: RoomArea;
   lamp: "wound" | "face" | "away";
   restrained: boolean;
   rules: Record<RuleId, boolean>;
@@ -411,6 +444,7 @@ export function createInitialState(): GameState {
     paused: false,
     elapsed: 0,
     stage: "pinned",
+    posture: "prone",
     patient: {
       health: 86,
       pain: 36,
@@ -421,6 +455,7 @@ export function createInitialState(): GameState {
     },
     items,
     holding: null,
+    creatureArea: "father",
     lamp: "away",
     restrained: true,
     rules: {
@@ -478,8 +513,12 @@ export function actionLabel(action: PhysicalAction): string {
   switch (action.kind) {
     case "light_lantern":
       return "Lighting the workbench lantern";
+    case "move_to":
+      return `Walking to the ${action.target}`;
     case "lift_debris":
-      return `${action.style === "rough" ? "Dragging" : "Carefully lifting"} the fallen ceiling support`;
+      return `${action.style === "rough" ? "Dragging" : "Carefully lifting"} the cabinet off his back`;
+    case "roll_patient":
+      return `${action.style === "rough" ? "Roughly rolling" : "Carefully rolling"} him onto his back`;
     case "pick_up":
       return `Reaching for ${CATALOG[action.item].name.toLowerCase()}`;
     case "place":

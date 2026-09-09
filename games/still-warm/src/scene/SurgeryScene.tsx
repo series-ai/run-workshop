@@ -1,4 +1,5 @@
 import { useMemo, type FC } from "react";
+import { PatientPoseController, type PatientPose } from "./PatientPose";
 import { createHandSocket } from "./types";
 import { Canvas } from "@react-three/fiber";
 import type { GameState } from "../game/model";
@@ -8,7 +9,6 @@ import { SceneLighting } from "./SceneLighting";
 import { Room } from "./Room";
 import { PatientTorso } from "./PatientTorso";
 import { Lamp } from "./Lamp";
-import { WorkbenchLantern } from "./WorkbenchLantern";
 import { Tools } from "./Tools";
 import { GeneratedAssistant } from "./GeneratedAssistant";
 import { CameraController } from "./CameraController";
@@ -34,6 +34,10 @@ export const SurgeryScene: FC<SurgerySceneProps> = ({
   call = null,
 }) => {
   const socket = useMemo(createHandSocket, []);
+  const pose = useMemo<PatientPose>(
+    () => ({ roll: state.posture === "supine" ? 1 : 0 }),
+    [],
+  );
   const patient = state.patient;
   const isPaused = state.paused;
   const lit = state.environment.lanternLit;
@@ -58,17 +62,11 @@ export const SurgeryScene: FC<SurgerySceneProps> = ({
         <color attach="background" args={[COLORS.bg]} />
         <fog attach="fog" args={[COLORS.fog, 2.5, 9]} />
 
-        {/* First-person camera positioning & pain/sedation response */}
-        <CameraController
-          look={look}
-          elapsed={state.elapsed}
-          started={state.phase !== "ready"}
-          paused={isPaused}
-          patient={patient}
-          reducedMotion={reducedMotion}
-        />
+        {/* Player-controlled first-person view */}
+        <PatientPoseController state={state} pose={pose} />
+        <CameraController look={look} pose={pose} paused={isPaused} />
 
-        <SceneLighting lit={lit} paused={isPaused} />
+        <SceneLighting />
         <CellarStory
           lit={lit}
           paused={isPaused}
@@ -84,6 +82,7 @@ export const SurgeryScene: FC<SurgerySceneProps> = ({
 
         {/* Reclined Patient Torso, Legs, and Dynamic Stage Wound */}
         <PatientTorso
+          pose={pose}
           state={state}
           socket={socket}
           reducedMotion={reducedMotion}
@@ -92,7 +91,6 @@ export const SurgeryScene: FC<SurgerySceneProps> = ({
         <Debris state={state} socket={socket} />
 
         {/* Articulated Surgical Lamp with Dynamic Aim following state.lamp */}
-        <WorkbenchLantern lit={lit} paused={isPaused} />
         <Lamp
           lit={lit && state.lamp !== "away"}
           paused={isPaused}

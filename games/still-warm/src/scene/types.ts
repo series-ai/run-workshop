@@ -30,6 +30,7 @@ export const INSTRUMENT_TRAY: Vec3 = [-0.55, -0.57, 0.15];
 export const DEFAULT_SLOTS: Record<Location | string, Vec3> = {
   tray: INSTRUMENT_TRAY,
   cabinet: [-1.15, 0.12, -0.1],
+  workbench: [-1, 0.06, 0.4],
   hand: [-0.42, 0.14, 0.22],
   patient: [...PATIENT_LAYOUT.care],
   pillow: [0.32, -0.84, -0.42],
@@ -58,6 +59,7 @@ export const KNOWN_ITEM_OFFSETS: Record<string, Vec3> = {
   bowl: [0.02, 0.03, -0.1],
   blanket: [0.0, 0.04, -0.02],
   candle: [0.08, 0.04, 0.08],
+  lantern: [0, 0.11, 0],
 };
 
 export function getItemSlot(location: string): Vec3 {

@@ -1,0 +1,16 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><title>Still Warm · Lantern and motion</title><style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#080a07;color:#c6c0a0;font:17px/1.6 Georgia,serif}main{max-width:1150px;margin:auto;padding:48px 24px}h1{font-size:clamp(32px,5vw,58px);font-weight:400;line-height:1.1}h2{font-weight:400;margin-top:38px}p{max-width:760px}a{color:#ddd4a6}nav{display:flex;gap:24px;flex-wrap:wrap;margin:28px 0}img{width:100%;display:block}figure{margin:26px 0;background:#11140d}figcaption{padding:14px 18px}table{border-collapse:collapse;width:min(100%,500px)}td,th{text-align:left;padding:8px 16px;border-bottom:1px solid #363b29}code{font:13px monospace;overflow-wrap:anywhere}.date{font:12px monospace;letter-spacing:.12em;color:#8f9772}</style><main>
+<p class="date">STILL WARM · 8 SEPTEMBER 2026</p><h1>Carry the light.</h1>
+<p>The lantern has a short light range. The room no longer gets brighter when it is lit. Pick it up and move to reveal the cabinet, door, or your body. The boy stays where the action ends.</p>
+<nav><a href="../scene.html">Open room controls</a><a href="../play.html">Play guided preview</a><a href="../proof.html">Inspect source animations</a></nav>
+<figure><img src="lantern-motion/bench.png" alt="The boy lit beside the workbench, with the distant room dark"><figcaption>At the workbench. The light reveals the boy and nearby surfaces.</figcaption></figure>
+<figure><img src="lantern-motion/door.png" alt="The boy holds the lantern beside the door"><figcaption>At the door. The light moved more than two metres with his hand. The rest of the room stays dark.</figcaption></figure>
+<h2>Source motion</h2><p>Body clips play forward at their recorded speed. The game no longer reverses, stretches, or holds sections of a clip. The approved hand and mouth shape changes remain.</p>
+<p>A browser check compared 15 joints in five gameplay clips with the generated files. The table shows the largest sampled position difference. No model or animation asset was changed.</p>
+<table><thead><tr><th>Clip</th><th>Largest difference</th></tr></thead><tbody><tr><td>idle</td><td>0.010 mm</td></tr><tr><td>walk</td><td>0.009 mm</td></tr><tr><td>pickup</td><td>0.009 mm</td></tr><tr><td>collect</td><td>0.018 mm</td></tr><tr><td>scream</td><td>0.014 mm</td></tr></tbody></table>
+<p><a href="lantern-motion/source-poses.json">Read measured values</a>. Repeat the check on the local proof server with <code>playwright-cli run-code --filename=scripts/check-source-poses.js</code>.</p>
+<p>Verification: 201 tests passed across 12 files. TypeScript passed. The room check covered lighting, pickup, carrying to the door and cabinet, placement, and lifting the support.</p>
+<h2>A stable view</h2><p>The camera now moves only when you move the view. The chest does not expand while the beam pins it. An idle browser check found no change in the camera or beam matrix. The beam moves during lifting.</p>
+<p>The iron bands now sit outside the wood. Their top and bottom faces no longer share the wood surface.</p>
+<p>Sound stays off by default. This page and the guided preview use no RUN authentication or model calls. The live app still needs local RUN authentication.</p>
+</main></html>

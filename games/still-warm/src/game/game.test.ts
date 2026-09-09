@@ -4,23 +4,33 @@ import {
   createInitialState,
   GameState,
   PhysicalAction,
+  ROOM_AREAS,
   actionSchema,
 } from "./model";
 import {
   applyAction,
   BLACKOUT_DURATION,
+  locationArea,
   observeRoom,
   observeStatus,
+  physicalDestination,
   tickPatient,
   validateAction,
 } from "./transitions";
 import { getActionDuration, GameStore } from "./store";
+import {
+  APPROACH_SECONDS,
+  COLLECT_SECONDS,
+  WALK_SECONDS,
+  actionPerformance,
+} from "./performance";
 import {
   deriveEmotion,
   getEmotionContactModifiers,
   EMOTION_PROFILES,
 } from "./emotions";
 import { RECIPES, SUPPORTED_USES } from "./affordances";
+import { OPENING_DURATION } from "./opening";
 
 type RoomObservation = ReturnType<typeof observeStatus> & {
   recipes: typeof RECIPES;
@@ -32,10 +42,43 @@ function createPostAccidentState(): GameState {
   return {
     ...initial,
     phase: "playing",
-    elapsed: 22,
+    elapsed: OPENING_DURATION,
     stage: "covered",
+    posture: "supine",
     environment: { ...initial.environment, lanternLit: true },
   };
+}
+
+function confidentPlaying(initial = createInitialState()): GameState {
+  return {
+    ...initial,
+    phase: "playing",
+    disposition: { ...initial.disposition, trust: 50, confidence: 30 },
+  };
+}
+
+function applyOk(state: GameState, action: Parameters<typeof applyAction>[1]) {
+  const result = applyAction(state, action);
+  expect(result.ok, result.ok ? undefined : result.reason).toBe(true);
+  if (!result.ok) throw new Error(result.reason);
+  return result.state;
+}
+
+function liftThenRoll(state: GameState): GameState {
+  const ready = confidentPlaying(state);
+  const announcedLift = applyOk(ready, {
+    kind: "signal_intent",
+    contact: { kind: "lift_debris", style: "gentle" },
+  });
+  const lifted = applyOk(announcedLift, {
+    kind: "lift_debris",
+    style: "gentle",
+  });
+  const announcedRoll = applyOk(lifted, {
+    kind: "signal_intent",
+    contact: { kind: "roll_patient", style: "gentle" },
+  });
+  return applyOk(announcedRoll, { kind: "roll_patient", style: "gentle" });
 }
 
 describe("Still Warm - Domain Rules & Transitions", () => {
@@ -46,62 +89,112 @@ describe("Still Warm - Domain Rules & Transitions", () => {
   });
 
   describe("Opening accident", () => {
-    it("starts with the creator pinned under the fallen ceiling support", () => {
+    it("starts with the creator face down and a cabinet on his back", () => {
       const initial = createInitialState();
       const status = observeStatus(initial);
 
       expect(initial.stage).toBe("pinned");
+      expect(initial.posture).toBe("prone");
+      expect(initial.patient.pain).toBe(36);
       expect(initial.disposition.confidence).toBe(18);
       expect(status.waterPortions).toBe(3);
-      expect(status.patient.condition).toMatch(/pinned.*ceiling support/i);
-      expect(status.summary).toMatch(/pinned.*ceiling support/i);
+      expect(status.posture).toBe("prone");
+      expect(status.patient.condition).toMatch(/cabinet.*back/i);
+      expect(status.summary).toMatch(/cabinet.*back/i);
     });
 
-    it.each(["reassure", "clear_instruction"] as const)(
-      "refuses at low confidence, then lifts after %s",
-      (stimulus) => {
-        let pinned: GameState = {
-          ...createInitialState(),
-          phase: "playing",
-        };
+    it("does not accept a plain first instruction as enough lift readiness", () => {
+      const initial: GameState = {
+        ...createInitialState(),
+        phase: "playing",
+      };
+      const instruction = applyAction(initial, {
+        kind: "react",
+        stimulus: "clear_instruction",
+      });
+      expect(instruction.ok).toBe(true);
+      if (!instruction.ok) return;
+      expect(instruction.state.disposition.confidence).toBe(36);
+      expect(instruction.state.disposition.trust).toBe(46);
 
-        const refused = applyAction(pinned, {
+      const announcement = applyAction(instruction.state, {
+        kind: "signal_intent",
+        contact: { kind: "lift_debris", style: "gentle" },
+      });
+      expect(announcement.ok).toBe(false);
+      if (announcement.ok) return;
+      expect(announcement.reason).toMatch(/too afraid/i);
+      expect(announcement.reason).toMatch(/reassure.*trust/i);
+      expect(instruction.state.stage).toBe("pinned");
+    });
+
+    it("allows the lift after a reassuring reaction builds trust and confidence", () => {
+      const initial: GameState = {
+        ...createInitialState(),
+        phase: "playing",
+      };
+      const reaction = applyAction(initial, {
+        kind: "react",
+        stimulus: "reassure",
+      });
+      expect(reaction.ok).toBe(true);
+      if (!reaction.ok) return;
+      expect(reaction.state.disposition.trust).toBe(56);
+      expect(reaction.state.disposition.confidence).toBe(26);
+
+      const announcement = applyAction(reaction.state, {
+        kind: "signal_intent",
+        contact: { kind: "lift_debris", style: "gentle" },
+      });
+      expect(announcement.ok).toBe(true);
+      if (!announcement.ok) return;
+      const lifted = applyAction(announcement.state, {
+        kind: "lift_debris",
+        style: "gentle",
+      });
+      expect(lifted.ok).toBe(true);
+      if (!lifted.ok) return;
+      expect(lifted.state.stage).toBe("covered");
+      expect(lifted.state.posture).toBe("prone");
+      expect(lifted.state.declaredContact).toBeNull();
+      expect(lifted.message).toMatch(/cabinet/i);
+      expect(lifted.message).toMatch(/face down|prone/i);
+      expect(lifted.message).not.toMatch(/surgery is now possible/i);
+    });
+
+    it("makes lift readiness worse after a threat", () => {
+      const initial: GameState = {
+        ...createInitialState(),
+        phase: "playing",
+      };
+      const threat = applyAction(initial, {
+        kind: "react",
+        stimulus: "threaten",
+      });
+      expect(threat.ok).toBe(true);
+      if (!threat.ok) return;
+      expect(threat.state.disposition).toEqual({
+        trust: 17,
+        agitation: 78,
+        confidence: 3,
+      });
+      expect(threat.state.emotion).toBe("angry");
+
+      const reassurance = applyAction(threat.state, {
+        kind: "react",
+        stimulus: "reassure",
+      });
+      expect(reassurance.ok).toBe(true);
+      if (!reassurance.ok) return;
+      expect(reassurance.state.disposition.trust).toBe(31);
+      expect(reassurance.state.disposition.confidence).toBe(11);
+      expect(
+        validateAction(reassurance.state, {
           kind: "lift_debris",
           style: "gentle",
-        });
-        expect(refused.ok).toBe(false);
-        if (refused.ok) return;
-        expect(refused.reason).toMatch(/too afraid/i);
-        expect(refused.reason).toMatch(/reassure.*clear instruction/i);
-
-        const reaction = applyAction(pinned, { kind: "react", stimulus });
-        expect(reaction.ok).toBe(true);
-        if (!reaction.ok) return;
-        const announcement = applyAction(reaction.state, {
-          kind: "signal_intent",
-          contact: { kind: "lift_debris", style: "gentle" },
-        });
-        expect(announcement.ok).toBe(true);
-        if (!announcement.ok) return;
-        pinned = announcement.state;
-
-        const lifted = applyAction(pinned, {
-          kind: "lift_debris",
-          style: "gentle",
-        });
-        expect(lifted.ok).toBe(true);
-        if (!lifted.ok) return;
-        expect(lifted.state.stage).toBe("covered");
-        expect(lifted.state.declaredContact).toBeNull();
-        expect(lifted.message).toMatch(/deep crush wound.*cannot move/i);
-        expect(
-          validateAction(lifted.state, {
-            kind: "lift_debris",
-            style: "gentle",
-          })?.reason,
-        ).toMatch(/already been removed/i);
-      },
-    );
+        })?.reason,
+      ).toMatch(/too afraid/i);
+    });
 
     it("blocks wound contact until the support is removed", () => {
       const initial = createInitialState();
@@ -129,7 +222,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
         style: "gentle",
       };
       expect(validateAction(pinned, action)?.reason).toMatch(
-        /support pins.*lift/i,
+        /cabinet|roll/i,
       );
       const result = applyAction(pinned, action);
       expect(result.ok).toBe(false);
@@ -141,7 +234,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       const confident = {
         ...initial,
         phase: "playing" as const,
-        disposition: { ...initial.disposition, confidence: 30 },
+        disposition: { ...initial.disposition, trust: 50, confidence: 30 },
       };
 
       expect(
@@ -176,6 +269,154 @@ describe("Still Warm - Domain Rules & Transitions", () => {
           { kind: "lift_debris", style: "gentle" },
         )?.reason,
       ).toMatch(/wait-in-blackout/i);
+    });
+
+    it("lifts the cabinet, then rolls the father, before light or wound care", () => {
+      const initial = createInitialState();
+      expect(initial.posture).toBe("prone");
+      expect(
+        validateAction(
+          { ...initial, phase: "playing" },
+          { kind: "light_lantern" },
+        )?.thought,
+      ).toMatch(/cabinet.*roll/i);
+      expect(
+        actionSchema.safeParse({ kind: "roll_patient", style: "gentle" })
+          .success,
+      ).toBe(true);
+
+      const lifted = applyOk(
+        applyOk(confidentPlaying(initial), {
+          kind: "signal_intent",
+          contact: { kind: "lift_debris", style: "gentle" },
+        }),
+        { kind: "lift_debris", style: "gentle" },
+      );
+      expect(lifted.stage).toBe("covered");
+      expect(lifted.posture).toBe("prone");
+      expect(lifted.patient.pain).toBe(36);
+      expect(
+        validateAction(lifted, { kind: "light_lantern" })?.thought,
+      ).toMatch(/roll/i);
+      expect(
+        validateAction(lifted, {
+          kind: "adjust_lamp",
+          position: "wound",
+        })?.thought,
+      ).toMatch(/roll/i);
+      expect(
+        validateAction(lifted, { kind: "pick_up", item: "cloth" }),
+      ).toBeNull();
+      expect(
+        validateAction(lifted, { kind: "roll_patient", style: "gentle" })
+          ?.reason,
+      ).toMatch(/signal/i);
+
+      const rolled = applyOk(
+        applyOk(lifted, {
+          kind: "signal_intent",
+          contact: { kind: "roll_patient", style: "gentle" },
+        }),
+        { kind: "roll_patient", style: "gentle" },
+      );
+      expect(rolled.posture).toBe("supine");
+      expect(rolled.stage).toBe("covered");
+      expect(rolled.patient.pain).toBe(36);
+      expect(rolled.declaredContact).toBeNull();
+      expect(observeStatus(rolled).posture).toBe("supine");
+      expect(validateAction(rolled, { kind: "light_lantern" })).toBeNull();
+      expect(
+        validateAction(rolled, { kind: "roll_patient", style: "gentle" })
+          ?.reason,
+      ).toMatch(/already|back/i);
+    });
+
+    it("blocks lighting until the father is rolled onto his back", () => {
+      const playing: GameState = {
+        ...createInitialState(),
+        phase: "playing",
+      };
+      const blocked = validateAction(playing, { kind: "light_lantern" });
+      expect(blocked?.reason).toMatch(/cabinet|roll|face down|prone/i);
+      expect(blocked?.thought).toMatch(/cabinet.*roll/i);
+      expect(applyAction(playing, { kind: "light_lantern" }).ok).toBe(false);
+
+      const lifted = applyOk(
+        applyOk(confidentPlaying(playing), {
+          kind: "signal_intent",
+          contact: { kind: "lift_debris", style: "gentle" },
+        }),
+        { kind: "lift_debris", style: "gentle" },
+      );
+      const stillBlocked = validateAction(lifted, { kind: "light_lantern" });
+      expect(stillBlocked?.thought).toMatch(/roll/i);
+      expect(applyAction(lifted, { kind: "light_lantern" }).ok).toBe(false);
+
+      const rolled = liftThenRoll(playing);
+      const lit = applyAction(rolled, { kind: "light_lantern" });
+      expect(lit.ok).toBe(true);
+      if (!lit.ok) return;
+      expect(lit.state.posture).toBe("supine");
+      expect(lit.state.stage).toBe("covered");
+    });
+
+    it("enforces the hand, gentle, signal, and blackout roll guards", () => {
+      const coveredProne = {
+        ...createInitialState(),
+        phase: "playing" as const,
+        stage: "covered" as const,
+        posture: "prone" as const,
+      };
+
+      expect(
+        validateAction(
+          { ...coveredProne, stage: "pinned" },
+          { kind: "roll_patient", style: "gentle" },
+        )?.reason,
+      ).toMatch(/cabinet|lift/i);
+      expect(
+        validateAction(
+          { ...coveredProne, holding: "cloth" },
+          { kind: "roll_patient", style: "gentle" },
+        )?.reason,
+      ).toMatch(/empty|put it down/i);
+      expect(
+        validateAction(
+          {
+            ...coveredProne,
+            declaredContact: { kind: "roll_patient", style: "rough" },
+            rules: { ...coveredProne.rules, gentle: true },
+          },
+          { kind: "roll_patient", style: "rough" },
+        )?.reason,
+      ).toMatch(/gentle rule/i);
+      expect(
+        validateAction(coveredProne, {
+          kind: "roll_patient",
+          style: "gentle",
+        })?.reason,
+      ).toMatch(/signal/i);
+      expect(
+        validateAction(
+          {
+            ...coveredProne,
+            phase: "blackout",
+            declaredContact: { kind: "roll_patient", style: "gentle" },
+            rules: { ...coveredProne.rules, waitBlackout: true },
+            patient: { ...coveredProne.patient, blackoutRemaining: 5 },
+          },
+          { kind: "roll_patient", style: "gentle" },
+        )?.reason,
+      ).toMatch(/wait-in-blackout/i);
+      expect(
+        validateAction(
+          {
+            ...coveredProne,
+            declaredContact: { kind: "roll_patient", style: "gentle" },
+          },
+          { kind: "roll_patient", style: "gentle" },
+        ),
+      ).toBeNull();
     });
   });
 
@@ -2201,9 +2442,9 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       };
       const patient = { ...s.patient };
 
-      s = tickPatient(s, 22);
+      s = tickPatient(s, OPENING_DURATION);
 
-      expect(s.elapsed).toBe(22);
+      expect(s.elapsed).toBe(OPENING_DURATION);
       expect(s.patient).toEqual(patient);
       expect(s.environment.door).toBe("quiet");
       expect(s.environment.fire).toBe(0);
@@ -2561,6 +2802,7 @@ describe("GameStore Controller", () => {
       ...base,
       phase: "playing",
       stage: "exposed",
+      posture: "supine",
       holding: "scalpel",
       lamp: "wound",
       rules: { ...base.rules, noSharp: true },
@@ -2612,6 +2854,8 @@ describe("GameStore Controller", () => {
       style: "rough",
     };
     const lift: PhysicalAction = { kind: "lift_debris", style: "gentle" };
+    const roll: PhysicalAction = { kind: "roll_patient", style: "gentle" };
+    const rollPerformance = actionPerformance(roll);
 
     // Fear slows the clip. The approach time stays fixed.
     expect(getActionDuration(gentlePick, "scared")).toBe(14850);
@@ -2621,12 +2865,23 @@ describe("GameStore Controller", () => {
     expect(getActionDuration(gentlePick, "focused")).toBe(11234);
     expect(getActionDuration(roughUse, "focused")).toBe(11234);
     expect(getActionDuration(lift, "scared")).toBe(14850);
+    expect(rollPerformance.clip).toBe("collect");
+    expect(rollPerformance.seconds).toBe(COLLECT_SECONDS);
+    expect(rollPerformance).toEqual(
+      expect.objectContaining({
+        clip: "collect",
+        seconds: COLLECT_SECONDS,
+      }),
+    );
+    expect(getActionDuration(roll, "focused")).toBe(
+      Math.ceil((APPROACH_SECONDS + COLLECT_SECONDS) * 1000),
+    );
   });
 
   it("completes a timed clean path through door and fire pressure", async () => {
     const store = new GameStore();
     store.start();
-    store.tick(22);
+    store.tick(OPENING_DURATION);
 
     const perform = async (action: PhysicalAction) => {
       const duration = getActionDuration(action, store.getSnapshot().emotion);
@@ -2643,10 +2898,12 @@ describe("GameStore Controller", () => {
       expect(result.ok, result.message).toBe(true);
     };
 
-    await perform({ kind: "light_lantern" });
-    await store.run({ kind: "react", stimulus: "clear_instruction" });
+    await store.run({ kind: "react", stimulus: "reassure" });
     await announce({ kind: "lift_debris", style: "gentle" });
     await perform({ kind: "lift_debris", style: "gentle" });
+    await announce({ kind: "roll_patient", style: "gentle" });
+    await perform({ kind: "roll_patient", style: "gentle" });
+    await perform({ kind: "light_lantern" });
     await perform({ kind: "adjust_lamp", position: "wound" });
     await perform({ kind: "pick_up", item: "cloth" });
     await announce({
@@ -2766,8 +3023,8 @@ describe("GameStore Controller", () => {
     expect(final.environment.door).toBe("barricaded");
     expect(final.environment.fire).toBe(0);
     expect(final.medicineDoses).toBe(2);
-    expect(final.elapsed).toBeGreaterThan(280);
-    expect(final.elapsed).toBeLessThan(360);
+    expect(final.elapsed).toBeGreaterThan(OPENING_DURATION + 250);
+    expect(final.elapsed).toBeLessThan(OPENING_DURATION + 350);
     store.dispose();
   });
 
@@ -2777,7 +3034,7 @@ describe("GameStore Controller", () => {
       ...initial,
       phase: "playing",
       declaredContact: { kind: "lift_debris", style: "gentle" },
-      disposition: { ...initial.disposition, confidence: 30 },
+      disposition: { ...initial.disposition, trust: 50, confidence: 30 },
     });
 
     const runPromise = store.run({ kind: "lift_debris", style: "gentle" });
@@ -2791,6 +3048,37 @@ describe("GameStore Controller", () => {
 
     vi.advanceTimersByTime(25000);
     expect(store.getSnapshot().stage).toBe("pinned");
+    expect(store.getSnapshot().posture).toBe("prone");
+  });
+
+  it("cancels a pending roll and leaves the father face down", async () => {
+    const lifted = applyOk(
+      applyOk(confidentPlaying(), {
+        kind: "signal_intent",
+        contact: { kind: "lift_debris", style: "gentle" },
+      }),
+      { kind: "lift_debris", style: "gentle" },
+    );
+    const store = new GameStore({
+      ...lifted,
+      declaredContact: { kind: "roll_patient", style: "gentle" },
+    });
+
+    const runPromise = store.run({ kind: "roll_patient", style: "gentle" });
+    expect(store.getSnapshot().pending?.action.kind).toBe("roll_patient");
+    expect(store.getSnapshot().posture).toBe("prone");
+
+    store.cancel("Player shouted STOP");
+    const result = await runPromise;
+    expect(result.ok).toBe(false);
+    expect(result.message).toBe("Player shouted STOP");
+    expect(store.getSnapshot().posture).toBe("prone");
+    expect(store.getSnapshot().stage).toBe("covered");
+
+    vi.advanceTimersByTime(25000);
+    expect(store.getSnapshot().posture).toBe("prone");
+    expect(store.getSnapshot().stage).toBe("covered");
+    store.dispose();
   });
 
   it("cancels pending action and prevents stale commit", async () => {
@@ -2815,8 +3103,9 @@ describe("GameStore Controller", () => {
     const base = createInitialState();
     const store = new GameStore({
       ...base,
-      elapsed: 22,
+      elapsed: OPENING_DURATION,
       stage: "covered",
+      posture: "supine",
       holding: "cloth",
       lamp: "wound",
       rules: { ...base.rules, announce: true },
@@ -2877,7 +3166,7 @@ describe("GameStore Controller", () => {
     const base = createInitialState();
     const store = new GameStore({
       ...base,
-      elapsed: 22,
+      elapsed: OPENING_DURATION,
       patient: { ...base.patient, health: 0.05, blood: 0.05 },
     });
     store.start();
@@ -2939,8 +3228,9 @@ describe("GameStore Controller", () => {
     const readyState: GameState = {
       ...base,
       phase: "playing",
-      elapsed: 22,
+      elapsed: OPENING_DURATION,
       stage: "exposed",
+      posture: "supine",
       holding: "cloth",
       lamp: "wound",
       declaredContact: {
@@ -2993,7 +3283,7 @@ describe("GameStore Controller", () => {
       ...initial,
       phase: "playing",
       declaredContact: { kind: "lift_debris", style: "gentle" },
-      disposition: { ...initial.disposition, confidence: 30 },
+      disposition: { ...initial.disposition, trust: 50, confidence: 30 },
       rules: { ...initial.rules, waitBlackout: true },
       patient: { ...initial.patient, pain: 85 },
     });
@@ -3009,6 +3299,33 @@ describe("GameStore Controller", () => {
     expect(result.ok).toBe(false);
     expect(result.message).toMatch(/wait-in-blackout/i);
     expect(store.getSnapshot().stage).toBe("pinned");
+  });
+
+  it("does not commit a roll after the patient enters blackout", async () => {
+    const initial = createInitialState();
+    const store = new GameStore({
+      ...initial,
+      phase: "playing",
+      stage: "covered",
+      posture: "prone",
+      declaredContact: { kind: "roll_patient", style: "gentle" },
+      rules: { ...initial.rules, waitBlackout: true },
+      patient: { ...initial.patient, pain: 85 },
+    });
+
+    const runPromise = store.run({ kind: "roll_patient", style: "gentle" });
+    expect(store.getSnapshot().pending?.action.kind).toBe("roll_patient");
+
+    store.tick(1);
+    expect(store.getSnapshot().phase).toBe("blackout");
+
+    vi.advanceTimersByTime(25000);
+    const result = await runPromise;
+    expect(result.ok).toBe(false);
+    expect(result.message).toMatch(/wait-in-blackout/i);
+    expect(store.getSnapshot().posture).toBe("prone");
+    expect(store.getSnapshot().stage).toBe("covered");
+    store.dispose();
   });
 });
 
@@ -3100,6 +3417,23 @@ describe("Fixed lamp and candle contract", () => {
 
   it("lights the candle from the lantern and from an existing fire", () => {
     expect(observeStatus(createInitialState()).candleLit).toBe(false);
+    expect(
+      actionSchema.safeParse({
+        kind: "use",
+        item: "candle",
+        target: "lantern",
+        style: "gentle",
+      }).success,
+    ).toBe(true);
+    expect(
+      validateAction(heldCandle(), {
+        kind: "use",
+        item: "candle",
+        target: "lamp",
+        style: "gentle",
+      })?.reason,
+    ).toMatch(/cannot use/i);
+
     const darkLantern = heldCandle({
       environment: {
         ...createPostAccidentState().environment,
@@ -3109,20 +3443,49 @@ describe("Fixed lamp and candle contract", () => {
     const blocked = validateAction(darkLantern, {
       kind: "use",
       item: "candle",
-      target: "lamp",
+      target: "lantern",
       style: "gentle",
     });
     expect(blocked?.reason).toMatch(/lantern must be lit/i);
 
-    const fromLantern = applyAction(heldCandle(), {
+    const gone = heldCandle({
+      items: {
+        ...createPostAccidentState().items,
+        candle: { location: "hand", clean: true },
+        lantern: { location: "consumed", clean: true },
+      },
+    });
+    expect(
+      validateAction(gone, {
+        kind: "use",
+        item: "candle",
+        target: "lantern",
+        style: "gentle",
+      })?.reason,
+    ).toMatch(/not available/i);
+
+    const apart = heldCandle();
+    expect(apart.creatureArea).toBe("father");
+    expect(apart.items.lantern.location).toBe("workbench");
+    expect(
+      physicalDestination(apart, {
+        kind: "use",
+        item: "candle",
+        target: "lantern",
+        style: "gentle",
+      }),
+    ).toBe("workbench");
+    const fromLantern = applyAction(apart, {
       kind: "use",
       item: "candle",
-      target: "lamp",
+      target: "lantern",
       style: "gentle",
     });
     expect(fromLantern.ok).toBe(true);
     if (!fromLantern.ok) return;
     expect(fromLantern.state.candleLit).toBe(true);
+    expect(fromLantern.state.creatureArea).toBe("workbench");
+    expect(fromLantern.message).toMatch(/lantern/i);
 
     const fromFire = applyAction(
       heldCandle({
@@ -3139,6 +3502,36 @@ describe("Fixed lamp and candle contract", () => {
     if (!fromFire.ok) return;
     expect(fromFire.state.candleLit).toBe(true);
     expect(fromFire.state.environment.fire).toBe(20);
+  });
+
+  it("lights the candle from a lantern that was moved off the workbench", () => {
+    const moved = heldCandle({
+      items: {
+        ...createPostAccidentState().items,
+        candle: { location: "hand", clean: true },
+        lantern: { location: "tray", clean: true },
+      },
+    });
+    expect(moved.creatureArea).toBe("father");
+    expect(
+      physicalDestination(moved, {
+        kind: "use",
+        item: "candle",
+        target: "lantern",
+        style: "gentle",
+      }),
+    ).toBe("tray");
+    const result = applyAction(moved, {
+      kind: "use",
+      item: "candle",
+      target: "lantern",
+      style: "gentle",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.candleLit).toBe(true);
+    expect(result.state.creatureArea).toBe("tray");
+    expect(result.state.items.lantern.location).toBe("tray");
   });
 
   it("uses one water portion when a lit candle is quenched in the bowl", () => {
@@ -3194,5 +3587,412 @@ describe("Fixed lamp and candle contract", () => {
     expect(result.state.patient).toEqual(patient);
     expect(result.state.stage).toBe(state.stage);
     expect(result.message).toMatch(/candle check/i);
+  });
+});
+
+describe("Portable lantern and room areas", () => {
+  it("treats the lantern as a portable item distinct from the fixed lamp", () => {
+    const initial = createInitialState();
+    expect(initial.items.lantern.location).toBe("workbench");
+    expect(initial.items.lamp.location).toBe("stand");
+    expect(initial.creatureArea).toBe("father");
+    expect(initial.environment.lanternLit).toBe(false);
+    expect(
+      actionSchema.safeParse({ kind: "pick_up", item: "lantern" }).success,
+    ).toBe(true);
+    expect(
+      actionSchema.safeParse({
+        kind: "place",
+        item: "lantern",
+        location: "workbench",
+      }).success,
+    ).toBe(true);
+    expect(
+      actionSchema.safeParse({ kind: "pick_up", item: "lamp" }).success,
+    ).toBe(false);
+  });
+
+  it("picks up and places the lantern without lighting it", () => {
+    const playing: GameState = {
+      ...createInitialState(),
+      phase: "playing",
+    };
+    const picked = applyAction(playing, { kind: "pick_up", item: "lantern" });
+    expect(picked.ok).toBe(true);
+    if (!picked.ok) return;
+    expect(picked.state.holding).toBe("lantern");
+    expect(picked.state.items.lantern.location).toBe("hand");
+    expect(picked.state.environment.lanternLit).toBe(false);
+    expect(picked.state.creatureArea).toBe("workbench");
+
+    const placed = applyAction(picked.state, {
+      kind: "place",
+      item: "lantern",
+      location: "tray",
+    });
+    expect(placed.ok).toBe(true);
+    if (!placed.ok) return;
+    expect(placed.state.holding).toBeNull();
+    expect(placed.state.items.lantern.location).toBe("tray");
+    expect(placed.state.creatureArea).toBe("tray");
+    expect(placed.state.environment.lanternLit).toBe(false);
+  });
+
+  it("lights the lantern at its item location after it is moved", () => {
+    const playing = liftThenRoll(createInitialState());
+    const picked = applyAction(playing, { kind: "pick_up", item: "lantern" });
+    expect(picked.ok).toBe(true);
+    if (!picked.ok) return;
+    expect(picked.state.creatureArea).toBe("workbench");
+    expect(physicalDestination(picked.state, { kind: "light_lantern" })).toBe(
+      "workbench",
+    );
+
+    const placed = applyAction(picked.state, {
+      kind: "place",
+      item: "lantern",
+      location: "tray",
+    });
+    expect(placed.ok).toBe(true);
+    if (!placed.ok) return;
+    expect(placed.state.environment.lanternLit).toBe(false);
+    expect(placed.state.items.lantern.location).toBe("tray");
+    expect(physicalDestination(placed.state, { kind: "light_lantern" })).toBe(
+      "tray",
+    );
+
+    const lit = applyAction(placed.state, { kind: "light_lantern" });
+    expect(lit.ok).toBe(true);
+    if (!lit.ok) return;
+    expect(lit.state.environment.lanternLit).toBe(true);
+    expect(lit.state.creatureArea).toBe("tray");
+    expect(lit.state.items.lantern.location).toBe("tray");
+  });
+
+  it("maps locations and physical destinations with one helper", () => {
+    expect(locationArea("workbench")).toBe("workbench");
+    expect(locationArea("cabinet")).toBe("cabinet");
+    expect(locationArea("tray")).toBe("tray");
+    expect(locationArea("stand")).toBe("father");
+    expect(locationArea("floor")).toBe("father");
+    expect(locationArea("hand")).toBe("father");
+    expect(locationArea("pillow")).toBe("father");
+    expect(locationArea("patient")).toBe("father");
+
+    const state = createPostAccidentState();
+    expect(physicalDestination(state, { kind: "light_lantern" })).toBe(
+      "workbench",
+    );
+    expect(
+      physicalDestination(state, {
+        kind: "use",
+        item: "candle",
+        target: "lantern",
+        style: "gentle",
+      }),
+    ).toBe("workbench");
+    expect(
+      physicalDestination(state, { kind: "lift_debris", style: "gentle" }),
+    ).toBe("father");
+    expect(
+      physicalDestination(state, { kind: "roll_patient", style: "gentle" }),
+    ).toBe("father");
+    expect(
+      physicalDestination(state, { kind: "adjust_lamp", position: "wound" }),
+    ).toBe("father");
+    expect(
+      physicalDestination(state, {
+        kind: "combine",
+        first: "needle",
+        second: "thread",
+      }),
+    ).toBe("father");
+    expect(
+      physicalDestination(state, { kind: "break", item: "scissors" }),
+    ).toBe("father");
+    expect(
+      physicalDestination(state, { kind: "pick_up", item: "lantern" }),
+    ).toBe("workbench");
+    expect(physicalDestination(state, { kind: "pick_up", item: "cloth" })).toBe(
+      "cabinet",
+    );
+    expect(
+      physicalDestination(state, { kind: "pick_up", item: "forceps" }),
+    ).toBe("tray");
+    expect(
+      physicalDestination(state, {
+        kind: "place",
+        item: "lantern",
+        location: "workbench",
+      }),
+    ).toBe("workbench");
+    expect(
+      physicalDestination(state, {
+        kind: "place",
+        item: "cloth",
+        location: "floor",
+      }),
+    ).toBe("father");
+    expect(
+      physicalDestination(state, { kind: "move_to", target: "cabinet" }),
+    ).toBe("cabinet");
+    expect(
+      physicalDestination(state, {
+        kind: "use",
+        item: "forceps",
+        target: "door",
+        style: "gentle",
+      }),
+    ).toBe("door");
+    expect(
+      physicalDestination(state, {
+        kind: "use",
+        item: "blanket",
+        target: "fire",
+        style: "gentle",
+      }),
+    ).toBe("fire");
+    expect(
+      physicalDestination(state, {
+        kind: "use",
+        item: "lantern",
+        target: "wound",
+        style: "gentle",
+      }),
+    ).toBe("father");
+    expect(
+      physicalDestination(state, {
+        kind: "use",
+        item: "lantern",
+        target: "patient",
+        style: "gentle",
+      }),
+    ).toBe("father");
+    expect(
+      physicalDestination(state, {
+        kind: "use",
+        item: "cloth",
+        target: "pillow",
+        style: "gentle",
+      }),
+    ).toBe("father");
+    expect(
+      physicalDestination(state, {
+        kind: "use",
+        item: "cloth",
+        target: "creature",
+        style: "gentle",
+      }),
+    ).toBe("father");
+    expect(
+      physicalDestination(state, {
+        kind: "use",
+        item: "scissors",
+        target: "wig",
+        style: "gentle",
+      }),
+    ).toBe("cabinet");
+  });
+
+  it("carries a held lantern through a move and keeps the one-hand rule", () => {
+    const playing: GameState = {
+      ...createInitialState(),
+      phase: "playing",
+      environment: { ...createInitialState().environment, lanternLit: true },
+    };
+    const picked = applyAction(playing, { kind: "pick_up", item: "lantern" });
+    expect(picked.ok).toBe(true);
+    if (!picked.ok) return;
+    expect(picked.state.holding).toBe("lantern");
+    expect(picked.state.items.lantern.location).toBe("hand");
+
+    const blockedPickup = validateAction(picked.state, {
+      kind: "pick_up",
+      item: "cloth",
+    });
+    expect(blockedPickup?.reason).toMatch(/already holding/i);
+
+    const moved = applyAction(picked.state, {
+      kind: "move_to",
+      target: "cabinet",
+    });
+    expect(moved.ok).toBe(true);
+    if (!moved.ok) return;
+    expect(moved.state.holding).toBe("lantern");
+    expect(moved.state.items.lantern.location).toBe("hand");
+    expect(moved.state.creatureArea).toBe("cabinet");
+    expect(moved.state.environment.lanternLit).toBe(true);
+
+    const stillBlocked = validateAction(moved.state, {
+      kind: "pick_up",
+      item: "cloth",
+    });
+    expect(stillBlocked?.reason).toMatch(/already holding/i);
+  });
+
+  it("exposes creatureArea and all move destinations in observations", () => {
+    const initial = createInitialState();
+    const status = observeStatus(initial);
+    expect(status.creatureArea).toBe("father");
+    expect(status.moveDestinations).toEqual(ROOM_AREAS);
+    expect(status.moveDestinations).toEqual([
+      "father",
+      "workbench",
+      "cabinet",
+      "door",
+      "fire",
+      "tray",
+    ]);
+
+    expect(status.posture).toBe("prone");
+    const playing = liftThenRoll(initial);
+    const lit = applyAction(playing, { kind: "light_lantern" });
+    expect(lit.ok).toBe(true);
+    if (!lit.ok) return;
+    const after = observeStatus(lit.state);
+    expect(after.creatureArea).toBe("workbench");
+    expect(after.moveDestinations).toEqual(ROOM_AREAS);
+    const room = observeRoom(lit.state) as ReturnType<typeof observeStatus>;
+    expect(room.creatureArea).toBe("workbench");
+    expect(room.moveDestinations).toEqual(after.moveDestinations);
+  });
+
+  it("rejects move_to when ready, paused, or terminal", () => {
+    const move = { kind: "move_to" as const, target: "cabinet" as const };
+    expect(validateAction(createInitialState(), move)?.reason).toMatch(
+      /not started yet/i,
+    );
+    expect(
+      validateAction({ ...createPostAccidentState(), paused: true }, move)
+        ?.reason,
+    ).toMatch(/currently paused/i);
+    expect(
+      validateAction({ ...createPostAccidentState(), phase: "won" }, move)
+        ?.reason,
+    ).toMatch(/already ended/i);
+    expect(
+      validateAction(createPostAccidentState(), {
+        kind: "move_to",
+        target: "father",
+      }),
+    ).toBeNull();
+  });
+
+  it("uses eight seconds for a focused move: approach 4 plus walk 4", () => {
+    const action: PhysicalAction = { kind: "move_to", target: "door" };
+    const performance = actionPerformance(action);
+    expect(APPROACH_SECONDS).toBe(4);
+    expect(WALK_SECONDS).toBe(4);
+    expect(performance.clip).toBe("walk");
+    expect(performance.seconds).toBe(4);
+    expect(getActionDuration(action, "focused")).toBe(8000);
+    expect(getActionDuration(action, "scared")).toBe(10000);
+  });
+
+  it("does not commit a move when cancelled, paused, or aborted", async () => {
+    vi.useFakeTimers();
+    const base = {
+      ...createInitialState(),
+      phase: "playing" as const,
+    };
+
+    const cancelled = new GameStore(base);
+    const cancelRun = cancelled.run({ kind: "move_to", target: "cabinet" });
+    expect(cancelled.getSnapshot().pending?.action.kind).toBe("move_to");
+    expect(cancelled.getSnapshot().creatureArea).toBe("father");
+    cancelled.cancel("Interrupted");
+    expect((await cancelRun).ok).toBe(false);
+    expect(cancelled.getSnapshot().creatureArea).toBe("father");
+    expect(cancelled.getSnapshot().pending).toBeNull();
+    await vi.advanceTimersByTimeAsync(20000);
+    expect(cancelled.getSnapshot().creatureArea).toBe("father");
+    const returnRun = cancelled.run({ kind: "move_to", target: "father" });
+    await vi.advanceTimersByTimeAsync(20000);
+    expect((await returnRun).ok).toBe(true);
+    cancelled.dispose();
+
+    const paused = new GameStore(base);
+    const pauseRun = paused.run({ kind: "move_to", target: "door" });
+    paused.pause(true);
+    expect((await pauseRun).ok).toBe(false);
+    expect(paused.getSnapshot().creatureArea).toBe("father");
+    expect(paused.getSnapshot().holding).toBeNull();
+    paused.dispose();
+
+    const aborted = new GameStore(base);
+    const signal = new AbortController();
+    const abortRun = aborted.run(
+      { kind: "move_to", target: "tray" },
+      signal.signal,
+    );
+    signal.abort("Action aborted");
+    expect((await abortRun).ok).toBe(false);
+    expect(aborted.getSnapshot().creatureArea).toBe("father");
+    aborted.dispose();
+    vi.useRealTimers();
+  });
+
+  it("inspects with a lit lantern without surgery or damage", () => {
+    const playing: GameState = {
+      ...createPostAccidentState(),
+      holding: "lantern",
+      lamp: "away",
+      items: {
+        ...createPostAccidentState().items,
+        lantern: { location: "hand", clean: true },
+      },
+    };
+    const patient = { ...playing.patient };
+    const health = playing.creatureHealth;
+
+    const wound = applyAction(playing, {
+      kind: "use",
+      item: "lantern",
+      target: "wound",
+      style: "rough",
+    });
+    expect(wound.ok).toBe(true);
+    if (!wound.ok) return;
+    expect(wound.state.stage).toBe(playing.stage);
+    expect(wound.state.patient).toEqual(patient);
+    expect(wound.state.creatureHealth).toBe(health);
+    expect(wound.state.environment.lanternLit).toBe(true);
+    expect(wound.message).toMatch(/lantern/i);
+    expect(wound.message).not.toMatch(/suture|extract|incision|dress/i);
+
+    const body = applyAction(playing, {
+      kind: "use",
+      item: "lantern",
+      target: "patient",
+      style: "gentle",
+    });
+    expect(body.ok).toBe(true);
+    if (!body.ok) return;
+    expect(body.state.patient).toEqual(patient);
+    expect(body.state.stage).toBe(playing.stage);
+
+    const door = applyAction(playing, {
+      kind: "use",
+      item: "lantern",
+      target: "door",
+      style: "gentle",
+    });
+    expect(door.ok).toBe(true);
+    if (!door.ok) return;
+    expect(door.state.environment.door).toBe(playing.environment.door);
+    expect(door.state.patient).toEqual(patient);
+
+    const dark: GameState = {
+      ...playing,
+      environment: { ...playing.environment, lanternLit: false },
+    };
+    expect(
+      validateAction(dark, {
+        kind: "use",
+        item: "lantern",
+        target: "wound",
+        style: "gentle",
+      })?.reason,
+    ).toMatch(/lantern must be lit/i);
   });
 });
