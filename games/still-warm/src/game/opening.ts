@@ -15,7 +15,7 @@ export function openingAt(elapsed: number) {
     [...OPENING_BEATS].reverse().find((beat) => elapsed >= beat.at) ??
     OPENING_BEATS[0];
   return {
-    eyes: Math.max(0, Math.min(1, (elapsed - 8) / 6)),
+    eyes: Math.max(0, Math.min(1, (elapsed - 6) / 6)),
     narration: elapsed < OPENING_DURATION ? beat.text : "",
     voice: beat.voice,
     age: Math.max(0, elapsed - beat.at),

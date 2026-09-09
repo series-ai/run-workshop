@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Still Warm · Eye Awakening Comparison</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #080b08;
+    color: #c7c9b1;
+    font: 16px/1.6 system-ui, sans-serif;
+  }
+  main {
+    max-width: 1200px;
+    margin: auto;
+    padding: 32px 20px;
+  }
+  h1 { font-family: Georgia, serif; font-weight: 400; color: #ecebe2; }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin: 24px 0;
+  }
+  @media (max-width: 800px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: #111511;
+    border: 1px solid #283025;
+    padding: 16px;
+    border-radius: 6px;
+  }
+  .card h2 {
+    font-size: 18px;
+    margin: 0 0 12px;
+    color: #dedec8;
+    font-family: Georgia, serif;
+  }
+  .viewport-preview {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    background: #000;
+    border: 1px solid #333;
+    overflow: hidden;
+  }
+  .scene-mock {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 65%, #554430 0%, #1f1a14 55%, #050505 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: Georgia, serif;
+    color: #ded8c5;
+    font-size: 16px;
+  }
+  .scene-mock .cabinet-mock {
+    width: 220px;
+    height: 100px;
+    background: #38281b;
+    border: 2px solid #221810;
+    box-shadow: 0 10px 30px #000;
+    margin-bottom: 16px;
+    display: grid;
+    place-items: center;
+    color: #9a8470;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+  }
+  .controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  button {
+    padding: 8px 18px;
+    background: #252a22;
+    border: 1px solid #4a5444;
+    color: #e2e8d8;
+    font-family: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  button:hover { background: #353d31; }
+  input[type=range] { width: 220px; }
+
+  /* Approach A: SVG Eyelid Paths */
+  .awakening-svg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .awakening-svg svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .eyelid-path {
+    fill: #000;
+  }
+
+  /* Approach B: Eyelids with CSS slit */
+  .awakening-css {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    pointer-events: none;
+    z-index: 10;
+    -webkit-mask: radial-gradient(
+      ellipse var(--slit-w, 0%) var(--slit-h, 0px) at 50% 50%,
+      transparent 0%,
+      transparent 70%,
+      rgba(0,0,0,0.6) 88%,
+      #000 100%
+    );
+    mask: radial-gradient(
+      ellipse var(--slit-w, 0%) var(--slit-h, 0px) at 50% 50%,
+      transparent 0%,
+      transparent 70%,
+      rgba(0,0,0,0.6) 88%,
+      #000 100%
+    );
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Eye Awakening Comparison</h1>
+  <p>User request: <em>“the opening eyes bit should be animated.. start with a thinner line and then open up”</em></p>
+  <div class="controls">
+    <button id="play-btn">Play Opening Animation (3s)</button>
+    <button id="reset-btn">Reset (Closed)</button>
+    <label>Scrub Progress: <input type="range" id="progress-range" min="0" max="1" step="0.005" value="0"></label>
+    <span id="progress-val">0%</span>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h2>Approach A: Organic Eyelids (SVG Bezier Curves + Edge Blur)</h2>
+      <div class="viewport-preview">
+        <div class="scene-mock">
+          <div class="cabinet-mock">[ HEAVY OAK CABINET ]</div>
+          <div>Cold stone floor & cellar</div>
+        </div>
+        <div class="awakening-svg" id="awakening-a">
+          <svg viewBox="0 0 1000 1000" preserveAspectRatio="none">
+            <defs>
+              <filter id="blur-edge" x="-10%" y="-10%" width="120%" height="120%">
+                <feGaussianBlur stdDeviation="8" />
+              </filter>
+            </defs>
+            <path id="upper-lid" class="eyelid-path" filter="url(#blur-edge)" d="" />
+            <path id="lower-lid" class="eyelid-path" filter="url(#blur-edge)" d="" />
+          </svg>
+        </div>
+      </div>
+      <p style="font-size:14px;color:#8f9882;margin-top:8px">Natural almond eyelids: Upper lid curves up, lower lid curves down. Starts as a razor-thin horizontal slit, widens smoothly.</p>
+    </div>
+    <div class="card">
+      <h2>Approach B: Radial Mask Vignette</h2>
+      <div class="viewport-preview">
+        <div class="scene-mock">
+          <div class="cabinet-mock">[ HEAVY OAK CABINET ]</div>
+          <div>Cold stone floor & cellar</div>
+        </div>
+        <div class="awakening-css" id="awakening-b"></div>
+      </div>
+      <p style="font-size:14px;color:#8f9882;margin-top:8px">Hardware-accelerated CSS mask: Starts as a 2px horizontal slit, flutters, then expands radially into full peripheral vision.</p>
+    </div>
+  </div>
+</main>
+<script>
+  const playBtn = document.getElementById('play-btn');
+  const resetBtn = document.getElementById('reset-btn');
+  const progressRange = document.getElementById('progress-range');
+  const progressVal = document.getElementById('progress-val');
+  const upperLid = document.getElementById('upper-lid');
+  const lowerLid = document.getElementById('lower-lid');
+  const awakeningA = document.getElementById('awakening-a');
+  const awakeningB = document.getElementById('awakening-b');
+
+  function renderA(p) {
+    if (p <= 0) {
+      upperLid.setAttribute('d', 'M -100 -50 L 1100 -50 L 1100 500 L -100 500 Z');
+      lowerLid.setAttribute('d', 'M -100 1050 L 1100 1050 L 1100 500 L -100 500 Z');
+      awakeningA.style.opacity = '1';
+      return;
+    }
+    if (p >= 1) {
+      upperLid.setAttribute('d', '');
+      lowerLid.setAttribute('d', '');
+      awakeningA.style.opacity = '0';
+      return;
+    }
+    awakeningA.style.opacity = p > 0.9 ? (1 - (p - 0.9) / 0.1) : 1;
+
+    let openH, edgeH;
+    if (p < 0.22) {
+      // Thinner line slit:
+      const t = p / 0.22;
+      openH = t * 14; // very thin slit: max 14 in 1000-unit box (1.4% height!)
+      edgeH = t * 2;
+    } else {
+      const t = (p - 0.22) / 0.78;
+      const eased = Math.pow(t, 2);
+      openH = 14 + eased * 580;
+      edgeH = 2 + eased * 520;
+    }
+
+    const mid = 500;
+    const topY = Math.max(-50, mid - openH);
+    const botY = Math.min(1050, mid + openH);
+    const topEdgeY = Math.max(-50, mid - edgeH);
+    const botEdgeY = Math.min(1050, mid + edgeH);
+
+    upperLid.setAttribute('d', `M -100 -50 L 1100 -50 L 1100 ${topEdgeY} Q 500 ${topY} -100 ${topEdgeY} Z`);
+    lowerLid.setAttribute('d', `M -100 1050 L 1100 1050 L 1100 ${botEdgeY} Q 500 ${botY} -100 ${botEdgeY} Z`);
+  }
+
+  function renderB(p) {
+    if (p <= 0) {
+      awakeningB.style.setProperty('--slit-w', '0%');
+      awakeningB.style.setProperty('--slit-h', '0px');
+      awakeningB.style.opacity = '1';
+      return;
+    }
+    let w, h, op = 1;
+    if (p < 0.22) {
+      const t = p / 0.22;
+      w = 60 + t * 25;
+      h = 1.2 + t * 6;
+    } else {
+      const t = (p - 0.22) / 0.78;
+      const eased = Math.pow(t, 2);
+      w = 85 + t * 55;
+      h = 7.2 + eased * 550;
+      if (p > 0.88) {
+        op = 1 - (p - 0.88) / 0.12;
+      }
+    }
+    awakeningB.style.setProperty('--slit-w', w + '%');
+    awakeningB.style.setProperty('--slit-h', h + 'px');
+    awakeningB.style.opacity = op;
+  }
+
+  function setProgress(p) {
+    progressRange.value = p;
+    progressVal.textContent = Math.round(p * 100) + '%';
+    renderA(p);
+    renderB(p);
+  }
+
+  let animId = null;
+  function animate() {
+    cancelAnimationFrame(animId);
+    let start = performance.now();
+    const duration = 3000;
+    function step(now) {
+      const t = Math.min(1, (now - start) / duration);
+      // add natural eye flutter in early stage
+      let visualP = t;
+      if (t > 0.08 && t < 0.25) {
+        // slight drowsy flutter
+        const flutter = Math.sin((t - 0.08) / 0.17 * Math.PI * 2) * 0.02;
+        visualP = Math.max(0.01, t + flutter);
+      }
+      setProgress(visualP);
+      if (t < 1) animId = requestAnimationFrame(step);
+    }
+    animId = requestAnimationFrame(step);
+  }
+
+  playBtn.addEventListener('click', animate);
+  resetBtn.addEventListener('click', () => { cancelAnimationFrame(animId); setProgress(0); });
+  progressRange.addEventListener('input', e => {
+    cancelAnimationFrame(animId);
+    setProgress(Number(e.target.value));
+  });
+  setProgress(0);
+</script>
+</body>
+</html>

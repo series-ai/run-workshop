@@ -36,10 +36,10 @@ export function contactThought(
 }
 
 export const EMOTION_THOUGHTS: Record<Emotion, string> = {
-  scared: "He's afraid. I have to keep my voice steady.",
-  anxious: "He's listening. Still afraid.",
-  angry: "He's angry. Those hands could tear me apart.",
-  sad: "Does he think I don't want him here? I need him to stay.",
-  happy: "He knows he's helping. That's still my boy.",
-  focused: "He understands. One thing at a time.",
+  scared: "A frightened, shuddering whimper in the cold cellar.",
+  anxious: "A thick, slurred murmur caught in his throat.",
+  angry: "A sudden, guttural growl cutting through the dark.",
+  sad: "A mournful moan caught deep in his chest.",
+  happy: "A sharp, eager rasp—he shifts his weight in sudden excitement.",
+  focused: "A deep, straining grunt under the heavy weight.",
 };

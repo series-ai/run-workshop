@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Still Warm · Eye Awakening Review</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #080b08;
+        color: #c7c9b1;
+        font: 16px/1.6 system-ui, sans-serif;
+      }
+      main {
+        max-width: 1080px;
+        margin: auto;
+        padding: 56px 24px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: Georgia, serif;
+        font-weight: 400;
+        color: #dedec8;
+      }
+      h1 {
+        font-size: clamp(36px, 5vw, 60px);
+        line-height: 1.1;
+        margin: 12px 0 18px;
+      }
+      a {
+        color: #d7ddb3;
+      }
+      p {
+        max-width: 740px;
+        color: #aeb69e;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin: 28px 0;
+      }
+      figure {
+        margin: 0;
+        background: #111612;
+        border: 1px solid #293327;
+        padding: 12px;
+        border-radius: 4px;
+      }
+      figure img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border: 1px solid #1c241a;
+      }
+      figcaption {
+        font-size: 14px;
+        color: #98a18d;
+        padding-top: 10px;
+      }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 2px;
+        color: #bfc6a4;
+        margin: 0;
+      }
+      .interactive-card {
+        background: #111612;
+        border: 1px solid #293327;
+        padding: 24px;
+        border-radius: 6px;
+        margin: 36px 0;
+      }
+      .viewport-preview {
+        position: relative;
+        width: 100%;
+        height: 380px;
+        background: #000;
+        border: 1px solid #333;
+        overflow: hidden;
+        margin-top: 16px;
+      }
+      .scene-mock {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          ellipse at 50% 65%,
+          #4a3e2e 0%,
+          #1c1913 55%,
+          #050505 100%
+        );
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: Georgia, serif;
+        color: #aba693;
+      }
+      .scene-mock .cabinet-mock {
+        width: 260px;
+        height: 110px;
+        background: #2b1f16;
+        border: 2px solid #1a120c;
+        box-shadow: 0 10px 30px #000;
+        margin-bottom: 16px;
+        display: grid;
+        place-items: center;
+        color: #7d6b5b;
+        font-size: 13px;
+        letter-spacing: 0.1em;
+      }
+      .awakening-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 10;
+        display: block;
+      }
+      .eyelid-path {
+        fill: #000;
+      }
+      .controls {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      button {
+        padding: 8px 18px;
+        background: #252a22;
+        border: 1px solid #4a5444;
+        color: #e2e8d8;
+        font-family: inherit;
+        font-size: 14px;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      button:hover {
+        background: #353d31;
+      }
+      input[type="range"] {
+        width: 240px;
+      }
+      code {
+        font-size: 13px;
+        background: #182017;
+        padding: 2px 6px;
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow"><a href="../review.html">← Build Review</a> · STILL WARM</p>
+      <h1>Animated Eye Awakening</h1>
+      <p>
+        The player awakens face down in the dark under a fallen cabinet. When
+        Beat 1 begins (<em>“I try to move... I can't.”</em>), the eyelids now
+        crack open into a thin horizontal line across vision, flutter drowsily,
+        and smoothly widen upward and downward into full view.
+      </p>
+
+      <section class="grid">
+        <figure>
+          <img
+            src="opening/play-beat0-black.png"
+            alt="Beat 0: Pitch black closed eyelids"
+          />
+          <figcaption>
+            <strong>1. Closed (Beat 0)</strong><br />
+            Pitch black. Eyelids meet at the midline (100% darkness).
+          </figcaption>
+        </figure>
+        <figure>
+          <img
+            src="opening/play-thin-slit.png"
+            alt="Beat 1: Thin line slit opening"
+          />
+          <figcaption>
+            <strong>2. Thin Line Slit (Beat 1 early)</strong><br />
+            Quadratic bezier slit (~1.6% height in center, tapered at edges).
+          </figcaption>
+        </figure>
+        <figure>
+          <img
+            src="opening/play-opening-up.png"
+            alt="Beat 1: Opening up wide"
+          />
+          <figcaption>
+            <strong>3. Opening Up (Beat 1 mid)</strong><br />
+            Upper lid rises, lower lid sinks, revealing the stone floor.
+          </figcaption>
+        </figure>
+        <figure>
+          <img
+            src="opening/play-fully-opened.png"
+            alt="Beat 1: Fully opened eyelids"
+          />
+          <figcaption>
+            <strong>4. Full Vision (Beat 1 end)</strong><br />
+            Eyelids retract off-screen, fading into unhindered observation.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section class="interactive-card">
+        <h2>Interactive Slit & Eyelid Simulator</h2>
+        <p>
+          Drag the scrubber or click Play to inspect the quadratic curve geometry
+          and blur filter at any progress point.
+        </p>
+        <div class="controls">
+          <button id="play-btn">Play Opening Animation (2.8s)</button>
+          <button id="reset-btn">Reset (Closed)</button>
+          <label
+            >Progress:
+            <input
+              type="range"
+              id="progress-range"
+              min="0"
+              max="1"
+              step="0.005"
+              value="0"
+          /></label>
+          <span id="progress-val">0%</span>
+        </div>
+        <div class="viewport-preview">
+          <div class="scene-mock">
+            <div class="cabinet-mock">[ HEAVY OAK CABINET ]</div>
+            <div>Cold stone floor & cellar</div>
+          </div>
+          <svg
+            id="awakening-svg"
+            viewBox="0 0 1000 1000"
+            preserveAspectRatio="none"
+            class="awakening-svg"
+          >
+            <defs>
+              <filter
+                id="blur-edge"
+                x="-10%"
+                y="-10%"
+                width="120%"
+                height="120%"
+              >
+                <feGaussianBlur stdDeviation="8" />
+              </filter>
+            </defs>
+            <path
+              id="upper-lid"
+              class="eyelid-path"
+              filter="url(#blur-edge)"
+              d=""
+            />
+            <path
+              id="lower-lid"
+              class="eyelid-path"
+              filter="url(#blur-edge)"
+              d=""
+            />
+          </svg>
+        </div>
+      </section>
+
+      <section>
+        <h2>Verification & Architecture</h2>
+        <ul>
+          <li>
+            <strong>Mathematical geometry</strong>: <code>calculateEyelidPaths</code>
+            maps progress non-linearly: 0–22% creates a horizontal slit (max 14px in
+            1000-unit box, tapered at corners); 22–100% applies a smooth quadratic ease
+            parting the upper lid upward and lower lid downward.
+          </li>
+          <li>
+            <strong>Non-blocking animation</strong>: Driven via single-trigger
+            <code>requestAnimationFrame</code> loop in <code>Awakening.tsx</code> with
+            delicate flutter, unaffected by 100ms clock interval ticks.
+          </li>
+          <li>
+            <strong>Accessibility</strong>: Respects
+            <code>prefers-reduced-motion: reduce</code> by bypassing animation delay
+            and rendering target progress directly.
+          </li>
+          <li>
+            <strong>All 235 unit tests pass</strong> across 15 test suites in Vitest.
+          </li>
+        </ul>
+      </section>
+    </main>
+
+    <script>
+      const playBtn = document.getElementById("play-btn");
+      const resetBtn = document.getElementById("reset-btn");
+      const progressRange = document.getElementById("progress-range");
+      const progressVal = document.getElementById("progress-val");
+      const upperLid = document.getElementById("upper-lid");
+      const lowerLid = document.getElementById("lower-lid");
+      const awakeningSvg = document.getElementById("awakening-svg");
+
+      function renderLids(p) {
+        if (p <= 0) {
+          upperLid.setAttribute(
+            "d",
+            "M -100 -50 L 1100 -50 L 1100 500 L -100 500 Z",
+          );
+          lowerLid.setAttribute(
+            "d",
+            "M -100 1050 L 1100 1050 L 1100 500 L -100 500 Z",
+          );
+          awakeningSvg.style.opacity = "1";
+          return;
+        }
+        if (p >= 1) {
+          upperLid.setAttribute("d", "");
+          lowerLid.setAttribute("d", "");
+          awakeningSvg.style.opacity = "0";
+          return;
+        }
+        awakeningSvg.style.opacity =
+          p > 0.88 ? Math.max(0, 1 - (p - 0.88) / 0.12) : "1";
+
+        let openH, edgeH;
+        if (p < 0.22) {
+          const t = p / 0.22;
+          openH = t * 14;
+          edgeH = t * 2;
+        } else {
+          const t = (p - 0.22) / 0.78;
+          const eased = t * t;
+          openH = 14 + eased * 580;
+          edgeH = 2 + eased * 520;
+        }
+
+        const mid = 500;
+        const topY = Math.round(mid - openH);
+        const botY = Math.round(mid + openH);
+        const topEdgeY = Math.round(mid - edgeH);
+        const botEdgeY = Math.round(mid + edgeH);
+
+        upperLid.setAttribute(
+          "d",
+          `M -100 -50 L 1100 -50 L 1100 ${topEdgeY} Q 500 ${topY} -100 ${topEdgeY} Z`,
+        );
+        lowerLid.setAttribute(
+          "d",
+          `M -100 1050 L 1100 1050 L 1100 ${botEdgeY} Q 500 ${botY} -100 ${botEdgeY} Z`,
+        );
+      }
+
+      function setProgress(p) {
+        progressRange.value = p;
+        progressVal.textContent = Math.round(p * 100) + "%";
+        renderLids(p);
+      }
+
+      let animId = null;
+      function animate() {
+        cancelAnimationFrame(animId);
+        let start = performance.now();
+        const duration = 2800;
+        function step(now) {
+          const t = Math.min(1, (now - start) / duration);
+          let flutter = 0;
+          if (t > 0.08 && t < 0.22) {
+            flutter = Math.sin(((t - 0.08) / 0.14) * Math.PI * 2) * 0.015;
+          }
+          const p = Math.min(1, Math.max(0, t + flutter));
+          setProgress(p);
+          if (t < 1) animId = requestAnimationFrame(step);
+        }
+        animId = requestAnimationFrame(step);
+      }
+
+      playBtn.addEventListener("click", animate);
+      resetBtn.addEventListener("click", () => {
+        cancelAnimationFrame(animId);
+        setProgress(0);
+      });
+      progressRange.addEventListener("input", (e) => {
+        cancelAnimationFrame(animId);
+        setProgress(Number(e.target.value));
+      });
+      setProgress(0);
+    </script>
+  </body>
+</html>

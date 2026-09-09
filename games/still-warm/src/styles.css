@@ -424,22 +424,15 @@ input {
   inset: 0;
   z-index: 12;
   pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.awakening-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 .eyelid {
-  position: absolute;
-  left: -5%;
-  width: 110%;
-  height: calc(51% * (1 - var(--eye-open)));
-  background: #000;
-  box-shadow: 0 0 35px 24px #000;
-}
-.eyelid.upper {
-  top: 0;
-  border-radius: 0 0 45% 45%;
-}
-.eyelid.lower {
-  bottom: 0;
-  border-radius: 45% 45% 0 0;
+  fill: #000;
 }
 .opening-story {
   position: absolute;
@@ -479,13 +472,7 @@ input {
     animation: none;
   }
 }
-.awakening::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: #000;
-  opacity: calc(1 - var(--eye-open) * 4);
-}
+
 
 .scene-wrap:focus {
   outline: none;

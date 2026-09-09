@@ -1,5 +1,8 @@
 import { useEffect, type FormEvent, type RefObject } from "react";
 
+export const FIRST_INSTRUCTION_PLACEHOLDER = "Speak to him, he can help you";
+export const SUBSEQUENT_INSTRUCTION_PLACEHOLDER = "Tell him what to do next";
+
 interface Props {
   inputRef: RefObject<HTMLInputElement>;
   value: string;
@@ -14,6 +17,8 @@ interface Props {
   onSpeak(): void;
   onStopSpeaking(): void;
   onCancelSpeaking(): void;
+  hasSpoken?: boolean;
+  placeholder?: string;
 }
 
 function focusDesktopInput(input: HTMLInputElement | null) {
@@ -24,6 +29,12 @@ function focusDesktopInput(input: HTMLInputElement | null) {
 
 export function PlayerReply(props: Props) {
   const { inputRef, busy, listening } = props;
+  const placeholder =
+    props.placeholder ??
+    (props.hasSpoken
+      ? SUBSEQUENT_INSTRUCTION_PLACEHOLDER
+      : FIRST_INSTRUCTION_PLACEHOLDER);
+
   useEffect(() => {
     if (busy || listening) return;
     const focus = () => focusDesktopInput(inputRef.current);
@@ -49,7 +60,7 @@ export function PlayerReply(props: Props) {
           value={props.value}
           onChange={(event) => props.onChange(event.target.value)}
           maxLength={1000}
-          placeholder="Tell him what to do next"
+          placeholder={placeholder}
           autoComplete="off"
         />
         <button aria-label="Send instruction" disabled={!props.value.trim()}>Send</button>
