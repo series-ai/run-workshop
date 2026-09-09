@@ -398,10 +398,12 @@ export class CreatureController {
             "The connection took too long. Your operation is paused.",
           );
         if (abort.signal.aborted) return;
-        if (result.error)
+        if (result.error) {
+          logConversation("RUN_MODEL_ERROR", result.error);
           throw new Error(
             `RUN could not answer (${result.error.code}). Check the RUN sign-in and retry.`,
           );
+        }
         capped = result.finishReason === "max_turns";
         this.update({ turns: this.snapshot.turns + result.turns });
         live.ensureResponse?.();

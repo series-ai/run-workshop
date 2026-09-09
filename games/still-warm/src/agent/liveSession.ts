@@ -161,11 +161,11 @@ export async function createLiveSession(
     concurrency: "reject",
     maxTurns: 12,
     modelRetry: {
-      maxAttempts: 1,
+      maxAttempts: 2,
       baseDelayMs: 500,
-      maxDelayMs: 1000,
-      jitter: 0,
-      maxFallbackModels: 0,
+      maxDelayMs: 2000,
+      jitter: 0.1,
+      maxFallbackModels: 1,
     },
     truncation: {
       maxRecoveries: 0,
