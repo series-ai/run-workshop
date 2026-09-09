@@ -5,6 +5,7 @@ import {
   WAITING_SET_2,
   WaitingThoughtPicker,
 } from "./waitingThoughts";
+import { createInitialState } from "./model";
 
 describe("waiting thoughts procedural generator", () => {
   it("provides over one hundred procedural combinations between Set 1 and Set 2", () => {
@@ -14,14 +15,60 @@ describe("waiting thoughts procedural generator", () => {
     expect(WAITING_SET_1).toContain("Your throat is coarse");
   });
 
-  it("formats with ellipsis and pause marker to slow down before revealing the second thought", () => {
+  it("formats with ellipsis and trailing pauses to act as buffers at the end of both lines", () => {
     const picker = new WaitingThoughtPicker();
     const thought = picker.pick();
 
     expect(thought.full).toContain("...");
-    expect(thought.full).toContain("{{pause(");
+    expect(thought.full).toContain("{{pause(2.2)}}");
+    expect(thought.full).toContain("{{pause(2.5)}}");
     expect(thought.full.startsWith(thought.first)).toBe(true);
-    expect(thought.full.endsWith(thought.second)).toBe(true);
+    expect(thought.full.includes(thought.second)).toBe(true);
+  });
+
+  it("damp stone bites into your forehead is only available until flipped over (prone vs supine)", () => {
+    const proneState = createInitialState();
+    expect(proneState.posture).toBe("prone");
+
+    const picker = new WaitingThoughtPicker();
+
+    // Verify forehead/prone thoughts can appear when prone
+    const pronePicks: string[] = [];
+    for (let i = 0; i < 50; i++) {
+      pronePicks.push(picker.pick(proneState).second);
+    }
+    expect(
+      pronePicks.some((p) => p.includes("damp stone bites into your forehead")),
+    ).toBe(true);
+
+    // Now roll the patient over (flipped over to supine)
+    const supineState = {
+      ...proneState,
+      posture: "supine" as const,
+      stage: "covered" as const,
+    };
+    picker.reset();
+
+    // In supine state, forehead against stone must NEVER appear
+    const supinePicks: string[] = [];
+    for (let i = 0; i < 100; i++) {
+      const pick = picker.pick(supineState);
+      supinePicks.push(pick.first);
+      supinePicks.push(pick.second);
+      expect(pick.second).not.toContain("damp stone bites into your forehead");
+      expect(pick.second).not.toContain("cellar floor drains the warmth");
+      expect(pick.first).not.toContain("breath leaves a cold mist against the stone");
+    }
+
+    // Supine specific thoughts should appear
+    expect(
+      supinePicks.some(
+        (p) =>
+          p.includes("ceiling") ||
+          p.includes("rafters") ||
+          p.includes("air above you"),
+      ),
+    ).toBe(true);
   });
 
   it("does not immediately repeat the same primary thought across consecutive picks", () => {

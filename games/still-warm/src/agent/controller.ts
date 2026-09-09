@@ -7,6 +7,7 @@ import {
 import { GameStore } from "../game/store";
 import { observeStatus } from "../game/transitions";
 import type { LiveHooks, LiveSession } from "./liveSession";
+import { logConversation } from "./conversationLogger";
 
 export type PlayMode = "live" | "rehearsal";
 export interface ConnectionState {
@@ -112,8 +113,10 @@ export class CreatureController {
             this.runAbort !== null &&
             !this.runAbort.signal.aborted &&
             !this.store.getSnapshot().paused
-          )
+          ) {
+            logConversation("AGENT_RESPONSE", { text });
             this.update({ response: { text, id: ++this.responseId } });
+          }
         },
         onPause: () => {
           if (
@@ -225,6 +228,7 @@ export class CreatureController {
 
   command(raw: string): void {
     const text = raw.trim().slice(0, 1000);
+    logConversation("PLAYER_COMMAND", { text });
     if (!text) return;
     if (
       /^(stop|stop now|stop please|please stop|stop stop)[.!?]*$/i.test(text)
@@ -400,6 +404,7 @@ export class CreatureController {
           );
         capped = result.finishReason === "max_turns";
         this.update({ turns: this.snapshot.turns + result.turns });
+        live.ensureResponse?.();
       } catch (error) {
         if (
           epoch === this.epoch &&

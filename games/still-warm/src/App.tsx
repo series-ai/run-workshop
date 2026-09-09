@@ -57,6 +57,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
       }),
   );
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
+  const stateRef = useRef(state);
+  stateRef.current = state;
   const connection = useSyncExternalStore(
     controller.subscribe,
     controller.getSnapshot,
@@ -94,7 +96,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
           setInterim("");
           setHasSpoken(true);
           setHeard(text);
-          const waiting = defaultWaitingPicker.pick();
+          const waiting = defaultWaitingPicker.pick(stateRef.current);
           setWaitingThought(waiting.full);
           setMonsterResponseText("");
           controller.command(text);
@@ -399,7 +401,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
     if (!command.trim() || !canSpeak) return;
     setHasSpoken(true);
     setHeard("");
-    const waiting = defaultWaitingPicker.pick();
+    const waiting = defaultWaitingPicker.pick(state);
     setWaitingThought(waiting.full);
     setMonsterResponseText("");
     controller.command(command.trim());
@@ -407,7 +409,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
   };
   const rehearse = (actions: GameAction[]) => {
     setHasSpoken(true);
-    const waiting = defaultWaitingPicker.pick();
+    const waiting = defaultWaitingPicker.pick(state);
     setWaitingThought(waiting.full);
     setMonsterResponseText("");
     controller.resume();

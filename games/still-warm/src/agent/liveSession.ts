@@ -17,6 +17,8 @@ import {
   ResponseEvidence,
   type InterpretationInput,
 } from "./responseEvidence";
+import { logConversation } from "./conversationLogger";
+import { getMonsterResponse } from "../game/monsterResponse";
 
 export interface LiveHooks {
   onVocalize(cue: VocalCue): void;
@@ -27,6 +29,7 @@ export interface LiveHooks {
 export interface LiveSession {
   session: AgentSession;
   beginInput(isPlayer: boolean): void;
+  ensureResponse?(): void;
   close(): Promise<void>;
 }
 
@@ -53,6 +56,8 @@ export async function createLiveSession(
   const run = await initializeRun();
   signal.throwIfAborted();
   let reactionAvailable = false;
+  let isPlayerTurn = false;
+  let respondedThisTurn = false;
   const responseEvidence = new ResponseEvidence();
   const withEvidence = <T extends object>(result: T) => ({
     ...result,
@@ -67,47 +72,58 @@ export async function createLiveSession(
       validate: validator(empty),
       execute: (_input, context) => {
         context.signal.throwIfAborted();
-        return withEvidence(observeRoom(store.getSnapshot()));
+        const obs = observeRoom(store.getSnapshot());
+        logConversation("TOOL_INSPECT_ROOM", obs);
+        return withEvidence(obs);
       },
     }),
-    act: defineAgentTool<GameAction, unknown>({
-      description:
-        "Perform one physical action, signal an exact patient contact, make a wordless sound, record guidance, set a standing rule, or react to the player. Effects are real and validated. You must inspect the outcome before claiming success.",
-      inputSchema: z.toJSONSchema(actionSchema),
-      validate: validator(actionSchema),
-      timeoutMs: 25000,
-      idempotency: "none",
-      execute: async (action: GameAction, context: AgentToolContext) => {
-        context.signal.throwIfAborted();
-        if (action.kind === "set_rule" && !action.enabled) {
-          return withEvidence({
-            ok: false,
-            message:
-              "Only the patient can lift a rule under Standing rules in the pause menu. Do not repeat the forbidden action. Wait for the player to change the rule.",
-          });
-        }
-        if (action.kind === "react") {
-          if (!reactionAvailable)
-            return withEvidence({
+    act: defineAgentTool<GameAction, unknown>(
+      {
+        description:
+          "Perform one physical action, signal an exact patient contact, make a wordless sound, record guidance, set a standing rule, or react to the player. Effects are real and validated. You must inspect the outcome before claiming success.",
+        inputSchema: z.toJSONSchema(actionSchema),
+        validate: validator(actionSchema),
+        timeoutMs: 25000,
+        idempotency: "none",
+        execute: async (action: GameAction, context: AgentToolContext) => {
+          context.signal.throwIfAborted();
+          logConversation("TOOL_ACT_CALL", action);
+          if (action.kind === "set_rule" && !action.enabled) {
+            const errResult = {
               ok: false,
               message:
-                "Tone can be interpreted only once for each player command.",
-            });
-          reactionAvailable = false;
-        }
-        hooks.onAction();
-        const result = await store.run(action, context.signal);
-        context.signal.throwIfAborted();
-        if (result.ok && action.kind === "vocalize")
-          hooks.onVocalize(action.cue);
-        if (result.ok && action.kind === "signal_intent")
-          hooks.onVocalize("effort");
-        return withEvidence({
-          ...result,
-          observation: observeStatus(store.getSnapshot()),
-        });
+                "Only the patient can lift a rule under Standing rules in the pause menu. Do not repeat the forbidden action. Wait for the player to change the rule.",
+            };
+            logConversation("TOOL_ACT_REJECTED", errResult);
+            return withEvidence(errResult);
+          }
+          if (action.kind === "react") {
+            if (!reactionAvailable) {
+              const errResult = {
+                ok: false,
+                message:
+                  "Tone can be interpreted only once for each player command.",
+              };
+              logConversation("TOOL_REACT_REJECTED", errResult);
+              return withEvidence(errResult);
+            }
+            reactionAvailable = false;
+          }
+          hooks.onAction();
+          const result = await store.run(action, context.signal);
+          context.signal.throwIfAborted();
+          logConversation("TOOL_ACT_RESULT", { action, result });
+          if (result.ok && action.kind === "vocalize")
+            hooks.onVocalize(action.cue);
+          if (result.ok && action.kind === "signal_intent")
+            hooks.onVocalize("effort");
+          return withEvidence({
+            ...result,
+            observation: observeStatus(store.getSnapshot()),
+          });
+        },
       },
-    }),
+    ),
     interpret_response: defineAgentTool<InterpretationInput, unknown>({
       description:
         "Show one brief patient thought about the actual latest tool outcome. Use the latest evidenceId from this input. This cannot change the world.",
@@ -115,9 +131,15 @@ export async function createLiveSession(
       validate: validator(interpretationSchema),
       execute: (input, context) => {
         context.signal.throwIfAborted();
+        logConversation("TOOL_INTERPRET_RESPONSE_CALL", input);
         const decision = responseEvidence.accept(input);
-        if (!decision.ok) return decision;
+        if (!decision.ok) {
+          logConversation("TOOL_INTERPRET_RESPONSE_REJECTED", decision);
+          return decision;
+        }
         context.signal.throwIfAborted();
+        respondedThisTurn = true;
+        logConversation("TOOL_INTERPRET_RESPONSE_ACCEPTED", decision.text);
         hooks.onResponse(decision.text);
         return { ok: true, message: "Patient thought shown." };
       },
@@ -126,9 +148,9 @@ export async function createLiveSession(
   const agent = createAgent({
     model: createTextGenTransport(run.textGen, {
       mode: "open",
-      modelClass: "standard",
+      modelClass: "quick",
     }),
-    models: ["gpt-5.6-luna"],
+    models: ["gpt-5.4-mini", "gpt-5.6-luna"],
     instructions: CREATURE_INSTRUCTIONS,
     tools,
     store: new InMemoryAgentSessionStore(),
@@ -165,8 +187,19 @@ export async function createLiveSession(
   return {
     session,
     beginInput(isPlayer) {
+      isPlayerTurn = isPlayer;
+      respondedThisTurn = false;
       reactionAvailable = isPlayer;
       responseEvidence.beginInput();
+    },
+    ensureResponse() {
+      if (isPlayerTurn && !respondedThisTurn) {
+        respondedThisTurn = true;
+        const fallback = getMonsterResponse(store.getSnapshot().emotion);
+        logConversation("ENSURED_FALLBACK_MONSTER_RESPONSE", fallback);
+        hooks.onResponse(fallback.text);
+        hooks.onVocalize(fallback.cue);
+      }
     },
     async close() {
       subscriptions.forEach((subscription) => subscription.unsubscribe());

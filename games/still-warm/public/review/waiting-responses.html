@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Still Warm · Submission Wait State & Non-Verbal Creature Responses</title>
+  <title>Still Warm · Submission Wait State, State Filtering & Quick Model Logging</title>
   <style>
     body {
       margin: 0;
@@ -23,11 +23,11 @@
       line-height: 1.2;
     }
     h1 {
-      font-size: clamp(32px, 5vw, 46px);
+      font-size: clamp(30px, 4.5vw, 42px);
       margin: 12px 0 16px;
     }
     h2 {
-      font-size: 24px;
+      font-size: 22px;
       margin: 32px 0 12px;
       border-bottom: 1px solid #283321;
       padding-bottom: 8px;
@@ -84,7 +84,7 @@
     }
     .button-group {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
       margin-top: 14px;
     }
@@ -92,8 +92,8 @@
       background: #253320;
       color: #dbe0c8;
       border: 1px solid #485c3e;
-      padding: 10px 18px;
-      font-size: 14px;
+      padding: 9px 16px;
+      font-size: 13px;
       cursor: pointer;
       font-family: inherit;
       border-radius: 3px;
@@ -103,6 +103,12 @@
       background: #35462e;
       border-color: #728b63;
       color: #fff;
+    }
+    button.active-toggle {
+      background: #476339;
+      border-color: #8db574;
+      color: #ffffff;
+      font-weight: bold;
     }
     .grid-sets {
       display: grid;
@@ -137,20 +143,36 @@
       margin-right: 6px;
       color: #c9d0b6;
     }
+    .state-indicator {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: #182315;
+      border: 1px solid #33442a;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
 <main>
   <a href="../review.html" class="back">← Back to build review</a>
   <div class="status-badge">Feature Verification</div>
-  <h1>Procedural Waiting Thoughts & Non-Verbal Creature</h1>
+  <h1>Procedural Waiting Thoughts, State Filtering & Quick Model</h1>
   <p>
-    When the player submits a command, the game now provides a gothic waiting state with procedural sensory thoughts drawn from over 200 possible combinations. The typewriter effect uses pauses at the ellipsis <code>...</code> to slow down before revealing a second non-repeating thought if the response has not yet arrived.
-    Furthermore, the creature/boy never speaks back with words—responses are strictly non-verbal emotional reactions (moans, slurred speech, excitement, screaming, or primal vocalizations) synchronized with synthesized Web Audio vocal cues.
+    Enhancements to the submission waiting flow, state-dependent thought filtering, creature audio reactions, local conversation logging, and latency optimization.
   </p>
 
   <h2>Interactive Submission Wait Simulator</h2>
   <div class="card">
+    <div class="state-indicator">
+      <span><strong>Simulated Posture:</strong></span>
+      <button id="btn-prone" class="active-toggle" onclick="setPosture('prone')">Prone (Face Down on Stone)</button>
+      <button id="btn-supine" onclick="setPosture('supine')">Supine (Flipped Over onto Back)</button>
+      <span style="color:#a8b499; margin-left:auto;" id="posture-note">"Damp stone bites into forehead" is eligible.</span>
+    </div>
     <div class="status-badge" id="demo-status">Status: Idle</div>
     <div class="demo-terminal">
       <div class="story-thought" id="story-display">“Speak to him, he can help you”</div>
@@ -158,77 +180,51 @@
     <div class="button-group">
       <button id="btn-submit" onclick="simulateSubmit()">Simulate Submit ("Can you lift the cabinet?")</button>
       <button onclick="simulateFastResponse()">Respond Immediately (Moan / Slur)</button>
-      <button onclick="simulateDelayedResponse()">Delayed Response (Wait for 2nd Thought)</button>
+      <button onclick="simulateDelayedResponse()">Delayed Response (Buffer with 2nd Thought)</button>
       <button onclick="simulateEmotion('screaming')">Trigger Screaming</button>
       <button onclick="simulateEmotion('excitement')">Trigger Excitement</button>
     </div>
   </div>
 
-  <h2>Combinatorial Thought Library (>200 Options)</h2>
-  <p>
-    Built from 15 Set 1 sensory vocal phrases and 15 Set 2 bodily/cellar continuation phrases. Keyword collision filtering ensures zero semantic repetition (e.g. avoiding repeating "throat" or "stone").
-  </p>
-  <div class="grid-sets">
-    <div class="card">
-      <h3>Set 1: Vocal & Breath Impressions (15)</h3>
-      <ul>
-        <li>Your voice echoes in the darkness</li>
-        <li>Your throat is coarse</li>
-        <li>The words scrape against your dry lips</li>
-        <li>Your breath leaves a cold mist against the stone</li>
-        <li>A hollow rasp catches in your throat</li>
-        <li>The damp cellar air swallows your call</li>
-        <li>Your whisper trembles across the dark</li>
-        <li>Pain flares along your ribs as you speak</li>
-        <li>Your voice sounds faint even to your own ears</li>
-        <li>The stone drinks the sound of your voice</li>
-        <li>You force the words past your cracked lips</li>
-        <li>The cold stone muffles your call</li>
-        <li>A trembling rasp leaves your chest</li>
-        <li>Your words hang frozen in the chill</li>
-        <li>Your chest burns with the effort to speak</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3>Set 2: Pinned Sensation Continuations (15)</h3>
-      <ul>
-        <li>Silence presses back against your chest.</li>
-        <li>The cold creeps deeper into your fingertips.</li>
-        <li>A dull throb pulses behind your eyes.</li>
-        <li>Warm blood seeps slowly through your clothes.</li>
-        <li>The darkness stays thick and suffocating.</li>
-        <li>Your ribs groan beneath the oak cabinet.</li>
-        <li>Every heartbeat feels heavier than the last.</li>
-        <li>You strain to hear movement in the gloom.</li>
-        <li>The cellar floor drains the warmth from your skin.</li>
-        <li>A slow shudder rattles down your spine.</li>
-        <li>The shadows offer no answer yet.</li>
-        <li>Your breath comes shallow and tight.</li>
-        <li>Numbness crawls along your wounded flank.</li>
-        <li>The damp stone bites into your forehead.</li>
-        <li>Dust settles slowly in the black air.</li>
-      </ul>
-    </div>
+  <h2>Buffering Pauses & Pacing</h2>
+  <div class="card">
+    <p>
+      The typewriter effect now features dedicated trailing pauses to act as realistic buffers while waiting for the model:
+    </p>
+    <ul>
+      <li><strong>Line 1 Trailing Buffer:</strong> Ends with <code>...{{pause(2.2)}}</code>. Types out the first sensory thought, then pauses at the dots for 2.2 seconds before advancing.</li>
+      <li><strong>Line 2 Trailing Buffer:</strong> Ends with <code>.{{pause(2.5)}}</code>. If the response has not yet arrived, types the second thought and buffers for an additional 2.5 seconds at the period.</li>
+      <li><strong>Total Buffer Window:</strong> ~7.2 seconds of atmospheric sensory immersion, seamlessly replaced when the creature's response arrives.</li>
+    </ul>
   </div>
 
-  <h2>Creature Non-Verbal Emotional Repertoire</h2>
+  <h2>State-Dependent Thought Filtering</h2>
   <div class="card">
-    <p>The creature is incapable of human speech. Responses are categorized by vocal emotions and mapped to synthesis parameters:</p>
+    <p>
+      Thoughts are filtered based on the player's physical reality:
+    </p>
     <ul>
-      <li><span class="tag">Moan</span> "A low, shuddering moan in the dark." / "A heavy, guttural moan from across the cellar floor."</li>
-      <li><span class="tag">Slurred Speech</span> "A thick, slurred murmur—he tries to form a word, but only a clumsy sound spills out."</li>
-      <li><span class="tag">Excitement</span> "A sharp, eager rasp—he shifts his weight in sudden excitement."</li>
-      <li><span class="tag">Screaming</span> "A sudden, terrified scream echoes off the cellar walls."</li>
-      <li><span class="tag">Fear / Whimper</span> "A frightened, shuddering whimper close to the stone."</li>
-      <li><span class="tag">Effort</span> "A deep, straining grunt under the heavy weight."</li>
-      <li><span class="tag">Relief</span> "A long, shuddering sigh of relief."</li>
-      <li><span class="tag">Anger</span> "A low, defensive rumble vibrating in his throat."</li>
+      <li><strong>Prone Only (Face-Down):</strong> <em>"The damp stone bites into your forehead."</em>, <em>"The cellar floor drains the warmth from your skin."</em>, <em>"The cold stone muffles your call"</em>. These are filtered out once the patient is rolled over.</li>
+      <li><strong>Pinned Only:</strong> <em>"Your ribs groan beneath the oak cabinet."</em> Only available before the debris is lifted.</li>
+      <li><strong>Supine Only (After Being Flipped Over):</strong> <em>"The damp cellar ceiling looms in the shadows above."</em>, <em>"You stare upward into the black rafters."</em>, <em>"Your exposed wound burns in the raw air."</em></li>
+      <li><strong>Always Available:</strong> General vocal friction (<em>"Your throat is coarse"</em>, <em>"The words scrape against your dry lips"</em>, <em>"Your voice echoes in the darkness"</em>) and chest sensations.</li>
+    </ul>
+  </div>
+
+  <h2>Model Optimization & Local Logging</h2>
+  <div class="card">
+    <ul>
+      <li><strong>Quick Model Class:</strong> <code>modelClass: "quick"</code> with fallback list <code>["gpt-5.4-mini", "gpt-5.6-luna"]</code> configured on Venus transport for minimal turnaround latency.</li>
+      <li><strong>Guaranteed Non-Verbal Creature Answer:</strong> In <code>instructions.ts</code>, "silence is valid" has been removed; the creature must always respond to the player's voice. <code>live.ensureResponse()</code> guarantees an emotional response even if the model turn didn't invoke <code>interpret_response</code>.</li>
+      <li><strong>Local Conversation Logging:</strong> All player commands, tool executions (<code>inspect_room</code>, <code>act</code>, <code>interpret_response</code>), observations, errors, and responses are appended to <code>conversation.log</code> via the Vite dev server endpoint <code>/_log_conversation</code>, stored in <code>window.__STILL_WARM_CONVERSATION__</code>, and logged to DevTools console.</li>
     </ul>
   </div>
 </main>
 
 <script>
-  const SET_1 = [
+  let currentPosture = "prone";
+
+  const SET_1_PRONE = [
     "Your voice echoes in the darkness",
     "Your throat is coarse",
     "The words scrape against your dry lips",
@@ -246,7 +242,25 @@
     "Your chest burns with the effort to speak"
   ];
 
-  const SET_2 = [
+  const SET_1_SUPINE = [
+    "Your voice echoes in the darkness",
+    "Your throat is coarse",
+    "The words scrape against your dry lips",
+    "A hollow rasp catches in your throat",
+    "The damp cellar air swallows your call",
+    "Your whisper trembles across the dark",
+    "Pain flares along your ribs as you speak",
+    "Your voice sounds faint even to your own ears",
+    "The stone drinks the sound of your voice",
+    "You force the words past your cracked lips",
+    "A trembling rasp leaves your chest",
+    "Your words hang frozen in the chill",
+    "Your chest burns with the effort to speak",
+    "Your voice rises toward the black cellar ceiling",
+    "You call out into the empty air above you"
+  ];
+
+  const SET_2_PRONE = [
     "Silence presses back against your chest.",
     "The cold creeps deeper into your fingertips.",
     "A dull throb pulses behind your eyes.",
@@ -264,6 +278,25 @@
     "Dust settles slowly in the black air."
   ];
 
+  const SET_2_SUPINE = [
+    "Silence presses back against your chest.",
+    "The cold creeps deeper into your fingertips.",
+    "A dull throb pulses behind your eyes.",
+    "Warm blood seeps slowly through your clothes.",
+    "The darkness stays thick and suffocating.",
+    "Every heartbeat feels heavier than the last.",
+    "You strain to hear movement in the gloom.",
+    "A slow shudder rattles down your spine.",
+    "The shadows offer no answer yet.",
+    "Your breath comes shallow and tight.",
+    "Numbness crawls along your wounded flank.",
+    "Dust settles slowly in the black air.",
+    "The damp cellar ceiling looms in the shadows above.",
+    "You stare upward into the black rafters.",
+    "Your exposed wound burns in the raw air.",
+    "You look up, straining to see his hands in the gloom."
+  ];
+
   const MONSTER_RESPONSES = {
     moan: "A heavy, guttural moan from across the cellar floor.",
     slurred: "A thick, slurred murmur—he tries to form a word, but only a clumsy sound spills out.",
@@ -273,46 +306,66 @@
 
   let typewriterTimer = null;
   let responseTimer = null;
-  let currentText = "";
-  let targetText = "";
 
-  function typewrite(fullText, onPause, onComplete) {
+  function setPosture(posture) {
+    currentPosture = posture;
+    document.getElementById("btn-prone").className = posture === "prone" ? "active-toggle" : "";
+    document.getElementById("btn-supine").className = posture === "supine" ? "active-toggle" : "";
+    document.getElementById("posture-note").textContent =
+      posture === "prone"
+        ? '"Damp stone bites into forehead" is eligible.'
+        : '"Damp stone bites into forehead" is EXCLUDED. Supine ceiling thoughts active.';
+  }
+
+  function typewrite(fullText, onComplete) {
     clearInterval(typewriterTimer);
     const display = document.getElementById("story-display");
     display.className = "story-thought";
-    let i = 0;
-    
-    // Parse pause marker
-    const pauseMatch = fullText.match(/\{\{pause\((\d+(?:\.\d+)?)\)\}\}/);
-    let pauseIdx = fullText.length;
-    let pauseMs = 0;
-    let textToType = fullText;
-
-    if (pauseMatch) {
-      pauseIdx = pauseMatch.index;
-      pauseMs = parseFloat(pauseMatch[1]) * 1000;
-      textToType = fullText.slice(0, pauseIdx) + fullText.slice(pauseIdx + pauseMatch[0].length);
-    }
-
     display.textContent = "";
 
+    // Parse all {{pause(seconds)}} markers
+    const regex = /\{\{pause\((\d+(?:\.\d+)?)\)\}\}/g;
+    const parts = [];
+    let lastIdx = 0;
+    let match;
+
+    while ((match = regex.exec(fullText)) !== null) {
+      parts.push({ type: "text", content: fullText.slice(lastIdx, match.index) });
+      parts.push({ type: "pause", duration: parseFloat(match[1]) * 1000 });
+      lastIdx = regex.lastIndex;
+    }
+    if (lastIdx < fullText.length) {
+      parts.push({ type: "text", content: fullText.slice(lastIdx) });
+    }
+
+    let partIdx = 0;
+    let charIdx = 0;
+
     function step() {
-      if (i < textToType.length) {
-        if (i === pauseIdx && pauseMs > 0) {
-          clearInterval(typewriterTimer);
-          document.getElementById("demo-status").textContent = "Status: Waiting (paused at ellipsis)...";
-          setTimeout(() => {
-            document.getElementById("demo-status").textContent = "Status: Still Waiting (revealing 2nd thought)...";
-            typewriterTimer = setInterval(step, 35);
-          }, pauseMs);
-          pauseMs = 0;
-          return;
-        }
-        display.textContent += textToType[i];
-        i++;
-      } else {
+      if (partIdx >= parts.length) {
         clearInterval(typewriterTimer);
         if (onComplete) onComplete();
+        return;
+      }
+
+      const current = parts[partIdx];
+      if (current.type === "pause") {
+        clearInterval(typewriterTimer);
+        document.getElementById("demo-status").textContent = `Status: Buffer Pause (${(current.duration/1000).toFixed(1)}s)...`;
+        setTimeout(() => {
+          document.getElementById("demo-status").textContent = "Status: Advancing thought...";
+          partIdx++;
+          typewriterTimer = setInterval(step, 35);
+        }, current.duration);
+        return;
+      }
+
+      if (charIdx < current.content.length) {
+        display.textContent += current.content[charIdx];
+        charIdx++;
+      } else {
+        partIdx++;
+        charIdx = 0;
       }
     }
 
@@ -321,10 +374,14 @@
 
   function simulateSubmit() {
     clearTimeout(responseTimer);
-    const s1 = SET_1[Math.floor(Math.random() * SET_1.length)];
-    const s2 = SET_2[Math.floor(Math.random() * SET_2.length)];
-    const full = `${s1}...{{pause(1.3)}} ${s2}`;
-    
+    const pool1 = currentPosture === "prone" ? SET_1_PRONE : SET_1_SUPINE;
+    const pool2 = currentPosture === "prone" ? SET_2_PRONE : SET_2_SUPINE;
+    const s1 = pool1[Math.floor(Math.random() * pool1.length)];
+    const s2 = pool2[Math.floor(Math.random() * pool2.length)];
+    const clean1 = s1.replace(/\.+$/, "");
+    const clean2 = s2.replace(/\.+$/, "");
+    const full = `${clean1}...{{pause(2.2)}} ${clean2}.{{pause(2.5)}}`;
+
     document.getElementById("demo-status").textContent = "Status: Player Submitted · Waiting for response...";
     typewrite(full);
   }
@@ -344,7 +401,7 @@
     simulateSubmit();
     responseTimer = setTimeout(() => {
       simulateFastResponse();
-    }, 4500);
+    }, 4800);
   }
 
   function simulateEmotion(emotion) {
