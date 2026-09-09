@@ -5,7 +5,7 @@ import {
 } from "./responseEvidence";
 
 describe("response evidence", () => {
-  it("accepts only the latest evidence from the current input", () => {
+  it("accepts any unused evidence issued during the current input", () => {
     const evidence = new ResponseEvidence();
     evidence.beginInput();
     const first = evidence.issue();
@@ -13,10 +13,10 @@ describe("response evidence", () => {
 
     expect(
       evidence.accept({ evidenceId: first, text: "I heard him." }),
-    ).toMatchObject({ ok: false });
-    expect(
-      evidence.accept({ evidenceId: latest, text: "I heard him." }),
     ).toEqual({ ok: true, text: "I heard him." });
+    expect(
+      evidence.accept({ evidenceId: latest, text: "I saw the room." }),
+    ).toEqual({ ok: true, text: "I saw the room." });
     expect(
       evidence.accept({ evidenceId: latest, text: "I repeat myself." }),
     ).toMatchObject({ ok: false });

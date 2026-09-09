@@ -58,6 +58,7 @@ export async function createLiveSession(
   let reactionAvailable = false;
   let isPlayerTurn = false;
   let respondedThisTurn = false;
+  let lastActionDescription: string | null = null;
   const responseEvidence = new ResponseEvidence();
   const withEvidence = <T extends object>(result: T) => ({
     ...result,
@@ -117,6 +118,9 @@ export async function createLiveSession(
             hooks.onVocalize(action.cue);
           if (result.ok && action.kind === "signal_intent")
             hooks.onVocalize("effort");
+          if (result.ok && action.kind !== "vocalize" && action.kind !== "react" && result.message) {
+            lastActionDescription = result.message;
+          }
           return withEvidence({
             ...result,
             observation: observeStatus(store.getSnapshot()),
@@ -189,6 +193,7 @@ export async function createLiveSession(
     beginInput(isPlayer) {
       isPlayerTurn = isPlayer;
       respondedThisTurn = false;
+      lastActionDescription = null;
       reactionAvailable = isPlayer;
       responseEvidence.beginInput();
     },
@@ -196,8 +201,11 @@ export async function createLiveSession(
       if (isPlayerTurn && !respondedThisTurn) {
         respondedThisTurn = true;
         const fallback = getMonsterResponse(store.getSnapshot().emotion);
-        logConversation("ENSURED_FALLBACK_MONSTER_RESPONSE", fallback);
-        hooks.onResponse(fallback.text);
+        const text = lastActionDescription
+          ? `${lastActionDescription} ${fallback.text}`
+          : fallback.text;
+        logConversation("ENSURED_FALLBACK_MONSTER_RESPONSE", { ...fallback, text, lastActionDescription });
+        hooks.onResponse(text);
         hooks.onVocalize(fallback.cue);
       }
     },

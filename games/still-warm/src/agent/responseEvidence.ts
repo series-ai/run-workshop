@@ -28,33 +28,35 @@ type InterpretationDecision =
 
 export class ResponseEvidence {
   private nextEvidenceId = 0;
-  private latestEvidenceId: number | null = null;
+  private issuedIds = new Set<number>();
+  private usedIds = new Set<number>();
   private inputActive = false;
   private interpretations = 0;
 
   beginInput(): void {
     this.inputActive = true;
-    this.latestEvidenceId = null;
+    this.issuedIds.clear();
+    this.usedIds.clear();
     this.interpretations = 0;
   }
 
   issue(): number {
     if (!this.inputActive) throw new Error("No active input.");
     const evidenceId = ++this.nextEvidenceId;
-    this.latestEvidenceId = evidenceId;
+    this.issuedIds.add(evidenceId);
     return evidenceId;
   }
 
   accept(input: InterpretationInput): InterpretationDecision {
     if (
       !this.inputActive ||
-      this.latestEvidenceId === null ||
-      input.evidenceId !== this.latestEvidenceId
+      !this.issuedIds.has(input.evidenceId) ||
+      this.usedIds.has(input.evidenceId)
     ) {
       return {
         ok: false,
         message:
-          "Use the evidenceId from the latest inspect_room or act outcome in this input.",
+          "Use an unused evidenceId from an inspect_room or act outcome in this input.",
       };
     }
     if (this.interpretations >= 3) {
@@ -64,7 +66,7 @@ export class ResponseEvidence {
       };
     }
     this.interpretations += 1;
-    this.latestEvidenceId = null;
+    this.usedIds.add(input.evidenceId);
     return { ok: true, text: input.text };
   }
 }

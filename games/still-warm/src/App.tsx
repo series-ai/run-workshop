@@ -26,6 +26,7 @@ import { PlayerReply } from "./ui/PlayerReply";
 import { GameDialog } from "./ui/GameDialog";
 import { Awakening } from "./ui/Awakening";
 import { defaultWaitingPicker } from "./game/waitingThoughts";
+import { logConversation } from "./agent/conversationLogger";
 import { getMonsterResponse } from "./game/monsterResponse";
 
 export default function App({ preview = false }: { preview?: boolean }) {
@@ -97,6 +98,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
           setHasSpoken(true);
           setHeard(text);
           const waiting = defaultWaitingPicker.pick(stateRef.current);
+          logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
           setWaitingThought(waiting.full);
           setMonsterResponseText("");
           controller.command(text);
@@ -402,6 +404,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
     setHasSpoken(true);
     setHeard("");
     const waiting = defaultWaitingPicker.pick(state);
+    logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
     setWaitingThought(waiting.full);
     setMonsterResponseText("");
     controller.command(command.trim());
@@ -410,6 +413,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const rehearse = (actions: GameAction[]) => {
     setHasSpoken(true);
     const waiting = defaultWaitingPicker.pick(state);
+    logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
     setWaitingThought(waiting.full);
     setMonsterResponseText("");
     controller.resume();
