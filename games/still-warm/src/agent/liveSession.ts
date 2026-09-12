@@ -130,7 +130,7 @@ export async function createLiveSession(
     ),
     interpret_response: defineAgentTool<InterpretationInput, unknown>({
       description:
-        "Show one brief patient thought about the actual latest tool outcome. Use the latest evidenceId from this input. This cannot change the world.",
+        "Show one brief sensory narration line describing what the patient hears, feels, or sees from the actual latest tool outcome. Use the latest evidenceId from this input. This cannot change the world.",
       inputSchema: z.toJSONSchema(interpretationSchema),
       validate: validator(interpretationSchema),
       execute: (input, context) => {
