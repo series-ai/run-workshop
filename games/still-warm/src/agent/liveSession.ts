@@ -154,7 +154,7 @@ export async function createLiveSession(
       mode: "open",
       modelClass: "quick",
     }),
-    models: ["quick"],
+    models: ["gpt-5.4-mini", "gpt-5"],
     instructions: CREATURE_INSTRUCTIONS,
     tools,
     store: new InMemoryAgentSessionStore(),
