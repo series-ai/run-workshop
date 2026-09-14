@@ -27,6 +27,7 @@ import { canPlayerSpeak, isActionResolving } from "./ui/playerInputState";
 import { GameDialog } from "./ui/GameDialog";
 import { Awakening } from "./ui/Awakening";
 import { defaultWaitingPicker } from "./game/waitingThoughts";
+import { WaitingTurn, createWaitingTurn, formatWaitingText, onAnimationFinished, onResponseArrived, onSkipWaiting } from "./ui/waitingTurnState";
 import { logConversation } from "./agent/conversationLogger";
 
 export default function App({ preview = false }: { preview?: boolean }) {
@@ -84,7 +85,9 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const [reactionThought, setReactionThought] = useState("");
   const [heard, setHeard] = useState("");
   const [hasSpoken, setHasSpoken] = useState(false);
-  const [waitingThought, setWaitingThought] = useState("");
+  const [waitingTurn, setWaitingTurn] = useState<WaitingTurn | null>(null);
+  const [activeResponseText, setActiveResponseText] = useState<string | null>(null);
+  const [dotCount, setDotCount] = useState(1);
   const wasBusy = useRef(false);
   const busyRef = useRef(false);
   const canSpeakRef = useRef(false);
@@ -101,7 +104,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
           setHeard(text);
           const waiting = defaultWaitingPicker.pick(stateRef.current);
           logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
-          setWaitingThought(waiting.full);
+          setWaitingTurn(createWaitingTurn(waiting.full));
+          setActiveResponseText(null);
           controller.command(text);
         },
         onInterim: setInterim,
@@ -208,23 +212,78 @@ export default function App({ preview = false }: { preview?: boolean }) {
     setThought(moment.text);
   }, [liveConversation, started, moment.id, moment.text, opening.complete]);
 
+  const skipWaiting = useCallback(() => {
+    setWaitingTurn((current) => {
+      if (!current) return null;
+      const result = onSkipWaiting(current);
+      if (result.activeResponse !== null) {
+        setActiveResponseText(result.activeResponse);
+      }
+      return result.turn;
+    });
+  }, []);
+
+  const handleWaitingAnimationComplete = useCallback(() => {
+    setWaitingTurn((current) => {
+      if (!current) return null;
+      const result = onAnimationFinished(current);
+      if (result.activeResponse !== null) {
+        setActiveResponseText(result.activeResponse);
+      }
+      return result.turn;
+    });
+  }, []);
+
   useEffect(() => {
     if (connection.response && connection.response.id !== lastResponseId.current) {
       lastResponseId.current = connection.response.id;
-      setWaitingThought("");
+      const responseText = connection.response.text;
+      setWaitingTurn((current) => {
+        const result = onResponseArrived(current, responseText);
+        if (result.activeResponse !== null) {
+          setActiveResponseText(result.activeResponse);
+        }
+        return result.turn;
+      });
     }
   }, [connection.response]);
+
+  useEffect(() => {
+    if (!waitingTurn?.animationComplete) return;
+    setDotCount(1);
+    const timer = setInterval(() => {
+      setDotCount((c) => (c % 3) + 1);
+    }, 450);
+    return () => clearInterval(timer);
+  }, [waitingTurn?.animationComplete]);
+
+  useEffect(() => {
+    if (!waitingTurn || waitingTurn.animationComplete) return;
+    const handleClick = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("button, a, input, select, textarea")) return;
+      skipWaiting();
+    };
+    window.addEventListener("click", handleClick);
+    return () => window.removeEventListener("click", handleClick);
+  }, [waitingTurn, skipWaiting]);
+
+  useEffect(() => {
+    if (connection.status === "error" || !active) {
+      setWaitingTurn(null);
+    }
+  }, [connection.status, active]);
 
   useEffect(() => {
     if (busy) {
       wasBusy.current = true;
     } else if (wasBusy.current) {
       wasBusy.current = false;
-      if (waitingThought) {
-        setWaitingThought("");
+      if (!waitingTurn?.pendingResponse) {
+        setWaitingTurn(null);
       }
     }
-  }, [busy, waitingThought]);
+  }, [busy, waitingTurn?.pendingResponse]);
   useEffect(() => {
     if (!heard) return;
     const timer = setTimeout(() => setHeard(""), 5000);
@@ -385,7 +444,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
     look.reset();
     lastOpeningShuffle.current = false;
     setHasSpoken(false);
-    setWaitingThought("");
+    setWaitingTurn(null);
+    setActiveResponseText(null);
     setHeard("");
     setCommand("");
     setReactionThought("");
@@ -402,7 +462,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
     setHeard("");
     const waiting = defaultWaitingPicker.pick(state);
     logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
-    setWaitingThought(waiting.full);
+    setWaitingTurn(createWaitingTurn(waiting.full));
+    setActiveResponseText(null);
     controller.command(command.trim());
     setCommand("");
   };
@@ -410,7 +471,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
     setHasSpoken(true);
     const waiting = defaultWaitingPicker.pick(state);
     logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
-    setWaitingThought(waiting.full);
+    setWaitingTurn(createWaitingTurn(waiting.full));
+    setActiveResponseText(null);
     controller.resume();
     void controller.rehearse(actions);
   };
@@ -568,23 +630,35 @@ export default function App({ preview = false }: { preview?: boolean }) {
           >
             Ⅱ
           </button>
-          <div className={`inner-voice ${!liveConversation && showRoomCaption ? "narrator-voice" : "thought-voice"}`} aria-live="polite">
-            <Typewriter
-              paused={state.paused}
-              instant={reducedMotion || (!waitingThought && (liveConversation ? !connection.response : !hasSpoken))}
-              text={
-                waitingThought ||
-                (liveConversation
-                  ? connection.response?.text ?? OPENING_BEATS[OPENING_BEATS.length - 1].text
-                  : contactOrProblemThought ||
-                  roomCaption ||
-                  reactionThought ||
-                  (!hasSpoken ? OPENING_BEATS[OPENING_BEATS.length - 1].text : thought) ||
-                  (connection.needsInstruction && !busy
-                    ? "He is waiting for my voice."
-                    : ""))
-              }
-            />
+          <div
+            className={`inner-voice ${!liveConversation && showRoomCaption ? "narrator-voice" : "thought-voice"} ${waitingTurn && !waitingTurn.animationComplete ? "waiting-skippable" : ""}`}
+            aria-live="polite"
+            onClick={waitingTurn ? skipWaiting : undefined}
+          >
+            {waitingTurn?.animationComplete ? (
+              <span className="typewriter waiting-dots-text">
+                {formatWaitingText(waitingTurn.cleanText, dotCount)}
+              </span>
+            ) : (
+              <Typewriter
+                paused={state.paused}
+                instant={reducedMotion || (!waitingTurn && (liveConversation ? !activeResponseText && !connection.response : !hasSpoken))}
+                onComplete={waitingTurn ? handleWaitingAnimationComplete : undefined}
+                text={
+                  waitingTurn
+                    ? waitingTurn.rawText
+                    : (liveConversation
+                      ? activeResponseText ?? connection.response?.text ?? OPENING_BEATS[OPENING_BEATS.length - 1].text
+                      : contactOrProblemThought ||
+                      roomCaption ||
+                      reactionThought ||
+                      (!hasSpoken ? OPENING_BEATS[OPENING_BEATS.length - 1].text : thought) ||
+                      (connection.needsInstruction && !busy
+                        ? "He is waiting for my voice."
+                        : ""))
+                }
+              />
+            )}
           </div>
           {(interim || heard) && (
             <p className="transcript" aria-live="polite">

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { compileText, visibleCharacters } from "../text";
 
@@ -7,18 +7,21 @@ export function Typewriter({
   seconds,
   paused = false,
   instant = false,
+  onComplete,
 }: {
   text: string;
   seconds?: number;
   paused?: boolean;
   instant?: boolean;
+  onComplete?: () => void;
 }) {
   const sequence = useMemo(() => compileText(text), [text]);
   const [clock, setClock] = useState({ text, seconds: 0 });
   const localSeconds = clock.text === text ? clock.seconds : 0;
   const forcedComplete = seconds !== undefined && seconds + 1e-6 >= sequence.duration;
   const displaySeconds = forcedComplete ? seconds : localSeconds;
-  const finished = displaySeconds + 1e-6 >= sequence.duration;
+  const finished = instant || forcedComplete || displaySeconds + 1e-6 >= sequence.duration;
+
   useEffect(() => {
     if (instant || paused || finished) return;
     let previous = performance.now();
@@ -33,6 +36,16 @@ export function Typewriter({
     }, 35);
     return () => clearInterval(timer);
   }, [text, instant, paused, finished]);
+
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  useEffect(() => {
+    if (finished && !paused) {
+      onCompleteRef.current?.();
+    }
+  }, [finished, paused, text]);
+
   const visible = instant
     ? Infinity
     : visibleCharacters(sequence, displaySeconds);

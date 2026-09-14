@@ -171,6 +171,13 @@ input {
   pointer-events: none;
   animation: none;
 }
+.inner-voice.waiting-skippable {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.waiting-dots-text {
+  letter-spacing: 0.05em;
+}
 
 .controls {
   position: absolute;
