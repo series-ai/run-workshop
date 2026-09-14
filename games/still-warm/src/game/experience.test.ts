@@ -333,6 +333,7 @@ it("places a held lantern before preview lift and surgery choices", async () => 
     ...heldLantern,
     phase: "playing",
     disposition: { ...state.disposition, trust: 50, confidence: 30 },
+    emotion: "anxious",
   });
   const liftOffered = previewChoices(liftStore.getSnapshot());
   const lift = liftOffered.find((choice) => choice.id === "lift");

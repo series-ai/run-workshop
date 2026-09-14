@@ -224,7 +224,7 @@ describe("CreatureController", () => {
     });
     expect(sendMock).toHaveBeenCalledTimes(1);
 
-    // Now issue a brand new command after STOP settled
+  // Now issue a brand new command after STOP settled
     const deferredSend3 = createDeferred<AgentRunResult>();
     sendMock.mockImplementationOnce(
       (_prompt: { text: string }) => deferredSend3.promise,
@@ -237,7 +237,21 @@ describe("CreatureController", () => {
     await deferredSend3.promise;
   });
 
-  it("only latest correction after active send settles", async () => {
+  it("passes player input text to beginInput for coaxing and distress guards", async () => {
+    const sendMock = vi.fn().mockResolvedValue(createDefaultRunResult());
+    const { liveSession, beginInputMock } = createFakeLiveSession({
+      session: { send: sendMock },
+    });
+    const factory: SessionFactory = vi.fn(async () => liveSession);
+    const controller = new CreatureController(store, hooks, factory);
+
+    await controller.start("live");
+    controller.command("help me");
+    await vi.waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1));
+    expect(beginInputMock).toHaveBeenCalledWith(true, "help me");
+  });
+
+    it("only latest correction after active send settles", async () => {
     const deferredSend1 = createDeferred<AgentRunResult>();
     const sendCalls: string[] = [];
 

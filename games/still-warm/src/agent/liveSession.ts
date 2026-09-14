@@ -9,7 +9,8 @@ import {
 import { createTextGenTransport } from "@series-inc/rundot-agent/venus";
 import { actionSchema, type GameAction, type VocalCue } from "../game/model";
 import { GameStore } from "../game/store";
-import { observeRoom, observeStatus } from "../game/transitions";
+import { isLiftReady, observeRoom, observeStatus } from "../game/transitions";
+import { evaluateLiftGate, isDistressUtterance } from "./turnGuards";
 import { CREATURE_INSTRUCTIONS } from "./instructions";
 import { initializeRun } from "./runtime";
 import {
@@ -28,7 +29,7 @@ export interface LiveHooks {
 }
 export interface LiveSession {
   session: AgentSession;
-  beginInput(isPlayer: boolean): void;
+  beginInput(isPlayer: boolean, inputText?: string): void;
   ensureResponse?(): void;
   close(): Promise<void>;
 }
@@ -59,6 +60,9 @@ export async function createLiveSession(
   let isPlayerTurn = false;
   let respondedThisTurn = false;
   let lastActionDescription: string | null = null;
+  let playerInputText: string | null = null;
+  let turnStartedScared = false;
+  let reactedOutOfFear = false;
   const responseEvidence = new ResponseEvidence();
   const withEvidence = <T extends object>(result: T) => ({
     ...result,
@@ -108,7 +112,35 @@ export async function createLiveSession(
               logConversation("TOOL_REACT_REJECTED", errResult);
               return withEvidence(errResult);
             }
+            if (
+              action.stimulus === "reassure" &&
+              playerInputText &&
+              isDistressUtterance(playerInputText)
+            ) {
+              const errResult = {
+                ok: false,
+                message:
+                  "A frantic cry for help or distress is not reassurance. You are frightened and agitated, not comforted.",
+              };
+              logConversation("TOOL_REACT_REJECTED", errResult);
+              return withEvidence(errResult);
+            }
+            const emotionBefore = store.getSnapshot().emotion;
             reactionAvailable = false;
+            if (emotionBefore === "scared") {
+              reactedOutOfFear = true;
+            }
+          }
+
+          const isLiftAction =
+            action.kind === "lift_debris" ||
+            (action.kind === "signal_intent" && action.contact.kind === "lift_debris");
+          if (isLiftAction) {
+            const gate = evaluateLiftGate({ turnStartedScared, reactedOutOfFear });
+            if (!gate.ok) {
+              logConversation("TOOL_ACT_REJECTED", gate);
+              return withEvidence(gate);
+            }
           }
           hooks.onAction();
           const result = await store.run(action, context.signal);
@@ -190,11 +222,16 @@ export async function createLiveSession(
   ];
   return {
     session,
-    beginInput(isPlayer) {
+    beginInput(isPlayer, inputText) {
       isPlayerTurn = isPlayer;
       respondedThisTurn = false;
       lastActionDescription = null;
       reactionAvailable = isPlayer;
+      playerInputText = isPlayer ? (inputText ?? null) : null;
+      const snap = store.getSnapshot();
+      turnStartedScared =
+        snap.emotion === "scared" || (snap.stage === "pinned" && !isLiftReady(snap));
+      reactedOutOfFear = false;
       responseEvidence.beginInput();
     },
     ensureResponse() {

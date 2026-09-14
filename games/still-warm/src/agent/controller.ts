@@ -316,7 +316,7 @@ export class CreatureController {
     const connectionToken = this.connectionToken;
     const abort = new AbortController();
     this.runAbort = abort;
-    live.beginInput(input.player);
+    live.beginInput(input.player, input.text);
     const observation = {
       ...observeStatus(state),
       previousActionInterrupted: this.interrupted,

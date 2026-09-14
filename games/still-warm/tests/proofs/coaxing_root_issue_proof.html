@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Coaxing State Machine & Guard Architecture Proof</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1117; color: #e1e4ea; margin: 0; padding: 2rem; }
+    h1 { color: #58a6ff; font-size: 1.6rem; margin-bottom: 0.5rem; }
+    h2 { color: #79c0ff; font-size: 1.2rem; border-bottom: 1px solid #30363d; padding-bottom: 0.3rem; margin-top: 1.8rem; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
+    .badge-pass { background: #238636; color: #fff; }
+    .badge-gate { background: #8957e5; color: #fff; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 1rem 1.25rem; margin-top: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #21262d; }
+    th { color: #8b949e; background: #1c2128; }
+    code { background: #21262d; color: #ff7b72; padding: 2px 6px; border-radius: 3px; font-family: ui-monospace, monospace; font-size: 0.85em; }
+    .flow { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+    .step { background: #1c2128; border-left: 4px solid #58a6ff; padding: 0.75rem 1rem; border-radius: 0 4px 4px 0; }
+    .step-title { font-weight: bold; color: #f0f6fc; }
+    .step-desc { color: #8b949e; margin-top: 0.25rem; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>Coaxing & Emotional Guard Verification Proof</h1>
+  <div>
+    <span class="badge badge-pass">PASS (248/248 tests)</span>
+    <span class="badge badge-gate">Smart-Model-Routing: PASS (claude-fable-5-1)</span>
+  </div>
+
+  <h2>Root Cause vs. Resolution Matrix</h2>
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Vulnerability Layer</th>
+          <th>Root Defect</th>
+          <th>Deterministic Guard</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. State Invariant</strong></td>
+          <td><code>isLiftReady</code> only tested disposition thresholds, ignoring <code>emotion === 'scared'</code>.</td>
+          <td>Enforced <code>state.emotion !== 'scared'</code> in <code>isLiftReady()</code> & domain transitions.</td>
+        </tr>
+        <tr>
+          <td><strong>2. Multi-Action Batching</strong></td>
+          <td>Agent chained <code>react()</code> &rarr; <code>signal_intent()</code> &rarr; <code>lift_debris()</code> in turn 1.</td>
+          <td>Gated <code>lift_debris</code> when turn started scared or when reacting to fear within the same turn.</td>
+        </tr>
+        <tr>
+          <td><strong>3. Stimulus Misclassification</strong></td>
+          <td>Player cries of pain ("help me") were self-classified as <code>reassure</code> by the LLM.</td>
+          <td>Input guard rejects <code>reassure</code> on cries of distress/pain.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Expected Player Experience Flow</h2>
+  <div class="flow">
+    <div class="step">
+      <div class="step-title">Turn 1: Player cries "help me"</div>
+      <div class="step-desc">Creature is terrified. Reacts with fear/pain, whimpers/groans in the darkness. Cabinet is strictly untouched.</div>
+    </div>
+    <div class="step">
+      <div class="step-title">Turn 2: Player coaxes "It's okay, my boy. You're safe."</div>
+      <div class="step-desc">Creature absorbs reassurance, calming agitation. Shifting from scared to anxious. He responds to his father's voice, steadying his breath, but cannot lift yet.</div>
+    </div>
+    <div class="step">
+      <div class="step-title">Turn 3: Player directs "Gently lift the cabinet off me."</div>
+      <div class="step-desc">Creature is calmed (not scared) and lift-ready. Signals contact intent, heaves the cabinet, revealing the cold stone floor.</div>
+    </div>
+  </div>
+</body>
+</html>

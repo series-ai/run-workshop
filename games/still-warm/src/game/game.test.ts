@@ -8,6 +8,7 @@ import {
   actionSchema,
 } from "./model";
 import {
+  isLiftReady,
   applyAction,
   BLACKOUT_DURATION,
   locationArea,
@@ -50,10 +51,12 @@ function createPostAccidentState(): GameState {
 }
 
 function confidentPlaying(initial = createInitialState()): GameState {
+  const disposition = { ...initial.disposition, trust: 50, confidence: 30 };
   return {
     ...initial,
     phase: "playing",
-    disposition: { ...initial.disposition, trust: 50, confidence: 30 },
+    disposition,
+    emotion: deriveEmotion(disposition),
   };
 }
 
@@ -229,13 +232,26 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       expect(pinned.stage).toBe("pinned");
     });
 
-    it("enforces the hand, gentle, signal, and blackout lift guards", () => {
+    it("enforces fear guard: cannot lift cabinet while scared even if trust and confidence are raised", () => {
       const initial = createInitialState();
-      const confident = {
+      const scaredWithHighTrust = {
         ...initial,
         phase: "playing" as const,
-        disposition: { ...initial.disposition, trust: 50, confidence: 30 },
+        emotion: "scared" as const,
+        disposition: { ...initial.disposition, trust: 60, confidence: 35 },
       };
+      expect(isLiftReady(scaredWithHighTrust)).toBe(false);
+      expect(
+        validateAction(scaredWithHighTrust, {
+          kind: "lift_debris",
+          style: "gentle",
+        })?.reason,
+      ).toMatch(/too afraid/i);
+    });
+
+    it("enforces the hand, gentle, signal, and blackout lift guards", () => {
+      const initial = createInitialState();
+      const confident = confidentPlaying(initial);
 
       expect(
         validateAction(
@@ -3035,6 +3051,7 @@ describe("GameStore Controller", () => {
       phase: "playing",
       declaredContact: { kind: "lift_debris", style: "gentle" },
       disposition: { ...initial.disposition, trust: 50, confidence: 30 },
+      emotion: "anxious",
     });
 
     const runPromise = store.run({ kind: "lift_debris", style: "gentle" });
@@ -3284,6 +3301,7 @@ describe("GameStore Controller", () => {
       phase: "playing",
       declaredContact: { kind: "lift_debris", style: "gentle" },
       disposition: { ...initial.disposition, trust: 50, confidence: 30 },
+      emotion: "anxious",
       rules: { ...initial.rules, waitBlackout: true },
       patient: { ...initial.patient, pain: 85 },
     });

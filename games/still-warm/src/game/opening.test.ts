@@ -21,6 +21,7 @@ function liftThenRoll() {
     ...initial,
     phase: "playing" as const,
     disposition: { ...initial.disposition, trust: 50, confidence: 30 },
+    emotion: "anxious" as const,
   };
   const announcedLift = applyAction(ready, {
     kind: "signal_intent",

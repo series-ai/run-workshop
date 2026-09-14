@@ -45,8 +45,9 @@ export const BLACKOUT_DURATION = 12;
 export const LIFT_CONFIDENCE_THRESHOLD = 24;
 export const LIFT_TRUST_THRESHOLD = 50;
 
-export function isLiftReady(state: Pick<GameState, "disposition">): boolean {
+export function isLiftReady(state: Pick<GameState, "disposition" | "emotion">): boolean {
   return (
+    state.emotion !== "scared" &&
     state.disposition.confidence >= LIFT_CONFIDENCE_THRESHOLD &&
     state.disposition.trust >= LIFT_TRUST_THRESHOLD
   );
