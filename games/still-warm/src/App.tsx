@@ -23,6 +23,7 @@ import { FullscreenController } from "./platform/fullscreen";
 import { Typewriter } from "./ui/Typewriter";
 import { useKeyboardInset } from "./ui/useKeyboardInset";
 import { PlayerReply } from "./ui/PlayerReply";
+import { canPlayerSpeak, isActionResolving } from "./ui/playerInputState";
 import { GameDialog } from "./ui/GameDialog";
 import { Awakening } from "./ui/Awakening";
 import { defaultWaitingPicker } from "./game/waitingThoughts";
@@ -87,6 +88,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const [waitingThought, setWaitingThought] = useState("");
   const [monsterResponseText, setMonsterResponseText] = useState("");
   const wasBusy = useRef(false);
+  const busyRef = useRef(false);
+  const canSpeakRef = useRef(false);
   const lastResponseId = useRef<number | null>(null);
   const lastEmotion = useRef(state.emotion);
   const lastRoomEventCount = useRef(0);
@@ -94,6 +97,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
     () =>
       new VoiceInput({
         onFinal: (text) => {
+          if (busyRef.current || !canSpeakRef.current) return;
           setInterim("");
           setHasSpoken(true);
           setHeard(text);
@@ -123,9 +127,16 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const lastOpeningShuffle = useRef(false);
   const terminal = state.phase === "won" || state.phase === "lost";
   const blackout = state.phase === "blackout";
-  const busy = ["thinking", "acting", "stopping"].includes(connection.status);
+  const busy = isActionResolving(connection.status, state.pending);
+  busyRef.current = busy;
   const active = started && !state.paused && !terminal && !blackout;
-  const canSpeak = active && opening.complete && connection.mode === "live";
+  const canSpeak = canPlayerSpeak({
+    active,
+    openingComplete: opening.complete,
+    mode: connection.mode,
+    busy,
+  });
+  canSpeakRef.current = canSpeak;
   const liveConversation = connection.mode === "live";
   const moment = sceneThought(state);
   const choices = previewChoices(state);
@@ -307,8 +318,14 @@ export default function App({ preview = false }: { preview?: boolean }) {
     setTyping(false);
     void fullscreen.release();
   };
+
+  useEffect(() => {
+    if (busy) {
+      voice.cancel();
+    }
+  }, [busy, voice]);
   const speak = () => {
-    if (!canSpeak) return;
+    if (!canSpeak || busy) return;
     silenceCall();
     voice.start();
   };

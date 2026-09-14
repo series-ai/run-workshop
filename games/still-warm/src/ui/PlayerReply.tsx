@@ -35,6 +35,14 @@ export function PlayerReply(props: Props) {
       ? SUBSEQUENT_INSTRUCTION_PLACEHOLDER
       : FIRST_INSTRUCTION_PLACEHOLDER);
 
+  // Blur on becoming busy to ensure keyboard drops and no stray keystrokes while fading out
+  useEffect(() => {
+    if (busy) {
+      inputRef.current?.blur();
+    }
+  }, [busy, inputRef]);
+
+  // Focus input on desktop when idle and ready for the next instruction
   useEffect(() => {
     if (busy || listening) return;
     const focus = () => focusDesktopInput(inputRef.current);
@@ -45,44 +53,72 @@ export function PlayerReply(props: Props) {
 
   return (
     <>
-      <form className="command-form" onSubmit={(event) => {
-        props.onSubmit(event);
-        focusDesktopInput(inputRef.current);
-      }}>
+      <form
+        className={`command-form ${busy ? "resolving" : ""}`}
+        onSubmit={(event) => {
+          if (busy) {
+            event.preventDefault();
+            return;
+          }
+          props.onSubmit(event);
+          focusDesktopInput(inputRef.current);
+        }}
+      >
         <input
           id="player-words"
           ref={props.inputRef}
           aria-label="Your instruction"
           inputMode="text"
           enterKeyHint="send"
+          disabled={busy}
+          aria-disabled={busy}
+          tabIndex={busy ? -1 : 0}
           onFocus={props.onFocus}
           onBlur={props.onBlur}
           value={props.value}
-          onChange={(event) => props.onChange(event.target.value)}
+          onChange={(event) => {
+            if (busy) return;
+            props.onChange(event.target.value);
+          }}
+          onKeyDown={(event) => {
+            if (busy) {
+              event.preventDefault();
+            }
+          }}
           maxLength={1000}
           placeholder={placeholder}
           autoComplete="off"
         />
-        <button aria-label="Send instruction" disabled={!props.value.trim()}>Send</button>
+        <button
+          aria-label="Send instruction"
+          disabled={busy || !props.value.trim()}
+          tabIndex={busy ? -1 : 0}
+        >
+          Send
+        </button>
       </form>
       <div className="controls">
         <button
           aria-label="Hold to speak"
-          className={`speak-button ${props.listening ? "listening" : ""}`}
-          disabled={!props.voiceSupported}
+          className={`speak-button ${props.listening ? "listening" : ""} ${busy ? "resolving" : ""}`}
+          disabled={!props.voiceSupported || busy}
+          tabIndex={busy ? -1 : 0}
           onPointerDown={(event) => {
+            if (busy || !props.voiceSupported) return;
             event.currentTarget.setPointerCapture(event.pointerId);
             props.onSpeak();
           }}
           onPointerUp={props.onStopSpeaking}
           onPointerCancel={props.onCancelSpeaking}
           onKeyDown={(event) => {
+            if (busy) return;
             if (event.code !== "Space" && event.key !== "Enter") return;
             event.preventDefault();
             event.stopPropagation();
             if (!event.repeat) props.onSpeak();
           }}
           onKeyUp={(event) => {
+            if (busy) return;
             if (event.code !== "Space" && event.key !== "Enter") return;
             event.preventDefault();
             event.stopPropagation();
@@ -91,7 +127,13 @@ export function PlayerReply(props: Props) {
         >
           {props.listening ? "Listening…" : "Hold to speak"}
         </button>
-        <button className="stop-control" disabled={!props.busy} onClick={props.onStopWork}>Stop</button>
+        <button
+          className="stop-control"
+          disabled={!props.busy}
+          onClick={props.onStopWork}
+        >
+          Stop
+        </button>
         <span>Drag to look</span>
       </div>
     </>
