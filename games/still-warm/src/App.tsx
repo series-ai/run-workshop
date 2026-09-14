@@ -647,24 +647,36 @@ export default function App({ preview = false }: { preview?: boolean }) {
                 <span aria-hidden="true" className="waiting-dots-pulse">{formatWaitingDots(dotCount)}</span>
               </span>
             ) : (
-              <Typewriter
-                paused={state.paused}
-                instant={reducedMotion || (!waitingTurn && (liveConversation ? !activeResponseText && !connection.response : !hasSpoken))}
-                onComplete={waitingTurn ? handleWaitingAnimationComplete : undefined}
-                text={
-                  waitingTurn
-                    ? waitingTurn.rawText
-                    : (liveConversation
-                      ? activeResponseText ?? connection.response?.text ?? OPENING_BEATS[OPENING_BEATS.length - 1].text
-                      : contactOrProblemThought ||
-                      roomCaption ||
-                      reactionThought ||
-                      (!hasSpoken ? OPENING_BEATS[OPENING_BEATS.length - 1].text : thought) ||
-                      (connection.needsInstruction && !busy
-                        ? "He is waiting for my voice."
-                        : ""))
-                }
-              />
+              <>
+                <Typewriter
+                  paused={state.paused}
+                  instant={reducedMotion || (!waitingTurn && (liveConversation ? !activeResponseText && !connection.response : !hasSpoken))}
+                  onComplete={waitingTurn ? handleWaitingAnimationComplete : undefined}
+                  text={
+                    waitingTurn
+                      ? waitingTurn.rawText
+                      : (liveConversation
+                        ? activeResponseText ?? connection.response?.text ?? OPENING_BEATS[OPENING_BEATS.length - 1].text
+                        : contactOrProblemThought ||
+                        roomCaption ||
+                        reactionThought ||
+                        (!hasSpoken ? OPENING_BEATS[OPENING_BEATS.length - 1].text : thought) ||
+                        (connection.needsInstruction && !busy
+                          ? "He is waiting for my voice."
+                          : ""))
+                  }
+                />
+                {waitingTurn && !waitingTurn.animationComplete && (
+                  <button
+                    type="button"
+                    className="skip-narration-button"
+                    onClick={skipWaiting}
+                    aria-label="Skip waiting narration"
+                  >
+                    Skip waiting narration
+                  </button>
+                )}
+              </>
             )}
           </div>
           {(interim || heard) && (

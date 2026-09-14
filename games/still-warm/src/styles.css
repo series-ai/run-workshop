@@ -748,3 +748,42 @@ input {
   min-width: 1.5em;
   text-align: left;
 }
+
+.skip-narration-button {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.skip-narration-button:focus,
+.skip-narration-button:focus-visible {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 6px 14px;
+  margin: 12px auto 0 auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+  background: #090c09f0;
+  border: 1px solid #79c0ff;
+  outline: 2px solid #79c0ff;
+  outline-offset: 2px;
+  color: #e5e3d7;
+  font-family: var(--ui-font);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 20;
+}
