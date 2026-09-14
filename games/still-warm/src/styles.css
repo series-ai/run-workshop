@@ -736,33 +736,15 @@ input {
 .thought-voice { font-style: italic; color: #c2bcaa; }
 .narrator-voice { font-style: normal; color: #a4b0ac; }
 
-.skip-waiting-button {
-  display: block;
-  margin: 10px auto 0 auto;
-  background: #090c09cc;
-  border: 1px solid #787b5e66;
-  color: #a4a896;
-  font-family: inherit;
-  font-size: 13px;
-  letter-spacing: 0.05em;
-  padding: 4px 12px;
-  border-radius: 3px;
-  cursor: pointer;
-  pointer-events: auto;
-  transition: opacity 0.15s, border-color 0.15s, color 0.15s;
-}
-.skip-waiting-button:hover {
-  color: #e5e3d7;
-  border-color: #a4a896;
-}
-.skip-waiting-button:focus-visible {
-  color: #e5e3d7;
-  border-color: #dce0e8;
-  outline: 2px solid #79c0ff;
-  outline-offset: 2px;
+.waiting-dots {
+  display: inline-block;
+  font-size: 24px;
+  letter-spacing: 0.25em;
+  color: #c2bcaa;
+  opacity: 0.85;
 }
 .waiting-dots-pulse {
-  letter-spacing: 0.1em;
   display: inline-block;
   min-width: 1.5em;
+  text-align: left;
 }

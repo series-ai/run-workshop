@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   createWaitingTurn,
-  formatWaitingText,
+  formatWaitingDots,
   onAnimationFinished,
   onResponseArrived,
   onSkipWaiting,
@@ -54,7 +54,7 @@ describe("waitingTurnState", () => {
     expect(afterResponse.activeResponse).toBe("A trembling sound answers.");
   });
 
-  it("skips animation immediately on user click and starts repeating dots if response not back yet", () => {
+  it("skips animation immediately on user click and shows repeating dots if response not back yet", () => {
     const turn = createWaitingTurn(sampleRaw);
     const skipped = onSkipWaiting(turn);
 
@@ -80,12 +80,11 @@ describe("waitingTurnState", () => {
   });
 
   it("formats repeating dots correctly (1 to 3 dots)", () => {
-    const text = "Waiting in dark";
-    expect(formatWaitingText(text, 1)).toBe("Waiting in dark .");
-    expect(formatWaitingText(text, 2)).toBe("Waiting in dark ..");
-    expect(formatWaitingText(text, 3)).toBe("Waiting in dark ...");
+    expect(formatWaitingDots(1)).toBe(".");
+    expect(formatWaitingDots(2)).toBe("..");
+    expect(formatWaitingDots(3)).toBe("...");
     // Clamped
-    expect(formatWaitingText(text, 4)).toBe("Waiting in dark ...");
-    expect(formatWaitingText(text, 0)).toBe("Waiting in dark .");
+    expect(formatWaitingDots(4)).toBe("...");
+    expect(formatWaitingDots(0)).toBe(".");
   });
 });

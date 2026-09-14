@@ -27,7 +27,7 @@ import { canPlayerSpeak, isActionResolving } from "./ui/playerInputState";
 import { GameDialog } from "./ui/GameDialog";
 import { Awakening } from "./ui/Awakening";
 import { defaultWaitingPicker } from "./game/waitingThoughts";
-import { WaitingTurn, createWaitingTurn, onAnimationFinished, onResponseArrived, onSkipWaiting } from "./ui/waitingTurnState";
+import { WaitingTurn, createWaitingTurn, formatWaitingDots, onAnimationFinished, onResponseArrived, onSkipWaiting } from "./ui/waitingTurnState";
 import { logConversation } from "./agent/conversationLogger";
 
 export default function App({ preview = false }: { preview?: boolean }) {
@@ -259,7 +259,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
 
   useEffect(() => {
     if (!waitingTurn || waitingTurn.animationComplete) return;
-    const handleClick = (e: MouseEvent | TouchEvent) => {
+    const handleClick = (e: MouseEvent) => {
+      if (e.button !== 0) return;
       const target = e.target as HTMLElement | null;
       if (target?.closest("button, a, input, select, textarea")) return;
       skipWaiting();
@@ -523,6 +524,11 @@ export default function App({ preview = false }: { preview?: boolean }) {
         onPointerCancel={() => {
           drag.current = null;
         }}
+        onClick={() => {
+          if (waitingTurn && !waitingTurn.animationComplete) {
+            skipWaiting();
+          }
+        }}
       >
         <SurgeryScene
           state={state}
@@ -633,46 +639,32 @@ export default function App({ preview = false }: { preview?: boolean }) {
           <div
             className={`inner-voice ${!liveConversation && showRoomCaption ? "narrator-voice" : "thought-voice"} ${waitingTurn && !waitingTurn.animationComplete ? "waiting-skippable" : ""}`}
             aria-live="polite"
-            onClick={waitingTurn ? skipWaiting : undefined}
+            onClick={waitingTurn && !waitingTurn.animationComplete ? skipWaiting : undefined}
           >
             {waitingTurn?.animationComplete ? (
-              <span className="typewriter waiting-dots-text">
-                <span className="sr-only">{waitingTurn.cleanText}</span>
-                <span aria-hidden="true">
-                  {waitingTurn.cleanText} <span className="waiting-dots-pulse">{".".repeat(dotCount)}</span>
-                </span>
+              <span className="typewriter waiting-dots">
+                <span className="sr-only">Waiting...</span>
+                <span aria-hidden="true" className="waiting-dots-pulse">{formatWaitingDots(dotCount)}</span>
               </span>
             ) : (
-              <>
-                <Typewriter
-                  paused={state.paused}
-                  instant={reducedMotion || (!waitingTurn && (liveConversation ? !activeResponseText && !connection.response : !hasSpoken))}
-                  onComplete={waitingTurn ? handleWaitingAnimationComplete : undefined}
-                  text={
-                    waitingTurn
-                      ? waitingTurn.rawText
-                      : (liveConversation
-                        ? activeResponseText ?? connection.response?.text ?? OPENING_BEATS[OPENING_BEATS.length - 1].text
-                        : contactOrProblemThought ||
-                        roomCaption ||
-                        reactionThought ||
-                        (!hasSpoken ? OPENING_BEATS[OPENING_BEATS.length - 1].text : thought) ||
-                        (connection.needsInstruction && !busy
-                          ? "He is waiting for my voice."
-                          : ""))
-                  }
-                />
-                {waitingTurn && !waitingTurn.animationComplete && (
-                  <button
-                    type="button"
-                    className="skip-waiting-button"
-                    onClick={skipWaiting}
-                    aria-label="Skip waiting narration"
-                  >
-                    Skip
-                  </button>
-                )}
-              </>
+              <Typewriter
+                paused={state.paused}
+                instant={reducedMotion || (!waitingTurn && (liveConversation ? !activeResponseText && !connection.response : !hasSpoken))}
+                onComplete={waitingTurn ? handleWaitingAnimationComplete : undefined}
+                text={
+                  waitingTurn
+                    ? waitingTurn.rawText
+                    : (liveConversation
+                      ? activeResponseText ?? connection.response?.text ?? OPENING_BEATS[OPENING_BEATS.length - 1].text
+                      : contactOrProblemThought ||
+                      roomCaption ||
+                      reactionThought ||
+                      (!hasSpoken ? OPENING_BEATS[OPENING_BEATS.length - 1].text : thought) ||
+                      (connection.needsInstruction && !busy
+                        ? "He is waiting for my voice."
+                        : ""))
+                }
+              />
             )}
           </div>
           {(interim || heard) && (

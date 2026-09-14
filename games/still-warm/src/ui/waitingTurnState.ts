@@ -56,7 +56,7 @@ export function onResponseArrived(
 /**
  * When the user clicks to skip waiting text:
  * If response has already arrived, transition immediately to it.
- * Otherwise, complete the animation and start repeating dots at the end.
+ * Otherwise, skip the line completely and show repeating dots until response returns.
  */
 export function onSkipWaiting(current: WaitingTurn | null): TurnTransitionResult {
   if (!current) {
@@ -69,7 +69,7 @@ export function onSkipWaiting(current: WaitingTurn | null): TurnTransitionResult
       activeResponse: current.pendingResponse,
     };
   }
-  // Result is not back yet: show full clean text with repeating dots.
+  // Result is not back yet: skip the line and show repeating dots.
   return {
     turn: {
       ...current,
@@ -83,7 +83,7 @@ export function onSkipWaiting(current: WaitingTurn | null): TurnTransitionResult
 /**
  * When the typewriter animation naturally finishes playing out:
  * If response has already arrived, transition immediately to it.
- * Otherwise, keep waiting with repeating dots at the end.
+ * Otherwise, keep waiting with repeating dots.
  */
 export function onAnimationFinished(current: WaitingTurn | null): TurnTransitionResult {
   if (!current) {
@@ -96,7 +96,7 @@ export function onAnimationFinished(current: WaitingTurn | null): TurnTransition
       activeResponse: current.pendingResponse,
     };
   }
-  // Response not back yet: keep waiting with repeating dots at the end.
+  // Response not back yet: keep waiting with repeating dots.
   return {
     turn: {
       ...current,
@@ -114,9 +114,9 @@ export function onTimeoutOrError(): TurnTransitionResult {
 }
 
 /**
- * Helper to compute the repeating dots string based on dot count (1 to 3).
+ * Format repeating dots string based on dot count (1 to 3).
  */
-export function formatWaitingText(cleanText: string, dotCount: number): string {
-  const dots = ".".repeat(Math.max(1, Math.min(3, dotCount)));
-  return `${cleanText} ${dots}`;
+export function formatWaitingDots(dotCount: number): string {
+  const count = Math.max(1, Math.min(3, dotCount));
+  return ".".repeat(count);
 }
