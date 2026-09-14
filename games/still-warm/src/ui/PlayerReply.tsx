@@ -21,8 +21,8 @@ interface Props {
   placeholder?: string;
 }
 
-function focusDesktopInput(input: HTMLInputElement | null) {
-  if (!document.hidden && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+function focusInput(input: HTMLInputElement | null) {
+  if (!document.hidden && (!window.matchMedia || window.matchMedia("(hover: hover) and (pointer: fine)").matches)) {
     input?.focus({ preventScroll: true });
   }
 }
@@ -45,10 +45,16 @@ export function PlayerReply(props: Props) {
   // Focus input on desktop when idle and ready for the next instruction
   useEffect(() => {
     if (busy || listening) return;
-    const focus = () => focusDesktopInput(inputRef.current);
+    const focus = () => focusInput(inputRef.current);
     focus();
+    const frame = requestAnimationFrame(focus);
+    const timer = setTimeout(focus, 160);
     window.addEventListener("focus", focus);
-    return () => window.removeEventListener("focus", focus);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timer);
+      window.removeEventListener("focus", focus);
+    };
   }, [inputRef, busy, listening]);
 
   return (
@@ -61,7 +67,7 @@ export function PlayerReply(props: Props) {
             return;
           }
           props.onSubmit(event);
-          focusDesktopInput(inputRef.current);
+          focusInput(inputRef.current);
         }}
       >
         <input

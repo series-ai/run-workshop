@@ -28,7 +28,6 @@ import { GameDialog } from "./ui/GameDialog";
 import { Awakening } from "./ui/Awakening";
 import { defaultWaitingPicker } from "./game/waitingThoughts";
 import { logConversation } from "./agent/conversationLogger";
-import { getMonsterResponse } from "./game/monsterResponse";
 
 export default function App({ preview = false }: { preview?: boolean }) {
   const listening = useRef(false);
@@ -86,7 +85,6 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const [heard, setHeard] = useState("");
   const [hasSpoken, setHasSpoken] = useState(false);
   const [waitingThought, setWaitingThought] = useState("");
-  const [monsterResponseText, setMonsterResponseText] = useState("");
   const wasBusy = useRef(false);
   const busyRef = useRef(false);
   const canSpeakRef = useRef(false);
@@ -104,7 +102,6 @@ export default function App({ preview = false }: { preview?: boolean }) {
           const waiting = defaultWaitingPicker.pick(stateRef.current);
           logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
           setWaitingThought(waiting.full);
-          setMonsterResponseText("");
           controller.command(text);
         },
         onInterim: setInterim,
@@ -215,15 +212,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
     if (connection.response && connection.response.id !== lastResponseId.current) {
       lastResponseId.current = connection.response.id;
       setWaitingThought("");
-      const isWordy = /["“”]/.test(connection.response.text) || connection.response.text.length > 120;
-      const resp = isWordy ? getMonsterResponse(state.emotion) : null;
-      const text = resp ? resp.text : connection.response.text;
-      setMonsterResponseText(text);
-      if (resp) {
-        vocalize(resp.cue);
-      }
     }
-  }, [connection.response, state.emotion, vocalize]);
+  }, [connection.response]);
 
   useEffect(() => {
     if (busy) {
@@ -231,19 +221,10 @@ export default function App({ preview = false }: { preview?: boolean }) {
     } else if (wasBusy.current) {
       wasBusy.current = false;
       if (waitingThought) {
-        const resp = getMonsterResponse(state.emotion);
         setWaitingThought("");
-        setMonsterResponseText(resp.text);
-        vocalize(resp.cue);
       }
     }
-  }, [busy, waitingThought, state.emotion, vocalize]);
-
-  useEffect(() => {
-    if (!monsterResponseText) return;
-    const timer = setTimeout(() => setMonsterResponseText(""), 7000);
-    return () => clearTimeout(timer);
-  }, [monsterResponseText]);
+  }, [busy, waitingThought]);
   useEffect(() => {
     if (!heard) return;
     const timer = setTimeout(() => setHeard(""), 5000);
@@ -405,7 +386,6 @@ export default function App({ preview = false }: { preview?: boolean }) {
     lastOpeningShuffle.current = false;
     setHasSpoken(false);
     setWaitingThought("");
-    setMonsterResponseText("");
     setHeard("");
     setCommand("");
     setReactionThought("");
@@ -423,7 +403,6 @@ export default function App({ preview = false }: { preview?: boolean }) {
     const waiting = defaultWaitingPicker.pick(state);
     logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
     setWaitingThought(waiting.full);
-    setMonsterResponseText("");
     controller.command(command.trim());
     setCommand("");
   };
@@ -432,7 +411,6 @@ export default function App({ preview = false }: { preview?: boolean }) {
     const waiting = defaultWaitingPicker.pick(state);
     logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
     setWaitingThought(waiting.full);
-    setMonsterResponseText("");
     controller.resume();
     void controller.rehearse(actions);
   };
@@ -593,10 +571,9 @@ export default function App({ preview = false }: { preview?: boolean }) {
           <div className={`inner-voice ${!liveConversation && showRoomCaption ? "narrator-voice" : "thought-voice"}`} aria-live="polite">
             <Typewriter
               paused={state.paused}
-              instant={reducedMotion || (!waitingThought && !monsterResponseText && (liveConversation ? !connection.response : !hasSpoken))}
+              instant={reducedMotion || (!waitingThought && (liveConversation ? !connection.response : !hasSpoken))}
               text={
                 waitingThought ||
-                monsterResponseText ||
                 (liveConversation
                   ? connection.response?.text ?? OPENING_BEATS[OPENING_BEATS.length - 1].text
                   : contactOrProblemThought ||
