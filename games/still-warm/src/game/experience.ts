@@ -20,7 +20,7 @@ export function sceneThought(state: GameState): { id: string; text: string } {
   if (state.posture === "prone")
     return {
       id: "roll",
-      text: "The cabinet is off my back. I am still face down. He can turn me.",
+      text: "The cabinet is off my back. I am still face down, but at least I can see the cold floor now. He can roll me over.",
     };
   if (!state.environment.lanternLit)
     return {

@@ -63,6 +63,15 @@ export const WAITING_ITEMS_2: readonly ConditionalThought[] = [
     available: (state) => !state || state.posture === "prone",
   },
   { text: "Dust settles slowly in the black air." },
+  // Freed prone (cabinet off, but still face down)
+  {
+    text: "The crushing weight is gone, but your cheek is still pressed against the stones.",
+    available: (state) => !state || (state.stage !== "pinned" && state.posture === "prone"),
+  },
+  {
+    text: "You can see the cold mortar and flagstones right in front of your eyes.",
+    available: (state) => !state || (state.stage !== "pinned" && state.posture === "prone"),
+  },
   // Supine (flipped over) specific continuations
   {
     text: "The damp cellar ceiling looms in the shadows above.",

@@ -91,7 +91,7 @@ function proneCareProblem(state: GameState): ActionProblem {
   }
   return problem(
     "I am still face down. Roll me onto my back before light or wound care.",
-    "The cabinet is off. Roll me over.",
+    "The cabinet is off, and I can see the ground, but I am still face down. Roll me over.",
   );
 }
 
@@ -2264,7 +2264,7 @@ export function observeStatus(state: GameState) {
     state.stage === "pinned"
       ? "A heavy cabinet is on his back after the laboratory collapse."
       : state.posture === "prone"
-        ? "The cabinet is off. He is still face down."
+        ? "The cabinet is off. He is still face down, but can see the cold floor now."
         : state.restrained
           ? "Unable to stand after the crush injury. The damaged leg brace is still caught."
           : "Stable and able to move.";

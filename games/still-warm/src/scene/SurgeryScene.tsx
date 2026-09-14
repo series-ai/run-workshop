@@ -64,9 +64,9 @@ export const SurgeryScene: FC<SurgerySceneProps> = ({
 
         {/* Player-controlled first-person view */}
         <PatientPoseController state={state} pose={pose} />
-        <CameraController look={look} pose={pose} paused={isPaused} />
+        <CameraController look={look} pose={pose} state={state} paused={isPaused} />
 
-        <SceneLighting />
+        <SceneLighting state={state} />
         <CellarStory
           lit={lit}
           paused={isPaused}
