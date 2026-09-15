@@ -117,6 +117,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
         },
         onStop: () => {
           setHeard("");
+          setWaitingTurn(null);
+          setResponseAnimating(false);
           controller.stop();
         },
       }),
@@ -283,7 +285,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
   }, [waitingTurn, responseAnimating, skipWaiting]);
 
   useEffect(() => {
-    if (connection.status === "error" || !active) {
+    if (connection.status === "error" || connection.status === "stopping" || !active) {
       setWaitingTurn(null);
       setResponseAnimating(false);
     }
@@ -365,10 +367,14 @@ export default function App({ preview = false }: { preview?: boolean }) {
     setHeard("");
     setCommand("");
     voice.cancel();
+    setWaitingTurn(null);
+    setResponseAnimating(false);
     controller.stop();
   };
   const pause = () => {
     voice.cancel();
+    setWaitingTurn(null);
+    setResponseAnimating(false);
     controller.pause();
     setTyping(false);
     void fullscreen.release();

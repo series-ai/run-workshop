@@ -34,6 +34,16 @@ describe("playerInputState", () => {
     expect(isActionResolving("idle", null, true)).toBe(true);
     expect(isActionResolving("idle", null, false)).toBe(false);
   });
+  it("restores input immediately when pending narration is cleared upon cancellation or stop", () => {
+    let hasPendingNarration = true;
+    let status = "thinking";
+    expect(isActionResolving(status, null, hasPendingNarration)).toBe(true);
+
+    // Player stops request: narration cleared and status returns to idle
+    hasPendingNarration = false;
+    status = "idle";
+    expect(isActionResolving(status, null, hasPendingNarration)).toBe(false);
+  });
 
   it("permits speech only when active, opening complete, live mode, and NOT busy", () => {
     expect(

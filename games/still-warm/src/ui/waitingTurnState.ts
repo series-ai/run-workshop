@@ -109,8 +109,15 @@ export function onAnimationFinished(current: WaitingTurn | null): TurnTransition
 /**
  * When a timeout or error occurs:
  */
-export function onTimeoutOrError(): TurnTransitionResult {
+/**
+ * When cancelled, stopped, timed out, or an error occurs:
+ */
+export function onCancelOrStop(): TurnTransitionResult {
   return { turn: null, activeResponse: null };
+}
+
+export function onTimeoutOrError(): TurnTransitionResult {
+  return onCancelOrStop();
 }
 
 /**

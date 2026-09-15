@@ -5,6 +5,7 @@ import {
   onAnimationFinished,
   onResponseArrived,
   onSkipWaiting,
+  onCancelOrStop,
   onTimeoutOrError,
 } from "./waitingTurnState";
 
@@ -71,6 +72,12 @@ describe("waitingTurnState", () => {
     const skipped = onSkipWaiting(withResponse.turn);
     expect(skipped.turn).toBeNull();
     expect(skipped.activeResponse).toBe("Response ready");
+  });
+
+  it("clears turn on cancel or stop", () => {
+    const result = onCancelOrStop();
+    expect(result.turn).toBeNull();
+    expect(result.activeResponse).toBeNull();
   });
 
   it("clears turn on timeout or error", () => {
