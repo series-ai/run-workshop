@@ -87,6 +87,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const [hasSpoken, setHasSpoken] = useState(false);
   const [waitingTurn, setWaitingTurn] = useState<WaitingTurn | null>(null);
   const [activeResponseText, setActiveResponseText] = useState<string | null>(null);
+  const [responseAnimating, setResponseAnimating] = useState(false);
   const [dotCount, setDotCount] = useState(1);
   const wasBusy = useRef(false);
   const busyRef = useRef(false);
@@ -128,7 +129,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const lastOpeningShuffle = useRef(false);
   const terminal = state.phase === "won" || state.phase === "lost";
   const blackout = state.phase === "blackout";
-  const busy = isActionResolving(connection.status, state.pending);
+  const hasPendingNarration = waitingTurn !== null || responseAnimating;
+  const busy = isActionResolving(connection.status, state.pending, hasPendingNarration);
   busyRef.current = busy;
   const active = started && !state.paused && !terminal && !blackout;
   const canSpeak = canPlayerSpeak({
@@ -218,6 +220,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
       const result = onSkipWaiting(current);
       if (result.activeResponse !== null) {
         setActiveResponseText(result.activeResponse);
+        setResponseAnimating(true);
       }
       return result.turn;
     });
@@ -229,9 +232,14 @@ export default function App({ preview = false }: { preview?: boolean }) {
       const result = onAnimationFinished(current);
       if (result.activeResponse !== null) {
         setActiveResponseText(result.activeResponse);
+        setResponseAnimating(true);
       }
       return result.turn;
     });
+  }, []);
+
+  const handleResponseAnimationComplete = useCallback(() => {
+    setResponseAnimating(false);
   }, []);
 
   useEffect(() => {
@@ -242,6 +250,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
         const result = onResponseArrived(current, responseText);
         if (result.activeResponse !== null) {
           setActiveResponseText(result.activeResponse);
+          setResponseAnimating(true);
         }
         return result.turn;
       });
@@ -258,20 +267,25 @@ export default function App({ preview = false }: { preview?: boolean }) {
   }, [waitingTurn?.animationComplete]);
 
   useEffect(() => {
-    if (!waitingTurn || waitingTurn.animationComplete) return;
+    if ((!waitingTurn || waitingTurn.animationComplete) && !responseAnimating) return;
     const handleClick = (e: MouseEvent) => {
       if (e.button !== 0) return;
       const target = e.target as HTMLElement | null;
       if (target?.closest("button, a, input, select, textarea")) return;
-      skipWaiting();
+      if (waitingTurn && !waitingTurn.animationComplete) {
+        skipWaiting();
+      } else if (responseAnimating) {
+        setResponseAnimating(false);
+      }
     };
     window.addEventListener("click", handleClick);
     return () => window.removeEventListener("click", handleClick);
-  }, [waitingTurn, skipWaiting]);
+  }, [waitingTurn, responseAnimating, skipWaiting]);
 
   useEffect(() => {
     if (connection.status === "error" || !active) {
       setWaitingTurn(null);
+      setResponseAnimating(false);
     }
   }, [connection.status, active]);
 
@@ -447,6 +461,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
     setHasSpoken(false);
     setWaitingTurn(null);
     setActiveResponseText(null);
+    setResponseAnimating(false);
     setHeard("");
     setCommand("");
     setReactionThought("");
@@ -527,6 +542,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
         onClick={() => {
           if (waitingTurn && !waitingTurn.animationComplete) {
             skipWaiting();
+          } else if (responseAnimating) {
+            setResponseAnimating(false);
           }
         }}
       >
@@ -650,8 +667,20 @@ export default function App({ preview = false }: { preview?: boolean }) {
               <>
                 <Typewriter
                   paused={state.paused}
-                  instant={reducedMotion || (!waitingTurn && (liveConversation ? !activeResponseText && !connection.response : !hasSpoken))}
-                  onComplete={waitingTurn ? handleWaitingAnimationComplete : undefined}
+                  instant={
+                    reducedMotion ||
+                    (!waitingTurn &&
+                      (liveConversation
+                        ? !responseAnimating && !activeResponseText && !connection.response
+                        : !hasSpoken))
+                  }
+                  onComplete={
+                    waitingTurn
+                      ? handleWaitingAnimationComplete
+                      : responseAnimating
+                        ? handleResponseAnimationComplete
+                        : undefined
+                  }
                   text={
                     waitingTurn
                       ? waitingTurn.rawText

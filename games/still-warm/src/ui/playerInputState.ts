@@ -1,10 +1,12 @@
 export function isActionResolving(
   status: string,
   pendingAction: unknown | null,
+  hasPendingNarration: boolean = false,
 ): boolean {
   return (
     ["thinking", "acting", "stopping"].includes(status) ||
-    pendingAction !== null
+    pendingAction !== null ||
+    hasPendingNarration
   );
 }
 

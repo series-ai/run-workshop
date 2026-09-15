@@ -30,6 +30,11 @@ describe("playerInputState", () => {
     expect(isActionResolving("idle", { action: { kind: "lift_debris" }, progress: 0.5 })).toBe(true);
   });
 
+  it("keeps action resolving while pending narration text is still displaying on screen", () => {
+    expect(isActionResolving("idle", null, true)).toBe(true);
+    expect(isActionResolving("idle", null, false)).toBe(false);
+  });
+
   it("permits speech only when active, opening complete, live mode, and NOT busy", () => {
     expect(
       canPlayerSpeak({
