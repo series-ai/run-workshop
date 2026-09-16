@@ -30,6 +30,7 @@ import {
   getEmotionContactModifiers,
 } from "./emotions";
 import {
+  canFireSpread,
   canStartDoor,
   canStartFire,
   DOOR_MAX_PRESSURE,
@@ -135,6 +136,7 @@ export function locationArea(location: Location): RoomArea {
 function lanternDestination(state: GameState): RoomArea {
   const location = state.items.lantern.location;
   if (location === "hand") return state.creatureArea;
+  if (location === "floor") return "workbench";
   return locationArea(location);
 }
 
@@ -874,8 +876,14 @@ export function applyAction(
   switch (action.kind) {
     case "light_lantern": {
       next.environment = { ...state.environment, lanternLit: true };
+      if (next.items.lantern.location === "floor") {
+        next.items = {
+          ...next.items,
+          lantern: { ...next.items.lantern, location: "workbench" },
+        };
+      }
       const message =
-        "The workbench lantern is lit. Its light reveals the cellar and the assembled boy.";
+        "Righted the fallen lantern and caught the flame. Its steady amber light reveals the cellar and the assembled boy.";
       return {
         ok: true,
         state: appendJournal(next, "action", message),
@@ -1123,7 +1131,7 @@ export function applyAction(
             const poured = next.waterPortions;
             next.environment = {
               ...next.environment,
-              fire: Math.max(0, next.environment.fire - poured * 20),
+              fire: Math.max(0, next.environment.fire - (poured === 3 ? 70 : poured * 20)),
             };
             next.items = {
               ...next.items,
@@ -2201,7 +2209,7 @@ export function tickPatient(state: GameState, dt: number): GameState {
     next = appendJournal(next, "system", fireEvent.text);
   }
 
-  if (fireWasBurning && next.environment.fire > 0) {
+  if (canFireSpread(next.stage, next.phase) && fireWasBurning && next.environment.fire > 0) {
     const fireBeforeGrowth = next.environment.fire;
     next.environment.fire = Math.min(
       100,

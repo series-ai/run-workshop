@@ -3,7 +3,7 @@ import { LanternModel } from "./WorkbenchLantern";
 import { useRef, useMemo } from "react";
 import type { FC } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Group, Vector3, Quaternion, MathUtils, CatmullRomCurve3 } from "three";
+import { Group, Vector3, Quaternion, Euler, MathUtils, CatmullRomCurve3 } from "three";
 import type { PointLight } from "three";
 import type { GameState } from "../game/model";
 import { getItemSlot, getItemOffset } from "./types";
@@ -701,7 +701,15 @@ const SingleItem: FC<SingleItemProps> = ({
   reducedMotion = false,
 }) => {
   const groupRef = useRef<Group>(null!);
-  const restingRotation = useMemo(() => new Quaternion(), []);
+  const restingRotation = useMemo(() => {
+    const q = new Quaternion();
+    if (id === "lantern" && location === "floor" && !lit) {
+      // Tipped over on floor next to the spilled oil fire
+      const euler = new Euler(1.32, 0.22, 0.48);
+      q.setFromEuler(euler);
+    }
+    return q;
+  }, [id, location, lit]);
 
   const targetPos = useMemo(() => {
     const slot = getItemSlot(location);

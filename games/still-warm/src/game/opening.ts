@@ -1,25 +1,20 @@
 import { compileText } from "../text";
 
 export const OPENING_BEATS = [
-  { at: 0, voice: "thought", text: "Pitch black. Cold stone against my face." },
-  { at: 6, voice: "thought", text: "I try to move.{{pause(0.250)}}.{{pause(0.250)}}..{{pause(0.750)}} I can't." },
-  { at: 11, voice: "thought", text: "The cabinet. It's pinning me." },
-  { at: 16, voice: "thought", text: "But no pain." },
-  { at: 21, voice: "narrator", text: "You hear shuffling on the stone next to you." },
-  { at: 25, voice: "thought", text: "Oh! My boy is here, in the dark. He must be so scared." },
+  { at: 0, voice: "thought", text: "Pitch black. Cold against my face. I'm pinned down." },
 ] as const;
-export const OPENING_DURATION = 32;
+export const OPENING_DURATION = 5;
 
 export function openingAt(elapsed: number) {
   const beat =
     [...OPENING_BEATS].reverse().find((beat) => elapsed >= beat.at) ??
     OPENING_BEATS[0];
   return {
-    eyes: Math.max(0, Math.min(1, (elapsed - 6) / 6)),
+    eyes: Math.max(0, Math.min(1, elapsed / 2.5)),
     narration: elapsed < OPENING_DURATION ? beat.text : "",
     voice: beat.voice,
     age: Math.max(0, elapsed - beat.at),
-    shuffle: elapsed >= 21 && elapsed < 25,
+    shuffle: false,
     call: 0,
     complete: elapsed >= OPENING_DURATION,
   };

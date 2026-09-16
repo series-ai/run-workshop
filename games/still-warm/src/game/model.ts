@@ -162,7 +162,7 @@ export const CATALOG: Record<
   lantern: {
     name: "Lantern",
     sharp: false,
-    initial: "workbench",
+    initial: "floor",
     material: "metal",
     capabilities: ["light"],
   },
@@ -479,8 +479,8 @@ export function createInitialState(): GameState {
     candleLit: false,
     environment: {
       lanternLit: false,
-      fire: 0,
-      fireStarted: false,
+      fire: 12,
+      fireStarted: true,
       door: "quiet",
       doorPressure: 0,
       nextEventAt: 75,
@@ -512,7 +512,7 @@ export function isActive(state: GameState): boolean {
 export function actionLabel(action: PhysicalAction): string {
   switch (action.kind) {
     case "light_lantern":
-      return "Lighting the workbench lantern";
+      return "Righting the fallen lantern and catching the flame";
     case "move_to":
       return `Walking to the ${action.target}`;
     case "lift_debris":
@@ -526,7 +526,7 @@ export function actionLabel(action: PhysicalAction): string {
     case "use":
       return `${action.style === "rough" ? "Pressing" : "Using"} ${CATALOG[action.item].name.toLowerCase()} on ${action.target}`;
     case "adjust_lamp":
-      return `Turning the lamp ${action.position === "away" ? "away" : `toward your ${action.position}`}`;
+      return `Turning the lamp ${action.position === "away" ? "away" : `toward his ${action.position}`}`;
     case "combine":
       return `Combining ${CATALOG[action.first].name.toLowerCase()} and ${CATALOG[action.second].name.toLowerCase()}`;
     case "break":

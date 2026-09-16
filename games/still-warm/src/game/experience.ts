@@ -25,14 +25,14 @@ export function sceneThought(state: GameState): { id: string; text: string } {
   if (!state.environment.lanternLit)
     return {
       id: "light",
-      text: "His shoulder. His hand. My boy, in the dark. The lantern is on the workbench.",
+      text: "His shoulder. His hand. My boy, in the firelight. Right the fallen lantern and catch the flame.",
     };
   if (state.environment.fire > 0)
     return {
       id: "fire",
       text:
         state.waterPortions > 0
-          ? "Smoke. Water, or the wool blanket. Before it spreads."
+          ? "Smoke. Water, or the wool blanket. Smother the spilled oil before it spreads."
           : "Smoke. He has to cover the flames. The blanket, or the metal bowl.",
     };
   if (state.patient.pain >= 62 && state.patient.sedation < 18)
@@ -189,7 +189,7 @@ export function previewChoices(state: GameState): PreviewChoice[] {
     return [
       {
         id: "light",
-        label: "Light the lantern. I am here.",
+        label: "Right the lantern and catch the flame.",
         actions: [
           { kind: "light_lantern" },
           { kind: "vocalize", cue: "relief" },

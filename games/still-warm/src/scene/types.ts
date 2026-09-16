@@ -35,7 +35,7 @@ export const DEFAULT_SLOTS: Record<Location | string, Vec3> = {
   patient: [...PATIENT_LAYOUT.care],
   pillow: [0.32, -0.84, -0.42],
   stand: [-0.72, -0.68, -0.25],
-  floor: [0.45, -0.88, 0.55],
+  floor: [-0.60, -0.88, 0.75],
   consumed: [0.0, -100.0, 0.0],
 };
 

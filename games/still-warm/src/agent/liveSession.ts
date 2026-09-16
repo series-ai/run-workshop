@@ -1,3 +1,41 @@
+export function createFastTurnTransport(
+  baseTransport: ReturnType<typeof createTextGenTransport>,
+  shouldFastClose: () => boolean,
+): ReturnType<typeof createTextGenTransport> {
+  return {
+    async *stream(request, options) {
+      if (shouldFastClose()) {
+        yield { type: "text_delta", delta: "Waiting." };
+        yield {
+          type: "finish",
+          reason: "stop",
+          usage: { inputTokens: 0, outputTokens: 1, totalTokens: 1 },
+        };
+        return;
+      }
+      for await (const chunk of baseTransport.stream(request, options)) {
+        yield chunk;
+      }
+    },
+    complete(request, options) {
+      if (shouldFastClose()) {
+        return Promise.resolve({
+          model: request.model,
+          content: [{ type: "text" as const, text: "Waiting." }],
+          finishReason: "stop" as const,
+          usage: { inputTokens: 0, outputTokens: 1, totalTokens: 1 },
+        });
+      }
+      return baseTransport.complete(request, options);
+    },
+    listModels(signal) {
+      return baseTransport.listModels
+        ? baseTransport.listModels(signal)
+        : Promise.resolve([]);
+    },
+  };
+}
+
 import { z } from "zod";
 import {
   createAgent,
@@ -181,11 +219,16 @@ export async function createLiveSession(
       },
     }),
   };
+  const baseTransport = createTextGenTransport(run.textGen, {
+    mode: "open",
+    modelClass: "quick",
+  });
+  const modelTransport = createFastTurnTransport(
+    baseTransport,
+    () => respondedThisTurn,
+  );
   const agent = createAgent({
-    model: createTextGenTransport(run.textGen, {
-      mode: "open",
-      modelClass: "quick",
-    }),
+    model: modelTransport,
     models: ["gpt-5.4-mini", "gpt-5"],
     instructions: CREATURE_INSTRUCTIONS,
     tools,

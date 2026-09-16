@@ -40,3 +40,8 @@ export function canStartFire(
     elapsed >= FIRE_FALLBACK_SECONDS
   );
 }
+
+export function canFireSpread(stage: Stage, phase: Phase): boolean {
+  if (phase !== "playing" || stage === "pinned") return false;
+  return true;
+}

@@ -11,8 +11,8 @@ describe("waiting thoughts procedural generator", () => {
   it("provides over one hundred procedural combinations between Set 1 and Set 2", () => {
     const totalPossible = WAITING_SET_1.length * WAITING_SET_2.length;
     expect(totalPossible).toBeGreaterThanOrEqual(100);
-    expect(WAITING_SET_1).toContain("Your voice echoes in the darkness");
-    expect(WAITING_SET_1).toContain("Your throat is coarse");
+    expect(WAITING_SET_1).toContain("My voice echoes in the darkness");
+    expect(WAITING_SET_1).toContain("My throat is coarse");
   });
 
   it("formats with ellipsis and trailing pauses to act as buffers at the end of both lines", () => {
@@ -26,7 +26,7 @@ describe("waiting thoughts procedural generator", () => {
     expect(thought.full.includes(thought.second)).toBe(true);
   });
 
-  it("damp stone bites into your forehead is only available until flipped over (prone vs supine)", () => {
+  it("damp stone bites into my forehead is only available until flipped over (prone vs supine)", () => {
     const proneState = createInitialState();
     expect(proneState.posture).toBe("prone");
 
@@ -34,11 +34,11 @@ describe("waiting thoughts procedural generator", () => {
 
     // Verify forehead/prone thoughts can appear when prone
     const pronePicks: string[] = [];
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 200; i++) {
       pronePicks.push(picker.pick(proneState).second);
     }
     expect(
-      pronePicks.some((p) => p.includes("damp stone bites into your forehead")),
+      pronePicks.some((p) => p.includes("damp stone bites into my forehead")),
     ).toBe(true);
 
     // Now roll the patient over (flipped over to supine)
@@ -55,7 +55,7 @@ describe("waiting thoughts procedural generator", () => {
       const pick = picker.pick(supineState);
       supinePicks.push(pick.first);
       supinePicks.push(pick.second);
-      expect(pick.second).not.toContain("damp stone bites into your forehead");
+      expect(pick.second).not.toContain("damp stone bites into my forehead");
       expect(pick.second).not.toContain("cellar floor drains the warmth");
       expect(pick.first).not.toContain("breath leaves a cold mist against the stone");
     }
@@ -66,7 +66,7 @@ describe("waiting thoughts procedural generator", () => {
         (p) =>
           p.includes("ceiling") ||
           p.includes("rafters") ||
-          p.includes("air above you"),
+          p.includes("air above me"),
       ),
     ).toBe(true);
   });

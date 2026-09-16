@@ -46,7 +46,16 @@ function createPostAccidentState(): GameState {
     elapsed: OPENING_DURATION,
     stage: "covered",
     posture: "supine",
-    environment: { ...initial.environment, lanternLit: true },
+    environment: {
+      ...initial.environment,
+      lanternLit: true,
+      fire: 0,
+      fireStarted: false,
+    },
+    items: {
+      ...initial.items,
+      lantern: { ...initial.items.lantern, location: "workbench" },
+    },
   };
 }
 
@@ -2463,7 +2472,7 @@ describe("Still Warm - Domain Rules & Transitions", () => {
       expect(s.elapsed).toBe(OPENING_DURATION);
       expect(s.patient).toEqual(patient);
       expect(s.environment.door).toBe("quiet");
-      expect(s.environment.fire).toBe(0);
+      expect(s.environment.fire).toBe(12);
       expect(s.environment.events).toHaveLength(0);
 
       s = tickPatient(s, 2);
@@ -3611,7 +3620,7 @@ describe("Fixed lamp and candle contract", () => {
 describe("Portable lantern and room areas", () => {
   it("treats the lantern as a portable item distinct from the fixed lamp", () => {
     const initial = createInitialState();
-    expect(initial.items.lantern.location).toBe("workbench");
+    expect(initial.items.lantern.location).toBe("floor");
     expect(initial.items.lamp.location).toBe("stand");
     expect(initial.creatureArea).toBe("father");
     expect(initial.environment.lanternLit).toBe(false);
@@ -3641,7 +3650,7 @@ describe("Portable lantern and room areas", () => {
     expect(picked.state.holding).toBe("lantern");
     expect(picked.state.items.lantern.location).toBe("hand");
     expect(picked.state.environment.lanternLit).toBe(false);
-    expect(picked.state.creatureArea).toBe("workbench");
+    expect(picked.state.creatureArea).toBe("father");
 
     const placed = applyAction(picked.state, {
       kind: "place",
@@ -3661,9 +3670,9 @@ describe("Portable lantern and room areas", () => {
     const picked = applyAction(playing, { kind: "pick_up", item: "lantern" });
     expect(picked.ok).toBe(true);
     if (!picked.ok) return;
-    expect(picked.state.creatureArea).toBe("workbench");
+    expect(picked.state.creatureArea).toBe("father");
     expect(physicalDestination(picked.state, { kind: "light_lantern" })).toBe(
-      "workbench",
+      "father",
     );
 
     const placed = applyAction(picked.state, {

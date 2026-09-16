@@ -49,6 +49,7 @@ it("guides a timed operation through relief, the door, fire, and rescue", async 
   await choose("lift");
   await choose("roll");
   await choose("light");
+  if (store.getSnapshot().environment.fire) await choose("fire");
   await choose("expose");
   await choose("relief");
   await choose("door");
@@ -291,7 +292,11 @@ it("takes and carries the portable lantern to the cabinet, then the door, then b
     phase: "playing",
     stage: "covered",
     posture: "supine",
-    environment: { ...state.environment, lanternLit: true },
+    environment: { ...state.environment, lanternLit: true, fire: 0, fireStarted: false },
+    items: {
+      ...state.items,
+      lantern: { ...state.items.lantern, location: "workbench" },
+    },
   });
   const sourceInventory = itemsOtherThanLantern(store.getSnapshot());
   const path = ["cabinet", "door", "father"] as const;

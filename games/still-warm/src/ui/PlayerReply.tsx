@@ -1,6 +1,6 @@
 import { useEffect, type FormEvent, type RefObject } from "react";
 
-export const FIRST_INSTRUCTION_PLACEHOLDER = "Speak to him, he can help you";
+export const FIRST_INSTRUCTION_PLACEHOLDER = "Call out into the dark...";
 export const SUBSEQUENT_INSTRUCTION_PLACEHOLDER = "Tell him what to do next";
 
 interface Props {
@@ -114,34 +114,40 @@ export function PlayerReply(props: Props) {
             event.currentTarget.setPointerCapture(event.pointerId);
             props.onSpeak();
           }}
-          onPointerUp={props.onStopSpeaking}
-          onPointerCancel={props.onCancelSpeaking}
-          onKeyDown={(event) => {
-            if (busy) return;
-            if (event.code !== "Space" && event.key !== "Enter") return;
-            event.preventDefault();
-            event.stopPropagation();
-            if (!event.repeat) props.onSpeak();
-          }}
-          onKeyUp={(event) => {
-            if (busy) return;
-            if (event.code !== "Space" && event.key !== "Enter") return;
-            event.preventDefault();
-            event.stopPropagation();
+          onPointerUp={(event) => {
+            if (busy || !props.voiceSupported) return;
+            try {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            } catch {
+              // Browser may already release capture
+            }
             props.onStopSpeaking();
           }}
+          onPointerCancel={(event) => {
+            if (busy || !props.voiceSupported) return;
+            try {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            } catch {
+              // Browser may already release capture
+            }
+            props.onCancelSpeaking();
+          }}
         >
-          {props.listening ? "Listening…" : "Hold to speak"}
+          {props.listening ? "Listening..." : "Hold to speak"}
         </button>
-        <button
-          className="stop-control"
-          disabled={!props.busy}
-          onClick={props.onStopWork}
-        >
-          Stop
-        </button>
-        <span>Drag to look</span>
       </div>
+      <button
+        aria-label="Stop instruction"
+        className="stop-button"
+        disabled={!busy}
+        onClick={props.onStopWork}
+        style={{
+          opacity: busy ? 1 : 0,
+          pointerEvents: busy ? "auto" : "none",
+        }}
+      >
+        Stop
+      </button>
     </>
   );
 }

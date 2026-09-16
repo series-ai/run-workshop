@@ -10,14 +10,14 @@ import {
 } from "./waitingTurnState";
 
 describe("waitingTurnState", () => {
-  const sampleRaw = "Your voice echoes in the darkness...{{pause(2.2)}} Silence presses back.{{pause(2.5)}}";
+  const sampleRaw = "My voice echoes in the darkness...{{pause(2.2)}} Silence presses back.{{pause(2.5)}}";
 
   it("creates initial waiting turn with animation not complete", () => {
     const turn = createWaitingTurn(sampleRaw);
     expect(turn.animationComplete).toBe(false);
     expect(turn.skipped).toBe(false);
     expect(turn.pendingResponse).toBe(null);
-    expect(turn.cleanText).toBe("Your voice echoes in the darkness... Silence presses back.");
+    expect(turn.cleanText).toBe("My voice echoes in the darkness... Silence presses back.");
   });
 
   it("does NOT interrupt playing animation when response arrives early", () => {

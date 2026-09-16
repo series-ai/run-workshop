@@ -7,69 +7,69 @@ export interface ConditionalThought {
 }
 
 export const WAITING_ITEMS_1: readonly ConditionalThought[] = [
-  { text: "Your voice echoes in the darkness" },
-  { text: "Your throat is coarse" },
-  { text: "The words scrape against your dry lips" },
+  { text: "My voice echoes in the darkness" },
+  { text: "My throat is coarse" },
+  { text: "The words scrape against my dry lips" },
   {
-    text: "Your breath leaves a cold mist against the stone",
+    text: "My breath leaves a cold mist against the stone",
     available: (state) => !state || state.posture === "prone",
   },
-  { text: "A hollow rasp catches in your throat" },
-  { text: "The damp cellar air swallows your call" },
-  { text: "Your whisper trembles across the dark" },
-  { text: "Pain flares along your ribs as you speak" },
-  { text: "Your voice sounds faint even to your own ears" },
-  { text: "The stone drinks the sound of your voice" },
-  { text: "You force the words past your cracked lips" },
+  { text: "A hollow rasp catches in my throat" },
+  { text: "The damp cellar air swallows my call" },
+  { text: "My whisper trembles across the dark" },
+  { text: "Pain flares along my ribs as I speak" },
+  { text: "My voice sounds faint even to my own ears" },
+  { text: "The stone drinks the sound of my voice" },
+  { text: "I force the words past my cracked lips" },
   {
-    text: "The cold stone muffles your call",
+    text: "The cold stone muffles my call",
     available: (state) => !state || state.posture === "prone",
   },
-  { text: "A trembling rasp leaves your chest" },
-  { text: "Your words hang frozen in the chill" },
-  { text: "Your chest burns with the effort to speak" },
+  { text: "A trembling rasp leaves my chest" },
+  { text: "My words hang frozen in the chill" },
+  { text: "My chest burns with the effort to speak" },
   {
-    text: "Your voice rises toward the black cellar ceiling",
+    text: "My voice rises toward the black cellar ceiling",
     available: (state) => !state || state.posture === "supine",
   },
   {
-    text: "You call out into the empty air above you",
+    text: "I call out into the empty air above me",
     available: (state) => !state || state.posture === "supine",
   },
 ] as const;
 
 export const WAITING_ITEMS_2: readonly ConditionalThought[] = [
-  { text: "Silence presses back against your chest." },
-  { text: "The cold creeps deeper into your fingertips." },
-  { text: "A dull throb pulses behind your eyes." },
-  { text: "Warm blood seeps slowly through your clothes." },
+  { text: "Silence presses back against my chest." },
+  { text: "The cold creeps deeper into my fingertips." },
+  { text: "A dull throb pulses behind my eyes." },
+  { text: "Warm blood seeps slowly through my clothes." },
   { text: "The darkness stays thick and suffocating." },
   {
-    text: "Your ribs groan beneath the oak cabinet.",
+    text: "My ribs groan beneath the oak cabinet.",
     available: (state) => !state || state.stage === "pinned",
   },
   { text: "Every heartbeat feels heavier than the last." },
-  { text: "You strain to hear movement in the gloom." },
+  { text: "I strain to hear movement in the gloom." },
   {
-    text: "The cellar floor drains the warmth from your skin.",
+    text: "The cellar floor drains the warmth from my skin.",
     available: (state) => !state || state.posture === "prone",
   },
-  { text: "A slow shudder rattles down your spine." },
+  { text: "A slow shudder rattles down my spine." },
   { text: "The shadows offer no answer yet." },
-  { text: "Your breath comes shallow and tight." },
-  { text: "Numbness crawls along your wounded flank." },
+  { text: "My breath comes shallow and tight." },
+  { text: "Numbness crawls along my wounded flank." },
   {
-    text: "The damp stone bites into your forehead.",
+    text: "The damp stone bites into my forehead.",
     available: (state) => !state || state.posture === "prone",
   },
   { text: "Dust settles slowly in the black air." },
   // Freed prone (cabinet off, but still face down)
   {
-    text: "The crushing weight is gone, but your cheek is still pressed against the stones.",
+    text: "The crushing weight is gone, but my cheek is still pressed against the stones.",
     available: (state) => !state || (state.stage !== "pinned" && state.posture === "prone"),
   },
   {
-    text: "You can see the cold mortar and flagstones right in front of your eyes.",
+    text: "I can see the cold mortar and flagstones right in front of my eyes.",
     available: (state) => !state || (state.stage !== "pinned" && state.posture === "prone"),
   },
   // Supine (flipped over) specific continuations
@@ -78,15 +78,15 @@ export const WAITING_ITEMS_2: readonly ConditionalThought[] = [
     available: (state) => !state || state.posture === "supine",
   },
   {
-    text: "You stare upward into the black rafters.",
+    text: "I stare upward into the black rafters.",
     available: (state) => !state || state.posture === "supine",
   },
   {
-    text: "Your exposed wound burns in the raw air.",
+    text: "My exposed wound burns in the raw air.",
     available: (state) => !state || state.posture === "supine",
   },
   {
-    text: "You look up, straining to see his hands in the gloom.",
+    text: "I look up, straining to see his hands in the gloom.",
     available: (state) => !state || state.posture === "supine",
   },
 ] as const;

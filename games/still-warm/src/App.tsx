@@ -30,6 +30,11 @@ import { defaultWaitingPicker } from "./game/waitingThoughts";
 import { WaitingTurn, createWaitingTurn, formatWaitingDots, onAnimationFinished, onResponseArrived, onSkipWaiting } from "./ui/waitingTurnState";
 import { logConversation } from "./agent/conversationLogger";
 
+export const MEMORY_STOOL = "I was standing on the stool.. reaching above the cabinet. Did I fall?";
+export const SENSORY_FIRST_SOUND = "There's a wimper near by. Who is that? Is it.. my boy?";
+export const SENSORY_FIRST_SOUND_PULSE =
+  "There's a wimper near by...{{pause(2.0)}} Who is that?{{pause(1.5)}} Is it.. my boy?{{pause(2.5)}}";
+
 export default function App({ preview = false }: { preview?: boolean }) {
   const listening = useRef(false);
   const [store] = useState(() => new GameStore());
@@ -84,8 +89,15 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const [roomCaption, setRoomCaption] = useState("");
   const [reactionThought, setReactionThought] = useState("");
   const [heard, setHeard] = useState("");
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const hasInteractedRef = useRef(hasInteracted);
+  hasInteractedRef.current = hasInteracted;
   const [hasSpoken, setHasSpoken] = useState(false);
+  const hasSpokenRef = useRef(hasSpoken);
+  hasSpokenRef.current = hasSpoken;
   const [waitingTurn, setWaitingTurn] = useState<WaitingTurn | null>(null);
+  const waitingTurnRef = useRef<WaitingTurn | null>(null);
+  waitingTurnRef.current = waitingTurn;
   const [activeResponseText, setActiveResponseText] = useState<string | null>(null);
   const [responseAnimating, setResponseAnimating] = useState(false);
   const [dotCount, setDotCount] = useState(1);
@@ -101,9 +113,13 @@ export default function App({ preview = false }: { preview?: boolean }) {
         onFinal: (text) => {
           if (busyRef.current || !canSpeakRef.current) return;
           setInterim("");
+          const isFirstSound = !hasSpokenRef.current;
+          setHasInteracted(true);
           setHasSpoken(true);
           setHeard(text);
-          const waiting = defaultWaitingPicker.pick(stateRef.current);
+          const waiting = isFirstSound
+            ? { full: SENSORY_FIRST_SOUND_PULSE }
+            : defaultWaitingPicker.pick(stateRef.current);
           logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
           setWaitingTurn(createWaitingTurn(waiting.full));
           setActiveResponseText(null);
@@ -217,27 +233,25 @@ export default function App({ preview = false }: { preview?: boolean }) {
   }, [liveConversation, started, moment.id, moment.text, opening.complete]);
 
   const skipWaiting = useCallback(() => {
-    setWaitingTurn((current) => {
-      if (!current) return null;
-      const result = onSkipWaiting(current);
-      if (result.activeResponse !== null) {
-        setActiveResponseText(result.activeResponse);
-        setResponseAnimating(true);
-      }
-      return result.turn;
-    });
+    const current = waitingTurnRef.current;
+    if (!current) return;
+    const result = onSkipWaiting(current);
+    setWaitingTurn(result.turn);
+    if (result.activeResponse !== null) {
+      setActiveResponseText(result.activeResponse);
+      setResponseAnimating(true);
+    }
   }, []);
 
   const handleWaitingAnimationComplete = useCallback(() => {
-    setWaitingTurn((current) => {
-      if (!current) return null;
-      const result = onAnimationFinished(current);
-      if (result.activeResponse !== null) {
-        setActiveResponseText(result.activeResponse);
-        setResponseAnimating(true);
-      }
-      return result.turn;
-    });
+    const current = waitingTurnRef.current;
+    if (!current) return;
+    const result = onAnimationFinished(current);
+    setWaitingTurn(result.turn);
+    if (result.activeResponse !== null) {
+      setActiveResponseText(result.activeResponse);
+      setResponseAnimating(true);
+    }
   }, []);
 
   const handleResponseAnimationComplete = useCallback(() => {
@@ -248,64 +262,31 @@ export default function App({ preview = false }: { preview?: boolean }) {
     if (connection.response && connection.response.id !== lastResponseId.current) {
       lastResponseId.current = connection.response.id;
       const responseText = connection.response.text;
-      setWaitingTurn((current) => {
-        const result = onResponseArrived(current, responseText);
-        if (result.activeResponse !== null) {
-          setActiveResponseText(result.activeResponse);
-          setResponseAnimating(true);
-        }
-        return result.turn;
-      });
+      const current = waitingTurnRef.current;
+      const result = onResponseArrived(current, responseText);
+      setWaitingTurn(result.turn);
+      if (result.activeResponse !== null) {
+        setActiveResponseText(result.activeResponse);
+        setResponseAnimating(true);
+      }
     }
   }, [connection.response]);
 
   useEffect(() => {
     if (!waitingTurn?.animationComplete) return;
-    setDotCount(1);
-    const timer = setInterval(() => {
-      setDotCount((c) => (c % 3) + 1);
+    const interval = setInterval(() => {
+      setDotCount((prev) => (prev % 3) + 1);
     }, 450);
-    return () => clearInterval(timer);
+    return () => clearInterval(interval);
   }, [waitingTurn?.animationComplete]);
 
   useEffect(() => {
-    if ((!waitingTurn || waitingTurn.animationComplete) && !responseAnimating) return;
-    const handleClick = (e: MouseEvent) => {
-      if (e.button !== 0) return;
-      const target = e.target as HTMLElement | null;
-      if (target?.closest("button, a, input, select, textarea")) return;
-      if (waitingTurn && !waitingTurn.animationComplete) {
-        skipWaiting();
-      } else if (responseAnimating) {
-        setResponseAnimating(false);
-      }
-    };
-    window.addEventListener("click", handleClick);
-    return () => window.removeEventListener("click", handleClick);
-  }, [waitingTurn, responseAnimating, skipWaiting]);
-
-  useEffect(() => {
-    if (connection.status === "error" || connection.status === "stopping" || !active) {
-      setWaitingTurn(null);
-      setResponseAnimating(false);
+    if (wasBusy.current && !busy) {
+      setActiveResponseText(null);
     }
-  }, [connection.status, active]);
+    wasBusy.current = busy;
+  }, [busy]);
 
-  useEffect(() => {
-    if (busy) {
-      wasBusy.current = true;
-    } else if (wasBusy.current) {
-      wasBusy.current = false;
-      if (!waitingTurn?.pendingResponse) {
-        setWaitingTurn(null);
-      }
-    }
-  }, [busy, waitingTurn?.pendingResponse]);
-  useEffect(() => {
-    if (!heard) return;
-    const timer = setTimeout(() => setHeard(""), 5000);
-    return () => clearTimeout(timer);
-  }, [heard]);
   useEffect(() => {
     const changed = lastEmotion.current !== state.emotion;
     lastEmotion.current = state.emotion;
@@ -348,14 +329,17 @@ export default function App({ preview = false }: { preview?: boolean }) {
     }
   }, [started, state.paused, opening.shuffle, sound]);
   useEffect(() => {
-    if (hasSpoken && !liveConversation) {
-      vocalize("fear");
-      setRoomCaption("A low moan in the darkness.");
+    if (hasSpoken) {
+      sound.shuffle();
+      if (!liveConversation) {
+        vocalize("fear");
+        setRoomCaption(SENSORY_FIRST_SOUND);
+      }
     }
-  }, [hasSpoken, liveConversation, vocalize]);
+  }, [hasSpoken, liveConversation, sound, vocalize]);
   useEffect(() => {
     if (!roomCaption) return;
-    const duration = roomCaption === "A low moan in the darkness." ? 3500 : 8500;
+    const duration = roomCaption === SENSORY_FIRST_SOUND ? 4500 : 8500;
     const timer = setTimeout(() => setRoomCaption(""), duration);
     return () => clearTimeout(timer);
   }, [roomCaption]);
@@ -408,16 +392,19 @@ export default function App({ preview = false }: { preview?: boolean }) {
       if (introPlaying && active && !interactive && !event.repeat &&
           (event.code === "Space" || event.key === "Enter")) {
         event.preventDefault();
+        setHasInteracted(true);
         store.tick(openingClickSeconds(store.getSnapshot().elapsed, reducedMotion));
         return;
       }
       if (event.code === "Space" && !interactive && !event.repeat && canSpeak) {
         event.preventDefault();
+        setHasInteracted(true);
         silenceCall();
         voice.start();
       }
       if (event.key === "Enter" && !interactive && canSpeak) {
         event.preventDefault();
+        setHasInteracted(true);
         voice.cancel();
         setTyping(true);
         void fullscreen.release();
@@ -431,6 +418,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
         active
       ) {
         event.preventDefault();
+        setHasInteracted(true);
         look.move(
           event.key === "ArrowLeft" ? -22 : event.key === "ArrowRight" ? 22 : 0,
           event.key === "ArrowUp" ? -22 : event.key === "ArrowDown" ? 22 : 0,
@@ -452,6 +440,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
     if (!introPlaying || !active || !screen.pointerLocked) return;
     const advance = (event: MouseEvent) => {
       if (event.button !== 0 || (event.target instanceof Element && event.target.closest("button"))) return;
+      setHasInteracted(true);
       store.tick(openingClickSeconds(store.getSnapshot().elapsed, reducedMotion));
     };
     window.addEventListener("click", advance);
@@ -464,6 +453,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
     voice.cancel();
     look.reset();
     lastOpeningShuffle.current = false;
+    setHasInteracted(false);
     setHasSpoken(false);
     setWaitingTurn(null);
     setActiveResponseText(null);
@@ -480,9 +470,13 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!command.trim() || !canSpeak) return;
+    const isFirstSound = !hasSpoken;
+    setHasInteracted(true);
     setHasSpoken(true);
     setHeard("");
-    const waiting = defaultWaitingPicker.pick(state);
+    const waiting = isFirstSound
+      ? { full: SENSORY_FIRST_SOUND_PULSE }
+      : defaultWaitingPicker.pick(state);
     logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
     setWaitingTurn(createWaitingTurn(waiting.full));
     setActiveResponseText(null);
@@ -490,8 +484,12 @@ export default function App({ preview = false }: { preview?: boolean }) {
     setCommand("");
   };
   const rehearse = (actions: GameAction[]) => {
+    const isFirstSound = !hasSpoken;
+    setHasInteracted(true);
     setHasSpoken(true);
-    const waiting = defaultWaitingPicker.pick(state);
+    const waiting = isFirstSound
+      ? { full: SENSORY_FIRST_SOUND_PULSE }
+      : defaultWaitingPicker.pick(state);
     logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
     setWaitingTurn(createWaitingTurn(waiting.full));
     setActiveResponseText(null);
@@ -521,6 +519,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
         aria-label="The cellar. Drag to look around."
         onPointerDown={(event) => {
           if (!active) return;
+          setHasInteracted(true);
           event.currentTarget.focus({ preventScroll: true });
           event.currentTarget.setPointerCapture(event.pointerId);
           drag.current = {
@@ -528,12 +527,12 @@ export default function App({ preview = false }: { preview?: boolean }) {
             x: event.clientX,
             y: event.clientY,
           };
-
         }}
         onPointerMove={(event) => {
           if (!active || typing || screen.pointerLocked) return;
           const p = drag.current;
           if (p && p.id === event.pointerId) {
+            setHasInteracted(true);
             look.move(event.clientX - p.x, event.clientY - p.y);
             p.x = event.clientX;
             p.y = event.clientY;
@@ -546,6 +545,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
           drag.current = null;
         }}
         onClick={() => {
+          setHasInteracted(true);
           if (waitingTurn && !waitingTurn.animationComplete) {
             skipWaiting();
           } else if (responseAnimating) {
@@ -572,7 +572,10 @@ export default function App({ preview = false }: { preview?: boolean }) {
             className="opening-advance"
             aria-label="Reveal text or continue"
             disabled={!active}
-            onClick={() => store.tick(openingClickSeconds(store.getSnapshot().elapsed, reducedMotion))}
+            onClick={() => {
+              setHasInteracted(true);
+              store.tick(openingClickSeconds(store.getSnapshot().elapsed, reducedMotion));
+            }}
           />
           {opening.narration && (
             <p className={`opening-narration ${opening.voice}-voice`} key={opening.narration}>
@@ -585,7 +588,6 @@ export default function App({ preview = false }: { preview?: boolean }) {
             </p>
           )}
           <span className="opening-click-hint" aria-hidden="true"><span className="fine-pointer">Click to continue</span><span className="coarse-pointer">Tap to continue</span></span>
-
         </section>
       )}
       <div className="vignette" aria-hidden="true" />
@@ -665,9 +667,12 @@ export default function App({ preview = false }: { preview?: boolean }) {
             onClick={waitingTurn && !waitingTurn.animationComplete ? skipWaiting : undefined}
           >
             {waitingTurn?.animationComplete ? (
-              <span className="typewriter waiting-dots">
-                <span className="sr-only">Waiting...</span>
-                <span aria-hidden="true" className="waiting-dots-pulse">{formatWaitingDots(dotCount)}</span>
+              <span className="typewriter waiting-dots-text">
+                <span className="sr-only">{waitingTurn.cleanText}</span>
+                <span aria-hidden="true">
+                  {waitingTurn.cleanText}{" "}
+                  <span className="waiting-dots-pulse">{formatWaitingDots(dotCount)}</span>
+                </span>
               </span>
             ) : (
               <>
@@ -677,8 +682,8 @@ export default function App({ preview = false }: { preview?: boolean }) {
                     reducedMotion ||
                     (!waitingTurn &&
                       (liveConversation
-                        ? !responseAnimating && !activeResponseText && !connection.response
-                        : !hasSpoken))
+                        ? !responseAnimating && !activeResponseText && !connection.response && !hasInteracted
+                        : !hasSpoken && !hasInteracted))
                   }
                   onComplete={
                     waitingTurn
@@ -691,11 +696,13 @@ export default function App({ preview = false }: { preview?: boolean }) {
                     waitingTurn
                       ? waitingTurn.rawText
                       : (liveConversation
-                        ? activeResponseText ?? connection.response?.text ?? OPENING_BEATS[OPENING_BEATS.length - 1].text
+                        ? activeResponseText ?? connection.response?.text ?? (!hasInteracted ? OPENING_BEATS[0].text : MEMORY_STOOL)
                         : contactOrProblemThought ||
                         roomCaption ||
                         reactionThought ||
-                        (!hasSpoken ? OPENING_BEATS[OPENING_BEATS.length - 1].text : thought) ||
+                        (!hasSpoken
+                          ? (!hasInteracted ? OPENING_BEATS[0].text : MEMORY_STOOL)
+                          : thought) ||
                         (connection.needsInstruction && !busy
                           ? "He is waiting for my voice."
                           : ""))
@@ -739,15 +746,25 @@ export default function App({ preview = false }: { preview?: boolean }) {
             <PlayerReply
               inputRef={inputRef}
               value={command}
-              onChange={setCommand}
+              onChange={(value) => {
+                setHasInteracted(true);
+                setCommand(value);
+              }}
               onSubmit={submit}
-              onFocus={() => { voice.cancel(); setTyping(true); }}
+              onFocus={() => {
+                setHasInteracted(true);
+                voice.cancel();
+                setTyping(true);
+              }}
               onBlur={() => setTyping(false)}
               voiceSupported={voice.supported}
               listening={voiceStatus === "listening"}
               busy={busy}
               onStopWork={stop}
-              onSpeak={speak}
+              onSpeak={() => {
+                setHasInteracted(true);
+                speak();
+              }}
               onStopSpeaking={() => voice.stop()}
               onCancelSpeaking={() => voice.cancel()}
               hasSpoken={hasSpoken}
@@ -761,6 +778,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
                 <button
                   key={choice.id}
                   onClick={() => {
+                    setHasInteracted(true);
                     setHasSpoken(true);
                     rehearse(choice.actions);
                   }}
@@ -891,12 +909,12 @@ export default function App({ preview = false }: { preview?: boolean }) {
           </h2>
           <p>
             <Typewriter instant={reducedMotion} text={state.outcome === "saved"
-              ? "His hand stays under your head. You can feel each breath. He will not let go."
+              ? "His hand stays under my head. I can feel each breath. He will not let go."
               : state.outcome === "fire"
-                ? "Smoke fills your lungs. His face disappears."
+                ? "Smoke fills my lungs. His face disappears."
                 : state.outcome === "creature_lost"
                   ? "I call for my boy. This time, he does not move."
-                  : "Your skin is cold. You try to speak, but no sound comes."} />
+                  : "My skin is cold. I try to speak, but no sound comes."} />
           </p>
           <button onClick={() => start(connection.mode)}>Begin again</button>
         </GameDialog>
