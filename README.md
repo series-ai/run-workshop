@@ -19,6 +19,7 @@ first game starter. Each sub-project then documents its own specifics in its
 - [BeatBoard](games/beat-board/) — a 4×4 pad-grid music maker where each pad fires a seamless loop layer (drums / bass / melody / FX) at a fixed BPM. Ships several genre packs and a documented pack-authoring pipeline powered by the `rundot` CLI. See [Creating New Packs](games/beat-board/README.md) and [docs/authoring-packs.md](games/beat-board/docs/authoring-packs.md).
 - [Pirate Nation Art Showcase](games/pirate-nation-showcase/) — a browsable showcase over the MIT-licensed Pirate Nation asset pack (Proof of Play): a thumbnail grid and 3D viewer over 355 models with animation playback and a collision-geometry toggle, a full pirate Avatar Lab, plus sprite and audio browsers. See [games/pirate-nation-showcase/README.md](games/pirate-nation-showcase/README.md).
 - [Dither Playground](games/dither-playground/) — apply retro dithering algorithms and palettes to 3D scenes, images, and video. Includes a split-screen algorithm comparison grid, a static-vs-animated crawl test, and a cursor-following resolve mask. See [games/dither-playground/README.md](games/dither-playground/README.md).
+- [Wreck Yard](games/wreck-yard/) — a multiplayer voxel destruction yard on RUN syncplay: grab and throw voxel bodies, torch them into falling fragments, and float them in a wave tank, all in one deterministic session with rollback and late join. See [games/wreck-yard/README.md](games/wreck-yard/README.md).
 
 ## Tools
 
@@ -26,6 +27,7 @@ first game starter. Each sub-project then documents its own specifics in its
 - [Layout Manager](games/layout-manager/) — a browser-based image layout, composition, and AI-assisted generation tool (Vite + React + TypeScript). Arrange, align, mask, and paint over images on a freeform workspace, with optional AI helpers: text-to-image via your own provider API keys, ComfyUI workflow integration (including background removal), and multi-provider AI chat. See [games/layout-manager/README.md](games/layout-manager/README.md).
 - [3D PFX Library](tools/3d-pfx-library/) — a React Three Fiber particle-effects library: a catalog of 500 ranked presets with a drop-in `GamePfx` runtime component, plus a browser to search, preview and performance-profile effects (Vite + React + TypeScript). Effects are authored-preview grade. Ships with CC0 sprite/flipbook assets. See [tools/3d-pfx-library/README.md](tools/3d-pfx-library/README.md).
 - [dither-kit](tools/dither-kit/) — engine-agnostic GPU dithering core (pure TypeScript, zero runtime deps): typed config → uniforms → GLSL fragment shader with 7 algorithms, 10 retro palettes, and 18 presets, shipped as source. Extracted from Dither Playground. See [tools/dither-kit/README.md](tools/dither-kit/README.md).
+- [voxel-kit](tools/voxel-kit/) — engine-agnostic voxel destruction core (pure TypeScript, zero runtime deps): stamp, carve, scorch, connected components, tank buoyancy, and world occlusion, with engine-independent math for lockstep simulations. See [tools/voxel-kit/README.md](tools/voxel-kit/README.md).
 
 ## License
 

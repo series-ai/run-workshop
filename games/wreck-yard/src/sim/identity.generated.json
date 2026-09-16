@@ -1,0 +1,11 @@
+{
+  "format": "wreck-yard.identity.v1",
+  "runtimeIdentity": {
+    "abiVersion": 1,
+    "tickRate": 30,
+    "inputSchemaId": "345106daf692f7b46b579d422c1552238acf759aa3b943c2d9cc029f3e338664",
+    "stateSchemaId": "e5a9b1e8466616d61248e4bd8c6184ec96cf098e0eedf230d3ad72368a4f85fe",
+    "deterministicVersion": "wreck-yard@1+syncplay@6.0.0-rc.3",
+    "engineIdentityHash": "aad562a9bd3e645a3c904b63e7cd949cc7202fce9f18a988fd381caf8d2e79b4"
+  }
+}

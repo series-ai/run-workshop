@@ -3,7 +3,7 @@ import { fileURLToPath } from 'url';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { rundotGameLibrariesPlugin, rundotGameSandboxPlugin, rundotMultiplayerPlugin } from '@series-inc/rundot-game-sdk/vite';
+import { rundotGameLibrariesPlugin, rundotGamePlaygroundPlugin, rundotMultiplayerPlugin } from '@series-inc/rundot-game-sdk/vite';
 import { resolveDevBindHost, resolveDevPort, resolveMultiplayerDevPort } from './dev-server.config';
 import { resolveSandboxGameId } from './sandbox.config';
 
@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => {
       react(), // Must come first - handles JSX transform
       tailwindcss(),
       rundotGameLibrariesPlugin(),
-      rundotGameSandboxPlugin({
+      rundotGamePlaygroundPlugin({
         gameId: resolveSandboxGameId(rootDir),
         apiKey: env.RUNDOT_API_KEY,
       }),

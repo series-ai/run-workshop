@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 // CDN assets in cdn/ folder are automatically served in dev mode by the
 // libraries plugin. Image-gen, appStorage, etc. only work in the deployed
 // run.game webview (where the SDK uses RpcImageGenApi to talk to the host).
-// Local dev intentionally has no sandbox plugin — same setup Depths uses.
+// Local dev intentionally has no playground plugin — same setup Depths uses.
 
 // Dev-only: trigger a full browser reload when a Sprite Fusion map file changes
 // under public/world/maps/. Files in public/ are served as-is and don't get

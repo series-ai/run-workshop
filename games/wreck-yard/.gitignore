@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+game.config.playground.json
+.rundot/session/
+.rundot-docs
+test-results
+playwright-report
+
+.env.local

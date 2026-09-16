@@ -5,7 +5,7 @@ import { rundotGameLibrariesPlugin } from '@series-inc/rundot-game-sdk/vite'
 // Ports are pinned so sub-projects never collide: picmon-editor owns
 // 5180/4180, this app owns 5190/4190.
 //
-// `rundotGameSandboxPlugin` is intentionally absent: it backs storage,
+// `rundotGamePlaygroundPlugin` (formerly `rundotGameSandboxPlugin`) is intentionally absent: it backs storage,
 // profile, and leaderboard calls in local dev, and this app calls none of
 // them. Skipping it keeps `npm run dev` and the e2e suite free of any
 // RUNDOT_API_KEY requirement.

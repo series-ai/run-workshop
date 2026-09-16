@@ -1,0 +1,10 @@
+{
+  "appData": {
+    "id": "wreck-yard",
+    "name": "Wreck Yard",
+    "description": "Torch, throw, and sink voxel bodies with friends in one deterministic multiplayer yard.",
+    "versionTag": "0.1.0",
+    "thumbnailUrl": "",
+    "userState": {}
+  }
+}
