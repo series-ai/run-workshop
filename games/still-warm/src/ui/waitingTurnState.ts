@@ -1,8 +1,11 @@
 import { compileText } from "../text";
 
+export type WaitingPhase = "typing" | "fading" | "dots";
+
 export interface WaitingTurn {
   readonly rawText: string;
   readonly cleanText: string;
+  readonly phase: WaitingPhase;
   readonly animationComplete: boolean;
   readonly skipped: boolean;
   readonly pendingResponse: string | null;
@@ -13,6 +16,7 @@ export function createWaitingTurn(rawText: string): WaitingTurn {
   return {
     rawText,
     cleanText,
+    phase: "typing",
     animationComplete: false,
     skipped: false,
     pendingResponse: null,
@@ -26,8 +30,8 @@ export interface TurnTransitionResult {
 
 /**
  * When connection.response arrives:
- * If animation is still running, DO NOT interrupt it - buffer into pendingResponse.
- * If animation is already finished or skipped, transition immediately.
+ * If animation is still playing (typing phase and not complete), DO NOT interrupt it - buffer into pendingResponse.
+ * If animation is already finished, fading, or in dots phase, transition immediately.
  */
 export function onResponseArrived(
   current: WaitingTurn | null,
@@ -36,7 +40,7 @@ export function onResponseArrived(
   if (!current) {
     return { turn: null, activeResponse: responseText };
   }
-  if (!current.animationComplete) {
+  if (current.phase === "typing" && !current.animationComplete) {
     // Animation is still playing: do not interrupt!
     return {
       turn: {
@@ -46,7 +50,7 @@ export function onResponseArrived(
       activeResponse: null,
     };
   }
-  // Animation already completed or skipped: transition immediately!
+  // Animation already completed, fading, or in dots: transition immediately!
   return {
     turn: null,
     activeResponse: responseText,
@@ -73,6 +77,7 @@ export function onSkipWaiting(current: WaitingTurn | null): TurnTransitionResult
   return {
     turn: {
       ...current,
+      phase: "dots",
       animationComplete: true,
       skipped: true,
     },
@@ -83,7 +88,7 @@ export function onSkipWaiting(current: WaitingTurn | null): TurnTransitionResult
 /**
  * When the typewriter animation naturally finishes playing out:
  * If response has already arrived, transition immediately to it.
- * Otherwise, keep waiting with repeating dots.
+ * Otherwise, start fading out the pre-gen text before showing dots.
  */
 export function onAnimationFinished(current: WaitingTurn | null): TurnTransitionResult {
   if (!current) {
@@ -96,10 +101,11 @@ export function onAnimationFinished(current: WaitingTurn | null): TurnTransition
       activeResponse: current.pendingResponse,
     };
   }
-  // Response not back yet: keep waiting with repeating dots.
+  // Response not back yet: start fading out pre-gen text.
   return {
     turn: {
       ...current,
+      phase: "fading",
       animationComplete: true,
     },
     activeResponse: null,
@@ -107,8 +113,29 @@ export function onAnimationFinished(current: WaitingTurn | null): TurnTransition
 }
 
 /**
- * When a timeout or error occurs:
+ * When the fade-out of the pre-gen text completes:
+ * If response arrived while fading, transition immediately to it.
+ * Otherwise, show the repeating dots animation.
  */
+export function onFadeComplete(current: WaitingTurn | null): TurnTransitionResult {
+  if (!current) {
+    return { turn: null, activeResponse: null };
+  }
+  if (current.pendingResponse !== null) {
+    return {
+      turn: null,
+      activeResponse: current.pendingResponse,
+    };
+  }
+  return {
+    turn: {
+      ...current,
+      phase: "dots",
+    },
+    activeResponse: null,
+  };
+}
+
 /**
  * When cancelled, stopped, timed out, or an error occurs:
  */

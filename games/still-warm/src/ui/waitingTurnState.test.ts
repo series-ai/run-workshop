@@ -3,6 +3,7 @@ import {
   createWaitingTurn,
   formatWaitingDots,
   onAnimationFinished,
+  onFadeComplete,
   onResponseArrived,
   onSkipWaiting,
   onCancelOrStop,
@@ -12,8 +13,9 @@ import {
 describe("waitingTurnState", () => {
   const sampleRaw = "My voice echoes in the darkness...{{pause(2.2)}} Silence presses back.{{pause(2.5)}}";
 
-  it("creates initial waiting turn with animation not complete", () => {
+  it("creates initial waiting turn with typing phase and animation not complete", () => {
     const turn = createWaitingTurn(sampleRaw);
+    expect(turn.phase).toBe("typing");
     expect(turn.animationComplete).toBe(false);
     expect(turn.skipped).toBe(false);
     expect(turn.pendingResponse).toBe(null);
@@ -24,8 +26,9 @@ describe("waitingTurnState", () => {
     const turn = createWaitingTurn(sampleRaw);
     const result = onResponseArrived(turn, "A trembling sound answers from the dark.");
 
-    // Turn is not cleared - animation still plays
+    // Turn is not cleared - animation still plays in typing phase
     expect(result.turn).not.toBeNull();
+    expect(result.turn?.phase).toBe("typing");
     expect(result.turn?.animationComplete).toBe(false);
     expect(result.turn?.pendingResponse).toBe("A trembling sound answers from the dark.");
     expect(result.activeResponse).toBeNull();
@@ -40,26 +43,57 @@ describe("waitingTurnState", () => {
     expect(completed.activeResponse).toBe("A trembling sound answers from the dark.");
   });
 
-  it("starts waiting mode with repeating dots if animation finishes before response arrives", () => {
+  it("transitions to fading phase when animation finishes before response arrives", () => {
     const turn = createWaitingTurn(sampleRaw);
     const completed = onAnimationFinished(turn);
 
     expect(completed.turn).not.toBeNull();
+    expect(completed.turn?.phase).toBe("fading");
     expect(completed.turn?.animationComplete).toBe(true);
     expect(completed.turn?.pendingResponse).toBeNull();
     expect(completed.activeResponse).toBeNull();
 
-    // Now when response arrives, transitions immediately
+    // Now when fade completes, transitions to dots phase
+    const afterFade = onFadeComplete(completed.turn);
+    expect(afterFade.turn).not.toBeNull();
+    expect(afterFade.turn?.phase).toBe("dots");
+    expect(afterFade.activeResponse).toBeNull();
+
+    // Now when response arrives in dots phase, transitions immediately
+    const afterResponse = onResponseArrived(afterFade.turn, "A trembling sound answers.");
+    expect(afterResponse.turn).toBeNull();
+    expect(afterResponse.activeResponse).toBe("A trembling sound answers.");
+  });
+
+  it("transitions immediately if response arrives during fading phase", () => {
+    const turn = createWaitingTurn(sampleRaw);
+    const completed = onAnimationFinished(turn);
+    expect(completed.turn?.phase).toBe("fading");
+
     const afterResponse = onResponseArrived(completed.turn, "A trembling sound answers.");
     expect(afterResponse.turn).toBeNull();
     expect(afterResponse.activeResponse).toBe("A trembling sound answers.");
   });
 
-  it("skips animation immediately on user click and shows repeating dots if response not back yet", () => {
+  it("transitions to response immediately upon fade complete if response arrived during fade", () => {
+    const turn = createWaitingTurn(sampleRaw);
+    const completed = onAnimationFinished(turn);
+    const withResponse = {
+      ...completed.turn!,
+      pendingResponse: "Delayed creature voice",
+    };
+
+    const afterFade = onFadeComplete(withResponse);
+    expect(afterFade.turn).toBeNull();
+    expect(afterFade.activeResponse).toBe("Delayed creature voice");
+  });
+
+  it("skips animation immediately on user click and jumps to dots phase if response not back yet", () => {
     const turn = createWaitingTurn(sampleRaw);
     const skipped = onSkipWaiting(turn);
 
     expect(skipped.turn).not.toBeNull();
+    expect(skipped.turn?.phase).toBe("dots");
     expect(skipped.turn?.animationComplete).toBe(true);
     expect(skipped.turn?.skipped).toBe(true);
     expect(skipped.activeResponse).toBeNull();

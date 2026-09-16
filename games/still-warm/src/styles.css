@@ -736,6 +736,34 @@ input {
 .thought-voice { font-style: italic; color: #c2bcaa; }
 .narrator-voice { font-style: normal; color: #a4b0ac; }
 
+.waiting-text-wrapper {
+  display: inline-block;
+  opacity: 1;
+  transition: opacity 0.4s ease-out;
+}
+.waiting-text-wrapper.fading-out {
+  opacity: 0;
+}
+
+.waiting-dots-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  animation: waitingDotsFadeIn 0.3s ease-in forwards;
+}
+
+@keyframes waitingDotsFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .waiting-dots {
   display: inline-block;
   font-size: 24px;

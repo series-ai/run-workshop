@@ -27,7 +27,7 @@ import { canPlayerSpeak, isActionResolving } from "./ui/playerInputState";
 import { GameDialog } from "./ui/GameDialog";
 import { Awakening } from "./ui/Awakening";
 import { defaultWaitingPicker } from "./game/waitingThoughts";
-import { WaitingTurn, createWaitingTurn, formatWaitingDots, onAnimationFinished, onResponseArrived, onSkipWaiting } from "./ui/waitingTurnState";
+import { WaitingTurn, createWaitingTurn, formatWaitingDots, onAnimationFinished, onFadeComplete, onResponseArrived, onSkipWaiting } from "./ui/waitingTurnState";
 import { logConversation } from "./agent/conversationLogger";
 
 export const MEMORY_STOOL = "I was standing on the stool.. reaching above the cabinet. Did I fall?";
@@ -273,12 +273,28 @@ export default function App({ preview = false }: { preview?: boolean }) {
   }, [connection.response]);
 
   useEffect(() => {
-    if (!waitingTurn?.animationComplete) return;
+    if (waitingTurn?.phase !== "fading") return;
+    const fadeTimer = setTimeout(() => {
+      const current = waitingTurnRef.current;
+      if (!current || current.phase !== "fading") return;
+      const result = onFadeComplete(current);
+      setWaitingTurn(result.turn);
+      if (result.activeResponse !== null) {
+        setActiveResponseText(result.activeResponse);
+        setResponseAnimating(true);
+      }
+    }, reducedMotion ? 0 : 400);
+    return () => clearTimeout(fadeTimer);
+  }, [waitingTurn?.phase, reducedMotion]);
+
+  useEffect(() => {
+    if (waitingTurn?.phase !== "dots") return;
+    setDotCount(1);
     const interval = setInterval(() => {
       setDotCount((prev) => (prev % 3) + 1);
     }, 450);
     return () => clearInterval(interval);
-  }, [waitingTurn?.animationComplete]);
+  }, [waitingTurn?.phase]);
 
   useEffect(() => {
     if (wasBusy.current && !busy) {
@@ -546,7 +562,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
         }}
         onClick={() => {
           setHasInteracted(true);
-          if (waitingTurn && !waitingTurn.animationComplete) {
+          if (waitingTurn && waitingTurn.phase === "typing") {
             skipWaiting();
           } else if (responseAnimating) {
             setResponseAnimating(false);
@@ -662,63 +678,67 @@ export default function App({ preview = false }: { preview?: boolean }) {
             Ⅱ
           </button>
           <div
-            className={`inner-voice ${!liveConversation && showRoomCaption ? "narrator-voice" : "thought-voice"} ${waitingTurn && !waitingTurn.animationComplete ? "waiting-skippable" : ""}`}
+            className={`inner-voice ${!liveConversation && showRoomCaption ? "narrator-voice" : "thought-voice"} ${waitingTurn && waitingTurn.phase === "typing" ? "waiting-skippable" : ""}`}
             aria-live="polite"
-            onClick={waitingTurn && !waitingTurn.animationComplete ? skipWaiting : undefined}
+            onClick={waitingTurn && waitingTurn.phase === "typing" ? skipWaiting : undefined}
           >
-            {waitingTurn?.animationComplete ? (
-              <span className="typewriter waiting-dots-text">
-                <span className="sr-only">{waitingTurn.cleanText}</span>
-                <span aria-hidden="true">
-                  {waitingTurn.cleanText}{" "}
+            {waitingTurn?.phase === "dots" ? (
+              <div className="waiting-dots-container" aria-label="Waiting for creature...">
+                <span className="waiting-dots">
                   <span className="waiting-dots-pulse">{formatWaitingDots(dotCount)}</span>
                 </span>
-              </span>
+              </div>
             ) : (
-              <>
-                <Typewriter
-                  paused={state.paused}
-                  instant={
-                    reducedMotion ||
-                    (!waitingTurn &&
-                      (liveConversation
-                        ? !responseAnimating && !activeResponseText && !connection.response && !hasInteracted
-                        : !hasSpoken && !hasInteracted))
-                  }
-                  onComplete={
-                    waitingTurn
-                      ? handleWaitingAnimationComplete
-                      : responseAnimating
-                        ? handleResponseAnimationComplete
-                        : undefined
-                  }
-                  text={
-                    waitingTurn
-                      ? waitingTurn.rawText
-                      : (liveConversation
-                        ? activeResponseText ?? connection.response?.text ?? (!hasInteracted ? OPENING_BEATS[0].text : MEMORY_STOOL)
-                        : contactOrProblemThought ||
-                        roomCaption ||
-                        reactionThought ||
-                        (!hasSpoken
-                          ? (!hasInteracted ? OPENING_BEATS[0].text : MEMORY_STOOL)
-                          : thought) ||
-                        (connection.needsInstruction && !busy
-                          ? "He is waiting for my voice."
-                          : ""))
-                  }
-                />
-                {waitingTurn && !waitingTurn.animationComplete && (
-                  <button
-                    type="button"
-                    className="skip-narration-button"
-                    onClick={skipWaiting}
-                    aria-label="Skip waiting narration"
-                  >
-                    Skip waiting narration
-                  </button>
+              <div className={`waiting-text-wrapper ${waitingTurn?.phase === "fading" ? "fading-out" : ""}`}>
+                {waitingTurn?.phase === "fading" ? (
+                  <span className="typewriter">{waitingTurn.cleanText}</span>
+                ) : (
+                  <>
+                    <Typewriter
+                      paused={state.paused}
+                      instant={
+                        reducedMotion ||
+                        (!waitingTurn &&
+                          (liveConversation
+                            ? !responseAnimating && !activeResponseText && !connection.response && !hasInteracted
+                            : !hasSpoken && !hasInteracted))
+                      }
+                      onComplete={
+                        waitingTurn
+                          ? handleWaitingAnimationComplete
+                          : responseAnimating
+                            ? handleResponseAnimationComplete
+                            : undefined
+                      }
+                      text={
+                        waitingTurn
+                          ? waitingTurn.rawText
+                          : (liveConversation
+                            ? activeResponseText ?? connection.response?.text ?? (!hasInteracted ? OPENING_BEATS[0].text : MEMORY_STOOL)
+                            : contactOrProblemThought ||
+                            roomCaption ||
+                            reactionThought ||
+                            (!hasSpoken
+                              ? (!hasInteracted ? OPENING_BEATS[0].text : MEMORY_STOOL)
+                              : thought) ||
+                            (connection.needsInstruction && !busy
+                              ? "He is waiting for my voice."
+                              : ""))
+                      }
+                    />
+                    {waitingTurn && waitingTurn.phase === "typing" && (
+                      <button
+                        type="button"
+                        className="skip-narration-button"
+                        onClick={skipWaiting}
+                        aria-label="Skip waiting narration"
+                      >
+                        Skip waiting narration
+                      </button>
+                    )}
+                  </>
                 )}
-              </>
+              </div>
             )}
           </div>
           {(interim || heard) && (
