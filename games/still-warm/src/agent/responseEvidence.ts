@@ -4,7 +4,7 @@ const responseTextSchema = z
   .string()
   .trim()
   .min(1)
-  .max(200)
+  .max(400)
   .refine(
     (text) => !/[\r\n\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(text),
     "Use one plain text line.",
@@ -48,25 +48,33 @@ export class ResponseEvidence {
   }
 
   accept(input: InterpretationInput): InterpretationDecision {
-    if (
-      !this.inputActive ||
-      !this.issuedIds.has(input.evidenceId) ||
-      this.usedIds.has(input.evidenceId)
-    ) {
+    if (!this.inputActive) {
       return {
         ok: false,
-        message:
-          "Use an unused evidenceId from an inspect_room or act outcome in this input.",
+        message: "Interpretation arrived without an active player input.",
+      };
+    }
+    if (!this.issuedIds.has(input.evidenceId)) {
+      return {
+        ok: false,
+        message: `Evidence id ${input.evidenceId} is invalid or expired.`,
+      };
+    }
+    if (this.usedIds.has(input.evidenceId)) {
+      return {
+        ok: false,
+        message: `Evidence id ${input.evidenceId} has already been used.`,
       };
     }
     if (this.interpretations >= 3) {
       return {
         ok: false,
-        message: "Only three brief interpretations are allowed for each input.",
+        message: "Limit three brief interpretations per player input.",
       };
     }
-    this.interpretations += 1;
+
     this.usedIds.add(input.evidenceId);
+    this.interpretations += 1;
     return { ok: true, text: input.text };
   }
 }

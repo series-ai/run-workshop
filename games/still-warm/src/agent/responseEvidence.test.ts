@@ -60,7 +60,7 @@ describe("response evidence", () => {
         .success,
     ).toBe(false);
     expect(
-      interpretationSchema.safeParse({ evidenceId: 7, text: "x".repeat(201) })
+      interpretationSchema.safeParse({ evidenceId: 7, text: "x".repeat(401) })
         .success,
     ).toBe(false);
   });
