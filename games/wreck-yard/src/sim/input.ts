@@ -39,7 +39,7 @@ const codec = defineSyncplayInputCodec<YardInput>({
   jetpack: { kind: 'boolean', neutral: false },
   moveX: { kind: 'int', min: -1, max: 1, neutral: 0 },
   moveZ: { kind: 'int', min: -1, max: 1, neutral: 0 },
-  yaw: { kind: 'int', min: -3200, max: 3200, neutral: 3142 },
+  yaw: { kind: 'int', min: -3200, max: 3200, neutral: 0 },
   pitch: { kind: 'int', min: -1500, max: 1500, neutral: 0 },
   ox: { kind: 'int', min: -RAY_ORIGIN_LIMIT, max: RAY_ORIGIN_LIMIT, neutral: 0 },
   oy: { kind: 'int', min: -RAY_ORIGIN_LIMIT, max: RAY_ORIGIN_LIMIT, neutral: 0 },

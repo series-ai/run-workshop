@@ -147,7 +147,7 @@ function getPlayerRay(player: PlayerState, input: YardInput): { origin: Vec3; di
 }
 
 function stepPlayerMovement(player: PlayerState, input: YardInput, w: Working): PlayerState {
-  const yaw = (input.yaw ?? 3142) / ANGLE_SCALE;
+  const yaw = (input.yaw ?? 0) / ANGLE_SCALE;
   const pitch = clamp((input.pitch ?? 0) / ANGLE_SCALE, -1.45, 1.45);
 
   const sinY = Math.sin(yaw);

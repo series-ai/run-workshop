@@ -43,7 +43,7 @@ export function PointerInput({
   const { camera, gl } = useThree();
   const lastBodies = useRef<readonly YardBody[] | null>(null);
 
-  const yaw = useRef(Math.PI);
+  const yaw = useRef(0);
   const pitch = useRef(0);
   const pressed = useRef(false);
   const secondary = useRef(false);

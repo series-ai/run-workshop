@@ -87,7 +87,7 @@ export function createInitialPlayer(slot = 0): PlayerState {
     vx: 0,
     vy: 0,
     vz: 0,
-    yaw: Math.PI, // Facing forward (negative Z) towards the playground
+    yaw: 0, // Facing forward (negative Z) towards the playground
     pitch: 0,
     grounded: true,
     fuel: 100,
