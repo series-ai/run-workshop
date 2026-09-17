@@ -3,20 +3,16 @@ import {
   type PhysicsContactEvent3D,
   type PhysicsJointHandle3D,
 } from '@series-inc/rundot-syncplay/physics/3d';
-import { computeTankBuoyancyResponse } from 'voxel-kit';
 import {
   DT,
   FLOOR_Y,
   GRAB_FLOOR_CLEARANCE,
   GRAB_LIFT,
   GRAB_PULL_GAIN,
-  GRAVITY,
   IMPACT_COOLDOWN_TICKS,
   IMPACT_MIN_SPEED,
   MAX_RAY_DISTANCE,
-  TANK_SPEC,
   THROW_BOOST,
-  TICK_RATE,
   TORCH_INSET,
   TORCH_PULSE_TICKS,
   TORCH_RADIUS,
@@ -29,7 +25,6 @@ import { add, clamp, rotateInverse, scale, sub, type Vec3 } from './math';
 import type { VoxelDims } from 'voxel-kit';
 import {
   addPhysicsBodies,
-  bodyMass,
   closeWorld,
   halfExtents,
   isShell,
@@ -41,7 +36,6 @@ import {
   removePhysicsBody,
   replacePhysicsBody,
   setPhysicsBodyVelocity,
-  voxelStats,
   type OpenYardPhysicsWorld,
   type YardPhysicsBody3D,
 } from './physics';
@@ -210,46 +204,6 @@ function stepPlayer(w: Working, slot: number, input: YardInput): PlayerState {
   }
 }
 
-function applyBuoyancy(w: Working, frame: number): void {
-  for (const body of w.bodies) {
-    if (body.motion !== 'dynamic') continue;
-    const physics = physicsBodyById(w.physics, body.id);
-    if (!physics) continue;
-    const pose = poseOf(physics);
-    const response = computeTankBuoyancyResponse(TANK_SPEC, {
-      position: [...pose.position],
-      linearVelocity: [
-        pose.linearVelocity[0] * TICK_RATE,
-        pose.linearVelocity[1] * TICK_RATE,
-        pose.linearVelocity[2] * TICK_RATE,
-      ],
-      angularVelocity: [
-        pose.angularVelocity[0] * TICK_RATE,
-        pose.angularVelocity[1] * TICK_RATE,
-        pose.angularVelocity[2] * TICK_RATE,
-      ],
-      halfExtents: [...halfExtents(body.dims)] as [number, number, number],
-      buoyancy: body.buoyancy,
-      mass: bodyMass(body),
-      gravity: GRAVITY,
-      fluidDensity: 1,
-      rotation: [...pose.rotation],
-      time: frame * DT,
-      volumeSamples: [...voxelStats(body.voxels, body.dims).samples],
-    });
-    const handle = physicsBodyHandle(w.physics, body.id);
-    if (response.submerged <= 0) {
-      w.physics.world.setBodyForce(handle, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 });
-      continue;
-    }
-    w.physics.world.setBodyForce(
-      handle,
-      { x: response.force[0], y: response.force[1], z: response.force[2] },
-      { x: response.torque[0], y: response.torque[1], z: response.torque[2] },
-    );
-  }
-}
-
 function queueImpacts(w: Working, contacts: readonly PhysicsContactEvent3D[], frame: number): void {
   for (const contact of contacts) {
     if (contact.type !== 'enter') continue;
@@ -396,7 +350,6 @@ export function stepYard(state: YardState, inputs: readonly YardInput[]): YardSt
       w.players[slot] = stepPlayer(w, slot, input);
     }
 
-    applyBuoyancy(w, state.frame);
     const grabJoints = createGrabJoints(w);
     w.physics.world.step();
     const latest = w.physics.world.latest();
@@ -410,7 +363,7 @@ export function stepYard(state: YardState, inputs: readonly YardInput[]): YardSt
     applyFractures(w, state.frame);
 
     disposed = true;
-    const nextWorld = closeWorld(w.physics);
+    const nextWorld = closeWorld(w.physics, latest.fluidInteractions);
     return {
       frame: state.frame + 1,
       bodies: w.bodies,

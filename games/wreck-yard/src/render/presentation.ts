@@ -21,6 +21,15 @@ export interface YardRender {
 
 export function projectYard(state: YardState, _context: { readonly localSlot: number; readonly status: SyncplayRunnerStatus }): YardRender {
   const poses = new Map<string, RenderPose>();
+  const submergedBodyIds = new Set<string>();
+  if (state.world.fluidInteractions) {
+    for (const interaction of state.world.fluidInteractions) {
+      if (interaction.submergedVolume > 1e-4) {
+        submergedBodyIds.add(interaction.bodyId);
+      }
+    }
+  }
+
   let floating = 0;
   for (const physics of state.world.bodies) {
     if (isShell(physics.id)) continue;
@@ -28,9 +37,12 @@ export function projectYard(state: YardState, _context: { readonly localSlot: nu
       ? [physics.orientation.x, physics.orientation.y, physics.orientation.z, physics.orientation.w]
       : [0, 0, 0, 1];
     poses.set(physics.id, { position: [physics.x, physics.y, physics.z], rotation });
-    if (physics.kind === 'dynamic' && physics.y < TANK_SPEC.surfaceY + 0.3 && physics.y > TANK_SPEC.bottomY
-      && Math.abs(physics.x - TANK_SPEC.center[0]) < TANK_SPEC.innerSize[0] * 0.5
-      && Math.abs(physics.z - TANK_SPEC.center[2]) < TANK_SPEC.innerSize[2] * 0.5) {
+    const isSubmerged = submergedBodyIds.size > 0
+      ? submergedBodyIds.has(physics.id)
+      : (physics.kind === 'dynamic' && physics.y < TANK_SPEC.surfaceY + 0.3 && physics.y > TANK_SPEC.bottomY
+        && Math.abs(physics.x - TANK_SPEC.center[0]) < TANK_SPEC.innerSize[0] * 0.5
+        && Math.abs(physics.z - TANK_SPEC.center[2]) < TANK_SPEC.innerSize[2] * 0.5);
+    if (isSubmerged) {
       floating += 1;
     }
   }

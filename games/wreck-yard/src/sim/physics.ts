@@ -1,20 +1,26 @@
 import {
   cookVoxelBody,
   createPhysicsWorld3D,
+  createVoxelChunk,
   initPhysics3D,
+  setVoxelCell,
   type PhysicsBody3D,
   type PhysicsBodyHandle3D,
   type PhysicsBodyId3D,
   type PhysicsBodyInput3D,
+  type PhysicsFluidHandle3D,
+  type PhysicsFluidInput3D,
+  type PhysicsFluidInteraction3D,
   type PhysicsShape3D,
   type PhysicsWorld3D,
   type VoxelCompoundShape,
 } from '@series-inc/rundot-syncplay/physics/3d';
-import { buildVoxelBuoyancySamples, type BuoyancyVolumeSample, type VoxelDims } from 'voxel-kit';
-import { ANGULAR_DAMPING, GRAVITY, LINEAR_DAMPING, MAX_PLAYERS, SHELL_BOXES, SHELL_PREFIX, TICK_RATE, VOXEL_SIZE, YARD_MATERIAL } from './constants';
+import type { VoxelDims } from 'voxel-kit';
+import { ANGULAR_DAMPING, GRAVITY, LINEAR_DAMPING, SHELL_BOXES, SHELL_PREFIX, TANK, TICK_RATE, VOXEL_SIZE, YARD_MATERIAL } from './constants';
 import { clamp, lerp, type Quat, type Vec3 } from './math';
 import type { YardBody } from './state';
 
+void setVoxelCell;
 await initPhysics3D();
 
 export interface BodyPose {
@@ -28,7 +34,6 @@ export interface BodyPose {
 
 export interface VoxelStats {
   readonly occupiedCount: number;
-  readonly samples: readonly BuoyancyVolumeSample[];
 }
 
 export interface YardPhysicsBodyInput3D {
@@ -50,11 +55,19 @@ export interface YardPhysicsBody3D {
   readonly angularVel: Readonly<{ x: number; y: number; z: number }>;
 }
 
+export interface YardFluidInteraction {
+  readonly bodyId: string;
+  readonly submergedVolume: number;
+  readonly totalForce: Readonly<{ x: number; y: number; z: number }>;
+  readonly totalTorque: Readonly<{ x: number; y: number; z: number }>;
+}
+
 export interface YardPhysicsWorldState {
   readonly frame: number;
   readonly bodies: readonly YardPhysicsBody3D[];
   readonly checkpoint: Uint8Array;
   readonly bodyIds: readonly (readonly [string, string])[];
+  readonly fluidInteractions?: readonly YardFluidInteraction[];
 }
 
 export interface OpenYardPhysicsWorld {
@@ -62,22 +75,50 @@ export interface OpenYardPhysicsWorld {
   readonly bodyIds: Map<string, PhysicsBodyId3D>;
 }
 
-const BODY_CAPACITY = 1024;
-const JOINT_CAPACITY = MAX_PLAYERS;
+export const PHYSICS_CAPACITY = {
+  bodies: 2048,
+  joints: 256,
+  fluids: 8,
+  fluidInteractions: 4096,
+} as const;
+
+export const WATER_FLUID_CONFIG: PhysicsFluidInput3D = {
+  bounds: {
+    minX: TANK.center[0] - TANK.innerSize[0] * 0.5,
+    minY: TANK.bottomY,
+    minZ: TANK.center[2] - TANK.innerSize[2] * 0.5,
+    maxX: TANK.center[0] + TANK.innerSize[0] * 0.5,
+    maxY: TANK.surfaceY,
+    maxZ: TANK.center[2] + TANK.innerSize[2] * 0.5,
+  },
+  surfacePlane: {
+    normal: { x: 0, y: 1, z: 0 },
+    offset: TANK.surfaceY,
+  },
+  density: 1,
+  linearDragPerSecond: 2,
+  angularDragPerSecond: 1,
+  flowVelocity: { x: 0, y: 0, z: 0 },
+  layer: 1,
+  mask: 0xffffffff,
+};
+
 const STATS_CACHE = new WeakMap<Uint8Array, VoxelStats>();
 
-export function voxelStats(voxels: Uint8Array, dims: VoxelDims): VoxelStats {
+export function voxelStats(voxels: Uint8Array, _dims?: VoxelDims): VoxelStats {
   const cached = STATS_CACHE.get(voxels);
   if (cached) return cached;
   let occupiedCount = 0;
   for (let i = 0; i < voxels.length; i += 1) if (voxels[i] !== 0) occupiedCount += 1;
-  const stats: VoxelStats = { occupiedCount, samples: buildVoxelBuoyancySamples(voxels, dims, VOXEL_SIZE) };
+  const stats: VoxelStats = { occupiedCount };
   STATS_CACHE.set(voxels, stats);
   return stats;
 }
 
 export function toChunk(voxels: Uint8Array, dims: VoxelDims) {
-  return { dimX: dims.x, dimY: dims.y, dimZ: dims.z, cellSize: VOXEL_SIZE, occupancy: voxels };
+  const chunk = createVoxelChunk(dims.x, dims.y, dims.z, VOXEL_SIZE);
+  chunk.occupancy.set(voxels);
+  return chunk;
 }
 
 function originOffset(dims: VoxelDims) {
@@ -128,6 +169,8 @@ export function makePhysicsBody(body: YardBody, pose: BodyPose): YardPhysicsBody
       angularDamping: ANGULAR_DAMPING,
       friction: YARD_MATERIAL.friction,
       restitution: YARD_MATERIAL.restitution,
+      layer: 1,
+      mask: 0xffffffff,
     },
   };
 }
@@ -141,15 +184,17 @@ export function shellBodies(): YardPhysicsBodyInput3D[] {
       shape: { type: 'box', halfX: box.size[0] * 0.5, halfY: box.size[1] * 0.5, halfZ: box.size[2] * 0.5 },
       friction: YARD_MATERIAL.friction,
       restitution: YARD_MATERIAL.restitution,
+      layer: 1,
+      mask: 0xffffffff,
     },
   }));
 }
 
-function makeWorld(): PhysicsWorld3D {
+export function makeWorld(): PhysicsWorld3D {
   return createPhysicsWorld3D({
     tickRate: TICK_RATE,
     initialGravity: { x: 0, y: -GRAVITY, z: 0 },
-    capacity: { bodies: BODY_CAPACITY, joints: JOINT_CAPACITY },
+    capacity: PHYSICS_CAPACITY,
   });
 }
 
@@ -178,6 +223,9 @@ export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): YardPhys
   let disposed = false;
   try {
     addPhysicsBodies(open, [...shellBodies(), ...bodies]);
+    open.world.edit((edit) => ({
+      water: edit.createFluid(WATER_FLUID_CONFIG),
+    }));
     disposed = true;
     return closeWorld(open);
   } finally {
@@ -199,18 +247,36 @@ export function openWorld(state: YardPhysicsWorldState): OpenYardPhysicsWorld {
   }
 }
 
-export function closeWorld(open: OpenYardPhysicsWorld): YardPhysicsWorldState {
+export function closeWorld(
+  open: OpenYardPhysicsWorld,
+  fluidInteractions?: readonly PhysicsFluidInteraction3D[],
+): YardPhysicsWorldState {
   try {
     const checkpoint = open.world.captureCheckpoint();
     try {
       const bytes = open.world.serializeCheckpoint(checkpoint);
       const names = [...open.bodyIds.keys()].sort();
       const bodies = names.map((name) => bodyView(name, open.world.readBody(open.world.resolveBody(open.bodyIds.get(name)!))));
+      const interactions: YardFluidInteraction[] = [];
+      if (fluidInteractions) {
+        for (const item of fluidInteractions) {
+          const name = physicsBodyName(open, item.bodyId);
+          if (name && !isShell(name)) {
+            interactions.push({
+              bodyId: name,
+              submergedVolume: item.submergedVolume,
+              totalForce: { x: item.totalForce.x, y: item.totalForce.y, z: item.totalForce.z },
+              totalTorque: { x: item.totalTorque.x, y: item.totalTorque.y, z: item.totalTorque.z },
+            });
+          }
+        }
+      }
       return {
         frame: Number(open.world.info().frame),
         bodies,
         checkpoint: new Uint8Array(bytes),
         bodyIds: names.map((name) => [name, open.bodyIds.get(name)!.toString()] as const),
+        fluidInteractions: interactions.length > 0 ? interactions : undefined,
       };
     } finally {
       open.world.releaseCheckpoint(checkpoint);
@@ -303,6 +369,57 @@ export function replacePhysicsPose(
 
 export function isShell(bodyId: string): boolean {
   return bodyId.startsWith(SHELL_PREFIX);
+}
+
+export function applyPhysicsForce(
+  open: OpenYardPhysicsWorld,
+  id: string,
+  force: Vec3,
+  torque: Vec3 = [0, 0, 0],
+): void {
+  const handle = physicsBodyHandle(open, id);
+  open.world.applyForce(
+    handle,
+    { x: force[0], y: force[1], z: force[2] },
+    { x: torque[0], y: torque[1], z: torque[2] },
+  );
+}
+
+export function applyPhysicsForceAtPoint(
+  open: OpenYardPhysicsWorld,
+  id: string,
+  force: Vec3,
+  point: Vec3,
+): void {
+  const handle = physicsBodyHandle(open, id);
+  open.world.applyForceAtPoint(
+    handle,
+    { x: force[0], y: force[1], z: force[2] },
+    { x: point[0], y: point[1], z: point[2] },
+  );
+}
+
+export function clearPhysicsBodyForce(open: OpenYardPhysicsWorld, id: string): void {
+  const handle = physicsBodyHandle(open, id);
+  open.world.clearBodyForce(handle);
+}
+
+export function createFluidVolume(
+  open: OpenYardPhysicsWorld,
+  fluid: PhysicsFluidInput3D,
+): PhysicsFluidHandle3D {
+  const {
+    created: { fluid: handle },
+  } = open.world.edit((edit) => ({
+    fluid: edit.createFluid(fluid),
+  }));
+  return handle;
+}
+
+export function removeFluidVolume(open: OpenYardPhysicsWorld, handle: PhysicsFluidHandle3D): void {
+  open.world.edit((edit) => {
+    edit.removeFluid(handle);
+  });
 }
 
 export function poseOf(physics: YardPhysicsBody3D | PhysicsBody3D): BodyPose {
