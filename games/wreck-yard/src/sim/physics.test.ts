@@ -38,7 +38,8 @@ describe('createInitialState', () => {
       const physics = state.world.bodies.find((p) => p.id === body.id);
       expect(physics?.kind).toBe(body.motion === 'fixed' ? 'static' : 'dynamic');
     }
-    expect(state.world.bodies.filter((b) => b.id.startsWith('shell:'))).toHaveLength(15);
+    expect(state.world.bodies.filter((b) => b.id.startsWith('shell:'))).toHaveLength(16);
+    expect(state.world.bodies.some((b) => b.id === 'shell:terrain')).toBe(true);
   });
 
   it('makes a static physics body without orientation', () => {

@@ -52,6 +52,7 @@ export interface PlayerState {
   readonly wasPressed: boolean;
   readonly wasSecondaryPressed: boolean;
   readonly jetpackActive: boolean;
+  readonly ridingVehicle?: boolean;
 }
 
 export interface YardStats {

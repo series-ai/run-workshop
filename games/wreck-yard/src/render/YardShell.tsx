@@ -1,10 +1,58 @@
+import { useMemo } from 'react';
+import * as THREE from 'three';
 import type { WaterTankSpec } from 'voxel-kit';
-import { FLOOR_Y, TANK, TANK_SPEC } from '../sim/constants';
+import { FLOOR_Y, getTerrainHeightAt, TANK, TANK_SPEC } from '../sim/constants';
 import { SkyDome } from './SkyDome';
 import { WaterCaustics, WaterSurface } from './Water';
 
 const noRaycast = () => null;
 const tuple3 = (x: number, y: number, z: number): [number, number, number] => [x, y, z];
+
+function DemolitionTerrainMesh() {
+  const geom = useMemo(() => {
+    const plane = new THREE.PlaneGeometry(51.2, 51.2, 32, 32);
+    plane.rotateX(-Math.PI / 2);
+    const pos = plane.attributes.position;
+    const colors = new Float32Array(pos.count * 3);
+    const color = new THREE.Color();
+
+    for (let i = 0; i < pos.count; i++) {
+      const vx = pos.getX(i);
+      const vz = pos.getZ(i);
+      const vy = FLOOR_Y + getTerrainHeightAt(vx, vz);
+      pos.setY(i, vy);
+
+      const centerDist = Math.hypot(vx, vz);
+      const waterDist = Math.hypot(vx - 11, vz - (-11));
+
+      if (waterDist < 7.0) {
+        // Wet quarry basin & shoreline
+        color.set('#1e293b');
+      } else if (centerDist < 6.5) {
+        // Industrial concrete / asphalt apron
+        color.set('#334155');
+      } else if (vy > FLOOR_Y + 0.7) {
+        // Dirt berms / rocky gravel ridges
+        color.set('#475569');
+      } else {
+        // Heavy demolition yard gravel
+        color.set('#27272a');
+      }
+      colors[i * 3] = color.r;
+      colors[i * 3 + 1] = color.g;
+      colors[i * 3 + 2] = color.b;
+    }
+    plane.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    plane.computeVertexNormals();
+    return plane;
+  }, []);
+
+  return (
+    <mesh geometry={geom} receiveShadow raycast={noRaycast}>
+      <meshStandardMaterial vertexColors roughness={0.84} metalness={0.15} />
+    </mesh>
+  );
+}
 
 export type WaterVisualLayout = {
   tankHeight: number;
@@ -96,11 +144,14 @@ export function YardShell() {
       <pointLight position={[0, 6, 0]} intensity={14} distance={28} color="#fed7aa" />
 
       {/* ========================================================================= */}
-      {/* DEMOLITION YARD FLOOR: 52m x 52m Layered Weathered Heavy Asphalt & Paving */}
+      {/* DEMOLITION YARD TERRAIN: Syncplay Heightfield Topography                  */}
       {/* ========================================================================= */}
-      <mesh position={[0, FLOOR_Y - 0.1, 0]} receiveShadow raycast={noRaycast}>
-        <boxGeometry args={[52, 0.2, 52]} />
-        <meshStandardMaterial color="#202226" roughness={0.88} metalness={0.12} />
+      <DemolitionTerrainMesh />
+
+      {/* Weathered Sub-Base Foundation */}
+      <mesh position={[0, FLOOR_Y - 0.25, 0]} receiveShadow raycast={noRaycast}>
+        <boxGeometry args={[52.4, 0.2, 52.4]} />
+        <meshStandardMaterial color="#18181b" roughness={0.95} metalness={0.05} />
       </mesh>
 
       {/* Central Heavy Concrete Slab with Expansion Joints */}

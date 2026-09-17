@@ -48,7 +48,7 @@ describe('stepYard', () => {
     expect(state.frame).toBe(60);
     const steel = physicsStateBodyById(state.world, 'steel-case')!;
     expect(steel.y).toBeGreaterThan(-0.9);
-    expect(steel.y).toBeLessThan(0);
+    expect(steel.y).toBeLessThan(0.3);
   });
 
   it('grabs, lifts, and throws the ballast box', () => {

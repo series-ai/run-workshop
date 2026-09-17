@@ -19,6 +19,7 @@ export interface PlayerRenderPose {
   readonly jetpackActive: boolean;
   readonly grabbing: string | null;
   readonly torching: string | null;
+  readonly ridingVehicle: boolean;
 }
 
 export interface YardRender {
@@ -71,6 +72,7 @@ export function projectYard(state: YardState, context: { readonly localSlot: num
     jetpackActive: p.jetpackActive,
     grabbing: p.grab?.bodyId ?? null,
     torching: p.torch?.bodyId ?? null,
+    ridingVehicle: Boolean(p.ridingVehicle),
   }));
 
   return {

@@ -112,9 +112,72 @@ export function FirstPersonTool({
 
   if (tool === 'orbit') return null;
 
+  const render = renderRef.current;
+  const localPlayer = render?.players?.find((p) => p.slot === render?.localSlot);
+  const isRiding = Boolean(localPlayer?.ridingVehicle);
+
   return (
     <group ref={root}>
-      {tool === 'hand' ? (
+      {isRiding ? (
+        // =========================================================================
+        // TEARDOWN-STYLE INDUSTRIAL BUGGY DRIVING COCKPIT VIEWMODEL
+        // =========================================================================
+        <group position={[0, -0.18, -0.2]} rotation={[0, 0, 0]}>
+          {/* Dashboard console */}
+          <mesh position={[0, -0.12, 0.05]}>
+            <boxGeometry args={[0.7, 0.16, 0.28]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.6} metalness={0.7} />
+          </mesh>
+          {/* Welded roll cage bars framing view */}
+          <mesh position={[-0.32, 0.2, 0]} rotation={[0.2, 0, -0.2]}>
+            <cylinderGeometry args={[0.022, 0.022, 0.65, 10]} />
+            <meshStandardMaterial color="#eab308" roughness={0.4} metalness={0.8} />
+          </mesh>
+          <mesh position={[0.32, 0.2, 0]} rotation={[0.2, 0, 0.2]}>
+            <cylinderGeometry args={[0.022, 0.022, 0.65, 10]} />
+            <meshStandardMaterial color="#eab308" roughness={0.4} metalness={0.8} />
+          </mesh>
+          <mesh position={[0, 0.45, 0.05]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.022, 0.022, 0.62, 10]} />
+            <meshStandardMaterial color="#eab308" roughness={0.4} metalness={0.8} />
+          </mesh>
+          {/* Steering column */}
+          <mesh position={[0, -0.04, 0.18]} rotation={[-0.55, 0, 0]}>
+            <cylinderGeometry args={[0.022, 0.022, 0.22, 12]} />
+            <meshStandardMaterial color="#0f172a" roughness={0.8} />
+          </mesh>
+          {/* Rotating Heavy Industrial Steering Wheel */}
+          <group position={[0, 0.04, 0.26]} rotation={[-0.55, 0, -swayX.current * 4]}>
+            <mesh rotation={[Math.PI / 2, 0, 0]}>
+              <torusGeometry args={[0.13, 0.016, 12, 28]} />
+              <meshStandardMaterial color="#020617" roughness={0.9} />
+            </mesh>
+            {/* Steering wheel cross spokes */}
+            <mesh>
+              <boxGeometry args={[0.24, 0.02, 0.015]} />
+              <meshStandardMaterial color="#475569" roughness={0.5} metalness={0.8} />
+            </mesh>
+            <mesh position={[0, -0.06, 0]}>
+              <boxGeometry args={[0.02, 0.12, 0.015]} />
+              <meshStandardMaterial color="#475569" roughness={0.5} metalness={0.8} />
+            </mesh>
+            {/* Horn button */}
+            <mesh position={[0, 0, 0.01]}>
+              <cylinderGeometry args={[0.03, 0.03, 0.015, 16]} />
+              <meshStandardMaterial color="#ef4444" roughness={0.5} />
+            </mesh>
+          </group>
+          {/* Speedometer & Turbo boost gauges */}
+          <mesh position={[-0.12, -0.03, 0.15]} rotation={[-0.55, 0, 0]}>
+            <cylinderGeometry args={[0.032, 0.032, 0.01, 16]} />
+            <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.6} />
+          </mesh>
+          <mesh position={[0.12, -0.03, 0.15]} rotation={[-0.55, 0, 0]}>
+            <cylinderGeometry args={[0.032, 0.032, 0.01, 16]} />
+            <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.6} />
+          </mesh>
+        </group>
+      ) : tool === 'hand' ? (
         // =========================================================================
         // TEARDOWN-STYLE HEAVY INDUSTRIAL GRAVITY TRACTOR VIEWMODEL
         // =========================================================================

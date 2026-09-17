@@ -27,6 +27,7 @@ import {
   TORCH_RADIUS,
   TORCH_THROUGH_MARGIN,
   VOXEL_SIZE,
+  getTerrainHeightAt,
 } from './constants';
 import { fractureBody, type FractureContact } from './fracture';
 import { ANGLE_SCALE, decodeRay, TOOL, type YardInput } from './input';
@@ -34,6 +35,7 @@ import { add, clamp, lerp, rotateInverse, scale, sub, type Vec3 } from './math';
 import type { VoxelDims } from 'voxel-kit';
 import {
   addPhysicsBodies,
+  applyPhysicsForce,
   closeWorld,
   halfExtents,
   isShell,
@@ -144,7 +146,7 @@ function getPlayerRay(player: PlayerState, input: YardInput): { origin: Vec3; di
   return { origin: eye, direction: dir };
 }
 
-function stepPlayerMovement(player: PlayerState, input: YardInput): PlayerState {
+function stepPlayerMovement(player: PlayerState, input: YardInput, w: Working): PlayerState {
   const yaw = (input.yaw ?? 3142) / ANGLE_SCALE;
   const pitch = clamp((input.pitch ?? 0) / ANGLE_SCALE, -1.45, 1.45);
 
@@ -157,6 +159,52 @@ function stepPlayerMovement(player: PlayerState, input: YardInput): PlayerState 
 
   const moveX = clamp(input.moveX ?? 0, -1, 1);
   const moveZ = clamp(input.moveZ ?? 0, -1, 1);
+
+  // Check buggy vehicle interaction
+  const buggy = physicsBodyById(w.physics, 'vehicle-chassis');
+  let ridingVehicle = Boolean(player.ridingVehicle);
+
+  if (buggy) {
+    const distToBuggy = Math.hypot(player.x - buggy.x, player.z - buggy.z);
+    if (!ridingVehicle && distToBuggy < 3.2 && input.secondary && !player.wasSecondaryPressed) {
+      ridingVehicle = true;
+    } else if (ridingVehicle && input.jetpack) {
+      ridingVehicle = false;
+    }
+  } else {
+    ridingVehicle = false;
+  }
+
+  if (ridingVehicle && buggy) {
+    if (moveZ !== 0 || moveX !== 0) {
+      const chassisYaw = Math.atan2(
+        2 * (buggy.orientation.w * buggy.orientation.y + buggy.orientation.x * buggy.orientation.z),
+        1 - 2 * (buggy.orientation.y * buggy.orientation.y + buggy.orientation.z * buggy.orientation.z),
+      );
+      const bFwdX = -Math.sin(chassisYaw);
+      const bFwdZ = -Math.cos(chassisYaw);
+      const engineForce = moveZ * 2600;
+      const steerTorque = -moveX * 750;
+      applyPhysicsForce(w.physics, 'vehicle-chassis', [bFwdX * engineForce, 0, bFwdZ * engineForce], [0, steerTorque, 0]);
+    }
+
+    return {
+      ...player,
+      x: buggy.x,
+      y: buggy.y + 0.65,
+      z: buggy.z,
+      vx: buggy.vx,
+      vy: buggy.vy,
+      vz: buggy.vz,
+      yaw,
+      pitch,
+      grounded: true,
+      fuel: 100,
+      jetpackActive: false,
+      activeTool: 'none' as PlayerTool,
+      ridingVehicle: true,
+    };
+  }
 
   const targetVx = (fwdX * moveZ + rightX * moveX) * PLAYER_MOVE_SPEED;
   const targetVz = (fwdZ * moveZ + rightZ * moveX) * PLAYER_MOVE_SPEED;
@@ -185,7 +233,8 @@ function stepPlayerMovement(player: PlayerState, input: YardInput): PlayerState 
   let y = player.y + vy * DT;
   let z = player.z + vz * DT;
 
-  const floorCollisionY = FLOOR_Y + PLAYER_RADIUS;
+  const terrainY = FLOOR_Y + getTerrainHeightAt(x, z);
+  const floorCollisionY = terrainY + PLAYER_RADIUS;
   let grounded = false;
   if (y <= floorCollisionY) {
     y = floorCollisionY;
@@ -214,8 +263,10 @@ function stepPlayerMovement(player: PlayerState, input: YardInput): PlayerState 
     fuel,
     jetpackActive,
     activeTool,
+    ridingVehicle: false,
   };
 }
+
 
 function stepHand(
   w: Working,
@@ -368,7 +419,17 @@ function stepTorch(
 
 function stepPlayer(w: Working, slot: number, input: YardInput): PlayerState {
   const initial = w.players[slot] ?? createInitialPlayer(slot);
-  const moved = stepPlayerMovement(initial, input);
+  const moved = stepPlayerMovement(initial, input, w);
+  if (moved.ridingVehicle) {
+    return {
+      ...moved,
+      grab: null,
+      torch: null,
+      torchTicks: 0,
+      wasPressed: input.pressed,
+      wasSecondaryPressed: input.secondary,
+    };
+  }
   const ray = getPlayerRay(moved, input);
 
   switch (input.tool) {

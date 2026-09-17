@@ -16,7 +16,23 @@ import {
   type VoxelCompoundShape,
 } from '@series-inc/rundot-syncplay/physics/3d';
 import type { VoxelDims } from 'voxel-kit';
-import { ANGULAR_DAMPING, GRAVITY, LINEAR_DAMPING, SHELL_BOXES, SHELL_PREFIX, TANK, TICK_RATE, VOXEL_SIZE, YARD_MATERIAL } from './constants';
+import {
+  ANGULAR_DAMPING,
+  GRAVITY,
+  LINEAR_DAMPING,
+  SHELL_BOXES,
+  SHELL_PREFIX,
+  TANK,
+  TERRAIN_COLS,
+  TERRAIN_HEIGHTS,
+  TERRAIN_ORIGIN_X,
+  TERRAIN_ORIGIN_Z,
+  TERRAIN_ROWS,
+  TERRAIN_SPACING,
+  TICK_RATE,
+  VOXEL_SIZE,
+  YARD_MATERIAL,
+} from './constants';
 import { clamp, lerp, type Quat, type Vec3 } from './math';
 import type { YardBody } from './state';
 
@@ -176,18 +192,39 @@ export function makePhysicsBody(body: YardBody, pose: BodyPose): YardPhysicsBody
 }
 
 export function shellBodies(): YardPhysicsBodyInput3D[] {
-  return SHELL_BOXES.map((box) => ({
+  const boxes = SHELL_BOXES.map((box) => ({
     id: `${SHELL_PREFIX}${box.id}`,
     body: {
-      kind: 'static',
+      kind: 'static' as const,
       position: { x: box.center[0], y: box.center[1], z: box.center[2] },
-      shape: { type: 'box', halfX: box.size[0] * 0.5, halfY: box.size[1] * 0.5, halfZ: box.size[2] * 0.5 },
+      shape: { type: 'box' as const, halfX: box.size[0] * 0.5, halfY: box.size[1] * 0.5, halfZ: box.size[2] * 0.5 },
       friction: YARD_MATERIAL.friction,
       restitution: YARD_MATERIAL.restitution,
       layer: 1,
       mask: 0xffffffff,
     },
   }));
+
+  const terrain: YardPhysicsBodyInput3D = {
+    id: `${SHELL_PREFIX}terrain`,
+    body: {
+      kind: 'static',
+      position: { x: TERRAIN_ORIGIN_X, y: 0, z: TERRAIN_ORIGIN_Z },
+      shape: {
+        type: 'heightfield',
+        columns: TERRAIN_COLS,
+        rows: TERRAIN_ROWS,
+        scale: { x: TERRAIN_SPACING, y: 1.0, z: TERRAIN_SPACING },
+        heights: TERRAIN_HEIGHTS,
+      },
+      friction: YARD_MATERIAL.friction,
+      restitution: YARD_MATERIAL.restitution,
+      layer: 1,
+      mask: 0xffffffff,
+    },
+  };
+
+  return [...boxes, terrain];
 }
 
 export function makeWorld(): PhysicsWorld3D {

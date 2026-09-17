@@ -91,3 +91,54 @@ export const SHELL_BOXES: readonly (WorldOcclusionStaticBox & { id: string })[] 
   { id: 'ball-drop-platform', center: [-12, FLOOR_Y + 2.5, 12], size: [4, 5.0, 4] },
   { id: 'vehicle-ramp', center: [12, FLOOR_Y + 0.4, 12], size: [4, 0.8, 6] },
 ];
+
+export const TERRAIN_COLS = 17;
+export const TERRAIN_ROWS = 17;
+export const TERRAIN_SPACING = 3.2; // 16 * 3.2 = 51.2m arena extent
+export const TERRAIN_ORIGIN_X = -25.6;
+export const TERRAIN_ORIGIN_Z = -25.6;
+
+export function getTerrainHeightAt(x: number, z: number): number {
+  let h = 0;
+  // 1. Water Basin (North-East: around x = 11, z = -11) - sunken excavated fluid quarry
+  const waterDist = Math.hypot(x - 11.0, z - (-11.0));
+  if (waterDist < 7.2) {
+    h -= Math.cos((waterDist / 7.2) * (Math.PI * 0.5)) * 1.85;
+  }
+
+  // 2. Vehicle Dirt Ridge / Hill (South-East: around x = 15, z = 14)
+  const hillDist = Math.hypot(x - 15.0, z - 14.0);
+  if (hillDist < 8.0) {
+    h += Math.cos((hillDist / 8.0) * (Math.PI * 0.5)) * 2.2;
+  }
+
+  // 3. Ball Drop Knoll (South-West: around x = -14, z = 14)
+  const knollDist = Math.hypot(x - (-14.0), z - 14.0);
+  if (knollDist < 7.5) {
+    h += Math.cos((knollDist / 7.5) * (Math.PI * 0.5)) * 1.5;
+  }
+
+  // 4. Central Salvage Flat: keep central apron (where gantry, ballast box, spawn points are) flat
+  const centerDist = Math.hypot(x, z);
+  if (centerDist < 6.5) {
+    h = 0;
+  } else if (centerDist < 9.0) {
+    h *= (centerDist - 6.5) / 2.5;
+  }
+
+  return Math.round(h * 100) / 100;
+}
+
+export function buildTerrainHeights(): readonly number[] {
+  const list: number[] = [];
+  for (let r = 0; r < TERRAIN_ROWS; r++) {
+    for (let c = 0; c < TERRAIN_COLS; c++) {
+      const x = TERRAIN_ORIGIN_X + c * TERRAIN_SPACING;
+      const z = TERRAIN_ORIGIN_Z + r * TERRAIN_SPACING;
+      list.push(getTerrainHeightAt(x, z));
+    }
+  }
+  return Object.freeze(list);
+}
+
+export const TERRAIN_HEIGHTS: readonly number[] = buildTerrainHeights();

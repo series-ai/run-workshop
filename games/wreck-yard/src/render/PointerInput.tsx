@@ -86,6 +86,37 @@ export function PointerInput({
       pitch.current = THREE.MathUtils.clamp(p, -1.45, 1.45);
     };
 
+    (window as unknown as {
+      __SIMULATE_INPUT__?: (action: {
+        pressed?: boolean;
+        secondary?: boolean;
+        tool?: UiTool;
+        moveX?: number;
+        moveZ?: number;
+        jetpack?: boolean;
+      }) => void;
+    }).__SIMULATE_INPUT__ = (action) => {
+      if (action.pressed !== undefined) pressed.current = action.pressed;
+      if (action.secondary !== undefined) secondary.current = action.secondary;
+      if (action.tool !== undefined) onToolChange?.(action.tool);
+      if (action.jetpack !== undefined) {
+        if (action.jetpack) keys.current.add('Space');
+        else keys.current.delete('Space');
+      }
+      if (action.moveZ !== undefined) {
+        if (action.moveZ > 0) keys.current.add('KeyW');
+        else keys.current.delete('KeyW');
+        if (action.moveZ < 0) keys.current.add('KeyS');
+        else keys.current.delete('KeyS');
+      }
+      if (action.moveX !== undefined) {
+        if (action.moveX > 0) keys.current.add('KeyD');
+        else keys.current.delete('KeyD');
+        if (action.moveX < 0) keys.current.add('KeyA');
+        else keys.current.delete('KeyA');
+      }
+    };
+
     const onPointerDown = (event: MouseEvent) => {
       if (tool !== 'orbit') {
         if (document.pointerLockElement !== dom) {
@@ -135,7 +166,7 @@ export function PointerInput({
       keys.current.delete(event.code);
     };
 
-    dom.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mousedown', onPointerDown);
     window.addEventListener('mouseup', onPointerUp);
     document.addEventListener('mousemove', onMouseMove);
     dom.addEventListener('contextmenu', onContextMenu);
@@ -143,7 +174,7 @@ export function PointerInput({
     window.addEventListener('keyup', onKeyUp);
 
     return () => {
-      dom.removeEventListener('mousedown', onPointerDown);
+      window.removeEventListener('mousedown', onPointerDown);
       window.removeEventListener('mouseup', onPointerUp);
       document.removeEventListener('mousemove', onMouseMove);
       dom.removeEventListener('contextmenu', onContextMenu);
