@@ -35,6 +35,11 @@ export function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
+export function lerpAngle(a: number, b: number, t: number): number {
+  const diff = ((b - a + Math.PI) % (Math.PI * 2)) - Math.PI;
+  return a + (diff < -Math.PI ? diff + Math.PI * 2 : diff) * t;
+}
+
 export function rotate(v: Vec3, q: Quat): Vec3 {
   return rotateVector([v[0], v[1], v[2]], [q[0], q[1], q[2], q[3]]);
 }

@@ -1,4 +1,4 @@
-async (page) => {
+(async () => {
   console.log('--- STARTING COMPREHENSIVE ACTION SHOWCASE ---');
 
   // Helper functions
@@ -176,4 +176,4 @@ async (page) => {
   });
   console.log('--- SHOWCASE COMPLETE --- Final Stats:', stats);
   return stats;
-}
+})();

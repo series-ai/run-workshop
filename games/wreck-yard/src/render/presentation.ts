@@ -1,5 +1,5 @@
 import type { SyncplayRunnerStatus } from '@series-inc/rundot-syncplay/browser';
-import { lerp, quatNlerp, type Quat, type Vec3 } from '../sim/math';
+import { lerp, lerpAngle, quatNlerp, type Quat, type Vec3 } from '../sim/math';
 import { isShell } from '../sim/physics';
 import type { YardBody, YardState, YardStats } from '../sim/state';
 import { TANK_SPEC } from '../sim/constants';
@@ -115,8 +115,8 @@ export function interpolateYard(previous: YardRender, current: YardRender, alpha
         lerp(prev.position[1], curr.position[1], alpha),
         lerp(prev.position[2], curr.position[2], alpha),
       ] as Vec3,
-      yaw: lerp(prev.yaw, curr.yaw, alpha),
-      pitch: lerp(prev.pitch, curr.pitch, alpha),
+      yaw: lerpAngle(prev.yaw, curr.yaw, alpha),
+      pitch: lerpAngle(prev.pitch, curr.pitch, alpha),
       fuel: lerp(prev.fuel, curr.fuel, alpha),
     };
   });

@@ -109,14 +109,14 @@ export function YardShell() {
         intensity={3.4}
         color="#ffe8cc"
         castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-camera-left={-30}
-        shadow-camera-right={30}
-        shadow-camera-top={30}
-        shadow-camera-bottom={-30}
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+        shadow-camera-left={-28}
+        shadow-camera-right={28}
+        shadow-camera-top={28}
+        shadow-camera-bottom={-28}
         shadow-camera-far={65}
-        shadow-bias={-0.00016}
+        shadow-bias={-0.0002}
       />
 
       {/* High-Mast Yard Floodlight 1 (West Tower) */}

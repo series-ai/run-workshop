@@ -73,12 +73,13 @@ export function YardScene({ controller, tool, onToolChange }: {
   return (
     <Canvas
       shadows
-      dpr={[1, 2]}
+      dpr={[1, 1.5]}
       camera={{ position: [CAMERA_BASE[0], CAMERA_BASE[1], CAMERA_BASE[2]], fov: 65 }}
-      gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+      gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', precision: 'highp' }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.08;
+        gl.shadowMap.type = THREE.PCFSoftShadowMap;
       }}
       style={{ position: 'absolute', inset: 0 }}
     >

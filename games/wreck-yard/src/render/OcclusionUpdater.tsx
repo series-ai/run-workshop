@@ -45,7 +45,8 @@ export function OcclusionUpdater({ renderRef, worldOcclusion }: { renderRef: Mut
     });
     const now = clock.elapsedTime;
     const forceUpdate = lastPoses.current.length !== poses.length;
-    if (!forceUpdate && (!hasWorldOcclusionPoseChanges(lastPoses.current, poses) || now - lastUpdate.current < 1 / 30)) return;
+    // Throttle CPU occlusion calculation to at most 5 Hz to maintain 60 fps and prevent WebGL stalls
+    if (!forceUpdate && (!hasWorldOcclusionPoseChanges(lastPoses.current, poses) || now - lastUpdate.current < 0.2)) return;
     const bodies: WorldOcclusionBody[] = render.bodies.map((body, index) => ({
       dims: body.dims,
       voxels: body.voxels,
