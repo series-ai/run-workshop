@@ -9,6 +9,7 @@ import { GroupTransformBox } from './GroupTransformBox';
 import { CropOverlay } from './CropOverlay';
 import type { CropRect, CropGeometry } from './CropOverlay';
 import { PaintEditor } from './paint/PaintEditor';
+import { DotPixelEditor } from './dotpixel/DotPixelEditor';
 import { autoCropImage } from './cropImage';
 import { saveProject, saveProjectAs, loadProject, setCurrentFileHandle, setCurrentFilePath } from './projectFile';
 import { importSpriteSheet } from './importSpriteSheet';
@@ -65,6 +66,7 @@ export function Workspace() {
   const [splitH, setSplitH] = useState(0);
   const [cropMode, setCropMode] = useState<{ imageId: string; rect: CropRect; offsetOnly?: boolean; followerIds?: string[] } | null>(null);
   const [maskMode, setMaskMode] = useState<{ imageId: string } | null>(null);
+  const [dotPixelImage, setDotPixelImage] = useState<ImageNodeType | null>(null);
   const [sliceMode, setSliceMode] = useState(false);
   const [slicePreview, setSlicePreview] = useState<{ imageId: string; axis: 'vertical' | 'horizontal'; cutAt: number } | null>(null);
   // Held-key axis lock for the knife. Refs (not state) so the pointer move
@@ -408,6 +410,7 @@ export function Workspace() {
   // --- Keyboard ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (dotPixelImage) return;
       // Block all workspace shortcuts when AI modals are open
       if (aiTextToImageOpen || aiRemoveBgOpen || aiLayerizeOpen || aiChatOpen || aiComfyOpen || aiUnityOpen) {
         const tag = (document.activeElement as HTMLElement)?.tagName;
@@ -734,7 +737,7 @@ export function Workspace() {
     // the file — listing it would TDZ-error). Its inputs (selectedIds, images,
     // scaleFilter) are all in this dep list, so re-runs always re-capture a
     // fresh callback.
-  }, [dispatch, state.selectedIds, state.snapEnabled, state.images, state.scaleFilter, cropMode, maskMode, sliceMode, paintHistory, state.pan, state.zoom, addImageFromFile, userConfig.alignPadding]);
+  }, [dispatch, state.selectedIds, state.snapEnabled, state.images, state.scaleFilter, cropMode, maskMode, dotPixelImage, sliceMode, paintHistory, state.pan, state.zoom, addImageFromFile, userConfig.alignPadding]);
 
   // --- Zoom (native listener to allow preventDefault on non-passive wheel) ---
   useEffect(() => {
@@ -2582,6 +2585,24 @@ export function Workspace() {
         />
       )}
 
+      {dotPixelImage && (
+        <DotPixelEditor
+          image={dotPixelImage}
+          onClose={() => setDotPixelImage(null)}
+          onAdd={(src, width, height) => {
+            dispatch({ type: 'ADD_IMAGE', image: {
+              id: crypto.randomUUID(), src,
+              fileName: `${dotPixelImage.fileName.replace(/\.[^.]+$/, '')}-dotpixel.png`,
+              x: dotPixelImage.x + dotPixelImage.width + 24, y: dotPixelImage.y,
+              width, height, naturalWidth: width, naturalHeight: height,
+              rotation: 0, zIndex: 0, locked: false, opacity: 1,
+              spriteName: '', parentId: null, basePosition: null, offsetPosition: null,
+              layerOrder: 'above', replacesParent: false, flipH: false, flipV: false,
+            } });
+          }}
+        />
+      )}
+
       <Toolbar
         zoom={state.zoom}
         dispatch={dispatch}
@@ -2605,6 +2626,11 @@ export function Workspace() {
         onToggleRulers={() => setRulersVisible((v) => !v)}
         canvasBgColor={state.canvasBgColor}
         onOpenFlipbook={() => setFlipbookOpen(true)}
+        canOpenDotPixel={!cropMode && !sliceMode && state.selectedIds.size === 1 && state.images.some((img) => state.selectedIds.has(img.id) && img.nodeType !== 'text')}
+        onOpenDotPixel={() => {
+          const img = state.images.find((item) => state.selectedIds.has(item.id) && item.nodeType !== 'text');
+          if (img) setDotPixelImage(img);
+        }}
         activeTool={activeTool}
         onSetActiveTool={setActiveTool}
         exportOpen={exportOpen}

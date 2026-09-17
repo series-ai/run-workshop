@@ -100,12 +100,21 @@ function imageProxyPlugin(): Plugin {
         const m = (req.url ?? '').split('?')[0]!.match(TICKET_RE);
         if (!m) { res.writeHead(400); res.end('Bad ticket'); return; }
         const [, id, rawName] = m;
-        const name = decodeURIComponent(rawName || 'image.png').replace(/[/\\"\r\n]/g, '_');
+        let name: string;
+        try {
+          name = decodeURIComponent(rawName || 'image.png').replace(/[/\\"\x00-\x1f\x7f]/g, '_');
+        } catch {
+          res.writeHead(400); res.end('Bad filename encoding'); return;
+        }
+        // HTTP headers cannot contain raw Unicode. Keep a safe ASCII fallback
+        // and preserve the actual filename via RFC 5987's UTF-8 filename*.
+        const asciiName = name.replace(/[^\x20-\x7e]/g, '_');
+        const encodedName = encodeURIComponent(name).replace(/['()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
         const t = downloadTickets.get(id!) ?? newTicket(id!);
         if (t.failed) { ticketCleanup(id!); res.writeHead(500); res.end('Render failed'); return; }
         res.writeHead(200, {
           'Content-Type': 'image/png',
-          'Content-Disposition': `attachment; filename="${name}"`,
+          'Content-Disposition': `attachment; filename="${asciiName}"; filename*=UTF-8''${encodedName}`,
           'Cache-Control': 'no-store',
         });
         if (t.data) {

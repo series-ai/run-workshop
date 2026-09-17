@@ -25,6 +25,8 @@ interface LayerPanelProps {
   onToggleCheckerboard?: () => void;
   onClearMask?: () => void;
   maskHasContent?: boolean;
+  pixelFixEnabled?: boolean;
+  onTogglePixelFix?: () => void;
 }
 
 export function LayerPanel({
@@ -33,6 +35,7 @@ export function LayerPanel({
   onAddLayer, onDeleteLayer, onRenameLayer, onReorderLayer,
   onDuplicateLayer, onMergeDown, onFlatten, onSelectLayerContents,
   onRasterizeLayer, onEditTextLayer, showCheckerboard, onToggleCheckerboard, onClearMask, maskHasContent,
+  pixelFixEnabled, onTogglePixelFix,
 }: LayerPanelProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -227,6 +230,16 @@ export function LayerPanel({
                   </span>
                   {layer.name === 'Mask' && (
                     <div style={{ marginLeft: 'auto', display: 'flex', gap: 2, flexShrink: 0 }}>
+                    {onTogglePixelFix && (
+                      <button
+                        className={`paint-layer-vis-btn${pixelFixEnabled ? '' : ' paint-layer-vis-off'}`}
+                        aria-label="Pixel Fix mode"
+                        aria-pressed={!!pixelFixEnabled}
+                        title="Pixel Fix: preview auto-crop bounds and a red 2px outside stroke (edit mode only)"
+                        onClick={(e) => { e.stopPropagation(); onSelectLayer(layer.id); onTogglePixelFix(); }}
+                        style={{ flexShrink: 0, fontWeight: 700, color: pixelFixEnabled ? '#ff0000' : undefined }}
+                      >P</button>
+                    )}
                     {onClearMask && (
                       <button
                         className={`paint-layer-vis-btn${!maskHasContent ? ' paint-layer-vis-off' : ''}`}

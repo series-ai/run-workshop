@@ -29,6 +29,8 @@ interface ToolbarProps {
   onToggleRulers: () => void;
   canvasBgColor: string | null;
   onOpenFlipbook: () => void;
+  onOpenDotPixel: () => void;
+  canOpenDotPixel: boolean;
   activeTool: 'pointer' | 'text';
   onSetActiveTool: (tool: 'pointer' | 'text') => void;
   exportOpen: boolean;
@@ -57,7 +59,7 @@ interface ToolbarProps {
   historyMax: number;
 }
 
-export function Toolbar({ zoom, dispatch, pan, onImport, onImportSpriteSheet, images, canUndo, canRedo, canvas, scaleFilter, snapEnabled, projectName, onNewProject, selectedIds, onCanvasInfoIssues, guides, rulersVisible, onToggleRulers, canvasBgColor, onOpenFlipbook, activeTool, onSetActiveTool, exportOpen, onExportClosed, onUndo, onRedo, onOpenPreferences, onExportStatus, onMenuOpenChange, editMode, aiHidden, onAiTextToImage, onAiBgRemoval, onAiLayerize, onAiChat, onAiComfy, onAiUnity, aiTextToImageOpen, aiRemoveBgOpen, aiLayerizeOpen, aiChatOpen, aiComfyOpen, aiUnityOpen, historyPast, historyFuture, historyMax }: ToolbarProps) {
+export function Toolbar({ zoom, dispatch, pan, onImport, onImportSpriteSheet, images, canUndo, canRedo, canvas, scaleFilter, snapEnabled, projectName, onNewProject, selectedIds, onCanvasInfoIssues, guides, rulersVisible, onToggleRulers, canvasBgColor, onOpenFlipbook, onOpenDotPixel, canOpenDotPixel, activeTool, onSetActiveTool, exportOpen, onExportClosed, onUndo, onRedo, onOpenPreferences, onExportStatus, onMenuOpenChange, editMode, aiHidden, onAiTextToImage, onAiBgRemoval, onAiLayerize, onAiChat, onAiComfy, onAiUnity, aiTextToImageOpen, aiRemoveBgOpen, aiLayerizeOpen, aiChatOpen, aiComfyOpen, aiUnityOpen, historyPast, historyFuture, historyMax }: ToolbarProps) {
   const zoomPercent = Math.round(zoom * 100);
   const [menuOpen, setMenuOpenRaw] = useState(false);
   const setMenuOpen = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
@@ -307,6 +309,10 @@ export function Toolbar({ zoom, dispatch, pan, onImport, onImportSpriteSheet, im
       <button className="toolbar-btn" onClick={onOpenFlipbook} title="Flipbook Viewer" disabled={editMode}>
         <Film size={18} />
         <span>Flipbook</span>
+      </button>
+      <button className="toolbar-btn" onClick={onOpenDotPixel} disabled={editMode || !canOpenDotPixel} title="DotPixel — select one image to rebuild as pixel art">
+        <LayoutGrid size={18} />
+        <span>DotPixel</span>
       </button>
       <div className="toolbar-separator" />
       <FilterMenu scaleFilter={scaleFilter} dispatch={dispatch} />

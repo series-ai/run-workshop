@@ -4,6 +4,24 @@
 
 A browser-based image layout, composition, and AI-assisted generation tool. Built for arranging, aligning, and compositing images on a freeform workspace — with integrated AI tools for generating images, removing backgrounds, and chatting with multiple AI providers.
 
+## DotPixel
+
+Select one image and click **DotPixel** beside Flipbook to rebuild it as small pixel art.
+
+- Frame the source, then pin important details using colour-filled sample squares. Drag frame handles to resize, or drag inside the frame to move it.
+- Start at a low resolution and raise it gradually; earlier coarse anchors guide newly added samples. Custom width and height each support **1–128 pixels**.
+- Use **Rows** for vertical row movement and **Columns** for horizontal column movement. **Soft selection** is off by default; enable it to influence neighbouring automatic samples.
+- Draw attraction outlines and adjust their radius/strength. Manual pins stay fixed. Posterize reduces RGB levels without changing the original source image.
+- **Add to workspace** creates a separate PNG-sized image; the source remains untouched. Undo/redo works inside the editor, and Escape cancels an active drag.
+
+This is an initial editor: frame/anchor/outline/colour settings last only while DotPixel is open and are not saved in project files. Square presets and the resolution slider set square dimensions; the custom fields allow rectangular output.
+
+The Paint editor also includes a **Pixel Fix** toggle on the Mask layer for a temporary red outside-stroke and live auto-crop-bounds preview. It is a viewing aid only and is not included in the applied image.
+
+### Editor regression tests
+
+With Node.js 22.18+ and dependencies installed, run `node --test tests/*.test.mjs` from this directory. `tests/dotPixel.browser.mjs` additionally exercises the live editor in Chromium: run a dev server, provide `DOTPIXEL_URL`, and set `PLAYWRIGHT_MODULE` to an installed Playwright module if it is not otherwise resolvable. No new runtime dependencies are required.
+
 ## Recommended Browser
 
 **Use a Chromium-based browser (Chrome, Brave, Edge, etc.)** — strongly recommended for any non-trivial session. Layout Manager works with large 2K+ images, paint layers, and undo history that can run into hundreds of MB of heap. Chromium browsers handle this workload noticeably better than Firefox, and they expose the `performance.memory` API that powers the **MEM** indicator in the toolbar so you can watch heap usage live and bake or save before things get tight. On Firefox the app still runs, but the MEM readout falls back to tracked-blob bytes only and you'll be flying blind on heap pressure.
