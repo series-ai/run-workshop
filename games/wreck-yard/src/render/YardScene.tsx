@@ -7,6 +7,7 @@ import type { YardBody } from '../sim/state';
 import { OcclusionUpdater, useWorldOcclusion } from './OcclusionUpdater';
 import { PointerInput, type UiTool } from './PointerInput';
 import { PlayerAvatars } from './PlayerAvatars';
+import { FirstPersonTool } from './FirstPersonTool';
 import { VoxelBodies } from './VoxelBodies';
 import { YardShell } from './YardShell';
 import type { YardRender } from './presentation';
@@ -30,6 +31,7 @@ function SceneRoot({ controller, tool, onToolChange, bodies, renderRef, outlines
       <YardShell />
       <VoxelBodies bodies={bodies} renderRef={renderRef} outlines={outlines} onHover={onHover} worldOcclusion={worldOcclusion} />
       <PlayerAvatars renderRef={renderRef} />
+      <FirstPersonTool tool={tool} renderRef={renderRef} />
       <OcclusionUpdater renderRef={renderRef} worldOcclusion={worldOcclusion} />
     </>
   );

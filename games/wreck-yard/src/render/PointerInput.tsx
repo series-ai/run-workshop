@@ -77,23 +77,46 @@ export function PointerInput({
   useEffect(() => {
     const dom = gl.domElement;
 
+    let isDragging = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    (window as unknown as { __SET_LOOK_ANGLES__?: (y: number, p: number) => void }).__SET_LOOK_ANGLES__ = (y, p) => {
+      yaw.current = y;
+      pitch.current = THREE.MathUtils.clamp(p, -1.45, 1.45);
+    };
+
     const onPointerDown = (event: MouseEvent) => {
-      if (tool !== 'orbit' && document.pointerLockElement !== dom) {
-        dom.requestPointerLock();
+      if (tool !== 'orbit') {
+        if (document.pointerLockElement !== dom) {
+          try { dom.requestPointerLock?.(); } catch {}
+        }
+        isDragging = true;
+        lastX = event.clientX;
+        lastY = event.clientY;
       }
       if (event.button === 0) pressed.current = true;
       if (event.button === 2) secondary.current = true;
     };
 
     const onPointerUp = (event: MouseEvent) => {
+      isDragging = false;
       if (event.button === 0) pressed.current = false;
       if (event.button === 2) secondary.current = false;
     };
 
     const onMouseMove = (event: MouseEvent) => {
-      if (tool !== 'orbit' && document.pointerLockElement === dom) {
+      if (tool === 'orbit') return;
+      if (document.pointerLockElement === dom) {
         yaw.current -= event.movementX * 0.0022;
         pitch.current = THREE.MathUtils.clamp(pitch.current - event.movementY * 0.0022, -1.45, 1.45);
+      } else if (isDragging || event.buttons > 0) {
+        const dx = event.movementX || (event.clientX - lastX);
+        const dy = event.movementY || (event.clientY - lastY);
+        lastX = event.clientX;
+        lastY = event.clientY;
+        yaw.current -= dx * 0.003;
+        pitch.current = THREE.MathUtils.clamp(pitch.current - dy * 0.003, -1.45, 1.45);
       }
     };
 
