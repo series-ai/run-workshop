@@ -25,6 +25,9 @@ try {
         ctx.fillStyle = `rgb(${x / 2},${y / 2},80)`;
         ctx.fillRect(x, y, 8, 8);
       }
+    ctx.clearRect(0, 0, 32, 16);
+    ctx.fillStyle = 'rgba(100,80,60,0.5)';
+    ctx.fillRect(16, 0, 16, 16);
     return canvas.toDataURL().split(',')[1];
   });
   await page
@@ -39,6 +42,14 @@ try {
     .locator('.image-node')
     .filter({ has: page.getByAltText('dotpixel-test.png', { exact: true }) })
     .click();
+  await page.getByTitle('Onion skin (60%)', { exact: true }).click();
+  assert.equal(
+    await page
+      .locator('.image-node-img')
+      .first()
+      .evaluate((img) => getComputedStyle(img).opacity),
+    '0.6',
+  );
   await page.getByRole('button', { name: 'DotPixel', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'DotPixel' });
   await dialog.waitFor();
@@ -58,6 +69,14 @@ try {
     'workspace controls cannot appear above DotPixel',
   );
   const preview = dialog.locator('canvas');
+  assert.deepEqual(
+    await preview.evaluate((canvas) => {
+      const data = canvas.getContext('2d').getImageData(0, 0, 3, 1).data;
+      return [data[3], data[7], data[11]];
+    }),
+    [0, 128, 255],
+    'DotPixel must ignore workspace opacity while preserving native image alpha',
+  );
   assert.equal(await dialog.getByRole('button', { name: 'Rows', exact: true }).count(), 1);
   assert.equal(await dialog.getByRole('button', { name: 'Columns', exact: true }).count(), 1);
   const allSamples = () =>
@@ -155,6 +174,27 @@ try {
   );
   await dialog.getByRole('button', { name: 'Undo', exact: true }).click();
   assert.equal(await dialog.locator('[data-anchor]').count(), 1);
+  const selectedPreview = await preview.evaluate((c) => c.toDataURL());
+  await anchor.click();
+  assert.equal(
+    await dialog.getByRole('button', { name: 'Redo', exact: true }).isEnabled(),
+    true,
+    'selecting an existing anchor preserves redo',
+  );
+  assert.equal(await preview.evaluate((c) => c.toDataURL()), selectedPreview);
+  // Move a slider away and back during one gesture: committing its starting value is a no-op.
+  const radiusSlider = dialog.getByRole('slider', { name: 'Attraction radius', exact: true });
+  await radiusSlider.focus();
+  await page.keyboard.down('ArrowRight');
+  await page.keyboard.down('ArrowLeft');
+  await page.keyboard.up('ArrowLeft');
+  await page.keyboard.up('ArrowRight');
+  assert.equal(
+    await dialog.getByRole('button', { name: 'Redo', exact: true }).isEnabled(),
+    true,
+    'unchanged slider commit preserves redo',
+  );
+  assert.equal(await preview.evaluate((c) => c.toDataURL()), selectedPreview);
   await dialog.getByRole('button', { name: 'Undo', exact: true }).click();
   assert.equal(await dialog.locator('[data-anchor]').count(), 0);
   assert.equal(await preview.evaluate((c) => c.toDataURL()), before);

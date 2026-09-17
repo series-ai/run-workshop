@@ -92,11 +92,12 @@ export function DotPixelEditor({ image, onClose, onAdd }: DotPixelEditorProps) {
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
-    // Work in native cropped source space, not the workspace's display scale/rotation.
+    // Ignore workspace display transforms/opacity, including onion skin.
+    // Native image/layer alpha still passes through the compositor unchanged.
     // The shared compositor preserves paint, masks, flips and colour adjustments.
     drawNodeToCtx(
       canvas.getContext('2d')!,
-      { ...image, x: 0, y: 0, width, height, rotation: 0 },
+      { ...image, x: 0, y: 0, width, height, rotation: 0, opacity: 1 },
       'nearest',
     )
       .then(() => {

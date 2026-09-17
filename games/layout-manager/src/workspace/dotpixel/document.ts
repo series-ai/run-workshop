@@ -169,18 +169,32 @@ export function editDotDocument(history: DotHistory, edit: DotEdit): DotHistory 
   } else if (edit.type === 'line') {
     if (edit.line.length < 2) return history;
     next = { ...present, lines: [...(present.lines ?? []), edit.line] };
-  } else if (edit.type === 'clear-lines') next = { ...present, lines: [] };
-  else if (edit.type === 'settings') next = { ...present, ...edit.settings };
-  else if (edit.type === 'clear') next = { ...present, anchors: [] };
-  else if (edit.type === 'remove') {
+  } else if (edit.type === 'clear-lines') {
+    if (!present.lines?.length) return history;
+    next = { ...present, lines: [] };
+  } else if (edit.type === 'settings') {
+    const defaults = { levels: 0, radius: 2, strength: 0.8, softSelection: false };
+    const keys = Object.keys(edit.settings) as (keyof typeof defaults)[];
+    if (
+      keys.every((key) => (edit.settings[key] ?? defaults[key]) === (present[key] ?? defaults[key]))
+    )
+      return history;
+    next = { ...present, ...edit.settings };
+  } else if (edit.type === 'clear') {
+    if (!present.anchors.length) return history;
+    next = { ...present, anchors: [] };
+  } else if (edit.type === 'remove') {
     const removed = activeAnchors(present.anchors).find(
       (a) => a.col === edit.col && a.row === edit.row,
     );
+    if (!removed) return history;
     next = { ...present, anchors: present.anchors.filter((a) => a !== removed) };
   } else {
     const replaced = activeAnchors(present.anchors).find(
       (a) => a.col === edit.anchor.col && a.row === edit.anchor.row,
     );
+    // Selecting an existing pin is not an edit, even if soft selection changed.
+    if (replaced && replaced.x === edit.anchor.x && replaced.y === edit.anchor.y) return history;
     next = {
       ...present,
       anchors: [

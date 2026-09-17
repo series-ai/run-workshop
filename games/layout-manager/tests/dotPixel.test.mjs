@@ -3,6 +3,83 @@ import test from 'node:test';
 
 const engine = await import('../src/workspace/dotpixel/sampling.ts');
 
+test('selecting an existing pin preserves redo and its influence metadata in either soft mode', async () => {
+  const { editDotDocument } = await import('../src/workspace/dotpixel/document.ts');
+  for (const softSelection of [false, true]) {
+    let history = {
+      present: { frame: { x: 0, y: 0, w: 320, h: 320 }, anchors: [], softSelection },
+      past: [],
+      future: [],
+    };
+    history = editDotDocument(history, {
+      type: 'pin',
+      anchor: { col: 3, row: 4, x: 41.2, y: 52.3 },
+    });
+    history = editDotDocument(history, { type: 'settings', settings: { radius: 3 } });
+    history = editDotDocument(history, { type: 'undo' });
+    const pin = history.present.anchors[0];
+    assert.equal(editDotDocument(history, { type: 'pin', anchor: { ...pin } }), history);
+    assert.equal(
+      editDotDocument(history, {
+        type: 'pin',
+        anchor: { col: pin.col, row: pin.row, x: pin.x, y: pin.y },
+      }),
+      history,
+    );
+    const changed = editDotDocument(history, { type: 'pin', anchor: { ...pin, x: pin.x + 1 } });
+    assert.notEqual(changed, history);
+    assert.equal(changed.future.length, 0);
+    assert.equal(editDotDocument(history, { type: 'redo' }).present.radius, 3);
+  }
+});
+
+test('unchanged settings use effective defaults and preserve redo', async () => {
+  const { editDotDocument } = await import('../src/workspace/dotpixel/document.ts');
+  let history = {
+    present: { frame: { x: 0, y: 0, w: 320, h: 320 }, anchors: [] },
+    past: [],
+    future: [],
+  };
+  history = editDotDocument(history, { type: 'settings', settings: { levels: 4 } });
+  history = editDotDocument(history, { type: 'undo' });
+  for (const settings of [
+    {},
+    { levels: 0 },
+    { radius: 2 },
+    { strength: 0.8 },
+    { softSelection: false },
+    { levels: 0, radius: 2, strength: 0.8, softSelection: false },
+  ]) {
+    assert.equal(editDotDocument(history, { type: 'settings', settings }), history);
+  }
+  const nonDefault = editDotDocument(history, { type: 'redo' });
+  assert.equal(
+    editDotDocument(nonDefault, { type: 'settings', settings: { levels: 4 } }),
+    nonDefault,
+  );
+  assert.equal(
+    editDotDocument(history, { type: 'settings', settings: { radius: 3 } }).future.length,
+    0,
+  );
+});
+
+test('empty clear and missing remove actions are also no-ops', async () => {
+  const { editDotDocument } = await import('../src/workspace/dotpixel/document.ts');
+  let history = {
+    present: { frame: { x: 0, y: 0, w: 320, h: 320 }, anchors: [] },
+    past: [],
+    future: [],
+  };
+  history = editDotDocument(history, { type: 'settings', settings: { levels: 4 } });
+  history = editDotDocument(history, { type: 'undo' });
+  for (const edit of [
+    { type: 'clear' },
+    { type: 'clear-lines' },
+    { type: 'remove', col: 3, row: 4 },
+  ])
+    assert.equal(editDotDocument(history, edit), history);
+});
+
 test('identity frame previews return the original document without remapping any points', async () => {
   const { transformDotFrame } = await import('../src/workspace/dotpixel/document.ts');
   const document = {
