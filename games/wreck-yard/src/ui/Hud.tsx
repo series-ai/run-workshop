@@ -4,23 +4,25 @@ import type { UiTool } from '../render/PointerInput';
 
 const panel: React.CSSProperties = {
   position: 'absolute',
-  background: 'rgba(20, 22, 20, 0.85)',
+  background: 'rgba(20, 22, 20, 0.88)',
   color: '#e8ecd8',
-  borderRadius: 10,
+  borderRadius: 8,
+  border: '1px solid #3f4836',
   padding: '12px 14px',
   font: '13px/1.45 ui-sans-serif, system-ui, sans-serif',
   backdropFilter: 'blur(8px)',
-  boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
 };
 
 const button = (active: boolean): React.CSSProperties => ({
   padding: '6px 12px',
   borderRadius: 6,
-  border: active ? '1px solid #38bdf8' : '1px solid #475569',
-  background: active ? '#0284c7' : '#1e293b',
-  color: active ? '#ffffff' : '#cbd5e1',
+  border: active ? '1px solid #a3e635' : '1px solid #6d7a62',
+  background: active ? '#9bbc0f' : '#2c3320',
+  color: active ? '#101408' : '#e8ecd8',
   cursor: 'pointer',
-  fontWeight: active ? 600 : 400,
+  fontWeight: active ? 700 : 500,
+  boxShadow: active ? '0 0 10px rgba(155, 188, 15, 0.35)' : 'none',
   transition: 'all 0.15s ease',
 });
 
@@ -42,41 +44,41 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
 
   return (
     <>
-      {/* Top Left: Status & Arena Stats */}
-      <div style={{ ...panel, top: 16, left: 16, minWidth: 250 }}>
-        <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8, color: '#38bdf8', letterSpacing: '0.02em' }}>
-          Wreck Yard Arena
+      {/* Top Left: Status & Yard Telemetry */}
+      <div style={{ ...panel, top: 16, left: 16, minWidth: 260 }}>
+        <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8, color: '#9bbc0f', letterSpacing: '0.04em' }}>
+          WRECK YARD
         </div>
         <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
           {(['hand', 'torch', 'orbit'] as const).map((entry) => (
             <button key={entry} type="button" style={button(tool === entry)} onClick={() => onTool(entry)} disabled={!live}>
-              {entry === 'hand' ? 'Gravity Gun (1)' : entry === 'torch' ? 'Plasma Torch (2)' : 'Orbit Cam (3)'}
+              {entry === 'hand' ? 'Gravity Gun (1)' : entry === 'torch' ? 'Plasma Torch (2)' : 'Orbit (3)'}
             </button>
           ))}
         </div>
-        <div aria-live="polite" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3px 8px', fontSize: 12 }}>
-          <div>Bodies: <strong style={{ color: '#f8fafc' }}>{render?.bodies.length ?? 0}</strong></div>
-          <div>Floating: <strong style={{ color: '#38bdf8' }}>{render?.floating ?? 0}</strong></div>
+        <div aria-live="polite" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3px 8px', fontSize: 12, color: '#c5ccb6' }}>
+          <div>Bodies: <strong style={{ color: '#ffffff' }}>{render?.bodies.length ?? 0}</strong></div>
+          <div>Floating: <strong style={{ color: '#5eead4' }}>{render?.floating ?? 0}</strong></div>
           <div>Torch cuts: <strong style={{ color: '#fb923c' }}>{render?.stats.torchCuts ?? 0}</strong></div>
-          <div>Throws/Punts: <strong style={{ color: '#a78bfa' }}>{render?.stats.throws ?? 0}</strong></div>
-          <div>Fractures: <strong style={{ color: '#f43f5e' }}>{render?.stats.fractures ?? 0}</strong></div>
-          <div>Players: <strong style={{ color: '#34d399' }}>{render?.players?.length ?? 1}/4</strong></div>
+          <div>Throws/Punts: <strong style={{ color: '#facc15' }}>{render?.stats.throws ?? 0}</strong></div>
+          <div>Fractures: <strong style={{ color: '#f87171' }}>{render?.stats.fractures ?? 0}</strong></div>
+          <div>Crew: <strong style={{ color: '#a3e635' }}>{render?.players?.length ?? 1}/4</strong></div>
         </div>
-        <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid #334155', fontSize: 11, color: '#94a3b8' }}>
+        <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid #3f4836', fontSize: 11, color: '#8c967d' }}>
           Status: {snapshot.status}{snapshot.rollbackCount > 0 ? ` (rollbacks: ${snapshot.rollbackCount})` : ''}
-          {snapshot.roomCode ? <span style={{ marginLeft: 8 }}>Room: <strong style={{ color: '#38bdf8' }}>{snapshot.roomCode}</strong></span> : null}
-          {snapshot.error ? <div style={{ color: '#ff8a8a', marginTop: 4 }}>Error: {snapshot.error}</div> : null}
+          {snapshot.roomCode ? <span style={{ marginLeft: 8 }}>Room: <strong style={{ color: '#9bbc0f' }}>{snapshot.roomCode}</strong></span> : null}
+          {snapshot.error ? <div style={{ color: '#f87171', marginTop: 4 }}>Error: {snapshot.error}</div> : null}
         </div>
       </div>
 
-      {/* Top Right: Multiplayer Session Manager */}
+      {/* Top Right: Match & Room Manager */}
       <div style={{ ...panel, top: 16, right: 16, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 210 }}>
         {live ? (
           <button type="button" style={button(false)} onClick={onStop}>Leave Match</button>
         ) : (
           <>
-            <button type="button" style={button(false)} onClick={() => onStart({ kind: 'solo' })}>Play Solo (4-Slot Playground)</button>
-            <button type="button" style={button(false)} onClick={() => onStart({ kind: 'quick' })}>Quick Match (Multiplayer)</button>
+            <button type="button" style={button(false)} onClick={() => onStart({ kind: 'solo' })}>Play Solo (4-Slot Yard)</button>
+            <button type="button" style={button(false)} onClick={() => onStart({ kind: 'quick' })}>Quick Match</button>
             <button type="button" style={button(false)} onClick={() => onStart({ kind: 'create' })}>Create Room</button>
             <div style={{ display: 'flex', gap: 6 }}>
               <input
@@ -84,7 +86,7 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
                 value={code}
                 onChange={(event) => setCode(event.target.value.trim().toUpperCase())}
                 placeholder="Room code"
-                style={{ flex: 1, padding: '6px 8px', borderRadius: 6, border: '1px solid #475569', background: '#0f172a', color: '#e8ecd8' }}
+                style={{ flex: 1, padding: '6px 8px', borderRadius: 6, border: '1px solid #6d7a62', background: '#14170d', color: '#e8ecd8' }}
               />
               <button type="button" style={button(false)} onClick={() => onStart({ kind: 'join', code })} disabled={code.length === 0}>Join</button>
             </div>
@@ -95,7 +97,7 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
         )}
       </div>
 
-      {/* Center: First-Person Reticle / Crosshair */}
+      {/* Center: Tactical Salvage Crosshair */}
       {live && tool !== 'orbit' && (
         <div
           style={{
@@ -112,27 +114,27 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
           {tool === 'hand' ? (
             <div
               style={{
-                width: isGrabbing ? 28 : 20,
-                height: isGrabbing ? 28 : 20,
+                width: isGrabbing ? 26 : 18,
+                height: isGrabbing ? 26 : 18,
                 borderRadius: '50%',
-                border: isGrabbing ? '2px solid #38bdf8' : '2px solid rgba(56, 189, 248, 0.65)',
-                boxShadow: isGrabbing ? '0 0 12px #38bdf8' : 'none',
-                transition: 'all 0.1s ease',
+                border: isGrabbing ? '2px solid #f59e0b' : '2px solid rgba(251, 191, 36, 0.75)',
+                boxShadow: isGrabbing ? '0 0 12px rgba(245, 158, 11, 0.8)' : 'none',
+                transition: 'all 0.12s ease',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#38bdf8' }} />
+              <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#fbbf24' }} />
             </div>
           ) : (
             <div
               style={{
-                width: 22,
-                height: 22,
+                width: 20,
+                height: 20,
                 border: '2px solid #f97316',
                 transform: 'rotate(45deg)',
-                boxShadow: '0 0 8px rgba(249, 115, 22, 0.6)',
+                boxShadow: '0 0 8px rgba(249, 115, 22, 0.7)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -143,14 +145,14 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
           )}
 
           {isGrabbing && (
-            <div style={{ marginTop: 14, fontSize: 11, fontWeight: 700, color: '#38bdf8', textShadow: '0 2px 6px black' }}>
+            <div style={{ marginTop: 14, fontSize: 11, fontWeight: 700, color: '#fbbf24', textShadow: '0 2px 6px black' }}>
               [RMB] PUNT OBJECT
             </div>
           )}
         </div>
       )}
 
-      {/* Bottom Center: Jetpack Fuel Meter */}
+      {/* Bottom Center: Industrial Analog Thruster Fuel Gauge */}
       {live && tool !== 'orbit' && (
         <div
           style={{
@@ -165,28 +167,28 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
             pointerEvents: 'none',
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#cbd5e1', letterSpacing: '0.08em', textShadow: '0 1px 4px black' }}>
-            JETPACK THRUSTER [{fuelPercent}%]
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#c5ccb6', letterSpacing: '0.08em', textShadow: '0 1px 4px black' }}>
+            THRUSTER FUEL [{fuelPercent}%]
           </div>
           <div
             style={{
               width: 220,
               height: 10,
-              background: 'rgba(15, 23, 42, 0.85)',
+              background: 'rgba(20, 24, 18, 0.9)',
               borderRadius: 6,
-              border: '1px solid #334155',
+              border: '1px solid #4a543f',
               overflow: 'hidden',
               padding: 1,
-              boxShadow: '0 2px 10px rgba(0,0,0,0.5)',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.6)',
             }}
           >
             <div
               style={{
                 width: `${fuelPercent}%`,
                 height: '100%',
-                background: fuelPercent > 25 ? 'linear-gradient(90deg, #0284c7, #38bdf8)' : '#f43f5e',
+                background: fuelPercent > 25 ? 'linear-gradient(90deg, #65a30d, #9bbc0f)' : '#ea580c',
                 borderRadius: 4,
-                boxShadow: fuelPercent > 25 ? '0 0 8px #38bdf8' : '0 0 8px #f43f5e',
+                boxShadow: fuelPercent > 25 ? '0 0 8px #a3e635' : '0 0 8px #ea580c',
                 transition: 'width 0.05s linear',
               }}
             />
@@ -194,28 +196,29 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
         </div>
       )}
 
-      {/* Bottom Left: Controls Quick Guide */}
+      {/* Bottom Left: Tactical Yard Controls */}
       {live && (
         <div
           style={{
             position: 'absolute',
             bottom: 16,
             left: 16,
-            background: 'rgba(15, 23, 42, 0.75)',
+            background: 'rgba(20, 22, 20, 0.82)',
+            border: '1px solid #3f4836',
             padding: '8px 12px',
-            borderRadius: 8,
+            borderRadius: 6,
             fontSize: 11,
-            color: '#94a3b8',
+            color: '#8c967d',
             backdropFilter: 'blur(4px)',
             pointerEvents: 'none',
           }}
         >
-          <span style={{ color: '#38bdf8', fontWeight: 600 }}>[Click Canvas]</span> Lock View &bull;{' '}
-          <span style={{ color: '#f8fafc' }}>[WASD]</span> Move &bull;{' '}
-          <span style={{ color: '#f8fafc' }}>[Space]</span> Jetpack &bull;{' '}
-          <span style={{ color: '#f8fafc' }}>[LMB]</span> {tool === 'hand' ? 'Grab / Levitate' : 'Carve Voxel'} &bull;{' '}
-          <span style={{ color: '#f8fafc' }}>[RMB]</span> Punt &bull;{' '}
-          <span style={{ color: '#f8fafc' }}>[1 / 2 / 3]</span> Switch Tool
+          <span style={{ color: '#9bbc0f', fontWeight: 600 }}>[Click Canvas]</span> Look &bull;{' '}
+          <span style={{ color: '#e8ecd8' }}>[WASD]</span> Move &bull;{' '}
+          <span style={{ color: '#e8ecd8' }}>[Space]</span> Jetpack &bull;{' '}
+          <span style={{ color: '#e8ecd8' }}>[LMB]</span> {tool === 'hand' ? 'Tractor Beam' : 'Carve Voxel'} &bull;{' '}
+          <span style={{ color: '#e8ecd8' }}>[RMB]</span> Punt &bull;{' '}
+          <span style={{ color: '#e8ecd8' }}>[1 / 2 / 3]</span> Tool
         </div>
       )}
     </>

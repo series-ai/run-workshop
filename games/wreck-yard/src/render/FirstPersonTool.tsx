@@ -86,88 +86,112 @@ export function FirstPersonTool({
   return (
     <group ref={root}>
       {tool === 'hand' ? (
-        // --- GRAVITY GUN VIEWMODEL ---
+        // --- GRAVITY CLAMP / SALVAGE TRACTOR VIEWMODEL ---
         <group rotation={[0.08, -0.05, 0]}>
-          {/* Main Chassis */}
+          {/* Main Heavy Cast Iron Chassis */}
           <mesh castShadow position={[0, 0, -0.1]}>
-            <boxGeometry args={[0.09, 0.11, 0.34]} />
-            <meshStandardMaterial color="#1e293b" roughness={0.35} metalness={0.8} />
+            <boxGeometry args={[0.095, 0.115, 0.35]} />
+            <meshStandardMaterial color="#2d2926" roughness={0.7} metalness={0.65} />
           </mesh>
-          {/* Upper Heat Vents */}
-          <mesh position={[0, 0.06, -0.1]}>
-            <boxGeometry args={[0.07, 0.02, 0.22]} />
-            <meshStandardMaterial color="#475569" roughness={0.5} metalness={0.7} />
+          {/* Olive Drab Reinforced Armor Casing Plate */}
+          <mesh position={[0, 0.045, -0.1]}>
+            <boxGeometry args={[0.105, 0.04, 0.26]} />
+            <meshStandardMaterial color="#3e4836" roughness={0.8} metalness={0.2} />
           </mesh>
-          {/* Gravity Energy Core Sphere */}
+          {/* Copper Induction Windings / Coils */}
+          <mesh position={[0, -0.02, -0.05]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.042, 0.042, 0.11, 16]} />
+            <meshStandardMaterial color="#b45309" roughness={0.35} metalness={0.85} />
+          </mesh>
+          <mesh position={[0, -0.02, -0.16]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.042, 0.042, 0.11, 16]} />
+            <meshStandardMaterial color="#b45309" roughness={0.35} metalness={0.85} />
+          </mesh>
+          {/* Amber Plasma Containment Core */}
           <mesh ref={coreRef} position={[0, 0.01, -0.12]}>
             <sphereGeometry args={[0.038, 16, 16]} />
             <meshStandardMaterial
-              color="#38bdf8"
-              emissive="#0284c7"
-              emissiveIntensity={2.0}
+              color="#f59e0b"
+              emissive="#d97706"
+              emissiveIntensity={2.5}
               roughness={0.1}
             />
           </mesh>
-          {/* 3 Forward Magnetic Prongs */}
+          {/* 3 Heavy Salvage Articulating Claw Prongs */}
           <group ref={prongGroup} position={[0, 0, -0.28]}>
-            {/* Top Prong */}
-            <mesh position={[0, 0.05, -0.06]} rotation={[-0.2, 0, 0]}>
-              <boxGeometry args={[0.018, 0.02, 0.12]} />
-              <meshStandardMaterial color="#64748b" metalness={0.9} roughness={0.2} />
+            {/* Top Clamp Jaw */}
+            <mesh position={[0, 0.055, -0.06]} rotation={[-0.22, 0, 0]}>
+              <boxGeometry args={[0.022, 0.025, 0.13]} />
+              <meshStandardMaterial color="#524c46" metalness={0.85} roughness={0.3} />
             </mesh>
-            <mesh position={[0, 0.065, -0.12]}>
-              <sphereGeometry args={[0.012, 8, 8]} />
-              <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={2.5} />
-            </mesh>
-
-            {/* Bottom Left Prong */}
-            <mesh position={[-0.045, -0.04, -0.06]} rotation={[0.15, -0.15, -0.4]}>
-              <boxGeometry args={[0.018, 0.02, 0.12]} />
-              <meshStandardMaterial color="#64748b" metalness={0.9} roughness={0.2} />
-            </mesh>
-            <mesh position={[-0.055, -0.05, -0.12]}>
-              <sphereGeometry args={[0.012, 8, 8]} />
-              <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={2.5} />
+            <mesh position={[0, 0.07, -0.12]}>
+              <sphereGeometry args={[0.013, 8, 8]} />
+              <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={3.0} />
             </mesh>
 
-            {/* Bottom Right Prong */}
-            <mesh position={[0.045, -0.04, -0.06]} rotation={[0.15, 0.15, 0.4]}>
-              <boxGeometry args={[0.018, 0.02, 0.12]} />
-              <meshStandardMaterial color="#64748b" metalness={0.9} roughness={0.2} />
+            {/* Bottom Left Clamp Jaw */}
+            <mesh position={[-0.048, -0.042, -0.06]} rotation={[0.16, -0.16, -0.42]}>
+              <boxGeometry args={[0.022, 0.025, 0.13]} />
+              <meshStandardMaterial color="#524c46" metalness={0.85} roughness={0.3} />
             </mesh>
-            <mesh position={[0.055, -0.05, -0.12]}>
-              <sphereGeometry args={[0.012, 8, 8]} />
-              <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={2.5} />
+            <mesh position={[-0.058, -0.052, -0.12]}>
+              <sphereGeometry args={[0.013, 8, 8]} />
+              <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={3.0} />
+            </mesh>
+
+            {/* Bottom Right Clamp Jaw */}
+            <mesh position={[0.048, -0.042, -0.06]} rotation={[0.16, 0.16, 0.42]}>
+              <boxGeometry args={[0.022, 0.025, 0.13]} />
+              <meshStandardMaterial color="#524c46" metalness={0.85} roughness={0.3} />
+            </mesh>
+            <mesh position={[0.058, -0.052, -0.12]}>
+              <sphereGeometry args={[0.013, 8, 8]} />
+              <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={3.0} />
             </mesh>
           </group>
         </group>
       ) : (
-        // --- PLASMA TORCH VIEWMODEL ---
-        <group rotation={[0.06, -0.04, 0]}>
-          {/* Torch Barrel */}
-          <mesh castShadow position={[0, 0, -0.12]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.032, 0.04, 0.32, 16]} />
-            <meshStandardMaterial color="#292524" roughness={0.4} metalness={0.7} />
+        // --- OXY-PLASMA CUTTING TORCH VIEWMODEL ---
+        <group rotation={[0.06, -0.08, 0]}>
+          {/* Brass Main Torch Handle */}
+          <mesh castShadow position={[0, -0.02, 0.02]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.022, 0.026, 0.28, 16]} />
+            <meshStandardMaterial color="#a16207" roughness={0.45} metalness={0.75} />
           </mesh>
-          {/* Brass Collar */}
-          <mesh position={[0, 0, -0.2]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.038, 0.038, 0.05, 16]} />
-            <meshStandardMaterial color="#b45309" roughness={0.25} metalness={0.85} />
+          {/* Dual Gas Feed Knobs (Red Acetylene & Green Oxygen) */}
+          <mesh position={[-0.035, -0.02, 0.12]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.016, 0.016, 0.02, 12]} />
+            <meshStandardMaterial color="#991b1b" roughness={0.6} metalness={0.3} />
           </mesh>
-          {/* Ceramic Nozzle */}
-          <mesh position={[0, 0, -0.28]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.02, 0.03, 0.08, 16]} />
+          <mesh position={[0.035, -0.02, 0.12]} rotation={[0, 0, -Math.PI / 2]}>
+            <cylinderGeometry args={[0.016, 0.016, 0.02, 12]} />
+            <meshStandardMaterial color="#166534" roughness={0.6} metalness={0.3} />
+          </mesh>
+          {/* High-Pressure Heavy Steel Forward Barrel */}
+          <mesh position={[0, -0.01, -0.18]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.014, 0.018, 0.22, 16]} />
+            <meshStandardMaterial color="#44403c" roughness={0.3} metalness={0.85} />
+          </mesh>
+          {/* Incandescent Ceramic Nozzle Collar */}
+          <mesh position={[0, -0.01, -0.3]}>
+            <cylinderGeometry args={[0.02, 0.024, 0.04, 16]} />
             <meshStandardMaterial
-              color="#f97316"
+              color="#ea580c"
               emissive="#ea580c"
-              emissiveIntensity={1.2}
-              roughness={0.2}
+              emissiveIntensity={2.8}
+              roughness={0.3}
             />
           </mesh>
-          {/* Cutting Plasma Laser Beam */}
-          <mesh ref={beamRef} position={[0, 0, -3.2]} rotation={[Math.PI / 2, 0, 0]} visible={false}>
-            <cylinderGeometry args={[0.02, 0.03, 5.8, 8]} />
-            <meshBasicMaterial color="#ffedd5" transparent opacity={0.9} />
+          {/* Fiery Cutting Plasma Jet Flame */}
+          <mesh ref={beamRef} position={[0, -0.01, -0.6]} rotation={[Math.PI / 2, 0, 0]} visible={false}>
+            <cylinderGeometry args={[0.008, 0.025, 0.6, 8]} />
+            <meshStandardMaterial
+              color="#ffedd5"
+              emissive="#f97316"
+              emissiveIntensity={4.5}
+              transparent
+              opacity={0.85}
+            />
           </mesh>
         </group>
       )}

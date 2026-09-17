@@ -4,10 +4,10 @@ import * as THREE from 'three';
 import type { YardRender, PlayerRenderPose } from './presentation';
 
 const PLAYER_COLORS = [
-  { suit: '#0284c7', visor: '#38bdf8', glow: '#7dd3fc', flame: '#38bdf8' }, // Cyan
-  { suit: '#d97706', visor: '#fbbf24', glow: '#fde68a', flame: '#f59e0b' }, // Amber
-  { suit: '#059669', visor: '#34d399', glow: '#a7f3d0', flame: '#10b981' }, // Emerald
-  { suit: '#e11d48', visor: '#fb7185', glow: '#fecdd3', flame: '#f43f5e' }, // Rose
+  { suit: '#4a5338', visor: '#facc15', glow: '#fef08a', flame: '#f59e0b' }, // Salvage Olive / Gold
+  { suit: '#78350f', visor: '#fbbf24', glow: '#fef3c7', flame: '#ea580c' }, // Industrial Amber
+  { suit: '#134e4a', visor: '#2dd4bf', glow: '#ccfbf1', flame: '#0d9488' }, // Marine Teal
+  { suit: '#7f1d1d', visor: '#f87171', glow: '#fee2e2', flame: '#ef4444' }, // Hazard Red
 ];
 
 function RemoteAvatar({ player, renderRef }: { player: PlayerRenderPose; renderRef: MutableRefObject<YardRender | null> }) {
