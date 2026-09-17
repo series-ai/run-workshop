@@ -8,6 +8,7 @@ import { OcclusionUpdater, useWorldOcclusion } from './OcclusionUpdater';
 import { PointerInput, type UiTool } from './PointerInput';
 import { PlayerAvatars } from './PlayerAvatars';
 import { FirstPersonTool } from './FirstPersonTool';
+import { TorchSparks } from './TorchSparks';
 import { VoxelBodies } from './VoxelBodies';
 import { YardShell } from './YardShell';
 import type { YardRender } from './presentation';
@@ -32,6 +33,7 @@ function SceneRoot({ controller, tool, onToolChange, bodies, renderRef, outlines
       <VoxelBodies bodies={bodies} renderRef={renderRef} outlines={outlines} onHover={onHover} worldOcclusion={worldOcclusion} />
       <PlayerAvatars renderRef={renderRef} />
       <FirstPersonTool tool={tool} renderRef={renderRef} />
+      <TorchSparks tool={tool} renderRef={renderRef} />
       <OcclusionUpdater renderRef={renderRef} worldOcclusion={worldOcclusion} />
     </>
   );

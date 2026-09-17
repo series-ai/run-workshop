@@ -321,19 +321,31 @@ export function VoxelVolumeRenderer({
           float albedoNoise = mix(0.95, 1.05, cellNoise(cell + ivec3(9, 2, 13)));
           float specPower = mix(64.0, 10.0, roughness);
           float specular = pow(max(dot(worldNormal, halfDir), 0.0), specPower) * mix(0.08, 0.95, metalness);
+          // Teardown-style voxel micro-bevel and crevice contact AO
+          vec3 hitVox = (hitLS + 0.5) * uDims;
+          vec3 cellUv = fract(hitVox);
+          vec2 faceCoord;
+          if (abs(faceNormal.x) > 0.5) faceCoord = cellUv.yz;
+          else if (abs(faceNormal.y) > 0.5) faceCoord = cellUv.xz;
+          else faceCoord = cellUv.xy;
+          vec2 distToEdge = min(faceCoord, 1.0 - faceCoord);
+          float edgeDist = min(distToEdge.x, distToEdge.y);
+          float voxelBevel = smoothstep(0.065, 0.015, edgeDist);
+          float voxelEdgeAo = smoothstep(0.0, 0.12, edgeDist) * 0.25 + 0.75;
+
           float bounce = mix(0.08, 0.28, physicalType) + exposure * 0.06;
           float skyMix = clamp(worldNormal.y * 0.5 + 0.5, 0.0, 1.0);
           vec3 hemiLight = mix(uGroundColor, uSkyColor, skyMix);
           vec3 baseColor = albedo.rgb * albedoNoise;
-          vec3 ambient = baseColor * hemiLight * (0.28 + ao * (0.28 + bounce));
-          vec3 direct = baseColor * uSunColor * diffuse * shadow * (0.64 + ao * (0.16 + bounce * 0.22));
-          vec3 specColor = mix(vec3(0.18), albedo.rgb, metalness);
+          vec3 ambient = baseColor * hemiLight * ((0.32 + ao * (0.28 + bounce)) * voxelEdgeAo);
+          vec3 direct = baseColor * uSunColor * diffuse * shadow * ((0.70 + ao * (0.16 + bounce * 0.22)) * voxelEdgeAo);
+          vec3 specColor = mix(vec3(0.24), albedo.rgb, metalness);
           float rim = pow(1.0 - max(dot(worldNormal, viewDir), 0.0), 2.6);
           float hotEdge = pow(1.0 - max(dot(viewDir, worldNormal), 0.0), 4.2) * exposure;
           vec3 emissiveColor = mix(baseColor, uSunColor, 0.35) * emissive * 1.85;
-          vec3 shaded = ambient + direct + specColor * specular * shadow + emissiveColor;
-          shaded += uSunColor * hotEdge * (0.06 + emissive * 0.44);
-          shaded += vec3(rim) * mix(0.02, 0.06, exposure);
+          vec3 shaded = ambient + direct + specColor * (specular + voxelBevel * (diffuse * 0.4 + 0.15)) * shadow + emissiveColor;
+          shaded += uSunColor * hotEdge * (0.08 + emissive * 0.44);
+          shaded += vec3(rim) * mix(0.03, 0.08, exposure);
 
           float fogDistance = distance(cameraPosition, worldPos);
           float fogFactor = smoothstep(uFogNear, uFogFar, fogDistance);
@@ -399,12 +411,12 @@ export function VoxelVolumeRenderer({
         uSunDir: {
           value: new THREE.Vector3(...(worldOcclusion?.sunDirection ?? [0.55, 0.82, 0.25])).normalize(),
         },
-        uSunColor: { value: new THREE.Color('#ffe3b5') },
-        uSkyColor: { value: new THREE.Color('#8b99ab') },
-        uGroundColor: { value: new THREE.Color('#534333') },
-        uFogColor: { value: new THREE.Color('#5a564d') },
-        uFogNear: { value: 8.4 },
-        uFogFar: { value: 19.5 },
+        uSunColor: { value: new THREE.Color('#ffe8cc') },
+        uSkyColor: { value: new THREE.Color('#94a3b8') },
+        uGroundColor: { value: new THREE.Color('#262626') },
+        uFogColor: { value: new THREE.Color('#1c1917') },
+        uFogNear: { value: 26.0 },
+        uFogFar: { value: 76.0 },
         uHasWorldOcc: { value: worldOcclusion ? 1 : 0 },
       },
       side: THREE.BackSide,
