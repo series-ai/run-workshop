@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import { OrbitControls as OrbitControlsImpl } from 'three/examples/jsm/controls/OrbitControls.js';
 import { CAMERA_BASE, CAMERA_LOOK_AT } from './viewConstants';
-import { quantizeRay, TOOL, type Tool, type YardInput } from '../sim/input';
+import { TOOL, type Tool, type YardInput } from '../sim/input';
 import type { MatchController } from '../game/match';
 import type { YardBody } from '../sim/state';
 import type { YardRender } from './presentation';
@@ -23,31 +23,41 @@ function toSimTool(tool: UiTool): Tool {
 }
 
 /**
- * Runs first in the scene each frame: reads the pointer, feeds the runner,
- * pumps the simulation, refreshes the shared render ref, reports body-list
- * changes, and drives the camera. Mount it before any component that reads
- * `renderRef` in its own `useFrame``.
+ * Runs first in the scene each frame: captures keyboard & mouse look in first person,
+ * drives the first-person camera or orbit camera, feeds inputs to the runner,
+ * pumps the simulation, and refreshes the shared render ref.
  */
-export function PointerInput({ controller, tool, renderRef, onBodiesChange }: {
+export function PointerInput({
+  controller,
+  tool,
+  onToolChange,
+  renderRef,
+  onBodiesChange,
+}: {
   controller: MatchController;
   tool: UiTool;
+  onToolChange?: (tool: UiTool) => void;
   renderRef: MutableRefObject<YardRender | null>;
   onBodiesChange: (bodies: readonly YardBody[]) => void;
 }) {
   const { camera, gl } = useThree();
   const lastBodies = useRef<readonly YardBody[] | null>(null);
+
+  const yaw = useRef(Math.PI);
+  const pitch = useRef(0);
   const pressed = useRef(false);
-  const raycaster = useMemo(() => new THREE.Raycaster(), []);
-  const target = useMemo(() => new THREE.Vector3(), []);
+  const secondary = useRef(false);
+  const keys = useRef<Set<string>>(new Set());
+
   const controls = useMemo(() => {
     const next = new OrbitControlsImpl(camera, gl.domElement);
     next.enablePan = false;
     next.enableDamping = true;
     next.dampingFactor = 0.08;
     next.minDistance = 5.4;
-    next.maxDistance = 14.5;
-    next.minPolarAngle = 0.42;
-    next.maxPolarAngle = 1.34;
+    next.maxDistance = 28.0;
+    next.minPolarAngle = 0.2;
+    next.maxPolarAngle = 1.45;
     next.target.set(CAMERA_LOOK_AT[0], CAMERA_LOOK_AT[1], CAMERA_LOOK_AT[2]);
     next.enabled = false;
     return next;
@@ -58,52 +68,116 @@ export function PointerInput({ controller, tool, renderRef, onBodiesChange }: {
   useEffect(() => {
     controls.enabled = tool === 'orbit';
     if (tool === 'orbit') {
-      camera.position.set(CAMERA_BASE[0], CAMERA_BASE[1], CAMERA_BASE[2]);
+      camera.position.set(CAMERA_BASE[0], CAMERA_BASE[1] + 2, CAMERA_BASE[2] + 4);
       controls.update();
     }
   }, [camera, controls, tool]);
 
+  // Pointer lock & Mouse / Keyboard handlers
   useEffect(() => {
-    const down = (event: PointerEvent) => { if (event.button === 0) pressed.current = true; };
-    const up = () => { pressed.current = false; };
-    gl.domElement.addEventListener('pointerdown', down);
-    window.addEventListener('pointerup', up);
-    window.addEventListener('pointercancel', up);
-    return () => {
-      gl.domElement.removeEventListener('pointerdown', down);
-      window.removeEventListener('pointerup', up);
-      window.removeEventListener('pointercancel', up);
-    };
-  }, [gl]);
+    const dom = gl.domElement;
 
-  useFrame((state, delta) => {
+    const onPointerDown = (event: MouseEvent) => {
+      if (tool !== 'orbit' && document.pointerLockElement !== dom) {
+        dom.requestPointerLock();
+      }
+      if (event.button === 0) pressed.current = true;
+      if (event.button === 2) secondary.current = true;
+    };
+
+    const onPointerUp = (event: MouseEvent) => {
+      if (event.button === 0) pressed.current = false;
+      if (event.button === 2) secondary.current = false;
+    };
+
+    const onMouseMove = (event: MouseEvent) => {
+      if (tool !== 'orbit' && document.pointerLockElement === dom) {
+        yaw.current -= event.movementX * 0.0022;
+        pitch.current = THREE.MathUtils.clamp(pitch.current - event.movementY * 0.0022, -1.45, 1.45);
+      }
+    };
+
+    const onContextMenu = (event: MouseEvent) => {
+      event.preventDefault();
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      keys.current.add(event.code);
+      if (event.code === 'Digit1') onToolChange?.('hand');
+      if (event.code === 'Digit2') onToolChange?.('torch');
+      if (event.code === 'Digit3') onToolChange?.('orbit');
+    };
+
+    const onKeyUp = (event: KeyboardEvent) => {
+      keys.current.delete(event.code);
+    };
+
+    dom.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mouseup', onPointerUp);
+    document.addEventListener('mousemove', onMouseMove);
+    dom.addEventListener('contextmenu', onContextMenu);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+
+    return () => {
+      dom.removeEventListener('mousedown', onPointerDown);
+      window.removeEventListener('mouseup', onPointerUp);
+      document.removeEventListener('mousemove', onMouseMove);
+      dom.removeEventListener('contextmenu', onContextMenu);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, [gl, tool, onToolChange]);
+
+  const dirVec = useMemo(() => new THREE.Vector3(), []);
+  const euler = useMemo(() => new THREE.Euler(0, 0, 0, 'YXZ'), []);
+
+  useFrame(() => {
+    const render = renderRef.current;
+    const localPlayer = render?.players?.find((p) => p.slot === render?.localSlot);
+
     if (tool === 'orbit') {
       controls.update();
+      dirVec.set(0, 0, -1).applyQuaternion(camera.quaternion);
     } else {
-      target.set(
-        CAMERA_BASE[0] + state.pointer.x * 0.45,
-        CAMERA_BASE[1] + state.pointer.y * 0.22,
-        CAMERA_BASE[2] - state.pointer.x * 0.28,
-      );
-      state.camera.position.lerp(target, 1 - Math.exp(-delta * 2.6));
-      state.camera.lookAt(CAMERA_LOOK_AT[0], CAMERA_LOOK_AT[1], CAMERA_LOOK_AT[2]);
+      if (localPlayer) {
+        camera.position.set(localPlayer.position[0], localPlayer.position[1] + 1.55, localPlayer.position[2]);
+      }
+      euler.set(pitch.current, yaw.current, 0, 'YXZ');
+      camera.quaternion.setFromEuler(euler);
+      dirVec.set(0, 0, -1).applyQuaternion(camera.quaternion);
     }
 
-    raycaster.setFromCamera(state.pointer, state.camera);
-    const o = raycaster.ray.origin;
-    const d = raycaster.ray.direction;
+    const moveX = (keys.current.has('KeyD') || keys.current.has('ArrowRight') ? 1 : 0) -
+                  (keys.current.has('KeyA') || keys.current.has('ArrowLeft') ? 1 : 0);
+    const moveZ = (keys.current.has('KeyW') || keys.current.has('ArrowUp') ? 1 : 0) -
+                  (keys.current.has('KeyS') || keys.current.has('ArrowDown') ? 1 : 0);
+    const jetpack = keys.current.has('Space');
+
     const input: YardInput = {
       tool: toSimTool(tool),
       pressed: tool !== 'orbit' && pressed.current,
-      ...quantizeRay([o.x, o.y, o.z], [d.x, d.y, d.z]),
+      secondary: tool !== 'orbit' && secondary.current,
+      jetpack,
+      moveX,
+      moveZ,
+      yaw: Math.round(yaw.current * 1000),
+      pitch: Math.round(pitch.current * 1000),
+      ox: Math.round(camera.position.x * 1000),
+      oy: Math.round(camera.position.y * 1000),
+      oz: Math.round(camera.position.z * 1000),
+      dx: Math.round(dirVec.x * 10000),
+      dy: Math.round(dirVec.y * 10000),
+      dz: Math.round(dirVec.z * 10000),
     };
+
     controller.setInput(input);
     controller.pump(performance.now());
-    const render = controller.getRender();
-    renderRef.current = render;
-    if (render && render.bodies !== lastBodies.current) {
-      lastBodies.current = render.bodies;
-      onBodiesChange(render.bodies);
+    const nextRender = controller.getRender();
+    renderRef.current = nextRender;
+    if (nextRender && nextRender.bodies !== lastBodies.current) {
+      lastBodies.current = nextRender.bodies;
+      onBodiesChange(nextRender.bodies);
     }
   });
 

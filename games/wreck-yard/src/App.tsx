@@ -51,7 +51,7 @@ export default function App() {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#5a564d' }}>
-      <YardScene controller={controller} tool={tool} />
+      <YardScene controller={controller} tool={tool} onToolChange={setTool} />
       <Hud
         snapshot={snapshot}
         tool={tool}

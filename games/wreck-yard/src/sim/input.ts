@@ -7,11 +7,21 @@ export type Tool = (typeof TOOL)[keyof typeof TOOL];
 export interface YardInput {
   readonly tool: Tool;
   readonly pressed: boolean;
-  /** Ray origin in millimeters. */
+  readonly secondary: boolean;
+  readonly jetpack: boolean;
+  /** Strafe: -1 (left) to 1 (right) */
+  readonly moveX: number;
+  /** Forward/backward: -1 (backward) to 1 (forward) */
+  readonly moveZ: number;
+  /** Aim yaw in milliradians (-3200 to 3200). */
+  readonly yaw: number;
+  /** Aim pitch in milliradians (-1500 to 1500). */
+  readonly pitch: number;
+  /** Ray origin in millimeters (optional legacy / test override). */
   readonly ox: number;
   readonly oy: number;
   readonly oz: number;
-  /** Ray direction times 10000. */
+  /** Ray direction times 10000 (optional legacy / test override). */
   readonly dx: number;
   readonly dy: number;
   readonly dz: number;
@@ -20,10 +30,17 @@ export interface YardInput {
 export const RAY_ORIGIN_SCALE = 1000;
 export const RAY_ORIGIN_LIMIT = 50_000;
 export const RAY_DIR_SCALE = 10_000;
+export const ANGLE_SCALE = 1000; // milliradians
 
 const codec = defineSyncplayInputCodec<YardInput>({
   tool: { kind: 'enum', values: [TOOL.hand, TOOL.torch, TOOL.none], neutral: TOOL.none },
   pressed: { kind: 'boolean', neutral: false },
+  secondary: { kind: 'boolean', neutral: false },
+  jetpack: { kind: 'boolean', neutral: false },
+  moveX: { kind: 'int', min: -1, max: 1, neutral: 0 },
+  moveZ: { kind: 'int', min: -1, max: 1, neutral: 0 },
+  yaw: { kind: 'int', min: -3200, max: 3200, neutral: 3142 },
+  pitch: { kind: 'int', min: -1500, max: 1500, neutral: 0 },
   ox: { kind: 'int', min: -RAY_ORIGIN_LIMIT, max: RAY_ORIGIN_LIMIT, neutral: 0 },
   oy: { kind: 'int', min: -RAY_ORIGIN_LIMIT, max: RAY_ORIGIN_LIMIT, neutral: 0 },
   oz: { kind: 'int', min: -RAY_ORIGIN_LIMIT, max: RAY_ORIGIN_LIMIT, neutral: 0 },

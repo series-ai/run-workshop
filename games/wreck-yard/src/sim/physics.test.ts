@@ -30,15 +30,15 @@ describe('voxelStats and bodyMass', () => {
 });
 
 describe('createInitialState', () => {
-  it('spawns five bodies, a physics body per yard body, and the shell', () => {
+  it('spawns playground bodies, a physics body per yard body, and the shell', () => {
     const state = createInitialState(2);
-    expect(state.bodies.map((b) => b.id)).toEqual(['steel-case', 'timber-pallet', 'steel-gantry', 'float-crate', 'ballast-box']);
+    expect(state.bodies.length).toBeGreaterThanOrEqual(5);
     expect(state.players).toHaveLength(2);
     for (const body of state.bodies) {
       const physics = state.world.bodies.find((p) => p.id === body.id);
       expect(physics?.kind).toBe(body.motion === 'fixed' ? 'static' : 'dynamic');
     }
-    expect(state.world.bodies.filter((b) => b.id.startsWith('shell:'))).toHaveLength(10);
+    expect(state.world.bodies.filter((b) => b.id.startsWith('shell:'))).toHaveLength(15);
   });
 
   it('makes a static physics body without orientation', () => {

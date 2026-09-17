@@ -223,9 +223,50 @@ export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): YardPhys
   let disposed = false;
   try {
     addPhysicsBodies(open, [...shellBodies(), ...bodies]);
-    open.world.edit((edit) => ({
-      water: edit.createFluid(WATER_FLUID_CONFIG),
-    }));
+    open.world.edit((edit) => {
+      edit.createFluid(WATER_FLUID_CONFIG);
+
+      // Seesaw revolute joint
+      const pivotId = open.bodyIds.get('shell:seesaw-pivot');
+      const plankId = open.bodyIds.get('seesaw-plank');
+      if (pivotId && plankId) {
+        edit.createJoint({
+          type: 'revolute',
+          bodyA: open.world.resolveBody(pivotId),
+          bodyB: open.world.resolveBody(plankId),
+          anchorA: { x: 0, y: 0.45, z: 0 },
+          anchorB: { x: 0, y: 0, z: 0 },
+          axis: { x: 0, y: 0, z: 1 },
+          minAngle: -0.42,
+          maxAngle: 0.42,
+        });
+      }
+
+      // Buggy chassis wheel joints
+      const chassisId = open.bodyIds.get('vehicle-chassis');
+      if (chassisId) {
+        const wheels = [
+          { id: 'vehicle-wheel-fl', anchor: { x: -0.9, y: -0.2, z: -0.9 } },
+          { id: 'vehicle-wheel-fr', anchor: { x: 0.9, y: -0.2, z: -0.9 } },
+          { id: 'vehicle-wheel-rl', anchor: { x: -0.9, y: -0.2, z: 0.9 } },
+          { id: 'vehicle-wheel-rr', anchor: { x: 0.9, y: -0.2, z: 0.9 } },
+        ];
+        for (const w of wheels) {
+          const wId = open.bodyIds.get(w.id);
+          if (wId) {
+            edit.createJoint({
+              type: 'wheel',
+              bodyA: open.world.resolveBody(chassisId),
+              bodyB: open.world.resolveBody(wId),
+              anchorA: w.anchor,
+              anchorB: { x: 0, y: 0, z: 0 },
+              axis: { x: 1, y: 0, z: 0 },
+              suspension: { restLength: 0.35, frequencyHz: 4.5, dampingRatio: 0.65 },
+            });
+          }
+        }
+      }
+    });
     disposed = true;
     return closeWorld(open);
   } finally {

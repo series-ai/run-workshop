@@ -1,17 +1,26 @@
 import {
-  type PhysicsBody3D,
   type PhysicsContactEvent3D,
   type PhysicsJointHandle3D,
 } from '@series-inc/rundot-syncplay/physics/3d';
 import {
+  ARENA_EXTENT,
   DT,
   FLOOR_Y,
   GRAB_FLOOR_CLEARANCE,
   GRAB_LIFT,
   GRAB_PULL_GAIN,
+  GRAVITY_GUN_PUNT_SPEED,
   IMPACT_COOLDOWN_TICKS,
   IMPACT_MIN_SPEED,
+  JETPACK_FUEL_DRAIN,
+  JETPACK_FUEL_RECHARGE,
+  JETPACK_THRUST_XZ,
+  JETPACK_THRUST_Y,
   MAX_RAY_DISTANCE,
+  PLAYER_EYE_OFFSET,
+  PLAYER_GRAVITY,
+  PLAYER_MOVE_SPEED,
+  PLAYER_RADIUS,
   THROW_BOOST,
   TORCH_INSET,
   TORCH_PULSE_TICKS,
@@ -20,8 +29,8 @@ import {
   VOXEL_SIZE,
 } from './constants';
 import { fractureBody, type FractureContact } from './fracture';
-import { decodeRay, TOOL, type YardInput } from './input';
-import { add, clamp, rotateInverse, scale, sub, type Vec3 } from './math';
+import { ANGLE_SCALE, decodeRay, TOOL, type YardInput } from './input';
+import { add, clamp, lerp, rotateInverse, scale, sub, type Vec3 } from './math';
 import type { VoxelDims } from 'voxel-kit';
 import {
   addPhysicsBodies,
@@ -39,7 +48,14 @@ import {
   type OpenYardPhysicsWorld,
   type YardPhysicsBody3D,
 } from './physics';
-import { EMPTY_PLAYER, type PlayerState, type YardBody, type YardState, type YardStats } from './state';
+import {
+  createInitialPlayer,
+  type PlayerState,
+  type PlayerTool,
+  type YardBody,
+  type YardState,
+  type YardStats,
+} from './state';
 
 interface Hit {
   readonly bodyId: string;
@@ -82,21 +98,19 @@ function firstYardHit(physics: OpenYardPhysicsWorld, origin: Vec3, direction: Ve
   return null;
 }
 
-function worldToVoxel(body: YardBody, physics: YardPhysicsBody3D | PhysicsBody3D, worldPoint: Vec3): Vec3 {
+function worldToVoxel(body: YardBody, physics: YardPhysicsBody3D, worldPoint: Vec3): Vec3 {
   const pose = poseOf(physics);
   const local = rotateInverse(sub(worldPoint, pose.position), pose.rotation);
   return [
-    local[0] / VOXEL_SIZE + body.dims.x * 0.5 - 0.5,
-    local[1] / VOXEL_SIZE + body.dims.y * 0.5 - 0.5,
-    local[2] / VOXEL_SIZE + body.dims.z * 0.5 - 0.5,
+    local[0] / VOXEL_SIZE + (body.dims.x - 1) * 0.5,
+    local[1] / VOXEL_SIZE + (body.dims.y - 1) * 0.5,
+    local[2] / VOXEL_SIZE + (body.dims.z - 1) * 0.5,
   ];
 }
 
 /**
- * Voxel-space distance from an interior point to the far side of the voxel box
- * along `direction`, so a torch carve can run out the other side of the body.
- * Cell centers span `[-0.5, dims - 0.5]` on each axis; a slab test returns the
- * distance to leave that box. Returns 0 for a degenerate direction.
+ * Steps along `direction` through a voxel-space box `[0, dims]` and returns
+ * the distance in voxels from `from` to the exit face.
  */
 function voxelsToExitBox(from: Vec3, direction: Vec3, dims: VoxelDims): number {
   const min: Vec3 = [-0.5, -0.5, -0.5];
@@ -116,20 +130,141 @@ function findBody(bodies: readonly YardBody[], id: string): YardBody | undefined
   return bodies.find((body) => body.id === id);
 }
 
-function stepHand(w: Working, input: YardInput, player: PlayerState): PlayerState {
-  const ray = decodeRay(input);
+function getPlayerRay(player: PlayerState, input: YardInput): { origin: Vec3; direction: Vec3 } {
+  const legacyRay = decodeRay(input);
+  if (legacyRay) return legacyRay;
+
+  const eye: Vec3 = [player.x, player.y + PLAYER_EYE_OFFSET, player.z];
+  const sinY = Math.sin(player.yaw);
+  const cosY = Math.cos(player.yaw);
+  const sinP = Math.sin(player.pitch);
+  const cosP = Math.cos(player.pitch);
+
+  const dir: Vec3 = [-sinY * cosP, sinP, -cosY * cosP];
+  return { origin: eye, direction: dir };
+}
+
+function stepPlayerMovement(player: PlayerState, input: YardInput): PlayerState {
+  const yaw = (input.yaw ?? 3142) / ANGLE_SCALE;
+  const pitch = clamp((input.pitch ?? 0) / ANGLE_SCALE, -1.45, 1.45);
+
+  const sinY = Math.sin(yaw);
+  const cosY = Math.cos(yaw);
+  const fwdX = -sinY;
+  const fwdZ = -cosY;
+  const rightX = cosY;
+  const rightZ = -sinY;
+
+  const moveX = clamp(input.moveX ?? 0, -1, 1);
+  const moveZ = clamp(input.moveZ ?? 0, -1, 1);
+
+  const targetVx = (fwdX * moveZ + rightX * moveX) * PLAYER_MOVE_SPEED;
+  const targetVz = (fwdZ * moveZ + rightZ * moveX) * PLAYER_MOVE_SPEED;
+
+  let vx = player.vx;
+  let vy = player.vy;
+  let vz = player.vz;
+  let fuel = player.fuel;
+  let jetpackActive = false;
+
+  if (input.jetpack && fuel > 0) {
+    jetpackActive = true;
+    vy = Math.min(vy + JETPACK_THRUST_Y * DT, 12.0);
+    vx += (fwdX * moveZ + rightX * moveX) * JETPACK_THRUST_XZ * DT;
+    vz += (fwdZ * moveZ + rightZ * moveX) * JETPACK_THRUST_XZ * DT;
+    fuel = Math.max(0, fuel - JETPACK_FUEL_DRAIN);
+  } else {
+    vy = Math.max(vy - PLAYER_GRAVITY * DT, -24.0);
+  }
+
+  const blend = player.grounded ? 0.35 : 0.08;
+  vx = lerp(vx, targetVx, blend);
+  vz = lerp(vz, targetVz, blend);
+
+  let x = player.x + vx * DT;
+  let y = player.y + vy * DT;
+  let z = player.z + vz * DT;
+
+  const floorCollisionY = FLOOR_Y + PLAYER_RADIUS;
+  let grounded = false;
+  if (y <= floorCollisionY) {
+    y = floorCollisionY;
+    vy = 0;
+    grounded = true;
+    fuel = Math.min(100, fuel + JETPACK_FUEL_RECHARGE);
+  }
+
+  const maxBound = ARENA_EXTENT - 1.0;
+  x = clamp(x, -maxBound, maxBound);
+  z = clamp(z, -maxBound, maxBound);
+
+  const activeTool: PlayerTool = input.tool === TOOL.torch ? 'torch' : 'gravity';
+
+  return {
+    ...player,
+    x,
+    y,
+    z,
+    vx,
+    vy,
+    vz,
+    yaw,
+    pitch,
+    grounded,
+    fuel,
+    jetpackActive,
+    activeTool,
+  };
+}
+
+function stepHand(
+  w: Working,
+  input: YardInput,
+  player: PlayerState,
+  ray: { origin: Vec3; direction: Vec3 },
+): PlayerState {
   let grab = player.grab;
   if (grab && !findBody(w.bodies, grab.bodyId)) grab = null;
 
-  if (input.pressed && !player.wasPressed && ray && !grab) {
-    const hit = firstYardHit(w.physics, ray.origin, ray.direction);
-    const body = hit ? findBody(w.bodies, hit.bodyId) : undefined;
-    if (hit && body?.motion === 'dynamic') {
-      grab = { bodyId: body.id, distance: hit.distance, velocity: [0, 0, 0] };
+  // Secondary action: Gravity Gun PUNT
+  if (input.secondary && !player.wasSecondaryPressed) {
+    let puntTarget = grab?.bodyId;
+    if (!puntTarget) {
+      const hit = firstYardHit(w.physics, ray.origin, ray.direction);
+      const body = hit ? findBody(w.bodies, hit.bodyId) : undefined;
+      if (hit && body?.motion === 'dynamic' && hit.distance <= 12) {
+        puntTarget = body.id;
+      }
+    }
+    if (puntTarget) {
+      const puntVel: Vec3 = [
+        ray.direction[0] * GRAVITY_GUN_PUNT_SPEED * DT,
+        (ray.direction[1] * GRAVITY_GUN_PUNT_SPEED + 2.0) * DT,
+        ray.direction[2] * GRAVITY_GUN_PUNT_SPEED * DT,
+      ];
+      setPhysicsBodyVelocity(w.physics, puntTarget, puntVel);
+      w.stats = { ...w.stats, throws: w.stats.throws + 1 };
+      return {
+        ...player,
+        grab: null,
+        torch: null,
+        torchTicks: 0,
+        wasPressed: input.pressed,
+        wasSecondaryPressed: true,
+      };
     }
   }
 
-  if (grab && input.pressed && ray) {
+  // Primary action: Gravity Gun LEVITATE / HOLD
+  if (input.pressed && !player.wasPressed && !grab) {
+    const hit = firstYardHit(w.physics, ray.origin, ray.direction);
+    const body = hit ? findBody(w.bodies, hit.bodyId) : undefined;
+    if (hit && body?.motion === 'dynamic') {
+      grab = { bodyId: body.id, distance: clamp(hit.distance, 2.5, 6.0), velocity: [0, 0, 0] };
+    }
+  }
+
+  if (grab && input.pressed) {
     const body = findBody(w.bodies, grab.bodyId)!;
     const physics = physicsBodyById(w.physics, grab.bodyId)!;
     const target = add(ray.origin, scale(ray.direction, grab.distance));
@@ -145,15 +280,44 @@ function stepHand(w: Working, input: YardInput, player: PlayerState): PlayerStat
     grab = null;
   }
 
-  return { ...player, grab, torch: null, torchTicks: 0, wasPressed: input.pressed };
+  return {
+    ...player,
+    grab,
+    torch: null,
+    torchTicks: 0,
+    wasPressed: input.pressed,
+    wasSecondaryPressed: input.secondary,
+  };
 }
 
-function stepTorch(w: Working, input: YardInput, player: PlayerState): PlayerState {
-  const ray = input.pressed ? decodeRay(input) : null;
-  const hit = ray ? firstYardHit(w.physics, ray.origin, ray.direction) : null;
+function stepTorch(
+  w: Working,
+  input: YardInput,
+  player: PlayerState,
+  ray: { origin: Vec3; direction: Vec3 },
+): PlayerState {
+  if (!input.pressed) {
+    return {
+      ...player,
+      grab: null,
+      torch: null,
+      torchTicks: 0,
+      wasPressed: false,
+      wasSecondaryPressed: input.secondary,
+    };
+  }
+
+  const hit = firstYardHit(w.physics, ray.origin, ray.direction);
   const body = hit ? findBody(w.bodies, hit.bodyId) : undefined;
   if (!hit || !body) {
-    return { ...player, grab: null, torch: null, torchTicks: 0, wasPressed: input.pressed };
+    return {
+      ...player,
+      grab: null,
+      torch: null,
+      torchTicks: 0,
+      wasPressed: true,
+      wasSecondaryPressed: input.secondary,
+    };
   }
 
   const physics = physicsBodyById(w.physics, body.id)!;
@@ -183,20 +347,44 @@ function stepTorch(w: Working, input: YardInput, player: PlayerState): PlayerSta
         impulseBoost: 0,
       },
     });
-    return { ...player, grab: null, torch: { bodyId: body.id, prev: point }, torchTicks, wasPressed: true };
+    return {
+      ...player,
+      grab: null,
+      torch: { bodyId: body.id, prev: point },
+      torchTicks,
+      wasPressed: true,
+      wasSecondaryPressed: input.secondary,
+    };
   }
-  return { ...player, grab: null, torch: { bodyId: body.id, prev }, torchTicks, wasPressed: true };
+  return {
+    ...player,
+    grab: null,
+    torch: { bodyId: body.id, prev },
+    torchTicks,
+    wasPressed: true,
+    wasSecondaryPressed: input.secondary,
+  };
 }
 
 function stepPlayer(w: Working, slot: number, input: YardInput): PlayerState {
-  const player = w.players[slot] ?? EMPTY_PLAYER;
+  const initial = w.players[slot] ?? createInitialPlayer(slot);
+  const moved = stepPlayerMovement(initial, input);
+  const ray = getPlayerRay(moved, input);
+
   switch (input.tool) {
     case TOOL.hand:
-      return stepHand(w, input, player);
+      return stepHand(w, input, moved, ray);
     case TOOL.torch:
-      return stepTorch(w, input, player);
+      return stepTorch(w, input, moved, ray);
     case TOOL.none:
-      return { ...EMPTY_PLAYER, wasPressed: input.pressed };
+      return {
+        ...moved,
+        grab: null,
+        torch: null,
+        torchTicks: 0,
+        wasPressed: input.pressed,
+        wasSecondaryPressed: input.secondary,
+      };
     default: {
       const unreachable: never = input.tool;
       throw new Error(`WRECK_YARD_TOOL_INVALID: ${String(unreachable)}`);

@@ -58,11 +58,28 @@ export const TANK_SPEC: WaterTankSpec = {
 const TANK_WALL_HEIGHT = TANK.surfaceY - TANK.bottomY;
 const TANK_WALL_CENTER_Y = TANK.bottomY + TANK_WALL_HEIGHT * 0.5;
 
+export const PLAYER_RADIUS = 0.4;
+export const PLAYER_HEIGHT = 1.8;
+export const PLAYER_EYE_OFFSET = 1.55;
+export const PLAYER_MOVE_SPEED = 7.5;
+export const PLAYER_GRAVITY = 22.0;
+export const JETPACK_THRUST_Y = 19.5;
+export const JETPACK_THRUST_XZ = 7.0;
+export const JETPACK_FUEL_DRAIN = 0.6;
+export const JETPACK_FUEL_RECHARGE = 1.2;
+export const GRAVITY_GUN_RANGE = 30.0;
+export const GRAVITY_GUN_HOLD_DIST = 3.5;
+export const GRAVITY_GUN_PUNT_SPEED = 30.0;
+
+export const ARENA_EXTENT = 26;
+
 /** Static boxes: center and full size. Used for physics shell bodies and occlusion. */
 export const SHELL_BOXES: readonly (WorldOcclusionStaticBox & { id: string })[] = [
-  { id: 'floor', center: [0, FLOOR_Y - 0.1, 0], size: [18, 0.2, 18] },
-  { id: 'wall-west', center: [-4.55, 1.25, 0], size: [0.7, 4.4, 18] },
-  { id: 'wall-north', center: [0, 1.25, -4.55], size: [18, 4.4, 0.7] },
+  { id: 'floor', center: [0, FLOOR_Y - 0.1, 0], size: [52, 0.2, 52] },
+  { id: 'wall-west', center: [-ARENA_EXTENT, 3, 0], size: [0.8, 8, 52] },
+  { id: 'wall-east', center: [ARENA_EXTENT, 3, 0], size: [0.8, 8, 52] },
+  { id: 'wall-north', center: [0, 3, -ARENA_EXTENT], size: [52, 8, 0.8] },
+  { id: 'wall-south', center: [0, 3, ARENA_EXTENT], size: [52, 8, 0.8] },
   { id: 'plinth-a', center: [1.0, FLOOR_Y + 0.24, 0.9], size: [3.1, 0.48, 3.8] },
   { id: 'plinth-b', center: [-2.35, FLOOR_Y + 0.2, -1.4], size: [2.3, 0.4, 2.3] },
   { id: 'tank-floor', center: [TANK.center[0], TANK.bottomY - 0.12, TANK.center[2]], size: [TANK.innerSize[0], 0.24, TANK.innerSize[2]] },
@@ -70,4 +87,7 @@ export const SHELL_BOXES: readonly (WorldOcclusionStaticBox & { id: string })[] 
   { id: 'tank-east', center: [TANK.center[0] + TANK.innerSize[0] * 0.5, TANK_WALL_CENTER_Y, TANK.center[2]], size: [TANK.wallThickness, TANK_WALL_HEIGHT, TANK.innerSize[2]] },
   { id: 'tank-north', center: [TANK.center[0], TANK_WALL_CENTER_Y, TANK.center[2] - TANK.innerSize[2] * 0.5], size: [TANK.innerSize[0], TANK_WALL_HEIGHT, TANK.wallThickness] },
   { id: 'tank-south', center: [TANK.center[0], TANK_WALL_CENTER_Y, TANK.center[2] + TANK.innerSize[2] * 0.5], size: [TANK.innerSize[0], TANK_WALL_HEIGHT, TANK.wallThickness] },
+  { id: 'seesaw-pivot', center: [-8, FLOOR_Y + 0.45, -6], size: [1.2, 0.9, 1.2] },
+  { id: 'ball-drop-platform', center: [-12, FLOOR_Y + 2.5, 12], size: [4, 5.0, 4] },
+  { id: 'vehicle-ramp', center: [12, FLOOR_Y + 0.4, 12], size: [4, 0.8, 6] },
 ];

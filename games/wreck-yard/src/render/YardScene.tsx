@@ -6,15 +6,17 @@ import { CAMERA_BASE } from './viewConstants';
 import type { YardBody } from '../sim/state';
 import { OcclusionUpdater, useWorldOcclusion } from './OcclusionUpdater';
 import { PointerInput, type UiTool } from './PointerInput';
+import { PlayerAvatars } from './PlayerAvatars';
 import { VoxelBodies } from './VoxelBodies';
 import { YardShell } from './YardShell';
 import type { YardRender } from './presentation';
 
 const SLOT_COLORS = ['#d4efff', '#ffb264', '#b8ffb0', '#f0a0ff'];
 
-function SceneRoot({ controller, tool, bodies, renderRef, outlines, onHover, onBodiesChange }: {
+function SceneRoot({ controller, tool, onToolChange, bodies, renderRef, outlines, onHover, onBodiesChange }: {
   controller: MatchController;
   tool: UiTool;
+  onToolChange?: (tool: UiTool) => void;
   bodies: readonly YardBody[];
   renderRef: React.MutableRefObject<YardRender | null>;
   outlines: ReadonlyMap<string, string>;
@@ -24,15 +26,20 @@ function SceneRoot({ controller, tool, bodies, renderRef, outlines, onHover, onB
   const worldOcclusion = useWorldOcclusion();
   return (
     <>
-      <PointerInput controller={controller} tool={tool} renderRef={renderRef} onBodiesChange={onBodiesChange} />
+      <PointerInput controller={controller} tool={tool} onToolChange={onToolChange} renderRef={renderRef} onBodiesChange={onBodiesChange} />
       <YardShell />
       <VoxelBodies bodies={bodies} renderRef={renderRef} outlines={outlines} onHover={onHover} worldOcclusion={worldOcclusion} />
+      <PlayerAvatars renderRef={renderRef} />
       <OcclusionUpdater renderRef={renderRef} worldOcclusion={worldOcclusion} />
     </>
   );
 }
 
-export function YardScene({ controller, tool }: { controller: MatchController; tool: UiTool }) {
+export function YardScene({ controller, tool, onToolChange }: {
+  controller: MatchController;
+  tool: UiTool;
+  onToolChange?: (tool: UiTool) => void;
+}) {
   const renderRef = useRef<YardRender | null>(null);
   const [bodies, setBodies] = useState<readonly YardBody[]>([]);
   const [localHover, setLocalHover] = useState<string | null>(null);
@@ -63,7 +70,7 @@ export function YardScene({ controller, tool }: { controller: MatchController; t
     <Canvas
       shadows
       dpr={[1, 2]}
-      camera={{ position: [CAMERA_BASE[0], CAMERA_BASE[1], CAMERA_BASE[2]], fov: 42 }}
+      camera={{ position: [CAMERA_BASE[0], CAMERA_BASE[1], CAMERA_BASE[2]], fov: 65 }}
       gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
@@ -71,7 +78,7 @@ export function YardScene({ controller, tool }: { controller: MatchController; t
       }}
       style={{ position: 'absolute', inset: 0 }}
     >
-      <SceneRoot controller={controller} tool={tool} bodies={bodies} renderRef={renderRef} outlines={outlines} onHover={onHover} onBodiesChange={setBodies} />
+      <SceneRoot controller={controller} tool={tool} onToolChange={onToolChange} bodies={bodies} renderRef={renderRef} outlines={outlines} onHover={onHover} onBodiesChange={setBodies} />
     </Canvas>
   );
 }

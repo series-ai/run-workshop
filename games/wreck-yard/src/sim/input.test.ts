@@ -3,7 +3,22 @@ import { decodeRay, decodeYardInput, encodeYardInput, NEUTRAL_INPUT, quantizeRay
 
 describe('yard input codec', () => {
   it('round trips a full input', () => {
-    const input: YardInput = { tool: TOOL.torch, pressed: true, ox: -1234, oy: 2500, oz: 99, dx: 7071, dy: -7071, dz: 0 };
+    const input: YardInput = {
+      tool: TOOL.torch,
+      pressed: true,
+      secondary: false,
+      jetpack: true,
+      moveX: 1,
+      moveZ: -1,
+      yaw: 1570,
+      pitch: -350,
+      ox: -1234,
+      oy: 2500,
+      oz: 99,
+      dx: 7071,
+      dy: -7071,
+      dz: 0,
+    };
     expect(decodeYardInput(encodeYardInput(input))).toEqual(input);
   });
 

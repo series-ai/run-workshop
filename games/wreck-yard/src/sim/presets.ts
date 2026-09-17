@@ -1,8 +1,8 @@
-import { makeEmptyVoxelField, stampBox, type VoxelDims } from 'voxel-kit';
+import { makeEmptyVoxelField, stampBox, stampSphere, type VoxelDims } from 'voxel-kit';
 import { FLOOR_Y, TANK, VOXEL_SIZE } from './constants';
 import { IDENTITY_QUAT, type Quat, type Vec3 } from './math';
 import { createWorld, makePhysicsBody } from './physics';
-import { EMPTY_PLAYER, type AnchorFace, type BodyMotion, type YardBody, type YardState } from './state';
+import { createInitialPlayer, type AnchorFace, type BodyMotion, type YardBody, type YardState } from './state';
 
 type VolumePreset = { dims: VoxelDims; voxels: Uint8Array };
 
@@ -70,6 +70,67 @@ function makeSteelGantry(): VolumePreset {
   return { dims, voxels };
 }
 
+function makeSeesawPlank(): VolumePreset {
+  const dims = { x: 50, y: 4, z: 12 };
+  const voxels = makeEmptyVoxelField(dims);
+  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 49, y: 3, z: 11 }, 2);
+  stampBox(voxels, dims, { x: 2, y: 1, z: 1 }, { x: 47, y: 2, z: 10 }, 4);
+  stampBox(voxels, dims, { x: 22, y: 0, z: 0 }, { x: 27, y: 3, z: 11 }, 3); // Pivot steel bracket
+  return { dims, voxels };
+}
+
+function makeBowlingBall(): VolumePreset {
+  const dims = { x: 12, y: 12, z: 12 };
+  const voxels = makeEmptyVoxelField(dims);
+  stampSphere(voxels, dims, { x: 5.5, y: 5.5, z: 5.5 }, 5.2, 3);
+  return { dims, voxels };
+}
+
+function makeBowlingPin(): VolumePreset {
+  const dims = { x: 6, y: 16, z: 6 };
+  const voxels = makeEmptyVoxelField(dims);
+  stampBox(voxels, dims, { x: 1, y: 0, z: 1 }, { x: 4, y: 15, z: 4 }, 1);
+  stampBox(voxels, dims, { x: 0, y: 1, z: 1 }, { x: 5, y: 9, z: 4 }, 1);
+  stampBox(voxels, dims, { x: 1, y: 1, z: 0 }, { x: 4, y: 9, z: 5 }, 1);
+  stampBox(voxels, dims, { x: 1, y: 10, z: 1 }, { x: 4, y: 12, z: 4 }, 4);
+  return { dims, voxels };
+}
+
+function makeBuggyChassis(): VolumePreset {
+  const dims = { x: 20, y: 6, z: 26 };
+  const voxels = makeEmptyVoxelField(dims);
+  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 19, y: 3, z: 25 }, 3);
+  stampBox(voxels, dims, { x: 2, y: 3, z: 4 }, { x: 17, y: 5, z: 16 }, 4);
+  stampBox(voxels, dims, { x: 4, y: 3, z: 6 }, { x: 15, y: 5, z: 14 }, 0);
+  return { dims, voxels };
+}
+
+function makeBuggyWheel(): VolumePreset {
+  const dims = { x: 6, y: 8, z: 8 };
+  const voxels = makeEmptyVoxelField(dims);
+  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 5, y: 7, z: 7 }, 4);
+  stampBox(voxels, dims, { x: 1, y: 2, z: 2 }, { x: 4, y: 5, z: 5 }, 3);
+  return { dims, voxels };
+}
+
+function makeDestructibleTower(): VolumePreset {
+  const dims = { x: 16, y: 32, z: 16 };
+  const voxels = makeEmptyVoxelField(dims);
+  // 4 corner columns
+  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 3, y: 31, z: 3 }, 3);
+  stampBox(voxels, dims, { x: 12, y: 0, z: 0 }, { x: 15, y: 31, z: 3 }, 3);
+  stampBox(voxels, dims, { x: 0, y: 0, z: 12 }, { x: 3, y: 31, z: 15 }, 3);
+  stampBox(voxels, dims, { x: 12, y: 0, z: 12 }, { x: 15, y: 31, z: 15 }, 3);
+  // Floor decks
+  stampBox(voxels, dims, { x: 0, y: 10, z: 0 }, { x: 15, y: 11, z: 15 }, 2);
+  stampBox(voxels, dims, { x: 0, y: 20, z: 0 }, { x: 15, y: 21, z: 15 }, 2);
+  stampBox(voxels, dims, { x: 0, y: 30, z: 0 }, { x: 15, y: 31, z: 15 }, 2);
+  // Walls
+  stampBox(voxels, dims, { x: 0, y: 2, z: 0 }, { x: 15, y: 8, z: 1 }, 1);
+  stampBox(voxels, dims, { x: 5, y: 4, z: 0 }, { x: 10, y: 7, z: 1 }, 0);
+  return { dims, voxels };
+}
+
 function restY(dims: VoxelDims): number {
   return FLOOR_Y + dims.y * VOXEL_SIZE * 0.5;
 }
@@ -103,12 +164,41 @@ export function createSpawns(): Spawn[] {
   const steelY = restY(steel.dims);
   const timberY = steelY + steel.dims.y * VOXEL_SIZE * 0.5 + timber.dims.y * VOXEL_SIZE * 0.5 + 0.02;
   const ballast = makeBallastBlock();
+
+  const seesaw = makeSeesawPlank();
+  const ball = makeBowlingBall();
+  const pin = makeBowlingPin();
+  const buggy = makeBuggyChassis();
+  const wheel = makeBuggyWheel();
+  const tower = makeDestructibleTower();
+
   return [
+    // Original core set
     spawn('steel-case', 'Steel Case', steel, [-1.35, steelY, -0.2], 0.1),
     spawn('timber-pallet', 'Timber Pallet', timber, [-1.3, timberY, -0.16], 0.28, YAW_POS_008),
     spawn('steel-gantry', 'Steel Gantry', makeSteelGantry(), [2.18, 1.74, TANK.center[2]], 0.08, IDENTITY_QUAT, 'fixed', ['-x']),
     spawn('float-crate', 'Float Crate', makeFloatCrate(), [TANK.center[0] + 0.35, 0.04, TANK.center[2] + 0.2], 1, YAW_POS_008),
     spawn('ballast-box', 'Ballast Box', ballast, [0.62, restY(ballast.dims), 1.3], 0.05, YAW_NEG_014),
+
+    // Seesaw sector
+    spawn('seesaw-plank', 'Seesaw Plank', seesaw, [-8, FLOOR_Y + 0.9 + seesaw.dims.y * VOXEL_SIZE * 0.5, -6], 0.2),
+
+    // Ball drop sector
+    spawn('bowling-ball-1', 'Heavy Bowling Ball', ball, [-12, FLOOR_Y + 5.2, 12], 0.05),
+    spawn('bowling-ball-2', 'Heavy Bowling Ball 2', ball, [-12.8, FLOOR_Y + 5.2, 11.2], 0.05),
+    spawn('bowling-pin-1', 'Bowling Pin 1', pin, [-8, restY(pin.dims), 11], 0.3),
+    spawn('bowling-pin-2', 'Bowling Pin 2', pin, [-8, restY(pin.dims), 13], 0.3),
+    spawn('bowling-pin-3', 'Bowling Pin 3', pin, [-6.8, restY(pin.dims), 12], 0.3),
+
+    // Buggy vehicle sector
+    spawn('vehicle-chassis', 'Sandbox Buggy', buggy, [12, FLOOR_Y + 1.1, 12], 0.25),
+    spawn('vehicle-wheel-fl', 'Buggy Wheel FL', wheel, [11.1, FLOOR_Y + 0.5, 11.1], 0.2),
+    spawn('vehicle-wheel-fr', 'Buggy Wheel FR', wheel, [12.9, FLOOR_Y + 0.5, 11.1], 0.2),
+    spawn('vehicle-wheel-rl', 'Buggy Wheel RL', wheel, [11.1, FLOOR_Y + 0.5, 12.9], 0.2),
+    spawn('vehicle-wheel-rr', 'Buggy Wheel RR', wheel, [12.9, FLOOR_Y + 0.5, 12.9], 0.2),
+
+    // Destructible tower sector
+    spawn('destructible-tower', 'Destructible Tower', tower, [-14, restY(tower.dims), -14], 0.15),
   ];
 }
 
@@ -131,7 +221,7 @@ export function createInitialState(playerCount: number): YardState {
     frame: 0,
     bodies: spawns.map((entry) => entry.body),
     world,
-    players: Array.from({ length: playerCount }, () => EMPTY_PLAYER),
+    players: Array.from({ length: playerCount }, (_, slot) => createInitialPlayer(slot)),
     stats: { torchCuts: 0, throws: 0, fractures: 0 },
     nextSerial: 0,
   };
