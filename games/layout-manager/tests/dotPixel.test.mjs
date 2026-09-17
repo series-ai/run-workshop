@@ -3,6 +3,50 @@ import test from 'node:test';
 
 const engine = await import('../src/workspace/dotpixel/sampling.ts');
 
+test('identity frame previews return the original document without remapping any points', async () => {
+  const { transformDotFrame } = await import('../src/workspace/dotpixel/document.ts');
+  const document = {
+    frame: { x: 7, y: 11, w: 333, h: 217 },
+    anchors: [
+      {
+        col: 1,
+        row: 1,
+        x: 29.1,
+        y: 47.3,
+        dragInfluence: { size: 32, point: { x: 29.2, y: 47.4 } },
+      },
+    ],
+    lines: [
+      [
+        { x: 17.1, y: 19.3 },
+        { x: 57.8, y: 73.9 },
+      ],
+    ],
+  };
+  for (let i = 0; i < 20; i++)
+    assert.equal(transformDotFrame(document, { ...document.frame }), document);
+});
+
+test('unchanged frame adjustments do not consume undo or erase redo history', async () => {
+  const { editDotDocument } = await import('../src/workspace/dotpixel/document.ts');
+  let history = {
+    present: { frame: { x: 0, y: 0, w: 333, h: 217 }, anchors: [] },
+    past: [],
+    future: [],
+  };
+  history = editDotDocument(history, { type: 'pin', anchor: { col: 1, row: 1, x: 29.1, y: 47.3 } });
+  history = editDotDocument(history, { type: 'pin', anchor: { col: 2, row: 2, x: 43.7, y: 55.8 } });
+  history = editDotDocument(history, { type: 'undo' });
+  assert.equal(history.past.length, 1);
+  assert.equal(history.future.length, 1);
+  const untouched = editDotDocument(history, {
+    type: 'adjust-frame',
+    frame: { ...history.present.frame },
+  });
+  assert.equal(untouched, history);
+  assert.equal(editDotDocument(untouched, { type: 'redo' }).present.anchors.length, 2);
+});
+
 test('row and column drags move the whole band on one axis, leaving neighbours alone by default', async () => {
   const { editDotDocument } = await import('../src/workspace/dotpixel/document.ts');
   const initial = {

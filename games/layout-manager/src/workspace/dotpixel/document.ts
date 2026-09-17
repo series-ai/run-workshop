@@ -37,6 +37,8 @@ export type DotEdit =
 /** Carry the editable grid with its frame instead of clearing the artist's work. */
 export function transformDotFrame(document: DotDocument, frame: DotFrame): DotDocument {
   const from = document.frame;
+  if (frame.x === from.x && frame.y === from.y && frame.w === from.w && frame.h === from.h)
+    return document;
   const transform = (p: { x: number; y: number }) => ({
     x: frame.x + ((p.x - from.x) / from.w) * frame.w,
     y: frame.y + ((p.y - from.y) / from.h) * frame.h,
@@ -161,8 +163,10 @@ export function editDotDocument(history: DotHistory, edit: DotEdit): DotHistory 
     };
   } else if (edit.type === 'frame')
     next = { ...present, frame: edit.frame, anchors: [], lines: [] };
-  else if (edit.type === 'adjust-frame') next = transformDotFrame(present, edit.frame);
-  else if (edit.type === 'line') {
+  else if (edit.type === 'adjust-frame') {
+    next = transformDotFrame(present, edit.frame);
+    if (next === present) return history;
+  } else if (edit.type === 'line') {
     if (edit.line.length < 2) return history;
     next = { ...present, lines: [...(present.lines ?? []), edit.line] };
   } else if (edit.type === 'clear-lines') next = { ...present, lines: [] };

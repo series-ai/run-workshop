@@ -60,6 +60,13 @@ try {
     'Mask layer needs a Pixel Fix toggle',
   );
   await until(`document.querySelector('.mask-display-canvas')?.width === 320`);
+  // A view-only toggle must not silently redirect subsequent painting to Mask.
+  await evaluate(
+    `Array.from(document.querySelectorAll('.paint-layer-item')).find(row=>row.querySelector('.paint-layer-name')?.textContent.trim()==='Background').click()`,
+  );
+  await until(
+    `document.querySelector('.paint-layer-item-active .paint-layer-name')?.textContent.trim() === 'Background'`,
+  );
   const originalPreview = await evaluate(
     `document.querySelector('.mask-display-canvas').toDataURL()`,
   );
@@ -72,6 +79,24 @@ try {
     true,
     'Pixel Fix needs a separate diagnostic canvas',
   );
+  assert.equal(
+    await evaluate(
+      `document.querySelector('.paint-layer-item-active .paint-layer-name')?.textContent.trim()`,
+    ),
+    'Background',
+    'Enabling Pixel Fix must preserve the active layer',
+  );
+  await evaluate(`document.querySelector('button[aria-label="Pixel Fix mode"]').click()`);
+  await until(`!document.querySelector('.paint-pixel-fix-canvas')`);
+  assert.equal(
+    await evaluate(
+      `document.querySelector('.paint-layer-item-active .paint-layer-name')?.textContent.trim()`,
+    ),
+    'Background',
+    'Disabling Pixel Fix must preserve the active layer',
+  );
+  await evaluate(`document.querySelector('button[aria-label="Pixel Fix mode"]').click()`);
+  await until(`!!document.querySelector('.paint-pixel-fix-canvas')`);
   assert.equal(
     await evaluate(`document.querySelector('.mask-display-canvas').toDataURL()`),
     originalPreview,
@@ -130,6 +155,12 @@ try {
   assert.equal(helper.empty, null);
   assert.equal(helper.emptyAlpha, false);
   // Erase the stray pixel and inspect while the pointer is still down.
+  await evaluate(
+    `Array.from(document.querySelectorAll('.paint-layer-item')).find(row=>row.querySelector('.paint-layer-name')?.textContent.trim()==='Mask').click()`,
+  );
+  await until(
+    `document.querySelector('.paint-layer-item-active .paint-layer-name')?.textContent.trim() === 'Mask'`,
+  );
   await cdp('Input.dispatchMouseEvent', {
     type: 'mousePressed',
     x: 620,

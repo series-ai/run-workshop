@@ -236,7 +236,7 @@ export function LayerPanel({
                         aria-label="Pixel Fix mode"
                         aria-pressed={!!pixelFixEnabled}
                         title="Pixel Fix: preview auto-crop bounds and a red 2px outside stroke (edit mode only)"
-                        onClick={(e) => { e.stopPropagation(); onSelectLayer(layer.id); onTogglePixelFix(); }}
+                        onClick={(e) => { e.stopPropagation(); onTogglePixelFix(); }}
                         style={{ flexShrink: 0, fontWeight: 700, color: pixelFixEnabled ? '#ff0000' : undefined }}
                       >P</button>
                     )}

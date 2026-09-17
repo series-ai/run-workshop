@@ -184,6 +184,21 @@ try {
   await dialog.getByRole('button', { name: 'Undo', exact: true }).click();
   assert.equal(await dialog.locator('[data-anchor]').count(), 1);
   await dialog.getByRole('button', { name: 'Frame', exact: true }).click();
+  const frameClickSamples = await allSamples();
+  const frameClickPreview = await preview.evaluate((c) => c.toDataURL());
+  assert.equal(await dialog.getByRole('button', { name: 'Redo', exact: true }).isEnabled(), true);
+  await source.click({ position: { x: 100, y: 100 } });
+  assert.deepEqual(
+    await allSamples(),
+    frameClickSamples,
+    'clicking an unchanged frame must not remap samples',
+  );
+  assert.equal(await preview.evaluate((c) => c.toDataURL()), frameClickPreview);
+  assert.equal(
+    await dialog.getByRole('button', { name: 'Redo', exact: true }).isEnabled(),
+    true,
+    'a frame click must preserve redo',
+  );
   const frameBefore = await dialog.locator('[data-frame-border]').getAttribute('width');
   const resize = await dialog.locator('[data-frame-handle="se"]').boundingBox();
   await page.mouse.move(resize.x + resize.width / 2, resize.y + resize.height / 2);
