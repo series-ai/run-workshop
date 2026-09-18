@@ -272,7 +272,10 @@ export function DotPixelEditor({ image, onClose, onAdd }: DotPixelEditorProps) {
   const selectedAnchor = anchors.find((a) => a.col === selected?.col && a.row === selected?.row);
   const removeSelected = () => {
     if (!selectedAnchor) return;
+    // Cancel the draft first so pointer-up cannot commit the deleted pin again.
+    changeGesture(null);
     edit({ type: 'remove', col: selectedAnchor.col, row: selectedAnchor.row });
+    setSelected(null);
     setTarget(null);
     setStatus('');
   };
@@ -524,6 +527,7 @@ export function DotPixelEditor({ image, onClose, onAdd }: DotPixelEditorProps) {
                   onPointerDown={(e) => {
                     if (e.button !== 0) return;
                     e.preventDefault();
+                    rootRef.current?.focus({ preventScroll: true });
                     e.currentTarget.setPointerCapture(e.pointerId);
                     setStatus('');
                     const p = pointAt(e);

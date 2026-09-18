@@ -144,6 +144,56 @@ try {
   );
   assert.deepEqual(await preview.evaluate((c) => [c.width, c.height]), [32, 32]);
   const before = await preview.evaluate((c) => c.toDataURL());
+  for (const key of ['Delete', 'Backspace']) {
+    await dialog.getByRole('button', { name: 'Anchors', exact: true }).click();
+    await dialog.locator('[data-sample="165"]').click();
+    const pin = dialog.locator('[data-anchor]').first();
+    const original = await pin.evaluate((node) => [node.getAttribute('x'), node.getAttribute('y')]);
+    const box = await pin.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 25, box.y + 20, { steps: 3 });
+    await page.keyboard.press(key);
+    await page.mouse.move(box.x + 35, box.y + 30);
+    await page.mouse.up();
+    assert.equal(
+      await dialog.locator('[data-anchor]').count(),
+      0,
+      `${key} during drag must not resurrect the pin on release`,
+    );
+    await dialog.getByRole('button', { name: 'Undo', exact: true }).click();
+    assert.equal(await dialog.locator('[data-anchor]').count(), 1);
+    assert.deepEqual(
+      await pin.evaluate((node) => [node.getAttribute('x'), node.getAttribute('y')]),
+      original,
+      'undo restores the committed pin, not its cancelled drag',
+    );
+    await dialog.getByRole('button', { name: 'Undo', exact: true }).click();
+    assert.equal(await dialog.locator('[data-anchor]').count(), 0);
+    const undoBefore = await dialog.getByRole('button', { name: 'Undo', exact: true }).isEnabled();
+    const redoBefore = await dialog.getByRole('button', { name: 'Redo', exact: true }).isEnabled();
+    // Start an uncommitted pin after editing a field: canvas gestures must own keyboard focus.
+    await dialog.getByRole('spinbutton', { name: 'Custom width', exact: true }).focus();
+    const sample = await dialog.locator('[data-sample="165"]').boundingBox();
+    await page.mouse.move(sample.x + sample.width / 2, sample.y + sample.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(sample.x + 20, sample.y + 20);
+    await page.keyboard.press(key);
+    await page.mouse.up();
+    assert.equal(
+      await dialog.locator('[data-anchor]').count(),
+      0,
+      `${key} cancels an uncommitted pin`,
+    );
+    assert.equal(
+      await dialog.getByRole('button', { name: 'Undo', exact: true }).isEnabled(),
+      undoBefore,
+    );
+    assert.equal(
+      await dialog.getByRole('button', { name: 'Redo', exact: true }).isEnabled(),
+      redoBefore,
+    );
+  }
   assert.equal(
     await dialog.locator('rect[data-sample]').count(),
     1024,
