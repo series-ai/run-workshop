@@ -23,6 +23,7 @@ import { LayerPanel } from './LayerPanel';
 import { ColorPicker, addRecentColor as addRecentColorToStorage } from './ColorPicker';
 import type { BrushSettings, BrushType, ToolType, Layer, WandSettings as PaintWandSettings, Point, TextSettings, TextLayerData } from './types';
 import { renderStrokeEffect, findEdges, dilateFromEdges, erodeFromEdges } from './strokeEffect';
+import { PIXEL_FIX_PADDING, renderPixelFixPreview } from './pixelFixPreview';
 import { DEFAULT_BRUSH, layerAdjustFilter } from './types';
 import type { LayerAdjustments } from './types';
 import { GOOGLE_FONTS, ensureGoogleFont } from '../googleFonts';
@@ -257,6 +258,7 @@ export function PaintEditor({ image, zoom, pan, scaleFilter, guides, snapEnabled
   // --- Canvas refs (same three-canvas architecture as MaskOverlay) ---
   const maskCanvasRef = useRef<HTMLCanvasElement>(null);
   const displayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const pixelFixCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const selMaskCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -493,6 +495,8 @@ export function PaintEditor({ image, zoom, pan, scaleFilter, guides, snapEnabled
   const [bgVisible, setBgVisible] = useState(true);
   const [maskVisible, setMaskVisible] = useState(true);
   const [showCheckerboard, setShowCheckerboard] = useState(false);
+  // View-only aid; never serialized into a layer or the workspace image.
+  const [pixelFixEnabled, setPixelFixEnabled] = useState(false);
 
   // Selection state
   const [hasSelection, setHasSelection] = useState(false);
@@ -921,6 +925,12 @@ export function PaintEditor({ image, zoom, pan, scaleFilter, guides, snapEnabled
       ctx.restore();
     }
 
+    // Diagnose the live masked image before checkerboard is added. The overlay
+    // is separate from display/layer canvases, so sampling and Apply stay clean.
+    if (pixelFixEnabled && pixelFixCanvasRef.current) {
+      renderPixelFixPreview(display, pixelFixCanvasRef.current, cropRectRef.current, ds * zoom);
+    }
+
     // Draw cached checkerboard behind everything, or show workspace through transparent areas
     if (showCheckerboard) {
       ctx.save();
@@ -928,7 +938,7 @@ export function PaintEditor({ image, zoom, pan, scaleFilter, guides, snapEnabled
       ctx.drawImage(checkerCacheRef.current!, 0, 0);
       ctx.restore();
     }
-  }, [nw, nh, bgVisible, maskVisible, layers, activeLayerId, showCheckerboard]);
+  }, [nw, nh, bgVisible, maskVisible, layers, activeLayerId, showCheckerboard, pixelFixEnabled, cropRect, ds, zoom]);
 
   // Wire up refs now that renderPreview is available
   renderPreviewRef.current = renderPreview;
@@ -3784,6 +3794,22 @@ export function PaintEditor({ image, zoom, pan, scaleFilter, guides, snapEnabled
         style={{ ...canvasStyle, pointerEvents: 'none' }}
         className="mask-display-canvas"
       />
+      {pixelFixEnabled && (
+        <canvas
+          ref={pixelFixCanvasRef}
+          className="paint-pixel-fix-canvas"
+          aria-hidden="true"
+          style={{
+            ...canvasStyle,
+            left: fullX * zoom + pan.x - PIXEL_FIX_PADDING * ds * zoom,
+            top: fullY * zoom + pan.y - PIXEL_FIX_PADDING * ds * zoom,
+            width: (fullW + PIXEL_FIX_PADDING * 2 * ds) * zoom,
+            height: (fullH + PIXEL_FIX_PADDING * 2 * ds) * zoom,
+            pointerEvents: 'none',
+            imageRendering: 'pixelated',
+          }}
+        />
+      )}
       {/* Text tool overlay */}
       {textBox && activeTool === 'text' && (() => {
         const scaleX = (fullW * zoom) / nw;
@@ -3925,6 +3951,8 @@ export function PaintEditor({ image, zoom, pan, scaleFilter, guides, snapEnabled
             onRasterizeLayer={handleRasterizeLayer}
             onEditTextLayer={handleEditTextLayer}
             showCheckerboard={showCheckerboard}
+            pixelFixEnabled={pixelFixEnabled}
+            onTogglePixelFix={() => setPixelFixEnabled((enabled) => !enabled)}
             onToggleCheckerboard={() => { setShowCheckerboard((v) => { const next = !v; onHideSource?.(!next); return next; }); }}
             maskHasContent={(() => {
               const mc = maskCanvasRef.current;

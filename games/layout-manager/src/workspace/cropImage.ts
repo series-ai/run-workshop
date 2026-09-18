@@ -16,6 +16,21 @@ export interface CropRectResult {
   h: number;
 }
 
+/** Bounds of every visible pixel, including alpha=1 remnants. Null means empty. */
+export function findAlphaBounds(data: Uint8ClampedArray, width: number, height: number): CropRectResult | null {
+  let minX = width, minY = height, maxX = -1, maxY = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (!(data[(y * width + x) * 4 + 3]! > 0)) continue;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+  return maxX < 0 ? null : { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+}
+
 /**
  * Auto-crop: find the bounding box of non-transparent pixels.
  * If the image already has a cropRect, scans only within that region.
@@ -45,34 +60,19 @@ export async function autoCropImage(image: ImageNode): Promise<CropRectResult | 
 
   const data = ctx.getImageData(0, 0, region.w, region.h).data;
 
-  let minX = region.w;
-  let minY = region.h;
-  let maxX = -1;
-  let maxY = -1;
-
-  for (let py = 0; py < region.h; py++) {
-    for (let px = 0; px < region.w; px++) {
-      const alpha = data[(py * region.w + px) * 4 + 3]!;
-      if (alpha > 0) {
-        if (px < minX) minX = px;
-        if (px > maxX) maxX = px;
-        if (py < minY) minY = py;
-        if (py > maxY) maxY = py;
-      }
-    }
-  }
+  const bounds = findAlphaBounds(data, region.w, region.h);
 
   // No opaque pixels, or already fully tight — nothing to trim
-  if (maxX < 0 || (minX === 0 && minY === 0 && maxX === region.w - 1 && maxY === region.h - 1)) {
+  if (!bounds || (bounds.x === 0 && bounds.y === 0 && bounds.w === region.w && bounds.h === region.h)) {
     return null;
   }
 
   // Convert back to full-source coordinates
   return {
-    x: region.x + minX,
-    y: region.y + minY,
-    w: maxX - minX + 1,
-    h: maxY - minY + 1,
+    x: region.x + bounds.x,
+    y: region.y + bounds.y,
+    w: bounds.w,
+    h: bounds.h,
   };
 }
 

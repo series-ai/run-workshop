@@ -1,0 +1,226 @@
+.dotpixel-editor {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  outline: none;
+}
+.dotpixel-header,
+.dotpixel-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  flex-shrink: 0;
+}
+.dotpixel-header {
+  justify-content: space-between;
+}
+.dotpixel-header strong {
+  font-size: 20px;
+  margin-right: 20px;
+}
+.dotpixel-header > div:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dotpixel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dotpixel-tools {
+  gap: 8px;
+  padding-block: 8px;
+}
+.dotpixel-editor button {
+  font: inherit;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  padding: 7px 11px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.dotpixel-editor button:hover:not(:disabled),
+.dotpixel-editor button[aria-pressed='true'] {
+  border-color: var(--color-accent);
+}
+.dotpixel-editor button[aria-pressed='true'] {
+  color: var(--color-accent);
+}
+.dotpixel-editor button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.dotpixel-editor button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.dotpixel-editor label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.dotpixel-editor input {
+  accent-color: var(--color-accent);
+}
+.dotpixel-divider {
+  height: 22px;
+  border-left: 1px solid var(--color-border);
+  margin-inline: 4px;
+}
+.dotpixel-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.dotpixel-source-pane {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dotpixel-hint {
+  padding: 12px 18px;
+  min-height: 44px;
+  border-bottom: 1px solid var(--color-border);
+}
+.dotpixel-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.dotpixel-viewport > p {
+  padding: 24px;
+}
+.dotpixel-source-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.dotpixel-source {
+  display: block;
+  flex-shrink: 0;
+  touch-action: none;
+  cursor: crosshair;
+  overflow: visible;
+}
+.dotpixel-source image {
+  image-rendering: pixelated;
+}
+.dotpixel-checker {
+  background-color: #30343a;
+  background-image: conic-gradient(#41464d 25%, transparent 0 50%, #41464d 0 75%, transparent 0);
+  background-size: 16px 16px;
+}
+.dotpixel-preview-pane {
+  width: 360px;
+  max-width: 40%;
+  flex-shrink: 0;
+  padding: 20px;
+  overflow-y: auto;
+  border-left: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.dotpixel-preview-pane h3 {
+  font-size: 14px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.dotpixel-preview-pane p {
+  margin-top: 16px;
+  line-height: 1.5;
+}
+.dotpixel-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  cursor: crosshair;
+}
+.dotpixel-preview canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.dotpixel-cell {
+  position: absolute;
+  border: 1px solid #fff;
+  outline: 1px solid #111;
+  pointer-events: none;
+}
+.dotpixel-muted {
+  color: var(--color-text-muted);
+  font-weight: normal;
+}
+.dotpixel-selection {
+  min-height: 40px;
+}
+.dotpixel-editor [role='status'] {
+  color: var(--color-accent);
+}
+
+.dotpixel-controls {
+  margin-top: 16px;
+  padding-block: 14px;
+  border-block: 1px solid var(--color-border);
+}
+.dotpixel-resolution {
+  margin-bottom: 16px;
+}
+.dotpixel-custom-size {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+  margin-top: 16px;
+}
+.dotpixel-editor .dotpixel-custom-size label {
+  display: grid;
+  gap: 5px;
+}
+.dotpixel-custom-size input {
+  width: 100%;
+  min-width: 0;
+  padding: 7px;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  font: inherit;
+}
+.dotpixel-custom-size > span {
+  grid-column: 1 / -1;
+  line-height: 1.5;
+}
+.dotpixel-controls h3 {
+  margin-top: 18px;
+}
+.dotpixel-editor .dotpixel-range {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-block: 12px;
+}
+.dotpixel-range input {
+  grid-column: 1 / -1;
+  width: 100%;
+}

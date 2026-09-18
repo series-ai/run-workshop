@@ -1381,10 +1381,11 @@ function computeNextHistory(history: HistoryState, action: WorkspaceAction): His
   }
 
   if (action.type === 'UNDO') {
+    // Navigation is not an edit: keep the live viewport when restoring content.
     if (history.past.length === 0) return history;
     const prev = history.past[history.past.length - 1]!;
     return {
-      current: { ...prev, selectedIds: history.current.selectedIds, lastSelectedId: history.current.lastSelectedId },
+      current: { ...prev, pan: history.current.pan, zoom: history.current.zoom, selectedIds: history.current.selectedIds, lastSelectedId: history.current.lastSelectedId },
       past: history.past.slice(0, -1),
       future: [history.current, ...history.future].slice(0, MAX_HISTORY),
     };
@@ -1394,7 +1395,7 @@ function computeNextHistory(history: HistoryState, action: WorkspaceAction): His
     if (history.future.length === 0) return history;
     const next = history.future[0]!;
     return {
-      current: { ...next, selectedIds: history.current.selectedIds, lastSelectedId: history.current.lastSelectedId },
+      current: { ...next, pan: history.current.pan, zoom: history.current.zoom, selectedIds: history.current.selectedIds, lastSelectedId: history.current.lastSelectedId },
       past: [...history.past, history.current].slice(-MAX_HISTORY),
       future: history.future.slice(1),
     };
