@@ -4,6 +4,8 @@ import * as THREE from 'three';
 import type { UiTool } from './PointerInput';
 import type { YardRender } from './presentation';
 
+const noRaycast = () => null;
+
 export function FirstPersonTool({
   tool,
   renderRef,
@@ -275,61 +277,106 @@ export function FirstPersonTool({
         </group>
       ) : tool === 'hand' ? (
         // =========================================================================
-        // AAA TEARDOWN HEAVY INDUSTRIAL GRAVITY TRACTOR (GRAVITY GUN)
+        // SPIDER-VERSE / MOEBIUS ANGULAR SCI-FI GRAVITY TRACTOR
         // =========================================================================
         <group rotation={[0.07, -0.06, 0]}>
-          {/* Main Milled Titanium Receiver Chassis */}
+          {/* Main Angular Matte Graphite Receiver Chassis */}
           <mesh castShadow position={[0, 0.01, -0.09]}>
-            <boxGeometry args={[0.096, 0.115, 0.34]} />
-            <meshStandardMaterial color="#1e242b" roughness={0.42} metalness={0.85} />
+            <boxGeometry args={[0.098, 0.118, 0.34]} />
+            <meshStandardMaterial color="#0f172a" roughness={0.35} metalness={0.8} />
+          </mesh>
+          {/* Fine Pen Ink Outline Shell */}
+          <mesh position={[0, 0.01, -0.09]} raycast={noRaycast}>
+            <boxGeometry args={[0.104, 0.124, 0.346]} />
+            <meshBasicMaterial color="#020617" side={THREE.BackSide} />
           </mesh>
 
-          {/* Upper Heat-Sink Cooling Fins */}
+          {/* Upper Heat-Sink / Angular Fin Racks */}
           {[-0.14, -0.10, -0.06, -0.02, 0.02].map((z, idx) => (
-            <mesh key={`fin-${idx}`} position={[0, 0.072, z]}>
-              <boxGeometry args={[0.088, 0.012, 0.018]} />
-              <meshStandardMaterial color="#334155" roughness={0.3} metalness={0.9} />
+            <mesh key={`fin-${idx}`} position={[0, 0.074, z]}>
+              <boxGeometry args={[0.092, 0.014, 0.018]} />
+              <meshStandardMaterial color="#1e293b" roughness={0.4} metalness={0.85} />
             </mesh>
           ))}
 
-          {/* Industrial Yellow Hazard Stripe Plates */}
-          <mesh position={[0.05, 0.02, -0.08]}>
-            <boxGeometry args={[0.004, 0.07, 0.22]} />
-            <meshStandardMaterial color="#eab308" roughness={0.4} metalness={0.2} />
+          {/* Electric Cyan Neon Power Conduit Rails */}
+          <mesh position={[0.051, 0.025, -0.08]}>
+            <boxGeometry args={[0.006, 0.024, 0.24]} />
+            <meshStandardMaterial color="#00f0ff" emissive="#00f0ff" emissiveIntensity={4.8} toneMapped={false} />
           </mesh>
-          <mesh position={[-0.05, 0.02, -0.08]}>
-            <boxGeometry args={[0.004, 0.07, 0.22]} />
-            <meshStandardMaterial color="#eab308" roughness={0.4} metalness={0.2} />
+          <mesh position={[-0.051, 0.025, -0.08]}>
+            <boxGeometry args={[0.006, 0.024, 0.24]} />
+            <meshStandardMaterial color="#00f0ff" emissive="#00f0ff" emissiveIntensity={4.8} toneMapped={false} />
           </mesh>
 
           {/* Ergonomic Molded Pistol Grip with Finger Grooves */}
           <mesh position={[0, -0.10, 0.05]} rotation={[-0.26, 0, 0]}>
             <cylinderGeometry args={[0.022, 0.026, 0.15, 16]} />
-            <meshStandardMaterial color="#0a0a0a" roughness={0.95} />
+            <meshStandardMaterial color="#09090b" roughness={0.92} />
           </mesh>
-          {/* Heavy Steel Trigger & Trigger Guard */}
+          {/* Electric Cyan Mechanical Trigger */}
           <mesh position={[0, -0.065, 0.01]} rotation={[-0.3, 0, 0]}>
-            <boxGeometry args={[0.008, 0.032, 0.012]} />
-            <meshStandardMaterial color="#94a3b8" roughness={0.2} metalness={0.9} />
+            <boxGeometry args={[0.010, 0.034, 0.014]} />
+            <meshStandardMaterial color="#06b6d4" roughness={0.3} metalness={0.7} />
           </mesh>
           <mesh position={[0, -0.085, 0.0]}>
             <torusGeometry args={[0.028, 0.004, 8, 16, Math.PI]} />
-            <meshStandardMaterial color="#1e293b" metalness={0.8} />
+            <meshStandardMaterial color="#020617" metalness={0.7} />
           </mesh>
+
+          {/* Glowing Vacuum Tubes with Cyan Plasma Filaments */}
+          {[-0.022, 0.022].map((x, idx) => (
+            <group key={`tube-${idx}`} position={[x, 0.082, -0.04]}>
+              {/* Glass Envelope */}
+              <mesh>
+                <cylinderGeometry args={[0.013, 0.013, 0.042, 16]} />
+                <meshStandardMaterial
+                  color="#cffafe"
+                  roughness={0.05}
+                  metalness={0.1}
+                  transparent
+                  opacity={0.45}
+                />
+              </mesh>
+              {/* Glowing Cyan Plasma Filament */}
+              <mesh position={[0, 0.002, 0]}>
+                <cylinderGeometry args={[0.003, 0.003, 0.028, 8]} />
+                <meshStandardMaterial
+                  color="#00f0ff"
+                  emissive="#00f0ff"
+                  emissiveIntensity={5.5}
+                  toneMapped={false}
+                />
+              </mesh>
+              {/* Ceramic Base */}
+              <mesh position={[0, -0.022, 0]}>
+                <cylinderGeometry args={[0.015, 0.015, 0.008, 16]} />
+                <meshStandardMaterial color="#1e293b" roughness={0.6} />
+              </mesh>
+            </group>
+          ))}
+
+          {/* High-Tech Induction Coils */}
+          {[-0.10, -0.02].map((z, idx) => (
+            <mesh key={`coil-${idx}`} position={[0, 0.01, z]} rotation={[Math.PI / 2, 0, 0]}>
+              <torusGeometry args={[0.062, 0.008, 12, 28]} />
+              <meshStandardMaterial color="#38bdf8" roughness={0.25} metalness={0.9} emissive="#0284c7" emissiveIntensity={1.2} />
+            </mesh>
+          ))}
 
           {/* Rear Digital Diagnostic HUD Display (Faces Player) */}
           <group position={[0, 0.045, 0.082]} rotation={[-0.2, 0, 0]}>
             <mesh>
-              <boxGeometry args={[0.065, 0.038, 0.008]} />
-              <meshStandardMaterial color="#09090b" roughness={0.7} />
+              <boxGeometry args={[0.068, 0.040, 0.008]} />
+              <meshStandardMaterial color="#020617" roughness={0.7} />
             </mesh>
             {/* Glowing CRT Screen */}
             <mesh position={[0, 0, 0.005]}>
-              <planeGeometry args={[0.055, 0.028]} />
+              <planeGeometry args={[0.058, 0.030]} />
               <meshStandardMaterial
-                color="#06b6d4"
-                emissive="#06b6d4"
-                emissiveIntensity={2.2}
+                color="#38bdf8"
+                emissive="#0284c7"
+                emissiveIntensity={2.5}
                 toneMapped={false}
               />
             </mesh>
@@ -340,23 +387,23 @@ export function FirstPersonTool({
             </mesh>
             <mesh position={[0.022, 0.012, 0.006]}>
               <sphereGeometry args={[0.003, 8, 8]} />
-              <meshStandardMaterial color="#eab308" emissive="#eab308" emissiveIntensity={3.0} />
+              <meshStandardMaterial color="#f97316" emissive="#f97316" emissiveIntensity={3.0} />
             </mesh>
           </group>
 
           {/* High-Current Braided Copper Induction Coils */}
           <mesh position={[0, -0.015, -0.03]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.046, 0.046, 0.11, 20]} />
-            <meshStandardMaterial color="#b45309" roughness={0.25} metalness={0.95} />
+            <cylinderGeometry args={[0.048, 0.048, 0.11, 20]} />
+            <meshStandardMaterial color="#d97706" roughness={0.25} metalness={0.95} />
           </mesh>
           <mesh position={[0, -0.015, -0.15]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.046, 0.046, 0.11, 20]} />
-            <meshStandardMaterial color="#b45309" roughness={0.25} metalness={0.95} />
+            <cylinderGeometry args={[0.048, 0.048, 0.11, 20]} />
+            <meshStandardMaterial color="#d97706" roughness={0.25} metalness={0.95} />
           </mesh>
 
           {/* Toughened Quartz Glass Containment Chamber Tube */}
           <mesh position={[0, 0.01, -0.12]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.042, 0.042, 0.12, 20]} />
+            <cylinderGeometry args={[0.043, 0.043, 0.12, 20]} />
             <meshStandardMaterial
               color="#e0f2fe"
               roughness={0.05}
@@ -369,14 +416,14 @@ export function FirstPersonTool({
           {/* Dual Counter-Rotating Magnetic Resonance Rings */}
           <group ref={rotorRing1} position={[0, 0.01, -0.08]}>
             <mesh rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[0.048, 0.005, 12, 24]} />
-              <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={1.8} metalness={0.9} />
+              <torusGeometry args={[0.049, 0.005, 12, 24]} />
+              <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={2.2} metalness={0.9} />
             </mesh>
           </group>
           <group ref={rotorRing2} position={[0, 0.01, -0.16]}>
             <mesh rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[0.048, 0.005, 12, 24]} />
-              <meshStandardMaterial color="#f59e0b" emissive="#d97706" emissiveIntensity={1.8} metalness={0.9} />
+              <torusGeometry args={[0.049, 0.005, 12, 24]} />
+              <meshStandardMaterial color="#f97316" emissive="#ea580c" emissiveIntensity={2.2} metalness={0.9} />
             </mesh>
           </group>
 
@@ -472,87 +519,64 @@ export function FirstPersonTool({
         </group>
       ) : (
         // =========================================================================
-        // AAA TEARDOWN HEAVY OXY-ACETYLENE CUTTING TORCH
+        // SPIDER-VERSE / MOEBIUS ANGULAR SCI-FI PLASMA CUTTER
         // =========================================================================
         <group rotation={[0.06, -0.08, 0]}>
-          {/* Heavy Machined Brass Handle with Diamond Knurling Texture */}
-          <mesh castShadow position={[0, -0.02, 0.02]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.022, 0.025, 0.28, 24]} />
-            <meshStandardMaterial color="#d97706" roughness={0.28} metalness={0.88} />
+          {/* Main Angular Matte Graphite Chassis */}
+          <mesh castShadow position={[0, -0.01, 0.0]}>
+            <boxGeometry args={[0.048, 0.074, 0.28]} />
+            <meshStandardMaterial color="#0f172a" roughness={0.32} metalness={0.85} />
           </mesh>
-          {/* Hexagonal Brass Connector Couplings */}
-          <mesh position={[0, -0.02, 0.15]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.027, 0.027, 0.03, 6]} />
-            <meshStandardMaterial color="#b45309" roughness={0.35} metalness={0.9} />
-          </mesh>
-          <mesh position={[0, -0.02, -0.11]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.027, 0.027, 0.03, 6]} />
-            <meshStandardMaterial color="#b45309" roughness={0.35} metalness={0.9} />
+          {/* Fine Comic Ink Outline Shell */}
+          <mesh position={[0, -0.01, 0.0]} raycast={noRaycast}>
+            <boxGeometry args={[0.054, 0.080, 0.286]} />
+            <meshBasicMaterial color="#020617" side={THREE.BackSide} />
           </mesh>
 
-          {/* Dual Analog Brass Pressure Gauges Facing First-Person View */}
-          <group position={[0, 0.015, 0.02]} rotation={[-0.35, 0, 0]}>
-            {/* Acetylene Gauge (Left) */}
-            <group position={[-0.035, 0, 0]}>
-              <mesh rotation={[Math.PI / 2, 0, 0]}>
-                <cylinderGeometry args={[0.022, 0.022, 0.014, 20]} />
-                <meshStandardMaterial color="#b45309" roughness={0.3} metalness={0.9} />
-              </mesh>
-              {/* Dial Face */}
-              <mesh position={[0, 0.008, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <circleGeometry args={[0.018, 16]} />
-                <meshStandardMaterial color="#f8fafc" roughness={0.6} />
-              </mesh>
-              {/* Red Dial Indicator Needle */}
-              <mesh position={[0.004, 0.009, 0]} rotation={[0, 0, 0.8]}>
-                <boxGeometry args={[0.014, 0.002, 0.001]} />
-                <meshStandardMaterial color="#dc2626" />
-              </mesh>
-            </group>
-
-            {/* Oxygen Gauge (Right) */}
-            <group position={[0.035, 0, 0]}>
-              <mesh rotation={[Math.PI / 2, 0, 0]}>
-                <cylinderGeometry args={[0.022, 0.022, 0.014, 20]} />
-                <meshStandardMaterial color="#b45309" roughness={0.3} metalness={0.9} />
-              </mesh>
-              <mesh position={[0, 0.008, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <circleGeometry args={[0.018, 16]} />
-                <meshStandardMaterial color="#f8fafc" roughness={0.6} />
-              </mesh>
-              {/* Black Dial Indicator Needle */}
-              <mesh position={[0.004, 0.009, 0]} rotation={[0, 0, 1.4]}>
-                <boxGeometry args={[0.014, 0.002, 0.001]} />
-                <meshStandardMaterial color="#0f172a" />
-              </mesh>
-            </group>
-          </group>
-
-          {/* Knurled Gas Adjustment Valves (Red Acetylene / Green Oxygen) */}
-          <mesh position={[-0.042, -0.02, 0.09]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.017, 0.017, 0.026, 16]} />
-            <meshStandardMaterial color="#dc2626" roughness={0.4} metalness={0.5} />
-          </mesh>
-          <mesh position={[0.042, -0.02, 0.09]} rotation={[0, 0, -Math.PI / 2]}>
-            <cylinderGeometry args={[0.017, 0.017, 0.026, 16]} />
-            <meshStandardMaterial color="#16a34a" roughness={0.4} metalness={0.5} />
+          {/* Electric Cyan Neon Power Conduit Running Along Top Spine */}
+          <mesh position={[0, 0.032, 0.0]}>
+            <boxGeometry args={[0.014, 0.012, 0.26]} />
+            <meshStandardMaterial color="#00f0ff" emissive="#00f0ff" emissiveIntensity={5.2} toneMapped={false} />
           </mesh>
 
-          {/* Drooping Heavy Rubber Supply Hoses Curving Off-Screen */}
-          <mesh position={[-0.018, -0.15, 0.18]} rotation={[0.38, 0, 0.12]}>
-            <cylinderGeometry args={[0.013, 0.013, 0.26, 12]} />
-            <meshStandardMaterial color="#991b1b" roughness={0.85} />
+          {/* Lateral Electric Cyan Accent Insets */}
+          <mesh position={[0.025, -0.005, 0.02]}>
+            <boxGeometry args={[0.004, 0.020, 0.18]} />
+            <meshStandardMaterial color="#00f0ff" emissive="#00f0ff" emissiveIntensity={4.8} toneMapped={false} />
           </mesh>
-          <mesh position={[0.018, -0.15, 0.18]} rotation={[0.38, 0, -0.12]}>
-            <cylinderGeometry args={[0.013, 0.013, 0.26, 12]} />
-            <meshStandardMaterial color="#15803d" roughness={0.85} />
+          <mesh position={[-0.025, -0.005, 0.02]}>
+            <boxGeometry args={[0.004, 0.020, 0.18]} />
+            <meshStandardMaterial color="#00f0ff" emissive="#00f0ff" emissiveIntensity={4.8} toneMapped={false} />
           </mesh>
 
-          {/* Stainless Steel Curved Torch Neck */}
-          <mesh position={[0, -0.01, -0.20]} rotation={[Math.PI / 2 - 0.08, 0, 0]}>
-            <cylinderGeometry args={[0.013, 0.017, 0.26, 20]} />
-            <meshStandardMaterial color="#64748b" roughness={0.2} metalness={0.95} />
+          {/* Tactical Angled Ergonomic Grip */}
+          <mesh position={[0, -0.09, 0.06]} rotation={[-0.32, 0, 0]}>
+            <boxGeometry args={[0.036, 0.12, 0.042]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.88} />
           </mesh>
+          <mesh position={[0, -0.055, 0.03]} rotation={[-0.32, 0, 0]}>
+            <boxGeometry args={[0.010, 0.028, 0.012]} />
+            <meshStandardMaterial color="#00f0ff" emissive="#00f0ff" emissiveIntensity={4.0} toneMapped={false} />
+          </mesh>
+
+          {/* Forward Angled Shroud / Recessed Heat-Sink Barrel */}
+          <mesh position={[0, 0.005, -0.18]} rotation={[0.06, 0, 0]}>
+            <boxGeometry args={[0.038, 0.054, 0.14]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.35} metalness={0.9} />
+          </mesh>
+          {/* Shroud Outline Shell */}
+          <mesh position={[0, 0.005, -0.18]} rotation={[0.06, 0, 0]} raycast={noRaycast}>
+            <boxGeometry args={[0.044, 0.060, 0.144]} />
+            <meshBasicMaterial color="#020617" side={THREE.BackSide} />
+          </mesh>
+
+          {/* Cyan Recessed Barrel Heat Vents */}
+          {[-0.22, -0.18, -0.14].map((z, idx) => (
+            <mesh key={`vent-${idx}`} position={[0, 0.034, z]}>
+              <boxGeometry args={[0.026, 0.006, 0.014]} />
+              <meshStandardMaterial color="#00f0ff" emissive="#00f0ff" emissiveIntensity={3.5} toneMapped={false} />
+            </mesh>
+          ))}
 
           {/* Heat Temper Gradient Rings (Heat Discoloration Blue/Purple) */}
           <mesh position={[0, 0.005, -0.28]} rotation={[Math.PI / 2 - 0.08, 0, 0]}>
@@ -564,21 +588,21 @@ export function FirstPersonTool({
             <meshStandardMaterial color="#8b5cf6" roughness={0.2} metalness={0.9} />
           </mesh>
 
-          {/* Incandescent Ceramic Nozzle Collar (White/Cherry Red Heat) */}
+          {/* Incandescent Ceramic Nozzle Collar with Cyan Pre-Ionization */}
           <mesh ref={nozzleGlowRef} position={[0, 0.014, -0.35]}>
             <cylinderGeometry args={[0.017, 0.022, 0.055, 20]} />
             <meshStandardMaterial
-              color="#ea580c"
-              emissive="#ea580c"
-              emissiveIntensity={2.2}
+              color="#00f0ff"
+              emissive="#00f0ff"
+              emissiveIntensity={2.8}
               roughness={0.2}
             />
           </mesh>
 
-          {/* Idle Pilot Flame (Soft Blue Glow Bead) */}
+          {/* Idle Pilot Plasma Arc (Electric Cyan Bead) */}
           <mesh ref={pilotFlameRef} position={[0, 0.014, -0.40]}>
-            <sphereGeometry args={[0.008, 10, 10]} />
-            <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={3.0} toneMapped={false} />
+            <sphereGeometry args={[0.009, 12, 12]} />
+            <meshStandardMaterial color="#00f0ff" emissive="#00f0ff" emissiveIntensity={5.0} toneMapped={false} />
           </mesh>
 
           {/* Multi-Stage Active Cutting Flame: Intense White/Blue Core + Fiery Plume */}

@@ -321,7 +321,7 @@ export function VoxelVolumeRenderer({
           float albedoNoise = mix(0.95, 1.05, cellNoise(cell + ivec3(9, 2, 13)));
           float specPower = mix(64.0, 10.0, roughness);
           float specular = pow(max(dot(worldNormal, halfDir), 0.0), specPower) * mix(0.08, 0.95, metalness);
-          // Teardown-style voxel micro-bevel and crevice contact AO
+          // Graphic novel comic ink outline and faceted cell bevel
           vec3 hitVox = (hitLS + 0.5) * uDims;
           vec3 cellUv = fract(hitVox);
           vec2 faceCoord;
@@ -330,22 +330,42 @@ export function VoxelVolumeRenderer({
           else faceCoord = cellUv.xy;
           vec2 distToEdge = min(faceCoord, 1.0 - faceCoord);
           float edgeDist = min(distToEdge.x, distToEdge.y);
-          float voxelBevel = smoothstep(0.065, 0.015, edgeDist);
-          float voxelEdgeAo = smoothstep(0.0, 0.12, edgeDist) * 0.25 + 0.75;
+          // Fine crisp pen ink contour along facet boundaries (Spider-Verse / Moebius style)
+          float inkLine = smoothstep(0.008, 0.032, edgeDist);
+          float voxelBevel = smoothstep(0.055, 0.015, edgeDist);
 
-          float bounce = mix(0.08, 0.28, physicalType) + exposure * 0.06;
+          // 3-band cel-stepped diffuse lighting with vibrant atmospheric fill
+          float celDiffuse = step(0.50, diffuse) * 0.45 + step(0.16, diffuse) * 0.35 + 0.20;
+          float celShadow = step(0.38, shadow) * 0.65 + 0.35;
+
+          // Moebius fine dual-angle cross-hatch shading in shadow cavities
+          float hatch1 = step(0.36, fract((worldPos.x + worldPos.y) * 16.0));
+          float hatch2 = step(0.36, fract((worldPos.x - worldPos.z) * 16.0));
+          float hatch = mix(0.74, 1.0, min(hatch1, hatch2));
+          if (celDiffuse * celShadow < 0.32) {
+            celDiffuse *= hatch;
+          }
+
+          float bounce = mix(0.12, 0.32, physicalType) + exposure * 0.08;
           float skyMix = clamp(worldNormal.y * 0.5 + 0.5, 0.0, 1.0);
           vec3 hemiLight = mix(uGroundColor, uSkyColor, skyMix);
+          // Rich atmospheric base color
           vec3 baseColor = albedo.rgb * albedoNoise;
-          vec3 ambient = baseColor * hemiLight * ((0.32 + ao * (0.28 + bounce)) * voxelEdgeAo);
-          vec3 direct = baseColor * uSunColor * diffuse * shadow * ((0.70 + ao * (0.16 + bounce * 0.22)) * voxelEdgeAo);
-          vec3 specColor = mix(vec3(0.24), albedo.rgb, metalness);
-          float rim = pow(1.0 - max(dot(worldNormal, viewDir), 0.0), 2.6);
-          float hotEdge = pow(1.0 - max(dot(viewDir, worldNormal), 0.0), 4.2) * exposure;
-          vec3 emissiveColor = mix(baseColor, uSunColor, 0.35) * emissive * 1.85;
-          vec3 shaded = ambient + direct + specColor * (specular + voxelBevel * (diffuse * 0.4 + 0.15)) * shadow + emissiveColor;
-          shaded += uSunColor * hotEdge * (0.08 + emissive * 0.44);
-          shaded += vec3(rim) * mix(0.03, 0.08, exposure);
+          vec3 ambient = baseColor * hemiLight * ((0.38 + ao * (0.26 + bounce)) * inkLine);
+          vec3 direct = baseColor * uSunColor * (celDiffuse * celShadow) * ((0.80 + ao * 0.20) * inkLine);
+          vec3 specColor = mix(vec3(0.35), albedo.rgb, metalness);
+
+          // Spider-Verse chromatic rim light (warm sunset rim + cool electric cyan silhouette rim)
+          float rimDot = 1.0 - max(dot(worldNormal, viewDir), 0.0);
+          float sunRimDot = max(dot(worldNormal, uSunDirection), 0.0);
+          float warmRim = step(0.65, rimDot) * sunRimDot * mix(0.20, 0.50, exposure);
+          float coolRim = step(0.72, rimDot) * (1.0 - sunRimDot) * 0.28;
+          vec3 coolRimColor = vec3(0.0, 0.85, 1.0); // Electric cyan edge fringe
+          float hotEdge = pow(rimDot, 3.8) * exposure;
+
+          vec3 emissiveColor = mix(baseColor, uSunColor, 0.35) * emissive * 2.0;
+          vec3 shaded = (ambient + direct) * inkLine + specColor * (specular * celShadow + voxelBevel * 0.25) + emissiveColor;
+          shaded += uSunColor * (hotEdge * 0.12 + warmRim) + coolRimColor * coolRim;
 
           float fogDistance = distance(cameraPosition, worldPos);
           float fogFactor = smoothstep(uFogNear, uFogFar, fogDistance);
