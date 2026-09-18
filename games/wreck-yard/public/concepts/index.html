@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wreck Yard — Visual Concept Showcase</title>
+  <style>
+    :root {
+      --bg: #090c13;
+      --bg-card: #111724;
+      --bg-card-hover: #171f30;
+      --border: #1e293b;
+      --border-accent: #334155;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent-cyber: #38bdf8;
+      --accent-solar: #14b8a6;
+      --accent-retro: #f97316;
+      --accent-gold: #eab308;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 85% 20%, rgba(249, 115, 22, 0.05) 0%, transparent 50%),
+        linear-gradient(to bottom, transparent, rgba(9, 12, 19, 0.95));
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      padding: 32px 24px 80px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1360px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 20px;
+    }
+
+    .brand-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent-cyber);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+
+    .brand-tag::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-cyber);
+      box-shadow: 0 0 8px var(--accent-cyber);
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #fff;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-top: 6px;
+      max-width: 680px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border);
+      padding: 4px;
+      border-radius: var(--radius-md);
+      gap: 4px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .tab-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .tab-btn.active {
+      background: #1e293b;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Section Headers */
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-badge {
+      font-size: 11px;
+      font-weight: 700;
+      background: #334155;
+      color: #cbd5e1;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* Concepts Grid */
+    .concepts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 28px;
+      margin-bottom: 56px;
+    }
+
+    .concept-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+
+    .concept-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-accent);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .card-media {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #020617;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .card-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .card-media:hover img {
+      transform: scale(1.03);
+    }
+
+    .media-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(15, 23, 42, 0.8) 0%, transparent 40%);
+      pointer-events: none;
+    }
+
+    .badge-bar {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .style-number {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+    }
+
+    .badge-cyber {
+      background: rgba(14, 165, 233, 0.25);
+      border: 1px solid rgba(56, 189, 248, 0.5);
+      color: #7dd3fc;
+    }
+
+    .badge-solar {
+      background: rgba(20, 184, 166, 0.25);
+      border: 1px solid rgba(45, 212, 191, 0.5);
+      color: #5eead4;
+    }
+
+    .badge-retro {
+      background: rgba(249, 115, 22, 0.25);
+      border: 1px solid rgba(251, 146, 60, 0.5);
+      color: #fdba74;
+    }
+
+    .fps-pill {
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #4ade80;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+    }
+
+    .zoom-hint {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      backdrop-filter: blur(6px);
+      transition: background 0.15s ease;
+    }
+
+    .card-media:hover .zoom-hint {
+      background: rgba(30, 41, 59, 0.95);
+      color: #fff;
+    }
+
+    .card-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      gap: 16px;
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.01em;
+    }
+
+    .card-desc {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* Palette Swatches */
+    .palette-box {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+
+    .box-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .swatches {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .swatch {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #1e293b;
+      padding: 3px 8px 3px 4px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #e2e8f0;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease;
+    }
+
+    .swatch:hover {
+      background: #334155;
+    }
+
+    .swatch-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Implementation Specs */
+    .spec-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-top: auto;
+    }
+
+    .spec-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .spec-list {
+      list-style: none;
+      font-size: 12px;
+      color: #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .spec-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .spec-list li::before {
+      content: "•";
+      color: #64748b;
+      font-weight: bold;
+    }
+
+    /* Split Comparison Section */
+    .comparison-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      margin-bottom: 56px;
+    }
+
+    .comp-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .comp-select-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .comp-select-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .comp-btn {
+      background: #1e293b;
+      border: 1px solid var(--border-accent);
+      color: #cbd5e1;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .comp-btn.active {
+      background: #38bdf8;
+      border-color: #38bdf8;
+      color: #0f172a;
+    }
+
+    .comp-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #020617;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      user-select: none;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+      cursor: ew-resize;
+    }
+
+    .comp-before,
+    .comp-after {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .comp-before img,
+    .comp-after img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .comp-after {
+      width: 50%;
+      overflow: hidden;
+      border-right: 2px solid #38bdf8;
+    }
+
+    .comp-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 4px;
+      margin-left: -2px;
+      background: #38bdf8;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.8);
+      pointer-events: none;
+    }
+
+    .comp-handle-knob {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #0f172a;
+      border: 2px solid #38bdf8;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #38bdf8;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .comp-label {
+      position: absolute;
+      bottom: 16px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+
+    .comp-label-left {
+      left: 16px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #38bdf8;
+    }
+
+    .comp-label-right {
+      right: 16px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #94a3b8;
+    }
+
+    /* Baseline In-Engine Gallery */
+    .baseline-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .baseline-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .baseline-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--border-accent);
+    }
+
+    .baseline-thumb {
+      aspect-ratio: 16 / 9;
+      background: #020617;
+      overflow: hidden;
+    }
+
+    .baseline-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+
+    .baseline-card:hover .baseline-thumb img {
+      transform: scale(1.04);
+    }
+
+    .baseline-info {
+      padding: 12px 14px;
+    }
+
+    .baseline-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .baseline-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Lightbox Modal */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 8, 14, 0.94);
+      backdrop-filter: blur(16px);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .lightbox.active {
+      display: flex;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: #1e293b;
+      border: 1px solid var(--border-accent);
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .lightbox-close:hover {
+      background: #334155;
+    }
+
+    .lightbox-content {
+      max-width: 90vw;
+      max-height: 80vh;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+      border: 1px solid var(--border-accent);
+    }
+
+    .lightbox-content img {
+      display: block;
+      max-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;
+    }
+
+    .lightbox-caption {
+      margin-top: 18px;
+      text-align: center;
+      max-width: 700px;
+    }
+
+    .lightbox-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .lightbox-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      border: 1px solid #38bdf8;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all 0.2s ease;
+      pointer-events: none;
+      z-index: 2000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div>
+        <div class="brand-tag">Astra & Rundot CLI — Art Direction Lab</div>
+        <h1>Wreck Yard — Visual Concept Targets</h1>
+        <p class="subtitle">
+          High-frame-rate aesthetic directions designed from the in-engine arena overview screenshot. Each concept is engineered for 60–120 FPS WebGL2 execution via procedural DDA voxel raymarching and analytic lighting.
+        </p>
+      </div>
+      <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchSection('concepts')">Style Concepts</button>
+        <button class="tab-btn" onclick="switchSection('compare')">Interactive Slider</button>
+        <button class="tab-btn" onclick="switchSection('baseline')">In-Engine Baseline</button>
+      </div>
+    </header>
+
+    <!-- SECTION 1: STYLE CONCEPTS GRID -->
+    <div id="section-concepts">
+      <div class="section-title">
+        <span>Target Visual Directions</span>
+        <span class="section-badge">3 Candidates</span>
+      </div>
+
+      <div class="concepts-grid">
+        <!-- Concept 1: Cyber-Brutalist -->
+        <div class="concept-card">
+          <div class="card-media" onclick="openLightbox('style_cyber_brutalist.png', 'Concept 01: Cyber-Brutalist Reclamation', 'Matte obsidian slate voxels, sharp hazard yellow chevrons, intense thermal molten cutting seams, and high-contrast sodium spot floodlights.')">
+            <img src="style_cyber_brutalist.png" alt="Cyber-Brutalist Reclamation" />
+            <div class="media-overlay"></div>
+            <div class="badge-bar">
+              <span class="style-number badge-cyber">Concept 01</span>
+              <span class="fps-pill">120 FPS Target</span>
+            </div>
+            <div class="zoom-hint">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+              Inspect
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Cyber-Brutalist Reclamation</div>
+            <p class="card-desc">
+              Heavy matte slate-gray and obsidian voxel architecture punctuated by sharp diagonal hazard chevrons. Supersonic torch cuts burn with vivid molten amber seams that illuminate surrounding voxel geometry.
+            </p>
+
+            <div class="palette-box">
+              <div class="box-label">Color Palette (Click to Copy)</div>
+              <div class="swatches">
+                <div class="swatch" onclick="copyColor('#0f172a')">
+                  <div class="swatch-color" style="background: #0f172a"></div>#0f172a
+                </div>
+                <div class="swatch" onclick="copyColor('#facc15')">
+                  <div class="swatch-color" style="background: #facc15"></div>#facc15
+                </div>
+                <div class="swatch" onclick="copyColor('#ff4d00')">
+                  <div class="swatch-color" style="background: #ff4d00"></div>#ff4d00
+                </div>
+                <div class="swatch" onclick="copyColor('#06b6d4')">
+                  <div class="swatch-color" style="background: #06b6d4"></div>#06b6d4
+                </div>
+              </div>
+            </div>
+
+            <div class="spec-box">
+              <div class="spec-title">⚡ High-FPS Shader Implementation</div>
+              <ul class="spec-list">
+                <li>Analytic Amanatides-Woo micro-bevel chamfer specular (0 polygon overhead).</li>
+                <li>Zero-cost emissive core boost on fractured voxel faces.</li>
+                <li>Single-pass high-contrast shadow map with slate twilight fog.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Concept 2: Solarpunk Drydock -->
+        <div class="concept-card">
+          <div class="card-media" onclick="openLightbox('style_solarpunk_drydock.png', 'Concept 02: Solarpunk Mediterranean Drydock', 'Sun-bleached chalk limestone, oxidized copper teal girders, warm terracotta accents, and crystalline azure cooling pool.')">
+            <img src="style_solarpunk_drydock.png" alt="Solarpunk Mediterranean Drydock" />
+            <div class="media-overlay"></div>
+            <div class="badge-bar">
+              <span class="style-number badge-solar">Concept 02</span>
+              <span class="fps-pill">120 FPS Target</span>
+            </div>
+            <div class="zoom-hint">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+              Inspect
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Solarpunk Mediterranean Drydock</div>
+            <p class="card-desc">
+              Crisp coastal salvage shipyard under brilliant midday Mediterranean sunlight. Chalk-white limestone structures, sea-salt oxidized copper gantry rails, and a shimmering crystal-clear azure water pool.
+            </p>
+
+            <div class="palette-box">
+              <div class="box-label">Color Palette (Click to Copy)</div>
+              <div class="swatches">
+                <div class="swatch" onclick="copyColor('#f8fafc')">
+                  <div class="swatch-color" style="background: #f8fafc"></div>#f8fafc
+                </div>
+                <div class="swatch" onclick="copyColor('#0d9488')">
+                  <div class="swatch-color" style="background: #0d9488"></div>#0d9488
+                </div>
+                <div class="swatch" onclick="copyColor('#c2410c')">
+                  <div class="swatch-color" style="background: #c2410c"></div>#c2410c
+                </div>
+                <div class="swatch" onclick="copyColor('#0284c7')">
+                  <div class="swatch-color" style="background: #0284c7"></div>#0284c7
+                </div>
+              </div>
+            </div>
+
+            <div class="spec-box">
+              <div class="spec-title">⚡ High-FPS Shader Implementation</div>
+              <ul class="spec-list">
+                <li>High-key hemispherical sky/ground fill lighting with razor-sharp sun shadows.</li>
+                <li>Procedural planar caustic ripple shader on water tank bottom.</li>
+                <li>Exceptional visual readability at high resolution and distance.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Concept 3: Retro-Futuristic Vector-Industrial -->
+        <div class="concept-card">
+          <div class="card-media" onclick="openLightbox('style_retro_industrial.png', 'Concept 03: Retro-Futuristic Vector-Industrial', 'Heavy cast architectural concrete slabs, bold signal orange gantry crane, warm tungsten flood cones, and graphic clarity.')">
+            <img src="style_retro_industrial.png" alt="Retro-Futuristic Vector-Industrial" />
+            <div class="media-overlay"></div>
+            <div class="badge-bar">
+              <span class="style-number badge-retro">Concept 03</span>
+              <span class="fps-pill">120 FPS Target</span>
+            </div>
+            <div class="zoom-hint">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+              Inspect
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Retro-Futuristic Vector-Industrial</div>
+            <p class="card-desc">
+              Inspired by architectural brutalism and tactile sci-fi (<em>Control</em> × <em>Homeworld</em> × <em>Team Fortress 2</em>). Smooth architectural cast concrete, stark signal orange crane platforms, and warm tungsten work lights.
+            </p>
+
+            <div class="palette-box">
+              <div class="box-label">Color Palette (Click to Copy)</div>
+              <div class="swatches">
+                <div class="swatch" onclick="copyColor('#475569')">
+                  <div class="swatch-color" style="background: #475569"></div>#475569
+                </div>
+                <div class="swatch" onclick="copyColor('#ea580c')">
+                  <div class="swatch-color" style="background: #ea580c"></div>#ea580c
+                </div>
+                <div class="swatch" onclick="copyColor('#fef08a')">
+                  <div class="swatch-color" style="background: #fef08a"></div>#fef08a
+                </div>
+                <div class="swatch" onclick="copyColor('#1e293b')">
+                  <div class="swatch-color" style="background: #1e293b"></div>#1e293b
+                </div>
+              </div>
+            </div>
+
+            <div class="spec-box">
+              <div class="spec-title">⚡ High-FPS Shader Implementation</div>
+              <ul class="spec-list">
+                <li>2-band smoothstep lambertian falloff: <code>smoothstep(-0.05, 0.45, N·L)</code>.</li>
+                <li>Zero-cost anisotropic rim specular highlights on geometric edges.</li>
+                <li>Very lightweight fragment shader ALU instructions for mobile/low-end GPUs.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: INTERACTIVE COMPARISON SLIDER -->
+    <div id="section-compare" class="comparison-section">
+      <div class="comp-controls">
+        <div>
+          <div class="section-title" style="margin-bottom: 4px;">
+            <span>Interactive Before / After Comparison</span>
+            <span class="section-badge">Side-by-Side</span>
+          </div>
+          <p class="subtitle" style="font-size: 13px;">Drag the slider or click anywhere on the viewport to compare the in-engine baseline with any concept.</p>
+        </div>
+        <div class="comp-select-group">
+          <span class="comp-select-label">Compare Against:</span>
+          <button class="comp-btn active" onclick="setComparisonTarget('style_cyber_brutalist.png', this)">Concept 01 (Cyber)</button>
+          <button class="comp-btn" onclick="setComparisonTarget('style_solarpunk_drydock.png', this)">Concept 02 (Solar)</button>
+          <button class="comp-btn" onclick="setComparisonTarget('style_retro_industrial.png', this)">Concept 03 (Retro)</button>
+        </div>
+      </div>
+
+      <div class="comp-container" id="sliderContainer">
+        <div class="comp-before">
+          <img src="classic_yard_vista.png" alt="Baseline In-Engine Wreck Yard" />
+        </div>
+        <div class="comp-after" id="compAfter">
+          <img id="compTargetImg" src="style_cyber_brutalist.png" alt="Target Concept" />
+        </div>
+        <div class="comp-handle" id="compHandle">
+          <div class="comp-handle-knob">⇄</div>
+        </div>
+        <div class="comp-label comp-label-left" id="compTargetLabel">Concept 01: Cyber-Brutalist</div>
+        <div class="comp-label comp-label-right">In-Engine Baseline</div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: IN-ENGINE BASELINE GALLERY -->
+    <div id="section-baseline">
+      <div class="section-title">
+        <span>In-Engine Baseline Screenshots</span>
+        <span class="section-badge">Spatial References</span>
+      </div>
+      <p class="subtitle" style="margin-bottom: 20px;">
+        Captured live from the Wreck Yard WebGL2 pipeline. These views served as the spatial layout and viewmodel reference for the generation runs.
+      </p>
+
+      <div class="baseline-grid">
+        <div class="baseline-card" onclick="openLightbox('classic_yard_vista.png', 'Arena Overview Vista', 'The aerial reference screenshot passed into rundot CLI to generate the three visual concepts.')">
+          <div class="baseline-thumb">
+            <img src="classic_yard_vista.png" alt="Arena Vista" />
+          </div>
+          <div class="baseline-info">
+            <div class="baseline-name">Arena Aerial Survey</div>
+            <div class="baseline-sub">Reference image passed to CLI</div>
+          </div>
+        </div>
+
+        <div class="baseline-card" onclick="openLightbox('classic_gravity_gun.png', 'Milled Titanium Gravity Gun', 'First-person viewmodel with magnetic rotor rings, CRT diagnostic HUD, and copper coils.')">
+          <div class="baseline-thumb">
+            <img src="classic_gravity_gun.png" alt="Gravity Gun Viewmodel" />
+          </div>
+          <div class="baseline-info">
+            <div class="baseline-name">Gravity Gun Viewmodel</div>
+            <div class="baseline-sub">Machined titanium chassis</div>
+          </div>
+        </div>
+
+        <div class="baseline-card" onclick="openLightbox('classic_torch_gun.png', 'Oxy-Acetylene Cutting Torch', 'Diamond-knurled brass grip, dual analog pressure dials with needles, and pilot flame.')">
+          <div class="baseline-thumb">
+            <img src="classic_torch_gun.png" alt="Torch Viewmodel" />
+          </div>
+          <div class="baseline-info">
+            <div class="baseline-name">Oxy-Acetylene Torch</div>
+            <div class="baseline-sub">Dual pressure gauges & brass valves</div>
+          </div>
+        </div>
+
+        <div class="baseline-card" onclick="openLightbox('classic_molten_slicing.png', 'Supersonic Cutting & Sparks', 'Cutting through structural column with dynamic incandescent flame cone and particle sparks.')">
+          <div class="baseline-thumb">
+            <img src="classic_molten_slicing.png" alt="Molten Slicing" />
+          </div>
+          <div class="baseline-info">
+            <div class="baseline-name">Molten Flame Slicing</div>
+            <div class="baseline-sub">High-heat emissive voxel seams</div>
+          </div>
+        </div>
+
+        <div class="baseline-card" onclick="openLightbox('classic_water_basin.png', 'Emerald Water Cooling Basin', 'Deep emerald cooling basin with procedural wave ripples and submerged voxel ballast.')">
+          <div class="baseline-thumb">
+            <img src="classic_water_basin.png" alt="Water Cooling Basin" />
+          </div>
+          <div class="baseline-info">
+            <div class="baseline-name">Emerald Water Basin</div>
+            <div class="baseline-sub">Natural cooling pool caustics</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX MODAL -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+    <button class="lightbox-close" onclick="closeLightbox(event)">&times;</button>
+    <div class="lightbox-content">
+      <img id="lightboxImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Zoomed view" />
+    </div>
+    <div class="lightbox-caption">
+      <div class="lightbox-title" id="lightboxTitle"></div>
+      <div class="lightbox-desc" id="lightboxDesc"></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast">Copied hex code to clipboard!</div>
+
+  <script>
+    // Tab switching
+    function switchSection(sec) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = event ? event.target : document.querySelector('.tab-btn');
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const secConcepts = document.getElementById('section-concepts');
+      const secCompare = document.getElementById('section-compare');
+      const secBaseline = document.getElementById('section-baseline');
+
+      if (sec === 'concepts') {
+        secConcepts.style.display = 'block';
+        secCompare.style.display = 'block';
+        secBaseline.style.display = 'block';
+        secConcepts.scrollIntoView({ behavior: 'smooth' });
+      } else if (sec === 'compare') {
+        secCompare.scrollIntoView({ behavior: 'smooth' });
+      } else if (sec === 'baseline') {
+        secBaseline.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    // Interactive slider logic
+    const container = document.getElementById('sliderContainer');
+    const compAfter = document.getElementById('compAfter');
+    const compHandle = document.getElementById('compHandle');
+    let isDragging = false;
+
+    function updateSlider(xPos) {
+      const rect = container.getBoundingClientRect();
+      let percent = ((xPos - rect.left) / rect.width) * 100;
+      percent = Math.max(0, Math.min(100, percent));
+      compAfter.style.width = percent + '%';
+      compHandle.style.left = percent + '%';
+    }
+
+    container.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      updateSlider(e.clientX);
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      updateSlider(e.clientX);
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    container.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      updateSlider(e.touches[0].clientX);
+    });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      updateSlider(e.touches[0].clientX);
+    });
+
+    window.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+
+    function setComparisonTarget(imgSrc, btn) {
+      document.querySelectorAll('.comp-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('compTargetImg').src = imgSrc;
+      
+      const label = document.getElementById('compTargetLabel');
+      if (imgSrc.includes('cyber')) label.textContent = 'Concept 01: Cyber-Brutalist';
+      else if (imgSrc.includes('solar')) label.textContent = 'Concept 02: Solarpunk Drydock';
+      else if (imgSrc.includes('retro')) label.textContent = 'Concept 03: Retro-Industrial';
+    }
+
+    // Lightbox modal
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxTitle = document.getElementById('lightboxTitle');
+    const lightboxDesc = document.getElementById('lightboxDesc');
+
+    function openLightbox(src, title, desc) {
+      lightboxImg.src = src;
+      lightboxTitle.textContent = title;
+      lightboxDesc.textContent = desc;
+      lightbox.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox(e) {
+      if (e.target === lightbox || e.target.classList.contains('lightbox-close')) {
+        lightbox.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+        lightbox.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+
+    // Copy color
+    function copyColor(hex) {
+      navigator.clipboard.writeText(hex).then(() => {
+        const toast = document.getElementById('toast');
+        toast.textContent = `Copied ${hex} to clipboard!`;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+      });
+    }
+  </script>
+</body>
+</html>
