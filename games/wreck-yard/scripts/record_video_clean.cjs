@@ -14,7 +14,8 @@ const fs = require('fs');
     ]
   });
 
-  const videoDir = '/Users/pany/.gemini/antigravity-acp/brain/36b2b570-c86a-4c35-8ac1-3a963a94e1f6/';
+  const videoDir = '/Users/pany/.gemini/antigravity-acp/brain/a420a389-15e4-420c-a27d-16bff6289c0b/';
+  if (!fs.existsSync(videoDir)) fs.mkdirSync(videoDir, { recursive: true });
   const context = await browser.newContext({
     viewport: { width: 1280, height: 720 },
     recordVideo: {
@@ -36,13 +37,13 @@ const fs = require('fs');
   const simInput = (action) => page.evaluate((a) => window.__SIMULATE_INPUT__?.(a), action);
   const setAim = (yaw, pitch) => page.evaluate(({ y, p }) => window.__SET_LOOK_ANGLES__?.(y, p), { y: yaw, p: pitch });
 
-  // 1. INTRO: Graphic Novel Gravity Gun with anodized teal chassis & ink outlines
-  console.log('1. Displaying Comic Cel Gravity Gun...');
+  // 1. INTRO: High-fidelity Gravity Gun with animated magnetic rings & CRT display
+  console.log('1. Displaying AAA Gravity Gun with spinning magnetic rings...');
   await setAim(0, -0.05);
   await page.waitForTimeout(1600);
 
-  // 2. TORCH GUN: Equip Graphic Novel Demolition Torch
-  console.log('2. Switching to Comic Cel Cutting Torch...');
+  // 2. TORCH GUN: Equip Oxy-Acetylene Demolition Torch with brass gauges
+  console.log('2. Switching to AAA Oxy-Acetylene Cutting Torch...');
   await simInput({ tool: 'torch' });
   await page.waitForTimeout(1200);
 
@@ -186,25 +187,23 @@ const fs = require('fs');
   if (video) {
     const rawPath = await video.path();
     console.log('Raw video saved to:', rawPath);
-    const destPath = '/Users/pany/.gemini/antigravity-acp/brain/36b2b570-c86a-4c35-8ac1-3a963a94e1f6/teardown_playground_gameplay.webm';
+    const destPath = '/Users/pany/.gemini/antigravity-acp/brain/a420a389-15e4-420c-a27d-16bff6289c0b/wreck_yard_classic_gameplay.webm';
     fs.copyFileSync(rawPath, destPath);
-    fs.copyFileSync(rawPath, '/Users/pany/.gemini/antigravity-acp/brain/36b2b570-c86a-4c35-8ac1-3a963a94e1f6/gameplay.webm');
+    fs.copyFileSync(rawPath, '/Users/pany/.gemini/antigravity-acp/brain/a420a389-15e4-420c-a27d-16bff6289c0b/gameplay.webm');
     console.log('Copied video to:', destPath);
 
     const { execSync } = require('child_process');
-    const ffmpegBin = '/Users/pany/Library/Caches/ms-playwright/ffmpeg-1011/ffmpeg-mac';
-    if (fs.existsSync(ffmpegBin)) {
-      try {
-        execSync(`"${ffmpegBin}" -y -ss 00:00:01.2 -i "${destPath}" -vframes 1 "/Users/pany/.gemini/antigravity-acp/brain/36b2b570-c86a-4c35-8ac1-3a963a94e1f6/comic_cel_gravity_gun.png"`);
-        execSync(`"${ffmpegBin}" -y -ss 00:00:03.2 -i "${destPath}" -vframes 1 "/Users/pany/.gemini/antigravity-acp/brain/36b2b570-c86a-4c35-8ac1-3a963a94e1f6/comic_cel_torch_gun.png"`);
-        execSync(`"${ffmpegBin}" -y -ss 00:00:06.0 -i "${destPath}" -vframes 1 "/Users/pany/.gemini/antigravity-acp/brain/36b2b570-c86a-4c35-8ac1-3a963a94e1f6/comic_cel_slicing.png"`);
-        execSync(`"${ffmpegBin}" -y -ss 00:00:10.5 -i "${destPath}" -vframes 1 "/Users/pany/.gemini/antigravity-acp/brain/36b2b570-c86a-4c35-8ac1-3a963a94e1f6/comic_cel_levitation.png"`);
-        execSync(`"${ffmpegBin}" -y -ss 00:00:17.5 -i "${destPath}" -vframes 1 "/Users/pany/.gemini/antigravity-acp/brain/36b2b570-c86a-4c35-8ac1-3a963a94e1f6/comic_cel_water_basin.png"`);
-        execSync(`"${ffmpegBin}" -y -ss 00:00:26.5 -i "${destPath}" -vframes 1 "/Users/pany/.gemini/antigravity-acp/brain/36b2b570-c86a-4c35-8ac1-3a963a94e1f6/comic_cel_buggy_drive.png"`);
-        console.log('Successfully extracted 6 high-res graphic novel gameplay frames!');
-      } catch (e) {
-        console.error('Frame extraction warning:', e);
-      }
+    const ffmpegBin = fs.existsSync('/opt/homebrew/bin/ffmpeg') ? '/opt/homebrew/bin/ffmpeg' : 'ffmpeg';
+    try {
+      execSync(`"${ffmpegBin}" -y -ss 00:00:01.2 -i "${destPath}" -vframes 1 "/Users/pany/.gemini/antigravity-acp/brain/a420a389-15e4-420c-a27d-16bff6289c0b/classic_gravity_gun.png"`);
+      execSync(`"${ffmpegBin}" -y -ss 00:00:03.2 -i "${destPath}" -vframes 1 "/Users/pany/.gemini/antigravity-acp/brain/a420a389-15e4-420c-a27d-16bff6289c0b/classic_torch_gun.png"`);
+      execSync(`"${ffmpegBin}" -y -ss 00:00:06.0 -i "${destPath}" -vframes 1 "/Users/pany/.gemini/antigravity-acp/brain/a420a389-15e4-420c-a27d-16bff6289c0b/classic_molten_slicing.png"`);
+      execSync(`"${ffmpegBin}" -y -ss 00:00:10.5 -i "${destPath}" -vframes 1 "/Users/pany/.gemini/antigravity-acp/brain/a420a389-15e4-420c-a27d-16bff6289c0b/classic_levitation.png"`);
+      execSync(`"${ffmpegBin}" -y -ss 00:00:17.5 -i "${destPath}" -vframes 1 "/Users/pany/.gemini/antigravity-acp/brain/a420a389-15e4-420c-a27d-16bff6289c0b/classic_water_basin.png"`);
+      execSync(`"${ffmpegBin}" -y -ss 00:00:26.5 -i "${destPath}" -vframes 1 "/Users/pany/.gemini/antigravity-acp/brain/a420a389-15e4-420c-a27d-16bff6289c0b/classic_buggy_drive.png"`);
+      console.log('Successfully extracted 6 high-res classic gameplay frames!');
+    } catch (e) {
+      console.error('Frame extraction error:', e);
     }
   }
 

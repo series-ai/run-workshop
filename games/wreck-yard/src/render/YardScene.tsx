@@ -75,7 +75,7 @@ export function YardScene({ controller, tool, onToolChange }: {
       shadows
       dpr={[1, 1.5]}
       camera={{ position: [CAMERA_BASE[0], CAMERA_BASE[1], CAMERA_BASE[2]], fov: 65 }}
-      gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', precision: 'highp' }}
+      gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', precision: 'highp', preserveDrawingBuffer: true }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.08;
