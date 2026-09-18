@@ -100,14 +100,14 @@ export function YardShell() {
       <SkyDome />
 
       {/* Atmospheric Depth Fog */}
-      <fog attach="fog" args={['#1c1917', 26, 76]} />
+      <fog attach="fog" args={['#0f172a', 30, 85]} />
 
-      {/* Dramatic Golden Hour Sun & Shadows */}
-      <ambientLight intensity={0.42} color="#94a3b8" />
+      {/* Dramatic Industrial Tungsten Worklight & Architectural Slate Fill */}
+      <ambientLight intensity={0.52} color="#475569" />
       <directionalLight
         position={[16, 24, 12]}
-        intensity={3.4}
-        color="#ffe8cc"
+        intensity={3.6}
+        color="#fef08a"
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
@@ -123,25 +123,25 @@ export function YardShell() {
       <spotLight
         position={[-21, 14, -21]}
         target-position={[0, 0, 0]}
-        intensity={24}
-        distance={45}
+        intensity={28}
+        distance={48}
         angle={0.65}
         penumbra={0.7}
-        color="#fef3c7"
+        color="#fef08a"
       />
       {/* High-Mast Yard Floodlight 2 (East Tower) */}
       <spotLight
         position={[21, 14, 21]}
         target-position={[0, 0, 0]}
-        intensity={22}
-        distance={45}
+        intensity={26}
+        distance={48}
         angle={0.65}
         penumbra={0.7}
-        color="#fef3c7"
+        color="#fef08a"
       />
 
       {/* Warm Fill / Secondary Bounce */}
-      <pointLight position={[0, 6, 0]} intensity={14} distance={28} color="#fed7aa" />
+      <pointLight position={[0, 6, 0]} intensity={16} distance={30} color="#fed7aa" />
 
       {/* ========================================================================= */}
       {/* DEMOLITION YARD TERRAIN: Syncplay Heightfield Topography                  */}
@@ -364,19 +364,28 @@ export function YardShell() {
 
       {/* Heavy Overhead Industrial Crane Gantry Spanning Center Runway */}
       <group position={[0, FLOOR_Y + 8.5, 0]}>
-        {/* Main Double Crane Bridge Girders */}
+        {/* Main Double Crane Bridge Girders - Signal Industrial Orange */}
         <mesh position={[0, 0, -1.2]} castShadow raycast={noRaycast}>
           <boxGeometry args={[28, 0.85, 0.4]} />
-          <meshStandardMaterial color="#eab308" roughness={0.5} metalness={0.65} />
+          <meshStandardMaterial color="#ea580c" roughness={0.38} metalness={0.78} />
         </mesh>
         <mesh position={[0, 0, 1.2]} castShadow raycast={noRaycast}>
           <boxGeometry args={[28, 0.85, 0.4]} />
-          <meshStandardMaterial color="#eab308" roughness={0.5} metalness={0.65} />
+          <meshStandardMaterial color="#ea580c" roughness={0.38} metalness={0.78} />
+        </mesh>
+        {/* Crane End-Trucks & Vertical Support Gantry Columns */}
+        <mesh position={[-13.8, -4.2, 0]} castShadow raycast={noRaycast}>
+          <boxGeometry args={[0.7, 8.5, 3.2]} />
+          <meshStandardMaterial color="#ea580c" roughness={0.42} metalness={0.75} />
+        </mesh>
+        <mesh position={[13.8, -4.2, 0]} castShadow raycast={noRaycast}>
+          <boxGeometry args={[0.7, 8.5, 3.2]} />
+          <meshStandardMaterial color="#ea580c" roughness={0.42} metalness={0.75} />
         </mesh>
         {/* Gantry Hoist Trolley & Hook */}
         <mesh position={[3, -0.3, 0]} castShadow raycast={noRaycast}>
           <boxGeometry args={[2.2, 0.6, 2.8]} />
-          <meshStandardMaterial color="#1f2937" roughness={0.4} metalness={0.85} />
+          <meshStandardMaterial color="#1e242b" roughness={0.4} metalness={0.85} />
         </mesh>
         <mesh position={[3, -2.5, 0]} castShadow raycast={noRaycast}>
           <cylinderGeometry args={[0.04, 0.04, 4.0, 8]} />

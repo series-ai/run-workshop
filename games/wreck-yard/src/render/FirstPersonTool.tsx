@@ -292,14 +292,14 @@ export function FirstPersonTool({
             </mesh>
           ))}
 
-          {/* Industrial Yellow Hazard Stripe Plates */}
+          {/* Retro-Futuristic Signal Orange Hazard Plates */}
           <mesh position={[0.05, 0.02, -0.08]}>
             <boxGeometry args={[0.004, 0.07, 0.22]} />
-            <meshStandardMaterial color="#eab308" roughness={0.4} metalness={0.2} />
+            <meshStandardMaterial color="#ea580c" roughness={0.38} metalness={0.65} />
           </mesh>
           <mesh position={[-0.05, 0.02, -0.08]}>
             <boxGeometry args={[0.004, 0.07, 0.22]} />
-            <meshStandardMaterial color="#eab308" roughness={0.4} metalness={0.2} />
+            <meshStandardMaterial color="#ea580c" roughness={0.38} metalness={0.65} />
           </mesh>
 
           {/* Ergonomic Molded Pistol Grip with Finger Grooves */}
@@ -317,19 +317,19 @@ export function FirstPersonTool({
             <meshStandardMaterial color="#1e293b" metalness={0.8} />
           </mesh>
 
-          {/* Rear Digital Diagnostic HUD Display (Faces Player) */}
+          {/* Rear Digital Diagnostic Nixie / CRT Display (Faces Player) */}
           <group position={[0, 0.045, 0.082]} rotation={[-0.2, 0, 0]}>
             <mesh>
               <boxGeometry args={[0.065, 0.038, 0.008]} />
               <meshStandardMaterial color="#09090b" roughness={0.7} />
             </mesh>
-            {/* Glowing CRT Screen */}
+            {/* Glowing Amber Nixie Screen */}
             <mesh position={[0, 0, 0.005]}>
               <planeGeometry args={[0.055, 0.028]} />
               <meshStandardMaterial
-                color="#06b6d4"
-                emissive="#06b6d4"
-                emissiveIntensity={2.2}
+                color="#f59e0b"
+                emissive="#d97706"
+                emissiveIntensity={2.5}
                 toneMapped={false}
               />
             </mesh>
@@ -340,7 +340,7 @@ export function FirstPersonTool({
             </mesh>
             <mesh position={[0.022, 0.012, 0.006]}>
               <sphereGeometry args={[0.003, 8, 8]} />
-              <meshStandardMaterial color="#eab308" emissive="#eab308" emissiveIntensity={3.0} />
+              <meshStandardMaterial color="#ea580c" emissive="#ea580c" emissiveIntensity={3.0} />
             </mesh>
           </group>
 
@@ -370,13 +370,13 @@ export function FirstPersonTool({
           <group ref={rotorRing1} position={[0, 0.01, -0.08]}>
             <mesh rotation={[Math.PI / 2, 0, 0]}>
               <torusGeometry args={[0.048, 0.005, 12, 24]} />
-              <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={1.8} metalness={0.9} />
+              <meshStandardMaterial color="#f97316" emissive="#ea580c" emissiveIntensity={2.0} metalness={0.9} />
             </mesh>
           </group>
           <group ref={rotorRing2} position={[0, 0.01, -0.16]}>
             <mesh rotation={[Math.PI / 2, 0, 0]}>
               <torusGeometry args={[0.048, 0.005, 12, 24]} />
-              <meshStandardMaterial color="#f59e0b" emissive="#d97706" emissiveIntensity={1.8} metalness={0.9} />
+              <meshStandardMaterial color="#fef08a" emissive="#eab308" emissiveIntensity={2.0} metalness={0.9} />
             </mesh>
           </group>
 

@@ -43,8 +43,8 @@ export function WaterSurface({
         varying vec2 vUv;
 
         void main() {
-          vec3 shallow = vec3(0.33, 0.73, 0.69);
-          vec3 deep = vec3(0.08, 0.22, 0.24);
+          vec3 shallow = vec3(0.14, 0.38, 0.36);
+          vec3 deep = vec3(0.05, 0.14, 0.15);
           vec3 viewDir = normalize(cameraPosition - vWorldPos);
           float rippleA = sin(vWorldPos.x * 7.4 + time * 1.8);
           float rippleB = sin(vWorldPos.z * 6.1 - time * 1.35);

@@ -5,10 +5,10 @@ export function SkyDome() {
   const shaderMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       uniforms: {
-        uTopColor: { value: new THREE.Color('#0f172a') }, // Deep slate night/twilight
-        uMidColor: { value: new THREE.Color('#334155') }, // Mid sky
-        uHorizonColor: { value: new THREE.Color('#ea580c') }, // Warm sunset amber/orange
-        uSunColor: { value: new THREE.Color('#fef08a') }, // Golden sun glare
+        uTopColor: { value: new THREE.Color('#0f172a') }, // Deep slate dusk zenith
+        uMidColor: { value: new THREE.Color('#1e293b') }, // Mid slate blue
+        uHorizonColor: { value: new THREE.Color('#d97706') }, // Industrial tungsten/amber horizon
+        uSunColor: { value: new THREE.Color('#fef08a') }, // Warm tungsten sun glare
         uSunDirection: { value: new THREE.Vector3(14, 18, 10).normalize() },
       },
       vertexShader: /* glsl */ `
