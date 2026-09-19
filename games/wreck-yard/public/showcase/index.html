@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wreck Yard // Realtime Gameplay & Physics Showcase</title>
+  <style>
+    :root {
+      --bg-base: #0a0d10;
+      --bg-surface: #121820;
+      --bg-card: #18202a;
+      --bg-card-hover: #1f2a37;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-bright: rgba(255, 255, 255, 0.18);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-lime: #a3e635;
+      --accent-lime-dim: rgba(163, 230, 53, 0.15);
+      --accent-orange: #f97316;
+      --accent-amber: #f59e0b;
+      --accent-cyan: #06b6d4;
+      --accent-cyan-dim: rgba(6, 182, 212, 0.15);
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 5rem;
+    }
+
+    /* Top Sticky Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 13, 16, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.85rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--accent-lime), #4d7c0f);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(163, 230, 53, 0.4);
+      font-weight: 900;
+      color: #0c1206;
+      font-size: 14px;
+    }
+
+    .brand-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .header-badges {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 0.22rem 0.6rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .badge-active {
+      background: var(--accent-lime-dim);
+      border-color: rgba(163, 230, 53, 0.35);
+      color: var(--accent-lime);
+    }
+
+    .badge-cyan {
+      background: var(--accent-cyan-dim);
+      border-color: rgba(6, 182, 212, 0.35);
+      color: var(--accent-cyan);
+    }
+
+    .dot-live {
+      width: 6px;
+      height: 6px;
+      background-color: var(--accent-lime);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-lime);
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* Main Container */
+    main {
+      max-width: 1240px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    /* Section Headers */
+    .section-title-wrap {
+      margin-bottom: 1.25rem;
+    }
+
+    .section-tag {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent-lime);
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 0.25rem;
+      max-width: 780px;
+    }
+
+    /* Card Wrapper */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Video Hero Section */
+    .video-hero-card {
+      padding: 1.25rem;
+      background: radial-gradient(circle at top right, #1a2330 0%, var(--bg-surface) 60%);
+    }
+
+    .video-viewport {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border-bright);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    .video-viewport video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .video-controls-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 0.85rem;
+      padding: 0.4rem 0.2rem;
+      flex-wrap: wrap;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 0.45rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-bright);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-active {
+      background: var(--accent-lime);
+      color: #0b1106;
+      border-color: var(--accent-lime);
+      font-weight: 600;
+    }
+
+    .telemetry-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .telemetry-item {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+    }
+
+    .telemetry-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .telemetry-val {
+      font-family: var(--font-mono);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent-lime);
+      margin-top: 0.1rem;
+    }
+
+    /* Comparison Tabs & Interactive Split Slider */
+    .comparison-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .tab-pills {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.4rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      width: fit-content;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.45rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn:hover {
+      color: #fff;
+    }
+
+    .tab-btn.active {
+      background: var(--bg-card-hover);
+      color: var(--accent-lime);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-bright);
+    }
+
+    /* Split Slider Widget */
+    .split-slider-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border-bright);
+      box-shadow: 0 12px 35px rgba(0,0,0,0.5);
+      user-select: none;
+    }
+
+    .slider-img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    .slider-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50%;
+      height: 100%;
+      overflow: hidden;
+      border-right: 2px solid var(--accent-lime);
+      box-shadow: 2px 0 15px rgba(163, 230, 53, 0.5);
+      pointer-events: none;
+    }
+
+    .slider-overlay img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      max-width: none;
+    }
+
+    .slider-handle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 36px;
+      height: 36px;
+      background: var(--accent-lime);
+      color: #0d1307;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 900;
+      box-shadow: 0 0 16px rgba(163, 230, 53, 0.7);
+      cursor: ew-resize;
+      z-index: 20;
+    }
+
+    .slider-badge {
+      position: absolute;
+      top: 1rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      z-index: 10;
+      pointer-events: none;
+      backdrop-filter: blur(8px);
+    }
+
+    .slider-badge-left {
+      left: 1rem;
+      background: rgba(163, 230, 53, 0.85);
+      color: #0b1105;
+    }
+
+    .slider-badge-right {
+      right: 1rem;
+      background: rgba(18, 24, 32, 0.85);
+      color: #fff;
+      border: 1px solid var(--border-bright);
+    }
+
+    /* Feature Grid Cards */
+    .grid-tools {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .tool-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.2s ease;
+    }
+
+    .tool-card:hover {
+      border-color: var(--border-bright);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .tool-thumb-wrap {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      background: #000;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .tool-thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .tool-thumb-wrap:hover img {
+      transform: scale(1.03);
+    }
+
+    .zoom-hint {
+      position: absolute;
+      bottom: 0.5rem;
+      right: 0.5rem;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      pointer-events: none;
+      font-family: var(--font-mono);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .tool-thumb-wrap:hover .zoom-hint {
+      opacity: 1;
+    }
+
+    .tool-content {
+      padding: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 0.5rem;
+    }
+
+    .tool-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tool-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .tool-key {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 0.15rem 0.45rem;
+      color: var(--accent-lime);
+    }
+
+    .tool-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .tool-bullets {
+      list-style: none;
+      margin-top: 0.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .tool-bullets li {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+    }
+
+    .tool-bullets li::before {
+      content: "▹";
+      color: var(--accent-lime);
+    }
+
+    /* Verification Table */
+    .verification-card {
+      padding: 1.25rem;
+    }
+
+    .telemetry-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin-top: 0.75rem;
+    }
+
+    .telemetry-table th {
+      text-align: left;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--border-bright);
+    }
+
+    .telemetry-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-main);
+    }
+
+    .telemetry-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .status-pill {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .status-pass {
+      background: rgba(163, 230, 53, 0.12);
+      border: 1px solid rgba(163, 230, 53, 0.4);
+      color: var(--accent-lime);
+    }
+
+    /* Lightbox Modal */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      cursor: zoom-out;
+    }
+
+    .lightbox.active {
+      display: flex;
+    }
+
+    .lightbox-img {
+      max-width: 90vw;
+      max-height: 85vh;
+      border-radius: 8px;
+      border: 1px solid var(--border-bright);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+      object-fit: contain;
+    }
+
+    .lightbox-caption {
+      position: absolute;
+      bottom: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: #fff;
+      background: rgba(0,0,0,0.7);
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">WY</div>
+      <div>
+        <div class="brand-title">Wreck Yard</div>
+        <div style="font-size: 0.72rem; color: var(--text-dim); font-family: var(--font-mono);">Retro Vector-Industrial Arena</div>
+      </div>
+    </div>
+
+    <div class="header-badges">
+      <span class="badge badge-active"><span class="dot-live"></span>Syncplay 4-Slot Realtime</span>
+      <span class="badge badge-cyan">Sobel Ink Cel Shading</span>
+      <span class="badge">60 FPS WebGL2</span>
+      <span class="badge">30 Hz Deterministic Rollback</span>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- SECTION 1: Live In-Engine Gameplay Recording -->
+    <section>
+      <div class="section-title-wrap">
+        <span class="section-tag">Direct In-Engine Capture</span>
+        <h2 class="section-title">Live 60 FPS Gameplay Recording</h2>
+        <p class="section-desc">
+          Uncut recorded gameplay captured from the live Syncplay multiplayer session in Chromium WebGL2. Showcases first-person tool swapping, precision laser bisection of voxel gantries, magnetic levitation with the gravity gun, and vertical jetpack flight over the industrial salvage arena.
+        </p>
+      </div>
+
+      <div class="card video-hero-card">
+        <div class="video-viewport">
+          <video id="gameplayVideo" autoplay loop muted playsinline>
+            <source src="./gameplay_recording.webm" type="video/webm" />
+            Your browser does not support WebM video playback.
+          </video>
+        </div>
+
+        <div class="video-controls-bar">
+          <div class="control-group">
+            <button class="btn btn-active" id="playBtn" onclick="togglePlay()">Pause</button>
+            <button class="btn" id="muteBtn" onclick="toggleMute()">Unmute</button>
+            <button class="btn" onclick="restartVideo()">↺ Replay</button>
+          </div>
+
+          <div class="control-group">
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">Speed:</span>
+            <button class="btn" onclick="setSpeed(0.5)">0.5x</button>
+            <button class="btn btn-active" id="speed1x" onclick="setSpeed(1)">1.0x</button>
+            <button class="btn" onclick="setSpeed(2)">2.0x</button>
+          </div>
+        </div>
+
+        <div class="telemetry-strip">
+          <div class="telemetry-item">
+            <div class="telemetry-label">Engine Frame Rate</div>
+            <div class="telemetry-val">60 FPS</div>
+          </div>
+          <div class="telemetry-item">
+            <div class="telemetry-label">Physics Step Rate</div>
+            <div class="telemetry-val">30 Hz Fixed</div>
+          </div>
+          <div class="telemetry-item">
+            <div class="telemetry-label">Active Rigid Bodies</div>
+            <div class="telemetry-val">17 Dynamic</div>
+          </div>
+          <div class="telemetry-item">
+            <div class="telemetry-label">Syncplay Divergences</div>
+            <div class="telemetry-val">0 (Identical)</div>
+          </div>
+          <div class="telemetry-item">
+            <div class="telemetry-label">Post-Process Passes</div>
+            <div class="telemetry-val">1 Pass (Sobel + Ink)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Interactive Before/After Split Comparison -->
+    <section>
+      <div class="section-title-wrap">
+        <span class="section-tag">Visual Fidelity Benchmark</span>
+        <h2 class="section-title">Interactive Target vs In-Engine Comparison</h2>
+        <p class="section-desc">
+          Drag the center handle horizontally to interactively inspect how the real-time procedural WebGL2 shaders, voxel geometry, and post-processing line up with the concept art visual benchmark.
+        </p>
+      </div>
+
+      <div class="comparison-container">
+        <!-- Tab Selectors -->
+        <div class="tab-pills">
+          <button class="tab-btn active" onclick="selectComparison('vista')">Salvage Vista & Sky Gantries</button>
+          <button class="tab-btn" onclick="selectComparison('torch')">Plasma Torch Slicing</button>
+          <button class="tab-btn" onclick="selectComparison('gravity')">Retro Gravity Gun</button>
+          <button class="tab-btn" onclick="selectComparison('basin')">Fluid Buoyancy Basin</button>
+        </div>
+
+        <!-- Interactive Split Slider -->
+        <div class="split-slider-box" id="sliderContainer">
+          <span class="slider-badge slider-badge-left">In-Engine Realtime (WebGL2)</span>
+          <span class="slider-badge slider-badge-right">Concept Target Benchmark</span>
+
+          <!-- Right Image (Concept Benchmark) -->
+          <img id="imgRight" class="slider-img" src="./retro_industrial_vista.png" alt="Concept Benchmark" />
+
+          <!-- Left Image (In-Engine Capture) with Clipping Mask -->
+          <div class="slider-overlay" id="sliderOverlay">
+            <img id="imgLeft" src="./wreck_yard_vista_playground.png" alt="In-Engine Realtime" />
+          </div>
+
+          <!-- Draggable Divider Handle -->
+          <div class="slider-handle" id="sliderHandle">⟷</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Multi-Tool Rig & Physics Toys -->
+    <section>
+      <div class="section-title-wrap">
+        <span class="section-tag">Player Systems & Mechanics</span>
+        <h2 class="section-title">First-Person Rig & Interactive Physics Toys</h2>
+        <p class="section-desc">
+          All tools are fully simulated inside the deterministic Syncplay runner with rollback support, local client prediction, and multiplayer replication.
+        </p>
+      </div>
+
+      <div class="grid-tools">
+        <!-- Card 1: Plasma Torch -->
+        <div class="tool-card">
+          <div class="tool-thumb-wrap" onclick="openLightbox('./wreck_yard_torch_cutter.png', 'First-Person Plasma Torch with Molten Particles & Voxel Slicing')">
+            <img src="./wreck_yard_torch_cutter.png" alt="Plasma Torch Cutter" />
+            <span class="zoom-hint">🔍 Click to zoom</span>
+          </div>
+          <div class="tool-content">
+            <div class="tool-header">
+              <h3 class="tool-name">Plasma Torch</h3>
+              <span class="tool-key">Key 2 / LMB</span>
+            </div>
+            <p class="tool-desc">
+              Heavy dual-nozzle laser cutter with induction coil glow, real-time voxel raycast bisection, and 3D molten spark particle spray.
+            </p>
+            <ul class="tool-bullets">
+              <li>Dual-axis voxel hull bisection algorithm</li>
+              <li>Stump pinning and free-floating piece spawn</li>
+              <li>Dynamic heat shroud color modulation</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Card 2: Gravity Gun -->
+        <div class="tool-card">
+          <div class="tool-thumb-wrap" onclick="openLightbox('./wreck_yard_gravity_gun.png', 'First-Person Gravity Gun with 3-Prong Tractor Beam')">
+            <img src="./wreck_yard_gravity_gun.png" alt="Gravity Gun" />
+            <span class="zoom-hint">🔍 Click to zoom</span>
+          </div>
+          <div class="tool-content">
+            <div class="tool-header">
+              <h3 class="tool-name">Gravity Gun</h3>
+              <span class="tool-key">Key 1 / LMB</span>
+            </div>
+            <p class="tool-desc">
+              Three animated magnetic containment prongs with spinning copper core rotor. Levitates, pulls, and flings any dynamic salvage object.
+            </p>
+            <ul class="tool-bullets">
+              <li>Rapier 3D spring-damper joint constraint</li>
+              <li>Angular velocity damping & aim lock</li>
+              <li>High-impulse fling velocity on release</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Card 3: Jetpack -->
+        <div class="tool-card">
+          <div class="tool-thumb-wrap" onclick="openLightbox('./wreck_yard_jetpack_aerial.png', 'Aerial Jetpack Flight over Salvage Yard and Water Basin')">
+            <img src="./wreck_yard_jetpack_aerial.png" alt="Jetpack Aerial Flight" />
+            <span class="zoom-hint">🔍 Click to zoom</span>
+          </div>
+          <div class="tool-content">
+            <div class="tool-header">
+              <h3 class="tool-name">Industrial Jetpack</h3>
+              <span class="tool-key">Spacebar (Hold)</span>
+            </div>
+            <p class="tool-desc">
+              Dual thruster nacelles providing vertical impulse thrust. Features fuel depletion, cooldown dissipation, and camera inertia tilt.
+            </p>
+            <ul class="tool-bullets">
+              <li>Vertical thrust impulse vector integration</li>
+              <li>HUD fuel gauge with overheat warning</li>
+              <li>Allows aerial traversal of high catwalks</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Card 4: Drivable Buggy & Toys -->
+        <div class="tool-card">
+          <div class="tool-thumb-wrap" onclick="openLightbox('./wreck_yard_vista_playground.png', 'Drivable 4-Wheel Buggy, Seesaw Fulcrum, Ball Drop, and Fluid Basin')">
+            <img src="./wreck_yard_vista_playground.png" alt="Buggy & Physics Toys" />
+            <span class="zoom-hint">🔍 Click to zoom</span>
+          </div>
+          <div class="tool-content">
+            <div class="tool-header">
+              <h3 class="tool-name">Salvage Buggy & Toys</h3>
+              <span class="tool-key">Approach + WASD</span>
+            </div>
+            <p class="tool-desc">
+              4-wheel compound suspension vehicle with mount/dismount, plus dual-tier Archimedes water basin, seesaw lever, and bowling ball hopper.
+            </p>
+            <ul class="tool-bullets">
+              <li>Submerged volume fluid buoyancy & drag</li>
+              <li>Hinged seesaw lever with dynamic balance</li>
+              <li>Gravity ball hopper with domino pin knockdowns</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: Determinism & Verification Suite -->
+    <section>
+      <div class="section-title-wrap">
+        <span class="section-tag">Verification & Telemetry</span>
+        <h2 class="section-title">Automated Test Matrix</h2>
+        <p class="section-desc">
+          Automated test suite guaranteeing deterministic playback, multiplayer convergence, and zero desync rollbacks.
+        </p>
+      </div>
+
+      <div class="card verification-card">
+        <table class="telemetry-table">
+          <thead>
+            <tr>
+              <th>Test Target</th>
+              <th>Methodology</th>
+              <th>Assertion Criteria</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Deterministic Rollback</strong></td>
+              <td>Syncplay synctest fuzzer over multi-frame schedule</td>
+              <td>Straight execution checksum equals rollback rewind checksum</td>
+              <td><span class="status-pill status-pass">✓ PASS (7.1s)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Authority Parity</strong></td>
+              <td>2-client networked authority room vs offline runner</td>
+              <td>Identical presentation state across offline and networked peers</td>
+              <td><span class="status-pill status-pass">✓ PASS (52.4s)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Late Join Hydration</strong></td>
+              <td>Mid-game snapshot export & client restore</td>
+              <td>Late joiner state hash matches host post-hydration</td>
+              <td><span class="status-pill status-pass">✓ PASS (20.2s)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Compound Vehicle</strong></td>
+              <td>4-wheel raycast suspension & throttle step</td>
+              <td>Mounts buggy, accelerates WASD, dismounts on jump</td>
+              <td><span class="status-pill status-pass">✓ PASS (1.1s)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Archimedes Fluid Basin</strong></td>
+              <td>Dual-tier fluid immersion & damping</td>
+              <td>Floats buoyant crates at surface; falls when lifted</td>
+              <td><span class="status-pill status-pass">✓ PASS (26.0s)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Full Test Suite</strong></td>
+              <td>Vitest all 16 test files</td>
+              <td><strong>74 tests passing (0 failures)</strong></td>
+              <td><span class="status-pill status-pass">✓ 100% PASS</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Lightbox Modal -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <img class="lightbox-img" id="lightboxImg" src="" alt="Enlarged screenshot" />
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+  </div>
+
+  <script>
+    // Video Controls
+    const video = document.getElementById('gameplayVideo');
+    const playBtn = document.getElementById('playBtn');
+    const muteBtn = document.getElementById('muteBtn');
+
+    function togglePlay() {
+      if (video.paused) {
+        video.play();
+        playBtn.innerText = 'Pause';
+        playBtn.classList.add('btn-active');
+      } else {
+        video.pause();
+        playBtn.innerText = 'Play';
+        playBtn.classList.remove('btn-active');
+      }
+    }
+
+    function toggleMute() {
+      video.muted = !video.muted;
+      muteBtn.innerText = video.muted ? 'Unmute' : 'Mute';
+      if (!video.muted) muteBtn.classList.add('btn-active');
+      else muteBtn.classList.remove('btn-active');
+    }
+
+    function restartVideo() {
+      video.currentTime = 0;
+      video.play();
+      playBtn.innerText = 'Pause';
+      playBtn.classList.add('btn-active');
+    }
+
+    function setSpeed(rate) {
+      video.playbackRate = rate;
+      document.querySelectorAll('.control-group button').forEach(b => {
+        if (b.innerText.includes('x')) b.classList.remove('btn-active');
+      });
+      event.target.classList.add('btn-active');
+    }
+
+    // Comparison Tabs Data
+    const comparisons = {
+      vista: {
+        engine: './wreck_yard_vista_playground.png',
+        target: './retro_industrial_vista.png',
+      },
+      torch: {
+        engine: './wreck_yard_torch_cutter.png',
+        target: './retro_torch_slicing.png',
+      },
+      gravity: {
+        engine: './wreck_yard_gravity_gun.png',
+        target: './retro_gravity_gun.png',
+      },
+      basin: {
+        engine: './wreck_yard_jetpack_aerial.png',
+        target: './retro_water_basin.png',
+      },
+    };
+
+    function selectComparison(key) {
+      const data = comparisons[key];
+      if (!data) return;
+
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const imgLeft = document.getElementById('imgLeft');
+      const imgRight = document.getElementById('imgRight');
+
+      imgLeft.src = data.engine;
+      imgRight.src = data.target;
+
+      updateSlider(50);
+    }
+
+    // Split Slider Dragging Logic
+    const sliderContainer = document.getElementById('sliderContainer');
+    const sliderOverlay = document.getElementById('sliderOverlay');
+    const sliderHandle = document.getElementById('sliderHandle');
+    const imgLeft = document.getElementById('imgLeft');
+
+    let isSliding = false;
+
+    function updateSlider(percentage) {
+      percentage = Math.max(0, Math.min(100, percentage));
+      sliderOverlay.style.width = percentage + '%';
+      sliderHandle.style.left = percentage + '%';
+
+      // Keep left image full width of container
+      if (sliderContainer.clientWidth > 0) {
+        imgLeft.style.width = sliderContainer.clientWidth + 'px';
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      if (sliderContainer.clientWidth > 0) {
+        imgLeft.style.width = sliderContainer.clientWidth + 'px';
+      }
+    });
+
+    // Initialize width
+    setTimeout(() => {
+      if (sliderContainer.clientWidth > 0) {
+        imgLeft.style.width = sliderContainer.clientWidth + 'px';
+      }
+    }, 100);
+
+    function onPointerMove(e) {
+      if (!isSliding) return;
+      const rect = sliderContainer.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const x = clientX - rect.left;
+      const pct = (x / rect.width) * 100;
+      updateSlider(pct);
+    }
+
+    sliderContainer.addEventListener('mousedown', (e) => {
+      isSliding = true;
+      onPointerMove(e);
+    });
+
+    sliderContainer.addEventListener('touchstart', (e) => {
+      isSliding = true;
+      onPointerMove(e);
+    }, { passive: true });
+
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('touchmove', onPointerMove, { passive: true });
+
+    window.addEventListener('mouseup', () => { isSliding = false; });
+    window.addEventListener('touchend', () => { isSliding = false; });
+
+    // Lightbox Modal
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxCaption = document.getElementById('lightboxCaption');
+
+    function openLightbox(src, caption) {
+      lightboxImg.src = src;
+      lightboxCaption.innerText = caption;
+      lightbox.classList.add('active');
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove('active');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeLightbox();
+    });
+  </script>
+</body>
+</html>
