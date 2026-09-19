@@ -54,7 +54,7 @@ function VoxelBody({ body, renderRef, outline, onHover, worldOcclusion }: {
       {outline ? (
         <mesh scale={[1.035, 1.035, 1.035]} raycast={noRaycast}>
           <boxGeometry args={boxSize} />
-          <meshBasicMaterial color={outline} wireframe transparent opacity={0.9} />
+          <meshBasicMaterial color={outline} wireframe transparent opacity={0.9} depthWrite={false} />
         </mesh>
       ) : null}
     </group>

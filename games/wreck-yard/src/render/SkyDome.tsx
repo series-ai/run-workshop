@@ -1,15 +1,15 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
+import { ART_STYLE } from './style/artStyle';
 
 export function SkyDome() {
   const shaderMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       uniforms: {
-        uTopColor: { value: new THREE.Color('#0f172a') }, // Deep slate dusk zenith
-        uMidColor: { value: new THREE.Color('#1e293b') }, // Mid slate blue
-        uHorizonColor: { value: new THREE.Color('#d97706') }, // Industrial tungsten/amber horizon
-        uSunColor: { value: new THREE.Color('#fef08a') }, // Warm tungsten sun glare
-        uSunDirection: { value: new THREE.Vector3(14, 18, 10).normalize() },
+        uSkyZenith: { value: new THREE.Color(ART_STYLE.palette.skyZenith) },
+        uSkyBand: { value: new THREE.Color(ART_STYLE.palette.skyBand) },
+        uSkyLow: { value: new THREE.Color(ART_STYLE.palette.skyLow) },
+        uSteps: { value: ART_STYLE.sky.steps },
       },
       vertexShader: /* glsl */ `
         varying vec3 vWorldPosition;
@@ -20,34 +20,35 @@ export function SkyDome() {
         }
       `,
       fragmentShader: /* glsl */ `
-        uniform vec3 uTopColor;
-        uniform vec3 uMidColor;
-        uniform vec3 uHorizonColor;
-        uniform vec3 uSunColor;
-        uniform vec3 uSunDirection;
+        uniform vec3 uSkyZenith;
+        uniform vec3 uSkyBand;
+        uniform vec3 uSkyLow;
+        uniform float uSteps;
         varying vec3 vWorldPosition;
 
         void main() {
           vec3 dir = normalize(vWorldPosition);
           float y = dir.y;
 
-          // Sky gradient from horizon to zenith
           vec3 sky;
           if (y > 0.0) {
-            float h = pow(1.0 - y, 2.5);
-            sky = mix(uTopColor, uMidColor, pow(1.0 - y, 0.8));
-            sky = mix(sky, uHorizonColor, h);
+            // Quantize elevation parameter into discrete steps
+            float t = clamp(y / 0.45, 0.0, 1.0);
+            float steppedT = floor(t * uSteps) / (uSteps - 1.0);
+
+            // Interpolate between horizon red-orange, warm transition band, and dark zenith
+            if (steppedT < 0.35) {
+              float localT = steppedT / 0.35;
+              sky = mix(uSkyLow, uSkyBand, localT);
+            } else {
+              float localT = (steppedT - 0.35) / 0.65;
+              sky = mix(uSkyBand, uSkyZenith, localT);
+            }
           } else {
-            sky = mix(uHorizonColor, vec3(0.08, 0.09, 0.10), clamp(-y * 4.0, 0.0, 1.0));
+            sky = uSkyLow;
           }
 
-          // Subtle sun glow
-          float sunCos = dot(dir, normalize(uSunDirection));
-          float sunGlow = pow(max(sunCos, 0.0), 32.0) * 0.45;
-          float sunCore = pow(max(sunCos, 0.0), 512.0) * 1.5;
-          vec3 finalColor = sky + uSunColor * (sunGlow + sunCore);
-
-          gl_FragColor = vec4(finalColor, 1.0);
+          gl_FragColor = vec4(sky, 1.0);
         }
       `,
       side: THREE.BackSide,

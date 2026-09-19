@@ -48,6 +48,7 @@ export function PointerInput({
   const pressed = useRef(false);
   const secondary = useRef(false);
   const keys = useRef<Set<string>>(new Set());
+  const cameraOverride = useRef<{ pos: [number, number, number]; lookAt: [number, number, number] } | null>(null);
 
   const controls = useMemo(() => {
     const next = new OrbitControlsImpl(camera, gl.domElement);
@@ -80,6 +81,19 @@ export function PointerInput({
     let isDragging = false;
     let lastX = 0;
     let lastY = 0;
+
+    (window as unknown as {
+      __SET_LOOK_ANGLES__?: (y: number, p: number) => void;
+      __SET_CAMERA_OVERRIDE__?: (pos: [number, number, number] | null, lookAt?: [number, number, number] | null) => void;
+      __THREE_RENDERER__?: unknown;
+    }).__SET_CAMERA_OVERRIDE__ = (pos, lookAt) => {
+      if (pos && lookAt) {
+        cameraOverride.current = { pos, lookAt };
+      } else {
+        cameraOverride.current = null;
+      }
+    };
+    (window as unknown as { __THREE_RENDERER__?: unknown }).__THREE_RENDERER__ = gl;
 
     (window as unknown as { __SET_LOOK_ANGLES__?: (y: number, p: number) => void }).__SET_LOOK_ANGLES__ = (y, p) => {
       yaw.current = y;
@@ -190,7 +204,11 @@ export function PointerInput({
     const render = renderRef.current;
     const localPlayer = render?.players?.find((p) => p.slot === render?.localSlot);
 
-    if (tool === 'orbit') {
+    if (cameraOverride.current) {
+      camera.position.set(cameraOverride.current.pos[0], cameraOverride.current.pos[1], cameraOverride.current.pos[2]);
+      camera.lookAt(cameraOverride.current.lookAt[0], cameraOverride.current.lookAt[1], cameraOverride.current.lookAt[2]);
+      dirVec.set(0, 0, -1).applyQuaternion(camera.quaternion);
+    } else if (tool === 'orbit') {
       controls.update();
       dirVec.set(0, 0, -1).applyQuaternion(camera.quaternion);
     } else {

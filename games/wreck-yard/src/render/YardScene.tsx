@@ -11,6 +11,7 @@ import { FirstPersonTool } from './FirstPersonTool';
 import { TorchSparks } from './TorchSparks';
 import { VoxelBodies } from './VoxelBodies';
 import { YardShell } from './YardShell';
+import { InkComposer } from './style/InkComposer';
 import type { YardRender } from './presentation';
 
 const SLOT_COLORS = ['#d4efff', '#ffb264', '#b8ffb0', '#f0a0ff'];
@@ -35,6 +36,7 @@ function SceneRoot({ controller, tool, onToolChange, bodies, renderRef, outlines
       <FirstPersonTool tool={tool} renderRef={renderRef} />
       <TorchSparks tool={tool} renderRef={renderRef} />
       <OcclusionUpdater renderRef={renderRef} worldOcclusion={worldOcclusion} />
+      <InkComposer enableInk={true} />
     </>
   );
 }
@@ -74,12 +76,12 @@ export function YardScene({ controller, tool, onToolChange }: {
     <Canvas
       shadows
       dpr={[1, 1.5]}
-      camera={{ position: [CAMERA_BASE[0], CAMERA_BASE[1], CAMERA_BASE[2]], fov: 65 }}
+      camera={{ position: [CAMERA_BASE[0], CAMERA_BASE[1], CAMERA_BASE[2]], fov: 50 }}
       gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', precision: 'highp', preserveDrawingBuffer: true }}
       onCreated={({ gl }) => {
-        gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.08;
-        gl.shadowMap.type = THREE.PCFSoftShadowMap;
+        gl.toneMapping = THREE.NoToneMapping;
+        gl.toneMappingExposure = 1.0;
+        gl.shadowMap.type = THREE.PCFShadowMap;
       }}
       style={{ position: 'absolute', inset: 0 }}
     >

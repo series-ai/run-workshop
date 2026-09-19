@@ -2,6 +2,8 @@ import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { useThree, type ThreeElements } from '@react-three/fiber';
 import { buildMacroOccupancyVolume } from 'voxel-kit';
+import { ART_STYLE } from './style/artStyle';
+import { toonGlsl } from './style/toonGlsl';
 
 type MeshSurfaceProps = Omit<ThreeElements['mesh'], 'args' | 'material' | 'position' | 'scale'>;
 type VoxelDims = { x: number; y: number; z: number };
@@ -72,6 +74,7 @@ export function VoxelVolumeRenderer({
 
     const paletteTex = new THREE.DataTexture(normalizeTextureBytes(palette), 256, 1, THREE.RGBAFormat);
     paletteTex.type = THREE.UnsignedByteType;
+    paletteTex.colorSpace = THREE.SRGBColorSpace;
     paletteTex.minFilter = THREE.NearestFilter;
     paletteTex.magFilter = THREE.NearestFilter;
     paletteTex.needsUpdate = true;
@@ -146,6 +149,8 @@ export function VoxelVolumeRenderer({
     uniform mat4 viewMatrix;
     uniform mat4 projectionMatrix;
 
+    ${toonGlsl}
+
     out vec4 outColor;
 
     vec3 defaultSurfaceNormal(vec3 rd) {
@@ -190,10 +195,6 @@ export function VoxelVolumeRenderer({
         return 0;
       }
       return voxelAt(c);
-    }
-
-    float cellNoise(ivec3 cell) {
-      return fract(sin(dot(vec3(cell), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
     }
 
     float surfaceExposure(ivec3 cell, vec3 faceNormal) {
@@ -309,57 +310,27 @@ export function VoxelVolumeRenderer({
           vec3 worldNormal = rotMat * faceNormal;
           vec3 viewDir = normalize(cameraPosition - worldPos);
           vec4 materialInfo = texture(uMaterialParams, vec2(u, 0.5));
-          float roughness = materialInfo.r;
           float metalness = materialInfo.g;
           float emissive = materialInfo.b;
-          float physicalType = materialInfo.a;
           float shadow = shadowAlongSun(worldPos, worldNormal);
-          float ao = ambientOcclusion(worldPos, worldNormal);
-          float NdotL = dot(worldNormal, lightDir);
-          float lightBand = smoothstep(-0.06, 0.42, NdotL);
-          float diffuse = lightBand * 0.82 + 0.18;
+          float NdotL = max(dot(worldNormal, lightDir), 0.0);
+
+          vec3 shaded = albedo.rgb * toonTint(NdotL, step(0.7, shadow));
+
+          // Specular highlight only for metalness > 0.5
           vec3 halfDir = normalize(lightDir + viewDir);
-          float exposure = surfaceExposure(cell, faceNormal);
-          float albedoNoise = mix(0.96, 1.04, cellNoise(cell + ivec3(9, 2, 13)));
-          float specPower = mix(64.0, 10.0, roughness);
-          float specular = pow(max(dot(worldNormal, halfDir), 0.0), specPower) * mix(0.12, 0.95, metalness);
-
-          // Retro-futuristic procedural voxel micro-chamfer and crevice contact AO
-          vec3 hitVox = (hitLS + 0.5) * uDims;
-          vec3 cellUv = fract(hitVox);
-          vec2 faceCoord;
-          if (abs(faceNormal.x) > 0.5) faceCoord = cellUv.yz;
-          else if (abs(faceNormal.y) > 0.5) faceCoord = cellUv.xz;
-          else faceCoord = cellUv.xy;
-          vec2 distToEdge = min(faceCoord, 1.0 - faceCoord);
-          float edgeDist = min(distToEdge.x, distToEdge.y);
-          float voxelBevel = smoothstep(0.075, 0.015, edgeDist) * 0.45;
-          float voxelEdgeAo = smoothstep(0.0, 0.14, edgeDist) * 0.30 + 0.70;
-
-          float bounce = mix(0.08, 0.28, physicalType) + exposure * 0.06;
-          float skyMix = clamp(worldNormal.y * 0.5 + 0.5, 0.0, 1.0);
-          vec3 hemiLight = mix(uGroundColor, uSkyColor, skyMix);
-          vec3 baseColor = albedo.rgb * albedoNoise;
-          vec3 ambient = baseColor * hemiLight * ((0.32 + ao * (0.28 + bounce)) * voxelEdgeAo);
-
-          // Stylized 2-band direct lighting with cool slate shadow tint
-          vec3 slateShadow = vec3(0.12, 0.16, 0.22);
-          vec3 directLight = mix(slateShadow, uSunColor, lightBand);
-          vec3 direct = baseColor * directLight * (diffuse * shadow) * ((0.75 + ao * (0.16 + bounce * 0.22)) * voxelEdgeAo);
-          vec3 specColor = mix(vec3(0.35, 0.38, 0.45), albedo.rgb, metalness);
-          float chamferSpec = pow(max(dot(worldNormal, halfDir), 0.0), specPower * 0.5) * voxelBevel * 1.6;
-
-          float rim = pow(1.0 - max(dot(worldNormal, viewDir), 0.0), 2.8);
-          float hotEdge = pow(1.0 - max(dot(viewDir, worldNormal), 0.0), 4.2) * exposure;
+          float NdotH = max(dot(worldNormal, halfDir), 0.0);
+          if (metalness > 0.5) {
+            shaded += step(0.95, NdotH) * 0.25;
+          }
 
           // Incandescent thermal core emissive on severed surfaces
-          vec3 moltenOrange = vec3(1.0, 0.32, 0.02);
-          vec3 moltenGold = vec3(1.0, 0.85, 0.22);
-          vec3 emissiveColor = mix(moltenOrange, moltenGold, smoothstep(0.2, 0.85, emissive)) * (emissive * 2.6);
-
-          vec3 shaded = ambient + direct + specColor * (specular + chamferSpec) * shadow + emissiveColor;
-          shaded += uSunColor * hotEdge * (0.08 + emissive * 0.44);
-          shaded += vec3(rim) * mix(0.04, 0.10, exposure);
+          if (emissive > 0.01) {
+            vec3 moltenOrange = vec3(1.0, 0.32, 0.02);
+            vec3 moltenGold = vec3(1.0, 0.85, 0.22);
+            vec3 emissiveColor = mix(moltenOrange, moltenGold, smoothstep(0.2, 0.85, emissive)) * (emissive * 2.6);
+            shaded += emissiveColor;
+          }
 
           float fogDistance = distance(cameraPosition, worldPos);
           float fogFactor = smoothstep(uFogNear, uFogFar, fogDistance);
@@ -425,12 +396,16 @@ export function VoxelVolumeRenderer({
         uSunDir: {
           value: new THREE.Vector3(...(worldOcclusion?.sunDirection ?? [0.55, 0.82, 0.25])).normalize(),
         },
-        uSunColor: { value: new THREE.Color('#fef08a') },
-        uSkyColor: { value: new THREE.Color('#475569') },
-        uGroundColor: { value: new THREE.Color('#1e242b') },
-        uFogColor: { value: new THREE.Color('#0f172a') },
-        uFogNear: { value: 30.0 },
-        uFogFar: { value: 85.0 },
+        uRampEdges: { value: new THREE.Vector2(ART_STYLE.ramp.edges[0], ART_STYLE.ramp.edges[1]) },
+        uShadeTint: { value: new THREE.Vector3(...ART_STYLE.ramp.shadeTint) },
+        uLitTint: { value: new THREE.Vector3(...ART_STYLE.ramp.litTint) },
+        uHalfLevel: { value: ART_STYLE.ramp.halfLevel },
+        uSunColor: { value: new THREE.Color('#ffd4a0') }, // Warm tungsten key
+        uSkyColor: { value: new THREE.Color('#809aa7') }, // Astra cool blue-slate sky fill
+        uGroundColor: { value: new THREE.Color('#686354') }, // Astra warm gray concrete ground bounce
+        uFogColor: { value: new THREE.Color(ART_STYLE.palette.skyLow) },
+        uFogNear: { value: 35.0 },
+        uFogFar: { value: 110.0 },
         uHasWorldOcc: { value: worldOcclusion ? 1 : 0 },
       },
       side: THREE.BackSide,

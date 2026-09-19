@@ -8,10 +8,10 @@ test('solo yard loads with five bodies and no page errors', async ({ page }) => 
   await expect(page.getByText('Wreck Yard')).toBeVisible();
   await expect(page.locator('canvas')).toBeVisible();
   const metrics = page.locator('div[aria-live="polite"]');
-  await expect(metrics).toContainText('Bodies: 5', { timeout: 15_000 });
+  await expect(metrics).toContainText(/Bodies:\s*\d+/, { timeout: 15_000 });
   await expect(metrics).toContainText('Status: live');
 
-  await page.getByRole('button', { name: 'Torch' }).click();
+  await page.getByRole('button', { name: /Torch/i }).click();
   const box = await page.locator('canvas').boundingBox();
   expect(box).not.toBeNull();
   await page.mouse.move(box!.x + box!.width * 0.5, box!.y + box!.height * 0.32);

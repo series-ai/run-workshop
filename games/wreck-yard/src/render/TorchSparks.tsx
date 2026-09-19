@@ -129,7 +129,7 @@ export function TorchSparks({
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, SPARK_COUNT]} frustumCulled={false}>
       <coneGeometry args={[0.015, 0.06, 4]} />
-      <meshBasicMaterial toneMapped={false} />
+      <meshBasicMaterial toneMapped={false} depthWrite={false} />
     </instancedMesh>
   );
 }
