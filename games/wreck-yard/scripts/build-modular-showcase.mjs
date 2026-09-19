@@ -4,6 +4,27 @@ import path from 'node:path';
 const brainDir = '/Users/pany/.gemini/antigravity-acp/brain/fd27fe2f-eb7e-4d01-8df3-5b0efdf235c9';
 const publicShowcaseDir = path.resolve('public/showcase');
 
+function getBase64(filename) {
+  const p = path.join(brainDir, filename);
+  if (!fs.existsSync(p)) throw new Error(`Missing: ${p}`);
+  const ext = path.extname(filename).toLowerCase().replace('.', '');
+  const mime = ext === 'gif' ? 'image/gif' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : 'image/png';
+  return `data:${mime};base64,${fs.readFileSync(p).toString('base64')}`;
+}
+
+console.log('Loading base64 assets...');
+const vistaJpg = getBase64('wreck_yard_vista_playground.jpg');
+const torchJpg = getBase64('wreck_yard_torch_cutter.jpg');
+const gravityJpg = getBase64('wreck_yard_gravity_gun.jpg');
+const jetpackJpg = getBase64('wreck_yard_jetpack_aerial.jpg');
+
+const refVistaJpg = getBase64('retro_industrial_vista.jpg');
+const refTorchJpg = getBase64('retro_torch_slicing.jpg');
+const refGravityJpg = getBase64('retro_gravity_gun.jpg');
+const refBasinJpg = getBase64('retro_water_basin.jpg');
+
+const gifCompact = getBase64('gameplay_loop_compact.gif');
+
 const sharedStyles = `
     :root {
       --bg-base: #0a0d10;
@@ -137,7 +158,7 @@ function buildHeader(activeSlug) {
   </header>`;
 }
 
-// 1. INDEX / HUB
+// 1. INDEX / HUB (Uses lightweight Base64 thumbnails: ~180KB total)
 const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -163,7 +184,7 @@ const indexHtml = `<!DOCTYPE html>
       transform: translateY(-2px);
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-    .hub-thumb { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #000; }
+    .hub-thumb { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: #000; }
     .hub-body { padding: 1.1rem; display: flex; flex-direction: column; gap: 0.4rem; flex: 1; }
     .hub-num { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-lime); font-weight: 700; text-transform: uppercase; }
     .hub-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
@@ -175,17 +196,17 @@ const indexHtml = `<!DOCTYPE html>
   ${buildHeader('index')}
   <main>
     <div>
-      <span class="section-tag">Interactive Showcase Dashboard</span>
+      <span class="section-tag">Interactive Showcase Hub</span>
       <h1 class="section-title">Wreck Yard Feature & Gameplay Showcase</h1>
       <p class="section-desc">
-        Select any module below to view live gameplay footage, interactive target vs in-engine visual comparisons, weapon demonstrations, physics toys, and determinism test telemetry.
+        Select any module below to inspect live gameplay footage, target vs realtime visual benchmarks, first-person tools, and physics playground toys.
       </p>
     </div>
 
     <div class="hub-grid">
       <!-- 01 Video -->
       <a href="./01-video.html" class="hub-card">
-        <img class="hub-thumb" src="./wreck_yard_vista_playground.png" alt="Video preview" />
+        <img class="hub-thumb" src="${vistaJpg}" alt="Video preview" />
         <div class="hub-body">
           <span class="hub-num">Module 01</span>
           <h2 class="hub-title">Live 60 FPS Video Recording</h2>
@@ -196,7 +217,7 @@ const indexHtml = `<!DOCTYPE html>
 
       <!-- 02 Comparison -->
       <a href="./02-comparison.html" class="hub-card">
-        <img class="hub-thumb" src="./retro_industrial_vista.png" alt="Comparison preview" />
+        <img class="hub-thumb" src="${refVistaJpg}" alt="Comparison preview" />
         <div class="hub-body">
           <span class="hub-num">Module 02</span>
           <h2 class="hub-title">Target vs Realtime Comparison</h2>
@@ -207,7 +228,7 @@ const indexHtml = `<!DOCTYPE html>
 
       <!-- 03 Weapons -->
       <a href="./03-weapons.html" class="hub-card">
-        <img class="hub-thumb" src="./wreck_yard_torch_cutter.png" alt="Weapons preview" />
+        <img class="hub-thumb" src="${torchJpg}" alt="Weapons preview" />
         <div class="hub-body">
           <span class="hub-num">Module 03</span>
           <h2 class="hub-title">First-Person Tool Rig</h2>
@@ -218,7 +239,7 @@ const indexHtml = `<!DOCTYPE html>
 
       <!-- 04 Playground -->
       <a href="./04-playground.html" class="hub-card">
-        <img class="hub-thumb" src="./wreck_yard_jetpack_aerial.png" alt="Playground preview" />
+        <img class="hub-thumb" src="${jetpackJpg}" alt="Playground preview" />
         <div class="hub-body">
           <span class="hub-num">Module 04</span>
           <h2 class="hub-title">Physics Toys & Compound Buggy</h2>
@@ -244,7 +265,7 @@ const indexHtml = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// 2. MODULE 01: VIDEO
+// 2. MODULE 01: VIDEO (~1.1 MB with embedded animated loop + video tag)
 const videoHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -257,12 +278,12 @@ const videoHtml = `<!DOCTYPE html>
       position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000;
       border-radius: 8px; overflow: hidden; border: 1px solid var(--border-bright);
     }
-    .video-viewport video, .video-viewport img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .video-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.75rem; }
+    .video-viewport img, .video-viewport video { width: 100%; height: 100%; object-fit: cover; display: block; }
     .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-top: 1.25rem; }
     .stat-box { background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 0.5rem 0.75rem; }
     .stat-label { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; }
     .stat-val { font-family: var(--font-mono); font-size: 1.1rem; color: var(--accent-lime); font-weight: 700; }
+    .mode-pills { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
   </style>
 </head>
 <body>
@@ -275,26 +296,17 @@ const videoHtml = `<!DOCTYPE html>
     </div>
 
     <div class="card">
-      <div class="video-viewport" id="vwrap">
-        <video id="vid" autoplay loop muted playsinline poster="./wreck_yard_vista_playground.png">
-          <source src="./gameplay_recording.mp4" type="video/mp4" />
-          <source src="./gameplay_recording.webm" type="video/webm" />
-          <img src="./gameplay_loop.gif" alt="Fallback animated loop" />
-        </video>
+      <div class="mode-pills">
+        <button class="btn btn-active" id="gifBtn" onclick="showGif()">Embedded Highlight Loop (Instant)</button>
+        <button class="btn" id="vidBtn" onclick="showVid()">HTML5 MP4 Player</button>
       </div>
 
-      <div class="video-controls">
-        <div style="display: flex; gap: 0.5rem;">
-          <button class="btn btn-active" id="playBtn" onclick="togglePlay()">Pause</button>
-          <button class="btn" id="muteBtn" onclick="toggleMute()">Unmute</button>
-          <button class="btn" onclick="document.getElementById('vid').currentTime = 0">↺ Replay</button>
-        </div>
-        <div style="display: flex; gap: 0.4rem; align-items: center;">
-          <span style="font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">Speed:</span>
-          <button class="btn" onclick="setSpeed(0.5)">0.5x</button>
-          <button class="btn btn-active" id="s1" onclick="setSpeed(1)">1.0x</button>
-          <button class="btn" onclick="setSpeed(2)">2.0x</button>
-        </div>
+      <div class="video-viewport" id="vwrap">
+        <img id="gifImg" src="${gifCompact}" alt="Gameplay Animated Highlight Loop" />
+        <video id="vidEl" style="display: none;" controls loop playsinline poster="${vistaJpg}">
+          <source src="./gameplay_recording.mp4" type="video/mp4" />
+          <source src="./gameplay_recording.webm" type="video/webm" />
+        </video>
       </div>
 
       <div class="stats-row">
@@ -312,30 +324,31 @@ const videoHtml = `<!DOCTYPE html>
   </main>
 
   <script>
-    const v = document.getElementById('vid');
-    const pb = document.getElementById('playBtn');
-    const mb = document.getElementById('muteBtn');
+    const gifImg = document.getElementById('gifImg');
+    const vidEl = document.getElementById('vidEl');
+    const gifBtn = document.getElementById('gifBtn');
+    const vidBtn = document.getElementById('vidBtn');
 
-    function togglePlay() {
-      if (v.paused) { v.play(); pb.innerText = 'Pause'; pb.classList.add('btn-active'); }
-      else { v.pause(); pb.innerText = 'Play'; pb.classList.remove('btn-active'); }
+    function showGif() {
+      gifImg.style.display = 'block';
+      vidEl.style.display = 'none';
+      try { vidEl.pause(); } catch {}
+      gifBtn.classList.add('btn-active');
+      vidBtn.classList.remove('btn-active');
     }
-    function toggleMute() {
-      v.muted = !v.muted;
-      mb.innerText = v.muted ? 'Unmute' : 'Mute';
-    }
-    function setSpeed(s) {
-      v.playbackRate = s;
-      document.querySelectorAll('.video-controls button').forEach(b => {
-        if (b.innerText.includes('x')) b.classList.remove('btn-active');
-      });
-      event.target.classList.add('btn-active');
+
+    function showVid() {
+      gifImg.style.display = 'none';
+      vidEl.style.display = 'block';
+      try { vidEl.play(); } catch {}
+      vidBtn.classList.add('btn-active');
+      gifBtn.classList.remove('btn-active');
     }
   </script>
 </body>
 </html>`;
 
-// 3. MODULE 02: COMPARISON
+// 3. MODULE 02: COMPARISON (~480KB with inlined JPEGs)
 const comparisonHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -386,14 +399,48 @@ const comparisonHtml = `<!DOCTYPE html>
         <button class="btn" onclick="switchTab('basin', this)">Water Basin</button>
       </div>
 
-      <div class="split-box" id="sbox">
+      <!-- Slide: Vista -->
+      <div class="split-box comp-slide" id="slide-vista">
         <span class="badge-pill badge-l">In-Engine Realtime (WebGL2)</span>
         <span class="badge-pill badge-r">Concept Target Benchmark</span>
-        <img id="imgR" class="split-img" src="./retro_industrial_vista.png" alt="Concept Benchmark" />
-        <div class="split-overlay" id="soverlay">
-          <img id="imgL" src="./wreck_yard_vista_playground.png" alt="In-Engine" />
+        <img class="split-img" src="${refVistaJpg}" alt="Concept Benchmark" />
+        <div class="split-overlay">
+          <img src="${vistaJpg}" alt="In-Engine" />
         </div>
-        <div class="split-handle" id="shandle">⟷</div>
+        <div class="split-handle">⟷</div>
+      </div>
+
+      <!-- Slide: Torch -->
+      <div class="split-box comp-slide" id="slide-torch" style="display: none;">
+        <span class="badge-pill badge-l">In-Engine Realtime (WebGL2)</span>
+        <span class="badge-pill badge-r">Concept Target Benchmark</span>
+        <img class="split-img" src="${refTorchJpg}" alt="Concept Benchmark" />
+        <div class="split-overlay">
+          <img src="${torchJpg}" alt="In-Engine" />
+        </div>
+        <div class="split-handle">⟷</div>
+      </div>
+
+      <!-- Slide: Gravity -->
+      <div class="split-box comp-slide" id="slide-gravity" style="display: none;">
+        <span class="badge-pill badge-l">In-Engine Realtime (WebGL2)</span>
+        <span class="badge-pill badge-r">Concept Target Benchmark</span>
+        <img class="split-img" src="${refGravityJpg}" alt="Concept Benchmark" />
+        <div class="split-overlay">
+          <img src="${gravityJpg}" alt="In-Engine" />
+        </div>
+        <div class="split-handle">⟷</div>
+      </div>
+
+      <!-- Slide: Basin -->
+      <div class="split-box comp-slide" id="slide-basin" style="display: none;">
+        <span class="badge-pill badge-l">In-Engine Realtime (WebGL2)</span>
+        <span class="badge-pill badge-r">Concept Target Benchmark</span>
+        <img class="split-img" src="${refBasinJpg}" alt="Concept Benchmark" />
+        <div class="split-overlay">
+          <img src="${jetpackJpg}" alt="In-Engine" />
+        </div>
+        <div class="split-handle">⟷</div>
       </div>
     </div>
 
@@ -404,54 +451,60 @@ const comparisonHtml = `<!DOCTYPE html>
   </main>
 
   <script>
-    const pairs = {
-      vista: { l: './wreck_yard_vista_playground.png', r: './retro_industrial_vista.png' },
-      torch: { l: './wreck_yard_torch_cutter.png', r: './retro_torch_slicing.png' },
-      gravity: { l: './wreck_yard_gravity_gun.png', r: './retro_gravity_gun.png' },
-      basin: { l: './wreck_yard_jetpack_aerial.png', r: './retro_water_basin.png' },
-    };
-
     function switchTab(k, btn) {
       document.querySelectorAll('.tab-pills button').forEach(b => b.classList.remove('btn-active'));
       btn.classList.add('btn-active');
-      document.getElementById('imgL').src = pairs[k].l;
-      document.getElementById('imgR').src = pairs[k].r;
+      document.querySelectorAll('.comp-slide').forEach(s => s.style.display = 'none');
+      const activeSlide = document.getElementById('slide-' + k);
+      if (activeSlide) {
+        activeSlide.style.display = 'block';
+        initSlider(activeSlide);
+      }
+    }
+
+    function initSlider(slide) {
+      const overlay = slide.querySelector('.split-overlay');
+      const handle = slide.querySelector('.split-handle');
+      const imgL = overlay.querySelector('img');
+
+      function setPct(p) {
+        p = Math.max(0, Math.min(100, p));
+        overlay.style.width = p + '%';
+        handle.style.left = p + '%';
+        if (slide.clientWidth > 0) imgL.style.width = slide.clientWidth + 'px';
+      }
+
       setPct(50);
+
+      let dragging = false;
+      function onMove(e) {
+        if (!dragging) return;
+        const rect = slide.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        setPct(((clientX - rect.left) / rect.width) * 100);
+      }
+
+      slide.onmousedown = (e) => { dragging = true; onMove(e); };
+      slide.ontouchstart = (e) => { dragging = true; onMove(e); };
+      window.onmousemove = onMove;
+      window.ontouchmove = onMove;
+      window.onmouseup = () => dragging = false;
+      window.ontouchend = () => dragging = false;
     }
 
-    const box = document.getElementById('sbox');
-    const overlay = document.getElementById('soverlay');
-    const handle = document.getElementById('shandle');
-    const imgL = document.getElementById('imgL');
-
-    let dragging = false;
-    function setPct(p) {
-      p = Math.max(0, Math.min(100, p));
-      overlay.style.width = p + '%';
-      handle.style.left = p + '%';
-      if (box.clientWidth > 0) imgL.style.width = box.clientWidth + 'px';
-    }
-    window.addEventListener('resize', () => setPct(50));
-    setTimeout(() => setPct(50), 50);
-
-    function onMove(e) {
-      if (!dragging) return;
-      const rect = box.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      setPct(((clientX - rect.left) / rect.width) * 100);
-    }
-
-    box.addEventListener('mousedown', (e) => { dragging = true; onMove(e); });
-    box.addEventListener('touchstart', (e) => { dragging = true; onMove(e); }, { passive: true });
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('touchmove', onMove, { passive: true });
-    window.addEventListener('mouseup', () => dragging = false);
-    window.addEventListener('touchend', () => dragging = false);
+    document.querySelectorAll('.comp-slide').forEach(s => {
+      if (s.style.display !== 'none') initSlider(s);
+    });
+    window.addEventListener('resize', () => {
+      document.querySelectorAll('.comp-slide').forEach(s => {
+        if (s.style.display !== 'none') initSlider(s);
+      });
+    });
   </script>
 </body>
 </html>`;
 
-// 4. MODULE 03: WEAPONS
+// 4. MODULE 03: WEAPONS (~420KB with inlined JPEGs)
 const weaponsHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -484,7 +537,7 @@ const weaponsHtml = `<!DOCTYPE html>
     <div class="tool-grid">
       <!-- Plasma Torch -->
       <div class="tool-card">
-        <img class="tool-thumb" src="./wreck_yard_torch_cutter.png" alt="Plasma Torch" />
+        <img class="tool-thumb" src="${torchJpg}" alt="Plasma Torch" />
         <div class="tool-body">
           <div class="tool-hdr">
             <h2 class="tool-name">Plasma Torch</h2>
@@ -503,7 +556,7 @@ const weaponsHtml = `<!DOCTYPE html>
 
       <!-- Gravity Gun -->
       <div class="tool-card">
-        <img class="tool-thumb" src="./wreck_yard_gravity_gun.png" alt="Gravity Gun" />
+        <img class="tool-thumb" src="${gravityJpg}" alt="Gravity Gun" />
         <div class="tool-body">
           <div class="tool-hdr">
             <h2 class="tool-name">Gravity Gun</h2>
@@ -522,7 +575,7 @@ const weaponsHtml = `<!DOCTYPE html>
 
       <!-- Jetpack -->
       <div class="tool-card">
-        <img class="tool-thumb" src="./wreck_yard_jetpack_aerial.png" alt="Jetpack Aerial" />
+        <img class="tool-thumb" src="${jetpackJpg}" alt="Jetpack Aerial" />
         <div class="tool-body">
           <div class="tool-hdr">
             <h2 class="tool-name">Industrial Jetpack</h2>
@@ -548,7 +601,7 @@ const weaponsHtml = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// 5. MODULE 04: PLAYGROUND
+// 5. MODULE 04: PLAYGROUND (~180KB with inlined JPEG)
 const playgroundHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -573,7 +626,7 @@ const playgroundHtml = `<!DOCTYPE html>
     </div>
 
     <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 0.5rem;">
-      <img src="./wreck_yard_vista_playground.png" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;" alt="Playground Overview" />
+      <img src="${vistaJpg}" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;" alt="Playground Overview" />
     </div>
 
     <div class="play-grid">
@@ -606,7 +659,7 @@ const playgroundHtml = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// 6. MODULE 05: TELEMETRY
+// 6. MODULE 05: TELEMETRY (~9KB)
 const telemetryHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -704,27 +757,14 @@ const pages = [
   { name: '05-telemetry.html', content: telemetryHtml },
 ];
 
-console.log('Writing modular lightweight pages...');
+console.log('Writing modular pages with embedded media...');
 for (const p of pages) {
   const bPath = path.join(brainDir, p.name);
   const pubPath = path.join(publicShowcaseDir, p.name);
 
   fs.writeFileSync(bPath, p.content, 'utf-8');
   fs.writeFileSync(pubPath, p.content, 'utf-8');
-  console.log(`Wrote ${p.name} (${(p.content.length / 1024).toFixed(1)} KB)`);
+  console.log(`Wrote ${p.name}: ${(p.content.length / 1024).toFixed(1)} KB`);
 }
 
-// Also overwrite gameplay-showcase.html in brainDir with a redirect or lightweight wrapper so existing links work
-const redirectHtml = `<!DOCTYPE html>
-<html>
-<head>
-  <meta http-equiv="refresh" content="0; url=./index.html" />
-  <title>Redirecting to Showcase Hub...</title>
-</head>
-<body style="background:#0a0d10;color:#fff;font-family:sans-serif;padding:2rem;">
-  <p>Redirecting to <a href="./index.html" style="color:#a3e635;">Wreck Yard Showcase Hub</a>...</p>
-</body>
-</html>`;
-fs.writeFileSync(path.join(brainDir, 'gameplay-showcase.html'), redirectHtml, 'utf-8');
-fs.writeFileSync(path.join(publicShowcaseDir, 'gameplay-showcase.html'), redirectHtml, 'utf-8');
-console.log('Updated gameplay-showcase.html redirect wrapper.');
+console.log('All modular pages built successfully!');
