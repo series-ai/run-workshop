@@ -43,27 +43,28 @@ async function captureScreen(page, filename) {
     console.log(`Saved screenshot: ${filename}`);
     return outPath;
   }
-  await page.screenshot({ path: outPath, timeout: 2000 });
-  console.log(`Saved fallback screenshot: ${filename}`);
-  return outPath;
+  throw new Error(`Failed to capture screenshot for ${filename}`);
 }
 
 async function main() {
   try {
     await waitForServer('http://127.0.0.1:4398');
-    console.log('Preview server ready! Launching Chromium...');
+    console.log('Preview server ready! Launching Google Chrome (channel: chrome)...');
 
     const browser = await chromium.launch({
+      channel: 'chrome',
       headless: true,
-      args: ['--use-gl=angle', '--use-angle=metal', '--enable-webgl', '--no-sandbox'],
+      args: [
+        '--enable-webgl',
+        '--no-sandbox',
+        '--disable-background-timer-throttling',
+        '--disable-renderer-backgrounding',
+        '--force-device-scale-factor=1',
+      ],
     });
 
     const context = await browser.newContext({
       viewport: { width: 1280, height: 720 },
-      recordVideo: {
-        dir: videosDir,
-        size: { width: 1280, height: 720 },
-      },
     });
 
     const page = await context.newPage();
@@ -85,8 +86,13 @@ async function main() {
     }
     if (!isLive) throw new Error('Live session did not become active within 15s');
 
-    console.log('Live session confirmed! Letting simulation warm up for 1.5s...');
+    console.log('Live session confirmed! Letting WebGL & physics warm up for 1.5s...');
     await page.waitForTimeout(1500);
+
+    // ==========================================
+    // PHASE 1: HIGH-RES SCREENSHOT CAPTURES
+    // ==========================================
+    console.log('--- PHASE 1: CAPTURING HIGH-RES SCREENSHOTS ---');
 
     // 1. Capture Yard Vista Overview
     console.log('Capturing: Vista overview...');
@@ -168,59 +174,6 @@ async function main() {
     });
     await page.waitForTimeout(600);
 
-    // 5b. Navigate to Buggy and Mount
-    console.log('Navigating player towards Buggy staging pad...');
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ moveX: 1, moveZ: 0.15, jetpack: true });
-      }
-      if (typeof win.__SET_LOOK_ANGLES__ === 'function') {
-        win.__SET_LOOK_ANGLES__(-1.42, -0.15);
-      }
-    });
-    await page.waitForTimeout(2400);
-
-    // Mount buggy with interaction key (secondary)
-    console.log('Mounting Buggy with interaction key...');
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ moveX: 0, moveZ: 0, jetpack: false, secondary: true });
-      }
-    });
-    await page.waitForTimeout(400);
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ secondary: false });
-      }
-    });
-    await page.waitForTimeout(600);
-
-    // Capture Cockpit View when Seated
-    console.log('Capturing: Buggy Cockpit view while driving...');
-    await captureScreen(page, 'wreck_yard_buggy_cockpit.png');
-
-    // Drive forward and steer!
-    console.log('Driving buggy forward with throttle and steering...');
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ moveZ: 1, moveX: -0.4 });
-      }
-    });
-    await page.waitForTimeout(1400);
-
-    // Stop buggy driving
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ moveZ: 0, moveX: 0 });
-      }
-    });
-    await page.waitForTimeout(500);
-
     // 6. Focus Shot: Buggy Vehicle & Tire Barriers (Player-Sized Scale)
     console.log('Capturing: Buggy vehicle & tire barrier sector...');
     await page.evaluate(() => {
@@ -243,37 +196,204 @@ async function main() {
     await page.waitForTimeout(800);
     await captureScreen(page, 'wreck_yard_tower_containers.png');
 
-    // Reset camera
+    // Reset camera for Buggy Mount
     await page.evaluate(() => {
       const win = window;
       if (typeof win.__SET_CAMERA_OVERRIDE__ === 'function') {
         win.__SET_CAMERA_OVERRIDE__(null, null);
       }
     });
+    await page.waitForTimeout(400);
+
+    // Navigate to Buggy and Mount for Cockpit Shot
+    console.log('Navigating player towards Buggy staging pad...');
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ moveX: 1, moveZ: 0.15, jetpack: true });
+      }
+      if (typeof win.__SET_LOOK_ANGLES__ === 'function') {
+        win.__SET_LOOK_ANGLES__(-1.42, -0.15);
+      }
+    });
+    await page.waitForTimeout(2200);
+
+    // Mount buggy with interaction key (secondary)
+    console.log('Mounting Buggy with interaction key...');
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ moveX: 0, moveZ: 0, jetpack: false, secondary: true });
+      }
+    });
+    await page.waitForTimeout(400);
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ secondary: false });
+      }
+    });
     await page.waitForTimeout(600);
 
-    console.log('Closing page to finalize video recording...');
-    const videoObj = page.video();
+    // Capture Cockpit View when Seated
+    console.log('Capturing: Buggy Cockpit view while driving...');
+    await captureScreen(page, 'wreck_yard_buggy_cockpit.png');
+
+    // Dismount Buggy before starting recorded gameplay loop
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ secondary: true });
+      }
+    });
+    await page.waitForTimeout(400);
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ secondary: false });
+      }
+    });
+    await page.waitForTimeout(600);
+
+    // ==========================================
+    // PHASE 2: 24 FPS CONTINUOUS GAMEPLAY LOOP RECORDING
+    // ==========================================
+    console.log('--- PHASE 2: STARTING 24 FPS CONTINUOUS GAMEPLAY RECORDING ---');
+    await page.evaluate(() => {
+      const canvas = document.querySelector('canvas');
+      if (!canvas) throw new Error('Canvas element not found for recording');
+      const stream = canvas.captureStream(24);
+      let mimeType = 'video/webm;codecs=vp9';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
+          ? 'video/webm;codecs=vp8'
+          : 'video/webm';
+      }
+      const recorder = new MediaRecorder(stream, {
+        mimeType,
+        videoBitsPerSecond: 6_000_000,
+      });
+      window._recordedChunks = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) window._recordedChunks.push(e.data);
+      };
+      recorder.start(100);
+      window._mediaRecorder = recorder;
+    });
+
+    console.log('Recording: Plasma torch slice action...');
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ tool: 'torch', pressed: true });
+      }
+      if (typeof win.__SET_LOOK_ANGLES__ === 'function') {
+        win.__SET_LOOK_ANGLES__(0.05, -0.2);
+      }
+    });
+    await page.waitForTimeout(2000);
+
+    console.log('Recording: Gravity Gun tractor levitation...');
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ tool: 'hand', pressed: true });
+      }
+      if (typeof win.__SET_LOOK_ANGLES__ === 'function') {
+        win.__SET_LOOK_ANGLES__(-0.35, -0.1);
+      }
+    });
+    await page.waitForTimeout(2200);
+
+    console.log('Recording: Jetpack flight towards buggy...');
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ pressed: false, jetpack: true, moveZ: 1 });
+      }
+      if (typeof win.__SET_LOOK_ANGLES__ === 'function') {
+        win.__SET_LOOK_ANGLES__(-1.4, -0.2);
+      }
+    });
+    await page.waitForTimeout(2000);
+
+    console.log('Recording: Mounting Buggy...');
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ moveZ: 0, jetpack: false, secondary: true });
+      }
+    });
+    await page.waitForTimeout(400);
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ secondary: false });
+      }
+    });
+    await page.waitForTimeout(600);
+
+    console.log('Recording: Driving Buggy at speed with steering...');
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ moveZ: 1, moveX: -0.3 });
+      }
+    });
+    await page.waitForTimeout(3000);
+
+    // Stop buggy
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ moveZ: 0, moveX: 0 });
+      }
+    });
+    await page.waitForTimeout(500);
+
+    console.log('Stopping 24 FPS canvas stream recorder...');
+    const webmBase64 = await page.evaluate(async () => {
+      return new Promise((resolve, reject) => {
+        const recorder = window._mediaRecorder;
+        if (!recorder || recorder.state === 'inactive') return resolve(null);
+        recorder.onstop = () => {
+          const blob = new Blob(window._recordedChunks, { type: 'video/webm' });
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const res = reader.result;
+            if (typeof res === 'string') {
+              resolve(res.replace(/^data:video\/webm;base64,/, ''));
+            } else {
+              resolve(null);
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        };
+        recorder.stop();
+      });
+    });
+
+    console.log('Closing page...');
     await page.close();
     await context.close();
     await browser.close();
 
     const ffmpegBin = fs.existsSync('/opt/homebrew/bin/ffmpeg') ? '/opt/homebrew/bin/ffmpeg' : 'ffmpeg';
 
-    if (videoObj) {
-      const recordedVideoPath = await videoObj.path();
+    if (webmBase64) {
       const destVideoPath = path.join(brainDir, 'gameplay_recording.webm');
-      fs.copyFileSync(recordedVideoPath, destVideoPath);
-      console.log(`Saved video recording to: ${destVideoPath}`);
+      fs.writeFileSync(destVideoPath, Buffer.from(webmBase64, 'base64'));
+      console.log(`Saved 24 FPS direct GPU canvas recording to: ${destVideoPath}`);
 
-      console.log('Transcoding MP4 video...');
+      console.log('Transcoding 24 FPS MP4 video with libx264...');
       const mp4Path = path.join(brainDir, 'gameplay_recording.mp4');
-      execSync(`"${ffmpegBin}" -y -i "${destVideoPath}" -c:v libx264 -pix_fmt yuv420p -crf 23 "${mp4Path}"`);
-      console.log(`Saved MP4 to: ${mp4Path}`);
+      execSync(`"${ffmpegBin}" -y -i "${destVideoPath}" -vf "setpts=N/(24*TB)" -r 24 -c:v libx264 -pix_fmt yuv420p -preset fast -crf 20 "${mp4Path}"`);
+      console.log(`Saved 24 FPS MP4 to: ${mp4Path}`);
 
-      console.log('Generating compact GIF loop...');
+      console.log('Generating 12 FPS compact GIF loop...');
       const gifCompact = path.join(brainDir, 'gameplay_loop_compact.gif');
-      execSync(`"${ffmpegBin}" -y -ss 00:00:01 -t 6 -i "${destVideoPath}" -vf "fps=10,scale=540:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=48[p];[s1][p]paletteuse=dither=bayer" "${gifCompact}"`);
+      execSync(`"${ffmpegBin}" -y -ss 00:00:01 -t 6 -i "${mp4Path}" -vf "fps=12,scale=540:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=48[p];[s1][p]paletteuse=dither=bayer" "${gifCompact}"`);
       console.log(`Saved compact GIF to: ${gifCompact}`);
     }
 
@@ -300,11 +420,18 @@ async function main() {
 
     console.log('All gameplay captures and showcase build completed successfully!');
   } finally {
-    preview.kill('SIGTERM');
+    try {
+      preview.kill('SIGKILL');
+      execSync('lsof -ti :4398 | xargs kill -9 2>/dev/null || true');
+    } catch {}
+    process.exit(0);
   }
 }
 
 main().catch((err) => {
   console.error('Error running capture:', err);
+  try {
+    execSync('lsof -ti :4398 | xargs kill -9 2>/dev/null || true');
+  } catch {}
   process.exit(1);
 });
