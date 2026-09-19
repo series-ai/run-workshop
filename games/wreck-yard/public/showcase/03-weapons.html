@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wreck Yard // 03 First-Person Tools</title>
+  <style>
+    
+    :root {
+      --bg-base: #0a0d10;
+      --bg-surface: #121820;
+      --bg-card: #18202a;
+      --bg-card-hover: #1f2a37;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-bright: rgba(255, 255, 255, 0.2);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-lime: #a3e635;
+      --accent-lime-dim: rgba(163, 230, 53, 0.15);
+      --accent-cyan: #38bdf8;
+      --accent-cyan-dim: rgba(56, 189, 248, 0.15);
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 4rem;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 13, 16, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+    .brand-logo {
+      width: 26px; height: 26px;
+      background: linear-gradient(135deg, var(--accent-lime), #4d7c0f);
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; color: #0c1206; font-size: 13px;
+    }
+    .brand-title { font-weight: 700; font-size: 1rem; color: #fff; letter-spacing: 0.04em; }
+    .nav-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+    .nav-tab {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .nav-tab:hover { color: #fff; background: var(--bg-card); }
+    .nav-tab.active {
+      color: var(--accent-lime);
+      background: var(--bg-card);
+      border-color: rgba(163, 230, 53, 0.4);
+      font-weight: 600;
+    }
+    main { max-width: 1100px; margin: 2rem auto; padding: 0 1.25rem; display: flex; flex-direction: column; gap: 2rem; }
+    .section-tag {
+      font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--accent-lime); display: block; margin-bottom: 0.25rem;
+    }
+    .section-title { font-size: 1.5rem; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+    .section-desc { color: var(--text-muted); font-size: 0.92rem; margin-top: 0.25rem; max-width: 780px; }
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      overflow: hidden;
+      padding: 1.25rem;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+    }
+    .btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { background: var(--bg-card-hover); border-color: var(--border-bright); }
+    .btn-active { background: var(--accent-lime); color: #0b1106; border-color: var(--accent-lime); font-weight: 600; }
+    .nav-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);
+    }
+
+    .tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; }
+    .tool-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden; }
+    .tool-thumb { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
+    .tool-body { padding: 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+    .tool-hdr { display: flex; justify-content: space-between; align-items: center; }
+    .tool-name { font-size: 1.1rem; font-weight: 700; color: #fff; }
+    .tool-key { font-family: var(--font-mono); font-size: 0.72rem; padding: 0.15rem 0.5rem; border-radius: 4px; background: rgba(163,230,53,0.15); color: var(--accent-lime); border: 1px solid rgba(163,230,53,0.3); }
+    .tool-bullets { list-style: none; margin-top: 0.4rem; display: flex; flex-direction: column; gap: 0.3rem; }
+    .tool-bullets li { font-size: 0.82rem; color: var(--text-muted); display: flex; gap: 0.4rem; }
+    .tool-bullets li::before { content: "▹"; color: var(--accent-lime); }
+  </style>
+</head>
+<body>
+  
+  <header>
+    <a href="./index.html" class="brand">
+      <div class="brand-logo">WY</div>
+      <div class="brand-title">Wreck Yard</div>
+    </a>
+    <nav class="nav-tabs">
+      <a href="./index.html" class="nav-tab ">Hub</a>
+      <a href="./01-video.html" class="nav-tab ">01 Video</a>
+      <a href="./02-comparison.html" class="nav-tab ">02 Comparison</a>
+      <a href="./03-weapons.html" class="nav-tab active">03 Tools</a>
+      <a href="./04-playground.html" class="nav-tab ">04 Playground</a>
+      <a href="./05-telemetry.html" class="nav-tab ">05 Telemetry</a>
+    </nav>
+  </header>
+  <main>
+    <div>
+      <span class="section-tag">Module 03</span>
+      <h1 class="section-title">First-Person Weapon Rig</h1>
+      <p class="section-desc">Deterministic tool interactions with laser voxel cutting, magnetic levitation, and aerial thrust.</p>
+    </div>
+
+    <div class="tool-grid">
+      <!-- Plasma Torch -->
+      <div class="tool-card">
+        <img class="tool-thumb" src="./wreck_yard_torch_cutter.png" alt="Plasma Torch" />
+        <div class="tool-body">
+          <div class="tool-hdr">
+            <h2 class="tool-name">Plasma Torch</h2>
+            <span class="tool-key">Key 2 / LMB</span>
+          </div>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">
+            Dual-nozzle heavy cutting laser with animated induction coils, volumetric sparks, and real-time voxel hull bisection.
+          </p>
+          <ul class="tool-bullets">
+            <li>Bisects rigid voxel structures along raycast plane</li>
+            <li>Spawns severed segments as free dynamic bodies</li>
+            <li>Heat shroud color modulation and molten embers</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Gravity Gun -->
+      <div class="tool-card">
+        <img class="tool-thumb" src="./wreck_yard_gravity_gun.png" alt="Gravity Gun" />
+        <div class="tool-body">
+          <div class="tool-hdr">
+            <h2 class="tool-name">Gravity Gun</h2>
+            <span class="tool-key">Key 1 / LMB</span>
+          </div>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">
+            Three-prong magnetic tractor beam with spinning rotor core. Levitates, locks orientation, and flings dynamic objects.
+          </p>
+          <ul class="tool-bullets">
+            <li>Rapier 3D joint spring-damper constraint</li>
+            <li>Capped linear and angular momentum targeting</li>
+            <li>High-impulse release fling vector on throw</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Jetpack -->
+      <div class="tool-card">
+        <img class="tool-thumb" src="./wreck_yard_jetpack_aerial.png" alt="Jetpack Aerial" />
+        <div class="tool-body">
+          <div class="tool-hdr">
+            <h2 class="tool-name">Industrial Jetpack</h2>
+            <span class="tool-key">Spacebar (Hold)</span>
+          </div>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">
+            Dual thruster nacelles providing vertical impulse thrust with fuel consumption, cooldown recharge, and camera tilt.
+          </p>
+          <ul class="tool-bullets">
+            <li>Impulse vector integration with ground detection</li>
+            <li>Tactical HUD fuel gauge with overheat indicator</li>
+            <li>Allows aerial navigation over gantry towers</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-footer">
+      <a href="./02-comparison.html" class="btn">← Prev: 02 Visual Comparison</a>
+      <a href="./04-playground.html" class="btn btn-active">Next: 04 Physics Playground →</a>
+    </div>
+  </main>
+</body>
+</html>

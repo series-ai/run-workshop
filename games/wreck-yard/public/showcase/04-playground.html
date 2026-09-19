@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wreck Yard // 04 Physics Playground</title>
+  <style>
+    
+    :root {
+      --bg-base: #0a0d10;
+      --bg-surface: #121820;
+      --bg-card: #18202a;
+      --bg-card-hover: #1f2a37;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-bright: rgba(255, 255, 255, 0.2);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-lime: #a3e635;
+      --accent-lime-dim: rgba(163, 230, 53, 0.15);
+      --accent-cyan: #38bdf8;
+      --accent-cyan-dim: rgba(56, 189, 248, 0.15);
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 4rem;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 13, 16, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+    .brand-logo {
+      width: 26px; height: 26px;
+      background: linear-gradient(135deg, var(--accent-lime), #4d7c0f);
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; color: #0c1206; font-size: 13px;
+    }
+    .brand-title { font-weight: 700; font-size: 1rem; color: #fff; letter-spacing: 0.04em; }
+    .nav-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+    .nav-tab {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .nav-tab:hover { color: #fff; background: var(--bg-card); }
+    .nav-tab.active {
+      color: var(--accent-lime);
+      background: var(--bg-card);
+      border-color: rgba(163, 230, 53, 0.4);
+      font-weight: 600;
+    }
+    main { max-width: 1100px; margin: 2rem auto; padding: 0 1.25rem; display: flex; flex-direction: column; gap: 2rem; }
+    .section-tag {
+      font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--accent-lime); display: block; margin-bottom: 0.25rem;
+    }
+    .section-title { font-size: 1.5rem; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+    .section-desc { color: var(--text-muted); font-size: 0.92rem; margin-top: 0.25rem; max-width: 780px; }
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      overflow: hidden;
+      padding: 1.25rem;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+    }
+    .btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { background: var(--bg-card-hover); border-color: var(--border-bright); }
+    .btn-active { background: var(--accent-lime); color: #0b1106; border-color: var(--accent-lime); font-weight: 600; }
+    .nav-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);
+    }
+
+    .play-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+    .play-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.1rem; }
+    .play-title { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem; }
+    .play-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.45; }
+  </style>
+</head>
+<body>
+  
+  <header>
+    <a href="./index.html" class="brand">
+      <div class="brand-logo">WY</div>
+      <div class="brand-title">Wreck Yard</div>
+    </a>
+    <nav class="nav-tabs">
+      <a href="./index.html" class="nav-tab ">Hub</a>
+      <a href="./01-video.html" class="nav-tab ">01 Video</a>
+      <a href="./02-comparison.html" class="nav-tab ">02 Comparison</a>
+      <a href="./03-weapons.html" class="nav-tab ">03 Tools</a>
+      <a href="./04-playground.html" class="nav-tab active">04 Playground</a>
+      <a href="./05-telemetry.html" class="nav-tab ">05 Telemetry</a>
+    </nav>
+  </header>
+  <main>
+    <div>
+      <span class="section-tag">Module 04</span>
+      <h1 class="section-title">Physics Toys & Compound Buggy</h1>
+      <p class="section-desc">Interactive environmental systems simulating fluid dynamics, compound vehicles, and joint constraints.</p>
+    </div>
+
+    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 0.5rem;">
+      <img src="./wreck_yard_vista_playground.png" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;" alt="Playground Overview" />
+    </div>
+
+    <div class="play-grid">
+      <div class="play-card">
+        <h2 class="play-title">🚜 Drivable Salvage Buggy</h2>
+        <p class="play-desc">4-wheel compound suspension vehicle with chassis collider, wheel raycasts, steering kinematics, and mount/dismount controls.</p>
+      </div>
+
+      <div class="play-card">
+        <h2 class="play-title">🌊 Archimedes Fluid Basin</h2>
+        <p class="play-desc">Dual-tier reservoir calculating submerged body displacement, buoyant lift forces, and viscous drag for floating crates.</p>
+      </div>
+
+      <div class="play-card">
+        <h2 class="play-title">⚖️ Seesaw Fulcrum</h2>
+        <p class="play-desc">Hinged balance plank responding to dynamic ballast weight. Stacking salvage crates on either end shifts torque dynamically.</p>
+      </div>
+
+      <div class="play-card">
+        <h2 class="play-title">🎳 Gravity Ball Hopper</h2>
+        <p class="play-desc">Overhead funnel dropper filled with heavy bowling spheres and salvage pins for domino-style kinetic knockdowns.</p>
+      </div>
+    </div>
+
+    <div class="nav-footer">
+      <a href="./03-weapons.html" class="btn">← Prev: 03 First-Person Tools</a>
+      <a href="./05-telemetry.html" class="btn btn-active">Next: 05 Verification Telemetry →</a>
+    </div>
+  </main>
+</body>
+</html>

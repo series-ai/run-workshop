@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wreck Yard // 01 Video Player</title>
+  <style>
+    
+    :root {
+      --bg-base: #0a0d10;
+      --bg-surface: #121820;
+      --bg-card: #18202a;
+      --bg-card-hover: #1f2a37;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-bright: rgba(255, 255, 255, 0.2);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-lime: #a3e635;
+      --accent-lime-dim: rgba(163, 230, 53, 0.15);
+      --accent-cyan: #38bdf8;
+      --accent-cyan-dim: rgba(56, 189, 248, 0.15);
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 4rem;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 13, 16, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+    .brand-logo {
+      width: 26px; height: 26px;
+      background: linear-gradient(135deg, var(--accent-lime), #4d7c0f);
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; color: #0c1206; font-size: 13px;
+    }
+    .brand-title { font-weight: 700; font-size: 1rem; color: #fff; letter-spacing: 0.04em; }
+    .nav-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+    .nav-tab {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .nav-tab:hover { color: #fff; background: var(--bg-card); }
+    .nav-tab.active {
+      color: var(--accent-lime);
+      background: var(--bg-card);
+      border-color: rgba(163, 230, 53, 0.4);
+      font-weight: 600;
+    }
+    main { max-width: 1100px; margin: 2rem auto; padding: 0 1.25rem; display: flex; flex-direction: column; gap: 2rem; }
+    .section-tag {
+      font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--accent-lime); display: block; margin-bottom: 0.25rem;
+    }
+    .section-title { font-size: 1.5rem; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+    .section-desc { color: var(--text-muted); font-size: 0.92rem; margin-top: 0.25rem; max-width: 780px; }
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      overflow: hidden;
+      padding: 1.25rem;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+    }
+    .btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { background: var(--bg-card-hover); border-color: var(--border-bright); }
+    .btn-active { background: var(--accent-lime); color: #0b1106; border-color: var(--accent-lime); font-weight: 600; }
+    .nav-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);
+    }
+
+    .video-viewport {
+      position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000;
+      border-radius: 8px; overflow: hidden; border: 1px solid var(--border-bright);
+    }
+    .video-viewport video, .video-viewport img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .video-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.75rem; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-top: 1.25rem; }
+    .stat-box { background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 0.5rem 0.75rem; }
+    .stat-label { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; }
+    .stat-val { font-family: var(--font-mono); font-size: 1.1rem; color: var(--accent-lime); font-weight: 700; }
+  </style>
+</head>
+<body>
+  
+  <header>
+    <a href="./index.html" class="brand">
+      <div class="brand-logo">WY</div>
+      <div class="brand-title">Wreck Yard</div>
+    </a>
+    <nav class="nav-tabs">
+      <a href="./index.html" class="nav-tab ">Hub</a>
+      <a href="./01-video.html" class="nav-tab active">01 Video</a>
+      <a href="./02-comparison.html" class="nav-tab ">02 Comparison</a>
+      <a href="./03-weapons.html" class="nav-tab ">03 Tools</a>
+      <a href="./04-playground.html" class="nav-tab ">04 Playground</a>
+      <a href="./05-telemetry.html" class="nav-tab ">05 Telemetry</a>
+    </nav>
+  </header>
+  <main>
+    <div>
+      <span class="section-tag">Module 01</span>
+      <h1 class="section-title">Live 60 FPS Gameplay Recording</h1>
+      <p class="section-desc">Uncut capture from live 4-slot Syncplay session in Chromium WebGL2.</p>
+    </div>
+
+    <div class="card">
+      <div class="video-viewport" id="vwrap">
+        <video id="vid" autoplay loop muted playsinline poster="./wreck_yard_vista_playground.png">
+          <source src="./gameplay_recording.mp4" type="video/mp4" />
+          <source src="./gameplay_recording.webm" type="video/webm" />
+          <img src="./gameplay_loop.gif" alt="Fallback animated loop" />
+        </video>
+      </div>
+
+      <div class="video-controls">
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-active" id="playBtn" onclick="togglePlay()">Pause</button>
+          <button class="btn" id="muteBtn" onclick="toggleMute()">Unmute</button>
+          <button class="btn" onclick="document.getElementById('vid').currentTime = 0">↺ Replay</button>
+        </div>
+        <div style="display: flex; gap: 0.4rem; align-items: center;">
+          <span style="font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">Speed:</span>
+          <button class="btn" onclick="setSpeed(0.5)">0.5x</button>
+          <button class="btn btn-active" id="s1" onclick="setSpeed(1)">1.0x</button>
+          <button class="btn" onclick="setSpeed(2)">2.0x</button>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-label">Frame Rate</div><div class="stat-val">60 FPS</div></div>
+        <div class="stat-box"><div class="stat-label">Fixed Physics</div><div class="stat-val">30 Hz</div></div>
+        <div class="stat-box"><div class="stat-label">Syncplay Mode</div><div class="stat-val">Deterministic</div></div>
+        <div class="stat-box"><div class="stat-label">Dynamic Bodies</div><div class="stat-val">17 Active</div></div>
+      </div>
+    </div>
+
+    <div class="nav-footer">
+      <a href="./index.html" class="btn">← Back to Hub</a>
+      <a href="./02-comparison.html" class="btn btn-active">Next: 02 Visual Comparison →</a>
+    </div>
+  </main>
+
+  <script>
+    const v = document.getElementById('vid');
+    const pb = document.getElementById('playBtn');
+    const mb = document.getElementById('muteBtn');
+
+    function togglePlay() {
+      if (v.paused) { v.play(); pb.innerText = 'Pause'; pb.classList.add('btn-active'); }
+      else { v.pause(); pb.innerText = 'Play'; pb.classList.remove('btn-active'); }
+    }
+    function toggleMute() {
+      v.muted = !v.muted;
+      mb.innerText = v.muted ? 'Unmute' : 'Mute';
+    }
+    function setSpeed(s) {
+      v.playbackRate = s;
+      document.querySelectorAll('.video-controls button').forEach(b => {
+        if (b.innerText.includes('x')) b.classList.remove('btn-active');
+      });
+      event.target.classList.add('btn-active');
+    }
+  </script>
+</body>
+</html>

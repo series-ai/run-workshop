@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wreck Yard // 02 Target Comparison</title>
+  <style>
+    
+    :root {
+      --bg-base: #0a0d10;
+      --bg-surface: #121820;
+      --bg-card: #18202a;
+      --bg-card-hover: #1f2a37;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-bright: rgba(255, 255, 255, 0.2);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-lime: #a3e635;
+      --accent-lime-dim: rgba(163, 230, 53, 0.15);
+      --accent-cyan: #38bdf8;
+      --accent-cyan-dim: rgba(56, 189, 248, 0.15);
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 4rem;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 13, 16, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+    .brand-logo {
+      width: 26px; height: 26px;
+      background: linear-gradient(135deg, var(--accent-lime), #4d7c0f);
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; color: #0c1206; font-size: 13px;
+    }
+    .brand-title { font-weight: 700; font-size: 1rem; color: #fff; letter-spacing: 0.04em; }
+    .nav-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+    .nav-tab {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .nav-tab:hover { color: #fff; background: var(--bg-card); }
+    .nav-tab.active {
+      color: var(--accent-lime);
+      background: var(--bg-card);
+      border-color: rgba(163, 230, 53, 0.4);
+      font-weight: 600;
+    }
+    main { max-width: 1100px; margin: 2rem auto; padding: 0 1.25rem; display: flex; flex-direction: column; gap: 2rem; }
+    .section-tag {
+      font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--accent-lime); display: block; margin-bottom: 0.25rem;
+    }
+    .section-title { font-size: 1.5rem; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+    .section-desc { color: var(--text-muted); font-size: 0.92rem; margin-top: 0.25rem; max-width: 780px; }
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      overflow: hidden;
+      padding: 1.25rem;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+    }
+    .btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { background: var(--bg-card-hover); border-color: var(--border-bright); }
+    .btn-active { background: var(--accent-lime); color: #0b1106; border-color: var(--accent-lime); font-weight: 600; }
+    .nav-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);
+    }
+
+    .split-box {
+      position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px;
+      overflow: hidden; border: 1px solid var(--border-bright); cursor: ew-resize; user-select: none;
+    }
+    .split-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+    .split-overlay {
+      position: absolute; top: 0; left: 0; width: 50%; height: 100%; overflow: hidden;
+      border-right: 2px solid var(--accent-lime); box-shadow: 2px 0 16px rgba(163,230,53,0.6); pointer-events: none;
+    }
+    .split-overlay img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+    .split-handle {
+      position: absolute; top: 50%; left: 50%; width: 36px; height: 36px;
+      background: var(--accent-lime); color: #000; border-radius: 50%; transform: translate(-50%, -50%);
+      display: flex; align-items: center; justify-content: center; font-weight: 900; z-index: 10;
+      box-shadow: 0 0 16px rgba(163,230,53,0.8);
+    }
+    .badge-pill {
+      position: absolute; top: 1rem; padding: 0.3rem 0.65rem; border-radius: 4px;
+      font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; z-index: 5;
+    }
+    .badge-l { left: 1rem; background: rgba(163,230,53,0.9); color: #000; }
+    .badge-r { right: 1rem; background: rgba(18,24,32,0.9); color: #fff; border: 1px solid var(--border-bright); }
+    .tab-pills { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  
+  <header>
+    <a href="./index.html" class="brand">
+      <div class="brand-logo">WY</div>
+      <div class="brand-title">Wreck Yard</div>
+    </a>
+    <nav class="nav-tabs">
+      <a href="./index.html" class="nav-tab ">Hub</a>
+      <a href="./01-video.html" class="nav-tab ">01 Video</a>
+      <a href="./02-comparison.html" class="nav-tab active">02 Comparison</a>
+      <a href="./03-weapons.html" class="nav-tab ">03 Tools</a>
+      <a href="./04-playground.html" class="nav-tab ">04 Playground</a>
+      <a href="./05-telemetry.html" class="nav-tab ">05 Telemetry</a>
+    </nav>
+  </header>
+  <main>
+    <div>
+      <span class="section-tag">Module 02</span>
+      <h1 class="section-title">Visual Benchmark: Target vs In-Engine</h1>
+      <p class="section-desc">Drag the divider horizontally to compare real-time WebGL2 Sobel ink/cel shaders against original concept benchmarks.</p>
+    </div>
+
+    <div class="card">
+      <div class="tab-pills">
+        <button class="btn btn-active" onclick="switchTab('vista', this)">Salvage Vista</button>
+        <button class="btn" onclick="switchTab('torch', this)">Plasma Torch</button>
+        <button class="btn" onclick="switchTab('gravity', this)">Gravity Gun</button>
+        <button class="btn" onclick="switchTab('basin', this)">Water Basin</button>
+      </div>
+
+      <div class="split-box" id="sbox">
+        <span class="badge-pill badge-l">In-Engine Realtime (WebGL2)</span>
+        <span class="badge-pill badge-r">Concept Target Benchmark</span>
+        <img id="imgR" class="split-img" src="./retro_industrial_vista.png" alt="Concept Benchmark" />
+        <div class="split-overlay" id="soverlay">
+          <img id="imgL" src="./wreck_yard_vista_playground.png" alt="In-Engine" />
+        </div>
+        <div class="split-handle" id="shandle">⟷</div>
+      </div>
+    </div>
+
+    <div class="nav-footer">
+      <a href="./01-video.html" class="btn">← Prev: 01 Video Player</a>
+      <a href="./03-weapons.html" class="btn btn-active">Next: 03 First-Person Tools →</a>
+    </div>
+  </main>
+
+  <script>
+    const pairs = {
+      vista: { l: './wreck_yard_vista_playground.png', r: './retro_industrial_vista.png' },
+      torch: { l: './wreck_yard_torch_cutter.png', r: './retro_torch_slicing.png' },
+      gravity: { l: './wreck_yard_gravity_gun.png', r: './retro_gravity_gun.png' },
+      basin: { l: './wreck_yard_jetpack_aerial.png', r: './retro_water_basin.png' },
+    };
+
+    function switchTab(k, btn) {
+      document.querySelectorAll('.tab-pills button').forEach(b => b.classList.remove('btn-active'));
+      btn.classList.add('btn-active');
+      document.getElementById('imgL').src = pairs[k].l;
+      document.getElementById('imgR').src = pairs[k].r;
+      setPct(50);
+    }
+
+    const box = document.getElementById('sbox');
+    const overlay = document.getElementById('soverlay');
+    const handle = document.getElementById('shandle');
+    const imgL = document.getElementById('imgL');
+
+    let dragging = false;
+    function setPct(p) {
+      p = Math.max(0, Math.min(100, p));
+      overlay.style.width = p + '%';
+      handle.style.left = p + '%';
+      if (box.clientWidth > 0) imgL.style.width = box.clientWidth + 'px';
+    }
+    window.addEventListener('resize', () => setPct(50));
+    setTimeout(() => setPct(50), 50);
+
+    function onMove(e) {
+      if (!dragging) return;
+      const rect = box.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      setPct(((clientX - rect.left) / rect.width) * 100);
+    }
+
+    box.addEventListener('mousedown', (e) => { dragging = true; onMove(e); });
+    box.addEventListener('touchstart', (e) => { dragging = true; onMove(e); }, { passive: true });
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('mouseup', () => dragging = false);
+    window.addEventListener('touchend', () => dragging = false);
+  </script>
+</body>
+</html>
