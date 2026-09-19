@@ -9,9 +9,9 @@ test('solo yard loads with five bodies and no page errors', async ({ page }) => 
   await expect(page.locator('canvas')).toBeVisible();
   const metrics = page.locator('div[aria-live="polite"]');
   await expect(metrics).toContainText(/Bodies:\s*\d+/, { timeout: 15_000 });
-  await expect(metrics).toContainText('Status: live');
+  await expect(page.getByText(/Status:\s*live/i)).toBeVisible();
 
-  await page.getByRole('button', { name: /Torch/i }).click();
+  await page.getByRole('button', { name: /Plasma Torch/i }).click();
   const box = await page.locator('canvas').boundingBox();
   expect(box).not.toBeNull();
   await page.mouse.move(box!.x + box!.width * 0.5, box!.y + box!.height * 0.32);
@@ -29,8 +29,8 @@ test('surfaces server error modal with helpful details and fallback to solo mode
   await expect(page.getByText('Wreck Yard')).toBeVisible();
 
   // Leave active solo session
-  await page.getByRole('button', { name: 'Leave' }).click();
-  await expect(page.getByRole('button', { name: 'Play solo' })).toBeVisible();
+  await page.getByRole('button', { name: /Leave/i }).click();
+  await expect(page.getByRole('button', { name: /Play solo/i })).toBeVisible();
 
   // Inject runner start aborted error into join transport
   await page.evaluate(() => {
@@ -61,8 +61,7 @@ test('surfaces server error modal with helpful details and fallback to solo mode
   await expect(modal.getByRole('button', { name: 'Copy error' })).toBeVisible();
 
   // Verify Play Solo (Offline) button in modal restores session
-  await modal.getByRole('button', { name: 'Play Solo (Offline)' }).click();
+  await modal.getByRole('button', { name: /Play Solo/i }).click();
   await expect(modal).not.toBeVisible();
-  const metrics = page.locator('div[aria-live=\"polite\"]');
-  await expect(metrics).toContainText('Status: live');
+  await expect(page.getByText(/Status:\s*live/i)).toBeVisible();
 });

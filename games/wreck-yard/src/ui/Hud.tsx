@@ -4,6 +4,8 @@ import type { UiTool } from '../render/PointerInput';
 
 const panel: React.CSSProperties = {
   position: 'absolute',
+  zIndex: 10,
+  pointerEvents: 'auto',
   background: 'rgba(20, 22, 20, 0.88)',
   color: '#e8ecd8',
   borderRadius: 8,
