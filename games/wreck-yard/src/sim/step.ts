@@ -602,6 +602,26 @@ export function stepYard(state: YardState, inputs: readonly YardInput[]): YardSt
     const grabJoints = createGrabJoints(w);
     w.physics.world.step();
     const latest = w.physics.world.latest();
+
+    // Sync vehicle riders with the post-step vehicle position
+    for (let slot = 0; slot < w.players.length; slot += 1) {
+      const p = w.players[slot];
+      if (p?.ridingVehicle) {
+        const chassis = physicsBodyById(w.physics, 'vehicle-chassis');
+        if (chassis) {
+          w.players[slot] = {
+            ...p,
+            x: chassis.x,
+            y: chassis.y + 0.65,
+            z: chassis.z,
+            vx: chassis.vx,
+            vy: chassis.vy,
+            vz: chassis.vz,
+          };
+        }
+      }
+    }
+
     for (const entry of grabJoints) {
       if (latest.breakEvents.some((event) => event.jointId === entry.joint.id)) {
         w.players[entry.slot] = { ...w.players[entry.slot]!, grab: null };

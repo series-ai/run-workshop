@@ -43,6 +43,7 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
   const localPlayer = render?.players?.find((p) => p.slot === render?.localSlot);
   const fuelPercent = Math.round(localPlayer?.fuel ?? 100);
   const isGrabbing = Boolean(localPlayer?.grabbing);
+  const isRiding = Boolean(localPlayer?.ridingVehicle);
 
   return (
     <>
@@ -53,7 +54,7 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
         </div>
         <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
           {(['hand', 'torch', 'orbit'] as const).map((entry) => (
-            <button key={entry} type="button" style={button(tool === entry)} onClick={() => onTool(entry)} disabled={!live}>
+            <button key={entry} type="button" style={button(tool === entry)} onClick={() => onTool(entry)} disabled={!live || isRiding}>
               {entry === 'hand' ? 'Gravity Gun (1)' : entry === 'torch' ? 'Plasma Torch (2)' : 'Orbit (3)'}
             </button>
           ))}
@@ -205,22 +206,34 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
             position: 'absolute',
             bottom: 16,
             left: 16,
-            background: 'rgba(20, 22, 20, 0.82)',
-            border: '1px solid #3f4836',
-            padding: '8px 12px',
+            background: isRiding ? 'rgba(30, 41, 20, 0.92)' : 'rgba(20, 22, 20, 0.82)',
+            border: isRiding ? '1px solid #84cc16' : '1px solid #3f4836',
+            padding: '8px 14px',
             borderRadius: 6,
             fontSize: 11,
             color: '#8c967d',
             backdropFilter: 'blur(4px)',
             pointerEvents: 'none',
+            boxShadow: isRiding ? '0 0 14px rgba(132, 204, 22, 0.25)' : 'none',
           }}
         >
-          <span style={{ color: '#9bbc0f', fontWeight: 600 }}>[Click Canvas]</span> Look &bull;{' '}
-          <span style={{ color: '#e8ecd8' }}>[WASD]</span> Move &bull;{' '}
-          <span style={{ color: '#e8ecd8' }}>[Space]</span> Jetpack &bull;{' '}
-          <span style={{ color: '#e8ecd8' }}>[LMB]</span> {tool === 'hand' ? 'Tractor Beam' : 'Carve Voxel'} &bull;{' '}
-          <span style={{ color: '#e8ecd8' }}>[RMB]</span> Punt &bull;{' '}
-          <span style={{ color: '#e8ecd8' }}>[1 / 2 / 3]</span> Tool
+          {isRiding ? (
+            <div>
+              <span style={{ color: '#a3e635', fontWeight: 700, marginRight: 8 }}>BUGGY COCKPIT ACTIVE</span>
+              <span style={{ color: '#e8ecd8' }}>[W / S]</span> Accelerate / Reverse &bull;{' '}
+              <span style={{ color: '#e8ecd8' }}>[A / D]</span> Steer Wheels &bull;{' '}
+              <span style={{ color: '#facc15', fontWeight: 600 }}>[Space]</span> Dismount Buggy
+            </div>
+          ) : (
+            <div>
+              <span style={{ color: '#9bbc0f', fontWeight: 600 }}>[Click Canvas]</span> Look &bull;{' '}
+              <span style={{ color: '#e8ecd8' }}>[WASD]</span> Move &bull;{' '}
+              <span style={{ color: '#e8ecd8' }}>[Space]</span> Jetpack &bull;{' '}
+              <span style={{ color: '#e8ecd8' }}>[LMB]</span> {tool === 'hand' ? 'Tractor Beam' : 'Carve Voxel'} &bull;{' '}
+              <span style={{ color: '#e8ecd8' }}>[RMB]</span> Punt / Enter Buggy &bull;{' '}
+              <span style={{ color: '#e8ecd8' }}>[1 / 2 / 3]</span> Tool
+            </div>
+          )}
         </div>
       )}
     </>

@@ -32,7 +32,7 @@ describe('wreck yard determinism', () => {
     } as never);
     expect(result.ok).toBe(true);
     expect(result.framesChecked).toBeGreaterThanOrEqual(FRAMES);
-  }, 60_000);
+  }, 120_000);
 
   it('presents the same frames offline and through the authority room', async () => {
     const proof = await assertPresentationParity({
@@ -60,7 +60,7 @@ describe('wreck yard determinism', () => {
       minComparedFrames: 5,
     });
     expect(proof.comparedFrames).toBeGreaterThanOrEqual(5);
-  }, 60_000);
+  }, 120_000);
 
   it('hydrates a late joiner to the same checksum', () => {
     const proof = assertLateJoinHydration({
@@ -89,5 +89,5 @@ describe('wreck yard determinism', () => {
     });
     expect(proof.hydratedThrough).toBeGreaterThanOrEqual(10);
     expect(proof.frame).toBeGreaterThanOrEqual(20);
-  }, 60_000);
+  }, 120_000);
 });

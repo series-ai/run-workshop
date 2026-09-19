@@ -97,11 +97,23 @@ function makeBowlingPin(): VolumePreset {
 }
 
 function makeBuggyChassis(): VolumePreset {
-  const dims = { x: 20, y: 6, z: 26 };
+  const dims = { x: 20, y: 12, z: 28 };
   const voxels = makeEmptyVoxelField(dims);
-  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 19, y: 3, z: 25 }, 3);
-  stampBox(voxels, dims, { x: 2, y: 3, z: 4 }, { x: 17, y: 5, z: 16 }, 4);
-  stampBox(voxels, dims, { x: 4, y: 3, z: 6 }, { x: 15, y: 5, z: 14 }, 0);
+  // Heavy floor pan and frame sills
+  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 19, y: 2, z: 27 }, 3);
+  // Front bull bar and radiator shield
+  stampBox(voxels, dims, { x: 2, y: 2, z: 0 }, { x: 17, y: 5, z: 6 }, 4);
+  // Exposed rear engine block
+  stampBox(voxels, dims, { x: 5, y: 2, z: 20 }, { x: 14, y: 7, z: 26 }, 3);
+  // Roll cage corner pillars (A and B pillars)
+  stampBox(voxels, dims, { x: 2, y: 2, z: 8 }, { x: 4, y: 11, z: 10 }, 3);
+  stampBox(voxels, dims, { x: 15, y: 2, z: 8 }, { x: 17, y: 11, z: 10 }, 3);
+  stampBox(voxels, dims, { x: 2, y: 2, z: 18 }, { x: 4, y: 11, z: 20 }, 3);
+  stampBox(voxels, dims, { x: 15, y: 2, z: 18 }, { x: 17, y: 11, z: 20 }, 3);
+  // Roll cage roof halo
+  stampBox(voxels, dims, { x: 2, y: 10, z: 8 }, { x: 17, y: 11, z: 20 }, 3);
+  // Open driver cockpit interior
+  stampBox(voxels, dims, { x: 5, y: 2, z: 8 }, { x: 14, y: 8, z: 18 }, 0);
   return { dims, voxels };
 }
 
@@ -113,21 +125,48 @@ function makeBuggyWheel(): VolumePreset {
   return { dims, voxels };
 }
 
-function makeDestructibleTower(): VolumePreset {
-  const dims = { x: 16, y: 32, z: 16 };
+function makeHazardBarrel(): VolumePreset {
+  const dims = { x: 10, y: 14, z: 10 };
   const voxels = makeEmptyVoxelField(dims);
-  // 4 corner columns
-  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 3, y: 31, z: 3 }, 3);
-  stampBox(voxels, dims, { x: 12, y: 0, z: 0 }, { x: 15, y: 31, z: 3 }, 3);
-  stampBox(voxels, dims, { x: 0, y: 0, z: 12 }, { x: 3, y: 31, z: 15 }, 3);
-  stampBox(voxels, dims, { x: 12, y: 0, z: 12 }, { x: 15, y: 31, z: 15 }, 3);
-  // Floor decks
-  stampBox(voxels, dims, { x: 0, y: 10, z: 0 }, { x: 15, y: 11, z: 15 }, 2);
-  stampBox(voxels, dims, { x: 0, y: 20, z: 0 }, { x: 15, y: 21, z: 15 }, 2);
-  stampBox(voxels, dims, { x: 0, y: 30, z: 0 }, { x: 15, y: 31, z: 15 }, 2);
-  // Walls
-  stampBox(voxels, dims, { x: 0, y: 2, z: 0 }, { x: 15, y: 8, z: 1 }, 1);
-  stampBox(voxels, dims, { x: 5, y: 4, z: 0 }, { x: 10, y: 7, z: 1 }, 0);
+  // Cylindrical drum body
+  stampSphere(voxels, dims, { x: 4.5, y: 6.5, z: 4.5 }, 4.6, 1);
+  // Chime reinforcement rings top, mid, bottom
+  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 9, y: 1, z: 9 }, 3);
+  stampBox(voxels, dims, { x: 0, y: 6, z: 0 }, { x: 9, y: 7, z: 9 }, 3);
+  stampBox(voxels, dims, { x: 0, y: 12, z: 0 }, { x: 9, y: 13, z: 9 }, 3);
+  // Yellow hazard warning stripe
+  stampBox(voxels, dims, { x: 0, y: 4, z: 0 }, { x: 9, y: 5, z: 9 }, 4);
+  stampBox(voxels, dims, { x: 0, y: 8, z: 0 }, { x: 9, y: 9, z: 9 }, 4);
+  return { dims, voxels };
+}
+
+function makeBuoyantFloatDrum(): VolumePreset {
+  const dims = { x: 10, y: 10, z: 10 };
+  const voxels = makeEmptyVoxelField(dims);
+  stampSphere(voxels, dims, { x: 4.5, y: 4.5, z: 4.5 }, 4.4, 4);
+  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 9, y: 1, z: 9 }, 3);
+  stampBox(voxels, dims, { x: 0, y: 8, z: 0 }, { x: 9, y: 9, z: 9 }, 3);
+  return { dims, voxels };
+}
+
+function makeDestructibleTower(): VolumePreset {
+  const dims = { x: 20, y: 44, z: 20 };
+  const voxels = makeEmptyVoxelField(dims);
+  // 4 corner structural steel columns
+  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 3, y: 43, z: 3 }, 3);
+  stampBox(voxels, dims, { x: 16, y: 0, z: 0 }, { x: 19, y: 43, z: 3 }, 3);
+  stampBox(voxels, dims, { x: 0, y: 0, z: 16 }, { x: 3, y: 43, z: 19 }, 3);
+  stampBox(voxels, dims, { x: 16, y: 0, z: 16 }, { x: 19, y: 43, z: 19 }, 3);
+  // 3 platform decks (Level 1, Level 2, Level 3 roof)
+  stampBox(voxels, dims, { x: 0, y: 14, z: 0 }, { x: 19, y: 15, z: 19 }, 2);
+  stampBox(voxels, dims, { x: 0, y: 28, z: 0 }, { x: 19, y: 29, z: 19 }, 2);
+  stampBox(voxels, dims, { x: 0, y: 42, z: 0 }, { x: 19, y: 43, z: 19 }, 2);
+  // Protective side cladding panels
+  stampBox(voxels, dims, { x: 0, y: 2, z: 0 }, { x: 19, y: 10, z: 1 }, 1);
+  stampBox(voxels, dims, { x: 6, y: 4, z: 0 }, { x: 13, y: 9, z: 1 }, 0);
+  // Top level observation cupola
+  stampBox(voxels, dims, { x: 4, y: 30, z: 4 }, { x: 15, y: 41, z: 15 }, 4);
+  stampBox(voxels, dims, { x: 6, y: 32, z: 6 }, { x: 13, y: 39, z: 13 }, 0);
   return { dims, voxels };
 }
 
@@ -171,6 +210,8 @@ export function createSpawns(): Spawn[] {
   const buggy = makeBuggyChassis();
   const wheel = makeBuggyWheel();
   const tower = makeDestructibleTower();
+  const hazard = makeHazardBarrel();
+  const floatDrum = makeBuoyantFloatDrum();
 
   return [
     // Original core set
@@ -178,14 +219,17 @@ export function createSpawns(): Spawn[] {
     spawn('timber-pallet', 'Timber Pallet', timber, [-1.3, timberY, -0.16], 0.28, YAW_POS_008),
     spawn('steel-gantry', 'Steel Gantry', makeSteelGantry(), [2.18, 1.74, TANK.center[2]], 0.08, IDENTITY_QUAT, 'fixed', ['-x']),
     spawn('float-crate', 'Float Crate', makeFloatCrate(), [TANK.center[0] + 0.35, 0.04, TANK.center[2] + 0.2], 1, YAW_POS_008),
+    spawn('float-drum', 'Flotation Drum', floatDrum, [TANK.center[0] - 0.65, 0.04, TANK.center[2] - 0.25], 1.2, YAW_NEG_014),
     spawn('ballast-box', 'Ballast Box', ballast, [0.62, restY(ballast.dims), 1.3], 0.05, YAW_NEG_014),
+    spawn('hazard-drum-1', 'Hazard Drum 1', hazard, [0.5, restY(hazard.dims), -2.2], 0.35, YAW_POS_008),
+    spawn('hazard-drum-2', 'Hazard Drum 2', hazard, [-2.2, restY(hazard.dims), 2.2], 0.35, YAW_NEG_014),
 
     // Seesaw sector
     spawn('seesaw-plank', 'Seesaw Plank', seesaw, [-8, FLOOR_Y + 0.9 + seesaw.dims.y * VOXEL_SIZE * 0.5, -6], 0.2),
 
     // Ball drop sector
-    spawn('bowling-ball-1', 'Heavy Bowling Ball', ball, [-12, FLOOR_Y + 5.2, 12], 0.05),
-    spawn('bowling-ball-2', 'Heavy Bowling Ball 2', ball, [-12.8, FLOOR_Y + 5.2, 11.2], 0.05),
+    spawn('bowling-ball-1', 'Heavy Demolition Ball 1', ball, [-12, FLOOR_Y + 5.2, 12], 0.05),
+    spawn('bowling-ball-2', 'Heavy Demolition Ball 2', ball, [-12.8, FLOOR_Y + 5.2, 11.2], 0.05),
     spawn('bowling-pin-1', 'Bowling Pin 1', pin, [-8, restY(pin.dims), 11], 0.3),
     spawn('bowling-pin-2', 'Bowling Pin 2', pin, [-8, restY(pin.dims), 13], 0.3),
     spawn('bowling-pin-3', 'Bowling Pin 3', pin, [-6.8, restY(pin.dims), 12], 0.3),

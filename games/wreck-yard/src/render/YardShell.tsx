@@ -138,6 +138,177 @@ function CuttingRigSparks() {
   );
 }
 
+function ShippingContainer({
+  position,
+  rotation = [0, 0, 0],
+  color,
+  hasHazardDecal = true,
+}: {
+  position: [number, number, number];
+  rotation?: [number, number, number];
+  color: string;
+  hasHazardDecal?: boolean;
+}) {
+  const ribOffsets = [-2.4, -1.8, -1.2, -0.6, 0, 0.6, 1.2, 1.8, 2.4];
+  return (
+    <group position={position} rotation={rotation}>
+      <mesh castShadow receiveShadow raycast={noRaycast}>
+        <boxGeometry args={[6.0, 2.5, 2.38]} />
+        <Toon color={color} />
+      </mesh>
+      {[
+        [-2.95, -1.15],
+        [-2.95, 1.15],
+        [2.95, -1.15],
+        [2.95, 1.15],
+      ].map(([cx, cz], idx) => (
+        <mesh key={`post-${idx}`} position={[cx, 0, cz]} castShadow raycast={noRaycast}>
+          <boxGeometry args={[0.18, 2.58, 0.18]} />
+          <Toon color={ART_STYLE.palette.ink} />
+        </mesh>
+      ))}
+      <mesh position={[0, 1.26, 0]} castShadow raycast={noRaycast}>
+        <boxGeometry args={[6.04, 0.08, 2.42]} />
+        <Toon color={ART_STYLE.palette.ink} />
+      </mesh>
+      <mesh position={[0, -1.26, 0]} castShadow raycast={noRaycast}>
+        <boxGeometry args={[6.04, 0.08, 2.42]} />
+        <Toon color={ART_STYLE.palette.ink} />
+      </mesh>
+      {ribOffsets.map((rx, idx) => (
+        <group key={`rib-${idx}`}>
+          <mesh position={[rx, 0, 1.2]} raycast={noRaycast}>
+            <boxGeometry args={[0.16, 2.35, 0.05]} />
+            <Toon color={color} />
+          </mesh>
+          <mesh position={[rx, 0, -1.2]} raycast={noRaycast}>
+            <boxGeometry args={[0.16, 2.35, 0.05]} />
+            <Toon color={color} />
+          </mesh>
+        </group>
+      ))}
+      {[-0.45, 0.45].map((dz, idx) => (
+        <mesh key={`rod-${idx}`} position={[3.01, 0, dz]} raycast={noRaycast}>
+          <cylinderGeometry args={[0.025, 0.025, 2.3, 8]} />
+          <Toon color={ART_STYLE.palette.concreteLit} />
+        </mesh>
+      ))}
+      {hasHazardDecal && (
+        <mesh position={[0, 0.55, 1.22]} raycast={noRaycast}>
+          <planeGeometry args={[1.5, 0.45]} />
+          <Toon color={ART_STYLE.palette.mustard} />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
+function GravityHopper({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position}>
+      {[
+        [-1.8, -1.8],
+        [-1.8, 1.8],
+        [1.8, -1.8],
+        [1.8, 1.8],
+      ].map(([lx, lz], idx) => (
+        <mesh key={`leg-${idx}`} position={[lx, 0, lz]} castShadow raycast={noRaycast}>
+          <boxGeometry args={[0.3, 5.0, 0.3]} />
+          <Toon color={ART_STYLE.palette.ink} />
+        </mesh>
+      ))}
+      {[-1.5, 0.5].map((yOffset, yIdx) => (
+        <group key={`tier-${yIdx}`} position={[0, yOffset, 0]}>
+          <mesh position={[0, 0, 1.8]} castShadow raycast={noRaycast}>
+            <boxGeometry args={[3.8, 0.16, 0.16]} />
+            <Toon color={ART_STYLE.palette.ink} />
+          </mesh>
+          <mesh position={[0, 0, -1.8]} castShadow raycast={noRaycast}>
+            <boxGeometry args={[3.8, 0.16, 0.16]} />
+            <Toon color={ART_STYLE.palette.ink} />
+          </mesh>
+          <mesh position={[1.8, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow raycast={noRaycast}>
+            <boxGeometry args={[3.8, 0.16, 0.16]} />
+            <Toon color={ART_STYLE.palette.ink} />
+          </mesh>
+          <mesh position={[-1.8, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow raycast={noRaycast}>
+            <boxGeometry args={[3.8, 0.16, 0.16]} />
+            <Toon color={ART_STYLE.palette.ink} />
+          </mesh>
+        </group>
+      ))}
+      <mesh position={[0, 2.45, 0]} castShadow receiveShadow raycast={noRaycast}>
+        <boxGeometry args={[4.1, 0.22, 4.1]} />
+        <Toon color={ART_STYLE.palette.rust} />
+      </mesh>
+      <mesh position={[0, 2.9, 1.95]} rotation={[-0.25, 0, 0]} castShadow raycast={noRaycast}>
+        <boxGeometry args={[3.9, 0.8, 0.1]} />
+        <Toon color={ART_STYLE.palette.signalOrange} />
+      </mesh>
+      <mesh position={[0, 2.9, -1.95]} rotation={[0.25, 0, 0]} castShadow raycast={noRaycast}>
+        <boxGeometry args={[3.9, 0.8, 0.1]} />
+        <Toon color={ART_STYLE.palette.signalOrange} />
+      </mesh>
+      <mesh position={[-1.95, 2.9, 0]} rotation={[0, 0, 0.25]} castShadow raycast={noRaycast}>
+        <boxGeometry args={[0.1, 0.8, 3.9]} />
+        <Toon color={ART_STYLE.palette.signalOrange} />
+      </mesh>
+      <group position={[2.5, 1.4, 0]} rotation={[0, 0, -0.42]}>
+        <mesh castShadow receiveShadow raycast={noRaycast}>
+          <boxGeometry args={[2.8, 0.12, 1.4]} />
+          <Toon color={ART_STYLE.palette.concreteShade} />
+        </mesh>
+        {[-0.65, 0.65].map((rz, idx) => (
+          <mesh key={`chute-rail-${idx}`} position={[0, 0.22, rz]} castShadow raycast={noRaycast}>
+            <boxGeometry args={[2.8, 0.32, 0.08]} />
+            <Toon color={ART_STYLE.palette.mustard} />
+          </mesh>
+        ))}
+      </group>
+      <mesh position={[-0.8, 2.85, 2.0]} castShadow raycast={noRaycast}>
+        <boxGeometry args={[2.4, 0.55, 0.08]} />
+        <Toon color={ART_STYLE.palette.mustard} />
+      </mesh>
+    </group>
+  );
+}
+
+function ScrapTireBarrier({ position, rotation = [0, 0, 0] }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+  return (
+    <group position={position} rotation={rotation}>
+      {[-1.2, -0.4, 0.4, 1.2].map((tx, idx) => (
+        <group key={`tire-stack-${idx}`} position={[tx, 0, 0]}>
+          {[0.14, 0.42, 0.70].map((ty, sIdx) => (
+            <mesh key={`tire-${sIdx}`} position={[0, ty, sIdx % 2 === 0 ? 0.04 : -0.04]} rotation={[Math.PI / 2, 0, 0]} castShadow raycast={noRaycast}>
+              <torusGeometry args={[0.38, 0.14, 8, 14]} />
+              <Toon color="#1a1c1a" />
+            </mesh>
+          ))}
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function ScrapMetalBales({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position}>
+      <mesh position={[0, 0.45, 0]} castShadow receiveShadow raycast={noRaycast}>
+        <boxGeometry args={[1.0, 0.9, 1.0]} />
+        <Toon color={ART_STYLE.palette.rust} />
+      </mesh>
+      <mesh position={[0.95, 0.4, 0.1]} rotation={[0, 0.1, 0]} castShadow receiveShadow raycast={noRaycast}>
+        <boxGeometry args={[0.9, 0.8, 0.9]} />
+        <Toon color={ART_STYLE.palette.teal} />
+      </mesh>
+      <mesh position={[0.3, 1.25, 0.05]} rotation={[0, -0.15, 0]} castShadow receiveShadow raycast={noRaycast}>
+        <boxGeometry args={[0.85, 0.75, 0.85]} />
+        <Toon color={ART_STYLE.palette.concreteLit} />
+      </mesh>
+    </group>
+  );
+}
+
 export function YardShell() {
   const waterLayout = computeWaterVisualLayout(TANK_SPEC);
   const lightRig = deriveLightRig(ART_STYLE);
@@ -717,6 +888,28 @@ export function YardShell() {
       {/* STATIC SALVAGE DRESSING (D6 SPEC: CAR ROWS, BLOCK CLUSTERS, DEBRIS CHIPS)  */}
       {/* ========================================================================= */}
       <YardDressing />
+
+      {/* ========================================================================= */}
+      {/* 20FT INDUSTRIAL INTERMODAL SHIPPING CONTAINERS (TEARDOWN YARD SIGNATURE) */}
+      {/* ========================================================================= */}
+      {/* Container Stack 1: Northwest Perimeter - 2-Tier Stack (Teal Base / Safety Orange Top) */}
+      <ShippingContainer position={[-15.5, FLOOR_Y + 1.26, -11.0]} color={ART_STYLE.palette.teal} />
+      <ShippingContainer position={[-15.5, FLOOR_Y + 3.82, -11.0]} color={ART_STYLE.palette.signalOrange} />
+
+      {/* Container Stack 2: East Perimeter - Heavy Oxidized Rust Container Angled */}
+      <ShippingContainer position={[16.2, FLOOR_Y + 1.26, -7.5]} rotation={[0, 0.28, 0]} color={ART_STYLE.palette.rust} />
+
+      {/* Container Stack 3: Southwest Perimeter - Weathered Industrial Concrete Container */}
+      <ShippingContainer position={[-16.5, FLOOR_Y + 1.26, 14.5]} rotation={[0, -0.22, 0]} color={ART_STYLE.palette.concreteLit} />
+
+      {/* Container Stack 4: Southeast Perimeter - Heavy Mustard Salvage Container */}
+      <ShippingContainer position={[15.2, FLOOR_Y + 1.26, 15.0]} rotation={[0, 0.14, 0]} color={ART_STYLE.palette.mustard} />
+
+      {/* ========================================================================= */}
+      {/* SECTOR A DRESSING: COMPACTED SCRAP BALES                                  */}
+      {/* ========================================================================= */}
+      <ScrapMetalBales position={[-3.6, FLOOR_Y, -0.6]} />
+
       {/* ========================================================================= */}
       {/* SECTOR B: SEESAW FULCRUM STAND [-8, FLOOR_Y + 0.45, -6]                   */}
       {/* ========================================================================= */}
@@ -733,19 +926,9 @@ export function YardShell() {
       </group>
 
       {/* ========================================================================= */}
-      {/* SECTOR C: BALL DROP HOPPER SCAFFOLDING [-12, FLOOR_Y + 2.5, 12]           */}
+      {/* SECTOR C: OPEN GRAVITY BALL HOPPER & ROLLER CHUTE [-12, FLOOR_Y + 2.5, 12] */}
       {/* ========================================================================= */}
-      <group position={[-12, FLOOR_Y + 2.5, 12]}>
-        <mesh castShadow receiveShadow raycast={noRaycast}>
-          <boxGeometry args={[4.2, 5.0, 4.2]} />
-          <Toon color={ART_STYLE.palette.ink} />
-        </mesh>
-        {/* Industrial Steel Pipe Railings */}
-        <mesh position={[0, 2.7, 2.0]} castShadow raycast={noRaycast}>
-          <boxGeometry args={[4.0, 0.45, 0.12]} />
-          <Toon color={ART_STYLE.palette.mustard} />
-        </mesh>
-      </group>
+      <GravityHopper position={[-12, FLOOR_Y + 2.5, 12]} />
 
       {/* ========================================================================= */}
       {/* SECTOR D: VEHICLE TEST RAMP & PAD [12, FLOOR_Y + 0.4, 12]                 */}
@@ -761,6 +944,9 @@ export function YardShell() {
           <Toon color={ART_STYLE.palette.mustard} />
         </mesh>
       </group>
+      {/* Scrap Tire Buffer Wall flanking vehicle staging pad */}
+      <ScrapTireBarrier position={[12, FLOOR_Y, 8.6]} />
+      <ScrapTireBarrier position={[12, FLOOR_Y, 15.4]} />
 
       {/* ========================================================================= */}
       {/* TEARDOWN WATER BASIN: Translucent Crystal Tank & Luminous Turquoise Water */}

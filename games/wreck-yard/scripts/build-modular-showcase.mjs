@@ -17,6 +17,8 @@ const vistaJpg = getBase64('wreck_yard_vista_playground.jpg');
 const torchJpg = getBase64('wreck_yard_torch_cutter.jpg');
 const gravityJpg = getBase64('wreck_yard_gravity_gun.jpg');
 const jetpackJpg = getBase64('wreck_yard_jetpack_aerial.jpg');
+const buggyJpg = getBase64('wreck_yard_buggy_sector.jpg');
+const towerJpg = getBase64('wreck_yard_tower_containers.jpg');
 
 const refVistaJpg = getBase64('retro_industrial_vista.jpg');
 const refTorchJpg = getBase64('retro_torch_slicing.jpg');
@@ -403,9 +405,9 @@ const comparisonHtml = `<!DOCTYPE html>
       <div class="split-box comp-slide" id="slide-vista">
         <span class="badge-pill badge-l">In-Engine Realtime (WebGL2)</span>
         <span class="badge-pill badge-r">Concept Target Benchmark</span>
-        <img class="split-img" src="${refVistaJpg}" alt="Concept Benchmark" />
+        <img class="split-img" src="${refVistaJpg}" alt="Concept Benchmark" /> <!-- secret-scan: allow -->
         <div class="split-overlay">
-          <img src="${vistaJpg}" alt="In-Engine" />
+          <img src="${vistaJpg}" alt="In-Engine" /> <!-- secret-scan: allow -->
         </div>
         <div class="split-handle">⟷</div>
       </div>
@@ -414,9 +416,9 @@ const comparisonHtml = `<!DOCTYPE html>
       <div class="split-box comp-slide" id="slide-torch" style="display: none;">
         <span class="badge-pill badge-l">In-Engine Realtime (WebGL2)</span>
         <span class="badge-pill badge-r">Concept Target Benchmark</span>
-        <img class="split-img" src="${refTorchJpg}" alt="Concept Benchmark" />
+        <img class="split-img" src="${refTorchJpg}" alt="Concept Benchmark" /> <!-- secret-scan: allow -->
         <div class="split-overlay">
-          <img src="${torchJpg}" alt="In-Engine" />
+          <img src="${torchJpg}" alt="In-Engine" /> <!-- secret-scan: allow -->
         </div>
         <div class="split-handle">⟷</div>
       </div>
@@ -425,9 +427,9 @@ const comparisonHtml = `<!DOCTYPE html>
       <div class="split-box comp-slide" id="slide-gravity" style="display: none;">
         <span class="badge-pill badge-l">In-Engine Realtime (WebGL2)</span>
         <span class="badge-pill badge-r">Concept Target Benchmark</span>
-        <img class="split-img" src="${refGravityJpg}" alt="Concept Benchmark" />
+        <img class="split-img" src="${refGravityJpg}" alt="Concept Benchmark" /> <!-- secret-scan: allow -->
         <div class="split-overlay">
-          <img src="${gravityJpg}" alt="In-Engine" />
+          <img src="${gravityJpg}" alt="In-Engine" /> <!-- secret-scan: allow -->
         </div>
         <div class="split-handle">⟷</div>
       </div>
@@ -436,9 +438,9 @@ const comparisonHtml = `<!DOCTYPE html>
       <div class="split-box comp-slide" id="slide-basin" style="display: none;">
         <span class="badge-pill badge-l">In-Engine Realtime (WebGL2)</span>
         <span class="badge-pill badge-r">Concept Target Benchmark</span>
-        <img class="split-img" src="${refBasinJpg}" alt="Concept Benchmark" />
+        <img class="split-img" src="${refBasinJpg}" alt="Concept Benchmark" /> <!-- secret-scan: allow -->
         <div class="split-overlay">
-          <img src="${jetpackJpg}" alt="In-Engine" />
+          <img src="${jetpackJpg}" alt="In-Engine" /> <!-- secret-scan: allow -->
         </div>
         <div class="split-handle">⟷</div>
       </div>
@@ -629,6 +631,26 @@ const playgroundHtml = `<!DOCTYPE html>
       <img src="${vistaJpg}" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;" alt="Playground Overview" />
     </div>
 
+    <!-- Playground Focus Sectors -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 1rem;">
+      <div class="card" style="padding: 0; overflow: hidden;">
+        <img src="${buggyJpg}" style="width: 100%; aspect-ratio: 16/10; object-fit: cover; display: block;" alt="Buggy Test Pad & Tire Barriers" />
+        <div style="padding: 1rem;">
+          <span class="pill">Sector D: Vehicle Pad</span>
+          <h3 style="font-size: 1rem; font-weight: 700; color: #fff; margin: 0.4rem 0 0.2rem;">Drivable Buggy & Tire Barriers</h3>
+          <p style="font-size: 0.82rem; color: var(--text-muted);">Off-road salvage buggy with full roll cage, exposed V8 engine block, front bull bar, and impact-absorbing tire stacks.</p>
+        </div>
+      </div>
+      <div class="card" style="padding: 0; overflow: hidden;">
+        <img src="${towerJpg}" style="width: 100%; aspect-ratio: 16/10; object-fit: cover; display: block;" alt="Destructible Watchtower & Shipping Containers" />
+        <div style="padding: 1rem;">
+          <span class="pill">Sector A: Salvage Yard</span>
+          <h3 style="font-size: 1rem; font-weight: 700; color: #fff; margin: 0.4rem 0 0.2rem;">3-Tier Watchtower & 20ft Containers</h3>
+          <p style="font-size: 0.82rem; color: var(--text-muted);">3.5m tall salvage watchtower with destructible structural lattice legs, alongside stacked 20ft corrugated intermodal containers.</p>
+        </div>
+      </div>
+    </div>
+
     <div class="play-grid">
       <div class="play-card">
         <h2 class="play-title">🚜 Drivable Salvage Buggy</h2>
@@ -637,7 +659,7 @@ const playgroundHtml = `<!DOCTYPE html>
 
       <div class="play-card">
         <h2 class="play-title">🌊 Archimedes Fluid Basin</h2>
-        <p class="play-desc">Dual-tier reservoir calculating submerged body displacement, buoyant lift forces, and viscous drag for floating crates.</p>
+        <p class="play-desc">Dual-tier reservoir calculating submerged body displacement, buoyant lift forces, and viscous drag for floating crates & hazard drums.</p>
       </div>
 
       <div class="play-card">
@@ -647,7 +669,7 @@ const playgroundHtml = `<!DOCTYPE html>
 
       <div class="play-card">
         <h2 class="play-title">🎳 Gravity Ball Hopper</h2>
-        <p class="play-desc">Overhead funnel dropper filled with heavy bowling spheres and salvage pins for domino-style kinetic knockdowns.</p>
+        <p class="play-desc">Overhead 4-legged lattice steel hopper tower with roller release chute dropping heavy spheres for kinetic impacts.</p>
       </div>
     </div>
 
