@@ -33,16 +33,6 @@ async function waitForServer(url, timeoutMs = 15000) {
 
 async function captureScreen(page, filename) {
   const outPath = path.join(brainDir, filename);
-  // Try full page screenshot first with a 3s timeout
-  try {
-    await page.screenshot({ path: outPath, timeout: 3000 });
-    console.log(`Saved screenshot (full page): ${filename}`);
-    return outPath;
-  } catch (err) {
-    console.warn(`Full page screenshot timed out, falling back to canvas dataURL: ${err.message}`);
-  }
-
-  // Fallback to direct canvas capture
   const dataUrl = await page.evaluate(() => {
     const canvas = document.querySelector('canvas');
     return canvas ? canvas.toDataURL('image/png') : null;
@@ -50,10 +40,12 @@ async function captureScreen(page, filename) {
   if (dataUrl) {
     const b64 = dataUrl.replace(/^data:image\/png;base64,/, '');
     fs.writeFileSync(outPath, Buffer.from(b64, 'base64'));
-    console.log(`Saved screenshot (canvas toDataURL): ${filename}`);
+    console.log(`Saved screenshot: ${filename}`);
     return outPath;
   }
-  throw new Error(`Failed to capture screenshot for ${filename}`);
+  await page.screenshot({ path: outPath, timeout: 2000 });
+  console.log(`Saved fallback screenshot: ${filename}`);
+  return outPath;
 }
 
 async function main() {
@@ -76,15 +68,22 @@ async function main() {
 
     const page = await context.newPage();
     page.on('console', (msg) => console.log('[BROWSER]', msg.type(), msg.text()));
+    page.on('pageerror', (err) => console.error('[BROWSER-PAGE-ERROR]', err));
 
     console.log('Navigating to http://127.0.0.1:4398 ...');
     await page.goto('http://127.0.0.1:4398', { waitUntil: 'networkidle' });
 
-    console.log('Waiting for live session status...');
-    await page.waitForFunction(() => {
-      const el = document.querySelector('body');
-      return el && el.innerText.includes('Status: live');
-    }, { timeout: 15000 });
+    console.log('Checking live session status...');
+    let isLive = false;
+    for (let i = 0; i < 30; i++) {
+      const text = await page.evaluate(() => document.body?.innerText ?? '');
+      if (text.includes('Status: live')) {
+        isLive = true;
+        break;
+      }
+      await page.waitForTimeout(500);
+    }
+    if (!isLive) throw new Error('Live session did not become active within 15s');
 
     console.log('Live session confirmed! Letting simulation warm up for 1.5s...');
     await page.waitForTimeout(1500);
@@ -169,12 +168,65 @@ async function main() {
     });
     await page.waitForTimeout(600);
 
-    // 6. Focus Shot: Buggy Vehicle & Tire Barriers
+    // 5b. Navigate to Buggy and Mount
+    console.log('Navigating player towards Buggy staging pad...');
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ moveX: 1, moveZ: 0.15, jetpack: true });
+      }
+      if (typeof win.__SET_LOOK_ANGLES__ === 'function') {
+        win.__SET_LOOK_ANGLES__(-1.42, -0.15);
+      }
+    });
+    await page.waitForTimeout(2400);
+
+    // Mount buggy with interaction key (secondary)
+    console.log('Mounting Buggy with interaction key...');
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ moveX: 0, moveZ: 0, jetpack: false, secondary: true });
+      }
+    });
+    await page.waitForTimeout(400);
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ secondary: false });
+      }
+    });
+    await page.waitForTimeout(600);
+
+    // Capture Cockpit View when Seated
+    console.log('Capturing: Buggy Cockpit view while driving...');
+    await captureScreen(page, 'wreck_yard_buggy_cockpit.png');
+
+    // Drive forward and steer!
+    console.log('Driving buggy forward with throttle and steering...');
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ moveZ: 1, moveX: -0.4 });
+      }
+    });
+    await page.waitForTimeout(1400);
+
+    // Stop buggy driving
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ moveZ: 0, moveX: 0 });
+      }
+    });
+    await page.waitForTimeout(500);
+
+    // 6. Focus Shot: Buggy Vehicle & Tire Barriers (Player-Sized Scale)
     console.log('Capturing: Buggy vehicle & tire barrier sector...');
     await page.evaluate(() => {
       const win = window;
       if (typeof win.__SET_CAMERA_OVERRIDE__ === 'function') {
-        win.__SET_CAMERA_OVERRIDE__([15.5, 2.8, 7.5], [12, 0.6, 12]);
+        win.__SET_CAMERA_OVERRIDE__([16.0, 3.2, 7.0], [11.8, 1.0, 12.2]);
       }
     });
     await page.waitForTimeout(800);
@@ -230,6 +282,7 @@ async function main() {
       'wreck_yard_torch_cutter.png',
       'wreck_yard_gravity_gun.png',
       'wreck_yard_jetpack_aerial.png',
+      'wreck_yard_buggy_cockpit.png',
       'wreck_yard_buggy_sector.png',
       'wreck_yard_tower_containers.png',
     ];

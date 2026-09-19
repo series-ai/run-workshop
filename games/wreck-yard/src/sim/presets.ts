@@ -97,31 +97,72 @@ function makeBowlingPin(): VolumePreset {
 }
 
 function makeBuggyChassis(): VolumePreset {
-  const dims = { x: 20, y: 12, z: 28 };
+  // Player-sized off-road buggy: 2.08m wide x 1.44m tall x 3.04m long (1.79m total vehicle height with wheels)
+  const dims = { x: 26, y: 18, z: 38 };
   const voxels = makeEmptyVoxelField(dims);
-  // Heavy floor pan and frame sills
-  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 19, y: 2, z: 27 }, 3);
-  // Front bull bar and radiator shield
-  stampBox(voxels, dims, { x: 2, y: 2, z: 0 }, { x: 17, y: 5, z: 6 }, 4);
-  // Exposed rear engine block
-  stampBox(voxels, dims, { x: 5, y: 2, z: 20 }, { x: 14, y: 7, z: 26 }, 3);
-  // Roll cage corner pillars (A and B pillars)
-  stampBox(voxels, dims, { x: 2, y: 2, z: 8 }, { x: 4, y: 11, z: 10 }, 3);
-  stampBox(voxels, dims, { x: 15, y: 2, z: 8 }, { x: 17, y: 11, z: 10 }, 3);
-  stampBox(voxels, dims, { x: 2, y: 2, z: 18 }, { x: 4, y: 11, z: 20 }, 3);
-  stampBox(voxels, dims, { x: 15, y: 2, z: 18 }, { x: 17, y: 11, z: 20 }, 3);
-  // Roll cage roof halo
-  stampBox(voxels, dims, { x: 2, y: 10, z: 8 }, { x: 17, y: 11, z: 20 }, 3);
-  // Open driver cockpit interior
-  stampBox(voxels, dims, { x: 5, y: 2, z: 8 }, { x: 14, y: 8, z: 18 }, 0);
+
+  // 1. Reinforced steel floor pan and frame rails
+  stampBox(voxels, dims, { x: 1, y: 0, z: 3 }, { x: 24, y: 2, z: 35 }, 3);
+  // Outer rock sliders / tubular side nerf bars
+  stampBox(voxels, dims, { x: 0, y: 1, z: 6 }, { x: 2, y: 3, z: 32 }, 3);
+  stampBox(voxels, dims, { x: 23, y: 1, z: 6 }, { x: 25, y: 3, z: 32 }, 3);
+
+  // 2. Front stinger bull bar, winch mount, and hood cowl
+  stampBox(voxels, dims, { x: 4, y: 1, z: 0 }, { x: 21, y: 6, z: 4 }, 4);
+  stampBox(voxels, dims, { x: 5, y: 2, z: 4 }, { x: 20, y: 7, z: 11 }, 3);
+  // Twin front high-output rally headlights
+  stampBox(voxels, dims, { x: 5, y: 4, z: 0 }, { x: 8, y: 7, z: 2 }, 4);
+  stampBox(voxels, dims, { x: 17, y: 4, z: 0 }, { x: 20, y: 7, z: 2 }, 4);
+
+  // 3. Exposed rear high-output V8 engine block & exhaust stacks
+  stampBox(voxels, dims, { x: 7, y: 2, z: 26 }, { x: 18, y: 9, z: 36 }, 3);
+  // Twin vertical exhaust headers
+  stampBox(voxels, dims, { x: 5, y: 3, z: 28 }, { x: 6, y: 11, z: 30 }, 4);
+  stampBox(voxels, dims, { x: 19, y: 3, z: 28 }, { x: 20, y: 11, z: 30 }, 4);
+  // Rear cooling radiator mesh
+  stampBox(voxels, dims, { x: 8, y: 9, z: 33 }, { x: 17, y: 12, z: 36 }, 3);
+
+  // 4. Structural 6-point tubular steel roll cage (A, B, and C pillars)
+  // A-Pillars (Front windshield frame)
+  stampBox(voxels, dims, { x: 2, y: 2, z: 11 }, { x: 4, y: 17, z: 13 }, 3);
+  stampBox(voxels, dims, { x: 21, y: 2, z: 11 }, { x: 23, y: 17, z: 13 }, 3);
+  // B-Pillars (Main roll hoop behind driver)
+  stampBox(voxels, dims, { x: 2, y: 2, z: 24 }, { x: 4, y: 17, z: 26 }, 3);
+  stampBox(voxels, dims, { x: 21, y: 2, z: 24 }, { x: 23, y: 17, z: 26 }, 3);
+  // C-Pillars (Rear engine cage down-tubes)
+  stampBox(voxels, dims, { x: 3, y: 2, z: 34 }, { x: 5, y: 12, z: 36 }, 3);
+  stampBox(voxels, dims, { x: 20, y: 2, z: 34 }, { x: 22, y: 12, z: 36 }, 3);
+  // Roof halo canopy frame
+  stampBox(voxels, dims, { x: 2, y: 16, z: 11 }, { x: 23, y: 17, z: 26 }, 3);
+  // Overhead Baja light bar across front roof halo
+  stampBox(voxels, dims, { x: 6, y: 17, z: 11 }, { x: 19, y: 18, z: 13 }, 4);
+
+  // 5. Open driver cockpit interior (1.12m wide, 1.20m tall clearance)
+  stampBox(voxels, dims, { x: 5, y: 2, z: 11 }, { x: 20, y: 15, z: 25 }, 0);
+
+  // 6. Molded high-back racing bucket seat & dashboard console
+  // Bucket seat base
+  stampBox(voxels, dims, { x: 8, y: 2, z: 18 }, { x: 17, y: 4, z: 23 }, 2);
+  // Ergonomic seat backrest
+  stampBox(voxels, dims, { x: 8, y: 4, z: 22 }, { x: 17, y: 12, z: 24 }, 2);
+  // Padded headrest
+  stampBox(voxels, dims, { x: 9, y: 12, z: 22 }, { x: 16, y: 14, z: 24 }, 2);
+  // Angled dashboard console & instrument pod
+  stampBox(voxels, dims, { x: 7, y: 4, z: 12 }, { x: 18, y: 7, z: 14 }, 3);
+  // Steering column and sport steering wheel
+  stampBox(voxels, dims, { x: 11, y: 6, z: 14 }, { x: 14, y: 9, z: 16 }, 4);
+
   return { dims, voxels };
 }
 
 function makeBuggyWheel(): VolumePreset {
-  const dims = { x: 6, y: 8, z: 8 };
+  // Heavy off-road all-terrain knobby tire: 0.64m wide x 0.96m diameter
+  const dims = { x: 8, y: 12, z: 12 };
   const voxels = makeEmptyVoxelField(dims);
-  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 5, y: 7, z: 7 }, 4);
-  stampBox(voxels, dims, { x: 1, y: 2, z: 2 }, { x: 4, y: 5, z: 5 }, 3);
+  // Deep knobby tire outer rubber tread
+  stampSphere(voxels, dims, { x: 3.5, y: 5.5, z: 5.5 }, 5.6, 4);
+  // Heavy stamped alloy wheel rim and center hub
+  stampBox(voxels, dims, { x: 1, y: 3, z: 3 }, { x: 6, y: 8, z: 8 }, 3);
   return { dims, voxels };
 }
 
@@ -234,12 +275,12 @@ export function createSpawns(): Spawn[] {
     spawn('bowling-pin-2', 'Bowling Pin 2', pin, [-8, restY(pin.dims), 13], 0.3),
     spawn('bowling-pin-3', 'Bowling Pin 3', pin, [-6.8, restY(pin.dims), 12], 0.3),
 
-    // Buggy vehicle sector
+    // Buggy vehicle sector (Player-sized off-road buggy)
     spawn('vehicle-chassis', 'Sandbox Buggy', buggy, [12, FLOOR_Y + 1.1, 12], 0.25),
-    spawn('vehicle-wheel-fl', 'Buggy Wheel FL', wheel, [11.1, FLOOR_Y + 0.5, 11.1], 0.2),
-    spawn('vehicle-wheel-fr', 'Buggy Wheel FR', wheel, [12.9, FLOOR_Y + 0.5, 11.1], 0.2),
-    spawn('vehicle-wheel-rl', 'Buggy Wheel RL', wheel, [11.1, FLOOR_Y + 0.5, 12.9], 0.2),
-    spawn('vehicle-wheel-rr', 'Buggy Wheel RR', wheel, [12.9, FLOOR_Y + 0.5, 12.9], 0.2),
+    spawn('vehicle-wheel-fl', 'Buggy Wheel FL', wheel, [10.78, FLOOR_Y + 0.52, 10.95], 0.2),
+    spawn('vehicle-wheel-fr', 'Buggy Wheel FR', wheel, [13.22, FLOOR_Y + 0.52, 10.95], 0.2),
+    spawn('vehicle-wheel-rl', 'Buggy Wheel RL', wheel, [10.78, FLOOR_Y + 0.52, 13.05], 0.2),
+    spawn('vehicle-wheel-rr', 'Buggy Wheel RR', wheel, [13.22, FLOOR_Y + 0.52, 13.05], 0.2),
 
     // Destructible tower sector
     spawn('destructible-tower', 'Destructible Tower', tower, [-14, restY(tower.dims), -14], 0.15),

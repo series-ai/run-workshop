@@ -45,6 +45,12 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
   const isGrabbing = Boolean(localPlayer?.grabbing);
   const isRiding = Boolean(localPlayer?.ridingVehicle);
 
+  const buggyPose = render?.poses?.get('vehicle-chassis');
+  const distToBuggy = (localPlayer && buggyPose)
+    ? Math.hypot(localPlayer.position[0] - buggyPose.position[0], localPlayer.position[2] - buggyPose.position[2])
+    : 999;
+  const canMountBuggy = live && !isRiding && distToBuggy < 4.8;
+
   return (
     <>
       {/* Top Left: Status & Yard Telemetry */}
@@ -199,6 +205,48 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
         </div>
       )}
 
+      {/* Buggy Interaction Prompt Banner */}
+      {canMountBuggy && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '58%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'rgba(15, 23, 15, 0.94)',
+            border: '2px solid #84cc16',
+            borderRadius: 8,
+            padding: '8px 18px',
+            boxShadow: '0 0 24px rgba(132, 204, 22, 0.6), inset 0 0 12px rgba(132, 204, 22, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            pointerEvents: 'none',
+            zIndex: 40,
+          }}
+        >
+          <span
+            style={{
+              background: '#84cc16',
+              color: '#0a0f0a',
+              fontWeight: 900,
+              fontSize: 13,
+              padding: '2px 8px',
+              borderRadius: 4,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.5)',
+            }}
+          >
+            E
+          </span>
+          <span style={{ color: '#f7fee7', fontWeight: 700, fontSize: 13, letterSpacing: '0.04em' }}>
+            DRIVE SALVAGE BUGGY
+          </span>
+          <span style={{ color: '#a3e635', fontSize: 11, opacity: 0.85 }}>
+            ({distToBuggy.toFixed(1)}m)
+          </span>
+        </div>
+      )}
+
       {/* Bottom Left: Tactical Yard Controls */}
       {live && (
         <div
@@ -206,7 +254,7 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
             position: 'absolute',
             bottom: 16,
             left: 16,
-            background: isRiding ? 'rgba(30, 41, 20, 0.92)' : 'rgba(20, 22, 20, 0.82)',
+            background: isRiding ? 'rgba(25, 38, 16, 0.94)' : 'rgba(20, 22, 20, 0.82)',
             border: isRiding ? '1px solid #84cc16' : '1px solid #3f4836',
             padding: '8px 14px',
             borderRadius: 6,
@@ -214,15 +262,15 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
             color: '#8c967d',
             backdropFilter: 'blur(4px)',
             pointerEvents: 'none',
-            boxShadow: isRiding ? '0 0 14px rgba(132, 204, 22, 0.25)' : 'none',
+            boxShadow: isRiding ? '0 0 16px rgba(132, 204, 22, 0.35)' : 'none',
           }}
         >
           {isRiding ? (
             <div>
-              <span style={{ color: '#a3e635', fontWeight: 700, marginRight: 8 }}>BUGGY COCKPIT ACTIVE</span>
-              <span style={{ color: '#e8ecd8' }}>[W / S]</span> Accelerate / Reverse &bull;{' '}
+              <span style={{ color: '#a3e635', fontWeight: 700, marginRight: 8 }}>🚜 BUGGY COCKPIT ACTIVE</span>
+              <span style={{ color: '#e8ecd8' }}>[W / S]</span> Throttle / Reverse &bull;{' '}
               <span style={{ color: '#e8ecd8' }}>[A / D]</span> Steer Wheels &bull;{' '}
-              <span style={{ color: '#facc15', fontWeight: 600 }}>[Space]</span> Dismount Buggy
+              <span style={{ color: '#facc15', fontWeight: 600 }}>[E / Space]</span> Dismount Buggy
             </div>
           ) : (
             <div>
@@ -230,7 +278,7 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
               <span style={{ color: '#e8ecd8' }}>[WASD]</span> Move &bull;{' '}
               <span style={{ color: '#e8ecd8' }}>[Space]</span> Jetpack &bull;{' '}
               <span style={{ color: '#e8ecd8' }}>[LMB]</span> {tool === 'hand' ? 'Tractor Beam' : 'Carve Voxel'} &bull;{' '}
-              <span style={{ color: '#e8ecd8' }}>[RMB]</span> Punt / Enter Buggy &bull;{' '}
+              <span style={{ color: '#e8ecd8' }}>[E / RMB]</span> {canMountBuggy ? 'Drive Buggy' : 'Punt'} &bull;{' '}
               <span style={{ color: '#e8ecd8' }}>[1 / 2 / 3]</span> Tool
             </div>
           )}

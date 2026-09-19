@@ -166,10 +166,26 @@ function stepPlayerMovement(player: PlayerState, input: YardInput, w: Working): 
 
   if (buggy) {
     const distToBuggy = Math.hypot(player.x - buggy.x, player.z - buggy.z);
-    if (!ridingVehicle && distToBuggy < 3.2 && input.secondary && !player.wasSecondaryPressed) {
+    if (!ridingVehicle && distToBuggy < 4.8 && input.secondary && !player.wasSecondaryPressed) {
       ridingVehicle = true;
-    } else if (ridingVehicle && input.jetpack) {
+    } else if (ridingVehicle && (input.jetpack || (input.secondary && !player.wasSecondaryPressed))) {
       ridingVehicle = false;
+      const chassisYaw = Math.atan2(
+        2 * (buggy.orientation.w * buggy.orientation.y + buggy.orientation.x * buggy.orientation.z),
+        1 - 2 * (buggy.orientation.y * buggy.orientation.y + buggy.orientation.z * buggy.orientation.z),
+      );
+      // Cleanly dismount to driver's side of the buggy
+      return {
+        ...player,
+        x: buggy.x + Math.cos(chassisYaw) * 1.8,
+        y: buggy.y + 0.2,
+        z: buggy.z - Math.sin(chassisYaw) * 1.8,
+        vx: 0,
+        vy: 0,
+        vz: 0,
+        grounded: true,
+        ridingVehicle: false,
+      };
     }
   } else {
     ridingVehicle = false;
@@ -183,16 +199,16 @@ function stepPlayerMovement(player: PlayerState, input: YardInput, w: Working): 
       );
       const bFwdX = -Math.sin(chassisYaw);
       const bFwdZ = -Math.cos(chassisYaw);
-      const engineForce = moveZ * 2600;
-      const steerTorque = -moveX * 750;
+      const engineForce = moveZ * 5800;
+      const steerTorque = -moveX * 1900;
       applyPhysicsForce(w.physics, 'vehicle-chassis', [bFwdX * engineForce, 0, bFwdZ * engineForce], [0, steerTorque, 0]);
     }
 
     return {
       ...player,
       x: buggy.x,
-      y: buggy.y + 0.65,
-      z: buggy.z,
+      y: buggy.y + 0.28,
+      z: buggy.z + 0.12,
       vx: buggy.vx,
       vy: buggy.vy,
       vz: buggy.vz,
@@ -612,8 +628,8 @@ export function stepYard(state: YardState, inputs: readonly YardInput[]): YardSt
           w.players[slot] = {
             ...p,
             x: chassis.x,
-            y: chassis.y + 0.65,
-            z: chassis.z,
+            y: chassis.y + 0.28,
+            z: chassis.z + 0.12,
             vx: chassis.vx,
             vy: chassis.vy,
             vz: chassis.vz,

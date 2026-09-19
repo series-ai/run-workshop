@@ -18,6 +18,7 @@ const torchJpg = getBase64('wreck_yard_torch_cutter.jpg');
 const gravityJpg = getBase64('wreck_yard_gravity_gun.jpg');
 const jetpackJpg = getBase64('wreck_yard_jetpack_aerial.jpg');
 const buggyJpg = getBase64('wreck_yard_buggy_sector.jpg');
+const cockpitJpg = getBase64('wreck_yard_buggy_cockpit.jpg');
 const towerJpg = getBase64('wreck_yard_tower_containers.jpg');
 
 const refVistaJpg = getBase64('retro_industrial_vista.jpg');
@@ -636,9 +637,17 @@ const playgroundHtml = `<!DOCTYPE html>
       <div class="card" style="padding: 0; overflow: hidden;">
         <img src="${buggyJpg}" style="width: 100%; aspect-ratio: 16/10; object-fit: cover; display: block;" alt="Buggy Test Pad & Tire Barriers" />
         <div style="padding: 1rem;">
-          <span class="pill">Sector D: Vehicle Pad</span>
-          <h3 style="font-size: 1rem; font-weight: 700; color: #fff; margin: 0.4rem 0 0.2rem;">Drivable Buggy & Tire Barriers</h3>
-          <p style="font-size: 0.82rem; color: var(--text-muted);">Off-road salvage buggy with full roll cage, exposed V8 engine block, front bull bar, and impact-absorbing tire stacks.</p>
+          <span class="pill">Sector D: Vehicle Staging</span>
+          <h3 style="font-size: 1rem; font-weight: 700; color: #fff; margin: 0.4rem 0 0.2rem;">Player-Sized Salvage Buggy (1.79m)</h3>
+          <p style="font-size: 0.82rem; color: var(--text-muted);">Scaled to match 1.71m character avatar. 6-point tubular steel roll cage, V8 engine block, front bull bar stinger, and 0.96m knobby off-road wheels.</p>
+        </div>
+      </div>
+      <div class="card" style="padding: 0; overflow: hidden;">
+        <img src="${cockpitJpg}" style="width: 100%; aspect-ratio: 16/10; object-fit: cover; display: block;" alt="Buggy First-Person Driving Cockpit" />
+        <div style="padding: 1rem;">
+          <span class="pill">First-Person Driving View</span>
+          <h3 style="font-size: 1rem; font-weight: 700; color: #fff; margin: 0.4rem 0 0.2rem;">Rideable Cockpit & Dynamic Wheel</h3>
+          <p style="font-size: 0.82rem; color: var(--text-muted);">Mount with [E]. Camera locks at driver eye-level inside the roll cage, rotates dynamically with chassis yaw, with active steering wheel rotation.</p>
         </div>
       </div>
       <div class="card" style="padding: 0; overflow: hidden;">

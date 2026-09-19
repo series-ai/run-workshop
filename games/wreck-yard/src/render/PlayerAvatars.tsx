@@ -13,7 +13,11 @@ const PLAYER_COLORS = [
 
 function RemoteAvatar({ player, renderRef }: { player: PlayerRenderPose; renderRef: MutableRefObject<YardRender | null> }) {
   const root = useRef<THREE.Group>(null);
+  const bodyRef = useRef<THREE.Mesh>(null);
   const head = useRef<THREE.Group>(null);
+  const toolRef = useRef<THREE.Group>(null);
+  const drivingArmsRef = useRef<THREE.Group>(null);
+  const jetpackRef = useRef<THREE.Group>(null);
   const leftFlame = useRef<THREE.Mesh>(null);
   const rightFlame = useRef<THREE.Mesh>(null);
 
@@ -24,28 +28,49 @@ function RemoteAvatar({ player, renderRef }: { player: PlayerRenderPose; renderR
     const current = renderRef.current?.players.find((p) => p.slot === player.slot);
     if (!current) return;
 
+    const isRiding = Boolean(current.ridingVehicle);
+
     root.current.position.set(current.position[0], current.position[1], current.position[2]);
     root.current.rotation.y = current.yaw;
 
-    if (head.current) {
-      head.current.rotation.x = current.pitch;
+    if (bodyRef.current) {
+      bodyRef.current.position.y = isRiding ? 0.32 : 0.75;
+      bodyRef.current.scale.set(1, isRiding ? 0.75 : 1.0, 1);
     }
 
-    const flameScale = current.jetpackActive ? 0.8 + Math.random() * 0.4 : 0;
+    if (head.current) {
+      head.current.position.y = isRiding ? 0.82 : 1.45;
+      head.current.rotation.x = isRiding ? 0.05 : current.pitch;
+    }
+
+    if (toolRef.current) {
+      toolRef.current.visible = !isRiding;
+    }
+
+    if (drivingArmsRef.current) {
+      drivingArmsRef.current.visible = isRiding;
+    }
+
+    if (jetpackRef.current) {
+      jetpackRef.current.position.y = isRiding ? 0.45 : 0.82;
+      jetpackRef.current.position.z = isRiding ? -0.18 : -0.26;
+    }
+
+    const flameScale = (!isRiding && current.jetpackActive) ? 0.8 + Math.random() * 0.4 : 0;
     if (leftFlame.current) {
       leftFlame.current.scale.set(flameScale, flameScale, flameScale);
-      leftFlame.current.visible = current.jetpackActive;
+      leftFlame.current.visible = !isRiding && current.jetpackActive;
     }
     if (rightFlame.current) {
       rightFlame.current.scale.set(flameScale, flameScale, flameScale);
-      rightFlame.current.visible = current.jetpackActive;
+      rightFlame.current.visible = !isRiding && current.jetpackActive;
     }
   });
 
   return (
     <group ref={root} position={player.position}>
-      {/* Body / Suit */}
-      <mesh position={[0, 0.75, 0]} castShadow>
+      {/* Body / Suit (adapts between standing and seated driving posture) */}
+      <mesh ref={bodyRef} position={[0, 0.75, 0]} castShadow>
         <capsuleGeometry args={[0.32, 0.65, 8, 16]} />
         <Toon color={colors.suit} />
       </mesh>
@@ -65,8 +90,8 @@ function RemoteAvatar({ player, renderRef }: { player: PlayerRenderPose; renderR
           />
         </mesh>
 
-        {/* Held tool (in direction of pitch) */}
-        <group position={[0.34, -0.22, 0.35]}>
+        {/* Held tool (in direction of pitch, hidden while driving) */}
+        <group ref={toolRef} position={[0.34, -0.22, 0.35]}>
           <mesh rotation={[Math.PI / 2, 0, 0]}>
             <cylinderGeometry args={[0.04, 0.05, 0.45, 8]} />
             <Toon color="#334155" />
@@ -81,8 +106,20 @@ function RemoteAvatar({ player, renderRef }: { player: PlayerRenderPose; renderR
         </group>
       </group>
 
+      {/* Driving Arms (reaching forward to hold steering wheel when riding) */}
+      <group ref={drivingArmsRef} visible={false}>
+        <mesh position={[-0.20, 0.48, 0.22]} rotation={[0.42, 0.2, -0.15]} castShadow>
+          <cylinderGeometry args={[0.06, 0.06, 0.42, 8]} />
+          <Toon color={colors.suit} />
+        </mesh>
+        <mesh position={[0.20, 0.48, 0.22]} rotation={[0.42, -0.2, 0.15]} castShadow>
+          <cylinderGeometry args={[0.06, 0.06, 0.42, 8]} />
+          <Toon color={colors.suit} />
+        </mesh>
+      </group>
+
       {/* Jetpack Module on back */}
-      <group position={[0, 0.82, -0.26]}>
+      <group ref={jetpackRef} position={[0, 0.82, -0.26]}>
         <mesh castShadow>
           <boxGeometry args={[0.38, 0.46, 0.16]} />
           <Toon color="#475569" />
@@ -111,16 +148,18 @@ function RemoteAvatar({ player, renderRef }: { player: PlayerRenderPose; renderR
   );
 }
 
-export function PlayerAvatars({ renderRef }: { renderRef: MutableRefObject<YardRender | null> }) {
+export function PlayerAvatars({ renderRef, tool }: { renderRef: MutableRefObject<YardRender | null>; tool?: string }) {
   const render = renderRef.current;
   if (!render || !render.players) return null;
 
-  // Render remote players only (local player is in first-person camera)
-  const remotes = render.players.filter((p) => p.slot !== render.localSlot);
+  // In orbit camera mode, render all players including local player so they can see themselves driving!
+  const visiblePlayers = tool === 'orbit'
+    ? render.players
+    : render.players.filter((p) => p.slot !== render.localSlot);
 
   return (
     <>
-      {remotes.map((player) => (
+      {visiblePlayers.map((player) => (
         <RemoteAvatar key={player.slot} player={player} renderRef={renderRef} />
       ))}
     </>

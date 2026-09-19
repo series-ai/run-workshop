@@ -931,22 +931,22 @@ export function YardShell() {
       <GravityHopper position={[-12, FLOOR_Y + 2.5, 12]} />
 
       {/* ========================================================================= */}
-      {/* SECTOR D: VEHICLE TEST RAMP & PAD [12, FLOOR_Y + 0.4, 12]                 */}
+      {/* SECTOR D: VEHICLE TEST STAGING SLAB & PAD [12, FLOOR_Y + 0.02, 12]        */}
       {/* ========================================================================= */}
-      <group position={[12, FLOOR_Y + 0.4, 12]}>
+      <group position={[12, FLOOR_Y + 0.02, 12]}>
         <mesh castShadow receiveShadow raycast={noRaycast}>
-          <boxGeometry args={[4.4, 0.8, 6.4]} />
+          <boxGeometry args={[5.2, 0.04, 7.2]} />
           <Toon color={ART_STYLE.palette.concreteShade} />
         </mesh>
-        {/* Yellow Chevron Ramp Edge Stripes */}
-        <mesh position={[0, 0.41, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={noRaycast}>
-          <planeGeometry args={[4.2, 0.3]} />
+        {/* Yellow Chevron Staging Pad Border Stripes */}
+        <mesh position={[0, 0.025, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={noRaycast}>
+          <planeGeometry args={[5.0, 0.25]} />
           <Toon color={ART_STYLE.palette.mustard} />
         </mesh>
       </group>
       {/* Scrap Tire Buffer Wall flanking vehicle staging pad */}
-      <ScrapTireBarrier position={[12, FLOOR_Y, 8.6]} />
-      <ScrapTireBarrier position={[12, FLOOR_Y, 15.4]} />
+      <ScrapTireBarrier position={[12, FLOOR_Y, 8.0]} />
+      <ScrapTireBarrier position={[12, FLOOR_Y, 16.0]} />
 
       {/* ========================================================================= */}
       {/* TEARDOWN WATER BASIN: Translucent Crystal Tank & Luminous Turquoise Water */}

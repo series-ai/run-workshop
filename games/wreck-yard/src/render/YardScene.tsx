@@ -32,7 +32,7 @@ function SceneRoot({ controller, tool, onToolChange, bodies, renderRef, outlines
       <PointerInput controller={controller} tool={tool} onToolChange={onToolChange} renderRef={renderRef} onBodiesChange={onBodiesChange} />
       <YardShell />
       <VoxelBodies bodies={bodies} renderRef={renderRef} outlines={outlines} onHover={onHover} worldOcclusion={worldOcclusion} />
-      <PlayerAvatars renderRef={renderRef} />
+      <PlayerAvatars renderRef={renderRef} tool={tool} />
       <FirstPersonTool tool={tool} renderRef={renderRef} />
       <TorchSparks tool={tool} renderRef={renderRef} />
       <OcclusionUpdater renderRef={renderRef} worldOcclusion={worldOcclusion} />

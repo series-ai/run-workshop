@@ -47,6 +47,7 @@ export function PointerInput({
   const pitch = useRef(0);
   const pressed = useRef(false);
   const secondary = useRef(false);
+  const lastBuggyYaw = useRef<number | null>(null);
   const keys = useRef<Set<string>>(new Set());
   const cameraOverride = useRef<{ pos: [number, number, number]; lookAt: [number, number, number] } | null>(null);
 
@@ -171,6 +172,9 @@ export function PointerInput({
 
     const onKeyDown = (event: KeyboardEvent) => {
       keys.current.add(event.code);
+      if (event.code === 'KeyE' || event.code === 'KeyF') {
+        secondary.current = true;
+      }
       if (event.code === 'Digit1') onToolChange?.('hand');
       if (event.code === 'Digit2') onToolChange?.('torch');
       if (event.code === 'Digit3') onToolChange?.('orbit');
@@ -178,6 +182,9 @@ export function PointerInput({
 
     const onKeyUp = (event: KeyboardEvent) => {
       keys.current.delete(event.code);
+      if (event.code === 'KeyE' || event.code === 'KeyF') {
+        secondary.current = false;
+      }
     };
 
     window.addEventListener('mousedown', onPointerDown);
@@ -203,6 +210,26 @@ export function PointerInput({
   useFrame(() => {
     const render = renderRef.current;
     const localPlayer = render?.players?.find((p) => p.slot === render?.localSlot);
+    const isRiding = Boolean(localPlayer?.ridingVehicle);
+    const buggyPose = render?.poses.get('vehicle-chassis');
+
+    // Turn camera yaw smoothly with buggy chassis rotation when driving
+    if (isRiding && buggyPose) {
+      const q = buggyPose.rotation;
+      const chassisYaw = Math.atan2(
+        2 * (q[3] * q[1] + q[0] * q[2]),
+        1 - 2 * (q[1] * q[1] + q[2] * q[2]),
+      );
+      if (lastBuggyYaw.current !== null) {
+        let deltaYaw = chassisYaw - lastBuggyYaw.current;
+        while (deltaYaw > Math.PI) deltaYaw -= 2 * Math.PI;
+        while (deltaYaw < -Math.PI) deltaYaw += 2 * Math.PI;
+        yaw.current += deltaYaw;
+      }
+      lastBuggyYaw.current = chassisYaw;
+    } else {
+      lastBuggyYaw.current = null;
+    }
 
     if (cameraOverride.current) {
       camera.position.set(cameraOverride.current.pos[0], cameraOverride.current.pos[1], cameraOverride.current.pos[2]);
@@ -213,7 +240,16 @@ export function PointerInput({
       dirVec.set(0, 0, -1).applyQuaternion(camera.quaternion);
     } else {
       if (localPlayer) {
-        camera.position.set(localPlayer.position[0], localPlayer.position[1] + 1.55, localPlayer.position[2]);
+        if (isRiding) {
+          // Driver's eye level seated inside the buggy roll cage looking out windshield
+          camera.position.set(
+            localPlayer.position[0],
+            localPlayer.position[1] + 0.52,
+            localPlayer.position[2] - 0.08,
+          );
+        } else {
+          camera.position.set(localPlayer.position[0], localPlayer.position[1] + 1.55, localPlayer.position[2]);
+        }
       }
       euler.set(pitch.current, yaw.current, 0, 'YXZ');
       camera.quaternion.setFromEuler(euler);

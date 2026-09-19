@@ -1,5 +1,5 @@
 import { useFrame, useThree } from '@react-three/fiber';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { Toon } from './style/toonMaterial';
 import type { UiTool } from './PointerInput';
@@ -41,6 +41,7 @@ export function FirstPersonTool({
   const bobTime = useRef(0);
   const swayX = useRef(0);
   const swayY = useRef(0);
+  const steerInput = useRef(0);
   const prevCameraRot = useRef(new THREE.Euler());
   const prevPlayerPos = useRef(new THREE.Vector3());
 
@@ -48,6 +49,24 @@ export function FirstPersonTool({
   const right = useRef(new THREE.Vector3());
   const up = useRef(new THREE.Vector3());
   const toolPos = useRef(new THREE.Vector3());
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const isDown = e.type === 'keydown';
+      if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
+        steerInput.current = isDown ? 1 : 0;
+      }
+      if (e.code === 'KeyD' || e.code === 'ArrowRight') {
+        steerInput.current = isDown ? -1 : 0;
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('keyup', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keyup', onKey);
+    };
+  }, []);
 
   useFrame((state, delta) => {
     if (!root.current || tool === 'orbit') return;
@@ -173,8 +192,8 @@ export function FirstPersonTool({
     // VEHICLE COCKPIT STEERING
     // =========================================================================
     if (isRiding && steeringWheelRef.current) {
-      const steer = swayX.current * 4.5;
-      steeringWheelRef.current.rotation.z = THREE.MathUtils.lerp(steeringWheelRef.current.rotation.z, steer, delta * 15);
+      const targetSteer = steerInput.current * 0.75 + swayX.current * 2.2;
+      steeringWheelRef.current.rotation.z = THREE.MathUtils.lerp(steeringWheelRef.current.rotation.z, targetSteer, delta * 14);
     }
   });
 

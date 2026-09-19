@@ -279,14 +279,14 @@ export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): YardPhys
         });
       }
 
-      // Buggy chassis wheel joints
+      // Buggy chassis wheel joints (Player-sized wide track buggy)
       const chassisId = open.bodyIds.get('vehicle-chassis');
       if (chassisId) {
         const wheels = [
-          { id: 'vehicle-wheel-fl', anchor: { x: -0.9, y: -0.2, z: -0.9 } },
-          { id: 'vehicle-wheel-fr', anchor: { x: 0.9, y: -0.2, z: -0.9 } },
-          { id: 'vehicle-wheel-rl', anchor: { x: -0.9, y: -0.2, z: 0.9 } },
-          { id: 'vehicle-wheel-rr', anchor: { x: 0.9, y: -0.2, z: 0.9 } },
+          { id: 'vehicle-wheel-fl', anchor: { x: -1.22, y: -0.42, z: -1.05 } },
+          { id: 'vehicle-wheel-fr', anchor: { x: 1.22, y: -0.42, z: -1.05 } },
+          { id: 'vehicle-wheel-rl', anchor: { x: -1.22, y: -0.42, z: 1.05 } },
+          { id: 'vehicle-wheel-rr', anchor: { x: 1.22, y: -0.42, z: 1.05 } },
         ];
         for (const w of wheels) {
           const wId = open.bodyIds.get(w.id);
@@ -298,7 +298,7 @@ export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): YardPhys
               anchorA: w.anchor,
               anchorB: { x: 0, y: 0, z: 0 },
               axis: { x: 1, y: 0, z: 0 },
-              suspension: { restLength: 0.35, frequencyHz: 4.5, dampingRatio: 0.65 },
+              suspension: { restLength: 0.40, frequencyHz: 6.0, dampingRatio: 0.80 },
             });
           }
         }
