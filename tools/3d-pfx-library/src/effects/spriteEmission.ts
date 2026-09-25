@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { PFX_FIREBALL_FLIPBOOK_ATLAS } from '../fireballFlipbook'
 import { PFX_FLAME_FLIPBOOK_ATLAS } from '../flameFlipbook'
 import { getPfxStyleRenderProfile } from '../constants/01'
-import { PFX_SPRITE_PARTICLE_VERTEX, getPfxParticleShapeProfile, getPfxSharedFireballFlipbookTexture, getPfxSharedFlameFlipbookTexture, getPfxSharedSpriteAtlasTexture } from '../constants/04'
+import { PFX_SPRITE_PARTICLE_VERTEX, getPfxParticleShapeProfile, getPfxSharedFireballFlipbookTexture, getPfxSharedFlameFlipbookTexture, getPfxSharedSpriteAtlasTexture, getPfxSharedProceduralDummyTexture } from '../constants/04'
 import { PFX_SPRITE_PARTICLE_FRAGMENT } from '../constants/05'
 import { PFX_SDF_SHAPE_INDEX_MAP } from '../shaders/procedural/sdfShapes.glsl'
 import { getPfxParticleColorRamp } from './particleColor'
@@ -144,7 +144,9 @@ export function createPfxSpriteEmissionMaterial(
       uStretch: { value: tuning?.stretch ?? shape.stretch },
       uAdditiveShrink: { value: materialProps.blending === 'additive' ? 1 : 0 },
       uAtlas: {
-        value: usesAuthoredFlipbook
+        value: tuning?.proceduralShape
+          ? getPfxSharedProceduralDummyTexture()
+          : usesAuthoredFlipbook
           ? flipbookAtlas.id === PFX_FIREBALL_FLIPBOOK_ATLAS.id
             ? getPfxSharedFireballFlipbookTexture()
             : getPfxSharedFlameFlipbookTexture()

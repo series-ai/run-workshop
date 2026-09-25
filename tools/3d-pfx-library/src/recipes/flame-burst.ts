@@ -17,7 +17,7 @@ export default authoredRecipe('flame-burst', 'Flame burst', 'Particle-first flam
   {
     kind: 'particles', role: 'impact', opacity: 0.86, scale: 0.96, phase: 'flame-burst-particle-hot-cinders',
     tuning: {
-      motion: 'radial-burst', sprite: 'ember', proceduralShape: 'glint', blend: 'additive', colorOverride: '#ffbd3d', ramp: 'pinned-hot',
+      motion: 'radial-burst', sprite: 'ember', proceduralShape: 'glint', blend: 'additive', colorOverride: '#ffbd3d', ramp: 'held',
       lifecycle: 'flame-burst-particle-ignite', delay: 0.08, window: 0.3, lifeScale: 0.68,
       countScale: 0.46, speedScale: 3.5, speedJitter: 0.52, drag: 0.88, gravity: -2.8,
       spawnScale: 0.12, depthScale: 3, size: [0.1, 0.28, 0.08], spinScale: 0.8,

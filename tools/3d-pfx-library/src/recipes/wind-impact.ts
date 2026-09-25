@@ -8,7 +8,7 @@ export default authoredRecipe('wind-impact', 'Wind impact', 'Particle-first pres
   {
     kind: 'particles', role: 'impact', opacity: 0.94, scale: 1.18, phase: 'wind-impact-particle-pressure-fan',
     tuning: {
-      motion: 'radial-burst', sprite: 'streak', blend: 'alpha', colorOverride: '#b7c9ca', ramp: 'held',
+      motion: 'radial-burst', sprite: 'streak', proceduralShape: 'streak', blend: 'alpha', colorOverride: '#b7c9ca', ramp: 'held',
       lifecycle: 'wind-impact-shear', delay: 0, window: 0.2, lifeScale: 0.46,
       countScale: 0.72, speedScale: 3.2, speedJitter: 0.42, drag: 1.2, gravity: 0,
       spawnScale: 0.18, depthScale: 3.2, size: [0.22, 0.58, 0.1], spinScale: 0.5,
@@ -22,7 +22,7 @@ export default authoredRecipe('wind-impact', 'Wind impact', 'Particle-first pres
   {
     kind: 'particles', role: 'trail', opacity: 0.8, scale: 1.16, phase: 'wind-impact-particle-release-streaks',
     tuning: {
-      motion: 'radial-burst', sprite: 'streak', blend: 'additive', colorOverride: '#d5dfde', ramp: 'held',
+      motion: 'radial-burst', sprite: 'streak', proceduralShape: 'streak', blend: 'additive', colorOverride: '#d5dfde', ramp: 'held',
       lifecycle: 'wind-impact-shear', delay: 0.06, window: 0.24, lifeScale: 0.52,
       countScale: 0.62, speedScale: 4.4, speedJitter: 0.5, drag: 0.72, gravity: 0,
       spawnScale: 0.2, depthScale: 3.4, size: [0.18, 0.52, 0.08], spinScale: 0,
@@ -36,10 +36,10 @@ export default authoredRecipe('wind-impact', 'Wind impact', 'Particle-first pres
   {
     kind: 'particles', role: 'volume', opacity: 0.58, scale: 1.16, phase: 'wind-impact-particle-ground-dust',
     tuning: {
-      motion: 'ground-scuff', sprite: 'debris', blend: 'alpha', colorOverride: '#8d9288', ramp: 'dark',
+      motion: 'ground-scuff', sprite: 'debris', proceduralShape: 'chip', blend: 'alpha', colorOverride: '#8d9288', ramp: 'dark',
       lifecycle: 'wind-impact-shear', delay: 0.14, window: 0.3, lifeScale: 0.8,
       countScale: 0.68, speedScale: 1.85, speedJitter: 0.42, drag: 1.35, spawnScale: 0.52,
-      depthScale: 2.8, gravity: -0.55, stretch: 0.85, spinScale: 0.55, turbulenceScale: 0.14,
+      depthScale: 2.8, gravity: -0.55, stretch: 0, spinScale: 0.55, turbulenceScale: 0.14,
       impactVector: [1, 0.16, 0.18], spreadAngle: 0.42, size: [0.16, 0.3, 0.08], death: 'erode',
       positionOffset: [0.55, -0.02, 0], referenceSource: 'wind-impact-ground-scuff-and-CC0-debris-sprite-language',
       referenceAdaptation: 'the quiet dust handoff stays low and directional so the pressure read resolves into ground matter',

@@ -1296,6 +1296,17 @@ export function parsePfxHexColor(hex: string | undefined): [number, number, numb
   return [((parsed >> 16) & 0xff) / 255, ((parsed >> 8) & 0xff) / 255, (parsed & 0xff) / 255]
 }
 
+let sharedProceduralDummyTexture: THREE.DataTexture | undefined
+
+export function getPfxSharedProceduralDummyTexture(): THREE.Texture {
+  if (sharedProceduralDummyTexture) return sharedProceduralDummyTexture
+  const data = new Uint8Array([255, 255, 255, 255])
+  const texture = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat)
+  texture.needsUpdate = true
+  sharedProceduralDummyTexture = texture
+  return texture
+}
+
 let sharedSpriteAtlasTexture: THREE.Texture | undefined
 
 export function getPfxSharedSpriteAtlasTexture(): THREE.Texture {

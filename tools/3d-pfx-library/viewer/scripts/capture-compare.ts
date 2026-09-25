@@ -61,11 +61,18 @@ function shapeNameToCode(name: string): number {
     case 'glint': return 2
     case 'droplet': return 3
     case 'smoke': return 4
+    case 'soft': return 5
+    case 'bubble': return 3
     default: return 2
   }
 }
 
 const REVIEW_EFFECT_IDS = [
+  'hit-spark',
+  'critical-hit-burst',
+  'fireball',
+  'enemy-death-poof',
+  'healing-aura',
   'explosion',
   'slime-impact',
   'reward-charge',
@@ -78,6 +85,8 @@ const REVIEW_EFFECT_IDS = [
   'flame-burst',
   'slash-trail',
   'shadow-burst',
+  'water-column',
+  'wind-impact',
 ]
 
 function extractProfiles(): EffectProfile[] {
@@ -670,15 +679,19 @@ function generateComparisonHtml(current: EffectProfile, allProfiles: EffectProfi
         vec3 col = vColor;
 
         if (vShape < 0.5) {
-          // 0: CHIP (faceted irregular rock / ice crystal)
-          float ang = atan(c.y, c.x);
-          float r = 0.65 + 0.22 * sin(ang * 5.0 + vSeed * 25.0);
-          alpha = smoothstep(r, r - 0.12, d);
-          col = mix(vColor, vec3(1.0), smoothstep(0.4, 0.0, d) * 0.6);
+          // 0: CHIP (faceted polygonal crystal / mineral shard with ridge catchlight)
+          float s = sin(vSeed * 25.13), co = cos(vSeed * 25.13);
+          vec2 sc = mat2(co, -s, s, co) * c;
+          float facet1 = max(abs(sc.x) * 1.5 + sc.y * 0.7, -sc.y * 1.4);
+          float facet2 = max(abs(sc.x * 0.8 + sc.y * 0.6) * 1.35, abs(sc.y * 0.8 - sc.x * 0.6) * 1.35);
+          float shardDist = mix(facet1, facet2, step(0.5, fract(vSeed * 7.13)));
+          alpha = smoothstep(0.85, 0.70, shardDist);
+          float ridge = smoothstep(0.12, 0.0, abs(sc.x)) * smoothstep(-0.8, 0.6, sc.y) * alpha * 0.85;
+          col = mix(vColor, vec3(1.4, 1.4, 1.3), ridge + smoothstep(0.5, 0.0, d) * 0.5);
         } else if (vShape < 1.5) {
           // 1: STREAK (directional filament)
           alpha = (1.0 - smoothstep(0.0, 0.22, abs(c.y))) * (1.0 - smoothstep(0.1, 0.95, abs(c.x)));
-          col = mix(vColor, vec3(1.0), smoothstep(0.2, 0.0, abs(c.y)));
+          col = mix(vColor, vec3(1.3, 1.3, 1.2), smoothstep(0.18, 0.0, abs(c.y)));
         } else if (vShape < 2.5) {
           // 2: GLINT (sharp 4-pointed specular star glint)
           float core = pow(1.0 - smoothstep(0.0, 0.35, d), 3.0);
@@ -686,16 +699,20 @@ function generateComparisonHtml(current: EffectProfile, allProfiles: EffectProfi
           float spike = (1.0 - smoothstep(0.0, 0.06, a.y)) * (1.0 - smoothstep(0.12, 1.0, a.x))
                       + (1.0 - smoothstep(0.0, 0.06, a.x)) * (1.0 - smoothstep(0.12, 1.0, a.y));
           alpha = clamp(core + spike * 0.8, 0.0, 1.0);
-          col = mix(vColor, vec3(1.0), core * 0.8);
+          col = mix(vColor, vec3(1.4, 1.35, 1.25), core * 0.8);
         } else if (vShape < 3.5) {
           // 3: DROPLET (surface-tension teardrop)
           float k = (1.0 - c.y * 0.45);
           alpha = smoothstep(0.85 * k, 0.85 * k - 0.18, d);
           col = mix(vColor * 0.8, vColor + vec3(0.2), smoothstep(0.5, 0.0, d));
-        } else {
+        } else if (vShape < 4.5) {
           // 4: SMOKE (soft curl FBM smoke)
           alpha = smoothstep(0.95, 0.12, d) * 0.55;
           col = vColor;
+        } else {
+          // 5: SOFT (Gaussian energy mote / orb)
+          alpha = exp(-2.5 * d * d);
+          col = mix(vColor, vec3(1.4, 1.35, 1.2), smoothstep(0.4, 0.0, d) * 0.8);
         }
 
         if (alpha * vAlpha < 0.01) discard;

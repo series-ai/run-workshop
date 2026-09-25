@@ -140,9 +140,13 @@ float pfxSampleShapeMask(int shapeIndex, vec2 uv, float seed, float time, float 
 
   // SHAPE 4: CHIP (angular faceted rock/crystal splinter)
   if (shapeIndex == 4) {
-    float ang = atan(c.y, c.x);
-    float r = 0.62 + 0.24 * sin(ang * 5.0 + seed * 30.0) + 0.1 * sin(ang * 9.0 - seed * 11.0);
-    return smoothstep(r, r - 0.14, d);
+    vec2 sc = pfxRot2(seed * 25.13) * c;
+    float facet1 = max(abs(sc.x) * 1.5 + sc.y * 0.7, -sc.y * 1.4);
+    float facet2 = max(abs(sc.x * 0.8 + sc.y * 0.6) * 1.35, abs(sc.y * 0.8 - sc.x * 0.6) * 1.35);
+    float shardDist = mix(facet1, facet2, step(0.5, fract(seed * 7.13)));
+    float mask = smoothstep(0.85, 0.70, shardDist);
+    hilite = smoothstep(0.12, 0.0, abs(sc.x)) * smoothstep(-0.8, 0.6, sc.y) * mask * 0.85;
+    return mask;
   }
 
   // SHAPE 5: RING (hollow annulus)

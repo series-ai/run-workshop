@@ -9,9 +9,9 @@ export default authoredRecipe('hit-spark', 'Contact spark burst', 'Particle-firs
   {
     kind: 'particles', role: 'impact', opacity: 0.98, scale: 0.86, phase: 'hit-spark-particle-contact-pop',
     tuning: {
-      motion: 'impact-burst', sprite: 'glow', blend: 'additive', colorOverride: '#fff4cc', ramp: 'pinned-hot',
+      motion: 'impact-burst', sprite: 'glow', proceduralShape: 'glint', blend: 'additive', colorOverride: '#fff4cc', ramp: 'pinned-hot',
       lifecycle: 'hit-spark-particle-confirm', delay: 0, window: 0.12, lifeScale: 0.36,
-      countScale: 0.32, speedScale: 2.8, speedJitter: 0.38, drag: 2.4, gravity: 0,
+      countScale: 0.22, speedScale: 2.8, speedJitter: 0.38, drag: 2.4, gravity: 0,
       spawnScale: 0.06, depthScale: 2.8, size: [0.18, 0.42, 0.14], spinScale: 0,
       stretch: 0.18, death: 'erode', ease: 'snap', turbulenceScale: 0.02, positionOffset: [0, 0, 0],
       referenceSource: 'hit-spark-faceted-star-and-CC0-glow-sprite-language',
@@ -22,9 +22,9 @@ export default authoredRecipe('hit-spark', 'Contact spark burst', 'Particle-firs
   {
     kind: 'particles', role: 'impact', opacity: 0.96, scale: 1.12, phase: 'hit-spark-particle-random-fan',
     tuning: {
-      motion: 'radial-burst', sprite: 'streak', blend: 'additive', colorOverride: '#ffd45e', ramp: 'pinned-hot',
+      motion: 'radial-burst', sprite: 'streak', proceduralShape: 'streak', blend: 'additive', colorOverride: '#ffd45e', ramp: 'pinned-hot',
       lifecycle: 'hit-spark-particle-confirm', delay: 0.06, window: 0.28, lifeScale: 0.62,
-      countScale: 0.86, speedScale: 3.8, speedJitter: 0.58, drag: 0.82, gravity: 0,
+      countScale: 0.65, speedScale: 3.8, speedJitter: 0.58, drag: 0.82, gravity: 0,
       spawnScale: 0.12, depthScale: 3.2, size: [0.12, 0.38, 0.08], spinScale: 0.7,
       stretch: 0.42, randomizeAzimuth: true, death: 'erode', ease: 'snap', turbulenceScale: 0.04,
       impactVector: [1, 0.18, 0.22], spreadAngle: 0.7, positionOffset: [0, 0.02, 0],
@@ -36,9 +36,9 @@ export default authoredRecipe('hit-spark', 'Contact spark burst', 'Particle-firs
   {
     kind: 'particles', role: 'trail', opacity: 0.78, scale: 0.92, phase: 'hit-spark-particle-ember-resolve',
     tuning: {
-      motion: 'radial-burst', sprite: 'ember', blend: 'alpha', colorOverride: '#ff9a2f', ramp: 'pigment',
+      motion: 'radial-burst', sprite: 'ember', proceduralShape: 'glint', blend: 'alpha', colorOverride: '#ff9a2f', ramp: 'pigment',
       lifecycle: 'hit-spark-particle-confirm', delay: 0.14, window: 0.34, lifeScale: 0.82,
-      countScale: 0.34, speedScale: 1.25, speedJitter: 0.64, drag: 2.2, gravity: -1.4,
+      countScale: 0.3, speedScale: 1.25, speedJitter: 0.64, drag: 2.2, gravity: -1.4,
       spawnScale: 0.14, depthScale: 3, size: [0.1, 0.22, 0.06], spinScale: 0.8,
       stretch: 0.18, randomizeAzimuth: true, death: 'erode', ease: 'snap', turbulenceScale: 0.04,
       impactVector: [1, 0.15, 0.28], spreadAngle: 0.82,

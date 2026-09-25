@@ -1673,7 +1673,10 @@ void main() {
   #ifdef PFX_PROCEDURAL_SDF
     float pfxHilite = 0.0;
     float pfxCoverage = pfxSampleShapeMask(PFX_PROCEDURAL_SDF_SHAPE, spriteUv, vVariant, uTime, vProgress, pfxHilite);
-    sprite = vec4(mix(vec3(1.0), vec3(1.4), pfxHilite), pfxCoverage);
+    float pfxDist = length((spriteUv - 0.5) * 2.0);
+    float pfxCoreHotness = smoothstep(0.65, 0.05, pfxDist);
+    vec3 pfxColorStructure = mix(vec3(0.85, 0.88, 0.92), vec3(1.45, 1.4, 1.3), pfxCoreHotness * 0.75 + pfxHilite * 0.85);
+    sprite = vec4(pfxColorStructure, pfxCoverage);
   #else
   if (uFlipbookFrameCount > 1.5) {
     // Each particle advances at the authored rate from its own age. A stable
