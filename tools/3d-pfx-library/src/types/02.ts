@@ -1,4 +1,5 @@
 import { PfxSpriteName } from '../particleSprites'
+import type { PfxSdfShapeKind } from '../shaders/procedural/sdfShapes.glsl'
 import { ReactElement } from 'react'
 import * as THREE from 'three'
 import type { ArtStyleCluster, BlendMode, EffectSpace, EffectType, LoopMode, MobileSafety, PfxMarketSourceFamily, PfxPreset, PfxPresetOverrides, PfxRenderSurfaceKind } from './01'
@@ -6,6 +7,7 @@ import type { ArtStyleCluster, BlendMode, EffectSpace, EffectType, LoopMode, Mob
 export interface PfxSurfaceTuning {
   /** Explicit atlas sprite; overrides the effect-family mapping. */
   sprite?: PfxSpriteName
+  proceduralShape?: PfxSdfShapeKind
   /** Static or lower-motion atlas sprite used by the reduced-motion preset
    * when the normal sprite's silhouette depends on animated travel. */
   reducedMotionSprite?: PfxSpriteName

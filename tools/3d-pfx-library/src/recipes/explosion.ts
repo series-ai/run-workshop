@@ -27,6 +27,7 @@ export default authoredRecipe('explosion', 'Gameplay blast', 'Short read on dama
     // upward, ends LARGER than it started, erodes away last.
     tuning: {
       sprite: 'smoke',
+      proceduralShape: 'smoke',
       blend: 'alpha',
       window: 0.24,
       delay: 0.26,
@@ -41,11 +42,11 @@ export default authoredRecipe('explosion', 'Gameplay blast', 'Short read on dama
       // Tempo pass: smoke gone ~1.3s (mobile spec 0.8-1.5s) — was ~3s.
       lifeScale: 1.1,
       turbulenceScale: 0.5,
+      death: 'erode',
       // No bands here: cel banding crushes the soft alpha falloff into hard
       // rims — right for hot drawn shapes (fire/flash), wrong for soft
       // matter. Smoke keeps soft edges; erosion still owns the death.
-      death: 'erode',
-    },
+      },
   },
   {
     kind: 'particles',
@@ -55,7 +56,7 @@ export default authoredRecipe('explosion', 'Gameplay blast', 'Short read on dama
     phase: 'dust-wall',
     // Beat 6 — ground contact: a low warm-grey dust wall kicked outward
     // (~95ms), the matter the additive fire reads against.
-    tuning: { sprite: 'puff', blend: 'alpha', window: 0.14, delay: 0.08, countScale: 0.16, speedScale: 0.9, drag: 2, size: [0.7, 1.7, 2.1], ramp: 'dark', lifeScale: 1.2, death: 'erode', turbulenceScale: 0.5 },
+    tuning: { sprite: 'puff', proceduralShape: 'smoke', blend: 'alpha', window: 0.14, delay: 0.08, countScale: 0.16, speedScale: 0.9, drag: 2, size: [0.7, 1.7, 2.1], ramp: 'dark', lifeScale: 1.2, turbulenceScale: 0.5 },
   },
   {
     kind: 'impact-sparks',
@@ -67,7 +68,7 @@ export default authoredRecipe('explosion', 'Gameplay blast', 'Short read on dama
     // spinning, eroding as they cool. Dark matter under the additive stack.
     // spinScale 1.1: chunk tumble is physical, but 3.2 at this sprite size
     // read as pinwheeling dots.
-    tuning: { sprite: 'debris', blend: 'alpha', stretch: 0, gravity: -3.5, drag: 0.4, speedScale: 1.9, delay: 0.04, window: 0.06, size: [0.38, 0.32, 0.22], lifeScale: 0.8, countScale: 0.2, ramp: 'dark', spinScale: 1.1, death: 'erode', turbulenceScale: 0 },
+    tuning: { sprite: 'debris', proceduralShape: 'chip', blend: 'alpha', stretch: 0, gravity: -3.5, drag: 0.4, speedScale: 1.9, delay: 0.04, window: 0.06, size: [0.38, 0.32, 0.22], lifeScale: 0.8, countScale: 0.2, ramp: 'dark', spinScale: 1.1, turbulenceScale: 0 },
   },
   // Beat 2 — radius telegraph (0-350ms). Must visibly outrun every layer.
   { kind: 'shockwave-ring', role: 'impact', opacity: 0.92, scale: 2.6, phase: 'radius-read', tuning: { meshMotion: 'shockwave', ringPurpose: 'shockwave' } },
@@ -82,7 +83,7 @@ export default authoredRecipe('explosion', 'Gameplay blast', 'Short read on dama
     // Beat 4 — the fireball body co-fires inside the flash, then outlives it.
     // A procedural single flame lick replaces the atlas fire cell: repeated
     // atlas glyphs read as identical magic twinkles instead of hot mass.
-    tuning: { sprite: 'lick', window: 0.12, delay: 0, countScale: 0.38, speedScale: 0.65, drag: 4.5, spawnScale: 0.52, size: [0.9, 2.2, 0.75], spinScale: 0.8, lifeScale: 0.52, ramp: 'pinned-hot', ease: 'snap', turbulenceScale: 0.45 },
+    tuning: { sprite: 'lick', proceduralShape: 'droplet', window: 0.12, delay: 0, countScale: 0.38, speedScale: 0.65, drag: 4.5, spawnScale: 0.52, size: [0.9, 2.2, 0.75], spinScale: 0.8, lifeScale: 0.52, ramp: 'pinned-hot', ease: 'snap', turbulenceScale: 0.45 },
   },
   {
     kind: 'impact-sparks',
@@ -95,7 +96,7 @@ export default authoredRecipe('explosion', 'Gameplay blast', 'Short read on dama
     // gravity 0: with drag killing speed, gravity re-bent the velocity
     // vector and the velocity-aligned streak visibly ROTATED in place —
     // cartoon sparks are straight radial single-glyph lines that shrink out.
-    tuning: { sprite: 'streak', stretch: 1.4, gravity: 0, drag: 1.1, speedScale: 1.7, speedJitter: 0.45, window: 0.05, countScale: 0.28, size: [1, 0.58, 0.12], lifeScale: 0.32, spinScale: 0.2, ramp: 'pinned-hot', ease: 'snap', turbulenceScale: 0 },
+    tuning: { sprite: 'streak', proceduralShape: 'streak', stretch: 1.4, gravity: 0, drag: 1.1, speedScale: 1.7, speedJitter: 0.45, window: 0.05, countScale: 0.28, size: [1, 0.58, 0.12], lifeScale: 0.32, spinScale: 0.2, ramp: 'pinned-hot', ease: 'snap', turbulenceScale: 0 },
   },
   {
     kind: 'particles',
@@ -117,6 +118,7 @@ export default authoredRecipe('explosion', 'Gameplay blast', 'Short read on dama
       // asset — with roll locked, every ember rendered as the same
       // parallel downward line.
       sprite: 'glow',
+      proceduralShape: 'glint',
       blend: 'additive',
       window: 0.26,
       delay: 0.32,
@@ -135,8 +137,7 @@ export default authoredRecipe('explosion', 'Gameplay blast', 'Short read on dama
       spinScale: 0,
       stretch: 0,
       ramp: 'hot',
-      turbulenceScale: 0,
-    },
+      turbulenceScale: 0, death: 'erode' },
   },
 // feelVersion 2: this recipe has been remediated — it opts into the v2
 // renderer looks (soft shockwave disc, billboard flash, freshness).

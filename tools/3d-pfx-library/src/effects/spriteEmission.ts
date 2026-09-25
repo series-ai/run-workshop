@@ -4,6 +4,7 @@ import { PFX_FLAME_FLIPBOOK_ATLAS } from '../flameFlipbook'
 import { getPfxStyleRenderProfile } from '../constants/01'
 import { PFX_SPRITE_PARTICLE_VERTEX, getPfxParticleShapeProfile, getPfxSharedFireballFlipbookTexture, getPfxSharedFlameFlipbookTexture, getPfxSharedSpriteAtlasTexture } from '../constants/04'
 import { PFX_SPRITE_PARTICLE_FRAGMENT } from '../constants/05'
+import { PFX_SDF_SHAPE_INDEX_MAP } from '../shaders/procedural/sdfShapes.glsl'
 import { getPfxParticleColorRamp } from './particleColor'
 import { getPfxSpriteVariantLayout } from './spriteVariant'
 import type { PfxControls } from '../types/01'
@@ -91,7 +92,7 @@ export function createPfxSpriteEmissionMaterial(
   }
   const variantLayout = getPfxSpriteVariantLayout(emission.sprite)
   const styleProfile = getPfxStyleRenderProfile(controls.style)
-  const defines: Record<string, boolean> = {}
+  const defines: Record<string, boolean | number | string> = {}
   if (emission.emissionWindow < 1) defines.BURST = true
   if (emission.motionKind === 'orbit-ring') defines.MOTION_ORBIT = true
   if (emission.motionKind === 'ground-ring') defines.MOTION_GROUND_RING = true
@@ -109,6 +110,10 @@ export function createPfxSpriteEmissionMaterial(
   ) defines.MOTION_MATERIALIZE = true
   if (emission.motionKind === 'materialize-gather') defines.MOTION_MATERIALIZE_GATHER = true
   if (emission.motionKind === 'materialize-release') defines.MOTION_MATERIALIZE_RELEASE = true
+  if (tuning?.proceduralShape) {
+    defines.PFX_PROCEDURAL_SDF = true
+    defines.PFX_PROCEDURAL_SDF_SHAPE = PFX_SDF_SHAPE_INDEX_MAP[tuning.proceduralShape]
+  }
   const material = new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },

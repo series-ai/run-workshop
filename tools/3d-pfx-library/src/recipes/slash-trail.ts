@@ -13,6 +13,6 @@ export default authoredRecipe('slash-trail', 'Melee slash arc', 'Readable direct
     opacity: 0.72,
     scale: 1,
     phase: 'edge-contact-tick',
-    tuning: { sprite: 'streak', stretch: 2, speedScale: 0.35, drag: 5, size: [0.18, 0.12, 0.05], countScale: 0.18, lifeScale: 0.12, spinScale: 0, ramp: 'pinned-hot', bands: 2, ease: 'snap', colorOverride: '#ffe0a3', delay: 0.22, window: 0.05, turbulenceScale: 0, spawnScale: 0.08, impactVector: [-0.8, 0.25, 0.1], spreadAngle: 0.28, positionOffset: [-0.95, 0, 0.05] },
+    tuning: { sprite: 'streak', proceduralShape: 'streak', stretch: 2, speedScale: 0.35, drag: 5, size: [0.18, 0.12, 0.05], countScale: 0.18, lifeScale: 0.12, spinScale: 0, ramp: 'pinned-hot', bands: 2, ease: 'snap', colorOverride: '#ffe0a3', delay: 0.22, window: 0.05, turbulenceScale: 0, spawnScale: 0.08, impactVector: [-0.8, 0.25, 0.1], spreadAngle: 0.28, positionOffset: [-0.95, 0, 0.05] },
   },
 ], 2, 2.2)

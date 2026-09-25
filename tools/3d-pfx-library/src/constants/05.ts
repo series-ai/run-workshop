@@ -6,6 +6,7 @@ import {
   sharedGradientTextureCache,
 } from './04'
 import type { PfxComboRingMultiplier, PfxGradientTextureKind, PfxSurfaceTuning } from '../types/02'
+import { pfxSdfShapesGLSL } from '../shaders/procedural/sdfShapes.glsl'
 
 export const PFX_SCREEN_VIGNETTE_VERTEX = /* glsl */ `
 varying vec2 vUv;
@@ -1605,6 +1606,8 @@ export function getPfxSharedGradientTexture(kind: PfxGradientTextureKind): THREE
 }
 
 export const PFX_SPRITE_PARTICLE_FRAGMENT = /* glsl */ `
+${pfxSdfShapesGLSL}
+uniform float uTime;
 uniform sampler2D uAtlas;
 uniform vec2 uUvOffset;
 uniform vec2 uUvScale;
@@ -1667,6 +1670,11 @@ void main() {
       );
   #endif
   vec4 sprite;
+  #ifdef PFX_PROCEDURAL_SDF
+    float pfxHilite = 0.0;
+    float pfxCoverage = pfxSampleShapeMask(PFX_PROCEDURAL_SDF_SHAPE, spriteUv, vVariant, uTime, vProgress, pfxHilite);
+    sprite = vec4(mix(vec3(1.0), vec3(1.4), pfxHilite), pfxCoverage);
+  #else
   if (uFlipbookFrameCount > 1.5) {
     // Each particle advances at the authored rate from its own age. A stable
     // variant phase prevents a stack of identical flames from pulsing in lockstep.
@@ -1710,6 +1718,7 @@ void main() {
   } else {
     sprite = texture2D(uAtlas, uUvOffset + variantOffset + spriteUv * uUvScale);
   }
+  #endif
   #ifdef MOTION_MATERIALIZE_RELEASE
     // Bright contact particles sample the radial atlas cell while gather and
     // release particles retain the tapered streak. One batched draw therefore

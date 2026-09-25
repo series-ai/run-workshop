@@ -4,7 +4,7 @@ export default authoredRecipe('flame-burst', 'Flame burst', 'Particle-first flam
   {
     kind: 'particles', role: 'impact', opacity: 0.96, scale: 0.94, phase: 'flame-burst-particle-upward-licks',
     tuning: {
-      motion: 'cone-fountain', sprite: 'flame', blend: 'additive', colorOverride: '#ff7a18', ramp: 'hot',
+      motion: 'cone-fountain', sprite: 'flame', proceduralShape: 'droplet', blend: 'additive', colorOverride: '#ff7a18', ramp: 'hot',
       lifecycle: 'flame-burst-particle-ignite', delay: 0, window: 0.28, lifeScale: 0.7,
       countScale: 0.64, speedScale: 2.25, speedJitter: 0.44, drag: 1.15, gravity: -1.4,
       spawnScale: 0.16, depthScale: 2.8, size: [0.16, 0.46, 0.12], spinScale: 0.55,
@@ -17,7 +17,7 @@ export default authoredRecipe('flame-burst', 'Flame burst', 'Particle-first flam
   {
     kind: 'particles', role: 'impact', opacity: 0.86, scale: 0.96, phase: 'flame-burst-particle-hot-cinders',
     tuning: {
-      motion: 'radial-burst', sprite: 'ember', blend: 'additive', colorOverride: '#ffbd3d', ramp: 'pinned-hot',
+      motion: 'radial-burst', sprite: 'ember', proceduralShape: 'glint', blend: 'additive', colorOverride: '#ffbd3d', ramp: 'pinned-hot',
       lifecycle: 'flame-burst-particle-ignite', delay: 0.08, window: 0.3, lifeScale: 0.68,
       countScale: 0.46, speedScale: 3.5, speedJitter: 0.52, drag: 0.88, gravity: -2.8,
       spawnScale: 0.12, depthScale: 3, size: [0.1, 0.28, 0.08], spinScale: 0.8,
@@ -30,7 +30,7 @@ export default authoredRecipe('flame-burst', 'Flame burst', 'Particle-first flam
   {
     kind: 'particles', role: 'volume', opacity: 0.54, scale: 1.08, phase: 'flame-burst-particle-char-smoke',
     tuning: {
-      motion: 'drift-cloud', sprite: 'smoke-variants', blend: 'alpha', colorOverride: '#733b2a', ramp: 'dark',
+      motion: 'drift-cloud', sprite: 'smoke-variants', proceduralShape: 'smoke', blend: 'alpha', colorOverride: '#733b2a', ramp: 'dark',
       lifecycle: 'flame-burst-particle-ignite', delay: 0.2, window: 0.42, lifeScale: 1.04,
       countScale: 0.38, speedScale: 0.24, speedJitter: 0.42, drag: 1.4, gravity: 0.05,
       spawnScale: 0.66, spawnLift: 0.04, depthScale: 3.2, size: [0.3, 0.72, 0.54],
