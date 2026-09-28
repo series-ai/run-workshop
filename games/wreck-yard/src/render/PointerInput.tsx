@@ -8,7 +8,7 @@ import type { MatchController } from '../game/match';
 import type { YardBody } from '../sim/state';
 import type { YardRender } from './presentation';
 import { bodyGeometryChanged, wrapYaw } from './inputPresentation';
-import { CHASE_FOLLOW_RATE, chaseCameraPose } from './chaseCamera';
+import { CHASE_FOLLOW_RATE, chaseCameraPose, recenterChaseView } from './chaseCamera';
 import { isGameKey, isThrusterHeld, toolForKey, type PlayTool, type UiTool } from './keyBindings';
 
 function toSimTool(tool: UiTool): Tool {
@@ -49,6 +49,8 @@ export function PointerInput({
   const pressed = useRef(false);
   const secondary = useRef(false);
   const lastBuggyYaw = useRef<number | null>(null);
+  /** performance.now() of the last mouse look, so the chase camera does not fight the player. */
+  const lastLookMs = useRef(-Infinity);
   const keys = useRef<Set<string>>(new Set());
   const lastPlayTool = useRef<PlayTool>(tool === 'orbit' ? 'hand' : tool);
   if (tool !== 'orbit') lastPlayTool.current = tool;
@@ -104,6 +106,7 @@ export function PointerInput({
       (window as unknown as { __SET_LOOK_ANGLES__?: (y: number, p: number) => void }).__SET_LOOK_ANGLES__ = (y, p) => {
         yaw.current = y;
         pitch.current = THREE.MathUtils.clamp(p, -1.45, 1.45);
+        lastLookMs.current = performance.now();
       };
 
       (window as unknown as {
@@ -160,6 +163,7 @@ export function PointerInput({
     const onMouseMove = (event: MouseEvent) => {
       if (tool === 'orbit') return;
       if (document.pointerLockElement === dom) {
+        if (event.movementX !== 0 || event.movementY !== 0) lastLookMs.current = performance.now();
         yaw.current -= event.movementX * 0.0022;
         pitch.current = THREE.MathUtils.clamp(pitch.current - event.movementY * 0.0022, -1.45, 1.45);
       } else if (isDragging) {
@@ -167,6 +171,7 @@ export function PointerInput({
         const dy = event.movementY || (event.clientY - lastY);
         lastX = event.clientX;
         lastY = event.clientY;
+        if (dx !== 0 || dy !== 0) lastLookMs.current = performance.now();
         yaw.current -= dx * 0.003;
         pitch.current = THREE.MathUtils.clamp(pitch.current - dy * 0.003, -1.45, 1.45);
       }
@@ -232,6 +237,9 @@ export function PointerInput({
   const buggyQuat = useMemo(() => new THREE.Quaternion(), []);
   const chaseFollowing = useRef(false);
   const chaseTarget = useMemo(() => new THREE.Vector3(), []);
+  /** Chassis position last frame and smoothed forward speed (m/s), for chase recentering. */
+  const lastChassisPosition = useRef<readonly [number, number, number] | null>(null);
+  const chassisForwardSpeed = useRef(0);
 
   const updateCamera = (render: YardRender | null, deltaSeconds: number) => {
     const localPlayer = render?.players?.find((p) => p.slot === render?.localSlot);
@@ -256,10 +264,31 @@ export function PointerInput({
           }
         }
         lastBuggyYaw.current = chassisYaw;
+
+        // Chase yaw 0 looks along -Z, like the sim; the chassis heading uses the same convention.
+        const previous = lastChassisPosition.current;
+        const position = buggyPose.position;
+        if (previous && deltaSeconds > 0) {
+          const forward = ((position[0] - previous[0]) * -Math.sin(chassisYaw) + (position[2] - previous[2]) * -Math.cos(chassisYaw)) / deltaSeconds;
+          // Poses step at the 30 Hz tick, so smooth the per-frame estimate over about 0.15 s.
+          chassisForwardSpeed.current += (forward - chassisForwardSpeed.current) * (1 - Math.exp(-7 * deltaSeconds));
+        }
+        lastChassisPosition.current = [position[0], position[1], position[2]];
+        const view = recenterChaseView(
+          { yaw: yaw.current, pitch: pitch.current },
+          chassisYaw,
+          chassisForwardSpeed.current,
+          (performance.now() - lastLookMs.current) / 1000,
+          deltaSeconds,
+        );
+        yaw.current = view.yaw;
+        pitch.current = view.pitch;
       }
     } else {
       lastBuggyYaw.current = null;
       chaseFollowing.current = false;
+      lastChassisPosition.current = null;
+      chassisForwardSpeed.current = 0;
     }
 
     if (!Number.isFinite(yaw.current)) yaw.current = 0;

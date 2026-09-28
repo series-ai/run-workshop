@@ -1,7 +1,7 @@
 import { SHELL_BOXES } from './shell';
 import { describe, expect, it } from 'vitest';
 import { makeEmptyVoxelField, stampBox } from 'voxel-kit';
-import { VOXEL_SIZE, YARD_CLUTTER } from './constants';
+import { VOXEL_SIZE } from './constants';
 import { bodyMass, cookCenteredCollider, makePhysicsBody, voxelStats } from './physics';
 import { createInitialState } from './presets';
 import type { YardBody } from './state';
@@ -40,7 +40,6 @@ describe('createInitialState', () => {
       expect(physics?.kind).toBe(body.motion === 'fixed' ? 'static' : 'dynamic');
     }
     expect(state.world.bodies.filter((b) => b.id.startsWith('shell:'))).toHaveLength(SHELL_BOXES.length);
-    expect(state.world.bodies.filter((b) => b.id.startsWith('shell:clutter-'))).toHaveLength(YARD_CLUTTER.length);
     expect(state.world.bodies.some((b) => b.id === 'shell:floor')).toBe(true);
   });
 

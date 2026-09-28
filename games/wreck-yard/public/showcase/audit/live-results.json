@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-28T18:49:36.865Z",
+  "capturedAt": "2026-09-28T23:40:37.188Z",
   "results": [
     {
       "name": "desktop",
@@ -18,8 +18,8 @@
         "p95FrameMs": 16.700000000000728,
         "maxFrameMs": 16.800000000000182,
         "simulationTicks": 60,
-        "elapsedMs": 2008.9000000357628,
-        "meanDrawCalls": 161.66666666666666,
+        "elapsedMs": 2009.300000011921,
+        "meanDrawCalls": 199.1,
         "dpr": 1,
         "shadows": true,
         "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Max, Unspecified Version)",
@@ -40,12 +40,12 @@
       },
       "profile": {
         "samples": 120,
-        "meanFrameMs": 16.66583333333333,
-        "p95FrameMs": 16.700000000000728,
+        "meanFrameMs": 16.665000000000003,
+        "p95FrameMs": 16.800000000000182,
         "maxFrameMs": 16.800000000000182,
         "simulationTicks": 60,
-        "elapsedMs": 2014,
-        "meanDrawCalls": 57.19166666666667,
+        "elapsedMs": 2006.5,
+        "meanDrawCalls": 76.18333333333334,
         "dpr": 1,
         "shadows": false,
         "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Max, Unspecified Version)",

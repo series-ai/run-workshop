@@ -42,6 +42,26 @@ describe('world occlusion volume', () => {
     expect(sampleWorldOcclusion(volume, spec, [-3.5, 0, -3.5])).toBe(0);
   });
 
+  it('skips bodies outside the volume without reading their voxels', () => {
+    const untouchable = new Proxy(new Uint8Array(512), {
+      get: () => { throw new Error('voxels read for a body outside the volume'); },
+    }) as Uint8Array;
+    const volume = buildWorldOcclusionVolume(spec, [
+      { dims: { x: 8, y: 8, z: 8 }, voxels: untouchable, position: [40, 0, 0], rotation: [0, 0, 0, 1] },
+    ], [], 0.5);
+
+    expect(volume.every((cell) => cell === 0)).toBe(true);
+  });
+
+  it('still rasterizes a body centered outside the volume that reaches into it', () => {
+    const voxels = makeVoxelBox({ x: 20, y: 2, z: 2 }, { x: 0, y: 0, z: 0 }, { x: 19, y: 1, z: 1 }, 1);
+    const volume = buildWorldOcclusionVolume(spec, [
+      { dims: { x: 20, y: 2, z: 2 }, voxels, position: [7, 0, 0], rotation: [0, 0, 0, 1] },
+    ], [], 0.5);
+
+    expect(sampleWorldOcclusion(volume, spec, [3.5, 0, 0])).toBe(1);
+  });
+
   it('ignores tiny pose jitter when deciding whether to refresh the shared volume', () => {
     const previous: WorldOcclusionPose[] = [
       { id: 'crate', position: [1, 0, 1], rotation: [0, 0, 0, 1] },

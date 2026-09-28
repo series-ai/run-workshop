@@ -10,8 +10,11 @@ import type { UiTool } from './keyBindings';
 import { PlayerAvatars } from './PlayerAvatars';
 import { FirstPersonTool } from './FirstPersonTool';
 import { TorchSparks } from './TorchSparks';
+import { ToolFeedbackBeams } from './ToolFeedbackBeams';
+import { TractorBeam } from './TractorBeam';
 import { VoxelBodies } from './VoxelBodies';
 import { YardShell } from './YardShell';
+import { Contraptions } from './Contraptions';
 import { InkComposer } from './style/InkComposer';
 import type { YardRender } from './presentation';
 import { DynamicDpr, isMobileDevice } from './DynamicDpr';
@@ -52,10 +55,13 @@ function SceneRoot({ controller, tool, quality, onQualityFallback, onToolChange,
     <>
       <PointerInput controller={controller} tool={tool} onToolChange={onToolChange} renderRef={renderRef} onBodiesChange={onBodiesChange} />
       <YardShell renderRef={renderRef} />
+      <Contraptions renderRef={renderRef} />
       <VoxelBodies bodies={bodies} renderRef={renderRef} outlines={outlines} onHover={onHover} worldOcclusion={worldOcclusion} />
       <PlayerAvatars renderRef={renderRef} tool={tool} />
       <FirstPersonTool tool={tool} renderRef={renderRef} />
       <TorchSparks tool={tool} renderRef={renderRef} />
+      <ToolFeedbackBeams tool={tool} renderRef={renderRef} />
+      <TractorBeam tool={tool} renderRef={renderRef} />
       <OcclusionUpdater renderRef={renderRef} worldOcclusion={worldOcclusion} />
       <InkComposer enableInk={true} samples={isMobileDevice() ? 0 : 4} quality={quality} />
       {onQualityFallback && quality === 'high' ? <QualityFallback onFallback={onQualityFallback} /> : null}

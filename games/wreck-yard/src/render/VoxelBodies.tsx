@@ -6,6 +6,7 @@ import { ART_STYLE, type PaletteKey } from './style/artStyle';
 import { bodyOutlineColor } from './bodyOutline';
 import { BuggyWheels } from './BuggyWheels';
 import { VOXEL_SIZE } from '../sim/constants';
+import { PROP_COLOR, type PropColor } from '../sim/props';
 import type { YardBody } from '../sim/state';
 import { VoxelVolumeRenderer } from './VoxelVolumeRenderer';
 import type { YardRender } from './presentation';
@@ -13,12 +14,18 @@ import type { WorldOcclusionRuntime } from './OcclusionUpdater';
 
 const palette = makeDemoPalette();
 const materialParams = makeDemoMaterialParams();
-const buggyColors: readonly PaletteKey[] = ['signalOrange', 'orangeShade', 'concreteLit', 'concreteShade', 'teal', 'mustard', 'rust', 'ink', 'spark', 'glow'];
-for (const [index, key] of buggyColors.entries()) {
-  const color = new THREE.Color(ART_STYLE.palette[key]).convertLinearToSRGB();
-  const offset = (index + 16) * 4;
+/** Prop and buggy palette band (sim/props.ts PROP_COLOR) to art colors. */
+const PROP_ART: Record<PropColor, PaletteKey> = {
+  orange: 'signalOrange', orangeShade: 'orangeShade', white: 'concreteLit', grey: 'concreteShade', teal: 'teal',
+  mustard: 'mustard', rust: 'rust', ink: 'ink', spark: 'spark', glow: 'glow', metal: 'metal',
+};
+for (const [name, code] of Object.entries(PROP_COLOR) as [PropColor, number][]) {
+  const color = new THREE.Color(ART_STYLE.palette[PROP_ART[name]]).convertLinearToSRGB();
+  const offset = code * 4;
   palette.set([Math.round(color.r * 255), Math.round(color.g * 255), Math.round(color.b * 255), 255], offset);
-  materialParams.set([190, index === 7 ? 20 : 70, index >= 8 ? 60 : 0, 40], offset);
+  // Only the lens colors (spark, glow) emit light. Ink stays matte.
+  const emissive = name === 'spark' || name === 'glow' ? 60 : 0;
+  materialParams.set([190, name === 'ink' ? 20 : 70, emissive, 40], offset);
 }
 // Reserve material 5 for cut surfaces.
 materialParams[5 * 4 + 2] = 255;

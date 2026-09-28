@@ -3,6 +3,8 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import type { UiTool } from './keyBindings';
 import type { YardRender } from './presentation';
+import { FLOOR_Y } from '../sim/constants';
+import { isTorchFiring } from './toolFeedback';
 
 const SPARK_COUNT = 160;
 
@@ -36,28 +38,20 @@ export function TorchSparks({
 
     const render = renderRef.current;
     const localPlayer = render?.players?.find((p) => p.slot === render?.localSlot);
-    const isTorching = tool === 'torch' && Boolean(localPlayer?.torching);
+    const feedback = localPlayer?.feedback ?? null;
+    const firing = tool === 'torch' && render !== null && isTorchFiring(feedback, render.frame);
+    // Full sparks while cutting, a thinner spray off surfaces the torch cannot cut, none in open air.
+    const sparksPerFrame = !firing || !feedback ? 0 : feedback.result === 'cut' ? 8 : feedback.result === 'scorch' ? 4 : 0;
 
-    // Compute player forward vector and torch tip position in world space
     let spawnOrigin: THREE.Vector3 | null = null;
     let spawnDir: THREE.Vector3 | null = null;
-
-    if (isTorching && localPlayer) {
-      const yaw = localPlayer.yaw;
-      const pitch = localPlayer.pitch;
-      const cy = Math.cos(pitch);
-      const fx = -Math.sin(yaw) * cy;
-      const fy = Math.sin(pitch);
-      const fz = -Math.cos(yaw) * cy;
-
-      // Player eye position
-      const eyeX = localPlayer.position[0];
-      const eyeY = localPlayer.position[1] + 1.55;
-      const eyeZ = localPlayer.position[2];
-
-      // Beam endpoint ~ 2.2m forward where it cuts voxels
-      spawnOrigin = new THREE.Vector3(eyeX + fx * 2.2, eyeY + fy * 2.2, eyeZ + fz * 2.2);
-      spawnDir = new THREE.Vector3(-fx, -fy, -fz); // Sparks spray backward / out from cut
+    if (sparksPerFrame > 0 && localPlayer && feedback) {
+      const cy = Math.cos(localPlayer.pitch);
+      const fx = -Math.sin(localPlayer.yaw) * cy;
+      const fy = Math.sin(localPlayer.pitch);
+      const fz = -Math.cos(localPlayer.yaw) * cy;
+      spawnOrigin = new THREE.Vector3(feedback.point[0], feedback.point[1], feedback.point[2]);
+      spawnDir = new THREE.Vector3(-fx, -fy, -fz); // Sparks spray back out of the hit surface
     }
 
     let nextSpawnIdx = 0;
@@ -72,8 +66,8 @@ export function TorchSparks({
         p.vel.multiplyScalar(0.97); // Air drag
 
         // Floor bounce
-        if (p.pos.y < 0.02) {
-          p.pos.y = 0.02;
+        if (p.pos.y < FLOOR_Y + 0.02) {
+          p.pos.y = FLOOR_Y + 0.02;
           p.vel.y = -p.vel.y * 0.45;
           p.vel.x *= 0.7;
           p.vel.z *= 0.7;
@@ -92,7 +86,7 @@ export function TorchSparks({
         // Color transitions from white-hot to red to dead
         const color = t > 0.7 ? sparkColorHot : t > 0.3 ? sparkColorOrange : sparkColorRed;
         meshRef.current.setColorAt(i, color);
-      } else if (spawnOrigin && spawnDir && nextSpawnIdx < 8) {
+      } else if (spawnOrigin && spawnDir && nextSpawnIdx < sparksPerFrame) {
         // Spawn fresh spark
         nextSpawnIdx++;
         p.pos.copy(spawnOrigin).add(new THREE.Vector3(

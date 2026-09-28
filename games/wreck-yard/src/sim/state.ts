@@ -34,6 +34,23 @@ export interface TorchState {
 
 export type PlayerTool = 'gravity' | 'torch';
 
+/**
+ * What the player's last tool action did, so every click shows a result.
+ * grab/punt/throw: the gravity gun acted. blocked: the ray hit something the
+ * tool cannot act on (static, fixed, or out of punt range). miss: nothing in
+ * range. cut: the torch is cutting a body. scorch: the torch hits a surface it
+ * cannot cut. press: the player pressed a contraption button.
+ */
+export type ToolResult = 'grab' | 'punt' | 'throw' | 'blocked' | 'miss' | 'cut' | 'scorch' | 'press';
+
+export interface ToolFeedback {
+  readonly result: ToolResult;
+  /** Where the ray ended: the hit point, or the end of the range on a miss. */
+  readonly point: Vec3;
+  /** Simulation frame of the action. */
+  readonly frame: number;
+}
+
 export interface PlayerState {
   readonly slot: number;
   readonly x: number;
@@ -54,13 +71,40 @@ export interface PlayerState {
   readonly wasSecondaryPressed: boolean;
   readonly jetpackActive: boolean;
   readonly ridingVehicle?: boolean;
+  readonly feedback: ToolFeedback | null;
 }
 
 export interface YardStats {
   readonly torchCuts: number;
   readonly throws: number;
   readonly fractures: number;
+  /** Bodies that dropped down through the hoop (sim/contraptions.ts). */
+  readonly dunks: number;
 }
+
+/** A catapult-launched body that flies without damping until frame `until`. */
+export interface BallisticBody {
+  readonly bodyId: string;
+  readonly until: number;
+}
+
+export interface ContraptionState {
+  /** Frame of the last crate drop; -Infinity is not JSON, so "never" is a large negative frame. */
+  readonly lastDropFrame: number;
+  /** Crates the conveyor dropped that still exist, oldest first. */
+  readonly droppedCrates: readonly string[];
+  readonly lastLaunchFrame: number;
+  readonly ballistic: readonly BallisticBody[];
+}
+
+export const NEVER_FRAME = -1_000_000;
+
+export const INITIAL_CONTRAPTIONS: ContraptionState = {
+  lastDropFrame: NEVER_FRAME,
+  droppedCrates: [],
+  lastLaunchFrame: NEVER_FRAME,
+  ballistic: [],
+};
 
 export interface BuggyWheelState {
   readonly compression: number;
@@ -76,6 +120,7 @@ export interface YardState {
   readonly world: YardPhysicsWorldState;
   readonly players: readonly PlayerState[];
   readonly stats: YardStats;
+  readonly contraptions: ContraptionState;
   readonly nextSerial: number;
 }
 
@@ -107,6 +152,7 @@ export function createInitialPlayer(slot = 0): PlayerState {
     wasPressed: false,
     wasSecondaryPressed: false,
     jetpackActive: false,
+    feedback: null,
   };
 }
 

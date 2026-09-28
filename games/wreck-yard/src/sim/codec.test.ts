@@ -1,10 +1,33 @@
 import { describe, expect, it } from 'vitest';
-import { decodeState, encodeState } from './codec';
+import { decodeState, decodeVoxelRuns, encodeState, encodeVoxelRuns } from './codec';
 import { NEUTRAL_INPUT, TOOL, quantizeRay } from './input';
 import { createInitialState } from './presets';
 import { stepYard } from './step';
 
+describe('voxel runs', () => {
+  it('round trips empty, uniform, mixed, and long runs', () => {
+    const cases = [
+      new Uint8Array(0),
+      new Uint8Array(5).fill(7),
+      Uint8Array.from([0, 1, 1, 2, 0, 0, 0, 255]),
+      new Uint8Array(70_000).fill(3),
+    ];
+    for (const voxels of cases) expect(decodeVoxelRuns(encodeVoxelRuns(voxels), voxels.length)).toEqual(voxels);
+    expect(encodeVoxelRuns(new Uint8Array(200).fill(9))).toEqual(Uint8Array.from([9, 0xc8, 0x01]));
+  });
+
+  it('rejects runs that do not fill the grid exactly', () => {
+    expect(() => decodeVoxelRuns(Uint8Array.from([1, 4]), 5)).toThrow('WRECK_YARD_STATE_BYTES_INVALID');
+    expect(() => decodeVoxelRuns(Uint8Array.from([1, 6]), 5)).toThrow('WRECK_YARD_STATE_BYTES_INVALID');
+    expect(() => decodeVoxelRuns(Uint8Array.from([1, 0x80]), 5)).toThrow('WRECK_YARD_STATE_BYTES_INVALID');
+  });
+});
+
 describe('state codec', () => {
+  it('keeps the full yard state small enough to checksum every tick and send to late joiners', () => {
+    expect(encodeState(createInitialState(4)).byteLength).toBeLessThan(400_000);
+  });
+
   it('round trips the initial state byte for byte', () => {
     const state = createInitialState(2);
     const bytes = encodeState(state);

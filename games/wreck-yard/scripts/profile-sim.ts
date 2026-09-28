@@ -4,6 +4,7 @@
 //   node --cpu-prof --cpu-prof-dir=/tmp/sim-prof /tmp/profile-sim.mjs
 // Prints per-scenario tick cost and the per-tick rollback costs (checkpoint,
 // restore, state encoding) so SDK changes can be measured against it.
+import '../src/deterministicMath';
 import { encodeState, decodeState } from '../src/sim/codec';
 import { NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from '../src/sim/input';
 import { closeWorld, openWorld, physicsStateBodyById } from '../src/sim/physics';

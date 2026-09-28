@@ -42,6 +42,37 @@ export function chaseCameraPose(chassis: Vec3, yaw: number, pitch: number): Came
   };
 }
 
+/** Seconds after the last mouse look before the view starts to turn back to the buggy's heading. */
+export const CHASE_RECENTER_DELAY = 1.0;
+/** Recenter rate (1/s) at full speed: about 1.5 s to close most of the gap. */
+const CHASE_RECENTER_RATE = 1.4;
+/** Forward speed (m/s) where recentering starts, and where it reaches the full rate. */
+const CHASE_RECENTER_SPEED = [1.0, 6.0] as const;
+
+export interface ChaseView {
+  readonly yaw: number;
+  readonly pitch: number;
+}
+
+/**
+ * While the buggy drives forward, turn the view slowly back to look along its
+ * heading, faster at higher speed. Reversing, standing still, or a recent mouse
+ * look leaves the view as the player set it.
+ */
+export function recenterChaseView(
+  view: ChaseView,
+  chassisYaw: number,
+  forwardSpeed: number,
+  secondsSinceLook: number,
+  deltaSeconds: number,
+): ChaseView {
+  if (secondsSinceLook < CHASE_RECENTER_DELAY || forwardSpeed <= CHASE_RECENTER_SPEED[0]) return view;
+  const speedFactor = Math.min(1, (forwardSpeed - CHASE_RECENTER_SPEED[0]) / (CHASE_RECENTER_SPEED[1] - CHASE_RECENTER_SPEED[0]));
+  const blend = 1 - Math.exp(-CHASE_RECENTER_RATE * speedFactor * deltaSeconds);
+  const yawGap = Math.atan2(Math.sin(chassisYaw - view.yaw), Math.cos(chassisYaw - view.yaw));
+  return { yaw: view.yaw + yawGap * blend, pitch: view.pitch * (1 - blend) };
+}
+
 /** First person hides the local body. Orbit and the chase camera show it. */
 export function showsLocalAvatar(tool: UiTool, riding: boolean): boolean {
   return tool === 'orbit' || riding;

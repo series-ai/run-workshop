@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import * as THREE from 'three';
 import { Toon } from './style/toonMaterial';
 import type { UiTool } from './keyBindings';
+import { feedbackEffect, isTorchFiring } from './toolFeedback';
 import type { YardRender } from './presentation';
 import { lerpAngle } from '../sim/math';
 
@@ -36,6 +37,7 @@ export function FirstPersonTool({
 
   // Dynamic animation states
   const recoil = useRef(0);
+  const lastKickFrame = useRef(-1);
   const bobTime = useRef(0);
   const swayX = useRef(0);
   const swayY = useRef(0);
@@ -53,7 +55,6 @@ export function FirstPersonTool({
     const render = renderRef.current;
     const localPlayer = render?.players?.find((p) => p.slot === render?.localSlot);
     const isGrabbing = Boolean(localPlayer?.grabbing);
-    const isTorching = Boolean(localPlayer?.torching);
     const isRiding = Boolean(localPlayer?.ridingVehicle);
     root.current.visible = !isRiding;
     const follow = 1 - Math.exp(-12 * delta);
@@ -82,6 +83,12 @@ export function FirstPersonTool({
     const bobX = Math.sin(bobTime.current * 0.5) * (isMoving ? 0.007 : 0.0015);
     const bobY = Math.abs(Math.cos(bobTime.current)) * (isMoving ? 0.009 : 0.002);
 
+    // Kick the viewmodel once per new tool result; punts and throws kick hardest.
+    const feedback = localPlayer?.feedback;
+    if (feedback && feedback.frame !== lastKickFrame.current) {
+      lastKickFrame.current = feedback.frame;
+      recoil.current = Math.max(recoil.current, feedbackEffect(feedback.result).recoil);
+    }
     // Spring recoil recovery
     recoil.current = THREE.MathUtils.lerp(recoil.current, 0, recover);
 
@@ -146,7 +153,8 @@ export function FirstPersonTool({
     // OXY-ACETYLENE TORCH DYNAMICS
     // =========================================================================
     if (tool === 'torch') {
-      const flameActive = isTorching;
+      // The flame shows whenever the torch fires, not only while it cuts a body.
+      const flameActive = render !== null && isTorchFiring(localPlayer?.feedback ?? null, render.frame);
       if (innerFlameRef.current && outerFlameRef.current) {
         innerFlameRef.current.visible = flameActive;
         outerFlameRef.current.visible = flameActive;

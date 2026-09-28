@@ -11,7 +11,7 @@ import {
   type PhysicsFluidHandle3D,
   type PhysicsFluidInput3D,
   type PhysicsFluidInteraction3D,
-  type PhysicsShape3D,
+  type PhysicsBodyMotion3D,
   type PhysicsWorld3D,
   type VoxelCompoundShape,
 } from '@series-inc/rundot-syncplay/physics/3d';
@@ -54,7 +54,6 @@ export interface YardPhysicsBodyInput3D {
 export interface YardPhysicsBody3D {
   readonly id: string;
   readonly kind: PhysicsBody3D['kind'];
-  readonly shape: PhysicsShape3D;
   readonly x: number;
   readonly y: number;
   readonly z: number;
@@ -211,11 +210,14 @@ export function makeWorld(): PhysicsWorld3D {
   });
 }
 
-function bodyView(id: string, physics: PhysicsBody3D): YardPhysicsBody3D {
+/**
+ * Pose and motion only. The shape is not part of the view: the checkpoint
+ * holds it, and the state header (encoded for every tick's checksum) stays small.
+ */
+function bodyView(id: string, physics: PhysicsBodyMotion3D): YardPhysicsBody3D {
   return {
     id,
     kind: physics.kind,
-    shape: physics.shape,
     x: physics.position.x,
     y: physics.position.y,
     z: physics.position.z,
@@ -270,7 +272,7 @@ export function closeWorld(
     try {
       const bytes = open.world.serializeCheckpoint(checkpoint);
       const names = [...open.bodyIds.keys()].sort();
-      const bodies = names.map((name) => bodyView(name, open.world.readBody(open.world.resolveBody(open.bodyIds.get(name)!))));
+      const bodies = names.map((name) => bodyView(name, open.world.readMotion(open.world.resolveBody(open.bodyIds.get(name)!))));
       const interactions: YardFluidInteraction[] = [];
       if (fluidInteractions) {
         for (const item of fluidInteractions) {
@@ -303,7 +305,7 @@ export function closeWorld(
 export function physicsBodyById(open: OpenYardPhysicsWorld, id: string): YardPhysicsBody3D | undefined {
   const numericId = open.bodyIds.get(id);
   if (numericId === undefined) return undefined;
-  return bodyView(id, open.world.readBody(open.world.resolveBody(numericId)));
+  return bodyView(id, open.world.readMotion(open.world.resolveBody(numericId)));
 }
 
 export function fullPhysicsBodyById(open: OpenYardPhysicsWorld, id: string): PhysicsBody3D | undefined {
@@ -360,6 +362,29 @@ export function setPhysicsBodyMotion(open: OpenYardPhysicsWorld, id: string, lin
     angularVelocity: { x: angular[0] * TICK_RATE, y: angular[1] * TICK_RATE, z: angular[2] * TICK_RATE },
     sleeping: false,
   }));
+}
+
+/**
+ * Moves a body and sets its velocity (m/s), spin (rad/s), and linear damping
+ * in one edit. The catapult uses it: a launched body flies undamped.
+ */
+export function launchPhysicsBody(open: OpenYardPhysicsWorld, id: string, position: Vec3, velocity: Vec3, spin: Vec3, linearDamping: number): void {
+  const handle = physicsBodyHandle(open, id);
+  const body = open.world.readBody(handle);
+  open.world.edit((edit) => edit.replaceBody(handle, {
+    ...body,
+    position: { x: position[0], y: position[1], z: position[2] },
+    linearVelocity: { x: velocity[0], y: velocity[1], z: velocity[2] },
+    angularVelocity: { x: spin[0], y: spin[1], z: spin[2] },
+    linearDamping,
+    sleeping: false,
+  }));
+}
+
+export function setPhysicsBodyLinearDamping(open: OpenYardPhysicsWorld, id: string, linearDamping: number): void {
+  const handle = physicsBodyHandle(open, id);
+  const body = open.world.readBody(handle);
+  open.world.edit((edit) => edit.replaceBody(handle, { ...body, linearDamping }));
 }
 
 export function setPhysicsBodyAngularVelocity(open: OpenYardPhysicsWorld, id: string, angularVelocity: Vec3): void {

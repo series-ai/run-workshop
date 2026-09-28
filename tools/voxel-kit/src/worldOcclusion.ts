@@ -135,6 +135,12 @@ export function fillWorldOcclusionVolume(
   }
 
   for (const body of bodies) {
+    // Skip bodies whose bounding sphere misses the volume: most of a large
+    // world lies outside a local occlusion volume, and each voxel costs a rotation.
+    const radius = 0.5 * voxelSize * Math.sqrt(body.dims.x ** 2 + body.dims.y ** 2 + body.dims.z ** 2);
+    if ([0, 1, 2].some((axis) => body.position[axis]! + radius < spec.min[axis]! || body.position[axis]! - radius > spec.max[axis]!)) {
+      continue;
+    }
     for (let z = 0; z < body.dims.z; z += 1) {
       for (let y = 0; y < body.dims.y; y += 1) {
         for (let x = 0; x < body.dims.x; x += 1) {

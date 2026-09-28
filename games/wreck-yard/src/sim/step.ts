@@ -4,10 +4,12 @@ import {
   FLOOR_Y,
   GRAB_BREAK_DISTANCE,
   GRAB_FLOOR_CLEARANCE,
+  GRAVITY_GUN_PUNT_RANGE,
   GRAVITY_GUN_PUNT_SPEED,
   IMPACT_COOLDOWN_TICKS,
   IMPACT_MIN_SPEED,
   JETPACK_FUEL_DRAIN,
+  LINEAR_DAMPING,
   JETPACK_FUEL_RECHARGE,
   JETPACK_THRUST_XZ,
   JETPACK_THRUST_Y,
@@ -24,6 +26,25 @@ import {
   VOXEL_SIZE,
 } from './constants';
 import { fractureBody, type FractureContact } from './fracture';
+import {
+  BALLISTIC_DAMPING,
+  BALLISTIC_TICKS,
+  buttonAt,
+  buttonTop,
+  buttonWithinReach,
+  CATAPULT,
+  catapultLaunchVelocity,
+  CONVEYOR,
+  CRATE_SPAWN,
+  crossedHoop,
+  DROP_COOLDOWN_TICKS,
+  inCatapultBucket,
+  MAX_DROPPED_CRATES,
+  nearHoop,
+  onConveyor,
+  type ButtonId,
+} from './contraptions';
+import { supplyCratePreset } from './props';
 import { stepBuggy } from './vehicle';
 import { movePlayer } from './movement';
 import { ANGLE_SCALE, decodeRay, TOOL, type YardInput } from './input';
@@ -36,6 +57,8 @@ import {
   halfExtents,
   voxelStats,
   isShell,
+  launchPhysicsBody,
+  makePhysicsBody,
   openWorld,
   physicsBodyById,
   physicsBodyName,
@@ -43,17 +66,22 @@ import {
   removePhysicsBody,
   replacePhysicsBody,
   setPhysicsBodyMotion,
+  setPhysicsBodyLinearDamping,
   setPhysicsBodyVelocity,
   type OpenYardPhysicsWorld,
+  type YardPhysicsWorldState,
   type YardPhysicsBody3D,
 } from './physics';
 import {
   createInitialPlayer,
+  type ContraptionState,
   type PlayerState,
   type PlayerTool,
   type YardBody,
   type YardState,
   type YardStats,
+  type ToolFeedback,
+  type ToolResult,
 } from './state';
 
 interface Hit {
@@ -74,27 +102,45 @@ interface Working {
   bodies: YardBody[];
   players: PlayerState[];
   stats: YardStats;
+  contraptions: ContraptionState;
   nextSerial: number;
   fractures: PendingFracture[];
+  /** The frame this step produces; stamps tool feedback. */
+  readonly frame: number;
 }
 
-function firstYardHit(physics: OpenYardPhysicsWorld, origin: Vec3, direction: Vec3): Hit | null {
-  const hits = physics.world.raycast({
+/** The first solid along the aim ray. Static shell boxes block the ray. */
+type AimHit =
+  | { readonly kind: 'body'; readonly body: YardBody; readonly hit: Hit }
+  | { readonly kind: 'solid'; readonly point: Vec3 }
+  | { readonly kind: 'none'; readonly point: Vec3 };
+
+function aimRay(w: Working, origin: Vec3, direction: Vec3): AimHit {
+  const hits = w.physics.world.raycast({
     x: origin[0], y: origin[1], z: origin[2],
     dx: direction[0], dy: direction[1], dz: direction[2],
     maxDistance: MAX_RAY_DISTANCE,
   });
-  for (const hit of hits) {
-    const bodyId = physicsBodyName(physics, hit.bodyId);
-    if (bodyId === undefined || isShell(bodyId)) continue;
-    return {
-      bodyId,
-      distance: hit.distance,
-      point: [hit.point.x, hit.point.y, hit.point.z],
-      normal: [hit.normal.x, hit.normal.y, hit.normal.z],
-    };
-  }
-  return null;
+  const first = hits[0];
+  if (!first) return { kind: 'none', point: add(origin, scale(direction, MAX_RAY_DISTANCE)) };
+  const point: Vec3 = [first.point.x, first.point.y, first.point.z];
+  const bodyId = physicsBodyName(w.physics, first.bodyId);
+  const body = bodyId === undefined || isShell(bodyId) ? undefined : findBody(w.bodies, bodyId);
+  if (!body) return { kind: 'solid', point };
+  return {
+    kind: 'body',
+    body,
+    hit: { bodyId: body.id, distance: first.distance, point, normal: [first.normal.x, first.normal.y, first.normal.z] },
+  };
+}
+
+function toolFeedback(w: Working, result: ToolResult, point: Vec3): ToolFeedback {
+  return { result, point, frame: w.frame };
+}
+
+/** Feedback for a gravity gun ray that found nothing it can act on. */
+function refusal(w: Working, aim: AimHit): ToolFeedback {
+  return aim.kind === 'none' ? toolFeedback(w, 'miss', aim.point) : toolFeedback(w, 'blocked', aim.kind === 'body' ? aim.hit.point : aim.point);
 }
 
 function worldToVoxel(body: YardBody, physics: YardPhysicsBody3D, worldPoint: Vec3): Vec3 {
@@ -282,24 +328,29 @@ function stepHand(
 ): PlayerState {
   let grab = player.grab;
   if (grab && !findBody(w.bodies, grab.bodyId)) grab = null;
+  let feedback = player.feedback;
 
   // Secondary action: Gravity Gun PUNT
   if (input.secondary && !player.wasSecondaryPressed) {
-    let puntTarget = grab?.bodyId;
-    if (!puntTarget) {
-      const hit = firstYardHit(w.physics, ray.origin, ray.direction);
-      const body = hit ? findBody(w.bodies, hit.bodyId) : undefined;
-      if (hit && body?.motion === 'dynamic' && hit.distance <= 12) {
-        puntTarget = body.id;
+    let punt: { bodyId: string; point: Vec3 } | null = null;
+    if (grab) {
+      const held = physicsBodyById(w.physics, grab.bodyId)!;
+      punt = { bodyId: grab.bodyId, point: [held.x, held.y, held.z] };
+    } else {
+      const aim = aimRay(w, ray.origin, ray.direction);
+      if (aim.kind === 'body' && aim.body.motion === 'dynamic' && aim.hit.distance <= GRAVITY_GUN_PUNT_RANGE) {
+        punt = { bodyId: aim.body.id, point: aim.hit.point };
+      } else {
+        feedback = refusal(w, aim);
       }
     }
-    if (puntTarget) {
+    if (punt) {
       const puntVel: Vec3 = [
         ray.direction[0] * GRAVITY_GUN_PUNT_SPEED * DT,
         (ray.direction[1] * GRAVITY_GUN_PUNT_SPEED + 2.0) * DT,
         ray.direction[2] * GRAVITY_GUN_PUNT_SPEED * DT,
       ];
-      setPhysicsBodyVelocity(w.physics, puntTarget, puntVel);
+      setPhysicsBodyVelocity(w.physics, punt.bodyId, puntVel);
       w.stats = { ...w.stats, throws: w.stats.throws + 1 };
       return {
         ...player,
@@ -308,22 +359,26 @@ function stepHand(
         torchTicks: 0,
         wasPressed: input.pressed,
         wasSecondaryPressed: true,
+        feedback: toolFeedback(w, 'punt', punt.point),
       };
     }
   }
 
   // Primary action: Gravity Gun LEVITATE / HOLD
   if (input.pressed && !player.wasPressed && !grab) {
-    const hit = firstYardHit(w.physics, ray.origin, ray.direction);
-    const body = hit ? findBody(w.bodies, hit.bodyId) : undefined;
-    const physics = hit ? physicsBodyById(w.physics, hit.bodyId) : undefined;
-    if (hit && body?.motion === 'dynamic' && physics) {
+    const aim = aimRay(w, ray.origin, ray.direction);
+    const physics = aim.kind === 'body' ? physicsBodyById(w.physics, aim.body.id) : undefined;
+    if (aim.kind === 'body' && aim.body.motion === 'dynamic' && physics) {
       grab = {
-        bodyId: body.id,
-        distance: clamp(hit.distance, 2.5, 6.0),
+        bodyId: aim.body.id,
+        distance: clamp(aim.hit.distance, 2.5, 6.0),
         target: [physics.x, physics.y, physics.z],
         targetVelocity: [0, 0, 0],
       };
+      feedback = toolFeedback(w, 'grab', aim.hit.point);
+    } else {
+      const button = aim.kind === 'solid' ? buttonAt(aim.point) : null;
+      feedback = button ? pressButton(w, button) : refusal(w, aim);
     }
   }
 
@@ -350,6 +405,7 @@ function stepHand(
     const physics = physicsBodyById(w.physics, grab.bodyId)!;
     setPhysicsBodyVelocity(w.physics, grab.bodyId, scale([physics.vx, physics.vy, physics.vz], THROW_BOOST));
     w.stats = { ...w.stats, throws: w.stats.throws + 1 };
+    feedback = toolFeedback(w, 'throw', [physics.x, physics.y, physics.z]);
     grab = null;
   }
 
@@ -360,6 +416,7 @@ function stepHand(
     torchTicks: 0,
     wasPressed: input.pressed,
     wasSecondaryPressed: input.secondary,
+    feedback,
   };
 }
 
@@ -380,9 +437,9 @@ function stepTorch(
     };
   }
 
-  const hit = firstYardHit(w.physics, ray.origin, ray.direction);
-  const body = hit ? findBody(w.bodies, hit.bodyId) : undefined;
-  if (!hit || !body) {
+  const aim = aimRay(w, ray.origin, ray.direction);
+  if (aim.kind !== 'body') {
+    // A wall or other static solid throws sparks without cutting; open air shows only the flame.
     return {
       ...player,
       grab: null,
@@ -390,8 +447,11 @@ function stepTorch(
       torchTicks: 0,
       wasPressed: true,
       wasSecondaryPressed: input.secondary,
+      feedback: toolFeedback(w, aim.kind === 'solid' ? 'scorch' : 'miss', aim.point),
     };
   }
+  const { body, hit } = aim;
+  const feedback = toolFeedback(w, 'cut', hit.point);
 
   const physics = physicsBodyById(w.physics, body.id)!;
   const pose = poseOf(physics);
@@ -427,6 +487,7 @@ function stepTorch(
       torchTicks,
       wasPressed: true,
       wasSecondaryPressed: input.secondary,
+      feedback,
     };
   }
   return {
@@ -436,11 +497,19 @@ function stepTorch(
     torchTicks,
     wasPressed: true,
     wasSecondaryPressed: input.secondary,
+    feedback,
   };
 }
 
 function stepPlayer(w: Working, slot: number, input: YardInput): PlayerState {
   const initial = w.players[slot] ?? createInitialPlayer(slot);
+  // E at a button presses it. It then neither mounts the buggy nor punts.
+  const secondaryEdge = input.secondary && !initial.wasSecondaryPressed;
+  const button = secondaryEdge && !initial.ridingVehicle ? buttonWithinReach([initial.x, initial.y, initial.z]) : null;
+  if (button) {
+    const moved = stepPlayerMovement(initial, { ...input, secondary: false }, w);
+    return { ...moved, wasPressed: input.pressed, wasSecondaryPressed: input.secondary, feedback: pressButton(w, button) };
+  }
   const moved = stepPlayerMovement(initial, input, w);
   if (moved.ridingVehicle) {
     return {
@@ -556,6 +625,105 @@ function applyFractures(w: Working, frame: number): void {
   w.fractures = [];
 }
 
+/** Removes a body from the yard and lets go of it in every player's tools. */
+function removeYardBody(w: Working, id: string): void {
+  w.bodies = w.bodies.filter((body) => body.id !== id);
+  removePhysicsBody(w.physics, id);
+  w.players = w.players.map((player) => ({
+    ...player,
+    grab: player.grab?.bodyId === id ? null : player.grab,
+    torch: player.torch?.bodyId === id ? null : player.torch,
+  }));
+}
+
+/** Ticks from a crate's spawn until it has left the belt and landed. */
+const CRATE_DROP_TICKS = Math.ceil(((CONVEYOR.zEnd - CRATE_SPAWN[2]) / CONVEYOR.speed + 1.5) / DT);
+
+function dropCrate(w: Working): void {
+  const c = w.contraptions;
+  if (w.frame - c.lastDropFrame < DROP_COOLDOWN_TICKS) return;
+  let crates = c.droppedCrates.filter((id) => findBody(w.bodies, id));
+  while (crates.length >= MAX_DROPPED_CRATES) {
+    removeYardBody(w, crates[0]!);
+    crates = crates.slice(1);
+  }
+  const preset = supplyCratePreset();
+  const id = `supply-crate-${w.nextSerial}`;
+  w.nextSerial += 1;
+  // The fall from the belt is faster than IMPACT_MIN_SPEED: the crate may not break on landing.
+  const body: YardBody = {
+    id, label: 'Supply Crate', dims: preset.dims, voxels: preset.voxels, motion: 'dynamic', buoyancy: 0.3, anchorFaces: [],
+    impactCooldownUntil: w.frame + CRATE_DROP_TICKS,
+  };
+  w.bodies = [...w.bodies, body];
+  addPhysicsBodies(w.physics, [makePhysicsBody(body, { position: CRATE_SPAWN, rotation: [0, 0, 0, 1], linearVelocity: [0, 0, 0], angularVelocity: [0, 0, 0] })]);
+  w.contraptions = { ...c, lastDropFrame: w.frame, droppedCrates: [...crates, id] };
+}
+
+/** Launches every dynamic body in the catapult bucket at the hoop. */
+function fireCatapult(w: Working): void {
+  const c = w.contraptions;
+  if (w.frame - c.lastLaunchFrame < CATAPULT.cooldownTicks) return;
+  const launched: string[] = [];
+  for (const body of w.bodies) {
+    if (body.motion !== 'dynamic' || body.id === 'vehicle-chassis') continue;
+    const physics = physicsBodyById(w.physics, body.id)!;
+    if (!inCatapultBucket([physics.x, physics.y, physics.z])) continue;
+    const from: Vec3 = [physics.x, physics.y + CATAPULT.launchLift, physics.z];
+    launchPhysicsBody(w.physics, body.id, from, catapultLaunchVelocity(from), [3, 0, 1.5], BALLISTIC_DAMPING);
+    launched.push(body.id);
+  }
+  // A held body leaves the gravity gun when it is launched.
+  w.players = w.players.map((player) => (player.grab && launched.includes(player.grab.bodyId) ? { ...player, grab: null } : player));
+  w.contraptions = {
+    ...c,
+    lastLaunchFrame: w.frame,
+    ballistic: [
+      ...c.ballistic.filter((entry) => !launched.includes(entry.bodyId)),
+      ...launched.map((bodyId) => ({ bodyId, until: w.frame + BALLISTIC_TICKS })),
+    ],
+  };
+}
+
+function pressButton(w: Working, button: ButtonId): ToolFeedback {
+  switch (button) {
+    case 'dropper': dropCrate(w); break;
+    case 'catapult': fireCatapult(w); break;
+    default: {
+      const unreachable: never = button;
+      throw new Error(`WRECK_YARD_BUTTON_INVALID: ${String(unreachable)}`);
+    }
+  }
+  return toolFeedback(w, 'press', buttonTop(button));
+}
+
+/** Before the physics step: bodies resting on the belt move at the belt speed. */
+function stepConveyor(w: Working, before: YardPhysicsWorldState): void {
+  for (const previous of before.bodies) {
+    if (previous.kind !== 'dynamic' || !onConveyor([previous.x, previous.y, previous.z])) continue;
+    const now = physicsBodyById(w.physics, previous.id);
+    if (now) setPhysicsBodyVelocity(w.physics, previous.id, [now.vx * 0.5, now.vy, CONVEYOR.speed * DT]);
+  }
+}
+
+/** After the physics step: count dunks, and give landed catapult bodies their damping back. */
+function stepContraptions(w: Working, before: YardPhysicsWorldState): void {
+  for (const previous of before.bodies) {
+    if (previous.kind !== 'dynamic' || !nearHoop([previous.x, previous.y, previous.z])) continue;
+    const now = physicsBodyById(w.physics, previous.id);
+    if (now && crossedHoop([previous.x, previous.y, previous.z], [now.x, now.y, now.z])) {
+      w.stats = { ...w.stats, dunks: w.stats.dunks + 1 };
+    }
+  }
+  const c = w.contraptions;
+  if (c.ballistic.some((entry) => entry.until <= w.frame || !findBody(w.bodies, entry.bodyId))) {
+    for (const entry of c.ballistic) {
+      if (entry.until <= w.frame && findBody(w.bodies, entry.bodyId)) setPhysicsBodyLinearDamping(w.physics, entry.bodyId, LINEAR_DAMPING);
+    }
+    w.contraptions = { ...c, ballistic: c.ballistic.filter((entry) => entry.until > w.frame && findBody(w.bodies, entry.bodyId)) };
+  }
+}
+
 export function stepYard(state: YardState, inputs: readonly YardInput[]): YardState {
   const physics = openWorld(state.world);
   let disposed = false;
@@ -565,8 +733,10 @@ export function stepYard(state: YardState, inputs: readonly YardInput[]): YardSt
       bodies: [...state.bodies],
       players: [...state.players],
       stats: state.stats,
+      contraptions: state.contraptions,
       nextSerial: state.nextSerial,
       fractures: [],
+      frame: state.frame + 1,
     };
 
     for (let slot = 0; slot < w.players.length; slot += 1) {
@@ -577,8 +747,10 @@ export function stepYard(state: YardState, inputs: readonly YardInput[]): YardSt
 
     const driver = w.players.find((player) => player.ridingVehicle);
     const buggyWheels = stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyWheels);
+    stepConveyor(w, state.world);
     w.physics.world.step();
     const latest = w.physics.world.latest();
+    stepContraptions(w, state.world);
 
     // Sync vehicle riders with the post-step vehicle position
     for (let slot = 0; slot < w.players.length; slot += 1) {
@@ -611,6 +783,7 @@ export function stepYard(state: YardState, inputs: readonly YardInput[]): YardSt
       world: nextWorld,
       players: w.players,
       stats: w.stats,
+      contraptions: w.contraptions,
       nextSerial: w.nextSerial,
     };
   } finally {

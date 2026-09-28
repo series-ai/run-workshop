@@ -3,6 +3,10 @@ import type { BuggyWheelState } from './state';
 import { type YardInput } from './input';
 import { fullPhysicsBodyById, physicsBodyHandle, type OpenYardPhysicsWorld } from './physics';
 
+/** Tuned at chassis mass 3.614: stiffness 220, damping 12. */
+const SUSPENSION_STIFFNESS_PER_MASS = 220 / 3.614;
+const SUSPENSION_DAMPING_PER_MASS = 12 / 3.614;
+
 export const BUGGY_WHEELS: readonly DeterministicVehicleWheel3D[] = [-0.84, 0.84].flatMap((x) =>
   [-0.68, 0.84].map((z) => ({
     localAnchor: { x, y: -0.30, z },
@@ -10,8 +14,10 @@ export const BUGGY_WHEELS: readonly DeterministicVehicleWheel3D[] = [-0.84, 0.84
     suspensionRestLength: 0.5,
     suspensionMaximumTravel: 0.2,
     radius: 0.35,
-    stiffness: 220,
-    damping: 12,
+    // Per unit of chassis mass; stepBuggy scales them, so ride height and
+    // damping do not change when the chassis design changes its mass.
+    stiffness: SUSPENSION_STIFFNESS_PER_MASS,
+    damping: SUSPENSION_DAMPING_PER_MASS,
     grip: 1.8,
     maximumSteerAngleTurns: 0.08,
     steered: z < 0,
@@ -25,7 +31,7 @@ export function stepBuggy(physics: OpenYardPhysicsWorld, input?: YardInput, prev
   if (!body || body.kind !== 'dynamic') return [];
   const result = stepDeterministicVehicle3D({
     chassis: physicsBodyHandle(physics, 'vehicle-chassis'),
-    wheels: BUGGY_WHEELS,
+    wheels: BUGGY_WHEELS.map((wheel) => ({ ...wheel, stiffness: wheel.stiffness * body.mass, damping: wheel.damping * body.mass })),
     driveForce: body.mass * 18,
     brakeForce: body.mass * 28,
   }, {

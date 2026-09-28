@@ -18,6 +18,16 @@ const VIEWS = {
   tank: { pos: [8, 3.4, 6], lookAt: [2.5, 0, 0.5] },
   deck: { pos: [-13, 3.2, 14], lookAt: [-21, 0.6, 7] },
   center: { pos: [-1, 2.6, 5], lookAt: [-4.5, -0.2, -0.8] },
+  rig: { pos: [0.5, 3.2, -9], lookAt: [-6, -0.2, -16] },
+  'south-wall': { pos: [-3, 3.4, 16], lookAt: [-8, 0, 24] },
+  'east-circuit': { pos: [12, 3.2, 3], lookAt: [20, 0, 11] },
+  hoop: { pos: [9, 3.4, -12], lookAt: [15, 3.2, -24] },
+  conveyor: { pos: [7, 3.5, -5], lookAt: [0, 3.5, -20] },
+  catapult: { pos: [3.5, 3.2, 15.5], lookAt: [9, 0.4, 23] },
+  // The buggy parks at (14, -12) facing +z (its front is local -z, turned 180°).
+  'buggy-front': { pos: [16.6, 0.9, -8.4], lookAt: [14, -0.35, -12] },
+  'buggy-side': { pos: [10.2, 0.6, -12.6], lookAt: [14, -0.35, -12] },
+  'buggy-rear': { pos: [12.2, 1.4, -16.2], lookAt: [14, -0.35, -12] },
 };
 const selected = (process.argv[3]?.split(',') ?? Object.keys(VIEWS)).filter((name) => name in VIEWS);
 

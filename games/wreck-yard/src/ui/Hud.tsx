@@ -4,6 +4,7 @@ import type { MatchRequest, MatchSnapshot } from '../game/match';
 import { TOOL_KEY_LABELS, type UiTool } from '../render/keyBindings';
 import type { RenderQuality } from '../render/renderQuality';
 import { withinBuggyMountRange } from '../sim/constants';
+import { buttonWithinReach } from '../sim/contraptions';
 
 const panel: React.CSSProperties = {
   zIndex: 10,
@@ -52,6 +53,11 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
   const buggyPose = render?.poses?.get('vehicle-chassis');
   const canMountBuggy = live && !isRiding && Boolean(localPlayer && buggyPose)
     && withinBuggyMountRange(localPlayer!.position, buggyPose!.position);
+  // The sim checks a button before the buggy, so the prompt does too.
+  const reachableButton = live && !isRiding && localPlayer ? buttonWithinReach(localPlayer.position) : null;
+  const secondaryLabel = reachableButton === 'dropper' ? 'Drop Crate'
+    : reachableButton === 'catapult' ? 'Fire Catapult'
+    : canMountBuggy ? 'Drive Buggy' : 'Punt';
 
   return (
     <>
@@ -288,7 +294,7 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
               <span style={{ color: '#e8ecd8' }}>[WASD]</span> Move &bull;{' '}
               <span style={{ color: '#e8ecd8' }}>[Space / Delete]</span> Jetpack &bull;{' '}
               <span style={{ color: '#e8ecd8' }}>[LMB]</span> {tool === 'hand' ? 'Tractor Beam' : 'Carve Voxel'} &bull;{' '}
-              <span style={{ color: '#e8ecd8' }}>[E / RMB]</span> {canMountBuggy ? 'Drive Buggy' : 'Punt'} &bull;{' '}
+              <span style={{ color: reachableButton ? '#facc15' : '#e8ecd8' }}>[E / RMB]</span> {secondaryLabel} &bull;{' '}
               <span style={{ color: '#e8ecd8' }}>[1 / 2]</span> Tool &bull;{' '}
               <span style={{ color: '#e8ecd8' }}>[O]</span> Orbit
             </div>

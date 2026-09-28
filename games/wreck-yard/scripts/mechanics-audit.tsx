@@ -1,3 +1,4 @@
+import "../src/deterministicMath";
 import React, { useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";

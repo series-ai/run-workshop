@@ -11,6 +11,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    setupFiles: ['src/deterministicMath.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
     testTimeout: 300_000,
   },

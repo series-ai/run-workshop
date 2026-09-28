@@ -2,7 +2,8 @@ import { makeEmptyVoxelField, stampBox, stampSphere, type VoxelDims } from 'voxe
 import { FLOOR_Y, getTerrainHeightAt, TANK, VOXEL_SIZE } from './constants';
 import { IDENTITY_QUAT, type Quat, type Vec3 } from './math';
 import { createWorld, makePhysicsBody } from './physics';
-import { createInitialPlayer, type AnchorFace, type BodyMotion, type YardBody, type YardState } from './state';
+import { DECK_HEIGHT, yardProps } from './props';
+import { createInitialPlayer, INITIAL_CONTRAPTIONS, type AnchorFace, type BodyMotion, type YardBody, type YardState } from './state';
 
 type VolumePreset = { dims: VoxelDims; voxels: Uint8Array };
 
@@ -23,12 +24,18 @@ function makeSteelCase(): VolumePreset {
   return { dims, voxels };
 }
 
+/**
+ * Pallets stand on one full bottom board. Separate runners give several
+ * contact patches that creep a few mm/s, never sleep, and so keep every body
+ * on the floor awake (the SDK joins bodies into one island through the floor).
+ */
 function makeTimberPallet(): VolumePreset {
   const dims = { x: 16, y: 10, z: 12 };
   const voxels = makeEmptyVoxelField(dims);
-  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 15, y: 1, z: 2 }, 2);
-  stampBox(voxels, dims, { x: 0, y: 0, z: 5 }, { x: 15, y: 1, z: 6 }, 2);
-  stampBox(voxels, dims, { x: 0, y: 0, z: 9 }, { x: 15, y: 1, z: 11 }, 2);
+  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 15, y: 0, z: 11 }, 2);
+  stampBox(voxels, dims, { x: 0, y: 1, z: 0 }, { x: 15, y: 1, z: 2 }, 2);
+  stampBox(voxels, dims, { x: 0, y: 1, z: 5 }, { x: 15, y: 1, z: 6 }, 2);
+  stampBox(voxels, dims, { x: 0, y: 1, z: 9 }, { x: 15, y: 1, z: 11 }, 2);
   stampBox(voxels, dims, { x: 1, y: 2, z: 1 }, { x: 4, y: 8, z: 10 }, 2);
   stampBox(voxels, dims, { x: 6, y: 2, z: 1 }, { x: 9, y: 8, z: 10 }, 2);
   stampBox(voxels, dims, { x: 11, y: 2, z: 1 }, { x: 14, y: 8, z: 10 }, 2);
@@ -96,92 +103,114 @@ function makeBowlingPin(): VolumePreset {
   return { dims, voxels };
 }
 
+/**
+ * Dune buggy on a 26 x 18 x 38 grid (0.08 m voxels; front is z = 0). The wheels
+ * (sim/vehicle.ts BUGGY_WHEELS, hubs near x = 2 and 23) stand outside a narrow
+ * tub on visible suspension arms. Open tube roll cage, low nose, exposed rear
+ * engine. Material codes map to the buggy palette in render/VoxelBodies.tsx:
+ * 1 orange, 3 white, 4 grey, 5 teal, 6 mustard, 8 ink, 9 lens, 11 metal.
+ */
 function makeBuggyChassis(): VolumePreset {
-  // Astro Bot High-Craft Off-Road Buggy: 2.08m wide x 1.44m tall x 3.04m long (1.79m total vehicle height with wheels)
   const dims = { x: 26, y: 18, z: 38 };
   const voxels = makeEmptyVoxelField(dims);
+  const ORANGE = 1, WHITE = 3, GREY = 4, TEAL = 5, MUSTARD = 6, INK = 8, LENS = 9, METAL = 11;
+  const box = (x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, material: number) =>
+    stampBox(voxels, dims, { x: x0, y: y0, z: z0 }, { x: x1, y: y1, z: z1 }, material);
+  // A one-voxel tube between two cells.
+  const tube = (from: readonly [number, number, number], to: readonly [number, number, number], material: number) => {
+    const steps = Math.max(Math.abs(to[0] - from[0]), Math.abs(to[1] - from[1]), Math.abs(to[2] - from[2]), 1);
+    for (let i = 0; i <= steps; i += 1) {
+      const t = i / steps;
+      const x = Math.round(from[0] + (to[0] - from[0]) * t);
+      const y = Math.round(from[1] + (to[1] - from[1]) * t);
+      const z = Math.round(from[2] + (to[2] - from[2]) * t);
+      box(x, y, z, x, y, z, material);
+    }
+  };
+  const mirror = (x: number) => dims.x - 1 - x;
 
-  // 1. Reinforced chassis floor pan and frame rails (8 = ink / carbon dark)
-  stampBox(voxels, dims, { x: 1, y: 0, z: 3 }, { x: 24, y: 2, z: 35 }, 8);
-  // Outer rock sliders / tubular side nerf bars (1 = signalOrange)
-  stampBox(voxels, dims, { x: 0, y: 1, z: 6 }, { x: 2, y: 3, z: 32 }, 1);
-  stampBox(voxels, dims, { x: 23, y: 1, z: 6 }, { x: 25, y: 3, z: 32 }, 1);
+  // Tub: solid belly pan and low side walls carry most of the mass, low down.
+  box(5, 0, 3, 20, 2, 34, INK);
+  box(5, 3, 11, 6, 5, 25, TEAL);
+  box(19, 3, 11, 20, 5, 25, TEAL);
 
-  // 2. Sculpted Astro Bot Aero Body Panels: Vibrant Electric Teal (5 = teal)
-  stampBox(voxels, dims, { x: 2, y: 2, z: 4 }, { x: 23, y: 7, z: 12 }, 5);
-  stampBox(voxels, dims, { x: 1, y: 3, z: 12 }, { x: 4, y: 8, z: 26 }, 5);
-  stampBox(voxels, dims, { x: 21, y: 3, z: 12 }, { x: 24, y: 8, z: 26 }, 5);
-
-  // Bold Pearl White Center Racing Stripe (3 = concreteLit)
-  stampBox(voxels, dims, { x: 10, y: 3, z: 4 }, { x: 15, y: 7, z: 12 }, 3);
-
-  // Front Stinger Bull Bar & Winch Spool (8 = ink / 6 = mustard)
-  stampBox(voxels, dims, { x: 4, y: 1, z: 0 }, { x: 21, y: 5, z: 4 }, 8);
-  stampBox(voxels, dims, { x: 10, y: 2, z: 0 }, { x: 15, y: 4, z: 2 }, 6);
-
-  // Adorable Expressive Round Rally Headlights (Outer: 1 = signalOrange, Lens: 9 = spark glowing cyan-white)
-  stampBox(voxels, dims, { x: 4, y: 3, z: 0 }, { x: 9, y: 7, z: 2 }, 1);
-  stampBox(voxels, dims, { x: 5, y: 4, z: 0 }, { x: 8, y: 6, z: 1 }, 9);
-  stampBox(voxels, dims, { x: 16, y: 3, z: 0 }, { x: 21, y: 7, z: 2 }, 1);
-  stampBox(voxels, dims, { x: 17, y: 4, z: 0 }, { x: 20, y: 6, z: 1 }, 9);
-
-  // Twin Lower Fog/Accent Pods (10 = glow)
-  stampBox(voxels, dims, { x: 7, y: 1, z: 0 }, { x: 9, y: 2, z: 1 }, 10);
-  stampBox(voxels, dims, { x: 16, y: 1, z: 0 }, { x: 18, y: 2, z: 1 }, 10);
-
-  // 3. Exposed Rear High-Output V8 & Twin Rocket Thruster Boosters
-  // Chrome Engine Block & Intake Supercharger Scoop (3 = concreteLit / 1 = signalOrange)
-  stampBox(voxels, dims, { x: 7, y: 2, z: 26 }, { x: 18, y: 8, z: 35 }, 3);
-  stampBox(voxels, dims, { x: 8, y: 8, z: 28 }, { x: 17, y: 11, z: 33 }, 1);
-  // Twin High-Output Rocket Thrusters (Nozzles: 8 = ink, Core Flame: 10 = glow / 9 = spark)
-  stampBox(voxels, dims, { x: 5, y: 3, z: 32 }, { x: 9, y: 7, z: 37 }, 8);
-  stampBox(voxels, dims, { x: 6, y: 4, z: 35 }, { x: 8, y: 6, z: 37 }, 10);
-  stampBox(voxels, dims, { x: 16, y: 3, z: 32 }, { x: 20, y: 7, z: 37 }, 8);
-  stampBox(voxels, dims, { x: 17, y: 4, z: 35 }, { x: 19, y: 6, z: 37 }, 10);
-  // Rear Radiator Mesh (4 = concreteShade)
-  stampBox(voxels, dims, { x: 9, y: 7, z: 34 }, { x: 16, y: 11, z: 36 }, 4);
-
-  // 4. Astro Bot Springy Whip Antenna with Glowing Beacon Orb
-  // Steel whip mast (8 = ink)
-  stampBox(voxels, dims, { x: 3, y: 8, z: 34 }, { x: 4, y: 17, z: 35 }, 8);
-  // Beacon orb at top (10 = glow)
-  stampBox(voxels, dims, { x: 2, y: 16, z: 33 }, { x: 5, y: 18, z: 36 }, 10);
-
-  // 5. Structural 6-Point Tubular Roll Cage in Signal Orange (1 = signalOrange)
-  // A-Pillars (Front windshield frame)
-  stampBox(voxels, dims, { x: 2, y: 2, z: 11 }, { x: 4, y: 17, z: 13 }, 1);
-  stampBox(voxels, dims, { x: 21, y: 2, z: 11 }, { x: 23, y: 17, z: 13 }, 1);
-  // B-Pillars (Main roll hoop behind driver)
-  stampBox(voxels, dims, { x: 2, y: 2, z: 24 }, { x: 4, y: 17, z: 26 }, 1);
-  stampBox(voxels, dims, { x: 21, y: 2, z: 24 }, { x: 23, y: 17, z: 26 }, 1);
-  // C-Pillars (Rear engine cage down-tubes)
-  stampBox(voxels, dims, { x: 3, y: 2, z: 34 }, { x: 5, y: 12, z: 36 }, 1);
-  stampBox(voxels, dims, { x: 20, y: 2, z: 34 }, { x: 22, y: 12, z: 36 }, 1);
-  // Roof halo canopy frame (1 = signalOrange) & White Roof Panel (3 = concreteLit)
-  stampBox(voxels, dims, { x: 2, y: 16, z: 11 }, { x: 23, y: 17, z: 26 }, 1);
-  stampBox(voxels, dims, { x: 8, y: 16, z: 13 }, { x: 17, y: 17, z: 24 }, 3);
-
-  // Overhead 4-Lens Baja Rally Light Bar (Lenses: 9 = spark)
-  stampBox(voxels, dims, { x: 5, y: 17, z: 11 }, { x: 20, y: 18, z: 13 }, 8);
-  for (const lx of [6, 10, 14, 18]) {
-    stampBox(voxels, dims, { x: lx, y: 17, z: 11 }, { x: lx + 2, y: 18, z: 12 }, 9);
+  // Low nose: a teal wedge that narrows and drops toward the front, with a white stripe.
+  for (let z = 1; z <= 10; z += 1) {
+    const inset = Math.round((10 - z) * 0.35);
+    const top = 2 + Math.round(z * 0.3);
+    box(6 + inset, 1, z, 19 - inset, top, z, TEAL);
+    box(12, top, z, 13, top, z, WHITE);
+  }
+  // Front bumper tube and round headlights set into the nose.
+  box(6, 1, 0, 19, 2, 0, INK);
+  for (const x of [8, 16]) {
+    box(x, 3, 1, x + 1, 4, 1, LENS);
+    box(x - 1, 2, 2, x + 2, 5, 2, INK);
   }
 
-  // 6. Open Driver Cockpit Interior Clearance
-  stampBox(voxels, dims, { x: 5, y: 2, z: 11 }, { x: 20, y: 15, z: 25 }, 0);
+  // Suspension: lower and upper arms out to the hubs, and a mustard coilover per corner.
+  for (const [z0, z1] of [[9, 12], [28, 31]] as const) {
+    for (const side of [0, 1]) {
+      const inner = side === 0 ? 5 : 20;
+      const outer = side === 0 ? 2 : 23;
+      box(Math.min(inner, outer), 0, z0, Math.max(inner, outer), 0, z1, INK);
+      box(Math.min(inner, outer), 2, z0 + 1, Math.max(inner, outer), 2, z1 - 1, INK);
+      const hub = side === 0 ? 3 : mirror(3);
+      const top = side === 0 ? 6 : mirror(6);
+      tube([hub, 1, z0 + 2], [top, 7, z0 + 1], MUSTARD);
+    }
+  }
 
-  // 7. Molded High-Back Racing Bucket Seat & Dashboard Console
-  // Racing Bucket Seat (5 = teal / 8 = ink)
-  stampBox(voxels, dims, { x: 8, y: 2, z: 18 }, { x: 17, y: 4, z: 23 }, 5);
-  stampBox(voxels, dims, { x: 8, y: 4, z: 22 }, { x: 17, y: 12, z: 24 }, 5);
-  stampBox(voxels, dims, { x: 9, y: 12, z: 22 }, { x: 16, y: 14, z: 24 }, 1);
-  // Dashboard Console (8 = ink) & Glowing Gauges (9 = spark, 10 = glow)
-  stampBox(voxels, dims, { x: 7, y: 4, z: 12 }, { x: 18, y: 7, z: 14 }, 8);
-  stampBox(voxels, dims, { x: 9, y: 5, z: 12 }, { x: 11, y: 6, z: 13 }, 9);
-  stampBox(voxels, dims, { x: 14, y: 5, z: 12 }, { x: 16, y: 6, z: 13 }, 10);
-  // Steering column and sport steering wheel (1 = signalOrange)
-  stampBox(voxels, dims, { x: 11, y: 6, z: 14 }, { x: 14, y: 9, z: 16 }, 1);
+  // Seat, steering wheel, and a low dash.
+  box(9, 3, 17, 16, 4, 22, INK);
+  box(9, 5, 22, 16, 11, 23, INK);
+  box(12, 5, 22, 13, 10, 21, ORANGE); // harness
+  tube([12, 5, 13], [12, 8, 16], INK);
+  box(10, 9, 16, 14, 9, 16, ORANGE);
+  box(10, 7, 16, 10, 9, 16, ORANGE);
+  box(14, 7, 16, 14, 9, 16, ORANGE);
+  box(10, 7, 16, 14, 7, 16, ORANGE);
+  box(8, 5, 11, 17, 6, 12, INK);
+  box(10, 6, 11, 10, 6, 11, LENS);
+  box(15, 6, 11, 15, 6, 11, LENS);
 
+  // Roll cage: main hoop behind the seat, raked front hoop, roof rails, rear braces.
+  for (const x of [6, 19]) {
+    box(x, 3, 24, x, 14, 24, ORANGE);
+    const lean = x === 6 ? 7 : 18;
+    tube([x, 3, 10], [lean, 13, 13], ORANGE);
+    tube([lean, 13, 13], [x, 14, 24], ORANGE);
+    tube([x, 14, 24], [lean, 4, 34], ORANGE);
+    tube([x, 6, 11], [x, 6, 24], ORANGE); // side intrusion bar
+  }
+  box(6, 14, 24, 19, 14, 24, ORANGE);
+  box(7, 13, 13, 18, 13, 13, ORANGE);
+  tube([6, 4, 24], [19, 13, 24], ORANGE); // diagonal in the main hoop
+  // Roof light bar with four lenses.
+  box(8, 14, 12, 17, 14, 13, INK);
+  for (const x of [8, 11, 14, 17]) box(x, 14, 11, x, 14, 11, LENS);
+
+  // Exposed rear engine: block, valve covers, air filter, exhaust pipes.
+  box(8, 3, 27, 17, 7, 33, METAL);
+  box(8, 8, 28, 10, 8, 32, ORANGE);
+  box(15, 8, 28, 17, 8, 32, ORANGE);
+  box(11, 8, 29, 14, 10, 31, MUSTARD);
+  for (const x of [9, 16]) {
+    tube([x, 4, 33], [x, 5, 36], INK);
+    box(x, 5, 37, x, 6, 37, GREY);
+  }
+  box(7, 4, 34, 18, 4, 35, ORANGE); // rear engine guard
+
+  // Upright spare tire behind the main hoop.
+  for (let a = 0; a < 24; a += 1) {
+    const angle = (a / 24) * Math.PI * 2;
+    const x = Math.round(12.5 + Math.cos(angle) * 3);
+    const y = Math.round(12 + Math.sin(angle) * 3);
+    box(x, y, 26, x, y, 26, INK);
+  }
+  box(12, 11, 26, 13, 12, 26, GREY);
+
+  // Buggy materials use the vehicle palette band (material + 15).
   for (let i = 0; i < voxels.length; i += 1) {
     if (voxels[i] !== 0) voxels[i] += 15;
   }
@@ -233,17 +262,16 @@ function makeDestructibleTower(): VolumePreset {
 }
 
 function makeFlatPallet(): VolumePreset {
-  // 1.2 x 0.24 x 1.2 m shipping pallet: three wide runners (stable support,
-  // no rocking when stacked) under a slatted top deck.
+  // 1.2 x 0.24 x 1.2 m shipping pallet: a full bottom board (see
+  // makeTimberPallet), three runners, and a slatted top deck.
   const dims = { x: 15, y: 3, z: 15 };
   const voxels = makeEmptyVoxelField(dims);
-  for (const z of [0, 6, 12]) stampBox(voxels, dims, { x: 0, y: 0, z }, { x: 14, y: 1, z: z + 2 }, 2);
+  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 14, y: 0, z: 14 }, 2);
+  for (const z of [0, 6, 12]) stampBox(voxels, dims, { x: 0, y: 1, z }, { x: 14, y: 1, z: z + 2 }, 2);
   for (const x of [0, 3, 6, 9, 12]) stampBox(voxels, dims, { x, y: 2, z: 0 }, { x: x + 2, y: 2, z: 14 }, 2);
   return { dims, voxels };
 }
 
-/** Top of the west loading deck above the floor (see setPieces deck collider). */
-const DECK_HEIGHT = 1.0;
 /** Top of the ball-drop platform above the floor (shell box 'ball-drop-platform'). */
 const HOPPER_TOP = 5.0;
 
@@ -341,12 +369,20 @@ export function createSpawns(): Spawn[] {
 
     // Destructible tower sector (North-West playground edge)
     spawn('destructible-tower', 'Destructible Tower', tower, [-16, restY(tower.dims), 0], 0.15),
+
+    // Yard props: wrecks, containers, concrete, tires, bales, and loose scrap.
+    ...yardProps().map((prop) => spawn(prop.id, prop.label, prop.preset, prop.position, prop.buoyancy, prop.rotation)),
   ];
 }
 
 export function createInitialState(playerCount: number): YardState {
   if (!Number.isInteger(playerCount) || playerCount < 1) {
     throw new Error(`WRECK_YARD_PLAYER_COUNT_INVALID: ${playerCount}`);
+  }
+  // Spawn poses and set pieces use Math.sin/cos/atan2/hypot. Peers agree on them
+  // only when the Syncplay shim replaced them (src/deterministicMath.ts).
+  if ((globalThis as { __deterministicMathInstalled?: boolean }).__deterministicMathInstalled !== true) {
+    throw new Error('WRECK_YARD_DETERMINISTIC_MATH_MISSING: import src/deterministicMath.ts before any sim module');
   }
   const spawns = createSpawns();
   const world = createWorld(
@@ -364,7 +400,8 @@ export function createInitialState(playerCount: number): YardState {
     bodies: spawns.map((entry) => entry.body),
     world,
     players: Array.from({ length: playerCount }, (_, slot) => createInitialPlayer(slot)),
-    stats: { torchCuts: 0, throws: 0, fractures: 0 },
+    stats: { torchCuts: 0, throws: 0, fractures: 0, dunks: 0 },
+    contraptions: INITIAL_CONTRAPTIONS,
     nextSerial: 0,
   };
 }

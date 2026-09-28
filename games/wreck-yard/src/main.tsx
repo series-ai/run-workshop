@@ -1,3 +1,4 @@
+import './deterministicMath';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import RundotAPI from '@series-inc/rundot-game-sdk/api';

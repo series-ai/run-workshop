@@ -74,6 +74,35 @@ try {
   await frames(4);
   await page.keyboard.up('KeyE');
   await page.waitForFunction(() => { const r = window.__WRECK_YARD_CONTROLLER__.getRender(); return r.players.find((p) => p.slot === r.localSlot).ridingVehicle; }, null, { timeout: 5000 });
+  // Right after mounting, the buggy faces a clear runway (+Z from the east lane).
+  // Driving forward turns the view back to the heading, unless the player is looking around.
+  const viewOffset = () => page.evaluate(() => {
+    const c = window.__WRECK_YARD_CONTROLLER__;
+    const [x, y, z, w] = c.getRender().poses.get('vehicle-chassis').rotation;
+    const chassisYaw = Math.atan2(2 * (x * z + w * y), 1 - 2 * (x * x + y * y));
+    const gap = c.input.yaw / 1000 - chassisYaw;
+    return { chassisYaw, offset: Math.abs(Math.atan2(Math.sin(gap), Math.cos(gap))) };
+  });
+  const lookSideways = async () => {
+    const { chassisYaw } = await viewOffset();
+    await page.evaluate((yaw) => window.__SET_LOOK_ANGLES__(yaw, 0.3), chassisYaw + 1.2);
+  };
+  await lookSideways();
+  await frames(45);
+  results.offsetStandingStill = +(await viewOffset()).offset.toFixed(2);
+  assert.ok(results.offsetStandingStill > 1.1, `the view turned while the buggy stood still: ${results.offsetStandingStill}`);
+  await lookSideways();
+  await page.keyboard.down('KeyW');
+  for (let i = 0; i < 5; i += 1) { await lookSideways(); await frames(4); }
+  results.offsetWhileLooking = +(await viewOffset()).offset.toFixed(2);
+  const drivenFrom = await page.evaluate(() => window.__WRECK_YARD_CONTROLLER__.getRender().poses.get('vehicle-chassis').position);
+  await frames(70);
+  await page.keyboard.up('KeyW');
+  const drivenTo = await page.evaluate(() => window.__WRECK_YARD_CONTROLLER__.getRender().poses.get('vehicle-chassis').position);
+  results.drivenMeters = +Math.hypot(drivenTo[0] - drivenFrom[0], drivenTo[2] - drivenFrom[2]).toFixed(1);
+  results.offsetAfterDriving = +(await viewOffset()).offset.toFixed(2);
+  assert.ok(results.offsetWhileLooking > 1.0, `the view fought the mouse look: ${results.offsetWhileLooking}`);
+  assert.ok(results.offsetAfterDriving < 0.35, `the view did not turn back to the heading: ${results.offsetAfterDriving}`);
   await page.keyboard.down('KeyW');
   await frames(25);
   await page.keyboard.up('KeyW');

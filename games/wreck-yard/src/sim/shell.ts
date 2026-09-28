@@ -1,6 +1,7 @@
 import type { WorldOcclusionStaticBox } from 'voxel-kit';
-import { ARENA_EXTENT, clutterCollider, FLOOR_Y, TANK, YARD_CLUTTER } from './constants';
+import { ARENA_EXTENT, FLOOR_Y, TANK } from './constants';
 import type { Quat } from './math';
+import { CONTRAPTION_COLLIDERS } from './contraptions';
 import { SET_PIECE_COLLIDERS, VEHICLE_RAMP, type ShellBox } from './setPieces';
 
 const TANK_WALL_HEIGHT = TANK.surfaceY - TANK.bottomY;
@@ -27,8 +28,8 @@ export const SHELL_BOXES: readonly ShellBox[] = [
   { id: 'seesaw-pivot', center: [-14, FLOOR_Y + 0.45, -6], size: [1.2, 0.9, 1.2] },
   { id: 'ball-drop-platform', center: [-12, FLOOR_Y + 2.5, 12], size: [4, 5.0, 4] },
   { id: 'vehicle-ramp', center: VEHICLE_RAMP.center, size: VEHICLE_RAMP.size, rotation: [VEHICLE_RAMP.pitch, 0, 0] },
-  ...YARD_CLUTTER.map((item) => ({ id: `clutter-${item.id}`, ...clutterCollider(item) })),
   ...SET_PIECE_COLLIDERS,
+  ...CONTRAPTION_COLLIDERS,
 ];
 
 /** Quaternion for a shell box's XYZ Euler rotation (three.js order). */

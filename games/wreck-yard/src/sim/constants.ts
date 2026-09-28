@@ -8,8 +8,9 @@ export const FLOOR_Y = -0.86;
 export const GRAVITY = 13.5;
 export const GRAVITY_PER_TICK2 = -GRAVITY * DT2;
 /**
- * Syncplay damping rates (per second, not per-tick multipliers). In
- * 6.0.0-rc.8, rounded voxel bodies at rest sleep with these values, but
+ * Syncplay damping is the fraction of velocity a body keeps each tick (measured
+ * in 6.0.0-rc.8: v=10 becomes 9.8 after one step at 0.98; 0 stops the body; 1
+ * keeps it all). In rc.8, rounded voxel bodies at rest sleep with these values, but
  * slatted shapes (the timber pallet) still never sleep and creep a few mm/s:
  * https://github.com/series-ai/venus/issues/4861.
  */
@@ -92,58 +93,10 @@ export const JETPACK_FUEL_RECHARGE = 1.2;
 export const GRAVITY_GUN_RANGE = 30.0;
 export const GRAVITY_GUN_HOLD_DIST = 3.5;
 export const GRAVITY_GUN_PUNT_SPEED = 30.0;
+/** A punt only reaches dynamic bodies this close (m). */
+export const GRAVITY_GUN_PUNT_RANGE = 12;
 
 export const ARENA_EXTENT = 26;
-
-/**
- * Salvage clutter along the walls. Each item is solid: its collider joins
- * SHELL_BOXES, and the renderer builds matching voxel props from the same list.
- */
-export type ClutterKind = 'cars' | 'barriers';
-export interface ClutterItem {
-  readonly id: string;
-  readonly kind: ClutterKind;
-  readonly x: number;
-  readonly z: number;
-  /** Long side along world X. */
-  readonly alongX: boolean;
-  /** Cars: stacked tiers. Barriers: blocks in the row. */
-  readonly count: number;
-  readonly seed: number;
-}
-
-/** Crushed car: 10 x 4 x 18 voxels at 0.22 m. Barrier block: 7 x 4 x 4 voxels at 0.2 m. */
-export const CLUTTER_CAR = { width: 2.2, tierHeight: 0.88, length: 3.96, voxelScale: 0.22 } as const;
-export const CLUTTER_BARRIER = { length: 1.4, height: 0.8, depth: 0.8, gap: 0.06, voxelScale: 0.2 } as const;
-const CLUTTER_PAD = 0.1;
-
-export const YARD_CLUTTER: readonly ClutterItem[] = [
-  { id: 'south-cars-a', kind: 'cars', x: -14, z: 24.3, alongX: true, count: 2, seed: 11 },
-  { id: 'south-cars-b', kind: 'cars', x: -9.4, z: 24.3, alongX: true, count: 3, seed: 12 },
-  { id: 'south-barriers', kind: 'barriers', x: -3.2, z: 25.1, alongX: true, count: 4, seed: 13 },
-  { id: 'south-cars-c', kind: 'cars', x: 2.4, z: 24.3, alongX: true, count: 1, seed: 14 },
-  { id: 'north-cars-a', kind: 'cars', x: -9, z: -24.3, alongX: true, count: 2, seed: 21 },
-  { id: 'north-barriers', kind: 'barriers', x: -3.4, z: -25.1, alongX: true, count: 3, seed: 22 },
-  { id: 'north-cars-b', kind: 'cars', x: 2.6, z: -24.3, alongX: true, count: 3, seed: 23 },
-  { id: 'north-cars-c', kind: 'cars', x: 7.2, z: -24.3, alongX: true, count: 1, seed: 24 },
-  // Open yard areas away from the play zones (seesaw, tower, bowling, slalom, buggy lane).
-  { id: 'yard-nw-cars', kind: 'cars', x: -12.5, z: -16, alongX: false, count: 2, seed: 31 },
-  { id: 'yard-nw-barriers', kind: 'barriers', x: -12.5, z: -11.2, alongX: true, count: 3, seed: 32 },
-  { id: 'yard-ne-cars', kind: 'cars', x: 5.5, z: -16.5, alongX: true, count: 2, seed: 33 },
-  { id: 'yard-ne-cars-b', kind: 'cars', x: 1.6, z: -19.2, alongX: false, count: 1, seed: 34 },
-  { id: 'yard-sw-cars', kind: 'cars', x: -15, z: 17.5, alongX: true, count: 2, seed: 35 },
-  { id: 'yard-sw-barriers', kind: 'barriers', x: -15, z: 21.2, alongX: true, count: 2, seed: 36 },
-];
-
-export function clutterCollider(item: ClutterItem): { center: [number, number, number]; size: [number, number, number] } {
-  const [long, height, short] = item.kind === 'cars'
-    ? [CLUTTER_CAR.length, CLUTTER_CAR.tierHeight * item.count, CLUTTER_CAR.width]
-    : [item.count * (CLUTTER_BARRIER.length + CLUTTER_BARRIER.gap), CLUTTER_BARRIER.height, CLUTTER_BARRIER.depth];
-  const size: [number, number, number] = item.alongX
-    ? [long + CLUTTER_PAD, height, short + CLUTTER_PAD]
-    : [short + CLUTTER_PAD, height, long + CLUTTER_PAD];
-  return { center: [item.x, FLOOR_Y + height / 2, item.z], size };
-}
 
 /** A player mounts the buggy within this 3D distance of the chassis center (m). */
 export const BUGGY_MOUNT_RANGE = 2.8;

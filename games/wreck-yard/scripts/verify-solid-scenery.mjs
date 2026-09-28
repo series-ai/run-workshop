@@ -11,7 +11,8 @@ const base = process.env.AUDIT_URL ?? 'http://127.0.0.1:4400';
  */
 const TARGETS = [
   { name: 'gantry base (rail bogie under the A-frame legs)', center: [-13.5, -1.5], half: [0.7, 2.7], yaw: 0, route: [[-9, -1.0]] },
-  { name: 'southwest container', center: [-21, 19], half: [3.0, 1.2], yaw: -0.22, route: [[-3, 8], [-3, 17], [-12, 19.7]] },
+  // Containers, wrecks, and blocks are dynamic props now (sim/props.ts): the player pushes them.
+  { name: 'demolition rig carriage', center: [-5, -17], half: [1.8, 1.6], yaw: 0, route: [[7.5, 9], [7.5, -12.5], [-2, -12.5], [-2, -17]] },
 ];
 const PLAYER_RADIUS = 0.4;
 

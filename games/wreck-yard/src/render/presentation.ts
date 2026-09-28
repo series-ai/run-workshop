@@ -1,7 +1,7 @@
 import type { SyncplayRunnerStatus } from '@series-inc/rundot-syncplay/browser';
 import { lerp, lerpAngle, quatNlerp, type Quat, type Vec3 } from '../sim/math';
 import { isShell } from '../sim/physics';
-import type { BuggyWheelState, YardBody, YardState, YardStats } from '../sim/state';
+import type { BuggyWheelState, ContraptionState, YardBody, YardState, YardStats, ToolFeedback } from '../sim/state';
 import { TANK_SPEC } from '../sim/constants';
 
 export interface RenderPose {
@@ -20,6 +20,7 @@ export interface PlayerRenderPose {
   readonly grabbing: string | null;
   readonly torching: string | null;
   readonly ridingVehicle: boolean;
+  readonly feedback: ToolFeedback | null;
 }
 
 export interface YardRender {
@@ -30,6 +31,7 @@ export interface YardRender {
   readonly players: readonly PlayerRenderPose[];
   readonly localSlot: number;
   readonly stats: YardStats;
+  readonly contraptions: ContraptionState;
   readonly floating: number;
   readonly grabbed: readonly (string | null)[];
   readonly torching: readonly (string | null)[];
@@ -74,6 +76,7 @@ export function projectYard(state: YardState, context: { readonly localSlot: num
     grabbing: p.grab?.bodyId ?? null,
     torching: p.torch?.bodyId ?? null,
     ridingVehicle: Boolean(p.ridingVehicle),
+    feedback: p.feedback,
   }));
 
   return {
@@ -84,6 +87,7 @@ export function projectYard(state: YardState, context: { readonly localSlot: num
     players,
     localSlot: context.localSlot,
     stats: state.stats,
+    contraptions: state.contraptions,
     floating,
     grabbed: state.players.map((p) => p.grab?.bodyId ?? null),
     torching: state.players.map((p) => p.torch?.bodyId ?? null),
