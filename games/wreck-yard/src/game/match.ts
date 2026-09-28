@@ -4,7 +4,6 @@ import {
   type SyncplayRunner,
   type SyncplayRunnerStatus,
 } from "@series-inc/rundot-syncplay/browser";
-import { TICK_RATE } from "../sim/constants";
 import {
   decodeYardInput,
   encodeYardInput,
@@ -51,8 +50,6 @@ export interface MatchDeps {
   readonly quickMatchTransport: () => Promise<SyncplayRoomTransport>;
   readonly joinRoomTransport: (code: string) => Promise<SyncplayRoomTransport>;
 }
-
-const MAX_BURST_TICKS = 5 * TICK_RATE;
 
 export function formatMatchError(
   cause: unknown,
@@ -171,8 +168,8 @@ export class MatchController {
       decodeInput: decodeYardInput,
       localInputForTick: () => this.input,
       presentation: { project: projectYard, interpolate: interpolateYard },
-      maxOfflineStepsPerUpdate: MAX_BURST_TICKS,
-      pacing: { targetLeadTicks: 2, maxStepsPerPump: 4 },
+      maxOfflineStepsPerUpdate: 2,
+      pacing: { targetLeadTicks: 2, maxStepsPerPump: 2 },
       inputDelay: { minTicks: 1, maxTicks: 3 },
     });
     this.runner.subscribe((snapshot) => {
@@ -219,12 +216,8 @@ export class MatchController {
   /** The latest render state. Returns sub-tick interpolated state when active. */
   getRender(): YardRender | null {
     if (this.runner.status === "live" || this.runner.status === "offline") {
-      try {
-        const interpolated = this.runner.getRenderState();
-        if (interpolated) return interpolated;
-      } catch {
-        // Runner not ready or interpolation failed; fall back to last snapshot
-      }
+      const interpolated = this.runner.getRenderState();
+      if (interpolated) return interpolated;
     }
     return this.render;
   }

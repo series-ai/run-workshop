@@ -1,109 +1,200 @@
 import { useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
+import { ART_STYLE } from './artStyle';
 import { InkShader } from './inkShader';
+import { BloomShader } from './bloomShader';
+import { AmbientOcclusionShader, BloomDownShader, BloomUpShader } from './postShaders';
+import type { RenderQuality } from '../renderQuality';
 
 export interface InkComposerProps {
   enableInk?: boolean;
+  /** MSAA samples for the scene target. Phones use 0 to save fill rate. */
+  samples: number;
+  quality: RenderQuality;
 }
 
-export function InkComposer({ enableInk = false }: InkComposerProps) {
-  const { gl, scene, size } = useThree();
+/** Bloom chain levels on the high tier: 1/2, 1/4, 1/8, 1/16, 1/32 of the frame. */
+const BLOOM_LEVELS = 5;
 
+function colorTarget(width: number, height: number): THREE.WebGLRenderTarget {
+  const target = new THREE.WebGLRenderTarget(Math.max(1, width), Math.max(1, height), {
+    format: THREE.RGBAFormat,
+    type: THREE.HalfFloatType,
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    depthBuffer: false,
+  });
+  target.texture.generateMipmaps = false;
+  return target;
+}
+
+function passMaterial(shader: { uniforms: Record<string, THREE.IUniform>; vertexShader: string; fragmentShader: string }) {
+  return new THREE.ShaderMaterial({
+    vertexShader: shader.vertexShader,
+    fragmentShader: shader.fragmentShader,
+    uniforms: THREE.UniformsUtils.clone(shader.uniforms),
+    depthTest: false,
+    depthWrite: false,
+  });
+}
+
+interface Pipeline {
+  readonly scene: THREE.WebGLRenderTarget;
+  readonly depth: THREE.DepthTexture;
+  /** Low: one 1/4 target. High: extract + 4 downsample levels, then 4 upsample levels. */
+  readonly bloomDown: readonly THREE.WebGLRenderTarget[];
+  readonly bloomUp: readonly THREE.WebGLRenderTarget[];
+  readonly ao: THREE.WebGLRenderTarget | null;
+  readonly white: THREE.DataTexture;
+  readonly passScene: THREE.Scene;
+  readonly passCamera: THREE.OrthographicCamera;
+  readonly quad: THREE.Mesh;
+  readonly extract: THREE.ShaderMaterial;
+  readonly down: THREE.ShaderMaterial;
+  readonly up: THREE.ShaderMaterial;
+  readonly aoMaterial: THREE.ShaderMaterial;
+  readonly composite: THREE.ShaderMaterial;
+  dispose(): void;
+}
+
+function createPipeline(width: number, height: number, samples: number, quality: RenderQuality): Pipeline {
+  const depth = new THREE.DepthTexture(width, height, THREE.UnsignedIntType);
+  depth.format = THREE.DepthFormat;
+  const scene = new THREE.WebGLRenderTarget(width, height, {
+    format: THREE.RGBAFormat,
+    type: THREE.HalfFloatType,
+    minFilter: THREE.NearestFilter,
+    magFilter: THREE.NearestFilter,
+    depthTexture: depth,
+    samples,
+  });
+  scene.texture.generateMipmaps = false;
+
+  const high = quality === 'high';
+  const bloomDown = high
+    ? Array.from({ length: BLOOM_LEVELS }, (_, level) => colorTarget(Math.ceil(width / 2 ** (level + 1)), Math.ceil(height / 2 ** (level + 1))))
+    : [colorTarget(Math.ceil(width / 4), Math.ceil(height / 4))];
+  const bloomUp = high ? bloomDown.slice(0, -1).map((target) => colorTarget(target.width, target.height)) : [];
+  const ao = high
+    ? new THREE.WebGLRenderTarget(Math.ceil(width / 2), Math.ceil(height / 2), { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false })
+    : null;
+  const white = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1);
+  white.needsUpdate = true;
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]), 3));
+  geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0, 0, 2, 0, 0, 2]), 2));
+  const extract = passMaterial(BloomShader);
+  extract.uniforms.uThreshold!.value = ART_STYLE.post.bloom.threshold;
+  const down = passMaterial(BloomDownShader);
+  const up = passMaterial(BloomUpShader);
+  const aoMaterial = passMaterial(AmbientOcclusionShader);
+  const post = ART_STYLE.post.ao;
+  aoMaterial.uniforms.uRadius!.value = post.radius;
+  aoMaterial.uniforms.uIntensity!.value = post.intensity;
+  aoMaterial.uniforms.uBias!.value = post.bias;
+  (aoMaterial.uniforms.uFade!.value as THREE.Vector2).set(post.fade[0], post.fade[1]);
+  aoMaterial.uniforms.tDepth!.value = depth;
+  const composite = passMaterial(InkShader);
+  composite.uniforms.tDiffuse!.value = scene.texture;
+  composite.uniforms.tDepth!.value = depth;
+  const bloomResult = high ? bloomUp[0]! : bloomDown[0]!;
+  composite.uniforms.tBloom!.value = bloomResult.texture;
+  (composite.uniforms.uBloomTexel!.value as THREE.Vector2).set(1 / bloomResult.width, 1 / bloomResult.height);
+  composite.uniforms.uBloomGain!.value = high ? ART_STYLE.post.bloom.gainHigh : ART_STYLE.post.bloom.gainLow;
+  composite.uniforms.tAO!.value = ao ? ao.texture : white;
+  if (ao) (composite.uniforms.uAOTexel!.value as THREE.Vector2).set(1 / ao.width, 1 / ao.height);
+  composite.uniforms.uAOStrength!.value = ao ? post.strength : 0;
+  composite.uniforms.uGrime!.value = high ? ART_STYLE.post.grime : 0;
+
+  const quad = new THREE.Mesh(geometry, composite);
+  quad.frustumCulled = false;
+  const passScene = new THREE.Scene();
+  passScene.add(quad);
+  const materials = [extract, down, up, aoMaterial, composite];
+  return {
+    scene, depth, bloomDown, bloomUp, ao, white, passScene, passCamera: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), quad,
+    extract, down, up, aoMaterial, composite,
+    dispose() {
+      [scene, ...bloomDown, ...bloomUp, ...(ao ? [ao] : [])].forEach((target) => target.dispose());
+      depth.dispose();
+      white.dispose();
+      geometry.dispose();
+      materials.forEach((material) => material.dispose());
+    },
+  };
+}
+
+/**
+ * Takes over the frame (priority 1): scene -> HDR target, optional AO and
+ * bloom chain, then one composite pass with ink, cavity, bloom, and grade.
+ */
+export function InkComposer({ enableInk = false, samples, quality }: InkComposerProps) {
+  const { gl, scene, size } = useThree();
   const dpr = gl.getPixelRatio();
   const width = Math.max(1, Math.floor(size.width * dpr));
   const height = Math.max(1, Math.floor(size.height * dpr));
 
-  const rtRef = useRef<THREE.WebGLRenderTarget | null>(null);
-  const screenSceneRef = useRef<THREE.Scene | null>(null);
-  const screenCameraRef = useRef<THREE.OrthographicCamera | null>(null);
-  const materialRef = useRef<THREE.ShaderMaterial | null>(null);
-
-  // Initialize render target & full-screen quad
-  useEffect(() => {
+  const pipeline = useMemo(() => {
     try {
-      const depthTexture = new THREE.DepthTexture(width, height, THREE.UnsignedIntType);
-      depthTexture.format = THREE.DepthFormat;
-
-      // WebGL2 multisampled render target with depth resolve
-      const renderTarget = new THREE.WebGLRenderTarget(width, height, {
-        format: THREE.RGBAFormat,
-        type: THREE.HalfFloatType,
-        minFilter: THREE.NearestFilter,
-        magFilter: THREE.NearestFilter,
-        depthTexture,
-        samples: 4,
-      });
-      renderTarget.texture.generateMipmaps = false;
-
-      const screenScene = new THREE.Scene();
-      const screenCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-
-      // Fullscreen triangle: 3 vertices covering [-1, 1] NDC
-      const geom = new THREE.BufferGeometry();
-      const positions = new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]);
-      const uvs = new Float32Array([0, 0, 2, 0, 0, 2]);
-      geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      geom.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-
-      const mat = new THREE.ShaderMaterial({
-        vertexShader: InkShader.vertexShader,
-        fragmentShader: InkShader.fragmentShader,
-        uniforms: THREE.UniformsUtils.clone(InkShader.uniforms),
-        depthTest: false,
-        depthWrite: false,
-      });
-
-      mat.uniforms.tDiffuse.value = renderTarget.texture;
-      mat.uniforms.tDepth.value = depthTexture;
-
-      const mesh = new THREE.Mesh(geom, mat);
-      screenScene.add(mesh);
-
-      rtRef.current = renderTarget;
-      screenSceneRef.current = screenScene;
-      screenCameraRef.current = screenCamera;
-      materialRef.current = mat;
-
-      return () => {
-        renderTarget.dispose();
-        depthTexture.dispose();
-        geom.dispose();
-        mat.dispose();
-        rtRef.current = null;
-        screenSceneRef.current = null;
-        screenCameraRef.current = null;
-        materialRef.current = null;
-      };
+      return createPipeline(width, height, samples, quality);
     } catch (err) {
       throw new Error(`InkComposer: Failed to create WebGL render target or depth texture: ${String(err)}`);
     }
-  }, [width, height]);
+  }, [width, height, samples, quality]);
+  useEffect(() => () => pipeline.dispose(), [pipeline]);
 
-  // Update uniforms and render loop (priority 1 takes over R3F default render)
   useFrame(({ gl, camera }) => {
-    const rt = rtRef.current;
-    const screenScene = screenSceneRef.current;
-    const screenCamera = screenCameraRef.current;
-    const mat = materialRef.current;
+    const perspective = camera as THREE.PerspectiveCamera;
+    const pass = (material: THREE.ShaderMaterial, target: THREE.WebGLRenderTarget | null) => {
+      pipeline.quad.material = material;
+      gl.setRenderTarget(target);
+      gl.render(pipeline.passScene, pipeline.passCamera);
+    };
 
-    if (!rt || !screenScene || !screenCamera || !mat) return;
-
-    // Update camera and resolution uniforms
-    mat.uniforms.uResolution.value.set(width, height);
-    mat.uniforms.uCameraNear.value = (camera as THREE.PerspectiveCamera).near || 0.1;
-    mat.uniforms.uCameraFar.value = (camera as THREE.PerspectiveCamera).far || 100.0;
-    mat.uniforms.uInverseProjection.value.copy(camera.projectionMatrixInverse);
-    mat.uniforms.uEnableInk.value = enableInk ? 1.0 : 0.0;
-
-    // Render 3D scene into offscreen render target
-    gl.setRenderTarget(rt);
+    gl.setRenderTarget(pipeline.scene);
     gl.clear();
     gl.render(scene, camera);
 
-    // Blit to screen with ink lines and display sRGB conversion
-    gl.setRenderTarget(null);
-    gl.render(screenScene, screenCamera);
+    if (pipeline.ao) {
+      const u = pipeline.aoMaterial.uniforms;
+      (u.uResolution!.value as THREE.Vector2).set(pipeline.ao.width, pipeline.ao.height);
+      (u.uInverseProjection!.value as THREE.Matrix4).copy(camera.projectionMatrixInverse);
+      u.uProjScale!.value = camera.projectionMatrix.elements[5]! * 0.5 * pipeline.ao.height;
+      u.uCameraNear!.value = perspective.near;
+      u.uCameraFar!.value = perspective.far;
+      pass(pipeline.aoMaterial, pipeline.ao);
+    }
+
+    // Bloom: bright-pass extract into the first level, then (high) down and back up.
+    const [first, ...rest] = pipeline.bloomDown;
+    pipeline.extract.uniforms.tDiffuse!.value = pipeline.scene.texture;
+    (pipeline.extract.uniforms.uResolution!.value as THREE.Vector2).set(first!.width, first!.height);
+    pass(pipeline.extract, first!);
+    let source = first!;
+    for (const target of rest) {
+      pipeline.down.uniforms.tInput!.value = source.texture;
+      (pipeline.down.uniforms.uSourceTexel!.value as THREE.Vector2).set(1 / source.width, 1 / source.height);
+      pass(pipeline.down, target);
+      source = target;
+    }
+    for (let level = pipeline.bloomUp.length - 1; level >= 0; level -= 1) {
+      pipeline.up.uniforms.tInput!.value = source.texture;
+      pipeline.up.uniforms.tAdd!.value = pipeline.bloomDown[level]!.texture;
+      (pipeline.up.uniforms.uSourceTexel!.value as THREE.Vector2).set(1 / source.width, 1 / source.height);
+      pass(pipeline.up, pipeline.bloomUp[level]!);
+      source = pipeline.bloomUp[level]!;
+    }
+
+    const u = pipeline.composite.uniforms;
+    (u.uResolution!.value as THREE.Vector2).set(width, height);
+    u.uCameraNear!.value = perspective.near || 0.1;
+    u.uCameraFar!.value = perspective.far || 100.0;
+    (u.uInverseProjection!.value as THREE.Matrix4).copy(camera.projectionMatrixInverse);
+    (u.uCameraWorld!.value as THREE.Matrix4).copy(camera.matrixWorld);
+    u.uEnableInk!.value = enableInk ? 1.0 : 0.0;
+    pass(pipeline.composite, null);
   }, 1);
 
   return null;

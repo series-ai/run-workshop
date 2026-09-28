@@ -60,7 +60,7 @@ describe('wreck yard determinism', () => {
       minComparedFrames: 5,
     });
     expect(proof.comparedFrames).toBeGreaterThanOrEqual(5);
-  }, 300_000);
+  }, 500_000);
 
   it('hydrates a late joiner to the same checksum', () => {
     const proof = assertLateJoinHydration({

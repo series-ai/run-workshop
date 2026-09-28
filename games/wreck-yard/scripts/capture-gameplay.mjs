@@ -33,6 +33,10 @@ async function waitForServer(url, timeoutMs = 15000) {
 
 async function captureScreen(page, filename) {
   const outPath = path.join(brainDir, filename);
+  if (!process.env.FORCE_ALL && fs.existsSync(outPath) && fs.statSync(outPath).mtimeMs > Date.now() - 3600 * 1000) {
+    console.log(`Using freshly captured screenshot from today: ${filename}`);
+    return outPath;
+  }
   const dataUrl = await page.evaluate(() => {
     const canvas = document.querySelector('canvas');
     return canvas ? canvas.toDataURL('image/png') : null;
@@ -65,6 +69,10 @@ async function main() {
 
     const context = await browser.newContext({
       viewport: { width: 1280, height: 720 },
+      recordVideo: {
+        dir: videosDir,
+        size: { width: 1280, height: 720 },
+      },
     });
 
     const page = await context.newPage();
@@ -94,16 +102,23 @@ async function main() {
     // ==========================================
     console.log('--- PHASE 1: CAPTURING HIGH-RES SCREENSHOTS ---');
 
+    function hasRecent(filename) {
+      const p = path.join(brainDir, filename);
+      return !process.env.FORCE_ALL && fs.existsSync(p) && fs.statSync(p).mtimeMs > Date.now() - 3600 * 1000;
+    }
+
     // 1. Capture Yard Vista Overview
-    console.log('Capturing: Vista overview...');
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SET_CAMERA_OVERRIDE__ === 'function') {
-        win.__SET_CAMERA_OVERRIDE__([16, 9, 17], [0, 1.5, -4]);
-      }
-    });
-    await page.waitForTimeout(800);
-    await captureScreen(page, 'wreck_yard_vista_playground.png');
+    if (!hasRecent('wreck_yard_vista_playground.png')) {
+      console.log('Capturing: Vista overview...');
+      await page.evaluate(() => {
+        const win = window;
+        if (typeof win.__SET_CAMERA_OVERRIDE__ === 'function') {
+          win.__SET_CAMERA_OVERRIDE__([16, 9, 17], [0, 1.5, -4]);
+        }
+      });
+      await page.waitForTimeout(800);
+      await captureScreen(page, 'wreck_yard_vista_playground.png');
+    }
 
     // 2. Clear camera override for First-Person
     await page.evaluate(() => {
@@ -115,86 +130,96 @@ async function main() {
         win.__SET_LOOK_ANGLES__(0.1, -0.15);
       }
     });
-    await page.waitForTimeout(600);
-
-    // 3. First-Person Plasma Torch Firing
-    console.log('Capturing: First-Person Plasma Torch cutting...');
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ tool: 'torch', pressed: true });
-      }
-    });
-    await page.waitForTimeout(1200);
-    await captureScreen(page, 'wreck_yard_torch_cutter.png');
-
-    // Release torch
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ pressed: false });
-      }
-    });
     await page.waitForTimeout(400);
 
+    // 3. First-Person Plasma Torch Firing
+    if (!hasRecent('wreck_yard_torch_cutter.png')) {
+      console.log('Capturing: First-Person Plasma Torch cutting...');
+      await page.evaluate(() => {
+        const win = window;
+        if (typeof win.__SIMULATE_INPUT__ === 'function') {
+          win.__SIMULATE_INPUT__({ tool: 'torch', pressed: true });
+        }
+      });
+      await page.waitForTimeout(1200);
+      await captureScreen(page, 'wreck_yard_torch_cutter.png');
+
+      // Release torch
+      await page.evaluate(() => {
+        const win = window;
+        if (typeof win.__SIMULATE_INPUT__ === 'function') {
+          win.__SIMULATE_INPUT__({ pressed: false });
+        }
+      });
+      await page.waitForTimeout(400);
+    }
+
     // 4. First-Person Gravity Gun Levitation
-    console.log('Capturing: First-Person Gravity Gun...');
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ tool: 'hand', pressed: true });
-      }
-      if (typeof win.__SET_LOOK_ANGLES__ === 'function') {
-        win.__SET_LOOK_ANGLES__(-0.35, -0.2);
-      }
-    });
-    await page.waitForTimeout(1200);
-    await captureScreen(page, 'wreck_yard_gravity_gun.png');
+    if (!hasRecent('wreck_yard_gravity_gun.png')) {
+      console.log('Capturing: First-Person Gravity Gun...');
+      await page.evaluate(() => {
+        const win = window;
+        if (typeof win.__SIMULATE_INPUT__ === 'function') {
+          win.__SIMULATE_INPUT__({ tool: 'hand', pressed: true });
+        }
+        if (typeof win.__SET_LOOK_ANGLES__ === 'function') {
+          win.__SET_LOOK_ANGLES__(-0.35, -0.2);
+        }
+      });
+      await page.waitForTimeout(1200);
+      await captureScreen(page, 'wreck_yard_gravity_gun.png');
+    }
 
     // 5. First-Person Jetpack Boosting & Aerial Flight
-    console.log('Capturing: Jetpack boost over playground...');
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ pressed: false, jetpack: true, moveZ: 1 });
-      }
-      if (typeof win.__SET_LOOK_ANGLES__ === 'function') {
-        win.__SET_LOOK_ANGLES__(0.5, -0.35);
-      }
-    });
-    await page.waitForTimeout(1600);
-    await captureScreen(page, 'wreck_yard_jetpack_aerial.png');
+    if (!hasRecent('wreck_yard_jetpack_aerial.png')) {
+      console.log('Capturing: Jetpack boost over playground...');
+      await page.evaluate(() => {
+        const win = window;
+        if (typeof win.__SIMULATE_INPUT__ === 'function') {
+          win.__SIMULATE_INPUT__({ pressed: false, jetpack: true, moveZ: 1 });
+        }
+        if (typeof win.__SET_LOOK_ANGLES__ === 'function') {
+          win.__SET_LOOK_ANGLES__(0.5, -0.35);
+        }
+      });
+      await page.waitForTimeout(1600);
+      await captureScreen(page, 'wreck_yard_jetpack_aerial.png');
 
-    // Release jetpack and settle
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ jetpack: false, moveZ: 0 });
-      }
-    });
-    await page.waitForTimeout(600);
+      // Release jetpack and settle
+      await page.evaluate(() => {
+        const win = window;
+        if (typeof win.__SIMULATE_INPUT__ === 'function') {
+          win.__SIMULATE_INPUT__({ jetpack: false, moveZ: 0 });
+        }
+      });
+      await page.waitForTimeout(600);
+    }
 
     // 6. Focus Shot: Buggy Vehicle & Tire Barriers (Player-Sized Scale)
-    console.log('Capturing: Buggy vehicle & tire barrier sector...');
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SET_CAMERA_OVERRIDE__ === 'function') {
-        win.__SET_CAMERA_OVERRIDE__([16.0, 3.2, 7.0], [11.8, 1.0, 12.2]);
-      }
-    });
-    await page.waitForTimeout(800);
-    await captureScreen(page, 'wreck_yard_buggy_sector.png');
+    if (!hasRecent('wreck_yard_buggy_sector.png')) {
+      console.log('Capturing: Buggy vehicle & tire barrier sector...');
+      await page.evaluate(() => {
+        const win = window;
+        if (typeof win.__SET_CAMERA_OVERRIDE__ === 'function') {
+          win.__SET_CAMERA_OVERRIDE__([16.0, 3.2, 7.0], [11.8, 1.0, 12.2]);
+        }
+      });
+      await page.waitForTimeout(800);
+      await captureScreen(page, 'wreck_yard_buggy_sector.png');
+    }
 
     // 7. Focus Shot: Destructible Tower & Shipping Containers
-    console.log('Capturing: Tower & shipping containers...');
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SET_CAMERA_OVERRIDE__ === 'function') {
-        win.__SET_CAMERA_OVERRIDE__([-8, 4.2, -6], [-14, 2.5, -14]);
-      }
-    });
-    await page.waitForTimeout(800);
-    await captureScreen(page, 'wreck_yard_tower_containers.png');
+    if (!hasRecent('wreck_yard_tower_containers.png')) {
+      console.log('Capturing: Tower & shipping containers...');
+      await page.evaluate(() => {
+        const win = window;
+        if (typeof win.__SET_CAMERA_OVERRIDE__ === 'function') {
+          win.__SET_CAMERA_OVERRIDE__([-8, 4.2, -6], [-14, 2.5, -14]);
+        }
+      });
+      await page.waitForTimeout(800);
+      await captureScreen(page, 'wreck_yard_tower_containers.png');
+    }
 
     // Reset camera for Buggy Mount
     await page.evaluate(() => {
@@ -203,83 +228,64 @@ async function main() {
         win.__SET_CAMERA_OVERRIDE__(null, null);
       }
     });
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(200);
 
-    // Navigate to Buggy and Mount for Cockpit Shot
-    console.log('Navigating player towards Buggy staging pad...');
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ moveX: 1, moveZ: 0.15, jetpack: true });
-      }
-      if (typeof win.__SET_LOOK_ANGLES__ === 'function') {
-        win.__SET_LOOK_ANGLES__(-1.42, -0.15);
-      }
-    });
-    await page.waitForTimeout(2200);
+    if (!hasRecent('wreck_yard_buggy_cockpit.png')) {
+      // Navigate to Buggy and Mount for Cockpit Shot
+      console.log('Navigating player towards Buggy staging pad...');
+      await page.evaluate(() => {
+        const win = window;
+        if (typeof win.__SIMULATE_INPUT__ === 'function') {
+          win.__SIMULATE_INPUT__({ moveX: 1, moveZ: 0.15, jetpack: true });
+        }
+        if (typeof win.__SET_LOOK_ANGLES__ === 'function') {
+          win.__SET_LOOK_ANGLES__(-1.42, -0.15);
+        }
+      });
+      await page.waitForTimeout(2200);
 
-    // Mount buggy with interaction key (secondary)
-    console.log('Mounting Buggy with interaction key...');
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ moveX: 0, moveZ: 0, jetpack: false, secondary: true });
-      }
-    });
-    await page.waitForTimeout(400);
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ secondary: false });
-      }
-    });
-    await page.waitForTimeout(600);
+      // Mount buggy with interaction key (secondary)
+      console.log('Mounting Buggy with interaction key...');
+      await page.evaluate(() => {
+        const win = window;
+        if (typeof win.__SIMULATE_INPUT__ === 'function') {
+          win.__SIMULATE_INPUT__({ moveX: 0, moveZ: 0, jetpack: false, secondary: true });
+        }
+      });
+      await page.waitForTimeout(400);
+      await page.evaluate(() => {
+        const win = window;
+        if (typeof win.__SIMULATE_INPUT__ === 'function') {
+          win.__SIMULATE_INPUT__({ secondary: false });
+        }
+      });
+      await page.waitForTimeout(600);
 
-    // Capture Cockpit View when Seated
-    console.log('Capturing: Buggy Cockpit view while driving...');
-    await captureScreen(page, 'wreck_yard_buggy_cockpit.png');
+      // Capture Cockpit View when Seated
+      console.log('Capturing: Buggy Cockpit view while driving...');
+      await captureScreen(page, 'wreck_yard_buggy_cockpit.png');
 
-    // Dismount Buggy before starting recorded gameplay loop
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ secondary: true });
-      }
-    });
-    await page.waitForTimeout(400);
-    await page.evaluate(() => {
-      const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ secondary: false });
-      }
-    });
-    await page.waitForTimeout(600);
+      // Dismount Buggy before starting recorded gameplay loop
+      await page.evaluate(() => {
+        const win = window;
+        if (typeof win.__SIMULATE_INPUT__ === 'function') {
+          win.__SIMULATE_INPUT__({ secondary: true });
+        }
+      });
+      await page.waitForTimeout(400);
+      await page.evaluate(() => {
+        const win = window;
+        if (typeof win.__SIMULATE_INPUT__ === 'function') {
+          win.__SIMULATE_INPUT__({ secondary: false });
+        }
+      });
+      await page.waitForTimeout(600);
+    }
 
     // ==========================================
     // PHASE 2: 24 FPS CONTINUOUS GAMEPLAY LOOP RECORDING
     // ==========================================
     console.log('--- PHASE 2: STARTING 24 FPS CONTINUOUS GAMEPLAY RECORDING ---');
-    await page.evaluate(() => {
-      const canvas = document.querySelector('canvas');
-      if (!canvas) throw new Error('Canvas element not found for recording');
-      const stream = canvas.captureStream(24);
-      let mimeType = 'video/webm;codecs=vp9';
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
-          ? 'video/webm;codecs=vp8'
-          : 'video/webm';
-      }
-      const recorder = new MediaRecorder(stream, {
-        mimeType,
-        videoBitsPerSecond: 6_000_000,
-      });
-      window._recordedChunks = [];
-      recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) window._recordedChunks.push(e.data);
-      };
-      recorder.start(100);
-      window._mediaRecorder = recorder;
-    });
 
     console.log('Recording: Plasma torch slice action...');
     await page.evaluate(() => {
@@ -305,44 +311,53 @@ async function main() {
     });
     await page.waitForTimeout(2200);
 
-    console.log('Recording: Jetpack flight towards buggy...');
+    console.log('Recording: Moving to Buggy staging pad...');
     await page.evaluate(() => {
       const win = window;
-      if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ pressed: false, jetpack: true, moveZ: 1 });
+      if (typeof win.__TELEPORT_PLAYER__ === 'function') {
+        win.__TELEPORT_PLAYER__([13.8, -0.86 + 0.5, -11.0]);
       }
       if (typeof win.__SET_LOOK_ANGLES__ === 'function') {
-        win.__SET_LOOK_ANGLES__(-1.4, -0.2);
+        win.__SET_LOOK_ANGLES__(0, 0);
       }
     });
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(400);
 
     console.log('Recording: Mounting Buggy...');
     await page.evaluate(() => {
       const win = window;
       if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ moveZ: 0, jetpack: false, secondary: true });
+        win.__SIMULATE_INPUT__({ secondary: true });
       }
     });
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(200);
     await page.evaluate(() => {
       const win = window;
       if (typeof win.__SIMULATE_INPUT__ === 'function') {
         win.__SIMULATE_INPUT__({ secondary: false });
       }
     });
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(400);
 
-    console.log('Recording: Driving Buggy at speed with steering...');
+    console.log('Recording: Driving Buggy at speed down straightaway...');
     await page.evaluate(() => {
       const win = window;
       if (typeof win.__SIMULATE_INPUT__ === 'function') {
-        win.__SIMULATE_INPUT__({ moveZ: 1, moveX: -0.3 });
+        win.__SIMULATE_INPUT__({ moveZ: 1, moveX: 0 });
       }
     });
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2500);
 
-    // Stop buggy
+    // Turn through hairpin with tire traction
+    await page.evaluate(() => {
+      const win = window;
+      if (typeof win.__SIMULATE_INPUT__ === 'function') {
+        win.__SIMULATE_INPUT__({ moveZ: 0.7, moveX: 0.7 });
+      }
+    });
+    await page.waitForTimeout(1500);
+
+    // Stop buggy firmly
     await page.evaluate(() => {
       const win = window;
       if (typeof win.__SIMULATE_INPUT__ === 'function') {
@@ -351,49 +366,28 @@ async function main() {
     });
     await page.waitForTimeout(500);
 
-    console.log('Stopping 24 FPS canvas stream recorder...');
-    const webmBase64 = await page.evaluate(async () => {
-      return new Promise((resolve, reject) => {
-        const recorder = window._mediaRecorder;
-        if (!recorder || recorder.state === 'inactive') return resolve(null);
-        recorder.onstop = () => {
-          const blob = new Blob(window._recordedChunks, { type: 'video/webm' });
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const res = reader.result;
-            if (typeof res === 'string') {
-              resolve(res.replace(/^data:video\/webm;base64,/, ''));
-            } else {
-              resolve(null);
-            }
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        };
-        recorder.stop();
-      });
-    });
-
-    console.log('Closing page...');
+    console.log('Closing page to finalize video recording...');
+    const videoObj = page.video();
     await page.close();
     await context.close();
     await browser.close();
 
     const ffmpegBin = fs.existsSync('/opt/homebrew/bin/ffmpeg') ? '/opt/homebrew/bin/ffmpeg' : 'ffmpeg';
 
-    if (webmBase64) {
+    if (videoObj) {
+      const recordedVideoPath = await videoObj.path();
       const destVideoPath = path.join(brainDir, 'gameplay_recording.webm');
-      fs.writeFileSync(destVideoPath, Buffer.from(webmBase64, 'base64'));
-      console.log(`Saved 24 FPS direct GPU canvas recording to: ${destVideoPath}`);
+      fs.copyFileSync(recordedVideoPath, destVideoPath);
+      console.log(`Saved video recording to: ${destVideoPath}`);
 
       console.log('Transcoding 24 FPS MP4 video with libx264...');
       const mp4Path = path.join(brainDir, 'gameplay_recording.mp4');
-      execSync(`"${ffmpegBin}" -y -i "${destVideoPath}" -vf "setpts=N/(24*TB)" -r 24 -c:v libx264 -pix_fmt yuv420p -preset fast -crf 20 "${mp4Path}"`);
+      execSync(`"${ffmpegBin}" -y -ss 0.8 -i "${destVideoPath}" -vf "setpts=N/(24*TB)" -r 24 -c:v libx264 -pix_fmt yuv420p -preset fast -crf 20 "${mp4Path}"`);
       console.log(`Saved 24 FPS MP4 to: ${mp4Path}`);
 
       console.log('Generating 12 FPS compact GIF loop...');
       const gifCompact = path.join(brainDir, 'gameplay_loop_compact.gif');
-      execSync(`"${ffmpegBin}" -y -ss 00:00:01 -t 6 -i "${mp4Path}" -vf "fps=12,scale=540:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=48[p];[s1][p]paletteuse=dither=bayer" "${gifCompact}"`);
+      execSync(`"${ffmpegBin}" -y -ss 00:00:01 -t 6 -i "${mp4Path}" -vf "fps=14,scale=540:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=96[p];[s1][p]paletteuse=dither=sierra2_4a" "${gifCompact}"`);
       console.log(`Saved compact GIF to: ${gifCompact}`);
     }
 

@@ -1,9 +1,10 @@
 import { useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import * as THREE from 'three';
 import { Toon } from './style/toonMaterial';
-import type { UiTool } from './PointerInput';
+import type { UiTool } from './keyBindings';
 import type { YardRender } from './presentation';
+import { lerpAngle } from '../sim/math';
 
 export function FirstPersonTool({
   tool,
@@ -33,15 +34,11 @@ export function FirstPersonTool({
   const pilotFlameRef = useRef<THREE.Mesh>(null);
   const nozzleGlowRef = useRef<THREE.Mesh>(null);
 
-  // Cockpit Refs
-  const steeringWheelRef = useRef<THREE.Group>(null);
-
   // Dynamic animation states
   const recoil = useRef(0);
   const bobTime = useRef(0);
   const swayX = useRef(0);
   const swayY = useRef(0);
-  const steerInput = useRef(0);
   const prevCameraRot = useRef(new THREE.Euler());
   const prevPlayerPos = useRef(new THREE.Vector3());
 
@@ -49,24 +46,6 @@ export function FirstPersonTool({
   const right = useRef(new THREE.Vector3());
   const up = useRef(new THREE.Vector3());
   const toolPos = useRef(new THREE.Vector3());
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const isDown = e.type === 'keydown';
-      if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
-        steerInput.current = isDown ? 1 : 0;
-      }
-      if (e.code === 'KeyD' || e.code === 'ArrowRight') {
-        steerInput.current = isDown ? -1 : 0;
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    window.addEventListener('keyup', onKey);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      window.removeEventListener('keyup', onKey);
-    };
-  }, []);
 
   useFrame((state, delta) => {
     if (!root.current || tool === 'orbit') return;
@@ -76,14 +55,17 @@ export function FirstPersonTool({
     const isGrabbing = Boolean(localPlayer?.grabbing);
     const isTorching = Boolean(localPlayer?.torching);
     const isRiding = Boolean(localPlayer?.ridingVehicle);
+    root.current.visible = !isRiding;
+    const follow = 1 - Math.exp(-12 * delta);
+    const recover = 1 - Math.exp(-14 * delta);
 
     // Calculate rotational camera velocity for spring sway
-    const rotDeltaX = camera.rotation.y - prevCameraRot.current.y;
-    const rotDeltaY = camera.rotation.x - prevCameraRot.current.x;
+    const rotDeltaX = lerpAngle(prevCameraRot.current.y, camera.rotation.y, 1) - prevCameraRot.current.y;
+    const rotDeltaY = lerpAngle(prevCameraRot.current.x, camera.rotation.x, 1) - prevCameraRot.current.x;
     prevCameraRot.current.copy(camera.rotation);
 
-    swayX.current = THREE.MathUtils.lerp(swayX.current, -rotDeltaX * 0.14, delta * 12);
-    swayY.current = THREE.MathUtils.lerp(swayY.current, rotDeltaY * 0.14, delta * 12);
+    swayX.current = THREE.MathUtils.lerp(swayX.current, -rotDeltaX * 0.14, follow);
+    swayY.current = THREE.MathUtils.lerp(swayY.current, rotDeltaY * 0.14, follow);
 
     // Walking / flying bob based on position displacement
     let speed = 0;
@@ -101,7 +83,7 @@ export function FirstPersonTool({
     const bobY = Math.abs(Math.cos(bobTime.current)) * (isMoving ? 0.009 : 0.002);
 
     // Spring recoil recovery
-    recoil.current = THREE.MathUtils.lerp(recoil.current, 0, delta * 14);
+    recoil.current = THREE.MathUtils.lerp(recoil.current, 0, recover);
 
     // Compute viewmodel world position: offset relative to camera
     camera.getWorldDirection(forward.current);
@@ -147,16 +129,16 @@ export function FirstPersonTool({
       // Claw articulators: flare open when tractor lock engages
       const clawTarget = isGrabbing ? 1.35 : 1.0;
       if (clawTop.current) {
-        clawTop.current.rotation.x = THREE.MathUtils.lerp(clawTop.current.rotation.x, isGrabbing ? -0.38 : -0.16, delta * 12);
+        clawTop.current.rotation.x = THREE.MathUtils.lerp(clawTop.current.rotation.x, isGrabbing ? -0.38 : -0.16, follow);
       }
       if (clawLeft.current) {
-        clawLeft.current.rotation.z = THREE.MathUtils.lerp(clawLeft.current.rotation.z, isGrabbing ? -0.52 : -0.28, delta * 12);
+        clawLeft.current.rotation.z = THREE.MathUtils.lerp(clawLeft.current.rotation.z, isGrabbing ? -0.52 : -0.28, follow);
       }
       if (clawRight.current) {
-        clawRight.current.rotation.z = THREE.MathUtils.lerp(clawRight.current.rotation.z, isGrabbing ? 0.52 : 0.28, delta * 12);
+        clawRight.current.rotation.z = THREE.MathUtils.lerp(clawRight.current.rotation.z, isGrabbing ? 0.52 : 0.28, follow);
       }
       if (prongGroup.current) {
-        prongGroup.current.scale.lerp(new THREE.Vector3(clawTarget, clawTarget, clawTarget), delta * 12);
+        prongGroup.current.scale.setScalar(THREE.MathUtils.lerp(prongGroup.current.scale.x, clawTarget, follow));
       }
     }
 
@@ -180,120 +162,24 @@ export function FirstPersonTool({
       }
       if (nozzleGlowRef.current) {
         // High heat emissive surge
-        const mat = nozzleGlowRef.current.material as THREE.MeshStandardMaterial;
-        mat.emissiveIntensity = flameActive ? 5.5 : 1.8;
+        const mat = nozzleGlowRef.current.material as THREE.MeshBasicMaterial;
+        mat.color.set(flameActive ? '#fff1ca' : '#ea580c');
       }
       if (torchLightRef.current) {
         torchLightRef.current.intensity = flameActive ? 6.5 + Math.random() * 1.2 : 0.5;
       }
     }
 
-    // =========================================================================
-    // VEHICLE COCKPIT STEERING
-    // =========================================================================
-    if (isRiding && steeringWheelRef.current) {
-      const targetSteer = steerInput.current * 0.75 + swayX.current * 2.2;
-      steeringWheelRef.current.rotation.z = THREE.MathUtils.lerp(steeringWheelRef.current.rotation.z, targetSteer, delta * 14);
-    }
   });
 
   if (tool === 'orbit') return null;
-
-  const render = renderRef.current;
-  const localPlayer = render?.players?.find((p) => p.slot === render?.localSlot);
-  const isRiding = Boolean(localPlayer?.ridingVehicle);
 
   return (
     <group ref={root}>
       {/* Subtle Dedicated Studio Rim Light to make metallic bevels and textures pop */}
       <pointLight position={[0.25, 0.35, 0.1]} intensity={0.9} distance={1.4} color="#ffffff" />
 
-      {isRiding ? (
-        // =========================================================================
-        // AAA TEARDOWN INDUSTRIAL BUGGY DRIVING COCKPIT
-        // =========================================================================
-        <group position={[0, -0.16, -0.22]}>
-          {/* Main Curved Dashboard Console */}
-          <mesh position={[0, -0.12, 0.06]}>
-            <boxGeometry args={[0.74, 0.16, 0.32]} />
-            <Toon color="#1e293b" />
-          </mesh>
-          <mesh position={[0, -0.04, 0.20]}>
-            <boxGeometry args={[0.72, 0.04, 0.08]} />
-            <Toon color="#0f172a" />
-          </mesh>
-
-          {/* Heavy Tubular Steel Roll Cage Framing Viewport */}
-          <mesh position={[-0.34, 0.22, 0]} rotation={[0.18, 0, -0.18]}>
-            <cylinderGeometry args={[0.024, 0.024, 0.7, 12]} />
-            <Toon color="#eab308" />
-          </mesh>
-          <mesh position={[0.34, 0.22, 0]} rotation={[0.18, 0, 0.18]}>
-            <cylinderGeometry args={[0.024, 0.024, 0.7, 12]} />
-            <Toon color="#eab308" />
-          </mesh>
-          <mesh position={[0, 0.48, 0.05]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.024, 0.024, 0.68, 12]} />
-            <Toon color="#eab308" />
-          </mesh>
-
-          {/* Steering Column Assembly */}
-          <mesh position={[0, -0.04, 0.16]} rotation={[-0.55, 0, 0]}>
-            <cylinderGeometry args={[0.024, 0.024, 0.24, 16]} />
-            <Toon color="#334155" />
-          </mesh>
-
-          {/* 3-Spoke Perforated Leather Rally Steering Wheel */}
-          <group ref={steeringWheelRef} position={[0, 0.04, 0.25]} rotation={[-0.55, 0, 0]}>
-            {/* Outer Rim */}
-            <mesh rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[0.135, 0.018, 16, 32]} />
-              <Toon color="#09090b" />
-            </mesh>
-            {/* Red 12-o'clock centering stripe */}
-            <mesh position={[0, 0.135, 0]}>
-              <boxGeometry args={[0.035, 0.03, 0.035]} />
-              <Toon color="#ef4444" />
-            </mesh>
-            {/* Milled Brushed Aluminum Spokes */}
-            <mesh>
-              <boxGeometry args={[0.25, 0.022, 0.012]} />
-              <Toon color="#94a3b8" />
-            </mesh>
-            <mesh position={[0, -0.065, 0]}>
-              <boxGeometry args={[0.022, 0.13, 0.012]} />
-              <Toon color="#94a3b8" />
-            </mesh>
-            {/* Central Boss & Horn */}
-            <mesh position={[0, 0, 0.01]}>
-              <cylinderGeometry args={[0.034, 0.034, 0.016, 24]} />
-              <Toon color="#18181b" />
-            </mesh>
-            <mesh position={[0, 0, 0.02]}>
-              <sphereGeometry args={[0.015, 12, 12]} />
-              <meshBasicMaterial color="#ef4444" toneMapped={false} />
-            </mesh>
-          </group>
-
-          {/* Backlit Instrument Cluster (Speedometer & Turbo Boost Gauge) */}
-          <mesh position={[-0.14, -0.03, 0.13]} rotation={[-0.55, 0, 0]}>
-            <cylinderGeometry args={[0.036, 0.036, 0.012, 20]} />
-            <meshBasicMaterial color="#0284c7" toneMapped={false} />
-          </mesh>
-          <mesh position={[0.14, -0.03, 0.13]} rotation={[-0.55, 0, 0]}>
-            <cylinderGeometry args={[0.036, 0.036, 0.012, 20]} />
-            <meshBasicMaterial color="#f59e0b" toneMapped={false} />
-          </mesh>
-
-          {/* Dashboard Toggle Switches */}
-          {[-0.05, 0, 0.05].map((x, i) => (
-            <mesh key={`sw-${i}`} position={[x, -0.05, 0.14]} rotation={[-0.3, 0, 0]}>
-              <cylinderGeometry args={[0.005, 0.005, 0.025, 8]} />
-              <Toon color="#e2e8f0" />
-            </mesh>
-          ))}
-        </group>
-      ) : tool === 'hand' ? (
+      {tool === 'hand' ? (
         // =========================================================================
         // AAA TEARDOWN HEAVY INDUSTRIAL GRAVITY TRACTOR (GRAVITY GUN)
         // =========================================================================

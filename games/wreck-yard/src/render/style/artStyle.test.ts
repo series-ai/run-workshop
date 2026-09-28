@@ -1,3 +1,4 @@
+import { SKYLINE_LAYERS } from './skylineShapes';
 import { describe, expect, it } from 'vitest';
 import {
   ART_STYLE,
@@ -31,7 +32,7 @@ describe('ART_STYLE definitions & invariants (T1)', () => {
 
   it('enforces silhouetteFade[1] is less than the nearest skyline distance', () => {
     const { ink } = ART_STYLE;
-    const NEAREST_SKYLINE_DISTANCE = 45; // metres
+    const NEAREST_SKYLINE_DISTANCE = Math.min(...SKYLINE_LAYERS.map((layer) => layer.distance));
     expect(ink.silhouetteFade[0]).toBeLessThan(ink.silhouetteFade[1]);
     expect(ink.silhouetteFade[1]).toBeLessThan(NEAREST_SKYLINE_DISTANCE);
   });
@@ -54,6 +55,10 @@ describe('ART_STYLE definitions & invariants (T1)', () => {
       'teal',
       'mustard',
       'rust',
+      'metal',
+      'waterDeep',
+      'waterShallow',
+      'waterFoam',
       'spark',
       'glow',
       'ink',
@@ -63,6 +68,16 @@ describe('ART_STYLE definitions & invariants (T1)', () => {
       expect(ART_STYLE.palette[key]).toBeDefined();
       expect(ART_STYLE.palette[key]).toMatch(/^#[0-9a-fA-F]{6}$/);
     });
+  });
+
+  it('enforces cavity parameter invariants', () => {
+    const { cavity } = ART_STYLE;
+    expect(cavity.strength).toBeGreaterThan(0);
+    expect(cavity.strength).toBeLessThanOrEqual(1.0);
+    expect(cavity.width).toBeGreaterThan(0);
+    expect(cavity.width).toBeLessThan(1.0);
+    expect(cavity.maxNeighborDistance).toBeGreaterThan(0);
+    expect(cavity.fade[0]).toBeLessThan(cavity.fade[1]);
   });
 
   it('pure toonBand maps nDotL * shadow to discrete 3-band steps (0, 1, 2)', () => {

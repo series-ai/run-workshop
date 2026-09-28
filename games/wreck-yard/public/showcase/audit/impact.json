@@ -1,0 +1,6892 @@
+{
+  "id": "impact",
+  "title": "Impact damage",
+  "setup": "Ballast box starts at 3.5 m with downward velocity. No later pose edits.",
+  "mode": "Offline simulation replay at 30 ticks/s. This does not measure live frame rate or test browser input.",
+  "checks": {
+    "voxelDamage": true
+  },
+  "passed": true,
+  "history": [
+    {
+      "tick": 0,
+      "frame": 0,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 0
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1728,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": 0.2,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14,
+        "y": 0.19000000000000006,
+        "z": -12,
+        "speed": 0,
+        "groundedWheels": 0
+      },
+      "ballast": {
+        "x": -6,
+        "y": 3.5,
+        "z": 3,
+        "speed": 9
+      },
+      "floating": {
+        "y": 0.04,
+        "vy": 0
+      }
+    },
+    {
+      "tick": 1,
+      "frame": 1,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 0
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1728,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": 0.17555555555555546,
+        "z": 10,
+        "fuel": 100,
+        "grounded": false,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.000598,
+        "y": 0.206973,
+        "z": -12.000417,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -6,
+        "y": 3.19125,
+        "z": 3,
+        "speed": 9.261
+      },
+      "floating": {
+        "y": 0.050385,
+        "vy": 0.518645
+      }
+    },
+    {
+      "tick": 2,
+      "frame": 2,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 0
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1728,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": 0.12666666666666648,
+        "z": 10,
+        "fuel": 100,
+        "grounded": false,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.00104,
+        "y": 0.225851,
+        "z": -12.000893,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -6,
+        "y": 2.8738,
+        "z": 3,
+        "speed": 9.51678
+      },
+      "floating": {
+        "y": 0.077406,
+        "vy": 0.9943120000000001
+      }
+    },
+    {
+      "tick": 3,
+      "frame": 3,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 0
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1728,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": 0.05333333333333301,
+        "z": 10,
+        "fuel": 100,
+        "grounded": false,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001137,
+        "y": 0.24103,
+        "z": -12.00123,
+        "speed": 0.0000014142135623730952,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -6,
+        "y": 2.547824,
+        "z": 3,
+        "speed": 9.767444
+      },
+      "floating": {
+        "y": 0.119683,
+        "vy": 1.430562
+      }
+    },
+    {
+      "tick": 4,
+      "frame": 4,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 0
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1728,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.04444444444444495,
+        "z": 10,
+        "fuel": 100,
+        "grounded": false,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001004,
+        "y": 0.250204,
+        "z": -12.001375,
+        "speed": 0.0000014142135623730952,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -6,
+        "y": 2.213493,
+        "z": 3,
+        "speed": 10.013095
+      },
+      "floating": {
+        "y": 0.175835,
+        "vy": 1.817614
+      }
+    },
+    {
+      "tick": 5,
+      "frame": 5,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 0
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1728,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.000826,
+        "y": 0.253573,
+        "z": -12.001369,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -6,
+        "y": 1.870973,
+        "z": 3,
+        "speed": 10.253833
+      },
+      "floating": {
+        "y": 0.242788,
+        "vy": 2.084389
+      }
+    },
+    {
+      "tick": 6,
+      "frame": 6,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 0
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1728,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.000727,
+        "y": 0.252745,
+        "z": -12.001292,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -6,
+        "y": 1.520429,
+        "z": 3,
+        "speed": 10.489756
+      },
+      "floating": {
+        "y": 0.316139,
+        "vy": 2.220298
+      }
+    },
+    {
+      "tick": 7,
+      "frame": 7,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 0
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1728,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.00074,
+        "y": 0.249727,
+        "z": -12.001216,
+        "speed": 0.0000014142135623730952,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -6,
+        "y": 1.16202,
+        "z": 3,
+        "speed": 10.720961
+      },
+      "floating": {
+        "y": 0.392012,
+        "vy": 2.259191
+      }
+    },
+    {
+      "tick": 8,
+      "frame": 8,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 0
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1728,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.000834,
+        "y": 0.246241,
+        "z": -12.001184,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -6,
+        "y": 0.795905,
+        "z": 3,
+        "speed": 10.947542
+      },
+      "floating": {
+        "y": 0.467719,
+        "vy": 2.224038
+      }
+    },
+    {
+      "tick": 9,
+      "frame": 9,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 0
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1728,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.000957,
+        "y": 0.243398,
+        "z": -12.001205,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -6,
+        "y": 0.422237,
+        "z": 3,
+        "speed": 11.169591
+      },
+      "floating": {
+        "y": 0.540854,
+        "vy": 2.119553
+      }
+    },
+    {
+      "tick": 10,
+      "frame": 10,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 0
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1728,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001062,
+        "y": 0.241669,
+        "z": -12.001265,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -6,
+        "y": 0.041167,
+        "z": 3,
+        "speed": 11.387199
+      },
+      "floating": {
+        "y": 0.609186,
+        "vy": 1.9513160000000003
+      }
+    },
+    {
+      "tick": 11,
+      "frame": 11,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 0
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1728,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001126,
+        "y": 0.241033,
+        "z": -12.00134,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -6,
+        "y": -0.347156,
+        "z": 3,
+        "speed": 11.600455
+      },
+      "floating": {
+        "y": 0.670557,
+        "vy": 1.714082
+      }
+    },
+    {
+      "tick": 12,
+      "frame": 12,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001145,
+        "y": 0.241193,
+        "z": -12.001407,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.999499,
+        "y": -0.322962,
+        "z": 2.998722,
+        "speed": 3.850625478864675
+      },
+      "floating": {
+        "y": 0.722162,
+        "vy": 1.388941
+      }
+    },
+    {
+      "tick": 13,
+      "frame": 13,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001131,
+        "y": 0.241767,
+        "z": -12.00145,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.998915,
+        "y": -0.203368,
+        "z": 2.99723,
+        "speed": 3.3326529802471185
+      },
+      "floating": {
+        "y": 0.761322,
+        "vy": 0.9917930000000001
+      }
+    },
+    {
+      "tick": 14,
+      "frame": 14,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.0011,
+        "y": 0.242428,
+        "z": -12.001465,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.998342,
+        "y": -0.101041,
+        "z": 2.995767,
+        "speed": 2.82505191866716
+      },
+      "floating": {
+        "y": 0.786025,
+        "vy": 0.544905
+      }
+    },
+    {
+      "tick": 15,
+      "frame": 15,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001068,
+        "y": 0.242962,
+        "z": -12.001455,
+        "speed": 0.0000014142135623730952,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.99778,
+        "y": -0.015635,
+        "z": 2.994333,
+        "speed": 2.327622357400788
+      },
+      "floating": {
+        "y": 0.795438,
+        "vy": 0.093007
+      }
+    },
+    {
+      "tick": 16,
+      "frame": 16,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001043,
+        "y": 0.24328,
+        "z": -12.001429,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.997229,
+        "y": 0.053188,
+        "z": 2.992928,
+        "speed": 1.8401742559448004
+      },
+      "floating": {
+        "y": 0.789788,
+        "vy": -0.349853
+      }
+    },
+    {
+      "tick": 17,
+      "frame": 17,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.00103,
+        "y": 0.243387,
+        "z": -12.001397,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.996689,
+        "y": 0.105759,
+        "z": 2.991551,
+        "speed": 1.3625424119296252
+      },
+      "floating": {
+        "y": 0.769396,
+        "vy": -0.781047
+      }
+    },
+    {
+      "tick": 18,
+      "frame": 18,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001027,
+        "y": 0.243343,
+        "z": -12.001368,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.996159,
+        "y": 0.142404,
+        "z": 2.990201,
+        "speed": 0.8946312116872516
+      },
+      "floating": {
+        "y": 0.73539,
+        "vy": -1.15758
+      }
+    },
+    {
+      "tick": 19,
+      "frame": 19,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001031,
+        "y": 0.243221,
+        "z": -12.001347,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.99564,
+        "y": 0.163441,
+        "z": 2.988878,
+        "speed": 0.43675823047196266
+      },
+      "floating": {
+        "y": 0.690396,
+        "vy": -1.444172
+      }
+    },
+    {
+      "tick": 20,
+      "frame": 20,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001038,
+        "y": 0.243086,
+        "z": -12.001336,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.995131,
+        "y": 0.169182,
+        "z": 2.987581,
+        "speed": 0.043835135108723
+      },
+      "floating": {
+        "y": 0.637876,
+        "vy": -1.620311
+      }
+    },
+    {
+      "tick": 21,
+      "frame": 21,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001045,
+        "y": 0.242979,
+        "z": -12.001335,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.994632,
+        "y": 0.159933,
+        "z": 2.98631,
+        "speed": 0.4574514776858853
+      },
+      "floating": {
+        "y": 0.581718,
+        "vy": -1.683656
+      }
+    },
+    {
+      "tick": 22,
+      "frame": 22,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.00105,
+        "y": 0.242918,
+        "z": -12.00134,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.994142,
+        "y": 0.135994,
+        "z": 2.985064,
+        "speed": 0.8884346333608342
+      },
+      "floating": {
+        "y": 0.525004,
+        "vy": -1.669799
+      }
+    },
+    {
+      "tick": 23,
+      "frame": 23,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001053,
+        "y": 0.2429,
+        "z": -12.001349,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993662,
+        "y": 0.097659,
+        "z": 2.983843,
+        "speed": 1.3113754725264612
+      },
+      "floating": {
+        "y": 0.470143,
+        "vy": -1.586718
+      }
+    },
+    {
+      "tick": 24,
+      "frame": 24,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001053,
+        "y": 0.242913,
+        "z": -12.001358,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993191,
+        "y": 0.045216,
+        "z": 2.982646,
+        "speed": 1.7260044171221003
+      },
+      "floating": {
+        "y": 0.419329,
+        "vy": -1.44198
+      }
+    },
+    {
+      "tick": 25,
+      "frame": 25,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001052,
+        "y": 0.242941,
+        "z": -12.001365,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.99273,
+        "y": -0.021053,
+        "z": 2.981473,
+        "speed": 2.1323992450467615
+      },
+      "floating": {
+        "y": 0.374443,
+        "vy": -1.245942
+      }
+    },
+    {
+      "tick": 26,
+      "frame": 26,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001051,
+        "y": 0.242971,
+        "z": -12.00137,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.992278,
+        "y": -0.100872,
+        "z": 2.980323,
+        "speed": 2.530696202412688
+      },
+      "floating": {
+        "y": 0.336978,
+        "vy": -1.010816
+      }
+    },
+    {
+      "tick": 27,
+      "frame": 27,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.00105,
+        "y": 0.242994,
+        "z": -12.001372,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.991835,
+        "y": -0.19397,
+        "z": 2.979196,
+        "speed": 2.9210429941616742
+      },
+      "floating": {
+        "y": 0.307995,
+        "vy": -0.749692
+      }
+    },
+    {
+      "tick": 28,
+      "frame": 28,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.243007,
+        "z": -12.001372,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.9914,
+        "y": -0.300081,
+        "z": 2.978091,
+        "speed": 3.303593965723088
+      },
+      "floating": {
+        "y": 0.288134,
+        "vy": -0.47316100000000005
+      }
+    },
+    {
+      "tick": 29,
+      "frame": 29,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.243011,
+        "z": -12.001371,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.991093,
+        "y": -0.378045,
+        "z": 2.990395,
+        "speed": 1.2881599098873555
+      },
+      "floating": {
+        "y": 0.277858,
+        "vy": -0.185522
+      }
+    },
+    {
+      "tick": 30,
+      "frame": 30,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.243008,
+        "z": -12.001369,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.998995,
+        "y": -0.361821,
+        "z": 3.003411,
+        "speed": 0.5480633072383153
+      },
+      "floating": {
+        "y": 0.277194,
+        "vy": 0.09491
+      }
+    },
+    {
+      "tick": 31,
+      "frame": 31,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.243002,
+        "z": -12.001367,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -6.003371,
+        "y": -0.352371,
+        "z": 3.010249,
+        "speed": 0.24907616813537178
+      },
+      "floating": {
+        "y": 0.285548,
+        "vy": 0.350873
+      }
+    },
+    {
+      "tick": 32,
+      "frame": 32,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242995,
+        "z": -12.001365,
+        "speed": 0.0000014142135623730952,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -6.0047,
+        "y": -0.35069,
+        "z": 3.011837,
+        "speed": 0.04564284558394667
+      },
+      "floating": {
+        "y": 0.301812,
+        "vy": 0.568629
+      }
+    },
+    {
+      "tick": 33,
+      "frame": 33,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -6.002953,
+        "y": -0.35642,
+        "z": 3.008138,
+        "speed": 0.3266745333049395
+      },
+      "floating": {
+        "y": 0.324603,
+        "vy": 0.746092
+      }
+    },
+    {
+      "tick": 34,
+      "frame": 34,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242987,
+        "z": -12.001364,
+        "speed": 0.0000014142135623730952,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.998942,
+        "y": -0.367374,
+        "z": 2.998253,
+        "speed": 0.5439897099201418
+      },
+      "floating": {
+        "y": 0.352647,
+        "vy": 0.886124
+      }
+    },
+    {
+      "tick": 35,
+      "frame": 35,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242986,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.996156,
+        "y": -0.379634,
+        "z": 2.990624,
+        "speed": 0.05548826645336833
+      },
+      "floating": {
+        "y": 0.384636,
+        "vy": 0.9866219999999999
+      }
+    },
+    {
+      "tick": 36,
+      "frame": 36,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242986,
+        "z": -12.001364,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.995059,
+        "y": -0.379936,
+        "z": 2.991274,
+        "speed": 0.06124652946086005
+      },
+      "floating": {
+        "y": 0.419218,
+        "vy": 1.046844
+      }
+    },
+    {
+      "tick": 37,
+      "frame": 37,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242987,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.992888,
+        "y": -0.380249,
+        "z": 2.990653,
+        "speed": 0.01349709546532142
+      },
+      "floating": {
+        "y": 0.455041,
+        "vy": 1.067251
+      }
+    },
+    {
+      "tick": 38,
+      "frame": 38,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242988,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993866,
+        "y": -0.380374,
+        "z": 2.990919,
+        "speed": 0.014551155383680021
+      },
+      "floating": {
+        "y": 0.490789,
+        "vy": 1.049369
+      }
+    },
+    {
+      "tick": 39,
+      "frame": 39,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242989,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993623,
+        "y": -0.380381,
+        "z": 2.990883,
+        "speed": 0.02431937057162459
+      },
+      "floating": {
+        "y": 0.525217,
+        "vy": 0.9956780000000001
+      }
+    },
+    {
+      "tick": 40,
+      "frame": 40,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993616,
+        "y": -0.380319,
+        "z": 2.990897,
+        "speed": 0.019400528111368515
+      },
+      "floating": {
+        "y": 0.557181,
+        "vy": 0.909517
+      }
+    },
+    {
+      "tick": 41,
+      "frame": 41,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242991,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993461,
+        "y": -0.380271,
+        "z": 2.990874,
+        "speed": 0.02073135429729568
+      },
+      "floating": {
+        "y": 0.585666,
+        "vy": 0.795009
+      }
+    },
+    {
+      "tick": 42,
+      "frame": 42,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242991,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993542,
+        "y": -0.380228,
+        "z": 2.990909,
+        "speed": 0.01657095464962716
+      },
+      "floating": {
+        "y": 0.609809,
+        "vy": 0.656981
+      }
+    },
+    {
+      "tick": 43,
+      "frame": 43,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242991,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993533,
+        "y": -0.380143,
+        "z": 2.990933,
+        "speed": 0.007546900357100259
+      },
+      "floating": {
+        "y": 0.628914,
+        "vy": 0.499725
+      }
+    },
+    {
+      "tick": 44,
+      "frame": 44,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242991,
+        "z": -12.001364,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993584,
+        "y": -0.380079,
+        "z": 2.990973,
+        "speed": 0.007562578264057833
+      },
+      "floating": {
+        "y": 0.642272,
+        "vy": 0.320304
+      }
+    },
+    {
+      "tick": 45,
+      "frame": 45,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242991,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993464,
+        "y": -0.380034,
+        "z": 2.990958,
+        "speed": 0.006299249320355561
+      },
+      "floating": {
+        "y": 0.649283,
+        "vy": 0.127618
+      }
+    },
+    {
+      "tick": 46,
+      "frame": 46,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242991,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993616,
+        "y": -0.379992,
+        "z": 2.991024,
+        "speed": 0.020270291389124135
+      },
+      "floating": {
+        "y": 0.649741,
+        "vy": -0.066063
+      }
+    },
+    {
+      "tick": 47,
+      "frame": 47,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242991,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993589,
+        "y": -0.379932,
+        "z": 2.991033,
+        "speed": 0.019366596009624405
+      },
+      "floating": {
+        "y": 0.643858,
+        "vy": -0.248388
+      }
+    },
+    {
+      "tick": 48,
+      "frame": 48,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242991,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993434,
+        "y": -0.379884,
+        "z": 2.99101,
+        "speed": 0.02073146811009775
+      },
+      "floating": {
+        "y": 0.632249,
+        "vy": -0.407758
+      }
+    },
+    {
+      "tick": 49,
+      "frame": 49,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.242991,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993515,
+        "y": -0.379841,
+        "z": 2.991045,
+        "speed": 0.016570719598134536
+      },
+      "floating": {
+        "y": 0.615891,
+        "vy": -0.534353
+      }
+    },
+    {
+      "tick": 50,
+      "frame": 50,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993506,
+        "y": -0.379756,
+        "z": 2.991069,
+        "speed": 0.0075474094893546095
+      },
+      "floating": {
+        "y": 0.595896,
+        "vy": -0.630132
+      }
+    },
+    {
+      "tick": 51,
+      "frame": 51,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993508,
+        "y": -0.379702,
+        "z": 2.991094,
+        "speed": 0.006082987834937695
+      },
+      "floating": {
+        "y": 0.573235,
+        "vy": -0.697072
+      }
+    },
+    {
+      "tick": 52,
+      "frame": 52,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993492,
+        "y": -0.379652,
+        "z": 2.991116,
+        "speed": 0.006104716701043546
+      },
+      "floating": {
+        "y": 0.548916,
+        "vy": -0.733552
+      }
+    },
+    {
+      "tick": 53,
+      "frame": 53,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993457,
+        "y": -0.379608,
+        "z": 2.99113,
+        "speed": 0.008606353989930928
+      },
+      "floating": {
+        "y": 0.523974,
+        "vy": -0.739363
+      }
+    },
+    {
+      "tick": 54,
+      "frame": 54,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993609,
+        "y": -0.379992,
+        "z": 2.991201,
+        "speed": 0.027466278488357317
+      },
+      "floating": {
+        "y": 0.499425,
+        "vy": -0.715682
+      }
+    },
+    {
+      "tick": 55,
+      "frame": 55,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993592,
+        "y": -0.379967,
+        "z": 2.991226,
+        "speed": 0.027753599946673584
+      },
+      "floating": {
+        "y": 0.476218,
+        "vy": -0.664957
+      }
+    },
+    {
+      "tick": 56,
+      "frame": 56,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993576,
+        "y": -0.379942,
+        "z": 2.991252,
+        "speed": 0.027767163863095565
+      },
+      "floating": {
+        "y": 0.455198,
+        "vy": -0.590712
+      }
+    },
+    {
+      "tick": 57,
+      "frame": 57,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.99356,
+        "y": -0.379917,
+        "z": 2.991278,
+        "speed": 0.027766098771703593
+      },
+      "floating": {
+        "y": 0.437075,
+        "vy": -0.4973
+      }
+    },
+    {
+      "tick": 58,
+      "frame": 58,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993544,
+        "y": -0.379892,
+        "z": 2.991304,
+        "speed": 0.02776379071740745
+      },
+      "floating": {
+        "y": 0.422399,
+        "vy": -0.389625
+      }
+    },
+    {
+      "tick": 59,
+      "frame": 59,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993551,
+        "y": -0.379828,
+        "z": 2.991323,
+        "speed": 0.019426237772662006
+      },
+      "floating": {
+        "y": 0.411549,
+        "vy": -0.272854
+      }
+    },
+    {
+      "tick": 60,
+      "frame": 60,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993396,
+        "y": -0.37978,
+        "z": 2.9913,
+        "speed": 0.020722735388939366
+      },
+      "floating": {
+        "y": 0.40473,
+        "vy": -0.152152
+      }
+    },
+    {
+      "tick": 61,
+      "frame": 61,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993477,
+        "y": -0.379737,
+        "z": 2.991335,
+        "speed": 0.016576725551205828
+      },
+      "floating": {
+        "y": 0.401975,
+        "vy": -0.032451
+      }
+    },
+    {
+      "tick": 62,
+      "frame": 62,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993469,
+        "y": -0.379652,
+        "z": 2.991359,
+        "speed": 0.00755134199993617
+      },
+      "floating": {
+        "y": 0.403161,
+        "vy": 0.081742
+      }
+    },
+    {
+      "tick": 63,
+      "frame": 63,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.99352,
+        "y": -0.379588,
+        "z": 2.991399,
+        "speed": 0.007560828592158402
+      },
+      "floating": {
+        "y": 0.408021,
+        "vy": 0.186481
+      }
+    },
+    {
+      "tick": 64,
+      "frame": 64,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.9934,
+        "y": -0.379543,
+        "z": 2.991384,
+        "speed": 0.00629798769449417
+      },
+      "floating": {
+        "y": 0.41617,
+        "vy": 0.278479
+      }
+    },
+    {
+      "tick": 65,
+      "frame": 65,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993552,
+        "y": -0.379501,
+        "z": 2.99145,
+        "speed": 0.02027618272752542
+      },
+      "floating": {
+        "y": 0.427126,
+        "vy": 0.355156
+      }
+    },
+    {
+      "tick": 66,
+      "frame": 66,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993525,
+        "y": -0.379441,
+        "z": 2.991459,
+        "speed": 0.019369972973651766
+      },
+      "floating": {
+        "y": 0.440332,
+        "vy": 0.414658
+      }
+    },
+    {
+      "tick": 67,
+      "frame": 67,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.99337,
+        "y": -0.379393,
+        "z": 2.991436,
+        "speed": 0.020724057590153527
+      },
+      "floating": {
+        "y": 0.455185,
+        "vy": 0.455851
+      }
+    },
+    {
+      "tick": 68,
+      "frame": 68,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993451,
+        "y": -0.379349,
+        "z": 2.991471,
+        "speed": 0.016576491426113067
+      },
+      "floating": {
+        "y": 0.471057,
+        "vy": 0.4782910000000001
+      }
+    },
+    {
+      "tick": 69,
+      "frame": 69,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993334,
+        "y": -0.379686,
+        "z": 2.991471,
+        "speed": 0.02170255874315284
+      },
+      "floating": {
+        "y": 0.487317,
+        "vy": 0.48218400000000006
+      }
+    },
+    {
+      "tick": 70,
+      "frame": 70,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993442,
+        "y": -0.379619,
+        "z": 2.991517,
+        "speed": 0.007789150274580661
+      },
+      "floating": {
+        "y": 0.503355,
+        "vy": 0.468335
+      }
+    },
+    {
+      "tick": 71,
+      "frame": 71,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993495,
+        "y": -0.379555,
+        "z": 2.991558,
+        "speed": 0.007556938599724098
+      },
+      "floating": {
+        "y": 0.518597,
+        "vy": 0.438091
+      }
+    },
+    {
+      "tick": 72,
+      "frame": 72,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993375,
+        "y": -0.37951,
+        "z": 2.991543,
+        "speed": 0.0062980639088532605
+      },
+      "floating": {
+        "y": 0.532525,
+        "vy": 0.393278
+      }
+    },
+    {
+      "tick": 73,
+      "frame": 73,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993527,
+        "y": -0.379468,
+        "z": 2.991609,
+        "speed": 0.02027775453545091
+      },
+      "floating": {
+        "y": 0.54469,
+        "vy": 0.336132
+      }
+    },
+    {
+      "tick": 74,
+      "frame": 74,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.9935,
+        "y": -0.379408,
+        "z": 2.991618,
+        "speed": 0.019371548879735974
+      },
+      "floating": {
+        "y": 0.554727,
+        "vy": 0.269221
+      }
+    },
+    {
+      "tick": 75,
+      "frame": 75,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993345,
+        "y": -0.37936,
+        "z": 2.991595,
+        "speed": 0.020722534545754775
+      },
+      "floating": {
+        "y": 0.562362,
+        "vy": 0.19536
+      }
+    },
+    {
+      "tick": 76,
+      "frame": 76,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993426,
+        "y": -0.379316,
+        "z": 2.99163,
+        "speed": 0.016578086650756777
+      },
+      "floating": {
+        "y": 0.567418,
+        "vy": 0.117517
+      }
+    },
+    {
+      "tick": 77,
+      "frame": 77,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993418,
+        "y": -0.379231,
+        "z": 2.991654,
+        "speed": 0.00755357465045524
+      },
+      "floating": {
+        "y": 0.569821,
+        "vy": 0.038716
+      }
+    },
+    {
+      "tick": 78,
+      "frame": 78,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993503,
+        "y": -0.379548,
+        "z": 2.991711,
+        "speed": 0.006867134700877797
+      },
+      "floating": {
+        "y": 0.569598,
+        "vy": -0.038073
+      }
+    },
+    {
+      "tick": 79,
+      "frame": 79,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993438,
+        "y": -0.379527,
+        "z": 2.991724,
+        "speed": 0.006861363712848925
+      },
+      "floating": {
+        "y": 0.566873,
+        "vy": -0.110039
+      }
+    },
+    {
+      "tick": 80,
+      "frame": 80,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993339,
+        "y": -0.379482,
+        "z": 2.991713,
+        "speed": 0.00626385200974608
+      },
+      "floating": {
+        "y": 0.56186,
+        "vy": -0.174639
+      }
+    },
+    {
+      "tick": 81,
+      "frame": 81,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993492,
+        "y": -0.37944,
+        "z": 2.991779,
+        "speed": 0.020284115312233862
+      },
+      "floating": {
+        "y": 0.554851,
+        "vy": -0.229693
+      }
+    },
+    {
+      "tick": 82,
+      "frame": 82,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993465,
+        "y": -0.37938,
+        "z": 2.991788,
+        "speed": 0.01937407406819743
+      },
+      "floating": {
+        "y": 0.546204,
+        "vy": -0.273468
+      }
+    },
+    {
+      "tick": 83,
+      "frame": 83,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.99331,
+        "y": -0.379332,
+        "z": 2.991765,
+        "speed": 0.020719865829681428
+      },
+      "floating": {
+        "y": 0.536325,
+        "vy": -0.304743
+      }
+    },
+    {
+      "tick": 84,
+      "frame": 84,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993391,
+        "y": -0.379288,
+        "z": 2.9918,
+        "speed": 0.016580627521297256
+      },
+      "floating": {
+        "y": 0.525651,
+        "vy": -0.322849
+      }
+    },
+    {
+      "tick": 85,
+      "frame": 85,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993322,
+        "y": -0.379275,
+        "z": 2.991811,
+        "speed": 0.013145369755164744
+      },
+      "floating": {
+        "y": 0.514629,
+        "vy": -0.327678
+      }
+    },
+    {
+      "tick": 86,
+      "frame": 86,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993398,
+        "y": -0.379239,
+        "z": 2.991855,
+        "speed": 0.008274020727554409
+      },
+      "floating": {
+        "y": 0.5037,
+        "vy": -0.31967
+      }
+    },
+    {
+      "tick": 87,
+      "frame": 87,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.99335,
+        "y": -0.37919,
+        "z": 2.991864,
+        "speed": 0.010844249582151825
+      },
+      "floating": {
+        "y": 0.49328,
+        "vy": -0.299768
+      }
+    },
+    {
+      "tick": 88,
+      "frame": 88,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993338,
+        "y": -0.379151,
+        "z": 2.991873,
+        "speed": 0.012780148121207358
+      },
+      "floating": {
+        "y": 0.483744,
+        "vy": -0.269353
+      }
+    },
+    {
+      "tick": 89,
+      "frame": 89,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993461,
+        "y": -0.379115,
+        "z": 2.991919,
+        "speed": 0.016899945384527132
+      },
+      "floating": {
+        "y": 0.475412,
+        "vy": -0.23016
+      }
+    },
+    {
+      "tick": 90,
+      "frame": 90,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993447,
+        "y": -0.379045,
+        "z": 2.991938,
+        "speed": 0.009124646623294517
+      },
+      "floating": {
+        "y": 0.468542,
+        "vy": -0.184179
+      }
+    },
+    {
+      "tick": 91,
+      "frame": 91,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993421,
+        "y": -0.379371,
+        "z": 2.991969,
+        "speed": 0.006351090378824726
+      },
+      "floating": {
+        "y": 0.463321,
+        "vy": -0.133556
+      }
+    },
+    {
+      "tick": 92,
+      "frame": 92,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993312,
+        "y": -0.379326,
+        "z": 2.991956,
+        "speed": 0.006280596229658456
+      },
+      "floating": {
+        "y": 0.459862,
+        "vy": -0.080492
+      }
+    },
+    {
+      "tick": 93,
+      "frame": 93,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.99329,
+        "y": -0.379314,
+        "z": 2.991975,
+        "speed": 0.008442463739928054
+      },
+      "floating": {
+        "y": 0.458204,
+        "vy": -0.027149
+      }
+    },
+    {
+      "tick": 94,
+      "frame": 94,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993221,
+        "y": -0.379294,
+        "z": 2.991985,
+        "speed": 0.008717267977984847
+      },
+      "floating": {
+        "y": 0.458316,
+        "vy": 0.024435
+      }
+    },
+    {
+      "tick": 95,
+      "frame": 95,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993431,
+        "y": -0.37927,
+        "z": 2.992066,
+        "speed": 0.017519937071804798
+      },
+      "floating": {
+        "y": 0.460102,
+        "vy": 0.072414
+      }
+    },
+    {
+      "tick": 96,
+      "frame": 96,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993421,
+        "y": -0.3792,
+        "z": 2.992086,
+        "speed": 0.009142216142708506
+      },
+      "floating": {
+        "y": 0.463407,
+        "vy": 0.115191
+      }
+    },
+    {
+      "tick": 97,
+      "frame": 97,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993492,
+        "y": -0.379163,
+        "z": 2.992129,
+        "speed": 0.006933413228706335
+      },
+      "floating": {
+        "y": 0.46803,
+        "vy": 0.15146
+      }
+    },
+    {
+      "tick": 98,
+      "frame": 98,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993438,
+        "y": -0.379141,
+        "z": 2.992144,
+        "speed": 0.006861661679214445
+      },
+      "floating": {
+        "y": 0.47373,
+        "vy": 0.180231
+      }
+    },
+    {
+      "tick": 99,
+      "frame": 99,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993408,
+        "y": -0.37909,
+        "z": 2.992152,
+        "speed": 0.007735128053238678
+      },
+      "floating": {
+        "y": 0.48024,
+        "vy": 0.200842
+      }
+    },
+    {
+      "tick": 100,
+      "frame": 100,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993284,
+        "y": -0.379045,
+        "z": 2.992137,
+        "speed": 0.006303951300573316
+      },
+      "floating": {
+        "y": 0.487278,
+        "vy": 0.212963
+      }
+    },
+    {
+      "tick": 101,
+      "frame": 101,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993436,
+        "y": -0.379003,
+        "z": 2.992203,
+        "speed": 0.020283606311501907
+      },
+      "floating": {
+        "y": 0.494556,
+        "vy": 0.216584
+      }
+    },
+    {
+      "tick": 102,
+      "frame": 102,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993287,
+        "y": -0.378954,
+        "z": 2.992181,
+        "speed": 0.020655679921028982
+      },
+      "floating": {
+        "y": 0.501793,
+        "vy": 0.211997
+      }
+    },
+    {
+      "tick": 103,
+      "frame": 103,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993368,
+        "y": -0.378911,
+        "z": 2.992216,
+        "speed": 0.01659231623372698
+      },
+      "floating": {
+        "y": 0.508722,
+        "vy": 0.199771
+      }
+    },
+    {
+      "tick": 104,
+      "frame": 104,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993313,
+        "y": -0.378851,
+        "z": 2.992229,
+        "speed": 0.01555054947582239
+      },
+      "floating": {
+        "y": 0.515101,
+        "vy": 0.180719
+      }
+    },
+    {
+      "tick": 105,
+      "frame": 105,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.99332,
+        "y": -0.378811,
+        "z": 2.992248,
+        "speed": 0.00701178108614352
+      },
+      "floating": {
+        "y": 0.520719,
+        "vy": 0.155861
+      }
+    },
+    {
+      "tick": 106,
+      "frame": 106,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993313,
+        "y": -0.378769,
+        "z": 2.99227,
+        "speed": 0.008512303154845932
+      },
+      "floating": {
+        "y": 0.525404,
+        "vy": 0.126379
+      }
+    },
+    {
+      "tick": 107,
+      "frame": 107,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993204,
+        "y": -0.37908,
+        "z": 2.992265,
+        "speed": 0.007656225048938935
+      },
+      "floating": {
+        "y": 0.529025,
+        "vy": 0.09357
+      }
+    },
+    {
+      "tick": 108,
+      "frame": 108,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993422,
+        "y": -0.379058,
+        "z": 2.992347,
+        "speed": 0.017574258675688147
+      },
+      "floating": {
+        "y": 0.531497,
+        "vy": 0.058801000000000006
+      }
+    },
+    {
+      "tick": 109,
+      "frame": 109,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993255,
+        "y": -0.379011,
+        "z": 2.992321,
+        "speed": 0.020819013473265247
+      },
+      "floating": {
+        "y": 0.532781,
+        "vy": 0.023453
+      }
+    },
+    {
+      "tick": 110,
+      "frame": 110,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993336,
+        "y": -0.378967,
+        "z": 2.992356,
+        "speed": 0.016584815072830928
+      },
+      "floating": {
+        "y": 0.532884,
+        "vy": -0.011126
+      }
+    },
+    {
+      "tick": 111,
+      "frame": 111,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993328,
+        "y": -0.378882,
+        "z": 2.99238,
+        "speed": 0.007561135033842472
+      },
+      "floating": {
+        "y": 0.531858,
+        "vy": -0.04367
+      }
+    },
+    {
+      "tick": 112,
+      "frame": 112,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993331,
+        "y": -0.37884,
+        "z": 2.992405,
+        "speed": 0.008479325680736647
+      },
+      "floating": {
+        "y": 0.529794,
+        "vy": -0.073041
+      }
+    },
+    {
+      "tick": 113,
+      "frame": 113,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993279,
+        "y": -0.378791,
+        "z": 2.992414,
+        "speed": 0.010847292519334029
+      },
+      "floating": {
+        "y": 0.526819,
+        "vy": -0.098269
+      }
+    },
+    {
+      "tick": 114,
+      "frame": 114,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993427,
+        "y": -0.378758,
+        "z": 2.992471,
+        "speed": 0.017051421113795765
+      },
+      "floating": {
+        "y": 0.523088,
+        "vy": -0.11858200000000002
+      }
+    },
+    {
+      "tick": 115,
+      "frame": 115,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993256,
+        "y": -0.378711,
+        "z": 2.992444,
+        "speed": 0.02085200887204876
+      },
+      "floating": {
+        "y": 0.518779,
+        "vy": -0.13343
+      }
+    },
+    {
+      "tick": 116,
+      "frame": 116,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993368,
+        "y": -0.378645,
+        "z": 2.992491,
+        "speed": 0.00780947302959681
+      },
+      "floating": {
+        "y": 0.514083,
+        "vy": -0.142501
+      }
+    },
+    {
+      "tick": 117,
+      "frame": 117,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993235,
+        "y": -0.378984,
+        "z": 2.992479,
+        "speed": 0.026783852336809206
+      },
+      "floating": {
+        "y": 0.509197,
+        "vy": -0.145721
+      }
+    },
+    {
+      "tick": 118,
+      "frame": 118,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993215,
+        "y": -0.378988,
+        "z": 2.99249,
+        "speed": 0.030399438613237583
+      },
+      "floating": {
+        "y": 0.504315,
+        "vy": -0.143248
+      }
+    },
+    {
+      "tick": 119,
+      "frame": 119,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993199,
+        "y": -0.378993,
+        "z": 2.992499,
+        "speed": 0.030354882852681214
+      },
+      "floating": {
+        "y": 0.499623,
+        "vy": -0.135453
+      }
+    },
+    {
+      "tick": 120,
+      "frame": 120,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993183,
+        "y": -0.378998,
+        "z": 2.992508,
+        "speed": 0.030355021265023024
+      },
+      "floating": {
+        "y": 0.49529,
+        "vy": -0.12289899999999998
+      }
+    },
+    {
+      "tick": 121,
+      "frame": 121,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993351,
+        "y": -0.378954,
+        "z": 2.992565,
+        "speed": 0.005894945037911718
+      },
+      "floating": {
+        "y": 0.491463,
+        "vy": -0.106305
+      }
+    },
+    {
+      "tick": 122,
+      "frame": 122,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993389,
+        "y": -0.378894,
+        "z": 2.992602,
+        "speed": 0.0075748706919656385
+      },
+      "floating": {
+        "y": 0.488261,
+        "vy": -0.08651
+      }
+    },
+    {
+      "tick": 123,
+      "frame": 123,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993269,
+        "y": -0.378849,
+        "z": 2.992587,
+        "speed": 0.006296350768500751
+      },
+      "floating": {
+        "y": 0.485775,
+        "vy": -0.064432
+      }
+    },
+    {
+      "tick": 124,
+      "frame": 124,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993421,
+        "y": -0.378807,
+        "z": 2.992653,
+        "speed": 0.020293097693550876
+      },
+      "floating": {
+        "y": 0.484062,
+        "vy": -0.041028
+      }
+    },
+    {
+      "tick": 125,
+      "frame": 125,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993395,
+        "y": -0.378747,
+        "z": 2.992662,
+        "speed": 0.019383788716347484
+      },
+      "floating": {
+        "y": 0.483149,
+        "vy": -0.017254
+      }
+    },
+    {
+      "tick": 126,
+      "frame": 126,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.99324,
+        "y": -0.378699,
+        "z": 2.992639,
+        "speed": 0.020705656135462113
+      },
+      "floating": {
+        "y": 0.483029,
+        "vy": 0.005973
+      }
+    },
+    {
+      "tick": 127,
+      "frame": 127,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993321,
+        "y": -0.378655,
+        "z": 2.992674,
+        "speed": 0.0165924395734925
+      },
+      "floating": {
+        "y": 0.483667,
+        "vy": 0.027806
+      }
+    },
+    {
+      "tick": 128,
+      "frame": 128,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993313,
+        "y": -0.37857,
+        "z": 2.992698,
+        "speed": 0.007563980169196639
+      },
+      "floating": {
+        "y": 0.485001,
+        "vy": 0.047498
+      }
+    },
+    {
+      "tick": 129,
+      "frame": 129,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993316,
+        "y": -0.378528,
+        "z": 2.992723,
+        "speed": 0.008476598433333975
+      },
+      "floating": {
+        "y": 0.486946,
+        "vy": 0.064422
+      }
+    },
+    {
+      "tick": 130,
+      "frame": 130,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993265,
+        "y": -0.378479,
+        "z": 2.992732,
+        "speed": 0.010846234784477052
+      },
+      "floating": {
+        "y": 0.489399,
+        "vy": 0.078087
+      }
+    },
+    {
+      "tick": 131,
+      "frame": 131,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993413,
+        "y": -0.378446,
+        "z": 2.992789,
+        "speed": 0.017054942098992887
+      },
+      "floating": {
+        "y": 0.492242,
+        "vy": 0.088149
+      }
+    },
+    {
+      "tick": 132,
+      "frame": 132,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993315,
+        "y": -0.378786,
+        "z": 2.992783,
+        "speed": 0.06982285473253008
+      },
+      "floating": {
+        "y": 0.49535,
+        "vy": 0.094416
+      }
+    },
+    {
+      "tick": 133,
+      "frame": 133,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993296,
+        "y": -0.378678,
+        "z": 2.992811,
+        "speed": 0.007020333752749935
+      },
+      "floating": {
+        "y": 0.498593,
+        "vy": 0.096844
+      }
+    },
+    {
+      "tick": 134,
+      "frame": 134,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993289,
+        "y": -0.378636,
+        "z": 2.992833,
+        "speed": 0.008508091560391201
+      },
+      "floating": {
+        "y": 0.501844,
+        "vy": 0.095533
+      }
+    },
+    {
+      "tick": 135,
+      "frame": 135,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993269,
+        "y": -0.378588,
+        "z": 2.99285,
+        "speed": 0.012778304817150041
+      },
+      "floating": {
+        "y": 0.50498,
+        "vy": 0.090715
+      }
+    },
+    {
+      "tick": 136,
+      "frame": 136,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993392,
+        "y": -0.378552,
+        "z": 2.992896,
+        "speed": 0.016913331930758054
+      },
+      "floating": {
+        "y": 0.50789,
+        "vy": 0.082739
+      }
+    },
+    {
+      "tick": 137,
+      "frame": 137,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993378,
+        "y": -0.378482,
+        "z": 2.992915,
+        "speed": 0.00913994146589572
+      },
+      "floating": {
+        "y": 0.510476,
+        "vy": 0.072054
+      }
+    },
+    {
+      "tick": 138,
+      "frame": 138,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993334,
+        "y": -0.378404,
+        "z": 2.992925,
+        "speed": 0.0075079854821383345
+      },
+      "floating": {
+        "y": 0.512657,
+        "vy": 0.05918600000000001
+      }
+    },
+    {
+      "tick": 139,
+      "frame": 139,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993336,
+        "y": -0.37835,
+        "z": 2.99295,
+        "speed": 0.006083281186991112
+      },
+      "floating": {
+        "y": 0.514371,
+        "vy": 0.04472
+      }
+    },
+    {
+      "tick": 140,
+      "frame": 140,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993321,
+        "y": -0.3783,
+        "z": 2.992972,
+        "speed": 0.006104537738436875
+      },
+      "floating": {
+        "y": 0.515576,
+        "vy": 0.02927
+      }
+    },
+    {
+      "tick": 141,
+      "frame": 141,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993306,
+        "y": -0.378249,
+        "z": 2.992995,
+        "speed": 0.006104537738436875
+      },
+      "floating": {
+        "y": 0.516251,
+        "vy": 0.013461
+      }
+    },
+    {
+      "tick": 142,
+      "frame": 142,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993361,
+        "y": -0.378559,
+        "z": 2.993043,
+        "speed": 0.006861058300291582
+      },
+      "floating": {
+        "y": 0.516396,
+        "vy": -0.002097
+      }
+    },
+    {
+      "tick": 143,
+      "frame": 143,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993263,
+        "y": -0.378514,
+        "z": 2.993032,
+        "speed": 0.006259716766755506
+      },
+      "floating": {
+        "y": 0.516031,
+        "vy": -0.016831
+      }
+    },
+    {
+      "tick": 144,
+      "frame": 144,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993246,
+        "y": -0.378456,
+        "z": 2.993049,
+        "speed": 0.01157608029516036
+      },
+      "floating": {
+        "y": 0.515194,
+        "vy": -0.030224000000000004
+      }
+    },
+    {
+      "tick": 145,
+      "frame": 145,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.99339,
+        "y": -0.378421,
+        "z": 2.993103,
+        "speed": 0.01703672776679841
+      },
+      "floating": {
+        "y": 0.513939,
+        "vy": -0.041834
+      }
+    },
+    {
+      "tick": 146,
+      "frame": 146,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993219,
+        "y": -0.378374,
+        "z": 2.993076,
+        "speed": 0.02084488891790983
+      },
+      "floating": {
+        "y": 0.512334,
+        "vy": -0.051306
+      }
+    },
+    {
+      "tick": 147,
+      "frame": 147,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993331,
+        "y": -0.378308,
+        "z": 2.993123,
+        "speed": 0.007816232724273248
+      },
+      "floating": {
+        "y": 0.510457,
+        "vy": -0.058383
+      }
+    },
+    {
+      "tick": 148,
+      "frame": 148,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993385,
+        "y": -0.378243,
+        "z": 2.993164,
+        "speed": 0.00754841552910278
+      },
+      "floating": {
+        "y": 0.508391,
+        "vy": -0.062912
+      }
+    },
+    {
+      "tick": 149,
+      "frame": 149,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993266,
+        "y": -0.378198,
+        "z": 2.99315,
+        "speed": 0.006294081426228931
+      },
+      "floating": {
+        "y": 0.506224,
+        "vy": -0.064844
+      }
+    },
+    {
+      "tick": 150,
+      "frame": 150,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993249,
+        "y": -0.37814,
+        "z": 2.993167,
+        "speed": 0.01157822326611471
+      },
+      "floating": {
+        "y": 0.504042,
+        "vy": -0.064232
+      }
+    },
+    {
+      "tick": 151,
+      "frame": 151,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.99332,
+        "y": -0.378494,
+        "z": 2.993198,
+        "speed": 0.0684726299261245
+      },
+      "floating": {
+        "y": 0.501929,
+        "vy": -0.061222000000000006
+      }
+    },
+    {
+      "tick": 152,
+      "frame": 152,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993322,
+        "y": -0.378415,
+        "z": 2.993232,
+        "speed": 0.014005869912290348
+      },
+      "floating": {
+        "y": 0.499961,
+        "vy": -0.056047
+      }
+    },
+    {
+      "tick": 153,
+      "frame": 153,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993301,
+        "y": -0.378332,
+        "z": 2.993251,
+        "speed": 0.007545977537734921
+      },
+      "floating": {
+        "y": 0.498205,
+        "vy": -0.04901
+      }
+    },
+    {
+      "tick": 154,
+      "frame": 154,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993303,
+        "y": -0.37829,
+        "z": 2.993276,
+        "speed": 0.008475037050066508
+      },
+      "floating": {
+        "y": 0.496717,
+        "vy": -0.04047
+      }
+    },
+    {
+      "tick": 155,
+      "frame": 155,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993276,
+        "y": -0.378245,
+        "z": 2.993292,
+        "speed": 0.019669868403220193
+      },
+      "floating": {
+        "y": 0.49554,
+        "vy": -0.030824999999999998
+      }
+    },
+    {
+      "tick": 156,
+      "frame": 156,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993363,
+        "y": -0.378203,
+        "z": 2.993329,
+        "speed": 0.016646582682340545
+      },
+      "floating": {
+        "y": 0.494703,
+        "vy": -0.020495
+      }
+    },
+    {
+      "tick": 157,
+      "frame": 157,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993347,
+        "y": -0.378133,
+        "z": 2.993348,
+        "speed": 0.009139376893421126
+      },
+      "floating": {
+        "y": 0.494221,
+        "vy": -0.009904
+      }
+    },
+    {
+      "tick": 158,
+      "frame": 158,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993303,
+        "y": -0.378055,
+        "z": 2.993358,
+        "speed": 0.007511598631449899
+      },
+      "floating": {
+        "y": 0.494094,
+        "vy": 0.000536
+      }
+    },
+    {
+      "tick": 159,
+      "frame": 159,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993305,
+        "y": -0.378013,
+        "z": 2.993383,
+        "speed": 0.008475912694217656
+      },
+      "floating": {
+        "y": 0.49431,
+        "vy": 0.010439
+      }
+    },
+    {
+      "tick": 160,
+      "frame": 160,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993197,
+        "y": -0.378324,
+        "z": 2.993378,
+        "speed": 0.007647460558904503
+      },
+      "floating": {
+        "y": 0.494843,
+        "vy": 0.019459
+      }
+    },
+    {
+      "tick": 161,
+      "frame": 161,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993253,
+        "y": -0.378295,
+        "z": 2.993412,
+        "speed": 0.01268932693250513
+      },
+      "floating": {
+        "y": 0.495658,
+        "vy": 0.027302
+      }
+    },
+    {
+      "tick": 162,
+      "frame": 162,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993379,
+        "y": -0.378259,
+        "z": 2.99346,
+        "speed": 0.0169363924434928
+      },
+      "floating": {
+        "y": 0.49671,
+        "vy": 0.033733
+      }
+    },
+    {
+      "tick": 163,
+      "frame": 163,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993208,
+        "y": -0.378212,
+        "z": 2.993433,
+        "speed": 0.02084777611641107
+      },
+      "floating": {
+        "y": 0.497948,
+        "vy": 0.03858
+      }
+    },
+    {
+      "tick": 164,
+      "frame": 164,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993321,
+        "y": -0.378146,
+        "z": 2.99348,
+        "speed": 0.007820024424514287
+      },
+      "floating": {
+        "y": 0.499317,
+        "vy": 0.041741
+      }
+    },
+    {
+      "tick": 165,
+      "frame": 165,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993375,
+        "y": -0.378081,
+        "z": 2.993521,
+        "speed": 0.0075473297927147725
+      },
+      "floating": {
+        "y": 0.500758,
+        "vy": 0.043181
+      }
+    },
+    {
+      "tick": 166,
+      "frame": 166,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993256,
+        "y": -0.378036,
+        "z": 2.993507,
+        "speed": 0.006293666737284395
+      },
+      "floating": {
+        "y": 0.502214,
+        "vy": 0.04293
+      }
+    },
+    {
+      "tick": 167,
+      "frame": 167,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993409,
+        "y": -0.377994,
+        "z": 2.993573,
+        "speed": 0.020306862288398963
+      },
+      "floating": {
+        "y": 0.50363,
+        "vy": 0.041081
+      }
+    },
+    {
+      "tick": 168,
+      "frame": 168,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993383,
+        "y": -0.377934,
+        "z": 2.993582,
+        "speed": 0.01939473874534019
+      },
+      "floating": {
+        "y": 0.504954,
+        "vy": 0.037781
+      }
+    },
+    {
+      "tick": 169,
+      "frame": 169,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993229,
+        "y": -0.377885,
+        "z": 2.993559,
+        "speed": 0.020688179257730727
+      },
+      "floating": {
+        "y": 0.506141,
+        "vy": 0.033223
+      }
+    },
+    {
+      "tick": 170,
+      "frame": 170,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993311,
+        "y": -0.377841,
+        "z": 2.993595,
+        "speed": 0.016606507037905352
+      },
+      "floating": {
+        "y": 0.507154,
+        "vy": 0.02764
+      }
+    },
+    {
+      "tick": 171,
+      "frame": 171,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993195,
+        "y": -0.378178,
+        "z": 2.993595,
+        "speed": 0.02166984884580416
+      },
+      "floating": {
+        "y": 0.507962,
+        "vy": 0.02129
+      }
+    },
+    {
+      "tick": 172,
+      "frame": 172,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993304,
+        "y": -0.378111,
+        "z": 2.993641,
+        "speed": 0.007814387627959083
+      },
+      "floating": {
+        "y": 0.508546,
+        "vy": 0.014448
+      }
+    },
+    {
+      "tick": 173,
+      "frame": 173,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993358,
+        "y": -0.378046,
+        "z": 2.993682,
+        "speed": 0.007547009871465653
+      },
+      "floating": {
+        "y": 0.508894,
+        "vy": 0.007394999999999999
+      }
+    },
+    {
+      "tick": 174,
+      "frame": 174,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993239,
+        "y": -0.378001,
+        "z": 2.993668,
+        "speed": 0.006293056967801897
+      },
+      "floating": {
+        "y": 0.509005,
+        "vy": 0.000405
+      }
+    },
+    {
+      "tick": 175,
+      "frame": 175,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993222,
+        "y": -0.377943,
+        "z": 2.993685,
+        "speed": 0.01157439026471805
+      },
+      "floating": {
+        "y": 0.508886,
+        "vy": -0.006262
+      }
+    },
+    {
+      "tick": 176,
+      "frame": 176,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993366,
+        "y": -0.377908,
+        "z": 2.99374,
+        "speed": 0.017044100328266087
+      },
+      "floating": {
+        "y": 0.508552,
+        "vy": -0.01237
+      }
+    },
+    {
+      "tick": 177,
+      "frame": 177,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993195,
+        "y": -0.377861,
+        "z": 2.993713,
+        "speed": 0.020836014686115005
+      },
+      "floating": {
+        "y": 0.508027,
+        "vy": -0.017716
+      }
+    },
+    {
+      "tick": 178,
+      "frame": 178,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993308,
+        "y": -0.377795,
+        "z": 2.99376,
+        "speed": 0.007822669748877298
+      },
+      "floating": {
+        "y": 0.507339,
+        "vy": -0.022135
+      }
+    },
+    {
+      "tick": 179,
+      "frame": 179,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993362,
+        "y": -0.37773,
+        "z": 2.993801,
+        "speed": 0.007545977272693047
+      },
+      "floating": {
+        "y": 0.506523,
+        "vy": -0.025505
+      }
+    },
+    {
+      "tick": 180,
+      "frame": 180,
+      "stats": {
+        "torchCuts": 0,
+        "throws": 0,
+        "fractures": 1
+      },
+      "ballastPieces": 1,
+      "ballastVoxels": 1700,
+      "pieces": 1,
+      "player": {
+        "x": -3,
+        "y": -0.44989999999999997,
+        "z": 10,
+        "fuel": 100,
+        "grounded": true,
+        "riding": false,
+        "grab": null
+      },
+      "buggy": {
+        "x": 14.001049,
+        "y": 0.24299,
+        "z": -12.001364,
+        "speed": 0.000001,
+        "groundedWheels": 4
+      },
+      "ballast": {
+        "x": -5.993243,
+        "y": -0.377685,
+        "z": 2.993787,
+        "speed": 0.006293451676147199
+      },
+      "floating": {
+        "y": 0.505615,
+        "vy": -0.02775
+      }
+    }
+  ],
+  "sourceLoadedAt": "2026-09-25T17:09:26.366Z",
+  "capturedAt": "2026-09-25T17:10:29.038Z"
+}

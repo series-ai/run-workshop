@@ -23,13 +23,8 @@ import {
   SHELL_BOXES,
   SHELL_PREFIX,
   TANK,
-  TERRAIN_COLS,
-  TERRAIN_HEIGHTS,
-  TERRAIN_ORIGIN_X,
-  TERRAIN_ORIGIN_Z,
-  TERRAIN_ROWS,
-  TERRAIN_SPACING,
   TICK_RATE,
+  VEHICLE_RAMP_PITCH,
   VOXEL_SIZE,
   YARD_MATERIAL,
 } from './constants';
@@ -198,6 +193,9 @@ export function shellBodies(): YardPhysicsBodyInput3D[] {
       kind: 'static' as const,
       position: { x: box.center[0], y: box.center[1], z: box.center[2] },
       shape: { type: 'box' as const, halfX: box.size[0] * 0.5, halfY: box.size[1] * 0.5, halfZ: box.size[2] * 0.5 },
+      orientation: box.id === 'vehicle-ramp'
+        ? { x: Math.sin(VEHICLE_RAMP_PITCH / 2), y: 0, z: 0, w: Math.cos(VEHICLE_RAMP_PITCH / 2) }
+        : { x: 0, y: 0, z: 0, w: 1 },
       friction: YARD_MATERIAL.friction,
       restitution: YARD_MATERIAL.restitution,
       layer: 1,
@@ -205,26 +203,7 @@ export function shellBodies(): YardPhysicsBodyInput3D[] {
     },
   }));
 
-  const terrain: YardPhysicsBodyInput3D = {
-    id: `${SHELL_PREFIX}terrain`,
-    body: {
-      kind: 'static',
-      position: { x: TERRAIN_ORIGIN_X, y: 0, z: TERRAIN_ORIGIN_Z },
-      shape: {
-        type: 'heightfield',
-        columns: TERRAIN_COLS,
-        rows: TERRAIN_ROWS,
-        scale: { x: TERRAIN_SPACING, y: 1.0, z: TERRAIN_SPACING },
-        heights: TERRAIN_HEIGHTS,
-      },
-      friction: YARD_MATERIAL.friction,
-      restitution: YARD_MATERIAL.restitution,
-      layer: 1,
-      mask: 0xffffffff,
-    },
-  };
-
-  return [...boxes, terrain];
+  return boxes;
 }
 
 export function makeWorld(): PhysicsWorld3D {
@@ -263,46 +242,6 @@ export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): YardPhys
     open.world.edit((edit) => {
       edit.createFluid(WATER_FLUID_CONFIG);
 
-      // Seesaw revolute joint
-      const pivotId = open.bodyIds.get('shell:seesaw-pivot');
-      const plankId = open.bodyIds.get('seesaw-plank');
-      if (pivotId && plankId) {
-        edit.createJoint({
-          type: 'revolute',
-          bodyA: open.world.resolveBody(pivotId),
-          bodyB: open.world.resolveBody(plankId),
-          anchorA: { x: 0, y: 0.45, z: 0 },
-          anchorB: { x: 0, y: 0, z: 0 },
-          axis: { x: 0, y: 0, z: 1 },
-          minAngle: -0.42,
-          maxAngle: 0.42,
-        });
-      }
-
-      // Buggy chassis wheel joints (Player-sized wide track buggy)
-      const chassisId = open.bodyIds.get('vehicle-chassis');
-      if (chassisId) {
-        const wheels = [
-          { id: 'vehicle-wheel-fl', anchor: { x: -1.22, y: -0.42, z: -1.05 } },
-          { id: 'vehicle-wheel-fr', anchor: { x: 1.22, y: -0.42, z: -1.05 } },
-          { id: 'vehicle-wheel-rl', anchor: { x: -1.22, y: -0.42, z: 1.05 } },
-          { id: 'vehicle-wheel-rr', anchor: { x: 1.22, y: -0.42, z: 1.05 } },
-        ];
-        for (const w of wheels) {
-          const wId = open.bodyIds.get(w.id);
-          if (wId) {
-            edit.createJoint({
-              type: 'wheel',
-              bodyA: open.world.resolveBody(chassisId),
-              bodyB: open.world.resolveBody(wId),
-              anchorA: w.anchor,
-              anchorB: { x: 0, y: 0, z: 0 },
-              axis: { x: 1, y: 0, z: 0 },
-              suspension: { restLength: 0.40, frequencyHz: 6.0, dampingRatio: 0.80 },
-            });
-          }
-        }
-      }
     });
     disposed = true;
     return closeWorld(open);
@@ -410,6 +349,16 @@ export function setPhysicsBodyVelocity(open: OpenYardPhysicsWorld, id: string, v
   open.world.edit((edit) => edit.replaceBody(handle, {
     ...body,
     linearVelocity: { x: velocity[0] * TICK_RATE, y: velocity[1] * TICK_RATE, z: velocity[2] * TICK_RATE },
+    sleeping: false,
+  }));
+}
+
+export function setPhysicsBodyAngularVelocity(open: OpenYardPhysicsWorld, id: string, angularVelocity: Vec3): void {
+  const handle = physicsBodyHandle(open, id);
+  const body = open.world.readBody(handle);
+  open.world.edit((edit) => edit.replaceBody(handle, {
+    ...body,
+    angularVelocity: { x: angularVelocity[0] * TICK_RATE, y: angularVelocity[1] * TICK_RATE, z: angularVelocity[2] * TICK_RATE },
     sleeping: false,
   }));
 }

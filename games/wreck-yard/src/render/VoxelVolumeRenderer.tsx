@@ -2,8 +2,9 @@ import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { useThree, type ThreeElements } from '@react-three/fiber';
 import { buildMacroOccupancyVolume } from 'voxel-kit';
-import { ART_STYLE } from './style/artStyle';
+import { ART_STYLE, YARD_LIGHTING } from './style/artStyle';
 import { toonGlsl } from './style/toonGlsl';
+import { isMobileDevice } from './DynamicDpr';
 
 type MeshSurfaceProps = Omit<ThreeElements['mesh'], 'args' | 'material' | 'position' | 'scale'>;
 type VoxelDims = { x: number; y: number; z: number };
@@ -132,7 +133,6 @@ export function VoxelVolumeRenderer({
     uniform sampler2D uMaterialParams;
     uniform sampler3D uWorldOcc;
     uniform vec3 uDims;
-    uniform vec3 uMacroDims;
     uniform float uMacroCellSize;
     uniform vec3 uWorldMin;
     uniform vec3 uWorldMax;
@@ -144,10 +144,14 @@ export function VoxelVolumeRenderer({
     uniform float uFogNear;
     uniform float uFogFar;
     uniform float uHasWorldOcc;
+    uniform float uIsMobile;
+    uniform float uOutputSRGB;
     uniform vec3 cameraPosition;
     uniform mat4 modelMatrix;
     uniform mat4 viewMatrix;
     uniform mat4 projectionMatrix;
+
+    #include <colorspace_pars_fragment>
 
     ${toonGlsl}
 
@@ -165,7 +169,8 @@ export function VoxelVolumeRenderer({
     }
 
     bool hitBox(vec3 ro, vec3 rd, out float tMin, out float tMax, out vec3 entryNormal) {
-      vec3 inv = 1.0 / rd;
+      vec3 safeDir = mix(vec3(1e-7), rd, greaterThan(abs(rd), vec3(1e-7)));
+      vec3 inv = 1.0 / safeDir;
       vec3 t0s = (-0.5 - ro) * inv;
       vec3 t1s = ( 0.5 - ro) * inv;
       vec3 tsmaller = min(t0s, t1s);
@@ -185,9 +190,13 @@ export function VoxelVolumeRenderer({
       return true;
     }
 
+    bool isMacroEmpty(ivec3 cell) {
+      ivec3 macroCell = cell / int(uMacroCellSize);
+      return texelFetch(uMacroOcc, macroCell, 0).r < 0.01;
+    }
+
     int voxelAt(ivec3 c) {
-      vec3 uvw = (vec3(c) + vec3(0.5)) / uDims;
-      return int(round(texture(uVoxels, uvw).r * 255.0));
+      return int(round(texelFetch(uVoxels, c, 0).r * 255.0));
     }
 
     int safeVoxelAt(ivec3 c) {
@@ -241,8 +250,11 @@ export function VoxelVolumeRenderer({
 
       vec3 start = worldPos + worldNormal * 0.18 + uSunDir * 0.12;
       float shadow = 1.0;
-      for (int i = 0; i < 14; i++) {
-        vec3 probe = start + uSunDir * (0.10 + float(i) * 0.20);
+      int maxProbes = uIsMobile > 0.5 ? 4 : 7;
+      float stepDist = uIsMobile > 0.5 ? 0.60 : 0.40;
+      for (int i = 0; i < 7; i++) {
+        if (i >= maxProbes) break;
+        vec3 probe = start + uSunDir * (0.12 + float(i) * stepDist);
         float occ = worldOccAt(probe);
         if (occ > 0.02) {
           shadow = min(shadow, clamp(1.0 - occ * 0.85, 0.36, 1.0));
@@ -288,7 +300,9 @@ export function VoxelVolumeRenderer({
       vec3 invRdVox = 1.0 / max(abs(rdVox), vec3(1e-7));
       vec3 tDelta = invRdVox;
       vec3 nextBoundary = mix(vec3(cell), vec3(cell + 1), step(vec3(0.0), rdVox));
-      vec3 tMax = tStart + abs(nextBoundary - p) * invRdVox;
+      vec3 tMax = (nextBoundary - roVox) * stepDir * invRdVox;
+
+      tMax = mix(vec3(1e20), tMax, greaterThan(abs(rdVox), vec3(1e-7)));
 
       vec3 lightDir = normalize(uSunDir);
       mat3 rotMat = mat3(
@@ -298,8 +312,36 @@ export function VoxelVolumeRenderer({
       );
 
       float tHit = tStart;
-      const int MAX_STEPS = 192;
+      const int MAX_STEPS = 96;
       for (int i = 0; i < MAX_STEPS; i++) {
+        // Hierarchical macro-occupancy acceleration: leapfrog empty 4x4x4 voxel void blocks
+        if (isMacroEmpty(cell)) {
+          ivec3 macroIdx = cell / int(uMacroCellSize);
+          vec3 nextMacroBoundary = mix(vec3(macroIdx) * uMacroCellSize, vec3(macroIdx + 1) * uMacroCellSize, step(vec3(0.0), rdVox));
+          vec3 tMacroExit = (nextMacroBoundary - roVox) * stepDir * invRdVox;
+          tMacroExit = mix(vec3(1e20), tMacroExit, greaterThan(abs(rdVox), vec3(1e-7)));
+          float tSkip = min(min(tMacroExit.x, tMacroExit.y), tMacroExit.z);
+          if (tSkip > tHit + 1e-4) {
+            tHit = tSkip;
+            if (tMacroExit.x <= tMacroExit.y && tMacroExit.x <= tMacroExit.z) {
+              faceNormal = vec3(-stepDir.x, 0.0, 0.0);
+            } else if (tMacroExit.y <= tMacroExit.z) {
+              faceNormal = vec3(0.0, -stepDir.y, 0.0);
+            } else {
+              faceNormal = vec3(0.0, 0.0, -stepDir.z);
+            }
+            vec3 newP = roVox + rdVox * (tHit + 1e-5);
+            cell = ivec3(floor(newP));
+            if (any(lessThan(cell, ivec3(0))) || any(greaterThanEqual(cell, ivec3(uDims)))) {
+              break;
+            }
+            nextBoundary = mix(vec3(cell), vec3(cell + 1), step(vec3(0.0), rdVox));
+            tMax = (nextBoundary - roVox) * stepDir * invRdVox;
+            tMax = mix(vec3(1e20), tMax, greaterThan(abs(rdVox), vec3(1e-7)));
+            continue;
+          }
+        }
+
         int materialId = voxelAt(cell);
         if (materialId != 0) {
           float u = (float(materialId) + 0.5) / 256.0;
@@ -315,14 +357,19 @@ export function VoxelVolumeRenderer({
           float shadow = shadowAlongSun(worldPos, worldNormal);
           float NdotL = max(dot(worldNormal, lightDir), 0.0);
 
-          vec3 shaded = albedo.rgb * toonTint(NdotL, step(0.7, shadow));
+          vec3 shaded = albedo.rgb;
 
-          // Specular highlight only for metalness > 0.5
-          vec3 halfDir = normalize(lightDir + viewDir);
-          float NdotH = max(dot(worldNormal, halfDir), 0.0);
-          if (metalness > 0.5) {
-            shaded += step(0.95, NdotH) * 0.25;
-          }
+          // Keep texture variation fixed to each voxel as the camera moves.
+          float vHash = fract(sin(dot(vec3(cell), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+          float speckle = (vHash - 0.5) * 0.08;
+          vec3 gritAlbedo = albedo.rgb * (1.0 + speckle);
+
+          // Astra Teardown Pass: Dual-Hemisphere Ambient Diffuse + Smooth Shadow Response
+          float visibility = smoothstep(0.36, 1.0, shadow);
+          shaded = gritAlbedo * yardDiffuse(worldNormal, lightDir, visibility);
+
+          // Astra Teardown Specular Glint & Glancing Fresnel Rim
+          shaded += yardMetal(worldNormal, viewDir, lightDir, metalness, visibility);
 
           // Incandescent thermal core emissive on severed surfaces
           if (emissive > 0.01) {
@@ -332,10 +379,12 @@ export function VoxelVolumeRenderer({
             shaded += emissiveColor;
           }
 
-          float fogDistance = distance(cameraPosition, worldPos);
-          float fogFactor = smoothstep(uFogNear, uFogFar, fogDistance);
-          shaded = mix(shaded, uFogColor, fogFactor);
-          outColor = vec4(shaded, 1.0);
+          // Astra Teardown Height Fog (Industrial Ground Dust Haze)
+          shaded = mix(shaded, uFogColor, yardFog(worldPos, cameraPosition, -0.86));
+          // Linear into the ink composer's target; sRGB only straight to the screen.
+          outColor = vec4(yardShoulder(shaded), 1.0);
+          if (uOutputSRGB > 0.5) outColor = sRGBTransferOETF(outColor);
+
 
           vec4 clip = projectionMatrix * viewMatrix * vec4(worldPos, 1.0);
           float ndc = clip.z / clip.w;
@@ -389,7 +438,6 @@ export function VoxelVolumeRenderer({
         uMaterialParams: { value: materialParamsTex },
         uWorldOcc: { value: worldOcclusion?.texture ?? emptyWorldTex },
         uDims: { value: new THREE.Vector3(dims.x, dims.y, dims.z) },
-        uMacroDims: { value: new THREE.Vector3(macroVolume.dims.x, macroVolume.dims.y, macroVolume.dims.z) },
         uMacroCellSize: { value: macroVolume.cellSize },
         uWorldMin: { value: new THREE.Vector3(...(worldOcclusion?.min ?? [0, 0, 0])) },
         uWorldMax: { value: new THREE.Vector3(...(worldOcclusion?.max ?? [1, 1, 1])) },
@@ -400,18 +448,30 @@ export function VoxelVolumeRenderer({
         uShadeTint: { value: new THREE.Vector3(...ART_STYLE.ramp.shadeTint) },
         uLitTint: { value: new THREE.Vector3(...ART_STYLE.ramp.litTint) },
         uHalfLevel: { value: ART_STYLE.ramp.halfLevel },
-        uSunColor: { value: new THREE.Color('#ffd4a0') }, // Warm tungsten key
-        uSkyColor: { value: new THREE.Color('#809aa7') }, // Astra cool blue-slate sky fill
-        uGroundColor: { value: new THREE.Color('#686354') }, // Astra warm gray concrete ground bounce
-        uFogColor: { value: new THREE.Color(ART_STYLE.palette.skyLow) },
+        uAmbientFloor: { value: new THREE.Color(...YARD_LIGHTING.ambientFloor) },
+        uSunColor: { value: new THREE.Color(...YARD_LIGHTING.sun) }, // Astra warm tungsten sun
+        uSkyColor: { value: new THREE.Color(...YARD_LIGHTING.sky) }, // Astra cool blue-slate sky fill
+        uGroundColor: { value: new THREE.Color(...YARD_LIGHTING.ground) }, // Astra warm concrete ground bounce
+        uFogColor: { value: new THREE.Color(ART_STYLE.palette.haze) },
         uFogNear: { value: 35.0 },
         uFogFar: { value: 110.0 },
         uHasWorldOcc: { value: worldOcclusion ? 1 : 0 },
+        uIsMobile: { value: isMobileDevice() ? 1.0 : 0.0 },
+        uOutputSRGB: { value: 1 },
       },
       side: THREE.BackSide,
       depthTest: true,
       depthWrite: true,
     });
+
+    // Three.js encodes sRGB only for the default framebuffer. This raw shader must match it.
+    shaderMaterial.onBeforeRender = (renderer) => {
+      const outputSRGB = renderer.getRenderTarget() === null ? 1 : 0;
+      if (shaderMaterial.uniforms.uOutputSRGB!.value !== outputSRGB) {
+        shaderMaterial.uniforms.uOutputSRGB!.value = outputSRGB;
+        shaderMaterial.uniformsNeedUpdate = true;
+      }
+    };
 
     return {
       emptyWorldTex,

@@ -27,4 +27,14 @@ describe('presentation', () => {
     const state = createInitialState(1);
     expect(new TextDecoder().decode(encodeState(state))).not.toContain('hover');
   });
+  it('interpolates the suspension and continuous wheel rotation', () => {
+    const state = createInitialState(1);
+    const before = projectYard({ ...state, buggyWheels: [{ compression: 0.02, steerAngleTurns: 0, spinTurns: 0.95, grounded: true }] }, context);
+    const after = projectYard({ ...state, buggyWheels: [{ compression: 0.12, steerAngleTurns: 0.06, spinTurns: 1.05, grounded: true }] }, context);
+    const wheel = interpolateYard(before, after, 0.5).buggyWheels![0]!;
+    expect(wheel.compression).toBeCloseTo(0.07);
+    expect(wheel.steerAngleTurns).toBeCloseTo(0.03);
+    expect(wheel.spinTurns).toBeCloseTo(1.0);
+  });
+
 });

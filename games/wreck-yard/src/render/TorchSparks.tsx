@@ -1,7 +1,7 @@
 import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import type { UiTool } from './PointerInput';
+import type { UiTool } from './keyBindings';
 import type { YardRender } from './presentation';
 
 const SPARK_COUNT = 160;
@@ -27,8 +27,8 @@ export function TorchSparks({
     }));
   }, []);
 
-  const sparkColorHot = useMemo(() => new THREE.Color('#fffbeb'), []);
-  const sparkColorOrange = useMemo(() => new THREE.Color('#f97316'), []);
+  const sparkColorHot = useMemo(() => new THREE.Color(2.4, 2.3, 1.8), []);
+  const sparkColorOrange = useMemo(() => new THREE.Color(1.8, 0.8, 0.2), []);
   const sparkColorRed = useMemo(() => new THREE.Color('#dc2626'), []);
 
   useFrame((_, delta) => {

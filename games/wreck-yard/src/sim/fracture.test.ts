@@ -74,6 +74,21 @@ describe('fractureBody', () => {
     expect(Math.max(...speeds)).toBeGreaterThan(0.3);
   });
 
+  it('does not launch a body that an impact only chips', () => {
+    // A hard landing carves a small crater but leaves one piece. Scatter
+    // exists to push pieces apart; on a single piece it is a false bounce.
+    const chipped = fractureBody(bar('dynamic'), pose, {
+      start: [15, 0, 6], end: [15, 0, 6], through: [15, 0, 6], throughEnd: [15, 0, 6],
+      radius: 1.5, worldPoint: [0, 0.4, 0], impulseBoost: 2.2,
+    }, 0);
+    expect(chipped.fragments).toHaveLength(1);
+    const [piece] = chipped.fragments;
+    expect(piece!.body.voxels.filter((v) => v !== 0).length).toBeLessThan(30 * 12 * 12);
+    expect(piece!.physics.body.linearVelocity).toEqual({ x: 0.3, y: 0, z: 0 });
+    expect(piece!.physics.body.angularVelocity).toEqual({ x: 0, y: 0, z: 0 });
+    expect(piece!.physics.body.position).toEqual({ x: 0, y: 1, z: 0 });
+  });
+
   it('returns no fragments when the cut removes everything', () => {
     const tiny: YardBody = { ...bar('dynamic'), dims: { x: 3, y: 3, z: 3 }, voxels: new Uint8Array(27).fill(2) };
     const result = fractureBody(tiny, pose, {

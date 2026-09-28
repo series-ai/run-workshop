@@ -142,6 +142,8 @@ export function fractureBody(source: YardBody, pose: BodyPose, contact: Fracture
   const anchoredIndex = entries.findIndex((entry) => entry.anchored);
   const preservedIndex = source.motion === 'fixed' ? anchoredIndex : 0;
   const scatter = contact.impulseBoost > 0;
+  // Separation pushes pieces apart. A single surviving piece keeps its motion.
+  const separates = entries.length > 1;
   const hitOffset = sub(contact.worldPoint, pose.position);
   let nextSerial = serial;
 
@@ -166,7 +168,7 @@ export function fractureBody(source: YardBody, pose: BodyPose, contact: Fracture
     let linearVelocity: Vec3 = anchored ? [0, 0, 0] : pose.linearVelocity;
     let angularVelocity: Vec3 = anchored ? [0, 0, 0] : pose.angularVelocity;
 
-    if (!anchored) {
+    if (!anchored && separates) {
       const dir = launchDirection(worldOffset, hitOffset, index, entries.length);
       position = add(position, scale(dir, scatter ? IMPACT_SEPARATION_BIAS : CUT_SEPARATION_BIAS));
       if (scatter) {

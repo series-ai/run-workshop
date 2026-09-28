@@ -1,0 +1,20 @@
+[
+  {
+    "name": "partial macro cells",
+    "differingPixels": 0,
+    "maxChannelError": 0,
+    "coveredPixels": 3160
+  },
+  {
+    "name": "normals after empty macro cells",
+    "differingPixels": 0,
+    "maxChannelError": 0,
+    "coveredPixels": 704
+  },
+  {
+    "name": "camera inside a sparse cabin",
+    "differingPixels": 0,
+    "maxChannelError": 0,
+    "coveredPixels": 4984
+  }
+]

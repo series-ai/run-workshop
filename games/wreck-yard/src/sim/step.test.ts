@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { TANK, TICK_RATE } from './constants';
+import { IMPACT_MIN_SPEED, TANK, TICK_RATE } from './constants';
 import { NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
 import { createInitialState } from './presets';
-import { physicsStateBodyById, replacePhysicsPose } from './physics';
+import { physicsStateBodyById, replacePhysicsPose, voxelStats } from './physics';
 import type { YardState } from './state';
 import { stepYard } from './step';
 
@@ -51,6 +51,16 @@ describe('stepYard', () => {
     expect(steel.y).toBeLessThan(0.3);
   });
 
+  it('keeps the full idle scene above the floor without impact damage', () => {
+    const initial = createInitialState(1);
+    const state = run(initial, [NEUTRAL_INPUT], 120);
+    expect(state.stats.fractures).toBe(0);
+    expect(state.bodies.length).toBe(initial.bodies.length);
+    for (const body of state.world.bodies) {
+      if (body.kind === 'dynamic') expect(body.y, body.id).toBeGreaterThan(-.86);
+    }
+  });
+
   it('grabs, lifts, and throws the ballast box', () => {
     let state = run(createInitialState(1), [NEUTRAL_INPUT], 30);
     const before = physicsStateBodyById(state.world, 'ballast-box')!;
@@ -64,6 +74,56 @@ describe('stepYard', () => {
     state = stepYard(state, [{ ...lift, pressed: false }]);
     expect(state.players[0]!.grab).toBeNull();
     expect(state.stats.throws).toBe(1);
+  });
+
+  // Offsets keep the path clear: the fixed gantry spans the space above the tank.
+  it.each([
+    ['ballast-box', 0],
+    ['float-crate', 3.5],
+  ] as const)('lifts %s to the hold point without a launch or overshoot', (id, dx) => {
+    let state = run(createInitialState(1), [NEUTRAL_INPUT], 30);
+    const rest = physicsStateBodyById(state.world, id)!;
+    const grab: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...rayAt([rest.x, rest.y, rest.z]) };
+    state = stepYard(state, [grab]);
+    const hold: YardInput = { ...grab, ...rayAt([rest.x + dx, rest.y + 1.5, rest.z]) };
+    let peak = -Infinity;
+    let fastest = 0;
+    for (let i = 0; i < 45; i += 1) {
+      state = stepYard(state, [hold]);
+      const body = physicsStateBodyById(state.world, id)!;
+      peak = Math.max(peak, body.y);
+      fastest = Math.max(fastest, Math.hypot(body.vx, body.vy, body.vz) * TICK_RATE);
+    }
+    expect(state.players[0]!.grab?.bodyId).toBe(id);
+    expect(state.stats.fractures).toBe(0);
+    const target = state.players[0]!.grab!.target[1];
+    const settled = physicsStateBodyById(state.world, id)!.y;
+    expect(Math.abs(settled - target)).toBeLessThan(0.1);
+    expect(peak - settled).toBeLessThan(0.08);
+    expect(fastest).toBeLessThan(IMPACT_MIN_SPEED);
+  });
+
+  it('drops a still-held box on release and lands it without a bounce', () => {
+    let state = run(createInitialState(1), [NEUTRAL_INPUT], 30);
+    const rest = physicsStateBodyById(state.world, 'ballast-box')!;
+    const grab: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...rayAt([rest.x, rest.y, rest.z]) };
+    state = stepYard(state, [grab]);
+    const hold: YardInput = { ...grab, ...rayAt([rest.x, rest.y + 2, rest.z]) };
+    state = run(state, [hold], 60);
+    const held = physicsStateBodyById(state.world, 'ballast-box')!;
+    let peak = -Infinity;
+    let landed = false;
+    let rebound = 0;
+    for (let i = 0; i < 60; i += 1) {
+      state = stepYard(state, [{ ...hold, pressed: false }]);
+      const box = physicsStateBodyById(state.world, 'ballast-box')!;
+      peak = Math.max(peak, box.y);
+      if (box.y < rest.y + 0.1) landed = true;
+      if (landed) rebound = Math.max(rebound, box.vy * TICK_RATE);
+    }
+    expect(peak).toBeLessThanOrEqual(held.y + 0.005);
+    expect(landed).toBe(true);
+    expect(rebound).toBeLessThan(1);
   });
 
   it('torches the gantry into a fixed stump and a loose piece', () => {
@@ -121,10 +181,13 @@ describe('stepYard', () => {
 
   it('fractures a body that slams into the floor', () => {
     const state = createInitialState(1);
-    const fast = { ...state, world: replacePhysicsPose(state.world, 'ballast-box', { y: 3.5, vy: -9 / TICK_RATE }) };
+    const fast = { ...state, world: replacePhysicsPose(state.world, 'ballast-box', { x: -6, z: 3, y: 3.5, vy: -9 / TICK_RATE }) };
     const after = run(fast, [NEUTRAL_INPUT], 40);
     expect(after.stats.fractures).toBeGreaterThanOrEqual(1);
-    expect(after.bodies.filter((b) => b.label === 'Ballast Box').length).toBeGreaterThanOrEqual(1);
+    const beforeCount = voxelStats(state.bodies.find((b) => b.id === 'ballast-box')!.voxels).occupiedCount;
+    const remaining = after.bodies.filter((b) => b.label === 'Ballast Box').reduce((n, b) => n + voxelStats(b.voxels).occupiedCount, 0);
+    expect(remaining).toBeLessThan(beforeCount);
+    expect(remaining).toBeGreaterThan(0);
   });
 
   it('keeps the float crate at the water surface', () => {

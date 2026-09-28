@@ -58,6 +58,7 @@ export function WaterSurface({
           color += vec3(0.08, 0.1, 0.11) * fresnel;
           float alpha = clamp(0.5 + fresnel * 0.24 + foam * 0.12, 0.42, 0.88);
           gl_FragColor = vec4(color, alpha);
+          #include <colorspace_fragment>
         }
       `,
     });
@@ -115,6 +116,7 @@ export function WaterCaustics({
           float edgeFade = smoothstep(0.0, 0.1, vUv.x) * smoothstep(0.0, 0.1, vUv.y) * smoothstep(0.0, 0.1, 1.0 - vUv.x) * smoothstep(0.0, 0.1, 1.0 - vUv.y);
           vec3 color = vec3(0.16, 0.28, 0.24) * caustic * edgeFade;
           gl_FragColor = vec4(color, caustic * 0.22 * edgeFade);
+          #include <colorspace_fragment>
         }
       `,
     });

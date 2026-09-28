@@ -20,9 +20,10 @@ export interface YardBody {
 export interface GrabState {
   readonly bodyId: string;
   readonly distance: number;
-  /** Last pull velocity in meters per second; becomes the throw velocity. */
-  readonly velocity: Vec3;
-  readonly target?: Vec3;
+  /** Hold point the grab spring pulls toward. */
+  readonly target: Vec3;
+  /** Hold point motion in meters per tick; the spring damps relative to it. */
+  readonly targetVelocity: Vec3;
 }
 
 export interface TorchState {
@@ -61,7 +62,15 @@ export interface YardStats {
   readonly fractures: number;
 }
 
+export interface BuggyWheelState {
+  readonly compression: number;
+  readonly steerAngleTurns: number;
+  readonly spinTurns: number;
+  readonly grounded: boolean;
+}
+
 export interface YardState {
+  readonly buggyWheels?: readonly BuggyWheelState[];
   readonly frame: number;
   readonly bodies: readonly YardBody[];
   readonly world: YardPhysicsWorldState;

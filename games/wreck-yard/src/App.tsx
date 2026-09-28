@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { MatchController, type MatchRequest, type MatchSnapshot } from './game/match';
 import { createRoomTransport, joinRoomTransport, quickMatchTransport } from './net/rooms';
 import { YardScene } from './render/YardScene';
-import type { UiTool } from './render/PointerInput';
+import type { UiTool } from './render/keyBindings';
 import { Hud } from './ui/Hud';
+import { isMobileDevice } from './render/DynamicDpr';
+import { readRenderQuality, type RenderQuality } from './render/renderQuality';
 import { ErrorModal } from './ui/ErrorModal';
 
 export default function App() {
@@ -13,6 +15,17 @@ export default function App() {
   );
   const [snapshot, setSnapshot] = useState<MatchSnapshot>(() => controller.snapshot());
   const [tool, setTool] = useState<UiTool>('hand');
+  const [quality, setQuality] = useState<RenderQuality>(() => readRenderQuality(isMobileDevice()));
+  // The tier is automatic until the player picks one or the URL sets it.
+  const [qualityIsAutomatic, setQualityIsAutomatic] = useState(() => !new URLSearchParams(window.location.search).has('quality'));
+  const chooseQuality = (next: RenderQuality) => {
+    setQualityIsAutomatic(false);
+    setQuality(next);
+  };
+  const fallBackToLow = () => {
+    setQualityIsAutomatic(false);
+    setQuality('low');
+  };
   const [lastRequest, setLastRequest] = useState<MatchRequest>({ kind: 'solo' });
 
   useEffect(() => {
@@ -51,11 +64,13 @@ export default function App() {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#5a564d' }}>
-      <YardScene controller={controller} tool={tool} onToolChange={setTool} />
+      <YardScene controller={controller} tool={tool} quality={quality} onQualityFallback={qualityIsAutomatic ? fallBackToLow : undefined} onToolChange={setTool} />
       <Hud
         snapshot={snapshot}
         tool={tool}
         onTool={setTool}
+        quality={quality}
+        onQuality={chooseQuality}
         onStart={start}
         onStop={() => controller.stop()}
         onRetry={retry}

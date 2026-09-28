@@ -1,7 +1,7 @@
 import type { SyncplayRunnerStatus } from '@series-inc/rundot-syncplay/browser';
 import { lerp, lerpAngle, quatNlerp, type Quat, type Vec3 } from '../sim/math';
 import { isShell } from '../sim/physics';
-import type { YardBody, YardState, YardStats } from '../sim/state';
+import type { BuggyWheelState, YardBody, YardState, YardStats } from '../sim/state';
 import { TANK_SPEC } from '../sim/constants';
 
 export interface RenderPose {
@@ -23,6 +23,7 @@ export interface PlayerRenderPose {
 }
 
 export interface YardRender {
+  readonly buggyWheels?: readonly BuggyWheelState[];
   readonly frame: number;
   readonly bodies: readonly YardBody[];
   readonly poses: ReadonlyMap<string, RenderPose>;
@@ -77,6 +78,7 @@ export function projectYard(state: YardState, context: { readonly localSlot: num
 
   return {
     frame: state.frame,
+    buggyWheels: state.buggyWheels,
     bodies: state.bodies,
     poses,
     players,
@@ -120,5 +122,14 @@ export function interpolateYard(previous: YardRender, current: YardRender, alpha
       fuel: lerp(prev.fuel, curr.fuel, alpha),
     };
   });
-  return { ...current, poses, players };
+  const buggyWheels = current.buggyWheels?.map((wheel, index) => {
+    const before = previous.buggyWheels?.[index];
+    return before ? {
+      ...wheel,
+      compression: lerp(before.compression, wheel.compression, alpha),
+      steerAngleTurns: lerp(before.steerAngleTurns, wheel.steerAngleTurns, alpha),
+      spinTurns: lerp(before.spinTurns, wheel.spinTurns, alpha),
+    } : wheel;
+  });
+  return { ...current, poses, players, buggyWheels };
 }

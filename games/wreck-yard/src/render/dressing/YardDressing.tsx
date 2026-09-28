@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import { meshVoxelGrids } from './voxelMesher';
-import { DRESSING_LAYOUT } from './layout';
+import { CLUTTER_LAYOUT, DRESSING_LAYOUT } from './layout';
 import { getToonMaterial } from '../style/toonMaterial';
 
 const noRaycast = () => null;
 
 export function YardDressing() {
   const geometry = useMemo(() => {
-    const meshed = meshVoxelGrids(DRESSING_LAYOUT);
+    const meshed = meshVoxelGrids([...DRESSING_LAYOUT, ...CLUTTER_LAYOUT]);
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.BufferAttribute(meshed.positions, 3));
     geom.setAttribute('normal', new THREE.BufferAttribute(meshed.normals, 3));

@@ -1,0 +1,19 @@
+.yard-hud-top {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  pointer-events: none;
+}
+.yard-hud-status { min-width: 260px; }
+.yard-hud-room { min-width: 210px; }
+@media (max-width: 620px) {
+  .yard-hud-top { flex-wrap: wrap; }
+  .yard-hud-status { width: 100%; min-width: 0; }
+  .yard-hud-room { min-width: 0; width: 100%; }
+}

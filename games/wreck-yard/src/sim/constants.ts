@@ -13,9 +13,21 @@ export const MAX_RAY_DISTANCE = 40;
 export const MAX_PLAYERS = 4;
 export const SHELL_PREFIX = 'shell:';
 
-export const GRAB_PULL_GAIN = 10.6;
-export const GRAB_LIFT = 0.9;
 export const GRAB_FLOOR_CLEARANCE = 0.25;
+/**
+ * The hold point moves toward the aim at most this fast (m/s). It stays below
+ * IMPACT_MIN_SPEED so carrying a body cannot fracture it.
+ */
+export const GRAB_TARGET_MAX_SPEED = 5.5;
+/** Hold point acceleration (m/s²). Must stay well below GRAB_MAX_ACCEL - gravity so the body can follow. */
+export const GRAB_TARGET_ACCEL = 18;
+/** Grab spring. Critical damping stops at the hold point without overshoot. */
+export const GRAB_SPRING_HZ = 6;
+export const GRAB_DAMPING_RATIO = 1;
+/** Force and torque limits scale with mass and inertia so every body accelerates alike. */
+export const GRAB_MAX_ACCEL = 40;
+export const GRAB_MAX_ANGULAR_ACCEL = 60;
+/** Release multiplies the body's real velocity, so a still hold drops straight down. */
 export const THROW_BOOST = 1.16;
 
 export const TORCH_PULSE_TICKS = 3;
@@ -73,13 +85,74 @@ export const GRAVITY_GUN_PUNT_SPEED = 30.0;
 
 export const ARENA_EXTENT = 26;
 
+/**
+ * Salvage clutter along the walls. Each item is solid: its collider joins
+ * SHELL_BOXES, and the renderer builds matching voxel props from the same list.
+ */
+export type ClutterKind = 'cars' | 'barriers';
+export interface ClutterItem {
+  readonly id: string;
+  readonly kind: ClutterKind;
+  readonly x: number;
+  readonly z: number;
+  /** Long side along world X. */
+  readonly alongX: boolean;
+  /** Cars: stacked tiers. Barriers: blocks in the row. */
+  readonly count: number;
+  readonly seed: number;
+}
+
+/** Crushed car: 10 x 4 x 18 voxels at 0.22 m. Barrier block: 7 x 4 x 4 voxels at 0.2 m. */
+export const CLUTTER_CAR = { width: 2.2, tierHeight: 0.88, length: 3.96, voxelScale: 0.22 } as const;
+export const CLUTTER_BARRIER = { length: 1.4, height: 0.8, depth: 0.8, gap: 0.06, voxelScale: 0.2 } as const;
+const CLUTTER_PAD = 0.1;
+
+export const YARD_CLUTTER: readonly ClutterItem[] = [
+  { id: 'south-cars-a', kind: 'cars', x: -14, z: 24.3, alongX: true, count: 2, seed: 11 },
+  { id: 'south-cars-b', kind: 'cars', x: -9.4, z: 24.3, alongX: true, count: 3, seed: 12 },
+  { id: 'south-barriers', kind: 'barriers', x: -3.2, z: 25.1, alongX: true, count: 4, seed: 13 },
+  { id: 'south-cars-c', kind: 'cars', x: 2.4, z: 24.3, alongX: true, count: 1, seed: 14 },
+  { id: 'north-cars-a', kind: 'cars', x: -9, z: -24.3, alongX: true, count: 2, seed: 21 },
+  { id: 'north-barriers', kind: 'barriers', x: -3.4, z: -25.1, alongX: true, count: 3, seed: 22 },
+  { id: 'north-cars-b', kind: 'cars', x: 2.6, z: -24.3, alongX: true, count: 3, seed: 23 },
+  { id: 'north-cars-c', kind: 'cars', x: 7.2, z: -24.3, alongX: true, count: 1, seed: 24 },
+  // Open yard areas away from the play zones (seesaw, tower, bowling, slalom, buggy lane).
+  { id: 'yard-nw-cars', kind: 'cars', x: -12.5, z: -16, alongX: false, count: 2, seed: 31 },
+  { id: 'yard-nw-barriers', kind: 'barriers', x: -12.5, z: -11.2, alongX: true, count: 3, seed: 32 },
+  { id: 'yard-ne-cars', kind: 'cars', x: 5.5, z: -16.5, alongX: true, count: 2, seed: 33 },
+  { id: 'yard-ne-cars-b', kind: 'cars', x: 1.6, z: -19.2, alongX: false, count: 1, seed: 34 },
+  { id: 'yard-sw-cars', kind: 'cars', x: -15, z: 17.5, alongX: true, count: 2, seed: 35 },
+  { id: 'yard-sw-barriers', kind: 'barriers', x: -15, z: 21.2, alongX: true, count: 2, seed: 36 },
+];
+
+export function clutterCollider(item: ClutterItem): { center: [number, number, number]; size: [number, number, number] } {
+  const [long, height, short] = item.kind === 'cars'
+    ? [CLUTTER_CAR.length, CLUTTER_CAR.tierHeight * item.count, CLUTTER_CAR.width]
+    : [item.count * (CLUTTER_BARRIER.length + CLUTTER_BARRIER.gap), CLUTTER_BARRIER.height, CLUTTER_BARRIER.depth];
+  const size: [number, number, number] = item.alongX
+    ? [long + CLUTTER_PAD, height, short + CLUTTER_PAD]
+    : [short + CLUTTER_PAD, height, long + CLUTTER_PAD];
+  return { center: [item.x, FLOOR_Y + height / 2, item.z], size };
+}
+
+/** A player mounts the buggy within this 3D distance of the chassis center (m). */
+export const BUGGY_MOUNT_RANGE = 2.8;
+
+/** One rule for the sim and the HUD prompt. */
+export function withinBuggyMountRange(player: readonly [number, number, number], chassis: readonly [number, number, number]): boolean {
+  return Math.hypot(player[0] - chassis[0], player[1] - chassis[1], player[2] - chassis[2]) < BUGGY_MOUNT_RANGE;
+}
+
+/** Pitch of the vehicle ramp about X, in radians. The collider and the drawn ramp share it. */
+export const VEHICLE_RAMP_PITCH = -0.14;
+
 /** Static boxes: center and full size. Used for physics shell bodies and occlusion. */
 export const SHELL_BOXES: readonly (WorldOcclusionStaticBox & { id: string })[] = [
   { id: 'floor', center: [0, FLOOR_Y - 0.1, 0], size: [52, 0.2, 52] },
-  { id: 'wall-west', center: [-ARENA_EXTENT, 3, 0], size: [0.8, 8, 52] },
-  { id: 'wall-east', center: [ARENA_EXTENT, 3, 0], size: [0.8, 8, 52] },
-  { id: 'wall-north', center: [0, 3, -ARENA_EXTENT], size: [52, 8, 0.8] },
-  { id: 'wall-south', center: [0, 3, ARENA_EXTENT], size: [52, 8, 0.8] },
+  { id: 'wall-west', center: [-ARENA_EXTENT, FLOOR_Y + 2, 0], size: [0.6, 4, 52] },
+  { id: 'wall-east', center: [ARENA_EXTENT, FLOOR_Y + 2, 0], size: [0.6, 4, 52] },
+  { id: 'wall-north', center: [0, FLOOR_Y + 1, -ARENA_EXTENT], size: [52, 2, 0.6] },
+  { id: 'wall-south', center: [0, FLOOR_Y + 2, ARENA_EXTENT], size: [52, 4, 0.6] },
   { id: 'plinth-a', center: [1.0, FLOOR_Y + 0.24, 0.9], size: [3.1, 0.48, 3.8] },
   { id: 'plinth-b', center: [-2.35, FLOOR_Y + 0.2, -1.4], size: [2.3, 0.4, 2.3] },
   { id: 'tank-floor', center: [TANK.center[0], TANK.bottomY - 0.12, TANK.center[2]], size: [TANK.innerSize[0], 0.24, TANK.innerSize[2]] },
@@ -87,9 +160,10 @@ export const SHELL_BOXES: readonly (WorldOcclusionStaticBox & { id: string })[] 
   { id: 'tank-east', center: [TANK.center[0] + TANK.innerSize[0] * 0.5, TANK_WALL_CENTER_Y, TANK.center[2]], size: [TANK.wallThickness, TANK_WALL_HEIGHT, TANK.innerSize[2]] },
   { id: 'tank-north', center: [TANK.center[0], TANK_WALL_CENTER_Y, TANK.center[2] - TANK.innerSize[2] * 0.5], size: [TANK.innerSize[0], TANK_WALL_HEIGHT, TANK.wallThickness] },
   { id: 'tank-south', center: [TANK.center[0], TANK_WALL_CENTER_Y, TANK.center[2] + TANK.innerSize[2] * 0.5], size: [TANK.innerSize[0], TANK_WALL_HEIGHT, TANK.wallThickness] },
-  { id: 'seesaw-pivot', center: [-8, FLOOR_Y + 0.45, -6], size: [1.2, 0.9, 1.2] },
+  { id: 'seesaw-pivot', center: [-14, FLOOR_Y + 0.45, -6], size: [1.2, 0.9, 1.2] },
   { id: 'ball-drop-platform', center: [-12, FLOOR_Y + 2.5, 12], size: [4, 5.0, 4] },
-  { id: 'vehicle-ramp', center: [12, FLOOR_Y + 0.4, 12], size: [4, 0.8, 6] },
+  { id: 'vehicle-ramp', center: [14.0, FLOOR_Y + 0.45, 0.0], size: [4.8, 0.12, 6.0] },
+  ...YARD_CLUTTER.map((item) => ({ id: `clutter-${item.id}`, ...clutterCollider(item) })),
 ];
 
 export const TERRAIN_COLS = 17;
@@ -98,35 +172,8 @@ export const TERRAIN_SPACING = 3.2; // 16 * 3.2 = 51.2m arena extent
 export const TERRAIN_ORIGIN_X = -25.6;
 export const TERRAIN_ORIGIN_Z = -25.6;
 
-export function getTerrainHeightAt(x: number, z: number): number {
-  let h = 0;
-  // 1. Water Basin (North-East: around x = 11, z = -11) - sunken excavated fluid quarry
-  const waterDist = Math.hypot(x - 11.0, z - (-11.0));
-  if (waterDist < 7.2) {
-    h -= Math.cos((waterDist / 7.2) * (Math.PI * 0.5)) * 1.85;
-  }
-
-  // 2. Vehicle Dirt Ridge / Hill (South-East: around x = 15, z = 14)
-  const hillDist = Math.hypot(x - 15.0, z - 14.0);
-  if (hillDist < 8.0) {
-    h += Math.cos((hillDist / 8.0) * (Math.PI * 0.5)) * 2.2;
-  }
-
-  // 3. Ball Drop Knoll (South-West: around x = -14, z = 14)
-  const knollDist = Math.hypot(x - (-14.0), z - 14.0);
-  if (knollDist < 7.5) {
-    h += Math.cos((knollDist / 7.5) * (Math.PI * 0.5)) * 1.5;
-  }
-
-  // 4. Central Salvage Flat: keep central apron (where gantry, ballast box, spawn points are) flat
-  const centerDist = Math.hypot(x, z);
-  if (centerDist < 6.5) {
-    h = 0;
-  } else if (centerDist < 9.0) {
-    h *= (centerDist - 6.5) / 2.5;
-  }
-
-  return Math.round(h * 100) / 100;
+export function getTerrainHeightAt(_x: number, _z: number): number {
+  return 0;
 }
 
 export function buildTerrainHeights(): readonly number[] {

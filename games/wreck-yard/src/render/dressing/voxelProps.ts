@@ -18,6 +18,7 @@ export const PALETTE_INDEX_TO_KEY: readonly PaletteKey[] = [
   'spark', // 9
   'glow', // 10
   'skyline', // 11
+  'metal', // 12
 ];
 
 export function getPaletteKeyIndex(key: PaletteKey): number {
@@ -121,7 +122,7 @@ export function buildDebrisChips(
   const sz = 8;
   const cells = new Uint8Array(sx * sy * sz);
 
-  const idx = (x: number, y: number, z: number) => x + y * sx + z * sx * sz;
+  const idx = (x: number, y: number, z: number) => x + y * sx + z * sx * sy;
   const rustIdx = getPaletteKeyIndex('rust');
   const inkIdx = getPaletteKeyIndex('ink');
   const concreteIdx = getPaletteKeyIndex('concreteLit');
@@ -140,4 +141,41 @@ export function buildDebrisChips(
     dims: { x: sx, y: sy, z: sz },
     cells,
   };
+}
+
+/**
+ * Flat scrap scatter: rods, plates, and chips lying on the ground, in scrap
+ * colors. 20 x 2 x 20 cells; at 0.1 m scale one patch covers 2 x 2 m.
+ */
+export function buildScrapScatter(seed: number, pieces: number): VoxelGrid {
+  const rand = lcg(seed);
+  const sx = 20;
+  const sy = 2;
+  const sz = 20;
+  const cells = new Uint8Array(sx * sy * sz);
+  const set = (x: number, y: number, z: number, value: number) => {
+    if (x >= 0 && x < sx && y >= 0 && y < sy && z >= 0 && z < sz) cells[x + y * sx + z * sx * sy] = value;
+  };
+  const swatches = (['rust', 'ink', 'metal', 'concreteShade', 'rust', 'mustard'] as const).map(getPaletteKeyIndex);
+  for (let i = 0; i < pieces; i += 1) {
+    const color = swatches[Math.floor(rand() * swatches.length)]!;
+    const x = Math.floor(rand() * sx);
+    const z = Math.floor(rand() * sz);
+    const kind = rand();
+    if (kind < 0.45) {
+      // Rod or beam, 3-8 cells long, along X or Z.
+      const length = 3 + Math.floor(rand() * 6);
+      const alongX = rand() < 0.5;
+      for (let k = 0; k < length; k += 1) set(alongX ? x + k : x, 0, alongX ? z : z + k, color);
+    } else if (kind < 0.75) {
+      // Plate, 2-3 cells square, sometimes propped up one cell on an edge.
+      const w = 2 + Math.floor(rand() * 2);
+      const propped = rand() < 0.3;
+      for (let a = 0; a < w; a += 1) for (let b = 0; b < w; b += 1) set(x + a, propped && a === w - 1 ? 1 : 0, z + b, color);
+    } else {
+      set(x, 0, z, color);
+      if (rand() < 0.4) set(x, 1, z, color);
+    }
+  }
+  return { dims: { x: sx, y: sy, z: sz }, cells };
 }

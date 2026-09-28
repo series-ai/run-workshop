@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import './Hud.css';
 import type { MatchRequest, MatchSnapshot } from '../game/match';
-import type { UiTool } from '../render/PointerInput';
+import { TOOL_KEY_LABELS, type UiTool } from '../render/keyBindings';
+import type { RenderQuality } from '../render/renderQuality';
+import { withinBuggyMountRange } from '../sim/constants';
 
 const panel: React.CSSProperties = {
-  position: 'absolute',
   zIndex: 10,
   pointerEvents: 'auto',
   background: 'rgba(20, 22, 20, 0.88)',
@@ -28,7 +30,9 @@ const button = (active: boolean): React.CSSProperties => ({
   transition: 'all 0.15s ease',
 });
 
-export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
+export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onStop, onRetry }: {
+  quality: RenderQuality;
+  onQuality: (quality: RenderQuality) => void;
   snapshot: MatchSnapshot;
   tool: UiTool;
   onTool: (tool: UiTool) => void;
@@ -46,22 +50,21 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
   const isRiding = Boolean(localPlayer?.ridingVehicle);
 
   const buggyPose = render?.poses?.get('vehicle-chassis');
-  const distToBuggy = (localPlayer && buggyPose)
-    ? Math.hypot(localPlayer.position[0] - buggyPose.position[0], localPlayer.position[2] - buggyPose.position[2])
-    : 999;
-  const canMountBuggy = live && !isRiding && distToBuggy < 4.8;
+  const canMountBuggy = live && !isRiding && Boolean(localPlayer && buggyPose)
+    && withinBuggyMountRange(localPlayer!.position, buggyPose!.position);
 
   return (
     <>
+      <div className="yard-hud-top">
       {/* Top Left: Status & Yard Telemetry */}
-      <div style={{ ...panel, top: 16, left: 16, minWidth: 260 }}>
+      <div className="yard-hud-status" style={panel}>
         <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8, color: '#9bbc0f', letterSpacing: '0.04em' }}>
           WRECK YARD
         </div>
-        <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
           {(['hand', 'torch', 'orbit'] as const).map((entry) => (
             <button key={entry} type="button" style={button(tool === entry)} onClick={() => onTool(entry)} disabled={!live || isRiding}>
-              {entry === 'hand' ? 'Gravity Gun (1)' : entry === 'torch' ? 'Plasma Torch (2)' : 'Orbit (3)'}
+              {`${entry === 'hand' ? 'Gravity Gun' : entry === 'torch' ? 'Plasma Torch' : 'Orbit'} (${TOOL_KEY_LABELS[entry]})`}
             </button>
           ))}
         </div>
@@ -81,9 +84,14 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
       </div>
 
       {/* Top Right: Match & Room Manager */}
-      <div style={{ ...panel, top: 16, right: 16, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 210 }}>
+      <div className="yard-hud-room" style={{ ...panel, display: 'flex', flexDirection: 'column', gap: 6 }}>
         {live ? (
-          <button type="button" style={button(false)} onClick={onStop}>Leave Match</button>
+          <>
+            <button type="button" style={button(false)} onClick={onStop}>Leave Match</button>
+            <button type="button" style={button(quality === 'high')} onClick={() => onQuality(quality === 'high' ? 'low' : 'high')}>
+              Graphics: {quality === 'high' ? 'High' : 'Low'}
+            </button>
+          </>
         ) : (
           <>
             <button type="button" style={button(false)} onClick={() => onStart({ kind: 'solo' })}>Play Solo (4-Slot Yard)</button>
@@ -106,8 +114,10 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
         )}
       </div>
 
-      {/* Center: Tactical Salvage Crosshair */}
-      {live && tool !== 'orbit' && (
+      </div>
+
+      {/* Center: Tactical Salvage Crosshair (hidden in the chase camera) */}
+      {live && tool !== 'orbit' && !isRiding && (
         <div
           style={{
             position: 'absolute',
@@ -166,7 +176,7 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
         <div
           style={{
             position: 'absolute',
-            bottom: 24,
+            bottom: 78,
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
@@ -241,9 +251,6 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
           <span style={{ color: '#f7fee7', fontWeight: 700, fontSize: 13, letterSpacing: '0.04em' }}>
             DRIVE SALVAGE BUGGY
           </span>
-          <span style={{ color: '#a3e635', fontSize: 11, opacity: 0.85 }}>
-            ({distToBuggy.toFixed(1)}m)
-          </span>
         </div>
       )}
 
@@ -254,6 +261,9 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
             position: 'absolute',
             bottom: 16,
             left: 16,
+            right: 16,
+            width: 'fit-content',
+            maxWidth: 'calc(100% - 32px)',
             background: isRiding ? 'rgba(25, 38, 16, 0.94)' : 'rgba(20, 22, 20, 0.82)',
             border: isRiding ? '1px solid #84cc16' : '1px solid #3f4836',
             padding: '8px 14px',
@@ -267,7 +277,7 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
         >
           {isRiding ? (
             <div>
-              <span style={{ color: '#a3e635', fontWeight: 700, marginRight: 8 }}>🚜 BUGGY COCKPIT ACTIVE</span>
+              <span style={{ color: '#a3e635', fontWeight: 700, marginRight: 8 }}>🚜 DRIVING BUGGY</span>
               <span style={{ color: '#e8ecd8' }}>[W / S]</span> Throttle / Reverse &bull;{' '}
               <span style={{ color: '#e8ecd8' }}>[A / D]</span> Steer Wheels &bull;{' '}
               <span style={{ color: '#facc15', fontWeight: 600 }}>[E / Space]</span> Dismount Buggy
@@ -276,10 +286,11 @@ export function Hud({ snapshot, tool, onTool, onStart, onStop, onRetry }: {
             <div>
               <span style={{ color: '#9bbc0f', fontWeight: 600 }}>[Click Canvas]</span> Look &bull;{' '}
               <span style={{ color: '#e8ecd8' }}>[WASD]</span> Move &bull;{' '}
-              <span style={{ color: '#e8ecd8' }}>[Space]</span> Jetpack &bull;{' '}
+              <span style={{ color: '#e8ecd8' }}>[Space / Delete]</span> Jetpack &bull;{' '}
               <span style={{ color: '#e8ecd8' }}>[LMB]</span> {tool === 'hand' ? 'Tractor Beam' : 'Carve Voxel'} &bull;{' '}
               <span style={{ color: '#e8ecd8' }}>[E / RMB]</span> {canMountBuggy ? 'Drive Buggy' : 'Punt'} &bull;{' '}
-              <span style={{ color: '#e8ecd8' }}>[1 / 2 / 3]</span> Tool
+              <span style={{ color: '#e8ecd8' }}>[1 / 2]</span> Tool &bull;{' '}
+              <span style={{ color: '#e8ecd8' }}>[O]</span> Orbit
             </div>
           )}
         </div>

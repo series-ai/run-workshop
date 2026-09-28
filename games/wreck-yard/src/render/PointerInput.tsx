@@ -7,8 +7,9 @@ import { TOOL, type Tool, type YardInput } from '../sim/input';
 import type { MatchController } from '../game/match';
 import type { YardBody } from '../sim/state';
 import type { YardRender } from './presentation';
-
-export type UiTool = 'hand' | 'torch' | 'orbit';
+import { bodyGeometryChanged, wrapYaw } from './inputPresentation';
+import { CHASE_FOLLOW_RATE, chaseCameraPose } from './chaseCamera';
+import { isGameKey, isThrusterHeld, toolForKey, type PlayTool, type UiTool } from './keyBindings';
 
 function toSimTool(tool: UiTool): Tool {
   switch (tool) {
@@ -49,6 +50,8 @@ export function PointerInput({
   const secondary = useRef(false);
   const lastBuggyYaw = useRef<number | null>(null);
   const keys = useRef<Set<string>>(new Set());
+  const lastPlayTool = useRef<PlayTool>(tool === 'orbit' ? 'hand' : tool);
+  if (tool !== 'orbit') lastPlayTool.current = tool;
   const cameraOverride = useRef<{ pos: [number, number, number]; lookAt: [number, number, number] } | null>(null);
 
   const controls = useMemo(() => {
@@ -70,10 +73,11 @@ export function PointerInput({
   useEffect(() => {
     controls.enabled = tool === 'orbit';
     if (tool === 'orbit') {
+      if (document.pointerLockElement === gl.domElement) document.exitPointerLock();
       camera.position.set(CAMERA_BASE[0], CAMERA_BASE[1] + 2, CAMERA_BASE[2] + 4);
       controls.update();
     }
-  }, [camera, controls, tool]);
+  }, [camera, controls, gl, tool]);
 
   // Pointer lock & Mouse / Keyboard handlers
   useEffect(() => {
@@ -83,59 +87,61 @@ export function PointerInput({
     let lastX = 0;
     let lastY = 0;
 
-    (window as unknown as {
-      __SET_LOOK_ANGLES__?: (y: number, p: number) => void;
-      __SET_CAMERA_OVERRIDE__?: (pos: [number, number, number] | null, lookAt?: [number, number, number] | null) => void;
-      __THREE_RENDERER__?: unknown;
-    }).__SET_CAMERA_OVERRIDE__ = (pos, lookAt) => {
-      if (pos && lookAt) {
-        cameraOverride.current = { pos, lookAt };
-      } else {
-        cameraOverride.current = null;
-      }
-    };
-    (window as unknown as { __THREE_RENDERER__?: unknown }).__THREE_RENDERER__ = gl;
+    if (import.meta.env.DEV) {
+      (window as unknown as {
+        __SET_LOOK_ANGLES__?: (y: number, p: number) => void;
+        __SET_CAMERA_OVERRIDE__?: (pos: [number, number, number] | null, lookAt?: [number, number, number] | null) => void;
+        __THREE_RENDERER__?: unknown;
+      }).__SET_CAMERA_OVERRIDE__ = (pos, lookAt) => {
+        if (pos && lookAt) {
+          cameraOverride.current = { pos, lookAt };
+        } else {
+          cameraOverride.current = null;
+        }
+      };
+      (window as unknown as { __THREE_RENDERER__?: unknown }).__THREE_RENDERER__ = gl;
 
-    (window as unknown as { __SET_LOOK_ANGLES__?: (y: number, p: number) => void }).__SET_LOOK_ANGLES__ = (y, p) => {
-      yaw.current = y;
-      pitch.current = THREE.MathUtils.clamp(p, -1.45, 1.45);
-    };
+      (window as unknown as { __SET_LOOK_ANGLES__?: (y: number, p: number) => void }).__SET_LOOK_ANGLES__ = (y, p) => {
+        yaw.current = y;
+        pitch.current = THREE.MathUtils.clamp(p, -1.45, 1.45);
+      };
 
-    (window as unknown as {
-      __SIMULATE_INPUT__?: (action: {
-        pressed?: boolean;
-        secondary?: boolean;
-        tool?: UiTool;
-        moveX?: number;
-        moveZ?: number;
-        jetpack?: boolean;
-      }) => void;
-    }).__SIMULATE_INPUT__ = (action) => {
-      if (action.pressed !== undefined) pressed.current = action.pressed;
-      if (action.secondary !== undefined) secondary.current = action.secondary;
-      if (action.tool !== undefined) onToolChange?.(action.tool);
-      if (action.jetpack !== undefined) {
-        if (action.jetpack) keys.current.add('Space');
-        else keys.current.delete('Space');
-      }
-      if (action.moveZ !== undefined) {
-        if (action.moveZ > 0) keys.current.add('KeyW');
-        else keys.current.delete('KeyW');
-        if (action.moveZ < 0) keys.current.add('KeyS');
-        else keys.current.delete('KeyS');
-      }
-      if (action.moveX !== undefined) {
-        if (action.moveX > 0) keys.current.add('KeyD');
-        else keys.current.delete('KeyD');
-        if (action.moveX < 0) keys.current.add('KeyA');
-        else keys.current.delete('KeyA');
-      }
-    };
+      (window as unknown as {
+        __SIMULATE_INPUT__?: (action: {
+          pressed?: boolean;
+          secondary?: boolean;
+          tool?: UiTool;
+          moveX?: number;
+          moveZ?: number;
+          jetpack?: boolean;
+        }) => void;
+      }).__SIMULATE_INPUT__ = (action) => {
+        if (action.pressed !== undefined) pressed.current = action.pressed;
+        if (action.secondary !== undefined) secondary.current = action.secondary;
+        if (action.tool !== undefined) onToolChange?.(action.tool);
+        if (action.jetpack !== undefined) {
+          if (action.jetpack) keys.current.add('Space');
+          else keys.current.delete('Space');
+        }
+        if (action.moveZ !== undefined) {
+          if (action.moveZ > 0) keys.current.add('KeyW');
+          else keys.current.delete('KeyW');
+          if (action.moveZ < 0) keys.current.add('KeyS');
+          else keys.current.delete('KeyS');
+        }
+        if (action.moveX !== undefined) {
+          if (action.moveX > 0) keys.current.add('KeyD');
+          else keys.current.delete('KeyD');
+          if (action.moveX < 0) keys.current.add('KeyA');
+          else keys.current.delete('KeyA');
+        }
+      };
+    }
 
     const onPointerDown = (event: MouseEvent) => {
       if (tool !== 'orbit') {
         if (document.pointerLockElement !== dom) {
-          try { dom.requestPointerLock?.(); } catch {}
+          void dom.requestPointerLock?.()?.catch(() => { /* Drag look remains available. */ });
         }
         isDragging = true;
         lastX = event.clientX;
@@ -156,7 +162,7 @@ export function PointerInput({
       if (document.pointerLockElement === dom) {
         yaw.current -= event.movementX * 0.0022;
         pitch.current = THREE.MathUtils.clamp(pitch.current - event.movementY * 0.0022, -1.45, 1.45);
-      } else if (isDragging || event.buttons > 0) {
+      } else if (isDragging) {
         const dx = event.movementX || (event.clientX - lastX);
         const dy = event.movementY || (event.clientY - lastY);
         lastX = event.clientX;
@@ -171,13 +177,16 @@ export function PointerInput({
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLElement && event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (event.code === 'Space' && event.target instanceof HTMLButtonElement) return;
+      if (isGameKey(event.code)) event.preventDefault();
       keys.current.add(event.code);
       if (event.code === 'KeyE' || event.code === 'KeyF') {
         secondary.current = true;
       }
-      if (event.code === 'Digit1') onToolChange?.('hand');
-      if (event.code === 'Digit2') onToolChange?.('torch');
-      if (event.code === 'Digit3') onToolChange?.('orbit');
+      if (event.repeat) return;
+      const nextTool = toolForKey(event.code, tool, lastPlayTool.current);
+      if (nextTool) onToolChange?.(nextTool);
     };
 
     const onKeyUp = (event: KeyboardEvent) => {
@@ -187,7 +196,16 @@ export function PointerInput({
       }
     };
 
-    window.addEventListener('mousedown', onPointerDown);
+    const clearInput = () => {
+      keys.current.clear();
+      pressed.current = false;
+      secondary.current = false;
+      isDragging = false;
+    };
+    const onVisibility = () => { if (document.hidden) clearInput(); };
+    dom.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('blur', clearInput);
+    document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('mouseup', onPointerUp);
     document.addEventListener('mousemove', onMouseMove);
     dom.addEventListener('contextmenu', onContextMenu);
@@ -195,20 +213,27 @@ export function PointerInput({
     window.addEventListener('keyup', onKeyUp);
 
     return () => {
-      window.removeEventListener('mousedown', onPointerDown);
+      dom.removeEventListener('mousedown', onPointerDown);
+      window.removeEventListener('blur', clearInput);
+      document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('mouseup', onPointerUp);
       document.removeEventListener('mousemove', onMouseMove);
+      if (import.meta.env.DEV) {
+        const debug = window as unknown as Record<string, unknown>;
+        for (const key of ['__SET_LOOK_ANGLES__', '__SET_CAMERA_OVERRIDE__', '__SIMULATE_INPUT__', '__THREE_RENDERER__']) delete debug[key];
+      }
       dom.removeEventListener('contextmenu', onContextMenu);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
   }, [gl, tool, onToolChange]);
 
-  const dirVec = useMemo(() => new THREE.Vector3(), []);
   const euler = useMemo(() => new THREE.Euler(0, 0, 0, 'YXZ'), []);
+  const buggyQuat = useMemo(() => new THREE.Quaternion(), []);
+  const chaseFollowing = useRef(false);
+  const chaseTarget = useMemo(() => new THREE.Vector3(), []);
 
-  useFrame(() => {
-    const render = renderRef.current;
+  const updateCamera = (render: YardRender | null, deltaSeconds: number) => {
     const localPlayer = render?.players?.find((p) => p.slot === render?.localSlot);
     const isRiding = Boolean(localPlayer?.ridingVehicle);
     const buggyPose = render?.poses.get('vehicle-chassis');
@@ -216,76 +241,87 @@ export function PointerInput({
     // Turn camera yaw smoothly with buggy chassis rotation when driving
     if (isRiding && buggyPose) {
       const q = buggyPose.rotation;
-      const chassisYaw = Math.atan2(
-        2 * (q[3] * q[1] + q[0] * q[2]),
-        1 - 2 * (q[1] * q[1] + q[2] * q[2]),
-      );
-      if (lastBuggyYaw.current !== null) {
-        let deltaYaw = chassisYaw - lastBuggyYaw.current;
-        while (deltaYaw > Math.PI) deltaYaw -= 2 * Math.PI;
-        while (deltaYaw < -Math.PI) deltaYaw += 2 * Math.PI;
-        yaw.current += deltaYaw;
+      euler.setFromQuaternion(buggyQuat.set(q[0], q[1], q[2], q[3]), 'YXZ');
+      const chassisYaw = euler.y;
+      if (Number.isFinite(chassisYaw)) {
+        if (lastBuggyYaw.current === null) {
+          yaw.current = chassisYaw;
+        } else if (Number.isFinite(lastBuggyYaw.current)) {
+          const deltaYaw = Math.atan2(
+            Math.sin(chassisYaw - lastBuggyYaw.current),
+            Math.cos(chassisYaw - lastBuggyYaw.current),
+          );
+          if (Number.isFinite(deltaYaw)) {
+            yaw.current += deltaYaw;
+          }
+        }
+        lastBuggyYaw.current = chassisYaw;
       }
-      lastBuggyYaw.current = chassisYaw;
     } else {
       lastBuggyYaw.current = null;
+      chaseFollowing.current = false;
     }
+
+    if (!Number.isFinite(yaw.current)) yaw.current = 0;
+    if (!Number.isFinite(pitch.current)) pitch.current = 0;
+    yaw.current = wrapYaw(yaw.current);
 
     if (cameraOverride.current) {
       camera.position.set(cameraOverride.current.pos[0], cameraOverride.current.pos[1], cameraOverride.current.pos[2]);
       camera.lookAt(cameraOverride.current.lookAt[0], cameraOverride.current.lookAt[1], cameraOverride.current.lookAt[2]);
-      dirVec.set(0, 0, -1).applyQuaternion(camera.quaternion);
     } else if (tool === 'orbit') {
       controls.update();
-      dirVec.set(0, 0, -1).applyQuaternion(camera.quaternion);
     } else {
       if (localPlayer) {
-        if (isRiding) {
-          // Driver's eye level seated inside the buggy roll cage looking out windshield
-          camera.position.set(
-            localPlayer.position[0],
-            localPlayer.position[1] + 0.52,
-            localPlayer.position[2] - 0.08,
-          );
-        } else {
-          camera.position.set(localPlayer.position[0], localPlayer.position[1] + 1.55, localPlayer.position[2]);
+        if (isRiding && buggyPose) {
+          const chase = chaseCameraPose(buggyPose.position, yaw.current, pitch.current);
+          // Snap on mount; after that, follow smoothly so suspension bumps do not shake the view.
+          const follow = chaseFollowing.current ? 1 - Math.exp(-CHASE_FOLLOW_RATE * deltaSeconds) : 1;
+          camera.position.lerp(chaseTarget.set(chase.position[0], chase.position[1], chase.position[2]), follow);
+          camera.lookAt(chase.lookAt[0], chase.lookAt[1], chase.lookAt[2]);
+          chaseFollowing.current = true;
+          return;
         }
+        camera.position.set(localPlayer.position[0], localPlayer.position[1] + 1.55, localPlayer.position[2]);
       }
       euler.set(pitch.current, yaw.current, 0, 'YXZ');
       camera.quaternion.setFromEuler(euler);
-      dirVec.set(0, 0, -1).applyQuaternion(camera.quaternion);
     }
 
+  };
+
+  useFrame((_, deltaSeconds) => {
     const moveX = (keys.current.has('KeyD') || keys.current.has('ArrowRight') ? 1 : 0) -
                   (keys.current.has('KeyA') || keys.current.has('ArrowLeft') ? 1 : 0);
     const moveZ = (keys.current.has('KeyW') || keys.current.has('ArrowUp') ? 1 : 0) -
                   (keys.current.has('KeyS') || keys.current.has('ArrowDown') ? 1 : 0);
-    const jetpack = keys.current.has('Space');
+    const jetpack = isThrusterHeld(keys.current);
 
     const input: YardInput = {
       tool: toSimTool(tool),
-      pressed: tool !== 'orbit' && pressed.current,
-      secondary: tool !== 'orbit' && secondary.current,
-      jetpack,
-      moveX,
-      moveZ,
-      yaw: Math.round(yaw.current * 1000),
-      pitch: Math.round(pitch.current * 1000),
-      ox: Math.round(camera.position.x * 1000),
-      oy: Math.round(camera.position.y * 1000),
-      oz: Math.round(camera.position.z * 1000),
-      dx: Math.round(dirVec.x * 10000),
-      dy: Math.round(dirVec.y * 10000),
-      dz: Math.round(dirVec.z * 10000),
+      pressed: tool !== 'orbit' && Boolean(pressed.current),
+      secondary: tool !== 'orbit' && Boolean(secondary.current),
+      jetpack: tool !== 'orbit' && jetpack,
+      moveX: tool !== 'orbit' ? moveX : 0,
+      moveZ: tool !== 'orbit' ? moveZ : 0,
+      yaw: Math.round(wrapYaw(yaw.current) * 1000),
+      pitch: Math.round(pitch.current * 1000) || 0,
+      ox: 0, oy: 0, oz: 0,
+      dx: 0, dy: 0, dz: 0,
     };
 
     controller.setInput(input);
     controller.pump(performance.now());
     const nextRender = controller.getRender();
     renderRef.current = nextRender;
+    updateCamera(nextRender, deltaSeconds);
     if (nextRender && nextRender.bodies !== lastBodies.current) {
+      const prev = lastBodies.current;
       lastBodies.current = nextRender.bodies;
-      onBodiesChange(nextRender.bodies);
+      const changed = bodyGeometryChanged(prev, nextRender.bodies);
+      if (changed) {
+        onBodiesChange(nextRender.bodies);
+      }
     }
   });
 

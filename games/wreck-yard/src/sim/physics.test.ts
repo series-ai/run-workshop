@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeEmptyVoxelField, stampBox } from 'voxel-kit';
-import { VOXEL_SIZE } from './constants';
+import { SHELL_BOXES, VOXEL_SIZE, YARD_CLUTTER } from './constants';
 import { bodyMass, cookCenteredCollider, makePhysicsBody, voxelStats } from './physics';
 import { createInitialState } from './presets';
 import type { YardBody } from './state';
@@ -38,8 +38,9 @@ describe('createInitialState', () => {
       const physics = state.world.bodies.find((p) => p.id === body.id);
       expect(physics?.kind).toBe(body.motion === 'fixed' ? 'static' : 'dynamic');
     }
-    expect(state.world.bodies.filter((b) => b.id.startsWith('shell:'))).toHaveLength(16);
-    expect(state.world.bodies.some((b) => b.id === 'shell:terrain')).toBe(true);
+    expect(state.world.bodies.filter((b) => b.id.startsWith('shell:'))).toHaveLength(SHELL_BOXES.length);
+    expect(state.world.bodies.filter((b) => b.id.startsWith('shell:clutter-'))).toHaveLength(YARD_CLUTTER.length);
+    expect(state.world.bodies.some((b) => b.id === 'shell:floor')).toBe(true);
   });
 
   it('makes a static physics body without orientation', () => {

@@ -3,6 +3,8 @@ import { useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import { Toon } from './style/toonMaterial';
 import type { YardRender, PlayerRenderPose } from './presentation';
+import { showsLocalAvatar } from './chaseCamera';
+import type { UiTool } from './keyBindings';
 
 const PLAYER_COLORS = [
   { suit: '#4a5338', visor: '#facc15', glow: '#fef08a', flame: '#f59e0b' }, // Salvage Olive / Gold
@@ -11,7 +13,7 @@ const PLAYER_COLORS = [
   { suit: '#7f1d1d', visor: '#f87171', glow: '#fee2e2', flame: '#ef4444' }, // Hazard Red
 ];
 
-function RemoteAvatar({ player, renderRef }: { player: PlayerRenderPose; renderRef: MutableRefObject<YardRender | null> }) {
+function PlayerAvatar({ player, renderRef, tool }: { player: PlayerRenderPose; renderRef: MutableRefObject<YardRender | null>; tool: UiTool }) {
   const root = useRef<THREE.Group>(null);
   const bodyRef = useRef<THREE.Mesh>(null);
   const head = useRef<THREE.Group>(null);
@@ -21,6 +23,8 @@ function RemoteAvatar({ player, renderRef }: { player: PlayerRenderPose; renderR
   const leftFlame = useRef<THREE.Mesh>(null);
   const rightFlame = useRef<THREE.Mesh>(null);
 
+  const forwardCorrection = useRef(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI));
+
   const colors = PLAYER_COLORS[player.slot % PLAYER_COLORS.length]!;
 
   useFrame(() => {
@@ -29,18 +33,27 @@ function RemoteAvatar({ player, renderRef }: { player: PlayerRenderPose; renderR
     if (!current) return;
 
     const isRiding = Boolean(current.ridingVehicle);
+    root.current.visible = current.slot !== renderRef.current?.localSlot || showsLocalAvatar(tool, isRiding);
+    if (!root.current.visible) return;
 
-    root.current.position.set(current.position[0], current.position[1], current.position[2]);
-    root.current.rotation.y = current.yaw;
+    const chassis = isRiding ? renderRef.current?.poses.get('vehicle-chassis') : undefined;
+    if (chassis) {
+      root.current.position.set(...chassis.position);
+      root.current.quaternion.set(...chassis.rotation).multiply(forwardCorrection.current);
+    } else {
+      root.current.position.set(...current.position);
+      root.current.rotation.set(0, current.yaw + Math.PI, 0);
+    }
 
     if (bodyRef.current) {
-      bodyRef.current.position.y = isRiding ? 0.32 : 0.75;
-      bodyRef.current.scale.set(1, isRiding ? 0.75 : 1.0, 1);
+      bodyRef.current.position.y = isRiding ? -0.10 : 0.75;
+      bodyRef.current.scale.set(1, isRiding ? 0.45 : 1.0, 1);
     }
 
     if (head.current) {
-      head.current.position.y = isRiding ? 0.82 : 1.45;
-      head.current.rotation.x = isRiding ? 0.05 : current.pitch;
+      head.current.position.y = isRiding ? 0.30 : 1.45;
+      head.current.scale.setScalar(isRiding ? 0.85 : 1);
+      head.current.rotation.x = isRiding ? 0.05 : -current.pitch;
     }
 
     if (toolRef.current) {
@@ -49,9 +62,11 @@ function RemoteAvatar({ player, renderRef }: { player: PlayerRenderPose; renderR
 
     if (drivingArmsRef.current) {
       drivingArmsRef.current.visible = isRiding;
+      drivingArmsRef.current.position.y = -0.4;
     }
 
     if (jetpackRef.current) {
+      jetpackRef.current.visible = !isRiding;
       jetpackRef.current.position.y = isRiding ? 0.45 : 0.82;
       jetpackRef.current.position.z = isRiding ? -0.18 : -0.26;
     }
@@ -148,19 +163,14 @@ function RemoteAvatar({ player, renderRef }: { player: PlayerRenderPose; renderR
   );
 }
 
-export function PlayerAvatars({ renderRef, tool }: { renderRef: MutableRefObject<YardRender | null>; tool?: string }) {
+export function PlayerAvatars({ renderRef, tool }: { renderRef: MutableRefObject<YardRender | null>; tool: UiTool }) {
   const render = renderRef.current;
   if (!render || !render.players) return null;
 
-  // In orbit camera mode, render all players including local player so they can see themselves driving!
-  const visiblePlayers = tool === 'orbit'
-    ? render.players
-    : render.players.filter((p) => p.slot !== render.localSlot);
-
   return (
     <>
-      {visiblePlayers.map((player) => (
-        <RemoteAvatar key={player.slot} player={player} renderRef={renderRef} />
+      {render.players.map((player) => (
+        <PlayerAvatar key={player.slot} player={player} renderRef={renderRef} tool={tool} />
       ))}
     </>
   );

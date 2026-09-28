@@ -24,6 +24,16 @@ describe('MatchController', () => {
     expect(controller.snapshot().status).toBe('idle');
   });
 
+  it('keeps simulation time when display frames take 50 milliseconds', async () => {
+    const controller = new MatchController(deps());
+    await controller.start({ kind: 'solo' });
+    try {
+      controller.setInput(NEUTRAL_INPUT);
+      for (let i = 0; i <= 20; i++) controller.pump(i * 50);
+      expect(controller.snapshot().render?.frame ?? 0).toBeGreaterThanOrEqual(28);
+    } finally { controller.stop(); }
+  });
+
   it('surfaces a rejected transport as an error with the message', async () => {
     const controller = new MatchController(deps({ createRoomTransport: async () => { throw new Error('room rejected'); } }));
     await controller.start({ kind: 'create' });

@@ -1,0 +1,57 @@
+{
+  "capturedAt": "2026-09-28T01:06:31.475Z",
+  "results": [
+    {
+      "name": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "inputChecks": {
+        "travel": 2.8764604060185617,
+        "drift": 0,
+        "sentYaw": 1717
+      },
+      "profile": {
+        "samples": 120,
+        "meanFrameMs": 16.665833333333335,
+        "p95FrameMs": 16.700000000000728,
+        "maxFrameMs": 16.800000000000182,
+        "simulationTicks": 60,
+        "elapsedMs": 2008.199999988079,
+        "meanDrawCalls": 161.675,
+        "dpr": 1,
+        "shadows": true,
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Max, Unspecified Version)",
+        "note": "Headless desktop browser. Mobile layout is not a phone benchmark."
+      },
+      "errors": []
+    },
+    {
+      "name": "mobile-layout",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "inputChecks": {
+        "travel": 2.8764604060185617,
+        "drift": 0,
+        "sentYaw": 1717
+      },
+      "profile": {
+        "samples": 120,
+        "meanFrameMs": 16.666666666666664,
+        "p95FrameMs": 16.799999999999727,
+        "maxFrameMs": 16.800000000000182,
+        "simulationTicks": 60,
+        "elapsedMs": 2007.9000000357628,
+        "meanDrawCalls": 57.2,
+        "dpr": 1,
+        "shadows": false,
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Max, Unspecified Version)",
+        "note": "Headless desktop browser. Mobile layout is not a phone benchmark."
+      },
+      "errors": []
+    }
+  ]
+}
