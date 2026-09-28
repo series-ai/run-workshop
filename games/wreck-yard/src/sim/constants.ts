@@ -8,10 +8,10 @@ export const FLOOR_Y = -0.86;
 export const GRAVITY = 13.5;
 export const GRAVITY_PER_TICK2 = -GRAVITY * DT2;
 /**
- * Syncplay damping rates (per second, not per-tick multipliers). With these
- * values, rounded voxel bodies at rest never sleep and creep a few mm/s:
- * https://github.com/series-ai/venus/issues/4861. Damping 0 lets them sleep
- * but changes how far thrown bodies travel.
+ * Syncplay damping rates (per second, not per-tick multipliers). In
+ * 6.0.0-rc.8, rounded voxel bodies at rest sleep with these values, but
+ * slatted shapes (the timber pallet) still never sleep and creep a few mm/s:
+ * https://github.com/series-ai/venus/issues/4861.
  */
 export const LINEAR_DAMPING = 0.98;
 export const ANGULAR_DAMPING = 0.945;
@@ -20,6 +20,8 @@ export const MAX_PLAYERS = 4;
 export const SHELL_PREFIX = 'shell:';
 
 export const GRAB_FLOOR_CLEARANCE = 0.25;
+/** A held body this far (m) from its hold point is let go. */
+export const GRAB_BREAK_DISTANCE = 10;
 /**
  * The hold point moves toward the aim at most this fast (m/s). It stays below
  * IMPACT_MIN_SPEED so carrying a body cannot fracture it.
@@ -27,12 +29,16 @@ export const GRAB_FLOOR_CLEARANCE = 0.25;
 export const GRAB_TARGET_MAX_SPEED = 5.5;
 /** Hold point acceleration (m/s²). Must stay well below GRAB_MAX_ACCEL - gravity so the body can follow. */
 export const GRAB_TARGET_ACCEL = 18;
-/** Grab spring. Critical damping stops at the hold point without overshoot. */
-export const GRAB_SPRING_HZ = 6;
-export const GRAB_DAMPING_RATIO = 1;
-/** Force and torque limits scale with mass and inertia so every body accelerates alike. */
+/**
+ * The held body closes its gap to the hold point over this time (s). The servo
+ * sets velocity directly; a physics joint made every world step 5x slower
+ * (see grab.ts).
+ */
+export const GRAB_SERVO_TIME = 0.1;
+/** Spin kept per tick while held, so a carried body does not tumble. */
+export const GRAB_SPIN_KEEP = 0.7;
+/** Largest acceleration the servo applies to a held body (m/s²), the same for every mass. */
 export const GRAB_MAX_ACCEL = 40;
-export const GRAB_MAX_ANGULAR_ACCEL = 60;
 /** Release multiplies the body's real velocity, so a still hold drops straight down. */
 export const THROW_BOOST = 1.16;
 

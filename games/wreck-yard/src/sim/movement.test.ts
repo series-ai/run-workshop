@@ -41,6 +41,7 @@ describe('scene collision', () => {
     } finally { physics.world.dispose(); }
   });
 
+  // Regression for https://github.com/series-ai/venus/issues/4823 (fixed in 6.0.0-rc.8).
   it('carries a standing player by one tick of platform motion', () => {
     const physics: OpenYardPhysicsWorld = { world: makeWorld(), bodyIds: new Map() };
     try {

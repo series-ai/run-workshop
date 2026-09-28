@@ -5,10 +5,13 @@ import type { Vec3 } from './math';
 import type { OpenYardPhysicsWorld } from './physics';
 import type { PlayerState } from './state';
 
-// RC.5 rejects capsule queries when a compound collider exists. Use the
-// capsule bounds for KCC queries until that SDK defect is fixed.
-// https://github.com/series-ai/venus/issues/4821
-function queryShape(shape: PhysicsOverlapQuery3D['shape']): PhysicsOverlapQuery3D['shape'] {
+/**
+ * The KCC queries with the capsule's bounding box. In Syncplay 6.0.0-rc.8,
+ * capsule queries work with voxel bodies but cost ~150x a box query (9.5 ms
+ * each with 30 voxel bodies), which doubled the tick. Box queries stop the
+ * player a few cm early at the corners of turned boxes.
+ */
+function boxQueryShape(shape: PhysicsOverlapQuery3D['shape']): PhysicsOverlapQuery3D['shape'] {
   return shape.type === 'capsule'
     ? { type: 'box', halfX: shape.radius, halfY: shape.halfHeight + shape.radius, halfZ: shape.radius }
     : shape;
@@ -17,17 +20,8 @@ function queryShape(shape: PhysicsOverlapQuery3D['shape']): PhysicsOverlapQuery3
 function characterQueries(world: PhysicsWorld3D): PhysicsWorld3D {
   return {
     ...world,
-    // KCC platform carry uses meters per frame. Physics motion uses m/s.
-    readMotion: (handle) => {
-      const motion = world.readMotion(handle);
-      return { ...motion, linearVelocity: {
-        x: motion.linearVelocity.x * DT,
-        y: motion.linearVelocity.y * DT,
-        z: motion.linearVelocity.z * DT,
-      } };
-    },
-    overlap: (query) => world.overlap({ ...query, shape: queryShape(query.shape) }),
-    shapeCast: (query) => world.shapeCast({ ...query, shape: queryShape(query.shape) }),
+    overlap: (query) => world.overlap({ ...query, shape: boxQueryShape(query.shape) }),
+    shapeCast: (query) => world.shapeCast({ ...query, shape: boxQueryShape(query.shape) }),
   };
 }
 

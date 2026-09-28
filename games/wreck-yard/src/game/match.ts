@@ -244,6 +244,9 @@ export class MatchController {
           sessionConfigBytes: room.sessionConfigBytes,
           playerCount: 1,
           localSlot: 0,
+          // Solo play has no peer to compare checksums with. Hashing the full
+          // state every tick cost ~1.45 ms/tick (Syncplay defaults to per-tick).
+          checksumMode: "events-only",
         });
         if (this.startGeneration !== generation) return;
         this.status = "live";

@@ -1,15 +1,9 @@
-import {
-  type PhysicsContactEvent3D,
-  type PhysicsJointHandle3D,
-} from '@series-inc/rundot-syncplay/physics/3d';
+import type { PhysicsContactEvent3D } from '@series-inc/rundot-syncplay/physics/3d';
 import {
   DT,
   FLOOR_Y,
-  GRAB_DAMPING_RATIO,
+  GRAB_BREAK_DISTANCE,
   GRAB_FLOOR_CLEARANCE,
-  GRAB_MAX_ACCEL,
-  GRAB_MAX_ANGULAR_ACCEL,
-  GRAB_SPRING_HZ,
   GRAVITY_GUN_PUNT_SPEED,
   IMPACT_COOLDOWN_TICKS,
   IMPACT_MIN_SPEED,
@@ -23,7 +17,6 @@ import {
   PLAYER_MOVE_SPEED,
   THROW_BOOST,
   withinBuggyMountRange,
-  TICK_RATE,
   TORCH_INSET,
   TORCH_PULSE_TICKS,
   TORCH_RADIUS,
@@ -34,7 +27,7 @@ import { fractureBody, type FractureContact } from './fracture';
 import { stepBuggy } from './vehicle';
 import { movePlayer } from './movement';
 import { ANGLE_SCALE, decodeRay, TOOL, type YardInput } from './input';
-import { advanceHoldPoint } from './grab';
+import { advanceHoldPoint, grabServo } from './grab';
 import { add, clamp, lerp, rotateInverse, scale, sub, type Vec3 } from './math';
 import type { VoxelDims } from 'voxel-kit';
 import {
@@ -44,13 +37,12 @@ import {
   voxelStats,
   isShell,
   openWorld,
-  fullPhysicsBodyById,
   physicsBodyById,
-  physicsBodyHandle,
   physicsBodyName,
   poseOf,
   removePhysicsBody,
   replacePhysicsBody,
+  setPhysicsBodyMotion,
   setPhysicsBodyVelocity,
   type OpenYardPhysicsWorld,
   type YardPhysicsBody3D,
@@ -340,7 +332,20 @@ function stepHand(
     const aim = add(ray.origin, scale(ray.direction, grab.distance));
     const floorY = FLOOR_Y + halfExtents(body.dims)[1] + GRAB_FLOOR_CLEARANCE;
     const hold = advanceHoldPoint({ point: grab.target, velocity: grab.targetVelocity }, [aim[0], Math.max(aim[1], floorY), aim[2]]);
-    grab = { ...grab, target: hold.point, targetVelocity: hold.velocity };
+    const physics = physicsBodyById(w.physics, grab.bodyId)!;
+    const position: Vec3 = [physics.x, physics.y, physics.z];
+    const gap = sub(hold.point, position);
+    if (gap[0] * gap[0] + gap[1] * gap[1] + gap[2] * gap[2] > GRAB_BREAK_DISTANCE * GRAB_BREAK_DISTANCE) {
+      // The body is stuck far behind the hold point (wedged or knocked away): let go.
+      grab = null;
+    } else {
+      const motion = grabServo(position, {
+        linear: [physics.vx, physics.vy, physics.vz],
+        angular: [physics.angularVel.x, physics.angularVel.y, physics.angularVel.z],
+      }, hold);
+      setPhysicsBodyMotion(w.physics, grab.bodyId, motion.linear, motion.angular);
+      grab = { ...grab, target: hold.point, targetVelocity: hold.velocity };
+    }
   } else if (grab && !input.pressed) {
     const physics = physicsBodyById(w.physics, grab.bodyId)!;
     setPhysicsBodyVelocity(w.physics, grab.bodyId, scale([physics.vx, physics.vy, physics.vz], THROW_BOOST));
@@ -484,9 +489,9 @@ function queueImpacts(w: Working, contacts: readonly PhysicsContactEvent3D[], fr
       const physics = physicsBodyById(w.physics, id)!;
       let worldPoint: Vec3 = [contact.point.x, contact.point.y, contact.point.z];
       let local = worldToVoxel(body, physics, worldPoint);
-      // RC.5 can report a contact outside both bodies. Recover a point on
-      // this body along the contact normal before carving its surface.
-      // https://github.com/series-ai/venus/issues/4822
+      // The contact point is shared by both bodies and can sit a few cm off
+      // this body's surface. Project it onto this body along the contact
+      // normal so the carve lands on its surface.
       if (local.some((v, axis) => v < -1 || v > [body.dims.x, body.dims.y, body.dims.z][axis]!)) {
         const sign = numericId === contact.bodyA ? 1 : -1;
         const outward: Vec3 = [contact.normal.x * sign, contact.normal.y * sign, contact.normal.z * sign];
@@ -551,75 +556,6 @@ function applyFractures(w: Working, frame: number): void {
   w.fractures = [];
 }
 
-interface GrabJoint {
-  readonly slot: number;
-  readonly targetId: string;
-  readonly joint: PhysicsJointHandle3D;
-}
-
-const FREE_AXIS = { type: 'free' } as const;
-
-function createGrabJoints(w: Working): GrabJoint[] {
-  const joints: GrabJoint[] = [];
-  for (let slot = 0; slot < w.players.length; slot += 1) {
-    const player = w.players[slot];
-    const grab = player?.grab;
-    if (!grab) continue;
-    const body = physicsBodyById(w.physics, grab.bodyId);
-    if (!body) continue;
-    const delta = sub(grab.target, [body.x, body.y, body.z]);
-    if (delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2] > 100) {
-      w.players[slot] = { ...player, grab: null };
-      continue;
-    }
-    const { mass, inertia } = fullPhysicsBodyById(w.physics, grab.bodyId)!;
-    const maxForce = mass * GRAB_MAX_ACCEL;
-    const maxTorque = Math.max(inertia.xx, inertia.yy, inertia.zz) * GRAB_MAX_ANGULAR_ACCEL;
-    const linearSpring = { target: 0, frequencyHz: GRAB_SPRING_HZ, dampingRatio: GRAB_DAMPING_RATIO, maxForce };
-    const angularSpring = { target: 0, frequencyHz: GRAB_SPRING_HZ, dampingRatio: GRAB_DAMPING_RATIO, maxForce: maxTorque };
-    const targetId = `__grab_target:${slot}`;
-    const created = w.physics.world.edit((edit) => {
-      const target = edit.createBody({
-        kind: 'kinematic',
-        shape: { type: 'sphere', radius: 0.001 },
-        // Starts one tick back and reaches the hold point at the end of the step.
-        position: {
-          x: grab.target[0] - grab.targetVelocity[0],
-          y: grab.target[1] - grab.targetVelocity[1],
-          z: grab.target[2] - grab.targetVelocity[2],
-        },
-        linearVelocity: {
-          x: grab.targetVelocity[0] * TICK_RATE,
-          y: grab.targetVelocity[1] * TICK_RATE,
-          z: grab.targetVelocity[2] * TICK_RATE,
-        },
-        layer: 0,
-        mask: 0,
-      });
-      const joint = edit.createJoint({
-        type: 'six_dof',
-        bodyA: target,
-        bodyB: physicsBodyHandle(w.physics, grab.bodyId),
-        linearAxes: [{ limit: FREE_AXIS, spring: linearSpring }, { limit: FREE_AXIS, spring: linearSpring }, { limit: FREE_AXIS, spring: linearSpring }],
-        angularAxes: [{ limit: FREE_AXIS, spring: angularSpring }, { limit: FREE_AXIS, spring: angularSpring }, { limit: FREE_AXIS, spring: angularSpring }],
-        maxLinearForce: maxForce,
-        maxAngularTorque: maxTorque,
-      });
-      return { target, joint };
-    }).created;
-    w.physics.bodyIds.set(targetId, created.target.id);
-    joints.push({ slot, targetId, joint: created.joint });
-  }
-  return joints;
-}
-
-function removeGrabJoints(w: Working, joints: readonly GrabJoint[]): void {
-  for (const entry of joints) {
-    w.physics.world.edit((edit) => edit.removeBody(physicsBodyHandle(w.physics, entry.targetId)));
-    w.physics.bodyIds.delete(entry.targetId);
-  }
-}
-
 export function stepYard(state: YardState, inputs: readonly YardInput[]): YardState {
   const physics = openWorld(state.world);
   let disposed = false;
@@ -641,7 +577,6 @@ export function stepYard(state: YardState, inputs: readonly YardInput[]): YardSt
 
     const driver = w.players.find((player) => player.ridingVehicle);
     const buggyWheels = stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyWheels);
-    const grabJoints = createGrabJoints(w);
     w.physics.world.step();
     const latest = w.physics.world.latest();
 
@@ -664,13 +599,7 @@ export function stepYard(state: YardState, inputs: readonly YardInput[]): YardSt
       }
     }
 
-    for (const entry of grabJoints) {
-      if (latest.breakEvents.some((event) => event.jointId === entry.joint.id)) {
-        w.players[entry.slot] = { ...w.players[entry.slot]!, grab: null };
-      }
-    }
     queueImpacts(w, latest.contacts, state.frame);
-    removeGrabJoints(w, grabJoints);
     applyFractures(w, state.frame);
 
     disposed = true;

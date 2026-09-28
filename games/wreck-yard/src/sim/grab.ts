@@ -1,4 +1,4 @@
-import { DT, GRAB_TARGET_ACCEL, GRAB_TARGET_MAX_SPEED } from './constants';
+import { DT, GRAB_MAX_ACCEL, GRAB_SERVO_TIME, GRAB_SPIN_KEEP, GRAB_TARGET_ACCEL, GRAB_TARGET_MAX_SPEED, GRAVITY } from './constants';
 import { add, length, scale, sub, type Vec3 } from './math';
 
 export interface HoldPoint {
@@ -28,4 +28,32 @@ export function advanceHoldPoint(hold: HoldPoint, aim: Vec3): HoldPoint {
 
   if (length(velocity) >= distance) return { point: aim, velocity: toAim };
   return { point: add(hold.point, velocity), velocity };
+}
+
+export interface BodyMotion {
+  /** Meters per tick. */
+  readonly linear: Vec3;
+  /** Radians per tick. */
+  readonly angular: Vec3;
+}
+
+/**
+ * Velocity servo that carries a held body to the hold point. It replaces a
+ * six-DOF joint: any joint makes the whole world step slower (about 5x in
+ * 6.0.0-rc.5, still about 2x in rc.8; https://github.com/series-ai/venus/issues/4862).
+ * The servo moves the body toward the hold point over
+ * GRAB_SERVO_TIME, limits the change to GRAB_MAX_ACCEL, cancels the gravity
+ * the next step applies, and damps spin. Units are per tick.
+ */
+export function grabServo(position: Vec3, motion: BodyMotion, hold: HoldPoint): BodyMotion {
+  // hold.point is where the hold point ends this tick. Close the gap from its
+  // start-of-tick position, then move with it, so the body does not lead it.
+  const holdStart = sub(hold.point, hold.velocity);
+  const desired = add(hold.velocity, scale(sub(holdStart, position), DT / GRAB_SERVO_TIME));
+  const change = sub(desired, motion.linear);
+  const changeLength = length(change);
+  const maxChange = GRAB_MAX_ACCEL * DT * DT;
+  const limited = changeLength <= maxChange ? change : scale(change, maxChange / changeLength);
+  const linear = add(add(motion.linear, limited), [0, GRAVITY * DT * DT, 0]);
+  return { linear, angular: scale(motion.angular, GRAB_SPIN_KEEP) };
 }
