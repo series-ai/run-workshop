@@ -2,7 +2,8 @@ import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import { fillWorldOcclusionVolume, type WorldOcclusionBody, type WorldOcclusionSpec } from 'voxel-kit';
-import { SHELL_BOXES, VOXEL_SIZE } from '../sim/constants';
+import { VOXEL_SIZE } from '../sim/constants';
+import { SHELL_BOXES, shellBoxBounds } from '../sim/shell';
 import type { YardBody } from '../sim/state';
 import { WORLD_OCCLUSION_SPEC, WORLD_SUN_DIRECTION } from './viewConstants';
 import type { RenderPose, YardRender } from './presentation';
@@ -131,7 +132,7 @@ export function OcclusionUpdater({ renderRef, worldOcclusion }: { renderRef: Mut
       };
     });
 
-    fillWorldOcclusionVolume(worldOcclusion.data, worldOcclusion.spec, bodies, SHELL_BOXES.map(({ center, size }) => ({ center, size })), VOXEL_SIZE);
+    fillWorldOcclusionVolume(worldOcclusion.data, worldOcclusion.spec, bodies, SHELL_BOXES.map(shellBoxBounds), VOXEL_SIZE);
     worldOcclusion.texture.needsUpdate = true;
     lastUpdate.current = now;
     poseCache.current.update(render.bodies, render.poses);

@@ -1,5 +1,6 @@
+import { SHELL_BOXES, shellBoxBounds } from './shell';
 import { describe, expect, it } from 'vitest';
-import { ARENA_EXTENT, clutterCollider, SHELL_BOXES, YARD_CLUTTER } from './constants';
+import { ARENA_EXTENT, clutterCollider, VOXEL_SIZE, YARD_CLUTTER } from './constants';
 import { createInitialState } from './presets';
 import { PLAYER_SPAWN_POINTS } from './state';
 
@@ -21,7 +22,7 @@ describe('yard clutter', () => {
   });
 
   it('keeps clear of other colliders, floodlights, and each other', () => {
-    const solids = SHELL_BOXES.filter((box) => box.id !== 'floor' && !box.id.startsWith('wall-'));
+    const solids = SHELL_BOXES.filter((box) => box.id !== 'floor' && !box.id.startsWith('wall-')).map((box) => ({ id: box.id, ...shellBoxBounds(box) }));
     for (const item of YARD_CLUTTER) {
       const box = clutterCollider(item);
       for (const other of solids) {
@@ -48,6 +49,21 @@ describe('yard clutter', () => {
       for (const body of bodies) {
         const spawn: Box = { center: [body.x, body.y, body.z], size: [0, 0, 0] };
         expect(overlaps(box, spawn, 2.5), `${item.id} vs ${body.id}`).toBe(false);
+      }
+    }
+  });
+
+  it('starts every dynamic body clear of every static collider', () => {
+    // Overlap at spawn makes the solver push bodies out explosively.
+    const state = createInitialState(1);
+    const statics = SHELL_BOXES.filter((box) => box.id !== 'floor').map((box) => ({ id: box.id, ...shellBoxBounds(box) }));
+    for (const body of state.bodies.filter((b) => b.motion === 'dynamic' && b.id !== 'vehicle-chassis')) {
+      const pose = state.world.bodies.find((p) => p.id === body.id)!;
+      const size = [body.dims.x * VOXEL_SIZE, body.dims.y * VOXEL_SIZE, body.dims.z * VOXEL_SIZE];
+      for (const box of statics) {
+        const inside = [0, 1, 2].every((axis) =>
+          Math.abs([pose.x, pose.y, pose.z][axis]! - box.center[axis]!) < (size[axis]! + box.size[axis]!) / 2 - 0.02);
+        expect(inside, `${body.id} starts inside ${box.id}`).toBe(false);
       }
     }
   });

@@ -232,6 +232,21 @@ function makeDestructibleTower(): VolumePreset {
   return { dims, voxels };
 }
 
+function makeFlatPallet(): VolumePreset {
+  // 1.2 x 0.24 x 1.2 m shipping pallet: three wide runners (stable support,
+  // no rocking when stacked) under a slatted top deck.
+  const dims = { x: 15, y: 3, z: 15 };
+  const voxels = makeEmptyVoxelField(dims);
+  for (const z of [0, 6, 12]) stampBox(voxels, dims, { x: 0, y: 0, z }, { x: 14, y: 1, z: z + 2 }, 2);
+  for (const x of [0, 3, 6, 9, 12]) stampBox(voxels, dims, { x, y: 2, z: 0 }, { x: x + 2, y: 2, z: 14 }, 2);
+  return { dims, voxels };
+}
+
+/** Top of the west loading deck above the floor (see setPieces deck collider). */
+const DECK_HEIGHT = 1.0;
+/** Top of the ball-drop platform above the floor (shell box 'ball-drop-platform'). */
+const HOPPER_TOP = 5.0;
+
 function restY(dims: { y: number }): number {
   return FLOOR_Y + dims.y * VOXEL_SIZE * 0.5 + 0.01;
 }
@@ -267,6 +282,7 @@ export function createSpawns(): Spawn[] {
   const ballast = makeBallastBlock();
 
   const seesaw = makeSeesawPlank();
+  const flatPallet = makeFlatPallet();
   const ball = makeBowlingBall();
   const pin = makeBowlingPin();
   const buggy = makeBuggyChassis();
@@ -281,7 +297,7 @@ export function createSpawns(): Spawn[] {
     spawn('steel-gantry', 'Steel Gantry', makeSteelGantry(), [2.18, 1.74, TANK.center[2]], 0.08, IDENTITY_QUAT, 'fixed', ['-x']),
     spawn('float-crate', 'Float Crate', makeFloatCrate(), [TANK.center[0] + 0.35, 0.04, TANK.center[2] + 0.2], 1, YAW_POS_008),
     spawn('float-drum', 'Flotation Drum', floatDrum, [TANK.center[0] - 0.65, 0.04, TANK.center[2] - 0.25], 1.2, YAW_NEG_014),
-    spawn('ballast-box', 'Ballast Box', ballast, [0.62, restY(ballast.dims) + 0.48, 1.3], 0.05, YAW_NEG_014),
+    spawn('ballast-box', 'Ballast Box', ballast, [-0.1, restY(ballast.dims) + 0.48, 1.3], 0.05, YAW_NEG_014),
     spawn('hazard-drum-1', 'Hazard Drum 1', hazard, [0.5, restY(hazard.dims), -2.2], 0.35, YAW_POS_008),
     spawn('hazard-drum-2', 'Hazard Drum 2', hazard, [-2.2, restY(hazard.dims), 2.2], 0.35, YAW_NEG_014),
 
@@ -289,8 +305,8 @@ export function createSpawns(): Spawn[] {
     spawn('seesaw-plank', 'Seesaw Plank', seesaw, [-14, FLOOR_Y + 0.9 + 0.18, -6], 0.2),
 
     // Ball drop sector
-    spawn('bowling-ball-1', 'Heavy Demolition Ball 1', ball, [-12, FLOOR_Y + 5.2, 12], 0.05),
-    spawn('bowling-ball-2', 'Heavy Demolition Ball 2', ball, [-12.8, FLOOR_Y + 5.2, 11.2], 0.05),
+    spawn('bowling-ball-1', 'Heavy Demolition Ball 1', ball, [-12, restY(ball.dims) + HOPPER_TOP, 12], 0.05),
+    spawn('bowling-ball-2', 'Heavy Demolition Ball 2', ball, [-12.8, restY(ball.dims) + HOPPER_TOP, 11.2], 0.05),
 
     // Astro Bot Playground: 6-Pin Bowling Triangle Alley
     spawn('bowling-pin-1', 'Bowling Pin 1', pin, [-6.0, restY(pin.dims), 12.0], 0.3),
@@ -308,6 +324,15 @@ export function createSpawns(): Spawn[] {
     spawn('domino-crate-2', 'Domino Crate 2', timber, [14.0, steelY, 13.0], 0.28),
     spawn('domino-crate-3', 'Domino Crate 3', steel, [15.4, steelY, 13.0], 0.1),
     spawn('hazard-drum-jump', 'Jump Hazard Drum', hazard, [14.0, restY(hazard.dims) + 0.8, 13.0], 0.35),
+
+    // Loose props on the west loading deck (top 1.0 m above the floor) and by the east barriers.
+    spawn('deck-drum-1', 'Oil Drum', hazard, [-22.6, restY(hazard.dims) + DECK_HEIGHT, 9.0], 0.35),
+    spawn('deck-drum-2', 'Oil Drum', hazard, [-22.6, restY(hazard.dims) + DECK_HEIGHT, 9.9], 0.35),
+    spawn('deck-drum-3', 'Oil Drum', hazard, [-21.75, restY(hazard.dims) + DECK_HEIGHT, 9.45], 0.35),
+    spawn('deck-pallet-1', 'Pallet', flatPallet, [-19.9, restY(flatPallet.dims) + DECK_HEIGHT, 9.5], 0.3, YAW_POS_008),
+    spawn('deck-pallet-2', 'Pallet', flatPallet, [-19.9, restY(flatPallet.dims) + DECK_HEIGHT + 0.25, 9.5], 0.3),
+    spawn('yard-drum-1', 'Oil Drum', hazard, [18.9, restY(hazard.dims), 4.0], 0.35),
+    spawn('yard-pallet-1', 'Pallet', flatPallet, [20.4, restY(flatPallet.dims), 3.5], 0.3, YAW_NEG_014),
 
     // Astro Bot Drift Slalom Cones (Guiding the sweeping southern hairpin curve)
     spawn('slalom-drum-1', 'Slalom Drum 1', hazard, [10.0, restY(hazard.dims), 18.0], 0.35),

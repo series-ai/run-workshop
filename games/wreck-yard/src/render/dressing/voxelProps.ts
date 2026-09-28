@@ -112,37 +112,6 @@ export function buildCar(
   };
 }
 
-export function buildDebrisChips(
-  seed: number,
-  count: number,
-): VoxelGrid {
-  const rand = lcg(seed);
-  const sx = 8;
-  const sy = 2;
-  const sz = 8;
-  const cells = new Uint8Array(sx * sy * sz);
-
-  const idx = (x: number, y: number, z: number) => x + y * sx + z * sx * sy;
-  const rustIdx = getPaletteKeyIndex('rust');
-  const inkIdx = getPaletteKeyIndex('ink');
-  const concreteIdx = getPaletteKeyIndex('concreteLit');
-
-  const swatches = [rustIdx, inkIdx, concreteIdx];
-
-  for (let i = 0; i < count; i++) {
-    const x = Math.floor(rand() * sx);
-    const z = Math.floor(rand() * sz);
-    const y = rand() < 0.8 ? 0 : 1;
-    const swatch = swatches[Math.floor(rand() * swatches.length)];
-    cells[idx(x, y, z)] = swatch;
-  }
-
-  return {
-    dims: { x: sx, y: sy, z: sz },
-    cells,
-  };
-}
-
 /**
  * Flat scrap scatter: rods, plates, and chips lying on the ground, in scrap
  * colors. 20 x 2 x 20 cells; at 0.1 m scale one patch covers 2 x 2 m.

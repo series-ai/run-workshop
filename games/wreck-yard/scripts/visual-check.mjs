@@ -16,6 +16,8 @@ const VIEWS = {
   vista: { pos: [2, 8.5, 25], lookAt: [0, 2.2, -8] },
   ramp: { pos: [7.5, 2.6, 7.5], lookAt: [14, 0.2, 0] },
   tank: { pos: [8, 3.4, 6], lookAt: [2.5, 0, 0.5] },
+  deck: { pos: [-13, 3.2, 14], lookAt: [-21, 0.6, 7] },
+  center: { pos: [-1, 2.6, 5], lookAt: [-4.5, -0.2, -0.8] },
 };
 const selected = (process.argv[3]?.split(',') ?? Object.keys(VIEWS)).filter((name) => name in VIEWS);
 

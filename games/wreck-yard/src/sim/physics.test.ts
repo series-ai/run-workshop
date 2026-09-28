@@ -1,6 +1,7 @@
+import { SHELL_BOXES } from './shell';
 import { describe, expect, it } from 'vitest';
 import { makeEmptyVoxelField, stampBox } from 'voxel-kit';
-import { SHELL_BOXES, VOXEL_SIZE, YARD_CLUTTER } from './constants';
+import { VOXEL_SIZE, YARD_CLUTTER } from './constants';
 import { bodyMass, cookCenteredCollider, makePhysicsBody, voxelStats } from './physics';
 import { createInitialState } from './presets';
 import type { YardBody } from './state';

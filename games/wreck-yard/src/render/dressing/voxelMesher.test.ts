@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildCar,
   buildConcreteBlock,
-  buildDebrisChips,
+  buildScrapScatter,
 } from './voxelProps';
 import { meshVoxelGrids, type VoxelPlacement } from './voxelMesher';
 import { DRESSING_LAYOUT } from './layout';
@@ -17,8 +17,8 @@ describe('voxelProps and voxelMesher (T7, R6, A6)', () => {
     const blockB = buildConcreteBlock(101, [4, 4, 4]);
     expect(blockA.cells).toEqual(blockB.cells);
 
-    const chipsA = buildDebrisChips(7, 30);
-    const chipsB = buildDebrisChips(7, 30);
+    const chipsA = buildScrapScatter(7, 30);
+    const chipsB = buildScrapScatter(7, 30);
     expect(chipsA.cells).toEqual(chipsB.cells);
   });
 

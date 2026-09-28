@@ -1,4 +1,4 @@
-import { buildCar, buildConcreteBlock, buildDebrisChips, buildScrapScatter } from './voxelProps';
+import { buildCar, buildConcreteBlock, buildScrapScatter } from './voxelProps';
 import type { VoxelPlacement } from './voxelMesher';
 import { CLUTTER_BARRIER, CLUTTER_CAR, FLOOR_Y, YARD_CLUTTER, type ClutterItem } from '../../sim/constants';
 import type { PaletteKey } from '../style/artStyle';
@@ -90,28 +90,28 @@ export const DRESSING_LAYOUT: readonly VoxelPlacement[] = [
 
   // Scrap debris chips clusters around central pad perimeter
   {
-    grid: buildDebrisChips(401, 35),
+    grid: buildScrapScatter(401, 26),
     position: [-6, FLOOR_Y, -4],
     rotationY: 0.4,
-    scale: 0.2,
+    scale: 0.1,
   },
   {
-    grid: buildDebrisChips(402, 35),
+    grid: buildScrapScatter(402, 26),
     position: [6, FLOOR_Y, -4],
     rotationY: -0.5,
-    scale: 0.2,
+    scale: 0.1,
   },
   {
-    grid: buildDebrisChips(403, 30),
+    grid: buildScrapScatter(403, 26),
     position: [-5, FLOOR_Y, 5],
     rotationY: 1.1,
-    scale: 0.2,
+    scale: 0.1,
   },
   {
-    grid: buildDebrisChips(404, 30),
+    grid: buildScrapScatter(404, 26),
     position: [5, FLOOR_Y, 5],
     rotationY: -0.8,
-    scale: 0.2,
+    scale: 0.1,
   },
 ];
 

@@ -20,14 +20,13 @@ import {
   ANGULAR_DAMPING,
   GRAVITY,
   LINEAR_DAMPING,
-  SHELL_BOXES,
   SHELL_PREFIX,
   TANK,
   TICK_RATE,
-  VEHICLE_RAMP_PITCH,
   VOXEL_SIZE,
   YARD_MATERIAL,
 } from './constants';
+import { SHELL_BOXES, shellBoxQuaternion } from './shell';
 import { clamp, lerp, type Quat, type Vec3 } from './math';
 import type { YardBody } from './state';
 
@@ -193,9 +192,7 @@ export function shellBodies(): YardPhysicsBodyInput3D[] {
       kind: 'static' as const,
       position: { x: box.center[0], y: box.center[1], z: box.center[2] },
       shape: { type: 'box' as const, halfX: box.size[0] * 0.5, halfY: box.size[1] * 0.5, halfZ: box.size[2] * 0.5 },
-      orientation: box.id === 'vehicle-ramp'
-        ? { x: Math.sin(VEHICLE_RAMP_PITCH / 2), y: 0, z: 0, w: Math.cos(VEHICLE_RAMP_PITCH / 2) }
-        : { x: 0, y: 0, z: 0, w: 1 },
+      orientation: (([x, y, z, w]) => ({ x, y, z, w }))(shellBoxQuaternion(box)),
       friction: YARD_MATERIAL.friction,
       restitution: YARD_MATERIAL.restitution,
       layer: 1,

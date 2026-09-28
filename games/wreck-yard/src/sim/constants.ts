@@ -1,4 +1,4 @@
-import type { WaterTankSpec, WorldOcclusionStaticBox } from 'voxel-kit';
+import type { WaterTankSpec } from 'voxel-kit';
 
 export const TICK_RATE = 30;
 export const DT = 1 / TICK_RATE;
@@ -7,6 +7,12 @@ export const VOXEL_SIZE = 0.08;
 export const FLOOR_Y = -0.86;
 export const GRAVITY = 13.5;
 export const GRAVITY_PER_TICK2 = -GRAVITY * DT2;
+/**
+ * Syncplay damping rates (per second, not per-tick multipliers). With these
+ * values, rounded voxel bodies at rest never sleep and creep a few mm/s:
+ * https://github.com/series-ai/venus/issues/4861. Damping 0 lets them sleep
+ * but changes how far thrown bodies travel.
+ */
 export const LINEAR_DAMPING = 0.98;
 export const ANGULAR_DAMPING = 0.945;
 export const MAX_RAY_DISTANCE = 40;
@@ -67,8 +73,6 @@ export const TANK_SPEC: WaterTankSpec = {
   surfaceY: TANK.surfaceY,
 };
 
-const TANK_WALL_HEIGHT = TANK.surfaceY - TANK.bottomY;
-const TANK_WALL_CENTER_Y = TANK.bottomY + TANK_WALL_HEIGHT * 0.5;
 
 export const PLAYER_RADIUS = 0.4;
 export const PLAYER_HEIGHT = 1.8;
@@ -146,25 +150,6 @@ export function withinBuggyMountRange(player: readonly [number, number, number],
 /** Pitch of the vehicle ramp about X, in radians. The collider and the drawn ramp share it. */
 export const VEHICLE_RAMP_PITCH = -0.14;
 
-/** Static boxes: center and full size. Used for physics shell bodies and occlusion. */
-export const SHELL_BOXES: readonly (WorldOcclusionStaticBox & { id: string })[] = [
-  { id: 'floor', center: [0, FLOOR_Y - 0.1, 0], size: [52, 0.2, 52] },
-  { id: 'wall-west', center: [-ARENA_EXTENT, FLOOR_Y + 2, 0], size: [0.6, 4, 52] },
-  { id: 'wall-east', center: [ARENA_EXTENT, FLOOR_Y + 2, 0], size: [0.6, 4, 52] },
-  { id: 'wall-north', center: [0, FLOOR_Y + 1, -ARENA_EXTENT], size: [52, 2, 0.6] },
-  { id: 'wall-south', center: [0, FLOOR_Y + 2, ARENA_EXTENT], size: [52, 4, 0.6] },
-  { id: 'plinth-a', center: [1.0, FLOOR_Y + 0.24, 0.9], size: [3.1, 0.48, 3.8] },
-  { id: 'plinth-b', center: [-2.35, FLOOR_Y + 0.2, -1.4], size: [2.3, 0.4, 2.3] },
-  { id: 'tank-floor', center: [TANK.center[0], TANK.bottomY - 0.12, TANK.center[2]], size: [TANK.innerSize[0], 0.24, TANK.innerSize[2]] },
-  { id: 'tank-west', center: [TANK.center[0] - TANK.innerSize[0] * 0.5, TANK_WALL_CENTER_Y, TANK.center[2]], size: [TANK.wallThickness, TANK_WALL_HEIGHT, TANK.innerSize[2]] },
-  { id: 'tank-east', center: [TANK.center[0] + TANK.innerSize[0] * 0.5, TANK_WALL_CENTER_Y, TANK.center[2]], size: [TANK.wallThickness, TANK_WALL_HEIGHT, TANK.innerSize[2]] },
-  { id: 'tank-north', center: [TANK.center[0], TANK_WALL_CENTER_Y, TANK.center[2] - TANK.innerSize[2] * 0.5], size: [TANK.innerSize[0], TANK_WALL_HEIGHT, TANK.wallThickness] },
-  { id: 'tank-south', center: [TANK.center[0], TANK_WALL_CENTER_Y, TANK.center[2] + TANK.innerSize[2] * 0.5], size: [TANK.innerSize[0], TANK_WALL_HEIGHT, TANK.wallThickness] },
-  { id: 'seesaw-pivot', center: [-14, FLOOR_Y + 0.45, -6], size: [1.2, 0.9, 1.2] },
-  { id: 'ball-drop-platform', center: [-12, FLOOR_Y + 2.5, 12], size: [4, 5.0, 4] },
-  { id: 'vehicle-ramp', center: [14.0, FLOOR_Y + 0.45, 0.0], size: [4.8, 0.12, 6.0] },
-  ...YARD_CLUTTER.map((item) => ({ id: `clutter-${item.id}`, ...clutterCollider(item) })),
-];
 
 export const TERRAIN_COLS = 17;
 export const TERRAIN_ROWS = 17;

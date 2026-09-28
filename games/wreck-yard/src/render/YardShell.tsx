@@ -5,8 +5,10 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { WaterTankSpec } from 'voxel-kit';
-import { FLOOR_Y, getTerrainHeightAt, TANK, TANK_SPEC, TERRAIN_COLS, TERRAIN_ROWS, TERRAIN_SPACING, SHELL_BOXES, VEHICLE_RAMP_PITCH } from '../sim/constants';
-import { RAMP_COLLIDER, RAMP_PARTS } from './rampParts';
+import { FLOOR_Y, getTerrainHeightAt, TANK, TANK_SPEC, TERRAIN_COLS, TERRAIN_ROWS, TERRAIN_SPACING } from '../sim/constants';
+import { SHELL_BOXES } from '../sim/shell';
+import { BALES_ORIGIN, FLOODLIGHT_MASTS, MAST_LAMP_HEIGHT, mastYaw, openTankFrameBoxes, TANK_RIM, VEHICLE_RAMP } from '../sim/setPieces';
+import { RAMP_PARTS } from './rampParts';
 import { glowTexture } from './style/glowTexture';
 import { SkyDome } from './SkyDome';
 import { Skyline } from './Skyline';
@@ -103,14 +105,6 @@ export function computeWaterVisualLayout(tank: WaterTankSpec): WaterVisualLayout
   };
 }
 
-export function openTankFrameBoxes(width: number, depth: number, thickness: number, height: number) {
-  return [
-    { center: tuple3(0, 0, -(depth + thickness) / 2), size: tuple3(width + thickness * 2, height, thickness) },
-    { center: tuple3(0, 0, (depth + thickness) / 2), size: tuple3(width + thickness * 2, height, thickness) },
-    { center: tuple3(-(width + thickness) / 2, 0, 0), size: tuple3(thickness, height, depth) },
-    { center: tuple3((width + thickness) / 2, 0, 0), size: tuple3(thickness, height, depth) },
-  ];
-}
 
 function tankFrameGeometry(thickness: number, height: number, centerY: number) {
   const parts = openTankFrameBoxes(TANK.innerSize[0], TANK.innerSize[2], thickness, height).map(({ center, size }) => {
@@ -124,7 +118,7 @@ function tankFrameGeometry(thickness: number, height: number, centerY: number) {
 }
 
 const TANK_WALL_GEOMETRY = tankFrameGeometry(TANK.wallThickness, TANK.surfaceY - TANK.bottomY, (TANK.surfaceY + TANK.bottomY) / 2);
-const TANK_RIM_GEOMETRY = tankFrameGeometry(0.4, 0.1, TANK.surfaceY + 0.05);
+const TANK_RIM_GEOMETRY = tankFrameGeometry(TANK_RIM.thickness, TANK_RIM.height, TANK_RIM.centerY);
 
 function CuttingRigSparks() {
   const geom = useMemo(() => {
@@ -234,19 +228,17 @@ function wallTrimGeometry(size: readonly [number, number, number]): THREE.Buffer
   const key = size.join(',');
   const cached = wallTrimCache.get(key);
   if (cached) return cached;
-  const parts = WALL_PILASTERS.map((z) => new THREE.BoxGeometry(0.1, size[1], 0.35).translate(size[0] / 2 + 0.05, 0, z));
+  // Pilasters protrude 7 cm, within the wall collider's contact margin.
+  const parts = WALL_PILASTERS.map((z) => new THREE.BoxGeometry(0.1, size[1], 0.35).translate(size[0] / 2 + 0.02, 0, z));
   parts.push(new THREE.BoxGeometry(0.04, 0.08, size[2]).translate(size[0] / 2 + 0.02, size[1] * 0.2, 0));
   const merged = BufferGeometryUtils.mergeGeometries(parts);
   parts.forEach((part) => part.dispose());
   wallTrimCache.set(key, merged);
   return merged;
 }
-const MAST_LAMP_HEIGHT = 11.2;
 const FLOODLIGHT_COLOR = '#ffe5a3';
 /** Lens color above 1.0 in the HDR target, so the bloom picks it up. */
 const FLOODLIGHT_LENS = new THREE.Color(FLOODLIGHT_COLOR).multiplyScalar(3);
-/** Corner floodlight masts (x, z). */
-const FLOODLIGHT_MASTS: readonly (readonly [number, number])[] = [[-21.5, -21], [21.5, -21], [-21.5, 21], [21.5, 21]];
 
 function createMastSteelGeometry(): THREE.BufferGeometry {
   const geoms: THREE.BufferGeometry[] = [];
@@ -594,7 +586,7 @@ export function YardShell({ renderRef }: { renderRef?: React.MutableRefObject<Ya
 
       {/* High-mast floodlights at the four corners, turned to face the yard */}
       {FLOODLIGHT_MASTS.map(([x, z]) => (
-        <group key={`mast-${x}-${z}`} position={[x, FLOOR_Y, z]} rotation={[0, Math.atan2(-x, -z), 0]}>
+        <group key={`mast-${x}-${z}`} position={[x, FLOOR_Y, z]} rotation={[0, mastYaw(x, z), 0]}>
           <mesh position={[0, 0.6, 0]} castShadow receiveShadow raycast={noRaycast}>
             <boxGeometry args={[2.0, 1.2, 2.0]} />
             <Toon color={ART_STYLE.palette.concreteShade} />
@@ -641,9 +633,9 @@ export function YardShell({ renderRef }: { renderRef?: React.MutableRefObject<Ya
           <mesh geometry={wallTrimGeometry(wall.size)} raycast={noRaycast}>
             <Toon color={ART_STYLE.palette.concreteShade} />
           </mesh>
-          {/* Concrete Cap Rail */}
-          <mesh position={[0, wall.size[1] / 2 + 0.15, 0]} castShadow raycast={noRaycast}>
-            <boxGeometry args={[0.9, 0.3, 52]} />
+          {/* Concrete cap band, flush with the collider top */}
+          <mesh position={[0, wall.size[1] / 2 - 0.15, 0]} castShadow raycast={noRaycast}>
+            <boxGeometry args={[0.7, 0.3, 52]} />
             <Toon color={ART_STYLE.palette.concreteShade} />
           </mesh>
         </group>
@@ -679,31 +671,7 @@ export function YardShell({ renderRef }: { renderRef?: React.MutableRefObject<Ya
         </mesh>
       </group>
 
-      {/* Stacked Wooden Cargo Pallets */}
-      {[
-        { pos: [-22, FLOOR_Y + 1.12, 1.5], rot: 0.1 },
-        { pos: [-22, FLOOR_Y + 1.36, 1.5], rot: 0.05 },
-        { pos: [20.4, FLOOR_Y + 0.12, 3.5], rot: -0.2 },
-      ].map((pallet, idx) => (
-        <mesh key={`pallet-${idx}`} position={pallet.pos as [number, number, number]} rotation={[0, pallet.rot, 0]} receiveShadow raycast={noRaycast}>
-          <boxGeometry args={[1.2, 0.22, 1.2]} />
-          <Toon color={ART_STYLE.palette.rust} />
-        </mesh>
-      ))}
-
-      {/* Industrial 55-Gallon Steel Oil Drums (Teardown signature prop) */}
-      {[
-        { pos: [-20.5, FLOOR_Y + 1.5, 1.2], color: '#eab308' },
-        { pos: [-20.5, FLOOR_Y + 1.5, 2.1], color: '#1e3a8a' },
-        { pos: [-19.7, FLOOR_Y + 1.5, 1.6], color: '#b91c1c' },
-        { pos: [20.1, FLOOR_Y + 0.5, 4.8], color: '#047857' },
-      ].map((drum, idx) => (
-        <mesh key={`drum-${idx}`} position={drum.pos as [number, number, number]} receiveShadow raycast={noRaycast}>
-          <cylinderGeometry args={[0.3, 0.3, 1.0, 16]} />
-          <Toon color={ART_STYLE.palette.teal} />
-        </mesh>
-      ))}
-
+      {/* Drums and pallets are dynamic bodies (sim/presets.ts), drawn by VoxelBodies. */}
       {/* Concrete Highway Jersey Barriers - Positioned as outer circuit crash barriers */}
       {[
         { pos: [20.5, FLOOR_Y + 0.45, 6.0], rot: 0 },
@@ -723,7 +691,7 @@ export function YardShell({ renderRef }: { renderRef?: React.MutableRefObject<Ya
       ))}
 
       {/* Stunt launch ramp: safety-orange deck with inset hazard curbs */}
-      <group position={[...RAMP_COLLIDER.center]} rotation={[VEHICLE_RAMP_PITCH, 0, 0]}>
+      <group position={[...VEHICLE_RAMP.center]} rotation={[VEHICLE_RAMP.pitch, 0, 0]}>
         {RAMP_PARTS.map((part) => (
           <mesh key={part.name} position={[...part.center]} castShadow={part.name === 'deck'} receiveShadow raycast={noRaycast}>
             <boxGeometry args={[...part.size]} />
@@ -1036,7 +1004,7 @@ export function YardShell({ renderRef }: { renderRef?: React.MutableRefObject<Ya
       {/* ========================================================================= */}
       {/* SECTOR A DRESSING: COMPACTED SCRAP BALES                                  */}
       {/* ========================================================================= */}
-      <ScrapMetalBales position={[-3.6, FLOOR_Y, -0.6]} />
+      <ScrapMetalBales position={BALES_ORIGIN} />
 
       {/* ========================================================================= */}
       {/* SECTOR C: OPEN GRAVITY BALL HOPPER & ROLLER CHUTE [-12, FLOOR_Y + 2.5, 12] */}
