@@ -24,18 +24,12 @@ function makeSteelCase(): VolumePreset {
   return { dims, voxels };
 }
 
-/**
- * Pallets stand on one full bottom board. On three separate runners, the light
- * flat pallet jitters at ~0.04 m/s and never sleeps (Syncplay 6.0.0-rc.13, #4861
- * follow-up), and it keeps what rests on it awake too.
- */
 function makeTimberPallet(): VolumePreset {
   const dims = { x: 16, y: 10, z: 12 };
   const voxels = makeEmptyVoxelField(dims);
-  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 15, y: 0, z: 11 }, 2);
-  stampBox(voxels, dims, { x: 0, y: 1, z: 0 }, { x: 15, y: 1, z: 2 }, 2);
-  stampBox(voxels, dims, { x: 0, y: 1, z: 5 }, { x: 15, y: 1, z: 6 }, 2);
-  stampBox(voxels, dims, { x: 0, y: 1, z: 9 }, { x: 15, y: 1, z: 11 }, 2);
+  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 15, y: 1, z: 2 }, 2);
+  stampBox(voxels, dims, { x: 0, y: 0, z: 5 }, { x: 15, y: 1, z: 6 }, 2);
+  stampBox(voxels, dims, { x: 0, y: 0, z: 9 }, { x: 15, y: 1, z: 11 }, 2);
   stampBox(voxels, dims, { x: 1, y: 2, z: 1 }, { x: 4, y: 8, z: 10 }, 2);
   stampBox(voxels, dims, { x: 6, y: 2, z: 1 }, { x: 9, y: 8, z: 10 }, 2);
   stampBox(voxels, dims, { x: 11, y: 2, z: 1 }, { x: 14, y: 8, z: 10 }, 2);
@@ -262,12 +256,11 @@ function makeDestructibleTower(): VolumePreset {
 }
 
 function makeFlatPallet(): VolumePreset {
-  // 1.2 x 0.24 x 1.2 m shipping pallet: a full bottom board (see
-  // makeTimberPallet), three runners, and a slatted top deck.
+  // 1.2 x 0.24 x 1.2 m shipping pallet: three wide runners (stable support,
+  // no rocking when stacked) under a slatted top deck.
   const dims = { x: 15, y: 3, z: 15 };
   const voxels = makeEmptyVoxelField(dims);
-  stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 14, y: 0, z: 14 }, 2);
-  for (const z of [0, 6, 12]) stampBox(voxels, dims, { x: 0, y: 1, z }, { x: 14, y: 1, z: z + 2 }, 2);
+  for (const z of [0, 6, 12]) stampBox(voxels, dims, { x: 0, y: 0, z }, { x: 14, y: 1, z: z + 2 }, 2);
   for (const x of [0, 3, 6, 9, 12]) stampBox(voxels, dims, { x, y: 2, z: 0 }, { x: x + 2, y: 2, z: 14 }, 2);
   return { dims, voxels };
 }

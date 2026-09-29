@@ -49,6 +49,8 @@ export function ToolFeedbackBeams({ renderRef, tool }: { renderRef: MutableRefOb
       const feedback = player?.feedback;
       if (!render || !player || !feedback || player.ridingVehicle) continue;
       const effect = feedbackEffect(feedback.result);
+      // A torch shot that reaches nothing burns out in the air (TorchJet); the red beam is the gravity gun's refusal.
+      if (effect.kind === 'refusal' && player.activeTool === 'torch') continue;
       const progress = effect.kind === 'heat'
         ? (isTorchFiring(feedback, render.frame) ? 0 : null)
         : effectProgress(render.frame - feedback.frame);

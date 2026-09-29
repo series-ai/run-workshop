@@ -11,11 +11,8 @@ import { stepYard } from './step';
 /** Bodies that move at the start on purpose: floats bob in the tank. */
 const MOVES_BY_DESIGN = new Set(['float-crate', 'float-drum']);
 
-/**
- * Bodies that never sleep at rest, each in a small island of its own: the buggy
- * rides on wheel rays, the floats bob, and the timber pallet creeps on the steel case.
- */
-const NEVER_SLEEPS = new Set(['vehicle-chassis', 'float-crate', 'float-drum', 'steel-case', 'timber-pallet']);
+/** Bodies that never sleep at rest: the buggy rides on wheel rays, and the floats bob. */
+const NEVER_SLEEPS = new Set(['vehicle-chassis', 'float-crate', 'float-drum']);
 
 /** Wall inner faces sit at ARENA_EXTENT minus half the 0.6 m wall. */
 const INNER = ARENA_EXTENT - 0.3;

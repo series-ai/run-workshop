@@ -12,6 +12,7 @@ import { FirstPersonTool } from './FirstPersonTool';
 import { TorchSparks } from './TorchSparks';
 import { ToolFeedbackBeams } from './ToolFeedbackBeams';
 import { TractorBeam } from './TractorBeam';
+import { TorchJet } from './TorchJet';
 import { VoxelBodies } from './VoxelBodies';
 import { YardShell } from './YardShell';
 import { Contraptions } from './Contraptions';
@@ -62,6 +63,7 @@ function SceneRoot({ controller, tool, quality, onQualityFallback, onToolChange,
       <TorchSparks tool={tool} renderRef={renderRef} />
       <ToolFeedbackBeams tool={tool} renderRef={renderRef} />
       <TractorBeam tool={tool} renderRef={renderRef} />
+      <TorchJet tool={tool} renderRef={renderRef} />
       <OcclusionUpdater renderRef={renderRef} worldOcclusion={worldOcclusion} />
       <InkComposer enableInk={true} samples={isMobileDevice() ? 0 : 4} quality={quality} />
       {onQualityFallback && quality === 'high' ? <QualityFallback onFallback={onQualityFallback} /> : null}

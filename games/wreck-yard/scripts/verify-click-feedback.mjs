@@ -101,13 +101,16 @@ try {
   await page.evaluate(() => window.__SIMULATE_INPUT__({ secondary: false }));
   results['gun-punt-burst'] = { result: punted.feedback?.result ?? null };
   // 7. Torch at the wall: flame and sparks, no cut.
-  // The wall is far past TORCH_RANGE: the flame fires, but nothing is hit (src/sim/toolFeedback.test.ts covers scorch in reach).
+  // The wall is far past TORCH_RANGE: the flame burns out in the air at the end of its reach.
   await click('torch-out-of-range', 'torch', [me.position[0], me.position[1] + 0.5, 30], { hold: 500 });
+  // The floor 1.3 m ahead is within reach: the flame ends on it and scorches it.
+  await click('torch-scorch-floor', 'torch', [me.position[0], me.position[1] - 0.4, me.position[2] - 1.3], { hold: 500 });
 
   assert.equal(results['gun-miss'].result, 'miss');
   assert.equal(results['gun-blocked-wall'].result, 'blocked');
   assert.equal(results['gun-grab'].result, 'grab');
   assert.equal(results['torch-out-of-range'].result, 'miss');
+  assert.equal(results['torch-scorch-floor'].result, 'scorch');
   assert.ok(results['gun-hold-bend'].holding, 'the tractor beam case was not holding a body');
   assert.equal(results['gun-throw-burst'].result, 'throw');
   assert.equal(results['gun-punt-burst'].result, 'punt');

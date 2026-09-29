@@ -10,9 +10,8 @@ export const GRAVITY_PER_TICK2 = -GRAVITY * DT2;
 /**
  * Syncplay damping is the fraction of velocity a body keeps each tick (v=10
  * becomes 9.8 after one step at 0.98; 0 stops the body; 1 keeps it all;
- * documented in 6.0.0-rc.13). In rc.13 voxel bodies at rest sleep with these
- * values, except a light flat pallet on runners (see presets.ts makeTimberPallet):
- * https://github.com/series-ai/venus/issues/4861.
+ * documented in 6.0.0-rc.13). Since rc.14 every voxel body in the yard sleeps
+ * at rest with these values (https://github.com/series-ai/venus/issues/4861).
  */
 export const LINEAR_DAMPING = 0.98;
 export const ANGULAR_DAMPING = 0.945;

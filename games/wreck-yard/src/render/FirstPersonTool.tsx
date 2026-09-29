@@ -30,8 +30,6 @@ export function FirstPersonTool({
 
   // Torch Refs
   const torchLightRef = useRef<THREE.PointLight>(null);
-  const innerFlameRef = useRef<THREE.Mesh>(null);
-  const outerFlameRef = useRef<THREE.Mesh>(null);
   const pilotFlameRef = useRef<THREE.Mesh>(null);
   const nozzleGlowRef = useRef<THREE.Mesh>(null);
 
@@ -155,15 +153,6 @@ export function FirstPersonTool({
     if (tool === 'torch') {
       // The flame shows whenever the torch fires, not only while it cuts a body.
       const flameActive = render !== null && isTorchFiring(localPlayer?.feedback ?? null, render.frame);
-      if (innerFlameRef.current && outerFlameRef.current) {
-        innerFlameRef.current.visible = flameActive;
-        outerFlameRef.current.visible = flameActive;
-        if (flameActive) {
-          const jitter = 0.88 + Math.random() * 0.24;
-          innerFlameRef.current.scale.set(jitter, 1.0 + Math.random() * 0.15, jitter);
-          outerFlameRef.current.scale.set(jitter * 1.15, 1.0 + Math.random() * 0.35, jitter * 1.15);
-        }
-      }
       if (pilotFlameRef.current) {
         const pilotPulse = 0.9 + Math.sin(state.clock.elapsedTime * 15) * 0.15;
         pilotFlameRef.current.scale.set(pilotPulse, pilotPulse, pilotPulse);
@@ -486,21 +475,7 @@ export function FirstPersonTool({
             <meshBasicMaterial color="#38bdf8" toneMapped={false} />
           </mesh>
 
-          {/* Multi-Stage Active Cutting Flame: Intense White/Blue Core + Fiery Plume */}
-          <mesh ref={innerFlameRef} position={[0, 0.014, -0.56]} rotation={[Math.PI / 2, 0, 0]} visible={false}>
-            <cylinderGeometry args={[0.006, 0.018, 0.38, 10]} />
-            <meshBasicMaterial color="#ffffff" toneMapped={false} />
-          </mesh>
-          <mesh ref={outerFlameRef} position={[0, 0.014, -0.74]} rotation={[Math.PI / 2, 0, 0]} visible={false}>
-            <cylinderGeometry args={[0.012, 0.042, 0.72, 12]} />
-            <meshBasicMaterial
-              color="#ffedd5"
-              transparent
-              opacity={0.88}
-              toneMapped={false}
-            />
-          </mesh>
-
+          {/* The cutting flame is drawn in world space by TorchJet, as long as the torch reaches. */}
           {/* Dynamic Light Cast onto Environment Voxels */}
           <pointLight ref={torchLightRef} position={[0, 0.014, -0.76]} distance={9.0} color="#f97316" />
         </group>
