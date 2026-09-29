@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 
 const base = process.env.AUDIT_URL ?? 'http://127.0.0.1:4400';
-const output = fileURLToPath(new URL('../public/showcase/audit/', import.meta.url));
+// Results stay local (test-results/ is git-ignored); they are evidence, not app assets.
+const output = fileURLToPath(new URL('../test-results/live-gameplay/', import.meta.url));
 await fs.mkdir(output, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const results = [];

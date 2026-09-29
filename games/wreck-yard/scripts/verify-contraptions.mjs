@@ -2,12 +2,13 @@
 // watch the sky conveyor drop a crate; then fire the catapult and capture the
 // arm mid-swing. The catapult dunk itself is covered by src/sim/contraptions.test.ts.
 // Needs the dev server on AUDIT_URL.
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
 const base = process.env.AUDIT_URL ?? 'http://127.0.0.1:4400';
-const out = process.env.CONTRAPTION_SHOTS ?? '/tmp/wreck-visual/contraptions-live';
+const out = process.env.CONTRAPTION_SHOTS ?? fileURLToPath(new URL('../test-results/contraptions/', import.meta.url));
 await fs.mkdir(out, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const results = {};

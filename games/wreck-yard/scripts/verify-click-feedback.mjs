@@ -1,11 +1,12 @@
 // Live check: every click shows a result. Saves one frame per case.
 // Needs the dev server on AUDIT_URL.
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
 const base = process.env.AUDIT_URL ?? 'http://127.0.0.1:4400';
-const out = process.env.CLICK_OUT ?? '/tmp/wreck-visual/click-feedback';
+const out = process.env.CLICK_OUT ?? fileURLToPath(new URL('../test-results/click-feedback/', import.meta.url));
 await fs.mkdir(out, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const results = {};

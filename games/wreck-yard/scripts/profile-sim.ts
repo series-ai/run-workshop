@@ -1,7 +1,6 @@
-// Profiles real simulation ticks. Bundle and run with a CPU profile:
-//   npx esbuild scripts/profile-sim.ts --bundle --platform=node --format=esm \
-//     --external:@series-inc/* --outfile=/tmp/profile-sim.mjs
-//   node --cpu-prof --cpu-prof-dir=/tmp/sim-prof /tmp/profile-sim.mjs
+// Profiles real simulation ticks: npm run profile:sim. For a CPU profile:
+//   npm run profile:sim
+//   node --cpu-prof --cpu-prof-dir=test-results/sim-prof test-results/profile-sim.mjs
 // Prints per-scenario tick cost and the per-tick rollback costs (checkpoint,
 // restore, state encoding) so SDK changes can be measured against it.
 import '../src/deterministicMath';

@@ -1,11 +1,13 @@
 // Live check for key bindings and the buggy chase camera.
 // Needs the dev server: npm run dev -- --host 127.0.0.1 --port 4400 --strictPort
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
 const base = process.env.AUDIT_URL ?? 'http://127.0.0.1:4400';
-const shot = process.env.CONTROLS_SHOT ?? '/tmp/wreck-visual/controls-chase.png';
+const shot = process.env.CONTROLS_SHOT ?? fileURLToPath(new URL('../test-results/controls-chase.png', import.meta.url));
+await fs.mkdir(new URL('.', `file://${shot}`), { recursive: true });
 const TOOL = { hand: 0, torch: 1, none: 2 };
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const results = {};

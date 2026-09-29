@@ -25,6 +25,11 @@ Open the printed URL. The app starts in solo mode. Use **Quick match**,
 - `npm run build` — identity check, typecheck, production build
 - `npm test` — unit, codec, and determinism tests
 - `npm run test:e2e` — Playwright smoke test against the preview build
+- `npm run verify:live` — browser checks against a running dev server
+  (`npm run dev -- --host 127.0.0.1 --port 4400 --strictPort`, or set
+  `AUDIT_URL`): collision coverage, controls, click feedback, contraptions,
+  solid scenery, and live frame time. Results go to `test-results/`.
+- `npm run profile:sim` — per-tick simulation and rollback cost, for SDK comparisons
 - `npm run identity:generate` — regenerate `src/sim/identity.generated.json`
   after any change under `src/sim` or `tools/voxel-kit/src`
 - `npm run deploy` — build and deploy with the `rundot` CLI
@@ -33,7 +38,8 @@ Open the printed URL. The app starts in solo mode. Use **Quick match**,
 
 - `src/sim/` — the deterministic simulation: `state.ts`, `input.ts`, `step.ts`,
   `fracture.ts`, `physics.ts`, `presets.ts`, `codec.ts`, `session.ts`. Nothing
-  here reads a clock or uses engine-dependent math. The identity generator
+  here reads a clock. Trig runs through the Syncplay deterministic math shim
+  (`src/deterministicMath.ts`), which loads before any sim module. The identity generator
   hashes every file in this folder plus the kit.
 - `src/game/match.ts` — the syncplay runner controller (solo and rooms).
 - `src/net/rooms.ts` — room transports through the RUN SDK realtime API.

@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'url';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
-import { rundotGameLibrariesPlugin, rundotGamePlaygroundPlugin } from '@series-inc/rundot-game-sdk/vite';
+import { rundotGameLibrariesPlugin, rundotGameSandboxPlugin } from '@series-inc/rundot-game-sdk/vite';
 import { resolveSandboxGameId } from './sandbox.config';
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url));
@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(), // Must come first - handles JSX transform
       rundotGameLibrariesPlugin(),
-      rundotGamePlaygroundPlugin({
+      rundotGameSandboxPlugin({
         gameId: resolveSandboxGameId(rootDir),
         apiKey: env.RUNDOT_API_KEY,
       }),

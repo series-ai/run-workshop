@@ -14,6 +14,8 @@
     "preview": "vite preview --port 4398 --strictPort --host 127.0.0.1",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "verify:live": "node scripts/audit-collision.mjs && node scripts/verify-controls.mjs && node scripts/verify-click-feedback.mjs && node scripts/verify-contraptions.mjs && node scripts/verify-solid-scenery.mjs && node scripts/verify-live-gameplay.mjs",
+    "profile:sim": "esbuild scripts/profile-sim.ts --bundle --platform=node --format=esm --external:@series-inc/* --log-level=warning --outfile=test-results/profile-sim.mjs && node test-results/profile-sim.mjs",
     "identity:generate": "node scripts/generate-identity.mjs",
     "identity:check": "node scripts/generate-identity.mjs --check",
     "deploy": "npm run build && rundot deploy"
