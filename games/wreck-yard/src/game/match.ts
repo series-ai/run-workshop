@@ -290,7 +290,18 @@ export class MatchController {
     const deltaMs =
       this.lastPumpMs === null ? 0 : Math.max(0, nowMs - this.lastPumpMs);
     this.lastPumpMs = nowMs;
-    this.runner.update(deltaMs);
+    try {
+      this.runner.update(deltaMs);
+    } catch (caught) {
+      // A throwing step halts the runner. Syncplay 6.0.0-rc.15 sets its status to
+      // "error" without notifying subscribers, so show the failure here, then rethrow.
+      const failure = caught instanceof Error ? caught : new Error(String(caught));
+      this.status = "error";
+      this.error = failure.message;
+      this.errorDetails = formatMatchError(failure, { roomCode: this.roomCode }).details;
+      this.publish();
+      throw failure;
+    }
     return (this.render?.frame ?? -1) > before;
   }
 
