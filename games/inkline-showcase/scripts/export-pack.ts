@@ -8,29 +8,23 @@ import type { PackManifest, ModelEntry } from '../src/types'
 
 // Category mapping from app catalog to jam-ready-assets top/dimension/theme buckets
 
-const MIT_LICENSE_TEXT = `SPDX-License-Identifier: MIT
-Source: original generated INKLINE assets authored for this project on 2026-09-24
-Verified-by: Codex, 2026-09-24
-Copyright (c) 2026 INKLINE contributors
+async function getRunLicenseText(appRoot: string): Promise<string> {
+  const candidates = [
+    resolve(appRoot, 'LICENSE.md'),
+    resolve(appRoot, '../../LICENSE.md'),
+  ]
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      const content = await readFile(candidate, 'utf8')
+      return `SPDX-License-Identifier: LicenseRef-RUN-Repository-Supplemental-1.0
+Source: https://github.com/series-ai/run-workshop/tree/main/games/inkline-showcase (original INKLINE assets generated for this project)
+Verified-by: run-workshop maintainers
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-`
+${content}`
+    }
+  }
+  throw new Error('Could not find LICENSE.md')
+}
 
 function generateLeafReadme(leaf: string, manifest: PackManifest, effectCount: number): string {
   const models = manifest.models.filter(model => (model.kind === 'character' ? '3D/characters' : CATEGORY_TO_LEAF[model.category]) === leaf)
@@ -131,7 +125,8 @@ async function exportPack() {
   for (const id of ['service-yard', 'roof-works']) required.push(`public/assets/${id}.json`, `public/assets/scenes/${id}.glb`, `public/assets/source/${id}.blend`)
   required.push('public/assets/environment-layouts.json', 'src/runtime/firearms.json')
   for (const path of required) if (!(await stat(resolve(appRoot, path))).size) throw new Error(`Required source is empty: ${path}`)
-  await writeFile(resolve(appRoot, 'public/assets/License.txt'), MIT_LICENSE_TEXT)
+  const runLicenseText = await getRunLicenseText(appRoot)
+  await writeFile(resolve(appRoot, 'public/assets/License.txt'), runLicenseText)
 
   // Clear target pack directory safely
   if (existsSync(targetOut)) {
@@ -156,7 +151,7 @@ async function exportPack() {
     await mkdir(leafDir, { recursive: true })
     await mkdir(resolve(leafDir, 'previews'), { recursive: true })
     // Each leaf gets License.txt and Readme.md
-    await writeFile(resolve(leafDir, 'License.txt'), MIT_LICENSE_TEXT)
+    await writeFile(resolve(leafDir, 'License.txt'), runLicenseText)
     await writeFile(resolve(leafDir, 'Readme.md'), generateLeafReadme(leaf, manifest, effectsCatalog.effects.length))
   }
 
@@ -360,7 +355,10 @@ This directory contains the master consumer manifest, editable Blender sources, 
     await copyFile(resolve(appRoot, 'docs/verification', name), resolve(evidenceDir, name))
   }
   await mkdir(resolve(evidenceDir, 'expansion'), { recursive: true })
-  for (const name of ['runtime.json', 'report.json', 'game-performance.json', 'level-support.json', 'animation-compatibility.json', 'independent-review.json', 'contact-poses.json', 'contact-timing.md', 'animation-expansion-contact-overview.png', 'animation-expansion-side-contact-overview.png', 'effects-64.png', ...Array.from({ length: 6 }, (_, index) => `animation-expansion-${String(index + 1).padStart(2, '0')}.png`)]) await copyFile(resolve(appRoot, 'docs/verification/expansion', name), resolve(evidenceDir, 'expansion', name))
+  for (const name of ['runtime.json', 'report.json', 'game-performance.json', 'level-support.json', 'animation-compatibility.json', 'independent-review.json', 'contact-poses.json', 'contact-timing.md', 'animation-expansion-contact-overview.png', 'animation-expansion-side-contact-overview.png', 'effects-64.png', ...Array.from({ length: 6 }, (_, index) => `animation-expansion-${String(index + 1).padStart(2, '0')}.png`)]) {
+    const src = resolve(appRoot, 'docs/verification/expansion', name)
+    if (existsSync(src)) await copyFile(src, resolve(evidenceDir, 'expansion', name))
+  }
   await mkdir(resolve(evidenceDir, 'kinetic'), { recursive: true })
   for (const name of ['runtime.json', 'contact-poses.json', 'grounded-export.json', 'camera-motion.json', 'camera-performance.json', 'avatar-framing.json', 'cpu-stress.json', 'independent-review.json', 'final-review.md']) await copyFile(resolve(appRoot, 'docs/verification/kinetic', name), resolve(evidenceDir, 'kinetic', name))
   for (const name of ['consumer.json', 'weapon-alignment-review.md', 'camera-performance-before.json']) {
@@ -369,7 +367,9 @@ This directory contains the master consumer manifest, editable Blender sources, 
   }
   // Keep report images and their metadata together. Video footage is excluded.
   for (const directory of ['kinetic/animation-review', 'kinetic/art-review', 'kinetic/screenshots', 'kinetic/avatar-framing', 'expansion/screenshots', 'art-pass', 'correction', 'polish', 'stance', 'feet', 'block', 'gun-height', 'joints']) {
-    for (const file of await walkDir(resolve(appRoot, 'docs/verification', directory))) {
+    const dirPath = resolve(appRoot, 'docs/verification', directory)
+    if (!existsSync(dirPath)) continue
+    for (const file of await walkDir(dirPath)) {
       if (!/\.(png|jpe?g|jsonl?|md)$/i.test(file.rel)) continue
       if (['line-delivery.json', 'polish-delivery.json', 'stance-delivery.json', 'foot-delivery.json', 'block-delivery.json', 'gun-height-delivery.json', 'joint-delivery.json'].includes(file.rel) || /^(frames|effects-before|effects-after)\//.test(file.rel)) continue
       const destination = resolve(evidenceDir, directory, file.rel)

@@ -84,7 +84,7 @@ python3 scripts/verify-export.py
 
 The export script creates `dist-pack/run-inkline` and the ZIP download. Run `python3 scripts/package-showcase.py` to create a separate showcase source ZIP. That archive excludes installed dependencies and prebuilt downloads. Run `npm run assets:export` after unpacking it to restore the full-pack download.
 
-Each asset leaf has an MIT license and provenance. The export includes editable sources, runtime code, previews, metadata, and file checksums.
+Each asset leaf has provenance and license notices under the RUN Repository Supplemental License v1.0. The export includes editable sources, runtime code, previews, metadata, and file checksums.
 
 ## Performance
 
@@ -94,9 +94,9 @@ All GLBs use unlit materials. Static district meshes are combined by material. E
 
 Read [reuse.md](docs/reuse.md), [pack-content.md](docs/pack-content.md), [art-direction.md](docs/art-direction.md), and [performance.md](docs/performance.md) for the contracts and test limits.
 
-All pack geometry, rigs, animation definitions, effect recipes, and sprite sheets were created for this project. No franchise meshes or textures are included. Keep the supplied MIT notice with redistributed pack files.
+All pack geometry, rigs, animation definitions, effect recipes, and sprite sheets were created for this project. No franchise meshes or textures are included. Keep the supplied license notice with redistributed pack files.
 
-The showcase source retains the workshop license in `LICENSE.md`. The separate asset pack carries MIT notices. Dependencies retain their own notices.
+The showcase source and assets are licensed under the RUN Repository Supplemental License v1.0 in `LICENSE.md`. Dependencies retain their own notices.
 
 ## Expansion pass history
 

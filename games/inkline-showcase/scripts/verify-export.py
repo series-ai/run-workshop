@@ -57,7 +57,7 @@ for scene in json.loads((pack / '3D/city/Source/environment-layouts.json').read_
     file_at(pack, scene['source'])
 licenses = list(pack.glob('*/*/License.txt'))
 assert len(licenses) == 7
-assert all(path.read_text().startswith('SPDX-License-Identifier: MIT\n') for path in licenses)
+assert all(path.read_text().startswith('SPDX-License-Identifier: LicenseRef-RUN-Repository-Supplemental-1.0\n') for path in licenses)
 report = {
     'checkedAt': datetime.now(timezone.utc).isoformat(), 'status': 'pass',
     'files': len(files), 'references': references, 'sheets': len(atlas['effects']),
