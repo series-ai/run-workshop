@@ -17,6 +17,12 @@ function rayAt(target: readonly [number, number, number]): Pick<YardInput, 'ox' 
   return quantizeRay(origin, [target[0] - origin[0], target[1] - origin[1], target[2] - origin[2]]);
 }
 
+/** Torch aim from 2 m above the target, inside TORCH_RANGE. */
+function torchAt(target: readonly [number, number, number]): Pick<YardInput, 'ox' | 'oy' | 'oz' | 'dx' | 'dy' | 'dz'> {
+  const origin = [target[0], target[1] + 2, target[2] + 0.001] as const;
+  return quantizeRay(origin, [target[0] - origin[0], target[1] - origin[1], target[2] - origin[2]]);
+}
+
 /**
  * Holds the torch while the aim point walks from `from` to `to` in `steps`
  * increments, pumping the simulation each step. Produces the same per-tick
@@ -36,7 +42,7 @@ function torchDrag(
       from[1] + (to[1] - from[1]) * t,
       from[2] + (to[2] - from[2]) * t,
     ] as const;
-    const cut: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...rayAt(target) };
+    const cut: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...torchAt(target) };
     next = run(next, [cut], 4);
   }
   return next;
@@ -129,7 +135,7 @@ describe('stepYard', () => {
   it('torches the gantry into a fixed stump and a loose piece', () => {
     let state = run(createInitialState(1), [NEUTRAL_INPUT], 5);
     const gantry = physicsStateBodyById(state.world, 'steel-gantry')!;
-    const cut: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...rayAt([gantry.x + 0.2, gantry.y + 0.2, gantry.z]) };
+    const cut: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...torchAt([gantry.x + 0.2, gantry.y + 0.2, gantry.z]) };
     state = run(state, [cut], 12);
     expect(state.stats.torchCuts).toBeGreaterThanOrEqual(1);
     const pieces = state.bodies.filter((b) => b.label === 'Steel Gantry');
@@ -173,7 +179,7 @@ describe('stepYard', () => {
     // through cut replaces, and it must not regress into a fabricated split.
     let state = run(createInitialState(1), [NEUTRAL_INPUT], 5);
     const pallet = physicsStateBodyById(state.world, 'timber-pallet')!;
-    const graze: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...rayAt([pallet.x, pallet.y, pallet.z]) };
+    const graze: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...torchAt([pallet.x, pallet.y, pallet.z]) };
     state = run(state, [graze], 8);
     expect(state.stats.torchCuts).toBeGreaterThanOrEqual(1);
     expect(state.bodies.filter((b) => b.label === 'Timber Pallet').length).toBe(1);

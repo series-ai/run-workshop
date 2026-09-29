@@ -6,10 +6,10 @@ import type { OpenYardPhysicsWorld } from './physics';
 import type { PlayerState } from './state';
 
 /**
- * The KCC queries with the capsule's bounding box. In Syncplay 6.0.0-rc.8,
- * capsule queries work with voxel bodies but cost ~150x a box query (9.5 ms
- * each with 30 voxel bodies), which doubled the tick. Box queries stop the
- * player a few cm early at the corners of turned boxes.
+ * The KCC queries with the capsule's bounding box. In Syncplay 6.0.0-rc.13 a
+ * capsule query next to a voxel body still costs ~17x a box query (~0.5 ms);
+ * real capsules add ~0.2-0.4 ms per walking player per tick. Box queries stop
+ * the player a few cm early at the corners of turned boxes.
  */
 function boxQueryShape(shape: PhysicsOverlapQuery3D['shape']): PhysicsOverlapQuery3D['shape'] {
   return shape.type === 'capsule'

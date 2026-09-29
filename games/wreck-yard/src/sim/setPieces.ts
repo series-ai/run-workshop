@@ -2,12 +2,16 @@ import { FLOOR_Y, TANK, VEHICLE_RAMP_PITCH } from './constants';
 
 type Vec3Tuple = [number, number, number];
 
-/** A static collision box. `rotation` is an XYZ Euler angle in radians (three.js order). */
+/**
+ * A static collision box. `rotation` is an XYZ Euler angle in radians (three.js
+ * order). `surfaceVelocity` (m/s) makes it a conveyor: bodies on it are carried.
+ */
 export interface ShellBox {
   readonly id: string;
   readonly center: Vec3Tuple;
   readonly size: Vec3Tuple;
   readonly rotation?: readonly [number, number, number];
+  readonly surfaceVelocity?: Vec3Tuple;
 }
 
 /** Corner floodlight masts (x, z). Each mast turns to face the yard center. */

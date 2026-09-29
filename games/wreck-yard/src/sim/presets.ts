@@ -25,9 +25,9 @@ function makeSteelCase(): VolumePreset {
 }
 
 /**
- * Pallets stand on one full bottom board. Separate runners give several
- * contact patches that creep a few mm/s, never sleep, and so keep every body
- * on the floor awake (the SDK joins bodies into one island through the floor).
+ * Pallets stand on one full bottom board. On three separate runners, the light
+ * flat pallet jitters at ~0.04 m/s and never sleeps (Syncplay 6.0.0-rc.13, #4861
+ * follow-up), and it keeps what rests on it awake too.
  */
 function makeTimberPallet(): VolumePreset {
   const dims = { x: 16, y: 10, z: 12 };

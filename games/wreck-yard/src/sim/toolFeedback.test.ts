@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { TORCH_RANGE } from './constants';
 import { NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
 import { createInitialState } from './presets';
 import { physicsStateBodyById } from './physics';
@@ -57,11 +58,22 @@ describe('tool feedback', () => {
 
   it('scorches static scenery and cuts bodies with the torch', () => {
     const start = settled();
-    const wall = click(start, { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...ray([0, 0, 20], [0, 0, 30]) });
+    const wall = click(start, { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...ray([0, 0, 23.8], [0, 0, 30]) });
     expect(wall.players[0]!.feedback!.result).toBe('scorch');
     expect(wall.players[0]!.torch).toBeNull();
     const gantry = physicsStateBodyById(start.world, 'steel-gantry')!;
-    const body = click(start, { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...ray([gantry.x + 0.2, gantry.y + 6.2, gantry.z + 0.001], [gantry.x + 0.2, gantry.y + 0.2, gantry.z]) });
+    const body = click(start, { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...ray([gantry.x + 0.2, gantry.y + 2.2, gantry.z + 0.001], [gantry.x + 0.2, gantry.y + 0.2, gantry.z]) });
     expect(body.players[0]!.feedback!.result).toBe('cut');
+  });
+
+  it('reaches only TORCH_RANGE: a body or wall farther away is a miss and is not cut', () => {
+    const start = settled();
+    const gantry = physicsStateBodyById(start.world, 'steel-gantry')!;
+    const far = click(start, { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...ray([gantry.x + 0.2, gantry.y + 5.2, gantry.z + 0.001], [gantry.x + 0.2, gantry.y + 0.2, gantry.z]) });
+    expect(far.players[0]!.feedback!.result).toBe('miss');
+    expect(far.players[0]!.torch).toBeNull();
+    const wall = click(start, { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...ray([0, 0, 20], [0, 0, 30]) });
+    expect(wall.players[0]!.feedback!.result).toBe('miss');
+    expect(wall.players[0]!.feedback!.point[2]).toBeCloseTo(20 + TORCH_RANGE, 1);
   });
 });

@@ -12,7 +12,7 @@ const FRAMES = 15;
 export function scriptedInput(slot: number, frame: number): YardInput {
   if (slot === 0) {
     const on = frame % 40 < 18;
-    return { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: on, ...quantizeRay([2.4 + (frame % 5) * 0.03, 8, 0.551], [0, -1, 0]) };
+    return { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: on, ...quantizeRay([2.4 + (frame % 5) * 0.03, 4, 0.551], [0, -1, 0]) };
   }
   const holding = frame % 60 < 35;
   const lift = holding ? Math.min(1.5, (frame % 60) * 0.06) : 0;

@@ -238,9 +238,14 @@ export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): YardPhys
   let disposed = false;
   try {
     addPhysicsBodies(open, [...shellBodies(), ...bodies]);
+    // Conveyor belts. The surface velocity is part of the checkpoint (6.0.0-rc.13), so once is enough.
+    for (const box of SHELL_BOXES) {
+      if (!box.surfaceVelocity) continue;
+      const [x, y, z] = box.surfaceVelocity;
+      open.world.setBodySurfaceVelocity(physicsBodyHandle(open, `${SHELL_PREFIX}${box.id}`), { x, y, z });
+    }
     open.world.edit((edit) => {
       edit.createFluid(WATER_FLUID_CONFIG);
-
     });
     disposed = true;
     return closeWorld(open);

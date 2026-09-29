@@ -40,7 +40,7 @@ describe('state codec', () => {
 
   it('round trips a state after cuts and grabs', () => {
     let state = createInitialState(2);
-    const torch = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...quantizeRay([2.4, 8, 0.551], [0, -1, 0]) };
+    const torch = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...quantizeRay([2.4, 4, 0.551], [0, -1, 0]) };
     for (let i = 0; i < 12; i += 1) state = stepYard(state, [torch, NEUTRAL_INPUT]);
     const bytes = encodeState(state);
     expect(encodeState(decodeState(bytes))).toEqual(bytes);

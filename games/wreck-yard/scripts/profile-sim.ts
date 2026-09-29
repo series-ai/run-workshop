@@ -12,10 +12,13 @@ import { createInitialState } from '../src/sim/presets';
 import type { YardState } from '../src/sim/state';
 import { stepYard } from '../src/sim/step';
 
-const rayAt = (t: readonly [number, number, number]) => {
-  const o = [t[0], t[1] + 6, t[2] + 0.001] as const;
+const aimFrom = (height: number) => (t: readonly [number, number, number]) => {
+  const o = [t[0], t[1] + height, t[2] + 0.001] as const;
   return quantizeRay(o, [t[0] - o[0], t[1] - o[1], t[2] - o[2]]);
 };
+const rayAt = aimFrom(6);
+/** Inside TORCH_RANGE. */
+const torchAt = aimFrom(2);
 const stats = (times: number[]) => {
   const sorted = [...times].sort((a, b) => a - b);
   return `median ${sorted[sorted.length >> 1]!.toFixed(2)} ms, p90 ${sorted[Math.floor(sorted.length * 0.9)]!.toFixed(2)} ms, max ${sorted.at(-1)!.toFixed(2)} ms`;
@@ -53,7 +56,7 @@ state = run('torch cutting', state, 150, (tick, current) => {
   if (total > lastCuts) { cuts.push(tick); lastCuts = total; }
   const target = physicsStateBodyById(current.world, 'steel-gantry') ?? gantry;
   // Release for one tick every 20 ticks so each stroke starts a new cut.
-  return { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: tick % 20 !== 19, ...rayAt([target.x + 0.2 - (tick % 20) * 0.03, target.y + 0.2, target.z]) };
+  return { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: tick % 20 !== 19, ...torchAt([target.x + 0.2 - (tick % 20) * 0.03, target.y + 0.2, target.z]) };
 });
 console.log(`  cuts/fractures landed on ticks: ${cuts.join(', ') || 'none'}`);
 state = run('after cutting (idle)', state, 150, () => NEUTRAL_INPUT);

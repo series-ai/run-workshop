@@ -14,6 +14,7 @@ import {
   JETPACK_THRUST_XZ,
   JETPACK_THRUST_Y,
   MAX_RAY_DISTANCE,
+  TORCH_RANGE,
   PLAYER_EYE_OFFSET,
   PLAYER_GRAVITY,
   PLAYER_MOVE_SPEED,
@@ -41,7 +42,6 @@ import {
   inCatapultBucket,
   MAX_DROPPED_CRATES,
   nearHoop,
-  onConveyor,
   type ButtonId,
 } from './contraptions';
 import { supplyCratePreset } from './props';
@@ -115,14 +115,14 @@ type AimHit =
   | { readonly kind: 'solid'; readonly point: Vec3 }
   | { readonly kind: 'none'; readonly point: Vec3 };
 
-function aimRay(w: Working, origin: Vec3, direction: Vec3): AimHit {
+function aimRay(w: Working, origin: Vec3, direction: Vec3, maxDistance = MAX_RAY_DISTANCE): AimHit {
   const hits = w.physics.world.raycast({
     x: origin[0], y: origin[1], z: origin[2],
     dx: direction[0], dy: direction[1], dz: direction[2],
-    maxDistance: MAX_RAY_DISTANCE,
+    maxDistance,
   });
   const first = hits[0];
-  if (!first) return { kind: 'none', point: add(origin, scale(direction, MAX_RAY_DISTANCE)) };
+  if (!first) return { kind: 'none', point: add(origin, scale(direction, maxDistance)) };
   const point: Vec3 = [first.point.x, first.point.y, first.point.z];
   const bodyId = physicsBodyName(w.physics, first.bodyId);
   const body = bodyId === undefined || isShell(bodyId) ? undefined : findBody(w.bodies, bodyId);
@@ -437,9 +437,10 @@ function stepTorch(
     };
   }
 
-  const aim = aimRay(w, ray.origin, ray.direction);
+  const aim = aimRay(w, ray.origin, ray.direction, TORCH_RANGE);
   if (aim.kind !== 'body') {
-    // A wall or other static solid throws sparks without cutting; open air shows only the flame.
+    // A wall or other static solid throws sparks without cutting; open air or anything
+    // past TORCH_RANGE shows only the flame.
     return {
       ...player,
       grab: null,
@@ -697,15 +698,6 @@ function pressButton(w: Working, button: ButtonId): ToolFeedback {
   return toolFeedback(w, 'press', buttonTop(button));
 }
 
-/** Before the physics step: bodies resting on the belt move at the belt speed. */
-function stepConveyor(w: Working, before: YardPhysicsWorldState): void {
-  for (const previous of before.bodies) {
-    if (previous.kind !== 'dynamic' || !onConveyor([previous.x, previous.y, previous.z])) continue;
-    const now = physicsBodyById(w.physics, previous.id);
-    if (now) setPhysicsBodyVelocity(w.physics, previous.id, [now.vx * 0.5, now.vy, CONVEYOR.speed * DT]);
-  }
-}
-
 /** After the physics step: count dunks, and give landed catapult bodies their damping back. */
 function stepContraptions(w: Working, before: YardPhysicsWorldState): void {
   for (const previous of before.bodies) {
@@ -747,7 +739,6 @@ export function stepYard(state: YardState, inputs: readonly YardInput[]): YardSt
 
     const driver = w.players.find((player) => player.ridingVehicle);
     const buggyWheels = stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyWheels);
-    stepConveyor(w, state.world);
     w.physics.world.step();
     const latest = w.physics.world.latest();
     stepContraptions(w, state.world);

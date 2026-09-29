@@ -74,16 +74,7 @@ export const CRATE_SPAWN: Vec3 = [CONVEYOR.x, CONVEYOR.topY + 0.52, -27.6];
 export const DROP_COOLDOWN_TICKS = 45;
 /** Crates the conveyor keeps in the yard; the oldest goes when a new one comes. */
 export const MAX_DROPPED_CRATES = 12;
-/**
- * A body resting on the belt. The step sets its speed along the belt each tick:
- * Syncplay 6.0.0-rc.8 surface velocity moves a resting body at only about
- * friction × gravity × dt (0.37 m/s here), and a body that sleeps on it freezes.
- */
-export function onConveyor(position: Vec3): boolean {
-  return Math.abs(position[0] - CONVEYOR.x) < CONVEYOR.width / 2
-    && position[2] > CONVEYOR.zStart && position[2] < CONVEYOR.zEnd
-    && position[1] > CONVEYOR.topY && position[1] < CONVEYOR.topY + 1.5;
-}
+
 
 // ---------------------------------------------------------------------------
 // Catapult at the south wall, aimed at the hoop.
@@ -228,7 +219,10 @@ export const CONTRAPTION_COLLIDERS: readonly ShellBox[] = [
   ...DUNK_SIGN.posts.map((post, index) => box(`dunk-sign-post-${index}`, post.center, post.size)),
 
   // Conveyor: belt deck (frame and rollers inside it), side rails, legs, feeder housing.
-  box('conveyor-belt', [CONVEYOR.x, CONVEYOR.topY - 0.15, (CONVEYOR.zStart + CONVEYOR.zEnd) / 2], [CONVEYOR.width + 0.2, 0.3, CONVEYOR.zEnd - CONVEYOR.zStart]),
+  {
+    ...box('conveyor-belt', [CONVEYOR.x, CONVEYOR.topY - 0.15, (CONVEYOR.zStart + CONVEYOR.zEnd) / 2], [CONVEYOR.width + 0.2, 0.3, CONVEYOR.zEnd - CONVEYOR.zStart]),
+    surfaceVelocity: [0, 0, CONVEYOR.speed],
+  },
   ...[-1, 1].map((side) => box(`conveyor-rail-${side}`, [CONVEYOR.x + side * (CONVEYOR.width / 2 + 0.12), CONVEYOR.topY + 0.2, (CONVEYOR.zStart + CONVEYOR.zEnd) / 2], [0.12, 0.5, CONVEYOR.zEnd - CONVEYOR.zStart])),
   ...CONVEYOR.legZ.flatMap((z) => [-1, 1].map((side) => box(`conveyor-leg-${z}-${side}`,
     [CONVEYOR.x + side * 0.9, (FLOOR_Y + CONVEYOR.topY - 0.3) / 2, z], [0.28, CONVEYOR.topY - 0.3 - FLOOR_Y, 0.28]))),

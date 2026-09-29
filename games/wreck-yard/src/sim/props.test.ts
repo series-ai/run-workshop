@@ -73,8 +73,8 @@ describe('yard props', () => {
   });
 
   it('lets every other body sleep once settled', () => {
-    // The SDK joins all bodies on the floor into one island, so one body that
-    // never sleeps keeps the whole yard awake and roughly doubles the tick cost.
+    // Awake bodies cost solver time every tick. With ~120 props, a prop shape that
+    // never sleeps (and whatever rests on it) is a steady cost.
     let state = createInitialState(1);
     for (let tick = 0; tick < 90; tick += 1) state = stepYard(state, [NEUTRAL_INPUT]);
     const open = openWorld(state.world);

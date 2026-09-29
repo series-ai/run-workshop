@@ -8,15 +8,17 @@ export const FLOOR_Y = -0.86;
 export const GRAVITY = 13.5;
 export const GRAVITY_PER_TICK2 = -GRAVITY * DT2;
 /**
- * Syncplay damping is the fraction of velocity a body keeps each tick (measured
- * in 6.0.0-rc.8: v=10 becomes 9.8 after one step at 0.98; 0 stops the body; 1
- * keeps it all). In rc.8, rounded voxel bodies at rest sleep with these values, but
- * slatted shapes (the timber pallet) still never sleep and creep a few mm/s:
+ * Syncplay damping is the fraction of velocity a body keeps each tick (v=10
+ * becomes 9.8 after one step at 0.98; 0 stops the body; 1 keeps it all;
+ * documented in 6.0.0-rc.13). In rc.13 voxel bodies at rest sleep with these
+ * values, except a light flat pallet on runners (see presets.ts makeTimberPallet):
  * https://github.com/series-ai/venus/issues/4861.
  */
 export const LINEAR_DAMPING = 0.98;
 export const ANGULAR_DAMPING = 0.945;
 export const MAX_RAY_DISTANCE = 40;
+/** The torch cuts only within arm's reach of the eye (m): the player must walk up to cut. */
+export const TORCH_RANGE = 2.5;
 export const MAX_PLAYERS = 4;
 export const SHELL_PREFIX = 'shell:';
 
