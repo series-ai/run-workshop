@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "propClips": ["idle", "open", "close", "active", "hit", "attack", "death", "move", "spin"],
+  "oneShotClips": ["open", "close", "hit", "attack", "death"],
+  "fps": 30,
+  "pirateAvatarClips": ["00_TPose","01_Idle_1","02_Idle_2","03_Idle_3","04_Walk","05_Run","06_Jump_Run","07_Jump_Stand","08_Action_One-Handed_Low","09_Action_One-Handed_Mid","10_Action_One-Handed_High","11_Action_Two-Handed_Low","12_Action_Two-Handed_Mid","13_Action_Two-Handed_High","14_Action_Chopping","15_Waving_Right","16_Waving_Left","17_Two-Handed_Wave","18_Success_Celebration","19_Suprised_Scared","20_Dance_1","21_Dance_2","22_Drunk","23_Kick_Sand","24_Pushups","25_Jumpingjacks","26_Looking_Horizon","27_Dance_3_Backspin","28_Dance_4_Robot","29_Dance_5_Cabbage_Patch","30_Treading_Water","31_Swimming"],
+  "heldItemTestClips": ["08_Action_One-Handed_Low","09_Action_One-Handed_Mid","10_Action_One-Handed_High","11_Action_Two-Handed_Low","12_Action_Two-Handed_Mid","13_Action_Two-Handed_High"]
+}

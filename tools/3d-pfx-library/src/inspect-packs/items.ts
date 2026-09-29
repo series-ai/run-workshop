@@ -12,6 +12,7 @@ import {
   isInspectPackId,
 } from './ids'
 import { PIRATE_RECIPES } from './pirateRecipes'
+import { RVX_RECIPES } from './rvxRecipes'
 import { DUELYST_SHEET_DEFS } from './textures'
 
 function inspectPreset(effect: PfxTaxonomyEffect): PfxPreset {
@@ -114,10 +115,27 @@ function pirateInspectItems(): PfxCatalogItem[] {
   })
 }
 
+function rvxInspectItems(): PfxCatalogItem[] {
+  return RVX_RECIPES.map((recipe, index) => {
+    const effect = inspectEffect({
+      id: recipe.id,
+      name: recipe.label,
+      rank: 9300 + index,
+      effectType: recipe.effectType,
+      role: recipe.role,
+      loopMode: recipe.looping ? 'loop' : 'burst',
+      notes: 'RUN voxel pack effect (tools/run-voxel-packs).',
+      assetRequirements: ['inspect-sheet', 'run-voxel', recipe.id.split('-')[1] ?? 'run-voxel'],
+    })
+    return { effect, preset: inspectPreset(effect) }
+  })
+}
+
 export const INSPECT_PACK_ITEMS: PfxCatalogItem[] = [
   ...burgerShopInspectItems(),
   ...duelystInspectItems(),
   ...pirateInspectItems(),
+  ...rvxInspectItems(),
 ]
 
 export function getInspectPackItem(id: string): PfxCatalogItem | undefined {

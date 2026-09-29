@@ -1,0 +1,6316 @@
+{
+ "pack": "fantasy",
+ "label": "Fantasy",
+ "models": [
+  {
+   "id": "fantasy-animated-props-bell-frame",
+   "pack": "fantasy",
+   "name": "Chapel Bell",
+   "category": "animated-props",
+   "filename": "fantasy-animated-props-bell-frame.glb",
+   "relativePath": "animated-props/fantasy-animated-props-bell-frame.glb",
+   "leaf": "world",
+   "sizeBytes": 58516,
+   "bounds": {
+    "min": [
+     -22,
+     0,
+     -11.5
+    ],
+    "max": [
+     22,
+     90,
+     11.5
+    ],
+    "size": [
+     44,
+     90,
+     23
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-bell"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-bell-toll",
+     "socket": "socket-bell",
+     "trigger": "clip:active",
+     "size": 40,
+     "aim": [
+      0,
+      0,
+      1
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-animated-props-bubbling-cauldron",
+   "pack": "fantasy",
+   "name": "Bubbling Cauldron",
+   "category": "animated-props",
+   "filename": "fantasy-animated-props-bubbling-cauldron.glb",
+   "relativePath": "animated-props/fantasy-animated-props-bubbling-cauldron.glb",
+   "leaf": "world",
+   "sizeBytes": 72240,
+   "bounds": {
+    "min": [
+     -14,
+     -0.0312,
+     -14
+    ],
+    "max": [
+     14,
+     29.6985,
+     14
+    ],
+    "size": [
+     28,
+     29.7297,
+     28
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-brew"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-cauldron-brew",
+     "socket": "socket-brew",
+     "trigger": "idle",
+     "size": 22
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-animated-props-catapult",
+   "pack": "fantasy",
+   "name": "Siege Catapult",
+   "category": "animated-props",
+   "filename": "fantasy-animated-props-catapult.glb",
+   "relativePath": "animated-props/fantasy-animated-props-catapult.glb",
+   "leaf": "world",
+   "sizeBytes": 57384,
+   "bounds": {
+    "min": [
+     -15,
+     0,
+     -18
+    ],
+    "max": [
+     15,
+     39,
+     18.2
+    ],
+    "size": [
+     30,
+     39,
+     36.2
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "idle"
+   ],
+   "sockets": [
+    "socket-payload"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-dust-slam",
+     "socket": "socket-payload",
+     "trigger": "clip:attack",
+     "size": 26,
+     "at": 0.8
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-animated-props-crystal-pylon",
+   "pack": "fantasy",
+   "name": "Crystal Pylon",
+   "category": "animated-props",
+   "filename": "fantasy-animated-props-crystal-pylon.glb",
+   "relativePath": "animated-props/fantasy-animated-props-crystal-pylon.glb",
+   "leaf": "world",
+   "sizeBytes": 48360,
+   "bounds": {
+    "min": [
+     -15,
+     0,
+     -15
+    ],
+    "max": [
+     15,
+     71,
+     15
+    ],
+    "size": [
+     30,
+     71,
+     30
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-crystal"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-frost-nova",
+     "socket": "socket-crystal",
+     "trigger": "clip:active",
+     "size": 36
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-animated-props-forge-bellows",
+   "pack": "fantasy",
+   "name": "Forge with Bellows",
+   "category": "animated-props",
+   "filename": "fantasy-animated-props-forge-bellows.glb",
+   "relativePath": "animated-props/fantasy-animated-props-forge-bellows.glb",
+   "leaf": "world",
+   "sizeBytes": 32028,
+   "bounds": {
+    "min": [
+     -19,
+     0,
+     -8
+    ],
+    "max": [
+     19,
+     40,
+     8
+    ],
+    "size": [
+     38,
+     40,
+     16
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-chimney",
+    "socket-coals"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-forge-flare",
+     "socket": "socket-coals",
+     "trigger": "clip:active",
+     "size": 30
+    },
+    {
+     "effectId": "rvx-fantasy-chimney-smoke",
+     "socket": "socket-chimney",
+     "trigger": "idle",
+     "size": 18
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-animated-props-mimic-chest",
+   "pack": "fantasy",
+   "name": "Mimic Chest",
+   "category": "animated-props",
+   "filename": "fantasy-animated-props-mimic-chest.glb",
+   "relativePath": "animated-props/fantasy-animated-props-mimic-chest.glb",
+   "leaf": "world",
+   "sizeBytes": 69660,
+   "bounds": {
+    "min": [
+     -13.6,
+     -0.0312,
+     -12.6406
+    ],
+    "max": [
+     13.6,
+     26.8731,
+     12.5
+    ],
+    "size": [
+     27.2,
+     26.9044,
+     25.1406
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-mouth"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-metal-clang",
+     "socket": "socket-mouth",
+     "trigger": "clip:attack",
+     "size": 20,
+     "at": 0.36
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-animated-props-portcullis",
+   "pack": "fantasy",
+   "name": "Portcullis Gate",
+   "category": "animated-props",
+   "filename": "fantasy-animated-props-portcullis.glb",
+   "relativePath": "animated-props/fantasy-animated-props-portcullis.glb",
+   "leaf": "world",
+   "sizeBytes": 95776,
+   "bounds": {
+    "min": [
+     -23.5,
+     -0.0625,
+     -10.5
+    ],
+    "max": [
+     23.5,
+     99,
+     10.5
+    ],
+    "size": [
+     47,
+     99.0625,
+     21
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "close",
+    "idle",
+    "open"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-animated-props-rune-portal",
+   "pack": "fantasy",
+   "name": "Rune Portal",
+   "category": "animated-props",
+   "filename": "fantasy-animated-props-rune-portal.glb",
+   "relativePath": "animated-props/fantasy-animated-props-rune-portal.glb",
+   "leaf": "world",
+   "sizeBytes": 52424,
+   "bounds": {
+    "min": [
+     -44,
+     0,
+     -17
+    ],
+    "max": [
+     44,
+     95.5,
+     17
+    ],
+    "size": [
+     88,
+     95.5,
+     34
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-portal"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-portal-swirl",
+     "socket": "socket-portal",
+     "trigger": "idle",
+     "size": 64,
+     "aim": [
+      0,
+      0,
+      1
+     ]
+    },
+    {
+     "effectId": "rvx-fantasy-portal-swirl",
+     "socket": "socket-portal",
+     "trigger": "idle",
+     "size": 64,
+     "aim": [
+      0,
+      0,
+      -1
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-animated-props-scrying-orb",
+   "pack": "fantasy",
+   "name": "Scrying Orb",
+   "category": "animated-props",
+   "filename": "fantasy-animated-props-scrying-orb.glb",
+   "relativePath": "animated-props/fantasy-animated-props-scrying-orb.glb",
+   "leaf": "world",
+   "sizeBytes": 53968,
+   "bounds": {
+    "min": [
+     -14,
+     0,
+     -11.0732
+    ],
+    "max": [
+     14,
+     36.111,
+     11.0732
+    ],
+    "size": [
+     28,
+     36.111,
+     22.1463
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-orb"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-arcane-orbit",
+     "socket": "socket-orb",
+     "trigger": "clip:active",
+     "size": 28
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-animated-props-spell-book",
+   "pack": "fantasy",
+   "name": "Floating Spell Book",
+   "category": "animated-props",
+   "filename": "fantasy-animated-props-spell-book.glb",
+   "relativePath": "animated-props/fantasy-animated-props-spell-book.glb",
+   "leaf": "world",
+   "sizeBytes": 27104,
+   "bounds": {
+    "min": [
+     -10.5312,
+     0,
+     -8.5
+    ],
+    "max": [
+     11,
+     35.5,
+     8.5
+    ],
+    "size": [
+     21.5313,
+     35.5,
+     17
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "close",
+    "idle",
+    "open"
+   ],
+   "sockets": [
+    "socket-pages"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-arcane-bolt",
+     "socket": "socket-pages",
+     "trigger": "clip:open",
+     "size": 24,
+     "at": 0.3
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-animated-props-treasure-chest",
+   "pack": "fantasy",
+   "name": "Treasure Chest",
+   "category": "animated-props",
+   "filename": "fantasy-animated-props-treasure-chest.glb",
+   "relativePath": "animated-props/fantasy-animated-props-treasure-chest.glb",
+   "leaf": "world",
+   "sizeBytes": 14224,
+   "bounds": {
+    "min": [
+     -11,
+     0,
+     -8.5
+    ],
+    "max": [
+     11,
+     19,
+     8.5
+    ],
+    "size": [
+     22,
+     19,
+     17
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "close",
+    "idle",
+    "open"
+   ],
+   "sockets": [
+    "socket-loot"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-loot-burst",
+     "socket": "socket-loot",
+     "trigger": "clip:open",
+     "size": 22,
+     "at": 0.13
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-animated-props-well",
+   "pack": "fantasy",
+   "name": "Village Well",
+   "category": "animated-props",
+   "filename": "fantasy-animated-props-well.glb",
+   "relativePath": "animated-props/fantasy-animated-props-well.glb",
+   "leaf": "world",
+   "sizeBytes": 53944,
+   "bounds": {
+    "min": [
+     -19,
+     0,
+     -16.5
+    ],
+    "max": [
+     19.0625,
+     53,
+     16.5
+    ],
+    "size": [
+     38.0625,
+     53,
+     33
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-buildings-blacksmith",
+   "pack": "fantasy",
+   "name": "Blacksmith",
+   "category": "buildings",
+   "filename": "fantasy-buildings-blacksmith.glb",
+   "relativePath": "buildings/fantasy-buildings-blacksmith.glb",
+   "leaf": "world",
+   "sizeBytes": 135696,
+   "bounds": {
+    "min": [
+     -66.5312,
+     -0.0312,
+     -41.5813
+    ],
+    "max": [
+     66.5,
+     116,
+     41.1
+    ],
+    "size": [
+     133.0313,
+     116.0313,
+     82.6813
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [
+    "socket-chimney",
+    "socket-forge"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-chimney-smoke",
+     "socket": "socket-chimney",
+     "trigger": "idle",
+     "size": 32
+    },
+    {
+     "effectId": "rvx-fantasy-hearth-fire",
+     "socket": "socket-forge",
+     "trigger": "idle",
+     "size": 34
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-buildings-castle-keep",
+   "pack": "fantasy",
+   "name": "Castle Keep",
+   "category": "buildings",
+   "filename": "fantasy-buildings-castle-keep.glb",
+   "relativePath": "buildings/fantasy-buildings-castle-keep.glb",
+   "leaf": "world",
+   "sizeBytes": 229452,
+   "bounds": {
+    "min": [
+     -62,
+     -0.0312,
+     -50
+    ],
+    "max": [
+     62,
+     140,
+     50
+    ],
+    "size": [
+     124,
+     140.0313,
+     100
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-buildings-castle-tower",
+   "pack": "fantasy",
+   "name": "Castle Tower",
+   "category": "buildings",
+   "filename": "fantasy-buildings-castle-tower.glb",
+   "relativePath": "buildings/fantasy-buildings-castle-tower.glb",
+   "leaf": "world",
+   "sizeBytes": 91804,
+   "bounds": {
+    "min": [
+     -26,
+     -0.0312,
+     -27
+    ],
+    "max": [
+     26,
+     159,
+     27
+    ],
+    "size": [
+     52,
+     159.0313,
+     54
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-door"
+   ],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-buildings-castle-wall",
+   "pack": "fantasy",
+   "name": "Castle Wall",
+   "category": "buildings",
+   "filename": "fantasy-buildings-castle-wall.glb",
+   "relativePath": "buildings/fantasy-buildings-castle-wall.glb",
+   "leaf": "world",
+   "sizeBytes": 97188,
+   "bounds": {
+    "min": [
+     -63,
+     -0.0312,
+     -23
+    ],
+    "max": [
+     63,
+     112,
+     23
+    ],
+    "size": [
+     126,
+     112.0313,
+     46
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-buildings-chapel",
+   "pack": "fantasy",
+   "name": "Chapel",
+   "category": "buildings",
+   "filename": "fantasy-buildings-chapel.glb",
+   "relativePath": "buildings/fantasy-buildings-chapel.glb",
+   "leaf": "world",
+   "sizeBytes": 147868,
+   "bounds": {
+    "min": [
+     -45,
+     -0.0312,
+     -59
+    ],
+    "max": [
+     45.4829,
+     148,
+     59
+    ],
+    "size": [
+     90.4829,
+     148.0313,
+     118
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-buildings-elven-treehouse",
+   "pack": "fantasy",
+   "name": "Elven Treehouse",
+   "category": "buildings",
+   "filename": "fantasy-buildings-elven-treehouse.glb",
+   "relativePath": "buildings/fantasy-buildings-elven-treehouse.glb",
+   "leaf": "world",
+   "sizeBytes": 190964,
+   "bounds": {
+    "min": [
+     -35.8056,
+     -0.0625,
+     -30.25
+    ],
+    "max": [
+     35.875,
+     165.5,
+     30.2813
+    ],
+    "size": [
+     71.6806,
+     165.5625,
+     60.5313
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-canopy"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-leaf-fall",
+     "socket": "socket-canopy",
+     "trigger": "idle",
+     "size": 100
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-buildings-gatehouse",
+   "pack": "fantasy",
+   "name": "Gatehouse",
+   "category": "buildings",
+   "filename": "fantasy-buildings-gatehouse.glb",
+   "relativePath": "buildings/fantasy-buildings-gatehouse.glb",
+   "leaf": "world",
+   "sizeBytes": 124080,
+   "bounds": {
+    "min": [
+     -52,
+     0,
+     -25.5
+    ],
+    "max": [
+     52,
+     120,
+     25.5
+    ],
+    "size": [
+     104,
+     120,
+     51
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-buildings-tavern",
+   "pack": "fantasy",
+   "name": "Tavern",
+   "category": "buildings",
+   "filename": "fantasy-buildings-tavern.glb",
+   "relativePath": "buildings/fantasy-buildings-tavern.glb",
+   "leaf": "world",
+   "sizeBytes": 98816,
+   "bounds": {
+    "min": [
+     -46.8437,
+     -0.0312,
+     -44.391
+    ],
+    "max": [
+     46.5,
+     130,
+     44
+    ],
+    "size": [
+     93.3438,
+     130.0313,
+     88.391
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-chimney"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-chimney-smoke",
+     "socket": "socket-chimney",
+     "trigger": "idle",
+     "size": 32
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-buildings-windmill",
+   "pack": "fantasy",
+   "name": "Windmill",
+   "category": "buildings",
+   "filename": "fantasy-buildings-windmill.glb",
+   "relativePath": "buildings/fantasy-buildings-windmill.glb",
+   "leaf": "world",
+   "sizeBytes": 75240,
+   "bounds": {
+    "min": [
+     -43.8406,
+     -0.0312,
+     -29.0312
+    ],
+    "max": [
+     43.8406,
+     133.8406,
+     29.5
+    ],
+    "size": [
+     87.6812,
+     133.8719,
+     58.5313
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "spin"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-buildings-wizard-tower",
+   "pack": "fantasy",
+   "name": "Wizard Tower",
+   "category": "buildings",
+   "filename": "fantasy-buildings-wizard-tower.glb",
+   "relativePath": "buildings/fantasy-buildings-wizard-tower.glb",
+   "leaf": "world",
+   "sizeBytes": 102824,
+   "bounds": {
+    "min": [
+     -29.5056,
+     -0.0312,
+     -23.1
+    ],
+    "max": [
+     29.5056,
+     153,
+     23.5
+    ],
+    "size": [
+     59.0111,
+     153.0313,
+     46.6
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-spire"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-arcane-orbit",
+     "socket": "socket-spire",
+     "trigger": "idle",
+     "size": 44
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-creatures-dragon",
+   "pack": "fantasy",
+   "name": "Crimson Wyrm",
+   "category": "creatures",
+   "filename": "fantasy-creatures-dragon.glb",
+   "relativePath": "creatures/fantasy-creatures-dragon.glb",
+   "leaf": "world",
+   "sizeBytes": 195196,
+   "bounds": {
+    "min": [
+     -86.2259,
+     0,
+     -97.5312
+    ],
+    "max": [
+     86.2259,
+     121.8,
+     97.09
+    ],
+    "size": [
+     172.4519,
+     121.8,
+     194.6212
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-mouth"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-dragon-breath",
+     "socket": "socket-mouth",
+     "trigger": "clip:attack",
+     "size": 64,
+     "aim": [
+      0,
+      -0.243,
+      -0.97
+     ],
+     "at": 0.68
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-creatures-ent",
+   "pack": "fantasy",
+   "name": "Elder Ent",
+   "category": "creatures",
+   "filename": "fantasy-creatures-ent.glb",
+   "relativePath": "creatures/fantasy-creatures-ent.glb",
+   "leaf": "world",
+   "sizeBytes": 118432,
+   "bounds": {
+    "min": [
+     -29.6451,
+     0,
+     -17.5
+    ],
+    "max": [
+     29.6451,
+     72,
+     17.24
+    ],
+    "size": [
+     59.2902,
+     72,
+     34.74
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-slam"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-dust-slam",
+     "socket": "socket-slam",
+     "trigger": "clip:attack",
+     "size": 44,
+     "at": 0.52
+    },
+    {
+     "effectId": "rvx-fantasy-leaf-fall",
+     "socket": "socket-slam",
+     "trigger": "idle",
+     "size": 40
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-creatures-forest-wisp",
+   "pack": "fantasy",
+   "name": "Forest Wisp",
+   "category": "creatures",
+   "filename": "fantasy-creatures-forest-wisp.glb",
+   "relativePath": "creatures/fantasy-creatures-forest-wisp.glb",
+   "leaf": "world",
+   "sizeBytes": 30428,
+   "bounds": {
+    "min": [
+     -11.5,
+     0,
+     -10.2
+    ],
+    "max": [
+     11.5,
+     20.7,
+     10.5
+    ],
+    "size": [
+     23,
+     20.7,
+     20.7
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-core"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-fairy-motes",
+     "socket": "socket-core",
+     "trigger": "idle",
+     "size": 18
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-creatures-goblin",
+   "pack": "fantasy",
+   "name": "Goblin Raider",
+   "category": "creatures",
+   "filename": "fantasy-creatures-goblin.glb",
+   "relativePath": "creatures/fantasy-creatures-goblin.glb",
+   "leaf": "world",
+   "sizeBytes": 62484,
+   "bounds": {
+    "min": [
+     -21,
+     0,
+     -14.5
+    ],
+    "max": [
+     21,
+     37.7403,
+     14.3736
+    ],
+    "size": [
+     42,
+     37.7403,
+     28.8736
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-blade"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-slash-arc",
+     "socket": "socket-blade",
+     "trigger": "clip:attack",
+     "size": 13.77,
+     "aim": [
+      0.196,
+      0.49,
+      -0.849
+     ],
+     "offset": [
+      -1.65,
+      -4.125,
+      7.15
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-creatures-griffin",
+   "pack": "fantasy",
+   "name": "Griffin",
+   "category": "creatures",
+   "filename": "fantasy-creatures-griffin.glb",
+   "relativePath": "creatures/fantasy-creatures-griffin.glb",
+   "leaf": "world",
+   "sizeBytes": 119400,
+   "bounds": {
+    "min": [
+     -48.6118,
+     -0.0469,
+     -47.5
+    ],
+    "max": [
+     48.6118,
+     77.7029,
+     47.5
+    ],
+    "size": [
+     97.2236,
+     77.7497,
+     95
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-beak"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-slash-arc",
+     "socket": "socket-beak",
+     "trigger": "clip:attack",
+     "size": 27,
+     "aim": [
+      0,
+      0.4,
+      -0.917
+     ],
+     "offset": [
+      0,
+      -6.6,
+      15.125
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-creatures-skeleton-knight",
+   "pack": "fantasy",
+   "name": "Skeleton Knight",
+   "category": "creatures",
+   "filename": "fantasy-creatures-skeleton-knight.glb",
+   "relativePath": "creatures/fantasy-creatures-skeleton-knight.glb",
+   "leaf": "world",
+   "sizeBytes": 75888,
+   "bounds": {
+    "min": [
+     -17.1,
+     0,
+     -10.9145
+    ],
+    "max": [
+     16.7,
+     43.6,
+     10.5
+    ],
+    "size": [
+     33.8,
+     43.6,
+     21.4145
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "death",
+    "attack",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-eyes"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-bone-poof",
+     "socket": "socket-eyes",
+     "trigger": "clip:death",
+     "size": 34,
+     "at": 0.24
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-creatures-slime",
+   "pack": "fantasy",
+   "name": "Gel Slime",
+   "category": "creatures",
+   "filename": "fantasy-creatures-slime.glb",
+   "relativePath": "creatures/fantasy-creatures-slime.glb",
+   "leaf": "world",
+   "sizeBytes": 16788,
+   "bounds": {
+    "min": [
+     -11.2708,
+     0,
+     -11.8343
+    ],
+    "max": [
+     11.2708,
+     16.5,
+     11.8343
+    ],
+    "size": [
+     22.5415,
+     16.5,
+     23.6686
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "death",
+    "attack",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-top"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-slime-splat",
+     "socket": "socket-top",
+     "trigger": "clip:death",
+     "size": 26,
+     "at": 0.2
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-creatures-unicorn",
+   "pack": "fantasy",
+   "name": "Unicorn",
+   "category": "creatures",
+   "filename": "fantasy-creatures-unicorn.glb",
+   "relativePath": "creatures/fantasy-creatures-unicorn.glb",
+   "leaf": "world",
+   "sizeBytes": 96012,
+   "bounds": {
+    "min": [
+     -9.8,
+     0,
+     -35.3
+    ],
+    "max": [
+     9.4,
+     67.2,
+     35.1
+    ],
+    "size": [
+     19.2,
+     67.2,
+     70.4
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-horn"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-holy-smite",
+     "socket": "socket-horn",
+     "trigger": "clip:attack",
+     "size": 28,
+     "at": 0.56
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-battle-axe",
+   "pack": "fantasy",
+   "name": "Dwarven Battle Axe",
+   "category": "held-items",
+   "filename": "fantasy-held-items-battle-axe.glb",
+   "relativePath": "held-items/fantasy-held-items-battle-axe.glb",
+   "leaf": "world",
+   "sizeBytes": 34520,
+   "bounds": {
+    "min": [
+     -0.375,
+     0.015,
+     -0.04
+    ],
+    "max": [
+     0.065,
+     0.045,
+     0.13
+    ],
+    "size": [
+     0.44,
+     0.03,
+     0.17
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-edge"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-slash-arc",
+     "trigger": "manual",
+     "size": 0.281,
+     "aim": [
+      -1,
+      0,
+      0
+     ],
+     "offset": [
+      -0.094,
+      0.03,
+      0.045
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-crossbow",
+   "pack": "fantasy",
+   "name": "Heavy Crossbow",
+   "category": "held-items",
+   "filename": "fantasy-held-items-crossbow.glb",
+   "relativePath": "held-items/fantasy-held-items-crossbow.glb",
+   "leaf": "world",
+   "sizeBytes": 37188,
+   "bounds": {
+    "min": [
+     -0.275,
+     -0.085,
+     -0.015
+    ],
+    "max": [
+     0.105,
+     0.145,
+     0.045
+    ],
+    "size": [
+     0.38,
+     0.23,
+     0.06
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-muzzle"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-bow-release",
+     "socket": "socket-muzzle",
+     "trigger": "manual",
+     "size": 0.2,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-dagger",
+   "pack": "fantasy",
+   "name": "Assassin's Dagger",
+   "category": "held-items",
+   "filename": "fantasy-held-items-dagger.glb",
+   "relativePath": "held-items/fantasy-held-items-dagger.glb",
+   "leaf": "world",
+   "sizeBytes": 23588,
+   "bounds": {
+    "min": [
+     -0.195,
+     0.015,
+     -0.03
+    ],
+    "max": [
+     0.035,
+     0.045,
+     0.03
+    ],
+    "size": [
+     0.23,
+     0.03,
+     0.06
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tip"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-slash-arc",
+     "trigger": "manual",
+     "size": 0.146,
+     "aim": [
+      -1,
+      0,
+      0
+     ],
+     "offset": [
+      -0.049,
+      0.03,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-elven-bow",
+   "pack": "fantasy",
+   "name": "Elven Longbow",
+   "category": "held-items",
+   "filename": "fantasy-held-items-elven-bow.glb",
+   "relativePath": "held-items/fantasy-held-items-elven-bow.glb",
+   "leaf": "world",
+   "sizeBytes": 29312,
+   "bounds": {
+    "min": [
+     -0.28,
+     -0.09,
+     -0.01
+    ],
+    "max": [
+     0.28,
+     0.06,
+     0.02
+    ],
+    "size": [
+     0.56,
+     0.15,
+     0.03
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-arrow"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-bow-release",
+     "socket": "socket-arrow",
+     "trigger": "manual",
+     "size": 0.22,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-flail",
+   "pack": "fantasy",
+   "name": "Morning-Star Flail",
+   "category": "held-items",
+   "filename": "fantasy-held-items-flail.glb",
+   "relativePath": "held-items/fantasy-held-items-flail.glb",
+   "leaf": "world",
+   "sizeBytes": 44744,
+   "bounds": {
+    "min": [
+     -0.305,
+     -0.01,
+     -0.11
+    ],
+    "max": [
+     0.065,
+     0.07,
+     0.01
+    ],
+    "size": [
+     0.37,
+     0.08,
+     0.12
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-ball"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-metal-clang",
+     "socket": "socket-ball",
+     "trigger": "manual",
+     "size": 0.3
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-flanged-mace",
+   "pack": "fantasy",
+   "name": "Flanged Mace",
+   "category": "held-items",
+   "filename": "fantasy-held-items-flanged-mace.glb",
+   "relativePath": "held-items/fantasy-held-items-flanged-mace.glb",
+   "leaf": "world",
+   "sizeBytes": 43360,
+   "bounds": {
+    "min": [
+     -0.295,
+     -0.03,
+     -0.06
+    ],
+    "max": [
+     0.065,
+     0.1,
+     0.07
+    ],
+    "size": [
+     0.36,
+     0.13,
+     0.13
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-head"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-metal-clang",
+     "socket": "socket-head",
+     "trigger": "manual",
+     "size": 0.3
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-frost-wand",
+   "pack": "fantasy",
+   "name": "Frost Wand",
+   "category": "held-items",
+   "filename": "fantasy-held-items-frost-wand.glb",
+   "relativePath": "held-items/fantasy-held-items-frost-wand.glb",
+   "leaf": "world",
+   "sizeBytes": 17716,
+   "bounds": {
+    "min": [
+     -0.255,
+     0.015,
+     -0.025
+    ],
+    "max": [
+     0.045,
+     0.045,
+     0.015
+    ],
+    "size": [
+     0.3,
+     0.03,
+     0.04
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tip"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-frost-nova",
+     "socket": "socket-tip",
+     "trigger": "manual",
+     "size": 0.4
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-greatsword",
+   "pack": "fantasy",
+   "name": "Runic Greatsword",
+   "category": "held-items",
+   "filename": "fantasy-held-items-greatsword.glb",
+   "relativePath": "held-items/fantasy-held-items-greatsword.glb",
+   "leaf": "world",
+   "sizeBytes": 39216,
+   "bounds": {
+    "min": [
+     -0.535,
+     0.015,
+     -0.085
+    ],
+    "max": [
+     0.065,
+     0.045,
+     0.085
+    ],
+    "size": [
+     0.6,
+     0.03,
+     0.17
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tip",
+    "socket-trail"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-slash-arc",
+     "trigger": "manual",
+     "size": 0.401,
+     "aim": [
+      -1,
+      0,
+      0
+     ],
+     "offset": [
+      -0.134,
+      0.03,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-kite-shield",
+   "pack": "fantasy",
+   "name": "Heraldic Kite Shield",
+   "category": "held-items",
+   "filename": "fantasy-held-items-kite-shield.glb",
+   "relativePath": "held-items/fantasy-held-items-kite-shield.glb",
+   "leaf": "world",
+   "sizeBytes": 46020,
+   "bounds": {
+    "min": [
+     -0.19,
+     -0.08,
+     -0.005
+    ],
+    "max": [
+     0.15,
+     0.14,
+     0.045
+    ],
+    "size": [
+     0.34,
+     0.22,
+     0.05
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-face"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-metal-clang",
+     "socket": "socket-face",
+     "trigger": "manual",
+     "size": 0.32
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-lantern-staff",
+   "pack": "fantasy",
+   "name": "Lantern Staff",
+   "category": "held-items",
+   "filename": "fantasy-held-items-lantern-staff.glb",
+   "relativePath": "held-items/fantasy-held-items-lantern-staff.glb",
+   "leaf": "world",
+   "sizeBytes": 8896,
+   "bounds": {
+    "min": [
+     -0.275,
+     0.01,
+     -0.07
+    ],
+    "max": [
+     0.065,
+     0.06,
+     0.01
+    ],
+    "size": [
+     0.34,
+     0.05,
+     0.08
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-light"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-torch-flame",
+     "socket": "socket-light",
+     "trigger": "manual",
+     "size": 0.12,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-longsword",
+   "pack": "fantasy",
+   "name": "Knight's Longsword",
+   "category": "held-items",
+   "filename": "fantasy-held-items-longsword.glb",
+   "relativePath": "held-items/fantasy-held-items-longsword.glb",
+   "leaf": "world",
+   "sizeBytes": 18916,
+   "bounds": {
+    "min": [
+     -0.415,
+     0.015,
+     -0.05
+    ],
+    "max": [
+     0.065,
+     0.045,
+     0.05
+    ],
+    "size": [
+     0.48,
+     0.03,
+     0.1
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tip",
+    "socket-trail"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-slash-arc",
+     "trigger": "manual",
+     "size": 0.311,
+     "aim": [
+      -1,
+      0,
+      0
+     ],
+     "offset": [
+      -0.104,
+      0.03,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-mage-staff",
+   "pack": "fantasy",
+   "name": "Archmage Staff",
+   "category": "held-items",
+   "filename": "fantasy-held-items-mage-staff.glb",
+   "relativePath": "held-items/fantasy-held-items-mage-staff.glb",
+   "leaf": "world",
+   "sizeBytes": 55952,
+   "bounds": {
+    "min": [
+     -0.415,
+     -0.01,
+     -0.04
+    ],
+    "max": [
+     0.155,
+     0.07,
+     0.05
+    ],
+    "size": [
+     0.57,
+     0.08,
+     0.09
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tip"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-arcane-bolt",
+     "socket": "socket-tip",
+     "trigger": "manual",
+     "size": 0.4
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-spear",
+   "pack": "fantasy",
+   "name": "Elven Spear",
+   "category": "held-items",
+   "filename": "fantasy-held-items-spear.glb",
+   "relativePath": "held-items/fantasy-held-items-spear.glb",
+   "leaf": "world",
+   "sizeBytes": 19800,
+   "bounds": {
+    "min": [
+     -0.415,
+     0.015,
+     -0.035
+    ],
+    "max": [
+     0.185,
+     0.045,
+     0.035
+    ],
+    "size": [
+     0.6,
+     0.03,
+     0.07
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tip"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-slash-arc",
+     "trigger": "manual",
+     "size": 0.311,
+     "aim": [
+      -1,
+      0,
+      0
+     ],
+     "offset": [
+      -0.104,
+      0.03,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-spellbook",
+   "pack": "fantasy",
+   "name": "Grimoire",
+   "category": "held-items",
+   "filename": "fantasy-held-items-spellbook.glb",
+   "relativePath": "held-items/fantasy-held-items-spellbook.glb",
+   "leaf": "world",
+   "sizeBytes": 18372,
+   "bounds": {
+    "min": [
+     -0.17,
+     0,
+     -0.08
+    ],
+    "max": [
+     0.03,
+     0.06,
+     0.08
+    ],
+    "size": [
+     0.2,
+     0.06,
+     0.16
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-sigil"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-arcane-bolt",
+     "socket": "socket-sigil",
+     "trigger": "manual",
+     "size": 0.32
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-torch",
+   "pack": "fantasy",
+   "name": "Pitch Torch",
+   "category": "held-items",
+   "filename": "fantasy-held-items-torch.glb",
+   "relativePath": "held-items/fantasy-held-items-torch.glb",
+   "leaf": "world",
+   "sizeBytes": 13784,
+   "bounds": {
+    "min": [
+     -0.22,
+     0.01,
+     -0.02
+    ],
+    "max": [
+     0.08,
+     0.05,
+     0.02
+    ],
+    "size": [
+     0.3,
+     0.04,
+     0.04
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-flame"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-torch-flame",
+     "socket": "socket-flame",
+     "trigger": "manual",
+     "size": 0.16,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-held-items-war-hammer",
+   "pack": "fantasy",
+   "name": "Paladin's War Hammer",
+   "category": "held-items",
+   "filename": "fantasy-held-items-war-hammer.glb",
+   "relativePath": "held-items/fantasy-held-items-war-hammer.glb",
+   "leaf": "world",
+   "sizeBytes": 17868,
+   "bounds": {
+    "min": [
+     -0.355,
+     -0.02,
+     -0.08
+    ],
+    "max": [
+     0.065,
+     0.08,
+     0.08
+    ],
+    "size": [
+     0.42,
+     0.1,
+     0.16
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-head"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-metal-clang",
+     "socket": "socket-head",
+     "trigger": "manual",
+     "size": 0.36
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-alchemy-table",
+   "pack": "fantasy",
+   "name": "Alchemy Table",
+   "category": "props",
+   "filename": "fantasy-props-alchemy-table.glb",
+   "relativePath": "props/fantasy-props-alchemy-table.glb",
+   "leaf": "world",
+   "sizeBytes": 35160,
+   "bounds": {
+    "min": [
+     -15,
+     0,
+     -6
+    ],
+    "max": [
+     15,
+     30,
+     6
+    ],
+    "size": [
+     30,
+     30,
+     12
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [
+    "socket-brew"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-potion-fizz",
+     "socket": "socket-brew",
+     "trigger": "manual",
+     "size": 18
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-anvil",
+   "pack": "fantasy",
+   "name": "Smith's Anvil",
+   "category": "props",
+   "filename": "fantasy-props-anvil.glb",
+   "relativePath": "props/fantasy-props-anvil.glb",
+   "leaf": "world",
+   "sizeBytes": 12452,
+   "bounds": {
+    "min": [
+     -14,
+     0,
+     -6.5
+    ],
+    "max": [
+     13.5,
+     22,
+     6.5
+    ],
+    "size": [
+     27.5,
+     22,
+     13
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-archery-target",
+   "pack": "fantasy",
+   "name": "Archery Target",
+   "category": "props",
+   "filename": "fantasy-props-archery-target.glb",
+   "relativePath": "props/fantasy-props-archery-target.glb",
+   "leaf": "world",
+   "sizeBytes": 20640,
+   "bounds": {
+    "min": [
+     -11.5,
+     0,
+     -10.629
+    ],
+    "max": [
+     11.5,
+     27.5,
+     10.9353
+    ],
+    "size": [
+     23,
+     27.5,
+     21.5643
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-armor-stand",
+   "pack": "fantasy",
+   "name": "Armor Stand",
+   "category": "props",
+   "filename": "fantasy-props-armor-stand.glb",
+   "relativePath": "props/fantasy-props-armor-stand.glb",
+   "leaf": "world",
+   "sizeBytes": 27516,
+   "bounds": {
+    "min": [
+     -14,
+     0,
+     -8.5
+    ],
+    "max": [
+     14.0603,
+     46.0781,
+     8.5
+    ],
+    "size": [
+     28.0603,
+     46.0781,
+     17
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-arrow-barrel",
+   "pack": "fantasy",
+   "name": "Arrow Barrel",
+   "category": "props",
+   "filename": "fantasy-props-arrow-barrel.glb",
+   "relativePath": "props/fantasy-props-arrow-barrel.glb",
+   "leaf": "world",
+   "sizeBytes": 19960,
+   "bounds": {
+    "min": [
+     -10.5,
+     0,
+     -7.5
+    ],
+    "max": [
+     10.125,
+     23.2332,
+     7.5
+    ],
+    "size": [
+     20.625,
+     23.2332,
+     15
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-banner-stand",
+   "pack": "fantasy",
+   "name": "Banner Stand",
+   "category": "props",
+   "filename": "fantasy-props-banner-stand.glb",
+   "relativePath": "props/fantasy-props-banner-stand.glb",
+   "leaf": "world",
+   "sizeBytes": 15020,
+   "bounds": {
+    "min": [
+     -11,
+     0,
+     -6.0312
+    ],
+    "max": [
+     11,
+     40,
+     6.4677
+    ],
+    "size": [
+     22,
+     40,
+     12.4989
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-banquet-table",
+   "pack": "fantasy",
+   "name": "Banquet Table",
+   "category": "props",
+   "filename": "fantasy-props-banquet-table.glb",
+   "relativePath": "props/fantasy-props-banquet-table.glb",
+   "leaf": "world",
+   "sizeBytes": 41444,
+   "bounds": {
+    "min": [
+     -19,
+     0,
+     -13
+    ],
+    "max": [
+     19,
+     24,
+     13
+    ],
+    "size": [
+     38,
+     24,
+     26
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-barrel",
+   "pack": "fantasy",
+   "name": "Oak Barrel",
+   "category": "props",
+   "filename": "fantasy-props-barrel.glb",
+   "relativePath": "props/fantasy-props-barrel.glb",
+   "leaf": "world",
+   "sizeBytes": 7728,
+   "bounds": {
+    "min": [
+     -8,
+     0,
+     -8.5
+    ],
+    "max": [
+     8,
+     25,
+     8.5
+    ],
+    "size": [
+     16,
+     25,
+     17
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-bookshelf",
+   "pack": "fantasy",
+   "name": "Wizard's Bookcase",
+   "category": "props",
+   "filename": "fantasy-props-bookshelf.glb",
+   "relativePath": "props/fantasy-props-bookshelf.glb",
+   "leaf": "world",
+   "sizeBytes": 31956,
+   "bounds": {
+    "min": [
+     -15,
+     0,
+     -5.5
+    ],
+    "max": [
+     15,
+     45,
+     5.5
+    ],
+    "size": [
+     30,
+     45,
+     11
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-brazier",
+   "pack": "fantasy",
+   "name": "Stone Brazier",
+   "category": "props",
+   "filename": "fantasy-props-brazier.glb",
+   "relativePath": "props/fantasy-props-brazier.glb",
+   "leaf": "world",
+   "sizeBytes": 19544,
+   "bounds": {
+    "min": [
+     -9.5,
+     0,
+     -8.5
+    ],
+    "max": [
+     9.951,
+     25,
+     8.951
+    ],
+    "size": [
+     19.451,
+     25,
+     17.451
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [
+    "socket-fire"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-hearth-fire",
+     "socket": "socket-fire",
+     "trigger": "idle",
+     "size": 16
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-candelabra",
+   "pack": "fantasy",
+   "name": "Candelabra",
+   "category": "props",
+   "filename": "fantasy-props-candelabra.glb",
+   "relativePath": "props/fantasy-props-candelabra.glb",
+   "leaf": "world",
+   "sizeBytes": 22080,
+   "bounds": {
+    "min": [
+     -10.5,
+     -0.1247,
+     -4.6
+    ],
+    "max": [
+     10.9142,
+     38.5,
+     4.1925
+    ],
+    "size": [
+     21.4142,
+     38.6247,
+     8.7925
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-crate",
+   "pack": "fantasy",
+   "name": "Supply Crate",
+   "category": "props",
+   "filename": "fantasy-props-crate.glb",
+   "relativePath": "props/fantasy-props-crate.glb",
+   "leaf": "world",
+   "sizeBytes": 19320,
+   "bounds": {
+    "min": [
+     -9,
+     0,
+     -8
+    ],
+    "max": [
+     9,
+     18,
+     8
+    ],
+    "size": [
+     18,
+     18,
+     16
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-fence",
+   "pack": "fantasy",
+   "name": "Palisade Fence",
+   "category": "props",
+   "filename": "fantasy-props-fence.glb",
+   "relativePath": "props/fantasy-props-fence.glb",
+   "leaf": "world",
+   "sizeBytes": 20748,
+   "bounds": {
+    "min": [
+     -16,
+     0,
+     -4.5
+    ],
+    "max": [
+     16,
+     23,
+     4.5
+    ],
+    "size": [
+     32,
+     23,
+     9
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-grindstone",
+   "pack": "fantasy",
+   "name": "Grindstone",
+   "category": "props",
+   "filename": "fantasy-props-grindstone.glb",
+   "relativePath": "props/fantasy-props-grindstone.glb",
+   "leaf": "world",
+   "sizeBytes": 18012,
+   "bounds": {
+    "min": [
+     -10.1247,
+     0,
+     -10
+    ],
+    "max": [
+     10.1247,
+     22.5,
+     10
+    ],
+    "size": [
+     20.2494,
+     22.5,
+     20
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-hay-bales",
+   "pack": "fantasy",
+   "name": "Hay Bales",
+   "category": "props",
+   "filename": "fantasy-props-hay-bales.glb",
+   "relativePath": "props/fantasy-props-hay-bales.glb",
+   "leaf": "world",
+   "sizeBytes": 13172,
+   "bounds": {
+    "min": [
+     -15.5,
+     0,
+     -9
+    ],
+    "max": [
+     15.9063,
+     25,
+     9
+    ],
+    "size": [
+     31.4063,
+     25,
+     18
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-heraldic-shield",
+   "pack": "fantasy",
+   "name": "Heraldic Shield Display",
+   "category": "props",
+   "filename": "fantasy-props-heraldic-shield.glb",
+   "relativePath": "props/fantasy-props-heraldic-shield.glb",
+   "leaf": "world",
+   "sizeBytes": 17036,
+   "bounds": {
+    "min": [
+     -13.92,
+     0,
+     -4
+    ],
+    "max": [
+     13.92,
+     33.5069,
+     4
+    ],
+    "size": [
+     27.8399,
+     33.5069,
+     8
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-knight-statue",
+   "pack": "fantasy",
+   "name": "Knight Statue",
+   "category": "props",
+   "filename": "fantasy-props-knight-statue.glb",
+   "relativePath": "props/fantasy-props-knight-statue.glb",
+   "leaf": "world",
+   "sizeBytes": 29288,
+   "bounds": {
+    "min": [
+     -13.1406,
+     0,
+     -10
+    ],
+    "max": [
+     13.0313,
+     44,
+     10
+    ],
+    "size": [
+     26.1719,
+     44,
+     20
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-knight-tent",
+   "pack": "fantasy",
+   "name": "Tournament Pavilion",
+   "category": "props",
+   "filename": "fantasy-props-knight-tent.glb",
+   "relativePath": "props/fantasy-props-knight-tent.glb",
+   "leaf": "world",
+   "sizeBytes": 23360,
+   "bounds": {
+    "min": [
+     -30,
+     -0.0312,
+     -24
+    ],
+    "max": [
+     30,
+     68,
+     24
+    ],
+    "size": [
+     60,
+     68.0313,
+     48
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-lantern-post",
+   "pack": "fantasy",
+   "name": "Street Lantern",
+   "category": "props",
+   "filename": "fantasy-props-lantern-post.glb",
+   "relativePath": "props/fantasy-props-lantern-post.glb",
+   "leaf": "world",
+   "sizeBytes": 23656,
+   "bounds": {
+    "min": [
+     -13,
+     0,
+     -6
+    ],
+    "max": [
+     13.4415,
+     54,
+     6
+    ],
+    "size": [
+     26.4415,
+     54,
+     12
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-light"
+   ],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-lectern",
+   "pack": "fantasy",
+   "name": "Spell Lectern",
+   "category": "props",
+   "filename": "fantasy-props-lectern.glb",
+   "relativePath": "props/fantasy-props-lectern.glb",
+   "leaf": "world",
+   "sizeBytes": 19044,
+   "bounds": {
+    "min": [
+     -10,
+     0,
+     -7
+    ],
+    "max": [
+     10,
+     29.7735,
+     7
+    ],
+    "size": [
+     20,
+     29.7735,
+     14
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-market-stall",
+   "pack": "fantasy",
+   "name": "Market Stall",
+   "category": "props",
+   "filename": "fantasy-props-market-stall.glb",
+   "relativePath": "props/fantasy-props-market-stall.glb",
+   "leaf": "world",
+   "sizeBytes": 53768,
+   "bounds": {
+    "min": [
+     -24.6575,
+     0,
+     -13.5
+    ],
+    "max": [
+     25,
+     51,
+     13.5
+    ],
+    "size": [
+     49.6575,
+     51,
+     27
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-potion-shelf",
+   "pack": "fantasy",
+   "name": "Potion Shelf",
+   "category": "props",
+   "filename": "fantasy-props-potion-shelf.glb",
+   "relativePath": "props/fantasy-props-potion-shelf.glb",
+   "leaf": "world",
+   "sizeBytes": 45768,
+   "bounds": {
+    "min": [
+     -15.5,
+     0,
+     -5.5
+    ],
+    "max": [
+     15.5,
+     38,
+     5.5
+    ],
+    "size": [
+     31,
+     38,
+     11
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-rune-stone",
+   "pack": "fantasy",
+   "name": "Rune Stone",
+   "category": "props",
+   "filename": "fantasy-props-rune-stone.glb",
+   "relativePath": "props/fantasy-props-rune-stone.glb",
+   "leaf": "world",
+   "sizeBytes": 20772,
+   "bounds": {
+    "min": [
+     -13.5,
+     0,
+     -13.5
+    ],
+    "max": [
+     13.5,
+     28,
+     13.5
+    ],
+    "size": [
+     27,
+     28,
+     27
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-sack-pile",
+   "pack": "fantasy",
+   "name": "Grain Sacks",
+   "category": "props",
+   "filename": "fantasy-props-sack-pile.glb",
+   "relativePath": "props/fantasy-props-sack-pile.glb",
+   "leaf": "world",
+   "sizeBytes": 39612,
+   "bounds": {
+    "min": [
+     -17.5,
+     -0.0312,
+     -12
+    ],
+    "max": [
+     17.55,
+     18.416,
+     12
+    ],
+    "size": [
+     35.05,
+     18.4473,
+     24
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-signpost",
+   "pack": "fantasy",
+   "name": "Crossroads Signpost",
+   "category": "props",
+   "filename": "fantasy-props-signpost.glb",
+   "relativePath": "props/fantasy-props-signpost.glb",
+   "leaf": "world",
+   "sizeBytes": 25024,
+   "bounds": {
+    "min": [
+     -18.9844,
+     -0.073,
+     -6.5
+    ],
+    "max": [
+     18.9069,
+     36,
+     6.5
+    ],
+    "size": [
+     37.8912,
+     36.073,
+     13
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-stone-altar",
+   "pack": "fantasy",
+   "name": "Temple Altar",
+   "category": "props",
+   "filename": "fantasy-props-stone-altar.glb",
+   "relativePath": "props/fantasy-props-stone-altar.glb",
+   "leaf": "world",
+   "sizeBytes": 27992,
+   "bounds": {
+    "min": [
+     -15,
+     0,
+     -10.5
+    ],
+    "max": [
+     15,
+     30,
+     10.5
+    ],
+    "size": [
+     30,
+     30,
+     21
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-throne",
+   "pack": "fantasy",
+   "name": "Royal Throne",
+   "category": "props",
+   "filename": "fantasy-props-throne.glb",
+   "relativePath": "props/fantasy-props-throne.glb",
+   "leaf": "world",
+   "sizeBytes": 22612,
+   "bounds": {
+    "min": [
+     -14,
+     0,
+     -13.5
+    ],
+    "max": [
+     14,
+     44.0469,
+     13.5
+    ],
+    "size": [
+     28,
+     44.0469,
+     27
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-training-dummy",
+   "pack": "fantasy",
+   "name": "Training Dummy",
+   "category": "props",
+   "filename": "fantasy-props-training-dummy.glb",
+   "relativePath": "props/fantasy-props-training-dummy.glb",
+   "leaf": "world",
+   "sizeBytes": 19860,
+   "bounds": {
+    "min": [
+     -13.0561,
+     0,
+     -9
+    ],
+    "max": [
+     13.092,
+     35,
+     9
+    ],
+    "size": [
+     26.1481,
+     35,
+     18
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-treasure-pile",
+   "pack": "fantasy",
+   "name": "Dragon Hoard",
+   "category": "props",
+   "filename": "fantasy-props-treasure-pile.glb",
+   "relativePath": "props/fantasy-props-treasure-pile.glb",
+   "leaf": "world",
+   "sizeBytes": 71228,
+   "bounds": {
+    "min": [
+     -17.3,
+     0,
+     -16.3
+    ],
+    "max": [
+     17.3,
+     27.5247,
+     16.3
+    ],
+    "size": [
+     34.6,
+     27.5247,
+     32.6
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [
+    "socket-glint"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-treasure-glint",
+     "socket": "socket-glint",
+     "trigger": "idle",
+     "size": 40
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-props-weapon-rack",
+   "pack": "fantasy",
+   "name": "Weapon Rack",
+   "category": "props",
+   "filename": "fantasy-props-weapon-rack.glb",
+   "relativePath": "props/fantasy-props-weapon-rack.glb",
+   "leaf": "world",
+   "sizeBytes": 28316,
+   "bounds": {
+    "min": [
+     -17,
+     0.1094,
+     -7.5
+    ],
+    "max": [
+     17.5,
+     33,
+     7.5
+    ],
+    "size": [
+     34.5,
+     32.8906,
+     15
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-terrain-nature-ancient-oak",
+   "pack": "fantasy",
+   "name": "Ancient Autumn Oak",
+   "category": "terrain-nature",
+   "filename": "fantasy-terrain-nature-ancient-oak.glb",
+   "relativePath": "terrain-nature/fantasy-terrain-nature-ancient-oak.glb",
+   "leaf": "world",
+   "sizeBytes": 98712,
+   "bounds": {
+    "min": [
+     -35.42,
+     0,
+     -27.7857
+    ],
+    "max": [
+     35.0156,
+     78,
+     28
+    ],
+    "size": [
+     70.4356,
+     78,
+     55.7857
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-terrain-nature-cliff-waterfall",
+   "pack": "fantasy",
+   "name": "Cliff Waterfall",
+   "category": "terrain-nature",
+   "filename": "fantasy-terrain-nature-cliff-waterfall.glb",
+   "relativePath": "terrain-nature/fantasy-terrain-nature-cliff-waterfall.glb",
+   "leaf": "world",
+   "sizeBytes": 60020,
+   "bounds": {
+    "min": [
+     -47.4062,
+     -0.0625,
+     -39.8663
+    ],
+    "max": [
+     47.8125,
+     66,
+     40.3572
+    ],
+    "size": [
+     95.2188,
+     66.0625,
+     80.2234
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-splash"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-waterfall-mist",
+     "socket": "socket-splash",
+     "trigger": "idle",
+     "size": 70
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-terrain-nature-crystal-formation",
+   "pack": "fantasy",
+   "name": "Arcane Crystal Outcrop",
+   "category": "terrain-nature",
+   "filename": "fantasy-terrain-nature-crystal-formation.glb",
+   "relativePath": "terrain-nature/fantasy-terrain-nature-crystal-formation.glb",
+   "leaf": "world",
+   "sizeBytes": 32672,
+   "bounds": {
+    "min": [
+     -22.2656,
+     -0.0312,
+     -16.25
+    ],
+    "max": [
+     21.8125,
+     51,
+     15.9817
+    ],
+    "size": [
+     44.0781,
+     51.0313,
+     32.2317
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-heart"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-frost-nova",
+     "socket": "socket-heart",
+     "trigger": "manual",
+     "size": 40
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-terrain-nature-elven-tree",
+   "pack": "fantasy",
+   "name": "Elven Tree",
+   "category": "terrain-nature",
+   "filename": "fantasy-terrain-nature-elven-tree.glb",
+   "relativePath": "terrain-nature/fantasy-terrain-nature-elven-tree.glb",
+   "leaf": "world",
+   "sizeBytes": 107768,
+   "bounds": {
+    "min": [
+     -32.3333,
+     0,
+     -24.7857
+    ],
+    "max": [
+     31.85,
+     94,
+     24.7857
+    ],
+    "size": [
+     64.1833,
+     94,
+     49.5714
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-canopy"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-leaf-fall",
+     "socket": "socket-canopy",
+     "trigger": "idle",
+     "size": 80
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-terrain-nature-fairy-ring",
+   "pack": "fantasy",
+   "name": "Fairy Ring",
+   "category": "terrain-nature",
+   "filename": "fantasy-terrain-nature-fairy-ring.glb",
+   "relativePath": "terrain-nature/fantasy-terrain-nature-fairy-ring.glb",
+   "leaf": "world",
+   "sizeBytes": 104148,
+   "bounds": {
+    "min": [
+     -23.5294,
+     0,
+     -21.7408
+    ],
+    "max": [
+     23.3851,
+     23,
+     22.1985
+    ],
+    "size": [
+     46.9144,
+     23,
+     43.9394
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-sprite"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-fairy-motes",
+     "socket": "socket-sprite",
+     "trigger": "idle",
+     "size": 40
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-terrain-nature-giant-mushrooms",
+   "pack": "fantasy",
+   "name": "Glowcap Mushrooms",
+   "category": "terrain-nature",
+   "filename": "fantasy-terrain-nature-giant-mushrooms.glb",
+   "relativePath": "terrain-nature/fantasy-terrain-nature-giant-mushrooms.glb",
+   "leaf": "world",
+   "sizeBytes": 115848,
+   "bounds": {
+    "min": [
+     -35.1157,
+     0,
+     -33.1148
+    ],
+    "max": [
+     35,
+     56,
+     33.408
+    ],
+    "size": [
+     70.1157,
+     56,
+     66.5228
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-terrain-nature-pine-tree",
+   "pack": "fantasy",
+   "name": "Frost Pine",
+   "category": "terrain-nature",
+   "filename": "fantasy-terrain-nature-pine-tree.glb",
+   "relativePath": "terrain-nature/fantasy-terrain-nature-pine-tree.glb",
+   "leaf": "world",
+   "sizeBytes": 18932,
+   "bounds": {
+    "min": [
+     -16.6298,
+     -0.0312,
+     -16.6298
+    ],
+    "max": [
+     16.6298,
+     66,
+     16.6298
+    ],
+    "size": [
+     33.2597,
+     66.0313,
+     33.2597
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-terrain-nature-rock-cluster",
+   "pack": "fantasy",
+   "name": "Mossy Boulders",
+   "category": "terrain-nature",
+   "filename": "fantasy-terrain-nature-rock-cluster.glb",
+   "relativePath": "terrain-nature/fantasy-terrain-nature-rock-cluster.glb",
+   "leaf": "world",
+   "sizeBytes": 29136,
+   "bounds": {
+    "min": [
+     -20.2344,
+     -0.0625,
+     -17.0559
+    ],
+    "max": [
+     20,
+     21,
+     16.6719
+    ],
+    "size": [
+     40.2344,
+     21.0625,
+     33.7277
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-terrain-nature-ruined-arch",
+   "pack": "fantasy",
+   "name": "Elven Ruin",
+   "category": "terrain-nature",
+   "filename": "fantasy-terrain-nature-ruined-arch.glb",
+   "relativePath": "terrain-nature/fantasy-terrain-nature-ruined-arch.glb",
+   "leaf": "world",
+   "sizeBytes": 46932,
+   "bounds": {
+    "min": [
+     -42.0312,
+     -0.0312,
+     -17.0312
+    ],
+    "max": [
+     42.0313,
+     79.97,
+     17.0313
+    ],
+    "size": [
+     84.0625,
+     80.0013,
+     34.0625
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-terrain-nature-stone-bridge",
+   "pack": "fantasy",
+   "name": "Stone Bridge",
+   "category": "terrain-nature",
+   "filename": "fantasy-terrain-nature-stone-bridge.glb",
+   "relativePath": "terrain-nature/fantasy-terrain-nature-stone-bridge.glb",
+   "leaf": "world",
+   "sizeBytes": 41640,
+   "bounds": {
+    "min": [
+     -52,
+     0,
+     -17.5
+    ],
+    "max": [
+     52,
+     34.5313,
+     17.5
+    ],
+    "size": [
+     104,
+     34.5313,
+     35
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-vehicles-ballista-cart",
+   "pack": "fantasy",
+   "name": "Ballista War Cart",
+   "category": "vehicles",
+   "filename": "fantasy-vehicles-ballista-cart.glb",
+   "relativePath": "vehicles/fantasy-vehicles-ballista-cart.glb",
+   "leaf": "world",
+   "sizeBytes": 110112,
+   "bounds": {
+    "min": [
+     -32,
+     0,
+     -49.0312
+    ],
+    "max": [
+     32,
+     52,
+     49
+    ],
+    "size": [
+     64,
+     52,
+     98.0313
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "move"
+   ],
+   "sockets": [
+    "socket-bolt"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-bow-release",
+     "socket": "socket-bolt",
+     "trigger": "clip:attack",
+     "size": 44,
+     "aim": [
+      0,
+      0,
+      -1
+     ],
+     "at": 0.56
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-vehicles-covered-wagon",
+   "pack": "fantasy",
+   "name": "Merchant Wagon",
+   "category": "vehicles",
+   "filename": "fantasy-vehicles-covered-wagon.glb",
+   "relativePath": "vehicles/fantasy-vehicles-covered-wagon.glb",
+   "leaf": "world",
+   "sizeBytes": 87644,
+   "bounds": {
+    "min": [
+     -23,
+     -0.2388,
+     -44
+    ],
+    "max": [
+     23,
+     71,
+     44
+    ],
+    "size": [
+     46,
+     71.2388,
+     88
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "move"
+   ],
+   "sockets": [
+    "socket-lantern"
+   ],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-vehicles-elven-swan-boat",
+   "pack": "fantasy",
+   "name": "Elven Swan Boat",
+   "category": "vehicles",
+   "filename": "fantasy-vehicles-elven-swan-boat.glb",
+   "relativePath": "vehicles/fantasy-vehicles-elven-swan-boat.glb",
+   "leaf": "world",
+   "sizeBytes": 55824,
+   "bounds": {
+    "min": [
+     -41.6562,
+     0,
+     -54.5
+    ],
+    "max": [
+     41.6563,
+     66,
+     54.2
+    ],
+    "size": [
+     83.3125,
+     66,
+     108.7
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move"
+   ],
+   "sockets": [
+    "socket-lantern"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-lantern-glow",
+     "socket": "socket-lantern",
+     "trigger": "idle",
+     "size": 24
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-vehicles-royal-carriage",
+   "pack": "fantasy",
+   "name": "Royal Carriage",
+   "category": "vehicles",
+   "filename": "fantasy-vehicles-royal-carriage.glb",
+   "relativePath": "vehicles/fantasy-vehicles-royal-carriage.glb",
+   "leaf": "world",
+   "sizeBytes": 90424,
+   "bounds": {
+    "min": [
+     -22,
+     0,
+     -44.5
+    ],
+    "max": [
+     22,
+     78,
+     44.5
+    ],
+    "size": [
+     44,
+     78,
+     89
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move"
+   ],
+   "sockets": [
+    "socket-lantern"
+   ],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-vehicles-siege-tower",
+   "pack": "fantasy",
+   "name": "Siege Tower",
+   "category": "vehicles",
+   "filename": "fantasy-vehicles-siege-tower.glb",
+   "relativePath": "vehicles/fantasy-vehicles-siege-tower.glb",
+   "leaf": "world",
+   "sizeBytes": 104344,
+   "bounds": {
+    "min": [
+     -36,
+     0,
+     -37
+    ],
+    "max": [
+     36,
+     149,
+     37
+    ],
+    "size": [
+     72,
+     149,
+     74
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "move"
+   ],
+   "sockets": [
+    "socket-bridge"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-dust-slam",
+     "socket": "socket-bridge",
+     "trigger": "clip:attack",
+     "size": 70,
+     "at": 0.4
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-vehicles-sky-airship",
+   "pack": "fantasy",
+   "name": "Sky Airship",
+   "category": "vehicles",
+   "filename": "fantasy-vehicles-sky-airship.glb",
+   "relativePath": "vehicles/fantasy-vehicles-sky-airship.glb",
+   "leaf": "world",
+   "sizeBytes": 81536,
+   "bounds": {
+    "min": [
+     -45.1452,
+     0,
+     -59
+    ],
+    "max": [
+     45.1452,
+     132,
+     59
+    ],
+    "size": [
+     90.2905,
+     132,
+     118
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move"
+   ],
+   "sockets": [
+    "socket-burner"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-fantasy-torch-flame",
+     "socket": "socket-burner",
+     "trigger": "idle",
+     "size": 26
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "fantasy-avatar-parts",
+   "pack": "fantasy",
+   "name": "Fantasy Avatar Parts",
+   "category": "avatar",
+   "filename": "fantasy-avatar-parts.glb",
+   "relativePath": "avatar/fantasy-avatar-parts.glb",
+   "leaf": "characters",
+   "sizeBytes": 1482796,
+   "bounds": {
+    "min": [
+     -0.16,
+     0,
+     -0.26
+    ],
+    "max": [
+     0.16,
+     0.88,
+     0.26
+    ],
+    "size": [
+     0.32,
+     0.88,
+     0.52
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [
+    "32_Cast_Spell",
+    "33_Shield_Block",
+    "34_Bow_Draw",
+    "35_Sword_Slash",
+    "36_Heal",
+    "37_Kneel",
+    "38_Levitate",
+    "39_Victory"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "fantasy-characters-skins-dark-knight",
+   "pack": "fantasy",
+   "name": "Dark Knight",
+   "category": "characters-skins",
+   "filename": "fantasy-characters-skins-dark-knight.glb",
+   "relativePath": "characters-skins/fantasy-characters-skins-dark-knight.glb",
+   "leaf": "characters",
+   "sizeBytes": 749180,
+   "bounds": {
+    "min": [
+     -0.08,
+     0,
+     -0.3
+    ],
+    "max": [
+     0.1,
+     0.6,
+     0.3
+    ],
+    "size": [
+     0.18,
+     0.6,
+     0.6
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "fantasy-characters-skins-druid",
+   "pack": "fantasy",
+   "name": "Druid",
+   "category": "characters-skins",
+   "filename": "fantasy-characters-skins-druid.glb",
+   "relativePath": "characters-skins/fantasy-characters-skins-druid.glb",
+   "leaf": "characters",
+   "sizeBytes": 800864,
+   "bounds": {
+    "min": [
+     -0.09,
+     0,
+     -0.29
+    ],
+    "max": [
+     0.11,
+     0.78,
+     0.29
+    ],
+    "size": [
+     0.2,
+     0.78,
+     0.58
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "fantasy-characters-skins-dwarf",
+   "pack": "fantasy",
+   "name": "Dwarf Warrior",
+   "category": "characters-skins",
+   "filename": "fantasy-characters-skins-dwarf.glb",
+   "relativePath": "characters-skins/fantasy-characters-skins-dwarf.glb",
+   "leaf": "characters",
+   "sizeBytes": 810104,
+   "bounds": {
+    "min": [
+     -0.08,
+     0,
+     -0.29
+    ],
+    "max": [
+     0.1,
+     0.6,
+     0.29
+    ],
+    "size": [
+     0.18,
+     0.6,
+     0.58
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "fantasy-characters-skins-elf-mage",
+   "pack": "fantasy",
+   "name": "Elf Mage",
+   "category": "characters-skins",
+   "filename": "fantasy-characters-skins-elf-mage.glb",
+   "relativePath": "characters-skins/fantasy-characters-skins-elf-mage.glb",
+   "leaf": "characters",
+   "sizeBytes": 575592,
+   "bounds": {
+    "min": [
+     -0.09,
+     0,
+     -0.29
+    ],
+    "max": [
+     0.11,
+     0.6,
+     0.29
+    ],
+    "size": [
+     0.2,
+     0.6,
+     0.58
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "fantasy-characters-skins-elf-ranger",
+   "pack": "fantasy",
+   "name": "Elf Ranger",
+   "category": "characters-skins",
+   "filename": "fantasy-characters-skins-elf-ranger.glb",
+   "relativePath": "characters-skins/fantasy-characters-skins-elf-ranger.glb",
+   "leaf": "characters",
+   "sizeBytes": 644460,
+   "bounds": {
+    "min": [
+     -0.13,
+     0,
+     -0.29
+    ],
+    "max": [
+     0.11,
+     0.61,
+     0.29
+    ],
+    "size": [
+     0.24,
+     0.61,
+     0.58
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "fantasy-characters-skins-paladin",
+   "pack": "fantasy",
+   "name": "Paladin",
+   "category": "characters-skins",
+   "filename": "fantasy-characters-skins-paladin.glb",
+   "relativePath": "characters-skins/fantasy-characters-skins-paladin.glb",
+   "leaf": "characters",
+   "sizeBytes": 517944,
+   "bounds": {
+    "min": [
+     -0.08,
+     0,
+     -0.3
+    ],
+    "max": [
+     0.1,
+     0.6,
+     0.3
+    ],
+    "size": [
+     0.18,
+     0.6,
+     0.6
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  }
+ ],
+ "avatar": {
+  "pack": "fantasy",
+  "partsModelPath": "avatar/fantasy-avatar-parts.glb",
+  "clipsModelPath": "avatar/fantasy-avatar-parts.glb",
+  "leaf": "characters",
+  "parts": [
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "headwear",
+     "index": 1
+    },
+    "nodeName": "headwear fantasy-1",
+    "name": "Elven Circlet",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "headwear",
+     "index": 2
+    },
+    "nodeName": "headwear fantasy-2",
+    "name": "Winged Great Helm",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": true,
+     "hidesFacialHair": true
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "headwear",
+     "index": 3
+    },
+    "nodeName": "headwear fantasy-3",
+    "name": "Wizard Hat",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "headwear",
+     "index": 4
+    },
+    "nodeName": "headwear fantasy-4",
+    "name": "Ranger Hood",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "headwear",
+     "index": 5
+    },
+    "nodeName": "headwear fantasy-5",
+    "name": "Royal Crown",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "headwear",
+     "index": 6
+    },
+    "nodeName": "headwear fantasy-6",
+    "name": "Horned Helm",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "headwear",
+     "index": 7
+    },
+    "nodeName": "headwear fantasy-7",
+    "name": "Flower Crown",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "hair",
+     "index": 1
+    },
+    "nodeName": "hair fantasy-1",
+    "name": "Long Silver Elf Hair",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "hair",
+     "index": 2
+    },
+    "nodeName": "hair fantasy-2",
+    "name": "Braided Warrior Hair",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "hair",
+     "index": 3
+    },
+    "nodeName": "hair fantasy-3",
+    "name": "Elven Topknot",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "facialhair",
+     "index": 1
+    },
+    "nodeName": "facialhair fantasy-1",
+    "name": "Braided Dwarf Beard",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "facialhair",
+     "index": 2
+    },
+    "nodeName": "facialhair fantasy-2",
+    "name": "Wizard Beard",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "eyewear",
+     "index": 1
+    },
+    "nodeName": "eyewear fantasy-1",
+    "name": "Arcane Monocle",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "eyewear",
+     "index": 2
+    },
+    "nodeName": "eyewear fantasy-2",
+    "name": "Moon Spectacles",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "eyewear",
+     "index": 3
+    },
+    "nodeName": "eyewear fantasy-3",
+    "name": "Rune Eyepatch",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "ears",
+     "index": 1
+    },
+    "nodeName": "ears fantasy-1",
+    "name": "Elf Ears",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "ears",
+     "index": 2
+    },
+    "nodeName": "ears fantasy-2",
+    "name": "High-Elf Ears",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "face",
+     "index": 1
+    },
+    "nodeName": "face fantasy-1",
+    "name": "Elven Rune Face",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "face",
+     "index": 2
+    },
+    "nodeName": "face fantasy-2",
+    "name": "Druid Leaf Paint",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "eyebrow",
+     "index": 1
+    },
+    "nodeName": "eyebrow fantasy-1",
+    "name": "Arched Elven Brows",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "tops",
+     "index": 1
+    },
+    "nodeName": "tops fantasy-1",
+    "name": "Plate Cuirass",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "tops",
+     "index": 2
+    },
+    "nodeName": "tops fantasy-2",
+    "name": "Ranger Jerkin",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "tops",
+     "index": 3
+    },
+    "nodeName": "tops fantasy-3",
+    "name": "Mage Robe",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "tops",
+     "index": 4
+    },
+    "nodeName": "tops fantasy-4",
+    "name": "Paladin Tabard",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "tops",
+     "index": 5
+    },
+    "nodeName": "tops fantasy-5",
+    "name": "Chainmail Hauberk",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "bottoms",
+     "index": 1
+    },
+    "nodeName": "bottoms fantasy-1",
+    "name": "Iron Greaves",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "bottoms",
+     "index": 2
+    },
+    "nodeName": "bottoms fantasy-2",
+    "name": "Leather Breeches",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "bottoms",
+     "index": 3
+    },
+    "nodeName": "bottoms fantasy-3",
+    "name": "Mage Robe Skirt",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "bottoms",
+     "index": 4
+    },
+    "nodeName": "bottoms fantasy-4",
+    "name": "Chain Skirt",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "shoes",
+     "index": 1
+    },
+    "nodeName": "shoes fantasy-1",
+    "name": "Steel Sabatons",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "shoes",
+     "index": 2
+    },
+    "nodeName": "shoes fantasy-2",
+    "name": "Elven Boots",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "shoes",
+     "index": 3
+    },
+    "nodeName": "shoes fantasy-3",
+    "name": "Wizard Slippers",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "back",
+     "index": 1
+    },
+    "nodeName": "back fantasy-1",
+    "name": "Royal Cape",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "back",
+     "index": 2
+    },
+    "nodeName": "back fantasy-2",
+    "name": "Ranger Quiver",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "back",
+     "index": 3
+    },
+    "nodeName": "back fantasy-3",
+    "name": "Fairy Wings",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "back",
+     "index": 4
+    },
+    "nodeName": "back fantasy-4",
+    "name": "Round Shield (Back)",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "fantasy",
+     "slot": "back",
+     "index": 5
+    },
+    "nodeName": "back fantasy-5",
+    "name": "Starry Mage Cape",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   }
+  ],
+  "clips": [
+   "32_Cast_Spell",
+   "33_Shield_Block",
+   "34_Bow_Draw",
+   "35_Sword_Slash",
+   "36_Heal",
+   "37_Kneel",
+   "38_Levitate",
+   "39_Victory"
+  ]
+ },
+ "sprites": [
+  {
+   "id": "icon-fantasy-animated-props-bell-frame",
+   "pack": "fantasy",
+   "name": "animated props bell frame",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-fantasy-animated-props-bell-frame.png",
+   "leaf": "icons",
+   "sizeBytes": 17463,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-animated-props-bubbling-cauldron",
+   "pack": "fantasy",
+   "name": "animated props bubbling cauldron",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-fantasy-animated-props-bubbling-cauldron.png",
+   "leaf": "icons",
+   "sizeBytes": 10469,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-animated-props-catapult",
+   "pack": "fantasy",
+   "name": "animated props catapult",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-fantasy-animated-props-catapult.png",
+   "leaf": "icons",
+   "sizeBytes": 16306,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-animated-props-crystal-pylon",
+   "pack": "fantasy",
+   "name": "animated props crystal pylon",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-fantasy-animated-props-crystal-pylon.png",
+   "leaf": "icons",
+   "sizeBytes": 12327,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-animated-props-forge-bellows",
+   "pack": "fantasy",
+   "name": "animated props forge bellows",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-fantasy-animated-props-forge-bellows.png",
+   "leaf": "icons",
+   "sizeBytes": 16428,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-animated-props-mimic-chest",
+   "pack": "fantasy",
+   "name": "animated props mimic chest",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-fantasy-animated-props-mimic-chest.png",
+   "leaf": "icons",
+   "sizeBytes": 14554,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-animated-props-portcullis",
+   "pack": "fantasy",
+   "name": "animated props portcullis",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-fantasy-animated-props-portcullis.png",
+   "leaf": "icons",
+   "sizeBytes": 18610,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-animated-props-rune-portal",
+   "pack": "fantasy",
+   "name": "animated props rune portal",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-fantasy-animated-props-rune-portal.png",
+   "leaf": "icons",
+   "sizeBytes": 25644,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-animated-props-scrying-orb",
+   "pack": "fantasy",
+   "name": "animated props scrying orb",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-fantasy-animated-props-scrying-orb.png",
+   "leaf": "icons",
+   "sizeBytes": 18164,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-animated-props-spell-book",
+   "pack": "fantasy",
+   "name": "animated props spell book",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-fantasy-animated-props-spell-book.png",
+   "leaf": "icons",
+   "sizeBytes": 12098,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-animated-props-treasure-chest",
+   "pack": "fantasy",
+   "name": "animated props treasure chest",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-fantasy-animated-props-treasure-chest.png",
+   "leaf": "icons",
+   "sizeBytes": 9496,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-animated-props-well",
+   "pack": "fantasy",
+   "name": "animated props well",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-fantasy-animated-props-well.png",
+   "leaf": "icons",
+   "sizeBytes": 19063,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-creatures-dragon",
+   "pack": "fantasy",
+   "name": "creatures dragon",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-fantasy-creatures-dragon.png",
+   "leaf": "icons",
+   "sizeBytes": 20460,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-creatures-ent",
+   "pack": "fantasy",
+   "name": "creatures ent",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-fantasy-creatures-ent.png",
+   "leaf": "icons",
+   "sizeBytes": 23343,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-creatures-forest-wisp",
+   "pack": "fantasy",
+   "name": "creatures forest wisp",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-fantasy-creatures-forest-wisp.png",
+   "leaf": "icons",
+   "sizeBytes": 13919,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-creatures-goblin",
+   "pack": "fantasy",
+   "name": "creatures goblin",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-fantasy-creatures-goblin.png",
+   "leaf": "icons",
+   "sizeBytes": 15629,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-creatures-griffin",
+   "pack": "fantasy",
+   "name": "creatures griffin",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-fantasy-creatures-griffin.png",
+   "leaf": "icons",
+   "sizeBytes": 21491,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-creatures-skeleton-knight",
+   "pack": "fantasy",
+   "name": "creatures skeleton knight",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-fantasy-creatures-skeleton-knight.png",
+   "leaf": "icons",
+   "sizeBytes": 16621,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-creatures-slime",
+   "pack": "fantasy",
+   "name": "creatures slime",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-fantasy-creatures-slime.png",
+   "leaf": "icons",
+   "sizeBytes": 7142,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-creatures-unicorn",
+   "pack": "fantasy",
+   "name": "creatures unicorn",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-fantasy-creatures-unicorn.png",
+   "leaf": "icons",
+   "sizeBytes": 15767,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-battle-axe",
+   "pack": "fantasy",
+   "name": "held items battle axe",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-battle-axe.png",
+   "leaf": "icons",
+   "sizeBytes": 11052,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-crossbow",
+   "pack": "fantasy",
+   "name": "held items crossbow",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-crossbow.png",
+   "leaf": "icons",
+   "sizeBytes": 8897,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-dagger",
+   "pack": "fantasy",
+   "name": "held items dagger",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-dagger.png",
+   "leaf": "icons",
+   "sizeBytes": 13866,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-elven-bow",
+   "pack": "fantasy",
+   "name": "held items elven bow",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-elven-bow.png",
+   "leaf": "icons",
+   "sizeBytes": 8624,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-flail",
+   "pack": "fantasy",
+   "name": "held items flail",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-flail.png",
+   "leaf": "icons",
+   "sizeBytes": 10453,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-flanged-mace",
+   "pack": "fantasy",
+   "name": "held items flanged mace",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-flanged-mace.png",
+   "leaf": "icons",
+   "sizeBytes": 12507,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-frost-wand",
+   "pack": "fantasy",
+   "name": "held items frost wand",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-frost-wand.png",
+   "leaf": "icons",
+   "sizeBytes": 9680,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-greatsword",
+   "pack": "fantasy",
+   "name": "held items greatsword",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-greatsword.png",
+   "leaf": "icons",
+   "sizeBytes": 11854,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-kite-shield",
+   "pack": "fantasy",
+   "name": "held items kite shield",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-kite-shield.png",
+   "leaf": "icons",
+   "sizeBytes": 10829,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-lantern-staff",
+   "pack": "fantasy",
+   "name": "held items lantern staff",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-lantern-staff.png",
+   "leaf": "icons",
+   "sizeBytes": 8793,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-longsword",
+   "pack": "fantasy",
+   "name": "held items longsword",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-longsword.png",
+   "leaf": "icons",
+   "sizeBytes": 12139,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-mage-staff",
+   "pack": "fantasy",
+   "name": "held items mage staff",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-mage-staff.png",
+   "leaf": "icons",
+   "sizeBytes": 11748,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-spear",
+   "pack": "fantasy",
+   "name": "held items spear",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-spear.png",
+   "leaf": "icons",
+   "sizeBytes": 8307,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-spellbook",
+   "pack": "fantasy",
+   "name": "held items spellbook",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-spellbook.png",
+   "leaf": "icons",
+   "sizeBytes": 14532,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-torch",
+   "pack": "fantasy",
+   "name": "held items torch",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-torch.png",
+   "leaf": "icons",
+   "sizeBytes": 10201,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-held-items-war-hammer",
+   "pack": "fantasy",
+   "name": "held items war hammer",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-fantasy-held-items-war-hammer.png",
+   "leaf": "icons",
+   "sizeBytes": 11622,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-alchemy-table",
+   "pack": "fantasy",
+   "name": "props alchemy table",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-alchemy-table.png",
+   "leaf": "icons",
+   "sizeBytes": 13141,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-anvil",
+   "pack": "fantasy",
+   "name": "props anvil",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-anvil.png",
+   "leaf": "icons",
+   "sizeBytes": 7554,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-archery-target",
+   "pack": "fantasy",
+   "name": "props archery target",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-archery-target.png",
+   "leaf": "icons",
+   "sizeBytes": 12136,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-armor-stand",
+   "pack": "fantasy",
+   "name": "props armor stand",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-armor-stand.png",
+   "leaf": "icons",
+   "sizeBytes": 11763,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-arrow-barrel",
+   "pack": "fantasy",
+   "name": "props arrow barrel",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-arrow-barrel.png",
+   "leaf": "icons",
+   "sizeBytes": 12425,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-banner-stand",
+   "pack": "fantasy",
+   "name": "props banner stand",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-banner-stand.png",
+   "leaf": "icons",
+   "sizeBytes": 10419,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-banquet-table",
+   "pack": "fantasy",
+   "name": "props banquet table",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-banquet-table.png",
+   "leaf": "icons",
+   "sizeBytes": 9599,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-barrel",
+   "pack": "fantasy",
+   "name": "props barrel",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-barrel.png",
+   "leaf": "icons",
+   "sizeBytes": 9489,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-bookshelf",
+   "pack": "fantasy",
+   "name": "props bookshelf",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-bookshelf.png",
+   "leaf": "icons",
+   "sizeBytes": 13111,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-brazier",
+   "pack": "fantasy",
+   "name": "props brazier",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-brazier.png",
+   "leaf": "icons",
+   "sizeBytes": 11549,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-candelabra",
+   "pack": "fantasy",
+   "name": "props candelabra",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-candelabra.png",
+   "leaf": "icons",
+   "sizeBytes": 11267,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-crate",
+   "pack": "fantasy",
+   "name": "props crate",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-crate.png",
+   "leaf": "icons",
+   "sizeBytes": 9021,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-fence",
+   "pack": "fantasy",
+   "name": "props fence",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-fence.png",
+   "leaf": "icons",
+   "sizeBytes": 13166,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-grindstone",
+   "pack": "fantasy",
+   "name": "props grindstone",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-grindstone.png",
+   "leaf": "icons",
+   "sizeBytes": 10916,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-hay-bales",
+   "pack": "fantasy",
+   "name": "props hay bales",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-hay-bales.png",
+   "leaf": "icons",
+   "sizeBytes": 6911,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-heraldic-shield",
+   "pack": "fantasy",
+   "name": "props heraldic shield",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-heraldic-shield.png",
+   "leaf": "icons",
+   "sizeBytes": 12331,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-knight-statue",
+   "pack": "fantasy",
+   "name": "props knight statue",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-knight-statue.png",
+   "leaf": "icons",
+   "sizeBytes": 12257,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-knight-tent",
+   "pack": "fantasy",
+   "name": "props knight tent",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-knight-tent.png",
+   "leaf": "icons",
+   "sizeBytes": 13553,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-lantern-post",
+   "pack": "fantasy",
+   "name": "props lantern post",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-lantern-post.png",
+   "leaf": "icons",
+   "sizeBytes": 9088,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-lectern",
+   "pack": "fantasy",
+   "name": "props lectern",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-lectern.png",
+   "leaf": "icons",
+   "sizeBytes": 11604,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-market-stall",
+   "pack": "fantasy",
+   "name": "props market stall",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-market-stall.png",
+   "leaf": "icons",
+   "sizeBytes": 14232,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-potion-shelf",
+   "pack": "fantasy",
+   "name": "props potion shelf",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-potion-shelf.png",
+   "leaf": "icons",
+   "sizeBytes": 12258,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-rune-stone",
+   "pack": "fantasy",
+   "name": "props rune stone",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-rune-stone.png",
+   "leaf": "icons",
+   "sizeBytes": 10697,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-sack-pile",
+   "pack": "fantasy",
+   "name": "props sack pile",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-sack-pile.png",
+   "leaf": "icons",
+   "sizeBytes": 10405,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-signpost",
+   "pack": "fantasy",
+   "name": "props signpost",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-signpost.png",
+   "leaf": "icons",
+   "sizeBytes": 13176,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-stone-altar",
+   "pack": "fantasy",
+   "name": "props stone altar",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-stone-altar.png",
+   "leaf": "icons",
+   "sizeBytes": 11307,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-throne",
+   "pack": "fantasy",
+   "name": "props throne",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-throne.png",
+   "leaf": "icons",
+   "sizeBytes": 10452,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-training-dummy",
+   "pack": "fantasy",
+   "name": "props training dummy",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-training-dummy.png",
+   "leaf": "icons",
+   "sizeBytes": 10731,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-treasure-pile",
+   "pack": "fantasy",
+   "name": "props treasure pile",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-treasure-pile.png",
+   "leaf": "icons",
+   "sizeBytes": 11174,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-props-weapon-rack",
+   "pack": "fantasy",
+   "name": "props weapon rack",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-fantasy-props-weapon-rack.png",
+   "leaf": "icons",
+   "sizeBytes": 15039,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-vehicles-ballista-cart",
+   "pack": "fantasy",
+   "name": "vehicles ballista cart",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-fantasy-vehicles-ballista-cart.png",
+   "leaf": "icons",
+   "sizeBytes": 12976,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-vehicles-covered-wagon",
+   "pack": "fantasy",
+   "name": "vehicles covered wagon",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-fantasy-vehicles-covered-wagon.png",
+   "leaf": "icons",
+   "sizeBytes": 21007,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-vehicles-elven-swan-boat",
+   "pack": "fantasy",
+   "name": "vehicles elven swan boat",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-fantasy-vehicles-elven-swan-boat.png",
+   "leaf": "icons",
+   "sizeBytes": 18698,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-vehicles-royal-carriage",
+   "pack": "fantasy",
+   "name": "vehicles royal carriage",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-fantasy-vehicles-royal-carriage.png",
+   "leaf": "icons",
+   "sizeBytes": 18206,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-vehicles-siege-tower",
+   "pack": "fantasy",
+   "name": "vehicles siege tower",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-fantasy-vehicles-siege-tower.png",
+   "leaf": "icons",
+   "sizeBytes": 21350,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-fantasy-vehicles-sky-airship",
+   "pack": "fantasy",
+   "name": "vehicles sky airship",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-fantasy-vehicles-sky-airship.png",
+   "leaf": "icons",
+   "sizeBytes": 17806,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-danger-square-default",
+   "pack": "fantasy",
+   "name": "buttons danger square default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-danger-square-default.png",
+   "leaf": "ui",
+   "sizeBytes": 564,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-danger-square-disabled",
+   "pack": "fantasy",
+   "name": "buttons danger square disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-danger-square-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 548,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-danger-square-hover",
+   "pack": "fantasy",
+   "name": "buttons danger square hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-danger-square-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 550,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-danger-square-pressed",
+   "pack": "fantasy",
+   "name": "buttons danger square pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-danger-square-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 515,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-danger-wide-default",
+   "pack": "fantasy",
+   "name": "buttons danger wide default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-danger-wide-default.png",
+   "leaf": "ui",
+   "sizeBytes": 1786,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-danger-wide-disabled",
+   "pack": "fantasy",
+   "name": "buttons danger wide disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-danger-wide-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 1739,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-danger-wide-hover",
+   "pack": "fantasy",
+   "name": "buttons danger wide hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-danger-wide-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 1853,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-danger-wide-pressed",
+   "pack": "fantasy",
+   "name": "buttons danger wide pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-danger-wide-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 1808,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-primary-square-default",
+   "pack": "fantasy",
+   "name": "buttons primary square default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-primary-square-default.png",
+   "leaf": "ui",
+   "sizeBytes": 615,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-primary-square-disabled",
+   "pack": "fantasy",
+   "name": "buttons primary square disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-primary-square-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 463,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-primary-square-hover",
+   "pack": "fantasy",
+   "name": "buttons primary square hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-primary-square-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 576,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-primary-square-pressed",
+   "pack": "fantasy",
+   "name": "buttons primary square pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-primary-square-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 578,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-primary-wide-default",
+   "pack": "fantasy",
+   "name": "buttons primary wide default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-primary-wide-default.png",
+   "leaf": "ui",
+   "sizeBytes": 2051,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-primary-wide-disabled",
+   "pack": "fantasy",
+   "name": "buttons primary wide disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-primary-wide-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 1617,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-primary-wide-hover",
+   "pack": "fantasy",
+   "name": "buttons primary wide hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-primary-wide-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 1872,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-primary-wide-pressed",
+   "pack": "fantasy",
+   "name": "buttons primary wide pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-primary-wide-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 1899,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-secondary-square-default",
+   "pack": "fantasy",
+   "name": "buttons secondary square default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-secondary-square-default.png",
+   "leaf": "ui",
+   "sizeBytes": 577,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-secondary-square-disabled",
+   "pack": "fantasy",
+   "name": "buttons secondary square disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-secondary-square-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 548,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-secondary-square-hover",
+   "pack": "fantasy",
+   "name": "buttons secondary square hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-secondary-square-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 583,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-secondary-square-pressed",
+   "pack": "fantasy",
+   "name": "buttons secondary square pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-secondary-square-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 606,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-secondary-wide-default",
+   "pack": "fantasy",
+   "name": "buttons secondary wide default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-secondary-wide-default.png",
+   "leaf": "ui",
+   "sizeBytes": 1865,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-secondary-wide-disabled",
+   "pack": "fantasy",
+   "name": "buttons secondary wide disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-secondary-wide-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 1677,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-secondary-wide-hover",
+   "pack": "fantasy",
+   "name": "buttons secondary wide hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-secondary-wide-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 1893,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-secondary-wide-pressed",
+   "pack": "fantasy",
+   "name": "buttons secondary wide pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-secondary-wide-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 1897,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-tab-active",
+   "pack": "fantasy",
+   "name": "buttons tab active",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-tab-active.png",
+   "leaf": "ui",
+   "sizeBytes": 655,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-tab-hover",
+   "pack": "fantasy",
+   "name": "buttons tab hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-tab-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 674,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-buttons-tab-inactive",
+   "pack": "fantasy",
+   "name": "buttons tab inactive",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-fantasy-buttons-tab-inactive.png",
+   "leaf": "ui",
+   "sizeBytes": 612,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-checkbox-off",
+   "pack": "fantasy",
+   "name": "general checkbox off",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-checkbox-off.png",
+   "leaf": "ui",
+   "sizeBytes": 401,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-checkbox-on",
+   "pack": "fantasy",
+   "name": "general checkbox on",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-checkbox-on.png",
+   "leaf": "ui",
+   "sizeBytes": 428,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-dialog",
+   "pack": "fantasy",
+   "name": "general dialog",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-dialog.png",
+   "leaf": "ui",
+   "sizeBytes": 2196,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-header-banner",
+   "pack": "fantasy",
+   "name": "general header banner",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-header-banner.png",
+   "leaf": "ui",
+   "sizeBytes": 1743,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-icon-arrow",
+   "pack": "fantasy",
+   "name": "general icon arrow",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-icon-arrow.png",
+   "leaf": "ui",
+   "sizeBytes": 298,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-icon-check",
+   "pack": "fantasy",
+   "name": "general icon check",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-icon-check.png",
+   "leaf": "ui",
+   "sizeBytes": 304,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-icon-close",
+   "pack": "fantasy",
+   "name": "general icon close",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-icon-close.png",
+   "leaf": "ui",
+   "sizeBytes": 279,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-icon-plus",
+   "pack": "fantasy",
+   "name": "general icon plus",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-icon-plus.png",
+   "leaf": "ui",
+   "sizeBytes": 281,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-panel-inset",
+   "pack": "fantasy",
+   "name": "general panel inset",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-panel-inset.png",
+   "leaf": "ui",
+   "sizeBytes": 1659,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-panel",
+   "pack": "fantasy",
+   "name": "general panel",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-panel.png",
+   "leaf": "ui",
+   "sizeBytes": 2086,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-progress-fill-energy",
+   "pack": "fantasy",
+   "name": "general progress fill energy",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-progress-fill-energy.png",
+   "leaf": "ui",
+   "sizeBytes": 143,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-progress-fill-health",
+   "pack": "fantasy",
+   "name": "general progress fill health",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-progress-fill-health.png",
+   "leaf": "ui",
+   "sizeBytes": 142,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-progress-fill-xp",
+   "pack": "fantasy",
+   "name": "general progress fill xp",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-progress-fill-xp.png",
+   "leaf": "ui",
+   "sizeBytes": 143,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-progress-frame",
+   "pack": "fantasy",
+   "name": "general progress frame",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-progress-frame.png",
+   "leaf": "ui",
+   "sizeBytes": 764,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-slot-empty",
+   "pack": "fantasy",
+   "name": "general slot empty",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-slot-empty.png",
+   "leaf": "ui",
+   "sizeBytes": 544,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-slot-filled",
+   "pack": "fantasy",
+   "name": "general slot filled",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-slot-filled.png",
+   "leaf": "ui",
+   "sizeBytes": 431,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-slot-locked",
+   "pack": "fantasy",
+   "name": "general slot locked",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-slot-locked.png",
+   "leaf": "ui",
+   "sizeBytes": 576,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-slot-selected",
+   "pack": "fantasy",
+   "name": "general slot selected",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-slot-selected.png",
+   "leaf": "ui",
+   "sizeBytes": 531,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-toggle-off",
+   "pack": "fantasy",
+   "name": "general toggle off",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-toggle-off.png",
+   "leaf": "ui",
+   "sizeBytes": 281,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-toggle-on",
+   "pack": "fantasy",
+   "name": "general toggle on",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-toggle-on.png",
+   "leaf": "ui",
+   "sizeBytes": 285,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-general-tooltip",
+   "pack": "fantasy",
+   "name": "general tooltip",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-fantasy-general-tooltip.png",
+   "leaf": "ui",
+   "sizeBytes": 1561,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-rarities-rarity-common",
+   "pack": "fantasy",
+   "name": "rarities rarity common",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-fantasy-rarities-rarity-common.png",
+   "leaf": "ui",
+   "sizeBytes": 493,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-rarities-rarity-epic",
+   "pack": "fantasy",
+   "name": "rarities rarity epic",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-fantasy-rarities-rarity-epic.png",
+   "leaf": "ui",
+   "sizeBytes": 514,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-rarities-rarity-legendary",
+   "pack": "fantasy",
+   "name": "rarities rarity legendary",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-fantasy-rarities-rarity-legendary.png",
+   "leaf": "ui",
+   "sizeBytes": 501,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-rarities-rarity-rare",
+   "pack": "fantasy",
+   "name": "rarities rarity rare",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-fantasy-rarities-rarity-rare.png",
+   "leaf": "ui",
+   "sizeBytes": 549,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-fantasy-rarities-rarity-uncommon",
+   "pack": "fantasy",
+   "name": "rarities rarity uncommon",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-fantasy-rarities-rarity-uncommon.png",
+   "leaf": "ui",
+   "sizeBytes": 587,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  }
+ ],
+ "pfx": {
+  "pack": "fantasy",
+  "effects": [
+   "rvx-fantasy-arcane-bolt",
+   "rvx-fantasy-arcane-orbit",
+   "rvx-fantasy-bell-toll",
+   "rvx-fantasy-bone-poof",
+   "rvx-fantasy-bow-release",
+   "rvx-fantasy-cauldron-brew",
+   "rvx-fantasy-chimney-smoke",
+   "rvx-fantasy-dragon-breath",
+   "rvx-fantasy-dust-slam",
+   "rvx-fantasy-fairy-motes",
+   "rvx-fantasy-forge-flare",
+   "rvx-fantasy-frost-nova",
+   "rvx-fantasy-hearth-fire",
+   "rvx-fantasy-holy-smite",
+   "rvx-fantasy-lantern-glow",
+   "rvx-fantasy-leaf-fall",
+   "rvx-fantasy-loot-burst",
+   "rvx-fantasy-metal-clang",
+   "rvx-fantasy-portal-swirl",
+   "rvx-fantasy-potion-fizz",
+   "rvx-fantasy-slash-arc",
+   "rvx-fantasy-slime-splat",
+   "rvx-fantasy-torch-flame",
+   "rvx-fantasy-treasure-glint",
+   "rvx-fantasy-waterfall-mist"
+  ]
+ }
+}

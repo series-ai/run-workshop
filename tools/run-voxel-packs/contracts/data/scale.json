@@ -1,0 +1,333 @@
+{
+ "version": 1,
+ "about": "World scale standard in voxels (1 voxel = 1 world unit), matched to Pirate Nation by class: each class range comes from the PN models of that kind (see the README, 'Scale standard'). PN footprints use a 16-voxel tile (a 6x6 building is 96 wide). Every world asset declares one class; its bounds must fit the class ranges. height = y size, length = the larger of x/z, width = the smaller of x/z, largest = the largest of all three.",
+ "tileVoxels": 16,
+ "personVoxels": 36,
+ "grammar": {
+  "doorHeight": [
+   24,
+   36
+  ],
+  "doorWidth": [
+   14,
+   24
+  ],
+  "storeyHeight": [
+   26,
+   42
+  ],
+  "windowHeight": [
+   10,
+   18
+  ]
+ },
+ "categoryClasses": {
+  "props": [
+   "prop",
+   "person-size",
+   "coffin",
+   "door",
+   "lamp",
+   "tall-prop",
+   "fence",
+   "kit",
+   "tile"
+  ],
+  "animated-props": [
+   "prop",
+   "person-size",
+   "coffin",
+   "door",
+   "vehicle-door",
+   "lamp",
+   "tall-prop",
+   "fence",
+   "kit"
+  ],
+  "buildings": [
+   "building",
+   "tower",
+   "wall"
+  ],
+  "terrain-nature": [
+   "tree",
+   "terrain",
+   "fence",
+   "tile",
+   "wreck"
+  ],
+  "creatures": [
+   "creature-small",
+   "humanoid",
+   "creature-large",
+   "creature-boss"
+  ],
+  "vehicles": [
+   "vehicle-small",
+   "vehicle",
+   "vehicle-large"
+  ]
+ },
+ "classes": {
+  "prop": {
+   "largest": [
+    6,
+    40
+   ],
+   "height": [
+    2,
+    40
+   ],
+   "use": "small objects: crates, barrels, tables, signs, tools, consoles, rocks as props"
+  },
+  "person-size": {
+   "largest": [
+    28,
+    50
+   ],
+   "height": [
+    2,
+    50
+   ],
+   "use": "objects sized to a person: vending machines, thrones, armour stands, statues of people, iron maidens, cryo pods, stasis tubes, porta-potties, payphones, bookshelves"
+  },
+  "coffin": {
+   "largest": [
+    16,
+    26
+   ],
+   "height": [
+    4,
+    26
+   ],
+   "use": "anything a body lies in: coffins, sarcophagi, caskets (flat or upright)"
+  },
+  "door": {
+   "largest": [
+    28,
+    116
+   ],
+   "height": [
+    28,
+    116
+   ],
+   "use": "free-standing doors, gates, archways and portals a person walks through (PN pirate archway 82\u00d790, haunted archway 83\u00d7115)"
+  },
+  "vehicle-door": {
+   "largest": [
+    36,
+    72
+   ],
+   "height": [
+    32,
+    64
+   ],
+   "use": "doors a vehicle drives through: garage doors"
+  },
+  "lamp": {
+   "largest": [
+    40,
+    64
+   ],
+   "height": [
+    40,
+    64
+   ],
+   "use": "street lamps, lamp posts, lantern posts"
+  },
+  "tall-prop": {
+   "largest": [
+    44,
+    100
+   ],
+   "height": [
+    44,
+    100
+   ],
+   "use": "structures taller than a lamp but not buildings: radio masts, windpumps, bell frames, pylons, obelisks"
+  },
+  "building": {
+   "height": [
+    60,
+    150
+   ],
+   "length": [
+    66,
+    180
+   ],
+   "width": [
+    40,
+    180
+   ],
+   "use": "houses, halls, shops, hangars, warehouses: 5x5 to 13x13 tiles, doors at least doorHeight"
+  },
+  "tower": {
+   "height": [
+    85,
+    170
+   ],
+   "length": [
+    28,
+    72
+   ],
+   "use": "towers, spires, water towers, bell towers"
+  },
+  "wall": {
+   "height": [
+    50,
+    120
+   ],
+   "length": [
+    60,
+    140
+   ],
+   "use": "castle walls and gatehouse-like wall sections"
+  },
+  "vehicle-small": {
+   "length": [
+    36,
+    64
+   ],
+   "height": [
+    14,
+    60
+   ],
+   "use": "one-rider vehicles: motorbikes, hover bikes, brooms"
+  },
+  "vehicle": {
+   "length": [
+    60,
+    110
+   ],
+   "height": [
+    26,
+    90
+   ],
+   "use": "cars, trucks, carts, wagons, carriages, rovers, buggies, fighters, saucers"
+  },
+  "vehicle-large": {
+   "largest": [
+    85,
+    160
+   ],
+   "height": [
+    36,
+    160
+   ],
+   "use": "buses, ships, airships, freighters, siege towers"
+  },
+  "creature-small": {
+   "largest": [
+    5,
+    24
+   ],
+   "height": [
+    3,
+    24
+   ],
+   "use": "animals smaller than a person: bats, rats, crows, dogs, slimes, wisps, drones"
+  },
+  "humanoid": {
+   "height": [
+    28,
+    44
+   ],
+   "largest": [
+    14,
+    50
+   ],
+   "use": "person-sized creatures: zombies, goblins, skeletons, mummies, aliens, ghosts, robots"
+  },
+  "creature-large": {
+   "largest": [
+    36,
+    110
+   ],
+   "height": [
+    18,
+    110
+   ],
+   "use": "creatures bigger than a person: werewolves, horses, griffins, spiders, mechs, ents, gargoyles"
+  },
+  "creature-boss": {
+   "largest": [
+    150,
+    280
+   ],
+   "height": [
+    70,
+    140
+   ],
+   "use": "boss monsters: dragons, queens, behemoths, vampire lords"
+  },
+  "fence": {
+   "length": [
+    16,
+    32
+   ],
+   "height": [
+    12,
+    28
+   ],
+   "tileLength": true,
+   "use": "fence and railing segments; the length is whole 16-voxel tiles so segments line up on the PN grid"
+  },
+  "kit": {
+   "length": [
+    16,
+    64
+   ],
+   "height": [
+    24,
+    64
+   ],
+   "tileLength": true,
+   "use": "modular building pieces a person walks among: dungeon walls, corners, pillars, stairs (one storey or more tall, whole tiles long)"
+  },
+  "tile": {
+   "length": [
+    16,
+    64
+   ],
+   "height": [
+    1,
+    12
+   ],
+   "tileLength": true,
+   "use": "flat ground tiles: floors, grates, road sections (whole tiles)"
+  },
+  "wreck": {
+   "length": [
+    40,
+    100
+   ],
+   "height": [
+    10,
+    50
+   ],
+   "use": "wrecked vehicles as scenery; the same size as the live vehicle"
+  },
+  "tree": {
+   "height": [
+    30,
+    100
+   ],
+   "largest": [
+    24,
+    100
+   ],
+   "use": "trees"
+  },
+  "terrain": {
+   "largest": [
+    16,
+    150
+   ],
+   "height": [
+    2,
+    90
+   ],
+   "use": "rocks, ground tiles, craters, pools, bridges, plants, wrecks, planets as scenery"
+  }
+ }
+}
