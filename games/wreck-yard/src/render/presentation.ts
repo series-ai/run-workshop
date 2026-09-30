@@ -18,7 +18,6 @@ export interface PlayerRenderPose {
   readonly activeTool: string;
   readonly jetpackActive: boolean;
   readonly grabbing: string | null;
-  readonly torching: string | null;
   readonly ridingVehicle: boolean;
   readonly feedback: ToolFeedback | null;
 }
@@ -33,8 +32,6 @@ export interface YardRender {
   readonly stats: YardStats;
   readonly contraptions: ContraptionState;
   readonly floating: number;
-  readonly grabbed: readonly (string | null)[];
-  readonly torching: readonly (string | null)[];
 }
 
 export function projectYard(state: YardState, context: { readonly localSlot: number; readonly status: SyncplayRunnerStatus }): YardRender {
@@ -74,7 +71,6 @@ export function projectYard(state: YardState, context: { readonly localSlot: num
     activeTool: p.activeTool,
     jetpackActive: p.jetpackActive,
     grabbing: p.grab?.bodyId ?? null,
-    torching: p.torch?.bodyId ?? null,
     ridingVehicle: Boolean(p.ridingVehicle),
     feedback: p.feedback,
   }));
@@ -89,8 +85,6 @@ export function projectYard(state: YardState, context: { readonly localSlot: num
     stats: state.stats,
     contraptions: state.contraptions,
     floating,
-    grabbed: state.players.map((p) => p.grab?.bodyId ?? null),
-    torching: state.players.map((p) => p.torch?.bodyId ?? null),
   };
 }
 

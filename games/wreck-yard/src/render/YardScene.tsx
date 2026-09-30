@@ -1,5 +1,5 @@
 import { Canvas, useFrame } from '@react-three/fiber';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import type { MatchController } from '../game/match';
 import { CAMERA_BASE } from './viewConstants';
@@ -38,7 +38,7 @@ function QualityFallback({ onFallback }: { onFallback: () => void }) {
   return null;
 }
 
-function SceneRoot({ controller, tool, quality, onQualityFallback, onToolChange, bodies, renderRef, outlines, onHover, onBodiesChange }: {
+function SceneRoot({ controller, tool, quality, onQualityFallback, onToolChange, bodies, renderRef, onBodiesChange }: {
   quality: RenderQuality;
   /** Set only while the tier is automatic; a player choice is never overridden. */
   onQualityFallback?: () => void;
@@ -47,8 +47,6 @@ function SceneRoot({ controller, tool, quality, onQualityFallback, onToolChange,
   onToolChange?: (tool: UiTool) => void;
   bodies: readonly YardBody[];
   renderRef: React.MutableRefObject<YardRender | null>;
-  outlines: ReadonlyMap<string, string>;
-  onHover: (id: string | null) => void;
   onBodiesChange: (bodies: readonly YardBody[]) => void;
 }) {
   const worldOcclusion = useWorldOcclusion();
@@ -57,7 +55,7 @@ function SceneRoot({ controller, tool, quality, onQualityFallback, onToolChange,
       <PointerInput controller={controller} tool={tool} onToolChange={onToolChange} renderRef={renderRef} onBodiesChange={onBodiesChange} />
       <YardShell renderRef={renderRef} />
       <Contraptions renderRef={renderRef} />
-      <VoxelBodies bodies={bodies} renderRef={renderRef} outlines={outlines} onHover={onHover} worldOcclusion={worldOcclusion} />
+      <VoxelBodies bodies={bodies} renderRef={renderRef} worldOcclusion={worldOcclusion} />
       <PlayerAvatars renderRef={renderRef} tool={tool} />
       <FirstPersonTool tool={tool} renderRef={renderRef} />
       <TorchSparks tool={tool} renderRef={renderRef} />
@@ -80,7 +78,6 @@ export function YardScene({ controller, tool, quality, onQualityFallback, onTool
 }) {
   const renderRef = useRef<YardRender | null>(null);
   const [bodies, setBodies] = useState<readonly YardBody[]>([]);
-  const [localHover, setLocalHover] = useState<string | null>(null);
 
   useEffect(() => {
     return controller.subscribe(() => {
@@ -91,10 +88,7 @@ export function YardScene({ controller, tool, quality, onQualityFallback, onTool
     });
   }, [controller]);
 
-  const onHover = useCallback((id: string | null) => setLocalHover(id), []);
 
-  const outlines = new Map<string, string>();
-  if (localHover && tool !== 'orbit') outlines.set(localHover, tool === 'torch' ? '#ffb264' : '#d4efff');
 
   const isMobile = isMobileDevice();
 
@@ -125,7 +119,7 @@ export function YardScene({ controller, tool, quality, onQualityFallback, onTool
         minDpr={isMobile ? 0.85 : 1.0}
         maxDpr={isMobile ? 1.25 : 1.5}
       />
-      <SceneRoot controller={controller} tool={tool} quality={quality} onQualityFallback={onQualityFallback} onToolChange={onToolChange} bodies={bodies} renderRef={renderRef} outlines={outlines} onHover={onHover} onBodiesChange={setBodies} />
+      <SceneRoot controller={controller} tool={tool} quality={quality} onQualityFallback={onQualityFallback} onToolChange={onToolChange} bodies={bodies} renderRef={renderRef} onBodiesChange={setBodies} />
     </Canvas>
   );
 }
