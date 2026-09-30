@@ -1,35 +1,66 @@
-import type { PhysicsOverlapQuery3D, PhysicsWorld3D } from '@series-inc/rundot-syncplay/physics/3d';
 import { stepDeterministicKcc3D } from '@series-inc/rundot-syncplay/browser';
 import { ARENA_EXTENT, DT, FLOOR_Y, PLAYER_HEIGHT, PLAYER_RADIUS } from './constants';
 import type { Vec3 } from './math';
 import type { OpenYardPhysicsWorld } from './physics';
 import type { PlayerState } from './state';
 
-/**
- * The KCC queries with the capsule's bounding box. In Syncplay 6.0.0-rc.13 a
- * capsule query next to a voxel body still costs ~17x a box query (~0.5 ms);
- * real capsules add ~0.2-0.4 ms per walking player per tick. Box queries stop
- * the player a few cm early at the corners of turned boxes.
- */
-function boxQueryShape(shape: PhysicsOverlapQuery3D['shape']): PhysicsOverlapQuery3D['shape'] {
-  return shape.type === 'capsule'
-    ? { type: 'box', halfX: shape.radius, halfY: shape.halfHeight + shape.radius, halfZ: shape.radius }
-    : shape;
-}
-
-function characterQueries(world: PhysicsWorld3D): PhysicsWorld3D {
-  return {
-    ...world,
-    overlap: (query) => world.overlap({ ...query, shape: boxQueryShape(query.shape) }),
-    shapeCast: (query) => world.shapeCast({ ...query, shape: boxQueryShape(query.shape) }),
-  };
-}
-
 const HALF_HEIGHT = PLAYER_HEIGHT * 0.5 - PLAYER_RADIUS;
 
+/** Tallest edge the player walks up onto (m). */
+const STEP_HEIGHT = 0.3;
+/** Upward speed (m/s) of the lifted slide: just above zero, so the KCC does not ground it. */
+const LIFT_SPEED = 0.001;
+/**
+ * The landing check sits this far above the landed pose. A lower edge beside the
+ * feet is fine (the next step climbs it); anything taller means the capsule's
+ * side is inside the step.
+ */
+const LANDING_CLEARANCE = 0.13;
+
+type PlayerPose = Pick<PlayerState, 'x' | 'y' | 'z' | 'grounded'>;
+
+/**
+ * Moves the player with the Syncplay KCC. The KCC slides horizontally only: a
+ * low edge it meets head-on (a plate on the floor, a crate's lip) is a wall to
+ * it, and its step height only snaps down onto ground already underfoot. So a
+ * grounded player that is blocked tries the move again from STEP_HEIGHT up,
+ * then drops onto the step. The retry is kept only when it gets further and
+ * lands clear of everything, so a wall, or an edge too tall for the capsule's
+ * round bottom to clear (~0.12 m head-on), still blocks.
+ */
+export function movePlayer(physics: OpenYardPhysicsWorld, player: PlayerPose, velocity: Vec3) {
+  const direct = moveWithKcc(physics, player, velocity);
+  const wanted = Math.hypot(velocity[0], velocity[2]) * DT;
+  const moved = Math.hypot(direct.x - player.x, direct.z - player.z);
+  if (!player.grounded || wanted < 1e-4 || moved >= wanted * 0.5) return direct;
+  const headroom = physics.world.shapeCast({
+    x: player.x, y: player.y + HALF_HEIGHT, z: player.z,
+    shape: { type: 'capsule', radius: PLAYER_RADIUS, halfHeight: HALF_HEIGHT },
+    dx: 0, dy: 1, dz: 0, maxDistance: STEP_HEIGHT,
+    hitTriggers: false, hitSensors: false,
+  });
+  if (headroom.length > 0) return direct;
+  // Two passes: slide at the lifted height (moving up by a hair, so the KCC skips its
+  // ground pass, which would put the player straight back down), then drop onto the step.
+  const lifted = moveWithKcc(physics, { ...player, y: player.y + STEP_HEIGHT, grounded: false }, [velocity[0], LIFT_SPEED, velocity[2]]);
+  const liftedMoved = Math.hypot(lifted.x - player.x, lifted.z - player.z);
+  if (liftedMoved <= moved + 1e-3) return direct;
+  const landed = moveWithKcc(physics, { x: lifted.x, y: lifted.y, z: lifted.z, grounded: false }, [0, -(STEP_HEIGHT + 0.05) / DT, 0]);
+  if (!landed.grounded) return direct;
+  // The KCC grounds on what is under the capsule's center. Next to a tall edge that
+  // is the floor while the capsule's side is inside the step; refuse that landing.
+  const inside = physics.world.overlap({
+    x: landed.x, y: landed.y + HALF_HEIGHT + LANDING_CLEARANCE, z: landed.z,
+    shape: { type: 'capsule', radius: PLAYER_RADIUS, halfHeight: HALF_HEIGHT },
+    hitTriggers: false, hitSensors: false,
+  });
+  if (inside.length > 0) return direct;
+  return { ...landed, velocity: [lifted.velocity[0], landed.velocity[1], lifted.velocity[2]] as Vec3 };
+}
+
 /** Convert game velocities to the KCC's meters per frame at this boundary. */
-export function movePlayer(physics: OpenYardPhysicsWorld, player: PlayerState, velocity: Vec3) {
-  const queries = characterQueries(physics.world);
+function moveWithKcc(physics: OpenYardPhysicsWorld, player: PlayerPose, velocity: Vec3) {
+  const queries = physics.world;
   const centerY = player.y + HALF_HEIGHT;
   let vertical = velocity[1] * DT;
   if (vertical > 0) {
@@ -50,7 +81,7 @@ export function movePlayer(physics: OpenYardPhysicsWorld, player: PlayerState, v
     minX: -ARENA_EXTENT + 1, maxX: ARENA_EXTENT - 1,
     minY: FLOOR_Y - 2, maxY: 40,
     minZ: -ARENA_EXTENT + 1, maxZ: ARENA_EXTENT - 1,
-    maxSlopeRisePerUnit: 0.8, stepHeight: 0.3,
+    maxSlopeRisePerUnit: 0.8, stepHeight: STEP_HEIGHT,
   }, {
     frame: Number(physics.world.info().frame),
     physics: queries,

@@ -64,8 +64,8 @@ function walkInto(box: ShellBox, start: [number, number]): { deepest: number; st
     deepest = Math.max(deepest, penetration(box, state.players[0]!.x, state.players[0]!.z));
   }
   const end = state.players[0]!;
-  // Stopped by this piece or a neighbor, not in open space. The box-shaped KCC
-  // query stops early at the corners of turned boxes, hence the 0.6 m margin.
+  // Stopped by this piece or a neighbor, not in open space. The 0.6 m margin
+  // covers the capsule radius and the KCC skin.
   return { deepest, stoppedAtSolid: TOUCHABLE.some((other) => penetration(other, end.x, end.z) > -0.6) };
 }
 
