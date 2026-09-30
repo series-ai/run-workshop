@@ -1,3 +1,4 @@
+import { CAGE_PANELS } from './cage';
 import { SHELL_BOXES } from './shell';
 import { describe, expect, it } from 'vitest';
 import { makeEmptyVoxelField, stampBox } from 'voxel-kit';
@@ -39,7 +40,7 @@ describe('createInitialState', () => {
       const physics = state.world.bodies.find((p) => p.id === body.id);
       expect(physics?.kind).toBe(body.motion === 'fixed' ? 'static' : 'dynamic');
     }
-    expect(state.world.bodies.filter((b) => b.id.startsWith('shell:'))).toHaveLength(SHELL_BOXES.length);
+    expect(state.world.bodies.filter((b) => b.id.startsWith('shell:'))).toHaveLength(SHELL_BOXES.length + CAGE_PANELS.length);
     expect(state.world.bodies.some((b) => b.id === 'shell:floor')).toBe(true);
   });
 

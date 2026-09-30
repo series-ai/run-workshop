@@ -16,6 +16,7 @@ import { TorchJet } from './TorchJet';
 import { VoxelBodies } from './VoxelBodies';
 import { YardShell } from './YardShell';
 import { Contraptions } from './Contraptions';
+import { ArenaCage } from './ArenaCage';
 import { InkComposer } from './style/InkComposer';
 import type { YardRender } from './presentation';
 import { DynamicDpr, isMobileDevice } from './DynamicDpr';
@@ -55,6 +56,7 @@ function SceneRoot({ controller, tool, quality, onQualityFallback, onToolChange,
       <PointerInput controller={controller} tool={tool} onToolChange={onToolChange} renderRef={renderRef} onBodiesChange={onBodiesChange} />
       <YardShell renderRef={renderRef} />
       <Contraptions renderRef={renderRef} />
+      <ArenaCage renderRef={renderRef} />
       <VoxelBodies bodies={bodies} renderRef={renderRef} worldOcclusion={worldOcclusion} />
       <PlayerAvatars renderRef={renderRef} tool={tool} />
       <FirstPersonTool tool={tool} renderRef={renderRef} />

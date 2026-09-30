@@ -26,6 +26,7 @@ import {
   TORCH_THROUGH_MARGIN,
   VOXEL_SIZE,
 } from './constants';
+import { WORLD_LAYER } from './cage';
 import { fractureBody, type FractureContact } from './fracture';
 import {
   BALLISTIC_DAMPING,
@@ -120,6 +121,7 @@ function aimRay(w: Working, origin: Vec3, direction: Vec3, maxDistance = MAX_RAY
     x: origin[0], y: origin[1], z: origin[2],
     dx: direction[0], dy: direction[1], dz: direction[2],
     maxDistance,
+    layerMask: WORLD_LAYER,
   });
   const first = hits[0];
   if (!first) return { kind: 'none', point: add(origin, scale(direction, maxDistance)) };

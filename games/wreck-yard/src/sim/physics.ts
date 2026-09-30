@@ -26,6 +26,7 @@ import {
   VOXEL_SIZE,
   YARD_MATERIAL,
 } from './constants';
+import { CAGE_LAYER, CAGE_PANELS, WORLD_LAYER } from './cage';
 import { SHELL_BOXES, shellBoxQuaternion } from './shell';
 import { clamp, lerp, type Quat, type Vec3 } from './math';
 import type { YardBody } from './state';
@@ -108,7 +109,7 @@ export const WATER_FLUID_CONFIG: PhysicsFluidInput3D = {
   linearDragPerSecond: 2,
   angularDragPerSecond: 1,
   flowVelocity: { x: 0, y: 0, z: 0 },
-  layer: 1,
+  layer: WORLD_LAYER,
   mask: 0xffffffff,
 };
 
@@ -178,7 +179,7 @@ export function makePhysicsBody(body: YardBody, pose: BodyPose): YardPhysicsBody
       angularDamping: ANGULAR_DAMPING,
       friction: YARD_MATERIAL.friction,
       restitution: YARD_MATERIAL.restitution,
-      layer: 1,
+      layer: WORLD_LAYER,
       mask: 0xffffffff,
     },
   };
@@ -194,12 +195,24 @@ export function shellBodies(): YardPhysicsBodyInput3D[] {
       orientation: (([x, y, z, w]) => ({ x, y, z, w }))(shellBoxQuaternion(box)),
       friction: YARD_MATERIAL.friction,
       restitution: YARD_MATERIAL.restitution,
-      layer: 1,
+      layer: WORLD_LAYER,
       mask: 0xffffffff,
     },
   }));
-
-  return boxes;
+  // The cage sits on its own layer, so aim rays (layerMask WORLD_LAYER) pass through it.
+  const cage = CAGE_PANELS.map((panel) => ({
+    id: `${SHELL_PREFIX}${panel.id}`,
+    body: {
+      kind: 'static' as const,
+      position: { x: panel.center[0], y: panel.center[1], z: panel.center[2] },
+      shape: { type: 'box' as const, halfX: panel.size[0] * 0.5, halfY: panel.size[1] * 0.5, halfZ: panel.size[2] * 0.5 },
+      friction: YARD_MATERIAL.friction,
+      restitution: YARD_MATERIAL.restitution,
+      layer: CAGE_LAYER,
+      mask: 0xffffffff,
+    },
+  }));
+  return [...boxes, ...cage];
 }
 
 export function makeWorld(): PhysicsWorld3D {
