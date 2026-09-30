@@ -163,6 +163,12 @@ function CuttingRigSparks() {
 
 /** Pilaster offsets along each wall (m). */
 const WALL_PILASTERS = Array.from({ length: 13 }, (_, i) => -24 + i * 4);
+/**
+ * The cap band is the only top surface of a wall: it sits WALL_CAP_LIFT above
+ * the wall box and runs a little past its ends, so no two faces share a plane
+ * (coplanar faces z-fight). The pilasters stop under the cap.
+ */
+const WALL_CAP = { height: 0.3, width: 0.7, lift: 0.03, overhang: 0.05 } as const;
 const wallTrimCache = new Map<string, THREE.BufferGeometry>();
 
 /** One merged mesh per wall size: pilasters and a panel line on the local +x face. */
@@ -170,8 +176,9 @@ function wallTrimGeometry(size: readonly [number, number, number]): THREE.Buffer
   const key = size.join(',');
   const cached = wallTrimCache.get(key);
   if (cached) return cached;
-  // Pilasters protrude 7 cm, within the wall collider's contact margin.
-  const parts = WALL_PILASTERS.map((z) => new THREE.BoxGeometry(0.1, size[1], 0.35).translate(size[0] / 2 + 0.02, 0, z));
+  // Pilasters protrude 7 cm, within the wall collider's contact margin, and end at the cap's underside.
+  const pilasterHeight = size[1] - WALL_CAP.height + WALL_CAP.lift;
+  const parts = WALL_PILASTERS.map((z) => new THREE.BoxGeometry(0.1, pilasterHeight, 0.35).translate(size[0] / 2 + 0.02, (pilasterHeight - size[1]) / 2, z));
   parts.push(new THREE.BoxGeometry(0.04, 0.08, size[2]).translate(size[0] / 2 + 0.02, size[1] * 0.2, 0));
   const merged = BufferGeometryUtils.mergeGeometries(parts);
   parts.forEach((part) => part.dispose());
@@ -498,9 +505,9 @@ export function YardShell({ renderRef }: { renderRef?: React.MutableRefObject<Ya
           <mesh geometry={wallTrimGeometry(wall.size)} raycast={noRaycast}>
             <Toon color={ART_STYLE.palette.concreteShade} />
           </mesh>
-          {/* Concrete cap band, flush with the collider top */}
-          <mesh position={[0, wall.size[1] / 2 - 0.15, 0]} castShadow raycast={noRaycast}>
-            <boxGeometry args={[0.7, 0.3, 52]} />
+          {/* Concrete cap band, the wall's only top surface (see WALL_CAP) */}
+          <mesh position={[0, wall.size[1] / 2 + WALL_CAP.lift - WALL_CAP.height / 2, 0]} castShadow raycast={noRaycast}>
+            <boxGeometry args={[WALL_CAP.width, WALL_CAP.height, wall.size[2] + WALL_CAP.overhang * 2]} />
             <Toon color={ART_STYLE.palette.concreteShade} />
           </mesh>
         </group>
