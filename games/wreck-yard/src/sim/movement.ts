@@ -33,13 +33,14 @@ export function movePlayer(physics: OpenYardPhysicsWorld, player: PlayerPose, ve
   const wanted = Math.hypot(velocity[0], velocity[2]) * DT;
   const moved = Math.hypot(direct.x - player.x, direct.z - player.z);
   if (!player.grounded || wanted < 1e-4 || moved >= wanted * 0.5) return direct;
-  const headroom = physics.world.shapeCast({
-    x: player.x, y: player.y + HALF_HEIGHT, z: player.z,
+  // Room at the lifted height itself: an edge the capsule already touches below
+  // (a plate pushed against the player) must not count as a ceiling.
+  const blockedAbove = physics.world.overlap({
+    x: player.x, y: player.y + STEP_HEIGHT + HALF_HEIGHT, z: player.z,
     shape: { type: 'capsule', radius: PLAYER_RADIUS, halfHeight: HALF_HEIGHT },
-    dx: 0, dy: 1, dz: 0, maxDistance: STEP_HEIGHT,
     hitTriggers: false, hitSensors: false,
   });
-  if (headroom.length > 0) return direct;
+  if (blockedAbove.length > 0) return direct;
   // Two passes: slide at the lifted height (moving up by a hair, so the KCC skips its
   // ground pass, which would put the player straight back down), then drop onto the step.
   const lifted = moveWithKcc(physics, { ...player, y: player.y + STEP_HEIGHT, grounded: false }, [velocity[0], LIFT_SPEED, velocity[2]]);

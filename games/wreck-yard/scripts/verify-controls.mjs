@@ -52,6 +52,11 @@ try {
   await page.keyboard.press('Digit1');
 
   // Walk to the buggy, mount with E, and check the chase camera.
+  // Walk straight at the buggy; when something tall blocks the way (loose props
+  // move around), sidestep to the left for a moment, as a player would.
+  let last = null;
+  let stalled = 0;
+  let sidestep = 0;
   for (let step = 0; step < 200; step += 1) {
     const [player, buggy] = await page.evaluate(() => {
       const r = window.__WRECK_YARD_CONTROLLER__.getRender();
@@ -60,7 +65,12 @@ try {
     const dx = buggy[0] - player[0];
     const dz = buggy[2] - player[2];
     if (Math.hypot(dx, dz) < 1.8) break;
-    await page.evaluate(([x, z]) => window.__SET_LOOK_ANGLES__(Math.atan2(-x, -z), 0), [dx, dz]);
+    stalled = last && Math.hypot(player[0] - last[0], player[2] - last[2]) < 0.02 ? stalled + 1 : 0;
+    last = player;
+    if (stalled >= 3) sidestep = 3;
+    const turn = sidestep > 0 ? Math.PI / 2.5 : 0;
+    sidestep = Math.max(0, sidestep - 1);
+    await page.evaluate(([x, z, t]) => window.__SET_LOOK_ANGLES__(Math.atan2(-x, -z) + t, 0), [dx, dz, turn]);
     await page.keyboard.down('KeyW');
     await frames(4);
     await page.keyboard.up('KeyW');

@@ -122,6 +122,22 @@ describe('stepping over low edges', () => {
     }
   });
 
+  it('walks on when the capsule already overlaps a low edge', () => {
+    // A plate pushed against the player leaves the capsule's side inside its edge.
+    const physics: OpenYardPhysicsWorld = { world: makeWorld(), bodyIds: new Map() };
+    try {
+      addPhysicsBodies(physics, [
+        { id: 'floor', body: { kind: 'static', shape: { type: 'box', halfX: 20, halfY: 0.1, halfZ: 20 }, position: { x: 0, y: FLOOR_Y - 0.1, z: 0 } } },
+        { id: 'plate', body: { kind: 'dynamic', mass: 0.5, shape: { type: 'box', halfX: 0.6, halfY: 0.04, halfZ: 0.44 }, position: { x: 0, y: FLOOR_Y + 0.04, z: 0 } } },
+      ]);
+      // The pose from the yard: capsule center at the plate's edge, walking away from it.
+      let player = { ...createInitialPlayer(), x: -0.15, y: FLOOR_Y + 0.41, z: -0.45, grounded: true };
+      const start = { x: player.x, z: player.z };
+      for (let tick = 0; tick < 30; tick += 1) player = { ...player, ...movePlayer(physics, player, [2.9, -3, -5.3]) };
+      expect(Math.hypot(player.x - start.x, player.z - start.z)).toBeGreaterThan(2);
+    } finally { physics.world.dispose(); }
+  });
+
   it('is stopped by a taller edge without ending up inside it', () => {
     for (const height of [0.2, 0.6]) expect(walkInto('static', height, [1, 0]), `${height} m`).toBeLessThan(1.1);
     // A blocked player can still walk away.
