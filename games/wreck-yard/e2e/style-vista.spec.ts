@@ -19,7 +19,7 @@ test.describe('Wreck Yard Style Vista E2E', () => {
 
     await expect(page.getByText('Wreck Yard')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('canvas')).toBeVisible();
-    await expect(page.getByText('Status: live')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-match-status="live"]')).toBeVisible({ timeout: 15_000 });
     await page.evaluate(() => document.fonts.ready);
 
     const testResultsDir = path.resolve('test-results');

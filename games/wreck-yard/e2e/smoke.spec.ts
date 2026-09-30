@@ -1,15 +1,17 @@
 import { expect, test } from '@playwright/test';
 
-test('solo yard loads with five bodies and no page errors', async ({ page }) => {
+test('solo yard loads its bodies with no page errors', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(String(error)));
 
   await page.goto('/', { waitUntil: 'networkidle' });
   await expect(page.getByText('Wreck Yard')).toBeVisible();
   await expect(page.locator('canvas')).toBeVisible();
-  const metrics = page.locator('div[aria-live="polite"]');
-  await expect(metrics).toContainText(/Bodies:\s*\d+/, { timeout: 15_000 });
-  await expect(page.getByText(/Status:\s*live/i)).toBeVisible();
+  await expect.poll(
+    () => page.evaluate(() => (window as unknown as { __WRECK_YARD_CONTROLLER__?: { getRender(): { bodies: unknown[] } | null } }).__WRECK_YARD_CONTROLLER__?.getRender()?.bodies.length ?? 0),
+    { timeout: 15_000 },
+  ).toBeGreaterThan(5);
+  await expect(page.locator('[data-match-status="live"]')).toBeVisible();
 
   await page.getByRole('button', { name: /Plasma Torch/i }).click();
   const box = await page.locator('canvas').boundingBox();
@@ -63,5 +65,5 @@ test('surfaces server error modal with helpful details and fallback to solo mode
   // Verify Play Solo (Offline) button in modal restores session
   await modal.getByRole('button', { name: /Play Solo/i }).click();
   await expect(modal).not.toBeVisible();
-  await expect(page.getByText(/Status:\s*live/i)).toBeVisible();
+  await expect(page.locator('[data-match-status="live"]')).toBeVisible();
 });

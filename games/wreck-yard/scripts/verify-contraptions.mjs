@@ -50,7 +50,7 @@ try {
     await page.waitForTimeout(120);
     await page.keyboard.up('KeyE');
   };
-  const prompt = () => page.evaluate(() => document.body.innerText.match(/\[E \/ RMB\]\s*([A-Za-z ]+?)\s*•/)?.[1] ?? null);
+  const prompt = () => page.evaluate(() => document.querySelector('[data-prompt]')?.getAttribute('data-prompt') ?? null);
 
   results.startDunks = (await render()).dunks;
   assert.equal(results.startDunks, 0);

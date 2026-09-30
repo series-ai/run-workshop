@@ -6,30 +6,48 @@ import type { RenderQuality } from '../render/renderQuality';
 import { withinBuggyMountRange } from '../sim/constants';
 import { buttonWithinReach } from '../sim/contraptions';
 
-const panel: React.CSSProperties = {
-  zIndex: 10,
-  pointerEvents: 'auto',
-  background: 'rgba(20, 22, 20, 0.88)',
-  color: '#e8ecd8',
-  borderRadius: 8,
-  border: '1px solid #3f4836',
-  padding: '12px 14px',
-  font: '13px/1.45 ui-sans-serif, system-ui, sans-serif',
-  backdropFilter: 'blur(8px)',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-};
+const TOOL_NAMES: Readonly<Record<UiTool, string>> = { hand: 'Gravity Gun', torch: 'Plasma Torch', orbit: 'Orbit' };
+const FUEL_SEGMENTS = 14;
 
-const button = (active: boolean): React.CSSProperties => ({
-  padding: '6px 12px',
-  borderRadius: 6,
-  border: active ? '1px solid #a3e635' : '1px solid #6d7a62',
-  background: active ? '#9bbc0f' : '#2c3320',
-  color: active ? '#101408' : '#e8ecd8',
-  cursor: 'pointer',
-  fontWeight: active ? 700 : 500,
-  boxShadow: active ? '0 0 10px rgba(155, 188, 15, 0.35)' : 'none',
-  transition: 'all 0.15s ease',
-});
+function Key({ children, wide = false }: { children: string; wide?: boolean }) {
+  return <kbd className={wide ? 'yard-key yard-key--wide' : 'yard-key'}>{children}</kbd>;
+}
+
+function StatusLamp({ status }: { status: MatchSnapshot['status'] }) {
+  const label = status === 'live' ? 'Live' : status === 'error' ? 'Fault' : status === 'idle' ? 'Idle' : 'Linking';
+  return (
+    <span className={`yard-lamp yard-lamp--${status}`} data-match-status={status} aria-label={`Status: ${status}`}>
+      <span className="yard-lamp__bulb" aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+/** Segmented jet fuel gauge: it dims when idle and full, and flashes when low. */
+function FuelGauge({ fuel, burning }: { fuel: number; burning: boolean }) {
+  const lit = Math.round((fuel / 100) * FUEL_SEGMENTS);
+  const low = fuel < 25;
+  const resting = !burning && fuel > 99;
+  return (
+    <div className={`yard-fuel${low ? ' yard-fuel--low' : ''}${resting ? ' yard-fuel--resting' : ''}`} aria-label={`Jet fuel ${Math.round(fuel)}%`}>
+      <span className="yard-fuel__label">Jet</span>
+      <span className="yard-fuel__cells" aria-hidden="true">
+        {Array.from({ length: FUEL_SEGMENTS }, (_, index) => (
+          <span key={index} className={index < lit ? 'yard-fuel__cell yard-fuel__cell--on' : 'yard-fuel__cell'} />
+        ))}
+      </span>
+    </div>
+  );
+}
+
+function Reticle({ tool, grabbing }: { tool: UiTool; grabbing: boolean }) {
+  if (tool === 'torch') return <div className="yard-reticle yard-reticle--torch" aria-hidden="true"><span /></div>;
+  return (
+    <div className={`yard-reticle yard-reticle--gun${grabbing ? ' yard-reticle--locked' : ''}`} aria-hidden="true">
+      <i /><i /><i /><i /><span />
+    </div>
+  );
+}
 
 export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onStop, onRetry }: {
   quality: RenderQuality;
@@ -46,7 +64,6 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
   const render = snapshot.render;
   const live = snapshot.status === 'live';
   const localPlayer = render?.players?.find((p) => p.slot === render?.localSlot);
-  const fuelPercent = Math.round(localPlayer?.fuel ?? 100);
   const isGrabbing = Boolean(localPlayer?.grabbing);
   const isRiding = Boolean(localPlayer?.ridingVehicle);
 
@@ -55,252 +72,136 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
     && withinBuggyMountRange(localPlayer!.position, buggyPose!.position);
   // The sim checks a button before the buggy, so the prompt does too.
   const reachableButton = live && !isRiding && localPlayer ? buttonWithinReach(localPlayer.position) : null;
-  const secondaryLabel = reachableButton === 'dropper' ? 'Drop Crate'
+  const prompt = reachableButton === 'dropper' ? 'Drop Crate'
     : reachableButton === 'catapult' ? 'Fire Catapult'
-    : canMountBuggy ? 'Drive Buggy' : 'Punt';
+    : canMountBuggy ? 'Drive Buggy'
+    : isGrabbing ? 'Punt' : null;
+  const aiming = live && tool !== 'orbit' && !isRiding;
 
   return (
     <>
       <div className="yard-hud-top">
-      {/* Top Left: Status & Yard Telemetry */}
-      <div className="yard-hud-status" style={panel}>
-        <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8, color: '#9bbc0f', letterSpacing: '0.04em' }}>
-          WRECK YARD
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-          {(['hand', 'torch', 'orbit'] as const).map((entry) => (
-            <button key={entry} type="button" style={button(tool === entry)} onClick={() => onTool(entry)} disabled={!live || isRiding}>
-              {`${entry === 'hand' ? 'Gravity Gun' : entry === 'torch' ? 'Plasma Torch' : 'Orbit'} (${TOOL_KEY_LABELS[entry]})`}
+        {live ? (
+        <section className="yard-plate yard-plate--title">
+          <div className="yard-title">
+            <span className="yard-title__word">Wreck Yard</span>
+          </div>
+          <div className="yard-title__meta">
+            <StatusLamp status={snapshot.status} />
+            {snapshot.roomCode ? <span className="yard-tape" aria-label={`Room ${snapshot.roomCode}`}>{snapshot.roomCode}</span> : null}
+            <span className="yard-crew">Crew {render?.players?.length ?? 1}/4</span>
+          </div>
+          {live ? (
+            <div className="yard-tally" aria-live="polite">
+              <span><b>{render?.stats.torchCuts ?? 0}</b>Cuts</span>
+              <span><b>{render?.stats.throws ?? 0}</b>Throws</span>
+              <span><b>{render?.stats.fractures ?? 0}</b>Breaks</span>
+            </div>
+          ) : null}
+        </section>
+        ) : null}
+
+        {live ? (
+          <nav className="yard-toolbar" aria-label="Tools">
+            {(['hand', 'torch', 'orbit'] as const).map((entry) => (
+              <button
+                key={entry}
+                type="button"
+                className={`yard-tab${tool === entry ? ' yard-tab--on' : ''}${entry === 'orbit' ? ' yard-tab--small' : ''}`}
+                aria-label={`${TOOL_NAMES[entry]} (${TOOL_KEY_LABELS[entry]})`}
+                aria-pressed={tool === entry}
+                onClick={() => onTool(entry)}
+                disabled={isRiding}
+              >
+                <Key>{TOOL_KEY_LABELS[entry]}</Key>
+                <span>{TOOL_NAMES[entry]}</span>
+              </button>
+            ))}
+          </nav>
+        ) : null}
+
+        {live ? (
+          <div className="yard-corner">
+            <button type="button" className="yard-switch" aria-pressed={quality === 'high'} onClick={() => onQuality(quality === 'high' ? 'low' : 'high')}>
+              <span className="yard-switch__label">Graphics</span>
+              <span className="yard-switch__track"><span className={quality === 'high' ? 'is-on' : ''}>Hi</span><span className={quality === 'low' ? 'is-on' : ''}>Lo</span></span>
             </button>
-          ))}
-        </div>
-        <div aria-live="polite" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3px 8px', fontSize: 12, color: '#c5ccb6' }}>
-          <div>Bodies: <strong style={{ color: '#ffffff' }}>{render?.bodies.length ?? 0}</strong></div>
-          <div>Floating: <strong style={{ color: '#5eead4' }}>{render?.floating ?? 0}</strong></div>
-          <div>Torch cuts: <strong style={{ color: '#fb923c' }}>{render?.stats.torchCuts ?? 0}</strong></div>
-          <div>Throws/Punts: <strong style={{ color: '#facc15' }}>{render?.stats.throws ?? 0}</strong></div>
-          <div>Fractures: <strong style={{ color: '#f87171' }}>{render?.stats.fractures ?? 0}</strong></div>
-          <div>Crew: <strong style={{ color: '#a3e635' }}>{render?.players?.length ?? 1}/4</strong></div>
-        </div>
-        <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid #3f4836', fontSize: 11, color: '#8c967d' }}>
-          Status: {snapshot.status}{snapshot.rollbackCount > 0 ? ` (rollbacks: ${snapshot.rollbackCount})` : ''}
-          {snapshot.roomCode ? <span style={{ marginLeft: 8 }}>Room: <strong style={{ color: '#9bbc0f' }}>{snapshot.roomCode}</strong></span> : null}
-          {snapshot.error ? <div style={{ color: '#f87171', marginTop: 4 }}>Error: {snapshot.error}</div> : null}
-        </div>
+            <button type="button" className="yard-button yard-button--danger" onClick={onStop}>Leave Match</button>
+          </div>
+        ) : null}
       </div>
 
-      {/* Top Right: Match & Room Manager */}
-      <div className="yard-hud-room" style={{ ...panel, display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {live ? (
-          <>
-            <button type="button" style={button(false)} onClick={onStop}>Leave Match</button>
-            <button type="button" style={button(quality === 'high')} onClick={() => onQuality(quality === 'high' ? 'low' : 'high')}>
-              Graphics: {quality === 'high' ? 'High' : 'Low'}
-            </button>
-          </>
-        ) : (
-          <>
-            <button type="button" style={button(false)} onClick={() => onStart({ kind: 'solo' })}>Play Solo (4-Slot Yard)</button>
-            <button type="button" style={button(false)} onClick={() => onStart({ kind: 'quick' })}>Quick Match</button>
-            <button type="button" style={button(false)} onClick={() => onStart({ kind: 'create' })}>Create Room</button>
-            <div style={{ display: 'flex', gap: 6 }}>
+      {!live ? (
+        <div className="yard-gate">
+          <section className="yard-plate yard-plate--gate" aria-label="Start a match">
+            <div className="yard-gate__stripe" aria-hidden="true" />
+            <h1 className="yard-gate__title">Wreck<br />Yard</h1>
+            <p className="yard-gate__sub">Torch it. Toss it. Sink it.</p>
+            {snapshot.status !== 'idle' ? (
+              <div className="yard-gate__status">
+                <StatusLamp status={snapshot.status} />
+                {snapshot.error ? <span className="yard-fault">{snapshot.error}</span> : null}
+              </div>
+            ) : null}
+            <button type="button" className="yard-button yard-button--primary" onClick={() => onStart({ kind: 'solo' })}>Play Solo</button>
+            <div className="yard-gate__row">
+              <button type="button" className="yard-button" onClick={() => onStart({ kind: 'quick' })}>Quick Match</button>
+              <button type="button" className="yard-button" onClick={() => onStart({ kind: 'create' })}>Create Room</button>
+            </div>
+            <div className="yard-gate__row">
               <input
+                className="yard-input"
                 aria-label="Room code"
                 value={code}
                 onChange={(event) => setCode(event.target.value.trim().toUpperCase())}
-                placeholder="Room code"
-                style={{ flex: 1, padding: '6px 8px', borderRadius: 6, border: '1px solid #6d7a62', background: '#14170d', color: '#e8ecd8' }}
+                placeholder="ROOM CODE"
               />
-              <button type="button" style={button(false)} onClick={() => onStart({ kind: 'join', code })} disabled={code.length === 0}>Join</button>
+              <button type="button" className="yard-button" onClick={() => onStart({ kind: 'join', code })} disabled={code.length === 0}>Join</button>
             </div>
             {snapshot.status === 'error' ? (
-              <button type="button" style={button(true)} onClick={onRetry}>Retry</button>
+              <button type="button" className="yard-button yard-button--primary" onClick={onRetry}>Retry</button>
             ) : null}
-          </>
-        )}
-      </div>
-
-      </div>
-
-      {/* Center: Tactical Salvage Crosshair (hidden in the chase camera) */}
-      {live && tool !== 'orbit' && !isRiding && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            pointerEvents: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
-          {tool === 'hand' ? (
-            <div
-              style={{
-                width: isGrabbing ? 26 : 18,
-                height: isGrabbing ? 26 : 18,
-                borderRadius: '50%',
-                border: isGrabbing ? '2px solid #f59e0b' : '2px solid rgba(251, 191, 36, 0.75)',
-                boxShadow: isGrabbing ? '0 0 12px rgba(245, 158, 11, 0.8)' : 'none',
-                transition: 'all 0.12s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#fbbf24' }} />
-            </div>
-          ) : (
-            <div
-              style={{
-                width: 20,
-                height: 20,
-                border: '2px solid #f97316',
-                transform: 'rotate(45deg)',
-                boxShadow: '0 0 8px rgba(249, 115, 22, 0.7)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <div style={{ width: 4, height: 4, background: '#fdba74' }} />
-            </div>
-          )}
-
-          {isGrabbing && (
-            <div style={{ marginTop: 14, fontSize: 11, fontWeight: 700, color: '#fbbf24', textShadow: '0 2px 6px black' }}>
-              [RMB] PUNT OBJECT
-            </div>
-          )}
+          </section>
         </div>
-      )}
+      ) : null}
 
-      {/* Bottom Center: Industrial Analog Thruster Fuel Gauge */}
-      {live && tool !== 'orbit' && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 78,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 4,
-            pointerEvents: 'none',
-          }}
-        >
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#c5ccb6', letterSpacing: '0.08em', textShadow: '0 1px 4px black' }}>
-            THRUSTER FUEL [{fuelPercent}%]
-          </div>
-          <div
-            style={{
-              width: 220,
-              height: 10,
-              background: 'rgba(20, 24, 18, 0.9)',
-              borderRadius: 6,
-              border: '1px solid #4a543f',
-              overflow: 'hidden',
-              padding: 1,
-              boxShadow: '0 2px 10px rgba(0,0,0,0.6)',
-            }}
-          >
-            <div
-              style={{
-                width: `${fuelPercent}%`,
-                height: '100%',
-                background: fuelPercent > 25 ? 'linear-gradient(90deg, #65a30d, #9bbc0f)' : '#ea580c',
-                borderRadius: 4,
-                boxShadow: fuelPercent > 25 ? '0 0 8px #a3e635' : '0 0 8px #ea580c',
-                transition: 'width 0.05s linear',
-              }}
-            />
-          </div>
+      {aiming ? (
+        <div className="yard-center">
+          <Reticle tool={tool} grabbing={isGrabbing} />
         </div>
-      )}
+      ) : null}
 
-      {/* Buggy Interaction Prompt Banner */}
-      {canMountBuggy && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '58%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            background: 'rgba(15, 23, 15, 0.94)',
-            border: '2px solid #84cc16',
-            borderRadius: 8,
-            padding: '8px 18px',
-            boxShadow: '0 0 24px rgba(132, 204, 22, 0.6), inset 0 0 12px rgba(132, 204, 22, 0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            pointerEvents: 'none',
-            zIndex: 40,
-          }}
-        >
-          <span
-            style={{
-              background: '#84cc16',
-              color: '#0a0f0a',
-              fontWeight: 900,
-              fontSize: 13,
-              padding: '2px 8px',
-              borderRadius: 4,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.5)',
-            }}
-          >
-            E
-          </span>
-          <span style={{ color: '#f7fee7', fontWeight: 700, fontSize: 13, letterSpacing: '0.04em' }}>
-            DRIVE SALVAGE BUGGY
-          </span>
+      {live && prompt ? (
+        <div className="yard-prompt" data-prompt={prompt}>
+          <Key>E</Key>
+          <span>{prompt}</span>
         </div>
-      )}
+      ) : null}
 
-      {/* Bottom Left: Tactical Yard Controls */}
-      {live && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 16,
-            left: 16,
-            right: 16,
-            width: 'fit-content',
-            maxWidth: 'calc(100% - 32px)',
-            background: isRiding ? 'rgba(25, 38, 16, 0.94)' : 'rgba(20, 22, 20, 0.82)',
-            border: isRiding ? '1px solid #84cc16' : '1px solid #3f4836',
-            padding: '8px 14px',
-            borderRadius: 6,
-            fontSize: 11,
-            color: '#8c967d',
-            backdropFilter: 'blur(4px)',
-            pointerEvents: 'none',
-            boxShadow: isRiding ? '0 0 16px rgba(132, 204, 22, 0.35)' : 'none',
-          }}
-        >
+      {live && tool !== 'orbit' && !isRiding ? (
+        <FuelGauge fuel={localPlayer?.fuel ?? 100} burning={Boolean(localPlayer?.jetpackActive)} />
+      ) : null}
+
+      {live ? (
+        <div className={`yard-legend${isRiding ? ' yard-legend--driving' : ''}`}>
           {isRiding ? (
-            <div>
-              <span style={{ color: '#a3e635', fontWeight: 700, marginRight: 8 }}>🚜 DRIVING BUGGY</span>
-              <span style={{ color: '#e8ecd8' }}>[W / S]</span> Throttle / Reverse &bull;{' '}
-              <span style={{ color: '#e8ecd8' }}>[A / D]</span> Steer Wheels &bull;{' '}
-              <span style={{ color: '#facc15', fontWeight: 600 }}>[E / Space]</span> Dismount Buggy
-            </div>
+            <>
+              <span className="yard-legend__tag">Driving</span>
+              <span><Key>W</Key><Key>S</Key>Throttle</span>
+              <span><Key>A</Key><Key>D</Key>Steer</span>
+              <span><Key>E</Key>Hop out</span>
+            </>
           ) : (
-            <div>
-              <span style={{ color: '#9bbc0f', fontWeight: 600 }}>[Click Canvas]</span> Look &bull;{' '}
-              <span style={{ color: '#e8ecd8' }}>[WASD]</span> Move &bull;{' '}
-              <span style={{ color: '#e8ecd8' }}>[Space / Delete]</span> Jetpack &bull;{' '}
-              <span style={{ color: '#e8ecd8' }}>[LMB]</span> {tool === 'hand' ? 'Tractor Beam' : 'Carve Voxel'} &bull;{' '}
-              <span style={{ color: reachableButton ? '#facc15' : '#e8ecd8' }}>[E / RMB]</span> {secondaryLabel} &bull;{' '}
-              <span style={{ color: '#e8ecd8' }}>[1 / 2]</span> Tool &bull;{' '}
-              <span style={{ color: '#e8ecd8' }}>[O]</span> Orbit
-            </div>
+            <>
+              <span><Key wide>WASD</Key>Move</span>
+              <span><Key wide>Space</Key>Jet</span>
+              <span><Key wide>LMB</Key>{tool === 'torch' ? 'Cut' : 'Grab'}</span>
+              <span><Key wide>RMB</Key>Punt</span>
+              <span><Key>O</Key>Orbit</span>
+            </>
           )}
         </div>
-      )}
+      ) : null}
     </>
   );
 }
