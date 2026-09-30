@@ -3896,22 +3896,22 @@
    "filename": "monster-avatar-parts.glb",
    "relativePath": "avatar/monster-avatar-parts.glb",
    "leaf": "characters",
-   "sizeBytes": 1462120,
+   "sizeBytes": 1066680,
    "bounds": {
     "min": [
-     -0.2,
-     0,
-     -0.38
+     -0.2024,
+     -0.0004,
+     -0.3824
     ],
     "max": [
-     0.2,
-     0.85,
-     0.38
+     0.2024,
+     0.8524,
+     0.3824
     ],
     "size": [
-     0.4,
-     0.85,
-     0.76
+     0.4048,
+     0.8528,
+     0.7648
     ]
    },
    "normalizedShift": 0,
@@ -3940,7 +3940,7 @@
    "filename": "monster-characters-skins-frankenstein.glb",
    "relativePath": "characters-skins/monster-characters-skins-frankenstein.glb",
    "leaf": "characters",
-   "sizeBytes": 290696,
+   "sizeBytes": 166520,
    "bounds": {
     "min": [
      -0.07,
@@ -3975,7 +3975,7 @@
    "filename": "monster-characters-skins-mummy.glb",
    "relativePath": "characters-skins/monster-characters-skins-mummy.glb",
    "leaf": "characters",
-   "sizeBytes": 628824,
+   "sizeBytes": 357096,
    "bounds": {
     "min": [
      -0.08,
@@ -4010,7 +4010,7 @@
    "filename": "monster-characters-skins-skeleton-hunter.glb",
    "relativePath": "characters-skins/monster-characters-skins-skeleton-hunter.glb",
    "leaf": "characters",
-   "sizeBytes": 471544,
+   "sizeBytes": 268456,
    "bounds": {
     "min": [
      -0.11,
@@ -4045,7 +4045,7 @@
    "filename": "monster-characters-skins-vampire.glb",
    "relativePath": "characters-skins/monster-characters-skins-vampire.glb",
    "leaf": "characters",
-   "sizeBytes": 349208,
+   "sizeBytes": 199496,
    "bounds": {
     "min": [
      -0.07,
@@ -4080,7 +4080,7 @@
    "filename": "monster-characters-skins-werewolf.glb",
    "relativePath": "characters-skins/monster-characters-skins-werewolf.glb",
    "leaf": "characters",
-   "sizeBytes": 719908,
+   "sizeBytes": 408436,
    "bounds": {
     "min": [
      -0.12,
@@ -4115,7 +4115,7 @@
    "filename": "monster-characters-skins-witch.glb",
    "relativePath": "characters-skins/monster-characters-skins-witch.glb",
    "leaf": "characters",
-   "sizeBytes": 556448,
+   "sizeBytes": 316304,
    "bounds": {
     "min": [
      -0.1,

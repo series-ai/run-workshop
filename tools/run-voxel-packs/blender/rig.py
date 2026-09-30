@@ -13,6 +13,7 @@ join into one node per part — the PN part-node convention.
 """
 from __future__ import annotations
 
+import json
 import os
 
 import bpy
@@ -20,7 +21,7 @@ import numpy as np
 from mathutils import Quaternion, Vector
 
 import export
-from mesher import greedy_mesh
+from mesher import greedy_mesh, layered_mesh
 from rigspace import RIG_UNIT, gl_to_bl, restricted_bone
 from voxgrid import CLIPS, RIG, Asset, Part
 
@@ -40,6 +41,11 @@ SLOT_BONES: dict[str, list[str]] = {
     "shoes": ["Foot.L", "LowerLeg.L", "Foot.R", "LowerLeg.R"],
     "back": ["Chest"],
 }
+
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "contracts", "data", "avatar-layers.json")) as _fh:
+    # Voxels each slot's faces sit out from the grid, so covering parts never share a plane.
+    AVATAR_LAYERS: dict[str, float] = json.load(_fh)["layers"]
+
 
 def split_by_bone(part: Part, bones: list[str]) -> dict[str, np.ndarray]:
     """Per-bone copies of the part grid (other voxels cleared), by the joint rule."""
@@ -77,10 +83,13 @@ def load_template(pirate_avatar_glb: str) -> bpy.types.Object:
     return arm
 
 
-def skinned_part(arm, part: Part, bones: list[str], material) -> bpy.types.Object:
+def skinned_part(arm, part: Part, bones: list[str], material, layer: float = 0.0) -> bpy.types.Object:
+    """One skinned mesh node for a part. `layer` > 0 grows the whole part by
+    that many voxels (every open face moves out; bone blocks stay joined)."""
     verts, faces, uvs, groups = [], [], [], {}
+    solid = part.grid.a != 0
     for bone, sub in split_by_bone(part, bones).items():
-        pos, _n, uv, quads = greedy_mesh(sub, pivot=part.pivot)
+        pos, _n, uv, quads = layered_mesh(sub, part.pivot, solid, layer) if layer else greedy_mesh(sub, pivot=part.pivot)
         base = len(verts)
         verts.extend(tuple(gl_to_bl(p * RIG_UNIT)) for p in pos)
         faces.extend((quads + base).tolist())
@@ -161,7 +170,7 @@ def build_rig_asset(asset: Asset, glb_path: str, rig_config: dict | None) -> Non
         parts_meta = []
         for part in asset.root.children:
             slot = part.name.split(" ", 1)[0]
-            skinned_part(arm, part, SLOT_BONES[slot], material)
+            skinned_part(arm, part, SLOT_BONES[slot], material, layer=AVATAR_LAYERS[slot])
             index = int(part.name.rsplit("-", 1)[1])
             parts_meta.append({"nodeName": part.name, "slot": slot, "index": index, **part.meta})
         asset.extra_meta = {"parts": parts_meta, "avatarClips": [c.name for c in asset.clips]}

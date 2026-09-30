@@ -320,3 +320,31 @@ export function insideSolid(doc: Document, point: number[], dir: number[]): { in
   }
   return { inside: true, exit }
 }
+
+/**
+ * Avatar part layers: each face of a part node must sit its slot's layer
+ * (`layerOf(node)`, voxels) out from a voxel grid plane, along its normal, so
+ * parts that cover one another never share a plane. A face left on the grid
+ * is fine only when a back-to-back face of the same node shares its plane
+ * (two bone blocks of one part touching inside it: never seen). Returns the
+ * misplaced area per node, in voxel².
+ */
+export function layerMisfits(doc: Document, unit: number, layerOf: (node: string) => number): Map<string, { area: number; offset: number }> {
+  const tris = triangles(doc)
+  const planes = new Set(tris.map((t) => `${t.node}|${t.n.map((x) => Math.round(x)).join(',')}|${Math.round((t.d / unit) * 1e4)}`))
+  const out = new Map<string, { area: number; offset: number }>()
+  for (const t of tris) {
+    const steps = t.d / unit
+    const offset = steps - Math.round(steps)
+    const layer = layerOf(t.node)
+    if (Math.abs(offset - layer) < 1e-3) continue
+    const twin = `${t.node}|${t.n.map((x) => -Math.round(x) || 0).join(',')}|${Math.round((-t.d / unit) * 1e4)}`
+    if (Math.abs(offset) < 1e-3 && planes.has(twin)) continue
+    const c = cross(sub(t.p[1]!, t.p[0]!), sub(t.p[2]!, t.p[0]!))
+    const area = Math.hypot(c[0]!, c[1]!, c[2]!) / 2 / unit / unit
+    const entry = out.get(t.node) ?? { area: 0, offset }
+    entry.area += area
+    out.set(t.node, entry)
+  }
+  return out
+}

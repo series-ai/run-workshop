@@ -40,6 +40,7 @@ is JSON under `contracts/data/`.
 | Prop clips | node-hierarchy TRS: `idle open close active hit attack death move spin` |
 | Avatar clips | `NN_Name`; PN owns 00–31, fantasy 32–39, space 40–47, monster 48–55, apocalypse 56–63 |
 | Part nodes | `<slot> <pack>-<n>` (PN keeps `<slot> <n>`); composition rules are per part (`AvatarPartRules`) |
+| Part layers | each slot's faces sit a fixed distance (0.02–0.24 voxel, `data/avatar-layers.json`) out from the voxel grid, outer slots further out, so parts that cover one another (tops over bottoms, a face on the head, headwear over hair) never share a plane with each other or with PN parts and cannot z-fight; `blender/mesher.layered_mesh` builds it, the `avatar.layers` rule checks it |
 
 Licence: every leaf is under the RUN License (the RUN Repository
 Supplemental License v1.0 in the repository's `LICENSE.md`, SPDX

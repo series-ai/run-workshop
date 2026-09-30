@@ -3826,22 +3826,22 @@
    "filename": "apocalypse-avatar-parts.glb",
    "relativePath": "avatar/apocalypse-avatar-parts.glb",
    "leaf": "characters",
-   "sizeBytes": 1462004,
+   "sizeBytes": 1026756,
    "bounds": {
     "min": [
-     -0.14,
-     0,
-     -0.24
+     -0.1424,
+     -0.0004,
+     -0.2406
     ],
     "max": [
-     0.16,
-     0.68,
-     0.24
+     0.1624,
+     0.6824,
+     0.2406
     ],
     "size": [
-     0.3,
-     0.68,
-     0.48
+     0.3048,
+     0.6828,
+     0.4812
     ]
    },
    "normalizedShift": 0,
@@ -3869,7 +3869,7 @@
    "filename": "apocalypse-characters-skins-hazmat.glb",
    "relativePath": "characters-skins/apocalypse-characters-skins-hazmat.glb",
    "leaf": "characters",
-   "sizeBytes": 562176,
+   "sizeBytes": 319536,
    "bounds": {
     "min": [
      -0.09,
@@ -3904,7 +3904,7 @@
    "filename": "apocalypse-characters-skins-mechanic.glb",
    "relativePath": "characters-skins/apocalypse-characters-skins-mechanic.glb",
    "leaf": "characters",
-   "sizeBytes": 508496,
+   "sizeBytes": 289280,
    "bounds": {
     "min": [
      -0.12,
@@ -3939,7 +3939,7 @@
    "filename": "apocalypse-characters-skins-raider.glb",
    "relativePath": "characters-skins/apocalypse-characters-skins-raider.glb",
    "leaf": "characters",
-   "sizeBytes": 641816,
+   "sizeBytes": 364424,
    "bounds": {
     "min": [
      -0.08,
@@ -3974,7 +3974,7 @@
    "filename": "apocalypse-characters-skins-survivor.glb",
    "relativePath": "characters-skins/apocalypse-characters-skins-survivor.glb",
    "leaf": "characters",
-   "sizeBytes": 537096,
+   "sizeBytes": 305400,
    "bounds": {
     "min": [
      -0.08,
@@ -4009,7 +4009,7 @@
    "filename": "apocalypse-characters-skins-wasteland-ranger.glb",
    "relativePath": "characters-skins/apocalypse-characters-skins-wasteland-ranger.glb",
    "leaf": "characters",
-   "sizeBytes": 765036,
+   "sizeBytes": 433884,
    "bounds": {
     "min": [
      -0.13,
@@ -4044,7 +4044,7 @@
    "filename": "apocalypse-characters-skins-zombie.glb",
    "relativePath": "characters-skins/apocalypse-characters-skins-zombie.glb",
    "leaf": "characters",
-   "sizeBytes": 703192,
+   "sizeBytes": 399016,
    "bounds": {
     "min": [
      -0.08,

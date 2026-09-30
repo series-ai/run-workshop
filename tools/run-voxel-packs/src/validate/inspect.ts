@@ -5,7 +5,8 @@
 import { getBounds, type Document, type Node } from '@gltf-transform/core'
 import { PNG } from 'pngjs'
 import { createIo } from '../gltfIo'
-import { coplanarOverlaps } from './zfight'
+import { coplanarOverlaps, layerMisfits } from './zfight'
+import { AVATAR_LAYER_VOXELS, parsePartNodeName } from '../../contracts/catalog'
 
 export interface SamplerSummary {
   magFilter: number | null
@@ -79,8 +80,18 @@ export interface GlbSummary {
   scaleClass: string | null
   /** Null when no primitive samples a PNG texture. */
   surface: SurfaceStats | null
-  /** Visible z-fighting (src/validate/zfight.ts), in voxel²; `worst` names the worst node pair. Null unless asked for. */
+  /**
+   * Visible z-fighting (src/validate/zfight.ts), in voxel²: the sum over node
+   * pairs, or for avatar files (alternative parts, one shown per slot) the
+   * worst part; `worst` names the worst node pair. Null unless asked for.
+   */
   zfight: { area: number; worst: string | null } | null
+  /**
+   * Avatar part files (every mesh node named `<slot> …`): face area, in
+   * voxel², that is not on its slot's layer (AVATAR_LAYER_VOXELS). Null for
+   * every other file.
+   */
+  layers: { misfit: number; worst: string | null } | null
 }
 
 const io = createIo()
@@ -214,12 +225,24 @@ export function summarize(doc: Document, options: { zfight?: boolean } = {}): Gl
     pairs.set(key, (pairs.get(key) ?? 0) + (o.area * o.mismatch) / unit / unit)
   }
   const worst = [...pairs].sort((a, b) => b[1] - a[1])[0]
-  const zfight = options.zfight ? { area: [...pairs.values()].reduce((a, b) => a + b, 0), worst: worst ? `${worst[0]} (${worst[1].toFixed(2)} voxel²)` : null } : null
+  // An avatar file holds alternative parts and shows one per slot, so its measure is the worst part; other files sum.
+  const area = skins.length > 0 ? (worst?.[1] ?? 0) : [...pairs.values()].reduce((a, b) => a + b, 0)
+  const zfight = options.zfight ? { area, worst: worst ? `${worst[0]} (${worst[1].toFixed(2)} voxel²)` : null } : null
+
+  const meshNodes = root.listNodes().filter((node) => node.getMesh())
+  const partFile = meshNodes.length > 0 && meshNodes.every((node) => /^[a-z]+ (?:[a-z]+-)?\d+$/.test(node.getName()))
+  let layers: GlbSummary['layers'] = null
+  if (partFile) {
+    const misfits = [...layerMisfits(doc, 0.01, (name) => AVATAR_LAYER_VOXELS[parsePartNodeName(name).slot])].sort((a, b) => b[1].area - a[1].area)
+    const top = misfits[0]
+    layers = { misfit: misfits.reduce((a, [, m]) => a + m.area, 0), worst: top ? `${top[0]} (${top[1].area.toFixed(1)} voxel² at ${top[1].offset.toFixed(3)} voxel)` : null }
+  }
 
   return {
     scaleClass,
     surface,
     zfight,
+    layers,
     materials,
     primitives,
     meshCount: root.listMeshes().length,

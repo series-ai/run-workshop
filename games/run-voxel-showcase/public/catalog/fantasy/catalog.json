@@ -3961,22 +3961,22 @@
    "filename": "fantasy-avatar-parts.glb",
    "relativePath": "avatar/fantasy-avatar-parts.glb",
    "leaf": "characters",
-   "sizeBytes": 1482796,
+   "sizeBytes": 1145840,
    "bounds": {
     "min": [
-     -0.16,
-     0,
-     -0.26
+     -0.1624,
+     -0.0004,
+     -0.2606
     ],
     "max": [
-     0.16,
-     0.88,
-     0.26
+     0.1624,
+     0.8824,
+     0.2608
     ],
     "size": [
-     0.32,
-     0.88,
-     0.52
+     0.3248,
+     0.8828,
+     0.5214
     ]
    },
    "normalizedShift": 0,
@@ -4005,7 +4005,7 @@
    "filename": "fantasy-characters-skins-dark-knight.glb",
    "relativePath": "characters-skins/fantasy-characters-skins-dark-knight.glb",
    "leaf": "characters",
-   "sizeBytes": 749180,
+   "sizeBytes": 424940,
    "bounds": {
     "min": [
      -0.08,
@@ -4040,7 +4040,7 @@
    "filename": "fantasy-characters-skins-druid.glb",
    "relativePath": "characters-skins/fantasy-characters-skins-druid.glb",
    "leaf": "characters",
-   "sizeBytes": 800864,
+   "sizeBytes": 454064,
    "bounds": {
     "min": [
      -0.09,
@@ -4075,7 +4075,7 @@
    "filename": "fantasy-characters-skins-dwarf.glb",
    "relativePath": "characters-skins/fantasy-characters-skins-dwarf.glb",
    "leaf": "characters",
-   "sizeBytes": 810104,
+   "sizeBytes": 459272,
    "bounds": {
     "min": [
      -0.08,
@@ -4110,7 +4110,7 @@
    "filename": "fantasy-characters-skins-elf-mage.glb",
    "relativePath": "characters-skins/fantasy-characters-skins-elf-mage.glb",
    "leaf": "characters",
-   "sizeBytes": 575592,
+   "sizeBytes": 327096,
    "bounds": {
     "min": [
      -0.09,
@@ -4145,7 +4145,7 @@
    "filename": "fantasy-characters-skins-elf-ranger.glb",
    "relativePath": "characters-skins/fantasy-characters-skins-elf-ranger.glb",
    "leaf": "characters",
-   "sizeBytes": 644460,
+   "sizeBytes": 365916,
    "bounds": {
     "min": [
      -0.13,
@@ -4180,7 +4180,7 @@
    "filename": "fantasy-characters-skins-paladin.glb",
    "relativePath": "characters-skins/fantasy-characters-skins-paladin.glb",
    "leaf": "characters",
-   "sizeBytes": 517944,
+   "sizeBytes": 294600,
    "bounds": {
     "min": [
      -0.08,

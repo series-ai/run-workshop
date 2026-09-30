@@ -4,7 +4,8 @@ import { join } from 'node:path'
 import { Accessor, Document } from '@gltf-transform/core'
 import { describe, expect, it } from 'vitest'
 import { createIo } from '../gltfIo'
-import { coplanarOverlaps } from '../validate/zfight'
+import { coplanarOverlaps, layerMisfits } from '../validate/zfight'
+import { AVATAR_LAYER_VOXELS, parsePartNodeName } from '../../contracts/catalog'
 import { finalizeGlb, PART_INSET, QUANTIZED_NODE_SUFFIX } from './finalize'
 
 const io = createIo()
@@ -114,5 +115,52 @@ describe('finalizeGlb', () => {
     expect(Math.max(...worldPositions(after, 'deck').filter((_, i) => i % 3 === 1))).toBe(4)
     await finalizeGlb(path, { scale: 'prop', quantize: true, insetUnit: 1 })
     expect(readFileSync(path).equals(once)).toBe(true)
+  })
+})
+
+/** A voxel cube (size 0.01, rig space) grown by `grow` voxels on every side, as 12 triangles with face normals. */
+function cube(doc: Document, name: string, at: [number, number, number], grow: number): void {
+  const faces: [number[], number[][]][] = [
+    [[1, 0, 0], [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]]],
+    [[-1, 0, 0], [[0, 0, 0], [0, 0, 1], [0, 1, 1], [0, 1, 0]]],
+    [[0, 1, 0], [[0, 1, 0], [0, 1, 1], [1, 1, 1], [1, 1, 0]]],
+    [[0, -1, 0], [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]]],
+    [[0, 0, 1], [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]]],
+    [[0, 0, -1], [[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0]]],
+  ]
+  const pos: number[] = []
+  const nrm: number[] = []
+  for (const [n, q] of faces) {
+    for (const i of [0, 1, 2, 0, 2, 3]) {
+      pos.push(...q[i]!.map((c, k) => (c + at[k]! + (c === 0 ? -grow : grow)) * 0.01))
+      nrm.push(...n)
+    }
+  }
+  const buffer = doc.getRoot().listBuffers()[0] ?? doc.createBuffer()
+  const prim = doc
+    .createPrimitive()
+    .setAttribute('POSITION', doc.createAccessor().setType('VEC3').setArray(new Float32Array(pos)).setBuffer(buffer))
+    .setAttribute('NORMAL', doc.createAccessor().setType('VEC3').setArray(new Float32Array(nrm)).setBuffer(buffer))
+  const node = doc.createNode(name).setMesh(doc.createMesh(name).addPrimitive(prim))
+  ;(doc.getRoot().listScenes()[0] ?? doc.createScene('scene')).addChild(node)
+}
+
+describe('avatar part layers', () => {
+  it('find parts that share a plane, and pass parts grown to their own layers', () => {
+    const layerOf = (name: string) => AVATAR_LAYER_VOXELS[parsePartNodeName(name).slot]
+    const across = (d: Document) => coplanarOverlaps(d, 0.01).filter((o) => o.facing === 'same' && o.nodes[0] !== o.nodes[1])
+
+    const flat = new Document()
+    cube(flat, 'bottoms space-1', [0, 0, 0], 0)
+    cube(flat, 'tops space-1', [0, 0, 0], 0)
+    expect(across(flat).length).toBeGreaterThan(0)
+    expect([...layerMisfits(flat, 0.01, layerOf).keys()].sort()).toEqual(['bottoms space-1', 'tops space-1'])
+
+    // blender/rig.py grows each part by its slot layer (mesher.layered_mesh); a lone cube just grows on every side.
+    const layered = new Document()
+    cube(layered, 'bottoms space-1', [0, 0, 0], AVATAR_LAYER_VOXELS.bottoms)
+    cube(layered, 'tops space-1', [0, 0, 0], AVATAR_LAYER_VOXELS.tops)
+    expect(across(layered)).toEqual([])
+    expect(layerMisfits(layered, 0.01, layerOf).size).toBe(0)
   })
 })

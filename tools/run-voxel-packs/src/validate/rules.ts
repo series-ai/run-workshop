@@ -51,6 +51,7 @@ export type RuleId =
   | 'style.dark'
   | 'style.saturation'
   | 'geometry.zfight'
+  | 'avatar.layers'
   | 'clips.loop'
 
 export interface Violation {
@@ -279,6 +280,9 @@ export function validateAsset(summary: GlbSummary, context: AssetContext): Viola
   if (category === 'avatar') {
     if (!skin) out.push({ rule: 'rig.names', message: 'avatar parts file has no skin' })
     else out.push(...checkRigExact(skin))
+    // Parts that cover one another must not share a plane, or they z-fight on the avatar.
+    if (!summary.layers) out.push({ rule: 'avatar.layers', message: 'avatar parts file has mesh nodes outside the `<slot> <pack>-<n>` convention' })
+    else if (summary.layers.misfit > 0.01) out.push({ rule: 'avatar.layers', message: `${summary.layers.misfit.toFixed(1)} voxel² of part faces are off their slot's layer (worst: ${summary.layers.worst}); rebuild so finalize layers the parts` })
   } else if (category === 'characters-skins') {
     if (!skin) out.push({ rule: 'rig.names', message: 'skin has no skin' })
     else out.push(...checkRigByName(skin))

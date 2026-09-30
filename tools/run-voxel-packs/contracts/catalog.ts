@@ -8,6 +8,7 @@
  */
 import { z } from 'zod'
 import { CATEGORIES } from './categories'
+import avatarLayersJson from './data/avatar-layers.json'
 import { LEAF_KINDS, LICENSES, PACK_KEYS } from './packs'
 
 export const AVATAR_SLOTS = [
@@ -25,6 +26,13 @@ export const AVATAR_SLOTS = [
   'back',
 ] as const
 export type AvatarSlot = (typeof AVATAR_SLOTS)[number]
+
+/** How far (voxels) each slot's faces sit outside the voxel grid (see data/avatar-layers.json). */
+export const AVATAR_LAYER_VOXELS: Readonly<Record<AvatarSlot, number>> = (() => {
+  const layers = avatarLayersJson.layers as Record<string, number>
+  for (const slot of AVATAR_SLOTS) if (typeof layers[slot] !== 'number') throw new Error(`data/avatar-layers.json has no layer for slot "${slot}"`)
+  return layers as Record<AvatarSlot, number>
+})()
 
 const vec3 = z.tuple([z.number(), z.number(), z.number()])
 export const boundsSchema = z.object({ min: vec3, max: vec3, size: vec3 })

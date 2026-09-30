@@ -10,6 +10,11 @@ const pn = (path: string, zfight = false) => inspectGlb(new Uint8Array(readFileS
 const rules = (violations: Violation[]) => [...new Set(violations.map((v) => v.rule))].sort()
 
 /** A summary that satisfies the rvx contract for a 20-voxel prop. */
+/** An avatar parts summary whose parts all sit on their slot layers. */
+function validParts(): GlbSummary {
+  return { ...validProp(), layers: { misfit: 0, worst: null } }
+}
+
 function validProp(): GlbSummary {
   return {
     materials: [{ name: 'palette', metallic: 0, roughness: 1, baseColorSize: [256, 1], baseColorMime: 'image/png', sampler: { magFilter: GL_NEAREST, minFilter: GL_NEAREST, wrapS: GL_CLAMP_TO_EDGE, wrapT: GL_CLAMP_TO_EDGE } }],
@@ -23,6 +28,7 @@ function validProp(): GlbSummary {
     scaleClass: 'prop',
     surface: { triangles: 400, diagonalShare: 0.2, unitsPerTexel: 1, darkShare: 0.02, meanSaturation: 0.55 },
     zfight: { area: 0, worst: null },
+    layers: null,
   }
 }
 
@@ -116,7 +122,7 @@ describe('rvx profile', () => {
     expect(rules(validateAsset(s, { profile: 'rvx', pack: 'space', category: 'held-items' }))).toEqual(['scale.origin', 'sockets.required'])
   })
   it('rejects shuffled joints on a parts file and a drifted IBM on a skin', () => {
-    const parts = validProp()
+    const parts = validParts()
     const shuffled = rigSkin()
     ;[shuffled.joints[0], shuffled.joints[1]] = [shuffled.joints[1]!, shuffled.joints[0]!]
     parts.skins = [shuffled]
@@ -131,7 +137,7 @@ describe('rvx profile', () => {
     expect(rules(validateAsset(skin, { profile: 'rvx', pack: 'fantasy', category: 'characters-skins' }))).toEqual(['rig.bind'])
   })
   it('rejects an avatar clip from another pack range', () => {
-    const parts = validProp()
+    const parts = validParts()
     parts.skins = [rigSkin()]
     parts.animations = [{ name: '40_Rifle_Aim', targets: ['Arm.R'], duration: 1, seam: null }]
     expect(rules(validateAsset(parts, { profile: 'rvx', pack: 'fantasy', category: 'avatar' }))).toEqual(['clips.names'])
@@ -150,10 +156,20 @@ describe('rvx profile', () => {
     uv.primitives = [{ mesh: 'barrel', material: -1, paletteUvs: false }]
     expect(rules(validateAsset(uv, { profile: 'rvx', pack: 'fantasy', category: 'props' }))).toEqual(['material.primitive'])
 
-    const parts = validProp()
+    const parts = validParts()
     parts.skins = [rigSkin()]
     parts.animations = [{ name: '32_Cast_Spell', targets: ['Arm.R', 'Tail'], duration: 1, seam: null }]
     expect(rules(validateAsset(parts, { profile: 'rvx', pack: 'fantasy', category: 'avatar' }))).toEqual(['clips.targets'])
+  })
+
+  it('flags avatar parts off their slot layer, or a parts file without layers', () => {
+    const parts = validParts()
+    parts.skins = [rigSkin()]
+    expect(rules(validateAsset(parts, { profile: 'rvx', pack: 'fantasy', category: 'avatar' }))).toEqual([])
+    parts.layers = { misfit: 12, worst: 'tops fantasy-3 (12.0 voxel² at 0.000 voxel)' }
+    expect(rules(validateAsset(parts, { profile: 'rvx', pack: 'fantasy', category: 'avatar' }))).toEqual(['avatar.layers'])
+    parts.layers = null
+    expect(rules(validateAsset(parts, { profile: 'rvx', pack: 'fantasy', category: 'avatar' }))).toEqual(['avatar.layers'])
   })
 
   it('flags visible z-fighting above the tolerance', () => {
