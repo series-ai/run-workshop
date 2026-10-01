@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { makeEmptyVoxelField, stampBox } from 'voxel-kit';
 import { VOXEL_SIZE } from './constants';
 import { bodyMass, cookCenteredCollider, makePhysicsBody, voxelStats } from './physics';
-import { createInitialState } from './presets';
 import type { YardBody } from './state';
+import { initialState } from './testSim';
 
 describe('cookCenteredCollider', () => {
   it('centers a solid 2x1x1 volume on the body origin', () => {
@@ -31,9 +31,9 @@ describe('voxelStats and bodyMass', () => {
   });
 });
 
-describe('createInitialState', () => {
+describe('createInitialYard', () => {
   it('spawns playground bodies, a physics body per yard body, and the shell', () => {
-    const state = createInitialState(2);
+    const state = initialState(2);
     expect(state.bodies.length).toBeGreaterThanOrEqual(5);
     expect(state.players).toHaveLength(2);
     for (const body of state.bodies) {

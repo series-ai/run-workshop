@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { ANGLE_SCALE, NEUTRAL_INPUT, TOOL, type YardInput } from './input';
 import { FLOOR_Y, PLAYER_RADIUS } from './constants';
-import { createInitialState } from './presets';
 import { SET_PIECE_COLLIDERS, type ShellBox } from './setPieces';
 import { SHELL_BOXES, shellBoxBounds } from './shell';
-import type { YardState } from './state';
-import { stepYard } from './step';
+import { initialState, patchPlayer, testSim } from './testSim';
 
 /** Only colliders a walking player can reach: bottom near the floor. */
 const GROUND_LEVEL = SET_PIECE_COLLIDERS.filter((box) => box.center[1] - box.size[1] / 2 < FLOOR_Y + 0.5 && box.size[1] > 0.35);
@@ -25,7 +23,7 @@ function penetration(box: ShellBox, x: number, z: number): number {
 }
 
 /** Dynamic bodies at spawn: start spots keep clear of them. */
-const DYNAMIC_SPAWNS = createInitialState(1).world.bodies.filter((b) => b.kind === 'dynamic').map((b) => [b.x, b.z] as const);
+const DYNAMIC_SPAWNS = initialState(1).world.bodies.filter((b) => b.kind === 'dynamic').map((b) => [b.x, b.z] as const);
 
 /** Solid boxes a standing player can touch. */
 const TOUCHABLE = SHELL_BOXES.filter((box) => box.id !== 'floor' && box.center[1] - box.size[1] / 2 < FLOOR_Y + 1.5);
@@ -52,15 +50,16 @@ function startSpot(box: ShellBox): [number, number] | null {
 
 /** Player y is the lower capsule sphere center: a standing player rests one radius above the floor. */
 function walkInto(box: ShellBox, start: [number, number]): { deepest: number; stoppedAtSolid: boolean } {
-  let state: YardState = createInitialState(1);
-  state = { ...state, players: state.players.map((p, i) => (i === 0 ? { ...p, x: start[0], y: FLOOR_Y + PLAYER_RADIUS + 0.01, z: start[1], vx: 0, vy: 0, vz: 0 } : p)) };
-  for (let i = 0; i < 8; i += 1) state = stepYard(state, [NEUTRAL_INPUT]);
+  const sim = testSim(1);
+  patchPlayer(sim, { x: start[0], y: FLOOR_Y + PLAYER_RADIUS + 0.01, z: start[1], vx: 0, vy: 0, vz: 0 });
+  let state = sim.state;
+  for (let i = 0; i < 8; i += 1) state = sim.step([NEUTRAL_INPUT]);
   let deepest = -Infinity;
   for (let i = 0; i < 75; i += 1) {
     const p = state.players[0]!;
     const yaw = Math.atan2(-(box.center[0] - p.x), -(box.center[2] - p.z));
     const walk: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.none, moveZ: 1, yaw: Math.round(yaw * ANGLE_SCALE) };
-    state = stepYard(state, [walk]);
+    state = sim.step([walk]);
     deepest = Math.max(deepest, penetration(box, state.players[0]!.x, state.players[0]!.z));
   }
   const end = state.players[0]!;

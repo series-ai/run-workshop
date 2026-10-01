@@ -54,13 +54,11 @@ import { add, clamp, lerp, rotateInverse, scale, sub, type Vec3 } from './math';
 import type { VoxelDims } from 'voxel-kit';
 import {
   addPhysicsBodies,
-  closeWorld,
   halfExtents,
   voxelStats,
   isShell,
   launchPhysicsBody,
   makePhysicsBody,
-  openWorld,
   physicsBodyById,
   physicsBodyName,
   poseOf,
@@ -69,6 +67,7 @@ import {
   setPhysicsBodyMotion,
   setPhysicsBodyLinearDamping,
   setPhysicsBodyVelocity,
+  readWorldState,
   type OpenYardPhysicsWorld,
   type YardPhysicsWorldState,
   type YardPhysicsBody3D,
@@ -718,68 +717,68 @@ function stepContraptions(w: Working, before: YardPhysicsWorldState): void {
   }
 }
 
-export function stepYard(state: YardState, inputs: readonly YardInput[]): YardState {
-  const physics = openWorld(state.world);
-  let disposed = false;
-  try {
-    const w: Working = {
-      physics,
-      bodies: [...state.bodies],
-      players: [...state.players],
-      stats: state.stats,
-      contraptions: state.contraptions,
-      nextSerial: state.nextSerial,
-      fractures: [],
-      frame: state.frame + 1,
-    };
+/**
+ * Advances one tick. `physics` is the live world at `state` (see sim.ts); this
+ * steps it in place and returns the next state.
+ */
+export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs: readonly YardInput[]): YardState {
+  const worldFrame = Number(physics.world.info().frame);
+  if (worldFrame !== state.world.frame) {
+    throw new Error(`WRECK_YARD_WORLD_FRAME_MISMATCH: world ${worldFrame}, state ${state.world.frame}`);
+  }
+  const w: Working = {
+    physics,
+    bodies: [...state.bodies],
+    players: [...state.players],
+    stats: state.stats,
+    contraptions: state.contraptions,
+    nextSerial: state.nextSerial,
+    fractures: [],
+    frame: state.frame + 1,
+  };
 
-    for (let slot = 0; slot < w.players.length; slot += 1) {
-      const input = inputs[slot];
-      if (!input) throw new Error(`WRECK_YARD_INPUT_MISSING: slot ${slot}`);
-      w.players[slot] = stepPlayer(w, slot, input);
-    }
+  for (let slot = 0; slot < w.players.length; slot += 1) {
+    const input = inputs[slot];
+    if (!input) throw new Error(`WRECK_YARD_INPUT_MISSING: slot ${slot}`);
+    w.players[slot] = stepPlayer(w, slot, input);
+  }
 
-    const driver = w.players.find((player) => player.ridingVehicle);
-    const buggyWheels = stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyWheels);
-    w.physics.world.step();
-    const latest = w.physics.world.latest();
-    stepContraptions(w, state.world);
+  const driver = w.players.find((player) => player.ridingVehicle);
+  const buggyWheels = stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyWheels);
+  w.physics.world.step();
+  const latest = w.physics.world.latest();
+  stepContraptions(w, state.world);
 
-    // Sync vehicle riders with the post-step vehicle position
-    for (let slot = 0; slot < w.players.length; slot += 1) {
-      const p = w.players[slot];
-      if (p?.ridingVehicle) {
-        const chassis = physicsBodyById(w.physics, 'vehicle-chassis');
-        if (chassis) {
-          w.players[slot] = {
-            ...p,
-            x: chassis.x,
-            y: chassis.y + 0.28,
-            z: chassis.z + 0.12,
-            vx: chassis.vx,
-            vy: chassis.vy,
-            vz: chassis.vz,
-          };
-        }
+  // Sync vehicle riders with the post-step vehicle position
+  for (let slot = 0; slot < w.players.length; slot += 1) {
+    const p = w.players[slot];
+    if (p?.ridingVehicle) {
+      const chassis = physicsBodyById(w.physics, 'vehicle-chassis');
+      if (chassis) {
+        w.players[slot] = {
+          ...p,
+          x: chassis.x,
+          y: chassis.y + 0.28,
+          z: chassis.z + 0.12,
+          vx: chassis.vx,
+          vy: chassis.vy,
+          vz: chassis.vz,
+        };
       }
     }
-
-    queueImpacts(w, latest.contacts, state.frame);
-    applyFractures(w, state.frame);
-
-    disposed = true;
-    const nextWorld = closeWorld(w.physics, latest.fluidInteractions);
-    return {
-      frame: state.frame + 1,
-      buggyWheels,
-      bodies: w.bodies,
-      world: nextWorld,
-      players: w.players,
-      stats: w.stats,
-      contraptions: w.contraptions,
-      nextSerial: w.nextSerial,
-    };
-  } finally {
-    if (!disposed) physics.world.dispose();
   }
+
+  queueImpacts(w, latest.contacts, state.frame);
+  applyFractures(w, state.frame);
+
+  return {
+    frame: state.frame + 1,
+    buggyWheels,
+    bodies: w.bodies,
+    world: readWorldState(w.physics, latest.fluidInteractions),
+    players: w.players,
+    stats: w.stats,
+    contraptions: w.contraptions,
+    nextSerial: w.nextSerial,
+  };
 }

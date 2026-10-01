@@ -2,11 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { ARENA_EXTENT, VOXEL_SIZE } from './constants';
 import { NEUTRAL_INPUT } from './input';
 import type { Quat } from './math';
-import { fullPhysicsBodyById, openWorld, physicsStateBodyById } from './physics';
-import { createInitialState } from './presets';
+import { fullPhysicsBodyById, physicsStateBodyById } from './physics';
 import { yardProps } from './props';
 import { PLAYER_SPAWN_POINTS } from './state';
-import { stepYard } from './step';
+import { initialState, testSim } from './testSim';
 
 /** Bodies that move at the start on purpose: floats bob in the tank. */
 const MOVES_BY_DESIGN = new Set(['float-crate', 'float-drum']);
@@ -30,7 +29,7 @@ function worldHalfSize(dims: { x: number; y: number; z: number }, [qx, qy, qz, q
 
 describe('yard props', () => {
   it('uses unique ids that do not clash with the core bodies', () => {
-    const ids = createInitialState(1).bodies.map((body) => body.id);
+    const ids = initialState(1).bodies.map((body) => body.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
@@ -54,11 +53,12 @@ describe('yard props', () => {
 
   it('settles in place: no body starts in an overlap, falls over, or breaks', () => {
     // Overlap at spawn makes the solver push bodies out, so any overlap shows as drift.
-    const initial = createInitialState(1);
+    const sim = testSim(1);
+    const initial = sim.state;
     const start = initial.world.bodies.filter((body) => body.kind === 'dynamic' && !MOVES_BY_DESIGN.has(body.id));
     expect(start.length).toBeGreaterThan(yardProps().length);
     let state = initial;
-    for (let tick = 0; tick < 60; tick += 1) state = stepYard(state, [NEUTRAL_INPUT]);
+    for (let tick = 0; tick < 60; tick += 1) state = sim.step([NEUTRAL_INPUT]);
     expect(state.stats.fractures).toBe(0);
     const moved = start.flatMap((before) => {
       const after = physicsStateBodyById(state.world, before.id);
@@ -72,17 +72,12 @@ describe('yard props', () => {
   it('lets every other body sleep once settled', () => {
     // Awake bodies cost solver time every tick. With ~120 props, a prop shape that
     // never sleeps (and whatever rests on it) is a steady cost.
-    let state = createInitialState(1);
-    for (let tick = 0; tick < 90; tick += 1) state = stepYard(state, [NEUTRAL_INPUT]);
-    const open = openWorld(state.world);
-    try {
-      const awake = state.bodies
-        .filter((body) => body.motion === 'dynamic' && !NEVER_SLEEPS.has(body.id))
-        .filter((body) => !fullPhysicsBodyById(open, body.id)!.sleeping)
-        .map((body) => body.id);
-      expect(awake).toEqual([]);
-    } finally {
-      open.world.dispose();
-    }
+    const sim = testSim(1);
+    for (let tick = 0; tick < 90; tick += 1) sim.step([NEUTRAL_INPUT]);
+    const awake = sim.state.bodies
+      .filter((body) => body.motion === 'dynamic' && !NEVER_SLEEPS.has(body.id))
+      .filter((body) => !fullPhysicsBodyById(sim.physics, body.id)!.sleeping)
+      .map((body) => body.id);
+    expect(awake).toEqual([]);
   });
 });

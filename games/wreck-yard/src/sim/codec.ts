@@ -7,7 +7,7 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
 type HeaderBody = Omit<YardBody, 'voxels'> & { readonly voxelBytes: number };
-type HeaderWorld = Omit<YardPhysicsWorldState, 'checkpoint'> & { readonly checkpointBytes: number };
+type HeaderWorld = Omit<YardPhysicsWorldState, 'fluidInteractions'> & { readonly checkpointBytes: number };
 type Header = Omit<YardState, 'bodies' | 'world'> & {
   readonly bodies: readonly HeaderBody[];
   readonly world: HeaderWorld;
@@ -70,24 +70,31 @@ function voxelRuns(voxels: Uint8Array): Uint8Array {
   return runs;
 }
 
+/** A state with its physics world as native checkpoint bytes: what peers checksum and late joiners load. */
+export interface EncodedYard {
+  readonly state: YardState;
+  readonly checkpoint: Uint8Array;
+}
+
 /**
  * Layout: u32 magic, u32 header length, canonical JSON header (everything but
  * voxel and checkpoint bytes), then the native checkpoint, then each body's
  * run-length voxels in header order. Canonical JSON keeps key order stable.
+ * Fluid interactions are not encoded: each step makes them again.
  */
-export function encodeState(state: YardState): Uint8Array {
+export function encodeState({ state, checkpoint }: EncodedYard): Uint8Array {
   const header: Header = {
     ...state,
     world: {
       frame: state.world.frame,
       bodies: state.world.bodies,
       bodyIds: state.world.bodyIds,
-      checkpointBytes: state.world.checkpoint.byteLength,
+      checkpointBytes: checkpoint.byteLength,
     },
     bodies: state.bodies.map(({ voxels, ...rest }) => ({ ...rest, voxelBytes: voxelRuns(voxels).byteLength })),
   };
   const headerBytes = encoder.encode(canonicalStringify(header));
-  const total = 8 + headerBytes.byteLength + state.world.checkpoint.byteLength
+  const total = 8 + headerBytes.byteLength + checkpoint.byteLength
     + state.bodies.reduce((sum, body) => sum + voxelRuns(body.voxels).byteLength, 0);
   const out = new Uint8Array(total);
   const view = new DataView(out.buffer);
@@ -95,8 +102,8 @@ export function encodeState(state: YardState): Uint8Array {
   view.setUint32(4, headerBytes.byteLength);
   out.set(headerBytes, 8);
   let offset = 8 + headerBytes.byteLength;
-  out.set(state.world.checkpoint, offset);
-  offset += state.world.checkpoint.byteLength;
+  out.set(checkpoint, offset);
+  offset += checkpoint.byteLength;
   for (const body of state.bodies) {
     const runs = voxelRuns(body.voxels);
     out.set(runs, offset);
@@ -105,7 +112,7 @@ export function encodeState(state: YardState): Uint8Array {
   return out;
 }
 
-export function decodeState(bytes: Uint8Array): YardState {
+export function decodeState(bytes: Uint8Array): EncodedYard {
   if (bytes.byteLength < 8) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: too short');
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   if (view.getUint32(0) !== MAGIC) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: bad magic');
@@ -126,5 +133,5 @@ export function decodeState(bytes: Uint8Array): YardState {
   });
   if (offset !== bytes.byteLength) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: trailing bytes');
   const { checkpointBytes: _checkpointBytes, ...world } = header.world;
-  return { ...header, world: { ...world, checkpoint }, bodies };
+  return { state: { ...header, world, bodies }, checkpoint };
 }

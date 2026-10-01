@@ -3,18 +3,17 @@ import { CAGE_TOP } from './cage';
 import { ARENA_EXTENT, FLOOR_Y } from './constants';
 import { NEUTRAL_INPUT, quantizeRay, TOOL } from './input';
 import { physicsStateBodyById, replacePhysicsPose } from './physics';
-import { createInitialState } from './presets';
-import type { YardState } from './state';
-import { stepYard } from './step';
+import { testSim } from './testSim';
 
 /** Launches a body from `at` with `velocity` (m/s) and tracks its highest point and farthest reach for 4 s. */
 function launch(id: string, at: [number, number, number], velocity: [number, number, number]) {
-  let state: YardState = createInitialState(1);
-  state = { ...state, world: replacePhysicsPose(state.world, id, { x: at[0], y: at[1], z: at[2], vx: velocity[0] / 30, vy: velocity[1] / 30, vz: velocity[2] / 30 }) };
+  const sim = testSim(1);
+  sim.edit((physics) => replacePhysicsPose(physics, id, { x: at[0], y: at[1], z: at[2], vx: velocity[0] / 30, vy: velocity[1] / 30, vz: velocity[2] / 30 }));
+  let state = sim.state;
   let top = -Infinity;
   let reach = 0;
   for (let tick = 0; tick < 120; tick += 1) {
-    state = stepYard(state, [NEUTRAL_INPUT]);
+    state = sim.step([NEUTRAL_INPUT]);
     const body = physicsStateBodyById(state.world, id);
     if (!body) break; // fractured on impact: its pieces are new bodies
     top = Math.max(top, body.y);
@@ -45,7 +44,7 @@ describe('arena cage', () => {
   it('lets aim rays through: a gravity gun shot at the sky above a wall is a miss', () => {
     // Over the south wall's top and through the cage panel above it.
     const eye: [number, number, number] = [-3, FLOOR_Y + 2, 20];
-    const state = stepYard(createInitialState(1), [{ ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...quantizeRay(eye, [0, 0.6, 1]) }]);
+    const state = testSim(1).step([{ ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...quantizeRay(eye, [0, 0.6, 1]) }]);
     expect(state.players[0]!.feedback?.result).toBe('miss');
   });
 });

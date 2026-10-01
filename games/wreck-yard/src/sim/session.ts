@@ -4,16 +4,16 @@ import {
   encodeKinetixSessionConfig,
   kinetixRuntimeIdentitiesEqual,
   kinetixSessionConfigDigest,
-  type KinetixRuntime,
   type KinetixRuntimeIdentity,
+  type KinetixRuntimeLease,
+  type OwnedKinetixRuntime,
 } from '@series-inc/rundot-syncplay/core/runtime';
 import generated from './identity.generated.json';
-import { decodeState, encodeState } from './codec';
 import type { YardInput } from './input';
-import { createInitialState } from './presets';
+import { CHECKPOINT_BUDGET } from './physics';
 import { SESSION_CONFIG_SCHEMA, type YardSessionConfig } from './session-config';
+import { YardSim, type YardSave } from './sim';
 import type { YardState } from './state';
-import { stepYard } from './step';
 
 const productIdentity = generated.runtimeIdentity as KinetixRuntimeIdentity;
 
@@ -32,31 +32,60 @@ export function decodeYardSessionConfig(bytes: Uint8Array): YardSessionConfig {
   return { playerCount };
 }
 
-export type YardRuntime = KinetixRuntime<YardState, YardInput>;
+export type YardRuntime = OwnedKinetixRuntime<YardState, YardInput>;
 
-export function createYardRuntime(identity: KinetixRuntimeIdentity, sessionConfigBytes: Uint8Array): YardRuntime {
+/**
+ * An owned runtime: Syncplay holds saves as native checkpoints in one live
+ * world (sim.ts) and asks for bytes only to checksum or to send a late joiner.
+ * The runner disposes the lease; that releases every save, then the world.
+ */
+export function createYardRuntime(identity: KinetixRuntimeIdentity, sessionConfigBytes: Uint8Array): KinetixRuntimeLease<YardRuntime> {
   if (!kinetixRuntimeIdentitiesEqual(identity, productIdentity)) {
     throw new Error('WRECK_YARD_RUNTIME_IDENTITY_MISMATCH');
   }
   const config = decodeYardSessionConfig(sessionConfigBytes);
-  let state = createInitialState(config.playerCount);
-  return createInstalledRuntimeAdapter<YardState, YardInput>({
-    identity,
-    sessionConfigBytes,
-    captureState: () => state,
-    restoreState: (restored) => {
-      state = restored;
+  const sim = YardSim.create(config.playerCount);
+  let lease: KinetixRuntimeLease<YardRuntime>;
+  try {
+    lease = createInstalledRuntimeAdapter<YardState, YardInput, never, YardState, YardSave>({
+      identity,
+      sessionConfigBytes,
+      step: (inputs) => {
+        sim.step(inputs);
+      },
+      stateStorage: {
+        kind: 'owned',
+        checkpointBudget: CHECKPOINT_BUDGET,
+        captureState: () => sim.save(),
+        restoreState: (save) => sim.restore(save),
+        releaseState: (save) => sim.release(save),
+        frameOf: (save) => save.state.frame,
+        inspectState: (save) => save.state,
+        serializeState: (save) => sim.encode(save),
+        hydrateState: (frame, bytes) => {
+          const save = YardSim.decode(bytes);
+          if (save.state.frame !== frame) throw new Error(`WRECK_YARD_STATE_FRAME_MISMATCH: bytes ${save.state.frame}, expected ${frame}`);
+          return save;
+        },
+        checksumStateBytes: (save) => sim.encode(save),
+        readLiveRevision: () => sim.revision,
+        projectState: (save) => save.state,
+      },
+    });
+  } catch (error) {
+    sim.dispose();
+    throw error;
+  }
+  return {
+    runtime: lease.runtime,
+    dispose: async () => {
+      try {
+        await lease.dispose();
+      } finally {
+        sim.dispose();
+      }
     },
-    frameOf: (candidate) => candidate.frame,
-    capturedStateIsDetached: true,
-    step: (inputs) => {
-      state = stepYard(state, inputs);
-    },
-    serializeState: encodeState,
-    hydrateState: (_frame, bytes) => decodeState(bytes),
-    checksumBytes: encodeState,
-    projectState: (presented) => presented,
-  });
+  };
 }
 
 export interface YardRoomOptions {

@@ -1,7 +1,7 @@
 import { stepDeterministicVehicle3D, type DeterministicVehicleWheel3D } from '@series-inc/rundot-syncplay/physics/3d';
 import type { BuggyWheelState } from './state';
 import { type YardInput } from './input';
-import { fullPhysicsBodyById, physicsBodyHandle, type OpenYardPhysicsWorld } from './physics';
+import { physicsBodyHandle, type OpenYardPhysicsWorld } from './physics';
 
 /** Tuned at chassis mass 3.614: stiffness 220, damping 12. */
 const SUSPENSION_STIFFNESS_PER_MASS = 220 / 3.614;
@@ -27,10 +27,13 @@ export const BUGGY_WHEELS: readonly DeterministicVehicleWheel3D[] = [-0.84, 0.84
 
 /** Apply tire forces only at ground contacts. Keep airborne momentum intact. */
 export function stepBuggy(physics: OpenYardPhysicsWorld, input?: YardInput, previous: readonly BuggyWheelState[] = []): readonly BuggyWheelState[] {
-  const body = fullPhysicsBodyById(physics, 'vehicle-chassis');
-  if (!body || body.kind !== 'dynamic') return [];
+  if (!physics.bodyIds.has('vehicle-chassis')) return [];
+  const chassis = physicsBodyHandle(physics, 'vehicle-chassis');
+  // Motion has mass and kind; a full read would decode the voxel shape every tick.
+  const body = physics.world.readMotion(chassis);
+  if (body.kind !== 'dynamic') return [];
   const result = stepDeterministicVehicle3D({
-    chassis: physicsBodyHandle(physics, 'vehicle-chassis'),
+    chassis,
     wheels: BUGGY_WHEELS.map((wheel) => ({ ...wheel, stiffness: wheel.stiffness * body.mass, damping: wheel.damping * body.mass })),
     driveForce: body.mass * 18,
     brakeForce: body.mass * 28,

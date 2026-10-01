@@ -1,15 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { IMPACT_MIN_SPEED, TANK, TICK_RATE } from './constants';
 import { NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
-import { createInitialState } from './presets';
 import { physicsStateBodyById, replacePhysicsPose, voxelStats } from './physics';
+import type { YardSim } from './sim';
 import type { YardState } from './state';
-import { stepYard } from './step';
+import { testSim } from './testSim';
 
-function run(state: YardState, inputs: readonly YardInput[], frames: number): YardState {
-  let next = state;
-  for (let i = 0; i < frames; i += 1) next = stepYard(next, inputs);
-  return next;
+function run(sim: YardSim, inputs: readonly YardInput[], frames: number): YardState {
+  for (let i = 0; i < frames; i += 1) sim.step(inputs);
+  return sim.state;
 }
 
 function rayAt(target: readonly [number, number, number]): Pick<YardInput, 'ox' | 'oy' | 'oz' | 'dx' | 'dy' | 'dz'> {
@@ -29,12 +28,12 @@ function torchAt(target: readonly [number, number, number]): Pick<YardInput, 'ox
  * swept contact the torch makes when a player drags across a face.
  */
 function torchDrag(
-  state: YardState,
+  sim: YardSim,
   from: readonly [number, number, number],
   to: readonly [number, number, number],
   steps: number,
 ): YardState {
-  let next = state;
+  let next = sim.state;
   for (let i = 0; i <= steps; i += 1) {
     const t = i / steps;
     const target = [
@@ -43,14 +42,14 @@ function torchDrag(
       from[2] + (to[2] - from[2]) * t,
     ] as const;
     const cut: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...torchAt(target) };
-    next = run(next, [cut], 4);
+    next = run(sim, [cut], 4);
   }
   return next;
 }
 
 describe('stepYard', () => {
   it('advances the frame and keeps resting bodies near their spawn', () => {
-    const state = run(createInitialState(1), [NEUTRAL_INPUT], 60);
+    const state = run(testSim(1), [NEUTRAL_INPUT], 60);
     expect(state.frame).toBe(60);
     const steel = physicsStateBodyById(state.world, 'steel-case')!;
     expect(steel.y).toBeGreaterThan(-0.9);
@@ -58,8 +57,9 @@ describe('stepYard', () => {
   });
 
   it('keeps the full idle scene above the floor without impact damage', () => {
-    const initial = createInitialState(1);
-    const state = run(initial, [NEUTRAL_INPUT], 120);
+    const sim = testSim(1);
+    const initial = sim.state;
+    const state = run(sim, [NEUTRAL_INPUT], 120);
     expect(state.stats.fractures).toBe(0);
     expect(state.bodies.length).toBe(initial.bodies.length);
     for (const body of state.world.bodies) {
@@ -68,16 +68,17 @@ describe('stepYard', () => {
   });
 
   it('grabs, lifts, and throws the ballast box', () => {
-    let state = run(createInitialState(1), [NEUTRAL_INPUT], 30);
+    const sim = testSim(1);
+    let state = run(sim, [NEUTRAL_INPUT], 30);
     const before = physicsStateBodyById(state.world, 'ballast-box')!;
     const hold: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...rayAt([before.x, before.y, before.z]) };
-    state = stepYard(state, [hold]);
+    state = sim.step([hold]);
     expect(state.players[0]!.grab?.bodyId).toBe('ballast-box');
     const lift: YardInput = { ...hold, ...rayAt([before.x, before.y + 1.5, before.z]) };
-    state = run(state, [lift], 20);
+    state = run(sim, [lift], 20);
     const lifted = physicsStateBodyById(state.world, 'ballast-box')!;
     expect(lifted.y).toBeGreaterThan(before.y + 0.3);
-    state = stepYard(state, [{ ...lift, pressed: false }]);
+    state = sim.step([{ ...lift, pressed: false }]);
     expect(state.players[0]!.grab).toBeNull();
     expect(state.stats.throws).toBe(1);
   });
@@ -87,15 +88,16 @@ describe('stepYard', () => {
     ['ballast-box', 0],
     ['float-crate', 3.5],
   ] as const)('lifts %s to the hold point without a launch or overshoot', (id, dx) => {
-    let state = run(createInitialState(1), [NEUTRAL_INPUT], 30);
+    const sim = testSim(1);
+    let state = run(sim, [NEUTRAL_INPUT], 30);
     const rest = physicsStateBodyById(state.world, id)!;
     const grab: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...rayAt([rest.x, rest.y, rest.z]) };
-    state = stepYard(state, [grab]);
+    state = sim.step([grab]);
     const hold: YardInput = { ...grab, ...rayAt([rest.x + dx, rest.y + 1.5, rest.z]) };
     let peak = -Infinity;
     let fastest = 0;
     for (let i = 0; i < 45; i += 1) {
-      state = stepYard(state, [hold]);
+      state = sim.step([hold]);
       const body = physicsStateBodyById(state.world, id)!;
       peak = Math.max(peak, body.y);
       fastest = Math.max(fastest, Math.hypot(body.vx, body.vy, body.vz) * TICK_RATE);
@@ -110,18 +112,19 @@ describe('stepYard', () => {
   });
 
   it('drops a still-held box on release and lands it without a bounce', () => {
-    let state = run(createInitialState(1), [NEUTRAL_INPUT], 30);
+    const sim = testSim(1);
+    let state = run(sim, [NEUTRAL_INPUT], 30);
     const rest = physicsStateBodyById(state.world, 'ballast-box')!;
     const grab: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...rayAt([rest.x, rest.y, rest.z]) };
-    state = stepYard(state, [grab]);
+    state = sim.step([grab]);
     const hold: YardInput = { ...grab, ...rayAt([rest.x, rest.y + 2, rest.z]) };
-    state = run(state, [hold], 60);
+    state = run(sim, [hold], 60);
     const held = physicsStateBodyById(state.world, 'ballast-box')!;
     let peak = -Infinity;
     let landed = false;
     let rebound = 0;
     for (let i = 0; i < 60; i += 1) {
-      state = stepYard(state, [{ ...hold, pressed: false }]);
+      state = sim.step([{ ...hold, pressed: false }]);
       const box = physicsStateBodyById(state.world, 'ballast-box')!;
       peak = Math.max(peak, box.y);
       if (box.y < rest.y + 0.1) landed = true;
@@ -133,10 +136,11 @@ describe('stepYard', () => {
   });
 
   it('torches the gantry into a fixed stump and a loose piece', () => {
-    let state = run(createInitialState(1), [NEUTRAL_INPUT], 5);
+    const sim = testSim(1);
+    let state = run(sim, [NEUTRAL_INPUT], 5);
     const gantry = physicsStateBodyById(state.world, 'steel-gantry')!;
     const cut: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...torchAt([gantry.x + 0.2, gantry.y + 0.2, gantry.z]) };
-    state = run(state, [cut], 12);
+    state = run(sim, [cut], 12);
     expect(state.stats.torchCuts).toBeGreaterThanOrEqual(1);
     const pieces = state.bodies.filter((b) => b.label === 'Steel Gantry');
     expect(pieces.length).toBeGreaterThanOrEqual(2);
@@ -149,8 +153,12 @@ describe('stepYard', () => {
     // The reported bug: a vertical stroke broke a piece off the gantry and the
     // same stroke horizontally did not. Both must separate it now.
     const gantryPieces = (state: YardState) => state.bodies.filter((b) => b.label === 'Steel Gantry');
-    const settle = () => run(createInitialState(1), [NEUTRAL_INPUT], 5);
-    const gantry = physicsStateBodyById(settle().world, 'steel-gantry')!;
+    const settle = (): YardSim => {
+      const sim = testSim(1);
+      run(sim, [NEUTRAL_INPUT], 5);
+      return sim;
+    };
+    const gantry = physicsStateBodyById(settle().state.world, 'steel-gantry')!;
 
     // Vertical stroke down the gantry's front, spanning past both edges.
     const vertical = torchDrag(
@@ -177,18 +185,20 @@ describe('stepYard', () => {
     // A held point on a thick body removes surface material but cannot sever it.
     // The cut registers; the body stays whole. This is the behaviour the
     // through cut replaces, and it must not regress into a fabricated split.
-    let state = run(createInitialState(1), [NEUTRAL_INPUT], 5);
+    const sim = testSim(1);
+    let state = run(sim, [NEUTRAL_INPUT], 5);
     const pallet = physicsStateBodyById(state.world, 'timber-pallet')!;
     const graze: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...torchAt([pallet.x, pallet.y, pallet.z]) };
-    state = run(state, [graze], 8);
+    state = run(sim, [graze], 8);
     expect(state.stats.torchCuts).toBeGreaterThanOrEqual(1);
     expect(state.bodies.filter((b) => b.label === 'Timber Pallet').length).toBe(1);
   });
 
   it('fractures a body that slams into the floor', () => {
-    const state = createInitialState(1);
-    const fast = { ...state, world: replacePhysicsPose(state.world, 'ballast-box', { x: -6, z: 3, y: 3.5, vy: -9 / TICK_RATE }) };
-    const after = run(fast, [NEUTRAL_INPUT], 40);
+    const sim = testSim(1);
+    const state = sim.state;
+    sim.edit((physics) => replacePhysicsPose(physics, 'ballast-box', { x: -6, z: 3, y: 3.5, vy: -9 / TICK_RATE }));
+    const after = run(sim, [NEUTRAL_INPUT], 40);
     expect(after.stats.fractures).toBeGreaterThanOrEqual(1);
     const beforeCount = voxelStats(state.bodies.find((b) => b.id === 'ballast-box')!.voxels).occupiedCount;
     const remaining = after.bodies.filter((b) => b.label === 'Ballast Box').reduce((n, b) => n + voxelStats(b.voxels).occupiedCount, 0);
@@ -197,7 +207,7 @@ describe('stepYard', () => {
   });
 
   it('keeps the float crate at the water surface', () => {
-    const state = run(createInitialState(1), [NEUTRAL_INPUT], 240);
+    const state = run(testSim(1), [NEUTRAL_INPUT], 240);
     const crate = physicsStateBodyById(state.world, 'float-crate')!;
     expect(crate.y).toBeGreaterThan(TANK.bottomY + 0.2);
     expect(crate.y).toBeLessThan(TANK.surfaceY + 0.4);
@@ -207,19 +217,21 @@ describe('stepYard', () => {
     // Submerge and settle the float crate in water, then pull it out into the air.
     // Previously, buoyancy forces persisted because setBodyForce was skipped when
     // submerged <= 0, causing the object to float in mid-air.
-    let state = run(createInitialState(1), [NEUTRAL_INPUT], 30);
-    const inAir = replacePhysicsPose(state.world, 'float-crate', { y: 2.5, vy: 0 });
-    state = run({ ...state, world: inAir }, [NEUTRAL_INPUT], 20);
+    const sim = testSim(1);
+    run(sim, [NEUTRAL_INPUT], 30);
+    sim.edit((physics) => replacePhysicsPose(physics, 'float-crate', { y: 2.5, vy: 0 }));
+    const state = run(sim, [NEUTRAL_INPUT], 20);
     const crate = physicsStateBodyById(state.world, 'float-crate')!;
     expect(crate.vy).toBeLessThan(-0.05);
     expect(crate.y).toBeLessThan(2.4);
   });
 
   it('never mutates the previous state', () => {
-    const state = createInitialState(1);
+    const sim = testSim(1);
+    const state = sim.state;
     const frozenBodies = state.bodies;
     const frozenWorld = state.world;
-    stepYard(state, [NEUTRAL_INPUT]);
+    sim.step([NEUTRAL_INPUT]);
     expect(state.frame).toBe(0);
     expect(state.bodies).toBe(frozenBodies);
     expect(state.world).toBe(frozenWorld);

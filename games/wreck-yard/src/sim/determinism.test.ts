@@ -1,4 +1,4 @@
-import { assertDeterministic, assertLateJoinHydration, assertPresentationParity } from '@series-inc/rundot-syncplay/testing';
+import { assertDeterministicAsync, assertLateJoinHydrationAsync, assertPresentationParity } from '@series-inc/rundot-syncplay/testing';
 import { describe, expect, it } from 'vitest';
 import { decodeYardInput, encodeYardInput, NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
 import { createYardRuntime, yardRoomOptions } from './session';
@@ -22,8 +22,8 @@ export function scriptedInput(slot: number, frame: number): YardInput {
 describe('wreck yard determinism', () => {
   const room = yardRoomOptions(PLAYERS);
 
-  it('replays identically under rollback for fuzzed inputs', () => {
-    const result = assertDeterministic<YardState, YardInput>({
+  it('replays identically under rollback for fuzzed inputs', async () => {
+    const result = await assertDeterministicAsync<YardState, YardInput>({
       runtimeFactory: () => createYardRuntime(room.runtimeIdentity, room.sessionConfigBytes),
       policy: { playerCount: PLAYERS, defaultInput: NEUTRAL_INPUT, checksumIntervalFrames: 1 },
       frames: FRAMES,
@@ -62,8 +62,8 @@ describe('wreck yard determinism', () => {
     expect(proof.comparedFrames).toBeGreaterThanOrEqual(5);
   }, 500_000);
 
-  it('hydrates a late joiner to the same checksum', () => {
-    const proof = assertLateJoinHydration({
+  it('hydrates a late joiner to the same checksum', async () => {
+    const proof = await assertLateJoinHydrationAsync({
       roomConfig: {
         playerCount: PLAYERS,
         seed: 11,

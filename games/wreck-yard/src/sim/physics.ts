@@ -72,10 +72,14 @@ export interface YardFluidInteraction {
   readonly totalTorque: Readonly<{ x: number; y: number; z: number }>;
 }
 
+/**
+ * The sim's view of the physics world after a tick: body motion, and the
+ * name of each body id. The world itself is live (see sim.ts); a save holds
+ * it as a native checkpoint, and the codec adds the checkpoint bytes.
+ */
 export interface YardPhysicsWorldState {
   readonly frame: number;
   readonly bodies: readonly YardPhysicsBody3D[];
-  readonly checkpoint: Uint8Array;
   readonly bodyIds: readonly (readonly [string, string])[];
   readonly fluidInteractions?: readonly YardFluidInteraction[];
 }
@@ -85,11 +89,23 @@ export interface OpenYardPhysicsWorld {
   readonly bodyIds: Map<string, PhysicsBodyId3D>;
 }
 
+/**
+ * Native checkpoints the runtime can hold at once. Syncplay's session keeps
+ * 256 saves (its default snapshot buffer), plus one catch-up batch of up to
+ * 240 ticks (the runner's default limit), plus saves loaded from bytes.
+ */
+export const CHECKPOINT_BUDGET = {
+  maxLiveCheckpoints: 256 + 240 + 2,
+  maxAdvanceBatch: 240,
+  importScratch: 2,
+} as const;
+
 export const PHYSICS_CAPACITY = {
   bodies: 2048,
   joints: 256,
   fluids: 8,
   fluidInteractions: 4096,
+  checkpoints: CHECKPOINT_BUDGET.maxLiveCheckpoints,
 } as const;
 
 export const WATER_FLUID_CONFIG: PhysicsFluidInput3D = {
@@ -246,9 +262,10 @@ function bodyView(id: string, physics: PhysicsBodyMotion3D): YardPhysicsBody3D {
   };
 }
 
-export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): YardPhysicsWorldState {
+/** Builds the live world: the shell, the cage, the water, and `bodies`. */
+export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): OpenYardPhysicsWorld {
   const open: OpenYardPhysicsWorld = { world: makeWorld(), bodyIds: new Map() };
-  let disposed = false;
+  let built = false;
   try {
     addPhysicsBodies(open, [...shellBodies(), ...bodies]);
     // Conveyor belts. The surface velocity is part of the checkpoint (6.0.0-rc.13), so once is enough.
@@ -260,64 +277,46 @@ export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): YardPhys
     open.world.edit((edit) => {
       edit.createFluid(WATER_FLUID_CONFIG);
     });
-    disposed = true;
-    return closeWorld(open);
+    built = true;
+    return open;
   } finally {
-    if (!disposed) open.world.dispose();
+    if (!built) open.world.dispose();
   }
 }
 
-export function openWorld(state: YardPhysicsWorldState): OpenYardPhysicsWorld {
-  const world = makeWorld();
-  try {
-    world.restore(state.checkpoint);
-    return {
-      world,
-      bodyIds: new Map(state.bodyIds.map(([name, id]) => [name, BigInt(id) as PhysicsBodyId3D])),
-    };
-  } catch (error) {
-    world.dispose();
-    throw new Error(`WRECK_YARD_PHYSICS_RESTORE_FAILED: frame ${state.frame}`, { cause: error });
-  }
+/** After a restore: the body names must match the restored world. */
+export function setBodyNames(open: OpenYardPhysicsWorld, bodyIds: YardPhysicsWorldState['bodyIds']): void {
+  open.bodyIds.clear();
+  for (const [name, id] of bodyIds) open.bodyIds.set(name, BigInt(id) as PhysicsBodyId3D);
 }
 
-export function closeWorld(
+/** Reads the sim's view of the live world after a step or an edit. */
+export function readWorldState(
   open: OpenYardPhysicsWorld,
   fluidInteractions?: readonly PhysicsFluidInteraction3D[],
 ): YardPhysicsWorldState {
-  try {
-    const checkpoint = open.world.captureCheckpoint();
-    try {
-      const bytes = open.world.serializeCheckpoint(checkpoint);
-      const names = [...open.bodyIds.keys()].sort();
-      const bodies = names.map((name) => bodyView(name, open.world.readMotion(open.world.resolveBody(open.bodyIds.get(name)!))));
-      const interactions: YardFluidInteraction[] = [];
-      if (fluidInteractions) {
-        for (const item of fluidInteractions) {
-          const name = physicsBodyName(open, item.bodyId);
-          if (name && !isShell(name)) {
-            interactions.push({
-              bodyId: name,
-              submergedVolume: item.submergedVolume,
-              totalForce: { x: item.totalForce.x, y: item.totalForce.y, z: item.totalForce.z },
-              totalTorque: { x: item.totalTorque.x, y: item.totalTorque.y, z: item.totalTorque.z },
-            });
-          }
-        }
+  const names = [...open.bodyIds.keys()].sort();
+  const bodies = names.map((name) => bodyView(name, open.world.readMotion(open.world.resolveBody(open.bodyIds.get(name)!))));
+  const interactions: YardFluidInteraction[] = [];
+  if (fluidInteractions) {
+    for (const item of fluidInteractions) {
+      const name = physicsBodyName(open, item.bodyId);
+      if (name && !isShell(name)) {
+        interactions.push({
+          bodyId: name,
+          submergedVolume: item.submergedVolume,
+          totalForce: { x: item.totalForce.x, y: item.totalForce.y, z: item.totalForce.z },
+          totalTorque: { x: item.totalTorque.x, y: item.totalTorque.y, z: item.totalTorque.z },
+        });
       }
-      return {
-        frame: Number(open.world.info().frame),
-        bodies,
-        checkpoint: new Uint8Array(bytes),
-        bodyIds: names.map((name) => [name, open.bodyIds.get(name)!.toString()] as const),
-        fluidInteractions: interactions.length > 0 ? interactions : undefined,
-      };
-    } finally {
-      open.world.releaseCheckpoint(checkpoint);
     }
-  } finally {
-    open.world.dispose();
   }
+  return {
+    frame: Number(open.world.info().frame),
+    bodies,
+    bodyIds: names.map((name) => [name, open.bodyIds.get(name)!.toString()] as const),
+    fluidInteractions: interactions.length > 0 ? interactions : undefined,
+  };
 }
 
 export function physicsBodyById(open: OpenYardPhysicsWorld, id: string): YardPhysicsBody3D | undefined {
@@ -400,34 +399,26 @@ export function setPhysicsBodyAngularVelocity(open: OpenYardPhysicsWorld, id: st
 }
 
 export function replacePhysicsPose(
-  state: YardPhysicsWorldState,
+  open: OpenYardPhysicsWorld,
   id: string,
   pose: Partial<Pick<YardPhysicsBody3D, 'x' | 'y' | 'z' | 'vx' | 'vy' | 'vz'>>,
-): YardPhysicsWorldState {
-  const open = openWorld(state);
-  let disposed = false;
-  try {
-    const handle = physicsBodyHandle(open, id);
-    const body = open.world.readBody(handle);
-    open.world.edit((edit) => edit.replaceBody(handle, {
-      ...body,
-      position: {
-        x: pose.x ?? body.position.x,
-        y: pose.y ?? body.position.y,
-        z: pose.z ?? body.position.z,
-      },
-      linearVelocity: {
-        x: (pose.vx ?? body.linearVelocity.x / TICK_RATE) * TICK_RATE,
-        y: (pose.vy ?? body.linearVelocity.y / TICK_RATE) * TICK_RATE,
-        z: (pose.vz ?? body.linearVelocity.z / TICK_RATE) * TICK_RATE,
-      },
-      sleeping: false,
-    }));
-    disposed = true;
-    return closeWorld(open);
-  } finally {
-    if (!disposed) open.world.dispose();
-  }
+): void {
+  const handle = physicsBodyHandle(open, id);
+  const body = open.world.readBody(handle);
+  open.world.edit((edit) => edit.replaceBody(handle, {
+    ...body,
+    position: {
+      x: pose.x ?? body.position.x,
+      y: pose.y ?? body.position.y,
+      z: pose.z ?? body.position.z,
+    },
+    linearVelocity: {
+      x: (pose.vx ?? body.linearVelocity.x / TICK_RATE) * TICK_RATE,
+      y: (pose.vy ?? body.linearVelocity.y / TICK_RATE) * TICK_RATE,
+      z: (pose.vz ?? body.linearVelocity.z / TICK_RATE) * TICK_RATE,
+    },
+    sleeping: false,
+  }));
 }
 
 export function isShell(bodyId: string): boolean {

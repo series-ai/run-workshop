@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { addPhysicsBodies, closeWorld, makeWorld, openWorld, physicsBodyHandle, physicsStateBodyById, type OpenYardPhysicsWorld } from './physics';
+import { addPhysicsBodies, makeWorld, physicsBodyHandle, physicsStateBodyById, type OpenYardPhysicsWorld } from './physics';
 import { createInitialPlayer } from './state';
 import { movePlayer } from './movement';
 import { DT, FLOOR_Y } from './constants';
 import { NEUTRAL_INPUT } from './input';
-import { createInitialState } from './presets';
-import { stepYard } from './step';
+import { patchPlayer, testSim } from './testSim';
 
 describe('scene collision', () => {
   it('stops the player at a wall and permits travel along it', () => {
@@ -61,18 +60,19 @@ describe('standing on voxel bodies', () => {
   const s2 = Math.SQRT1_2;
   /** Drops the body (upright or tipped over), lands the player on it, then walks forward. */
   function walkOffBody(orientation: { x: number; y: number; z: number; w: number }): { moved: number; grounded: boolean } {
-    let state = createInitialState(1);
-    const open = openWorld(state.world);
-    const handle = physicsBodyHandle(open, 'steel-case');
-    const body = open.world.readBody(handle);
-    open.world.edit((edit) => edit.replaceBody(handle, { ...body, position: { x: 2, y: FLOOR_Y + 2, z: 14 }, orientation, sleeping: false }));
-    state = { ...state, world: closeWorld(open) };
-    for (let i = 0; i < 60; i += 1) state = stepYard(state, [NEUTRAL_INPUT]);
-    const crate = physicsStateBodyById(state.world, 'steel-case')!;
-    state = { ...state, players: [{ ...state.players[0]!, x: crate.x, y: crate.y + 2.5, z: crate.z, vx: 0, vy: 0, vz: 0, grounded: false }] };
-    for (let i = 0; i < 30; i += 1) state = stepYard(state, [NEUTRAL_INPUT]);
+    const sim = testSim(1);
+    sim.edit((physics) => {
+      const handle = physicsBodyHandle(physics, 'steel-case');
+      const body = physics.world.readBody(handle);
+      physics.world.edit((edit) => edit.replaceBody(handle, { ...body, position: { x: 2, y: FLOOR_Y + 2, z: 14 }, orientation, sleeping: false }));
+    });
+    for (let i = 0; i < 60; i += 1) sim.step([NEUTRAL_INPUT]);
+    const crate = physicsStateBodyById(sim.state.world, 'steel-case')!;
+    patchPlayer(sim, { x: crate.x, y: crate.y + 2.5, z: crate.z, vx: 0, vy: 0, vz: 0, grounded: false });
+    let state = sim.state;
+    for (let i = 0; i < 30; i += 1) state = sim.step([NEUTRAL_INPUT]);
     const landed = state.players[0]!;
-    for (let i = 0; i < 20; i += 1) state = stepYard(state, [{ ...NEUTRAL_INPUT, moveZ: 1 }]);
+    for (let i = 0; i < 20; i += 1) state = sim.step([{ ...NEUTRAL_INPUT, moveZ: 1 }]);
     const walked = state.players[0]!;
     return { moved: Math.hypot(walked.x - landed.x, walked.z - landed.z), grounded: landed.grounded };
   }

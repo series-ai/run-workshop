@@ -1,8 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { decodeState, decodeVoxelRuns, encodeState, encodeVoxelRuns } from './codec';
+import { decodeState, decodeVoxelRuns, encodeVoxelRuns } from './codec';
 import { NEUTRAL_INPUT, TOOL, quantizeRay } from './input';
-import { createInitialState } from './presets';
-import { stepYard } from './step';
+import { YardSim } from './sim';
+import { patchPlayer, testSim } from './testSim';
+
+/** The bytes of the sim's current state and world. */
+function encodeLive(sim: YardSim): Uint8Array {
+  const save = sim.save();
+  try {
+    return sim.encode(save);
+  } finally {
+    sim.release(save);
+  }
+}
 
 describe('voxel runs', () => {
   it('round trips empty, uniform, mixed, and long runs', () => {
@@ -25,46 +35,57 @@ describe('voxel runs', () => {
 
 describe('state codec', () => {
   it('keeps the full yard state small enough to checksum every tick and send to late joiners', () => {
-    expect(encodeState(createInitialState(4)).byteLength).toBeLessThan(400_000);
+    const sim = testSim(4);
+    const save = sim.save();
+    expect(sim.encode(save).byteLength).toBeLessThan(400_000);
+    sim.release(save);
   });
 
   it('round trips the initial state byte for byte', () => {
-    const state = createInitialState(2);
-    const bytes = encodeState(state);
-    const decoded = decodeState(bytes);
-    expect(decoded.frame).toBe(0);
-    expect(decoded.bodies.map((b) => b.id)).toEqual(state.bodies.map((b) => b.id));
-    expect(decoded.bodies[0]!.voxels).toBeInstanceOf(Uint8Array);
-    expect(encodeState(decoded)).toEqual(bytes);
+    const sim = testSim(2);
+    const save = sim.save();
+    const state = save.state;
+    const bytes = sim.encode(save);
+    const decoded = YardSim.decode(bytes);
+    expect(decoded.state.frame).toBe(0);
+    expect(decoded.state.bodies.map((b) => b.id)).toEqual(state.bodies.map((b) => b.id));
+    expect(decoded.state.bodies[0]!.voxels).toBeInstanceOf(Uint8Array);
+    expect(sim.encode(decoded)).toEqual(bytes);
+    sim.release(save);
   });
 
   it('round trips a state after cuts and grabs', () => {
-    let state = createInitialState(2);
+    const sim = testSim(2);
     const torch = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...quantizeRay([2.4, 4, 0.551], [0, -1, 0]) };
-    for (let i = 0; i < 12; i += 1) state = stepYard(state, [torch, NEUTRAL_INPUT]);
-    const bytes = encodeState(state);
-    expect(encodeState(decodeState(bytes))).toEqual(bytes);
-    expect(decodeState(bytes).players[0]!.torch?.bodyId).toBe(state.players[0]!.torch?.bodyId);
+    for (let i = 0; i < 12; i += 1) sim.step([torch, NEUTRAL_INPUT]);
+    const save = sim.save();
+    const bytes = sim.encode(save);
+    expect(sim.encode(YardSim.decode(bytes))).toEqual(bytes);
+    expect(YardSim.decode(bytes).state.players[0]!.torch?.bodyId).toBe(sim.state.players[0]!.torch?.bodyId);
+    sim.release(save);
   });
 
   it('replays 120 driving ticks after checkpoint restore with identical wheel and physics state', () => {
-    let state = createInitialState(1);
-    for (let i = 0; i < 20; i++) state = stepYard(state, [NEUTRAL_INPUT]);
-    const car = state.world.bodies.find((b) => b.id === 'vehicle-chassis')!;
-    state = { ...state, players: [{ ...state.players[0]!, x: car.x + 1.2, y: car.y + .5, z: car.z }] };
-    state = stepYard(state, [{ ...NEUTRAL_INPUT, secondary: true }]);
-    expect(state.players[0]!.ridingVehicle).toBe(true);
-    for (let i = 0; i < 15; i++) state = stepYard(state, [{ ...NEUTRAL_INPUT, moveZ: 1 }]);
-    const checkpoint = encodeState(state);
-    let restored = decodeState(checkpoint);
-    expect(restored.buggyWheels).toEqual(state.buggyWheels);
+    const sim = testSim(1);
+    for (let i = 0; i < 20; i++) sim.step([NEUTRAL_INPUT]);
+    const car = sim.state.world.bodies.find((b) => b.id === 'vehicle-chassis')!;
+    patchPlayer(sim, { x: car.x + 1.2, y: car.y + .5, z: car.z });
+    sim.step([{ ...NEUTRAL_INPUT, secondary: true }]);
+    expect(sim.state.players[0]!.ridingVehicle).toBe(true);
+    for (let i = 0; i < 15; i++) sim.step([{ ...NEUTRAL_INPUT, moveZ: 1 }]);
+    const save = sim.save();
+    const checkpoint = sim.encode(save);
+    sim.release(save);
+    const restored = testSim(1);
+    restored.restore(YardSim.decode(checkpoint));
+    expect(restored.state.buggyWheels).toEqual(sim.state.buggyWheels);
     for (let i = 0; i < 120; i++) {
       const input = { ...NEUTRAL_INPUT, moveZ: i < 90 ? 1 : 0, moveX: i > 65 && i < 85 ? .2 : 0 };
-      state = stepYard(state, [input]);
-      restored = stepYard(restored, [input]);
+      sim.step([input]);
+      restored.step([input]);
     }
-    expect(state.buggyWheels?.some((w) => Math.abs(w.spinTurns) > 1)).toBe(true);
-    expect(encodeState(restored)).toEqual(encodeState(state));
+    expect(sim.state.buggyWheels?.some((w) => Math.abs(w.spinTurns) > 1)).toBe(true);
+    expect(encodeLive(restored)).toEqual(encodeLive(sim));
   });
 
   it('rejects bytes with a bad magic header', () => {

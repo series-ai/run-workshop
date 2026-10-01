@@ -1,7 +1,8 @@
+import { isDeterministicMathInstalled } from '@series-inc/rundot-syncplay/core/deterministic-math';
 import { makeEmptyVoxelField, stampBox, stampSphere, type VoxelDims } from 'voxel-kit';
 import { FLOOR_Y, getTerrainHeightAt, TANK, VOXEL_SIZE } from './constants';
 import { IDENTITY_QUAT, type Quat, type Vec3 } from './math';
-import { createWorld, makePhysicsBody } from './physics';
+import { createWorld, makePhysicsBody, readWorldState, type OpenYardPhysicsWorld } from './physics';
 import { DECK_HEIGHT, yardProps } from './props';
 import { createInitialPlayer, INITIAL_CONTRAPTIONS, type AnchorFace, type BodyMotion, type YardBody, type YardState } from './state';
 
@@ -368,17 +369,18 @@ export function createSpawns(): Spawn[] {
   ];
 }
 
-export function createInitialState(playerCount: number): YardState {
+/** The live world and the state at frame 0. The caller owns the world (see sim.ts). */
+export function createInitialYard(playerCount: number): { readonly physics: OpenYardPhysicsWorld; readonly state: YardState } {
   if (!Number.isInteger(playerCount) || playerCount < 1) {
     throw new Error(`WRECK_YARD_PLAYER_COUNT_INVALID: ${playerCount}`);
   }
   // Spawn poses and set pieces use Math.sin/cos/atan2/hypot. Peers agree on them
   // only when the Syncplay shim replaced them (src/deterministicMath.ts).
-  if ((globalThis as { __deterministicMathInstalled?: boolean }).__deterministicMathInstalled !== true) {
+  if (!isDeterministicMathInstalled()) {
     throw new Error('WRECK_YARD_DETERMINISTIC_MATH_MISSING: import src/deterministicMath.ts before any sim module');
   }
   const spawns = createSpawns();
-  const world = createWorld(
+  const physics = createWorld(
     spawns.map((entry) =>
       makePhysicsBody(entry.body, {
         position: entry.position,
@@ -389,12 +391,15 @@ export function createInitialState(playerCount: number): YardState {
     ),
   );
   return {
-    frame: 0,
-    bodies: spawns.map((entry) => entry.body),
-    world,
-    players: Array.from({ length: playerCount }, (_, slot) => createInitialPlayer(slot)),
-    stats: { torchCuts: 0, throws: 0, fractures: 0, dunks: 0 },
-    contraptions: INITIAL_CONTRAPTIONS,
-    nextSerial: 0,
+    physics,
+    state: {
+      frame: 0,
+      bodies: spawns.map((entry) => entry.body),
+      world: readWorldState(physics),
+      players: Array.from({ length: playerCount }, (_, slot) => createInitialPlayer(slot)),
+      stats: { torchCuts: 0, throws: 0, fractures: 0, dunks: 0 },
+      contraptions: INITIAL_CONTRAPTIONS,
+      nextSerial: 0,
+    },
   };
 }
