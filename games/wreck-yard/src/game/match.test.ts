@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { NEUTRAL_INPUT, TOOL } from '../sim/input';
+import { YardSim } from '../sim/sim';
 import { MatchController, type MatchDeps } from './match';
 
 function deps(overrides: Partial<MatchDeps> = {}): MatchDeps {
@@ -32,6 +33,24 @@ describe('MatchController', () => {
       for (let i = 0; i <= 20; i++) controller.pump(i * 50);
       expect(controller.snapshot().render?.frame ?? 0).toBeGreaterThanOrEqual(28);
     } finally { controller.stop(); }
+  });
+
+  it('shows a failed step as an error status, and rethrows it', async () => {
+    const controller = new MatchController(deps());
+    await controller.start({ kind: 'solo' });
+    const step = vi.spyOn(YardSim.prototype, 'step').mockImplementation(() => {
+      throw new Error('WRECK_YARD_TEST_STEP_FAILED');
+    });
+    try {
+      expect(() => {
+        for (let i = 0; i <= 3; i += 1) controller.pump(i * 34);
+      }).toThrow();
+      expect(controller.snapshot().status).toBe('error');
+      expect(controller.snapshot().error).toContain('WRECK_YARD_TEST_STEP_FAILED');
+    } finally {
+      step.mockRestore();
+      controller.stop();
+    }
   });
 
   it('surfaces a rejected transport as an error with the message', async () => {

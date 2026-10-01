@@ -10,6 +10,7 @@ import {
   NEUTRAL_INPUT,
   type YardInput,
 } from "../sim/input";
+import { TICK_RATE } from "../sim/constants";
 import { createYardRuntime, yardRoomOptions } from "../sim/session";
 import type { YardState } from "../sim/state";
 import {
@@ -17,6 +18,9 @@ import {
   projectYard,
   type YardRender,
 } from "../render/presentation";
+
+/** Networked peers compare state checksums once a second. */
+const NETWORK_CHECKSUM_INTERVAL = TICK_RATE;
 
 export type MatchRequest =
   | { readonly kind: "solo" }
@@ -244,9 +248,6 @@ export class MatchController {
           sessionConfigBytes: room.sessionConfigBytes,
           playerCount: 1,
           localSlot: 0,
-          // Solo play has no peer to compare checksums with. Hashing the full
-          // state every tick cost ~1.45 ms/tick (Syncplay defaults to per-tick).
-          checksumMode: "events-only",
         });
         if (this.startGeneration !== generation) return;
         this.status = "live";
@@ -265,6 +266,10 @@ export class MatchController {
       await this.runner.start({
         mode: "networked",
         connect: async () => transport,
+        // A checksum encodes the full state (~1.7 ms) and hashes ~400 KB. Once a
+        // second still finds a desync; Syncplay's networked default is every tick.
+        checksumMode: "interval",
+        checksumIntervalFrames: NETWORK_CHECKSUM_INTERVAL,
       });
       if (this.startGeneration !== generation) return;
     } catch (cause) {
@@ -290,18 +295,9 @@ export class MatchController {
     const deltaMs =
       this.lastPumpMs === null ? 0 : Math.max(0, nowMs - this.lastPumpMs);
     this.lastPumpMs = nowMs;
-    try {
-      this.runner.update(deltaMs);
-    } catch (caught) {
-      // A throwing step halts the runner. Syncplay 6.0.0-rc.15 sets its status to
-      // "error" without notifying subscribers, so show the failure here, then rethrow.
-      const failure = caught instanceof Error ? caught : new Error(String(caught));
-      this.status = "error";
-      this.error = failure.message;
-      this.errorDetails = formatMatchError(failure, { roomCode: this.roomCode }).details;
-      this.publish();
-      throw failure;
-    }
+    // A throwing step halts the runner, which publishes its "error" status
+    // to the subscriber above, then rethrows here.
+    this.runner.update(deltaMs);
     return (this.render?.frame ?? -1) > before;
   }
 
