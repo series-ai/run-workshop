@@ -402,7 +402,11 @@ export class InklineRenderer {
         if (mode === 'combat') for (const [x, z] of [[0, 5], [-2, 2], [1.5, -1], [-1.5, -5]]) {
           const actor = await this.addActor('stick-fighter', new THREE.Vector3(x, 0, z), generation, 'block')
           if (generation !== this.generation || this.disposed) return
-          if (actor) { applyAvatar(actor.root, { ...this.settings.avatar, color: '#bd4c34', headwear: 'none', equipment: null }); actor.root.rotation.y = Math.PI }
+          if (actor) {
+            applyAvatar(actor.root, { ...this.settings.avatar, color: '#bd4c34', headwear: 'none', equipment: null })
+            actor.root.rotation.y = 0
+            actor.spawnRotation = actor.root.quaternion.clone()
+          }
         }
         if (mode === 'parkour' && generation === this.generation && !this.disposed) this.createCheckpoints()
       } else if (mode !== 'effects') await this.addActor(this.settings.avatar.preset, new THREE.Vector3(), generation)
