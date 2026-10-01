@@ -58,9 +58,10 @@ export function resolveVisibleParts(base: ModularBase, index: PartIndex): Avatar
 
   const hidden = new Set<AvatarSlot>()
   if (species.rules.builtInFace) hidden.add('face')
-  if (species.rules.hidesEyebrows) hidden.add('eyebrow')
+  // Hide rules of the species count like those of any other part. Tucked hair
+  // replaces chosen hair only, as in Pirate Nation (getEffectiveHairForHeadwear).
   let hairOverride: AvatarPartRef | undefined
-  for (const part of chosen) {
+  for (const part of [species, ...chosen]) {
     if (part.rules.hidesHair) hidden.add('hair')
     if (part.rules.hidesEyebrows) hidden.add('eyebrow')
     if (part.rules.hidesFacialHair) hidden.add('facialhair')

@@ -21,6 +21,8 @@ function catalogs(): PackCatalog[] {
       part('pirate', 'species', 1),
       part('pirate', 'species', 7, rules({ fullBody: true })),
       part('pirate', 'species', 5, rules({ builtInFace: true })),
+      part('pirate', 'species', 9, rules({ hidesHair: true, hidesFacialHair: true })),
+      part('pirate', 'facialhair', 1),
       part('pirate', 'face', 1),
       part('pirate', 'hair', 1),
       part('pirate', 'hair', 4),
@@ -46,6 +48,14 @@ describe('resolveVisibleParts', () => {
     expect(names(base({ hair, headwear: { pack: 'pirate', slot: 'headwear', index: 4 } }))).toContain('hair 4')
     expect(names(base({ hair, face: { pack: 'pirate', slot: 'face', index: 1 }, back: { pack: 'pirate', slot: 'back', index: 1 } }, 7))).toEqual(['species 7', 'back 1'])
     expect(names(base({ face: { pack: 'pirate', slot: 'face', index: 1 } }, 5))).toEqual(['species 5'])
+  })
+  it('applies every hide rule of the species, as of any other part', () => {
+    const facialhair = { pack: 'pirate', slot: 'facialhair', index: 1 } as const
+    expect(names(base({ hair, facialhair }))).toEqual(['species 1', 'hair 1', 'facialhair 1'])
+    expect(names(base({ hair, facialhair }, 9))).toEqual(['species 9'])
+  })
+  it('swaps in tucked hair only when hair is chosen, as Pirate Nation does', () => {
+    expect(names(base({ headwear: { pack: 'pirate', slot: 'headwear', index: 4 } }))).toEqual(['species 1', 'headwear 4'])
   })
   it('throws on an unknown part', () => {
     expect(() => names(base({ ears: { pack: 'fantasy', slot: 'ears', index: 9 } }))).toThrow(/no avatar part ears 9 in pack fantasy/)

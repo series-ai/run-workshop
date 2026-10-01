@@ -9,7 +9,7 @@
 import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, type Ref } from 'react'
-import { AnimationMixer, LoopOnce, LoopRepeat, type AnimationAction, type Group, type Mesh, type MeshStandardMaterial } from 'three'
+import { AnimationMixer, LoopOnce, LoopRepeat, type AnimationAction, type Group, type Mesh } from 'three'
 import { ONE_SHOT_CLIPS } from '@rvx/contracts/clips'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import type { VoxelModelEntry } from '@rvx/contracts/catalog'
@@ -26,7 +26,6 @@ export interface PackModelProps extends ModelTransformOptions {
   name?: string
   /** Clip to loop; `undefined` = the entry's `idle` or first clip; `null` = rest pose. */
   clip?: string | null
-  wireframe?: boolean
   castShadow?: boolean
   rotationY?: number
   groupRef?: Ref<Group>
@@ -36,7 +35,7 @@ export interface PackModelProps extends ModelTransformOptions {
   pfxOnly?: string
 }
 
-function LoadedPackModel({ url, entry, name, clip, wireframe = false, castShadow = true, rotationY = 0, groupRef, pfx = false, pfxOnly, ...transform }: PackModelProps & { url: string }) {
+function LoadedPackModel({ url, entry, name, clip, castShadow = true, rotationY = 0, groupRef, pfx = false, pfxOnly, ...transform }: PackModelProps & { url: string }) {
   const gltf = useGLTF(url)
   const model = useMemo(() => {
     assertModelContract(gltf.scene, gltf.animations, entry)
@@ -100,10 +99,8 @@ function LoadedPackModel({ url, entry, name, clip, wireframe = false, castShadow
       if (mesh.isMesh !== true) return
       mesh.castShadow = castShadow
       mesh.receiveShadow = castShadow
-      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-      for (const material of materials) (material as MeshStandardMaterial).wireframe = wireframe
     })
-  }, [model, wireframe, castShadow])
+  }, [model, castShadow])
 
   return (
     <group ref={groupRef} name={name} position={placement.position} rotation={[0, rotationY, 0]} scale={placement.scale} dispose={null}>
