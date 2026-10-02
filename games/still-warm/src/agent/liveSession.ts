@@ -47,8 +47,7 @@ import {
 import {
   createTextGenTransport,
   createTextGenJudgeTransport,
-} from "@series-inc/rundot-agent/venus";
-import { actionSchema, type GameAction, type VocalCue } from "../game/model";
+} from "@series-inc/rundot-agent/venus";import { actionSchema, type GameAction, type VocalCue } from "../game/model";
 import { GameStore } from "../game/store";
 import { isLiftReady, observeRoom, observeStatus } from "../game/transitions";
 import { evaluateLiftGate, isDistressUtterance } from "./turnGuards";
@@ -65,6 +64,7 @@ import { createInitialTempo, updateTempo, type TempoTracker } from "../game/temp
 import { formatSensoryNarration } from "./sensoryNarration";
 import { isStandAttempt, isRollAttempt } from "../game/waitingThoughts";
 import { createCreatureTriage } from "./creatureTriage";
+import { createNormalizingJudgeTransport } from "./judgeTransport";
 
 export interface LiveHooks {
   onVocalize(cue: VocalCue): void;
@@ -268,13 +268,17 @@ export async function createLiveSession(
   const baseTransport = createTextGenTransport(run.textGen, {
     mode: "open",
     modelClass: "quick",
-    reasoningEffort: "none",
+    // Do not set reasoningEffort: "none". The quick-tier completion endpoint
+    // rejects it with 400 "Reasoning is mandatory for this endpoint and cannot
+    // be disabled" (STREAM_FAILED), killing every escalated chat turn.
   });
   const modelTransport = createFastTurnTransport(
     baseTransport,
     () => respondedThisTurn,
   );
-  const judgeTransport = createTextGenJudgeTransport(run.textGen);
+  const judgeTransport = createNormalizingJudgeTransport(
+    createTextGenJudgeTransport(run.textGen),
+  );
   const triage = createCreatureTriage(tools, {
     store,
     getTempo: () => tempo,
