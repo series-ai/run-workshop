@@ -245,7 +245,7 @@ function validateActionInternal(
         (state.phase === "blackout" || state.patient.blackoutRemaining > 0)
       ) {
         return problem(
-          "Patient is unconscious and wait-in-blackout rule is active.",
+          "I am unconscious and wait-in-blackout rule is active.",
           null,
         );
       }
@@ -299,7 +299,7 @@ function validateActionInternal(
         (state.phase === "blackout" || state.patient.blackoutRemaining > 0)
       ) {
         return problem(
-          "Patient is unconscious and wait-in-blackout rule is active.",
+          "I am unconscious and wait-in-blackout rule is active.",
           null,
         );
       }
@@ -628,7 +628,7 @@ function validateActionInternal(
           (state.phase === "blackout" || state.patient.blackoutRemaining > 0)
         ) {
           return problem(
-            "Patient is unconscious and wait-in-blackout rule is active.",
+            "I am unconscious and wait-in-blackout rule is active.",
             null,
           );
         }
@@ -848,7 +848,7 @@ function validateActionInternal(
           !sameContactAction(state.declaredContact, action as ContactAction))
       ) {
         return problem(
-          "Patient contact requires an exact signal before proceeding.",
+          "Contact with me requires an exact signal before proceeding.",
           "Wait. I need to know what he is going to do.",
         );
       }
@@ -911,7 +911,7 @@ export function applyAction(
       };
       next.emotion = deriveEmotion(next.disposition);
       const msg =
-        "Lifted the cabinet off his back. He is still face down and cannot move.";
+        "Lifted the cabinet off my back. I am still face down and cannot move.";
       next = appendJournal(next, "action", msg);
       return {
         ok: true,
@@ -924,7 +924,7 @@ export function applyAction(
       next.declaredContact = null;
       next.contactCount += 1;
       const msg =
-        "Rolled him onto his back. The crush wound is reachable. He still cannot move.";
+        "Rolled me onto my back. The crush wound is reachable. I still cannot move.";
       next = appendJournal(next, "action", msg);
       return {
         ok: true,
@@ -1081,7 +1081,7 @@ export function applyAction(
     case "react": {
       next.disposition = applyStimulus(next.disposition, action.stimulus);
       next.emotion = deriveEmotion(next.disposition);
-      const msg = `Assistant absorbed stimulus (${action.stimulus}): now feeling ${next.emotion}.`;
+      const msg = `Boy absorbed stimulus (${action.stimulus}): now feeling ${next.emotion}.`;
       next = appendJournal(next, "creature", msg);
       return {
         ok: true,
@@ -1423,7 +1423,7 @@ export function applyAction(
             next.outcome = "creature_lost";
             next.pending = null;
             const failMsg =
-              "The assistant turned the sharp tool upon itself and collapsed. Operation failed.";
+              "He turned the sharp tool upon himself and collapsed. Operation failed.";
             next = appendJournal(next, "system", failMsg);
             return {
               ok: true,
@@ -1431,7 +1431,7 @@ export function applyAction(
               message: failMsg,
             };
           }
-          const cutMsg = `The assistant suffered an injury from the sharp ${CATALOG[action.item].name.toLowerCase()}. Creature health is ${next.creatureHealth}%.`;
+          const cutMsg = `He suffered an injury from the sharp ${CATALOG[action.item].name.toLowerCase()}. Boy's health is ${next.creatureHealth}%.`;
           next = appendJournal(next, "action", cutMsg);
           return {
             ok: true,
@@ -1447,7 +1447,7 @@ export function applyAction(
           };
           next.emotion = deriveEmotion(next.disposition);
           const msg =
-            "Administered a calming drop of morphine to the assistant, soothing its trembling.";
+            "Administered a calming drop of morphine to him, soothing his trembling.";
           next = appendJournal(next, "action", msg);
           return {
             ok: true,
@@ -1461,7 +1461,7 @@ export function applyAction(
             agitation: Math.max(0, next.disposition.agitation - 10),
           };
           next.emotion = deriveEmotion(next.disposition);
-          const msg = "Offer cool water to the assistant, calming its nerves.";
+          const msg = "Offered cool water to him, calming his nerves.";
           next = appendJournal(next, "action", msg);
           return {
             ok: true,
@@ -1475,7 +1475,7 @@ export function applyAction(
             agitation: Math.max(0, next.disposition.agitation - 15),
           };
           next.emotion = deriveEmotion(next.disposition);
-          const msg = `Held the ${CATALOG[action.item].name.toLowerCase()} briefly against the shivering assistant.`;
+          const msg = `Held the ${CATALOG[action.item].name.toLowerCase()} briefly against him to soothe his shivering.`;
           next = appendJournal(next, "action", msg);
           return {
             ok: true,
@@ -1489,7 +1489,7 @@ export function applyAction(
             trust: Math.min(100, next.disposition.trust + 8),
           };
           next.emotion = deriveEmotion(next.disposition);
-          const msg = `Interacted gently with the assistant using ${CATALOG[action.item].name.toLowerCase()}.`;
+          const msg = `Interacted gently with him using ${CATALOG[action.item].name.toLowerCase()}.`;
           next = appendJournal(next, "action", msg);
           return {
             ok: true,
@@ -1581,7 +1581,7 @@ export function applyAction(
             next.restrained = false;
             next.pending = null;
             const winMsg =
-              "Leg brace catch released. The patient is stable, dressed, and saved. Victory!";
+              "Leg brace catch released. I am stable, dressed, and saved. Victory!";
             next = appendJournal(next, "system", winMsg);
             return {
               ok: true,
@@ -1626,7 +1626,7 @@ export function applyAction(
             pain: Math.max(0, next.patient.pain - 4),
           };
           const verb = action.item === "cloth" ? "Pressed" : "Held";
-          const msg = `${verb} the ${CATALOG[action.item].name.toLowerCase()} briefly against the patient for warmth and comfort.`;
+          const msg = `${verb} the ${CATALOG[action.item].name.toLowerCase()} briefly against me for warmth and comfort.`;
           next = appendJournal(next, "action", msg);
           return {
             ok: true,
@@ -1641,7 +1641,7 @@ export function applyAction(
             pain: Math.max(0, next.patient.pain - 3),
           };
           const msg =
-            "Gently wiped patient brow with cool water from the bowl.";
+            "Gently wiped my brow with cool water from the bowl.";
           next = appendJournal(next, "action", msg);
           return {
             ok: true,
@@ -1775,7 +1775,7 @@ export function applyAction(
             };
             next.emotion = deriveEmotion(next.disposition);
             checkPainBlackoutAndDeath(next);
-            const msg = `Gently blotted the ${next.stage} wound with clean ${CATALOG[action.item].name.toLowerCase()} to absorb bleeding and comfort the patient.`;
+            const msg = `Gently blotted the ${next.stage} wound with clean ${CATALOG[action.item].name.toLowerCase()} to absorb bleeding and comfort me.`;
             next = appendJournal(next, "action", msg);
             return {
               ok: true,
@@ -2140,7 +2140,7 @@ export function tickPatient(state: GameState, dt: number): GameState {
     next.phase = "lost";
     next.outcome = "blood_loss";
     next.pending = null;
-    next = appendJournal(next, "system", "The patient has expired.");
+    next = appendJournal(next, "system", "My breath stops. My life has slipped away in the dark.");
     return next;
   }
 
@@ -2244,7 +2244,7 @@ export function tickPatient(state: GameState, dt: number): GameState {
       next = appendJournal(
         next,
         "system",
-        "Smoke and heat overwhelmed the patient before the fire was stopped.",
+        "Smoke and heat overwhelmed me before the fire was stopped.",
       );
       return next;
     }
@@ -2271,9 +2271,9 @@ export function observeStatus(state: GameState) {
 
   const patientCondition =
     state.stage === "pinned"
-      ? "A heavy cabinet is on his back after the laboratory collapse."
+      ? "A heavy cabinet is on my back after the laboratory collapse."
       : state.posture === "prone"
-        ? "The cabinet is off. He is still face down, but can see the cold floor now."
+        ? "The cabinet is off. I am still face down, but can see the cold floor now."
         : state.restrained
           ? "Unable to stand after the crush injury. The damaged leg brace is still caught."
           : "Stable and able to move.";
@@ -2312,7 +2312,7 @@ export function observeStatus(state: GameState) {
     rules: state.rules,
     notes: state.notes,
     items,
-    summary: `Phase: ${state.phase}. Stage: ${state.stage}. Posture: ${state.posture}. ${patientCondition} Holding: ${state.holding ?? "none"}. Lamp: ${state.lamp}. Assistant: ${state.emotion}. Patient: ${Math.round(state.patient.health)}% hp, ${Math.round(state.patient.blood)}% bl, ${Math.round(state.patient.pain)}% pn.`,
+    summary: `Phase: ${state.phase}. Stage: ${state.stage}. Posture: ${state.posture}. ${patientCondition} Holding: ${state.holding ?? "none"}. Lamp: ${state.lamp}. Boy: ${state.emotion}. Patient: ${Math.round(state.patient.health)}% hp, ${Math.round(state.patient.blood)}% bl, ${Math.round(state.patient.pain)}% pn.`,
   };
 }
 

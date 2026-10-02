@@ -1,5 +1,55 @@
 import { z } from "zod";
 
+export function sanitizeNarrativeVoice(text: string): string {
+  return text
+    .replace(/\bthe creature's\b/gi, "my boy's")
+    .replace(/\bthe assistant's\b/gi, "my boy's")
+    .replace(/\bthe monster's\b/gi, "my boy's")
+    .replace(/\bthe beast's\b/gi, "my boy's")
+    .replace(/\bThe creature\b/g, "My boy")
+    .replace(/\bThe assistant\b/g, "My boy")
+    .replace(/\bThe monster\b/g, "My boy")
+    .replace(/\bThe beast\b/g, "My boy")
+    .replace(/\bthe creature\b/g, "my boy")
+    .replace(/\bthe assistant\b/g, "my boy")
+    .replace(/\bthe monster\b/g, "my boy")
+    .replace(/\bthe beast\b/g, "my boy")
+    .replace(/\bsoothing its\b/gi, "soothing his")
+    .replace(/\bcalming its\b/gi, "calming his")
+    .replace(/\bupon itself\b/gi, "upon himself")
+    .replace(/\b(The|the) cabinet (still )?pins him fast\b/g, (_m, t, s) => `${t} cabinet ${s ?? ""}pins me fast`)
+    .replace(/\b(The|the) cabinet (still )?pins him\b/g, (_m, t, s) => `${t} cabinet ${s ?? ""}pins me`)
+    .replace(/\b(The|the) crushing cabinet holds him flat\b/g, (_m, t) => `${t} crushing cabinet holds me flat`)
+    .replace(/\b(Pins|pins) him fast\b/g, (_m, p) => `${p === "Pins" ? "Pins" : "pins"} me fast`)
+    .replace(/\b(Pins|pins) him\b/g, (_m, p) => `${p === "Pins" ? "Pins" : "pins"} me`)
+    .replace(/\b(Holds|holds) him flat\b/g, (_m, h) => `${h === "Holds" ? "Holds" : "holds"} me flat`)
+    .replace(/\b(Holds|holds) him fast\b/g, (_m, h) => `${h === "Holds" ? "Holds" : "holds"} me fast`)
+    .replace(/\boff his back\b/gi, "off my back")
+    .replace(/\bonto his back\b/gi, "onto my back")
+    .replace(/\bon his back\b/gi, "on my back")
+    .replace(/\b(He|he) is still face down\b/g, "I am still face down")
+    .replace(/\bkeeps him still\b/gi, "keeps me still")
+    .replace(/\bkeep him still\b/gi, "keep me still")
+    .replace(/\bheld him still\b/gi, "held me still")
+    .replace(/\b(The|the) patient's\b/g, (_m, t) => (t === "The" ? "My" : "my"))
+    .replace(/\b(comfort|against|beside|over|soothe|soothing|injures|reach|save|calm|calming)\s+the patient\b/gi, "$1 me")
+    .replace(/\b(The|the) patient (is|cannot|can't|can|wants|needs|strains)\b/g, (_m, _t, v) => {
+      const verb = v === "is" ? "am" : v === "wants" ? "want" : v === "needs" ? "need" : v === "strains" ? "strain" : v;
+      return `I ${verb}`;
+    })
+    .replace(/\b(He|he) (cannot|can't) (stand|rise|move|turn|walk|get up)\b/g, "I $2 $3")
+    .replace(/\b(He|he) is (pinned|trapped|held flat|face down)\b/g, "I am $2")
+    .replace(/\b(He|he) is already on his back\b/g, "I am already on my back")
+    .replace(/\b(He|he) is on his back\b/g, "I am on my back")
+    .replace(/\b(traps|trapped|crushes|crushing)\s+him\b/gi, (_m, v) => `${v.toLowerCase()} me`)
+    .replace(/\bacross his spine\b/gi, "across my spine")
+    .replace(/\bin his spine\b/gi, "in my spine")
+    .replace(/\bthrough his spine\b/gi, "through my spine")
+    .replace(/\b(his|His) spine\b/g, (_m, h) => (h === "His" ? "My spine" : "my spine"))
+    .replace(/\b(his|His) broken ribs\b/g, (_m, h) => (h === "His" ? "My broken ribs" : "my broken ribs"))
+    .replace(/\b(his|His) (torn|wounded|exposed) flank\b/g, (_m, h, w) => `${h === "His" ? "My" : "my"} ${w} flank`);
+}
+
 const responseTextSchema = z
   .string()
   .trim()
@@ -75,6 +125,6 @@ export class ResponseEvidence {
 
     this.usedIds.add(input.evidenceId);
     this.interpretations += 1;
-    return { ok: true, text: input.text };
+    return { ok: true, text: sanitizeNarrativeVoice(input.text) };
   }
 }

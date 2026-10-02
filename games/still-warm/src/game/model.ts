@@ -249,7 +249,7 @@ export const RULES: Record<RuleId, { label: string; instruction: string }> = {
   announce: {
     label: "Signal before contact",
     instruction:
-      "Signal the exact tool, target, and movement before each patient contact.",
+      "Signal the exact tool, target, and movement before each contact with me.",
   },
   noSharp: {
     label: "No sharp tools",
@@ -258,12 +258,12 @@ export const RULES: Record<RuleId, { label: string; instruction: string }> = {
   noMedicine: { label: "No medication", instruction: "Do not use morphine." },
   gentle: {
     label: "Gentle hands",
-    instruction: "Use gentle movements for every patient contact.",
+    instruction: "Use gentle movements for every contact with me.",
   },
   waitBlackout: {
     label: "Wait if I pass out",
     instruction:
-      "Do not start or complete patient contact while I am unconscious.",
+      "Do not start or complete contact with me while I am unconscious.",
   },
 };
 
@@ -516,9 +516,9 @@ export function actionLabel(action: PhysicalAction): string {
     case "move_to":
       return `Walking to the ${action.target}`;
     case "lift_debris":
-      return `${action.style === "rough" ? "Dragging" : "Carefully lifting"} the cabinet off his back`;
+      return `${action.style === "rough" ? "Dragging" : "Carefully lifting"} the cabinet off my back`;
     case "roll_patient":
-      return `${action.style === "rough" ? "Roughly rolling" : "Carefully rolling"} him onto his back`;
+      return `${action.style === "rough" ? "Roughly rolling" : "Carefully rolling"} me onto my back`;
     case "pick_up":
       return `Reaching for ${CATALOG[action.item].name.toLowerCase()}`;
     case "place":
@@ -526,7 +526,7 @@ export function actionLabel(action: PhysicalAction): string {
     case "use":
       return `${action.style === "rough" ? "Pressing" : "Using"} ${CATALOG[action.item].name.toLowerCase()} on ${action.target}`;
     case "adjust_lamp":
-      return `Turning the lamp ${action.position === "away" ? "away" : `toward his ${action.position}`}`;
+      return `Turning the lamp ${action.position === "away" ? "away" : `toward my ${action.position}`}`;
     case "combine":
       return `Combining ${CATALOG[action.first].name.toLowerCase()} and ${CATALOG[action.second].name.toLowerCase()}`;
     case "break":

@@ -163,13 +163,13 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: "cloth",
     target: "patient",
-    description: "Press linen cloth briefly against patient for comfort",
+    description: "Press linen cloth briefly against me for comfort",
   },
   { item: "cloth", target: "fire", description: "Smother encroaching flames" },
   {
     item: "cloth",
     target: "creature",
-    description: "Wipe and comfort assistant to build trust",
+    description: "Wipe and comfort the boy to build trust",
   },
   {
     item: "cloth",
@@ -208,12 +208,12 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: "morphine",
     target: "patient",
-    description: "Administer pain sedative to patient",
+    description: "Administer pain sedative to me",
   },
   {
     item: "morphine",
     target: "creature",
-    description: "Administer dose to calm assistant agitation",
+    description: "Administer dose to calm the boy's agitation",
   },
   {
     item: "morphine",
@@ -277,7 +277,7 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: "mirror",
     target: "creature",
-    description: "Show reflection to assistant to ground awareness",
+    description: "Show reflection to the boy to ground awareness",
   },
   {
     item: "mirror",
@@ -327,7 +327,7 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
     item: "release",
     target: "patient",
     description:
-      "Release the brace after dressing; early release injures the patient",
+      "Release the brace after dressing; early release causes me severe injury",
   },
   {
     item: "release",
@@ -386,9 +386,9 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: "wig",
     target: "creature",
-    description: "Place hairpiece on creature for comfort/distraction",
+    description: "Place hairpiece on the boy for comfort/distraction",
   },
-  { item: "wig", target: "patient", description: "Cover patient for warmth" },
+  { item: "wig", target: "patient", description: "Cover me for warmth" },
   { item: "wig", target: "pillow", description: "Rest on pillow" },
 
   // Bowl (9 uses)
@@ -401,12 +401,12 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: "bowl",
     target: "patient",
-    description: "Use one clean water portion to cool the patient brow",
+    description: "Use one clean water portion to cool my brow",
   },
   {
     item: "bowl",
     target: "creature",
-    description: "Use one clean water portion to offer water to the assistant",
+    description: "Use one clean water portion to offer water to the boy",
   },
   {
     item: "bowl",
@@ -448,7 +448,7 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: "blanket",
     target: "patient",
-    description: "Hold the wool blanket briefly for patient warmth",
+    description: "Hold the wool blanket briefly against me for warmth",
   },
   {
     item: "blanket",
@@ -458,7 +458,7 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: "blanket",
     target: "creature",
-    description: "Wrap assistant in warm blanket to relieve agitation",
+    description: "Wrap the boy in a warm blanket to relieve agitation",
   },
   { item: "blanket", target: "pillow", description: "Rehearse bed dressing" },
 
@@ -471,7 +471,7 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: "candle",
     target: "patient",
-    description: "Check patient condition with a lit candle",
+    description: "Check my condition with a lit candle",
   },
   {
     item: "candle",
@@ -486,7 +486,7 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: "lantern",
     target: "patient",
-    description: "Check patient condition with a lit lantern",
+    description: "Check my condition with a lit lantern",
   },
   {
     item: "lantern",
@@ -523,7 +523,7 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: "thread",
     target: "creature",
-    description: "Hand thread to assistant",
+    description: "Hand thread to the boy",
   },
   {
     item: "thread",
@@ -576,7 +576,7 @@ export const SUPPORTED_USES: readonly SupportedUse[] = [
   {
     item: "bandage",
     target: "patient",
-    description: "Hold the dressing briefly for patient comfort",
+    description: "Hold the dressing briefly against me for comfort",
   },
   {
     item: "bandage",
