@@ -44,7 +44,10 @@ import {
   type AgentSession,
   type AgentToolContext,
 } from "@series-inc/rundot-agent";
-import { createTextGenTransport } from "@series-inc/rundot-agent/venus";
+import {
+  createTextGenTransport,
+  createTextGenJudgeTransport,
+} from "@series-inc/rundot-agent/venus";
 import { actionSchema, type GameAction, type VocalCue } from "../game/model";
 import { GameStore } from "../game/store";
 import { isLiftReady, observeRoom, observeStatus } from "../game/transitions";
@@ -58,17 +61,23 @@ import {
 } from "./responseEvidence";
 import { logConversation } from "./conversationLogger";
 import { getMonsterResponse } from "../game/monsterResponse";
+import { createInitialTempo, updateTempo, type TempoTracker } from "../game/tempo";
+import { formatSensoryNarration } from "./sensoryNarration";
+import { isStandAttempt, isRollAttempt } from "../game/waitingThoughts";
+import { createCreatureTriage } from "./creatureTriage";
 
 export interface LiveHooks {
   onVocalize(cue: VocalCue): void;
   onResponse(text: string): void;
   onPause(): void;
   onAction(): void;
+  onTempoChange?(tempo: TempoTracker): void;
 }
 export interface LiveSession {
   session: AgentSession;
   beginInput(isPlayer: boolean, inputText?: string): void;
   ensureResponse?(): void;
+  getTempo?(): TempoTracker;
   close(): Promise<void>;
 }
 
@@ -101,6 +110,14 @@ export async function createLiveSession(
   let playerInputText: string | null = null;
   let turnStartedScared = false;
   let reactedOutOfFear = false;
+  let gateFailureReason:
+    | "lift_scared"
+    | "stand_injured"
+    | "roll_pinned"
+    | undefined = undefined;
+  let actionSucceeded = false;
+  let snapshotBefore = store.getSnapshot();
+  let tempo: TempoTracker = createInitialTempo("pinned");
   const responseEvidence = new ResponseEvidence();
   const withEvidence = <T extends object>(result: T) => ({
     ...result,
@@ -110,7 +127,7 @@ export async function createLiveSession(
   const tools = {
     inspect_room: defineAgentTool({
       description:
-        "Inspect the current patient, objects, emotions, rules, and possible material combinations.",
+        "Inspect your father's physical condition, objects, emotions, rules, and possible material combinations.",
       inputSchema: z.toJSONSchema(empty),
       validate: validator(empty),
       execute: (_input, context) => {
@@ -123,7 +140,7 @@ export async function createLiveSession(
     act: defineAgentTool<GameAction, unknown>(
       {
         description:
-          "Perform one physical action, signal an exact patient contact, make a wordless sound, record guidance, set a standing rule, or react to the player. Effects are real and validated. You must inspect the outcome before claiming success.",
+          "Perform one physical action, signal an exact contact with your father, make a wordless sound, record guidance, set a standing rule, or react to the player. Effects are real and validated. You must inspect the outcome before claiming success.",
         inputSchema: z.toJSONSchema(actionSchema),
         validate: validator(actionSchema),
         timeoutMs: 25000,
@@ -135,7 +152,7 @@ export async function createLiveSession(
             const errResult = {
               ok: false,
               message:
-                "Only the patient can lift a rule under Standing rules in the pause menu. Do not repeat the forbidden action. Wait for the player to change the rule.",
+                "Only your father can lift a rule under Standing rules in the pause menu. Do not repeat the forbidden action. Wait for the player to change the rule.",
             };
             logConversation("TOOL_ACT_REJECTED", errResult);
             return withEvidence(errResult);
@@ -170,6 +187,13 @@ export async function createLiveSession(
             }
           }
 
+          if (
+            action.kind === "roll_patient" &&
+            store.getSnapshot().stage === "pinned"
+          ) {
+            gateFailureReason = "roll_pinned";
+          }
+
           const isLiftAction =
             action.kind === "lift_debris" ||
             (action.kind === "signal_intent" && action.contact.kind === "lift_debris");
@@ -177,6 +201,7 @@ export async function createLiveSession(
             const gate = evaluateLiftGate({ turnStartedScared, reactedOutOfFear });
             if (!gate.ok) {
               logConversation("TOOL_ACT_REJECTED", gate);
+              gateFailureReason = "lift_scared";
               return withEvidence(gate);
             }
           }
@@ -184,12 +209,15 @@ export async function createLiveSession(
           const result = await store.run(action, context.signal);
           context.signal.throwIfAborted();
           logConversation("TOOL_ACT_RESULT", { action, result });
-          if (result.ok && action.kind === "vocalize")
-            hooks.onVocalize(action.cue);
-          if (result.ok && action.kind === "signal_intent")
-            hooks.onVocalize("effort");
-          if (result.ok && action.kind !== "vocalize" && action.kind !== "react" && result.message) {
-            lastActionDescription = result.message;
+          if (result.ok) {
+            if (action.kind === "vocalize")
+              hooks.onVocalize(action.cue);
+            if (action.kind === "signal_intent")
+              hooks.onVocalize("effort");
+            if (action.kind !== "vocalize" && action.kind !== "react") {
+              actionSucceeded = true;
+              if (result.message) lastActionDescription = result.message;
+            }
           }
           return withEvidence({
             ...result,
@@ -200,7 +228,7 @@ export async function createLiveSession(
     ),
     interpret_response: defineAgentTool<InterpretationInput, unknown>({
       description:
-        "Show one brief sensory narration line describing what the patient hears, feels, or sees from the actual latest tool outcome. Use the latest evidenceId from this input. This cannot change the world.",
+        "Show one brief sensory narration line from the father's first-person perspective ('I', 'me', 'my') describing what I hear, feel, or see from the actual latest tool outcome. NEVER use third-person 'he'/'him' for the father. Use the latest evidenceId from this input. This cannot change the world.",
       inputSchema: z.toJSONSchema(interpretationSchema),
       validate: validator(interpretationSchema),
       execute: (input, context) => {
@@ -213,25 +241,73 @@ export async function createLiveSession(
         }
         context.signal.throwIfAborted();
         respondedThisTurn = true;
+        const snapshotAfter = store.getSnapshot();
+        tempo = updateTempo(tempo, {
+          actionSucceeded,
+          gateFailed: Boolean(gateFailureReason),
+          stateBefore: {
+            stage: snapshotBefore.stage,
+            emotion: snapshotBefore.emotion,
+            disposition: { ...snapshotBefore.disposition },
+            holding: snapshotBefore.holding,
+          },
+          stateAfter: {
+            stage: snapshotAfter.stage,
+            emotion: snapshotAfter.emotion,
+            disposition: { ...snapshotAfter.disposition },
+            holding: snapshotAfter.holding,
+          },
+        });
+        hooks.onTempoChange?.(tempo);
         logConversation("TOOL_INTERPRET_RESPONSE_ACCEPTED", decision.text);
         hooks.onResponse(decision.text);
-        return { ok: true, message: "Patient thought shown." };
+        return { ok: true, message: "Narration thought shown." };
       },
     }),
   };
   const baseTransport = createTextGenTransport(run.textGen, {
     mode: "open",
     modelClass: "quick",
+    reasoningEffort: "none",
   });
   const modelTransport = createFastTurnTransport(
     baseTransport,
     () => respondedThisTurn,
   );
+  const judgeTransport = createTextGenJudgeTransport(run.textGen);
+  const triage = createCreatureTriage(tools, {
+    store,
+    getTempo: () => tempo,
+    setTempo: (t) => {
+      tempo = t;
+    },
+    getSnapshotBefore: () => snapshotBefore,
+    getPlayerInputText: () => playerInputText,
+    isPlayerTurn: () => isPlayerTurn,
+    getActionSucceeded: () => actionSucceeded,
+    setActionSucceeded: (s) => {
+      actionSucceeded = s;
+    },
+    getGateFailureReason: () => gateFailureReason,
+    setGateFailureReason: (r) => {
+      gateFailureReason = r;
+    },
+    onResponse: (text) => {
+      hooks.onResponse(text);
+    },
+    onTempoChange: hooks.onTempoChange,
+    onVocalize: hooks.onVocalize,
+    markResponded: () => {
+      respondedThisTurn = true;
+    },
+  });
   const agent = createAgent({
     model: modelTransport,
-    models: ["gpt-5.4-mini", "gpt-5"],
+    models: ["quick"],
     instructions: CREATURE_INSTRUCTIONS,
     tools,
+    judge: judgeTransport,
+    triage,
     store: new InMemoryAgentSessionStore(),
     concurrency: "reject",
     maxTurns: 12,
@@ -240,7 +316,7 @@ export async function createLiveSession(
       baseDelayMs: 500,
       maxDelayMs: 2000,
       jitter: 0.1,
-      maxFallbackModels: 1,
+      maxFallbackModels: 0,
     },
     truncation: {
       maxRecoveries: 0,
@@ -271,23 +347,63 @@ export async function createLiveSession(
       lastActionDescription = null;
       reactionAvailable = isPlayer;
       playerInputText = isPlayer ? (inputText ?? null) : null;
+      snapshotBefore = store.getSnapshot();
+      gateFailureReason = undefined;
+      actionSucceeded = false;
       const snap = store.getSnapshot();
       turnStartedScared =
         snap.emotion === "scared" || (snap.stage === "pinned" && !isLiftReady(snap));
       reactedOutOfFear = false;
+
+      if (isPlayer && inputText) {
+        if (isStandAttempt(inputText)) {
+          gateFailureReason = "stand_injured";
+        } else if (isRollAttempt(inputText) && snap.stage === "pinned") {
+          gateFailureReason = "roll_pinned";
+        }
+      }
+
       responseEvidence.beginInput();
     },
     ensureResponse() {
       if (isPlayerTurn && !respondedThisTurn) {
         respondedThisTurn = true;
-        const fallback = getMonsterResponse(store.getSnapshot().emotion);
-        const text = lastActionDescription
-          ? `${lastActionDescription} ${fallback.text}`
-          : fallback.text;
+        const snapshotAfter = store.getSnapshot();
+        tempo = updateTempo(tempo, {
+          actionSucceeded,
+          gateFailed: Boolean(gateFailureReason),
+          stateBefore: {
+            stage: snapshotBefore.stage,
+            emotion: snapshotBefore.emotion,
+            disposition: { ...snapshotBefore.disposition },
+            holding: snapshotBefore.holding,
+          },
+          stateAfter: {
+            stage: snapshotAfter.stage,
+            emotion: snapshotAfter.emotion,
+            disposition: { ...snapshotAfter.disposition },
+            holding: snapshotAfter.holding,
+          },
+        });
+        hooks.onTempoChange?.(tempo);
+
+        const fallback = getMonsterResponse(snapshotAfter.emotion);
+        const text = formatSensoryNarration({
+          action: "none",
+          actionSucceeded,
+          gateFailureReason,
+          tempoState: tempo.state,
+          currentStage: snapshotAfter.stage,
+          creatureEmotion: snapshotAfter.emotion,
+          vocalText: fallback.text,
+        });
         logConversation("ENSURED_FALLBACK_MONSTER_RESPONSE", { ...fallback, text, lastActionDescription });
         hooks.onResponse(text);
         hooks.onVocalize(fallback.cue);
       }
+    },
+    getTempo() {
+      return tempo;
     },
     async close() {
       subscriptions.forEach((subscription) => subscription.unsubscribe());

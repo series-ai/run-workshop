@@ -119,7 +119,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
           setHeard(text);
           const waiting = isFirstSound
             ? { full: SENSORY_FIRST_SOUND_PULSE }
-            : defaultWaitingPicker.pick(stateRef.current);
+            : defaultWaitingPicker.pick(stateRef.current, controller.getSnapshot().tempo, text);
           logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
           setWaitingTurn(createWaitingTurn(waiting.full));
           setActiveResponseText(null);
@@ -492,7 +492,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
     setHeard("");
     const waiting = isFirstSound
       ? { full: SENSORY_FIRST_SOUND_PULSE }
-      : defaultWaitingPicker.pick(state);
+      : defaultWaitingPicker.pick(state, controller.getSnapshot().tempo, command.trim());
     logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
     setWaitingTurn(createWaitingTurn(waiting.full));
     setActiveResponseText(null);
@@ -505,7 +505,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
     setHasSpoken(true);
     const waiting = isFirstSound
       ? { full: SENSORY_FIRST_SOUND_PULSE }
-      : defaultWaitingPicker.pick(state);
+      : defaultWaitingPicker.pick(state, controller.getSnapshot().tempo);
     logConversation("WAITING_THOUGHT_STARTED", { thought: waiting.full });
     setWaitingTurn(createWaitingTurn(waiting.full));
     setActiveResponseText(null);

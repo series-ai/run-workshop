@@ -8,6 +8,7 @@ import { GameStore } from "../game/store";
 import { observeStatus } from "../game/transitions";
 import type { LiveHooks, LiveSession } from "./liveSession";
 import { logConversation } from "./conversationLogger";
+import { createInitialTempo, type TempoTracker } from "../game/tempo";
 
 export type PlayMode = "live" | "rehearsal";
 export interface ConnectionState {
@@ -18,6 +19,7 @@ export interface ConnectionState {
   canResume: boolean;
   needsInstruction: boolean;
   response: { text: string; id: number } | null;
+  tempo: TempoTracker;
 }
 interface Input {
   text: string;
@@ -47,6 +49,7 @@ export class CreatureController {
     canResume: false,
     needsInstruction: false,
     response: null,
+    tempo: createInitialTempo("pinned"),
   };
   private listeners = new Set<() => void>();
   private live: LiveSession | null = null;
@@ -138,6 +141,15 @@ export class CreatureController {
           )
             this.update({ status: "acting" });
         },
+        onTempoChange: (tempo) => {
+          if (
+            token === this.connectionToken &&
+            epoch === this.epoch &&
+            !this.closed
+          ) {
+            this.update({ tempo });
+          }
+        },
       },
       signal,
     );
@@ -167,6 +179,7 @@ export class CreatureController {
       canResume: false,
       needsInstruction: false,
       response: null,
+      tempo: createInitialTempo("pinned"),
     });
     if (old) void old.close().catch(() => undefined);
     if (epoch !== this.epoch || this.closed) return;

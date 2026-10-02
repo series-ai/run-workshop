@@ -1,7 +1,7 @@
 import {
   actionLabel,
-  appendJournal,
   ActionProblem,
+  appendJournal,
   createInitialState,
   Emotion,
   GameAction,
@@ -196,6 +196,7 @@ export class GameStore {
   run(
     action: GameAction,
     signal?: AbortSignal,
+    options?: { instant?: boolean },
   ): Promise<{ ok: boolean; message: string }> {
     if (this.disposed) {
       return Promise.resolve({
@@ -247,7 +248,9 @@ export class GameStore {
 
     // Prepare pending action
     const currentGen = ++this.generation;
-    this.actionDuration = getActionDuration(action, this.state.emotion);
+    this.actionDuration = options?.instant
+      ? 0
+      : getActionDuration(action, this.state.emotion);
     this.actionIdCounter++;
 
     this.state = {
