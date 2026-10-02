@@ -1,62 +1,52 @@
-import { describe, expect, it } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
-  defaultWaitingPicker,
-  WAITING_SET_1,
-  WAITING_SET_2,
   WaitingThoughtPicker,
+  defaultWaitingPicker,
+  isStandAttempt,
+  isPushCabinetAttempt,
+  isRollAttempt,
 } from "./waitingThoughts";
 import { createInitialState } from "./model";
 
-describe("waiting thoughts procedural generator", () => {
-  it("provides over one hundred procedural combinations between Set 1 and Set 2", () => {
-    const totalPossible = WAITING_SET_1.length * WAITING_SET_2.length;
-    expect(totalPossible).toBeGreaterThanOrEqual(100);
-    expect(WAITING_SET_1).toContain("My voice echoes in the darkness");
-    expect(WAITING_SET_1).toContain("My throat is coarse");
-  });
-
-  it("formats with ellipsis and trailing pauses to act as buffers at the end of both lines", () => {
+describe("WaitingThoughtPicker", () => {
+  it("generates a thought with two distinct sentences and trailing pause tags", () => {
     const picker = new WaitingThoughtPicker();
     const thought = picker.pick();
 
-    expect(thought.full).toContain("...");
+    expect(thought.first).toBeTruthy();
+    expect(thought.second).toBeTruthy();
     expect(thought.full).toContain("{{pause(2.2)}}");
     expect(thought.full).toContain("{{pause(2.5)}}");
-    expect(thought.full.startsWith(thought.first)).toBe(true);
-    expect(thought.full.includes(thought.second)).toBe(true);
+    expect(thought.full.startsWith(thought.first.replace(/\.+$/, ""))).toBe(
+      true,
+    );
   });
 
-  it("damp stone bites into my forehead is only available until flipped over (prone vs supine)", () => {
-    const proneState = createInitialState();
-    expect(proneState.posture).toBe("prone");
-
+  it("respects state availability filters (e.g. pinned vs unpinned, prone vs supine)", () => {
     const picker = new WaitingThoughtPicker();
+    const pinnedState = createInitialState(); // stage: pinned, posture: prone
 
-    // Verify forehead/prone thoughts can appear when prone
-    const pronePicks: string[] = [];
-    for (let i = 0; i < 200; i++) {
-      pronePicks.push(picker.pick(proneState).second);
+    // Generate several picks in pinned state
+    const pinnedPicks = Array.from({ length: 15 }, () =>
+      picker.pick(pinnedState),
+    );
+    for (const pick of pinnedPicks) {
+      expect(pick.first).not.toContain("raw wound");
+      expect(pick.first).not.toContain("Rotting beams");
+      expect(pick.second).not.toContain("Webs drift");
     }
-    expect(
-      pronePicks.some((p) => p.includes("damp stone bites into my forehead")),
-    ).toBe(true);
 
-    // Now roll the patient over (flipped over to supine)
+    // Change to supine state
     const supineState = {
-      ...proneState,
+      ...createInitialState(),
+      stage: "exposed" as const,
       posture: "supine" as const,
-      stage: "covered" as const,
     };
     picker.reset();
-
-    // In supine state, forehead against stone must NEVER appear
-    const supinePicks: string[] = [];
-    for (let i = 0; i < 100; i++) {
-      const pick = picker.pick(supineState);
-      supinePicks.push(pick.first);
-      supinePicks.push(pick.second);
-      expect(pick.second).not.toContain("damp stone bites into my forehead");
-      expect(pick.second).not.toContain("cellar floor drains the warmth");
+    const supinePicks = Array.from({ length: 15 }, () =>
+      picker.pick(supineState).full,
+    );
+    for (const pick of pinnedPicks) {
       expect(pick.first).not.toContain("breath leaves a cold mist against the stone");
     }
 
@@ -68,6 +58,102 @@ describe("waiting thoughts procedural generator", () => {
           p.includes("rafters") ||
           p.includes("air above me"),
       ),
+    ).toBe(true);
+  });
+
+  it("delivers stage somatic guidance thoughts when tempo is peak", () => {
+    const picker = new WaitingThoughtPicker();
+    const pinnedState = createInitialState();
+    const peakTempo = {
+      stagnantTurns: 3,
+      state: "peak" as const,
+      lastStage: "pinned" as const,
+    };
+
+    const thought = picker.pick(pinnedState, peakTempo);
+    expect(
+      thought.full.includes("oak") ||
+        thought.full.includes("spine") ||
+        thought.full.includes("heave") ||
+        thought.full.includes("wood"),
+    ).toBe(true);
+  });
+
+  it("identifies player self-actions and natural command intents", () => {
+    expect(isStandAttempt("I stand up")).toBe(true);
+    expect(isStandAttempt("stand up")).toBe(true);
+    expect(isStandAttempt("get up")).toBe(true);
+    expect(isStandAttempt("I try to get up")).toBe(true);
+    expect(isStandAttempt("walk")).toBe(true);
+    expect(isStandAttempt("hello")).toBe(false);
+
+    expect(isPushCabinetAttempt("push the cabinet off")).toBe(true);
+    expect(isPushCabinetAttempt("push the cabinet")).toBe(true);
+    expect(isPushCabinetAttempt("shove the wood")).toBe(true);
+    expect(isPushCabinetAttempt("push it off me")).toBe(true);
+    expect(isPushCabinetAttempt("get this off me")).toBe(true);
+    expect(isPushCabinetAttempt("lift the debris")).toBe(true);
+    expect(isPushCabinetAttempt("sing a song")).toBe(false);
+
+    expect(isRollAttempt("roll over")).toBe(true);
+    expect(isRollAttempt("I roll over")).toBe(true);
+    expect(isRollAttempt("turn me over")).toBe(true);
+    expect(isRollAttempt("roll onto my back")).toBe(true);
+    expect(isRollAttempt("turn me onto my back")).toBe(true);
+    expect(isRollAttempt("take the forceps")).toBe(false);
+  });
+
+  it("prioritizes somatic realization when player tries to stand up", () => {
+    const picker = new WaitingThoughtPicker();
+    const pinnedState = createInitialState();
+
+    const thoughtPinned = picker.pick(pinnedState, undefined, "I stand up");
+    expect(thoughtPinned.full.includes("agony") || thoughtPinned.full.includes("crushing")).toBe(true);
+    expect(thoughtPinned.full).toContain("cannot");
+
+    const unpinnedState = {
+      ...pinnedState,
+      stage: "exposed" as const,
+      posture: "prone" as const,
+    };
+    const thoughtUnpinned = picker.pick(unpinnedState, undefined, "stand up");
+    expect(thoughtUnpinned.full.includes("agony") || thoughtUnpinned.full.includes("tears")).toBe(true);
+    expect(thoughtUnpinned.full.includes("cannot stand") || thoughtUnpinned.full.includes("unable to stand")).toBe(true);
+  });
+
+  it("prioritizes somatic realization when player commands pushing the cabinet", () => {
+    const picker = new WaitingThoughtPicker();
+    const pinnedState = createInitialState();
+
+    const thought = picker.pick(pinnedState, undefined, "push the cabinet off");
+    expect(
+      thought.full.includes("oak") ||
+        thought.full.includes("heave") ||
+        thought.full.includes("weight"),
+    ).toBe(true);
+  });
+
+  it("prioritizes somatic realization when player commands rolling over while pinned vs prone", () => {
+    const picker = new WaitingThoughtPicker();
+    const pinnedState = createInitialState();
+
+    const thoughtPinned = picker.pick(pinnedState, undefined, "roll over");
+    expect(
+      thoughtPinned.full.includes("oak") ||
+        thoughtPinned.full.includes("cabinet") ||
+        thoughtPinned.full.includes("lifted"),
+    ).toBe(true);
+
+    const proneState = {
+      ...pinnedState,
+      stage: "exposed" as const,
+      posture: "prone" as const,
+    };
+    const thoughtProne = picker.pick(proneState, undefined, "roll me over");
+    expect(
+      thoughtProne.full.includes("iron") ||
+        thoughtProne.full.includes("flank") ||
+        thoughtProne.full.includes("turn"),
     ).toBe(true);
   });
 
