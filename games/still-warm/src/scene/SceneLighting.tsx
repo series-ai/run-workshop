@@ -11,11 +11,11 @@ export function SceneLighting({
   const posture = state?.posture;
   const lanternLit = state?.environment?.lanternLit ?? false;
 
-  // When the cabinet is lifted off but the patient is still prone:
-  // Cool pale cellar light spills down from the collapsed ceiling opening,
-  // illuminating the cold stone floor, cracks, and drainage grill before his eyes.
-  const isProneFreed =
-    stage !== undefined && stage !== "pinned" && posture === "prone";
+  // When the cabinet is lifted off:
+  // Cool pale cellar light spills down from the collapsed ceiling opening.
+  const isFreed = stage !== undefined && stage !== "pinned";
+  const isProneFreed = isFreed && posture === "prone";
+  const isSupineFreed = isFreed && posture === "supine";
 
   return (
     <group name="cellar-lighting">
@@ -25,11 +25,13 @@ export function SceneLighting({
             ? 0.55
             : isProneFreed
               ? 0.24
-              : lanternLit
-                ? 0.08
-                : 0.025
+              : isSupineFreed
+                ? 0.16
+                : lanternLit
+                  ? 0.12
+                  : 0.08
         }
-        color={isProneFreed ? "#788a96" : "#8b9075"}
+        color={isProneFreed || isSupineFreed ? "#8295a3" : "#8b9075"}
       />
       {inspection && (
         <directionalLight
@@ -38,7 +40,7 @@ export function SceneLighting({
           color="#d1bd8d"
         />
       )}
-      {/* Light filtering down to illuminate the floor when the cabinet is heaved off */}
+      {/* Light filtering down from the ceiling breach when prone */}
       {isProneFreed && (
         <>
           <directionalLight
@@ -52,6 +54,23 @@ export function SceneLighting({
             intensity={1.2}
             distance={2.8}
             color="#728c9e"
+          />
+        </>
+      )}
+      {/* Light illuminating the creature and ceiling breach when rolled supine */}
+      {isSupineFreed && (
+        <>
+          <directionalLight
+            position={[0.2, 2.6, 0.3]}
+            intensity={1.6}
+            color="#9ab3c4"
+            castShadow
+          />
+          <pointLight
+            position={[0, 0.1, 0.4]}
+            intensity={0.9}
+            distance={3.2}
+            color="#a89b87"
           />
         </>
       )}

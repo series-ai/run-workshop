@@ -4,4 +4,4 @@ import "../styles.css";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("The game root is missing.");
-createRoot(root).render(<App preview />);
+createRoot(root).render(<App />);
