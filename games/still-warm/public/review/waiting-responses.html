@@ -214,7 +214,7 @@
   <h2>Model Optimization & Local Logging</h2>
   <div class="card">
     <ul>
-      <li><strong>Quick Model Class:</strong> <code>modelClass: "quick"</code> with fallback list <code>["gpt-5.4-mini", "gpt-5.6-luna"]</code> configured on Venus transport for minimal turnaround latency.</li>
+      <li><strong>Quick Model Class:</strong> <code>modelClass: "quick"</code> configured on Venus transport with <code>models: ["quick"]</code> for minimal turnaround latency.</li>
       <li><strong>Guaranteed Non-Verbal Creature Answer:</strong> In <code>instructions.ts</code>, "silence is valid" has been removed; the creature must always respond to the player's voice. <code>live.ensureResponse()</code> guarantees an emotional response even if the model turn didn't invoke <code>interpret_response</code>.</li>
       <li><strong>Local Conversation Logging:</strong> All player commands, tool executions (<code>inspect_room</code>, <code>act</code>, <code>interpret_response</code>), observations, errors, and responses are appended to <code>conversation.log</code> via the Vite dev server endpoint <code>/_log_conversation</code>, stored in <code>window.__STILL_WARM_CONVERSATION__</code>, and logged to DevTools console.</li>
     </ul>
