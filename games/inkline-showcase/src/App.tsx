@@ -20,6 +20,7 @@ const STORAGE_KEY_AVATAR = 'inkline_avatar_v1'
 function loadSavedAvatar(): AvatarConfig | null {
   if (typeof window === 'undefined') return null
   try {
+    // @rundot-ignore-storage
     const raw = localStorage.getItem(STORAGE_KEY_AVATAR)
     if (!raw) return null
     const parsed: unknown = JSON.parse(raw)
@@ -36,6 +37,7 @@ function loadSavedAvatar(): AvatarConfig | null {
 function saveAvatarToStorage(avatar: AvatarConfig): void {
   if (typeof window === 'undefined') return
   try {
+    // @rundot-ignore-storage
     localStorage.setItem(STORAGE_KEY_AVATAR, JSON.stringify(avatar))
   } catch {
     // Storage quota or privacy restrictions

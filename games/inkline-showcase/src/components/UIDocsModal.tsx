@@ -150,7 +150,7 @@ export const UIDocsModal: FC<DocsModalProps> = ({ isOpen, onClose }) => {
                 tagged <code>held</code>.
               </li>
               <li>
-                <strong>Storage:</strong> Safely serialized to <code>localStorage</code> with
+                <strong>Storage:</strong> Safely serialized to <code>local storage</code> with
                 boundary checks and export/import validation.
               </li>
             </ul>

@@ -1,0 +1,10 @@
+{
+  "appData": {
+    "id": "inkline-showcase",
+    "name": "INKLINE Asset Showcase",
+    "description": "Interactive 3D stick-figure asset showcase and combat playground featuring 12 animated characters, 291 props, modular industrial kits, and procedural ink VFX.",
+    "versionTag": "1.4.0",
+    "thumbnailUrl": "",
+    "userState": {}
+  }
+}
