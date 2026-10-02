@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   getMonsterResponse,
-  MONSTER_RESPONSES,
   type MonsterEmotionCategory,
 } from "./monsterResponse";
 
@@ -19,16 +18,24 @@ describe("monster emotional responses", () => {
     ];
 
     for (const cat of categories) {
-      const items = MONSTER_RESPONSES[cat];
-      expect(items.length).toBeGreaterThan(0);
-      for (const item of items) {
-        expect(item.text).not.toContain('"');
-        expect(item.text).not.toContain("“");
-        expect(item.text).not.toContain("”");
-        expect(item.text).not.toContain("father");
-        expect(item.cue).toBeDefined();
+      for (let i = 0; i < 20; i++) {
+        const resp = getMonsterResponse(cat);
+        expect(resp.text).not.toContain('"');
+        expect(resp.text).not.toContain("“");
+        expect(resp.text).not.toContain("”");
+        expect(resp.text).not.toMatch(/\bfather\b/i);
+        expect(resp.cue).toBeDefined();
       }
     }
+  });
+
+  it("generates procedurally diverse responses without immediate repetition", () => {
+    const outputs = new Set<string>();
+    for (let i = 0; i < 15; i++) {
+      outputs.add(getMonsterResponse("fear").text);
+    }
+    // Procedural generation should produce multiple distinct sentences
+    expect(outputs.size).toBeGreaterThan(4);
   });
 
   it("returns appropriate vocal cues for moaning, slurred speech, excitement, and screaming", () => {
