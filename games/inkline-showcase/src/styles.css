@@ -1352,6 +1352,60 @@ button:active {
   opacity: 0.8;
 }
 
+.ink-avatar-anim-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ink-avatar-anim-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ink-anim-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.ink-play-btn-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: var(--ink-surface);
+  color: var(--ink-text);
+  border: 1px solid var(--ink-border);
+  border-radius: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.ink-play-btn-compact:hover {
+  border-color: var(--ink-border-strong);
+  background-color: #e8e6df;
+}
+
+.ink-play-btn-compact.paused {
+  background-color: var(--ink-accent);
+  color: #faf9f5;
+  border-color: var(--ink-accent);
+}
+
+.ink-quick-motion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .ink-color-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -77,6 +77,14 @@ export const UIInspector: FC<InspectorProps> = ({
         return (
           <UIAvatarEditor
             avatar={settings.avatar}
+            animationId={settings.animationId}
+            onSelectAnimation={(animationId) =>
+              onUpdateSettings((prev) => ({ ...prev, animationId }))
+            }
+            playing={settings.playing}
+            onTogglePlay={() =>
+              onUpdateSettings((prev) => ({ ...prev, playing: !prev.playing }))
+            }
             onUpdateAvatar={(updater) =>
               onUpdateSettings((prev) => ({ ...prev, avatar: updater(prev.avatar) }))
             }
@@ -87,6 +95,7 @@ export const UIInspector: FC<InspectorProps> = ({
             onReset={() =>
               onUpdateSettings((prev) => ({
                 ...prev,
+                animationId: 'block',
                 avatar: {
                   preset: 'stick-standard',
                   color: '#151716',

@@ -579,6 +579,9 @@ export class InklineRenderer {
     }
   }
   private avatarPreviewClip(): string {
+    if (this.settings.mode === 'avatars' && this.settings.animationId) {
+      return this.settings.animationId
+    }
     const role = ROLE_BY_ID.get(this.settings.avatar.preset)
     return role && role.equipment === this.settings.avatar.equipment ? role.preview : this.avatarIdleClip()
   }

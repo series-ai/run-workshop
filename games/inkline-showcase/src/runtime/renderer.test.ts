@@ -66,3 +66,21 @@ describe('landing movement', () => {
     expect(actor.active).toBe('jump-start')
   })
 })
+
+describe('avatarPreviewClip', () => {
+  it('returns settings.animationId in avatars mode when specified', () => {
+    const stage = Object.create(InklineRenderer.prototype) as InklineRenderer
+    Object.assign(stage, {
+      settings: { mode: 'avatars', animationId: 'kick-roundhouse', avatar: { preset: 'stick-standard', equipment: null } },
+    })
+    expect(stage['avatarPreviewClip']()).toBe('kick-roundhouse')
+  })
+
+  it('falls back to role signature preview if animationId is empty', () => {
+    const stage = Object.create(InklineRenderer.prototype) as InklineRenderer
+    Object.assign(stage, {
+      settings: { mode: 'avatars', animationId: '', avatar: { preset: 'stick-fighter', equipment: 'sword' } },
+    })
+    expect(stage['avatarPreviewClip']()).toBe('sword-slash')
+  })
+})

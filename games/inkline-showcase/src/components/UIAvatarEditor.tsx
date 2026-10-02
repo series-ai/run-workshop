@@ -1,8 +1,8 @@
 import { useState, useId, useMemo, useEffect, useRef, type FC, type ChangeEvent } from 'react'
-import type { AvatarConfig, PackManifest } from '../types'
+import type { AvatarConfig, PackManifest, AnimationEntry } from '../types'
 import { CHARACTER_ROLES, ROLE_BY_ID, roleAvatar } from '../runtime/roles'
 import { validateAvatar } from '../runtime/physics'
-import { IconDownload, IconReset } from './UIIcons'
+import { IconDownload, IconReset, IconPlay, IconPause } from './UIIcons'
 
 export interface AvatarEditorProps {
   avatar: AvatarConfig
@@ -10,6 +10,10 @@ export interface AvatarEditorProps {
   onSelectModelId: (modelId: string) => void
   manifest: PackManifest | null
   onReset: () => void
+  animationId?: string
+  onSelectAnimation?: (animationId: string) => void
+  playing?: boolean
+  onTogglePlay?: () => void
 }
 
 export interface PresetDef {
@@ -32,6 +36,20 @@ export const HEADWEAR_OPTIONS: { id: AvatarConfig['headwear']; label: string }[]
   { id: 'beanie', label: 'Beanie' },
   { id: 'visor', label: 'Visor' },
   { id: 'helmet', label: 'Helmet' },
+]
+
+export const QUICK_MOTIONS: { id: string; label: string; isAuto?: boolean }[] = [
+  { id: 'auto', label: 'Kit Pose', isAuto: true },
+  { id: 'idle', label: 'Idle' },
+  { id: 'walk', label: 'Walk' },
+  { id: 'run', label: 'Run' },
+  { id: 'sprint', label: 'Sprint' },
+  { id: 'jump-loop', label: 'Jump' },
+  { id: 'block', label: 'Block' },
+  { id: 'punch-left', label: 'Punch' },
+  { id: 'kick-roundhouse', label: 'Roundhouse' },
+  { id: 'vault', label: 'Vault' },
+  { id: 'hit-front', label: 'Reaction' },
 ]
 
 const SWATCH_COLORS = ['#151716', '#2b2e2a', '#3f443e', '#faf9f5', '#485055']
@@ -96,6 +114,10 @@ export const UIAvatarEditor: FC<AvatarEditorProps> = ({
   onSelectModelId,
   manifest,
   onReset,
+  animationId,
+  onSelectAnimation,
+  playing = true,
+  onTogglePlay,
 }) => {
   const [importModalOpen, setImportModalOpen] = useState(false)
   const [importText, setImportText] = useState('')
@@ -106,6 +128,7 @@ export const UIAvatarEditor: FC<AvatarEditorProps> = ({
   const thicknessId = useId()
   const headScaleId = useId()
   const equipmentSelectId = useId()
+  const animationSelectId = useId()
   const importTextareaId = useId()
   const importModalRef = useRef<HTMLDivElement>(null)
 
@@ -181,9 +204,32 @@ export const UIAvatarEditor: FC<AvatarEditorProps> = ({
 
   const selectedRole = ROLE_BY_ID.get(avatar.preset)
 
+  const activeAnimationId = animationId || selectedRole?.preview || 'idle'
+
+  const activeClip = useMemo(
+    () => manifest?.animations.find((a) => a.id === activeAnimationId),
+    [manifest, activeAnimationId]
+  )
+
+  const groupedAnimations = useMemo(() => {
+    const map = new Map<string, AnimationEntry[]>()
+    if (!manifest?.animations) return map
+    for (const anim of manifest.animations) {
+      const cat = anim.category || 'General'
+      const list = map.get(cat) ?? []
+      list.push(anim)
+      map.set(cat, list)
+    }
+    return map
+  }, [manifest])
+
   const handleSelectPreset = (presetId: string) => {
     onUpdateAvatar((prev) => ({ ...prev, preset: presetId }))
     onSelectModelId(presetId)
+    const role = ROLE_BY_ID.get(presetId)
+    if (role && onSelectAnimation) {
+      onSelectAnimation(role.preview)
+    }
   }
 
   const handleExportJson = () => {
@@ -270,9 +316,84 @@ export const UIAvatarEditor: FC<AvatarEditorProps> = ({
         </div>
         {selectedRole && <div className="ink-role-summary">
           <p>{selectedRole.description}</p><p>Kit action: {selectedRole.preview.replaceAll('-', ' ')}.</p>
-          <button type="button" className="ink-btn ink-btn-secondary" onClick={() => onUpdateAvatar(() => roleAvatar(selectedRole))}>Apply {selectedRole.label} kit</button>
+          <button
+            type="button"
+            className="ink-btn ink-btn-secondary"
+            onClick={() => {
+              onUpdateAvatar(() => roleAvatar(selectedRole))
+              onSelectAnimation?.(selectedRole.preview)
+            }}
+          >
+            Apply {selectedRole.label} kit
+          </button>
           <small>Sets the body, colors, headwear, and held gear. All parts remain editable.</small>
         </div>}
+      </section>
+
+      {/* Test Motion & Pose Picker */}
+      <section className="ink-control-section">
+        <div className="ink-section-header">
+          <span className="ink-section-title">TEST MOTION & POSE</span>
+          <span className="ink-section-sub">
+            {activeClip ? `${activeClip.label} (${activeClip.duration.toFixed(2)}s)` : activeAnimationId}
+          </span>
+        </div>
+
+        <div className="ink-avatar-anim-deck">
+          <div className="ink-avatar-anim-row">
+            <select
+              id={animationSelectId}
+              className="ink-select ink-anim-select"
+              value={activeAnimationId}
+              onChange={(e) => onSelectAnimation?.(e.target.value)}
+              aria-label="Select animation clip to test with current avatar"
+            >
+              {[...groupedAnimations.entries()].map(([cat, clips]) => (
+                <optgroup key={cat} label={`${cat.toUpperCase()} (${clips.length})`}>
+                  {clips.map((clip) => (
+                    <option key={clip.id} value={clip.id}>
+                      {clip.label} [{clip.id}]
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+
+            {onTogglePlay && (
+              <button
+                type="button"
+                className={`ink-play-btn-compact ${playing ? 'playing' : 'paused'}`}
+                onClick={onTogglePlay}
+                aria-label={playing ? 'Pause animation playback' : 'Play animation'}
+                title={playing ? 'Freeze frame to inspect details' : 'Play animation motion'}
+              >
+                {playing ? <IconPause size={14} /> : <IconPlay size={14} />}
+                <span>{playing ? 'Freeze' : 'Play'}</span>
+              </button>
+            )}
+          </div>
+
+          {/* Quick Test Motion Chips */}
+          <div className="ink-quick-motion-chips" role="group" aria-label="Quick test motions">
+            {QUICK_MOTIONS.map((motion) => {
+              const isAuto = motion.isAuto
+              const targetId = isAuto ? (selectedRole?.preview ?? 'idle') : motion.id
+              const isSelected = activeAnimationId === targetId
+              return (
+                <button
+                  key={motion.id}
+                  type="button"
+                  className={`ink-chip ${isSelected ? 'active' : ''}`}
+                  onClick={() => onSelectAnimation?.(targetId)}
+                  aria-pressed={isSelected}
+                  title={isAuto ? `Reset to signature kit pose: ${targetId}` : `Test ${motion.label} motion`}
+                >
+                  {motion.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </section>
 
       {/* Ink & Accent Colors */}
