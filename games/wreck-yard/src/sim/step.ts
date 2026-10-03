@@ -47,6 +47,7 @@ import {
   type ButtonId,
 } from './contraptions';
 import { coolVoxels } from './heat';
+import { waterEntry } from './water';
 import { BLAST, blastDirection, blastFalloff, damageDrum, dentVoxels, EXPLOSION_SHOW_TICKS, FUEL_DRUM, hitDamage, scorchVoxels } from './fuelDrum';
 import { fuelDrumPreset } from './props';
 import { stepBuggy } from './vehicle';
@@ -450,7 +451,22 @@ function stepTorch(
     };
   }
 
-  const aim = aimRay(w, ray.origin, ray.direction, TORCH_RANGE);
+  // Water puts the flame out: it reaches only to the water surface, and not at all under water.
+  const water = waterEntry(ray.origin, ray.direction, TORCH_RANGE);
+  const aim: AimHit = water === 0
+    ? { kind: 'none', point: ray.origin }
+    : aimRay(w, ray.origin, ray.direction, water ?? TORCH_RANGE);
+  if (aim.kind === 'none' && water !== null) {
+    return {
+      ...player,
+      grab: null,
+      torch: null,
+      torchTicks: 0,
+      wasPressed: true,
+      wasSecondaryPressed: input.secondary,
+      feedback: toolFeedback(w, 'quench', aim.point),
+    };
+  }
   if (aim.kind !== 'body') {
     // A wall or other static solid throws sparks without cutting; open air or anything
     // past TORCH_RANGE shows only the flame.

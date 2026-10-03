@@ -164,7 +164,10 @@ export function FirstPersonTool({
         mat.color.set(visual === 'stream' ? '#fff1ca' : sputter ? '#ffb347' : '#ea580c');
       }
       if (torchLightRef.current) {
-        torchLightRef.current.intensity = visual === 'stream' ? 6.5 + Math.random() * 1.2 : sputter ? 0.8 + Math.random() * 1.4 : 0.5;
+        // A quench still burns in the air above the water, but it is cut short.
+        torchLightRef.current.intensity = visual === 'stream' ? 6.5 + Math.random() * 1.2
+          : visual === 'quench' ? 3 + Math.random() * 0.8
+            : sputter ? 0.8 + Math.random() * 1.4 : 0.5;
       }
     }
 

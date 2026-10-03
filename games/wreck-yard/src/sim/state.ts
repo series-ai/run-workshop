@@ -48,9 +48,10 @@ export type PlayerTool = 'gravity' | 'torch';
  * grab/punt/throw: the gravity gun acted. blocked: the ray hit something the
  * tool cannot act on (static, fixed, or out of punt range). miss: nothing in
  * range. cut: the torch is cutting a body. scorch: the torch hits a surface it
- * cannot cut. press: the player pressed a contraption button.
+ * cannot cut. quench: the flame met water (at the surface, or the nozzle is
+ * under water) and goes out. press: the player pressed a contraption button.
  */
-export type ToolResult = 'grab' | 'punt' | 'throw' | 'blocked' | 'miss' | 'cut' | 'scorch' | 'press';
+export type ToolResult = 'grab' | 'punt' | 'throw' | 'blocked' | 'miss' | 'cut' | 'scorch' | 'quench' | 'press';
 
 export interface ToolFeedback {
   readonly result: ToolResult;

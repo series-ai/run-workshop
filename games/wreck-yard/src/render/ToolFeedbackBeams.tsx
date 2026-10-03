@@ -51,6 +51,8 @@ export function ToolFeedbackBeams({ renderRef, tool }: { renderRef: MutableRefOb
       const effect = feedbackEffect(feedback.result);
       // A torch shot that reaches nothing only fizzles at the nozzle (TorchJet); the red beam is the gravity gun's refusal.
       if (effect.kind === 'refusal' && player.activeTool === 'torch') continue;
+      // Water put the flame out: TorchJet draws the steam, and there is no glow or beam.
+      if (effect.kind === 'quench') continue;
       const progress = effect.kind === 'heat'
         ? (isTorchFiring(feedback, render.frame) ? 0 : null)
         : effectProgress(render.frame - feedback.frame);

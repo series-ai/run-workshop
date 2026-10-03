@@ -40,6 +40,7 @@ import { SHELL_BOXES, shellBoxQuaternion } from './shell';
 import { clamp, lerp, type Quat, type Vec3 } from './math';
 import type { YardBody } from './state';
 import { fromVec3, vec } from './units';
+import { WATER_BOUNDS } from './water';
 
 void setVoxelCell;
 await initPhysics3D();
@@ -120,12 +121,12 @@ export const PHYSICS_CAPACITY = {
 
 export const WATER_FLUID_CONFIG: PhysicsFluidInput3D = {
   bounds: {
-    minX: meters(TANK.center[0] - TANK.innerSize[0] * 0.5),
-    minY: meters(TANK.bottomY),
-    minZ: meters(TANK.center[2] - TANK.innerSize[2] * 0.5),
-    maxX: meters(TANK.center[0] + TANK.innerSize[0] * 0.5),
-    maxY: meters(TANK.surfaceY),
-    maxZ: meters(TANK.center[2] + TANK.innerSize[2] * 0.5),
+    minX: meters(WATER_BOUNDS.min[0]),
+    minY: meters(WATER_BOUNDS.min[1]),
+    minZ: meters(WATER_BOUNDS.min[2]),
+    maxX: meters(WATER_BOUNDS.max[0]),
+    maxY: meters(WATER_BOUNDS.max[1]),
+    maxZ: meters(WATER_BOUNDS.max[2]),
   },
   surfacePlane: {
     normal: { x: 0, y: 1, z: 0 },

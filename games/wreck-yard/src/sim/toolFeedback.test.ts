@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { TORCH_RANGE } from './constants';
+import { TANK, TORCH_RANGE } from './constants';
 import { NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
-import { physicsStateBodyById } from './physics';
+import { halfExtents, physicsStateBodyById, replacePhysicsPose } from './physics';
 import type { YardSim } from './sim';
 import { testSim } from './testSim';
 
@@ -92,5 +92,36 @@ describe('tool feedback', () => {
     expect(wall.players[0]!.feedback!.point[2]).toBeCloseTo(20 + TORCH_RANGE, 1);
   });
 
+  it('does not burn under water: aimed into the tank, the flame stops at the surface and the sunken box is not cut', () => {
+    const sim = settled();
+    const box = sim.state.bodies.find((body) => body.id === 'ballast-box')!;
+    const half = halfExtents(box.dims);
+    sim.edit((physics) => {
+      replacePhysicsPose(physics, 'ballast-box', { x: TANK.center[0], y: TANK.bottomY + half[1] + 0.02, z: TANK.center[2], vx: 0, vy: 0, vz: 0 });
+      // The floats would sit above the water, where the torch does cut: move them out of the tank.
+      replacePhysicsPose(physics, 'float-crate', { x: 6, y: 0, z: 11, vx: 0, vy: 0, vz: 0 });
+      replacePhysicsPose(physics, 'float-drum', { x: 8, y: 0, z: 11, vx: 0, vy: 0, vz: 0 });
+    });
+    for (let i = 0; i < 30; i += 1) sim.step([NEUTRAL_INPUT]);
+    const sunk = physicsStateBodyById(sim.state.world, 'ballast-box')!;
+    expect(sunk.y + half[1]).toBeLessThan(TANK.surfaceY);
+    const voxels = sim.state.bodies.find((body) => body.id === 'ballast-box')!.voxels;
+    const down = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...ray([sunk.x, TANK.surfaceY + 1.2, sunk.z + 0.001], [sunk.x, sunk.y, sunk.z]) };
+    let state = sim.state;
+    for (let i = 0; i < 12; i += 1) state = click(sim, down);
+    expect(state.players[0]!.feedback!.result).toBe('quench');
+    expect(state.players[0]!.feedback!.point[1]).toBeCloseTo(TANK.surfaceY, 2);
+    expect(state.players[0]!.torch).toBeNull();
+    expect(state.stats.torchCuts).toBe(0);
+    expect(state.bodies.find((body) => body.id === 'ballast-box')!.voxels).toEqual(voxels);
+  });
+
+  it('only quenches when the nozzle is under water', () => {
+    const sim = settled();
+    const inWater = [TANK.center[0], TANK.surfaceY - 0.3, TANK.center[2]] as const;
+    const state = click(sim, { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...ray(inWater, [inWater[0] + 1, inWater[1], inWater[2]]) });
+    expect(state.players[0]!.feedback!.result).toBe('quench');
+    expect(state.players[0]!.feedback!.point[1]).toBeCloseTo(inWater[1], 2);
+  });
 });
 

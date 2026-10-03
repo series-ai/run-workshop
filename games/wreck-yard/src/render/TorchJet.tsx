@@ -87,6 +87,9 @@ const TONGUES_PER_METER = 1.6;
 /** Fizzle bits: two sputtering sparks of flame and one puff of smoke at the nozzle. */
 const FIZZLE_SPARKS = 2;
 const FIZZLE_PUFF_SECONDS = 0.55;
+/** Steam where the flame meets water: two puffs that rise and fade, half a cycle apart. */
+const STEAM_PUFFS = 2;
+const STEAM_SECONDS = 0.7;
 
 interface JetSlot {
   strips: (THREE.Mesh | null)[];
@@ -95,13 +98,16 @@ interface JetSlot {
   tip: THREE.Sprite | null;
   sparks: (THREE.Sprite | null)[];
   puff: THREE.Sprite | null;
+  steam: (THREE.Sprite | null)[];
 }
 
 /**
  * The torch in world space, for every player. When it hits something within
  * TORCH_RANGE, a stream of red fire runs from the muzzle to the hit. When
  * nothing is in range, the torch only fizzles at the nozzle: sputtering
- * sparks and a puff of smoke, and no stream.
+ * sparks and a puff of smoke, and no stream. Water puts the flame out: the
+ * stream stops at the surface in a burst of steam, and a nozzle under water
+ * makes only steam.
  */
 export function TorchJet({ renderRef, tool }: { renderRef: MutableRefObject<YardRender | null>; tool: UiTool }) {
   const { camera } = useThree();
@@ -122,6 +128,7 @@ export function TorchJet({ renderRef, tool }: { renderRef: MutableRefObject<Yard
     tip: null,
     sparks: Array.from({ length: FIZZLE_SPARKS }, () => null),
     puff: null,
+    steam: Array.from({ length: STEAM_PUFFS }, () => null),
   })), [profile, tongue]);
   useEffect(() => () => {
     profile.dispose();
@@ -143,6 +150,7 @@ export function TorchJet({ renderRef, tool }: { renderRef: MutableRefObject<Yard
       const tip = tipRef.current[slot] ?? null;
       for (const strip of jet.strips) if (strip) strip.visible = false;
       for (const spark of jet.sparks) if (spark) spark.visible = false;
+      for (const puff of jet.steam) if (puff) puff.visible = false;
       if (jet.puff) jet.puff.visible = false;
       if (tip) tip.visible = false;
       const player = render?.players.find((p) => p.slot === slot);
@@ -175,7 +183,20 @@ export function TorchJet({ renderRef, tool }: { renderRef: MutableRefObject<Yard
         continue;
       }
 
-      // In range: a stream of fire from the muzzle to the hit point.
+      if (visual === 'quench') {
+        // Steam rises from where the flame meets water.
+        jet.steam.forEach((puff, index) => {
+          if (!puff) return;
+          const t = ((time + index * STEAM_SECONDS * 0.5 + slot * 0.13) % STEAM_SECONDS) / STEAM_SECONDS;
+          puff.position.set(feedback.point[0], feedback.point[1] + 0.05 + t * 0.45, feedback.point[2]);
+          const size = 0.2 + t * 0.55;
+          puff.scale.set(size, size, 1);
+          (puff.material as THREE.SpriteMaterial).opacity = 0.8 * (1 - t);
+          puff.visible = true;
+        });
+      }
+
+      // A stream of fire from the muzzle to the hit point, or to the water surface.
       s.end.set(feedback.point[0], feedback.point[1], feedback.point[2]);
       s.dir.subVectors(s.end, s.muzzle);
       const length = s.dir.length();
@@ -204,7 +225,7 @@ export function TorchJet({ renderRef, tool }: { renderRef: MutableRefObject<Yard
         strip.visible = true;
       });
 
-      if (tip) {
+      if (tip && visual === 'stream') {
         const size = 0.6 * flicker;
         tip.position.fromArray(towardCamera(feedback.point, camera.position.toArray(), size * 0.5));
         tip.scale.set(size, size, 1);
@@ -241,6 +262,11 @@ export function TorchJet({ renderRef, tool }: { renderRef: MutableRefObject<Yard
           <sprite ref={(sprite) => { jet.puff = sprite; }} visible={false} renderOrder={9}>
             <spriteMaterial map={smokeTexture()} color="#a39a92" transparent depthWrite={false} />
           </sprite>
+          {jet.steam.map((_, index) => (
+            <sprite key={`steam-${index}`} ref={(sprite) => { jet.steam[index] = sprite; }} visible={false} renderOrder={9}>
+              <spriteMaterial map={smokeTexture()} color="#e8e6e3" transparent depthWrite={false} />
+            </sprite>
+          ))}
         </group>
       ))}
     </group>

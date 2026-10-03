@@ -49,6 +49,7 @@ describe('tool feedback effects', () => {
     expect(torchVisual(at('cut', 10), 10)).toBe('stream');
     expect(torchVisual(at('scorch', 10), 11)).toBe('stream');
     expect(torchVisual(at('miss', 10), 10)).toBe('fizzle');
+    expect(torchVisual(at('quench', 10), 10)).toBe('quench');
     expect(torchVisual(at('miss', 10), 12)).toBeNull();
     expect(torchVisual(at('grab', 10), 10)).toBeNull();
     expect(torchVisual(null, 10)).toBeNull();

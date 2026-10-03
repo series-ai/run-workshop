@@ -8,6 +8,7 @@ const TORCH_FIRING_TICKS = 2;
 const ENERGY = '#7dd3fc';
 const REFUSED = '#ef4444';
 const TORCH_HEAT = '#ff8a3d';
+const STEAM = '#e8e6e3';
 
 /**
  * The effect for each tool result:
@@ -15,10 +16,11 @@ const TORCH_HEAT = '#ff8a3d';
  * - lock: a flash on the object the gun took hold of; the tractor beam takes over while held
  * - burst: an energy burst that pushes the object out (throw on release, punt)
  * - heat: the torch's glowing mark where it hits
+ * - quench: the torch flame met water; TorchJet draws the steam
  */
 export type FeedbackEffect =
   | { readonly kind: 'refusal'; readonly color: string; readonly flash: boolean; readonly recoil: number }
-  | { readonly kind: 'lock' | 'burst' | 'heat'; readonly color: string; readonly recoil: number };
+  | { readonly kind: 'lock' | 'burst' | 'heat' | 'quench'; readonly color: string; readonly recoil: number };
 
 export function feedbackEffect(result: ToolResult): FeedbackEffect {
   switch (result) {
@@ -35,6 +37,8 @@ export function feedbackEffect(result: ToolResult): FeedbackEffect {
     case 'cut':
     case 'scorch':
       return { kind: 'heat', color: TORCH_HEAT, recoil: 0 };
+    case 'quench':
+      return { kind: 'quench', color: STEAM, recoil: 0 };
     case 'press':
       return { kind: 'lock', color: ENERGY, recoil: 0.02 };
     default: {
@@ -50,21 +54,25 @@ export function effectProgress(ageTicks: number): number | null {
   return ageTicks / FEEDBACK_EFFECT_TICKS;
 }
 
-/** True while the torch is firing: it reported a cut, scorch, or miss within the last ticks. */
+const TORCH_RESULTS: readonly ToolResult[] = ['cut', 'scorch', 'miss', 'quench'];
+
+/** True while the torch is firing: it reported a torch result within the last ticks. */
 export function isTorchFiring(feedback: ToolFeedback | null, frame: number): boolean {
-  if (!feedback || (feedback.result !== 'cut' && feedback.result !== 'scorch' && feedback.result !== 'miss')) return false;
+  if (!feedback || !TORCH_RESULTS.includes(feedback.result)) return false;
   return frame - feedback.frame < TORCH_FIRING_TICKS;
 }
 
 /**
  * What the torch shows while it fires: a stream of fire to what it hits
- * within TORCH_RANGE, or a fizzle at the nozzle when nothing is in range.
+ * within TORCH_RANGE, a fizzle at the nozzle when nothing is in range, or
+ * steam where the flame meets water (the stream runs to the surface first).
  */
-export type TorchVisual = 'stream' | 'fizzle';
+export type TorchVisual = 'stream' | 'fizzle' | 'quench';
 
 export function torchVisual(feedback: ToolFeedback | null, frame: number): TorchVisual | null {
   if (!feedback || !isTorchFiring(feedback, frame)) return null;
-  return feedback.result === 'miss' ? 'fizzle' : 'stream';
+  if (feedback.result === 'miss') return 'fizzle';
+  return feedback.result === 'quench' ? 'quench' : 'stream';
 }
 
 type V3 = readonly [number, number, number];
