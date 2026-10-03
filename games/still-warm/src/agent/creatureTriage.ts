@@ -12,6 +12,7 @@ import { formatSensoryNarration } from "./sensoryNarration";
 
 export type TriageIntent =
   | "soothe"
+  | "come"
   | "lift"
   | "stand_self"
   | "roll_self"
@@ -56,6 +57,7 @@ export const TRIAGE_QUESTIONS = {
     criteria: {
       soothe:
         "Comfort, calm, praise, or reassure the creature (e.g., 'it is okay', 'good boy', 'I am here', 'calm down', 'breathe', 'do not be afraid')",
+      come: "Command the creature to come closer, approach, return to, or walk toward the player (e.g., 'come here', 'come to me', 'come closer', 'get over here', 'follow my voice')",
       lift: "Command the creature to lift, push, heave, or remove the fallen cabinet/debris pinning the player",
       stand_self:
         "Player states or tries to stand up, rise, or get to their feet themselves while pinned",
@@ -173,6 +175,33 @@ export function createCreatureTriage<TTools extends AgentToolSet>(
     questions: TRIAGE_QUESTIONS,
     routes: {
       chat: "escalate",
+
+      come: {
+        calls: () => [
+          {
+            tool: "act" as Extract<keyof TTools, string>,
+            input: { kind: "move_to", target: "father" },
+          },
+        ],
+        reply: () => {
+          const snapBefore = context.getSnapshotBefore();
+          const snap = context.store.getSnapshot();
+          const succeeded = context.getActionSucceeded();
+          const narration = formatSensoryNarration({
+            action: "move_to",
+            actionSucceeded: succeeded,
+            movedFrom: snapBefore.creatureArea,
+            movedTo: snap.creatureArea,
+            tempoState: context.getTempo().state,
+            currentStage: snap.stage,
+            creatureEmotion: snap.emotion,
+            vocalText: succeeded
+              ? "His weight settles close, the straw rustling beside my head."
+              : "He stays where he is, a hesitant shape in the gloom.",
+          });
+          return commitReply(narration);
+        },
+      },
 
       soothe: {
         calls: () => [

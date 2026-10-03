@@ -124,6 +124,83 @@ describe("creatureTriage", () => {
     expect(store.getSnapshot().emotion).not.toBe("scared");
   });
 
+  it("routes come intent to move_to father with approach narration", async () => {
+    const base = createInitialState();
+    const store = new GameStore({
+      ...base,
+      creatureArea: "tray",
+      emotion: "focused",
+    });
+    store.start();
+    let tempo: TempoTracker = createInitialTempo("pinned");
+    let responded = false;
+    let lastResponseText = "";
+    let actionSucceeded = false;
+    const executedActions: any[] = [];
+
+    const mockTools = createMockTools(store, (action) => {
+      executedActions.push(action);
+      if (action.kind === "move_to") {
+        actionSucceeded = true;
+      }
+    });
+    const triage = createCreatureTriage(mockTools, {
+      store,
+      getTempo: () => tempo,
+      setTempo: (t) => {
+        tempo = t;
+      },
+      getSnapshotBefore: () => ({ ...store.getSnapshot(), creatureArea: "tray" as const }),
+      getPlayerInputText: () => "come here",
+      isPlayerTurn: () => true,
+      getActionSucceeded: () => actionSucceeded,
+      setActionSucceeded: (s) => {
+        actionSucceeded = s;
+      },
+      getGateFailureReason: () => undefined,
+      setGateFailureReason: () => undefined,
+      onResponse: (text) => {
+        lastResponseText = text;
+      },
+      onTempoChange: (t) => {
+        tempo = t;
+      },
+      onVocalize: vi.fn(),
+      markResponded: () => {
+        responded = true;
+      },
+    });
+
+    const agent = createAgent({
+      model: {
+        stream: async function* () {},
+        complete: async () => ({
+          model: "test",
+          content: [],
+          finishReason: "stop",
+          usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+        }),
+      },
+      models: ["quick"],
+      tools: mockTools,
+      judge: createMockJudge("come"),
+      triage,
+      store: new InMemoryAgentSessionStore(),
+    });
+
+    const session = await agent.createSession();
+    const result = await session.send({ text: "PLAYER COMMAND: come here" });
+
+    expect(result.finishReason).toBe("stop");
+    expect(executedActions).toEqual([{ kind: "move_to", target: "father" }]);
+    expect(responded).toBe(true);
+    expect(lastResponseText).toBe(result.text);
+    // The boy walked from the tray back to the father
+    expect(store.getSnapshot().creatureArea).toBe("father");
+    // Narration should describe the approach from the father's perspective
+    expect(lastResponseText).toMatch(/shuffle|stride|step|boot|scrape|presence|weight|stirr/i);
+  });
+
   it("routes lift intent with announce rule: emits signal_intent first, then lift_debris", async () => {
     const base = createInitialState();
     const store = new GameStore({

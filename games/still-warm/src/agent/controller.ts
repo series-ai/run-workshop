@@ -413,8 +413,12 @@ export class CreatureController {
         if (abort.signal.aborted) return;
         if (result.error) {
           logConversation("RUN_MODEL_ERROR", result.error);
+          const hint =
+            result.error.kind === "rate_limit"
+              ? "Too many calls in a short burst. Give it a few seconds, then call out again."
+              : "Check the RUN sign-in and retry.";
           throw new Error(
-            `RUN could not answer (${result.error.code}). Check the RUN sign-in and retry.`,
+            `RUN could not answer (${result.error.code}). ${hint}`,
           );
         }
         capped = result.finishReason === "max_turns";
