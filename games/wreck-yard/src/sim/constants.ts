@@ -24,10 +24,7 @@ export const SHELL_PREFIX = 'shell:';
 export const GRAB_FLOOR_CLEARANCE = 0.25;
 /** A held body this far (m) from its hold point is let go. */
 export const GRAB_BREAK_DISTANCE = 10;
-/**
- * The hold point moves toward the aim at most this fast (m/s). It stays below
- * IMPACT_MIN_SPEED so carrying a body cannot fracture it.
- */
+/** The hold point moves toward the aim at most this fast (m/s). */
 export const GRAB_TARGET_MAX_SPEED = 5.5;
 /** Hold point acceleration (m/s²). Must stay well below GRAB_MAX_ACCEL - gravity so the body can follow. */
 export const GRAB_TARGET_ACCEL = 18;
@@ -54,15 +51,25 @@ export const TORCH_INSET = 1.35;
  * gouging a fixed depth and only splitting when the body happens to be thin.
  */
 export const TORCH_THROUGH_MARGIN = 2;
+/** Voxels that torch or blast heat touched. They glow, then cool (HEAT) into BURNT_MATERIAL. */
 export const SCORCH_MATERIAL = 5;
+/** Burnt voxels: what a scorch leaves once it is cold (PROP_COLOR.burnt). */
+export const BURNT_MATERIAL = 28;
+/**
+ * Heat look (seconds after the last heat on a body): red glow that fades out
+ * by glowSeconds, brown by brownSeconds, burnt black by burntSeconds. Then the
+ * sim turns SCORCH_MATERIAL into BURNT_MATERIAL. Only the torch and blasts
+ * heat or break voxel bodies; a hit moves a body and does not chip it.
+ */
+export const HEAT = { glowSeconds: 1.6, brownSeconds: 3.5, burntSeconds: 6 } as const;
 
-export const IMPACT_MIN_SPEED = 6.4;
+/** A fuel drum takes damage from one hit per this many ticks. */
 export const IMPACT_COOLDOWN_TICKS = 11;
 
 export const MIN_FRAGMENT_VOXELS = 28;
 export const MAX_TORCH_FRAGMENTS = 5;
 export const CUT_SEPARATION_BIAS = 0.01;
-export const IMPACT_SEPARATION_BIAS = 0.045;
+export const BLAST_SEPARATION_BIAS = 0.045;
 
 export const YARD_MATERIAL = { friction: 0.82, restitution: 0.08 } as const;
 

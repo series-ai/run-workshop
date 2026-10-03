@@ -13,6 +13,7 @@ describe('PoseCache zero-allocation pose tracking', () => {
     buoyancy: 1.0,
     anchorFaces: [],
     impactCooldownUntil: 0,
+    heat: null,
   });
 
   const dummyPose = (px: number, py: number, pz: number): RenderPose => ({

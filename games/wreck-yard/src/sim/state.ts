@@ -14,8 +14,16 @@ export interface YardBody {
   readonly motion: BodyMotion;
   readonly buoyancy: number;
   readonly anchorFaces: readonly AnchorFace[];
-  /** Frame at which the body may fracture from an impact again. */
+  /** Frame at which a hit may damage the body (a fuel drum) again. */
   readonly impactCooldownUntil: number;
+  /** The last torch or blast heat on the body, until its scorch cools (HEAT). */
+  readonly heat: BodyHeat | null;
+}
+
+export interface BodyHeat {
+  readonly frame: number;
+  /** Voxel-space center of the heated area. The heat light sits here. */
+  readonly at: Vec3;
 }
 
 export interface GrabState {

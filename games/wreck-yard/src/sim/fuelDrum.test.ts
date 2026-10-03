@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FLOOR_Y, PLAYER_RADIUS, TICK_RATE } from './constants';
+import { FLOOR_Y, PLAYER_RADIUS, SCORCH_MATERIAL, TICK_RATE } from './constants';
 import { BUTTONS } from './contraptions';
 import { BLAST, blastDirection, blastFalloff, damageDrum, EXPLOSION_SHOW_TICKS, FUEL_DRUM, hitDamage } from './fuelDrum';
 import { NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
@@ -158,6 +158,19 @@ describe('fuel drums', () => {
     const pushed = physicsStateBodyById(sim.state.world, 'hazard-drum-2')!;
     expect(pushed.vx).toBeGreaterThan(0);
     expect(pushed.vy).toBeGreaterThan(0);
+  });
+
+  it('a blast breaks a body next to it and leaves the break hot', () => {
+    const sim = testSim();
+    const id = placeDrum(sim);
+    placeBody(sim, 'timber-pallet', OPEN[0] + 1.2, OPEN[1]);
+    steps(sim, 20);
+    const before = sim.state.stats.fractures;
+    lightNow(sim, id);
+    steps(sim, 3);
+    expect(sim.state.stats.fractures).toBeGreaterThan(before);
+    const pieces = sim.state.bodies.filter((body) => body.label === 'Timber Pallet');
+    expect(pieces.some((body) => typeof body.heat?.frame === 'number' && body.voxels.includes(SCORCH_MATERIAL))).toBe(true);
   });
 
   it('the blast throws a nearby player away from it', () => {

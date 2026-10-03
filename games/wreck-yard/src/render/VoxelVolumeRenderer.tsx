@@ -1,7 +1,9 @@
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
-import { useThree, type ThreeElements } from '@react-three/fiber';
+import { useFrame, useThree, type ThreeElements } from '@react-three/fiber';
 import { buildMacroOccupancyVolume } from 'voxel-kit';
+import { SCORCH_MATERIAL } from '../sim/constants';
+import { COLD_AGE, HEAT_GLSL, type BodyHeatLook } from './heatLook';
 import { ART_STYLE, YARD_LIGHTING } from './style/artStyle';
 import { toonGlsl } from './style/toonGlsl';
 import { isMobileDevice } from './DynamicDpr';
@@ -26,6 +28,8 @@ export type VoxelVolumeRendererProps = MeshSurfaceProps & {
   materialParams?: Uint8Array;
   voxelSize?: number;
   position?: [number, number, number];
+  /** The body's last heat (heatLook.ts): its age in seconds and its voxel-space center. */
+  heatRef?: { readonly current: BodyHeatLook };
   worldOcclusion?: {
     texture: THREE.Data3DTexture;
     min: [number, number, number];
@@ -41,6 +45,7 @@ export function VoxelVolumeRenderer({
   materialParams,
   voxelSize = 0.08,
   position = [0, 0, 0],
+  heatRef,
   worldOcclusion,
   ...meshProps
 }: VoxelVolumeRendererProps) {
@@ -146,6 +151,10 @@ export function VoxelVolumeRenderer({
     uniform float uHasWorldOcc;
     uniform float uIsMobile;
     uniform float uOutputSRGB;
+    uniform int uHeatMaterial;
+    uniform float uHeatAge;
+    uniform vec3 uHeatCenter;
+    uniform vec3 uBurntColor;
     uniform vec3 cameraPosition;
     uniform mat4 modelMatrix;
     uniform mat4 viewMatrix;
@@ -154,6 +163,7 @@ export function VoxelVolumeRenderer({
     #include <colorspace_pars_fragment>
 
     ${toonGlsl}
+    ${HEAT_GLSL}
 
     out vec4 outColor;
 
@@ -346,6 +356,10 @@ export function VoxelVolumeRenderer({
         if (materialId != 0) {
           float u = (float(materialId) + 0.5) / 256.0;
           vec4 albedo = texture(uPalette, vec2(u, 0.5));
+          bool heated = materialId == uHeatMaterial;
+          float heatCells = distance(vec3(cell), uHeatCenter);
+          float voxelHeatAge = heatAgeAt(uHeatAge, heatCells);
+          if (heated) albedo.rgb = heatAlbedo(voxelHeatAge, uBurntColor);
 
           vec3 hitLS = ro + rd * tHit;
           vec3 worldPos = (modelMatrix * vec4(hitLS, 1.0)).xyz;
@@ -371,8 +385,10 @@ export function VoxelVolumeRenderer({
           // Astra Teardown Specular Glint & Glancing Fresnel Rim
           shaded += yardMetal(worldNormal, viewDir, lightDir, metalness, visibility);
 
-          // Incandescent thermal core emissive on severed surfaces
-          if (emissive > 0.01) {
+          // Torch and blast heat: a red glow that cools (heatLook.ts).
+          if (heated) {
+            shaded += heatEmission(voxelHeatAge, heatCells);
+          } else if (emissive > 0.01) {
             vec3 moltenOrange = vec3(1.0, 0.32, 0.02);
             vec3 moltenGold = vec3(1.0, 0.85, 0.22);
             vec3 emissiveColor = mix(moltenOrange, moltenGold, smoothstep(0.2, 0.85, emissive)) * (emissive * 2.6);
@@ -458,6 +474,10 @@ export function VoxelVolumeRenderer({
         uHasWorldOcc: { value: worldOcclusion ? 1 : 0 },
         uIsMobile: { value: isMobileDevice() ? 1.0 : 0.0 },
         uOutputSRGB: { value: 1 },
+        uHeatMaterial: { value: SCORCH_MATERIAL },
+        uHeatAge: { value: COLD_AGE },
+        uHeatCenter: { value: new THREE.Vector3() },
+        uBurntColor: { value: new THREE.Color(ART_STYLE.palette.burnt) },
       },
       side: THREE.BackSide,
       depthTest: true,
@@ -493,6 +513,12 @@ export function VoxelVolumeRenderer({
     voxels,
     worldOcclusion,
   ]);
+
+  useFrame(() => {
+    const heat = heatRef?.current;
+    material.uniforms.uHeatAge!.value = heat?.age ?? COLD_AGE;
+    if (heat) (material.uniforms.uHeatCenter!.value as THREE.Vector3).set(heat.at[0], heat.at[1], heat.at[2]);
+  });
 
   useEffect(() => {
     return () => {

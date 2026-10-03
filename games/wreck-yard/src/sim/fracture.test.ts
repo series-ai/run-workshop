@@ -11,7 +11,7 @@ function bar(motion: 'dynamic' | 'fixed'): YardBody {
   const dims = { x: 30, y: 12, z: 12 };
   const voxels = makeEmptyVoxelField(dims);
   stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 29, y: 11, z: 11 }, 3);
-  return { id: 'bar', label: 'Bar', dims, voxels, motion, buoyancy: 0.1, anchorFaces: motion === 'fixed' ? ['-x'] : [], impactCooldownUntil: 0 };
+  return { id: 'bar', label: 'Bar', dims, voxels, motion, buoyancy: 0.1, anchorFaces: motion === 'fixed' ? ['-x'] : [], impactCooldownUntil: 0, heat: null };
 }
 
 const pose = { position: [0, 1, 0] as const, rotation: IDENTITY_QUAT, linearVelocity: [0.01, 0, 0] as const, angularVelocity: [0, 0, 0] as const };
@@ -32,7 +32,7 @@ function cutThrough(x: number): FractureContact {
 
 describe('fractureBody', () => {
   it('splits a fixed bar and keeps the anchored piece fixed under the parent id', () => {
-    const result = fractureBody(bar('fixed'), pose, cutThrough(15), 7);
+    const result = fractureBody(bar('fixed'), pose, cutThrough(15), 7, 0);
     expect(result.fragments).toHaveLength(2);
     const anchored = result.fragments.find((f) => f.body.motion === 'fixed');
     const loose = result.fragments.find((f) => f.body.motion === 'dynamic');
@@ -44,7 +44,7 @@ describe('fractureBody', () => {
   });
 
   it('splits a dynamic bar into two dynamic pieces that inherit velocity', () => {
-    const result = fractureBody(bar('dynamic'), pose, cutThrough(15), 0);
+    const result = fractureBody(bar('dynamic'), pose, cutThrough(15), 0, 0);
     expect(result.fragments).toHaveLength(2);
     for (const fragment of result.fragments) {
       expect(fragment.body.motion).toBe('dynamic');
@@ -56,7 +56,7 @@ describe('fractureBody', () => {
     // Cut the body just in front of its anchor face, so nothing anchored
     // survives. The remaining piece must become dynamic under a new id rather
     // than keep 'bar' frozen to an anchor it is no longer attached to.
-    const removedAnchor = fractureBody(bar('fixed'), pose, cutThrough(1.5), 42);
+    const removedAnchor = fractureBody(bar('fixed'), pose, cutThrough(1.5), 42, 0);
     expect(removedAnchor.fragments.length).toBeGreaterThan(0);
     for (const fragment of removedAnchor.fragments) {
       expect(fragment.body.anchorFaces).toEqual([]);
@@ -66,7 +66,7 @@ describe('fractureBody', () => {
   });
 
   it('scatters fragments when an impulse boost is given', () => {
-    const result = fractureBody(bar('dynamic'), pose, { ...cutThrough(15), impulseBoost: 2 }, 0);
+    const result = fractureBody(bar('dynamic'), pose, { ...cutThrough(15), impulseBoost: 2 }, 0, 0);
     const speeds = result.fragments.map((fragment) => {
       const velocity = fragment.physics.body.linearVelocity!;
       return Math.abs(velocity.x) + Math.abs(velocity.y) + Math.abs(velocity.z);
@@ -74,13 +74,13 @@ describe('fractureBody', () => {
     expect(Math.max(...speeds)).toBeGreaterThan(0.3);
   });
 
-  it('does not launch a body that an impact only chips', () => {
-    // A hard landing carves a small crater but leaves one piece. Scatter
+  it('does not launch a body that a blast only chips', () => {
+    // A blast at the edge of its break range carves a small crater but leaves one piece. Scatter
     // exists to push pieces apart; on a single piece it is a false bounce.
     const chipped = fractureBody(bar('dynamic'), pose, {
       start: [15, 0, 6], end: [15, 0, 6], through: [15, 0, 6], throughEnd: [15, 0, 6],
       radius: 1.5, worldPoint: [0, 0.4, 0], impulseBoost: 2.2,
-    }, 0);
+    }, 0, 0);
     expect(chipped.fragments).toHaveLength(1);
     const [piece] = chipped.fragments;
     expect(piece!.body.voxels.filter((v) => v !== 0).length).toBeLessThan(30 * 12 * 12);
@@ -93,7 +93,7 @@ describe('fractureBody', () => {
     const tiny: YardBody = { ...bar('dynamic'), dims: { x: 3, y: 3, z: 3 }, voxels: new Uint8Array(27).fill(2) };
     const result = fractureBody(tiny, pose, {
       start: [1, 1, 1], end: [1, 1, 1], through: [1, 1, 1], throughEnd: [1, 1, 1], radius: 5, worldPoint: [0, 1, 0], impulseBoost: 0,
-    }, 0);
+    }, 0, 0);
     expect(result.fragments).toEqual([]);
   });
 
@@ -111,8 +111,8 @@ describe('fractureBody', () => {
       start: [-1, 6, zIn], end: [31, 6, zIn], through: [-1, 6, -3], throughEnd: [31, 6, -3],
       radius: TORCH_RADIUS, worldPoint: [0, 1, 0], impulseBoost: 0,
     };
-    expect(fractureBody(slab, pose, vertical, 0).fragments.length).toBeGreaterThan(1);
-    expect(fractureBody(slab, pose, horizontal, 0).fragments.length).toBeGreaterThan(1);
+    expect(fractureBody(slab, pose, vertical, 0, 0).fragments.length).toBeGreaterThan(1);
+    expect(fractureBody(slab, pose, horizontal, 0, 0).fragments.length).toBeGreaterThan(1);
   });
 
   it('does not separate a body when the stroke is only a surface gouge', () => {
@@ -123,12 +123,12 @@ describe('fractureBody', () => {
       start: [15, 13, 10.65], end: [15, -2, 10.65], through: [15, 13, 10.65], throughEnd: [15, -2, 10.65],
       radius: TORCH_RADIUS, worldPoint: [0, 1, 0], impulseBoost: 0,
     };
-    expect(fractureBody(bar('dynamic'), pose, gouge, 0).fragments).toHaveLength(1);
+    expect(fractureBody(bar('dynamic'), pose, gouge, 0, 0).fragments).toHaveLength(1);
   });
 
   it('leaves a thin cut and preserves the majority of the body volume', () => {
     const original = bar('dynamic');
-    const result = fractureBody(original, pose, cutThrough(15), 0);
+    const result = fractureBody(original, pose, cutThrough(15), 0, 0);
     expect(result.fragments).toHaveLength(2);
     let survivingVoxels = 0;
     for (const frag of result.fragments) {
@@ -147,7 +147,7 @@ describe('fractureBody', () => {
       start: [-1, 6, zIn], end: [31, 6, zIn], through: [-1, 6, -3], throughEnd: [31, 6, -3],
       radius: TORCH_RADIUS, worldPoint: [0, 1, 0], impulseBoost: 0,
     };
-    const result = fractureBody(fixedBar, pose, horizontalCut, 10);
+    const result = fractureBody(fixedBar, pose, horizontalCut, 10, 0);
     expect(result.fragments).toHaveLength(2);
     const fixedFragments = result.fragments.filter((f) => f.body.motion === 'fixed');
     const dynamicFragments = result.fragments.filter((f) => f.body.motion === 'dynamic');

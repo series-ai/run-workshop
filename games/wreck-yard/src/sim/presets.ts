@@ -290,7 +290,7 @@ function spawn(
   anchorFaces: readonly AnchorFace[] = [],
 ): Spawn {
   return {
-    body: { id, label, dims: preset.dims, voxels: preset.voxels, motion, buoyancy, anchorFaces, impactCooldownUntil: 0 },
+    body: { id, label, dims: preset.dims, voxels: preset.voxels, motion, buoyancy, anchorFaces, impactCooldownUntil: 0, heat: null },
     position,
     rotation,
   };

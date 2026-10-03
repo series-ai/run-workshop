@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { IMPACT_MIN_SPEED, TANK, TICK_RATE } from './constants';
+import { TANK, TICK_RATE } from './constants';
 import { NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
-import { physicsStateBodyById, replacePhysicsPose, voxelStats } from './physics';
+import { physicsStateBodyById, replacePhysicsPose } from './physics';
 import type { YardSim } from './sim';
 import type { YardState } from './state';
 import { testSim } from './testSim';
@@ -108,7 +108,8 @@ describe('stepYard', () => {
     const settled = physicsStateBodyById(state.world, id)!.y;
     expect(Math.abs(settled - target)).toBeLessThan(0.1);
     expect(peak - settled).toBeLessThan(0.08);
-    expect(fastest).toBeLessThan(IMPACT_MIN_SPEED);
+    // m/s: a carried body moves no faster than a hard throw.
+    expect(fastest).toBeLessThan(6.4);
   });
 
   it('drops a still-held box on release and lands it without a bounce', () => {
@@ -194,16 +195,20 @@ describe('stepYard', () => {
     expect(state.bodies.filter((b) => b.label === 'Timber Pallet').length).toBe(1);
   });
 
-  it('fractures a body that slams into the floor', () => {
+  it('does not chip a body that slams into the floor or a wall', () => {
+    // Only the torch and blasts change voxel shapes; a hit moves the body and nothing else.
     const sim = testSim(1);
-    const state = sim.state;
-    sim.edit((physics) => replacePhysicsPose(physics, 'ballast-box', { x: -6, z: 3, y: 3.5, vy: -9 / TICK_RATE }));
-    const after = run(sim, [NEUTRAL_INPUT], 40);
-    expect(after.stats.fractures).toBeGreaterThanOrEqual(1);
-    const beforeCount = voxelStats(state.bodies.find((b) => b.id === 'ballast-box')!.voxels).occupiedCount;
-    const remaining = after.bodies.filter((b) => b.label === 'Ballast Box').reduce((n, b) => n + voxelStats(b.voxels).occupiedCount, 0);
-    expect(remaining).toBeLessThan(beforeCount);
-    expect(remaining).toBeGreaterThan(0);
+    const before = sim.state;
+    sim.edit((physics) => {
+      replacePhysicsPose(physics, 'ballast-box', { x: -6, z: 3, y: 3.5, vy: -14 / TICK_RATE });
+      replacePhysicsPose(physics, 'timber-pallet', { vx: 16 / TICK_RATE, vy: 2 / TICK_RATE });
+    });
+    const after = run(sim, [NEUTRAL_INPUT], 60);
+    expect(after.stats.fractures).toBe(0);
+    expect(after.bodies.map((body) => body.id)).toEqual(before.bodies.map((body) => body.id));
+    for (const id of ['ballast-box', 'timber-pallet']) {
+      expect(after.bodies.find((body) => body.id === id)!.voxels, id).toEqual(before.bodies.find((body) => body.id === id)!.voxels);
+    }
   });
 
   it('keeps the float crate at the water surface', () => {

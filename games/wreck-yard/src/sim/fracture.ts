@@ -12,7 +12,7 @@ import {
 import {
   CUT_SEPARATION_BIAS,
   DT,
-  IMPACT_SEPARATION_BIAS,
+  BLAST_SEPARATION_BIAS,
   MAX_TORCH_FRAGMENTS,
   MIN_FRAGMENT_VOXELS,
   SCORCH_MATERIAL,
@@ -87,8 +87,9 @@ function launchDirection(worldOffset: Vec3, hitOffset: Vec3, index: number, coun
  * Carves the contact out of the source body and returns the surviving
  * fragments as new yard bodies with physics bodies. The parent id is kept by
  * the anchored fragment of a fixed body, or by the largest fragment otherwise.
+ * The carve scorches the voxels around it, so every fragment is hot from `frame`.
  */
-export function fractureBody(source: YardBody, pose: BodyPose, contact: FractureContact, serial: number): FractureResult {
+export function fractureBody(source: YardBody, pose: BodyPose, contact: FractureContact, serial: number, frame: number): FractureResult {
   const cutsThrough = contact.through[0] !== contact.start[0]
     || contact.through[1] !== contact.start[1]
     || contact.through[2] !== contact.start[2];
@@ -145,6 +146,7 @@ export function fractureBody(source: YardBody, pose: BodyPose, contact: Fracture
   // Separation pushes pieces apart. A single surviving piece keeps its motion.
   const separates = entries.length > 1;
   const hitOffset = sub(contact.worldPoint, pose.position);
+  const heatAt = scale(add(contact.start, contact.end), 0.5);
   let nextSerial = serial;
 
   const fragments = entries.map((entry, index) => {
@@ -170,7 +172,7 @@ export function fractureBody(source: YardBody, pose: BodyPose, contact: Fracture
 
     if (!anchored && separates) {
       const dir = launchDirection(worldOffset, hitOffset, index, entries.length);
-      position = add(position, scale(dir, scatter ? IMPACT_SEPARATION_BIAS : CUT_SEPARATION_BIAS));
+      position = add(position, scale(dir, scatter ? BLAST_SEPARATION_BIAS : CUT_SEPARATION_BIAS));
       if (scatter) {
         linearVelocity = add(linearVelocity, scale(dir, (contact.impulseBoost + index * 0.18) * DT));
         angularVelocity = add(angularVelocity, scale([dir[2] * 1.8, 1.1 * (index % 2 === 0 ? 1 : -1), -dir[0] * 1.8], DT));
@@ -186,6 +188,7 @@ export function fractureBody(source: YardBody, pose: BodyPose, contact: Fracture
       buoyancy: source.buoyancy,
       anchorFaces: anchored ? source.anchorFaces : [],
       impactCooldownUntil: source.impactCooldownUntil,
+      heat: { frame, at: sub(heatAt, [entry.offsetCells.x, entry.offsetCells.y, entry.offsetCells.z]) },
     };
     const physics = makePhysicsBody(body, { position, rotation: pose.rotation, linearVelocity, angularVelocity });
     return { body, physics };

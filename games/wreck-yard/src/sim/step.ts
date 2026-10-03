@@ -6,8 +6,9 @@ import {
   GRAB_FLOOR_CLEARANCE,
   GRAVITY_GUN_PUNT_RANGE,
   GRAVITY_GUN_PUNT_SPEED,
+  HEAT,
   IMPACT_COOLDOWN_TICKS,
-  IMPACT_MIN_SPEED,
+  TICK_RATE,
   JETPACK_FUEL_DRAIN,
   LINEAR_DAMPING,
   JETPACK_FUEL_RECHARGE,
@@ -45,6 +46,7 @@ import {
   nearHoop,
   type ButtonId,
 } from './contraptions';
+import { coolVoxels } from './heat';
 import { BLAST, blastDirection, blastFalloff, damageDrum, dentVoxels, EXPLOSION_SHOW_TICKS, FUEL_DRUM, hitDamage, scorchVoxels } from './fuelDrum';
 import { fuelDrumPreset } from './props';
 import { stepBuggy } from './vehicle';
@@ -452,6 +454,7 @@ function stepTorch(
   if (aim.kind !== 'body') {
     // A wall or other static solid throws sparks without cutting; open air or anything
     // past TORCH_RANGE shows only the flame.
+    if (aim.kind === 'solid') keepFlameHeat(w, aim.point);
     return {
       ...player,
       grab: null,
@@ -479,7 +482,9 @@ function stepTorch(
     hurtDrum(w, body.id, FUEL_DRUM.torchDamagePerTick, null);
     if (torchTicks % TORCH_PULSE_TICKS === 0) {
       const heated = findBody(w.bodies, body.id)!;
-      w.bodies = w.bodies.map((entry) => (entry.id === body.id ? { ...heated, voxels: scorchVoxels(heated.dims, heated.voxels, surface) } : entry));
+      w.bodies = w.bodies.map((entry) => (entry.id === body.id
+        ? { ...heated, voxels: scorchVoxels(heated.dims, heated.voxels, surface), heat: { frame: w.frame, at: surface } }
+        : entry));
     }
     return {
       ...player,
@@ -606,44 +611,51 @@ function contactOnBody(w: Working, body: YardBody, numericId: PhysicsContactEven
   return { local, worldPoint };
 }
 
-function queueImpacts(w: Working, contacts: readonly PhysicsContactEvent3D[], frame: number): void {
+/**
+ * Hits damage fuel drums (a dent and damage) and nothing else: only the torch
+ * and blasts change a voxel shape.
+ */
+function queueDrumHits(w: Working, contacts: readonly PhysicsContactEvent3D[], frame: number): void {
   for (const contact of contacts) {
     if (contact.type !== 'enter') continue;
     const speed = contact.closingSpeed;
-    if (speed < Math.min(IMPACT_MIN_SPEED, FUEL_DRUM.minHitSpeed)) continue;
+    if (speed < FUEL_DRUM.minHitSpeed) continue;
     for (const numericId of [contact.bodyA, contact.bodyB]) {
       const id = physicsBodyName(w.physics, numericId);
-      if (id === undefined) continue;
+      if (id === undefined || !drumOf(w, id)) continue;
       const body = findBody(w.bodies, id);
-      if (!body || body.motion !== 'dynamic' || frame < body.impactCooldownUntil) continue;
-      if (drumOf(w, id)) {
-        // Drums do not break: a hit dents them and adds damage.
-        const damage = hitDamage(speed);
-        if (damage <= 0) continue;
-        hurtDrum(w, id, damage, contactOnBody(w, body, numericId, contact)?.local ?? null);
-        setImpactCooldown(w, id, frame);
-        continue;
-      }
-      if (speed < IMPACT_MIN_SPEED) continue;
-      if (w.fractures.some((pending) => pending.bodyId === id)) continue;
-      const point = contactOnBody(w, body, numericId, contact);
-      if (!point) continue;
-      w.fractures.push({
-        bodyId: id,
-        countsAsCut: false,
-        contact: {
-          start: point.local,
-          end: point.local,
-          through: point.local,
-          throughEnd: point.local,
-          radius: clamp(1.1 + speed * 0.12, 1.1, 2.8),
-          worldPoint: point.worldPoint,
-          impulseBoost: 1.1 + speed * 0.18,
-        },
-      });
+      if (!body || frame < body.impactCooldownUntil) continue;
+      const damage = hitDamage(speed);
+      if (damage <= 0) continue;
+      hurtDrum(w, id, damage, contactOnBody(w, body, numericId, contact)?.local ?? null);
       setImpactCooldown(w, id, frame);
     }
   }
+}
+
+/** Meters around the flame point that stay hot: the torch carve radius plus one voxel. */
+const FLAME_HEAT_REACH = (TORCH_RADIUS + 1) * VOXEL_SIZE;
+
+/**
+ * A torch through a hole hits what is behind it, but its flame still touches
+ * the rim: a hot body within FLAME_HEAT_REACH of the flame point stays hot.
+ */
+function keepFlameHeat(w: Working, point: Vec3): void {
+  const near = w.physics.world.overlap({
+    x: meters(point[0]), y: meters(point[1]), z: meters(point[2]),
+    shape: { type: 'sphere', radius: meters(FLAME_HEAT_REACH) },
+    hitTriggers: false, hitSensors: false,
+  });
+  const ids = new Set(near.map((hit) => physicsBodyName(w.physics, hit.bodyId)));
+  w.bodies = w.bodies.map((body) => (body.heat && ids.has(body.id) ? { ...body, heat: { ...body.heat, frame: w.frame } } : body));
+}
+
+/** A scorch that has cooled for HEAT.burntSeconds turns burnt. Colors only: the collider stays. */
+function coolBodies(w: Working): void {
+  const coolTicks = Math.round(HEAT.burntSeconds * TICK_RATE);
+  w.bodies = w.bodies.map((body) => (body.heat && w.frame - body.heat.frame >= coolTicks
+    ? { ...body, voxels: coolVoxels(body.voxels), heat: null }
+    : body));
 }
 
 function setImpactCooldown(w: Working, id: string, frame: number): void {
@@ -658,9 +670,14 @@ function applyFractures(w: Working, frame: number): void {
     const physics = physicsBodyById(w.physics, pending.bodyId);
     if (!body || !physics) continue;
     const source = pending.countsAsCut ? body : { ...body, impactCooldownUntil: frame + IMPACT_COOLDOWN_TICKS };
-    const result = fractureBody(source, poseOf(physics), pending.contact, w.nextSerial);
+    const result = fractureBody(source, poseOf(physics), pending.contact, w.nextSerial, frame);
     const remaining = result.fragments.reduce((sum, fragment) => sum + voxelStats(fragment.body.voxels).occupiedCount, 0);
-    if (remaining >= voxelStats(source.voxels).occupiedCount) continue;
+    if (remaining >= voxelStats(source.voxels).occupiedCount) {
+      // Nothing left to carve here, but a held torch keeps the spot hot.
+      const at = scale(add(pending.contact.start, pending.contact.end), 0.5);
+      w.bodies = w.bodies.map((entry) => (entry.id === pending.bodyId ? { ...entry, heat: { frame, at } } : entry));
+      continue;
+    }
     w.nextSerial = result.nextSerial;
     const index = w.bodies.findIndex((entry) => entry.id === pending.bodyId);
     w.bodies = [...w.bodies.slice(0, index), ...result.fragments.map((fragment) => fragment.body), ...w.bodies.slice(index + 1)];
@@ -738,6 +755,7 @@ function dropDrum(w: Working): void {
   const body: YardBody = {
     id, label: FUEL_DRUM.label, dims: preset.dims, voxels: preset.voxels, motion: 'dynamic', buoyancy: 0.3, anchorFaces: [],
     impactCooldownUntil: w.frame + DRUM_DROP_TICKS,
+    heat: null,
   };
   w.bodies = [...w.bodies, body];
   addPhysicsBodies(w.physics, [makePhysicsBody(body, { position: DRUM_SPAWN, rotation: [0, 0, 0, 1], linearVelocity: [0, 0, 0], angularVelocity: [0, 0, 0] })]);
@@ -933,8 +951,9 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
     }
   }
 
-  queueImpacts(w, latest.contacts, state.frame);
+  queueDrumHits(w, latest.contacts, state.frame);
   applyFractures(w, state.frame);
+  coolBodies(w);
 
   return {
     frame: state.frame + 1,

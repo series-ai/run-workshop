@@ -1,5 +1,5 @@
 import { makeEmptyVoxelField, stampBox, type VoxelDims } from 'voxel-kit';
-import { FLOOR_Y, VOXEL_SIZE } from './constants';
+import { BURNT_MATERIAL, FLOOR_Y, VOXEL_SIZE } from './constants';
 import type { Quat, Vec3 } from './math';
 
 /**
@@ -14,6 +14,7 @@ import type { Quat, Vec3 } from './math';
  */
 export const PROP_COLOR = {
   orange: 16, orangeShade: 17, white: 18, grey: 19, teal: 20, mustard: 21, rust: 22, ink: 23, spark: 24, glow: 25, metal: 26, red: 27,
+  burnt: BURNT_MATERIAL,
 } as const;
 export type PropColor = keyof typeof PROP_COLOR;
 

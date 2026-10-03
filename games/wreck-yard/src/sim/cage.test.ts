@@ -15,7 +15,7 @@ function launch(id: string, at: [number, number, number], velocity: [number, num
   for (let tick = 0; tick < 120; tick += 1) {
     state = sim.step([NEUTRAL_INPUT]);
     const body = physicsStateBodyById(state.world, id);
-    if (!body) break; // fractured on impact: its pieces are new bodies
+    if (!body) break; // fractured (a blast or the torch): its pieces are new bodies
     top = Math.max(top, body.y);
     reach = Math.max(reach, Math.abs(body.x), Math.abs(body.z));
   }

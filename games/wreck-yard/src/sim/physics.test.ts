@@ -27,7 +27,7 @@ describe('voxelStats and bodyMass', () => {
     const a = voxelStats(voxels, dims);
     expect(a.occupiedCount).toBe(8);
     expect(voxelStats(voxels, dims)).toBe(a);
-    const body: YardBody = { id: 'b', label: 'b', dims, voxels, motion: 'dynamic', buoyancy: 0, anchorFaces: [], impactCooldownUntil: 0 };
+    const body: YardBody = { id: 'b', label: 'b', dims, voxels, motion: 'dynamic', buoyancy: 0, anchorFaces: [], impactCooldownUntil: 0, heat: null };
     expect(bodyMass(body)).toBeCloseTo(8 * VOXEL_SIZE ** 3 * 1.5, 9);
   });
 });
@@ -46,7 +46,7 @@ describe('createInitialYard', () => {
   });
 
   it('makes a static physics body without orientation', () => {
-    const body: YardBody = { id: 'g', label: 'g', dims: { x: 1, y: 1, z: 1 }, voxels: new Uint8Array([2]), motion: 'fixed', buoyancy: 0, anchorFaces: ['-x'], impactCooldownUntil: 0 };
+    const body: YardBody = { id: 'g', label: 'g', dims: { x: 1, y: 1, z: 1 }, voxels: new Uint8Array([2]), motion: 'fixed', buoyancy: 0, anchorFaces: ['-x'], impactCooldownUntil: 0, heat: null };
     const physics = makePhysicsBody(body, { position: [1, 2, 3], rotation: [0, 0, 0, 1], linearVelocity: [0, 0, 0], angularVelocity: [0, 0, 0] });
     expect(physics.body.kind).toBe('static');
     expect(physics.body.orientation).toEqual({ x: 0, y: 0, z: 0, w: 1 });

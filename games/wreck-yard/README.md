@@ -2,7 +2,9 @@
 
 A multiplayer voxel destruction yard on RUN syncplay. Grab and throw voxel
 bodies with the hand, carve them with the torch until pieces fall off, and
-watch them float or sink in the tank. Every client runs the same deterministic
+watch them float or sink in the tank. Only the torch and fuel drum blasts
+change a voxel shape: a hit moves a body but does not chip it. A torch cut or
+a blast break glows red with heat, then turns brown, then burnt black. Every client runs the same deterministic
 simulation; only inputs cross the wire, and rollback plus late join keep
 everyone in sync.
 

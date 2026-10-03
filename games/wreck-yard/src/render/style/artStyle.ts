@@ -23,6 +23,7 @@ export type PaletteKey =
   | 'waterShallow'
   | 'waterFoam'
   | 'spark'
+  | 'burnt'
   | 'glow'
   | 'ink';
 
@@ -118,6 +119,8 @@ export const ART_STYLE: ArtStyle = {
     waterShallow: '#397b7b',
     waterFoam: '#adc0b6',
     spark: '#fff1ca',
+    /** Cold scorch (sim HEAT): near black with a warm cast, darker than ink. */
+    burnt: '#1b1512',
     glow: '#ff812e',
     ink: '#18212b',
   },
