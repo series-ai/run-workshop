@@ -3,9 +3,10 @@ import { SHELL_BOXES } from './shell';
 import { describe, expect, it } from 'vitest';
 import { makeEmptyVoxelField, stampBox } from 'voxel-kit';
 import { VOXEL_SIZE } from './constants';
-import { bodyMass, cookCenteredCollider, makePhysicsBody, voxelStats } from './physics';
+import { NEUTRAL_INPUT } from './input';
+import { bodyMass, cookCenteredCollider, makePhysicsBody, physicsBodyById, readWorldState, removePhysicsBody, voxelStats } from './physics';
 import type { YardBody } from './state';
-import { initialState } from './testSim';
+import { initialState, testSim } from './testSim';
 
 describe('cookCenteredCollider', () => {
   it('centers a solid 2x1x1 volume on the body origin', () => {
@@ -51,3 +52,18 @@ describe('createInitialYard', () => {
     expect(physics.body.orientation).toEqual({ x: 0, y: 0, z: 0, w: 1 });
   });
 });
+
+describe('readWorldState', () => {
+  it('matches a per-body motion read for every body, moving, sleeping, static, and after a removal', () => {
+    const sim = testSim(2);
+    for (let i = 0; i < 40; i += 1) sim.step([{ ...NEUTRAL_INPUT, moveZ: 1 }, NEUTRAL_INPUT]);
+    const scrap = sim.state.bodies.find((body) => body.id.startsWith('scrap-'))!;
+    sim.edit((physics) => removePhysicsBody(physics, scrap.id));
+    sim.step([NEUTRAL_INPUT, NEUTRAL_INPUT]);
+    const state = readWorldState(sim.physics);
+    expect(state.bodies.map((body) => body.id)).toEqual([...sim.physics.bodyIds.keys()].sort());
+    expect(new Set(state.bodies.map((body) => body.kind))).toEqual(new Set(['static', 'dynamic']));
+    for (const body of state.bodies) expect(body, body.id).toEqual(physicsBodyById(sim.physics, body.id));
+  });
+});
+

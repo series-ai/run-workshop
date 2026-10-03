@@ -1,4 +1,4 @@
-import type { PhysicsContactEvent3D } from '@series-inc/rundot-syncplay/physics/3d';
+import { meters, type PhysicsContactEvent3D } from '@series-inc/rundot-syncplay/physics/3d';
 import {
   DT,
   FLOOR_Y,
@@ -120,9 +120,9 @@ type AimHit =
 
 function aimRay(w: Working, origin: Vec3, direction: Vec3, maxDistance = MAX_RAY_DISTANCE): AimHit {
   const hits = w.physics.world.raycast({
-    x: origin[0], y: origin[1], z: origin[2],
+    x: meters(origin[0]), y: meters(origin[1]), z: meters(origin[2]),
     dx: direction[0], dy: direction[1], dz: direction[2],
-    maxDistance,
+    maxDistance: meters(maxDistance),
     layerMask: WORLD_LAYER,
   });
   const first = hits[0];
@@ -593,11 +593,11 @@ function contactOnBody(w: Working, body: YardBody, numericId: PhysicsContactEven
     const outward: Vec3 = [contact.normal.x * sign, contact.normal.y * sign, contact.normal.z * sign];
     const distance = Math.hypot(...halfExtents(body.dims)) + VOXEL_SIZE;
     const hit = w.physics.world.raycast({
-      x: physics.x + outward[0] * distance,
-      y: physics.y + outward[1] * distance,
-      z: physics.z + outward[2] * distance,
+      x: meters(physics.x + outward[0] * distance),
+      y: meters(physics.y + outward[1] * distance),
+      z: meters(physics.z + outward[2] * distance),
       dx: -outward[0], dy: -outward[1], dz: -outward[2],
-      maxDistance: distance * 2,
+      maxDistance: meters(distance * 2),
     }).find((entry) => entry.bodyId === numericId);
     if (!hit) return null;
     worldPoint = [hit.point.x, hit.point.y, hit.point.z];
@@ -811,9 +811,9 @@ function queueBlastBreak(w: Working, body: YardBody, at: Vec3): void {
   const distance = Math.hypot(...toward);
   if (distance < 1e-6) return;
   const hit = w.physics.world.raycast({
-    x: at[0], y: at[1], z: at[2],
+    x: meters(at[0]), y: meters(at[1]), z: meters(at[2]),
     dx: toward[0] / distance, dy: toward[1] / distance, dz: toward[2] / distance,
-    maxDistance: distance + Math.hypot(...halfExtents(body.dims)),
+    maxDistance: meters(distance + Math.hypot(...halfExtents(body.dims))),
     onlyBody: physicsBodyHandle(w.physics, body.id),
   })[0];
   if (!hit) return;
@@ -909,7 +909,7 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
   }
 
   const driver = w.players.find((player) => player.ridingVehicle);
-  const buggyWheels = stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyWheels);
+  const buggy = stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyVehicle);
   w.physics.world.step();
   const latest = w.physics.world.latest();
   stepContraptions(w, state.world);
@@ -938,7 +938,8 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
 
   return {
     frame: state.frame + 1,
-    buggyWheels,
+    buggyWheels: buggy?.wheels ?? [],
+    buggyVehicle: buggy?.vehicle,
     bodies: w.bodies,
     world: readWorldState(w.physics, latest.fluidInteractions),
     players: w.players,

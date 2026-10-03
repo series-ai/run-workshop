@@ -10,8 +10,8 @@ import { initialState, testSim } from './testSim';
 /** Bodies that move at the start on purpose: floats bob in the tank. */
 const MOVES_BY_DESIGN = new Set(['float-crate', 'float-drum']);
 
-/** Bodies that never sleep at rest: the buggy rides on wheel rays, and the floats bob. */
-const NEVER_SLEEPS = new Set(['vehicle-chassis', 'float-crate', 'float-drum']);
+/** Bodies that never sleep at rest: the floats bob. The buggy parks (Syncplay's revision 2 vehicle). */
+const NEVER_SLEEPS = new Set(['float-crate', 'float-drum']);
 
 /** Wall inner faces sit at ARENA_EXTENT minus half the 0.6 m wall. */
 const INNER = ARENA_EXTENT - 0.3;

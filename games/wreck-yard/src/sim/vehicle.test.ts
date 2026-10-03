@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { replacePhysicsPose, fullPhysicsBodyById } from "./physics";
-import { stepBuggy } from "./vehicle";
+import { TICK_RATE } from "./constants";
+import { rotate, type Quat, type Vec3 } from "./math";
+import { replacePhysicsPose, fullPhysicsBodyById, physicsStateBodyById, bodyMass } from "./physics";
+import { BUGGY_WHEELS, stepBuggy } from "./vehicle";
 import { NEUTRAL_INPUT, type YardInput } from "./input";
 import { patchPlayer, testSim } from "./testSim";
 
@@ -68,11 +70,43 @@ describe("vehicle driving", () => {
     sim.edit((physics) => replacePhysicsPose(physics, 'vehicle-chassis', { y: 10, vx: .1, vy: .2, vz: .3 }));
     const physics = sim.physics;
     const before = fullPhysicsBodyById(physics, 'vehicle-chassis')!;
-    const wheels = stepBuggy(physics, { ...NEUTRAL_INPUT, moveZ: 1, moveX: 1 });
+    const { wheels } = stepBuggy(physics, { ...NEUTRAL_INPUT, moveZ: 1, moveX: 1 })!;
     const after = fullPhysicsBodyById(physics, 'vehicle-chassis')!;
     expect(wheels.every((w) => !w.grounded)).toBe(true);
     expect(after.linearVelocity).toEqual(before.linearVelocity);
     expect(after.angularVelocity).toEqual(before.angularVelocity);
   });
 
+  it('does not fling light scrap under its wheels, parked or driving off', () => {
+    const sim = testSim(1);
+    let state = sim.state;
+    for (let i = 0; i < 20; i++) state = sim.step([NEUTRAL_INPUT]);
+    const car = physicsStateBodyById(state.world, 'vehicle-chassis')!;
+    const carAt: Vec3 = [car.x, car.y, car.z];
+    const carRotation: Quat = [car.orientation.x, car.orientation.y, car.orientation.z, car.orientation.w];
+    // The lightest loose scrap, one piece under each wheel (0.1 to 0.33 kg).
+    const scrap = state.bodies.filter((body) => body.id.startsWith('scrap-') && body.motion === 'dynamic')
+      .sort((a, b) => bodyMass(a) - bodyMass(b)).slice(0, BUGGY_WHEELS.length);
+    expect(bodyMass(scrap[0]!)).toBeLessThan(0.15);
+    sim.edit((physics) => {
+      for (const [index, wheel] of BUGGY_WHEELS.entries()) {
+        const [x, , z] = rotate([wheel.localAnchor.x, wheel.localAnchor.y, wheel.localAnchor.z], carRotation).map((v, axis) => v + carAt[axis]!);
+        replacePhysicsPose(physics, scrap[index]!.id, { x, y: car.y - 0.55, z, vx: 0, vy: 0, vz: 0 });
+      }
+    });
+    patchPlayer(sim, { x: car.x + 1.2, y: car.y + .5, z: car.z });
+    state = sim.step([{ ...NEUTRAL_INPUT, use: true }]);
+    expect(state.players[0]!.ridingVehicle).toBe(true);
+    const peak = new Map(scrap.map((body) => [body.id, 0]));
+    for (let i = 0; i < 120; i++) {
+      // Parked with the brake on for 1.5 s, then full throttle off the scrap.
+      state = sim.step([{ ...NEUTRAL_INPUT, moveZ: i < 45 ? 0 : 1 }]);
+      for (const body of scrap) {
+        const view = physicsStateBodyById(state.world, body.id)!;
+        peak.set(body.id, Math.max(peak.get(body.id)!, Math.hypot(view.vx, view.vy, view.vz) * TICK_RATE));
+      }
+    }
+    expect(physicsStateBodyById(state.world, 'vehicle-chassis')!.z).toBeGreaterThan(car.z + 3);
+    for (const [id, speed] of peak) expect(speed, id).toBeLessThan(12);
+  });
 });

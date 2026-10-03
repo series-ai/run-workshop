@@ -3,6 +3,15 @@ import {
   createPhysicsWorld3D,
   createVoxelChunk,
   initPhysics3D,
+  kilograms,
+  kilogramsPerCubicMeter,
+  meters,
+  metersPerSecond,
+  metersPerSecondSquared,
+  newtons,
+  newtonMeters,
+  perSecond,
+  radiansPerSecond,
   setVoxelCell,
   type PhysicsBody3D,
   type PhysicsBodyHandle3D,
@@ -30,6 +39,7 @@ import { CAGE_LAYER, CAGE_PANELS, WORLD_LAYER } from './cage';
 import { SHELL_BOXES, shellBoxQuaternion } from './shell';
 import { clamp, lerp, type Quat, type Vec3 } from './math';
 import type { YardBody } from './state';
+import { fromVec3, vec } from './units';
 
 void setVoxelCell;
 await initPhysics3D();
@@ -110,21 +120,21 @@ export const PHYSICS_CAPACITY = {
 
 export const WATER_FLUID_CONFIG: PhysicsFluidInput3D = {
   bounds: {
-    minX: TANK.center[0] - TANK.innerSize[0] * 0.5,
-    minY: TANK.bottomY,
-    minZ: TANK.center[2] - TANK.innerSize[2] * 0.5,
-    maxX: TANK.center[0] + TANK.innerSize[0] * 0.5,
-    maxY: TANK.surfaceY,
-    maxZ: TANK.center[2] + TANK.innerSize[2] * 0.5,
+    minX: meters(TANK.center[0] - TANK.innerSize[0] * 0.5),
+    minY: meters(TANK.bottomY),
+    minZ: meters(TANK.center[2] - TANK.innerSize[2] * 0.5),
+    maxX: meters(TANK.center[0] + TANK.innerSize[0] * 0.5),
+    maxY: meters(TANK.surfaceY),
+    maxZ: meters(TANK.center[2] + TANK.innerSize[2] * 0.5),
   },
   surfacePlane: {
     normal: { x: 0, y: 1, z: 0 },
-    offset: TANK.surfaceY,
+    offset: meters(TANK.surfaceY),
   },
-  density: 1,
-  linearDragPerSecond: 2,
-  angularDragPerSecond: 1,
-  flowVelocity: { x: 0, y: 0, z: 0 },
+  density: kilogramsPerCubicMeter(1),
+  linearDragPerSecond: perSecond(2),
+  angularDragPerSecond: perSecond(1),
+  flowVelocity: vec(metersPerSecond, 0, 0, 0),
   layer: WORLD_LAYER,
   mask: 0xffffffff,
 };
@@ -142,21 +152,17 @@ export function voxelStats(voxels: Uint8Array, _dims?: VoxelDims): VoxelStats {
 }
 
 export function toChunk(voxels: Uint8Array, dims: VoxelDims) {
-  const chunk = createVoxelChunk(dims.x, dims.y, dims.z, VOXEL_SIZE);
+  const chunk = createVoxelChunk(dims.x, dims.y, dims.z, meters(VOXEL_SIZE));
   chunk.occupancy.set(voxels);
   return chunk;
 }
 
 function originOffset(dims: VoxelDims) {
-  return {
-    x: -(dims.x - 1) * 0.5 * VOXEL_SIZE,
-    y: -(dims.y - 1) * 0.5 * VOXEL_SIZE,
-    z: -(dims.z - 1) * 0.5 * VOXEL_SIZE,
-  };
+  return vec(meters, -(dims.x - 1) * 0.5 * VOXEL_SIZE, -(dims.y - 1) * 0.5 * VOXEL_SIZE, -(dims.z - 1) * 0.5 * VOXEL_SIZE);
 }
 
 export function cookCenteredCollider(voxels: Uint8Array, dims: VoxelDims): VoxelCompoundShape {
-  const cooked = cookVoxelBody(toChunk(voxels, dims), 1, { originOffset: originOffset(dims) });
+  const cooked = cookVoxelBody(toChunk(voxels, dims), kilograms(1), { originOffset: originOffset(dims) });
   if (cooked.status !== 0) throw new Error('WRECK_YARD_VOXEL_BODY_EMPTY');
   return cooked.body.shape;
 }
@@ -173,21 +179,17 @@ export function bodyMass(body: YardBody): number {
 
 export function makePhysicsBody(body: YardBody, pose: BodyPose): YardPhysicsBodyInput3D {
   const mass = bodyMass(body);
-  const cooked = cookVoxelBody(toChunk(body.voxels, body.dims), mass, { originOffset: originOffset(body.dims) });
+  const cooked = cookVoxelBody(toChunk(body.voxels, body.dims), kilograms(mass), { originOffset: originOffset(body.dims) });
   if (cooked.status !== 0) throw new Error(`WRECK_YARD_VOXEL_BODY_EMPTY: ${body.id}`);
   return {
     id: body.id,
     body: {
       kind: body.motion === 'fixed' ? 'static' : 'dynamic',
       shape: cooked.body.shape,
-      position: { x: pose.position[0], y: pose.position[1], z: pose.position[2] },
-      linearVelocity: body.motion === 'fixed'
-        ? { x: 0, y: 0, z: 0 }
-        : { x: pose.linearVelocity[0] * TICK_RATE, y: pose.linearVelocity[1] * TICK_RATE, z: pose.linearVelocity[2] * TICK_RATE },
+      position: fromVec3(meters, pose.position),
+      linearVelocity: body.motion === 'fixed' ? vec(metersPerSecond, 0, 0, 0) : fromVec3(metersPerSecond, pose.linearVelocity, TICK_RATE),
       orientation: { x: pose.rotation[0], y: pose.rotation[1], z: pose.rotation[2], w: pose.rotation[3] },
-      angularVelocity: body.motion === 'fixed'
-        ? { x: 0, y: 0, z: 0 }
-        : { x: pose.angularVelocity[0] * TICK_RATE, y: pose.angularVelocity[1] * TICK_RATE, z: pose.angularVelocity[2] * TICK_RATE },
+      angularVelocity: body.motion === 'fixed' ? vec(radiansPerSecond, 0, 0, 0) : fromVec3(radiansPerSecond, pose.angularVelocity, TICK_RATE),
       mass: cooked.body.mass,
       inertia: cooked.body.inertia,
       centerOfMass: cooked.body.centerOfMass,
@@ -206,8 +208,8 @@ export function shellBodies(): YardPhysicsBodyInput3D[] {
     id: `${SHELL_PREFIX}${box.id}`,
     body: {
       kind: 'static' as const,
-      position: { x: box.center[0], y: box.center[1], z: box.center[2] },
-      shape: { type: 'box' as const, halfX: box.size[0] * 0.5, halfY: box.size[1] * 0.5, halfZ: box.size[2] * 0.5 },
+      position: fromVec3(meters, box.center),
+      shape: { type: 'box' as const, halfX: meters(box.size[0] * 0.5), halfY: meters(box.size[1] * 0.5), halfZ: meters(box.size[2] * 0.5) },
       orientation: (([x, y, z, w]) => ({ x, y, z, w }))(shellBoxQuaternion(box)),
       friction: YARD_MATERIAL.friction,
       restitution: YARD_MATERIAL.restitution,
@@ -220,8 +222,8 @@ export function shellBodies(): YardPhysicsBodyInput3D[] {
     id: `${SHELL_PREFIX}${panel.id}`,
     body: {
       kind: 'static' as const,
-      position: { x: panel.center[0], y: panel.center[1], z: panel.center[2] },
-      shape: { type: 'box' as const, halfX: panel.size[0] * 0.5, halfY: panel.size[1] * 0.5, halfZ: panel.size[2] * 0.5 },
+      position: fromVec3(meters, panel.center),
+      shape: { type: 'box' as const, halfX: meters(panel.size[0] * 0.5), halfY: meters(panel.size[1] * 0.5), halfZ: meters(panel.size[2] * 0.5) },
       friction: YARD_MATERIAL.friction,
       restitution: YARD_MATERIAL.restitution,
       layer: CAGE_LAYER,
@@ -234,7 +236,7 @@ export function shellBodies(): YardPhysicsBodyInput3D[] {
 export function makeWorld(): PhysicsWorld3D {
   return createPhysicsWorld3D({
     tickRate: TICK_RATE,
-    initialGravity: { x: 0, y: -GRAVITY, z: 0 },
+    initialGravity: vec(metersPerSecondSquared, 0, -GRAVITY, 0),
     capacity: PHYSICS_CAPACITY,
   });
 }
@@ -262,6 +264,59 @@ function bodyView(id: string, physics: PhysicsBodyMotion3D): YardPhysicsBody3D {
   };
 }
 
+/**
+ * Scratch rows for one batch motion read (6.0.0-rc.20): one native call
+ * instead of a resolve and a read per body.
+ */
+const MOTION_BATCH = {
+  poses: new Float64Array(PHYSICS_CAPACITY.bodies * 7),
+  velocities: new Float64Array(PHYSICS_CAPACITY.bodies * 6),
+  ids: new BigUint64Array(PHYSICS_CAPACITY.bodies),
+  status: new Uint8Array(PHYSICS_CAPACITY.bodies),
+};
+
+/** Bits 0-1 of the batch status byte are the body kind; higher bits are flags (6.0.0-rc.21 docs). */
+const BATCH_KINDS: readonly PhysicsBody3D['kind'][] = ['static', 'dynamic', 'kinematic'];
+
+/** The batch row of a body id. The batch lists ids in ascending order. */
+function batchRow(id: PhysicsBodyId3D, count: number): number {
+  const { ids } = MOTION_BATCH;
+  let low = 0;
+  let high = count - 1;
+  while (low <= high) {
+    const mid = (low + high) >> 1;
+    const value = ids[mid]!;
+    if (value === id) return mid;
+    if (value < id) low = mid + 1;
+    else high = mid - 1;
+  }
+  throw new Error(`WRECK_YARD_PHYSICS_BODY_MISSING: id ${id}`);
+}
+
+function batchBodyView(name: string, row: number): YardPhysicsBody3D {
+  const { poses, velocities, status } = MOTION_BATCH;
+  const kind = BATCH_KINDS[status[row]! & 0b11];
+  if (kind === undefined) throw new Error(`WRECK_YARD_MOTION_STATUS_UNKNOWN: ${status[row]} for ${name}`);
+  const p = row * 7;
+  const v = row * 6;
+  return {
+    id: name,
+    kind,
+    x: poses[p]!,
+    y: poses[p + 1]!,
+    z: poses[p + 2]!,
+    vx: velocities[v]! / TICK_RATE,
+    vy: velocities[v + 1]! / TICK_RATE,
+    vz: velocities[v + 2]! / TICK_RATE,
+    orientation: { x: poses[p + 3]!, y: poses[p + 4]!, z: poses[p + 5]!, w: poses[p + 6]! },
+    angularVel: {
+      x: velocities[v + 3]! / TICK_RATE,
+      y: velocities[v + 4]! / TICK_RATE,
+      z: velocities[v + 5]! / TICK_RATE,
+    },
+  };
+}
+
 /** Builds the live world: the shell, the cage, the water, and `bodies`. */
 export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): OpenYardPhysicsWorld {
   const open: OpenYardPhysicsWorld = { world: makeWorld(), bodyIds: new Map() };
@@ -271,8 +326,7 @@ export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): OpenYard
     // Conveyor belts. The surface velocity is part of the checkpoint (6.0.0-rc.13), so once is enough.
     for (const box of SHELL_BOXES) {
       if (!box.surfaceVelocity) continue;
-      const [x, y, z] = box.surfaceVelocity;
-      open.world.setBodySurfaceVelocity(physicsBodyHandle(open, `${SHELL_PREFIX}${box.id}`), { x, y, z });
+      open.world.setBodySurfaceVelocity(physicsBodyHandle(open, `${SHELL_PREFIX}${box.id}`), fromVec3(metersPerSecond, box.surfaceVelocity));
     }
     open.world.edit((edit) => {
       edit.createFluid(WATER_FLUID_CONFIG);
@@ -295,8 +349,9 @@ export function readWorldState(
   open: OpenYardPhysicsWorld,
   fluidInteractions?: readonly PhysicsFluidInteraction3D[],
 ): YardPhysicsWorldState {
+  const { count } = open.world.writeBodyMotionInto(MOTION_BATCH.poses, MOTION_BATCH.velocities, MOTION_BATCH.ids, MOTION_BATCH.status);
   const names = [...open.bodyIds.keys()].sort();
-  const bodies = names.map((name) => bodyView(name, open.world.readMotion(open.world.resolveBody(open.bodyIds.get(name)!))));
+  const bodies = names.map((name) => batchBodyView(name, batchRow(open.bodyIds.get(name)!, count)));
   const interactions: YardFluidInteraction[] = [];
   if (fluidInteractions) {
     for (const item of fluidInteractions) {
@@ -361,14 +416,14 @@ export function replacePhysicsBody(open: OpenYardPhysicsWorld, body: YardPhysics
 
 /** Sets linear velocity (m/tick) and wakes the body. The SDK setter is ~8x cheaper than a replaceBody edit. */
 export function setPhysicsBodyVelocity(open: OpenYardPhysicsWorld, id: string, velocity: Vec3): void {
-  open.world.setLinearVelocity(physicsBodyHandle(open, id), { x: velocity[0] * TICK_RATE, y: velocity[1] * TICK_RATE, z: velocity[2] * TICK_RATE });
+  open.world.setLinearVelocity(physicsBodyHandle(open, id), fromVec3(metersPerSecond, velocity, TICK_RATE));
 }
 
 /** Sets linear (m/tick) and angular (rad/tick) velocity and wakes the body. */
 export function setPhysicsBodyMotion(open: OpenYardPhysicsWorld, id: string, linear: Vec3, angular: Vec3): void {
   const handle = physicsBodyHandle(open, id);
-  open.world.setLinearVelocity(handle, { x: linear[0] * TICK_RATE, y: linear[1] * TICK_RATE, z: linear[2] * TICK_RATE });
-  open.world.setAngularVelocity(handle, { x: angular[0] * TICK_RATE, y: angular[1] * TICK_RATE, z: angular[2] * TICK_RATE });
+  open.world.setLinearVelocity(handle, fromVec3(metersPerSecond, linear, TICK_RATE));
+  open.world.setAngularVelocity(handle, fromVec3(radiansPerSecond, angular, TICK_RATE));
 }
 
 /**
@@ -380,9 +435,9 @@ export function launchPhysicsBody(open: OpenYardPhysicsWorld, id: string, positi
   const body = open.world.readBody(handle);
   open.world.edit((edit) => edit.replaceBody(handle, {
     ...body,
-    position: { x: position[0], y: position[1], z: position[2] },
-    linearVelocity: { x: velocity[0], y: velocity[1], z: velocity[2] },
-    angularVelocity: { x: spin[0], y: spin[1], z: spin[2] },
+    position: fromVec3(meters, position),
+    linearVelocity: fromVec3(metersPerSecond, velocity),
+    angularVelocity: fromVec3(radiansPerSecond, spin),
     linearDamping,
     sleeping: false,
   }));
@@ -395,7 +450,7 @@ export function setPhysicsBodyLinearDamping(open: OpenYardPhysicsWorld, id: stri
 }
 
 export function setPhysicsBodyAngularVelocity(open: OpenYardPhysicsWorld, id: string, angularVelocity: Vec3): void {
-  open.world.setAngularVelocity(physicsBodyHandle(open, id), { x: angularVelocity[0] * TICK_RATE, y: angularVelocity[1] * TICK_RATE, z: angularVelocity[2] * TICK_RATE });
+  open.world.setAngularVelocity(physicsBodyHandle(open, id), fromVec3(radiansPerSecond, angularVelocity, TICK_RATE));
 }
 
 export function replacePhysicsPose(
@@ -407,15 +462,11 @@ export function replacePhysicsPose(
   const body = open.world.readBody(handle);
   open.world.edit((edit) => edit.replaceBody(handle, {
     ...body,
-    position: {
-      x: pose.x ?? body.position.x,
-      y: pose.y ?? body.position.y,
-      z: pose.z ?? body.position.z,
-    },
+    position: vec(meters, pose.x ?? body.position.x, pose.y ?? body.position.y, pose.z ?? body.position.z),
     linearVelocity: {
-      x: (pose.vx ?? body.linearVelocity.x / TICK_RATE) * TICK_RATE,
-      y: (pose.vy ?? body.linearVelocity.y / TICK_RATE) * TICK_RATE,
-      z: (pose.vz ?? body.linearVelocity.z / TICK_RATE) * TICK_RATE,
+      x: pose.vx === undefined ? body.linearVelocity.x : metersPerSecond(pose.vx * TICK_RATE),
+      y: pose.vy === undefined ? body.linearVelocity.y : metersPerSecond(pose.vy * TICK_RATE),
+      z: pose.vz === undefined ? body.linearVelocity.z : metersPerSecond(pose.vz * TICK_RATE),
     },
     sleeping: false,
   }));
@@ -434,8 +485,8 @@ export function applyPhysicsForce(
   const handle = physicsBodyHandle(open, id);
   open.world.applyForce(
     handle,
-    { x: force[0], y: force[1], z: force[2] },
-    { x: torque[0], y: torque[1], z: torque[2] },
+    fromVec3(newtons, force),
+    fromVec3(newtonMeters, torque),
   );
 }
 
@@ -448,8 +499,8 @@ export function applyPhysicsForceAtPoint(
   const handle = physicsBodyHandle(open, id);
   open.world.applyForceAtPoint(
     handle,
-    { x: force[0], y: force[1], z: force[2] },
-    { x: point[0], y: point[1], z: point[2] },
+    fromVec3(newtons, force),
+    fromVec3(meters, point),
   );
 }
 

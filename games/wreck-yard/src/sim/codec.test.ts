@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decodeState, decodeVoxelRuns, encodeVoxelRuns } from './codec';
+import { decodeState, decodeVoxelRuns, encodeState, encodeVoxelRuns } from './codec';
 import { NEUTRAL_INPUT, TOOL, quantizeRay } from './input';
 import { YardSim } from './sim';
 import { patchPlayer, testSim } from './testSim';
@@ -34,6 +34,18 @@ describe('voxel runs', () => {
 });
 
 describe('state codec', () => {
+  it('decodes the header with the canonical decoder, so -0 stays a number', () => {
+    const sim = testSim(1);
+    const save = sim.save();
+    try {
+      const { state, checkpoint } = decodeState(sim.encode(save));
+      const negativeZero = { ...state, players: state.players.map((player) => ({ ...player, vx: -0 })) };
+      expect(Object.is(decodeState(encodeState({ state: negativeZero, checkpoint })).state.players[0]!.vx, -0)).toBe(true);
+    } finally {
+      sim.release(save);
+    }
+  });
+
   it('keeps the full yard state small enough to checksum every tick and send to late joiners', () => {
     const sim = testSim(4);
     const save = sim.save();
@@ -79,6 +91,8 @@ describe('state codec', () => {
     const restored = testSim(1);
     restored.restore(YardSim.decode(checkpoint));
     expect(restored.state.buggyWheels).toEqual(sim.state.buggyWheels);
+    expect(typeof restored.state.buggyVehicle?.chassisId).toBe('bigint');
+    expect(restored.state.buggyVehicle).toEqual(sim.state.buggyVehicle);
     for (let i = 0; i < 120; i++) {
       const input = { ...NEUTRAL_INPUT, moveZ: i < 90 ? 1 : 0, moveX: i > 65 && i < 85 ? .2 : 0 };
       sim.step([input]);

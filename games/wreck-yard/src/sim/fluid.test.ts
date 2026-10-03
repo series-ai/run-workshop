@@ -4,26 +4,34 @@ import {
   createPhysicsWorld3D,
   createVoxelChunk,
   initPhysics3D,
+  kilograms,
+  kilogramsPerCubicMeter,
+  meters,
+  metersPerSecond,
+  metersPerSecondSquared,
+  perSecond,
+  radiansPerSecond,
   setVoxelCell,
   type PhysicsBodyInput3D,
 } from '@series-inc/rundot-syncplay/physics/3d';
 import { stampBox } from 'voxel-kit';
+import { vec } from './units';
 
 await initPhysics3D();
 
 const FLUID_BOUNDS = {
-  minX: -10,
-  minY: -10,
-  minZ: -10,
-  maxX: 10,
-  maxY: 0,
-  maxZ: 10,
+  minX: meters(-10),
+  minY: meters(-10),
+  minZ: meters(-10),
+  maxX: meters(10),
+  maxY: meters(0),
+  maxZ: meters(10),
 };
 
 function createTestWorld(capacity?: { bodies?: number; joints?: number; fluids?: number; fluidInteractions?: number }) {
   return createPhysicsWorld3D({
     tickRate: 60,
-    initialGravity: { x: 0, y: -10, z: 0 },
+    initialGravity: vec(metersPerSecondSquared, 0, -10, 0),
     capacity: {
       bodies: capacity?.bodies ?? 64,
       joints: capacity?.joints ?? 16,
@@ -46,15 +54,15 @@ function makeBoxBody(options: {
     kind: 'dynamic',
     shape: {
       type: 'box',
-      halfX: options.halfX ?? 0.5,
-      halfY: options.halfY ?? 0.5,
-      halfZ: options.halfZ ?? 0.5,
+      halfX: meters(options.halfX ?? 0.5),
+      halfY: meters(options.halfY ?? 0.5),
+      halfZ: meters(options.halfZ ?? 0.5),
     },
-    position: options.position ?? { x: 0, y: 2, z: 0 },
+    position: options.position ? vec(meters, options.position.x, options.position.y, options.position.z) : vec(meters, 0, 2, 0),
     orientation: { x: 0, y: 0, z: 0, w: 1 },
-    linearVelocity: { x: 0, y: 0, z: 0 },
-    angularVelocity: { x: 0, y: 0, z: 0 },
-    mass: options.mass ?? 1,
+    linearVelocity: vec(metersPerSecond, 0, 0, 0),
+    angularVelocity: vec(radiansPerSecond, 0, 0, 0),
+    mass: kilograms(options.mass ?? 1),
     linearDamping: 0.1,
     angularDamping: 0.1,
     friction: 0.5,
@@ -72,11 +80,11 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
     } = world.edit((edit) => ({
       water: edit.createFluid({
         bounds: FLUID_BOUNDS,
-        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: 0 },
-        density: 1,
-        linearDragPerSecond: 2,
-        angularDragPerSecond: 1,
-        flowVelocity: { x: 0, y: 0, z: 0 },
+        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: meters(0) },
+        density: kilogramsPerCubicMeter(1),
+        linearDragPerSecond: perSecond(2),
+        angularDragPerSecond: perSecond(1),
+        flowVelocity: vec(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),
@@ -100,8 +108,8 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
       const current = world.readBody(body);
       edit.replaceBody(body, {
         ...current,
-        position: { x: 0, y: 5, z: 0 },
-        linearVelocity: { x: 0, y: 0, z: 0 },
+        position: vec(meters, 0, 5, 0),
+        linearVelocity: vec(metersPerSecond, 0, 0, 0),
       });
     });
 
@@ -119,11 +127,11 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
     } = world.edit((edit) => ({
       water: edit.createFluid({
         bounds: FLUID_BOUNDS,
-        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: 0 },
-        density: 1,
-        linearDragPerSecond: 2,
-        angularDragPerSecond: 1,
-        flowVelocity: { x: 0, y: 0, z: 0 },
+        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: meters(0) },
+        density: kilogramsPerCubicMeter(1),
+        linearDragPerSecond: perSecond(2),
+        angularDragPerSecond: perSecond(1),
+        flowVelocity: vec(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),
@@ -139,8 +147,8 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
       const current = world.readBody(body);
       edit.replaceBody(body, {
         ...current,
-        position: { x: 0, y: 5, z: 0 },
-        linearVelocity: { x: 0, y: 0, z: 0 },
+        position: vec(meters, 0, 5, 0),
+        linearVelocity: vec(metersPerSecond, 0, 0, 0),
       });
     });
 
@@ -158,11 +166,11 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
     world.edit((edit) => ({
       water: edit.createFluid({
         bounds: FLUID_BOUNDS,
-        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: 0 },
-        density: 1,
-        linearDragPerSecond: 2,
-        angularDragPerSecond: 1,
-        flowVelocity: { x: 0, y: 0, z: 0 },
+        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: meters(0) },
+        density: kilogramsPerCubicMeter(1),
+        linearDragPerSecond: perSecond(2),
+        angularDragPerSecond: perSecond(1),
+        flowVelocity: vec(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),
@@ -172,19 +180,19 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
     const cellSize = 0.1;
 
     // 1. Solid chunk: fully occupied
-    const solidChunk = createVoxelChunk(dims.x, dims.y, dims.z, cellSize);
+    const solidChunk = createVoxelChunk(dims.x, dims.y, dims.z, meters(cellSize));
     stampBox(solidChunk.occupancy, dims, { x: 0, y: 0, z: 0 }, { x: 5, y: 5, z: 5 }, 1);
-    const cookedSolid = cookVoxelBody(solidChunk, 10);
+    const cookedSolid = cookVoxelBody(solidChunk, kilograms(10));
     expect(cookedSolid.status).toBe(0);
     if (cookedSolid.status !== 0) throw new Error('Solid cook failed');
 
     // 2. Hollow chunk: only walls (interior 1..4 hollowed out)
-    const hollowChunk = createVoxelChunk(dims.x, dims.y, dims.z, cellSize);
+    const hollowChunk = createVoxelChunk(dims.x, dims.y, dims.z, meters(cellSize));
     stampBox(hollowChunk.occupancy, dims, { x: 0, y: 0, z: 0 }, { x: 5, y: 5, z: 5 }, 1);
     stampBox(hollowChunk.occupancy, dims, { x: 1, y: 1, z: 1 }, { x: 4, y: 4, z: 4 }, 0);
     // Test setVoxelCell directly
     setVoxelCell(hollowChunk, 0, 0, 0, true);
-    const cookedHollow = cookVoxelBody(hollowChunk, 5);
+    const cookedHollow = cookVoxelBody(hollowChunk, kilograms(5));
     expect(cookedHollow.status).toBe(0);
     if (cookedHollow.status !== 0) throw new Error('Hollow cook failed');
 
@@ -194,10 +202,10 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
       solidBody: edit.createBody({
         kind: 'dynamic',
         shape: cookedSolid.body.shape,
-        position: { x: -2, y: -3, z: 0 }, // fully submerged below surface (y=0)
+        position: vec(meters, -2, -3, 0), // fully submerged below surface (y=0)
         orientation: { x: 0, y: 0, z: 0, w: 1 },
-        linearVelocity: { x: 0, y: 0, z: 0 },
-        angularVelocity: { x: 0, y: 0, z: 0 },
+        linearVelocity: vec(metersPerSecond, 0, 0, 0),
+        angularVelocity: vec(radiansPerSecond, 0, 0, 0),
         mass: cookedSolid.body.mass,
         inertia: cookedSolid.body.inertia,
         centerOfMass: cookedSolid.body.centerOfMass,
@@ -211,10 +219,10 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
       hollowBody: edit.createBody({
         kind: 'dynamic',
         shape: cookedHollow.body.shape,
-        position: { x: 2, y: -3, z: 0 }, // fully submerged below surface (y=0)
+        position: vec(meters, 2, -3, 0), // fully submerged below surface (y=0)
         orientation: { x: 0, y: 0, z: 0, w: 1 },
-        linearVelocity: { x: 0, y: 0, z: 0 },
-        angularVelocity: { x: 0, y: 0, z: 0 },
+        linearVelocity: vec(metersPerSecond, 0, 0, 0),
+        angularVelocity: vec(radiansPerSecond, 0, 0, 0),
         mass: cookedHollow.body.mass,
         inertia: cookedHollow.body.inertia,
         centerOfMass: cookedHollow.body.centerOfMass,
@@ -249,11 +257,11 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
     world.edit((edit) => ({
       water: edit.createFluid({
         bounds: FLUID_BOUNDS,
-        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: 0 },
-        density: 1,
-        linearDragPerSecond: 2,
-        angularDragPerSecond: 1,
-        flowVelocity: { x: 0, y: 0, z: 0 },
+        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: meters(0) },
+        density: kilogramsPerCubicMeter(1),
+        linearDragPerSecond: perSecond(2),
+        angularDragPerSecond: perSecond(1),
+        flowVelocity: vec(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),
@@ -261,9 +269,9 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
 
     const dims = { x: 4, y: 8, z: 4 };
     const cellSize = 0.1;
-    const fullChunk = createVoxelChunk(dims.x, dims.y, dims.z, cellSize);
+    const fullChunk = createVoxelChunk(dims.x, dims.y, dims.z, meters(cellSize));
     stampBox(fullChunk.occupancy, dims, { x: 0, y: 0, z: 0 }, { x: 3, y: 7, z: 3 }, 1);
-    const cookedFull = cookVoxelBody(fullChunk, 10);
+    const cookedFull = cookVoxelBody(fullChunk, kilograms(10));
     expect(cookedFull.status).toBe(0);
     if (cookedFull.status !== 0) throw new Error('Full cook failed');
 
@@ -273,10 +281,10 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
       fullBody: edit.createBody({
         kind: 'dynamic',
         shape: cookedFull.body.shape,
-        position: { x: 0, y: -4, z: 0 },
+        position: vec(meters, 0, -4, 0),
         orientation: { x: 0, y: 0, z: 0, w: 1 },
-        linearVelocity: { x: 0, y: 0, z: 0 },
-        angularVelocity: { x: 0, y: 0, z: 0 },
+        linearVelocity: vec(metersPerSecond, 0, 0, 0),
+        angularVelocity: vec(radiansPerSecond, 0, 0, 0),
         mass: cookedFull.body.mass,
         inertia: cookedFull.body.inertia,
         centerOfMass: cookedFull.body.centerOfMass,
@@ -295,16 +303,16 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
 
     // Simulate cut: replace full body with two halves
     const halfADims = { x: 4, y: 4, z: 4 };
-    const halfAChunk = createVoxelChunk(halfADims.x, halfADims.y, halfADims.z, cellSize);
+    const halfAChunk = createVoxelChunk(halfADims.x, halfADims.y, halfADims.z, meters(cellSize));
     stampBox(halfAChunk.occupancy, halfADims, { x: 0, y: 0, z: 0 }, { x: 3, y: 3, z: 3 }, 1);
-    const cookedHalfA = cookVoxelBody(halfAChunk, 5);
+    const cookedHalfA = cookVoxelBody(halfAChunk, kilograms(5));
     expect(cookedHalfA.status).toBe(0);
     if (cookedHalfA.status !== 0) throw new Error('HalfA cook failed');
 
     const halfBDims = { x: 4, y: 4, z: 4 };
-    const halfBChunk = createVoxelChunk(halfBDims.x, halfBDims.y, halfBDims.z, cellSize);
+    const halfBChunk = createVoxelChunk(halfBDims.x, halfBDims.y, halfBDims.z, meters(cellSize));
     stampBox(halfBChunk.occupancy, halfBDims, { x: 0, y: 0, z: 0 }, { x: 3, y: 3, z: 3 }, 1);
-    const cookedHalfB = cookVoxelBody(halfBChunk, 5);
+    const cookedHalfB = cookVoxelBody(halfBChunk, kilograms(5));
     expect(cookedHalfB.status).toBe(0);
     if (cookedHalfB.status !== 0) throw new Error('HalfB cook failed');
 
@@ -316,10 +324,10 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
         pieceA: edit.createBody({
           kind: 'dynamic',
           shape: cookedHalfA.body.shape,
-          position: { x: 0, y: -3.8, z: 0 },
+          position: vec(meters, 0, -3.8, 0),
           orientation: { x: 0, y: 0, z: 0, w: 1 },
-          linearVelocity: { x: 0, y: 0, z: 0 },
-          angularVelocity: { x: 0, y: 0, z: 0 },
+          linearVelocity: vec(metersPerSecond, 0, 0, 0),
+          angularVelocity: vec(radiansPerSecond, 0, 0, 0),
           mass: cookedHalfA.body.mass,
           inertia: cookedHalfA.body.inertia,
           centerOfMass: cookedHalfA.body.centerOfMass,
@@ -333,10 +341,10 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
         pieceB: edit.createBody({
           kind: 'dynamic',
           shape: cookedHalfB.body.shape,
-          position: { x: 0, y: -4.2, z: 0 },
+          position: vec(meters, 0, -4.2, 0),
           orientation: { x: 0, y: 0, z: 0, w: 1 },
-          linearVelocity: { x: 0, y: 0, z: 0 },
-          angularVelocity: { x: 0, y: 0, z: 0 },
+          linearVelocity: vec(metersPerSecond, 0, 0, 0),
+          angularVelocity: vec(radiansPerSecond, 0, 0, 0),
           mass: cookedHalfB.body.mass,
           inertia: cookedHalfB.body.inertia,
           centerOfMass: cookedHalfB.body.centerOfMass,
@@ -369,11 +377,11 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
     } = world.edit((edit) => ({
       water: edit.createFluid({
         bounds: FLUID_BOUNDS,
-        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: 0 },
-        density: 1,
-        linearDragPerSecond: 2,
-        angularDragPerSecond: 1,
-        flowVelocity: { x: 0, y: 0, z: 0 },
+        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: meters(0) },
+        density: kilogramsPerCubicMeter(1),
+        linearDragPerSecond: perSecond(2),
+        angularDragPerSecond: perSecond(1),
+        flowVelocity: vec(metersPerSecond, 0, 0, 0),
         layer: 0b01, // Fluid layer 1
         mask: 0b01,  // Fluid mask 1
       }),
@@ -400,11 +408,11 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
     world.edit((edit) => ({
       water: edit.createFluid({
         bounds: FLUID_BOUNDS,
-        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: 0 },
-        density: 1,
-        linearDragPerSecond: 2,
-        angularDragPerSecond: 1,
-        flowVelocity: { x: 0, y: 0, z: 0 },
+        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: meters(0) },
+        density: kilogramsPerCubicMeter(1),
+        linearDragPerSecond: perSecond(2),
+        angularDragPerSecond: perSecond(1),
+        flowVelocity: vec(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),
@@ -424,11 +432,11 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
     world.edit((edit) => ({
       water: edit.createFluid({
         bounds: FLUID_BOUNDS,
-        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: 0 },
-        density: 1,
-        linearDragPerSecond: 2,
-        angularDragPerSecond: 1,
-        flowVelocity: { x: 0, y: 0, z: 0 },
+        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: meters(0) },
+        density: kilogramsPerCubicMeter(1),
+        linearDragPerSecond: perSecond(2),
+        angularDragPerSecond: perSecond(1),
+        flowVelocity: vec(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),
@@ -466,11 +474,11 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
       return w.edit((edit) => ({
         water: edit.createFluid({
           bounds: FLUID_BOUNDS,
-          surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: 0 },
-          density: 1,
-          linearDragPerSecond: 2,
-          angularDragPerSecond: 1,
-          flowVelocity: { x: 0, y: 0, z: 0 },
+          surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: meters(0) },
+          density: kilogramsPerCubicMeter(1),
+          linearDragPerSecond: perSecond(2),
+          angularDragPerSecond: perSecond(1),
+          flowVelocity: vec(metersPerSecond, 0, 0, 0),
           layer: 1,
           mask: 0xffffffff,
         }),
@@ -507,11 +515,11 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
     } = world.edit((edit) => ({
       water: edit.createFluid({
         bounds: FLUID_BOUNDS,
-        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: 0 },
-        density: 1,
-        linearDragPerSecond: 2,
-        angularDragPerSecond: 1,
-        flowVelocity: { x: 0, y: 0, z: 0 },
+        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: meters(0) },
+        density: kilogramsPerCubicMeter(1),
+        linearDragPerSecond: perSecond(2),
+        angularDragPerSecond: perSecond(1),
+        flowVelocity: vec(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),
@@ -533,11 +541,11 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
     world.edit((edit) => ({
       newWater: edit.createFluid({
         bounds: FLUID_BOUNDS,
-        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: 0 },
-        density: 1,
-        linearDragPerSecond: 2,
-        angularDragPerSecond: 1,
-        flowVelocity: { x: 0, y: 0, z: 0 },
+        surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: meters(0) },
+        density: kilogramsPerCubicMeter(1),
+        linearDragPerSecond: perSecond(2),
+        angularDragPerSecond: perSecond(1),
+        flowVelocity: vec(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),

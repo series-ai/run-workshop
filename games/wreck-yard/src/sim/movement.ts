@@ -1,10 +1,12 @@
 import { stepDeterministicKcc3D } from '@series-inc/rundot-syncplay/browser';
+import { meters } from '@series-inc/rundot-syncplay/physics/3d';
 import { ARENA_EXTENT, DT, FLOOR_Y, PLAYER_HEIGHT, PLAYER_RADIUS } from './constants';
 import type { Vec3 } from './math';
 import type { OpenYardPhysicsWorld } from './physics';
 import type { PlayerState } from './state';
 
 const HALF_HEIGHT = PLAYER_HEIGHT * 0.5 - PLAYER_RADIUS;
+const CAPSULE = { type: 'capsule', radius: meters(PLAYER_RADIUS), halfHeight: meters(HALF_HEIGHT) } as const;
 
 /** Tallest edge the player walks up onto (m). */
 const STEP_HEIGHT = 0.3;
@@ -36,8 +38,8 @@ export function movePlayer(physics: OpenYardPhysicsWorld, player: PlayerPose, ve
   // Room at the lifted height itself: an edge the capsule already touches below
   // (a plate pushed against the player) must not count as a ceiling.
   const blockedAbove = physics.world.overlap({
-    x: player.x, y: player.y + STEP_HEIGHT + HALF_HEIGHT, z: player.z,
-    shape: { type: 'capsule', radius: PLAYER_RADIUS, halfHeight: HALF_HEIGHT },
+    x: meters(player.x), y: meters(player.y + STEP_HEIGHT + HALF_HEIGHT), z: meters(player.z),
+    shape: CAPSULE,
     hitTriggers: false, hitSensors: false,
   });
   if (blockedAbove.length > 0) return direct;
@@ -51,8 +53,8 @@ export function movePlayer(physics: OpenYardPhysicsWorld, player: PlayerPose, ve
   // The KCC grounds on what is under the capsule's center. Next to a tall edge that
   // is the floor while the capsule's side is inside the step; refuse that landing.
   const inside = physics.world.overlap({
-    x: landed.x, y: landed.y + HALF_HEIGHT + LANDING_CLEARANCE, z: landed.z,
-    shape: { type: 'capsule', radius: PLAYER_RADIUS, halfHeight: HALF_HEIGHT },
+    x: meters(landed.x), y: meters(landed.y + HALF_HEIGHT + LANDING_CLEARANCE), z: meters(landed.z),
+    shape: CAPSULE,
     hitTriggers: false, hitSensors: false,
   });
   if (inside.length > 0) return direct;
@@ -66,9 +68,9 @@ function moveWithKcc(physics: OpenYardPhysicsWorld, player: PlayerPose, velocity
   let vertical = velocity[1] * DT;
   if (vertical > 0) {
     const ceiling = queries.shapeCast({
-      x: player.x, y: centerY, z: player.z,
-      shape: { type: 'capsule', radius: PLAYER_RADIUS, halfHeight: HALF_HEIGHT },
-      dx: 0, dy: 1, dz: 0, maxDistance: vertical,
+      x: meters(player.x), y: meters(centerY), z: meters(player.z),
+      shape: CAPSULE,
+      dx: 0, dy: 1, dz: 0, maxDistance: meters(vertical),
       hitTriggers: false, hitSensors: false,
     }).find((hit) => hit.normal.y > 0.5);
     if (ceiling) vertical = Math.max(0, ceiling.distance - 0.01);

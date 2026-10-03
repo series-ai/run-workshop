@@ -1,4 +1,4 @@
-import { canonicalStringify } from '@series-inc/rundot-syncplay/browser';
+import { canonicalParse, canonicalStringify } from '@series-inc/rundot-syncplay/browser';
 import type { YardPhysicsWorldState } from './physics';
 import type { YardBody, YardState } from './state';
 
@@ -118,7 +118,8 @@ export function decodeState(bytes: Uint8Array): EncodedYard {
   if (view.getUint32(0) !== MAGIC) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: bad magic');
   const headerLength = view.getUint32(4);
   if (8 + headerLength > bytes.byteLength) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: header overflow');
-  const header = JSON.parse(decoder.decode(bytes.subarray(8, 8 + headerLength))) as Header;
+  // canonicalParse restores what canonicalStringify tags, such as -0.
+  const header = canonicalParse<Header>(decoder.decode(bytes.subarray(8, 8 + headerLength)));
   let offset = 8 + headerLength;
   if (offset + header.world.checkpointBytes > bytes.byteLength) {
     throw new Error('WRECK_YARD_STATE_BYTES_INVALID: checkpoint overflow');

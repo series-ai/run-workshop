@@ -1,3 +1,4 @@
+import type { DeterministicVehicleState3D } from '@series-inc/rundot-syncplay/physics/3d';
 import type { VoxelDims } from 'voxel-kit';
 import type { Vec3 } from './math';
 import type { YardPhysicsWorldState } from './physics';
@@ -128,6 +129,7 @@ export const INITIAL_CONTRAPTIONS: ContraptionState = {
   ballistic: [],
 };
 
+/** What the renderer draws for one wheel. Syncplay's vehicle step reports it. */
 export interface BuggyWheelState {
   readonly compression: number;
   readonly steerAngleTurns: number;
@@ -137,6 +139,8 @@ export interface BuggyWheelState {
 
 export interface YardState {
   readonly buggyWheels?: readonly BuggyWheelState[];
+  /** Syncplay's revision 2 vehicle state. Canonical JSON keeps its bigint ids (codec.ts). */
+  readonly buggyVehicle?: DeterministicVehicleState3D;
   readonly frame: number;
   readonly bodies: readonly YardBody[];
   readonly world: YardPhysicsWorldState;
