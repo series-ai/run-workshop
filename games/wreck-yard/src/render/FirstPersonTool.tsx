@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import * as THREE from 'three';
 import { Toon } from './style/toonMaterial';
 import type { UiTool } from './keyBindings';
-import { feedbackEffect, isTorchFiring } from './toolFeedback';
+import { feedbackEffect, torchVisual } from './toolFeedback';
 import type { YardRender } from './presentation';
 import { lerpAngle } from '../sim/math';
 
@@ -151,8 +151,9 @@ export function FirstPersonTool({
     // OXY-ACETYLENE TORCH DYNAMICS
     // =========================================================================
     if (tool === 'torch') {
-      // The flame shows whenever the torch fires, not only while it cuts a body.
-      const flameActive = render !== null && isTorchFiring(localPlayer?.feedback ?? null, render.frame);
+      // A stream lights the nozzle and the scene; a fizzle (nothing in range) only sputters.
+      const visual = render !== null ? torchVisual(localPlayer?.feedback ?? null, render.frame) : null;
+      const sputter = visual === 'fizzle' && Math.random() < 0.6;
       if (pilotFlameRef.current) {
         const pilotPulse = 0.9 + Math.sin(state.clock.elapsedTime * 15) * 0.15;
         pilotFlameRef.current.scale.set(pilotPulse, pilotPulse, pilotPulse);
@@ -160,10 +161,10 @@ export function FirstPersonTool({
       if (nozzleGlowRef.current) {
         // High heat emissive surge
         const mat = nozzleGlowRef.current.material as THREE.MeshBasicMaterial;
-        mat.color.set(flameActive ? '#fff1ca' : '#ea580c');
+        mat.color.set(visual === 'stream' ? '#fff1ca' : sputter ? '#ffb347' : '#ea580c');
       }
       if (torchLightRef.current) {
-        torchLightRef.current.intensity = flameActive ? 6.5 + Math.random() * 1.2 : 0.5;
+        torchLightRef.current.intensity = visual === 'stream' ? 6.5 + Math.random() * 1.2 : sputter ? 0.8 + Math.random() * 1.4 : 0.5;
       }
     }
 

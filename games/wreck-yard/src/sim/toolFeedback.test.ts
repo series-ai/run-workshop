@@ -70,6 +70,13 @@ describe('tool feedback', () => {
     expect(body.players[0]!.feedback!.result).toBe('cut');
   });
 
+  it('cuts a body 3.2 m away', () => {
+    const sim = settled();
+    const gantry = physicsStateBodyById(sim.state.world, 'steel-gantry')!;
+    const reach = click(sim, { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...ray([gantry.x + 0.2, gantry.y + 3.4, gantry.z + 0.001], [gantry.x + 0.2, gantry.y + 0.2, gantry.z]) });
+    expect(reach.players[0]!.feedback!.result).toBe('cut');
+  });
+
   it('reaches only TORCH_RANGE: a body or wall farther away is a miss and is not cut', () => {
     // Both clicks start from the same settled yard.
     const sim = settled();
@@ -84,4 +91,6 @@ describe('tool feedback', () => {
     expect(wall.players[0]!.feedback!.result).toBe('miss');
     expect(wall.players[0]!.feedback!.point[2]).toBeCloseTo(20 + TORCH_RANGE, 1);
   });
+
 });
+

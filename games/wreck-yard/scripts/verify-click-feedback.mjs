@@ -101,10 +101,9 @@ try {
   await shot('gun-punt-burst');
   await page.evaluate(() => window.__SIMULATE_INPUT__({ secondary: false }));
   results['gun-punt-burst'] = { result: punted.feedback?.result ?? null };
-  // 7. Torch at the wall: flame and sparks, no cut.
-  // The wall is far past TORCH_RANGE: the flame burns out in the air at the end of its reach.
+  // 7. Torch at the wall, far past TORCH_RANGE: no stream, only a fizzle and a puff at the nozzle.
   await click('torch-out-of-range', 'torch', [me.position[0], me.position[1] + 0.5, 30], { hold: 500 });
-  // The floor 1.3 m ahead is within reach: the flame ends on it and scorches it.
+  // The floor 1.3 m ahead is within reach: a stream of fire runs to it and scorches it.
   await click('torch-scorch-floor', 'torch', [me.position[0], me.position[1] - 0.4, me.position[2] - 1.3], { hold: 500 });
 
   assert.equal(results['gun-miss'].result, 'miss');

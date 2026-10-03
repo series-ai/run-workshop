@@ -16,8 +16,8 @@ export const GRAVITY_PER_TICK2 = -GRAVITY * DT2;
 export const LINEAR_DAMPING = 0.98;
 export const ANGULAR_DAMPING = 0.945;
 export const MAX_RAY_DISTANCE = 40;
-/** The torch cuts only within arm's reach of the eye (m): the player must walk up to cut. */
-export const TORCH_RANGE = 2.5;
+/** The torch flame reaches this far from the eye (m). Past it, the torch only fizzles at the nozzle. */
+export const TORCH_RANGE = 3.5;
 export const MAX_PLAYERS = 4;
 export const SHELL_PREFIX = 'shell:';
 

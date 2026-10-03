@@ -56,6 +56,17 @@ export function isTorchFiring(feedback: ToolFeedback | null, frame: number): boo
   return frame - feedback.frame < TORCH_FIRING_TICKS;
 }
 
+/**
+ * What the torch shows while it fires: a stream of fire to what it hits
+ * within TORCH_RANGE, or a fizzle at the nozzle when nothing is in range.
+ */
+export type TorchVisual = 'stream' | 'fizzle';
+
+export function torchVisual(feedback: ToolFeedback | null, frame: number): TorchVisual | null {
+  if (!feedback || !isTorchFiring(feedback, frame)) return null;
+  return feedback.result === 'miss' ? 'fizzle' : 'stream';
+}
+
 type V3 = readonly [number, number, number];
 
 /**

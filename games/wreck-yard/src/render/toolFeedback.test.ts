@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { bezierPoint, effectProgress, FEEDBACK_EFFECT_TICKS, feedbackEffect, isTorchFiring, tractorControlPoint } from './toolFeedback';
+import type { ToolFeedback } from '../sim/state';
+import { bezierPoint, effectProgress, FEEDBACK_EFFECT_TICKS, feedbackEffect, isTorchFiring, torchVisual, tractorControlPoint } from './toolFeedback';
 
 describe('tool feedback effects', () => {
   it('pushes objects out with a burst, not a beam, on throw and punt', () => {
@@ -42,4 +43,15 @@ describe('tool feedback effects', () => {
     const onAim = tractorControlPoint(muzzle, aim, [0, 0, -4]);
     expect(bezierPoint(muzzle, onAim, [0, 0, -4], 0.5)[0]).toBeCloseTo(0);
   });
+
+  it('streams fire at what the torch hits in range, fizzles when nothing is in range, and shows nothing when it stops', () => {
+    const at = (result: ToolFeedback['result'], frame: number): ToolFeedback => ({ result, frame, point: [0, 0, 0] });
+    expect(torchVisual(at('cut', 10), 10)).toBe('stream');
+    expect(torchVisual(at('scorch', 10), 11)).toBe('stream');
+    expect(torchVisual(at('miss', 10), 10)).toBe('fizzle');
+    expect(torchVisual(at('miss', 10), 12)).toBeNull();
+    expect(torchVisual(at('grab', 10), 10)).toBeNull();
+    expect(torchVisual(null, 10)).toBeNull();
+  });
 });
+
