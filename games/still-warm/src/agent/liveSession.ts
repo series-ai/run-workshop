@@ -64,7 +64,6 @@ import { createInitialTempo, updateTempo, type TempoTracker } from "../game/temp
 import { formatSensoryNarration } from "./sensoryNarration";
 import { isStandAttempt, isRollAttempt } from "../game/waitingThoughts";
 import { createCreatureTriage } from "./creatureTriage";
-import { createNormalizingJudgeTransport } from "./judgeTransport";
 
 export interface LiveHooks {
   onVocalize(cue: VocalCue): void;
@@ -276,9 +275,9 @@ export async function createLiveSession(
     baseTransport,
     () => respondedThisTurn,
   );
-  const judgeTransport = createNormalizingJudgeTransport(
-    createTextGenJudgeTransport(run.textGen),
-  );
+  // beta.5 normalizes the decide endpoint's untyped answers
+  // (no "type" discriminator) inside createTextGenJudgeTransport.
+  const judgeTransport = createTextGenJudgeTransport(run.textGen);
   const triage = createCreatureTriage(tools, {
     store,
     getTempo: () => tempo,

@@ -21,7 +21,7 @@
     "@react-three/drei": "^9.121.0",
     "@react-three/fiber": "^8.17.0",
     "@react-three/postprocessing": "^2.16.0",
-    "@series-inc/rundot-agent": "^0.1.0-beta.4",
+    "@series-inc/rundot-agent": "^0.1.0-beta.5",
     "@series-inc/rundot-game-sdk": "^5.29.0",
     "dither-kit": "file:../../tools/dither-kit",
     "postprocessing": "^6.36.0",

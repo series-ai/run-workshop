@@ -118,3 +118,13 @@ it upstream if useful.
   completion requests; a fast-path turn costs 1 decide. Once routing works,
   the fast path meaningfully stretches that budget (most of our turns are
   discrete commands).
+
+## Update (2026-10-03)
+
+0.1.0-beta.5 (published 2026-10-02 23:55 UTC) fixes Bug 2:
+createTextGenJudgeTransport now normalizes decide answers against the
+question definitions and injects the type discriminator. We upgraded and
+deleted our local wrapper; fast path and chat escalation both verified
+live. Bug 1 remains open: reasoningEffort is still forwarded verbatim, the
+quick tier still rejects "none", and the in-stream 400 still classifies as
+kind "unknown".
