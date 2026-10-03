@@ -5,6 +5,7 @@ import { Stage } from './components/Stage'
 import { EFFECTS } from './runtime/effects'
 import { parseManifest } from './catalog'
 import { validateAvatar } from './runtime/physics'
+import { ROLE_BY_ID } from './runtime/roles'
 import { UINavRail } from './components/UINavRail'
 import { UIHeader } from './components/UIHeader'
 import { UIInspector } from './components/UIInspector'
@@ -176,7 +177,13 @@ export const App: FC = () => {
 
   // Mode selection helper
   const handleSelectMode = useCallback((mode: ViewMode) => {
-    updateSettings((prev) => ({ ...prev, mode }))
+    updateSettings((prev) => ({
+      ...prev,
+      mode,
+      animationId: mode === 'avatars' && (!prev.animationId || prev.animationId === 'idle')
+        ? (ROLE_BY_ID.get(prev.avatar.preset)?.preview ?? 'block')
+        : prev.animationId,
+    }))
     // On mobile, auto-close or open inspector sensibly
     if (mode === 'combat' || mode === 'parkour') {
       setIsInspectorOpenMobile(false)

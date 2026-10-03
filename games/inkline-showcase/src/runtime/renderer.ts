@@ -306,7 +306,14 @@ export class InklineRenderer {
     if (settings.camera !== previous.camera) this.frameCamera()
     if (settings.animationId !== previous.animationId && !this.isGame()) {
       this.trails.clear(); this.trailClipTime = 0
-      try { this.animationElapsed = 0; this.actors.forEach(actor => this.play(actor, settings.animationId, true)); if (['animations', 'avatars', 'assets'].includes(settings.mode)) this.refitPreviewCamera(true) } catch (error) { this.fail(error) }
+      try {
+        this.animationElapsed = 0
+        this.actors.forEach(actor => {
+          this.play(actor, settings.animationId, true)
+          if (!settings.playing) actor.mixer.update(0)
+        })
+        if (['animations', 'avatars', 'assets'].includes(settings.mode)) this.refitPreviewCamera(true)
+      } catch (error) { this.fail(error) }
     }
     if (settings.seek !== previous.seek && settings.seek !== null && settings.mode === 'animations') {
       this.trails.clear(); this.trailClipTime = 0
