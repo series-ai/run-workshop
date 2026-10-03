@@ -56,6 +56,7 @@ describe('ART_STYLE definitions & invariants (T1)', () => {
       'mustard',
       'rust',
       'metal',
+      'dangerRed',
       'waterDeep',
       'waterShallow',
       'waterFoam',

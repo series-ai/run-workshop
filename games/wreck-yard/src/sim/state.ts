@@ -80,6 +80,8 @@ export interface YardStats {
   readonly fractures: number;
   /** Bodies that dropped down through the hoop (sim/contraptions.ts). */
   readonly dunks: number;
+  /** Fuel drums that blew up (sim/fuelDrum.ts). */
+  readonly explosions: number;
 }
 
 /** A catapult-launched body that flies without damping until frame `until`. */
@@ -88,11 +90,29 @@ export interface BallisticBody {
   readonly until: number;
 }
 
+/** A fuel drum from the sky conveyor (sim/fuelDrum.ts). */
+export interface FuelDrumState {
+  readonly bodyId: string;
+  /** 0 when new. At FUEL_DRUM.maxDamage the drum is lit. */
+  readonly damage: number;
+  /** Frame on which a lit drum explodes; null while it is not lit. */
+  readonly detonateAt: number | null;
+}
+
+/** A drum explosion, kept for a short time so the render can show it. */
+export interface Explosion {
+  readonly at: Vec3;
+  readonly radius: number;
+  readonly frame: number;
+}
+
 export interface ContraptionState {
-  /** Frame of the last crate drop; -Infinity is not JSON, so "never" is a large negative frame. */
+  /** Frame of the last drum drop; -Infinity is not JSON, so "never" is a large negative frame. */
   readonly lastDropFrame: number;
-  /** Crates the conveyor dropped that still exist, oldest first. */
-  readonly droppedCrates: readonly string[];
+  /** Drums the conveyor dropped that still exist, oldest first. */
+  readonly drums: readonly FuelDrumState[];
+  /** Recent explosions, oldest first (sim/fuelDrum.ts EXPLOSION_SHOW_TICKS). */
+  readonly explosions: readonly Explosion[];
   readonly lastLaunchFrame: number;
   readonly ballistic: readonly BallisticBody[];
 }
@@ -101,7 +121,8 @@ export const NEVER_FRAME = -1_000_000;
 
 export const INITIAL_CONTRAPTIONS: ContraptionState = {
   lastDropFrame: NEVER_FRAME,
-  droppedCrates: [],
+  drums: [],
+  explosions: [],
   lastLaunchFrame: NEVER_FRAME,
   ballistic: [],
 };

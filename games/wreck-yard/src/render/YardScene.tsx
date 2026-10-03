@@ -17,6 +17,8 @@ import { VoxelBodies } from './VoxelBodies';
 import { YardShell } from './YardShell';
 import { Contraptions } from './Contraptions';
 import { ArenaCage } from './ArenaCage';
+import { Explosions } from './Explosions';
+import { FuelDrumFx } from './FuelDrumFx';
 import { InkComposer } from './style/InkComposer';
 import type { YardRender } from './presentation';
 import { DynamicDpr, isMobileDevice } from './DynamicDpr';
@@ -61,6 +63,8 @@ function SceneRoot({ controller, tool, quality, onQualityFallback, onToolChange,
       <PlayerAvatars renderRef={renderRef} tool={tool} />
       <FirstPersonTool tool={tool} renderRef={renderRef} />
       <TorchSparks tool={tool} renderRef={renderRef} />
+      <FuelDrumFx renderRef={renderRef} />
+      <Explosions renderRef={renderRef} />
       <ToolFeedbackBeams tool={tool} renderRef={renderRef} />
       <TractorBeam tool={tool} renderRef={renderRef} />
       <TorchJet tool={tool} renderRef={renderRef} />

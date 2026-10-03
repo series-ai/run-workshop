@@ -37,15 +37,16 @@ import {
   CATAPULT,
   catapultLaunchVelocity,
   CONVEYOR,
-  CRATE_SPAWN,
+  DRUM_SPAWN,
   crossedHoop,
   DROP_COOLDOWN_TICKS,
   inCatapultBucket,
-  MAX_DROPPED_CRATES,
+  MAX_DROPPED_DRUMS,
   nearHoop,
   type ButtonId,
 } from './contraptions';
-import { supplyCratePreset } from './props';
+import { BLAST, blastDirection, blastFalloff, damageDrum, dentVoxels, EXPLOSION_SHOW_TICKS, FUEL_DRUM, hitDamage, scorchVoxels } from './fuelDrum';
+import { fuelDrumPreset } from './props';
 import { stepBuggy } from './vehicle';
 import { movePlayer } from './movement';
 import { ANGLE_SCALE, decodeRay, TOOL, type YardInput } from './input';
@@ -60,6 +61,7 @@ import {
   launchPhysicsBody,
   makePhysicsBody,
   physicsBodyById,
+  physicsBodyHandle,
   physicsBodyName,
   poseOf,
   removePhysicsBody,
@@ -75,6 +77,7 @@ import {
 import {
   createInitialPlayer,
   type ContraptionState,
+  type FuelDrumState,
   type PlayerState,
   type PlayerTool,
   type YardBody,
@@ -353,6 +356,12 @@ function stepHand(
       ];
       setPhysicsBodyVelocity(w.physics, punt.bodyId, puntVel);
       w.stats = { ...w.stats, throws: w.stats.throws + 1 };
+      const punted = findBody(w.bodies, punt.bodyId);
+      if (punted && drumOf(w, punt.bodyId)) {
+        // A punt from range dents the drum where it hits; a punt of a held drum only adds damage.
+        const dentAt = grab ? null : worldToVoxel(punted, physicsBodyById(w.physics, punt.bodyId)!, punt.point);
+        hurtDrum(w, punt.bodyId, FUEL_DRUM.puntDamage, dentAt);
+      }
       return {
         ...player,
         grab: null,
@@ -464,6 +473,24 @@ function stepTorch(
   const prev = sameBody ? player.torch!.prev : point;
   const torchTicks = sameBody ? player.torchTicks + 1 : 1;
 
+  if (drumOf(w, body.id)) {
+    // The torch does not cut a drum: it heats it until it is lit.
+    hurtDrum(w, body.id, FUEL_DRUM.torchDamagePerTick, null);
+    if (torchTicks % TORCH_PULSE_TICKS === 0) {
+      const heated = findBody(w.bodies, body.id)!;
+      w.bodies = w.bodies.map((entry) => (entry.id === body.id ? { ...heated, voxels: scorchVoxels(heated.dims, heated.voxels, surface) } : entry));
+    }
+    return {
+      ...player,
+      grab: null,
+      torch: { bodyId: body.id, prev: point },
+      torchTicks,
+      wasPressed: true,
+      wasSecondaryPressed: input.secondary,
+      feedback,
+    };
+  }
+
   if (torchTicks % TORCH_PULSE_TICKS === 0) {
     // The through cut is the whole stroke translated out the far side, so both
     // ends of the stroke clear the body wall instead of only the far end.
@@ -546,56 +573,77 @@ function stepPlayer(w: Working, slot: number, input: YardInput): PlayerState {
   }
 }
 
+/**
+ * Where a contact touches `body`, in voxel space and world space. The contact
+ * point is shared by both bodies and can sit a few cm off this body's surface;
+ * then it is projected onto this body along the contact normal.
+ */
+function contactOnBody(w: Working, body: YardBody, numericId: PhysicsContactEvent3D['bodyA'], contact: PhysicsContactEvent3D): { local: Vec3; worldPoint: Vec3 } | null {
+  const physics = physicsBodyById(w.physics, body.id)!;
+  let worldPoint: Vec3 = [contact.point.x, contact.point.y, contact.point.z];
+  let local = worldToVoxel(body, physics, worldPoint);
+  if (local.some((v, axis) => v < -1 || v > [body.dims.x, body.dims.y, body.dims.z][axis]!)) {
+    const sign = numericId === contact.bodyA ? 1 : -1;
+    const outward: Vec3 = [contact.normal.x * sign, contact.normal.y * sign, contact.normal.z * sign];
+    const distance = Math.hypot(...halfExtents(body.dims)) + VOXEL_SIZE;
+    const hit = w.physics.world.raycast({
+      x: physics.x + outward[0] * distance,
+      y: physics.y + outward[1] * distance,
+      z: physics.z + outward[2] * distance,
+      dx: -outward[0], dy: -outward[1], dz: -outward[2],
+      maxDistance: distance * 2,
+    }).find((entry) => entry.bodyId === numericId);
+    if (!hit) return null;
+    worldPoint = [hit.point.x, hit.point.y, hit.point.z];
+    local = worldToVoxel(body, physics, worldPoint);
+  }
+  return { local, worldPoint };
+}
+
 function queueImpacts(w: Working, contacts: readonly PhysicsContactEvent3D[], frame: number): void {
   for (const contact of contacts) {
     if (contact.type !== 'enter') continue;
     const speed = contact.closingSpeed;
-    if (speed < IMPACT_MIN_SPEED) continue;
+    if (speed < Math.min(IMPACT_MIN_SPEED, FUEL_DRUM.minHitSpeed)) continue;
     for (const numericId of [contact.bodyA, contact.bodyB]) {
       const id = physicsBodyName(w.physics, numericId);
       if (id === undefined) continue;
       const body = findBody(w.bodies, id);
       if (!body || body.motion !== 'dynamic' || frame < body.impactCooldownUntil) continue;
-      if (w.fractures.some((pending) => pending.bodyId === id)) continue;
-      const physics = physicsBodyById(w.physics, id)!;
-      let worldPoint: Vec3 = [contact.point.x, contact.point.y, contact.point.z];
-      let local = worldToVoxel(body, physics, worldPoint);
-      // The contact point is shared by both bodies and can sit a few cm off
-      // this body's surface. Project it onto this body along the contact
-      // normal so the carve lands on its surface.
-      if (local.some((v, axis) => v < -1 || v > [body.dims.x, body.dims.y, body.dims.z][axis]!)) {
-        const sign = numericId === contact.bodyA ? 1 : -1;
-        const outward: Vec3 = [contact.normal.x * sign, contact.normal.y * sign, contact.normal.z * sign];
-        const distance = Math.hypot(...halfExtents(body.dims)) + VOXEL_SIZE;
-        const hit = w.physics.world.raycast({
-          x: physics.x + outward[0] * distance,
-          y: physics.y + outward[1] * distance,
-          z: physics.z + outward[2] * distance,
-          dx: -outward[0], dy: -outward[1], dz: -outward[2],
-          maxDistance: distance * 2,
-        }).find((entry) => entry.bodyId === numericId);
-        if (!hit) continue;
-        worldPoint = [hit.point.x, hit.point.y, hit.point.z];
-        local = worldToVoxel(body, physics, worldPoint);
+      if (drumOf(w, id)) {
+        // Drums do not break: a hit dents them and adds damage.
+        const damage = hitDamage(speed);
+        if (damage <= 0) continue;
+        hurtDrum(w, id, damage, contactOnBody(w, body, numericId, contact)?.local ?? null);
+        setImpactCooldown(w, id, frame);
+        continue;
       }
+      if (speed < IMPACT_MIN_SPEED) continue;
+      if (w.fractures.some((pending) => pending.bodyId === id)) continue;
+      const point = contactOnBody(w, body, numericId, contact);
+      if (!point) continue;
       w.fractures.push({
         bodyId: id,
         countsAsCut: false,
         contact: {
-          start: local,
-          end: local,
-          through: local,
-          throughEnd: local,
+          start: point.local,
+          end: point.local,
+          through: point.local,
+          throughEnd: point.local,
           radius: clamp(1.1 + speed * 0.12, 1.1, 2.8),
-          worldPoint,
+          worldPoint: point.worldPoint,
           impulseBoost: 1.1 + speed * 0.18,
         },
       });
-      w.bodies = w.bodies.map((entry) => entry.id === id
-        ? { ...entry, impactCooldownUntil: frame + IMPACT_COOLDOWN_TICKS }
-        : entry);
+      setImpactCooldown(w, id, frame);
     }
   }
+}
+
+function setImpactCooldown(w: Working, id: string, frame: number): void {
+  w.bodies = w.bodies.map((entry) => entry.id === id
+    ? { ...entry, impactCooldownUntil: frame + IMPACT_COOLDOWN_TICKS }
+    : entry);
 }
 
 function applyFractures(w: Working, frame: number): void {
@@ -638,28 +686,138 @@ function removeYardBody(w: Working, id: string): void {
   }));
 }
 
-/** Ticks from a crate's spawn until it has left the belt and landed. */
-const CRATE_DROP_TICKS = Math.ceil(((CONVEYOR.zEnd - CRATE_SPAWN[2]) / CONVEYOR.speed + 1.5) / DT);
+function drumOf(w: Working, id: string): FuelDrumState | undefined {
+  return w.contraptions.drums.find((drum) => drum.bodyId === id);
+}
 
-function dropCrate(w: Working): void {
+/** New voxels for a body; the collider is cooked again from them, at the same pose and velocity. */
+function reshapeBody(w: Working, id: string, voxels: Uint8Array): void {
+  const body = findBody(w.bodies, id);
+  const physics = physicsBodyById(w.physics, id);
+  if (!body || !physics) return;
+  const next: YardBody = { ...body, voxels };
+  w.bodies = w.bodies.map((entry) => (entry.id === id ? next : entry));
+  replacePhysicsBody(w.physics, makePhysicsBody(next, poseOf(physics)));
+}
+
+/** Adds damage to a drum, and dents it at `dentAt` (voxel space) if given. */
+function hurtDrum(w: Working, id: string, amount: number, dentAt: Vec3 | null, fuseTicks: number = FUEL_DRUM.fuseTicks): void {
+  if (!drumOf(w, id)) return;
+  w.contraptions = {
+    ...w.contraptions,
+    drums: w.contraptions.drums.map((drum) => (drum.bodyId === id ? damageDrum(drum, amount, w.frame, fuseTicks) : drum)),
+  };
+  const body = findBody(w.bodies, id);
+  if (dentAt && body) reshapeBody(w, id, dentVoxels(body.dims, body.voxels, dentAt));
+}
+
+/** Ticks from a drum's spawn until it has left the belt and landed. */
+const DRUM_DROP_TICKS = Math.ceil(((CONVEYOR.zEnd - DRUM_SPAWN[2]) / CONVEYOR.speed + 2.5) / DT);
+
+function dropDrum(w: Working): void {
   const c = w.contraptions;
   if (w.frame - c.lastDropFrame < DROP_COOLDOWN_TICKS) return;
-  let crates = c.droppedCrates.filter((id) => findBody(w.bodies, id));
-  while (crates.length >= MAX_DROPPED_CRATES) {
-    removeYardBody(w, crates[0]!);
-    crates = crates.slice(1);
+  let drums = c.drums.filter((drum) => findBody(w.bodies, drum.bodyId));
+  while (drums.length >= MAX_DROPPED_DRUMS) {
+    // The oldest drum that is not lit goes. A yard full of lit drums gets no more.
+    const oldest = drums.find((drum) => drum.detonateAt === null);
+    if (!oldest) return;
+    removeYardBody(w, oldest.bodyId);
+    drums = drums.filter((drum) => drum !== oldest);
   }
-  const preset = supplyCratePreset();
-  const id = `supply-crate-${w.nextSerial}`;
+  const preset = fuelDrumPreset();
+  const id = `${FUEL_DRUM.idPrefix}${w.nextSerial}`;
   w.nextSerial += 1;
-  // The fall from the belt is faster than IMPACT_MIN_SPEED: the crate may not break on landing.
+  // The fall from the belt would damage the drum: it is safe until it has landed.
   const body: YardBody = {
-    id, label: 'Supply Crate', dims: preset.dims, voxels: preset.voxels, motion: 'dynamic', buoyancy: 0.3, anchorFaces: [],
-    impactCooldownUntil: w.frame + CRATE_DROP_TICKS,
+    id, label: FUEL_DRUM.label, dims: preset.dims, voxels: preset.voxels, motion: 'dynamic', buoyancy: 0.3, anchorFaces: [],
+    impactCooldownUntil: w.frame + DRUM_DROP_TICKS,
   };
   w.bodies = [...w.bodies, body];
-  addPhysicsBodies(w.physics, [makePhysicsBody(body, { position: CRATE_SPAWN, rotation: [0, 0, 0, 1], linearVelocity: [0, 0, 0], angularVelocity: [0, 0, 0] })]);
-  w.contraptions = { ...c, lastDropFrame: w.frame, droppedCrates: [...crates, id] };
+  addPhysicsBodies(w.physics, [makePhysicsBody(body, { position: DRUM_SPAWN, rotation: [0, 0, 0, 1], linearVelocity: [0, 0, 0], angularVelocity: [0, 0, 0] })]);
+  w.contraptions = { ...w.contraptions, lastDropFrame: w.frame, drums: [...drums, { bodyId: id, damage: 0, detonateAt: null }] };
+}
+
+/** Lit drums whose fuse has run out explode; old explosions leave the state. */
+function stepDrums(w: Working): void {
+  const due = w.contraptions.drums.filter((drum) => drum.detonateAt !== null && drum.detonateAt <= w.frame);
+  for (const drum of due) explodeDrum(w, drum.bodyId);
+  w.contraptions = {
+    ...w.contraptions,
+    drums: w.contraptions.drums.filter((drum) => findBody(w.bodies, drum.bodyId)),
+    explosions: w.contraptions.explosions.filter((entry) => w.frame - entry.frame <= EXPLOSION_SHOW_TICKS),
+  };
+}
+
+/**
+ * The drum goes, and the blast reaches BLAST.radius: bodies get a push away
+ * from it (impulse × falloff / mass, so light bodies fly further), bodies
+ * close to it also break, other drums take damage, and players are thrown.
+ */
+function explodeDrum(w: Working, id: string): void {
+  const physics = physicsBodyById(w.physics, id);
+  if (!physics) return;
+  const at: Vec3 = [physics.x, physics.y, physics.z];
+  removeYardBody(w, id);
+  w.contraptions = {
+    ...w.contraptions,
+    drums: w.contraptions.drums.filter((drum) => drum.bodyId !== id),
+    explosions: [...w.contraptions.explosions, { at, radius: BLAST.radius, frame: w.frame }],
+  };
+  w.stats = { ...w.stats, explosions: w.stats.explosions + 1 };
+
+  for (const body of w.bodies) {
+    if (body.motion !== 'dynamic') continue;
+    const view = physicsBodyById(w.physics, body.id);
+    if (!view) continue;
+    const to: Vec3 = [view.x, view.y, view.z];
+    // Big bodies feel the blast from their near side, not their center.
+    const reach = Math.max(0, Math.hypot(to[0] - at[0], to[1] - at[1], to[2] - at[2]) - Math.hypot(...halfExtents(body.dims)) * 0.5);
+    const falloff = blastFalloff(reach);
+    if (falloff <= 0) continue;
+    if (drumOf(w, body.id)) hurtDrum(w, body.id, BLAST.drumDamage * falloff, null, FUEL_DRUM.chainFuseTicks);
+    const mass = w.physics.world.readMotion(physicsBodyHandle(w.physics, body.id)).mass;
+    const speed = Math.min(BLAST.maxSpeed, (BLAST.impulse * falloff) / mass);
+    const direction = blastDirection(at, to);
+    const push = scale(direction, speed * DT);
+    // Tumble about the horizontal axis across the push.
+    const spin = scale([direction[2], 0, -direction[0]], speed * BLAST.spinPerSpeed * DT);
+    setPhysicsBodyMotion(w.physics, body.id, add([view.vx, view.vy, view.vz], push), add([view.angularVel.x, view.angularVel.y, view.angularVel.z], spin));
+    if (reach < BLAST.radius * BLAST.shatterShare && !drumOf(w, body.id) && body.id !== 'vehicle-chassis') queueBlastBreak(w, body, at);
+  }
+
+  w.players = w.players.map((player) => {
+    if (player.ridingVehicle) return player;
+    const center: Vec3 = [player.x, player.y + 0.5, player.z];
+    const falloff = blastFalloff(Math.hypot(center[0] - at[0], center[1] - at[1], center[2] - at[2]));
+    if (falloff <= 0) return player;
+    // Player velocity is in m/s (stepPlayerMovement), unlike body views (m/tick).
+    const push = scale(blastDirection(at, center), BLAST.playerSpeed * falloff);
+    return { ...player, vx: player.vx + push[0], vy: player.vy + push[1], vz: player.vz + push[2], grounded: false };
+  });
+}
+
+/** Breaks a body near the blast on the side that faces it. */
+function queueBlastBreak(w: Working, body: YardBody, at: Vec3): void {
+  if (w.fractures.some((pending) => pending.bodyId === body.id)) return;
+  const view = physicsBodyById(w.physics, body.id)!;
+  const toward = sub([view.x, view.y, view.z], at);
+  const distance = Math.hypot(...toward);
+  if (distance < 1e-6) return;
+  const hit = w.physics.world.raycast({
+    x: at[0], y: at[1], z: at[2],
+    dx: toward[0] / distance, dy: toward[1] / distance, dz: toward[2] / distance,
+    maxDistance: distance + Math.hypot(...halfExtents(body.dims)),
+    onlyBody: physicsBodyHandle(w.physics, body.id),
+  })[0];
+  if (!hit) return;
+  const worldPoint: Vec3 = [hit.point.x, hit.point.y, hit.point.z];
+  const local = worldToVoxel(body, view, worldPoint);
+  w.fractures.push({
+    bodyId: body.id,
+    countsAsCut: false,
+    contact: { start: local, end: local, through: local, throughEnd: local, radius: 2.4, worldPoint, impulseBoost: 2.5 },
+  });
 }
 
 /** Launches every dynamic body in the catapult bucket at the hoop. */
@@ -689,7 +847,7 @@ function fireCatapult(w: Working): void {
 
 function pressButton(w: Working, button: ButtonId): ToolFeedback {
   switch (button) {
-    case 'dropper': dropCrate(w); break;
+    case 'dropper': dropDrum(w); break;
     case 'catapult': fireCatapult(w); break;
     default: {
       const unreachable: never = button;
@@ -699,8 +857,9 @@ function pressButton(w: Working, button: ButtonId): ToolFeedback {
   return toolFeedback(w, 'press', buttonTop(button));
 }
 
-/** After the physics step: count dunks, and give landed catapult bodies their damping back. */
+/** After the physics step: count dunks, give landed catapult bodies their damping back, and set off lit drums. */
 function stepContraptions(w: Working, before: YardPhysicsWorldState): void {
+  stepDrums(w);
   for (const previous of before.bodies) {
     if (previous.kind !== 'dynamic' || !nearHoop([previous.x, previous.y, previous.z])) continue;
     const now = physicsBodyById(w.physics, previous.id);

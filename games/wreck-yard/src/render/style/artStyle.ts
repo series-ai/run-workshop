@@ -18,6 +18,7 @@ export type PaletteKey =
   | 'mustard'
   | 'rust'
   | 'metal'
+  | 'dangerRed'
   | 'waterDeep'
   | 'waterShallow'
   | 'waterFoam'
@@ -111,6 +112,8 @@ export const ART_STYLE: ArtStyle = {
     mustard: '#ba9148',
     rust: '#925039',
     metal: '#7d8c96',
+    /** Fuel drums (sim/fuelDrum.ts): a muted red that reads as danger at dusk. */
+    dangerRed: '#a8392c',
     waterDeep: '#184b55',
     waterShallow: '#397b7b',
     waterFoam: '#adc0b6',

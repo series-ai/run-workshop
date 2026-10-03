@@ -4,7 +4,7 @@ import type { ShellBox } from './setPieces';
 
 /**
  * Yard contraptions: the dunk hoop and its score sign, the sky conveyor that
- * drops supply crates, and the catapult that lobs whatever sits in its bucket
+ * drops fuel drums, and the catapult that lobs whatever sits in its bucket
  * at the hoop. Geometry lives here once; the colliders, the simulation rules,
  * and render/Contraptions.tsx all read it.
  */
@@ -53,7 +53,7 @@ export function nearHoop(position: Vec3): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Sky conveyor: comes in over the north wall and drops crates into the yard.
+// Sky conveyor: comes in over the north wall and drops fuel drums into the yard.
 
 export const CONVEYOR = {
   x: 0.2,
@@ -68,12 +68,12 @@ export const CONVEYOR = {
   legZ: [-22.5, -16.5] as const,
 } as const;
 
-/** New crates appear on the belt outside the wall, in the feeder housing. */
-export const CRATE_SPAWN: Vec3 = [CONVEYOR.x, CONVEYOR.topY + 0.52, -27.6];
-/** Ticks between two crates, so one crate clears the spawn point first. */
+/** New drums appear on the belt outside the wall, in the feeder housing. */
+export const DRUM_SPAWN: Vec3 = [CONVEYOR.x, CONVEYOR.topY + 0.52, -27.6];
+/** Ticks between two drums, so one drum clears the spawn point first. */
 export const DROP_COOLDOWN_TICKS = 45;
-/** Crates the conveyor keeps in the yard; the oldest goes when a new one comes. */
-export const MAX_DROPPED_CRATES = 12;
+/** Drums the conveyor keeps in the yard; the oldest unlit drum goes when a new one comes. */
+export const MAX_DROPPED_DRUMS = 8;
 
 
 // ---------------------------------------------------------------------------
@@ -144,7 +144,7 @@ export interface ButtonSpec {
 }
 
 export const BUTTONS: readonly ButtonSpec[] = [
-  { id: 'dropper', label: 'CRATE', base: [3.2, FLOOR_Y, -11] },
+  { id: 'dropper', label: 'DRUMS', base: [3.2, FLOOR_Y, -11] },
   { id: 'catapult', label: 'LAUNCH', base: [11.2, FLOOR_Y, 21.8] },
 ];
 

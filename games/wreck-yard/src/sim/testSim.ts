@@ -20,14 +20,20 @@ export function initialState(playerCount = 1): YardState {
 }
 
 /**
- * Moves or changes a player outside a tick. Players are not in the physics
- * world, so this restores a save of the live world with the changed player.
+ * Changes the state outside a tick (player poses, drum damage). That state is
+ * not in the physics world, so this restores a save of the live world with
+ * the changed state.
  */
-export function patchPlayer(sim: YardSim, patch: Partial<PlayerState>, slot = 0): void {
+export function patchState(sim: YardSim, change: (state: YardState) => YardState): void {
   const save = sim.save();
   try {
-    sim.restore({ ...save, state: { ...save.state, players: save.state.players.map((player, index) => (index === slot ? { ...player, ...patch } : player)) } });
+    sim.restore({ ...save, state: change(save.state) });
   } finally {
     sim.release(save);
   }
+}
+
+/** Moves or changes a player outside a tick. */
+export function patchPlayer(sim: YardSim, patch: Partial<PlayerState>, slot = 0): void {
+  patchState(sim, (state) => ({ ...state, players: state.players.map((player, index) => (index === slot ? { ...player, ...patch } : player)) }));
 }

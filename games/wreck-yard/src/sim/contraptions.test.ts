@@ -5,11 +5,11 @@ import {
   CATAPULT,
   CONVEYOR,
   crossedHoop,
-  DROP_COOLDOWN_TICKS,
   HOOP,
-  MAX_DROPPED_CRATES,
+  MAX_DROPPED_DRUMS,
   type ButtonId,
 } from './contraptions';
+import { FUEL_DRUM } from './fuelDrum';
 import { NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
 import { fullPhysicsBodyById, physicsStateBodyById, replacePhysicsPose } from './physics';
 import type { YardSim } from './sim';
@@ -31,7 +31,7 @@ const pressWithE = (sim: YardSim, id: ButtonId): YardState => {
   sim.step([{ ...NEUTRAL_INPUT, secondary: true }]);
   return sim.step([NEUTRAL_INPUT]);
 };
-const crates = (state: YardState) => state.bodies.filter((body) => body.id.startsWith('supply-crate-'));
+const drums = (state: YardState) => state.bodies.filter((body) => body.id.startsWith(FUEL_DRUM.idPrefix));
 
 describe('hoop scoring', () => {
   it('counts a center that drops down through the ring', () => {
@@ -51,31 +51,37 @@ describe('hoop scoring', () => {
 });
 
 describe('sky conveyor', () => {
-  it('drops a supply crate when a player presses E at the button, and the crate lands whole', () => {
+  it('drops a fuel drum when a player presses E at the button, and the drum lands whole', () => {
     const sim = testSim(1);
     let state = pressWithE(sim, 'dropper');
-    expect(crates(state)).toHaveLength(1);
+    expect(drums(state)).toHaveLength(1);
     expect(state.players[0]!.feedback?.result).toBe('press');
-    const id = crates(state)[0]!.id;
+    const id = drums(state)[0]!.id;
     state = run(sim, 200);
-    const crate = physicsStateBodyById(state.world, id);
-    expect(crate, 'the crate broke or vanished').toBeDefined();
-    expect(crate!.z).toBeGreaterThan(CONVEYOR.zEnd);
-    expect(crate!.y).toBeLessThan(FLOOR_Y + 1.5);
+    const drum = physicsStateBodyById(state.world, id);
+    expect(drum, 'the drum broke or vanished').toBeDefined();
+    expect(drum!.z).toBeGreaterThan(CONVEYOR.zEnd);
+    expect(drum!.y).toBeLessThan(FLOOR_Y + 1.5);
     expect(state.stats.fractures).toBe(0);
+    expect(state.contraptions.drums).toEqual([{ bodyId: id, damage: 0, detonateAt: null }]);
   });
 
-  it('drops at most one crate per cooldown and keeps at most MAX_DROPPED_CRATES', () => {
+  it('drops at most one drum per cooldown and keeps at most MAX_DROPPED_DRUMS', () => {
     const sim = testSim(1);
     pressWithE(sim, 'dropper');
     let state = pressWithE(sim, 'dropper');
-    expect(crates(state)).toHaveLength(1);
-    for (let drop = 1; drop <= MAX_DROPPED_CRATES; drop += 1) {
-      run(sim, DROP_COOLDOWN_TICKS);
+    expect(drums(state)).toHaveLength(1);
+    // Each drum lands, then moves to its own spot: drums that fall on drums damage them.
+    const spread = (index: number) => sim.edit((physics) => replacePhysicsPose(physics, state.contraptions.drums.at(-1)!.bodyId, {
+      x: 4 + (index % 3) * 1.5, y: FLOOR_Y + 0.6, z: 9 + Math.floor(index / 3) * 1.5, vx: 0, vy: 0, vz: 0,
+    }));
+    for (let drop = 1; drop <= MAX_DROPPED_DRUMS; drop += 1) {
+      state = run(sim, 200);
+      spread(drop - 1);
       state = pressWithE(sim, 'dropper');
     }
-    expect(crates(state)).toHaveLength(MAX_DROPPED_CRATES);
-    expect(state.contraptions.droppedCrates).toEqual(crates(state).map((body) => body.id));
+    expect(drums(state)).toHaveLength(MAX_DROPPED_DRUMS);
+    expect(state.contraptions.drums.map((drum) => drum.bodyId)).toEqual(drums(state).map((body) => body.id));
   });
 
   it('presses the button when the gravity gun clicks it, from across the yard', () => {
@@ -85,7 +91,7 @@ describe('sky conveyor', () => {
     const click = { ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...quantizeRay(eye, [target[0]! - eye[0], target[1]! - eye[1], target[2]! - eye[2]]) };
     const state = testSim(1).step([click]);
     expect(state.players[0]!.feedback?.result).toBe('press');
-    expect(crates(state)).toHaveLength(1);
+    expect(drums(state)).toHaveLength(1);
   });
 });
 

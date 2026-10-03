@@ -397,7 +397,7 @@ export function createInitialYard(playerCount: number): { readonly physics: Open
       bodies: spawns.map((entry) => entry.body),
       world: readWorldState(physics),
       players: Array.from({ length: playerCount }, (_, slot) => createInitialPlayer(slot)),
-      stats: { torchCuts: 0, throws: 0, fractures: 0, dunks: 0 },
+      stats: { torchCuts: 0, throws: 0, fractures: 0, dunks: 0, explosions: 0 },
       contraptions: INITIAL_CONTRAPTIONS,
       nextSerial: 0,
     },

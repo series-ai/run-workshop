@@ -16,7 +16,7 @@ const materialParams = makeDemoMaterialParams();
 /** Prop and buggy palette band (sim/props.ts PROP_COLOR) to art colors. */
 const PROP_ART: Record<PropColor, PaletteKey> = {
   orange: 'signalOrange', orangeShade: 'orangeShade', white: 'concreteLit', grey: 'concreteShade', teal: 'teal',
-  mustard: 'mustard', rust: 'rust', ink: 'ink', spark: 'spark', glow: 'glow', metal: 'metal',
+  mustard: 'mustard', rust: 'rust', ink: 'ink', spark: 'spark', glow: 'glow', metal: 'metal', red: 'dangerRed',
 };
 for (const [name, code] of Object.entries(PROP_COLOR) as [PropColor, number][]) {
   const color = new THREE.Color(ART_STYLE.palette[PROP_ART[name]]).convertLinearToSRGB();

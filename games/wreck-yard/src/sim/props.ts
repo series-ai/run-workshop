@@ -13,7 +13,7 @@ import type { Quat, Vec3 } from './math';
  * code to an ART_STYLE color. Only `spark` and `glow` emit light.
  */
 export const PROP_COLOR = {
-  orange: 16, orangeShade: 17, white: 18, grey: 19, teal: 20, mustard: 21, rust: 22, ink: 23, spark: 24, glow: 25, metal: 26,
+  orange: 16, orangeShade: 17, white: 18, grey: 19, teal: 20, mustard: 21, rust: 22, ink: 23, spark: 24, glow: 25, metal: 26, red: 27,
 } as const;
 export type PropColor = keyof typeof PROP_COLOR;
 
@@ -156,19 +156,33 @@ export function tireStackPreset(): VolumePreset {
   return { dims, voxels };
 }
 
-/** Supply crate from the sky conveyor, 0.96 m: an orange frame around slatted wood panels. */
-export function supplyCratePreset(): VolumePreset {
-  const { dims, voxels, box } = field(12, 12, 12);
-  box(0, 0, 0, 11, 11, 11, 'mustard');
-  for (const y of [3, 7]) box(0, y, 0, 11, y, 11, 'rust');
-  // Orange frame on all twelve edges.
-  for (const [a, b] of [[0, 0], [0, 10], [10, 0], [10, 10]]) {
-    box(a, 0, b, a + 1, 11, b + 1, 'orange');
-    box(0, a, b, 11, a + 1, b + 1, 'orange');
-    box(a, b, 0, a + 1, b + 1, 11, 'orange');
+/**
+ * Fuel drum from the sky conveyor (sim/fuelDrum.ts), 0.72 m across and 0.96 m
+ * tall: red paint, steel lids, dark rolling hoops, and a hazard band.
+ */
+export function fuelDrumPreset(): VolumePreset {
+  const { dims, voxels } = field(9, 12, 9);
+  const radius = 4.4;
+  for (let y = 0; y < dims.y; y += 1) {
+    for (let z = 0; z < dims.z; z += 1) {
+      for (let x = 0; x < dims.x; x += 1) {
+        const dx = x - 4;
+        const dz = z - 4;
+        if (dx * dx + dz * dz > radius * radius) continue;
+        const rim = dx * dx + dz * dz > (radius - 1.2) * (radius - 1.2);
+        // Diagonal stripes around the band: the angle term turns with height.
+        const stripe = (Math.round((Math.atan2(dz, dx) / Math.PI) * 6 + y) & 1) === 0;
+        const color: PropColor = y === 0 || y === dims.y - 1 ? (rim ? 'metal' : 'grey')
+          : !rim ? 'red'
+          : y === 2 || y === 9 ? 'ink'
+          : y === 5 || y === 6 ? (stripe ? 'mustard' : 'ink')
+          : 'red';
+        voxels[x + y * dims.x + z * dims.x * dims.y] = PROP_COLOR[color];
+      }
+    }
   }
-  box(4, 4, 0, 7, 6, 0, 'white');
-  box(4, 4, 11, 7, 6, 11, 'white');
+  // Filler cap on the lid.
+  voxels[6 + (dims.y - 1) * dims.x + 4 * dims.x * dims.y] = PROP_COLOR.white;
   return { dims, voxels };
 }
 

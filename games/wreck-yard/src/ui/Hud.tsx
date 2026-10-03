@@ -72,7 +72,7 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
     && withinBuggyMountRange(localPlayer!.position, buggyPose!.position);
   // The sim checks a button before the buggy, so the prompt does too.
   const reachableButton = live && !isRiding && localPlayer ? buttonWithinReach(localPlayer.position) : null;
-  const prompt = reachableButton === 'dropper' ? 'Drop Crate'
+  const prompt = reachableButton === 'dropper' ? 'Drop Drum'
     : reachableButton === 'catapult' ? 'Fire Catapult'
     : canMountBuggy ? 'Drive Buggy'
     : isGrabbing ? 'Punt' : null;
@@ -96,6 +96,7 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
               <span><b>{render?.stats.torchCuts ?? 0}</b>Cuts</span>
               <span><b>{render?.stats.throws ?? 0}</b>Throws</span>
               <span><b>{render?.stats.fractures ?? 0}</b>Breaks</span>
+              <span><b>{render?.stats.explosions ?? 0}</b>Booms</span>
             </div>
           ) : null}
         </section>
