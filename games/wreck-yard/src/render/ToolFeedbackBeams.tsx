@@ -5,7 +5,7 @@ import { MAX_PLAYERS } from '../sim/constants';
 import type { UiTool } from './keyBindings';
 import type { YardRender } from './presentation';
 import { glowTexture } from './style/glowTexture';
-import { effectProgress, feedbackEffect, isTorchFiring } from './toolFeedback';
+import { effectProgress, feedbackEffect, isTorchFiring, towardCamera } from './toolFeedback';
 import { toolMuzzleAndAim } from './toolMuzzle';
 
 const BEAM_RADIUS = 0.025;
@@ -100,10 +100,10 @@ export function ToolFeedbackBeams({ renderRef, tool }: { renderRef: MutableRefOb
 
       const flashes = effect.kind === 'burst' || effect.kind === 'lock' || effect.kind === 'heat' || (effect.kind === 'refusal' && effect.flash);
       if (flashes) {
-        flash.position.copy(s.to);
         // Grow with distance so a far impact still reads on screen.
         const base = effect.kind === 'burst' ? 0.9 : 0.35;
         const size = Math.max(base, distance * 0.045) * (1 + progress * 0.6);
+        flash.position.fromArray(towardCamera(s.to.toArray(), camera.position.toArray(), size * 0.5));
         flash.scale.set(size, size, 1);
         const material = flash.material as THREE.SpriteMaterial;
         material.color.set(effect.color).multiplyScalar(2.5);

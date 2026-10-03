@@ -40,7 +40,7 @@ import {
   CONVEYOR,
   DRUM_SPAWN,
   crossedHoop,
-  DROP_COOLDOWN_TICKS,
+  buttonResetLeft,
   inCatapultBucket,
   MAX_DROPPED_DRUMS,
   nearHoop,
@@ -739,7 +739,7 @@ const DRUM_DROP_TICKS = Math.ceil(((CONVEYOR.zEnd - DRUM_SPAWN[2]) / CONVEYOR.sp
 
 function dropDrum(w: Working): void {
   const c = w.contraptions;
-  if (w.frame - c.lastDropFrame < DROP_COOLDOWN_TICKS) return;
+  if (buttonResetLeft('dropper', c, w.frame) > 0) return;
   let drums = c.drums.filter((drum) => findBody(w.bodies, drum.bodyId));
   while (drums.length >= MAX_DROPPED_DRUMS) {
     // The oldest drum that is not lit goes. A yard full of lit drums gets no more.
@@ -847,7 +847,7 @@ function queueBlastBreak(w: Working, body: YardBody, at: Vec3): void {
 /** Launches every dynamic body in the catapult bucket at the hoop. */
 function fireCatapult(w: Working): void {
   const c = w.contraptions;
-  if (w.frame - c.lastLaunchFrame < CATAPULT.cooldownTicks) return;
+  if (buttonResetLeft('catapult', c, w.frame) > 0) return;
   const launched: string[] = [];
   for (const body of w.bodies) {
     if (body.motion !== 'dynamic' || body.id === 'vehicle-chassis') continue;

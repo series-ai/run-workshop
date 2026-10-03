@@ -6,6 +6,6 @@ describe('withinBuggyMountRange', () => {
     expect(withinBuggyMountRange([0, 0, BUGGY_MOUNT_RANGE - 0.01], [0, 0, 0])).toBe(true);
     expect(withinBuggyMountRange([0, 0, BUGGY_MOUNT_RANGE + 0.01], [0, 0, 0])).toBe(false);
     // Height counts: a player on a roof above the buggy is out of range.
-    expect(withinBuggyMountRange([0, 3, 0], [0, 0, 0])).toBe(false);
+    expect(withinBuggyMountRange([0, 4, 0], [0, 0, 0])).toBe(false);
   });
 });

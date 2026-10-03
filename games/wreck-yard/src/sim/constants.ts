@@ -107,7 +107,7 @@ export const GRAVITY_GUN_PUNT_RANGE = 12;
 export const ARENA_EXTENT = 26;
 
 /** A player mounts the buggy within this 3D distance of the chassis center (m). */
-export const BUGGY_MOUNT_RANGE = 2.8;
+export const BUGGY_MOUNT_RANGE = 3.6;
 
 /** One rule for the sim and the HUD prompt. */
 export function withinBuggyMountRange(player: readonly [number, number, number], chassis: readonly [number, number, number]): boolean {

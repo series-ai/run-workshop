@@ -1,6 +1,7 @@
 import { DT, FLOOR_Y, GRAVITY } from './constants';
 import type { Vec3 } from './math';
 import type { ShellBox } from './setPieces';
+import type { ContraptionState } from './state';
 
 /**
  * Yard contraptions: the dunk hoop and its score sign, the sky conveyor that
@@ -150,7 +151,20 @@ export const BUTTONS: readonly ButtonSpec[] = [
 
 export const BUTTON_PEDESTAL = { size: [0.7, 1.0, 0.7] as Vec3Tuple, capRadius: 0.26, capHeight: 0.14 } as const;
 /** Horizontal reach (m) from the player to a button for E. */
-export const BUTTON_REACH = 2.0;
+export const BUTTON_REACH = 2.6;
+
+/** Ticks a button stays down after a press: its contraption's reset time. */
+export const BUTTON_RESET_TICKS: Readonly<Record<ButtonId, number>> = { dropper: DROP_COOLDOWN_TICKS, catapult: CATAPULT.cooldownTicks };
+
+/**
+ * Share of a button's reset time still to run: 1 on the press, 0 when it can
+ * be pressed again. The sim refuses a press while it is above 0, and the
+ * button stays down while it runs.
+ */
+export function buttonResetLeft(id: ButtonId, contraptions: ContraptionState, frame: number): number {
+  const pressed = id === 'dropper' ? contraptions.lastDropFrame : contraptions.lastLaunchFrame;
+  return Math.max(0, 1 - (frame - pressed) / BUTTON_RESET_TICKS[id]);
+}
 
 /** The button the player can press with E, if any. Player y is the lower capsule sphere center. */
 export function buttonWithinReach(player: Vec3): ButtonId | null {

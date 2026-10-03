@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import {
   BUTTON_PEDESTAL,
+  buttonResetLeft,
   BUTTONS,
   CATAPULT,
   CATAPULT_ARM_REST,
@@ -222,24 +223,38 @@ function SkyConveyor({ renderRef }: { renderRef: MutableRefObject<YardRender | n
 
 // ---------------------------------------------------------------------------
 
+/** Ready: a red cap that pulses. Resetting: pressed down, dull amber, no glow. */
+const BUTTON_READY = new THREE.Color('#ff3b2f').multiplyScalar(1.4);
+const BUTTON_RESETTING = new THREE.Color('#8a5a1c');
+const BUTTON_FLASH = new THREE.Color('#fff1ca').multiplyScalar(1.6);
+/** How far the cap sinks while the button resets (m). */
+const BUTTON_TRAVEL = 0.1;
+/** Share of the reset time at its end in which the cap rises back. */
+const BUTTON_RISE = 0.15;
+
 function ContraptionButton({ id, label, base, renderRef }: { id: ButtonId; label: string; base: V3; renderRef: MutableRefObject<YardRender | null> }) {
   const tag = useLedPanel(400, 88, 8);
   useEffect(() => tag.draw([label]), [tag, label]);
   const cap = useRef<THREE.Mesh>(null);
+  const capMaterial = useRef<THREE.MeshBasicMaterial>(null);
   const glow = useRef<THREE.Sprite>(null);
   const since = useEventClock();
   const [sx, sy, sz] = BUTTON_PEDESTAL.size;
   const capY = base[1] + sy + BUTTON_PEDESTAL.capHeight / 2;
   useFrame(({ clock }) => {
     const render = renderRef.current;
-    if (!render || !cap.current || !glow.current) return;
-    const frame = id === 'dropper' ? render.contraptions.lastDropFrame : render.contraptions.lastLaunchFrame;
-    const age = since(frame, render.frame, clock.elapsedTime);
-    const pressed = age < 0.25;
-    cap.current.position.y = capY - (pressed ? 0.08 : 0);
-    // A slow idle pulse invites a press; a press flashes bright.
-    const pulse = pressed ? 1.6 : 0.55 + 0.25 * Math.sin(clock.elapsedTime * 3);
-    glow.current.scale.setScalar(pulse);
+    if (!render || !cap.current || !capMaterial.current || !glow.current) return;
+    // The sim refuses a press while the reset runs (sim/contraptions.ts buttonResetLeft).
+    const left = buttonResetLeft(id, render.contraptions, render.frame);
+    const pressedAt = id === 'dropper' ? render.contraptions.lastDropFrame : render.contraptions.lastLaunchFrame;
+    const flash = left > 0 && since(pressedAt, render.frame, clock.elapsedTime) < 0.15;
+    // Down for the whole reset; it rises back over the last BUTTON_RISE of it.
+    const down = left <= 0 ? 0 : Math.min(1, left / BUTTON_RISE);
+    cap.current.position.y = capY - BUTTON_TRAVEL * down;
+    capMaterial.current.color.copy(left > 0 ? (flash ? BUTTON_FLASH : BUTTON_RESETTING) : BUTTON_READY);
+    // A slow idle pulse invites a press; a press flashes bright, then the glow is off until it is ready.
+    glow.current.visible = left <= 0 || flash;
+    glow.current.scale.setScalar(flash ? 1.6 : 0.55 + 0.25 * Math.sin(clock.elapsedTime * 3));
   });
   return (
     <group name={`Button-${id}`}>
@@ -247,7 +262,7 @@ function ContraptionButton({ id, label, base, renderRef }: { id: ButtonId; label
       <Block center={[base[0], base[1] + sy - 0.03, base[2]]} size={[sx + 0.04, 0.06, sz + 0.04]} color={palette.mustard} />
       <mesh ref={cap} position={[base[0], capY, base[2]]} castShadow raycast={noRaycast}>
         <cylinderGeometry args={[BUTTON_PEDESTAL.capRadius, BUTTON_PEDESTAL.capRadius, BUTTON_PEDESTAL.capHeight, 20]} />
-        <meshBasicMaterial color={new THREE.Color('#ff3b2f').multiplyScalar(1.4)} toneMapped={false} />
+        <meshBasicMaterial ref={capMaterial} color={BUTTON_READY} toneMapped={false} />
       </mesh>
       <sprite ref={glow} position={[base[0], capY + 0.05, base[2]]} renderOrder={12}>
         <spriteMaterial map={glowTexture()} color={new THREE.Color('#ff3b2f').multiplyScalar(2)} transparent blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />

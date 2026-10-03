@@ -5,7 +5,7 @@ import { MAX_PLAYERS } from '../sim/constants';
 import type { UiTool } from './keyBindings';
 import type { YardRender } from './presentation';
 import { glowTexture, smokeTexture } from './style/glowTexture';
-import { torchVisual } from './toolFeedback';
+import { torchVisual, towardCamera } from './toolFeedback';
 import { toolMuzzleAndAim } from './toolMuzzle';
 
 /**
@@ -205,8 +205,8 @@ export function TorchJet({ renderRef, tool }: { renderRef: MutableRefObject<Yard
       });
 
       if (tip) {
-        tip.position.copy(s.end);
         const size = 0.6 * flicker;
+        tip.position.fromArray(towardCamera(feedback.point, camera.position.toArray(), size * 0.5));
         tip.scale.set(size, size, 1);
         tip.visible = true;
       }

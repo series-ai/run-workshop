@@ -70,6 +70,20 @@ export function torchVisual(feedback: ToolFeedback | null, frame: number): Torch
 type V3 = readonly [number, number, number];
 
 /**
+ * Where to put a flat glow sprite that marks a hit: `distance` (its radius)
+ * from the hit toward the camera. The whole quad then sits in front of the
+ * surface it touches, instead of half of it cut off inside, and it still
+ * hides behind anything nearer.
+ */
+export function towardCamera(point: V3, camera: V3, distance: number): [number, number, number] {
+  const d = [camera[0] - point[0], camera[1] - point[1], camera[2] - point[2]] as const;
+  const length = Math.hypot(d[0], d[1], d[2]);
+  if (length < 1e-6) return [point[0], point[1], point[2]];
+  const step = Math.min(distance, length * 0.5) / length;
+  return [point[0] + d[0] * step, point[1] + d[1] * step, point[2] + d[2] * step];
+}
+
+/**
  * Tractor beam curve: a quadratic Bézier that leaves the muzzle along the aim
  * and ends on the held object. When the object lags behind the aim, the beam bends.
  */
