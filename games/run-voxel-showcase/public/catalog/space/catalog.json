@@ -1,0 +1,6168 @@
+{
+ "pack": "space",
+ "label": "Space",
+ "models": [
+  {
+   "id": "space-animated-props-airlock-door",
+   "pack": "space",
+   "name": "Airlock Door",
+   "category": "animated-props",
+   "filename": "space-animated-props-airlock-door.glb",
+   "relativePath": "animated-props/space-animated-props-airlock-door.glb",
+   "leaf": "world",
+   "sizeBytes": 30984,
+   "bounds": {
+    "min": [
+     -25,
+     0,
+     -7.5
+    ],
+    "max": [
+     25,
+     60,
+     7.5
+    ],
+    "size": [
+     50,
+     60,
+     15
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "close",
+    "open",
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-animated-props-cryo-pod",
+   "pack": "space",
+   "name": "Cryo Pod",
+   "category": "animated-props",
+   "filename": "space-animated-props-cryo-pod.glb",
+   "relativePath": "animated-props/space-animated-props-cryo-pod.glb",
+   "leaf": "world",
+   "sizeBytes": 13188,
+   "bounds": {
+    "min": [
+     -13,
+     -0.0312,
+     -23.5312
+    ],
+    "max": [
+     13,
+     23,
+     23.5
+    ],
+    "size": [
+     26,
+     23.0313,
+     47.0313
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "close",
+    "open"
+   ],
+   "sockets": [
+    "socket-mist"
+   ],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-animated-props-holo-projector",
+   "pack": "space",
+   "name": "Holo Projector",
+   "category": "animated-props",
+   "filename": "space-animated-props-holo-projector.glb",
+   "relativePath": "animated-props/space-animated-props-holo-projector.glb",
+   "leaf": "world",
+   "sizeBytes": 20552,
+   "bounds": {
+    "min": [
+     -14,
+     0,
+     -13
+    ],
+    "max": [
+     14,
+     31.0625,
+     13
+    ],
+    "size": [
+     28,
+     31.0625,
+     26
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "spin"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-animated-props-laser-turret",
+   "pack": "space",
+   "name": "Laser Turret",
+   "category": "animated-props",
+   "filename": "space-animated-props-laser-turret.glb",
+   "relativePath": "animated-props/space-animated-props-laser-turret.glb",
+   "leaf": "world",
+   "sizeBytes": 32648,
+   "bounds": {
+    "min": [
+     -13.4,
+     0,
+     -16
+    ],
+    "max": [
+     13.4,
+     33,
+     16
+    ],
+    "size": [
+     26.8,
+     33,
+     32
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "idle"
+   ],
+   "sockets": [
+    "socket-muzzle"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-laser-bolt",
+     "socket": "socket-muzzle",
+     "trigger": "clip:attack",
+     "size": 16,
+     "aim": [
+      0,
+      0,
+      -1
+     ],
+     "at": 0.4
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-animated-props-loot-cache",
+   "pack": "space",
+   "name": "Loot Cache",
+   "category": "animated-props",
+   "filename": "space-animated-props-loot-cache.glb",
+   "relativePath": "animated-props/space-animated-props-loot-cache.glb",
+   "leaf": "world",
+   "sizeBytes": 12444,
+   "bounds": {
+    "min": [
+     -11.5,
+     0,
+     -9
+    ],
+    "max": [
+     11.5,
+     19,
+     8.6
+    ],
+    "size": [
+     23,
+     19,
+     17.6
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "close",
+    "open",
+    "idle"
+   ],
+   "sockets": [
+    "socket-loot"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-data-burst",
+     "socket": "socket-loot",
+     "trigger": "clip:open",
+     "size": 22,
+     "at": 0.25
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-animated-props-planet-globe",
+   "pack": "space",
+   "name": "Ringed Planet Orrery",
+   "category": "animated-props",
+   "filename": "space-animated-props-planet-globe.glb",
+   "relativePath": "animated-props/space-animated-props-planet-globe.glb",
+   "leaf": "world",
+   "sizeBytes": 54296,
+   "bounds": {
+    "min": [
+     -17.1592,
+     0,
+     -14.5749
+    ],
+    "max": [
+     17,
+     30,
+     14.5749
+    ],
+    "size": [
+     34.1592,
+     30,
+     29.1497
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "spin"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-animated-props-radar-dish",
+   "pack": "space",
+   "name": "Tracking Radar",
+   "category": "animated-props",
+   "filename": "space-animated-props-radar-dish.glb",
+   "relativePath": "animated-props/space-animated-props-radar-dish.glb",
+   "leaf": "world",
+   "sizeBytes": 27176,
+   "bounds": {
+    "min": [
+     -12.6175,
+     0,
+     -11.5661
+    ],
+    "max": [
+     12.6175,
+     38.9427,
+     11.5
+    ],
+    "size": [
+     25.2351,
+     38.9427,
+     23.0661
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "spin"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-animated-props-reactor-core",
+   "pack": "space",
+   "name": "Fusion Reactor Core",
+   "category": "animated-props",
+   "filename": "space-animated-props-reactor-core.glb",
+   "relativePath": "animated-props/space-animated-props-reactor-core.glb",
+   "leaf": "world",
+   "sizeBytes": 55048,
+   "bounds": {
+    "min": [
+     -14,
+     0,
+     -14
+    ],
+    "max": [
+     14,
+     39,
+     14
+    ],
+    "size": [
+     28,
+     39,
+     28
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-animated-props-robotic-arm",
+   "pack": "space",
+   "name": "Robotic Loader Arm",
+   "category": "animated-props",
+   "filename": "space-animated-props-robotic-arm.glb",
+   "relativePath": "animated-props/space-animated-props-robotic-arm.glb",
+   "leaf": "world",
+   "sizeBytes": 46432,
+   "bounds": {
+    "min": [
+     -10,
+     0,
+     -15.7344
+    ],
+    "max": [
+     10,
+     34.8,
+     15.5
+    ],
+    "size": [
+     20,
+     34.8,
+     31.2344
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-animated-props-shield-generator",
+   "pack": "space",
+   "name": "Shield Generator",
+   "category": "animated-props",
+   "filename": "space-animated-props-shield-generator.glb",
+   "relativePath": "animated-props/space-animated-props-shield-generator.glb",
+   "leaf": "world",
+   "sizeBytes": 28660,
+   "bounds": {
+    "min": [
+     -15.0111,
+     0,
+     -13
+    ],
+    "max": [
+     15.0111,
+     40,
+     13
+    ],
+    "size": [
+     30.0222,
+     40,
+     26
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-field"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-shield-dome",
+     "socket": "socket-field",
+     "trigger": "idle",
+     "size": 34
+    },
+    {
+     "effectId": "rvx-space-shield-hit",
+     "socket": "socket-field",
+     "trigger": "clip:hit",
+     "size": 34
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-animated-props-signal-beacon",
+   "pack": "space",
+   "name": "Signal Beacon",
+   "category": "animated-props",
+   "filename": "space-animated-props-signal-beacon.glb",
+   "relativePath": "animated-props/space-animated-props-signal-beacon.glb",
+   "leaf": "world",
+   "sizeBytes": 16752,
+   "bounds": {
+    "min": [
+     -10,
+     0,
+     -9
+    ],
+    "max": [
+     10,
+     40,
+     9.0313
+    ],
+    "size": [
+     20,
+     40,
+     18.0313
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-animated-props-teleporter-pad",
+   "pack": "space",
+   "name": "Teleporter Pad",
+   "category": "animated-props",
+   "filename": "space-animated-props-teleporter-pad.glb",
+   "relativePath": "animated-props/space-animated-props-teleporter-pad.glb",
+   "leaf": "world",
+   "sizeBytes": 26580,
+   "bounds": {
+    "min": [
+     -16,
+     -0.0312,
+     -16.5625
+    ],
+    "max": [
+     16,
+     22,
+     16.5
+    ],
+    "size": [
+     32,
+     22.0313,
+     33.0625
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-beam"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-teleport-beam",
+     "socket": "socket-beam",
+     "trigger": "clip:active",
+     "size": 26
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-buildings-alien-hive",
+   "pack": "space",
+   "name": "Alien Hive",
+   "category": "buildings",
+   "filename": "space-buildings-alien-hive.glb",
+   "relativePath": "buildings/space-buildings-alien-hive.glb",
+   "leaf": "world",
+   "sizeBytes": 148348,
+   "bounds": {
+    "min": [
+     -64,
+     -0.0625,
+     -64
+    ],
+    "max": [
+     64,
+     126,
+     64
+    ],
+    "size": [
+     128,
+     126.0625,
+     128
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-spores"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-spore-drift",
+     "socket": "socket-spores",
+     "trigger": "idle",
+     "size": 60
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-buildings-comm-array",
+   "pack": "space",
+   "name": "Deep-Space Comm Array",
+   "category": "buildings",
+   "filename": "space-buildings-comm-array.glb",
+   "relativePath": "buildings/space-buildings-comm-array.glb",
+   "leaf": "world",
+   "sizeBytes": 97980,
+   "bounds": {
+    "min": [
+     -34.5312,
+     0,
+     -34
+    ],
+    "max": [
+     34.5,
+     100.9777,
+     34
+    ],
+    "size": [
+     69.0313,
+     100.9777,
+     68
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-buildings-control-tower",
+   "pack": "space",
+   "name": "Spaceport Control Tower",
+   "category": "buildings",
+   "filename": "space-buildings-control-tower.glb",
+   "relativePath": "buildings/space-buildings-control-tower.glb",
+   "leaf": "world",
+   "sizeBytes": 105184,
+   "bounds": {
+    "min": [
+     -30,
+     0,
+     -30
+    ],
+    "max": [
+     30,
+     154.8724,
+     30
+    ],
+    "size": [
+     60,
+     154.8724,
+     60
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-buildings-hab-dome",
+   "pack": "space",
+   "name": "Habitat Dome",
+   "category": "buildings",
+   "filename": "space-buildings-hab-dome.glb",
+   "relativePath": "buildings/space-buildings-hab-dome.glb",
+   "leaf": "world",
+   "sizeBytes": 191068,
+   "bounds": {
+    "min": [
+     -49.0312,
+     -0.0312,
+     -51
+    ],
+    "max": [
+     49,
+     93.0551,
+     51.0313
+    ],
+    "size": [
+     98.0313,
+     93.0864,
+     102.0313
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-buildings-hangar",
+   "pack": "space",
+   "name": "Starship Hangar",
+   "category": "buildings",
+   "filename": "space-buildings-hangar.glb",
+   "relativePath": "buildings/space-buildings-hangar.glb",
+   "leaf": "world",
+   "sizeBytes": 150624,
+   "bounds": {
+    "min": [
+     -75.5,
+     0,
+     -61.5
+    ],
+    "max": [
+     75.5,
+     101.0313,
+     61.5
+    ],
+    "size": [
+     151,
+     101.0313,
+     123
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-buildings-launch-pad",
+   "pack": "space",
+   "name": "Rocket Launch Pad",
+   "category": "buildings",
+   "filename": "space-buildings-launch-pad.glb",
+   "relativePath": "buildings/space-buildings-launch-pad.glb",
+   "leaf": "world",
+   "sizeBytes": 157248,
+   "bounds": {
+    "min": [
+     -59,
+     0,
+     -54
+    ],
+    "max": [
+     59,
+     132,
+     54
+    ],
+    "size": [
+     118,
+     132,
+     108
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-steam"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-launch-steam",
+     "socket": "socket-steam",
+     "trigger": "idle",
+     "size": 90
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-buildings-mining-rig",
+   "pack": "space",
+   "name": "Asteroid Mining Rig",
+   "category": "buildings",
+   "filename": "space-buildings-mining-rig.glb",
+   "relativePath": "buildings/space-buildings-mining-rig.glb",
+   "leaf": "world",
+   "sizeBytes": 117372,
+   "bounds": {
+    "min": [
+     -35,
+     0,
+     -33
+    ],
+    "max": [
+     35,
+     132,
+     33
+    ],
+    "size": [
+     70,
+     132,
+     66
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-buildings-reactor-plant",
+   "pack": "space",
+   "name": "Fusion Power Plant",
+   "category": "buildings",
+   "filename": "space-buildings-reactor-plant.glb",
+   "relativePath": "buildings/space-buildings-reactor-plant.glb",
+   "leaf": "world",
+   "sizeBytes": 182252,
+   "bounds": {
+    "min": [
+     -73.5,
+     0,
+     -54
+    ],
+    "max": [
+     73.5,
+     100.0313,
+     54
+    ],
+    "size": [
+     147,
+     100.0313,
+     108
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-buildings-research-lab",
+   "pack": "space",
+   "name": "Research Lab",
+   "category": "buildings",
+   "filename": "space-buildings-research-lab.glb",
+   "relativePath": "buildings/space-buildings-research-lab.glb",
+   "leaf": "world",
+   "sizeBytes": 143480,
+   "bounds": {
+    "min": [
+     -65.8,
+     0,
+     -43
+    ],
+    "max": [
+     65.5,
+     92,
+     43
+    ],
+    "size": [
+     131.3,
+     92,
+     86
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-buildings-station-module",
+   "pack": "space",
+   "name": "Station Module",
+   "category": "buildings",
+   "filename": "space-buildings-station-module.glb",
+   "relativePath": "buildings/space-buildings-station-module.glb",
+   "leaf": "world",
+   "sizeBytes": 98452,
+   "bounds": {
+    "min": [
+     -61,
+     0,
+     -63
+    ],
+    "max": [
+     61,
+     87,
+     63
+    ],
+    "size": [
+     122,
+     87,
+     126
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-creatures-alien-grunt",
+   "pack": "space",
+   "name": "Alien Grunt",
+   "category": "creatures",
+   "filename": "space-creatures-alien-grunt.glb",
+   "relativePath": "creatures/space-creatures-alien-grunt.glb",
+   "leaf": "world",
+   "sizeBytes": 48352,
+   "bounds": {
+    "min": [
+     -16,
+     0,
+     -12
+    ],
+    "max": [
+     16,
+     42,
+     12
+    ],
+    "size": [
+     32,
+     42,
+     24
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "death",
+    "attack",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-muzzle"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-laser-bolt",
+     "socket": "socket-muzzle",
+     "trigger": "clip:attack",
+     "size": 14,
+     "aim": [
+      0,
+      0,
+      -1
+     ],
+     "at": 0.4
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-creatures-mech-walker",
+   "pack": "space",
+   "name": "Mech Walker",
+   "category": "creatures",
+   "filename": "space-creatures-mech-walker.glb",
+   "relativePath": "creatures/space-creatures-mech-walker.glb",
+   "leaf": "world",
+   "sizeBytes": 76308,
+   "bounds": {
+    "min": [
+     -21.4,
+     0,
+     -19
+    ],
+    "max": [
+     21.4,
+     74,
+     19
+    ],
+    "size": [
+     42.8,
+     74,
+     38
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "death",
+    "hit",
+    "move",
+    "attack",
+    "idle"
+   ],
+   "sockets": [
+    "socket-cannon-l",
+    "socket-cannon-r"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-cannon-blast",
+     "socket": "socket-cannon-l",
+     "trigger": "clip:attack",
+     "size": 24,
+     "aim": [
+      0,
+      0,
+      -1
+     ],
+     "at": 0.4
+    },
+    {
+     "effectId": "rvx-space-cannon-blast",
+     "socket": "socket-cannon-r",
+     "trigger": "clip:attack",
+     "size": 24,
+     "aim": [
+      0,
+      0,
+      -1
+     ],
+     "at": 0.4
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-creatures-robot-dog",
+   "pack": "space",
+   "name": "Robot Dog",
+   "category": "creatures",
+   "filename": "space-creatures-robot-dog.glb",
+   "relativePath": "creatures/space-creatures-robot-dog.glb",
+   "leaf": "world",
+   "sizeBytes": 28424,
+   "bounds": {
+    "min": [
+     -7.5,
+     0,
+     -11.5
+    ],
+    "max": [
+     7.5,
+     23.5,
+     11.6592
+    ],
+    "size": [
+     15,
+     23.5,
+     23.1592
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle",
+    "move"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-creatures-space-slug",
+   "pack": "space",
+   "name": "Space Slug",
+   "category": "creatures",
+   "filename": "space-creatures-space-slug.glb",
+   "relativePath": "creatures/space-creatures-space-slug.glb",
+   "leaf": "world",
+   "sizeBytes": 69960,
+   "bounds": {
+    "min": [
+     -19,
+     0,
+     -53.5
+    ],
+    "max": [
+     19,
+     63,
+     53
+    ],
+    "size": [
+     38,
+     63,
+     106.5
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "idle",
+    "hit"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-creatures-tentacle-alien",
+   "pack": "space",
+   "name": "Tentacle Alien",
+   "category": "creatures",
+   "filename": "space-creatures-tentacle-alien.glb",
+   "relativePath": "creatures/space-creatures-tentacle-alien.glb",
+   "leaf": "world",
+   "sizeBytes": 76916,
+   "bounds": {
+    "min": [
+     -20.1348,
+     0.1731,
+     -22.2104
+    ],
+    "max": [
+     20.1348,
+     40,
+     22.2104
+    ],
+    "size": [
+     40.2696,
+     39.8269,
+     44.4208
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "hit",
+    "death",
+    "idle",
+    "attack"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-creatures-ufo-drone",
+   "pack": "space",
+   "name": "UFO Drone",
+   "category": "creatures",
+   "filename": "space-creatures-ufo-drone.glb",
+   "relativePath": "creatures/space-creatures-ufo-drone.glb",
+   "leaf": "world",
+   "sizeBytes": 21864,
+   "bounds": {
+    "min": [
+     -12.0918,
+     0,
+     -11.5
+    ],
+    "max": [
+     12.0918,
+     13,
+     11.5
+    ],
+    "size": [
+     24.1836,
+     13,
+     23
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-beam"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-ray-zap",
+     "socket": "socket-beam",
+     "trigger": "clip:attack",
+     "size": 16,
+     "aim": [
+      0,
+      -1,
+      0
+     ],
+     "at": 0.36
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-creatures-xeno-drone",
+   "pack": "space",
+   "name": "Xeno Drone",
+   "category": "creatures",
+   "filename": "space-creatures-xeno-drone.glb",
+   "relativePath": "creatures/space-creatures-xeno-drone.glb",
+   "leaf": "world",
+   "sizeBytes": 32600,
+   "bounds": {
+    "min": [
+     -10.9338,
+     -0.2107,
+     -11.32
+    ],
+    "max": [
+     10.9338,
+     11.2596,
+     11
+    ],
+    "size": [
+     21.8677,
+     11.4703,
+     22.32
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-creatures-xeno-queen",
+   "pack": "space",
+   "name": "Xeno Queen",
+   "category": "creatures",
+   "filename": "space-creatures-xeno-queen.glb",
+   "relativePath": "creatures/space-creatures-xeno-queen.glb",
+   "leaf": "world",
+   "sizeBytes": 169416,
+   "bounds": {
+    "min": [
+     -86.7191,
+     0.0211,
+     -103.1278
+    ],
+    "max": [
+     86.7191,
+     137.4582,
+     103.5
+    ],
+    "size": [
+     173.4383,
+     137.4371,
+     206.6278
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "death",
+    "attack",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-mouth"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-acid-spray",
+     "socket": "socket-mouth",
+     "trigger": "clip:attack",
+     "size": 70,
+     "aim": [
+      -0.288,
+      -0.242,
+      -0.927
+     ],
+     "at": 0.52
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-bio-blaster",
+   "pack": "space",
+   "name": "Bio Blaster",
+   "category": "held-items",
+   "filename": "space-held-items-bio-blaster.glb",
+   "relativePath": "held-items/space-held-items-bio-blaster.glb",
+   "leaf": "world",
+   "sizeBytes": 84660,
+   "bounds": {
+    "min": [
+     -0.265,
+     -0.02,
+     -0.025
+    ],
+    "max": [
+     0.035,
+     0.08,
+     0.115
+    ],
+    "size": [
+     0.3,
+     0.1,
+     0.14
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-muzzle"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-goo-shot",
+     "socket": "socket-muzzle",
+     "trigger": "manual",
+     "size": 0.3,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-blaster-rifle",
+   "pack": "space",
+   "name": "Blaster Rifle",
+   "category": "held-items",
+   "filename": "space-held-items-blaster-rifle.glb",
+   "relativePath": "held-items/space-held-items-blaster-rifle.glb",
+   "leaf": "world",
+   "sizeBytes": 62264,
+   "bounds": {
+    "min": [
+     -0.365,
+     0.005,
+     -0.04
+    ],
+    "max": [
+     0.135,
+     0.055,
+     0.08
+    ],
+    "size": [
+     0.5,
+     0.05,
+     0.12
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-muzzle"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-laser-bolt",
+     "socket": "socket-muzzle",
+     "trigger": "manual",
+     "size": 0.3,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-data-pad",
+   "pack": "space",
+   "name": "Holo Data Pad",
+   "category": "held-items",
+   "filename": "space-held-items-data-pad.glb",
+   "relativePath": "held-items/space-held-items-data-pad.glb",
+   "leaf": "world",
+   "sizeBytes": 14648,
+   "bounds": {
+    "min": [
+     -0.18,
+     -0.03,
+     -0.01
+    ],
+    "max": [
+     0.05,
+     0.09,
+     0.07
+    ],
+    "size": [
+     0.23,
+     0.12,
+     0.08
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-holo"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-holo-scan",
+     "socket": "socket-holo",
+     "trigger": "manual",
+     "size": 0.3
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-energy-shield",
+   "pack": "space",
+   "name": "Energy Shield",
+   "category": "held-items",
+   "filename": "space-held-items-energy-shield.glb",
+   "relativePath": "held-items/space-held-items-energy-shield.glb",
+   "leaf": "world",
+   "sizeBytes": 49504,
+   "bounds": {
+    "min": [
+     -0.065,
+     -0.105,
+     -0.145
+    ],
+    "max": [
+     0.015,
+     0.155,
+     0.135
+    ],
+    "size": [
+     0.08,
+     0.26,
+     0.28
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-shield"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-shield-hit",
+     "socket": "socket-shield",
+     "trigger": "manual",
+     "size": 0.32
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-gravity-hammer",
+   "pack": "space",
+   "name": "Gravity Hammer",
+   "category": "held-items",
+   "filename": "space-held-items-gravity-hammer.glb",
+   "relativePath": "held-items/space-held-items-gravity-hammer.glb",
+   "leaf": "world",
+   "sizeBytes": 40964,
+   "bounds": {
+    "min": [
+     -0.4,
+     -0.03,
+     -0.08
+    ],
+    "max": [
+     0.06,
+     0.09,
+     0.08
+    ],
+    "size": [
+     0.46,
+     0.12,
+     0.16
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-head"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-gravity-slam",
+     "socket": "socket-head",
+     "trigger": "manual",
+     "size": 0.6
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-laser-cannon",
+   "pack": "space",
+   "name": "Laser Cannon",
+   "category": "held-items",
+   "filename": "space-held-items-laser-cannon.glb",
+   "relativePath": "held-items/space-held-items-laser-cannon.glb",
+   "leaf": "world",
+   "sizeBytes": 122044,
+   "bounds": {
+    "min": [
+     -0.48,
+     -0.015,
+     -0.02
+    ],
+    "max": [
+     0.08,
+     0.075,
+     0.14
+    ],
+    "size": [
+     0.56,
+     0.09,
+     0.16
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-muzzle"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-laser-bolt",
+     "socket": "socket-muzzle",
+     "trigger": "manual",
+     "size": 0.4,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-laser-pistol",
+   "pack": "space",
+   "name": "Laser Pistol",
+   "category": "held-items",
+   "filename": "space-held-items-laser-pistol.glb",
+   "relativePath": "held-items/space-held-items-laser-pistol.glb",
+   "leaf": "world",
+   "sizeBytes": 24740,
+   "bounds": {
+    "min": [
+     -0.16,
+     0.005,
+     -0.07
+    ],
+    "max": [
+     0.04,
+     0.055,
+     0.05
+    ],
+    "size": [
+     0.2,
+     0.05,
+     0.12
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-muzzle"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-laser-bolt",
+     "socket": "socket-muzzle",
+     "trigger": "manual",
+     "size": 0.22,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-plasma-grenade",
+   "pack": "space",
+   "name": "Plasma Grenade",
+   "category": "held-items",
+   "filename": "space-held-items-plasma-grenade.glb",
+   "relativePath": "held-items/space-held-items-plasma-grenade.glb",
+   "leaf": "world",
+   "sizeBytes": 39588,
+   "bounds": {
+    "min": [
+     -0.08,
+     -0.01,
+     -0.02
+    ],
+    "max": [
+     0.03,
+     0.07,
+     0.07
+    ],
+    "size": [
+     0.11,
+     0.08,
+     0.09
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-core"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-plasma-blast",
+     "socket": "socket-core",
+     "trigger": "manual",
+     "size": 0.7
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-plasma-sword",
+   "pack": "space",
+   "name": "Plasma Sword",
+   "category": "held-items",
+   "filename": "space-held-items-plasma-sword.glb",
+   "relativePath": "held-items/space-held-items-plasma-sword.glb",
+   "leaf": "world",
+   "sizeBytes": 12880,
+   "bounds": {
+    "min": [
+     -0.43,
+     0.005,
+     -0.035
+    ],
+    "max": [
+     0.05,
+     0.055,
+     0.035
+    ],
+    "size": [
+     0.48,
+     0.05,
+     0.07
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tip",
+    "socket-trail"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-plasma-slash",
+     "trigger": "manual",
+     "size": 0.323,
+     "aim": [
+      -1,
+      0,
+      0
+     ],
+     "offset": [
+      -0.107,
+      0.03,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-pulse-smg",
+   "pack": "space",
+   "name": "Pulse SMG",
+   "category": "held-items",
+   "filename": "space-held-items-pulse-smg.glb",
+   "relativePath": "held-items/space-held-items-pulse-smg.glb",
+   "leaf": "world",
+   "sizeBytes": 47420,
+   "bounds": {
+    "min": [
+     -0.26,
+     -0.005,
+     -0.03
+    ],
+    "max": [
+     0.06,
+     0.065,
+     0.1
+    ],
+    "size": [
+     0.32,
+     0.07,
+     0.13
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-muzzle"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-laser-bolt",
+     "socket": "socket-muzzle",
+     "trigger": "manual",
+     "size": 0.25,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-ray-gun",
+   "pack": "space",
+   "name": "Atomic Ray Gun",
+   "category": "held-items",
+   "filename": "space-held-items-ray-gun.glb",
+   "relativePath": "held-items/space-held-items-ray-gun.glb",
+   "leaf": "world",
+   "sizeBytes": 61972,
+   "bounds": {
+    "min": [
+     -0.2,
+     -0.005,
+     -0.05
+    ],
+    "max": [
+     0.05,
+     0.065,
+     0.1
+    ],
+    "size": [
+     0.25,
+     0.07,
+     0.15
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-muzzle"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-ray-bolt",
+     "socket": "socket-muzzle",
+     "trigger": "manual",
+     "size": 0.25,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-scanner",
+   "pack": "space",
+   "name": "Bio Scanner",
+   "category": "held-items",
+   "filename": "space-held-items-scanner.glb",
+   "relativePath": "held-items/space-held-items-scanner.glb",
+   "leaf": "world",
+   "sizeBytes": 24448,
+   "bounds": {
+    "min": [
+     -0.16,
+     -0.005,
+     -0.05
+    ],
+    "max": [
+     0.04,
+     0.065,
+     0.06
+    ],
+    "size": [
+     0.2,
+     0.07,
+     0.11
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-sensor"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-holo-scan",
+     "socket": "socket-sensor",
+     "trigger": "manual",
+     "size": 0.28
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-space-wrench",
+   "pack": "space",
+   "name": "Space Wrench",
+   "category": "held-items",
+   "filename": "space-held-items-space-wrench.glb",
+   "relativePath": "held-items/space-held-items-space-wrench.glb",
+   "leaf": "world",
+   "sizeBytes": 23456,
+   "bounds": {
+    "min": [
+     -0.29,
+     0.015,
+     -0.055
+    ],
+    "max": [
+     0.05,
+     0.045,
+     0.045
+    ],
+    "size": [
+     0.34,
+     0.03,
+     0.1
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tip"
+   ],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-star-flag",
+   "pack": "space",
+   "name": "Star Flag",
+   "category": "held-items",
+   "filename": "space-held-items-star-flag.glb",
+   "relativePath": "held-items/space-held-items-star-flag.glb",
+   "leaf": "world",
+   "sizeBytes": 25148,
+   "bounds": {
+    "min": [
+     -0.46,
+     0.015,
+     -0.01
+    ],
+    "max": [
+     0.06,
+     0.035,
+     0.18
+    ],
+    "size": [
+     0.52,
+     0.02,
+     0.19
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tip"
+   ],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-stun-baton",
+   "pack": "space",
+   "name": "Stun Baton",
+   "category": "held-items",
+   "filename": "space-held-items-stun-baton.glb",
+   "relativePath": "held-items/space-held-items-stun-baton.glb",
+   "leaf": "world",
+   "sizeBytes": 22608,
+   "bounds": {
+    "min": [
+     -0.29,
+     0.005,
+     -0.025
+    ],
+    "max": [
+     0.05,
+     0.055,
+     0.025
+    ],
+    "size": [
+     0.34,
+     0.05,
+     0.05
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tip"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-stun-arc",
+     "socket": "socket-tip",
+     "trigger": "manual",
+     "size": 0.3
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-held-items-welding-torch",
+   "pack": "space",
+   "name": "Welding Torch",
+   "category": "held-items",
+   "filename": "space-held-items-welding-torch.glb",
+   "relativePath": "held-items/space-held-items-welding-torch.glb",
+   "leaf": "world",
+   "sizeBytes": 23736,
+   "bounds": {
+    "min": [
+     -0.24,
+     0,
+     -0.02
+    ],
+    "max": [
+     0.06,
+     0.06,
+     0.08
+    ],
+    "size": [
+     0.3,
+     0.06,
+     0.1
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-flame"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-weld-sparks",
+     "socket": "socket-flame",
+     "trigger": "manual",
+     "size": 0.25,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-alien-eggs",
+   "pack": "space",
+   "name": "Alien Egg Clutch",
+   "category": "props",
+   "filename": "space-props-alien-eggs.glb",
+   "relativePath": "props/space-props-alien-eggs.glb",
+   "leaf": "world",
+   "sizeBytes": 28516,
+   "bounds": {
+    "min": [
+     -13.9054,
+     0,
+     -12.4054
+    ],
+    "max": [
+     13.5,
+     16.4987,
+     12.4054
+    ],
+    "size": [
+     27.4054,
+     16.4987,
+     24.8107
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-cargo-crate",
+   "pack": "space",
+   "name": "Cargo Crate Stack",
+   "category": "props",
+   "filename": "space-props-cargo-crate.glb",
+   "relativePath": "props/space-props-cargo-crate.glb",
+   "leaf": "world",
+   "sizeBytes": 10380,
+   "bounds": {
+    "min": [
+     -12,
+     0,
+     -9.5
+    ],
+    "max": [
+     12,
+     28.1455,
+     9.5
+    ],
+    "size": [
+     24,
+     28.1455,
+     19
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-comm-radio",
+   "pack": "space",
+   "name": "Field Comm Radio",
+   "category": "props",
+   "filename": "space-props-comm-radio.glb",
+   "relativePath": "props/space-props-comm-radio.glb",
+   "leaf": "world",
+   "sizeBytes": 18920,
+   "bounds": {
+    "min": [
+     -11.1284,
+     0,
+     -6.5
+    ],
+    "max": [
+     11,
+     38.8886,
+     6
+    ],
+    "size": [
+     22.1284,
+     38.8886,
+     12.5
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-computer-terminal",
+   "pack": "space",
+   "name": "Computer Terminal",
+   "category": "props",
+   "filename": "space-props-computer-terminal.glb",
+   "relativePath": "props/space-props-computer-terminal.glb",
+   "leaf": "world",
+   "sizeBytes": 18948,
+   "bounds": {
+    "min": [
+     -11.8883,
+     0,
+     -10.5
+    ],
+    "max": [
+     12.1033,
+     37.5711,
+     10.5
+    ],
+    "size": [
+     23.9915,
+     37.5711,
+     21
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-control-console",
+   "pack": "space",
+   "name": "Control Console",
+   "category": "props",
+   "filename": "space-props-control-console.glb",
+   "relativePath": "props/space-props-control-console.glb",
+   "leaf": "world",
+   "sizeBytes": 14176,
+   "bounds": {
+    "min": [
+     -13.0714,
+     0,
+     -8
+    ],
+    "max": [
+     13.241,
+     30.0478,
+     8
+    ],
+    "size": [
+     26.3123,
+     30.0478,
+     16
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-crew-seat",
+   "pack": "space",
+   "name": "Pilot Seat",
+   "category": "props",
+   "filename": "space-props-crew-seat.glb",
+   "relativePath": "props/space-props-crew-seat.glb",
+   "leaf": "world",
+   "sizeBytes": 20792,
+   "bounds": {
+    "min": [
+     -10.5,
+     0,
+     -8
+    ],
+    "max": [
+     10.1367,
+     34.4755,
+     8
+    ],
+    "size": [
+     20.6367,
+     34.4755,
+     16
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-fuel-barrel",
+   "pack": "space",
+   "name": "Toxic Fuel Barrel",
+   "category": "props",
+   "filename": "space-props-fuel-barrel.glb",
+   "relativePath": "props/space-props-fuel-barrel.glb",
+   "leaf": "world",
+   "sizeBytes": 13976,
+   "bounds": {
+    "min": [
+     -11.8,
+     0,
+     -10.8
+    ],
+    "max": [
+     11.5,
+     26.3281,
+     10.8
+    ],
+    "size": [
+     23.3,
+     26.3281,
+     21.6
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-fuel-cell",
+   "pack": "space",
+   "name": "Plasma Fuel Cell",
+   "category": "props",
+   "filename": "space-props-fuel-cell.glb",
+   "relativePath": "props/space-props-fuel-cell.glb",
+   "leaf": "world",
+   "sizeBytes": 24180,
+   "bounds": {
+    "min": [
+     -8,
+     0,
+     -8
+    ],
+    "max": [
+     8,
+     26.1785,
+     8
+    ],
+    "size": [
+     16,
+     26.1785,
+     16
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-fuel-pump",
+   "pack": "space",
+   "name": "Starport Fuel Pump",
+   "category": "props",
+   "filename": "space-props-fuel-pump.glb",
+   "relativePath": "props/space-props-fuel-pump.glb",
+   "leaf": "world",
+   "sizeBytes": 11052,
+   "bounds": {
+    "min": [
+     -13.9924,
+     0,
+     -7
+    ],
+    "max": [
+     13.5129,
+     37.8469,
+     7
+    ],
+    "size": [
+     27.5054,
+     37.8469,
+     14
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-hazard-barrier",
+   "pack": "space",
+   "name": "Hazard Barrier",
+   "category": "props",
+   "filename": "space-props-hazard-barrier.glb",
+   "relativePath": "props/space-props-hazard-barrier.glb",
+   "leaf": "world",
+   "sizeBytes": 16804,
+   "bounds": {
+    "min": [
+     -16.9896,
+     0,
+     -6
+    ],
+    "max": [
+     17.2688,
+     23.5687,
+     6
+    ],
+    "size": [
+     34.2585,
+     23.5687,
+     12
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-hologram-table",
+   "pack": "space",
+   "name": "Hologram Table",
+   "category": "props",
+   "filename": "space-props-hologram-table.glb",
+   "relativePath": "props/space-props-hologram-table.glb",
+   "leaf": "world",
+   "sizeBytes": 54092,
+   "bounds": {
+    "min": [
+     -14.5,
+     0,
+     -14.5
+    ],
+    "max": [
+     14.5,
+     34.7215,
+     14.5
+    ],
+    "size": [
+     29,
+     34.7215,
+     29
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-hydro-planter",
+   "pack": "space",
+   "name": "Hydroponic Planter",
+   "category": "props",
+   "filename": "space-props-hydro-planter.glb",
+   "relativePath": "props/space-props-hydro-planter.glb",
+   "leaf": "world",
+   "sizeBytes": 42652,
+   "bounds": {
+    "min": [
+     -14,
+     0,
+     -8.5
+    ],
+    "max": [
+     14,
+     28,
+     8.8356
+    ],
+    "size": [
+     28,
+     28,
+     17.3356
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-landing-beacon",
+   "pack": "space",
+   "name": "Landing Beacon",
+   "category": "props",
+   "filename": "space-props-landing-beacon.glb",
+   "relativePath": "props/space-props-landing-beacon.glb",
+   "leaf": "world",
+   "sizeBytes": 27272,
+   "bounds": {
+    "min": [
+     -11.7604,
+     0,
+     -11.8008
+    ],
+    "max": [
+     12,
+     32,
+     11.8008
+    ],
+    "size": [
+     23.7604,
+     32,
+     23.6016
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-med-kit",
+   "pack": "space",
+   "name": "Field Med Kit",
+   "category": "props",
+   "filename": "space-props-med-kit.glb",
+   "relativePath": "props/space-props-med-kit.glb",
+   "leaf": "world",
+   "sizeBytes": 13284,
+   "bounds": {
+    "min": [
+     -10.5,
+     0,
+     -5.5
+    ],
+    "max": [
+     10.732,
+     19,
+     5.5
+    ],
+    "size": [
+     21.232,
+     19,
+     11
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-mining-drill",
+   "pack": "space",
+   "name": "Mining Drill Rig",
+   "category": "props",
+   "filename": "space-props-mining-drill.glb",
+   "relativePath": "props/space-props-mining-drill.glb",
+   "leaf": "world",
+   "sizeBytes": 33136,
+   "bounds": {
+    "min": [
+     -12,
+     0,
+     -17
+    ],
+    "max": [
+     12,
+     32.7164,
+     16.7996
+    ],
+    "size": [
+     24,
+     32.7164,
+     33.7996
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-ore-rock",
+   "pack": "space",
+   "name": "Crystal Ore Rock",
+   "category": "props",
+   "filename": "space-props-ore-rock.glb",
+   "relativePath": "props/space-props-ore-rock.glb",
+   "leaf": "world",
+   "sizeBytes": 23604,
+   "bounds": {
+    "min": [
+     -14.1194,
+     -0.203,
+     -10.9641
+    ],
+    "max": [
+     14.1985,
+     27.3449,
+     10.5
+    ],
+    "size": [
+     28.3179,
+     27.5479,
+     21.4641
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-oxygen-tanks",
+   "pack": "space",
+   "name": "Oxygen Tank Rack",
+   "category": "props",
+   "filename": "space-props-oxygen-tanks.glb",
+   "relativePath": "props/space-props-oxygen-tanks.glb",
+   "leaf": "world",
+   "sizeBytes": 33236,
+   "bounds": {
+    "min": [
+     -15,
+     0,
+     -6.5
+    ],
+    "max": [
+     15,
+     30.1588,
+     6.5
+    ],
+    "size": [
+     30,
+     30.1588,
+     13
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-plasma-conduit",
+   "pack": "space",
+   "name": "Plasma Conduit",
+   "category": "props",
+   "filename": "space-props-plasma-conduit.glb",
+   "relativePath": "props/space-props-plasma-conduit.glb",
+   "leaf": "world",
+   "sizeBytes": 25388,
+   "bounds": {
+    "min": [
+     -18.0312,
+     0,
+     -7.5
+    ],
+    "max": [
+     18.0313,
+     21,
+     7.5
+    ],
+    "size": [
+     36.0625,
+     21,
+     15
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-power-cell-crate",
+   "pack": "space",
+   "name": "Power Cell Crate",
+   "category": "props",
+   "filename": "space-props-power-cell-crate.glb",
+   "relativePath": "props/space-props-power-cell-crate.glb",
+   "leaf": "world",
+   "sizeBytes": 28088,
+   "bounds": {
+    "min": [
+     -15,
+     0.0729,
+     -10.0017
+    ],
+    "max": [
+     14.5614,
+     18,
+     10
+    ],
+    "size": [
+     29.5614,
+     17.9271,
+     20.0017
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-power-generator",
+   "pack": "space",
+   "name": "Tesla Power Generator",
+   "category": "props",
+   "filename": "space-props-power-generator.glb",
+   "relativePath": "props/space-props-power-generator.glb",
+   "leaf": "world",
+   "sizeBytes": 27424,
+   "bounds": {
+    "min": [
+     -15,
+     0,
+     -7.5
+    ],
+    "max": [
+     15.0801,
+     36,
+     7.5
+    ],
+    "size": [
+     30.0801,
+     36,
+     15
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-robot-parts",
+   "pack": "space",
+   "name": "Robot Scrap Pile",
+   "category": "props",
+   "filename": "space-props-robot-parts.glb",
+   "relativePath": "props/space-props-robot-parts.glb",
+   "leaf": "world",
+   "sizeBytes": 32128,
+   "bounds": {
+    "min": [
+     -17.9166,
+     0,
+     -11.4563
+    ],
+    "max": [
+     18.387,
+     16.994,
+     11.7224
+    ],
+    "size": [
+     36.3036,
+     16.994,
+     23.1787
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-satellite-dish",
+   "pack": "space",
+   "name": "Satellite Dish",
+   "category": "props",
+   "filename": "space-props-satellite-dish.glb",
+   "relativePath": "props/space-props-satellite-dish.glb",
+   "leaf": "world",
+   "sizeBytes": 30544,
+   "bounds": {
+    "min": [
+     -13.6392,
+     0,
+     -10.5397
+    ],
+    "max": [
+     13.2319,
+     37.1725,
+     10.5
+    ],
+    "size": [
+     26.8711,
+     37.1725,
+     21.0397
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-sensor-probe",
+   "pack": "space",
+   "name": "Survey Probe",
+   "category": "props",
+   "filename": "space-props-sensor-probe.glb",
+   "relativePath": "props/space-props-sensor-probe.glb",
+   "leaf": "world",
+   "sizeBytes": 30856,
+   "bounds": {
+    "min": [
+     -12.8744,
+     0,
+     -12.2938
+    ],
+    "max": [
+     12.8744,
+     34.2319,
+     11.799
+    ],
+    "size": [
+     25.7487,
+     34.2319,
+     24.0928
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-solar-panel",
+   "pack": "space",
+   "name": "Solar Panel Array",
+   "category": "props",
+   "filename": "space-props-solar-panel.glb",
+   "relativePath": "props/space-props-solar-panel.glb",
+   "leaf": "world",
+   "sizeBytes": 22072,
+   "bounds": {
+    "min": [
+     -16.2739,
+     0,
+     -6.5
+    ],
+    "max": [
+     16.1882,
+     27.483,
+     6.2341
+    ],
+    "size": [
+     32.4621,
+     27.483,
+     12.7341
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-stasis-tube",
+   "pack": "space",
+   "name": "Stasis Tube",
+   "category": "props",
+   "filename": "space-props-stasis-tube.glb",
+   "relativePath": "props/space-props-stasis-tube.glb",
+   "leaf": "world",
+   "sizeBytes": 27480,
+   "bounds": {
+    "min": [
+     -12,
+     0,
+     -11
+    ],
+    "max": [
+     12,
+     50.0206,
+     11
+    ],
+    "size": [
+     24,
+     50.0206,
+     22
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-storage-locker",
+   "pack": "space",
+   "name": "Crew Locker",
+   "category": "props",
+   "filename": "space-props-storage-locker.glb",
+   "relativePath": "props/space-props-storage-locker.glb",
+   "leaf": "world",
+   "sizeBytes": 18828,
+   "bounds": {
+    "min": [
+     -13,
+     0,
+     -7
+    ],
+    "max": [
+     13,
+     50.2827,
+     7
+    ],
+    "size": [
+     26,
+     50.2827,
+     14
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-supply-pod",
+   "pack": "space",
+   "name": "Supply Drop Pod",
+   "category": "props",
+   "filename": "space-props-supply-pod.glb",
+   "relativePath": "props/space-props-supply-pod.glb",
+   "leaf": "world",
+   "sizeBytes": 16192,
+   "bounds": {
+    "min": [
+     -11.7136,
+     -0.0248,
+     -10.5
+    ],
+    "max": [
+     11.7081,
+     29.9446,
+     10.5
+    ],
+    "size": [
+     23.4217,
+     29.9694,
+     21
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-tool-cart",
+   "pack": "space",
+   "name": "Tool Cart",
+   "category": "props",
+   "filename": "space-props-tool-cart.glb",
+   "relativePath": "props/space-props-tool-cart.glb",
+   "leaf": "world",
+   "sizeBytes": 31124,
+   "bounds": {
+    "min": [
+     -12.9037,
+     0,
+     -7.308
+    ],
+    "max": [
+     13,
+     26.6,
+     7.5
+    ],
+    "size": [
+     25.9037,
+     26.6,
+     14.808
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-vending-machine",
+   "pack": "space",
+   "name": "Snack Vending Machine",
+   "category": "props",
+   "filename": "space-props-vending-machine.glb",
+   "relativePath": "props/space-props-vending-machine.glb",
+   "leaf": "world",
+   "sizeBytes": 14432,
+   "bounds": {
+    "min": [
+     -16.4391,
+     0,
+     -9.5
+    ],
+    "max": [
+     16.3978,
+     43.3526,
+     9.5
+    ],
+    "size": [
+     32.8369,
+     43.3526,
+     19
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-props-water-recycler",
+   "pack": "space",
+   "name": "Water Recycler",
+   "category": "props",
+   "filename": "space-props-water-recycler.glb",
+   "relativePath": "props/space-props-water-recycler.glb",
+   "leaf": "world",
+   "sizeBytes": 27244,
+   "bounds": {
+    "min": [
+     -14,
+     0,
+     -9
+    ],
+    "max": [
+     14.1927,
+     23.5,
+     9
+    ],
+    "size": [
+     28.1927,
+     23.5,
+     18
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-terrain-nature-alien-plant",
+   "pack": "space",
+   "name": "Alien Bulb Plant",
+   "category": "terrain-nature",
+   "filename": "space-terrain-nature-alien-plant.glb",
+   "relativePath": "terrain-nature/space-terrain-nature-alien-plant.glb",
+   "leaf": "world",
+   "sizeBytes": 40300,
+   "bounds": {
+    "min": [
+     -19,
+     0,
+     -18
+    ],
+    "max": [
+     19,
+     39,
+     18
+    ],
+    "size": [
+     38,
+     39,
+     36
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-terrain-nature-asteroid-cluster",
+   "pack": "space",
+   "name": "Asteroid Cluster",
+   "category": "terrain-nature",
+   "filename": "space-terrain-nature-asteroid-cluster.glb",
+   "relativePath": "terrain-nature/space-terrain-nature-asteroid-cluster.glb",
+   "leaf": "world",
+   "sizeBytes": 46732,
+   "bounds": {
+    "min": [
+     -20.9602,
+     0,
+     -20.5
+    ],
+    "max": [
+     20.9602,
+     32,
+     20.7836
+    ],
+    "size": [
+     41.9204,
+     32,
+     41.2836
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-terrain-nature-crystal-cluster",
+   "pack": "space",
+   "name": "Crystal Cluster",
+   "category": "terrain-nature",
+   "filename": "space-terrain-nature-crystal-cluster.glb",
+   "relativePath": "terrain-nature/space-terrain-nature-crystal-cluster.glb",
+   "leaf": "world",
+   "sizeBytes": 31432,
+   "bounds": {
+    "min": [
+     -21.2047,
+     0.2153,
+     -16.34
+    ],
+    "max": [
+     20.768,
+     32.6613,
+     16.7115
+    ],
+    "size": [
+     41.9727,
+     32.446,
+     33.0515
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-terrain-nature-gas-giant",
+   "pack": "space",
+   "name": "Ringed Gas Giant",
+   "category": "terrain-nature",
+   "filename": "space-terrain-nature-gas-giant.glb",
+   "relativePath": "terrain-nature/space-terrain-nature-gas-giant.glb",
+   "leaf": "world",
+   "sizeBytes": 54856,
+   "bounds": {
+    "min": [
+     -26.6829,
+     0,
+     -25.5088
+    ],
+    "max": [
+     26.6829,
+     32,
+     25.5088
+    ],
+    "size": [
+     53.3659,
+     32,
+     51.0175
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-terrain-nature-ice-planet",
+   "pack": "space",
+   "name": "Ice Planet",
+   "category": "terrain-nature",
+   "filename": "space-terrain-nature-ice-planet.glb",
+   "relativePath": "terrain-nature/space-terrain-nature-ice-planet.glb",
+   "leaf": "world",
+   "sizeBytes": 52888,
+   "bounds": {
+    "min": [
+     -19.4789,
+     0,
+     -19.1045
+    ],
+    "max": [
+     19.4789,
+     26,
+     19.1045
+    ],
+    "size": [
+     38.9579,
+     26,
+     38.2089
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-terrain-nature-impact-crater",
+   "pack": "space",
+   "name": "Impact Crater",
+   "category": "terrain-nature",
+   "filename": "space-terrain-nature-impact-crater.glb",
+   "relativePath": "terrain-nature/space-terrain-nature-impact-crater.glb",
+   "leaf": "world",
+   "sizeBytes": 31084,
+   "bounds": {
+    "min": [
+     -29.4409,
+     -0.0312,
+     -28
+    ],
+    "max": [
+     29.4409,
+     9,
+     28
+    ],
+    "size": [
+     58.8819,
+     9.0313,
+     56
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-terrain-nature-lava-planet",
+   "pack": "space",
+   "name": "Lava Planet",
+   "category": "terrain-nature",
+   "filename": "space-terrain-nature-lava-planet.glb",
+   "relativePath": "terrain-nature/space-terrain-nature-lava-planet.glb",
+   "leaf": "world",
+   "sizeBytes": 29208,
+   "bounds": {
+    "min": [
+     -10.3043,
+     0,
+     -9.8
+    ],
+    "max": [
+     10.3043,
+     22,
+     9.8
+    ],
+    "size": [
+     20.6087,
+     22,
+     19.6
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-terrain-nature-moon-rocks",
+   "pack": "space",
+   "name": "Moon Rocks",
+   "category": "terrain-nature",
+   "filename": "space-terrain-nature-moon-rocks.glb",
+   "relativePath": "terrain-nature/space-terrain-nature-moon-rocks.glb",
+   "leaf": "world",
+   "sizeBytes": 30104,
+   "bounds": {
+    "min": [
+     -22.5,
+     0,
+     -17
+    ],
+    "max": [
+     22.5,
+     26,
+     17
+    ],
+    "size": [
+     45,
+     26,
+     34
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-terrain-nature-spore-tree",
+   "pack": "space",
+   "name": "Spore Tree",
+   "category": "terrain-nature",
+   "filename": "space-terrain-nature-spore-tree.glb",
+   "relativePath": "terrain-nature/space-terrain-nature-spore-tree.glb",
+   "leaf": "world",
+   "sizeBytes": 94012,
+   "bounds": {
+    "min": [
+     -22.4263,
+     0,
+     -20.8182
+    ],
+    "max": [
+     22.2171,
+     81,
+     21.1818
+    ],
+    "size": [
+     44.6434,
+     81,
+     42
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-terrain-nature-terra-planet",
+   "pack": "space",
+   "name": "Terra Planet with Moon",
+   "category": "terrain-nature",
+   "filename": "space-terrain-nature-terra-planet.glb",
+   "relativePath": "terrain-nature/space-terrain-nature-terra-planet.glb",
+   "leaf": "world",
+   "sizeBytes": 41352,
+   "bounds": {
+    "min": [
+     -17.8652,
+     0,
+     -11.76
+    ],
+    "max": [
+     17.6163,
+     26,
+     11.76
+    ],
+    "size": [
+     35.4815,
+     26,
+     23.52
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-vehicles-cargo-freighter",
+   "pack": "space",
+   "name": "Cargo Freighter",
+   "category": "vehicles",
+   "filename": "space-vehicles-cargo-freighter.glb",
+   "relativePath": "vehicles/space-vehicles-cargo-freighter.glb",
+   "leaf": "world",
+   "sizeBytes": 67000,
+   "bounds": {
+    "min": [
+     -35,
+     0,
+     -67.5
+    ],
+    "max": [
+     35,
+     72,
+     67.5
+    ],
+    "size": [
+     70,
+     72,
+     135
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "move",
+    "idle"
+   ],
+   "sockets": [
+    "socket-engine"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-engine-exhaust",
+     "socket": "socket-engine",
+     "trigger": "clip:move",
+     "size": 44,
+     "aim": [
+      0,
+      0,
+      1
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-vehicles-hover-bike",
+   "pack": "space",
+   "name": "Hover Bike",
+   "category": "vehicles",
+   "filename": "space-vehicles-hover-bike.glb",
+   "relativePath": "vehicles/space-vehicles-hover-bike.glb",
+   "leaf": "world",
+   "sizeBytes": 25412,
+   "bounds": {
+    "min": [
+     -12,
+     0,
+     -28.5
+    ],
+    "max": [
+     12,
+     28.5694,
+     28.5
+    ],
+    "size": [
+     24,
+     28.5694,
+     57
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move"
+   ],
+   "sockets": [
+    "socket-pad",
+    "socket-thrust"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-hover-thrust",
+     "socket": "socket-thrust",
+     "trigger": "clip:move",
+     "size": 24,
+     "aim": [
+      0,
+      0,
+      1
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-vehicles-moon-rover",
+   "pack": "space",
+   "name": "Moon Rover",
+   "category": "vehicles",
+   "filename": "space-vehicles-moon-rover.glb",
+   "relativePath": "vehicles/space-vehicles-moon-rover.glb",
+   "leaf": "world",
+   "sizeBytes": 69916,
+   "bounds": {
+    "min": [
+     -25.0312,
+     0,
+     -40
+    ],
+    "max": [
+     25.0313,
+     67.7599,
+     40
+    ],
+    "size": [
+     50.0625,
+     67.7599,
+     80
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-vehicles-shuttle",
+   "pack": "space",
+   "name": "Orbital Shuttle",
+   "category": "vehicles",
+   "filename": "space-vehicles-shuttle.glb",
+   "relativePath": "vehicles/space-vehicles-shuttle.glb",
+   "leaf": "world",
+   "sizeBytes": 59640,
+   "bounds": {
+    "min": [
+     -41,
+     0,
+     -52
+    ],
+    "max": [
+     41,
+     60,
+     52
+    ],
+    "size": [
+     82,
+     60,
+     104
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "move",
+    "idle"
+   ],
+   "sockets": [
+    "socket-engine",
+    "socket-warp"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-warp-jump",
+     "socket": "socket-warp",
+     "trigger": "manual",
+     "size": 60,
+     "aim": [
+      0,
+      0,
+      1
+     ]
+    },
+    {
+     "effectId": "rvx-space-engine-exhaust",
+     "socket": "socket-engine",
+     "trigger": "clip:move",
+     "size": 36,
+     "aim": [
+      0,
+      0,
+      1
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-vehicles-star-fighter",
+   "pack": "space",
+   "name": "Star Fighter",
+   "category": "vehicles",
+   "filename": "space-vehicles-star-fighter.glb",
+   "relativePath": "vehicles/space-vehicles-star-fighter.glb",
+   "leaf": "world",
+   "sizeBytes": 54272,
+   "bounds": {
+    "min": [
+     -39,
+     0,
+     -53.5
+    ],
+    "max": [
+     39,
+     45,
+     53.5
+    ],
+    "size": [
+     78,
+     45,
+     107
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move"
+   ],
+   "sockets": [
+    "socket-cannon-l",
+    "socket-cannon-r",
+    "socket-engine"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-engine-exhaust",
+     "socket": "socket-engine",
+     "trigger": "clip:move",
+     "size": 34,
+     "aim": [
+      0,
+      0,
+      1
+     ]
+    },
+    {
+     "effectId": "rvx-space-laser-bolt",
+     "socket": "socket-cannon-l",
+     "trigger": "manual",
+     "size": 16,
+     "aim": [
+      -1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-vehicles-ufo-saucer",
+   "pack": "space",
+   "name": "UFO Saucer",
+   "category": "vehicles",
+   "filename": "space-vehicles-ufo-saucer.glb",
+   "relativePath": "vehicles/space-vehicles-ufo-saucer.glb",
+   "leaf": "world",
+   "sizeBytes": 51044,
+   "bounds": {
+    "min": [
+     -47,
+     0,
+     -47
+    ],
+    "max": [
+     47,
+     54,
+     47
+    ],
+    "size": [
+     94,
+     54,
+     94
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle",
+    "move"
+   ],
+   "sockets": [
+    "socket-beam"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-space-tractor-beam",
+     "socket": "socket-beam",
+     "trigger": "clip:active",
+     "size": 36,
+     "aim": [
+      0,
+      -1,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "space-avatar-parts",
+   "pack": "space",
+   "name": "Space Avatar Parts",
+   "category": "avatar",
+   "filename": "space-avatar-parts.glb",
+   "relativePath": "avatar/space-avatar-parts.glb",
+   "leaf": "characters",
+   "sizeBytes": 995868,
+   "bounds": {
+    "min": [
+     -0.1308,
+     -0.0004,
+     -0.2406
+    ],
+    "max": [
+     0.1324,
+     0.7124,
+     0.2406
+    ],
+    "size": [
+     0.2632,
+     0.7128,
+     0.4812
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [
+    "40_Rifle_Aim",
+    "41_Rifle_Shoot",
+    "42_Jetpack_Hover",
+    "43_Salute",
+    "44_Scan",
+    "45_Zero_G_Float",
+    "46_Pistol_Shoot",
+    "47_Plasma_Slash"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "space-characters-skins-android",
+   "pack": "space",
+   "name": "Android",
+   "category": "characters-skins",
+   "filename": "space-characters-skins-android.glb",
+   "relativePath": "characters-skins/space-characters-skins-android.glb",
+   "leaf": "characters",
+   "sizeBytes": 137860,
+   "bounds": {
+    "min": [
+     -0.07,
+     0,
+     -0.29
+    ],
+    "max": [
+     0.09,
+     0.59,
+     0.29
+    ],
+    "size": [
+     0.16,
+     0.59,
+     0.58
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "space-characters-skins-astronaut",
+   "pack": "space",
+   "name": "Astronaut",
+   "category": "characters-skins",
+   "filename": "space-characters-skins-astronaut.glb",
+   "relativePath": "characters-skins/space-characters-skins-astronaut.glb",
+   "leaf": "characters",
+   "sizeBytes": 182632,
+   "bounds": {
+    "min": [
+     -0.12,
+     0,
+     -0.3
+    ],
+    "max": [
+     0.11,
+     0.67,
+     0.3
+    ],
+    "size": [
+     0.23,
+     0.67,
+     0.6
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "space-characters-skins-bounty-hunter",
+   "pack": "space",
+   "name": "Bounty Hunter",
+   "category": "characters-skins",
+   "filename": "space-characters-skins-bounty-hunter.glb",
+   "relativePath": "characters-skins/space-characters-skins-bounty-hunter.glb",
+   "leaf": "characters",
+   "sizeBytes": 242280,
+   "bounds": {
+    "min": [
+     -0.11,
+     0,
+     -0.3
+    ],
+    "max": [
+     0.1,
+     0.6,
+     0.3
+    ],
+    "size": [
+     0.21,
+     0.6,
+     0.6
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "space-characters-skins-grey-alien",
+   "pack": "space",
+   "name": "Grey Alien",
+   "category": "characters-skins",
+   "filename": "space-characters-skins-grey-alien.glb",
+   "relativePath": "characters-skins/space-characters-skins-grey-alien.glb",
+   "leaf": "characters",
+   "sizeBytes": 139232,
+   "bounds": {
+    "min": [
+     -0.1,
+     0,
+     -0.3
+    ],
+    "max": [
+     0.09,
+     0.64,
+     0.3
+    ],
+    "size": [
+     0.19,
+     0.64,
+     0.6
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "space-characters-skins-space-marine",
+   "pack": "space",
+   "name": "Space Marine",
+   "category": "characters-skins",
+   "filename": "space-characters-skins-space-marine.glb",
+   "relativePath": "characters-skins/space-characters-skins-space-marine.glb",
+   "leaf": "characters",
+   "sizeBytes": 285924,
+   "bounds": {
+    "min": [
+     -0.13,
+     0,
+     -0.3
+    ],
+    "max": [
+     0.1,
+     0.62,
+     0.3
+    ],
+    "size": [
+     0.23,
+     0.62,
+     0.6
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "space-characters-skins-starship-captain",
+   "pack": "space",
+   "name": "Starship Captain",
+   "category": "characters-skins",
+   "filename": "space-characters-skins-starship-captain.glb",
+   "relativePath": "characters-skins/space-characters-skins-starship-captain.glb",
+   "leaf": "characters",
+   "sizeBytes": 143580,
+   "bounds": {
+    "min": [
+     -0.08,
+     0,
+     -0.3
+    ],
+    "max": [
+     0.13,
+     0.62,
+     0.3
+    ],
+    "size": [
+     0.21,
+     0.62,
+     0.6
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  }
+ ],
+ "avatar": {
+  "pack": "space",
+  "partsModelPath": "avatar/space-avatar-parts.glb",
+  "clipsModelPath": "avatar/space-avatar-parts.glb",
+  "leaf": "characters",
+  "parts": [
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "headwear",
+     "index": 1
+    },
+    "nodeName": "headwear space-1",
+    "name": "Bubble Helmet",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "headwear",
+     "index": 2
+    },
+    "nodeName": "headwear space-2",
+    "name": "Marine Helmet",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": true,
+     "hidesFacialHair": true
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "headwear",
+     "index": 3
+    },
+    "nodeName": "headwear space-3",
+    "name": "Captain's Cap",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "headwear",
+     "index": 4
+    },
+    "nodeName": "headwear space-4",
+    "name": "Antenna Headband",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "headwear",
+     "index": 5
+    },
+    "nodeName": "headwear space-5",
+    "name": "Flight Cap",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "headwear",
+     "index": 6
+    },
+    "nodeName": "headwear space-6",
+    "name": "Grey Alien Head",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": true,
+     "hidesFacialHair": true
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "headwear",
+     "index": 7
+    },
+    "nodeName": "headwear space-7",
+    "name": "Hunter Helmet",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": true,
+     "hidesFacialHair": true
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "headwear",
+     "index": 8
+    },
+    "nodeName": "headwear space-8",
+    "name": "Robot Head",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": true,
+     "hidesFacialHair": true
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "hair",
+     "index": 1
+    },
+    "nodeName": "hair space-1",
+    "name": "Neon Mohawk",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "hair",
+     "index": 2
+    },
+    "nodeName": "hair space-2",
+    "name": "Silver Bob",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "hair",
+     "index": 3
+    },
+    "nodeName": "hair space-3",
+    "name": "Circuit Buzz Cut",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "hair",
+     "index": 4
+    },
+    "nodeName": "hair space-4",
+    "name": "Starlet Twin Buns",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "facialhair",
+     "index": 1
+    },
+    "nodeName": "facialhair space-1",
+    "name": "Cyber Goatee",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "facialhair",
+     "index": 2
+    },
+    "nodeName": "facialhair space-2",
+    "name": "Holo Moustache",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "eyewear",
+     "index": 1
+    },
+    "nodeName": "eyewear space-1",
+    "name": "Visor Band",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "eyewear",
+     "index": 2
+    },
+    "nodeName": "eyewear space-2",
+    "name": "Cyber Eyepiece",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "eyewear",
+     "index": 3
+    },
+    "nodeName": "eyewear space-3",
+    "name": "Aviator Goggles",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "eyewear",
+     "index": 4
+    },
+    "nodeName": "eyewear space-4",
+    "name": "Star Shades",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "ears",
+     "index": 1
+    },
+    "nodeName": "ears space-1",
+    "name": "Antenna Ears",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "ears",
+     "index": 2
+    },
+    "nodeName": "ears space-2",
+    "name": "Robot Ear Caps",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "ears",
+     "index": 3
+    },
+    "nodeName": "ears space-3",
+    "name": "Alien Fin Ears",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "face",
+     "index": 1
+    },
+    "nodeName": "face space-1",
+    "name": "Xeno Eyes",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "face",
+     "index": 2
+    },
+    "nodeName": "face space-2",
+    "name": "Cyborg Face Plate",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "face",
+     "index": 3
+    },
+    "nodeName": "face space-3",
+    "name": "Glow War Paint",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "eyebrow",
+     "index": 1
+    },
+    "nodeName": "eyebrow space-1",
+    "name": "Chrome Brows",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "eyebrow",
+     "index": 2
+    },
+    "nodeName": "eyebrow space-2",
+    "name": "Glow Brows",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "tops",
+     "index": 1
+    },
+    "nodeName": "tops space-1",
+    "name": "EVA Suit Top",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "tops",
+     "index": 2
+    },
+    "nodeName": "tops space-2",
+    "name": "Marine Power Armour",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "tops",
+     "index": 3
+    },
+    "nodeName": "tops space-3",
+    "name": "Captain's Jacket",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "tops",
+     "index": 4
+    },
+    "nodeName": "tops space-4",
+    "name": "Flight Jacket",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "bottoms",
+     "index": 1
+    },
+    "nodeName": "bottoms space-1",
+    "name": "EVA Suit Pants",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "bottoms",
+     "index": 2
+    },
+    "nodeName": "bottoms space-2",
+    "name": "Armoured Greaves",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "bottoms",
+     "index": 3
+    },
+    "nodeName": "bottoms space-3",
+    "name": "Cargo Pants",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "shoes",
+     "index": 1
+    },
+    "nodeName": "shoes space-1",
+    "name": "Moon Boots",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "shoes",
+     "index": 2
+    },
+    "nodeName": "shoes space-2",
+    "name": "Mag Boots",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "shoes",
+     "index": 3
+    },
+    "nodeName": "shoes space-3",
+    "name": "Jet Boots",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "back",
+     "index": 1
+    },
+    "nodeName": "back space-1",
+    "name": "Jetpack",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "back",
+     "index": 2
+    },
+    "nodeName": "back space-2",
+    "name": "Oxygen Tanks",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "space",
+     "slot": "back",
+     "index": 3
+    },
+    "nodeName": "back space-3",
+    "name": "Starfield Cape",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   }
+  ],
+  "clips": [
+   "40_Rifle_Aim",
+   "41_Rifle_Shoot",
+   "42_Jetpack_Hover",
+   "43_Salute",
+   "44_Scan",
+   "45_Zero_G_Float",
+   "46_Pistol_Shoot",
+   "47_Plasma_Slash"
+  ]
+ },
+ "sprites": [
+  {
+   "id": "icon-space-animated-props-airlock-door",
+   "pack": "space",
+   "name": "animated props airlock door",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-space-animated-props-airlock-door.png",
+   "leaf": "icons",
+   "sizeBytes": 18137,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-animated-props-cryo-pod",
+   "pack": "space",
+   "name": "animated props cryo pod",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-space-animated-props-cryo-pod.png",
+   "leaf": "icons",
+   "sizeBytes": 9483,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-animated-props-holo-projector",
+   "pack": "space",
+   "name": "animated props holo projector",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-space-animated-props-holo-projector.png",
+   "leaf": "icons",
+   "sizeBytes": 11579,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-animated-props-laser-turret",
+   "pack": "space",
+   "name": "animated props laser turret",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-space-animated-props-laser-turret.png",
+   "leaf": "icons",
+   "sizeBytes": 12037,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-animated-props-loot-cache",
+   "pack": "space",
+   "name": "animated props loot cache",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-space-animated-props-loot-cache.png",
+   "leaf": "icons",
+   "sizeBytes": 9586,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-animated-props-planet-globe",
+   "pack": "space",
+   "name": "animated props planet globe",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-space-animated-props-planet-globe.png",
+   "leaf": "icons",
+   "sizeBytes": 13542,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-animated-props-radar-dish",
+   "pack": "space",
+   "name": "animated props radar dish",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-space-animated-props-radar-dish.png",
+   "leaf": "icons",
+   "sizeBytes": 11274,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-animated-props-reactor-core",
+   "pack": "space",
+   "name": "animated props reactor core",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-space-animated-props-reactor-core.png",
+   "leaf": "icons",
+   "sizeBytes": 16533,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-animated-props-robotic-arm",
+   "pack": "space",
+   "name": "animated props robotic arm",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-space-animated-props-robotic-arm.png",
+   "leaf": "icons",
+   "sizeBytes": 13906,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-animated-props-shield-generator",
+   "pack": "space",
+   "name": "animated props shield generator",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-space-animated-props-shield-generator.png",
+   "leaf": "icons",
+   "sizeBytes": 13257,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-animated-props-signal-beacon",
+   "pack": "space",
+   "name": "animated props signal beacon",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-space-animated-props-signal-beacon.png",
+   "leaf": "icons",
+   "sizeBytes": 10770,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-animated-props-teleporter-pad",
+   "pack": "space",
+   "name": "animated props teleporter pad",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-space-animated-props-teleporter-pad.png",
+   "leaf": "icons",
+   "sizeBytes": 8571,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-creatures-alien-grunt",
+   "pack": "space",
+   "name": "creatures alien grunt",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-space-creatures-alien-grunt.png",
+   "leaf": "icons",
+   "sizeBytes": 13476,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-creatures-mech-walker",
+   "pack": "space",
+   "name": "creatures mech walker",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-space-creatures-mech-walker.png",
+   "leaf": "icons",
+   "sizeBytes": 18242,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-creatures-robot-dog",
+   "pack": "space",
+   "name": "creatures robot dog",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-space-creatures-robot-dog.png",
+   "leaf": "icons",
+   "sizeBytes": 12319,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-creatures-space-slug",
+   "pack": "space",
+   "name": "creatures space slug",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-space-creatures-space-slug.png",
+   "leaf": "icons",
+   "sizeBytes": 17281,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-creatures-tentacle-alien",
+   "pack": "space",
+   "name": "creatures tentacle alien",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-space-creatures-tentacle-alien.png",
+   "leaf": "icons",
+   "sizeBytes": 18505,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-creatures-ufo-drone",
+   "pack": "space",
+   "name": "creatures ufo drone",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-space-creatures-ufo-drone.png",
+   "leaf": "icons",
+   "sizeBytes": 5477,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-creatures-xeno-drone",
+   "pack": "space",
+   "name": "creatures xeno drone",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-space-creatures-xeno-drone.png",
+   "leaf": "icons",
+   "sizeBytes": 10391,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-creatures-xeno-queen",
+   "pack": "space",
+   "name": "creatures xeno queen",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-space-creatures-xeno-queen.png",
+   "leaf": "icons",
+   "sizeBytes": 21403,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-bio-blaster",
+   "pack": "space",
+   "name": "held items bio blaster",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-bio-blaster.png",
+   "leaf": "icons",
+   "sizeBytes": 15150,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-blaster-rifle",
+   "pack": "space",
+   "name": "held items blaster rifle",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-blaster-rifle.png",
+   "leaf": "icons",
+   "sizeBytes": 13082,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-data-pad",
+   "pack": "space",
+   "name": "held items data pad",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-data-pad.png",
+   "leaf": "icons",
+   "sizeBytes": 10082,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-energy-shield",
+   "pack": "space",
+   "name": "held items energy shield",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-energy-shield.png",
+   "leaf": "icons",
+   "sizeBytes": 7403,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-gravity-hammer",
+   "pack": "space",
+   "name": "held items gravity hammer",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-gravity-hammer.png",
+   "leaf": "icons",
+   "sizeBytes": 11802,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-laser-cannon",
+   "pack": "space",
+   "name": "held items laser cannon",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-laser-cannon.png",
+   "leaf": "icons",
+   "sizeBytes": 16891,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-laser-pistol",
+   "pack": "space",
+   "name": "held items laser pistol",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-laser-pistol.png",
+   "leaf": "icons",
+   "sizeBytes": 13502,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-plasma-grenade",
+   "pack": "space",
+   "name": "held items plasma grenade",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-plasma-grenade.png",
+   "leaf": "icons",
+   "sizeBytes": 14692,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-plasma-sword",
+   "pack": "space",
+   "name": "held items plasma sword",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-plasma-sword.png",
+   "leaf": "icons",
+   "sizeBytes": 8555,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-pulse-smg",
+   "pack": "space",
+   "name": "held items pulse smg",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-pulse-smg.png",
+   "leaf": "icons",
+   "sizeBytes": 15020,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-ray-gun",
+   "pack": "space",
+   "name": "held items ray gun",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-ray-gun.png",
+   "leaf": "icons",
+   "sizeBytes": 14182,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-scanner",
+   "pack": "space",
+   "name": "held items scanner",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-scanner.png",
+   "leaf": "icons",
+   "sizeBytes": 12459,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-space-wrench",
+   "pack": "space",
+   "name": "held items space wrench",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-space-wrench.png",
+   "leaf": "icons",
+   "sizeBytes": 13679,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-star-flag",
+   "pack": "space",
+   "name": "held items star flag",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-star-flag.png",
+   "leaf": "icons",
+   "sizeBytes": 12735,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-stun-baton",
+   "pack": "space",
+   "name": "held items stun baton",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-stun-baton.png",
+   "leaf": "icons",
+   "sizeBytes": 11969,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-held-items-welding-torch",
+   "pack": "space",
+   "name": "held items welding torch",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-space-held-items-welding-torch.png",
+   "leaf": "icons",
+   "sizeBytes": 12077,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-alien-eggs",
+   "pack": "space",
+   "name": "props alien eggs",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-alien-eggs.png",
+   "leaf": "icons",
+   "sizeBytes": 11848,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-cargo-crate",
+   "pack": "space",
+   "name": "props cargo crate",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-cargo-crate.png",
+   "leaf": "icons",
+   "sizeBytes": 11178,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-comm-radio",
+   "pack": "space",
+   "name": "props comm radio",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-comm-radio.png",
+   "leaf": "icons",
+   "sizeBytes": 10409,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-computer-terminal",
+   "pack": "space",
+   "name": "props computer terminal",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-computer-terminal.png",
+   "leaf": "icons",
+   "sizeBytes": 12142,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-control-console",
+   "pack": "space",
+   "name": "props control console",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-control-console.png",
+   "leaf": "icons",
+   "sizeBytes": 14576,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-crew-seat",
+   "pack": "space",
+   "name": "props crew seat",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-crew-seat.png",
+   "leaf": "icons",
+   "sizeBytes": 13489,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-fuel-barrel",
+   "pack": "space",
+   "name": "props fuel barrel",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-fuel-barrel.png",
+   "leaf": "icons",
+   "sizeBytes": 7146,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-fuel-cell",
+   "pack": "space",
+   "name": "props fuel cell",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-fuel-cell.png",
+   "leaf": "icons",
+   "sizeBytes": 10997,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-fuel-pump",
+   "pack": "space",
+   "name": "props fuel pump",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-fuel-pump.png",
+   "leaf": "icons",
+   "sizeBytes": 11443,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-hazard-barrier",
+   "pack": "space",
+   "name": "props hazard barrier",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-hazard-barrier.png",
+   "leaf": "icons",
+   "sizeBytes": 11861,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-hologram-table",
+   "pack": "space",
+   "name": "props hologram table",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-hologram-table.png",
+   "leaf": "icons",
+   "sizeBytes": 14177,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-hydro-planter",
+   "pack": "space",
+   "name": "props hydro planter",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-hydro-planter.png",
+   "leaf": "icons",
+   "sizeBytes": 19467,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-landing-beacon",
+   "pack": "space",
+   "name": "props landing beacon",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-landing-beacon.png",
+   "leaf": "icons",
+   "sizeBytes": 13871,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-med-kit",
+   "pack": "space",
+   "name": "props med kit",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-med-kit.png",
+   "leaf": "icons",
+   "sizeBytes": 8926,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-mining-drill",
+   "pack": "space",
+   "name": "props mining drill",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-mining-drill.png",
+   "leaf": "icons",
+   "sizeBytes": 15696,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-ore-rock",
+   "pack": "space",
+   "name": "props ore rock",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-ore-rock.png",
+   "leaf": "icons",
+   "sizeBytes": 13858,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-oxygen-tanks",
+   "pack": "space",
+   "name": "props oxygen tanks",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-oxygen-tanks.png",
+   "leaf": "icons",
+   "sizeBytes": 14077,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-plasma-conduit",
+   "pack": "space",
+   "name": "props plasma conduit",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-plasma-conduit.png",
+   "leaf": "icons",
+   "sizeBytes": 13128,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-power-cell-crate",
+   "pack": "space",
+   "name": "props power cell crate",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-power-cell-crate.png",
+   "leaf": "icons",
+   "sizeBytes": 8518,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-power-generator",
+   "pack": "space",
+   "name": "props power generator",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-power-generator.png",
+   "leaf": "icons",
+   "sizeBytes": 15344,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-robot-parts",
+   "pack": "space",
+   "name": "props robot parts",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-robot-parts.png",
+   "leaf": "icons",
+   "sizeBytes": 10248,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-satellite-dish",
+   "pack": "space",
+   "name": "props satellite dish",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-satellite-dish.png",
+   "leaf": "icons",
+   "sizeBytes": 11024,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-sensor-probe",
+   "pack": "space",
+   "name": "props sensor probe",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-sensor-probe.png",
+   "leaf": "icons",
+   "sizeBytes": 12936,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-solar-panel",
+   "pack": "space",
+   "name": "props solar panel",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-solar-panel.png",
+   "leaf": "icons",
+   "sizeBytes": 14145,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-stasis-tube",
+   "pack": "space",
+   "name": "props stasis tube",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-stasis-tube.png",
+   "leaf": "icons",
+   "sizeBytes": 9342,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-storage-locker",
+   "pack": "space",
+   "name": "props storage locker",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-storage-locker.png",
+   "leaf": "icons",
+   "sizeBytes": 9502,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-supply-pod",
+   "pack": "space",
+   "name": "props supply pod",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-supply-pod.png",
+   "leaf": "icons",
+   "sizeBytes": 11497,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-tool-cart",
+   "pack": "space",
+   "name": "props tool cart",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-tool-cart.png",
+   "leaf": "icons",
+   "sizeBytes": 11269,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-vending-machine",
+   "pack": "space",
+   "name": "props vending machine",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-vending-machine.png",
+   "leaf": "icons",
+   "sizeBytes": 13330,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-props-water-recycler",
+   "pack": "space",
+   "name": "props water recycler",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-space-props-water-recycler.png",
+   "leaf": "icons",
+   "sizeBytes": 9796,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-vehicles-cargo-freighter",
+   "pack": "space",
+   "name": "vehicles cargo freighter",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-space-vehicles-cargo-freighter.png",
+   "leaf": "icons",
+   "sizeBytes": 12777,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-vehicles-hover-bike",
+   "pack": "space",
+   "name": "vehicles hover bike",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-space-vehicles-hover-bike.png",
+   "leaf": "icons",
+   "sizeBytes": 9428,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-vehicles-moon-rover",
+   "pack": "space",
+   "name": "vehicles moon rover",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-space-vehicles-moon-rover.png",
+   "leaf": "icons",
+   "sizeBytes": 15627,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-vehicles-shuttle",
+   "pack": "space",
+   "name": "vehicles shuttle",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-space-vehicles-shuttle.png",
+   "leaf": "icons",
+   "sizeBytes": 9750,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-vehicles-star-fighter",
+   "pack": "space",
+   "name": "vehicles star fighter",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-space-vehicles-star-fighter.png",
+   "leaf": "icons",
+   "sizeBytes": 8850,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-space-vehicles-ufo-saucer",
+   "pack": "space",
+   "name": "vehicles ufo saucer",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-space-vehicles-ufo-saucer.png",
+   "leaf": "icons",
+   "sizeBytes": 8631,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-danger-square-default",
+   "pack": "space",
+   "name": "buttons danger square default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-danger-square-default.png",
+   "leaf": "ui",
+   "sizeBytes": 568,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-danger-square-disabled",
+   "pack": "space",
+   "name": "buttons danger square disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-danger-square-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 543,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-danger-square-hover",
+   "pack": "space",
+   "name": "buttons danger square hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-danger-square-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 567,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-danger-square-pressed",
+   "pack": "space",
+   "name": "buttons danger square pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-danger-square-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 522,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-danger-wide-default",
+   "pack": "space",
+   "name": "buttons danger wide default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-danger-wide-default.png",
+   "leaf": "ui",
+   "sizeBytes": 1756,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-danger-wide-disabled",
+   "pack": "space",
+   "name": "buttons danger wide disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-danger-wide-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 1744,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-danger-wide-hover",
+   "pack": "space",
+   "name": "buttons danger wide hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-danger-wide-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 1941,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-danger-wide-pressed",
+   "pack": "space",
+   "name": "buttons danger wide pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-danger-wide-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 1848,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-primary-square-default",
+   "pack": "space",
+   "name": "buttons primary square default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-primary-square-default.png",
+   "leaf": "ui",
+   "sizeBytes": 589,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-primary-square-disabled",
+   "pack": "space",
+   "name": "buttons primary square disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-primary-square-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 465,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-primary-square-hover",
+   "pack": "space",
+   "name": "buttons primary square hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-primary-square-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 561,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-primary-square-pressed",
+   "pack": "space",
+   "name": "buttons primary square pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-primary-square-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 549,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-primary-wide-default",
+   "pack": "space",
+   "name": "buttons primary wide default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-primary-wide-default.png",
+   "leaf": "ui",
+   "sizeBytes": 1925,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-primary-wide-disabled",
+   "pack": "space",
+   "name": "buttons primary wide disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-primary-wide-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 1601,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-primary-wide-hover",
+   "pack": "space",
+   "name": "buttons primary wide hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-primary-wide-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 1833,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-primary-wide-pressed",
+   "pack": "space",
+   "name": "buttons primary wide pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-primary-wide-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 1776,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-secondary-square-default",
+   "pack": "space",
+   "name": "buttons secondary square default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-secondary-square-default.png",
+   "leaf": "ui",
+   "sizeBytes": 576,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-secondary-square-disabled",
+   "pack": "space",
+   "name": "buttons secondary square disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-secondary-square-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 553,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-secondary-square-hover",
+   "pack": "space",
+   "name": "buttons secondary square hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-secondary-square-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 567,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-secondary-square-pressed",
+   "pack": "space",
+   "name": "buttons secondary square pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-secondary-square-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 610,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-secondary-wide-default",
+   "pack": "space",
+   "name": "buttons secondary wide default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-secondary-wide-default.png",
+   "leaf": "ui",
+   "sizeBytes": 1871,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-secondary-wide-disabled",
+   "pack": "space",
+   "name": "buttons secondary wide disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-secondary-wide-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 1677,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-secondary-wide-hover",
+   "pack": "space",
+   "name": "buttons secondary wide hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-secondary-wide-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 1848,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-secondary-wide-pressed",
+   "pack": "space",
+   "name": "buttons secondary wide pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-secondary-wide-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 1912,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-tab-active",
+   "pack": "space",
+   "name": "buttons tab active",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-tab-active.png",
+   "leaf": "ui",
+   "sizeBytes": 632,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-tab-hover",
+   "pack": "space",
+   "name": "buttons tab hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-tab-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 686,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-buttons-tab-inactive",
+   "pack": "space",
+   "name": "buttons tab inactive",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-space-buttons-tab-inactive.png",
+   "leaf": "ui",
+   "sizeBytes": 621,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-checkbox-off",
+   "pack": "space",
+   "name": "general checkbox off",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-checkbox-off.png",
+   "leaf": "ui",
+   "sizeBytes": 378,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-checkbox-on",
+   "pack": "space",
+   "name": "general checkbox on",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-checkbox-on.png",
+   "leaf": "ui",
+   "sizeBytes": 423,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-dialog",
+   "pack": "space",
+   "name": "general dialog",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-dialog.png",
+   "leaf": "ui",
+   "sizeBytes": 1833,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-header-banner",
+   "pack": "space",
+   "name": "general header banner",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-header-banner.png",
+   "leaf": "ui",
+   "sizeBytes": 1741,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-icon-arrow",
+   "pack": "space",
+   "name": "general icon arrow",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-icon-arrow.png",
+   "leaf": "ui",
+   "sizeBytes": 299,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-icon-check",
+   "pack": "space",
+   "name": "general icon check",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-icon-check.png",
+   "leaf": "ui",
+   "sizeBytes": 305,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-icon-close",
+   "pack": "space",
+   "name": "general icon close",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-icon-close.png",
+   "leaf": "ui",
+   "sizeBytes": 279,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-icon-plus",
+   "pack": "space",
+   "name": "general icon plus",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-icon-plus.png",
+   "leaf": "ui",
+   "sizeBytes": 282,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-panel-inset",
+   "pack": "space",
+   "name": "general panel inset",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-panel-inset.png",
+   "leaf": "ui",
+   "sizeBytes": 1561,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-panel",
+   "pack": "space",
+   "name": "general panel",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-panel.png",
+   "leaf": "ui",
+   "sizeBytes": 1818,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-progress-fill-energy",
+   "pack": "space",
+   "name": "general progress fill energy",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-progress-fill-energy.png",
+   "leaf": "ui",
+   "sizeBytes": 143,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-progress-fill-health",
+   "pack": "space",
+   "name": "general progress fill health",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-progress-fill-health.png",
+   "leaf": "ui",
+   "sizeBytes": 141,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-progress-fill-xp",
+   "pack": "space",
+   "name": "general progress fill xp",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-progress-fill-xp.png",
+   "leaf": "ui",
+   "sizeBytes": 139,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-progress-frame",
+   "pack": "space",
+   "name": "general progress frame",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-progress-frame.png",
+   "leaf": "ui",
+   "sizeBytes": 697,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-slot-empty",
+   "pack": "space",
+   "name": "general slot empty",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-slot-empty.png",
+   "leaf": "ui",
+   "sizeBytes": 514,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-slot-filled",
+   "pack": "space",
+   "name": "general slot filled",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-slot-filled.png",
+   "leaf": "ui",
+   "sizeBytes": 384,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-slot-locked",
+   "pack": "space",
+   "name": "general slot locked",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-slot-locked.png",
+   "leaf": "ui",
+   "sizeBytes": 526,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-slot-selected",
+   "pack": "space",
+   "name": "general slot selected",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-slot-selected.png",
+   "leaf": "ui",
+   "sizeBytes": 493,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-toggle-off",
+   "pack": "space",
+   "name": "general toggle off",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-toggle-off.png",
+   "leaf": "ui",
+   "sizeBytes": 270,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-toggle-on",
+   "pack": "space",
+   "name": "general toggle on",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-toggle-on.png",
+   "leaf": "ui",
+   "sizeBytes": 287,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-general-tooltip",
+   "pack": "space",
+   "name": "general tooltip",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-space-general-tooltip.png",
+   "leaf": "ui",
+   "sizeBytes": 1449,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-rarities-rarity-common",
+   "pack": "space",
+   "name": "rarities rarity common",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-space-rarities-rarity-common.png",
+   "leaf": "ui",
+   "sizeBytes": 484,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-rarities-rarity-epic",
+   "pack": "space",
+   "name": "rarities rarity epic",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-space-rarities-rarity-epic.png",
+   "leaf": "ui",
+   "sizeBytes": 518,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-rarities-rarity-legendary",
+   "pack": "space",
+   "name": "rarities rarity legendary",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-space-rarities-rarity-legendary.png",
+   "leaf": "ui",
+   "sizeBytes": 504,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-rarities-rarity-rare",
+   "pack": "space",
+   "name": "rarities rarity rare",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-space-rarities-rarity-rare.png",
+   "leaf": "ui",
+   "sizeBytes": 542,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-space-rarities-rarity-uncommon",
+   "pack": "space",
+   "name": "rarities rarity uncommon",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-space-rarities-rarity-uncommon.png",
+   "leaf": "ui",
+   "sizeBytes": 581,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  }
+ ],
+ "pfx": {
+  "pack": "space",
+  "effects": [
+   "rvx-space-acid-spray",
+   "rvx-space-cannon-blast",
+   "rvx-space-data-burst",
+   "rvx-space-engine-exhaust",
+   "rvx-space-goo-shot",
+   "rvx-space-gravity-slam",
+   "rvx-space-holo-scan",
+   "rvx-space-hover-thrust",
+   "rvx-space-laser-bolt",
+   "rvx-space-launch-steam",
+   "rvx-space-plasma-blast",
+   "rvx-space-plasma-slash",
+   "rvx-space-ray-bolt",
+   "rvx-space-ray-zap",
+   "rvx-space-shield-dome",
+   "rvx-space-shield-hit",
+   "rvx-space-spore-drift",
+   "rvx-space-stun-arc",
+   "rvx-space-teleport-beam",
+   "rvx-space-tractor-beam",
+   "rvx-space-warp-jump",
+   "rvx-space-weld-sparks"
+  ]
+ }
+}

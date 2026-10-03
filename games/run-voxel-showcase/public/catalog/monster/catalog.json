@@ -1,0 +1,6287 @@
+{
+ "pack": "monster",
+ "label": "Monster",
+ "models": [
+  {
+   "id": "monster-animated-props-chained-coffin",
+   "pack": "monster",
+   "name": "Chained Coffin",
+   "category": "animated-props",
+   "filename": "monster-animated-props-chained-coffin.glb",
+   "relativePath": "animated-props/monster-animated-props-chained-coffin.glb",
+   "leaf": "world",
+   "sizeBytes": 45532,
+   "bounds": {
+    "min": [
+     -13,
+     0,
+     -10
+    ],
+    "max": [
+     13,
+     22,
+     10
+    ],
+    "size": [
+     26,
+     22,
+     20
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "open"
+   ],
+   "sockets": [
+    "socket-lid"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-curse-cloud",
+     "socket": "socket-lid",
+     "trigger": "clip:open",
+     "size": 30,
+     "at": 0.25
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-animated-props-chandelier",
+   "pack": "monster",
+   "name": "Candle Chandelier",
+   "category": "animated-props",
+   "filename": "monster-animated-props-chandelier.glb",
+   "relativePath": "animated-props/monster-animated-props-chandelier.glb",
+   "leaf": "world",
+   "sizeBytes": 109528,
+   "bounds": {
+    "min": [
+     -14.5,
+     0,
+     -14.5
+    ],
+    "max": [
+     14.5,
+     40,
+     14.5
+    ],
+    "size": [
+     29,
+     40,
+     29
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-candles"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-candle-flame",
+     "socket": "socket-candles",
+     "trigger": "idle",
+     "size": 7
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-animated-props-dungeon-door",
+   "pack": "monster",
+   "name": "Dungeon Door",
+   "category": "animated-props",
+   "filename": "monster-animated-props-dungeon-door.glb",
+   "relativePath": "animated-props/monster-animated-props-dungeon-door.glb",
+   "leaf": "world",
+   "sizeBytes": 70804,
+   "bounds": {
+    "min": [
+     -22,
+     0,
+     -9.5312
+    ],
+    "max": [
+     22,
+     53,
+     9.5
+    ],
+    "size": [
+     44,
+     53,
+     19.0313
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "close",
+    "open",
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-animated-props-hanging-cage",
+   "pack": "monster",
+   "name": "Gibbet Cage",
+   "category": "animated-props",
+   "filename": "monster-animated-props-hanging-cage.glb",
+   "relativePath": "animated-props/monster-animated-props-hanging-cage.glb",
+   "leaf": "world",
+   "sizeBytes": 81600,
+   "bounds": {
+    "min": [
+     -20.1287,
+     0,
+     -10
+    ],
+    "max": [
+     20.5,
+     48,
+     10
+    ],
+    "size": [
+     40.6287,
+     48,
+     20
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "close",
+    "open"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-animated-props-haunted-mirror",
+   "pack": "monster",
+   "name": "Haunted Mirror",
+   "category": "animated-props",
+   "filename": "monster-animated-props-haunted-mirror.glb",
+   "relativePath": "animated-props/monster-animated-props-haunted-mirror.glb",
+   "leaf": "world",
+   "sizeBytes": 41844,
+   "bounds": {
+    "min": [
+     -16,
+     -0.0312,
+     -10.375
+    ],
+    "max": [
+     16,
+     47.2,
+     10.375
+    ],
+    "size": [
+     32,
+     47.2313,
+     20.75
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-glass"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-ghost-wisps",
+     "socket": "socket-glass",
+     "trigger": "idle",
+     "size": 26
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-animated-props-iron-maiden",
+   "pack": "monster",
+   "name": "Iron Maiden",
+   "category": "animated-props",
+   "filename": "monster-animated-props-iron-maiden.glb",
+   "relativePath": "animated-props/monster-animated-props-iron-maiden.glb",
+   "leaf": "world",
+   "sizeBytes": 33384,
+   "bounds": {
+    "min": [
+     -11,
+     0,
+     -9.5
+    ],
+    "max": [
+     11,
+     45,
+     9.5
+    ],
+    "size": [
+     22,
+     45,
+     19
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "close",
+    "idle",
+    "open"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-animated-props-spider-thread",
+   "pack": "monster",
+   "name": "Dangling Spider",
+   "category": "animated-props",
+   "filename": "monster-animated-props-spider-thread.glb",
+   "relativePath": "animated-props/monster-animated-props-spider-thread.glb",
+   "leaf": "world",
+   "sizeBytes": 62048,
+   "bounds": {
+    "min": [
+     -20,
+     0,
+     -9.4089
+    ],
+    "max": [
+     20.1078,
+     38.6719,
+     9.904
+    ],
+    "size": [
+     40.1078,
+     38.6719,
+     19.3129
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "idle"
+   ],
+   "sockets": [
+    "socket-web"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-web-burst",
+     "socket": "socket-web",
+     "trigger": "clip:attack",
+     "size": 24,
+     "at": 0.44
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-animated-props-torch-sconce",
+   "pack": "monster",
+   "name": "Torch Sconce",
+   "category": "animated-props",
+   "filename": "monster-animated-props-torch-sconce.glb",
+   "relativePath": "animated-props/monster-animated-props-torch-sconce.glb",
+   "leaf": "world",
+   "sizeBytes": 37556,
+   "bounds": {
+    "min": [
+     -7,
+     0,
+     -9.8906
+    ],
+    "max": [
+     7,
+     39.5,
+     10
+    ],
+    "size": [
+     14,
+     39.5,
+     19.8906
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-flame"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-torch-flame",
+     "socket": "socket-flame",
+     "trigger": "idle",
+     "size": 11
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-animated-props-trapdoor",
+   "pack": "monster",
+   "name": "Dungeon Trapdoor",
+   "category": "animated-props",
+   "filename": "monster-animated-props-trapdoor.glb",
+   "relativePath": "animated-props/monster-animated-props-trapdoor.glb",
+   "leaf": "world",
+   "sizeBytes": 26488,
+   "bounds": {
+    "min": [
+     -16,
+     0,
+     -16
+    ],
+    "max": [
+     16,
+     18.3,
+     16
+    ],
+    "size": [
+     32,
+     18.3,
+     32
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "close",
+    "idle",
+    "open"
+   ],
+   "sockets": [
+    "socket-pit"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-grave-mist",
+     "socket": "socket-pit",
+     "trigger": "clip:open",
+     "size": 34
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-animated-props-upright-coffin",
+   "pack": "monster",
+   "name": "Upright Coffin",
+   "category": "animated-props",
+   "filename": "monster-animated-props-upright-coffin.glb",
+   "relativePath": "animated-props/monster-animated-props-upright-coffin.glb",
+   "leaf": "world",
+   "sizeBytes": 17832,
+   "bounds": {
+    "min": [
+     -8,
+     0,
+     -6
+    ],
+    "max": [
+     8,
+     24.6024,
+     6
+    ],
+    "size": [
+     16,
+     24.6024,
+     12
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "close",
+    "idle",
+    "open"
+   ],
+   "sockets": [
+    "socket-inside"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-grave-mist",
+     "socket": "socket-inside",
+     "trigger": "clip:open",
+     "size": 18
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-animated-props-vampire-coffin",
+   "pack": "monster",
+   "name": "Vampire Coffin",
+   "category": "animated-props",
+   "filename": "monster-animated-props-vampire-coffin.glb",
+   "relativePath": "animated-props/monster-animated-props-vampire-coffin.glb",
+   "leaf": "world",
+   "sizeBytes": 42992,
+   "bounds": {
+    "min": [
+     -13,
+     0,
+     -8
+    ],
+    "max": [
+     13,
+     26,
+     8
+    ],
+    "size": [
+     26,
+     26,
+     16
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "close",
+    "open"
+   ],
+   "sockets": [
+    "socket-mist"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-grave-mist",
+     "socket": "socket-mist",
+     "trigger": "clip:open",
+     "size": 22
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-animated-props-witch-cauldron",
+   "pack": "monster",
+   "name": "Witch Cauldron",
+   "category": "animated-props",
+   "filename": "monster-animated-props-witch-cauldron.glb",
+   "relativePath": "animated-props/monster-animated-props-witch-cauldron.glb",
+   "leaf": "world",
+   "sizeBytes": 119080,
+   "bounds": {
+    "min": [
+     -14.5,
+     -0.0312,
+     -12.5781
+    ],
+    "max": [
+     14.5,
+     37,
+     12.5781
+    ],
+    "size": [
+     29,
+     37.0313,
+     25.1563
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-brew"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-witch-brew",
+     "socket": "socket-brew",
+     "trigger": "idle",
+     "size": 26
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-buildings-bell-tower",
+   "pack": "monster",
+   "name": "Graveyard Bell Tower",
+   "category": "buildings",
+   "filename": "monster-buildings-bell-tower.glb",
+   "relativePath": "buildings/monster-buildings-bell-tower.glb",
+   "leaf": "world",
+   "sizeBytes": 164620,
+   "bounds": {
+    "min": [
+     -34.4611,
+     0,
+     -31
+    ],
+    "max": [
+     33.9808,
+     170.0537,
+     31.0313
+    ],
+    "size": [
+     68.4419,
+     170.0537,
+     62.0313
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-bell"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-bat-swarm",
+     "socket": "socket-bell",
+     "trigger": "idle",
+     "size": 70
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-buildings-crypt",
+   "pack": "monster",
+   "name": "Family Crypt",
+   "category": "buildings",
+   "filename": "monster-buildings-crypt.glb",
+   "relativePath": "buildings/monster-buildings-crypt.glb",
+   "leaf": "world",
+   "sizeBytes": 240340,
+   "bounds": {
+    "min": [
+     -48,
+     0,
+     -46.5
+    ],
+    "max": [
+     48,
+     112,
+     46.5
+    ],
+    "size": [
+     96,
+     112,
+     93
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-buildings-dungeon-entrance",
+   "pack": "monster",
+   "name": "Dungeon Entrance",
+   "category": "buildings",
+   "filename": "monster-buildings-dungeon-entrance.glb",
+   "relativePath": "buildings/monster-buildings-dungeon-entrance.glb",
+   "leaf": "world",
+   "sizeBytes": 342612,
+   "bounds": {
+    "min": [
+     -58.6563,
+     -0.0312,
+     -60
+    ],
+    "max": [
+     58.1817,
+     88,
+     59.5313
+    ],
+    "size": [
+     116.838,
+     88.0313,
+     119.5313
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-buildings-gothic-chapel",
+   "pack": "monster",
+   "name": "Gothic Chapel",
+   "category": "buildings",
+   "filename": "monster-buildings-gothic-chapel.glb",
+   "relativePath": "buildings/monster-buildings-gothic-chapel.glb",
+   "leaf": "world",
+   "sizeBytes": 270704,
+   "bounds": {
+    "min": [
+     -48.5,
+     0,
+     -58.5
+    ],
+    "max": [
+     49,
+     148,
+     58.5
+    ],
+    "size": [
+     97.5,
+     148,
+     117
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-buildings-haunted-manor",
+   "pack": "monster",
+   "name": "Haunted Manor",
+   "category": "buildings",
+   "filename": "monster-buildings-haunted-manor.glb",
+   "relativePath": "buildings/monster-buildings-haunted-manor.glb",
+   "leaf": "world",
+   "sizeBytes": 287552,
+   "bounds": {
+    "min": [
+     -59.5,
+     0,
+     -44
+    ],
+    "max": [
+     59.9753,
+     135,
+     44
+    ],
+    "size": [
+     119.4753,
+     135,
+     88
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-chimney"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-ghost-smoke",
+     "socket": "socket-chimney",
+     "trigger": "idle",
+     "size": 38
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-buildings-haunted-windmill",
+   "pack": "monster",
+   "name": "Haunted Windmill",
+   "category": "buildings",
+   "filename": "monster-buildings-haunted-windmill.glb",
+   "relativePath": "buildings/monster-buildings-haunted-windmill.glb",
+   "leaf": "world",
+   "sizeBytes": 136540,
+   "bounds": {
+    "min": [
+     -51.9112,
+     0,
+     -31
+    ],
+    "max": [
+     51.5,
+     137.4112,
+     31
+    ],
+    "size": [
+     103.4112,
+     137.4112,
+     62
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-sails"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-ghost-wisps",
+     "socket": "socket-sails",
+     "trigger": "idle",
+     "size": 60
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-buildings-mausoleum",
+   "pack": "monster",
+   "name": "Domed Mausoleum",
+   "category": "buildings",
+   "filename": "monster-buildings-mausoleum.glb",
+   "relativePath": "buildings/monster-buildings-mausoleum.glb",
+   "leaf": "world",
+   "sizeBytes": 179084,
+   "bounds": {
+    "min": [
+     -46,
+     0,
+     -51.2344
+    ],
+    "max": [
+     46,
+     128,
+     51
+    ],
+    "size": [
+     92,
+     128,
+     102.2344
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-buildings-ruined-watchtower",
+   "pack": "monster",
+   "name": "Ruined Watchtower",
+   "category": "buildings",
+   "filename": "monster-buildings-ruined-watchtower.glb",
+   "relativePath": "buildings/monster-buildings-ruined-watchtower.glb",
+   "leaf": "world",
+   "sizeBytes": 142448,
+   "bounds": {
+    "min": [
+     -33.7321,
+     -0.0312,
+     -30.0743
+    ],
+    "max": [
+     33.525,
+     148.5256,
+     30.5
+    ],
+    "size": [
+     67.2571,
+     148.5569,
+     60.5743
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-buildings-undertaker-shop",
+   "pack": "monster",
+   "name": "Undertaker's Shop",
+   "category": "buildings",
+   "filename": "monster-buildings-undertaker-shop.glb",
+   "relativePath": "buildings/monster-buildings-undertaker-shop.glb",
+   "leaf": "world",
+   "sizeBytes": 136684,
+   "bounds": {
+    "min": [
+     -50.5,
+     0,
+     -44
+    ],
+    "max": [
+     50.5,
+     136,
+     44
+    ],
+    "size": [
+     101,
+     136,
+     88
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-chimney"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-ghost-smoke",
+     "socket": "socket-chimney",
+     "trigger": "idle",
+     "size": 30
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-buildings-witch-hut",
+   "pack": "monster",
+   "name": "Witch Hut",
+   "category": "buildings",
+   "filename": "monster-buildings-witch-hut.glb",
+   "relativePath": "buildings/monster-buildings-witch-hut.glb",
+   "leaf": "world",
+   "sizeBytes": 167628,
+   "bounds": {
+    "min": [
+     -46.2643,
+     -0.0312,
+     -44.5
+    ],
+    "max": [
+     46.2643,
+     116,
+     44.5
+    ],
+    "size": [
+     92.5287,
+     116.0313,
+     89
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-chimney"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-witch-smoke",
+     "socket": "socket-chimney",
+     "trigger": "idle",
+     "size": 40
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-creatures-gargoyle",
+   "pack": "monster",
+   "name": "Living Gargoyle",
+   "category": "creatures",
+   "filename": "monster-creatures-gargoyle.glb",
+   "relativePath": "creatures/monster-creatures-gargoyle.glb",
+   "leaf": "world",
+   "sizeBytes": 82564,
+   "bounds": {
+    "min": [
+     -31.3281,
+     0,
+     -21.6
+    ],
+    "max": [
+     31.3281,
+     52,
+     22
+    ],
+    "size": [
+     62.6563,
+     52,
+     43.6
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-eyes"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-stone-crumble",
+     "socket": "socket-eyes",
+     "trigger": "clip:death",
+     "size": 44,
+     "at": 0.2
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-creatures-giant-spider",
+   "pack": "monster",
+   "name": "Giant Tomb Spider",
+   "category": "creatures",
+   "filename": "monster-creatures-giant-spider.glb",
+   "relativePath": "creatures/monster-creatures-giant-spider.glb",
+   "leaf": "world",
+   "sizeBytes": 62332,
+   "bounds": {
+    "min": [
+     -29.5015,
+     -0.2195,
+     -29.2426
+    ],
+    "max": [
+     29.5015,
+     25,
+     29
+    ],
+    "size": [
+     59.0029,
+     25.2195,
+     58.2426
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-fangs",
+    "socket-spinner"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-venom-spit",
+     "socket": "socket-fangs",
+     "trigger": "clip:attack",
+     "size": 30,
+     "aim": [
+      0,
+      -0.243,
+      -0.97
+     ],
+     "at": 0.4
+    },
+    {
+     "effectId": "rvx-monster-rot-poof",
+     "socket": "socket-fangs",
+     "trigger": "clip:death",
+     "size": 40,
+     "at": 0.16
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-creatures-mummy",
+   "pack": "monster",
+   "name": "Bandaged Mummy",
+   "category": "creatures",
+   "filename": "monster-creatures-mummy.glb",
+   "relativePath": "creatures/monster-creatures-mummy.glb",
+   "leaf": "world",
+   "sizeBytes": 48512,
+   "bounds": {
+    "min": [
+     -14.0782,
+     0,
+     -13
+    ],
+    "max": [
+     14.0782,
+     44,
+     13
+    ],
+    "size": [
+     28.1565,
+     44,
+     26
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "death",
+    "idle",
+    "attack",
+    "hit"
+   ],
+   "sockets": [
+    "socket-eye"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-curse-cloud",
+     "socket": "socket-eye",
+     "trigger": "clip:attack",
+     "size": 26,
+     "at": 0.4
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-creatures-vampire-bat",
+   "pack": "monster",
+   "name": "Vampire Bat",
+   "category": "creatures",
+   "filename": "monster-creatures-vampire-bat.glb",
+   "relativePath": "creatures/monster-creatures-vampire-bat.glb",
+   "leaf": "world",
+   "sizeBytes": 26520,
+   "bounds": {
+    "min": [
+     -11.5,
+     0,
+     -4
+    ],
+    "max": [
+     11.5,
+     20.5,
+     4
+    ],
+    "size": [
+     23,
+     20.5,
+     8
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-mouth"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-screech",
+     "socket": "socket-mouth",
+     "trigger": "clip:attack",
+     "size": 18,
+     "at": 0.32
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-creatures-vampire-lord",
+   "pack": "monster",
+   "name": "Vampire Lord",
+   "category": "creatures",
+   "filename": "monster-creatures-vampire-lord.glb",
+   "relativePath": "creatures/monster-creatures-vampire-lord.glb",
+   "leaf": "world",
+   "sizeBytes": 114832,
+   "bounds": {
+    "min": [
+     -87.5156,
+     -0.0312,
+     -25
+    ],
+    "max": [
+     87.5156,
+     123,
+     24.5313
+    ],
+    "size": [
+     175.0313,
+     123.0313,
+     49.5313
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-chest",
+    "socket-claw-r",
+    "socket-mouth"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-blood-moon-aura",
+     "socket": "socket-chest",
+     "trigger": "idle",
+     "size": 110
+    },
+    {
+     "effectId": "rvx-monster-bat-burst",
+     "socket": "socket-claw-r",
+     "trigger": "clip:attack",
+     "size": 60,
+     "at": 0.48
+    },
+    {
+     "effectId": "rvx-monster-blood-splat",
+     "socket": "socket-mouth",
+     "trigger": "clip:hit",
+     "size": 36
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-creatures-wailing-ghost",
+   "pack": "monster",
+   "name": "Wailing Ghost",
+   "category": "creatures",
+   "filename": "monster-creatures-wailing-ghost.glb",
+   "relativePath": "creatures/monster-creatures-wailing-ghost.glb",
+   "leaf": "world",
+   "sizeBytes": 49896,
+   "bounds": {
+    "min": [
+     -21.5,
+     -0.2,
+     -9.9
+    ],
+    "max": [
+     21.5,
+     41.5,
+     9.9
+    ],
+    "size": [
+     43,
+     41.7,
+     19.8
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-core"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-ghost-wisps",
+     "socket": "socket-core",
+     "trigger": "idle",
+     "size": 30
+    },
+    {
+     "effectId": "rvx-monster-soul-burst",
+     "socket": "socket-core",
+     "trigger": "clip:death",
+     "size": 56,
+     "at": 0.24
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-creatures-werewolf",
+   "pack": "monster",
+   "name": "Werewolf",
+   "category": "creatures",
+   "filename": "monster-creatures-werewolf.glb",
+   "relativePath": "creatures/monster-creatures-werewolf.glb",
+   "leaf": "world",
+   "sizeBytes": 93524,
+   "bounds": {
+    "min": [
+     -24.0625,
+     0,
+     -22.7
+    ],
+    "max": [
+     24.0625,
+     59.5,
+     22.9373
+    ],
+    "size": [
+     48.125,
+     59.5,
+     45.6373
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "death",
+    "attack",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-claw-r",
+    "socket-mouth"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-howl",
+     "socket": "socket-mouth",
+     "trigger": "clip:attack",
+     "size": 40,
+     "at": 0.36
+    },
+    {
+     "effectId": "rvx-monster-claw-slash",
+     "socket": "socket-claw-r",
+     "trigger": "clip:attack",
+     "size": 36.46,
+     "aim": [
+      0.099,
+      -0.913,
+      -0.395
+     ],
+     "offset": [
+      -2.2,
+      20.35,
+      8.8
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-creatures-zombie-ghoul",
+   "pack": "monster",
+   "name": "Zombie Ghoul",
+   "category": "creatures",
+   "filename": "monster-creatures-zombie-ghoul.glb",
+   "relativePath": "creatures/monster-creatures-zombie-ghoul.glb",
+   "leaf": "world",
+   "sizeBytes": 54140,
+   "bounds": {
+    "min": [
+     -13.0312,
+     0,
+     -15.6562
+    ],
+    "max": [
+     13,
+     42,
+     15.5
+    ],
+    "size": [
+     26.0313,
+     42,
+     31.1563
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "death",
+    "idle",
+    "attack",
+    "hit"
+   ],
+   "sockets": [
+    "socket-mouth"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-rot-poof",
+     "socket": "socket-mouth",
+     "trigger": "clip:death",
+     "size": 32,
+     "at": 0.2
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-bone-club",
+   "pack": "monster",
+   "name": "Bone Club",
+   "category": "held-items",
+   "filename": "monster-held-items-bone-club.glb",
+   "relativePath": "held-items/monster-held-items-bone-club.glb",
+   "leaf": "world",
+   "sizeBytes": 64756,
+   "bounds": {
+    "min": [
+     -0.24,
+     -0.02,
+     -0.04
+    ],
+    "max": [
+     0.08,
+     0.08,
+     0.05
+    ],
+    "size": [
+     0.32,
+     0.1,
+     0.09
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-head"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-blood-splat",
+     "socket": "socket-head",
+     "trigger": "manual",
+     "size": 0.3
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-butcher-cleaver",
+   "pack": "monster",
+   "name": "Butcher's Cleaver",
+   "category": "held-items",
+   "filename": "monster-held-items-butcher-cleaver.glb",
+   "relativePath": "held-items/monster-held-items-butcher-cleaver.glb",
+   "leaf": "world",
+   "sizeBytes": 25024,
+   "bounds": {
+    "min": [
+     -0.21,
+     0.015,
+     -0.015
+    ],
+    "max": [
+     0.05,
+     0.045,
+     0.105
+    ],
+    "size": [
+     0.26,
+     0.03,
+     0.12
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-edge"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-blood-splat",
+     "socket": "socket-edge",
+     "trigger": "manual",
+     "size": 0.3
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-garlic-mace",
+   "pack": "monster",
+   "name": "Garlic Mace",
+   "category": "held-items",
+   "filename": "monster-held-items-garlic-mace.glb",
+   "relativePath": "held-items/monster-held-items-garlic-mace.glb",
+   "leaf": "world",
+   "sizeBytes": 66856,
+   "bounds": {
+    "min": [
+     -0.26,
+     -0.03,
+     -0.06
+    ],
+    "max": [
+     0.07,
+     0.08,
+     0.07
+    ],
+    "size": [
+     0.33,
+     0.11,
+     0.13
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-head"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-holy-burst",
+     "socket": "socket-head",
+     "trigger": "manual",
+     "size": 0.36
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-grave-shovel",
+   "pack": "monster",
+   "name": "Grave Shovel",
+   "category": "held-items",
+   "filename": "monster-held-items-grave-shovel.glb",
+   "relativePath": "held-items/monster-held-items-grave-shovel.glb",
+   "leaf": "world",
+   "sizeBytes": 42924,
+   "bounds": {
+    "min": [
+     -0.32,
+     0.015,
+     -0.055
+    ],
+    "max": [
+     0.14,
+     0.045,
+     0.055
+    ],
+    "size": [
+     0.46,
+     0.03,
+     0.11
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-blade"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-dirt-toss",
+     "socket": "socket-blade",
+     "trigger": "manual",
+     "size": 0.4
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-holy-water",
+   "pack": "monster",
+   "name": "Holy Water",
+   "category": "held-items",
+   "filename": "monster-held-items-holy-water.glb",
+   "relativePath": "held-items/monster-held-items-holy-water.glb",
+   "leaf": "world",
+   "sizeBytes": 47256,
+   "bounds": {
+    "min": [
+     -0.145,
+     -0.03,
+     -0.05
+    ],
+    "max": [
+     0.025,
+     0.08,
+     0.06
+    ],
+    "size": [
+     0.17,
+     0.11,
+     0.11
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-splash"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-holy-burst",
+     "socket": "socket-splash",
+     "trigger": "manual",
+     "size": 0.36
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-hunter-lantern",
+   "pack": "monster",
+   "name": "Hunter's Lantern",
+   "category": "held-items",
+   "filename": "monster-held-items-hunter-lantern.glb",
+   "relativePath": "held-items/monster-held-items-hunter-lantern.glb",
+   "leaf": "world",
+   "sizeBytes": 37180,
+   "bounds": {
+    "min": [
+     -0.19,
+     -0.01,
+     -0.07
+    ],
+    "max": [
+     0.06,
+     0.07,
+     0.08
+    ],
+    "size": [
+     0.25,
+     0.08,
+     0.15
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-flame"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-candle-flame",
+     "socket": "socket-flame",
+     "trigger": "manual",
+     "size": 0.12,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-pitchfork",
+   "pack": "monster",
+   "name": "Mob Pitchfork",
+   "category": "held-items",
+   "filename": "monster-held-items-pitchfork.glb",
+   "relativePath": "held-items/monster-held-items-pitchfork.glb",
+   "leaf": "world",
+   "sizeBytes": 38576,
+   "bounds": {
+    "min": [
+     -0.4,
+     0.015,
+     -0.045
+    ],
+    "max": [
+     0.12,
+     0.045,
+     0.045
+    ],
+    "size": [
+     0.52,
+     0.03,
+     0.09
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tines"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-blood-splat",
+     "socket": "socket-tines",
+     "trigger": "manual",
+     "size": 0.32
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-reaper-scythe",
+   "pack": "monster",
+   "name": "Reaper's Scythe",
+   "category": "held-items",
+   "filename": "monster-held-items-reaper-scythe.glb",
+   "relativePath": "held-items/monster-held-items-reaper-scythe.glb",
+   "leaf": "world",
+   "sizeBytes": 50904,
+   "bounds": {
+    "min": [
+     -0.47,
+     0.015,
+     -0.03
+    ],
+    "max": [
+     0.08,
+     0.045,
+     0.25
+    ],
+    "size": [
+     0.55,
+     0.03,
+     0.28
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-blade"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-reaper-slash",
+     "trigger": "manual",
+     "size": 0.352,
+     "aim": [
+      -1,
+      0,
+      0
+     ],
+     "offset": [
+      -0.117,
+      0.03,
+      0.11
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-silver-axe",
+   "pack": "monster",
+   "name": "Silver Axe",
+   "category": "held-items",
+   "filename": "monster-held-items-silver-axe.glb",
+   "relativePath": "held-items/monster-held-items-silver-axe.glb",
+   "leaf": "world",
+   "sizeBytes": 42500,
+   "bounds": {
+    "min": [
+     -0.29,
+     0.005,
+     -0.09
+    ],
+    "max": [
+     0.09,
+     0.055,
+     0.09
+    ],
+    "size": [
+     0.38,
+     0.05,
+     0.18
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-blade"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-silver-slash",
+     "trigger": "manual",
+     "size": 0.217,
+     "aim": [
+      -1,
+      0,
+      0
+     ],
+     "offset": [
+      -0.072,
+      0.03,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-silver-blunderbuss",
+   "pack": "monster",
+   "name": "Silver Blunderbuss",
+   "category": "held-items",
+   "filename": "monster-held-items-silver-blunderbuss.glb",
+   "relativePath": "held-items/monster-held-items-silver-blunderbuss.glb",
+   "leaf": "world",
+   "sizeBytes": 55132,
+   "bounds": {
+    "min": [
+     -0.34,
+     -0.015,
+     -0.05
+    ],
+    "max": [
+     0.06,
+     0.075,
+     0.08
+    ],
+    "size": [
+     0.4,
+     0.09,
+     0.13
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-muzzle"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-blunderbuss-blast",
+     "socket": "socket-muzzle",
+     "trigger": "manual",
+     "size": 0.3,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-silver-dagger",
+   "pack": "monster",
+   "name": "Silver Dagger",
+   "category": "held-items",
+   "filename": "monster-held-items-silver-dagger.glb",
+   "relativePath": "held-items/monster-held-items-silver-dagger.glb",
+   "leaf": "world",
+   "sizeBytes": 26124,
+   "bounds": {
+    "min": [
+     -0.19,
+     0.015,
+     -0.055
+    ],
+    "max": [
+     0.05,
+     0.045,
+     0.055
+    ],
+    "size": [
+     0.24,
+     0.03,
+     0.11
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tip"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-silver-slash",
+     "trigger": "manual",
+     "size": 0.143,
+     "aim": [
+      -1,
+      0,
+      0
+     ],
+     "offset": [
+      -0.048,
+      0.03,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-skull-staff",
+   "pack": "monster",
+   "name": "Skull Staff",
+   "category": "held-items",
+   "filename": "monster-held-items-skull-staff.glb",
+   "relativePath": "held-items/monster-held-items-skull-staff.glb",
+   "leaf": "world",
+   "sizeBytes": 57500,
+   "bounds": {
+    "min": [
+     -0.44,
+     -0.03,
+     -0.03
+    ],
+    "max": [
+     0.14,
+     0.09,
+     0.07
+    ],
+    "size": [
+     0.58,
+     0.12,
+     0.1
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tip"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-soul-burst",
+     "socket": "socket-tip",
+     "trigger": "manual",
+     "size": 0.4
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-stake-crossbow",
+   "pack": "monster",
+   "name": "Stake Crossbow",
+   "category": "held-items",
+   "filename": "monster-held-items-stake-crossbow.glb",
+   "relativePath": "held-items/monster-held-items-stake-crossbow.glb",
+   "leaf": "world",
+   "sizeBytes": 52184,
+   "bounds": {
+    "min": [
+     -0.31,
+     0.015,
+     -0.13
+    ],
+    "max": [
+     0.05,
+     0.045,
+     0.14
+    ],
+    "size": [
+     0.36,
+     0.03,
+     0.27
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-muzzle"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-bolt-twang",
+     "socket": "socket-muzzle",
+     "trigger": "manual",
+     "size": 0.2,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-torch",
+   "pack": "monster",
+   "name": "Pitch Torch",
+   "category": "held-items",
+   "filename": "monster-held-items-torch.glb",
+   "relativePath": "held-items/monster-held-items-torch.glb",
+   "leaf": "world",
+   "sizeBytes": 30008,
+   "bounds": {
+    "min": [
+     -0.2,
+     0,
+     -0.03
+    ],
+    "max": [
+     0.08,
+     0.06,
+     0.03
+    ],
+    "size": [
+     0.28,
+     0.06,
+     0.06
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-flame"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-torch-flame",
+     "socket": "socket-flame",
+     "trigger": "manual",
+     "size": 0.16,
+     "aim": [
+      1,
+      0,
+      0
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-witch-wand",
+   "pack": "monster",
+   "name": "Witch's Wand",
+   "category": "held-items",
+   "filename": "monster-held-items-witch-wand.glb",
+   "relativePath": "held-items/monster-held-items-witch-wand.glb",
+   "leaf": "world",
+   "sizeBytes": 25972,
+   "bounds": {
+    "min": [
+     -0.21,
+     0.005,
+     -0.025
+    ],
+    "max": [
+     0.04,
+     0.055,
+     0.025
+    ],
+    "size": [
+     0.25,
+     0.05,
+     0.05
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tip"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-curse-cloud",
+     "socket": "socket-tip",
+     "trigger": "manual",
+     "size": 0.35
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-held-items-wooden-stake",
+   "pack": "monster",
+   "name": "Wooden Stake",
+   "category": "held-items",
+   "filename": "monster-held-items-wooden-stake.glb",
+   "relativePath": "held-items/monster-held-items-wooden-stake.glb",
+   "leaf": "world",
+   "sizeBytes": 22056,
+   "bounds": {
+    "min": [
+     -0.23,
+     0.005,
+     -0.025
+    ],
+    "max": [
+     0.05,
+     0.055,
+     0.025
+    ],
+    "size": [
+     0.28,
+     0.05,
+     0.05
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [
+    "socket-tip"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-holy-burst",
+     "socket": "socket-tip",
+     "trigger": "manual",
+     "size": 0.3
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-blood-barrel",
+   "pack": "monster",
+   "name": "Blood Barrel",
+   "category": "props",
+   "filename": "monster-props-blood-barrel.glb",
+   "relativePath": "props/monster-props-blood-barrel.glb",
+   "leaf": "world",
+   "sizeBytes": 25436,
+   "bounds": {
+    "min": [
+     -12,
+     0,
+     -14.5
+    ],
+    "max": [
+     12.3,
+     20,
+     14.8
+    ],
+    "size": [
+     24.3,
+     20,
+     29.3
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-bone-pile",
+   "pack": "monster",
+   "name": "Bone Pile",
+   "category": "props",
+   "filename": "monster-props-bone-pile.glb",
+   "relativePath": "props/monster-props-bone-pile.glb",
+   "leaf": "world",
+   "sizeBytes": 47000,
+   "bounds": {
+    "min": [
+     -15.0937,
+     -0.0312,
+     -13.1094
+    ],
+    "max": [
+     14.7031,
+     14,
+     13.1094
+    ],
+    "size": [
+     29.7969,
+     14.0313,
+     26.2188
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-bookshelf",
+   "pack": "monster",
+   "name": "Haunted Bookshelf",
+   "category": "props",
+   "filename": "monster-props-bookshelf.glb",
+   "relativePath": "props/monster-props-bookshelf.glb",
+   "leaf": "world",
+   "sizeBytes": 40044,
+   "bounds": {
+    "min": [
+     -16,
+     0,
+     -7
+    ],
+    "max": [
+     16,
+     49.5,
+     7
+    ],
+    "size": [
+     32,
+     49.5,
+     14
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-brazier",
+   "pack": "monster",
+   "name": "Spiked Brazier",
+   "category": "props",
+   "filename": "monster-props-brazier.glb",
+   "relativePath": "props/monster-props-brazier.glb",
+   "leaf": "world",
+   "sizeBytes": 25648,
+   "bounds": {
+    "min": [
+     -10.5,
+     0,
+     -10.8
+    ],
+    "max": [
+     10.5,
+     37,
+     11
+    ],
+    "size": [
+     21,
+     37,
+     21.8
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-candelabra",
+   "pack": "monster",
+   "name": "Iron Candelabra",
+   "category": "props",
+   "filename": "monster-props-candelabra.glb",
+   "relativePath": "props/monster-props-candelabra.glb",
+   "leaf": "world",
+   "sizeBytes": 50688,
+   "bounds": {
+    "min": [
+     -12.6,
+     0,
+     -8
+    ],
+    "max": [
+     12.6,
+     40,
+     8
+    ],
+    "size": [
+     25.2,
+     40,
+     16
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-cobweb-arch",
+   "pack": "monster",
+   "name": "Cobweb Arch",
+   "category": "props",
+   "filename": "monster-props-cobweb-arch.glb",
+   "relativePath": "props/monster-props-cobweb-arch.glb",
+   "leaf": "world",
+   "sizeBytes": 70888,
+   "bounds": {
+    "min": [
+     -20,
+     0,
+     -5
+    ],
+    "max": [
+     20,
+     40,
+     5
+    ],
+    "size": [
+     40,
+     40,
+     10
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-coffin-stack",
+   "pack": "monster",
+   "name": "Coffin Stack",
+   "category": "props",
+   "filename": "monster-props-coffin-stack.glb",
+   "relativePath": "props/monster-props-coffin-stack.glb",
+   "leaf": "world",
+   "sizeBytes": 34324,
+   "bounds": {
+    "min": [
+     -13,
+     0,
+     -12
+    ],
+    "max": [
+     12.824,
+     20,
+     11.8
+    ],
+    "size": [
+     25.824,
+     20,
+     23.8
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-cursed-well",
+   "pack": "monster",
+   "name": "Cursed Well",
+   "category": "props",
+   "filename": "monster-props-cursed-well.glb",
+   "relativePath": "props/monster-props-cursed-well.glb",
+   "leaf": "world",
+   "sizeBytes": 26724,
+   "bounds": {
+    "min": [
+     -15,
+     0,
+     -11.5312
+    ],
+    "max": [
+     15,
+     39,
+     12
+    ],
+    "size": [
+     30,
+     39,
+     23.5313
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-dungeon-crate",
+   "pack": "monster",
+   "name": "Dungeon Crates",
+   "category": "props",
+   "filename": "monster-props-dungeon-crate.glb",
+   "relativePath": "props/monster-props-dungeon-crate.glb",
+   "leaf": "world",
+   "sizeBytes": 17948,
+   "bounds": {
+    "min": [
+     -19,
+     0,
+     -7.5
+    ],
+    "max": [
+     19.3,
+     33,
+     7.6164
+    ],
+    "size": [
+     38.3,
+     33,
+     15.1164
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-dungeon-pillar",
+   "pack": "monster",
+   "name": "Dungeon Pillar",
+   "category": "props",
+   "filename": "monster-props-dungeon-pillar.glb",
+   "relativePath": "props/monster-props-dungeon-pillar.glb",
+   "leaf": "world",
+   "sizeBytes": 16904,
+   "bounds": {
+    "min": [
+     -8,
+     0,
+     -8
+    ],
+    "max": [
+     8,
+     48,
+     8
+    ],
+    "size": [
+     16,
+     48,
+     16
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-dungeon-stairs",
+   "pack": "monster",
+   "name": "Dungeon Stairs",
+   "category": "props",
+   "filename": "monster-props-dungeon-stairs.glb",
+   "relativePath": "props/monster-props-dungeon-stairs.glb",
+   "leaf": "world",
+   "sizeBytes": 61004,
+   "bounds": {
+    "min": [
+     -16,
+     0,
+     -32
+    ],
+    "max": [
+     16,
+     52.5,
+     32
+    ],
+    "size": [
+     32,
+     52.5,
+     64
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-dungeon-wall-corner",
+   "pack": "monster",
+   "name": "Dungeon Wall Corner",
+   "category": "props",
+   "filename": "monster-props-dungeon-wall-corner.glb",
+   "relativePath": "props/monster-props-dungeon-wall-corner.glb",
+   "leaf": "world",
+   "sizeBytes": 57220,
+   "bounds": {
+    "min": [
+     -16,
+     0,
+     -16
+    ],
+    "max": [
+     16,
+     48,
+     16
+    ],
+    "size": [
+     32,
+     48,
+     32
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-dungeon-wall",
+   "pack": "monster",
+   "name": "Dungeon Wall",
+   "category": "props",
+   "filename": "monster-props-dungeon-wall.glb",
+   "relativePath": "props/monster-props-dungeon-wall.glb",
+   "leaf": "world",
+   "sizeBytes": 54676,
+   "bounds": {
+    "min": [
+     -16,
+     0,
+     -9.1
+    ],
+    "max": [
+     16,
+     48,
+     9.1
+    ],
+    "size": [
+     32,
+     48,
+     18.2
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-funeral-urn",
+   "pack": "monster",
+   "name": "Funeral Urn",
+   "category": "props",
+   "filename": "monster-props-funeral-urn.glb",
+   "relativePath": "props/monster-props-funeral-urn.glb",
+   "leaf": "world",
+   "sizeBytes": 26588,
+   "bounds": {
+    "min": [
+     -8.3281,
+     0,
+     -7
+    ],
+    "max": [
+     8.3281,
+     34,
+     7
+    ],
+    "size": [
+     16.6563,
+     34,
+     14
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-gargoyle-statue",
+   "pack": "monster",
+   "name": "Gargoyle Statue",
+   "category": "props",
+   "filename": "monster-props-gargoyle-statue.glb",
+   "relativePath": "props/monster-props-gargoyle-statue.glb",
+   "leaf": "world",
+   "sizeBytes": 33472,
+   "bounds": {
+    "min": [
+     -10.5,
+     0,
+     -9.4349
+    ],
+    "max": [
+     10.5,
+     39.6656,
+     9.9219
+    ],
+    "size": [
+     21,
+     39.6656,
+     19.3568
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-gravestone-cross",
+   "pack": "monster",
+   "name": "Celtic Cross Grave",
+   "category": "props",
+   "filename": "monster-props-gravestone-cross.glb",
+   "relativePath": "props/monster-props-gravestone-cross.glb",
+   "leaf": "world",
+   "sizeBytes": 42012,
+   "bounds": {
+    "min": [
+     -12.5,
+     0,
+     -8.5
+    ],
+    "max": [
+     12.8526,
+     37.2153,
+     8.5
+    ],
+    "size": [
+     25.3526,
+     37.2153,
+     17
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-gravestone-obelisk",
+   "pack": "monster",
+   "name": "Family Obelisk",
+   "category": "props",
+   "filename": "monster-props-gravestone-obelisk.glb",
+   "relativePath": "props/monster-props-gravestone-obelisk.glb",
+   "leaf": "world",
+   "sizeBytes": 55824,
+   "bounds": {
+    "min": [
+     -12,
+     0,
+     -12
+    ],
+    "max": [
+     12,
+     40,
+     12
+    ],
+    "size": [
+     24,
+     40,
+     24
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-gravestone-rounded",
+   "pack": "monster",
+   "name": "Rounded Gravestone",
+   "category": "props",
+   "filename": "monster-props-gravestone-rounded.glb",
+   "relativePath": "props/monster-props-gravestone-rounded.glb",
+   "leaf": "world",
+   "sizeBytes": 24572,
+   "bounds": {
+    "min": [
+     -10,
+     0,
+     -12
+    ],
+    "max": [
+     10,
+     24.9163,
+     12
+    ],
+    "size": [
+     20,
+     24.9163,
+     24
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-jack-o-lantern",
+   "pack": "monster",
+   "name": "Giant Jack-o'-Lantern",
+   "category": "props",
+   "filename": "monster-props-jack-o-lantern.glb",
+   "relativePath": "props/monster-props-jack-o-lantern.glb",
+   "leaf": "world",
+   "sizeBytes": 20692,
+   "bounds": {
+    "min": [
+     -10,
+     0,
+     -10.5
+    ],
+    "max": [
+     10,
+     21.4316,
+     10.5
+    ],
+    "size": [
+     20,
+     21.4316,
+     21
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-lamp-post",
+   "pack": "monster",
+   "name": "Gothic Lamp Post",
+   "category": "props",
+   "filename": "monster-props-lamp-post.glb",
+   "relativePath": "props/monster-props-lamp-post.glb",
+   "leaf": "world",
+   "sizeBytes": 42028,
+   "bounds": {
+    "min": [
+     -14.5,
+     0,
+     -8
+    ],
+    "max": [
+     14.5,
+     62,
+     8
+    ],
+    "size": [
+     29,
+     62,
+     16
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-pipe-organ",
+   "pack": "monster",
+   "name": "Haunted Pipe Organ",
+   "category": "props",
+   "filename": "monster-props-pipe-organ.glb",
+   "relativePath": "props/monster-props-pipe-organ.glb",
+   "leaf": "world",
+   "sizeBytes": 40940,
+   "bounds": {
+    "min": [
+     -19,
+     0,
+     -11
+    ],
+    "max": [
+     19,
+     49,
+     11
+    ],
+    "size": [
+     38,
+     49,
+     22
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-potion-table",
+   "pack": "monster",
+   "name": "Alchemist Table",
+   "category": "props",
+   "filename": "monster-props-potion-table.glb",
+   "relativePath": "props/monster-props-potion-table.glb",
+   "leaf": "world",
+   "sizeBytes": 37908,
+   "bounds": {
+    "min": [
+     -18.0928,
+     0.0488,
+     -7.7
+    ],
+    "max": [
+     18.0928,
+     36,
+     7.5
+    ],
+    "size": [
+     36.1857,
+     35.9512,
+     15.2
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-pumpkin-patch",
+   "pack": "monster",
+   "name": "Pumpkin Patch",
+   "category": "props",
+   "filename": "monster-props-pumpkin-patch.glb",
+   "relativePath": "props/monster-props-pumpkin-patch.glb",
+   "leaf": "world",
+   "sizeBytes": 64896,
+   "bounds": {
+    "min": [
+     -18,
+     0,
+     -12
+    ],
+    "max": [
+     18,
+     37,
+     12
+    ],
+    "size": [
+     36,
+     37,
+     24
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-ritual-altar",
+   "pack": "monster",
+   "name": "Ritual Altar",
+   "category": "props",
+   "filename": "monster-props-ritual-altar.glb",
+   "relativePath": "props/monster-props-ritual-altar.glb",
+   "leaf": "world",
+   "sizeBytes": 49068,
+   "bounds": {
+    "min": [
+     -19,
+     0,
+     -19
+    ],
+    "max": [
+     19,
+     20,
+     19
+    ],
+    "size": [
+     38,
+     20,
+     38
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-sarcophagus",
+   "pack": "monster",
+   "name": "Knight Sarcophagus",
+   "category": "props",
+   "filename": "monster-props-sarcophagus.glb",
+   "relativePath": "props/monster-props-sarcophagus.glb",
+   "leaf": "world",
+   "sizeBytes": 13960,
+   "bounds": {
+    "min": [
+     -9,
+     0,
+     -13
+    ],
+    "max": [
+     9,
+     20,
+     13
+    ],
+    "size": [
+     18,
+     20,
+     26
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-shackle-post",
+   "pack": "monster",
+   "name": "Shackle Post",
+   "category": "props",
+   "filename": "monster-props-shackle-post.glb",
+   "relativePath": "props/monster-props-shackle-post.glb",
+   "leaf": "world",
+   "sizeBytes": 37496,
+   "bounds": {
+    "min": [
+     -15.5,
+     -0.0312,
+     -8.0937
+    ],
+    "max": [
+     15.5,
+     39,
+     8.0938
+    ],
+    "size": [
+     31,
+     39.0313,
+     16.1875
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-skull-pile",
+   "pack": "monster",
+   "name": "Skull Pile",
+   "category": "props",
+   "filename": "monster-props-skull-pile.glb",
+   "relativePath": "props/monster-props-skull-pile.glb",
+   "leaf": "world",
+   "sizeBytes": 60548,
+   "bounds": {
+    "min": [
+     -17.3,
+     0,
+     -14.2187
+    ],
+    "max": [
+     17.3,
+     32,
+     14.5
+    ],
+    "size": [
+     34.6,
+     32,
+     28.7188
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-stocks",
+   "pack": "monster",
+   "name": "Pillory Stocks",
+   "category": "props",
+   "filename": "monster-props-stocks.glb",
+   "relativePath": "props/monster-props-stocks.glb",
+   "leaf": "world",
+   "sizeBytes": 47736,
+   "bounds": {
+    "min": [
+     -19,
+     0,
+     -8.5
+    ],
+    "max": [
+     19,
+     39.0156,
+     8.5
+    ],
+    "size": [
+     38,
+     39.0156,
+     17
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-torture-rack",
+   "pack": "monster",
+   "name": "Torture Rack",
+   "category": "props",
+   "filename": "monster-props-torture-rack.glb",
+   "relativePath": "props/monster-props-torture-rack.glb",
+   "leaf": "world",
+   "sizeBytes": 47268,
+   "bounds": {
+    "min": [
+     -12,
+     0,
+     -22
+    ],
+    "max": [
+     12,
+     24,
+     22
+    ],
+    "size": [
+     24,
+     24,
+     44
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-props-vampire-throne",
+   "pack": "monster",
+   "name": "Vampire Throne",
+   "category": "props",
+   "filename": "monster-props-vampire-throne.glb",
+   "relativePath": "props/monster-props-vampire-throne.glb",
+   "leaf": "world",
+   "sizeBytes": 24044,
+   "bounds": {
+    "min": [
+     -16,
+     0,
+     -13
+    ],
+    "max": [
+     16,
+     48,
+     13
+    ],
+    "size": [
+     32,
+     48,
+     26
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-terrain-nature-dead-tree",
+   "pack": "monster",
+   "name": "Dead Oak",
+   "category": "terrain-nature",
+   "filename": "monster-terrain-nature-dead-tree.glb",
+   "relativePath": "terrain-nature/monster-terrain-nature-dead-tree.glb",
+   "leaf": "world",
+   "sizeBytes": 69596,
+   "bounds": {
+    "min": [
+     -21.2969,
+     -0.0312,
+     -13.95
+    ],
+    "max": [
+     21.2969,
+     88.2344,
+     13.7344
+    ],
+    "size": [
+     42.5938,
+     88.2656,
+     27.6844
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-terrain-nature-dungeon-floor",
+   "pack": "monster",
+   "name": "Dungeon Floor Tile",
+   "category": "terrain-nature",
+   "filename": "monster-terrain-nature-dungeon-floor.glb",
+   "relativePath": "terrain-nature/monster-terrain-nature-dungeon-floor.glb",
+   "leaf": "world",
+   "sizeBytes": 8596,
+   "bounds": {
+    "min": [
+     -16,
+     0,
+     -16
+    ],
+    "max": [
+     16,
+     6.0625,
+     16
+    ],
+    "size": [
+     32,
+     6.0625,
+     32
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-terrain-nature-dungeon-grate",
+   "pack": "monster",
+   "name": "Dungeon Grate Tile",
+   "category": "terrain-nature",
+   "filename": "monster-terrain-nature-dungeon-grate.glb",
+   "relativePath": "terrain-nature/monster-terrain-nature-dungeon-grate.glb",
+   "leaf": "world",
+   "sizeBytes": 12344,
+   "bounds": {
+    "min": [
+     -16,
+     0,
+     -16
+    ],
+    "max": [
+     16,
+     4,
+     16
+    ],
+    "size": [
+     32,
+     4,
+     32
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [
+    "socket-grate"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-sewer-fume",
+     "socket": "socket-grate",
+     "trigger": "idle",
+     "size": 26
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-terrain-nature-fog-pit",
+   "pack": "monster",
+   "name": "Fog Pit",
+   "category": "terrain-nature",
+   "filename": "monster-terrain-nature-fog-pit.glb",
+   "relativePath": "terrain-nature/monster-terrain-nature-fog-pit.glb",
+   "leaf": "world",
+   "sizeBytes": 73644,
+   "bounds": {
+    "min": [
+     -22.5937,
+     -0.0625,
+     -23.5625
+    ],
+    "max": [
+     22.5469,
+     17.5,
+     23.7188
+    ],
+    "size": [
+     45.1406,
+     17.5625,
+     47.2813
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-fog"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-grave-mist",
+     "socket": "socket-fog",
+     "trigger": "idle",
+     "size": 36
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-terrain-nature-glow-mushrooms",
+   "pack": "monster",
+   "name": "Glowing Mushrooms",
+   "category": "terrain-nature",
+   "filename": "monster-terrain-nature-glow-mushrooms.glb",
+   "relativePath": "terrain-nature/monster-terrain-nature-glow-mushrooms.glb",
+   "leaf": "world",
+   "sizeBytes": 64788,
+   "bounds": {
+    "min": [
+     -28.9,
+     0,
+     -16.5433
+    ],
+    "max": [
+     29.1,
+     27,
+     16.3149
+    ],
+    "size": [
+     58,
+     27,
+     32.8582
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [
+    "socket-spores"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-spore-glow",
+     "socket": "socket-spores",
+     "trigger": "idle",
+     "size": 40
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-terrain-nature-grave-mound",
+   "pack": "monster",
+   "name": "Fresh Grave Mound",
+   "category": "terrain-nature",
+   "filename": "monster-terrain-nature-grave-mound.glb",
+   "relativePath": "terrain-nature/monster-terrain-nature-grave-mound.glb",
+   "leaf": "world",
+   "sizeBytes": 45500,
+   "bounds": {
+    "min": [
+     -13.6946,
+     -0.0312,
+     -25.5625
+    ],
+    "max": [
+     13.6855,
+     30.9616,
+     25.5
+    ],
+    "size": [
+     27.3801,
+     30.9929,
+     51.0625
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-terrain-nature-iron-fence",
+   "pack": "monster",
+   "name": "Graveyard Iron Fence",
+   "category": "terrain-nature",
+   "filename": "monster-terrain-nature-iron-fence.glb",
+   "relativePath": "terrain-nature/monster-terrain-nature-iron-fence.glb",
+   "leaf": "world",
+   "sizeBytes": 25476,
+   "bounds": {
+    "min": [
+     -16,
+     0,
+     -4
+    ],
+    "max": [
+     16,
+     24,
+     4
+    ],
+    "size": [
+     32,
+     24,
+     8
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-terrain-nature-mossy-rocks",
+   "pack": "monster",
+   "name": "Mossy Boulders",
+   "category": "terrain-nature",
+   "filename": "monster-terrain-nature-mossy-rocks.glb",
+   "relativePath": "terrain-nature/monster-terrain-nature-mossy-rocks.glb",
+   "leaf": "world",
+   "sizeBytes": 36236,
+   "bounds": {
+    "min": [
+     -23.5,
+     -0.0312,
+     -19
+    ],
+    "max": [
+     24,
+     20,
+     19
+    ],
+    "size": [
+     47.5,
+     20.0313,
+     38
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-terrain-nature-thorn-bramble",
+   "pack": "monster",
+   "name": "Thorn Bramble",
+   "category": "terrain-nature",
+   "filename": "monster-terrain-nature-thorn-bramble.glb",
+   "relativePath": "terrain-nature/monster-terrain-nature-thorn-bramble.glb",
+   "leaf": "world",
+   "sizeBytes": 127112,
+   "bounds": {
+    "min": [
+     -22.0883,
+     0,
+     -18.6587
+    ],
+    "max": [
+     22.2671,
+     31.1086,
+     18.7188
+    ],
+    "size": [
+     44.3554,
+     31.1086,
+     37.3774
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-terrain-nature-weeping-willow",
+   "pack": "monster",
+   "name": "Weeping Willow",
+   "category": "terrain-nature",
+   "filename": "monster-terrain-nature-weeping-willow.glb",
+   "relativePath": "terrain-nature/monster-terrain-nature-weeping-willow.glb",
+   "leaf": "world",
+   "sizeBytes": 122344,
+   "bounds": {
+    "min": [
+     -29.006,
+     0,
+     -22.5937
+    ],
+    "max": [
+     29.5,
+     81,
+     23
+    ],
+    "size": [
+     58.506,
+     81,
+     45.5937
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-vehicles-bone-cart",
+   "pack": "monster",
+   "name": "Bone Cart",
+   "category": "vehicles",
+   "filename": "monster-vehicles-bone-cart.glb",
+   "relativePath": "vehicles/monster-vehicles-bone-cart.glb",
+   "leaf": "world",
+   "sizeBytes": 110556,
+   "bounds": {
+    "min": [
+     -23,
+     0,
+     -39
+    ],
+    "max": [
+     23,
+     69,
+     39
+    ],
+    "size": [
+     46,
+     69,
+     78
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "move"
+   ],
+   "sockets": [
+    "socket-lantern"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-ghost-lantern",
+     "socket": "socket-lantern",
+     "trigger": "idle",
+     "size": 24
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-vehicles-coffin-wagon",
+   "pack": "monster",
+   "name": "Coffin Wagon",
+   "category": "vehicles",
+   "filename": "monster-vehicles-coffin-wagon.glb",
+   "relativePath": "vehicles/monster-vehicles-coffin-wagon.glb",
+   "leaf": "world",
+   "sizeBytes": 114540,
+   "bounds": {
+    "min": [
+     -22,
+     0,
+     -47
+    ],
+    "max": [
+     22,
+     77,
+     47
+    ],
+    "size": [
+     44,
+     77,
+     94
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "move"
+   ],
+   "sockets": [
+    "socket-lantern"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-candle-flame",
+     "socket": "socket-lantern",
+     "trigger": "idle",
+     "size": 14
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-vehicles-ghost-ship",
+   "pack": "monster",
+   "name": "Ghost Ship",
+   "category": "vehicles",
+   "filename": "monster-vehicles-ghost-ship.glb",
+   "relativePath": "vehicles/monster-vehicles-ghost-ship.glb",
+   "leaf": "world",
+   "sizeBytes": 136768,
+   "bounds": {
+    "min": [
+     -24,
+     0,
+     -53.3281
+    ],
+    "max": [
+     24,
+     125,
+     53
+    ],
+    "size": [
+     48,
+     125,
+     106.3281
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move"
+   ],
+   "sockets": [
+    "socket-deck",
+    "socket-stern"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-ghost-wisps",
+     "socket": "socket-deck",
+     "trigger": "idle",
+     "size": 70,
+     "offset": [
+      0,
+      60,
+      0
+     ]
+    },
+    {
+     "effectId": "rvx-monster-ghost-wake",
+     "socket": "socket-stern",
+     "trigger": "clip:move",
+     "size": 70
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-vehicles-hearse-carriage",
+   "pack": "monster",
+   "name": "Funeral Hearse",
+   "category": "vehicles",
+   "filename": "monster-vehicles-hearse-carriage.glb",
+   "relativePath": "vehicles/monster-vehicles-hearse-carriage.glb",
+   "leaf": "world",
+   "sizeBytes": 104936,
+   "bounds": {
+    "min": [
+     -20,
+     0,
+     -52.5
+    ],
+    "max": [
+     20,
+     80,
+     52
+    ],
+    "size": [
+     40,
+     80,
+     104.5
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move"
+   ],
+   "sockets": [
+    "socket-horse",
+    "socket-lamp"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-ghost-wisps",
+     "socket": "socket-horse",
+     "trigger": "idle",
+     "size": 40
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-vehicles-spider-carriage",
+   "pack": "monster",
+   "name": "Spider Carriage",
+   "category": "vehicles",
+   "filename": "monster-vehicles-spider-carriage.glb",
+   "relativePath": "vehicles/monster-vehicles-spider-carriage.glb",
+   "leaf": "world",
+   "sizeBytes": 85464,
+   "bounds": {
+    "min": [
+     -52.1939,
+     0.0222,
+     -49.5
+    ],
+    "max": [
+     52.1939,
+     72,
+     49.5
+    ],
+    "size": [
+     104.3878,
+     71.9778,
+     99
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move"
+   ],
+   "sockets": [
+    "socket-lamp",
+    "socket-lamp-r"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-ghost-lantern",
+     "socket": "socket-lamp",
+     "trigger": "idle",
+     "size": 24
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-vehicles-witch-broom",
+   "pack": "monster",
+   "name": "Witch's Broom",
+   "category": "vehicles",
+   "filename": "monster-vehicles-witch-broom.glb",
+   "relativePath": "vehicles/monster-vehicles-witch-broom.glb",
+   "leaf": "world",
+   "sizeBytes": 61068,
+   "bounds": {
+    "min": [
+     -10,
+     0,
+     -31.5
+    ],
+    "max": [
+     10,
+     49.375,
+     31.5
+    ],
+    "size": [
+     20,
+     49.375,
+     63
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move"
+   ],
+   "sockets": [
+    "socket-brush"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-monster-broom-trail",
+     "socket": "socket-brush",
+     "trigger": "clip:move",
+     "size": 30,
+     "aim": [
+      0,
+      0,
+      1
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "monster-avatar-parts",
+   "pack": "monster",
+   "name": "Monster Avatar Parts",
+   "category": "avatar",
+   "filename": "monster-avatar-parts.glb",
+   "relativePath": "avatar/monster-avatar-parts.glb",
+   "leaf": "characters",
+   "sizeBytes": 1066680,
+   "bounds": {
+    "min": [
+     -0.2024,
+     -0.0004,
+     -0.3824
+    ],
+    "max": [
+     0.2024,
+     0.8524,
+     0.3824
+    ],
+    "size": [
+     0.4048,
+     0.8528,
+     0.7648
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [
+    "48_Howl",
+    "49_Coffin_Rise",
+    "50_Bat_Flap",
+    "51_Lunge",
+    "52_Creep_Walk",
+    "53_Cast_Curse",
+    "54_Zombie_Shamble",
+    "55_Claw_Swipe"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "monster-characters-skins-frankenstein",
+   "pack": "monster",
+   "name": "Frankenstein's Monster",
+   "category": "characters-skins",
+   "filename": "monster-characters-skins-frankenstein.glb",
+   "relativePath": "characters-skins/monster-characters-skins-frankenstein.glb",
+   "leaf": "characters",
+   "sizeBytes": 166520,
+   "bounds": {
+    "min": [
+     -0.07,
+     0,
+     -0.29
+    ],
+    "max": [
+     0.09,
+     0.61,
+     0.29
+    ],
+    "size": [
+     0.16,
+     0.61,
+     0.58
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "monster-characters-skins-mummy",
+   "pack": "monster",
+   "name": "Mummy Pharaoh",
+   "category": "characters-skins",
+   "filename": "monster-characters-skins-mummy.glb",
+   "relativePath": "characters-skins/monster-characters-skins-mummy.glb",
+   "leaf": "characters",
+   "sizeBytes": 357096,
+   "bounds": {
+    "min": [
+     -0.08,
+     0,
+     -0.29
+    ],
+    "max": [
+     0.1,
+     0.6,
+     0.29
+    ],
+    "size": [
+     0.18,
+     0.6,
+     0.58
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "monster-characters-skins-skeleton-hunter",
+   "pack": "monster",
+   "name": "Skeleton Hunter",
+   "category": "characters-skins",
+   "filename": "monster-characters-skins-skeleton-hunter.glb",
+   "relativePath": "characters-skins/monster-characters-skins-skeleton-hunter.glb",
+   "leaf": "characters",
+   "sizeBytes": 268456,
+   "bounds": {
+    "min": [
+     -0.11,
+     0,
+     -0.29
+    ],
+    "max": [
+     0.13,
+     0.66,
+     0.29
+    ],
+    "size": [
+     0.24,
+     0.66,
+     0.58
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "monster-characters-skins-vampire",
+   "pack": "monster",
+   "name": "Vampire Count",
+   "category": "characters-skins",
+   "filename": "monster-characters-skins-vampire.glb",
+   "relativePath": "characters-skins/monster-characters-skins-vampire.glb",
+   "leaf": "characters",
+   "sizeBytes": 199496,
+   "bounds": {
+    "min": [
+     -0.07,
+     0,
+     -0.29
+    ],
+    "max": [
+     0.09,
+     0.59,
+     0.29
+    ],
+    "size": [
+     0.16,
+     0.59,
+     0.58
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "monster-characters-skins-werewolf",
+   "pack": "monster",
+   "name": "Werewolf",
+   "category": "characters-skins",
+   "filename": "monster-characters-skins-werewolf.glb",
+   "relativePath": "characters-skins/monster-characters-skins-werewolf.glb",
+   "leaf": "characters",
+   "sizeBytes": 408436,
+   "bounds": {
+    "min": [
+     -0.12,
+     0,
+     -0.29
+    ],
+    "max": [
+     0.16,
+     0.67,
+     0.29
+    ],
+    "size": [
+     0.28,
+     0.67,
+     0.58
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  },
+  {
+   "id": "monster-characters-skins-witch",
+   "pack": "monster",
+   "name": "Swamp Witch",
+   "category": "characters-skins",
+   "filename": "monster-characters-skins-witch.glb",
+   "relativePath": "characters-skins/monster-characters-skins-witch.glb",
+   "leaf": "characters",
+   "sizeBytes": 316304,
+   "bounds": {
+    "min": [
+     -0.1,
+     0,
+     -0.29
+    ],
+    "max": [
+     0.12,
+     0.87,
+     0.29
+    ],
+    "size": [
+     0.22,
+     0.87,
+     0.58
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "avatar",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+  }
+ ],
+ "avatar": {
+  "pack": "monster",
+  "partsModelPath": "avatar/monster-avatar-parts.glb",
+  "clipsModelPath": "avatar/monster-avatar-parts.glb",
+  "leaf": "characters",
+  "parts": [
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "headwear",
+     "index": 1
+    },
+    "nodeName": "headwear monster-1",
+    "name": "Crooked Witch Hat",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "headwear",
+     "index": 2
+    },
+    "nodeName": "headwear monster-2",
+    "name": "Hunter's Wide Brim",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "headwear",
+     "index": 3
+    },
+    "nodeName": "headwear monster-3",
+    "name": "Undertaker's Top Hat",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "headwear",
+     "index": 4
+    },
+    "nodeName": "headwear monster-4",
+    "name": "Horned Bone Helm",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "headwear",
+     "index": 5
+    },
+    "nodeName": "headwear monster-5",
+    "name": "Jack-o'-Lantern Head",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": true,
+     "hidesFacialHair": true
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "headwear",
+     "index": 6
+    },
+    "nodeName": "headwear monster-6",
+    "name": "Wolf Pelt Hood",
+    "tints": [],
+    "rules": {
+     "hidesHair": true,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "hair",
+     "index": 1
+    },
+    "nodeName": "hair monster-1",
+    "name": "Slicked Count Hair",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "hair",
+     "index": 2
+    },
+    "nodeName": "hair monster-2",
+    "name": "Flat Top Fringe",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "hair",
+     "index": 3
+    },
+    "nodeName": "hair monster-3",
+    "name": "Mad Scientist Hair",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "facialhair",
+     "index": 1
+    },
+    "nodeName": "facialhair monster-1",
+    "name": "Vampire Fangs",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "facialhair",
+     "index": 2
+    },
+    "nodeName": "facialhair monster-2",
+    "name": "Stitched Grin",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "facialhair",
+     "index": 3
+    },
+    "nodeName": "facialhair monster-3",
+    "name": "Grey Mutton Chops",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "eyewear",
+     "index": 1
+    },
+    "nodeName": "eyewear monster-1",
+    "name": "Blood Monocle",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "eyewear",
+     "index": 2
+    },
+    "nodeName": "eyewear monster-2",
+    "name": "Brass Goggles",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "eyewear",
+     "index": 3
+    },
+    "nodeName": "eyewear monster-3",
+    "name": "Skull Eyepatch",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "ears",
+     "index": 1
+    },
+    "nodeName": "ears monster-1",
+    "name": "Wolf Ears",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "ears",
+     "index": 2
+    },
+    "nodeName": "ears monster-2",
+    "name": "Bat Ears",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "ears",
+     "index": 3
+    },
+    "nodeName": "ears monster-3",
+    "name": "Pointed Vampire Ears",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "face",
+     "index": 1
+    },
+    "nodeName": "face monster-1",
+    "name": "Skull Face Paint",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "face",
+     "index": 2
+    },
+    "nodeName": "face monster-2",
+    "name": "Mummy Wraps",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "face",
+     "index": 3
+    },
+    "nodeName": "face monster-3",
+    "name": "Stitched Scar",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "face",
+     "index": 4
+    },
+    "nodeName": "face monster-4",
+    "name": "Wolf Muzzle",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "eyebrow",
+     "index": 1
+    },
+    "nodeName": "eyebrow monster-1",
+    "name": "Sinister Arched Brows",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "eyebrow",
+     "index": 2
+    },
+    "nodeName": "eyebrow monster-2",
+    "name": "Heavy Unibrow",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "tops",
+     "index": 1
+    },
+    "nodeName": "tops monster-1",
+    "name": "Count's Tailcoat",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "tops",
+     "index": 2
+    },
+    "nodeName": "tops monster-2",
+    "name": "Tattered Shirt",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "tops",
+     "index": 3
+    },
+    "nodeName": "tops monster-3",
+    "name": "Bone Armour",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "tops",
+     "index": 4
+    },
+    "nodeName": "tops monster-4",
+    "name": "Mummy Wraps Top",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "tops",
+     "index": 5
+    },
+    "nodeName": "tops monster-5",
+    "name": "Hunter's Coat",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "bottoms",
+     "index": 1
+    },
+    "nodeName": "bottoms monster-1",
+    "name": "Tattered Trousers",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "bottoms",
+     "index": 2
+    },
+    "nodeName": "bottoms monster-2",
+    "name": "Bone Greaves",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "bottoms",
+     "index": 3
+    },
+    "nodeName": "bottoms monster-3",
+    "name": "Mummy Wrapped Legs",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "shoes",
+     "index": 1
+    },
+    "nodeName": "shoes monster-1",
+    "name": "Wolf Paws",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "shoes",
+     "index": 2
+    },
+    "nodeName": "shoes monster-2",
+    "name": "Hunter's Boots",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "shoes",
+     "index": 3
+    },
+    "nodeName": "shoes monster-3",
+    "name": "Pointed Buckle Shoes",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "back",
+     "index": 1
+    },
+    "nodeName": "back monster-1",
+    "name": "Vampire Cape",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "back",
+     "index": 2
+    },
+    "nodeName": "back monster-2",
+    "name": "Bat Wings",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "back",
+     "index": 3
+    },
+    "nodeName": "back monster-3",
+    "name": "Coffin Backpack",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   },
+   {
+    "ref": {
+     "pack": "monster",
+     "slot": "back",
+     "index": 4
+    },
+    "nodeName": "back monster-4",
+    "name": "Stake Quiver",
+    "tints": [],
+    "rules": {
+     "hidesHair": false,
+     "hidesEyebrows": false,
+     "hidesFacialHair": false
+    }
+   }
+  ],
+  "clips": [
+   "48_Howl",
+   "49_Coffin_Rise",
+   "50_Bat_Flap",
+   "51_Lunge",
+   "52_Creep_Walk",
+   "53_Cast_Curse",
+   "54_Zombie_Shamble",
+   "55_Claw_Swipe"
+  ]
+ },
+ "sprites": [
+  {
+   "id": "icon-monster-animated-props-chained-coffin",
+   "pack": "monster",
+   "name": "animated props chained coffin",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-monster-animated-props-chained-coffin.png",
+   "leaf": "icons",
+   "sizeBytes": 9934,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-animated-props-chandelier",
+   "pack": "monster",
+   "name": "animated props chandelier",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-monster-animated-props-chandelier.png",
+   "leaf": "icons",
+   "sizeBytes": 15167,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-animated-props-dungeon-door",
+   "pack": "monster",
+   "name": "animated props dungeon door",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-monster-animated-props-dungeon-door.png",
+   "leaf": "icons",
+   "sizeBytes": 20065,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-animated-props-hanging-cage",
+   "pack": "monster",
+   "name": "animated props hanging cage",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-monster-animated-props-hanging-cage.png",
+   "leaf": "icons",
+   "sizeBytes": 20697,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-animated-props-haunted-mirror",
+   "pack": "monster",
+   "name": "animated props haunted mirror",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-monster-animated-props-haunted-mirror.png",
+   "leaf": "icons",
+   "sizeBytes": 15412,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-animated-props-iron-maiden",
+   "pack": "monster",
+   "name": "animated props iron maiden",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-monster-animated-props-iron-maiden.png",
+   "leaf": "icons",
+   "sizeBytes": 13719,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-animated-props-spider-thread",
+   "pack": "monster",
+   "name": "animated props spider thread",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-monster-animated-props-spider-thread.png",
+   "leaf": "icons",
+   "sizeBytes": 20314,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-animated-props-torch-sconce",
+   "pack": "monster",
+   "name": "animated props torch sconce",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-monster-animated-props-torch-sconce.png",
+   "leaf": "icons",
+   "sizeBytes": 11226,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-animated-props-trapdoor",
+   "pack": "monster",
+   "name": "animated props trapdoor",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-monster-animated-props-trapdoor.png",
+   "leaf": "icons",
+   "sizeBytes": 7236,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-animated-props-upright-coffin",
+   "pack": "monster",
+   "name": "animated props upright coffin",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-monster-animated-props-upright-coffin.png",
+   "leaf": "icons",
+   "sizeBytes": 14515,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-animated-props-vampire-coffin",
+   "pack": "monster",
+   "name": "animated props vampire coffin",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-monster-animated-props-vampire-coffin.png",
+   "leaf": "icons",
+   "sizeBytes": 13356,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-animated-props-witch-cauldron",
+   "pack": "monster",
+   "name": "animated props witch cauldron",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-monster-animated-props-witch-cauldron.png",
+   "leaf": "icons",
+   "sizeBytes": 12750,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-creatures-gargoyle",
+   "pack": "monster",
+   "name": "creatures gargoyle",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-monster-creatures-gargoyle.png",
+   "leaf": "icons",
+   "sizeBytes": 23028,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-creatures-giant-spider",
+   "pack": "monster",
+   "name": "creatures giant spider",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-monster-creatures-giant-spider.png",
+   "leaf": "icons",
+   "sizeBytes": 13499,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-creatures-mummy",
+   "pack": "monster",
+   "name": "creatures mummy",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-monster-creatures-mummy.png",
+   "leaf": "icons",
+   "sizeBytes": 13430,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-creatures-vampire-bat",
+   "pack": "monster",
+   "name": "creatures vampire bat",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-monster-creatures-vampire-bat.png",
+   "leaf": "icons",
+   "sizeBytes": 14872,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-creatures-vampire-lord",
+   "pack": "monster",
+   "name": "creatures vampire lord",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-monster-creatures-vampire-lord.png",
+   "leaf": "icons",
+   "sizeBytes": 23663,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-creatures-wailing-ghost",
+   "pack": "monster",
+   "name": "creatures wailing ghost",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-monster-creatures-wailing-ghost.png",
+   "leaf": "icons",
+   "sizeBytes": 17805,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-creatures-werewolf",
+   "pack": "monster",
+   "name": "creatures werewolf",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-monster-creatures-werewolf.png",
+   "leaf": "icons",
+   "sizeBytes": 22824,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-creatures-zombie-ghoul",
+   "pack": "monster",
+   "name": "creatures zombie ghoul",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-monster-creatures-zombie-ghoul.png",
+   "leaf": "icons",
+   "sizeBytes": 15824,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-bone-club",
+   "pack": "monster",
+   "name": "held items bone club",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-bone-club.png",
+   "leaf": "icons",
+   "sizeBytes": 11815,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-butcher-cleaver",
+   "pack": "monster",
+   "name": "held items butcher cleaver",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-butcher-cleaver.png",
+   "leaf": "icons",
+   "sizeBytes": 13707,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-garlic-mace",
+   "pack": "monster",
+   "name": "held items garlic mace",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-garlic-mace.png",
+   "leaf": "icons",
+   "sizeBytes": 12413,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-grave-shovel",
+   "pack": "monster",
+   "name": "held items grave shovel",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-grave-shovel.png",
+   "leaf": "icons",
+   "sizeBytes": 11148,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-holy-water",
+   "pack": "monster",
+   "name": "held items holy water",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-holy-water.png",
+   "leaf": "icons",
+   "sizeBytes": 11892,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-hunter-lantern",
+   "pack": "monster",
+   "name": "held items hunter lantern",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-hunter-lantern.png",
+   "leaf": "icons",
+   "sizeBytes": 13624,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-pitchfork",
+   "pack": "monster",
+   "name": "held items pitchfork",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-pitchfork.png",
+   "leaf": "icons",
+   "sizeBytes": 11143,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-reaper-scythe",
+   "pack": "monster",
+   "name": "held items reaper scythe",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-reaper-scythe.png",
+   "leaf": "icons",
+   "sizeBytes": 10732,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-silver-axe",
+   "pack": "monster",
+   "name": "held items silver axe",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-silver-axe.png",
+   "leaf": "icons",
+   "sizeBytes": 13372,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-silver-blunderbuss",
+   "pack": "monster",
+   "name": "held items silver blunderbuss",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-silver-blunderbuss.png",
+   "leaf": "icons",
+   "sizeBytes": 14197,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-silver-dagger",
+   "pack": "monster",
+   "name": "held items silver dagger",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-silver-dagger.png",
+   "leaf": "icons",
+   "sizeBytes": 13227,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-skull-staff",
+   "pack": "monster",
+   "name": "held items skull staff",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-skull-staff.png",
+   "leaf": "icons",
+   "sizeBytes": 10559,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-stake-crossbow",
+   "pack": "monster",
+   "name": "held items stake crossbow",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-stake-crossbow.png",
+   "leaf": "icons",
+   "sizeBytes": 14117,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-torch",
+   "pack": "monster",
+   "name": "held items torch",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-torch.png",
+   "leaf": "icons",
+   "sizeBytes": 9751,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-witch-wand",
+   "pack": "monster",
+   "name": "held items witch wand",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-witch-wand.png",
+   "leaf": "icons",
+   "sizeBytes": 12101,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-held-items-wooden-stake",
+   "pack": "monster",
+   "name": "held items wooden stake",
+   "category": "icons",
+   "subCategory": "held",
+   "relativePath": "icon-monster-held-items-wooden-stake.png",
+   "leaf": "icons",
+   "sizeBytes": 10544,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-blood-barrel",
+   "pack": "monster",
+   "name": "props blood barrel",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-blood-barrel.png",
+   "leaf": "icons",
+   "sizeBytes": 8834,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-bone-pile",
+   "pack": "monster",
+   "name": "props bone pile",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-bone-pile.png",
+   "leaf": "icons",
+   "sizeBytes": 7014,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-bookshelf",
+   "pack": "monster",
+   "name": "props bookshelf",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-bookshelf.png",
+   "leaf": "icons",
+   "sizeBytes": 13578,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-brazier",
+   "pack": "monster",
+   "name": "props brazier",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-brazier.png",
+   "leaf": "icons",
+   "sizeBytes": 14425,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-candelabra",
+   "pack": "monster",
+   "name": "props candelabra",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-candelabra.png",
+   "leaf": "icons",
+   "sizeBytes": 15096,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-cobweb-arch",
+   "pack": "monster",
+   "name": "props cobweb arch",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-cobweb-arch.png",
+   "leaf": "icons",
+   "sizeBytes": 24431,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-coffin-stack",
+   "pack": "monster",
+   "name": "props coffin stack",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-coffin-stack.png",
+   "leaf": "icons",
+   "sizeBytes": 7464,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-cursed-well",
+   "pack": "monster",
+   "name": "props cursed well",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-cursed-well.png",
+   "leaf": "icons",
+   "sizeBytes": 15074,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-dungeon-crate",
+   "pack": "monster",
+   "name": "props dungeon crate",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-dungeon-crate.png",
+   "leaf": "icons",
+   "sizeBytes": 9171,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-dungeon-pillar",
+   "pack": "monster",
+   "name": "props dungeon pillar",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-dungeon-pillar.png",
+   "leaf": "icons",
+   "sizeBytes": 9571,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-dungeon-stairs",
+   "pack": "monster",
+   "name": "props dungeon stairs",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-dungeon-stairs.png",
+   "leaf": "icons",
+   "sizeBytes": 17288,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-dungeon-wall-corner",
+   "pack": "monster",
+   "name": "props dungeon wall corner",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-dungeon-wall-corner.png",
+   "leaf": "icons",
+   "sizeBytes": 11030,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-dungeon-wall",
+   "pack": "monster",
+   "name": "props dungeon wall",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-dungeon-wall.png",
+   "leaf": "icons",
+   "sizeBytes": 12724,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-funeral-urn",
+   "pack": "monster",
+   "name": "props funeral urn",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-funeral-urn.png",
+   "leaf": "icons",
+   "sizeBytes": 12462,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-gargoyle-statue",
+   "pack": "monster",
+   "name": "props gargoyle statue",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-gargoyle-statue.png",
+   "leaf": "icons",
+   "sizeBytes": 16442,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-gravestone-cross",
+   "pack": "monster",
+   "name": "props gravestone cross",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-gravestone-cross.png",
+   "leaf": "icons",
+   "sizeBytes": 16677,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-gravestone-obelisk",
+   "pack": "monster",
+   "name": "props gravestone obelisk",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-gravestone-obelisk.png",
+   "leaf": "icons",
+   "sizeBytes": 15105,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-gravestone-rounded",
+   "pack": "monster",
+   "name": "props gravestone rounded",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-gravestone-rounded.png",
+   "leaf": "icons",
+   "sizeBytes": 10646,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-jack-o-lantern",
+   "pack": "monster",
+   "name": "props jack o lantern",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-jack-o-lantern.png",
+   "leaf": "icons",
+   "sizeBytes": 7106,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-lamp-post",
+   "pack": "monster",
+   "name": "props lamp post",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-lamp-post.png",
+   "leaf": "icons",
+   "sizeBytes": 12779,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-pipe-organ",
+   "pack": "monster",
+   "name": "props pipe organ",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-pipe-organ.png",
+   "leaf": "icons",
+   "sizeBytes": 12820,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-potion-table",
+   "pack": "monster",
+   "name": "props potion table",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-potion-table.png",
+   "leaf": "icons",
+   "sizeBytes": 14568,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-pumpkin-patch",
+   "pack": "monster",
+   "name": "props pumpkin patch",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-pumpkin-patch.png",
+   "leaf": "icons",
+   "sizeBytes": 12273,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-ritual-altar",
+   "pack": "monster",
+   "name": "props ritual altar",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-ritual-altar.png",
+   "leaf": "icons",
+   "sizeBytes": 7640,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-sarcophagus",
+   "pack": "monster",
+   "name": "props sarcophagus",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-sarcophagus.png",
+   "leaf": "icons",
+   "sizeBytes": 9704,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-shackle-post",
+   "pack": "monster",
+   "name": "props shackle post",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-shackle-post.png",
+   "leaf": "icons",
+   "sizeBytes": 13990,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-skull-pile",
+   "pack": "monster",
+   "name": "props skull pile",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-skull-pile.png",
+   "leaf": "icons",
+   "sizeBytes": 12144,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-stocks",
+   "pack": "monster",
+   "name": "props stocks",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-stocks.png",
+   "leaf": "icons",
+   "sizeBytes": 16530,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-torture-rack",
+   "pack": "monster",
+   "name": "props torture rack",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-torture-rack.png",
+   "leaf": "icons",
+   "sizeBytes": 9033,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-props-vampire-throne",
+   "pack": "monster",
+   "name": "props vampire throne",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-monster-props-vampire-throne.png",
+   "leaf": "icons",
+   "sizeBytes": 13621,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-vehicles-bone-cart",
+   "pack": "monster",
+   "name": "vehicles bone cart",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-monster-vehicles-bone-cart.png",
+   "leaf": "icons",
+   "sizeBytes": 18325,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-vehicles-coffin-wagon",
+   "pack": "monster",
+   "name": "vehicles coffin wagon",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-monster-vehicles-coffin-wagon.png",
+   "leaf": "icons",
+   "sizeBytes": 17713,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-vehicles-ghost-ship",
+   "pack": "monster",
+   "name": "vehicles ghost ship",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-monster-vehicles-ghost-ship.png",
+   "leaf": "icons",
+   "sizeBytes": 23060,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-vehicles-hearse-carriage",
+   "pack": "monster",
+   "name": "vehicles hearse carriage",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-monster-vehicles-hearse-carriage.png",
+   "leaf": "icons",
+   "sizeBytes": 23708,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-vehicles-spider-carriage",
+   "pack": "monster",
+   "name": "vehicles spider carriage",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-monster-vehicles-spider-carriage.png",
+   "leaf": "icons",
+   "sizeBytes": 19929,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-monster-vehicles-witch-broom",
+   "pack": "monster",
+   "name": "vehicles witch broom",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-monster-vehicles-witch-broom.png",
+   "leaf": "icons",
+   "sizeBytes": 14185,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-danger-square-default",
+   "pack": "monster",
+   "name": "buttons danger square default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-danger-square-default.png",
+   "leaf": "ui",
+   "sizeBytes": 591,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-danger-square-disabled",
+   "pack": "monster",
+   "name": "buttons danger square disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-danger-square-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 547,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-danger-square-hover",
+   "pack": "monster",
+   "name": "buttons danger square hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-danger-square-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 585,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-danger-square-pressed",
+   "pack": "monster",
+   "name": "buttons danger square pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-danger-square-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 532,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-danger-wide-default",
+   "pack": "monster",
+   "name": "buttons danger wide default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-danger-wide-default.png",
+   "leaf": "ui",
+   "sizeBytes": 1855,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-danger-wide-disabled",
+   "pack": "monster",
+   "name": "buttons danger wide disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-danger-wide-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 1741,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-danger-wide-hover",
+   "pack": "monster",
+   "name": "buttons danger wide hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-danger-wide-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 1940,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-danger-wide-pressed",
+   "pack": "monster",
+   "name": "buttons danger wide pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-danger-wide-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 1879,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-primary-square-default",
+   "pack": "monster",
+   "name": "buttons primary square default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-primary-square-default.png",
+   "leaf": "ui",
+   "sizeBytes": 614,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-primary-square-disabled",
+   "pack": "monster",
+   "name": "buttons primary square disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-primary-square-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 460,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-primary-square-hover",
+   "pack": "monster",
+   "name": "buttons primary square hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-primary-square-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 581,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-primary-square-pressed",
+   "pack": "monster",
+   "name": "buttons primary square pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-primary-square-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 574,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-primary-wide-default",
+   "pack": "monster",
+   "name": "buttons primary wide default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-primary-wide-default.png",
+   "leaf": "ui",
+   "sizeBytes": 2027,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-primary-wide-disabled",
+   "pack": "monster",
+   "name": "buttons primary wide disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-primary-wide-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 1623,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-primary-wide-hover",
+   "pack": "monster",
+   "name": "buttons primary wide hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-primary-wide-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 1867,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-primary-wide-pressed",
+   "pack": "monster",
+   "name": "buttons primary wide pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-primary-wide-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 1847,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-secondary-square-default",
+   "pack": "monster",
+   "name": "buttons secondary square default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-secondary-square-default.png",
+   "leaf": "ui",
+   "sizeBytes": 563,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-secondary-square-disabled",
+   "pack": "monster",
+   "name": "buttons secondary square disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-secondary-square-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 558,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-secondary-square-hover",
+   "pack": "monster",
+   "name": "buttons secondary square hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-secondary-square-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 574,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-secondary-square-pressed",
+   "pack": "monster",
+   "name": "buttons secondary square pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-secondary-square-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 601,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-secondary-wide-default",
+   "pack": "monster",
+   "name": "buttons secondary wide default",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-secondary-wide-default.png",
+   "leaf": "ui",
+   "sizeBytes": 1772,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-secondary-wide-disabled",
+   "pack": "monster",
+   "name": "buttons secondary wide disabled",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-secondary-wide-disabled.png",
+   "leaf": "ui",
+   "sizeBytes": 1690,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-secondary-wide-hover",
+   "pack": "monster",
+   "name": "buttons secondary wide hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-secondary-wide-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 1852,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-secondary-wide-pressed",
+   "pack": "monster",
+   "name": "buttons secondary wide pressed",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-secondary-wide-pressed.png",
+   "leaf": "ui",
+   "sizeBytes": 1847,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-tab-active",
+   "pack": "monster",
+   "name": "buttons tab active",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-tab-active.png",
+   "leaf": "ui",
+   "sizeBytes": 665,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-tab-hover",
+   "pack": "monster",
+   "name": "buttons tab hover",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-tab-hover.png",
+   "leaf": "ui",
+   "sizeBytes": 724,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-buttons-tab-inactive",
+   "pack": "monster",
+   "name": "buttons tab inactive",
+   "category": "ui",
+   "subCategory": "buttons",
+   "relativePath": "ui-monster-buttons-tab-inactive.png",
+   "leaf": "ui",
+   "sizeBytes": 651,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-checkbox-off",
+   "pack": "monster",
+   "name": "general checkbox off",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-checkbox-off.png",
+   "leaf": "ui",
+   "sizeBytes": 370,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-checkbox-on",
+   "pack": "monster",
+   "name": "general checkbox on",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-checkbox-on.png",
+   "leaf": "ui",
+   "sizeBytes": 400,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-dialog",
+   "pack": "monster",
+   "name": "general dialog",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-dialog.png",
+   "leaf": "ui",
+   "sizeBytes": 1913,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-header-banner",
+   "pack": "monster",
+   "name": "general header banner",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-header-banner.png",
+   "leaf": "ui",
+   "sizeBytes": 1745,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-icon-arrow",
+   "pack": "monster",
+   "name": "general icon arrow",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-icon-arrow.png",
+   "leaf": "ui",
+   "sizeBytes": 288,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-icon-check",
+   "pack": "monster",
+   "name": "general icon check",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-icon-check.png",
+   "leaf": "ui",
+   "sizeBytes": 294,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-icon-close",
+   "pack": "monster",
+   "name": "general icon close",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-icon-close.png",
+   "leaf": "ui",
+   "sizeBytes": 276,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-icon-plus",
+   "pack": "monster",
+   "name": "general icon plus",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-icon-plus.png",
+   "leaf": "ui",
+   "sizeBytes": 267,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-panel-inset",
+   "pack": "monster",
+   "name": "general panel inset",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-panel-inset.png",
+   "leaf": "ui",
+   "sizeBytes": 1498,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-panel",
+   "pack": "monster",
+   "name": "general panel",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-panel.png",
+   "leaf": "ui",
+   "sizeBytes": 1853,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-progress-fill-energy",
+   "pack": "monster",
+   "name": "general progress fill energy",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-progress-fill-energy.png",
+   "leaf": "ui",
+   "sizeBytes": 141,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-progress-fill-health",
+   "pack": "monster",
+   "name": "general progress fill health",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-progress-fill-health.png",
+   "leaf": "ui",
+   "sizeBytes": 142,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-progress-fill-xp",
+   "pack": "monster",
+   "name": "general progress fill xp",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-progress-fill-xp.png",
+   "leaf": "ui",
+   "sizeBytes": 143,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-progress-frame",
+   "pack": "monster",
+   "name": "general progress frame",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-progress-frame.png",
+   "leaf": "ui",
+   "sizeBytes": 688,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-slot-empty",
+   "pack": "monster",
+   "name": "general slot empty",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-slot-empty.png",
+   "leaf": "ui",
+   "sizeBytes": 503,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-slot-filled",
+   "pack": "monster",
+   "name": "general slot filled",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-slot-filled.png",
+   "leaf": "ui",
+   "sizeBytes": 388,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-slot-locked",
+   "pack": "monster",
+   "name": "general slot locked",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-slot-locked.png",
+   "leaf": "ui",
+   "sizeBytes": 536,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-slot-selected",
+   "pack": "monster",
+   "name": "general slot selected",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-slot-selected.png",
+   "leaf": "ui",
+   "sizeBytes": 495,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-toggle-off",
+   "pack": "monster",
+   "name": "general toggle off",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-toggle-off.png",
+   "leaf": "ui",
+   "sizeBytes": 279,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-toggle-on",
+   "pack": "monster",
+   "name": "general toggle on",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-toggle-on.png",
+   "leaf": "ui",
+   "sizeBytes": 277,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-general-tooltip",
+   "pack": "monster",
+   "name": "general tooltip",
+   "category": "ui",
+   "subCategory": "general",
+   "relativePath": "ui-monster-general-tooltip.png",
+   "leaf": "ui",
+   "sizeBytes": 1385,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-rarities-rarity-common",
+   "pack": "monster",
+   "name": "rarities rarity common",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-monster-rarities-rarity-common.png",
+   "leaf": "ui",
+   "sizeBytes": 475,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-rarities-rarity-epic",
+   "pack": "monster",
+   "name": "rarities rarity epic",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-monster-rarities-rarity-epic.png",
+   "leaf": "ui",
+   "sizeBytes": 524,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-rarities-rarity-legendary",
+   "pack": "monster",
+   "name": "rarities rarity legendary",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-monster-rarities-rarity-legendary.png",
+   "leaf": "ui",
+   "sizeBytes": 508,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-rarities-rarity-rare",
+   "pack": "monster",
+   "name": "rarities rarity rare",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-monster-rarities-rarity-rare.png",
+   "leaf": "ui",
+   "sizeBytes": 548,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "ui-monster-rarities-rarity-uncommon",
+   "pack": "monster",
+   "name": "rarities rarity uncommon",
+   "category": "ui",
+   "subCategory": "rarities",
+   "relativePath": "ui-monster-rarities-rarity-uncommon.png",
+   "leaf": "ui",
+   "sizeBytes": 594,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  }
+ ],
+ "pfx": {
+  "pack": "monster",
+  "effects": [
+   "rvx-monster-bat-burst",
+   "rvx-monster-bat-swarm",
+   "rvx-monster-blood-moon-aura",
+   "rvx-monster-blood-splat",
+   "rvx-monster-blunderbuss-blast",
+   "rvx-monster-bolt-twang",
+   "rvx-monster-broom-trail",
+   "rvx-monster-candle-flame",
+   "rvx-monster-claw-slash",
+   "rvx-monster-curse-cloud",
+   "rvx-monster-dirt-toss",
+   "rvx-monster-ghost-lantern",
+   "rvx-monster-ghost-smoke",
+   "rvx-monster-ghost-wake",
+   "rvx-monster-ghost-wisps",
+   "rvx-monster-grave-mist",
+   "rvx-monster-holy-burst",
+   "rvx-monster-howl",
+   "rvx-monster-reaper-slash",
+   "rvx-monster-rot-poof",
+   "rvx-monster-screech",
+   "rvx-monster-sewer-fume",
+   "rvx-monster-silver-slash",
+   "rvx-monster-soul-burst",
+   "rvx-monster-spore-glow",
+   "rvx-monster-stone-crumble",
+   "rvx-monster-torch-flame",
+   "rvx-monster-venom-spit",
+   "rvx-monster-web-burst",
+   "rvx-monster-witch-brew",
+   "rvx-monster-witch-smoke"
+  ]
+ }
+}

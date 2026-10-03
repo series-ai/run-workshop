@@ -1,0 +1,187 @@
+{
+ "version": 1,
+ "about": "Art direction limits for world assets, measured from the Pirate Nation files (docs/art-direction.md). Per asset: triangle budgets (rule F1) and minimum diagonal share (F2) by scale class; a loose dark-area cap and saturation floor (C2) set near the low end of PN's own models (PN grey stone fences score ~0.10, haunted headstones 0.00), so grey stone may stay grey. Per pack: the median saturation and the mean dark area must match the PN theme, so a pack as a whole keeps the PN look. Texture density: 1 texel per world unit (S1).",
+ "unitsPerTexel": [
+  0.9,
+  1.1
+ ],
+ "darkShareMax": 0.25,
+ "saturationFloor": {
+  "fantasy": 0.12,
+  "space": 0.08,
+  "monster": 0.0,
+  "apocalypse": 0.1
+ },
+ "pack": {
+  "medianSaturation": {
+   "fantasy": 0.5,
+   "space": 0.3,
+   "monster": 0.3,
+   "apocalypse": 0.4
+  },
+  "meanDarkMax": 0.08
+ },
+ "budgets": {
+  "building": {
+   "triangles": [
+    300,
+    6000
+   ],
+   "diagonalMin": 0.12
+  },
+  "tower": {
+   "triangles": [
+    200,
+    6000
+   ],
+   "diagonalMin": 0.08
+  },
+  "wall": {
+   "triangles": [
+    100,
+    5000
+   ],
+   "diagonalMin": 0
+  },
+  "vehicle-large": {
+   "triangles": [
+    300,
+    5000
+   ],
+   "diagonalMin": 0.12
+  },
+  "vehicle": {
+   "triangles": [
+    100,
+    4000
+   ],
+   "diagonalMin": 0.05
+  },
+  "vehicle-small": {
+   "triangles": [
+    60,
+    2500
+   ],
+   "diagonalMin": 0.05
+  },
+  "creature-boss": {
+   "triangles": [
+    300,
+    5000
+   ],
+   "diagonalMin": 0.15
+  },
+  "creature-large": {
+   "triangles": [
+    100,
+    4000
+   ],
+   "diagonalMin": 0.08
+  },
+  "humanoid": {
+   "triangles": [
+    60,
+    2500
+   ],
+   "diagonalMin": 0
+  },
+  "creature-small": {
+   "triangles": [
+    12,
+    1500
+   ],
+   "diagonalMin": 0
+  },
+  "tree": {
+   "triangles": [
+    40,
+    1500
+   ],
+   "diagonalMin": 0.15
+  },
+  "terrain": {
+   "triangles": [
+    12,
+    3500
+   ],
+   "diagonalMin": 0
+  },
+  "wreck": {
+   "triangles": [
+    60,
+    3000
+   ],
+   "diagonalMin": 0
+  },
+  "prop": {
+   "triangles": [
+    12,
+    2000
+   ],
+   "diagonalMin": 0
+  },
+  "person-size": {
+   "triangles": [
+    12,
+    2000
+   ],
+   "diagonalMin": 0
+  },
+  "coffin": {
+   "triangles": [
+    12,
+    1500
+   ],
+   "diagonalMin": 0
+  },
+  "door": {
+   "triangles": [
+    12,
+    2000
+   ],
+   "diagonalMin": 0
+  },
+  "vehicle-door": {
+   "triangles": [
+    12,
+    2000
+   ],
+   "diagonalMin": 0
+  },
+  "lamp": {
+   "triangles": [
+    12,
+    1500
+   ],
+   "diagonalMin": 0
+  },
+  "tall-prop": {
+   "triangles": [
+    12,
+    2500
+   ],
+   "diagonalMin": 0
+  },
+  "fence": {
+   "triangles": [
+    12,
+    800
+   ],
+   "diagonalMin": 0
+  },
+  "kit": {
+   "triangles": [
+    12,
+    1500
+   ],
+   "diagonalMin": 0
+  },
+  "tile": {
+   "triangles": [
+    2,
+    800
+   ],
+   "diagonalMin": 0
+  }
+ }
+}

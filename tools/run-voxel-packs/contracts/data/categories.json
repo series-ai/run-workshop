@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "unitsPerVoxel": { "world": 1, "avatar": 0.01 },
+  "categories": {
+    "props":            { "space": "world",  "leaf": "world",      "largest": [6, 128],  "origin": "base" },
+    "animated-props":   { "space": "world",  "leaf": "world",      "largest": [6, 128],  "origin": "base" },
+    "buildings":        { "space": "world",  "leaf": "world",      "largest": [64, 224], "origin": "base" },
+    "terrain-nature":   { "space": "world",  "leaf": "world",      "largest": [8, 208],  "origin": "base" },
+    "creatures":        { "space": "world",  "leaf": "world",      "largest": [5, 280],  "origin": "base" },
+    "vehicles":         { "space": "world",  "leaf": "world",      "largest": [40, 260], "origin": "base" },
+    "held-items":       { "space": "avatar", "leaf": "world",      "largest": [6, 60],   "origin": "grip" },
+    "characters-skins": { "space": "avatar", "leaf": "characters", "largest": [55, 90],  "origin": "feet" },
+    "avatar":           { "space": "avatar", "leaf": "characters", "largest": [1, 90],   "origin": "rig" }
+  }
+}
