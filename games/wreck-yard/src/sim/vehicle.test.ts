@@ -15,7 +15,7 @@ describe("vehicle driving", () => {
 
     const mountInput: YardInput = {
       ...NEUTRAL_INPUT,
-      secondary: true,
+      use: true,
     };
     state = sim.step([mountInput]);
     expect(state.players[0]?.ridingVehicle).toBe(true);
@@ -45,7 +45,7 @@ describe("vehicle driving", () => {
     for (let i = 0; i < 20; i++) state = sim.step([NEUTRAL_INPUT]);
     const car = state.world.bodies.find((b) => b.id === 'vehicle-chassis')!;
     patchPlayer(sim, { x: car.x + 1.2, y: car.y + .5, z: car.z });
-    state = sim.step([{ ...NEUTRAL_INPUT, secondary: true }]);
+    state = sim.step([{ ...NEUTRAL_INPUT, use: true }]);
     expect(state.players[0]!.ridingVehicle).toBe(true);
     let airborne = false;
     let landed = false;

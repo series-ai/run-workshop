@@ -154,6 +154,9 @@ export class MatchController {
   private errorDetails: MatchErrorDetails | null = null;
   private roomCode: string | null = null;
   private lastPumpMs: number | null = null;
+  /** Solo only: the pause menu holds the yard still (src/game/playGate.ts soloPaused). */
+  private paused = false;
+  private solo = false;
   private starting = false;
   private startGeneration = 0;
   private readonly listeners = new Set<() => void>();
@@ -234,6 +237,8 @@ export class MatchController {
     this.render = null;
     this.roomCode = null;
     this.lastPumpMs = null;
+    this.paused = false;
+    this.solo = request.kind === "solo";
     this.error = null;
     this.errorDetails = null;
     this.status = "connecting";
@@ -285,9 +290,22 @@ export class MatchController {
     }
   }
 
+  /**
+   * Holds a solo match still, or lets it run again. A room cannot pause for one
+   * player, so this has no effect there. start() and stop() clear it.
+   */
+  setPaused(paused: boolean): void {
+    this.paused = paused && this.solo;
+  }
+
+  isPaused(): boolean {
+    return this.paused;
+  }
+
   /** Advance by wall clock. Returns true when at least one frame was produced. */
   pump(nowMs: number): boolean {
-    if (this.runner.status === "stopped") {
+    if (this.runner.status === "stopped" || this.paused) {
+      // No clock while paused, so the first pump after resume does not catch up.
       this.lastPumpMs = null;
       return false;
     }
@@ -330,6 +348,8 @@ export class MatchController {
     this.render = null;
     this.roomCode = null;
     this.lastPumpMs = null;
+    this.paused = false;
+    this.solo = false;
     this.status = "idle";
     this.error = null;
     this.errorDetails = null;

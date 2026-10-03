@@ -53,6 +53,37 @@ describe('MatchController', () => {
     }
   });
 
+  it('holds a paused solo match still, and resumes with no burst of frames', async () => {
+    const controller = new MatchController(deps());
+    await controller.start({ kind: 'solo' });
+    try {
+      controller.setInput(NEUTRAL_INPUT);
+      for (let i = 0; i <= 10; i += 1) controller.pump(i * 33.4);
+      const before = controller.snapshot().render!.frame;
+      controller.setPaused(true);
+      expect(controller.isPaused()).toBe(true);
+      for (let i = 11; i <= 100; i += 1) controller.pump(i * 33.4);
+      expect(controller.snapshot().render!.frame).toBe(before);
+      controller.setPaused(false);
+      // Three seconds passed while paused; the first pump after resume must not catch up.
+      controller.pump(101 * 33.4);
+      controller.pump(102 * 33.4);
+      expect(controller.snapshot().render!.frame - before).toBeLessThanOrEqual(1);
+    } finally { controller.stop(); }
+  });
+
+  it('clears the pause on a new start, and never pauses a room', async () => {
+    const controller = new MatchController(deps({ joinRoomTransport: () => new Promise(() => { /* never connects */ }) }));
+    await controller.start({ kind: 'solo' });
+    controller.setPaused(true);
+    await controller.start({ kind: 'solo' });
+    expect(controller.isPaused()).toBe(false);
+    void controller.start({ kind: 'join', code: 'ROOM' });
+    controller.setPaused(true);
+    expect(controller.isPaused()).toBe(false);
+    controller.stop();
+  });
+
   it('surfaces a rejected transport as an error with the message', async () => {
     const controller = new MatchController(deps({ createRoomTransport: async () => { throw new Error('room rejected'); } }));
     await controller.start({ kind: 'create' });

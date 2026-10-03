@@ -15,7 +15,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto(`${base}/?record`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${base}/?record&capture=off`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => (window.__WRECK_YARD_CONTROLLER__?.getRender()?.frame ?? 0) > 30, null, { timeout: 60000 });
   const input = () => page.evaluate(() => window.__WRECK_YARD_CONTROLLER__.input);
   const frames = (n) => page.waitForTimeout(n * 34);

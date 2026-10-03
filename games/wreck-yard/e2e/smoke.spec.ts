@@ -4,7 +4,7 @@ test('solo yard loads its bodies with no page errors', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(String(error)));
 
-  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.goto('/?capture=off', { waitUntil: 'networkidle' });
   await expect(page.getByText('Wreck Yard')).toBeVisible();
   await expect(page.locator('canvas')).toBeVisible();
   await expect.poll(
@@ -27,7 +27,7 @@ test('solo yard loads its bodies with no page errors', async ({ page }) => {
 });
 
 test('surfaces server error modal with helpful details and fallback to solo mode', async ({ page }) => {
-  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.goto('/?capture=off', { waitUntil: 'networkidle' });
   await expect(page.getByText('Wreck Yard')).toBeVisible();
 
   // Leave active solo session

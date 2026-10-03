@@ -22,7 +22,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 800, height: 500 } });
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto(`${base}/?quality=low`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${base}/?quality=low&capture=off`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => (window.__WRECK_YARD_CONTROLLER__?.getRender()?.frame ?? 0) > 30, null, { timeout: 60000 });
   const player = () => page.evaluate(() => { const r = window.__WRECK_YARD_CONTROLLER__.getRender(); return r.players.find((p) => p.slot === r.localSlot).position; });
   // Depth of the player center inside the target footprint grown by the capsule radius (<= 0 is outside).

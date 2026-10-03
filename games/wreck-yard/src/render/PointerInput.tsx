@@ -10,6 +10,13 @@ import type { YardRender } from './presentation';
 import { bodyGeometryChanged, wrapYaw } from './inputPresentation';
 import { CHASE_FOLLOW_RATE, chaseCameraPose, recenterChaseView } from './chaseCamera';
 import { isGameKey, isThrusterHeld, toolForKey, type PlayTool, type UiTool } from './keyBindings';
+import { engageCall, inputLive } from '../game/playGate';
+import type { PlayGateApi } from '../ui/usePlayGate';
+import { applyLook, BUTTONS_UP, ignoreUntilRelease, pausedInput, pressButton } from './pointerMapping';
+
+/** Radians per pixel: captured mouse look, and drag-to-look. */
+const LOOK_SENSITIVITY = 0.0022;
+const DRAG_SENSITIVITY = 0.003;
 
 function toSimTool(tool: UiTool): Tool {
   switch (tool) {
@@ -24,9 +31,11 @@ function toSimTool(tool: UiTool): Tool {
 }
 
 /**
- * Runs first in the scene each frame: captures keyboard & mouse look in first person,
- * drives the first-person camera or orbit camera, feeds inputs to the runner,
- * pumps the simulation, and refreshes the shared render ref.
+ * Runs first in the scene each frame: reads keyboard and mouse look in first
+ * person, drives the first-person camera or orbit camera, feeds inputs to the
+ * runner, pumps the simulation, and refreshes the shared render ref. Mouse
+ * capture belongs to the play gate (src/ui/usePlayGate.ts): while the host owns
+ * the lock, look and buttons come from its pointer stream, not DOM events.
  */
 export function PointerInput({
   controller,
@@ -34,20 +43,25 @@ export function PointerInput({
   onToolChange,
   renderRef,
   onBodiesChange,
+  gate,
 }: {
   controller: MatchController;
   tool: UiTool;
   onToolChange?: (tool: UiTool) => void;
   renderRef: MutableRefObject<YardRender | null>;
   onBodiesChange: (bodies: readonly YardBody[]) => void;
+  gate: PlayGateApi;
 }) {
+  const gateRef = useRef(gate);
+  gateRef.current = gate;
   const { camera, gl } = useThree();
   const lastBodies = useRef<readonly YardBody[] | null>(null);
 
   const yaw = useRef(0);
   const pitch = useRef(0);
-  const pressed = useRef(false);
-  const secondary = useRef(false);
+  const buttons = useRef(BUTTONS_UP);
+  /** E or F held: use (buttons, the buggy). The right mouse button is the punt. */
+  const keyUse = useRef(false);
   const lastBuggyYaw = useRef<number | null>(null);
   /** performance.now() of the last mouse look, so the chase camera does not fight the player. */
   const lastLookMs = useRef(-Infinity);
@@ -72,14 +86,34 @@ export function PointerInput({
 
   useEffect(() => () => controls.dispose(), [controls]);
 
+  const { setOrbit } = gate;
   useEffect(() => {
     controls.enabled = tool === 'orbit';
+    // Orbit needs a free cursor; the gate releases the capture without the pause menu.
+    setOrbit(tool === 'orbit');
     if (tool === 'orbit') {
-      if (document.pointerLockElement === gl.domElement) document.exitPointerLock();
       camera.position.set(CAMERA_BASE[0], CAMERA_BASE[1] + 2, CAMERA_BASE[2] + 4);
       controls.update();
     }
-  }, [camera, controls, gl, tool]);
+  }, [camera, controls, tool, setOrbit]);
+
+  // While the host owns the lock, look and buttons arrive here.
+  const { port, onClearInput } = gate;
+  useEffect(() => {
+    if (!port.onPointer) return undefined;
+    return port.onPointer((input) => {
+      const state = gateRef.current.state;
+      if (state.view !== 'playing' || state.look !== 'capture') return;
+      if (input.type === 'move') {
+        if (input.movementX !== 0 || input.movementY !== 0) lastLookMs.current = performance.now();
+        const view = applyLook({ yaw: yaw.current, pitch: pitch.current }, input.movementX, input.movementY, LOOK_SENSITIVITY);
+        yaw.current = view.yaw;
+        pitch.current = view.pitch;
+      } else {
+        buttons.current = pressButton(buttons.current, input.button, input.pressed);
+      }
+    });
+  }, [port]);
 
   // Pointer lock & Mouse / Keyboard handlers
   useEffect(() => {
@@ -113,14 +147,16 @@ export function PointerInput({
         __SIMULATE_INPUT__?: (action: {
           pressed?: boolean;
           secondary?: boolean;
+          use?: boolean;
           tool?: UiTool;
           moveX?: number;
           moveZ?: number;
           jetpack?: boolean;
         }) => void;
       }).__SIMULATE_INPUT__ = (action) => {
-        if (action.pressed !== undefined) pressed.current = action.pressed;
-        if (action.secondary !== undefined) secondary.current = action.secondary;
+        if (action.pressed !== undefined) buttons.current = pressButton(buttons.current, 0, action.pressed);
+        if (action.secondary !== undefined) buttons.current = pressButton(buttons.current, 2, action.secondary);
+        if (action.use !== undefined) keyUse.current = action.use;
         if (action.tool !== undefined) onToolChange?.(action.tool);
         if (action.jetpack !== undefined) {
           if (action.jetpack) keys.current.add('Space');
@@ -142,38 +178,42 @@ export function PointerInput({
     }
 
     const onPointerDown = (event: MouseEvent) => {
-      if (tool !== 'orbit') {
-        if (document.pointerLockElement !== dom) {
-          void dom.requestPointerLock?.()?.catch(() => { /* Drag look remains available. */ });
-        }
+      const current = gateRef.current;
+      if (tool !== 'orbit' && current.state.view === 'free-cursor' && engageCall(current.state) !== 'none') {
+        // "Click to look" after orbit: this click captures; it must not also fire the tool.
+        buttons.current = ignoreUntilRelease(buttons.current, event.button);
+        void current.engage();
+        return;
+      }
+      if (tool !== 'orbit' && current.state.look === 'drag') {
         isDragging = true;
         lastX = event.clientX;
         lastY = event.clientY;
       }
-      if (event.button === 0) pressed.current = true;
-      if (event.button === 2) secondary.current = true;
+      buttons.current = pressButton(buttons.current, event.button, true);
     };
 
     const onPointerUp = (event: MouseEvent) => {
       isDragging = false;
-      if (event.button === 0) pressed.current = false;
-      if (event.button === 2) secondary.current = false;
+      buttons.current = pressButton(buttons.current, event.button, false);
     };
 
     const onMouseMove = (event: MouseEvent) => {
       if (tool === 'orbit') return;
       if (document.pointerLockElement === dom) {
         if (event.movementX !== 0 || event.movementY !== 0) lastLookMs.current = performance.now();
-        yaw.current -= event.movementX * 0.0022;
-        pitch.current = THREE.MathUtils.clamp(pitch.current - event.movementY * 0.0022, -1.45, 1.45);
+        const view = applyLook({ yaw: yaw.current, pitch: pitch.current }, event.movementX, event.movementY, LOOK_SENSITIVITY);
+        yaw.current = view.yaw;
+        pitch.current = view.pitch;
       } else if (isDragging) {
         const dx = event.movementX || (event.clientX - lastX);
         const dy = event.movementY || (event.clientY - lastY);
         lastX = event.clientX;
         lastY = event.clientY;
         if (dx !== 0 || dy !== 0) lastLookMs.current = performance.now();
-        yaw.current -= dx * 0.003;
-        pitch.current = THREE.MathUtils.clamp(pitch.current - dy * 0.003, -1.45, 1.45);
+        const view = applyLook({ yaw: yaw.current, pitch: pitch.current }, dx, dy, DRAG_SENSITIVITY);
+        yaw.current = view.yaw;
+        pitch.current = view.pitch;
       }
     };
 
@@ -187,9 +227,10 @@ export function PointerInput({
       if (isGameKey(event.code)) event.preventDefault();
       keys.current.add(event.code);
       if (event.code === 'KeyE' || event.code === 'KeyF') {
-        secondary.current = true;
+        keyUse.current = true;
       }
-      if (event.repeat) return;
+      // Behind the gate or the pause menu the tool does not change (no "resume with orbit on").
+      if (event.repeat || !inputLive(gateRef.current.state)) return;
       const nextTool = toolForKey(event.code, tool, lastPlayTool.current);
       if (nextTool) onToolChange?.(nextTool);
     };
@@ -197,16 +238,17 @@ export function PointerInput({
     const onKeyUp = (event: KeyboardEvent) => {
       keys.current.delete(event.code);
       if (event.code === 'KeyE' || event.code === 'KeyF') {
-        secondary.current = false;
+        keyUse.current = false;
       }
     };
 
     const clearInput = () => {
       keys.current.clear();
-      pressed.current = false;
-      secondary.current = false;
+      buttons.current = BUTTONS_UP;
+      keyUse.current = false;
       isDragging = false;
     };
+    const stopClear = onClearInput(clearInput);
     const onVisibility = () => { if (document.hidden) clearInput(); };
     dom.addEventListener('mousedown', onPointerDown);
     window.addEventListener('blur', clearInput);
@@ -218,6 +260,7 @@ export function PointerInput({
     window.addEventListener('keyup', onKeyUp);
 
     return () => {
+      stopClear();
       dom.removeEventListener('mousedown', onPointerDown);
       window.removeEventListener('blur', clearInput);
       document.removeEventListener('visibilitychange', onVisibility);
@@ -231,7 +274,7 @@ export function PointerInput({
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [gl, tool, onToolChange]);
+  }, [gl, tool, onToolChange, onClearInput]);
 
   const euler = useMemo(() => new THREE.Euler(0, 0, 0, 'YXZ'), []);
   const buggyQuat = useMemo(() => new THREE.Quaternion(), []);
@@ -326,10 +369,11 @@ export function PointerInput({
                   (keys.current.has('KeyS') || keys.current.has('ArrowDown') ? 1 : 0);
     const jetpack = isThrusterHeld(keys.current);
 
-    const input: YardInput = {
+    const playInput: YardInput = {
       tool: toSimTool(tool),
-      pressed: tool !== 'orbit' && Boolean(pressed.current),
-      secondary: tool !== 'orbit' && Boolean(secondary.current),
+      pressed: tool !== 'orbit' && buttons.current.primary,
+      secondary: tool !== 'orbit' && buttons.current.punt,
+      use: keyUse.current,
       jetpack: tool !== 'orbit' && jetpack,
       moveX: tool !== 'orbit' ? moveX : 0,
       moveZ: tool !== 'orbit' ? moveZ : 0,
@@ -339,6 +383,8 @@ export function PointerInput({
       dx: 0, dy: 0, dz: 0,
     };
 
+    // Behind the gate or the pause menu: keep the view and tool, stop the rest.
+    const input = inputLive(gateRef.current.state) ? playInput : pausedInput(playInput);
     controller.setInput(input);
     controller.pump(performance.now());
     const nextRender = controller.getRender();

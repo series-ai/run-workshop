@@ -70,7 +70,7 @@ describe('state codec', () => {
     for (let i = 0; i < 20; i++) sim.step([NEUTRAL_INPUT]);
     const car = sim.state.world.bodies.find((b) => b.id === 'vehicle-chassis')!;
     patchPlayer(sim, { x: car.x + 1.2, y: car.y + .5, z: car.z });
-    sim.step([{ ...NEUTRAL_INPUT, secondary: true }]);
+    sim.step([{ ...NEUTRAL_INPUT, use: true }]);
     expect(sim.state.players[0]!.ridingVehicle).toBe(true);
     for (let i = 0; i < 15; i++) sim.step([{ ...NEUTRAL_INPUT, moveZ: 1 }]);
     const save = sim.save();

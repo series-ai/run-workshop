@@ -28,7 +28,7 @@ const standAt = (sim: YardSim, x: number, z: number): void => {
 const pressWithE = (sim: YardSim, id: ButtonId): YardState => {
   const button = BUTTONS.find((entry) => entry.id === id)!;
   standAt(sim, button.base[0] + 1.2, button.base[2]);
-  sim.step([{ ...NEUTRAL_INPUT, secondary: true }]);
+  sim.step([{ ...NEUTRAL_INPUT, use: true }]);
   return sim.step([NEUTRAL_INPUT]);
 };
 const drums = (state: YardState) => state.bodies.filter((body) => body.id.startsWith(FUEL_DRUM.idPrefix));

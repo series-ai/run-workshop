@@ -2,12 +2,13 @@ import './deterministicMath';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import RundotAPI from '@series-inc/rundot-game-sdk/api';
-import App from './App';
+import App, { type CaptureSurface } from './App';
 
 async function boot(): Promise<void> {
   const rootElement = document.getElementById('root');
   if (!rootElement) throw new Error('Root element not found');
 
+  let sdkReady = false;
   try {
     RundotAPI.preloader.showLoadScreen();
     // Must complete before any other SDK call. Bounded so a hung init can't
@@ -18,6 +19,7 @@ async function boot(): Promise<void> {
         setTimeout(() => reject(new Error('RUN SDK init timed out')), 5000),
       ),
     ]);
+    sdkReady = true;
   } catch (error) {
     // The playground is usable standalone in a plain browser, so a failed SDK
     // init (no sandbox session / signed-out) is not fatal.
@@ -31,9 +33,17 @@ async function boot(): Promise<void> {
     // produce an unhandled rejection.
   }
 
+  // The playground and mock hosts have a System API that does nothing; the
+  // capture port then uses the browser's own fullscreen (src/game/capturePort.ts).
+  const capture: CaptureSurface = {
+    sdkReady,
+    isMock: sdkReady && RundotAPI.isMock(),
+    system: sdkReady ? RundotAPI.system : null,
+  };
+
   createRoot(rootElement).render(
     <StrictMode>
-      <App />
+      <App capture={capture} />
     </StrictMode>,
   );
 }

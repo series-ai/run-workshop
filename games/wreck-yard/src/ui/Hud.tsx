@@ -5,6 +5,8 @@ import { TOOL_KEY_LABELS, type UiTool } from '../render/keyBindings';
 import type { RenderQuality } from '../render/renderQuality';
 import { withinBuggyMountRange } from '../sim/constants';
 import { buttonWithinReach } from '../sim/contraptions';
+import { canCapture, cursorNeededNow, fullscreenToggleCall } from '../game/playGate';
+import type { PlayGateApi } from './usePlayGate';
 
 const TOOL_NAMES: Readonly<Record<UiTool, string>> = { hand: 'Gravity Gun', torch: 'Plasma Torch', orbit: 'Orbit' };
 const FUEL_SEGMENTS = 14;
@@ -49,7 +51,7 @@ function Reticle({ tool, grabbing }: { tool: UiTool; grabbing: boolean }) {
   );
 }
 
-export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onStop, onRetry }: {
+export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onStop, onRetry, gate }: {
   quality: RenderQuality;
   onQuality: (quality: RenderQuality) => void;
   snapshot: MatchSnapshot;
@@ -59,6 +61,7 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
   onStop: () => void;
   /** Re-runs the last requested action after a terminal error. */
   onRetry: () => void;
+  gate: PlayGateApi;
 }) {
   const [code, setCode] = useState('');
   const render = snapshot.render;
@@ -70,13 +73,19 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
   const buggyPose = render?.poses?.get('vehicle-chassis');
   const canMountBuggy = live && !isRiding && Boolean(localPlayer && buggyPose)
     && withinBuggyMountRange(localPlayer!.position, buggyPose!.position);
-  // The sim checks a button before the buggy, so the prompt does too.
+  // The sim checks a button before the buggy, so the prompt does too. E is use; Punt is the right mouse button.
   const reachableButton = live && !isRiding && localPlayer ? buttonWithinReach(localPlayer.position) : null;
   const prompt = reachableButton === 'dropper' ? 'Drop Drum'
     : reachableButton === 'catapult' ? 'Fire Catapult'
     : canMountBuggy ? 'Drive Buggy'
     : isGrabbing ? 'Punt' : null;
-  const aiming = live && tool !== 'orbit' && !isRiding;
+  // The start plate or the pause menu covers the yard (src/ui/PlayGate.tsx): its controls replace these.
+  const gateState = gate.state;
+  const behindGate = gateState.look === 'capture' && !cursorNeededNow(gateState)
+    && (gateState.view === 'start' || gateState.view === 'paused' || gateState.view === 'engaging');
+  const offerCapture = gateState.look === 'drag' && canCapture(gateState.caps);
+  const fullscreenToggle = fullscreenToggleCall(gateState);
+  const aiming = live && tool !== 'orbit' && !isRiding && !behindGate;
 
   return (
     <>
@@ -102,7 +111,7 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
         </section>
         ) : null}
 
-        {live ? (
+        {live && !behindGate ? (
           <nav className="yard-toolbar" aria-label="Tools">
             {(['hand', 'torch', 'orbit'] as const).map((entry) => (
               <button
@@ -121,8 +130,16 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
           </nav>
         ) : null}
 
-        {live ? (
+        {live && !behindGate ? (
           <div className="yard-corner">
+            {offerCapture ? (
+              <button type="button" className="yard-button" onClick={() => { void gate.chooseCapture(); }}>Capture mouse</button>
+            ) : null}
+            {fullscreenToggle !== 'none' ? (
+              <button type="button" className="yard-button" aria-pressed={fullscreenToggle === 'exit-fullscreen'} onClick={() => { void gate.toggleFullscreen(); }}>
+                {fullscreenToggle === 'exit-fullscreen' ? 'Exit fullscreen' : 'Fullscreen'}
+              </button>
+            ) : null}
             <button type="button" className="yard-switch" aria-pressed={quality === 'high'} onClick={() => onQuality(quality === 'high' ? 'low' : 'high')}>
               <span className="yard-switch__label">Graphics</span>
               <span className="yard-switch__track"><span className={quality === 'high' ? 'is-on' : ''}>Hi</span><span className={quality === 'low' ? 'is-on' : ''}>Lo</span></span>
@@ -144,6 +161,8 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
                 {snapshot.error ? <span className="yard-fault">{snapshot.error}</span> : null}
               </div>
             ) : null}
+            {/* A match button already captured the mouse: only the status shows until the match settles. */}
+            {gateState.matchStarting ? null : (<>
             <button type="button" className="yard-button yard-button--primary" onClick={() => onStart({ kind: 'solo' })}>Play Solo</button>
             <div className="yard-gate__row">
               <button type="button" className="yard-button" onClick={() => onStart({ kind: 'quick' })}>Quick Match</button>
@@ -162,6 +181,7 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
             {snapshot.status === 'error' ? (
               <button type="button" className="yard-button yard-button--primary" onClick={onRetry}>Retry</button>
             ) : null}
+            </>)}
           </section>
         </div>
       ) : null}
@@ -174,7 +194,8 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
 
       {live && prompt ? (
         <div className="yard-prompt" data-prompt={prompt}>
-          <Key>E</Key>
+          {/* E is use (buttons, the buggy); the punt is on the right mouse button. */}
+          {prompt === 'Punt' ? <Key wide>RMB</Key> : <Key>E</Key>}
           <span>{prompt}</span>
         </div>
       ) : null}
@@ -198,7 +219,9 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
               <span><Key wide>Space</Key>Jet</span>
               <span><Key wide>LMB</Key>{tool === 'torch' ? 'Cut' : 'Grab'}</span>
               <span><Key wide>RMB</Key>Punt</span>
+              <span><Key>E</Key>Use</span>
               <span><Key>O</Key>Orbit</span>
+              {gateState.look === 'capture' ? <span><Key wide>Esc</Key>Pause</span> : null}
             </>
           )}
         </div>

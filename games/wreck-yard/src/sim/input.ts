@@ -7,7 +7,10 @@ export type Tool = (typeof TOOL)[keyof typeof TOOL];
 export interface YardInput {
   readonly tool: Tool;
   readonly pressed: boolean;
+  /** The gravity gun's punt (right mouse button). */
   readonly secondary: boolean;
+  /** Use (E or F): press a contraption button, get in or out of the buggy. */
+  readonly use: boolean;
   readonly jetpack: boolean;
   /** Strafe: -1 (left) to 1 (right) */
   readonly moveX: number;
@@ -36,6 +39,7 @@ const codec = defineSyncplayInputCodec<YardInput>({
   tool: { kind: 'enum', values: [TOOL.hand, TOOL.torch, TOOL.none], neutral: TOOL.none },
   pressed: { kind: 'boolean', neutral: false },
   secondary: { kind: 'boolean', neutral: false },
+  use: { kind: 'boolean', neutral: false },
   jetpack: { kind: 'boolean', neutral: false },
   moveX: { kind: 'int', min: -1, max: 1, neutral: 0 },
   moveZ: { kind: 'int', min: -1, max: 1, neutral: 0 },

@@ -18,7 +18,7 @@ const steps = (sim: YardSim, ticks: number, input: YardInput = NEUTRAL_INPUT) =>
 function dropDrum(sim: YardSim): string {
   const button = BUTTONS.find((entry) => entry.id === 'dropper')!;
   patchPlayer(sim, { x: button.base[0] + 1.2, y: FLOOR_Y + PLAYER_RADIUS + 0.01, z: button.base[2], vx: 0, vy: 0, vz: 0 });
-  sim.step([{ ...NEUTRAL_INPUT, secondary: true }]);
+  sim.step([{ ...NEUTRAL_INPUT, use: true }]);
   const id = sim.state.contraptions.drums.at(-1)!.bodyId;
   steps(sim, 180);
   return id;

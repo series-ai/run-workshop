@@ -15,7 +15,7 @@ test.describe('Wreck Yard Style Vista E2E', () => {
     page.on('console', (msg) => console.log('[BROWSER]', msg.type(), msg.text()));
 
     await page.setViewportSize({ width: 1280, height: 720 });
-    await page.goto('/');
+    await page.goto('/?capture=off');
 
     await expect(page.getByText('Wreck Yard')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('canvas')).toBeVisible();

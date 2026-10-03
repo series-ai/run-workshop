@@ -24,7 +24,7 @@ try {
         errors.push(`HTTP ${response.status()}: ${response.url()}`);
       }
     });
-    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${base}/?capture=off`, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => (window.__WRECK_YARD_CONTROLLER__?.getRender()?.frame ?? 0) > 15, null, { timeout: 30000 });
     const waitTicks = async (ticks) => {
       const start = await page.evaluate(() => window.__WRECK_YARD_CONTROLLER__.getRender().frame);

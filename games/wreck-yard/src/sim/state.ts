@@ -69,6 +69,7 @@ export interface PlayerState {
   readonly torchTicks: number;
   readonly wasPressed: boolean;
   readonly wasSecondaryPressed: boolean;
+  readonly wasUsePressed: boolean;
   readonly jetpackActive: boolean;
   readonly ridingVehicle?: boolean;
   readonly feedback: ToolFeedback | null;
@@ -172,6 +173,7 @@ export function createInitialPlayer(slot = 0): PlayerState {
     torchTicks: 0,
     wasPressed: false,
     wasSecondaryPressed: false,
+    wasUsePressed: false,
     jetpackActive: false,
     feedback: null,
   };

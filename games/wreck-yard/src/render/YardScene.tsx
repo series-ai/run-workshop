@@ -21,6 +21,7 @@ import { Explosions } from './Explosions';
 import { FuelDrumFx } from './FuelDrumFx';
 import { InkComposer } from './style/InkComposer';
 import type { YardRender } from './presentation';
+import type { PlayGateApi } from '../ui/usePlayGate';
 import { DynamicDpr, isMobileDevice } from './DynamicDpr';
 import { nextSlowWindowCount, QUALITY_FALLBACK, type RenderQuality } from './renderQuality';
 
@@ -41,7 +42,7 @@ function QualityFallback({ onFallback }: { onFallback: () => void }) {
   return null;
 }
 
-function SceneRoot({ controller, tool, quality, onQualityFallback, onToolChange, bodies, renderRef, onBodiesChange }: {
+function SceneRoot({ controller, tool, quality, onQualityFallback, onToolChange, bodies, renderRef, onBodiesChange, gate }: {
   quality: RenderQuality;
   /** Set only while the tier is automatic; a player choice is never overridden. */
   onQualityFallback?: () => void;
@@ -51,11 +52,12 @@ function SceneRoot({ controller, tool, quality, onQualityFallback, onToolChange,
   bodies: readonly YardBody[];
   renderRef: React.MutableRefObject<YardRender | null>;
   onBodiesChange: (bodies: readonly YardBody[]) => void;
+  gate: PlayGateApi;
 }) {
   const worldOcclusion = useWorldOcclusion();
   return (
     <>
-      <PointerInput controller={controller} tool={tool} onToolChange={onToolChange} renderRef={renderRef} onBodiesChange={onBodiesChange} />
+      <PointerInput controller={controller} tool={tool} onToolChange={onToolChange} renderRef={renderRef} onBodiesChange={onBodiesChange} gate={gate} />
       <YardShell renderRef={renderRef} />
       <Contraptions renderRef={renderRef} />
       <ArenaCage renderRef={renderRef} />
@@ -75,12 +77,15 @@ function SceneRoot({ controller, tool, quality, onQualityFallback, onToolChange,
   );
 }
 
-export function YardScene({ controller, tool, quality, onQualityFallback, onToolChange }: {
+export function YardScene({ controller, tool, quality, onQualityFallback, onToolChange, gate, onCanvas }: {
   onQualityFallback?: () => void;
   controller: MatchController;
   tool: UiTool;
   quality: RenderQuality;
   onToolChange?: (tool: UiTool) => void;
+  gate: PlayGateApi;
+  /** The canvas, for the browser capture port's pointer lock. */
+  onCanvas: (canvas: HTMLCanvasElement) => void;
 }) {
   const renderRef = useRef<YardRender | null>(null);
   const [bodies, setBodies] = useState<readonly YardBody[]>([]);
@@ -117,6 +122,7 @@ export function YardScene({ controller, tool, quality, onQualityFallback, onTool
         gl.toneMappingExposure = 1.0;
         gl.shadowMap.type = THREE.PCFSoftShadowMap;
         (window as unknown as { __DEBUG_THREE__: unknown }).__DEBUG_THREE__ = { gl, scene, camera, advance };
+        onCanvas(gl.domElement);
       }}
       style={{ position: 'absolute', inset: 0 }}
     >
@@ -125,7 +131,7 @@ export function YardScene({ controller, tool, quality, onQualityFallback, onTool
         minDpr={isMobile ? 0.85 : 1.0}
         maxDpr={isMobile ? 1.25 : 1.5}
       />
-      <SceneRoot controller={controller} tool={tool} quality={quality} onQualityFallback={onQualityFallback} onToolChange={onToolChange} bodies={bodies} renderRef={renderRef} onBodiesChange={setBodies} />
+      <SceneRoot controller={controller} tool={tool} quality={quality} onQualityFallback={onQualityFallback} onToolChange={onToolChange} bodies={bodies} renderRef={renderRef} onBodiesChange={setBodies} gate={gate} />
     </Canvas>
   );
 }

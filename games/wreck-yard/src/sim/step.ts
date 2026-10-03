@@ -215,9 +215,10 @@ function stepPlayerMovement(player: PlayerState, input: YardInput, w: Working): 
   if (buggy) {
     const inRange = withinBuggyMountRange([player.x, player.y, player.z], [buggy.x, buggy.y, buggy.z]);
     const occupied = w.players.some((other) => other.slot !== player.slot && other.ridingVehicle);
-    if (!ridingVehicle && !occupied && inRange && input.secondary && !player.wasSecondaryPressed) {
+    const useEdge = input.use && !player.wasUsePressed;
+    if (!ridingVehicle && !occupied && inRange && useEdge) {
       ridingVehicle = true;
-    } else if (ridingVehicle && (input.jetpack || (input.secondary && !player.wasSecondaryPressed))) {
+    } else if (ridingVehicle && (input.jetpack || useEdge)) {
       ridingVehicle = false;
       const chassisYaw = Math.atan2(
         2 * (buggy.orientation.w * buggy.orientation.y + buggy.orientation.x * buggy.orientation.z),
@@ -531,12 +532,17 @@ function stepTorch(
 }
 
 function stepPlayer(w: Working, slot: number, input: YardInput): PlayerState {
+  return { ...stepPlayerActions(w, slot, input), wasUsePressed: input.use };
+}
+
+/** Use (E) works buttons and the buggy; the right mouse button punts. They never share a press. */
+function stepPlayerActions(w: Working, slot: number, input: YardInput): PlayerState {
   const initial = w.players[slot] ?? createInitialPlayer(slot);
-  // E at a button presses it. It then neither mounts the buggy nor punts.
-  const secondaryEdge = input.secondary && !initial.wasSecondaryPressed;
-  const button = secondaryEdge && !initial.ridingVehicle ? buttonWithinReach([initial.x, initial.y, initial.z]) : null;
+  // Use at a button presses it; it then does not also get in the buggy.
+  const useEdge = input.use && !initial.wasUsePressed;
+  const button = useEdge && !initial.ridingVehicle ? buttonWithinReach([initial.x, initial.y, initial.z]) : null;
   if (button) {
-    const moved = stepPlayerMovement(initial, { ...input, secondary: false }, w);
+    const moved = stepPlayerMovement(initial, { ...input, use: false }, w);
     return { ...moved, wasPressed: input.pressed, wasSecondaryPressed: input.secondary, feedback: pressButton(w, button) };
   }
   const moved = stepPlayerMovement(initial, input, w);

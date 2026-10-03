@@ -14,7 +14,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto(`${base}/?record&quality=high`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${base}/?record&quality=high&capture=off`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => (window.__WRECK_YARD_CONTROLLER__?.getRender()?.frame ?? 0) > 30, null, { timeout: 90000 });
   const local = () => page.evaluate(() => { const r = window.__WRECK_YARD_CONTROLLER__.getRender(); return { frame: r.frame, ...r.players.find((p) => p.slot === r.localSlot) }; });
   const lookAt = (target) => page.evaluate((t) => {

@@ -7,6 +7,7 @@ describe('yard input codec', () => {
       tool: TOOL.torch,
       pressed: true,
       secondary: false,
+      use: true,
       jetpack: true,
       moveX: 1,
       moveZ: -1,

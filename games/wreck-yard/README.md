@@ -19,6 +19,30 @@ npm run dev
 Open the printed URL. The app starts in solo mode. Use **Quick match**,
 **Create room**, or **Join** with a room code to play together.
 
+## Controls and fullscreen
+
+On a surface that can capture the mouse (desktop web, Steam), the yard runs
+behind a start plate. One click on **Click to play** enters fullscreen and
+captures the mouse. When the cursor comes free (Escape, the RUN toolbar,
+alt-tab), the pause menu opens: solo stops, and a room keeps running while you
+stand still. **Resume** captures the mouse again, and enters fullscreen again if
+you left it. A second Escape, or **Exit fullscreen** in the pause menu, leaves
+fullscreen. The orbit tool (`O`) frees the cursor without the menu; click the
+yard to look again. If the browser keeps refusing the capture, **Play in a
+window** switches to drag-to-look, and **Capture mouse** switches back. Phones
+and other surfaces without pointer lock skip the gate and use drag-to-look.
+
+Inside RUN.world the game is a frame, so only the host may go fullscreen or
+lock the pointer: `src/game/capturePort.ts` uses the RUN SDK System API there,
+and the browser's own APIs at top level (local dev). `src/game/playGate.ts`
+holds the rules. While a host error modal is open in fullscreen, one Escape
+both closes the modal and leaves fullscreen (the SDK handles that key too).
+
+For tests, `?capture=off` turns capture off (drag-to-look, no gate) and
+`?capture=fake` uses a fake port on `window.__CAPTURE_FAKE__`. Both work in dev
+and preview builds. The design is in
+[.plans/wreck-yard-fullscreen-play-gate.html](../../.plans/wreck-yard-fullscreen-play-gate.html).
+
 ## Commands
 
 - `npm run dev` — dev server with the RUN sandbox
@@ -46,6 +70,8 @@ Open the printed URL. The app starts in solo mode. Use **Quick match**,
 - `src/render/` — presentation: projection and interpolation, the raymarched
   voxel renderer, yard shell, water, occlusion, pointer input.
 - `src/ui/Hud.tsx` — tools, stats, lobby, status.
+- `src/game/playGate.ts`, `src/game/capturePort.ts`, `src/ui/usePlayGate.ts`,
+  `src/ui/PlayGate.tsx` — fullscreen, mouse capture, the start plate, and the pause menu.
 - Voxel operations come from [tools/voxel-kit](../../tools/voxel-kit/).
 
 ## Units

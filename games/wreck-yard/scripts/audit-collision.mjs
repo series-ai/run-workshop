@@ -12,7 +12,7 @@ const browser = await chromium.launch({ channel: 'chrome', headless: true });
 let report;
 try {
   const page = await browser.newPage({ viewport: { width: 800, height: 500 } });
-  await page.goto(`${base}/?quality=low`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${base}/?quality=low&capture=off`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => (window.__WRECK_YARD_CONTROLLER__?.getRender()?.frame ?? 0) > 30, null, { timeout: 60000 });
   await page.keyboard.press('KeyO'); // orbit: hides the first-person tool
   await page.waitForTimeout(500);
