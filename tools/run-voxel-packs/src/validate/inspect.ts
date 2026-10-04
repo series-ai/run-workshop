@@ -7,6 +7,7 @@ import { PNG } from 'pngjs'
 import { createIo } from '../gltfIo'
 import { coplanarOverlaps, layerMisfits } from './zfight'
 import { AVATAR_LAYER_VOXELS, parsePartNodeName } from '../../contracts/catalog'
+import { POSITION_STEPS, QUANTIZED_NODE_SUFFIX } from '../build/finalize'
 
 export interface SamplerSummary {
   magFilter: number | null
@@ -92,6 +93,12 @@ export interface GlbSummary {
    * every other file.
    */
   layers: { misfit: number; worst: string | null } | null
+  /**
+   * Nodes scaled away from 1 (or a quantization holder's 1/n) by more than
+   * finalize's z-fight inset. A scaled part shows bigger or smaller voxels
+   * than the rest of the pack.
+   */
+  scaledNodes: string[]
 }
 
 const io = createIo()
@@ -238,11 +245,21 @@ export function summarize(doc: Document, options: { zfight?: boolean } = {}): Gl
     layers = { misfit: misfits.reduce((a, [, m]) => a + m.area, 0), worst: top ? `${top[0]} (${top[1].area.toFixed(1)} voxel² at ${top[1].offset.toFixed(3)} voxel)` : null }
   }
 
+  // Finalize scales two kinds of nodes on purpose: quantization holders (`-voxels`, 1/n) and fighting
+  // parts it insets by 1/16 voxel (a scale a few percent under 1 on one axis). Anything else, or a
+  // larger change, is a rescaled part.
+  const INSET_TOLERANCE = 0.1
+  const scaledNodes = root.listNodes().filter((node) => {
+    const base = node.getName().endsWith(QUANTIZED_NODE_SUFFIX) ? POSITION_STEPS.map((n) => 1 / n) : [1]
+    return node.getScale().some((x) => !base.some((b) => Math.abs(x / b - 1) <= INSET_TOLERANCE))
+  }).map((node) => node.getName())
+
   return {
     scaleClass,
     surface,
     zfight,
     layers,
+    scaledNodes,
     materials,
     primitives,
     meshCount: root.listMeshes().length,

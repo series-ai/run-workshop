@@ -31,6 +31,7 @@ export type RuleId =
   | 'mesh.present'
   | 'scale.budget'
   | 'scale.origin'
+  | 'scale.node'
   | 'rig.order'
   | 'rig.names'
   | 'rig.bind'
@@ -272,6 +273,8 @@ export function validateAsset(summary: GlbSummary, context: AssetContext): Viola
   const { category, pack } = context
   const out = [...checkMaterials(summary, category), ...checkScale(summary, category), ...checkScaleClassRule(summary, category), ...checkStyle(summary, pack, category), ...checkClips(summary, pack, category), ...checkSockets(summary, category)]
   if (summary.meshCount === 0) out.push({ rule: 'mesh.present', message: 'file has no mesh' })
+  // One voxel is one unit (0.01 in avatar space) in every pack: a scaled part would show other-sized voxels.
+  if (summary.scaledNodes.length > 0) out.push({ rule: 'scale.node', message: `scaled nodes ${summary.scaledNodes.join(', ')}: parts must keep scale 1 so every voxel matches the pack` })
   if (!summary.zfight) throw new Error('rvx validation needs the z-fighting check: inspectGlb(bytes, { zfight: true })')
   if (summary.zfight.area > ZFIGHT_TOLERANCE) {
     out.push({ rule: 'geometry.zfight', message: `${summary.zfight.area.toFixed(1)} voxel² of coplanar faces overlap and z-fight (worst: ${summary.zfight.worst})` })

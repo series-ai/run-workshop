@@ -29,6 +29,7 @@ function validProp(): GlbSummary {
     surface: { triangles: 400, diagonalShare: 0.2, unitsPerTexel: 1, darkShare: 0.02, meanSaturation: 0.55 },
     zfight: { area: 0, worst: null },
     layers: null,
+    scaledNodes: [],
   }
 }
 
@@ -170,6 +171,13 @@ describe('rvx profile', () => {
     expect(rules(validateAsset(parts, { profile: 'rvx', pack: 'fantasy', category: 'avatar' }))).toEqual(['avatar.layers'])
     parts.layers = null
     expect(rules(validateAsset(parts, { profile: 'rvx', pack: 'fantasy', category: 'avatar' }))).toEqual(['avatar.layers'])
+  })
+
+  it('rejects a scaled part', () => {
+    const prop = validProp()
+    expect(rules(validateAsset(prop, { profile: 'rvx', pack: 'fantasy', category: 'props' }))).toEqual([])
+    prop.scaledNodes = ['lid']
+    expect(rules(validateAsset(prop, { profile: 'rvx', pack: 'fantasy', category: 'props' }))).toEqual(['scale.node'])
   })
 
   it('flags visible z-fighting above the tolerance', () => {

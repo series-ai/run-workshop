@@ -36,6 +36,8 @@ export interface GlbRecord {
   hasPreview: boolean
   scaleClass: string | null
   surface: SurfaceStats | null
+  /** Largest dimension in voxels (world: 1 unit, avatar space: 0.01). */
+  size: number
 }
 
 export interface PackInventory {
@@ -133,6 +135,7 @@ export async function collectInventory(stageDir: string, pack: RvxPackKey): Prom
           partNodes,
           hasPreview: existsSync(join(categoryDir, 'Previews', `${id}.jpg`)),
           scaleClass: summary.scaleClass,
+          size: summary.bounds ? Math.max(...summary.bounds.max.map((x, i) => x - summary.bounds!.min[i]!)) / (summary.scaleClass ? 1 : 0.01) : 0,
           surface: summary.surface,
         })
       }
@@ -212,6 +215,36 @@ export function unexpectedFiles(packDir: string, pack: RvxPackKey): string[] {
   return out
 }
 
+/** Allowed factor between an asset's largest dimension and the median of its group. */
+export const SIZE_OUTLIER_FACTOR = 3
+
+/**
+ * `scale.outlier`: an asset far bigger or smaller than the pack's other
+ * assets of its scale class (held items and skins: of their category).
+ * Scale classes bound absolute size; this catches drift inside a class, e.g.
+ * a rework that doubles a prop. Groups need three assets to have a median.
+ */
+export function sizeOutliers(glbs: Pick<GlbRecord, 'id' | 'category' | 'scaleClass' | 'size'>[]): LevelIssue[] {
+  const groups = new Map<string, typeof glbs>()
+  for (const glb of glbs) {
+    if (glb.category === 'avatar' || glb.size <= 0) continue
+    const key = glb.scaleClass ?? `category:${glb.category}`
+    groups.set(key, [...(groups.get(key) ?? []), glb])
+  }
+  const out: LevelIssue[] = []
+  for (const [key, group] of groups) {
+    if (group.length < 3) continue
+    const sizes = group.map((g) => g.size).sort((a, b) => a - b)
+    const median = sizes[Math.floor(sizes.length / 2)]!
+    for (const glb of group) {
+      if (glb.size > median * SIZE_OUTLIER_FACTOR || glb.size < median / SIZE_OUTLIER_FACTOR) {
+        out.push({ rule: 'scale.outlier', message: `${glb.id}: ${glb.size.toFixed(0)} voxels, the ${key.replace('category:', '')} median in this pack is ${median.toFixed(0)} (allowed ×${SIZE_OUTLIER_FACTOR})` })
+      }
+    }
+  }
+  return out
+}
+
 export function checkLevel(inventory: PackInventory, level: Level): LevelIssue[] {
   const issues: LevelIssue[] = []
   for (const glb of inventory.glbs) {
@@ -220,6 +253,7 @@ export function checkLevel(inventory: PackInventory, level: Level): LevelIssue[]
     if (glb.leaf !== expectedLeaf) issues.push({ rule: 'layout.leaf', message: `${glb.id}: ${glb.category} belongs in the ${expectedLeaf} leaf` })
   }
   for (const stray of inventory.strayFiles) issues.push({ rule: 'layout.stray', message: `unexpected entry ${stray}` })
+  issues.push(...sizeOutliers(inventory.glbs))
   if (level === 'asset') return issues
 
   const byCategory = (category: Category) => inventory.glbs.filter((glb) => glb.category === category)

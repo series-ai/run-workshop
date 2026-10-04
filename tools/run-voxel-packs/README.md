@@ -70,6 +70,16 @@ world asset has a scale class, listed in `assets/<pack>/scale-classes.json`
 | `fence` / `kit` / `tile` | whole 16-unit tiles long | fence segment 16 |
 | `creature-boss` | 150–280 largest | giant turtle, kraken |
 
+Two more rules keep voxel size and proportion the same across packs:
+
+- `scale.node`: no part may be scaled, so one voxel stays one unit (0.01 in
+  avatar space) in every asset. Only finalize's own scales pass: the 1/n of a
+  quantized mesh holder and its 1/16-voxel z-fight inset (within 10%).
+- `scale.outlier` (pack level): an asset more than 3× larger or smaller than
+  the median of its scale class in the pack (held items and skins: of their
+  category). Scale classes bound absolute size; this catches drift inside a
+  class, for example a rework that doubles a prop.
+
 ## Authoring an asset
 
 Each `assets/<pack>/<category>/<slug>.py` defines `build()` returning an
