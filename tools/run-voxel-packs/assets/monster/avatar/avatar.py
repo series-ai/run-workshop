@@ -36,13 +36,27 @@ def witch_hat():
 
 def hunter_hat():
     g, (x, y, z) = canvas()
-    g.box(8, 58, 20, 34, 60, 57, C("darkwood", 2))
-    g.where((y == 59) & ((x < 10) | (x > 31) | (z < 22) | (z > 54)), C("darkwood", 3))  # upturned brim edge
-    g.box(13, 60, 27, 29, 67, 49, C("darkwood", 3))
-    g.box(13, 60, 27, 29, 62, 49, C("blood", 2))
-    g.box(14, 66, 36, 29, 67, 41, 0)
-    g.box(26, 60, 45, 28, 66, 46, C("bone", 7))  # feather
-    g.box(28, 60, 36, 30, 62, 40, C("steel", 6))  # silver buckle
+    # Short brim and taller crown give the hat a clear, compact profile.
+    g.box(14, 58, 25, 30, 60, 51, C("iron", 0))
+    g.box(15, 59, 26, 29, 61, 50, C("purple", 3))
+    brim_edge = (x >= 14) & (x < 30) & (z >= 25) & (z < 51) & ((x == 14) | (x == 29) | (z == 25) | (z == 50))
+    g.where((y == 60) & brim_edge, C("iron", 2))
+    g.where((y == 58) & brim_edge, C("iron", 0))
+    g.box(28, 57, 30, 29, 59, 46, C("iron", 0))
+    # Taper each crown course. The upper edge steps inward and shifts one
+    # voxel, so the crown reads as shaped cloth instead of a tall box.
+    for k in range(10):
+        inset = k // 4
+        lean = k // 7
+        g.box(17 + inset + lean, 61 + k, 29 + inset, 28 - inset + lean, 62 + k, 47 - inset,
+              C("stone", 4 if k % 3 else 3))
+    g.where((y >= 65) & (y <= 69) & (x == 26) & (z >= 34) & (z <= 42), C("purple", 5))
+    # A single framed band and a small bone charm hold the focal detail.
+    g.box(17, 62, 29, 28, 65, 47, C("magenta", 3))
+    g.box(18, 63, 30, 27, 64, 46, C("purple", 4))
+    g.box(26, 62, 37, 28, 65, 41, C("bone", 6))
+    g.box(28, 63, 38, 29, 64, 40, C("toxic", 6))
+    g.set(29, 63, 39, C("toxic", 7))
     return rig_part("headwear monster-2", g, "Hunter's Wide Brim", hides_hair=True)
 
 
@@ -61,9 +75,12 @@ def top_hat():
 def horned_helm():
     g, (x, y, z) = canvas()
     cap = shell(["Head"], 1) & (y >= 50)
-    g.where(cap, C("bone", 5))
-    g.where(cap & (y == 50), C("bone", 4))
-    g.box(F - 1, 50, 36, F + 1, 58, 40, C("bone", 6))  # nasal ridge
+    g.where(cap, C("iron", 2))
+    g.where(cap & (y == 50), C("iron", 0))
+    g.where(cap & (y >= 55) & ((z % 5) == 0), C("purple", 3))
+    g.where(cap & (x >= 24) & (y >= 54) & (z >= 31) & (z < 45), C("bone", 5))
+    g.box(F - 1, 50, 36, F + 1, 58, 40, C("bone", 6))
+    g.box(F, 54, 37, F + 2, 56, 39, C("toxic", 5))
     for s_, zc in ((-1, 26), (1, 49)):
         for k in range(10):  # ram-like horns curving out, up and forward
             a = k / 9
@@ -71,7 +88,9 @@ def horned_helm():
             yy = 52 + 12 * math.sin(a * 1.6)
             xx = 18 + 10 * a
             r = 2.2 - a * 1.4
-            g.box(xx - r, yy - r, zz - r, xx + r, yy + r, zz + r, C("bone", 6 - int(a * 4)))
+            g.box(xx - r, yy - r, zz - r, xx + r, yy + r, zz + r, C("bone", 6 - int(a * 3)))
+            if k in (3, 6):
+                g.set(round(xx), round(yy), round(zz), C("magenta", 4))
     return rig_part("headwear monster-4", g, "Horned Bone Helm", hides_hair=True)
 
 
@@ -79,13 +98,27 @@ def pumpkin_head():
     g, (x, y, z) = canvas()
     sh = shell(["Head"], 2)
     g.where(sh, C("orange", 4))
+    # Broad vertical ribs wrap the whole pumpkin, with darker valleys and a
+    # lighter crown. This keeps the back and side faces designed as well.
+    center_z = 38.0
+    rib_z = np.cos((z + 0.5 - center_z) / 11.0 * math.pi * 2)
+    rib_x = np.cos((x + 0.5 - 21.0) / 8.0 * math.pi * 2)
+    rib = np.maximum(rib_z, rib_x)
+    g.where(sh & (rib < -0.72), C("ember", 3))
+    g.where(sh & (rib > 0.72), C("orange", 6))
     g.where(sh & (y >= 58), C("orange", 5))
+    g.where(sh & (y == 38), C("ember", 2))
     front = sh & (x >= F)
-    g.where(front & (y >= 47) & (y < 51) & (((z >= 31) & (z < 36)) | ((z >= 41) & (z < 46))), C("ember", 5))  # eyes
-    g.where(front & (y >= 40) & (y < 43) & (z >= 31) & (z < 46) & ((z % 3) != 0), C("ember", 5))  # grin
-    g.where(front & (y == 43) & (z >= 33) & (z < 44) & ((z % 3) == 1), C("ember", 4))
-    g.box(19, 61, 36, 23, 65, 40, C("forest", 2))  # stem
-    g.box(22, 62, 40, 26, 63, 44, C("leaf", 3))
+    # Deep, dark carved sockets with a toxic inner glow.
+    eyes = front & (y >= 47) & (y < 52) & (((z >= 31) & (z < 36)) | ((z >= 41) & (z < 46)))
+    g.where(eyes, C("iron", 0))
+    g.where(front & (y >= 48) & (y < 50) & (((z >= 32) & (z < 35)) | ((z >= 42) & (z < 45))), C("toxic", 6))
+    mouth = front & (y >= 40) & (y < 44) & (z >= 31) & (z < 46) & ((z % 3) != 0)
+    g.where(mouth, C("iron", 0))
+    g.where(front & (y == 44) & (z >= 33) & (z < 44) & ((z % 2) == 0), C("ember", 5))
+    g.box(18, 61, 35, 23, 66, 40, C("forest", 2))
+    g.box(21, 64, 39, 26, 65, 43, C("leaf", 4))
+    g.box(22, 63, 39, 24, 67, 41, C("forest", 3))
     return rig_part("headwear monster-5", g, "Jack-o'-Lantern Head", hides_hair=True, hides_eyebrows=True, hides_facial_hair=True)
 
 
@@ -109,20 +142,21 @@ def slick_hair():
     g, (x, y, z) = canvas()
     h = shell(["Head"], 1) & (((y >= 52) & (x <= 26)) | (x <= 15)) & (y >= 40)
     h |= shell(["Head"], 1) & (y >= 58)
-    g.where(h, C("navy", 0))
-    g.box(F - 1, 52, 37, F, 58, 39, C("navy", 0))  # widow's peak
-    g.box(F - 2, 55, 34, F - 1, 58, 42, C("navy", 0))
+    g.where(h, C("iron", 0))
+    g.where(h & ((z % 5) == 0), C("purple", 2))
+    g.box(F - 1, 52, 37, F, 58, 39, C("iron", 0))
+    g.box(F - 2, 55, 34, F - 1, 58, 42, C("purple", 2))
     return rig_part("hair monster-1", g, "Slicked Count Hair")
 
 
 def flat_top():
     g, (x, y, z) = canvas()
-    g.box(13, 58, 26, 29, 63, 50, C("iron", 0))
-    g.box(13, 62, 26, 29, 63, 50, C("iron", 1))
-    for zz in range(26, 50, 2):
-        g.box(F - 1, 55 - (zz % 3), zz, F, 58, zz + 1, C("iron", 0))
-    h = shell(["Head"], 1) & (x <= 16) & (y >= 44)
+    # Keep the hair tucked under headwear. Paint the side and rear hair only.
+    h = shell(["Head"], 1) & (y >= 49) & ((x <= 18) | (z <= 27) | (z >= 48))
     g.where(h, C("iron", 0))
+    g.where(h & ((z % 5) == 0), C("purple", 3))
+    g.box(17, 53, 27, 19, 57, 29, C("iron", 1))
+    g.box(17, 53, 47, 19, 57, 49, C("iron", 1))
     return rig_part("hair monster-2", g, "Flat Top Fringe")
 
 
@@ -141,16 +175,18 @@ def fangs():
     for zz in (35, 40):
         g.box(F, 40, zz, F + 1, 43, zz + 2, C("bone", 7))
         g.set(F, 40, zz + (1 if zz > 38 else 0), 0)
-    g.box(F, 42, 34, F + 1, 43, 43, C("blood", 2))
+    g.box(F, 42, 34, F + 1, 43, 43, C("magenta", 3))
+    g.set(F, 43, 34, C("iron", 0)).set(F, 43, 42, C("iron", 0))
     return rig_part("facialhair monster-1", g, "Vampire Fangs")
 
 
 def stitched_grin():
     g, _ = canvas()
-    g.box(F, 41, 31, F + 1, 42, 46, C("blood", 2))
-    for zz in range(32, 46, 2):
-        g.box(F, 40, zz, F + 1, 43, zz + 1, C("iron", 1))
-    g.set(F, 42, 31, C("blood", 2)).set(F, 42, 45, C("blood", 2))
+    g.box(F, 41, 33, F + 1, 43, 44, C("iron", 0))
+    g.box(F, 41, 34, F + 1, 42, 43, C("magenta", 3))
+    for zz in (35, 38, 41):
+        g.set(F, 40, zz, C("bone", 6)).set(F, 43, zz, C("bone", 6))
+    g.set(F, 42, 33, C("magenta", 4)).set(F, 42, 44, C("magenta", 4))
     return rig_part("facialhair monster-2", g, "Stitched Grin")
 
 
@@ -167,8 +203,10 @@ def mutton_chops():
 def red_monocle():
     g, (x, y, z) = canvas()
     ring = (x == F) & (((y + 0.5 - 48) ** 2 + (z + 0.5 - 43) ** 2) <= 9) & (((y + 0.5 - 48) ** 2 + (z + 0.5 - 43) ** 2) >= 4)
-    g.where(ring, C("gold", 5))
-    g.where((x == F) & (((y + 0.5 - 48) ** 2 + (z + 0.5 - 43) ** 2) < 4), C("red", 5))
+    g.where(ring, C("iron", 0))
+    g.where((x == F) & (((y + 0.5 - 48) ** 2 + (z + 0.5 - 43) ** 2) <= 6) & (((y + 0.5 - 48) ** 2 + (z + 0.5 - 43) ** 2) >= 4), C("gold", 6))
+    g.where((x == F) & (((y + 0.5 - 48) ** 2 + (z + 0.5 - 43) ** 2) < 4), C("magenta", 4))
+    g.set(F, 48, 43, C("toxic", 6))
     for k in range(8):
         g.set(F, 45 - k, 46 + k // 3, C("gold", 4 if k % 2 else 3))
     return rig_part("eyewear monster-1", g, "Blood Monocle")
@@ -176,12 +214,14 @@ def red_monocle():
 
 def brass_goggles():
     g, (x, y, z) = canvas()
-    strap = shell(["Head"], 1) & (y >= 47) & (y < 50)
-    g.where(strap, C("darkwood", 2))
+    strap = shell(["Head"], 1) & (y >= 48) & (y < 50)
+    g.where(strap, C("iron", 1))
     for zc in (34, 43):
-        g.cylinder("x", 48.5, zc, 3, F, F + 2, C("gold", 3))
-        g.cylinder("x", 48.5, zc, 2, F + 1, F + 2, C("toxic", 5))
-    g.box(F, 48, 37, F + 1, 49, 40, C("gold", 4))
+        g.cylinder("x", 48.5, zc, 3.0, F, F + 2, C("iron", 0))
+        g.cylinder("x", 48.5, zc, 2.2, F + 1, F + 2, C("bone", 5))
+        g.cylinder("x", 48.5, zc, 1.3, F + 1, F + 2, C("toxic", 5))
+        g.set(F + 1, 49, zc, C("toxic", 6))
+    g.box(F, 48, 37, F + 1, 49, 40, C("magenta", 3))
     return rig_part("eyewear monster-2", g, "Brass Goggles")
 
 
@@ -197,24 +237,26 @@ def skull_patch():
 
 # ------------------------------------------------------------------ ears
 def wolf_ears():
-    g, _ = canvas()
+    g, (x, y, z) = canvas()
     for zc in (30, 45):
         for k in range(9):
             w = max(1, 3 - k // 3)
-            g.box(17, 59 + k, zc - w, 23, 60 + k, zc + w, C("stone", 3 if k > 5 else 4))
-        g.box(21, 60, zc - 1, 23, 65, zc + 1, C("pink", 2))
+            g.box(17, 59 + k, zc - w, 23, 60 + k, zc + w, C("stone", 4 if k > 5 else 5))
+            g.where((x >= 21) & (x < 23) & (y == 59 + k) & (abs(z + 0.5 - zc) <= w - 1), C("magenta", 3))
+        g.box(22, 60, zc - 1, 24, 64, zc + 1, C("bone", 6))
     return rig_part("ears monster-1", g, "Wolf Ears")
 
 
 def bat_ears():
     g, _ = canvas()
     for s_, zc in ((-1, 26), (1, 49)):
-        for k in range(12):  # big membranous ears sweeping out and up past the hair
-            zz = zc + s_ * (2 + k * 0.6)
-            g.box(18, 50 + k, zz - 1, 23 - k // 5, 51 + k, zz + 1, C("purple", 2 if k % 3 else 1))
-        for k in range(8):
-            zz = zc + s_ * (3 + k * 0.6)
-            g.box(22 - k // 5, 52 + k, zz - 0.5, 24 - k // 5, 53 + k, zz + 0.5, C("pink", 1))
+        # Small folded ears sit below the brim and keep the hat dominant.
+        for k in range(5):
+            zz = zc + s_ * (1 + k * 0.65)
+            width = 2 - k // 3
+            g.box(18, 54 + k, zz - width, 21, 55 + k, zz + width, C("iron", 0))
+            g.box(19, 54 + k, zz - width + 1, 21, 55 + k, zz + width - 1, C("purple", 3))
+            g.set(21, 54 + k, zz, C("magenta", 4))
     return rig_part("ears monster-2", g, "Bat Ears")
 
 
@@ -231,23 +273,30 @@ def pointed_ears():
 def skull_paint():
     g, (x, y, z) = canvas()
     plate = (x == F) & (y >= 38) & (y < 57) & (z >= 28) & (z < 48)
-    g.where(plate, C("bone", 7))
+    g.where(plate, C("bone", 6))
+    g.where(plate & ((y == 38) | (y == 56) | (z == 28) | (z == 47)), C("bone", 4))
     for z0 in (31, 41):
-        g.box(F, 45, z0, F + 1, 51, z0 + 5, C("iron", 0))
+        g.box(F, 46, z0, F + 1, 51, z0 + 5, C("iron", 0))
+        g.box(F, 47, z0 + 1, F + 1, 49, z0 + 4, C("toxic", 5))
+        g.set(F, 48, z0 + 2, C("toxic", 7))
     g.box(F, 42, 37, F + 1, 44, 39, C("iron", 0))
     g.box(F, 39, 31, F + 1, 41, 46, C("iron", 0))
-    for zz in range(31, 46, 2):
-        g.box(F, 39, zz, F + 1, 41, zz + 1, C("bone", 6))
+    for zz in range(32, 46, 2):
+        g.box(F, 39, zz, F + 1, 41, zz + 1, C("bone", 7))
     return rig_part("face monster-1", g, "Skull Face Paint")
 
 
 def mummy_face():
     g, (x, y, z) = canvas()
     plate = (x == F) & (y >= 37) & (y < 58) & (z >= 27) & (z < 49)
-    g.where(plate, C("sand", 5))
-    g.where(plate & ((y % 3) == 0), C("sand", 4))
-    g.where(plate & (y >= 47) & (y < 49) & (z >= 31) & (z < 46), C("iron", 1))
-    g.box(F, 47, 41, F + 1, 49, 44, C("toxic", 6))
+    g.where(plate, C("stone", 5))
+    g.where(plate & ((y == 37) | (y == 57) | (z == 27) | (z == 48)), C("iron", 2))
+    # Keep the eye shapes dark and simple under the green lenses.
+    for z0 in (31, 41):
+        g.box(F, 46, z0, F + 1, 51, z0 + 5, C("iron", 0))
+        g.box(F, 47, z0 + 1, F + 1, 49, z0 + 4, C("magenta", 3))
+    g.box(F, 40, 34, F + 1, 43, 44, C("iron", 0))
+    g.box(F, 41, 35, F + 1, 42, 43, C("bone", 5))
     return rig_part("face monster-2", g, "Mummy Wraps")
 
 
@@ -263,12 +312,16 @@ def scar_face():
 
 def wolf_muzzle():
     g, _ = canvas()
-    g.box(F, 39, 33, F + 6, 46, 43, C("stone", 5))
-    g.box(F, 39, 34, F + 6, 42, 42, C("bone", 4))
-    g.box(F + 4, 44, 36, F + 7, 47, 40, C("iron", 1))
-    g.box(F, 42, 34, F + 6, 43, 42, C("blood", 2))
-    for zz in (35, 41):
-        g.box(F + 3, 41, zz, F + 4, 43, zz + 1, C("bone", 7))
+    # Center the short muzzle on the face. The dark eye sockets and nose are
+    # painted on its forward plane, so it reads as one deliberate wolf mask.
+    g.box(F, 39, 32, F + 6, 46, 45, C("stone", 4))
+    g.box(F + 1, 39, 33, F + 5, 44, 44, C("bone", 5))
+    g.box(F + 5, 43, 36, F + 7, 47, 41, C("iron", 0))
+    g.box(F + 6, 44, 37, F + 7, 46, 40, C("magenta", 4))
+    for z0 in (33, 42):
+        g.box(F + 5, 47, z0, F + 6, 51, z0 + 3, C("iron", 0))
+        g.set(F + 5, 48, z0 + 1, C("toxic", 6)).set(F + 5, 49, z0 + 1, C("toxic", 6))
+    g.box(F + 5, 40, 37, F + 6, 42, 40, C("bone", 7))
     return rig_part("face monster-4", g, "Wolf Muzzle")
 
 
@@ -277,14 +330,17 @@ def arched_brows():
     g, _ = canvas()
     for z0, s in ((31, 1), (41, -1)):
         for k in range(5):
-            g.set(F, 50 + (k if s > 0 else 4 - k) // 2, z0 + k, C("navy", 0))
+            g.set(F, 51 + (k if s > 0 else 4 - k) // 2, z0 + k, C("iron", 0))
+        g.set(F, 51, z0 + 2, C("magenta", 4))
     return rig_part("eyebrow monster-1", g, "Sinister Arched Brows")
 
 
 def unibrow():
     g, _ = canvas()
-    g.box(F, 50, 31, F + 1, 52, 46, C("iron", 0))
-    g.box(F, 52, 33, F + 1, 53, 44, C("iron", 1))
+    # Two short angled brows leave a clear gap between the eyes.
+    g.line((F, 53, 31), (F, 52, 35), 1.3, C("iron", 0))
+    g.line((F, 52, 42), (F, 53, 46), 1.3, C("iron", 0))
+    g.set(F, 53, 32, C("magenta", 4)).set(F, 53, 45, C("magenta", 4))
     return rig_part("eyebrow monster-2", g, "Heavy Unibrow")
 
 
@@ -313,10 +369,18 @@ def vampire_coat():
 
 def tattered_shirt():
     g, (x, y, z), m, arms = torso_shell()
-    g.where(m | (arms & (abs(z + 0.5 - 38) < 16)), C("bone", 6))
-    g.where(m & (y < 18) & (((z // 2) % 2) == 0), 0)  # ragged hem
-    g.where(m & (x >= 24) & (y >= 22) & (y < 28) & (z >= 40) & (z < 44), C("blood", 3))
-    g.where(m & (x >= 24) & (abs(z + 0.5 - 38) < 1) & (y >= 28), C("skin", 4))
+    g.where(m | (arms & (abs(z + 0.5 - 38) < 16)), C("stone", 5))
+    g.where(m & (x >= 24) & (y >= 30) & (z >= 30) & (z <= 46) & ((z == 30) | (z == 46)), C("iron", 1))
+    # A framed violet vest, bone placket and one toxic seal make a clear front.
+    g.where(m & (x >= 24) & (y >= 19) & (y <= 34) & (z >= 33) & (z <= 43), C("iron", 0))
+    g.where(m & (x >= 24) & (y >= 20) & (y <= 33) & (z >= 34) & (z <= 42), C("purple", 3))
+    g.where(m & (x >= 24) & (y >= 20) & (y <= 34) & (z >= 37) & (z <= 39), C("bone", 6))
+    for yy in (22, 27, 32):
+        g.where(m & (x == 26) & (y == yy) & (z == 38), C("toxic", 6))
+    g.where(m & (x >= 24) & (y >= 34) & (y < 37) & (z >= 34) & (z <= 42), C("iron", 1))
+    g.where(arms & ((z < 16) | (z > 59)), C("purple", 3))
+    g.where(arms & ((z < 15) | (z > 60)), C("iron", 0))
+    g.where(m & (y == 16), C("iron", 1))
     return rig_part("tops monster-2", g, "Tattered Shirt")
 
 
@@ -336,22 +400,34 @@ def bone_armor():
 def mummy_top():
     g, (x, y, z), m, arms = torso_shell()
     w = m | arms
-    g.where(w, C("sand", 5))
-    g.where(m & ((y % 4) == 0), C("sand", 4))  # bandage courses
-    g.box(21, 18, 50, 22, 26, 51, C("sand", 6))
+    g.where(w, C("iron", 2))
+    g.where(m & ((y % 4) == 0), C("bone", 6))
+    g.where(m & (x >= 24) & ((y % 4) == 1), C("bone", 4))
+    g.where(m & (x >= 24) & (y >= 19) & (y <= 35) & (abs(z + 0.5 - 38) < 1), C("magenta", 4))
+    g.where(arms & ((z < 16) | (z > 59)), C("purple", 3))
+    g.box(22, 20, 47, 23, 30, 50, C("purple", 3))
+    g.box(23, 22, 48, 24, 28, 49, C("toxic", 5))
+    for yy in (22, 27, 32):
+        g.where(m & (x >= 24) & (y == yy) & (z >= 34) & (z <= 42), C("gold", 4))
     return rig_part("tops monster-4", g, "Mummy Wraps Top")
 
 
 def hunter_coat():
     g, (x, y, z), m, arms = torso_shell()
-    g.where(m | arms, C("rust", 2))
-    g.where(m & (x >= 24) & (abs(z + 0.5 - 38) < 2), C("bone", 5))
-    g.box(24, 17, 42, 26, 36, 44, C("darkwood", 2))  # shoulder strap with stakes
-    for yy in (21, 26, 31):
-        g.box(26, yy, 42, 27, yy + 5, 43, C("wood", 5))
-        g.set(26, yy + 5, 42, C("steel", 6))
-    g.where(m & (y == 17), C("darkwood", 2))
-    g.box(25, 17, 37, 26, 19, 39, C("steel", 6))
+    g.where(m | arms, C("iron", 2))
+    g.where(m & (x >= 24) & (abs(z + 0.5 - 38) < 5), C("purple", 3))
+    g.where(m & (x >= 24) & (abs(z + 0.5 - 38) < 2), C("bone", 6))
+    # Framed lapels, cross-body ward sash, and a bright seal replace the loose
+    # stake-hunter read with a haunted field coat.
+    g.where(m & (x >= 24) & (y >= 30) & (z >= 31) & (z <= 45) & ((z == 31) | (z == 45)), C("iron", 0))
+    g.box(24, 17, 42, 26, 35, 44, C("magenta", 3))
+    g.box(26, 20, 42, 27, 34, 43, C("bone", 5))
+    for yy in (22, 27, 32):
+        g.set(27, yy, 42, C("toxic", 6))
+    g.where(arms & ((z < 16) | (z > 59)), C("purple", 3))
+    g.where(m & (y == 17), C("iron", 0))
+    g.box(25, 17, 37, 26, 20, 40, C("toxic", 5))
+    g.box(26, 18, 38, 27, 19, 39, C("bone", 7))
     return rig_part("tops monster-5", g, "Hunter's Coat")
 
 
@@ -364,18 +440,25 @@ def legs_shell():
 
 def tattered_trousers():
     g, (x, y, z), m = legs_shell()
-    g.where(m, C("navy", 2))
+    g.where(m, C("iron", 1))
     g.where(m & (y < 8) & (((z // 2) % 2) == 0), 0)
-    g.where(m & (x >= 23) & (y >= 10) & (y < 13) & (z > 40) & (z < 45), C("skin", 4))  # torn knee
-    g.where(m & (y == 17), C("sand", 4))
+    g.where(m & (x >= 23) & (y >= 10) & (y < 13) & (z > 40) & (z < 45), C("moss", 3))
+    g.where(m & (y == 17), C("purple", 3))
+    g.where(m & (x >= 23) & (y >= 14) & (y <= 17) & ((z % 4) == 0), C("bone", 5))
     return rig_part("bottoms monster-1", g, "Tattered Trousers")
 
 
 def bone_greaves():
     g, (x, y, z), m = legs_shell()
-    g.where(m, C("iron", 1))
-    g.where(m & (x >= 23) & (y >= 4), C("bone", 5))
-    g.where(m & (y >= 9) & (y < 11), C("bone", 7))
+    g.where(m, C("iron", 3))
+    # Tall framed shin panels stop well above the single boot.
+    g.where(m & (y >= 13) & (x >= 23), C("bone", 5))
+    g.where(m & (y >= 13) & (y < 15), C("iron", 0))
+    g.where(m & (x >= 23) & (y >= 10) & (y < 12), C("purple", 3))
+    g.where(m & (x >= 23) & (y >= 15) & (y <= 17) & ((z == 33) | (z == 42)), C("purple", 3))
+    g.where(m & (x >= 23) & (y == 16) & (z >= 34) & (z <= 41), C("magenta", 4))
+    for zz in (35, 40):
+        g.where(m & (x == 24) & (y == 14) & (z == zz), C("iron", 0))
     return rig_part("bottoms monster-2", g, "Bone Greaves")
 
 
@@ -389,22 +472,28 @@ def mummy_legs():
 
 # ------------------------------------------------------------------ shoes
 def wolf_paws():
-    g, _ = canvas()
+    g, (x, y, z) = canvas()
     for z0, z1 in leg_z_ranges().values():
-        g.box(15, 0, z0 - 1, 27, 5, z1 + 1, C("stone", 3))
-        g.box(15, 5, z0 - 1, 25, 7, z1 + 1, C("stone", 4))
-        for zz in range(z0, z1, 3):
-            g.box(27, 0, zz, 29, 2, zz + 1, C("bone", 6))
+        g.box(15, 0, z0 - 1, 27, 2, z1 + 1, C("iron", 0))
+        g.box(16, 2, z0, 26, 7, z1, C("stone", 4))
+        g.box(16, 6, z0, 25, 8, z1, C("purple", 3))
+        g.where((x >= 24) & (x < 27) & (y >= 2) & (y <= 5) & (z >= z0) & (z < z1), C("stone", 5))
+        g.box(25, 3, z0 + 2, 27, 5, z1 - 2, C("bone", 6))
     return rig_part("shoes monster-1", g, "Wolf Paws")
 
 
 def hunter_boots():
-    g, _ = canvas()
+    g, (x, y, z) = canvas()
     for z0, z1 in leg_z_ranges().values():
-        g.box(15, 0, z0 - 1, 27, 9, z1 + 1, C("darkwood", 2))
-        g.box(14, 8, z0 - 1, 25, 10, z1 + 1, C("darkwood", 3))
-        g.box(24, 4, z0, 26, 5, z1, C("steel", 6))
-        g.box(15, 0, z0 - 1, 28, 1, z1 + 1, C("iron", 2))
+        # One complete boot shell covers the PN shoe. Details stay painted.
+        g.box(14, 0, z0 - 2, 29, 2, z1 + 2, C("iron", 0))
+        g.box(15, 2, z0 - 1, 29, 7, z1 + 1, C("purple", 3))
+        g.box(15, 6, z0 - 1, 29, 8, z1 + 1, C("iron", 1))
+        # A small toe charm replaces the broad pale strip that read as a shoe.
+        center = (z0 + z1 - 1) // 2
+        g.box(27, 3, center - 1, 29, 5, center + 1, C("bone", 6))
+        g.set(28, 4, center, C("toxic", 6))
+        g.where((x >= 17) & (x < 26) & (y == 5) & (z == z0 - 1), C("magenta", 4))
     return rig_part("shoes monster-2", g, "Hunter's Boots")
 
 
@@ -422,21 +511,41 @@ def vampire_cape():
     g, (x, y, z) = canvas()
     for yy in range(4, 36):
         spread = 9 + (36 - yy) // 5
-        g.box(13, yy, 38 - spread, 15, yy + 1, 38 + spread, C("iron", 1))
-        g.box(15, yy, 38 - spread + 1, 16, yy + 1, 38 + spread - 1, C("red", 3))
+        g.box(13, yy, 38 - spread, 15, yy + 1, 38 + spread, C("iron", 2))
+        g.box(15, yy, 38 - spread + 1, 16, yy + 1, 38 + spread - 1, C("purple", 3))
+        if yy % 5 == 0:
+            g.box(15, yy, 33, 16, yy + 2, 34, C("magenta", 4))
+            g.box(15, yy, 42, 16, yy + 2, 43, C("magenta", 4))
+    g.where((x == 15) & (y >= 5) & (y < 34) & (abs(z + 0.5 - 38) < 2), C("iron", 3))
     g.carve((x < 16) & (y < 8) & (((z // 3) % 2) == 0))
-    g.box(13, 34, 26, 16, 40, 50, C("blood", 2))  # standing collar
+    g.box(13, 34, 26, 16, 40, 50, C("purple", 2))
+    g.box(16, 37, 35, 17, 39, 41, C("toxic", 5))
     return rig_part("back monster-1", g, "Vampire Cape")
 
 
 def bat_wings():
     g, (x, y, z) = canvas()
+    # Two compact bat silhouettes. A single membrane field sits inside a dark
+    # scalloped frame, with three ribs that meet at the shoulder root.
+    outline = [(4, 35), (8, 45), (15, 50), (22, 46), (26, 40),
+               (24, 34), (20, 37), (17, 29), (14, 35), (11, 31),
+               (8, 36), (5, 33)]
     for s in (-1, 1):
-        dz = (z + 0.5 - 38) * s
-        mem = (x >= 13) & (x < 15) & (dz >= 4) & (dz <= 36) & (y <= 36 + dz * 0.4) & (y >= 22 + 4 * np.abs(np.sin(dz / 11 * np.pi)) + dz * 0.1)
-        g.where(mem, C("purple", 2))
-        for tz, ty in ((36, 51), (26, 24), (16, 22)):
-            g.line((13.5, 34, 38 + s * 4), (13.5, ty, 38 + s * tz), 0.6, C("iron", 2))
+        u = (z + 0.5 - 38) * s
+        v = y + 0.5
+        inside = np.zeros(g.shape, dtype=bool)
+        for i, (u1, v1) in enumerate(outline):
+            u2, v2 = outline[(i + 1) % len(outline)]
+            inside ^= ((v1 > v) != (v2 > v)) & (u < (u2 - u1) * (v - v1) / (v2 - v1 + 1e-8) + u1)
+        mem = (x >= 13) & (x < 16) & inside
+        g.where(mem, C("purple", 3))
+        g.where(mem & (v >= 40), C("purple", 4))
+        # Frame each outer edge and add fine ribs along the membrane folds.
+        for i, (u1, v1) in enumerate(outline):
+            u2, v2 = outline[(i + 1) % len(outline)]
+            g.line((13, v1, 38 + s * u1), (13, v2, 38 + s * u2), 0.9, C("iron", 0))
+        for u_tip, y_tip in ((17, 29), (14, 35), (8, 36)):
+            g.line((13, 35, 38 + s * 4), (13, y_tip, 38 + s * u_tip), 0.7, C("iron", 1))
     return rig_part("back monster-2", g, "Bat Wings")
 
 
@@ -457,13 +566,15 @@ def coffin_pack():
 
 def stake_quiver():
     g, (x, y, z) = canvas()
-    for k in range(20):  # diagonal quiver across the back
-        yy, zz = 16 + k, 30 + k * 0.8
-        g.box(11, yy, zz, 15, yy + 1, zz + 4, C("rust", 2))
-    for k, (yy, zz) in enumerate(((36, 45), (37, 47), (35, 43), (38, 49))):
-        g.box(12, yy, zz, 13, yy + 7, zz + 1, C("wood", 5))
-        g.set(12, yy + 7, zz, C("steel", 6))
-    g.box(15, 30, 29, 16, 32, 47, C("darkwood", 2))
+    # A compact grave-ward pack: one framed iron reliquary with a luminous
+    # violet panel. It keeps the back slot's volume and drops the archer cues.
+    g.box(9, 17, 29, 14, 35, 47, C("iron", 0))
+    g.box(8, 19, 31, 10, 33, 45, C("bone", 5))
+    g.box(8, 20, 32, 9, 32, 44, C("purple", 3))
+    g.box(8, 24, 36, 9, 29, 40, C("toxic", 5))
+    g.box(8, 25, 37, 9, 28, 39, C("toxic", 7))
+    g.box(10, 16, 35, 13, 19, 41, C("magenta", 3))
+    g.box(10, 33, 35, 13, 36, 41, C("magenta", 3))
     return rig_part("back monster-4", g, "Stake Quiver")
 
 
