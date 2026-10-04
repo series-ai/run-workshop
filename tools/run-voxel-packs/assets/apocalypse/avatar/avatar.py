@@ -114,19 +114,49 @@ def wide_brim():
 def welding_mask():
     g, b = new()
     X, Y, Z = b.X, b.Y, b.Z
-    m = dilate(b.region(["Head"]), 2) & ~b.body() & (Y >= b.hy0 - 1)
+    m = dilate(b.region(["Head"]), 2) & ~b.body() & (Y >= b.hy0 + 2)
+    # Paint the shell with steel plates and a wide lens. Keep details on its
+    # existing voxels so the head mesh has no overlapping geometry.
     g.where(m, C("iron", 3))
-    g.where(m & (X >= b.hx1), C("iron", 4))
-    g.where(m & (X >= b.fx) & (Y == b.hy0 + 16), C("rust", 4))
-    g.box(b.hx1 + 1, b.hy0 + 10, 31, b.hx1 + 2, b.hy0 + 14, 46, C("iron", 1))  # visor slot
-    g.box(b.hx1 + 2, b.hy0 + 10, 32, b.hx1 + 3, b.hy0 + 14, 45, C("toxic", 3))
-    g.box(b.hx1 + 2, b.hy0 + 13, 33, b.hx1 + 3, b.hy0 + 14, 36, C("toxic", 5))
-    g.box(b.hx1 + 1, b.hy0 + 2, 36, b.hx1 + 3, b.hy0 + 6, 41, C("steel", 4))  # breather grille
-    for z in range(36, 41, 2):
-        g.set(b.hx1 + 2, b.hy0 + 4, z, C("iron", 1))
+    g.where(m & (X >= b.fx) & (Y >= b.hy0 + 7), C("steel", 3))
+    g.where(m & (X >= b.fx) & (Y >= b.hy0 + 18), C("steel", 4))
+    g.where(m & (X >= b.fx) & (Y >= b.hy0 + 15) & (Y < b.hy0 + 19), C("steel", 4))
+    g.where(m & (X < b.fx) & (Y >= b.hy0 + 17), C("iron", 4))
+    g.where(m & (Y >= b.hy0 + 19), C("iron", 2))
+    visor = m & (X >= b.fx) & (Y >= b.hy0 + 9) & (Y < b.hy0 + 17) & (Z >= 29) & (Z < 48)
+    g.where(visor, C("iron", 1))
+    g.where(visor & (Z >= 30) & (Z < 47) & (Y >= b.hy0 + 10) & (Y < b.hy0 + 16), C("steel", 5))
+    g.where(visor & (Z >= 31) & (Z < 46) & (Y >= b.hy0 + 11) & (Y < b.hy0 + 15), C("forest", 2))
+    g.where(visor & (Z >= 32) & (Z < 45) & (Y >= b.hy0 + 12) & (Y < b.hy0 + 14), C("toxic", 4))
+    g.where(visor & (Z >= 33) & (Z < 38) & (Y == b.hy0 + 14), C("toxic", 6))
+
+    # Painted cheek vents, welded seams, and a salvage mark break up broad faces.
+    for z0 in (30, 44):
+        g.where(m & (X >= b.fx) & (Y >= b.hy0 + 2) & (Y < b.hy0 + 7) & (Z >= z0) & (Z < z0 + 3), C("steel", 4))
+        g.where(m & (X >= b.fx) & (Y >= b.hy0 + 3) & (Y < b.hy0 + 6) & (Z >= z0 + 1) & (Z < z0 + 2), C("iron", 1))
+        for yy in (b.hy0 + 4, b.hy0 + 6):
+            g.where(m & (X >= b.fx) & (Y == yy) & (Z == z0 + 1), C("rust", 5))
+    g.where(m & (X >= b.fx) & (Y >= b.hy0 + 18) & (Y < b.hy0 + 21) & (Z >= 33) & (Z < 44), C("rust", 4))
+    g.where(m & (X >= b.fx) & (Y == b.hy0 + 20) & (Z >= 36) & (Z < 41), C("gold", 5))
+
+    # Rear and side faces have painted repair plates and rust marks.
+    g.where(m & (X < b.hx0 + 2) & (Y < b.hy1), C("steel", 3))
+    g.where(m & (X < b.hx0 + 2) & (Y >= b.hy0 + 5) & (Y < b.hy0 + 7), C("steel", 4))
+    g.where(m & (X < b.hx0 + 2) & (Y >= b.hy0 + 14) & (Y < b.hy0 + 15), C("rust", 4))
+    g.where(m & (X < b.hx0 + 2) & (Y >= b.hy0 + 8) & (Y < b.hy0 + 12) & (Z >= 34) & (Z < 43), C("iron", 2))
+    g.where(m & (X < b.hx0 + 2) & (Y >= b.hy0 + 9) & (Y < b.hy0 + 11) & (Z >= 36) & (Z < 41), C("red", 4))
+    g.where(m & (X < b.hx0 + 2) & (Y >= b.hy0 + 10) & (Y < b.hy0 + 11) & (Z >= 37) & (Z < 40), C("gold", 5))
+    g.where(m & (X < b.hx0 + 2) & (Z % 7 == 0) & (Y >= b.hy0 + 2) & (Y < b.hy0 + 19), C("rust", 3))
     for z in (b.hz0 - 3, b.hz1 + 2):
-        g.box(19, b.hy0 + 10, z, 22, b.hy0 + 14, z + 1, C("steel", 5))  # pivot knobs
-    g.box(b.hx1 - 2, b.hy1 + 2, 30, b.hx1 + 3, b.hy1 + 3, 47, C("red", 4))  # skull stripe
+        g.box(19, b.hy0 + 10, z, 22, b.hy0 + 14, z + 1, C("steel", 5))  # hinge plate
+        g.set(22, b.hy0 + 12, z, C("gold", 5))
+
+    # Signal stripe and filter retain the welding-mask read from a distance.
+    g.box(b.hx1 - 2, b.hy1 + 2, 30, b.hx1 + 3, b.hy1 + 3, 47, C("red", 4))
+    g.box(b.hx1 + 1, b.hy0 + 1, 36, b.hx1 + 4, b.hy0 + 5, 41, C("steel", 4))
+    g.box(b.hx1 + 4, b.hy0 + 2, 37, b.hx1 + 6, b.hy0 + 5, 40, C("forest", 4))
+    for z in range(37, 41):
+        g.set(b.hx1 + 6, b.hy0 + 3, z, C("iron", 1))
     return part("headwear", 7, g, "Welding Mask", hides_hair=True, hides_eyebrows=True, hides_facial_hair=True)
 
 
@@ -322,6 +352,18 @@ def spiked_vest():
         g.box(17, 38, z0 + 1, 24, 39, z1 - 1, C("gray", 3))
         for zz in range(z0 + 2, z1 - 1, 3):
             g.box(20, 39, zz, 21, 42, zz + 1, C("steel", 6))
+    # Wrapped forearms balance the shoulder armour and cover bare skin.
+    arms = b.arm_shell(1, ("ForeArm.L", "ForeArm.R"))
+    g.where(arms, C("forest", 3))
+    g.where(arms & (Y >= 17) & (Y < 20), C("darkwood", 3))
+    g.where(arms & (Y >= 20) & (Y < 23), C("sand", 4))
+    g.where(arms & (Y >= 23) & (Y < 25), C("forest", 5))
+    g.where(arms & (((Z >= 16) & (Z < 18)) | ((Z >= 58) & (Z < 60))), C("iron", 2))
+    g.where(arms & (Y >= 20) & (Y < 22) & (Z % 5 == 0), C("rust", 4))
+    for z0 in (20, 46):
+        g.box(17, 34, z0, 24, 37, z0 + 8, C("iron", 3))
+        g.box(18, 35, z0 + 1, 23, 36, z0 + 7, C("steel", 4))
+        g.set(24, 36, z0 + 2, C("rust", 5)).set(24, 36, z0 + 6, C("rust", 5))
     g.where(t & (X >= 24) & (Y >= 18) & (Y < 20), C("steel", 6))  # studded belt
     return part("tops", 2, g, "Spiked Leather Vest")
 
@@ -417,11 +459,20 @@ def armored_legs():
 def combat_boots():
     g, b = new()
     for z0, z1 in b.legs.values():
-        g.box(15, 0, z0 - 1, 27, 2, z1 + 1, C("iron", 1))
-        g.box(15, 2, z0 - 1, 26, 8, z1 + 1, C("darkwood", 2))
-        g.box(15, 7, z0 - 1, 25, 8, z1 + 1, C("darkwood", 3))
+        g.box(14, 0, z0 - 1, 30, 2, z1 + 1, C("iron", 1))
+        g.box(14, 2, z0 - 1, 29, 8, z1 + 1, C("darkwood", 3))
+        g.box(14, 7, z0 - 1, 28, 8, z1 + 1, C("darkwood", 4))
+        # Broad steel toe cap covers the PN foot tip under the wraps.
+        g.box(25, 1, z0, 30, 4, z1 + 1, C("steel", 3))
+        g.box(28, 2, z0 + 1, 30, 3, z1, C("steel", 5))
+        boot = g.a > 0
+        g.where(boot & (b.Z >= z0) & (b.Z <= z1) & (b.Y >= 4) & (b.Y < 6) & (b.X >= 18) & (b.X < 25), C("sand", 4))
+        g.where(boot & (b.Z >= z0) & (b.Z <= z1) & (b.Y == 5) & (b.X >= 18) & (b.X < 25) & (b.X % 3 == 0), C("iron", 2))
+        for y in (3, 6):
+            g.box(14, y, z0 + 1, 15, y + 1, z1, C("rust", 4))
+        g.box(27, 4, z0 + 2, 28, 6, z0 + 4, C("gold", 5))
         for y in range(3, 8, 2):
-            g.box(26, y, z0 + 1, 27, y + 1, z1 - 1, C("bone", 5))
+            g.box(28, y, z0 + 1, 29, y + 1, z1, C("bone", 5))
     return part("shoes", 1, g, "Combat Boots")
 
 

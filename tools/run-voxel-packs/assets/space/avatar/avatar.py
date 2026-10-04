@@ -43,13 +43,31 @@ def marine_helmet():
     g = rig_grid()
     (hx0, hy0, hz0), (hx1, hy1, hz1) = hb()
     helm = dilate(region(HEAD), 1) & ~region(HEAD) & (y >= hy0 - 1)
-    fill(g, helm, C("khaki", 4))
-    fill(g, helm & (y >= hy1 - 2), C("khaki", 5))
-    g.box(29, 46, 31, 30, 49, 45, C("red", 5))
-    g.box(29, 40, 37, 30, 49, 39, C("red", 5))
-    g.box(29, 47, 32, 30, 48, 44, C("red", 7))
-    g.box(29, 38, 33, 30, 42, 35, C("iron", 2)).box(29, 38, 41, 30, 42, 43, C("iron", 2))
-    g.box(16, hy1 + 1, 37, 26, hy1 + 3, 39, C("iron", 2))
+    fill(g, helm, C("bone", 6))
+    fill(g, helm & (y >= hy1 - 2), C("bone", 7))
+    # Framed cyan faceplate replaces the competing T-mark and eye slots.
+    g.box(29, 40, 30, 30, 51, 46, C("iron", 1))
+    g.box(29, 41, 31, 30, 50, 45, C("steel", 5))
+    g.box(30, 43, 33, 31, 48, 43, C("teal", 3))
+    g.box(31, 44, 34, 32, 47, 42, C("plasma", 6))
+    g.box(31, 46, 35, 32, 47, 39, C("plasma", 7))
+    # Copper brow badge and steel neck ring give the shell deliberate breaks.
+    g.box(29, 52, 35, 30, 54, 41, C("rust", 5))
+    g.box(30, 53, 37, 31, 54, 39, C("orange", 6))
+    g.box(16, hy1 + 1, 37, 26, hy1 + 3, 39, C("steel", 4))
+    # Small cheek vents sit below the visor frame.
+    for zz in (33, 36, 40, 43):
+        g.set(29, 38, zz, C("steel", 3))
+    # The rear service hatch and top edge carry the same hull language.
+    g.box(12, 42, 31, 13, 51, 45, C("iron", 1))
+    g.box(12, 43, 32, 13, 50, 44, C("steel", 4))
+    g.box(12, 45, 34, 13, 48, 42, C("teal", 3))
+    for zz in (35, 38, 41):
+        g.set(12, 46, zz, C("plasma", 6))
+    for yy in (43, 49):
+        for zz in (33, 43):
+            g.set(12, yy, zz, C("orange", 5))
+    fill(g, helm & (y == hy1) & ((z <= hz0) | (z >= hz1 - 1)), C("steel", 4))
     return rpart("headwear space-2", g, "Marine Helmet", hides_hair=True, hides_eyebrows=True, hides_facial_hair=True)
 
 
@@ -96,33 +114,82 @@ def grey_alien_head():
     g = rig_grid()
     (hx0, hy0, hz0), (hx1, hy1, hz1) = hb()
     shellm = dilate(region(HEAD), 1) & (y >= hy0 - 1)
-    fill(g, shellm, C("gray", 5))
-    g.box(13, hy1, 28, 28, hy1 + 4, 48, C("gray", 5))  # tall stepped cranium
-    g.box(14, hy1 + 4, 29, 26, hy1 + 7, 47, C("gray", 5))
-    g.box(16, hy1 + 7, 31, 24, hy1 + 9, 45, C("gray", 6))
-    g.box(12, hy1 - 2, 27, 13, hy1 + 3, 49, C("gray", 4))
+    fill(g, shellm, C("steel", 5))
+    # Keep the stepped silhouette, with each ledge reading as separate hull.
+    g.box(13, hy1, 28, 28, hy1 + 4, 48, C("steel", 5))
+    g.box(14, hy1 + 4, 29, 26, hy1 + 7, 47, C("bone", 6))
+    g.box(16, hy1 + 7, 31, 24, hy1 + 9, 45, C("steel", 6))
+    g.box(12, hy1 - 2, 27, 13, hy1 + 3, 49, C("steel", 5))
+    # Recessed dark visor and teal lenses replace the loose eye decals.
+    g.box(29, 44, 31, 30, 50, 46, C("iron", 1))
+    g.box(30, 45, 32, 31, 49, 45, C("steel", 4))
+    for z0 in (33, 41):
+        g.box(31, 46, z0, 32, 49, z0 + 3, C("teal", 3))
+        g.box(32, 47, z0 + 1, 33, 48, z0 + 2, C("plasma", 7))
+    g.set(31, 47, 38, C("orange", 6)).set(31, 48, 38, C("orange", 5))
+    # Side ear module and visible top panel breaks.
+    g.box(18, 43, 49, 24, 50, 51, C("iron", 1))
+    g.box(19, 44, 51, 23, 49, 52, C("teal", 3))
+    g.set(21, 47, 52, C("plasma", 7))
+    for zz in (31, 38, 45):
+        g.box(15, hy1 + 5, zz, 25, hy1 + 6, zz + 1, C("steel", 3))
     g.a[region(HEAD)] = 0
+    # Rear service panel adds a clear function mark to the broad hull face.
+    g.box(11, 42, 31, 12, 51, 45, C("iron", 1))
+    g.box(11, 43, 32, 12, 50, 44, C("steel", 4))
+    g.box(11, 45, 34, 12, 48, 42, C("teal", 3))
+    for zz in (35, 38, 41):
+        g.set(11, 46, zz, C("plasma", 6))
+    for yy in (43, 49):
+        for zz in (33, 43):
+            g.set(11, yy, zz, C("orange", 5))
     rows = {44: (35, 36), 45: (33, 36), 46: (32, 36), 47: (31, 36), 48: (30, 36), 49: (29, 35), 50: (29, 33)}
     for yy, (z0, z1) in rows.items():
-        g.box(29, yy, z0, 30, yy + 1, z1, C("iron", 0))
-        g.box(29, yy, 76 - z1, 30, yy + 1, 76 - z0, C("iron", 0))
-    g.set(29, 48, 32, C("gray", 7)).set(29, 48, 41, C("gray", 7))
-    g.box(29, 41, 37, 30, 42, 39, C("gray", 3))
+        g.box(29, yy, z0, 30, yy + 1, z1, C("iron", 1))
+        g.box(29, yy, 76 - z1, 30, yy + 1, 76 - z0, C("iron", 1))
+    g.box(29, 45, 32, 30, 50, 36, C("teal", 3))
+    g.box(29, 45, 40, 30, 50, 44, C("teal", 3))
+    g.set(29, 48, 33, C("plasma", 7)).set(29, 48, 42, C("plasma", 7))
+    g.box(29, 41, 37, 30, 43, 39, C("steel", 3))
     return rpart("headwear space-6", g, "Grey Alien Head", hides_hair=True, hides_eyebrows=True, hides_facial_hair=True)
 
 
 def hunter_helmet():
     g = rig_grid()
     (hx0, hy0, hz0), (hx1, hy1, hz1) = hb()
-    helm = dilate(region(HEAD), 1) & ~region(HEAD) & (y >= hy0 - 1)
+    # Fill the head volume and outer shell so no underlying pixels show
+    # through the large hull panels.
+    # Use a continuous cuboid so the head shell has no voxel gaps.
+    helm = ((x >= hx0 - 1) & (x < hx1 + 1) &
+            (y >= hy0 - 1) & (y < hy1 + 1) &
+            (z >= hz0 - 1) & (z < hz1 + 1))
     fill(g, helm, C("teal", 4))
     fill(g, helm & (y >= hy1 - 2), C("teal", 5))
-    fill(g, helm & (x < 20) & (y < hy0 + 8), C("rust", 3))
-    g.box(29, 45, 30, 30, 48, 46, C("iron", 0))
-    g.box(29, 39, 36, 30, 48, 40, C("iron", 0))
-    g.box(20, 50, 49, 24, 52, 51, C("iron", 2))
-    g.box(23, 44, 50, 26, 51, 51, C("iron", 2))
-    g.set(26, 47, 50, C("red", 7))
+    # Short steel neck seal replaces the muddy brown lower-head band.
+    fill(g, helm & (x < 20) & (y < hy0 + 3), C("iron", 2))
+    fill(g, helm & (x < 20) & (y == hy0 + 3), C("steel", 5))
+    # A fitted rear panel breaks up the broad hull without a full-width stripe.
+    g.box(12, 43, 32, 13, 52, 44, C("steel", 3))
+    g.box(12, 44, 33, 13, 51, 43, C("teal", 4))
+    g.box(12, 46, 35, 13, 49, 41, C("iron", 1))
+    g.box(12, 47, 36, 13, 48, 40, C("plasma", 5))
+    for yy in (45, 50):
+        for zz in (34, 42):
+            g.set(12, yy, zz, C("orange", 6))
+            g.set(12, yy + 1, zz, C("steel", 7))
+    # A broad dark visor with teal glass reads at thumbnail size.
+    g.box(29, 43, 30, 30, 50, 46, C("iron", 1))
+    g.box(30, 44, 32, 31, 49, 44, C("plasma", 4))
+    g.box(31, 45, 34, 32, 48, 42, C("plasma", 6))
+    g.box(31, 47, 35, 32, 48, 39, C("plasma", 7))
+    # Side comm unit: base, inset, and one status lamp.
+    g.box(20, 45, 49, 25, 51, 51, C("steel", 4))
+    g.box(21, 46, 50, 25, 50, 52, C("iron", 2))
+    g.set(25, 48, 52, C("orange", 6))
+    # Short aerial grows from a visible steel mount.
+    g.box(20, 52, 49, 23, 54, 51, C("steel", 4))
+    g.box(21, 54, 50, 22, 58, 51, C("rust", 5))
+    g.set(21, 58, 50, C("plasma", 7))
     return rpart("headwear space-7", g, "Hunter Helmet", hides_hair=True, hides_eyebrows=True, hides_facial_hair=True)
 
 
@@ -226,21 +293,23 @@ def visor_band():
 
 def cyber_monocle():
     g = rig_grid()
-    g.box(29, 45, 40, 30, 50, 46, C("iron", 2))
-    g.box(30, 46, 41, 31, 49, 45, C("red", 5))
-    g.set(30, 47, 42, C("red", 7))
-    g.box(22, 47, 48, 29, 49, 50, C("iron", 2))
+    g.box(29, 44, 39, 30, 51, 47, C("iron", 1))
+    g.box(30, 45, 40, 31, 50, 46, C("steel", 5))
+    g.box(31, 46, 41, 32, 49, 45, C("teal", 3))
+    g.set(32, 47, 42, C("plasma", 7)).set(32, 48, 44, C("plasma", 6))
+    g.box(22, 47, 48, 29, 49, 50, C("steel", 3))
     return rpart("eyewear space-2", g, "Cyber Eyepiece")
 
 
 def aviator_goggles():
     g = rig_grid()
     band = dilate(region(HEAD), 1) & ~region(HEAD) & (y >= 46) & (y < 48)
-    fill(g, band, C("darkwood", 3))
+    fill(g, band, C("iron", 1))
     for z0 in (31, 40):
-        g.box(29, 44, z0, 31, 50, z0 + 6, C("gold", 4))
-        g.box(31, 45, z0 + 1, 32, 49, z0 + 5, C("sky", 5))
-        g.set(31, 48, z0 + 1, C("sky", 7))
+        g.box(29, 44, z0, 31, 50, z0 + 6, C("rust", 5))
+        g.box(30, 45, z0 + 1, 31, 49, z0 + 5, C("iron", 1))
+        g.box(31, 46, z0 + 2, 32, 49, z0 + 4, C("plasma", 5))
+        g.set(32, 48, z0 + 2, C("plasma", 7))
     return rpart("eyewear space-3", g, "Aviator Goggles")
 
 
@@ -259,9 +328,10 @@ def antenna_ears():
     g = rig_grid()
     (hx0, hy0, hz0), (hx1, hy1, hz1) = hb()
     for zz, sgn in ((hz0 - 1, -1), (hz1, 1)):
-        g.box(18, 44, zz, 23, 49, zz + 1, C("lime", 4))
-        g.line((20.5, 48, zz + 0.5), (19, 58, zz + 0.5 + sgn * 4), 0.5, C("lime", 5))
-        g.sphere(19, 59, zz + 0.5 + sgn * 4, 1.5, C("toxic", 6))
+        g.box(18, 44, zz, 23, 49, zz + 1, C("steel", 4))
+        g.box(19, 45, zz, 22, 48, zz + 1, C("teal", 3))
+        g.line((20.5, 48, zz + 0.5), (19, 57, zz + 0.5 + sgn * 3), 0.75, C("steel", 6))
+        g.sphere(19, 58, zz + 0.5 + sgn * 3, 1.5, C("plasma", 6))
     return rpart("ears space-1", g, "Antenna Ears")
 
 
@@ -280,8 +350,9 @@ def fin_ears():
     (hx0, hy0, hz0), (hx1, hy1, hz1) = hb()
     for zz, sgn in ((hz0 - 1, -1), (hz1, 1)):
         for k in range(6):
-            g.box(16 + k, 42 + k, zz + sgn * (k // 2), 24 - k // 2, 50 + k, zz + sgn * (k // 2) + 1, C("teal", 4 + (k % 2)))
-        g.box(16, 43, zz, 23, 44, zz + 1, C("teal", 2))
+            g.box(16 + k, 42 + k, zz + sgn * (k // 2), 24 - k // 2, 50 + k, zz + sgn * (k // 2) + 1, C("steel", 4 + (k % 2)))
+        g.box(16, 43, zz, 23, 44, zz + 1, C("teal", 3))
+        g.box(18, 45, zz + sgn, 22, 47, zz + sgn, C("plasma", 5))
     return rpart("ears space-3", g, "Alien Fin Ears")
 
 
@@ -290,33 +361,41 @@ def alien_face():
     g = rig_grid()
     rows = {44: (35, 36), 45: (33, 36), 46: (32, 36), 47: (31, 36), 48: (30, 36), 49: (30, 35)}
     for yy, (z0, z1) in rows.items():
-        g.box(29, yy, z0, 30, yy + 1, z1, C("iron", 0))
-        g.box(29, yy, 76 - z1, 30, yy + 1, 76 - z0, C("iron", 0))
-    g.set(29, 48, 32, C("toxic", 7)).set(29, 48, 43, C("toxic", 7))
-    g.box(29, 41, 37, 30, 42, 39, C("forest", 2))
+        g.box(29, yy, z0, 30, yy + 1, z1, C("iron", 1))
+        g.box(29, yy, 76 - z1, 30, yy + 1, 76 - z0, C("iron", 1))
+    # Two large luminous eyes and a small respirator make a single clear face.
+    for z0 in (31, 42):
+        g.box(29, 46, z0, 30, 50, z0 + 4, C("teal", 3))
+        g.box(30, 47, z0 + 1, 31, 49, z0 + 3, C("plasma", 6))
+        g.set(31, 48, z0 + 1, C("plasma", 7))
+    g.box(29, 41, 36, 30, 43, 40, C("steel", 3))
+    g.set(30, 42, 37, C("orange", 5)).set(30, 42, 39, C("orange", 5))
     return rpart("face space-1", g, "Xeno Eyes")
 
 
 def cyborg_plate():
     g = rig_grid()
-    g.box(29, 38, 39, 30, 53, 48, C("steel", 5))
-    g.box(29, 46, 41, 30, 49, 45, C("iron", 1))
-    g.box(29, 47, 42, 30, 48, 44, C("red", 7))
-    for yy in (40, 43, 51):
-        g.set(29, yy, 46, C("steel", 3))
-    g.box(29, 46, 32, 30, 48, 35, C("navy", 1))  # the human eye
-    g.box(29, 42, 35, 30, 43, 39, C("skindark", 3))
+    # A compact sensor set sits inside the marine helmet's larger visor.
+    g.box(29, 45, 31, 30, 50, 37, C("iron", 1))
+    g.box(29, 46, 32, 30, 49, 36, C("teal", 3))
+    g.set(29, 48, 33, C("plasma", 7)).set(29, 47, 35, C("plasma", 6))
+    # Orange status ticks add contrast without competing with the main glass.
+    g.set(29, 52, 37, C("orange", 6)).set(29, 52, 38, C("orange", 5))
+    g.box(29, 41, 37, 30, 43, 40, C("steel", 3))
+    g.set(29, 42, 38, C("iron", 1))
     return rpart("face space-2", g, "Cyborg Face Plate")
 
 
 def glow_warpaint():
     g = rig_grid()
-    g.box(29, 46, 32, 30, 48, 35, C("navy", 1)).box(29, 46, 41, 30, 48, 44, C("navy", 1))
-    for zz in (30, 31, 45, 46):
-        g.box(29, 41, zz, 30, 46, zz + 1, C("plasma", 6))
-    g.box(29, 50, 36, 30, 53, 40, C("plasma", 6))
-    g.set(29, 51, 37, C("plasma", 7))
-    g.box(29, 42, 36, 30, 43, 40, C("skindark", 3))
+    # Teal tracers align with the alien helmet's dual-lens face.
+    g.box(29, 45, 32, 30, 50, 36, C("teal", 3))
+    g.box(29, 45, 41, 30, 50, 45, C("teal", 3))
+    for zz in (31, 32, 45, 46):
+        g.set(29, 46, zz, C("plasma", 6))
+        g.set(29, 49, zz, C("plasma", 7))
+    g.box(29, 41, 36, 30, 44, 40, C("steel", 3))
+    g.set(29, 42, 38, C("orange", 6))
     return rpart("face space-3", g, "Glow War Paint")
 
 
@@ -333,7 +412,7 @@ def glow_brows():
     g = rig_grid()
     for z0, z1, tilt in ((31, 36, 1), (41, 46, -1)):
         for zz in range(z0, z1):
-            g.set(29, 50 + (1 if (zz - z0 if tilt > 0 else z1 - 1 - zz) < 2 else 0), zz, C("toxic", 6))
+            g.set(29, 50 + (1 if (zz - z0 if tilt > 0 else z1 - 1 - zz) < 2 else 0), zz, C("plasma", 6))
     return rpart("eyebrow space-2", g, "Glow Brows")
 
 
@@ -356,15 +435,28 @@ def marine_armor():
     g = rig_grid()
     (hx0, hy0, hz0), (hx1, hy1, hz1) = hb()
     armor = shell(["Chest", "Body"], 2) & (y < hy0) & (y >= 16)
-    fill(g, armor, C("khaki", 4))
-    fill(g, armor & (x >= 24) & (y >= 22), C("khaki", 5))
-    fill(g, armor & (x >= 24) & (y >= 26) & (y < 28), C("iron", 2))
-    fill(g, shell(ARMS, 1), C("khaki", 3))
+    fill(g, armor, C("steel", 5))
+    fill(g, armor & (x >= 24) & (y >= 22), C("bone", 6))
+    fill(g, armor & (x >= 24) & (y >= 26) & (y < 28), C("iron", 1))
+    fill(g, shell(ARMS, 1), C("steel", 4))
+    # One solid shoulder cap per arm. Keep the cap inside the arm silhouette.
     for z0, z1 in ((23, 31), (45, 53)):
-        g.box(14, 33, z0, 26, 38, z1, C("khaki", 5))
-        g.box(14, 33, z0, 26, 34, z1, C("gold", 5))
-    g.box(8, 18, 30, 14, 34, 46, C("khaki", 3))
-    g.box(8, 30, 36, 9, 32, 40, C("toxic", 7))
+        g.box(15, 33, z0 + 1, 25, 37, z1 - 1, C("bone", 6))
+        g.box(15, 33, z0 + 1, 25, 34, z1 - 1, C("orange", 5))
+        for zz in (z0 + 2, z1 - 3):
+            g.set(24, 36, zz, C("steel", 2))
+    # Chest module and back module use the same framed steel housing.
+    g.box(24, 22, 34, 25, 31, 42, C("iron", 1))
+    g.box(25, 23, 35, 26, 30, 41, C("steel", 5))
+    g.box(26, 25, 36, 27, 28, 40, C("teal", 3))
+    for zz, col in ((36, "plasma"), (38, "orange"), (40, "plasma")):
+        g.set(27, 26, zz, C(col, 6))
+    g.box(9, 19, 31, 15, 33, 45, C("steel", 4))
+    # Compact rear battery ribs leave room for the back-slot part to read.
+    g.box(8, 21, 34, 9, 31, 42, C("steel", 4))
+    for yy in (24, 27, 30):
+        g.box(8, yy, 36, 9, yy + 1, 40, C("teal", 3))
+    g.box(9, 32, 34, 14, 34, 42, C("orange", 5))
     return rpart("tops space-2", g, "Marine Power Armour")
 
 
@@ -372,15 +464,20 @@ def captain_jacket():
     g = rig_grid()
     (hx0, hy0, hz0), (hx1, hy1, hz1) = hb()
     coat = shell(["Chest", "Body", "Arm.L", "Arm.R", "ForeArm.L", "ForeArm.R"], 1) & (y < hy0) & (y >= 15)
-    fill(g, coat, C("navy", 4))
-    fill(g, coat & (x >= 24) & (z >= 37) & (z < 39), C("gold", 5))
+    fill(g, coat, C("steel", 4))
+    fill(g, coat & (x >= 24) & (z >= 37) & (z < 39), C("bone", 6))
     for k in range(16):
-        g.box(24, 34 - k, 30 + k, 25, 36 - k, 32 + k, C("red", 4))
+        g.box(24, 34 - k, 30 + k, 25, 36 - k, 32 + k, C("rust", 5))
     for z0, z1 in ((24, 30), (46, 52)):
-        g.box(15, 35, z0, 25, 37, z1, C("gold", 5))
-        for zz in range(z0, z1, 2):
-            g.box(15, 33, zz, 25, 35, zz + 1, C("gold", 4))
-    fill(g, coat & ((z == 18) | (z == 57)), C("gold", 5))
+        g.box(15, 34, z0 + 1, 25, 37, z1 - 1, C("bone", 6))
+        g.box(15, 34, z0 + 1, 25, 35, z1 - 1, C("orange", 5))
+        for zz in (z0 + 2, z1 - 3):
+            g.set(24, 36, zz, C("steel", 2))
+    fill(g, coat & ((z == 18) | (z == 57)), C("orange", 5))
+    # Mission patch on the chest, placed as a compact framed badge.
+    g.box(24, 26, 43, 25, 31, 48, C("iron", 1))
+    g.box(25, 27, 44, 26, 30, 47, C("teal", 4))
+    g.set(26, 29, 45, C("plasma", 7)).set(26, 28, 46, C("orange", 6))
     return rpart("tops space-3", g, "Captain's Jacket")
 
 
@@ -407,29 +504,37 @@ def suit_pants():
     g = rig_grid()
     m = leg_shell()
     fill(g, m, C("bone", 6))
-    fill(g, m & (y >= 9) & (y < 11), C("orange", 4))
-    fill(g, m & (y >= 17), C("orange", 5))
+    fill(g, m & (y >= 9) & (y < 11), C("orange", 5))
+    fill(g, m & (y >= 17), C("steel", 4))
+    for side, (z0, z1) in leg_z_ranges().items():
+        zz = z1 if side == "L" else z0 - 1
+        g.box(18, 12, zz, 23, 16, zz + 1, C("steel", 4))
+        g.box(19, 13, zz, 22, 15, zz + 1, C("teal", 3))
+        g.set(21, 14, zz, C("plasma", 7))
     return rpart("bottoms space-1", g, "EVA Suit Pants")
 
 
 def armored_greaves():
     g = rig_grid()
     m = leg_shell()
-    fill(g, m, C("khaki", 3))
-    fill(g, m & (x >= 23) & (y >= 6), C("khaki", 5))
-    fill(g, m & (y >= 9) & (y < 11) & (x >= 23), C("steel", 5))
+    fill(g, m, C("steel", 4))
+    fill(g, m & (x >= 23) & (y >= 6), C("bone", 6))
+    fill(g, m & (y >= 9) & (y < 11) & (x >= 23), C("orange", 5))
+    fill(g, m & (y >= 17), C("iron", 2))
     return rpart("bottoms space-2", g, "Armoured Greaves")
 
 
 def cargo_pants():
     g = rig_grid()
     m = leg_shell()
-    fill(g, m, C("sky", 3))
+    fill(g, m, C("steel", 5))
+    fill(g, m & (y >= 17), C("iron", 2))
     for side, (z0, z1) in leg_z_ranges().items():
         zz = z0 - 1 if side == "L" else z1
-        g.box(18, 9, zz, 23, 13, zz + 1, C("sky", 2))  # thigh pockets
-        g.set(20, 12, zz, C("gold", 5))
-    fill(g, m & (y >= 17), C("iron", 2))
+        g.box(18, 9, zz, 23, 14, zz + 1, C("iron", 1))  # framed thigh pockets
+        g.box(19, 10, zz, 22, 13, zz + 1, C("steel", 5))
+        g.set(20, 12, zz, C("orange", 6))
+        g.set(21, 10, zz, C("teal", 6))
     return rpart("bottoms space-3", g, "Cargo Pants")
 
 
@@ -447,13 +552,18 @@ def boots(c, cuff, sole, height, pad, extra=None):
 
 
 def moon_boots():
-    return rpart("shoes space-1", boots(C("bone", 6), C("orange", 5), C("iron", 2), 8, 1), "Moon Boots")
+    def extra(g, z0, z1):
+        # Front toe shield with a small luminous locator.
+        g.box(25, 2, z0 + 2, 27, 5, z1 - 2, C("steel", 5))
+        g.set(27, 4, (z0 + z1) // 2, C("plasma", 7))
+    return rpart("shoes space-1", boots(C("bone", 6), C("steel", 5), C("iron", 1), 8, 1, extra), "Moon Boots")
 
 
 def mag_boots():
     def extra(g, z0, z1):
-        g.box(16, 1, z0 - 1, 26, 3, z1 + 1, C("plasma", 5))
-        g.box(18, 2, z1 + 1, 24, 3, z1 + 1, C("plasma", 7))
+        g.box(16, 1, z0 - 1, 26, 3, z1 + 1, C("teal", 3))
+        g.box(18, 2, z1, 24, 3, z1 + 1, C("plasma", 7))
+        g.box(24, 4, z0, 27, 6, z1, C("orange", 5))
     return rpart("shoes space-2", boots(C("iron", 3), C("steel", 5), C("iron", 1), 7, 1, extra), "Mag Boots")
 
 
@@ -461,21 +571,23 @@ def jet_boots():
     def extra(g, z0, z1):
         g.box(13, 1, z0 + 1, 15, 5, z1 - 1, C("steel", 4))
         g.box(13, 0, z0 + 2, 15, 1, z1 - 2, C("ember", 6))
-        g.box(15, 4, z0, 26, 5, z1, C("red", 5))
-    return rpart("shoes space-3", boots(C("red", 4), C("gold", 5), C("iron", 2), 7, 0, extra), "Jet Boots")
+        g.box(15, 4, z0, 26, 5, z1, C("orange", 5))
+    return rpart("shoes space-3", boots(C("steel", 4), C("bone", 6), C("iron", 1), 7, 0, extra), "Jet Boots")
 
 
 # ---------------------------------------------------------------- back --
 def jetpack():
     g = rig_grid()
-    g.box(10, 20, 31, 16, 34, 45, C("steel", 4))
-    g.box(9, 22, 33, 10, 32, 43, C("steel", 3))
+    g.box(10, 20, 31, 16, 34, 45, C("steel", 5))
+    g.box(9, 22, 33, 10, 32, 43, C("iron", 1))
     for zc in (33.5, 42.5):
-        g.cylinder("y", 10, zc, 3, 16, 34, C("red", 4))
-        g.cylinder("y", 10, zc, 3.2, 30, 32, C("gold", 5))
-        g.cylinder("y", 10, zc, 2.2, 14, 16, C("iron", 2))
+        g.cylinder("y", 10, zc, 3, 16, 34, C("rust", 5))
+        g.cylinder("y", 10, zc, 3.2, 30, 32, C("steel", 6))
+        g.cylinder("y", 10, zc, 2.2, 14, 16, C("iron", 1))
         g.cylinder("y", 10, zc, 1.4, 13, 14, C("ember", 6))
-    g.box(12, 34, 36, 14, 37, 40, C("iron", 2))
+        g.box(10, 20, int(zc - 1), 11, 30, int(zc + 1), C("orange", 5))
+    g.box(12, 34, 36, 14, 37, 40, C("iron", 1))
+    g.box(14, 35, 37, 15, 36, 39, C("plasma", 6))
     return rpart("back space-1", g, "Jetpack")
 
 
@@ -483,24 +595,33 @@ def oxygen_tanks():
     g = rig_grid()
     for zc in (33.5, 42.5):
         g.cylinder("y", 12, zc, 3.4, 17, 33, C("bone", 6))
-        g.ellipsoid(12, 33, zc, 3.4, 2, 3.4, C("bone", 6))
-        g.cylinder("y", 12, zc, 3.6, 28, 30, C("sky", 4))
-        g.cylinder("y", 12, zc, 1, 34, 37, C("steel", 5))
-    g.box(14, 22, 30, 16, 24, 46, C("iron", 2))
+        g.ellipsoid(12, 33, zc, 3.4, 2, 3.4, C("steel", 5))
+        g.cylinder("y", 12, zc, 3.6, 28, 30, C("rust", 5))
+        g.cylinder("y", 12, zc, 1, 34, 37, C("steel", 6))
+        g.box(12, 21, int(zc - 1), 13, 27, int(zc + 1), C("teal", 3))
+        g.set(13, 25, int(zc), C("plasma", 7))
+    g.box(14, 22, 30, 16, 24, 46, C("iron", 1))
+    g.box(15, 24, 35, 16, 31, 41, C("orange", 5))
     return rpart("back space-2", g, "Oxygen Tanks")
 
 
 def star_cape():
     g = rig_grid()
-    for yy in range(12, 36):
-        spread = 9 + (36 - yy) // 5
-        g.box(13, yy, 38 - spread, 15, yy + 1, 38 + spread, C("navy", 3 if yy % 5 else 2))
-    rng = np.random.default_rng(7)
-    for k in range(18):
-        yy = int(rng.integers(13, 34))
-        spread = 9 + (36 - yy) // 5
-        g.set(13, yy, int(rng.integers(38 - spread, 38 + spread)), C("bone", 7))
-    g.box(13, 34, 28, 16, 36, 48, C("gold", 4))
+    # Short, tapered mantle stays above the belt and cannot read as a stray
+    # column between a pack and the trousers.
+    for yy in range(20, 36):
+        spread = 7 + (36 - yy) // 6
+        shade = 4 if yy % 4 else 5
+        g.box(13, yy, 38 - spread, 15, yy + 1, 38 + spread, C("steel", shade))
+        if yy in (20, 21):
+            g.box(13, yy, 38 - spread, 15, yy + 1, 38 + spread, C("iron", 2))
+    # Four bright constellations read as a fabric pattern, not a panel.
+    for yy, zz in ((31, 33), (28, 40), (24, 44), (22, 35)):
+        g.set(13, yy, zz, C("plasma", 7))
+        g.set(13, yy, zz - 1, C("bone", 7))
+        g.set(13, yy, zz + 1, C("bone", 7))
+        g.set(13, yy - 1, zz, C("bone", 6))
+        g.set(13, yy + 1, zz, C("bone", 6))
     return rpart("back space-3", g, "Starfield Cape")
 
 
