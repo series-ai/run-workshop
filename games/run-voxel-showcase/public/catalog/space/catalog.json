@@ -515,22 +515,22 @@
    "filename": "space-buildings-alien-hive.glb",
    "relativePath": "buildings/space-buildings-alien-hive.glb",
    "leaf": "world",
-   "sizeBytes": 148348,
+   "sizeBytes": 133312,
    "bounds": {
     "min": [
-     -64,
-     -0.0625,
-     -64
+     -62,
+     0,
+     -64.5
     ],
     "max": [
-     64,
+     62,
      126,
-     64
+     64.5
     ],
     "size": [
-     128,
-     126.0625,
-     128
+     124,
+     126,
+     129
     ]
    },
    "normalizedShift": 0,
@@ -1148,21 +1148,21 @@
    "filename": "space-creatures-ufo-drone.glb",
    "relativePath": "creatures/space-creatures-ufo-drone.glb",
    "leaf": "world",
-   "sizeBytes": 21864,
+   "sizeBytes": 37148,
    "bounds": {
     "min": [
-     -12.0918,
+     -11.5,
      0,
      -11.5
     ],
     "max": [
-     12.0918,
-     13,
+     11.5,
+     22.8,
      11.5
     ],
     "size": [
-     24.1836,
-     13,
+     23,
+     22.8,
      23
     ]
    },
@@ -1243,21 +1243,21 @@
    "filename": "space-creatures-xeno-queen.glb",
    "relativePath": "creatures/space-creatures-xeno-queen.glb",
    "leaf": "world",
-   "sizeBytes": 169416,
+   "sizeBytes": 159636,
    "bounds": {
     "min": [
-     -86.7191,
-     0.0211,
+     -87.1457,
+     -0.2333,
      -103.1278
     ],
     "max": [
-     86.7191,
-     137.4582,
+     87.1457,
+     130.0205,
      103.5
     ],
     "size": [
-     173.4383,
-     137.4371,
+     174.2914,
+     130.2538,
      206.6278
     ]
    },
@@ -1396,22 +1396,22 @@
    "filename": "space-held-items-data-pad.glb",
    "relativePath": "held-items/space-held-items-data-pad.glb",
    "leaf": "world",
-   "sizeBytes": 14648,
+   "sizeBytes": 88708,
    "bounds": {
     "min": [
-     -0.18,
-     -0.03,
-     -0.01
+     -0.2,
+     -0.05,
+     -0.06
     ],
     "max": [
-     0.05,
-     0.09,
-     0.07
+     0.06,
+     0.11,
+     0.12
     ],
     "size": [
-     0.23,
-     0.12,
-     0.08
+     0.26,
+     0.16,
+     0.18
     ]
    },
    "normalizedShift": 0,
@@ -2033,22 +2033,22 @@
    "filename": "space-props-alien-eggs.glb",
    "relativePath": "props/space-props-alien-eggs.glb",
    "leaf": "world",
-   "sizeBytes": 28516,
+   "sizeBytes": 58604,
    "bounds": {
     "min": [
-     -13.9054,
+     -16,
      0,
-     -12.4054
+     -14
     ],
     "max": [
-     13.5,
-     16.4987,
-     12.4054
+     16,
+     17.4846,
+     14
     ],
     "size": [
-     27.4054,
-     16.4987,
-     24.8107
+     32,
+     17.4846,
+     28
     ]
    },
    "normalizedShift": 0,
@@ -3171,22 +3171,22 @@
    "filename": "space-terrain-nature-crystal-cluster.glb",
    "relativePath": "terrain-nature/space-terrain-nature-crystal-cluster.glb",
    "leaf": "world",
-   "sizeBytes": 31432,
+   "sizeBytes": 94156,
    "bounds": {
     "min": [
-     -21.2047,
-     0.2153,
-     -16.34
+     -29.4409,
+     0.218,
+     -28
     ],
     "max": [
-     20.768,
-     32.6613,
-     16.7115
+     29.4409,
+     48.6389,
+     28
     ],
     "size": [
-     41.9727,
-     32.446,
-     33.0515
+     58.8819,
+     48.4208,
+     56
     ]
    },
    "normalizedShift": 0,

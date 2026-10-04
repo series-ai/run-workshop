@@ -633,22 +633,22 @@
    "filename": "monster-buildings-dungeon-entrance.glb",
    "relativePath": "buildings/monster-buildings-dungeon-entrance.glb",
    "leaf": "world",
-   "sizeBytes": 342612,
+   "sizeBytes": 332500,
    "bounds": {
     "min": [
-     -58.6563,
+     -56.7724,
      -0.0312,
-     -60
+     -59.5
     ],
     "max": [
-     58.1817,
-     88,
-     59.5313
+     56.9219,
+     125.0537,
+     59.8087
     ],
     "size": [
-     116.838,
-     88.0313,
-     119.5313
+     113.6943,
+     125.085,
+     119.3087
     ]
    },
    "normalizedShift": 0,
@@ -1585,22 +1585,22 @@
    "filename": "monster-held-items-holy-water.glb",
    "relativePath": "held-items/monster-held-items-holy-water.glb",
    "leaf": "world",
-   "sizeBytes": 47256,
+   "sizeBytes": 73160,
    "bounds": {
     "min": [
-     -0.145,
+     -0.2,
      -0.03,
-     -0.05
+     -0.06
     ],
     "max": [
-     0.025,
-     0.08,
+     0.06,
+     0.09,
      0.06
     ],
     "size": [
-     0.17,
-     0.11,
-     0.11
+     0.26,
+     0.12,
+     0.12
     ]
    },
    "normalizedShift": 0,
@@ -2072,22 +2072,22 @@
    "filename": "monster-held-items-witch-wand.glb",
    "relativePath": "held-items/monster-held-items-witch-wand.glb",
    "leaf": "world",
-   "sizeBytes": 25972,
+   "sizeBytes": 59424,
    "bounds": {
     "min": [
-     -0.21,
-     0.005,
-     -0.025
+     -0.28,
+     -0.02,
+     -0.05
     ],
     "max": [
-     0.04,
-     0.055,
-     0.025
+     0.07,
+     0.08,
+     0.05
     ],
     "size": [
-     0.25,
-     0.05,
-     0.05
+     0.35,
+     0.1,
+     0.1
     ]
    },
    "normalizedShift": 0,
@@ -4010,7 +4010,7 @@
    "filename": "monster-characters-skins-skeleton-hunter.glb",
    "relativePath": "characters-skins/monster-characters-skins-skeleton-hunter.glb",
    "leaf": "characters",
-   "sizeBytes": 268456,
+   "sizeBytes": 152264,
    "bounds": {
     "min": [
      -0.11,
@@ -4019,12 +4019,12 @@
     ],
     "max": [
      0.13,
-     0.66,
+     0.67,
      0.29
     ],
     "size": [
      0.24,
-     0.66,
+     0.67,
      0.58
     ]
    },

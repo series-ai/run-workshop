@@ -1,56 +1,76 @@
 """Xeno queen (boss), in the style of the Pirate Nation world bosses.
 
-A chunky caricature like the PN giant turtle, kraken and Kevin, in three
-colours: violet chitin, bone and glowing toxic green. She rears up like a
-mantis: a huge egg sac drags behind, the thorax slopes up to a big wedge
+A chunky caricature like the PN giant turtle, kraken and Kevin: an escaped
+lab specimen. Violet chitin with clean colour fields (lit tops, shaded
+undersides, a dark frame on every facet edge), bone armour, a magenta egg
+sac and glowing cyan bio-light (the space theme's glow). She rears up like
+a mantis: the egg sac drags behind, the thorax slopes up to a big wedge
 head that turns toward the viewer. The head has two huge angry glowing
-eyes under a heavy brow, a wide open jaw full of bone fangs with a toxic
-glow inside, and hooked mandibles; a tall crowned frill fans out behind
-it. Two giant bone scythe arms rise over the shoulders and hang their
-blades in front. Four long jointed legs splay out: thighs up to high
-spiked knees, shins down on the diagonal to bone claws. Every mass is a
-loft of octagonal frustums or a prism (true slopes); the detail is
-painted. Clips: idle (breathe, look, jaw), attack (rear, double slash,
-jaw wide, goo from the mouth socket), hit (recoil), death (collapse).
-Faces -Z.
+eyes under a heavy brow, a wide open jaw full of bone fangs with a cyan
+glow inside, and hooked mandibles; a solid three-pointed crest stands
+behind it. A broken steel containment collar with a hazard band and a
+blinking tag lamp is still clamped round her neck. Two giant bone scythe
+arms rise over the shoulders and hang their blades in front. Four thick
+jointed legs come out of her flanks: thighs up and out to bone knees,
+shins down on the diagonal to bone claws. Every mass is a loft of
+octagonal frustums or a prism (true slopes); the detail is painted.
+Clips: idle (breathe, look, jaw), attack (rear, double slash, jaw wide,
+goo from the mouth socket), hit (recoil), death (collapse). Faces -Z.
 """
 import numpy as np
 
 from voxgrid import C
-from _life import P, Clip, Grid, Rig, asset, coords, facet_paint, front, keys, light_top, loft, plan, quad, side, spots, wave
+from _life import P, Clip, Grid, Rig, asset, coords, front, keys, light_top, loft, plan, quad, seams, side, wave
+from pnshapes import _owners
+import pnpaint
 
 S = (192, 150, 212)
 CX = 96
-SHELL, BONE, GLOW = "purple", "bone", "toxic"
+SHELL, BONE, GLOW = "purple", "bone", "plasma"
 HZ = 14  # the front plane of the skull (the face)
 HEAD = [(HZ, 25, 18, 86), (HZ + 12, 30, 21, 89), (HZ + 32, 27, 19, 91), (HZ + 48, 16, 12, 86)]
 JAW = [(HZ - 5, 19, 6, 62), (HZ + 10, 22, 7, 63), (HZ + 36, 16, 6, 68)]
 JAW_HINGE = (CX, 68.0, HZ + 34.0)
 THORAX = [(HZ + 40, 20, 16, 84), (HZ + 52, 26, 21, 78), (HZ + 72, 27, 22, 66), (HZ + 90, 23, 20, 54)]
+COLLAR = [(HZ + 42, 25.0, 21.0, 83), (HZ + 53, 31.0, 26.0, 78)]
 ABDOMEN = [(102, 23, 20, 50), (120, 33, 27, 50), (144, 36, 30, 50), (168, 32, 27, 48), (188, 21, 19, 44), (206, 8, 8, 40)]
 NECK = (CX, 84.0, HZ + 44.0)
 BODY_J = (CX, 60.0, 100.0)
 SHOULDER = (80.0, HZ + 56.0)  # (y, z)
 SCY_X = 42
 CREST_J = (CX, 100.0, HZ + 36.0)
-# legs: (hip x offset, z, knee out, knee y, foot out, splay degrees)
-LEGS = [(22, 102, 30, 106, 66, 34.0), (28, 128, 28, 102, 62, -30.0)]
+# legs: (hip x offset, z, hip y, knee x offset, knee y, foot x offset, splay degrees)
+LEGS = [(18, 108, 48, 60, 66, 86, 30.0), (26, 136, 46, 64, 62, 88, -28.0)]
 
 
-def chitin(g: Grid, solids, base: int = 5, size=(14, 9), seed: int = 0) -> np.ndarray:
-    """Big violet chitin plates on every facet (no rivets), soft seams, lit tops."""
-    m = facet_paint(g, solids, lambda gg, mm, fr: P.plates(gg, mm, SHELL, base, size=size, rivets=False, frame=fr, seed=seed))
-    P.flat(g, m & (g.a == C(SHELL, base - 2)), SHELL, base - 1)  # softer seams
-    light_top(g, m, SHELL, base + 1)
+def shade_facets(g: Grid, solids, ramp: str, base: int, seam: int | None = 2, width: float = 0.85) -> np.ndarray:
+    """Clean colour fields: one shade per facet by the way it faces (lit
+    tops, mid walls, shaded undersides) and a dark frame on facet edges
+    (rule S4). No per-voxel noise."""
+    idx, owner, _best, second, normals = _owners(g, solids)
+    m = np.zeros(g.shape, dtype=bool)
+    m[idx] = True
+    shades = np.array([base + (1 if n[1] > 0.55 else (-1 if n[1] < -0.35 else 0)) for n in normals])
+    cols = C(ramp, 0) + np.clip(shades[owner], 1, 7)
+    g.a[idx] = np.where(g.a[idx] > 0, cols, g.a[idx]).astype(np.uint8)
+    if seam is not None:
+        edge = np.zeros(g.shape, dtype=bool)
+        sel = second > -width
+        edge[tuple(i[sel] for i in idx)] = True
+        P.flat(g, edge, ramp, max(1, base - seam))
     return m
 
 
-def spine_row(g: Grid, zs, top_of, h: float = 9, w: float = 2.5) -> np.ndarray:
-    """Bone spines along the top ridge; top_of(z) gives the ridge height."""
+def chitin(g: Grid, solids, base: int = 4) -> np.ndarray:
+    return shade_facets(g, solids, SHELL, base)
+
+
+def spine_row(g: Grid, zs, top_of, h: float = 9, w: float = 3.5) -> np.ndarray:
+    """Chunky bone spines along the top ridge; top_of(z) gives the ridge height."""
     m = np.zeros(g.shape, dtype=bool)
     for z in zs:
         y = top_of(z)
-        m |= side(g, [(y - 3, z - 5), (y - 3, z + 5), (y + h, z + 6)], CX - w, CX + w, BONE, 6)
+        m |= side(g, [(y - 4, z - 6), (y - 4, z + 6), (y + h, z + 7)], CX - w, CX + w, BONE, 6)
     P.flat(g, m, BONE, 6)
     light_top(g, m, BONE, 7)
     return m
@@ -67,61 +87,103 @@ def ridge(rings):
 def abdomen() -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
-    m = chitin(g, loft(g, CX, ABDOMEN, SHELL, 5), 5, size=(26, 14), seed=1)
-    top = m & (Y >= 58)
-    P.flat(g, top & (np.floor((Z - 100) / 12) % 2 == 1), SHELL, 4)  # wasp bands
-    light_top(g, top, SHELL, 6)
-    # glowing toxic vents between the bands
-    for z0 in (122, 146, 170):
-        vent = top & (Z >= z0) & (Z < z0 + 2) & (np.abs(X - CX) < 22)
-        P.flat(g, vent, GLOW, 5)
-        P.flat(g, vent & (np.abs(X - CX) < 12), GLOW, 7)
-    # the egg membrane on the flanks: pale violet, packed with glowing eggs
+    m = chitin(g, loft(g, CX, ABDOMEN, SHELL, 4), 4)
+    P.flat(g, m & (Z < 107), SHELL, 2)       # the dark waist where the sac meets the thorax
+    P.flat(g, m & (Z >= 107) & (Z < 109), SHELL, 5)
+    top = m & (Y >= 58) & (Z >= 109)
+    # wasp bands: broad darker plates with a lit leading edge
+    band = top & (np.floor((Z - 102) / 12) % 2 == 1)
+    P.flat(g, band, SHELL, 3)
+    P.flat(g, top & ((Z - 102) % 12 < 1.0) & (Z > 110), SHELL, 2)
+    # glowing cyan vents between the bands
+    for z0 in (126, 150, 174):
+        vent = top & (Z >= z0) & (Z < z0 + 2) & (np.abs(X - CX) < 20)
+        P.flat(g, vent, GLOW, 4)
+        P.flat(g, vent & (np.abs(X - CX) < 11), GLOW, 7)
+    # the egg sac on the flanks: a magenta membrane with rows of glowing eggs
     low = m & (Y < 58) & (np.abs(X - CX) > 8)
     P.flat(g, low, "magenta", 4)
-    P.flat(g, low & (Y < 34), "magenta", 3)
-    spots(g, low, GLOW, 5, cell=11, r=4.2, chance=1, seed=3)
-    spots(g, low, GLOW, 7, cell=11, r=2.4, chance=1, seed=3)
-    spine_row(g, (112, 134, 158, 182), ridge(ABDOMEN), h=12, w=3)
+    P.flat(g, low & (Y < 36), "magenta", 3)
+    P.flat(g, m & (np.abs(Y - 58) < 0.8) & (np.abs(X - CX) > 8), SHELL, 2)   # the dark seam over the sac
+    for row, (yy, z0) in enumerate(((49.0, 118.0), (39.0, 128.0))):
+        for zc in np.arange(z0, 196, 20):
+            d = np.hypot(Y - yy, Z - zc)
+            P.flat(g, low & (d < 5.2), "magenta", 2)
+            P.flat(g, low & (d < 4.2), GLOW, 4)
+            P.flat(g, low & (d < 2.6), GLOW, 6)
+            P.flat(g, low & (np.hypot(Y - yy - 1.5, Z - zc + 1.5) < 1.1), GLOW, 7)
+    spine_row(g, (120, 150, 180), ridge(ABDOMEN), h=11, w=3.5)
     return g
 
 
 def thorax() -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
-    m = chitin(g, loft(g, CX, THORAX, SHELL, 5), 5, size=(18, 10), seed=4)
+    m = chitin(g, loft(g, CX, THORAX, SHELL, 4), 4)
     # a pale bone breastplate on the chest (the underside of the slope)
-    chest = m & (Y < 78) & (np.abs(X - CX) < 16) & (Z < HZ + 84)
-    P.plates(g, chest, BONE, 5, size=(10, 6), rivets=False)
-    spine_row(g, (HZ + 54, HZ + 72), ridge(THORAX), h=12, w=3)
+    chest = m & (Y < 76) & (np.abs(X - CX) < 15) & (Z < HZ + 86)
+    P.flat(g, chest, BONE, 5)
+    P.flat(g, chest & (np.abs(X - CX) < 0.8), BONE, 3)
+    P.flat(g, chest & (np.abs(X - CX) > 13.5), BONE, 3)
+    # a carapace marking along the ridge: a lit stripe framed in dark
+    back = m & (Y > 80) & (np.abs(X - CX) < 9)
+    P.flat(g, back, SHELL, 2)
+    P.flat(g, back & (np.abs(X - CX) < 7.5), SHELL, 5)
+    spine_row(g, (HZ + 66, HZ + 82), ridge(THORAX), h=11, w=3.5)
     # shoulder knobs that carry the scythes
     for s in (-1, 1):
         x0, x1 = sorted((CX + s * 20, CX + s * (SCY_X - 2)))
         sy, sz = SHOULDER
-        k = side(g, [(sy - 8, sz - 6), (sy - 8, sz + 8), (sy + 6, sz + 9), (sy + 10, sz + 1), (sy + 5, sz - 8)], x0, x1, SHELL, 5)
-        P.flat(g, k, SHELL, 5)
-        light_top(g, k, SHELL, 6)
-        spike = side(g, [(sy + 4, sz - 2), (sy + 4, sz + 6), (sy + 16, sz + 10)], x0 + 3, x1 - 3, BONE, 6)
+        k = side(g, [(sy - 8, sz - 6), (sy - 8, sz + 8), (sy + 6, sz + 9), (sy + 10, sz + 1), (sy + 5, sz - 8)], x0, x1, SHELL, 4)
+        shade_facets(g, [g.solids[-1]], SHELL, 5)
+        spike = side(g, [(sy + 4, sz - 2), (sy + 4, sz + 6), (sy + 14, sz + 9)], x0 + 4, x1 - 4, BONE, 6)
         light_top(g, spike, BONE, 7)
+    collar(g)
     return g
+
+
+def collar(g: Grid) -> None:
+    """The broken containment collar: a riveted steel band with a hazard
+    stripe, a tag box with a blinking cyan lamp and a snapped chain link."""
+    X, Y, Z = coords(g)
+    n0 = len(g.solids)
+    loft(g, CX, COLLAR, "steel", 5)
+    ring = shade_facets(g, g.solids[n0:], "steel", 5, seam=2)
+    zc = (COLLAR[0][0] + COLLAR[1][0]) / 2
+    pnpaint.hazard(g, ring & (np.abs(Z - zc) < 2.6), period=6, a=("orange", 4), b=("steel", 2))
+    P.flat(g, ring & (np.floor(X / 5) % 2 == 0) & (np.abs(np.abs(Z - zc) - 4.0) < 0.5), "steel", 3)  # rivets
+    # the tag box on top, with its lamp
+    tb = plan(g, [(CX - 5, zc - 3), (CX + 5, zc - 3), (CX + 5, zc + 4), (CX - 5, zc + 4)], 102, 107, "steel", 3)
+    shade_facets(g, [g.solids[-1]], "steel", 3, seam=1)
+    P.flat(g, tb & (Z < zc - 2.5) & (np.abs(Y - 104.5) < 1.0) & (np.abs(X - CX) < 3.5), "orange", 5)
+    lamp = plan(g, [(CX - 2, zc - 1), (CX + 2, zc - 1), (CX + 2, zc + 2), (CX - 2, zc + 2)], 107, 110, GLOW, 6)
+    P.flat(g, lamp, GLOW, 6)
+    P.flat(g, lamp & (Y > 109), GLOW, 7)
+    # a snapped chain link hanging from the side lug
+    for s, dy in ((1, 0),):
+        lx = CX + s * 28.5
+        lug = side(g, [(64, zc - 3), (64, zc + 3), (70, zc + 3), (70, zc - 3)], lx - 2.5, lx + 2.5, "steel", 3)
+        P.flat(g, lug, "steel", 3)
+        link = front(g, [(lx - 1.5, 65), (lx + 1.5, 65), (lx + 3.0, 54), (lx, 54)], zc - 1.5, zc + 1.5, "steel", 5)
+        P.flat(g, link, "steel", 5)
+        P.flat(g, link & (Y < 56), "steel", 3)
 
 
 # ------------------------------------------------------------------ head
 def head() -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
-    m = chitin(g, loft(g, CX, HEAD, SHELL, 5, k=0.34), 5, size=(20, 11), seed=5)
+    m = chitin(g, loft(g, CX, HEAD, SHELL, 5, k=0.34), 5)
     z0, w0, h0, y0 = HEAD[0]
     face = m & (Z < z0 + 1.2)
-    P.flat(g, face, SHELL, 7)
-    P.outline(g, face, SHELL, 5, normal="z")
-    # a glowing toxic gem on the brow of the skull (the queen's mark)
+    P.flat(g, face, SHELL, 6)
+    P.outline(g, face, SHELL, 3, normal="z")
+    # a glowing cyan gem on the brow of the skull (the queen's mark)
     topf = m & (Y > y0 + h0 - 1.5) & (Z < z0 + 20)
     P.flat(g, topf & (np.abs(X - CX) + np.abs(Z - (z0 + 9)) * 0.8 < 6.5), SHELL, 3)
     P.flat(g, topf & (np.abs(X - CX) + np.abs(Z - (z0 + 9)) * 0.8 < 5), GLOW, 6)
     P.flat(g, topf & (np.abs(X - CX) + np.abs(Z - (z0 + 9)) * 0.8 < 2.5), GLOW, 7)
-    for s in (-1, 1):  # dark V stripes back over the skull
-        P.flat(g, topf & (np.abs((Z - z0) - 14 - 0.6 * np.abs(X - CX)) < 1.2) & (np.abs(X - CX) > 5), SHELL, 3)
+    P.flat(g, topf & (np.abs((Z - z0) - 16 - 0.6 * np.abs(X - CX)) < 1.5) & (np.abs(X - CX) > 6), SHELL, 3)  # one dark V over the skull
     # the glowing mouth cavity behind the fangs
     throat = front(g, [(CX - 19, 55), (CX + 19, 55), (CX + 17, 70), (CX - 17, 70)], z0 + 3, z0 + 26, GLOW, 4)
     P.flat(g, throat, GLOW, 4)
@@ -142,7 +204,7 @@ def head() -> Grid:
         P.flat(g, rim & (d < 1.25), SHELL, 2)
         P.flat(g, eye, GLOW, 6)
         P.flat(g, eye & (d < 0.6), GLOW, 7)
-        P.flat(g, eye & (np.abs(X - ex + s * 0.5) < 1.3) & (np.abs(Y - ey) < 4.5), SHELL, 1)
+        P.flat(g, eye & (np.abs(X - ex + s * 0.5) < 1.3) & (np.abs(Y - ey) < 4.5), "navy", 1)
         P.flat(g, eye & (np.hypot(X - (ex + s * 4.0), Y - (ey + 2.0)) < 1.6), BONE, 7)
     # a heavy brow ridge in a V over the eyes
     brow = np.zeros(g.shape, dtype=bool)
@@ -159,21 +221,21 @@ def head() -> Grid:
     # two bone horns sweeping back from the top corners of the skull
     for s in (-1, 1):
         hx = CX + s * 17
-        horn = side(g, quad((y0 + 14, z0 + 16), (y0 + 30, z0 + 44), 5.0, 1.0, cap=0.6), hx - 3, hx + 3, BONE, 6)
+        horn = side(g, quad((y0 + 12, z0 + 14), (y0 + 26, z0 + 38), 6.0, 2.0, cap=0.6), hx - 4.5, hx + 4.5, BONE, 6)
         P.flat(g, horn, BONE, 6)
         light_top(g, horn, BONE, 7)
-        P.flat(g, horn & (Y < y0 + 19), BONE, 4)
+        P.flat(g, horn & (Y < y0 + 17), BONE, 4)
     return g
 
 
 def jaw() -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
-    m = chitin(g, loft(g, CX, JAW, SHELL, 5, k=0.34), 5, size=(16, 8), seed=6)
+    m = chitin(g, loft(g, CX, JAW, SHELL, 4, k=0.34), 4)
     z0 = JAW[0][0]
     top = JAW[0][3] + JAW[0][2]
     P.flat(g, m & (Y > top - 1.5), GLOW, 4)  # the glowing tongue bed
-    P.flat(g, m & (Z < z0 + 1.2) & (Y < top - 1.5), SHELL, 6)
+    P.flat(g, m & (Z < z0 + 1.2) & (Y < top - 1.5), SHELL, 5)
     teeth = np.zeros(g.shape, dtype=bool)
     for k, x in enumerate(np.linspace(CX - 14, CX + 14, 5)):
         big = k in (0, 4)
@@ -195,26 +257,24 @@ def jaw() -> Grid:
 
 
 def crest() -> Grid:
-    """The queen's crowned frill: a wide fan of five bone-tipped points."""
+    """The queen's crown: a solid fan of three thick bone-tipped points."""
     g = Grid(*S)
     X, Y, Z = coords(g)
     cy = CREST_J[1]
     zc = CREST_J[2]
-    fan = [(CX - 18, cy - 6), (CX + 18, cy - 6), (CX + 38, cy + 14), (CX + 30, cy + 18), (CX + 34, cy + 34), (CX + 19, cy + 26),
-           (CX + 14, cy + 42), (CX + 5, cy + 30), (CX, cy + 46), (CX - 5, cy + 30), (CX - 14, cy + 42), (CX - 19, cy + 26),
-           (CX - 34, cy + 34), (CX - 30, cy + 18), (CX - 38, cy + 14)]
-    m = front(g, fan, zc - 3, zc + 3, SHELL, 5)
-    P.flat(g, m, SHELL, 5)
+    fan = [(CX - 16, cy - 6), (CX + 16, cy - 6), (CX + 28, cy + 16), (CX + 26, cy + 26), (CX + 15, cy + 18),
+           (CX + 6, cy + 24), (CX, cy + 36), (CX - 6, cy + 24), (CX - 15, cy + 18), (CX - 26, cy + 26), (CX - 28, cy + 16)]
+    m = front(g, fan, zc - 5, zc + 5, SHELL, 4)
+    shade_facets(g, [g.solids[-1]], SHELL, 4)
+    face = m & ((Z < zc - 4) | (Z > zc + 4))
     rr = np.hypot(X - CX, (Y - (cy - 6)) * 1.1)
-    P.flat(g, m & (rr > 16), "magenta", 5)  # the inner membrane
-    P.flat(g, m & (rr > 16) & (np.abs(np.sin(np.arctan2(Y - cy + 6, X - CX) * 5)) < 0.18), SHELL, 3)  # ribs
-    P.flat(g, m & (rr > 34), BONE, 6)  # bone points
-    P.flat(g, m & (rr > 40), BONE, 7)
-    P.outline(g, m, SHELL, 3, normal="z")
-    P.flat(g, m & (rr > 34) & (Y > cy + 20), BONE, 7)
-    for gx, gy in ((CX - 20, cy + 12), (CX + 20, cy + 12), (CX, cy + 20)):
-        P.flat(g, m & (np.hypot(X - gx, Y - gy) < 3.2), GLOW, 6)
-        P.flat(g, m & (np.hypot(X - gx, Y - gy) < 1.6), GLOW, 7)
+    P.flat(g, face & (rr > 12), "magenta", 4)  # the inner membrane
+    P.flat(g, face & (rr > 12) & (np.abs(np.sin(np.arctan2(Y - cy + 6, X - CX) * 3)) < 0.12), "magenta", 2)  # two ribs
+    P.flat(g, m & (rr > 25), BONE, 6)  # bone points
+    P.flat(g, m & (rr > 30), BONE, 7)
+    gem = face & (np.hypot(X - CX, Y - (cy + 12)) < 3.6)
+    P.flat(g, gem, GLOW, 5)
+    P.flat(g, gem & (np.hypot(X - CX, Y - (cy + 12)) < 1.8), GLOW, 7)
     return g
 
 
@@ -224,54 +284,62 @@ def scythe(s: int) -> Grid:
     X, Y, Z = coords(g)
     x = CX + s * SCY_X
     sy, sz = SHOULDER
-    elbow = (sy + 32, sz - 12)
-    arm = side(g, quad((sy, sz), elbow, 6.0, 5.0, cap=0.3), x - 4, x + 4, SHELL, 5)
-    P.flat(g, arm, SHELL, 5)
-    light_top(g, arm, SHELL, 6)
-    P.flat(g, arm & (np.abs(Y - (sy + 19)) < 1.2), SHELL, 3)
+    elbow = (sy + 30, sz - 12)
+    side(g, quad((sy, sz), elbow, 7.0, 6.0, cap=0.3), x - 5, x + 5, SHELL, 4)
+    arm = shade_facets(g, [g.solids[-1]], SHELL, 4)
+    P.flat(g, arm & (np.abs(Y - (sy + 18)) < 1.2), SHELL, 2)
     ey, ez = elbow
-    knob = side(g, [(ey - 7, ez - 5), (ey - 7, ez + 6), (ey + 5, ez + 8), (ey + 8, ez), (ey + 3, ez - 7)], x - 4.5, x + 4.5, SHELL, 5)
-    light_top(g, knob, SHELL, 6)
-    spur = side(g, [(ey + 4, ez + 2), (ey + 4, ez + 8), (ey + 12, ez + 16)], x - 2, x + 2, BONE, 6)
-    light_top(g, spur, BONE, 7)
-    # the blade: a big sickle curving down in front of the queen
-    outer = [(ey + 6, ez - 4), (ey + 4, ez - 20), (ey - 8, ez - 36), (ey - 26, ez - 46), (ey - 44, ez - 50)]
-    inner = [(ey - 32, ez - 38), (ey - 20, ez - 28), (ey - 12, ez - 18), (ey - 7, ez - 6)]
-    blade_pts = outer + inner
-    blade = side(g, blade_pts, x - 2.5, x + 2.5, BONE, 6)
-    P.flat(g, blade, BONE, 6)
-    # serrated teeth along the inner edge
+    side(g, [(ey - 8, ez - 6), (ey - 8, ez + 7), (ey + 6, ez + 9), (ey + 9, ez), (ey + 4, ez - 8)], x - 6, x + 6, BONE, 5)
+    shade_facets(g, [g.solids[-1]], BONE, 5, seam=2)
+    # the blade: a thick sickle curving down in front of the queen
+    outer = [(ey + 5, ez - 4), (ey + 3, ez - 15), (ey - 5, ez - 26), (ey - 17, ez - 33), (ey - 30, ez - 35)]
+    inner = [(ey - 22, ez - 26), (ey - 14, ez - 20), (ey - 9, ez - 13), (ey - 7, ez - 5)]
+    side(g, outer + inner, x - 4, x + 4, BONE, 6)
+    blade = shade_facets(g, [g.solids[-1]], BONE, 6, seam=2)
+    # three chunky teeth along the inner edge
     teeth = np.zeros(g.shape, dtype=bool)
-    for (ya, za), (yb, zb) in zip(inner, inner[1:]):
-        for t in (0.25, 0.75):
-            ty, tz = ya + (yb - ya) * t, za + (zb - za) * t
-            teeth |= side(g, [(ty - 2.5, tz - 1.5), (ty + 2.5, tz + 1.5), (ty - 6, tz + 5)], x - 1.5, x + 1.5, BONE, 5)
+    for (ya, za), (yb, zb) in list(zip(inner, inner[1:])):
+        ty, tz = (ya + yb) / 2, (za + zb) / 2
+        teeth |= side(g, [(ty - 3, tz - 2), (ty + 3, tz + 2), (ty - 7, tz + 6)], x - 2.5, x + 2.5, BONE, 5)
     P.flat(g, teeth, BONE, 5)
-    # a toxic groove along the blade and a lit spine
-    P.flat(g, blade & (np.abs((Y - (ey - 18)) - (Z - (ez - 30)) * 1.1) < 1.3) & (Y < ey - 4) & (Y > ey - 36), GLOW, 6)
-    light_top(g, blade, BONE, 7)
+    # a glowing groove along the blade
+    P.flat(g, blade & (np.abs((Y - (ey - 12)) - (Z - (ez - 21)) * 1.1) < 1.3) & (Y < ey - 3) & (Y > ey - 26), GLOW, 5)
     return g
 
 
-def leg(s: int, hx: float, lz: float, kout: float, ky: float, fout: float) -> Grid:
+def leg(s: int, hx: float, lz: float, hy: float, kx: float, ky: float, fx: float, cuff: bool = False) -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
-    hip = (CX + s * hx, 56.0)
-    knee = (CX + s * (hx + kout), ky)
-    foot = (CX + s * (hx + fout), 6.0)
-    n0 = len(g.solids)
-    thigh = front(g, quad(hip, knee, 7.0, 5.4, cap=0.3), lz - 5.5, lz + 5.5, SHELL, 5)
-    shin = front(g, quad(knee, foot, 5.4, 3.4, cap=0.2), lz - 4.5, lz + 4.5, SHELL, 5)
-    chitin(g, g.solids[n0:], 5, size=(10, 8), seed=int(lz))
-    P.flat(g, shin & (Y < 26), BONE, 5)  # pale lower shins
-    P.flat(g, shin & (Y < 26) & (np.floor(Y) % 7 == 0), BONE, 4)
-    claw = front(g, quad(foot, (foot[0] + s * 3, 0.5), 3.4, 1.0), lz - 3, lz + 3, BONE, 6)
+    hip = (CX + s * hx, hy)
+    knee = (CX + s * kx, ky)
+    foot = (CX + s * fx, 7.0)
+    front(g, quad(hip, knee, 8.5, 7.0, cap=0.2), lz - 6.5, lz + 6.5, SHELL, 4)
+    thigh = shade_facets(g, [g.solids[-1]], SHELL, 4)
+    front(g, quad(knee, foot, 6.6, 4.6, cap=0.2), lz - 5.5, lz + 5.5, SHELL, 4)
+    shin = shade_facets(g, [g.solids[-1]], SHELL, 4)
+    # pale bone lower shin with one dark joint ring
+    lower = shin & (Y < 30)
+    P.flat(g, lower, BONE, 5)
+    light_top(g, lower, BONE, 6)
+    P.flat(g, shin & (np.abs(Y - 30) < 1.2), SHELL, 2)
+    if cuff:
+        # a broken steel restraint cuff with a hazard band (she escaped a lab)
+        a = (knee[0] + (foot[0] - knee[0]) * 0.42, knee[1] + (foot[1] - knee[1]) * 0.42)
+        b = (knee[0] + (foot[0] - knee[0]) * 0.62, knee[1] + (foot[1] - knee[1]) * 0.62)
+        front(g, quad(a, b, 7.4, 7.0), lz - 6.6, lz + 6.6, "steel", 5)
+        cm = shade_facets(g, [g.solids[-1]], "steel", 5, seam=2)
+        ym = (a[1] + b[1]) / 2
+        pnpaint.hazard(g, cm & (np.abs(Y - ym) < 2.2), period=6, a=("orange", 4), b=("steel", 2))
+        lamp = front(g, [(b[0] + s * 6.5, ym - 1.5), (b[0] + s * 9.0, ym - 1.5), (b[0] + s * 9.0, ym + 1.5), (b[0] + s * 6.5, ym + 1.5)], lz - 7.5, lz - 5.5, GLOW, 6)
+        P.flat(g, lamp, GLOW, 6)
+    claw = front(g, quad(foot, (foot[0] + s * 4, 1.6), 4.2, 1.4), lz - 4, lz + 4, BONE, 6)
     P.flat(g, claw, BONE, 6)
-    knob = front(g, [(knee[0] - 7, knee[1] - 3), (knee[0] + 7, knee[1] - 3), (knee[0] + 5, knee[1] + 4), (knee[0] - 5, knee[1] + 4)], lz - 6.5, lz + 6.5, BONE, 5)
-    P.flat(g, knob, BONE, 5)
-    light_top(g, knob, BONE, 6)
-    spike = front(g, [(knee[0] - 4, knee[1] + 3), (knee[0] + 4, knee[1] + 3), (knee[0] + s * 7, knee[1] + 15)], lz - 2.5, lz + 2.5, BONE, 6)
-    light_top(g, spike, BONE, 7)
+    P.flat(g, claw & (Y < 2.5), BONE, 4)
+    # a bone knee cap and a short spur pointing out
+    front(g, [(knee[0] - 7.5, knee[1] - 4), (knee[0] + 7.5, knee[1] - 4), (knee[0] + 6, knee[1] + 5), (knee[0] - 6, knee[1] + 5)], lz - 7, lz + 7, BONE, 5)
+    shade_facets(g, [g.solids[-1]], BONE, 5, seam=2)
+    spur = front(g, [(knee[0] + s * 2, knee[1] + 3), (knee[0] + s * 7, knee[1] - 2), (knee[0] + s * 13, knee[1] + 8)], lz - 3, lz + 3, BONE, 6)
+    light_top(g, spur, BONE, 7)
     _ = thigh
     return g
 
@@ -281,8 +349,8 @@ def build():
     rig = Rig()
     rig.add("xeno-queen", abdomen(), BODY_J)
     for s in (-1, 1):
-        for k, (hx, lz, kout, ky, fout, splay) in enumerate(LEGS):
-            rig.add(f"leg-{'rl'[s > 0]}{k}", leg(s, hx, lz, kout, ky, fout), (CX + s * hx, 56.0, lz), "xeno-queen", rot=(0.0, s * splay, 0.0))
+        for k, (hx, lz, hy, kx, ky, fx, splay) in enumerate(LEGS):
+            rig.add(f"leg-{'rl'[s > 0]}{k}", leg(s, hx, lz, hy, kx, ky, fx, cuff=(s > 0 and k == 0)), (CX + s * hx, float(hy), lz), "xeno-queen", rot=(0.0, s * splay, 0.0))
     rig.add("body", thorax(), BODY_J, "xeno-queen")
     rig.add("head", head(), NECK, "body", rot=(0.0, -16.0, 5.0))
     rig.add("jaw", jaw(), JAW_HINGE, "head", rot=(-10.0, 0.0, 0.0))

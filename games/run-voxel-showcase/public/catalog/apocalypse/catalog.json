@@ -1542,22 +1542,22 @@
    "filename": "apocalypse-held-items-fire-axe.glb",
    "relativePath": "held-items/apocalypse-held-items-fire-axe.glb",
    "leaf": "world",
-   "sizeBytes": 18244,
+   "sizeBytes": 59952,
    "bounds": {
     "min": [
-     -0.4,
-     0.01,
-     -0.1
+     -0.35,
+     0.005,
+     -0.155
     ],
     "max": [
-     0.06,
-     0.05,
-     0.11
+     0.07,
+     0.055,
+     0.175
     ],
     "size": [
-     0.46,
-     0.04,
-     0.21
+     0.42,
+     0.05,
+     0.33
     ]
    },
    "normalizedShift": 0,
@@ -3292,22 +3292,22 @@
    "filename": "apocalypse-terrain-nature-flipped-car.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-flipped-car.glb",
    "leaf": "world",
-   "sizeBytes": 37396,
+   "sizeBytes": 79168,
    "bounds": {
     "min": [
-     -28,
+     -30.8097,
      0,
-     -42.5
+     -47.1589
     ],
     "max": [
-     28,
-     40,
-     42.5
+     31.2592,
+     38,
+     47.3438
     ],
     "size": [
-     56,
-     40,
-     85
+     62.0689,
+     38,
+     94.5027
     ]
    },
    "normalizedShift": 0,
@@ -3432,22 +3432,22 @@
    "filename": "apocalypse-terrain-nature-toxic-pool.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-toxic-pool.glb",
    "leaf": "world",
-   "sizeBytes": 52720,
+   "sizeBytes": 76048,
    "bounds": {
     "min": [
-     -31.4062,
-     -0.0937,
-     -24.8125
+     -43.3919,
+     0,
+     -34.6756
     ],
     "max": [
-     30.9844,
-     18,
-     25.2656
+     43.2901,
+     25.8769,
+     34.9625
     ],
     "size": [
-     62.3906,
-     18.0938,
-     50.0781
+     86.682,
+     25.8769,
+     69.6381
     ]
    },
    "normalizedShift": 0,
@@ -3478,22 +3478,22 @@
    "filename": "apocalypse-terrain-nature-wrecked-sedan.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-wrecked-sedan.glb",
    "leaf": "world",
-   "sizeBytes": 32072,
+   "sizeBytes": 67332,
    "bounds": {
     "min": [
-     -29.0312,
-     -0.0937,
-     -41.5
+     -34.5312,
+     0,
+     -46.6676
     ],
     "max": [
-     29.0313,
-     42.5,
-     41.9219
+     35,
+     44.5,
+     46.8506
     ],
     "size": [
-     58.0625,
-     42.5938,
-     83.4219
+     69.5313,
+     44.5,
+     93.5183
     ]
    },
    "normalizedShift": 0,
