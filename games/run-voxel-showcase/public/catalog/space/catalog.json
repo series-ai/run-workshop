@@ -468,22 +468,22 @@
    "filename": "space-animated-props-teleporter-pad.glb",
    "relativePath": "animated-props/space-animated-props-teleporter-pad.glb",
    "leaf": "world",
-   "sizeBytes": 26580,
+   "sizeBytes": 33772,
    "bounds": {
     "min": [
-     -16,
-     -0.0312,
-     -16.5625
+     -16.6376,
+     0,
+     -16.5
     ],
     "max": [
-     16,
-     22,
-     16.5
+     16.6376,
+     24,
+     16.1376
     ],
     "size": [
-     32,
-     22.0313,
-     33.0625
+     33.2753,
+     24,
+     32.6376
     ]
    },
    "normalizedShift": 0,
@@ -755,7 +755,7 @@
    "filename": "space-buildings-mining-rig.glb",
    "relativePath": "buildings/space-buildings-mining-rig.glb",
    "leaf": "world",
-   "sizeBytes": 117372,
+   "sizeBytes": 134680,
    "bounds": {
     "min": [
      -35,
@@ -764,12 +764,12 @@
     ],
     "max": [
      35,
-     132,
+     118,
      33
     ],
     "size": [
      70,
-     132,
+     118,
      66
     ]
    },
@@ -1027,21 +1027,21 @@
    "filename": "space-creatures-robot-dog.glb",
    "relativePath": "creatures/space-creatures-robot-dog.glb",
    "leaf": "world",
-   "sizeBytes": 28424,
+   "sizeBytes": 30752,
    "bounds": {
     "min": [
-     -7.5,
+     -6.9375,
      0,
      -11.5
     ],
     "max": [
-     7.5,
-     23.5,
+     6.9375,
+     23,
      11.6592
     ],
     "size": [
-     15,
-     23.5,
+     13.875,
+     23,
      23.1592
     ]
    },
@@ -1298,7 +1298,7 @@
    "filename": "space-held-items-bio-blaster.glb",
    "relativePath": "held-items/space-held-items-bio-blaster.glb",
    "leaf": "world",
-   "sizeBytes": 84660,
+   "sizeBytes": 74156,
    "bounds": {
     "min": [
      -0.265,
@@ -1670,7 +1670,7 @@
    "filename": "space-held-items-plasma-sword.glb",
    "relativePath": "held-items/space-held-items-plasma-sword.glb",
    "leaf": "world",
-   "sizeBytes": 12880,
+   "sizeBytes": 30804,
    "bounds": {
     "min": [
      -0.43,
@@ -1680,12 +1680,12 @@
     "max": [
      0.05,
      0.055,
-     0.035
+     0.055
     ],
     "size": [
      0.48,
      0.05,
-     0.07
+     0.09
     ]
    },
    "normalizedShift": 0,
@@ -1724,7 +1724,7 @@
    "filename": "space-held-items-pulse-smg.glb",
    "relativePath": "held-items/space-held-items-pulse-smg.glb",
    "leaf": "world",
-   "sizeBytes": 47420,
+   "sizeBytes": 63516,
    "bounds": {
     "min": [
      -0.26,
@@ -1734,12 +1734,12 @@
     "max": [
      0.06,
      0.065,
-     0.1
+     0.11
     ],
     "size": [
      0.32,
      0.07,
-     0.13
+     0.14
     ]
    },
    "normalizedShift": 0,
@@ -1903,22 +1903,22 @@
    "filename": "space-held-items-star-flag.glb",
    "relativePath": "held-items/space-held-items-star-flag.glb",
    "leaf": "world",
-   "sizeBytes": 25148,
+   "sizeBytes": 57496,
    "bounds": {
     "min": [
-     -0.46,
-     0.015,
+     -0.48,
+     0.005,
      -0.01
     ],
     "max": [
-     0.06,
-     0.035,
-     0.18
+     0.08,
+     0.055,
+     0.26
     ],
     "size": [
-     0.52,
-     0.02,
-     0.19
+     0.56,
+     0.05,
+     0.27
     ]
    },
    "normalizedShift": 0,
@@ -1984,22 +1984,22 @@
    "filename": "space-held-items-welding-torch.glb",
    "relativePath": "held-items/space-held-items-welding-torch.glb",
    "leaf": "world",
-   "sizeBytes": 23736,
+   "sizeBytes": 63520,
    "bounds": {
     "min": [
      -0.24,
-     0,
-     -0.02
+     -0.01,
+     -0.03
     ],
     "max": [
      0.06,
-     0.06,
-     0.08
+     0.07,
+     0.09
     ],
     "size": [
      0.3,
-     0.06,
-     0.1
+     0.08,
+     0.12
     ]
    },
    "normalizedShift": 0,
@@ -2033,7 +2033,7 @@
    "filename": "space-props-alien-eggs.glb",
    "relativePath": "props/space-props-alien-eggs.glb",
    "leaf": "world",
-   "sizeBytes": 58604,
+   "sizeBytes": 58456,
    "bounds": {
     "min": [
      -16,
@@ -2042,12 +2042,12 @@
     ],
     "max": [
      16,
-     17.4846,
+     16.7846,
      14
     ],
     "size": [
      32,
-     17.4846,
+     16.7846,
      28
     ]
    },
@@ -2278,7 +2278,7 @@
    "filename": "space-props-fuel-cell.glb",
    "relativePath": "props/space-props-fuel-cell.glb",
    "leaf": "world",
-   "sizeBytes": 24180,
+   "sizeBytes": 24700,
    "bounds": {
     "min": [
      -8,
@@ -2287,12 +2287,12 @@
     ],
     "max": [
      8,
-     26.1785,
+     32.1481,
      8
     ],
     "size": [
      16,
-     26.1785,
+     32.1481,
      16
     ]
    },
@@ -2420,22 +2420,22 @@
    "filename": "space-props-hydro-planter.glb",
    "relativePath": "props/space-props-hydro-planter.glb",
    "leaf": "world",
-   "sizeBytes": 42652,
+   "sizeBytes": 34052,
    "bounds": {
     "min": [
-     -14,
+     -13,
      0,
-     -8.5
+     -6
     ],
     "max": [
-     14,
+     13,
      28,
-     8.8356
+     6
     ],
     "size": [
+     26,
      28,
-     28,
-     17.3356
+     12
     ]
    },
    "normalizedShift": 0,
@@ -2566,22 +2566,22 @@
    "filename": "space-props-ore-rock.glb",
    "relativePath": "props/space-props-ore-rock.glb",
    "leaf": "world",
-   "sizeBytes": 23604,
+   "sizeBytes": 19280,
    "bounds": {
     "min": [
-     -14.1194,
-     -0.203,
-     -10.9641
+     -12.0312,
+     -0.0312,
+     -10.0469
     ],
     "max": [
-     14.1985,
-     27.3449,
-     10.5
+     12,
+     26.3449,
+     10.0469
     ],
     "size": [
-     28.3179,
-     27.5479,
-     21.4641
+     24.0313,
+     26.3761,
+     20.0938
     ]
    },
    "normalizedShift": 0,
@@ -2957,22 +2957,22 @@
    "filename": "space-props-supply-pod.glb",
    "relativePath": "props/space-props-supply-pod.glb",
    "leaf": "world",
-   "sizeBytes": 16192,
+   "sizeBytes": 15920,
    "bounds": {
     "min": [
-     -11.7136,
-     -0.0248,
-     -10.5
+     -12.219,
+     0.0375,
+     -11.5
     ],
     "max": [
-     11.7081,
+     12.7024,
      29.9446,
-     10.5
+     11.4641
     ],
     "size": [
-     23.4217,
-     29.9694,
-     21
+     24.9215,
+     29.9071,
+     22.9641
     ]
    },
    "normalizedShift": 0,
@@ -2992,22 +2992,22 @@
    "filename": "space-props-tool-cart.glb",
    "relativePath": "props/space-props-tool-cart.glb",
    "leaf": "world",
-   "sizeBytes": 31124,
+   "sizeBytes": 31524,
    "bounds": {
     "min": [
      -12.9037,
      0,
-     -7.308
+     -7
     ],
     "max": [
      13,
      26.6,
-     7.5
+     7
     ],
     "size": [
      25.9037,
      26.6,
-     14.808
+     14
     ]
    },
    "normalizedShift": 0,
@@ -3280,21 +3280,21 @@
    "filename": "space-terrain-nature-impact-crater.glb",
    "relativePath": "terrain-nature/space-terrain-nature-impact-crater.glb",
    "leaf": "world",
-   "sizeBytes": 31084,
+   "sizeBytes": 50372,
    "bounds": {
     "min": [
      -29.4409,
-     -0.0312,
+     0,
      -28
     ],
     "max": [
      29.4409,
-     9,
+     15,
      28
     ],
     "size": [
      58.8819,
-     9.0313,
+     15,
      56
     ]
    },
@@ -3352,22 +3352,22 @@
    "filename": "space-terrain-nature-moon-rocks.glb",
    "relativePath": "terrain-nature/space-terrain-nature-moon-rocks.glb",
    "leaf": "world",
-   "sizeBytes": 30104,
+   "sizeBytes": 40852,
    "bounds": {
     "min": [
-     -22.5,
+     -22,
      0,
-     -17
+     -18
     ],
     "max": [
-     22.5,
-     26,
-     17
+     22,
+     28,
+     18
     ],
     "size": [
-     45,
-     26,
-     34
+     44,
+     28,
+     36
     ]
    },
    "normalizedShift": 0,
@@ -3424,7 +3424,7 @@
    "filename": "space-terrain-nature-terra-planet.glb",
    "relativePath": "terrain-nature/space-terrain-nature-terra-planet.glb",
    "leaf": "world",
-   "sizeBytes": 41352,
+   "sizeBytes": 33636,
    "bounds": {
     "min": [
      -17.8652,
@@ -3513,7 +3513,7 @@
    "filename": "space-vehicles-hover-bike.glb",
    "relativePath": "vehicles/space-vehicles-hover-bike.glb",
    "leaf": "world",
-   "sizeBytes": 25412,
+   "sizeBytes": 26212,
    "bounds": {
     "min": [
      -12,
@@ -3786,7 +3786,7 @@
    "filename": "space-avatar-parts.glb",
    "relativePath": "avatar/space-avatar-parts.glb",
    "leaf": "characters",
-   "sizeBytes": 995868,
+   "sizeBytes": 1041880,
    "bounds": {
     "min": [
      -0.1308,
@@ -3830,22 +3830,22 @@
    "filename": "space-characters-skins-android.glb",
    "relativePath": "characters-skins/space-characters-skins-android.glb",
    "leaf": "characters",
-   "sizeBytes": 137860,
+   "sizeBytes": 174316,
    "bounds": {
     "min": [
-     -0.07,
+     -0.14,
      0,
-     -0.29
+     -0.3
     ],
     "max": [
      0.09,
-     0.59,
-     0.29
+     0.64,
+     0.3
     ],
     "size": [
-     0.16,
-     0.59,
-     0.58
+     0.23,
+     0.64,
+     0.6
     ]
    },
    "normalizedShift": 0,
@@ -3865,7 +3865,7 @@
    "filename": "space-characters-skins-astronaut.glb",
    "relativePath": "characters-skins/space-characters-skins-astronaut.glb",
    "leaf": "characters",
-   "sizeBytes": 182632,
+   "sizeBytes": 157584,
    "bounds": {
     "min": [
      -0.12,
@@ -3900,10 +3900,10 @@
    "filename": "space-characters-skins-bounty-hunter.glb",
    "relativePath": "characters-skins/space-characters-skins-bounty-hunter.glb",
    "leaf": "characters",
-   "sizeBytes": 242280,
+   "sizeBytes": 117912,
    "bounds": {
     "min": [
-     -0.11,
+     -0.12,
      0,
      -0.3
     ],
@@ -3913,7 +3913,7 @@
      0.3
     ],
     "size": [
-     0.21,
+     0.22,
      0.6,
      0.6
     ]
@@ -4005,7 +4005,7 @@
    "filename": "space-characters-skins-starship-captain.glb",
    "relativePath": "characters-skins/space-characters-skins-starship-captain.glb",
    "leaf": "characters",
-   "sizeBytes": 143580,
+   "sizeBytes": 145692,
    "bounds": {
     "min": [
      -0.08,

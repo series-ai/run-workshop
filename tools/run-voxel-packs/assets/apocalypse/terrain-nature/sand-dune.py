@@ -43,22 +43,25 @@ def dune() -> Grid:
         g.prism("x", prof(i), xs[i], xs[i + 1], C("sand", 5), top=prof(i + 1))
         m |= g.solids[-1].mask(g.shape)
     crest_z = np.interp(X, xs, cs)
-    # wind ripples on the windward face, a darker lee face, a pale crest
+    # Broad, wind-cut color fields keep the large slopes quiet.
     lee = m & (Z > crest_z + 0.5)
     P.flat(g, m, "sand", 5)
-    ripple = m & ~lee & (((np.floor(Z - Y * 0.9 + np.sin(X / 7) * 2)) % 5) == 0)
-    P.flat(g, ripple, "sand", 6)
-    P.flat(g, lee, "sand", 4)
-    P.flat(g, lee & (((np.floor(Y + np.sin(X / 5) * 1.5)) % 6) == 0), "sand", 3)
-    P.flat(g, m & (np.abs(Z - crest_z) < 1.2) & (Y > 3), "sand", 7)
-    # a car door half buried on the windward slope (teal, with a window)
-    door = slab(g, "x", 7.0, 12.0, 13, 2.5, 44, 56, 52, "teal", 5)
-    P.mottle(g, door, "teal", 5, cell=3, seed=1)
-    P.flat(g, door & (Y > 7) & (Z > 9) & (Z < 16), "sky", 4)
-    PP.blotch(g, door, "rust", 5, cell=2, chance=0.12, seed=2)
+    windcut = m & ~lee & (Y > 3) & (Y < crest_z * 0.58) & (
+        np.abs(Z - (10 + X * 0.34 + np.sin(X / 11) * 3)) < 2.2
+    )
+    P.flat(g, windcut, "sand", 6)
+    P.flat(g, lee & (Y > 3) & (Y < 11), "sand", 4)
+    P.flat(g, m & (np.abs(Z - crest_z) < 1.4) & (Y > 3), "sand", 7)
+    # A vehicle door is buried in the lower windward slope. Its framed
+    # steel plates and rust remain readable without the old blue patchwork.
+    door = slab(g, "x", 5.0, 13.0, 8, 3.5, 40, 50, 42, "steel", 5)
+    P.plates(g, door, "steel", 5, size=(4, 4), frame="x", seed=3)
+    P.outline(g, door, "darkwood", 3, normal="x")
+    P.flat(g, door & (Y > 5) & (Y < 8) & (Z > 12) & (Z < 14), "teal", 5)
+    PP.blotch(g, door, "rust", 5, cell=4, chance=0.08, seed=2)
     # dry scrub on the lee side
     for k, (tx, tz) in enumerate(((26.5, 42.5), (40.5, 41.5), (55.5, 40.5))):
-        tuft(g, tx, tz, 0, 6, blades=5, spread=3.0, ramp="sand", shade=6, seed=k)
+        tuft(g, tx, tz, 0, 8, blades=7, spread=4.2, ramp="sand", shade=6, seed=k)
     return g
 
 
@@ -68,26 +71,34 @@ def skull() -> Grid:
     X, Y, Z = ctr(g)
     sx, sz = 33.5, ZC - 1.5
     y0 = H - 0.5
-    head = limb(g, (sx, y0 + 2.5, sz + 2), (sx, y0 + 1.5, sz - 4), 2.2, 1.4, "bone", 7, n=4)
+    head = limb(g, (sx, y0 + 3, sz + 2), (sx, y0 + 2, sz - 5), 3.0, 2.1, "bone", 7, n=4)
     for s in (-1, 1):
-        limb(g, (sx, y0 + 3, sz + 1.5), (sx + s * 5, y0 + 5, sz + 1.5), 0.9, 0.7, "bone", 6, n=4)
-        limb(g, (sx + s * 5, y0 + 5, sz + 1.5), (sx + s * 6.5, y0 + 8, sz + 0.5), 0.7, 0.3, "bone", 6, n=4)
-    P.flat(g, head & (Z < sz - 1) & (np.abs(X - sx) > 0.6) & (Y > y0 + 2), "darkwood", 5)  # eye holes
+        limb(g, (sx + s * 2, y0 + 4, sz + 1.5), (sx + s * 8, y0 + 6, sz + 1.5), 1.5, 1.1, "bone", 6, n=4)
+        limb(g, (sx + s * 8, y0 + 6, sz + 1.5), (sx + s * 9, y0 + 9, sz + 0.5), 1.1, 0.5, "bone", 6, n=4)
+    eyes = head & (Z < sz - 1) & (Y > y0 + 2) & (Y < y0 + 5) & (np.abs(X - sx) > 1) & (np.abs(X - sx) < 3.2)
+    P.flat(g, eyes, "darkwood", 2)
     return g
 
 
 def sign() -> Grid:
     g = Grid(*SZ)
-    pole = limb(g, (52.5, 4, 16.5), (52.5, 23, 16.5), 0.9, None, "steel", 5, n=4)
-    plate = box(g, 46, 16, 15, 60, 24, 16, "gold", 5)
-    P.outline(g, plate, "darkwood", 4, normal="z")
-    G.stamp(g, "-z", 15, 49, 17, ["....#....", "...###...", "..##.##..", ".##...##.", "#########"], {"#": C("darkwood", 4)})
+    X, Y, Z = ctr(g)
+    # The post and buried anchor share one base point on the slope.
+    pole = limb(g, (58, 5, 29), (58, 23, 31.5), 1.5, None, "steel", 5, n=4)
+    anchor = box(g, 55, 4, 27, 61, 10, 31, "rust", 5)
+    P.outline(g, anchor, "darkwood", 3, normal="z")
+    P.flat(g, anchor & (Y > 2) & (Y < 4), "gold", 5)
+    plate = box(g, 51, 17, 28, 65, 26, 30, "steel", 5)
+    P.plates(g, plate, "steel", 5, size=(5, 4), frame="z", seed=9)
+    P.outline(g, plate, "darkwood", 3, normal="z")
+    G.icon(g, "-z", 28, 54, 19, "skull", "gold", 6, depth=2)
+    G.stamp(g, "-z", 28, 62, 19, ["###", "#..", "##.", "#..", "###"], {"#": C("red", 5)}, depth=2)
     del pole
     return g
 
 
 def build():
     rig = Rig("sand-dune", (35, 0, 24), dune())
-    rig.add("skull", skull(), (33.5, H - 0.5, ZC - 1.5), rot=(0, 25, 0))
-    rig.add("sign", sign(), (52.5, 4, 16.5), rot=(-12, 0, 16))
+    rig.add("skull", skull(), (33.5, H - 0.5, ZC - 1.5), rot=(0, 18, 0))
+    rig.add("sign", sign(), (58, 5, 29), rot=(0, 0, -5))
     return make("terrain-nature", "sand-dune", "Wasteland Dune", rig.root)

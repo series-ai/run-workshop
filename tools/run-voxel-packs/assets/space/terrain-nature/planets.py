@@ -32,6 +32,28 @@ def cradle(g: Grid, cx, cz, r, ramp: str, shade: int, seed: int) -> np.ndarray:
     return m
 
 
+def terra_cradle(g: Grid, cx, cz, r, ramp: str, shade: int, seed: int) -> np.ndarray:
+    """A plated steel cradle with a lit rim and two seated sensor rocks."""
+    m = ngon_y(g, cx, cz, r, 0, 4, ramp, shade, n=9, r_top=r * 0.72)
+    X, Y, Z = coords(g)
+    angle = np.arctan2(Z - cz, X - cx)
+    sector = np.floor((angle + math.pi) * 9 / (2 * math.pi))
+    P.flat(g, m, "steel", 4)
+    P.flat(g, m & (Y < 1.5), "steel", 2)
+    P.flat(g, m & (Y >= 3), "bone", 5)
+    # Nine framed hull plates wrap the visible outer wall.
+    wall = m & (Y >= 1.5) & (Y < 3.0)
+    seam = np.abs(((angle + math.pi) * 9 / (2 * math.pi)) - (sector + 0.5)) > 0.43
+    P.flat(g, wall & seam, "iron", 3)
+    plates = wall & ~seam & ((sector.astype(int) % 3) != 1)
+    P.flat(g, plates, "bone", 6)
+    # A narrow teal service line and copper hazard tabs mark the cradle rim.
+    P.flat(g, m & (Y >= 2.5) & (Y < 3.5), "teal", 5)
+    tabs = m & (Y >= 2.5) & (Y < 3.5) & ((sector.astype(int) % 3) == 1)
+    P.flat(g, tabs, "orange", 5)
+    return m
+
+
 def ring_band(g: Grid, cx, cy, cz, r0, r1, n: int, inner, outer) -> np.ndarray:
     """A flat ring of n segments (1.5 thick) between flat radii r0 and r1."""
     o, i = flat_ngon(cx, cz, r1, n), flat_ngon(cx, cz, r0, n)
@@ -51,7 +73,10 @@ def planet_asset(slug: str, name: str, r: float, paint, base, extra=None):
     cx = cz = size / 2
     cy = r + 1.5
     root_g = Grid(*S)
-    cradle(root_g, cx, cz, r * 0.8, *base)
+    if slug == "terra-planet":
+        terra_cradle(root_g, cx, cz, r * 0.8, *base)
+    else:
+        cradle(root_g, cx, cz, r * 0.8, *base)
     body = Grid(*S)
     solids = globe(body, cx, cy, cz, r, "bone", 5)
     paint(body, mask_of(body, solids), cx, cy, cz, r)
@@ -99,12 +124,55 @@ def paint_lava(g, m, cx, cy, cz, r):
 
 def paint_terra(g, m, cx, cy, cz, r):
     X, Y, Z = coords(g)
-    P.flat(g, m, "sky", 4)
-    spots(g, m, "leaf", 5, cell=8, r=3.4, chance=1, seed=3)
-    spots(g, m, "leaf", 6, cell=8, r=1.8, chance=1, seed=3)
-    P.flat(g, m & (np.abs(Y - cy) > r * 0.9), "bone", 7)  # ice caps
-    clouds = m & (np.abs(Y - cy - np.sin((X + Z) * 0.35) * 2 - r * 0.3) < 0.8)
-    P.flat(g, clouds, "bone", 7)
+    dx, dy, dz = X - cx, Y - cy, Z - cz
+    lon = np.arctan2(dx, dz)
+    lat = np.arcsin(np.clip(dy / max(r, 1), -1, 1))
+
+    # A clear mid-blue ocean gives the land a strong silhouette.
+    P.flat(g, m, "sky", 3)
+
+    # Large land areas have rough edges and small islands.
+    continents = ((3.00, 0.34, 0.67, 0.42), (-1.55, -0.42, 0.60, 0.40),
+                  (0.02, -0.10, 0.67, 0.47), (1.55, 0.62, 0.58, 0.36),
+                  (2.55, -0.64, 0.30, 0.18), (-0.55, 0.68, 0.19, 0.12))
+    land = np.zeros_like(m)
+    coast = np.zeros_like(m)
+    for k, (lo, la, w, h) in enumerate(continents):
+        dl = (lon - lo + np.pi) % (2 * np.pi) - np.pi
+        # Two waves make rough coast edges at different sizes.
+        coast_wave = (0.075 * np.sin(lon * (5 + k) + 0.8 * k)
+                      + 0.035 * np.sin(lon * (9 + k) - lat * 7.0))
+        d = np.sqrt((dl * np.cos(la) / w) ** 2 + ((lat - la) / h) ** 2)
+        edge = 1.0 + coast_wave
+        land |= m & (np.abs(lat) < 0.77) & (d <= edge)
+        coast |= m & (np.abs(lat) < 0.79) & (d > edge - 0.10) & (d <= edge + 0.02)
+    P.flat(g, coast & ~land, "forest", 3)
+    P.flat(g, land, "leaf", 5)
+    P.flat(g, land & (np.sin(lon * 3.0 + lat * 4.0) > 0.45), "leaf", 6)
+    # Sand interiors make the continents read as varied terrain.
+    desert = np.zeros_like(m)
+    for lo, la, w, h in ((2.90, 0.37, 0.29, 0.16), (-1.45, -0.33, 0.24, 0.15),
+                         (0.00, -0.16, 0.29, 0.17), (1.68, 0.55, 0.25, 0.15)):
+        dl = (lon - lo + np.pi) % (2 * np.pi) - np.pi
+        desert_d = np.sqrt((dl * np.cos(la) / w) ** 2 + ((lat - la) / h) ** 2)
+        desert |= land & (desert_d < 1.0)
+    P.flat(g, desert, "sand", 5)
+    P.flat(g, desert & (np.sin(lon * 4.0 - lat * 3.0) > 0.4), "sand", 6)
+
+    # Small polar ice breaks into a stepped coastline around each pole.
+    cap_edge = 0.92 + 0.012 * np.sin(lon * 3.0)
+    cap_radius = r * (0.31 + 0.012 * np.sin(lon * 3.0))
+    pole_r = np.hypot(dx, dz)
+    polar_surface = (np.abs(lat) < 0.985) | (pole_r < cap_radius)
+    caps = m & (np.abs(lat) > cap_edge) & polar_surface
+    P.flat(g, caps, "bone", 6)
+    P.flat(g, caps & (np.abs(lat) > 0.975), "bone", 7)
+
+    # A thin broken cloud belt adds a light mark across the oceans.
+    cloud_lat = -0.05 + 0.018 * np.sin(lon * 2.5) + 0.008 * np.sin(lon * 5.0)
+    clouds = m & (np.abs(lat - cloud_lat) < 0.03)
+    clouds &= (np.sin(lon * 2.5 + 0.5) > -0.2)
+    P.flat(g, clouds, "bone", 6)
 
 
 # ------------------------------------------------------------ extras
@@ -129,10 +197,34 @@ def ice_rings(rig, S, cx, cy, cz, r, clips):
 
 def terra_moon(rig, S, cx, cy, cz, r, clips):
     g = Grid(*S)
+    X, Y, Z = coords(g)
     mx = cx + r + 7
-    m = mask_of(g, globe(g, mx, cy + r * 0.5, cz, 3.5, "gray", 6, n=8))
-    P.flat(g, m, "gray", 6)
-    spots(g, m, "gray", 4, cell=3, r=0.8, chance=2, seed=2)
+    my = cy + r * 0.5
+    # A steel arm joins the moon and planet. The arm turns with the moon.
+    g.prism("z", [(cx + r * 0.90, my - 0.6), (mx - 2.5, my - 0.6),
+                  (mx - 2.5, my + 0.6), (cx + r * 0.90, my + 0.6)],
+            cz - 0.7, cz + 0.7, C("steel", 4))
+    arm = g.solids[-1].mask(g.shape)
+    P.flat(g, arm & (Y > my + 0.2), "steel", 6)
+    collar = arm & (X >= mx - 4.5) & (X < mx - 3.5)
+    P.flat(g, collar, "rust", 5)
+    P.flat(g, collar & (Y > my), "orange", 5)
+
+    moon_solids = globe(g, mx, my, cz, 3.5, "gray", 6, n=8)
+    m = mask_of(g, moon_solids)
+    P.flat(g, m, "gray", 5)
+    # Crater rims and dark centers show on each side.
+    for side in (-1, 1):
+        face = m & ((Z - cz) * side > 0)
+        for ox, oy, size in ((-1.0, 0.8, 1.05), (0.9, 0.45, 0.78),
+                             (-0.15, -1.1, 0.68)):
+            d = np.sqrt((X - (mx + ox)) ** 2 + (Y - (my + oy)) ** 2)
+            rim = face & (d >= size * 0.66) & (d <= size * 1.25)
+            bowl = face & (d < size * 0.66)
+            P.flat(g, rim, "gray", 7)
+            P.flat(g, bowl, "gray", 3)
+            P.flat(g, bowl & (d < size * 0.34), "steel", 3)
+    light_top(g, m & (Y > my + 1.6), "gray", 7)
     rig.add("terra-planet-moon", g, (cx, cy, cz), "terra-planet-base", rot=(0.0, 0.0, -8.0))
     clips["terra-planet-moon"] = {"rot": spin(6.0, "y", 360)}
 
@@ -142,5 +234,5 @@ def build():
         planet_asset("gas-giant", "Ringed Gas Giant", 15, paint_gas, ("sand", 5, 1), gas_rings),
         planet_asset("ice-planet", "Ice Planet", 12, paint_ice, ("bone", 6, 2), ice_rings),
         planet_asset("lava-planet", "Lava Planet", 10, paint_lava, ("steel", 4, 3)),
-        planet_asset("terra-planet", "Terra Planet with Moon", 12, paint_terra, ("leaf", 5, 4), terra_moon),
+        planet_asset("terra-planet", "Terra Planet with Moon", 12, paint_terra, ("steel", 5, 4), terra_moon),
     ]

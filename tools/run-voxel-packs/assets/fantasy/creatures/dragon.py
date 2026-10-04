@@ -32,7 +32,7 @@ NECK_HINGE = (CX, 42.0, 66.0)
 JAW_HINGE = (CX, 75.0, 40.0)
 TAIL_HINGE = (CX, 42.0, 122.0)
 WING_HINGE = {-1: (CX - 18.0, 60.5, 70.0), 1: (CX + 18.0, 60.5, 70.0)}
-WING_REST = {-1: (0.0, 8.0, -30.0), 1: (0.0, -8.0, 30.0)}
+WING_REST = {-1: (0.0, -55.0, -30.0), 1: (0.0, 55.0, 30.0)}
 # the back line of the body: (z, top y) for the spikes
 BACK = [(50, 60), (80, 64), (116, 58), (132, 50)]
 
@@ -66,20 +66,15 @@ def yseg(g: Grid, c0, c1, r0, r1, y0, y1, ramp: str, shade: int, ch: float = 0.4
     return last(g)
 
 
-def scales(g: Grid, m: np.ndarray, frame, ramp: str = SCALE, base: int = 4, row: int = 5, width: int = 8, seed: int = 0) -> None:
-    """Painted scales on one face: a diamond lattice (period `width`) of
-    1-texel seams one shade darker, the upper tip of every diamond one
-    shade lighter and a few whole diamonds one shade lighter (cells, not
-    speckle; rule S3). Follows the face frame on slopes. `row` is unused
-    (kept for one signature with the other painters)."""
+def scales(g: Grid, m: np.ndarray, frame, ramp: str = SCALE, base: int = 4, row: int = 5, width: int = 14, seed: int = 0) -> None:
+    """Paint broad, quiet scale patches with narrow seams on selected cells."""
     U, V = P.uv(g, frame)
     a, b = U + V, U - V
     ca, cb = a // width, b // width
     pa, pb = a % width, b % width
     cell = P._hash(ca, cb, seed=seed)
-    shade = base + ((cell % np.uint64(5)) == 0).astype(np.int64)
-    shade = np.where((pa <= 1) & (pb >= width - 2), base + 1, shade)
-    shade = np.where((pa == 0) | (pb == 0), base - 1, shade)
+    shade = base + 2 * ((cell % np.uint64(7)) == 0).astype(np.int64)
+    shade = np.where((pa == 0) & (pb == 0), base - 1, shade)
     P._paint(g, m, ramp, shade)
 
 
@@ -93,7 +88,7 @@ def plates(g: Grid, m: np.ndarray, frame, ramp: str = BELLY, base: int = 5, row:
     P._paint(g, m, ramp, np.minimum(shade, 7))
 
 
-def paint_scaled(g: Grid, start: int, base: int = 4, row: int = 5, width: int = 8, seed: int = 0, belly=None, plate_row: int = 5) -> None:
+def paint_scaled(g: Grid, start: int, base: int = 4, row: int = 5, width: int = 14, seed: int = 0, belly=None, plate_row: int = 5) -> None:
     """Scales on every face of the prisms added since `start`; belly plates
     where `belly` (a position mask) is true."""
     def painter(gg, mm, fr):
@@ -141,6 +136,11 @@ def body() -> Grid:
     # a darker back stripe and dark belly-plate borders
     bod = g.a > 0
     P.darken(g, bod & (Y > 57) & (np.abs(X - CX) < 9) & (Z > 48) & (Z < 134))
+    for s in (-1, 1):
+        for xo, zo, yj in ((27, 66, 22.5), (30, 106, 24.5)):
+            joint = ((g.a > 0) & (np.abs(X - (CX + s * xo)) < 10) &
+                     (np.abs(Z - zo) < 11) & (np.abs(Y - yj) < 0.6))
+            P.flat(g, joint, SCALE, 2)
     edge = np.minimum(15, 10 + (52 - Y) * 0.22)
     P.flat(g, trunk & (np.abs(np.abs(X - CX) - edge + 0.5) < 0.6) & ((Y < 27) | ((Z < 53) & (Y < 52))) & (Y > 14) & (Z < 124), "gold", 4)
     # big feet with toes and claws
@@ -149,7 +149,7 @@ def body() -> Grid:
             xc = CX + s * xo
             f0 = len(g.solids)
             plan(g, chamfer_rect(xc - 11, zf, xc + 11, zf + 26, 3.5), 0, 10, SCALE, 3, top=chamfer_rect(xc - 9, zf + 4, xc + 9, zf + 23, 3))
-            facet_paint(g, g.solids[f0:], lambda gg, mm, fr: scales(gg, mm, fr, SCALE, 4, 4, 6, seed=2))
+            facet_paint(g, g.solids[f0:], lambda gg, mm, fr: scales(gg, mm, fr, SCALE, 4, 4, 14, seed=2))
             foot = g.solids[-1].mask(g.shape)
             for k in (-1, 1):  # toe splits (painted)
                 P.flat(g, foot & (np.abs(X - (xc + k * 3.6)) < 0.6) & (Z < zf + 9), SCALE, 1)
@@ -184,10 +184,10 @@ def neck() -> Grid:
     h0 = len(g.solids)
     zseg(g, (CX, 92), (CX, 90), (21, 19), (17, 14), 16, 50, SCALE, 4, ch=0.45)
     zseg(g, (CX, 84), (CX, 88), (13, 9), (17, 13), 0.5, 20, SCALE, 4, ch=0.45)
-    paint_scaled(g, h0, 5, 4, 6, seed=4)
+    paint_scaled(g, h0, 5, 4, 14, seed=4)
     b0 = len(g.solids)
     brow = front(g, [(CX - 24, 110), (CX - 24, 117), (CX, 111), (CX + 24, 117), (CX + 24, 110), (CX, 105)], 10.5, 21, SCALE, 3)
-    facet_paint(g, g.solids[b0:], lambda gg, mm, fr: scales(gg, mm, fr, SCALE, 4, 4, 6, seed=5))
+    facet_paint(g, g.solids[b0:], lambda gg, mm, fr: scales(gg, mm, fr, SCALE, 4, 4, 14, seed=5))
     lower = 105 + np.abs(X - CX) * 5 / 24
     P.flat(g, brow & (Z < 11.5) & (Y < lower + 1.5), SCALE, 1)  # the brow's shadow line
     head = (g.a > 0) & (Y > 70)
@@ -205,13 +205,13 @@ def neck() -> Grid:
         front(g, [(xa + 2, 98), (xb - 2, 98), (xb, 100), (xb, 110), (xb - 2, 112), (xa + 2, 112), (xa, 110), (xa, 100)], 13, 17.5, "gold", 6)
     half = ["..dddddddddddd..",
             ".dwwyyyyyyyyyod.",
-            "dwwyyyyppyyyyood",
-            "dwyyyyyppyyyyood",
-            "dyyyyyyppyyyyood",
-            "dyyyyyyppyyyoood",
-            "dyyyyyyppyyyoood",
-            "doyyyyyppyyoooed",
-            "deoyyyyppyooeeed",
+            "dwwyyyppppyyyood",
+            "dwyyypppppyyyood",
+            "dyyyyyppppyyyood",
+            "dyyyyppppyyyoood",
+            "dyyyyppppyyyoood",
+            "doyyyyppppyoooed",
+            "deoyyyppppyoeeed",
             ".deeooopppoeeed.",
             "..deeeeeeeeeed..",
             "...dddddddddd..."]
@@ -251,7 +251,7 @@ def jaw() -> Grid:
     start = len(g.solids)
     zseg(g, (CX, 70.0), (CX, 69.5), (11, 5), (15, 5.5), 2, 42, SCALE, 4, ch=0.5)
     chin = Y < 67.5
-    paint_scaled(g, start, 5, 4, 6, seed=6, belly=chin, plate_row=4)
+    paint_scaled(g, start, 5, 4, 14, seed=6, belly=chin, plate_row=4)
     m = g.a > 0
     mouth = m & (Y > 73.5) & (np.abs(X - CX) < 10.5) & (Z > 4)
     P.flat(g, mouth, SCALE, 1)
@@ -284,20 +284,13 @@ def tail() -> Grid:
         yc = c0[1] + (c1[1] - c0[1]) * f
         ry = r0[1] + (r1[1] - r0[1]) * f
         under |= (Z >= z0) & (Z < z1) & (Y < yc - ry * 0.45)
-    paint_scaled(g, start, 5, 5, 7, seed=7, belly=under)
+    paint_scaled(g, start, 5, 5, 14, seed=7, belly=under)
     P.darken(g, (g.a > 0) & ~under & (Y > 38) & (np.abs(X - CX) < 6))
-    # the spade: a big flat faceted arrowhead at the tip
-    cxs, czs = CX + 38.0, 187.5
-    d, p = (0.72, 0.69), (-0.69, 0.72)
-    spade = [(cxs - d[0] * 9, czs - d[1] * 9), (cxs + p[0] * 10, czs + p[1] * 10), (cxs + d[0] * 11, czs + d[1] * 11), (cxs - p[0] * 10, czs - p[1] * 10)]
-    top = [(u + (cxs - u) * 0.4, v + (czs - v) * 0.4) for u, v in spade]
-    s0 = len(g.solids)
-    plan(g, top, 10.5, 12.5, HORN, 6, top=spade)
-    plan(g, spade, 12.5, 16.5, HORN, 6)
-    plan(g, spade, 16.5, 18.5, HORN, 6, top=top)
-    sm = np.logical_or.reduce([sol.mask(g.shape) for sol in g.solids[s0:]])
-    P.flat(g, sm & (Y < 12.5), HORN, 4)
-    P.flat(g, sm & (Y > 16.5), HORN, 7)
+    # A faceted side-profile barb keeps a pointed silhouette in every view.
+    barb = side(g, [(11, 180), (19, 180), (22, 186), (15, 197), (8, 186)], CX + 27, CX + 35, HORN, 6)
+    P.flat(g, barb & (Y < 11), HORN, 4)
+    P.flat(g, barb & (Y > 18), HORN, 7)
+    P.flat(g, barb & (Z > 192), HORN, 7)
     # tail spikes, shrinking
     for zb, h in ((130, 10), (145, 8), (157, 6)):
         k = 0 if zb < 142 else (1 if zb < 158 else 2)
@@ -310,11 +303,10 @@ def tail() -> Grid:
 
 
 def wing(s: int) -> Grid:
-    """A bat wing laid flat (the part's rest rotation raises it): a thin
-    scalloped membrane panel with a thick arm and finger bones on it."""
+    """A raised bat wing with a thick scalloped membrane and finger bones."""
     g = Grid(*S)
     X, Y, Z = xyz()
-    y0, y1 = 59.0, 62.0
+    y0, y1 = 56.0, 65.0
     sh = (CX + s * 15.0, 70.0)
     wr = (CX + s * 52.0, 57.0)
     tips = [(CX + s * 93.0, 80.0), (CX + s * 85.0, 106.0), (CX + s * 64.0, 124.0)]
@@ -344,10 +336,10 @@ def wing(s: int) -> Grid:
     for a in mids:
         P.flat(g, mem & (np.abs(ang - a) < 0.035) & ~rim[:, None, :], WEB, 7)
     # bones: a thick arm to the wrist, fingers to the tips (red, faceted)
-    bones = plan(g, quad(sh, wr, 5.0, 3.6), 57.5, 63.5, SCALE, 3)
+    bones = plan(g, quad(sh, wr, 5.0, 3.6), 55.5, 65.5, SCALE, 3)
     for t in tips:
-        bones |= plan(g, quad(wr, t, 2.8, 1.3, cap=0.8), 58, 63, SCALE, 3)
-    bones |= plan(g, chamfer_rect(wr[0] - 4.5, wr[1] - 4.5, wr[0] + 4.5, wr[1] + 4.5, 1.8), 57, 64.5, SCALE, 3)
+        bones |= plan(g, quad(wr, t, 2.8, 1.3, cap=0.8), 56, 65, SCALE, 3)
+    bones |= plan(g, chamfer_rect(wr[0] - 4.5, wr[1] - 4.5, wr[0] + 4.5, wr[1] + 4.5, 1.8), 55.5, 66, SCALE, 3)
     P.flat(g, bones & (Y > 62.5), SCALE, 4)
     P.flat(g, bones & (Y < 58.5), SCALE, 2)
     # the thumb claw at the wrist and small claws at the finger tips
@@ -382,6 +374,9 @@ def build():
             part.rot = WING_REST[-1]
         elif part.name == "wing-r":
             part.rot = WING_REST[1]
+        elif part.name == "neck":
+            # Break the symmetric side-face overlap with the torso at rest.
+            part.at = (part.at[0] + 0.5, part.at[1], part.at[2])
     z = (0, 0, 0, 0)
     idle = {"body": {"scale": keys((0, 1, 1, 1), (1.5, 1.02, 1.035, 1.015), (3.0, 1, 1, 1))},
             "neck": {"rot": keys(z, (1.0, -3, 6, 0), (2.0, 2, -5, 0), (3.0, 0, 0, 0))},

@@ -1,35 +1,86 @@
-"""Archmage staff: a gnarled darkwood shaft with silver bands and a leaf
-wrap, crowned by twisting gold tines that cradle a glowing arcane crystal
-with orbiting chips. Crystal end along +X."""
-import math
+"""Archmage staff with a carved warmwood haft and a set cyan crystal."""
+import numpy as np
 
 from _kit import held
 from voxgrid import C, Grid
 
 
+L, W = 58, 13
+CY = CZ = 6
+
+
+def _coords():
+    x = np.arange(L)[:, None, None]
+    y = np.arange(W)[None, :, None]
+    z = np.arange(W)[None, None, :]
+    return x, y - CY, z - CZ
+
+
 def build():
-    L = 58
-    g = Grid(L, 13, 13)
-    cy = cz = 6
-    for x in range(0, 46):
-        wob = 0.6 * math.sin(x / 3.2)
-        g.box(x, cy - 1 + wob, cz - 1, x + 1, cy + 1 + wob, cz + 1, C("darkwood", 4 if (x // 3) % 2 else 3))
-    for x in (4, 22, 40):
-        g.box(x, cy - 2, cz - 2, x + 2, cy + 2, cz + 2, C("steel", 6))
-    g.box(12, cy - 2, cz - 2, 18, cy + 2, cz + 2, C("leaf", 3))
-    g.box(13, cy - 2, cz - 3, 14, cy + 1, cz - 2, C("leaf", 5))  # dangling leaf
-    g.box(0, cy - 1, cz - 1, 2, cy + 1, cz + 1, C("gold", 5))  # ferrule
-    for a in range(4):  # twisting tines
-        th = a * math.pi / 2
-        for k in range(10):
-            ang = th + k * 0.18
-            r = 1.2 + k * 0.28 if k < 7 else 3.2 - (k - 7) * 0.7
-            g.set(44 + k, cy + r * math.sin(ang), cz + r * math.cos(ang), C("gold", 4 + (k % 2)))
-    g.sphere(50, cy + 0.5, cz + 0.5, 2.8, C("arcane", 5))
-    g.sphere(50, cy + 0.5, cz + 0.5, 1.5, C("arcane", 7))
-    g.box(49, cy + 2, cz + 2, 50, cy + 3, cz + 3, C("arcane", 6))
-    for (x, y, z) in ((54, cy + 4, cz), (47, cy - 4, cz + 3), (56, cy - 2, cz - 3)):
-        g.set(x, y, z, C("arcane", 6))
-    g.box(54, cy, cz, 57, cy + 1, cz + 1, C("arcane", 6))
-    return held("mage-staff", "Archmage Staff", g, (15.5, cy, cz), {"socket-tip": (50, cy + 0.5, cz + 0.5)},
-                [{"effectId": "rvx-fantasy-arcane-bolt", "socket": "socket-tip", "trigger": "manual", "size": 0.4}])
+    g = Grid(L, W, W)
+    x, dy, dz = _coords()
+    ay, az = np.abs(dy), np.abs(dz)
+    quad = (dy > 0).astype(int) * 2 + ((dy > 0) ^ (dz > 0)).astype(int)
+
+    # A square-cut pommel caps the broad, warmwood shaft.
+    shaft = (x >= 2) & (x < 46) & (ay <= 1) & (az <= 1)
+    g.where(shaft, C("darkwood", 4))
+    g.where(shaft & (dy > 0), C("wood", 5))
+    grain = shaft & (dy == 0) & (dz == -1)
+    grain &= ((x >= 5) & (x < 10)) | ((x >= 24) & (x < 30)) | ((x >= 33) & (x < 39))
+    g.where(grain, C("darkwood", 3))
+    grain_light = shaft & (dy == 0) & (dz == 1) & (x >= 16) & (x < 23)
+    g.where(grain_light, C("wood", 6))
+    pommel = (x < 3) & (ay <= 2) & (az <= 2) & ~((ay == 2) & (az == 2))
+    g.where(pommel, C("steel", 4))
+    g.where(pommel & (dy > 0), C("steel", 6))
+    g.where((x == 0) & (ay <= 1) & (az <= 1), C("gold", 5))
+
+    # A shaped leather grip has stepped shoulders and a painted spiral seam.
+    grip = (x >= 12) & (x < 20) & (ay <= 2) & (az <= 2)
+    grip &= ~(((x == 12) | (x == 19)) & ((ay == 2) | (az == 2)))
+    g.where(grip, C("rust", 3))
+    g.where(grip & (dy > 0), C("rust", 5))
+    g.where(grip & (((x + quad) % 3) == 0), C("darkwood", 3))
+    for x0 in (11, 20, 29, 40):
+        band = (x == x0) & (ay <= 2) & (az <= 2) & ~((ay == 2) & (az == 2))
+        g.where(band, C("steel", 5))
+        g.where(band & (dy > 0), C("steel", 6))
+        rivets = band & (ay == 2) & (az == 0)
+        g.where(rivets, C("gold", 6))
+
+    # The crystal seat is a broad gold collar with four attached prongs.
+    seat = (x >= 43) & (x < 47) & (ay <= 2) & (az <= 2)
+    seat &= ~((ay == 2) & (az == 2))
+    g.where(seat, C("gold", 4))
+    g.where(seat & (dy > 0), C("gold", 6))
+    g.where(seat & (dy < 0), C("gold", 3))
+    prongs = []
+    for y0, z0 in ((3, 0), (-3, 0), (0, 3), (0, -3)):
+        prong = (x >= 46) & (x < 50) & (dy >= y0) & (dy < y0 + 1)
+        if y0 == 0:
+            prong = (x >= 46) & (x < 50) & (dy >= -1) & (dy <= 1) & (dz == z0)
+        else:
+            prong = prong & (dz >= -1) & (dz <= 1)
+        prongs.append(prong)
+        g.where(prong, C("gold", 5))
+        g.where(prong & (dy > 0), C("gold", 7))
+
+    # One large octahedral crystal makes the magic head read as a single gem.
+    crystal = (x >= 45) & (x <= 56) & ((np.abs(x - 51) * 0.9 + ay * 0.75 + az * 0.75) <= 5.0)
+    g.where(crystal, C("cyan", 4))
+    g.where(crystal & (dy > 0), C("cyan", 6))
+    g.where(crystal & (dz > 0) & (dy >= 0), C("sky", 6))
+    g.where(crystal & (dy < 0) & (dz < 0), C("blue", 3))
+    # Broad facet streaks add a cut-glass highlight without adding loose pieces.
+    g.where(crystal & (dy >= 1) & (dz >= 0) & ((x + dz) % 4 == 0), C("cyan", 7))
+    g.where(crystal & (dy <= -2) & (dz <= 0), C("blue", 4))
+    # Paint the prongs last so each one remains visible against the gem.
+    for prong in prongs:
+        g.where(prong, C("gold", 5))
+        g.where(prong & (dy > 0), C("gold", 7))
+
+    return held("mage-staff", "Archmage Staff", g, (15.5, CY, CZ),
+                {"socket-tip": (50, CY + 0.5, CZ + 0.5)},
+                [{"effectId": "rvx-fantasy-arcane-bolt", "socket": "socket-tip",
+                  "trigger": "manual", "size": 0.4}])

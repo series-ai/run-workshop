@@ -2,16 +2,14 @@
 
 One iconic shape (rule K3): an upright capsule of stacked octagonal
 frustums (true slopes, F2) in white hull plates with orange heat-shield
-bands, landed on three swept fins and scorched dark at the foot. A big
-painted hatch with a glowing teal status strip faces the front and a red
-nose beacon tops it. The pod leans a little after the landing (F5). Detail
-is paint (S1). Faces -Z.
+bands, landed on three swept fins with steel foot pads. A framed hatch with a
+glowing cyan porthole faces the front. A red nose beacon tops it. The pod
+leans a little after the landing (F5). Detail is paint (S1). Faces -Z.
 """
 import numpy as np
 
 import paint as P
 from _props import lamp, ngon_prism
-from pnkit import box
 from pnshapes import coords, facets
 from voxgrid import C, Asset, Grid, Part
 
@@ -27,35 +25,64 @@ def capsule() -> Grid:
     ngon_prism(g, "y", C0, C0, 7.0, 17, 23, "bone", 5, r_top=4.0)
     ngon_prism(g, "y", C0, C0, 4.0, 23, 25, "orange", 5, r_top=3.0)
     m = g.a > 0
-    for f, fr in facets(g, g.solids[1:3]):
-        P.plates(g, f, "bone", 5, size=(6, 5), rivets=True, frame=fr)
+    # Keep the nose cone clean. Frame only the larger cylindrical hull plates.
+    for f, fr in facets(g, g.solids[1:2]):
+        U, V = P.uv(g, fr)
+        P.flat(g, f, "bone", 5)
+        seams = ((U % 12 == 0) | ((V == 10) | (V == 15))) & f
+        P.flat(g, seams, "steel", 4)
+        rivets = ((U % 12 == 1) & ((V == 11) | (V == 14))) & f
+        P.flat(g, rivets, "steel", 5)
+    for f, _fr in facets(g, g.solids[2:3]):
+        P.flat(g, f, "bone", 5)
+        # One clean service seam breaks the long white nose cone.
+        P.flat(g, f & (Y == 20), "steel", 4)
     shield = m & (Y < 4)
     P.flat(g, shield, "iron", 5)
     P.flat(g, shield & (np.floor(np.arctan2(Z - C0, X - C0) * 16 / 6.283) % 2 == 0), "iron", 6)
-    # orange heat-shield bands
+    # Orange thermal collars sit between white hull sections.
     P.flat(g, m & (Y > 4) & (Y < 6), "orange", 5)
     P.flat(g, m & (Y > 16) & (Y < 18), "orange", 5)
-    # scorch marks near the foot
-    sc = m & (Y < 9) & (Y > 4) & (P._hash(np.floor(X).astype(int) // 2, np.floor(Y).astype(int) // 2, np.floor(Z).astype(int) // 2, seed=3) % np.uint64(3) == 0)
-    P.flat(g, sc, "rust", 2)
-    # the hatch on the front facet
-    front = m & (Z < C0 - 6.5) & (Y > 6) & (Y < 16)
-    hatch = front & (np.abs(X - C0) < 3.3)
-    P.flat(g, hatch, "bone", 6)
-    P.flat(g, hatch & ((np.abs(X - C0) > 2.4) | (Y < 7) | (Y > 15)), "steel", 3)
-    P.flat(g, hatch & (np.abs(Y - 11.5) < 0.6) & (np.abs(X - C0) < 1.6), "orange", 6)  # the handle
-    # glowing status strip down the +x facet
-    P.flat(g, m & (X > C0 + 6.5) & (np.abs(Z - C0) < 1.2) & (Y > 6) & (Y < 16), "cyan", 6)
+    P.flat(g, m & (Y >= 4) & (Y < 5), "steel", 4)
+    P.flat(g, m & (Y >= 17) & (Y < 18), "steel", 4)
+    # The five-sided hull has two sloped front facets around its nose point.
+    # Place the hatch on the left facet, above the landing fins.
+    front = m & (Z < C0 - 6.5 + 0.72 * np.abs(X - C0)) & (Y > 8) & (Y < 18)
+    hatch = front & (np.abs(X - 6.0) < 3.6) & (Y > 9) & (Y < 17)
+    P.flat(g, hatch, "steel", 3)
+    inset = front & (np.abs(X - 6.0) < 2.8) & (Y > 10) & (Y < 16)
+    P.flat(g, inset, "bone", 6)
+    # Oversized status porthole framed in steel.
+    radius = np.hypot(X - 6.0, Y - 13.0)
+    ring = front & (radius >= 2.2) & (radius < 3.0)
+    glass = front & (radius < 2.2)
+    P.flat(g, ring, "steel", 4)
+    P.flat(g, glass, "teal", 5)
+    P.flat(g, glass & (X < C0) & (Y > 11), "cyan", 7)
+    # Small orange latch below the window.
+    P.flat(g, front & (np.abs(X - 6.0) < 1.6) & (np.abs(Y - 10.0) < 0.6), "orange", 6)
+    # A broad framed service window marks the side panel.
+    side = m & (X > C0 + 4.0 - 0.32 * np.abs(Z - 7.5)) & (Y > 9) & (Y < 16)
+    side_frame = side & (np.abs(Z - 11.5) < 3.6)
+    P.flat(g, side_frame, "steel", 3)
+    side_glass = side & (np.abs(Z - 11.5) < 2.7) & (Y > 10) & (Y < 15)
+    P.flat(g, side_glass, "teal", 5)
+    P.flat(g, side_glass & (Y > 12), "cyan", 7)
     lamp(g, C0, 25, C0, r=1.8, h=2, glass=("red", 5), cap=("steel", 4))
     return g
 
 
 def fin() -> Grid:
-    g = Grid(2, 12, 9)
-    g.prism("x", [(0, 0), (0, 8), (9, 1), (11, 0)], 0, 2, C("orange", 5))
+    g = Grid(5, 12, 11)
+    g.prism("x", [(0, 0), (0, 8), (7, 5), (10, 2), (11, 0)], 0, 5, C("orange", 5))
     m = g.a > 0
-    P.flat(g, m & (coords(g)[1] < 1), "orange", 3)
-    P.flat(g, m & (coords(g)[2] > 6), "iron", 5)  # a scorched tip
+    P.flat(g, m & (coords(g)[1] < 2), "orange", 3)
+    _, Y, Z = coords(g)
+    # Paint a thin dark root edge. Keep the large fin faces orange.
+    P.flat(g, m & (Y < 1), "iron", 3)
+    # Broad steel foot pads give each fin a stable landing point.
+    P.flat(g, m & (Y < 2) & (Z > 7), "steel", 5)
+    P.flat(g, m & (Y < 1) & (Z > 8), "steel", 3)
     return g
 
 

@@ -3,9 +3,9 @@
 A ragged sinkhole: a ring of earth segments whose inner faces slope down
 into the pit (true slopes), a dark purple pit floor with a magenta and
 toxic glow, broken flagstones tilted toward the hole (prisms at a slant),
-bones and a skull on the rim. Out of the dark rise three chunky mist slabs
-(swirling faceted bands, pale purple and bone) that swell and turn on idle, each at
-its own pace. Parts: pit (root), mist-0, mist-1, mist-2. socket-fog sits
+bones and a skull on the rim. Out of the dark rise three narrow magenta and
+violet mist coils that swell and turn on idle, each at its own pace. Parts:
+pit (root), mist-0, mist-1, mist-2. socket-fog sits
 over the glow for the coffin-mist effect. Faces -Z.
 """
 import importlib.util
@@ -31,9 +31,9 @@ N = 12
 RI = [10.5, 11.5, 10.0, 12.0, 11.0, 9.8, 11.2, 12.2, 10.4, 11.6, 10.2, 11.0]
 RO = [22.0, 23.5, 21.5, 24.0, 22.5, 21.0, 23.0, 24.5, 22.0, 23.0, 21.5, 22.5]
 MIST = [  # (y0, y1, outer radius, inner radius, ramp, shade, start angle)
-    (5, 8, 14.5, 6.5, "purple", 6, 0.3),
-    (10, 13, 11.5, 4.5, "bone", 6, 2.4),
-    (15, 17.5, 8.5, 3.0, "purple", 7, 4.4),
+    (5, 7.5, 15.0, 10.0, "magenta", 4, 0.3),
+    (10, 12.5, 13.0, 8.0, "purple", 4, 2.4),
+    (15, 17.5, 10.0, 5.0, "magenta", 4, 4.4),
 ]
 
 
@@ -60,36 +60,34 @@ def tilted_slab(g, a_deg, r, length, width, thick, tilt, y, ramp="stone", base=5
     return g.solids[-1]
 
 
-def wisp(a0, arc, r_out, r_in, n=10):
+def wisp(a0, arc, r_out, r_in, n=12):
     """A swirling mist band (x, z): an arc of `arc` radians from a0 whose
-    width tapers to a point at its tail, as a simple polygon."""
+    width tapers to a short end at its tail, as a simple polygon."""
     outer, inner = [], []
     for i in range(n + 1):
         t = i / n
         a = a0 + arc * t
-        ro = r_out * (1.0 - 0.18 * t)
-        ri = r_in + (ro - r_in) * t ** 1.6 * 0.95
+        ro = r_out * (1.0 - 0.12 * t)
+        width = 2.0 + (r_out - r_in - 2.0) * (1.0 - t) ** 1.35
+        ri = ro - width
         outer.append((CX + ro * math.cos(a), CZ + ro * math.sin(a)))
         inner.append((CX + ri * math.cos(a), CZ + ri * math.sin(a)))
     return outer + inner[::-1]
 
 
 def mist(k) -> Grid:
-    """One mist layer: a thick swirling band around the pit's axis (open
-    in the middle so the glow shows), with sloped edges (its top is a
-    thinner band). Pale top with swirl streaks, magenta-lit underside."""
+    """One narrow, open mist coil with a beveled top and dark edge trim."""
     y0, y1, r_out, r_in, ramp, shade, a0 = MIST[k]
     g = Grid(*S)
-    X, Y, Z = coords(g)
-    arc = math.radians(265 - 25 * k)
-    plan(g, wisp(a0, arc, r_out, r_in), y0, y1, ramp, shade, top=wisp(a0, arc, r_out - 1.6, r_in + 1.4))
+    arc = math.radians(235 - 12 * k)
+    plan(g, wisp(a0, arc, r_out, r_in), y0, y1, ramp, shade,
+         top=wisp(a0, arc, r_out - 0.5, r_in + 0.5))
     m = last(g)
-    rr = np.hypot(X + 0.5 - CX, Z + 0.5 - CZ)
-    ang = np.arctan2(Z + 0.5 - CZ, X + 0.5 - CX)
-    streak = m & (np.abs(np.sin(rr * 1.1 - ang * 2)) < 0.3)
-    P.flat(g, streak, ramp, min(7, shade + 1))
-    P.flat(g, m & (Y >= y1 - 1) & (np.abs(np.sin(rr * 1.1 - ang * 2 + 1.2)) < 0.35), ramp, 7)
-    P.flat(g, m & (Y < y0 + 1), "magenta", 6)  # lit from the glow below
+    X, Y, Z = coords(g)
+    top = m & (Y >= y1 - 1)
+    P.flat(g, top, ramp, 5)
+    P.flat(g, top & (X < CX + 1), ramp, 6)
+    P.flat(g, m & (Y < y0 + 1), "purple", 2)
     return g
 
 
@@ -103,7 +101,9 @@ def pit() -> Grid:
     P.flat(g, floor & (rr < 7.5), "magenta", 4)
     P.flat(g, floor & (rr < 4.5), "magenta", 6)
     P.flat(g, floor & (np.abs(np.sin(ang * 2 + rr * 0.6)) < 0.2) & (rr < 8.5), "magenta", 5)
-    P.flat(g, floor & ((P._hash(X // 2, Z // 2, seed=4) % np.uint64(6)) == 0) & (rr > 3) & (rr < 9), "toxic", 6)
+    sigil = floor & (rr >= 2.2) & (rr <= 3.0) & (np.abs(np.sin(ang * 4)) < 0.18)
+    P.flat(g, sigil, "toxic", 5)
+    P.flat(g, floor & (rr < 1.8), "toxic", 6)
     # the ring of earth: segments whose inner faces slope down into the pit
     seg = []
     for k in range(N):
@@ -128,9 +128,9 @@ def pit() -> Grid:
         slabs.append(tilted_slab(g, a_deg, r, ln, w, 3.0, tilt, 1.6, "stone", 5))
     for m, fr in pnshapes.facets(g, slabs):
         P.stone(g, m, "stone", 6, block=(7, 5), cracks=0.25, frame=fr, seed=8)
-    _floor.bone(g, CX + 10, CZ - 16.5, 3, 7, 20)
+    _floor.bone(g, CX + 10, CZ - 14.5, 3, 7, 20)
     _floor.bone(g, CX - 18, CZ + 6, 3, 6, 110)
-    pnshapes.skull(g, CX - 12, 3, CZ - 17, s=8, eyes=("magenta", 6), seed=9)
+    pnshapes.skull(g, CX - 10, 3, CZ - 12, s=10, eyes=("toxic", 6), socket=("purple", 1), seed=9)
     return g
 
 

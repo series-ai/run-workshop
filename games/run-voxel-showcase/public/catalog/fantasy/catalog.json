@@ -1005,22 +1005,22 @@
    "filename": "fantasy-creatures-dragon.glb",
    "relativePath": "creatures/fantasy-creatures-dragon.glb",
    "leaf": "world",
-   "sizeBytes": 195196,
+   "sizeBytes": 164888,
    "bounds": {
     "min": [
-     -86.2259,
+     -84.8586,
      0,
-     -97.5312
+     -98.0312
     ],
     "max": [
-     86.2259,
+     84.8586,
      121.8,
-     97.09
+     98.5
     ],
     "size": [
-     172.4519,
+     169.7172,
      121.8,
-     194.6212
+     196.5313
     ]
    },
    "normalizedShift": 0,
@@ -1535,22 +1535,22 @@
    "filename": "fantasy-held-items-dagger.glb",
    "relativePath": "held-items/fantasy-held-items-dagger.glb",
    "leaf": "world",
-   "sizeBytes": 23588,
+   "sizeBytes": 27924,
    "bounds": {
     "min": [
-     -0.195,
+     -0.205,
      0.015,
      -0.03
     ],
     "max": [
      0.035,
      0.045,
-     0.03
+     0.04
     ],
     "size": [
-     0.23,
+     0.24,
      0.03,
-     0.06
+     0.07
     ]
    },
    "normalizedShift": 0,
@@ -1681,7 +1681,7 @@
    "filename": "fantasy-held-items-flanged-mace.glb",
    "relativePath": "held-items/fantasy-held-items-flanged-mace.glb",
    "leaf": "world",
-   "sizeBytes": 43360,
+   "sizeBytes": 71224,
    "bounds": {
     "min": [
      -0.295,
@@ -1867,21 +1867,21 @@
    "filename": "fantasy-held-items-lantern-staff.glb",
    "relativePath": "held-items/fantasy-held-items-lantern-staff.glb",
    "leaf": "world",
-   "sizeBytes": 8896,
+   "sizeBytes": 30888,
    "bounds": {
     "min": [
-     -0.275,
+     -0.265,
      0.01,
      -0.07
     ],
     "max": [
      0.065,
-     0.06,
+     0.07,
      0.01
     ],
     "size": [
-     0.34,
-     0.05,
+     0.33,
+     0.06,
      0.08
     ]
    },
@@ -1970,22 +1970,22 @@
    "filename": "fantasy-held-items-mage-staff.glb",
    "relativePath": "held-items/fantasy-held-items-mage-staff.glb",
    "leaf": "world",
-   "sizeBytes": 55952,
+   "sizeBytes": 105512,
    "bounds": {
     "min": [
      -0.415,
-     -0.01,
-     -0.04
+     -0.03,
+     -0.06
     ],
     "max": [
      0.155,
-     0.07,
-     0.05
+     0.1,
+     0.07
     ],
     "size": [
      0.57,
-     0.08,
-     0.09
+     0.13,
+     0.13
     ]
    },
    "normalizedShift": 0,
@@ -2111,22 +2111,22 @@
    "filename": "fantasy-held-items-torch.glb",
    "relativePath": "held-items/fantasy-held-items-torch.glb",
    "leaf": "world",
-   "sizeBytes": 13784,
+   "sizeBytes": 34196,
    "bounds": {
     "min": [
-     -0.22,
-     0.01,
-     -0.02
+     -0.25,
+     0,
+     -0.03
     ],
     "max": [
      0.08,
-     0.05,
-     0.02
+     0.06,
+     0.03
     ],
     "size": [
-     0.3,
-     0.04,
-     0.04
+     0.33,
+     0.06,
+     0.06
     ]
    },
    "normalizedShift": 0,
@@ -2528,22 +2528,22 @@
    "filename": "fantasy-props-brazier.glb",
    "relativePath": "props/fantasy-props-brazier.glb",
    "leaf": "world",
-   "sizeBytes": 19544,
+   "sizeBytes": 28612,
    "bounds": {
     "min": [
-     -9.5,
+     -10,
      0,
-     -8.5
+     -9
     ],
     "max": [
-     9.951,
-     25,
-     8.951
+     10,
+     24,
+     9
     ],
     "size": [
-     19.451,
-     25,
-     17.451
+     20,
+     24,
+     18
     ]
    },
    "normalizedShift": 0,
@@ -2572,22 +2572,22 @@
    "filename": "fantasy-props-candelabra.glb",
    "relativePath": "props/fantasy-props-candelabra.glb",
    "leaf": "world",
-   "sizeBytes": 22080,
+   "sizeBytes": 39288,
    "bounds": {
     "min": [
-     -10.5,
-     -0.1247,
-     -4.6
+     -11,
+     0,
+     -4.7
     ],
     "max": [
-     10.9142,
-     38.5,
-     4.1925
+     11,
+     39,
+     5
     ],
     "size": [
-     21.4142,
-     38.6247,
-     8.7925
+     22,
+     39,
+     9.7
     ]
    },
    "normalizedShift": 0,
@@ -2817,22 +2817,22 @@
    "filename": "fantasy-props-knight-tent.glb",
    "relativePath": "props/fantasy-props-knight-tent.glb",
    "leaf": "world",
-   "sizeBytes": 23360,
+   "sizeBytes": 30412,
    "bounds": {
     "min": [
-     -30,
-     -0.0312,
-     -24
+     -30.5,
+     -0.0625,
+     -30.5
     ],
     "max": [
-     30,
+     30.7,
      68,
-     24
+     30.7
     ],
     "size": [
-     60,
-     68.0313,
-     48
+     61.2,
+     68.0625,
+     61.2
     ]
    },
    "normalizedShift": 0,
@@ -3961,7 +3961,7 @@
    "filename": "fantasy-avatar-parts.glb",
    "relativePath": "avatar/fantasy-avatar-parts.glb",
    "leaf": "characters",
-   "sizeBytes": 1145840,
+   "sizeBytes": 1172500,
    "bounds": {
     "min": [
      -0.1624,
@@ -4040,10 +4040,10 @@
    "filename": "fantasy-characters-skins-druid.glb",
    "relativePath": "characters-skins/fantasy-characters-skins-druid.glb",
    "leaf": "characters",
-   "sizeBytes": 454064,
+   "sizeBytes": 467832,
    "bounds": {
     "min": [
-     -0.09,
+     -0.11,
      0,
      -0.29
     ],
@@ -4053,7 +4053,7 @@
      0.29
     ],
     "size": [
-     0.2,
+     0.22,
      0.78,
      0.58
     ]

@@ -279,7 +279,7 @@
    "filename": "apocalypse-animated-props-porta-potty.glb",
    "relativePath": "animated-props/apocalypse-animated-props-porta-potty.glb",
    "leaf": "world",
-   "sizeBytes": 25756,
+   "sizeBytes": 24272,
    "bounds": {
     "min": [
      -14,
@@ -923,12 +923,12 @@
    "filename": "apocalypse-creatures-crow.glb",
    "relativePath": "creatures/apocalypse-creatures-crow.glb",
    "leaf": "world",
-   "sizeBytes": 27612,
+   "sizeBytes": 30088,
    "bounds": {
     "min": [
      -5.5,
      0,
-     -11
+     -11.5
     ],
     "max": [
      5.5,
@@ -938,7 +938,7 @@
     "size": [
      11,
      16,
-     22.5
+     23
     ]
    },
    "normalizedShift": 0,
@@ -1636,12 +1636,12 @@
    "filename": "apocalypse-held-items-frying-pan.glb",
    "relativePath": "held-items/apocalypse-held-items-frying-pan.glb",
    "leaf": "world",
-   "sizeBytes": 81152,
+   "sizeBytes": 47832,
    "bounds": {
     "min": [
      -0.34,
      -0.07,
-     -0.03
+     -0.02
     ],
     "max": [
      0.05,
@@ -1651,7 +1651,7 @@
     "size": [
      0.39,
      0.2,
-     0.04
+     0.03
     ]
    },
    "normalizedShift": 0,
@@ -2555,22 +2555,22 @@
    "filename": "apocalypse-props-pallet-stack.glb",
    "relativePath": "props/apocalypse-props-pallet-stack.glb",
    "leaf": "world",
-   "sizeBytes": 36516,
+   "sizeBytes": 21408,
    "bounds": {
     "min": [
-     -15.5002,
+     -13.5,
      0,
-     -14.2295
+     -12
     ],
     "max": [
-     16,
-     19,
-     14.0002
+     13.5,
+     18.0781,
+     12.5
     ],
     "size": [
-     31.5002,
-     19,
-     28.2297
+     27,
+     18.0781,
+     24.5
     ]
    },
    "normalizedShift": 0,
@@ -2942,22 +2942,22 @@
    "filename": "apocalypse-props-tire-stack.glb",
    "relativePath": "props/apocalypse-props-tire-stack.glb",
    "leaf": "world",
-   "sizeBytes": 36540,
+   "sizeBytes": 42312,
    "bounds": {
     "min": [
-     -14.0919,
+     -14.8436,
      0,
-     -12.8025
+     -13.2949
     ],
     "max": [
-     13.9154,
-     25,
-     12.6055
+     15,
+     22,
+     12.8025
     ],
     "size": [
-     28.0073,
-     25,
-     25.408
+     29.8436,
+     22,
+     26.0974
     ]
    },
    "normalizedShift": 0,
@@ -3012,22 +3012,22 @@
    "filename": "apocalypse-props-traffic-cone.glb",
    "relativePath": "props/apocalypse-props-traffic-cone.glb",
    "leaf": "world",
-   "sizeBytes": 8580,
+   "sizeBytes": 11840,
    "bounds": {
     "min": [
-     -15.5,
-     0.204,
-     -9.5
+     -17,
+     0.1292,
+     -10.5
     ],
     "max": [
-     15.0637,
+     16.791,
      19.5,
-     9.5263
+     10.5263
     ],
     "size": [
-     30.5637,
-     19.296,
-     19.0263
+     33.791,
+     19.3708,
+     21.0263
     ]
    },
    "normalizedShift": 0,
@@ -3397,22 +3397,22 @@
    "filename": "apocalypse-terrain-nature-sand-dune.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-sand-dune.glb",
    "leaf": "world",
-   "sizeBytes": 26300,
+   "sizeBytes": 29720,
    "bounds": {
     "min": [
      -32,
-     -0.1562,
-     -21.5
+     -0.2187,
+     -22
     ],
     "max": [
      32,
-     28.5,
+     29.5,
      21.5469
     ],
     "size": [
      64,
-     28.6563,
-     43.0469
+     29.7188,
+     43.5469
     ]
    },
    "normalizedShift": 0,
@@ -3826,7 +3826,7 @@
    "filename": "apocalypse-avatar-parts.glb",
    "relativePath": "avatar/apocalypse-avatar-parts.glb",
    "leaf": "characters",
-   "sizeBytes": 1026756,
+   "sizeBytes": 1080396,
    "bounds": {
     "min": [
      -0.1424,
@@ -4044,7 +4044,7 @@
    "filename": "apocalypse-characters-skins-zombie.glb",
    "relativePath": "characters-skins/apocalypse-characters-skins-zombie.glb",
    "leaf": "characters",
-   "sizeBytes": 399016,
+   "sizeBytes": 90372,
    "bounds": {
     "min": [
      -0.08,

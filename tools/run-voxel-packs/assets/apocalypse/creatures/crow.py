@@ -1,10 +1,9 @@
-"""Carrion crow, in the Pirate Nation creature style (after the PN pigeon
-and gull): a chunky faceted body in slate blue-black with a violet sheen,
-a big square head with a heavy pale beak and angry red eyes, broad wings
-with notched feather tips (one of them torn), a fanned tail and gold
-feet. The body, beak, wings and tail are true-slope prisms; feathers and
-sheen are paint. Clips: idle (peck and hop), move (flight, the wings
-flap), attack (dive and peck), hit, death (falls on its back). Faces -Z.
+"""Carrion crow, in the Pirate Nation creature style: a chunky scrap-yard
+scavenger with weathered steel plumage, zombie-teal wounds, a rusted beak,
+signal-red eyes, a torn feather patch and a tapered split tail. Gold feet
+read as hazard yellow. Feather rows and damage are paint. Clips: idle
+(peck and hop), move (flight, the wings flap), attack (dive and peck),
+hit, death (falls on its back). Faces -Z.
 """
 import numpy as np
 
@@ -18,29 +17,43 @@ from voxgrid import C, Clip, Grid
 
 SZ = (26, 18, 24)
 CX = 13.0
-INK = ("navy", 6)
+INK = ("steel", 5)
+EDGE = ("steel", 2)
 NECK = (CX, 9.0, 10.0)
 SHOULDER = {"wing-l": (CX - 4.0, 9.0, 12.0), "wing-r": (CX + 4.0, 9.0, 12.0)}
 
 
 def feathers(g, m, base=INK[1], seed=0):
-    P.flat(g, m, INK[0], base)
-    PP.fur(g, m, INK[0], base, stroke=3, seed=seed)
+    P.flat(g, m, *INK)
+    PP.fur(g, m, INK[0], base, stroke=4, seed=seed)
 
 
 def body() -> Grid:
     g = Grid(*SZ)
     X, Y, Z = ctr(g)
-    m = side(g, [(3, 9), (3, 16), (5, 19.5), (9.5, 18), (11, 13), (10, 9), (6.5, 7.5)], CX - 4, CX + 4, *INK)
+    m = side(g, [(3, 9), (3, 15), (5, 18.5), (9.5, 18), (11, 13), (10, 9), (6.5, 7.5)], CX - 4, CX + 4, *INK)
     feathers(g, m, seed=1)
-    P.flat(g, m & (Y < 5), INK[0], INK[1] + 1)  # a lighter belly
-    PP.blotch(g, m & (Y > 7), "purple", 5, cell=2, chance=0.08, seed=2)  # an oily sheen
-    tail = side(g, [(5, 18.5), (8, 17.5), (8.5, 23.5), (4, 23.5)], CX - 3, CX + 3, *INK)
-    P.flat(g, tail, INK[0], INK[1] - 1)
-    P.flat(g, tail & (np.floor(X) % 2 == 0), INK[0], INK[1])
+    P.outline(g, m, *EDGE, normal="z")
+    P.flat(g, m & (Y < 5.5), "sand", 5)  # sun-bleached breast
+    # A broad infected patch and three exposed rib marks break the flank.
+    wound = m & (np.abs(X - CX) > 3) & (Z > 13) & (Z < 17) & (Y > 7) & (Y < 12)
+    P.flat(g, wound, "teal", 5)
+    P.flat(g, wound & ((np.floor(Y) + np.floor(Z)) % 4 == 0), "teal", 7)
+    for zr in (13.5, 15.0, 16.5):
+        P.flat(g, m & (np.abs(Z - zr) < 0.5) & (Y > 7.5) & (Y < 11.5) & (np.abs(np.abs(X - CX) - 4) < 0.5), "bone", 6)
+    # A few clean feather bands give the back a readable direction.
+    P.flat(g, m & (Y > 12) & (Y < 16) & (np.floor(Z) % 3 == 0), "steel", 7)
+    # The tail narrows from the rump and ends in three stepped feathers.
+    tail = side(g, [(8.0, 17.5), (11.5, 18.2), (12.8, 21.8), (12.0, 23.0), (11.0, 21.7), (9.8, 24.0), (9.1, 22.0), (7.7, 23.2), (7.3, 20.0)], CX - 3, CX + 3, "steel", 5)
+    P.outline(g, tail, *EDGE, normal="z")
+    tips = (((Y > 11) & (Z > 22)) |
+            ((Y > 9.2) & (Y < 10.5) & (Z > 22.5)) |
+            ((Y > 7.2) & (Y < 8.5) & (Z > 21.5)))
+    P.flat(g, tail & tips & (np.abs(X - CX) < 2.5), "sand", 5)  # three worn feather tips
     for s in (-1, 1):  # gold feet
         limb(g, (CX + s * 1.8, 3.5, 13), (CX + s * 1.8, 0.8, 12.5), 0.7, 0.6, "gold", 5, n=4)
         box(g, CX + s * 1.8 - 1.2, 0, 10.5, CX + s * 1.8 + 1.2, 1, 13.5, "gold", 5)
+        P.flat(g, g.solids[-1].mask(g.shape) & (Y < 1), "gold", 7)
     return g
 
 
@@ -50,10 +63,16 @@ def head() -> Grid:
     nx, ny, nz = NECK
     m = box(g, CX - 3.5, ny, nz - 5, CX + 3.5, ny + 7, nz + 1, *INK)
     feathers(g, m, seed=3)
-    P.flat(g, m & (Y > ny + 6), INK[0], INK[1] + 1)
-    beak = side(g, [(ny + 1, nz - 5), (ny + 4.5, nz - 5), (ny + 2.5, nz - 9), (ny + 1.5, nz - 8.5)], CX - 1.5, CX + 1.5, "bone", 5)
-    P.flat(g, beak & (Y < ny + 2.2), "bone", 4)
-    G.stamp(g, "-z", nz - 5, int(CX - 3), int(ny + 3), ["oo...oo", "rr...rr"], {"r": C("red", 6), "o": C("navy", 4)}, depth=2)
+    P.outline(g, m, *EDGE, normal="z")
+    P.flat(g, m & (Y > ny + 6), "steel", 7)  # raised crown
+    # Deep red eye sockets, sand sclera and dark pupils make the face read at scale.
+    face = [".......", "rrr.rrr", "pwr.rwp", "pwr.rwp", "rrr.rrr"]
+    G.stamp(g, "-z", nz - 5, int(CX - 3), int(ny + 1), face,
+            {"r": C("red", 6), "w": C("bone", 7), "p": C("iron", 1)}, depth=2)
+    beak = side(g, [(ny + 1, nz - 5), (ny + 4.5, nz - 5), (ny + 2.5, nz - 9), (ny + 1.5, nz - 8.5)], CX - 1.5, CX + 1.5, "rust", 6)
+    P.flat(g, beak & (Y < ny + 3), "rust", 4)
+    P.flat(g, beak & (np.abs(X - CX) < 0.6) & (Y > ny + 3.5), "gold", 6)  # chipped ridge
+    P.flat(g, beak & (np.abs(X - CX) > 1.4) & (Y > ny + 3), "iron", 2)  # nostrils
     return g
 
 
@@ -62,12 +81,21 @@ def wing(s: int) -> Grid:
     X, Y, Z = ctr(g)
     wx, wy, wz = SHOULDER["wing-l" if s < 0 else "wing-r"]
     x0, x1 = (wx - 1.5, wx) if s < 0 else (wx, wx + 1.5)
-    pts = [(wy + 0.5, wz - 4), (wy + 1.5, wz + 1), (wy, wz + 8), (wy - 2, wz + 7.5), (wy - 1.5, wz + 5.5), (wy - 3.5, wz + 5), (wy - 3, wz + 3), (wy - 5, wz + 2), (wy - 4, wz - 2)]
-    if s > 0:  # the torn wing: a bitten notch in the trailing edge
-        pts = [(wy + 0.5, wz - 4), (wy + 1.5, wz + 1), (wy, wz + 8), (wy - 2, wz + 7.5), (wy - 1.5, wz + 5.5), (wy - 0.5, wz + 4), (wy - 3, wz + 3), (wy - 5, wz + 2), (wy - 4, wz - 2)]
+    pts = [(wy + 0.5, wz - 4), (wy + 1.5, wz + 1), (wy, wz + 7), (wy - 1.2, wz + 8), (wy - 2.2, wz + 6.5), (wy - 3.2, wz + 7.5), (wy - 4.2, wz + 5.5), (wy - 5, wz + 3), (wy - 4, wz - 2)]
+    if s > 0:  # the torn wing has one clear missing feather notch
+        pts = [(wy + 0.5, wz - 4), (wy + 1.5, wz + 1), (wy, wz + 7), (wy - 1.2, wz + 8), (wy - 2.2, wz + 6.5), (wy - 1.8, wz + 5), (wy - 3.5, wz + 4.5), (wy - 5, wz + 3), (wy - 4, wz - 2)]
     m = side(g, pts, x0, x1, *INK)
-    feathers(g, m, INK[1] - 1, seed=4 + s)
-    P.flat(g, m & (Y < wy - 2.5), "purple", 4)  # violet sheen on the flight feathers
+    feathers(g, m, INK[1], seed=4 + s)
+    P.outline(g, m, *EDGE, normal="z")
+    # Broad staggered bands read as feather rows, with brighter worn edges.
+    for row, zrow in enumerate((wz - 1, wz + 2, wz + 5)):
+        band = m & (Z >= zrow) & (Z < zrow + 1.2) & (Y < wy + 1 - row * 1.2)
+        P.flat(g, band, "steel", 7 if row == 0 else 6)
+    if s > 0:
+        # Teal regrowth and a small rust patch mark the damaged wing.
+        patch = m & (Z > wz + 1) & (Z < wz + 4) & (Y < wy - 2)
+        P.flat(g, patch, "teal", 6)
+        P.flat(g, m & (Z > wz + 4) & (Y < wy - 3), "rust", 5)
     return g
 
 

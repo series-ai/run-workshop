@@ -1722,22 +1722,22 @@
    "filename": "monster-held-items-reaper-scythe.glb",
    "relativePath": "held-items/monster-held-items-reaper-scythe.glb",
    "leaf": "world",
-   "sizeBytes": 50904,
+   "sizeBytes": 53304,
    "bounds": {
     "min": [
-     -0.47,
-     0.015,
+     -0.39,
+     0.005,
      -0.03
     ],
     "max": [
      0.08,
-     0.045,
-     0.25
+     0.055,
+     0.22
     ],
     "size": [
-     0.55,
-     0.03,
-     0.28
+     0.47,
+     0.05,
+     0.25
     ]
    },
    "normalizedShift": 0,
@@ -1828,7 +1828,7 @@
    "filename": "monster-held-items-silver-blunderbuss.glb",
    "relativePath": "held-items/monster-held-items-silver-blunderbuss.glb",
    "leaf": "world",
-   "sizeBytes": 55132,
+   "sizeBytes": 68292,
    "bounds": {
     "min": [
      -0.34,
@@ -2116,7 +2116,7 @@
    "filename": "monster-held-items-wooden-stake.glb",
    "relativePath": "held-items/monster-held-items-wooden-stake.glb",
    "leaf": "world",
-   "sizeBytes": 22056,
+   "sizeBytes": 15336,
    "bounds": {
     "min": [
      -0.23,
@@ -2440,22 +2440,22 @@
    "filename": "monster-props-dungeon-crate.glb",
    "relativePath": "props/monster-props-dungeon-crate.glb",
    "leaf": "world",
-   "sizeBytes": 17948,
+   "sizeBytes": 18944,
    "bounds": {
     "min": [
-     -19,
+     -19.5,
      0,
-     -7.5
+     -7.8
     ],
     "max": [
      19.3,
-     33,
+     36,
      7.6164
     ],
     "size": [
-     38.3,
-     33,
-     15.1164
+     38.8,
+     36,
+     15.4164
     ]
    },
    "normalizedShift": 0,
@@ -2652,22 +2652,22 @@
    "filename": "monster-props-gargoyle-statue.glb",
    "relativePath": "props/monster-props-gargoyle-statue.glb",
    "leaf": "world",
-   "sizeBytes": 33472,
+   "sizeBytes": 34028,
    "bounds": {
     "min": [
-     -10.5,
+     -12,
      0,
-     -9.4349
+     -10
     ],
     "max": [
-     10.5,
+     12,
      39.6656,
      9.9219
     ],
     "size": [
-     21,
+     24,
      39.6656,
-     19.3568
+     19.9219
     ]
    },
    "normalizedShift": 0,
@@ -2687,22 +2687,22 @@
    "filename": "monster-props-gravestone-cross.glb",
    "relativePath": "props/monster-props-gravestone-cross.glb",
    "leaf": "world",
-   "sizeBytes": 42012,
+   "sizeBytes": 35224,
    "bounds": {
     "min": [
-     -12.5,
+     -11.1817,
      0,
-     -8.5
+     -6.58
     ],
     "max": [
-     12.8526,
+     11.3526,
      37.2153,
-     8.5
+     6.5
     ],
     "size": [
-     25.3526,
+     22.5343,
      37.2153,
-     17
+     13.08
     ]
    },
    "normalizedShift": 0,
@@ -3328,7 +3328,7 @@
    "filename": "monster-terrain-nature-fog-pit.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-fog-pit.glb",
    "leaf": "world",
-   "sizeBytes": 73644,
+   "sizeBytes": 76468,
    "bounds": {
     "min": [
      -22.5937,
@@ -3796,22 +3796,22 @@
    "filename": "monster-vehicles-spider-carriage.glb",
    "relativePath": "vehicles/monster-vehicles-spider-carriage.glb",
    "leaf": "world",
-   "sizeBytes": 85464,
+   "sizeBytes": 87136,
    "bounds": {
     "min": [
-     -52.1939,
+     -52.3199,
      0.0222,
-     -49.5
+     -49
     ],
     "max": [
-     52.1939,
+     52.3199,
      72,
-     49.5
+     49
     ],
     "size": [
-     104.3878,
+     104.6398,
      71.9778,
-     99
+     98
     ]
    },
    "normalizedShift": 0,
@@ -3896,22 +3896,22 @@
    "filename": "monster-avatar-parts.glb",
    "relativePath": "avatar/monster-avatar-parts.glb",
    "leaf": "characters",
-   "sizeBytes": 1066680,
+   "sizeBytes": 1198052,
    "bounds": {
     "min": [
-     -0.2024,
+     -0.1208,
      -0.0004,
-     -0.3824
+     -0.2708
     ],
     "max": [
-     0.2024,
+     0.1612,
      0.8524,
-     0.3824
+     0.2708
     ],
     "size": [
-     0.4048,
+     0.282,
      0.8528,
-     0.7648
+     0.5416
     ]
    },
    "normalizedShift": 0,
@@ -3975,7 +3975,7 @@
    "filename": "monster-characters-skins-mummy.glb",
    "relativePath": "characters-skins/monster-characters-skins-mummy.glb",
    "leaf": "characters",
-   "sizeBytes": 357096,
+   "sizeBytes": 115784,
    "bounds": {
     "min": [
      -0.08,

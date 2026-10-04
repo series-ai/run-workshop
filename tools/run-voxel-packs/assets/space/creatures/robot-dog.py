@@ -1,11 +1,8 @@
 """Robot dog, in the Pirate Nation mecha style.
 
-A small boxy patrol bot, chunky and cute: a big square head (caricature)
-with a navy screen face showing cyan pixel eyes and a smile, two radar-dish
-ears that lean out (true slopes), an orange armoured back with a hazard
-saddle plate over a steel belly, four piston legs with steel paws, and a
-whip-antenna tail with a red tip. Clips: idle (wag, tilt), move (trot),
-attack (lunge and bark), hit, death. Faces -Z.
+A small boxy patrol bot with a white and steel hull, copper armor, a framed
+cyan face, mounted radar ears, plated piston legs, and a lit antenna tail.
+Clips: idle, move, attack, hit, death. Faces -Z.
 """
 import numpy as np
 
@@ -23,15 +20,30 @@ def body() -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
     belly = box(g, CX - 4, YB, 6, CX + 4, YB + 3, 21, "steel", 5)
-    P.flat(g, belly, "steel", 5)
-    back = side(g, [(YB + 3, 5), (YB + 3, 21), (YB + 7, 20), (YB + 8, 16), (YB + 8, 8), (YB + 7, 5.5)], CX - 5, CX + 5, "orange", 6)
-    P.flat(g, back, "orange", 6)
-    light_top(g, back, "orange", 7)
-    P.flat(g, back & ((X < CX - 4) | (X > CX + 4)) & (Y < YB + 4), "orange", 5)
+    P.plates(g, belly, "steel", 5, size=(5, 4), seed=2)
+    P.flat(g, belly & (Y < YB + 1), "steel", 3)
+    back = side(g, [(YB + 3, 5), (YB + 3, 21), (YB + 7, 20), (YB + 8, 16), (YB + 8, 8), (YB + 7, 5.5)], CX - 5, CX + 5, "bone", 6)
+    P.plates(g, back, "bone", 6, size=(6, 5), seed=3)
+    light_top(g, back, "bone", 7)
+    # Steel skirts and copper armor mark the body edge.
+    P.flat(g, back & ((X < CX - 4) | (X > CX + 4)) & (Y < YB + 4), "steel", 4)
+    P.flat(g, back & ((X < CX - 4) | (X > CX + 4)) & (Y > YB + 4) & (Y < YB + 6), "rust", 5)
+    hazard_strip = back & ((X < CX - 4) | (X > CX + 4)) & (Y > YB + 3) & (Y < YB + 4.5) & (Z > 16) & (Z < 19)
+    hazard(g, hazard_strip, period=3, a=("orange", 6), b=("steel", 3), frame="wall")
     saddle = back & (Y > YB + 7) & (Z > 10) & (Z < 16)
     P.flat(g, saddle, "steel", 5)
+    P.outline(g, saddle, "steel", 3)
     P.flat(g, saddle & (np.abs(X - CX) < 1), "cyan", 6)
-    P.flat(g, back & ((X < CX - 4) | (X > CX + 4)) & (np.abs(Z - 13) < 2.5) & (Y > YB + 4.5) & (Y < YB + 6.5), "cyan", 6)  # side lights
+    P.flat(g, saddle & (np.abs(X - CX) < 1) & (Y > YB + 7.5), "cyan", 7)
+    # Narrow side lamps sit inside the copper belt.
+    side_lamps = back & ((X < CX - 4) | (X > CX + 4)) & (np.abs(Z - 13) < 2.5) & (Y > YB + 4.5) & (Y < YB + 6.5)
+    P.flat(g, side_lamps, "cyan", 5)
+    P.flat(g, side_lamps & (np.abs(Z - 13) < 1), "cyan", 7)
+    # Rear service vents and small fasteners add scale without filling the panels.
+    rear = back & (Z > 19) & (Y > YB + 3.5) & (Y < YB + 7)
+    P.flat(g, rear & (np.floor(Y) % 2 == 0), "steel", 3)
+    for x in (CX - 3, CX + 3):
+        P.flat(g, back & (np.abs(X - x) < 0.6) & (Z > 19) & (Y > YB + 6), "rust", 6)
     return g
 
 
@@ -39,19 +51,38 @@ def head() -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
     h = box(g, CX - 5, YB + 5, 0, CX + 5, YB + 14, 7, "orange", 6)
-    P.flat(g, h, "orange", 6)
-    P.flat(g, edges(h), "orange", 4)
-    light_top(g, h, "orange", 7)
-    screen = h & (Z < 1) & (np.abs(X - CX) < 4) & (Y > YB + 6) & (Y < YB + 13)
-    P.flat(g, screen, "navy", 5)
-    legend = {"e": C("cyan", 7), "m": C("cyan", 6)}
-    rows = [".e....e.", "e.e..e.e", "........", "..mmmm..", "...mm..."]
+    P.plates(g, h, "bone", 6, size=(5, 5), seed=1)
+    P.flat(g, edges(h), "steel", 3)
+    light_top(g, h, "bone", 7)
+    # Copper cheek guards and steel rear panels frame the white head shell.
+    P.flat(g, h & (Z < 1) & (np.abs(X - CX) > 4) & (Y > YB + 6), "rust", 5)
+    P.flat(g, h & (Z > 5) & (np.abs(X - CX) > 2) & (Y > YB + 7) & (Y < YB + 13), "steel", 5)
+    P.flat(g, h & (Z > 5) & (np.abs(X - CX) > 3.5) & (Y > YB + 7) & (Y < YB + 12), "bone", 6)
+    P.flat(g, h & (Z > 5) & (np.abs(X - CX) < 2.5) & (Y > YB + 7) & (Y < YB + 12), "steel", 3)
+    # The face sits in a dark bezel with a small cyan status rim.
+    face = h & (Z < 1) & (np.abs(X - CX) < 4.5) & (Y > YB + 6) & (Y < YB + 13)
+    P.flat(g, face, "steel", 2)
+    screen = face & (np.abs(X - CX) < 3.5) & (Y > YB + 7) & (Y < YB + 12)
+    P.flat(g, screen, "navy", 2)
+    P.outline(g, screen, "cyan", 4, normal="z")
+    legend = {"e": C("cyan", 7), "E": C("cyan", 5), "m": C("cyan", 6), "w": C("bone", 7)}
+    rows = [".E....E.", "ew....we", "........", ".mmmmmm.", "..mwwm.."]
     pnglyph.stamp(g, "-z", 0, CX - 4, YB + 7, rows, legend)
+    # Two copper sensor studs sit below the screen.
+    for x in (CX - 4, CX + 4):
+        P.flat(g, h & (Z < 1) & (np.abs(X - x) < 0.6) & (Y > YB + 5) & (Y < YB + 6), "rust", 6)
     ears = np.zeros(g.shape, dtype=bool)
+    sockets = np.zeros(g.shape, dtype=bool)
     for s in (-1, 1):
-        ears |= front(g, [(CX + s * 3, YB + 14), (CX + s * 5, YB + 14), (CX + s * 7.5, YB + 17), (CX + s * 5.5, YB + 17.5)], 2, 5, "steel", 6)
-    P.flat(g, ears, "steel", 6)
+        # Each ear starts inside a broad steel socket on the head crown.
+        sockets |= box(g, CX + s * 3 - 1, YB + 14, 1, CX + s * 3 + 1, YB + 16, 6, "steel", 4)
+        ears |= front(g, [(CX + s * 3, YB + 14), (CX + s * 5, YB + 14), (CX + s * 7, YB + 17), (CX + s * 5, YB + 17)], 2, 5, "bone", 6)
+    P.flat(g, sockets, "steel", 4)
+    P.flat(g, sockets & (Y > YB + 14.5), "rust", 5)
+    P.flat(g, sockets & (Y > YB + 14.5) & (np.abs(X - CX) > 3.5), "cyan", 6)
+    P.plates(g, ears, "bone", 6, size=(4, 3), seed=4)
     P.flat(g, ears & (Y > YB + 16), "cyan", 6)
+    P.flat(g, ears & (Y > YB + 17), "cyan", 7)
     return g
 
 
@@ -60,17 +91,33 @@ def leg(x: float, z: float) -> Grid:
     X, Y, Z = coords(g)
     lg = side(g, quad((YB + 1, z), (3, z + 1), 1.5, 1.2), x - 1.2, x + 1.2, "steel", 5)
     P.flat(g, lg, "steel", 5)
-    P.flat(g, lg & (Y > YB - 2), "orange", 5)
+    # A white thigh plate follows the leg slope. A copper stripe marks its edge.
+    thigh = lg & (Y > YB - 1) & (Y < YB + 3.5)
+    P.plates(g, thigh, "bone", 6, size=(3, 3), seed=int(z))
+    P.flat(g, thigh & (np.abs(Y - (YB + 1.5)) < 0.6), "rust", 5)
+    # The hip and ankle bands define the moving joints.
+    P.flat(g, lg & (Y > YB + 2.5), "steel", 3)
+    P.flat(g, lg & (Y > YB + 2.5) & (np.abs(X - x) < 0.7), "cyan", 5)
     paw = box(g, x - 1.5, 0, z - 2, x + 1.5, 3, z + 2, "steel", 4)
+    P.plates(g, paw, "steel", 5, size=(3, 3), seed=int(z + x))
     light_top(g, paw, "steel", 6)
+    P.flat(g, paw & (Y < 1), "steel", 2)
+    P.flat(g, paw & (Z < z - 1.5) & (np.abs(X - x) < 0.7), "bone", 6)
+    P.flat(g, paw & (Z < z - 1.5) & (np.abs(X - x) < 0.7) & (Y > 1), "cyan", 5)
     return g
 
 
 def tail() -> Grid:
     g = Grid(*S)
+    X, Y, Z = coords(g)
     t = side(g, quad((YB + 7, 20), (YB + 14, 22.5), 0.7), CX - 0.6, CX + 0.6, "steel", 6)
-    tip = box(g, CX - 1, YB + 13, 21, CX + 1, YB + 15, 23, "red", 6)
-    del t, tip
+    P.flat(g, t, "steel", 5)
+    P.flat(g, t & (Y > YB + 9) & (Y < YB + 10), "rust", 6)
+    P.flat(g, t & (Y > YB + 12), "steel", 4)
+    tip = box(g, CX - 1, YB + 13, 21, CX + 1, YB + 15, 23, "cyan", 6)
+    P.flat(g, tip, "cyan", 6)
+    P.flat(g, tip & (Y > YB + 14), "cyan", 7)
+    P.flat(g, tip & (Z > 22), "steel", 3)
     return g
 
 

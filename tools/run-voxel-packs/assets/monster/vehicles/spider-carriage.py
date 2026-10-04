@@ -14,6 +14,7 @@ Faces -Z.
 import numpy as np
 
 import paint as P
+import pnglyph
 import pnshapes as S
 from _bld import coffin_poly, coords, facet_window, parts
 from pnkit import box
@@ -33,24 +34,32 @@ LAMP_L = (CX - 17.0, 58.0, 30.0)
 def cabin() -> Grid:
     g = Grid(*G)
     X, Y, Z = coords(g)
-    # the spider: thorax, abdomen with an hourglass, head with eyes and fangs
-    S.disc(g, "y", CX, 56, 17, 26, CAB_Y0, "purple", 4)
-    P.mottle(g, S.last(g), "purple", 4, cell=3, seed=1)
+    # The thorax sits under the cabin as a dark, plated connector.
+    thorax = S.disc(g, "y", CX, 56, 17, 26, CAB_Y0, "moss", 4)
+    P.flat(g, thorax & S.seams(g, [g.solids[-1]], 1.2), "moss", 2)
+    P.flat(g, thorax & (Y < 29), "gray", 3)
+    # The abdomen is a stepped, armored sac with a bold magenta hourglass.
     start = len(g.solids)
-    g.prism("y", S.flat_ngon(CX, 96, 10, 8), 22, 32, C("purple", 6), top=S.flat_ngon(CX, 97, 15, 8))
-    g.prism("y", S.flat_ngon(CX, 97, 15, 8), 32, 44, C("purple", 5), top=S.flat_ngon(CX, 98, 12, 8))
+    g.prism("y", S.flat_ngon(CX, 96, 9, 8), 22, 32, C("purple", 5), top=S.flat_ngon(CX, 97, 14, 8))
+    g.prism("y", S.flat_ngon(CX, 97, 14, 8), 32, 44, C("purple", 5), top=S.flat_ngon(CX, 98, 12, 8))
     g.prism("y", S.flat_ngon(CX, 98, 12, 8), 44, 52, C("purple", 5), top=S.flat_ngon(CX, 98, 5, 8))
     ab = np.logical_or.reduce([sd.mask(g.shape) for sd in g.solids[start:]])
-    S.paint_facets(g, g.solids[start:], lambda gg, mm, fr: P.mottle(gg, mm, "purple", 6, cell=3, seed=2))
-    P.flat(g, ab & S.seams(g, g.solids[start:], 0.9), "purple", 5)
-    hg = ab & (Z > 99) & (Y > 26) & (Y < 50) & (np.abs(X - CX) < 1.5 + np.abs(Y - 38) * 0.5)
-    P.flat(g, hg, "magenta", 5)
-    head = box(g, CX - 10, 24, 14, CX + 10, 40, 30, "purple", 6)
-    P.mottle(g, head, "purple", 6, cell=3, seed=3)
-    for ex, ey, r, ramp in ((-4, 34, 2, "toxic"), (4, 34, 2, "toxic"), (-8, 32, 1, "magenta"), (8, 32, 1, "magenta"), (-2, 29, 1, "toxic"), (2, 29, 1, "toxic"), (-6, 37, 1, "magenta"), (6, 37, 1, "magenta")):
-        eye = head & (Z < 15) & (np.abs(X - CX - ex) <= r) & (np.abs(Y - ey) <= r)
-        P.flat(g, eye, ramp, 6)
-        P.flat(g, eye & (np.abs(X - CX - ex - 0.5) < 0.6) & (np.abs(Y - ey - 0.5) < 0.6), ramp, 7)
+    P.flat(g, ab, "purple", 5)
+    P.flat(g, ab & S.seams(g, g.solids[start:], 1.2), "purple", 2)
+    P.flat(g, ab & ((Y < 24) | ((Y > 49) & (Y < 51))), "gray", 4)
+    # A large bone skull gives the rear shell a clear focal mark.
+    pnglyph.icon(g, "+z", 110, int(CX - 7), 30, "skull", "bone", 6, scale=2, depth=2, reach=4)
+    head = box(g, CX - 11, 23, 13, CX + 11, 41, 31, "gray", 4)
+    P.flat(g, head & S.seams(g, [g.solids[-1]], 1.1), "gray", 2)
+    # Two large eyes sit on a clean dark face panel.
+    face = head & (Z < 15) & (Y > 28) & (Y < 39) & (np.abs(X - CX) < 9)
+    P.flat(g, face, "purple", 2)
+    for ex in (-5, 5):
+        socket = head & (Z < 15) & (np.abs(X - CX - ex) <= 3) & (np.abs(Y - 34) <= 3)
+        P.flat(g, socket, "moss", 2)
+        eye = socket & (Z < 14) & (np.abs(X - CX - ex) <= 2) & (np.abs(Y - 34) <= 2)
+        P.flat(g, eye, "toxic", 6)
+        P.flat(g, eye & (np.abs(X - CX - ex - 0.5) < 1) & (np.abs(Y - 34 - 0.5) < 1), "toxic", 7)
     for s in (-1, 1):
         g.prism("x", [(25, 16), (25, 20), (14, 13)], CX + s * 4 - 1.5, CX + s * 4 + 1.5, C("bone", 6))
     # the driver's perch on the head
@@ -62,19 +71,33 @@ def cabin() -> Grid:
     g.prism("y", [(u, v) for u, v in poly], CAB_Y0, CAB_Y1, C("purple", 6))
     walls = [g.solids[-1]]
     wm = S.last(g)
-    P.mottle(g, wm, "purple", 6, cell=4, seed=4)
+    P.flat(g, wm, "gray", 5)
+    P.flat(g, wm & S.seams(g, walls, 1.2), "gray", 2)
     for k, (m, fr) in enumerate(S.facets(g, walls)):
         if fr == "top":
             continue
         u, _v = fr
         if abs(u[2]) > 0.5:  # the long side facets
+            P.planks(g, m, "gray", 5, width=5, across="y", nails=False, grain=False, frame=fr, seed=4)
             facet_window(g, m, fr, CAB_Y0 + 6, CAB_Y1 - 4, 9, glass=("magenta", 6), rim=("gold", 5))
     P.flat(g, wm & ((Y < CAB_Y0 + 2) | (Y > CAB_Y1 - 2)), "gold", 4)
     P.flat(g, wm & S.seams(g, walls, 1.2), "gold", 4)
+    # Dark hip sockets join each leg to the lower coffin frame.
+    for side in (-1, 1):
+        for hz in HIP_Z:
+            hx = CX + side * HIP_X
+            mount = box(g, hx - 4, 31, hz - 4, hx + 4, 38, hz + 4, "purple", 2)
+            P.flat(g, mount & (Y > 33) & (Y < 36), "magenta", 4)
     top = coffin_poly(CX, CAB_Z0 + 3, CAB_W - 8, CAB_L - 6)
     start = len(g.solids)
     g.prism("y", [(u, v) for u, v in coffin_poly(CX, CAB_Z0 - 1, CAB_W + 2, CAB_L + 2)], CAB_Y1, CAB_Y1 + 10, C("purple", 6), top=top)
-    S.paint_facets(g, g.solids[start:], lambda gg, mm, fr: P.tiles(gg, mm, "purple", 6, row=3, width=4, frame=fr, seed=5))
+    def roof_courses(gg, mm, fr):
+        u, v = P.uv(gg, fr)
+        P.flat(gg, mm, "purple", 5)
+        P.flat(gg, mm & (v % 4 == 3), "purple", 3)
+        P.flat(gg, mm & (u % 5 == 0) & (v % 4 != 3), "purple", 4)
+
+    S.paint_facets(g, g.solids[start:], roof_courses)
     lid = S.last(g)
     P.flat(g, lid & (Y < CAB_Y1 + 1.5), "gold", 5)
     lidtop = lid & (Y > CAB_Y1 + 9)
@@ -84,10 +107,11 @@ def cabin() -> Grid:
     # two magenta lamps on brackets at the front corners
     for s in (-1, 1):
         x = CX + s * (CX - LAMP_L[0])
-        box(g, x - 1, CAB_Y1 - 8, CAB_Z0 + 2, x + 1, CAB_Y1 - 6, CAB_Z0 + 8, "gold", 4)
+        attach_x = CX + s * 11
+        box(g, min(x, attach_x), CAB_Y1 - 8, CAB_Z0 - 3, max(x, attach_x), LAMP_L[1] + 1, CAB_Z0 + 3, "gold", 4)
         lamp = box(g, x - 2.5, LAMP_L[1] - 4, LAMP_L[2] - 2.5, x + 2.5, LAMP_L[1] + 3, LAMP_L[2] + 2.5, "magenta", 6)
         P.flat(g, lamp & (np.abs(X - x) > 1.6) & (np.abs(Z - LAMP_L[2]) > 1.6), "gold", 4)
-        g.prism("y", [(x - 3, LAMP_L[2] - 3), (x + 3, LAMP_L[2] - 3), (x + 3, LAMP_L[2] + 3), (x - 3, LAMP_L[2] + 3)], LAMP_L[1] + 3, LAMP_L[1] + 7, C("purple", 5), top=[(x, LAMP_L[2])] * 4)
+        g.prism("y", [(x - 3, LAMP_L[2] - 3), (x + 3, LAMP_L[2] - 3), (x + 3, LAMP_L[2] + 3), (x - 3, LAMP_L[2] + 3)], LAMP_L[1] + 2, LAMP_L[1] + 7, C("purple", 5), top=[(x, LAMP_L[2])] * 4)
     return g
 
 
@@ -100,16 +124,28 @@ def leg(side: int, k: int) -> Grid:
     reach = 40 - abs(k - 1.5) * 2
     knee = (hx + side * reach * 0.5, HIP_Y + 22)
     foot = (hx + side * reach, 3.0)
-    g.prism("z", S.quad((hx, HIP_Y), knee, 3.2, 2.8), hz - 2.5, hz + 2.5, C("purple", 6))
-    g.prism("z", S.quad(knee, foot, 2.8, 1.6), hz - 2, hz + 2, C("purple", 6))
+    g.prism("z", S.quad((hx, HIP_Y), knee, 3.5, 3.0), hz - 3, hz + 3, C("purple", 5))
+    g.prism("z", S.quad(knee, foot, 3.0, 1.8), hz - 2.5, hz + 2.5, C("purple", 5))
+    box(g, knee[0] - 2.8, knee[1] - 2.8, hz - 3.1, knee[0] + 2.8, knee[1] + 2.8, hz + 3.1, "purple", 5)
     m = (g.a > 0)
-    P.mottle(g, m, "purple", 6, cell=3, seed=10 + k)
-    P.flat(g, m & (np.hypot(X - knee[0], Y - knee[1]) < 3.6), "magenta", 5)
-    P.flat(g, m & (np.hypot(X - hx, Y - HIP_Y) < 3.8), "magenta", 5)
-    mid = ((knee[0] + foot[0]) / 2, (knee[1] + foot[1]) / 2)
-    P.flat(g, m & (np.hypot(X - mid[0], Y - mid[1]) < 1.6), "magenta", 4)
+    P.flat(g, m, "purple", 5)
+    # Place broad bands along each bent segment, not along the full hip-to-foot span.
+    def segment_coords(a, b):
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        length2 = dx * dx + dy * dy
+        t = ((X - a[0]) * dx + (Y - a[1]) * dy) / length2
+        dist = np.abs((X - a[0]) * dy - (Y - a[1]) * dx) / np.sqrt(length2)
+        return t, dist
+
+    upper_t, upper_d = segment_coords((hx, HIP_Y), knee)
+    lower_t, lower_d = segment_coords(knee, foot)
+    P.flat(g, m & (upper_d < 4.0) & (upper_t > 0.13) & (upper_t < 0.23), "magenta", 5)
+    P.flat(g, m & (upper_d < 4.0) & (upper_t > 0.78) & (upper_t < 0.9), "gray", 5)
+    P.flat(g, m & (lower_d < 3.4) & (lower_t > 0.50) & (lower_t < 0.64), "magenta", 5)
+    P.flat(g, m & S.seams(g, [g.solids[-1]], 1.0), "purple", 2)
+    pin = m & (np.abs(X - knee[0]) <= 1) & (np.abs(Y - knee[1]) <= 1) & (np.abs(Z - hz) <= 3)
+    P.flat(g, pin, "magenta", 5)
     g.prism("z", S.quad((foot[0] - side * 0.6, foot[1] + 3), (foot[0] + side * 1.2, 0.2), 1.3, 0.6), hz - 1.5, hz + 1.5, C("bone", 6))
-    box(g, knee[0] - 3, knee[1] - 3, hz - 3, knee[0] + 3, knee[1] + 3, hz + 3, "magenta", 4)
     return g
 
 
