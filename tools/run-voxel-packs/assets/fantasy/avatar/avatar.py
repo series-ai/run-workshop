@@ -85,22 +85,22 @@ def wizard_hat():
     cx, cz = (HX0 + HX1) / 2 - 0.5, HEAD_CZ
     d = np.sqrt((x + 0.5 - cx) ** 2 + (z + 0.5 - cz) ** 2)
     sq = np.maximum(np.abs(x + 0.5 - cx), np.abs(z + 0.5 - cz))
-    g.where((sq <= 15.5) & (y >= 58) & (y < 60), C("purple", 3))  # brim
+    g.where((sq <= 15.5) & (y >= 58) & (y < 60), C("blue", 2))  # broad, framed brim
     g.where((sq <= 15.5) & (sq > 14.5) & (y >= 58) & (y < 59), C("gold", 4))
-    for k in range(0, 28, 2):
-        t = k / 27
-        r = 11.5 * (1 - t) ** 0.9 + 0.8
-        ox = -1 - round(9 * t ** 2.3)
-        m = (np.maximum(np.abs(x + 0.5 - cx - ox), np.abs(z + 0.5 - cz)) <= r) & (y >= 60 + k) & (y < 62 + k)
-        g.where(m, C("purple", 3))
+    # Four broad courses make a steep, irregular witch-hat silhouette.
+    for yy in range(60, 76):
+        level = (yy - 60) // 4
+        t = level / 3
+        r = 12.2 - level * 2.9
+        ox = -1 - round(4 * t * t)
+        m = (np.maximum(np.abs(x + 0.5 - cx - ox), np.abs(z + 0.5 - cz)) <= r) & (y == yy)
+        g.where(m, C("rust", 4 if level % 2 == 0 else 3))
     band = (np.maximum(np.abs(x + 0.5 - cx + 1), np.abs(z + 0.5 - cz)) <= 12.3) & (y >= 60) & (y < 62)
-    g.where(band, C("gold", 5))
-    g.box(FACE_X - 1, 60, 36, FACE_X + 1, 64, 40, C("gold", 6))  # buckle
-    g.box(FACE_X, 61, 37, FACE_X + 1, 63, 39, C("purple", 3))
-    rng = np.random.default_rng(4)
-    pts = np.argwhere((g.a // 8 == 18) & (y > 63))
-    for p in pts[rng.choice(len(pts), 8, replace=False)]:
-        g.set(*p, C("gold", 6))
+    g.where(band, C("rust", 4))
+    g.where(band & (y == 60), C("gold", 5))
+    # A small stitched rune sits just above the brow band.
+    g.box(27, 64, 36, 29, 66, 40, C("gold", 5))
+    g.box(28, 64, 37, 29, 66, 39, C("cyan", 6))
     return rig_part("headwear fantasy-3", g, "Wizard Hat", hides_hair=True)
 
 
@@ -145,15 +145,25 @@ def horned_helm():
     g = rig_grid()
     x, y, z = _xyz()
     helm = shell(["Head"], 1) & (y >= 50)
-    g.where(helm, C("iron", 4))
-    g.where(helm & (y == 50), C("gold", 4))
-    g.where(helm & (((z - 38) % 5) == 0) & (y > 50), C("iron", 5))
+    g.where(helm, C("steel", 5))
+    g.where(helm & (y >= 57), C("blue", 2))
+    g.where(helm & (y == 50), C("gold", 5))
+    g.where(helm & (x < FACE_X - 2) & (y >= 51) & (y <= 54) & ((z == HZ0) | (z == HZ1 - 1)), C("steel", 3))
+    # The crown has a strong gold front band and a painted heraldic crest.
+    front = helm & (x == FACE_X + 1)
+    g.where(front & (y >= 55) & (y <= 57), C("gold", 6))
+    crest = front & (y >= 53) & (y <= 62) & (z >= 33) & (z <= 43)
+    g.where(crest, C("rust", 4))
+    g.where(crest & ((y == 53) | (y == 62) | (z == 33) | (z == 43)), C("gold", 6))
+    g.where(crest & (y >= 55) & (y <= 60) & (z >= 35) & (z <= 41), C("blue", 2))
+    g.where(crest & (y >= 57) & (y <= 59) & (z >= 37) & (z <= 39), C("cyan", 7))
+    g.where(helm & (y >= 52) & (y <= 54) & (x < FACE_X - 2) & ((z % 6) == 0), C("gold", 5))
     g.box(FACE_X + 1, 43, 37, FACE_X + 2, 51, 39, C("iron", 5))  # nose guard
     for sign, zb in ((-1, HZ0 - 1), (1, HZ1)):
         for k in range(11):
             zz = zb + sign * (1 + k // 2)
             yy = 52 + k - (k * k) // 14
-            g.box(HX0 + 7, yy, zz, HX0 + 10, yy + 2, zz + 1, C("bone", 5 if k < 6 else 7))
+            g.box(HX0 + 7, yy, zz, HX0 + 10, yy + 2, zz + 1, C("wood", 5 if k < 6 else 7))
     return rig_part("headwear fantasy-6", g, "Horned Helm", hides_hair=True)
 
 
@@ -223,9 +233,11 @@ def topknot():
     g = rig_grid()
     x, y, z = _xyz()
     cap = (shell(["Head"], 1) & (y >= 52)) | (shell(["Head"], 1) & (x <= HX0 + 5) & (y >= 44))
-    g.where(cap, C("iron", 1))
-    g.box(17, 59, 34, 24, 63, 42, C("iron", 1))  # bun
-    g.box(18, 63, 35, 23, 66, 41, C("iron", 2))
+    g.where(cap, C("darkwood", 3))
+    g.where(cap & (y >= 56), C("wood", 4))
+    g.box(17, 59, 34, 24, 63, 42, C("darkwood", 3))  # bun
+    g.box(18, 63, 35, 23, 66, 41, C("wood", 4))
+    g.where((g.a != 0) & (x < FACE_X) & (y >= 53) & ((z % 5) == 0), C("wood", 5))
     g.box(20, 64, 29, 21, 65, 49, C("gold", 5))  # hairpin
     g.set(20, 64, 28, C("red", 5)).set(20, 64, 49, C("red", 5))
     return rig_part("hair fantasy-3", g, "Elven Topknot")
@@ -236,14 +248,21 @@ def dwarf_beard():
     g = rig_grid()
     x, y, z = _xyz()
     for k in range(9):
-        w = 9 - k // 2
-        g.box(FACE_X - 1, 43 - k * 2, 38 - w, FACE_X + 3, 45 - k * 2, 38 + w, C("wood", 3 if k % 2 else 4))
-        g.where((g.a != 0) & (y == 43 - k * 2) & (z >= 38 - w + 1) & (z < 38 + w - 1), C("rust", 4))
-    g.box(FACE_X + 1, 43, 33, FACE_X + 3, 46, 43, C("rust", 5))  # moustache
+        w = 9 - k // 2 - (1 if k >= 6 else 0)
+        yy = 43 - k * 2
+        g.box(FACE_X - 1, yy, 38 - w, FACE_X + 3, yy + 2, 38 + w, C("rust", 4))
+        g.where((g.a != 0) & (x == FACE_X + 2) & (y == yy) & ((z == 38 - w) | (z == 37 + w)), C("darkwood", 3))
+        g.where((g.a != 0) & (x == FACE_X + 2) & (y >= yy) & (y <= yy + 2) & (z >= 37) & (z <= 39), C("wood", 6))
+    g.box(FACE_X + 1, 43, 34, FACE_X + 3, 46, 42, C("rust", 5))  # kept within the cheeks
     for zb in (33, 42):
-        g.box(FACE_X, 17, zb, FACE_X + 3, 27, zb + 3, C("wood", 3))
-        for yy in (19, 24):
-            g.box(FACE_X, yy, zb, FACE_X + 3, yy + 2, zb + 3, C("gold", 5))
+        g.box(FACE_X, 17, zb, FACE_X + 2, 27, zb + 2, C("darkwood", 3))
+        for yy in (18, 22, 26):
+            g.box(FACE_X, yy, zb, FACE_X + 2, yy + 1, zb + 2, C("rust", 5))
+        for yy in (20, 25):
+            g.box(FACE_X + 1, yy, zb, FACE_X + 2, yy + 1, zb + 2, C("gold", 5))
+    beard_front = (g.a != 0) & (x == FACE_X + 2) & (y >= 27) & (y <= 43)
+    for zz in (35, 39, 43):
+        g.where(beard_front & (z == zz), C("wood", 5))
     return rig_part("facialhair fantasy-1", g, "Braided Dwarf Beard")
 
 
@@ -255,7 +274,8 @@ def wizard_beard():
         g.box(FACE_X - 1, 43 - k * 2, 38 - w, FACE_X + 2, 45 - k * 2, 38 + w, C("bone", 6 if k % 2 else 7))
         if k < 9:
             g.where((g.a != 0) & (y == 43 - k * 2) & (z == 38 - w), C("bone", 5))
-    g.box(FACE_X + 1, 43, 32, FACE_X + 3, 45, 44, C("bone", 7))
+    # Keep the moustache on the front plane and within the cheek width.
+    g.box(FACE_X + 1, 43, 34, FACE_X + 2, 45, 42, C("bone", 7))
     g.box(FACE_X, 19, 37, FACE_X + 2, 21, 39, C("gold", 5))
     g.box(FACE_X + 1, 25, 37, FACE_X + 2, 27, 39, C("gold", 4))
     return rig_part("facialhair fantasy-2", g, "Wizard Beard")
@@ -293,8 +313,9 @@ def moon_spectacles():
 def eyepatch():
     g = rig_grid()
     x, y, z = _xyz()
-    g.box(FACE_X + 1, 46, 30, FACE_X + 2, 52, 36, C("darkwood", 2))
-    g.box(FACE_X + 1, 48, 32, FACE_X + 2, 50, 34, C("gold", 5))  # rune stud
+    g.box(FACE_X + 1, 46, 30, FACE_X + 2, 52, 36, C("darkwood", 3))
+    g.box(FACE_X + 2, 47, 31, FACE_X + 3, 51, 35, C("gold", 5))
+    g.box(FACE_X + 3, 48, 32, FACE_X + 4, 50, 34, C("cyan", 6))  # arcane rune
     strap = shell(["Head"], 1) & (np.abs((y - 50) - (z - 38) * 0.35) < 0.8)
     g.where(strap, C("darkwood", 3))
     return rig_part("eyewear fantasy-3", g, "Rune Eyepatch")
@@ -310,28 +331,27 @@ def elf_ears():
             y0 = 44 + k
             x0 = 20 - k // 2
             h = max(2, 7 - k // 2)
-            g.box(x0, y0, zz, x0 + 3, y0 + h, zz + 1, C("skin", 5 if k < 6 else 4))
-            if k % 2 == 0:
-                g.box(x0, y0 + 1, zz, x0 + 1, y0 + h - 1, zz + 1, C("skindark", 3))
-            if k < 5:
-                g.box(x0 + 1, y0 + 1, zz, x0 + 2, y0 + h - 1, zz + 1, C("pink", 4))
-        g.where((g.a != 0) & (x >= 19) & (x <= 22) & (y >= 45) & (y <= 46) & (z == z0 + sign), C("gold", 5))
+            g.box(x0, y0, zz, x0 + 3, y0 + h, zz + 2, C("skin", 5 if k < 6 else 4))
+            g.where((g.a != 0) & (x >= x0) & (x <= x0 + 1) & (y >= y0 + 1) & (y < y0 + h - 1) & (z == zz + sign), C("pink", 5))
+        g.box(20, 45, z0 + sign, 23, 47, z0 + sign * 2, C("gold", 5))
+        g.set(21, 46, z0 + sign * 2, C("cyan", 6))
     return rig_part("ears fantasy-1", g, "Elf Ears")
 
 
 def high_elf_ears():
     g = rig_grid()
+    x, y, z = _xyz()
     for sign, z0 in ((-1, HZ0 - 1), (1, HZ1 + 1)):
         for k in range(11):
             zz = z0 + sign * (k * 2 // 3)
             y0 = 44 + k
             x0 = 20 - k // 2
             h = max(2, 7 - k // 2)
-            g.box(x0, y0, zz, x0 + 3, y0 + h, zz + 1, C("skin", 5))
-            if k < 6:
-                g.box(x0 + 1, y0 + 1, zz, x0 + 2, y0 + h - 1, zz + 1, C("pink", 5))
-        g.box(18, 47, z0 + sign * 2, 22, 49, z0 + sign * 2 + 1, C("gold", 5))  # gold cuffs
-        g.set(19, 46, z0 + sign * 1, C("plasma", 6))
+            g.box(x0, y0, zz, x0 + 3, y0 + h, zz + 2, C("skin", 5))
+            if k < 7:
+                g.where((g.a != 0) & (x >= x0) & (x <= x0 + 1) & (y >= y0 + 1) & (y < y0 + h - 1) & (z == zz + sign), C("pink", 5))
+        g.box(18, 47, z0 + sign * 2, 22, 49, z0 + sign * 3, C("gold", 5))  # gold cuffs
+        g.set(19, 48, z0 + sign * 3, C("cyan", 6))
     return rig_part("ears fantasy-2", g, "High-Elf Ears")
 
 
@@ -345,19 +365,21 @@ def _eyes(g, iris, glint, mouth):
 
 def elven_face():
     g = rig_grid()
-    _eyes(g, C("forest", 3), C("gold", 7), C("skindark", 3))
+    _eyes(g, C("forest", 2), C("cyan", 7), C("skindark", 4))
     for zz in (31, 44):  # small paired rune marks
-        g.box(FACE_X + 1, 44, zz, FACE_X + 2, 46, zz + 1, C("plasma", 5))
-    g.box(FACE_X + 1, 52, 38, FACE_X + 2, 53, 39, C("gold", 6))
+        g.box(FACE_X + 1, 44, zz, FACE_X + 2, 46, zz + 1, C("cyan", 5))
+    g.box(FACE_X + 1, 52, 37, FACE_X + 2, 54, 40, C("gold", 6))
+    g.set(FACE_X + 2, 53, 38, C("cyan", 7))
     return rig_part("face fantasy-1", g, "Elven Rune Face")
 
 
 def druid_face():
     g = rig_grid()
-    _eyes(g, C("wood", 2), C("sky", 7), C("skindark", 3))
+    _eyes(g, C("darkwood", 2), C("orange", 7), C("skindark", 4))
     # One small forehead leaf keeps the face clear at thumbnail size.
-    g.box(FACE_X + 1, 54, 37, FACE_X + 2, 56, 40, C("leaf", 5))
-    g.set(FACE_X + 1, 55, 38, C("gold", 6))
+    g.box(FACE_X + 1, 53, 36, FACE_X + 2, 57, 41, C("leaf", 5))
+    g.box(FACE_X + 2, 54, 37, FACE_X + 3, 56, 40, C("gold", 6))
+    g.set(FACE_X + 3, 55, 38, C("cyan", 7))
     return rig_part("face fantasy-2", g, "Druid Leaf Paint")
 
 
@@ -366,9 +388,9 @@ def elven_brows():
     for sign, z0 in ((1, 30), (-1, 46)):
         for k in range(5):
             zz = z0 + sign * k
-            g.box(FACE_X + 1, 53 + (k // 2 if k < 4 else 1), zz, FACE_X + 2, 54 + (k // 2 if k < 4 else 1), zz + 1, C("wood", 4))
+            g.box(FACE_X + 1, 53 + (k // 2 if k < 4 else 1), zz, FACE_X + 2, 54 + (k // 2 if k < 4 else 1), zz + 1, C("darkwood", 4))
     for zz in (30, 46):
-        g.set(FACE_X + 1, 53, zz, C("gold", 5))
+        g.set(FACE_X + 1, 53, zz, C("gold", 6))
     return rig_part("eyebrow fantasy-1", g, "Arched Elven Brows")
 
 
@@ -377,13 +399,20 @@ def cuirass():
     g = rig_grid()
     x, y, z = _xyz()
     torso = shell(["Chest", "Body"], 1) & (y >= 16)
-    g.where(torso, C("steel", 5))
+    g.where(torso, C("steel", 6))
     g.where(torso & (x >= 24) & (np.abs(z - 37.5) < 1), C("steel", 7))  # ridge
     g.where(torso & ((y == 22) | (y == 28)) & (x >= 24), C("steel", 4))  # lames
-    g.where(torso & (y >= 16) & (y < 18), C("darkwood", 3))
+    g.where(torso & (y >= 16) & (y < 19), C("rust", 4))
     g.box(24, 16, 36, 25, 18, 40, C("gold", 5))
+    g.box(25, 16, 37, 26, 18, 39, C("cyan", 6))
+    front = torso & (x >= 24)
+    chest_panel = front & (y >= 19) & (y <= 28) & (z >= 34) & (z <= 41)
+    g.where(chest_panel, C("rust", 4))
+    g.where(chest_panel & ((y == 19) | (y == 28) | (z == 34) | (z == 41)), C("gold", 5))
+    g.where(chest_panel & (y >= 22) & (y <= 25) & (z >= 36) & (z <= 39), C("blue", 2))
+    g.where(chest_panel & (y >= 23) & (y <= 24) & (z >= 37) & (z <= 38), C("cyan", 7))
     sleeves = shell(["Arm.L", "Arm.R", "ForeArm.L", "ForeArm.R"], 1)
-    g.where(sleeves, C("iron", 5))
+    g.where(sleeves, C("steel", 4))
     for (z0, z1) in ((24, 32), (44, 52)):
         pad = dilate(region(["Arm.L" if z0 < 30 else "Arm.R"]) | region(["Chest"]), 2) & ~body() & (z >= z0) & (z < z1) & (y >= 30)
         g.where(pad, C("steel", 6))
@@ -424,20 +453,26 @@ def mage_robe_top():
     g = rig_grid()
     x, y, z = _xyz()
     torso = shell(["Chest", "Body"], 1) & (y >= 15)
-    g.where(torso, C("purple", 3))
-    g.where(torso & (np.abs(z - 37.5) < 2.5) & (x >= 24), C("bone", 6))
-    g.where(torso & (y >= 17) & (y < 20), C("arcane", 4))
+    g.where(torso, C("blue", 3))
+    g.where(torso & (np.abs(z - 37.5) < 1.5) & (x >= 24) & (y >= 20), C("cyan", 5))
+    g.where(torso & (y >= 17) & (y < 20), C("darkwood", 3))
+    g.where(torso & (y >= 16) & (y < 17), C("gold", 5))
     sleeves = shell(["Arm.L", "Arm.R"], 1)
-    g.where(sleeves, C("purple", 4))
-    bell = shell(["ForeArm.L", "ForeArm.R"], 2) & (y <= 35)
-    g.where(bell, C("purple", 4))
-    g.where(bell & ((z == 14) | (z == 13) | (z == 61) | (z == 62)), C("gold", 5))
+    g.where(sleeves, C("blue", 4))
+    forearms = shell(["ForeArm.L", "ForeArm.R"], 1)
+    g.where(forearms, C("blue", 3))
+    g.where(forearms & (y >= 31) & (y <= 33), C("rust", 4))
+    g.where(forearms & (y == 32) & ((z == 14) | (z == 15) | (z == 60) | (z == 61)), C("gold", 5))
     collar = shell(["Chest"], 2) & (y >= 33) & (y < 39) & (x < FACE_X - 3) & ~region(["Head"])
-    g.where(collar & (g.a == 0), C("purple", 5))
+    g.where(collar & (g.a == 0), C("rust", 4))
     g.where(collar & (y >= 38), C("gold", 5))
     for zz in (32, 43):
         g.box(24, 26, zz, 25, 29, zz + 1, C("gold", 6))
         g.box(24, 27, zz - 1, 25, 28, zz + 2, C("gold", 6))
+    # A framed cyan spell-star makes the front readable at thumbnail size.
+    g.box(25, 24, 35, 26, 30, 41, C("gold", 5))
+    g.box(26, 25, 36, 27, 29, 40, C("cyan", 5))
+    g.box(27, 26, 37, 28, 28, 39, C("cyan", 7))
     return rig_part("tops fantasy-3", g, "Mage Robe")
 
 
@@ -503,10 +538,11 @@ def breeches():
     g = rig_grid()
     x, y, z = _xyz()
     legs = shell(LEGS, 1) | (shell(["Body"], 1) & (y < 18))
-    g.where(legs, C("wood", 4))
-    g.where(legs & ((y % 5) == 0), C("wood", 3))
-    g.where(legs & (x >= 24) & (y >= 9) & (y < 13), C("wood", 6))  # leather knee guards
+    g.where(legs, C("wood", 5))
+    g.where(legs & (y >= 9) & (y < 13), C("rust", 4))
+    g.where(legs & (y >= 9) & (y < 13) & (x >= 24), C("wood", 6))  # leather knee guards
     g.where(legs & (y >= 16), C("darkwood", 3))
+    g.where(legs & (y >= 10) & (y < 15) & ((z == 27) | (z == 48)), C("gold", 4))
     return rig_part("bottoms fantasy-2", g, "Leather Breeches")
 
 
@@ -517,8 +553,8 @@ def robe_skirt():
     lower_body = B & (y >= 8) & (y < 17) & ~region(["Arm.L", "Arm.R", "Hand.L", "Hand.R", "ForeArm.L", "ForeArm.R"])
     for yy in range(8, 17):
         ring = dilate(lower_body, 1) & (y == yy) & ~B
-        g.where(ring, C("rust", 4))
-        g.where(ring & (x >= 27) & ((z % 7) == 0), C("wood", 5))
+        g.where(ring, C("blue", 3))
+        g.where(ring & (x >= 27) & ((z == 30) | (z == 45)), C("cyan", 5))
     # Open the front between the legs. Two short apron panels frame the split.
     front = (g.a != 0) & (x >= 27) & (y >= 9) & (y < 15)
     g.where(front & (z >= 36) & (z <= 39), 0)
@@ -526,6 +562,7 @@ def robe_skirt():
         panel = (g.a != 0) & (x >= 27) & (y >= 9) & (y < 15) & (z >= z0 + 1) & (z < z1 - 1)
         g.where(panel, C("blue", 4))
         g.where(panel & ((y == 9) | (z == z0 + 1) | (z == z1 - 2)), C("gold", 5))
+        g.where(panel & (x >= 28) & (y >= 11) & (y <= 13) & (z == z0 + 2), C("cyan", 6))
     return rig_part("bottoms fantasy-3", g, "Mage Robe Skirt")
 
 
@@ -577,9 +614,9 @@ def elven_boots():
 def slippers():
     g = rig_grid()
     for z0, z1 in leg_z_ranges().values():
-        g.box(15, 0, z0 - 1, 27, 3, z1 + 1, C("purple", 3))
-        g.box(15, 3, z0 - 1, 22, 5, z1 + 1, C("purple", 3))
-        g.box(27, 1, z0 + 2, 29, 3, z1 - 2, C("purple", 3))
+        g.box(15, 0, z0 - 1, 27, 3, z1 + 1, C("darkwood", 3))
+        g.box(15, 3, z0 - 1, 22, 5, z1 + 1, C("rust", 4))
+        g.box(27, 1, z0 + 2, 29, 3, z1 - 2, C("wood", 4))
         g.box(28, 3, z0 + 3, 30, 5, z1 - 3, C("gold", 5))  # curled toe
         g.box(15, 2, z0 - 1, 27, 3, z1 + 1, C("gold", 4))
     return rig_part("shoes fantasy-3", g, "Wizard Slippers")
@@ -588,9 +625,15 @@ def slippers():
 # ---------------------------------------------------------------- back
 def royal_cape():
     g = rig_grid()
+    x, y, z = _xyz()
     for yy in range(10, 36):
         spread = 9 + (36 - yy) // 5
-        g.box(13, yy, 38 - spread, 15, yy + 1, 38 + spread, C("red", 3 if yy % 5 else 2))
+        g.box(13, yy, 38 - spread, 15, yy + 1, 38 + spread, C("red", 4))
+        # Broad painted folds run down the cloth instead of making stacked slats.
+        for offset, shade in ((-5, 3), (1, 5), (6, 3)):
+            zz = 38 + offset
+            if 38 - spread <= zz < 38 + spread:
+                g.where((g.a != 0) & (x == 13) & (y == yy) & (z == zz), C("red", shade))
         g.set(13, yy, 38 - spread, C("gold", 5)).set(13, yy, 37 + spread, C("gold", 5))
     g.box(12, 10, 24, 15, 11, 52, C("bone", 7))  # ermine hem
     for zz in range(25, 52, 3):
@@ -622,18 +665,29 @@ def quiver():
 
 def fairy_wings():
     g = rig_grid()
+    x, y, z = _xyz()
+    # Two compact, filled wings mount at the shoulder blades and stay behind
+    # the arm silhouette.
     for sign in (-1, 1):
-        for yy in range(14, 44):
-            t = (yy - 14) / 30
-            spread = int(4 + 22 * math.sin(t * math.pi) ** 0.8 * (1.0 if t > 0.35 else 0.75))
-            for k in range(2, spread):
-                zz = 38 + sign * k
-                if 0 <= zz < 76:
-                    edge = k >= spread - 1
-                    vein = (k + yy) % 7 == 0
-                    col = C("plasma", 7) if edge else C("sky", 6 if yy > 29 else 5)
-                    g.set(11 - k // 8, yy, zz, col)
-    g.box(12, 24, 36, 15, 34, 40, C("sky", 4))
+        for yy in range(29, 46):
+            t = (yy - 29) / 16
+            reach = int(3 + 10 * math.sin(t * math.pi) ** 0.72)
+            root = 39
+            if yy >= 40:
+                root += sign * (yy - 40) // 3
+            edge_z = root + sign * reach
+            near_z = root + sign * 2
+            lo, hi = sorted((near_z, edge_z))
+            if hi - lo < 2:
+                continue
+            g.box(9, yy, lo, 11, yy + 1, hi + 1, C("sky", 5))
+            # Dark outer outline and a cyan vein are painted on the visible rear face.
+            g.where((g.a != 0) & (x == 9) & (y == yy) & (z == edge_z), C("sky", 3))
+            vein_z = root + sign * max(3, reach // 2)
+            g.where((g.a != 0) & (x == 9) & (y == yy) & (z == vein_z), C("cyan", 6))
+            g.where((g.a != 0) & (x == 10) & (y == yy) & (z == root + sign * 2), C("sky", 7))
+    g.box(9, 34, 36, 11, 39, 40, C("sky", 4))
+    g.where((g.a != 0) & (x == 9) & (y >= 35) & (y <= 38) & (z >= 37) & (z <= 39), C("cyan", 7))
     return rig_part("back fantasy-3", g, "Fairy Wings")
 
 

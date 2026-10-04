@@ -92,14 +92,34 @@ def planet_asset(slug: str, name: str, r: float, paint, base, extra=None):
 # ------------------------------------------------------------ painters
 def paint_gas(g, m, cx, cy, cz, r):
     X, Y, Z = coords(g)
-    bands = [("rust", 5), ("orange", 6), ("gold", 6), ("bone", 6), ("orange", 5), ("gold", 7), ("orange", 6), ("rust", 5), ("orange", 5)]
-    step = 2 * r / len(bands)
-    for k, (ramp, sh) in enumerate(bands):
-        hi = cy - r + (k + 1) * step + (1.0 if k == len(bands) - 1 else 0.0)
-        P.flat(g, m & (Y >= cy - r + k * step - (1.0 if k == 0 else 0.0)) & (Y < hi), ramp, sh)
-    storm = m & (np.hypot((X - (cx + r * 0.35)) * 0.6, Y - (cy - r * 0.2)) < r * 0.2) & (Z < cz)
-    P.flat(g, storm, "red", 5)
-    P.flat(g, storm & (np.hypot((X - (cx + r * 0.35)) * 0.6, Y - (cy - r * 0.2)) < r * 0.1), "red", 6)
+    dx, dy, dz = X - cx, Y - cy, Z - cz
+    lon = np.arctan2(dx, dz)
+    lat = np.arcsin(np.clip(dy / max(r, 1), -1, 1))
+    bands = [("rust", 4), ("orange", 5), ("rust", 5), ("orange", 6),
+             ("bone", 5), ("orange", 5), ("gold", 6), ("rust", 4), ("orange", 5)]
+    lat_wave = 0.022 * np.sin(lon * 2.0) + 0.012 * np.sin(lon * 5.0 + 0.5)
+    phase = (lat + math.pi / 2 + lat_wave) * len(bands) / math.pi
+    band_index = np.clip(np.floor(phase).astype(int), 0, len(bands) - 1)
+    for k, (ramp, shade) in enumerate(bands):
+        band = m & (band_index == k)
+        P.flat(g, band, ramp, shade)
+        local = phase - k
+        edge = band & ((local < 0.055) | (local > 0.945))
+        P.flat(g, edge, "rust", 4)
+        if k in (1, 4, 6, 7):
+            cloud = band & (np.abs(local - (0.52 + 0.07 * np.sin(lon * 2.5 + k))) < 0.07)
+            cloud &= np.sin(lon * 2.0 + k * 1.7) > 0.3
+            P.flat(g, cloud, "gold", 7)
+    current = m & (np.abs(lat - (0.23 + 0.055 * np.sin(lon * 2 + 0.4))) < 0.045)
+    current |= m & (np.abs(lat - (-0.39 + 0.035 * np.sin(lon * 3))) < 0.035)
+    P.flat(g, current, "rust", 7)
+    P.flat(g, current & (np.sin(lon * 5 + 0.7) > 0.15), "teal", 5)
+    storm_d = np.sqrt(((X - (cx + 1.0)) / 4.4) ** 2 + ((Y - (cy - 3.0)) / 2.4) ** 2)
+    storm = m & (Z < cz - r * 0.48) & (storm_d < 1.0)
+    P.flat(g, storm, "rust", 2)
+    P.flat(g, storm & (storm_d < 0.82), "orange", 5)
+    P.flat(g, storm & (storm_d < 0.54), "red", 5)
+    P.flat(g, storm & (storm_d < 0.3), "gold", 7)
 
 
 def paint_ice(g, m, cx, cy, cz, r):
@@ -179,6 +199,22 @@ def paint_terra(g, m, cx, cy, cz, r):
 def gas_rings(rig, S, cx, cy, cz, r, clips):
     g = Grid(*S)
     ring_band(g, cx, cy, cz, r * 1.3, r * 1.75, 14, ("gold", 6), ("bone", 6))
+    X, Y, Z = coords(g)
+    radius = np.hypot(X - cx, Z - cz)
+    angle = (np.arctan2(Z - cz, X - cx) + math.pi) % (2 * math.pi)
+    segment = np.floor(angle * 14 / (2 * math.pi)).astype(int)
+    ring = (radius >= r * 1.3) & (radius <= r * 1.75) & (Y >= cy - 1) & (Y <= cy + 1)
+    segment_phase = angle * 14 / (2 * math.pi)
+    segment_local = segment_phase - segment
+    seam = ring & ((segment_local < 0.045) | (segment_local > 0.955))
+    P.flat(g, seam, "steel", 3)
+    # Small cyan ports sit inside selected plates. Most of the ring stays hull white.
+    ports = ring & (radius > r * 1.48) & (radius < r * 1.58)
+    ports &= (segment % 4 == 0) & (segment_local > 0.28) & (segment_local < 0.56)
+    P.flat(g, ports, "teal", 5)
+    tabs = ring & (radius > r * 1.62) & (radius < r * 1.69) & (segment % 7 == 0)
+    tabs &= (segment_local > 0.18) & (segment_local < 0.33)
+    P.flat(g, tabs, "orange", 5)
     rig.add("gas-giant-rings", g, (cx, cy, cz), "gas-giant-base", rot=(16.0, 0.0, -10.0))
     clips["gas-giant-rings"] = {"rot": spin(16.0, "y", 360)}
 
@@ -231,7 +267,7 @@ def terra_moon(rig, S, cx, cy, cz, r, clips):
 
 def build():
     return [
-        planet_asset("gas-giant", "Ringed Gas Giant", 15, paint_gas, ("sand", 5, 1), gas_rings),
+        planet_asset("gas-giant", "Ringed Gas Giant", 15, paint_gas, ("steel", 4, 1), gas_rings),
         planet_asset("ice-planet", "Ice Planet", 12, paint_ice, ("bone", 6, 2), ice_rings),
         planet_asset("lava-planet", "Lava Planet", 10, paint_lava, ("steel", 4, 3)),
         planet_asset("terra-planet", "Terra Planet with Moon", 12, paint_terra, ("steel", 5, 4), terra_moon),

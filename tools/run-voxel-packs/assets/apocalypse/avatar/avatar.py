@@ -74,13 +74,21 @@ def spiked_helmet():
 
 def trucker_cap():
     g, b = new()
-    Y = b.Y
+    X, Y, Z = b.X, b.Y, b.Z
     cap = b.head_shell(1, 16)
-    g.where(cap, C("gray", 7))
-    g.where(cap & (b.X >= 23), C("red", 4))  # front panel
-    g.box(b.hx1, b.hy0 + 16, 30, b.hx1 + 6, b.hy0 + 17, 47, C("red", 3))  # bill
-    g.box(b.hx1 + 1, b.hy0 + 18, 35, b.hx1 + 2, b.hy0 + 21, 41, C("gold", 5))  # patch
-    g.where(cap & (b.X < 20) & (b.Z % 3 == 0) & (Y < b.hy1), C("gray", 5))  # mesh back
+    g.where(cap, C("khaki", 3))
+    g.where(cap & (Y == b.hy0 + 16), C("rust", 3))  # one continuous sweat band
+    g.box(b.hx1, b.hy0 + 16, 30, b.hx1 + 5, b.hy0 + 17, 47, C("darkwood", 3))  # short worn bill
+    g.box(b.hx1 + 1, b.hy0 + 18, 35, b.hx1 + 2, b.hy0 + 21, 41, C("steel", 3))  # salvage patch
+    g.box(b.hx1 + 2, b.hy0 + 19, 36, b.hx1 + 3, b.hy0 + 20, 40, C("gold", 5))
+    # Rear mesh is a dark inset with restrained steel ribs, not a second colour block.
+    mesh = cap & (X < 20) & (Y >= b.hy0 + 17) & (Y < b.hy1)
+    g.where(mesh, C("steel", 3))
+    g.where(mesh & (Z % 4 == 0), C("steel", 5))
+    # Sewn crown seams and a small repair stitch give the cap a clear shape.
+    g.where(cap & (Z == 37) & (Y >= b.hy0 + 17), C("khaki", 1))
+    g.where(cap & (X >= b.hx1 - 2) & (Y >= b.hy0 + 18) & (Y < b.hy0 + 20) & (Z >= 39) & (Z < 42), C("red", 3))
+    g.where(cap & (X >= b.hx1 - 2) & (Y == b.hy0 + 18) & (Z >= 39) & (Z < 42), C("gold", 4))
     return part("headwear", 4, g, "Trucker Cap", hides_hair=True)
 
 
@@ -386,17 +394,32 @@ def tactical_vest():
 def poncho():
     g, b = new()
     X, Y, Z = b.X, b.Y, b.Z
-    for y in range(20, 37):
-        spread = 4 + ((37 - y) // 4) * 2
-        m = dilate(b.region(["Chest", "Body"]), 1) & ~b.body() & (Y == y)
-        m |= (Y == y) & (np.abs(Z - 37.5) < 9 + spread) & (np.abs(X - 20) < 5) & ~b.body() & (y < 30) & ((np.abs(X - 20) >= 4) | (np.abs(Z - 37.5) >= 8 + spread))
-        g.where(m, C("sand", 4))
-    g.where((g.a > 0) & ((Y % 6) < 2), C("orange", 3))  # stripes
+    # A close shell keeps the garment on the torso and follows its outline.
+    coat = b.torso_shell(1, 17, 36)
+    g.where(coat, C("sand", 3))
+    g.where(coat & (Y >= 17) & (Y < 20), C("darkwood", 3))  # fitted hem
+    g.where(coat & (Y >= 20) & (Y < 21), C("rust", 4))  # narrow piping
+    g.where(coat & (Y >= 21) & (Y < 23), C("sand", 2))  # shaded seam
 
-    scarf = b.torso_shell(2, 33, 37)
+    sleeves = b.arm_shell(1, ("Arm.L", "Arm.R", "ForeArm.L", "ForeArm.R"))
+    g.where(sleeves, C("sand", 3))
+    cuff = sleeves & (((Z >= 15) & (Z < 19)) | ((Z >= 57) & (Z < 61)))
+    g.where(cuff, C("darkwood", 3))
+    g.where(cuff & (Y >= 4), C("rust", 4))
+    g.where(sleeves & (Y >= 33) & (Y < 36), C("sand", 4))
+
+    # The red scarf sits on the upper chest, clear of the sleeve silhouette.
+    scarf = b.torso_shell(2, 34, 37) & (X >= 24) & (Z >= 33) & (Z < 42)
     g.where(scarf, C("red", 3))
-    g.box(24, 27, 42, 26, 33, 45, C("red", 3))  # scarf tail
-    _sleeves(g, b, C("sand", 5), fore=False)
+    g.where(scarf & (Y == 34), C("red", 4))
+    # Keep the coat seam below the repair patch so it does not cut the mark.
+    g.where(coat & (X >= 24) & (Y >= 21) & (Y < 33) & (Z == 37), C("darkwood", 4))
+    # A cloth repair patch sits between the front straps.
+    patch = coat & (X >= 24) & (Y >= 24) & (Y < 30) & (Z >= 35) & (Z < 41)
+    g.where(patch, C("darkwood", 3))  # sewn border
+    g.where(patch & (Y >= 25) & (Y < 29) & (Z >= 36) & (Z < 40), C("red", 3))
+    g.where(patch & (Y >= 25) & (Y < 29) & (Z >= 36) & (Z < 40) & ((Y - 27) == (Z - 38)), C("gold", 5))  # hazard slash
+    g.where(patch & ((Y == 24) | (Y == 29)) & ((Z == 35) | (Z == 40)), C("gold", 4))
     return part("tops", 4, g, "Desert Poncho")
 
 
@@ -427,6 +450,7 @@ def cargo_pants():
     for z0 in (27, 47):  # side pockets
         g.box(17, 8, z0, 24, 12, z0 + 2, C("khaki", 2))
         g.box(17, 11, z0, 24, 12, z0 + 2, C("khaki", 4))
+        g.box(23, 9, z0, 24, 10, z0 + 2, C("rust", 3))  # stitched pocket tab
     g.where(m & (Y >= 17) & (Y < 19), C("darkwood", 2))
     g.where(m & (Y == 18) & (X >= 24) & (Z >= 37) & (Z < 40), C("steel", 5))
     return part("bottoms", 1, g, "Cargo Pants")
@@ -512,16 +536,21 @@ def _straps(g, b, c):
 
 def backpack():
     g, b = new()
-    g.box(9, 17, 30, 16, 34, 46, C("forest", 4))
-    g.box(9, 30, 30, 16, 34, 46, C("forest", 5))
-    g.box(8, 19, 32, 9, 28, 44, C("forest", 3))  # front pocket
-    g.box(8, 26, 32, 9, 27, 44, C("forest", 5))
-    g.box(10, 13, 31, 15, 17, 45, C("red", 3))  # bedroll
-    g.box(10, 13, 29, 15, 17, 31, C("red", 5)).box(10, 13, 45, 15, 17, 47, C("red", 5))
-    g.box(11, 34, 34, 14, 38, 38, C("steel", 4))  # tin cup
-    g.box(9, 22, 46, 13, 29, 49, C("sky", 4))  # water bottle
+    g.box(9, 17, 30, 16, 34, 46, C("teal", 2))
+    g.box(9, 30, 30, 16, 34, 46, C("teal", 3))
+    g.box(8, 19, 32, 9, 28, 44, C("teal", 1))  # reinforced front pocket
+    g.box(8, 26, 32, 9, 27, 44, C("teal", 3))
+    g.box(8, 19, 38, 9, 21, 40, C("steel", 3))  # stitched repair patch
+    g.box(9, 22, 38, 9, 25, 39, C("rust", 4))
+    g.box(10, 13, 31, 15, 17, 45, C("red", 3))  # rolled signal-red bedroll
+    g.box(10, 13, 29, 15, 17, 31, C("rust", 4)).box(10, 13, 45, 15, 17, 47, C("rust", 4))
+    g.box(11, 34, 34, 14, 38, 38, C("steel", 3))  # tin cup
+    g.box(9, 22, 46, 13, 29, 49, C("sky", 3))  # water bottle
     g.box(10, 29, 46, 12, 30, 48, C("iron", 2))
-    _straps(g, b, C("forest", 3))
+    for y in (21, 26):
+        g.box(8, y, 35, 9, y + 1, 36, C("gold", 4))  # pack buckles
+        g.box(8, y, 40, 9, y + 1, 41, C("gold", 4))
+    _straps(g, b, C("teal", 2))
     return part("back", 1, g, "Survival Backpack")
 
 

@@ -1072,22 +1072,22 @@
    "filename": "monster-creatures-mummy.glb",
    "relativePath": "creatures/monster-creatures-mummy.glb",
    "leaf": "world",
-   "sizeBytes": 48512,
+   "sizeBytes": 52316,
    "bounds": {
     "min": [
-     -14.0782,
+     -15,
      0,
-     -13
+     -14
     ],
     "max": [
-     14.0782,
+     15,
      44,
-     13
+     14
     ],
     "size": [
-     28.1565,
+     30,
      44,
-     26
+     28
     ]
    },
    "normalizedShift": 0,
@@ -1292,22 +1292,22 @@
    "filename": "monster-creatures-werewolf.glb",
    "relativePath": "creatures/monster-creatures-werewolf.glb",
    "leaf": "world",
-   "sizeBytes": 93524,
+   "sizeBytes": 79588,
    "bounds": {
     "min": [
-     -24.0625,
+     -24,
      0,
      -22.7
     ],
     "max": [
-     24.0625,
+     24,
      59.5,
-     22.9373
+     23.0365
     ],
     "size": [
-     48.125,
+     48,
      59.5,
-     45.6373
+     45.7365
     ]
    },
    "normalizedShift": 0,
@@ -1585,21 +1585,21 @@
    "filename": "monster-held-items-holy-water.glb",
    "relativePath": "held-items/monster-held-items-holy-water.glb",
    "leaf": "world",
-   "sizeBytes": 73160,
+   "sizeBytes": 76800,
    "bounds": {
     "min": [
      -0.2,
-     -0.03,
+     -0.02,
      -0.06
     ],
     "max": [
      0.06,
-     0.09,
+     0.08,
      0.06
     ],
     "size": [
      0.26,
-     0.12,
+     0.1,
      0.12
     ]
    },
@@ -2023,22 +2023,22 @@
    "filename": "monster-held-items-torch.glb",
    "relativePath": "held-items/monster-held-items-torch.glb",
    "leaf": "world",
-   "sizeBytes": 30008,
+   "sizeBytes": 46828,
    "bounds": {
     "min": [
-     -0.2,
+     -0.21,
      0,
      -0.03
     ],
     "max": [
      0.08,
      0.06,
-     0.03
+     0.1
     ],
     "size": [
-     0.28,
+     0.29,
      0.06,
-     0.06
+     0.13
     ]
    },
    "normalizedShift": 0,
@@ -3844,22 +3844,22 @@
    "filename": "monster-vehicles-witch-broom.glb",
    "relativePath": "vehicles/monster-vehicles-witch-broom.glb",
    "leaf": "world",
-   "sizeBytes": 61068,
+   "sizeBytes": 53352,
    "bounds": {
     "min": [
-     -10,
+     -9,
      0,
-     -31.5
+     -30.5
     ],
     "max": [
-     10,
-     49.375,
-     31.5
+     9,
+     41,
+     30.5
     ],
     "size": [
-     20,
-     49.375,
-     63
+     18,
+     41,
+     61
     ]
    },
    "normalizedShift": 0,

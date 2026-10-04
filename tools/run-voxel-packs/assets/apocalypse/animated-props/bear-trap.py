@@ -1,80 +1,108 @@
-"""Rusty bear trap, in the Pirate Nation style.
-
-One iconic shape (rule K3), oversized so it reads at a glance: two thick
-half-ring jaws with big saw teeth lie open on a steel spring bar, with a
-gold trigger pan and a painted skull in the middle, leaf springs at both
-ends and a chain to a stake. On `attack` the jaws snap up and meet; on
-`open` they spring back down; on `idle` they tremble. Rust, rivets and the
-skull are paint.
-"""
+"""Animated steel bear trap with raised jaws, trigger pan and tether stake."""
 import math
 
 import numpy as np
 
 import paint as P
-import pnglyph as G
 import pnpaint as PP
 import pnshapes as S
-from _life import Rig, ctr, fx, keys, limb, make, plan
+from _life import Rig, ctr, fx, keys, make, plan
 from pnkit import box
 from voxgrid import Clip, Grid
 
 SZ = (40, 16, 30)
-CX, CZ = 18.0, 14.0
-JY = 2.0  # hinge height
-RO, RI, TOOTH = 12.5, 8.5, 3.2
+CX, CZ = 17.0, 13.0
+JY = 3.0
+RO, RI = 11.0, 8.0
 
 
-def jaw_poly(front: bool):
-    """A half ring with saw teeth on the inner edge, in plan (x, z)."""
-    a0, a1 = (math.pi, 2 * math.pi) if front else (0.0, math.pi)
-    n = 8
-    outer = [(CX + RO * math.cos(a0 + (a1 - a0) * k / n), CZ + RO * math.sin(a0 + (a1 - a0) * k / n)) for k in range(n + 1)]
+def arc_poly(front):
+    """A half-circle jaw with clear gaps at both hinge ends."""
+    a0, a1 = ((math.pi + 0.3, 2 * math.pi - 0.3) if front else (0.3, math.pi - 0.3))
+    outer = [(CX + RO * math.cos(a0 + (a1 - a0) * k / 10),
+              CZ + RO * math.sin(a0 + (a1 - a0) * k / 10)) for k in range(11)]
     inner = []
-    teeth = 7
-    for k in range(2 * teeth + 1):
-        a = a1 - (a1 - a0) * k / (2 * teeth)
-        r = RI - TOOTH if k % 2 else RI
+    for k in range(7):
+        a = a1 - (a1 - a0) * k / 6
+        r = RI - (2.3 if k % 2 else 0.0)
         inner.append((CX + r * math.cos(a), CZ + r * math.sin(a)))
     return outer + inner
 
 
-def jaw(front: bool) -> Grid:
+def jaw(front):
     g = Grid(*SZ)
+    m = plan(g, arc_poly(front), JY, JY + 3, "steel", 4)
+    P.outline(g, m, "steel", 2)
     X, Y, Z = ctr(g)
-    m = plan(g, jaw_poly(front), JY - 1, JY + 2, "rust", 5)
-    d = np.hypot(X - CX, Z - CZ)
-    P.mottle(g, m, "rust", 5, cell=3, seed=1 if front else 2)
-    P.flat(g, m & (d < RI + 0.4), "steel", 7)  # bright filed teeth
-    P.flat(g, m & (d > RO - 1.2), "rust", 4)
-    PP.blotch(g, m & (d >= RI + 0.4), "steel", 5, cell=3, chance=0.05, seed=3 if front else 4)
-    if not front:  # a torn red rag caught in the teeth
-        P.flat(g, m & (np.abs(X - (CX + 4)) < 1.6) & (d < RI + 1.2), "red", 4)
+    rad = np.hypot(X - CX, Z - CZ)
+    P.flat(g, m & (np.abs(Y - (JY + 2.5)) < 0.6), "steel", 6)
+    P.flat(g, m & (rad > RO - 1.0), "rust", 5)
+    P.flat(g, m & (rad < RI + 0.8), "steel", 6)
+    # Pin heads are paint on the outer band. They move with each jaw.
+    rivet_top = m & (np.abs(Y - (JY + 2.5)) < 0.6)
+    for a in np.linspace(a0 := (math.pi + 0.38 if front else 0.38),
+                         a1 := (2 * math.pi - 0.38 if front else math.pi - 0.38), 5):
+        px, pz = CX + 9.65 * math.cos(a), CZ + 9.65 * math.sin(a)
+        vx, vz = np.rint(px - 0.5) + 0.5, np.rint(pz - 0.5) + 0.5
+        P.flat(g, rivet_top & (np.abs(X - vx) < 0.1) & (np.abs(Z - vz) < 0.1), "steel", 3)
     return g
 
 
-def base() -> Grid:
+def base():
     g = Grid(*SZ)
     X, Y, Z = ctr(g)
-    bar = box(g, 3, 0, CZ - 2, 34, 2, CZ + 2, "steel", 4)
-    PP.hazard(g, bar, period=6, a=("gold", 5), b=("darkwood", 4), frame="top")
-    # leaf springs: chunky bent steel wedges at both ends (true slopes)
-    springs = np.zeros(g.shape, dtype=bool)
-    for x0, s in ((2.0, 1), (35.0, -1)):
-        springs |= S.bar(g, "z", (x0 + s * 0.5, 2.0), (x0 + s * 7, 5.0), 3.0, CZ - 2.5, CZ + 2.5, "steel", 5)
-        springs |= box(g, min(x0, x0 + s * 3), 0, CZ - 3, max(x0, x0 + s * 3), 3, CZ + 3, "steel", 3)
-    PP.blotch(g, springs, "rust", 5, cell=3, chance=0.08, seed=4)
-    # the trigger pan: a gold octagon with a painted skull
-    pan = S.disc(g, "y", CX, CZ, 5.0, 1, 3, "gold", 5, n=8)
-    P.flat(g, pan & (S.ngon_radius(g, "y", CX, CZ, 8) > 4.0), "gold", 4)
-    G.icon(g, "top", 3, int(CX - 4.5), int(CZ - 4), "skull", "darkwood", 4)
-    # the chain to a stake
-    for k in range(4):
-        cx0 = 34 + k * 1.5
-        box(g, int(cx0), 0, CZ + 2 + k * 2, int(cx0) + 2, 2 if k % 2 else 1, CZ + 4 + k * 2, "steel", 5 - k % 2)
-    stake = limb(g, (38.0, 0.0, 24.0), (38.0, 9.0, 24.0), 1.3, 1.5, "wood", 5, n=4)
-    P.flat(g, stake & (Y > 8), "steel", 5)
-    del stake
+    # Open cross frame keeps the center clear and makes the trap read as metal.
+    frame = box(g, 4, 0, CZ - 1.5, 30, 2, CZ + 1.5, "steel", 4)
+    frame |= box(g, CX - 1.5, 0, 2, CX + 1.5, 2, 24, "steel", 4)
+    P.outline(g, frame, "steel", 2)
+    PP.hazard(g, frame & (Y < 1), period=7, a=("gold", 5), b=("darkwood", 4), frame="top")
+    # Each jaw has a chunky hinge block, a dark socket and a short spring stack.
+    for hx in (CX - 10, CX + 10):
+        pod = box(g, hx - 2, 1, CZ - 3, hx + 2, 5, CZ + 3, "steel", 4)
+        P.outline(g, pod, "steel", 2)
+        socket = S.disc(g, "x", 3.0, CZ, 2.0, hx - 3, hx - 2, "darkwood", 3, n=8)
+        cap = S.disc(g, "x", 3.0, CZ, 1.0, hx - 4, hx - 3, "gold", 5, n=8)
+        del socket, cap
+        for yy in (1.5, 2.5, 3.5):
+            box(g, hx - 1.4, yy, CZ - 2.2, hx + 1.4, yy + 0.6, CZ + 2.2, "rust", 5)
+        for dx in (-1.3, 1.3):
+            for dz in (-2.3, 2.3):
+                vx = np.rint(hx + dx - 0.5) + 0.5
+                vz = np.rint(CZ + dz - 0.5) + 0.5
+                P.flat(g, pod & (np.abs(Y - 4.5) < 0.1) & (np.abs(X - vx) < 0.1) & (np.abs(Z - vz) < 0.1), "gold", 6)
+    # A framed round pressure plate has a clear signal mark and teal center.
+    rim = S.disc(g, "y", CX, CZ, 5.0, 2, 3, "gold", 5, n=8)
+    plate = S.disc(g, "y", CX, CZ, 4.0, 3, 4, "darkwood", 3, n=8)
+    d = S.ngon_radius(g, "y", CX, CZ, 8)
+    P.flat(g, rim & (d > 4.0), "gold", 7)
+    P.outline(g, plate, "darkwood", 1)
+    # A bright ring and marked center make the pressure plate easy to read.
+    plate_top = plate & (Y > 3)
+    P.flat(g, plate_top, "darkwood", 2)
+    P.flat(g, plate_top & (d > 2.9), "gold", 6)
+    P.flat(g, plate_top & (np.abs(X - CX) < 1.5) & (np.abs(Z - CZ) < 1.5), "teal", 6)
+    P.flat(g, plate_top & (np.abs(X - (CX + 0.5)) < 0.1) & (np.abs(Z - (CZ + 0.5)) < 0.1), "red", 6)
+    # The chain forms a continuous, overlapping S curve from the frame to the stake.
+    path = [(29.0, 1.5, 13.0), (31.0, 1.5, 15.0), (33.0, 1.5, 17.0),
+            (35.0, 1.5, 19.0), (36.0, 1.5, 21.5)]
+    for i, (p0, p1) in enumerate(zip(path, path[1:])):
+        # Thick diagonal links overlap at their ends, so there are no floating cubes.
+        dx, dz = p1[0] - p0[0], p1[2] - p0[2]
+        length = math.hypot(dx, dz)
+        nx, nz = -dz / length * 0.72, dx / length * 0.72
+        link = plan(g, [(p0[0] + nx, p0[2] + nz), (p1[0] + nx, p1[2] + nz),
+                        (p1[0] - nx, p1[2] - nz), (p0[0] - nx, p0[2] - nz)],
+                   1, 2.5, "steel", 5)
+        P.flat(g, link & ((X + Z + i) % 3 < 1), "steel", 7)
+    # Stake is planted beside the trap and capped with a forged steel head.
+    stake = box(g, 35, 0, 21, 38, 12, 24, "wood", 5)
+    P.planks(g, stake, "wood", 5, width=2, across="z", length=(5, 7), nails=False, seed=2)
+    P.flat(g, stake & (X == 35), "wood", 3)
+    P.flat(g, stake & (X == 37) & (np.floor(Y) % 4 == 0), "sand", 5)
+    cap = box(g, 34.5, 11, 20.5, 38.5, 13, 24.5, "steel", 5)
+    P.outline(g, cap, "steel", 3)
+    for yy in (2, 8):
+        box(g, 34.5, yy, 20.5, 38.5, yy + 1, 24.5, "darkwood", 4)
     return g
 
 

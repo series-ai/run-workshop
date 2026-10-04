@@ -10,22 +10,22 @@
    "filename": "apocalypse-animated-props-bear-trap.glb",
    "relativePath": "animated-props/apocalypse-animated-props-bear-trap.glb",
    "leaf": "world",
-   "sizeBytes": 31832,
+   "sizeBytes": 41308,
    "bounds": {
     "min": [
-     -19.1286,
-     -0.0312,
-     -12.5
+     -17.5,
+     0,
+     -11
     ],
     "max": [
-     19,
-     9.0313,
-     12.5
+     17.5,
+     13,
+     11
     ],
     "size": [
-     38.1286,
-     9.0625,
-     25
+     35,
+     13,
+     22
     ]
    },
    "normalizedShift": 0,
@@ -571,22 +571,22 @@
    "filename": "apocalypse-buildings-bunker.glb",
    "relativePath": "buildings/apocalypse-buildings-bunker.glb",
    "leaf": "world",
-   "sizeBytes": 92048,
+   "sizeBytes": 79744,
    "bounds": {
     "min": [
-     -61.5,
-     -0.0625,
-     -65
+     -60.0625,
+     -0.0312,
+     -62.125
     ],
     "max": [
-     61.3,
+     60.0625,
      97,
-     65.0625
+     62.0625
     ],
     "size": [
-     122.8,
-     97.0625,
-     130.0625
+     120.125,
+     97.0313,
+     124.1875
     ]
    },
    "normalizedShift": 0,
@@ -1542,12 +1542,12 @@
    "filename": "apocalypse-held-items-fire-axe.glb",
    "relativePath": "held-items/apocalypse-held-items-fire-axe.glb",
    "leaf": "world",
-   "sizeBytes": 59952,
+   "sizeBytes": 62620,
    "bounds": {
     "min": [
-     -0.35,
+     -0.39,
      0.005,
-     -0.155
+     -0.025
     ],
     "max": [
      0.07,
@@ -1555,9 +1555,9 @@
      0.175
     ],
     "size": [
-     0.42,
+     0.46,
      0.05,
-     0.33
+     0.2
     ]
    },
    "normalizedShift": 0,
@@ -3187,21 +3187,21 @@
    "filename": "apocalypse-terrain-nature-crater.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-crater.glb",
    "leaf": "world",
-   "sizeBytes": 26060,
+   "sizeBytes": 26112,
    "bounds": {
     "min": [
      -27.5625,
-     -0.0937,
+     -0.0625,
      -27.5625
     ],
     "max": [
      27.5625,
-     12.5,
+     13,
      27.5625
     ],
     "size": [
      55.125,
-     12.5938,
+     13.0625,
      55.125
     ]
    },
@@ -3362,22 +3362,22 @@
    "filename": "apocalypse-terrain-nature-rubble-pile.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-rubble-pile.glb",
    "leaf": "world",
-   "sizeBytes": 21396,
+   "sizeBytes": 20896,
    "bounds": {
     "min": [
-     -21.948,
+     -22.448,
      -0.0312,
-     -16.3594
+     -15.5488
     ],
     "max": [
-     21.798,
-     34.1485,
-     16.326
+     22.2683,
+     35.3904,
+     15.826
     ],
     "size": [
-     43.746,
-     34.1797,
-     32.6854
+     44.7163,
+     35.4217,
+     31.3748
     ]
    },
    "normalizedShift": 0,
@@ -3826,7 +3826,7 @@
    "filename": "apocalypse-avatar-parts.glb",
    "relativePath": "avatar/apocalypse-avatar-parts.glb",
    "leaf": "characters",
-   "sizeBytes": 1080396,
+   "sizeBytes": 1068956,
    "bounds": {
     "min": [
      -0.1424,

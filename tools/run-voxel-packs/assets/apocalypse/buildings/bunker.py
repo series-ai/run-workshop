@@ -60,15 +60,27 @@ def bunker() -> tuple[Grid, tuple, tuple]:
     bloom(g, berm & (Y >= BERM_H - 1), 5, ((CX - 50, BERM_H - 1, CZ - 50), (CX + 50, BERM_H, CZ + 50)), r=(3.0, 6.0), ramp="sand", shades=(6, 6), seed=3)
 
     # ---- the dome: warm poured concrete in formwork lifts, moss at the foot
-    def formwork(gg, mm, fr):  # poured lifts: flat panels with a darker line every 7 rows
-        _x, yy, _z = S._idx(gg)
-        U, _V = P.uv(gg, fr)
-        P._paint(gg, mm, "sand", 6 + P._jitter(P._hash(U // 14, yy // 7, seed=4)) * ((P._hash(U // 14, yy // 7, seed=5) % np.uint64(3)) == 0))
-        P.flat(gg, mm & (yy % 7 == 0), "sand", 5)
+    def formwork(gg, mm, fr):  # broad, quiet concrete panels with even seams
+        U, V = P.uv(gg, fr)
+        P.flat(gg, mm, "sand", 6)
+        P.flat(gg, mm & ((U % 14 == 0) | (V % 9 == 0)), "sand", 4)
+        face_x = float(X[mm].mean())
+        face_z = float(Z[mm].mean())
+        if face_x > CX + 10 and face_z < CZ - 10:
+            band = mm & (Y >= BERM_H + 17) & (Y < BERM_H + 30)
+            if band.any():
+                uc = float(np.median(U[band]))
+                vc = float(np.median(V[band]))
+                panel = band & (np.abs(U - uc) <= 6) & (np.abs(V - vc) <= 6)
+                inset = band & (np.abs(U - uc) <= 4) & (np.abs(V - vc) <= 4)
+                P.flat(gg, panel, "darkwood", 4)
+                P.flat(gg, inset, "steel", 5)
 
     dome = S.dome(g, CX, CZ, BERM_H, DOME_R, h=DOME_H, n=10, rings=4, ramp="sand", base=6, cap_r=6, painter=formwork, ribs=("sand", 4))
-    bloom(g, dome & (Y < BERM_H + 8), 7, ((CX - 44, BERM_H, CZ - 44), (CX + 44, BERM_H + 6, CZ + 44)), r=(4.0, 7.0), ramp="khaki", shades=(5, 4), seed=5)
-    P.flat(g, dome & (Y < BERM_H + 2), "khaki", 4)
+    P.flat(g, dome & (Y < BERM_H + 2), "sand", 5)
+    # A dark steel foot separates the shell from the grass berm.
+    P.flat(g, dome & (Y >= BERM_H) & (Y < BERM_H + 3), "steel", 4)
+    P.flat(g, dome & (Y >= BERM_H + 3) & (Y < BERM_H + 5), "rust", 5)
     cap = box(g, CX - 5, BERM_H + DOME_H, CZ - 5, CX + 5, BERM_H + DOME_H + 2, CZ + 5, "steel", 5)
 
     # ---- the portal: a concrete block with a sloped top running into the dome
@@ -77,33 +89,23 @@ def bunker() -> tuple[Grid, tuple, tuple]:
     portal = S.last(g)
     for m, fr in S.facets(g):
         P.plates(g, m, "sand", 5, size=(13, 7), rivets=False, frame=fr, seed=6)
-    # a big radiation sign painted on the sloped portal roof (reads from above)
-    Xc, Yc, Zc = S.coords(g)
-    zc = PORTAL_Z0 + 12
-    up = np.zeros(g.shape, dtype=bool)
-    up[:, :-1, :] = g.a[:, 1:, :] == 0
-    roof = portal & up & (Yc > 44)
-    du, dv = Xc - CX, -(Zc - zc) * 1.0
-    rad = np.hypot(du, dv)
-    ang = np.degrees(np.arctan2(dv, du)) % 360
-    blade = np.zeros(g.shape, dtype=bool)
-    for a in (30, 150, 270):
-        blade |= np.abs((ang - a + 180) % 360 - 180) < 30
-    P.flat(g, roof & (rad < 15), "gold", 5)
-    P.flat(g, roof & (rad < 15) & (rad > 13.8), "darkwood", 4)
-    P.flat(g, roof & ((rad < 2.6) | ((rad > 4) & (rad < 12.5) & blade)), "darkwood", 4)
     P.flat(g, edges(box(g, px0 - 1, 0, PORTAL_Z0 - 1, px1 + 1, 3, PORTAL_Z0 + 2, "sand", 4)), "sand", 3)
-    # hazard frame posts at the portal corners
+    # Hazard paint stays on the visible faces, with broad, even diagonal bands.
+    GX, GY, GZ = S.coords(g)
     for x0 in (px0 - 2, px1 - 4):
-        post = box(g, x0, 0, PORTAL_Z0 - 2, x0 + 6, 44, PORTAL_Z0 + 4, "gold", 5)
-        pnpaint.hazard(g, post, period=8, a=("gold", 5), b=("darkwood", 4))
-    lintel = box(g, px0 - 2, 44, PORTAL_Z0 - 2, px1 + 2, 49, PORTAL_Z0 + 4, "gold", 5)
-    pnpaint.hazard(g, lintel, period=8, a=("gold", 5), b=("darkwood", 4))
+        post = box(g, x0, 0, PORTAL_Z0 - 2, x0 + 6, 44, PORTAL_Z0 + 4, "steel", 5)
+        pnpaint.hazard(g, post & (GZ == PORTAL_Z0 - 2), period=6, a=("gold", 6), b=("darkwood", 3), frame="z")
+        P.flat(g, post & ((GX == x0) | (GX == x0 + 5)), "darkwood", 4)
+    lintel = box(g, px0 - 2, 44, PORTAL_Z0 - 2, px1 + 2, 49, PORTAL_Z0 + 4, "steel", 5)
+    LX, LY, LZ = S.coords(g)
+    pnpaint.hazard(g, lintel & (LZ == PORTAL_Z0 - 2), period=6, a=("gold", 6), b=("darkwood", 3), frame="z")
+    pnpaint.hazard(g, lintel & (LY == 48), period=6, a=("gold", 6), b=("darkwood", 3), frame="top")
+    P.flat(g, lintel & (LZ >= PORTAL_Z0 + 2), "steel", 4)
 
     # ---- the function prop: a giant round blast door with a locking wheel
     dc, dy, dr = CX, 21.5, 18
     ring = S.disc(g, "z", dc, dy, dr + 3, PORTAL_Z0 - 2, PORTAL_Z0, "gold", 5, n=12)
-    pnpaint.hazard(g, ring, period=6, a=("gold", 5), b=("darkwood", 4))
+    pnpaint.hazard(g, ring, period=8, a=("gold", 6), b=("darkwood", 3), frame="z")
     door = S.disc(g, "z", dc, dy, dr, PORTAL_Z0 - 5, PORTAL_Z0 - 1, "steel", 6, n=12)
     P.plates(g, door, "steel", 6, size=(8, 8), rivets=True, seed=7)
     rr = S.radial(g, "z", dc, dy)
@@ -127,9 +129,8 @@ def bunker() -> tuple[Grid, tuple, tuple]:
 
 
     # ---- sandbag walls flanking the approach
-    for x0 in (px0 - 16, px1 + 8):
-        sandbags(g, "z", 0, PORTAL_Z0 + 12, x0, 0, rows=3, h=5, d=8, ramp="sand", base=4, seed=x0)
-    sandbags(g, "x", 6, px0 - 16, 2, 0, rows=2, h=5, d=8, ramp="sand", base=4, seed=8)
+    for x0, z0, z1 in ((110, 30, 54),):
+        sandbags(g, "z", z0, z1, x0, 0, rows=3, h=5, d=8, ramp="sand", base=4, seed=x0)
 
     # ---- mushroom air vents (frustum caps, true slopes)
     for vx, vz, vh in ((CX + 26, CZ + 14, 16), (CX - 24, CZ + 20, 14)):
@@ -148,9 +149,9 @@ def bunker() -> tuple[Grid, tuple, tuple]:
     S.bar(g, "z", (mx + 12, BERM_H + 22), (mx, 80), 1.2, mz, mz + 1, "steel", 4)
 
     # ---- props: supply crates, a drum, a jerry can by the door
-    crate(g, 12, 0, 20, 12, ramp="khaki", base=5, icon="cross", ink=("red", 5), seed=9)
-    crate(g, 14, 12, 22, 8, seed=10)
-    S.drum(g, 118, 24, 0, 20, 10, ramp="gold", base=5, band=("bone", 6), icon="skull", ink=("darkwood", 4), seed=11)
+    crate(g, 26, 0, 34, 12, ramp="khaki", base=5, icon="cross", ink=("red", 5), seed=9)
+    crate(g, 28, 12, 36, 8, seed=10)
+    S.drum(g, 20, 70, 0, 18, 7, ramp="gold", base=5, band=("bone", 6), seed=11)
 
     # periscope: a pipe up through the dome crown with a hooded head, facing -z
     peri = Grid(W, H, D)

@@ -1243,7 +1243,7 @@
    "filename": "space-creatures-xeno-queen.glb",
    "relativePath": "creatures/space-creatures-xeno-queen.glb",
    "leaf": "world",
-   "sizeBytes": 159636,
+   "sizeBytes": 151096,
    "bounds": {
     "min": [
      -87.1457,
@@ -3206,7 +3206,7 @@
    "filename": "space-terrain-nature-gas-giant.glb",
    "relativePath": "terrain-nature/space-terrain-nature-gas-giant.glb",
    "leaf": "world",
-   "sizeBytes": 54856,
+   "sizeBytes": 93096,
    "bounds": {
     "min": [
      -26.6829,
@@ -3786,7 +3786,7 @@
    "filename": "space-avatar-parts.glb",
    "relativePath": "avatar/space-avatar-parts.glb",
    "leaf": "characters",
-   "sizeBytes": 1041880,
+   "sizeBytes": 1081728,
    "bounds": {
     "min": [
      -0.1308,
@@ -3795,12 +3795,12 @@
     ],
     "max": [
      0.1324,
-     0.7124,
+     0.6824,
      0.2406
     ],
     "size": [
      0.2632,
-     0.7128,
+     0.6828,
      0.4812
     ]
    },

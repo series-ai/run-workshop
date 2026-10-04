@@ -14,7 +14,7 @@ import numpy as np
 
 import paint as P
 from _kit import keys, pfx, world
-from _pn import assemble, coords, fur, last, quad, stamp
+from _pn import assemble, coords, last, quad, stamp
 from pnkit import box
 from voxgrid import C, Clip, Grid, Socket
 
@@ -41,6 +41,16 @@ def front(g: Grid, pts_xy, z0, z1, ramp: str, shade: int) -> np.ndarray:
     return last(g)
 
 
+def fur(g: Grid, mask: np.ndarray, ramp: str, base: int = 4, seed: int = 0) -> None:
+    """Paint a soft hide base with short, grouped fur marks."""
+    X, Y, Z = coords(g)
+    P._paint(g, mask, ramp, base)
+    # Two-voxel clumps break up the long stripes without adding face-wide noise.
+    clump = P._hash((X + Z) // 2, (Y + ((X + Z) % 2)) // 2, seed=seed) % np.uint64(19)
+    P._paint(g, mask & (clump == 0), ramp, base + 1)
+    P._paint(g, mask & (clump == 1), ramp, base - 1)
+
+
 def hips() -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
@@ -56,9 +66,10 @@ def hips() -> Grid:
         for k in range(3):  # three big toe claws, hooked down (true slopes)
             cxk = x0 + 1.5 + k * 2.5
             side(g, [(4.5, 17.5), (1.5, 17.5), (0.2, 14.0)], cxk - 0.9, cxk + 0.9, "bone", 6)
-    tail = side(g, quad((24, 34), (13, 44), 3.4, 2.4, cap=1.2), CX - 2.5, CX + 2.5, FUR, FUR_BASE)
+    tail = side(g, quad((23, 34), (13, 44), 3.4, 2.4, cap=1.2), CX - 2.5, CX + 2.5, FUR, FUR_BASE)
     fur(g, furm | tail, FUR, FUR_BASE, seed=1)
-    P.flat(g, tail & (Z > 40), PALE, 5)  # pale tail tip
+    # A warm fur highlight marks the point without making a detached bone wedge.
+    P.flat(g, tail & (Z >= 42), FUR, FUR_BASE + 1)
     P.mottle(g, pants, PANTS, 4, cell=3, seed=2)
     # torn hem (fur shows through a zigzag), a dark waistband, a magenta patch
     P.flat(g, pants & (Y < 15), FUR, FUR_BASE)
@@ -71,12 +82,8 @@ def hips() -> Grid:
 def torso() -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
-    body = side(g, [(24, 34), (24, 20), (29, 15), (36, 13), (41, 15), (43, 21), (42, 30), (36, 36), (28, 36)], CX - 11, CX + 11, FUR, FUR_BASE)
-    body |= side(g, [(31, 14), (41, 15), (43, 21), (41, 30), (32, 31)], CX - 15, CX + 15, FUR, FUR_BASE)  # broad shoulders
-    mane = side(g, [(39, 19), (50, 22), (45, 25), (49, 29), (43, 29), (45, 35), (39, 33), (37, 26)], CX - 8, CX + 8, FUR, FUR_BASE - 2)
+    body = side(g, [(24, 34), (24, 20), (29, 15), (36, 13), (41, 15), (43, 21), (42, 30), (45, 36), (42, 41), (35, 43), (29, 39)], CX - 13, CX + 13, FUR, FUR_BASE)
     fur(g, body, FUR, FUR_BASE, seed=3)
-    fur(g, mane, FUR, FUR_BASE - 2, seed=4)
-    P.flat(g, body & (Y >= 40) & (Z > 22), FUR, FUR_BASE - 1)  # darker back
     # a pale chest and belly with painted pecs and ribs (rule S1)
     chest = body & (Z < 21) & (np.abs(X + 0.5 - CX) < 9) & (Y < 40)
     fur(g, chest, PALE, 5, seed=5)
@@ -92,8 +99,8 @@ def head() -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
     skull_m = box(g, CX - 9, 38, 10, CX + 9, 53, 23, FUR, FUR_BASE)
-    brow = box(g, CX - 10, 50, 8, CX + 10, 54, 14, FUR, FUR_BASE - 1)
-    muzzle = side(g, [(48, 11), (46, 1.2), (44, 0.3), (40, 1), (40, 11)], CX - 4, CX + 4, PALE, 5)
+    brow = box(g, CX - 10, 51, 9, CX + 10, 54, 13, FUR, FUR_BASE - 1)
+    muzzle = side(g, [(48, 11), (46, 1.2), (44, 0.3), (40, 1), (40, 11)], CX - 3, CX + 3, PALE, 5)
     ears = np.zeros(g.shape, dtype=bool)
     tufts = np.zeros(g.shape, dtype=bool)
     for s in (-1, 1):
@@ -108,10 +115,10 @@ def head() -> Grid:
     P.flat(g, muzzle & (Y >= 44) & (Z < 2) & (np.abs(X + 0.5 - CX) < 2.6), "gray", 2)  # nose tip
     P.flat(g, muzzle & (Y >= 46) & (np.abs(X + 0.5 - CX) < 1.5), FUR, FUR_BASE)  # muzzle ridge
     # big glowing eyes under the angry brow (painted, rule K3)
-    eye = {"d": C(FUR, 2), "o": C("gold", 5), "p": C("gray", 1), "w": C("ember", 7)}
-    rows = ["ddddd........ddddd", "dwood........doowd", "doopp........ppood", ".dddd........dddd."]
+    eye = {"d": C(FUR, 1), "g": C("toxic", 6), "G": C("toxic", 7), "p": C("gray", 1), "w": C("bone", 7)}
+    rows = ["..ddddd.....ddddd..", ".dgggggd...dgggggd.", ".dGppGd.....dGppGd.", ".dGGGGGd...dGGGGGd.", ".dgggggd...dgggggd.", "..ddddd.....ddddd.."]
     stamp(g, "-z", 10, CX - 9, 45, rows, eye, depth=3)
-    P.flat(g, brow & (Z < 10) & (Y < 51), FUR, FUR_BASE - 2)  # brow shadow line
+    P.flat(g, brow & (Z < 10) & (Y == 51), FUR, FUR_BASE - 2)  # brow shadow line
     for fx in (CX - 3, CX + 2):  # upper fangs, on the head so the jaw can open
         box(g, fx, 38, 1, fx + 1, 40, 3, "bone", 7)
     return g
@@ -120,7 +127,7 @@ def head() -> Grid:
 def jaw() -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
-    m = side(g, [(40.5, 11), (40.5, 2), (38.5, 2.5), (36.5, 11)], CX - 3.5, CX + 3.5, PALE, 5)
+    m = side(g, [(41, 11), (41, 2), (39, 3), (37, 11)], CX - 3, CX + 3, PALE, 5)
     fur(g, m, PALE, 5, seed=10)
     P.flat(g, m & (Y >= 40) & (np.abs(X + 0.5 - CX) < 2.5), "red", 4)  # red mouth
     P.flat(g, m & (Y >= 40) & (np.abs(X + 0.5 - CX) >= 2.5) & (Z % 2 == 0), "bone", 7)  # lower teeth
@@ -133,20 +140,19 @@ def arm(s: int) -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
     sx = CX + s * 15
-    upper = front(g, quad((sx + s * 1, 40), (sx + s * 5, 28), 4.5, 3.8, cap=0.5), 19, 29, FUR, FUR_BASE)
-    fore = front(g, quad((sx + s * 5, 28), (sx + s * 4, 17), 3.8, 3.4, cap=0.5), 14, 23, FUR, FUR_BASE)
-    ruff = front(g, [(sx - s * 3, 43), (sx + s * 4, 46), (sx + s * 9, 41), (sx + s * 7, 38), (sx + s * 9, 34), (sx + s * 4, 36), (sx - s * 2, 36)], 17, 29, FUR, FUR_BASE - 1)
+    # A single tapered arm mass keeps the shoulder-to-forearm joint clean.
+    arm_mass = front(g, [(sx - s * 3, 38), (sx + s * 2, 38), (sx + s * 5, 34), (sx + s * 4, 29), (sx + s * 3, 23), (sx + s * 3, 17), (sx - s * 3, 17), (sx - s * 3, 24), (sx - s * 4, 31)], 16, 25, FUR, FUR_BASE)
     hx = sx + s * 4
     hand = box(g, hx - 5, 8, 10, hx + 5, 18, 21, FUR, FUR_BASE - 1)
-    fur(g, upper | fore, FUR, FUR_BASE, seed=11 + s)
+    fur(g, arm_mass, FUR, FUR_BASE, seed=11 + s)
     fur(g, hand, FUR, FUR_BASE - 1, seed=13 + s)
-    fur(g, ruff, FUR, FUR_BASE - 2, seed=15 + s)
     P.flat(g, hand & (Y < 10), PALE, 4)  # pads
     for k in range(4):  # four oversized hooked claws, down and forward
         cxk = hx - 3.75 + k * 2.5
         side(g, [(9, 13.5), (9, 10.5), (4, 8.8), (1, 8.2), (4, 11)], cxk - 0.9, cxk + 0.9, "bone", 6)
-    cuff = box(g, hx - 4, 18, 13, hx + 4, 21, 22, "gray", 5)  # broken shackle
-    P.outline(g, cuff, "gray", 3)
+    cuff = box(g, hx - 4, 18, 13, hx + 4, 21, 22, "magenta", 4)  # broken enchanted shackle
+    P.outline(g, cuff, "purple", 2)
+    P.flat(g, cuff & (Y == 19) & (Z < 16), "toxic", 6)
     for k in range(3):  # a dangling chain
         box(g, hx - s * 5 - 1, 17 - k * 3, 17, hx - s * 5 + 1, 19 - k * 3, 19, "gray", 5 - k % 2)
     return g
