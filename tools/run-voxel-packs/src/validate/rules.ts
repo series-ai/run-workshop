@@ -52,6 +52,7 @@ export type RuleId =
   | 'style.saturation'
   | 'geometry.zfight'
   | 'avatar.layers'
+  | 'avatar.composite'
   | 'clips.loop'
 
 export interface Violation {

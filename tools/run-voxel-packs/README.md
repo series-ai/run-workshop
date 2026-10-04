@@ -40,7 +40,7 @@ is JSON under `contracts/data/`.
 | Prop clips | node-hierarchy TRS: `idle open close active hit attack death move spin` |
 | Avatar clips | `NN_Name`; PN owns 00–31, fantasy 32–39, space 40–47, monster 48–55, apocalypse 56–63 |
 | Part nodes | `<slot> <pack>-<n>` (PN keeps `<slot> <n>`); composition rules are per part (`AvatarPartRules`) |
-| Part layers | each slot's faces sit a fixed distance (0.02–0.24 voxel, `data/avatar-layers.json`) out from the voxel grid, outer slots further out, so parts that cover one another (tops over bottoms, a face on the head, headwear over hair) never share a plane with each other or with PN parts and cannot z-fight; `blender/mesher.layered_mesh` builds it, the `avatar.layers` rule checks it |
+| Part layers | each slot's faces sit a fixed distance (0.02–0.24 voxel, `data/avatar-layers.json`) out from the voxel grid, outer slots further out, so parts that cover one another (tops over bottoms, a face on the head, headwear over hair) never share a plane with each other or with PN parts and cannot z-fight; `blender/mesher.layered_mesh` builds it; the `avatar.layers` and `avatar.composite` rules check it (see Z-fighting checks) |
 
 Licence: every leaf is under the RUN License (the RUN Repository
 Supplemental License v1.0 in the repository's `LICENSE.md`, SPDX
@@ -135,6 +135,34 @@ constant spin, whole turns only) and `sway` (a sine loop that closes, for
 hanging lanterns, bells, fronds and scanning dishes).
 
 Keep big solids SOLID: the mesher only emits faces between filled and empty voxels, so a hollow interior adds hidden faces and file size. The validator also enforces a 1.5 MB per-GLB budget.
+
+## Z-fighting checks
+
+Z-fighting is two faces in one plane that overlap: the depth buffer cannot
+order them, so the picture flickers between their colours as the camera or
+the model moves. `npm run validate` scans for it at every level, so a new
+pack gets the checks with no extra step:
+
+| Rule | What it scans | How the build prevents it |
+|---|---|---|
+| `geometry.zfight` | Each GLB on its own: coplanar overlaps with different paint, not buried inside another solid and not on the ground. World assets and held items count every pair of parts (limit 1 voxel² per file); avatar files count the worst single part (a parts file shows one part per slot). | `finalize` moves the smaller of two fighting parts 1/16 voxel back (world assets, held items); atlas prisms get distinct plane offsets. |
+| `avatar.layers` | Every face of every avatar part sits its slot's layer out from the voxel grid (`contracts/data/avatar-layers.json`). | `blender/rig.py` meshes parts with `mesher.layered_mesh`. |
+| `avatar.composite` | Each pack's avatar parts worn on the PN bodies with the PN parts and every other staged pack's parts (`src/validate/composite.ts`): any two parts that can be on one avatar at once (`wornTogether`: different slots, no hide rule between them) must not share a plane. Needs the PN avatar (`JAM_ASSETS_DIR`) and the build metadata in `out/meta`. | The layers above. |
+
+Each message names the node pair and a point (rig voxels for avatar space),
+so a fight can be found in a viewer. When you add:
+
+- a pack: nothing; `build:pack` layers its parts and `validate` scans them
+  against every other staged pack.
+- an avatar slot: give it its own value in `avatar-layers.json` (outer slots
+  larger; keep away from 0 and 0.1, where PN parts sit).
+- a composition rule (a new way one part hides another): add it to
+  `wornTogether`, or the composite scan reports parts that never show together.
+
+Not covered: faces that cross while an avatar or prop animates (the scans use
+the rest pose), a held item against the hand, and models placed next to each
+other in a scene. Painted one-voxel specks (`speck_rig`) shimmer at a
+distance but do not flicker in place; a z-fight does.
 
 The validator is the gate: every GLB must pass `--level asset`; the style
 slice passes `--level slice`; authored content passes `--level content`

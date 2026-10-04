@@ -17,6 +17,10 @@ import { AVATAR_SLOTS, parsePartNodeName } from '../../contracts/catalog'
 import { inspectGlb, type SurfaceStats } from './inspect'
 import { STYLE } from '../../contracts/style'
 import { validateAsset, type Violation } from './rules'
+import { avatarCompositeFights, COMPOSITE_MAX_AREA, rvxPartRules } from './composite'
+import { piratePartRules } from '../catalog/pirate'
+import { OUT_DIR, PIRATE_AVATAR_GLB, pirateModelsDir } from '../paths'
+import { RVX_PACK_KEYS } from '../../contracts/packs'
 
 export const LEVELS = ['asset', 'slice', 'content', 'release'] as const
 export type Level = (typeof LEVELS)[number]
@@ -135,7 +139,41 @@ export async function collectInventory(stageDir: string, pack: RvxPackKey): Prom
     }
   }
   strayFiles.push(...unexpectedFiles(packDir, pack))
+  const parts = glbs.find((glb) => glb.category === 'avatar')
+  if (parts) parts.violations.push(...(await compositeViolations(stageDir, pack)))
   return { pack, glbs, leaves, strayFiles: [...new Set(strayFiles)].sort() }
+}
+
+/** The staged avatar parts file of each RUN pack that has one. */
+function stagedPartFiles(stageDir: string): { pack: RvxPackKey; path: string }[] {
+  return RVX_PACK_KEYS.map((key) => ({ pack: key, path: join(stageDir, RVX_PACKS[key].dir, leafFor(key, 'characters').path, 'avatar', `${key}-avatar-parts.glb`) })).filter((file) => existsSync(file.path))
+}
+
+/**
+ * `avatar.composite`: this pack's avatar parts, worn on the PN bodies with PN
+ * parts and every other staged pack's parts, must not share a plane with any
+ * part they can be worn with (src/validate/composite.ts).
+ */
+async function compositeViolations(stageDir: string, pack: RvxPackKey): Promise<Violation[]> {
+  const files = stagedPartFiles(stageDir)
+  const pirateAvatar = join(pirateModelsDir(), PIRATE_AVATAR_GLB)
+  if (!existsSync(pirateAvatar)) throw new Error(`the avatar composite check needs the PN avatar at ${pirateAvatar} (set JAM_ASSETS_DIR)`)
+  const rvx = rvxPartRules(join(OUT_DIR, 'meta'), files.map((file) => file.pack))
+  const fights = await avatarCompositeFights(
+    files.map((file) => file.path),
+    pirateAvatar,
+    (part) => {
+      if (part.pack === 'pirate') return piratePartRules(part.slot, part.index)
+      const rules = rvx.get(`${part.slot} ${part.pack}-${part.index}`)
+      if (!rules) throw new Error(`no composition rules for ${part.slot} ${part.pack}-${part.index} in out/meta`)
+      return rules
+    },
+    pack,
+  )
+  const bad = fights.filter((fight) => fight.area > COMPOSITE_MAX_AREA)
+  if (bad.length === 0) return []
+  const worst = bad.slice(0, 3).map((f) => `${f.part} × ${f.other} ${f.area.toFixed(1)} voxel² at (${f.at.map((x) => x.toFixed(1)).join(', ')})`).join('; ')
+  return [{ rule: 'avatar.composite', message: `${bad.length} part pair(s) worn together share a plane and z-fight (worst: ${worst}); give the slots distinct layers (contracts/data/avatar-layers.json)` }]
 }
 
 /**

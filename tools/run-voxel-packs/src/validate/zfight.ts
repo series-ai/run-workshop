@@ -218,9 +218,115 @@ export function coplanarOverlaps(
     sameNodeOnly?: boolean
   } = {},
 ): Overlap[] {
-  const tolerance = 0.02 * unit
+  return sweep(triangles(doc), unit, { sameNodeOnly: options.sameNodeOnly, tolerance: 0.02 })
+}
+
+/**
+ * Coplanar overlaps between nodes of several files placed in one space (all
+ * at rest; skinned meshes in bind space), for parts that are worn together:
+ * avatar parts of every pack on the Pirate Nation bodies. Only pairs with a
+ * `subject` node (the parts under test) are checked, and only those `pair`
+ * accepts (parts that can be seen together). `tolerance` (voxels) is how
+ * close two planes must be to fight. No ground or buried-point exemption:
+ * which parts cover a spot depends on the outfit. Triangles are indexed by
+ * plane and by a 2D grid, so thousands of parts on one body stay fast.
+ */
+export function coplanarOverlapsAcross(
+  docs: Document[],
+  unit: number,
+  options: { tolerance: number; subject: (node: string) => boolean; pair: (a: string, b: string) => boolean },
+): Overlap[] {
+  const tolerance = options.tolerance * unit
   const minArea = 0.01 * unit * unit
-  const tris = triangles(doc)
+  const cell = 8 * unit
+  interface Entry { id: number; tri: Tri; sign: number; d: number; pts: number[][]; box: number[]; n: number[]; U: number[]; V: number[]; subject: boolean }
+  const planes = new Map<string, Map<string, Entry[]>>()
+  const subjects: Entry[] = []
+  const basis = new Map<string, { n: number[]; U: number[]; V: number[] }>()
+  let id = 0
+  for (const doc of docs) {
+    for (const tri of triangles(doc)) {
+      const first = tri.n.find((x) => Math.abs(x) > 1e-6)!
+      const sign = first > 0 ? 1 : -1
+      const nc = tri.n.map((x) => x * sign)
+      const nk = nc.map((x) => Math.round(x * 1000)).join(',')
+      let frame = basis.get(nk)
+      if (!frame) {
+        const helper = Math.abs(nc[0]!) < 0.9 ? [1, 0, 0] : [0, 1, 0]
+        const u = cross(nc, helper)
+        const ul = Math.hypot(u[0]!, u[1]!, u[2]!)
+        const U = u.map((x) => x / ul)
+        frame = { n: nc, U, V: cross(nc, U) }
+        basis.set(nk, frame)
+      }
+      const pts = tri.p.map((q) => [dot(q, frame!.U), dot(q, frame!.V)])
+      const xs = pts.map((q) => q[0]!)
+      const ys = pts.map((q) => q[1]!)
+      const d = tri.d * sign
+      const entry: Entry = { id: id++, tri, sign, d, pts, box: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], ...frame, subject: options.subject(tri.node) }
+      const planeKey = `${nk}|${Math.floor(d / tolerance)}`
+      let grid = planes.get(planeKey)
+      if (!grid) planes.set(planeKey, (grid = new Map()))
+      for (let gx = Math.floor(entry.box[0]! / cell); gx <= Math.floor(entry.box[2]! / cell); gx += 1) {
+        for (let gy = Math.floor(entry.box[1]! / cell); gy <= Math.floor(entry.box[3]! / cell); gy += 1) {
+          const key = `${gx},${gy}`
+          const list = grid.get(key)
+          if (list) list.push(entry)
+          else grid.set(key, [entry])
+        }
+      }
+      if (entry.subject) subjects.push(entry)
+    }
+  }
+  const found: Overlap[] = []
+  for (const a of subjects) {
+    const nk = a.n.map((x) => Math.round(x * 1000)).join(',')
+    const seen = new Set<number>()
+    const k = Math.floor(a.d / tolerance)
+    for (let dk = -1; dk <= 1; dk += 1) {
+      const grid = planes.get(`${nk}|${k + dk}`)
+      if (!grid) continue
+      for (let gx = Math.floor(a.box[0]! / cell); gx <= Math.floor(a.box[2]! / cell); gx += 1) {
+        for (let gy = Math.floor(a.box[1]! / cell); gy <= Math.floor(a.box[3]! / cell); gy += 1) {
+          for (const b of grid.get(`${gx},${gy}`) ?? []) {
+            // Each pair once: a subject meets another subject only from the lower id.
+            if (b.id === a.id || seen.has(b.id) || (b.subject && b.id < a.id)) continue
+            seen.add(b.id)
+            if (Math.abs(b.d - a.d) > tolerance || a.tri.node === b.tri.node || !options.pair(a.tri.node, b.tri.node)) continue
+            if (b.box[0]! >= a.box[2]! || a.box[0]! >= b.box[2]! || b.box[1]! >= a.box[3]! || a.box[1]! >= b.box[3]!) continue
+            const overlap = overlapArea(a.pts, b.pts)
+            if (overlap.area < minArea) continue
+            const samples = [overlap.centre, ...overlap.poly.map((v) => [0.7 * v[0]! + 0.3 * overlap.centre[0]!, 0.7 * v[1]! + 0.3 * overlap.centre[1]!])]
+            let differ = 0
+            for (const q of samples) {
+              const ca = colourAt(a.pts, a.tri, q)
+              const cb = colourAt(b.pts, b.tri, q)
+              if (!(ca && cb && !ca.some((x, i) => Math.abs(x - cb[i]!) > 12))) differ += 1
+            }
+            found.push({
+              facing: a.sign === b.sign ? 'same' : 'opposite',
+              area: overlap.area,
+              nodes: [a.tri.node, b.tri.node],
+              at: [0, 1, 2].map((r) => a.U[r]! * overlap.centre[0]! + a.V[r]! * overlap.centre[1]! + a.n[r]! * a.d) as [number, number, number],
+              normal: a.tri.n as [number, number, number],
+              colors: [a.tri.color, b.tri.color],
+              mismatch: differ / samples.length,
+            })
+          }
+        }
+      }
+    }
+  }
+  return found
+}
+
+function sweep(
+  tris: Tri[],
+  unit: number,
+  options: { sameNodeOnly?: boolean; tolerance: number },
+): Overlap[] {
+  const tolerance = options.tolerance * unit
+  const minArea = 0.01 * unit * unit
   // Down-facing faces on the model's lowest plane sit on the ground: never seen.
   let floor = Infinity
   for (const t of tris) for (const p of t.p) floor = Math.min(floor, p[1]!)
