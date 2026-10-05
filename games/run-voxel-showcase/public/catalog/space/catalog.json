@@ -3513,7 +3513,7 @@
    "filename": "space-vehicles-hover-bike.glb",
    "relativePath": "vehicles/space-vehicles-hover-bike.glb",
    "leaf": "world",
-   "sizeBytes": 26212,
+   "sizeBytes": 26296,
    "bounds": {
     "min": [
      -12,
@@ -3538,7 +3538,8 @@
     "move"
    ],
    "sockets": [
-    "socket-pad",
+    "socket-pad-front",
+    "socket-pad-rear",
     "socket-thrust"
    ],
    "pfx": [
@@ -3555,9 +3556,20 @@
     },
     {
      "effectId": "rvx-space-hover-thrust",
-     "socket": "socket-pad",
+     "socket": "socket-pad-front",
      "trigger": "clip:move",
-     "size": 20,
+     "size": 14,
+     "aim": [
+      0,
+      -1,
+      0
+     ]
+    },
+    {
+     "effectId": "rvx-space-hover-thrust",
+     "socket": "socket-pad-rear",
+     "trigger": "clip:move",
+     "size": 14,
      "aim": [
       0,
       -1,
@@ -3724,7 +3736,7 @@
      "effectId": "rvx-space-laser-bolt",
      "socket": "socket-cannon-l",
      "trigger": "manual",
-     "size": 16,
+     "size": 28,
      "aim": [
       0,
       0,
@@ -3735,7 +3747,7 @@
      "effectId": "rvx-space-laser-bolt",
      "socket": "socket-cannon-r",
      "trigger": "manual",
-     "size": 16,
+     "size": 28,
      "aim": [
       0,
       0,

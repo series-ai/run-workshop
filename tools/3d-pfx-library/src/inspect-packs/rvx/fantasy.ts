@@ -1,7 +1,7 @@
 /** RUN voxel fantasy pack effects (ids `rvx-fantasy-*`). PN base-pirate
  * theme: warm woods and stone, gold, sky-blue frost, magenta arcane, leaf green. */
 import { FIRE, hex, SMOKE, theme, WHITE, type RvxRecipe } from './common'
-import { bubbles, burst, dim, fall, fire, glint, lampGlow, mist, motes, muzzle, orbit, slam, slash, smokeColumn, spray, waves } from './kit'
+import { bolt, bubbles, burst, dim, fall, fire, glint, lampGlow, mist, motes, muzzle, orbit, slam, slash, smokeColumn, spray, waves } from './kit'
 
 const t = theme('fantasy')
 const id = (slug: string, label: string) => ({ id: `rvx-fantasy-${slug}`, label: `RUN Fantasy ${label}` })
@@ -53,16 +53,31 @@ export const FANTASY_RECIPES: RvxRecipe[] = [
     colors: [hex('#e6f2f5'), hex('#cfe3ea'), t('sky', 7)],
     motes: [WHITE, t('sky', 7)],
     rate: 7,
+    // over the splash pool, not across the whole island
+    width: 0.5,
   }),
   // ---------------------------------------------------------------- one-shots
-  burst({ ...id('arcane-bolt', 'arcane bolt'), source: 'spell book, mage staff', effectType: 'magic', role: 'release' }, {
-    flash: dim(t('magenta', 6), 0.8),
-    star: t('magenta', 7),
-    ring: { color: t('magenta', 6), kind: 'face' },
-    cubes: [t('magenta', 6), t('magenta', 7), t('sky', 7)],
-    sparks: [t('magenta', 7), WHITE],
+  // a bolt that flies along the aim: a burst that stays at the book does not read as a cast
+  bolt({ ...id('arcane-bolt', 'arcane bolt'), source: 'spell book, mage staff', effectType: 'magic', role: 'projectile' }, {
+    core: WHITE,
+    edge: t('magenta', 6),
+    sparks: [t('magenta', 7), t('sky', 7), WHITE],
   }),
-  spray({ ...id('dragon-breath', 'dragon breath'), source: 'dragon attack', effectType: 'fire', role: 'release' }, { kind: 'fire', length: 2.2, duration: 0.9 }),
+  spray({ ...id('dragon-breath', 'dragon breath'), source: 'dragon attack', effectType: 'fire', role: 'release' }, {
+    kind: 'fire',
+    length: 2.2,
+    duration: 0.9,
+    thick: 1.8,
+    // cools to orange and red early: the stream flies out fast, so the default ramp shows
+    // only its yellow start, which reads as dripping liquid
+    tint: [
+      { t: 0, c: FIRE.white },
+      { t: 0.12, c: FIRE.yellow },
+      { t: 0.35, c: FIRE.orange },
+      { t: 0.75, c: FIRE.red },
+      { t: 1, c: FIRE.ember },
+    ],
+  }),
   burst({ ...id('frost-nova', 'frost nova'), source: 'frost wand, crystals, crystal pylon', effectType: 'elemental', role: 'burst' }, {
     flash: dim(t('sky', 6), 0.8),
     ring: { color: t('sky', 7), kind: 'flat' },

@@ -47,7 +47,8 @@ export const APOCALYPSE_RECIPES: RvxRecipe[] = [
     bubble: [t('toxic', 6), t('toxic', 5)],
     fume: TOXIC,
     chips: [t('toxic', 7)],
-    width: 1,
+    // the green pool is about half the island: wider, bubbles rose from the barrels and the sand
+    width: 0.5,
   }),
   beam({ ...id('searchlight', 'searchlight'), source: 'watchtower light', effectType: 'environment', role: 'beam' }, {
     color: hex('#fff3c4'),

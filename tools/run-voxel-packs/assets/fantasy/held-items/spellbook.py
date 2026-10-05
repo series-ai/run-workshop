@@ -21,4 +21,4 @@ def build():
         g.set(9 + dx, 8 + dy, 0, C("arcane", 6)).set(9 + dx, 8 + dy, 5, C("arcane", 6))
     g.set(9, 8, 0, C("arcane", 7)).set(9, 8, 5, C("arcane", 7))
     return held("spellbook", "Grimoire", g, (3, 8, 3), {"socket-sigil": (9, 8, 0)},
-                [{"effectId": "rvx-fantasy-arcane-bolt", "socket": "socket-sigil", "trigger": "manual", "size": 0.32}])
+                [{"effectId": "rvx-fantasy-arcane-bolt", "socket": "socket-sigil", "trigger": "manual", "size": 0.6, "aim": [1.0, 0.0, 0.0]}])

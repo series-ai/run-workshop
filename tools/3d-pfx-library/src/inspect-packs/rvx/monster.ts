@@ -8,7 +8,8 @@ const t = theme('monster')
 const id = (slug: string, label: string) => ({ id: `rvx-monster-${slug}`, label: `RUN Monster ${label}` })
 
 const GHOST = [t('teal', 6), t('teal', 7), hex('#dff7f2')]
-const BLOOD = [t('red', 3), t('red', 4), t('blood', 4)]
+// one shade lighter than a deep red: darker drops vanish on dark ground
+const BLOOD = [t('red', 4), t('red', 5), t('blood', 5)]
 const AURA = [t('red', 5), t('red', 6), t('magenta', 6)]
 // two shades lighter than a silhouette, so the bats read on dark ground too
 const BATS = [t('purple', 6), t('purple', 5)]
@@ -30,10 +31,11 @@ export const MONSTER_RECIPES: RvxRecipe[] = [
     colors: [t('purple', 6), t('purple', 7), t('magenta', 7)],
     motes: [t('teal', 7)],
   }),
-  mist({ ...id('ghost-wake', 'ghost wake'), source: 'ghost ship stern', effectType: 'movement', role: 'trail' }, {
-    colors: GHOST,
-    motes: [t('teal', 7)],
-    rate: 7,
+  // a soft trail out behind the stern (along the aim), not a mist cloud that stays beside it
+  exhaust({ ...id('ghost-wake', 'ghost wake'), source: 'ghost ship stern', effectType: 'movement', role: 'trail' }, {
+    smoke: GHOST,
+    rate: 9,
+    soft: true,
   }),
   mist({ ...id('sewer-fume', 'sewer fume'), source: 'dungeon grate', effectType: 'smoke', role: 'loop' }, {
     colors: [t('moss', 6), t('toxic', 6)],

@@ -70,7 +70,7 @@ function emitPoint(shape: BurgerShopShape, random: () => number): [number, numbe
   }
   if (shape.kind === 'sphere' || shape.kind === 'hemisphere') {
     const direction = emitDirection(shape, random)
-    const radius = shape.radius * Math.cbrt(random())
+    const radius = shape.shell ? shape.radius : shape.radius * Math.cbrt(random())
     return [direction[0] * radius, direction[1] * radius, direction[2] * radius]
   }
   if (shape.kind === 'cone' || shape.kind === 'cone-volume') {

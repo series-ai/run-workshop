@@ -18,8 +18,9 @@ export type BurgerShopTextureId =
 export type BurgerShopBillboard = 'camera' | 'horizontal' | 'vertical' | 'mesh'
 export type BurgerShopBlend = 'cutout' | 'additive' | 'alpha'
 export type BurgerShopShape =
-  | { kind: 'sphere'; radius: number }
-  | { kind: 'hemisphere'; radius: number }
+  /** `shell`: spawn on the surface only (a dome or bubble), not through the volume. */
+  | { kind: 'sphere'; radius: number; shell?: boolean }
+  | { kind: 'hemisphere'; radius: number; shell?: boolean }
   | { kind: 'cone'; angle: number; radius: number; length?: number }
   | { kind: 'cone-volume'; angle: number; radius: number; length: number }
   | { kind: 'box'; size: [number, number, number] }

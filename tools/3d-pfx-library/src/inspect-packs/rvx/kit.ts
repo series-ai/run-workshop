@@ -344,7 +344,7 @@ export function orbit(
       startRotation: constant(0),
       rate: 2,
       life: range(0.9, 1.3),
-      size: range(0.26, 0.32),
+      size: range(0.2, 0.24),
       ...around(r * 1.05),
       swirl: spin,
       sizeCurve: [
@@ -362,10 +362,22 @@ export function orbit(
     layers.push(
       ring({ name: 'Ring', billboard: 'horizontal', burst: undefined, rate: 1, life: constant(1), size: constant(r * 2.3), sizeCurve: [{ t: 0, v: 0.85 }, { t: 1, v: 1.05 }], colorOverLife: FADE_IN_OUT, color: [o.ring] }),
     )
-  // `dome`: a bubble rim that faces the camera, so the field reads as a sphere from every side.
-  // Two rims overlap at any time (rate 2, life 1), so the fade in and out keeps it steady.
+  // `dome`: hex cells that twinkle on a hemisphere shell give the field its curve, and a
+  // bubble rim that faces the camera gives it an outline from every side. Two rims overlap
+  // at any time (rate 2, life 1), so the fade in and out keeps it steady.
   if (o.dome)
     layers.push(
+      cubes({
+        name: 'DomeCells',
+        rate: 34,
+        life: range(0.5, 0.9),
+        speed: constant(0),
+        size: range(0.05, 0.07),
+        shape: { kind: 'hemisphere', radius: r * 1.02, shell: true },
+        localEuler: UP,
+        sizeCurve: TWINKLE,
+        color: [o.dome, o.colors[0]!],
+      }),
       ring({ name: 'Dome', billboard: 'camera', burst: undefined, rate: 2, life: constant(1), size: constant(r * 2.05), sizeCurve: [{ t: 0, v: 0.98 }, { t: 1, v: 1.02 }], colorOverLife: FADE_IN_OUT, color: [o.dome] }),
     )
   // `lift` moves the whole orbit along +Y, e.g. in front of a solid portal face.
@@ -767,15 +779,18 @@ export function waves(meta: RvxMeta, o: { color: Rgba; count?: number; face?: bo
 /** A breath or spray along +Y: a cone of flames/puffs/pieces that travels out and spreads. */
 export function spray(
   meta: RvxMeta,
-  o: { kind: 'fire' | 'puff'; colors?: Colors; tint?: NonNullable<RvxEmitter['colorOverLife']>; embers?: Colors; length?: number; duration?: number },
+  o: { kind: 'fire' | 'puff'; colors?: Colors; tint?: NonNullable<RvxEmitter['colorOverLife']>; embers?: Colors; length?: number; duration?: number; loop?: boolean; thick?: number },
 ): RvxRecipe {
   const len = o.length ?? 2
+  // `thick` scales the stream's pieces and spread: a dragon's breath is a wall of fire, a
+  // welder's flame a thin jet
+  const k = o.thick ?? 1
   const dur = o.duration ?? 0.8
   const body =
     o.kind === 'fire'
       ? flames({ name: 'Stream', ...(o.tint ? { colorOverLife: o.tint } : {}) })
       : puffs({ name: 'Stream', color: o.colors ?? [SMOKE_DEFAULT] })
-  return oneShot(meta, dur + 0.7, [
+  const layers: RvxEmitter[] = [
     glow({ name: 'Flash', life: constant(0.2), size: constant(0.9), color: [dim(o.colors?.[0] ?? FIRE.orange, 0.5)] }),
     {
       ...body,
@@ -784,8 +799,8 @@ export function spray(
       life: range(0.4, 0.6),
       speed: range(len * 1.6, len * 2),
       drag: 1.6,
-      size: range(0.26, 0.4),
-      shape: coneUp(14, 0.06),
+      size: range(0.26 * k, 0.4 * k),
+      shape: coneUp(14 * Math.sqrt(k), 0.06 * k),
       localEuler: UP,
       sizeCurve: [
         { t: 0, v: 0.35 },
@@ -808,7 +823,10 @@ export function spray(
       localEuler: UP,
       color: o.embers ?? [FIRE.yellow, FIRE.orange],
     }),
-  ])
+  ]
+  // `loop`: a steady stream (a welding torch) with no flash; every layer runs all the time.
+  if (o.loop) return loop(meta, dur, layers.slice(1).map((l) => ({ ...l, duration: undefined })))
+  return oneShot(meta, dur + 0.7, layers)
 }
 
 const SMOKE_DEFAULT: Rgba = [0.6, 0.58, 0.55, 1]
@@ -816,7 +834,7 @@ const SMOKE_DEFAULT: Rgba = [0.6, 0.58, 0.55, 1]
 /** Exhaust or thrust along +Y while a vehicle moves: a flame jet with puffs trailing in world space. */
 export function exhaust(
   meta: RvxMeta,
-  o: { jet?: NonNullable<RvxEmitter['colorOverLife']>; smoke: Colors; halo?: Rgba; rate?: number; lift?: number },
+  o: { jet?: NonNullable<RvxEmitter['colorOverLife']>; smoke: Colors; halo?: Rgba; rate?: number; lift?: number; soft?: boolean },
 ): RvxRecipe {
   const layers: RvxEmitter[] = []
   if (o.jet)
@@ -824,8 +842,10 @@ export function exhaust(
       glow({ name: 'Halo', burst: undefined, rate: 4, life: constant(0.4), size: range(0.6, 0.75), sizeCurve: HALO, colorOverLife: FADE_IN_OUT, color: [o.halo ?? dim(FIRE.orange, 0.5)] }),
       flames({ name: 'Jet', rate: 30, life: range(0.12, 0.2), speed: range(3, 4), size: range(0.2, 0.28), shape: coneUp(4, 0.04), localEuler: UP, colorOverLife: o.jet, sizeCurve: SHRINK }),
     )
+  // `soft`: a ghostly wake of soft blobs (softMist), not faceted smoke puffs.
+  const smoke = (layer: RvxEmitter) => (o.soft ? softMist(layer) : layer)
   layers.push(
-    puffs({
+    smoke(puffs({
       name: 'Smoke',
       worldSpace: true,
       rate: o.rate ?? 8,
@@ -841,7 +861,7 @@ export function exhaust(
       // so a car's smoke clears the body of a low vehicle and the rear corners of a tall one.
       gravity: -(o.lift ?? 0.08),
       color: o.smoke,
-    }),
+    })),
   )
   return loop(meta, 1, layers)
 }

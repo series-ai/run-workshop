@@ -842,7 +842,7 @@
   },
   {
    "id": "rvx-space-weld-sparks",
-   "looping": false
+   "looping": true
   },
   {
    "id": "rvx-space-warp-jump",

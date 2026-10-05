@@ -118,10 +118,11 @@ export const SPACE_RECIPES: RvxRecipe[] = [
     duration: 0.5,
   }),
   burst({ ...id('holo-scan', 'holo scan'), source: 'data pad, scanner', effectType: 'ui', role: 'charge' }, {
-    ring: { color: t('cyan', 7), kind: 'flat' },
-    cubes: [t('cyan', 6), t('cyan', 7)],
-    cubeCount: 8,
-    star: t('cyan', 7),
+    // the ring faces the camera: a flat ring on a hand-held scanner reads edge-on, a dark line
+    ring: { color: t('cyan', 7), kind: 'face' },
+    cubes: [t('cyan', 6), t('cyan', 7), WHITE],
+    cubeCount: 10,
+    star: WHITE,
     reach: 0.8,
   }),
   burst({ ...id('gravity-slam', 'gravity slam'), source: 'gravity hammer', effectType: 'impact', role: 'impact' }, {
@@ -161,6 +162,8 @@ export const SPACE_RECIPES: RvxRecipe[] = [
     embers: [FIRE.white, FIRE.yellow, FIRE.white],
     length: 0.6,
     duration: 0.9,
+    // a torch burns steadily; a one-shot left gaps between plays
+    loop: true,
   }),
   waves({ ...id('warp-jump', 'warp jump'), source: 'shuttle warp', effectType: 'portal', role: 'despawn' }, {
     color: t('cyan', 7),

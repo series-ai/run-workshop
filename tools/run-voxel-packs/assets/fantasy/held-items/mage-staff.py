@@ -83,4 +83,4 @@ def build():
     return held("mage-staff", "Archmage Staff", g, (15.5, CY, CZ),
                 {"socket-tip": (50, CY + 0.5, CZ + 0.5)},
                 [{"effectId": "rvx-fantasy-arcane-bolt", "socket": "socket-tip",
-                  "trigger": "manual", "size": 0.4}])
+                  "trigger": "manual", "size": 0.6, "aim": [1.0, 0.0, 0.0]}])

@@ -1227,7 +1227,7 @@
      "effectId": "rvx-monster-blood-splat",
      "socket": "socket-mouth",
      "trigger": "clip:hit",
-     "size": 56
+     "size": 90
     }
    ],
    "route": "code",
@@ -1333,7 +1333,12 @@
      "effectId": "rvx-monster-howl",
      "socket": "socket-mouth",
      "trigger": "clip:attack",
-     "size": 40,
+     "size": 34,
+     "offset": [
+      0,
+      2,
+      -12
+     ],
      "at": 0.36
     },
     {
@@ -3740,7 +3745,12 @@
      "effectId": "rvx-monster-ghost-wake",
      "socket": "socket-stern",
      "trigger": "clip:move",
-     "size": 70
+     "size": 50,
+     "aim": [
+      0,
+      0,
+      1
+     ]
     }
    ],
    "route": "code",

@@ -1049,7 +1049,7 @@
      "effectId": "rvx-fantasy-dragon-breath",
      "socket": "socket-mouth",
      "trigger": "clip:attack",
-     "size": 64,
+     "size": 80,
      "aim": [
       0,
       -0.243,
@@ -2029,7 +2029,12 @@
      "effectId": "rvx-fantasy-arcane-bolt",
      "socket": "socket-tip",
      "trigger": "manual",
-     "size": 0.4
+     "size": 0.6,
+     "aim": [
+      1,
+      0,
+      0
+     ]
     }
    ],
    "route": "code",
@@ -2126,7 +2131,12 @@
      "effectId": "rvx-fantasy-arcane-bolt",
      "socket": "socket-sigil",
      "trigger": "manual",
-     "size": 0.32
+     "size": 0.6,
+     "aim": [
+      1,
+      0,
+      0
+     ]
     }
    ],
    "route": "code",
@@ -3433,7 +3443,12 @@
      "effectId": "rvx-fantasy-frost-nova",
      "socket": "socket-heart",
      "trigger": "manual",
-     "size": 40
+     "size": 40,
+     "offset": [
+      0,
+      -20,
+      0
+     ]
     }
    ],
    "route": "code",
@@ -3754,6 +3769,11 @@
       0,
       0,
       -1
+     ],
+     "offset": [
+      0,
+      3,
+      -8
      ],
      "at": 0.56
     }

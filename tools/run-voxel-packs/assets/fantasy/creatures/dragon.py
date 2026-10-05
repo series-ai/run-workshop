@@ -410,4 +410,4 @@ def build():
     return asset("creatures", "dragon", "Crimson Wyrm", root,
                  clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                  sockets=[Socket("socket-mouth", at=mouth, parent="neck")],
-                 fx=[pfx("rvx-fantasy-dragon-breath", "socket-mouth", "clip:attack", size=64, aim=(0.0, -0.243, -0.97), at=0.68)])
+                 fx=[pfx("rvx-fantasy-dragon-breath", "socket-mouth", "clip:attack", size=80, aim=(0.0, -0.243, -0.97), at=0.68)])

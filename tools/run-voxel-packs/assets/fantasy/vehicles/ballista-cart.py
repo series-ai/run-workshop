@@ -157,4 +157,4 @@ def build() -> Asset:
     return Asset(id="fantasy-vehicles-ballista-cart", pack="fantasy", category="vehicles", name="Ballista War Cart", root=root,
                  clips=[Clip("move", move), Clip("attack", attack, loop=False)],
                  sockets=[Socket("socket-bolt", at=(CX, ty + 6, 4), parent="ballista")],
-                 pfx=[{"effectId": "rvx-fantasy-bow-release", "socket": "socket-bolt", "trigger": "clip:attack", "size": 44, "aim": [0.0, 0.0, -1.0], "at": 0.56}])
+                 pfx=[{"effectId": "rvx-fantasy-bow-release", "socket": "socket-bolt", "trigger": "clip:attack", "size": 44, "aim": [0.0, 0.0, -1.0], "offset": [0.0, 3.0, -8.0], "at": 0.56}])

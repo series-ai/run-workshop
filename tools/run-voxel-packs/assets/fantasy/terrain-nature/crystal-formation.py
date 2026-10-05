@@ -89,4 +89,5 @@ def build():
                       "rot": [(0.0, (0.0, 0.0, 0.0)), (1.2, (0.0, 0.0, 1.5)), (2.4, (0.0, 0.0, 0.0))]}}
     return asset("terrain-nature", "crystal-formation", "Arcane Crystal Outcrop", root, clips=[Clip("idle", idle)],
                  sockets=[Socket("socket-heart", at=to_root((CX + 0.8, HEART_Y0 + 22, CZ)), parent="heart")],
-                 fx=[pfx("rvx-fantasy-frost-nova", "socket-heart", "manual", size=40)])
+                 # the nova bursts round the foot of the spire (the socket is 22 voxels up it)
+                 fx=[pfx("rvx-fantasy-frost-nova", "socket-heart", "manual", size=40, offset=(0.0, -20.0, 0.0))])

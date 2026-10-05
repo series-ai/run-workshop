@@ -124,8 +124,9 @@ def build() -> Asset:
     return Asset(
         id="space-vehicles-hover-bike", pack="space", category="vehicles", name="Hover Bike", root=root,
         clips=[Clip("idle", idle), Clip("move", move)],
-        sockets=[Socket("socket-thrust", at=rel(pv, (TH[0], TH[1], L)), parent="hover-bike"), Socket("socket-pad", at=(0.0, 0.0, 0.0), parent="hover-bike")],
-        # the rear thruster trails back; the pad under the bike pushes down
+        sockets=[Socket("socket-thrust", at=rel(pv, (TH[0], TH[1], L)), parent="hover-bike"), Socket("socket-pad-front", at=rel(pv, (CX, 0.0, 14)), parent="hover-bike"), Socket("socket-pad-rear", at=rel(pv, (CX, 0.0, 42)), parent="hover-bike")],
+        # the rear thruster trails back; each anti-grav pad pushes down
         pfx=[{"effectId": "rvx-space-hover-thrust", "socket": "socket-thrust", "trigger": "clip:move", "size": 24, "aim": [0.0, 0.0, 1.0]},
-             {"effectId": "rvx-space-hover-thrust", "socket": "socket-pad", "trigger": "clip:move", "size": 20, "aim": [0.0, -1.0, 0.0]}],
+             {"effectId": "rvx-space-hover-thrust", "socket": "socket-pad-front", "trigger": "clip:move", "size": 14, "aim": [0.0, -1.0, 0.0]},
+             {"effectId": "rvx-space-hover-thrust", "socket": "socket-pad-rear", "trigger": "clip:move", "size": 14, "aim": [0.0, -1.0, 0.0]}],
     )

@@ -158,6 +158,6 @@ def build() -> Asset:
         sockets=[Socket("socket-engine", at=rel(pv, (CX, YC - 1, EZ + 2))), Socket("socket-cannon-l", at=rel(pv, (CX - 37, YC - 8, 61))), Socket("socket-cannon-r", at=rel(pv, (CX + 37, YC - 8, 61)))],
         pfx=[{"effectId": "rvx-space-engine-exhaust", "socket": "socket-engine", "trigger": "clip:move", "size": 34, "aim": [0.0, 0.0, 1.0]},
              # the guns fire forward, along -z (the nozzles are at +z)
-             {"effectId": "rvx-space-laser-bolt", "socket": "socket-cannon-l", "trigger": "manual", "size": 16, "aim": [0.0, 0.0, -1.0]},
-             {"effectId": "rvx-space-laser-bolt", "socket": "socket-cannon-r", "trigger": "manual", "size": 16, "aim": [0.0, 0.0, -1.0]}],
+             {"effectId": "rvx-space-laser-bolt", "socket": "socket-cannon-l", "trigger": "manual", "size": 28, "aim": [0.0, 0.0, -1.0]},
+             {"effectId": "rvx-space-laser-bolt", "socket": "socket-cannon-r", "trigger": "manual", "size": 28, "aim": [0.0, 0.0, -1.0]}],
     )
