@@ -166,7 +166,7 @@ export const SPACE_RECIPES: RvxRecipe[] = [
     // a torch burns steadily; a one-shot left gaps between plays
     loop: true,
     // large sparks: at a hand-held size the default ones are a pixel or two
-    sparks: 4,
+    sparks: 8,
   }),
   waves({ ...id('warp-jump', 'warp jump'), source: 'shuttle warp', effectType: 'portal', role: 'despawn' }, {
     color: t('cyan', 7),

@@ -2,7 +2,7 @@
  * mecha steel and zombie greens: rust, khaki dust, oily smoke, toxic green,
  * gore red and hot muzzle yellow. */
 import { FIRE, hex, SMOKE, theme, WHITE, type RvxRecipe } from './common'
-import { beam, bubbles, burst, dim, exhaust, fire, lampGlow, muzzle, slam, smokeColumn, spray } from './kit'
+import { beam, bubbles, burst, dim, exhaust, fire, lampGlow, lightCone, muzzle, slam, smokeColumn, spray } from './kit'
 
 const t = theme('apocalypse')
 const id = (slug: string, label: string) => ({ id: `rvx-apocalypse-${slug}`, label: `RUN Apocalypse ${label}` })
@@ -55,10 +55,9 @@ export const APOCALYPSE_RECIPES: RvxRecipe[] = [
     length: 3,
     width: 0.7,
   }),
-  beam({ ...id('flashlight-beam', 'flashlight beam'), source: 'flashlight', effectType: 'environment', role: 'beam' }, {
+  lightCone({ ...id('flashlight-beam', 'flashlight beam'), source: 'flashlight', effectType: 'environment', role: 'beam' }, {
     color: hex('#fff3c4'),
     length: 2.4,
-    width: 0.55,
   }),
   exhaust({ ...id('engine-smoke', 'engine smoke'), source: 'van, pickups, bus, buggy, motorbike exhausts', effectType: 'movement', role: 'trail' }, {
     smoke: EXHAUST,

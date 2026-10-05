@@ -13,7 +13,7 @@ import numpy as np
 import paint as P
 import pnshapes as S
 from _bld import coffin, coords, parts
-from pnkit import box, crate
+from pnkit import box, crate, edges
 from voxgrid import C, Asset, Clip, Grid, Socket, turn
 
 G = (68, 88, 108)
@@ -79,7 +79,17 @@ def wagon() -> Grid:
     g.prism("x", [(ARM_Y - 8, pz - 1.5), (ARM_Y - 5, pz - 1.5), (ARM_Y, pz - 6), (ARM_Y, pz - 9)], px - 1, px + 1, C("wood", 5))
     info = S.lantern(g, int(px), ARM_Y - 29, int(LZ), s=10, body=12, glass="orange", roof="purple", frame="wood", seed=10)
     box(g, px - 0.5, info["top"], LZ - 0.5, px + 0.5, ARM_Y, LZ + 0.5, "gray", 4)
-    return g, info["glow"]
+    # an open cage, not glass: the frame stays and the panes go, so the candle's PFX flame
+    # shows (inside closed panes it could not); a stubby wax candle stands on the base plate
+    panes = info["panes"]
+    _X, Y, _Z = coords(g)
+    ys = np.nonzero(panes.any(axis=(0, 2)))[0]
+    yb0, yb1 = ys.min(), ys.max() + 1
+    frame = edges(panes) | (panes & (Y < yb0 + 1.0)) | (panes & (Y > yb1 - 1.0))
+    g.a[panes & ~frame] = 0
+    gx, _gy, gz = info["glow"]
+    box(g, gx - 1.5, yb0 + 1, gz - 1.5, gx + 1.5, yb0 + 5, gz + 1.5, "bone", 7)
+    return g, (gx, yb0 + 6.5, gz)
 
 
 def wheel(side: str, az: float, r: float) -> Grid:
@@ -110,6 +120,6 @@ def build() -> Asset:
         id="monster-vehicles-coffin-wagon", pack="monster", category="vehicles", name="Coffin Wagon", root=root,
         clips=[Clip("move", clips)],
         sockets=[Socket("socket-lantern", at=(gx - CX, gy - RR, gz - RZ), parent="wagon")],
-        # the candle burns inside a closed lantern, where a flame cannot show: the lantern glows
-        pfx=[{"effectId": "rvx-monster-ghost-lantern", "socket": "socket-lantern", "trigger": "idle", "size": 44}],
+        # the candle flame burns in the open lantern cage (the socket is at the wick)
+        pfx=[{"effectId": "rvx-monster-candle-flame", "socket": "socket-lantern", "trigger": "idle", "size": 12}],
     )

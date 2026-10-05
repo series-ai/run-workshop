@@ -3645,7 +3645,7 @@
    "filename": "monster-vehicles-coffin-wagon.glb",
    "relativePath": "vehicles/monster-vehicles-coffin-wagon.glb",
    "leaf": "world",
-   "sizeBytes": 114540,
+   "sizeBytes": 119264,
    "bounds": {
     "min": [
      -22,
@@ -3673,10 +3673,10 @@
    ],
    "pfx": [
     {
-     "effectId": "rvx-monster-ghost-lantern",
+     "effectId": "rvx-monster-candle-flame",
      "socket": "socket-lantern",
      "trigger": "idle",
-     "size": 44
+     "size": 12
     }
    ],
    "route": "code",

@@ -603,9 +603,10 @@ export function muzzle(meta: RvxMeta, o: { flash: Rgba; core?: Rgba; smoke?: Col
     },
     glints({ name: 'Star', burst: constant(1), life: constant(0.12), size: constant(0.7 * k), sizeCurve: FLASH, localPosition: [0, 0.1, 0], color: [o.flash] }),
   ]
+  // Gun smoke is soft (softMist): small faceted puffs read as flat grey shards beside a muzzle.
   if (o.smoke)
     layers.push(
-      puffs({
+      softMist(puffs({
         name: 'Smoke',
         burst: range(4, 5),
         delay: 0.03,
@@ -617,7 +618,7 @@ export function muzzle(meta: RvxMeta, o: { flash: Rgba; core?: Rgba; smoke?: Col
         localEuler: UP,
         gravity: -0.03,
         color: o.smoke,
-      }),
+      })),
     )
   if (o.sparks)
     layers.push(sparks({ name: 'Sparks', burst: constant(6), speed: range(3.5, 5.5), shape: coneUp(28, 0.03), localEuler: UP, color: o.sparks }))
@@ -669,6 +670,31 @@ export function bolt(meta: RvxMeta, o: { core: Rgba; edge: Rgba; sparks?: Colors
     },
     sparks({ name: 'Sparks', burst: constant(6), speed: range(2, 3.5), shape: coneUp(40, 0.03), localEuler: UP, color: o.sparks ?? [o.edge] }),
   ])
+}
+
+/**
+ * A torch or flashlight cone along +Y: soft glows that grow and fade along the aim, and a thin
+ * bright core. A single column reads as a flat bar seen side-on; a cone of soft light does not.
+ */
+export function lightCone(meta: RvxMeta, o: { color: Rgba; length?: number }): RvxRecipe {
+  const len = o.length ?? 2.4
+  // glows overlap by about two thirds, so they merge into one cone
+  const steps = 12
+  const cone: RvxEmitter[] = Array.from({ length: steps }, (_, i) => {
+    const u = (i + 0.5) / steps
+    return glow({
+      name: `Cone${i + 1}`,
+      burst: undefined,
+      rate: 2,
+      life: constant(1),
+      size: constant(0.5 + u * 1.2),
+      sizeCurve: HALO,
+      localPosition: [0, u * len, 0],
+      colorOverLife: FADE_IN_OUT,
+      color: [dim(o.color, 0.28 * (1 - u * 0.75))],
+    })
+  })
+  return loop(meta, 2, [...cone, glow({ name: 'Lens', burst: undefined, rate: 2, life: constant(1), size: constant(0.45), sizeCurve: HALO, colorOverLife: FADE_IN_OUT, color: [dim(o.color, 0.8)] })])
 }
 
 /** A beam up +Y (teleporter, tractor beam, flashlight): a tall column that breathes, with rising motes. */
@@ -841,20 +867,35 @@ export function spray(
       ],
       gravity: -0.03,
     },
-    cubes({
-      name: 'Embers',
-      rate: 14,
-      duration: dur,
-      life: range(0.4, 0.65),
-      speed: range(len * 1.6, len * 2.4),
-      drag: 1.2,
-      gravity: 0.2,
-      // `sparks` scales the embers alone (weld sparks: big, bright points on a small flame)
-      size: range(0.035 * k * (o.sparks ?? 1), 0.05 * k * (o.sparks ?? 1)),
-      shape: coneUp(22, 0.05),
-      localEuler: UP,
-      color: o.embers ?? [FIRE.yellow, FIRE.orange],
-    }),
+    // Weld sparks (`sparks`, a size scale) are bright streaks that spit out fast and fall; plain
+    // embers are cubes that drift with the stream.
+    o.sparks
+      ? sparks({
+          name: 'Embers',
+          rate: 30,
+          duration: dur,
+          life: range(0.25, 0.45),
+          speed: range(2.5, 4),
+          drag: 1.2,
+          gravity: 1.5,
+          size: range(0.012 * o.sparks, 0.018 * o.sparks),
+          shape: coneUp(60, 0.05),
+          localEuler: UP,
+          color: o.embers ?? [FIRE.yellow, FIRE.white],
+        })
+      : cubes({
+          name: 'Embers',
+          rate: 14,
+          duration: dur,
+          life: range(0.4, 0.65),
+          speed: range(len * 1.6, len * 2.4),
+          drag: 1.2,
+          gravity: 0.2,
+          size: range(0.035 * k, 0.05 * k),
+          shape: coneUp(22, 0.05),
+          localEuler: UP,
+          color: o.embers ?? [FIRE.yellow, FIRE.orange],
+        }),
   ]
   // `loop`: a steady stream (a welding torch) with no flash; every layer runs all the time.
   if (o.loop) return loop(meta, dur, layers.slice(1).map((l) => ({ ...l, duration: undefined })))

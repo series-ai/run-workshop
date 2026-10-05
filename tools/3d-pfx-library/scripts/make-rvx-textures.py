@@ -185,7 +185,9 @@ def beam() -> Image.Image:
     im = blank(128, 256)
     px = im.load()
     for y in range(256):
-        fade = min(1.0, y / 255 * 1.6)  # image top = beam top: clear there, solid at the base
+        # image top = beam top: clear there, solid near the base; the last rows fade in too, so
+        # the base has no hard straight edge at the lens
+        fade = min(1.0, y / 255 * 1.6, (255 - y) / 18)
         for x in range(128):
             edge = abs(x - 63.5) / 64
             if edge > 0.92:

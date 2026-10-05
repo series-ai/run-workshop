@@ -112,7 +112,8 @@ export const FANTASY_RECIPES: RvxRecipe[] = [
   muzzle({ ...id('bow-release', 'bow release'), source: 'bow, crossbow, ballista, catapult', effectType: 'weapon', role: 'release' }, {
     flash: dim(t('sand', 7), 0.4),
     core: t('sand', 7),
-    smoke: [t('sand', 6), t('bone', 6)],
+    // a string snap throws splinters, not smoke: smoke at a bow grip read as a misfire
+    sparks: [t('sand', 7), WHITE],
   }),
   slam({ ...id('dust-slam', 'dust slam'), source: 'ent slam, siege tower bridge', effectType: 'impact', role: 'impact' }, {
     dust: [t('sand', 6), t('sand', 5), t('bone', 6)],
