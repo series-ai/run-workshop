@@ -8,6 +8,7 @@
  * play by bone name, so a clip from any pack drives any avatar. A held item
  * rides the `Hand.R` bone with an identity local transform.
  */
+import { AVATAR_ACTION_STRIKES } from '@rvx/contracts/clips'
 import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import { useEffect, useMemo, useRef } from 'react'
@@ -218,12 +219,13 @@ function LoadedAvatar({ selection, catalogs, plan, urls, heldPfx }: VoxelAvatarP
   }, [loaded, plan, selection, catalogs])
 
   const mixer = useMemo(() => new AnimationMixer(avatar.root), [avatar])
-  // Action clips (swings, shots) time a held item's manual one-shots to the swing; other clips leave them on a timer.
+  // Action clips (swings, shots, casts) time a held item's manual one-shots to their strikes; other clips leave them on a timer.
   const clipClock = useRef<ClipClock | null>(null)
   useEffect(() => {
     const action = mixer.clipAction(avatar.clip)
     action.reset().fadeIn(0.15).play()
-    clipClock.current = avatar.clip.name.includes('_Action_') ? { elapsed: 0, duration: avatar.clip.duration } : null
+    const strikes = AVATAR_ACTION_STRIKES[avatar.clip.name]
+    clipClock.current = strikes ? { elapsed: 0, duration: avatar.clip.duration, strikes } : null
     ;(window as unknown as { __rvxAvatar?: unknown }).__rvxAvatar = { root: avatar.root, mixer, clip: avatar.clip.name, key: JSON.stringify(selection) }
     return () => {
       mixer.stopAllAction()

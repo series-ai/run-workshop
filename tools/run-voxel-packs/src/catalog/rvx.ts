@@ -144,7 +144,6 @@ export async function rvxCatalog(stageDir: string, metaDir: string, pack: RvxPac
       const where = `${m.id} → ${p.effectId}`
       if (!p.effectId.startsWith(`rvx-${pack}-`)) problems.push(`${where}: not a rvx-${pack}- effect`)
       else if (!rvx.has(p.effectId)) problems.push(`${where}: unknown effect (npm run effect-ids in tools/3d-pfx-library?)`)
-      else if (p.at !== undefined && rvx.get(p.effectId)) problems.push(`${where}: \`at\` is for one-shots, and this effect loops`)
       if (p.socket && !m.sockets.includes(p.socket)) problems.push(`${where}: socket ${p.socket} is not in the file`)
       if (p.trigger.startsWith('clip:') && !m.clips.includes(p.trigger.slice(5))) problems.push(`${where}: no clip ${p.trigger.slice(5)}`)
     }

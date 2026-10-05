@@ -2,7 +2,7 @@
  * Reads a GLB into the plain summary the contract rules check. All glTF
  * access happens here; the rules stay pure functions over `GlbSummary`.
  */
-import { getBounds, type Document, type Node } from '@gltf-transform/core'
+import { getBounds, type Document, type Node, type Primitive } from '@gltf-transform/core'
 import { PNG } from 'pngjs'
 import { createIo } from '../gltfIo'
 import { coplanarOverlaps, layerMisfits } from './zfight'
@@ -99,6 +99,11 @@ export interface GlbSummary {
    * than the rest of the pack.
    */
   scaledNodes: string[]
+  /**
+   * Each `socket-*` node's distance, in voxels, from the nearest triangle at
+   * rest. A socket far from every surface puts its effect in empty air.
+   */
+  socketGaps: { name: string; gap: number }[]
 }
 
 const io = createIo()
@@ -254,12 +259,15 @@ export function summarize(doc: Document, options: { zfight?: boolean } = {}): Gl
     return node.getScale().some((x) => !base.some((b) => Math.abs(x / b - 1) <= INSET_TOLERANCE))
   }).map((node) => node.getName())
 
+  const socketGaps = socketDistances(doc).map(({ name, distance }) => ({ name, gap: distance / unit }))
+
   return {
     scaleClass,
     surface,
     zfight,
     layers,
     scaledNodes,
+    socketGaps,
     materials,
     primitives,
     meshCount: root.listMeshes().length,
@@ -269,6 +277,66 @@ export function summarize(doc: Document, options: { zfight?: boolean } = {}): Gl
     bounds,
     vertexCount,
   }
+}
+
+/** Closest point to p on triangle abc (Ericson, Real-Time Collision Detection 5.1.5). */
+function closestOnTriangle(p: number[], a: number[], b: number[], c: number[]): number[] {
+  const sub = (u: number[], v: number[]) => [u[0]! - v[0]!, u[1]! - v[1]!, u[2]! - v[2]!]
+  const dot = (u: number[], v: number[]) => u[0]! * v[0]! + u[1]! * v[1]! + u[2]! * v[2]!
+  const at = (o: number[], u: number[], s: number, v: number[] = [0, 0, 0], t = 0) => [0, 1, 2].map((i) => o[i]! + u[i]! * s + v[i]! * t)
+  const ab = sub(b, a), ac = sub(c, a), ap = sub(p, a)
+  const d1 = dot(ab, ap), d2 = dot(ac, ap)
+  if (d1 <= 0 && d2 <= 0) return a
+  const bp = sub(p, b), d3 = dot(ab, bp), d4 = dot(ac, bp)
+  if (d3 >= 0 && d4 <= d3) return b
+  const vc = d1 * d4 - d3 * d2
+  if (vc <= 0 && d1 >= 0 && d3 <= 0) return at(a, ab, d1 / (d1 - d3))
+  const cp = sub(p, c), d5 = dot(ab, cp), d6 = dot(ac, cp)
+  if (d6 >= 0 && d5 <= d6) return c
+  const vb = d5 * d2 - d1 * d6
+  if (vb <= 0 && d2 >= 0 && d6 <= 0) return at(a, ac, d2 / (d2 - d6))
+  const va = d3 * d6 - d5 * d4
+  if (va <= 0 && d4 - d3 >= 0 && d5 - d6 >= 0) return at(b, sub(c, b), (d4 - d3) / (d4 - d3 + (d5 - d6)))
+  const denom = 1 / (va + vb + vc)
+  return at(a, ab, vb * denom, ac, vc * denom)
+}
+
+/** Each `socket-*` node's distance (model units) from the nearest mesh triangle, at rest. */
+export function socketDistances(doc: Document): { name: string; distance: number }[] {
+  const triangles: number[][][] = []
+  const v = [0, 0, 0]
+  for (const node of doc.getRoot().listNodes()) {
+    const mesh = node.getMesh()
+    if (!mesh) continue
+    const m = node.getWorldMatrix()
+    const world = (i: number, pos: NonNullable<ReturnType<Primitive['getAttribute']>>) => {
+      pos.getElement(i, v)
+      return [0, 1, 2].map((r) => m[r]! * v[0]! + m[4 + r]! * v[1]! + m[8 + r]! * v[2]! + m[12 + r]!)
+    }
+    for (const prim of mesh.listPrimitives()) {
+      const pos = prim.getAttribute('POSITION')
+      if (!pos) continue
+      const index = prim.getIndices()
+      const count = index ? index.getCount() : pos.getCount()
+      for (let i = 0; i + 2 < count; i += 3) {
+        const [a, b, c] = [i, i + 1, i + 2].map((k) => (index ? index.getScalar(k) : k))
+        triangles.push([world(a!, pos), world(b!, pos), world(c!, pos)])
+      }
+    }
+  }
+  return doc
+    .getRoot()
+    .listNodes()
+    .filter((node) => node.getName().startsWith('socket-'))
+    .map((node) => {
+      const p = node.getWorldTranslation() as number[]
+      let best = Infinity
+      for (const [a, b, c] of triangles) {
+        const q = closestOnTriangle(p, a!, b!, c!)
+        best = Math.min(best, Math.hypot(p[0]! - q[0]!, p[1]! - q[1]!, p[2]! - q[2]!))
+      }
+      return { name: node.getName(), distance: best }
+    })
 }
 
 /** Exact world-space bounds of every mesh vertex at rest. */

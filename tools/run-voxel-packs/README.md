@@ -80,6 +80,12 @@ Two more rules keep voxel size and proportion the same across packs:
   category). Scale classes bound absolute size; this catches drift inside a
   class, for example a rework that doubles a prop.
 
+`sockets.placement` keeps effects on the model: every `socket-*` node must sit
+within 10 voxels of a surface at rest. A socket built from absolute instead of
+hinge-relative coordinates puts its smoke or dust in empty air. A socket for a
+moving part (a drawbridge tip) follows that part (`parent`), so it is on the
+surface at rest too.
+
 ## Authoring an asset
 
 Each `assets/<pack>/<category>/<slug>.py` defines `build()` returning an

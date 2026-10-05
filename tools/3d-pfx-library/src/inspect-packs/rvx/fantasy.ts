@@ -92,7 +92,7 @@ export const FANTASY_RECIPES: RvxRecipe[] = [
   }),
   slash({ ...id('slash-arc', 'slash arc'), source: 'swords, axes, spears, griffin beak', effectType: 'weapon', role: 'trail' }, {
     edge: WHITE,
-    body: t('sky', 7, 0.9),
+    body: t('cyan', 4),
   }),
   muzzle({ ...id('bow-release', 'bow release'), source: 'bow, crossbow, ballista, catapult', effectType: 'weapon', role: 'release' }, {
     flash: dim(t('sand', 7), 0.4),

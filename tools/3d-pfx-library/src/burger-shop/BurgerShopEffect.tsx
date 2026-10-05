@@ -118,7 +118,30 @@ const localCameraPosition = new Vector3()
 const localCameraQuat = new Quaternion()
 
 const RIBBON_SAMPLES = 96
+// Points drawn between two samples. A fast swing moves the blade far in one
+// frame, so straight joins show as a fan of flat wedges; a Catmull-Rom curve
+// through the samples gives a smooth crescent.
+const RIBBON_SUBDIVISIONS = 4
+const RIBBON_POINTS = (RIBBON_SAMPLES - 1) * RIBBON_SUBDIVISIONS + 1
 const ribbonTip = new Vector3()
+const ribbonBase = new Vector3()
+const curveBase = new Vector3()
+const curveTip = new Vector3()
+
+/** Catmull-Rom point between p1 and p2 at u (0..1); p0 and p3 are the neighbours. */
+function catmullRom(out: Vector3, p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, u: number): Vector3 {
+  const u2 = u * u
+  const u3 = u2 * u
+  const a = -0.5 * u3 + u2 - 0.5 * u
+  const b = 1.5 * u3 - 2.5 * u2 + 1
+  const c = -1.5 * u3 + 2 * u2 + 0.5 * u
+  const d = 0.5 * u3 - 0.5 * u2
+  return out.set(
+    a * p0.x + b * p1.x + c * p2.x + d * p3.x,
+    a * p0.y + b * p1.y + c * p2.y + d * p3.y,
+    a * p0.z + b * p1.z + c * p2.z + d * p3.z,
+  )
+}
 
 /** A blade trail: see BurgerShopEmitter.ribbon. Drawn in world space under the scene root. */
 function RibbonLayer({
@@ -137,11 +160,11 @@ function RibbonLayer({
   const ribbon = emitter.ribbon!
   const { geometry, material } = useMemo(() => {
     const g = new BufferGeometry()
-    g.setAttribute('position', new BufferAttribute(new Float32Array(RIBBON_SAMPLES * 2 * 3), 3).setUsage(DynamicDrawUsage))
-    g.setAttribute('color', new BufferAttribute(new Float32Array(RIBBON_SAMPLES * 2 * 4), 4).setUsage(DynamicDrawUsage))
-    g.setAttribute('uv', new BufferAttribute(new Float32Array(RIBBON_SAMPLES * 2 * 2), 2).setUsage(DynamicDrawUsage))
+    g.setAttribute('position', new BufferAttribute(new Float32Array(RIBBON_POINTS * 2 * 3), 3).setUsage(DynamicDrawUsage))
+    g.setAttribute('color', new BufferAttribute(new Float32Array(RIBBON_POINTS * 2 * 4), 4).setUsage(DynamicDrawUsage))
+    g.setAttribute('uv', new BufferAttribute(new Float32Array(RIBBON_POINTS * 2 * 2), 2).setUsage(DynamicDrawUsage))
     const index: number[] = []
-    for (let i = 0; i + 1 < RIBBON_SAMPLES; i += 1) index.push(2 * i, 2 * i + 1, 2 * i + 2, 2 * i + 1, 2 * i + 3, 2 * i + 2)
+    for (let i = 0; i + 1 < RIBBON_POINTS; i += 1) index.push(2 * i, 2 * i + 1, 2 * i + 2, 2 * i + 1, 2 * i + 3, 2 * i + 2)
     g.setIndex(index)
     g.setDrawRange(0, 0)
     const m = new MeshBasicMaterial({
@@ -194,7 +217,8 @@ function RibbonLayer({
       const tip = at(ribbon.to, new Vector3())
       const last = list[list.length - 1]
       const speed = last ? tip.distanceTo(last.tip) / unit / Math.max(1e-4, t - last.t) : 0
-      list.push({ base: at(ribbon.from, new Vector3()), tip, t, speed })
+      // A faked sweep is slow by design, so it passes the speed gate.
+      list.push({ base: at(ribbon.from, new Vector3()), tip, t, speed: still ? Infinity : speed })
       if (list.length > RIBBON_SAMPLES) list.shift()
       state.lastT = t
     }
@@ -205,25 +229,41 @@ function RibbonLayer({
     const uv = geometry.getAttribute('uv') as BufferAttribute
     const tint = emitter.color[0] ?? [1, 1, 1, 1]
     const gate = (speed: number) => (ribbon.minSpeed ? Math.min(1, Math.max(0, (speed - ribbon.minSpeed * 0.5) / (ribbon.minSpeed * 0.5))) : 1)
-    for (let i = 0; i < list.length; i += 1) {
-      const sample = list[i]!
-      const age = Math.min(1, (t - sample.t) / ribbon.life)
-      const keys = emitter.colorOverLife
-      const k = [0, 1, 2, 3].map((ch) => (keys ? sampleCurve(keys.map((key) => ({ t: key.t, v: key.c[ch] ?? 1 })), age) : 1))
-      const alpha = (tint[3] ?? 1) * k[3]! * gate(sample.speed)
-      for (const [j, p, v] of [
-        [0, sample.base, 0],
-        [1, sample.tip, 1],
-      ] as const) {
-        position.setXYZ(2 * i + j, p.x, p.y, p.z)
-        colour.setXYZW(2 * i + j, tint[0]! * k[0]!, tint[1]! * k[1]!, tint[2]! * k[2]!, alpha)
-        uv.setXY(2 * i + j, age, v)
+    let points = 0
+    const last = list.length - 1
+    for (let i = 0; i <= last; i += 1) {
+      const p0 = list[Math.max(0, i - 1)]!
+      const p1 = list[i]!
+      const p2 = list[Math.min(last, i + 1)]!
+      const p3 = list[Math.min(last, i + 2)]!
+      const steps = i === last ? 1 : RIBBON_SUBDIVISIONS
+      for (let s = 0; s < steps; s += 1) {
+        const u = s / RIBBON_SUBDIVISIONS
+        const sampleT = p1.t + (p2.t - p1.t) * u
+        const speed = Math.min(p1.speed, p2.speed)
+        const tip = catmullRom(curveTip, p0.tip, p1.tip, p2.tip, p3.tip, u)
+        const age = Math.min(1, (t - sampleT) / ribbon.life)
+        const keys = emitter.colorOverLife
+        const k = [0, 1, 2, 3].map((ch) => (keys ? sampleCurve(keys.map((key) => ({ t: key.t, v: key.c[ch] ?? 1 })), age) : 1))
+        const alpha = (tint[3] ?? 1) * k[3]! * gate(speed)
+        // Taper: the base slides toward the tip with age, so old samples are short.
+        catmullRom(curveBase, p0.base, p1.base, p2.base, p3.base, u)
+        const base = ribbon.taper ? ribbonBase.copy(curveBase).lerp(tip, age * ribbon.taper) : curveBase
+        for (const [j, p, v] of [
+          [0, base, 0],
+          [1, tip, 1],
+        ] as const) {
+          position.setXYZ(2 * points + j, p.x, p.y, p.z)
+          colour.setXYZW(2 * points + j, tint[0]! * k[0]!, tint[1]! * k[1]!, tint[2]! * k[2]!, alpha)
+          uv.setXY(2 * points + j, age, v)
+        }
+        points += 1
       }
     }
     position.needsUpdate = true
     colour.needsUpdate = true
     uv.needsUpdate = true
-    geometry.setDrawRange(0, Math.max(0, list.length - 1) * 6)
+    geometry.setDrawRange(0, Math.max(0, points - 1) * 6)
   })
 
   return createPortal(<mesh geometry={geometry} material={material} frustumCulled={false} />, root)

@@ -139,7 +139,9 @@ export const SPACE_RECIPES: RvxRecipe[] = [
   }),
   slash({ ...id('plasma-slash', 'plasma slash'), source: 'plasma sword', effectType: 'weapon', role: 'trail' }, {
     edge: WHITE,
-    body: t('cyan', 6, 0.9),
+    body: t('cyan', 4),
+    // the plasma slash clip is a slow spin (it peaks at 14 effect sizes a second), and a glowing blade trails at any speed
+    minSpeed: 10,
   }),
   burst({ ...id('stun-arc', 'stun arc'), source: 'stun baton', effectType: 'elemental', role: 'impact' }, {
     flash: dim(t('cyan', 6), 0.7),

@@ -4,5 +4,28 @@
   "oneShotClips": ["open", "close", "hit", "attack", "death"],
   "fps": 30,
   "pirateAvatarClips": ["00_TPose","01_Idle_1","02_Idle_2","03_Idle_3","04_Walk","05_Run","06_Jump_Run","07_Jump_Stand","08_Action_One-Handed_Low","09_Action_One-Handed_Mid","10_Action_One-Handed_High","11_Action_Two-Handed_Low","12_Action_Two-Handed_Mid","13_Action_Two-Handed_High","14_Action_Chopping","15_Waving_Right","16_Waving_Left","17_Two-Handed_Wave","18_Success_Celebration","19_Suprised_Scared","20_Dance_1","21_Dance_2","22_Drunk","23_Kick_Sand","24_Pushups","25_Jumpingjacks","26_Looking_Horizon","27_Dance_3_Backspin","28_Dance_4_Robot","29_Dance_5_Cabbage_Patch","30_Treading_Water","31_Swimming"],
-  "heldItemTestClips": ["08_Action_One-Handed_Low","09_Action_One-Handed_Mid","10_Action_One-Handed_High","11_Action_Two-Handed_Low","12_Action_Two-Handed_Mid","13_Action_Two-Handed_High"]
+  "heldItemTestClips": ["08_Action_One-Handed_Low","09_Action_One-Handed_Mid","10_Action_One-Handed_High","11_Action_Two-Handed_Low","12_Action_Two-Handed_Mid","13_Action_Two-Handed_High"],
+  "avatarActionStrikesAbout": "Avatar clips where a held item acts (a swing, shot, cast or throw), with the moments it acts as fractions of the clip. Held-item one-shot PFX fire at each moment. RVX moments come from the clip keys (the swing or recoil key); PN action clips use 0.45.",
+  "avatarActionStrikes": {
+    "08_Action_One-Handed_Low": [0.45],
+    "09_Action_One-Handed_Mid": [0.45],
+    "10_Action_One-Handed_High": [0.45],
+    "11_Action_Two-Handed_Low": [0.45],
+    "12_Action_Two-Handed_Mid": [0.45],
+    "13_Action_Two-Handed_High": [0.45],
+    "14_Action_Chopping": [0.45],
+    "32_Cast_Spell": [0.375],
+    "34_Bow_Draw": [0.79],
+    "35_Sword_Slash": [0.389],
+    "41_Rifle_Shoot": [0.05, 0.45, 0.85],
+    "44_Scan": [0.39],
+    "46_Pistol_Shoot": [0.27, 0.5],
+    "47_Plasma_Slash": [0.4],
+    "51_Lunge": [0.352],
+    "53_Cast_Curse": [0.533],
+    "55_Claw_Swipe": [0.44],
+    "57_Shotgun_Fire": [0.13],
+    "61_Throw": [0.5],
+    "62_Bat_Swing": [0.45]
+  }
 }

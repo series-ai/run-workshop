@@ -198,21 +198,7 @@ def arm(s: int) -> Grid:
     brace = box(g, int(hx) - 3, 14, int(CZ) - 3, int(hx) + 3, 17, int(CZ) + 2, LEATHER, 3)
     P.flat(g, edges(brace), LEATHER, 2)
     P.flat(g, brace & (np.abs(Y - 15.5) < 0.6) & ((np.floor(X + Z) % 3) == 0), "gold", 6)
-    if s > 0:
-        # a notched scimitar pointing up and forward
-        box(g, int(hx) - 1, 10, int(CZ) - 7, int(hx) + 1, 12, int(CZ) + 3, "darkwood", 3)  # grip
-        guard = box(g, int(hx) - 2, 9, int(CZ) - 8, int(hx) + 2, 13, int(CZ) - 6, "gold", 5)
-        P.flat(g, guard & (Y > 12), "gold", 7)
-        bstart = len(g.solids)
-        blade = side(g, [(11, CZ - 8), (13, CZ - 7.5), (26, CZ - 9.5), (30.5, CZ - 13), (26, CZ - 13.5), (16, CZ - 11.5)], hx - 0.9, hx + 0.9, "steel", 6)
-        facet_paint(g, g.solids[bstart:], lambda gg, mm, fr: P.flat(gg, mm, "steel", 6))
-        # a bright cutting edge on the lower curve, a darker spine and two notches
-        # a bright cutting edge on the front curve, a darker spine at the back and two notches
-        P.flat(g, blade & (Z < CZ - 8.3 - (Y - 11) * 0.2), "steel", 7)
-        P.flat(g, blade & (Z > CZ - 8.6 - (Y - 13) * 0.16), "steel", 4)
-        for ny in (17.5, 22.5):
-            P.flat(g, blade & (np.abs(Y - ny) < 0.7) & (Z < CZ - 9.6 - (ny - 11) * 0.1), "steel", 3)
-    else:
+    if s < 0:
         # a round wooden buckler with a red rim and a gold boss, facing -z
         bstart = len(g.solids)
         disc = front(g, ngon(hx - 1, 12, 7.2, 8, 0.39), CZ - 7, CZ - 4.5, "wood", 4)
@@ -227,8 +213,33 @@ def arm(s: int) -> Grid:
     return g
 
 
+# the right hand (arm(1)): the scimitar's wrist hinge sits in the middle of the fist
+HAND_R = CX + 9.5 + 3
+WRIST_R = (int(HAND_R) + 0.5, 11.0, CZ - 2.0)
+
+
+def scimitar() -> Grid:
+    """A notched scimitar pointing up and forward, a separate part on a wrist
+    hinge so the attack can turn the blade forward through the cut."""
+    g = Grid(*SH)
+    X, Y, Z = coords(g)
+    hx = HAND_R
+    box(g, int(hx) - 1, 10, int(CZ) - 7, int(hx) + 1, 12, int(CZ) + 3, "darkwood", 3)  # grip
+    guard = box(g, int(hx) - 2, 9, int(CZ) - 8, int(hx) + 2, 13, int(CZ) - 6, "gold", 5)
+    P.flat(g, guard & (Y > 12), "gold", 7)
+    bstart = len(g.solids)
+    blade = side(g, [(11, CZ - 8), (13, CZ - 7.5), (26, CZ - 9.5), (30.5, CZ - 13), (26, CZ - 13.5), (16, CZ - 11.5)], hx - 0.9, hx + 0.9, "steel", 6)
+    facet_paint(g, g.solids[bstart:], lambda gg, mm, fr: P.flat(gg, mm, "steel", 6))
+    # a bright cutting edge on the front curve, a darker spine at the back and two notches
+    P.flat(g, blade & (Z < CZ - 8.3 - (Y - 11) * 0.2), "steel", 7)
+    P.flat(g, blade & (Z > CZ - 8.6 - (Y - 13) * 0.16), "steel", 4)
+    for ny in (17.5, 22.5):
+        P.flat(g, blade & (np.abs(Y - ny) < 0.7) & (Z < CZ - 9.6 - (ny - 11) * 0.1), "steel", 3)
+    return g
+
+
 def build():
-    grids = {"goblin": pelvis(), "body": body(), "head": head(), "arm-l": arm(-1), "arm-r": arm(1), "leg-l": leg(-1), "leg-r": leg(1)}
+    grids = {"goblin": pelvis(), "body": body(), "head": head(), "arm-l": arm(-1), "arm-r": arm(1), "scimitar": scimitar(), "leg-l": leg(-1), "leg-r": leg(1)}
     waist = (CX, 13.0, CZ)
     neck = (CX, HEAD_Y0 + 1, CZ - 1)
     sh = {s: (CX + s * 9.5, SHOULDER_Y + 1, CZ) for s in (-1, 1)}
@@ -241,6 +252,7 @@ def build():
         ("head", grids["head"], neck, "body"),
         ("arm-l", grids["arm-l"], sh[-1], "body"),
         ("arm-r", grids["arm-r"], sh[1], "body"),
+        ("scimitar", grids["scimitar"], WRIST_R, "arm-r"),
     ])
     # the head rests tilted back so the big face reads from above (rule F4)
     next(p for p in root.walk() if p.name == "head").rot = (HEAD_TILT, 0.0, 0.0)
@@ -248,11 +260,17 @@ def build():
             "head": {"rot": keys((0, 0, 0, 0), (0.4, 0, 14, 3), (0.8, -3, 0, 0), (1.2, 0, -14, -3), (1.6, 0, 0, 0))},
             "arm-l": {"rot": keys((0, 0, 0, 0), (0.8, 6, 0, -4), (1.6, 0, 0, 0))},
             "arm-r": {"rot": keys((0, 0, 0, 0), (0.8, -6, 0, 5), (1.6, 0, 0, 0))}}
-    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.22, -55, 0, 25), (0.38, 75, 0, -10), (0.5, 70, 0, -10), (0.8, 0, 0, 0))},
-              "body": {"rot": keys((0, 0, 0, 0), (0.22, 6, -20, 0), (0.38, -14, 18, 0), (0.8, 0, 0, 0))},
-              "head": {"rot": keys((0, 0, 0, 0), (0.22, 8, 10, 0), (0.38, -8, -8, 0), (0.8, 0, 0, 0))},
-              "arm-l": {"rot": keys((0, 0, 0, 0), (0.22, 20, 0, -10), (0.38, -10, 0, 0), (0.8, 0, 0, 0))},
-              "goblin": {"loc": keys((0, 0, 0, 0), (0.22, 0, 0, 1.5), (0.38, 0, 0, -3), (0.8, 0, 0, 0))}}
+    # a diagonal slash. The wind-up lifts the hand above the shoulder with the blade up and back;
+    # the cut drives the hand across the belly while the wrist sweeps the blade from over the head,
+    # across the front, to the left hip. The keys were solved for tip and hand targets (the cut
+    # crosses the front, so it reads from the preview camera on the shield side); each key step
+    # stays under 150 degrees, as the export takes the shortest way between keys.
+    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.2, 25, -42, 35), (0.42, 78, -37, 43), (0.49, 64, 13, 35), (0.55, 3, 33, -14), (0.65, 3, 33, -14), (1.05, 0, 0, 0))},
+              "scimitar": {"rot": keys((0, 0, 0, 0), (0.2, 11, -14, -32), (0.42, -10, -30, -44), (0.49, -59, -14, -21), (0.55, -64, -2, -8), (0.65, -64, -2, -8), (1.05, 0, 0, 0))},
+              "body": {"rot": keys((0, 0, 0, 0), (0.2, 3, -10, 0), (0.42, 6, -20, 0), (0.49, -4, 0, 0), (0.55, -14, 22, 0), (1.05, 0, 0, 0))},
+              "head": {"rot": keys((0, 0, 0, 0), (0.42, 8, 10, 0), (0.55, -8, -8, 0), (1.05, 0, 0, 0))},
+              "arm-l": {"rot": keys((0, 0, 0, 0), (0.42, 20, 0, -10), (0.55, -10, 0, 0), (1.05, 0, 0, 0))},
+              "goblin": {"loc": keys((0, 0, 0, 0), (0.2, 0, 0, 0.7), (0.42, 0, 0, 1.5), (0.49, 0, 0, -0.7), (0.55, 0, 0, -3), (1.05, 0, 0, 0))}}
     hit = {"body": {"rot": keys((0, 0, 0, 0), (0.1, 18, 0, 8), (0.45, 0, 0, 0))},
            "head": {"rot": keys((0, 0, 0, 0), (0.1, 16, -12, 6), (0.45, 0, 0, 0))},
            "arm-l": {"rot": keys((0, 0, 0, 0), (0.1, -20, 0, -25), (0.45, 0, 0, 0))},
@@ -268,5 +286,7 @@ def build():
     tip = (CX + 12.5, 30.0, CZ - 13.0)
     return asset("creatures", "goblin", "Goblin Raider", root,
                  clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
-                 sockets=[Socket("socket-blade", at=to_root(tip), parent="arm-r")],
-                 fx=[pfx("rvx-fantasy-slash-arc", "socket-blade", "clip:attack", size=13.77, aim=(0.196, 0.49, -0.849), offset=(-1.65, -4.125, 7.15))])
+                 sockets=[Socket("socket-blade", at=to_root(tip), parent="scimitar")],
+                 # The trail spans the blade: from the hilt (offset back from the tip socket) along the blade to the tip.
+                 # It starts with the cut (0.42 s), so the wind-up leaves no trail.
+                 fx=[pfx("rvx-fantasy-slash-arc", "socket-blade", "clip:attack", size=19.6, aim=(0.0, 0.967, -0.254), offset=(0.0, -19.0, 5.0), at=0.42)])

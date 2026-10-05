@@ -65,7 +65,11 @@ export const pfxBindingSchema = z
     aim: vec3.refine((v) => Math.hypot(...v) > 1e-6, 'aim must not be zero').optional(),
     /** Where the effect's origin sits, in the socket's frame and model units (a blade trail starts at the guard); omitted = the socket. */
     offset: vec3.optional(),
-    /** Seconds into the clip at which a one-shot fires (clip triggers only); omitted = 0. */
+    /**
+     * Clip triggers only. A one-shot fires `at` seconds into the clip (omitted = 0); a loop
+     * runs from `at` to the end of each clip cycle (omitted = the whole clip), so a blade
+     * trail can skip the wind-up.
+     */
     at: z.number().nonnegative().optional(),
   })
   .refine((b) => b.at === undefined || b.trigger.startsWith('clip:'), 'at is for clip triggers only')

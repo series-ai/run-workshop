@@ -137,7 +137,7 @@ export const MONSTER_RECIPES: RvxRecipe[] = [
   }),
   slash({ ...id('claw-slash', 'claw slash'), source: 'werewolf claw', effectType: 'weapon', role: 'trail' }, {
     edge: WHITE,
-    body: t('red', 5, 0.9),
+    body: t('red', 4),
   }),
   slash({ ...id('silver-slash', 'silver slash'), source: 'silver axe, silver dagger', effectType: 'weapon', role: 'trail' }, {
     edge: WHITE,
@@ -145,7 +145,7 @@ export const MONSTER_RECIPES: RvxRecipe[] = [
   }),
   slash({ ...id('reaper-slash', 'reaper slash'), source: 'reaper scythe', effectType: 'weapon', role: 'trail' }, {
     edge: t('teal', 7),
-    body: t('purple', 5, 0.9),
+    body: t('purple', 6),
   }),
   burst({ ...id('holy-burst', 'holy burst'), source: 'garlic mace, holy water, wooden stake', effectType: 'magic', role: 'impact' }, {
     flash: dim(HOLY[1]!, 0.8),

@@ -1344,7 +1344,8 @@
       -2.2,
       20.35,
       8.8
-     ]
+     ],
+     "at": 0.2
     }
    ],
    "route": "code",
@@ -3844,7 +3845,7 @@
    "filename": "monster-vehicles-witch-broom.glb",
    "relativePath": "vehicles/monster-vehicles-witch-broom.glb",
    "leaf": "world",
-   "sizeBytes": 53352,
+   "sizeBytes": 53348,
    "bounds": {
     "min": [
      -9,

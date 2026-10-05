@@ -156,6 +156,7 @@ def build() -> Asset:
             Clip("idle", {"broom": {"loc": bob, "rot": roll}, "lantern": {"rot": swing_i}}),
             Clip("move", {"broom": {"rot": lean, "loc": lift}, "lantern": {"rot": swing_m}}),
         ],
-        sockets=[Socket("socket-brush", at=(sx - CX, sy, sz - CRADLE[2]), parent="broom")],
+        # in the broom's frame: relative to its hinge on every axis
+        sockets=[Socket("socket-brush", at=(sx - CX, sy - CRADLE[1], sz - CRADLE[2]), parent="broom")],
         pfx=[{"effectId": "rvx-monster-broom-trail", "socket": "socket-brush", "trigger": "clip:move", "size": 30, "aim": [0.0, 0.0, 1.0]}],
     )

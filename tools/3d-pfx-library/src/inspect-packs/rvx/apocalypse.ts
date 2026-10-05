@@ -62,6 +62,7 @@ export const APOCALYPSE_RECIPES: RvxRecipe[] = [
   exhaust({ ...id('engine-smoke', 'engine smoke'), source: 'van, pickups, bus, buggy, motorbike exhausts', effectType: 'movement', role: 'trail' }, {
     smoke: EXHAUST,
     rate: 9,
+    lift: 0.6,
   }),
   exhaust({ ...id('dust-kick', 'dust kick'), source: 'mutant dog paws', effectType: 'movement', role: 'trail' }, {
     smoke: DUST,

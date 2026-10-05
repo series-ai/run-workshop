@@ -23,6 +23,8 @@ export const RIG_EPSILON = 1e-4
 export const GRIP_REACH_VOXELS = 6
 /** Visible z-fighting a file may keep (voxel²): slivers where a diagonal edge crosses a face. */
 export const ZFIGHT_TOLERANCE = 1
+/** How far (voxels) a socket may sit from the model's surface: a chimney mouth a few voxels up, not empty air. */
+export const SOCKET_GAP_VOXELS = 10
 
 export type RuleId =
   | 'material.palette'
@@ -41,6 +43,7 @@ export type RuleId =
   | 'clips.no-pirate'
   | 'sockets.required'
   | 'sockets.names'
+  | 'sockets.placement'
   | 'size.file'
   | 'material.primitive'
   | 'rig.rest'
@@ -256,6 +259,10 @@ function checkSockets(summary: GlbSummary, category: Category): Violation[] {
   }
   if (category === 'held-items' && sockets.length === 0) {
     out.push({ rule: 'sockets.required', message: 'held item has no socket-* node' })
+  }
+  // A socket in empty air puts its effect there (a socket built from absolute, not hinge-relative, coordinates).
+  for (const { name, gap } of summary.socketGaps) {
+    if (gap > SOCKET_GAP_VOXELS) out.push({ rule: 'sockets.placement', message: `${name} is ${gap.toFixed(1)} voxels from the nearest surface (allowed ${SOCKET_GAP_VOXELS}); check its position is relative to its parent's hinge` })
   }
   return out
 }

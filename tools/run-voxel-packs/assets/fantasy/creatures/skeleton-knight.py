@@ -188,24 +188,7 @@ def arm(s: int) -> Grid:
     P.flat(g, pau & (Y < 21), "gold", 5)
     P.flat(g, pau & (Y < 21) & (np.floor(X + Z) % 3 == 0), "gold", 7)
     P.flat(g, pau & (Y > 23) & (Y < 24), ENAMEL, ENAMEL_B - 1)  # a lame line
-    if s > 0:
-        # a longsword in the fist: the pommel under the fist, the grip through
-        # it, the gold guard sitting right on top of it, and the blade leaning
-        # forward so it clears the pauldron and reads as held
-        ix = int(round(hx)) - 1
-        box(g, ix - 1, 4, int(CZ) - 2, ix + 2, 6, int(CZ) + 1, "gold", 6)
-        box(g, ix - 1, 6, int(CZ) - 2, ix + 2, 11, int(CZ) + 1, "darkwood", 4)
-        guard = box(g, ix - 2, 11, int(CZ) - 5, ix + 3, 13, int(CZ) + 4, "gold", 5)
-        P.flat(g, guard & (Y > 12), "gold", 7)
-        st = len(g.solids)
-        blade = side(g, S.quad((13, CZ - 0.5), (31, CZ - 12.5), 2.3, 1.7, cap=1.2), ix - 0.3, ix + 1.3, "steel", 6)
-        facet_paint(g, g.solids[st:], lambda gg, mm, fr: P.flat(gg, mm, "steel", 6))
-        # a darker fuller down the middle, bright edges
-        t = (Y - 13) / 18.0
-        mid = CZ - 0.5 - 12 * t
-        P.flat(g, blade & (np.abs(Z - mid) < 0.55) & (Y < 28), "steel", 4)
-        P.flat(g, blade & (np.abs((Z - mid) * 0.83 + (Y - 13 - 18 * t) * 0.55) > 1.4), "steel", 7)
-    else:
+    if s < 0:
         # a royal-blue kite shield with a gold rim and a gold cross, facing -z
         st = len(g.solids)
         kite = front(g, [(hx - 6.5, 24), (hx + 6.5, 24), (hx + 6.5, 13), (hx, 3.5), (hx - 6.5, 13)], CZ - 6, CZ - 3.5, CLOTH, 4)
@@ -219,8 +202,36 @@ def arm(s: int) -> Grid:
     return g
 
 
+# the right fist (arm(1)): the longsword's wrist hinge sits in the middle of the grip
+SWORD_X = int(round(CX + 9 + 2.6)) - 1
+WRIST_R = (SWORD_X + 0.5, 8.5, CZ - 0.5)
+
+
+def longsword() -> Grid:
+    """A longsword in the right fist, a separate part on a wrist hinge so the
+    attack can turn the blade through the cut: the pommel under the fist,
+    the grip through it, the gold guard right on top of it, and the blade
+    leaning forward so it clears the pauldron and reads as held."""
+    g = Grid(*SH)
+    X, Y, Z = coords(g)
+    ix = SWORD_X
+    box(g, ix - 1, 4, int(CZ) - 2, ix + 2, 6, int(CZ) + 1, "gold", 6)
+    box(g, ix - 1, 6, int(CZ) - 2, ix + 2, 11, int(CZ) + 1, "darkwood", 4)
+    guard = box(g, ix - 2, 11, int(CZ) - 5, ix + 3, 13, int(CZ) + 4, "gold", 5)
+    P.flat(g, guard & (Y > 12), "gold", 7)
+    st = len(g.solids)
+    blade = side(g, S.quad((13, CZ - 0.5), (31, CZ - 12.5), 2.3, 1.7, cap=1.2), ix - 0.3, ix + 1.3, "steel", 6)
+    facet_paint(g, g.solids[st:], lambda gg, mm, fr: P.flat(gg, mm, "steel", 6))
+    # a darker fuller down the middle, bright edges
+    t = (Y - 13) / 18.0
+    mid = CZ - 0.5 - 12 * t
+    P.flat(g, blade & (np.abs(Z - mid) < 0.55) & (Y < 28), "steel", 4)
+    P.flat(g, blade & (np.abs((Z - mid) * 0.83 + (Y - 13 - 18 * t) * 0.55) > 1.4), "steel", 7)
+    return g
+
+
 def build():
-    parts = {"skeleton-knight": pelvis(), "torso": torso(), "head": head(), "arm-l": arm(-1), "arm-r": arm(1), "leg-l": leg(-1), "leg-r": leg(1)}
+    parts = {"skeleton-knight": pelvis(), "torso": torso(), "head": head(), "arm-l": arm(-1), "arm-r": arm(1), "longsword": longsword(), "leg-l": leg(-1), "leg-r": leg(1)}
     root, to_root = rig([
         ("skeleton-knight", parts["skeleton-knight"], None, None),
         ("leg-l", parts["leg-l"], (CX - 4.5, HIP_Y, CZ), None),
@@ -229,15 +240,22 @@ def build():
         ("head", parts["head"], (CX, NECK_Y, CZ), "torso"),
         ("arm-l", parts["arm-l"], (CX - 9.5, SHOULDER_Y, CZ), "torso"),
         ("arm-r", parts["arm-r"], (CX + 9.5, SHOULDER_Y, CZ), "torso"),
+        ("longsword", parts["longsword"], WRIST_R, "arm-r"),
     ])
     idle = {"torso": {"rot": keys((0, 0, 0, 0), (1.0, 3, 0, 3), (2.0, 0, 0, 0))},
             "head": {"rot": keys((0, 0, 0, 0), (0.6, 0, 0, -8), (1.1, 0, 12, -8), (1.5, 0, 0, 0), (2.0, 0, 0, 0))},
             "arm-r": {"rot": keys((0, 0, 0, 0), (1.0, 6, 0, 0), (2.0, 0, 0, 0))},
             "arm-l": {"rot": keys((0, 0, 0, 0), (1.0, -4, 0, 0), (2.0, 0, 0, 0))}}
-    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.3, -150, 0, 10), (0.45, 55, 0, 0), (0.55, 50, 0, 0), (0.9, 0, 0, 0))},
-              "torso": {"rot": keys((0, 0, 0, 0), (0.3, 10, -14, 0), (0.45, -18, 12, 0), (0.9, 0, 0, 0))},
-              "head": {"rot": keys((0, 0, 0, 0), (0.3, 8, 0, 0), (0.45, -10, 0, 0), (0.9, 0, 0, 0))},
-              "arm-l": {"rot": keys((0, 0, 0, 0), (0.3, -20, 0, 0), (0.45, 15, 0, 0), (0.9, 0, 0, 0))}}
+    # a diagonal slash, as on the goblin: the wind-up lifts the fist above the shoulder with the
+    # blade up and back; the cut drives the fist across the belly while the wrist sweeps the blade
+    # from over the helm, across the front, to the left hip. The keys were solved for tip and fist
+    # targets (the cut crosses the front, so it reads from the preview camera on the shield side);
+    # each key step stays under 150 degrees, as the export takes the shortest way between keys.
+    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.2, 0, -30, 66), (0.4, 69, -58, 61), (0.47, 77, 6, 40), (0.53, 46, 36, 12), (0.62, 46, 36, 12), (1.0, 0, 0, 0))},
+              "longsword": {"rot": keys((0, 0, 0, 0), (0.2, 21, -10, -53), (0.4, -20, -40, -53), (0.47, -71, -22, -29), (0.53, -91, -11, -20), (0.62, -91, -11, -20), (1.0, 0, 0, 0))},
+              "torso": {"rot": keys((0, 0, 0, 0), (0.2, 5, -7, 0), (0.4, 10, -14, 0), (0.47, -4, 0, 0), (0.53, -18, 12, 0), (1.0, 0, 0, 0))},
+              "head": {"rot": keys((0, 0, 0, 0), (0.4, 8, 0, 0), (0.53, -10, 0, 0), (1.0, 0, 0, 0))},
+              "arm-l": {"rot": keys((0, 0, 0, 0), (0.4, -20, 0, 0), (0.53, 15, 0, 0), (1.0, 0, 0, 0))}}
     hit = {"torso": {"rot": keys((0, 0, 0, 0), (0.1, 15, 0, -8), (0.45, 0, 0, 0))},
            "head": {"rot": keys((0, 0, 0, 0), (0.1, 25, 0, 10), (0.2, 18, 0, 12), (0.45, 0, 0, 0))},
            "arm-l": {"rot": keys((0, 0, 0, 0), (0.1, 25, 0, -10), (0.45, 0, 0, 0))}}
@@ -247,7 +265,12 @@ def build():
              "leg-l": {"rot": keys((0, 0, 0, 0), (0.8, -50, 0, -25))}, "leg-r": {"rot": keys((0, 0, 0, 0), (0.8, -50, 0, 25))},
              "skeleton-knight": {"loc": keys((0, 0, 0, 0), (0.8, 0, -4, 0))}}
     eyes = (CX, 30.85, SKULL["cz"] - 5.4)
+    # the longsword tip, as drawn in longsword(): blade x centre SWORD_X + 0.5, from (y 13, z CZ - 0.5) to (y 31, z CZ - 12.5)
+    blade_tip = (SWORD_X + 0.5, 31.0, CZ - 12.5)
     return asset("creatures", "skeleton-knight", "Skeleton Knight", root,
                  clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
-                 sockets=[Socket("socket-eyes", at=to_root(eyes), parent="head")],
-                 fx=[pfx("rvx-fantasy-bone-poof", "socket-eyes", "clip:death", size=34, at=0.24)])
+                 sockets=[Socket("socket-eyes", at=to_root(eyes), parent="head"), Socket("socket-blade", at=to_root(blade_tip), parent="longsword")],
+                 # The slash spans the longsword: from the hilt (offset back from the tip socket) along the blade.
+                 # It starts with the cut (0.4 s), so the wind-up leaves no trail.
+                 fx=[pfx("rvx-fantasy-bone-poof", "socket-eyes", "clip:death", size=34, at=0.24),
+                     pfx("rvx-fantasy-slash-arc", "socket-blade", "clip:attack", size=21.6, aim=(0.0, 0.832, -0.555), offset=(0.0, -18.0, 12.0), at=0.4)])

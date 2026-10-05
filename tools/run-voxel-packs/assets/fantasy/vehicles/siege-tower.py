@@ -144,8 +144,10 @@ def build() -> Asset:
             root.add(Part(name, wheel_grid(side, az), pivot=hub, at=hub))
             move[name] = {"rot": turn(2.0, "x", -180)}
     attack = {"bridge": {"rot": keys((0, 0, 0, 0), (0.6, -60, 0, 0), (0.8, -95, 0, 0), (0.9, -86, 0, 0), (1.0, -90, 0, 0))}}
-    tip = (CX, hinge[1], hinge[2] - BR_H)
+    # the bridge's top edge at rest (it stands closed); it rides the bridge down and slams at 0.8 s,
+    # when its +z (the aim) points up, so the dust ring lies flat
+    tip = (CX, hinge[1] + BR_H, hinge[2])
     return Asset(id="fantasy-vehicles-siege-tower", pack="fantasy", category="vehicles", name="Siege Tower", root=root,
                  clips=[Clip("move", move), Clip("attack", attack, loop=False)],
-                 sockets=[Socket("socket-bridge", at=tip)],
-                 pfx=[{"effectId": "rvx-fantasy-dust-slam", "socket": "socket-bridge", "trigger": "clip:attack", "size": 70, "at": 0.4}])
+                 sockets=[Socket("socket-bridge", at=tip, parent="bridge")],
+                 pfx=[{"effectId": "rvx-fantasy-dust-slam", "socket": "socket-bridge", "trigger": "clip:attack", "size": 70, "aim": [0.0, 0.0, 1.0], "at": 0.8}])

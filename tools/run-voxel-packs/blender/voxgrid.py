@@ -485,8 +485,9 @@ class Socket:
 def pfx_binding(effect: str, socket: str | None, trigger: str = "idle", *, size: float, aim=None, at: float | None = None, offset=None) -> dict:
     """A PFX binding (contracts/catalog.ts pfxBindingSchema). `size`: nominal
     effect size in model units (RVX effects are drawn at size 1). `aim`: the
-    effect's +Y in the socket frame (default up). `at`: seconds into the clip
-    at which a one-shot fires (clip triggers only). `offset`: the effect's
+    effect's +Y in the socket frame (default up). `at` (clip triggers only):
+    seconds into the clip at which a one-shot fires, or from which a loop
+    runs to the end of the clip cycle (a blade trail that skips the wind-up). `offset`: the effect's
     origin in the socket frame, model units (default the socket itself)."""
     if size <= 0:
         raise ValueError(f"{effect}: PFX size must be positive")

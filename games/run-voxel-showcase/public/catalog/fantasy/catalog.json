@@ -1165,7 +1165,7 @@
    "filename": "fantasy-creatures-goblin.glb",
    "relativePath": "creatures/fantasy-creatures-goblin.glb",
    "leaf": "world",
-   "sizeBytes": 62484,
+   "sizeBytes": 63024,
    "bounds": {
     "min": [
      -21,
@@ -1199,17 +1199,18 @@
      "effectId": "rvx-fantasy-slash-arc",
      "socket": "socket-blade",
      "trigger": "clip:attack",
-     "size": 13.77,
+     "size": 19.6,
      "aim": [
-      0.196,
-      0.49,
-      -0.849
+      0,
+      0.967,
+      -0.254
      ],
      "offset": [
-      -1.65,
-      -4.125,
-      7.15
-     ]
+      0,
+      -19,
+      5
+     ],
+     "at": 0.42
     }
    ],
    "route": "code",
@@ -1283,7 +1284,7 @@
    "filename": "fantasy-creatures-skeleton-knight.glb",
    "relativePath": "creatures/fantasy-creatures-skeleton-knight.glb",
    "leaf": "world",
-   "sizeBytes": 75888,
+   "sizeBytes": 77148,
    "bounds": {
     "min": [
      -17.1,
@@ -1310,6 +1311,7 @@
     "idle"
    ],
    "sockets": [
+    "socket-blade",
     "socket-eyes"
    ],
    "pfx": [
@@ -1319,6 +1321,23 @@
      "trigger": "clip:death",
      "size": 34,
      "at": 0.24
+    },
+    {
+     "effectId": "rvx-fantasy-slash-arc",
+     "socket": "socket-blade",
+     "trigger": "clip:attack",
+     "size": 21.6,
+     "aim": [
+      0,
+      0.832,
+      -0.555
+     ],
+     "offset": [
+      0,
+      -18,
+      12
+     ],
+     "at": 0.4
     }
    ],
    "route": "code",
@@ -3866,7 +3885,7 @@
    "filename": "fantasy-vehicles-siege-tower.glb",
    "relativePath": "vehicles/fantasy-vehicles-siege-tower.glb",
    "leaf": "world",
-   "sizeBytes": 104344,
+   "sizeBytes": 104336,
    "bounds": {
     "min": [
      -36,
@@ -3899,7 +3918,12 @@
      "socket": "socket-bridge",
      "trigger": "clip:attack",
      "size": 70,
-     "at": 0.4
+     "aim": [
+      0,
+      0,
+      1
+     ],
+     "at": 0.8
     }
    ],
    "route": "code",

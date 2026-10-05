@@ -30,6 +30,7 @@ function validProp(): GlbSummary {
     zfight: { area: 0, worst: null },
     layers: null,
     scaledNodes: [],
+    socketGaps: [],
   }
 }
 
@@ -178,6 +179,13 @@ describe('rvx profile', () => {
     expect(rules(validateAsset(prop, { profile: 'rvx', pack: 'fantasy', category: 'props' }))).toEqual([])
     prop.scaledNodes = ['lid']
     expect(rules(validateAsset(prop, { profile: 'rvx', pack: 'fantasy', category: 'props' }))).toEqual(['scale.node'])
+  })
+
+  it('flags a socket far from every surface', () => {
+    const near = { ...validProp(), nodeNames: ['barrel', 'socket-top'], socketGaps: [{ name: 'socket-top', gap: 4 }] }
+    expect(validateAsset(near, { profile: 'rvx', pack: 'fantasy', category: 'props' })).toEqual([])
+    const far = { ...near, socketGaps: [{ name: 'socket-top', gap: 27 }] }
+    expect(rules(validateAsset(far, { profile: 'rvx', pack: 'fantasy', category: 'props' }))).toEqual(['sockets.placement'])
   })
 
   it('flags visible z-fighting above the tolerance', () => {

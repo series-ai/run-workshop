@@ -689,10 +689,16 @@ export function beam(
  * moves fast, so it shows during every swing whatever the clip's timing. A
  * still preview sweeps it once every period.
  */
-export function slash(meta: RvxMeta, o: { edge: Rgba; body: Rgba }): RvxRecipe {
+export function slash(meta: RvxMeta, o: { edge: Rgba; body: Rgba; minSpeed?: number }): RvxRecipe {
+  const minSpeed = o.minSpeed ?? 16
   return loop(meta, 2, [
-    ribbon({ name: 'Swipe', color: [o.body], ribbon: { from: 0.1, to: 1, life: 0.22, sweep: 110, minSpeed: 2.5 } }),
-    ribbon({ name: 'Edge', color: [o.edge], blend: 'additive', ribbon: { from: 0.72, to: 1.04, life: 0.16, sweep: 110, minSpeed: 2.5 } }),
+    // A crescent that thins and fades behind the blade: a solid body that reads on light and
+    // dark scenes, and a glowing edge. It draws only while the blade moves fast (minSpeed):
+    // strikes peak at 17-50 effect sizes a second, wind-ups and recoveries at 5-12 (a slow,
+    // glowing swing can lower it). The trail texture already fades with age, so the body
+    // stays opaque for its first third.
+    ribbon({ name: 'Swipe', color: [[o.body[0], o.body[1], o.body[2], 1]], colorOverLife: fadeOut(0.35), ribbon: { from: 0.22, to: 1, life: 0.28, sweep: 110, minSpeed, taper: 0.85 } }),
+    ribbon({ name: 'Edge', color: [o.edge], blend: 'additive', colorOverLife: fadeOut(0.2), ribbon: { from: 0.84, to: 1.04, life: 0.18, sweep: 110, minSpeed, taper: 0.5 } }),
   ])
 }
 
@@ -773,7 +779,7 @@ const SMOKE_DEFAULT: Rgba = [0.6, 0.58, 0.55, 1]
 /** Exhaust or thrust along +Y while a vehicle moves: a flame jet with puffs trailing in world space. */
 export function exhaust(
   meta: RvxMeta,
-  o: { jet?: NonNullable<RvxEmitter['colorOverLife']>; smoke: Colors; halo?: Rgba; rate?: number },
+  o: { jet?: NonNullable<RvxEmitter['colorOverLife']>; smoke: Colors; halo?: Rgba; rate?: number; lift?: number },
 ): RvxRecipe {
   const layers: RvxEmitter[] = []
   if (o.jet)
@@ -786,15 +792,17 @@ export function exhaust(
       name: 'Smoke',
       worldSpace: true,
       rate: o.rate ?? 8,
-      life: range(1, 1.4),
+      life: o.lift ? range(1.4, 1.9) : range(1, 1.4),
       speed: range(1.2, 1.8),
       drag: 2.5,
       size: range(0.38, 0.52),
       shape: coneUp(12, 0.05),
       localEuler: UP,
       localPosition: [0, o.jet ? 0.35 : 0, 0],
-      // Exhaust leaves along the aim, then floats up over the vehicle, where it can be seen.
-      gravity: -0.08,
+      // Exhaust leaves along the aim (drag stops it about 0.6 sizes out) and stays there, a trail
+      // behind a craft. `lift` (world up, sizes/s²) floats it up instead: at 0.6, about one size,
+      // so a car's smoke clears the body of a low vehicle and the rear corners of a tall one.
+      gravity: -(o.lift ?? 0.08),
       color: o.smoke,
     }),
   )

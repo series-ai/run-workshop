@@ -105,6 +105,12 @@ export interface BurgerShopEmitter {
      * emitter duration.
      */
     minSpeed?: number
+    /**
+     * 0–1: how far each sample's base slides toward its tip as it ages, so the
+     * trail thins from the full blade at the head to a point at the tail (a
+     * crescent, not a band). Default 0.
+     */
+    taper?: number
   }
   /** Turn rate (radians per second) of each particle around the effect's vertical axis (x = z = 0): vortices, orbits. */
   swirl?: number

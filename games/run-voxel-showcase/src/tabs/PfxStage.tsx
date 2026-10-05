@@ -27,7 +27,7 @@ function StagePfx({ effectId }: { effectId: string }) {
     const cycle = Math.floor(state.clock.elapsedTime / ONE_SHOT_REPLAY_SECONDS)
     if (isPfxOneShot(effectId) && cycle !== play) setPlay(cycle)
   })
-  return <PfxById effectId={effectId} playKey={play} />
+  return <PfxById effectId={effectId} playKey={play} preview />
 }
 
 export function PfxStage({ catalogs }: { catalogs: PackCatalog[] }) {

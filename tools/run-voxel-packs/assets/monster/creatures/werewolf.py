@@ -189,4 +189,4 @@ def build():
     return world("werewolf", "creatures", "Werewolf", root,
                  clips=[Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False), Clip("idle", idle)],
                  sockets=[Socket("socket-mouth", at=mouth, parent="head"), Socket("socket-claw-r", at=claw, parent="arm-r")],
-                 pfx=[pfx("rvx-monster-howl", "socket-mouth", "clip:attack", size=40, at=0.36), pfx("rvx-monster-claw-slash", "socket-claw-r", "clip:attack", size=36.46, aim=(0.099, -0.913, -0.395), offset=(-2.2, 20.35, 8.8))])
+                 pfx=[pfx("rvx-monster-howl", "socket-mouth", "clip:attack", size=40, at=0.36), pfx("rvx-monster-claw-slash", "socket-claw-r", "clip:attack", size=36.46, aim=(0.099, -0.913, -0.395), offset=(-2.2, 20.35, 8.8), at=0.2)])

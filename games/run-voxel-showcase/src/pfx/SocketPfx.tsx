@@ -3,7 +3,9 @@
  * drawn at nominal size 1, so each binding scales its effect to
  * `binding.size` model units and turns the effect's +Y to `binding.aim`.
  *
- * Loops run while their trigger is on. One-shots fire once per trigger:
+ * Loops run while their trigger is on; a `clip:<name>` loop with `at` runs
+ * from `at` seconds into each clip cycle to its end (a blade trail that
+ * skips the wind-up). One-shots fire once per trigger:
  * `clip:<name>` bindings once per clip cycle, `binding.at` seconds in;
  * `manual` bindings at the swing point of the clip in `clipClock` (a held
  * item on an avatar playing an action clip), or every few seconds when no
@@ -19,6 +21,8 @@ import type { PfxBinding, VoxelModelEntry } from '@rvx/contracts/catalog'
 export interface ClipClock {
   elapsed: number
   duration: number
+  /** Moments a held item acts in this clip, as fractions (contracts AVATAR_ACTION_STRIKES); default [MANUAL_CLIP_FRACTION]. */
+  strikes?: readonly number[]
 }
 
 /** Seconds between replays of a one-shot that no clip drives. */
@@ -40,11 +44,25 @@ export function activeBindings(entry: Pick<VoxelModelEntry, 'pfx'>, activeClip: 
  */
 export function oneShotCycle(binding: Pick<PfxBinding, 'trigger' | 'at'>, clock: ClipClock | null, seconds: number): number {
   if (clock && clock.duration > 0 && binding.trigger !== 'idle') {
-    const at = binding.trigger === 'manual' ? clock.duration * MANUAL_CLIP_FRACTION : (binding.at ?? 0)
+    if (binding.trigger === 'manual') {
+      // One trigger per strike: whole cycles times strikes, plus the strikes passed in this cycle.
+      const strikes = clock.strikes ?? [MANUAL_CLIP_FRACTION]
+      const cycles = Math.floor(clock.elapsed / clock.duration)
+      const phase = clock.elapsed - cycles * clock.duration
+      return cycles * strikes.length + strikes.filter((f) => phase >= f * clock.duration).length - 1
+    }
+    const at = binding.at ?? 0
     if (at > clock.duration) throw new Error(`PFX fires at ${at} s, after the ${clock.duration.toFixed(2)} s clip`)
     return Math.floor((clock.elapsed - at) / clock.duration)
   }
   return Math.floor(seconds / ONE_SHOT_REPLAY_SECONDS)
+}
+
+/** Whether a loop plays now: always, except a clip loop with `at` before `at` in its cycle. */
+export function loopWindowOpen(binding: Pick<PfxBinding, 'trigger' | 'at'>, clock: ClipClock | null): boolean {
+  if (binding.at === undefined || !clock || clock.duration <= 0 || !binding.trigger.startsWith('clip:')) return true
+  if (binding.at > clock.duration) throw new Error(`PFX starts at ${binding.at} s, after the ${clock.duration.toFixed(2)} s clip`)
+  return clock.elapsed - Math.floor(clock.elapsed / clock.duration) * clock.duration >= binding.at
 }
 
 const UP = new Vector3(0, 1, 0)
@@ -54,6 +72,7 @@ const modelScale = new Vector3()
 function BindingPfx({ binding, anchor, model, clipClock }: { binding: PfxBinding; anchor: Object3D; model: Object3D; clipClock?: RefObject<ClipClock | null> }) {
   const oneShot = isPfxOneShot(binding.effectId)
   const [play, setPlay] = useState(-1)
+  const [open, setOpen] = useState(true)
   const group = useRef<Group>(null)
   const quaternion = useMemo(() => new Quaternion().setFromUnitVectors(UP, binding.aim ? new Vector3(...binding.aim).normalize() : UP), [binding.aim])
   // `size` is in the model's own units. Socket parents may carry scale, and
@@ -80,13 +99,16 @@ function BindingPfx({ binding, anchor, model, clipClock }: { binding: PfxBinding
     if (oneShot) {
       const cycle = oneShotCycle(binding, clipClock?.current ?? null, state.clock.elapsedTime)
       if (cycle >= 0 && cycle !== play) setPlay(cycle)
+    } else {
+      const now = loopWindowOpen(binding, clipClock?.current ?? null)
+      if (now !== open) setOpen(now)
     }
     if (!group.current) return
     const { position, scale } = place()
     group.current.position.set(...position)
     group.current.scale.set(...scale)
   })
-  if (oneShot && play < 0) return null
+  if ((oneShot && play < 0) || (!oneShot && !open)) return null
   const initial = place()
   return createPortal(
     <group ref={group} quaternion={quaternion} position={initial.position} scale={initial.scale}>

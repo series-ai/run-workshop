@@ -12,6 +12,14 @@ export const ONE_SHOT_CLIPS: readonly string[] = clipsJson.oneShotClips
 export const CLIP_FPS: number = clipsJson.fps
 export const PIRATE_AVATAR_CLIPS: readonly string[] = clipsJson.pirateAvatarClips
 export const HELD_ITEM_TEST_CLIPS: readonly string[] = clipsJson.heldItemTestClips
+/** Avatar clips where a held item acts, and when (fractions of the clip; see data/clips.json). */
+export const AVATAR_ACTION_STRIKES: Readonly<Record<string, readonly number[]>> = (() => {
+  const strikes = clipsJson.avatarActionStrikes as Record<string, number[]>
+  for (const [clip, list] of Object.entries(strikes)) {
+    if (list.length === 0 || list.some((f) => !(f >= 0 && f < 1))) throw new Error(`clips.json avatarActionStrikes.${clip}: each moment must be a fraction in [0, 1)`)
+  }
+  return strikes
+})()
 
 const AVATAR_CLIP_ID = /^(\d{2})_[A-Za-z0-9-]+(?:_[A-Za-z0-9-]+)*$/
 
