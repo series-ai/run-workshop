@@ -27,4 +27,4 @@ def build():
     light(g)
     speck(g, 161, 0.08, ramps=("orange",))
     return held("laser-cannon", "Laser Cannon", g, grip=(8, 2, cz), sockets={"socket-muzzle": (56, cy + 0.5, cz)},
-                pfx=[{"effectId": "rvx-space-laser-bolt", "socket": "socket-muzzle", "trigger": "manual", "size": 0.4, "aim": [1.0, 0.0, 0.0]}])
+                pfx=[{"effectId": "rvx-space-laser-bolt", "socket": "socket-muzzle", "trigger": "manual", "size": 0.55, "aim": [1.0, 0.0, 0.0]}])

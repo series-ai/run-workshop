@@ -30,14 +30,14 @@ export function hasPfxEffect(effectId: string): boolean {
  * undo the Burger Shop world scale so one recipe unit is one world unit.
  * Loops loop; one-shots play once, and a new `playKey` plays them again.
  */
-function RvxEffect({ effectId, playKey, preview = false }: { effectId: string; playKey?: number | string; preview?: boolean }) {
+function RvxEffect({ effectId, playKey, preview = false, prewarm = true }: { effectId: string; playKey?: number | string; preview?: boolean; prewarm?: boolean }) {
   // A ribbon's `sweep` fakes a swing when its socket stands still. That is right for a preview
   // of the effect alone, and wrong on a model: the blade rests between swings, and the fake
   // swing would play after the real one. On sockets, ribbons follow the real motion only.
   const recipe = useMemo(() => (preview ? getRvxRecipe(effectId) : withoutSweep(getRvxRecipe(effectId))), [effectId, preview])
   return (
     <group scale={1 / BURGER_SHOP_WORLD_SCALE}>
-      <BurgerShopEffect key={recipe.looping ? 'loop' : String(playKey ?? 0)} recipe={recipe} textureUrls={RVX_TEXTURE_URLS} />
+      <BurgerShopEffect key={recipe.looping ? 'loop' : String(playKey ?? 0)} recipe={recipe} textureUrls={RVX_TEXTURE_URLS} prewarm={prewarm} />
     </group>
   )
 }
@@ -53,9 +53,13 @@ function withoutSweep(recipe: ReturnType<typeof getRvxRecipe>): ReturnType<typeo
   return { ...recipe, emitters: recipe.emitters.map((e) => (e.ribbon?.sweep ? { ...e, ribbon: { ...e.ribbon, sweep: undefined } } : e)) }
 }
 
-/** `preview`: the effect is shown on its own, not on a moving model (lets ribbons fake a swing). */
-export function PfxById({ effectId, playKey, preview = false }: { effectId: string; playKey?: number | string; preview?: boolean }) {
-  if (isRvxId(effectId)) return <RvxEffect effectId={effectId} playKey={playKey} preview={preview} />
+/**
+ * `preview`: the effect is shown on its own, not on a moving model (lets ribbons fake a swing).
+ * `prewarm` (loops; default true): start a loop as if it had run for a while. False for a loop
+ * that a clip starts, such as mist that pours out as a door opens.
+ */
+export function PfxById({ effectId, playKey, preview = false, prewarm = true }: { effectId: string; playKey?: number | string; preview?: boolean; prewarm?: boolean }) {
+  if (isRvxId(effectId)) return <RvxEffect effectId={effectId} playKey={playKey} preview={preview} prewarm={prewarm} />
   if (isInspectPackId(effectId)) return <InspectPackEffect id={effectId} />
   const preset = PFX_PRESETS.find((candidate) => candidate.effectId === effectId)
   if (!preset) throw new Error(`Unknown PFX effect id "${effectId}"`)

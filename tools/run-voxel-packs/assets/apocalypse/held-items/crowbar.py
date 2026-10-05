@@ -22,4 +22,4 @@ def build():
     g.box(35, 9, cz, 37, 11, cz + 2, C("steel", 6))  # split claw tips
     g.set(36, 10, cz, 0)
     return held_asset("crowbar", "Crowbar", g, grip=(8, 3, cz + 0.5), sockets=[("socket-tip", (41, 7, cz + 1))],
-                      pfx=[{"effectId": "rvx-apocalypse-metal-clang", "socket": "socket-tip", "trigger": "manual", "size": 0.3}])
+                      pfx=[{"effectId": "rvx-apocalypse-metal-clang", "socket": "socket-tip", "trigger": "manual", "size": 0.42}])

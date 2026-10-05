@@ -283,4 +283,4 @@ def build():
     return asset("creatures", "unicorn", "Unicorn", root,
                  clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                  sockets=[Socket("socket-horn", at=horn, parent="head")],
-                 fx=[pfx("rvx-fantasy-holy-smite", "socket-horn", "clip:attack", size=28, at=0.56)])
+                 fx=[pfx("rvx-fantasy-holy-smite", "socket-horn", "clip:attack", size=44, at=0.56)])

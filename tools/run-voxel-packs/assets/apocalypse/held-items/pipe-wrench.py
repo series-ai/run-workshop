@@ -23,4 +23,4 @@ def build():
     for x in range(36, 40):
         g.set(x, 10, cz if x % 2 else cz + 1, C("steel", 6)).set(x, 6, cz if x % 2 else cz + 1, C("steel", 6))
     return held_asset("pipe-wrench", "Pipe Wrench", g, grip=(9, 4, cz + 0.5), sockets=[("socket-tip", (40, 8, cz + 0.5))],
-                      pfx=[{"effectId": "rvx-apocalypse-metal-clang", "socket": "socket-tip", "trigger": "manual", "size": 0.3}])
+                      pfx=[{"effectId": "rvx-apocalypse-metal-clang", "socket": "socket-tip", "trigger": "manual", "size": 0.42}])

@@ -93,4 +93,4 @@ def build():
     g.set(21, 2, cz - 1, C("steel", 5)).set(21, 2, cz, C("steel", 5))
 
     return held_asset("frying-pan", "Frying Pan", g, grip=(5, 3, cz), sockets=[("socket-tip", (39, 2, cz))],
-                      pfx=[{"effectId": "rvx-apocalypse-metal-clang", "socket": "socket-tip", "trigger": "manual", "size": 0.3}])
+                      pfx=[{"effectId": "rvx-apocalypse-metal-clang", "socket": "socket-tip", "trigger": "manual", "size": 0.42}])

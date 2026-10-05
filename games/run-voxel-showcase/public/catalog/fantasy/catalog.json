@@ -142,7 +142,7 @@
      "socket": "socket-payload",
      "trigger": "clip:attack",
      "size": 26,
-     "at": 0.8
+     "at": 0.28
     }
    ],
    "route": "code",
@@ -1221,7 +1221,7 @@
       -19,
       5
      ],
-     "at": 0.42
+     "at": 0.36
     }
    ],
    "route": "code",
@@ -1348,7 +1348,7 @@
       -18,
       12
      ],
-     "at": 0.4
+     "at": 0.34
     }
    ],
    "route": "code",
@@ -1447,7 +1447,7 @@
      "effectId": "rvx-fantasy-holy-smite",
      "socket": "socket-horn",
      "trigger": "clip:attack",
-     "size": 28,
+     "size": 44,
      "at": 0.56
     }
    ],
@@ -1647,7 +1647,7 @@
      "effectId": "rvx-fantasy-bow-release",
      "socket": "socket-arrow",
      "trigger": "manual",
-     "size": 0.22,
+     "size": 0.36,
      "aim": [
       1,
       0,

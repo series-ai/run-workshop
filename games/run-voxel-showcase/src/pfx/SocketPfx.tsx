@@ -113,7 +113,8 @@ function BindingPfx({ binding, anchor, model, clipClock }: { binding: PfxBinding
   return createPortal(
     <group ref={group} quaternion={quaternion} position={initial.position} scale={initial.scale}>
       <Suspense fallback={null}>
-        <PfxById effectId={binding.effectId} playKey={play} />
+        {/* A loop that a clip starts begins empty (mist pours out as the door opens). */}
+        <PfxById effectId={binding.effectId} playKey={play} prewarm={!binding.trigger.startsWith('clip:')} />
       </Suspense>
     </group>,
     anchor,

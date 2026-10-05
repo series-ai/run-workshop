@@ -16,4 +16,4 @@ def build():
     ring(g, "z", 9, 8, 1.6, 0.8, 4, 6, C("gold", 5))
     light(g)
     return held("plasma-grenade", "Plasma Grenade", g, grip=(4, 3, 5), sockets={"socket-core": (5.5, 5.5, 5.5)},
-                pfx=[{"effectId": "rvx-space-plasma-blast", "socket": "socket-core", "trigger": "manual", "size": 0.7}])
+                pfx=[{"effectId": "rvx-space-plasma-blast", "socket": "socket-core", "trigger": "manual", "size": 0.3}])

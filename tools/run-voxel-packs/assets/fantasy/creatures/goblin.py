@@ -288,5 +288,6 @@ def build():
                  clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                  sockets=[Socket("socket-blade", at=to_root(tip), parent="scimitar")],
                  # The trail spans the blade: from the hilt (offset back from the tip socket) along the blade to the tip.
-                 # It starts with the cut (0.42 s), so the wind-up leaves no trail.
-                 fx=[pfx("rvx-fantasy-slash-arc", "socket-blade", "clip:attack", size=19.6, aim=(0.0, 0.967, -0.254), offset=(0.0, -19.0, 5.0), at=0.42)])
+                 # It starts just before the cut (0.42 s): the trail takes a frame or two to start, and the
+                 # end of the wind-up is too slow to draw, so the wind-up leaves no trail.
+                 fx=[pfx("rvx-fantasy-slash-arc", "socket-blade", "clip:attack", size=19.6, aim=(0.0, 0.967, -0.254), offset=(0.0, -19.0, 5.0), at=0.36)])

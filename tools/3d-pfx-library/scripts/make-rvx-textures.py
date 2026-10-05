@@ -75,13 +75,14 @@ def sheet(cells: list[Image.Image], columns: int) -> Image.Image:
 
 
 def ring() -> Image.Image:
-    """A hard 16-sided ring, thick, with a lighter inner edge."""
+    """A hard 16-sided ring with a lighter inner edge. The band is thin: rings grow to
+    several times their start size, and a thick band then reads as a flat grey sheet."""
     im = blank()
     d = ImageDraw.Draw(im)
     n = 16
     outer = [(128 + 124 * math.cos(i / n * math.tau), 128 + 124 * math.sin(i / n * math.tau)) for i in range(n)]
-    inner = [(128 + 96 * math.cos(i / n * math.tau), 128 + 96 * math.sin(i / n * math.tau)) for i in range(n)]
-    inner2 = [(128 + 88 * math.cos(i / n * math.tau), 128 + 88 * math.sin(i / n * math.tau)) for i in range(n)]
+    inner = [(128 + 110 * math.cos(i / n * math.tau), 128 + 110 * math.sin(i / n * math.tau)) for i in range(n)]
+    inner2 = [(128 + 102 * math.cos(i / n * math.tau), 128 + 102 * math.sin(i / n * math.tau)) for i in range(n)]
     d.polygon(outer, fill=SHADE)
     d.polygon(inner, fill=WHITE)
     d.polygon(inner2, fill=(0, 0, 0, 0))
@@ -179,7 +180,8 @@ def drop() -> Image.Image:
 
 
 def beam() -> Image.Image:
-    """A beam column: hard sides, a bright centre stripe, fading out toward the top."""
+    """A beam column: a bright centre stripe and sides that fade to the edge (hard sides
+    read as a solid plank), fading out toward the top."""
     im = blank(128, 256)
     px = im.load()
     for y in range(256):
@@ -189,7 +191,7 @@ def beam() -> Image.Image:
             if edge > 0.92:
                 continue
             core = edge < 0.3
-            a = int(255 * fade * (1 if core else 0.62))
+            a = int(255 * fade * (1 if core else 0.62 * (1 - (edge - 0.3) / 0.62)))
             v = 255 if core else 214
             px[x, y] = (v, v, v, a)
     return im

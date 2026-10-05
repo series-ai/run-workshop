@@ -20,7 +20,7 @@ export const APOCALYPSE_RECIPES: RvxRecipe[] = [
     kind: 'hearth',
     smoke: OILY,
   }),
-  fire({ ...id('wick-flame', 'wick flame'), source: 'molotov wick', effectType: 'fire', role: 'loop' }, { kind: 'torch', smoke: [SMOKE.dark] }),
+  fire({ ...id('wick-flame', 'wick flame'), source: 'molotov wick', effectType: 'fire', role: 'loop' }, { kind: 'torch', smoke: [SMOKE.dark], follow: true }),
   smokeColumn({ ...id('exhaust-smoke', 'exhaust smoke'), source: 'generator, raider bot, chainsaw, armored van', effectType: 'smoke', role: 'loop' }, {
     colors: EXHAUST,
     rate: 6,

@@ -240,7 +240,9 @@ function RibbonLayer({
       for (let s = 0; s < steps; s += 1) {
         const u = s / RIBBON_SUBDIVISIONS
         const sampleT = p1.t + (p2.t - p1.t) * u
-        const speed = Math.min(p1.speed, p2.speed)
+        // A segment draws at the faster of its two samples: the slower one would drop the
+        // first and last segments of a short, eased cut.
+        const speed = Math.max(p1.speed, p2.speed)
         const tip = catmullRom(curveTip, p0.tip, p1.tip, p2.tip, p3.tip, u)
         const age = Math.min(1, (t - sampleT) / ribbon.life)
         const keys = emitter.colorOverLife
@@ -278,9 +280,12 @@ export function getBurgerShopRecipe(id: string): BurgerShopRecipe {
 export function BurgerShopEffect({
   recipe,
   textureUrls = BURGER_SHOP_TEXTURE_URLS,
+  prewarm = true,
 }: {
   recipe: BurgerShopRecipe
   textureUrls?: Record<string, string>
+  /** Loops only: start as if the loop had run for 2 s (default), or start empty. */
+  prewarm?: boolean
 }) {
   const { camera } = useThree()
   const group = useRef<Group>(null)
@@ -342,12 +347,12 @@ export function BurgerShopEffect({
     simulation.particles = []
     simulation.time = 0
     updateFrame()
-    if (recipe.looping) {
+    if (recipe.looping && prewarm) {
       for (let step = 0; step < 40; step += 1) stepBurgerShopSimulation(simulation, 0.05, random)
     } else {
       stepBurgerShopSimulation(simulation, 0.001, random)
     }
-  }, [random, recipe, simulation])
+  }, [random, recipe, simulation, prewarm])
 
   useFrame((_, delta) => {
     updateFrame()

@@ -99,7 +99,7 @@ export function smokeColumn(
  */
 export function fire(
   meta: RvxMeta,
-  o: { kind: 'torch' | 'hearth'; smoke?: Colors; embers?: Colors; halo?: Rgba; tint?: NonNullable<RvxEmitter['colorOverLife']> },
+  o: { kind: 'torch' | 'hearth'; smoke?: Colors; embers?: Colors; halo?: Rgba; tint?: NonNullable<RvxEmitter['colorOverLife']>; follow?: boolean },
 ): RvxRecipe {
   const hearth = o.kind === 'hearth'
   const layers: RvxEmitter[] = [
@@ -183,7 +183,9 @@ export function fire(
         color: o.smoke,
       }),
     )
-  return loop(meta, 2, layers)
+  // `follow`: every layer moves with the socket. A small flame in a moving hand (a wick, a
+  // lantern candle) would leave its world-space flames and embers behind in the air.
+  return loop(meta, 2, o.follow ? layers.map((l) => ({ ...l, worldSpace: false })) : layers)
 }
 
 /** A lamp or lantern: a warm halo that breathes and a few motes. */
@@ -716,11 +718,11 @@ export function beam(
  * still preview sweeps it once every period.
  */
 export function slash(meta: RvxMeta, o: { edge: Rgba; body: Rgba; minSpeed?: number }): RvxRecipe {
-  const minSpeed = o.minSpeed ?? 16
+  const minSpeed = o.minSpeed ?? 14
   return loop(meta, 2, [
     // A crescent that thins and fades behind the blade: a solid body that reads on light and
     // dark scenes, and a glowing edge. It draws only while the blade moves fast (minSpeed):
-    // strikes peak at 17-50 effect sizes a second, wind-ups and recoveries at 5-12 (a slow,
+    // strikes peak at 17-50 effect sizes a second, held recoveries at 8-12 (a slow,
     // glowing swing can lower it). The trail texture already fades with age, so the body
     // stays opaque for its first third.
     ribbon({ name: 'Swipe', color: [[o.body[0], o.body[1], o.body[2], 1]], colorOverLife: fadeOut(0.35), ribbon: { from: 0.22, to: 1, life: 0.28, sweep: 110, minSpeed, taper: 0.85 } }),

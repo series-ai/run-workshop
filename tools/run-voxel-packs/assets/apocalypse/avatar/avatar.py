@@ -597,8 +597,13 @@ def build() -> Asset:
 def clips():
     # rig axes: +X forward, +Y up, +Z along the right arm. Arm.R forward = (0, 90, 0), Arm.L forward = (0, -90, 0).
     # Leg swing forward = +Z rotation; Chest lean forward = -Z rotation.
+    # Held items are authored pointing forward with the arm at rest, and they turn with every
+    # bone above the hand. The arm's 80-degree swing would aim the gun across the chest:
+    # GUN_WRIST turns Hand.R back so the barrel points where the chest faces.
+    GUN_WRIST = (90.0, -82.0, -90.0)
     pump = {
         "Arm.R": {"rot": keys((0, (0, 80, 8)), (0.8, (0, 80, 8)))},
+        "Hand.R": {"rot": keys((0, GUN_WRIST), (0.8, GUN_WRIST))},
         "ForeArm.R": {"rot": keys((0, (0, 10, 0)), (0.8, (0, 10, 0)))},
         "Arm.L": {"rot": keys((0, (0, -88, 4)), (0.2, (0, -70, 2)), (0.4, (0, -88, 4)), (0.8, (0, -88, 4)))},
         "ForeArm.L": {"rot": keys((0, (0, -10, 0)), (0.2, (0, -45, 0)), (0.4, (0, -10, 0)), (0.8, (0, -10, 0)))},
@@ -607,6 +612,7 @@ def clips():
     }
     fire = {
         "Arm.R": {"rot": keys((0, (0, 80, 8)), (0.08, (0, 80, 30)), (0.3, (0, 80, 14)), (0.6, (0, 80, 8)))},
+        "Hand.R": {"rot": keys((0, GUN_WRIST), (0.6, GUN_WRIST))},
         "ForeArm.R": {"rot": keys((0, (0, 10, 0)), (0.6, (0, 10, 0)))},
         "Arm.L": {"rot": keys((0, (0, -88, 4)), (0.08, (0, -88, 26)), (0.3, (0, -88, 10)), (0.6, (0, -88, 4)))},
         "ForeArm.L": {"rot": keys((0, (0, -10, 0)), (0.6, (0, -10, 0)))},

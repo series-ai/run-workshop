@@ -702,8 +702,13 @@ def clips():
     # rig axes: +X forward, +Y up, +Z along the right arm. Arm.R forward (0, 90, 0);
     # Arm.R down (90, 0, 0); Arm.L down (-90, 0, 0); Arm.R up (-90, 0, 0).
     hold = lambda v, t0, t1: [(t0, v), (t1, v)]
+    # Held items are authored pointing forward with the arm at rest, and they turn with every
+    # bone above the hand. GUN_WRIST turns Hand.R back so a gun points where the chest faces
+    # (solved for this arm pose); without it the barrel tilts away from the target.
+    GUN_WRIST = (-36.9, -33.6, -10.3)
     rifle_aim = {
         "Arm.R": {"rot": keys((0, (0, 0, 0)), (0.3, (55, 0, 0)), (1.6, (55, 0, 0)))},
+        "Hand.R": {"rot": keys((0, (0, 0, 0)), (0.3, GUN_WRIST), (1.6, GUN_WRIST))},
         "ForeArm.R": {"rot": keys((0, (0, 0, 0)), (0.3, (-15, 35, 0)), (1.6, (-15, 35, 0)))},
         "Arm.L": {"rot": keys((0, (0, 0, 0)), (0.3, (-30, -55, 0)), (1.6, (-30, -55, 0)))},
         "ForeArm.L": {"rot": keys((0, (0, 0, 0)), (0.3, (0, -50, 0)), (1.6, (0, -50, 0)))},
@@ -714,6 +719,7 @@ def clips():
     rifle_shoot = {
         "Arm.R": {"rot": kick((55, 0, 0), (45, 0, 0))},
         "ForeArm.R": {"rot": kick((-15, 35, 0), (-25, 35, 0))},
+        "Hand.R": {"rot": hold(GUN_WRIST, 0, 1.0)},
         "Arm.L": {"rot": kick((-30, -55, 0), (-22, -55, 0))},
         "ForeArm.L": {"rot": hold((0, -50, 0), 0, 1.0)},
         "Chest": {"rot": kick((0, -12, 0), (0, -12, 4))},
@@ -755,9 +761,13 @@ def clips():
         "LowerLeg.R": {"rot": [(i * 0.5, (0, 0, -15 - 10 * s(i, 1))) for i in range(9)]},
         "Head": {"rot": [(i * 0.5, (0, 8 * s(i, 2), 5 * s(i))) for i in range(9)]},
     }
+    # the arm swings forward to aim (yaw 70) and kicks up at each shot (0.3 s, 0.55 s); the
+    # wrist turns back by the same yaw so the pistol points forward, not across the chest
+    pistol_wrist = (0, -78, 0)
     pistol = {
-        "Arm.R": {"rot": keys((0, (0, 0, 0)), (0.2, (30, 0, 0)), (0.3, (22, 0, 0)), (0.45, (30, 0, 0)), (0.55, (22, 0, 0)), (0.8, (30, 0, 0)), (1.1, (0, 0, 0)))},
-        "ForeArm.R": {"rot": keys((0, (0, 0, 0)), (0.2, (-30, 0, 0)), (0.8, (-30, 0, 0)), (1.1, (0, 0, 0)))},
+        "Arm.R": {"rot": keys((0, (0, 0, 0)), (0.2, (0, 70, 0)), (0.3, (0, 70, 10)), (0.45, (0, 70, 0)), (0.55, (0, 70, 10)), (0.8, (0, 70, 0)), (1.1, (0, 0, 0)))},
+        "ForeArm.R": {"rot": keys((0, (0, 0, 0)), (0.2, (0, 8, 0)), (0.8, (0, 8, 0)), (1.1, (0, 0, 0)))},
+        "Hand.R": {"rot": keys((0, (0, 0, 0)), (0.2, pistol_wrist), (0.8, pistol_wrist), (1.1, (0, 0, 0)))},
         "Chest": {"rot": keys((0, (0, 0, 0)), (0.2, (0, -15, 0)), (0.8, (0, -15, 0)), (1.1, (0, 0, 0)))},
         "Arm.L": {"rot": keys((0, (0, 0, 0)), (0.2, (-70, 0, 0)), (0.8, (-70, 0, 0)), (1.1, (0, 0, 0)))},
     }

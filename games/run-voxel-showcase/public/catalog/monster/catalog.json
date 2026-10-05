@@ -1350,7 +1350,7 @@
       20.35,
       8.8
      ],
-     "at": 0.2
+     "at": 0.15
     }
    ],
    "route": "code",
@@ -1863,7 +1863,7 @@
      "effectId": "rvx-monster-blunderbuss-blast",
      "socket": "socket-muzzle",
      "trigger": "manual",
-     "size": 0.3,
+     "size": 0.42,
      "aim": [
       1,
       0,
@@ -2009,7 +2009,7 @@
      "effectId": "rvx-monster-bolt-twang",
      "socket": "socket-muzzle",
      "trigger": "manual",
-     "size": 0.2,
+     "size": 0.34,
      "aim": [
       1,
       0,

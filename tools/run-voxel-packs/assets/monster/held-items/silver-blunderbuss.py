@@ -73,5 +73,5 @@ def build():
         g,
         (6, cy - 2, cz + 0.5),
         {"socket-muzzle": (40, cy + 1, cz + 0.5)},
-        pfx=[pfx("rvx-monster-blunderbuss-blast", "socket-muzzle", "manual", size=0.3, aim=(1.0, 0.0, 0.0))],
+        pfx=[pfx("rvx-monster-blunderbuss-blast", "socket-muzzle", "manual", size=0.42, aim=(1.0, 0.0, 0.0))],
     )

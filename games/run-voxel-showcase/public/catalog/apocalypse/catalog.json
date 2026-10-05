@@ -966,7 +966,7 @@
    "filename": "apocalypse-creatures-mutant-behemoth.glb",
    "relativePath": "creatures/apocalypse-creatures-mutant-behemoth.glb",
    "leaf": "world",
-   "sizeBytes": 112296,
+   "sizeBytes": 112364,
    "bounds": {
     "min": [
      -79.5,
@@ -995,6 +995,7 @@
    ],
    "sockets": [
     "socket-fist",
+    "socket-fist-l",
     "socket-mouth",
     "socket-vents"
    ],
@@ -1003,8 +1004,15 @@
      "effectId": "rvx-apocalypse-ground-slam",
      "socket": "socket-fist",
      "trigger": "clip:attack",
-     "size": 70,
-     "at": 1.05
+     "size": 90,
+     "at": 1
+    },
+    {
+     "effectId": "rvx-apocalypse-ground-slam",
+     "socket": "socket-fist-l",
+     "trigger": "clip:attack",
+     "size": 90,
+     "at": 1
     },
     {
      "effectId": "rvx-apocalypse-toxic-vent",
@@ -1478,7 +1486,7 @@
      "effectId": "rvx-apocalypse-metal-clang",
      "socket": "socket-tip",
      "trigger": "manual",
-     "size": 0.3
+     "size": 0.42
     }
    ],
    "route": "code",
@@ -1665,7 +1673,7 @@
      "effectId": "rvx-apocalypse-metal-clang",
      "socket": "socket-tip",
      "trigger": "manual",
-     "size": 0.3
+     "size": 0.42
     }
    ],
    "route": "code",
@@ -1892,7 +1900,7 @@
      "effectId": "rvx-apocalypse-metal-clang",
      "socket": "socket-tip",
      "trigger": "manual",
-     "size": 0.3
+     "size": 0.42
     }
    ],
    "route": "code",
@@ -3826,7 +3834,7 @@
    "filename": "apocalypse-avatar-parts.glb",
    "relativePath": "avatar/apocalypse-avatar-parts.glb",
    "leaf": "characters",
-   "sizeBytes": 1068956,
+   "sizeBytes": 1069060,
    "bounds": {
     "min": [
      -0.1424,

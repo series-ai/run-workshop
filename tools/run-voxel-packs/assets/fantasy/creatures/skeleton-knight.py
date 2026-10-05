@@ -271,6 +271,7 @@ def build():
                  clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                  sockets=[Socket("socket-eyes", at=to_root(eyes), parent="head"), Socket("socket-blade", at=to_root(blade_tip), parent="longsword")],
                  # The slash spans the longsword: from the hilt (offset back from the tip socket) along the blade.
-                 # It starts with the cut (0.4 s), so the wind-up leaves no trail.
+                 # It starts just before the cut (0.4 s): the trail takes a frame or two to start, and the
+                 # end of the wind-up is too slow to draw, so the wind-up leaves no trail.
                  fx=[pfx("rvx-fantasy-bone-poof", "socket-eyes", "clip:death", size=34, at=0.24),
-                     pfx("rvx-fantasy-slash-arc", "socket-blade", "clip:attack", size=21.6, aim=(0.0, 0.832, -0.555), offset=(0.0, -18.0, 12.0), at=0.4)])
+                     pfx("rvx-fantasy-slash-arc", "socket-blade", "clip:attack", size=21.6, aim=(0.0, 0.832, -0.555), offset=(0.0, -18.0, 12.0), at=0.34)])

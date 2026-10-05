@@ -128,4 +128,4 @@ def build():
     return asset("animated-props", "catapult", "Siege Catapult", root,
                  clips=[Clip("idle", idle), Clip("attack", attack, loop=False)],
                  sockets=[Socket("socket-payload", at=payload, parent="arm")],
-                 fx=[pfx("rvx-fantasy-dust-slam", "socket-payload", "clip:attack", size=26, at=0.8)])
+                 fx=[pfx("rvx-fantasy-dust-slam", "socket-payload", "clip:attack", size=26, at=0.28)])

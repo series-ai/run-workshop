@@ -110,10 +110,12 @@ export const SPACE_RECIPES: RvxRecipe[] = [
     embers: [t('lime', 7), t('toxic', 6)],
     length: 2,
   }),
-  burst({ ...id('goo-shot', 'goo shot'), source: 'bio blaster', effectType: 'projectile', role: 'release' }, {
-    pieces: { texture: 'rvx-drop', colors: XENO, count: 8, size: 0.14, gravity: 0.8 },
-    puffs: [t('toxic', 6), t('lime', 6)],
-    reach: 0.8,
+  // a spray out of the muzzle along the aim; a round burst would also cover the gun and the wielder
+  spray({ ...id('goo-shot', 'goo shot'), source: 'bio blaster', effectType: 'projectile', role: 'release' }, {
+    kind: 'puff',
+    colors: [t('toxic', 6), t('lime', 6), t('toxic', 7)],
+    length: 1.6,
+    duration: 0.5,
   }),
   burst({ ...id('holo-scan', 'holo scan'), source: 'data pad, scanner', effectType: 'ui', role: 'charge' }, {
     ring: { color: t('cyan', 7), kind: 'flat' },
@@ -133,8 +135,9 @@ export const SPACE_RECIPES: RvxRecipe[] = [
   burst({ ...id('plasma-blast', 'plasma blast'), source: 'plasma grenade', effectType: 'impact', role: 'burst' }, {
     flash: dim(t('cyan', 7), 0.9),
     ring: { color: t('cyan', 7), kind: 'flat' },
-    puffs: [t('cyan', 6), t('steel', 6), t('gray', 7)],
-    cubes: [t('cyan', 7), WHITE, t('steel', 5)],
+    // cyan energy, not grey: grey puffs and chunks read as a rock smash
+    puffs: [t('cyan', 6), t('cyan', 7)],
+    cubes: [t('cyan', 7), WHITE],
     sparks: [t('cyan', 7), WHITE],
     sparkCount: 14,
     reach: 1.2,
@@ -153,9 +156,9 @@ export const SPACE_RECIPES: RvxRecipe[] = [
     reach: 0.7,
   }),
   spray({ ...id('weld-sparks', 'weld sparks'), source: 'welding torch', effectType: 'fire', role: 'release' }, {
+    // warm fire colours: the cyan jet tint read as water drops, not weld sparks
     kind: 'fire',
-    tint: JET,
-    embers: [FIRE.yellow, FIRE.white],
+    embers: [FIRE.white, FIRE.yellow, FIRE.white],
     length: 0.6,
     duration: 0.9,
   }),

@@ -15,7 +15,7 @@ export const FANTASY_RECIPES: RvxRecipe[] = [
     kind: 'hearth',
     smoke: [SMOKE.mid, SMOKE.dark],
   }),
-  fire({ ...id('torch-flame', 'torch flame'), source: 'torch, lantern staff, airship burner', effectType: 'fire', role: 'loop' }, { kind: 'torch' }),
+  fire({ ...id('torch-flame', 'torch flame'), source: 'torch, lantern staff, airship burner', effectType: 'fire', role: 'loop' }, { kind: 'torch', follow: true }),
   lampGlow({ ...id('lantern-glow', 'lantern glow'), source: 'swan boat lantern', effectType: 'aura', role: 'loop' }, {
     halo: dim(t('gold', 6), 0.35),
     motes: [t('gold', 7), t('gold', 6)],

@@ -217,7 +217,9 @@ def build():
     fist_x = SHOULDERS["arm-r"][0] + 27
     return make("creatures", "mutant-behemoth", "Mutant Behemoth", rig.root,
                 clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                # both fists slam: each gets its own socket and dust
                 sockets=[rig.socket("socket-fist", (fist_x, 12.0, SHOULDERS["arm-r"][2] - 14), parent="arm-r"),
+                         rig.socket("socket-fist-l", (SHOULDERS["arm-l"][0] - 27, 12.0, SHOULDERS["arm-l"][2] - 14), parent="arm-l"),
                          rig.socket("socket-vents", (CX, 106.0, CZ + 17), parent="body"),
                          rig.socket("socket-mouth", (CX, NECK[1] - 1, NECK[2] - 19), parent="head")],
-                pfx=[fx("rvx-apocalypse-ground-slam", "socket-fist", "clip:attack", size=70, at=1.05), fx("rvx-apocalypse-toxic-vent", "socket-vents", "idle", size=36), fx("rvx-apocalypse-gore-burst", "socket-mouth", "clip:hit", size=44)])
+                pfx=[fx("rvx-apocalypse-ground-slam", "socket-fist", "clip:attack", size=90, at=1.0), fx("rvx-apocalypse-ground-slam", "socket-fist-l", "clip:attack", size=90, at=1.0), fx("rvx-apocalypse-toxic-vent", "socket-vents", "idle", size=36), fx("rvx-apocalypse-gore-burst", "socket-mouth", "clip:hit", size=44)])
