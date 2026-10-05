@@ -626,6 +626,8 @@ export function muzzle(meta: RvxMeta, o: { flash: Rgba; core?: Rgba; smoke?: Col
 
 /** An energy bolt leaving along +Y: a long streak that flies out, a muzzle ring and sparkle. */
 export function bolt(meta: RvxMeta, o: { core: Rgba; edge: Rgba; sparks?: Colors }): RvxRecipe {
+  // A bolt flies 3 effect sizes in 0.5 s: fast enough to read as a shot, slow enough that it is
+  // seen leaving the muzzle, not only far ahead of it.
   return oneShot(meta, 0.8, [
     glow({ name: 'Flash', life: constant(0.12), size: constant(0.8), color: [dim(o.edge, 0.7)] }),
     ring({ name: 'MuzzleRing', billboard: 'mesh', localEuler: UP, life: constant(0.2), size: constant(0.5), color: [o.edge] }),
@@ -633,8 +635,8 @@ export function bolt(meta: RvxMeta, o: { core: Rgba; edge: Rgba; sparks?: Colors
       ...sparks({ name: 'Bolt', color: [o.edge] }),
       blend: 'alpha',
       burst: constant(1),
-      life: constant(0.35),
-      speed: constant(9),
+      life: constant(0.5),
+      speed: constant(6),
       size: constant(0.18),
       stretch: 0.14,
       drag: 0,
@@ -651,8 +653,8 @@ export function bolt(meta: RvxMeta, o: { core: Rgba; edge: Rgba; sparks?: Colors
       ...sparks({ name: 'BoltCore', color: [o.core] }),
       blend: 'alpha',
       burst: constant(1),
-      life: constant(0.35),
-      speed: constant(9),
+      life: constant(0.5),
+      speed: constant(6),
       size: constant(0.09),
       stretch: 0.12,
       drag: 0,
@@ -808,7 +810,7 @@ export function waves(meta: RvxMeta, o: { color: Rgba; count?: number; face?: bo
 /** A breath or spray along +Y: a cone of flames/puffs/pieces that travels out and spreads. */
 export function spray(
   meta: RvxMeta,
-  o: { kind: 'fire' | 'puff'; colors?: Colors; tint?: NonNullable<RvxEmitter['colorOverLife']>; embers?: Colors; length?: number; duration?: number; loop?: boolean; thick?: number },
+  o: { kind: 'fire' | 'puff'; colors?: Colors; tint?: NonNullable<RvxEmitter['colorOverLife']>; embers?: Colors; length?: number; duration?: number; loop?: boolean; thick?: number; sparks?: number },
 ): RvxRecipe {
   const len = o.length ?? 2
   // `thick` scales the stream's pieces and spread: a dragon's breath is a wall of fire, a
@@ -847,7 +849,8 @@ export function spray(
       speed: range(len * 1.6, len * 2.4),
       drag: 1.2,
       gravity: 0.2,
-      size: range(0.035 * k, 0.05 * k),
+      // `sparks` scales the embers alone (weld sparks: big, bright points on a small flame)
+      size: range(0.035 * k * (o.sparks ?? 1), 0.05 * k * (o.sparks ?? 1)),
       shape: coneUp(22, 0.05),
       localEuler: UP,
       color: o.embers ?? [FIRE.yellow, FIRE.orange],

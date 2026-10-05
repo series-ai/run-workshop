@@ -151,7 +151,7 @@ export const MONSTER_RECIPES: RvxRecipe[] = [
     edge: t('teal', 7),
     body: t('purple', 6),
     // the scythe blade only: a body the length of the haft read as a grey fan
-    band: 0.45,
+    band: 0.35,
   }),
   burst({ ...id('holy-burst', 'holy burst'), source: 'garlic mace, holy water, wooden stake', effectType: 'magic', role: 'impact' }, {
     flash: dim(HOLY[1]!, 0.8),
