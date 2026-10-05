@@ -1333,30 +1333,20 @@
      "effectId": "rvx-monster-howl",
      "socket": "socket-mouth",
      "trigger": "clip:attack",
-     "size": 34,
+     "size": 30,
      "offset": [
       0,
       2,
       -12
      ],
-     "at": 0.36
+     "at": 0.6
     },
     {
      "effectId": "rvx-monster-claw-slash",
      "socket": "socket-claw-r",
      "trigger": "clip:attack",
-     "size": 36.46,
-     "aim": [
-      0.099,
-      -0.913,
-      -0.395
-     ],
-     "offset": [
-      -2.2,
-      20.35,
-      8.8
-     ],
-     "at": 0.15
+     "size": 30,
+     "at": 0.36
     }
    ],
    "route": "code",

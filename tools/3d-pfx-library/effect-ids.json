@@ -946,7 +946,7 @@
   },
   {
    "id": "rvx-monster-claw-slash",
-   "looping": true
+   "looping": false
   },
   {
    "id": "rvx-monster-silver-slash",

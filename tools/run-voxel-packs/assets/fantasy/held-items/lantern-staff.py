@@ -78,4 +78,4 @@ def build():
     return held("lantern-staff", "Lantern Staff", g, (6.5, cy, cz),
                 {"socket-light": (31.5, 3, cz)},
                 [{"effectId": "rvx-fantasy-torch-flame", "socket": "socket-light",
-                  "trigger": "manual", "size": 0.12, "aim": [1.0, 0.0, 0.0]}])
+                  "trigger": "manual", "size": 0.18, "aim": [1.0, 0.0, 0.0]}])

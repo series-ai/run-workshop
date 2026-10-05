@@ -161,4 +161,4 @@ def build() -> Asset:
     return Asset(id="fantasy-buildings-wizard-tower", pack="fantasy", category="buildings", name="Wizard Tower", root=root,
                  clips=[Clip("idle", idle)], sockets=[Socket("socket-spire", at=(CX + tip[0], tip[3] + 1, CZ + tip[1]))],
                  # the orbit circles the hat, below the spire tip, so it stays on the model
-                 pfx=[{"effectId": "rvx-fantasy-arcane-orbit", "socket": "socket-spire", "trigger": "idle", "size": 44, "offset": [0.0, -26.0, 0.0]}])
+                 pfx=[{"effectId": "rvx-fantasy-arcane-orbit", "socket": "socket-spire", "trigger": "idle", "size": 64, "offset": [0.0, -26.0, 0.0]}])

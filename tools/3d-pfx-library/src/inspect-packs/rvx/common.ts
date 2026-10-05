@@ -236,6 +236,9 @@ function base(texture: string, over: Layer): RvxEmitter {
   }
 }
 
+/** A hard crescent sprite facing the camera: claw marks, quick cuts. */
+export const crescent = (over: Layer) => base('rvx-slash', { burst: constant(1), sizeCurve: undefined, ...over })
+
 /** Faceted toon puffs (smoke, dust, mist, poofs). Solid colour; they shrink away. */
 export const puffs = (over: Layer) =>
   base('rvx-puff', { sheet: { columns: 2, rows: 2 }, sheetVariant: true, rotateOverLife: true, sizeCurve: SWELL, ...over })

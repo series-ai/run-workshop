@@ -19,7 +19,8 @@ export const SPACE_RECIPES: RvxRecipe[] = [
     colors: [t('cyan', 6), t('cyan', 7)],
     core: dim(t('cyan', 5), 0.28),
     ring: t('cyan', 6),
-    dome: dim(t('cyan', 7), 0.45),
+    // a faint rim: the dome cells give the shape, the rim only its outline
+    dome: dim(t('cyan', 7), 0.25),
     radius: 0.55,
     spin: 1.2,
     rise: 0,
@@ -164,6 +165,8 @@ export const SPACE_RECIPES: RvxRecipe[] = [
     duration: 0.9,
     // a torch burns steadily; a one-shot left gaps between plays
     loop: true,
+    // large sparks: at a hand-held size the default ones are a pixel or two
+    thick: 2,
   }),
   waves({ ...id('warp-jump', 'warp jump'), source: 'shuttle warp', effectType: 'portal', role: 'despawn' }, {
     color: t('cyan', 7),

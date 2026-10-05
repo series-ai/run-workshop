@@ -2,7 +2,7 @@
  * zombie themes: moonlit purples, ghost teal, bone, rot green, blood red and
  * candle ember. */
 import { FIRE, hex, SMOKE, theme, WHITE, type RvxRecipe } from './common'
-import { bubbles, burst, dim, exhaust, fire, glyphs, lampGlow, mist, motes, muzzle, orbit, slash, smokeColumn, spray, swarm, waves } from './kit'
+import { bubbles, burst, dim, exhaust, fire, glyphs, lampGlow, mist, motes, muzzle, orbit, rake, slash, smokeColumn, spray, swarm, waves } from './kit'
 
 const t = theme('monster')
 const id = (slug: string, label: string) => ({ id: `rvx-monster-${slug}`, label: `RUN Monster ${label}` })
@@ -38,7 +38,8 @@ export const MONSTER_RECIPES: RvxRecipe[] = [
     soft: true,
   }),
   mist({ ...id('sewer-fume', 'sewer fume'), source: 'dungeon grate', effectType: 'smoke', role: 'loop' }, {
-    colors: [t('moss', 6), t('toxic', 6)],
+    // light greens: a darker haze reads as a dirty smear on the tile
+    colors: [t('toxic', 6), t('toxic', 7)],
     rate: 4,
   }),
   bubbles({ ...id('witch-brew', 'witch brew'), source: 'witch cauldron', effectType: 'magic', role: 'loop' }, {
@@ -138,9 +139,9 @@ export const MONSTER_RECIPES: RvxRecipe[] = [
     cubeCount: 5,
     reach: 0.9,
   }),
-  slash({ ...id('claw-slash', 'claw slash'), source: 'werewolf claw', effectType: 'weapon', role: 'trail' }, {
+  rake({ ...id('claw-slash', 'claw slash'), source: 'werewolf claw', effectType: 'weapon', role: 'impact' }, {
+    body: t('red', 5),
     edge: WHITE,
-    body: t('red', 4),
   }),
   slash({ ...id('silver-slash', 'silver slash'), source: 'silver axe, silver dagger', effectType: 'weapon', role: 'trail' }, {
     edge: WHITE,
@@ -149,6 +150,8 @@ export const MONSTER_RECIPES: RvxRecipe[] = [
   slash({ ...id('reaper-slash', 'reaper slash'), source: 'reaper scythe', effectType: 'weapon', role: 'trail' }, {
     edge: t('teal', 7),
     body: t('purple', 6),
+    // the scythe blade only: a body the length of the haft read as a grey fan
+    band: 0.45,
   }),
   burst({ ...id('holy-burst', 'holy burst'), source: 'garlic mace, holy water, wooden stake', effectType: 'magic', role: 'impact' }, {
     flash: dim(HOLY[1]!, 0.8),

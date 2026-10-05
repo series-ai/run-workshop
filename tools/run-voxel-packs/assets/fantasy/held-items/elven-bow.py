@@ -30,4 +30,4 @@ def build():
     g.box(int(mid) - 1, cy, int(tip_z) - 1, int(mid) + 2, cy + 1, int(tip_z) + 2, C("red", 4))
     g.box(int(mid), cy - 1, cz + 9, int(mid) + 1, cy + 2, cz + 10, C("steel", 6))
     return held("elven-bow", "Elven Longbow", g, (mid, cy, cz + 7), {"socket-arrow": (mid, cy, cz + 10)},
-                [{"effectId": "rvx-fantasy-bow-release", "socket": "socket-arrow", "trigger": "manual", "size": 0.36, "aim": [1.0, 0.0, 0.0]}])
+                [{"effectId": "rvx-fantasy-bow-release", "socket": "socket-arrow", "trigger": "manual", "size": 0.5, "aim": [1.0, 0.0, 0.0]}])

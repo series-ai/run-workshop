@@ -10,6 +10,7 @@
  */
 import {
   around,
+  crescent,
   constant,
   coneUp,
   cubes,
@@ -738,17 +739,45 @@ export function beam(
  * moves fast, so it shows during every swing whatever the clip's timing. A
  * still preview sweeps it once every period.
  */
-export function slash(meta: RvxMeta, o: { edge: Rgba; body: Rgba; minSpeed?: number }): RvxRecipe {
+export function slash(meta: RvxMeta, o: { edge: Rgba; body: Rgba; minSpeed?: number; band?: number }): RvxRecipe {
   const minSpeed = o.minSpeed ?? 14
+  // `band`: how much of the line, from the tip, the body covers (claws: the outer part only)
+  const from = 1 - (o.band ?? 0.78)
   return loop(meta, 2, [
     // A crescent that thins and fades behind the blade: a solid body that reads on light and
     // dark scenes, and a glowing edge. It draws only while the blade moves fast (minSpeed):
     // strikes peak at 17-50 effect sizes a second, held recoveries at 8-12 (a slow,
     // glowing swing can lower it). The trail texture already fades with age, so the body
     // stays opaque for its first third.
-    ribbon({ name: 'Swipe', color: [[o.body[0], o.body[1], o.body[2], 1]], colorOverLife: fadeOut(0.35), ribbon: { from: 0.22, to: 1, life: 0.28, sweep: 110, minSpeed, taper: 0.85 } }),
+    ribbon({ name: 'Swipe', color: [[o.body[0], o.body[1], o.body[2], 1]], colorOverLife: fadeOut(0.35), ribbon: { from, to: 1, life: 0.28, sweep: 110, minSpeed, taper: 0.85 } }),
     ribbon({ name: 'Edge', color: [o.edge], blend: 'additive', colorOverLife: fadeOut(0.2), ribbon: { from: 0.84, to: 1.04, life: 0.18, sweep: 110, minSpeed, taper: 0.5 } }),
   ])
+}
+
+/**
+ * Claw marks: three crescents that snap open side by side at the strike and fade. A trail
+ * follows a long swing; a claw strike is short and close to the body, so a trail there
+ * draws a hoop or a flat slab, and marks read better.
+ */
+export function rake(meta: RvxMeta, o: { body: Rgba; edge: Rgba }): RvxRecipe {
+  const marks: RvxEmitter[] = [-1, 0, 1].map((i) =>
+    crescent({
+      name: `Mark${i + 2}`,
+      delay: (i + 1) * 0.03,
+      life: constant(0.3),
+      size: constant(0.9 - Math.abs(i) * 0.1),
+      startRotation: constant(-0.6),
+      localPosition: [i * 0.16, -i * 0.06, 0],
+      sizeCurve: [
+        { t: 0, v: 0.5 },
+        { t: 0.18, v: 1 },
+        { t: 1, v: 1.06 },
+      ],
+      colorOverLife: fadeOut(0.45),
+      color: [o.body],
+    }),
+  )
+  return oneShot(meta, 0.5, [glow({ name: 'Flash', life: constant(0.14), size: constant(1), color: [dim(o.edge, 0.5)] }), ...marks])
 }
 
 /** A heavy landing: a flat shock ring on the ground, dust rolling out, rubble thrown up. */
@@ -818,7 +847,7 @@ export function spray(
       speed: range(len * 1.6, len * 2.4),
       drag: 1.2,
       gravity: 0.2,
-      size: range(0.035, 0.05),
+      size: range(0.035 * k, 0.05 * k),
       shape: coneUp(22, 0.05),
       localEuler: UP,
       color: o.embers ?? [FIRE.yellow, FIRE.orange],

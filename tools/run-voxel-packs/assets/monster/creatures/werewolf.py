@@ -186,7 +186,10 @@ def build():
     # sockets in root (hips joint) space: the mouth tip and the right claw tips
     mouth = (0.0, 40.0 - HIP[1], 1.0 - HIP[2])
     claw = (CX + 19.0 - HIP[0], 2.0 - HIP[1], 8.0 - HIP[2])
+    # Claw marks snap open at the claws as the swing crosses the front (0.36 s); a trail of the
+    # 205-degree swing drew a hoop round the body. The howl comes after the sweep, with the jaw
+    # still open, so its rings do not read as a hand effect.
     return world("werewolf", "creatures", "Werewolf", root,
                  clips=[Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False), Clip("idle", idle)],
                  sockets=[Socket("socket-mouth", at=mouth, parent="head"), Socket("socket-claw-r", at=claw, parent="arm-r")],
-                 pfx=[pfx("rvx-monster-howl", "socket-mouth", "clip:attack", size=34, offset=(0.0, 2.0, -12.0), at=0.36), pfx("rvx-monster-claw-slash", "socket-claw-r", "clip:attack", size=36.46, aim=(0.099, -0.913, -0.395), offset=(-2.2, 20.35, 8.8), at=0.15)])
+                 pfx=[pfx("rvx-monster-howl", "socket-mouth", "clip:attack", size=30, offset=(0.0, 2.0, -12.0), at=0.6), pfx("rvx-monster-claw-slash", "socket-claw-r", "clip:attack", size=30, at=0.36)])

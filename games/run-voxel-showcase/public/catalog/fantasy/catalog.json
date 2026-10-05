@@ -995,7 +995,7 @@
      "effectId": "rvx-fantasy-arcane-orbit",
      "socket": "socket-spire",
      "trigger": "idle",
-     "size": 44,
+     "size": 64,
      "offset": [
       0,
       -26,
@@ -1647,7 +1647,7 @@
      "effectId": "rvx-fantasy-bow-release",
      "socket": "socket-arrow",
      "trigger": "manual",
-     "size": 0.36,
+     "size": 0.5,
      "aim": [
       1,
       0,
@@ -1926,7 +1926,7 @@
      "effectId": "rvx-fantasy-torch-flame",
      "socket": "socket-light",
      "trigger": "manual",
-     "size": 0.12,
+     "size": 0.18,
      "aim": [
       1,
       0,
