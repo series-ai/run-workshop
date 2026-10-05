@@ -1,0 +1,35 @@
+{
+  "name": "stick-zone",
+  "version": "1.0.0",
+  "description": "High-Action 3D Stickman Extraction Shooter in Sector 7 Depot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5196",
+    "build": "tsc && vite build",
+    "preview": "vite preview --port 4196",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.121.4",
+    "@react-three/fiber": "^8.17.10",
+    "@series-inc/rundot-syncplay": "file:/Users/pany/.bb/plugins/environment-git-worktree/host-data/worktrees/thr_fn6cpnqyqj-1/venus/packages/syncplay",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.469.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "~0.170.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.6",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@types/three": "~0.170.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "vitest": "^2.1.8"
+  }
+}
