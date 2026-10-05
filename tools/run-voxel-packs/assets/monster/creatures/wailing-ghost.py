@@ -120,4 +120,4 @@ def build():
     return world("wailing-ghost", "creatures", "Wailing Ghost", root,
                  clips=[Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False), Clip("idle", idle)],
                  sockets=[Socket("socket-core", at=core, parent="body")],
-                 pfx=[pfx("rvx-monster-ghost-wisps", "socket-core", "idle", size=30), pfx("rvx-monster-soul-burst", "socket-core", "clip:death", size=56, at=0.24)])
+                 pfx=[pfx("rvx-monster-ghost-wisps", "socket-core", "idle", size=30), pfx("rvx-monster-soul-burst", "socket-core", "clip:death", size=56, at=0.9)])

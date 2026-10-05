@@ -186,6 +186,6 @@ def build() -> Asset:
         sockets=[Socket("socket-deck", at=rel((CX, DECK + 6.0, 50.0)), parent="hull"), Socket("socket-stern", at=rel((CX, 16.0, 108.0)), parent="hull")],
         pfx=[
             {"effectId": "rvx-monster-ghost-wisps", "socket": "socket-deck", "trigger": "idle", "size": 70, "offset": [0.0, 60.0, 0.0]},
-            {"effectId": "rvx-monster-ghost-wake", "socket": "socket-stern", "trigger": "clip:move", "size": 50, "aim": [0.0, 0.0, 1.0]},
+            {"effectId": "rvx-monster-ghost-wake", "socket": "socket-stern", "trigger": "clip:move", "size": 80, "aim": [0.0, 0.0, 1.0]},
         ],
     )

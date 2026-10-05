@@ -79,8 +79,9 @@ export const FANTASY_RECIPES: RvxRecipe[] = [
     ],
   }),
   burst({ ...id('frost-nova', 'frost nova'), source: 'frost wand, crystals, crystal pylon', effectType: 'elemental', role: 'burst' }, {
-    flash: dim(t('sky', 6), 0.8),
-    ring: { color: t('sky', 7), kind: 'flat' },
+    // a dim flash and a pale ring read as a dark smudge on dark ground: white ring, faint flash
+    flash: dim(t('sky', 6), 0.45),
+    ring: { color: WHITE, kind: 'flat' },
     pieces: { texture: 'rvx-shard', colors: [t('sky', 7), t('sky', 6), WHITE], count: 9, size: 0.18, gravity: 0.5 },
     puffs: [hex('#e8f4f8'), t('sky', 7)],
   }),

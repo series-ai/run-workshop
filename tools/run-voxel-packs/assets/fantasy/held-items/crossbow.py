@@ -109,4 +109,4 @@ def build():
             if x in (34, 38) or zz in (CZ - 3, CZ + 3):
                 g.set(x, CY - 1, zz, C("iron", 5 if x != 38 else 6))
     return held("crossbow", "Heavy Crossbow", g, (10.5, CY - 2.5, CZ + 0.5), {"socket-muzzle": (40, CY + 1.5, CZ + 0.5)},
-                [{"effectId": "rvx-fantasy-bow-release", "socket": "socket-muzzle", "trigger": "manual", "size": 0.2, "aim": [1.0, 0.0, 0.0]}])
+                [{"effectId": "rvx-fantasy-bow-release", "socket": "socket-muzzle", "trigger": "manual", "size": 0.36, "aim": [1.0, 0.0, 0.0]}])

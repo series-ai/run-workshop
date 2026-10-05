@@ -1545,7 +1545,7 @@
      "effectId": "rvx-fantasy-bow-release",
      "socket": "socket-muzzle",
      "trigger": "manual",
-     "size": 0.2,
+     "size": 0.36,
      "aim": [
       1,
       0,
@@ -3764,7 +3764,7 @@
      "effectId": "rvx-fantasy-bow-release",
      "socket": "socket-bolt",
      "trigger": "clip:attack",
-     "size": 44,
+     "size": 64,
      "aim": [
       0,
       0,

@@ -339,6 +339,9 @@ export function orbit(
   if (o.runes)
     layers.push({
       ...glints({ name: 'Runes', color: o.runes }),
+      // additive: the strokes glow and the dark rim fades to a soft edge; drawn solid, the
+      // rimmed glyphs read as UI stickers
+      blend: 'additive',
       texture: 'rvx-runes',
       sheet: { columns: 2, rows: 2 },
       sheetVariant: true,
@@ -363,9 +366,8 @@ export function orbit(
     layers.push(
       ring({ name: 'Ring', billboard: 'horizontal', burst: undefined, rate: 1, life: constant(1), size: constant(r * 2.3), sizeCurve: [{ t: 0, v: 0.85 }, { t: 1, v: 1.05 }], colorOverLife: FADE_IN_OUT, color: [o.ring] }),
     )
-  // `dome`: hex cells that twinkle on a hemisphere shell give the field its curve, and a
-  // bubble rim that faces the camera gives it an outline from every side. Two rims overlap
-  // at any time (rate 2, life 1), so the fade in and out keeps it steady.
+  // `dome`: hex cells that twinkle on a hemisphere shell give the field its curve. (A rim
+  // facing the camera read as a flat circle, not a dome.)
   if (o.dome)
     layers.push(
       cubes({
@@ -379,7 +381,6 @@ export function orbit(
         sizeCurve: TWINKLE,
         color: [o.dome, o.colors[0]!],
       }),
-      ring({ name: 'Dome', billboard: 'camera', burst: undefined, rate: 2, life: constant(1), size: constant(r * 2.05), sizeCurve: [{ t: 0, v: 0.98 }, { t: 1, v: 1.02 }], colorOverLife: FADE_IN_OUT, color: [o.dome] }),
     )
   // `lift` moves the whole orbit along +Y, e.g. in front of a solid portal face.
   const lifted = o.lift ? layers.map((l) => ({ ...l, localPosition: [0, o.lift!, 0] as [number, number, number] })) : layers
@@ -610,7 +611,7 @@ export function muzzle(meta: RvxMeta, o: { flash: Rgba; core?: Rgba; smoke?: Col
         name: 'Smoke',
         burst: range(4, 5),
         delay: 0.03,
-        life: range(0.5, 0.8),
+        life: range(0.35, 0.55),
         speed: range(1.2 * k, 2 * k),
         drag: 4,
         size: range(0.2 * k, 0.3 * k),
@@ -787,15 +788,17 @@ export function slash(meta: RvxMeta, o: { edge: Rgba; body: Rgba; minSpeed?: num
  * follows a long swing; a claw strike is short and close to the body, so a trail there
  * draws a hoop or a flat slab, and marks read better.
  */
-export function rake(meta: RvxMeta, o: { body: Rgba; edge: Rgba }): RvxRecipe {
-  const marks: RvxEmitter[] = [-1, 0, 1].map((i) =>
+export function rake(meta: RvxMeta, o: { body: Rgba; edge: Rgba; marks?: 1 | 3; size?: number }): RvxRecipe {
+  // `marks: 1`: one large crescent (a scythe's reap)
+  const k = o.size ?? 1
+  const marks: RvxEmitter[] = (o.marks === 1 ? [0] : [-1, 0, 1]).map((i) =>
     crescent({
       name: `Mark${i + 2}`,
       delay: (i + 1) * 0.03,
       life: constant(0.3),
-      size: constant(0.9 - Math.abs(i) * 0.1),
+      size: constant((0.9 - Math.abs(i) * 0.1) * k),
       startRotation: constant(-0.6),
-      localPosition: [i * 0.16, -i * 0.06, 0],
+      localPosition: [i * 0.16 * k, -i * 0.06 * k, 0],
       sizeCurve: [
         { t: 0, v: 0.5 },
         { t: 0.18, v: 1 },

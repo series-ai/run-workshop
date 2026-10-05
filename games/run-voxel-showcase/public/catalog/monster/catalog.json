@@ -1218,9 +1218,14 @@
     },
     {
      "effectId": "rvx-monster-bat-burst",
-     "socket": "socket-claw-r",
+     "socket": "socket-chest",
      "trigger": "clip:attack",
      "size": 100,
+     "offset": [
+      0,
+      0,
+      -20
+     ],
      "at": 0.48
     },
     {
@@ -1283,7 +1288,7 @@
      "socket": "socket-core",
      "trigger": "clip:death",
      "size": 56,
-     "at": 0.24
+     "at": 0.9
     }
    ],
    "route": "code",
@@ -2005,7 +2010,7 @@
      "effectId": "rvx-monster-bolt-twang",
      "socket": "socket-muzzle",
      "trigger": "manual",
-     "size": 0.34,
+     "size": 0.5,
      "aim": [
       1,
       0,
@@ -3315,7 +3320,12 @@
      "effectId": "rvx-monster-sewer-fume",
      "socket": "socket-grate",
      "trigger": "idle",
-     "size": 26
+     "size": 26,
+     "offset": [
+      0,
+      6,
+      0
+     ]
     }
    ],
    "route": "code",
@@ -3735,7 +3745,7 @@
      "effectId": "rvx-monster-ghost-wake",
      "socket": "socket-stern",
      "trigger": "clip:move",
-     "size": 50,
+     "size": 80,
      "aim": [
       0,
       0,

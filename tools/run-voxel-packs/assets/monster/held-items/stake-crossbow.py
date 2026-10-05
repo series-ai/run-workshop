@@ -22,4 +22,4 @@ def build():
     g.box(16, cy + 2, cz - 1, 18, cy + 3, cz + 2, C("blood", 3))  # fletching
     speck(g, 404, 0.1)
     return held("stake-crossbow", "Stake Crossbow", g, (5, cy, cz + 0.5), {"socket-muzzle": (36, cy + 2.5, cz + 0.5)},
-                pfx=[pfx("rvx-monster-bolt-twang", "socket-muzzle", "manual", size=0.34, aim=(1.0, 0.0, 0.0))])
+                pfx=[pfx("rvx-monster-bolt-twang", "socket-muzzle", "manual", size=0.5, aim=(1.0, 0.0, 0.0))])

@@ -74,4 +74,4 @@ def build():
     drip = (g.a > 0) & ~opening & (Y == H - 2) & ((X == A0 - 1) | (X == A1) | (Z == A0 - 1) | (Z == A1)) & (X >= A0 - 1) & (X <= A1) & (Z >= A0 - 1) & (Z <= A1) & ((P._hash(X + Z, seed=10) % np.uint64(3)) == 0)
     P.flat(g, drip, "toxic", 5)
     return single("dungeon-grate", "terrain-nature", "Dungeon Grate Tile", g,
-                  sockets=[Socket("socket-grate", at=(0.0, 2.0, 0.0))], pfx=[pfx("rvx-monster-sewer-fume", "socket-grate", "idle", size=26)])
+                  sockets=[Socket("socket-grate", at=(0.0, 2.0, 0.0))], pfx=[pfx("rvx-monster-sewer-fume", "socket-grate", "idle", size=26, offset=(0.0, 6.0, 0.0))])

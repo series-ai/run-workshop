@@ -40,6 +40,8 @@ export const MONSTER_RECIPES: RvxRecipe[] = [
   mist({ ...id('sewer-fume', 'sewer fume'), source: 'dungeon grate', effectType: 'smoke', role: 'loop' }, {
     // light greens: a darker haze reads as a dirty smear on the tile
     colors: [t('toxic', 6), t('toxic', 7)],
+    // over the grate, not the whole tile
+    width: 0.5,
     rate: 4,
   }),
   bubbles({ ...id('witch-brew', 'witch brew'), source: 'witch cauldron', effectType: 'magic', role: 'loop' }, {
@@ -147,11 +149,13 @@ export const MONSTER_RECIPES: RvxRecipe[] = [
     edge: WHITE,
     body: hex('#d8e2ea', 0.9),
   }),
-  slash({ ...id('reaper-slash', 'reaper slash'), source: 'reaper scythe', effectType: 'weapon', role: 'trail' }, {
-    edge: t('teal', 7),
+  // one big crescent at the strike: a trail of the scythe's flat sweep cut across the body
+  // as a pale band
+  rake({ ...id('reaper-slash', 'reaper slash'), source: 'reaper scythe', effectType: 'weapon', role: 'impact' }, {
     body: t('purple', 6),
-    // the scythe blade only: a body the length of the haft read as a grey fan
-    band: 0.35,
+    edge: t('teal', 7),
+    marks: 1,
+    size: 1.3,
   }),
   burst({ ...id('holy-burst', 'holy burst'), source: 'garlic mace, holy water, wooden stake', effectType: 'magic', role: 'impact' }, {
     flash: dim(HOLY[1]!, 0.8),

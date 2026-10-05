@@ -19,8 +19,8 @@ export const SPACE_RECIPES: RvxRecipe[] = [
     colors: [t('cyan', 6), t('cyan', 7)],
     core: dim(t('cyan', 5), 0.28),
     ring: t('cyan', 6),
-    // a faint rim: the dome cells give the shape, the rim only its outline
-    dome: dim(t('cyan', 7), 0.25),
+    // the dome cells' colour, with `colors`
+    dome: dim(t('cyan', 7), 0.8),
     radius: 0.55,
     spin: 1.2,
     rise: 0,
@@ -115,8 +115,9 @@ export const SPACE_RECIPES: RvxRecipe[] = [
   spray({ ...id('goo-shot', 'goo shot'), source: 'bio blaster', effectType: 'projectile', role: 'release' }, {
     kind: 'puff',
     colors: [t('toxic', 6), t('lime', 6), t('toxic', 7)],
-    length: 1.6,
-    duration: 0.5,
+    // a short glob that flies: a long one-shot ran into the next shot and sputtered
+    length: 3,
+    duration: 0.2,
   }),
   // rings that spread from the device: one short ring faded out before a viewer could read it
   waves({ ...id('holo-scan', 'holo scan'), source: 'data pad, scanner', effectType: 'ui', role: 'charge' }, {
