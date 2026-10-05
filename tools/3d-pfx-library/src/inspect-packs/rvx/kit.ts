@@ -412,21 +412,30 @@ const HAZE: NonNullable<RvxEmitter['colorOverLife']> = [
   { t: 1, c: [1, 1, 1, 0] },
 ]
 
+/** A puff layer redrawn as a soft blob: the soft-circle texture, one sheet cell, no spin. */
+function softMist(layer: RvxEmitter): RvxEmitter {
+  return { ...layer, texture: 'soft-circle', lumaAlpha: true, sheet: { columns: 1, rows: 1 }, sheetVariant: false, rotateOverLife: false }
+}
+
 export function mist(meta: RvxMeta, o: { colors: Colors; width?: number; motes?: Colors; rate?: number }): RvxRecipe {
   const w = o.width ?? 1
   const layers: RvxEmitter[] = [
-    puffs({
-      name: 'Mist',
-      rate: o.rate ?? 5,
-      life: range(1.6, 2.4),
-      speed: range(0.08, 0.16),
-      size: range(0.35, 0.5),
-      ...flat(w, w, 0.08),
-      drag: 0.4,
-      noise: range(0.06, 0.12),
-      colorOverLife: HAZE,
-      color: o.colors,
-    }),
+    // Mist is drawn with the soft circle, not the faceted puff: even half-transparent, puff
+    // facets read as flat sheets or rocks. A soft blob shows a little smaller, so it is larger.
+    softMist(
+      puffs({
+        name: 'Mist',
+        rate: o.rate ?? 5,
+        life: range(1.6, 2.4),
+        speed: range(0.08, 0.16),
+        size: range(0.5, 0.7),
+        ...flat(w, w, 0.08),
+        drag: 0.4,
+        noise: range(0.06, 0.12),
+        colorOverLife: HAZE,
+        color: o.colors,
+      }),
+    ),
   ]
   if (o.motes)
     layers.push(

@@ -23,6 +23,8 @@ export interface ClipClock {
   duration: number
   /** Moments a held item acts in this clip, as fractions (contracts AVATAR_ACTION_STRIKES); default [MANUAL_CLIP_FRACTION]. */
   strikes?: readonly number[]
+  /** The clip plays once and holds (open, attack, death), as opposed to a loop (idle, move). */
+  oneShot?: boolean
 }
 
 /** Seconds between replays of a one-shot that no clip drives. */
@@ -113,8 +115,9 @@ function BindingPfx({ binding, anchor, model, clipClock }: { binding: PfxBinding
   return createPortal(
     <group ref={group} quaternion={quaternion} position={initial.position} scale={initial.scale}>
       <Suspense fallback={null}>
-        {/* A loop that a clip starts begins empty (mist pours out as the door opens). */}
-        <PfxById effectId={binding.effectId} playKey={play} prewarm={!binding.trigger.startsWith('clip:')} />
+        {/* A loop that a one-shot clip starts begins empty (mist pours out as the door opens);
+            on a looping clip (a vehicle's move) it is already running. */}
+        <PfxById effectId={binding.effectId} playKey={play} prewarm={!(binding.trigger.startsWith('clip:') && clipClock?.current?.oneShot)} />
       </Suspense>
     </group>,
     anchor,

@@ -395,7 +395,8 @@
      "effectId": "rvx-monster-grave-mist",
      "socket": "socket-pit",
      "trigger": "clip:open",
-     "size": 34
+     "size": 34,
+     "at": 0.3
     }
    ],
    "route": "code",

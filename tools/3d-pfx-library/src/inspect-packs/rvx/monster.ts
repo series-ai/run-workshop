@@ -18,7 +18,7 @@ const HOLY = [t('bone', 7), hex('#fff1b8')]
 export const MONSTER_RECIPES: RvxRecipe[] = [
   // ---------------------------------------------------------------- loops
   fire({ ...id('candle-flame', 'candle flame'), source: 'chandelier, lanterns, carriage lamps', effectType: 'fire', role: 'loop' }, { kind: 'torch', follow: true }),
-  fire({ ...id('torch-flame', 'torch flame'), source: 'torch sconce, torch', effectType: 'fire', role: 'loop' }, { kind: 'torch', smoke: [SMOKE.dark, SMOKE.mid], follow: true }),
+  fire({ ...id('torch-flame', 'torch flame'), source: 'torch sconce, torch', effectType: 'fire', role: 'loop' }, { kind: 'torch', smoke: [SMOKE.dark, SMOKE.mid] }),
   motes({ ...id('ghost-wisps', 'ghost wisps'), source: 'mirror, ghost, windmill, ghost ship, hearse horse', effectType: 'horror', role: 'loop' }, {
     colors: GHOST,
     glints: [t('teal', 7)],

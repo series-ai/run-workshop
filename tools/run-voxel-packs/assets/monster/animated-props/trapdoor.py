@@ -150,4 +150,5 @@ def build():
     return world("trapdoor", "animated-props", "Dungeon Trapdoor", root,
                  clips=[open_, close, idle],
                  sockets=[Socket("socket-pit", at=(0.0, 1.0, 0.0))],
-                 pfx=[pfx("rvx-monster-grave-mist", "socket-pit", "clip:open", size=34)])
+                 # the mist starts as the hatch lifts (it starts at 0.25 s, after the lever), not on the closed lid
+                 pfx=[pfx("rvx-monster-grave-mist", "socket-pit", "clip:open", size=34, at=0.3)])

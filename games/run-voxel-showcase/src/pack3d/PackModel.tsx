@@ -67,7 +67,7 @@ function LoadedPackModel({ url, entry, name, clip, castShadow = true, rotationY 
       start.time = 0
       start.setEffectiveWeight(0)
       oneShot.current = { main: action, start }
-      clipClock.current = { elapsed: 0, duration: oneShotCycle(found.duration).period }
+      clipClock.current = { elapsed: 0, duration: oneShotCycle(found.duration).period, oneShot: true }
     } else {
       action.setLoop(LoopRepeat, Infinity).reset().fadeIn(0.15).play()
       clipClock.current = { elapsed: 0, duration: found.duration }
