@@ -26,7 +26,7 @@ HULL_Z = [44, 50, 60, 74, 88, 100, 106]
 HULL_TOP = [2.0, 10.0, 15.0, 16.0, 15.0, 12.0, 9.0]
 HULL_BOT = [1.0, 4.0, 7.0, 8.0, 7.0, 5.0, 3.0]
 H0, H1 = 6, 26  # hull bottom and deck
-BURNER = (CX, 60, 70)
+BURNER = (CX, 48, 70)  # the fire cone's top: low enough that the flame burns in the gap under the balloon (y 63)
 PROP_R = 12
 STERN = (CX, 16, 110)
 SIDE_Z = 70
@@ -165,4 +165,4 @@ def build() -> Asset:
     return Asset(id="fantasy-vehicles-sky-airship", pack="fantasy", category="vehicles", name="Sky Airship", root=root,
                  clips=[Clip("idle", idle), Clip("move", move)],
                  sockets=[Socket("socket-burner", at=BURNER, parent="ship")],
-                 pfx=[{"effectId": "rvx-fantasy-torch-flame", "socket": "socket-burner", "trigger": "idle", "size": 26}])
+                 pfx=[{"effectId": "rvx-fantasy-torch-flame", "socket": "socket-burner", "trigger": "idle", "size": 14}])

@@ -144,4 +144,4 @@ def build():
     return make("creatures", "zombie-bloated", "Bloated Zombie", rig.root,
                 clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                 sockets=[rig.socket("socket-belly", (CX, 19, CZ - 13.5), parent="body"), rig.socket("socket-mouth", (CX, NECK[1] + 2, NECK[2] - 6), parent="head")],
-                pfx=[fx("rvx-apocalypse-toxic-bubbles", "socket-belly", "idle", size=18), fx("rvx-apocalypse-vomit-spray", "socket-mouth", "clip:attack", size=26, aim=(-0.042, -0.239, -0.97), at=0.44)])
+                pfx=[fx("rvx-apocalypse-toxic-bubbles", "socket-belly", "idle", size=28), fx("rvx-apocalypse-vomit-spray", "socket-mouth", "clip:attack", size=26, aim=(-0.042, -0.239, -0.97), at=0.44)])

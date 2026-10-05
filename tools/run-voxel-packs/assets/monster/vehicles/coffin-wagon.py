@@ -110,5 +110,6 @@ def build() -> Asset:
         id="monster-vehicles-coffin-wagon", pack="monster", category="vehicles", name="Coffin Wagon", root=root,
         clips=[Clip("move", clips)],
         sockets=[Socket("socket-lantern", at=(gx - CX, gy - RR, gz - RZ), parent="wagon")],
-        pfx=[{"effectId": "rvx-monster-candle-flame", "socket": "socket-lantern", "trigger": "idle", "size": 14}],
+        # the candle burns inside a closed lantern, where a flame cannot show: the lantern glows
+        pfx=[{"effectId": "rvx-monster-ghost-lantern", "socket": "socket-lantern", "trigger": "idle", "size": 44}],
     )

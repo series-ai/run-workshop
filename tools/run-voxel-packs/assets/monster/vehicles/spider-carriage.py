@@ -194,5 +194,6 @@ def build() -> Asset:
         id="monster-vehicles-spider-carriage", pack="monster", category="vehicles", name="Spider Carriage", root=root,
         clips=[Clip("move", move), Clip("idle", idle)],
         sockets=[Socket("socket-lamp", at=rel(LAMP_L), parent="cabin"), Socket("socket-lamp-r", at=rel(lamp_r), parent="cabin")],
-        pfx=[{"effectId": "rvx-monster-ghost-lantern", "socket": "socket-lamp", "trigger": "idle", "size": 24}],
+        pfx=[{"effectId": "rvx-monster-ghost-lantern", "socket": "socket-lamp", "trigger": "idle", "size": 32},
+             {"effectId": "rvx-monster-ghost-lantern", "socket": "socket-lamp-r", "trigger": "idle", "size": 32}],
     )

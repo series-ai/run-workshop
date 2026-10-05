@@ -301,9 +301,10 @@ export function bubbles(meta: RvxMeta, o: { bubble: Colors; fume?: Colors; chips
         rate: 2,
         life: range(1.4, 1.9),
         speed: range(0.12, 0.2),
-        size: range(0.35, 0.5),
-        ...flat(w, w, 0.1),
+        size: range(0.25, 0.35),
+        ...flat(w * 0.6, w * 0.6, 0.1),
         localPosition: [0, 0.15, 0],
+        colorOverLife: HAZE,
         color: o.fume,
       }),
     )
@@ -313,7 +314,7 @@ export function bubbles(meta: RvxMeta, o: { bubble: Colors; fume?: Colors; chips
 /** Pieces orbit a core: arcane spires, portals, auras. `runes` adds pixel glyphs to the orbit. */
 export function orbit(
   meta: RvxMeta,
-  o: { colors: Colors; core?: Rgba; runes?: Colors; radius?: number; spin?: number; ring?: Rgba; rise?: number; lift?: number },
+  o: { colors: Colors; core?: Rgba; runes?: Colors; radius?: number; spin?: number; ring?: Rgba; dome?: Rgba; rise?: number; lift?: number },
 ): RvxRecipe {
   const r = o.radius ?? 0.5
   const spin = o.spin ?? 2.4
@@ -359,6 +360,12 @@ export function orbit(
     layers.push(
       ring({ name: 'Ring', billboard: 'horizontal', burst: undefined, rate: 1, life: constant(1), size: constant(r * 2.3), sizeCurve: [{ t: 0, v: 0.85 }, { t: 1, v: 1.05 }], colorOverLife: FADE_IN_OUT, color: [o.ring] }),
     )
+  // `dome`: a bubble rim that faces the camera, so the field reads as a sphere from every side.
+  // Two rims overlap at any time (rate 2, life 1), so the fade in and out keeps it steady.
+  if (o.dome)
+    layers.push(
+      ring({ name: 'Dome', billboard: 'camera', burst: undefined, rate: 2, life: constant(1), size: constant(r * 2.05), sizeCurve: [{ t: 0, v: 0.98 }, { t: 1, v: 1.02 }], colorOverLife: FADE_IN_OUT, color: [o.dome] }),
+    )
   // `lift` moves the whole orbit along +Y, e.g. in front of a solid portal face.
   const lifted = o.lift ? layers.map((l) => ({ ...l, localPosition: [0, o.lift!, 0] as [number, number, number] })) : layers
   return loop(meta, 2, lifted)
@@ -394,6 +401,15 @@ export function fall(meta: RvxMeta, o: { colors: Colors; texture?: 'rvx-leaf' | 
 }
 
 /** Low mist that rolls out and sinks: fog pits, coffins, waterfalls, graves. */
+/** Haze: fades in, holds at a little over half opacity, fades out. Mist and fumes drawn
+ * opaque read as a pile of faceted rocks, not as vapour. */
+const HAZE: NonNullable<RvxEmitter['colorOverLife']> = [
+  { t: 0, c: [1, 1, 1, 0] },
+  { t: 0.25, c: [1, 1, 1, 0.55] },
+  { t: 0.7, c: [1, 1, 1, 0.55] },
+  { t: 1, c: [1, 1, 1, 0] },
+]
+
 export function mist(meta: RvxMeta, o: { colors: Colors; width?: number; motes?: Colors; rate?: number }): RvxRecipe {
   const w = o.width ?? 1
   const layers: RvxEmitter[] = [
@@ -406,6 +422,7 @@ export function mist(meta: RvxMeta, o: { colors: Colors; width?: number; motes?:
       ...flat(w, w, 0.08),
       drag: 0.4,
       noise: range(0.06, 0.12),
+      colorOverLife: HAZE,
       color: o.colors,
     }),
   ]
@@ -594,7 +611,7 @@ export function bolt(meta: RvxMeta, o: { core: Rgba; edge: Rgba; sparks?: Colors
       burst: constant(1),
       life: constant(0.35),
       speed: constant(9),
-      size: constant(0.12),
+      size: constant(0.18),
       stretch: 0.14,
       drag: 0,
       gravity: 0,
@@ -612,7 +629,7 @@ export function bolt(meta: RvxMeta, o: { core: Rgba; edge: Rgba; sparks?: Colors
       burst: constant(1),
       life: constant(0.35),
       speed: constant(9),
-      size: constant(0.06),
+      size: constant(0.09),
       stretch: 0.12,
       drag: 0,
       gravity: 0,
@@ -661,7 +678,16 @@ export function beam(
           { t: 1, v: 0 },
         ]
       : HALO,
-    colorOverLife: FADE_IN_OUT,
+    // A one-shot fades out before it narrows: narrowing keeps the length, so a beam that
+    // is still visible then shrinks to a thin rod.
+    colorOverLife: o.oneShotDuration
+      ? [
+          { t: 0, c: [1, 1, 1, 0] },
+          { t: 0.12, c: [1, 1, 1, 1] },
+          { t: 0.55, c: [1, 1, 1, 1] },
+          { t: 0.8, c: [1, 1, 1, 0] },
+        ]
+      : FADE_IN_OUT,
   })
   const layers: RvxEmitter[] = [column('Beam', width, 0.55), column('BeamCore', width * 0.45, 0.8)]
   if (o.motes)

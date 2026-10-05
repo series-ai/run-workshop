@@ -3637,7 +3637,7 @@
      "effectId": "rvx-space-warp-jump",
      "socket": "socket-warp",
      "trigger": "manual",
-     "size": 60,
+     "size": 40,
      "aim": [
       0,
       0,

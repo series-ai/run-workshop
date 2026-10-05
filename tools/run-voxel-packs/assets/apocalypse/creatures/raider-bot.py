@@ -152,4 +152,4 @@ def build():
                 sockets=[rig.socket("socket-saw", (SAW[0], SAW[1] + 6.5, SAW[2] - 3), parent="saw"),
                          rig.socket("socket-exhaust", (CX + 4, 36, CZ + 9.5), parent="body"),
                          rig.socket("socket-core", (CX, HIP_Y + 7, CZ - 10), parent="body")],
-                pfx=[fx("rvx-apocalypse-saw-sparks", "socket-saw", "clip:attack", size=26, at=0.4), fx("rvx-apocalypse-exhaust-smoke", "socket-exhaust", "idle", size=16), fx("rvx-apocalypse-explosion", "socket-core", "clip:death", size=44, at=0.24)])
+                pfx=[fx("rvx-apocalypse-saw-sparks", "socket-saw", "clip:attack", size=38, at=0.4), fx("rvx-apocalypse-exhaust-smoke", "socket-exhaust", "idle", size=16), fx("rvx-apocalypse-explosion", "socket-core", "clip:death", size=44, at=0.24)])

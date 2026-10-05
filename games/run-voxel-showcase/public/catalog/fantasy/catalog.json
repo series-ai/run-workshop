@@ -237,7 +237,12 @@
      "effectId": "rvx-fantasy-forge-flare",
      "socket": "socket-coals",
      "trigger": "clip:active",
-     "size": 30
+     "size": 30,
+     "aim": [
+      0,
+      0.6,
+      -0.8
+     ]
     },
     {
      "effectId": "rvx-fantasy-chimney-smoke",
@@ -990,7 +995,12 @@
      "effectId": "rvx-fantasy-arcane-orbit",
      "socket": "socket-spire",
      "trigger": "idle",
-     "size": 44
+     "size": 44,
+     "offset": [
+      0,
+      -26,
+      0
+     ]
     }
    ],
    "route": "code",
@@ -1060,7 +1070,7 @@
    "filename": "fantasy-creatures-ent.glb",
    "relativePath": "creatures/fantasy-creatures-ent.glb",
    "leaf": "world",
-   "sizeBytes": 118432,
+   "sizeBytes": 118492,
    "bounds": {
     "min": [
      -29.6451,
@@ -1087,6 +1097,7 @@
     "idle"
    ],
    "sockets": [
+    "socket-canopy",
     "socket-slam"
    ],
    "pfx": [
@@ -1099,7 +1110,7 @@
     },
     {
      "effectId": "rvx-fantasy-leaf-fall",
-     "socket": "socket-slam",
+     "socket": "socket-canopy",
      "trigger": "idle",
      "size": 40
     }
@@ -2252,7 +2263,7 @@
      "effectId": "rvx-fantasy-potion-fizz",
      "socket": "socket-brew",
      "trigger": "manual",
-     "size": 18
+     "size": 12
     }
    ],
    "route": "code",
@@ -3258,7 +3269,7 @@
      "effectId": "rvx-fantasy-treasure-glint",
      "socket": "socket-glint",
      "trigger": "idle",
-     "size": 40
+     "size": 26
     }
    ],
    "route": "code",
@@ -3938,7 +3949,7 @@
    "filename": "fantasy-vehicles-sky-airship.glb",
    "relativePath": "vehicles/fantasy-vehicles-sky-airship.glb",
    "leaf": "world",
-   "sizeBytes": 81536,
+   "sizeBytes": 81512,
    "bounds": {
     "min": [
      -45.1452,
@@ -3970,7 +3981,7 @@
      "effectId": "rvx-fantasy-torch-flame",
      "socket": "socket-burner",
      "trigger": "idle",
-     "size": 26
+     "size": 14
     }
    ],
    "route": "code",

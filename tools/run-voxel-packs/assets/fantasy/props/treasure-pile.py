@@ -137,4 +137,4 @@ def build() -> Asset:
     root = Part("treasure-pile", g)
     return Asset(id="fantasy-props-treasure-pile", pack="fantasy", category="props", name="Dragon Hoard", root=root,
                  sockets=[Socket("socket-glint", at=(CX, 17, CZ))],
-                 pfx=[{"effectId": "rvx-fantasy-treasure-glint", "socket": "socket-glint", "trigger": "idle", "size": 40}])
+                 pfx=[{"effectId": "rvx-fantasy-treasure-glint", "socket": "socket-glint", "trigger": "idle", "size": 26}])

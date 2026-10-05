@@ -62,4 +62,4 @@ def build() -> Asset:
     root = Part("alchemy-table", g)
     return Asset(id="fantasy-props-alchemy-table", pack="fantasy", category="props", name="Alchemy Table", root=root,
                  sockets=[Socket("socket-brew", at=(fx, b0 + 12, fz))],
-                 pfx=[{"effectId": "rvx-fantasy-potion-fizz", "socket": "socket-brew", "trigger": "manual", "size": 18}])
+                 pfx=[{"effectId": "rvx-fantasy-potion-fizz", "socket": "socket-brew", "trigger": "manual", "size": 12}])

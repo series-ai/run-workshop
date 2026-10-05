@@ -19,6 +19,7 @@ export const SPACE_RECIPES: RvxRecipe[] = [
     colors: [t('cyan', 6), t('cyan', 7)],
     core: dim(t('cyan', 5), 0.28),
     ring: t('cyan', 6),
+    dome: dim(t('cyan', 7), 0.45),
     radius: 0.55,
     spin: 1.2,
     rise: 0,
@@ -100,7 +101,8 @@ export const SPACE_RECIPES: RvxRecipe[] = [
     motes: [t('lime', 7), WHITE],
     length: 1.6,
     width: 0.35,
-    oneShotDuration: 0.6,
+    // the drone's attack clip rights it at about 0.8 s: the beam ends before then
+    oneShotDuration: 0.4,
   }),
   spray({ ...id('acid-spray', 'acid spray'), source: 'xeno queen attack', effectType: 'elemental', role: 'release' }, {
     kind: 'puff',

@@ -168,4 +168,5 @@ def build():
     return world("upright-coffin", "animated-props", "Upright Coffin", root,
                  clips=[Clip("open", open_k, loop=False), Clip("close", close_k, loop=False), Clip("idle", idle_k)],
                  sockets=[Socket("socket-inside", at=inside, parent="coffin")],
-                 pfx=[pfx("rvx-monster-grave-mist", "socket-inside", "clip:open", size=18)])
+                 # the mist pours out of the open front at the foot, not around the chest
+                 pfx=[pfx("rvx-monster-grave-mist", "socket-inside", "clip:open", size=14, offset=(0.0, -8.0, -5.0))])

@@ -21,6 +21,7 @@ OUT = os.path.join(os.path.dirname(__file__), "..", "assets", "run-voxel")
 S = 256  # cell size for shapes
 SHADE = (196, 196, 196, 255)  # the shadow facet: about 77% of the tint
 WHITE = (255, 255, 255, 255)
+RIM = (70, 70, 70, 255)  # a glyph's dark outline: about 27% of the tint
 
 
 def blank(w: int = S, h: int = S) -> Image.Image:
@@ -226,6 +227,8 @@ def pixel_art(rows: list[str], scale: int) -> Image.Image:
                 px[x, y] = WHITE
             elif ch == "+":
                 px[x, y] = SHADE
+            elif ch == "o":
+                px[x, y] = RIM
     return im.resize((w * scale, h * scale), Image.NEAREST)
 
 
@@ -363,6 +366,16 @@ BATS = [
 ]
 
 
+def bold(rows: list[str]) -> list[str]:
+    """A dark rim (`o`) around every stroke, one pixel wide on all eight sides:
+    the strokes keep their shape, and the glyph gains the weight that a bare
+    1-pixel stroke lacks at particle size."""
+    h, w = len(rows), len(rows[0])
+    lit = lambda x, y: 0 <= x < w and 0 <= y < h and rows[y][x] == "#"  # noqa: E731
+    near = lambda x, y: any(lit(x + dx, y + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1))  # noqa: E731
+    return ["".join("#" if lit(x, y) else "o" if near(x, y) else "." for x in range(w)) for y in range(h)]
+
+
 def pixel_sheet(frames: list[list[str]], columns: int) -> Image.Image:
     cells = [pixel_art(f, 8) for f in frames]
     rows = math.ceil(len(cells) / columns)
@@ -387,7 +400,7 @@ def main() -> None:
         "drop": drop(),
         "beam": beam(),
         "trail": trail(),
-        "runes": pixel_sheet(RUNES, 2),
+        "runes": pixel_sheet([bold(r) for r in RUNES], 2),
         "skull": pixel_art(SKULL, 8),
         # Eight frames, wings up and down in turn: a bat flaps four times per life.
         "bat": pixel_sheet(BATS * 4, 4),

@@ -225,4 +225,4 @@ def build():
     return world("vampire-lord", "creatures", "Vampire Lord", root,
                  clips=[Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False), Clip("idle", idle)],
                  sockets=[Socket("socket-chest", at=chest, parent="body"), Socket("socket-claw-r", at=claw_r, parent="arm-r"), Socket("socket-mouth", at=mouth, parent="head")],
-                 pfx=[pfx("rvx-monster-blood-moon-aura", "socket-chest", "idle", size=110), pfx("rvx-monster-bat-burst", "socket-claw-r", "clip:attack", size=60, at=0.48), pfx("rvx-monster-blood-splat", "socket-mouth", "clip:hit", size=36)])
+                 pfx=[pfx("rvx-monster-blood-moon-aura", "socket-chest", "idle", size=110), pfx("rvx-monster-bat-burst", "socket-claw-r", "clip:attack", size=100, at=0.48), pfx("rvx-monster-blood-splat", "socket-mouth", "clip:hit", size=56)])

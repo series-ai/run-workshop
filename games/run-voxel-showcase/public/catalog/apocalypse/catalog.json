@@ -1167,7 +1167,7 @@
      "effectId": "rvx-apocalypse-saw-sparks",
      "socket": "socket-saw",
      "trigger": "clip:attack",
-     "size": 26,
+     "size": 38,
      "at": 0.4
     },
     {
@@ -1232,7 +1232,7 @@
      "effectId": "rvx-apocalypse-toxic-bubbles",
      "socket": "socket-belly",
      "trigger": "idle",
-     "size": 18
+     "size": 28
     },
     {
      "effectId": "rvx-apocalypse-vomit-spray",

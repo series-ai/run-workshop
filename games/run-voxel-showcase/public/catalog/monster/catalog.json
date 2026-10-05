@@ -443,7 +443,12 @@
      "effectId": "rvx-monster-grave-mist",
      "socket": "socket-inside",
      "trigger": "clip:open",
-     "size": 18
+     "size": 14,
+     "offset": [
+      0,
+      -8,
+      -5
+     ]
     }
    ],
    "route": "code",
@@ -1214,14 +1219,14 @@
      "effectId": "rvx-monster-bat-burst",
      "socket": "socket-claw-r",
      "trigger": "clip:attack",
-     "size": 60,
+     "size": 100,
      "at": 0.48
     },
     {
      "effectId": "rvx-monster-blood-splat",
      "socket": "socket-mouth",
      "trigger": "clip:hit",
-     "size": 36
+     "size": 56
     }
    ],
    "route": "code",
@@ -1236,7 +1241,7 @@
    "filename": "monster-creatures-wailing-ghost.glb",
    "relativePath": "creatures/monster-creatures-wailing-ghost.glb",
    "leaf": "world",
-   "sizeBytes": 49896,
+   "sizeBytes": 50072,
    "bounds": {
     "min": [
      -21.5,
@@ -3672,10 +3677,10 @@
    ],
    "pfx": [
     {
-     "effectId": "rvx-monster-candle-flame",
+     "effectId": "rvx-monster-ghost-lantern",
      "socket": "socket-lantern",
      "trigger": "idle",
-     "size": 14
+     "size": 44
     }
    ],
    "route": "code",
@@ -3830,7 +3835,13 @@
      "effectId": "rvx-monster-ghost-lantern",
      "socket": "socket-lamp",
      "trigger": "idle",
-     "size": 24
+     "size": 32
+    },
+    {
+     "effectId": "rvx-monster-ghost-lantern",
+     "socket": "socket-lamp-r",
+     "trigger": "idle",
+     "size": 32
     }
    ],
    "route": "code",

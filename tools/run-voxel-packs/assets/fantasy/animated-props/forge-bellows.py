@@ -146,4 +146,4 @@ def build():
     return asset("animated-props", "forge-bellows", "Forge with Bellows", root,
                  clips=[Clip("idle", idle), Clip("active", active)],
                  sockets=[Socket("socket-coals", at=to_root((CX, HY + 3.0, CZ - 1.0))), Socket("socket-chimney", at=to_root((CX + 1.0, 40.0, CZ + 0.5)))],
-                 fx=[pfx("rvx-fantasy-forge-flare", "socket-coals", "clip:active", size=30), pfx("rvx-fantasy-chimney-smoke", "socket-chimney", "idle", size=18)])
+                 fx=[pfx("rvx-fantasy-forge-flare", "socket-coals", "clip:active", size=30, aim=(0.0, 0.6, -0.8)), pfx("rvx-fantasy-chimney-smoke", "socket-chimney", "idle", size=18)])

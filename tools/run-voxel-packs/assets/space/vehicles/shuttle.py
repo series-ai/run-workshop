@@ -165,6 +165,6 @@ def build() -> Asset:
         id="space-vehicles-shuttle", pack="space", category="vehicles", name="Orbital Shuttle", root=root,
         clips=[Clip("idle", {"flames": {"scale": flick}}), Clip("move", move)],
         sockets=[Socket("socket-warp", at=rel(pv, (CX, 30, ENG_Z + 2))), Socket("socket-engine", at=rel(pv, (CX, 24, ENG_Z + 2)))],
-        pfx=[{"effectId": "rvx-space-warp-jump", "socket": "socket-warp", "trigger": "manual", "size": 60, "aim": [0.0, 0.0, 1.0]},
+        pfx=[{"effectId": "rvx-space-warp-jump", "socket": "socket-warp", "trigger": "manual", "size": 40, "aim": [0.0, 0.0, 1.0]},
              {"effectId": "rvx-space-engine-exhaust", "socket": "socket-engine", "trigger": "clip:move", "size": 36, "aim": [0.0, 0.0, 1.0]}],
     )

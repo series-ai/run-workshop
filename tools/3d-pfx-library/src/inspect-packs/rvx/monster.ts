@@ -10,7 +10,8 @@ const id = (slug: string, label: string) => ({ id: `rvx-monster-${slug}`, label:
 const GHOST = [t('teal', 6), t('teal', 7), hex('#dff7f2')]
 const BLOOD = [t('red', 3), t('red', 4), t('blood', 4)]
 const AURA = [t('red', 5), t('red', 6), t('magenta', 6)]
-const BATS = [t('purple', 4), t('stone', 3)]
+// two shades lighter than a silhouette, so the bats read on dark ground too
+const BATS = [t('purple', 6), t('purple', 5)]
 const ROT = [t('toxic', 5), t('moss', 5), t('toxic', 6)]
 const HOLY = [t('bone', 7), hex('#fff1b8')]
 
@@ -26,7 +27,7 @@ export const MONSTER_RECIPES: RvxRecipe[] = [
     rise: 1.5,
   }),
   mist({ ...id('grave-mist', 'grave mist'), source: 'coffins, trapdoor, fog pit', effectType: 'smoke', role: 'loop' }, {
-    colors: [t('purple', 6), t('stone', 6), t('purple', 7)],
+    colors: [t('purple', 6), t('purple', 7), t('magenta', 7)],
     motes: [t('teal', 7)],
   }),
   mist({ ...id('ghost-wake', 'ghost wake'), source: 'ghost ship stern', effectType: 'movement', role: 'trail' }, {
@@ -112,7 +113,7 @@ export const MONSTER_RECIPES: RvxRecipe[] = [
     pieces: { texture: 'rvx-skull', colors: [t('toxic', 7)], count: 1, size: 0.3, gravity: -0.1 },
   }),
   waves({ ...id('screech', 'screech'), source: 'vampire bat attack', effectType: 'horror', role: 'release' }, {
-    color: t('purple', 7),
+    color: t('magenta', 6),
     face: true,
     count: 2,
     size: 0.9,

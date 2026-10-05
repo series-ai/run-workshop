@@ -181,5 +181,6 @@ def build():
              "leg-l": {"rot": keys((0, 0, 0, 0), (1.4, -20, 0, 0))}}
     return asset("creatures", "ent", "Elder Ent", root,
                  clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
-                 sockets=[Socket("socket-slam", at=to_root((CX, 1.0, CZ - 16)))],
-                 fx=[pfx("rvx-fantasy-dust-slam", "socket-slam", "clip:attack", size=44, at=0.52), pfx("rvx-fantasy-leaf-fall", "socket-slam", "idle", size=40)])
+                 # leaves fall from under the canopy, which they follow as it sways
+                 sockets=[Socket("socket-slam", at=to_root((CX, 1.0, CZ - 16))), Socket("socket-canopy", at=to_root((CX, CROWN_Y + 4, CZ)), parent="crown")],
+                 fx=[pfx("rvx-fantasy-dust-slam", "socket-slam", "clip:attack", size=44, at=0.52), pfx("rvx-fantasy-leaf-fall", "socket-canopy", "idle", size=40)])
