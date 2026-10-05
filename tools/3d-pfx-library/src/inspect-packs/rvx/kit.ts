@@ -366,9 +366,27 @@ export function orbit(
     layers.push(
       ring({ name: 'Ring', billboard: 'horizontal', burst: undefined, rate: 1, life: constant(1), size: constant(r * 2.3), sizeCurve: [{ t: 0, v: 0.85 }, { t: 1, v: 1.05 }], colorOverLife: FADE_IN_OUT, color: [o.ring] }),
     )
-  // `dome`: hex cells that twinkle on a hemisphere shell give the field its curve. (A rim
-  // facing the camera read as a flat circle, not a dome.)
-  if (o.dome)
+  // `dome`: latitude rings stacked up a hemisphere draw its curve from every side, and hex
+  // cells twinkle on the shell between them. (A rim facing the camera read as a flat circle;
+  // the cells alone were too sparse to read as a surface.)
+  if (o.dome) {
+    for (const [n, lat] of [20, 45, 70].entries()) {
+      const a = (lat * Math.PI) / 180
+      layers.push(
+        ring({
+          name: `DomeRing${n + 1}`,
+          billboard: 'horizontal',
+          burst: undefined,
+          rate: 2,
+          life: constant(1),
+          size: constant(r * 2.1 * Math.cos(a)),
+          sizeCurve: [{ t: 0, v: 1 }, { t: 1, v: 1 }],
+          localPosition: [0, r * 1.02 * Math.sin(a), 0],
+          colorOverLife: FADE_IN_OUT,
+          color: [dim(o.dome, 0.9 - n * 0.15)],
+        }),
+      )
+    }
     layers.push(
       cubes({
         name: 'DomeCells',
@@ -382,6 +400,7 @@ export function orbit(
         color: [o.dome, o.colors[0]!],
       }),
     )
+  }
   // `lift` moves the whole orbit along +Y, e.g. in front of a solid portal face.
   const lifted = o.lift ? layers.map((l) => ({ ...l, localPosition: [0, o.lift!, 0] as [number, number, number] })) : layers
   return loop(meta, 2, lifted)
