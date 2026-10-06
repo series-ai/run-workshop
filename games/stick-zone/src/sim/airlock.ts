@@ -480,12 +480,22 @@ export async function authoritativeLedgerCommit(
     // commit with backoff until the custody gate confirms the verified hold (bounded to
     // 15s of wall time — the relay never relaxes its own verification).
     let lastErrText = "";
-    // Bounded eventual-consistency window: retries stop at the elapsed deadline (~15s
-    // wall time) regardless of round count; only the custody-verification race is
-    // retried — permanent rejections surface immediately.
+    // Bounded eventual-consistency window (~15s wall): the deadline is applied to EACH
+    // round (request + backoff must both fit in the remaining window), and only the
+    // custody-verification race / transient network failures are retried — permanent
+    // rejections surface immediately.
     const commitDeadline = Date.now() + 15000;
+    const __isTransient = (msg: string) =>
+      msg.includes("hold not completed") ||
+      msg.includes("pending revocation") ||
+      msg.includes("corridor presentation in progress") ||
+      msg.includes("Unreachable") ||
+      msg.includes("unreachable") ||
+      msg.includes("Network") ||
+      msg.includes("fetch");
     for (let commitRound = 0; commitRound < 40 && !data; commitRound++) {
-      if (Date.now() > commitDeadline) break;
+      const __remaining = commitDeadline - Date.now();
+      if (__remaining <= 0) break;
       const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
       const tid = ctrl ? setTimeout(() => ctrl.abort(), 4000) : null;
       try {
@@ -518,12 +528,22 @@ export async function authoritativeLedgerCommit(
       } finally {
         if (tid) clearTimeout(tid);
       }
-      if (!data && commitRound < 39) {
-        await new Promise((r) => setTimeout(r, 300));
+      if (!data) {
+        if (!__isTransient(lastErrText)) {
+          break; // Permanent rejection: surface immediately
+        }
+        const __rem = commitDeadline - Date.now();
+        if (__rem <= 300) break;
+        await new Promise((r) => setTimeout(r, Math.min(300, __rem)));
       }
     }
     if (!data) {
-      throw new Error(`Commit rejected after bounded retries: ${lastErrText}`);
+      const __deadlineHit = Date.now() >= commitDeadline;
+      throw new Error(
+        (__deadlineHit && __isTransient(lastErrText))
+          ? `Settlement custody verification not confirmed within the bounded retry window: ${lastErrText}`
+          : `Commit rejected: ${lastErrText}`
+      );
     }
     if (data) {
       ledger.auditLog.set(data.receipt.receiptId, JSON.parse(JSON.stringify(data.receipt)));

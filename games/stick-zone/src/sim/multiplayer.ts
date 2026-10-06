@@ -83,6 +83,10 @@ export interface KickActionPacketData {
   rivalTargets?: Array<{ id: string; x?: number; z?: number; damage: number; knockX?: number; knockZ?: number; predictedHealth?: number; predictedArmor?: number }>;
 }
 
+export interface MachineRosterPacketData {
+  machines?: Array<{ id: string; type?: string; x?: number; y?: number; z?: number; facing?: number; health?: number; isAlive?: boolean; originX?: number; originZ?: number }>;
+}
+
 export interface MachineAttackPacketData {
   machineId?: string;
   machineType?: string;
@@ -219,6 +223,7 @@ export type PeerPacket =
   | (PeerPacketBase & { type: 'crate_looted'; data: CrateLootPacketData })
   | (PeerPacketBase & { type: 'machine_hit'; data: MachineHitPacketData })
   | (PeerPacketBase & { type: 'machine_attack'; data: MachineAttackPacketData })
+  | (PeerPacketBase & { type: 'machine_roster'; data: MachineRosterPacketData })
   | (PeerPacketBase & { type: 'exfil_success'; data: ExfilSuccessPacketData })
   | (PeerPacketBase & { type: 'ingress_request'; data?: IngressRequestPacketData })
   | (PeerPacketBase & { type: 'ingress_snapshot'; data: IngressSnapshotPacketData })
@@ -964,8 +969,16 @@ export class MultiplayerCoordinator {
         .then((data) => {
           const serverTick = data?.raidTick;
           if (typeof serverTick === "number" && Number.isFinite(serverTick) && serverTick > this.sim.tick && serverTick <= 57600) {
-            // Fast-forward only: the local tick never runs AHEAD of the server clock.
+            // Fast-forward only — and CONSUME the equivalent elapsed time from the
+            // frame accumulator (exposed by App via __stickZoneConsumeAccumulatorMs),
+            // so the frame loop cannot re-execute the reconciled interval and the
+            // local clock doubles no time (single-owner tick advancement).
+            const advancedTicks = Math.floor(serverTick) - this.sim.tick;
             this.sim.tick = Math.floor(serverTick);
+            const consume = (globalThis as any).__stickZoneConsumeAccumulatorMs;
+            if (typeof consume === "function") {
+              try { consume((advancedTicks * 1000) / 60); } catch {}
+            }
           }
         })
         .catch(() => {});
@@ -1765,8 +1778,9 @@ export class MultiplayerCoordinator {
     if (!packet.eventId || typeof packet.eventId !== "string" || packet.eventId.trim() === "") {
       return;
     }
-    const dedupNamespace = (packet as any).serverAuthoritative === true
-      ? "srv"
+    const isServerOrigin = !(packet as any)._fromBroadcastChannel && (packet.senderId === "server" || (packet as any).senderName === "CENTRAL COMMAND");
+    const dedupNamespace = isServerOrigin
+      ? `srv:${typeof packet.raidId === "string" ? packet.raidId : "any"}`
       : `${typeof packet.raidId === "string" ? packet.raidId : "any"}:${(packet as any).senderId || "unknown"}`;
     const dedupKey = `${dedupNamespace}:${packet.eventId}`;
     if (this.seenEvents.has(dedupKey)) return;
@@ -2591,6 +2605,48 @@ export class MultiplayerCoordinator {
         }
         this.sim.claimCrateLocally(crateId, packet.senderId, claimTimestamp || packet.timestamp);
       }
+    } else if (packet.type === 'machine_roster') {
+      // Versioned full-roster reconciliation: adopts the RELAY-DEPLOYED machine set —
+      // membership (add/remove), type, placement geometry, patrol origins, vitals. Only
+      // server-stamped rosters (never BroadcastChannel copies) apply.
+      const relayStamped = (packet as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel;
+      if (!relayStamped) return;
+      if (packet.senderId && packet.senderId !== "server") return;
+      if (typeof packet.raidId === "string" && packet.raidId !== this.sim.raidId) return;
+      const d = packet.data as any;
+      if (!d || !Array.isArray(d.machines)) return;
+      const next = this.sim.machines;
+      // Reconcile by ID: update membership + truth for each custody machine
+      for (const rm of d.machines) {
+        if (!rm || typeof rm.id !== "string") continue;
+        const existingIdx = next.findIndex((m) => m.id === rm.id);
+        const validVitals = typeof rm.health !== "number" || (Number.isFinite(rm.health) && rm.health >= 0);
+        if (!validVitals) continue;
+        const rosterRecord = {
+          id: rm.id,
+          type: (rm.type === "turret" || rm.type === "drone") ? rm.type : "turret",
+          x: typeof rm.x === "number" && Number.isFinite(rm.x) ? rm.x : (existingIdx !== -1 ? next[existingIdx].x : 0),
+          y: typeof rm.y === "number" && Number.isFinite(rm.y) ? rm.y : 0,
+          z: typeof rm.z === "number" && Number.isFinite(rm.z) ? rm.z : (existingIdx !== -1 ? next[existingIdx].z : 0),
+          facing: typeof rm.facing === "number" && Number.isFinite(rm.facing) ? rm.facing : 0,
+          health: typeof rm.health === "number" && Number.isFinite(rm.health) ? Math.min(1000, Math.max(0, rm.health)) : (existingIdx !== -1 ? next[existingIdx].health : 120),
+          isAlive: rm.isAlive !== false,
+          cooldownTicks: existingIdx !== -1 ? next[existingIdx].cooldownTicks : 0,
+          originX: rm.originX,
+          originZ: rm.originZ,
+        } as any;
+        if (existingIdx !== -1) {
+          next[existingIdx] = { ...next[existingIdx], ...rosterRecord, ...(rosterRecord.originX !== undefined ? { originX: rosterRecord.originX, originZ: rosterRecord.originZ } : {}) };
+        } else {
+          next.push(rosterRecord);
+        }
+      }
+      // Remove local machines absent from the authoritative roster
+      const custodyIds = new Set(d.machines.map((rm: any) => rm && rm.id).filter(Boolean));
+      for (let i = next.length - 1; i >= 0; i--) {
+        if (!custodyIds.has(next[i].id)) next.splice(i, 1);
+      }
+      this.sim.combatLog.push(`[MACHINE AUTHORITY] Roster reconciled: ${d.machines.length} machine(s)`);
     } else if (packet.type === 'machine_attack') {
       // Server-side machine attack authority: relay-computed machine fire with custody
       // vitals. Only honoured when relay-stamped — broadcast-channel copies are ignored.

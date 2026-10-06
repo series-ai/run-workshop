@@ -506,9 +506,17 @@ export const App: React.FC = () => {
 
     // Fixed-timestep 60Hz accumulator simulation loop
     let lastTime = performance.now();
+    // Ref-backed accumulator: raid-clock reconciliation (multiplayer.ts) consumes
+    // accumulated elapsed time via __stickZoneConsumeAccumulatorMs when it
+    // fast-forwards the tick — single-owner tick advancement, no double counting.
+    const accumulatorRef = { current: 0 };
     let accumulator = 0;
     const dt = 1000 / 60;
     let animId: number;
+    (globalThis as any).__stickZoneConsumeAccumulatorMs = (ms: number) => {
+      accumulator = Math.max(0, accumulator - ms);
+      accumulatorRef.current = accumulator;
+    };
 
     const loop = (currentTime: number) => {
       let delta = currentTime - lastTime;
@@ -522,9 +530,11 @@ export const App: React.FC = () => {
       // catch-up; local execution resumes from the next frame's tick window.
       if (delta > 5000) {
         accumulator = 0;
+        accumulatorRef.current = 0;
         delta = 0;
       }
       accumulator += delta;
+      accumulatorRef.current = accumulator;
 
       let steps = 0;
       while (accumulator >= dt && steps < 10) {
@@ -628,6 +638,7 @@ export const App: React.FC = () => {
         }
 
         accumulator -= dt;
+        accumulatorRef.current = accumulator;
         steps++;
       }
 

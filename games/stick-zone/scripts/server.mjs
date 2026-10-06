@@ -1139,6 +1139,21 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
 
       const machines = getRaidMachines(raidId);
       const idx = machines.findIndex((m) => m.id === machineId);
+      // Full-transaction snapshot (machine list + health map + deployment record) taken
+      // BEFORE any mutation; place/replace/remove all restore through __restoreMachines.
+      const __mListBefore = machines.map((m) => ({ ...m }));
+      const __mRrec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
+      const __mHealthBefore = __mRrec && __mRrec.machines ? JSON.parse(JSON.stringify(__mRrec.machines)) : null;
+      const __mDeployBefore = __mRrec && __mRrec.machineDeployment ? JSON.parse(JSON.stringify(__mRrec.machineDeployment)) : null;
+      const __restoreMachines = () => {
+        machines.length = 0;
+        for (const m of __mListBefore) machines.push(m);
+        if (__mRrec) {
+          if (__mHealthBefore) __mRrec.machines = JSON.parse(JSON.stringify(__mHealthBefore));
+          if (__mDeployBefore) __mRrec.machineDeployment = JSON.parse(JSON.stringify(__mDeployBefore));
+          else if (__mRrec.machineDeployment !== undefined) delete __mRrec.machineDeployment;
+        }
+      };
 
       if (action === "remove") {
         if (idx === -1) {
@@ -1154,8 +1169,36 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           rRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs }));
         }
         if (settlement.saveToDisk) {
-          try { settlement.saveToDisk(); } catch { /* removal is memory-effective; next successful save syncs */ }
+          try {
+            settlement.saveToDisk();
+          } catch (removePersistErr) {
+            __restoreMachines();
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: "Machine removal persistence failed; deployment state restored" }));
+            return;
+          }
         }
+        // Versioned full-roster broadcast: connected raid clients reconcile their machine
+        // world (membership, geometry, patrol origins, vitals) to the deployment truth.
+        const rosterMsg = {
+          eventId: `machine_roster_${raidId}_${Date.now()}`,
+          type: "machine_roster",
+          senderId: "server",
+          senderName: "CENTRAL COMMAND",
+          raidId,
+          timestamp: Date.now(),
+          serverAuthoritative: true,
+          data: { machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ })) },
+        };
+        try {
+          const __rosterOut = JSON.stringify(rosterMsg);
+          for (const client of wss.clients) {
+            if (client.readyState === 1 && client.authenticated && client.raidId === raidId) {
+              try { client.send(__rosterOut); } catch {}
+            }
+          }
+        } catch {}
         res.setHeader("Content-Type", "application/json");
         res.end(JSON.stringify({ success: true, action, raidId, machineId, removedType: removed.type }));
         return;
@@ -1187,17 +1230,31 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           try {
             settlement.saveToDisk();
           } catch (deployPersistErr) {
-            // Restore the in-memory machine list + custody to the pre-deployment state
-            const placementIdx = machines.findIndex((m) => m && m.id === machineId);
-            if (placementIdx !== -1) {
-              if (idx !== -1) machines.splice(placementIdx, 1);
-              else machines.splice(placementIdx, 1);
-            }
-            delete rRec.machines[machineId];
+            // Restore the COMPLETE pre-deployment state (list + health map + deployment record)
+            __restoreMachines();
             throw new Error("Machine deployment persistence failed");
           }
         }
       }
+      // Versioned full-roster broadcast (place): connected raid clients reconcile their
+      // machine world (membership, geometry, patrol origins, vitals) to the deployment truth.
+      try {
+        const __placeRosterOut = JSON.stringify({
+          eventId: `machine_roster_${raidId}_${Date.now()}`,
+          type: "machine_roster",
+          senderId: "server",
+          senderName: "CENTRAL COMMAND",
+          raidId,
+          timestamp: Date.now(),
+          serverAuthoritative: true,
+          data: { machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ })) },
+        });
+        for (const client of wss.clients) {
+          if (client.readyState === 1 && client.authenticated && client.raidId === raidId) {
+            try { client.send(__placeRosterOut); } catch {}
+          }
+        }
+      } catch {}
       res.setHeader("Content-Type", "application/json");
       res.end(JSON.stringify({ success: true, action, raidId, machine: { id: machineId, type, x, z, health } }));
     });
@@ -1872,6 +1929,19 @@ wss.on("connection", (ws, req) => {
             return;
           }
 
+          // DURABLE TRANSACTION: capture the COMPLETE movement state (budget, timestamps,
+          // roll state, action) and custody snapshot BEFORE the first mutation, so a
+          // failed persistence restores the exact prior world. ONE save commits the
+          // accepted packet (all nested per-action saves were removed).
+          const __txMoveBefore = Object.assign({}, moveState, {
+            rollStartedAt: moveState.rollStartedAt,
+            lastRollStartedAt: moveState.lastRollStartedAt,
+            action: moveState.action,
+          });
+          const __txRrec = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
+          const __txOrec = __txRrec?.operatives?.[ws.operativeId];
+          const __txCustodyBefore = __txOrec ? JSON.parse(JSON.stringify(__txOrec)) : null;
+
           // Deduct consumed distance from budget!
           moveState.budget -= dist;
           moveState.x = px;
@@ -1972,53 +2042,33 @@ wss.on("connection", (ws, req) => {
           }
         }
 
-        // Durable state transaction (single owner): the accepted position, observation
-        // time, vitals, and any hold-broken custody change are committed as ONE snapshot
-        // BEFORE the packet is relayed. On persistence failure the COMPLETE prior state
-        // (movement + custody) is restored and the packet is dropped — memory never
-        // drifts ahead of disk, and peers never see persisted-but-uncommitted state.
+        // Authoritative life-state clamp for the relayed view
         packet.data.health = moveState.health;
         if (typeof moveState.armor === "number") {
           packet.data.armor = moveState.armor;
         }
         packet.data.isAlive = moveState.isAlive;
 
-        // Synchronize authoritative settlement custody with accepted position (same transaction)
+        // Synchronize authoritative settlement custody with the accepted packet, then
+        // commit the WHOLE transaction (position + observation time + vitals + any
+        // hold revocation) with exactly ONE save before relay. On failure the complete
+        // pre-transaction snapshots are restored and the packet is dropped — memory
+        // never drifts ahead of disk, peers never see uncommitted state.
         const rRec = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
         const oRec = rRec?.operatives?.[ws.operativeId];
-        const __custodyBefore = oRec ? JSON.parse(JSON.stringify(oRec)) : null;
-        const __moveBefore = { x: moveState.x, z: moveState.z, health: moveState.health, armor: moveState.armor, isAlive: moveState.isAlive, isKia: moveState.isKia };
-        try {
         if (oRec) {
           oRec.lastObservedX = px;
           oRec.lastObservedZ = pz;
           oRec.hasLiveMovement = true;
+          oRec.lastObservedTimestamp = Date.now();
           oRec.health = Math.max(0, Math.min(100, moveState.health ?? 100));
           oRec.armor = Math.max(0, Math.min(100, moveState.armor ?? 100));
           oRec.isAlive = moveState.isAlive;
-          if (moveState.health <= 0) {
-            oRec.isKia = true;
-          }
+          if (moveState.health <= 0) oRec.isKia = true;
+          delete oRec.pendingRevocationSave; // resolved within this commit
+
           const distToLz = Math.hypot(px - 45.0, pz - 45.0);
-
-          // Retry pending revocation saves independently of position
-          if (oRec.pendingRevocationSave) {
-            if (distToLz <= 6.0 && (oRec.holdTicks > 0 || oRec.holdCompleted)) {
-              delete oRec.pendingRevocationSave;
-            } else {
-              delete oRec.pendingRevocationSave;
-              if (typeof settlement.saveToDisk === "function") {
-                try {
-                  settlement.saveToDisk();
-                } catch {
-                  oRec.pendingRevocationSave = true;
-                }
-              }
-            }
-          }
-
           if (distToLz > 6.0) {
-            const hadHold = oRec.holdCompleted || (oRec.holdTicks && oRec.holdTicks > 0) || oRec.holdCompletedAtTick || oRec.holdStartTick !== undefined;
             if (typeof settlement.resetOperativeHoldAttempt === "function") {
               settlement.resetOperativeHoldAttempt(ws.raidId, ws.operativeId);
             } else {
@@ -2033,15 +2083,6 @@ wss.on("connection", (ws, req) => {
               oRec.holdCompletedAtTick = undefined;
               oRec.holdCompletedTimestamp = undefined;
             }
-            if (hadHold) {
-              if (typeof settlement.saveToDisk === "function") {
-                try {
-                  settlement.saveToDisk();
-                } catch {
-                  oRec.pendingRevocationSave = true;
-                }
-              }
-            }
           }
         }
 
@@ -2051,32 +2092,22 @@ wss.on("connection", (ws, req) => {
           }
         }
 
-        // Commit the transaction: observation time + the full custody change persist
-        // BEFORE relay. On persistence failure restore the complete pre-transaction
-        // snapshot (movement + custody) and drop the packet — memory never drifts
-        // ahead of disk, and peers never see uncommitted accepted state.
-        if (oRec) oRec.lastObservedTimestamp = Date.now();
-        } catch (persistErr) {
-          Object.assign(moveState, __moveBefore);
-          if (oRec && __custodyBefore) {
-            for (const __k of Object.keys(oRec)) delete oRec[__k];
-            Object.assign(oRec, __custodyBefore);
-          }
-          return;
-        }
+        // Single durable commit of the accepted packet
         if (settlement.saveToDisk) {
           try {
             settlement.saveToDisk();
-          } catch (latePersistErr) {
-            Object.assign(moveState, __moveBefore);
-            if (oRec && __custodyBefore) {
+          } catch (__txPersistErr) {
+            for (const __k of Object.keys(moveState)) delete moveState[__k];
+            Object.assign(moveState, __txMoveBefore);
+            if (oRec && __txCustodyBefore) {
               for (const __k of Object.keys(oRec)) delete oRec[__k];
-              Object.assign(oRec, __custodyBefore);
+              Object.assign(oRec, __txCustodyBefore); // ✓ pre-mutation snapshot
             }
             return;
           }
         }
       }
+
       if (packet.senderName === "CENTRAL COMMAND" || packet.senderName === "system" || packet.senderName === "server") {
         packet.senderName = ws.operativeId === "op_bravo_1" ? "INFILTRATOR PHANTOM-1" : "OPERATIVE ALPHA";
       }
@@ -2970,7 +3001,30 @@ wss.on("connection", (ws, req) => {
       }
       if (settlement.raids) {
         for (const [rid, rrec] of settlement.raids.entries()) {
-          if (rrec && rrec.status === "active") raidsWithClients.add(rid);
+          if (!(rrec && rrec.status === "active")) continue;
+          raidsWithClients.add(rid);
+          // Cold restart recovery: the volatile movement-state map starts empty, so
+          // rebuild accepted operative states from ACTIVE raid custody (persisted
+          // position evidence) BEFORE this tick's machine authority — machine fire
+          // and hold verification share the same session-validity basis.
+          for (const [copId, cop] of Object.entries(rrec.operatives || {})) {
+            if (!cop || cop.isKia || cop.isAlive === false || cop.isExtracted) continue;
+            const ckey = `${rid}:${copId}`;
+            if (operativeMovementStates.has(ckey)) continue;
+            if (typeof cop.lastObservedX !== "number" || typeof cop.lastObservedZ !== "number") continue;
+            if (typeof cop.lastObservedTimestamp !== "number" || (Date.now() - cop.lastObservedTimestamp) > 30000) continue;
+            operativeMovementStates.set(ckey, {
+              x: cop.lastObservedX,
+              z: cop.lastObservedZ,
+              health: typeof cop.health === "number" ? cop.health : 100,
+              armor: typeof cop.armor === "number" ? cop.armor : 100,
+              isAlive: true,
+              lastServerTime: 0,
+              budget: 2.0,
+              packetTimestamp: 0,
+              timestamp: 0,
+            });
+          }
         }
       }
       for (const raidId of raidsWithClients) {
