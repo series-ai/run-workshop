@@ -514,8 +514,12 @@ export const App: React.FC = () => {
     const dt = 1000 / 60;
     let animId: number;
     (globalThis as any).__stickZoneConsumeAccumulatorMs = (ms: number) => {
+      // Single-owner clock correction: drain the backpacked accumulator AND advance
+      // the frame timestamp by the same interval, so the next frame's delta begins
+      // AFTER the reconciled window (time can never be counted twice).
       accumulator = Math.max(0, accumulator - ms);
       accumulatorRef.current = accumulator;
+      lastTime = Math.min(performance.now(), lastTime + ms);
     };
 
     const loop = (currentTime: number) => {

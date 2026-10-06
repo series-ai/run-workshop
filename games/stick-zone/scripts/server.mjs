@@ -263,12 +263,13 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
   function getRaidMachines(raidId) {
     const rRecord = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
     if (!raidMachines.has(raidId)) {
-      if (rRecord && Array.isArray(rRecord.machineDeployment)) {
+      if (rRecord && machineDeploymentValid(rRecord.machineDeployment)) {
         // Full deployment persistence: restarts rebuild the COMPLETE machine set (placed
         // AND removed machines) from custody — the machine array is truth, the map of
         // health snapshots mirrors it.
         const machines = rRecord.machineDeployment.map((m) => ({
           ...m,
+          maxHealth: 1000,
           health: (rRecord.machines && rRecord.machines[m.id] && typeof rRecord.machines[m.id].health === "number")
             ? rRecord.machines[m.id].health
             : m.health,
@@ -280,8 +281,8 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         return machines;
       }
       const defaultMachines = [
-        { id: "turret_depot_alpha", type: "turret", x: -5, y: 0, z: 12, facing: Math.PI, health: 120, isAlive: true, cooldownTicks: 0 },
-        { id: "drone_patrol_beta", type: "drone", x: 14, y: 2.2, z: -8, facing: -Math.PI / 2, health: 75, isAlive: true, cooldownTicks: 0 },
+        { id: "turret_depot_alpha", type: "turret", x: -5, y: 0, z: 12, facing: Math.PI, health: 120, isAlive: true, cooldownTicks: 0, maxHealth: 120 },
+        { id: "drone_patrol_beta", type: "drone", x: 14, y: 2.2, z: -8, facing: -Math.PI / 2, health: 75, isAlive: true, cooldownTicks: 0, maxHealth: 75 },
       ];
       if (rRecord && rRecord.machines) {
         for (const m of defaultMachines) {
@@ -309,7 +310,35 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
   // raidTick * 0.012) — the server computes positions itself instead of trusting
   // client-claimed target positions during hit geometry validation.
   const DRONE_PATROL = { speed: 0.012, ampX: 5.0, ampZ: 3.5 };
+  // Monotonic roster revision per raid: bumped on every committed deployment change;
+  // receivers reject rosters older than the last applied revision (no stale regression).
+  const raidRosterRevisions = new Map();
+  function raidRevision(raidId) {
+    const rev = (raidRosterRevisions.get(raidId) || 0) + 1;
+    raidRosterRevisions.set(raidId, rev);
+    return rev;
+  }
   const DRONE_ORIGINS = { drone_patrol_beta: { x: 14, z: -8 } };
+  // Deployment-record validation: entries must be dense objects with unique string
+  // ids, valid type, bounded geometry, coherent vitals. A corrupt deployment record
+  // (e.g. a null entry) is REJECTED (getRaidMachines falls back to health-map rebuild)
+  // instead of crashing cold restore at m.id.
+  function machineDeploymentValid(deployment) {
+    if (!Array.isArray(deployment) || deployment.length > 64) return false;
+    const ids = new Set();
+    for (const m of deployment) {
+      if (!m || typeof m !== "object" || Array.isArray(m)) return false;
+      if (typeof m.id !== "string" || !m.id || m.id.length > 64) return false;
+      if (ids.has(m.id)) return false;
+      ids.add(m.id);
+      if (m.type !== "turret" && m.type !== "drone") return false;
+      if (typeof m.x !== "number" || !Number.isFinite(m.x) || Math.abs(m.x) > 80) return false;
+      if (typeof m.z !== "number" || !Number.isFinite(m.z) || Math.abs(m.z) > 80) return false;
+      if (typeof m.health !== "number" || !Number.isFinite(m.health) || m.health < 0 || m.health > 1000) return false;
+      if (typeof m.isAlive !== "boolean") return false;
+    }
+    return true;
+  }
   function computeMachineServerPosition(m, raidTick) {
     if (!m || m.type !== "drone") return { x: m.x, z: m.z };
     const originX = typeof m.originX === "number" && Number.isFinite(m.originX) ? m.originX : (DRONE_ORIGINS[m.id] ? DRONE_ORIGINS[m.id].x : m.x);
@@ -1230,9 +1259,14 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           try {
             settlement.saveToDisk();
           } catch (deployPersistErr) {
-            // Restore the COMPLETE pre-deployment state (list + health map + deployment record)
+            // Restore the COMPLETE pre-deployment state (list + health map + deployment
+            // record) and answer 500: handler-scoped failures take this path — never a
+            // thrown exception into the JSON parser's catch (double-response bug).
             __restoreMachines();
-            throw new Error("Machine deployment persistence failed");
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: "Machine deployment persistence failed; deployment state restored" }));
+            return;
           }
         }
       }
@@ -1714,6 +1748,9 @@ wss.on("connection", (ws, req) => {
 
   ws.on("message", (message) => {
     ws.lastActivity = Date.now();
+    // Tx safety latch: any stale suppression from an aborted prior handler is cleared
+    // at message entry (a leaked latch must never disable persistence).
+    if (settlement.__txSuppressSave) settlement.__txSuppressSave = false;
     try {
       const byteLen = Buffer.isBuffer(message) ? message.length : Buffer.byteLength(message);
       if (byteLen > 65536) {
@@ -1929,6 +1966,11 @@ wss.on("connection", (ws, req) => {
             return;
           }
 
+          // Tx save-latch: while an accepted-state packet transaction is open, nested
+          // custody recorders (ammo, K.I.A.) MUST NOT save — the ONE commit at the end
+          // of the handler persists the whole transaction atomically.
+          settlement.__txSuppressSave = true;
+          const __txEnd = () => { settlement.__txSuppressSave = false; };
           // DURABLE TRANSACTION: capture the COMPLETE movement state (budget, timestamps,
           // roll state, action) and custody snapshot BEFORE the first mutation, so a
           // failed persistence restores the exact prior world. ONE save commits the
@@ -2092,11 +2134,13 @@ wss.on("connection", (ws, req) => {
           }
         }
 
-        // Single durable commit of the accepted packet
+        // Single durable commit of the accepted packet (latch released after)
+        __txEnd();
         if (settlement.saveToDisk) {
           try {
             settlement.saveToDisk();
           } catch (__txPersistErr) {
+            __txEnd();
             for (const __k of Object.keys(moveState)) delete moveState[__k];
             Object.assign(moveState, __txMoveBefore);
             if (oRec && __txCustodyBefore) {
@@ -2484,13 +2528,47 @@ wss.on("connection", (ws, req) => {
         const machinesForBatch = getRaidMachines(ws.raidId);
         const rawMachineTargets = Array.isArray(packet.data?.machineTargets) ? packet.data.machineTargets : [];
         const rawRivalTargets = Array.isArray(packet.data?.rivalTargets) ? packet.data.rivalTargets : [];
+
+        // Authoritative correction for REJECTED batches (oversized / duplicate /
+        // invalid targets): clients optimistically predicted damage for every
+        // submitted target — return custody truth for each so the misprediction is
+        // reconciled immediately, never silently retained.
+        const sendRejectedKickCorrection = (reason) => {
+          try {
+            const corr = {
+              eventId: `${packet.eventId}_rej_${Date.now()}`,
+              type: "kick_action_rejected",
+              senderId: "server",
+              senderName: "CENTRAL COMMAND",
+              raidId: ws.raidId,
+              timestamp: Date.now(),
+              serverAuthoritative: true,
+              data: {
+                actionEventId: packet.eventId,
+                reason,
+                machineCustody: rawMachineTargets
+                  .map((t) => t && t.id)
+                  .filter((id) => typeof id === "string")
+                  .map((id) => {
+                    const m = machinesForBatch.find((x) => x.id === id);
+                    return m ? { id, health: m.health, isAlive: m.isAlive, x: m.x, z: m.z } : null;
+                  })
+                  .filter(Boolean),
+              },
+            };
+            ws.send(JSON.stringify(corr));
+          } catch {}
+        };
+
         if (rawMachineTargets.length > 24 || rawRivalTargets.length > 8) {
+          sendRejectedKickCorrection("oversized_batch");
           return;
         }
         const seenIds = new Set();
         for (const t of [...rawMachineTargets, ...rawRivalTargets]) {
           const tid = t && typeof t === "object" ? t.id : undefined;
           if (typeof tid !== "string" || !tid || seenIds.has(tid)) {
+            sendRejectedKickCorrection("duplicate_or_invalid_target");
             return;
           }
           seenIds.add(tid);
@@ -2506,7 +2584,10 @@ wss.on("connection", (ws, req) => {
           attackTimes.kickBucket.tokens = Math.min(1.5, attackTimes.kickBucket.tokens + elapsed / 600);
           attackTimes.kickBucket.lastTime = Math.max(attackTimes.kickBucket.lastTime, hitNow);
         }
-        if (attackTimes.kickBucket.tokens < 1.0) return;
+        if (attackTimes.kickBucket.tokens < 1.0) {
+          sendRejectedKickCorrection("cooldown_rejection");
+          return;
+        }
         attackTimes.kickBucket.tokens -= 1.0;
         attackTimes.kick = hitNow;
 
@@ -2535,7 +2616,22 @@ wss.on("connection", (ws, req) => {
             targetZ = m.z;
           }
           const distToM = Math.hypot(strikeOriginX - targetX, strikeOriginZ - targetZ);
-          if (distToM <= 0.001 || distToM > 2.8) continue; // Kick out of range (client 2.5m + 0.3m jitter)
+          if (distToM <= 0.001 || distToM > 2.8) {
+            // Rejected target: correct the client's optimistic prediction with custody
+            try {
+              ws.send(JSON.stringify({
+                eventId: `${packet.eventId}_mrej_${m.id}`,
+                type: "machine_hit",
+                senderId: ws.operativeId,
+                senderName: packet.senderName || "OPERATIVE",
+                raidId: ws.raidId,
+                timestamp: Date.now(),
+                serverAuthoritative: true,
+                data: { machineId: m.id, damage: 0, machineHealth: m.health, machineAlive: m.isAlive, kind: "kick", rejected: true, targetX, targetZ },
+              }));
+            } catch {}
+            continue;
+          }
           const dx = targetX - strikeOriginX;
           const dz = targetZ - strikeOriginZ;
           const forwardX = Math.sin(facing);
@@ -2880,6 +2976,13 @@ wss.on("connection", (ws, req) => {
       delete packet.token;
       if (packet.data && packet.data.token) {
         delete packet.data.token;
+      }
+      // Trust boundary: the reserved server-authority stamp is assigned ONLY by the
+      // relay's own validated result builders. A client-supplied copy on an ordinary
+      // event packet is stripped here (reserved server-only types never take this
+      // generic forward path).
+      if (packet.type !== "machine_attack" && packet.type !== "machine_roster" && packet.type !== "kick_action_rejected") {
+        delete packet.serverAuthoritative;
       }
 
       // World-custody strip for forwarded world-state snapshots: crate ownership and

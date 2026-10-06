@@ -818,6 +818,10 @@ export class ServerSettlementAuthority {
   }
 
   public saveToDisk(): void {
+    // Transaction latch: while the relay's accepted-state handler holds the packet
+    // transaction open, nested recorders defer persistence — exactly ONE commit at
+    // the end of the handler saves the complete transaction.
+    if ((this as any).__txSuppressSave === true) return;
     if (this.isCorrupted) {
       console.error("Refusing to save to disk: settlement store is marked corrupted to protect historical ledger.");
       return;

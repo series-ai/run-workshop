@@ -614,13 +614,10 @@ export class MultiplayerCoordinator {
             }
             if (data.machines && Array.isArray(data.machines)) {
               this.serverMachines = JSON.parse(JSON.stringify(data.machines));
-              for (const sm of data.machines) {
-                const m = this.sim.machines.find(x => x.id === sm.id);
-                if (m) {
-                  m.health = sm.health;
-                  m.isAlive = sm.isAlive && sm.health > 0;
-                }
-              }
+              // Full roster reconciliation (hydration): membership + geometry + vitals
+              // via the shared custody reconciler — reconnecting clients never retain
+              // removed machines or miss deployed ones.
+              this.applyMachineRosterCustody(data.machines);
             }
             if (typeof data.holdCompleted === "boolean" || typeof data.isExtracted === "boolean" || typeof data.holdCompletedAtTick === "number") {
               this.sim.restoreExtractionCustody({
@@ -754,7 +751,7 @@ export class MultiplayerCoordinator {
     if (typeof damage !== 'number' || isNaN(damage) || damage <= 0 || damage > 150) return;
     const machine = this.sim.machines.find((m) => m.id === machineId);
     if (machine) {
-      const maxHp = machine.type === 'drone' ? 75 : 120;
+      const maxHp = (machine as any).maxHealth ?? (machine.type === 'drone' ? 75 : 120);
       if (typeof authorHealth === "number" && Number.isFinite(authorHealth)) {
         const clampedHp = Math.max(0, Math.min(maxHp, authorHealth));
         machine.health = clampedHp;
@@ -1055,13 +1052,8 @@ export class MultiplayerCoordinator {
               this.ensureRaidClockReconciliation();
               this.sim.serverMachineDamageAuthority = true; // relay owns machine fire now
               if (Array.isArray(data.machines)) {
-                for (const sm of data.machines) {
-                  const localM = this.sim.machines.find((x) => x.id === sm.id);
-                  if (localM) {
-                    localM.health = sm.health;
-                    localM.isAlive = sm.isAlive !== false && sm.health > 0;
-                  }
-                }
+                // Full roster reconciliation (authentication): shared custody reconciler
+                this.applyMachineRosterCustody(data.machines);
               }
               if (data.crates && typeof data.crates === "object") {
                 const crateEntries = Object.entries(data.crates as Record<string, any>).map(([cid, cinfo]) => ({
@@ -1595,6 +1587,52 @@ export class MultiplayerCoordinator {
   }
 
 
+  /**
+   * Shared machine-roster custody reconciliation: used by HTTP hydration,
+   * authentication snapshots, and live machine_roster broadcasts — one function owns
+   * membership (add/remove by ID), geometry, patrol origins, vitals, and the shared
+   * maxHealth contract.
+   */
+  public applyMachineRosterCustody(roster: Array<{ id?: unknown; type?: unknown; x?: unknown; y?: unknown; z?: unknown; facing?: unknown; health?: unknown; isAlive?: unknown; originX?: unknown; originZ?: unknown; maxHealth?: unknown }>): void {
+    if (!Array.isArray(roster)) return;
+    const next = this.sim.machines;
+    const seen = new Set<string>();
+    for (const rm of roster) {
+      if (!rm || typeof rm !== "object") continue;
+      const rid = (rm as any).id;
+      if (typeof rid !== "string" || !rid || seen.has(rid)) continue;
+      seen.add(rid);
+      const existingIdx = next.findIndex((m) => m.id === rid);
+      const maxHp = typeof (rm as any).maxHealth === "number" ? (rm as any).maxHealth : (existingIdx !== -1 ? (next[existingIdx] as any).maxHealth : undefined);
+      const typeOk = (rm as any).type === "turret" || (rm as any).type === "drone";
+      const health = typeof (rm as any).health === "number" && Number.isFinite((rm as any).health)
+        ? Math.min(maxHp ?? 1000, Math.max(0, (rm as any).health))
+        : (existingIdx !== -1 ? next[existingIdx].health : undefined);
+      const record: any = {
+        id: rid,
+        type: typeOk ? (rm as any).type : (existingIdx !== -1 ? next[existingIdx].type : "turret"),
+        x: typeof (rm as any).x === "number" && Number.isFinite((rm as any).x) ? (rm as any).x : (existingIdx !== -1 ? next[existingIdx].x : 0),
+        y: typeof (rm as any).y === "number" && Number.isFinite((rm as any).y) ? (rm as any).y : (existingIdx !== -1 ? next[existingIdx].y : 0),
+        z: typeof (rm as any).z === "number" && Number.isFinite((rm as any).z) ? (rm as any).z : (existingIdx !== -1 ? next[existingIdx].z : 0),
+        facing: typeof (rm as any).facing === "number" && Number.isFinite((rm as any).facing) ? (rm as any).facing : (existingIdx !== -1 ? next[existingIdx].facing : 0),
+        health: health ?? 120,
+        isAlive: (rm as any).isAlive !== false,
+        cooldownTicks: existingIdx !== -1 ? next[existingIdx].cooldownTicks : 0,
+        originX: (rm as any).originX,
+        originZ: (rm as any).originZ,
+      };
+      if (maxHp !== undefined) record.maxHealth = maxHp;
+      if (existingIdx !== -1) {
+        next[existingIdx] = { ...next[existingIdx], ...record };
+      } else {
+        next.push(record);
+      }
+    }
+    for (let i = next.length - 1; i >= 0; i--) {
+      if (!seen.has(next[i].id)) next.splice(i, 1);
+    }
+  }
+
   public applyValidatedSnapshotWithBoundary(
     sanitized: RaidWorldSnapshot,
     snapshotTime: number,
@@ -1799,7 +1837,7 @@ export class MultiplayerCoordinator {
         if (targetM) {
           const newHealth = (packet as any).data?.machineHealth;
           if (typeof newHealth === 'number' && Number.isFinite(newHealth)) {
-            const maxHp = targetM.type === 'drone' ? 75 : 120;
+            const maxHp = (targetM as any).maxHealth ?? (targetM.type === 'drone' ? 75 : 120);
             targetM.health = Math.max(0, Math.min(maxHp, newHealth));
             if (typeof (packet as any).data?.machineAlive === 'boolean') {
               targetM.isAlive = (packet as any).data.machineAlive && targetM.health > 0;
@@ -2615,37 +2653,15 @@ export class MultiplayerCoordinator {
       if (typeof packet.raidId === "string" && packet.raidId !== this.sim.raidId) return;
       const d = packet.data as any;
       if (!d || !Array.isArray(d.machines)) return;
-      const next = this.sim.machines;
-      // Reconcile by ID: update membership + truth for each custody machine
-      for (const rm of d.machines) {
-        if (!rm || typeof rm.id !== "string") continue;
-        const existingIdx = next.findIndex((m) => m.id === rm.id);
-        const validVitals = typeof rm.health !== "number" || (Number.isFinite(rm.health) && rm.health >= 0);
-        if (!validVitals) continue;
-        const rosterRecord = {
-          id: rm.id,
-          type: (rm.type === "turret" || rm.type === "drone") ? rm.type : "turret",
-          x: typeof rm.x === "number" && Number.isFinite(rm.x) ? rm.x : (existingIdx !== -1 ? next[existingIdx].x : 0),
-          y: typeof rm.y === "number" && Number.isFinite(rm.y) ? rm.y : 0,
-          z: typeof rm.z === "number" && Number.isFinite(rm.z) ? rm.z : (existingIdx !== -1 ? next[existingIdx].z : 0),
-          facing: typeof rm.facing === "number" && Number.isFinite(rm.facing) ? rm.facing : 0,
-          health: typeof rm.health === "number" && Number.isFinite(rm.health) ? Math.min(1000, Math.max(0, rm.health)) : (existingIdx !== -1 ? next[existingIdx].health : 120),
-          isAlive: rm.isAlive !== false,
-          cooldownTicks: existingIdx !== -1 ? next[existingIdx].cooldownTicks : 0,
-          originX: rm.originX,
-          originZ: rm.originZ,
-        } as any;
-        if (existingIdx !== -1) {
-          next[existingIdx] = { ...next[existingIdx], ...rosterRecord, ...(rosterRecord.originX !== undefined ? { originX: rosterRecord.originX, originZ: rosterRecord.originZ } : {}) };
-        } else {
-          next.push(rosterRecord);
-        }
+      // Monotonic roster revisions: reject rosters older than the last applied (no
+      // regression to stale geometry from a delayed delivery).
+      if (typeof d.revision === "number" && Number.isFinite(d.revision)) {
+        const appliedRev = (this as any).__appliedMachineRosterRevision ?? 0;
+        if (d.revision <= appliedRev) return;
+        (this as any).__appliedMachineRosterRevision = d.revision;
       }
-      // Remove local machines absent from the authoritative roster
-      const custodyIds = new Set(d.machines.map((rm: any) => rm && rm.id).filter(Boolean));
-      for (let i = next.length - 1; i >= 0; i--) {
-        if (!custodyIds.has(next[i].id)) next.splice(i, 1);
-      }
+      // Shared custody reconciler (same function as hydration/authentication)
+      this.applyMachineRosterCustody(d.machines);
       this.sim.combatLog.push(`[MACHINE AUTHORITY] Roster reconciled: ${d.machines.length} machine(s)`);
     } else if (packet.type === 'machine_attack') {
       // Server-side machine attack authority: relay-computed machine fire with custody

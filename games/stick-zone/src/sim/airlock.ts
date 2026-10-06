@@ -496,8 +496,10 @@ export async function authoritativeLedgerCommit(
     for (let commitRound = 0; commitRound < 40 && !data; commitRound++) {
       const __remaining = commitDeadline - Date.now();
       if (__remaining <= 0) break;
+      const __rem = commitDeadline - Date.now();
+      if (__rem <= 0) break;
       const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-      const tid = ctrl ? setTimeout(() => ctrl.abort(), 4000) : null;
+      const tid = ctrl ? setTimeout(() => ctrl.abort(), Math.min(4000, __rem)) : null;
       try {
         const roundResp = await fetch('/api/settlement/commit', {
           signal: ctrl ? ctrl.signal : undefined,
