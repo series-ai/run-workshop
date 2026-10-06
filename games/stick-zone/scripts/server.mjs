@@ -314,9 +314,14 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
   // receivers reject rosters older than the last applied revision (no stale regression).
   const raidRosterRevisions = new Map();
   function raidRevision(raidId) {
-    const rev = (raidRosterRevisions.get(raidId) || 0) + 1;
-    raidRosterRevisions.set(raidId, rev);
-    return rev;
+    // Persisted monotonic revision: the surviving source of truth is the ACTIVE RAID
+    // CUSTODY record (rRec.machineRosterRevision), so a server restart never rewinds
+    // revisions (the receiver keeps its last applied value; stale rosters stay stale).
+    const rRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
+    const cur = Math.max((rRec && typeof rRec.machineRosterRevision === "number") ? rRec.machineRosterRevision : 0, raidRosterRevisions.get(raidId) || 0) + 1;
+    raidRosterRevisions.set(raidId, cur);
+    if (rRec) rRec.machineRosterRevision = cur; // persisted by the deploy transaction's save
+    return cur;
   }
   const DRONE_ORIGINS = { drone_patrol_beta: { x: 14, z: -8 } };
   // Deployment-record validation: entries must be dense objects with unique string
