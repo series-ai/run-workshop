@@ -330,8 +330,8 @@ async function recordAll() {
   });
 
   // Wait for real P2P mesh state packet exchange to populate rivals naturally
-  await pageAlpha.waitForFunction(() => window.debugSim?.rivals?.length >= 1 && window.debugSim?.rivals[0]?.id === 'op_bravo_1', { timeout: 8000 });
-  await pageBravo.waitForFunction(() => window.debugSim?.rivals?.length >= 1 && window.debugSim?.rivals[0]?.id === 'op_alpha_1', { timeout: 8000 });
+  await pageAlpha.waitForFunction(() => window.debugSim?.rivals?.length >= 1 && window.debugSim?.rivals[0]?.id === 'op_bravo_1', { timeout: 20000 });
+  await pageBravo.waitForFunction(() => window.debugSim?.rivals?.length >= 1 && window.debugSim?.rivals[0]?.id === 'op_alpha_1', { timeout: 20000 });
   console.log('✓ Real P2P mesh state delivery confirmed across browsers');
 
   // Verify proximity warning banner is strictly visible on Alpha (distance is 25m <= 60m)
