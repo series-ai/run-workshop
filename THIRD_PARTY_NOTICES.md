@@ -13,3 +13,4 @@ licenses and attributions.
 - Layout Manager — [`games/layout-manager/THIRD_PARTY_NOTICES.md`](games/layout-manager/THIRD_PARTY_NOTICES.md)
 - 3D PFX Library — [`tools/3d-pfx-library/THIRD_PARTY_NOTICES.md`](tools/3d-pfx-library/THIRD_PARTY_NOTICES.md)
 - Pirate Nation Art Showcase — [`games/pirate-nation-showcase/THIRD_PARTY_NOTICES.md`](games/pirate-nation-showcase/THIRD_PARTY_NOTICES.md)
+- Skyriver Demo — [`games/skyriver-demo/THIRD_PARTY_NOTICES.md`](games/skyriver-demo/THIRD_PARTY_NOTICES.md)
