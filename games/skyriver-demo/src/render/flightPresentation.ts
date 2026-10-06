@@ -38,7 +38,13 @@ import { SKYRIVER_ROOFLINE_MIN_M } from './presentationLayout';
 const TAU = Math.PI * 2;
 
 /** Lateral offset of each straight from the canyon centreline, metres. Also the U-turn radius. */
-export const TRACK_LANE_X_M = 230;
+/** T7-2: lanes pulled in toward the centreline (was 230 m), so the chase aims down the canyon's middle. */
+export const TRACK_LANE_X_M = 110;
+/** Lateral weave on the straights, metres and wavelength, so the run never looks on rails. */
+const TRACK_WEAVE_M = 28;
+const TRACK_WEAVE_WAVELENGTH_M = 950;
+/** Arc length over which the cut at each end dips to black, metres (~0.3 s at cruise). */
+const TRACK_CUT_FADE_M = 45;
 /** Mean cruise altitude, metres, and the swell around it. Max ~770 m: far under the roofline. */
 /**
  * T7: raised from 560 m. The chase now flies high over a deep canyon and looks down into it (the
@@ -53,14 +59,14 @@ const TRACK_SWELL_A_CYCLES = 2;
 const TRACK_SWELL_B_CYCLES = 5;
 /** Straight half-length clamp, metres. The presented canyon runs to ~|z| = 2700. */
 const TRACK_MIN_HALF_M = 700;
-const TRACK_MAX_HALF_M = 1900;
+const TRACK_MAX_HALF_M = 2400;
 /** Peak roll through the U-turns, turns (~24 degrees). */
 const TRACK_BANK_TURNS = 0.066;
 
 /** Free-flight hand-off easing, ticks (30 Hz). */
 const HANDOFF_TICKS = 75;
 /** Boost drama ramp-in seconds and release ticks (30 Hz). */
-const BOOST_RAMP_S = 0.4;
+const BOOST_RAMP_S = 0.2;
 const BOOST_RELEASE_TICKS = 18;
 /** Mirrors systems.ts PATH_TANGENT_STEP: the sim reads its own heading this far ahead. */
 const PATH_TANGENT_STEP = 0.02;
@@ -77,11 +83,14 @@ export interface PresentedFlight extends SkyriverFlight {
    * boost, and eases out over BOOST_RELEASE_TICKS after the sim drops boostT to 0 on release.
    */
   readonly boostVisual: number;
+  /** T7-2: 0..1 dip-to-black at the autopilot lap's cuts. Always 0 in free flight. */
+  readonly cutFade: number;
 }
 
 type MutablePresented = { -readonly [K in keyof PresentedFlight]: PresentedFlight[K] };
 
 interface TrackPose {
+  cutFade: number;
   x: number;
   y: number;
   z: number;
@@ -106,6 +115,11 @@ function catmullRom(p0: number, p1: number, p2: number, p3: number, t: number): 
 function wrap(value: number, period: number): number {
   const w = value % period;
   return w < 0 ? w + period : w;
+}
+
+function smoothstep01(x: number): number {
+  const t = x < 0 ? 0 : x > 1 ? 1 : x;
+  return t * t * (3 - 2 * t);
 }
 
 function wrapTurns(turns: number): number {
@@ -134,10 +148,9 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
   const ringLength = cumulative[path.count]!;
 
   const laneX = TRACK_LANE_X_M;
-  const turnLength = Math.PI * laneX;
-  const half = Math.min(TRACK_MAX_HALF_M, Math.max(TRACK_MIN_HALF_M, (ringLength - 2 * turnLength) / 4));
+  const half = Math.min(TRACK_MAX_HALF_M, Math.max(TRACK_MIN_HALF_M, ringLength / 4));
   const straight = 2 * half;
-  const trackLength = 2 * straight + 2 * turnLength;
+  const trackLength = 2 * straight;
 
   /** Sim arc length at a ring parameter: exactly what the sim's per-tick advance integrates. */
   function ringArc(t: number): number {
@@ -152,38 +165,35 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
 
   function trackPose(uIn: number, out: TrackPose): void {
     const u = wrap(uIn, trackLength);
+    // T7-2: two full-length straights joined by cuts. Any 180-degree turn inside a canyon faces a
+    // wall at its midpoint (the cycle-3 "faceplant" at ~20 s), so the lap cuts at each end instead,
+    // behind a short dip to black (cutFade), and the chase always looks down the canyon.
+    const onA = u < straight;
+    const along = onA ? u : u - straight;
+    const weavePhase = (along / TRACK_WEAVE_WAVELENGTH_M) * TAU + (onA ? 0 : 2.1);
+    const weave = TRACK_WEAVE_M * Math.sin(weavePhase);
+    const weaveSlope = TRACK_WEAVE_M * Math.cos(weavePhase) * (TAU / TRACK_WEAVE_WAVELENGTH_M);
     let x: number;
     let z: number;
     let tx: number;
     let tz: number;
-    let roll = 0;
-    if (u < straight) {
-      // Straight A: x = +lane, heading +z.
-      x = laneX;
-      z = -half + u;
-      tx = 0;
+    if (onA) {
+      // Straight A: right of the centreline, heading +z.
+      x = laneX + weave;
+      z = -half + along;
+      tx = weaveSlope;
       tz = 1;
-    } else if (u < straight + turnLength) {
-      const theta = (u - straight) / laneX;
-      x = laneX * Math.cos(theta);
-      z = half + laneX * Math.sin(theta);
-      tx = -Math.sin(theta);
-      tz = Math.cos(theta);
-      roll = TRACK_BANK_TURNS * Math.sin(theta);
-    } else if (u < 2 * straight + turnLength) {
-      // Straight B: x = -lane, heading -z.
-      x = -laneX;
-      z = half - (u - straight - turnLength);
-      tx = 0;
-      tz = -1;
     } else {
-      const theta = (u - 2 * straight - turnLength) / laneX;
-      x = -laneX * Math.cos(theta);
-      z = -half - laneX * Math.sin(theta);
-      tx = Math.sin(theta);
-      tz = -Math.cos(theta);
-      roll = TRACK_BANK_TURNS * Math.sin(theta);
+      // Straight B: left of the centreline, heading -z.
+      x = -laneX - weave;
+      z = half - along;
+      tx = -weaveSlope;
+      tz = -1;
     }
+    // Bank gently into the weave (lateral acceleration ~ -weave curvature).
+    const roll = -TRACK_BANK_TURNS * 0.5 * Math.sin(weavePhase) * (onA ? 1 : -1);
+    const toEdge = Math.min(along, straight - along);
+    out.cutFade = 1 - smoothstep01(toEdge / TRACK_CUT_FADE_M);
     const phase = (u / trackLength) * TAU;
     const y = TRACK_BASE_Y_M
       + TRACK_SWELL_A_M * Math.sin(phase * TRACK_SWELL_A_CYCLES)
@@ -201,7 +211,7 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
   }
 
   const result: MutablePresented = {
-    x: 0, y: 0, z: 0, yaw: 0, pitch: 0, speed: 0, mode: 0, autopilotT: 0, boostT: 0, roll: 0, boostVisual: 0,
+    x: 0, y: 0, z: 0, yaw: 0, pitch: 0, speed: 0, mode: 0, autopilotT: 0, boostT: 0, roll: 0, boostVisual: 0, cutFade: 0,
   };
   // Observed like handoffTick: the tick a boost release was seen, dropped when the tick runs back.
   let boostEndTick: number | null = null;
@@ -218,7 +228,7 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
     const k = (current.tick - boostEndTick + state.alpha) / BOOST_RELEASE_TICKS;
     return k >= 1 ? 0 : 1 - k * k * (3 - 2 * k);
   }
-  const poseA: TrackPose = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, roll: 0 };
+  const poseA: TrackPose = { cutFade: 0, x: 0, y: 0, z: 0, yaw: 0, pitch: 0, roll: 0 };
   const ring = { x: 0, y: 0, z: 0 };
   const ringAhead = { x: 0, y: 0, z: 0 };
   let handoffTick: number | null = null;
@@ -232,6 +242,7 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
     result.mode = flight.mode;
     result.autopilotT = flight.autopilotT;
     result.roll = 0;
+    result.cutFade = 0;
     result.boostVisual = boostVisualOf(state);
 
     if (flight.mode === 0) {
@@ -252,6 +263,7 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
       result.yaw = poseA.yaw;
       result.pitch = poseA.pitch;
       result.roll = poseA.roll;
+      result.cutFade = poseA.cutFade;
       return result;
     }
 

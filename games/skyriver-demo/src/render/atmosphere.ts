@@ -358,7 +358,8 @@ void main() {
   float drift = 0.88 + 0.12 * skyValueNoise( vec2( vBeamT * 7.0, uTime * 0.35 + vBeamSeed * 31.0 ) );
   float flicker = 1.0 + 0.05 * sin( uTime * 1.9 + vBeamSeed * 6.2831853 );
 
-  gl_FragColor = vec4( vBeamColor * ( radial * along * drift * flicker * uIntensity ), 1.0 );
+  float nearFade = smoothstep( 60.0, 420.0, vFogDepth );
+  gl_FragColor = vec4( vBeamColor * ( radial * along * drift * flicker * uIntensity * nearFade ), 1.0 );
 
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
@@ -606,6 +607,34 @@ void main() {
 }
 `;
 
+// --- boost speed lines (T7-2) --------------------------------------------------------------------
+
+const SPEED_FRAGMENT = /* glsl */ `
+uniform float uTime;
+uniform float uAspect;
+uniform float uBoost;
+
+varying vec2 vRainUv;
+
+${SKYRIVER_OUTPUT_PARS_GLSL}
+${SKYRIVER_HASH_GLSL}
+
+void main() {
+  // Radial streaks rushing out from just above the vanishing point; brighter toward the edges.
+  vec2 p = ( vRainUv - vec2( 0.5, 0.62 ) ) * vec2( uAspect, 1.0 );
+  float r = length( p );
+  float angle = atan( p.y, p.x );
+  float lane = floor( ( angle + 3.14159265 ) / 6.2831853 * 240.0 );
+  float live = step( 0.72, skyHash11( lane * 3.7 + 1.0 ) );
+  float rush = fract( r * ( 1.6 + skyHash11( lane ) * 1.4 ) - uTime * ( 2.4 + 2.0 * skyHash11( lane + 9.0 ) ) );
+  float streak = smoothstep( 0.0, 0.05, rush ) * ( 1.0 - smoothstep( 0.05, 0.4, rush ) );
+  float across = abs( fract( ( angle + 3.14159265 ) / 6.2831853 * 240.0 ) - 0.5 ) * 2.0;
+  streak *= 1.0 - smoothstep( 0.1, 0.6, across );
+  float vignette = smoothstep( 0.18, 0.75, r );
+  gl_FragColor = vec4( vec3( 0.75, 0.85, 1.0 ) * ( streak * live * vignette * uBoost * 0.55 ), 1.0 );
+}
+`;
+
 // --- god-ray placement ----------------------------------------------------------------------------
 
 export interface SkyriverGodRayAnchor {
@@ -687,6 +716,8 @@ export class SkyriverAtmosphere {
   private readonly searchlights: BeamField;
   private readonly rainMaterial: THREE.ShaderMaterial;
   private readonly rainMesh: THREE.Mesh;
+  private readonly speedMaterial: THREE.ShaderMaterial;
+  private readonly speedMesh: THREE.Mesh;
 
   private quality: SkyriverQualitySettings;
   private readonly anchors: readonly SkyriverGodRayAnchor[];
@@ -745,7 +776,8 @@ export class SkyriverAtmosphere {
     this.searchlights = new BeamField({
       name: 'skyriver.searchlights',
       capacity: SKYRIVER_ATMOSPHERE.searchlightCount,
-      intensity: 0.22,
+      // T7-2: softer, and faded where a beam passes near the camera (cycle-3 foreground wash).
+      intensity: 0.13,
       softness: 8.0,
       fadeStart: 0.45,
     });
@@ -776,6 +808,25 @@ export class SkyriverAtmosphere {
     this.rainMesh.renderOrder = 1000;
     this.group.add(this.rainMesh);
 
+    // Boost speed lines: one additive screen pass, drawn only while boosting (budget: +1 call then).
+    this.speedMaterial = new THREE.ShaderMaterial({
+      name: 'skyriver.speedlines',
+      vertexShader: RAIN_VERTEX,
+      fragmentShader: SPEED_FRAGMENT,
+      uniforms: { uTime: { value: 0 }, uAspect: { value: 1 }, uBoost: { value: 0 } },
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthTest: false,
+      depthWrite: false,
+      fog: false,
+    });
+    this.speedMesh = new THREE.Mesh(rainGeometry, this.speedMaterial);
+    this.speedMesh.name = 'skyriver.speedlines';
+    this.speedMesh.frustumCulled = false;
+    this.speedMesh.renderOrder = 1001;
+    this.speedMesh.visible = false;
+    this.group.add(this.speedMesh);
+
     this.setQuality(quality);
   }
 
@@ -787,6 +838,7 @@ export class SkyriverAtmosphere {
 
   resize(width: number, height: number): void {
     this.rainMaterial.uniforms.uAspect.value = height > 0 ? width / height : 1;
+    this.speedMaterial.uniforms.uAspect.value = height > 0 ? width / height : 1;
   }
 
   update(frame: SkyriverFrame): void {
@@ -802,6 +854,13 @@ export class SkyriverAtmosphere {
     this.writeSearchlights(time);
 
     if (this.quality.rainStreaks) this.rainMaterial.uniforms.uTime.value = time;
+    this.speedMaterial.uniforms.uTime.value = time;
+  }
+
+  /** T7-2: boost drama level 0..1 (flightPresentation boostVisual). Pure per frame; no state. */
+  setBoost(level: number): void {
+    this.speedMaterial.uniforms.uBoost.value = level;
+    this.speedMesh.visible = level > 0.02;
   }
 
   stats(): SkyriverAtmosphereStats {
@@ -826,6 +885,7 @@ export class SkyriverAtmosphere {
     this.searchlights.dispose();
     this.rainMesh.geometry.dispose();
     this.rainMaterial.dispose();
+    this.speedMaterial.dispose();
   }
 
   // --- internals ----------------------------------------------------------------------------------

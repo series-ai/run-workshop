@@ -171,12 +171,12 @@ const HUD_CSS = `
   font-weight: 700;
 }
 .skyriver-hud__hint-touch { display: none; }
+/* T7-2: the hint fades on every device after the first input or ~5 s (cycle 3 saw it on at 20 s). */
+.skyriver-hud__hint { transition: opacity 600ms ease-out; }
+.skyriver-hud__hint--faded { opacity: 0; }
 /* Touch devices get touch instructions, never desktop keys (T6R P1). */
 @media (hover: none) and (pointer: coarse) {
   .skyriver-hud__controls { display: flex; }
-  .skyriver-hud__hint { transition: opacity 600ms ease-out; }
-  /* T6R-2: the touch hint gets out of the way after the first touch or ~5 s. */
-  .skyriver-hud__hint--faded { opacity: 0; }
   .skyriver-hud__hint-desktop { display: none; }
   .skyriver-hud__hint-touch { display: inline; }
   /* T7: one line, top-centre above the shuttle — never over the lower-third boost zone. */
@@ -328,10 +328,10 @@ export function createSkyriverHud(options: SkyriverHudOptions): SkyriverHud {
     'drag: steer · hold low: boost · mode: fly',
   );
   hint.append(hintDesktop, hintTouch);
-  // Only has a visible effect under the coarse-pointer media query (CSS above).
   const fadeHint = (): void => hint.classList.add('skyriver-hud__hint--faded');
   const hintTimer = doc.defaultView?.setTimeout(fadeHint, HINT_FADE_MS) ?? null;
   options.root.addEventListener('pointerdown', fadeHint, { once: true, capture: true });
+  doc.defaultView?.addEventListener('keydown', fadeHint, { once: true });
 
   element_.append(readout, debugLine, controls, hint);
   options.root.appendChild(element_);
@@ -471,6 +471,7 @@ export function createSkyriverHud(options: SkyriverHudOptions): SkyriverHud {
       if (flashTimer !== null) clearTimeout(flashTimer);
       if (hintTimer !== null) clearTimeout(hintTimer);
       options.root.removeEventListener('pointerdown', fadeHint, { capture: true });
+      doc.defaultView?.removeEventListener('keydown', fadeHint);
       modeButton.removeEventListener('click', onModeClick);
       boostButton.removeEventListener('pointerdown', onBoostDown);
       boostButton.removeEventListener('pointerup', onBoostUp);

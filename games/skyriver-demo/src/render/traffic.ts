@@ -106,41 +106,75 @@ export const TRAFFIC_QUALITY_TIERS: {
 });
 
 /**
- * T7 river model. Both cycle-2 reviews still read the along-canyon streams as lanes converging on the
- * vanishing point (a highway). Every river is now a straight segment that *crosses* the canyon at
- * its own angle (up to +-58 degrees off square), height, gentle climb or dive, and direction, so
- * the ribbon field is a criss-cross lattice at many depths — never parallel rows toward the slot.
- * Each river emerges from one wall and disappears into the other (faded over RIVER_END_FADE_M), as
- * if threading the gaps between the slabs.
+ * T7-2 river model. Cycle 3 passed the road gate but read the all-crossing lattice as "laser
+ * fences". Rivers of traffic now flow *with* the canyon again — about 85% of rivers run along its
+ * axis — but every one is its own jittered stream, which is what kept the T6R-2 rows from reading
+ * as lanes this time:
+ *   - its own length (0.8-2.4 km) and stretch of the canyon, so streams start and end at different
+ *     depths instead of all running into the vanishing point;
+ *   - its own lateral offset, a 1-6 degree yaw and a gentle climb or dive, so no two are parallel;
+ *   - a slow lateral drift (6-14 m over 1.8-3 km — anything tighter foreshortens into a zig-zag
+ *     when seen down the canyon), so none is a ruled line;
+ *   - one of three altitude layers (below the track, above it, high above it) with height jitter
+ *     inside the layer, so they never stack into a row at one height.
+ * A few crossing rivers remain as intersection accents. Cars are scattered at random along each
+ * river (no platoons) and their trails overlap, so a stream is one continuous ribbon — no even dash
+ * rhythm anywhere.
  */
-const RIVERS = 34;
-/** Half-width of the crossing, metres: past the inner faces (|x| ~ 500-560), where the fades hide the ends. */
-const CROSS_HALF_X_M = 620;
-const MAX_CROSS_ANGLE_RAD = 1.01;
+const ALONG_RIVERS = 30;
+const CROSS_RIVERS = 3;
+const RIVERS = ALONG_RIVERS + CROSS_RIVERS;
+/** Along rivers: length range, yaw and climb jitter, weave. */
+const ALONG_MIN_LENGTH_M = 800;
+const ALONG_LENGTH_SPAN_M = 1600;
+const ALONG_MAX_YAW_RAD = 0.105;
+const ALONG_MAX_RISE_M = 70;
+const WEAVE_MIN_M = 6;
+const WEAVE_SPAN_M = 8;
+const WEAVE_MIN_WAVELENGTH_M = 1800;
+const WEAVE_WAVELENGTH_SPAN_M = 1200;
+/** Below-track streams keep at least this far off the centreline (autopilot lanes sit at +-110 m). */
+const BELOW_MIN_ABS_X_M = 330;
+/** Along rivers stay inside the corridor (inner terraces reach |x| = 405). */
+const ALONG_MAX_ABS_X_M = 385;
 /** Rivers are spread along the canyon over this half-length, metres. */
-const RIVER_Z_HALF_M = 2700;
-const RIVER_END_FADE_M = 150;
-/** Altitude layers: a deep layer crossing under the shuttle, and a tall field above it. */
-// T7: with the track at ~945-1360 m, the canyon below holds two layers (deep, mid) and the field
-// above runs to just under the skybridges (>= 2700 m). Nothing crosses at the track's own height.
-const DEEP_MIN_Y_M = 250;
-const DEEP_MAX_Y_M = 480;
-const MID_MIN_Y_M = 620;
-const MID_MAX_Y_M = TRACK_BASE_Y_M - 330;
-const HIGH_MIN_Y_M = TRACK_BASE_Y_M + 360;
-const HIGH_MAX_Y_M = 2550;
-const DEEP_SHARE = 0.2;
-const MID_SHARE = 0.25;
-/** Climb or dive across one crossing, metres. */
-const RIVER_MAX_RISE_M = 140;
+const RIVER_Z_HALF_M = 3200;
+/** Crossing accents. */
+const CROSS_HALF_X_M = 620;
+const MAX_CROSS_ANGLE_RAD = 0.9;
+const RIVER_END_FADE_M = 160;
+/**
+ * Altitude layers around the track (~945-1360 m): one below it, one above, one high above. The
+ * track band itself carries no river; near-field cars fly there instead (see NEAR_*).
+ */
+const LAYERS: readonly (readonly [number, number, number])[] = Object.freeze([
+  // [min y, max y, share]. The chase sees ~18 degrees above and ~43 below its axis: the layers sit
+  // close around the track band (945-1360 m) so the streams actually stand in the main frame.
+  // Below: wall-hugging, just under the track. A stream far below and near the centre projects
+  // straight down the middle of the chase frame — the lane-line read — so this layer stays shallow
+  // and pressed to the walls (BELOW_MIN_ABS_X_M), where it reads as traffic along the canyon sides.
+  [860, 930, 0.3],
+  [1420, 1620, 0.45],
+  [1700, 2100, 0.25],
+]);
+/** Climb or dive across one crossing accent, metres. */
+const RIVER_MAX_RISE_M = 120;
 /** Tight in-river scatter, metres, so a river reads as one ribbon. */
 const RIVER_LATERAL_SCATTER_M = 4;
 const RIVER_VERTICAL_SCATTER_M = 3;
-/** Platoons per river, and how much of each platoon slot the cars occupy: long ribbons, short gaps. */
-const RIVER_PLATOONS = 3;
-const PLATOON_FILL = 0.7;
 /** Derived speeds (30..90 m/s) are scaled up: rivers must visibly stream past a 150 m/s shuttle. */
 const SPEED_SCALE = 1.6;
+/** Escort and near-field streaks are this fraction of a river car's (they read as tracer fire otherwise). */
+const ESCORT_STREAK_SCALE = 0.16;
+const NEAR_STREAK_SCALE = 0.3;
+/**
+ * T7-2 near field: small vehicles flying along-axis lanes around the shuttle (depth variety near the
+ * camera). Positions are absolute canyon motion wrapped into a window around the anchor, so they are
+ * a pure function of (time, anchor) and stream past at their own speeds.
+ */
+const NEAR_COUNT = 44;
+const NEAR_WINDOW_M = 1500;
+const NEAR_FADE_M = 180;
 /** Inset from the corridor walls for escorts, metres. Inner tower faces sit at |x| >= 440. */
 const WALL_MARGIN_M = 18;
 const HULL_DRAW_DISTANCE_M = 320;
@@ -148,10 +182,12 @@ const HULL_DRAW_DISTANCE_M = 320;
 /** Escort cars: [lateral, lift, forward mean, forward swing] in metres, shuttle frame. */
 const ESCORT_COUNT = 4;
 const ESCORTS: readonly number[] = Object.freeze([
-  -34, 6, 60, 38,
-  40, -9, 22, 30,
-  -72, 24, 150, 70,
-  82, 16, 0, 0,
+  // T7-2: every escort flies level with or above the shuttle and off its line. A light trail
+  // under the shuttle projects straight down the frame toward the camera and reads as a lane line.
+  -38, 8, 60, 38,
+  48, 5, 30, 26,
+  -78, 26, 150, 70,
+  88, 18, 0, 0,
 ]);
 
 /** Per-car size jitter, so a batch of identical hulls does not read as a clone army. */
@@ -167,7 +203,7 @@ const HEAD_OFFSET_M = 2.4;
 const TAIL_OFFSET_M = 2.5;
 /** T6R-2: long continuous trails (platoon-mates' trails overlap into one ribbon), never dashes. */
 const TAIL_TRAIL_S = 0.7;
-const HEAD_TRAIL_S = 0.45;
+const HEAD_TRAIL_S = 0.9;
 
 function fail(code: string): never {
   throw new Error(code);
@@ -636,7 +672,8 @@ void main() {
   // Brightest at the lamp, fading down the trail.
   float t = vLengthR > 0.0 ? along / vLengthR : 0.0;
   // max(): with fast-math division t can land a hair above 1, and pow(negative) is NaN.
-  float trail = pow( max( 1.0 - t, 0.0 ), 1.3 );
+  // Head: a white-to-bright gradient that stays lit most of its length; tail: a red falloff.
+  float trail = pow( max( 1.0 - t, 0.0 ), vLamp < 0.5 ? 0.7 : 1.2 );
 
   vec3 headColor = vec3( 1.0, 0.93, 0.82 );
   vec3 tailColor = vec3( 1.0, 0.07, 0.045 );
@@ -732,7 +769,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
 
   const params = deriveTrafficParams(options.seed, maxCarCount);
 
-  // ---- Rivers: origin, unit axis, length and direction. Derived from the seed by hashing.
+  // ---- Rivers: origin, unit axis, length, weave and direction. Derived from the seed by hashing.
   const riverOx = new Float32Array(RIVERS);
   const riverOy = new Float32Array(RIVERS);
   const riverOz = new Float32Array(RIVERS);
@@ -740,35 +777,96 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const riverDy = new Float32Array(RIVERS);
   const riverDz = new Float32Array(RIVERS);
   const riverLength = new Float32Array(RIVERS);
+  const riverWeave = new Float32Array(RIVERS);
+  const riverWeaveK = new Float32Array(RIVERS);
+  const riverWeavePhase = new Float32Array(RIVERS);
   const riverDirection = new Float32Array(RIVERS);
   const riverSpeedScale = new Float32Array(RIVERS);
   const seedSalt = options.seed | 0;
   for (let river = 0; river < RIVERS; river += 1) {
-    const h = (k: number): number => hash01(seedSalt, river * 13 + k);
+    const h = (k: number): number => hash01(seedSalt, river * 17 + k);
     riverDirection[river] = h(1) < 0.5 ? 1 : -1;
     riverSpeedScale[river] = 0.85 + 0.3 * h(2);
-    // Stratified along the canyon so every stretch of the flight has crossings ahead.
-    const zMid = -RIVER_Z_HALF_M + ((river + h(3) * 0.9) / RIVERS) * 2 * RIVER_Z_HALF_M;
-    const angle = (h(4) * 2 - 1) * MAX_CROSS_ANGLE_RAD;
-    const layer = h(5);
-    const deep = layer < DEEP_SHARE;
-    const mid = !deep && layer < DEEP_SHARE + MID_SHARE;
-    const yMid = deep
-      ? DEEP_MIN_Y_M + h(6) * (DEEP_MAX_Y_M - DEEP_MIN_Y_M)
-      : mid
-        ? MID_MIN_Y_M + h(6) * (MID_MAX_Y_M - MID_MIN_Y_M)
-        : HIGH_MIN_Y_M + Math.pow(h(6), 0.8) * (HIGH_MAX_Y_M - HIGH_MIN_Y_M);
-    const rise = (h(7) * 2 - 1) * RIVER_MAX_RISE_M * (deep ? 0.3 : 1);
-    const run = 2 * CROSS_HALF_X_M;
-    const dzTotal = Math.tan(angle) * run;
-    const length = Math.hypot(run, dzTotal, rise);
-    riverDx[river] = run / length;
-    riverDy[river] = rise / length;
-    riverDz[river] = dzTotal / length;
-    riverOx[river] = -CROSS_HALF_X_M;
-    riverOy[river] = yMid - rise * 0.5;
-    riverOz[river] = zMid - dzTotal * 0.5;
-    riverLength[river] = length;
+    if (river < ALONG_RIVERS) {
+      let pick = h(5);
+      let layer = LAYERS[LAYERS.length - 1]!;
+      for (const candidate of LAYERS) {
+        if (pick < candidate[2]) { layer = candidate; break; }
+        pick -= candidate[2];
+      }
+      const yMid = layer[0] + h(6) * (layer[1] - layer[0]);
+      const length = ALONG_MIN_LENGTH_M + h(3) * ALONG_LENGTH_SPAN_M;
+      const weave = WEAVE_MIN_M + h(8) * WEAVE_SPAN_M;
+      // Lateral start and yaw chosen so the whole stream (with its weave) stays inside the corridor.
+      // Streams in the layer *below* the track keep to the wall side of the autopilot lanes: a stream
+      // converging on the vanishing point directly under the shuttle reads as a lane divider.
+      const below = layer === LAYERS[0];
+      let x0: number;
+      let yaw: number;
+      if (below) {
+        const side = h(4) < 0.5 ? -1 : 1;
+        x0 = side * (BELOW_MIN_ABS_X_M + h(14) * (ALONG_MAX_ABS_X_M - weave - BELOW_MIN_ABS_X_M));
+        yaw = 0;
+      } else {
+        x0 = (h(4) * 2 - 1) * (ALONG_MAX_ABS_X_M - weave);
+        const yawLimit = Math.min(ALONG_MAX_YAW_RAD, Math.asin(Math.min(1, (ALONG_MAX_ABS_X_M - weave - Math.abs(x0)) / length + 0.0001)));
+        yaw = (h(7) * 2 - 1) * Math.max(0.017, yawLimit) * (x0 > 0 ? -1 : 1) * (h(10) < 0.3 ? -1 : 1);
+      }
+      const rise = (h(9) * 2 - 1) * ALONG_MAX_RISE_M;
+      const dx = Math.sin(yaw);
+      const dz = Math.cos(yaw);
+      const horizontal = length;
+      riverDx[river] = dx * horizontal / Math.hypot(horizontal, rise);
+      riverDz[river] = dz * horizontal / Math.hypot(horizontal, rise);
+      riverDy[river] = rise / Math.hypot(horizontal, rise);
+      const zMid = -RIVER_Z_HALF_M + ((river + h(11) * 0.9) / ALONG_RIVERS) * 2 * RIVER_Z_HALF_M;
+      riverOx[river] = x0;
+      riverOy[river] = yMid - rise * 0.5;
+      riverOz[river] = zMid - length * 0.5;
+      riverLength[river] = Math.hypot(horizontal, rise);
+      riverWeave[river] = weave;
+      riverWeaveK[river] = TAU / (WEAVE_MIN_WAVELENGTH_M + h(12) * WEAVE_WAVELENGTH_SPAN_M);
+      riverWeavePhase[river] = h(13) * TAU;
+    } else {
+      const zMid = (h(3) * 2 - 1) * RIVER_Z_HALF_M * 0.8;
+      const angle = (h(4) * 2 - 1) * MAX_CROSS_ANGLE_RAD;
+      const layer = LAYERS[river % LAYERS.length]!;
+      const yMid = layer[0] + h(6) * (layer[1] - layer[0]);
+      const rise = (h(7) * 2 - 1) * RIVER_MAX_RISE_M;
+      const run = 2 * CROSS_HALF_X_M;
+      const dzTotal = Math.tan(angle) * run;
+      const length = Math.hypot(run, dzTotal, rise);
+      riverDx[river] = run / length;
+      riverDy[river] = rise / length;
+      riverDz[river] = dzTotal / length;
+      riverOx[river] = -CROSS_HALF_X_M;
+      riverOy[river] = yMid - rise * 0.5;
+      riverOz[river] = zMid - dzTotal * 0.5;
+      riverLength[river] = length;
+      riverWeave[river] = 0;
+      riverWeaveK[river] = 0;
+      riverWeavePhase[river] = 0;
+    }
+  }
+  // Cars are shared in proportion to river length, so every ribbon has the same density.
+  const riverCumulative = new Float32Array(RIVERS + 1);
+  for (let river = 0; river < RIVERS; river += 1) riverCumulative[river + 1] = riverCumulative[river]! + riverLength[river]!;
+
+  // Near-field lanes, one per near car: [lateral offset, lift, speed m/s (signed), start z].
+  const nearLane = new Float32Array(NEAR_COUNT * 4);
+  for (let i = 0; i < NEAR_COUNT; i += 1) {
+    const h = (k: number): number => hash01(seedSalt ^ 0x4ea7, i * 11 + k);
+    let lateral = (h(1) * 2 - 1) * 290;
+    if (Math.abs(lateral) < 40) lateral = Math.sign(lateral || 1) * (40 + h(2) * 30);
+    let lift = (h(3) * 2 - 1) * 170;
+    if (Math.abs(lift) < 16 && Math.abs(lateral) < 70) lift = Math.sign(lift || 1) * 22;
+    // Nothing streams directly *below* the shuttle: from the chase that converges like a lane line.
+    if (lift < 0 && Math.abs(lateral) < 160) lateral = Math.sign(lateral || 1) * (160 + h(7) * 130);
+    const oncoming = h(4) < 0.35;
+    nearLane[i * 4] = lateral;
+    nearLane[i * 4 + 1] = lift;
+    nearLane[i * 4 + 2] = (oncoming ? -1 : 1) * (70 + h(5) * 90);
+    nearLane[i * 4 + 3] = h(6) * NEAR_WINDOW_M;
   }
 
   // ---- Per-car constants. Indexed by global car index, so a tier change recomputes nothing.
@@ -802,15 +900,14 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     group[groupFill[archetype]] = car;
     groupFill[archetype] = groupFill[archetype] + 1;
 
-    // River choice by hash: the derived band/lane spread cars evenly over every river.
-    const river = Math.min(RIVERS - 1, Math.floor(hash01(car, 0x7a11) * RIVERS));
+    // River choice weighted by length, then a random spot along it (no platoons, no even gaps).
+    const pick = hash01(car, 0x7a11) * riverCumulative[RIVERS]!;
+    let river = 0;
+    while (river < RIVERS - 1 && riverCumulative[river + 1]! <= pick) river += 1;
     carRiver[car] = river;
     carOffsetLateral[car] = params.lane[car] * RIVER_LATERAL_SCATTER_M;
     carOffsetY[car] = (hash01(car, 0x2f3b) * 2 - 1) * RIVER_VERTICAL_SCATTER_M;
-    // Platoons: squeeze the derived phase into PLATOON_FILL of each platoon slot.
-    const slot = params.phase[car] * RIVER_PLATOONS;
-    const platoon = Math.floor(slot);
-    carPhase[car] = (platoon + (slot - platoon) * PLATOON_FILL) / RIVER_PLATOONS;
+    carPhase[car] = params.phase[car];
     carSpeed[car] = Math.abs(params.speed[car]) * SPEED_SCALE * riverSpeedScale[river]
       * (0.94 + 0.12 * hash01(car, 0x51ed));
     carBob[car] = hash01(car, 0x7a17) * TAU;
@@ -879,7 +976,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       uHeadTrail: { value: HEAD_TRAIL_S },
       uTailTrail: { value: TAIL_TRAIL_S },
       // T7: dense crossing ribbons overlap several trails per pixel; bloom supplies the glow.
-      uIntensity: { value: 0.7 },
+      uIntensity: { value: 0.75 },
       uFogPenetration: { value: 0.2 },
       ...skyriverFogUniforms(),
     },
@@ -976,6 +1073,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         let fade = smoothstep(0, RIVER_END_FADE_M, edge);
         const bob = Math.sin(t * 0.7 + carBob[car]) * 1.2;
         let carSpeedNow = speed;
+        let streakSpeed = speed;
 
         let px: number;
         let py: number;
@@ -998,25 +1096,51 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           }
           const ax = anchor[3]!;
           const az = anchor[4]!;
-          // Right-hand vector in the sim basis (yaw 0 faces +z): (cos, 0, -sin) of the heading.
           px = clamp(anchor[0]! + ax * forward + az * lateral, laneMinX, laneMaxX);
           py = anchor[1]! + lift + Math.sin(t * 0.9 + car) * 1.2;
           pz = anchor[2]! + az * forward - ax * lateral;
           fx = ax * heading;
           fz = az * heading;
           carSpeedNow = heading > 0 ? anchor[5]! : 170;
+          streakSpeed = carSpeedNow * ESCORT_STREAK_SCALE;
           fade = 1;
+        } else if (car >= ESCORT_COUNT && car < ESCORT_COUNT + NEAR_COUNT && anchorValid) {
+          // Near field: absolute motion along the canyon axis, wrapped into a window on the anchor.
+          const n = (car - ESCORT_COUNT) * 4;
+          const vz = nearLane[n + 2]!;
+          const absoluteZ = nearLane[n + 3]! + vz * t;
+          let rel = (absoluteZ - anchor[2]! + NEAR_WINDOW_M * 0.5) % NEAR_WINDOW_M;
+          if (rel < 0) rel += NEAR_WINDOW_M;
+          rel -= NEAR_WINDOW_M * 0.5;
+          fade = smoothstep(0, NEAR_FADE_M, NEAR_WINDOW_M * 0.5 - Math.abs(rel));
+          px = clamp(anchor[0]! + nearLane[n]!, -ALONG_MAX_ABS_X_M, ALONG_MAX_ABS_X_M);
+          py = anchor[1]! + nearLane[n + 1]! + bob;
+          pz = anchor[2]! + rel;
+          fx = 0;
+          fz = Math.sign(vz);
+          carSpeedNow = Math.abs(vz);
+          streakSpeed = carSpeedNow * NEAR_STREAK_SCALE;
         } else {
-          // Lateral scatter is perpendicular to the river in the horizontal plane.
+          // River: along the axis plus the lateral weave (and its slope, for the heading).
           const dx = riverDx[river]!;
           const dz = riverDz[river]!;
           const horizontal = Math.hypot(dx, dz) || 1;
-          const lateral = carOffsetLateral[car]!;
-          px = riverOx[river]! + dx * s + (dz / horizontal) * lateral;
+          const nx = dz / horizontal;
+          const nz = -dx / horizontal;
+          const k = riverWeaveK[river]!;
+          const weave = riverWeave[river]! * Math.sin(k * s + riverWeavePhase[river]!);
+          const weaveSlope = riverWeave[river]! * k * Math.cos(k * s + riverWeavePhase[river]!);
+          const lateral = carOffsetLateral[car]! + weave;
+          px = riverOx[river]! + dx * s + nx * lateral;
           py = riverOy[river]! + riverDy[river]! * s + carOffsetY[car]! + bob;
-          pz = riverOz[river]! + dz * s - (dx / horizontal) * lateral;
-          fx = (dx / horizontal) * direction;
-          fz = (dz / horizontal) * direction;
+          pz = riverOz[river]! + dz * s + nz * lateral;
+          let hx = dx / horizontal + nx * weaveSlope;
+          let hz = dz / horizontal + nz * weaveSlope;
+          const hl = Math.hypot(hx, hz) || 1;
+          hx /= hl;
+          hz /= hl;
+          fx = hx * direction;
+          fz = hz * direction;
           fy = riverDy[river]! * direction;
         }
 
@@ -1066,7 +1190,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           streakDirArray[d] = fx;
           streakDirArray[d + 1] = fy;
           streakDirArray[d + 2] = fz;
-          streakDirArray[d + 3] = carSpeedNow;
+          streakDirArray[d + 3] = streakSpeed;
           streakFadeArray[streaksUsed] = fade;
           streaksUsed += 1;
         }

@@ -75,7 +75,8 @@ export interface SkyriverQualitySettings {
   readonly dpr: number;
   /**
    * T7 post bloom: 'full' at the high tier, 'half' renders the bloom chain at half resolution
-   * (medium), 'off' skips the composer entirely and renders straight to the canvas (low).
+   * (medium), 'off' skips the bloom pass (low). The composer itself always runs (T7-2), so the low
+   * tier keeps the same single ACES tone map as the others for one extra full-screen draw.
    */
   readonly bloom: SkyriverBloomMode;
 }
@@ -418,8 +419,12 @@ export class SkyriverScene {
     for (let i = 0; i < this.listeners.length; i += 1) this.listeners[i](frame);
 
     this.renderer.info.reset();
-    if (this.bloomEnabled) this.composer.render(dt);
-    else this.renderer.render(this.scene, this.camera);
+    // T7-2: every tier renders through the composer, so tone mapping always runs once, on the
+    // blended HDR frame. Rendering straight to the canvas tone-mapped each additive layer before
+    // blending, which blew near signs out to white on the low tier (and made the T7 bloom A/B pair
+    // differ in two variables). With bloom off only the bloom pass is skipped.
+    this.bloomPass.enabled = this.bloomEnabled;
+    this.composer.render(dt);
   }
 
   /** True when this frame goes through the bloom composer. */

@@ -52,6 +52,13 @@ const TAILLIGHT: Rgb = [2.4, 0.0, 0.0];
 const TAILLIGHT_SOFT: Rgb = [0.9, 0.01, 0.008];
 const THROAT: Rgb = [0.9, 1.3, 2.0];
 const MARKER: Rgb = [0.25, 1.6, 2.0];
+/** T7-2: panel seams (true black) and the bevel catch-light along the canopy base. */
+const SEAM: Rgb = [0.004, 0.0, 0.0];
+const BEVEL: Rgb = [0.34, 0.03, 0.035];
+/** T7-2 neon environment tint per face side: the city's cyan on the right, magenta on the left. */
+const ENV_RIGHT: Rgb = [0.0, 0.03, 0.045];
+const ENV_LEFT: Rgb = [0.04, 0.0, 0.03];
+const ENV_TOP: Rgb = [0.01, 0.02, 0.035];
 /** T6R-2: the clearcoat catching the city — a narrow hot highlight along each shoulder line. */
 const CLEARCOAT: Rgb = [0.8, 0.3, 0.33];
 
@@ -91,10 +98,15 @@ function pushTri(build: HullBuild, a: Vec3, b: Vec3, c: Vec3, color: Rgb, emissi
     const gradient = vertical > 0.6 ? (facesUp ? 1.35 : 0.12) : 0.55 + 0.45 * Math.min(1, Math.max(0, (centreY + 0.8) / 1.8));
     const shade = (0.3 + 0.75 * key) * gradient;
     const up = facesUp ? vertical : 0;
+    // Environment reflection: which way the face looks decides which neon it mirrors.
+    const centreX = (a[0] + b[0] + c[0]) / 3;
+    const sideways = 1 - vertical;
+    const env: Rgb = vertical > 0.6 && facesUp ? ENV_TOP : centreX > 0.4 ? ENV_RIGHT : centreX < -0.4 ? ENV_LEFT : [0, 0, 0];
+    const envAmount = vertical > 0.6 ? 1 : sideways;
     rgb = [
-      color[0] * shade + RIM[0] * up,
-      color[1] * shade + RIM[1] * up,
-      color[2] * shade + RIM[2] * up,
+      color[0] * shade + RIM[0] * up + env[0] * envAmount,
+      color[1] * shade + RIM[1] * up + env[1] * envAmount,
+      color[2] * shade + RIM[2] * up + env[2] * envAmount,
     ];
   }
   for (const p of [a, b, c]) {
@@ -204,6 +216,37 @@ function buildHull(): HullBuild {
         [side * (b.halfHigh - inset - 0.14), b.yHigh + 0.02, b.z],
         [side * (a.halfHigh - inset - 0.14), a.yHigh + 0.02, a.z],
         CLEARCOAT,
+        true,
+      );
+    }
+  }
+
+  // T7-2 panel seams: a side seam along each flank at ~55% height, and a hood seam across the nose.
+  for (let i = 0; i + 1 < body.length; i += 1) {
+    const a = body[i]!;
+    const b = body[i + 1]!;
+    for (const side of [-1, 1]) {
+      const at = (r: Ring, k: number): Vec3 => {
+        const y = r.yLow + (r.yHigh - r.yLow) * k;
+        const half = r.halfLow + (r.halfHigh - r.halfLow) * k;
+        return [side * (half + 0.025), y, r.z];
+      };
+      pushQuad(build, at(a, 0.52), at(b, 0.52), at(b, 0.58), at(a, 0.58), SEAM, true);
+    }
+  }
+  pushQuad(build, [-1.45, 0.29, 4.12], [1.45, 0.29, 4.12], [1.45, 0.27, 4.26], [-1.45, 0.27, 4.26], SEAM, true);
+  // Bevel catch-light where the canopy meets the body.
+  for (let i = 0; i + 1 < canopy.length; i += 1) {
+    const a = canopy[i]!;
+    const b = canopy[i + 1]!;
+    for (const side of [-1, 1]) {
+      pushQuad(
+        build,
+        [side * (a.halfLow + 0.02), a.yLow + 0.01, a.z],
+        [side * (b.halfLow + 0.02), b.yLow + 0.01, b.z],
+        [side * (b.halfLow + 0.12), b.yLow - 0.04, b.z],
+        [side * (a.halfLow + 0.12), a.yLow - 0.04, a.z],
+        BEVEL,
         true,
       );
     }
@@ -390,7 +433,7 @@ function buildPlumeGeometry(): THREE.BufferGeometry {
 /** Cruise and boost plume shapes, metres. Boost roughly doubles the jet and brightens the core. */
 // T7: intensities halved for the bloom pass, which now supplies the glow the raw values used to fake.
 const PLUME_CRUISE = Object.freeze({ length: 8, width: 1.4, flare: 1.2, intensity: 0.55 });
-const PLUME_BOOST = Object.freeze({ length: 19, width: 2.2, flare: 2.0, intensity: 1.1 });
+const PLUME_BOOST = Object.freeze({ length: 30, width: 2.6, flare: 2.2, intensity: 1.15 });
 
 export function createSkyriverShuttle(): SkyriverShuttle {
   const build = buildHull();

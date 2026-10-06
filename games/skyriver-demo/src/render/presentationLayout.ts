@@ -35,9 +35,9 @@ export const SKYRIVER_ROOFLINE_MIN_M = 2200;
  */
 const INNER_SETBACK_M = 70;
 /** T7: only the stretch around the free-flight box must clear its 2000 m ceiling. */
-const FREEFLIGHT_WALL_ABS_Z_M = 720;
+const FREEFLIGHT_WALL_ABS_Z_M = 520;
 /** Inner-wall band elsewhere: low enough in places for crowned rooflines to meet a sky band. */
-const INNER_OPEN_BAND: readonly [number, number] = [1250, 2300];
+const INNER_OPEN_BAND: readonly [number, number] = [1180, 2250];
 
 /** Height band per column, inner first: [floor, span]. Inner walls tall, outer ones step down. */
 const COLUMN_BANDS: readonly (readonly [number, number])[] = Object.freeze([

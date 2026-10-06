@@ -10,21 +10,27 @@
  * Zero shipped assets: the text is drawn with the platform's own system fonts at runtime (Hiragino
  * on Apple, Noto Sans CJK on Android/ChromeOS). Nothing is downloaded or bundled.
  *
- * Layout (one 2048 x 1536 RGBA canvas, mipmapped):
- *   - 16 vertical cells, 128 x 768 px, in the top band: stacked kana/kanji, or latin set sideways.
- *   - 24 horizontal cells, 512 x 128 px, in a 4 x 6 grid below: one-line wordmarks.
+ * Layout (one 2048 x 2048 RGBA canvas, mipmapped; T7-2 grew it so no sign text repeats):
+ *   - 32 vertical cells, 128 x 768 px, in two bands: stacked kana/kanji, or latin set sideways.
+ *     Cells 0..HERO_VERTICAL_CELLS-1 are reserved for the giant hero blades.
+ *   - 16 horizontal cells, 512 x 128 px, in a 4 x 4 grid below: one-line wordmarks.
+ *     Cells 0..HERO_HORIZONTAL_CELLS-1 are reserved for the giant wall panels.
  * The canvas holds white-on-black luminance only; the sign shader tints it per sign and adds a
  * white-hot tube core where the mask saturates.
  */
 import * as THREE from 'three';
 
 export const SIGN_ATLAS_WIDTH = 2048;
-export const SIGN_ATLAS_HEIGHT = 1536;
-const VERTICAL_CELL = { w: 128, h: 768, count: 16 } as const;
-const HORIZONTAL_CELL = { w: 512, h: 128, columns: 4, rows: 6 } as const;
+export const SIGN_ATLAS_HEIGHT = 2048;
+const VERTICAL_CELL = { w: 128, h: 768, count: 32, perRow: 16 } as const;
+const HORIZONTAL_CELL = { w: 512, h: 128, columns: 4, rows: 4 } as const;
+/** Cells reserved for hero signs, so their text appears nowhere else in the canyon. */
+export const HERO_VERTICAL_CELLS = 8;
+export const HERO_HORIZONTAL_CELLS = 4;
 
 /** Stacked top-to-bottom, the way vertical shop signs read. */
 const VERTICAL_STACKED: readonly string[] = Object.freeze([
+  // Hero blades (cells 0-7).
   'ネオ京都',
   'ラーメン',
   'サイバネ',
@@ -32,44 +38,55 @@ const VERTICAL_STACKED: readonly string[] = Object.freeze([
   'ホテル夜',
   'カラオケ',
   '電脳街',
-  '寿司24',
   'スカイ川',
+  // Ordinary banners.
+  '寿司24',
   '風航空',
+  '夜市',
+  '薬局',
+  '居酒屋',
+  '雷電',
+  '月光',
+  '新宿区',
+  '整備工',
+  '銀河',
+  '茶房',
+  '星の湯',
+  '赤提灯',
+  '龍門',
 ]);
 /** Latin set sideways along the blade (rotated 90 degrees). */
 const VERTICAL_SIDEWAYS: readonly string[] = Object.freeze([
-  'NEO-KYOTO',
   'CYBERNETICS',
   'RAMEN 24H',
   'SKYRIVER',
   'MIRAI BANK',
   'ROBOTIX',
+  'DATA VAULT',
+  'KAZE AIR',
+  'NIGHT MARKET',
+  'PHARMA',
+  'NOODLE BAR',
 ]);
 const HORIZONTAL: readonly string[] = Object.freeze([
+  // Giant wall panels (cells 0-3).
   'NEO-KYOTO',
   'CYBERNETICS',
-  'ラーメン 24H',
-  'MIRAI BANK',
-  'ホテル NEON',
-  'SKYRIVER',
-  'カラオケ',
-  '電脳 CYBER',
-  '夜市 NIGHT',
-  'KAZE AIR',
+  'スカイリバー',
+  'MIRAI BANK 未来',
+  // Ordinary strips.
+  'RAMP ACCESS',
+  'OPEN 24H',
   '寿司 SUSHI',
   'ROBOTIX',
-  '薬 PHARMA',
-  'OPEN 24H',
-  'ネオ京都',
-  'RAMP ACCESS',
-  'サイバネティクス',
   'HOTEL',
-  '未来 FUTURE',
-  'NOODLE BAR',
-  'スカイリバー',
-  'DATA VAULT',
-  '24H',
+  '夜市 NIGHT',
   'RYOKAN',
+  '電脳 CYBER',
+  'NOODLE BAR',
+  '薬 PHARMA',
+  'KAZE AIR',
+  'DATA VAULT',
 ]);
 
 /** UV rectangle in the atlas: u0, v0, u1, v1 (v up, matching CanvasTexture's default flipY). */
@@ -126,8 +143,8 @@ export function createSignAtlas(): SignAtlas {
 
   const vertical: AtlasRect[] = [];
   for (let i = 0; i < VERTICAL_CELL.count; i += 1) {
-    const x = i * VERTICAL_CELL.w;
-    const y = 0;
+    const x = (i % VERTICAL_CELL.perRow) * VERTICAL_CELL.w;
+    const y = Math.floor(i / VERTICAL_CELL.perRow) * VERTICAL_CELL.h;
     const w = VERTICAL_CELL.w;
     const h = VERTICAL_CELL.h;
     ctx.save();
@@ -159,7 +176,7 @@ export function createSignAtlas(): SignAtlas {
   }
 
   const horizontal: AtlasRect[] = [];
-  const baseY = VERTICAL_CELL.h;
+  const baseY = VERTICAL_CELL.h * 2;
   for (let row = 0; row < HORIZONTAL_CELL.rows; row += 1) {
     for (let column = 0; column < HORIZONTAL_CELL.columns; column += 1) {
       const index = row * HORIZONTAL_CELL.columns + column;

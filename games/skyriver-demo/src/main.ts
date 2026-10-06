@@ -340,6 +340,10 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   root.style.overflow = 'hidden';
   root.style.background = '#04060b';
 
+  // T7-2: the autopilot lap cuts at each canyon end; this veil dips the frame to black across it.
+  const cutVeil = doc.createElement('div');
+  cutVeil.style.cssText = 'position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:1;';
+
   const canvas = doc.createElement('canvas');
   canvas.id = 'skyriver-canvas';
   canvas.style.display = 'block';
@@ -347,6 +351,7 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   canvas.style.height = '100%';
   canvas.style.touchAction = 'none';
   root.appendChild(canvas);
+  root.appendChild(cutVeil);
 
   const scene = new SkyriverScene({ canvas, seed, tier: initialTier });
 
@@ -628,6 +633,9 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
       lastTick = state.current.tick;
 
       const presented = presenter.present(state);
+      scene.atmosphere.setBoost(presented.boostVisual);
+      const veil = presented.cutFade.toFixed(3);
+      if (cutVeil.style.opacity !== veil) cutVeil.style.opacity = veil;
       writeCameraPose(poseScratch, presented, state.camera, {
         boost: presented.boostVisual,
         time: (state.current.tick + state.alpha) / 30,

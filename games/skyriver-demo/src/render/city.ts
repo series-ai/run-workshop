@@ -44,7 +44,7 @@ import {
   skyriverFogUniforms,
 } from './atmosphere';
 import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
-import { createSignAtlas, type SignAtlas } from './signAtlas';
+import { HERO_HORIZONTAL_CELLS, HERO_VERTICAL_CELLS, createSignAtlas, type SignAtlas } from './signAtlas';
 
 /** Draw calls this module may spend (plan T3 allows 10 city-only; the shared budget allots 8). */
 export const SKYRIVER_CITY_DRAW_CALL_BUDGET = 8;
@@ -566,6 +566,10 @@ function innerWallOf(layout: SkyriverCityLayout, side: -1 | 1): readonly Skyrive
 
 
 export interface SkyriverHeroBlade {
+  /** T7-2: 'blade' projects into the canyon facing along it; 'panel' is a giant sign flat on the wall. */
+  readonly kind: 'blade' | 'panel';
+  /** Index within its kind: selects the reserved atlas cell, so every hero's text is unique. */
+  readonly cell: number;
   readonly x: number;
   readonly y: number;
   readonly z: number;
@@ -576,9 +580,14 @@ export interface SkyriverHeroBlade {
 }
 
 /** Along-canyon stations of the hero blades, per wall. Staggered so each straight sees 4-6 ahead. */
-const HERO_STATIONS: readonly (readonly [-1 | 1, number])[] = Object.freeze([
-  [-1, -1400], [-1, -700], [-1, 0], [-1, 700], [-1, 1400],
-  [1, -1050], [1, -350], [1, 350], [1, 1050], [1, 1750],
+/**
+ * T7-2 stations along the autopilot straights (|z| <= ~1.75 km): 8 blades and 4 wall panels,
+ * interleaved and alternating walls, so every ~1 km of canyon shows 2-3 distinct giant signs.
+ */
+const HERO_STATIONS: readonly (readonly [-1 | 1, number, 'blade' | 'panel'])[] = Object.freeze([
+  [-1, -1500, 'blade'], [1, -1300, 'panel'], [1, -1050, 'blade'], [-1, -600, 'blade'],
+  [-1, -350, 'panel'], [1, -150, 'blade'], [-1, 300, 'blade'], [1, 550, 'panel'],
+  [1, 750, 'blade'], [-1, 1200, 'blade'], [-1, 1450, 'panel'], [1, 1650, 'blade'],
 ]);
 const HERO_COLORS: readonly number[] = Object.freeze([0x2ff2ff, 0xff2fb4, 0xffb13c, 0x2ff2ff, 0xff4a8c]);
 /** Shuttle height band (flightPresentation.ts track: ~945-1360 m). */
@@ -596,24 +605,37 @@ export function deriveHeroBlades(layout: SkyriverCityLayout): readonly SkyriverH
   deriveCityTrims(layout);
   const random = new DeterministicRandom(layout.seed).fork('skyriver.city.hero');
   const blades: SkyriverHeroBlade[] = [];
-  for (const [side, z] of HERO_STATIONS) {
+  let bladeCell = 0;
+  let panelCell = 0;
+  for (const [side, z, kind] of HERO_STATIONS) {
     const wall = innerWallOf(layout, side);
     if (wall.length === 0) continue;
     const tower = wall.reduce((best, candidate) => (Math.abs(candidate.z - z) < Math.abs(best.z - z) ? candidate : best));
-    const height = 170 + random.nextInt(0, 70);
-    const y = HERO_CENTRE_Y + random.nextInt(-60, 60);
-    const face = Math.abs(tower.x) - tower.width * 0.5
-      - tierProjectionOver(layout.seed, tower, y - height * 0.5, y + height * 0.5);
-    const width = Math.min(60, Math.max(24, face - 410));
-    blades.push({
-      x: side * (face - width * 0.5),
-      y,
-      z: Math.max(tower.z - tower.depth * 0.5 + 6, Math.min(tower.z + tower.depth * 0.5 - 6, z)),
-      width,
-      height,
-      color: HERO_COLORS[blades.length % HERO_COLORS.length]!,
-      seed: random.nextInt(0, 9999) / 9999,
-    });
+    const zOnTower = (half: number): number =>
+      Math.max(tower.z - tower.depth * 0.5 + half, Math.min(tower.z + tower.depth * 0.5 - half, z));
+    if (kind === 'blade') {
+      const height = 230 + random.nextInt(0, 100);
+      const y = HERO_CENTRE_Y + random.nextInt(-50, 50);
+      const face = Math.abs(tower.x) - tower.width * 0.5
+        - tierProjectionOver(layout.seed, tower, y - height * 0.5, y + height * 0.5);
+      const width = Math.min(70, Math.max(30, face - 410));
+      blades.push({
+        kind, cell: bladeCell, x: side * (face - width * 0.5), y, z: zOnTower(6), width, height,
+        color: HERO_COLORS[blades.length % HERO_COLORS.length]!, seed: random.nextInt(0, 9999) / 9999,
+      });
+      bladeCell += 1;
+    } else {
+      const height = 44 + random.nextInt(0, 12);
+      const y = HERO_CENTRE_Y + 110 + random.nextInt(-40, 40);
+      const width = Math.min(160, tower.depth - 10);
+      const face = Math.abs(tower.x) - tower.width * 0.5
+        - tierProjectionOver(layout.seed, tower, y - height * 0.5, y + height * 0.5);
+      blades.push({
+        kind, cell: panelCell, x: side * (face - 0.8), y, z: zOnTower(width * 0.5 + 4), width, height,
+        color: HERO_COLORS[(blades.length + 2) % HERO_COLORS.length]!, seed: random.nextInt(0, 9999) / 9999,
+      });
+      panelCell += 1;
+    }
   }
   heroCache.set(layout.seed, blades);
   return blades;
@@ -672,15 +694,15 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     cx[count] = hero.x;
     cy[count] = hero.y;
     cz[count] = hero.z;
-    nx[count] = 0;
-    nz[count] = 1;
+    nx[count] = hero.kind === 'panel' ? -Math.sign(hero.x) : 0;
+    nz[count] = hero.kind === 'panel' ? 0 : 1;
     sw[count] = hero.width;
     sh[count] = hero.height;
     tint.setHex(hero.color, THREE.SRGBColorSpace);
     color[count * 3] = tint.r;
     color[count * 3 + 1] = tint.g;
     color[count * 3 + 2] = tint.b;
-    kind[count] = SKYRIVER_SIGN_BANNER;
+    kind[count] = hero.kind === 'panel' ? SKYRIVER_SIGN_STRIP : SKYRIVER_SIGN_BANNER;
     seedValue[count] = hero.seed;
     count += 1;
   }
@@ -993,10 +1015,15 @@ void main() {
   // Dark at street level, brightest through the mid-high floors, thinning again at the parapet.
   float litShare = mix( 0.025, 0.11, smoothstep( 0.04, 0.5, vUp ) )
     * ( 1.0 - 0.5 * smoothstep( 0.84, 1.0, vUp ) );
-  float lit = step( 1.0 - litShare, paneHash );
+  // T7-2 lit runs: a floor lights in runs of 3-9 panes (an office, a corridor) sharing one colour
+  // temperature, with the odd dark pane inside a run. Per-pane hashing read as confetti noise.
+  float runLength = 3.0 + floor( skyHash12( vec2( cell.y, faceOffset.x ) ) * 7.0 );
+  float runId = floor( ( cell.x + floor( skyHash11( cell.y * 7.3 + faceOffset.y ) * 9.0 ) ) / runLength );
+  float runHash = skyHash12( vec2( runId, cell.y ) + faceOffset * 1.31 );
+  float lit = step( 1.0 - litShare * 1.15, runHash ) * step( 0.12, paneHash );
 
-  // Colour temperature: mostly warm interior light, some cold office pale, sparse neon.
-  float tempHash = skyHash11( paneHash * 311.7 + vSeed * 53.0 );
+  // Colour temperature, per run: mostly warm interior light, some cold office pale, sparse neon.
+  float tempHash = skyHash11( runHash * 311.7 + vSeed * 53.0 );
   // T6R: a wider spread of colour temperatures, so lit panes read as rooms, not as one decal.
   vec3 sodium = vec3( 1.0, 0.55, 0.22 );
   vec3 warm = vec3( 1.0, 0.76, 0.46 );
@@ -1011,7 +1038,7 @@ void main() {
   paneColor = mix( paneColor, neonCyan, step( 0.86, tempHash ) );
   paneColor = mix( paneColor, neonMagenta, step( 0.94, tempHash ) );
 
-  float brightness = 0.2 + 0.8 * pow( skyHash11( paneHash * 71.3 + 2.0 ), 1.5 );
+  float brightness = ( 0.45 + 0.55 * skyHash11( runHash * 71.3 + 2.0 ) ) * ( 0.85 + 0.15 * paneHash );
   // A handful of panes buzz. Cheap, and it stops the grid reading as a static decal.
   float buzzing = step( 0.965, skyHash11( paneHash * 17.7 + 9.0 ) );
   float buzz = 1.0 - buzzing * 0.55 * ( 0.5 + 0.5 * sin( uTime * 23.0 + paneHash * 120.0 ) );
@@ -1019,7 +1046,7 @@ void main() {
   vec3 resolved = paneColor * ( lit * brightness * buzz ) * ( glass + halo * 0.28 ) * ( 1.0 - heroShadow );
   // What the grid averages out to once it stops resolving: lit share times mean pane brightness,
   // in the mean pane colour. Distant walls read as a dim glow rather than a field of sparks.
-  vec3 averaged = vec3( 0.86, 0.72, 0.56 ) * ( litShare * 0.4 * blockLive * vIsSide );
+  vec3 averaged = vec3( 0.86, 0.72, 0.56 ) * ( litShare * 0.22 * blockLive * vIsSide );
   // T7: dimmer panes — under bloom they compete with the signage otherwise.
   color += mix( averaged * ( 1.0 - heroShadow ), resolved, detail ) * 0.55;
 
@@ -1292,11 +1319,13 @@ void main() {
     mask = texture2D( uAtlas, mix( vAtlas.xy, vAtlas.zw, cell ) ).r * inside;
   }
 
-  // Halo: exponential spill around the sign rectangle, in metres.
-  vec2 q = abs( vLocal ) - vSignSize * 0.5;
-  float outside = length( max( q, 0.0 ) );
-  float halo = exp( - outside / ( vMargin * 0.4 ) ) * ( 1.0 - inside * 0.6 );
-  float plate = inside * 0.14;
+  // T7-2 halo: a radial (elliptical) falloff from the sign centre, faded to zero before the quad
+  // edge — the T7 rectangle-distance spill read as glowing cards.
+  vec2 q = vLocal / ( vSignSize * 0.5 + vMargin * 0.5 );
+  vec2 edge = abs( vLocal ) / ( vSignSize * 0.5 + vMargin );
+  float edgeFade = ( 1.0 - smoothstep( 0.7, 1.0, edge.x ) ) * ( 1.0 - smoothstep( 0.7, 1.0, edge.y ) );
+  float halo = exp( - dot( q, q ) * 1.4 ) * edgeFade * ( 1.0 - inside * 0.5 );
+  float plate = inside * 0.03;
 
   // Signs are double-sided: blades are seen from both canyon directions. Grazing views dim, but
   // never to nothing — the halo is volumetric, not a decal.
@@ -1619,14 +1648,23 @@ export class SkyriverCity {
     const atlasRects = new Float32Array(count * 4);
     // Hero blades come first in the sign list (deriveNeonSigns) and each gets its own vertical cell;
     // other banners and strips pick a cell by their seed; outline frames stay procedural.
-    const heroCount = deriveHeroBlades(this.layout).length;
+    const heroes = deriveHeroBlades(this.layout);
     const { vertical, horizontal } = this.atlas;
+    // Hero cells are reserved: ordinary signs draw only from the cells after them, so no hero text
+    // ever repeats on a small sign (cycle-3 caught duplicates reading as repetition).
+    const verticalPool = vertical.length - HERO_VERTICAL_CELLS;
+    const horizontalPool = horizontal.length - HERO_HORIZONTAL_CELLS;
 
     for (let i = 0; i < count; i += 1) {
       let rect: readonly number[] = [0, 0, -1, -1];
-      if (i < heroCount) rect = vertical[i % vertical.length]!;
-      else if (kind[i] === SKYRIVER_SIGN_BANNER) rect = vertical[Math.floor(seedValue[i]! * vertical.length) % vertical.length]!;
-      else if (kind[i] === SKYRIVER_SIGN_STRIP) rect = horizontal[Math.floor(seedValue[i]! * horizontal.length) % horizontal.length]!;
+      const hero = heroes[i];
+      if (i < heroes.length && hero !== undefined) {
+        rect = hero.kind === 'blade' ? vertical[hero.cell % HERO_VERTICAL_CELLS]! : horizontal[hero.cell % HERO_HORIZONTAL_CELLS]!;
+      } else if (kind[i] === SKYRIVER_SIGN_BANNER) {
+        rect = vertical[HERO_VERTICAL_CELLS + (Math.floor(seedValue[i]! * verticalPool) % verticalPool)]!;
+      } else if (kind[i] === SKYRIVER_SIGN_STRIP) {
+        rect = horizontal[HERO_HORIZONTAL_CELLS + (Math.floor(seedValue[i]! * horizontalPool) % horizontalPool)]!;
+      }
       atlasRects.set(rect, i * 4);
       centres[i * 3] = cx[i];
       centres[i * 3 + 1] = cy[i];

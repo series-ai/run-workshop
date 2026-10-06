@@ -54,7 +54,8 @@ export const CHASE_PITCH_FOLLOW = 0.2;
  * down and 9 degrees up. Combined with the presented canyon walls (presentationLayout.ts) this keeps
  * every frame inside the chasm: walls on both sides, depth below, never a full-sky frame.
  */
-export const CHASE_PITCH_MIN_TURNS = -0.056;
+/** T7-2: limit ~-12 degrees (was -20): the horizon holds the top 25-30% of the frame. */
+export const CHASE_PITCH_MIN_TURNS = -0.034;
 export const CHASE_PITCH_MAX_TURNS = 0.025;
 /** Aim point ahead of the shuttle, metres, along the boom. */
 export const CHASE_LOOK_AHEAD_M = 140;
@@ -63,9 +64,13 @@ export const CHASE_LOOK_AHEAD_M = 140;
  * and the vanishing point sits ahead of and above it (the Neon Rain composition).
  */
 /** T7: ~12 degrees more look-down than T6R-2 (aim drop 9 m -> 36 m at 140 m ahead, plus the crane). */
-export const CHASE_LOOK_DOWN_M = 36;
+/**
+ * T7-2: aim drop retuned with the crane so the view pitches ~12.5 degrees down: rivers and depth
+ * below, horizon near the top 30%, crowned rooflines and the hazed sky band in the upper third.
+ */
+export const CHASE_LOOK_DOWN_M = 25;
 /** T7 boost drama: field-of-view widen at full boost, degrees, and camera shake amplitude, metres. */
-export const CHASE_BOOST_FOV_DEG = 9;
+export const CHASE_BOOST_FOV_DEG = 12;
 export const CHASE_BOOST_SHAKE_M = 0.28;
 export const CHASE_BASE_FOV_DEG = 62;
 /**
