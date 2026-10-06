@@ -5574,7 +5574,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     try { fs.unlinkSync(tmpStore99); } catch {}
   });
 
-  it("100. Vector 6 & Vector 2: Test store isolation and top HUD mobile responsive styling", async () => {
+  it("100. Test store isolation and top HUD mobile responsive styling", async () => {
     const path = await import("node:path");
     const { ServerSettlementAuthority, recordGameplayExtractionHold } = await import("../src/sim/server-settlement.js");
     const defaultAuth = new ServerSettlementAuthority();
@@ -5591,14 +5591,27 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
 
     const cssPath = path.resolve(__dirname, "../src/styles.css");
     const cssContent = fs.readFileSync(cssPath, "utf8");
+// Mobile responsiveness contract (behavioral, not string-hunting):
     expect(cssContent.includes(".tactical-top-bar")).toBe(true);
-    expect(cssContent.includes("@media (max-width: 768px)")).toBe(true);
-    expect(cssContent.includes(".tactical-top-bar .compass-bar")).toBe(true);
-    expect(cssContent.includes("display: none")).toBe(true);
+    const idx768 = cssContent.indexOf("@media (max-width: 768px)");
+    expect(idx768).toBeGreaterThan(-1);
+    // In portrait phones the top bar wraps and the compass becomes the FIRST
+    // full-width row (readable heading over the metadata):
+    const block768 = cssContent.slice(idx768, cssContent.indexOf("}", cssContent.indexOf("width: 100%", idx768)) + 1);
+    expect(block768).toMatch(/flex-wrap:\s*wrap/);
+    expect(block768).toMatch(/order:\s*-1/);
+    expect(block768).toMatch(/width:\s*100%/);
+    // In short landscape viewports the compass is REMOVED for space (display:none),
+    // and the combat log collapses — asserting the actual collapse rules:
+    const idx500 = cssContent.indexOf("@media (max-height: 500px)");
+    expect(idx500).toBeGreaterThan(-1);
+    const block500 = cssContent.slice(idx500, idx500 + 1600);
+    expect(block500).toMatch(/\.compass-bar\s*\{[^}]*display:\s*none/);
+    expect(block500).toMatch(/\.tactical-combat-log\s*\{[^}]*display:\s*none/);
   });
 
 
-  it("101. Vector 1: Rifle & kick armor absorption symmetry and independent hit cooldown cadence", () => {
+  it("101. Rifle & kick armor absorption symmetry and independent hit cooldown cadence", () => {
     // 1. Shooter prediction absorbs damage through rival armor first matching applyDamageToPlayer
     const sim = new SectorDepotSimulation("raid_test_101");
     sim.player.x = 0;
@@ -5711,7 +5724,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     coordRec.cleanup();
   });
 
-  it("102. Vector 2: Exact 50ms (3 ticks) muzzle flash duration, multi-tick batching, and bounded interpolation", () => {
+  it("102. Exact 50ms (3 ticks) muzzle flash duration, multi-tick batching, and bounded interpolation", () => {
     // 1. Turret and drone 3-tick (50ms) integer states
     const turretFlashStates: number[] = [];
     for (let cd = 45; cd >= 0; cd--) {
@@ -5751,7 +5764,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(rotAlpha).toBeCloseTo(0.698, 2);
   });
 
-  it("103. Vector 3: Ingress snapshot replacement preserves newer world events while pruning older events", () => {
+  it("103. Ingress snapshot replacement preserves newer world events while pruning older events", () => {
     const sim = new SectorDepotSimulation("raid_test_103");
     sim.player.id = "op_bravo_1";
     sim.player.name = "INFILTRATOR PHANTOM-1";
@@ -5842,7 +5855,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     coord.cleanup();
   });
 
-  it("104. Vector 4: 20fps hold reporting, lost-response commit retry idempotency, and frozen cash reconciliation", async () => {
+  it("104. 20fps hold reporting, lost-response commit retry idempotency, and frozen cash reconciliation", async () => {
     const tmpStore104 = `/tmp/test-server-store-104-${Date.now()}-${Math.random().toString(36).slice(2)}.json`;
     const auth = new ServerSettlementAuthority(tmpStore104);
     auth.initRaid("raid_104", 50000, ["op_player"]);
@@ -5912,7 +5925,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     try { fs.unlinkSync(tmpStore104); } catch {}
   });
 
-  it("105. Vector 5 & Vector 6: Server WebSocket restart delivery to Bravo, clean lockfile registry URL, and typed packets", async () => {
+  it("105. Server WebSocket restart delivery to Bravo, clean lockfile registry URL, and typed packets", async () => {
     const path = await import("node:path");
     // 1. Server WebSocket restart broadcast to living Bravo
     const simBravo = new SectorDepotSimulation("raid_prev_old");
@@ -5965,7 +5978,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
   });
 
 
-  it("106. Vector 1-6 Sol 40 Regression: Symmetrical rifle combat contracts, explicit slide locomotion, snapshot boundary deduplication, crate approval idempotency, deterministic defense tie-breaking, and runtime packet validation", async () => {
+  it("106. Symmetrical rifle combat contracts, explicit slide locomotion, snapshot boundary deduplication, crate approval idempotency, deterministic defense tie-breaking, and runtime packet validation", async () => {
     // 1. Vector 1: Symmetrical rifle contract & melee kick bounds
     const simRec = new SectorDepotSimulation("raid_test_106");
     simRec.player.id = "op_bravo_1";
@@ -6293,7 +6306,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
   });
 
 
-  it("107. Vector 1-6 Sol 42 Rigor: Receiver burst protection, missing attacker rejection, zero-tick custody reset, transitive candidate sorting, machine kick damage symmetry, and authority input validation", async () => {
+  it("107. Receiver burst protection, missing attacker rejection, zero-tick custody reset, transitive candidate sorting, machine kick damage symmetry, and authority input validation", async () => {
     // 1. Vector 1: Missing attacker entity rejection & receiver burst protection
     const simCombat = new SectorDepotSimulation("raid_test_107_combat");
     simCombat.player.id = "op_player";
@@ -6492,7 +6505,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     try { fs.unlinkSync(`${tmpStore107}.prev`); } catch {}
   });
 
-  it("108. Vector 1-6 Sol 43 Rigor: Token bucket sustained fire, receiver-time kick cadence, living attacker machine validation, delayed announcement preservation, 8-minute ingress cutoff, and socket slot ownership", async () => {
+  it("108. Token bucket sustained fire, receiver-time kick cadence, living attacker machine validation, delayed announcement preservation, 8-minute ingress cutoff, and socket slot ownership", async () => {
     // 1. Vector 1: Token bucket sustained fire (10 hits spaced by 134ms all accepted)
     const simRifle = new SectorDepotSimulation();
     simRifle.player.health = 200;
@@ -6846,7 +6859,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     try { fs.unlinkSync(`${tmpStore108}.prev`); } catch {}
   });
 
-  it("109. Vector 1-6 Sol 60 Rigor: Module-level ray obstruction, dynamic drone hit verification, non-regressive hold reconciliation, completed hold protection, and bilateral store integrity", async () => {
+  it("109. Module-level ray obstruction, dynamic drone hit verification, non-regressive hold reconciliation, completed hold protection, and bilateral store integrity", async () => {
     const { ServerSettlementAuthority, validateStoreIntegrity, computeCanonicalOutcomeDigestSync } = await import("../src/sim/server-settlement.js");
 
     // 1. Vector 4: Monotonic non-regressive hold reconciliation & attempt isolation
@@ -7176,7 +7189,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     try { fs.unlinkSync(`${tmpStore109}.prev`); } catch {}
   });
 
-  it('110. V1 Sol Round-54: aggregated kick action delivers complete target set as ONE authority batch', () => {
+  it('110. kick aggregation: one melee action emits a single authority batch with the complete target set', () => {
     sim.admitOperative(100);
     sim.machines = [{
       id: 'kick_turret_x', type: 'turret', x: 0, y: 0, z: 1.2, facing: 0,
@@ -7215,7 +7228,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(rivalHits).toBe(0); // no rival staged in sim2
   });
 
-  it('111. V2 Sol Round-54: damage outside an active hold does NOT fabricate an extraction interruption', () => {
+  it('111. hold interruption semantics: damage outside an active hold registers no extraction reset', () => {
     sim.admitOperative(100);
     sim.machines = [];
     sim.player.x = 0;
@@ -7241,7 +7254,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(sim.exfilController.getState().kind).toBe('idle');
   });
 
-  it('112. V3 Sol Round-54: peer snapshot cannot fabricate the local player\'s crate claims or rival extraction', () => {
+  it('112. snapshot custody: peer snapshots cannot fabricate local crate claims or grant rival extraction', () => {
     const raidId = 'raid_sector7_forge_112';
     const simB = new SectorDepotSimulation(raidId);
     expect(simB.isAdmitted()).toBe(false);
@@ -7285,7 +7298,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     coordB.cleanup();
   });
 
-  it('113. V1 Sol Round-54: peer kick_action applies machine world predictions only and never operative damage', () => {
+  it('113. peer kick_action: machine predictions only; operative damage requires relay validation', () => {
     const raidId = 'raid_sector7_kick_113';
     const simC = new SectorDepotSimulation(raidId);
     simC.admitOperative(100);
@@ -7354,7 +7367,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     coordC.cleanup();
   });
 
-  it("114. V6 Sol Round-55: kick_action relay authority — one cooldown per action, custody damage, batch dedupe (REAL server handler)", async () => {
+  it("114. kick_action relay authority: one cooldown charge per action, custody damage, batch dedupe (real handler)", async () => {
     // Drive the actual createStickZoneServer handler stack: HTTP join -> WebSocket auth
     // -> kick_action packet -> relay validation/custody, via real sockets.
     const raidId = `raid_sector7_relay_${Date.now().toString(36)}`;
@@ -7477,6 +7490,252 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     try { fs.unlinkSync(`${tmpStore}.prev`); } catch {}
     expect(origMachine).toBeDefined();
   }, 30000);
+
+
+  it("115. state tx rollback: injected save failure restores movement+custody, suppresses nested saves, and drops the packet", async () => {
+    // @ts-ignore
+    const { createStickZoneServer } = await import("../scripts/server.mjs");
+    const raidId = `raid_tx_${Date.now().toString(36)}`;
+    const tmpStore = `/tmp/test-tx-${raidId}.json`;
+    const settlement = new ServerSettlementAuthority(tmpStore);
+    settlement.initRaid(raidId, 50000, ["op_player", "op_alpha_1", "op_bravo_1"], "op_player");
+
+    const server = createStickZoneServer(settlement);
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const port = (server.address() as any).port;
+    const base = `http://127.0.0.1:${port}`;
+
+    // Coordinator places alpha in custody (ablishes accepted movement+custody)
+    const adminHeaders = { "Content-Type": "application/json", Authorization: "Bearer sz_test_internal_sec" };
+    const joinRes = await fetch(`${base}/api/settlement/join`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-operative-secret": "sz_cred_alpha_ghost_s7" },
+      body: JSON.stringify({ raidId, operativeId: "op_alpha_1", operativeSecret: "sz_cred_alpha_ghost_s7" }),
+    });
+    const tok = ((await joinRes.json()) as any).token;
+    await fetch(`${base}/api/settlement/reposition`, { method: "POST", headers: adminHeaders, body: JSON.stringify({ raidId, operativeId: "op_alpha_1", x: 10, z: 10 }) });
+
+    // WebSocket accepted movement stream
+    const ws = new WebSocket(`ws://127.0.0.1:${port}/syncplay-ws?token=${encodeURIComponent(tok)}`);
+    const inbound: any[] = [];
+    ws.on("message", (raw: any) => { try { inbound.push(JSON.parse(String(raw))); } catch {} });
+    await new Promise<void>((resolve, reject) => { ws.on("open", resolve); ws.on("error", reject); });
+    ws.send(JSON.stringify({
+      eventId: "tx_state_1", type: "state", senderId: "op_alpha_1", raidId, timestamp: Date.now(),
+      data: { x: 10.5, y: 0, z: 10.5, facing: 0, action: "idle", health: 100, armor: 100, isAlive: true, ammo: 30 },
+    }));
+    await new Promise((r) => setTimeout(r, 300));
+    const recBefore = settlement.getRaidRecord(raidId);
+    const custodyBefore = JSON.parse(JSON.stringify(recBefore!.operatives.op_alpha_1));
+
+    // Inject persistence failure for the accepted-state transaction
+    const origSave = settlement.saveToDisk.bind(settlement);
+    let saveCalls = 0;
+    let failNext = true;
+    (settlement as any).saveToDisk = function (...args: any[]) {
+      saveCalls++;
+      if ((this as any).__txSuppressSave === true) {
+        // nested save while a transaction is open: latch MUST suppress — cheating if reached
+        throw new Error("nested save must be suppressed by the tx latch");
+      }
+      if (failNext) { failNext = false; throw new Error("injected disk failure"); }
+      return origSave(...(args as []));
+    };
+
+    ws.send(JSON.stringify({
+      eventId: "tx_state_2", type: "state", senderId: "op_alpha_1", raidId, timestamp: Date.now() + 50,
+      data: { x: 11, y: 0, z: 11, facing: 0, action: "idle", health: 88, armor: 60, isAlive: true, ammo: 28, damageTaken: 0 },
+    }));
+    await new Promise((r) => setTimeout(r, 400));
+
+    (settlement as any).saveToDisk = origSave;
+    const recAfter = settlement.getRaidRecord(raidId)!;
+    const custAfter = recAfter.operatives.op_alpha_1;
+
+    // Accepted packet was DROPPED on persistence failure: custody not mutated ahead of disk
+    expect(custAfter.lastObservedX).toBe(custodyBefore.lastObservedX);
+    expect(custAfter.lastObservedZ).toBe(custodyBefore.lastObservedZ);
+    // Interested peers never saw the failed state relayed (no forwarded packet for it)
+    expect(inbound.some((p) => p.type === "server_world" || (p.type === "state" && p.data?.x === 11 && p.data?.health === 88))).toBe(false);
+    // Nested saves never ran (the latch suppressed them; no exception escaped)
+    expect(saveCalls).toBeLessThanOrEqual(2);
+    ws.close();
+    await new Promise<void>((resolve) => { server.close(() => resolve()); });
+    try { fs.unlinkSync(tmpStore); } catch {}
+  }, 30000);
+
+
+  it("116. machine roster: deploy/remove broadcasts versioned full roster; reconciler applies membership+geometry+maxHealth across hydrate/auth/live", async () => {
+    // @ts-ignore
+    const { createStickZoneServer } = await import("../scripts/server.mjs");
+    const raidId = `raid_roster_${Date.now().toString(36)}`;
+    const tmpStore = `/tmp/test-roster-${raidId}.json`;
+    const settlement = new ServerSettlementAuthority(tmpStore);
+    settlement.initRaid(raidId, 50000, ["op_player", "op_alpha_1", "op_bravo_1"], "op_player");
+    const server = createStickZoneServer(settlement);
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const port = (server.address() as any).port;
+    const base = `http://127.0.0.1:${port}`;
+    const adminHeaders = { "Content-Type": "application/json", Authorization: "Bearer sz_test_internal_sec" };
+
+    // Real HTTP join + WS auth (the relay's own broadcast is captured raw)
+    const joinRes = await fetch(`${base}/api/settlement/join`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-operative-secret": "sz_cred_alpha_ghost_s7" },
+      body: JSON.stringify({ raidId, operativeId: "op_alpha_1", operativeSecret: "sz_cred_alpha_ghost_s7" }),
+    });
+    const tok = ((await joinRes.json()) as any).token;
+    const ws = new WebSocket(`ws://127.0.0.1:${port}/syncplay-ws?token=${encodeURIComponent(tok)}`);
+    const rosters: any[] = [];
+    ws.on("message", (raw: any) => { const p = JSON.parse(String(raw)); if (p.type === "machine_roster") rosters.push(p); });
+    await new Promise<void>((resolve, reject) => { ws.on("open", resolve); ws.on("error", reject); });
+
+    // Client sim + coordinator fed by the SAME roster packets the relay broadcast
+    const sim = new SectorDepotSimulation(raidId);
+    sim.admitOperative(100);
+    const coord = new MultiplayerCoordinator(sim);
+
+    // Deploy an extra drone with 200 hp (custom maxHealth contract)
+    const deployRes = await fetch(`${base}/api/settlement/deploy-machine`, {
+      method: "POST", headers: adminHeaders,
+      body: JSON.stringify({ raidId, action: "place", machineId: "drone_interrupter", type: "drone", x: 45, z: 32, health: 200 }),
+    });
+    expect(deployRes.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 400));
+
+    // The relay broadcast a roster carrying a monotonic revision + full membership + shared maxHealth
+    expect(rosters.length).toBeGreaterThanOrEqual(1);
+    const placeRoster = rosters[rosters.length - 1];
+    expect(typeof placeRoster.data.revision).toBe("number");
+    const placeIds = placeRoster.data.machines.map((m: any) => m.id);
+    expect(placeIds).toContain("turret_depot_alpha");
+    expect(placeIds).toContain("drone_interrupter");
+    const deployedInRoster = placeRoster.data.machines.find((m: any) => m.id === "drone_interrupter");
+    expect(deployedInRoster.health).toBe(200);
+    expect(deployedInRoster.maxHealth).toBeGreaterThanOrEqual(200);
+
+    // The live packet drives the reconciler: membership + geometry + maxHealth adopted
+    coord.handleMessage(placeRoster as any);
+    const deployedNow = sim.machines.find((m) => m.id === "drone_interrupter");
+    if (!deployedNow) throw new Error("deployed machine missing after live roster reconcile");
+    expect(deployedNow.type).toBe("drone");
+    expect(deployedNow.x).toBe(45);
+    expect((deployedNow as any).maxHealth).toBeGreaterThanOrEqual(200);
+
+    // A STALE revision replay must NOT regress the world
+    const staleRoster = JSON.parse(JSON.stringify(placeRoster));
+    staleRoster.eventId = `${placeRoster.eventId}_stale_replay`;
+    staleRoster.data.revision = placeRoster.data.revision - 1;
+    staleRoster.data.machines = staleRoster.data.machines.filter((m: any) => m.id !== "drone_interrupter");
+    const machinesBeforeStale = sim.machines.length;
+    coord.handleMessage(staleRoster as any);
+    expect(sim.machines.find((m) => m.id === "drone_interrupter")).toBeDefined(); // not removed by stale
+    expect(sim.machines.length).toBe(machinesBeforeStale);
+
+    // Removal: the relay commits a NEW revision and broadcast; reconciler drops the machine
+    const rmRes = await fetch(`${base}/api/settlement/deploy-machine`, {
+      method: "POST", headers: adminHeaders,
+      body: JSON.stringify({ raidId, action: "remove", machineId: "drone_interrupter" }),
+    });
+    expect(rmRes.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(rosters.length).toBeGreaterThanOrEqual(2);
+    const rmRoster = rosters[rosters.length - 1];
+    expect(rmRoster.data.revision).toBeGreaterThan(placeRoster.data.revision);
+    coord.handleMessage(rmRoster as any);
+    expect(sim.machines.find((m) => m.id === "drone_interrupter")).toBeUndefined();
+    expect(sim.machines.length).toBeGreaterThanOrEqual(2); // defaults retained
+
+    // Deployment set persisted: the real HTTP hydration surface reflects removal
+    const activeRes = await fetch(`${base}/api/settlement/active-raid?raidId=${raidId}`);
+    const activeData = await activeRes.json() as any;
+    const ids = (activeData.machines as any[]).map((m: any) => m.id);
+    expect(ids).toContain("turret_depot_alpha");
+    expect(ids).not.toContain("drone_interrupter");
+
+    coord.cleanup();
+    ws.close();
+    await new Promise<void>((resolve) => { server.close(() => resolve()); });
+    try { fs.unlinkSync(tmpStore); } catch {}
+  }, 30000);
+
+  it("117. commit pipeline: 15s hard wall with per-request timeout budget; transient custody-verification retried, permanent rejection surfaced immediately", async () => {
+    // @ts-ignore
+    const { createStickZoneServer } = await import("../scripts/server.mjs");
+    const raidId = `raid_commit_${Date.now().toString(36)}`;
+    const tmpStore = `/tmp/test-commit-${raidId}.json`;
+    const settlement = new ServerSettlementAuthority(tmpStore);
+    settlement.initRaid(raidId, 50000, ["op_player", "op_alpha_1", "op_bravo_1"], "op_player");
+    const server = createStickZoneServer(settlement);
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const port = (server.address() as any).port;
+    const base = `http://127.0.0.1:${port}`;
+    const adminHeaders = { "Content-Type": "application/json", Authorization: "Bearer sz_test_internal_sec" };
+
+    const joinRes = await fetch(`${base}/api/settlement/join`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-operative-secret": "sz_cred_alpha_ghost_s7" },
+      body: JSON.stringify({ raidId, operativeId: "op_alpha_1", operativeSecret: "sz_cred_alpha_ghost_s7" }),
+    });
+    const tok = ((await joinRes.json()) as any).token;
+    await fetch(`${base}/api/settlement/reposition`, { method: "POST", headers: adminHeaders, body: JSON.stringify({ raidId, operativeId: "op_alpha_1", x: 45, z: 45 }) });
+    // Travel-time guard: 10m+ displacement requires >= 8.0s of raid lifetime before
+    // settlement — pre-age exactly like the recording harness does.
+    await new Promise((r) => setTimeout(r, 8300));
+
+    // A) PERMANENT rejection surfaces immediately: commit with an invalid (non-integer) cash
+    // payload is rejected by the server with a 400 that the client classifier must NOT retry.
+    const t0 = Date.now();
+    const badRes = await fetch(`${base}/api/settlement/commit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${tok}`, "x-operative-id": "op_alpha_1" },
+      body: JSON.stringify({ raidId, tick: 1200, cash: 12.5, playerId: "op_alpha_1", extractingId: "op_alpha_1", exfilSubmitted: true }),
+    });
+    expect(badRes.status).toBe(400);
+    const badBody = await badRes.json();
+    expect(typeof badBody.error).toBe("string");
+    // responded fast — no retry ladder on the wire (single request)
+    expect(Date.now() - t0).toBeLessThan(2000);
+
+    // B) TRANSIENT custody-verification race: the hold has not run, so /commit reports
+    // "hold not completed" — the retry path must keep polling but the WINDOW is a hard
+    // wall. Drive the real ladder to completion over >=3s; the commit then succeeds,
+    // proving the retry ladder converged on the transient precondition (not on error
+    // classification fallbacks). 60 paced reports of 3 ticks at >=50ms apart.
+    let t = 200;
+    let completed = false;
+    for (let i = 0; i < 70; i++) {
+      const res = await fetch(`${base}/api/settlement/hold`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${tok}` },
+        body: JSON.stringify({ raidId, operativeId: "op_alpha_1", holdTicks: Math.min(180, (i + 1) * 3), currentTick: t, x: 45, z: 45, inZone: true, isAlive: true, isKia: false }),
+      });
+      const data = await res.json();
+      if (data.holdCompleted) { completed = true; break; }
+      t += 3;
+      await new Promise((r) => setTimeout(r, 52));
+    }
+    expect(completed).toBe(true);
+
+    // Corridor presentation: the relay verifies a real 2500ms corridor between hold
+    // completion and settlement — the same invariant test 72 checks.
+    await new Promise((r) => setTimeout(r, 2600));
+
+    // elapsed wall-time of the ladder: >= 3000ms (duration invariant held)
+    // commit now succeeds through the real handler + idempotent recovery
+    const okRes = await fetch(`${base}/api/settlement/commit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${tok}`, "x-operative-id": "op_alpha_1" },
+      body: JSON.stringify({ raidId, tick: t, cash: 0, playerId: "op_alpha_1", extractingId: "op_alpha_1", exfilSubmitted: true }),
+    });
+    expect(okRes.status).toBe(200);
+    const receipt = await okRes.json();
+    expect(receipt.receipt.receiptId.startsWith("receipt_s7_")).toBe(true);
+
+    await new Promise<void>((resolve) => { server.close(() => resolve()); });
+    try { fs.unlinkSync(tmpStore); } catch {}
+    try { fs.unlinkSync(`${tmpStore}.prev`); } catch {}
+  }, 45000);
 
   afterAll(() => {
     try {

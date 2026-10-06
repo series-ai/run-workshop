@@ -1218,7 +1218,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           raidId,
           timestamp: Date.now(),
           serverAuthoritative: true,
-          data: { machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ })) },
+          data: { revision: raidRevision(raidId), machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ, maxHealth: m.maxHealth || 1000 })) },
         };
         try {
           const __rosterOut = JSON.stringify(rosterMsg);
@@ -1281,7 +1281,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           raidId,
           timestamp: Date.now(),
           serverAuthoritative: true,
-          data: { machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ })) },
+          data: { revision: raidRevision(raidId), machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ, maxHealth: m.maxHealth || 1000 })) },
         });
         for (const client of wss.clients) {
           if (client.readyState === 1 && client.authenticated && client.raidId === raidId) {

@@ -19,6 +19,8 @@ import os from 'os';
 // vite), so it was silently dead — now the harness fails fast instead.
 const OUT_DIR = process.env.PROOF_OUT_DIR || new URL('../proofs/', import.meta.url).pathname;
 const BASE_URL = process.env.BASE_URL || 'http://localhost:4196';
+// NOTE: the harness drives window.debugSim for scene staging — run the preview with
+// VITE_EXPOSE_DEBUG_SIM=1 so the debug hook is compiled in (see README).
 const REQUIRED_SECRET = (() => {
   const v = process.env.STICK_ZONE_SERVER_SECRET;
   if (!v) {

@@ -117,7 +117,9 @@ export const App: React.FC = () => {
         s.player.isAlive = false;
       }
     }
-    if (typeof window !== "undefined") (window as any).debugSim = s;
+    // Debug hook for the recording harness and dev inspection. OPT-IN via the
+    // VITE_EXPOSE_DEBUG_SIM build flag (never auto-exposed in production builds).
+    if (typeof window !== "undefined" && (import.meta as any).env?.VITE_EXPOSE_DEBUG_SIM === "1") (window as any).debugSim = s;
     return s;
   });
   const [, setFrame] = useState(0);
@@ -756,7 +758,7 @@ export const App: React.FC = () => {
       }
       setSim(newSim);
       if (typeof window !== "undefined") {
-        (window as any).debugSim = newSim;
+        if ((import.meta as any).env?.VITE_EXPOSE_DEBUG_SIM === "1") (window as any).debugSim = newSim;
       }
 
       if (!fromPeer && coordinatorRef.current) {
