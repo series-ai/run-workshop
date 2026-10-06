@@ -23,7 +23,7 @@ export interface SkyriverModuleDigest {
 export const SKYRIVER_SIM_MODULE_MANIFEST: readonly SkyriverModuleDigest[] = Object.freeze([
   Object.freeze({ path: 'derive.ts', digest: 'd851f1a95f766bc88df9484a4148498f23b9dff1197988f3b0f273f3bda72ded' }),
   Object.freeze({ path: 'identity.ts', digest: 'a8b88d907eeaaf6b9f545166f23180a810e90db0c8dad0b22df5e5716d79407d' }),
-  Object.freeze({ path: 'input.ts', digest: '3aa99191b15c0e7ef9c9be176e1947b434add2c44b351f412be1b926ea3f0d17' }),
+  Object.freeze({ path: 'input.ts', digest: 'd6e11404707d6535fe1581b077ad251b771fe56408976fae9a381283dcdc7b8a' }),
   Object.freeze({ path: 'runtime.ts', digest: 'dd7ba63859ab81016ca5894db6ff73cea9cad76db1f491f53d665a57bbe10f0a' }),
   Object.freeze({ path: 'systems.ts', digest: '9939001678327ad9963d9376d2893d3275b3c78d5a9615cda88a7f044b98868d' }),
 ]);
@@ -34,5 +34,5 @@ export const SKYRIVER_RUNTIME_IDENTITY: KinetixRuntimeIdentity = Object.freeze({
   inputSchemaId: 'c85bba6866218cf441ed2fbfeaf7baed178fb1adcbb748a54d3beefb46528c8e',
   stateSchemaId: '1bcfdb69de5d385e0f5d9acfed7139c67319d9a7daa4e186820a5ae50feb1e72',
   deterministicVersion: 'syncplay-6.0.0-rc.33-skyriver-1',
-  engineIdentityHash: 'a48b5788935f8adde30394988be8dc89db90e0ed60f3de0977eacce157738e21',
+  engineIdentityHash: '672ebc431db043de0b86023106587df7a50290797673968167e25aa7c2038d40',
 });

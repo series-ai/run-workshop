@@ -102,6 +102,17 @@ export function decodeInput(value: unknown): SkyriverInput {
   if (value === null || value === undefined) return SKYRIVER_NEUTRAL_INPUT;
   if (!isPlainObject(value)) fail('SKYRIVER_INPUT_INVALID: expected a plain object');
 
+  // Strict shape: the syncplay runner's codec probe (validateSyncplayInputCodec, dist/input-codec)
+  // requires decodeInput to reject an object carrying unknown fields rather than tolerate them,
+  // and step() decoding should fail closed the same way. The five keys below are the entire wire
+  // form — an extra key is a codec mismatch, never a value to ignore.
+  const KNOWN_KEYS = ['throttle', 'yawRate', 'pitchRate', 'boost', 'modeToggle'] as const;
+  for (const key of Object.keys(value)) {
+    if (!(KNOWN_KEYS as readonly string[]).includes(key)) {
+      fail(`SKYRIVER_INPUT_INVALID: unknown field "${key}"`);
+    }
+  }
+
   const { throttle, yawRate, pitchRate, boost, modeToggle } = value;
   if (!isAxis(throttle) || !isAxis(yawRate) || !isAxis(pitchRate)) {
     fail('SKYRIVER_INPUT_INVALID: axes must be on the 0.01 grid within [-1, 1]');

@@ -1,0 +1,180 @@
+/**
+ * @file cameraRig.ts — the Skyriver chase camera, as a pure function of the frame it renders.
+ *
+ * Plan anchors (.plans/skyriver-syncplay-demo.html):
+ *   R5 — "chase-cam smoothing is a pure function of (previous projection, current projection, alpha)
+ *     with explicit reset on restore/rollback".
+ *   P2-13 — pure chase-cam smoothing specified (no persistent smoothing accumulators).
+ *   Visual target "Chase Cam — Red Shuttle" — the shuttle sits ahead in frame with its thrusters
+ *     toward the camera, the city canyon opening up past it.
+ *   A5 — "chase-cam shows no jump after simulated restore".
+ *
+ * WHY THERE IS NO SMOOTHING STATE
+ * -------------------------------
+ * The obvious way to write a chase cam is to keep a camera position and ease it toward a target each
+ * frame. That is exactly what breaks under this engine: a rollback, a checkpoint hydration or a
+ * replay seek moves the simulation discontinuously, and an eased camera would then sweep across the
+ * seam — a visible jump whose length depends on how far the sim moved. Every value here is computed
+ * from (previous projection, current projection, alpha) alone, so the pose after a restore is the
+ * pose the same frame always had. "Reset on restore" is free because there is nothing to reset.
+ *
+ * The smoothing the look needs instead comes from interpolation (session.ts interpolates the two
+ * projections, and snaps rather than sweeps when the tick gap is not 1) and from the boom geometry,
+ * which trails the shuttle's own heading rather than chasing the camera's previous heading.
+ *
+ * Angles are in turns, matching the sim (src/sim/systems.ts). Determinism is not required here —
+ * this is presentation only, never checksummed — so plain Math.sin/Math.cos are correct and cheap.
+ */
+import type { PerspectiveCamera } from 'three';
+
+import type { SkyriverProjection } from '../sim/runtime';
+import { interpolateSkyriverFlight } from '../sim/session';
+import { CHASM_BOUNDS, type SkyriverCamera, type SkyriverFlight } from '../sim/systems';
+
+const TURNS_TO_RADIANS = Math.PI * 2;
+
+/** Boom length at cruise speed, metres. Far enough back to hold the whole shuttle in frame. */
+export const CHASE_DISTANCE_M = 30;
+/** Extra boom length at top speed. Acceleration reads as the city pulling away behind the craft. */
+export const CHASE_SPEED_PULLBACK_M = 14;
+/** Boom lift above the shuttle, metres. Puts the thruster deck in view (the Neon Rain still). */
+export const CHASE_HEIGHT_M = 8.5;
+/**
+ * How much of the shuttle's own climb angle the boom follows, 0..1.
+ *
+ * Below 1 the boom stays flatter than the craft, so a climb shows the thrusters and a dive shows the
+ * canopy instead of the camera rigidly sitting on the flight axis.
+ */
+export const CHASE_PITCH_FOLLOW = 0.55;
+/** Aim point ahead of the shuttle, metres. This is what puts the shuttle low-centre in frame. */
+export const CHASE_LOOK_AHEAD_M = 70;
+/** Aim point lift, metres. Biases the horizon up so the canyon fills the frame. */
+export const CHASE_LOOK_UP_M = 4;
+/** The camera never drops below this altitude, metres. Keeps a dive out of the city floor. */
+export const CHASE_MIN_ALTITUDE_M = Math.max(12, CHASM_BOUNDS.minY - 40);
+
+/** Speed band the pull-back is measured against (mirrors systems.ts SPEED_MIN/MAX_MPS). */
+const SPEED_FLOOR_MPS = 40;
+const SPEED_CEILING_MPS = 260;
+/** Boost multiplier in systems.ts, so a boosted frame pulls back past the un-boosted ceiling. */
+const BOOST_SPEED_HEADROOM = 1.8;
+
+export interface SkyriverVec3 {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
+
+export interface SkyriverCameraPose {
+  readonly position: SkyriverVec3;
+  /** World point the camera looks at. */
+  readonly target: SkyriverVec3;
+  /** Boom length actually used this frame, metres. For the debug line. */
+  readonly distance: number;
+}
+
+/** The writable form of a pose, for a caller that reuses one scratch object per frame. */
+export interface SkyriverCameraPoseScratch {
+  position: { x: number; y: number; z: number };
+  target: { x: number; y: number; z: number };
+  distance: number;
+}
+
+/**
+ * Allocates a scratch pose.
+ *
+ * A scratch buffer is not smoothing state: nothing is read back out of it, so the pose written on
+ * any frame depends only on that frame's arguments. Reusing one keeps the render loop
+ * allocation-free, which is the same discipline T4's traffic update follows.
+ */
+export function createCameraPoseScratch(): SkyriverCameraPoseScratch {
+  return {
+    position: { x: 0, y: 0, z: 0 },
+    target: { x: 0, y: 0, z: 0 },
+    distance: CHASE_DISTANCE_M,
+  };
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return value < min ? min : value > max ? max : value;
+}
+
+/** Normalized position in the speed band, including the boost headroom. */
+function speedFactor(speed: number, boostT: number): number {
+  const ceiling = SPEED_CEILING_MPS * (boostT > 0 ? BOOST_SPEED_HEADROOM : 1);
+  return clamp((speed - SPEED_FLOOR_MPS) / (ceiling - SPEED_FLOOR_MPS), 0, 1);
+}
+
+/**
+ * Writes the chase pose for one interpolated flight state.
+ *
+ * The boom sits behind the craft along (yaw + orbitYaw) and is lifted along world up, so the orbit
+ * offsets the pilot accumulates are a rigid rotation of the boom rather than a re-aim of the camera.
+ * In autopilot the sim drives those offsets from the steering axes; in free flight the sim relaxes
+ * them back to zero (systems.ts), so the same expression serves both modes and the free-flight
+ * camera settles behind the craft on its own.
+ */
+export function writeCameraPose(
+  out: SkyriverCameraPoseScratch,
+  flight: SkyriverFlight,
+  camera: SkyriverCamera,
+): SkyriverCameraPoseScratch {
+  const boomYawRad = (flight.yaw + camera.orbitYaw) * TURNS_TO_RADIANS;
+  const boomPitchRad = (flight.pitch * CHASE_PITCH_FOLLOW + camera.orbitPitch) * TURNS_TO_RADIANS;
+
+  const boomCosPitch = Math.cos(boomPitchRad);
+  // Same basis as the sim's kinematics (systems.ts): yaw 0 faces +Z, pitch lifts +Y.
+  const boomX = Math.sin(boomYawRad) * boomCosPitch;
+  const boomY = Math.sin(boomPitchRad);
+  const boomZ = Math.cos(boomYawRad) * boomCosPitch;
+
+  const distance = CHASE_DISTANCE_M
+    + CHASE_SPEED_PULLBACK_M * speedFactor(flight.speed, flight.boostT);
+
+  out.distance = distance;
+  out.position.x = flight.x - boomX * distance;
+  out.position.y = Math.max(flight.y - boomY * distance + CHASE_HEIGHT_M, CHASE_MIN_ALTITUDE_M);
+  out.position.z = flight.z - boomZ * distance;
+
+  // The aim runs along the *boom*, not along the craft's own heading.
+  //
+  // Measured, after a first version aimed down the flight axis: when the boom follows only part of
+  // the climb angle (CHASE_PITCH_FOLLOW) but the aim follows all of it, the two diverge in
+  // proportion to pitch, and at the sim's 0.15-turn pitch limit the shuttle slides off the bottom of
+  // the frame entirely. Aiming along the boom makes the craft's screen position a constant of the
+  // rig's geometry instead of a function of how steeply it happens to be climbing, and it gives the
+  // orbit offsets their natural meaning: orbiting circles the shuttle rather than panning off it.
+  out.target.x = flight.x + boomX * CHASE_LOOK_AHEAD_M;
+  out.target.y = flight.y + boomY * CHASE_LOOK_AHEAD_M + CHASE_LOOK_UP_M;
+  out.target.z = flight.z + boomZ * CHASE_LOOK_AHEAD_M;
+
+  return out;
+}
+
+/**
+ * The pose for the frame between two projections — the R5 signature.
+ *
+ * Interpolation is delegated to session.ts so the camera and the HUD cannot disagree about where the
+ * shuttle is this frame, and so the "snap, do not sweep, across a tick gap" rule lives in exactly
+ * one place.
+ */
+export function cameraPoseAt(
+  previous: SkyriverProjection,
+  current: SkyriverProjection,
+  alpha: number,
+  out: SkyriverCameraPoseScratch = createCameraPoseScratch(),
+): SkyriverCameraPose {
+  const blended = interpolateSkyriverFlight(previous, current, alpha);
+  return writeCameraPose(out, blended.flight, blended.camera);
+}
+
+/**
+ * Moves a three.js camera onto a pose.
+ *
+ * `three` is a type-only import: this touches only methods that already exist on the camera the
+ * scene owns, so the rig stays loadable in node for a unit test.
+ */
+export function applyCameraPose(camera: PerspectiveCamera, pose: SkyriverCameraPose): void {
+  camera.position.set(pose.position.x, pose.position.y, pose.position.z);
+  camera.lookAt(pose.target.x, pose.target.y, pose.target.z);
+}
