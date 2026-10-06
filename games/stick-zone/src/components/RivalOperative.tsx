@@ -9,7 +9,12 @@ interface RivalOperativeProps {
 }
 
 export const RivalOperative: React.FC<RivalOperativeProps> = ({ rival }) => {
-  if (!rival.isAlive || rival.isExtracted) {
+  if (rival.isExtracted) {
+    // Operative safely exfiltrated — remove from battlefield (do not render as casualty)
+    return null;
+  }
+
+  if (!rival.isAlive) {
     // Slumped casualty drop / loot bag
     return (
       <group position={[rival.x, 0.2, rival.z]}>

@@ -1,0 +1,40 @@
+import { chromium } from 'playwright';
+const BASE_URL = 'http://localhost:4196';
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const raidId = `raid_dbg8_${Date.now().toString(36)}`;
+const secret = 'sz_test_internal_sec';
+const jpost = async (path, body) => {
+  const res = await fetch(`${BASE_URL}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` }, body: JSON.stringify(body) });
+  return { status: res.status };
+};
+await jpost('/api/settlement/init-raid', { raidId, allowablePool: 50000, operatives: ['op_player', 'op_alpha_1', 'op_bravo_1'] });
+await sleep(8300);
+const browser = await chromium.launch({ headless: true, args: ['--enable-webgl', '--use-gl=swiftshader', '--no-sandbox'] });
+const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+page.on('console', (m) => { const t = m.text(); if (t.includes('SETTLEMENT') || t.includes('Exfil') || t.includes('reject') || t.includes('Reject')) console.log('PAGE:', t.slice(0, 220)); });
+page.on('pageerror', (e) => console.log('PAGEERROR:', e.message));
+await page.goto(`${BASE_URL}/?raidId=${raidId}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+await sleep(2500);
+await page.waitForSelector('.game-viewport', { timeout: 20000 });
+await page.evaluate(() => { if (window.debugSim) window.debugSim.admitOperative(); });
+await page.waitForFunction(() => !!window.debugSim?.sessionToken, { timeout: 8000 });
+console.log('reposition crate', (await jpost('/api/settlement/reposition', { raidId, operativeId: 'op_alpha_1', x: -8, z: -5.5 })).status);
+console.log('deploy', (await jpost('/api/settlement/deploy-machine', { raidId, action: 'place', machineId: 'drone_interrupter', type: 'drone', x: 45, z: 32, health: 50 })).status);
+await page.keyboard.down('KeyE'); await sleep(150); await page.keyboard.up('KeyE');
+await page.waitForFunction(() => window.debugSim?.player?.cash >= 1250, { timeout: 5000 });
+console.log('crate ok');
+console.log('reposition LZ', (await jpost('/api/settlement/reposition', { raidId, operativeId: 'op_alpha_1', x: 45, z: 45 })).status);
+await page.waitForFunction(() => window.debugSim?.lastInterruptionTick > 0, { timeout: 10000 });
+await page.waitForSelector('.exfil-reset-banner', { timeout: 6000 });
+console.log('interrupted + banner');
+console.log('withdraw', (await jpost('/api/settlement/deploy-machine', { raidId, action: 'remove', machineId: 'drone_interrupter' })).status);
+for (let i = 0; i < 20; i++) {
+  await sleep(1000);
+  const s = await page.evaluate(() => { const st = window.debugSim?.exfilController?.getState?.() || {}; return { kind: st.kind, ticks: st.currentTicks, x: window.debugSim?.player?.x, z: window.debugSim?.player?.z, zone: window.debugSim?.isPlayerInExfilZone?.() ?? null, hp: window.debugSim?.player?.health, armor: window.debugSim?.player?.armor, lastLog: (window.debugSim?.combatLog || []).slice(-1)[0] }; });
+  console.log(`t=${i}`, JSON.stringify(s));
+  if (s.kind === 'extracted' || s.kind === 'failed' || s.kind === 'submitting_settlement') break;
+}
+const finalState = await page.evaluate(() => window.debugSim?.exfilController?.getState?.());
+console.log('final:', JSON.stringify({ kind: finalState.kind, reason: finalState.reason || null }));
+await browser.close();
+process.exit(0);

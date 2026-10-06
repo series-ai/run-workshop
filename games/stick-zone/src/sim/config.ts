@@ -35,10 +35,10 @@ export const SIM_CONFIG = {
   SHOTGUN_COOLDOWN_TICKS: 40,   // ~1.5 shots/sec
 
   // Sector 7 Map Dimensions
-  MAP_MIN_X: -80,
-  MAP_MAX_X: 80,
-  MAP_MIN_Z: -80,
-  MAP_MAX_Z: 80,
+  MAP_MIN_X: -79.05,
+  MAP_MAX_X: 79.05,
+  MAP_MIN_Z: -79.05,
+  MAP_MAX_Z: 79.05,
 
   // Key Sector Coordinates
   EXFIL_ZONE: { x: 45, y: 0, z: 45, radius: 6.0, zoneId: 'lz_sector_7' },

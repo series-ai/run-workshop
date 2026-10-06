@@ -1,3 +1,5 @@
 node_modules
 dist
 .DS_Store
+.settlement-store.json*
+src/sim/server-settlement.js
