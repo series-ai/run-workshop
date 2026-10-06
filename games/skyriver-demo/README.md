@@ -28,6 +28,14 @@ Preflight (same checks RUN runs before deploy):
 rundot preflight --phase all
 ```
 
+## Controls
+
+- **Autopilot** (default): the shuttle flies the deterministic canyon tour; drag to orbit the camera.
+- **Fly mode** (`M` or the MODE button, touch or key): drag to steer; throttle `Shift` (+) / `Z` (−).
+- **Boost** (`B`, or hold the lower third of the screen on touch): ×1.8 flight speed, plume flare,
+  replay-safe boost events. Boost fuel races 3 s.
+- `F3` or `` ` `` toggles the debug HUD (fps, draw calls, tier, tick jump, adapter).
+
 ## Orientation & target device
 
 Landscape. Performance targets: desktop 60 fps; Galaxy S23 WebView ≥ 45 fps

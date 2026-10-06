@@ -31,6 +31,7 @@ import {
 } from './render/scene';
 import { TRAFFIC_QUALITY_TIERS, createSkyriverTraffic } from './render/traffic';
 import type { SkyriverTraffic, TrafficQuality } from './render/trafficTypes';
+import { createSkyriverShuttle } from './render/shuttle';
 import {
   applyCameraPose,
   createCameraPoseScratch,
@@ -269,85 +270,6 @@ export function createSkyriverTierManager(
 }
 
 /* -------------------------------------------------------------------------------------------------
- * The player shuttle marker
- * ------------------------------------------------------------------------------------------------*/
-
-/**
- * The red transit shuttle the camera chases, as one merged unlit mesh (1 draw call).
- *
- * PROVISIONAL, AND FLAGGED: the plan's file roster gives the shuttle no renderer of its own — T3
- * built the city and atmosphere, T4 the traffic swarm — yet the approved concept and the chase-cam
- * brief both require a visible shuttle with its thrusters toward the camera. It lives here because
- * main.ts is the only file this task owns that can hold it, and it reaches the scene only through the
- * public scene graph. If a later task gives the shuttle a real home (its own module, with the hull
- * shading and thruster plume the concept art shows), delete this and use that instead.
- *
- * It is one geometry with vertex colours and no lights, matching T4's unlit convention, so it adds
- * exactly one draw call: high tier is then 7 (city + atmosphere) + 4 (traffic) + 1 = 12, the hard
- * ceiling T3 set.
- */
-function createShuttleMarker(): THREE.Mesh {
-  const positions: number[] = [];
-  const colors: number[] = [];
-
-  /** Appends an axis-aligned box as 12 triangles with one flat colour. */
-  const box = (
-    cx: number, cy: number, cz: number,
-    sx: number, sy: number, sz: number,
-    r: number, g: number, b: number,
-  ): void => {
-    const hx = sx / 2;
-    const hy = sy / 2;
-    const hz = sz / 2;
-    const corners: readonly [number, number, number][] = [
-      [cx - hx, cy - hy, cz - hz], [cx + hx, cy - hy, cz - hz],
-      [cx + hx, cy + hy, cz - hz], [cx - hx, cy + hy, cz - hz],
-      [cx - hx, cy - hy, cz + hz], [cx + hx, cy - hy, cz + hz],
-      [cx + hx, cy + hy, cz + hz], [cx - hx, cy + hy, cz + hz],
-    ];
-    const faces: readonly [number, number, number][] = [
-      [0, 2, 1], [0, 3, 2], // -Z
-      [4, 5, 6], [4, 6, 7], // +Z
-      [0, 4, 7], [0, 7, 3], // -X
-      [1, 2, 6], [1, 6, 5], // +X
-      [0, 1, 5], [0, 5, 4], // -Y
-      [3, 7, 6], [3, 6, 2], // +Y
-    ];
-    for (const [a, b2, c] of faces) {
-      for (const index of [a, b2, c]) {
-        const corner = corners[index]!;
-        positions.push(corner[0], corner[1], corner[2]);
-        colors.push(r, g, b);
-      }
-    }
-  };
-
-  // Nose at +Z, matching the sim's forward basis (systems.ts: yaw 0 faces +Z).
-  box(0, 0, 1.2, 4.2, 2.0, 11.0, 0.62, 0.09, 0.10); // hull
-  box(0, 1.25, 0.4, 2.6, 0.7, 5.2, 0.74, 0.14, 0.14); // spine
-  box(0, 0.35, 4.2, 2.2, 1.0, 2.6, 0.16, 0.26, 0.36); // canopy
-  box(-3.1, -0.1, -0.6, 2.2, 0.5, 5.0, 0.52, 0.08, 0.09); // port wing
-  box(3.1, -0.1, -0.6, 2.2, 0.5, 5.0, 0.52, 0.08, 0.09); // starboard wing
-  // Thrusters: the camera sits behind, so these emissive-looking blocks are what it sees first.
-  box(-1.3, 0, -4.9, 1.5, 1.5, 1.6, 0.35, 0.92, 1.0);
-  box(1.3, 0, -4.9, 1.5, 1.5, 1.6, 0.35, 0.92, 1.0);
-  box(0, 0.9, -4.7, 1.1, 1.0, 1.2, 0.30, 0.78, 0.95);
-
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  geometry.computeBoundingSphere();
-
-  const material = new THREE.MeshBasicMaterial({ vertexColors: true, fog: true });
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.name = 'skyriver.shuttle';
-  // Yaw first, then pitch, so the pose maps straight from the sim's (yaw, pitch) turns.
-  mesh.rotation.order = 'YXZ';
-  mesh.frustumCulled = false;
-  return mesh;
-}
-
-/* -------------------------------------------------------------------------------------------------
  * The app
  * ------------------------------------------------------------------------------------------------*/
 
@@ -437,8 +359,8 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   });
   for (const object of traffic.objects) scene.scene.add(object);
 
-  const shuttle = createShuttleMarker();
-  scene.scene.add(shuttle);
+  const shuttle = createSkyriverShuttle();
+  for (const object of shuttle.objects) scene.scene.add(object);
 
   const session = createSkyriverRunnerSession(seed, startMode);
 
@@ -701,8 +623,12 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
       writeCameraPose(poseScratch, state.flight, state.camera);
       applyCameraPose(scene.camera, poseScratch);
 
-      shuttle.position.set(state.flight.x, state.flight.y, state.flight.z);
-      shuttle.rotation.set(-state.flight.pitch * Math.PI * 2, state.flight.yaw * Math.PI * 2, 0);
+      shuttle.setPose(state.flight.x, state.flight.y, state.flight.z, state.flight.yaw, state.flight.pitch);
+      shuttle.update({
+        // 1.8 matches the sim's BOOST_MULTIPLIER (systems.ts); the plume pulse softens the edge.
+        boostIntensity: state.flight.boostT > 0 ? 1.8 : 1.0,
+        time: (state.current.tick + state.alpha) / 30,
+      });
 
       scene.update(state.current.tick, state.current, state.alpha);
 
@@ -834,8 +760,7 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
       hud.dispose();
       void session.dispose();
       traffic.dispose();
-      shuttle.geometry.dispose();
-      (shuttle.material as THREE.Material).dispose();
+      shuttle.dispose();
       scene.dispose();
       canvas.remove();
     },
@@ -866,6 +791,7 @@ export function boot(): SkyriverApp {
   document.body.style.margin = '0';
   document.body.style.height = '100%';
   document.body.style.overflow = 'hidden';
+  document.body.style.overscrollBehavior = 'none';
   document.body.style.background = '#04060b';
   root.style.position = 'fixed';
   root.style.inset = '0';

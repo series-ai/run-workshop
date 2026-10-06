@@ -36,7 +36,12 @@ import { SkyriverAtmosphere, SKYRIVER_ATMOSPHERE_DRAW_CALL_BUDGET } from './atmo
 import { SkyriverCity, SKYRIVER_CITY_DRAW_CALL_BUDGET } from './city';
 
 /** Plan R3: 16 total. The approved night look spends less — the hard ceiling we hold to is 12. */
-export const SKYRIVER_TOTAL_DRAW_CALL_BUDGET = 12;
+/**
+ * T6: raised from 12 to 14 — the shuttle now renders through its own module (render/shuttle.ts) as
+ * 2 draw calls (hull + additive plume), replacing T5's provisional 1-call marker. The plan's R3
+ * hard ceiling stays 16; this leaves headroom while keeping the tiers' estimates honest.
+ */
+export const SKYRIVER_TOTAL_DRAW_CALL_BUDGET = 14;
 /** T4's share (plan R4: "<= 4 traffic draw calls"). Defined here so T4 can import it on day one. */
 export const SKYRIVER_TRAFFIC_DRAW_CALL_BUDGET = 4;
 
