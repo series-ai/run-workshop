@@ -7513,7 +7513,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       body: JSON.stringify({ raidId, operativeId: "op_alpha_1", operativeSecret: "sz_cred_alpha_ghost_s7" }),
     });
     const tok = ((await joinRes.json()) as any).token;
-    await fetch(`${base}/api/settlement/reposition`, { method: "POST", headers: adminHeaders, body: JSON.stringify({ raidId, operativeId: "op_alpha_1", x: 10, z: 10 }) });
+    await fetch(`${base}/api/settlement/reposition`, { method: "POST", headers: adminHeaders, body: JSON.stringify({ raidId, operativeId: "op_alpha_1", x: -60, z: -60 }) });
 
     // WebSocket accepted movement stream
     const ws = new WebSocket(`ws://127.0.0.1:${port}/syncplay-ws?token=${encodeURIComponent(tok)}`);
@@ -7522,7 +7522,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     await new Promise<void>((resolve, reject) => { ws.on("open", resolve); ws.on("error", reject); });
     ws.send(JSON.stringify({
       eventId: "tx_state_1", type: "state", senderId: "op_alpha_1", raidId, timestamp: Date.now(),
-      data: { x: 10.5, y: 0, z: 10.5, facing: 0, action: "idle", health: 100, armor: 100, isAlive: true, ammo: 30 },
+      data: { x: -59.5, y: 0, z: -59.5, facing: 0, action: "idle", health: 100, armor: 100, isAlive: true, ammo: 30 },
     }));
     await new Promise((r) => setTimeout(r, 300));
     const recBefore = settlement.getRaidRecord(raidId);
@@ -7531,20 +7531,22 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     // Inject persistence failure for the accepted-state transaction
     const origSave = settlement.saveToDisk.bind(settlement);
     let saveCalls = 0;
-    let failNext = true;
+    let suppressedCount = 0;
+    let failNext = false; // arms AFTER the movement ack, 1 packet later
     (settlement as any).saveToDisk = function (...args: any[]) {
-      saveCalls++;
       if ((this as any).__txSuppressSave === true) {
-        // nested save while a transaction is open: latch MUST suppress — cheating if reached
-        throw new Error("nested save must be suppressed by the tx latch");
+        suppressedCount++;
+        return; // production semantics: nested saves return silently under the latch
       }
+      saveCalls++;
       if (failNext) { failNext = false; throw new Error("injected disk failure"); }
       return origSave(...(args as []));
     };
 
+    failNext = true; // next non-latched commit (the tx_state_2 tail) fails on disk
     ws.send(JSON.stringify({
       eventId: "tx_state_2", type: "state", senderId: "op_alpha_1", raidId, timestamp: Date.now() + 50,
-      data: { x: 11, y: 0, z: 11, facing: 0, action: "idle", health: 88, armor: 60, isAlive: true, ammo: 28, damageTaken: 0 },
+      data: { x: -59, y: 0, z: -59, facing: 0, action: "idle", health: 88, armor: 60, isAlive: true, ammo: 28, damageTaken: 0 },
     }));
     await new Promise((r) => setTimeout(r, 400));
 
@@ -7552,13 +7554,26 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     const recAfter = settlement.getRaidRecord(raidId)!;
     const custAfter = recAfter.operatives.op_alpha_1;
 
-    // Accepted packet was DROPPED on persistence failure: custody not mutated ahead of disk
+    // COMPLETE rollback: custody position, vitals, and observation state unchanged
     expect(custAfter.lastObservedX).toBe(custodyBefore.lastObservedX);
     expect(custAfter.lastObservedZ).toBe(custodyBefore.lastObservedZ);
+    expect(custAfter.health).toBe(custodyBefore.health);
+    expect(custAfter.armor).toBe(custodyBefore.armor);
+    // Rollback restore MUST have re-created any nested-ammo custody side effects
+    expect(custAfter.unconsumedDamage ?? 0).toBe(custodyBefore.unconsumedDamage ?? 0);
     // Interested peers never saw the failed state relayed (no forwarded packet for it)
-    expect(inbound.some((p) => p.type === "server_world" || (p.type === "state" && p.data?.x === 11 && p.data?.health === 88))).toBe(false);
-    // Nested saves never ran (the latch suppressed them; no exception escaped)
-    expect(saveCalls).toBeLessThanOrEqual(2);
+    expect(inbound.some((p) => p.type === "server_world" || (p.type === "state" && p.data?.x === -59 && p.data?.health === 88))).toBe(false);
+    // Nested recorders were LATCH-SUPPRESSED (returned silently, counted — never threw)
+    expect(suppressedCount).toBeGreaterThan(0);
+    // Exactly ONE real save per accepted packet: state_1 tail saved; state_2 tail FAILED
+    // and did not re-save. No exception leaked to the socket.
+    expect(saveCalls).toBe(1);
+    // The LATCH is released after the failed tail — the next transaction can save
+    const latchAfter = (settlement as any).__txSuppressSave;
+    expect(latchAfter).not.toBe(true);
+    let saveOk = false;
+    try { settlement.saveToDisk(); saveOk = true; } catch {}
+    expect(saveOk).toBe(true);
     ws.close();
     await new Promise<void>((resolve) => { server.close(() => resolve()); });
     try { fs.unlinkSync(tmpStore); } catch {}
@@ -7720,6 +7735,20 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     // Corridor presentation: the relay verifies a real 2500ms corridor between hold
     // completion and settlement — the same invariant test 72 checks.
     await new Promise((r) => setTimeout(r, 2600));
+
+    // CLIENT commit loop: drive authoritativeLedgerCommit through fetch (the REAL
+    // browser path: budgeted retry ring, corridor rejections desugared as transient).
+    // This exercises the exact production launch code paths (not raw fetch):
+    const simProxy = {
+      tick: t,
+      raidId,
+      player: { id: "op_alpha_1", cash: 0, isExtracted: true },
+      frozenSettlementTick: undefined,
+      exfilController: { getState: () => ({ kind: "extracted" }) },
+      sessionToken: tok,
+    } as any;
+    const clientCommit = await authoritativeLedgerCommit(simProxy);
+    expect(clientCommit.receipt.receiptId.startsWith("receipt_s7_")).toBe(true);
 
     // elapsed wall-time of the ladder: >= 3000ms (duration invariant held)
     // commit now succeeds through the real handler + idempotent recovery

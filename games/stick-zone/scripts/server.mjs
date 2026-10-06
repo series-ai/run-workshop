@@ -2164,13 +2164,15 @@ wss.on("connection", (ws, req) => {
             Object.assign(oRec, __txCbCustodyBefore);
           }
         };
+        // Unlatch BEFORE the commit save — the latch's own saveToDisk guard would
+        // silently no-op this call. Between unlatch and save nothing else runs, so the
+        // single-save guarantee is preserved (all nested recorders already finished).
+        __txnUnlatch();
         try {
           if (settlement.saveToDisk) settlement.saveToDisk();
         } catch (__txPersistErr) {
           __txRollback();
           return; // accepted state never relays ahead of disk
-        } finally {
-          __txnUnlatch();
         }
       }
 
