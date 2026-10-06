@@ -59,7 +59,7 @@ import {
   applySkyriverFog,
   skyriverFogUniforms,
 } from './atmosphere';
-import { TRACK_BASE_Y_M, TRACK_LANE_X_M } from './flightPresentation';
+import { TRACK_BASE_Y_M } from './flightPresentation';
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
 import type {
   SkyriverTraffic,
@@ -119,7 +119,8 @@ const WRAP_FADE_M = 700;
 /** Inset from the corridor walls, metres. Inner tower faces sit at |x| >= 440. */
 const WALL_MARGIN_M = 18;
 /** Drawn altitude range of the rivers, metres. The top stays under the skybridges (>= 1900 m). */
-const RIVER_MIN_Y_M = 70;
+/** T6R-2: no river skims the canyon bottom — a low layer of lights read as a floor plane. */
+const RIVER_MIN_Y_M = 240;
 const RIVER_MAX_Y_M = 1820;
 /** Tight in-river scatter, metres, so a river reads as one stream. */
 const RIVER_LATERAL_SCATTER_M = 7;
@@ -130,10 +131,21 @@ const PLATOON_FILL = 0.3;
 /** Derived speeds (30..90 m/s) are scaled up: rivers must visibly stream past a 150 m/s shuttle. */
 const SPEED_SCALE = 1.7;
 /** Keep rivers out of the autopilot's own airspace so cars do not fly through the shuttle. */
-const TRACK_KEEP_OUT_X_M = 55;
-const TRACK_KEEP_OUT_Y_M = 260;
+/** T6R-2 road-read fix: along-canyon rivers start above the autopilot track's highest swell. */
+const ALONG_MIN_Y_M = TRACK_BASE_Y_M + 300;
+/** Rivers in the same altitude layer share a direction, so red and white never pair side by side. */
+const DIRECTION_LAYER_M = 170;
 /** Crossing rows sit at the gaps between derived tower rows (centres every 320 m). */
 const ROW_PITCH_M = 320;
+
+/** Escort cars: [lateral, lift, forward mean, forward swing] in metres, shuttle frame. */
+const ESCORT_COUNT = 4;
+const ESCORTS: readonly number[] = Object.freeze([
+  -34, 6, 60, 38,
+  40, -9, 22, 30,
+  -72, 24, 150, 70,
+  82, 16, 0, 0,
+]);
 
 /** Per-car size jitter, so a batch of identical hulls does not read as a clone army. */
 const SIZE_MIN_SCALE = 0.95;
@@ -146,8 +158,9 @@ const DISTANCE_DIM_FLOOR = 0.42;
 /** Streak tuning: lamp offsets from the car centre, metres; trail seconds of motion. */
 const HEAD_OFFSET_M = 2.4;
 const TAIL_OFFSET_M = 2.5;
-const TAIL_TRAIL_S = 0.32;
-const HEAD_TRAIL_S = 0.06;
+/** T6R-2: long continuous trails (platoon-mates' trails overlap into one ribbon), never dashes. */
+const TAIL_TRAIL_S = 1.1;
+const HEAD_TRAIL_S = 0.9;
 
 function fail(code: string): never {
   throw new Error(code);
@@ -561,8 +574,9 @@ void main() {
   vec4 v0 = viewMatrix * vec4( lamp, 1.0 );
   vec4 v1 = viewMatrix * vec4( tailEnd, 1.0 );
   // Radius: a real lamp size up close, a pixel floor far away (~1.3 px radius).
-  float r0 = max( 0.6, -v0.z * uPixelAngle * 2.1 );
-  float r1 = max( 0.45, -v1.z * uPixelAngle * 1.4 );
+  // T6R-2: 3-4x thicker at the lamp, tapering to a thread at the trail end.
+  float r0 = max( 0.7, -v0.z * uPixelAngle * 4.5 );
+  float r1 = max( 0.35, -v1.z * uPixelAngle * 1.1 );
   vec2 d = v1.xy - v0.xy;
   float len = length( d );
   vec2 axis = len > 1e-4 ? d / len : vec2( 0.0, -1.0 );
@@ -612,7 +626,7 @@ void main() {
   float core = exp( - dist * dist * 10.0 );
   // Brightest at the lamp, fading down the trail.
   float t = vLengthR > 0.0 ? along / vLengthR : 0.0;
-  float trail = mix( 1.0, 0.12, t );
+  float trail = pow( 1.0 - t, 1.3 );
 
   vec3 headColor = vec3( 1.0, 0.93, 0.82 );
   vec3 tailColor = vec3( 1.0, 0.07, 0.045 );
@@ -720,22 +734,18 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     riverDirection[river] = river % 2 === 0 ? 1 : -1;
     riverSpeedScale[river] = 0.85 + 0.3 * hash01(seedSalt ^ 0x5eed, river * 7 + 1);
     if (along) {
-      // Fifth Element layers: altitudes stratified across the drawn range, lanes spread across the
-      // corridor width.
+      // Fifth Element layers, T6R-2: every along-canyon river flies above the autopilot band, at
+      // many heights and lateral offsets. A stream converging on the vanishing point *below* the
+      // shuttle reads as a road marking however it is drawn, so below the shuttle only crossing
+      // rivers run (they cut across the view and never converge).
       const layer = (river + hash01(seedSalt, river * 3 + 2) * 0.8) / ALONG_RIVERS;
-      let y = RIVER_MIN_Y_M + layer * (RIVER_MAX_Y_M - RIVER_MIN_Y_M);
+      const y = ALONG_MIN_Y_M + layer * (RIVER_MAX_Y_M - ALONG_MIN_Y_M);
       // Lanes stratified across the corridor (golden-ratio sequence), so both sides carry rivers.
       const laneFraction = (0.5 + river * 0.6180339887 + hash01(seedSalt, river * 3 + 1) * 0.08) % 1;
-      let x = laneMinX + laneFraction * (laneMaxX - laneMinX);
-      // Keep the autopilot's lanes clear at its altitudes: nudge the river above or below.
-      for (const trackX of [-TRACK_LANE_X_M, TRACK_LANE_X_M]) {
-        if (Math.abs(x - trackX) < TRACK_KEEP_OUT_X_M && Math.abs(y - TRACK_BASE_Y_M) < TRACK_KEEP_OUT_Y_M) {
-          y = y < TRACK_BASE_Y_M ? TRACK_BASE_Y_M - TRACK_KEEP_OUT_Y_M : TRACK_BASE_Y_M + TRACK_KEEP_OUT_Y_M;
-          x += hash01(seedSalt, river) < 0.5 ? -TRACK_KEEP_OUT_X_M : TRACK_KEEP_OUT_X_M;
-        }
-      }
+      const x = laneMinX + laneFraction * (laneMaxX - laneMinX);
       riverLane[river] = x;
       riverY[river] = clamp(y, RIVER_MIN_Y_M, RIVER_MAX_Y_M);
+      riverDirection[river] = Math.floor(riverY[river] / DIRECTION_LAYER_M) % 2 === 0 ? 1 : -1;
     } else {
       // Crossing rivers ride the gap between two tower rows, deep down or high up.
       const crossIndex = river - ALONG_RIVERS;
@@ -865,7 +875,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       uTailOffset: { value: TAIL_OFFSET_M },
       uHeadTrail: { value: HEAD_TRAIL_S },
       uTailTrail: { value: TAIL_TRAIL_S },
-      uIntensity: { value: 3.2 },
+      uIntensity: { value: 2.4 },
       uFogPenetration: { value: 0.2 },
       ...skyriverFogUniforms(),
     },
@@ -891,6 +901,21 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const streakFadeArray = streakFade.array as Float32Array;
 
   const objects: Object3D[] = [meshes[0], meshes[1], meshes[2], streakMesh];
+
+  // T6R-2 escorts: the first ESCORT_COUNT cars fly with the shuttle (the anchor) instead of a
+  // river, so the chase view always holds a few close vehicles with readable dark bodies and long
+  // trails. Offsets are a pure function of time; the anchor is the presented shuttle pose.
+  const anchor = new Float64Array(6); // x, y, z, forward x, forward z, speed
+  let anchorValid = false;
+  function setAnchor(x: number, y: number, z: number, yawTurns: number, speed: number): void {
+    anchor[0] = x;
+    anchor[1] = y;
+    anchor[2] = z;
+    anchor[3] = Math.sin(yawTurns * TAU);
+    anchor[4] = Math.cos(yawTurns * TAU);
+    anchor[5] = speed;
+    anchorValid = true;
+  }
 
   // ---- Mutable tier state. Written by setQuality(), read by the hot loop.
   const groupActive = new Int32Array(TRAFFIC_ARCHETYPE_COUNT);
@@ -949,14 +974,38 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         if (s < 0) s += span;
         const along = s - halfSpan;
         const edge = halfSpan - Math.abs(along);
-        const fade = smoothstep(0, WRAP_FADE_M, edge);
-        const py = riverY[river] + carOffsetY[car] + Math.sin(t * 0.7 + carBob[car]) * 1.6;
+        let fade = smoothstep(0, WRAP_FADE_M, edge);
+        let py = riverY[river] + carOffsetY[car] + Math.sin(t * 0.7 + carBob[car]) * 1.6;
+        let carSpeedNow = speed;
 
         let px: number;
         let pz: number;
         let fx: number;
         let fz: number;
-        if (crossing) {
+        if (car < ESCORT_COUNT && anchorValid) {
+          const e = car * 4;
+          const lateral = ESCORTS[e]!;
+          const lift = ESCORTS[e + 1]!;
+          let forward: number;
+          let heading = 1;
+          if (car === ESCORT_COUNT - 1) {
+            // The oncoming one: passes the shuttle every ~3 s on the far side.
+            forward = 520 - ((t * 330) % 1040);
+            heading = -1;
+          } else {
+            forward = ESCORTS[e + 2]! + ESCORTS[e + 3]! * Math.sin(t * (0.13 + car * 0.04) + car * 1.7);
+          }
+          const ax = anchor[3]!;
+          const az = anchor[4]!;
+          // Right-hand vector in the sim basis (yaw 0 faces +z): (cos, 0, -sin) of the heading.
+          px = clamp(anchor[0]! + ax * forward + az * lateral, laneMinX, laneMaxX);
+          py = anchor[1]! + lift + Math.sin(t * 0.9 + car) * 1.2;
+          pz = anchor[2]! + az * forward - ax * lateral;
+          fx = ax * heading;
+          fz = az * heading;
+          carSpeedNow = heading > 0 ? anchor[5]! : 170;
+          fade = 1;
+        } else if (crossing) {
           px = along;
           pz = riverLane[river] + carOffsetLateral[car];
           fx = direction;
@@ -1007,7 +1056,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           streakDirArray[d] = fx;
           streakDirArray[d + 1] = 0;
           streakDirArray[d + 2] = fz;
-          streakDirArray[d + 3] = speed;
+          streakDirArray[d + 3] = carSpeedNow;
           streakFadeArray[streaksUsed] = fade;
           streaksUsed += 1;
         }
@@ -1057,5 +1106,5 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
 
   setQuality(options.quality);
 
-  return { objects, update, setQuality, setPixelAngle, stats, dispose };
+  return { objects, update, setQuality, setPixelAngle, setAnchor, stats, dispose };
 }

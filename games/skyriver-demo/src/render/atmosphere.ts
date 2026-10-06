@@ -52,8 +52,12 @@ export const SKYRIVER_ATMOSPHERE = Object.freeze({
    */
   // T6R: ~0.0026 closed the canyon at ~400 m, which hid every light river and the vanishing point.
   // The haze now reads as a luminous volume about 1.2 km deep, still opaque toward the depths.
-  fogDensityLow: 0.00125,
-  fogDensityHigh: 0.0005,
+  // T6R-2: exponential, not exp-squared. Exp-squared saturates to a flat wall of haze colour by
+  // ~2 km (the "flat blue monolith" in the vanishing slot); exponential keeps grading, so near,
+  // mid and far masses separate into layers. Below the canyon floor band the density triples
+  // (see skyriverFogFactor) and the colour sinks to the deep tone: the bottom reads as void.
+  fogDensityLow: 0.00078,
+  fogDensityHigh: 0.00032,
   /**
    * Must sit between the camera's near and far planes: the dome is drawn with depth testing off,
    * but the near plane still clips it in the vertex stage, and a radius under `camera.near` leaves
@@ -61,7 +65,8 @@ export const SKYRIVER_ATMOSPHERE = Object.freeze({
    */
   skydomeRadius: 5000,
   godRayMaxCount: 14,
-  searchlightCount: 3,
+  /** T6R-2: five, mounted over the autopilot straights so 2-3 always cross the chase view. */
+  searchlightCount: 5,
   /** Searchlight sweep period in seconds; slow enough to read as "creeping". */
   searchlightPeriodS: 23,
   drawCallBudget: SKYRIVER_ATMOSPHERE_DRAW_CALL_BUDGET,
@@ -74,11 +79,13 @@ export const SKYRIVER_ATMOSPHERE = Object.freeze({
  */
 // T6R contrast pass: the haze is a lit volume, brighter than the near-black concrete, so towers and
 // their ribs silhouette against it (Neon Rain still); a faint teal/magenta neon cast tints the depths.
-const COLOR_FOG_LOW = 0x1d2c40;
-const COLOR_FOG_HIGH = 0x2b4058;
+const COLOR_FOG_LOW = 0x1a2638;
+const COLOR_FOG_HIGH = 0x2a3b52;
+/** T6R-2: the depths — what the haze sinks to below the canyon floor band. */
+const COLOR_FOG_DEEP = 0x060a11;
 const COLOR_SKY_ZENITH = 0x070b14;
-const COLOR_SKY_HORIZON = 0x2a3c55;
-const COLOR_SKY_DEPTHS = 0x1a2738;
+const COLOR_SKY_HORIZON = 0x1d2a3d;
+const COLOR_SKY_DEPTHS = 0x060a11;
 /** Neon the wet overcast throws back down. The one place warmth is allowed into the blue. */
 const COLOR_SKY_NEON = 0x4a5f86;
 const COLOR_RAIN = 0x8fa6bd;
@@ -142,6 +149,7 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
   uniform float uSkyFogDensityHigh;
   uniform float uSkyFogFloorY;
   uniform float uSkyFogRangeY;
+  uniform vec3 uSkyFogColorDeep;
   varying float vFogDepth;
   varying float vSkyFogHeight;
 
@@ -150,12 +158,22 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
     // Squared so the murk stays tight to the depths and the upper canyon opens up quickly.
     return h * h;
   }
+  /** 0 above the canyon floor band, 1 deep in the void below it. */
+  float skyriverFogDeep() {
+    return smoothstep( 180.0, -700.0, vSkyFogHeight );
+  }
   float skyriverFogFactor() {
     float density = mix( fogDensity, uSkyFogDensityHigh, skyriverFogGrade() );
-    return clamp( 1.0 - exp( - density * density * vFogDepth * vFogDepth ), 0.0, 1.0 );
+    density *= 1.0 + 3.0 * skyriverFogDeep();
+    return clamp( 1.0 - exp( - density * vFogDepth ), 0.0, 1.0 );
   }
   vec3 skyriverFogColor() {
-    return mix( fogColor, uSkyFogColorHigh, skyriverFogGrade() );
+    vec3 color = mix( fogColor, uSkyFogColorHigh, skyriverFogGrade() );
+    // Neon the haze has scattered: magenta low in the canyon, cyan through the middle band.
+    float h = vSkyFogHeight;
+    color += vec3( 0.05, 0.0, 0.035 ) * exp( - pow( ( h - 250.0 ) / 260.0, 2.0 ) );
+    color += vec3( 0.0, 0.03, 0.04 ) * exp( - pow( ( h - 950.0 ) / 380.0, 2.0 ) );
+    return mix( color, uSkyFogColorDeep, skyriverFogDeep() );
   }
 #endif
 `;
@@ -208,6 +226,7 @@ const fogExtraUniforms: Record<string, THREE.IUniform> = {
   uSkyFogDensityHigh: { value: SKYRIVER_ATMOSPHERE.fogDensityHigh },
   uSkyFogFloorY: { value: SKYRIVER_ATMOSPHERE.fogFloorY },
   uSkyFogRangeY: { value: SKYRIVER_ATMOSPHERE.fogRangeY },
+  uSkyFogColorDeep: { value: new THREE.Color(COLOR_FOG_DEEP) },
 };
 
 /**
@@ -521,7 +540,7 @@ void main() {
   // Layer 2: below the horizon the canyon depths swallow the light. There is no canyon floor, so
   // looking straight down this is all the player sees — it has to read as haze too thick to see
   // through, not as nothing rendered, so it stays a dimmed version of the murk rather than black.
-  color = mix( color, uDepths, smoothstep( 0.05, -0.55, h ) );
+  color = mix( color, uDepths, smoothstep( 0.02, -0.35, h ) );
   // Neon the city throws back into the overcast, concentrated in the horizon band.
   color += uNeon * ( 0.2 * exp( - abs( h ) * 4.2 ) );
 
@@ -563,17 +582,18 @@ ${SKYRIVER_HASH_GLSL}
 
 void main() {
   // One hashed column per streak lane; the slight x shear reads as wind.
-  vec2 p = vec2( ( vRainUv.x + vRainUv.y * 0.055 ) * uAspect * 260.0, vRainUv.y );
+  // T6R-2: long, thin, slanted streaks (the review read the T6R rain as specks).
+  vec2 p = vec2( ( vRainUv.x + vRainUv.y * 0.11 ) * uAspect * 210.0, vRainUv.y );
   float lane = floor( p.x );
   float laneHash = skyHash11( lane );
-  float live = step( 0.62, skyHash11( lane * 1.73 + 3.0 ) );
+  float live = step( 0.7, skyHash11( lane * 1.73 + 3.0 ) );
 
-  float repeats = 13.0 + 11.0 * skyHash11( lane + 7.0 );
-  float fall = fract( p.y * repeats - uTime * ( 2.2 + 3.4 * laneHash ) + laneHash * 13.0 );
-  float streak = smoothstep( 0.0, 0.012, fall ) * ( 1.0 - smoothstep( 0.012, 0.11, fall ) );
+  float repeats = 2.2 + 2.6 * skyHash11( lane + 7.0 );
+  float fall = fract( p.y * repeats - uTime * ( 1.3 + 1.6 * laneHash ) + laneHash * 13.0 );
+  float streak = smoothstep( 0.0, 0.02, fall ) * ( 1.0 - smoothstep( 0.02, 0.32, fall ) );
 
   float across = abs( fract( p.x ) - 0.5 ) * 2.0;
-  streak *= 1.0 - smoothstep( 0.08, 0.7, across );
+  streak *= 1.0 - smoothstep( 0.05, 0.4, across );
 
   gl_FragColor = vec4( uColor * ( streak * live * uIntensity ), 1.0 );
 
@@ -721,9 +741,9 @@ export class SkyriverAtmosphere {
     this.searchlights = new BeamField({
       name: 'skyriver.searchlights',
       capacity: SKYRIVER_ATMOSPHERE.searchlightCount,
-      intensity: 0.14,
+      intensity: 0.22,
       softness: 8.0,
-      fadeStart: 0.35,
+      fadeStart: 0.45,
     });
     this.group.add(this.searchlights.mesh);
     this.searchlightOrigins = this.deriveSearchlightOrigins(layout);
@@ -737,7 +757,7 @@ export class SkyriverAtmosphere {
       uniforms: {
         uTime: { value: 0 },
         uAspect: { value: 1 },
-        uIntensity: { value: 0.07 },
+        uIntensity: { value: 0.16 },
         uColor: { value: new THREE.Color(COLOR_RAIN) },
       },
       transparent: true,
@@ -834,15 +854,20 @@ export class SkyriverAtmosphere {
     this.godRays.commit();
   }
 
-  /** Mounted on the tallest towers of each side, so the beams start where a fixture plausibly is. */
+  /**
+   * T6R-2: mounted on inner-wall roofs at stations along the autopilot straights (|z| <= 1.6 km), so
+   * the beams sweep down through the canyon the camera actually flies, not over distant rooftops.
+   */
   private deriveSearchlightOrigins(layout: SkyriverCityLayout): readonly THREE.Vector3[] {
-    const tallest = [...layout.towers]
-      .sort((a, b) => b.height - a.height || a.x - b.x || a.z - b.z)
-      .slice(0, SKYRIVER_ATMOSPHERE.searchlightCount);
-
+    const stations: readonly (readonly [number, number])[] = [[-1, -1300], [1, -650], [-1, 0], [1, 650], [-1, 1300]];
     const origins: THREE.Vector3[] = [];
-    for (const tower of tallest) {
-      origins.push(new THREE.Vector3(tower.x, tower.height + 14, tower.z));
+    for (const [side, z] of stations.slice(0, SKYRIVER_ATMOSPHERE.searchlightCount)) {
+      const wall = layout.towers.filter((tower) => Math.sign(tower.x) === side);
+      if (wall.length === 0) continue;
+      const innerX = Math.min(...wall.map((tower) => Math.abs(tower.x)));
+      const inner = wall.filter((tower) => Math.abs(tower.x) < innerX + layout.cell * 0.5);
+      const tower = inner.reduce((best, c) => (Math.abs(c.z - z) < Math.abs(best.z - z) ? c : best));
+      origins.push(new THREE.Vector3(side * (Math.abs(tower.x) - tower.width * 0.5), tower.height + 14, tower.z));
     }
     // A layout with fewer towers than lights would otherwise silently drop beams.
     while (origins.length < SKYRIVER_ATMOSPHERE.searchlightCount) {
@@ -859,12 +884,12 @@ export class SkyriverAtmosphere {
       const origin = this.searchlightOrigins[i];
       const seed = hash1(i * 3.77 + 1.19);
       const phase = (time / (period * (0.8 + seed * 0.5))) + seed * 6.2831853;
-      const yaw = Math.sin(phase) * 1.15;
-      const pitch = -0.42 - 0.3 * (0.5 + 0.5 * Math.sin(phase * 0.61 + seed * 4.0));
+      const yaw = Math.sin(phase) * 0.9;
+      const pitch = -0.75 - 0.35 * (0.5 + 0.5 * Math.sin(phase * 0.61 + seed * 4.0));
 
       const cosPitch = Math.cos(pitch);
       this.scratchAxis
-        .set(Math.sin(yaw) * cosPitch * -Math.sign(origin.x || 1), Math.sin(pitch), Math.cos(yaw) * cosPitch)
+        .set(Math.cos(yaw) * cosPitch * -Math.sign(origin.x || 1), Math.sin(pitch), Math.sin(yaw) * cosPitch)
         .normalize();
       this.scratchStart.copy(origin);
       this.scratchColor.setRGB(0.62 + seed * 0.2, 0.68, 0.74 - seed * 0.22);
@@ -873,9 +898,9 @@ export class SkyriverAtmosphere {
         i,
         this.scratchStart,
         this.scratchAxis,
-        1250 + seed * 350,
-        9 + seed * 6,
-        105 + seed * 65,
+        2600 + seed * 500,
+        10 + seed * 6,
+        150 + seed * 80,
         this.scratchColor,
         seed,
       );

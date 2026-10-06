@@ -42,8 +42,8 @@ type Rgb = readonly [number, number, number];
 type Vec3 = readonly [number, number, number];
 
 /** Linear-space paint. The hull is a deep lacquered red, never pink. */
-const PAINT: Rgb = [0.25, 0.012, 0.014];
-const PAINT_DARK: Rgb = [0.09, 0.005, 0.007];
+const PAINT: Rgb = [0.15, 0.008, 0.01];
+const PAINT_DARK: Rgb = [0.05, 0.003, 0.004];
 const GLAZING: Rgb = [0.012, 0.016, 0.024];
 const TRIM: Rgb = [0.018, 0.018, 0.022];
 /** HDR emissive: ACES maps this to a saturated, hot red. */
@@ -51,6 +51,8 @@ const TAILLIGHT: Rgb = [1.7, 0.02, 0.012];
 const TAILLIGHT_SOFT: Rgb = [0.9, 0.01, 0.008];
 const THROAT: Rgb = [2.6, 3.6, 5.2];
 const MARKER: Rgb = [0.25, 1.6, 2.0];
+/** T6R-2: the clearcoat catching the city — a narrow hot highlight along each shoulder line. */
+const CLEARCOAT: Rgb = [1.1, 0.42, 0.46];
 
 /** Key light from above-front-right; a cool rim from the overcast on up-facing faces. */
 const KEY: Vec3 = normalize3([0.35, 0.85, 0.4]);
@@ -172,13 +174,32 @@ function buildHull(): HullBuild {
 
   // Fastback canopy: dark glazing, raked toward the nose.
   const canopy: Ring[] = [
-    { z: -4.3, yLow: 0.78, yHigh: 1.02, halfLow: 2.2, halfHigh: 1.9 },
-    { z: -2.0, yLow: 0.86, yHigh: 1.62, halfLow: 2.2, halfHigh: 1.55 },
-    { z: 1.0, yLow: 0.66, yHigh: 1.5, halfLow: 2.0, halfHigh: 1.35 },
-    { z: 3.2, yLow: 0.36, yHigh: 0.5, halfLow: 1.7, halfHigh: 1.5 },
+    // T6R-2: flatter and wider, so from above the craft reads as a wedge, not a capsule.
+    { z: -4.3, yLow: 0.78, yHigh: 0.96, halfLow: 2.35, halfHigh: 2.15 },
+    { z: -2.0, yLow: 0.86, yHigh: 1.28, halfLow: 2.35, halfHigh: 1.95 },
+    { z: 1.0, yLow: 0.66, yHigh: 1.18, halfLow: 2.1, halfHigh: 1.75 },
+    { z: 3.2, yLow: 0.36, yHigh: 0.46, halfLow: 1.75, halfHigh: 1.6 },
   ];
   loft(build, canopy, GLAZING, GLAZING, GLAZING);
   capRing(build, canopy[0]!, GLAZING);
+
+  // Clearcoat highlight: a thin hot line riding each shoulder (roof-to-side edge) of the body loft.
+  for (let i = 0; i + 1 < body.length; i += 1) {
+    const a = body[i]!;
+    const b = body[i + 1]!;
+    for (const side of [-1, 1]) {
+      const inset = 0.08;
+      pushQuad(
+        build,
+        [side * (a.halfHigh - inset), a.yHigh + 0.015, a.z],
+        [side * (b.halfHigh - inset), b.yHigh + 0.015, b.z],
+        [side * (b.halfHigh - inset - 0.14), b.yHigh + 0.02, b.z],
+        [side * (a.halfHigh - inset - 0.14), a.yHigh + 0.02, a.z],
+        CLEARCOAT,
+        true,
+      );
+    }
+  }
 
   // Rear deck lip above the strip, and the dark diffuser below it.
   pushBox(build, [0, 0.86, TAIL_Z + 0.1], [5.5, 0.16, 0.6], PAINT);
@@ -284,7 +305,9 @@ void main() {
     float along = smoothstep( 0.0, 0.03, t ) * pow( 1.0 - t, 1.25 );
     // Shock diamonds drifting down the jet.
     float diamonds = 0.82 + 0.18 * sin( t * 46.0 - uTime * 70.0 );
-    color = ( outer * halo * along * 0.7 + hot * core * 1.6 ) * diamonds;
+    // T6R-2: the first fifth of the jet is white-hot.
+    float throat = ( 1.0 - smoothstep( 0.12, 0.24, t ) ) * exp( - s * s * 5.0 );
+    color = ( outer * halo * along * 0.7 + hot * core * 1.6 ) * diamonds + vec3( 1.0 ) * throat * 1.5;
   } else if ( vKind < 1.5 ) {
     float r = length( vTS );
     float disc = exp( - r * r * 5.0 );

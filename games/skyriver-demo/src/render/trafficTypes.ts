@@ -120,6 +120,12 @@ export interface SkyriverTraffic {
    */
   setPixelAngle(radiansPerPixel: number): void;
 
+  /**
+   * T6R-2: the presented shuttle pose (sim turns for yaw) and its speed, m/s. The escort vehicles
+   * fly in formation off it. Call once per frame before update().
+   */
+  setAnchor(x: number, y: number, z: number, yawTurns: number, speed: number): void;
+
   /** Switches tier. Allocation-free while quality.carCount <= the configured maxCarCount. */
   setQuality(quality: TrafficQuality): void;
 

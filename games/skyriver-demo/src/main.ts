@@ -631,7 +631,14 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
       writeCameraPose(poseScratch, presented, state.camera);
       applyCameraPose(scene.camera, poseScratch);
 
-      shuttle.setPose(presented.x, presented.y, presented.z, presented.yaw, presented.pitch, presented.roll);
+      // T6R-2: the drawn nose follows under half the climb angle (the sim allows 54 degrees), so the
+      // chase view keeps reading the wedge from behind, never a capsule from above or a belly from below.
+      shuttle.setPose(presented.x, presented.y, presented.z, presented.yaw, presented.pitch * 0.45, presented.roll);
+      traffic.setAnchor(
+        presented.x, presented.y, presented.z, presented.yaw,
+        // 1.8 matches the sim's BOOST_MULTIPLIER (systems.ts).
+        presented.speed * (presented.boostT > 0 ? 1.8 : 1),
+      );
       shuttle.update({
         // 1.8 matches the sim's BOOST_MULTIPLIER (systems.ts); the plume pulse softens the edge.
         boostIntensity: state.flight.boostT > 0 ? 1.8 : 1.0,

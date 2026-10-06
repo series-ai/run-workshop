@@ -39,7 +39,7 @@ export const CHASE_DISTANCE_M = 19;
 /** Extra boom length at top speed. Acceleration reads as the city pulling away behind the craft. */
 export const CHASE_SPEED_PULLBACK_M = 10;
 /** Boom lift above the shuttle, metres. Puts the rear deck and its taillight strip in view. */
-export const CHASE_HEIGHT_M = 5.2;
+export const CHASE_HEIGHT_M = 4.6;
 /**
  * How much of the shuttle's own climb angle the boom follows, 0..1.
  *
@@ -47,7 +47,7 @@ export const CHASE_HEIGHT_M = 5.2;
  * canopy instead of the camera rigidly sitting on the flight axis. T6R lowered it from 0.55: at the
  * sim's 54-degree pitch limit the old boom pitched the view ~30 degrees up, over the roofline.
  */
-export const CHASE_PITCH_FOLLOW = 0.3;
+export const CHASE_PITCH_FOLLOW = 0.2;
 /**
  * T6R hard limits on the boom elevation, turns, after the orbit offset is added: about 20 degrees
  * down and 9 degrees up. Combined with the presented canyon walls (presentationLayout.ts) this keeps

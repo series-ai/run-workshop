@@ -18,6 +18,8 @@ import type { SkyriverHudEvent } from '../sim/session';
 import type { SkyriverMode } from '../sim/systems';
 
 const HUD_STYLE_ID = 'skyriver-hud-style';
+/** Touch hint lifetime before it fades, milliseconds (unless a touch comes first). */
+const HINT_FADE_MS = 5000;
 
 /**
  * Mute, unbranded styling: translucent slate panels and a system monospace stack, so the HUD reads
@@ -117,10 +119,11 @@ const HUD_CSS = `
 }
 .skyriver-hud__debug--on { display: block; }
 .skyriver-hud__controls {
+  /* T6R-2: touch buttons only on touch devices; desktop uses the keys in the hint. */
+  display: none;
   position: absolute;
   right: calc(14px + env(safe-area-inset-right, 0px));
   bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  display: flex;
   flex-direction: column;
   gap: 10px;
   pointer-events: auto;
@@ -170,6 +173,10 @@ const HUD_CSS = `
 .skyriver-hud__hint-touch { display: none; }
 /* Touch devices get touch instructions, never desktop keys (T6R P1). */
 @media (hover: none) and (pointer: coarse) {
+  .skyriver-hud__controls { display: flex; }
+  .skyriver-hud__hint { transition: opacity 600ms ease-out; }
+  /* T6R-2: the touch hint gets out of the way after the first touch or ~5 s. */
+  .skyriver-hud__hint--faded { opacity: 0; }
   .skyriver-hud__hint-desktop { display: none; }
   .skyriver-hud__hint-touch { display: inline; }
   .skyriver-hud__hint {
@@ -319,6 +326,10 @@ export function createSkyriverHud(options: SkyriverHudOptions): SkyriverHud {
     'drag to steer · hold low screen to boost · mode: fly yourself',
   );
   hint.append(hintDesktop, hintTouch);
+  // Only has a visible effect under the coarse-pointer media query (CSS above).
+  const fadeHint = (): void => hint.classList.add('skyriver-hud__hint--faded');
+  const hintTimer = doc.defaultView?.setTimeout(fadeHint, HINT_FADE_MS) ?? null;
+  options.root.addEventListener('pointerdown', fadeHint, { once: true, capture: true });
 
   element_.append(readout, debugLine, controls, hint);
   options.root.appendChild(element_);
@@ -456,6 +467,8 @@ export function createSkyriverHud(options: SkyriverHudOptions): SkyriverHud {
 
     dispose(): void {
       if (flashTimer !== null) clearTimeout(flashTimer);
+      if (hintTimer !== null) clearTimeout(hintTimer);
+      options.root.removeEventListener('pointerdown', fadeHint, { capture: true });
       modeButton.removeEventListener('click', onModeClick);
       boostButton.removeEventListener('pointerdown', onBoostDown);
       boostButton.removeEventListener('pointerup', onBoostUp);
