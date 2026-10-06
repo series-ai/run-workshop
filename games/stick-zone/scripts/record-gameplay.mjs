@@ -11,8 +11,27 @@ import { execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 
-const OUT_DIR = '/Users/pany/.bb/plugins/environment-git-worktree/host-data/worktrees/thr_fn6cpnqyqj-1/venus/.plans/stick-zone-proofs';
+import os from 'os';
+
+// Proof outputs are repo-local and gitignored (games/stick-zone/proofs/). Override with
+// PROOF_OUT_DIR when archiving elsewhere. The server secret MUST be provided explicitly:
+// the old sz_test_internal_sec fallback only worked under NODE_ENV=test (never set by
+// vite), so it was silently dead — now the harness fails fast instead.
+const OUT_DIR = process.env.PROOF_OUT_DIR || new URL('../proofs/', import.meta.url).pathname;
 const BASE_URL = process.env.BASE_URL || 'http://localhost:4196';
+const REQUIRED_SECRET = (() => {
+  const v = process.env.STICK_ZONE_SERVER_SECRET;
+  if (!v) {
+    throw new Error('STICK_ZONE_SERVER_SECRET is required: start vite preview with it set (e.g. STICK_ZONE_SERVER_SECRET=... npm run preview)');
+  }
+  return v;
+})();
+
+fs.mkdirSync(OUT_DIR, { recursive: true });
+// Raw Playwright segments never carry over between runs — each recording starts clean.
+for (const d of ['raw_solo', 'raw_multi_alpha', 'raw_multi_bravo', 'raw_exfil']) {
+  fs.rmSync(path.join(OUT_DIR, d), { recursive: true, force: true });
+}
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
@@ -35,7 +54,7 @@ function raidPageUrl(raidId, extra) {
  * the in-browser sim never credits this damage itself).
  */
 async function deployMachine(raidId, machineId, type, x, z, health) {
-  const secret = process.env.STICK_ZONE_SERVER_SECRET || 'sz_test_internal_sec';
+  const secret = REQUIRED_SECRET;
   const res = await fetch(`${BASE_URL}/api/settlement/deploy-machine`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` },
@@ -47,7 +66,7 @@ async function deployMachine(raidId, machineId, type, x, z, health) {
 }
 
 async function withdrawMachine(raidId, machineId) {
-  const secret = process.env.STICK_ZONE_SERVER_SECRET || 'sz_test_internal_sec';
+  const secret = REQUIRED_SECRET;
   const res = await fetch(`${BASE_URL}/api/settlement/deploy-machine`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` },
@@ -59,7 +78,7 @@ async function withdrawMachine(raidId, machineId) {
 }
 
 async function resetServerRaid(raidId) {
-  const secret = process.env.STICK_ZONE_SERVER_SECRET || "sz_test_internal_sec";
+  const secret = REQUIRED_SECRET;
   const res = await fetch(`${BASE_URL}/api/settlement/init-raid`, {
     method: "POST",
     headers: {
@@ -87,7 +106,7 @@ async function resetServerRaid(raidId) {
  * anti-teleport movement authority accepts the placement without state_correction.
  */
 async function repositionOperative(page, raidId, x, z, operativeId = 'op_alpha_1') {
-  const secret = process.env.STICK_ZONE_SERVER_SECRET || 'sz_test_internal_sec';
+  const secret = REQUIRED_SECRET;
   const res = await fetch(`${BASE_URL}/api/settlement/reposition`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` },
@@ -673,7 +692,7 @@ async function recordAll() {
   // Combined Highlight Montage
   console.log('Generating Combined Highlight Montage: stick_zone_gameplay_proof.mp4...');
   try {
-    const listFile = path.join(OUT_DIR, 'concat_list.txt');
+    const listFile = path.join(os.tmpdir(), 'stick-zone-concat.txt');
     const clips = [
       `file '${path.join(OUT_DIR, 'stick_zone_solo_kinetic.mp4')}'`,
       `file '${path.join(OUT_DIR, 'stick_zone_multiplayer_squad_alpha.mp4')}'`,

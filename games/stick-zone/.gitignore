@@ -3,3 +3,7 @@ dist
 .DS_Store
 .settlement-store.json*
 src/sim/server-settlement.js
+
+public/run-inkline
+proofs/
+*.log
