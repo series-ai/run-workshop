@@ -1184,7 +1184,18 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         rRec.machines[machineId] = { health, isAlive: true };
         rRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs }));
         if (settlement.saveToDisk) {
-          try { settlement.saveToDisk(); } catch { throw new Error("Machine deployment persistence failed"); }
+          try {
+            settlement.saveToDisk();
+          } catch (deployPersistErr) {
+            // Restore the in-memory machine list + custody to the pre-deployment state
+            const placementIdx = machines.findIndex((m) => m && m.id === machineId);
+            if (placementIdx !== -1) {
+              if (idx !== -1) machines.splice(placementIdx, 1);
+              else machines.splice(placementIdx, 1);
+            }
+            delete rRec.machines[machineId];
+            throw new Error("Machine deployment persistence failed");
+          }
         }
       }
       res.setHeader("Content-Type", "application/json");
@@ -1941,22 +1952,6 @@ wss.on("connection", (ws, req) => {
 
         ws.lastRelayedPos = moveState;
 
-        // Durable state transaction: the accepted movement + vitals + any hold-broken
-        // custody change are persisted together BEFORE the packet is relayed, so a crash
-        // between processing and relay cannot leave memory/custody disagreeing with disk.
-        try {
-          const rRecTx = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
-          const oRecTx = rRecTx?.operatives?.[ws.operativeId];
-          if (oRecTx) {
-            oRecTx.lastObservedX = moveState.x;
-            oRecTx.lastObservedZ = moveState.z;
-            oRecTx.hasLiveMovement = true;
-            oRecTx.health = Math.max(0, Math.min(100, moveState.health ?? 100));
-            oRecTx.armor = Math.max(0, Math.min(100, moveState.armor ?? 100));
-            oRecTx.isAlive = moveState.isAlive !== false;
-            if (settlement.saveToDisk) settlement.saveToDisk();
-          }
-        } catch (persistErr) {}
 
         // Weapon state is updated authoritatively ONLY after packet timestamp, bounds, and movement validation have passed!
         if (typeof packet.data.ammo === "number" && Number.isFinite(packet.data.ammo)) {
@@ -1977,21 +1972,27 @@ wss.on("connection", (ws, req) => {
           }
         }
 
-        // Authoritative life-state clamp and sync before forwarding
+        // Durable state transaction (single owner): the accepted position, observation
+        // time, vitals, and any hold-broken custody change are committed as ONE snapshot
+        // BEFORE the packet is relayed. On persistence failure the COMPLETE prior state
+        // (movement + custody) is restored and the packet is dropped — memory never
+        // drifts ahead of disk, and peers never see persisted-but-uncommitted state.
         packet.data.health = moveState.health;
         if (typeof moveState.armor === "number") {
           packet.data.armor = moveState.armor;
         }
         packet.data.isAlive = moveState.isAlive;
 
-        // Synchronize authoritative settlement custody with accepted position
+        // Synchronize authoritative settlement custody with accepted position (same transaction)
         const rRec = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
         const oRec = rRec?.operatives?.[ws.operativeId];
+        const __custodyBefore = oRec ? JSON.parse(JSON.stringify(oRec)) : null;
+        const __moveBefore = { x: moveState.x, z: moveState.z, health: moveState.health, armor: moveState.armor, isAlive: moveState.isAlive, isKia: moveState.isKia };
+        try {
         if (oRec) {
           oRec.lastObservedX = px;
           oRec.lastObservedZ = pz;
           oRec.hasLiveMovement = true;
-          oRec.lastObservedTimestamp = Date.now();
           oRec.health = Math.max(0, Math.min(100, moveState.health ?? 100));
           oRec.armor = Math.max(0, Math.min(100, moveState.armor ?? 100));
           oRec.isAlive = moveState.isAlive;
@@ -2032,8 +2033,7 @@ wss.on("connection", (ws, req) => {
               oRec.holdCompletedAtTick = undefined;
               oRec.holdCompletedTimestamp = undefined;
             }
-            if (hadHold || oRec.pendingRevocationSave) {
-              delete oRec.pendingRevocationSave;
+            if (hadHold) {
               if (typeof settlement.saveToDisk === "function") {
                 try {
                   settlement.saveToDisk();
@@ -2048,6 +2048,32 @@ wss.on("connection", (ws, req) => {
         if (moveState.health <= 0 || packet.data.isAlive === false || packet.data.isKia === true) {
           if (typeof settlement.recordOperativeKia === "function") {
             try { settlement.recordOperativeKia(ws.raidId, ws.operativeId, "system"); } catch {}
+          }
+        }
+
+        // Commit the transaction: observation time + the full custody change persist
+        // BEFORE relay. On persistence failure restore the complete pre-transaction
+        // snapshot (movement + custody) and drop the packet — memory never drifts
+        // ahead of disk, and peers never see uncommitted accepted state.
+        if (oRec) oRec.lastObservedTimestamp = Date.now();
+        } catch (persistErr) {
+          Object.assign(moveState, __moveBefore);
+          if (oRec && __custodyBefore) {
+            for (const __k of Object.keys(oRec)) delete oRec[__k];
+            Object.assign(oRec, __custodyBefore);
+          }
+          return;
+        }
+        if (settlement.saveToDisk) {
+          try {
+            settlement.saveToDisk();
+          } catch (latePersistErr) {
+            Object.assign(moveState, __moveBefore);
+            if (oRec && __custodyBefore) {
+              for (const __k of Object.keys(oRec)) delete oRec[__k];
+              Object.assign(oRec, __custodyBefore);
+            }
+            return;
           }
         }
       }
@@ -2351,14 +2377,11 @@ wss.on("connection", (ws, req) => {
 
         const strikeApplied = applyOperativeStrike({ ws, packet, targetId, kind: rawKind, dmg, ackEventId: packet.eventId });
         if (!strikeApplied) {
-          // Validation or persistence FAILED: the classic packet must NEVER forward with
-          // client-supplied authoritative result fields (receivers would misread them
-          // as server-authoritative outcomes). Strip them and forward as a plain peer
-          // prediction the receiver re-validates itself.
-          delete packet.data.targetHealth;
-          delete packet.data.targetArmor;
-          delete packet.data.targetAlive;
-          delete packet.data.targetKia;
+          // Validation or persistence FAILED: drop the strike entirely — receivers must
+          // never see client-supplied damage that the authoritative relay rejected (not
+          // as result-field-carrying packets, and not as predictions either: a rejected
+          // strike is a rejected strike).
+          return;
         }
       }
 
@@ -2936,9 +2959,19 @@ wss.on("connection", (ws, req) => {
   const machineAttackClock = new Map(); // `${raidId}:${machineId}` -> lastAttackMs
   const machineAttackTimer = setInterval(() => {
     try {
+      // Machine authority is CUSTODY-DRIVEN: every ACTIVE raid runs its automated
+      // defenses regardless of live socket count — machine fire and extraction hold
+      // verification use ONE session-validity basis (active raid custody), so a raid
+      // cannot keep verifying holds while silently skipping machine attacks between
+      // the last socket drop and its reconnect lease.
       const raidsWithClients = new Set();
       for (const client of wss.clients) {
         if (client.readyState === 1 && client.authenticated && client.raidId) raidsWithClients.add(client.raidId);
+      }
+      if (settlement.raids) {
+        for (const [rid, rrec] of settlement.raids.entries()) {
+          if (rrec && rrec.status === "active") raidsWithClients.add(rid);
+        }
       }
       for (const raidId of raidsWithClients) {
         const rRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
