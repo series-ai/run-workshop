@@ -83,6 +83,12 @@ export interface KickActionPacketData {
   rivalTargets?: Array<{ id: string; x?: number; z?: number; damage: number; knockX?: number; knockZ?: number; predictedHealth?: number; predictedArmor?: number }>;
 }
 
+export interface KickActionRejectedPacketData {
+  actionEventId?: string;
+  reason?: string;
+  machineCustody?: Array<{ id?: string; health?: number; isAlive?: boolean; x?: number; z?: number }>;
+}
+
 export interface MachineRosterPacketData {
   machines?: Array<{ id: string; type?: string; x?: number; y?: number; z?: number; facing?: number; health?: number; isAlive?: boolean; originX?: number; originZ?: number }>;
 }
@@ -224,6 +230,7 @@ export type PeerPacket =
   | (PeerPacketBase & { type: 'machine_hit'; data: MachineHitPacketData })
   | (PeerPacketBase & { type: 'machine_attack'; data: MachineAttackPacketData })
   | (PeerPacketBase & { type: 'machine_roster'; data: MachineRosterPacketData })
+  | (PeerPacketBase & { type: 'kick_action_rejected'; data: KickActionRejectedPacketData })
   | (PeerPacketBase & { type: 'exfil_success'; data: ExfilSuccessPacketData })
   | (PeerPacketBase & { type: 'ingress_request'; data?: IngressRequestPacketData })
   | (PeerPacketBase & { type: 'ingress_snapshot'; data: IngressSnapshotPacketData })
@@ -602,7 +609,12 @@ export class MultiplayerCoordinator {
               this.sim.combatLog.push(`[INGRESS DENIED] Raid ${data.activeRaidId} exceeded 8-minute ingress limit (tick ${currentTick})`);
               return;
             }
-            this.sim.tick = Math.max(this.sim.tick, currentTick);
+            {
+              const consumeH = (globalThis as any).__stickZoneConsumeAccumulatorMs;
+              const advH = currentTick - this.sim.tick;
+              this.sim.tick = Math.max(this.sim.tick, currentTick);
+              if (advH > 0 && typeof consumeH === "function") { try { consumeH((advH * 1000) / 60); } catch {} }
+            }
             if (data.crates) {
               const crateEntries = Object.entries(data.crates as Record<string, any>).map(([cid, cinfo]) => ({
                 id: cid,
@@ -670,7 +682,12 @@ export class MultiplayerCoordinator {
             if (data && this.sim.ingressController.getState().kind !== "confirmed_active") {
               if (data.activeRaidId) this.sim.raidId = data.activeRaidId;
               const currentTick = typeof data.raidTick === "number" ? data.raidTick : this.sim.tick;
+              {
+              const consumeH = (globalThis as any).__stickZoneConsumeAccumulatorMs;
+              const advH = currentTick - this.sim.tick;
               this.sim.tick = Math.max(this.sim.tick, currentTick);
+              if (advH > 0 && typeof consumeH === "function") { try { consumeH((advH * 1000) / 60); } catch {} }
+            }
               if (data.crates) {
                 const crateEntries = Object.entries(data.crates as Record<string, any>).map(([cid, cinfo]) => ({
                   id: cid,
@@ -1028,7 +1045,12 @@ export class MultiplayerCoordinator {
                 if (typeof globalThis !== "undefined") (globalThis as any).__stickZoneServerTimeOffset = this.serverTimeOffset;
               }
               if (typeof data.currentRaidTick === "number" && data.currentRaidTick > this.sim.tick) {
+                // Single clock owner: adopt the server tick THROUGH the frame consumer
+                // (drains the accumulator + advances lastTime — no double count).
+                const consume = (globalThis as any).__stickZoneConsumeAccumulatorMs;
+                const advTicks = data.currentRaidTick - this.sim.tick;
                 this.sim.tick = data.currentRaidTick;
+                if (typeof consume === "function") { try { consume((advTicks * 1000) / 60); } catch {} }
               }
               if (data.lastAcceptedPosition && typeof data.lastAcceptedPosition.x === "number" && typeof data.lastAcceptedPosition.z === "number" && Number.isFinite(data.lastAcceptedPosition.x) && Number.isFinite(data.lastAcceptedPosition.z)) {
                 this.sim.player.x = data.lastAcceptedPosition.x;
@@ -1631,7 +1653,11 @@ export class MultiplayerCoordinator {
     for (let i = next.length - 1; i >= 0; i--) {
       if (!seen.has(next[i].id)) next.splice(i, 1);
     }
+    // Keep the authoritative-machine cache in sync with the reconciled world: later
+    // ingress snapshots must never substitute an older custody view back in.
+    this.serverMachines = this.sim.machines.map((m) => ({ id: m.id, health: m.health, isAlive: m.isAlive }));
   }
+
 
   public applyValidatedSnapshotWithBoundary(
     sanitized: RaidWorldSnapshot,
@@ -2643,6 +2669,27 @@ export class MultiplayerCoordinator {
         }
         this.sim.claimCrateLocally(crateId, packet.senderId, claimTimestamp || packet.timestamp);
       }
+    } else if (packet.type === 'kick_action_rejected') {
+      // Authoritative rejection correction for a rejected kick batch (oversized /
+      // duplicate / invalid targets / cooldown): the relay returns custody truth for
+      // every predicted machine target so the optimistic damage is reconciled.
+      const relayStamped = (packet as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel;
+      if (!relayStamped) return;
+      if (packet.senderId && packet.senderId !== "server") return;
+      if (typeof packet.raidId === "string" && packet.raidId !== this.sim.raidId) return;
+      const d = packet.data as any;
+      if (!d || !Array.isArray(d.machineCustody)) return;
+      for (const c of d.machineCustody) {
+        if (!c || typeof c.id !== "string") continue;
+        const m = this.sim.machines.find((x) => x.id === c.id);
+        if (!m) continue;
+        const maxHp = (m as any).maxHealth ?? (m.type === "drone" ? 75 : 120);
+        if (typeof c.health === "number" && Number.isFinite(c.health)) {
+          m.health = Math.max(0, Math.min(maxHp, c.health));
+          m.isAlive = c.isAlive !== false && m.health > 0;
+        }
+      }
+      this.sim.combatLog.push(`[KICK REJECTED] Strike rejected by relay (${d.reason || "invalid"}); machine predictions reconciled to custody`);
     } else if (packet.type === 'machine_roster') {
       // Versioned full-roster reconciliation: adopts the RELAY-DEPLOYED machine set —
       // membership (add/remove), type, placement geometry, patrol origins, vitals. Only

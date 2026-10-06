@@ -1195,7 +1195,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         const rRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
         if (rRec?.machines) delete rRec.machines[machineId];
         if (rRec) {
-          rRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs }));
+          rRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs, maxHealth: m.maxHealth || Math.max(m.health, m.type === "turret" ? 120 : 75) }));
         }
         if (settlement.saveToDisk) {
           try {
@@ -1254,7 +1254,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
       if (rRec) {
         if (!rRec.machines) rRec.machines = {};
         rRec.machines[machineId] = { health, isAlive: true };
-        rRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs }));
+        rRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs, maxHealth: m.maxHealth || Math.max(m.health, m.type === "turret" ? 120 : 75) }));
         if (settlement.saveToDisk) {
           try {
             settlement.saveToDisk();
@@ -1768,6 +1768,13 @@ wss.on("connection", (ws, req) => {
         if (activeSlotSockets.get(slotKey) !== ws) return;
       }
       const packet = JSON.parse(text);
+      // INGRESS trust boundary: the reserved server-authority stamp is assignable ONLY
+      // by the relay's own validated result builders. Any client-supplied copy is
+      // deleted BEFORE any handler runs — validated results stamped downstream by the
+      // relay pass through untouched, so receivers can trust every stamp they see.
+      if (packet && typeof packet === "object" && typeof packet.serverAuthoritative !== "undefined") {
+        delete packet.serverAuthoritative;
+      }
 
       if (!ws.authenticated) {
         const authTok = packet.token || (packet.type === "auth" && packet.data?.token);
@@ -1881,6 +1888,15 @@ wss.on("connection", (ws, req) => {
       packet.raidId = ws.raidId;
 
       if (packet.type === "state" && packet.data) {
+        // TRANSACTION OWNER (packet-handler scope): snapshots + latch live here so the
+        // commit/rollback logic in any nested block can reference them. The latch is
+        // cleared in the finally tail — it can never leak into the next packet (which
+        // would silently disable saveToDisk for machine-executor persistence).
+        let __txCbMoveBefore = null;
+        let __txCbCustodyBefore = null;
+        let __txOpen = false;
+        const __txLatch = () => { settlement.__txSuppressSave = true; __txOpen = true; };
+        const __txnUnlatch = () => { settlement.__txSuppressSave = false; __txOpen = false; };
         if (!packet.eventId || typeof packet.eventId !== "string" || !packet.eventId.trim()) {
           return;
         }
@@ -1966,23 +1982,22 @@ wss.on("connection", (ws, req) => {
             return;
           }
 
-          // Tx save-latch: while an accepted-state packet transaction is open, nested
-          // custody recorders (ammo, K.I.A.) MUST NOT save — the ONE commit at the end
-          // of the handler persists the whole transaction atomically.
-          settlement.__txSuppressSave = true;
-          const __txEnd = () => { settlement.__txSuppressSave = false; };
+          // DURABLE TRANSACTION open (packet-scoped owner declared above the if-chain):
+          // latch nested recorders (ammo, K.I.A.) so exactly ONE commit at the end of
+          // the handler persists the whole transaction atomically.
+          __txLatch();
           // DURABLE TRANSACTION: capture the COMPLETE movement state (budget, timestamps,
           // roll state, action) and custody snapshot BEFORE the first mutation, so a
           // failed persistence restores the exact prior world. ONE save commits the
           // accepted packet (all nested per-action saves were removed).
-          const __txMoveBefore = Object.assign({}, moveState, {
+          __txCbMoveBefore = Object.assign({}, moveState, {
             rollStartedAt: moveState.rollStartedAt,
             lastRollStartedAt: moveState.lastRollStartedAt,
             action: moveState.action,
           });
           const __txRrec = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
           const __txOrec = __txRrec?.operatives?.[ws.operativeId];
-          const __txCustodyBefore = __txOrec ? JSON.parse(JSON.stringify(__txOrec)) : null;
+          __txCbCustodyBefore = __txOrec ? JSON.parse(JSON.stringify(__txOrec)) : null;
 
           // Deduct consumed distance from budget!
           moveState.budget -= dist;
@@ -2134,21 +2149,28 @@ wss.on("connection", (ws, req) => {
           }
         }
 
-        // Single durable commit of the accepted packet (latch released after)
-        __txEnd();
-        if (settlement.saveToDisk) {
-          try {
-            settlement.saveToDisk();
-          } catch (__txPersistErr) {
-            __txEnd();
+        // SINGLE DURABLE COMMIT of the accepted packet. Order: save FIRST while the
+        // latch still suppresses nested recorders (true single save), then unlatch in
+        // finally — the latch can NEVER leak into the next packet (leaks would
+        // silently disable saveToDisk machine-executor persistence). On failure the
+        // COMPLETE pre-transaction snapshots restore and the packet is dropped.
+        const __txRollback = () => {
+          if (__txCbMoveBefore) {
             for (const __k of Object.keys(moveState)) delete moveState[__k];
-            Object.assign(moveState, __txMoveBefore);
-            if (oRec && __txCustodyBefore) {
-              for (const __k of Object.keys(oRec)) delete oRec[__k];
-              Object.assign(oRec, __txCustodyBefore); // ✓ pre-mutation snapshot
-            }
-            return;
+            Object.assign(moveState, __txCbMoveBefore);
           }
+          if (oRec && __txCbCustodyBefore) {
+            for (const __k of Object.keys(oRec)) delete oRec[__k];
+            Object.assign(oRec, __txCbCustodyBefore);
+          }
+        };
+        try {
+          if (settlement.saveToDisk) settlement.saveToDisk();
+        } catch (__txPersistErr) {
+          __txRollback();
+          return; // accepted state never relays ahead of disk
+        } finally {
+          __txnUnlatch();
         }
       }
 
@@ -2981,7 +3003,7 @@ wss.on("connection", (ws, req) => {
       // relay's own validated result builders. A client-supplied copy on an ordinary
       // event packet is stripped here (reserved server-only types never take this
       // generic forward path).
-      if (packet.type !== "machine_attack" && packet.type !== "machine_roster" && packet.type !== "kick_action_rejected") {
+      if (packet.type !== "machine_attack" && packet.type !== "machine_roster" && packet.type !== "kick_action_rejected" && packet.type !== "machine_hit" && packet.type !== "hit") {
         delete packet.serverAuthoritative;
       }
 

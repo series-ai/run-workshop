@@ -93,7 +93,12 @@ export const MachineEnemy: React.FC<MachineEnemyProps> = ({ machine }) => {
   }, [machine.x, machine.z, machine.facing, machine.type, (machine as any).targetY, (machine as any).targetDistance]);
   const groupRef = useRef<THREE.Group>(null);
   const hudRef = useRef<THREE.Group>(null);
-  const maxHp = machine.type === "turret" ? 120 : (machine.type === "drone" ? 75 : 100);
+  // Shared maxHealth contract: servers may deploy custom-vital machines (up to 1000);
+  // the bar ratio uses the AUTHORITATIVE maxHealth when present, never fixed type limits
+  // (a 200-max drone at 150 hp must show 75%, not a full bar).
+  const maxHp = typeof (machine as any).maxHealth === "number" && (machine as any).maxHealth > 0
+    ? (machine as any).maxHealth
+    : (machine.type === "turret" ? 120 : (machine.type === "drone" ? 75 : 100));
   const hpRatio = Math.max(0, Math.min(1, machine.health / maxHp));
 
   useFrame((state, delta) => {
