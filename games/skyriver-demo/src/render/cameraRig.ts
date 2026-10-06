@@ -30,28 +30,44 @@ import type { PerspectiveCamera } from 'three';
 import type { SkyriverProjection } from '../sim/runtime';
 import { interpolateSkyriverFlight } from '../sim/session';
 import { CHASM_BOUNDS, type SkyriverCamera, type SkyriverFlight } from '../sim/systems';
+import { SKYRIVER_ROOFLINE_MIN_M } from './presentationLayout';
 
 const TURNS_TO_RADIANS = Math.PI * 2;
 
 /** Boom length at cruise speed, metres. Far enough back to hold the whole shuttle in frame. */
-export const CHASE_DISTANCE_M = 30;
+export const CHASE_DISTANCE_M = 19;
 /** Extra boom length at top speed. Acceleration reads as the city pulling away behind the craft. */
-export const CHASE_SPEED_PULLBACK_M = 14;
-/** Boom lift above the shuttle, metres. Puts the thruster deck in view (the Neon Rain still). */
-export const CHASE_HEIGHT_M = 8.5;
+export const CHASE_SPEED_PULLBACK_M = 10;
+/** Boom lift above the shuttle, metres. Puts the rear deck and its taillight strip in view. */
+export const CHASE_HEIGHT_M = 5.2;
 /**
  * How much of the shuttle's own climb angle the boom follows, 0..1.
  *
  * Below 1 the boom stays flatter than the craft, so a climb shows the thrusters and a dive shows the
- * canopy instead of the camera rigidly sitting on the flight axis.
+ * canopy instead of the camera rigidly sitting on the flight axis. T6R lowered it from 0.55: at the
+ * sim's 54-degree pitch limit the old boom pitched the view ~30 degrees up, over the roofline.
  */
-export const CHASE_PITCH_FOLLOW = 0.55;
-/** Aim point ahead of the shuttle, metres. This is what puts the shuttle low-centre in frame. */
-export const CHASE_LOOK_AHEAD_M = 70;
-/** Aim point lift, metres. Biases the horizon up so the canyon fills the frame. */
-export const CHASE_LOOK_UP_M = 4;
+export const CHASE_PITCH_FOLLOW = 0.3;
+/**
+ * T6R hard limits on the boom elevation, turns, after the orbit offset is added: about 20 degrees
+ * down and 9 degrees up. Combined with the presented canyon walls (presentationLayout.ts) this keeps
+ * every frame inside the chasm: walls on both sides, depth below, never a full-sky frame.
+ */
+export const CHASE_PITCH_MIN_TURNS = -0.056;
+export const CHASE_PITCH_MAX_TURNS = 0.025;
+/** Aim point ahead of the shuttle, metres, along the boom. */
+export const CHASE_LOOK_AHEAD_M = 140;
+/**
+ * Aim point drop, metres. Tilts the view down into the canyon so the shuttle sits in the lower third
+ * and the vanishing point sits ahead of and above it (the Neon Rain composition).
+ */
+export const CHASE_LOOK_DOWN_M = 9;
 /** The camera never drops below this altitude, metres. Keeps a dive out of the city floor. */
 export const CHASE_MIN_ALTITUDE_M = Math.max(12, CHASM_BOUNDS.minY - 40);
+/** The camera never rises above this, metres: under the presented roofline with margin. */
+export const CHASE_MAX_ALTITUDE_M = SKYRIVER_ROOFLINE_MIN_M - 120;
+/** The camera never leaves the corridor sideways (inner tower faces sit at |x| >= 440). */
+export const CHASE_MAX_ABS_X_M = 425;
 
 /** Speed band the pull-back is measured against (mirrors systems.ts SPEED_MIN/MAX_MPS). */
 const SPEED_FLOOR_MPS = 40;
@@ -120,7 +136,11 @@ export function writeCameraPose(
   camera: SkyriverCamera,
 ): SkyriverCameraPoseScratch {
   const boomYawRad = (flight.yaw + camera.orbitYaw) * TURNS_TO_RADIANS;
-  const boomPitchRad = (flight.pitch * CHASE_PITCH_FOLLOW + camera.orbitPitch) * TURNS_TO_RADIANS;
+  const boomPitchRad = clamp(
+    flight.pitch * CHASE_PITCH_FOLLOW + camera.orbitPitch,
+    CHASE_PITCH_MIN_TURNS,
+    CHASE_PITCH_MAX_TURNS,
+  ) * TURNS_TO_RADIANS;
 
   const boomCosPitch = Math.cos(boomPitchRad);
   // Same basis as the sim's kinematics (systems.ts): yaw 0 faces +Z, pitch lifts +Y.
@@ -132,8 +152,8 @@ export function writeCameraPose(
     + CHASE_SPEED_PULLBACK_M * speedFactor(flight.speed, flight.boostT);
 
   out.distance = distance;
-  out.position.x = flight.x - boomX * distance;
-  out.position.y = Math.max(flight.y - boomY * distance + CHASE_HEIGHT_M, CHASE_MIN_ALTITUDE_M);
+  out.position.x = clamp(flight.x - boomX * distance, -CHASE_MAX_ABS_X_M, CHASE_MAX_ABS_X_M);
+  out.position.y = clamp(flight.y - boomY * distance + CHASE_HEIGHT_M, CHASE_MIN_ALTITUDE_M, CHASE_MAX_ALTITUDE_M);
   out.position.z = flight.z - boomZ * distance;
 
   // The aim runs along the *boom*, not along the craft's own heading.
@@ -145,7 +165,7 @@ export function writeCameraPose(
   // rig's geometry instead of a function of how steeply it happens to be climbing, and it gives the
   // orbit offsets their natural meaning: orbiting circles the shuttle rather than panning off it.
   out.target.x = flight.x + boomX * CHASE_LOOK_AHEAD_M;
-  out.target.y = flight.y + boomY * CHASE_LOOK_AHEAD_M + CHASE_LOOK_UP_M;
+  out.target.y = flight.y + boomY * CHASE_LOOK_AHEAD_M - CHASE_LOOK_DOWN_M;
   out.target.z = flight.z + boomZ * CHASE_LOOK_AHEAD_M;
 
   return out;

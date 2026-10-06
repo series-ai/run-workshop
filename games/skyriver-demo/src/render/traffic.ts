@@ -1,68 +1,65 @@
 /**
- * @file traffic.ts — the Skyriver traffic swarm (T4): thousands of free-flying vehicles rendered as
- * three instanced archetypes plus one additive glow batch, four draw calls total.
+ * @file traffic.ts — the Skyriver traffic (T4, reworked in T6R): thousands of free-flying vehicles
+ * that read as crossing rivers of light, in four draw calls.
  *
  * Plan anchors (.plans/skyriver-syncplay-demo.html):
  *   R4 — ">= 2,000 flying vehicles as a street-free open-air swarm with Fifth Element altitude
  *     layers; 3 instanced archetypes + thruster quads; <= 4 traffic draw calls; transforms evaluated
  *     from float math at interpolated time tick + renderAlpha".
- *   Design "Sim <-> render split" — "traffic transforms (evaluated at interpolated time so 30 Hz sim
- *     renders smoothly). Traffic never feeds simulation".
- *   Design "City / traffic model" — "3 archetypes + thruster quads", "2,400 cars x 60 Hz ~ 144k
- *     evaluations/s ~ 15-40 M ops/s — budgeted, measured, tiered".
+ *   Design "Sim <-> render split" — traffic is presentation-derived and never feeds simulation.
  *   Design "Performance" — quality tiers cars 2,400 -> 1,200 -> 600, presentation-only.
- *   T4 — "Verify: >= 2,000 instances in <= 4 draw calls; frame grid street-free".
  *
- * What this file is, and is not:
- *   - Presentation only. It reads seeded parameters from ../sim/derive and the flight volume from
- *     ../sim/systems, and it writes nothing back. Nothing here is checksummed, so float math and a
- *     local value noise are correct choices; none of it may ever influence simulation.
- *   - Street-free by construction. There is no ground plane, no road, no lane geometry and no path
- *     mesh of any kind in this module. Vehicles fly free on open orbital courses through the volume.
+ * T6R P0 "no light rivers". The T4 swarm flew every car on its own small orbit inside the 800 m
+ * flight box, so the view was a uniform snow of grey/yellow pills with tiny glows on the nearest
+ * 1,500. The approved Neon Rain bar is the opposite: dark vehicles whose head- and taillights form
+ * long streams converging down the canyon at many altitudes, crossed by streams through the tower
+ * gaps. This module now draws exactly that:
+ *   - Rivers. Each car joins one river: most run along the canyon (z) in a tight lateral lane at one
+ *     altitude, alternating direction; the rest cross the canyon (x) through the gaps between tower
+ *     rows, high up and deep down. Cars bunch into platoons, so a river reads as a stream with gaps.
+ *     Rivers wrap over a span far longer than the visible canyon and fade out at the wrap ends, so
+ *     no car ever pops in front of the camera.
+ *   - Dark hulls. The archetypes keep their silhouettes but carry dark paint; only the light patches
+ *     stay bright. Hulls now take the shared altitude fog (T4 left it unwired, so they never hazed).
+ *   - Light streaks. One additive draw holds a head streak (white) and a tail streak (red) per car.
+ *     Each is a view-space capsule from the lamp backward along the velocity, length proportional
+ *     to speed, with a pixel-size floor so a 3 m lamp 2 km away still covers ~2 px. Each lamp is
+ *     directional: headlights show to the cars' front, taillights to their rear. Lights penetrate
+ *     the haze further than concrete (a softer fog curve), which is what makes distant rivers read.
+ * Draw calls: 3 hull archetypes + 1 streak batch = 4 (plan R4 ceiling, unchanged).
  *
- * Motion model (see evaluate() below):
- *   Each car rides its own wide, slow, closed course through the chasm volume: a per-car ellipse
- *   centre, radius, direction and angular rate, taken from the derived band/lane/speed/phase, with a
- *   local value-noise weave layered on top. Closed courses matter for two reasons. They never
- *   teleport a car (a wrapping volume pops vehicles in mid-air in front of the camera), and the
- *   tangent of the course is already a unit vector, so one sin/cos pair per car yields both the
- *   position and the full orientation basis — which is the whole per-car trig budget the plan allows.
- *   Courses differ per car in centre, radius, rate and direction, so the swarm reads as a diffuse
- *   school of fish at every altitude and heading, never as a formation or a lane.
+ * Street-free by construction: no ground plane, no road, no lane geometry. A "river" exists only as
+ * the shared course of the cars on it. Rivers keep clear of the T6R skybridge altitudes, so no car
+ * ever rides a structure.
  *
- * GC discipline:
- *   The per-car work allocates nothing: every per-car constant is precomputed into typed arrays at
- *   init, and transforms are written straight into the InstancedMesh instanceMatrix/instanceColor
- *   buffers by index arithmetic. No Matrix4, Vector3, Color, closure or array literal appears in the
- *   hot loop. Measured heap growth is flat at ~16 bytes per update() call whether 1 car or 2,400 are
- *   active — that residue is V8 boxing the single double time argument across a non-inlined call,
- *   not garbage this module creates, and it works out to about 1 KB/s at 60 Hz.
- *
- * API anchors (games/skyriver-demo/node_modules/three, ~0.170):
- *   src/renderers/shaders/ShaderChunk/color_vertex.glsl.js — USE_INSTANCING_COLOR multiplies
- *     vColor by instanceColor, and USE_COLOR multiplies it by the vertex colour attribute, so a
- *     MeshBasicMaterial with vertexColors gets both the baked archetype shading and the per-car tint.
- *   src/renderers/webgl/WebGLPrograms.js:198 — instancingColor is enabled when instanceColor is set.
+ * GC discipline: per-car constants are precomputed into typed arrays; the per-frame loop writes
+ * instance matrices and streak attributes by index arithmetic and allocates nothing.
  */
 import {
-  AdditiveBlending,
   BufferAttribute,
-  InstancedBufferAttribute,
   BufferGeometry,
-  ClampToEdgeWrapping,
-  DataTexture,
   DynamicDrawUsage,
+  InstancedBufferAttribute,
+  InstancedBufferGeometry,
   InstancedMesh,
-  LinearFilter,
+  Mesh,
   MeshBasicMaterial,
-  RGBAFormat,
-  UnsignedByteType,
+  ShaderMaterial,
+  AdditiveBlending,
+  DoubleSide,
 } from 'three';
 import type { Object3D } from 'three';
 
-import { deriveTrafficParams, TRAFFIC_ARCHETYPE_COUNT, TRAFFIC_MAX_CARS } from '../sim/derive';
+import { deriveTrafficParams, TRAFFIC_ARCHETYPE_COUNT, TRAFFIC_MAX_CARS, TRAFFIC_MAX_ALTITUDE_M, TRAFFIC_MIN_ALTITUDE_M } from '../sim/derive';
 import { CHASM_BOUNDS, SKYRIVER_TICK_RATE } from '../sim/systems';
 
+import {
+  SKYRIVER_OUTPUT_APPLY_GLSL,
+  SKYRIVER_OUTPUT_PARS_GLSL,
+  applySkyriverFog,
+  skyriverFogUniforms,
+} from './atmosphere';
+import { TRACK_BASE_Y_M, TRACK_LANE_X_M } from './flightPresentation';
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
 import type {
   SkyriverTraffic,
@@ -90,90 +87,67 @@ const TAU = Math.PI * 2;
 /** Per-archetype triangle ceiling from the brief. Exceeding it is a build error, not a warning. */
 const MAX_TRIANGLES_PER_ARCHETYPE = 800;
 
-/** Draw calls this module adds: one InstancedMesh per archetype, plus one glow batch (R4: <= 4). */
+/** Draw calls this module adds: one InstancedMesh per archetype, plus one streak batch (R4: <= 4). */
 const TRAFFIC_DRAW_CALLS = TRAFFIC_ARCHETYPE_COUNT + 1;
 
 /**
- * The plan's quality tiers (Design "Performance": cars 2,400 -> 1,200 -> 600). Glow budgets stay
- * under the brief's 1,500 ceiling at the top tier and scale down with the car count.
+ * The plan's quality tiers (Design "Performance": cars 2,400 -> 1,200 -> 600). T6R: every active car
+ * now carries its light streaks — the streak batch is one cheap instanced draw, and a car without its
+ * lights is exactly the "unlit pill" the review rejected — so the light budget equals the car count.
  */
 export const TRAFFIC_QUALITY_TIERS: {
   readonly high: TrafficQuality;
   readonly medium: TrafficQuality;
   readonly low: TrafficQuality;
 } = Object.freeze({
-  high: Object.freeze({ carCount: 2400, thrusterBudget: 1500 }),
-  medium: Object.freeze({ carCount: 1200, thrusterBudget: 800 }),
-  low: Object.freeze({ carCount: 600, thrusterBudget: 400 }),
+  high: Object.freeze({ carCount: 2400, thrusterBudget: 2400 }),
+  medium: Object.freeze({ carCount: 1200, thrusterBudget: 1200 }),
+  low: Object.freeze({ carCount: 600, thrusterBudget: 600 }),
 });
 
-/** Inset from the volume walls, metres. Keeps vehicles clear of T3's tower faces. */
-const WALL_MARGIN_M = 50;
-/** Vertical clearance kept from the volume's floor and ceiling, metres. */
-const CEILING_MARGIN_M = 40;
-
-/** Course radius range, metres. Wide courses sweep the whole chasm; tight ones loiter in a pocket. */
-const COURSE_MIN_RADIUS_M = 70;
-const COURSE_RADIUS_SPAN_M = 250;
-/** Radial spread applied from the derived lane offset, metres. Breaks cars off a shared course. */
-const LANE_RADIAL_SPREAD_M = 22;
-/** Vertical spread applied from the derived lane offset, metres. Thickens each altitude layer. */
-const LANE_VERTICAL_SPREAD_M = 26;
-
-/** Value-noise weave: radial and vertical amplitude ranges, metres, and rate range, hertz. */
-const WEAVE_RADIAL_MIN_M = 12;
-const WEAVE_RADIAL_SPAN_M = 20;
-const WEAVE_VERTICAL_MIN_M = 5;
-const WEAVE_VERTICAL_SPAN_M = 14;
-const WEAVE_MIN_RATE_HZ = 0.05;
-const WEAVE_RATE_SPAN_HZ = 0.12;
-/** How hard a car banks into its weave. Radians of roll per unit of noise. */
-const BANK_PER_NOISE = 0.38;
+/** Rivers along the canyon, and rivers crossing it through the tower-row gaps. */
+const ALONG_RIVERS = 20;
+const CROSS_RIVERS = 10;
+/** Share of cars on crossing rivers. */
+const CROSS_SHARE = 0.16;
+/** Along-canyon wrap span, metres: the presented canyon runs to |z| ~ 2700; the fade hides the seam. */
+const ALONG_HALF_SPAN_M = 3400;
+/** Crossing wrap span, metres, centred on the corridor. */
+const CROSS_HALF_SPAN_M = 1500;
+/** Fade-in/out distance at the wrap ends, metres. */
+const WRAP_FADE_M = 700;
+/** Inset from the corridor walls, metres. Inner tower faces sit at |x| >= 440. */
+const WALL_MARGIN_M = 18;
+/** Drawn altitude range of the rivers, metres. The top stays under the skybridges (>= 1900 m). */
+const RIVER_MIN_Y_M = 70;
+const RIVER_MAX_Y_M = 1820;
+/** Tight in-river scatter, metres, so a river reads as one stream. */
+const RIVER_LATERAL_SCATTER_M = 7;
+const RIVER_VERTICAL_SCATTER_M = 5;
+/** Platoons per river, and how much of each platoon slot the cars occupy. */
+const RIVER_PLATOONS = 11;
+const PLATOON_FILL = 0.3;
+/** Derived speeds (30..90 m/s) are scaled up: rivers must visibly stream past a 150 m/s shuttle. */
+const SPEED_SCALE = 1.7;
+/** Keep rivers out of the autopilot's own airspace so cars do not fly through the shuttle. */
+const TRACK_KEEP_OUT_X_M = 55;
+const TRACK_KEEP_OUT_Y_M = 260;
+/** Crossing rows sit at the gaps between derived tower rows (centres every 320 m). */
+const ROW_PITCH_M = 320;
 
 /** Per-car size jitter, so a batch of identical hulls does not read as a clone army. */
-const SIZE_MIN_SCALE = 0.9;
-const SIZE_SCALE_SPAN = 0.26;
+const SIZE_MIN_SCALE = 0.95;
+const SIZE_SCALE_SPAN = 0.35;
 
-/** Distance dimming: a car this far away keeps DISTANCE_DIM_FLOOR of its tint. */
+/** Distance dimming of the hull tint: far hulls sink into the haze. */
 const DISTANCE_DIM_RANGE_M = 900;
 const DISTANCE_DIM_FLOOR = 0.42;
 
-/** Glow quad sizing, metres: a close engine flare, growing with distance so far lights stay visible. */
-const GLOW_BASE_SIZE_M = 2.6;
-const GLOW_SIZE_PER_METRE = 0.0075;
-const GLOW_MAX_SIZE_M = 9;
-/** Where the glow sits along the hull, metres: ahead of the nose, or behind the tail. */
-const GLOW_NOSE_OFFSET_M = 2.6;
-const GLOW_TAIL_OFFSET_M = 2.9;
-/**
- * Near-range glow damping. A glow drawn at full strength onto a hull that fills a good part of the
- * screen washes the hull out, and R4 wants a vehicle to be a discernible shape up close and a moving
- * light far away. So a glow fades toward GLOW_NEAR_FLOOR as its car approaches the camera.
- */
-const GLOW_NEAR_FADE_M = 70;
-const GLOW_NEAR_FLOOR = 0.4;
-
-/** Headlight glow, cyan-white core. Taillight glow, warm red. Both scaled by pulse and fade. */
-const GLOW_HEAD_R = 0.74;
-const GLOW_HEAD_G = 0.93;
-const GLOW_HEAD_B = 1;
-const GLOW_TAIL_R = 1;
-const GLOW_TAIL_G = 0.3;
-const GLOW_TAIL_B = 0.22;
-/** Thruster pulse depth, as a fraction of full brightness. */
-const GLOW_PULSE_DEPTH = 0.22;
-const GLOW_PULSE_RATE_HZ = 2.6;
-
-/** Glow selection radius bounds, metres, and the per-frame gain of the budget controller. */
-const GLOW_MIN_RADIUS_M = 70;
-const GLOW_MAX_RADIUS_M = 1500;
-const GLOW_RADIUS_START_M = 520;
-const GLOW_RADIUS_SHRINK = 0.94;
-const GLOW_RADIUS_GROW = 1.05;
-/** Below this fill fraction the controller opens the radius back up. */
-const GLOW_FILL_TARGET = 0.9;
-
-const GLOW_TEXTURE_SIZE = 32;
+/** Streak tuning: lamp offsets from the car centre, metres; trail seconds of motion. */
+const HEAD_OFFSET_M = 2.4;
+const TAIL_OFFSET_M = 2.5;
+const TAIL_TRAIL_S = 0.32;
+const HEAD_TRAIL_S = 0.06;
 
 function fail(code: string): never {
   throw new Error(code);
@@ -418,10 +392,11 @@ const SIGN_B = 0.2;
  */
 function buildCab(): MeshBuild {
   const build = newBuild();
-  const body = 0.36;
+  // T6R: dark paint; the instance tint picks the hue, the lamps carry the light.
+  const body = 0.075;
   const r = body;
-  const g = body * 0.78;
-  const b = body * 0.14;
+  const g = body * 0.9;
+  const b = body * 0.85;
 
   pushBox(build, 0, 0, 0, 2, 0.8, 4.4, r, g, b);
   pushBox(build, 0, 0.72, -0.2, 1.72, 0.76, 2.4, r * 0.82, g * 0.82, b * 0.82);
@@ -441,9 +416,9 @@ function buildCab(): MeshBuild {
 /** Archetype 1 — "interceptor": a sharp gunmetal wedge, the fast traffic of the upper bands. */
 function buildInterceptor(): MeshBuild {
   const build = newBuild();
-  const r = 0.17;
-  const g = 0.18;
-  const b = 0.21;
+  const r = 0.06;
+  const g = 0.064;
+  const b = 0.075;
 
   // Tapered prism: nose point, a mid ring at z = 0.4, a tail ring at z = -2.6.
   const noseZ = 3.1;
@@ -519,12 +494,12 @@ function buildInterceptor(): MeshBuild {
 /** Archetype 2 — "commuter": a pale bus-like hull under a bubble canopy, the slow mid bands. */
 function buildCommuter(): MeshBuild {
   const build = newBuild();
-  const r = 0.24;
-  const g = 0.26;
-  const b = 0.29;
+  const r = 0.07;
+  const g = 0.076;
+  const b = 0.085;
 
   pushBox(build, 0, -0.26, 0, 2.2, 0.72, 4.2, r, g, b);
-  pushDome(build, 0, 0.06, 0.1, 1.02, 1.1, 1.9, 8, 3, 0.2, 0.34, 0.4);
+  pushDome(build, 0, 0.06, 0.1, 1.02, 1.1, 1.9, 8, 3, 0.05, 0.09, 0.12);
   pushBox(build, 0.96, -0.74, -0.1, 0.26, 0.4, 2.6, 0.16, 0.17, 0.19);
   pushBox(build, -0.96, -0.74, -0.1, 0.26, 0.4, 2.6, 0.16, 0.17, 0.19);
 
@@ -550,66 +525,139 @@ function toGeometry(build: MeshBuild, label: string): BufferGeometry {
   return geometry;
 }
 
-/** A single camera-facing quad in the XY plane, the glow billboard. 2 triangles. */
-function buildGlowQuad(): BufferGeometry {
-  const geometry = new BufferGeometry();
-  const half = 0.5;
-  geometry.setAttribute('position', new BufferAttribute(new Float32Array([
-    -half, -half, 0, half, -half, 0, half, half, 0,
-    -half, -half, 0, half, half, 0, -half, half, 0,
-  ]), 3));
-  geometry.setAttribute('uv', new BufferAttribute(new Float32Array([
-    0, 0, 1, 0, 1, 1,
-    0, 0, 1, 1, 0, 1,
-  ]), 2));
-  geometry.setAttribute('normal', new BufferAttribute(new Float32Array([
-    0, 0, 1, 0, 0, 1, 0, 0, 1,
-    0, 0, 1, 0, 0, 1, 0, 0, 1,
-  ]), 3));
-  geometry.computeBoundingSphere();
-  return geometry;
-}
-
-/**
- * Generates the glow sprite: a white core falling off to nothing, in both colour and alpha, so an
- * additive draw reads as a soft light rather than a disc. Per-instance colour tints it cyan-white
- * for a headlight or red for a taillight. Procedural, so the demo keeps its zero-asset promise.
- */
-function buildGlowTexture(): DataTexture {
-  const size = GLOW_TEXTURE_SIZE;
-  const data = new Uint8Array(size * size * 4);
-  const centre = (size - 1) / 2;
-  const radius = size / 2;
-  for (let y = 0; y < size; y += 1) {
-    for (let x = 0; x < size; x += 1) {
-      const dx = (x - centre) / radius;
-      const dy = (y - centre) / radius;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      // Soft shoulder with a tight core: (1 - d)^2.6, plus a small hot centre.
-      const falloff = distance >= 1 ? 0 : Math.pow(1 - distance, 2.6);
-      const core = distance >= 0.34 ? 0 : (1 - distance / 0.34) * 0.5;
-      const intensity = clamp(falloff + core, 0, 1);
-      const byte = Math.round(intensity * 255);
-      const offset = (y * size + x) * 4;
-      data[offset] = 255;
-      data[offset + 1] = 255;
-      data[offset + 2] = 255;
-      data[offset + 3] = byte;
-    }
-  }
-  const texture = new DataTexture(data, size, size, RGBAFormat, UnsignedByteType);
-  texture.magFilter = LinearFilter;
-  texture.minFilter = LinearFilter;
-  texture.wrapS = ClampToEdgeWrapping;
-  texture.wrapT = ClampToEdgeWrapping;
-  texture.generateMipmaps = false;
-  texture.needsUpdate = true;
-  return texture;
-}
 
 /* ------------------------------------------------------------------------------------------------
- * The swarm.
+ * Light streak batch: one instanced draw, two capsules (head, tail) per car.
  * ---------------------------------------------------------------------------------------------- */
+
+const STREAK_VERTEX = /* glsl */ `
+attribute vec2 aCorner;      // x: 0 lamp end, 1 trail end; y: side -1..1
+attribute float aLamp;       // 0 head, 1 tail
+attribute vec3 aCarPos;
+attribute vec4 aCarDir;      // xyz unit velocity, w speed (m/s)
+attribute float aCarFade;
+
+uniform float uPixelAngle;   // radians per drawing-buffer pixel, vertically
+uniform float uHeadOffset;
+uniform float uTailOffset;
+uniform float uHeadTrail;
+uniform float uTailTrail;
+
+varying vec2 vCapsule;       // x along in radius units, y across -1..1
+varying float vLengthR;      // capsule body length in radius units
+varying float vLamp;
+varying float vIntensity;
+
+#include <fog_pars_vertex>
+
+void main() {
+  vec3 dir = aCarDir.xyz;
+  float speed = aCarDir.w;
+  bool head = aLamp < 0.5;
+  vec3 lamp = aCarPos + dir * ( head ? uHeadOffset : -uTailOffset );
+  float trail = 1.2 + speed * ( head ? uHeadTrail : uTailTrail );
+  vec3 tailEnd = lamp - dir * trail;
+
+  vec4 v0 = viewMatrix * vec4( lamp, 1.0 );
+  vec4 v1 = viewMatrix * vec4( tailEnd, 1.0 );
+  // Radius: a real lamp size up close, a pixel floor far away (~1.3 px radius).
+  float r0 = max( 0.6, -v0.z * uPixelAngle * 2.1 );
+  float r1 = max( 0.45, -v1.z * uPixelAngle * 1.4 );
+  vec2 d = v1.xy - v0.xy;
+  float len = length( d );
+  vec2 axis = len > 1e-4 ? d / len : vec2( 0.0, -1.0 );
+  vec2 side = vec2( -axis.y, axis.x );
+  float rMean = 0.5 * ( r0 + r1 );
+
+  float end = aCorner.x;
+  float r = mix( r0, r1, end );
+  vec4 v = mix( v0, v1, end );
+  // Extend past both ends by the radius, so the quad covers the rounded caps.
+  v.xy += axis * ( end * 2.0 - 1.0 ) * r + side * aCorner.y * r;
+
+  vLengthR = len / rMean;
+  vCapsule = vec2( mix( -1.0, vLengthR + 1.0, end ), aCorner.y );
+  vLamp = aLamp;
+
+  // Directional lamps: a headlight shows to the front, a taillight to the rear.
+  vec3 toCam = normalize( cameraPosition - lamp );
+  float facing = dot( dir, toCam ) * ( head ? 1.0 : -1.0 );
+  vIntensity = aCarFade * smoothstep( -0.35, 0.5, facing );
+
+  #ifdef USE_FOG
+    vFogDepth = - v.z;
+    vSkyFogHeight = lamp.y;
+  #endif
+  gl_Position = projectionMatrix * v;
+}
+`;
+
+const STREAK_FRAGMENT = /* glsl */ `
+uniform float uIntensity;
+uniform float uFogPenetration;
+
+varying vec2 vCapsule;
+varying float vLengthR;
+varying float vLamp;
+varying float vIntensity;
+
+#include <fog_pars_fragment>
+${SKYRIVER_OUTPUT_PARS_GLSL}
+
+void main() {
+  float x = vCapsule.x;
+  float along = clamp( x, 0.0, vLengthR );
+  float dist = length( vec2( x - along, vCapsule.y ) );
+  float body = exp( - dist * dist * 1.6 );
+  float core = exp( - dist * dist * 10.0 );
+  // Brightest at the lamp, fading down the trail.
+  float t = vLengthR > 0.0 ? along / vLengthR : 0.0;
+  float trail = mix( 1.0, 0.12, t );
+
+  vec3 headColor = vec3( 1.0, 0.93, 0.82 );
+  vec3 tailColor = vec3( 1.0, 0.07, 0.045 );
+  vec3 lampColor = vLamp < 0.5 ? headColor : tailColor;
+  vec3 color = ( lampColor * body + mix( lampColor, vec3( 1.0 ), 0.5 ) * core * 0.4 ) * trail;
+
+  gl_FragColor = vec4( color * ( vIntensity * uIntensity ), 1.0 );
+
+${SKYRIVER_OUTPUT_APPLY_GLSL}
+  #ifdef USE_FOG
+    // Lights carry further through the rain than the concrete they pass: a softened fog curve.
+    gl_FragColor.rgb *= pow( 1.0 - skyriverFogFactor(), uFogPenetration );
+  #endif
+}
+`;
+
+function buildStreakGeometry(capacity: number): InstancedBufferGeometry {
+  const corner: number[] = [];
+  const lamp: number[] = [];
+  const index: number[] = [];
+  for (let l = 0; l < 2; l += 1) {
+    const base = l * 4;
+    for (const [end, side] of [[0, -1], [0, 1], [1, 1], [1, -1]] as const) {
+      corner.push(end, side);
+      lamp.push(l);
+    }
+    index.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
+  const geometry = new InstancedBufferGeometry();
+  geometry.setAttribute('position', new BufferAttribute(new Float32Array(8 * 3), 3));
+  geometry.setAttribute('aCorner', new BufferAttribute(new Float32Array(corner), 2));
+  geometry.setAttribute('aLamp', new BufferAttribute(new Float32Array(lamp), 1));
+  geometry.setIndex(index);
+  const pos = new InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
+  const dir = new InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
+  const fade = new InstancedBufferAttribute(new Float32Array(capacity), 1);
+  pos.setUsage(DynamicDrawUsage);
+  dir.setUsage(DynamicDrawUsage);
+  fade.setUsage(DynamicDrawUsage);
+  geometry.setAttribute('aCarPos', pos);
+  geometry.setAttribute('aCarDir', dir);
+  geometry.setAttribute('aCarFade', fade);
+  geometry.instanceCount = 0;
+  return geometry;
+}
 
 /** Resolves either accepted time form to continuous seconds. */
 function secondsOf(time: TrafficTime): number {
@@ -629,16 +677,17 @@ function assertQuality(quality: TrafficQuality, maxCarCount: number): void {
   if (quality.thrusterBudget > quality.carCount) fail('SKYRIVER_TRAFFIC_TIER_GLOW_OVER_CARS');
 }
 
+function smoothstep(edge0: number, edge1: number, x: number): number {
+  const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
 /**
- * Builds the traffic swarm.
+ * Builds the traffic.
  *
- * Everything that costs real work happens here, once: the seeded parameter derivation, the archetype
- * geometry, the per-car course constants, and the instance buffers. After this, a frame costs one
+ * Everything that costs real work happens here, once: the seeded parameter derivation, the river
+ * assignment, the archetype geometry and the instance buffers. After this, a frame costs one
  * arithmetic pass over the active cars.
- *
- * No WebGL object is created at module scope, so importing this file in node (the determinism suite)
- * is safe; only this factory touches three.js constructors, and those stay renderer-less until the
- * meshes are added to a rendered scene.
  */
 export function createSkyriverTraffic(options: SkyriverTrafficOptions): SkyriverTraffic {
   if (TRAFFIC_TICK_RATE_HZ !== SKYRIVER_TICK_RATE) {
@@ -653,34 +702,64 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   assertQuality(options.quality, maxCarCount);
 
   const bounds: TrafficBounds = options.bounds ?? CHASM_BOUNDS;
-  const fieldX = (bounds.minX + bounds.maxX) / 2;
-  const fieldZ = (bounds.minZ + bounds.maxZ) / 2;
-  const halfX = (bounds.maxX - bounds.minX) / 2 - WALL_MARGIN_M;
-  const halfZ = (bounds.maxZ - bounds.minZ) / 2 - WALL_MARGIN_M;
-  // One circular reach, so a course that fits it cannot overrun either wall at any heading.
-  const reach = Math.min(halfX, halfZ);
-  const floorY = bounds.minY + CEILING_MARGIN_M;
-  const ceilingY = bounds.maxY - CEILING_MARGIN_M;
-  if (reach <= COURSE_MIN_RADIUS_M || ceilingY <= floorY) fail('SKYRIVER_TRAFFIC_BOUNDS_TOO_SMALL');
+  const laneMinX = bounds.minX + WALL_MARGIN_M;
+  const laneMaxX = bounds.maxX - WALL_MARGIN_M;
+  if (laneMaxX <= laneMinX) fail('SKYRIVER_TRAFFIC_BOUNDS_TOO_SMALL');
 
   const params = deriveTrafficParams(options.seed, maxCarCount);
 
-  // ---- Per-car course constants. Indexed by global car index, so a tier change recomputes nothing.
-  const courseCentreX = new Float32Array(maxCarCount);
-  const courseCentreZ = new Float32Array(maxCarCount);
-  const courseRadius = new Float32Array(maxCarCount);
-  const courseRate = new Float32Array(maxCarCount);
-  const courseDirection = new Float32Array(maxCarCount);
-  const courseAngle0 = new Float32Array(maxCarCount);
-  const baseY = new Float32Array(maxCarCount);
-  const weaveRadial = new Float32Array(maxCarCount);
-  const weaveVertical = new Float32Array(maxCarCount);
-  const weaveRate = new Float32Array(maxCarCount);
+  // ---- Rivers: lane position, altitude, axis and direction. Derived from the seed by hashing.
+  const riverCount = ALONG_RIVERS + CROSS_RIVERS;
+  const riverLane = new Float32Array(riverCount);
+  const riverY = new Float32Array(riverCount);
+  const riverDirection = new Float32Array(riverCount);
+  const riverSpeedScale = new Float32Array(riverCount);
+  const seedSalt = options.seed | 0;
+  for (let river = 0; river < riverCount; river += 1) {
+    const along = river < ALONG_RIVERS;
+    riverDirection[river] = river % 2 === 0 ? 1 : -1;
+    riverSpeedScale[river] = 0.85 + 0.3 * hash01(seedSalt ^ 0x5eed, river * 7 + 1);
+    if (along) {
+      // Fifth Element layers: altitudes stratified across the drawn range, lanes spread across the
+      // corridor width.
+      const layer = (river + hash01(seedSalt, river * 3 + 2) * 0.8) / ALONG_RIVERS;
+      let y = RIVER_MIN_Y_M + layer * (RIVER_MAX_Y_M - RIVER_MIN_Y_M);
+      // Lanes stratified across the corridor (golden-ratio sequence), so both sides carry rivers.
+      const laneFraction = (0.5 + river * 0.6180339887 + hash01(seedSalt, river * 3 + 1) * 0.08) % 1;
+      let x = laneMinX + laneFraction * (laneMaxX - laneMinX);
+      // Keep the autopilot's lanes clear at its altitudes: nudge the river above or below.
+      for (const trackX of [-TRACK_LANE_X_M, TRACK_LANE_X_M]) {
+        if (Math.abs(x - trackX) < TRACK_KEEP_OUT_X_M && Math.abs(y - TRACK_BASE_Y_M) < TRACK_KEEP_OUT_Y_M) {
+          y = y < TRACK_BASE_Y_M ? TRACK_BASE_Y_M - TRACK_KEEP_OUT_Y_M : TRACK_BASE_Y_M + TRACK_KEEP_OUT_Y_M;
+          x += hash01(seedSalt, river) < 0.5 ? -TRACK_KEEP_OUT_X_M : TRACK_KEEP_OUT_X_M;
+        }
+      }
+      riverLane[river] = x;
+      riverY[river] = clamp(y, RIVER_MIN_Y_M, RIVER_MAX_Y_M);
+    } else {
+      // Crossing rivers ride the gap between two tower rows, deep down or high up.
+      const crossIndex = river - ALONG_RIVERS;
+      const row = Math.floor(hash01(seedSalt, river * 5 + 3) * 10) - 5;
+      riverLane[river] = (row + 0.5) * ROW_PITCH_M;
+      const high = crossIndex % 2 === 0;
+      const y = high
+        ? 1050 + hash01(seedSalt, river * 5 + 4) * 700
+        : 90 + hash01(seedSalt, river * 5 + 4) * 230;
+      riverY[river] = clamp(y, RIVER_MIN_Y_M, RIVER_MAX_Y_M);
+    }
+  }
+
+  // ---- Per-car constants. Indexed by global car index, so a tier change recomputes nothing.
+  const carRiver = new Uint16Array(maxCarCount);
+  const carOffsetLateral = new Float32Array(maxCarCount);
+  const carOffsetY = new Float32Array(maxCarCount);
+  const carPhase = new Float32Array(maxCarCount);
+  const carSpeed = new Float32Array(maxCarCount);
+  const carBob = new Float32Array(maxCarCount);
   const sizeScale = new Float32Array(maxCarCount);
   const tintR = new Float32Array(maxCarCount);
   const tintG = new Float32Array(maxCarCount);
   const tintB = new Float32Array(maxCarCount);
-  const pulseOffset = new Float32Array(maxCarCount);
 
   const archetypeTotals = new Int32Array(TRAFFIC_ARCHETYPE_COUNT);
   for (let car = 0; car < maxCarCount; car += 1) {
@@ -688,85 +767,61 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     if (archetype >= TRAFFIC_ARCHETYPE_COUNT) fail('SKYRIVER_TRAFFIC_ARCHETYPE_OUT_OF_RANGE');
     archetypeTotals[archetype] = archetypeTotals[archetype] + 1;
   }
-  // Car indices grouped by archetype, each group ascending. Ascending order is what makes a lower
-  // tier a prefix of every group: tier N is exactly the entries whose car index is below N.
+  // Car indices grouped by archetype, each group ascending, so tier N is a prefix of every group.
   const groupCars: Int32Array[] = [];
   for (let archetype = 0; archetype < TRAFFIC_ARCHETYPE_COUNT; archetype += 1) {
     groupCars.push(new Int32Array(archetypeTotals[archetype]));
   }
   const groupFill = new Int32Array(TRAFFIC_ARCHETYPE_COUNT);
 
+  const altitudeSpan = TRAFFIC_MAX_ALTITUDE_M - TRAFFIC_MIN_ALTITUDE_M;
   for (let car = 0; car < maxCarCount; car += 1) {
-    const lane = params.lane[car];
-    const speed = params.speed[car];
-    const phase = params.phase[car];
-    const altitude = params.altitude[car];
     const archetype = params.archetype[car];
-
     const group = groupCars[archetype];
     group[groupFill[archetype]] = car;
     groupFill[archetype] = groupFill[archetype] + 1;
 
-    const radialWeave = WEAVE_RADIAL_MIN_M + hash01(car, 0x51ed) * WEAVE_RADIAL_SPAN_M;
-    const verticalWeave = WEAVE_VERTICAL_MIN_M + hash01(car, 0x2f3b) * WEAVE_VERTICAL_SPAN_M;
-    weaveRadial[car] = radialWeave;
-    weaveVertical[car] = verticalWeave;
-    weaveRate[car] = WEAVE_MIN_RATE_HZ + hash01(car, 0x7a17) * WEAVE_RATE_SPAN_HZ;
-
-    // Course radius, spread by the derived lane offset, then capped so the weave still fits inside
-    // the volume. Courses larger than the reach would scrape T3's tower faces.
-    const maxRadius = reach - radialWeave;
-    const nominal = COURSE_MIN_RADIUS_M + hash01(car, 0x1d3f) * COURSE_RADIUS_SPAN_M;
-    const radius = clamp(nominal + lane * LANE_RADIAL_SPREAD_M, 25, maxRadius);
-    courseRadius[car] = radius;
-
-    // Centre offset, bounded so |position - field centre| <= reach for every angle and weave value.
-    const centreLimit = Math.max(0, reach - radius - radialWeave);
-    const centreAngle = hash01(car, 0x63c9) * TAU;
-    const centreDistance = Math.sqrt(hash01(car, 0x9b27)) * centreLimit;
-    courseCentreX[car] = fieldX + Math.cos(centreAngle) * centreDistance;
-    courseCentreZ[car] = fieldZ + Math.sin(centreAngle) * centreDistance;
-
-    // Angular rate preserves the derived linear speed: omega = v / r. The derived sign of the speed
-    // stays the direction of travel, so counter-flowing bands stay counter-flowing.
-    courseRate[car] = speed / radius;
-    courseDirection[car] = speed >= 0 ? 1 : -1;
-    courseAngle0[car] = phase * TAU;
-
-    baseY[car] = clamp(
-      altitude + lane * LANE_VERTICAL_SPREAD_M,
-      floorY + verticalWeave,
-      ceilingY - verticalWeave,
-    );
-
+    // River choice: the derived band picks the altitude stratum, the lane the river within it.
+    const crossing = hash01(car, 0xc205) < CROSS_SHARE;
+    let river: number;
+    if (crossing) {
+      river = ALONG_RIVERS + Math.min(CROSS_RIVERS - 1, Math.floor(hash01(car, 0x7a11) * CROSS_RIVERS));
+    } else {
+      const stratum = (params.altitude[car] - TRAFFIC_MIN_ALTITUDE_M) / altitudeSpan;
+      const jitter = (params.lane[car] * 0.5) * (4 / ALONG_RIVERS);
+      river = Math.min(ALONG_RIVERS - 1, Math.max(0, Math.floor((stratum + jitter) * ALONG_RIVERS)));
+    }
+    carRiver[car] = river;
+    carOffsetLateral[car] = params.lane[car] * RIVER_LATERAL_SCATTER_M;
+    carOffsetY[car] = (hash01(car, 0x2f3b) * 2 - 1) * RIVER_VERTICAL_SCATTER_M;
+    // Platoons: squeeze the derived phase into PLATOON_FILL of each platoon slot.
+    const slot = params.phase[car] * RIVER_PLATOONS;
+    const platoon = Math.floor(slot);
+    carPhase[car] = (platoon + (slot - platoon) * PLATOON_FILL) / RIVER_PLATOONS;
+    carSpeed[car] = Math.abs(params.speed[car]) * SPEED_SCALE * riverSpeedScale[river]
+      * (0.94 + 0.12 * hash01(car, 0x51ed));
+    carBob[car] = hash01(car, 0x7a17) * TAU;
     sizeScale[car] = SIZE_MIN_SCALE + hash01(car, 0x4e8d) * SIZE_SCALE_SPAN;
 
-    // Per-car tint around white: paint variation on top of the archetype's baked hull colour.
-    const warm = hash01(car, 0x33b1);
-    const level = 0.82 + hash01(car, 0x1771) * 0.34;
-    tintR[car] = level * (0.88 + warm * 0.26);
-    tintG[car] = level * (0.95 + warm * 0.05);
-    tintB[car] = level * (1.12 - warm * 0.3);
-
-    pulseOffset[car] = phase * 11.37;
+    // Dark paint: gunmetal, oxblood, deep teal, near-black. The lamps carry the colour.
+    const paint = hash01(car, 0x33b1);
+    const level = 0.8 + hash01(car, 0x1771) * 0.4;
+    if (paint < 0.4) {
+      tintR[car] = level; tintG[car] = level; tintB[car] = level * 1.1;
+    } else if (paint < 0.65) {
+      tintR[car] = level * 1.5; tintG[car] = level * 0.55; tintB[car] = level * 0.55;
+    } else if (paint < 0.85) {
+      tintR[car] = level * 0.6; tintG[car] = level * 1.05; tintB[car] = level * 1.25;
+    } else {
+      tintR[car] = level * 0.55; tintG[car] = level * 0.55; tintB[car] = level * 0.6;
+    }
   }
 
   // ---- Geometry, materials, meshes.
-  const carMaterial = new MeshBasicMaterial({ vertexColors: true });
+  const carMaterial = new MeshBasicMaterial({ vertexColors: true, fog: true });
   carMaterial.name = 'skyriver.traffic.hull';
-
-  const glowTexture = buildGlowTexture();
-  const glowMaterial = new MeshBasicMaterial({
-    map: glowTexture,
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-    // Towers and the shuttle must occlude a glow, so depth testing stays on.
-    depthTest: true,
-    fog: false,
-    toneMapped: false,
-  });
-  glowMaterial.name = 'skyriver.traffic.glow';
+  // T6R: the shared fog was never wired to the hulls, so distant cars stayed full-bright pills.
+  applySkyriverFog(carMaterial);
 
   const archetypeBuilds: MeshBuild[] = [buildCab(), buildInterceptor(), buildCommuter()];
   const archetypeLabels: string[] = ['cab', 'interceptor', 'commuter'];
@@ -786,8 +841,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     const capacity = Math.max(1, archetypeTotals[archetype]);
     const mesh = new InstancedMesh(geometry, carMaterial, capacity);
     mesh.name = 'skyriver.traffic.' + label;
-    // The swarm fills the whole volume and every matrix changes per frame, so the instanced bounding
-    // sphere would be stale every frame. Culling the batch is never a win here; disable it.
+    // Every matrix changes per frame across the whole canyon; culling the batch is never a win.
     mesh.frustumCulled = false;
     mesh.instanceMatrix.setUsage(DynamicDrawUsage);
     const instanceColor = new InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
@@ -799,54 +853,65 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     colorArrays.push(instanceColor.array as Float32Array);
   }
 
-  const glowGeometry = buildGlowQuad();
-  const glowCapacity = Math.max(1, options.maxThrusterBudget ?? options.quality.thrusterBudget);
-  const glowMesh = new InstancedMesh(glowGeometry, glowMaterial, glowCapacity);
-  glowMesh.name = 'skyriver.traffic.glow';
-  glowMesh.frustumCulled = false;
-  glowMesh.instanceMatrix.setUsage(DynamicDrawUsage);
-  const glowInstanceColor = new InstancedBufferAttribute(new Float32Array(glowCapacity * 3), 3);
-  glowInstanceColor.setUsage(DynamicDrawUsage);
-  glowMesh.instanceColor = glowInstanceColor;
-  glowMesh.count = 0;
-  // Glows are additive and unlit: draw them after the opaque city so they read as light on top.
-  glowMesh.renderOrder = 10;
-  const glowMatrices = glowMesh.instanceMatrix.array as Float32Array;
-  const glowColors = glowInstanceColor.array as Float32Array;
+  const streakCapacity = Math.max(1, options.maxThrusterBudget ?? options.quality.thrusterBudget);
+  const streakGeometry = buildStreakGeometry(streakCapacity);
+  const streakMaterial = new ShaderMaterial({
+    name: 'skyriver.traffic.streaks',
+    vertexShader: STREAK_VERTEX,
+    fragmentShader: STREAK_FRAGMENT,
+    uniforms: {
+      uPixelAngle: { value: 0.0012 },
+      uHeadOffset: { value: HEAD_OFFSET_M },
+      uTailOffset: { value: TAIL_OFFSET_M },
+      uHeadTrail: { value: HEAD_TRAIL_S },
+      uTailTrail: { value: TAIL_TRAIL_S },
+      uIntensity: { value: 3.2 },
+      uFogPenetration: { value: 0.2 },
+      ...skyriverFogUniforms(),
+    },
+    transparent: true,
+    blending: AdditiveBlending,
+    depthWrite: false,
+    depthTest: true,
+    // The capsule is built in view space and its winding flips with the projected axis: never cull.
+    side: DoubleSide,
+    fog: true,
+  });
+  applySkyriverFog(streakMaterial);
+  const streakMesh = new Mesh(streakGeometry, streakMaterial);
+  streakMesh.name = 'skyriver.traffic.streaks';
+  streakMesh.frustumCulled = false;
+  // Additive light on top of the opaque city and hulls.
+  streakMesh.renderOrder = 10;
+  const streakPos = streakGeometry.getAttribute('aCarPos') as InstancedBufferAttribute;
+  const streakDir = streakGeometry.getAttribute('aCarDir') as InstancedBufferAttribute;
+  const streakFade = streakGeometry.getAttribute('aCarFade') as InstancedBufferAttribute;
+  const streakPosArray = streakPos.array as Float32Array;
+  const streakDirArray = streakDir.array as Float32Array;
+  const streakFadeArray = streakFade.array as Float32Array;
 
-  const objects: Object3D[] = [meshes[0], meshes[1],
-    meshes[2], glowMesh];
+  const objects: Object3D[] = [meshes[0], meshes[1], meshes[2], streakMesh];
 
   // ---- Mutable tier state. Written by setQuality(), read by the hot loop.
   const groupActive = new Int32Array(TRAFFIC_ARCHETYPE_COUNT);
   let activeCars = 0;
-  let glowBudget = 0;
-  let glowUsed = 0;
-  /**
-   * The glow selection controller's state: [0] radius in metres, [1] its square.
-   *
-   * A typed array rather than two closure-scope `let` doubles on purpose. A double held in a closure
-   * context and reassigned every frame is boxed into a fresh heap number on each write, which is a
-   * small per-frame allocation in an update path that is otherwise allocation-free. A Float64Array
-   * slot stores the bits directly. (glowUsed stays a plain variable: small integers are not boxed.)
-   */
-  const glowControl = new Float64Array(2);
-  glowControl[0] = GLOW_RADIUS_START_M;
-  glowControl[1] = GLOW_RADIUS_START_M * GLOW_RADIUS_START_M;
+  let streakBudget = 0;
+  let streaksUsed = 0;
 
   const invDimRangeSq = 1 / (DISTANCE_DIM_RANGE_M * DISTANCE_DIM_RANGE_M);
+  const alongSpan = ALONG_HALF_SPAN_M * 2;
+  const crossSpan = CROSS_HALF_SPAN_M * 2;
 
   function setQuality(quality: TrafficQuality): void {
     assertQuality(quality, maxCarCount);
-    if (quality.thrusterBudget > glowCapacity) fail('SKYRIVER_TRAFFIC_TIER_GLOW_OVER_CAPACITY');
+    if (quality.thrusterBudget > streakCapacity) fail('SKYRIVER_TRAFFIC_TIER_GLOW_OVER_CAPACITY');
 
     activeCars = quality.carCount;
-    glowBudget = quality.thrusterBudget;
+    streakBudget = quality.thrusterBudget;
 
     for (let archetype = 0; archetype < TRAFFIC_ARCHETYPE_COUNT; archetype += 1) {
       const group = groupCars[archetype];
       let active = 0;
-      // Groups are ascending, so the active set is the prefix of car indices below the tier count.
       while (active < group.length && group[active] < activeCars) active += 1;
       groupActive[archetype] = active;
       meshes[archetype].count = active;
@@ -854,15 +919,15 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   }
 
   /**
-   * Re-evaluates every active car. One sin/cos pair, two noise samples and one matrix write per car;
-   * one extra noise sample and two square roots for a car that also earns a glow quad.
+   * Re-evaluates every active car: one wrap, one sine for the bob, one matrix write, and one streak
+   * record. Allocates nothing.
    */
   function update(time: TrafficTime, camera: TrafficPoint): void {
     const t = secondsOf(time);
     const camX = camera.x;
     const camY = camera.y;
     const camZ = camera.z;
-    glowUsed = 0;
+    streaksUsed = 0;
 
     for (let archetype = 0; archetype < TRAFFIC_ARCHETYPE_COUNT; archetype += 1) {
       const group = groupCars[archetype];
@@ -872,48 +937,47 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
 
       for (let slot = 0; slot < active; slot += 1) {
         const car = group[slot];
-        const noiseLane = car * 3;
+        const river = carRiver[car];
+        const direction = riverDirection[river];
+        const speed = carSpeed[car];
+        const crossing = river >= ALONG_RIVERS;
+        const span = crossing ? crossSpan : alongSpan;
+        const halfSpan = span * 0.5;
 
-        // --- Course position at continuous time.
-        const angle = courseAngle0[car] + courseRate[car] * t;
-        const ca = Math.cos(angle);
-        const sa = Math.sin(angle);
+        // Position along the river at continuous time, wrapped over the span.
+        let s = (carPhase[car] * span + direction * speed * t) % span;
+        if (s < 0) s += span;
+        const along = s - halfSpan;
+        const edge = halfSpan - Math.abs(along);
+        const fade = smoothstep(0, WRAP_FADE_M, edge);
+        const py = riverY[river] + carOffsetY[car] + Math.sin(t * 0.7 + carBob[car]) * 1.6;
 
-        const weavePhase = t * weaveRate[car];
-        const weaveA = valueNoise(noiseLane, weavePhase);
-        const weaveB = valueNoise(noiseLane + 1, weavePhase * 0.73);
+        let px: number;
+        let pz: number;
+        let fx: number;
+        let fz: number;
+        if (crossing) {
+          px = along;
+          pz = riverLane[river] + carOffsetLateral[car];
+          fx = direction;
+          fz = 0;
+        } else {
+          px = clamp(riverLane[river] + carOffsetLateral[car], laneMinX, laneMaxX);
+          pz = along;
+          fx = 0;
+          fz = direction;
+        }
 
-        const radius = courseRadius[car] + weaveA * weaveRadial[car];
-        const px = courseCentreX[car] + radius * ca;
-        const pz = courseCentreZ[car] + radius * sa;
-        const py = baseY[car] + weaveB * weaveVertical[car];
-
-        // --- Orientation. The course tangent is already unit length, so no normalize is needed.
-        const direction = courseDirection[car];
-        const fx = -sa * direction;
-        const fz = ca * direction;
-
-        // Bank into the weave. (R0 + up * b) / sqrt(1 + b*b) is an exact rotation of the basis
-        // about the forward axis, for one square root and no trig.
-        const bank = weaveA * BANK_PER_NOISE * direction;
-        const inv = 1 / Math.sqrt(1 + bank * bank);
+        // Axis-aligned basis: right = up x forward, up = +Y.
         const scale = sizeScale[car];
-        const rightScale = inv * scale;
-        const rx = fz * rightScale;
-        const ry = bank * rightScale;
-        const rz = -fx * rightScale;
-        const ux = -fz * bank * rightScale;
-        const uy = rightScale;
-        const uz = fx * bank * rightScale;
-
         const offset = slot * 16;
-        matrices[offset] = rx;
-        matrices[offset + 1] = ry;
-        matrices[offset + 2] = rz;
+        matrices[offset] = fz * scale;
+        matrices[offset + 1] = 0;
+        matrices[offset + 2] = -fx * scale;
         matrices[offset + 3] = 0;
-        matrices[offset + 4] = ux;
-        matrices[offset + 5] = uy;
-        matrices[offset + 6] = uz;
+        matrices[offset + 4] = 0;
+        matrices[offset + 5] = scale;
+        matrices[offset + 6] = 0;
         matrices[offset + 7] = 0;
         matrices[offset + 8] = fx * scale;
         matrices[offset + 9] = 0;
@@ -924,88 +988,28 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         matrices[offset + 14] = pz;
         matrices[offset + 15] = 1;
 
-        // --- Distance dimming, so the far swarm settles into the haze instead of speckling it.
         const dx = px - camX;
         const dy = py - camY;
         const dz = pz - camZ;
         const distanceSq = dx * dx + dy * dy + dz * dz;
-        const dim = 1 - (1 - DISTANCE_DIM_FLOOR) * Math.min(1, distanceSq * invDimRangeSq);
+        const dim = (1 - (1 - DISTANCE_DIM_FLOOR) * Math.min(1, distanceSq * invDimRangeSq)) * fade;
         const colorOffset = slot * 3;
         colors[colorOffset] = tintR[car] * dim;
         colors[colorOffset + 1] = tintG[car] * dim;
         colors[colorOffset + 2] = tintB[car] * dim;
 
-        // --- Glow quad, for cars inside the self-tuning selection radius while the budget lasts.
-        if (glowUsed < glowBudget && distanceSq < glowControl[1] && distanceSq > 1e-6) {
-          const invDistance = 1 / Math.sqrt(distanceSq);
-          const distance = distanceSq * invDistance;
-          // Unit vector from the car toward the camera: the billboard's forward axis.
-          const bfx = -dx * invDistance;
-          const bfy = -dy * invDistance;
-          const bfz = -dz * invDistance;
-
-          // Is the camera ahead of the car (headlights) or behind it (thrusters)?
-          const facing = fx * bfx + fz * bfz;
-          const along = facing > 0 ? GLOW_NOSE_OFFSET_M : -GLOW_TAIL_OFFSET_M;
-
-          // Billboard basis: right = up x forward, then up = forward x right.
-          let brx = bfz;
-          let brz = -bfx;
-          const rightLengthSq = brx * brx + brz * brz;
-          let bry = 0;
-          if (rightLengthSq > 1e-8) {
-            const invRight = 1 / Math.sqrt(rightLengthSq);
-            brx *= invRight;
-            brz *= invRight;
-          } else {
-            // Camera straight above or below: any perpendicular will do.
-            brx = 1;
-            brz = 0;
-          }
-          const bux = bfy * brz;
-          const buy = bfz * brx - bfx * brz;
-          const buz = -bfy * brx;
-
-          const size = Math.min(GLOW_MAX_SIZE_M, GLOW_BASE_SIZE_M + distance * GLOW_SIZE_PER_METRE)
-            * sizeScale[car];
-
-          const glowOffset = glowUsed * 16;
-          glowMatrices[glowOffset] = brx * size;
-          glowMatrices[glowOffset + 1] = bry * size;
-          glowMatrices[glowOffset + 2] = brz * size;
-          glowMatrices[glowOffset + 3] = 0;
-          glowMatrices[glowOffset + 4] = bux * size;
-          glowMatrices[glowOffset + 5] = buy * size;
-          glowMatrices[glowOffset + 6] = buz * size;
-          glowMatrices[glowOffset + 7] = 0;
-          glowMatrices[glowOffset + 8] = bfx * size;
-          glowMatrices[glowOffset + 9] = bfy * size;
-          glowMatrices[glowOffset + 10] = bfz * size;
-          glowMatrices[glowOffset + 11] = 0;
-          glowMatrices[glowOffset + 12] = px + fx * along;
-          glowMatrices[glowOffset + 13] = py;
-          glowMatrices[glowOffset + 14] = pz + fz * along;
-          glowMatrices[glowOffset + 15] = 1;
-
-          // Fade out at the selection edge, so a glow entering the radius does not pop on.
-          const edge = distanceSq / glowControl[1];
-          const fade = 1 - edge * edge;
-          const pulseNoise = valueNoise(noiseLane + 2, t * GLOW_PULSE_RATE_HZ + pulseOffset[car]);
-          const near = GLOW_NEAR_FLOOR
-            + (1 - GLOW_NEAR_FLOOR) * Math.min(1, distance / GLOW_NEAR_FADE_M);
-          const brightness = fade * near * (1 - GLOW_PULSE_DEPTH * (0.5 - 0.5 * pulseNoise));
-
-          const glowColorOffset = glowUsed * 3;
-          if (facing > 0) {
-            glowColors[glowColorOffset] = GLOW_HEAD_R * brightness;
-            glowColors[glowColorOffset + 1] = GLOW_HEAD_G * brightness;
-            glowColors[glowColorOffset + 2] = GLOW_HEAD_B * brightness;
-          } else {
-            glowColors[glowColorOffset] = GLOW_TAIL_R * brightness;
-            glowColors[glowColorOffset + 1] = GLOW_TAIL_G * brightness;
-            glowColors[glowColorOffset + 2] = GLOW_TAIL_B * brightness;
-          }
-          glowUsed += 1;
+        if (streaksUsed < streakBudget) {
+          const p = streaksUsed * 3;
+          streakPosArray[p] = px;
+          streakPosArray[p + 1] = py;
+          streakPosArray[p + 2] = pz;
+          const d = streaksUsed * 4;
+          streakDirArray[d] = fx;
+          streakDirArray[d + 1] = 0;
+          streakDirArray[d + 2] = fz;
+          streakDirArray[d + 3] = speed;
+          streakFadeArray[streaksUsed] = fade;
+          streaksUsed += 1;
         }
       }
 
@@ -1014,23 +1018,15 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       if (mesh.instanceColor !== null) mesh.instanceColor.needsUpdate = true;
     }
 
-    glowMesh.count = glowUsed;
-    glowMesh.instanceMatrix.needsUpdate = true;
-    if (glowMesh.instanceColor !== null) glowMesh.instanceColor.needsUpdate = true;
+    streakGeometry.instanceCount = streaksUsed;
+    streakPos.needsUpdate = true;
+    streakDir.needsUpdate = true;
+    streakFade.needsUpdate = true;
+  }
 
-    // Hold the glow budget without sorting: nudge the selection radius toward a full batch. A sort
-    // of 2,400 cars per frame would cost more than everything above it put together.
-    if (glowBudget > 0) {
-      let radius = glowControl[0];
-      if (glowUsed >= glowBudget) {
-        radius *= GLOW_RADIUS_SHRINK;
-      } else if (glowUsed < glowBudget * GLOW_FILL_TARGET) {
-        radius *= GLOW_RADIUS_GROW;
-      }
-      radius = clamp(radius, GLOW_MIN_RADIUS_M, GLOW_MAX_RADIUS_M);
-      glowControl[0] = radius;
-      glowControl[1] = radius * radius;
-    }
+  /** Radians per drawing-buffer pixel, vertically. The scene calls this on resize. */
+  function setPixelAngle(radiansPerPixel: number): void {
+    streakMaterial.uniforms.uPixelAngle!.value = radiansPerPixel;
   }
 
   function stats(): TrafficStats {
@@ -1038,14 +1034,14 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     for (let archetype = 0; archetype < TRAFFIC_ARCHETYPE_COUNT; archetype += 1) {
       triangles += trianglesPerArchetype[archetype] * groupActive[archetype];
     }
-    triangles += glowUsed * 2;
+    triangles += streaksUsed * 4;
     return {
       activeCars,
-      activeThrusters: glowUsed,
+      activeThrusters: streaksUsed,
       drawCalls: TRAFFIC_DRAW_CALLS,
       trianglesPerArchetype,
       trianglesDrawn: triangles,
-      glowRadiusM: glowControl[0],
+      glowRadiusM: 0,
     };
   }
 
@@ -1054,14 +1050,12 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       meshes[archetype].dispose();
       geometries[archetype].dispose();
     }
-    glowMesh.dispose();
-    glowGeometry.dispose();
+    streakGeometry.dispose();
     carMaterial.dispose();
-    glowMaterial.dispose();
-    glowTexture.dispose();
+    streakMaterial.dispose();
   }
 
   setQuality(options.quality);
 
-  return { objects, update, setQuality, stats, dispose };
+  return { objects, update, setQuality, setPixelAngle, stats, dispose };
 }

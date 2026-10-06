@@ -34,6 +34,7 @@ import type { SkyriverProjection } from '../sim/runtime';
 import { SKYRIVER_TICK_RATE } from '../sim/systems';
 import { SkyriverAtmosphere, SKYRIVER_ATMOSPHERE_DRAW_CALL_BUDGET } from './atmosphere';
 import { SkyriverCity, SKYRIVER_CITY_DRAW_CALL_BUDGET } from './city';
+import { presentCityLayout } from './presentationLayout';
 
 /** Plan R3: 16 total. The approved night look spends less — the hard ceiling we hold to is 12. */
 /**
@@ -266,7 +267,9 @@ export class SkyriverScene {
     this.camera = new THREE.PerspectiveCamera(62, 1, 1, 14000);
     this.camera.name = 'skyriver.camera';
 
-    this.layout = deriveCityLayout(seed);
+    // T6R: the drawn canyon is the derived layout raised above the flight ceiling and lengthened
+    // (presentationLayout.ts). Every T3 pass reads this one layout, so they stay consistent.
+    this.layout = presentCityLayout(deriveCityLayout(seed));
 
     this.atmosphere = new SkyriverAtmosphere({ layout: this.layout, quality: this.quality });
     // The haze colour and depths density live on scene.fog, so three refreshes them into every

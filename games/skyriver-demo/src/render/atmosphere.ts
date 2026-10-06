@@ -43,14 +43,17 @@ export const SKYRIVER_ATMOSPHERE_DRAW_CALL_BUDGET = 4;
 export const SKYRIVER_ATMOSPHERE = Object.freeze({
   /** Haze grading window: y below this is full depths murk, y above floor+range is the clear end. */
   fogFloorY: 40,
-  fogRangeY: 1700,
+  // T6R: the presented canyon walls rise to ~3.5 km (presentationLayout.ts), so the grade spans more.
+  fogRangeY: 2600,
   /**
    * FogExp2 densities. The factor is `1 - exp( -(density * depth)^2 )`, so density is read as "one
    * over the distance at which the haze is most of the way in": ~380 m in the depths, ~1.8 km high
    * up. The depths being ~5x denser is what closes off the canyon floor without a ground plane.
    */
-  fogDensityLow: 0.0026,
-  fogDensityHigh: 0.00055,
+  // T6R: ~0.0026 closed the canyon at ~400 m, which hid every light river and the vanishing point.
+  // The haze now reads as a luminous volume about 1.2 km deep, still opaque toward the depths.
+  fogDensityLow: 0.00125,
+  fogDensityHigh: 0.0005,
   /**
    * Must sit between the camera's near and far planes: the dome is drawn with depth testing off,
    * but the near plane still clips it in the vertex stage, and a radius under `camera.near` leaves
@@ -69,13 +72,15 @@ export const SKYRIVER_ATMOSPHERE = Object.freeze({
  * substance between the player and the far wall, so it cannot be darker than the concrete it hides.
  * The "high" variants are lighter as well as thinner — that difference is what makes altitude read.
  */
-const COLOR_FOG_LOW = 0x121b2b;
-const COLOR_FOG_HIGH = 0x253549;
-const COLOR_SKY_ZENITH = 0x080d18;
-const COLOR_SKY_HORIZON = 0x1f2d42;
-const COLOR_SKY_DEPTHS = 0x0b1119;
+// T6R contrast pass: the haze is a lit volume, brighter than the near-black concrete, so towers and
+// their ribs silhouette against it (Neon Rain still); a faint teal/magenta neon cast tints the depths.
+const COLOR_FOG_LOW = 0x1d2c40;
+const COLOR_FOG_HIGH = 0x2b4058;
+const COLOR_SKY_ZENITH = 0x070b14;
+const COLOR_SKY_HORIZON = 0x2a3c55;
+const COLOR_SKY_DEPTHS = 0x1a2738;
 /** Neon the wet overcast throws back down. The one place warmth is allowed into the blue. */
-const COLOR_SKY_NEON = 0x40607f;
+const COLOR_SKY_NEON = 0x4a5f86;
 const COLOR_RAIN = 0x8fa6bd;
 
 /** Shared GLSL. city.ts imports these so both modules hash identically and stay cheap. */

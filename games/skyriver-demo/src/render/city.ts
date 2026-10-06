@@ -19,9 +19,11 @@
  * the fragment shader from an instance-seeded hash. There is no texture and no image file.
  *
  * NO ROADS. Nothing here renders a horizontal surface at or near the flight corridor. Gantries are
- * narrow structural catwalks that span between towers inside the wall, well clear of
- * `CHASM_BOUNDS` (|x| <= 400), and there is no ground plane — the depths are closed off by the
- * altitude-graded haze in atmosphere.ts instead. Vehicles are T4's and are not created here.
+ * narrow structural catwalks between towers inside the wall; T6R cantilevers stop at |x| >= 412,
+ * clear of `CHASM_BOUNDS` (|x| <= 400); and there is no ground plane — the depths are closed off by
+ * the altitude-graded haze in atmosphere.ts instead. T6R skybridges are the one exception that
+ * spans the canyon: empty structures above every traffic river (>= 1900 m) and outside the
+ * free-flight box (|z| >= 600), so no vehicle ever rides one. Vehicles are T4's, not created here.
  *
  * Layout ownership: `deriveCityLayout` (committed T2, src/sim/derive.ts) is the single source of
  * tower placement and is consumed verbatim. It carries no trim or signage fields, and T2 is not
@@ -52,13 +54,16 @@ export const SKYRIVER_CITY_DRAW_CALL_BUDGET = 8;
  * 1900 m one — that is what sells the scale of the canyon.
  */
 export const SKYRIVER_CITY = Object.freeze({
-  /** Window cell pitch: one floor tall, one bay wide. */
-  windowCellWidthM: 4.2,
-  windowCellHeightM: 3.6,
+  /**
+   * Window cell pitch. T6R: was one 3.6 m floor by one 4.2 m bay, which at canyon distances read as
+   * static "QR noise". Now a double bay by a floor-and-a-half, with a sparser lit share.
+   */
+  windowCellWidthM: 7.2,
+  windowCellHeightM: 5.4,
   /** Structural rib pitch down the facade. */
   ribSpacingM: 19,
   /** Hard caps on the locally derived passes. */
-  maxTrims: 512,
+  maxTrims: 2600,
   maxSigns: 1600,
   /** Target sign count before the cap and the per-tower fit test. */
   signTarget: 1440,
@@ -71,6 +76,15 @@ export const SKYRIVER_CITY = Object.freeze({
 export const SKYRIVER_TRIM_ANTENNA = 0;
 export const SKYRIVER_TRIM_GANTRY = 1;
 export const SKYRIVER_TRIM_ROOF_PLANT = 2;
+/** T6R structural kit on the corridor face: these silhouette against the haze. */
+export const SKYRIVER_TRIM_RIB = 3;
+export const SKYRIVER_TRIM_BAND = 4;
+export const SKYRIVER_TRIM_CANTILEVER = 5;
+/** High skybridges spanning the canyon. Empty structures: no traffic river runs at their height. */
+export const SKYRIVER_TRIM_SKYBRIDGE = 6;
+/** Skybridge altitude band and the canyon stretch they keep out of (the free-flight box, |z| <= 400). */
+export const SKYRIVER_SKYBRIDGE_MIN_Y_M = 1900;
+export const SKYRIVER_SKYBRIDGE_MIN_ABS_Z_M = 600;
 
 /** Sign kinds: a vertical banner, a horizontal strip, and a hollow outline box. */
 export const SKYRIVER_SIGN_BANNER = 0;
@@ -143,8 +157,8 @@ function wallOf(layout: SkyriverCityLayout, side: -1 | 1): readonly SkyriverTowe
  * Derives the trim kit: roof plant, antenna masts, and the gantries that tie the slabs together.
  *
  * Gantries only ever join two towers on the same wall — along the canyon, or outward between
- * columns. Nothing spans the corridor, so the flight volume stays clear and no span can read as a
- * road or a bridge.
+ * columns. T6R adds the corridor-face kit (ribs, floor bands, cantilevers) and a few high
+ * skybridges; see the file header for why none of it can read as a road.
  *
  * Pure and GL-free; cached per seed.
  */
@@ -279,6 +293,77 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     }
   }
 
+  // --- T6R structural kit on the inner (corridor) wall --------------------------------------------
+  // Deep vertical ribs and corner pilasters, projecting floor bands, cantilevered gantries, and a
+  // few skybridges high across the canyon. All of it projects from the facade, so it silhouettes
+  // against the haze instead of reading as paint on a flat box. Nothing reaches the corridor:
+  // cantilevers stop at |x| >= CANTILEVER_MIN_ABS_X, and skybridges stay above the traffic rivers
+  // and outside the free-flight box.
+  const CANTILEVER_MIN_ABS_X = 412;
+  const innerWalls = [innerWallOf(layout, -1), innerWallOf(layout, 1)] as const;
+  for (const wall of innerWalls) {
+    for (const tower of wall) {
+      const side = Math.sign(tower.x) as -1 | 1;
+      const innerFace = Math.abs(tower.x) - tower.width * 0.5;
+      const half = tower.depth * 0.5;
+
+      // Corner pilasters, then ribs between them.
+      for (const end of [-1, 1]) {
+        const projection = 8 + random.nextInt(0, 50) / 10;
+        push(SKYRIVER_TRIM_RIB, side * (innerFace - projection * 0.5), tower.height * 0.5,
+          tower.z + end * (half - 4.5), projection, tower.height, 9);
+      }
+      const ribs = Math.max(1, Math.floor(tower.depth / 34));
+      for (let r = 1; r <= ribs; r += 1) {
+        const z = tower.z - half + (r / (ribs + 1)) * tower.depth;
+        const projection = 3.5 + random.nextInt(0, 45) / 10;
+        const height = tower.height * (0.72 + random.nextInt(0, 280) / 1000);
+        push(SKYRIVER_TRIM_RIB, side * (innerFace - projection * 0.5), height * 0.5, z,
+          projection, height, 2.8 + random.nextInt(0, 22) / 10);
+      }
+
+      // Floor bands every 70-160 m.
+      let y = 90 + random.nextInt(0, 60);
+      while (y < tower.height - 60) {
+        const projection = 3 + random.nextInt(0, 30) / 10;
+        const thick = 2.4 + random.nextInt(0, 22) / 10;
+        push(SKYRIVER_TRIM_BAND, side * (innerFace - projection * 0.5), y, tower.z,
+          projection, thick, tower.depth + 1.5);
+        y += 70 + random.nextInt(0, 90);
+      }
+
+      // Cantilevered gantries reaching toward the corridor.
+      const cantilevers = random.nextInt(0, 3);
+      for (let c = 0; c < cantilevers; c += 1) {
+        const length = Math.min(34, innerFace - CANTILEVER_MIN_ABS_X) * (0.5 + random.nextInt(0, 500) / 1000);
+        if (length < 8) continue;
+        const level = 150 + random.nextInt(0, 1000) / 1000 * Math.max(Math.min(tower.height - 120, 1800) - 150, 0);
+        push(SKYRIVER_TRIM_CANTILEVER, side * (innerFace - length * 0.5), level,
+          tower.z + (random.nextInt(-1000, 1000) / 1000) * (half - 12),
+          length, 3.5 + random.nextInt(0, 20) / 10, 9 + random.nextInt(0, 80) / 10);
+      }
+    }
+  }
+
+  // Skybridges: on rows where both inner walls stand, away from the free-flight box.
+  const [leftWall, rightWall] = innerWalls;
+  const rows = leftWall
+    .map((left) => ({ left, right: rightWall.find((candidate) => Math.abs(candidate.z - left.z) < 1) }))
+    .filter((pair): pair is { left: SkyriverTower; right: SkyriverTower } =>
+      pair.right !== undefined && Math.abs(pair.left.z) >= SKYRIVER_SKYBRIDGE_MIN_ABS_Z_M);
+  let bridges = 0;
+  for (const { left, right } of rows) {
+    if (bridges >= 6 || random.nextInt(0, 99) >= 45) continue;
+    const leftFace = -(Math.abs(left.x) - left.width * 0.5);
+    const rightFace = Math.abs(right.x) - right.width * 0.5;
+    const top = Math.min(left.height, right.height) - 30;
+    const level = SKYRIVER_SKYBRIDGE_MIN_Y_M + random.nextInt(0, 1000) / 1000 * Math.max(top - SKYRIVER_SKYBRIDGE_MIN_Y_M - 20, 0);
+    push(SKYRIVER_TRIM_SKYBRIDGE, (leftFace + rightFace) * 0.5, level,
+      left.z + (random.nextInt(-1000, 1000) / 1000) * 20,
+      rightFace - leftFace, 11 + random.nextInt(0, 60) / 10, 16 + random.nextInt(0, 100) / 10);
+    bridges += 1;
+  }
+
   const trims: SkyriverCityTrims = {
     seed: layout.seed,
     count,
@@ -295,12 +380,31 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
   return trims;
 }
 
+const SIGN_MAX_ABS_Z_M = 3300;
+
+/** Towers of the inner column on one side: the wall that faces the corridor. */
+function innerWallOf(layout: SkyriverCityLayout, side: -1 | 1): readonly SkyriverTower[] {
+  const wall = wallOf(layout, side);
+  if (wall.length === 0) return wall;
+  const innerX = Math.abs(wall[0]!.x);
+  return wall.filter((tower) => Math.abs(tower.x) < innerX + layout.cell * 0.5);
+}
+
 /**
- * Derives the neon signage: thousands of emissive faces bolted flat to the tower facades.
+ * Derives the neon signage.
  *
- * Placement is weighted toward the two columns nearest the corridor and toward the lower-middle of
- * each facade, which is where the player will actually see them, and toward the faces that look
- * back at the corridor. Signs hug the facade — they are not free-floating billboards.
+ * T6R P0 "neon signs invisible". The T6 signs were 3-7 m wide, bolted flat to the facades and
+ * weighted to the bottom 200 m of each tower. A camera looking down the canyon sees every inner
+ * facade edge-on, so a flat sign there is a sliver, and the camera flies at 400-800 m, far above
+ * where most of them hung. Now:
+ *   - Every sign goes on the inner wall, the one that lines the corridor.
+ *   - Most are *blades*: tall vertical signs mounted perpendicular to the facade, projecting into
+ *     the canyon and facing along it — exactly the orientation a chase cam looking down the canyon
+ *     sees face-on (the Neon Rain still's vertical kanji blades).
+ *   - The rest are large flat panels and banners on the corridor face, which read whenever the
+ *     camera turns or banks.
+ *   - Sizes are scaled to the canyon: blades 8-18 m deep and 35-140 m tall, panels up to 90 m wide.
+ *   - 60% of signs sit in the flight band (150-1150 m), the rest anywhere up to ~2 km.
  *
  * Pure and GL-free; cached per seed.
  */
@@ -323,14 +427,13 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
   const seedValue = new Float32Array(cap);
   let count = 0;
 
-  // Weight the inner columns up: |x| ascending, so a low index is close to the corridor.
-  const byProximity = [...layout.towers].sort((a, b) => Math.abs(a.x) - Math.abs(b.x));
-  const innerPool = Math.max(1, Math.round(byProximity.length * 0.5));
+  // Only the stretch the camera actually flies (the autopilot track reaches |z| ~ 1.6 km; the view
+  // carries another ~1.5 km down the canyon). Beyond that the haze would swallow them anyway.
+  const inner = [...innerWallOf(layout, -1), ...innerWallOf(layout, 1)]
+    .filter((tower) => Math.abs(tower.z) <= SIGN_MAX_ABS_Z_M);
+  if (inner.length === 0) fail('SKYRIVER_CITY_INNER_WALL_EMPTY');
   const tint = new THREE.Color();
   const target = Math.min(SKYRIVER_CITY.signTarget, cap);
-  // Placement rejects a sign wider than the facade it would wrap around. Footprints are 120-240 m
-  // and signs top out at 40 m, so rejection should never happen — a stall means the layout changed
-  // under us, which is a bug worth surfacing rather than quietly shipping a bare city.
   const attemptLimit = target * 8;
   let attempts = 0;
 
@@ -338,57 +441,56 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     attempts += 1;
     if (attempts > attemptLimit) fail('SKYRIVER_CITY_NEON_PLACEMENT_STALLED');
 
-    // 78% of signs go on the half of the wall nearest the corridor.
-    const inner = random.nextInt(0, 99) < 78;
-    const index = inner
-      ? random.nextInt(0, innerPool - 1)
-      : random.nextInt(0, byProximity.length - 1);
-    const tower = byProximity[index];
+    const tower = inner[random.nextInt(0, inner.length - 1)]!;
     const side = Math.sign(tower.x) as -1 | 1;
+    const innerFace = Math.abs(tower.x) - tower.width * 0.5;
+    const roll = random.nextInt(0, 99);
 
-    // Face: the one looking back at the corridor most of the time, otherwise one of the two ends.
-    const facing = random.nextInt(0, 99);
-    let normalX = 0;
-    let normalZ = 0;
-    if (facing < 62) normalX = -side;
-    else if (facing < 81) normalX = side;
-    else normalZ = random.nextInt(0, 1) === 0 ? -1 : 1;
-
-    const faceWidth = normalX !== 0 ? tower.depth : tower.width;
-    const signKind = random.nextInt(0, 2);
+    // Altitude: weighted into the flight band, otherwise anywhere on the lit part of the slab.
+    const ceiling = Math.min(tower.height - 60, 2050);
+    const inBand = random.nextInt(0, 99) < 60;
+    const low = inBand ? 150 : 60;
+    const high = inBand ? Math.min(1150, ceiling) : ceiling;
+    const centreYRaw = low + (random.nextInt(0, 1000) / 1000) * Math.max(high - low, 0);
 
     let width: number;
     let height: number;
-    if (signKind === SKYRIVER_SIGN_BANNER) {
-      width = 3 + random.nextInt(0, 45) / 10;
-      height = 11 + random.nextInt(0, 230) / 10;
-    } else if (signKind === SKYRIVER_SIGN_STRIP) {
-      width = 11 + random.nextInt(0, 290) / 10;
-      height = 2.4 + random.nextInt(0, 38) / 10;
-    } else {
-      width = 7 + random.nextInt(0, 150) / 10;
-      height = 5 + random.nextInt(0, 110) / 10;
-    }
-    // A sign wider than the face it is bolted to would wrap around the corner.
-    if (width > faceWidth - 4) continue;
-
-    const alongSpan = (faceWidth - width) * 0.5;
-    const along = (random.nextInt(-1000, 1000) / 1000) * alongSpan;
-    // Lower-mid weighting: the square biases two uniform draws down the facade.
-    const upFraction = random.nextInt(0, 1000) / 1000;
-    const topLimit = Math.max(tower.height - height - 12, 18);
-    const centreY = 14 + upFraction * upFraction * Math.max(topLimit - 14, 0) + height * 0.5;
-
-    const standoff = SKYRIVER_CITY.signStandoffM;
+    let normalX = 0;
+    let normalZ = 0;
     let px: number;
     let pz: number;
-    if (normalX !== 0) {
-      px = tower.x + normalX * (tower.width * 0.5 + standoff);
-      pz = tower.z + along;
+    let signKind: number;
+    const along = random.nextInt(-1000, 1000) / 1000;
+
+    if (roll < 48) {
+      // Blade: perpendicular to the facade, projecting into the canyon, facing along it.
+      signKind = SKYRIVER_SIGN_BANNER;
+      width = 8 + random.nextInt(0, 100) / 10;
+      height = 35 + random.nextInt(0, 1050) / 10;
+      normalZ = random.nextInt(0, 1) === 0 ? -1 : 1;
+      px = side * (innerFace - width * 0.5 - 0.8);
+      pz = tower.z + along * (tower.depth * 0.5 - 4);
     } else {
-      px = tower.x + along;
-      pz = tower.z + normalZ * (tower.depth * 0.5 + standoff);
+      // Flat on the corridor face.
+      normalX = -side;
+      if (roll < 76) {
+        signKind = SKYRIVER_SIGN_STRIP;
+        width = 26 + random.nextInt(0, 640) / 10;
+        height = 8 + random.nextInt(0, 140) / 10;
+      } else if (roll < 91) {
+        signKind = SKYRIVER_SIGN_BANNER;
+        width = 9 + random.nextInt(0, 70) / 10;
+        height = 30 + random.nextInt(0, 700) / 10;
+      } else {
+        signKind = SKYRIVER_SIGN_OUTLINE;
+        width = 18 + random.nextInt(0, 260) / 10;
+        height = 12 + random.nextInt(0, 160) / 10;
+      }
+      if (width > tower.depth - 6) continue;
+      px = side * (innerFace - SKYRIVER_CITY.signStandoffM);
+      pz = tower.z + along * (tower.depth - width) * 0.5;
     }
+    const centreY = Math.max(centreYRaw, height * 0.5 + 20);
 
     const packed = random.weighted(NEON_PALETTE, NEON_WEIGHTS);
     if (!Number.isInteger(packed) || packed < 0 || packed > 0xffffff) {
@@ -512,7 +614,7 @@ ${SKYRIVER_HASH_GLSL}
 /** Rounded-box signed distance in cell units; the window glass. */
 float windowSdf( vec2 cellLocal ) {
   const float radius = 0.055;
-  vec2 halfExtent = vec2( 0.34, 0.33 );
+  vec2 halfExtent = vec2( 0.41, 0.29 );
   vec2 d = abs( cellLocal - 0.5 ) - halfExtent + radius;
   return length( max( d, 0.0 ) ) + min( max( d.x, d.y ), 0.0 ) - radius;
 }
@@ -567,13 +669,16 @@ void main() {
   float runnel = skyHash11( floor( vSurf.x / 2.6 ) + vSeed * 131.0 + vFaceId * 17.0 );
   float wet = mix( 0.42, smoothstep( 0.58, 1.0, runnel ), fineDetail )
     * ( 0.3 + 0.7 * ( 1.0 - smoothstep( 0.0, 0.45, vUp ) ) );
-  color += uWetTint * fresnel * ( 0.2 + 0.8 * wet ) * vIsSide;
+  // T6R: the wet sheen picks up the neon around it — a slow cyan/magenta drift over the facade.
+  float neonDrift = skyValueNoise( vWorldPos.yz * vec2( 0.004, 0.003 ) + vSeed * 7.0 );
+  vec3 sheen = mix( uWetTint, mix( vec3( 0.15, 0.55, 0.75 ), vec3( 0.7, 0.18, 0.55 ), neonDrift ), 0.55 );
+  color += sheen * fresnel * ( 0.2 + 0.8 * wet ) * vIsSide;
 
   // --- window grid ------------------------------------------------------------------------------
   // Coarse blocks gate whole stacks dark, so the lit windows stay sparse and clustered instead of
   // speckling evenly over every slab.
-  float blockHash = skyHash12( floor( cellUv / vec2( 6.0, 9.0 ) ) + faceOffset * 0.37 );
-  float blockLive = step( 0.44, blockHash );
+  float blockHash = skyHash12( floor( cellUv / vec2( 4.0, 7.0 ) ) + faceOffset * 0.37 );
+  float blockLive = step( 0.52, blockHash );
 
   float sd = windowSdf( cellLocal );
   float glass = ( 1.0 - smoothstep( -0.012, 0.012, sd ) ) * vIsSide * blockLive;
@@ -582,24 +687,27 @@ void main() {
 
   float paneHash = skyHash12( cell + faceOffset );
   // Dark at street level, brightest through the mid-high floors, thinning again at the parapet.
-  float litShare = mix( 0.04, 0.3, smoothstep( 0.04, 0.62, vUp ) )
+  float litShare = mix( 0.03, 0.16, smoothstep( 0.04, 0.5, vUp ) )
     * ( 1.0 - 0.5 * smoothstep( 0.84, 1.0, vUp ) );
   float lit = step( 1.0 - litShare, paneHash );
 
   // Colour temperature: mostly warm interior light, some cold office pale, sparse neon.
   float tempHash = skyHash11( paneHash * 311.7 + vSeed * 53.0 );
-  vec3 warm = vec3( 1.0, 0.76, 0.44 );
-  vec3 pale = vec3( 0.72, 0.83, 1.0 );
+  // T6R: a wider spread of colour temperatures, so lit panes read as rooms, not as one decal.
+  vec3 sodium = vec3( 1.0, 0.55, 0.22 );
+  vec3 warm = vec3( 1.0, 0.76, 0.46 );
+  vec3 pale = vec3( 0.78, 0.86, 1.0 );
+  vec3 cold = vec3( 0.48, 0.72, 1.0 );
   vec3 neonCyan = vec3( 0.22, 0.95, 1.0 );
   vec3 neonMagenta = vec3( 1.0, 0.24, 0.72 );
-  vec3 neonGreen = vec3( 0.42, 1.0, 0.5 );
-  vec3 paneColor = warm;
-  paneColor = mix( paneColor, pale, step( 0.44, tempHash ) );
-  paneColor = mix( paneColor, neonCyan, step( 0.76, tempHash ) );
-  paneColor = mix( paneColor, neonMagenta, step( 0.87, tempHash ) );
-  paneColor = mix( paneColor, neonGreen, step( 0.95, tempHash ) );
+  vec3 paneColor = sodium;
+  paneColor = mix( paneColor, warm, step( 0.18, tempHash ) );
+  paneColor = mix( paneColor, pale, step( 0.48, tempHash ) );
+  paneColor = mix( paneColor, cold, step( 0.7, tempHash ) );
+  paneColor = mix( paneColor, neonCyan, step( 0.86, tempHash ) );
+  paneColor = mix( paneColor, neonMagenta, step( 0.94, tempHash ) );
 
-  float brightness = 0.3 + 0.7 * skyHash11( paneHash * 71.3 + 2.0 );
+  float brightness = 0.2 + 0.8 * pow( skyHash11( paneHash * 71.3 + 2.0 ), 1.5 );
   // A handful of panes buzz. Cheap, and it stops the grid reading as a static decal.
   float buzzing = step( 0.965, skyHash11( paneHash * 17.7 + 9.0 ) );
   float buzz = 1.0 - buzzing * 0.55 * ( 0.5 + 0.5 * sin( uTime * 23.0 + paneHash * 120.0 ) );
@@ -607,7 +715,7 @@ void main() {
   vec3 resolved = paneColor * ( lit * brightness * buzz ) * ( glass + halo * 0.28 );
   // What the grid averages out to once it stops resolving: lit share times mean pane brightness,
   // in the mean pane colour. Distant walls read as a dim glow rather than a field of sparks.
-  vec3 averaged = vec3( 0.86, 0.72, 0.56 ) * ( litShare * 0.5 * blockLive * vIsSide );
+  vec3 averaged = vec3( 0.86, 0.72, 0.56 ) * ( litShare * 0.4 * blockLive * vIsSide );
   color += mix( averaged, resolved, detail ) * 1.15;
 
   gl_FragColor = vec4( max( color, vec3( 0.0 ) ), 1.0 );
@@ -684,8 +792,9 @@ void main() {
 
   vec3 color = base;
 
-  // Gantry: a line of amber deck lights spaced every ~6 m down the run.
-  float isGantry = step( 0.5, vKind ) * ( 1.0 - step( 1.5, vKind ) );
+  // Gantry (1) and cantilever (5): a line of amber deck lights spaced every ~6 m down the run.
+  float isGantry = ( step( 0.5, vKind ) * ( 1.0 - step( 1.5, vKind ) ) )
+    + ( step( 4.5, vKind ) * ( 1.0 - step( 5.5, vKind ) ) );
   float lamp = 1.0 - smoothstep( 0.0, 0.12, abs( fract( run / 6.0 ) - 0.5 ) );
   float lampLive = step( 0.25, skyHash11( floor( run / 6.0 ) + vSeed * 83.0 ) );
   color += vec3( 1.0, 0.68, 0.33 ) * ( isGantry * lamp * lampLive * 0.9 );
@@ -695,6 +804,28 @@ void main() {
   float head = smoothstep( 0.86, 1.0, vTrimLocal.y + 0.5 );
   float blink = 0.5 + 0.5 * sin( uTime * 1.9 + vSeed * 6.2831853 );
   color += vec3( 1.0, 0.16, 0.12 ) * ( isAntenna * head * blink * 1.5 );
+
+  // Rib (3): darker recess shading toward the facade, a lit arris on the outer edge.
+  float isRib = step( 2.5, vKind ) * ( 1.0 - step( 3.5, vKind ) );
+  color *= 1.0 - 0.35 * isRib * smoothstep( 0.2, -0.5, vTrimLocal.y );
+
+  // Floor band (4): a strip of light along the soffit, in long hashed runs, warm or cold.
+  float isBand = step( 3.5, vKind ) * ( 1.0 - step( 4.5, vKind ) );
+  float soffit = step( vNormalW.y, -0.5 );
+  float runLive = step( 0.35, skyHash11( floor( run / 22.0 ) + vSeed * 57.0 ) );
+  vec3 bandLight = mix( vec3( 1.0, 0.72, 0.42 ), vec3( 0.55, 0.85, 1.0 ), step( 0.6, vSeed ) );
+  float edge = smoothstep( 0.5, 0.36, abs( vTrimLocal.y ) ) * ( 1.0 - soffit );
+  color += bandLight * isBand * runLive * ( soffit * 0.55 + edge * 0.15 );
+
+  // Skybridge (6): a dark mass with a ribbon of cold windows on each side and blue underlights.
+  float isBridge = step( 5.5, vKind );
+  float sideFace = step( 0.5, abs( vNormalW.z ) );
+  float ribbon = smoothstep( 0.12, 0.08, abs( vTrimLocal.y - 0.05 ) );
+  float pane = step( 0.3, fract( run / 4.0 ) ) * step( 0.3, skyHash11( floor( run / 4.0 ) + vSeed * 19.0 ) );
+  color = mix( color, color * 0.55, isBridge );
+  color += vec3( 0.72, 0.86, 1.0 ) * ( isBridge * sideFace * ribbon * pane * 1.1 );
+  float under = step( vNormalW.y, -0.5 ) * ( 1.0 - smoothstep( 0.0, 0.1, abs( fract( run / 12.0 ) - 0.5 ) ) );
+  color += vec3( 0.3, 0.6, 1.0 ) * ( isBridge * under * 1.4 );
 
   gl_FragColor = vec4( max( color, vec3( 0.0 ) ), 1.0 );
 
@@ -707,36 +838,45 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
 
 const SIGN_VERTEX = /* glsl */ `
 attribute vec3 aCentre;
-attribute vec2 aNormal;   // outward facade normal, x and z
-attribute vec2 aSize;     // across the facade, up it
+attribute vec2 aNormal;   // facade normal (flat signs) or canyon axis (blades), x and z
+attribute vec2 aSize;     // across, up
 attribute vec3 aColor;
 attribute float aKind;
 attribute float aSeed;
 
-varying vec2 vSignUv;
+varying vec2 vSignUv;     // 0..1 across the sign face; outside that range is the halo
+varying vec2 vLocal;      // metres from the sign centre
 varying vec3 vSignColor;
 varying float vSignKind;
 varying float vSignSeed;
 varying vec3 vSignNormal;
 varying vec3 vWorldPos;
 varying vec2 vSignSize;
+varying float vMargin;
 
 #include <fog_pars_vertex>
 
 void main() {
   vec3 normalW = normalize( vec3( aNormal.x, 0.0, aNormal.y ) );
-  // The facade normal is axis-aligned, so the in-plane tangent is a fixed 90 degree turn in xz.
+  // The normal is axis-aligned, so the in-plane tangent is a fixed 90 degree turn in xz.
   vec3 tangent = vec3( -normalW.z, 0.0, normalW.x );
   vec3 up = vec3( 0.0, 1.0, 0.0 );
 
-  vec3 world = aCentre + tangent * ( position.x * aSize.x ) + up * ( position.y * aSize.y );
+  // T6R: the quad is grown by a halo margin, so every sign spills coloured light onto the wet
+  // concrete and the haze around it — the scene is lit by its signage, not just decorated with it.
+  float margin = clamp( 0.45 * min( aSize.x, aSize.y ), 3.0, 16.0 );
+  vec2 extent = aSize + 2.0 * margin;
+  vec2 local = position.xy * extent;
+  vec3 world = aCentre + tangent * local.x + up * local.y;
 
-  vSignUv = position.xy + 0.5;
+  vLocal = local;
+  vSignUv = local / aSize + 0.5;
   vSignColor = aColor;
   vSignKind = aKind;
   vSignSeed = aSeed;
   vSignNormal = normalW;
   vSignSize = aSize;
+  vMargin = margin;
   vWorldPos = world;
 
   vec4 mvPosition = viewMatrix * vec4( world, 1.0 );
@@ -751,14 +891,18 @@ void main() {
 const SIGN_FRAGMENT = /* glsl */ `
 uniform float uTime;
 uniform float uIntensity;
+uniform float uHalo;
+uniform float uFogPenetration;
 
 varying vec2 vSignUv;
+varying vec2 vLocal;
 varying vec3 vSignColor;
 varying float vSignKind;
 varying float vSignSeed;
 varying vec3 vSignNormal;
 varying vec3 vWorldPos;
 varying vec2 vSignSize;
+varying float vMargin;
 
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
@@ -769,35 +913,81 @@ float roundedRect( vec2 uv, vec2 halfExtent, float radius ) {
   return length( max( d, 0.0 ) ) + min( max( d.x, d.y ), 0.0 ) - radius;
 }
 
+/**
+ * A procedural glyph: up to five hashed strokes (alternating horizontal and vertical, with hashed
+ * position and extent) inside a padded cell. Reads as kanji/katakana-like lettering, never as any
+ * real text, and costs a handful of ALU ops. g is 0..1 across the cell; f is the feather in cell units.
+ */
+float glyph( vec2 g, float seed, float f ) {
+  vec2 q = ( g - 0.5 ) / 0.78 + 0.5;
+  float m = 0.0;
+  for ( int i = 0; i < 5; i ++ ) {
+    float fi = float( i );
+    float live = step( 0.22, skyHash11( seed * 17.0 + fi * 3.1 ) );
+    float a = skyHash11( seed * 29.0 + fi * 5.7 );
+    float b = skyHash11( seed * 41.0 + fi * 7.3 );
+    float c = skyHash11( seed * 53.0 + fi * 2.9 );
+    vec2 p = mod( fi, 2.0 ) < 0.5 ? q : q.yx;
+    float pos = 0.08 + 0.84 * a;
+    float s0 = 0.04 + 0.42 * b;
+    float s1 = 0.96 - 0.42 * c;
+    float d = max( abs( p.y - pos ) - 0.075, max( s0 - p.x, p.x - s1 ) );
+    m = max( m, live * ( 1.0 - smoothstep( -f, f, d ) ) );
+  }
+  // A box frame on some glyphs (the radical-in-a-box shapes).
+  float boxed = step( 0.72, skyHash11( seed * 7.7 ) );
+  float frame = abs( roundedRect( q, vec2( 0.44 ), 0.02 ) ) - 0.06;
+  m = max( m, boxed * ( 1.0 - smoothstep( -f, f, frame ) ) );
+  return m;
+}
+
 void main() {
-  // Pixel-ish feather scaled to the sign's real size, so a 3 m banner is not softer than a 40 m strip.
-  float feather = 0.5 / max( min( vSignSize.x, vSignSize.y ), 1.0 );
+  vec2 fw = fwidth( vSignUv );
+  float feather = max( 0.5 / max( min( vSignSize.x, vSignSize.y ), 1.0 ), max( fw.x, fw.y ) * 1.2 );
+  vec2 uv = vSignUv;
+  float inside = step( 0.0, uv.x ) * step( uv.x, 1.0 ) * step( 0.0, uv.y ) * step( uv.y, 1.0 );
 
   float mask;
+  float rows;
   if ( vSignKind < 0.5 ) {
-    // Banner: stacked glyph rows of hashed width, like vertical kanji signage.
-    float rows = floor( 3.0 + skyHash11( vSignSeed * 91.0 ) * 5.0 );
-    float row = floor( vSignUv.y * rows );
-    float rowLocal = fract( vSignUv.y * rows );
-    float glyphWidth = 0.22 + 0.2 * skyHash11( row + vSignSeed * 13.0 );
-    float sd = roundedRect( vec2( vSignUv.x, rowLocal ), vec2( glyphWidth, 0.3 ), 0.06 );
-    mask = 1.0 - smoothstep( -feather, feather, sd );
+    // Banner / blade: a vertical column of square glyph cells, like vertical kanji signage.
+    rows = clamp( floor( vSignSize.y / vSignSize.x * 0.92 ), 2.0, 12.0 );
+    float row = floor( uv.y * rows );
+    vec2 cell = vec2( ( uv.x - 0.5 ) * 1.1 + 0.5, fract( uv.y * rows ) );
+    float g = glyph( cell, row + vSignSeed * 131.0, feather * rows * 1.2 );
+    float frame = 1.0 - smoothstep( -feather, feather, abs( roundedRect( uv, vec2( 0.47, 0.49 ), 0.03 ) ) - 0.012 );
+    mask = max( g, frame );
   } else if ( vSignKind < 1.5 ) {
-    // Strip: a solid tube with soft ends.
-    float sd = roundedRect( vSignUv, vec2( 0.46, 0.3 ), 0.18 );
-    mask = 1.0 - smoothstep( -feather * 2.0, feather * 2.0, sd );
+    // Panel: a lit tube border around a line of square glyph cells.
+    rows = clamp( floor( vSignSize.x / vSignSize.y * 0.85 ), 2.0, 12.0 );
+    float column = floor( uv.x * rows );
+    vec2 cell = vec2( fract( uv.x * rows ), ( uv.y - 0.5 ) * 1.25 + 0.5 );
+    float g = glyph( cell, column + vSignSeed * 97.0, feather * rows * 1.2 );
+    float frame = 1.0 - smoothstep( -feather, feather, abs( roundedRect( uv, vec2( 0.485, 0.46 ), 0.1 ) ) - 0.02 );
+    mask = max( g, frame );
   } else {
-    // Outline: a hollow box, the cheapest thing that still reads as a lit frame.
-    float sd = abs( roundedRect( vSignUv, vec2( 0.42, 0.38 ), 0.1 ) ) - 0.045;
+    // Outline: a hollow lit frame.
+    rows = 1.0;
+    float sd = abs( roundedRect( uv, vec2( 0.42, 0.38 ), 0.1 ) ) - 0.05;
     mask = 1.0 - smoothstep( -feather * 2.0, feather * 2.0, sd );
   }
+  // Once the glyphs stop resolving, settle to their average coverage instead of shimmering.
+  float glyphPixels = 1.0 / max( max( fw.x, fw.y ) * rows, 1e-5 );
+  mask = mix( 0.5, mask, smoothstep( 3.0, 9.0, glyphPixels ) ) * inside;
 
-  // Viewing angle: a sign bolted flat to a facade dims hard as it turns edge-on.
+  // Halo: exponential spill around the sign rectangle, in metres.
+  vec2 q = abs( vLocal ) - vSignSize * 0.5;
+  float outside = length( max( q, 0.0 ) );
+  float halo = exp( - outside / ( vMargin * 0.4 ) ) * ( 1.0 - inside * 0.6 );
+  float plate = inside * 0.14;
+
+  // Signs are double-sided: blades are seen from both canyon directions. Grazing views dim, but
+  // never to nothing — the halo is volumetric, not a decal.
   vec3 viewDir = normalize( cameraPosition - vWorldPos );
-  float facing = clamp( dot( vSignNormal, viewDir ), 0.0, 1.0 );
-  float angle = 0.1 + 0.9 * pow( facing, 0.65 );
+  float facing = abs( dot( vSignNormal, viewDir ) );
+  float angle = 0.3 + 0.7 * pow( facing, 0.5 );
 
-  // A few tubes flicker; the rest just breathe.
+  // A few tubes flicker; the rest breathe.
   float flickering = step( 0.9, skyHash11( vSignSeed * 29.0 + 5.0 ) );
   float flicker = mix(
     1.0 + 0.05 * sin( uTime * 2.3 + vSignSeed * 6.2831853 ),
@@ -805,13 +995,16 @@ void main() {
     flickering
   );
 
-  gl_FragColor = vec4( vSignColor * ( mask * angle * flicker * uIntensity ), 1.0 );
+  vec3 hot = mix( vSignColor, vec3( 1.0 ), 0.08 );
+  vec3 color = hot * mask * angle * uIntensity + vSignColor * ( plate + halo * uHalo );
+  gl_FragColor = vec4( color * flicker, 1.0 );
 
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
   #ifdef USE_FOG
-    // Additive: the haze swallows distant signs rather than tinting them.
-    gl_FragColor.rgb *= 1.0 - skyriverFogFactor();
+    // Additive: the haze swallows distant signs rather than tinting them — but light carries further
+    // than concrete, so the attenuation is a softened curve.
+    gl_FragColor.rgb *= pow( 1.0 - skyriverFogFactor(), uFogPenetration );
   #endif
 }
 `;
@@ -880,7 +1073,8 @@ export class SkyriverCity {
     this.signs = deriveNeonSigns(layout);
     this.group.name = 'skyriver.city';
 
-    const concreteAmbient = new THREE.Color(0x1b2636);
+    // T6R contrast: near-black concrete against the luminous haze (atmosphere.ts).
+    const concreteAmbient = new THREE.Color(0x111925);
     const wetTint = new THREE.Color(0x567ba3);
 
     // --- towers -----------------------------------------------------------------------------------
@@ -895,7 +1089,7 @@ export class SkyriverCity {
         uCellHeight: { value: SKYRIVER_CITY.windowCellHeightM },
         uRibSpacing: { value: SKYRIVER_CITY.ribSpacingM },
         uProjScale: { value: 400 },
-        uConcreteLevel: { value: 0.075 },
+        uConcreteLevel: { value: 0.05 },
         uConcreteAmbient: { value: concreteAmbient },
         uWetTint: { value: wetTint },
         ...skyriverFogUniforms(),
@@ -944,7 +1138,9 @@ export class SkyriverCity {
       fragmentShader: SIGN_FRAGMENT,
       uniforms: {
         uTime: { value: 0 },
-        uIntensity: { value: 1.35 },
+        uIntensity: { value: 1.9 },
+        uHalo: { value: 0.32 },
+        uFogPenetration: { value: 0.55 },
         ...skyriverFogUniforms(),
       },
       transparent: true,

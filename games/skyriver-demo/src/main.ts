@@ -32,6 +32,7 @@ import {
 import { TRAFFIC_QUALITY_TIERS, createSkyriverTraffic } from './render/traffic';
 import type { SkyriverTraffic, TrafficQuality } from './render/trafficTypes';
 import { createSkyriverShuttle } from './render/shuttle';
+import { createFlightPresenter } from './render/flightPresentation';
 import {
   applyCameraPose,
   createCameraPoseScratch,
@@ -360,6 +361,9 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   for (const object of traffic.objects) scene.scene.add(object);
 
   const shuttle = createSkyriverShuttle();
+  // T6R: the drawn shuttle pose. Autopilot rides a canyon-run track mapped 1:1 from the sim's own arc
+  // length; free flight draws the sim pose (render/flightPresentation.ts). Pure, presentation-only.
+  const presenter = createFlightPresenter(seed);
   for (const object of shuttle.objects) scene.scene.add(object);
 
   const session = createSkyriverRunnerSession(seed, startMode);
@@ -392,7 +396,10 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
 
   // Traffic rides the scene's frame listener, so it updates with the same interpolated time the city
   // and the atmosphere use, after the camera is in place.
+  const bufferSize = new THREE.Vector2();
   const onFrame = (frame: SkyriverFrame): void => {
+    scene.renderer.getDrawingBufferSize(bufferSize);
+    traffic.setPixelAngle(((frame.camera.fov * Math.PI) / 180) / Math.max(1, bufferSize.y));
     traffic.update({ tick: frame.tick, alpha: frame.alpha }, frame.camera.position);
   };
   scene.addFrameListener(onFrame);
@@ -620,10 +627,11 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
       }
       lastTick = state.current.tick;
 
-      writeCameraPose(poseScratch, state.flight, state.camera);
+      const presented = presenter.present(state);
+      writeCameraPose(poseScratch, presented, state.camera);
       applyCameraPose(scene.camera, poseScratch);
 
-      shuttle.setPose(state.flight.x, state.flight.y, state.flight.z, state.flight.yaw, state.flight.pitch);
+      shuttle.setPose(presented.x, presented.y, presented.z, presented.yaw, presented.pitch, presented.roll);
       shuttle.update({
         // 1.8 matches the sim's BOOST_MULTIPLIER (systems.ts); the plume pulse softens the edge.
         boostIntensity: state.flight.boostT > 0 ? 1.8 : 1.0,

@@ -150,12 +150,38 @@ const HUD_CSS = `
   bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
-  font-size: 10px;
-  color: rgba(142, 162, 189, 0.75);
+  max-width: calc(100vw - 220px);
+  white-space: nowrap;
+  padding: 7px 12px;
+  border: 1px solid rgba(150, 180, 220, 0.45);
+  border-radius: 4px;
+  /* T6R: opaque panel and near-white text (contrast > 10:1 over any frame of the city). */
+  background: rgba(6, 10, 18, 0.9);
+  font-size: 12px;
+  line-height: 1.5;
+  color: #e4ecf7;
   text-align: center;
 }
+.skyriver-hud__hint kbd {
+  font: inherit;
+  color: #ffffff;
+  font-weight: 700;
+}
+.skyriver-hud__hint-touch { display: none; }
+/* Touch devices get touch instructions, never desktop keys (T6R P1). */
+@media (hover: none) and (pointer: coarse) {
+  .skyriver-hud__hint-desktop { display: none; }
+  .skyriver-hud__hint-touch { display: inline; }
+  .skyriver-hud__hint {
+    left: calc(12px + env(safe-area-inset-left, 0px));
+    transform: none;
+    max-width: min(62vw, 420px);
+    white-space: normal;
+    font-size: 14px;
+    text-align: left;
+  }
+}
 @media (max-width: 520px) {
-  .skyriver-hud__hint { display: none; }
   .skyriver-hud__speed { font-size: 22px; }
 }
 `;
@@ -274,12 +300,25 @@ export function createSkyriverHud(options: SkyriverHudOptions): SkyriverHud {
   boostButton.type = 'button';
   controls.append(modeButton, boostButton);
 
-  const hint = element(
+  const hint = element(doc, 'div', 'skyriver-hud__hint');
+  const hintDesktop = element(doc, 'span', 'skyriver-hud__hint-desktop');
+  const desktopParts: readonly (readonly [string, string])[] = [
+    ['wasd', ' steer · '],
+    ['b', ' boost · '],
+    ['m', ' fly / autopilot · '],
+    ['shift z', ' throttle · '],
+    ['f3', ' stats'],
+  ];
+  for (const [key, label] of desktopParts) {
+    hintDesktop.append(element(doc, 'kbd', '', key), doc.createTextNode(label));
+  }
+  const hintTouch = element(
     doc,
-    'div',
-    'skyriver-hud__hint',
-    'drag to steer · hold lower third to boost · wasd / arrows · b boost · m mode · f3 stats',
+    'span',
+    'skyriver-hud__hint-touch',
+    'drag to steer · hold low screen to boost · mode: fly yourself',
   );
+  hint.append(hintDesktop, hintTouch);
 
   element_.append(readout, debugLine, controls, hint);
   options.root.appendChild(element_);

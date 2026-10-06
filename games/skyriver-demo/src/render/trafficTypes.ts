@@ -28,7 +28,7 @@ export const TRAFFIC_TICK_RATE_HZ = 30;
 export interface TrafficQuality {
   /** Cars evaluated and drawn. The plan's tiers are 2400 / 1200 / 600. */
   readonly carCount: number;
-  /** Hard ceiling on thruster/headlight glow quads drawn this tier. The plan's cap is 1,500. */
+  /** Cars that draw head/tail light streaks this tier. T6R: equal to carCount (one cheap batch). */
   readonly thrusterBudget: number;
 }
 
@@ -63,15 +63,15 @@ export interface TrafficPoint {
 export interface TrafficStats {
   /** Cars evaluated and drawn this tier. */
   readonly activeCars: number;
-  /** Glow quads drawn on the last update(). */
+  /** Cars whose light streaks were drawn on the last update(). */
   readonly activeThrusters: number;
-  /** Draw calls this module adds to the frame: 3 archetypes + 1 glow batch. */
+  /** Draw calls this module adds to the frame: 3 archetypes + 1 light-streak batch. */
   readonly drawCalls: number;
   /** Triangles in one instance of each archetype, indexed by archetype id. */
   readonly trianglesPerArchetype: readonly number[];
   /** Triangles submitted this tier, across all four batches. */
   readonly trianglesDrawn: number;
-  /** Current glow selection radius, metres. Self-tunes to hold the thruster budget. */
+  /** Retired with the T4 glow selection controller; always 0 since T6R (every car is lit). */
   readonly glowRadiusM: number;
 }
 
@@ -113,6 +113,12 @@ export interface SkyriverTraffic {
    * @param camera the camera's world position, used for glow selection and distance fade.
    */
   update(time: TrafficTime, camera: TrafficPoint): void;
+
+  /**
+   * Radians per drawing-buffer pixel, vertically (field of view / buffer height). The light streaks
+   * use it to keep a pixel-size floor, so distant rivers never alias away. Call on resize/DPR change.
+   */
+  setPixelAngle(radiansPerPixel: number): void;
 
   /** Switches tier. Allocation-free while quality.carCount <= the configured maxCarCount. */
   setQuality(quality: TrafficQuality): void;
