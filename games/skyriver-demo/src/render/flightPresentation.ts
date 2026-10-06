@@ -40,7 +40,12 @@ const TAU = Math.PI * 2;
 /** Lateral offset of each straight from the canyon centreline, metres. Also the U-turn radius. */
 export const TRACK_LANE_X_M = 230;
 /** Mean cruise altitude, metres, and the swell around it. Max ~770 m: far under the roofline. */
-export const TRACK_BASE_Y_M = 560;
+/**
+ * T7: raised from 560 m. The chase now flies high over a deep canyon and looks down into it (the
+ * Neon Rain still's composition): rivers below, walls rising beside, crowned rooflines and a hazy
+ * sky band above the lower stretches of wall.
+ */
+export const TRACK_BASE_Y_M = 1150;
 const TRACK_SWELL_A_M = 150;
 const TRACK_SWELL_B_M = 55;
 /** Whole swell cycles per lap; low counts keep the climb angle shallow. */
@@ -54,16 +59,24 @@ const TRACK_BANK_TURNS = 0.066;
 
 /** Free-flight hand-off easing, ticks (30 Hz). */
 const HANDOFF_TICKS = 75;
+/** Boost drama ramp-in seconds and release ticks (30 Hz). */
+const BOOST_RAMP_S = 0.4;
+const BOOST_RELEASE_TICKS = 18;
 /** Mirrors systems.ts PATH_TANGENT_STEP: the sim reads its own heading this far ahead. */
 const PATH_TANGENT_STEP = 0.02;
 
-if (TRACK_BASE_Y_M + TRACK_SWELL_A_M + TRACK_SWELL_B_M > SKYRIVER_ROOFLINE_MIN_M - 400) {
+if (TRACK_BASE_Y_M + TRACK_SWELL_A_M + TRACK_SWELL_B_M > SKYRIVER_ROOFLINE_MIN_M - 600) {
   throw new Error('SKYRIVER_TRACK_ABOVE_ROOFLINE');
 }
 
 /** The drawn pose: a SkyriverFlight (so cameraRig consumes it unchanged) plus a cosmetic roll. */
 export interface PresentedFlight extends SkyriverFlight {
   readonly roll: number;
+  /**
+   * T7: 0..1 boost drama level for the camera (FOV widen, shake). Ramps in over the first 0.4 s of
+   * boost, and eases out over BOOST_RELEASE_TICKS after the sim drops boostT to 0 on release.
+   */
+  readonly boostVisual: number;
 }
 
 type MutablePresented = { -readonly [K in keyof PresentedFlight]: PresentedFlight[K] };
@@ -188,8 +201,23 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
   }
 
   const result: MutablePresented = {
-    x: 0, y: 0, z: 0, yaw: 0, pitch: 0, speed: 0, mode: 0, autopilotT: 0, boostT: 0, roll: 0,
+    x: 0, y: 0, z: 0, yaw: 0, pitch: 0, speed: 0, mode: 0, autopilotT: 0, boostT: 0, roll: 0, boostVisual: 0,
   };
+  // Observed like handoffTick: the tick a boost release was seen, dropped when the tick runs back.
+  let boostEndTick: number | null = null;
+
+  function boostVisualOf(state: SkyriverRenderState): number {
+    const current = state.current;
+    if (boostEndTick !== null && current.tick < boostEndTick) boostEndTick = null;
+    if (state.flight.boostT > 0) {
+      boostEndTick = null;
+      return Math.min(1, state.flight.boostT / BOOST_RAMP_S);
+    }
+    if (state.previous.flight.boostT > 0 && current.tick - state.previous.tick === 1) boostEndTick = current.tick;
+    if (boostEndTick === null) return 0;
+    const k = (current.tick - boostEndTick + state.alpha) / BOOST_RELEASE_TICKS;
+    return k >= 1 ? 0 : 1 - k * k * (3 - 2 * k);
+  }
   const poseA: TrackPose = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, roll: 0 };
   const ring = { x: 0, y: 0, z: 0 };
   const ringAhead = { x: 0, y: 0, z: 0 };
@@ -204,6 +232,7 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
     result.mode = flight.mode;
     result.autopilotT = flight.autopilotT;
     result.roll = 0;
+    result.boostVisual = boostVisualOf(state);
 
     if (flight.mode === 0) {
       handoffTick = null;

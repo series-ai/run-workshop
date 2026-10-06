@@ -28,6 +28,10 @@
  * safe. The pure helpers (`skyriverQualityFor`, `skyriverDrawCallEstimate`) run anywhere.
  */
 import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
 import { deriveCityLayout, type SkyriverCityLayout } from '../sim/derive';
 import type { SkyriverProjection } from '../sim/runtime';
@@ -43,6 +47,12 @@ import { presentCityLayout } from './presentationLayout';
  * hard ceiling stays 16; this leaves headroom while keeping the tiers' estimates honest.
  */
 export const SKYRIVER_TOTAL_DRAW_CALL_BUDGET = 14;
+/**
+ * T7: the operator raised the frame ceiling to 32 calls, counted across every pass. The scene keeps
+ * its 14-call budget above; the post chain adds RenderPass (the scene), UnrealBloomPass (1 bright
+ * pass + 5 mips x 2 blurs + 1 composite + 1 blend = 13 full-screen draws) and OutputPass (1).
+ */
+export const SKYRIVER_FRAME_DRAW_CALL_CEILING = 32;
 /** T4's share (plan R4: "<= 4 traffic draw calls"). Defined here so T4 can import it on day one. */
 export const SKYRIVER_TRAFFIC_DRAW_CALL_BUDGET = 4;
 
@@ -63,7 +73,14 @@ export interface SkyriverQualitySettings {
   readonly rainStreaks: boolean;
   /** Device-pixel-ratio clamp. */
   readonly dpr: number;
+  /**
+   * T7 post bloom: 'full' at the high tier, 'half' renders the bloom chain at half resolution
+   * (medium), 'off' skips the composer entirely and renders straight to the canvas (low).
+   */
+  readonly bloom: SkyriverBloomMode;
 }
+
+export type SkyriverBloomMode = 'full' | 'half' | 'off';
 
 export const SKYRIVER_QUALITY: Readonly<Record<SkyriverQualityTier, SkyriverQualitySettings>> =
   Object.freeze({
@@ -73,6 +90,7 @@ export const SKYRIVER_QUALITY: Readonly<Record<SkyriverQualityTier, SkyriverQual
       godRays: true,
       rainStreaks: true,
       dpr: 1.5,
+      bloom: 'full',
     }),
     [SkyriverQualityTier.Medium]: Object.freeze({
       tier: SkyriverQualityTier.Medium,
@@ -80,6 +98,7 @@ export const SKYRIVER_QUALITY: Readonly<Record<SkyriverQualityTier, SkyriverQual
       godRays: true,
       rainStreaks: false,
       dpr: 1.25,
+      bloom: 'half',
     }),
     [SkyriverQualityTier.Low]: Object.freeze({
       tier: SkyriverQualityTier.Low,
@@ -87,6 +106,7 @@ export const SKYRIVER_QUALITY: Readonly<Record<SkyriverQualityTier, SkyriverQual
       godRays: false,
       rainStreaks: false,
       dpr: 1.0,
+      bloom: 'off',
     }),
   });
 
@@ -228,6 +248,10 @@ export class SkyriverScene {
 
   private quality: SkyriverQualitySettings;
   private maxPixelRatio: number;
+  private readonly composer: EffectComposer;
+  private readonly bloomPass: UnrealBloomPass;
+  /** Debug/A-B override: false forces the bloom chain off regardless of tier. */
+  private bloomAllowed = true;
   private readonly listeners: SkyriverFrameListener[] = [];
   private readonly frame: MutableFrame;
   private lastUpdateMs: number | null = null;
@@ -252,12 +276,16 @@ export class SkyriverScene {
       preserveDrawingBuffer: false,
     });
     this.renderer.setClearColor(0x04060b, 1);
-    // ACES rolls the neon highlights off instead of clipping them to white.
+    // ACES rolls the neon highlights off instead of clipping them to white. With the T7 composer,
+    // the scene renders linear HDR into a half-float target (three skips tone mapping and the sRGB
+    // transfer for render targets), bloom runs on that HDR, and OutputPass applies ACES + sRGB once.
+    // On the 'off' tier the scene renders straight to the canvas and the same chunks apply inline.
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.3;
+    this.renderer.toneMappingExposure = 1.25;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    // No render targets and no post chain anywhere in T3 (plan: mobile budget discipline).
     this.renderer.autoClear = true;
+    // Count draw calls across every pass of a frame (reset by hand in update()).
+    this.renderer.info.autoReset = false;
 
     this.scene = new THREE.Scene();
     this.scene.name = 'skyriver';
@@ -279,6 +307,17 @@ export class SkyriverScene {
 
     this.city = new SkyriverCity({ layout: this.layout, quality: this.quality });
     this.scene.add(this.city.group);
+
+    const hdrTarget = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType });
+    this.composer = new EffectComposer(this.renderer, hdrTarget);
+    this.composer.addPass(new RenderPass(this.scene, this.camera));
+    // Tuned on the GPU against a frozen frame (T7 sweep): the threshold sits well above lit
+    // concrete, haze, sky and the dim window field, so only true emissives bloom — sign tubes, the
+    // taillight strip, light-trail lamps, the plume core, beacons. A tight radius keeps it a halo,
+    // not a wash.
+    this.bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.55, 0.3, 1.9);
+    this.composer.addPass(this.bloomPass);
+    this.composer.addPass(new OutputPass());
 
     this.frame = {
       tick: 0,
@@ -316,8 +355,14 @@ export class SkyriverScene {
     this.height = Math.max(1, Math.floor(height));
 
     const devicePixelRatio = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, this.maxPixelRatio));
+    const pixelRatio = Math.min(devicePixelRatio, this.maxPixelRatio);
+    this.renderer.setPixelRatio(pixelRatio);
     this.renderer.setSize(this.width, this.height, false);
+    this.composer.setPixelRatio(pixelRatio);
+    this.composer.setSize(this.width, this.height);
+    if (this.quality.bloom === 'half') {
+      this.bloomPass.setSize(Math.round(this.width * pixelRatio * 0.5), Math.round(this.height * pixelRatio * 0.5));
+    }
 
     this.camera.aspect = this.width / this.height;
     this.camera.updateProjectionMatrix();
@@ -372,7 +417,19 @@ export class SkyriverScene {
     this.city.update(frame);
     for (let i = 0; i < this.listeners.length; i += 1) this.listeners[i](frame);
 
-    this.renderer.render(this.scene, this.camera);
+    this.renderer.info.reset();
+    if (this.bloomEnabled) this.composer.render(dt);
+    else this.renderer.render(this.scene, this.camera);
+  }
+
+  /** True when this frame goes through the bloom composer. */
+  get bloomEnabled(): boolean {
+    return this.bloomAllowed && this.quality.bloom !== 'off';
+  }
+
+  /** A/B evidence and debugging: force bloom off (false) or back to the tier default (true). */
+  setBloomAllowed(allowed: boolean): void {
+    this.bloomAllowed = allowed;
   }
 
   /** Called after a restore or a long background pause, so the next dt is not a spike. */
@@ -433,6 +490,8 @@ export class SkyriverScene {
     this.listeners.length = 0;
     this.city.dispose();
     this.atmosphere.dispose();
+    this.bloomPass.dispose();
+    this.composer.dispose();
     this.renderer.dispose();
   }
 }

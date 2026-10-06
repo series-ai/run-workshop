@@ -50,7 +50,7 @@ import {
 } from 'three';
 import type { Object3D } from 'three';
 
-import { deriveTrafficParams, TRAFFIC_ARCHETYPE_COUNT, TRAFFIC_MAX_CARS, TRAFFIC_MAX_ALTITUDE_M, TRAFFIC_MIN_ALTITUDE_M } from '../sim/derive';
+import { deriveTrafficParams, TRAFFIC_ARCHETYPE_COUNT, TRAFFIC_MAX_CARS } from '../sim/derive';
 import { CHASM_BOUNDS, SKYRIVER_TICK_RATE } from '../sim/systems';
 
 import {
@@ -105,38 +105,45 @@ export const TRAFFIC_QUALITY_TIERS: {
   low: Object.freeze({ carCount: 600, thrusterBudget: 600 }),
 });
 
-/** Rivers along the canyon, and rivers crossing it through the tower-row gaps. */
-const ALONG_RIVERS = 20;
-const CROSS_RIVERS = 10;
-/** Share of cars on crossing rivers. */
-const CROSS_SHARE = 0.16;
-/** Along-canyon wrap span, metres: the presented canyon runs to |z| ~ 2700; the fade hides the seam. */
-const ALONG_HALF_SPAN_M = 3400;
-/** Crossing wrap span, metres, centred on the corridor. */
-const CROSS_HALF_SPAN_M = 1500;
-/** Fade-in/out distance at the wrap ends, metres. */
-const WRAP_FADE_M = 700;
-/** Inset from the corridor walls, metres. Inner tower faces sit at |x| >= 440. */
-const WALL_MARGIN_M = 18;
-/** Drawn altitude range of the rivers, metres. The top stays under the skybridges (>= 1900 m). */
-/** T6R-2: no river skims the canyon bottom — a low layer of lights read as a floor plane. */
-const RIVER_MIN_Y_M = 240;
-const RIVER_MAX_Y_M = 1820;
-/** Tight in-river scatter, metres, so a river reads as one stream. */
-const RIVER_LATERAL_SCATTER_M = 7;
-const RIVER_VERTICAL_SCATTER_M = 5;
-/** Platoons per river, and how much of each platoon slot the cars occupy. */
-const RIVER_PLATOONS = 11;
-const PLATOON_FILL = 0.3;
+/**
+ * T7 river model. Both cycle-2 reviews still read the along-canyon streams as lanes converging on the
+ * vanishing point (a highway). Every river is now a straight segment that *crosses* the canyon at
+ * its own angle (up to +-58 degrees off square), height, gentle climb or dive, and direction, so
+ * the ribbon field is a criss-cross lattice at many depths — never parallel rows toward the slot.
+ * Each river emerges from one wall and disappears into the other (faded over RIVER_END_FADE_M), as
+ * if threading the gaps between the slabs.
+ */
+const RIVERS = 34;
+/** Half-width of the crossing, metres: past the inner faces (|x| ~ 500-560), where the fades hide the ends. */
+const CROSS_HALF_X_M = 620;
+const MAX_CROSS_ANGLE_RAD = 1.01;
+/** Rivers are spread along the canyon over this half-length, metres. */
+const RIVER_Z_HALF_M = 2700;
+const RIVER_END_FADE_M = 150;
+/** Altitude layers: a deep layer crossing under the shuttle, and a tall field above it. */
+// T7: with the track at ~945-1360 m, the canyon below holds two layers (deep, mid) and the field
+// above runs to just under the skybridges (>= 2700 m). Nothing crosses at the track's own height.
+const DEEP_MIN_Y_M = 250;
+const DEEP_MAX_Y_M = 480;
+const MID_MIN_Y_M = 620;
+const MID_MAX_Y_M = TRACK_BASE_Y_M - 330;
+const HIGH_MIN_Y_M = TRACK_BASE_Y_M + 360;
+const HIGH_MAX_Y_M = 2550;
+const DEEP_SHARE = 0.2;
+const MID_SHARE = 0.25;
+/** Climb or dive across one crossing, metres. */
+const RIVER_MAX_RISE_M = 140;
+/** Tight in-river scatter, metres, so a river reads as one ribbon. */
+const RIVER_LATERAL_SCATTER_M = 4;
+const RIVER_VERTICAL_SCATTER_M = 3;
+/** Platoons per river, and how much of each platoon slot the cars occupy: long ribbons, short gaps. */
+const RIVER_PLATOONS = 3;
+const PLATOON_FILL = 0.7;
 /** Derived speeds (30..90 m/s) are scaled up: rivers must visibly stream past a 150 m/s shuttle. */
-const SPEED_SCALE = 1.7;
-/** Keep rivers out of the autopilot's own airspace so cars do not fly through the shuttle. */
-/** T6R-2 road-read fix: along-canyon rivers start above the autopilot track's highest swell. */
-const ALONG_MIN_Y_M = TRACK_BASE_Y_M + 300;
-/** Rivers in the same altitude layer share a direction, so red and white never pair side by side. */
-const DIRECTION_LAYER_M = 170;
-/** Crossing rows sit at the gaps between derived tower rows (centres every 320 m). */
-const ROW_PITCH_M = 320;
+const SPEED_SCALE = 1.6;
+/** Inset from the corridor walls for escorts, metres. Inner tower faces sit at |x| >= 440. */
+const WALL_MARGIN_M = 18;
+const HULL_DRAW_DISTANCE_M = 320;
 
 /** Escort cars: [lateral, lift, forward mean, forward swing] in metres, shuttle frame. */
 const ESCORT_COUNT = 4;
@@ -159,8 +166,8 @@ const DISTANCE_DIM_FLOOR = 0.42;
 const HEAD_OFFSET_M = 2.4;
 const TAIL_OFFSET_M = 2.5;
 /** T6R-2: long continuous trails (platoon-mates' trails overlap into one ribbon), never dashes. */
-const TAIL_TRAIL_S = 1.1;
-const HEAD_TRAIL_S = 0.9;
+const TAIL_TRAIL_S = 0.7;
+const HEAD_TRAIL_S = 0.45;
 
 function fail(code: string): never {
   throw new Error(code);
@@ -575,7 +582,7 @@ void main() {
   vec4 v1 = viewMatrix * vec4( tailEnd, 1.0 );
   // Radius: a real lamp size up close, a pixel floor far away (~1.3 px radius).
   // T6R-2: 3-4x thicker at the lamp, tapering to a thread at the trail end.
-  float r0 = max( 0.7, -v0.z * uPixelAngle * 4.5 );
+  float r0 = max( 0.9, -v0.z * uPixelAngle * 3.4 );
   float r1 = max( 0.35, -v1.z * uPixelAngle * 1.1 );
   vec2 d = v1.xy - v0.xy;
   float len = length( d );
@@ -596,7 +603,9 @@ void main() {
   // Directional lamps: a headlight shows to the front, a taillight to the rear.
   vec3 toCam = normalize( cameraPosition - lamp );
   float facing = dot( dir, toCam ) * ( head ? 1.0 : -1.0 );
-  vIntensity = aCarFade * smoothstep( -0.35, 0.5, facing );
+  // T7: the red tail trail reads from almost any angle (a long-exposure streak); the white head
+  // lamp only toward the front, so crossing rivers read as red ribbons with white oncoming points.
+  vIntensity = aCarFade * ( head ? smoothstep( 0.1, 0.7, facing ) : smoothstep( -0.85, 0.3, facing ) );
 
   #ifdef USE_FOG
     vFogDepth = - v.z;
@@ -626,7 +635,8 @@ void main() {
   float core = exp( - dist * dist * 10.0 );
   // Brightest at the lamp, fading down the trail.
   float t = vLengthR > 0.0 ? along / vLengthR : 0.0;
-  float trail = pow( 1.0 - t, 1.3 );
+  // max(): with fast-math division t can land a hair above 1, and pow(negative) is NaN.
+  float trail = pow( max( 1.0 - t, 0.0 ), 1.3 );
 
   vec3 headColor = vec3( 1.0, 0.93, 0.82 );
   vec3 tailColor = vec3( 1.0, 0.07, 0.045 );
@@ -638,7 +648,7 @@ void main() {
 ${SKYRIVER_OUTPUT_APPLY_GLSL}
   #ifdef USE_FOG
     // Lights carry further through the rain than the concrete they pass: a softened fog curve.
-    gl_FragColor.rgb *= pow( 1.0 - skyriverFogFactor(), uFogPenetration );
+    gl_FragColor.rgb *= pow( max( 1.0 - skyriverFogFactor(), 0.0 ), uFogPenetration );
   #endif
 }
 `;
@@ -722,41 +732,43 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
 
   const params = deriveTrafficParams(options.seed, maxCarCount);
 
-  // ---- Rivers: lane position, altitude, axis and direction. Derived from the seed by hashing.
-  const riverCount = ALONG_RIVERS + CROSS_RIVERS;
-  const riverLane = new Float32Array(riverCount);
-  const riverY = new Float32Array(riverCount);
-  const riverDirection = new Float32Array(riverCount);
-  const riverSpeedScale = new Float32Array(riverCount);
+  // ---- Rivers: origin, unit axis, length and direction. Derived from the seed by hashing.
+  const riverOx = new Float32Array(RIVERS);
+  const riverOy = new Float32Array(RIVERS);
+  const riverOz = new Float32Array(RIVERS);
+  const riverDx = new Float32Array(RIVERS);
+  const riverDy = new Float32Array(RIVERS);
+  const riverDz = new Float32Array(RIVERS);
+  const riverLength = new Float32Array(RIVERS);
+  const riverDirection = new Float32Array(RIVERS);
+  const riverSpeedScale = new Float32Array(RIVERS);
   const seedSalt = options.seed | 0;
-  for (let river = 0; river < riverCount; river += 1) {
-    const along = river < ALONG_RIVERS;
-    riverDirection[river] = river % 2 === 0 ? 1 : -1;
-    riverSpeedScale[river] = 0.85 + 0.3 * hash01(seedSalt ^ 0x5eed, river * 7 + 1);
-    if (along) {
-      // Fifth Element layers, T6R-2: every along-canyon river flies above the autopilot band, at
-      // many heights and lateral offsets. A stream converging on the vanishing point *below* the
-      // shuttle reads as a road marking however it is drawn, so below the shuttle only crossing
-      // rivers run (they cut across the view and never converge).
-      const layer = (river + hash01(seedSalt, river * 3 + 2) * 0.8) / ALONG_RIVERS;
-      const y = ALONG_MIN_Y_M + layer * (RIVER_MAX_Y_M - ALONG_MIN_Y_M);
-      // Lanes stratified across the corridor (golden-ratio sequence), so both sides carry rivers.
-      const laneFraction = (0.5 + river * 0.6180339887 + hash01(seedSalt, river * 3 + 1) * 0.08) % 1;
-      const x = laneMinX + laneFraction * (laneMaxX - laneMinX);
-      riverLane[river] = x;
-      riverY[river] = clamp(y, RIVER_MIN_Y_M, RIVER_MAX_Y_M);
-      riverDirection[river] = Math.floor(riverY[river] / DIRECTION_LAYER_M) % 2 === 0 ? 1 : -1;
-    } else {
-      // Crossing rivers ride the gap between two tower rows, deep down or high up.
-      const crossIndex = river - ALONG_RIVERS;
-      const row = Math.floor(hash01(seedSalt, river * 5 + 3) * 10) - 5;
-      riverLane[river] = (row + 0.5) * ROW_PITCH_M;
-      const high = crossIndex % 2 === 0;
-      const y = high
-        ? 1050 + hash01(seedSalt, river * 5 + 4) * 700
-        : 90 + hash01(seedSalt, river * 5 + 4) * 230;
-      riverY[river] = clamp(y, RIVER_MIN_Y_M, RIVER_MAX_Y_M);
-    }
+  for (let river = 0; river < RIVERS; river += 1) {
+    const h = (k: number): number => hash01(seedSalt, river * 13 + k);
+    riverDirection[river] = h(1) < 0.5 ? 1 : -1;
+    riverSpeedScale[river] = 0.85 + 0.3 * h(2);
+    // Stratified along the canyon so every stretch of the flight has crossings ahead.
+    const zMid = -RIVER_Z_HALF_M + ((river + h(3) * 0.9) / RIVERS) * 2 * RIVER_Z_HALF_M;
+    const angle = (h(4) * 2 - 1) * MAX_CROSS_ANGLE_RAD;
+    const layer = h(5);
+    const deep = layer < DEEP_SHARE;
+    const mid = !deep && layer < DEEP_SHARE + MID_SHARE;
+    const yMid = deep
+      ? DEEP_MIN_Y_M + h(6) * (DEEP_MAX_Y_M - DEEP_MIN_Y_M)
+      : mid
+        ? MID_MIN_Y_M + h(6) * (MID_MAX_Y_M - MID_MIN_Y_M)
+        : HIGH_MIN_Y_M + Math.pow(h(6), 0.8) * (HIGH_MAX_Y_M - HIGH_MIN_Y_M);
+    const rise = (h(7) * 2 - 1) * RIVER_MAX_RISE_M * (deep ? 0.3 : 1);
+    const run = 2 * CROSS_HALF_X_M;
+    const dzTotal = Math.tan(angle) * run;
+    const length = Math.hypot(run, dzTotal, rise);
+    riverDx[river] = run / length;
+    riverDy[river] = rise / length;
+    riverDz[river] = dzTotal / length;
+    riverOx[river] = -CROSS_HALF_X_M;
+    riverOy[river] = yMid - rise * 0.5;
+    riverOz[river] = zMid - dzTotal * 0.5;
+    riverLength[river] = length;
   }
 
   // ---- Per-car constants. Indexed by global car index, so a tier change recomputes nothing.
@@ -784,23 +796,14 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   }
   const groupFill = new Int32Array(TRAFFIC_ARCHETYPE_COUNT);
 
-  const altitudeSpan = TRAFFIC_MAX_ALTITUDE_M - TRAFFIC_MIN_ALTITUDE_M;
   for (let car = 0; car < maxCarCount; car += 1) {
     const archetype = params.archetype[car];
     const group = groupCars[archetype];
     group[groupFill[archetype]] = car;
     groupFill[archetype] = groupFill[archetype] + 1;
 
-    // River choice: the derived band picks the altitude stratum, the lane the river within it.
-    const crossing = hash01(car, 0xc205) < CROSS_SHARE;
-    let river: number;
-    if (crossing) {
-      river = ALONG_RIVERS + Math.min(CROSS_RIVERS - 1, Math.floor(hash01(car, 0x7a11) * CROSS_RIVERS));
-    } else {
-      const stratum = (params.altitude[car] - TRAFFIC_MIN_ALTITUDE_M) / altitudeSpan;
-      const jitter = (params.lane[car] * 0.5) * (4 / ALONG_RIVERS);
-      river = Math.min(ALONG_RIVERS - 1, Math.max(0, Math.floor((stratum + jitter) * ALONG_RIVERS)));
-    }
+    // River choice by hash: the derived band/lane spread cars evenly over every river.
+    const river = Math.min(RIVERS - 1, Math.floor(hash01(car, 0x7a11) * RIVERS));
     carRiver[car] = river;
     carOffsetLateral[car] = params.lane[car] * RIVER_LATERAL_SCATTER_M;
     carOffsetY[car] = (hash01(car, 0x2f3b) * 2 - 1) * RIVER_VERTICAL_SCATTER_M;
@@ -875,7 +878,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       uTailOffset: { value: TAIL_OFFSET_M },
       uHeadTrail: { value: HEAD_TRAIL_S },
       uTailTrail: { value: TAIL_TRAIL_S },
-      uIntensity: { value: 2.4 },
+      // T7: dense crossing ribbons overlap several trails per pixel; bloom supplies the glow.
+      uIntensity: { value: 0.7 },
       uFogPenetration: { value: 0.2 },
       ...skyriverFogUniforms(),
     },
@@ -924,8 +928,6 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   let streaksUsed = 0;
 
   const invDimRangeSq = 1 / (DISTANCE_DIM_RANGE_M * DISTANCE_DIM_RANGE_M);
-  const alongSpan = ALONG_HALF_SPAN_M * 2;
-  const crossSpan = CROSS_HALF_SPAN_M * 2;
 
   function setQuality(quality: TrafficQuality): void {
     assertQuality(quality, maxCarCount);
@@ -965,22 +967,21 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         const river = carRiver[car];
         const direction = riverDirection[river];
         const speed = carSpeed[car];
-        const crossing = river >= ALONG_RIVERS;
-        const span = crossing ? crossSpan : alongSpan;
-        const halfSpan = span * 0.5;
+        const span = riverLength[river];
 
-        // Position along the river at continuous time, wrapped over the span.
+        // Position along the river at continuous time, wrapped over the crossing.
         let s = (carPhase[car] * span + direction * speed * t) % span;
         if (s < 0) s += span;
-        const along = s - halfSpan;
-        const edge = halfSpan - Math.abs(along);
-        let fade = smoothstep(0, WRAP_FADE_M, edge);
-        let py = riverY[river] + carOffsetY[car] + Math.sin(t * 0.7 + carBob[car]) * 1.6;
+        const edge = Math.min(s, span - s);
+        let fade = smoothstep(0, RIVER_END_FADE_M, edge);
+        const bob = Math.sin(t * 0.7 + carBob[car]) * 1.2;
         let carSpeedNow = speed;
 
         let px: number;
+        let py: number;
         let pz: number;
         let fx: number;
+        let fy = 0;
         let fz: number;
         if (car < ESCORT_COUNT && anchorValid) {
           const e = car * 4;
@@ -1005,20 +1006,29 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           fz = az * heading;
           carSpeedNow = heading > 0 ? anchor[5]! : 170;
           fade = 1;
-        } else if (crossing) {
-          px = along;
-          pz = riverLane[river] + carOffsetLateral[car];
-          fx = direction;
-          fz = 0;
         } else {
-          px = clamp(riverLane[river] + carOffsetLateral[car], laneMinX, laneMaxX);
-          pz = along;
-          fx = 0;
-          fz = direction;
+          // Lateral scatter is perpendicular to the river in the horizontal plane.
+          const dx = riverDx[river]!;
+          const dz = riverDz[river]!;
+          const horizontal = Math.hypot(dx, dz) || 1;
+          const lateral = carOffsetLateral[car]!;
+          px = riverOx[river]! + dx * s + (dz / horizontal) * lateral;
+          py = riverOy[river]! + riverDy[river]! * s + carOffsetY[car]! + bob;
+          pz = riverOz[river]! + dz * s - (dx / horizontal) * lateral;
+          fx = (dx / horizontal) * direction;
+          fz = (dz / horizontal) * direction;
+          fy = riverDy[river]! * direction;
         }
 
-        // Axis-aligned basis: right = up x forward, up = +Y.
-        const scale = sizeScale[car];
+        const toCarX = px - camX;
+        const toCarY = py - camY;
+        const toCarZ = pz - camZ;
+        // T7 hull LOD: past HULL_DRAW_DISTANCE_M a body is a few pixels that only bites dark beads
+        // out of the ribbon behind it, so it collapses to nothing and the light carries the read.
+        const hullVisible = toCarX * toCarX + toCarY * toCarY + toCarZ * toCarZ < HULL_DRAW_DISTANCE_M * HULL_DRAW_DISTANCE_M;
+
+        // Basis: right = up x forward, up = +Y.
+        const scale = hullVisible ? sizeScale[car] : 0;
         const offset = slot * 16;
         matrices[offset] = fz * scale;
         matrices[offset + 1] = 0;
@@ -1054,7 +1064,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           streakPosArray[p + 2] = pz;
           const d = streaksUsed * 4;
           streakDirArray[d] = fx;
-          streakDirArray[d + 1] = 0;
+          streakDirArray[d + 1] = fy;
           streakDirArray[d + 2] = fz;
           streakDirArray[d + 3] = carSpeedNow;
           streakFadeArray[streaksUsed] = fade;

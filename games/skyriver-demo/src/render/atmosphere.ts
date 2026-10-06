@@ -171,8 +171,12 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
     vec3 color = mix( fogColor, uSkyFogColorHigh, skyriverFogGrade() );
     // Neon the haze has scattered: magenta low in the canyon, cyan through the middle band.
     float h = vSkyFogHeight;
-    color += vec3( 0.05, 0.0, 0.035 ) * exp( - pow( ( h - 250.0 ) / 260.0, 2.0 ) );
-    color += vec3( 0.0, 0.03, 0.04 ) * exp( - pow( ( h - 950.0 ) / 380.0, 2.0 ) );
+    // Squares, not pow(): GLSL pow() is undefined for a negative base, and one NaN pixel blacks out
+    // the whole frame once the bloom blur spreads it (found in T7).
+    float lowBand = ( h - 250.0 ) / 260.0;
+    float midBand = ( h - 950.0 ) / 380.0;
+    color += vec3( 0.035, 0.0, 0.026 ) * exp( - lowBand * lowBand );
+    color += vec3( 0.0, 0.03, 0.04 ) * exp( - midBand * midBand );
     return mix( color, uSkyFogColorDeep, skyriverFogDeep() );
   }
 #endif

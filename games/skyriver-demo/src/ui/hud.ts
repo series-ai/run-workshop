@@ -179,13 +179,15 @@ const HUD_CSS = `
   .skyriver-hud__hint--faded { opacity: 0; }
   .skyriver-hud__hint-desktop { display: none; }
   .skyriver-hud__hint-touch { display: inline; }
+  /* T7: one line, top-centre above the shuttle — never over the lower-third boost zone. */
   .skyriver-hud__hint {
-    left: calc(12px + env(safe-area-inset-left, 0px));
-    transform: none;
-    max-width: min(62vw, 420px);
-    white-space: normal;
-    font-size: 14px;
-    text-align: left;
+    top: calc(14px + env(safe-area-inset-top, 0px));
+    bottom: auto;
+    max-width: 60vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
   }
 }
 @media (max-width: 520px) {
@@ -323,7 +325,7 @@ export function createSkyriverHud(options: SkyriverHudOptions): SkyriverHud {
     doc,
     'span',
     'skyriver-hud__hint-touch',
-    'drag to steer · hold low screen to boost · mode: fly yourself',
+    'drag: steer · hold low: boost · mode: fly',
   );
   hint.append(hintDesktop, hintTouch);
   // Only has a visible effect under the coarse-pointer media query (CSS above).

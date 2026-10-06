@@ -23,7 +23,7 @@
  */
 import {
   SKYRIVER_QUALITY,
-  SKYRIVER_TOTAL_DRAW_CALL_BUDGET,
+  SKYRIVER_FRAME_DRAW_CALL_CEILING,
   SkyriverQualityTier,
   SkyriverScene,
   skyriverNextTierDown,
@@ -628,7 +628,10 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
       lastTick = state.current.tick;
 
       const presented = presenter.present(state);
-      writeCameraPose(poseScratch, presented, state.camera);
+      writeCameraPose(poseScratch, presented, state.camera, {
+        boost: presented.boostVisual,
+        time: (state.current.tick + state.alpha) / 30,
+      });
       applyCameraPose(scene.camera, poseScratch);
 
       // T6R-2: the drawn nose follows under half the climb angle (the sim allows 54 degrees), so the
@@ -683,7 +686,7 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
         tier: tiers.tier,
         fps: tiers.fps,
         drawCalls: debug.calls,
-        drawCallBudget: SKYRIVER_TOTAL_DRAW_CALL_BUDGET,
+        drawCallBudget: SKYRIVER_FRAME_DRAW_CALL_CEILING,
         cars: trafficStats.activeCars,
         tick: renderState?.current.tick ?? 0,
         alpha: renderState?.alpha ?? 0,
@@ -735,7 +738,7 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
         fps: tiers.fps,
         averageFrameMs: tiers.averageFrameMs,
         drawCalls: debug.calls,
-        drawCallBudget: SKYRIVER_TOTAL_DRAW_CALL_BUDGET,
+        drawCallBudget: SKYRIVER_FRAME_DRAW_CALL_CEILING,
         cars: trafficStats.activeCars,
         thrusters: trafficStats.activeThrusters,
         frames,
@@ -818,6 +821,9 @@ export function boot(): SkyriverApp {
     startMode: params.get('mode') === 'freefly' ? 'freefly' : 'autopilot',
     debug: params.get('debug') === '1',
   });
+
+  // T7 A/B evidence: ?bloom=0 renders the same frame without the post chain.
+  if (params.get('bloom') === '0') app.scene.setBloomAllowed(false);
 
   (window as unknown as { __skyriver?: SkyriverApp }).__skyriver = app;
 

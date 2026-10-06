@@ -42,17 +42,18 @@ type Rgb = readonly [number, number, number];
 type Vec3 = readonly [number, number, number];
 
 /** Linear-space paint. The hull is a deep lacquered red, never pink. */
-const PAINT: Rgb = [0.15, 0.008, 0.01];
+const PAINT: Rgb = [0.12, 0.006, 0.008];
 const PAINT_DARK: Rgb = [0.05, 0.003, 0.004];
 const GLAZING: Rgb = [0.012, 0.016, 0.024];
 const TRIM: Rgb = [0.018, 0.018, 0.022];
 /** HDR emissive: ACES maps this to a saturated, hot red. */
-const TAILLIGHT: Rgb = [1.7, 0.02, 0.012];
+/** T7: tuned for the bloom pass — above its threshold, so the strip glows without washing out. */
+const TAILLIGHT: Rgb = [2.4, 0.0, 0.0];
 const TAILLIGHT_SOFT: Rgb = [0.9, 0.01, 0.008];
-const THROAT: Rgb = [2.6, 3.6, 5.2];
+const THROAT: Rgb = [0.9, 1.3, 2.0];
 const MARKER: Rgb = [0.25, 1.6, 2.0];
 /** T6R-2: the clearcoat catching the city — a narrow hot highlight along each shoulder line. */
-const CLEARCOAT: Rgb = [1.1, 0.42, 0.46];
+const CLEARCOAT: Rgb = [0.8, 0.3, 0.33];
 
 /** Key light from above-front-right; a cool rim from the overcast on up-facing faces. */
 const KEY: Vec3 = normalize3([0.35, 0.85, 0.4]);
@@ -81,8 +82,15 @@ function pushTri(build: HullBuild, a: Vec3, b: Vec3, c: Vec3, color: Rgb, emissi
   if (!emissive) {
     // Double-sided material, so shade on |n·L| — winding cannot flip a face dark.
     const key = Math.abs(n[0] * KEY[0] + n[1] * KEY[1] + n[2] * KEY[2]);
-    const shade = 0.38 + 0.75 * key;
-    const up = Math.max(0, Math.abs(n[1]));
+    // T7 sculpted-metal gradient: lit from the overcast above, undersides fall to near-black.
+    // Up/down is resolved from the face centre's height (the material is double-sided, so the
+    // winding cannot be trusted for the sign of n.y).
+    const centreY = (a[1] + b[1] + c[1]) / 3;
+    const vertical = Math.abs(n[1]);
+    const facesUp = centreY > -0.3;
+    const gradient = vertical > 0.6 ? (facesUp ? 1.35 : 0.12) : 0.55 + 0.45 * Math.min(1, Math.max(0, (centreY + 0.8) / 1.8));
+    const shade = (0.3 + 0.75 * key) * gradient;
+    const up = facesUp ? vertical : 0;
     rgb = [
       color[0] * shade + RIM[0] * up,
       color[1] * shade + RIM[1] * up,
@@ -301,23 +309,24 @@ void main() {
     float t = vTS.x;
     float s = vTS.y;
     float halo = exp( - s * s * 2.6 );
-    float core = exp( - s * s * 26.0 ) * pow( 1.0 - t, 2.2 );
-    float along = smoothstep( 0.0, 0.03, t ) * pow( 1.0 - t, 1.25 );
+    float rest = max( 1.0 - t, 0.0 );
+    float core = exp( - s * s * 26.0 ) * pow( rest, 2.2 );
+    float along = smoothstep( 0.0, 0.03, t ) * pow( rest, 1.25 );
     // Shock diamonds drifting down the jet.
     float diamonds = 0.82 + 0.18 * sin( t * 46.0 - uTime * 70.0 );
     // T6R-2: the first fifth of the jet is white-hot.
     float throat = ( 1.0 - smoothstep( 0.12, 0.24, t ) ) * exp( - s * s * 5.0 );
-    color = ( outer * halo * along * 0.7 + hot * core * 1.6 ) * diamonds + vec3( 1.0 ) * throat * 1.5;
+    color = ( outer * halo * along * 0.8 + hot * core * 1.4 ) * diamonds + vec3( 1.0 ) * throat * 1.1;
   } else if ( vKind < 1.5 ) {
     float r = length( vTS );
     float disc = exp( - r * r * 5.0 );
     float pin = exp( - r * r * 40.0 );
-    color = outer * disc * 0.55 + hot * pin * 1.4;
+    color = outer * disc * 0.35 + hot * pin * 0.7;
   } else {
     // The taillight strip's bloom: a hot red bar fading out vertically and at the ends.
     float across = exp( - vTS.y * vTS.y * 7.0 );
     float ends = 1.0 - smoothstep( 0.72, 1.0, abs( vTS.x ) );
-    color = vec3( 1.0, 0.04, 0.03 ) * across * ends * 0.55 / max( uIntensity, 0.001 );
+    color = vec3( 1.0, 0.04, 0.03 ) * across * ends * 0.3 / max( uIntensity, 0.001 );
   }
   gl_FragColor = vec4( color * uIntensity, 1.0 );
 }
@@ -379,8 +388,9 @@ function buildPlumeGeometry(): THREE.BufferGeometry {
 }
 
 /** Cruise and boost plume shapes, metres. Boost roughly doubles the jet and brightens the core. */
-const PLUME_CRUISE = Object.freeze({ length: 8, width: 1.5, flare: 1.5, intensity: 1.0 });
-const PLUME_BOOST = Object.freeze({ length: 19, width: 2.3, flare: 2.6, intensity: 1.9 });
+// T7: intensities halved for the bloom pass, which now supplies the glow the raw values used to fake.
+const PLUME_CRUISE = Object.freeze({ length: 8, width: 1.4, flare: 1.2, intensity: 0.55 });
+const PLUME_BOOST = Object.freeze({ length: 19, width: 2.2, flare: 2.0, intensity: 1.1 });
 
 export function createSkyriverShuttle(): SkyriverShuttle {
   const build = buildHull();

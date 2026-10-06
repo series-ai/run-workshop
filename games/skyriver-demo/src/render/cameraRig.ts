@@ -35,11 +35,12 @@ import { SKYRIVER_ROOFLINE_MIN_M } from './presentationLayout';
 const TURNS_TO_RADIANS = Math.PI * 2;
 
 /** Boom length at cruise speed, metres. Far enough back to hold the whole shuttle in frame. */
-export const CHASE_DISTANCE_M = 19;
+export const CHASE_DISTANCE_M = 22;
 /** Extra boom length at top speed. Acceleration reads as the city pulling away behind the craft. */
 export const CHASE_SPEED_PULLBACK_M = 10;
 /** Boom lift above the shuttle, metres. Puts the rear deck and its taillight strip in view. */
-export const CHASE_HEIGHT_M = 4.6;
+/** T7: craned up — the chase looks down on the shuttle and into the canyon below it. */
+export const CHASE_HEIGHT_M = 10.5;
 /**
  * How much of the shuttle's own climb angle the boom follows, 0..1.
  *
@@ -61,7 +62,21 @@ export const CHASE_LOOK_AHEAD_M = 140;
  * Aim point drop, metres. Tilts the view down into the canyon so the shuttle sits in the lower third
  * and the vanishing point sits ahead of and above it (the Neon Rain composition).
  */
-export const CHASE_LOOK_DOWN_M = 9;
+/** T7: ~12 degrees more look-down than T6R-2 (aim drop 9 m -> 36 m at 140 m ahead, plus the crane). */
+export const CHASE_LOOK_DOWN_M = 36;
+/** T7 boost drama: field-of-view widen at full boost, degrees, and camera shake amplitude, metres. */
+export const CHASE_BOOST_FOV_DEG = 9;
+export const CHASE_BOOST_SHAKE_M = 0.28;
+export const CHASE_BASE_FOV_DEG = 62;
+/**
+ * T7 fly mode: the boom's heading is compressed toward the canyon axis by this factor on its
+ * across-canyon component, so the vanishing point and both walls stay in frame while the pilot
+ * crabs. Continuous everywhere; only a heading within a few degrees of dead-across still faces a wall.
+ */
+export const CHASE_FLY_YAW_COMPRESSION = 0.45;
+/** T7 fly mode: when the wall ahead is nearer than this, metres, the boom lengthens (up to +14 m). */
+export const CHASE_WALL_PULLBACK_RANGE_M = 380;
+
 /** The camera never drops below this altitude, metres. Keeps a dive out of the city floor. */
 export const CHASE_MIN_ALTITUDE_M = Math.max(12, CHASM_BOUNDS.minY - 40);
 /** The camera never rises above this, metres: under the presented roofline with margin. */
@@ -87,6 +102,8 @@ export interface SkyriverCameraPose {
   readonly target: SkyriverVec3;
   /** Boom length actually used this frame, metres. For the debug line. */
   readonly distance: number;
+  /** T7: vertical field of view, degrees (absent on poses built before T7). */
+  readonly fov?: number;
 }
 
 /** The writable form of a pose, for a caller that reuses one scratch object per frame. */
@@ -94,6 +111,16 @@ export interface SkyriverCameraPoseScratch {
   position: { x: number; y: number; z: number };
   target: { x: number; y: number; z: number };
   distance: number;
+  /** T7: vertical field of view for this frame, degrees. */
+  fov: number;
+}
+
+/** T7 presentation-only effects, each a pure function of the frame's state. */
+export interface SkyriverCameraEffects {
+  /** 0..1 boost drama level (flightPresentation.ts boostVisual). */
+  readonly boost: number;
+  /** Continuous presentation time, seconds (tick + alpha), for the shake phase. */
+  readonly time: number;
 }
 
 /**
@@ -108,6 +135,7 @@ export function createCameraPoseScratch(): SkyriverCameraPoseScratch {
     position: { x: 0, y: 0, z: 0 },
     target: { x: 0, y: 0, z: 0 },
     distance: CHASE_DISTANCE_M,
+    fov: CHASE_BASE_FOV_DEG,
   };
 }
 
@@ -134,8 +162,13 @@ export function writeCameraPose(
   out: SkyriverCameraPoseScratch,
   flight: SkyriverFlight,
   camera: SkyriverCamera,
+  effects: SkyriverCameraEffects = { boost: 0, time: 0 },
 ): SkyriverCameraPoseScratch {
-  const boomYawRad = (flight.yaw + camera.orbitYaw) * TURNS_TO_RADIANS;
+  let headingRad = flight.yaw * TURNS_TO_RADIANS;
+  if (flight.mode === 1) {
+    headingRad = Math.atan2(Math.sin(headingRad) * CHASE_FLY_YAW_COMPRESSION, Math.cos(headingRad));
+  }
+  const boomYawRad = headingRad + camera.orbitYaw * TURNS_TO_RADIANS;
   const boomPitchRad = clamp(
     flight.pitch * CHASE_PITCH_FOLLOW + camera.orbitPitch,
     CHASE_PITCH_MIN_TURNS,
@@ -148,8 +181,15 @@ export function writeCameraPose(
   const boomY = Math.sin(boomPitchRad);
   const boomZ = Math.cos(boomYawRad) * boomCosPitch;
 
-  const distance = CHASE_DISTANCE_M
+  let distance = CHASE_DISTANCE_M
     + CHASE_SPEED_PULLBACK_M * speedFactor(flight.speed, flight.boostT);
+  if (flight.mode === 1 && Math.abs(boomX) > 0.05) {
+    // Distance to the inner wall face (|x| ~ 510) along the boom's heading.
+    const wallAhead = ((Math.sign(boomX) * 510) - flight.x) / boomX;
+    if (wallAhead < CHASE_WALL_PULLBACK_RANGE_M) {
+      distance += Math.min(14, (CHASE_WALL_PULLBACK_RANGE_M - Math.max(wallAhead, 0)) * 0.05);
+    }
+  }
 
   out.distance = distance;
   out.position.x = clamp(flight.x - boomX * distance, -CHASE_MAX_ABS_X_M, CHASE_MAX_ABS_X_M);
@@ -167,6 +207,17 @@ export function writeCameraPose(
   out.target.x = flight.x + boomX * CHASE_LOOK_AHEAD_M;
   out.target.y = flight.y + boomY * CHASE_LOOK_AHEAD_M - CHASE_LOOK_DOWN_M;
   out.target.z = flight.z + boomZ * CHASE_LOOK_AHEAD_M;
+
+  // Boost drama: a wider lens and a fine, fast shake. Both are pure functions of (boost, time).
+  const boost = clamp(effects.boost, 0, 1);
+  out.fov = CHASE_BASE_FOV_DEG + CHASE_BOOST_FOV_DEG * boost * boost * (3 - 2 * boost);
+  if (boost > 0) {
+    const t = effects.time;
+    const amplitude = CHASE_BOOST_SHAKE_M * boost;
+    out.position.x += amplitude * Math.sin(t * 37.1) * Math.sin(t * 5.3 + 1.1);
+    out.position.y += amplitude * Math.sin(t * 43.7 + 2.0) * Math.sin(t * 6.1);
+    out.target.y += amplitude * 2.2 * Math.sin(t * 29.3 + 0.7);
+  }
 
   return out;
 }
@@ -197,4 +248,8 @@ export function cameraPoseAt(
 export function applyCameraPose(camera: PerspectiveCamera, pose: SkyriverCameraPose): void {
   camera.position.set(pose.position.x, pose.position.y, pose.position.z);
   camera.lookAt(pose.target.x, pose.target.y, pose.target.z);
+  if (pose.fov !== undefined && Math.abs(camera.fov - pose.fov) > 1e-3) {
+    camera.fov = pose.fov;
+    camera.updateProjectionMatrix();
+  }
 }

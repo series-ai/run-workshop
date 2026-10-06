@@ -29,6 +29,16 @@ const DERIVED_WALL_OFFSET_M = 560;
 /** Lowest roof of the inner wall. Above the sim's free-flight ceiling, with camera headroom. */
 export const SKYRIVER_ROOFLINE_MIN_M = 2200;
 
+/**
+ * T7: the inner wall is pulled back from the corridor by this much, so the setback tiers city.ts
+ * builds on its face can project 40-80 m (they stop at |x| >= 405) and read at autopilot distance.
+ */
+const INNER_SETBACK_M = 70;
+/** T7: only the stretch around the free-flight box must clear its 2000 m ceiling. */
+const FREEFLIGHT_WALL_ABS_Z_M = 720;
+/** Inner-wall band elsewhere: low enough in places for crowned rooflines to meet a sky band. */
+const INNER_OPEN_BAND: readonly [number, number] = [1250, 2300];
+
 /** Height band per column, inner first: [floor, span]. Inner walls tall, outer ones step down. */
 const COLUMN_BANDS: readonly (readonly [number, number])[] = Object.freeze([
   [SKYRIVER_ROOFLINE_MIN_M, 1300],
@@ -55,7 +65,10 @@ function columnOf(tower: SkyriverTower, cell: number): number {
 
 function regrade(tower: SkyriverTower, cell: number): number {
   const grade = Math.min(1, Math.max(0, (tower.height - DERIVED_MIN_HEIGHT_M) / (DERIVED_MAX_HEIGHT_M - DERIVED_MIN_HEIGHT_M)));
-  const [floor, span] = COLUMN_BANDS[columnOf(tower, cell)]!;
+  const column = columnOf(tower, cell);
+  const [floor, span] = column === 0 && Math.abs(tower.z) > FREEFLIGHT_WALL_ABS_Z_M
+    ? INNER_OPEN_BAND
+    : COLUMN_BANDS[column]!;
   return floor + grade * span;
 }
 
@@ -67,7 +80,11 @@ export function presentCityLayout(layout: SkyriverCityLayout): SkyriverCityLayou
   if (cached !== undefined && cached.towers.length > 0) return cached;
 
   const cell = layout.cell;
-  const towers: SkyriverTower[] = layout.towers.map((tower) => ({ ...tower, height: regrade(tower, cell) }));
+  const towers: SkyriverTower[] = layout.towers.map((tower) => ({
+    ...tower,
+    x: tower.x + Math.sign(tower.x) * INNER_SETBACK_M,
+    height: regrade(tower, cell),
+  }));
 
   let minZ = Infinity;
   let maxZ = -Infinity;
@@ -95,7 +112,7 @@ export function presentCityLayout(layout: SkyriverCityLayout): SkyriverCityLayou
         const x = Math.abs(source.x) < minimumCentre ? sign * minimumCentre : source.x;
         const jittered: SkyriverTower = {
           ...source,
-          x,
+          x: x + sign * INNER_SETBACK_M,
           z: targetZ,
           width,
           depth: source.depth * (0.85 + 0.3 * hash01(h * 91.7 + k)),

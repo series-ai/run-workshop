@@ -44,6 +44,7 @@ import {
   skyriverFogUniforms,
 } from './atmosphere';
 import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
+import { createSignAtlas, type SignAtlas } from './signAtlas';
 
 /** Draw calls this module may spend (plan T3 allows 10 city-only; the shared budget allots 8). */
 export const SKYRIVER_CITY_DRAW_CALL_BUDGET = 8;
@@ -84,7 +85,7 @@ export const SKYRIVER_TRIM_CANTILEVER = 5;
 /** High skybridges spanning the canyon. Empty structures: no traffic river runs at their height. */
 export const SKYRIVER_TRIM_SKYBRIDGE = 6;
 /** Skybridge altitude band and the canyon stretch they keep out of (the free-flight box, |z| <= 400). */
-export const SKYRIVER_SKYBRIDGE_MIN_Y_M = 1900;
+export const SKYRIVER_SKYBRIDGE_MIN_Y_M = 2700;
 export const SKYRIVER_SKYBRIDGE_MIN_ABS_Z_M = 600;
 
 /** Sign kinds: a vertical banner, a horizontal strip, and a hollow outline box. */
@@ -370,7 +371,8 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
       // Tier faces: [bottom, top, projection, zCentre, zSpan]. The core face above the last tier
       // is the slab itself (projection 0).
       const tiers: [number, number, number, number, number][] = [];
-      const base = Math.min(48, available * 0.6);
+      // T7: 40-80 m terraces (the inner wall now stands 70 m further back; see presentationLayout).
+      const base = Math.min(82, available * 0.62);
       if (base >= 10) {
         const tops = [
           h * (0.26 + random.nextInt(0, 160) / 1000),
@@ -379,8 +381,13 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
         ];
         const projections = [base, base * 0.56, base * 0.24];
         let bottom = SKYRIVER_CITY_VOID_BASE_Y;
+        // A quarter of the slabs carry a mega-plate podium: a 150-250 m wide terrace spanning the
+        // seams to both neighbours (broad-slab variety, not just narrow towers).
+        const megaPlate = random.nextInt(0, 99) < 25;
         for (let k = 0; k < 3; k += 1) {
-          const zSpan = tower.depth * (0.62 + random.nextInt(0, 330) / 1000);
+          const zSpan = k === 0 && megaPlate
+            ? Math.max(tower.depth + 60, 150 + random.nextInt(0, 100))
+            : tower.depth * (0.62 + random.nextInt(0, 330) / 1000);
           const zCentre = tower.z + (random.nextInt(-1000, 1000) / 1000) * (tower.depth - zSpan) * 0.5;
           tiers.push([bottom, tops[k]!, projections[k]!, zCentre, zSpan]);
           // Overlap the slab by 6 m so no seam shows between tier and core.
@@ -574,8 +581,8 @@ const HERO_STATIONS: readonly (readonly [-1 | 1, number])[] = Object.freeze([
   [1, -1050], [1, -350], [1, 350], [1, 1050], [1, 1750],
 ]);
 const HERO_COLORS: readonly number[] = Object.freeze([0x2ff2ff, 0xff2fb4, 0xffb13c, 0x2ff2ff, 0xff4a8c]);
-/** Shuttle height band (flightPresentation.ts track: 360-770 m). */
-const HERO_CENTRE_Y = 590;
+/** Shuttle height band (flightPresentation.ts track: ~945-1360 m). */
+const HERO_CENTRE_Y = 1160;
 
 const heroCache = new Map<number, readonly SkyriverHeroBlade[]>();
 
@@ -694,8 +701,8 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     // Altitude: weighted into the flight band, otherwise anywhere on the lit part of the slab.
     const ceiling = Math.min(tower.height - 60, 2050);
     const inBand = random.nextInt(0, 99) < 60;
-    const low = inBand ? 150 : 60;
-    const high = inBand ? Math.min(1150, ceiling) : ceiling;
+    const low = inBand ? 600 : 60;
+    const high = inBand ? Math.min(1750, ceiling) : ceiling;
     const centreYRaw = low + (random.nextInt(0, 1000) / 1000) * Math.max(high - low, 0);
 
     let width: number;
@@ -954,10 +961,22 @@ void main() {
     vec4 blade = uHeroBlades[ i ];
     vec3 nearest = vec3( blade.x, clamp( vWorldPos.y, blade.y - blade.w, blade.y + blade.w ), blade.z );
     float d = length( vWorldPos - nearest );
-    heroSpill += uHeroColors[ i ] * exp( - d / 55.0 );
-    heroShadow = max( heroShadow, exp( - d / 70.0 ) );
+    heroSpill += uHeroColors[ i ] * exp( - d / 45.0 );
+    heroShadow = max( heroShadow, exp( - d / 90.0 ) );
   }
-  color += heroSpill * 0.35;
+  color += heroSpill * 0.16;
+  // T7 wet sheen: the rain-slick facade mirrors the nearest giant sign's colour at grazing angles.
+  color += heroSpill / ( 1.0 + length( heroSpill ) ) * fresnel * 1.4 * vIsSide;
+
+  // T7 mass: a contact shadow along the foot of every box (under terraces, crowns, seam blocks) —
+  // the deep recesses that make stacked massing read as weight, not decals.
+  float footHeight = vSurf.y + vFaceHalf.y;
+  color *= mix( 1.0, mix( 0.35, 1.0, smoothstep( 0.0, 40.0, footHeight ) ), vIsSide );
+  // Lit parapets on some crowns and terrace tops: a cold line along the top edge that silhouettes
+  // the roofline against the haze once bloom catches it.
+  float parapetLive = step( 0.6, skyHash11( vSeed * 97.0 + 3.0 ) ) * step( 700.0, vWorldPos.y );
+  float parapet = 1.0 - smoothstep( 0.6, 2.2, vFaceHalf.y - vSurf.y );
+  color += vec3( 0.75, 0.9, 1.0 ) * parapet * parapetLive * vIsSide * 2.4;
 
   // --- window grid ------------------------------------------------------------------------------
   // Coarse blocks gate whole stacks dark, so the lit windows stay sparse and clustered instead of
@@ -972,7 +991,7 @@ void main() {
 
   float paneHash = skyHash12( cell + faceOffset );
   // Dark at street level, brightest through the mid-high floors, thinning again at the parapet.
-  float litShare = mix( 0.03, 0.16, smoothstep( 0.04, 0.5, vUp ) )
+  float litShare = mix( 0.025, 0.11, smoothstep( 0.04, 0.5, vUp ) )
     * ( 1.0 - 0.5 * smoothstep( 0.84, 1.0, vUp ) );
   float lit = step( 1.0 - litShare, paneHash );
 
@@ -997,11 +1016,12 @@ void main() {
   float buzzing = step( 0.965, skyHash11( paneHash * 17.7 + 9.0 ) );
   float buzz = 1.0 - buzzing * 0.55 * ( 0.5 + 0.5 * sin( uTime * 23.0 + paneHash * 120.0 ) );
 
-  vec3 resolved = paneColor * ( lit * brightness * buzz ) * ( glass + halo * 0.28 ) * ( 1.0 - 0.9 * heroShadow );
+  vec3 resolved = paneColor * ( lit * brightness * buzz ) * ( glass + halo * 0.28 ) * ( 1.0 - heroShadow );
   // What the grid averages out to once it stops resolving: lit share times mean pane brightness,
   // in the mean pane colour. Distant walls read as a dim glow rather than a field of sparks.
   vec3 averaged = vec3( 0.86, 0.72, 0.56 ) * ( litShare * 0.4 * blockLive * vIsSide );
-  color += mix( averaged * ( 1.0 - 0.9 * heroShadow ), resolved, detail ) * 0.8;
+  // T7: dimmer panes — under bloom they compete with the signage otherwise.
+  color += mix( averaged * ( 1.0 - heroShadow ), resolved, detail ) * 0.55;
 
   gl_FragColor = vec4( max( color, vec3( 0.0 ) ), 1.0 );
 
@@ -1128,8 +1148,10 @@ attribute vec2 aSize;     // across, up
 attribute vec3 aColor;
 attribute float aKind;
 attribute float aSeed;
+attribute vec4 aAtlas;    // T7: lettered atlas cell (u0, v0, u1, v1); u1 <= u0 means procedural
 
 varying vec2 vSignUv;     // 0..1 across the sign face; outside that range is the halo
+varying vec4 vAtlas;
 varying vec2 vLocal;      // metres from the sign centre
 varying vec3 vSignColor;
 varying float vSignKind;
@@ -1162,6 +1184,7 @@ void main() {
   vSignNormal = normalW;
   vSignSize = aSize;
   vMargin = margin;
+  vAtlas = aAtlas;
   vWorldPos = world;
 
   vec4 mvPosition = viewMatrix * vec4( world, 1.0 );
@@ -1188,6 +1211,8 @@ varying vec3 vSignNormal;
 varying vec3 vWorldPos;
 varying vec2 vSignSize;
 varying float vMargin;
+varying vec4 vAtlas;
+uniform sampler2D uAtlas;
 
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
@@ -1259,6 +1284,13 @@ void main() {
   // Once the glyphs stop resolving, settle to their average coverage instead of shimmering.
   float glyphPixels = 1.0 / max( max( fw.x, fw.y ) * rows, 1e-5 );
   mask = mix( 0.5, mask, smoothstep( 3.0, 9.0, glyphPixels ) ) * inside;
+  // T7: real lettering from the boot-drawn atlas (signAtlas.ts) replaces the hashed strokes. The
+  // back face of a double-sided blade reads unmirrored, as a real two-faced sign does.
+  if ( vAtlas.z > vAtlas.x ) {
+    vec2 cell = clamp( uv, 0.0, 1.0 );
+    if ( !gl_FrontFacing ) cell.x = 1.0 - cell.x;
+    mask = texture2D( uAtlas, mix( vAtlas.xy, vAtlas.zw, cell ) ).r * inside;
+  }
 
   // Halo: exponential spill around the sign rectangle, in metres.
   vec2 q = abs( vLocal ) - vSignSize * 0.5;
@@ -1280,7 +1312,8 @@ void main() {
     flickering
   );
 
-  vec3 hot = mix( vSignColor, vec3( 1.0 ), 0.08 );
+  // Tube core: where the lettering saturates it runs white-hot, the glow around it keeps the hue.
+  vec3 hot = mix( vSignColor, vec3( 1.0 ), 0.08 + 0.5 * smoothstep( 0.8, 1.0, mask ) );
   vec3 color = hot * mask * angle * uIntensity + vSignColor * ( plate + halo * uHalo );
   gl_FragColor = vec4( color * flicker, 1.0 );
 
@@ -1289,7 +1322,7 @@ void main() {
   #ifdef USE_FOG
     // Additive: the haze swallows distant signs rather than tinting them — but light carries further
     // than concrete, so the attenuation is a softened curve.
-    gl_FragColor.rgb *= pow( 1.0 - skyriverFogFactor(), uFogPenetration );
+    gl_FragColor.rgb *= pow( max( 1.0 - skyriverFogFactor(), 0.0 ), uFogPenetration );
   #endif
 }
 `;
@@ -1347,6 +1380,7 @@ export class SkyriverCity {
   private readonly trimMaterial: THREE.ShaderMaterial;
   private readonly signMaterial: THREE.ShaderMaterial;
   private readonly signGeometry: THREE.InstancedBufferGeometry;
+  private readonly atlas: SignAtlas;
   private readonly layout: SkyriverCityLayout;
   private readonly trims: SkyriverCityTrims;
   private readonly signs: SkyriverNeonSigns;
@@ -1356,6 +1390,7 @@ export class SkyriverCity {
     this.layout = layout;
     this.trims = deriveCityTrims(layout);
     this.signs = deriveNeonSigns(layout);
+    this.atlas = createSignAtlas();
     this.group.name = 'skyriver.city';
 
     // T6R contrast: near-black concrete against the luminous haze (atmosphere.ts).
@@ -1440,6 +1475,7 @@ export class SkyriverCity {
         uIntensity: { value: 1.9 },
         uHalo: { value: 0.32 },
         uFogPenetration: { value: 0.55 },
+        uAtlas: { value: this.atlas.texture },
         ...skyriverFogUniforms(),
       },
       transparent: true,
@@ -1497,6 +1533,7 @@ export class SkyriverCity {
     this.trimMaterial.dispose();
     this.signGeometry.dispose();
     this.signMaterial.dispose();
+    this.atlas.dispose();
     this.towerMesh.dispose();
     this.trimMesh.dispose();
   }
@@ -1579,8 +1616,18 @@ export class SkyriverCity {
     const normals = new Float32Array(count * 2);
     const sizes = new Float32Array(count * 2);
     const kinds = new Float32Array(count);
+    const atlasRects = new Float32Array(count * 4);
+    // Hero blades come first in the sign list (deriveNeonSigns) and each gets its own vertical cell;
+    // other banners and strips pick a cell by their seed; outline frames stay procedural.
+    const heroCount = deriveHeroBlades(this.layout).length;
+    const { vertical, horizontal } = this.atlas;
 
     for (let i = 0; i < count; i += 1) {
+      let rect: readonly number[] = [0, 0, -1, -1];
+      if (i < heroCount) rect = vertical[i % vertical.length]!;
+      else if (kind[i] === SKYRIVER_SIGN_BANNER) rect = vertical[Math.floor(seedValue[i]! * vertical.length) % vertical.length]!;
+      else if (kind[i] === SKYRIVER_SIGN_STRIP) rect = horizontal[Math.floor(seedValue[i]! * horizontal.length) % horizontal.length]!;
+      atlasRects.set(rect, i * 4);
       centres[i * 3] = cx[i];
       centres[i * 3 + 1] = cy[i];
       centres[i * 3 + 2] = cz[i];
@@ -1597,6 +1644,7 @@ export class SkyriverCity {
     geometry.setAttribute('aColor', new THREE.InstancedBufferAttribute(color.slice(0, count * 3), 3));
     geometry.setAttribute('aKind', new THREE.InstancedBufferAttribute(kinds, 1));
     geometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seedValue.slice(0, count), 1));
+    geometry.setAttribute('aAtlas', new THREE.InstancedBufferAttribute(atlasRects, 4));
 
     quad.dispose();
     return geometry;
