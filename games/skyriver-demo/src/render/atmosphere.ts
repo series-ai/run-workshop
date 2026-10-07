@@ -348,11 +348,13 @@ attribute vec3 aAxis;
 attribute vec3 aSize;   // length, width at the source, width at the far end
 attribute vec3 aColor;
 attribute float aSeed;
+attribute vec3 aParams; // R18: intensity, softness, fade start (per beam; god rays and searchlights share one draw)
 
 varying float vBeamT;
 varying float vBeamS;
 varying vec3 vBeamColor;
 varying float vBeamSeed;
+varying vec3 vBeamParams;
 
 #include <fog_pars_vertex>
 
@@ -375,6 +377,7 @@ void main() {
   vBeamS = s;
   vBeamColor = aColor;
   vBeamSeed = aSeed;
+  vBeamParams = aParams;
 
   vec4 mvPosition = viewMatrix * vec4( world, 1.0 );
   #ifdef USE_FOG
@@ -387,14 +390,12 @@ void main() {
 
 const BEAM_FRAGMENT = /* glsl */ `
 uniform float uTime;
-uniform float uIntensity;
-uniform float uSoftness;
-uniform float uFadeStart;
 
 varying float vBeamT;
 varying float vBeamS;
 varying vec3 vBeamColor;
 varying float vBeamSeed;
+varying vec3 vBeamParams;
 
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
@@ -402,14 +403,14 @@ ${SKYRIVER_HASH_GLSL}
 
 void main() {
   // Gaussian across the shaft keeps the quad edges from ever showing.
-  float radial = exp( - vBeamS * vBeamS * uSoftness );
-  float along = smoothstep( 0.0, 0.14, vBeamT ) * ( 1.0 - smoothstep( uFadeStart, 1.0, vBeamT ) );
+  float radial = exp( - vBeamS * vBeamS * vBeamParams.y );
+  float along = smoothstep( 0.0, 0.14, vBeamT ) * ( 1.0 - smoothstep( vBeamParams.z, 1.0, vBeamT ) );
   // Rain drifting through the shaft: slow banding plus a touch of flicker.
   float drift = 0.88 + 0.12 * skyValueNoise( vec2( vBeamT * 7.0, uTime * 0.35 + vBeamSeed * 31.0 ) );
   float flicker = 1.0 + 0.05 * sin( uTime * 1.9 + vBeamSeed * 6.2831853 );
 
   float nearFade = smoothstep( 60.0, 420.0, vFogDepth );
-  gl_FragColor = vec4( vBeamColor * ( radial * along * drift * flicker * uIntensity * nearFade ), 1.0 );
+  gl_FragColor = vec4( vBeamColor * ( radial * along * drift * flicker * vBeamParams.x * nearFade ), 1.0 );
 
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
@@ -423,10 +424,17 @@ void main() {
 interface BeamFieldOptions {
   readonly name: string;
   readonly capacity: number;
+}
+
+/** Per-beam look: brightness, Gaussian softness across the shaft, where it starts to fade along it. */
+interface BeamLook {
   readonly intensity: number;
   readonly softness: number;
   readonly fadeStart: number;
 }
+/** T7-2/T7-3: searchlights soft and weak (they dominated the frame); god rays brighter, wider. */
+const SEARCHLIGHT_LOOK: BeamLook = { intensity: 0.025, softness: 8.0, fadeStart: 0.45 };
+const GOD_RAY_LOOK: BeamLook = { intensity: 0.17, softness: 7.0, fadeStart: 0.5 };
 
 /**
  * One instanced quad field = one draw call, regardless of beam count. Used twice: static god rays in
@@ -441,6 +449,8 @@ class BeamField {
   private readonly size: Float32Array;
   private readonly color: Float32Array;
   private readonly seed: Float32Array;
+  private readonly params: Float32Array;
+  private readonly paramsAttr: THREE.InstancedBufferAttribute;
   private readonly startAttr: THREE.InstancedBufferAttribute;
   private readonly axisAttr: THREE.InstancedBufferAttribute;
   private readonly sizeAttr: THREE.InstancedBufferAttribute;
@@ -462,6 +472,8 @@ class BeamField {
     this.size = new Float32Array(options.capacity * 3);
     this.color = new Float32Array(options.capacity * 3);
     this.seed = new Float32Array(options.capacity);
+    this.params = new Float32Array(options.capacity * 3);
+    this.paramsAttr = new THREE.InstancedBufferAttribute(this.params, 3);
 
     this.startAttr = new THREE.InstancedBufferAttribute(this.start, 3);
     this.axisAttr = new THREE.InstancedBufferAttribute(this.axis, 3);
@@ -475,6 +487,7 @@ class BeamField {
     this.geometry.setAttribute('aSize', this.sizeAttr);
     this.geometry.setAttribute('aColor', this.colorAttr);
     this.geometry.setAttribute('aSeed', this.seedAttr);
+    this.geometry.setAttribute('aParams', this.paramsAttr);
 
     this.material = new THREE.ShaderMaterial({
       name: options.name,
@@ -482,9 +495,6 @@ class BeamField {
       fragmentShader: BEAM_FRAGMENT,
       uniforms: {
         uTime: { value: 0 },
-        uIntensity: { value: options.intensity },
-        uSoftness: { value: options.softness },
-        uFadeStart: { value: options.fadeStart },
         ...ownFogUniforms(),
       },
       transparent: true,
@@ -522,8 +532,12 @@ class BeamField {
     widthFar: number,
     color: THREE.Color,
     seed: number,
+    look: BeamLook,
   ): void {
     const v = index * 3;
+    this.params[v] = look.intensity;
+    this.params[v + 1] = look.softness;
+    this.params[v + 2] = look.fadeStart;
     this.start[v] = start.x;
     this.start[v + 1] = start.y;
     this.start[v + 2] = start.z;
@@ -546,6 +560,7 @@ class BeamField {
     this.sizeAttr.needsUpdate = true;
     this.colorAttr.needsUpdate = true;
     this.seedAttr.needsUpdate = true;
+    this.paramsAttr.needsUpdate = true;
   }
 
   /** Cheap per-frame path: only the axes moved. */
@@ -783,8 +798,7 @@ export class SkyriverAtmosphere {
 
   private readonly skyMaterial: THREE.ShaderMaterial;
   private readonly skyMesh: THREE.Mesh;
-  private readonly godRays: BeamField;
-  private readonly searchlights: BeamField;
+  private readonly beams: BeamField;
   private readonly rainMaterial: THREE.ShaderMaterial;
   private readonly rainMesh: THREE.Mesh;
 
@@ -840,27 +854,16 @@ export class SkyriverAtmosphere {
     this.skyMesh.renderOrder = -1000;
     this.group.add(this.skyMesh);
 
-    this.godRays = new BeamField({
-      name: 'skyriver.godrays',
-      capacity: SKYRIVER_ATMOSPHERE.godRayMaxCount,
-      intensity: 0.17,
-      softness: 7.0,
-      fadeStart: 0.5,
+    // R18: searchlights and god rays share one beam field (one draw call; the call went to the GPU
+    // impostor traffic). Searchlights fill slots [0, S), god rays [S, S + G), so the tiers without
+    // god rays just draw the first S instances.
+    this.beams = new BeamField({
+      name: 'skyriver.beams',
+      capacity: SKYRIVER_ATMOSPHERE.searchlightCount + SKYRIVER_ATMOSPHERE.godRayMaxCount,
     });
-    this.group.add(this.godRays.mesh);
-    this.writeGodRays();
-
-    this.searchlights = new BeamField({
-      name: 'skyriver.searchlights',
-      capacity: SKYRIVER_ATMOSPHERE.searchlightCount,
-      // T7-2: softer, and faded where a beam passes near the camera (cycle-3 foreground wash).
-      // T7-3: weaker still (cycle-4: the beams dominated the frame).
-      intensity: 0.025,
-      softness: 8.0,
-      fadeStart: 0.45,
-    });
-    this.group.add(this.searchlights.mesh);
+    this.group.add(this.beams.mesh);
     this.searchlightOrigins = this.deriveSearchlightOrigins(layout);
+    this.writeGodRays();
     this.writeSearchlights(0);
 
     const rainGeometry = new THREE.PlaneGeometry(1, 1);
@@ -897,9 +900,14 @@ export class SkyriverAtmosphere {
 
   setQuality(quality: SkyriverQualitySettings): void {
     this.quality = quality;
-    this.godRays.mesh.visible = quality.godRays;
+    this.updateBeamCount();
     this.rainMaterial.uniforms.uRainOn.value = quality.rainStreaks ? 1 : 0;
     this.updateScreenPass();
+  }
+
+  /** Searchlights always; god rays only on the tiers that have them (they sit after the lights). */
+  private updateBeamCount(): void {
+    this.beams.setCount(this.searchlightOrigins.length + (this.quality.godRays ? this.anchors.length : 0));
   }
 
   /** The rain / speed-line screen pass draws when either is live. */
@@ -924,9 +932,7 @@ export class SkyriverAtmosphere {
     const fl = Math.hypot(fx, fz);
     if (fl > 1e-4) (this.skyMaterial.uniforms.uForward.value as THREE.Vector2).set(fx / fl, fz / fl);
 
-    if (this.quality.godRays) this.godRays.setTime(time);
-
-    this.searchlights.setTime(time);
+    this.beams.setTime(time);
     this.writeSearchlights(time);
 
     if (this.quality.rainStreaks) this.updateRain(frame);
@@ -979,13 +985,13 @@ export class SkyriverAtmosphere {
   }
 
   stats(): SkyriverAtmosphereStats {
+    // Sky, the shared beam field (R18), and the rain pass.
     const drawCalls = 1
-      + (this.quality.godRays ? 1 : 0)
       + 1
       + (this.quality.rainStreaks ? 1 : 0);
     return {
-      godRays: this.godRays.count,
-      searchlights: this.searchlights.count,
+      godRays: this.quality.godRays ? this.anchors.length : 0,
+      searchlights: this.searchlightOrigins.length,
       rainStreaks: this.quality.rainStreaks,
       meshes: 4,
       drawCalls,
@@ -996,8 +1002,7 @@ export class SkyriverAtmosphere {
   dispose(): void {
     this.skyMesh.geometry.dispose();
     this.skyMaterial.dispose();
-    this.godRays.dispose();
-    this.searchlights.dispose();
+    this.beams.dispose();
     this.rainMesh.geometry.dispose();
     this.rainMaterial.dispose();
   }
@@ -1019,8 +1024,8 @@ export class SkyriverAtmosphere {
       // Cool rain-lit white, drifting a little toward the cyan end of the neon.
       this.scratchColor.setRGB(0.52 + jitter * 0.1, 0.63 + jitter * 0.08, 0.78);
 
-      this.godRays.write(
-        i,
+      this.beams.write(
+        SKYRIVER_ATMOSPHERE.searchlightCount + i,
         this.scratchStart,
         this.scratchAxis,
         length,
@@ -1028,10 +1033,10 @@ export class SkyriverAtmosphere {
         88 + jitter * 48,
         this.scratchColor,
         jitter,
+        GOD_RAY_LOOK,
       );
     }
-    this.godRays.setCount(this.anchors.length);
-    this.godRays.commit();
+    this.beams.commit();
   }
 
   /**
@@ -1078,7 +1083,7 @@ export class SkyriverAtmosphere {
       this.scratchStart.set(atmosphereWarp.x, origin.y, atmosphereWarp.z);
       this.scratchColor.setRGB(0.62 + seed * 0.2, 0.68, 0.74 - seed * 0.22);
 
-      this.searchlights.write(
+      this.beams.write(
         i,
         this.scratchStart,
         this.scratchAxis,
@@ -1087,12 +1092,12 @@ export class SkyriverAtmosphere {
         150 + seed * 80,
         this.scratchColor,
         seed,
+        SEARCHLIGHT_LOOK,
       );
     }
-    this.searchlights.setCount(this.searchlightOrigins.length);
     // First write seeds every attribute; later frames only move the axes.
-    if (time === 0) this.searchlights.commit();
-    else this.searchlights.commitAxes();
+    if (time === 0) this.beams.commit();
+    else this.beams.commitAxes();
   }
 }
 

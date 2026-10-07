@@ -57,7 +57,8 @@ export const SKYRIVER_FRAME_DRAW_CALL_CEILING = 32;
 const SKYRIVER_BLOOM_STRENGTH = 0.85;
 /** T4's share (plan R4: "<= 4 traffic draw calls"). Defined here so T4 can import it on day one. */
 /** T7-5: six hull archetypes + one light batch (frame ceiling 32 still holds: 16 scene + 14 post + 1). */
-export const SKYRIVER_TRAFFIC_DRAW_CALL_BUDGET = 8;
+/** R18: + the GPU impostor batch (9); the beams merged into one call to pay for it. */
+export const SKYRIVER_TRAFFIC_DRAW_CALL_BUDGET = 9;
 
 /** Presentation-only quality tiers (plan R7). Never reaches simulation. */
 export enum SkyriverQualityTier {
@@ -195,8 +196,8 @@ export function skyriverDrawCallEstimate(
 ): SkyriverDrawCallEstimate {
   // towers + trim + neon signs + R16 far-city impostor cards
   const city = 4;
-  // skydome + searchlights, plus god rays and rain streaks when the tier enables them
-  const atmosphere = 2 + (quality.godRays ? 1 : 0) + (quality.rainStreaks ? 1 : 0);
+  // skydome + the shared beam field (R18: searchlights and god rays in one call), plus rain streaks
+  const atmosphere = 2 + (quality.rainStreaks ? 1 : 0);
   const total = city + atmosphere + SKYRIVER_TRAFFIC_DRAW_CALL_BUDGET;
   return {
     city,

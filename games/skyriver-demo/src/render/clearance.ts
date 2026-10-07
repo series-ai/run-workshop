@@ -83,6 +83,34 @@ function boxDistance(b: PlacedBox, x: number, y: number, z: number): number {
 }
 
 /**
+ * R18: the drawn masses as a queryable field: `gap(x, y, z)` is the signed distance from a world
+ * point to the nearest mass (negative inside one). Used by the impostor-traffic clearance test.
+ */
+export function createMassField(layout: SkyriverCityLayout): { gap(x: number, y: number, z: number): number } {
+  const boxes = deriveCityMasses(layout).map(place);
+  const cell = 400;
+  const grid = new Map<string, number[]>();
+  boxes.forEach((b, i) => {
+    for (let gx = Math.floor((b.cx - b.reach) / cell); gx <= Math.floor((b.cx + b.reach) / cell); gx += 1) {
+      for (let gz = Math.floor((b.cz - b.reach) / cell); gz <= Math.floor((b.cz + b.reach) / cell); gz += 1) {
+        const key = `${gx}:${gz}`;
+        let list = grid.get(key);
+        if (list === undefined) grid.set(key, (list = []));
+        list.push(i);
+      }
+    }
+  });
+  return {
+    gap(x: number, y: number, z: number): number {
+      const list = grid.get(`${Math.floor(x / cell)}:${Math.floor(z / cell)}`) ?? [];
+      let gap = Infinity;
+      for (const i of list) gap = Math.min(gap, boxDistance(boxes[i]!, x, y, z));
+      return gap;
+    },
+  };
+}
+
+/**
  * Sweeps the whole loop every `stepM` metres. Camera distances: slowest cruise, top cruise and full
  * boost (the boom pulls back with speed), with the orbit offsets at rest (autopilot).
  */

@@ -35,6 +35,11 @@ export interface TrafficQuality {
    * stream cars only ('streams'), or cars near the camera only ('near').
    */
   readonly trails: TrafficTrailMode;
+  /**
+   * R18 GPU impostor cars: light sprites evaluated in the vertex shader from the stream path table
+   * (trafficStreams.ts), beyond the CPU cars' band. 0 = off.
+   */
+  readonly impostors: number;
 }
 
 export type TrafficTrailMode = 'all' | 'streams' | 'near';
@@ -72,6 +77,8 @@ export interface TrafficStats {
   readonly activeCars: number;
   /** Cars whose light streaks were drawn on the last update(). */
   readonly activeThrusters: number;
+  /** R18: GPU impostor cars drawn this frame (0 when off). */
+  readonly impostors: number;
   /** Draw calls this module adds to the frame: 3 archetypes + 1 light-streak batch. */
   readonly drawCalls: number;
   /** Triangles in one instance of each archetype, indexed by archetype id. */
@@ -97,6 +104,8 @@ export interface SkyriverTrafficOptions {
    * this count. Defaults to quality.thrusterBudget.
    */
   readonly maxThrusterBudget?: number;
+  /** R18: impostor capacity (the largest impostor count setQuality or setImpostorCount will be given). */
+  readonly maxImpostors?: number;
   /**
    * The volume the swarm flows inside, normally the sim's CHASM_BOUNDS (the default) or T3's city
    * layout bounding box. The swarm is inset from it so vehicles never clip the tower walls.
@@ -132,6 +141,9 @@ export interface SkyriverTraffic {
    * fly in formation off it. Call once per frame before update().
    */
   setAnchor(x: number, y: number, z: number, yawTurns: number, speed: number, canyonV?: number, canyonX?: number): void;
+
+  /** R18 operator density test (?impostors=N): overrides the tier's impostor count; null restores it. */
+  setImpostorCount(count: number | null): void;
 
   /** Switches tier. Allocation-free while quality.carCount <= the configured maxCarCount. */
   setQuality(quality: TrafficQuality): void;

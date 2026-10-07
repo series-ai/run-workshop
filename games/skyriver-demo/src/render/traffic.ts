@@ -46,7 +46,13 @@ import {
   MeshBasicMaterial,
   ShaderMaterial,
   AdditiveBlending,
+  DataTexture,
   DoubleSide,
+  FloatType,
+  NearestFilter,
+  RGBAFormat,
+  Vector2,
+  Vector4,
 } from 'three';
 import type { Object3D } from 'three';
 
@@ -63,6 +69,7 @@ import {
 import { CANYON_LOOP_LENGTH_M, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
 import { routeAltitude, routeLateral } from './routeProfile';
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
+import { IMPOSTOR_FREE_MAX_Y_M, IMPOSTOR_FREE_MIN_Y_M, IMPOSTOR_PATHS, IMPOSTOR_RINGS, STREAMS, loopCentroid, STREAM_CORRIDOR_HALF_M, STREAM_PATH_SAMPLES, STREAM_PATH_STEP_M, deriveImpostorAttributes, streamPathTable } from './trafficStreams';
 import type {
   SkyriverTraffic,
   SkyriverTrafficOptions,
@@ -101,7 +108,28 @@ const RENDER_ARCHETYPES = TRAFFIC_ARCHETYPE_COUNT * 2 + 1;
 const FLATBED_ARCHETYPE = TRAFFIC_ARCHETYPE_COUNT * 2;
 const FLATBED_SHARE = 0.12;
 const VARIANT_SHARE = 0.45;
-const TRAFFIC_DRAW_CALLS = RENDER_ARCHETYPES + 1;
+/** R18: + one GPU impostor batch (the call came from merging the god-ray and searchlight beams). */
+const TRAFFIC_DRAW_CALLS = RENDER_ARCHETYPES + 2;
+
+/**
+ * R18 GPU impostor traffic: per-tier counts (set from the measured frame-time curve, see the R18
+ * report), and the band where they take over from the CPU cars: impostors fade in and the CPU cars'
+ * lights fade out across it, so far traffic hands over without a seam.
+ */
+export const IMPOSTORS_HIGH = 20000;
+export const IMPOSTORS_MEDIUM = 10000;
+/**
+ * Impostors fade in over this band; the CPU cars' lights hand over at 1.0-1.3 km (their hulls are
+ * drawn to 1.3 km either way), so the mid range carries both and the far range impostors only.
+ * Measured (R18): the chase frame is ~50-65% wall surface at 0.7-1.5 km, so the air the camera can
+ * see traffic in is mostly the corridor in front of those walls; impostors start at 450 m to fill it.
+ */
+const IMPOSTOR_BAND_START_M = 450;
+const IMPOSTOR_BAND_END_M = 750;
+const CPU_LIGHT_HANDOVER_START_M = 1000;
+const CPU_LIGHT_HANDOVER_END_M = 1300;
+/** Impostor tier change: the larger set stays drawn while the difference fades, seconds. */
+const IMPOSTOR_FADE_S = 1.2;
 
 /**
  * The plan's quality tiers (Design "Performance": cars 2,400 -> 1,200 -> 600). T6R: every active car
@@ -113,9 +141,9 @@ export const TRAFFIC_QUALITY_TIERS: {
   readonly medium: TrafficQuality;
   readonly low: TrafficQuality;
 } = Object.freeze({
-  high: Object.freeze({ carCount: 2400, thrusterBudget: 2400, trails: 'all' as const }),
-  medium: Object.freeze({ carCount: 1200, thrusterBudget: 1200, trails: 'streams' as const }),
-  low: Object.freeze({ carCount: 600, thrusterBudget: 600, trails: 'near' as const }),
+  high: Object.freeze({ carCount: 2400, thrusterBudget: 2400, trails: 'all' as const, impostors: IMPOSTORS_HIGH }),
+  medium: Object.freeze({ carCount: 1200, thrusterBudget: 1200, trails: 'streams' as const, impostors: IMPOSTORS_MEDIUM }),
+  low: Object.freeze({ carCount: 600, thrusterBudget: 600, trails: 'near' as const, impostors: 0 }),
 });
 
 /**
@@ -163,23 +191,8 @@ const CHASE_FADE_M = 160;
  * altitudes (merge/branch points). Each car holds the stream's heading with a small personal jink,
  * surges ±40 m around its clump (speed varies inside the stream's band) and drifts a few metres in
  * its row. The pattern is carried by the flow, not by geometry: no crisp rows, no even spacing.
- * [x across, shelf y, direction, sub-rows, width m, speed m/s, meander m, wobble m, pulses, share]
+ * The stream table itself (and its R18 GPU twin) lives in trafficStreams.ts.
  */
-const STREAMS: readonly (readonly number[])[] = Object.freeze([
-  [-230, 560, 1, 4, 95, 60, 70, 14, 9, 0.17],   // freight, low
-  [210, 780, -1, 2, 26, 170, 45, 12, 15, 0.09],  // express
-  [-140, 1060, 1, 3, 52, 105, 60, 18, 12, 0.13], // standard
-  [250, 1320, -1, 3, 48, 115, 55, 16, 11, 0.13], // standard
-  [-275, 1620, 1, 2, 24, 180, 40, 10, 16, 0.09], // express
-  [-300, 1900, -1, 4, 100, 65, 60, 20, 8, 0.15], // freight, high
-  [190, 2240, 1, 3, 52, 110, 50, 15, 10, 0.12],  // standard, pristine
-  [130, 400, -1, 3, 60, 95, 65, 14, 12, 0.12],   // standard, grime
-]);
-/** Interchanges: [stream a, stream b, v] — the pair swaps shelves (and sides) through a 1.1 km ramp. */
-const INTERCHANGES: readonly (readonly [number, number, number])[] = Object.freeze([
-  [0, 7, -4100], [2, 3, 1500], [4, 5, 4800],
-]);
-const INTERCHANGE_RAMP_M = 1100;
 const STREAM_SHARE = 0.85;
 const CHASE_STREAM_SHARE = 0.8;
 const SURGE_M = 40;
@@ -224,6 +237,8 @@ const HEAD_TRAIL_S = 0.02;
  * R16 light trails: a modest additive smear behind every car, length ~0.45 s of travel capped at
  * 60 m, low alpha so bloom integrates it. Red seen from behind, warm white seen from the front.
  */
+/** R18 impostor sprite brightness before the emissive gain (bloom A/B tuned). */
+const IMPOSTOR_INTENSITY = 1.2;
 const TRAIL_SECONDS = 0.45;
 const TRAIL_MAX_M = 60;
 const TRAIL_ALPHA = 0.25;
@@ -867,6 +882,205 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
 }
 `;
 
+/* ------------------------------------------------------------------------------------------------
+ * R18 GPU impostor cars: one instanced quad per car, position evaluated here from the baked stream
+ * path table (trafficStreams.ts; impostorPosition is the CPU mirror — keep the two in step). Each
+ * instance carries only (stream, arc offset, phase, seed) and a sub-row; update() advances uTime.
+ * Drawn as a lamp sprite with a short micro-streak behind it: the head lamps' warm white seen from
+ * the front, the tails' red from behind, 2-5 px at distance, brightness and size varied per car.
+ * ---------------------------------------------------------------------------------------------- */
+
+const IMPOSTOR_VERTEX = /* glsl */ `
+attribute vec2 aCorner;      // x: 0 lamp end, 1 streak end; y: side -1..1
+attribute vec4 aImp;         // stream, arc offset 0..1, phase 0..1, seed 0..1
+attribute float aImpRow;     // sub-row 0..1
+
+uniform sampler2D uPaths;    // rows 0..NSTREAMS-1: stream centre (x, y); row NSTREAMS: warp (cx, cz, cos, sin)
+uniform vec4 uStreamA[ NSTREAMS ]; // direction, speed, sub-rows, width
+uniform vec4 uRingA[ NRINGS ];     // radius, altitude, direction, speed
+uniform vec4 uRingB[ NRINGS ];     // sub-rows, width, radial meander, wobble
+uniform float uRingLobes[ NRINGS ];
+uniform vec2 uRingCentre;
+uniform float uTime;
+uniform float uLoop;
+uniform float uPathStep;
+uniform float uPathLast;
+uniform float uCorridor;
+uniform float uPixelAngle;
+uniform vec2 uBand;          // impostors fade in over [x, y] metres from the camera
+uniform float uFadeFrom;     // instances at or above this index fade by uFadeK (tier change)
+uniform float uFadeK;
+
+varying vec2 vCapsule;
+varying float vLengthR;
+varying float vWarm;
+varying float vIntensity;
+
+#include <fog_pars_vertex>
+
+vec4 pathAt( int row, float f ) {
+  float i0 = min( floor( f ), uPathLast - 1.0 );
+  float fr = f - i0;
+  vec4 a = texelFetch( uPaths, ivec2( int( i0 ), row ), 0 );
+  vec4 b = texelFetch( uPaths, ivec2( int( i0 ) + 1, row ), 0 );
+  return mix( a, b, fr );
+}
+
+void ringPose( int ring, out vec3 pos, out vec3 dir ) {
+  // R18 air-traffic ring, world space (trafficStreams.impostorPosition's ring branch).
+  vec4 ra = uRingA[ ring ];
+  vec4 rb = uRingB[ ring ];
+  float row = aImpRow;
+  float phase = aImp.z;
+  float seed = aImp.w;
+  float speed = ra.w * ( 0.9 + 0.2 * row );
+  float surge = 110.0 * sin( uTime * ( 0.3 + 0.25 * row ) + phase * 97.0 );
+  float theta = ( aImp.y * 6.28318530718 * ra.x + ra.z * speed * uTime + surge ) / ra.x;
+  float rows = rb.x;
+  float rowIndex = min( rows - 1.0, floor( row * rows ) );
+  float spacing = rb.y / max( 1.0, rows - 1.0 );
+  float rowOffset = ( rowIndex - ( rows - 1.0 ) * 0.5 ) * spacing + ( seed - 0.5 ) * spacing * 0.6;
+  float fr = float( ring );
+  float r = ra.x + rb.z * sin( uRingLobes[ ring ] * theta + fr * 1.7 ) + rowOffset;
+  pos = vec3( uRingCentre.x + r * cos( theta ),
+    ra.y + rb.w * sin( 3.0 * theta + fr * 2.3 ) + ( mod( rowIndex, 2.0 ) < 0.5 ? - 12.0 : 12.0 ) + ( fract( seed * 7.3 ) - 0.5 ) * 30.0 + 6.0 * sin( uTime * 0.33 + phase * 17.0 ),
+    uRingCentre.y + r * sin( theta ) );
+  dir = vec3( - sin( theta ), 0.0, cos( theta ) ) * ra.z;
+}
+
+void freePose( out vec3 pos, out vec3 dir ) {
+  // R18 free floater (trafficStreams.impostorPosition's free branch): scattered through the corridor.
+  float row = aImpRow;
+  float phase = aImp.z;
+  float seed = aImp.w;
+  float d = phase < 0.5 ? - 1.0 : 1.0;
+  float speed = 60.0 + 150.0 * seed;
+  float homeX = ( seed * 2.0 - 1.0 ) * uCorridor;
+  float homeY = FREE_MIN_Y + pow( row, 0.9 ) * ( FREE_MAX_Y - FREE_MIN_Y );
+  float v = mod( aImp.y * uLoop + d * speed * uTime, uLoop );
+  float xf = clamp( homeX + ( 12.0 + 40.0 * row ) * sin( uTime * ( 0.05 + 0.13 * seed ) + phase * 37.0 ), - uCorridor, uCorridor );
+  float yf = homeY + ( 6.0 + 30.0 * seed ) * sin( uTime * ( 0.04 + 0.12 * row ) + phase * 23.0 );
+  vec4 w = pathAt( NSTREAMS, v / uPathStep );
+  vec2 h = normalize( w.zw );
+  pos = vec3( w.x + xf * h.x, yf, w.y - xf * h.y );
+  dir = vec3( h.y, 0.0, h.x ) * d;
+}
+
+void main() {
+  int k = int( aImp.x + 0.5 );
+  float row = aImpRow;
+  float phase = aImp.z;
+  float seed = aImp.w;
+  vec3 pos;
+  vec3 dir;
+  if ( k >= NSTREAMS + NRINGS ) {
+    freePose( pos, dir );
+  } else if ( k >= NSTREAMS ) {
+    ringPose( k - NSTREAMS, pos, dir );
+  } else {
+  vec4 st = uStreamA[ k ];
+  float speed = st.y * ( 0.9 + 0.2 * row );
+  float surge = ( st.y > 150.0 ? 110.0 : 40.0 ) * sin( uTime * ( 0.3 + 0.25 * row ) + phase * 97.0 );
+  float v = mod( aImp.y * uLoop + st.x * speed * uTime + surge, uLoop );
+  float f = v / uPathStep;
+  vec4 c = pathAt( k, f );
+  vec4 w = pathAt( NSTREAMS, f );
+  vec2 h = normalize( w.zw );
+  float rows = st.z;
+  float rowIndex = min( rows - 1.0, floor( row * rows ) );
+  float spacing = st.w / max( 1.0, rows - 1.0 );
+  float rowOffset = ( rowIndex - ( rows - 1.0 ) * 0.5 ) * spacing;
+  float x = clamp( c.x + rowOffset + ( seed - 0.5 ) * spacing * 0.6 + 3.0 * sin( uTime * 0.4 + phase * 31.0 ), - uCorridor, uCorridor );
+  float y = c.y + ( mod( rowIndex, 2.0 ) < 0.5 ? - 3.0 : 3.0 ) + ( fract( seed * 7.3 ) - 0.5 ) * 6.0 + 2.0 * sin( uTime * 0.33 + phase * 17.0 );
+  pos = vec3( w.x + x * h.x, y, w.y - x * h.y );
+  dir = vec3( h.y, 0.0, h.x ) * st.x;
+  }
+
+  vec3 toCam = cameraPosition - pos;
+  float dist = length( toCam );
+  // Size and brightness vary per car; the streak is ~1.3 car lengths of motion behind the lamp.
+  float scale = 1.6 + 1.0 * fract( seed * 13.37 );
+  vec4 v0 = viewMatrix * vec4( pos, 1.0 );
+  // Radius in pixels, not metres: every impostor is a crisp 3-5 px lamp dot at any range (a world-
+  // size floor turned the mid-range ones into soft blobs under bloom), varied per car.
+  float r0 = - v0.z * uPixelAngle * ( 1.8 + 1.0 * fract( seed * 5.1 ) );
+  // Micro-streak: ~1.3 car lengths of motion, but never longer on screen than 2.2 dot radii.
+  float streak = min( 5.0 * scale * 1.3, 2.2 * r0 );
+  vec3 tailEnd = pos - dir * streak;
+  vec4 v1 = viewMatrix * vec4( tailEnd, 1.0 );
+  float r1 = r0 * 0.45;
+  vec2 d = v1.xy - v0.xy;
+  float len = length( d );
+  vec2 axis = len > 1e-4 ? d / len : vec2( 0.0, - 1.0 );
+  vec2 side = vec2( - axis.y, axis.x );
+  float rMean = 0.5 * ( r0 + r1 );
+  float end = aCorner.x;
+  float r = mix( r0, r1, end );
+  vec4 vv = mix( v0, v1, end );
+  vv.xy += axis * ( end * 2.0 - 1.0 ) * r + side * aCorner.y * r;
+  vLengthR = len / rMean;
+  vCapsule = vec2( mix( - 1.0, vLengthR + 1.0, end ), aCorner.y );
+
+  float facing = dot( dir, toCam / max( dist, 1.0 ) );
+  vWarm = smoothstep( - 0.2, 0.3, facing );
+  float tierFade = float( gl_InstanceID ) >= uFadeFrom ? uFadeK : 1.0;
+  // Far impostors integrate into the haze instead of stacking into a bloom wash: a pixel-size dot
+  // keeps its size with distance, so its brightness has to fall instead (to 25% by 9 km).
+  vIntensity = ( 0.55 + 0.6 * fract( seed * 29.7 ) ) * smoothstep( uBand.x, uBand.y, dist ) * tierFade
+    * mix( 1.0, 0.25, smoothstep( 2500.0, 9000.0, dist ) );
+  if ( vIntensity <= 0.001 ) {
+    // Inside the CPU cars' band (or faded out): no fragments at all.
+    gl_Position = vec4( 2.0, 2.0, 2.0, 1.0 );
+    return;
+  }
+  #ifdef USE_FOG
+    vFogDepth = - vv.z;
+    vSkyFogHeight = pos.y;
+  #endif
+  gl_Position = projectionMatrix * vv;
+}
+`;
+
+const IMPOSTOR_FRAGMENT = /* glsl */ `
+uniform float uIntensity;
+uniform float uFogPenetration;
+
+varying vec2 vCapsule;
+varying float vLengthR;
+varying float vWarm;
+varying float vIntensity;
+
+#include <fog_pars_fragment>
+${SKYRIVER_OUTPUT_PARS_GLSL}
+
+void main() {
+  float x = vCapsule.x;
+  float along = clamp( x, 0.0, vLengthR );
+  float dist = length( vec2( x - along, vCapsule.y ) );
+  float body = exp( - dist * dist * 1.6 );
+  float t = vLengthR > 0.0 ? along / vLengthR : 0.0;
+  float fall = pow( max( 1.0 - t, 0.0 ), 1.2 );
+  vec3 color = mix( vec3( 1.0, 0.07, 0.045 ), vec3( 1.0, 0.86, 0.66 ), vWarm ) * body * fall;
+  gl_FragColor = vec4( color * ( vIntensity * uIntensity ), 1.0 );
+${SKYRIVER_OUTPUT_APPLY_GLSL}
+  #ifdef USE_FOG
+    gl_FragColor.rgb *= pow( max( 1.0 - skyriverFogFactor(), 0.0 ), uFogPenetration );
+  #endif
+}
+`;
+
+function buildImpostorGeometry(seed: number, capacity: number): InstancedBufferGeometry {
+  const geometry = new InstancedBufferGeometry();
+  geometry.setAttribute('position', new BufferAttribute(new Float32Array(4 * 3), 3));
+  geometry.setAttribute('aCorner', new BufferAttribute(new Float32Array([0, -1, 0, 1, 1, 1, 1, -1]), 2));
+  geometry.setIndex([0, 1, 2, 0, 2, 3]);
+  const attrs = deriveImpostorAttributes(seed, capacity);
+  geometry.setAttribute('aImp', new InstancedBufferAttribute(attrs.streamArcPhaseSeed, 4));
+  geometry.setAttribute('aImpRow', new InstancedBufferAttribute(attrs.row, 1));
+  geometry.instanceCount = 0;
+  return geometry;
+}
+
 function buildStreakGeometry(capacity: number): InstancedBufferGeometry {
   const corner: number[] = [];
   const lamp: number[] = [];
@@ -1154,7 +1368,90 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const streakDirArray = streakDir.array as Float32Array;
   const streakFadeArray = streakFade.array as Float32Array;
 
-  const objects: Object3D[] = [...meshes, streakMesh];
+  // ---- R18 GPU impostor cars.
+  const impostorCapacity = Math.max(0, options.maxImpostors ?? options.quality.impostors);
+  const table = streamPathTable();
+  const pathTexture = new DataTexture(table.data, table.width, table.height, RGBAFormat, FloatType);
+  pathTexture.minFilter = NearestFilter;
+  pathTexture.magFilter = NearestFilter;
+  pathTexture.needsUpdate = true;
+  const impostorGeometry = buildImpostorGeometry(options.seed, impostorCapacity);
+  const impostorMaterial = new ShaderMaterial({
+    name: 'skyriver.traffic.impostors',
+    vertexShader: IMPOSTOR_VERTEX,
+    fragmentShader: IMPOSTOR_FRAGMENT,
+    defines: { NSTREAMS: IMPOSTOR_PATHS.length, NRINGS: IMPOSTOR_RINGS.length, FREE_MIN_Y: IMPOSTOR_FREE_MIN_Y_M.toFixed(1), FREE_MAX_Y: IMPOSTOR_FREE_MAX_Y_M.toFixed(1) },
+    uniforms: {
+      uPaths: { value: pathTexture },
+      uStreamA: { value: IMPOSTOR_PATHS.map((st) => new Vector4(st[2]!, st[5]!, st[3]!, st[4]!)) },
+      uRingA: { value: IMPOSTOR_RINGS.map((r) => new Vector4(r[0]!, r[1]!, r[2]!, r[5]!)) },
+      uRingB: { value: IMPOSTOR_RINGS.map((r) => new Vector4(r[3]!, r[4]!, r[6]!, r[7]!)) },
+      uRingLobes: { value: IMPOSTOR_RINGS.map((r) => r[8]!) },
+      uRingCentre: { value: new Vector2(loopCentroid().x, loopCentroid().z) },
+      uTime: { value: 0 },
+      uLoop: { value: CANYON_LOOP_LENGTH_M },
+      uPathStep: { value: STREAM_PATH_STEP_M },
+      uPathLast: { value: STREAM_PATH_SAMPLES },
+      uCorridor: { value: STREAM_CORRIDOR_HALF_M },
+      uPixelAngle: { value: 0.0012 },
+      uBand: { value: new Vector2(IMPOSTOR_BAND_START_M, IMPOSTOR_BAND_END_M) },
+      uFadeFrom: { value: 1e9 },
+      uFadeK: { value: 1 },
+      // Dim on purpose: tens of thousands of sub-pixel dots must integrate into the haze as light-river
+      // texture, not bloom the sky into foam (the R12 sign-core lesson). Tuned in the R18 bloom A/B.
+      uIntensity: { value: IMPOSTOR_INTENSITY * SKYRIVER_EMISSIVE_GAIN },
+      uFogPenetration: { value: 0.2 },
+      ...skyriverFogUniforms(),
+    },
+    transparent: true,
+    blending: AdditiveBlending,
+    depthWrite: false,
+    depthTest: true,
+    side: DoubleSide,
+    fog: true,
+  });
+  applySkyriverFog(impostorMaterial);
+  const impostorMesh = new Mesh(impostorGeometry, impostorMaterial);
+  impostorMesh.name = 'skyriver.traffic.impostors';
+  impostorMesh.frustumCulled = false;
+  impostorMesh.renderOrder = 9;
+  impostorMesh.visible = false;
+  let impostorTier = 0;
+  let impostorOverride: number | null = null;
+  let impostorFrom = 0;
+  let impostorTo = 0;
+  let impostorChangeT = -1e9;
+  let impostorPending = false;
+  /**
+   * 0..1: how far the CPU cars' far lights have handed over to the impostors. Follows the impostor
+   * crossfade on a tier change (on/off), so the far lights never switch in one frame.
+   */
+  let impostorPresence = 0;
+  function retargetImpostors(): void {
+    const target = Math.min(impostorCapacity, impostorOverride ?? impostorTier);
+    if (target === impostorTo) return;
+    impostorFrom = impostorTo;
+    impostorTo = target;
+    impostorPending = true;
+  }
+  function setImpostorCount(count: number | null): void {
+    impostorOverride = count === null ? null : Math.max(0, Math.floor(count));
+    retargetImpostors();
+  }
+  function applyImpostors(t: number): void {
+    if (impostorPending) { impostorChangeT = t; impostorPending = false; }
+    const u = impostorMaterial.uniforms;
+    u.uTime!.value = t;
+    const k = Math.min(1, Math.max(0, (t - impostorChangeT) / IMPOSTOR_FADE_S));
+    const drawn = k >= 1 ? impostorTo : Math.max(impostorFrom, impostorTo);
+    impostorGeometry.instanceCount = drawn;
+    u.uFadeFrom!.value = Math.min(impostorFrom, impostorTo);
+    u.uFadeK!.value = k >= 1 ? 1 : impostorTo > impostorFrom ? k : 1 - k;
+    impostorMesh.visible = drawn > 0;
+    impostorPresence = impostorFrom === 0 && impostorTo > 0 ? k : impostorTo === 0 && impostorFrom > 0 ? 1 - k : impostorTo > 0 ? 1 : 0;
+  }
+
+  const objects: Object3D[] = [...meshes, streakMesh, impostorMesh];
 
   // T6R-2 escorts: the first ESCORT_COUNT cars fly with the shuttle (the anchor) instead of a
   // river, so the chase view always holds a few close vehicles with readable dark bodies and long
@@ -1182,6 +1479,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   let streaksUsed = 0;
 
   const invDimRangeSq = 1 / (DISTANCE_DIM_RANGE_M * DISTANCE_DIM_RANGE_M);
+  const impostorBandStartSq = CPU_LIGHT_HANDOVER_START_M * CPU_LIGHT_HANDOVER_START_M;
+  const impostorBandEndSq = CPU_LIGHT_HANDOVER_END_M * CPU_LIGHT_HANDOVER_END_M;
 
   // ---- R11 stream geometry: centre (x across, y) of stream k at canyon arc length v.
   const streamScratch = new Float64Array(3);
@@ -1303,56 +1602,23 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       meshes[archetype].count = active;
     }
   }
-  function swapWeight(v: number, at: number): number {
-    let d = (v - at) % CANYON_LOOP_LENGTH_M;
-    if (d < 0) d += CANYON_LOOP_LENGTH_M;
-    const half = CANYON_LOOP_LENGTH_M * 0.5;
-    return smoothstep(0, INTERCHANGE_RAMP_M, d) * (1 - smoothstep(half, half + INTERCHANGE_RAMP_M, d));
-  }
-  function streamCentreAnalytic(k: number, v: number, out: Float64Array): void {
-    const st = STREAMS[k]!;
-    let x = st[0]!;
-    let y = st[1]!;
-    for (const [a, b, at] of INTERCHANGES) {
-      if (k !== a && k !== b) continue;
-      const partner = STREAMS[k === a ? b : a]!;
-      const w = swapWeight(v, at);
-      x += (partner[0]! - x) * w;
-      y += (partner[1]! - y) * w;
-    }
-    out[0] = x + st[6]! * Math.sin((TAU * v) / (1800 + k * 230) + k * 1.3);
-    out[1] = y + st[7]! * Math.sin((TAU * v) / (1300 + k * 170) + k * 2.1);
-  }
-
   // R12 perf: each stream's centre line is baked once into a path table (8 m steps around the loop),
-  // so a car costs one table lookup instead of re-evaluating meanders and interchange ramps.
-  const PATH_STEP_M = 8;
-  const pathSamples = Math.ceil(CANYON_LOOP_LENGTH_M / PATH_STEP_M);
-  const pathX: Float32Array[] = [];
-  const pathY: Float32Array[] = [];
-  for (let k = 0; k < STREAMS.length; k += 1) {
-    const px = new Float32Array(pathSamples + 1);
-    const py = new Float32Array(pathSamples + 1);
-    for (let i = 0; i <= pathSamples; i += 1) {
-      streamCentreAnalytic(k, i * PATH_STEP_M, streamScratch);
-      px[i] = streamScratch[0]!;
-      py[i] = streamScratch[1]!;
-    }
-    pathX.push(px);
-    pathY.push(py);
-  }
+  // so a car costs one table lookup. R18: the table is shared with the GPU impostor cars
+  // (trafficStreams.ts), so both populations fly exactly the same corridors.
+  const pathTable = streamPathTable();
   /** Table lookup: writes centre x, y and the lateral slope dx/dv into out[0..2]. */
   function streamCentre(k: number, v: number, out: Float64Array): void {
     let w = v % CANYON_LOOP_LENGTH_M;
     if (w < 0) w += CANYON_LOOP_LENGTH_M;
-    const f = w / PATH_STEP_M;
-    const i = Math.min(pathSamples - 1, Math.floor(f));
+    const f = w / STREAM_PATH_STEP_M;
+    const i = Math.min(STREAM_PATH_SAMPLES - 1, Math.floor(f));
     const t = f - i;
-    const px = pathX[k]!;
-    const py = pathY[k]!;
-    out[0] = px[i]! + (px[i + 1]! - px[i]!) * t;
-    out[1] = py[i]! + (py[i + 1]! - py[i]!) * t;
-    out[2] = (px[i + 1]! - px[i]!) / PATH_STEP_M;
+    const o0 = (k * pathTable.width + i) * 4;
+    const o1 = o0 + 4;
+    const d = pathTable.data;
+    out[0] = d[o0]! + (d[o1]! - d[o0]!) * t;
+    out[1] = d[o0 + 1]! + (d[o1 + 1]! - d[o0 + 1]!) * t;
+    out[2] = (d[o1]! - d[o0]!) / STREAM_PATH_STEP_M;
   }
 
   function setQuality(quality: TrafficQuality): void {
@@ -1360,6 +1626,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     if (quality.thrusterBudget > streakCapacity) fail('SKYRIVER_TRAFFIC_TIER_GLOW_OVER_CAPACITY');
 
     streakBudget = quality.thrusterBudget;
+    impostorTier = quality.impostors;
+    retargetImpostors();
     if (quality.trails !== trailTo) {
       trailFrom = trailTo;
       trailTo = quality.trails;
@@ -1587,6 +1855,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         const dz = pz - camZ;
         const distanceSq = dx * dx + dy * dy + dz * dz;
         if (carThinFar[car] === 1) fade *= 1 - smoothstep(900 * 900, 1150 * 1150, distanceSq);
+        // R18: with impostors on, the CPU cars' far lights hand over to them across the impostor band.
+        if (impostorPresence > 0) fade *= 1 - impostorPresence * smoothstep(impostorBandStartSq, impostorBandEndSq, distanceSq);
         const dim = (1 - (1 - DISTANCE_DIM_FLOOR) * Math.min(1, distanceSq * invDimRangeSq)) * fade;
         const colorOffset = slot * 3;
         colors[colorOffset] = tintR[car] * dim;
@@ -1618,6 +1888,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     }
 
     streakGeometry.instanceCount = streaksUsed;
+    applyImpostors(t);
     streakPos.needsUpdate = true;
     streakDir.needsUpdate = true;
     streakFade.needsUpdate = true;
@@ -1625,6 +1896,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
 
   /** Radians per drawing-buffer pixel, vertically. The scene calls this on resize. */
   function setPixelAngle(radiansPerPixel: number): void {
+    impostorMaterial.uniforms.uPixelAngle!.value = radiansPerPixel;
     streakMaterial.uniforms.uPixelAngle!.value = radiansPerPixel;
   }
 
@@ -1633,10 +1905,11 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
       triangles += trianglesPerArchetype[archetype] * groupActive[archetype];
     }
-    triangles += streaksUsed * 10;
+    triangles += streaksUsed * 10 + impostorGeometry.instanceCount * 2;
     return {
       activeCars,
       activeThrusters: streaksUsed,
+      impostors: impostorGeometry.instanceCount,
       drawCalls: TRAFFIC_DRAW_CALLS,
       trianglesPerArchetype,
       trianglesDrawn: triangles,
@@ -1652,9 +1925,12 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     streakGeometry.dispose();
     carMaterial.dispose();
     streakMaterial.dispose();
+    impostorGeometry.dispose();
+    impostorMaterial.dispose();
+    pathTexture.dispose();
   }
 
   setQuality(options.quality);
 
-  return { objects, update, setQuality, setTrailsAllowed, setPixelAngle, setAnchor, stats, dispose };
+  return { objects, update, setQuality, setTrailsAllowed, setImpostorCount, setPixelAngle, setAnchor, stats, dispose };
 }

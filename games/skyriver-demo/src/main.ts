@@ -30,6 +30,7 @@ import {
   type SkyriverFrame,
 } from './render/scene';
 import { TRAFFIC_QUALITY_TIERS, createSkyriverTraffic } from './render/traffic';
+import { deriveImpostorAttributes, impostorPosition } from './render/trafficStreams';
 import type { SkyriverTraffic, TrafficQuality } from './render/trafficTypes';
 import { createSkyriverShuttle } from './render/shuttle';
 import { createFlightPresenter } from './render/flightPresentation';
@@ -95,7 +96,7 @@ export function trafficQualityForTier(tier: SkyriverQualityTier): TrafficQuality
       `SKYRIVER_TIER_CAR_COUNT_DRIFT: ${tier} scene=${scene.cars} traffic=${traffic.carCount}`,
     );
   }
-  return { carCount: scene.cars, thrusterBudget: traffic.thrusterBudget, trails: traffic.trails };
+  return { carCount: scene.cars, thrusterBudget: traffic.thrusterBudget, trails: traffic.trails, impostors: traffic.impostors };
 }
 
 /* -------------------------------------------------------------------------------------------------
@@ -281,6 +282,11 @@ export interface SkyriverAppOptions {
   readonly startMode?: 'autopilot' | 'freefly';
   readonly tier?: SkyriverQualityTier;
   readonly debug?: boolean;
+  /**
+   * R18 operator density test: draw exactly this many GPU impostor cars on every tier (capacity is
+   * raised to fit). Undefined keeps the tier's own count.
+   */
+  readonly impostors?: number;
 }
 
 /** Live numbers for the HUD debug line, T6's measurements and the A3/A5/A6 browser probe. */
@@ -358,7 +364,9 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
     quality: trafficQualityForTier(initialTier),
     maxCarCount: topQuality.carCount,
     maxThrusterBudget: topQuality.thrusterBudget,
+    maxImpostors: Math.max(topQuality.impostors, options.impostors ?? 0),
   });
+  if (options.impostors !== undefined) traffic.setImpostorCount(options.impostors);
   for (const object of traffic.objects) scene.scene.add(object);
 
   const shuttle = createSkyriverShuttle();
@@ -705,8 +713,6 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
 
     hud.setFps(tiers.fps);
 
-    hud.setFps(tiers.fps);
-
     if (hud.debugVisible) {
       const debug = scene.debug();
       const trafficStats = traffic.stats();
@@ -848,6 +854,10 @@ export function boot(): SkyriverApp {
     seed: SKYRIVER_DEMO_SEED,
     startMode: params.get('mode') === 'freefly' ? 'freefly' : 'autopilot',
     debug: params.get('debug') === '1',
+    // R18 phone density test: ?impostors=N (0 = off) overrides the tier's GPU impostor count.
+    ...(params.get('impostors') !== null && Number.isFinite(Number(params.get('impostors')))
+      ? { impostors: Math.min(60000, Math.max(0, Math.floor(Number(params.get('impostors'))))) }
+      : {}),
   });
 
   // T7 A/B evidence: ?bloom=0 renders the same frame without the post chain.
@@ -870,6 +880,9 @@ export function boot(): SkyriverApp {
   // browser probe can park a diagnostic camera at a real wall in the production build.
   (window as unknown as { __skyriverDiag?: unknown }).__skyriverDiag = {
     warpCanyon,
+    // R18: the GPU impostor cars' CPU mirror (density and continuity probes).
+    deriveImpostorAttributes,
+    impostorPosition,
     raycastTowers(ox: number, oy: number, oz: number, dx: number, dy: number, dz: number): { x: number; y: number; z: number } | null {
       const ray = new THREE.Raycaster(new THREE.Vector3(ox, oy, oz), new THREE.Vector3(dx, dy, dz).normalize(), 0, 3000);
       const hit = ray.intersectObject(app.scene.city.towerMesh, false)[0];
