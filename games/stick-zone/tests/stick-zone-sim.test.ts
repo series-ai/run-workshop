@@ -8092,15 +8092,15 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     });
     fs.writeFileSync(nativePermTarget, originalLedgerBytes, "utf8");
 
-    const nativePermStore = path.resolve(process.cwd(), `.test-native-perm-link-${Date.now()}.json`);
+    const nativePermStore = path.resolve(process.cwd(), `.test-native-perm-link-ENOENT-substring-${Date.now()}.json`);
     fs.symlinkSync(nativePermTarget, nativePermStore);
 
     // Also create backup with generation: 2
     const nativePermBackup = `${nativePermStore}.prev`;
     const nativeBkpAuth = new ServerSettlementAuthority(nativePermBackup);
     nativeBkpAuth.initRaid(raidId, 50000, ["op_player"]);
-    nativeBkpAuth.generation = 2;
-    nativeBkpAuth.saveToDisk();
+    nativeBkpAuth.generation = 1;
+    nativeBkpAuth.saveToDisk(); // Increments to exactly generation: 2
     const backupBytesBefore = fs.readFileSync(nativePermBackup, "utf8");
 
     // Revoke permissions on target directory so readFileSync and stat throw native EACCES (with "ENOENT" in path)
