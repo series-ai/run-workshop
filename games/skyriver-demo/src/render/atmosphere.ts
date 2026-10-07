@@ -32,6 +32,7 @@ import * as THREE from 'three';
 import type { SkyriverCityLayout } from '../sim/derive';
 import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
 import { CANYON_LOOP_LENGTH_M, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
+import { podiumLotHeight } from './presentationLayout';
 
 /** T7-3: god rays and searchlights are derived in canyon space and bent onto the loop here. */
 const atmosphereWarp: WarpOut = { x: 0, z: 0, heading: 0 };
@@ -89,10 +90,13 @@ export const SKYRIVER_ATMOSPHERE = Object.freeze({
 const COLOR_FOG_LOW = 0x070b11;
 const COLOR_FOG_HIGH = 0x06090e;
 /** T6R-2: the depths — what the haze sinks to below the canyon floor band. */
-const COLOR_FOG_DEEP = 0x140d08;
-const COLOR_SKY_ZENITH = 0x070b14;
-const COLOR_SKY_HORIZON = 0x0a1019;
-const COLOR_SKY_DEPTHS = 0x120c08;
+/** R17: the depths cooled from brown to a dark steel (the top-down 'brown ring'). */
+const COLOR_FOG_DEEP = 0x0c0f15;
+/** R17 twilight: navy-indigo zenith, pale steel-blue horizon, a dusk band toward the view. */
+const COLOR_SKY_ZENITH = 0x0d1131;
+const COLOR_SKY_HORIZON = 0x1e2a3e;
+const COLOR_SKY_DUSK = 0x34405a;
+const COLOR_SKY_DEPTHS = 0x0b0e14;
 /** Neon the wet overcast throws back down. The one place warmth is allowed into the blue. */
 const COLOR_SKY_NEON = 0x2c3a52;
 const COLOR_RAIN = 0x8fa6bd;
@@ -215,10 +219,14 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
     color += vec3( 0.0, 0.018, 0.024 ) * exp( - midBand * midBand );
     // T7-3 strata: warm smog over the grime, cool clean air in the pristine heights.
     float grimeAir = 1.0 - smoothstep( 300.0, 800.0, h );
-    color = mix( color, vec3( 0.008, 0.0052, 0.0034 ), grimeAir * 0.55 );
+    // R17: the grime smog is a near-neutral grey at the old smog's luminance; warmth stays in the lit
+    // rooms, not the air.
+    color = mix( color, vec3( 0.0062, 0.0055, 0.0053 ), grimeAir * 0.55 );
     color = mix( color, vec3( 0.014, 0.02, 0.03 ), smoothstep( 1800.0, 2700.0, h ) * 0.45 );
     // R12: the service deck's light scattering up into the low haze — a warm glow just above it.
-    color += vec3( 0.014, 0.007, 0.0025 ) * exp( - max( h - 40.0, 0.0 ) / 220.0 ) * ( 1.0 - skyriverFogDeep() * 0.6 );
+    // R17: the deck's scattered light is a neutral grey, not orange: down the canyon it was the amber
+    // 'distance' the operator read (same luminance, no hue).
+    color += vec3( 0.0083, 0.0079, 0.0086 ) * exp( - max( h - 40.0, 0.0 ) / 220.0 ) * ( 1.0 - skyriverFogDeep() * 0.6 );
     return mix( color, uSkyFogColorDeep, skyriverFogDeep() );
   }
 #endif
@@ -572,6 +580,8 @@ uniform vec3 uHorizon;
 uniform vec3 uDepths;
 uniform vec3 uNeon;
 uniform float uTime;
+uniform vec3 uDusk;
+uniform vec2 uForward;
 
 varying vec3 vSkyWorld;
 
@@ -582,8 +592,15 @@ void main() {
   vec3 dir = normalize( vSkyWorld );
   float h = dir.y;
 
-  // Layer 1: the sky itself — near-black overhead, easing into a rain-lit horizon.
-  vec3 color = mix( uHorizon, uZenith, pow( clamp( h, 0.0, 1.0 ), 0.42 ) );
+  // Layer 1: the sky itself. R17 twilight (operator: "evening, not void"): deep navy-indigo
+  // overhead, easing to a pale steel-blue horizon, plus a dusk band on the horizon that brightens
+  // toward the way the camera looks (the vanishing point). A rarefied lift at the top of the frame,
+  // not ambient light: nothing else reads the sky colour.
+  vec3 color = mix( uHorizon, uZenith, pow( clamp( h, 0.0, 1.0 ), 0.55 ) );
+  float duskBand = exp( - max( h, 0.0 ) * 9.0 ) * smoothstep( -0.06, 0.02, h );
+  vec2 flatDir = dir.xz / max( length( dir.xz ), 1e-4 );
+  float toward = pow( max( dot( flatDir, uForward ), 0.0 ), 3.0 );
+  color += uDusk * duskBand * ( 0.35 + 0.65 * toward );
   // Layer 2: below the horizon the canyon depths swallow the light. There is no canyon floor, so
   // looking straight down this is all the player sees — it has to read as haze too thick to see
   // through, not as nothing rendered, so it stays a dimmed version of the murk rather than black.
@@ -806,6 +823,8 @@ export class SkyriverAtmosphere {
         uHorizon: { value: new THREE.Color(COLOR_SKY_HORIZON) },
         uDepths: { value: new THREE.Color(COLOR_SKY_DEPTHS) },
         uNeon: { value: new THREE.Color(COLOR_SKY_NEON) },
+        uDusk: { value: new THREE.Color(COLOR_SKY_DUSK) },
+        uForward: { value: new THREE.Vector2(0, 1) },
         uTime: { value: 0 },
       },
       side: THREE.BackSide,
@@ -898,6 +917,12 @@ export class SkyriverAtmosphere {
     // One copy, no allocation: the dome is a unit sphere riding the camera.
     this.skyMesh.position.copy(camera.position);
     this.skyMaterial.uniforms.uTime.value = time;
+    // The dusk band leans toward the camera's horizontal view direction.
+    camera.getWorldDirection(this.rainScratch);
+    const fx = this.rainScratch.x;
+    const fz = this.rainScratch.z;
+    const fl = Math.hypot(fx, fz);
+    if (fl > 1e-4) (this.skyMaterial.uniforms.uForward.value as THREE.Vector2).set(fx / fl, fz / fl);
 
     if (this.quality.godRays) this.godRays.setTime(time);
 
@@ -1019,7 +1044,8 @@ export class SkyriverAtmosphere {
     for (let k = 0; k < count; k += 1) stations.push([k % 2 === 0 ? -1 : 1, -CANYON_LOOP_LENGTH_M / 2 + ((k + 0.3) / count) * CANYON_LOOP_LENGTH_M]);
     const origins: THREE.Vector3[] = [];
     for (const [side, z] of stations.slice(0, SKYRIVER_ATMOSPHERE.searchlightCount)) {
-      const wall = layout.towers.filter((tower) => Math.sign(tower.x) === side);
+      // R17: never a podium lot (cut down near route height, the lamp would shine into the camera).
+      const wall = layout.towers.filter((tower) => Math.sign(tower.x) === side && podiumLotHeight(tower) === undefined);
       if (wall.length === 0) continue;
       const innerX = Math.min(...wall.map((tower) => Math.abs(tower.x)));
       const inner = wall.filter((tower) => Math.abs(tower.x) < innerX + layout.cell * 0.5);

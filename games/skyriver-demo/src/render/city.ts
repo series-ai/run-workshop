@@ -60,6 +60,7 @@ import {
 } from './impostorAtlas';
 import { CANYON_LOOP_LENGTH_M, canyonBendApexes, foldsInsideBend, intrudesOtherStretch, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
 import { ROUTE_MAX_ALTITUDE_M, STRATA_GRIME_TOP_M, STRATA_PRISTINE_BASE_M, routeAltitude, routeLateral } from './routeProfile';
+import { podiumLotHeight } from './presentationLayout';
 
 /** Draw calls this module may spend (plan T3 allows 10 city-only; the shared budget allots 8). */
 export const SKYRIVER_CITY_DRAW_CALL_BUDGET = 8;
@@ -115,6 +116,8 @@ export const SKYRIVER_TRIM_FLOOD = 9;
 /** Skybridge altitude band and the canyon stretch they keep out of (the free-flight box, |z| <= 400). */
 export const SKYRIVER_SKYBRIDGE_MIN_Y_M = 2700;
 export const SKYRIVER_SKYBRIDGE_MIN_ABS_Z_M = 600;
+/** R17: longest single seam block; longer seams are split so they follow the canyon's curve. */
+const SEAM_SEGMENT_M = 180;
 /** R16: longest gantry between two slabs, metres. */
 export const SKYRIVER_GANTRY_MAX_SPAN_M = 300;
 
@@ -465,7 +468,8 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
           // R16: where a tower was dropped the next slab can be kilometres on; no bridge that long
           // (it read as a bar floating across the sky). Pushed then withdrawn, so every seeded draw
           // still runs and the rest of the city is unchanged.
-          if (span > SKYRIVER_GANTRY_MAX_SPAN_M) withdrawTrim();
+          // R17: with blade footprints the far end can miss a thin neighbour; both ends must land.
+          if (span > SKYRIVER_GANTRY_MAX_SPAN_M || Math.abs(cx[count - 1]! - next.x) > next.width * 0.5 - 2) withdrawTrim();
         }
       }
 
@@ -493,7 +497,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
             towerOwner,
             ownerOf(outward),
           );
-          if (span > SKYRIVER_GANTRY_MAX_SPAN_M) withdrawTrim();
+          if (span > SKYRIVER_GANTRY_MAX_SPAN_M || Math.abs(cz[count - 1]! - outward.z) > outward.depth * 0.5 - 2) withdrawTrim();
         }
       }
     }
@@ -624,15 +628,25 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
         if (gapEnd - gapStart > 16) {
           const setback = 30 + random.nextInt(0, 60);
           const width = 70 + random.nextInt(0, 80);
-          masses.push({
-            x: side * (Math.min(face, Math.abs(next.x) - next.width * 0.5) + setback + width * 0.5),
-            y0: SKYRIVER_CITY_VOID_BASE_Y,
-            z: (gapStart + gapEnd) * 0.5,
-            width,
-            height: Math.min(h, next.height) * (0.38 + random.nextInt(0, 420) / 1000) - SKYRIVER_CITY_VOID_BASE_Y,
-            depth: gapEnd - gapStart + 6,
-            tint: tower.tint,
-          });
+          const seamX = side * (Math.min(face, Math.abs(next.x) - next.width * 0.5) + setback + width * 0.5);
+          const seamHeight = Math.min(h, next.height) * (0.38 + random.nextInt(0, 420) / 1000) - SKYRIVER_CITY_VOID_BASE_Y;
+          // R17 clearance fix: where towers were dropped the seam runs up to ~1.7 km, and one straight
+          // box that long cut across the curving corridor at bends (the camera flew through it at
+          // 30.9, 42.3 and 46.2 s of the lap). The seam is now a run of <= SEAM_SEGMENT_M blocks,
+          // each placed at its own centre, so the run follows the canyon's curve.
+          const span = gapEnd - gapStart;
+          const pieces = Math.max(1, Math.ceil(span / SEAM_SEGMENT_M));
+          for (let k = 0; k < pieces; k += 1) {
+            masses.push({
+              x: seamX,
+              y0: SKYRIVER_CITY_VOID_BASE_Y,
+              z: gapStart + (k + 0.5) * (span / pieces),
+              width,
+              height: seamHeight,
+              depth: span / pieces + 6,
+              tint: tower.tint,
+            });
+          }
         }
       }
 
@@ -814,10 +828,12 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
           push(SKYRIVER_TRIM_FLOOD, x + cx * half, top - 130, apex.v + cz * half, 2.2, 260, 2.2, megaOwner);
         }
       }
-      push(SKYRIVER_TRIM_FLOOD, x, top + 1, apex.v - half, size + 2, 2.4, 2.2, megaOwner);
-      push(SKYRIVER_TRIM_FLOOD, x, top + 1, apex.v + half, size + 2, 2.4, 2.2, megaOwner);
-      push(SKYRIVER_TRIM_FLOOD, x - half, top + 1, apex.v, 2.2, 2.4, size + 2, megaOwner);
-      push(SKYRIVER_TRIM_FLOOD, x + half, top + 1, apex.v, 2.2, 2.4, size + 2, megaOwner);
+      // R17 crown readability: the rim is 6 m tall and 3.6 m proud (was 2.4 x 2.2), so it reads
+      // as a line of light on the approach, not as one more row of the facade's windows.
+      push(SKYRIVER_TRIM_FLOOD, x, top + 2.5, apex.v - half - 0.7, size + 3, 6, 3.6, megaOwner);
+      push(SKYRIVER_TRIM_FLOOD, x, top + 2.5, apex.v + half + 0.7, size + 3, 6, 3.6, megaOwner);
+      push(SKYRIVER_TRIM_FLOOD, x - half - 0.7, top + 2.5, apex.v, 3.6, 6, size + 3, megaOwner);
+      push(SKYRIVER_TRIM_FLOOD, x + half + 0.7, top + 2.5, apex.v, 3.6, 6, size + 3, megaOwner);
     }
     push(SKYRIVER_TRIM_FLOOD, x, tops[2]! + spire * 0.45, apex.v, 2.6, spire * 0.9, 2.6, megaOwner);
     // The crown sits far above the chase frame, so the outline runs down the whole tower body the
@@ -840,7 +856,10 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
   }
 
   // --- T7-3 tower profile variety: spears, flat tops, masts --------------------------------------
+  // R17: only lots left 'plain' by the massing pass keep these tops; the others still take their
+  // seeded draws (so every later draw is unchanged) but emit nothing here.
   for (const tower of layout.towers) {
+    const legacy = massingArchetype(layout, tower) === 'plain';
     const roll = random.nextInt(0, 99);
     if (roll < 28) {
       // Spear: three narrowing stages and a mast — silhouettes against the sky band.
@@ -849,21 +868,24 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
       let y = tower.height - 2;
       for (let stage = 0; stage < 3; stage += 1) {
         const h = 90 + random.nextInt(0, 220);
-        masses.push({ x: tower.x, y0: y, z: tower.z, width: w, height: h, depth: d, tint: tower.tint });
+        if (legacy) masses.push({ x: tower.x, y0: y, z: tower.z, width: w, height: h, depth: d, tint: tower.tint });
         y += h - 2;
         w *= 0.62;
         d *= 0.62;
       }
       const mast = 120 + random.nextInt(0, 260);
       push(SKYRIVER_TRIM_ANTENNA, tower.x, y + mast * 0.5, tower.z, 3.2, mast, 3.2, ownerOf(tower));
+      if (!legacy) withdrawTrim();
     } else if (roll < 55 && Math.abs(Math.abs(tower.x) - innerWallX(layout, tower)) > 1) {
       // Flat top with roof plant and a short antenna cluster (outer columns only; inner walls have crowns).
       const roofOwner = ownerOf(tower);
       push(SKYRIVER_TRIM_ROOF_PLANT, tower.x, tower.height + 9, tower.z, tower.width * 0.6, 18, tower.depth * 0.5, roofOwner);
+      if (!legacy) withdrawTrim();
       for (let m = 0; m < 3; m += 1) {
         const mh = 30 + random.nextInt(0, 90);
         push(SKYRIVER_TRIM_ANTENNA, tower.x + (random.nextInt(-1000, 1000) / 1000) * tower.width * 0.35,
           tower.height + mh * 0.5, tower.z + (random.nextInt(-1000, 1000) / 1000) * tower.depth * 0.35, 1.6, mh, 1.6, roofOwner);
+        if (!legacy) withdrawTrim();
       }
     }
   }
@@ -945,6 +967,8 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     bridges += 1;
   }
 
+  deriveMassingVariation(layout, innerWalls, masses, push);
+
   // Every derived slab, extended down into the void so no wall has a visible foot.
   for (const tower of layout.towers) {
     masses.unshift({
@@ -979,6 +1003,226 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
   return trims;
 }
 
+
+// --- R17 building variation ----------------------------------------------------------------------
+// Operator headline: adopt the reference's massing language (scratch/reference/massing_*.png): lots
+// become multi-tower complexes on a shared podium, shafts step back in graduated terraces, pure
+// ziggurat stacks and crown-only steps, a few very tall spires, cluttered plateau roofs, and low
+// infill in the gaps between slabs. Everything rises from a lot's roof inside its footprint, or sits
+// recessed behind the wall face in a gap, so nothing reaches the corridor (tests/clearance.test.ts).
+// Its own seeded stream: the T2 and trim streams are untouched.
+
+export type SkyriverMassingArchetype = 'plain' | 'complex' | 'ziggurat' | 'setback' | 'crown' | 'spire' | 'plateau';
+
+type PushTrim = (kind: number, px: number, py: number, pz: number, ex: number, ey: number, ez: number, on: SkyriverTrimOwner) => void;
+
+/** Shares per archetype, inner wall and outer columns (cumulative order below). */
+const MASSING_INNER: readonly (readonly [SkyriverMassingArchetype, number])[] = [
+  ['complex', 0.3], ['ziggurat', 0.15], ['setback', 0.15], ['crown', 0.1], ['spire', 0.08], ['plateau', 0.12], ['plain', 0.1],
+];
+const MASSING_OUTER: readonly (readonly [SkyriverMassingArchetype, number])[] = [
+  ['complex', 0.3], ['ziggurat', 0.12], ['setback', 0.15], ['crown', 0.13], ['plateau', 0.2], ['plain', 0.1],
+];
+
+/** The lot's massing archetype. Pure hash of the lot; slender and spire lots keep simple tops. */
+export function massingArchetype(layout: SkyriverCityLayout, tower: SkyriverTower): SkyriverMassingArchetype {
+  const inner = Math.abs(Math.abs(tower.x) - innerWallX(layout, tower)) < 1;
+  // Podium lots (presentationLayout) always raise their towers back up: a cluster or a stepped shaft.
+  if (podiumLotHeight(tower) !== undefined) return hash1(tower.x * 0.031 + tower.z * 0.0071) < 0.72 ? 'complex' : 'setback';
+  const aspect = Math.max(tower.width, tower.depth) / Math.max(1, Math.min(tower.width, tower.depth));
+  const h = hash1(tower.x * 0.0217 + tower.z * 0.00731 + 4.4);
+  if (!inner && aspect > 3) return h < 0.6 ? 'setback' : 'crown';
+  if (!inner && tower.height > 4200) return 'crown';
+  let acc = 0;
+  for (const [kind, share] of inner ? MASSING_INNER : MASSING_OUTER) {
+    acc += share;
+    if (h < acc) return kind;
+  }
+  return 'plain';
+}
+
+function deriveMassingVariation(
+  layout: SkyriverCityLayout,
+  innerWalls: readonly (readonly SkyriverTower[])[],
+  masses: SkyriverMass[],
+  push: PushTrim,
+): void {
+  const rng = new DeterministicRandom(layout.seed).fork('skyriver.city.massing');
+  const u = (): number => rng.nextInt(0, 10000) / 10000;
+  const between = (a: number, b: number): number => a + (b - a) * u();
+  /** A box on the lot, in the lot's frame (rides the slab through the bends). */
+  const box = (tower: SkyriverTower, dx: number, dz: number, y0: number, w: number, hgt: number, d: number, building?: number): void => {
+    masses.push({ x: tower.x + dx, y0, z: tower.z + dz, width: w, height: hgt, depth: d, tint: tower.tint, anchorV: tower.z, ...(building === undefined ? {} : { building }) });
+  };
+  /** Lit edge bands round a step: the line each terrace reads by at night. */
+  const stepBands = (tower: SkyriverTower, dx: number, dz: number, y: number, w: number, d: number): void => {
+    const on = ownerOf(tower);
+    push(SKYRIVER_TRIM_BAND, tower.x + dx - w * 0.5, y, tower.z + dz, 2.2, 3.6, d + 1, on);
+    push(SKYRIVER_TRIM_BAND, tower.x + dx + w * 0.5, y, tower.z + dz, 2.2, 3.6, d + 1, on);
+    push(SKYRIVER_TRIM_BAND, tower.x + dx, y, tower.z + dz - d * 0.5, w + 1, 3.6, 2.2, on);
+    push(SKYRIVER_TRIM_BAND, tower.x + dx, y, tower.z + dz + d * 0.5, w + 1, 3.6, 2.2, on);
+  };
+  /** A shaft that steps in `steps` times above y0; returns its top. */
+  const terraced = (tower: SkyriverTower, dx: number, dz: number, y0: number, w0: number, d0: number, rise: number, steps: number, shrink: number): number => {
+    let y = y0;
+    let w = w0;
+    let d = d0;
+    for (let k = 0; k <= steps; k += 1) {
+      const share = k === 0 ? 0.45 + 0.2 * u() : (1 - 0.55) / steps;
+      const hgt = Math.max(30, rise * share);
+      box(tower, dx, dz, y - 2, w, hgt + 2, d);
+      y += hgt;
+      if (k < steps) stepBands(tower, dx, dz, y - 2, w, d);
+      w *= 1 - shrink * (0.8 + 0.4 * u());
+      d *= 1 - shrink * (0.8 + 0.4 * u());
+    }
+    return y;
+  };
+  const clutter = (tower: SkyriverTower, dx: number, dz: number, roof: number, w: number, d: number, n: number): void => {
+    const on = ownerOf(tower);
+    for (let k = 0; k < n; k += 1) {
+      const px = tower.x + dx + (u() - 0.5) * w * 0.8;
+      const pz = tower.z + dz + (u() - 0.5) * d * 0.8;
+      const roll = u();
+      if (roll < 0.4) {
+        const t = between(6, 13);
+        push(SKYRIVER_TRIM_ROOF_PLANT, px, roof + 6, pz, t, between(8, 14), t, on); // water tank
+      } else if (roll < 0.75) {
+        push(SKYRIVER_TRIM_ROOF_PLANT, px, roof + 1.5, pz, between(4, 9), 3, between(3, 6), on); // AC block
+      } else {
+        const mh = between(25, 95);
+        push(SKYRIVER_TRIM_ANTENNA, px, roof + mh * 0.5, pz, between(0.8, 1.8), mh, between(0.8, 1.8), on);
+      }
+    }
+  };
+
+  for (const tower of layout.towers) {
+    const kind = massingArchetype(layout, tower);
+    const W = tower.width;
+    const D = tower.depth;
+    const roof = tower.height;
+    const inner = Math.abs(Math.abs(tower.x) - innerWallX(layout, tower)) < 1;
+    // Inner-wall lots grow up from the back of the roof so the corridor face keeps its line.
+    const back = inner ? Math.sign(tower.x) * W * 0.08 : 0;
+    switch (kind) {
+      case 'complex': {
+        // Shared podium deck (40-80 m) on the lot, then 2-6 towers of very different heights.
+        const podiumH = between(40, 80);
+        const pw = W * 0.92;
+        const pd = D * 0.94;
+        box(tower, 0, 0, roof - 2, pw, podiumH + 2, pd, buildingSeedOf(tower.x, tower.z));
+        stepBands(tower, 0, 0, roof + podiumH - 2, pw, pd);
+        const top = roof + podiumH;
+        const count = 2 + Math.floor(u() * 5);
+        const cols = count <= 3 ? 1 : 2;
+        const rows = Math.ceil(count / cols);
+        // On a podium lot the cluster climbs back past the old roofline; elsewhere it tops the roof.
+        const full = podiumLotHeight(tower);
+        const base = full === undefined ? between(220, 650) : (full - top) * between(0.45, 0.75);
+        // A height ladder with one or two towers at 2-3x the others.
+        const tall = Math.floor(u() * count);
+        for (let k = 0; k < count; k += 1) {
+          const cx = (cols === 1 ? 0 : (k % cols - 0.5) * pw * 0.5) + back * 0.5;
+          const cz = (Math.floor(k / cols) + 0.5 - rows / 2) * (pd / rows);
+          const tw = (pw / cols) * between(0.38, 0.72);
+          const td = (pd / rows) * between(0.4, 0.78);
+          const f = k === tall ? between(2.2, 3.1) : u() < 0.2 ? between(1.4, 2.0) : between(0.35, 1.0);
+          const rise = Math.min(6400 - top, base * f);
+          const style = u();
+          let t: number;
+          if (style < 0.4) t = terraced(tower, cx, cz, top, tw, td, rise, 2 + Math.floor(u() * 2), 0.18);
+          else {
+            box(tower, cx, cz, top - 2, tw, rise + 2, td);
+            t = top + rise;
+            if (style < 0.7) { box(tower, cx, cz, t - 2, tw * 0.6, rise * 0.12 + 20, td * 0.6); t += rise * 0.12 + 18; }
+          }
+          if (k === tall) push(SKYRIVER_TRIM_ANTENNA, tower.x + cx, t + 60, tower.z + cz, 2.4, 120, 2.4, ownerOf(tower));
+          else clutter(tower, cx, cz, t, tw, td, 1 + Math.floor(u() * 3));
+        }
+        break;
+      }
+      case 'ziggurat': {
+        // A pure stack, 4-6 steps, each a ring smaller.
+        const steps = 4 + Math.floor(u() * 3);
+        let w = W * 0.9;
+        let d = D * 0.9;
+        let y = roof;
+        const stepH = between(60, 150);
+        for (let k = 0; k < steps; k += 1) {
+          const hgt = stepH * (0.8 + 0.4 * u());
+          box(tower, back * 0.3, 0, y - 2, w, hgt + 2, d);
+          y += hgt;
+          stepBands(tower, back * 0.3, 0, y - 2, w, d);
+          w *= 0.8;
+          d *= 0.8;
+        }
+        clutter(tower, back * 0.3, 0, y, w, d, 2);
+        break;
+      }
+      case 'setback': {
+        // A shaft stepping in 2-4 times, rising well above the roof.
+        const steps = 2 + Math.floor(u() * 3);
+        const full = podiumLotHeight(tower);
+        const rise = full === undefined ? between(500, 1700) : Math.min(6400 - roof, (full - roof) * between(0.9, 1.5));
+        const t = terraced(tower, back, 0, roof, W * between(0.55, 0.8), D * between(0.55, 0.8), rise, steps, 0.2);
+        push(SKYRIVER_TRIM_ANTENNA, tower.x + back, t + 40, tower.z, 1.6, 80, 1.6, ownerOf(tower));
+        break;
+      }
+      case 'crown': {
+        // One crown step only.
+        const ch = between(80, 220);
+        box(tower, back * 0.5, 0, roof - 2, W * between(0.5, 0.72), ch + 2, D * between(0.5, 0.72));
+        clutter(tower, back * 0.5, 0, roof + ch, W * 0.5, D * 0.5, 2);
+        break;
+      }
+      case 'spire': {
+        // A very tall slender spire (1:4-1:6 to its height band), 2-3x its neighbours.
+        const s = Math.min(W, D) * between(0.2, 0.28);
+        const rise = Math.min(6400 - roof, between(1500, 3200));
+        box(tower, back, 0, roof - 2, s * 1.6, rise * 0.55 + 2, s * 1.6);
+        box(tower, back, 0, roof + rise * 0.55 - 2, s, rise * 0.45 + 2, s);
+        stepBands(tower, back, 0, roof + rise * 0.55, s * 1.6, s * 1.6);
+        push(SKYRIVER_TRIM_ANTENNA, tower.x + back, roof + rise + 150, tower.z, 3, 300, 3, ownerOf(tower));
+        break;
+      }
+      case 'plateau': {
+        // A flat roof crowded with tanks, plant and masts.
+        clutter(tower, 0, 0, roof, W, D, 5 + Math.floor(u() * 6));
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  // Low infill in the gaps between slabs: inner wall recessed behind the face line, outer columns
+  // between neighbours. Long gaps are split like the seams (they follow the curve).
+  const sides = [-1, 1] as const;
+  for (const side of sides) {
+    const wall = wallOf(layout, side);
+    for (let i = 0; i + 1 < wall.length; i += 1) {
+      const a = wall[i]!;
+      const b = wall[i + 1]!;
+      if (Math.abs(Math.abs(a.x) - Math.abs(b.x)) > 1) continue;
+      const gapStart = a.z + a.depth * 0.5;
+      const gapEnd = b.z - b.depth * 0.5;
+      const gap = gapEnd - gapStart;
+      if (gap < 40 || u() > 0.75) continue;
+      const inner = innerWalls.some((w) => w.includes(a));
+      const w = Math.min(a.width, b.width) * between(0.45, 0.8);
+      const face = Math.abs(a.x) - a.width * 0.5;
+      const x = inner ? side * (face + 12 + w * 0.5) : a.x;
+      const hgt = Math.min(a.height, b.height) * between(0.12, 0.45);
+      const span = Math.min(gap - 8, 420);
+      const pieces = Math.max(1, Math.ceil(span / SEAM_SEGMENT_M));
+      for (let k = 0; k < pieces; k += 1) {
+        const z = (gapStart + gapEnd) * 0.5 - span * 0.5 + (k + 0.5) * (span / pieces);
+        if (!inner && (intrudesOtherStretch(x, z, w * 0.5) || foldsInsideBend(x, z, w * 0.5))) continue;
+        masses.push({ x, y0: SKYRIVER_CITY_VOID_BASE_Y, z, width: w, height: hgt - SKYRIVER_CITY_VOID_BASE_Y, depth: span / pieces + 4, tint: a.tint });
+      }
+    }
+  }
+}
 
 /** World placement of one trim: centre x/z, heading, and its long-axis length (spans only). */
 export interface SkyriverTrimPlacement {
@@ -1438,6 +1682,10 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     if (attempts > attemptLimit) fail('SKYRIVER_CITY_NEON_PLACEMENT_STALLED');
 
     const tower = inner[random.nextInt(0, inner.length - 1)]!;
+    // R17: a podium lot keeps the sign density of the wall it was cut from, not of a full wall
+    // crammed into its lower height (that packed signage at route height and lifted the frame).
+    const full = podiumLotHeight(tower);
+    if (full !== undefined && random.nextInt(0, 999) / 1000 > tower.height / full) continue;
     const side = Math.sign(tower.x) as -1 | 1;
     const slabFace = Math.abs(tower.x) - tower.width * 0.5;
     const roll = random.nextInt(0, 99);
@@ -1488,7 +1736,8 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
       px = 0;
       pz = tower.z + along * (tower.depth - width) * 0.5;
     }
-    const centreY = Math.max(centreYRaw, height * 0.5 + 20);
+    // R17: podium lots are lower than any wall was before; the whole sign stays under the roof.
+    const centreY = Math.min(Math.max(centreYRaw, height * 0.5 + 20), tower.height - height * 0.5 - 20);
     const innerFace = slabFace - tierProjectionOver(layout.seed, tower, centreY - height * 0.5, centreY + height * 0.5);
     if (normalZ !== 0) px = side * (innerFace - width * 0.5 - 0.8);
     else px = side * (innerFace - SKYRIVER_CITY.signStandoffM);
@@ -1535,6 +1784,21 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
 }
 
 // --- tower shader ---------------------------------------------------------------------------------
+
+/**
+ * R17 distance grade (operator: distant buildings read amber/yellow). Beyond ~0.9 km a surface's
+ * colour (concrete, windows, rooms) is pulled toward a neutral steel grey-blue of the same
+ * brightness; `extra` raises it for the far layers. Depth separation is left to brightness and
+ * contrast falloff (fog), never to hue warmth.
+ */
+const SKYRIVER_DISTANCE_GRADE_GLSL = /* glsl */ `
+vec3 skyriverDistanceGrade( vec3 c, float depth, float extra ) {
+  float k = clamp( smoothstep( 900.0, 5000.0, depth ) * 0.75 + extra, 0.0, 0.92 );
+  float lum = dot( c, vec3( 0.2126, 0.7152, 0.0722 ) );
+  // Brightness falls off with the same grade: the layers separate by value, not by warmth.
+  return mix( c, lum * vec3( 0.66, 0.79, 0.98 ), k ) * ( 1.0 - 0.55 * k );
+}
+`;
 
 const TOWER_VERTEX = /* glsl */ `
 attribute float aSeed;
@@ -1704,6 +1968,7 @@ uniform vec3 uMegaTint;
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${SKYRIVER_HASH_GLSL}
+${SKYRIVER_DISTANCE_GRADE_GLSL}
 
 /** Rounded-box signed distance in cell units; the window glass. */
 float windowSdf( vec2 cellLocal, float ribbon ) {
@@ -1733,6 +1998,8 @@ void main() {
     vec3 farColor = vec3( 0.004, 0.005, 0.007 ) + farPane * mix( farAverage, farLit * farGlass, farResolve ) * 1.6 * layerDim * EMISSIVE_GAIN;
     // Crown tips catch a little sky so stacked silhouettes separate against the haze band.
     farColor += vec3( 0.012, 0.016, 0.024 ) * layerDim * smoothstep( 0.5, 1.0, vWorldPos.y / 6500.0 ) * ( 1.0 - vIsSide );
+    // R17: far layers grade further toward steel per layer (0.35 / 0.55 / 0.7 on top of distance).
+    farColor = skyriverDistanceGrade( farColor, max( vFogDepth, 1.0 ), vLayer < 1.5 ? 0.35 : ( vLayer < 2.5 ? 0.55 : 0.7 ) );
     gl_FragColor = vec4( farColor, 1.0 );
 ${SKYRIVER_OUTPUT_APPLY_GLSL}
     #include <fog_fragment>
@@ -1955,6 +2222,10 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   float buzzing = step( 0.965, skyHash11( paneHash * 17.7 + 9.0 ) );
   float buzz = 1.0 - buzzing * 0.55 * ( 0.5 + 0.5 * sin( uTime * 23.0 + paneHash * 120.0 ) );
 
+  // R17 crown readability: on the landmark towers the top 60 m of every stage is a dark band (no
+  // lit panes), so the crown rim's light separates cleanly from the facade texture below it.
+  float crownGap = ( 1.0 - step( 0.02, distance( vTint, uMegaTint ) ) ) * ( 1.0 - smoothstep( 50.0, 64.0, vFaceHalf.y - vSurf.y ) ) * vIsSide;
+  lit *= 1.0 - crownGap;
   vec3 resolved = paneColor * ( lit * brightness * buzz ) * ( glass + halo * 0.28 ) * ( 1.0 - heroShadow );
 
   // --- T7-4 interiors: within uInteriorFade of the camera, the glass shows a traced room. -----------
@@ -2017,6 +2288,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // the resolved panes and rooms take the emissive gain of the exposure trade.
   color += mix( averaged * ( 1.0 - heroShadow ) * 0.3, resolved * EMISSIVE_GAIN, detail ) * 1.55 * ( 1.0 - 0.65 * pristine );
 
+  color = skyriverDistanceGrade( color, viewDepth, 0.0 );
   gl_FragColor = vec4( max( color, vec3( 0.0 ) ), 1.0 );
 
 ${SKYRIVER_OUTPUT_APPLY_GLSL}
@@ -2094,6 +2366,7 @@ varying float vCardLayer;
 
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
+${SKYRIVER_DISTANCE_GRADE_GLSL}
 
 #define CARD_COLUMNS ${IMPOSTOR_COLUMNS.toFixed(1)}
 #define CARD_ROWS ${IMPOSTOR_ROWS.toFixed(1)}
@@ -2120,6 +2393,7 @@ void main() {
   float haze = vCardLayer < 1.5 ? uLayerHaze.x : ( vCardLayer < 2.5 ? uLayerHaze.y : uLayerHaze.z );
   // Windows a little under the R15 boxes' level: on a card every lit window resolves as a dot.
   vec3 color = vec3( 0.004, 0.005, 0.007 ) + card.rgb * 1.1 * dim * uEmissive;
+  color = skyriverDistanceGrade( color, vFogDepth, vCardLayer < 2.5 ? 0.55 : 0.7 );
   gl_FragColor = vec4( color, 1.0 );
 ${SKYRIVER_OUTPUT_APPLY_GLSL}
   #include <fog_fragment>

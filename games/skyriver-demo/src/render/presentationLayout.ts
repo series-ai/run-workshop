@@ -16,6 +16,23 @@
 import type { SkyriverCityLayout, SkyriverTower } from '../sim/derive';
 import { CHASM_BOUNDS } from '../sim/systems';
 import { CANYON_LOOP_LENGTH_M, foldsInsideBend, intrudesOtherStretch, wrapCanyonV } from './canyonWarp';
+import { routeAltitude } from './routeProfile';
+
+/**
+ * R17 podium lots: inner-wall lots cut down to a podium (the wall face still clears the route by
+ * PODIUM_ROUTE_CLEARANCE_M over the nearby stretch), their full height handed to the massing pass
+ * (city.ts), which raises a cluster or a stepped shaft from the podium. Down the canyon the skyline
+ * becomes clusters of towers of different heights instead of one cliff edge. Keyed by tower object.
+ */
+const podiumLots = new WeakMap<SkyriverTower, number>();
+const PODIUM_SHARE = 0.45;
+const PODIUM_ROUTE_CLEARANCE_M = 650;
+const PODIUM_MIN_DROP_M = 400;
+
+/** The full height a podium lot's towers rise back to (undefined for an ordinary lot). */
+export function podiumLotHeight(tower: SkyriverTower): number | undefined {
+  return podiumLots.get(tower);
+}
 
 /** Derived height range (derive.ts TOWER_MIN/MAX_HEIGHT_M), used to recover each tower's grade. */
 const DERIVED_MIN_HEIGHT_M = 240;
@@ -39,7 +56,43 @@ const COLUMN_BANDS: readonly (readonly [number, number])[] = Object.freeze([
   [900, 2300],
 ]);
 
-export const SKYRIVER_PRESENTED_MAX_HEIGHT_M = Math.max(...COLUMN_BANDS.map(([floor, span]) => floor + span));
+/** R17: tallest outer spire the height yarn may raise, metres. */
+const YARN_SPIRE_MAX_M = 6200;
+export const SKYRIVER_PRESENTED_MAX_HEIGHT_M = Math.max(YARN_SPIRE_MAX_M, ...COLUMN_BANDS.map(([floor, span]) => floor + span));
+
+/**
+ * R17 height yarn and aspect variety (operator: "even plateaus", "near-square slabs dominate").
+ * Each lot gets an irregular height ratio to its neighbours and, on the outer columns, a footprint
+ * archetype: slender blades (1:4-1:6), wide-but-low plateau blocks, a few very tall spires, the rest
+ * a broad scatter. The inner wall only ever rises (it is the canyon, and the signage reads its
+ * heights); it keeps its floor above the route's highest climb. Hashed per lot, so pure per seed.
+ */
+function applyYarn(tower: SkyriverTower, column: number, v: number, r: number): SkyriverTower {
+  const h = hash01(tower.x * 0.0091 + v * 0.0137 + r * 3.1 + 0.77);
+  const k = hash01(h * 53.1 + v * 0.0021);
+  if (column === 0) {
+    // Inner wall: a quarter of the lots rise well clear of the plateau, a half a little, a quarter not.
+    const rise = h < 0.25 ? 600 + k * 700 : h < 0.75 ? k * 320 : 0;
+    return { ...tower, height: tower.height + rise };
+  }
+  if (h < 0.15) {
+    // Wide-but-low plateau block.
+    return { ...tower, width: tower.width * 1.35, depth: tower.depth * 1.3, height: Math.max(600, tower.height * (0.42 + 0.16 * k)) };
+  }
+  if (h < 0.3) {
+    // Slender blade, 1:4 to 1:6, long along the canyon or across it.
+    const long = Math.max(tower.width, tower.depth) * 1.15;
+    const thin = long / (4 + 2 * k);
+    const along = hash01(k * 17.3 + 1.1) < 0.6;
+    return { ...tower, width: along ? thin : long, depth: along ? long : thin, height: tower.height * (1.1 + 0.3 * k) };
+  }
+  if (h < 0.37) {
+    // A few very tall spires: 2-3x their neighbours on a narrow footprint.
+    return { ...tower, width: tower.width * 0.5, depth: tower.depth * 0.5, height: Math.min(YARN_SPIRE_MAX_M, tower.height * (2.0 + 0.6 * k)) };
+  }
+  // The rest: an irregular scatter (no two neighbours at one height).
+  return { ...tower, height: tower.height * (0.62 + 0.75 * k * k + 0.12 * hash01(k * 9.1)) };
+}
 
 function hash01(n: number): number {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453123;
@@ -111,16 +164,32 @@ export function presentCityLayout(layout: SkyriverCityLayout): SkyriverCityLayou
       // R12: strongly varied slab widths along the canyon (0.6x-1.6x depth): narrow blades next to
       // broad plates, so the walls read as distinct shapes.
       const widthHash = hash01(tower.x * 0.0131 + v * 0.0071 + r * 1.7);
+      const column = columnOf(tower, cell);
       tower = {
         ...tower,
         x: tower.x + sign * INNER_SETBACK_M,
         depth: tower.depth * (0.6 + 1.0 * widthHash * widthHash),
         height: regrade(tower, cell),
       };
+      // The free-flight box keeps its exact walls (|v| < 650); everywhere else the skyline varies.
+      let podiumFull: number | undefined;
+      if (Math.abs(v) >= 650) {
+        tower = applyYarn(tower, column, v, r);
+        if (column === 0 && hash01(tower.x * 0.0057 + v * 0.0193 + r * 0.7 + 2.9) < PODIUM_SHARE) {
+          let routeTop = 0;
+          for (let dv = -450; dv <= 450; dv += 150) routeTop = Math.max(routeTop, routeAltitude(v + dv));
+          const podium = Math.max(700, routeTop + PODIUM_ROUTE_CLEARANCE_M);
+          if (podium < tower.height - PODIUM_MIN_DROP_M) {
+            podiumFull = tower.height;
+            tower = { ...tower, height: podium };
+          }
+        }
+      }
       const half = Math.max(tower.width, tower.depth) * 0.5;
       if (Math.abs(tower.x) > 900 && intrudesOtherStretch(tower.x, tower.z, half)) continue;
       // T7-5: tighter S-bends — drop footprints that would fold back through a bend's centre.
       if (Math.abs(tower.x) > 600 && foldsInsideBend(tower.x, tower.z, half)) continue;
+      if (podiumFull !== undefined) podiumLots.set(tower, podiumFull);
       towers.push(tower);
     }
   }

@@ -227,6 +227,15 @@ const HEAD_TRAIL_S = 0.02;
 const TRAIL_SECONDS = 0.45;
 const TRAIL_MAX_M = 60;
 const TRAIL_ALPHA = 0.25;
+/**
+ * R17 rods, not lines (cycle-7: long thin trails re-read as lane lines). A trail is at most this many
+ * of its own car's lengths (so on screen it can never outrun 2 car lengths at any distance), its
+ * width tapers from the lamp to this share at the end, and its alpha fades to zero along it.
+ */
+export const TRAIL_MAX_CAR_LENGTHS = 2;
+export const TRAIL_END_WIDTH_SHARE = 0.3;
+/** Lamp-to-lamp body length of a car at scale 1, metres (head + tail lamp offsets). */
+export const TRAFFIC_CAR_LENGTH_M = HEAD_OFFSET_M + TAIL_OFFSET_M;
 /** 'near' tier: trails on cars inside this camera distance (faded over the last 200 m). */
 const TRAIL_NEAR_M = 700;
 
@@ -714,6 +723,8 @@ uniform float uHeadTrail;
 uniform float uTailTrail;
 uniform float uTrailSeconds;
 uniform float uTrailMax;
+uniform float uTrailCarLengths;
+uniform float uTrailEndWidth;
 
 varying vec2 vCapsule;       // x along in radius units, y across -1..1
 varying float vLengthR;      // capsule body length in radius units
@@ -740,17 +751,35 @@ void main() {
   float scale = aCarFade.y;
   vec3 lamp = aCarPos + ( dir * ( head ? uHeadOffset : -uTailOffset ) + rightW * lampSide * 0.72 ) * scale;
   float trail = isTrail
-    ? min( speed * uTrailSeconds, uTrailMax )
+    ? min( speed * uTrailSeconds, min( uTrailMax, uTrailCarLengths * ( uHeadOffset + uTailOffset ) * scale ) )
     : 1.2 + speed * ( head ? uHeadTrail : uTailTrail );
   vec3 tailEnd = lamp - dir * trail;
 
   vec4 v0 = viewMatrix * vec4( lamp, 1.0 );
   vec4 v1 = viewMatrix * vec4( tailEnd, 1.0 );
+  if ( isTrail ) {
+    // R17: the cap is on screen. A trail nearer the camera than its car projects longer than its
+    // world length suggests, so it is shortened until its projected length is at most
+    // uTrailCarLengths times the car's own projected length (two refinement steps).
+    vec4 ch = viewMatrix * vec4( aCarPos + dir * uHeadOffset * scale, 1.0 );
+    vec4 ct = viewMatrix * vec4( aCarPos - dir * uTailOffset * scale, 1.0 );
+    float carScreen = length( ch.xy / max( - ch.z, 1.0 ) - ct.xy / max( - ct.z, 1.0 ) );
+    for ( int k = 0; k < 2; k ++ ) {
+      float trailScreen = length( v0.xy / max( - v0.z, 1.0 ) - v1.xy / max( - v1.z, 1.0 ) );
+      float limit = uTrailCarLengths * carScreen;
+      if ( trailScreen > limit && trailScreen > 0.0 ) {
+        trail *= limit / trailScreen;
+        tailEnd = lamp - dir * trail;
+        v1 = viewMatrix * vec4( tailEnd, 1.0 );
+      }
+    }
+  }
   // Radius: a real lamp size up close, a pixel floor far away (~1.3 px radius).
   // T6R-2: 3-4x thicker at the lamp, tapering to a thread at the trail end.
   // R16 trails: a thinner ribbon (~0.8 px floor), so they smear rather than paint bars.
   float r0 = isTrail ? max( 0.6, -v0.z * uPixelAngle * 1.6 ) : max( 0.9, -v0.z * uPixelAngle * 3.4 );
-  float r1 = isTrail ? max( 0.3, -v1.z * uPixelAngle * 0.8 ) : max( 0.35, -v1.z * uPixelAngle * 1.1 );
+  // R17: the trail tapers to uTrailEndWidth of its head width (a rod, never a constant-width line).
+  float r1 = isTrail ? r0 * uTrailEndWidth : max( 0.35, -v1.z * uPixelAngle * 1.1 );
   vec2 d = v1.xy - v0.xy;
   float len = length( d );
   vec2 axis = len > 1e-4 ? d / len : vec2( 0.0, -1.0 );
@@ -1096,6 +1125,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       uTrailSeconds: { value: TRAIL_SECONDS },
       uTrailMax: { value: TRAIL_MAX_M },
       uTrailAlpha: { value: TRAIL_ALPHA },
+      uTrailCarLengths: { value: TRAIL_MAX_CAR_LENGTHS },
+      uTrailEndWidth: { value: TRAIL_END_WIDTH_SHARE },
       // T7: dense crossing ribbons overlap several trails per pixel; bloom supplies the glow.
       // R16: raised with the exposure trade (SKYRIVER_EMISSIVE_GAIN), so the lights hold their level.
       uIntensity: { value: 1.7 * SKYRIVER_EMISSIVE_GAIN },

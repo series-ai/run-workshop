@@ -87,7 +87,7 @@ export interface PresentedFlight extends SkyriverFlight {
 
 type MutablePresented = { -readonly [K in keyof PresentedFlight]: PresentedFlight[K] };
 
-interface TrackPose {
+export interface TrackPose {
   cutFade: number;
   v: number;
   lateral: number;
@@ -141,6 +141,42 @@ function sampleRing(path: SkyriverFlightPath, t: number, out: { x: number; y: nu
   out.z = catmullRom(path.z[i0]!, path.z[i1]!, path.z[i2]!, path.z[i3]!, local);
 }
 
+/** Heading of the route itself (canyon heading plus the snake's angle), radians. */
+function routeHeading(v: number): number {
+  return canyonHeading(v) + Math.atan(routeLateralSlope(v));
+}
+
+const poseWarp: WarpOut = { x: 0, z: 0, heading: 0 };
+
+/**
+ * The autopilot's drawn pose at track arc length `uIn` (0 = the lap start). Pure; exported so the
+ * loop-wide clearance test (tests/clearance.test.ts) sweeps exactly the poses the game draws.
+ */
+export function autopilotTrackPose(uIn: number, out: TrackPose): TrackPose {
+  const trackLength = CANYON_LOOP_LENGTH_M;
+  const v = wrap(uIn + trackLength / 2, trackLength) - trackLength / 2;
+  warpCanyon(routeLateral(v), v, poseWarp);
+  const heading = routeHeading(v);
+  // Bank into the turn: signed curvature of the route in the horizontal plane.
+  let dh = routeHeading(v + CURVATURE_STEP_M) - routeHeading(v - CURVATURE_STEP_M);
+  dh -= TAU * Math.round(dh / TAU);
+  const curvature = dh / (2 * CURVATURE_STEP_M);
+  const character = 0.7 + 0.3 * Math.sin((TAU * v) / BANK_VARIATION_WAVELENGTH_M + 0.8);
+  const bank = BANK_MAX_TURNS * Math.tanh((-curvature * BANK_TURNS_PER_CURVATURE * character) / BANK_MAX_TURNS);
+  const lateralSlope = routeLateralSlope(v);
+  out.cutFade = 0;
+  out.v = v;
+  out.lateral = routeLateral(v);
+  out.x = poseWarp.x;
+  out.y = routeAltitude(v);
+  out.z = poseWarp.z;
+  // Sim basis: yaw 0 faces +Z, forward x = sin(yaw).
+  out.yaw = wrapTurns(heading / TAU);
+  out.pitch = Math.atan(routeAltitudeSlope(v) / Math.sqrt(1 + lateralSlope * lateralSlope)) / TAU;
+  out.roll = bank;
+  return out;
+}
+
 export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
   const path = deriveFlightPath(seed);
   const cumulative = new Float64Array(path.count + 1);
@@ -152,7 +188,6 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
   // its drawn ground speed is the sim speed times this scale (reported as `speed`, see below).
   const trackLength = CANYON_LOOP_LENGTH_M;
   const speedScale = trackLength / ringLength;
-  const poseWarp: WarpOut = { x: 0, z: 0, heading: 0 };
 
   /** Sim arc length at a ring parameter: exactly what the sim's per-tick advance integrates. */
   function ringArc(t: number): number {
@@ -163,34 +198,6 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
 
   function trackU(autopilotT: number): number {
     return (ringArc(autopilotT) / ringLength) * trackLength;
-  }
-
-  /** Heading of the route itself (canyon heading plus the snake's angle), radians. */
-  function routeHeading(v: number): number {
-    return canyonHeading(v) + Math.atan(routeLateralSlope(v));
-  }
-
-  function trackPose(uIn: number, out: TrackPose): void {
-    const v = wrap(uIn + trackLength / 2, trackLength) - trackLength / 2;
-    warpCanyon(routeLateral(v), v, poseWarp);
-    const heading = routeHeading(v);
-    // Bank into the turn: signed curvature of the route in the horizontal plane.
-    let dh = routeHeading(v + CURVATURE_STEP_M) - routeHeading(v - CURVATURE_STEP_M);
-    dh -= TAU * Math.round(dh / TAU);
-    const curvature = dh / (2 * CURVATURE_STEP_M);
-    const character = 0.7 + 0.3 * Math.sin((TAU * v) / BANK_VARIATION_WAVELENGTH_M + 0.8);
-    const bank = BANK_MAX_TURNS * Math.tanh((-curvature * BANK_TURNS_PER_CURVATURE * character) / BANK_MAX_TURNS);
-    const lateralSlope = routeLateralSlope(v);
-    out.cutFade = 0;
-    out.v = v;
-    out.lateral = routeLateral(v);
-    out.x = poseWarp.x;
-    out.y = routeAltitude(v);
-    out.z = poseWarp.z;
-    // Sim basis: yaw 0 faces +Z, forward x = sin(yaw).
-    out.yaw = wrapTurns(heading / TAU);
-    out.pitch = Math.atan(routeAltitudeSlope(v) / Math.sqrt(1 + lateralSlope * lateralSlope)) / TAU;
-    out.roll = bank;
   }
 
   const result: MutablePresented = {
@@ -242,7 +249,7 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
         if (du < -trackLength / 2) du += trackLength;
         u = u0 + du * state.alpha;
       }
-      trackPose(u, poseA);
+      autopilotTrackPose(u, poseA);
       result.x = poseA.x;
       result.y = poseA.y;
       result.z = poseA.z;
@@ -303,7 +310,7 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
 
     // autopilotT is frozen in free flight, so the hand-off point is recoverable from any later tick.
     const frozenT = current.flight.autopilotT;
-    trackPose(trackU(frozenT), poseA);
+    autopilotTrackPose(trackU(frozenT), poseA);
     sampleRing(path, frozenT, ring);
     sampleRing(path, frozenT + PATH_TANGENT_STEP, ringAhead);
     const ringYaw = Math.atan2(ringAhead.x - ring.x, ringAhead.z - ring.z) / TAU;
