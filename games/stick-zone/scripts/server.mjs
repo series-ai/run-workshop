@@ -336,6 +336,18 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         if (m.vitalsSeq > cur) machineVitalsSeq.set(m.id, m.vitalsSeq);
       }
     }
+    // The combat health map carries the LATEST durable per-machine sequences (strikes
+    // persist health/isAlive/vitalsSeq in one transaction) — seed from it too so cold
+    // restore continues above everything clients ever applied, never regressing.
+    const rrForSeed = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
+    if (rrForSeed && rrForSeed.machines) {
+      for (const [mid, rec] of Object.entries(rrForSeed.machines)) {
+        if (rec && typeof rec.vitalsSeq === "number" && Number.isFinite(rec.vitalsSeq)) {
+          const cur = machineVitalsSeq.get(mid) || 0;
+          if (rec.vitalsSeq > cur) machineVitalsSeq.set(mid, rec.vitalsSeq);
+        }
+      }
+    }
   }
   function raidRevision(raidId) {
     // Persisted monotonic revision: the surviving source of truth is the ACTIVE RAID
@@ -2775,6 +2787,22 @@ wss.on("connection", (ws, req) => {
             m.health = preDmgHealth;
             m.isAlive = preDmgAlive;
             if (rRecord?.machines) rRecord.machines[m.id] = { health: preDmgHealth, isAlive: preDmgAlive };
+            // FAILED SAVE = strike rejected: send an authoritative correction with the
+            // RESTORED custody vitals (and a NEW sequence) so the client's optimistic
+            // prediction (game.ts decremented local health) reconciles immediately.
+            try {
+              const __seqAfterRollback = nextVitalsSeq(m.id);
+              ws.send(JSON.stringify({
+                eventId: `${packet.eventId}_mrej_${m.id}`,
+                type: "machine_hit",
+                senderId: ws.operativeId,
+                senderName: packet.senderName || (ws.operativeId === "op_bravo_1" ? "INFILTRATOR PHANTOM-1" : "OPERATIVE GHOST-1"),
+                raidId: ws.raidId,
+                timestamp: Date.now(),
+                serverAuthoritative: true,
+                data: { machineId: m.id, damage: 0, machineHealth: m.health, machineAlive: m.isAlive, kind: "kick", rejected: true, maxHealth: m.maxHealth || m.health, vitalsSeq: __seqAfterRollback },
+              }));
+            } catch {}
             continue;
           }
 
@@ -3006,13 +3034,19 @@ wss.on("connection", (ws, req) => {
         }
         const preDmgHealth = m.health;
         const preDmgAlive = m.isAlive;
+        const preDmgSeq = m.vitalsSeq || 0;
         m.health = Math.max(0, m.health - safeDmg);
         if (m.health <= 0) m.isAlive = false;
+        // Sequence advances ONCE, BEFORE the durable save — health, alive, and vitalsSeq
+        // persist in the SAME transaction; the durable copy can never trail the live
+        // sequence (which would make valid recovery updates look stale to clients).
+        m.vitalsSeq = nextVitalsSeq(m.id);
         const rRecord = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
         try {
           if (rRecord) {
             if (!rRecord.machines) rRecord.machines = {};
             rRecord.machines[m.id] = { health: m.health, isAlive: m.isAlive };
+            if (rRecord.machines[m.id]) rRecord.machines[m.id].vitalsSeq = m.vitalsSeq;
             if (typeof settlement.saveToDisk === "function") {
               settlement.saveToDisk();
             }
@@ -3020,24 +3054,22 @@ wss.on("connection", (ws, req) => {
         } catch (saveErr) {
           m.health = preDmgHealth;
           m.isAlive = preDmgAlive;
+          m.vitalsSeq = preDmgSeq;
           if (rRecord?.machines) {
             rRecord.machines[m.id] = { health: preDmgHealth, isAlive: preDmgAlive };
+            if (rRecord.machines[m.id]) rRecord.machines[m.id].vitalsSeq = preDmgSeq;
           }
           sendRejectionSync(m);
           return;
         }
-        m.vitalsSeq = nextVitalsSeq(m.id);
         packet.data.vitalsSeq = m.vitalsSeq;
         packet.data.damage = safeDmg;
         packet.data.machineHealth = m.health;
         packet.data.machineAlive = m.isAlive;
         packet.data.kind = kind;
-        // Relay-validated machine strike: results are authoritative (validated custody)
+        // Relay-validated machine strike: results are authoritative (validated custody);
+        // the vitalsSeq displayed here was already advanced+persisted above.
         packet.serverAuthoritative = true;
-        // Combat custody mutations advance the vitals sequence BEFORE the result is sent —
-        // every authoritative success reply carries the current sequence, so a stale
-        // roster or delayed packet can never resurrect a destroyed machine.
-        m.vitalsSeq = nextVitalsSeq(m.id);
         try {
           ws.send(JSON.stringify({
             eventId: packet.eventId,
