@@ -13,6 +13,16 @@ const RESERVED_RAID_IDS = new Set(["__proto__", "prototype", "constructor"]);
 export function isValidRaidId(id: unknown): id is string {
   return typeof id === "string" && RAID_ID_REGEX.test(id) && !RESERVED_RAID_IDS.has(id.toLowerCase());
 }
+
+export const OPERATIVE_ID_REGEX = /^[a-zA-Z0-9_-]{1,64}$/;
+const RESERVED_OPERATIVE_IDS = new Set(["__proto__", "prototype", "constructor", "system", "server", "admin", "root"]);
+export function isValidOperativeId(id: unknown): id is string {
+  return typeof id === "string" && OPERATIVE_ID_REGEX.test(id) && !RESERVED_OPERATIVE_IDS.has(id.toLowerCase());
+}
+
+function hasOwnOperative(raid: any, opId: string): boolean {
+  return Boolean(raid && raid.operatives && typeof opId === "string" && isValidOperativeId(opId) && Object.prototype.hasOwnProperty.call(raid.operatives, opId));
+}
 import crypto from "crypto";
 import type { SettlementReceipt, ProfileId, RaidId } from "@series-inc/rundot-syncplay/extensions/hub";
 import type { CanonicalOutcomePayload, SettlementCommitment } from "./airlock.js";
@@ -231,7 +241,9 @@ export function validateStoreIntegrity(data: any): boolean {
       if (typeof (tok as any).operativeId !== "string" || typeof (tok as any).raidId !== "string") return false;
       if (!data.raids || !Object.prototype.hasOwnProperty.call(data.raids, (tok as any).raidId)) return false;
       const targetRaid = data.raids[(tok as any).raidId];
-      if (!targetRaid || !targetRaid.operatives || !targetRaid.operatives[(tok as any).operativeId]) {
+      const opId = (tok as any).operativeId;
+      if (!isValidOperativeId(opId)) return false;
+      if (!targetRaid || !targetRaid.operatives || !Object.prototype.hasOwnProperty.call(targetRaid.operatives, opId)) {
         return false; // Reject orphan session token
       }
     }
@@ -514,13 +526,16 @@ export class ServerSettlementAuthority {
     const wasClaimed = this.claimedSessions.has(key);
     const wasOwned = this.ownedOperatives.has(key);
     const prevTs = this.slotClaimTimestamps.get(key);
+    if (!isValidOperativeId(opId)) {
+      throw new Error(`Invalid operativeId: ${opId}`);
+    }
     const raid = this.raids.get(raidId);
-    const wasOpOwned = Boolean(raid && raid.operatives && raid.operatives[opId] && (raid.operatives[opId] as any).owned);
+    const wasOpOwned = Boolean(hasOwnOperative(raid, opId) && (raid!.operatives[opId] as any).owned);
     this.claimedSessions.add(key);
     this.ownedOperatives.add(key);
     this.slotClaimTimestamps.set(key, Date.now());
-    if (raid && raid.operatives && raid.operatives[opId]) {
-      (raid.operatives[opId] as any).owned = true;
+    if (hasOwnOperative(raid, opId)) {
+      (raid!.operatives[opId] as any).owned = true;
     }
     try {
       this.saveToDisk();
@@ -532,8 +547,8 @@ export class ServerSettlementAuthority {
       } else {
         this.slotClaimTimestamps.delete(key);
       }
-      if (raid && raid.operatives && raid.operatives[opId]) {
-        (raid.operatives[opId] as any).owned = wasOpOwned;
+      if (hasOwnOperative(raid, opId)) {
+        (raid!.operatives[opId] as any).owned = wasOpOwned;
       }
       throw err;
     }
@@ -657,13 +672,14 @@ export class ServerSettlementAuthority {
       }
     }
     const raid = this.raids.get(entry.raidId);
-    if (!raid) return null;
-    const op = raid.operatives[entry.operativeId];
-    if (!op) return null;
+    if (!hasOwnOperative(raid, entry.operativeId)) return null;
     return entry;
   }
 
   public getSessionToken(raidId: string, operativeId: string): string | undefined {
+    if (!isValidOperativeId(operativeId) || !isValidRaidId(raidId)) return undefined;
+    const raid = this.raids.get(raidId);
+    if (!hasOwnOperative(raid, operativeId)) return undefined;
     for (const [tok, entry] of this.sessionTokens.entries()) {
       if (entry.raidId === raidId && entry.operativeId === operativeId) {
         return tok;
@@ -673,8 +689,9 @@ export class ServerSettlementAuthority {
   }
 
   public allocateSessionToken(raidId: string, operativeId: string): string | null {
+    if (!isValidOperativeId(operativeId) || !isValidRaidId(raidId)) return null;
     const raid = this.raids.get(raidId);
-    if (!raid || !raid.operatives || !raid.operatives[operativeId]) return null;
+    if (!hasOwnOperative(raid, operativeId)) return null;
     const prevTokens = new Map(this.sessionTokens);
     for (const [tok, sess] of this.sessionTokens.entries()) {
       if (sess.raidId === raidId && sess.operativeId === operativeId) {
@@ -807,6 +824,13 @@ export class ServerSettlementAuthority {
       }
       for (const [k, v] of Object.entries(data.raids || {})) {
         if (v && v.operatives) {
+          const nullOps: Record<string, any> = Object.create(null);
+          for (const [opId, op] of Object.entries(v.operatives)) {
+            if (isValidOperativeId(opId)) {
+              nullOps[opId] = op;
+            }
+          }
+          v.operatives = nullOps;
           for (const op of Object.values(v.operatives)) {
             const currentProf = this.profiles.get(op.operativeId);
             const opRev = typeof op.inventoryRevision === "number" ? op.inventoryRevision : ((op.operativeId.includes("alpha") || op.operativeId === "op_player") ? 13 : 1);
@@ -1009,9 +1033,8 @@ export class ServerSettlementAuthority {
     if (typeof allowablePool !== "number" || !Number.isInteger(allowablePool) || allowablePool < 0 || allowablePool > 1000000) {
       throw new Error(`Invalid allowable cash pool: must be an integer between 0 and 1,000,000, got ${allowablePool}`);
     }
-    const RESERVED_OPS = new Set(["system", "server", "admin", "root"]);
     for (const opId of operatives) {
-      if (typeof opId !== "string" || RESERVED_OPS.has(opId.trim().toLowerCase())) {
+      if (!isValidOperativeId(opId)) {
         throw new Error(`Cannot register reserved or invalid operative ID: ${opId}`);
       }
     }
@@ -1045,7 +1068,7 @@ export class ServerSettlementAuthority {
           this.claimedSessions.delete(claim);
         }
       }
-      const opMap: Record<string, OperativeCustody> = {};
+      const opMap: Record<string, OperativeCustody> = Object.create(null);
       const nowInit = Date.now();
       for (const opId of operatives) {
         const sessionToken = `sz_tok_${opId}_${crypto.randomBytes(16).toString("hex")}`;

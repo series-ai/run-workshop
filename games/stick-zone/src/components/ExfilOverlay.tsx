@@ -19,6 +19,8 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRestarting, setIsRestarting] = useState(false);
   const [restartError, setRestartError] = useState<string | null>(null);
+  const [recoveryError, setRecoveryError] = useState<string | undefined>(sim.terminalRecoveryError);
+  const [isRetryingRecovery, setIsRetryingRecovery] = useState(false);
 
   useEffect(() => {
     setIsRestarting(false);
@@ -47,6 +49,9 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
     const timer = setInterval(async () => {
       const currentState = sim.exfilController.getState();
       setState(currentState);
+      if (sim.terminalRecoveryError !== recoveryError) {
+        setRecoveryError(sim.terminalRecoveryError);
+      }
 
       if (currentState.kind === "corridor_presentation") {
         if (!sim.player.isAlive || sim.player.health <= 0) {
@@ -160,7 +165,7 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
   };
 
   const isDead = !sim.player.isAlive && !sim.player.isExtracted;
-  const isModalActive = isDead || (state.kind !== "idle" && state.kind !== "holding_zone");
+  const isModalActive = isDead || (state.kind !== "idle" && state.kind !== "holding_zone") || Boolean(recoveryError);
 
   const modalRef = useRef<HTMLDivElement>(null);
   // Single-flight settlement guard: exactly one corridor->settlement continuation runs.
@@ -490,6 +495,79 @@ style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", border
           </div>
         );
       })()}
+
+      {/* Persistent Terminal Recovery Error Modal */}
+      {!isDead && Boolean(recoveryError) && (
+        <div
+          ref={modalRef}
+          tabIndex={-1}
+          className="exfil-recovery-modal exfil-error-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="recovery-dialog-title"
+          style={{
+            padding: 20,
+            background: "#1c1917",
+            border: "1px solid #ef4444",
+            borderRadius: 10,
+            maxWidth: 440,
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+            alignItems: "center",
+            textAlign: "center",
+          }}
+        >
+          <div
+            id="recovery-dialog-title"
+            style={{
+              color: "#ef4444",
+              fontWeight: 800,
+              fontSize: 14,
+              letterSpacing: "1px",
+              textTransform: "uppercase",
+            }}
+          >
+            Connection Recovery Error
+          </div>
+          <div style={{ color: "#fca5a5", fontSize: 12, lineHeight: 1.5 }}>
+            {recoveryError}
+          </div>
+          <div style={{ display: "flex", gap: 10, width: "100%", marginTop: 8 }}>
+            <button
+              onClick={async () => {
+                if (isRetryingRecovery) return;
+                setIsRetryingRecovery(true);
+                try {
+                  if (typeof sim.retryTerminalRecovery === "function") {
+                    await sim.retryTerminalRecovery();
+                    setRecoveryError(sim.terminalRecoveryError);
+                  }
+                } finally {
+                  setIsRetryingRecovery(false);
+                }
+              }}
+              autoFocus
+              className="exfil-recovery-retry-btn"
+              style={{
+                flex: 1,
+                padding: "10px 0",
+                background: "#dc2626",
+                border: "none",
+                borderRadius: 6,
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: 12,
+                cursor: "pointer",
+                textTransform: "uppercase",
+              }}
+            >
+              {isRetryingRecovery ? "Retrying Recovery..." : "Retry Recovery"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Recoverable Failure State using Official ExfilController Methods */}
       {!isDead && state.kind === "failed" && (

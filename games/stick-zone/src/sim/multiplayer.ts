@@ -475,11 +475,13 @@ export class MultiplayerCoordinator {
   public authenticated = false;
   public serverMachines: Array<{ id: string; health: number; isAlive: boolean }> | null = null;
   private isDisposed = false;
+  private isRetryingTerminalRecovery = false;
   private reconnectTimer: any = null;
   private raidClockSyncInterval: any = null;
 
   constructor(sim: SectorDepotSimulation) {
     this.sim = sim;
+    this.sim.retryTerminalRecovery = () => this.retryTerminalRecovery();
 
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const isPlayer2 = urlParams?.get('rundotPlayer') === 'player2' || sim.player.id === 'op_bravo_1';
@@ -791,7 +793,7 @@ export class MultiplayerCoordinator {
       machine.health = Math.max(0, machine.health - damage);
       machine.isAlive = machine.health > 0;
       if (!machine.isAlive) this.sim.combatLog.push(`[MACHINE DESTROYED] ${machine.id} neutralized by ${senderName}`);
-      if (hadSeq) (machine as any).vitalsSeq = seqNow + 1; // local advance — superseded by any newer relay seq
+      if (hadSeq) (machine as any).predictedVitalsSeq = seqNow + 1; // Uncommitted prediction sequence kept separate from authoritative vitalsSeq
       this.serverMachines = this.sim.machines.map((x) => ({ id: x.id, health: x.health, isAlive: x.isAlive, type: (x as any).type, x: (x as any).x, y: (x as any).y, z: (x as any).z, facing: (x as any).facing, originX: (x as any).originX, originZ: (x as any).originZ, maxHealth: (x as any).maxHealth, vitalsSeq: (x as any).vitalsSeq } as any));
       return;
     }
@@ -956,22 +958,10 @@ export class MultiplayerCoordinator {
     if (!this.pendingWorldEvents.length) return;
     // Relay machine custody FIRST and UNCONDITIONALLY: sequenced server results are
     // applied through the ordered channel before any time/peer filter can discard them.
+    // Authoritative machine custody queued during ingress is processed before snapshot filters
     for (const p of [...this.pendingWorldEvents]) {
-      if (!p || typeof p !== "object" || Array.isArray(p)) continue;
-      if (p.raidId && this.sim.raidId && p.raidId !== this.sim.raidId) continue;
-      if (typeof p.senderId !== "string" || !p.senderId || typeof p.senderName !== "string" || !p.senderName) continue;
-      if ((p as any)._fromBroadcastChannel) continue;
-      if (!p.eventId || typeof p.eventId !== "string" || p.eventId.trim() === "") continue;
-      if (p.type === "machine_hit" && (p as any).serverAuthoritative === true) {
-        const d = (p as any).data;
-        if (!d || typeof d !== "object") continue;
-        const seq = d.vitalsSeq;
-        const mid = d.machineId;
-        if (typeof mid !== "string" || !mid || typeof seq !== "number" || !Number.isFinite(seq)) continue;
-        const tgt = this.sim.machines.find((x) => x.id === mid);
-        if (!tgt || seq > ((tgt as any).vitalsSeq ?? 0)) {
-          this.adoptMachineVitals(mid, d.machineHealth, d.machineAlive, seq, d.maxHealth);
-        }
+      if (p && typeof p === "object" && p.type === "machine_hit" && (p as any).serverAuthoritative === true) {
+        this.validateAndAdoptMachineCustody(p);
       }
     }
     for (const p of this.pendingWorldEvents) {
@@ -1666,6 +1656,62 @@ export class MultiplayerCoordinator {
    * enforced independently of roster revisions — an older seq is dropped, a newer seq
    * updates vitals AND the authoritative cache.
    */
+  public validateAndAdoptMachineCustody(packet: any): boolean {
+    if (!packet || typeof packet !== "object" || Array.isArray(packet)) return false;
+    if (packet.type !== "machine_hit") return false;
+    if (packet.serverAuthoritative !== true || packet._fromBroadcastChannel) return false;
+    if (typeof packet.raidId !== "string" || !packet.raidId || !this.sim.raidId || packet.raidId !== this.sim.raidId) {
+      return false;
+    }
+    if (!isAuthorizedSender(packet.senderId, packet.senderName)) return false;
+    if (typeof packet.eventId !== "string" || packet.eventId.trim() === "") return false;
+
+    const now = this.getServerNow();
+    if (
+      typeof packet.timestamp !== "number" ||
+      !Number.isFinite(packet.timestamp) ||
+      packet.timestamp <= 0 ||
+      packet.timestamp >= 1e15 ||
+      packet.timestamp > now + 5000
+    ) {
+      return false;
+    }
+
+    const d = packet.data;
+    if (!d || typeof d !== "object" || Array.isArray(d)) return false;
+    const mid = d.machineId;
+    if (typeof mid !== "string" || !mid) return false;
+    const mHit = this.sim.machines.find((x) => x.id === mid);
+    if (!mHit) return false;
+
+    const seq = d.vitalsSeq;
+    if (typeof seq !== "number" || !Number.isSafeInteger(seq) || seq < 0) return false;
+
+    let maxHp = (mHit as any).maxHealth ?? (mHit.type === "drone" ? 75 : 120);
+    if (d.maxHealth !== undefined) {
+      if (typeof d.maxHealth !== "number" || !Number.isFinite(d.maxHealth) || d.maxHealth <= 0 || d.maxHealth > 1000) {
+        return false;
+      }
+      maxHp = d.maxHealth;
+    }
+
+    if (
+      typeof d.machineHealth !== "number" ||
+      !Number.isFinite(d.machineHealth) ||
+      d.machineHealth < 0 ||
+      d.machineHealth > maxHp
+    ) {
+      return false;
+    }
+
+    if (typeof d.machineAlive !== "boolean") return false;
+
+    const curSeq = (mHit as any).vitalsSeq ?? 0;
+    if (seq < curSeq) return false;
+
+    return this.adoptMachineVitals(mid, d.machineHealth, d.machineAlive, seq, maxHp);
+  }
+
   public adoptMachineVitals(machineId: string, health: number | undefined, isAlive: boolean | undefined, vitalsSeq: number | undefined, maxHealth?: number): boolean {
     const m = this.sim.machines.find((x) => x.id === machineId);
     if (!m) return false;
@@ -1673,6 +1719,7 @@ export class MultiplayerCoordinator {
     if (typeof vitalsSeq === "number" && Number.isFinite(vitalsSeq)) {
       if (vitalsSeq < seqNow) return false; // stale vitals — never a resurrection path
       (m as any).vitalsSeq = vitalsSeq;
+      delete (m as any).predictedVitalsSeq;
     }
     if (maxHealth !== undefined) (m as any).maxHealth = maxHealth;
     if (typeof health === "number" && Number.isFinite(health)) {
@@ -1955,24 +2002,8 @@ export class MultiplayerCoordinator {
     // Envelope, exact raid, sender, relay source, and custody fields must all be validated
     // BEFORE adoption. Once validated, adoption happens BEFORE presentation snapshot filters so
     // client presentation filters never discard authoritative machine vitals.
-    if (packet.type === 'machine_hit' && (packet as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel) {
-      const d = (packet as any).data;
-      if (d && typeof d === 'object') {
-        const dseq = d.vitalsSeq;
-        const mid = d.machineId;
-        if (typeof mid === 'string' && mid && typeof dseq === "number" && Number.isFinite(dseq)) {
-          const mHit = this.sim.machines.find((x) => x.id === mid);
-          if (!mHit || dseq > ((mHit as any).vitalsSeq ?? 0)) {
-            this.adoptMachineVitals(
-              mid,
-              d.machineHealth,
-              d.machineAlive,
-              dseq,
-              d.maxHealth
-            );
-          }
-        }
-      }
+    if (packet.type === 'machine_hit' && (packet as any).serverAuthoritative === true) {
+      this.validateAndAdoptMachineCustody(packet);
     }
 
     // 7. Universal snapshot presentation filters
@@ -2020,18 +2051,8 @@ export class MultiplayerCoordinator {
     }
 
     if (packet.senderId === this.localId) {
-      if (packet.type === 'machine_hit') {
-        const smId = (packet as any).data?.machineId;
-        const targetM = this.sim.machines.find((x) => x.id === smId);
-        if (targetM) {
-          this.adoptMachineVitals(
-            (packet as any).data?.machineId,
-            (packet as any).data?.machineHealth,
-            (packet as any).data?.machineAlive,
-            (packet as any).data?.vitalsSeq,
-            (packet as any).data?.maxHealth
-          );
-        }
+      if (packet.type === 'machine_hit' && (packet as any).serverAuthoritative === true) {
+        this.validateAndAdoptMachineCustody(packet);
       }
       return;
     }
@@ -2904,18 +2925,8 @@ export class MultiplayerCoordinator {
       const machineName = d.machineType === "drone" ? "SCOUT DRONE" : "AUTOMATED TURRET";
       this.sim.combatLog.push(`[MACHINE FIRE] Struck by ${machineName} (${d.machineId}) (-${d.damage} HP)`);
     } else if (packet.type === 'machine_hit') {
-      // RELAY CUSTODY FIRST: a server-stamped sequenced result is applied before
-      // the time/peer-combat filters — those filters may discard the packet that
-      // carried newer machine custody; adoption here is ordered so it can never
-      // resurrect stale state.
-      if ((packet as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel) {
-        const dseq = (packet.data as any)?.vitalsSeq;
-        if (typeof dseq === "number" && Number.isFinite(dseq)) {
-          const mHit = this.sim.machines.find((x) => x.id === (packet.data as any)?.machineId);
-          if (!mHit || dseq > ((mHit as any).vitalsSeq ?? 0)) {
-            this.adoptMachineVitals((packet.data as any).machineId, (packet.data as any).machineHealth, (packet.data as any).machineAlive, dseq, (packet.data as any).maxHealth);
-          }
-        }
+      if ((packet as any).serverAuthoritative === true) {
+        this.validateAndAdoptMachineCustody(packet);
       }
       if (!isAuthorizedSender(packet.senderId, packet.senderName)) return;
       if (!packet.data || typeof packet.data !== 'object') return;
@@ -3108,6 +3119,16 @@ export class MultiplayerCoordinator {
   }
 
   public async retryTerminalRecovery(maxRetries = 3): Promise<boolean> {
+    if (this.isDisposed || this.isRetryingTerminalRecovery) return false;
+    this.isRetryingTerminalRecovery = true;
+    try {
+      return await this._doRetryTerminalRecovery(maxRetries);
+    } finally {
+      this.isRetryingTerminalRecovery = false;
+    }
+  }
+
+  private async _doRetryTerminalRecovery(maxRetries = 3): Promise<boolean> {
     if (this.isDisposed) return false;
     let resumeKey: string | null = null;
     if (typeof sessionStorage !== "undefined") {
@@ -3163,6 +3184,10 @@ export class MultiplayerCoordinator {
                 sessionStorage.setItem(`sz_kia_${this.sim.raidId}_${this.sim.player.id}`, "true");
               }
             }
+            this.sim.terminalRecoveryError = undefined;
+            return true;
+          } else if (data && data.success && data.token) {
+            this.sim.sessionToken = data.token;
             this.sim.terminalRecoveryError = undefined;
             return true;
           }

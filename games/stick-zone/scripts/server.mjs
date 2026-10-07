@@ -10,7 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer } from "ws";
-import { ServerSettlementAuthority, isValidRaidId } from "../src/sim/server-settlement.js";
+import { ServerSettlementAuthority, isValidRaidId, isValidOperativeId } from "../src/sim/server-settlement.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -503,11 +503,16 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         const data = JSON.parse(body || "{}");
         const raidId = data.raidId || settlement.getActiveRaidId();
         const opId = data.operativeId || data.playerId;
-        const RESERVED = new Set(["system", "server", "admin", "root"]);
-        if (!opId || RESERVED.has(String(opId).toLowerCase())) {
-          res.statusCode = 403;
+        if (!isValidRaidId(raidId)) {
+          res.statusCode = 400;
           res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ error: "Cannot issue token for reserved operative ID" }));
+          res.end(JSON.stringify({ error: "Invalid raid ID" }));
+          return;
+        }
+        if (!isValidOperativeId(opId)) {
+          res.statusCode = 400;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: "Cannot issue token for reserved or invalid operative ID" }));
           return;
         }
         const caller = getAuthenticatedCaller(req, settlement);
@@ -3011,6 +3016,7 @@ wss.on("connection", (ws, req) => {
               senderName: packet.senderName || (ws.operativeId === "op_bravo_1" ? "INFILTRATOR PHANTOM-1" : "OPERATIVE ALPHA"),
               raidId: ws.raidId,
               timestamp: Date.now(),
+              serverAuthoritative: true,
               data: {
                 machineId: packet.data.machineId,
                 damage: 0,
@@ -3168,6 +3174,7 @@ wss.on("connection", (ws, req) => {
             senderName: packet.senderName || (ws.operativeId === "op_bravo_1" ? "INFILTRATOR PHANTOM-1" : "OPERATIVE ALPHA"),
             raidId: ws.raidId,
             timestamp: Date.now(),
+            serverAuthoritative: true,
             data: {
               machineId: m.id,
               damage: safeDmg,

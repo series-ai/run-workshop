@@ -7455,7 +7455,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
         rivalTargets: [],
       },
     });
-    await new Promise((res) => setTimeout(res, 150));
+    await new Promise((res) => setTimeout(res, 160));
     const afterKick = settlement.getRaidRecord(raidId);
     expect(afterKick?.machines?.turret_depot_alpha?.health).toBe(70); // 120 - 50 exactly once
 
@@ -7826,6 +7826,128 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       coord.cleanup();
     } finally {
       globalThis.fetch = originalFetch;
+      try { fs.unlinkSync(tmpStore); } catch {}
+      try { fs.unlinkSync(`${tmpStore}.prev`); } catch {}
+    }
+  });
+
+
+  it("119. unified machine custody validation, recovery error input locking, and operative prototype pollution defense", async () => {
+    // A) Prototype pollution defense on operative records and JOIN endpoint
+    const raidId = `raid_pure_${Date.now().toString(36)}`;
+    const tmpStore = `/tmp/test-pure-op-${raidId}.json`;
+    try { fs.unlinkSync(tmpStore); } catch {}
+    const auth = new ServerSettlementAuthority(tmpStore);
+
+    expect(() => auth.initRaid(raidId, 50000, ["__proto__"])).toThrow(/Cannot register reserved or invalid operative ID/);
+    expect(() => auth.initRaid(raidId, 50000, ["constructor"])).toThrow(/Cannot register reserved or invalid operative ID/);
+    expect(() => auth.claimSlot(raidId, "__proto__")).toThrow(/Invalid operativeId/);
+    expect((Object.prototype as any).owned).toBeUndefined();
+    expect(auth.getSessionToken(raidId, "__proto__")).toBeUndefined();
+    expect(auth.allocateSessionToken(raidId, "__proto__")).toBeNull();
+
+    // Verify valid operative init and slot claiming
+    auth.initRaid(raidId, 50000, ["op_player", "op_bravo_1"]);
+    auth.claimSlot(raidId, "op_player");
+    expect((Object.prototype as any).owned).toBeUndefined();
+    expect(auth.isSlotClaimed(raidId, "op_player")).toBe(true);
+
+    // B) Unified machine custody validator & rejection reconciliation
+    const sim = new SectorDepotSimulation();
+    sim.raidId = raidId;
+    sim.player.id = "op_player";
+    sim.admitOperative(0);
+    const coord = new MultiplayerCoordinator(sim);
+
+    const turret = sim.machines.find((m) => m.id === "turret_depot_alpha");
+    expect(turret).toBeDefined();
+    expect(turret?.health).toBe(120);
+
+    // 1. Missing or mismatching raidId rejected:
+    const resMismatchedRaid = coord.validateAndAdoptMachineCustody({
+      eventId: "hit_wrong_raid",
+      type: "machine_hit",
+      serverAuthoritative: true,
+      raidId: "raid_other_999",
+      senderId: "server",
+      senderName: "CENTRAL COMMAND",
+      timestamp: Date.now(),
+      data: { machineId: "turret_depot_alpha", machineHealth: 0, machineAlive: false, vitalsSeq: 5 },
+    });
+    expect(resMismatchedRaid).toBe(false);
+    expect(turret?.health).toBe(120);
+
+    // 2. Unauthorized sender rejected:
+    const resUnauthorizedSender = coord.validateAndAdoptMachineCustody({
+      eventId: "hit_bad_sender",
+      type: "machine_hit",
+      serverAuthoritative: true,
+      raidId,
+      senderId: "hacker_666",
+      senderName: "UNKNOWN SENDER",
+      timestamp: Date.now(),
+      data: { machineId: "turret_depot_alpha", machineHealth: 0, machineAlive: false, vitalsSeq: 5 },
+    });
+    expect(resUnauthorizedSender).toBe(false);
+    expect(turret?.health).toBe(120);
+
+    // 3. Invalid maxHealth rejected:
+    const resInvalidMax = coord.validateAndAdoptMachineCustody({
+      eventId: "hit_bad_max",
+      type: "machine_hit",
+      serverAuthoritative: true,
+      raidId,
+      senderId: "server",
+      senderName: "CENTRAL COMMAND",
+      timestamp: Date.now(),
+      data: { machineId: "turret_depot_alpha", machineHealth: 0, machineAlive: false, vitalsSeq: 5, maxHealth: -50 },
+    });
+    expect(resInvalidMax).toBe(false);
+    expect(turret?.health).toBe(120);
+
+    // 4. Local optimistic strike leaves prediction damage without polluting committed seq
+    coord.applyValidatedMachineHit("OPERATIVE GHOST-1", "turret_depot_alpha", 25);
+    expect(turret?.health).toBe(95);
+
+    // 5. Stamped server rejection/custody sync reconciles health back to 120
+    const resReconcile = coord.validateAndAdoptMachineCustody({
+      eventId: "hit_rejection_corr",
+      type: "machine_hit",
+      serverAuthoritative: true,
+      raidId,
+      senderId: "server",
+      senderName: "CENTRAL COMMAND",
+      timestamp: Date.now(),
+      data: { machineId: "turret_depot_alpha", machineHealth: 120, machineAlive: true, vitalsSeq: 0, maxHealth: 120 },
+    });
+    expect(resReconcile).toBe(true);
+    expect(turret?.health).toBe(120);
+
+    // C) Terminal recovery error, input locking, and user retry unlocking
+    sim.terminalRecoveryError = "Terminal session recovery failed after retries. Reconnect required.";
+    expect(sim.isInputLocked()).toBe(true);
+
+    // User retry succeeds and clears error, unlocking input
+    let fetchCalled = 0;
+    const origFetch = globalThis.fetch;
+    try {
+      globalThis.fetch = (async (url: any) => {
+        fetchCalled++;
+        return new Response(JSON.stringify({
+          success: true,
+          token: "sz_recovered_token_119",
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }) as any;
+
+      const userRecovered = await sim.retryTerminalRecovery?.();
+      expect(userRecovered).toBe(true);
+      expect(fetchCalled).toBe(1);
+      expect(sim.terminalRecoveryError).toBeUndefined();
+      expect(sim.sessionToken).toBe("sz_recovered_token_119");
+      expect(sim.isInputLocked()).toBe(false);
+    } finally {
+      globalThis.fetch = origFetch;
+      coord.cleanup();
       try { fs.unlinkSync(tmpStore); } catch {}
       try { fs.unlinkSync(`${tmpStore}.prev`); } catch {}
     }
