@@ -292,6 +292,13 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           if (persisted) {
             m.health = persisted.health;
             m.isAlive = persisted.isAlive;
+            // Combat sequences survive via the health map floor: restore continues at
+            // or above everything clients applied (never resets to 1).
+            if (typeof persisted.vitalsSeq === "number" && Number.isFinite(persisted.vitalsSeq)) {
+              m.vitalsSeq = Math.max(m.vitalsSeq || 0, persisted.vitalsSeq);
+              const cur = machineVitalsSeq.get(m.id) || 0;
+              if (m.vitalsSeq > cur) machineVitalsSeq.set(m.id, m.vitalsSeq);
+            }
           }
         }
       }
@@ -2680,7 +2687,7 @@ wss.on("connection", (ws, req) => {
                   .filter((id) => typeof id === "string")
                   .map((id) => {
                     const m = machinesForBatch.find((x) => x.id === id);
-                    return m ? { id, health: m.health, isAlive: m.isAlive, x: m.x, z: m.z } : null;
+                    return m ? { id, health: m.health, isAlive: m.isAlive, x: m.x, z: m.z, maxHealth: m.maxHealth || m.health, vitalsSeq: m.vitalsSeq || 0 } : null;
                   })
                   .filter(Boolean),
               },
@@ -2770,9 +2777,13 @@ wss.on("connection", (ws, req) => {
           const mY = typeof m.y === "number" ? m.y : 1.0;
           if (checkContainerRayObstruction(strikeOriginX, strikeOriginZ, targetX, targetZ, 1.0, mY)) continue;
 
-          // Atomic custody application with rollback on persistence failure
+          // Atomic custody application with rollback on persistence failure:
+          // health + alive + vitalsSeq are captured, mutated, SAVED together, and
+          // restored together — the reply (success OR rejection) carries the COMMITTED
+          // sequence only; no unsaved authoritative sequence is ever emitted.
           const preDmgHealth = m.health;
           const preDmgAlive = m.isAlive;
+          const preDmgSeq = m.vitalsSeq || 0;
           m.health = Math.max(0, m.health - safeDmg);
           m.vitalsSeq = nextVitalsSeq(m.id);
           if (m.health <= 0) m.isAlive = false;
@@ -2780,18 +2791,17 @@ wss.on("connection", (ws, req) => {
           try {
             if (rRecord) {
               if (!rRecord.machines) rRecord.machines = {};
-              rRecord.machines[m.id] = { health: m.health, isAlive: m.isAlive };
+              rRecord.machines[m.id] = { health: m.health, isAlive: m.isAlive, vitalsSeq: m.vitalsSeq };
               if (typeof settlement.saveToDisk === "function") settlement.saveToDisk();
             }
           } catch (saveErr) {
             m.health = preDmgHealth;
             m.isAlive = preDmgAlive;
-            if (rRecord?.machines) rRecord.machines[m.id] = { health: preDmgHealth, isAlive: preDmgAlive };
-            // FAILED SAVE = strike rejected: send an authoritative correction with the
-            // RESTORED custody vitals (and a NEW sequence) so the client's optimistic
-            // prediction (game.ts decremented local health) reconciles immediately.
+            m.vitalsSeq = preDmgSeq;
+            if (rRecord?.machines) rRecord.machines[m.id] = { health: preDmgHealth, isAlive: preDmgAlive, vitalsSeq: preDmgSeq };
+            // FAILED SAVE = strike rejected: an authoritative correction restores the
+            // client's optimistic prediction to COMMITTED custody (pre-save sequence).
             try {
-              const __seqAfterRollback = nextVitalsSeq(m.id);
               ws.send(JSON.stringify({
                 eventId: `${packet.eventId}_mrej_${m.id}`,
                 type: "machine_hit",
@@ -2800,7 +2810,7 @@ wss.on("connection", (ws, req) => {
                 raidId: ws.raidId,
                 timestamp: Date.now(),
                 serverAuthoritative: true,
-                data: { machineId: m.id, damage: 0, machineHealth: m.health, machineAlive: m.isAlive, kind: "kick", rejected: true, maxHealth: m.maxHealth || m.health, vitalsSeq: __seqAfterRollback },
+                data: { machineId: m.id, damage: 0, machineHealth: preDmgHealth, machineAlive: preDmgAlive, kind: "kick", rejected: true, maxHealth: m.maxHealth || m.health, vitalsSeq: preDmgSeq },
               }));
             } catch {}
             continue;
@@ -2914,9 +2924,9 @@ wss.on("connection", (ws, req) => {
 
         const sendRejectionSync = (machineObj) => {
           try {
-            // Rejection = custody stands: the reply carries the CURRENT advanced sequence
-            // so the client's optimistic prediction reconciles to ordered truth.
-            if (machineObj) machineObj.vitalsSeq = nextVitalsSeq(machineObj.id);
+            // Rejection = custody stands: the reply carries the COMMITTED sequence
+            // (never an unsaved advance) so the client's prediction reconciles to
+            // durable truth without emitting an authoritative version of nothing.
             ws.send(JSON.stringify({
               eventId: packet.eventId,
               type: "machine_hit",

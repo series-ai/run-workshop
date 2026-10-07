@@ -86,7 +86,7 @@ export interface KickActionPacketData {
 export interface KickActionRejectedPacketData {
   actionEventId?: string;
   reason?: string;
-  machineCustody?: Array<{ id?: string; health?: number; isAlive?: boolean; x?: number; z?: number }>;
+  machineCustody?: Array<{ id?: string; health?: number; isAlive?: boolean; x?: number; z?: number; maxHealth?: number; vitalsSeq?: number }>;
 }
 
 export interface MachineRosterPacketData {
