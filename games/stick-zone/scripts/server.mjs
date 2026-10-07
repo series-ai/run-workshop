@@ -1197,6 +1197,12 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         return;
       }
 
+      // PRE-INITIALIZATION SNAPSHOT: capture custody field presence BEFORE getRaidMachines
+      // runs (which lazily creates the optional machines health map). First-deployment
+      // failures restore even that lazy initialization.
+      const __preRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
+      const __machMapExisted = !(__preRec && __preRec.machines === undefined);
+      const __machMapSnapshot = __preRec && __preRec.machines ? JSON.parse(JSON.stringify(__preRec.machines)) : null;
       const machines = getRaidMachines(raidId);
       const idx = machines.findIndex((m) => m.id === machineId);
       // Full-transaction snapshot (machine list + health map + deployment record) taken
@@ -1214,9 +1220,15 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
       const __mRrec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
       // Optional-map rollback: restore deletes a newly created health map when it was
       // absent before the deployment (a failed placement can leave uncommitted state).
-      const __machMapBefore = !(__mRrec && __mRrec.machines !== undefined && __mRrec.machines !== null);
       const __machMapRestore = () => {
-        if (__machMapBefore && __mRrec) delete __mRrec.machines;
+        // Full optional-map restoration: a failed deployment returns the health map to
+        // its PRE-DEPLOYMENT state — including deleting a map lazily created by the
+        // getRaidMachines call itself (not just mutations after the snapshot).
+        if (__machMapExisted) {
+          if (__machMapSnapshot && __mRrec) __mRrec.machines = JSON.parse(JSON.stringify(__machMapSnapshot));
+        } else if (__mRrec) {
+          delete __mRrec.machines;
+        }
       };
       const __mHealthBefore = __mRrec && __mRrec.machines ? JSON.parse(JSON.stringify(__mRrec.machines)) : null;
       const __mDeployBefore = __mRrec && __mRrec.machineDeployment ? JSON.parse(JSON.stringify(__mRrec.machineDeployment)) : null;
@@ -1245,7 +1257,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         const rRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
         if (rRec?.machines) delete rRec.machines[machineId];
         if (rRec) {
-          rRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs, maxHealth: m.maxHealth || Math.max(m.health, m.type === "turret" ? 120 : 75) }));
+          rRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs, maxHealth: m.maxHealth || Math.max(m.health, m.type === "turret" ? 120 : 75), vitalsSeq: m.vitalsSeq || 0 }));
         }
         if (settlement.saveToDisk) {
           try {
@@ -2874,6 +2886,9 @@ wss.on("connection", (ws, req) => {
 
         const sendRejectionSync = (machineObj) => {
           try {
+            // Rejection = custody stands: the reply carries the CURRENT advanced sequence
+            // so the client's optimistic prediction reconciles to ordered truth.
+            if (machineObj) machineObj.vitalsSeq = nextVitalsSeq(machineObj.id);
             ws.send(JSON.stringify({
               eventId: packet.eventId,
               type: "machine_hit",
@@ -2888,6 +2903,8 @@ wss.on("connection", (ws, req) => {
                 machineAlive: machineObj ? machineObj.isAlive : false,
                 kind,
                 rejected: true,
+                maxHealth: machineObj ? (machineObj.maxHealth || machineObj.health) : undefined,
+                vitalsSeq: machineObj ? machineObj.vitalsSeq : undefined,
               },
             }));
           } catch {}
@@ -3017,6 +3034,10 @@ wss.on("connection", (ws, req) => {
         packet.data.kind = kind;
         // Relay-validated machine strike: results are authoritative (validated custody)
         packet.serverAuthoritative = true;
+        // Combat custody mutations advance the vitals sequence BEFORE the result is sent —
+        // every authoritative success reply carries the current sequence, so a stale
+        // roster or delayed packet can never resurrect a destroyed machine.
+        m.vitalsSeq = nextVitalsSeq(m.id);
         try {
           ws.send(JSON.stringify({
             eventId: packet.eventId,
@@ -3031,6 +3052,8 @@ wss.on("connection", (ws, req) => {
               machineHealth: m.health,
               machineAlive: m.isAlive,
               kind,
+              maxHealth: m.maxHealth || m.health,
+              vitalsSeq: m.vitalsSeq,
             },
           }));
         } catch {}

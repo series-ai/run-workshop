@@ -1038,12 +1038,14 @@ export class MultiplayerCoordinator {
     try {
       const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${proto}//${window.location.host}/syncplay-ws?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
-      this.ws = new WebSocket(wsUrl);
-      this.ws.onopen = () => {
+      const createdSocket = new WebSocket(wsUrl);
+      this.ws = createdSocket; // ownership: callbacks verify they still serve the CURRENT socket
+      createdSocket.onopen = () => {
+        if (this.isDisposed || createdSocket !== this.ws) return;
         this.broadcastRaidDiscovery();
       };
       this.ws.onmessage = async (event) => {
-        const __msgSocket = this.ws; // capture: decoding may finish after reconnect
+        const __msgSocket = createdSocket; // ownership: this handler serves ONLY the socket it was created for
         this.lastServerMessageTime = Date.now();
         try {
           const raw = typeof event.data === "string" ? event.data : (event.data instanceof Blob ? await event.data.text() : new TextDecoder().decode(event.data));
@@ -1139,7 +1141,10 @@ export class MultiplayerCoordinator {
           this.handleMessage(data);
         } catch {}
       };
-      this.ws.onclose = (event) => {
+      createdSocket.onclose = (event) => {
+        // Ownership: only the CURRENT socket may clear live state — a superseded
+        // socket's late close must not deauthorize its replacement.
+        if (createdSocket !== this.ws) return;
         this.authenticated = false;
         this.sim.serverMachineDamageAuthority = false; // relay authority lost: local simulation resumes
         if (this.raidClockSyncInterval) {
