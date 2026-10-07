@@ -634,6 +634,15 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
         boost: presented.boostVisual,
         time: (state.current.tick + state.alpha) / 30,
       });
+      if (presented.revealWeight > 0.001) {
+        // R12 landmark reveal: lean the aim toward the bend's floodlit mega-tower so its lit edge
+        // frames one side of the view (at most ~35% of the way, eased in and out).
+        const k = 0.2 * presented.revealWeight;
+        const ty = poseScratch.position.y + 260;
+        poseScratch.target.x += (presented.revealX - poseScratch.target.x) * k * 0.6;
+        poseScratch.target.z += (presented.revealZ - poseScratch.target.z) * k * 0.6;
+        poseScratch.target.y += (ty - poseScratch.target.y) * k * 0.4;
+      }
       applyCameraPose(scene.camera, poseScratch);
 
       // T6R-2: the drawn nose follows under half the climb angle (the sim allows 54 degrees), so the

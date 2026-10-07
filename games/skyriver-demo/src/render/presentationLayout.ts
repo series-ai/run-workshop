@@ -108,7 +108,15 @@ export function presentCityLayout(layout: SkyriverCityLayout): SkyriverCityLayou
           height: source.height * (0.9 + 0.2 * hash01(h * 13.1 + 7)),
         };
       }
-      tower = { ...tower, x: tower.x + sign * INNER_SETBACK_M, height: regrade(tower, cell) };
+      // R12: strongly varied slab widths along the canyon (0.6x-1.6x depth): narrow blades next to
+      // broad plates, so the walls read as distinct shapes.
+      const widthHash = hash01(tower.x * 0.0131 + v * 0.0071 + r * 1.7);
+      tower = {
+        ...tower,
+        x: tower.x + sign * INNER_SETBACK_M,
+        depth: tower.depth * (0.6 + 1.0 * widthHash * widthHash),
+        height: regrade(tower, cell),
+      };
       const half = Math.max(tower.width, tower.depth) * 0.5;
       if (Math.abs(tower.x) > 900 && intrudesOtherStretch(tower.x, tower.z, half)) continue;
       // T7-5: tighter S-bends — drop footprints that would fold back through a bend's centre.

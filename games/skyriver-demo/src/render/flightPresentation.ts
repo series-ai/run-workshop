@@ -33,7 +33,7 @@ import {
   type SkyriverFlight,
   type SkyriverFlightPath,
 } from '../sim/systems';
-import { CANYON_LOOP_LENGTH_M, canyonHeading, warpCanyon, type WarpOut } from './canyonWarp';
+import { CANYON_LOOP_LENGTH_M, canyonBendApexes, canyonHeading, warpCanyon, type WarpOut } from './canyonWarp';
 import { SKYRIVER_ROOFLINE_MIN_M } from './presentationLayout';
 import { ROUTE_MAX_ALTITUDE_M, routeAltitude, routeAltitudeSlope, routeLateral, routeLateralSlope } from './routeProfile';
 
@@ -70,6 +70,13 @@ export interface PresentedFlight extends SkyriverFlight {
    * boost, and eases out over BOOST_RELEASE_TICKS after the sim drops boostT to 0 on release.
    */
   readonly boostVisual: number;
+  /**
+   * R12 landmark reveal: at a tight bend's entry, the world point of the bend's mega-tower body and a
+   * 0..1 weight the camera leans its aim toward it by. 0 away from bend entries and in free flight.
+   */
+  readonly revealX: number;
+  readonly revealZ: number;
+  readonly revealWeight: number;
   /** Retired in T7-3 (the loop has no cuts); always 0. */
   readonly cutFade: number;
   /** T7-3: the pose in canyon space (v along the loop, x across). Free flight: the box is straight. */
@@ -181,8 +188,10 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
   }
 
   const result: MutablePresented = {
-    x: 0, y: 0, z: 0, yaw: 0, pitch: 0, speed: 0, mode: 0, autopilotT: 0, boostT: 0, roll: 0, boostVisual: 0, cutFade: 0, canyonV: 0, canyonX: 0,
+    x: 0, y: 0, z: 0, yaw: 0, pitch: 0, speed: 0, mode: 0, autopilotT: 0, boostT: 0, roll: 0, boostVisual: 0, cutFade: 0, canyonV: 0, canyonX: 0, revealX: 0, revealZ: 0, revealWeight: 0,
   };
+  const apexes = canyonBendApexes(900);
+  const revealWarp: WarpOut = { x: 0, z: 0, heading: 0 };
   // Observed like handoffTick: the tick a boost release was seen, dropped when the tick runs back.
   let boostEndTick: number | null = null;
 
@@ -213,6 +222,7 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
     result.autopilotT = flight.autopilotT;
     result.roll = 0;
     result.cutFade = 0;
+    result.revealWeight = 0;
     result.boostVisual = boostVisualOf(state);
 
     if (flight.mode === 0) {
@@ -237,6 +247,21 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
       result.speed = flight.speed * speedScale;
       result.canyonV = poseA.v;
       result.canyonX = poseA.lateral;
+      // Reveal: ramps up 1.4 km before a bend's apex, peaks ~700 m out, gone by the apex.
+      let best = 0;
+      for (const apex of apexes) {
+        let d = apex.v - poseA.v;
+        d -= trackLength * Math.round(d / trackLength);
+        if (d <= 0 || d > 1500) continue;
+        const w = Math.sin(Math.PI * Math.min(1, Math.max(0, (1500 - d) / 1350)));
+        if (w > best) {
+          best = w;
+          warpCanyon(apex.side * apex.radius * 0.995, apex.v, revealWarp);
+          result.revealX = revealWarp.x;
+          result.revealZ = revealWarp.z;
+        }
+      }
+      result.revealWeight = best;
       return result;
     }
 

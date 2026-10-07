@@ -49,7 +49,7 @@ export const SKYRIVER_ATMOSPHERE = Object.freeze({
   /** Haze grading window: y below this is full depths murk, y above floor+range is the clear end. */
   fogFloorY: 40,
   // T6R: the presented canyon walls rise to ~3.5 km (presentationLayout.ts), so the grade spans more.
-  fogRangeY: 2600,
+  fogRangeY: 1900,
   /**
    * FogExp2 densities. The factor is `1 - exp( -(density * depth)^2 )`, so density is read as "one
    * over the distance at which the haze is most of the way in": ~380 m in the depths, ~1.8 km high
@@ -62,7 +62,8 @@ export const SKYRIVER_ATMOSPHERE = Object.freeze({
   // mid and far masses separate into layers. Below the canyon floor band the density triples
   // (see skyriverFogFactor) and the colour sinks to the deep tone: the bottom reads as void.
   fogDensityLow: 0.00078,
-  fogDensityHigh: 0.00032,
+  // R12 height fog: clears quickly above ~1800 m so the pristine tops read clean.
+  fogDensityHigh: 0.0001,
   /**
    * Must sit between the camera's near and far planes: the dome is drawn with depth testing off,
    * but the near plane still clips it in the vertex stage, and a radius under `camera.near` leaves
@@ -161,8 +162,8 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
 
   float skyriverFogGrade() {
     float h = clamp( ( vSkyFogHeight - uSkyFogFloorY ) / uSkyFogRangeY, 0.0, 1.0 );
-    // Squared so the murk stays tight to the depths and the upper canyon opens up quickly.
-    return h * h;
+    // R12: smoothstep — thick through the low city, clearing fast toward the pristine heights.
+    return h * h * ( 3.0 - 2.0 * h );
   }
   /** 0 above the canyon floor band, 1 deep in the void below it. */
   float skyriverFogDeep() {
@@ -173,6 +174,8 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
     // T7-3: the depths are *thinner* haze, not thicker (cycle-4: black void) — so the grime's lit
     // rooms carry down into them as a field of distant warm lights.
     density *= 1.0 - 0.45 * skyriverFogDeep();
+    // R12: a thick warm smog layer over the grime and the deck.
+    density *= 1.0 + 0.45 * ( 1.0 - smoothstep( 120.0, 600.0, vSkyFogHeight ) ) * ( 1.0 - skyriverFogDeep() );
     return clamp( 1.0 - exp( - density * vFogDepth ), 0.0, 1.0 );
   }
   vec3 skyriverFogColor() {
@@ -189,6 +192,8 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
     float grimeAir = 1.0 - smoothstep( 300.0, 800.0, h );
     color = mix( color, vec3( 0.03, 0.02, 0.013 ), grimeAir * 0.55 );
     color = mix( color, vec3( 0.025, 0.035, 0.05 ), smoothstep( 1800.0, 2700.0, h ) * 0.45 );
+    // R12: the service deck's light scattering up into the low haze — a warm glow just above it.
+    color += vec3( 0.055, 0.028, 0.01 ) * exp( - max( h - 40.0, 0.0 ) / 220.0 ) * ( 1.0 - skyriverFogDeep() * 0.6 );
     return mix( color, uSkyFogColorDeep, skyriverFogDeep() );
   }
 #endif

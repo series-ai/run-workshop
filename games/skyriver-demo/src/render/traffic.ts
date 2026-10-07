@@ -612,7 +612,7 @@ function buildBus(): MeshBuild {
       side * 1.215, 0.15, 3.3,
       side * 1.215, 0.6, 3.3,
       side * 1.215, 0.6, -3.5,
-      0, 0.3, 0, 2.2, 1.5, 0.75);
+      0, 0.3, 0, 1.0, 0.62, 0.3);
   }
   pushLightPatch(build, 0.75, -0.3, 4.12, 0.5, 0.3, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
   pushLightPatch(build, -0.75, -0.3, 4.12, 0.5, 0.3, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
@@ -848,6 +848,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   /** R11: stream index per car, or 255 for a free floater. Chase cars use it as a nearest-stream rank. */
   const carStream = new Uint8Array(maxCarCount).fill(255);
   const carRow = new Float32Array(maxCarCount);
+  /** R12: 40% of express cars drop out beyond ~1 km, breaking the distant white dot-chains. */
+  const carThinFar = new Uint8Array(maxCarCount);
   const shareCumulative = STREAMS.reduce<number[]>((acc, st) => { acc.push((acc[acc.length - 1] ?? 0) + st[9]!); return acc; }, []);
   const tintR = new Float32Array(maxCarCount);
   const tintG = new Float32Array(maxCarCount);
@@ -902,6 +904,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       while (stream < STREAMS.length - 1 && shareCumulative[stream]! <= pick) stream += 1;
       const st = STREAMS[stream]!;
       carStream[car] = stream;
+      carThinFar[car] = st[5]! > 150 && h(0x51) < 0.4 ? 1 : 0;
       carDirection[car] = st[2]!;
       carRow[car] = h(0x43);
       carHomeX[car] = (h(0x21) * 2 - 1);
@@ -1051,7 +1054,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const invDimRangeSq = 1 / (DISTANCE_DIM_RANGE_M * DISTANCE_DIM_RANGE_M);
 
   // ---- R11 stream geometry: centre (x across, y) of stream k at canyon arc length v.
-  const streamScratch = new Float64Array(2);
+  const streamScratch = new Float64Array(3);
   const streamRank = [0, 1, 2, 3, 4, 5, 6, 7].slice(0, STREAMS.length);
   const streamRankDist = new Float64Array(STREAMS.length);
   function swapWeight(v: number, at: number): number {
@@ -1060,7 +1063,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     const half = CANYON_LOOP_LENGTH_M * 0.5;
     return smoothstep(0, INTERCHANGE_RAMP_M, d) * (1 - smoothstep(half, half + INTERCHANGE_RAMP_M, d));
   }
-  function streamCentre(k: number, v: number, out: Float64Array): void {
+  function streamCentreAnalytic(k: number, v: number, out: Float64Array): void {
     const st = STREAMS[k]!;
     let x = st[0]!;
     let y = st[1]!;
@@ -1073,6 +1076,37 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     }
     out[0] = x + st[6]! * Math.sin((TAU * v) / (1800 + k * 230) + k * 1.3);
     out[1] = y + st[7]! * Math.sin((TAU * v) / (1300 + k * 170) + k * 2.1);
+  }
+
+  // R12 perf: each stream's centre line is baked once into a path table (8 m steps around the loop),
+  // so a car costs one table lookup instead of re-evaluating meanders and interchange ramps.
+  const PATH_STEP_M = 8;
+  const pathSamples = Math.ceil(CANYON_LOOP_LENGTH_M / PATH_STEP_M);
+  const pathX: Float32Array[] = [];
+  const pathY: Float32Array[] = [];
+  for (let k = 0; k < STREAMS.length; k += 1) {
+    const px = new Float32Array(pathSamples + 1);
+    const py = new Float32Array(pathSamples + 1);
+    for (let i = 0; i <= pathSamples; i += 1) {
+      streamCentreAnalytic(k, i * PATH_STEP_M, streamScratch);
+      px[i] = streamScratch[0]!;
+      py[i] = streamScratch[1]!;
+    }
+    pathX.push(px);
+    pathY.push(py);
+  }
+  /** Table lookup: writes centre x, y and the lateral slope dx/dv into out[0..2]. */
+  function streamCentre(k: number, v: number, out: Float64Array): void {
+    let w = v % CANYON_LOOP_LENGTH_M;
+    if (w < 0) w += CANYON_LOOP_LENGTH_M;
+    const f = w / PATH_STEP_M;
+    const i = Math.min(pathSamples - 1, Math.floor(f));
+    const t = f - i;
+    const px = pathX[k]!;
+    const py = pathY[k]!;
+    out[0] = px[i]! + (px[i + 1]! - px[i]!) * t;
+    out[1] = py[i]! + (py[i + 1]! - py[i]!) * t;
+    out[2] = (px[i + 1]! - px[i]!) / PATH_STEP_M;
   }
 
   function setQuality(quality: TrafficQuality): void {
@@ -1175,7 +1209,9 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
             direction = st[2]!;
             speed = st[5]! * (0.9 + 0.2 * carRow[car]!);
             const surgeArg = t * (0.3 + 0.25 * carRow[car]!) + carPhase[car]! * 97.0;
-            const surge = SURGE_M * Math.sin(surgeArg);
+            // R12: express streams surge harder (±110 m) so their spacing is irregular and a distant
+            // white chain breaks up instead of reading as an evenly dotted line.
+            const surge = (st[5]! > 150 ? 110 : SURGE_M) * Math.sin(surgeArg);
             if (isChase) {
               const absolute = carPhase[car]! * CHASE_WINDOW_M + direction * speed * t + surge;
               let rel = (absolute - anchor[6]! + CHASE_WINDOW_M * 0.5) % CHASE_WINDOW_M;
@@ -1189,8 +1225,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
             streamCentre(k, v, streamScratch);
             const cx = streamScratch[0]!;
             const cy = streamScratch[1]!;
-            streamCentre(k, v + 4, streamScratch);
-            streamSlope = (streamScratch[0]! - cx) / 4;
+            streamSlope = streamScratch[2]!;
             const rows = st[3]!;
             const rowIndex = Math.min(rows - 1, Math.floor(carRow[car]! * rows));
             const spacing = st[4]! / Math.max(1, rows - 1);
@@ -1284,6 +1319,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         const dy = py - camY;
         const dz = pz - camZ;
         const distanceSq = dx * dx + dy * dy + dz * dz;
+        if (carThinFar[car] === 1) fade *= 1 - smoothstep(900 * 900, 1150 * 1150, distanceSq);
         const dim = (1 - (1 - DISTANCE_DIM_FLOOR) * Math.min(1, distanceSq * invDimRangeSq)) * fade;
         const colorOffset = slot * 3;
         colors[colorOffset] = tintR[car] * dim;

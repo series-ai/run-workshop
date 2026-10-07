@@ -47,7 +47,7 @@ import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
 import { HERO_HORIZONTAL_CELLS, HERO_VERTICAL_CELLS, createSignAtlas, type SignAtlas } from './signAtlas';
 import { createInteriorAtlas, type InteriorAtlas } from './interiorAtlas';
 import { CANYON_LOOP_LENGTH_M, canyonBendApexes, foldsInsideBend, intrudesOtherStretch, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
-import { ROUTE_MAX_ALTITUDE_M, STRATA_GRIME_TOP_M, STRATA_PRISTINE_BASE_M, routeAltitude } from './routeProfile';
+import { GRIME_PASS_V_M, ROUTE_MAX_ALTITUDE_M, STRATA_GRIME_TOP_M, STRATA_PRISTINE_BASE_M, routeAltitude } from './routeProfile';
 
 /** Draw calls this module may spend (plan T3 allows 10 city-only; the shared budget allots 8). */
 export const SKYRIVER_CITY_DRAW_CALL_BUDGET = 8;
@@ -810,7 +810,8 @@ export interface SkyriverHeroBlade {
  * are skipped (calm, clean slabs up there).
  */
 const HERO_SPACING_M = 530;
-const HERO_COLORS: readonly number[] = Object.freeze([0x2ff2ff, 0xff2fb4, 0xffb13c, 0x2ff2ff, 0xff4a8c]);
+// R12: weighted toward cyan, amber and green — the hues that stay saturated *and* bright under ACES.
+const HERO_COLORS: readonly number[] = Object.freeze([0x2ff2ff, 0xffb13c, 0xff2fb4, 0x55ff7a, 0x2ff2ff, 0xffb13c, 0xff4a8c]);
 
 const heroCache = new Map<number, readonly SkyriverHeroBlade[]>();
 
@@ -829,11 +830,28 @@ export function deriveHeroBlades(layout: SkyriverCityLayout): readonly SkyriverH
   const stations: [-1 | 1, number, 'blade' | 'panel'][] = [];
   for (let k = 0; k * HERO_SPACING_M < CANYON_LOOP_LENGTH_M; k += 1) {
     const v = -CANYON_LOOP_LENGTH_M / 2 + (k + 0.5) * HERO_SPACING_M;
-    if (routeAltitude(v) > STRATA_PRISTINE_BASE_M - 50) continue;
-    stations.push([k % 2 === 0 ? -1 : 1, v, k % 3 === 2 ? 'panel' : 'blade']);
+    // R12: the pristine heights carry corporate wordmark panels only (calm, but lit), every station.
+    const pristineStation = routeAltitude(v) > STRATA_PRISTINE_BASE_M - 50;
+    stations.push([k % 2 === 0 ? -1 : 1, v, pristineStation || k % 3 === 2 ? 'panel' : 'blade']);
+  }
+  // R12 near-wall clusters: where the camera holds a wall longest — the outer wall at each tight
+  // bend's entry, and the wall the route hugs through the grime pass — three big blades stand close
+  // together (70 m apart, staggered in height), facing along the route at chase distance.
+  const clusterCentres: [-1 | 1, number][] = canyonBendApexes(900).flatMap((apex): [-1 | 1, number][] => [
+    [(-apex.side) as -1 | 1, apex.v - 420],
+    // ... and mid-section, on the wall the route's snake leans toward, ~1.6 km after the bend.
+    [apex.side, apex.v + 1600],
+  ]);
+  clusterCentres.push([-1, GRIME_PASS_V_M]);
+  const clusterLift = new Map<number, number>();
+  for (const [side, centre] of clusterCentres) {
+    for (const dv of [-70, 0, 70]) {
+      stations.push([side, centre + dv, 'blade']);
+      clusterLift.set(centre + dv, dv === 0 ? 60 : dv < 0 ? -40 : 20);
+    }
   }
   for (const [side, z, kind] of stations) {
-    const HERO_CENTRE_Y = routeAltitude(z) + 20;
+    const HERO_CENTRE_Y = routeAltitude(z) + 20 + (clusterLift.get(z) ?? 0);
     const wall = innerWallOf(layout, side);
     if (wall.length === 0) continue;
     const tower = wall.reduce((best, candidate) => (Math.abs(candidate.z - z) < Math.abs(best.z - z) ? candidate : best));
@@ -1184,7 +1202,7 @@ vec3 traceRoom( vec2 cellLocal, vec3 ray, float room, float mirror, out float de
   return c;
 }
 
-#define HERO_MAX 24
+#define HERO_MAX 12
 uniform vec4 uHeroBlades[ HERO_MAX ];   // x, centre y, z, half height
 uniform vec3 uHeroColors[ HERO_MAX ];
 uniform int uHeroCount;
@@ -1264,7 +1282,7 @@ void main() {
     * step( 0.2, cellLocal.x ) * step( cellLocal.x, 0.55 ) * step( 0.55, cellLocal.y ) * step( cellLocal.y, 0.86 );
   grimeTone += vec3( 0.5, 0.4, 0.3 ) * uConcreteLevel * ( ledge * 1.6 + acBox * 1.2 ) * detail;
   concrete = mix( concrete, grimeTone + uConcreteAmbient * 0.35, grime * vIsSide );
-  vec3 cleanTone = vec3( 0.07, 0.08, 0.1 ) * ( 0.92 + 0.08 * grain ) + uConcreteAmbient * 0.45;
+  vec3 cleanTone = vec3( 0.03, 0.035, 0.045 ) * ( 0.92 + 0.08 * grain ) + uConcreteAmbient * 0.3;
   float joint = max(
     1.0 - smoothstep( 0.0, 0.6, abs( fract( vSurf.x / 36.0 ) - 0.5 ) * 36.0 - 17.4 ),
     1.0 - smoothstep( 0.0, 0.6, abs( fract( vSurf.y / 48.0 ) - 0.5 ) * 48.0 - 23.4 )
@@ -1272,7 +1290,15 @@ void main() {
   cleanTone *= 1.0 - 0.35 * joint;
   concrete = mix( concrete, cleanTone * ( 0.55 + 0.45 * faceShade ), pristine * vIsSide );
 
+  // R12: the structural bands are a darker, smoother concrete with a thin lit soffit line under each.
+  float bandRow = mod( floor( vSurf.y / uCellHeight + vSeed * 37.0 ), 12.0 );
+  concrete *= mix( 1.0, 0.55, step( bandRow, 1.4 ) * vIsSide );
   vec3 color = concrete;
+  // R12: lit skylights and rooftop lamps on the deck's roofs.
+  float deckRoof = ( 1.0 - smoothstep( 70.0, 140.0, vWorldPos.y ) ) * ( 1.0 - vIsSide );
+  vec2 skyCell = floor( vSurf / 7.0 );
+  float skylight = step( 0.82, skyHash12( skyCell + vSeed * 13.0 ) ) * ( 1.0 - smoothstep( 0.25, 0.42, length( fract( vSurf / 7.0 ) - 0.5 ) ) );
+  color += vec3( 1.0, 0.55, 0.2 ) * skylight * deckRoof * 2.2;
 
   // --- wet reflection ---------------------------------------------------------------------------
   // Rain-slick facades: a grazing-angle sheen, broken into vertical runnels and heavier low down
@@ -1326,6 +1352,9 @@ void main() {
   float blockLive = step( 0.52, blockHash );
 
   float sd = windowSdf( cellLocal, pristine );
+  // R12: no glass in the structural bands (spandrel), computed again below for the lit gate.
+  float bandFloor = mod( floor( vSurf.y / uCellHeight + vSeed * 37.0 ), 12.0 );
+  sd = mix( sd, 1.0, step( bandFloor, 1.4 ) * vIsSide );
   float glass = ( 1.0 - smoothstep( -0.012, 0.012, sd ) ) * vIsSide * blockLive;
   // Soft halo: the glow the wet haze smears around every lit pane.
   float halo = ( 1.0 - smoothstep( -0.02, 0.3, sd ) ) * vIsSide * blockLive;
@@ -1334,7 +1363,9 @@ void main() {
   // Dark at street level, brightest through the mid-high floors, thinning again at the parapet.
   // T7-3 strata: the grime is crowded with small warm lit rooms (and carries city light down into
   // the void), the mid city is as before, the pristine heights are nearly dark glass.
-  float litShare = mix( 0.14, 0.1, smoothstep( 300.0, 900.0, vWorldPos.y ) ) * ( 1.0 - 0.8 * pristine )
+  // R12 deck glow: below ~120 m (the service deck and the wall feet) the rooms crowd and burn warm.
+  float deckZone = 1.0 - smoothstep( 70.0, 160.0, vWorldPos.y );
+  float litShare = mix( 0.14, 0.1, smoothstep( 300.0, 900.0, vWorldPos.y ) ) * ( 1.0 - 0.8 * pristine ) + 0.24 * deckZone
     + 0.06 * ( 1.0 - smoothstep( -600.0, 0.0, vWorldPos.y ) );
   // T7-2 lit runs: a floor lights in runs of 3-9 panes (an office, a corridor) sharing one colour
   // temperature, with the odd dark pane inside a run. Per-pane hashing read as confetti noise.
@@ -1342,6 +1373,18 @@ void main() {
   float runId = floor( ( cell.x + floor( skyHash11( cell.y * 7.3 + faceOffset.y ) * 9.0 ) ) / runLength );
   float runHash = skyHash12( vec2( runId, cell.y ) + faceOffset * 1.31 );
   float lit = step( 1.0 - litShare * 1.15, runHash ) * step( 0.12, paneHash );
+
+  // --- R12 tower shape hierarchy -----------------------------------------------------------------
+  // Structural bands: every ~12 floors (per-tower phase) a floor-and-a-half of dark spandrel with
+  // no windows. Between bands, each zone of a tower is either a lit zone or a dark-glass run, so a
+  // tower reads as stacked shapes in depth rather than one even noise of windows. Mid-city lit
+  // fraction drops to about half (the dark zones), the grime stays crowded.
+  float floorIndex = floor( vSurf.y / uCellHeight + vSeed * 37.0 );
+  float bandPhase = mod( floorIndex, 12.0 );
+  float structuralBand = step( bandPhase, 1.4 ) * vIsSide;
+  float zone = floor( floorIndex / 12.0 );
+  float zoneLit = step( 0.5 - 0.35 * grime, skyHash12( vec2( zone, vSeed * 71.0 + vFaceId ) ) );
+  lit *= zoneLit * ( 1.0 - structuralBand );
 
   // Colour temperature, per run: mostly warm interior light, some cold office pale, sparse neon.
   float tempHash = skyHash11( runHash * 311.7 + vSeed * 53.0 );
@@ -1405,7 +1448,8 @@ void main() {
   color += vec3( 0.02, 0.035, 0.065 ) * glassRaw * pristine * ( 0.25 + 0.75 * fresnel ) * vIsSide;
   // What the grid averages out to once it stops resolving: lit share times mean pane brightness,
   // in the mean pane colour. Distant walls read as a dim glow rather than a field of sparks.
-  vec3 averaged = vec3( 0.86, 0.72, 0.56 ) * ( litShare * 0.22 * blockLive * vIsSide );
+  // R12: the far average keeps the zone and band structure, so distant towers read as shapes.
+  vec3 averaged = vec3( 0.86, 0.72, 0.56 ) * ( litShare * 0.3 * blockLive * vIsSide * zoneLit * ( 1.0 - structuralBand ) );
   // T7: dimmer panes — under bloom they compete with the signage otherwise.
   // T7-5 value range: emissives carry the frame — panes at 2x the T7 level.
   // Pristine heights stay calm: their panes run at a third of the mid-city level.
@@ -1524,7 +1568,7 @@ void main() {
   // R11 flood (9): emissive cool-white floodlight strip, pulsing slowly at the spire tip.
   float isFlood = step( 8.5, vKind );
   float tip = smoothstep( 0.85, 1.0, vTrimLocal.y + 0.5 ) * step( 100.0, vSizeM.y );
-  color = mix( color, vec3( 1.5, 1.7, 2.1 ) * ( 0.85 + 0.15 * sin( uTime * 1.3 + vSeed * 6.28 ) ) + vec3( 3.0, 0.4, 0.3 ) * tip * ( 0.5 + 0.5 * sin( uTime * 2.0 ) ), isFlood );
+  color = mix( color, vec3( 0.75, 0.85, 1.05 ) * ( 1.0 + 0.5 * step( 50.0, vSizeM.y ) ) * ( 0.85 + 0.15 * sin( uTime * 1.3 + vSeed * 6.28 ) ) + vec3( 3.0, 0.4, 0.3 ) * tip * ( 0.5 + 0.5 * sin( uTime * 2.0 ) ), isFlood );
 
   // Skybridge (6): a dark mass with a ribbon of cold windows on each side and blue underlights.
   float isBridge = step( 5.5, vKind ) * ( 1.0 - step( 6.5, vKind ) );
@@ -1720,7 +1764,7 @@ void main() {
 
   // Tube core: where the lettering saturates it runs white-hot, the glow around it keeps the hue.
   // T7-5: keep the tubes saturated — ACES and bloom already push the cores toward white.
-  vec3 hot = mix( vSignColor * vSignColor * 1.2, vec3( 1.0 ), 0.02 + 0.18 * smoothstep( 0.8, 1.0, mask ) );
+  vec3 hot = mix( vSignColor * vSignColor * 1.2, vec3( 1.0 ), 0.06 * smoothstep( 0.8, 1.0, mask ) );
   vec3 color = hot * mask * angle * uIntensity + vSignColor * ( plate + halo * uHalo );
   gl_FragColor = vec4( color * flicker, 1.0 );
 
@@ -1808,7 +1852,9 @@ export class SkyriverCity {
     const wetTint = new THREE.Color(0x567ba3);
 
     // --- towers -----------------------------------------------------------------------------------
-    const heroBlades = deriveHeroBlades(layout).slice(0, 24);
+    // R12: all heroes are kept CPU-side in world space; each frame the 12 nearest to the camera are
+    // uploaded, so the facade's spill loop stays at 12 however many heroes the lap carries.
+    const heroBlades = deriveHeroBlades(layout);
     const heroWarp: WarpOut = { x: 0, z: 0, heading: 0 };
     const heroColor = new THREE.Color();
     const heroUniforms = {
@@ -1816,7 +1862,12 @@ export class SkyriverCity {
       colors: heroBlades.map((b) => heroColor.setHex(b.color, THREE.SRGBColorSpace).clone()),
       count: heroBlades.length,
     };
-    while (heroUniforms.blades.length < 24) {
+    this.heroWorld = heroUniforms.blades.map((b) => b.clone());
+    this.heroWorldColors = heroUniforms.colors.map((c) => c.clone());
+    heroUniforms.blades = heroUniforms.blades.slice(0, 12);
+    heroUniforms.colors = heroUniforms.colors.slice(0, 12);
+    heroUniforms.count = Math.min(12, heroUniforms.count);
+    while (heroUniforms.blades.length < 12) {
       heroUniforms.blades.push(new THREE.Vector4(0, -1e5, 0, 0));
       heroUniforms.colors.push(new THREE.Color(0));
     }
@@ -1885,7 +1936,8 @@ export class SkyriverCity {
       fragmentShader: SIGN_FRAGMENT,
       uniforms: {
         uTime: { value: 0 },
-        uIntensity: { value: 1.8 },
+        // R12: lower core intensity — at 1.8 the tubes burned through ACES+bloom to white.
+        uIntensity: { value: 1.05 },
         uHalo: { value: 0.75 },
         uFogPenetration: { value: 0.55 },
         uAtlas: { value: this.atlas.texture },
@@ -1939,7 +1991,31 @@ export class SkyriverCity {
   }
 
   /** One uniform write per material. No allocation, nothing per instance. */
+  private heroWorld: THREE.Vector4[] = [];
+  private heroWorldColors: THREE.Color[] = [];
+  private readonly heroOrder: number[] = [];
+
   update(frame: SkyriverFrame): void {
+    // R12: upload the 12 hero signs nearest the camera.
+    const cam = frame.camera.position;
+    const order = this.heroOrder;
+    order.length = 0;
+    for (let i = 0; i < this.heroWorld.length; i += 1) order.push(i);
+    const world = this.heroWorld;
+    const d2 = (i: number): number => {
+      const h = world[i]!;
+      return (h.x - cam.x) ** 2 + (h.y - cam.y) ** 2 + (h.z - cam.z) ** 2;
+    };
+    order.sort((a, b) => d2(a) - d2(b));
+    const u = this.towerMaterial.uniforms;
+    const blades = u.uHeroBlades!.value as THREE.Vector4[];
+    const colors = u.uHeroColors!.value as THREE.Color[];
+    const n = Math.min(12, order.length);
+    for (let k = 0; k < n; k += 1) {
+      blades[k]!.copy(world[order[k]!]!);
+      colors[k]!.copy(this.heroWorldColors[order[k]!]!);
+    }
+    u.uHeroCount!.value = n;
     const { time } = frame;
     this.towerMaterial.uniforms.uTime.value = time;
     this.trimMaterial.uniforms.uTime.value = time;

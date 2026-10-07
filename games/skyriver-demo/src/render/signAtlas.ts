@@ -25,7 +25,8 @@ export const SIGN_ATLAS_HEIGHT = 2048;
 const VERTICAL_CELL = { w: 128, h: 768, count: 32, perRow: 16 } as const;
 const HORIZONTAL_CELL = { w: 512, h: 128, columns: 4, rows: 4 } as const;
 /** Cells reserved for hero signs, so their text appears nowhere else in the canyon. */
-export const HERO_VERTICAL_CELLS = 8;
+/** R12: 16 reserved vertical cells — more hero blades (near-wall clusters), still no text repeats nearby. */
+export const HERO_VERTICAL_CELLS = 16;
 export const HERO_HORIZONTAL_CELLS = 4;
 
 /** Stacked top-to-bottom, the way vertical shop signs read. */
