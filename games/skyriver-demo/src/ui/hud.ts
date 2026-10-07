@@ -104,6 +104,23 @@ const HUD_CSS = `
   transition: opacity 180ms ease-out;
 }
 .skyriver-hud__flash--on { opacity: 1; }
+.skyriver-hud__fps {
+  /* Small, always-on fps readout, top-right (operator request R18). */
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(8, 12, 20, 0.55);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: #8ea2bd;
+  user-select: none;
+  pointer-events: none;
+}
+.skyriver-hud__fps--warn { color: #ffb300; }
+.skyriver-hud__fps--low { color: #ff5470; }
 .skyriver-hud__debug {
   position: absolute;
   bottom: calc(10px + env(safe-area-inset-bottom, 0px));
@@ -241,6 +258,7 @@ export interface SkyriverHud {
   /** Per-frame refresh. Writes only the fields that changed, so it does not thrash layout. */
   update(state: SkyriverHudState): void;
   /** Debug line refresh. Cheap no-op while the line is hidden. */
+  setFps(fps: number): void;
   updateDebug(debug: SkyriverHudDebug): void;
   setDebugVisible(visible: boolean): void;
   toggleDebug(): boolean;
@@ -303,6 +321,7 @@ export function createSkyriverHud(options: SkyriverHudOptions): SkyriverHud {
   readout.append(modeBadge, speed, boost, flash);
 
   const debugLine = element(doc, 'div', 'skyriver-hud__debug');
+  const fpsChip = element(doc, 'div', 'skyriver-hud__fps');
 
   const controls = element(doc, 'div', 'skyriver-hud__controls');
   const modeButton = element(doc, 'button', 'skyriver-hud__button', 'mode');
@@ -335,7 +354,7 @@ export function createSkyriverHud(options: SkyriverHudOptions): SkyriverHud {
   options.root.addEventListener('pointerdown', fadeHint, { once: true, capture: true });
   doc.defaultView?.addEventListener('keydown', fadeHint, { once: true });
 
-  element_.append(readout, debugLine, controls, hint);
+  element_.append(readout, fpsChip, debugLine, controls, hint);
   options.root.appendChild(element_);
 
   let debugVisible = options.debug === true;
@@ -351,6 +370,7 @@ export function createSkyriverHud(options: SkyriverHudOptions): SkyriverHud {
   let lastBoostPercent = -1;
   let lastPaused: boolean | null = null;
   let lastDebugText = '';
+  let lastFpsText = '';
 
   function onModeClick(event: MouseEvent): void {
     event.preventDefault();
@@ -418,6 +438,16 @@ export function createSkyriverHud(options: SkyriverHudOptions): SkyriverHud {
         lastPaused = state.paused;
         modeBadge.textContent = state.paused ? 'paused' : MODE_LABEL[state.mode];
       }
+    },
+
+    setFps(fps: number): void {
+      // Always-on top-right fps chip (operator request); full debug panel stays opt-in.
+      const fpsText = `${Math.round(fps)} fps`;
+      if (fpsText === lastFpsText) return;
+      lastFpsText = fpsText;
+      fpsChip.textContent = fpsText;
+      const state = fps >= 50 ? '' : fps >= 30 ? 'skyriver-hud__fps--warn' : 'skyriver-hud__fps--low';
+      fpsChip.className = `skyriver-hud__fps${state ? ` ${state}` : ''}`;
     },
 
     updateDebug(debug: SkyriverHudDebug): void {

@@ -703,6 +703,10 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
 
     tiers.sample(deltaMs);
 
+    hud.setFps(tiers.fps);
+
+    hud.setFps(tiers.fps);
+
     if (hud.debugVisible) {
       const debug = scene.debug();
       const trafficStats = traffic.stats();
