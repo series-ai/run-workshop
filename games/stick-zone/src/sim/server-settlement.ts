@@ -430,6 +430,9 @@ export function validateStoreIntegrity(data: any): boolean {
         if (typeof dm.z !== "number" || !Number.isFinite(dm.z) || Math.abs(dm.z) > 80) return false;
         if (typeof dm.health !== "number" || !Number.isFinite(dm.health) || dm.health < 0 || dm.health > 1000) return false;
         if (dm.isAlive !== undefined && typeof dm.isAlive !== "boolean") return false;
+        // isAlive is REQUIRED (server.mjs cold-restore validation requires it; omitting
+        // it here let an otherwise-accepted store silently collapse to default machines).
+        if (dm.isAlive === undefined) return false;
         if (dm.vitalsSeq !== undefined && (typeof dm.vitalsSeq !== "number" || !Number.isInteger(dm.vitalsSeq) || dm.vitalsSeq < 0)) return false;
         if (dm.maxHealth !== undefined && (typeof dm.maxHealth !== "number" || !Number.isFinite(dm.maxHealth) || dm.maxHealth <= 0 || dm.maxHealth > 1000)) return false;
         if (dm.maxHealth !== undefined && dm.health > dm.maxHealth) return false;
@@ -1727,6 +1730,14 @@ export class ServerSettlementAuthority {
         (op as any).hasLiveMovement = true;
       }
       this.saveToDisk();
+      // EXACTLY ONE save: return the completed hold immediately — the throttled
+      // tail below must never resave (or roll memory back after a durable completion).
+      return {
+        success: true,
+        holdCompleted: true,
+        currentHoldTicks: op.holdTicks,
+        holdCompletedAtTick: op.holdCompletedAtTick,
+      };
     } else if (op.holdCompleted && (op.holdTicks || 0) >= 180) {
       // Once completed, preserve holdCompleted = true during corridor presentation and submission
     } else {
@@ -1754,6 +1765,15 @@ export class ServerSettlementAuthority {
       throw new Error(`Operative ${opId} not active in raid ${raidId}`);
     }
     const op = raid.operatives[opId];
+    // Terminal-state purity: an EXTRACTED operative has settled custody — a later
+    // K.I.A. report (e.g. a stale machine strike) is IGNORED (idempotent no-op) rather
+    // than creating the conflicting extracted+kia state that breaks receipt recovery.
+    if (op.isExtracted) {
+      return;
+    }
+    if (op.isKia || op.isAlive === false) {
+      return; // already terminal — repeated reports are idempotent
+    }
     const prevOperativesSnapshot = JSON.parse(JSON.stringify(raid.operatives));
     op.isAlive = false;
     op.isKia = true;

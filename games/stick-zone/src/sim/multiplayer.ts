@@ -952,6 +952,19 @@ export class MultiplayerCoordinator {
 
   private flushPendingWorldEvents(): void {
     if (!this.pendingWorldEvents.length) return;
+    // Relay machine custody FIRST and UNCONDITIONALLY: sequenced server results are
+    // applied through the ordered channel before any time/peer filter can discard them.
+    for (const p of [...this.pendingWorldEvents]) {
+      if (p.type === "machine_hit" && (p as any).serverAuthoritative === true) {
+        const seq = (p as any).data?.vitalsSeq;
+        if (typeof seq === "number" && Number.isFinite(seq)) {
+          const tgt = this.sim.machines.find((x) => x.id === (p as any).data?.machineId);
+          if (!tgt || seq > ((tgt as any).vitalsSeq ?? 0)) {
+            this.adoptMachineVitals((p as any).data.machineId, (p as any).data.machineHealth, (p as any).data.machineAlive, seq, (p as any).data.maxHealth);
+          }
+        }
+      }
+    }
     for (const p of this.pendingWorldEvents) {
       if (!isAuthorizedSender(p.senderId, p.senderName)) continue;
       // Universal snapshot arrival boundary filter for queued events
@@ -1275,6 +1288,27 @@ export class MultiplayerCoordinator {
                   if (res.ok) {
                     const data = await res.json();
                     if (this.isDisposed) return;
+                    // TERMINAL CUSTODY FIRST: the renewal can answer isTerminal with
+                    // token:null (lease expired) — apply extraction/K.I.A. custody and
+                    // receipt recovery BEFORE token handling so the terminal state is
+                    // never lost to the "no token" path.
+                    if (data && (data.isTerminal || data.isExtracted || data.isKia || data.holdCompleted)) {
+                      if (data.isExtracted) {
+                        this.sim.restoreExtractionCustody({
+                          isExtracted: true,
+                          holdCompleted: true,
+                          extractedAtTick: data.extractedAtTick || this.sim.tick,
+                          receipt: data.receipt,
+                        });
+                        this.extractedPeerIds.add(this.localId);
+                      }
+                      if (data.isKia || this.sim.player.health <= 0) {
+                        this.sim.player.health = 0;
+                        this.sim.player.isAlive = false;
+                      }
+                      this.sim.combatLog.push("[NETWORK] Terminal custody restored by relay.");
+                      return;
+                    }
                     const tok = data?.token;
                     const newResKey = data?.resumeKey;
                     if (tok) {

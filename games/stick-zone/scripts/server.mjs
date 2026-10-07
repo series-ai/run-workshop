@@ -1601,6 +1601,19 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           }
         }
 
+        // SANCTIONED same-ID reset (expired/terminal only): clear ALL volatile
+        // raid-scoped caches so the new raid starts atomically (movement, weapons,
+        // machines, roster revision, attack cadence — nothing leaks across resets).
+        const __prefixEscape = (str) => str.replace(/[.*+?^${}()|[]\\]/g, "\\$&");
+        const __pfx = new RegExp("^" + __prefixEscape(raidId) + ":");
+        for (const k of [...operativeMovementStates.keys()]) if (__pfx.test(k)) operativeMovementStates.delete(k);
+        for (const k of [...raidOperativeWeaponStates.keys()]) if (__pfx.test(k)) raidOperativeWeaponStates.delete(k);
+        raidMachines.delete(raidId);
+        raidRosterRevisions.delete(raidId);
+        for (const k of [...machineVitalsSeq.keys()]) if (k.startsWith(raidId + ":")) machineVitalsSeq.delete(k);
+        for (const k of [...raidOperativeSeenEvents.keys()]) if (__pfx.test(k)) raidOperativeSeenEvents.delete(k);
+        for (const k of [...machineAttackClock.keys()]) if (k.startsWith(raidId + ":")) machineAttackClock.delete(k);
+
         const pool = data.allowablePool || 50000;
         const ops = data.operatives || ["op_player", "op_alpha_1", "op_bravo_1"];
         const oldRaidId = settlement.getActiveRaidId();
@@ -3120,6 +3133,9 @@ wss.on("connection", (ws, req) => {
         packet.data.damage = safeDmg;
         packet.data.machineHealth = m.health;
         packet.data.machineAlive = m.isAlive;
+        // Server-owned maxHealth: the relayed result carries CUSTODY maxHealth (never
+        // a client-supplied value) so adopted custody matches the server on every node.
+        packet.data.maxHealth = (typeof m.maxHealth === "number" && m.maxHealth > 0 && Number.isFinite(m.maxHealth)) ? m.maxHealth : undefined;
         packet.data.kind = kind;
         // Relay-validated machine strike: results are authoritative (validated custody);
         // the vitalsSeq displayed here was already advanced+persisted above.
