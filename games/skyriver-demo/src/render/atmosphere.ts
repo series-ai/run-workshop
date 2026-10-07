@@ -97,6 +97,27 @@ const COLOR_SKY_DEPTHS = 0x120c08;
 const COLOR_SKY_NEON = 0x2c3a52;
 const COLOR_RAIN = 0x8fa6bd;
 
+/**
+ * R16 ambient III: exposure is traded back down (R14 raised it 1.35 -> 2.2 so emissives carried the
+ * mids; the operator still read the base tones as too strong). Every emissive term is raised by the
+ * same ratio, so lights keep their level while concrete, haze fill and dark glass fall ~14%.
+ */
+export const SKYRIVER_EXPOSURE = 1.9;
+export const SKYRIVER_EMISSIVE_GAIN = 2.2 / SKYRIVER_EXPOSURE;
+
+/**
+ * R16 rain motion. Stylised: the fall is fast against the share of the craft's speed taken off it,
+ * so the streaks fall down the frame with a slight spread toward the camera, not as warp lines.
+ */
+const RAIN_FALL_MPS = 55;
+const RAIN_WIND_X_MPS = 6;
+const RAIN_CRAFT_SHARE = 0.12;
+/** Bounds on the rain's source point, in half screen heights from the centre. */
+const RAIN_FOE_MIN = 2.2;
+const RAIN_FOE_MAX = 60;
+/** A camera jump larger than this in one frame is a cut, not motion. */
+const RAIN_TELEPORT_M = 200;
+
 /** Shared GLSL. city.ts imports these so both modules hash identically and stay cheap. */
 export const SKYRIVER_HASH_GLSL = /* glsl */ `
 float skyHash11( float n ) {
@@ -186,14 +207,18 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
     // the whole frame once the bloom blur spreads it (found in T7).
     float lowBand = ( h - 250.0 ) / 260.0;
     float midBand = ( h - 950.0 ) / 380.0;
-    color += vec3( 0.035, 0.0, 0.026 ) * exp( - lowBand * lowBand );
-    color += vec3( 0.0, 0.03, 0.04 ) * exp( - midBand * midBand );
+    // R16 ambient III: the scattered-light terms of the haze are the ambient the operator still read
+    // in the low half of the lap (fog colour ~0.03-0.055 linear lands at 48-68/255 after ACES + sRGB,
+    // and every distant pixel is fogged). Low-band colours cut to a quarter, mid and high to ~60%;
+    // density untouched.
+    color += vec3( 0.01, 0.0, 0.0075 ) * exp( - lowBand * lowBand );
+    color += vec3( 0.0, 0.018, 0.024 ) * exp( - midBand * midBand );
     // T7-3 strata: warm smog over the grime, cool clean air in the pristine heights.
     float grimeAir = 1.0 - smoothstep( 300.0, 800.0, h );
-    color = mix( color, vec3( 0.03, 0.02, 0.013 ), grimeAir * 0.55 );
-    color = mix( color, vec3( 0.025, 0.035, 0.05 ), smoothstep( 1800.0, 2700.0, h ) * 0.45 );
+    color = mix( color, vec3( 0.008, 0.0052, 0.0034 ), grimeAir * 0.55 );
+    color = mix( color, vec3( 0.014, 0.02, 0.03 ), smoothstep( 1800.0, 2700.0, h ) * 0.45 );
     // R12: the service deck's light scattering up into the low haze — a warm glow just above it.
-    color += vec3( 0.055, 0.028, 0.01 ) * exp( - max( h - 40.0, 0.0 ) / 220.0 ) * ( 1.0 - skyriverFogDeep() * 0.6 );
+    color += vec3( 0.014, 0.007, 0.0025 ) * exp( - max( h - 40.0, 0.0 ) / 220.0 ) * ( 1.0 - skyriverFogDeep() * 0.6 );
     return mix( color, uSkyFogColorDeep, skyriverFogDeep() );
   }
 #endif
@@ -592,51 +617,25 @@ void main() {
 `;
 
 const RAIN_FRAGMENT = /* glsl */ `
-uniform float uTime;
+uniform float uFall;
 uniform float uAspect;
 uniform float uIntensity;
 uniform vec3 uColor;
-
-varying vec2 vRainUv;
-
-${SKYRIVER_OUTPUT_PARS_GLSL}
-${SKYRIVER_HASH_GLSL}
-
-void main() {
-  // One hashed column per streak lane; the slight x shear reads as wind.
-  // T6R-2: long, thin, slanted streaks (the review read the T6R rain as specks).
-  vec2 p = vec2( ( vRainUv.x + vRainUv.y * 0.11 ) * uAspect * 210.0, vRainUv.y );
-  float lane = floor( p.x );
-  float laneHash = skyHash11( lane );
-  float live = step( 0.7, skyHash11( lane * 1.73 + 3.0 ) );
-
-  float repeats = 2.2 + 2.6 * skyHash11( lane + 7.0 );
-  float fall = fract( p.y * repeats - uTime * ( 1.3 + 1.6 * laneHash ) + laneHash * 13.0 );
-  float streak = smoothstep( 0.0, 0.02, fall ) * ( 1.0 - smoothstep( 0.02, 0.32, fall ) );
-
-  float across = abs( fract( p.x ) - 0.5 ) * 2.0;
-  streak *= 1.0 - smoothstep( 0.05, 0.4, across );
-
-  gl_FragColor = vec4( uColor * ( streak * live * uIntensity ), 1.0 );
-
-  #include <tonemapping_fragment>
-  #include <colorspace_fragment>
-}
-`;
-
-// --- boost speed lines (T7-2) --------------------------------------------------------------------
-
-const SPEED_FRAGMENT = /* glsl */ `
+uniform vec2 uFoe;
+uniform float uFlow;
+// R16: the boost speed lines share this screen pass (they were their own call), so a boost no
+// longer costs a draw call; uRainOn is 0 on the tiers without rain.
+uniform float uRainOn;
 uniform float uTime;
-uniform float uAspect;
 uniform float uBoost;
 
 varying vec2 vRainUv;
 
+
 ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${SKYRIVER_HASH_GLSL}
 
-void main() {
+vec3 speedLines() {
   // Radial streaks rushing out from just above the vanishing point; brighter toward the edges.
   vec2 p = ( vRainUv - vec2( 0.5, 0.62 ) ) * vec2( uAspect, 1.0 );
   float r = length( p );
@@ -648,7 +647,43 @@ void main() {
   float across = abs( fract( ( angle + 3.14159265 ) / 6.2831853 * 240.0 ) - 0.5 ) * 2.0;
   streak *= 1.0 - smoothstep( 0.1, 0.6, across );
   float vignette = smoothstep( 0.18, 0.75, r );
-  gl_FragColor = vec4( vec3( 0.75, 0.85, 1.0 ) * ( streak * live * vignette * uBoost * 0.55 ), 1.0 );
+  return vec3( 0.75, 0.85, 1.0 ) * ( streak * live * vignette * uBoost * 0.55 );
+}
+
+void main() {
+  // R16: world-consistent rain. Streaks fall along lines from uFoe, the screen point the rain comes
+  // from (world down plus a little of the craft's own motion, projected through the camera, so it
+  // turns with the camera's roll), and move away from it (uFlow +1) or toward it (-1). Before R16
+  // the streaks ran up the screen at a fixed screen angle: on a bank the rain flew upward.
+  // Coordinates: screen-centred, isotropic, y from -1 (bottom) to 1 (top).
+  vec2 q = ( vRainUv - 0.5 ) * 2.0 * vec2( uAspect, 1.0 );
+  vec2 rel = q - uFoe;
+  float r = length( rel );
+  float foeDist = length( uFoe );
+  vec2 base = - uFoe / foeDist;
+  float angle = atan( base.x * rel.y - base.y * rel.x, dot( base, rel ) );
+  // One hashed lane per ~1/105 of the screen height at the centre.
+  float laneCoord = angle * foeDist * 105.0;
+  float lane = floor( laneCoord );
+  float laneHash = skyHash11( lane );
+  float live = step( 0.7, skyHash11( lane * 1.73 + 3.0 ) );
+
+  float repeats = 1.1 + 1.3 * skyHash11( lane + 7.0 );
+  float fall = fract( r * repeats - uFall * uFlow * ( 1.3 + 1.6 * laneHash ) + laneHash * 13.0 );
+  // Bright head on the leading edge, tail behind it.
+  float lead = uFlow > 0.0 ? fall : 1.0 - fall;
+  float streak = smoothstep( 0.68, 0.98, lead ) * ( 1.0 - smoothstep( 0.98, 1.0, lead ) );
+  float p = laneCoord;
+
+  float across = abs( fract( p ) - 0.5 ) * 2.0;
+  streak *= 1.0 - smoothstep( 0.05, 0.4, across );
+
+  vec3 color = uColor * ( streak * live * uIntensity * uRainOn );
+  if ( uBoost > 0.001 ) color += speedLines();
+  gl_FragColor = vec4( color, 1.0 );
+
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
 }
 `;
 
@@ -735,11 +770,15 @@ export class SkyriverAtmosphere {
   private readonly searchlights: BeamField;
   private readonly rainMaterial: THREE.ShaderMaterial;
   private readonly rainMesh: THREE.Mesh;
-  private readonly speedMaterial: THREE.ShaderMaterial;
-  private readonly speedMesh: THREE.Mesh;
 
   private quality: SkyriverQualitySettings;
   private readonly anchors: readonly SkyriverGodRayAnchor[];
+
+  /** R16 rain state: the camera's last position and smoothed world velocity. */
+  private readonly rainCamera = new THREE.Vector3();
+  private readonly rainVelocity = new THREE.Vector3();
+  private readonly rainScratch = new THREE.Vector3();
+  private readonly rainQuaternion = new THREE.Quaternion();
 
   /** Preallocated scratch. The update path must not allocate (plan R7 CPU budget). */
   private readonly scratchStart = new THREE.Vector3();
@@ -811,11 +850,16 @@ export class SkyriverAtmosphere {
       vertexShader: RAIN_VERTEX,
       fragmentShader: RAIN_FRAGMENT,
       uniforms: {
-        uTime: { value: 0 },
+        uFall: { value: 0 },
         uAspect: { value: 1 },
         // T7-5: rain at half strength — it was lifting the blacks.
         uIntensity: { value: 0.05 },
         uColor: { value: new THREE.Color(COLOR_RAIN) },
+        uFoe: { value: new THREE.Vector2(0, RAIN_FOE_MIN) },
+        uFlow: { value: 1 },
+        uRainOn: { value: 1 },
+        uTime: { value: 0 },
+        uBoost: { value: 0 },
       },
       transparent: true,
       blending: THREE.AdditiveBlending,
@@ -829,37 +873,23 @@ export class SkyriverAtmosphere {
     this.rainMesh.renderOrder = 1000;
     this.group.add(this.rainMesh);
 
-    // Boost speed lines: one additive screen pass, drawn only while boosting (budget: +1 call then).
-    this.speedMaterial = new THREE.ShaderMaterial({
-      name: 'skyriver.speedlines',
-      vertexShader: RAIN_VERTEX,
-      fragmentShader: SPEED_FRAGMENT,
-      uniforms: { uTime: { value: 0 }, uAspect: { value: 1 }, uBoost: { value: 0 } },
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthTest: false,
-      depthWrite: false,
-      fog: false,
-    });
-    this.speedMesh = new THREE.Mesh(rainGeometry, this.speedMaterial);
-    this.speedMesh.name = 'skyriver.speedlines';
-    this.speedMesh.frustumCulled = false;
-    this.speedMesh.renderOrder = 1001;
-    this.speedMesh.visible = false;
-    this.group.add(this.speedMesh);
-
     this.setQuality(quality);
   }
 
   setQuality(quality: SkyriverQualitySettings): void {
     this.quality = quality;
     this.godRays.mesh.visible = quality.godRays;
-    this.rainMesh.visible = quality.rainStreaks;
+    this.rainMaterial.uniforms.uRainOn.value = quality.rainStreaks ? 1 : 0;
+    this.updateScreenPass();
+  }
+
+  /** The rain / speed-line screen pass draws when either is live. */
+  private updateScreenPass(): void {
+    this.rainMesh.visible = this.quality.rainStreaks || this.rainMaterial.uniforms.uBoost.value > 0.02;
   }
 
   resize(width: number, height: number): void {
     this.rainMaterial.uniforms.uAspect.value = height > 0 ? width / height : 1;
-    this.speedMaterial.uniforms.uAspect.value = height > 0 ? width / height : 1;
   }
 
   update(frame: SkyriverFrame): void {
@@ -874,14 +904,53 @@ export class SkyriverAtmosphere {
     this.searchlights.setTime(time);
     this.writeSearchlights(time);
 
-    if (this.quality.rainStreaks) this.rainMaterial.uniforms.uTime.value = time;
-    this.speedMaterial.uniforms.uTime.value = time;
+    if (this.quality.rainStreaks) this.updateRain(frame);
+    this.rainMaterial.uniforms.uTime.value = time;
+  }
+
+  /**
+   * R16: the rain's apparent motion relative to the camera. The camera's world velocity is smoothed
+   * from its own motion; a share of it is taken off the rain's fall, and the direction the rain comes
+   * from is projected into view space. That screen point (uFoe) and the flow sign drive the streaks,
+   * so they always fall world-down with a slight toward-camera spread, whatever the camera's roll.
+   */
+  private updateRain(frame: SkyriverFrame): void {
+    const { camera, dt } = frame;
+    const u = this.rainMaterial.uniforms;
+    if (dt > 1e-4) {
+      const moved = this.rainCamera.distanceTo(camera.position);
+      // A cut or a restore moves the camera in one frame; that is not velocity.
+      if (moved < RAIN_TELEPORT_M) {
+        this.rainScratch.subVectors(camera.position, this.rainCamera).divideScalar(dt);
+        this.rainVelocity.lerp(this.rainScratch, Math.min(1, dt * 4));
+      }
+      this.rainCamera.copy(camera.position);
+      u.uFall.value += dt * (1 + 0.4 * Math.min(2, this.rainVelocity.length() / 250));
+    }
+    // Where the rain comes from: up, plus the camera's motion (rain velocity relative to the camera,
+    // negated), into view space.
+    this.rainScratch.copy(this.rainVelocity).multiplyScalar(RAIN_CRAFT_SHARE);
+    this.rainScratch.y += RAIN_FALL_MPS;
+    this.rainScratch.x -= RAIN_WIND_X_MPS;
+    this.rainQuaternion.copy(camera.quaternion).invert();
+    this.rainScratch.applyQuaternion(this.rainQuaternion);
+    const focal = 1 / Math.tan(THREE.MathUtils.degToRad(camera.fov) * 0.5);
+    const dz = this.rainScratch.z;
+    const foe = u.uFoe.value as THREE.Vector2;
+    // q = d.xy * focal / -d.z works for both signs of d.z; a source behind the camera means the rain
+    // runs toward the reflected point instead of away from it.
+    const zSafe = Math.abs(dz) < 1e-4 ? -1e-4 : dz;
+    foe.set(this.rainScratch.x, this.rainScratch.y).multiplyScalar(focal / -zSafe);
+    if (foe.lengthSq() < 1e-8) foe.set(0, RAIN_FOE_MIN);
+    // Off screen and above it in practice: the streaks keep reading as rain, not as warp lines.
+    foe.clampLength(RAIN_FOE_MIN, RAIN_FOE_MAX);
+    u.uFlow.value = zSafe < 0 ? 1 : -1;
   }
 
   /** T7-2: boost drama level 0..1 (flightPresentation boostVisual). Pure per frame; no state. */
   setBoost(level: number): void {
-    this.speedMaterial.uniforms.uBoost.value = level;
-    this.speedMesh.visible = level > 0.02;
+    this.rainMaterial.uniforms.uBoost.value = level;
+    this.updateScreenPass();
   }
 
   stats(): SkyriverAtmosphereStats {
@@ -906,7 +975,6 @@ export class SkyriverAtmosphere {
     this.searchlights.dispose();
     this.rainMesh.geometry.dispose();
     this.rainMaterial.dispose();
-    this.speedMaterial.dispose();
   }
 
   // --- internals ----------------------------------------------------------------------------------

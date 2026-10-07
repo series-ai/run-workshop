@@ -30,7 +30,14 @@ export interface TrafficQuality {
   readonly carCount: number;
   /** Cars that draw head/tail light streaks this tier. T6R: equal to carCount (one cheap batch). */
   readonly thrusterBudget: number;
+  /**
+   * R16 light trails (velocity-stretched additive quads in the streak batch): every car ('all'),
+   * stream cars only ('streams'), or cars near the camera only ('near').
+   */
+  readonly trails: TrafficTrailMode;
 }
+
+export type TrafficTrailMode = 'all' | 'streams' | 'near';
 
 /** The XZ box the swarm flows inside. Matches the shape of the sim's CHASM_BOUNDS. */
 export interface TrafficBounds {
@@ -128,6 +135,9 @@ export interface SkyriverTraffic {
 
   /** Switches tier. Allocation-free while quality.carCount <= the configured maxCarCount. */
   setQuality(quality: TrafficQuality): void;
+
+  /** R16 A/B and perf: light trails off (false) or back to the tier's budget (true). */
+  setTrailsAllowed(allowed: boolean): void;
 
   /** A fresh snapshot of the live counters. Not called per frame by this module. */
   stats(): TrafficStats;

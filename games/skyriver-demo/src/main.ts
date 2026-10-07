@@ -95,7 +95,7 @@ export function trafficQualityForTier(tier: SkyriverQualityTier): TrafficQuality
       `SKYRIVER_TIER_CAR_COUNT_DRIFT: ${tier} scene=${scene.cars} traffic=${traffic.carCount}`,
     );
   }
-  return { carCount: scene.cars, thrusterBudget: traffic.thrusterBudget };
+  return { carCount: scene.cars, thrusterBudget: traffic.thrusterBudget, trails: traffic.trails };
 }
 
 /* -------------------------------------------------------------------------------------------------
@@ -856,6 +856,10 @@ export function boot(): SkyriverApp {
   }
   // T7-4 A/B: ?interiors=0 renders the same frames with the emissive window term only.
   if (params.get('interiors') === '0') app.scene.setInteriorsAllowed(false);
+  // R16 A/B and fill-rate probe: ?trails=0 draws no light trails (the lamp dots stay).
+  if (params.get('trails') === '0') app.traffic.setTrailsAllowed(false);
+  // R16 A/B and cost probe: ?farcity=geometry draws the far-city layers as R15's box masses.
+  if (params.get('farcity') === 'geometry') app.scene.city.setFarMode('geometry');
 
   (window as unknown as { __skyriver?: SkyriverApp }).__skyriver = app;
   // T7-4 evidence hook (presentation-only, read-only): the canyon warp and a tower raycast, so the

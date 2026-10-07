@@ -36,7 +36,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { deriveCityLayout, type SkyriverCityLayout } from '../sim/derive';
 import type { SkyriverProjection } from '../sim/runtime';
 import { SKYRIVER_TICK_RATE } from '../sim/systems';
-import { SkyriverAtmosphere, SKYRIVER_ATMOSPHERE_DRAW_CALL_BUDGET } from './atmosphere';
+import { SkyriverAtmosphere, SKYRIVER_ATMOSPHERE_DRAW_CALL_BUDGET, SKYRIVER_EXPOSURE } from './atmosphere';
 import { SkyriverCity, SKYRIVER_CITY_DRAW_CALL_BUDGET, type SkyriverInteriorMode } from './city';
 import { presentCityLayout } from './presentationLayout';
 
@@ -193,8 +193,8 @@ export interface SkyriverDrawCallEstimate {
 export function skyriverDrawCallEstimate(
   quality: SkyriverQualitySettings,
 ): SkyriverDrawCallEstimate {
-  // towers + trim + neon signs
-  const city = 3;
+  // towers + trim + neon signs + R16 far-city impostor cards
+  const city = 4;
   // skydome + searchlights, plus god rays and rain streaks when the tier enables them
   const atmosphere = 2 + (quality.godRays ? 1 : 0) + (quality.rainStreaks ? 1 : 0);
   const total = city + atmosphere + SKYRIVER_TRAFFIC_DRAW_CALL_BUDGET;
@@ -296,7 +296,9 @@ export class SkyriverScene {
     // rooms) that land at 40-70/255 after ACES + sRGB even at tiny linear values. Those went near
     // black (city.ts); exposure then rises 1.35 -> 2.2 so the emissives, not the walls, carry the mids
     // (measured: p5 2-10, p50 30-48, <=12 share 8-20% across the coordinator's four timestamps).
-    this.renderer.toneMappingExposure = 2.2;
+    // R16 ambient III: exposure back to 1.9 with every emissive raised by 2.2 / 1.9 (atmosphere.ts),
+    // so base tones fall while lights hold (measured series in the R16 report).
+    this.renderer.toneMappingExposure = SKYRIVER_EXPOSURE;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.autoClear = true;
     // Count draw calls across every pass of a frame (reset by hand in update()).

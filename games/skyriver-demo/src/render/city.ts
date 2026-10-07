@@ -37,6 +37,7 @@ import * as THREE from 'three';
 import type { SkyriverCityLayout, SkyriverTower } from '../sim/derive';
 import {
   SKYRIVER_HASH_GLSL,
+  SKYRIVER_EMISSIVE_GAIN,
   SKYRIVER_OUTPUT_APPLY_GLSL,
   SKYRIVER_OUTPUT_PARS_GLSL,
   applySkyriverFog,
@@ -46,6 +47,17 @@ import {
 import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
 import { HERO_HORIZONTAL_CELLS, HERO_VERTICAL_CELLS, createSignAtlas, type SignAtlas } from './signAtlas';
 import { createInteriorAtlas, type InteriorAtlas } from './interiorAtlas';
+import {
+  IMPOSTOR_BODY_PX,
+  IMPOSTOR_CAP,
+  IMPOSTOR_COLUMNS,
+  IMPOSTOR_CROWN_PX,
+  IMPOSTOR_FLAT,
+  IMPOSTOR_ROWS,
+  IMPOSTOR_SPIRE,
+  createImpostorAtlas,
+  type ImpostorAtlas,
+} from './impostorAtlas';
 import { CANYON_LOOP_LENGTH_M, canyonBendApexes, foldsInsideBend, intrudesOtherStretch, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
 import { ROUTE_MAX_ALTITUDE_M, STRATA_GRIME_TOP_M, STRATA_PRISTINE_BASE_M, routeAltitude, routeLateral } from './routeProfile';
 
@@ -103,6 +115,8 @@ export const SKYRIVER_TRIM_FLOOD = 9;
 /** Skybridge altitude band and the canyon stretch they keep out of (the free-flight box, |z| <= 400). */
 export const SKYRIVER_SKYBRIDGE_MIN_Y_M = 2700;
 export const SKYRIVER_SKYBRIDGE_MIN_ABS_Z_M = 600;
+/** R16: longest gantry between two slabs, metres. */
+export const SKYRIVER_GANTRY_MAX_SPAN_M = 300;
 
 /** Sign kinds: a vertical banner, a horizontal strip, and a hollow outline box. */
 export const SKYRIVER_SIGN_BANNER = 0;
@@ -136,6 +150,23 @@ export interface SkyriverCityTrims {
   readonly kind: Uint8Array;
   /** Per-instance hash seed, 0 .. 1. */
   readonly seedValue: Float32Array;
+  /**
+   * R16: the mass each trim stands on. A trim is placed rigidly in its owner's warped frame, so it
+   * stays on its building through the bends (the warp is near-singular at a bend's centre).
+   */
+  readonly owner: readonly SkyriverTrimOwner[];
+  /** R16: for gantries, the second building of the span (its far end is placed in that frame). */
+  readonly spanTo: readonly (SkyriverTrimOwner | null)[];
+}
+
+/** A mass a trim is attached to, in canyon space. */
+export interface SkyriverTrimOwner {
+  readonly x: number;
+  readonly z: number;
+  readonly width: number;
+  readonly depth: number;
+  /** The along-canyon coordinate the owner is placed rigidly around (its own z, or its tower's). */
+  readonly anchorV: number;
 }
 
 export interface SkyriverNeonSigns {
@@ -155,6 +186,11 @@ export interface SkyriverNeonSigns {
   /** One of SKYRIVER_SIGN_*. */
   readonly kind: Uint8Array;
   readonly seedValue: Float32Array;
+  /**
+   * R16: the tower a facade sign is mounted on (null for hero signs, which keep their own placement).
+   * A mounted sign is placed rigidly in its tower's frame, so it never slides off the face at a bend.
+   */
+  readonly owner: readonly (SkyriverTrimOwner | null)[];
 }
 
 /**
@@ -172,6 +208,39 @@ export interface SkyriverMass {
   readonly tint: number;
   /** R15 depth layer: 0 = the real city; 1-3 = simplified far-skyline silhouettes, deeper = dimmer. */
   readonly layer?: number;
+  /**
+   * R16: place this mass rigidly in the frame of the canyon at this v (its tower's centre), not at
+   * its own centre. Tiers and annexes then stay flush with their slab through the bends.
+   */
+  readonly anchorV?: number;
+  /** R16: the building's identity seed (0..1) when this mass belongs to another's slab. */
+  readonly building?: number;
+}
+
+/** R16: per-building identity seed, from the slab's canyon centre. */
+export function buildingSeedOf(x: number, z: number): number {
+  return hash1(x * 0.0173 + z * 0.00411 + 0.5);
+}
+
+/** A tower or mass as a trim owner, placed around its own centre unless told otherwise. */
+function ownerOf(mass: { readonly x: number; readonly z: number; readonly width: number; readonly depth: number }, anchorV = mass.z): SkyriverTrimOwner {
+  return { x: mass.x, z: mass.z, width: mass.width, depth: mass.depth, anchorV };
+}
+
+/**
+ * R16: canyon point (x, v) carried rigidly with the frame at `anchorV`: the anchor is warped and
+ * the offset from it is turned by the anchor's heading, never warped point by point. Writes world
+ * x/z and heading into `out`.
+ */
+export function warpRigid(x: number, v: number, anchorV: number, out: WarpOut): WarpOut {
+  warpCanyon(0, anchorV, out);
+  const dv = v - anchorV;
+  const c = Math.cos(out.heading);
+  const s = Math.sin(out.heading);
+  // across = (cos h, -sin h), along = (sin h, cos h)
+  out.x += x * c + dv * s;
+  out.z += -x * s + dv * c;
+  return out;
 }
 
 /**
@@ -202,6 +271,27 @@ function innerWallX(layout: SkyriverCityLayout, tower: SkyriverTower): number {
 
 const trimCache = new Map<number, SkyriverCityTrims>();
 const massCache = new Map<number, SkyriverMass[]>();
+/** R16: the far-city layers as impostor cards, one per far tower (body, cap and spire together). */
+export interface SkyriverFarTower {
+  readonly x: number;
+  readonly v: number;
+  readonly width: number;
+  /** Top of the whole tower (spire included), metres. */
+  readonly top: number;
+  /** Depth layer 1-3, deeper = dimmer and hazier. */
+  readonly layer: number;
+  /** 0 flat top, 1 stepped cap, 2 cap and spire. */
+  readonly shape: number;
+}
+const farTowerCache = new Map<number, SkyriverFarTower[]>();
+
+/** R16: the far-city towers (as cards). Pure and cached; derived alongside the trims. */
+export function deriveFarTowers(layout: SkyriverCityLayout): readonly SkyriverFarTower[] {
+  deriveCityTrims(layout);
+  const far = farTowerCache.get(layout.seed);
+  if (far === undefined) fail('SKYRIVER_CITY_FAR_TOWERS_MISSING');
+  return far;
+}
 /**
  * R11: mega-tower centres (canyon space). They sit at bend centres of curvature, where the warp
  * crushes canyon-space offsets, so their floodlight trims are placed rigidly around the warped
@@ -270,6 +360,8 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
   const sz = new Float32Array(cap);
   const kind = new Uint8Array(cap);
   const seedValue = new Float32Array(cap);
+  const owner: SkyriverTrimOwner[] = [];
+  const spanTo: (SkyriverTrimOwner | null)[] = [];
   let count = 0;
 
   const push = (
@@ -280,8 +372,12 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     ex: number,
     ey: number,
     ez: number,
+    on: SkyriverTrimOwner,
+    to: SkyriverTrimOwner | null = null,
   ): void => {
     if (count >= cap) return;
+    owner[count] = on;
+    spanTo[count] = to;
     cx[count] = px;
     cy[count] = py;
     cz[count] = pz;
@@ -292,12 +388,17 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     seedValue[count] = random.nextInt(0, 9999) / 9999;
     count += 1;
   };
+  /** Drops the trim just pushed (its seeded draws have already run). */
+  const withdrawTrim = (): void => {
+    count -= 1;
+  };
 
   for (const side of [-1, 1] as const) {
     const wall = wallOf(layout, side);
 
     for (let i = 0; i < wall.length; i += 1) {
-      const tower = wall[i];
+      const tower = wall[i]!;
+      const towerOwner = ownerOf(tower);
 
       // Roof plant: a low mechanical block, off-centre, on most slabs. Reads as brutalist mass.
       if (random.nextInt(0, 99) < 74) {
@@ -314,6 +415,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
           plantW,
           plantH,
           plantD,
+          towerOwner,
         );
       }
 
@@ -331,6 +433,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
           mastT,
           mastH,
           mastT,
+          towerOwner,
         );
       }
 
@@ -356,7 +459,13 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
             4.5 + random.nextInt(0, 30) / 10,
             deck,
             span,
+            towerOwner,
+            ownerOf(next),
           );
+          // R16: where a tower was dropped the next slab can be kilometres on; no bridge that long
+          // (it read as a bar floating across the sky). Pushed then withdrawn, so every seeded draw
+          // still runs and the rest of the city is unchanged.
+          if (span > SKYRIVER_GANTRY_MAX_SPAN_M) withdrawTrim();
         }
       }
 
@@ -381,7 +490,10 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
             span,
             deck,
             4.5 + random.nextInt(0, 30) / 10,
+            towerOwner,
+            ownerOf(outward),
           );
+          if (span > SKYRIVER_GANTRY_MAX_SPAN_M) withdrawTrim();
         }
       }
     }
@@ -400,6 +512,11 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
   // Clearance: every projection stops at |x| >= CORRIDOR_CLEAR_X, outside CHASM_BOUNDS (|x| <= 400).
   const CORRIDOR_CLEAR_X = 405;
   const innerWalls = [innerWallOf(layout, -1), innerWallOf(layout, 1)] as const;
+  /** R16: a slab plus its tier projection out to `wallFace` (|x|), as the owner of face-mounted kit. */
+  const faceOwner = (tower: SkyriverTower, wallFace: number): SkyriverTrimOwner => {
+    const back = Math.abs(tower.x) + tower.width * 0.5;
+    return { x: Math.sign(tower.x) * (wallFace + back) * 0.5, z: tower.z, width: back - wallFace, depth: tower.depth, anchorV: tower.z };
+  };
   const tierMap = new Map<string, readonly (readonly [number, number, number, number, number])[]>();
   tierCache.set(layout.seed, tierMap);
   for (const wall of innerWalls) {
@@ -413,6 +530,8 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
       // Tier faces: [bottom, top, projection, zCentre, zSpan]. The core face above the last tier
       // is the slab itself (projection 0).
       const tiers: [number, number, number, number, number][] = [];
+      // R16: each tier is placed rigidly in its slab's frame, and so is the kit on its face.
+      const tierOwners: SkyriverTrimOwner[] = [];
       // T7: 40-80 m terraces (the inner wall now stands 70 m further back; see presentationLayout).
       const base = Math.min(82, available * 0.62);
       if (base >= 10) {
@@ -433,7 +552,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
           const zCentre = tower.z + (random.nextInt(-1000, 1000) / 1000) * (tower.depth - zSpan) * 0.5;
           tiers.push([bottom, tops[k]!, projections[k]!, zCentre, zSpan]);
           // Overlap the slab by 6 m so no seam shows between tier and core.
-          masses.push({
+          const tierMass: SkyriverMass = {
             x: side * (face - projections[k]! * 0.5 + 3),
             y0: bottom,
             z: zCentre,
@@ -441,15 +560,22 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
             height: tops[k]! - bottom,
             depth: zSpan,
             tint: tower.tint,
-          });
+            anchorV: tower.z,
+            building: buildingSeedOf(tower.x, tower.z),
+          };
+          masses.push(tierMass);
+          tierOwners.push(ownerOf(tierMass, tower.z));
           bottom = tops[k]!;
         }
       }
       const coreBottom = tiers.length > 0 ? tiers[tiers.length - 1]![1] : 40;
       tiers.push([coreBottom, h, 0, tower.z, tower.depth]);
+      tierOwners.push(ownerOf(tower));
       tierMap.set(towerKey(tower), tiers);
 
-      for (const [bottom, top, projection, zCentre, zSpan] of tiers) {
+      for (let t = 0; t < tiers.length; t += 1) {
+        const [bottom, top, projection, zCentre, zSpan] = tiers[t]!;
+        const tierOwner = tierOwners[t]!;
         const outer = face - projection;
         // Ribs on this tier's face.
         const ribDepth = Math.min(14, outer - CORRIDOR_CLEAR_X - 1);
@@ -462,7 +588,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
             const ribTop = Math.min(top - (r % 2 === 1 ? random.nextInt(0, 40) : 0), STRATA_PRISTINE_BASE_M + 80);
             if (ribTop <= ribBottom + 20) continue;
             push(SKYRIVER_TRIM_RIB, side * (outer - ribDepth * 0.5 + 0.5), (ribBottom + ribTop) * 0.5, z,
-              ribDepth + 1, ribTop - ribBottom, 6 + random.nextInt(0, 30) / 10);
+              ribDepth + 1, ribTop - ribBottom, 6 + random.nextInt(0, 30) / 10, tierOwner);
           }
         }
         // Floor slabs, then a thick parapet at the tier top.
@@ -471,12 +597,12 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
           let y = Math.max(bottom, 60) + 30 + random.nextInt(0, 40);
           while (y < Math.min(top - 25, STRATA_PRISTINE_BASE_M)) {
             push(SKYRIVER_TRIM_BAND, side * (outer - slabDepth * 0.5 + 0.5), y, zCentre,
-              slabDepth + 1, 4.5 + random.nextInt(0, 20) / 10, zSpan + 3);
+              slabDepth + 1, 4.5 + random.nextInt(0, 20) / 10, zSpan + 3, tierOwner);
             y += 48 + random.nextInt(0, 45);
           }
           if (projection > 0) {
             push(SKYRIVER_TRIM_BAND, side * (outer - slabDepth * 0.5 + 0.5), top - 4, zCentre,
-              slabDepth + 1, 8, zSpan + 4);
+              slabDepth + 1, 8, zSpan + 4, tierOwner);
           }
         }
       }
@@ -520,7 +646,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
         const level = Math.max(bottom, 150) + random.nextInt(0, 1000) / 1000 * Math.max(Math.min(top, 1800) - Math.max(bottom, 150), 0);
         push(SKYRIVER_TRIM_CANTILEVER, side * (outer - length * 0.5), level,
           tower.z + (random.nextInt(-1000, 1000) / 1000) * (tower.depth * 0.5 - 12),
-          length, 4 + random.nextInt(0, 20) / 10, 10 + random.nextInt(0, 80) / 10);
+          length, 4 + random.nextInt(0, 20) / 10, 10 + random.nextInt(0, 80) / 10, faceOwner(tower, outer));
       }
     }
   }
@@ -546,7 +672,9 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
         const span = 20 + random.nextInt(0, 60);
         const z = tower.z + (random.nextInt(-1000, 1000) / 1000) * (tower.depth * 0.5 - span * 0.5);
         const ax = side * (outerFace - depthInto * 0.5 + 2);
-        masses.push({ x: ax, y0, z, width: depthInto + 4, height, depth: span, tint: GRIME_TINT });
+        const annex: SkyriverMass = { x: ax, y0, z, width: depthInto + 4, height, depth: span, tint: GRIME_TINT, anchorV: tower.z, building: buildingSeedOf(tower.x, tower.z) };
+        masses.push(annex);
+        const annexOwner = ownerOf(annex, tower.z);
         // Rooftop clutter: water tanks (squat), AC boxes (small), and the odd mast.
         const clutter = 2 + random.nextInt(0, 5);
         for (let c = 0; c < clutter; c += 1) {
@@ -555,17 +683,17 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
           const roll = random.nextInt(0, 99);
           if (roll < 40) {
             const d = 3 + random.nextInt(0, 30) / 10;
-            push(SKYRIVER_TRIM_ROOF_PLANT, cxo, y0 + height + 2.5, czo, d, 5, d);
+            push(SKYRIVER_TRIM_ROOF_PLANT, cxo, y0 + height + 2.5, czo, d, 5, d, annexOwner);
           } else if (roll < 85) {
-            push(SKYRIVER_TRIM_ROOF_PLANT, cxo, y0 + height + 0.8, czo, 2.4, 1.6, 1.8);
+            push(SKYRIVER_TRIM_ROOF_PLANT, cxo, y0 + height + 0.8, czo, 2.4, 1.6, 1.8, annexOwner);
           } else {
             const mh = 10 + random.nextInt(0, 25);
-            push(SKYRIVER_TRIM_ANTENNA, cxo, y0 + height + mh * 0.5, czo, 0.6, mh, 0.6);
+            push(SKYRIVER_TRIM_ANTENNA, cxo, y0 + height + mh * 0.5, czo, 0.6, mh, 0.6, annexOwner);
           }
         }
         // Cable bundles: thin sagging spans between neighbouring annexes, read as tangled lines.
         if (random.nextInt(0, 99) < 45) {
-          push(SKYRIVER_TRIM_GANTRY, ax, y0 + height * 0.7, z + span * 0.5 + 10, 0.5, 0.5, 20);
+          push(SKYRIVER_TRIM_GANTRY, ax, y0 + height * 0.7, z + span * 0.5 + 10, 0.5, 0.5, 20, annexOwner);
         }
       }
     }
@@ -593,8 +721,8 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
         if (wallFace - depth < ANNEX_CLEAR_X) continue;
         for (let f = 0; f < floors; f += 1) {
           const y = Math.round((yBase + f * FLOOR_M) / FLOOR_M) * FLOOR_M;
-          push(SKYRIVER_TRIM_BALCONY, side * (wallFace - depth * 0.5), y, zc, depth + 0.4, 0.3, span);
-          push(SKYRIVER_TRIM_RAILING, side * (wallFace - depth + 0.05), y + 0.65, zc, 0.12, 1.0, span);
+          push(SKYRIVER_TRIM_BALCONY, side * (wallFace - depth * 0.5), y, zc, depth + 0.4, 0.3, span, faceOwner(tower, wallFace));
+          push(SKYRIVER_TRIM_RAILING, side * (wallFace - depth + 0.05), y + 0.65, zc, 0.12, 1.0, span, faceOwner(tower, wallFace));
         }
       }
       const vents = random.nextInt(0, 3);
@@ -606,7 +734,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
         const wallFace = face - proj;
         if (wallFace - w < ANNEX_CLEAR_X) continue;
         push(SKYRIVER_TRIM_ROOF_PLANT, side * (wallFace - w * 0.5), y0 + h * 0.5,
-          tower.z + (random.nextInt(-1000, 1000) / 1000) * (tower.depth * 0.4), w, h, w * 1.3);
+          tower.z + (random.nextInt(-1000, 1000) / 1000) * (tower.depth * 0.4), w, h, w * 1.3, faceOwner(tower, wallFace));
       }
     }
   }
@@ -629,17 +757,19 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
         const cx = x + w * 0.5;
         if (!foldsInsideBend(cx, v, w * 0.5)) {
           const top = -140 + random.nextInt(0, 210);
-          masses.push({ x: cx, y0: SKYRIVER_CITY_VOID_BASE_Y, z: v + random.nextInt(-8, 8), width: w, height: top - SKYRIVER_CITY_VOID_BASE_Y, depth: d, tint: GRIME_TINT });
+          const block: SkyriverMass = { x: cx, y0: SKYRIVER_CITY_VOID_BASE_Y, z: v + random.nextInt(-8, 8), width: w, height: top - SKYRIVER_CITY_VOID_BASE_Y, depth: d, tint: GRIME_TINT };
+          masses.push(block);
+          const blockOwner = ownerOf(block);
           if (random.nextInt(0, 99) < 34) {
             const h2 = 12 + random.nextInt(0, 30);
-            masses.push({ x: cx + random.nextInt(-8, 8), y0: top - 1, z: v, width: w * 0.55, height: h2, depth: d * 0.6, tint: GRIME_TINT });
+            masses.push({ x: cx + random.nextInt(-8, 8), y0: top - 1, z: v, width: w * 0.55, height: h2, depth: d * 0.6, tint: GRIME_TINT, anchorV: block.z });
           }
           if (random.nextInt(0, 99) < 40) {
-            push(SKYRIVER_TRIM_ROOF_PLANT, cx + random.nextInt(-10, 10), top + 3, v + random.nextInt(-10, 10), 4 + random.nextInt(0, 6), 6, 4 + random.nextInt(0, 6));
+            push(SKYRIVER_TRIM_ROOF_PLANT, cx + random.nextInt(-10, 10), top + 3, v + random.nextInt(-10, 10), 4 + random.nextInt(0, 6), 6, 4 + random.nextInt(0, 6), blockOwner);
           }
           if (random.nextInt(0, 99) < 12) {
             const mh = 20 + random.nextInt(0, 40);
-            push(SKYRIVER_TRIM_ANTENNA, cx, top + mh * 0.5, v, 0.8, mh, 0.8);
+            push(SKYRIVER_TRIM_ANTENNA, cx, top + mh * 0.5, v, 0.8, mh, 0.8, blockOwner);
           }
         }
         x += w + random.nextInt(4, 30);
@@ -671,8 +801,9 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     masses.push({ x, y0: SKYRIVER_CITY_VOID_BASE_Y, z: apex.v, width: base, height: tops[0]! - SKYRIVER_CITY_VOID_BASE_Y, depth: base, tint: MEGA_TINT });
     masses.push({ x, y0: tops[0]! - 4, z: apex.v, width: base * 0.72, height: tops[1]! - tops[0]! + 4, depth: base * 0.72, tint: MEGA_TINT });
     masses.push({ x, y0: tops[1]! - 4, z: apex.v, width: base * 0.42, height: tops[2]! - tops[1]! + 4, depth: base * 0.42, tint: MEGA_TINT });
+    const megaOwner = ownerOf({ x, z: apex.v, width: base, depth: base });
     const spire = 520 + random.nextInt(0, 300);
-    push(SKYRIVER_TRIM_ANTENNA, x, tops[2]! + spire * 0.5, apex.v, 7, spire, 7);
+    push(SKYRIVER_TRIM_ANTENNA, x, tops[2]! + spire * 0.5, apex.v, 7, spire, 7, megaOwner);
     // R11 crown lighting: floodlit edges on each stage's top 260 m and a rim at every setback,
     // plus a lit spire core, so the landmark silhouette is outlined in light from bend entry.
     const stages: readonly (readonly [number, number])[] = [[base, tops[0]!], [base * 0.72, tops[1]!], [base * 0.42, tops[2]!]];
@@ -680,31 +811,31 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
       const half = size * 0.5 + 0.6;
       for (const cx of [-1, 1]) {
         for (const cz of [-1, 1]) {
-          push(SKYRIVER_TRIM_FLOOD, x + cx * half, top - 130, apex.v + cz * half, 2.2, 260, 2.2);
+          push(SKYRIVER_TRIM_FLOOD, x + cx * half, top - 130, apex.v + cz * half, 2.2, 260, 2.2, megaOwner);
         }
       }
-      push(SKYRIVER_TRIM_FLOOD, x, top + 1, apex.v - half, size + 2, 2.4, 2.2);
-      push(SKYRIVER_TRIM_FLOOD, x, top + 1, apex.v + half, size + 2, 2.4, 2.2);
-      push(SKYRIVER_TRIM_FLOOD, x - half, top + 1, apex.v, 2.2, 2.4, size + 2);
-      push(SKYRIVER_TRIM_FLOOD, x + half, top + 1, apex.v, 2.2, 2.4, size + 2);
+      push(SKYRIVER_TRIM_FLOOD, x, top + 1, apex.v - half, size + 2, 2.4, 2.2, megaOwner);
+      push(SKYRIVER_TRIM_FLOOD, x, top + 1, apex.v + half, size + 2, 2.4, 2.2, megaOwner);
+      push(SKYRIVER_TRIM_FLOOD, x - half, top + 1, apex.v, 2.2, 2.4, size + 2, megaOwner);
+      push(SKYRIVER_TRIM_FLOOD, x + half, top + 1, apex.v, 2.2, 2.4, size + 2, megaOwner);
     }
-    push(SKYRIVER_TRIM_FLOOD, x, tops[2]! + spire * 0.45, apex.v, 2.6, spire * 0.9, 2.6);
+    push(SKYRIVER_TRIM_FLOOD, x, tops[2]! + spire * 0.45, apex.v, 2.6, spire * 0.9, 2.6, megaOwner);
     // The crown sits far above the chase frame, so the outline runs down the whole tower body the
     // route bends around: full-height corner strips and a lit rim every ~420 m.
     const bodyHalf = base * 0.5 + 0.6;
     for (const cx of [-1, 1]) {
       for (const cz of [-1, 1]) {
-        push(SKYRIVER_TRIM_FLOOD, x + cx * bodyHalf, (200 + tops[0]!) * 0.5, apex.v + cz * bodyHalf, 2.6, tops[0]! - 200, 2.6);
+        push(SKYRIVER_TRIM_FLOOD, x + cx * bodyHalf, (200 + tops[0]!) * 0.5, apex.v + cz * bodyHalf, 2.6, tops[0]! - 200, 2.6, megaOwner);
       }
     }
     for (let y = 840; y < tops[0]! - 100; y += 840) {
-      push(SKYRIVER_TRIM_FLOOD, x, y, apex.v - bodyHalf, base + 2, 1.8, 1.8);
-      push(SKYRIVER_TRIM_FLOOD, x, y, apex.v + bodyHalf, base + 2, 1.8, 1.8);
-      push(SKYRIVER_TRIM_FLOOD, x - bodyHalf, y, apex.v, 1.8, 1.8, base + 2);
-      push(SKYRIVER_TRIM_FLOOD, x + bodyHalf, y, apex.v, 1.8, 1.8, base + 2);
+      push(SKYRIVER_TRIM_FLOOD, x, y, apex.v - bodyHalf, base + 2, 1.8, 1.8, megaOwner);
+      push(SKYRIVER_TRIM_FLOOD, x, y, apex.v + bodyHalf, base + 2, 1.8, 1.8, megaOwner);
+      push(SKYRIVER_TRIM_FLOOD, x - bodyHalf, y, apex.v, 1.8, 1.8, base + 2, megaOwner);
+      push(SKYRIVER_TRIM_FLOOD, x + bodyHalf, y, apex.v, 1.8, 1.8, base + 2, megaOwner);
     }
     for (const corner of [-1, 1]) {
-      push(SKYRIVER_TRIM_ANTENNA, x + corner * base * 0.3, tops[1]! + 110, apex.v + corner * base * 0.25, 3, 220, 3);
+      push(SKYRIVER_TRIM_ANTENNA, x + corner * base * 0.3, tops[1]! + 110, apex.v + corner * base * 0.25, 3, 220, 3, megaOwner);
     }
   }
 
@@ -724,14 +855,15 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
         d *= 0.62;
       }
       const mast = 120 + random.nextInt(0, 260);
-      push(SKYRIVER_TRIM_ANTENNA, tower.x, y + mast * 0.5, tower.z, 3.2, mast, 3.2);
+      push(SKYRIVER_TRIM_ANTENNA, tower.x, y + mast * 0.5, tower.z, 3.2, mast, 3.2, ownerOf(tower));
     } else if (roll < 55 && Math.abs(Math.abs(tower.x) - innerWallX(layout, tower)) > 1) {
       // Flat top with roof plant and a short antenna cluster (outer columns only; inner walls have crowns).
-      push(SKYRIVER_TRIM_ROOF_PLANT, tower.x, tower.height + 9, tower.z, tower.width * 0.6, 18, tower.depth * 0.5);
+      const roofOwner = ownerOf(tower);
+      push(SKYRIVER_TRIM_ROOF_PLANT, tower.x, tower.height + 9, tower.z, tower.width * 0.6, 18, tower.depth * 0.5, roofOwner);
       for (let m = 0; m < 3; m += 1) {
         const mh = 30 + random.nextInt(0, 90);
         push(SKYRIVER_TRIM_ANTENNA, tower.x + (random.nextInt(-1000, 1000) / 1000) * tower.width * 0.35,
-          tower.height + mh * 0.5, tower.z + (random.nextInt(-1000, 1000) / 1000) * tower.depth * 0.35, 1.6, mh, 1.6);
+          tower.height + mh * 0.5, tower.z + (random.nextInt(-1000, 1000) / 1000) * tower.depth * 0.35, 1.6, mh, 1.6, roofOwner);
       }
     }
   }
@@ -750,6 +882,8 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     [2700, 700, 4200, 2600, 190],
     [3800, 1100, 5000, 3200, 240],
   ];
+  const farTowers: { x: number; v: number; width: number; top: number; layer: number; shape: number }[] = [];
+  farTowerCache.set(layout.seed, farTowers);
   FAR_LAYERS.forEach(([minX, spanX, minH, spanH, spacing], li) => {
     for (const side of [-1, 1] as const) {
       for (let v = -CANYON_LOOP_LENGTH_M / 2; v < CANYON_LOOP_LENGTH_M / 2; v += spacing * (0.7 + random.nextInt(0, 600) / 1000)) {
@@ -759,12 +893,20 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
         const height = minH + random.nextInt(0, 1000) / 1000 * spanH;
         const tint = 0x2a3038;
         masses.push({ x, y0: SKYRIVER_CITY_VOID_BASE_Y, z: v, width, height: height - SKYRIVER_CITY_VOID_BASE_Y, depth: width * (0.7 + random.nextInt(0, 600) / 1000), tint, layer: li + 1 });
+        // R16: the same tower as one impostor card (top shape and full height).
+        const far = { x, v, width, top: height, layer: li + 1, shape: 0 };
+        farTowers.push(far);
         // A stepped top on about half: crowns and spires break the line into thousands-and-parts.
         if (random.nextInt(0, 99) < 55) {
           const capH = 120 + random.nextInt(0, 500);
           masses.push({ x, y0: height - 2, z: v, width: width * 0.5, height: capH, depth: width * 0.45, tint, layer: li + 1 });
+          far.top = height + capH;
+          far.shape = 1;
           if (random.nextInt(0, 99) < 40) {
-            masses.push({ x, y0: height + capH - 2, z: v, width: width * 0.16, height: 150 + random.nextInt(0, 350), depth: width * 0.16, tint, layer: li + 1 });
+            const spireH = 150 + random.nextInt(0, 350);
+            masses.push({ x, y0: height + capH - 2, z: v, width: width * 0.16, height: spireH, depth: width * 0.16, tint, layer: li + 1 });
+            far.top = height + capH + spireH;
+            far.shape = 2;
           }
         }
       }
@@ -799,7 +941,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     const level = SKYRIVER_SKYBRIDGE_MIN_Y_M + random.nextInt(0, 1000) / 1000 * Math.max(top - SKYRIVER_SKYBRIDGE_MIN_Y_M - 20, 0);
     push(SKYRIVER_TRIM_SKYBRIDGE, (leftFace + rightFace) * 0.5, level,
       left.z + (random.nextInt(-1000, 1000) / 1000) * 20,
-      rightFace - leftFace, 14 + random.nextInt(0, 60) / 10, 20 + random.nextInt(0, 100) / 10);
+      rightFace - leftFace, 14 + random.nextInt(0, 60) / 10, 20 + random.nextInt(0, 100) / 10, ownerOf(left), ownerOf(right));
     bridges += 1;
   }
 
@@ -817,6 +959,8 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
   }
   massCache.set(layout.seed, masses);
 
+  owner.length = count;
+  spanTo.length = count;
   const trims: SkyriverCityTrims = {
     seed: layout.seed,
     count,
@@ -828,9 +972,223 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     sz,
     kind,
     seedValue,
+    owner,
+    spanTo,
   };
   trimCache.set(layout.seed, trims);
   return trims;
+}
+
+
+/** World placement of one trim: centre x/z, heading, and its long-axis length (spans only). */
+export interface SkyriverTrimPlacement {
+  x: number;
+  z: number;
+  heading: number;
+  /** Span length after placement, metres (0 for a trim that keeps its own size). */
+  length: number;
+}
+
+const placeEnd0: WarpOut = { x: 0, z: 0, heading: 0 };
+
+/** Canyon-space distance from point (x, v) to an owner's footprint (0 or less: on or inside it). */
+function footprintGap(owner: SkyriverTrimOwner, x: number, v: number): number {
+  return Math.max(Math.abs(x - owner.x) - owner.width * 0.5, Math.abs(v - owner.z) - owner.depth * 0.5);
+}
+const placeEnd1: WarpOut = { x: 0, z: 0, heading: 0 };
+
+/**
+ * R16: where trim `i` is drawn. Every trim is carried rigidly in its owner's warped frame (the
+ * owner's anchor is warped, the offset is only turned), so it stays on its building through the
+ * bends: warping each trim at its own centre drifts it off its roof or face wherever the warp
+ * stretches or crushes canyon space (outer columns, bend centres). A span (gantry, skybridge) puts
+ * each end in the frame of the building it meets and runs straight between them.
+ */
+export function placeTrim(trims: SkyriverCityTrims, i: number, out: SkyriverTrimPlacement): SkyriverTrimPlacement {
+  const owner = trims.owner[i]!;
+  const to = trims.spanTo[i]!;
+  const cx = trims.cx[i]!;
+  const cz = trims.cz[i]!;
+  if (to === null) {
+    warpRigid(cx, cz, owner.anchorV, placeEnd0);
+    out.x = placeEnd0.x;
+    out.z = placeEnd0.z;
+    out.heading = placeEnd0.heading;
+    out.length = 0;
+    return out;
+  }
+  const alongAxis = trims.sz[i]! >= trims.sx[i]!;
+  const half = (alongAxis ? trims.sz[i]! : trims.sx[i]!) * 0.5;
+  // End 0 is the low end of the long axis; it belongs to whichever building sits nearer to it.
+  const e0x = alongAxis ? cx : cx - half;
+  const e0z = alongAxis ? cz - half : cz;
+  const e1x = alongAxis ? cx : cx + half;
+  const e1z = alongAxis ? cz + half : cz;
+  const ownerAtLow = footprintGap(owner, e0x, e0z) <= footprintGap(to, e0x, e0z);
+  warpRigid(e0x, e0z, (ownerAtLow ? owner : to).anchorV, placeEnd0);
+  warpRigid(e1x, e1z, (ownerAtLow ? to : owner).anchorV, placeEnd1);
+  const dx = placeEnd1.x - placeEnd0.x;
+  const dz = placeEnd1.z - placeEnd0.z;
+  out.x = (placeEnd0.x + placeEnd1.x) * 0.5;
+  out.z = (placeEnd0.z + placeEnd1.z) * 0.5;
+  // Local +z (along) maps to (sin h, cos h); local +x (across) maps to (cos h, -sin h).
+  out.heading = alongAxis ? Math.atan2(dx, dz) : Math.atan2(-dz, dx);
+  out.length = Math.hypot(dx, dz);
+  return out;
+}
+
+export interface SkyriverAnchorAudit {
+  /** Trims checked (every trim of the layout, all around the loop). */
+  readonly checked: number;
+  /** Largest offset error of a drawn trim from its place on its owner, metres. Must be ~0. */
+  readonly maxDriftM: number;
+  /** Drawn trims that touch their owner in canyon space but not in the world. Must be 0. */
+  readonly floating: number;
+  /** The drawn failures, if any (empty when the pass holds). */
+  readonly failures: readonly { kind: number; index: number; x: number; y: number; v: number; wx: number; wz: number; driftM: number; gapM: number }[];
+  /** The same two numbers for trims warped at their own centres (the pre-R16 placement). */
+  readonly pointWarpMaxDriftM: number;
+  readonly pointWarpFloating: number;
+  /** pointWarpFloating split by SKYRIVER_TRIM_* kind. */
+  readonly pointWarpFloatingByKind: readonly number[];
+  /** Facade signs checked, their drawn drift (must be ~0), and the pre-R16 count that left their face. */
+  readonly signsChecked: number;
+  readonly signMaxDriftM: number;
+  readonly signsOffFace: number;
+  readonly pointWarpSignsOffFace: number;
+  /** Every pre-R16 floater, worst first: kind, canyon centre, world centre and how far off it was. */
+  readonly pointWarpFloaters: readonly { kind: number; index: number; x: number; y: number; v: number; wx: number; wz: number; driftM: number; gapM: number }[];
+}
+
+const auditOwner: WarpOut = { x: 0, z: 0, heading: 0 };
+const auditPoint: WarpOut = { x: 0, z: 0, heading: 0 };
+
+/**
+ * R16 global assertion pass: for every trim instance, the drawn placement must hold its canyon-space
+ * relation to its owner through the full loop's warp — the same offset in the owner's frame, and
+ * still touching it. Pure; for tests and the evidence probe.
+ */
+export function auditCityAnchors(layout: SkyriverCityLayout): SkyriverAnchorAudit {
+  const trims = deriveCityTrims(layout);
+  const placed: SkyriverTrimPlacement = { x: 0, z: 0, heading: 0, length: 0 };
+  let maxDrift = 0;
+  let floating = 0;
+  let pointMaxDrift = 0;
+  let pointFloating = 0;
+  const worst: { kind: number; index: number; x: number; y: number; v: number; wx: number; wz: number; driftM: number; gapM: number }[] = [];
+  const drawnFailures: typeof worst = [];
+  const pointByKind: number[] = [];
+  // Offset of world point (wx, wz) in the owner's drawn frame, minus the canyon offset.
+  const check = (owner: SkyriverTrimOwner, frameV: number, wx: number, wz: number, cx: number, cz: number, ex: number, ez: number): { drift: number; gap: number } => {
+    warpRigid(owner.x, owner.z, frameV, auditOwner);
+    const dx = wx - auditOwner.x;
+    const dz = wz - auditOwner.z;
+    const c = Math.cos(auditOwner.heading);
+    const s = Math.sin(auditOwner.heading);
+    const lx = dx * c - dz * s;
+    const lz = dx * s + dz * c;
+    const drift = Math.hypot(lx - (cx - owner.x), lz - (cz - owner.z));
+    const gap = Math.max(Math.abs(lx) - (owner.width + ex) * 0.5, Math.abs(lz) - (owner.depth + ez) * 0.5);
+    return { drift, gap };
+  };
+  for (let i = 0; i < trims.count; i += 1) {
+    const owner = trims.owner[i]!;
+    const cx = trims.cx[i]!;
+    const cz = trims.cz[i]!;
+    const ex = trims.sx[i]!;
+    const ez = trims.sz[i]!;
+    const touches = Math.max(Math.abs(cx - owner.x) - (owner.width + ex) * 0.5, Math.abs(cz - owner.z) - (owner.depth + ez) * 0.5) <= 0.5;
+    placeTrim(trims, i, placed);
+    const drawn = check(owner, owner.anchorV, placed.x, placed.z, cx, cz, ex, ez);
+    // Spans are checked at their ends below; their centre legitimately moves with the span.
+    if (trims.spanTo[i] === null) {
+      maxDrift = Math.max(maxDrift, drawn.drift);
+      if (touches && drawn.gap > 0.5) {
+        floating += 1;
+        drawnFailures.push({ kind: trims.kind[i]!, index: i, x: cx, y: trims.cy[i]!, v: cz, wx: placed.x, wz: placed.z, driftM: drawn.drift, gapM: drawn.gap });
+      }
+    }
+    // Pre-R16: warped at its own centre (landmark floods were already rigid around their tower);
+    // owners at their own centres.
+    if (trims.kind[i] === SKYRIVER_TRIM_FLOOD) warpRigid(cx, cz, owner.z, auditPoint);
+    else warpCanyon(cx, cz, auditPoint);
+    const to = trims.spanTo[i]!;
+    let point = check(owner, owner.z, auditPoint.x, auditPoint.z, cx, cz, ex, ez);
+    if (to !== null) {
+      // A pre-R16 span was a straight box of its canyon length at its warped centre: check its ends.
+      const alongAxis = ez >= ex;
+      const half = (alongAxis ? ez : ex) * 0.5;
+      const ux = alongAxis ? Math.sin(auditPoint.heading) : Math.cos(auditPoint.heading);
+      const uz = alongAxis ? Math.cos(auditPoint.heading) : -Math.sin(auditPoint.heading);
+      const px = auditPoint.x;
+      const pz = auditPoint.z;
+      point = { drift: 0, gap: -Infinity };
+      for (const sign of [-1, 1]) {
+        const ecx = alongAxis ? cx : cx + sign * half;
+        const ecz = alongAxis ? cz + sign * half : cz;
+        const nearOwner = footprintGap(owner, ecx, ecz) <= footprintGap(to, ecx, ecz) ? owner : to;
+        const end = check(nearOwner, nearOwner.z, px + ux * half * sign, pz + uz * half * sign, ecx, ecz, 0, 0);
+        point = { drift: Math.max(point.drift, end.drift), gap: Math.max(point.gap, end.gap) };
+      }
+    }
+    pointMaxDrift = Math.max(pointMaxDrift, point.drift);
+    if (touches && point.gap > 0.5) {
+      pointFloating += 1;
+      pointByKind[trims.kind[i]!] = (pointByKind[trims.kind[i]!] ?? 0) + 1;
+      worst.push({ kind: trims.kind[i]!, index: i, x: cx, y: trims.cy[i]!, v: cz, wx: auditPoint.x, wz: auditPoint.z, driftM: point.drift, gapM: point.gap });
+    }
+    if (to !== null) {
+      // Both ends of a span must land on their buildings' faces.
+      const alongAxis = ez >= ex;
+      const half = placed.length * 0.5;
+      const ux = alongAxis ? Math.sin(placed.heading) : Math.cos(placed.heading);
+      const uz = alongAxis ? Math.cos(placed.heading) : -Math.sin(placed.heading);
+      const canyonHalf = (alongAxis ? ez : ex) * 0.5;
+      for (const sign of [-1, 1]) {
+        const ecx = alongAxis ? cx : cx + sign * canyonHalf;
+        const ecz = alongAxis ? cz + sign * canyonHalf : cz;
+        const nearOwner = footprintGap(owner, ecx, ecz) <= footprintGap(to, ecx, ecz) ? owner : to;
+        const end = check(nearOwner, nearOwner.anchorV, placed.x + ux * half * sign, placed.z + uz * half * sign, ecx, ecz, 0, 0);
+        maxDrift = Math.max(maxDrift, end.drift);
+        if (end.gap > 0.5) {
+          floating += 1;
+          drawnFailures.push({ kind: trims.kind[i]!, index: i, x: ecx, y: trims.cy[i]!, v: ecz, wx: placed.x, wz: placed.z, driftM: end.drift, gapM: end.gap });
+        }
+      }
+    }
+  }
+  // Facade signs: the sign must stay on its tower's face (centre within the face's run, minus the
+  // sign's own half width for flat signs).
+  const signs = deriveNeonSigns(layout);
+  let signsChecked = 0;
+  let signMaxDrift = 0;
+  let signsOff = 0;
+  let pointSignsOff = 0;
+  for (let i = 0; i < signs.count; i += 1) {
+    const mount = signs.owner[i];
+    if (!mount) continue;
+    signsChecked += 1;
+    const cx = signs.cx[i]!;
+    const cz = signs.cz[i]!;
+    const halfAlong = signs.nz[i] === 0 ? signs.sw[i]! * 0.5 : 0;
+    warpRigid(cx, cz, mount.anchorV, auditPoint);
+    const drawn = check(mount, mount.anchorV, auditPoint.x, auditPoint.z, cx, cz, 0, 0);
+    signMaxDrift = Math.max(signMaxDrift, drawn.drift);
+    // Along-face overrun past the tower's end (the across offset is the standoff, exact either way).
+    const overrun = (d: number): boolean => d + halfAlong > mount.depth * 0.5 + 0.5;
+    if (overrun(Math.abs(cz - mount.z) + drawn.drift)) signsOff += 1;
+    warpCanyon(cx, cz, auditPoint);
+    const point = check(mount, mount.z, auditPoint.x, auditPoint.z, cx, cz, 0, 0);
+    // Along-face position of the pre-R16 placement in the tower's frame.
+    warpRigid(mount.x, mount.z, mount.z, auditOwner);
+    const c = Math.cos(auditOwner.heading);
+    const sn = Math.sin(auditOwner.heading);
+    const lz = (auditPoint.x - auditOwner.x) * sn + (auditPoint.z - auditOwner.z) * c;
+    if (point.drift > 0.5 && overrun(Math.abs(lz))) pointSignsOff += 1;
+  }
+
+  worst.sort((a, b) => b.driftM - a.driftM);
+  return { checked: trims.count, maxDriftM: maxDrift, floating, failures: drawnFailures.slice(0, 40), pointWarpMaxDriftM: pointMaxDrift, pointWarpFloating: pointFloating, signsChecked, signMaxDriftM: signMaxDrift, signsOffFace: signsOff, pointWarpSignsOffFace: pointSignsOff, pointWarpFloatingByKind: Array.from({ length: SKYRIVER_TRIM_FLOOD + 1 }, (_, k) => pointByKind[k] ?? 0), pointWarpFloaters: worst };
 }
 
 
@@ -1039,6 +1397,7 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
   const color = new Float32Array(cap * 3);
   const kind = new Uint8Array(cap);
   const seedValue = new Float32Array(cap);
+  const owner: (SkyriverTrimOwner | null)[] = [];
   let count = 0;
 
   // Only the stretch the camera actually flies (the autopilot track reaches |z| ~ 1.6 km; the view
@@ -1066,6 +1425,7 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     color[count * 3 + 2] = tint.b;
     kind[count] = hero.kind === 'panel' ? SKYRIVER_SIGN_STRIP : SKYRIVER_SIGN_BANNER;
     seedValue[count] = hero.seed;
+    owner[count] = null;
     count += 1;
   }
 
@@ -1151,6 +1511,7 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     color[count * 3 + 2] = tint.b;
     kind[count] = signKind;
     seedValue[count] = random.nextInt(0, 9999) / 9999;
+    owner[count] = ownerOf(tower);
     count += 1;
   }
 
@@ -1167,6 +1528,7 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     color,
     kind,
     seedValue,
+    owner,
   };
   signCache.set(layout.seed, signs);
   return signs;
@@ -1179,6 +1541,7 @@ attribute float aSeed;
 attribute vec3 aTint;
 attribute vec3 aSize;   // width, height, depth in metres
 attribute float aLayer; // R15 far-city depth layer (0 = near city)
+attribute float aBuilding; // R16 per-building identity seed (interior culture)
 
 varying vec2 vSurf;      // position on the face, metres
 varying float vSeed;
@@ -1191,6 +1554,7 @@ varying float vFaceId;
 varying vec2 vFaceHalf;  // half extents of this face in vSurf metres
 varying vec3 vTangentW;  // T7-4: world direction of increasing vSurf.x (interior mapping frame)
 varying float vLayer;
+varying float vBuilding;
 
 #include <fog_pars_vertex>
 
@@ -1223,6 +1587,7 @@ void main() {
   vSeed = aSeed;
   vTint = aTint;
   vLayer = aLayer;
+  vBuilding = aBuilding;
 
   vec4 world = modelMatrix * instanceMatrix * vec4( transformed, 1.0 );
   vWorldPos = world.xyz;
@@ -1241,6 +1606,7 @@ void main() {
 `;
 
 const TOWER_FRAGMENT = /* glsl */ `
+#define EMISSIVE_GAIN ${SKYRIVER_EMISSIVE_GAIN.toFixed(4)}
 uniform float uTime;
 uniform float uCellWidth;
 uniform float uCellHeight;
@@ -1261,6 +1627,7 @@ varying float vFaceId;
 varying vec2 vFaceHalf;
 varying vec3 vTangentW;
 varying float vLayer;
+varying float vBuilding;
 
 // --- T7-4 interior mapping ------------------------------------------------------------------------
 // Every window cell is a box room [0,1]^3 (x across, y up, z depth from the glass). The view ray is
@@ -1270,7 +1637,7 @@ uniform sampler2D uInterior;
 uniform vec2 uInteriorFade;      // view-depth fade window (start, end), metres
 uniform float uInteriorStrength; // 0 = off (low tier), 1 = on
 #define INTERIOR_COLUMNS 8.0
-#define INTERIOR_ROWS 4.0
+#define INTERIOR_ROWS 5.0
 #define ROOM_DEPTH_M 7.0
 
 vec4 interiorTap( float room, vec2 local, vec4 rect ) {
@@ -1363,7 +1730,7 @@ void main() {
     float farTemp = skyHash11( farId.x * 3.1 + farId.y * 7.7 + vSeed * 11.0 );
     vec3 farPane = mix( vec3( 1.0, 0.55, 0.22 ), vec3( 0.45, 0.65, 1.0 ), step( 0.6, farTemp ) );
     float farAverage = 0.14 * 0.24 * farZone * vIsSide;
-    vec3 farColor = vec3( 0.004, 0.005, 0.007 ) + farPane * mix( farAverage, farLit * farGlass, farResolve ) * 1.6 * layerDim;
+    vec3 farColor = vec3( 0.004, 0.005, 0.007 ) + farPane * mix( farAverage, farLit * farGlass, farResolve ) * 1.6 * layerDim * EMISSIVE_GAIN;
     // Crown tips catch a little sky so stacked silhouettes separate against the haze band.
     farColor += vec3( 0.012, 0.016, 0.024 ) * layerDim * smoothstep( 0.5, 1.0, vWorldPos.y / 6500.0 ) * ( 1.0 - vIsSide );
     gl_FragColor = vec4( farColor, 1.0 );
@@ -1388,6 +1755,22 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   vec2 cellLocal = fract( cellUv );
   // Per-face offset so opposite facades never mirror each other.
   vec2 faceOffset = vec2( vFaceId * 311.0 + vSeed * 613.0, vFaceId * 97.0 - vSeed * 271.0 );
+
+  // --- R16 building culture ------------------------------------------------------------------------
+  // One seeded identity per building (its slab, tiers, crowns and annexes share vBuilding), so
+  // neighbours stop pattern-matching: a subtle glass colour (warm / cool / teal / amber) that also
+  // leans the window-glow temperature, a luminance profile (even, dim, busy, spotty), and a family
+  // of room archetypes. The far window average and the room fade-in both carry the tint, so the
+  // transition compounds the identity instead of revealing one global room set.
+  float culture = fract( vBuilding * 7.31 );
+  vec3 glassTint = culture < 0.25 ? vec3( 1.0, 0.84, 0.66 )
+    : ( culture < 0.5 ? vec3( 0.7, 0.83, 1.0 ) : ( culture < 0.75 ? vec3( 0.62, 1.0, 0.88 ) : vec3( 1.0, 0.72, 0.4 ) ) );
+  float tempLean = culture < 0.25 ? 0.2 : ( culture < 0.5 ? 0.74 : ( culture < 0.75 ? 0.6 : 0.06 ) );
+  vec3 cultureGlow = mix( vec3( 1.0 ), glassTint, 0.45 );
+  float profile = floor( fract( vBuilding * 13.7 + 0.37 ) * 4.0 );
+  float litScale = profile < 0.5 ? 1.0 : ( profile < 1.5 ? 0.5 : ( profile < 2.5 ? 1.5 : 0.85 ) );
+  float brightScale = profile < 0.5 ? 1.0 : ( profile < 1.5 ? 0.7 : ( profile < 2.5 ? 1.0 : 1.35 ) );
+  float blockGate = profile < 1.5 ? 0.52 : ( profile < 2.5 ? 0.42 : 0.7 );
 
   // --- concrete ---------------------------------------------------------------------------------
   // Vertical structural ribs: a deep groove with a lighter arris, the brutalist read.
@@ -1432,10 +1815,12 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   float acBox = step( 0.72, skyHash12( cell * vec2( 1.3, 0.7 ) + faceOffset ) )
     * step( 0.2, cellLocal.x ) * step( cellLocal.x, 0.55 ) * step( 0.55, cellLocal.y ) * step( cellLocal.y, 0.86 );
   grimeTone += vec3( 0.5, 0.4, 0.3 ) * uConcreteLevel * ( ledge * 1.6 + acBox * 1.2 ) * detail;
-  concrete = mix( concrete, grimeTone * 0.4 + uConcreteAmbient * 0.15, grime * vIsSide );
+  // R16 ambient III: the grime floor drops (0.4 -> 0.28).
+  concrete = mix( concrete, grimeTone * 0.28 + uConcreteAmbient * 0.15, grime * vIsSide );
   // R14: tiny linear values still land at 40-50/255 after ACES + sRGB; the base tones are the real
   // 'ambient', so they go near black and the emissives carry the frame.
-  vec3 cleanTone = vec3( 0.007, 0.008, 0.011 ) * ( 0.92 + 0.08 * grain ) + uConcreteAmbient * 0.15;
+  // R16: pristine glass/concrete a further ~30% down.
+  vec3 cleanTone = vec3( 0.005, 0.0056, 0.0078 ) * ( 0.92 + 0.08 * grain ) + uConcreteAmbient * 0.15;
   float joint = max(
     1.0 - smoothstep( 0.0, 0.6, abs( fract( vSurf.x / 36.0 ) - 0.5 ) * 36.0 - 17.4 ),
     1.0 - smoothstep( 0.0, 0.6, abs( fract( vSurf.y / 48.0 ) - 0.5 ) * 48.0 - 23.4 )
@@ -1451,7 +1836,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   float deckRoof = ( 1.0 - smoothstep( 70.0, 140.0, vWorldPos.y ) ) * ( 1.0 - vIsSide );
   vec2 skyCell = floor( vSurf / 7.0 );
   float skylight = step( 0.82, skyHash12( skyCell + vSeed * 13.0 ) ) * ( 1.0 - smoothstep( 0.25, 0.42, length( fract( vSurf / 7.0 ) - 0.5 ) ) );
-  color += vec3( 1.0, 0.55, 0.2 ) * skylight * deckRoof * 2.2;
+  color += vec3( 1.0, 0.55, 0.2 ) * skylight * deckRoof * 1.4;
 
   // --- wet reflection ---------------------------------------------------------------------------
   // Rain-slick facades: a grazing-angle sheen, broken into vertical runnels and heavier low down
@@ -1496,13 +1881,13 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // the roofline against the haze once bloom catches it.
   float parapetLive = step( 0.6, skyHash11( vSeed * 97.0 + 3.0 ) ) * step( 700.0, vWorldPos.y );
   float parapet = 1.0 - smoothstep( 0.6, 2.2, vFaceHalf.y - vSurf.y );
-  color += vec3( 0.75, 0.9, 1.0 ) * parapet * parapetLive * vIsSide * 2.4;
+  color += vec3( 0.75, 0.9, 1.0 ) * parapet * parapetLive * vIsSide * 2.4 * EMISSIVE_GAIN;
 
   // --- window grid ------------------------------------------------------------------------------
   // Coarse blocks gate whole stacks dark, so the lit windows stay sparse and clustered instead of
   // speckling evenly over every slab.
   float blockHash = skyHash12( floor( cellUv / vec2( 4.0, 7.0 ) ) + faceOffset * 0.37 );
-  float blockLive = step( 0.52, blockHash );
+  float blockLive = step( blockGate, blockHash );
 
   float sd = windowSdf( cellLocal, pristine );
   // R12: no glass in the structural bands (spandrel), computed again below for the lit gate.
@@ -1518,8 +1903,10 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // the void), the mid city is as before, the pristine heights are nearly dark glass.
   // R12 deck glow: below ~120 m (the service deck and the wall feet) the rooms crowd and burn warm.
   float deckZone = 1.0 - smoothstep( 70.0, 160.0, vWorldPos.y );
-  float litShare = mix( 0.14, 0.1, smoothstep( 300.0, 900.0, vWorldPos.y ) ) * ( 1.0 - 0.8 * pristine ) + 0.24 * deckZone
-    + 0.06 * ( 1.0 - smoothstep( -600.0, 0.0, vWorldPos.y ) );
+  // R16 ambient III: the deck and void glow thinned (0.24 -> 0.1, 0.06 -> 0.04): their far average
+  // was the warm fill lifting the low half of the lap.
+  float litShare = ( mix( 0.14, 0.1, smoothstep( 300.0, 900.0, vWorldPos.y ) ) * ( 1.0 - 0.8 * pristine ) + 0.1 * deckZone
+    + 0.04 * ( 1.0 - smoothstep( -600.0, 0.0, vWorldPos.y ) ) ) * litScale;
   // T7-2 lit runs: a floor lights in runs of 3-9 panes (an office, a corridor) sharing one colour
   // temperature, with the odd dark pane inside a run. Per-pane hashing read as confetti noise.
   float runLength = 3.0 + floor( skyHash12( vec2( cell.y, faceOffset.x ) ) * 7.0 );
@@ -1536,13 +1923,17 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   float bandPhase = mod( floorIndex, 12.0 );
   float structuralBand = step( bandPhase, 1.4 ) * vIsSide;
   float zone = floor( floorIndex / 12.0 );
-  float zoneLit = step( 0.5 - 0.35 * grime, skyHash12( vec2( zone, vSeed * 71.0 + vFaceId ) ) );
+  // R16 ambient III: fewer crowded grime zones (0.35 -> 0.15): at play distance their fine grid of
+  // lit rooms averaged into a warm grey floor over the whole low half of the lap.
+  float zoneLit = step( 0.5 - 0.15 * grime, skyHash12( vec2( zone, vSeed * 71.0 + vFaceId ) ) );
   lit *= zoneLit * ( 1.0 - structuralBand );
 
   // Colour temperature, per run: mostly warm interior light, some cold office pale, sparse neon.
   float tempHash = skyHash11( runHash * 311.7 + vSeed * 53.0 );
   // Grime rooms are sodium and warm; pristine panes are cold.
   tempHash = mix( mix( tempHash, tempHash * 0.45, grime ), 0.55 + 0.4 * tempHash, pristine );
+  // R16: each building leans its window temperatures toward its culture.
+  tempHash = mix( tempHash, tempLean, 0.4 );
   // T6R: a wider spread of colour temperatures, so lit panes read as rooms, not as one decal.
   // T7-5: saturated temperatures — near-white panes read as grey glare under ACES and bloom.
   vec3 sodium = vec3( 1.0, 0.42, 0.1 );
@@ -1557,8 +1948,9 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   paneColor = mix( paneColor, cold, step( 0.7, tempHash ) );
   paneColor = mix( paneColor, neonCyan, step( 0.86, tempHash ) );
   paneColor = mix( paneColor, neonMagenta, step( 0.94, tempHash ) );
+  paneColor *= cultureGlow;
 
-  float brightness = ( 0.45 + 0.55 * skyHash11( runHash * 71.3 + 2.0 ) ) * ( 0.85 + 0.15 * paneHash );
+  float brightness = ( 0.45 + 0.55 * skyHash11( runHash * 71.3 + 2.0 ) ) * ( 0.85 + 0.15 * paneHash ) * brightScale;
   // A handful of panes buzz. Cheap, and it stops the grid reading as a static decal.
   float buzzing = step( 0.965, skyHash11( paneHash * 17.7 + 9.0 ) );
   float buzz = 1.0 - buzzing * 0.55 * ( 0.5 + 0.5 * sin( uTime * 23.0 + paneHash * 120.0 ) );
@@ -1577,8 +1969,16 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
     // Strata pick the room set: grime 0-9, mid 10-21, pristine 22-31 (dithered at the borders).
     float roomHash = skyHash12( cell * vec2( 1.7, 2.3 ) + faceOffset * 0.71 );
     float bandPick = vWorldPos.y + ( skyHash11( roomHash * 91.0 ) - 0.5 ) * 160.0;
-    float room = bandPick < 600.0 ? floor( roomHash * 10.0 )
-      : ( bandPick > 1800.0 ? 22.0 + floor( roomHash * 10.0 ) : 10.0 + floor( roomHash * 12.0 ) );
+    // R16: each stratum's set includes the new archetypes (grime + noodle, laundry, workshop; mid +
+    // server, karaoke, gym, grow; pristine + gallery, server), and each building draws from its own
+    // family of 5 consecutive archetypes in that set.
+    float setSize = bandPick < 600.0 ? 13.0 : ( bandPick > 1800.0 ? 12.0 : 16.0 );
+    float k = mod( floor( vBuilding * 97.0 ) + floor( roomHash * 5.0 ), setSize );
+    float room = bandPick < 600.0
+      ? ( k < 10.0 ? k : ( k < 10.5 ? 33.0 : ( k < 11.5 ? 35.0 : 39.0 ) ) )
+      : ( bandPick > 1800.0
+        ? ( k < 10.0 ? 22.0 + k : ( k < 10.5 ? 38.0 : 32.0 ) )
+        : ( k < 12.0 ? 10.0 + k : ( k < 14.5 ? 32.0 + 2.0 * ( k - 12.0 ) : 37.0 ) ) );
     float mirror = step( 0.5, skyHash11( roomHash * 37.0 + 3.0 ) );
     float depth01;
     vec3 roomColor = traceRoom( cellLocal, ray, room, mirror, depth01 );
@@ -1594,8 +1994,9 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
     // Exposure is set against the facade's 0.55 window scale below: lit rooms read as rooms, dim
     // rooms as lamp-lit silhouettes, dark rooms as shapes in the city's spill light.
     // R14: dark rooms are dark (city spill 0.42 -> 0.16); lit and lamp-lit rooms carry the read.
-    vec3 roomLight = paneColor * ( lit * blockLive * brightness * buzz * 7.0 ) + dimLight * dim * 5.5 + vec3( 0.16, 0.17, 0.22 ) * mix( 1.0, 0.25, pristine );
-    vec3 interior = roomColor * roomLight;
+    vec3 roomLight = paneColor * ( lit * blockLive * brightness * buzz * 7.0 ) + dimLight * dim * 5.5 + vec3( 0.16, 0.17, 0.22 ) * glassTint * mix( 1.0, 0.25, pristine );
+    // The glass colour sits over the whole room (the building's culture), not only its lamps.
+    vec3 interior = roomColor * roomLight * glassTint;
     // Glass: a faint sheen of the city over the room, stronger at grazing angles.
     interior += sheen * fresnel * 0.35;
     vec3 resolvedInterior = ( interior * glassRaw + paneColor * ( lit * blockLive * brightness ) * halo * 0.1 ) * ( 1.0 - heroShadow );
@@ -1607,12 +2008,14 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // What the grid averages out to once it stops resolving: lit share times mean pane brightness,
   // in the mean pane colour. Distant walls read as a dim glow rather than a field of sparks.
   // R12: the far average keeps the zone and band structure, so distant towers read as shapes.
-  vec3 averaged = vec3( 0.86, 0.72, 0.56 ) * ( litShare * 0.3 * blockLive * vIsSide * zoneLit * ( 1.0 - structuralBand ) );
+  vec3 averaged = vec3( 0.86, 0.72, 0.56 ) * cultureGlow * ( litShare * 0.3 * blockLive * vIsSide * zoneLit * ( 1.0 - structuralBand ) );
   // T7: dimmer panes — under bloom they compete with the signage otherwise.
   // T7-5 value range: emissives carry the frame — panes at 2x the T7 level.
   // Pristine heights stay calm: their panes run at a third of the mid-city level.
   // R14: the far-field window average (a uniform fill) is cut; resolved panes keep their punch.
-  color += mix( averaged * ( 1.0 - heroShadow ) * 0.55, resolved, detail ) * 1.55 * ( 1.0 - 0.65 * pristine );
+  // R16 ambient III: the unresolved fill is cut again (0.55 -> 0.3; it is ambient, not a light) and
+  // the resolved panes and rooms take the emissive gain of the exposure trade.
+  color += mix( averaged * ( 1.0 - heroShadow ) * 0.3, resolved * EMISSIVE_GAIN, detail ) * 1.55 * ( 1.0 - 0.65 * pristine );
 
   gl_FragColor = vec4( max( color, vec3( 0.0 ) ), 1.0 );
 
@@ -1646,10 +2049,108 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
     #endif
     // Close by, the wash eases off so the face keeps its windows instead of reading as a flat slab.
     float near = 0.35 + 0.65 * smoothstep( 250.0, 900.0, vFogDepth );
-    gl_FragColor.rgb += washColor * wash * through * near;
+    gl_FragColor.rgb += washColor * wash * through * near * EMISSIVE_GAIN;
   }
 }
 `;
+
+// --- R16 far-city impostor cards ------------------------------------------------------------------
+// Each far tower is a crossed pair of alpha-tested quads (from the card base up to the tower's top),
+// sampling one baked silhouette of impostorAtlas.ts: the crown section at the top, then the body
+// tile repeated down the card on a metric scale. Per-layer dim and haze grade the depth.
+
+const IMPOSTOR_VERTEX = /* glsl */ `
+attribute vec4 aCard;   // variant, layer, u flip, unused
+
+varying vec2 vCardUv;
+varying vec2 vCardSize; // width, height, metres
+varying float vVariant;
+varying float vCardLayer;
+
+#include <fog_pars_vertex>
+
+void main() {
+  vec3 transformed = vec3( position );
+  vCardUv = vec2( aCard.z > 0.5 ? 1.0 - uv.x : uv.x, uv.y );
+  vCardSize = vec2( length( instanceMatrix[ 0 ].xyz ), length( instanceMatrix[ 1 ].xyz ) );
+  vVariant = aCard.x;
+  vCardLayer = aCard.y;
+  vec4 mvPosition = modelViewMatrix * ( instanceMatrix * vec4( transformed, 1.0 ) );
+  #include <fog_vertex>
+  gl_Position = projectionMatrix * mvPosition;
+}
+`;
+
+const IMPOSTOR_FRAGMENT = /* glsl */ `
+uniform sampler2D uAtlas;
+uniform vec3 uLayerDim;
+uniform vec3 uLayerHaze;
+uniform float uEmissive;
+
+varying vec2 vCardUv;
+varying vec2 vCardSize;
+varying float vVariant;
+varying float vCardLayer;
+
+#include <fog_pars_fragment>
+${SKYRIVER_OUTPUT_PARS_GLSL}
+
+#define CARD_COLUMNS ${IMPOSTOR_COLUMNS.toFixed(1)}
+#define CARD_ROWS ${IMPOSTOR_ROWS.toFixed(1)}
+#define CROWN_PX ${IMPOSTOR_CROWN_PX.toFixed(1)}
+#define BODY_PX ${IMPOSTOR_BODY_PX.toFixed(1)}
+#define CELL_H ${(IMPOSTOR_CROWN_PX + IMPOSTOR_BODY_PX).toFixed(1)}
+
+void main() {
+  // Metres down from the card's top, in card widths: the crown section first, then the body tile.
+  float down = ( 1.0 - vCardUv.y ) * vCardSize.y / max( vCardSize.x, 1.0 );
+  float crownW = CROWN_PX / ( CELL_H / 8.0 );
+  float bodyW = BODY_PX / ( CELL_H / 8.0 );
+  // Pixel row in the cell, continuous (for the mip gradient) and wrapped (for the lookup).
+  float rowCont = down < crownW ? down / crownW * CROWN_PX : CROWN_PX + ( down - crownW ) / bodyW * BODY_PX;
+  float row = down < crownW ? rowCont : CROWN_PX + mod( rowCont - CROWN_PX, BODY_PX );
+  float column = mod( vVariant, CARD_COLUMNS );
+  float cellRow = floor( vVariant / CARD_COLUMNS );
+  vec2 uvCont = vec2( ( column + clamp( vCardUv.x, 0.01, 0.99 ) ) / CARD_COLUMNS, 1.0 - ( cellRow * CELL_H + rowCont ) / ( CELL_H * CARD_ROWS ) );
+  vec2 uv = vec2( uvCont.x, 1.0 - ( cellRow * CELL_H + row ) / ( CELL_H * CARD_ROWS ) );
+  // Gradients from the unwrapped coordinate: no smeared seam where the body tile repeats.
+  vec4 card = textureGrad( uAtlas, uv, dFdx( uvCont ), dFdy( uvCont ) );
+  if ( card.a < 0.5 ) discard;
+  float dim = vCardLayer < 1.5 ? uLayerDim.x : ( vCardLayer < 2.5 ? uLayerDim.y : uLayerDim.z );
+  float haze = vCardLayer < 1.5 ? uLayerHaze.x : ( vCardLayer < 2.5 ? uLayerHaze.y : uLayerHaze.z );
+  // Windows a little under the R15 boxes' level: on a card every lit window resolves as a dot.
+  vec3 color = vec3( 0.004, 0.005, 0.007 ) + card.rgb * 1.1 * dim * uEmissive;
+  gl_FragColor = vec4( color, 1.0 );
+${SKYRIVER_OUTPUT_APPLY_GLSL}
+  #include <fog_fragment>
+  #ifdef USE_FOG
+    // Deeper layers sink further into the haze than distance alone gives them.
+    gl_FragColor.rgb = mix( gl_FragColor.rgb, skyriverFogColor(), haze );
+  #endif
+}
+`;
+
+/** Card base altitude, metres: below every wall foot the haze hides; cards run from here to the top. */
+const IMPOSTOR_BASE_Y = -600;
+/**
+ * Far layers drawn as cards: this one and deeper. Layer 1, the nearest, stays box geometry — up close
+ * its haze-lit faces separate it from the layers behind, which a flat card loses.
+ */
+const IMPOSTOR_MIN_LAYER = 2;
+
+/** Two crossed unit quads (x in [-0.5, 0.5], y in [0, 1]): one along the canyon, one across it. */
+function buildCardGeometry(): THREE.BufferGeometry {
+  const geometry = new THREE.BufferGeometry();
+  const position = new Float32Array([
+    -0.5, 0, 0, 0.5, 0, 0, 0.5, 1, 0, -0.5, 1, 0,
+    0, 0, -0.5, 0, 0, 0.5, 0, 1, 0.5, 0, 1, -0.5,
+  ]);
+  const uv = new Float32Array([0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1]);
+  geometry.setAttribute('position', new THREE.BufferAttribute(position, 3));
+  geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  geometry.setIndex([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7]);
+  return geometry;
+}
 
 // --- trim shader ----------------------------------------------------------------------------------
 
@@ -1685,6 +2186,7 @@ void main() {
 `;
 
 const TRIM_FRAGMENT = /* glsl */ `
+#define EMISSIVE_GAIN ${SKYRIVER_EMISSIVE_GAIN.toFixed(4)}
 uniform float uTime;
 uniform vec3 uConcreteAmbient;
 uniform vec3 uWetTint;
@@ -1723,13 +2225,13 @@ void main() {
     + ( step( 4.5, vKind ) * ( 1.0 - step( 5.5, vKind ) ) );
   float lamp = 1.0 - smoothstep( 0.0, 0.12, abs( fract( run / 6.0 ) - 0.5 ) );
   float lampLive = step( 0.25, skyHash11( floor( run / 6.0 ) + vSeed * 83.0 ) );
-  color += vec3( 1.0, 0.68, 0.33 ) * ( isGantry * lamp * lampLive * 0.9 );
+  color += vec3( 1.0, 0.68, 0.33 ) * ( isGantry * lamp * lampLive * 0.9 * EMISSIVE_GAIN );
 
   // Antenna: a slow aircraft-warning beacon at the mast head.
   float isAntenna = 1.0 - step( 0.5, vKind );
   float head = smoothstep( 0.86, 1.0, vTrimLocal.y + 0.5 );
   float blink = 0.5 + 0.5 * sin( uTime * 1.9 + vSeed * 6.2831853 );
-  color += vec3( 1.0, 0.16, 0.12 ) * ( isAntenna * head * blink * 1.5 );
+  color += vec3( 1.0, 0.16, 0.12 ) * ( isAntenna * head * blink * 1.5 * EMISSIVE_GAIN );
 
   // Rib (3): darker recess shading toward the facade, a lit arris on the outer edge.
   float isRib = step( 2.5, vKind ) * ( 1.0 - step( 3.5, vKind ) );
@@ -1741,13 +2243,13 @@ void main() {
   float runLive = step( 0.35, skyHash11( floor( run / 22.0 ) + vSeed * 57.0 ) );
   vec3 bandLight = mix( vec3( 1.0, 0.72, 0.42 ), vec3( 0.55, 0.85, 1.0 ), step( 0.6, vSeed ) );
   float edge = smoothstep( 0.5, 0.36, abs( vTrimLocal.y ) ) * ( 1.0 - soffit );
-  color += bandLight * isBand * runLive * ( soffit * 0.55 + edge * 0.15 );
+  color += bandLight * isBand * runLive * ( soffit * 0.55 + edge * 0.15 ) * EMISSIVE_GAIN;
 
   // T7-4 balcony (7): a stained grime slab with a warm underlight here and there.
   float isBalcony = step( 6.5, vKind ) * ( 1.0 - step( 7.5, vKind ) );
   color = mix( color, vec3( 0.07, 0.05, 0.035 ) * ( 0.7 + 0.6 * grain ) + uConcreteAmbient * 0.15, isBalcony );
   float underLit = step( 0.72, skyHash11( floor( run / 7.0 ) + vSeed * 31.0 ) ) * step( vNormalW.y, -0.5 );
-  color += vec3( 1.0, 0.62, 0.3 ) * underLit * isBalcony * 0.5;
+  color += vec3( 1.0, 0.62, 0.3 ) * underLit * isBalcony * 0.5 * EMISSIVE_GAIN;
   // Railing (8): vertical bars every ~0.4 m and a top rail, painted on the thin rail box.
   float isRailing = step( 7.5, vKind ) * ( 1.0 - step( 8.5, vKind ) );
   float bars = step( 0.62, fract( run / 0.42 ) );
@@ -1757,7 +2259,7 @@ void main() {
   // R11 flood (9): emissive cool-white floodlight strip, pulsing slowly at the spire tip.
   float isFlood = step( 8.5, vKind );
   float tip = smoothstep( 0.85, 1.0, vTrimLocal.y + 0.5 ) * step( 100.0, vSizeM.y );
-  color = mix( color, vec3( 0.75, 0.85, 1.05 ) * ( 1.0 + 0.5 * step( 50.0, vSizeM.y ) ) * ( 0.85 + 0.15 * sin( uTime * 1.3 + vSeed * 6.28 ) ) + vec3( 3.0, 0.4, 0.3 ) * tip * ( 0.5 + 0.5 * sin( uTime * 2.0 ) ), isFlood );
+  color = mix( color, ( vec3( 0.75, 0.85, 1.05 ) * ( 1.0 + 0.5 * step( 50.0, vSizeM.y ) ) * ( 0.85 + 0.15 * sin( uTime * 1.3 + vSeed * 6.28 ) ) + vec3( 3.0, 0.4, 0.3 ) * tip * ( 0.5 + 0.5 * sin( uTime * 2.0 ) ) ) * EMISSIVE_GAIN, isFlood );
 
   // Skybridge (6): a dark mass with a ribbon of cold windows on each side and blue underlights.
   float isBridge = step( 5.5, vKind ) * ( 1.0 - step( 6.5, vKind ) );
@@ -1765,9 +2267,9 @@ void main() {
   float ribbon = smoothstep( 0.12, 0.08, abs( vTrimLocal.y - 0.05 ) );
   float pane = step( 0.3, fract( run / 4.0 ) ) * step( 0.3, skyHash11( floor( run / 4.0 ) + vSeed * 19.0 ) );
   color = mix( color, color * 0.55, isBridge );
-  color += vec3( 0.72, 0.86, 1.0 ) * ( isBridge * sideFace * ribbon * pane * 1.1 );
+  color += vec3( 0.72, 0.86, 1.0 ) * ( isBridge * sideFace * ribbon * pane * 1.1 * EMISSIVE_GAIN );
   float under = step( vNormalW.y, -0.5 ) * ( 1.0 - smoothstep( 0.0, 0.1, abs( fract( run / 12.0 ) - 0.5 ) ) );
-  color += vec3( 0.3, 0.6, 1.0 ) * ( isBridge * under * 1.4 );
+  color += vec3( 0.3, 0.6, 1.0 ) * ( isBridge * under * 1.4 * EMISSIVE_GAIN );
 
   gl_FragColor = vec4( max( color, vec3( 0.0 ) ), 1.0 );
 
@@ -1834,6 +2336,7 @@ void main() {
 `;
 
 const SIGN_FRAGMENT = /* glsl */ `
+#define EMISSIVE_GAIN ${SKYRIVER_EMISSIVE_GAIN.toFixed(4)}
 uniform float uTime;
 uniform float uIntensity;
 uniform float uHalo;
@@ -1961,7 +2464,7 @@ void main() {
   #else
     float signNear = 1.0;
   #endif
-  vec3 color = ( hot * mask * angle * uIntensity + vSignColor * ( plate + halo * uHalo * 0.85 ) ) * signNear;
+  vec3 color = ( hot * mask * angle * uIntensity + vSignColor * ( plate + halo * uHalo * 0.85 ) ) * signNear * EMISSIVE_GAIN;
   gl_FragColor = vec4( color * flicker, 1.0 );
 
   #include <tonemapping_fragment>
@@ -2022,8 +2525,14 @@ export class SkyriverCity {
   readonly towerMesh: THREE.InstancedMesh;
   readonly trimMesh: THREE.InstancedMesh;
   readonly signMesh: THREE.Mesh;
+  /** R16: the far-city layers as impostor cards (one call). */
+  readonly impostorMesh: THREE.InstancedMesh;
 
   private readonly towerMaterial: THREE.ShaderMaterial;
+  private readonly impostorMaterial: THREE.ShaderMaterial;
+  private readonly impostorAtlas: ImpostorAtlas;
+  /** R16 A/B: far layers as cards ('impostor', default) or as R15's box masses ('geometry'). */
+  private farMode: 'impostor' | 'geometry' = 'impostor';
   private readonly trimMaterial: THREE.ShaderMaterial;
   private readonly signMaterial: THREE.ShaderMaterial;
   private readonly signGeometry: THREE.InstancedBufferGeometry;
@@ -2044,7 +2553,8 @@ export class SkyriverCity {
 
     // T6R contrast: near-black concrete against the luminous haze (atmosphere.ts).
     // T6R-2: albedo crushed further toward black; the haze, signs and edges carry the read.
-    const concreteAmbient = new THREE.Color(0x020305);
+    // R16 ambient III: 0x020305 -> 0x010204.
+    const concreteAmbient = new THREE.Color(0x010204);
     const wetTint = new THREE.Color(0x567ba3);
 
     // --- towers -----------------------------------------------------------------------------------
@@ -2101,7 +2611,8 @@ export class SkyriverCity {
         uCellHeight: { value: SKYRIVER_CITY.windowCellHeightM },
         uRibSpacing: { value: SKYRIVER_CITY.ribSpacingM },
         uProjScale: { value: 400 },
-        uConcreteLevel: { value: 0.011 },
+        // R16 ambient III: 0.011 -> 0.008.
+        uConcreteLevel: { value: 0.008 },
         uConcreteAmbient: { value: concreteAmbient },
         uWetTint: { value: wetTint },
         uInterior: { value: this.interiorAtlas.texture },
@@ -2134,7 +2645,7 @@ export class SkyriverCity {
       fragmentShader: TRIM_FRAGMENT,
       uniforms: {
         uTime: { value: 0 },
-        uConcreteLevel: { value: 0.04 },
+        uConcreteLevel: { value: 0.03 },
         uConcreteAmbient: { value: concreteAmbient },
         uWetTint: { value: wetTint },
         ...skyriverFogUniforms(),
@@ -2180,9 +2691,45 @@ export class SkyriverCity {
     this.signMesh.renderOrder = 4;
     this.group.add(this.signMesh);
 
+    // --- R16 far-city impostor cards --------------------------------------------------------------
+    this.impostorAtlas = createImpostorAtlas();
+    this.impostorMaterial = new THREE.ShaderMaterial({
+      name: 'skyriver.city.impostors',
+      vertexShader: IMPOSTOR_VERTEX,
+      fragmentShader: IMPOSTOR_FRAGMENT,
+      uniforms: {
+        uAtlas: { value: this.impostorAtlas.texture },
+        // The R15 per-layer dims, plus extra haze for the deeper two.
+        uLayerDim: { value: new THREE.Vector3(0.6, 0.34, 0.18) },
+        uLayerHaze: { value: new THREE.Vector3(0.0, 0.12, 0.25) },
+        uEmissive: { value: SKYRIVER_EMISSIVE_GAIN },
+        ...skyriverFogUniforms(),
+      },
+      side: THREE.DoubleSide,
+      fog: true,
+    });
+    const far = deriveFarTowers(layout).filter((f) => f.layer >= IMPOSTOR_MIN_LAYER);
+    this.impostorMesh = new THREE.InstancedMesh(buildCardGeometry(), this.impostorMaterial, Math.max(far.length, 1));
+    this.impostorMesh.name = 'skyriver.city.impostors';
+    this.writeImpostors(far);
+    this.impostorMesh.frustumCulled = false;
+    this.group.add(this.impostorMesh);
+
     applySkyriverFog(this.towerMaterial);
     applySkyriverFog(this.trimMaterial);
     applySkyriverFog(this.signMaterial);
+    applySkyriverFog(this.impostorMaterial);
+  }
+
+  /**
+   * R16 A/B (and the geometry-vs-impostor cost measurement): draw the far layers as cards (default)
+   * or as R15's box masses in the tower batch.
+   */
+  setFarMode(mode: 'impostor' | 'geometry'): void {
+    if (mode === this.farMode) return;
+    this.farMode = mode;
+    this.impostorMesh.visible = mode === 'impostor';
+    this.writeTowers();
   }
 
   /**
@@ -2255,8 +2802,8 @@ export class SkyriverCity {
       towers: this.towerMesh.count,
       trims: this.trimMesh.count,
       signs: this.signGeometry.instanceCount,
-      meshes: 3,
-      drawCalls: 3,
+      meshes: 4,
+      drawCalls: this.impostorMesh.visible ? 4 : 3,
       drawCallBudget: SKYRIVER_CITY_DRAW_CALL_BUDGET,
     };
   }
@@ -2270,8 +2817,34 @@ export class SkyriverCity {
     this.signMaterial.dispose();
     this.atlas.dispose();
     this.interiorAtlas.dispose();
+    this.impostorMesh.geometry.dispose();
+    this.impostorMaterial.dispose();
+    this.impostorAtlas.dispose();
     this.towerMesh.dispose();
     this.trimMesh.dispose();
+    this.impostorMesh.dispose();
+  }
+
+  private writeImpostors(far: readonly SkyriverFarTower[]): void {
+    const matrix = new THREE.Matrix4();
+    const cards = new Float32Array(Math.max(far.length, 1) * 4);
+    for (let i = 0; i < far.length; i += 1) {
+      const f = far[i]!;
+      warpCanyon(f.x, f.v, warp);
+      quaternion.setFromAxisAngle(UP, warp.heading);
+      position.set(warp.x, IMPOSTOR_BASE_Y, warp.z);
+      scale.set(f.width, f.top - IMPOSTOR_BASE_Y, f.width);
+      matrix.compose(position, quaternion, scale);
+      this.impostorMesh.setMatrixAt(i, matrix);
+      const range = f.shape === 2 ? IMPOSTOR_SPIRE : f.shape === 1 ? IMPOSTOR_CAP : IMPOSTOR_FLAT;
+      const h = hash1(f.x * 0.0131 + f.v * 0.0071 + f.layer * 1.7);
+      cards[i * 4] = range[0] + Math.floor(h * (range[1] - range[0]));
+      cards[i * 4 + 1] = f.layer;
+      cards[i * 4 + 2] = hash1(h * 91.7 + 3.1) < 0.5 ? 1 : 0;
+    }
+    this.impostorMesh.count = far.length;
+    this.impostorMesh.instanceMatrix.needsUpdate = true;
+    this.impostorMesh.geometry.setAttribute('aCard', new THREE.InstancedBufferAttribute(cards, 4));
   }
 
   // --- internals ----------------------------------------------------------------------------------
@@ -2286,12 +2859,18 @@ export class SkyriverCity {
     const sizes = new Float32Array(slots * 3);
     const layers = new Float32Array(slots);
 
-    for (let i = 0; i < masses.length; i += 1) {
-      const mass = masses[i]!;
+    const buildings = new Float32Array(slots);
+    let i = 0;
+    for (let m = 0; m < masses.length; m += 1) {
+      const mass = masses[m]!;
+      // R16: in impostor mode the far layers are cards (writeImpostors), not boxes.
+      if (this.farMode === 'impostor' && (mass.layer ?? 0) >= IMPOSTOR_MIN_LAYER) continue;
       layers[i] = mass.layer ?? 0;
+      // R16 interior culture: one seed per building (its slab, tiers, crowns and annexes share it).
+      buildings[i] = mass.building ?? buildingSeedOf(mass.x, mass.z);
       // T7-3: canyon space -> the winding loop. Each box keeps its shape, placed at its warped centre
-      // and turned to the local canyon heading.
-      warpCanyon(mass.x, mass.z, warp);
+      // and turned to the local canyon heading. R16: tiers and annexes ride their slab's frame.
+      warpRigid(mass.x, mass.z, mass.anchorV ?? mass.z, warp);
       quaternion.setFromAxisAngle(UP, warp.heading);
       position.set(warp.x, mass.y0 + mass.height * 0.5, warp.z);
       scale.set(mass.width, mass.height, mass.depth);
@@ -2308,15 +2887,17 @@ export class SkyriverCity {
       sizes[i * 3 + 2] = mass.depth;
 
       // Seeded off the layout, not off a fresh stream: same seed, same facades, on every peer.
-      seeds[i] = hash1(mass.x * 0.173 + mass.z * 0.0411 + mass.height * 0.0017 + i * 0.37);
+      seeds[i] = hash1(mass.x * 0.173 + mass.z * 0.0411 + mass.height * 0.0017 + m * 0.37);
+      i += 1;
     }
 
-    this.towerMesh.count = masses.length;
+    this.towerMesh.count = i;
     this.towerMesh.instanceMatrix.needsUpdate = true;
     this.towerMesh.geometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seeds, 1));
     this.towerMesh.geometry.setAttribute('aTint', new THREE.InstancedBufferAttribute(tints, 3));
     this.towerMesh.geometry.setAttribute('aSize', new THREE.InstancedBufferAttribute(sizes, 3));
     this.towerMesh.geometry.setAttribute('aLayer', new THREE.InstancedBufferAttribute(layers, 1));
+    this.towerMesh.geometry.setAttribute('aBuilding', new THREE.InstancedBufferAttribute(buildings, 1));
     // Culling off keeps the draw-call count fixed, which is what the A3 smoke test asserts.
     this.towerMesh.frustumCulled = false;
   }
@@ -2345,33 +2926,25 @@ export class SkyriverCity {
       return false;
     };
     let drawn = 0;
-    const megaAnchors = megaAnchorCache.get(this.layout.seed) ?? [];
+    const placed: SkyriverTrimPlacement = { x: 0, z: 0, heading: 0, length: 0 };
     for (let i = 0; i < count; i += 1) {
       if (blocksHero(i)) continue;
-      const anchor = kind[i] === SKYRIVER_TRIM_FLOOD
-        ? megaAnchors.reduce<{ x: number; v: number } | null>((best, a) => (best === null || Math.abs(a.v - cz[i]!) < Math.abs(best.v - cz[i]!) ? a : best), null)
-        : null;
-      if (anchor !== null) {
-        warpCanyon(anchor.x, anchor.v, warp);
-        const dx = cx[i]! - anchor.x;
-        const dz = cz[i]! - anchor.v;
-        const sinH = Math.sin(warp.heading);
-        const cosH = Math.cos(warp.heading);
-        quaternion.setFromAxisAngle(UP, warp.heading);
-        position.set(warp.x + dx * cosH + dz * sinH, cy[i]!, warp.z - dx * sinH + dz * cosH);
-      } else {
-        warpCanyon(cx[i]!, cz[i]!, warp);
-        quaternion.setFromAxisAngle(UP, warp.heading);
-        position.set(warp.x, cy[i]!, warp.z);
-      }
-      scale.set(sx[i]!, sy[i]!, sz[i]!);
+      // R16: rigid in the owner's frame (spans: each end on its own building). See placeTrim.
+      placeTrim(this.trims, i, placed);
+      quaternion.setFromAxisAngle(UP, placed.heading);
+      position.set(placed.x, cy[i]!, placed.z);
+      const alongSpan = placed.length > 0 && sz[i]! >= sx[i]!;
+      const acrossSpan = placed.length > 0 && sx[i]! > sz[i]!;
+      const ex = acrossSpan ? placed.length : sx[i]!;
+      const ez = alongSpan ? placed.length : sz[i]!;
+      scale.set(ex, sy[i]!, ez);
       matrix.compose(position, quaternion, scale);
       this.trimMesh.setMatrixAt(drawn, matrix);
       seeds[drawn] = seedValue[i]!;
       kinds[drawn] = kind[i]!;
-      sizes[drawn * 3] = sx[i]!;
+      sizes[drawn * 3] = ex;
       sizes[drawn * 3 + 1] = sy[i]!;
-      sizes[drawn * 3 + 2] = sz[i]!;
+      sizes[drawn * 3 + 2] = ez;
       drawn += 1;
     }
     this.trimMesh.count = drawn;
@@ -2432,7 +3005,9 @@ export class SkyriverCity {
         warp.x += dx * cosH + dz * sinH;
         warp.z += -dx * sinH + dz * cosH;
       } else {
-        warpCanyon(cx[i]!, cz[i]!, warp);
+        // R16: a facade sign rides its tower's frame (see placeTrim); hero signs keep their own.
+        const mount = this.signs.owner[i];
+        warpRigid(cx[i]!, cz[i]!, mount ? mount.anchorV : cz[i]!, warp);
       }
       warpDirection(nx[i]!, nz[i]!, warp.heading, direction);
       centres[i * 3] = warp.x;
