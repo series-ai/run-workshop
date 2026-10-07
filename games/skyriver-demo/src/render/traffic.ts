@@ -60,7 +60,7 @@ import {
   skyriverFogUniforms,
 } from './atmosphere';
 import { CANYON_LOOP_LENGTH_M, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
-import { routeAltitude, routeLateral, routeLateralSlope } from './routeProfile';
+import { routeAltitude, routeLateral } from './routeProfile';
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
 import type {
   SkyriverTraffic,
@@ -141,28 +141,41 @@ const SPEED_SCALE = 1.3;
 /** Chase band: cars streaming past the shuttle within a window around it. */
 /** T7-4: more and bigger neighbours, so passing them reads as passing cars. */
 const CHASE_COUNT = 110;
-const CHASE_SIZE_MIN = 2.6;
-const CHASE_SIZE_SPAN = 1.2;
+const CHASE_SIZE_MIN = 3.2;
+const CHASE_SIZE_SPAN = 1.4;
 const CHASE_WINDOW_M = 1400;
 const CHASE_FADE_M = 160;
 /**
- * T7-5 flow lanes (cycle-5 prescription): mid-distance traffic organised into four streams that
- * follow the route spline itself, so they wind with the canyon and the sightline. Every lane sits
- * level with or above the route and off its line (a stream under the shuttle reads as a road
- * marking), and splays slowly in offset and height along the loop so no two run parallel.
- * [lateral m, lift m, direction, splay phase]
+ * R11 established traffic patterns. Cars belong to STREAMS — flight corridors, not drawn lanes:
+ * each stream holds one direction around the city on its own altitude shelf, follows the canyon's
+ * winding (it lives in canyon space), meanders slowly across the corridor and wobbles ±10-20 m in
+ * height, and carries its cars in 2-4 loose sub-rows. Density pulses along it (clumps and gaps,
+ * like real traffic). Stream pairs swap shelves at three interchanges, where they cross at distinct
+ * altitudes (merge/branch points). Each car holds the stream's heading with a small personal jink,
+ * surges ±40 m around its clump (speed varies inside the stream's band) and drifts a few metres in
+ * its row. The pattern is carried by the flow, not by geometry: no crisp rows, no even spacing.
+ * [x across, shelf y, direction, sub-rows, width m, speed m/s, meander m, wobble m, pulses, share]
  */
-const LANES: readonly (readonly [number, number, number, number])[] = Object.freeze([
-  [-215, 95, 1, 0.0],
-  [205, 150, -1, 1.9],
-  [-80, 250, -1, 3.7],
-  [260, 30, 1, 5.1],
+const STREAMS: readonly (readonly number[])[] = Object.freeze([
+  [-230, 560, 1, 4, 95, 60, 70, 14, 9, 0.17],   // freight, low
+  [210, 780, -1, 2, 26, 170, 45, 12, 15, 0.09],  // express
+  [-140, 1060, 1, 3, 52, 105, 60, 18, 12, 0.13], // standard
+  [250, 1320, -1, 3, 48, 115, 55, 16, 11, 0.13], // standard
+  [-275, 1620, 1, 2, 24, 180, 40, 10, 16, 0.09], // express
+  [-300, 1900, -1, 4, 100, 65, 60, 20, 8, 0.15], // freight, high
+  [190, 2240, 1, 3, 52, 110, 50, 15, 10, 0.12],  // standard, pristine
+  [130, 400, -1, 3, 60, 95, 65, 14, 12, 0.12],   // standard, grime
 ]);
-const LANE_SHARE = 0.34;
-const LANE_SPLAY_M = 70;
-const LANE_SPLAY_LIFT_M = 55;
-const LANE_JITTER_X_M = 13;
-const LANE_JITTER_Y_M = 8;
+/** Interchanges: [stream a, stream b, v] — the pair swaps shelves (and sides) through a 1.1 km ramp. */
+const INTERCHANGES: readonly (readonly [number, number, number])[] = Object.freeze([
+  [0, 7, -4100], [2, 3, 1500], [4, 5, 4800],
+]);
+const INTERCHANGE_RAMP_M = 1100;
+const STREAM_SHARE = 0.85;
+const CHASE_STREAM_SHARE = 0.8;
+const SURGE_M = 40;
+/** Personal jink: heading wobble amplitude, radians (~3 degrees). */
+const JINK_RAD = 0.055;
 
 /** Escort streaks are this fraction of a car's. */
 const ESCORT_STREAK_SCALE = 0.5;
@@ -417,12 +430,14 @@ function pushDome(
 }
 
 /** Emissive patch colours. Values near 1 read as lights against the dim hull shades at night. */
-const HEADLIGHT_R = 0.86;
-const HEADLIGHT_G = 0.95;
-const HEADLIGHT_B = 1;
-const TAILLIGHT_R = 1;
-const TAILLIGHT_G = 0.22;
-const TAILLIGHT_B = 0.18;
+// R11: HDR lamp bars — above the bloom threshold, so a near car reads as a dark body with one hot
+// light bar (the streak lamp dots fade out up close; far away only the lamp pairs remain).
+const HEADLIGHT_R = 2.0;
+const HEADLIGHT_G = 2.15;
+const HEADLIGHT_B = 2.3;
+const TAILLIGHT_R = 4.0;
+const TAILLIGHT_G = 0.3;
+const TAILLIGHT_B = 0.2;
 const SIGN_R = 1;
 const SIGN_G = 0.72;
 const SIGN_B = 0.2;
@@ -448,8 +463,7 @@ function buildCab(): MeshBuild {
 
   pushLightPatch(build, 0.56, -0.04, 2.61, 0.5, 0.3, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
   pushLightPatch(build, -0.56, -0.04, 2.61, 0.5, 0.3, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
-  pushLightPatch(build, 0.62, 0.1, -2.21, 0.46, 0.26, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
-  pushLightPatch(build, -0.62, 0.1, -2.21, 0.46, 0.26, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  pushLightPatch(build, 0, 0.1, -2.21, 1.75, 0.2, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
 
   return build;
 }
@@ -526,8 +540,7 @@ function buildInterceptor(): MeshBuild {
     0, -2, -1.8, r * 0.9, g * 0.9, b * 0.9);
 
   pushLightPatch(build, 0, 0.06, 3.14, 0.9, 0.12, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
-  pushLightPatch(build, 0.52, -0.02, -2.97, 0.32, 0.32, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
-  pushLightPatch(build, -0.52, -0.02, -2.97, 0.32, 0.32, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  pushLightPatch(build, 0, -0.02, -2.97, 1.4, 0.16, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
 
   return build;
 }
@@ -565,8 +578,7 @@ function buildVan(): MeshBuild {
   pushBox(build, -1.2, -0.45, -0.4, 0.3, 0.45, 2.6, 0.15, 0.15, 0.16);
   pushLightPatch(build, 0.7, -0.1, 2.31, 0.45, 0.25, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
   pushLightPatch(build, -0.7, -0.1, 2.31, 0.45, 0.25, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
-  pushLightPatch(build, 0.85, 0.6, -2.11, 0.3, 0.9, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
-  pushLightPatch(build, -0.85, 0.6, -2.11, 0.3, 0.9, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  pushLightPatch(build, 0, 1.05, -2.11, 1.9, 0.18, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
   return build;
 }
 
@@ -600,7 +612,7 @@ function buildBus(): MeshBuild {
       side * 1.215, 0.15, 3.3,
       side * 1.215, 0.6, 3.3,
       side * 1.215, 0.6, -3.5,
-      0, 0.3, 0, 0.95, 0.72, 0.42);
+      0, 0.3, 0, 2.2, 1.5, 0.75);
   }
   pushLightPatch(build, 0.75, -0.3, 4.12, 0.5, 0.3, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
   pushLightPatch(build, -0.75, -0.3, 4.12, 0.5, 0.3, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
@@ -688,6 +700,8 @@ void main() {
   // T7: the red tail trail reads from almost any angle (a long-exposure streak); the white head
   // lamp only toward the front, so crossing rivers read as red ribbons with white oncoming points.
   vIntensity = aCarFade.x * ( head ? smoothstep( 0.1, 0.7, facing ) : smoothstep( -0.85, 0.3, facing ) );
+  // R11: up close the body's own lamp bar carries the read; the dot pair fades in with distance.
+  vIntensity *= smoothstep( 140.0, 300.0, length( cameraPosition - lamp ) );
 
   #ifdef USE_FOG
     vFogDepth = - v.z;
@@ -831,8 +845,10 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const carClimbW = new Float32Array(maxCarCount);
   const carClimbP = new Float32Array(maxCarCount);
   const sizeScale = new Float32Array(maxCarCount);
-  /** T7-5: lane index per car, or 255 for the free volume. */
-  const carLane = new Uint8Array(maxCarCount).fill(255);
+  /** R11: stream index per car, or 255 for a free floater. Chase cars use it as a nearest-stream rank. */
+  const carStream = new Uint8Array(maxCarCount).fill(255);
+  const carRow = new Float32Array(maxCarCount);
+  const shareCumulative = STREAMS.reduce<number[]>((acc, st) => { acc.push((acc[acc.length - 1] ?? 0) + st[9]!); return acc; }, []);
   const tintR = new Float32Array(maxCarCount);
   const tintG = new Float32Array(maxCarCount);
   const tintB = new Float32Array(maxCarCount);
@@ -863,31 +879,50 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     const chase = car >= ESCORT_COUNT && car < ESCORT_COUNT + CHASE_COUNT;
     carDirection[car] = h(0x11) < (chase ? 0.3 : 0.5) ? -1 : 1;
     if (chase) {
-      // Chase band: lateral/vertical offsets from the shuttle, kept off its own line.
-      let lateral = (h(0x21) * 2 - 1) * 175;
-      let lift = (h(0x22) * 2 - 1) * 70;
-      if (Math.abs(lateral) < 35 && Math.abs(lift) < 20) lift = Math.sign(lift || 1) * (20 + h(0x23) * 30);
-      if (lift < -10 && Math.abs(lateral) < 110) lateral = Math.sign(lateral || 1) * (110 + h(0x24) * 100);
-      carHomeX[car] = lateral;
-      carHomeY[car] = lift;
-      // Same-direction cars are slower than the shuttle, so it overtakes them; oncoming ones rush by.
-      carSpeed[car] = carDirection[car] > 0 ? 90 + h(0x25) * 110 : 60 + h(0x25) * 80;
-    } else {
-      if (h(0x41) < LANE_SHARE) {
-        const lane = Math.min(LANES.length - 1, Math.floor(h(0x42) * LANES.length));
-        carLane[car] = lane;
-        carDirection[car] = LANES[lane]![2]!;
-        // In-lane jitter: a stream, not a rail.
-        carHomeX[car] = (h(0x21) * 2 - 1) * LANE_JITTER_X_M;
-        carHomeY[car] = (h(0x22) * 2 - 1) * LANE_JITTER_Y_M;
-        carSpeed[car] = 70 + h(0x25) * 90;
+      // Chase band: mostly members of the streams nearest the shuttle (rank 0 or 1, re-picked each
+      // frame), the rest free floaters at offsets kept off the shuttle's own line.
+      if (h(0x41) < CHASE_STREAM_SHARE) {
+        carStream[car] = h(0x42) < 0.65 ? 0 : 1;
+        carRow[car] = h(0x43);
+        carHomeX[car] = (h(0x21) * 2 - 1);
+        carHomeY[car] = (h(0x22) * 2 - 1);
+        carSpeed[car] = 0;
       } else {
-        carHomeX[car] = (h(0x21) * 2 - 1) * CAR_CORRIDOR_HALF_M;
-        carHomeY[car] = CAR_MIN_Y_M + Math.pow(h(0x22), 0.9) * (CAR_MAX_Y_M - CAR_MIN_Y_M);
-        carSpeed[car] = Math.abs(params.speed[car]!) * SPEED_SCALE * (0.8 + 0.4 * h(0x25));
+        let lateral = (h(0x21) * 2 - 1) * 175;
+        let lift = (h(0x22) * 2 - 1) * 70;
+        if (Math.abs(lateral) < 35 && Math.abs(lift) < 20) lift = Math.sign(lift || 1) * (20 + h(0x23) * 30);
+        if (lift < -10 && Math.abs(lateral) < 110) lateral = Math.sign(lateral || 1) * (110 + h(0x24) * 100);
+        carHomeX[car] = lateral;
+        carHomeY[car] = lift;
+        carSpeed[car] = carDirection[car] > 0 ? 90 + h(0x25) * 110 : 60 + h(0x25) * 80;
       }
+    } else if (h(0x41) < STREAM_SHARE) {
+      const pick = h(0x42) * shareCumulative[shareCumulative.length - 1]!;
+      let stream = 0;
+      while (stream < STREAMS.length - 1 && shareCumulative[stream]! <= pick) stream += 1;
+      const st = STREAMS[stream]!;
+      carStream[car] = stream;
+      carDirection[car] = st[2]!;
+      carRow[car] = h(0x43);
+      carHomeX[car] = (h(0x21) * 2 - 1);
+      carHomeY[car] = (h(0x22) * 2 - 1);
+      carSpeed[car] = st[5]!;
+    } else {
+      carHomeX[car] = (h(0x21) * 2 - 1) * CAR_CORRIDOR_HALF_M;
+      carHomeY[car] = CAR_MIN_Y_M + Math.pow(h(0x22), 0.9) * (CAR_MAX_Y_M - CAR_MIN_Y_M);
+      carSpeed[car] = Math.abs(params.speed[car]!) * SPEED_SCALE * (0.8 + 0.4 * h(0x25));
     }
     carPhase[car] = params.phase[car]!;
+    if (carStream[car] !== 255 && !chase) {
+      // Density pulses: squeeze the phase into clumps of varying fill, one set per stream.
+      const st = STREAMS[carStream[car]!]!;
+      const pulses = st[8]!;
+      const slot = carPhase[car]! * pulses;
+      const pulse = Math.floor(slot);
+      const fill = 0.22 + 0.4 * hash01(carStream[car]! * 97 + pulse, 0x9a11);
+      const offset = hash01(carStream[car]! * 131 + pulse, 0x9a12) * (1 - fill);
+      carPhase[car] = (pulse + offset + Math.pow(slot - pulse, 0.8) * fill) / pulses;
+    }
     carDriftA[car] = DRIFT_MIN_M + h(0x31) * DRIFT_SPAN_M;
     carDriftW[car] = 0.05 + h(0x32) * 0.13;
     carDriftP[car] = h(0x33) * TAU;
@@ -1015,6 +1050,31 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
 
   const invDimRangeSq = 1 / (DISTANCE_DIM_RANGE_M * DISTANCE_DIM_RANGE_M);
 
+  // ---- R11 stream geometry: centre (x across, y) of stream k at canyon arc length v.
+  const streamScratch = new Float64Array(2);
+  const streamRank = [0, 1, 2, 3, 4, 5, 6, 7].slice(0, STREAMS.length);
+  const streamRankDist = new Float64Array(STREAMS.length);
+  function swapWeight(v: number, at: number): number {
+    let d = (v - at) % CANYON_LOOP_LENGTH_M;
+    if (d < 0) d += CANYON_LOOP_LENGTH_M;
+    const half = CANYON_LOOP_LENGTH_M * 0.5;
+    return smoothstep(0, INTERCHANGE_RAMP_M, d) * (1 - smoothstep(half, half + INTERCHANGE_RAMP_M, d));
+  }
+  function streamCentre(k: number, v: number, out: Float64Array): void {
+    const st = STREAMS[k]!;
+    let x = st[0]!;
+    let y = st[1]!;
+    for (const [a, b, at] of INTERCHANGES) {
+      if (k !== a && k !== b) continue;
+      const partner = STREAMS[k === a ? b : a]!;
+      const w = swapWeight(v, at);
+      x += (partner[0]! - x) * w;
+      y += (partner[1]! - y) * w;
+    }
+    out[0] = x + st[6]! * Math.sin((TAU * v) / (1800 + k * 230) + k * 1.3);
+    out[1] = y + st[7]! * Math.sin((TAU * v) / (1300 + k * 170) + k * 2.1);
+  }
+
   function setQuality(quality: TrafficQuality): void {
     assertQuality(quality, maxCarCount);
     if (quality.thrusterBudget > streakCapacity) fail('SKYRIVER_TRAFFIC_TIER_GLOW_OVER_CAPACITY');
@@ -1041,6 +1101,15 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     const camY = camera.y;
     const camZ = camera.z;
     streaksUsed = 0;
+    // Chase cars join the streams nearest the shuttle: rank the stream shelves by height at its v.
+    if (anchorValid) {
+      for (let k = 0; k < STREAMS.length; k += 1) {
+        streamCentre(k, anchor[6]!, streamScratch);
+        streamRankDist[k] = Math.abs(streamScratch[1]! - anchor[1]!) + Math.abs(streamScratch[0]! - anchor[7]!) * 0.3;
+        streamRank[k] = k;
+      }
+      streamRank.sort((a, b) => streamRankDist[a]! - streamRankDist[b]!);
+    }
 
     for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
       const group = groupCars[archetype];
@@ -1050,8 +1119,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
 
       for (let slot = 0; slot < active; slot += 1) {
         const car = group[slot];
-        const direction = carDirection[car]!;
-        const speed = carSpeed[car]!;
+        let direction = carDirection[car]!;
+        let speed = carSpeed[car]!;
         let fade = 1;
         let streakSpeed = speed;
         let bank = 0;
@@ -1095,9 +1164,43 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           let x: number;
           let y: number;
           const isChase = car < ESCORT_COUNT + CHASE_COUNT && anchorValid;
-          let laneSlope = 0;
-          if (isChase) {
-            // Absolute motion along the canyon, wrapped into a window that travels with the shuttle.
+          let streamSlope = 0;
+          let inStream = false;
+          let jink = 0;
+          if (carStream[car]! !== 255 && (anchorValid || !isChase)) {
+            // Stream member: the stream sets direction, speed band, shelf and corridor.
+            inStream = true;
+            const k = isChase ? streamRank[carStream[car]!]! : carStream[car]!;
+            const st = STREAMS[k]!;
+            direction = st[2]!;
+            speed = st[5]! * (0.9 + 0.2 * carRow[car]!);
+            const surgeArg = t * (0.3 + 0.25 * carRow[car]!) + carPhase[car]! * 97.0;
+            const surge = SURGE_M * Math.sin(surgeArg);
+            if (isChase) {
+              const absolute = carPhase[car]! * CHASE_WINDOW_M + direction * speed * t + surge;
+              let rel = (absolute - anchor[6]! + CHASE_WINDOW_M * 0.5) % CHASE_WINDOW_M;
+              if (rel < 0) rel += CHASE_WINDOW_M;
+              rel -= CHASE_WINDOW_M * 0.5;
+              fade = smoothstep(0, CHASE_FADE_M, CHASE_WINDOW_M * 0.5 - Math.abs(rel));
+              v = anchor[6]! + rel;
+            } else {
+              v = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * st[5]! * t + surge;
+            }
+            streamCentre(k, v, streamScratch);
+            const cx = streamScratch[0]!;
+            const cy = streamScratch[1]!;
+            streamCentre(k, v + 4, streamScratch);
+            streamSlope = (streamScratch[0]! - cx) / 4;
+            const rows = st[3]!;
+            const rowIndex = Math.min(rows - 1, Math.floor(carRow[car]! * rows));
+            const spacing = st[4]! / Math.max(1, rows - 1);
+            const rowOffset = (rowIndex - (rows - 1) / 2) * spacing;
+            x = clamp(cx + rowOffset + carHomeX[car]! * spacing * 0.3 + 3 * Math.sin(driftArg),
+              -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
+            y = cy + (rowIndex % 2 === 0 ? -3 : 3) + carHomeY[car]! * 3 + 2 * Math.sin(climbArg);
+            jink = JINK_RAD * Math.sin(t * (0.5 + 0.4 * carRow[car]!) + carPhase[car]! * 53.0);
+          } else if (isChase) {
+            // Free floater near the shuttle.
             const absolute = carPhase[car]! * CHASE_WINDOW_M + direction * speed * t;
             let rel = (absolute - anchor[6]! + CHASE_WINDOW_M * 0.5) % CHASE_WINDOW_M;
             if (rel < 0) rel += CHASE_WINDOW_M;
@@ -1106,14 +1209,6 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
             v = anchor[6]! + rel;
             x = clamp(routeLateral(v) + carHomeX[car]! + drift * 0.6, -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
             y = routeAltitude(v) + carHomeY[car]! + climb * 0.6;
-          } else if (carLane[car]! !== 255) {
-            const lane = LANES[carLane[car]!]!;
-            v = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * speed * t;
-            const splay = Math.sin(v / 1700 + lane[3]!);
-            x = clamp(routeLateral(v) + lane[0]! + LANE_SPLAY_M * splay + carHomeX[car]! + drift * 0.15,
-              -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
-            y = routeAltitude(v) + lane[1]! + LANE_SPLAY_LIFT_M * Math.sin(v / 1300 + lane[3]! * 1.7) + carHomeY[car]! + climb * 0.2;
-            laneSlope = routeLateralSlope(v);
           } else {
             v = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * speed * t;
             x = clamp(carHomeX[car]! + drift, -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
@@ -1125,14 +1220,17 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           pz = carWarp.z;
           // Velocity in canyon space (across, along), then turned to world.
           const along = direction * speed;
-          const vx = carLane[car]! !== 255 ? laneSlope * along : driftRate;
+          const vx = inStream ? (streamSlope + Math.tan(jink)) * along : driftRate;
+          if (inStream) streakSpeed = speed;
           warpDirection(vx, along, carWarp.heading, carDir);
           const horizontal = Math.hypot(carDir.x, carDir.z) || 1;
           fx = carDir.x / horizontal;
           fz = carDir.z / horizontal;
-          fy = climbRate / Math.max(20, speed);
-          // Bank into the drift: lateral acceleration over speed.
-          bank = clamp((-carDriftA[car]! * carDriftW[car]! * carDriftW[car]! * Math.sin(driftArg)) / Math.max(20, speed) * 40 * direction, -0.45, 0.45);
+          fy = inStream ? 0 : climbRate / Math.max(20, speed);
+          // Bank into the drift (free) or the jink (stream): lateral acceleration over speed.
+          bank = inStream
+            ? clamp(jink * 3.0 * direction, -0.25, 0.25)
+            : clamp((-carDriftA[car]! * carDriftW[car]! * carDriftW[car]! * Math.sin(driftArg)) / Math.max(20, speed) * 40 * direction, -0.45, 0.45);
         }
 
         const toCarX = px - camX;

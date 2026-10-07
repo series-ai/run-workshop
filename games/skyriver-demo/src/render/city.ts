@@ -98,6 +98,8 @@ export const SKYRIVER_TRIM_SKYBRIDGE = 6;
 /** T7-4 grime: balcony slabs and their railings (instanced like every other trim). */
 export const SKYRIVER_TRIM_BALCONY = 7;
 export const SKYRIVER_TRIM_RAILING = 8;
+/** R11 landmark lighting: emissive floodlight edge strips and spires on the mega-towers. */
+export const SKYRIVER_TRIM_FLOOD = 9;
 /** Skybridge altitude band and the canyon stretch they keep out of (the free-flight box, |z| <= 400). */
 export const SKYRIVER_SKYBRIDGE_MIN_Y_M = 2700;
 export const SKYRIVER_SKYBRIDGE_MIN_ABS_Z_M = 600;
@@ -190,6 +192,12 @@ function innerWallX(layout: SkyriverCityLayout, tower: SkyriverTower): number {
 
 const trimCache = new Map<number, SkyriverCityTrims>();
 const massCache = new Map<number, SkyriverMass[]>();
+/**
+ * R11: mega-tower centres (canyon space). They sit at bend centres of curvature, where the warp
+ * crushes canyon-space offsets, so their floodlight trims are placed rigidly around the warped
+ * centre instead of being warped one by one.
+ */
+const megaAnchorCache = new Map<number, { x: number; v: number }[]>();
 /** Per seed: inner-wall slab key -> its corridor-face tiers [bottom, top, projection, zCentre, zSpan]. */
 const tierCache = new Map<number, Map<string, readonly (readonly [number, number, number, number, number])[]>>();
 
@@ -634,8 +642,11 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
   // One colossus at the centre of curvature of each tight bend. Its nearest face stays >= ~500 m from
   // the route's centreline, so the corridor is clear; at speed it reads as the tower the canyon bends
   // around, crowned with a lit stepped top, a spire and beacons.
+  const megaAnchors: { x: number; v: number }[] = [];
+  megaAnchorCache.set(layout.seed, megaAnchors);
   for (const apex of canyonBendApexes(900)) {
     const x = apex.side * apex.radius * 0.995;
+    megaAnchors.push({ x, v: apex.v });
     const base = Math.min(240, (apex.radius - 500) * 2);
     if (base < 120) continue;
     const tops = [3500 + random.nextInt(0, 400), 4400 + random.nextInt(0, 300), 5000 + random.nextInt(0, 300)];
@@ -644,6 +655,36 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     masses.push({ x, y0: tops[1]! - 4, z: apex.v, width: base * 0.42, height: tops[2]! - tops[1]! + 4, depth: base * 0.42, tint: MEGA_TINT });
     const spire = 520 + random.nextInt(0, 300);
     push(SKYRIVER_TRIM_ANTENNA, x, tops[2]! + spire * 0.5, apex.v, 7, spire, 7);
+    // R11 crown lighting: floodlit edges on each stage's top 260 m and a rim at every setback,
+    // plus a lit spire core, so the landmark silhouette is outlined in light from bend entry.
+    const stages: readonly (readonly [number, number])[] = [[base, tops[0]!], [base * 0.72, tops[1]!], [base * 0.42, tops[2]!]];
+    for (const [size, top] of stages) {
+      const half = size * 0.5 + 0.6;
+      for (const cx of [-1, 1]) {
+        for (const cz of [-1, 1]) {
+          push(SKYRIVER_TRIM_FLOOD, x + cx * half, top - 130, apex.v + cz * half, 2.2, 260, 2.2);
+        }
+      }
+      push(SKYRIVER_TRIM_FLOOD, x, top + 1, apex.v - half, size + 2, 2.4, 2.2);
+      push(SKYRIVER_TRIM_FLOOD, x, top + 1, apex.v + half, size + 2, 2.4, 2.2);
+      push(SKYRIVER_TRIM_FLOOD, x - half, top + 1, apex.v, 2.2, 2.4, size + 2);
+      push(SKYRIVER_TRIM_FLOOD, x + half, top + 1, apex.v, 2.2, 2.4, size + 2);
+    }
+    push(SKYRIVER_TRIM_FLOOD, x, tops[2]! + spire * 0.45, apex.v, 2.6, spire * 0.9, 2.6);
+    // The crown sits far above the chase frame, so the outline runs down the whole tower body the
+    // route bends around: full-height corner strips and a lit rim every ~420 m.
+    const bodyHalf = base * 0.5 + 0.6;
+    for (const cx of [-1, 1]) {
+      for (const cz of [-1, 1]) {
+        push(SKYRIVER_TRIM_FLOOD, x + cx * bodyHalf, (200 + tops[0]!) * 0.5, apex.v + cz * bodyHalf, 2.6, tops[0]! - 200, 2.6);
+      }
+    }
+    for (let y = 840; y < tops[0]! - 100; y += 840) {
+      push(SKYRIVER_TRIM_FLOOD, x, y, apex.v - bodyHalf, base + 2, 1.8, 1.8);
+      push(SKYRIVER_TRIM_FLOOD, x, y, apex.v + bodyHalf, base + 2, 1.8, 1.8);
+      push(SKYRIVER_TRIM_FLOOD, x - bodyHalf, y, apex.v, 1.8, 1.8, base + 2);
+      push(SKYRIVER_TRIM_FLOOD, x + bodyHalf, y, apex.v, 1.8, 1.8, base + 2);
+    }
     for (const corner of [-1, 1]) {
       push(SKYRIVER_TRIM_ANTENNA, x + corner * base * 0.3, tops[1]! + 110, apex.v + corner * base * 0.25, 3, 220, 3);
     }
@@ -1475,10 +1516,15 @@ void main() {
   float underLit = step( 0.72, skyHash11( floor( run / 7.0 ) + vSeed * 31.0 ) ) * step( vNormalW.y, -0.5 );
   color += vec3( 1.0, 0.62, 0.3 ) * underLit * isBalcony * 0.5;
   // Railing (8): vertical bars every ~0.4 m and a top rail, painted on the thin rail box.
-  float isRailing = step( 7.5, vKind );
+  float isRailing = step( 7.5, vKind ) * ( 1.0 - step( 8.5, vKind ) );
   float bars = step( 0.62, fract( run / 0.42 ) );
   float topRail = smoothstep( 0.38, 0.46, vTrimLocal.y );
   color = mix( color, mix( vec3( 0.02, 0.018, 0.016 ), vec3( 0.16, 0.13, 0.1 ), max( bars, topRail ) ), isRailing );
+
+  // R11 flood (9): emissive cool-white floodlight strip, pulsing slowly at the spire tip.
+  float isFlood = step( 8.5, vKind );
+  float tip = smoothstep( 0.85, 1.0, vTrimLocal.y + 0.5 ) * step( 100.0, vSizeM.y );
+  color = mix( color, vec3( 1.5, 1.7, 2.1 ) * ( 0.85 + 0.15 * sin( uTime * 1.3 + vSeed * 6.28 ) ) + vec3( 3.0, 0.4, 0.3 ) * tip * ( 0.5 + 0.5 * sin( uTime * 2.0 ) ), isFlood );
 
   // Skybridge (6): a dark mass with a ribbon of cold windows on each side and blue underlights.
   float isBridge = step( 5.5, vKind ) * ( 1.0 - step( 6.5, vKind ) );
@@ -1992,11 +2038,25 @@ export class SkyriverCity {
       return false;
     };
     let drawn = 0;
+    const megaAnchors = megaAnchorCache.get(this.layout.seed) ?? [];
     for (let i = 0; i < count; i += 1) {
       if (blocksHero(i)) continue;
-      warpCanyon(cx[i]!, cz[i]!, warp);
-      quaternion.setFromAxisAngle(UP, warp.heading);
-      position.set(warp.x, cy[i]!, warp.z);
+      const anchor = kind[i] === SKYRIVER_TRIM_FLOOD
+        ? megaAnchors.reduce<{ x: number; v: number } | null>((best, a) => (best === null || Math.abs(a.v - cz[i]!) < Math.abs(best.v - cz[i]!) ? a : best), null)
+        : null;
+      if (anchor !== null) {
+        warpCanyon(anchor.x, anchor.v, warp);
+        const dx = cx[i]! - anchor.x;
+        const dz = cz[i]! - anchor.v;
+        const sinH = Math.sin(warp.heading);
+        const cosH = Math.cos(warp.heading);
+        quaternion.setFromAxisAngle(UP, warp.heading);
+        position.set(warp.x + dx * cosH + dz * sinH, cy[i]!, warp.z - dx * sinH + dz * cosH);
+      } else {
+        warpCanyon(cx[i]!, cz[i]!, warp);
+        quaternion.setFromAxisAngle(UP, warp.heading);
+        position.set(warp.x, cy[i]!, warp.z);
+      }
       scale.set(sx[i]!, sy[i]!, sz[i]!);
       matrix.compose(position, quaternion, scale);
       this.trimMesh.setMatrixAt(drawn, matrix);
