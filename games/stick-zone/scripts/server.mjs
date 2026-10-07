@@ -1585,6 +1585,22 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           }
         }
 
+        // FINAL same-ID immutability gate (applies to EVERY caller class, including
+        // system): reinitializing an EXISTING raid that is live (operative-carrying
+        // custody, not lease-expired, not concluded) is rejected — replacement raids
+        // require a fresh raid ID so caches and machine sequence counters stay in sync.
+        const recForImmutable = settlement.hasRaid ? settlement.hasRaid(raidId) ? settlement.getRaidRecord(raidId) : null : null;
+        if (recForImmutable) {
+          const expired = Boolean(recForImmutable.createdAtMs && (Date.now() - recForImmutable.createdAtMs) > 15 * 60 * 1000);
+          const allTerminal = Object.values(recForImmutable.operatives || {}).every((o) => o.isExtracted || o.isKia || o.isAlive === false);
+          if (!(expired || recForImmutable.status === "concluded" || allTerminal)) {
+            res.statusCode = 403;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: "Cross-token forbidden: raid already exists and is live: replacement raids require a new raid ID" }));
+            return;
+          }
+        }
+
         const pool = data.allowablePool || 50000;
         const ops = data.operatives || ["op_player", "op_alpha_1", "op_bravo_1"];
         const oldRaidId = settlement.getActiveRaidId();

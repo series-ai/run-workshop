@@ -790,7 +790,7 @@ export class MultiplayerCoordinator {
       machine.isAlive = machine.health > 0;
       if (!machine.isAlive) this.sim.combatLog.push(`[MACHINE DESTROYED] ${machine.id} neutralized by ${senderName}`);
       if (hadSeq) (machine as any).vitalsSeq = seqNow + 1; // local advance — superseded by any newer relay seq
-      this.serverMachines = this.sim.machines.map((x) => ({ id: x.id, health: x.health, isAlive: x.isAlive }));
+      this.serverMachines = this.sim.machines.map((x) => ({ id: x.id, health: x.health, isAlive: x.isAlive, type: (x as any).type, x: (x as any).x, y: (x as any).y, z: (x as any).z, facing: (x as any).facing, originX: (x as any).originX, originZ: (x as any).originZ, maxHealth: (x as any).maxHealth, vitalsSeq: (x as any).vitalsSeq } as any));
       return;
     }
     // Authoritative or seq-carrying result: single ordered channel
@@ -1699,7 +1699,7 @@ export class MultiplayerCoordinator {
       this.sim.combatLog.push(`[MACHINE DESTROYED] ${m.id} neutralized`);
     }
     // Authoritative cache stays current for every accepted vitals result
-    this.serverMachines = this.sim.machines.map((x) => ({ id: x.id, health: x.health, isAlive: x.isAlive }));
+    this.serverMachines = this.sim.machines.map((x) => ({ id: x.id, health: x.health, isAlive: x.isAlive, type: (x as any).type, x: (x as any).x, y: (x as any).y, z: (x as any).z, facing: (x as any).facing, originX: (x as any).originX, originZ: (x as any).originZ, maxHealth: (x as any).maxHealth, vitalsSeq: (x as any).vitalsSeq } as any));
     return true;
   }
 
@@ -1757,8 +1757,11 @@ export class MultiplayerCoordinator {
         health: health ?? 120,
         isAlive: (rm as any).isAlive !== false,
         cooldownTicks: existingIdx !== -1 ? next[existingIdx].cooldownTicks : 0,
-        originX: (rm as any).originX,
-        originZ: (rm as any).originZ,
+        // Patrol origins: incoming values win when present; EXISTING origins are
+        // preserved when absent (snapshot/cache reconciliation can never strand a
+        // patrolling drone by undefined-ing its origins).
+        originX: typeof (rm as any).originX === "number" && Number.isFinite((rm as any).originX) ? (rm as any).originX : (existingIdx !== -1 ? (next[existingIdx] as any).originX : undefined),
+        originZ: typeof (rm as any).originZ === "number" && Number.isFinite((rm as any).originZ) ? (rm as any).originZ : (existingIdx !== -1 ? (next[existingIdx] as any).originZ : undefined),
       };
       if (maxHp !== undefined) record.maxHealth = maxHp;
       if (arrivingSeq !== undefined) (record as any).vitalsSeq = arrivingSeq;
@@ -1773,7 +1776,7 @@ export class MultiplayerCoordinator {
     }
     // Keep the authoritative-machine cache in sync with the reconciled world: later
     // ingress snapshots must never substitute an older custody view back in.
-    this.serverMachines = this.sim.machines.map((m) => ({ id: m.id, health: m.health, isAlive: m.isAlive }));
+    this.serverMachines = this.sim.machines.map((m) => ({ id: m.id, health: m.health, isAlive: m.isAlive, type: (m as any).type, x: (m as any).x, y: (m as any).y, z: (m as any).z, facing: (m as any).facing, originX: (m as any).originX, originZ: (m as any).originZ, maxHealth: (m as any).maxHealth, vitalsSeq: (m as any).vitalsSeq } as any));
   }
 
 
@@ -1903,6 +1906,18 @@ export class MultiplayerCoordinator {
     }
 
     this.pendingWorldEvents = this.pendingWorldEvents.filter((ev) => {
+      // Relay-confirmed machine custody updates are ORDERED BY vitalsSeq — time-based
+      // pruning must never discard one whose sequence exceeds local custody (dropping
+      // it would leave a dead machine alive or vice versa across the snapshot boundary).
+      if (ev.type === "machine_hit" && (ev as any).serverAuthoritative === true) {
+        const seq = (ev as any).data?.vitalsSeq;
+        if (typeof seq === "number" && Number.isFinite(seq)) {
+          const m = this.sim.machines.find((x) => x.id === (ev as any).data?.machineId);
+          if (!m || seq > ((m as any).vitalsSeq ?? 0)) {
+            return true; // superseding custody record — always replay
+          }
+        }
+      }
       // Keep any event generated after the snapshot timestamp
       if (typeof ev.timestamp === "number" && ev.timestamp > this.lastAppliedSnapshotTimestamp) {
         return true;

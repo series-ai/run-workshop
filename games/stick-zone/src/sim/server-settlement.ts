@@ -413,15 +413,26 @@ export function validateStoreIntegrity(data: any): boolean {
     // silently restoring default machines).
     const rAny = r as any;
     if (rAny.machineDeployment !== undefined) {
+      // SHARED deployment schema (mirrors server-side machineDeploymentValid): corrupt
+      // present records reject the store instead of silently restoring default machines.
       if (!Array.isArray(rAny.machineDeployment) || rAny.machineDeployment.length > 64) return false;
       const depIds = new Set<string>();
       for (const dm of rAny.machineDeployment) {
         if (!dm || typeof dm !== "object" || Array.isArray(dm)) return false;
-        if (typeof dm.id !== "string" || !dm.id) return false;
+        if (typeof dm.id !== "string" || !dm.id || dm.id.length > 64) return false;
         if (depIds.has(dm.id)) return false;
         depIds.add(dm.id);
+        if (dm.type !== "turret" && dm.type !== "drone") return false;
+        for (const f of ["x", "z", "originX", "originZ"]) {
+          if (dm[f] !== undefined && (typeof dm[f] !== "number" || !Number.isFinite(dm[f]) || Math.abs(dm[f]) > 80)) return false;
+        }
+        if (typeof dm.x !== "number" || !Number.isFinite(dm.x) || Math.abs(dm.x) > 80) return false;
+        if (typeof dm.z !== "number" || !Number.isFinite(dm.z) || Math.abs(dm.z) > 80) return false;
+        if (typeof dm.health !== "number" || !Number.isFinite(dm.health) || dm.health < 0 || dm.health > 1000) return false;
+        if (dm.isAlive !== undefined && typeof dm.isAlive !== "boolean") return false;
         if (dm.vitalsSeq !== undefined && (typeof dm.vitalsSeq !== "number" || !Number.isInteger(dm.vitalsSeq) || dm.vitalsSeq < 0)) return false;
         if (dm.maxHealth !== undefined && (typeof dm.maxHealth !== "number" || !Number.isFinite(dm.maxHealth) || dm.maxHealth <= 0 || dm.maxHealth > 1000)) return false;
+        if (dm.maxHealth !== undefined && dm.health > dm.maxHealth) return false;
       }
     }
     if (rAny.machineRosterRevision !== undefined && (typeof rAny.machineRosterRevision !== "number" || !Number.isInteger(rAny.machineRosterRevision) || rAny.machineRosterRevision < 0)) return false;
@@ -1703,10 +1714,9 @@ export class ServerSettlementAuthority {
     const isDurationVerified = (realElapsedMs >= 3000 || simTickAdvancement) && (op.holdReportCount || 0) >= 25;
 
     if (op.holdTicks >= 180 && ticksElapsed >= 179 && isDurationVerified) {
-      // DURABLE completion: the completion state (including the corridor start marker)
-      // is persisted BEFORE it is reported — a restart can never lose an accepted
-      // completion (the client extracts on verified custody, not on a volatile yes).
-      this.saveToDisk();
+      // DURABLE completion: ALL completion state is assigned FIRST, then persisted
+      // with one UNTHROTTLED save — a restart can never lose an accepted completion,
+      // and the save cannot be skipped by the throttle window.
       op.holdCompleted = true;
       if (!op.holdCompletedAtTick) op.holdCompletedAtTick = currentTick;
       op.holdCompletedTimestamp = now;
@@ -1716,6 +1726,7 @@ export class ServerSettlementAuthority {
         op.lastObservedZ = pz;
         (op as any).hasLiveMovement = true;
       }
+      this.saveToDisk();
     } else if (op.holdCompleted && (op.holdTicks || 0) >= 180) {
       // Once completed, preserve holdCompleted = true during corridor presentation and submission
     } else {
