@@ -264,13 +264,14 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
     const rRecord = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
     if (!raidMachines.has(raidId)) {
       if (rRecord && machineDeploymentValid(rRecord.machineDeployment)) {
+      seedVitalsSeqFromDeployment(raidId, rRecord.machineDeployment);
         // Full deployment persistence: restarts rebuild the COMPLETE machine set (placed
         // AND removed machines) from custody — the machine array is truth, the map of
         // health snapshots mirrors it.
         const machines = rRecord.machineDeployment.map((m) => ({
           ...m,
           maxHealth: typeof m.maxHealth === "number" && m.maxHealth > 0 ? m.maxHealth : Math.max(m.health, m.type === "turret" ? 120 : 75),
-          vitalsSeq: nextVitalsSeq(m.id),
+          vitalsSeq: Math.max(machineVitalsSeq.get(m.id) || 0, typeof m.vitalsSeq === "number" ? m.vitalsSeq : 0),
           health: (rRecord.machines && rRecord.machines[m.id] && typeof rRecord.machines[m.id].health === "number")
             ? rRecord.machines[m.id].health
             : m.health,
@@ -323,6 +324,18 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
     const v = (machineVitalsSeq.get(machineId) || 0) + 1;
     machineVitalsSeq.set(machineId, v);
     return v;
+  }
+  // Restore counters from persisted custody: the deployment record's vitalsSeq is the
+  // surviving sequence floor — a restarted server CONTINUES above what clients already
+  // applied (never restarts at 1, which would be rejected as stale by live clients).
+  function seedVitalsSeqFromDeployment(raidId, deployment) {
+    if (!Array.isArray(deployment)) return;
+    for (const m of deployment) {
+      if (m && typeof m.vitalsSeq === "number" && Number.isFinite(m.vitalsSeq)) {
+        const cur = machineVitalsSeq.get(m.id) || 0;
+        if (m.vitalsSeq > cur) machineVitalsSeq.set(m.id, m.vitalsSeq);
+      }
+    }
   }
   function raidRevision(raidId) {
     // Persisted monotonic revision: the surviving source of truth is the ACTIVE RAID
@@ -1199,6 +1212,12 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
       };
       const __mListBefore = machines.map((m) => ({ ...m }));
       const __mRrec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
+      // Optional-map rollback: restore deletes a newly created health map when it was
+      // absent before the deployment (a failed placement can leave uncommitted state).
+      const __machMapBefore = !(__mRrec && __mRrec.machines !== undefined && __mRrec.machines !== null);
+      const __machMapRestore = () => {
+        if (__machMapBefore && __mRrec) delete __mRrec.machines;
+      };
       const __mHealthBefore = __mRrec && __mRrec.machines ? JSON.parse(JSON.stringify(__mRrec.machines)) : null;
       const __mDeployBefore = __mRrec && __mRrec.machineDeployment ? JSON.parse(JSON.stringify(__mRrec.machineDeployment)) : null;
       const __restoreMachines = () => {
@@ -1233,6 +1252,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
             settlement.saveToDisk();
           } catch (removePersistErr) {
             __restoreMachines();
+            __machMapRestore();
             __restoreRevisions();
             res.statusCode = 500;
             res.setHeader("Content-Type", "application/json");
@@ -1309,6 +1329,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
             // record + revision stores) and answer 500: handler-scoped failures take
             // this path — never a thrown exception into the JSON parser's catch.
             __restoreMachines();
+            __machMapRestore();
             __restoreRevisions();
             res.statusCode = 500;
             res.setHeader("Content-Type", "application/json");
@@ -2711,7 +2732,7 @@ wss.on("connection", (ws, req) => {
                 raidId: ws.raidId,
                 timestamp: Date.now(),
                 serverAuthoritative: true,
-                data: { machineId: m.id, damage: 0, machineHealth: m.health, machineAlive: m.isAlive, kind: "kick", rejected: true, targetX, targetZ },
+                data: { machineId: m.id, damage: 0, machineHealth: m.health, machineAlive: m.isAlive, kind: "kick", rejected: true, targetX, targetZ, vitalsSeq: m.vitalsSeq || 0, maxHealth: m.maxHealth || m.health },
               }));
             } catch {}
             continue;
@@ -2763,6 +2784,8 @@ wss.on("connection", (ws, req) => {
               machineHealth: m.health,
               machineAlive: m.isAlive,
               kind: "kick",
+              vitalsSeq: m.vitalsSeq || 0,
+              maxHealth: m.maxHealth || m.health,
               attackerFacing: facing,
               attackerX: strikeOriginX,
               attackerZ: strikeOriginZ,

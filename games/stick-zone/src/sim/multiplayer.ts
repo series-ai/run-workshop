@@ -774,25 +774,27 @@ export class MultiplayerCoordinator {
     return `${this.localId}:${Date.now()}:${++this.seq}`;
   }
 
-  public applyValidatedMachineHit(senderName: string, machineId: string, damage: number, authorHealth?: number, authorAlive?: boolean): void {
+  public applyValidatedMachineHit(senderName: string, machineId: string, damage: number, authorHealth?: number, authorAlive?: boolean, authorVitalsSeq?: number, authorMaxHealth?: number): void {
     if (typeof damage !== 'number' || isNaN(damage) || damage <= 0 || damage > 150) return;
     const machine = this.sim.machines.find((m) => m.id === machineId);
-    if (machine) {
+    if (!machine) return;
+    const hadSeq = typeof (machine as any).vitalsSeq === "number";
+    const seqNow = (machine as any).vitalsSeq ?? 0;
+    if (authorHealth === undefined && machine.isAlive && !(typeof authorVitalsSeq === "number" && authorVitalsSeq < seqNow)) {
+      // Prediction damage (no authoritative vitals): local decrement stays ordered against
+      // LOCAL seq only (relay confirmations will carry higher seq and supersede).
       const maxHp = (machine as any).maxHealth ?? (machine.type === 'drone' ? 75 : 120);
-      if (typeof authorHealth === "number" && Number.isFinite(authorHealth)) {
-        const clampedHp = Math.max(0, Math.min(maxHp, authorHealth));
-        machine.health = clampedHp;
-        machine.isAlive = authorAlive !== false && clampedHp > 0;
-      } else if (machine.isAlive) {
-        machine.health = Math.max(0, machine.health - damage);
-        if (machine.health <= 0) {
-          machine.health = 0;
-          machine.isAlive = false;
-        }
-      }
-      if (!machine.isAlive && machine.health <= 0) {
-        this.sim.combatLog.push(`[MACHINE DESTROYED] ${machine.id} neutralized by ${senderName}`);
-      }
+      machine.health = Math.max(0, machine.health - damage);
+      machine.isAlive = machine.health > 0;
+      if (!machine.isAlive) this.sim.combatLog.push(`[MACHINE DESTROYED] ${machine.id} neutralized by ${senderName}`);
+      if (hadSeq) (machine as any).vitalsSeq = seqNow + 1; // local advance — superseded by any newer relay seq
+      this.serverMachines = this.sim.machines.map((x) => ({ id: x.id, health: x.health, isAlive: x.isAlive }));
+      return;
+    }
+    // Authoritative or seq-carrying result: single ordered channel
+    const applied = this.adoptMachineVitals(machineId, authorHealth, authorAlive, authorVitalsSeq, authorMaxHealth);
+    if (applied && !machine.isAlive) {
+      this.sim.combatLog.push(`[MACHINE DESTROYED] ${machine.id} neutralized by ${senderName}`);
     }
   }
 
@@ -940,7 +942,9 @@ export class MultiplayerCoordinator {
     const effectiveDmg = Math.min(maxAllowed, dmg > 0 ? dmg : maxAllowed);
     const authorHealth = machineCustodyAuth && typeof (packet as any).data?.machineHealth === 'number' ? (packet as any).data.machineHealth : undefined;
     const authorAlive = machineCustodyAuth && typeof (packet as any).data?.machineAlive === 'boolean' ? (packet as any).data.machineAlive : undefined;
-    this.applyValidatedMachineHit(packet.senderName, machineId, effectiveDmg, authorHealth, authorAlive);
+    const authorVitalsSeq = machineCustodyAuth && typeof (packet as any).data?.vitalsSeq === 'number' ? (packet as any).data.vitalsSeq : undefined;
+    const authorMaxHealth = machineCustodyAuth && typeof (packet as any).data?.maxHealth === 'number' ? (packet as any).data.maxHealth : undefined;
+    this.applyValidatedMachineHit(packet.senderName, machineId, effectiveDmg, authorHealth, authorAlive, authorVitalsSeq, authorMaxHealth);
     return true;
   }
 
@@ -1039,10 +1043,16 @@ export class MultiplayerCoordinator {
         this.broadcastRaidDiscovery();
       };
       this.ws.onmessage = async (event) => {
+        const __msgSocket = this.ws; // capture: decoding may finish after reconnect
         this.lastServerMessageTime = Date.now();
         try {
           const raw = typeof event.data === "string" ? event.data : (event.data instanceof Blob ? await event.data.text() : new TextDecoder().decode(event.data));
+          // Decode fence: a Blob body may resolve AFTER cleanup or socket replacement —
+          // applying it would mutate disposed state and steal frame time (the decoded
+          // tick adoption calls the global consumer with a huge accumulated interval).
+          if (this.isDisposed || this.ws !== __msgSocket) return;
           const data = JSON.parse(raw);
+          if (this.isDisposed || this.ws !== __msgSocket) return;
           if (data && typeof (data as any).serverTime === "number") {
             this.serverTimeOffset = (data as any).serverTime - Date.now();
             if (typeof globalThis !== "undefined") (globalThis as any).__stickZoneServerTimeOffset = this.serverTimeOffset;
@@ -1151,6 +1161,11 @@ export class MultiplayerCoordinator {
               }
               const termCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
               const termTid = termCtrl ? setTimeout(() => termCtrl.abort(), 4000) : null;
+              // Registry: cleanup aborts the terminal recovery request too
+              if (termCtrl) {
+                (this as any).__clockSyncInFlight = (this as any).__clockSyncInFlight || [];
+                (this as any).__clockSyncInFlight.push(termCtrl);
+              }
               try {
                 const res = await fetch("/api/settlement/join", {
                   method: "POST",
@@ -1166,9 +1181,9 @@ export class MultiplayerCoordinator {
                     ...(resumeKey ? { resumeKey } : {}),
                   }),
                 });
-                if (this.isDisposed) return;
                 if (res.ok) {
                   const data = await res.json();
+                  if (this.isDisposed) return; // disposal fence AFTER body resolve
                   if (data && (data.isTerminal || data.isExtracted || data.isKia)) {
                     if (data.isExtracted) {
                       this.sim.restoreExtractionCustody({
@@ -1197,6 +1212,8 @@ export class MultiplayerCoordinator {
                 }
               } catch {} finally {
                 if (termTid) clearTimeout(termTid);
+                const __termReg = (this as any).__clockSyncInFlight;
+                if (__termReg && termCtrl) { const ix = __termReg.indexOf(termCtrl); if (ix !== -1) __termReg.splice(ix, 1); }
               }
 
               try {
@@ -1639,6 +1656,39 @@ export class MultiplayerCoordinator {
    * membership (add/remove by ID), geometry, patrol origins, vitals, and the shared
    * maxHealth contract.
    */
+  /**
+   * SINGLE ordered vitals channel for machines: every authoritative surface (roster
+   * reconcile, self-confirmations, relay hit results, remote writer, rejection
+   * corrections) adopts machine health/alive ONLY through here. vitalsSeq ordering is
+   * enforced independently of roster revisions — an older seq is dropped, a newer seq
+   * updates vitals AND the authoritative cache.
+   */
+  public adoptMachineVitals(machineId: string, health: number | undefined, isAlive: boolean | undefined, vitalsSeq: number | undefined, maxHealth?: number): boolean {
+    const m = this.sim.machines.find((x) => x.id === machineId);
+    if (!m) return false;
+    const seqNow = (m as any).vitalsSeq ?? 0;
+    if (typeof vitalsSeq === "number" && Number.isFinite(vitalsSeq)) {
+      if (vitalsSeq < seqNow) return false; // stale vitals — never a resurrection path
+      (m as any).vitalsSeq = vitalsSeq;
+    }
+    if (maxHealth !== undefined) (m as any).maxHealth = maxHealth;
+    if (typeof health === "number" && Number.isFinite(health)) {
+      const maxHp = (m as any).maxHealth ?? (m.type === "drone" ? 75 : 120);
+      m.health = Math.max(0, Math.min(maxHp, health));
+    }
+    if (typeof isAlive === "boolean") {
+      m.isAlive = isAlive && m.health > 0;
+    } else {
+      m.isAlive = m.health > 0;
+    }
+    if (!m.isAlive) {
+      this.sim.combatLog.push(`[MACHINE DESTROYED] ${m.id} neutralized`);
+    }
+    // Authoritative cache stays current for every accepted vitals result
+    this.serverMachines = this.sim.machines.map((x) => ({ id: x.id, health: x.health, isAlive: x.isAlive }));
+    return true;
+  }
+
   public applyMachineRosterCustody(roster: Array<{ id?: unknown; type?: unknown; x?: unknown; y?: unknown; z?: unknown; facing?: unknown; health?: unknown; isAlive?: unknown; originX?: unknown; originZ?: unknown; maxHealth?: unknown }>, revision?: number): void {
     if (!Array.isArray(roster)) return;
     // Revision check INSIDE the shared reconciler — hydration, authentication, and
@@ -1915,19 +1965,13 @@ export class MultiplayerCoordinator {
         const smId = (packet as any).data?.machineId;
         const targetM = this.sim.machines.find((x) => x.id === smId);
         if (targetM) {
-          const newHealth = (packet as any).data?.machineHealth;
-          if (typeof newHealth === 'number' && Number.isFinite(newHealth)) {
-            const maxHp = (targetM as any).maxHealth ?? (targetM.type === 'drone' ? 75 : 120);
-            targetM.health = Math.max(0, Math.min(maxHp, newHealth));
-            if (typeof (packet as any).data?.machineAlive === 'boolean') {
-              targetM.isAlive = (packet as any).data.machineAlive && targetM.health > 0;
-            } else {
-              targetM.isAlive = targetM.health > 0;
-            }
-            if (!targetM.isAlive) {
-              this.sim.combatLog.push(`[MACHINE DESTROYED] ${targetM.id} neutralized by ${this.sim.player.name}`);
-            }
-          }
+          this.adoptMachineVitals(
+            (packet as any).data?.machineId,
+            (packet as any).data?.machineHealth,
+            (packet as any).data?.machineAlive,
+            (packet as any).data?.vitalsSeq,
+            (packet as any).data?.maxHealth
+          );
         }
       }
       return;
@@ -2735,13 +2779,7 @@ export class MultiplayerCoordinator {
       if (!d || !Array.isArray(d.machineCustody)) return;
       for (const c of d.machineCustody) {
         if (!c || typeof c.id !== "string") continue;
-        const m = this.sim.machines.find((x) => x.id === c.id);
-        if (!m) continue;
-        const maxHp = (m as any).maxHealth ?? (m.type === "drone" ? 75 : 120);
-        if (typeof c.health === "number" && Number.isFinite(c.health)) {
-          m.health = Math.max(0, Math.min(maxHp, c.health));
-          m.isAlive = c.isAlive !== false && m.health > 0;
-        }
+        this.adoptMachineVitals(c.id, c.health, c.isAlive, (c as any).vitalsSeq, (c as any).maxHealth);
       }
       this.sim.combatLog.push(`[KICK REJECTED] Strike rejected by relay (${d.reason || "invalid"}); machine predictions reconciled to custody`);
     } else if (packet.type === 'machine_roster') {
