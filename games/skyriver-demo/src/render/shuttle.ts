@@ -130,6 +130,33 @@ interface Ring {
   readonly yHigh: number;
   readonly halfLow: number;
   readonly halfHigh: number;
+  /** T7-4: chamfer at the roof edges (and 55% of it at the floor edges), metres. 0 = sharp. */
+  readonly round?: number;
+}
+
+type EdgeRole = 'floor' | 'side' | 'roof';
+
+/** T7-4 rounded section: an octagon (two chamfers per side) so the hull stops reading as a slab. */
+function ringOutline(r: Ring): { readonly points: readonly Vec3[]; readonly roles: readonly EdgeRole[] } {
+  const c = r.round ?? 0;
+  if (c <= 0) {
+    const [c0, c1, c2, c3] = ringCorners(r);
+    return { points: [c0, c1, c2, c3], roles: ['floor', 'side', 'roof', 'side'] };
+  }
+  const cl = c * 0.55;
+  return {
+    points: [
+      [-r.halfLow + cl, r.yLow, r.z],
+      [r.halfLow - cl, r.yLow, r.z],
+      [r.halfLow, r.yLow + cl, r.z],
+      [r.halfHigh, r.yHigh - c, r.z],
+      [r.halfHigh - c, r.yHigh, r.z],
+      [-r.halfHigh + c, r.yHigh, r.z],
+      [-r.halfHigh, r.yHigh - c, r.z],
+      [-r.halfLow, r.yLow + cl, r.z],
+    ],
+    roles: ['floor', 'floor', 'side', 'roof', 'roof', 'roof', 'side', 'floor'],
+  };
 }
 
 function ringCorners(r: Ring): readonly [Vec3, Vec3, Vec3, Vec3] {
@@ -142,6 +169,19 @@ function ringCorners(r: Ring): readonly [Vec3, Vec3, Vec3, Vec3] {
 }
 
 function loft(build: HullBuild, rings: readonly Ring[], side: Rgb, roof: Rgb, floor: Rgb): void {
+  if (rings.some((ring) => (ring.round ?? 0) > 0)) {
+    for (let i = 0; i + 1 < rings.length; i += 1) {
+      const a = ringOutline(rings[i]!);
+      const b = ringOutline(rings[i + 1]!);
+      const n = a.points.length;
+      for (let j = 0; j < n; j += 1) {
+        const k = (j + 1) % n;
+        const role = a.roles[j]!;
+        pushQuad(build, a.points[j]!, b.points[j]!, b.points[k]!, a.points[k]!, role === 'roof' ? roof : role === 'floor' ? floor : side);
+      }
+    }
+    return;
+  }
   for (let i = 0; i + 1 < rings.length; i += 1) {
     const [a0, a1, a2, a3] = ringCorners(rings[i]!);
     const [b0, b1, b2, b3] = ringCorners(rings[i + 1]!);
@@ -153,8 +193,11 @@ function loft(build: HullBuild, rings: readonly Ring[], side: Rgb, roof: Rgb, fl
 }
 
 function capRing(build: HullBuild, ring: Ring, color: Rgb): void {
-  const [c0, c1, c2, c3] = ringCorners(ring);
-  pushQuad(build, c0, c1, c2, c3, color);
+  const { points } = ringOutline(ring);
+  const centre: Vec3 = [0, (ring.yLow + ring.yHigh) / 2, ring.z];
+  for (let j = 0; j < points.length; j += 1) {
+    pushTri(build, centre, points[j]!, points[(j + 1) % points.length]!, color, false);
+  }
 }
 
 /** Axis-aligned box: centre and full extents. */
@@ -182,12 +225,16 @@ function buildHull(): HullBuild {
   const build: HullBuild = { positions: [], colors: [] };
 
   // Low wedge body: widest over the rear deck, pinching to a blade nose. Nose at +Z.
+  // T7-4 rounded wedge: ~10% wider, chamfered roof and floor edges and a softened nose, so the
+  // side and top views read as a sculpted craft (the reference's bulk) while the chase keeps the
+  // passing-wedge profile.
   const body: Ring[] = [
-    { z: TAIL_Z, yLow: -0.72, yHigh: 0.78, halfLow: 2.85, halfHigh: 2.6 },
-    { z: -2.4, yLow: -0.82, yHigh: 0.86, halfLow: 3.0, halfHigh: 2.62 },
-    { z: 1.6, yLow: -0.74, yHigh: 0.62, halfLow: 2.7, halfHigh: 2.2 },
-    { z: 4.6, yLow: -0.58, yHigh: 0.2, halfLow: 2.0, halfHigh: 1.35 },
-    { z: 6.6, yLow: -0.42, yHigh: -0.12, halfLow: 0.9, halfHigh: 0.5 },
+    { z: TAIL_Z, yLow: -0.72, yHigh: 0.82, halfLow: 3.1, halfHigh: 2.9, round: 0.5 },
+    { z: -2.4, yLow: -0.84, yHigh: 0.9, halfLow: 3.3, halfHigh: 2.95, round: 0.55 },
+    { z: 1.6, yLow: -0.76, yHigh: 0.66, halfLow: 3.0, halfHigh: 2.5, round: 0.5 },
+    { z: 4.4, yLow: -0.62, yHigh: 0.28, halfLow: 2.35, halfHigh: 1.75, round: 0.4 },
+    { z: 5.9, yLow: -0.5, yHigh: 0.0, halfLow: 1.55, halfHigh: 1.05, round: 0.25 },
+    { z: 6.7, yLow: -0.4, yHigh: -0.16, halfLow: 0.85, halfHigh: 0.55, round: 0.1 },
   ];
   loft(build, body, PAINT, PAINT, PAINT_DARK);
   capRing(build, body[0]!, PAINT_DARK);
@@ -209,13 +256,16 @@ function buildHull(): HullBuild {
     const a = body[i]!;
     const b = body[i + 1]!;
     for (const side of [-1, 1]) {
+      // On the rounded shoulder: where the roof meets its chamfer.
       const inset = 0.08;
+      const ra = a.round ?? 0;
+      const rb = b.round ?? 0;
       pushQuad(
         build,
-        [side * (a.halfHigh - inset), a.yHigh + 0.015, a.z],
-        [side * (b.halfHigh - inset), b.yHigh + 0.015, b.z],
-        [side * (b.halfHigh - inset - 0.14), b.yHigh + 0.02, b.z],
-        [side * (a.halfHigh - inset - 0.14), a.yHigh + 0.02, a.z],
+        [side * (a.halfHigh - ra - inset), a.yHigh + 0.015, a.z],
+        [side * (b.halfHigh - rb - inset), b.yHigh + 0.015, b.z],
+        [side * (b.halfHigh - rb - inset - 0.14), b.yHigh + 0.02, b.z],
+        [side * (a.halfHigh - ra - inset - 0.14), a.yHigh + 0.02, a.z],
         CLEARCOAT,
         true,
       );

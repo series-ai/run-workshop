@@ -132,7 +132,10 @@ const CLIMB_MIN_M = 6;
 const CLIMB_SPAN_M = 34;
 const SPEED_SCALE = 1.3;
 /** Chase band: cars streaming past the shuttle within a window around it. */
-const CHASE_COUNT = 64;
+/** T7-4: more and bigger neighbours, so passing them reads as passing cars. */
+const CHASE_COUNT = 110;
+const CHASE_SIZE_MIN = 2.6;
+const CHASE_SIZE_SPAN = 1.2;
 const CHASE_WINDOW_M = 1400;
 const CHASE_FADE_M = 160;
 /** Escort streaks are this fraction of a car's. */
@@ -768,8 +771,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     carDirection[car] = h(0x11) < (chase ? 0.3 : 0.5) ? -1 : 1;
     if (chase) {
       // Chase band: lateral/vertical offsets from the shuttle, kept off its own line.
-      let lateral = (h(0x21) * 2 - 1) * 230;
-      let lift = (h(0x22) * 2 - 1) * 90;
+      let lateral = (h(0x21) * 2 - 1) * 175;
+      let lift = (h(0x22) * 2 - 1) * 70;
       if (Math.abs(lateral) < 35 && Math.abs(lift) < 20) lift = Math.sign(lift || 1) * (20 + h(0x23) * 30);
       if (lift < -10 && Math.abs(lateral) < 110) lateral = Math.sign(lateral || 1) * (110 + h(0x24) * 100);
       carHomeX[car] = lateral;
@@ -788,7 +791,9 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     carClimbA[car] = CLIMB_MIN_M + h(0x34) * CLIMB_SPAN_M;
     carClimbW[car] = 0.04 + h(0x35) * 0.12;
     carClimbP[car] = h(0x36) * TAU;
-    sizeScale[car] = SIZE_MIN_SCALE + hash01(car, 0x4e8d) * SIZE_SCALE_SPAN;
+    sizeScale[car] = chase
+      ? CHASE_SIZE_MIN + hash01(car, 0x4e8d) * CHASE_SIZE_SPAN
+      : SIZE_MIN_SCALE + hash01(car, 0x4e8d) * SIZE_SCALE_SPAN;
 
     // Dark paint: gunmetal, oxblood, deep teal, near-black. The lamps carry the colour.
     const paint = hash01(car, 0x33b1);

@@ -45,11 +45,20 @@ import {
 } from './atmosphere';
 import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
 import { HERO_HORIZONTAL_CELLS, HERO_VERTICAL_CELLS, createSignAtlas, type SignAtlas } from './signAtlas';
+import { createInteriorAtlas, type InteriorAtlas } from './interiorAtlas';
 import { CANYON_LOOP_LENGTH_M, intrudesOtherStretch, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
 import { ROUTE_MAX_ALTITUDE_M, STRATA_GRIME_TOP_M, STRATA_PRISTINE_BASE_M, routeAltitude } from './routeProfile';
 
 /** Draw calls this module may spend (plan T3 allows 10 city-only; the shared budget allots 8). */
 export const SKYRIVER_CITY_DRAW_CALL_BUDGET = 8;
+
+/** T7-4 interior mapping per tier. */
+export type SkyriverInteriorMode = 'full' | 'near' | 'off';
+/** View-depth fade windows (start, end), metres: rooms within start, emissive panes beyond end. */
+export const SKYRIVER_INTERIOR_FADE = Object.freeze({
+  full: Object.freeze([600, 800] as const),
+  near: Object.freeze([260, 380] as const),
+});
 
 /**
  * Tunables, exported so a node-only check can assert them without a GL context. Metres throughout.
@@ -86,6 +95,9 @@ export const SKYRIVER_TRIM_BAND = 4;
 export const SKYRIVER_TRIM_CANTILEVER = 5;
 /** High skybridges spanning the canyon. Empty structures: no traffic river runs at their height. */
 export const SKYRIVER_TRIM_SKYBRIDGE = 6;
+/** T7-4 grime: balcony slabs and their railings (instanced like every other trim). */
+export const SKYRIVER_TRIM_BALCONY = 7;
+export const SKYRIVER_TRIM_RAILING = 8;
 /** Skybridge altitude band and the canyon stretch they keep out of (the free-flight box, |z| <= 400). */
 export const SKYRIVER_SKYBRIDGE_MIN_Y_M = 2700;
 export const SKYRIVER_SKYBRIDGE_MIN_ABS_Z_M = 600;
@@ -539,6 +551,46 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     }
   }
 
+  // --- T7-4 grime balconies: real ledges with railing hints on the low slabs -----------------------
+  // Runs of balcony slabs on the corridor face below ~640 m: 1.6-2.4 m deep, a floor apart, with a
+  // railing along the outer edge, broken into runs so the facade reads as lived-in clutter, plus a
+  // few big vent/chimney boxes. Everything stays outside |x| >= ANNEX_CLEAR_X.
+  const FLOOR_M = SKYRIVER_CITY.windowCellHeightM;
+  for (const wall of innerWalls) {
+    for (const tower of wall) {
+      if (Math.abs(tower.z) < 650) continue;
+      const side = Math.sign(tower.x) as -1 | 1;
+      const face = Math.abs(tower.x) - tower.width * 0.5;
+      const runs = 5 + random.nextInt(0, 6);
+      for (let k = 0; k < runs; k += 1) {
+        const yBase = 30 + random.nextInt(0, 560);
+        const floors = 2 + random.nextInt(0, 6);
+        const span = 10 + random.nextInt(0, 40);
+        const zc = tower.z + (random.nextInt(-1000, 1000) / 1000) * (tower.depth * 0.5 - span * 0.5);
+        const proj = tierProjectionOver(layout.seed, tower, yBase, yBase + floors * FLOOR_M);
+        const wallFace = face - proj;
+        const depth = 1.6 + random.nextInt(0, 8) / 10;
+        if (wallFace - depth < ANNEX_CLEAR_X) continue;
+        for (let f = 0; f < floors; f += 1) {
+          const y = Math.round((yBase + f * FLOOR_M) / FLOOR_M) * FLOOR_M;
+          push(SKYRIVER_TRIM_BALCONY, side * (wallFace - depth * 0.5), y, zc, depth + 0.4, 0.3, span);
+          push(SKYRIVER_TRIM_RAILING, side * (wallFace - depth + 0.05), y + 0.65, zc, 0.12, 1.0, span);
+        }
+      }
+      const vents = random.nextInt(0, 3);
+      for (let k = 0; k < vents; k += 1) {
+        const y0 = 40 + random.nextInt(0, 520);
+        const h = 18 + random.nextInt(0, 40);
+        const w = 4 + random.nextInt(0, 50) / 10;
+        const proj = tierProjectionOver(layout.seed, tower, y0, y0 + h);
+        const wallFace = face - proj;
+        if (wallFace - w < ANNEX_CLEAR_X) continue;
+        push(SKYRIVER_TRIM_ROOF_PLANT, side * (wallFace - w * 0.5), y0 + h * 0.5,
+          tower.z + (random.nextInt(-1000, 1000) / 1000) * (tower.depth * 0.4), w, h, w * 1.3);
+      }
+    }
+  }
+
   // --- T7-3 tower profile variety: spears, flat tops, masts --------------------------------------
   for (const tower of layout.towers) {
     const roll = random.nextInt(0, 99);
@@ -899,6 +951,7 @@ varying float vUp;       // 0 at the base, 1 at the parapet
 varying float vIsSide;   // 1 on a facade, 0 on the roof
 varying float vFaceId;
 varying vec2 vFaceHalf;  // half extents of this face in vSurf metres
+varying vec3 vTangentW;  // T7-4: world direction of increasing vSurf.x (interior mapping frame)
 
 #include <fog_pars_vertex>
 
@@ -938,6 +991,8 @@ void main() {
   vUp = clamp( world.y / 2600.0, 0.0, 1.0 );
   // Axis-aligned extents only, so normalising after the scale is enough — no inverse transpose.
   vNormalW = normalize( mat3( modelMatrix ) * ( mat3( instanceMatrix ) * n ) );
+  vec3 tangentObject = ax > 0.5 ? vec3( 0.0, 0.0, 1.0 ) : vec3( 1.0, 0.0, 0.0 );
+  vTangentW = normalize( mat3( modelMatrix ) * ( mat3( instanceMatrix ) * tangentObject ) );
 
   vec4 mvPosition = modelViewMatrix * ( instanceMatrix * vec4( transformed, 1.0 ) );
   #include <fog_vertex>
@@ -964,6 +1019,70 @@ varying float vUp;
 varying float vIsSide;
 varying float vFaceId;
 varying vec2 vFaceHalf;
+varying vec3 vTangentW;
+
+// --- T7-4 interior mapping ------------------------------------------------------------------------
+// Every window cell is a box room [0,1]^3 (x across, y up, z depth from the glass). The view ray is
+// expressed in the facade's tangent frame, one slab test finds the wall/floor/ceiling it hits, and a
+// cut-out furniture plane at mid-depth sits in front of the back wall. See interiorAtlas.ts.
+uniform sampler2D uInterior;
+uniform vec2 uInteriorFade;      // view-depth fade window (start, end), metres
+uniform float uInteriorStrength; // 0 = off (low tier), 1 = on
+#define INTERIOR_COLUMNS 8.0
+#define INTERIOR_ROWS 4.0
+#define ROOM_DEPTH_M 7.0
+
+vec4 interiorTap( float room, vec2 local, vec4 rect ) {
+  // rect = (u0, v0, u1, v1) inside the room cell; local in [0,1]^2 within that part.
+  vec2 inPart = mix( rect.xy, rect.zw, clamp( local, 0.02, 0.98 ) );
+  float column = mod( room, INTERIOR_COLUMNS );
+  float row = floor( room / INTERIOR_COLUMNS );
+  vec2 uv = vec2( ( column + inPart.x ) / INTERIOR_COLUMNS, 1.0 - ( row + 1.0 ) / INTERIOR_ROWS + inPart.y / INTERIOR_ROWS );
+  return texture2D( uInterior, uv );
+}
+
+/** Traces one room. Returns the lit interior colour for unit light; depth01 is the hit depth. */
+vec3 traceRoom( vec2 cellLocal, vec3 ray, float room, float mirror, out float depth01 ) {
+  vec3 o = vec3( cellLocal, 0.0 );
+  if ( mirror > 0.5 ) { o.x = 1.0 - o.x; ray.x = - ray.x; }
+  vec3 r = vec3(
+    sign( ray.x ) * max( abs( ray.x ), 1e-4 ),
+    sign( ray.y ) * max( abs( ray.y ), 1e-4 ),
+    max( ray.z, 1e-4 )
+  );
+  // Slab test against the inner box: each axis exits through the wall the ray heads toward.
+  vec3 tAxis = ( step( 0.0, r ) - o ) / r;
+  float t = min( tAxis.x, min( tAxis.y, tAxis.z ) );
+  vec3 p = o + r * t;
+  vec3 c;
+  float shadePlane;
+  if ( tAxis.z <= tAxis.x && tAxis.z <= tAxis.y ) {
+    c = interiorTap( room, p.xy, vec4( 0.0, 0.5, 0.5, 1.0 ) ).rgb;
+    shadePlane = 1.0;
+  } else if ( tAxis.x <= tAxis.y ) {
+    c = interiorTap( room, vec2( p.z, p.y ), vec4( 0.0, 0.0, 0.25, 0.5 ) ).rgb;
+    shadePlane = 0.72;
+  } else if ( r.y < 0.0 ) {
+    c = interiorTap( room, vec2( p.x, p.z ), vec4( 0.25, 0.0, 0.625, 0.25 ) ).rgb;
+    shadePlane = 0.6;
+  } else {
+    c = interiorTap( room, vec2( p.x, p.z ), vec4( 0.25, 0.25, 0.625, 0.5 ) ).rgb;
+    shadePlane = 0.95;
+  }
+  depth01 = p.z;
+  c *= shadePlane * mix( 1.0, 0.5, p.z );
+  // Furniture plane at mid-depth: in front of whatever the ray reached behind it.
+  float tf = 0.5 / r.z;
+  if ( tf < t ) {
+    vec2 pf = ( o + r * tf ).xy;
+    if ( pf.x > 0.0 && pf.x < 1.0 && pf.y > 0.0 && pf.y < 1.0 ) {
+      vec4 f = interiorTap( room, pf, vec4( 0.5, 0.5, 1.0, 1.0 ) );
+      c = mix( c, f.rgb * 0.85, f.a );
+      depth01 = mix( depth01, 0.5, f.a );
+    }
+  }
+  return c;
+}
 
 #define HERO_MAX 24
 uniform vec4 uHeroBlades[ HERO_MAX ];   // x, centre y, z, half height
@@ -975,9 +1094,10 @@ ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${SKYRIVER_HASH_GLSL}
 
 /** Rounded-box signed distance in cell units; the window glass. */
-float windowSdf( vec2 cellLocal ) {
+float windowSdf( vec2 cellLocal, float ribbon ) {
   const float radius = 0.055;
-  vec2 halfExtent = vec2( 0.41, 0.29 );
+  // T7-4: the pristine heights glaze in near-continuous ribbons (curtain wall), not punched windows.
+  vec2 halfExtent = mix( vec2( 0.41, 0.29 ), vec2( 0.495, 0.36 ), ribbon );
   vec2 d = abs( cellLocal - 0.5 ) - halfExtent + radius;
   return length( max( d, 0.0 ) ) + min( max( d.x, d.y ), 0.0 ) - radius;
 }
@@ -1044,7 +1164,7 @@ void main() {
     * step( 0.2, cellLocal.x ) * step( cellLocal.x, 0.55 ) * step( 0.55, cellLocal.y ) * step( cellLocal.y, 0.86 );
   grimeTone += vec3( 0.5, 0.4, 0.3 ) * uConcreteLevel * ( ledge * 1.6 + acBox * 1.2 ) * detail;
   concrete = mix( concrete, grimeTone + uConcreteAmbient * 0.35, grime * vIsSide );
-  vec3 cleanTone = vec3( 0.105, 0.12, 0.145 ) * ( 0.92 + 0.08 * grain ) + uConcreteAmbient * 0.6;
+  vec3 cleanTone = vec3( 0.07, 0.08, 0.1 ) * ( 0.92 + 0.08 * grain ) + uConcreteAmbient * 0.45;
   float joint = max(
     1.0 - smoothstep( 0.0, 0.6, abs( fract( vSurf.x / 36.0 ) - 0.5 ) * 36.0 - 17.4 ),
     1.0 - smoothstep( 0.0, 0.6, abs( fract( vSurf.y / 48.0 ) - 0.5 ) * 48.0 - 23.4 )
@@ -1064,7 +1184,7 @@ void main() {
   // T6R: the wet sheen picks up the neon around it — a slow cyan/magenta drift over the facade.
   float neonDrift = skyValueNoise( vWorldPos.yz * vec2( 0.004, 0.003 ) + vSeed * 7.0 );
   vec3 sheen = mix( uWetTint, mix( vec3( 0.15, 0.55, 0.75 ), vec3( 0.7, 0.18, 0.55 ), neonDrift ), 0.55 );
-  color += sheen * fresnel * ( 0.2 + 0.8 * wet ) * vIsSide;
+  color += sheen * fresnel * ( 0.2 + 0.8 * wet ) * vIsSide * ( 1.0 - 0.6 * smoothstep( 1750.0, 2250.0, vWorldPos.y ) );
 
   // Wet arrises: a 1-2 px highlight on every box edge, so each mass separates from the one behind.
   vec2 edgeDistance = vFaceHalf - abs( vSurf );
@@ -1105,7 +1225,7 @@ void main() {
   float blockHash = skyHash12( floor( cellUv / vec2( 4.0, 7.0 ) ) + faceOffset * 0.37 );
   float blockLive = step( 0.52, blockHash );
 
-  float sd = windowSdf( cellLocal );
+  float sd = windowSdf( cellLocal, pristine );
   float glass = ( 1.0 - smoothstep( -0.012, 0.012, sd ) ) * vIsSide * blockLive;
   // Soft halo: the glow the wet haze smears around every lit pane.
   float halo = ( 1.0 - smoothstep( -0.02, 0.3, sd ) ) * vIsSide * blockLive;
@@ -1147,6 +1267,39 @@ void main() {
   float buzz = 1.0 - buzzing * 0.55 * ( 0.5 + 0.5 * sin( uTime * 23.0 + paneHash * 120.0 ) );
 
   vec3 resolved = paneColor * ( lit * brightness * buzz ) * ( glass + halo * 0.28 ) * ( 1.0 - heroShadow );
+
+  // --- T7-4 interiors: within uInteriorFade of the camera, the glass shows a traced room. -----------
+  float interiorFade = uInteriorStrength * ( 1.0 - smoothstep( uInteriorFade.x, uInteriorFade.y, viewDepth ) ) * vIsSide;
+  float glassRaw = ( 1.0 - smoothstep( -0.012, 0.012, sd ) );
+  if ( interiorFade > 0.001 && glassRaw > 0.001 ) {
+    vec3 d = normalize( vWorldPos - cameraPosition );
+    vec3 ray = vec3( dot( d, vTangentW ) / uCellWidth, d.y / uCellHeight, - dot( d, vNormalW ) / ROOM_DEPTH_M );
+    // Strata pick the room set: grime 0-9, mid 10-21, pristine 22-31 (dithered at the borders).
+    float roomHash = skyHash12( cell * vec2( 1.7, 2.3 ) + faceOffset * 0.71 );
+    float bandPick = vWorldPos.y + ( skyHash11( roomHash * 91.0 ) - 0.5 ) * 160.0;
+    float room = bandPick < 600.0 ? floor( roomHash * 10.0 )
+      : ( bandPick > 1800.0 ? 22.0 + floor( roomHash * 10.0 ) : 10.0 + floor( roomHash * 12.0 ) );
+    float mirror = step( 0.5, skyHash11( roomHash * 37.0 + 3.0 ) );
+    float depth01;
+    vec3 roomColor = traceRoom( cellLocal, ray, room, mirror, depth01 );
+    // Light: the bright rooms are the existing lit runs (so the far average is unchanged); a second
+    // set is dimly lit (a lamp, a screen) — about 60% of mid-city rooms read as occupied up close;
+    // the rest sit dark, picked out only by city spill. Pristine floors are mostly dark.
+    float dimShare = mix( mix( 0.5, 0.42, smoothstep( 500.0, 700.0, vWorldPos.y ) ), 0.3, pristine );
+    float dim = ( 1.0 - lit ) * step( 1.0 - dimShare, skyHash11( roomHash * 53.0 + 11.0 ) );
+    float screen = step( 0.7, skyHash11( roomHash * 19.0 ) );
+    vec3 dimLight = mix( paneColor * 0.55, vec3( 0.25, 0.45, 0.9 ) * ( 0.5 + 0.15 * sin( uTime * 7.0 + roomHash * 40.0 ) ), screen * ( 1.0 - grime ) );
+    // Pristine floors: only the thin cool ceiling light lines are on.
+    dimLight = mix( dimLight, vec3( 0.7, 0.85, 1.0 ) * 0.7, pristine );
+    // Exposure is set against the facade's 0.55 window scale below: lit rooms read as rooms, dim
+    // rooms as lamp-lit silhouettes, dark rooms as shapes in the city's spill light.
+    vec3 roomLight = paneColor * ( lit * blockLive * brightness * buzz * 7.0 ) + dimLight * dim * 5.5 + vec3( 0.42, 0.45, 0.58 ) * mix( 1.0, 0.55, pristine );
+    vec3 interior = roomColor * roomLight;
+    // Glass: a faint sheen of the city over the room, stronger at grazing angles.
+    interior += sheen * fresnel * 0.35;
+    vec3 resolvedInterior = ( interior * glassRaw + paneColor * ( lit * blockLive * brightness ) * halo * 0.1 ) * ( 1.0 - heroShadow );
+    resolved = mix( resolved, resolvedInterior, interiorFade );
+  }
   // What the grid averages out to once it stops resolving: lit share times mean pane brightness,
   // in the mean pane colour. Distant walls read as a dim glow rather than a field of sparks.
   vec3 averaged = vec3( 0.86, 0.72, 0.56 ) * ( litShare * 0.22 * blockLive * vIsSide );
@@ -1252,8 +1405,19 @@ void main() {
   float edge = smoothstep( 0.5, 0.36, abs( vTrimLocal.y ) ) * ( 1.0 - soffit );
   color += bandLight * isBand * runLive * ( soffit * 0.55 + edge * 0.15 );
 
+  // T7-4 balcony (7): a stained grime slab with a warm underlight here and there.
+  float isBalcony = step( 6.5, vKind ) * ( 1.0 - step( 7.5, vKind ) );
+  color = mix( color, vec3( 0.07, 0.05, 0.035 ) * ( 0.7 + 0.6 * grain ) + uConcreteAmbient * 0.3, isBalcony );
+  float underLit = step( 0.72, skyHash11( floor( run / 7.0 ) + vSeed * 31.0 ) ) * step( vNormalW.y, -0.5 );
+  color += vec3( 1.0, 0.62, 0.3 ) * underLit * isBalcony * 0.5;
+  // Railing (8): vertical bars every ~0.4 m and a top rail, painted on the thin rail box.
+  float isRailing = step( 7.5, vKind );
+  float bars = step( 0.62, fract( run / 0.42 ) );
+  float topRail = smoothstep( 0.38, 0.46, vTrimLocal.y );
+  color = mix( color, mix( vec3( 0.02, 0.018, 0.016 ), vec3( 0.16, 0.13, 0.1 ), max( bars, topRail ) ), isRailing );
+
   // Skybridge (6): a dark mass with a ribbon of cold windows on each side and blue underlights.
-  float isBridge = step( 5.5, vKind );
+  float isBridge = step( 5.5, vKind ) * ( 1.0 - step( 6.5, vKind ) );
   float sideFace = step( 0.5, abs( vNormalW.z ) );
   float ribbon = smoothstep( 0.12, 0.08, abs( vTrimLocal.y - 0.05 ) );
   float pane = step( 0.3, fract( run / 4.0 ) ) * step( 0.3, skyHash11( floor( run / 4.0 ) + vSeed * 19.0 ) );
@@ -1513,6 +1677,7 @@ export class SkyriverCity {
   private readonly signMaterial: THREE.ShaderMaterial;
   private readonly signGeometry: THREE.InstancedBufferGeometry;
   private readonly atlas: SignAtlas;
+  private readonly interiorAtlas: InteriorAtlas;
   private readonly layout: SkyriverCityLayout;
   private readonly trims: SkyriverCityTrims;
   private readonly signs: SkyriverNeonSigns;
@@ -1523,6 +1688,7 @@ export class SkyriverCity {
     this.trims = deriveCityTrims(layout);
     this.signs = deriveNeonSigns(layout);
     this.atlas = createSignAtlas();
+    this.interiorAtlas = createInteriorAtlas(layout.seed);
     this.group.name = 'skyriver.city';
 
     // T6R contrast: near-black concrete against the luminous haze (atmosphere.ts).
@@ -1557,6 +1723,9 @@ export class SkyriverCity {
         uConcreteLevel: { value: 0.032 },
         uConcreteAmbient: { value: concreteAmbient },
         uWetTint: { value: wetTint },
+        uInterior: { value: this.interiorAtlas.texture },
+        uInteriorFade: { value: new THREE.Vector2(SKYRIVER_INTERIOR_FADE.full[0], SKYRIVER_INTERIOR_FADE.full[1]) },
+        uInteriorStrength: { value: 1 },
         uHeroBlades: { value: heroUniforms.blades },
         uHeroColors: { value: heroUniforms.colors },
         uHeroCount: { value: heroUniforms.count },
@@ -1640,6 +1809,24 @@ export class SkyriverCity {
     this.towerMaterial.uniforms.uProjScale.value = pixelsPerMetreAtUnitDepth;
   }
 
+  /**
+   * T7-4 interior mapping tier: 'full' traces rooms out to ~750 m, 'near' only close by (medium
+   * tier), 'off' keeps the emissive window term (low tier, perf-safe fallback).
+   */
+  setInteriorMode(mode: SkyriverInteriorMode): void {
+    const u = this.towerMaterial.uniforms;
+    u.uInteriorStrength!.value = mode === 'off' ? 0 : 1;
+    const fade = mode === 'near' ? SKYRIVER_INTERIOR_FADE.near : SKYRIVER_INTERIOR_FADE.full;
+    (u.uInteriorFade!.value as THREE.Vector2).set(fade[0], fade[1]);
+  }
+
+  /** The fade window currently in use, metres (for the debug stats). */
+  interiorFade(): { readonly strength: number; readonly start: number; readonly end: number } {
+    const u = this.towerMaterial.uniforms;
+    const fade = u.uInteriorFade!.value as THREE.Vector2;
+    return { strength: u.uInteriorStrength!.value as number, start: fade.x, end: fade.y };
+  }
+
   /** One uniform write per material. No allocation, nothing per instance. */
   update(frame: SkyriverFrame): void {
     const { time } = frame;
@@ -1667,6 +1854,7 @@ export class SkyriverCity {
     this.signGeometry.dispose();
     this.signMaterial.dispose();
     this.atlas.dispose();
+    this.interiorAtlas.dispose();
     this.towerMesh.dispose();
     this.trimMesh.dispose();
   }

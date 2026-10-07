@@ -33,6 +33,7 @@ import { TRAFFIC_QUALITY_TIERS, createSkyriverTraffic } from './render/traffic';
 import type { SkyriverTraffic, TrafficQuality } from './render/trafficTypes';
 import { createSkyriverShuttle } from './render/shuttle';
 import { createFlightPresenter } from './render/flightPresentation';
+import { warpCanyon } from './render/canyonWarp';
 import {
   applyCameraPose,
   createCameraPoseScratch,
@@ -827,8 +828,20 @@ export function boot(): SkyriverApp {
 
   // T7 A/B evidence: ?bloom=0 renders the same frame without the post chain.
   if (params.get('bloom') === '0') app.scene.setBloomAllowed(false);
+  // T7-4 A/B: ?interiors=0 renders the same frames with the emissive window term only.
+  if (params.get('interiors') === '0') app.scene.setInteriorsAllowed(false);
 
   (window as unknown as { __skyriver?: SkyriverApp }).__skyriver = app;
+  // T7-4 evidence hook (presentation-only, read-only): the canyon warp and a tower raycast, so the
+  // browser probe can park a diagnostic camera at a real wall in the production build.
+  (window as unknown as { __skyriverDiag?: unknown }).__skyriverDiag = {
+    warpCanyon,
+    raycastTowers(ox: number, oy: number, oz: number, dx: number, dy: number, dz: number): { x: number; y: number; z: number } | null {
+      const ray = new THREE.Raycaster(new THREE.Vector3(ox, oy, oz), new THREE.Vector3(dx, dy, dz).normalize(), 0, 3000);
+      const hit = ray.intersectObject(app.scene.city.towerMesh, false)[0];
+      return hit === undefined ? null : { x: hit.point.x, y: hit.point.y, z: hit.point.z };
+    },
+  };
 
   void app.start().catch((error: unknown) => {
     console.error('[skyriver] start failed', error);

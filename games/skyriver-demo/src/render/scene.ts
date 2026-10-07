@@ -37,7 +37,7 @@ import { deriveCityLayout, type SkyriverCityLayout } from '../sim/derive';
 import type { SkyriverProjection } from '../sim/runtime';
 import { SKYRIVER_TICK_RATE } from '../sim/systems';
 import { SkyriverAtmosphere, SKYRIVER_ATMOSPHERE_DRAW_CALL_BUDGET } from './atmosphere';
-import { SkyriverCity, SKYRIVER_CITY_DRAW_CALL_BUDGET } from './city';
+import { SkyriverCity, SKYRIVER_CITY_DRAW_CALL_BUDGET, type SkyriverInteriorMode } from './city';
 import { presentCityLayout } from './presentationLayout';
 
 /** Plan R3: 16 total. The approved night look spends less — the hard ceiling we hold to is 12. */
@@ -79,6 +79,8 @@ export interface SkyriverQualitySettings {
    * tier keeps the same single ACES tone map as the others for one extra full-screen draw.
    */
   readonly bloom: SkyriverBloomMode;
+  /** T7-4 interior mapping: 'full' (high), 'near' fade window (medium), 'off' emissive panes (low). */
+  readonly interiors: SkyriverInteriorMode;
 }
 
 export type SkyriverBloomMode = 'full' | 'half' | 'off';
@@ -92,6 +94,7 @@ export const SKYRIVER_QUALITY: Readonly<Record<SkyriverQualityTier, SkyriverQual
       rainStreaks: true,
       dpr: 1.5,
       bloom: 'full',
+      interiors: 'full',
     }),
     [SkyriverQualityTier.Medium]: Object.freeze({
       tier: SkyriverQualityTier.Medium,
@@ -100,6 +103,7 @@ export const SKYRIVER_QUALITY: Readonly<Record<SkyriverQualityTier, SkyriverQual
       rainStreaks: false,
       dpr: 1.25,
       bloom: 'half',
+      interiors: 'near',
     }),
     [SkyriverQualityTier.Low]: Object.freeze({
       tier: SkyriverQualityTier.Low,
@@ -108,6 +112,7 @@ export const SKYRIVER_QUALITY: Readonly<Record<SkyriverQualityTier, SkyriverQual
       rainStreaks: false,
       dpr: 1.0,
       bloom: 'off',
+      interiors: 'off',
     }),
   });
 
@@ -253,6 +258,7 @@ export class SkyriverScene {
   private readonly bloomPass: UnrealBloomPass;
   /** Debug/A-B override: false forces the bloom chain off regardless of tier. */
   private bloomAllowed = true;
+  private interiorsAllowed = true;
   private readonly listeners: SkyriverFrameListener[] = [];
   private readonly frame: MutableFrame;
   private lastUpdateMs: number | null = null;
@@ -308,6 +314,7 @@ export class SkyriverScene {
 
     this.city = new SkyriverCity({ layout: this.layout, quality: this.quality });
     this.scene.add(this.city.group);
+    this.city.setInteriorMode(this.quality.interiors);
 
     const hdrTarget = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType });
     this.composer = new EffectComposer(this.renderer, hdrTarget);
@@ -377,6 +384,7 @@ export class SkyriverScene {
     this.maxPixelRatio = maxPixelRatio ?? this.quality.dpr;
     this.frame.quality = this.quality;
     this.atmosphere.setQuality(this.quality);
+    this.city.setInteriorMode(this.interiorsAllowed ? this.quality.interiors : 'off');
     this.resize(this.width, this.height);
   }
 
@@ -430,6 +438,12 @@ export class SkyriverScene {
   /** True when this frame goes through the bloom composer. */
   get bloomEnabled(): boolean {
     return this.bloomAllowed && this.quality.bloom !== 'off';
+  }
+
+  /** A/B evidence and perf: force interior mapping off (false) or back to the tier default (true). */
+  setInteriorsAllowed(allowed: boolean): void {
+    this.interiorsAllowed = allowed;
+    this.city.setInteriorMode(allowed ? this.quality.interiors : 'off');
   }
 
   /** A/B evidence and debugging: force bloom off (false) or back to the tier default (true). */
