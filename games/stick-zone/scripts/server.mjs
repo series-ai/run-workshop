@@ -1517,8 +1517,12 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         }
         const data = JSON.parse(body || "{}");
         const raidId = data.raidId || `raid_sector7_${Date.now()}`;
+        // Raid IDs are immutable at the authority layer: a coordinator "reset" of a
+        // raid whose operatives have concluded (extracted/K.I.A./concluded) is the only
+        // sanctioned reinitialization; a reset of a LIVE or ledger-touched raid under
+        // the same ID is rejected — replacement raids MUST use a fresh raid ID (which
+        // also keeps operative caches, machine seq counters, and custody in sync).
         const isResettingExisting = settlement.hasRaid(raidId);
-
         if (isResettingExisting) {
           if (!caller.isSystem && caller.raidId !== raidId) {
             res.statusCode = 403;
@@ -1542,6 +1546,21 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
               res.setHeader("Content-Type", "application/json");
               res.end(JSON.stringify({ error: "Forbidden: Operative must be extracted, K.I.A., or raid concluded before resetting raid" }));
               return;
+            }
+            // Same-raid resets of a LIVE (non-terminal) raid are rejected BELOW the
+            // caller rules — immutability applies to system and coordinators alike;
+            // replacement raids MUST use a new raid ID (caches + seq counters sync).
+            if (!(isRaidExpired || activeRaidRec?.status === "concluded")) {
+              const __liveRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
+              const __allTerminal = __liveRec
+                ? Object.values(__liveRec.operatives || {}).every((o) => o.isExtracted || o.isKia || o.isAlive === false)
+                : false;
+              if (!__allTerminal) {
+                res.statusCode = 403;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ error: "Cross-token forbidden: raid already exists and is live: replacement raids require a new raid ID" }));
+                return;
+              }
             }
           }
         } else {

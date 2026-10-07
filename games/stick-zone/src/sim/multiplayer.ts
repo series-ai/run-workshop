@@ -1100,7 +1100,14 @@ export class MultiplayerCoordinator {
               if (typeof data.armor === "number" && Number.isFinite(data.armor)) {
                 this.sim.player.armor = data.armor;
               }
-              if (data.isAlive === false || (typeof data.health === "number" && data.health <= 0)) {
+              // Complete authoritative life-state adoption: positive custody health
+              // with nonterminal flags RESURRECTS a locally-dead player (the local
+              // death may have been predicted from a peer packet the relay never
+              // confirmed — the server is the sole life authority).
+              if (data.health > 0 && data.isAlive === true) {
+                this.sim.player.isAlive = true;
+                this.sim.player.health = data.health;
+              } else if (data.isAlive === false || (typeof data.health === "number" && data.health <= 0)) {
                 this.sim.player.isAlive = false;
                 this.sim.player.health = 0;
               }
@@ -1794,11 +1801,16 @@ export class MultiplayerCoordinator {
       this.hostPeerId = hostId;
     }
     if (this.serverMachines && Array.isArray(this.serverMachines)) {
-      // Snapshot substitution stays ORDERED: the cached machines carry vitalsSeq, and
-      // the applying client adopts them through the reconciler below (not a raw
-      // applyRaidSnapshot) — so a stale cache can never zero a live machine.
+      // Snapshot substitution stays ORDERED: reconcile authoritative custody FIRST, then
+      // strip the peer's machine claims from the snapshot — the world state that was
+      // just reconciled wins (applyRaidSnapshot then only no-ops the machine section
+      // instead of re-applying unsequenced peer claims).
       this.applyMachineRosterCustody(this.serverMachines as any, undefined);
+      sanitized.machines = [];
     }
+    // No authoritative cache (first admission): peer machine claims are the bootstrap
+    // world — the relay has not yet delivered any roster, so the joiner seeds its
+    // machines from the host snapshot (behavior preserved).
     this.lastAppliedSnapshotTimestamp = snapshotTime;
     this.lastAppliedSnapshotTick = sanitized.snapshotTick;
     // World-custody guards for peer-provided snapshots:

@@ -406,6 +406,30 @@ export function validateStoreIntegrity(data: any): boolean {
 
     if (totalOpEarnedCash > allowableCashPool) return false;
     if (totalBanked !== totalExtractedCash) return false;
+
+    // Machine authority fields: any PRESENT value must be well-formed — deployment
+    // records dense and bounded, roster revision and per-machine sequences
+    // nonnegative integers (corrupt present fields reject the store rather than
+    // silently restoring default machines).
+    const rAny = r as any;
+    if (rAny.machineDeployment !== undefined) {
+      if (!Array.isArray(rAny.machineDeployment) || rAny.machineDeployment.length > 64) return false;
+      const depIds = new Set<string>();
+      for (const dm of rAny.machineDeployment) {
+        if (!dm || typeof dm !== "object" || Array.isArray(dm)) return false;
+        if (typeof dm.id !== "string" || !dm.id) return false;
+        if (depIds.has(dm.id)) return false;
+        depIds.add(dm.id);
+        if (dm.vitalsSeq !== undefined && (typeof dm.vitalsSeq !== "number" || !Number.isInteger(dm.vitalsSeq) || dm.vitalsSeq < 0)) return false;
+        if (dm.maxHealth !== undefined && (typeof dm.maxHealth !== "number" || !Number.isFinite(dm.maxHealth) || dm.maxHealth <= 0 || dm.maxHealth > 1000)) return false;
+      }
+    }
+    if (rAny.machineRosterRevision !== undefined && (typeof rAny.machineRosterRevision !== "number" || !Number.isInteger(rAny.machineRosterRevision) || rAny.machineRosterRevision < 0)) return false;
+    if ((r as any).machines) {
+      for (const rec of Object.values((r as any).machines) as any[]) {
+        if (rec && rec.vitalsSeq !== undefined && (typeof rec.vitalsSeq !== "number" || !Number.isInteger(rec.vitalsSeq) || rec.vitalsSeq < 0)) return false;
+      }
+    }
   }
   return true;
 }
@@ -1679,6 +1703,10 @@ export class ServerSettlementAuthority {
     const isDurationVerified = (realElapsedMs >= 3000 || simTickAdvancement) && (op.holdReportCount || 0) >= 25;
 
     if (op.holdTicks >= 180 && ticksElapsed >= 179 && isDurationVerified) {
+      // DURABLE completion: the completion state (including the corridor start marker)
+      // is persisted BEFORE it is reported — a restart can never lose an accepted
+      // completion (the client extracts on verified custody, not on a volatile yes).
+      this.saveToDisk();
       op.holdCompleted = true;
       if (!op.holdCompletedAtTick) op.holdCompletedAtTick = currentTick;
       op.holdCompletedTimestamp = now;
