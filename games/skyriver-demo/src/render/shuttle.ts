@@ -174,8 +174,9 @@ function pushBox(build: HullBuild, centre: Vec3, size: Vec3, color: Rgb, emissiv
 
 /** Tail at z = TAIL_Z; the strip and the nozzles sit just behind it. */
 const TAIL_Z = -5.6;
-const NOZZLE_X = 1.65;
-const NOZZLE_Y = -0.38;
+/** T7-3: nozzles sit in the two engine pods (rear corners, under the deck). */
+const NOZZLE_X = 2.05;
+const NOZZLE_Y = -0.42;
 
 function buildHull(): HullBuild {
   const build: HullBuild = { positions: [], colors: [] };
@@ -235,6 +236,9 @@ function buildHull(): HullBuild {
     }
   }
   pushQuad(build, [-1.45, 0.29, 4.12], [1.45, 0.29, 4.12], [1.45, 0.27, 4.26], [-1.45, 0.27, 4.26], SEAM, true);
+  // T7-3 glass reflection: a soft cool band of city light sliding across the canopy roof.
+  const glassBand: Rgb = [0.09, 0.14, 0.2];
+  pushQuad(build, [-1.6, 1.3, -2.6], [1.1, 1.36, -1.6], [1.25, 1.33, -0.9], [-1.45, 1.27, -1.9], glassBand, true);
   // Bevel catch-light where the canopy meets the body.
   for (let i = 0; i + 1 < canopy.length; i += 1) {
     const a = canopy[i]!;
@@ -256,12 +260,24 @@ function buildHull(): HullBuild {
   pushBox(build, [0, 0.86, TAIL_Z + 0.1], [5.5, 0.16, 0.6], PAINT);
   pushBox(build, [0, -0.62, TAIL_Z - 0.02], [5.3, 0.22, 0.2], TRIM);
 
+  // T7-3 double strip (the reference's signature): a second, thinner hot line above the main one.
+  pushBox(build, [0, 0.7, TAIL_Z - 0.09], [5.0, 0.11, 0.1], TAILLIGHT, true);
   // The signature: one hot horizontal taillight strip across the full tail, plus a softer
   // under-bar so the strip has a glow footprint even before the camera resolves its thickness.
   pushBox(build, [0, 0.46, TAIL_Z - 0.08], [5.4, 0.3, 0.1], TAILLIGHT, true);
   pushBox(build, [0, 0.24, TAIL_Z - 0.06], [4.6, 0.08, 0.08], TAILLIGHT_SOFT, true);
 
-  // Twin thruster nozzles under the deck: dark collars with incandescent throats facing the camera.
+  // T7-3 engine pods: two distinct blocks at the rear corners, proud of the body, with horizontal
+  // grille slats across their rear faces (the reference's chunky rear assembly).
+  for (const side of [-1, 1]) {
+    pushBox(build, [side * NOZZLE_X, NOZZLE_Y + 0.05, TAIL_Z + 1.1], [1.75, 1.15, 3.2], PAINT_DARK);
+    pushBox(build, [side * NOZZLE_X, NOZZLE_Y + 0.66, TAIL_Z + 1.2], [1.55, 0.08, 2.8], BEVEL, true);
+    for (let k = 0; k < 4; k += 1) {
+      pushBox(build, [side * NOZZLE_X, NOZZLE_Y + 0.42 - k * 0.12, TAIL_Z - 0.52], [1.6, 0.05, 0.06], k % 2 === 0 ? SEAM : TRIM);
+    }
+  }
+
+  // Twin thruster nozzles in the pods: dark collars with incandescent throats facing the camera.
   for (const side of [-1, 1]) {
     pushBox(build, [side * NOZZLE_X, NOZZLE_Y, TAIL_Z - 0.18], [1.35, 0.72, 0.5], TRIM);
     pushQuad(

@@ -45,6 +45,8 @@ import {
 } from './atmosphere';
 import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
 import { HERO_HORIZONTAL_CELLS, HERO_VERTICAL_CELLS, createSignAtlas, type SignAtlas } from './signAtlas';
+import { CANYON_LOOP_LENGTH_M, intrudesOtherStretch, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
+import { ROUTE_MAX_ALTITUDE_M, STRATA_GRIME_TOP_M, STRATA_PRISTINE_BASE_M, routeAltitude } from './routeProfile';
 
 /** Draw calls this module may spend (plan T3 allows 10 city-only; the shared budget allots 8). */
 export const SKYRIVER_CITY_DRAW_CALL_BUDGET = 8;
@@ -64,11 +66,11 @@ export const SKYRIVER_CITY = Object.freeze({
   /** Structural rib pitch down the facade. */
   ribSpacingM: 19,
   /** Hard caps on the locally derived passes. */
-  maxTrims: 9000,
+  maxTrims: 16000,
   maxSigns: 1600,
   /** Target sign count before the cap and the per-tower fit test. */
   /** T6R-2: halved — the review read the T6R density as confetti competing with the windows. */
-  signTarget: 720,
+  signTarget: 1300,
   /** Signs sit this far off the facade so they never z-fight with it. */
   signStandoffM: 0.45,
   drawCallBudget: SKYRIVER_CITY_DRAW_CALL_BUDGET,
@@ -160,9 +162,17 @@ export interface SkyriverMass {
  * Every wall continues this far below the canyon floor. The depths haze (atmosphere.ts) swallows it,
  * so there is no wall foot and no plane edge anywhere: the canyon bottom reads as void.
  */
-export const SKYRIVER_CITY_VOID_BASE_Y = -1600;
+export const SKYRIVER_CITY_VOID_BASE_Y = -2600;
 /** The far skyline is a cold, darker concrete so the haze grades it into layered silhouettes. */
 const TOWER_FAR_TINT = 0x3c4450;
+/** T7-3 grime annexes: stained brown concrete and rust. */
+const GRIME_TINT = 0x6a5440;
+
+/** |x| of the inner column on a tower's side (for telling inner-wall slabs from outer columns). */
+function innerWallX(layout: SkyriverCityLayout, tower: SkyriverTower): number {
+  const wall = innerWallOf(layout, (Math.sign(tower.x) || 1) as -1 | 1);
+  return wall.length === 0 ? Math.abs(tower.x) : Math.abs(wall[0]!.x);
+}
 
 const trimCache = new Map<number, SkyriverCityTrims>();
 const massCache = new Map<number, SkyriverMass[]>();
@@ -416,7 +426,9 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
           const ribBottom = Math.max(bottom, -300);
           for (let r = 0; r <= ribs; r += 1) {
             const z = zCentre - zSpan * 0.5 + 3.5 + (r / ribs) * (zSpan - 7);
-            const ribTop = top - (r % 2 === 1 ? random.nextInt(0, 40) : 0);
+            // T7-3 strata: high pristine faces are smooth, so ribs stop at the pristine base.
+            const ribTop = Math.min(top - (r % 2 === 1 ? random.nextInt(0, 40) : 0), STRATA_PRISTINE_BASE_M + 80);
+            if (ribTop <= ribBottom + 20) continue;
             push(SKYRIVER_TRIM_RIB, side * (outer - ribDepth * 0.5 + 0.5), (ribBottom + ribTop) * 0.5, z,
               ribDepth + 1, ribTop - ribBottom, 6 + random.nextInt(0, 30) / 10);
           }
@@ -425,7 +437,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
         const slabDepth = Math.min(11, outer - CORRIDOR_CLEAR_X - 0.5);
         if (slabDepth >= 3) {
           let y = Math.max(bottom, 60) + 30 + random.nextInt(0, 40);
-          while (y < top - 25) {
+          while (y < Math.min(top - 25, STRATA_PRISTINE_BASE_M)) {
             push(SKYRIVER_TRIM_BAND, side * (outer - slabDepth * 0.5 + 0.5), y, zCentre,
               slabDepth + 1, 4.5 + random.nextInt(0, 20) / 10, zSpan + 3);
             y += 48 + random.nextInt(0, 45);
@@ -481,27 +493,90 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     }
   }
 
-  // Far skyline closing each end of the view: four terraced rows beyond the canyon, so the
-  // vanishing point holds layered silhouettes graded by the haze instead of a flat slot of sky.
-  for (const end of [-1, 1]) {
-    for (let row = 0; row < 4; row += 1) {
-      const zRow = end * (5000 + row * 650);
-      for (let x = -2500; x <= 2500; x += 230 + random.nextInt(0, 90)) {
-        const width = 110 + random.nextInt(0, 120);
-        const height = 1300 + random.nextInt(0, 2600) + row * 250;
-        masses.push({
-          x,
-          y0: SKYRIVER_CITY_VOID_BASE_Y,
-          z: zRow + random.nextInt(-120, 120),
-          width,
-          height: height - SKYRIVER_CITY_VOID_BASE_Y,
-          depth: 110 + random.nextInt(0, 120),
-          tint: TOWER_FAR_TINT,
-        });
-        if (random.nextInt(0, 99) < 55) {
-          masses.push({ x, y0: height - 2, z: zRow, width: width * 0.5, height: 60 + random.nextInt(0, 260), depth: 70, tint: TOWER_FAR_TINT });
+  // --- T7-3 grime strata: buildings-on-buildings low on the inner walls ---------------------------
+  // Below ~600 m the reference is utilitarian chaos: small blocks stacked on the big slabs, roofs
+  // crowded with water tanks, AC boxes and masts. Annex blocks stack against the corridor face (they
+  // stop at |x| >= ANNEX_CLEAR_X, the low corridor), each topped with clutter.
+  const ANNEX_CLEAR_X = 372;
+  for (const wall of innerWalls) {
+    for (const tower of wall) {
+      if (Math.abs(tower.z) < 650) continue; // keep the free-flight box's walls exactly as before
+      const side = Math.sign(tower.x) as -1 | 1;
+      const face = Math.abs(tower.x) - tower.width * 0.5;
+      const annexes = 3 + random.nextInt(0, 4);
+      for (let a = 0; a < annexes; a += 1) {
+        const y0 = -60 + random.nextInt(0, 520);
+        const height = 25 + random.nextInt(0, 90);
+        const proj = tierProjectionOver(layout.seed, tower, y0, y0 + height);
+        const outerFace = face - proj;
+        const depthInto = Math.min(18 + random.nextInt(0, 30), outerFace - ANNEX_CLEAR_X);
+        if (depthInto < 8) continue;
+        const span = 20 + random.nextInt(0, 60);
+        const z = tower.z + (random.nextInt(-1000, 1000) / 1000) * (tower.depth * 0.5 - span * 0.5);
+        const ax = side * (outerFace - depthInto * 0.5 + 2);
+        masses.push({ x: ax, y0, z, width: depthInto + 4, height, depth: span, tint: GRIME_TINT });
+        // Rooftop clutter: water tanks (squat), AC boxes (small), and the odd mast.
+        const clutter = 2 + random.nextInt(0, 5);
+        for (let c = 0; c < clutter; c += 1) {
+          const cxo = ax + (random.nextInt(-1000, 1000) / 1000) * (depthInto * 0.35);
+          const czo = z + (random.nextInt(-1000, 1000) / 1000) * (span * 0.4);
+          const roll = random.nextInt(0, 99);
+          if (roll < 40) {
+            const d = 3 + random.nextInt(0, 30) / 10;
+            push(SKYRIVER_TRIM_ROOF_PLANT, cxo, y0 + height + 2.5, czo, d, 5, d);
+          } else if (roll < 85) {
+            push(SKYRIVER_TRIM_ROOF_PLANT, cxo, y0 + height + 0.8, czo, 2.4, 1.6, 1.8);
+          } else {
+            const mh = 10 + random.nextInt(0, 25);
+            push(SKYRIVER_TRIM_ANTENNA, cxo, y0 + height + mh * 0.5, czo, 0.6, mh, 0.6);
+          }
+        }
+        // Cable bundles: thin sagging spans between neighbouring annexes, read as tangled lines.
+        if (random.nextInt(0, 99) < 45) {
+          push(SKYRIVER_TRIM_GANTRY, ax, y0 + height * 0.7, z + span * 0.5 + 10, 0.5, 0.5, 20);
         }
       }
+    }
+  }
+
+  // --- T7-3 tower profile variety: spears, flat tops, masts --------------------------------------
+  for (const tower of layout.towers) {
+    const roll = random.nextInt(0, 99);
+    if (roll < 28) {
+      // Spear: three narrowing stages and a mast — silhouettes against the sky band.
+      let w = tower.width * 0.55;
+      let d = tower.depth * 0.55;
+      let y = tower.height - 2;
+      for (let stage = 0; stage < 3; stage += 1) {
+        const h = 90 + random.nextInt(0, 220);
+        masses.push({ x: tower.x, y0: y, z: tower.z, width: w, height: h, depth: d, tint: tower.tint });
+        y += h - 2;
+        w *= 0.62;
+        d *= 0.62;
+      }
+      const mast = 120 + random.nextInt(0, 260);
+      push(SKYRIVER_TRIM_ANTENNA, tower.x, y + mast * 0.5, tower.z, 3.2, mast, 3.2);
+    } else if (roll < 55 && Math.abs(Math.abs(tower.x) - innerWallX(layout, tower)) > 1) {
+      // Flat top with roof plant and a short antenna cluster (outer columns only; inner walls have crowns).
+      push(SKYRIVER_TRIM_ROOF_PLANT, tower.x, tower.height + 9, tower.z, tower.width * 0.6, 18, tower.depth * 0.5);
+      for (let m = 0; m < 3; m += 1) {
+        const mh = 30 + random.nextInt(0, 90);
+        push(SKYRIVER_TRIM_ANTENNA, tower.x + (random.nextInt(-1000, 1000) / 1000) * tower.width * 0.35,
+          tower.height + mh * 0.5, tower.z + (random.nextInt(-1000, 1000) / 1000) * tower.depth * 0.35, 1.6, mh, 1.6);
+      }
+    }
+  }
+
+  // Far spears beyond the outer columns, on the outside of the loop: distant silhouettes that the
+  // winding sightline swings across.
+  for (let v = -CANYON_LOOP_LENGTH_M / 2; v < CANYON_LOOP_LENGTH_M / 2; v += 260 + random.nextInt(0, 160)) {
+    for (const side of [-1, 1] as const) {
+      const x = side * (1950 + random.nextInt(0, 900));
+      const width = 90 + random.nextInt(0, 110);
+      if (intrudesOtherStretch(x, v, width)) continue;
+      const height = 2600 + random.nextInt(0, 2600);
+      masses.push({ x, y0: SKYRIVER_CITY_VOID_BASE_Y, z: v, width, height: height - SKYRIVER_CITY_VOID_BASE_Y, depth: width * (0.8 + random.nextInt(0, 400) / 1000), tint: TOWER_FAR_TINT });
+      masses.push({ x, y0: height - 2, z: v, width: width * 0.45, height: 120 + random.nextInt(0, 400), depth: width * 0.4, tint: TOWER_FAR_TINT });
     }
   }
 
@@ -554,7 +629,6 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
   return trims;
 }
 
-const SIGN_MAX_ABS_Z_M = 3300;
 
 /** Towers of the inner column on one side: the wall that faces the corridor. */
 function innerWallOf(layout: SkyriverCityLayout, side: -1 | 1): readonly SkyriverTower[] {
@@ -579,19 +653,13 @@ export interface SkyriverHeroBlade {
   readonly seed: number;
 }
 
-/** Along-canyon stations of the hero blades, per wall. Staggered so each straight sees 4-6 ahead. */
 /**
- * T7-2 stations along the autopilot straights (|z| <= ~1.75 km): 8 blades and 4 wall panels,
- * interleaved and alternating walls, so every ~1 km of canyon shows 2-3 distinct giant signs.
+ * T7-3 hero stations around the whole loop: every ~530 m, alternating walls, in a blade-blade-panel
+ * rhythm, at the route's own altitude there. Stations where the route is in the pristine heights
+ * are skipped (calm, clean slabs up there).
  */
-const HERO_STATIONS: readonly (readonly [-1 | 1, number, 'blade' | 'panel'])[] = Object.freeze([
-  [-1, -1500, 'blade'], [1, -1300, 'panel'], [1, -1050, 'blade'], [-1, -600, 'blade'],
-  [-1, -350, 'panel'], [1, -150, 'blade'], [-1, 300, 'blade'], [1, 550, 'panel'],
-  [1, 750, 'blade'], [-1, 1200, 'blade'], [-1, 1450, 'panel'], [1, 1650, 'blade'],
-]);
+const HERO_SPACING_M = 530;
 const HERO_COLORS: readonly number[] = Object.freeze([0x2ff2ff, 0xff2fb4, 0xffb13c, 0x2ff2ff, 0xff4a8c]);
-/** Shuttle height band (flightPresentation.ts track: ~945-1360 m). */
-const HERO_CENTRE_Y = 1160;
 
 const heroCache = new Map<number, readonly SkyriverHeroBlade[]>();
 
@@ -607,7 +675,14 @@ export function deriveHeroBlades(layout: SkyriverCityLayout): readonly SkyriverH
   const blades: SkyriverHeroBlade[] = [];
   let bladeCell = 0;
   let panelCell = 0;
-  for (const [side, z, kind] of HERO_STATIONS) {
+  const stations: [-1 | 1, number, 'blade' | 'panel'][] = [];
+  for (let k = 0; k * HERO_SPACING_M < CANYON_LOOP_LENGTH_M; k += 1) {
+    const v = -CANYON_LOOP_LENGTH_M / 2 + (k + 0.5) * HERO_SPACING_M;
+    if (routeAltitude(v) > STRATA_PRISTINE_BASE_M - 50) continue;
+    stations.push([k % 2 === 0 ? -1 : 1, v, k % 3 === 2 ? 'panel' : 'blade']);
+  }
+  for (const [side, z, kind] of stations) {
+    const HERO_CENTRE_Y = routeAltitude(z) + 20;
     const wall = innerWallOf(layout, side);
     if (wall.length === 0) continue;
     const tower = wall.reduce((best, candidate) => (Math.abs(candidate.z - z) < Math.abs(best.z - z) ? candidate : best));
@@ -680,8 +755,7 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
 
   // Only the stretch the camera actually flies (the autopilot track reaches |z| ~ 1.6 km; the view
   // carries another ~1.5 km down the canyon). Beyond that the haze would swallow them anyway.
-  const inner = [...innerWallOf(layout, -1), ...innerWallOf(layout, 1)]
-    .filter((tower) => Math.abs(tower.z) <= SIGN_MAX_ABS_Z_M);
+  const inner = [...innerWallOf(layout, -1), ...innerWallOf(layout, 1)];
   if (inner.length === 0) fail('SKYRIVER_CITY_INNER_WALL_EMPTY');
   const tint = new THREE.Color();
   // Signs mount on the outermost tier face at their height, never inside a setback mass.
@@ -723,8 +797,9 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     // Altitude: weighted into the flight band, otherwise anywhere on the lit part of the slab.
     const ceiling = Math.min(tower.height - 60, 2050);
     const inBand = random.nextInt(0, 99) < 60;
-    const low = inBand ? 600 : 60;
-    const high = inBand ? Math.min(1750, ceiling) : ceiling;
+    // T7-3 strata: signage lives in the grime and the mid city; the pristine heights stay calm.
+    const low = inBand ? 350 : 40;
+    const high = inBand ? Math.min(STRATA_PRISTINE_BASE_M - 100, ceiling) : Math.min(STRATA_PRISTINE_BASE_M, ceiling);
     const centreYRaw = low + (random.nextInt(0, 1000) / 1000) * Math.max(high - low, 0);
 
     let width: number;
@@ -890,7 +965,7 @@ varying float vIsSide;
 varying float vFaceId;
 varying vec2 vFaceHalf;
 
-#define HERO_MAX 12
+#define HERO_MAX 24
 uniform vec4 uHeroBlades[ HERO_MAX ];   // x, centre y, z, half height
 uniform vec3 uHeroColors[ HERO_MAX ];
 uniform int uHeroCount;
@@ -950,8 +1025,32 @@ void main() {
   // T6R-2 face shading: the overcast lights roofs and setback tops, the canyon-facing fronts of
   // tiers catch the haze glow, and the corridor faces sit darkest. Without this every face of a box
   // is the same value and stepped massing reads flat.
-  float faceShade = vNormalW.y > 0.5 ? 1.0 : ( abs( vNormalW.z ) > 0.5 ? ( vNormalW.z > 0.0 ? 0.62 : 0.5 ) : 0.3 );
+  // T7-3: from the object-space face id — boxes are now turned to the canyon heading, so world axes
+  // no longer say which face looks down the canyon.
+  float faceShade = vFaceId > 3.5 ? 1.0 : ( vFaceId > 2.5 ? 0.5 : ( vFaceId > 1.5 ? 0.62 : 0.3 ) );
   concrete *= mix( 0.45, 1.6, faceShade );
+
+  // --- T7-3 strata -----------------------------------------------------------------------------
+  // LOW GRIME (< ~600 m): warm brown, stained by vertical runs of soot, ledges and AC boxes;
+  // MID CITY: as before; HIGH PRISTINE (> ~1800 m): clean, pale, cool, smooth mega-slab faces with
+  // large panel joints.
+  float grime = 1.0 - smoothstep( 420.0, 780.0, vWorldPos.y );
+  float pristine = smoothstep( 1750.0, 2250.0, vWorldPos.y );
+  float stain = skyValueNoise( vec2( vSurf.x * 0.11 + vSeed * 13.0, vSurf.y * 0.008 ) );
+  float soot = skyValueNoise( vec2( vSurf.x * 0.4, vSurf.y * 0.05 ) + faceOffset * 0.02 );
+  vec3 grimeTone = vec3( 0.62, 0.45, 0.31 ) * uConcreteLevel * 2.4 * ( 0.45 + 0.75 * stain ) * ( 0.7 + 0.5 * soot );
+  float ledge = smoothstep( 0.86, 0.94, cellLocal.y ) * ( 1.0 - smoothstep( 0.97, 1.0, cellLocal.y ) );
+  float acBox = step( 0.72, skyHash12( cell * vec2( 1.3, 0.7 ) + faceOffset ) )
+    * step( 0.2, cellLocal.x ) * step( cellLocal.x, 0.55 ) * step( 0.55, cellLocal.y ) * step( cellLocal.y, 0.86 );
+  grimeTone += vec3( 0.5, 0.4, 0.3 ) * uConcreteLevel * ( ledge * 1.6 + acBox * 1.2 ) * detail;
+  concrete = mix( concrete, grimeTone + uConcreteAmbient * 0.35, grime * vIsSide );
+  vec3 cleanTone = vec3( 0.105, 0.12, 0.145 ) * ( 0.92 + 0.08 * grain ) + uConcreteAmbient * 0.6;
+  float joint = max(
+    1.0 - smoothstep( 0.0, 0.6, abs( fract( vSurf.x / 36.0 ) - 0.5 ) * 36.0 - 17.4 ),
+    1.0 - smoothstep( 0.0, 0.6, abs( fract( vSurf.y / 48.0 ) - 0.5 ) * 48.0 - 23.4 )
+  ) * fineDetail;
+  cleanTone *= 1.0 - 0.35 * joint;
+  concrete = mix( concrete, cleanTone * ( 0.55 + 0.45 * faceShade ), pristine * vIsSide );
 
   vec3 color = concrete;
 
@@ -1013,8 +1112,10 @@ void main() {
 
   float paneHash = skyHash12( cell + faceOffset );
   // Dark at street level, brightest through the mid-high floors, thinning again at the parapet.
-  float litShare = mix( 0.025, 0.11, smoothstep( 0.04, 0.5, vUp ) )
-    * ( 1.0 - 0.5 * smoothstep( 0.84, 1.0, vUp ) );
+  // T7-3 strata: the grime is crowded with small warm lit rooms (and carries city light down into
+  // the void), the mid city is as before, the pristine heights are nearly dark glass.
+  float litShare = mix( 0.12, 0.075, smoothstep( 300.0, 900.0, vWorldPos.y ) ) * ( 1.0 - 0.85 * pristine )
+    + 0.06 * ( 1.0 - smoothstep( -600.0, 0.0, vWorldPos.y ) );
   // T7-2 lit runs: a floor lights in runs of 3-9 panes (an office, a corridor) sharing one colour
   // temperature, with the odd dark pane inside a run. Per-pane hashing read as confetti noise.
   float runLength = 3.0 + floor( skyHash12( vec2( cell.y, faceOffset.x ) ) * 7.0 );
@@ -1024,6 +1125,8 @@ void main() {
 
   // Colour temperature, per run: mostly warm interior light, some cold office pale, sparse neon.
   float tempHash = skyHash11( runHash * 311.7 + vSeed * 53.0 );
+  // Grime rooms are sodium and warm; pristine panes are cold.
+  tempHash = mix( mix( tempHash, tempHash * 0.45, grime ), 0.55 + 0.4 * tempHash, pristine );
   // T6R: a wider spread of colour temperatures, so lit panes read as rooms, not as one decal.
   vec3 sodium = vec3( 1.0, 0.55, 0.22 );
   vec3 warm = vec3( 1.0, 0.76, 0.46 );
@@ -1428,14 +1531,15 @@ export class SkyriverCity {
     const wetTint = new THREE.Color(0x567ba3);
 
     // --- towers -----------------------------------------------------------------------------------
-    const heroBlades = deriveHeroBlades(layout).slice(0, 12);
+    const heroBlades = deriveHeroBlades(layout).slice(0, 24);
+    const heroWarp: WarpOut = { x: 0, z: 0, heading: 0 };
     const heroColor = new THREE.Color();
     const heroUniforms = {
-      blades: heroBlades.map((b) => new THREE.Vector4(b.x, b.y, b.z, b.height * 0.5)),
+      blades: heroBlades.map((b) => { warpCanyon(b.x, b.z, heroWarp); return new THREE.Vector4(heroWarp.x, b.y, heroWarp.z, b.height * 0.5); }),
       colors: heroBlades.map((b) => heroColor.setHex(b.color, THREE.SRGBColorSpace).clone()),
       count: heroBlades.length,
     };
-    while (heroUniforms.blades.length < 12) {
+    while (heroUniforms.blades.length < 24) {
       heroUniforms.blades.push(new THREE.Vector4(0, -1e5, 0, 0));
       heroUniforms.colors.push(new THREE.Color(0));
     }
@@ -1580,8 +1684,13 @@ export class SkyriverCity {
 
     for (let i = 0; i < masses.length; i += 1) {
       const mass = masses[i]!;
-      matrix.makeScale(mass.width, mass.height, mass.depth);
-      matrix.setPosition(mass.x, mass.y0 + mass.height * 0.5, mass.z);
+      // T7-3: canyon space -> the winding loop. Each box keeps its shape, placed at its warped centre
+      // and turned to the local canyon heading.
+      warpCanyon(mass.x, mass.z, warp);
+      quaternion.setFromAxisAngle(UP, warp.heading);
+      position.set(warp.x, mass.y0 + mass.height * 0.5, warp.z);
+      scale.set(mass.width, mass.height, mass.depth);
+      matrix.compose(position, quaternion, scale);
       this.towerMesh.setMatrixAt(i, matrix);
 
       tint.setHex(mass.tint, THREE.SRGBColorSpace);
@@ -1614,16 +1723,38 @@ export class SkyriverCity {
     const kinds = new Float32Array(slots);
     const sizes = new Float32Array(slots * 3);
 
+    // T7-3: clear space around the hero signs — facade bands, ribs and cantilevers that would cross
+    // in front of a giant sign are not drawn (cycle-4 P1: strips occluding signage).
+    const heroes = deriveHeroBlades(this.layout);
+    const blocksHero = (i: number): boolean => {
+      const k = kind[i];
+      if (k !== SKYRIVER_TRIM_BAND && k !== SKYRIVER_TRIM_RIB && k !== SKYRIVER_TRIM_CANTILEVER) return false;
+      for (const hero of heroes) {
+        const hx = hero.kind === 'blade' ? hero.width * 0.5 + 14 : 16;
+        const hz = hero.kind === 'blade' ? 14 : hero.width * 0.5 + 14;
+        if (Math.abs(cx[i]! - hero.x) < hx + sx[i]! * 0.5
+          && Math.abs(cy[i]! - hero.y) < hero.height * 0.5 + 18 + sy[i]! * 0.5
+          && Math.abs(cz[i]! - hero.z) < hz + sz[i]! * 0.5) return true;
+      }
+      return false;
+    };
+    let drawn = 0;
     for (let i = 0; i < count; i += 1) {
-      matrix.makeScale(sx[i], sy[i], sz[i]);
-      matrix.setPosition(cx[i], cy[i], cz[i]);
-      this.trimMesh.setMatrixAt(i, matrix);
-      seeds[i] = seedValue[i];
-      kinds[i] = kind[i];
-      sizes[i * 3] = sx[i];
-      sizes[i * 3 + 1] = sy[i];
-      sizes[i * 3 + 2] = sz[i];
+      if (blocksHero(i)) continue;
+      warpCanyon(cx[i]!, cz[i]!, warp);
+      quaternion.setFromAxisAngle(UP, warp.heading);
+      position.set(warp.x, cy[i]!, warp.z);
+      scale.set(sx[i]!, sy[i]!, sz[i]!);
+      matrix.compose(position, quaternion, scale);
+      this.trimMesh.setMatrixAt(drawn, matrix);
+      seeds[drawn] = seedValue[i]!;
+      kinds[drawn] = kind[i]!;
+      sizes[drawn * 3] = sx[i]!;
+      sizes[drawn * 3 + 1] = sy[i]!;
+      sizes[drawn * 3 + 2] = sz[i]!;
+      drawn += 1;
     }
+    this.trimMesh.count = drawn;
 
     this.trimMesh.instanceMatrix.needsUpdate = true;
     this.trimMesh.geometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seeds, 1));
@@ -1666,11 +1797,14 @@ export class SkyriverCity {
         rect = horizontal[HERO_HORIZONTAL_CELLS + (Math.floor(seedValue[i]! * horizontalPool) % horizontalPool)]!;
       }
       atlasRects.set(rect, i * 4);
-      centres[i * 3] = cx[i];
-      centres[i * 3 + 1] = cy[i];
-      centres[i * 3 + 2] = cz[i];
-      normals[i * 2] = nx[i];
-      normals[i * 2 + 1] = nz[i];
+      // T7-3: canyon space -> the winding loop; the facade normal turns with the local heading.
+      warpCanyon(cx[i]!, cz[i]!, warp);
+      warpDirection(nx[i]!, nz[i]!, warp.heading, direction);
+      centres[i * 3] = warp.x;
+      centres[i * 3 + 1] = cy[i]!;
+      centres[i * 3 + 2] = warp.z;
+      normals[i * 2] = direction.x;
+      normals[i * 2 + 1] = direction.z;
       sizes[i * 2] = sw[i];
       sizes[i * 2 + 1] = sh[i];
       kinds[i] = kind[i];
@@ -1688,6 +1822,14 @@ export class SkyriverCity {
     return geometry;
   }
 }
+
+/** Construction-time scratch for the canyon -> loop warp (instance writes happen once, at boot). */
+const warp: WarpOut = { x: 0, z: 0, heading: 0 };
+const direction = { x: 0, z: 0 };
+const quaternion = new THREE.Quaternion();
+const position = new THREE.Vector3();
+const scale = new THREE.Vector3();
+const UP = new THREE.Vector3(0, 1, 0);
 
 /** Deterministic scalar hash, the CPU twin of `skyHash11`. Keeps facade seeding off Math.random. */
 function hash1(n: number): number {

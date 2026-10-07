@@ -69,6 +69,10 @@ export const CHASE_LOOK_AHEAD_M = 140;
  * below, horizon near the top 30%, crowned rooflines and the hazed sky band in the upper third.
  */
 export const CHASE_LOOK_DOWN_M = 25;
+/** T7-3: aim a few degrees higher than T7-2 so crowns and the sky band frame the winding view. */
+export const CHASE_LOOK_DOWN_AUTOPILOT_M = 13;
+/** T7-3: share of the craft's bank the camera follows (it leans into the turns with it). */
+export const CHASE_BANK_FOLLOW = 0.55;
 /** T7 boost drama: field-of-view widen at full boost, degrees, and camera shake amplitude, metres. */
 export const CHASE_BOOST_FOV_DEG = 12;
 export const CHASE_BOOST_SHAKE_M = 0.28;
@@ -109,6 +113,8 @@ export interface SkyriverCameraPose {
   readonly distance: number;
   /** T7: vertical field of view, degrees (absent on poses built before T7). */
   readonly fov?: number;
+  /** T7-3: roll about the view axis, radians. */
+  readonly roll?: number;
 }
 
 /** The writable form of a pose, for a caller that reuses one scratch object per frame. */
@@ -118,6 +124,8 @@ export interface SkyriverCameraPoseScratch {
   distance: number;
   /** T7: vertical field of view for this frame, degrees. */
   fov: number;
+  /** T7-3: camera roll about the view axis, radians (banks into the turns). */
+  roll: number;
 }
 
 /** T7 presentation-only effects, each a pure function of the frame's state. */
@@ -141,6 +149,7 @@ export function createCameraPoseScratch(): SkyriverCameraPoseScratch {
     target: { x: 0, y: 0, z: 0 },
     distance: CHASE_DISTANCE_M,
     fov: CHASE_BASE_FOV_DEG,
+    roll: 0,
   };
 }
 
@@ -197,7 +206,10 @@ export function writeCameraPose(
   }
 
   out.distance = distance;
-  out.position.x = clamp(flight.x - boomX * distance, -CHASE_MAX_ABS_X_M, CHASE_MAX_ABS_X_M);
+  // The |x| corridor clamp is a free-flight guard: autopilot runs around the whole loop in world space.
+  out.position.x = flight.mode === 1
+    ? clamp(flight.x - boomX * distance, -CHASE_MAX_ABS_X_M, CHASE_MAX_ABS_X_M)
+    : flight.x - boomX * distance;
   out.position.y = clamp(flight.y - boomY * distance + CHASE_HEIGHT_M, CHASE_MIN_ALTITUDE_M, CHASE_MAX_ALTITUDE_M);
   out.position.z = flight.z - boomZ * distance;
 
@@ -210,7 +222,9 @@ export function writeCameraPose(
   // rig's geometry instead of a function of how steeply it happens to be climbing, and it gives the
   // orbit offsets their natural meaning: orbiting circles the shuttle rather than panning off it.
   out.target.x = flight.x + boomX * CHASE_LOOK_AHEAD_M;
-  out.target.y = flight.y + boomY * CHASE_LOOK_AHEAD_M - CHASE_LOOK_DOWN_M;
+  out.target.y = flight.y + boomY * CHASE_LOOK_AHEAD_M - (flight.mode === 0 ? CHASE_LOOK_DOWN_AUTOPILOT_M : CHASE_LOOK_DOWN_M);
+  const rollTurns = (flight as { roll?: number }).roll ?? 0;
+  out.roll = rollTurns * TURNS_TO_RADIANS * CHASE_BANK_FOLLOW;
   out.target.z = flight.z + boomZ * CHASE_LOOK_AHEAD_M;
 
   // Boost drama: a wider lens and a fine, fast shake. Both are pure functions of (boost, time).
@@ -253,6 +267,7 @@ export function cameraPoseAt(
 export function applyCameraPose(camera: PerspectiveCamera, pose: SkyriverCameraPose): void {
   camera.position.set(pose.position.x, pose.position.y, pose.position.z);
   camera.lookAt(pose.target.x, pose.target.y, pose.target.z);
+  if (pose.roll !== undefined && pose.roll !== 0) camera.rotateZ(pose.roll);
   if (pose.fov !== undefined && Math.abs(camera.fov - pose.fov) > 1e-3) {
     camera.fov = pose.fov;
     camera.updateProjectionMatrix();

@@ -31,6 +31,11 @@ import * as THREE from 'three';
 
 import type { SkyriverCityLayout } from '../sim/derive';
 import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
+import { CANYON_LOOP_LENGTH_M, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
+
+/** T7-3: god rays and searchlights are derived in canyon space and bent onto the loop here. */
+const atmosphereWarp: WarpOut = { x: 0, z: 0, heading: 0 };
+const atmosphereDir = { x: 0, z: 0 };
 
 /** Draw calls this module may spend (plan R3 shares 16 with city and traffic; T3 owns 4 here). */
 export const SKYRIVER_ATMOSPHERE_DRAW_CALL_BUDGET = 4;
@@ -80,12 +85,12 @@ export const SKYRIVER_ATMOSPHERE = Object.freeze({
 // T6R contrast pass: the haze is a lit volume, brighter than the near-black concrete, so towers and
 // their ribs silhouette against it (Neon Rain still); a faint teal/magenta neon cast tints the depths.
 const COLOR_FOG_LOW = 0x1a2638;
-const COLOR_FOG_HIGH = 0x2a3b52;
+const COLOR_FOG_HIGH = 0x18222f;
 /** T6R-2: the depths — what the haze sinks to below the canyon floor band. */
-const COLOR_FOG_DEEP = 0x060a11;
+const COLOR_FOG_DEEP = 0x2a1c12;
 const COLOR_SKY_ZENITH = 0x070b14;
 const COLOR_SKY_HORIZON = 0x1d2a3d;
-const COLOR_SKY_DEPTHS = 0x060a11;
+const COLOR_SKY_DEPTHS = 0x241810;
 /** Neon the wet overcast throws back down. The one place warmth is allowed into the blue. */
 const COLOR_SKY_NEON = 0x4a5f86;
 const COLOR_RAIN = 0x8fa6bd;
@@ -160,11 +165,13 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
   }
   /** 0 above the canyon floor band, 1 deep in the void below it. */
   float skyriverFogDeep() {
-    return smoothstep( 180.0, -700.0, vSkyFogHeight );
+    return smoothstep( 0.0, -900.0, vSkyFogHeight );
   }
   float skyriverFogFactor() {
     float density = mix( fogDensity, uSkyFogDensityHigh, skyriverFogGrade() );
-    density *= 1.0 + 3.0 * skyriverFogDeep();
+    // T7-3: the depths are *thinner* haze, not thicker (cycle-4: black void) — so the grime's lit
+    // rooms carry down into them as a field of distant warm lights.
+    density *= 1.0 - 0.45 * skyriverFogDeep();
     return clamp( 1.0 - exp( - density * vFogDepth ), 0.0, 1.0 );
   }
   vec3 skyriverFogColor() {
@@ -177,6 +184,10 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
     float midBand = ( h - 950.0 ) / 380.0;
     color += vec3( 0.035, 0.0, 0.026 ) * exp( - lowBand * lowBand );
     color += vec3( 0.0, 0.03, 0.04 ) * exp( - midBand * midBand );
+    // T7-3 strata: warm smog over the grime, cool clean air in the pristine heights.
+    float grimeAir = 1.0 - smoothstep( 300.0, 800.0, h );
+    color = mix( color, vec3( 0.075, 0.052, 0.036 ), grimeAir * 0.55 );
+    color = mix( color, vec3( 0.07, 0.095, 0.13 ), smoothstep( 1800.0, 2700.0, h ) * 0.45 );
     return mix( color, uSkyFogColorDeep, skyriverFogDeep() );
   }
 #endif
@@ -680,7 +691,9 @@ export function deriveGodRayAnchors(layout: SkyriverCityLayout): readonly Skyriv
     }
   }
 
-  return anchors.slice(0, SKYRIVER_ATMOSPHERE.godRayMaxCount);
+  // Spread evenly around the whole loop rather than taking the first few seams.
+  const stride = Math.max(1, Math.floor(anchors.length / SKYRIVER_ATMOSPHERE.godRayMaxCount));
+  return anchors.filter((_, i) => i % stride === 0).slice(0, SKYRIVER_ATMOSPHERE.godRayMaxCount);
 }
 
 // --- atmosphere -----------------------------------------------------------------------------------
@@ -777,7 +790,8 @@ export class SkyriverAtmosphere {
       name: 'skyriver.searchlights',
       capacity: SKYRIVER_ATMOSPHERE.searchlightCount,
       // T7-2: softer, and faded where a beam passes near the camera (cycle-3 foreground wash).
-      intensity: 0.13,
+      // T7-3: weaker still (cycle-4: the beams dominated the frame).
+      intensity: 0.065,
       softness: 8.0,
       fadeStart: 0.45,
     });
@@ -898,8 +912,10 @@ export class SkyriverAtmosphere {
       const jitter = hash1(i * 7.13 + 0.37);
       const length = 1500 + jitter * 420;
 
-      this.scratchStart.set(anchor.x, anchor.y + 240, anchor.z);
-      this.scratchAxis.set(-anchor.side * (0.16 + jitter * 0.2), -1, (jitter - 0.5) * 0.22).normalize();
+      warpCanyon(anchor.x, anchor.z, atmosphereWarp);
+      this.scratchStart.set(atmosphereWarp.x, anchor.y + 240, atmosphereWarp.z);
+      warpDirection(-anchor.side * (0.16 + jitter * 0.2), (jitter - 0.5) * 0.22, atmosphereWarp.heading, atmosphereDir);
+      this.scratchAxis.set(atmosphereDir.x, -1, atmosphereDir.z).normalize();
       // Cool rain-lit white, drifting a little toward the cyan end of the neon.
       this.scratchColor.setRGB(0.52 + jitter * 0.1, 0.63 + jitter * 0.08, 0.78);
 
@@ -923,7 +939,9 @@ export class SkyriverAtmosphere {
    * the beams sweep down through the canyon the camera actually flies, not over distant rooftops.
    */
   private deriveSearchlightOrigins(layout: SkyriverCityLayout): readonly THREE.Vector3[] {
-    const stations: readonly (readonly [number, number])[] = [[-1, -1300], [1, -650], [-1, 0], [1, 650], [-1, 1300]];
+    const count = SKYRIVER_ATMOSPHERE.searchlightCount;
+    const stations: (readonly [number, number])[] = [];
+    for (let k = 0; k < count; k += 1) stations.push([k % 2 === 0 ? -1 : 1, -CANYON_LOOP_LENGTH_M / 2 + ((k + 0.3) / count) * CANYON_LOOP_LENGTH_M]);
     const origins: THREE.Vector3[] = [];
     for (const [side, z] of stations.slice(0, SKYRIVER_ATMOSPHERE.searchlightCount)) {
       const wall = layout.towers.filter((tower) => Math.sign(tower.x) === side);
@@ -952,10 +970,11 @@ export class SkyriverAtmosphere {
       const pitch = -0.75 - 0.35 * (0.5 + 0.5 * Math.sin(phase * 0.61 + seed * 4.0));
 
       const cosPitch = Math.cos(pitch);
-      this.scratchAxis
-        .set(Math.cos(yaw) * cosPitch * -Math.sign(origin.x || 1), Math.sin(pitch), Math.sin(yaw) * cosPitch)
-        .normalize();
-      this.scratchStart.copy(origin);
+      // Canyon space (across, along), then bent onto the loop with the origin's local heading.
+      warpCanyon(origin.x, origin.z, atmosphereWarp);
+      warpDirection(Math.cos(yaw) * cosPitch * -Math.sign(origin.x || 1), Math.sin(yaw) * cosPitch, atmosphereWarp.heading, atmosphereDir);
+      this.scratchAxis.set(atmosphereDir.x, Math.sin(pitch), atmosphereDir.z).normalize();
+      this.scratchStart.set(atmosphereWarp.x, origin.y, atmosphereWarp.z);
       this.scratchColor.setRGB(0.62 + seed * 0.2, 0.68, 0.74 - seed * 0.22);
 
       this.searchlights.write(

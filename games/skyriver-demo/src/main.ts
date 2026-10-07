@@ -340,10 +340,6 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   root.style.overflow = 'hidden';
   root.style.background = '#04060b';
 
-  // T7-2: the autopilot lap cuts at each canyon end; this veil dips the frame to black across it.
-  const cutVeil = doc.createElement('div');
-  cutVeil.style.cssText = 'position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:1;';
-
   const canvas = doc.createElement('canvas');
   canvas.id = 'skyriver-canvas';
   canvas.style.display = 'block';
@@ -351,7 +347,6 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   canvas.style.height = '100%';
   canvas.style.touchAction = 'none';
   root.appendChild(canvas);
-  root.appendChild(cutVeil);
 
   const scene = new SkyriverScene({ canvas, seed, tier: initialTier });
 
@@ -634,8 +629,6 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
 
       const presented = presenter.present(state);
       scene.atmosphere.setBoost(presented.boostVisual);
-      const veil = presented.cutFade.toFixed(3);
-      if (cutVeil.style.opacity !== veil) cutVeil.style.opacity = veil;
       writeCameraPose(poseScratch, presented, state.camera, {
         boost: presented.boostVisual,
         time: (state.current.tick + state.alpha) / 30,
@@ -649,6 +642,7 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
         presented.x, presented.y, presented.z, presented.yaw,
         // 1.8 matches the sim's BOOST_MULTIPLIER (systems.ts).
         presented.speed * (presented.boostT > 0 ? 1.8 : 1),
+        presented.canyonV, presented.canyonX,
       );
       shuttle.update({
         // 1.8 matches the sim's BOOST_MULTIPLIER (systems.ts); the plume pulse softens the edge.
@@ -660,7 +654,8 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
 
       hud.update({
         mode: state.flight.mode,
-        speed: state.flight.speed,
+        // T7-3: the drawn ground speed (autopilot covers the long winding loop in one sim lap).
+        speed: presented.speed,
         boosting: state.flight.boostT > 0,
         boostT: state.flight.boostT,
         boostCapacity: BOOST_CAPACITY_SECONDS,

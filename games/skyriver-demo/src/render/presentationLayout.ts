@@ -1,24 +1,21 @@
 /**
- * @file presentationLayout.ts — the canyon as it is drawn: the derived layout, raised and lengthened.
+ * @file presentationLayout.ts — the canyon as it is drawn: the derived layout, raised and tiled
+ * around the winding loop (T7-3).
  *
- * T6R P0 "camera escapes the chasm": the derived inner wall (src/sim/derive.ts) tops out between
- * ~650 m and ~1400 m, while free flight may climb to CHASM_BOUNDS.maxY = 2000 m. Any climb, and any
- * camera pitch above a few degrees, therefore framed empty sky over the roofs.
- *
- * derive.ts is hashed into the sim identity (src/sim/identity.ts lists it as a sim source), so the fix
- * cannot live there without re-deriving the runtime identity. This module is a pure, GL-free mapping
- * from the derived layout to the drawn one instead:
- *   - Heights are re-graded per wall column. The inner column always clears the flight ceiling
- *     (`SKYRIVER_ROOFLINE_MIN_M` > CHASM_BOUNDS.maxY), so the flyable volume is a closed chasm.
+ * derive.ts is hashed into the sim identity, so it stays untouched; this is a pure, GL-free mapping
+ * from the derived layout to the drawn one, in *canyon space* (x across, z = v along the loop; see
+ * canyonWarp.ts, which bends canyon space into the closed S-curving loop):
+ *   - Rows tile the whole loop: the derived 11 rows are folded back and forth (with hashed jitter)
+ *     to fill all CANYON_LOOP_LENGTH_M / cell rows, so the city has no end and the lap no U-turn.
+ *   - Heights are re-graded per wall column into the T7-3 strata: the inner wall always clears the
+ *     route's highest climb (~2.3 km) so the chase stays in a canyon from the grime to the heights.
  *     The derived grade (0..1) is kept, so the skyline keeps its seeded rhythm.
- *   - The canyon is extended by `EXTRA_ROWS_PER_END` rows at each end, cloned from the mirrored
- *     derived rows with hashed jitter, so the view down the canyon has a far vanishing point.
- *
- * Every consumer of tower geometry (city, god rays, searchlights) reads this layout, so they agree.
- * Presentation only: nothing here reaches simulation or checksums.
+ *   - The inner wall is set back 70 m so setback tiers (city.ts) can project into the canyon.
+ *   - Outer towers that would reach across into another stretch of the loop are dropped.
  */
 import type { SkyriverCityLayout, SkyriverTower } from '../sim/derive';
 import { CHASM_BOUNDS } from '../sim/systems';
+import { CANYON_LOOP_LENGTH_M, intrudesOtherStretch, wrapCanyonV } from './canyonWarp';
 
 /** Derived height range (derive.ts TOWER_MIN/MAX_HEIGHT_M), used to recover each tower's grade. */
 const DERIVED_MIN_HEIGHT_M = 240;
@@ -26,30 +23,21 @@ const DERIVED_MAX_HEIGHT_M = 1900;
 /** Derived grid (derive.ts CITY_WALL_OFFSET_M / CITY_CELL_M), used to recover the column index. */
 const DERIVED_WALL_OFFSET_M = 560;
 
-/** Lowest roof of the inner wall. Above the sim's free-flight ceiling, with camera headroom. */
-export const SKYRIVER_ROOFLINE_MIN_M = 2200;
+/** Lowest roof of the inner wall: above the route's highest climb and the free-flight ceiling. */
+export const SKYRIVER_ROOFLINE_MIN_M = 2500;
+
+const INNER_SETBACK_M = 70;
 
 /**
- * T7: the inner wall is pulled back from the corridor by this much, so the setback tiers city.ts
- * builds on its face can project 40-80 m (they stop at |x| >= 405) and read at autopilot distance.
+ * Height band per column, inner first: [floor, span]. Inner walls tall (the canyon), outer columns
+ * step down, and the outermost carry the tallest spears (city.ts adds those).
  */
-const INNER_SETBACK_M = 70;
-/** T7: only the stretch around the free-flight box must clear its 2000 m ceiling. */
-const FREEFLIGHT_WALL_ABS_Z_M = 520;
-/** Inner-wall band elsewhere: low enough in places for crowned rooflines to meet a sky band. */
-const INNER_OPEN_BAND: readonly [number, number] = [1180, 2250];
-
-/** Height band per column, inner first: [floor, span]. Inner walls tall, outer ones step down. */
 const COLUMN_BANDS: readonly (readonly [number, number])[] = Object.freeze([
   [SKYRIVER_ROOFLINE_MIN_M, 1300],
-  [1800, 1500],
-  [1300, 1800],
-  [900, 2100],
+  [2000, 1600],
+  [1500, 1900],
+  [900, 2300],
 ]);
-
-/** Rows cloned past each end: the canyon then runs to |z| ~ 4.3 km, so even the autopilot's U-turns
- * look down a walled canyon rather than out of its open end. */
-const EXTRA_ROWS_PER_END = 8;
 
 export const SKYRIVER_PRESENTED_MAX_HEIGHT_M = Math.max(...COLUMN_BANDS.map(([floor, span]) => floor + span));
 
@@ -65,10 +53,7 @@ function columnOf(tower: SkyriverTower, cell: number): number {
 
 function regrade(tower: SkyriverTower, cell: number): number {
   const grade = Math.min(1, Math.max(0, (tower.height - DERIVED_MIN_HEIGHT_M) / (DERIVED_MAX_HEIGHT_M - DERIVED_MIN_HEIGHT_M)));
-  const column = columnOf(tower, cell);
-  const [floor, span] = column === 0 && Math.abs(tower.z) > FREEFLIGHT_WALL_ABS_Z_M
-    ? INNER_OPEN_BAND
-    : COLUMN_BANDS[column]!;
+  const [floor, span] = COLUMN_BANDS[columnOf(tower, cell)]!;
   return floor + grade * span;
 }
 
@@ -80,46 +65,53 @@ export function presentCityLayout(layout: SkyriverCityLayout): SkyriverCityLayou
   if (cached !== undefined && cached.towers.length > 0) return cached;
 
   const cell = layout.cell;
-  const towers: SkyriverTower[] = layout.towers.map((tower) => ({
-    ...tower,
-    x: tower.x + Math.sign(tower.x) * INNER_SETBACK_M,
-    height: regrade(tower, cell),
-  }));
-
   let minZ = Infinity;
   let maxZ = -Infinity;
   for (const tower of layout.towers) {
     minZ = Math.min(minZ, tower.z);
     maxZ = Math.max(maxZ, tower.z);
   }
+  const derivedRows = Math.round((maxZ - minZ) / cell) + 1;
+  const loopRows = Math.round(CANYON_LOOP_LENGTH_M / cell);
+  if (Math.abs(loopRows * cell - CANYON_LOOP_LENGTH_M) > 1) throw new Error('SKYRIVER_LOOP_NOT_ROW_MULTIPLE');
 
-  // Clone the end rows outward, mirrored (row k beyond the end copies row k inside it).
-  for (let k = 1; k <= EXTRA_ROWS_PER_END; k += 1) {
-    for (const end of [-1, 1] as const) {
-      // Mirror back and forth through the derived rows, so any extension length has a source row.
-      const span = Math.round((maxZ - minZ) / cell);
-      const fold = (k - 1) % (2 * span);
-      const offset = fold <= span ? fold : 2 * span - fold;
-      const sourceZ = end > 0 ? maxZ - offset * cell : minZ + offset * cell;
-      const targetZ = end > 0 ? maxZ + k * cell : minZ - k * cell;
-      for (const source of layout.towers) {
-        if (Math.abs(source.z - sourceZ) > 0.5) continue;
-        const h = hash01(source.x * 0.031 + targetZ * 0.017 + k);
+  const towers: SkyriverTower[] = [];
+  // Row r sits at v = (r - loopRows / 2) * cell, so the derived rows (centred on z = 0) land on
+  // themselves and the free-flight box keeps its exact derived walls.
+  for (let r = 0; r < loopRows; r += 1) {
+    const v = wrapCanyonV((r - loopRows / 2) * cell);
+    const derivedIndex = Math.round((v - minZ) / cell);
+    let sourceZ: number;
+    let cloned = false;
+    if (derivedIndex >= 0 && derivedIndex < derivedRows) {
+      sourceZ = minZ + derivedIndex * cell;
+    } else {
+      // Fold back and forth through the derived rows.
+      const period = 2 * (derivedRows - 1);
+      const k = ((derivedIndex % period) + period) % period;
+      sourceZ = minZ + (k < derivedRows ? k : period - k) * cell;
+      cloned = true;
+    }
+    for (const source of layout.towers) {
+      if (Math.abs(source.z - sourceZ) > 0.5) continue;
+      const sign = Math.sign(source.x) || 1;
+      let tower: SkyriverTower = { ...source, z: v };
+      if (cloned) {
+        const h = hash01(source.x * 0.031 + v * 0.017 + r);
         const width = source.width * (0.85 + 0.3 * h);
-        const sign = Math.sign(source.x) || 1;
-        // Keep the corridor clear, exactly as derive.ts does.
         const minimumCentre = CHASM_BOUNDS.maxX + width / 2;
-        const x = Math.abs(source.x) < minimumCentre ? sign * minimumCentre : source.x;
-        const jittered: SkyriverTower = {
-          ...source,
-          x: x + sign * INNER_SETBACK_M,
-          z: targetZ,
+        tower = {
+          ...tower,
+          x: Math.abs(source.x) < minimumCentre ? sign * minimumCentre : source.x,
           width,
-          depth: source.depth * (0.85 + 0.3 * hash01(h * 91.7 + k)),
+          depth: source.depth * (0.85 + 0.3 * hash01(h * 91.7 + r)),
           height: source.height * (0.9 + 0.2 * hash01(h * 13.1 + 7)),
         };
-        towers.push({ ...jittered, height: regrade(jittered, cell) });
       }
+      tower = { ...tower, x: tower.x + sign * INNER_SETBACK_M, height: regrade(tower, cell) };
+      if (Math.abs(tower.x) > 900
+        && intrudesOtherStretch(tower.x, tower.z, Math.max(tower.width, tower.depth) * 0.5)) continue;
+      towers.push(tower);
     }
   }
 

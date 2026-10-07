@@ -33,35 +33,20 @@ import {
   type SkyriverFlight,
   type SkyriverFlightPath,
 } from '../sim/systems';
+import { CANYON_LOOP_LENGTH_M, canyonHeading, warpCanyon, type WarpOut } from './canyonWarp';
 import { SKYRIVER_ROOFLINE_MIN_M } from './presentationLayout';
+import { ROUTE_MAX_ALTITUDE_M, routeAltitude, routeAltitudeSlope, routeLateral, routeLateralSlope } from './routeProfile';
 
 const TAU = Math.PI * 2;
 
-/** Lateral offset of each straight from the canyon centreline, metres. Also the U-turn radius. */
-/** T7-2: lanes pulled in toward the centreline (was 230 m), so the chase aims down the canyon's middle. */
-export const TRACK_LANE_X_M = 110;
-/** Lateral weave on the straights, metres and wavelength, so the run never looks on rails. */
-const TRACK_WEAVE_M = 28;
-const TRACK_WEAVE_WAVELENGTH_M = 950;
-/** Arc length over which the cut at each end dips to black, metres (~0.3 s at cruise). */
-const TRACK_CUT_FADE_M = 45;
-/** Mean cruise altitude, metres, and the swell around it. Max ~770 m: far under the roofline. */
 /**
- * T7: raised from 560 m. The chase now flies high over a deep canyon and looks down into it (the
- * Neon Rain still's composition): rivers below, walls rising beside, crowned rooflines and a hazy
- * sky band above the lower stretches of wall.
+ * T7-3 bank: roll, in turns, per unit of path curvature (1/m), and its cap. At the loop's tightest
+ * S-bends (~1/800 m) plus the route's own snake this banks the craft ~20-25 degrees into the turn.
  */
-export const TRACK_BASE_Y_M = 1150;
-const TRACK_SWELL_A_M = 150;
-const TRACK_SWELL_B_M = 55;
-/** Whole swell cycles per lap; low counts keep the climb angle shallow. */
-const TRACK_SWELL_A_CYCLES = 2;
-const TRACK_SWELL_B_CYCLES = 5;
-/** Straight half-length clamp, metres. The presented canyon runs to ~|z| = 2700. */
-const TRACK_MIN_HALF_M = 700;
-const TRACK_MAX_HALF_M = 2400;
-/** Peak roll through the U-turns, turns (~24 degrees). */
-const TRACK_BANK_TURNS = 0.066;
+const BANK_TURNS_PER_CURVATURE = 52;
+const BANK_MAX_TURNS = 0.07;
+/** Arc-length step for the numeric heading derivative, metres. */
+const CURVATURE_STEP_M = 12;
 
 /** Free-flight hand-off easing, ticks (30 Hz). */
 const HANDOFF_TICKS = 75;
@@ -71,8 +56,8 @@ const BOOST_RELEASE_TICKS = 18;
 /** Mirrors systems.ts PATH_TANGENT_STEP: the sim reads its own heading this far ahead. */
 const PATH_TANGENT_STEP = 0.02;
 
-if (TRACK_BASE_Y_M + TRACK_SWELL_A_M + TRACK_SWELL_B_M > SKYRIVER_ROOFLINE_MIN_M - 600) {
-  throw new Error('SKYRIVER_TRACK_ABOVE_ROOFLINE');
+if (ROUTE_MAX_ALTITUDE_M > SKYRIVER_ROOFLINE_MIN_M - 200) {
+  throw new Error('SKYRIVER_ROUTE_ABOVE_ROOFLINE');
 }
 
 /** The drawn pose: a SkyriverFlight (so cameraRig consumes it unchanged) plus a cosmetic roll. */
@@ -83,14 +68,19 @@ export interface PresentedFlight extends SkyriverFlight {
    * boost, and eases out over BOOST_RELEASE_TICKS after the sim drops boostT to 0 on release.
    */
   readonly boostVisual: number;
-  /** T7-2: 0..1 dip-to-black at the autopilot lap's cuts. Always 0 in free flight. */
+  /** Retired in T7-3 (the loop has no cuts); always 0. */
   readonly cutFade: number;
+  /** T7-3: the pose in canyon space (v along the loop, x across). Free flight: the box is straight. */
+  readonly canyonV: number;
+  readonly canyonX: number;
 }
 
 type MutablePresented = { -readonly [K in keyof PresentedFlight]: PresentedFlight[K] };
 
 interface TrackPose {
   cutFade: number;
+  v: number;
+  lateral: number;
   x: number;
   y: number;
   z: number;
@@ -115,11 +105,6 @@ function catmullRom(p0: number, p1: number, p2: number, p3: number, t: number): 
 function wrap(value: number, period: number): number {
   const w = value % period;
   return w < 0 ? w + period : w;
-}
-
-function smoothstep01(x: number): number {
-  const t = x < 0 ? 0 : x > 1 ? 1 : x;
-  return t * t * (3 - 2 * t);
 }
 
 function wrapTurns(turns: number): number {
@@ -147,10 +132,12 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
   for (let i = 0; i < path.count; i += 1) cumulative[i + 1] = cumulative[i]! + path.segmentLength[i]!;
   const ringLength = cumulative[path.count]!;
 
-  const laneX = TRACK_LANE_X_M;
-  const half = Math.min(TRACK_MAX_HALF_M, Math.max(TRACK_MIN_HALF_M, ringLength / 4));
-  const straight = 2 * half;
-  const trackLength = 2 * straight;
+  // T7-3: the autopilot rides the route once around the closed winding loop. The sim's arc length
+  // maps proportionally onto the loop, so the drawn craft covers the loop in exactly one sim lap;
+  // its drawn ground speed is the sim speed times this scale (reported as `speed`, see below).
+  const trackLength = CANYON_LOOP_LENGTH_M;
+  const speedScale = trackLength / ringLength;
+  const poseWarp: WarpOut = { x: 0, z: 0, heading: 0 };
 
   /** Sim arc length at a ring parameter: exactly what the sim's per-tick advance integrates. */
   function ringArc(t: number): number {
@@ -163,55 +150,35 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
     return (ringArc(autopilotT) / ringLength) * trackLength;
   }
 
-  function trackPose(uIn: number, out: TrackPose): void {
-    const u = wrap(uIn, trackLength);
-    // T7-2: two full-length straights joined by cuts. Any 180-degree turn inside a canyon faces a
-    // wall at its midpoint (the cycle-3 "faceplant" at ~20 s), so the lap cuts at each end instead,
-    // behind a short dip to black (cutFade), and the chase always looks down the canyon.
-    const onA = u < straight;
-    const along = onA ? u : u - straight;
-    const weavePhase = (along / TRACK_WEAVE_WAVELENGTH_M) * TAU + (onA ? 0 : 2.1);
-    const weave = TRACK_WEAVE_M * Math.sin(weavePhase);
-    const weaveSlope = TRACK_WEAVE_M * Math.cos(weavePhase) * (TAU / TRACK_WEAVE_WAVELENGTH_M);
-    let x: number;
-    let z: number;
-    let tx: number;
-    let tz: number;
-    if (onA) {
-      // Straight A: right of the centreline, heading +z.
-      x = laneX + weave;
-      z = -half + along;
-      tx = weaveSlope;
-      tz = 1;
-    } else {
-      // Straight B: left of the centreline, heading -z.
-      x = -laneX - weave;
-      z = half - along;
-      tx = -weaveSlope;
-      tz = -1;
-    }
-    // Bank gently into the weave (lateral acceleration ~ -weave curvature).
-    const roll = -TRACK_BANK_TURNS * 0.5 * Math.sin(weavePhase) * (onA ? 1 : -1);
-    const toEdge = Math.min(along, straight - along);
-    out.cutFade = 1 - smoothstep01(toEdge / TRACK_CUT_FADE_M);
-    const phase = (u / trackLength) * TAU;
-    const y = TRACK_BASE_Y_M
-      + TRACK_SWELL_A_M * Math.sin(phase * TRACK_SWELL_A_CYCLES)
-      + TRACK_SWELL_B_M * Math.sin(phase * TRACK_SWELL_B_CYCLES + 1.3);
-    const dy = (TRACK_SWELL_A_M * TRACK_SWELL_A_CYCLES * Math.cos(phase * TRACK_SWELL_A_CYCLES)
-      + TRACK_SWELL_B_M * TRACK_SWELL_B_CYCLES * Math.cos(phase * TRACK_SWELL_B_CYCLES + 1.3)) * (TAU / trackLength);
+  /** Heading of the route itself (canyon heading plus the snake's angle), radians. */
+  function routeHeading(v: number): number {
+    return canyonHeading(v) + Math.atan(routeLateralSlope(v));
+  }
 
-    out.x = x;
-    out.y = y;
-    out.z = z;
+  function trackPose(uIn: number, out: TrackPose): void {
+    const v = wrap(uIn + trackLength / 2, trackLength) - trackLength / 2;
+    warpCanyon(routeLateral(v), v, poseWarp);
+    const heading = routeHeading(v);
+    // Bank into the turn: signed curvature of the route in the horizontal plane.
+    let dh = routeHeading(v + CURVATURE_STEP_M) - routeHeading(v - CURVATURE_STEP_M);
+    dh -= TAU * Math.round(dh / TAU);
+    const curvature = dh / (2 * CURVATURE_STEP_M);
+    const bank = Math.max(-BANK_MAX_TURNS, Math.min(BANK_MAX_TURNS, -curvature * BANK_TURNS_PER_CURVATURE));
+    const lateralSlope = routeLateralSlope(v);
+    out.cutFade = 0;
+    out.v = v;
+    out.lateral = routeLateral(v);
+    out.x = poseWarp.x;
+    out.y = routeAltitude(v);
+    out.z = poseWarp.z;
     // Sim basis: yaw 0 faces +Z, forward x = sin(yaw).
-    out.yaw = Math.atan2(tx, tz) / TAU;
-    out.pitch = Math.atan(dy) / TAU;
-    out.roll = roll;
+    out.yaw = wrapTurns(heading / TAU);
+    out.pitch = Math.atan(routeAltitudeSlope(v) / Math.sqrt(1 + lateralSlope * lateralSlope)) / TAU;
+    out.roll = bank;
   }
 
   const result: MutablePresented = {
-    x: 0, y: 0, z: 0, yaw: 0, pitch: 0, speed: 0, mode: 0, autopilotT: 0, boostT: 0, roll: 0, boostVisual: 0, cutFade: 0,
+    x: 0, y: 0, z: 0, yaw: 0, pitch: 0, speed: 0, mode: 0, autopilotT: 0, boostT: 0, roll: 0, boostVisual: 0, cutFade: 0, canyonV: 0, canyonX: 0,
   };
   // Observed like handoffTick: the tick a boost release was seen, dropped when the tick runs back.
   let boostEndTick: number | null = null;
@@ -228,7 +195,7 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
     const k = (current.tick - boostEndTick + state.alpha) / BOOST_RELEASE_TICKS;
     return k >= 1 ? 0 : 1 - k * k * (3 - 2 * k);
   }
-  const poseA: TrackPose = { cutFade: 0, x: 0, y: 0, z: 0, yaw: 0, pitch: 0, roll: 0 };
+  const poseA: TrackPose = { cutFade: 0, v: 0, lateral: 0, x: 0, y: 0, z: 0, yaw: 0, pitch: 0, roll: 0 };
   const ring = { x: 0, y: 0, z: 0 };
   const ringAhead = { x: 0, y: 0, z: 0 };
   let handoffTick: number | null = null;
@@ -263,13 +230,19 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
       result.yaw = poseA.yaw;
       result.pitch = poseA.pitch;
       result.roll = poseA.roll;
-      result.cutFade = poseA.cutFade;
+      result.cutFade = 0;
+      result.speed = flight.speed * speedScale;
+      result.canyonV = poseA.v;
+      result.canyonX = poseA.lateral;
       return result;
     }
 
     result.x = flight.x;
     result.y = flight.y;
     result.z = flight.z;
+    // The free-flight box is the loop's straight stretch at v = 0, so canyon space ~ world there.
+    result.canyonV = flight.z;
+    result.canyonX = flight.x;
     result.yaw = flight.yaw;
     result.pitch = flight.pitch;
 
