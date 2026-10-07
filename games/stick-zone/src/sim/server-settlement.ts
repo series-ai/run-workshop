@@ -1771,6 +1771,18 @@ export class ServerSettlementAuthority {
     if (op.isExtracted) {
       return;
     }
+    // DURABILITY RETRY: if a prior terminal save failed and left custody in memory,
+    // the next report retries the save before confirming terminal state.
+    if ((op as any).failedPersistence === true) {
+      try {
+        this.saveToDisk();
+        if (op.isKia || op.isAlive === false) {
+          return; // persisted terminal custody reconciled
+        }
+      } catch {
+        return; // still failing — do not confirm new terminal state on a un-durable ledger
+      }
+    }
     if (op.isKia || op.isAlive === false) {
       return; // already terminal — repeated reports are idempotent
     }

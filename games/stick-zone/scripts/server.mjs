@@ -1601,19 +1601,6 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           }
         }
 
-        // SANCTIONED same-ID reset (expired/terminal only): clear ALL volatile
-        // raid-scoped caches so the new raid starts atomically (movement, weapons,
-        // machines, roster revision, attack cadence — nothing leaks across resets).
-        const __prefixEscape = (str) => str.replace(/[.*+?^${}()|[]\\]/g, "\\$&");
-        const __pfx = new RegExp("^" + __prefixEscape(raidId) + ":");
-        for (const k of [...operativeMovementStates.keys()]) if (__pfx.test(k)) operativeMovementStates.delete(k);
-        for (const k of [...raidOperativeWeaponStates.keys()]) if (__pfx.test(k)) raidOperativeWeaponStates.delete(k);
-        raidMachines.delete(raidId);
-        raidRosterRevisions.delete(raidId);
-        for (const k of [...machineVitalsSeq.keys()]) if (k.startsWith(raidId + ":")) machineVitalsSeq.delete(k);
-        for (const k of [...raidOperativeSeenEvents.keys()]) if (__pfx.test(k)) raidOperativeSeenEvents.delete(k);
-        for (const k of [...machineAttackClock.keys()]) if (k.startsWith(raidId + ":")) machineAttackClock.delete(k);
-
         const pool = data.allowablePool || 50000;
         const ops = data.operatives || ["op_player", "op_alpha_1", "op_bravo_1"];
         const oldRaidId = settlement.getActiveRaidId();
@@ -1632,6 +1619,21 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
 
         // 1. Commit both new raid creation AND old raid conclusion atomically in a SINGLE persistence transaction!
         const raid = settlement.initRaid(raidId, pool, ops, callerClaimId, shouldConcludeOld ? oldRaidId : undefined);
+        // SANCTIONED same-ID reset (expired/terminal only): clear ALL volatile
+        // raid-scoped caches so the new raid starts atomically (movement, weapons,
+        // machines, roster revision, attack cadence — nothing leaks across resets).
+        const __prefixEscape = (str) => str.replace(/[.*+?^${}()|[]\\]/g, "\\$&");
+        const __pfx = new RegExp("^" + __prefixEscape(raidId) + ":");
+        for (const k of [...operativeMovementStates.keys()]) if (__pfx.test(k)) operativeMovementStates.delete(k);
+        for (const k of [...raidOperativeWeaponStates.keys()]) if (__pfx.test(k)) raidOperativeWeaponStates.delete(k);
+        raidMachines.delete(raidId);
+        raidRosterRevisions.delete(raidId);
+        for (const k of [...machineVitalsSeq.keys()]) if (k.startsWith(raidId + ":")) machineVitalsSeq.delete(k);
+        for (const k of [...raidOperativeSeenEvents.keys()]) if (__pfx.test(k)) raidOperativeSeenEvents.delete(k);
+        for (const k of [...machineAttackClock.keys()]) if (k.startsWith(raidId + ":")) machineAttackClock.delete(k);
+        for (const k of [...raidOperativeAttackTimes.keys()]) if (__pfx.test(k)) raidOperativeAttackTimes.delete(k);
+
+
         const tokens = settlement.getSessionTokens(raidId);
 
         // 2. Snapshot sockets belonging to old raid

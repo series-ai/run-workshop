@@ -588,6 +588,7 @@ export class MultiplayerCoordinator {
           this.sim.ingressController.applySnapshot(this.createRaidSnapshot());
           this.sim.ingressController.squadAck(1, 1);
           this.sim.ingressController.activate(this.sim.tick);
+          this.flushPendingWorldEvents(); // admission activates the queued world stream
           this.sim.combatLog.push(`[STAGED INGRESS] Squad Alpha host confirmed active at tick ${this.sim.tick}`);
         }
       }, 300);
@@ -733,6 +734,7 @@ export class MultiplayerCoordinator {
                 this.sim.ingressController.applySnapshot(this.createRaidSnapshot());
                 this.sim.ingressController.squadAck(1, 1);
                 this.sim.ingressController.activate(this.sim.tick);
+                this.flushPendingWorldEvents(); // recovery activates the queued world stream
               }
             }
           })
@@ -1292,7 +1294,8 @@ export class MultiplayerCoordinator {
                     // token:null (lease expired) — apply extraction/K.I.A. custody and
                     // receipt recovery BEFORE token handling so the terminal state is
                     // never lost to the "no token" path.
-                    if (data && (data.isTerminal || data.isExtracted || data.isKia || data.holdCompleted)) {
+                    const dIsTerminal = (data && (data.isTerminal || data.isExtracted || data.isKia)) === true;
+                    if (dIsTerminal) {
                       if (data.isExtracted) {
                         this.sim.restoreExtractionCustody({
                           isExtracted: true,
@@ -2916,6 +2919,19 @@ export class MultiplayerCoordinator {
       const machineName = d.machineType === "drone" ? "SCOUT DRONE" : "AUTOMATED TURRET";
       this.sim.combatLog.push(`[MACHINE FIRE] Struck by ${machineName} (${d.machineId}) (-${d.damage} HP)`);
     } else if (packet.type === 'machine_hit') {
+      // RELAY CUSTODY FIRST: a server-stamped sequenced result is applied before
+      // the time/peer-combat filters — those filters may discard the packet that
+      // carried newer machine custody; adoption here is ordered so it can never
+      // resurrect stale state.
+      if ((packet as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel) {
+        const dseq = (packet.data as any)?.vitalsSeq;
+        if (typeof dseq === "number" && Number.isFinite(dseq)) {
+          const mHit = this.sim.machines.find((x) => x.id === (packet.data as any)?.machineId);
+          if (!mHit || dseq > ((mHit as any).vitalsSeq ?? 0)) {
+            this.adoptMachineVitals((packet.data as any).machineId, (packet.data as any).machineHealth, (packet.data as any).machineAlive, dseq, (packet.data as any).maxHealth);
+          }
+        }
+      }
       if (!isAuthorizedSender(packet.senderId, packet.senderName)) return;
       if (!packet.data || typeof packet.data !== 'object') return;
       const dmg = packet.data.damage;
