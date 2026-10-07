@@ -269,7 +269,8 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         // health snapshots mirrors it.
         const machines = rRecord.machineDeployment.map((m) => ({
           ...m,
-          maxHealth: 1000,
+          maxHealth: typeof m.maxHealth === "number" && m.maxHealth > 0 ? m.maxHealth : Math.max(m.health, m.type === "turret" ? 120 : 75),
+          vitalsSeq: nextVitalsSeq(m.id),
           health: (rRecord.machines && rRecord.machines[m.id] && typeof rRecord.machines[m.id].health === "number")
             ? rRecord.machines[m.id].health
             : m.health,
@@ -281,8 +282,8 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         return machines;
       }
       const defaultMachines = [
-        { id: "turret_depot_alpha", type: "turret", x: -5, y: 0, z: 12, facing: Math.PI, health: 120, isAlive: true, cooldownTicks: 0, maxHealth: 120 },
-        { id: "drone_patrol_beta", type: "drone", x: 14, y: 2.2, z: -8, facing: -Math.PI / 2, health: 75, isAlive: true, cooldownTicks: 0, maxHealth: 75 },
+        { id: "turret_depot_alpha", type: "turret", x: -5, y: 0, z: 12, facing: Math.PI, health: 120, isAlive: true, cooldownTicks: 0, maxHealth: 120, vitalsSeq: nextVitalsSeq("turret_depot_alpha") },
+        { id: "drone_patrol_beta", type: "drone", x: 14, y: 2.2, z: -8, facing: -Math.PI / 2, health: 75, isAlive: true, cooldownTicks: 0, maxHealth: 75, vitalsSeq: nextVitalsSeq("drone_patrol_beta") },
       ];
       if (rRecord && rRecord.machines) {
         for (const m of defaultMachines) {
@@ -313,6 +314,16 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
   // Monotonic roster revision per raid: bumped on every committed deployment change;
   // receivers reject rosters older than the last applied revision (no stale regression).
   const raidRosterRevisions = new Map();
+  // Authoritative vitals sequence: STAMPED on every custody mutation of a machine
+  // (deploy, strike, cold-restore build). Receivers treat it as ordered INDEPENDENT of
+  // the roster membership revision — fresh vitals at unchanged membership apply; older
+  // vitals are rejected regardless of revision equality.
+  const machineVitalsSeq = new Map();
+  function nextVitalsSeq(machineId) {
+    const v = (machineVitalsSeq.get(machineId) || 0) + 1;
+    machineVitalsSeq.set(machineId, v);
+    return v;
+  }
   function raidRevision(raidId) {
     // Persisted monotonic revision: the surviving source of truth is the ACTIVE RAID
     // CUSTODY record (rRec.machineRosterRevision), so a server restart never rewinds
@@ -1239,7 +1250,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           raidId,
           timestamp: Date.now(),
           serverAuthoritative: true,
-          data: { revision: rRec && typeof rRec.machineRosterRevision === "number" ? rRec.machineRosterRevision : raidRosterRevisions.get(raidId) || 1, machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ, maxHealth: m.maxHealth })) },
+          data: { revision: rRec && typeof rRec.machineRosterRevision === "number" ? rRec.machineRosterRevision : raidRosterRevisions.get(raidId) || 1, machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ, maxHealth: m.maxHealth, vitalsSeq: m.vitalsSeq || 0 })) },
         };
         try {
           const __rosterOut = JSON.stringify(rosterMsg);
@@ -1277,7 +1288,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         res.end(JSON.stringify({ error: "Deployment limit reached (64 machines)" }));
         return;
       }
-      const machine = { id: machineId, type, x, y: type === "drone" ? 2.2 : 0, z, facing: 0, health, isAlive: true, cooldownTicks: 0, originX: x, originZ: z, deployedAtMs: now, maxHealth: health };
+      const machine = { id: machineId, type, x, y: type === "drone" ? 2.2 : 0, z, facing: 0, health, isAlive: true, cooldownTicks: 0, originX: x, originZ: z, deployedAtMs: now, maxHealth: health, vitalsSeq: nextVitalsSeq(machineId) };
       if (idx !== -1) machines[idx] = machine;
       else machines.push(machine);
       // Persist the COMPLETE deployment set (the machine array is truth) + health map;
@@ -1289,7 +1300,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         // Revision bump precedes the durable save (the broadcast then re-reads the same
         // committed revision — a restart can never rewind below what clients applied).
         raidRevision(raidId);
-        rRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs, maxHealth: m.maxHealth }));
+        rRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs, maxHealth: m.maxHealth, vitalsSeq: m.vitalsSeq || 0 }));
         if (settlement.saveToDisk) {
           try {
             settlement.saveToDisk();
@@ -1317,7 +1328,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           raidId,
           timestamp: Date.now(),
           serverAuthoritative: true,
-          data: { revision: rRec && typeof rRec.machineRosterRevision === "number" ? rRec.machineRosterRevision : raidRosterRevisions.get(raidId) || 1, machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ, maxHealth: m.maxHealth })) },
+          data: { revision: rRec && typeof rRec.machineRosterRevision === "number" ? rRec.machineRosterRevision : raidRosterRevisions.get(raidId) || 1, machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ, maxHealth: m.maxHealth, vitalsSeq: m.vitalsSeq || 0 })) },
         });
         for (const client of wss.clients) {
           if (client.readyState === 1 && client.authenticated && client.raidId === raidId) {
@@ -2718,6 +2729,7 @@ wss.on("connection", (ws, req) => {
           const preDmgHealth = m.health;
           const preDmgAlive = m.isAlive;
           m.health = Math.max(0, m.health - safeDmg);
+          m.vitalsSeq = nextVitalsSeq(m.id);
           if (m.health <= 0) m.isAlive = false;
           const rRecord = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
           try {
@@ -2974,6 +2986,8 @@ wss.on("connection", (ws, req) => {
           sendRejectionSync(m);
           return;
         }
+        m.vitalsSeq = nextVitalsSeq(m.id);
+        packet.data.vitalsSeq = m.vitalsSeq;
         packet.data.damage = safeDmg;
         packet.data.machineHealth = m.health;
         packet.data.machineAlive = m.isAlive;

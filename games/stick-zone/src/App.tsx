@@ -194,8 +194,6 @@ export const App: React.FC = () => {
                     existing.health = 0;
                     existing.isAlive = false;
                   }
-                } else {
-                  sim.machines.push({ ...m });
                 }
               }
             }
@@ -222,6 +220,7 @@ export const App: React.FC = () => {
                   for (const m of raidData.machines) {
                     const existing = sim.machines.find((x) => x.id === m.id);
                     if (existing) {
+                      if (typeof (m as any).maxHealth === "number") (existing as any).maxHealth = (m as any).maxHealth;
                       if (sim.tick < 60) {
                         existing.health = Math.min(existing.health, m.health);
                         existing.isAlive = m.isAlive && existing.health > 0;
@@ -229,8 +228,6 @@ export const App: React.FC = () => {
                         existing.health = 0;
                         existing.isAlive = false;
                       }
-                    } else {
-                      sim.machines.push({ ...m });
                     }
                   }
                 }

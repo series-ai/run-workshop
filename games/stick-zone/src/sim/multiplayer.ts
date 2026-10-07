@@ -90,7 +90,8 @@ export interface KickActionRejectedPacketData {
 }
 
 export interface MachineRosterPacketData {
-  machines?: Array<{ id: string; type?: string; x?: number; y?: number; z?: number; facing?: number; health?: number; isAlive?: boolean; originX?: number; originZ?: number }>;
+  revision?: number;
+  machines?: Array<{ id: string; type?: string; x?: number; y?: number; z?: number; facing?: number; health?: number; isAlive?: boolean; originX?: number; originZ?: number; maxHealth?: number; vitalsSeq?: number }>;
 }
 
 export interface MachineAttackPacketData {
@@ -676,10 +677,21 @@ export class MultiplayerCoordinator {
         const query = this.sim.raidId ? `?raidId=${encodeURIComponent(this.sim.raidId)}` : "";
         const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
         const tid = ctrl ? setTimeout(() => ctrl.abort(), 4000) : null;
+        // Recovery requests join the same in-flight registry as clock sync: cleanup
+        // aborts them, and their late resolution can never mutate disposed state.
+        if (ctrl) {
+          (this as any).__clockSyncInFlight = (this as any).__clockSyncInFlight || [];
+          (this as any).__clockSyncInFlight.push(ctrl);
+        }
         fetch(`/api/settlement/active-raid${query}`, { signal: ctrl ? ctrl.signal : undefined })
           .then((res) => res.json())
-          .finally(() => { if (tid) clearTimeout(tid); })
+          .finally(() => {
+            if (tid) clearTimeout(tid);
+            const reg = (this as any).__clockSyncInFlight;
+            if (reg && ctrl) { const ix = reg.indexOf(ctrl); if (ix !== -1) reg.splice(ix, 1); }
+          })
           .then((data) => {
+            if (this.isDisposed) return; // disposal fence BEFORE any state change
             if (data && this.sim.ingressController.getState().kind !== "confirmed_active") {
               if (data.activeRaidId) this.sim.raidId = data.activeRaidId;
               const currentTick = typeof data.raidTick === "number" ? data.raidTick : this.sim.tick;
@@ -1652,6 +1664,22 @@ export class MultiplayerCoordinator {
       const existingIdx = next.findIndex((m) => m.id === rid);
       const maxHp = typeof (rm as any).maxHealth === "number" ? (rm as any).maxHealth : (existingIdx !== -1 ? (next[existingIdx] as any).maxHealth : undefined);
       const typeOk = (rm as any).type === "turret" || (rm as any).type === "drone";
+      // Authoritative vitals sequence: ordered INDEPENDENT of membership revision. At an
+      // unchanged deployment revision, fresher vitals (higher seq) apply; older vitals
+      // (e.g. a delayed hydration carrying stale health) are rejected — a destroyed
+      // machine can never resurrect from health 0 to 200 via an equal-revision replay.
+      const arrivingSeq = typeof (rm as any).vitalsSeq === "number" && Number.isFinite((rm as any).vitalsSeq) ? (rm as any).vitalsSeq : undefined;
+      if (existingIdx !== -1 && arrivingSeq !== undefined) {
+        const curSeq = (() => {
+          // Current machine adopts its OWN preserving record update below; stale check
+          // skips the vitals overwrite while keeping membership (continue path).
+          return (next[existingIdx] as any).vitalsSeq ?? 0;
+        })();
+        if (arrivingSeq < curSeq) {
+          seen.add(rid);
+          continue; // stale vitals: membership unchanged, keep current vitals
+        }
+      }
       const health = typeof (rm as any).health === "number" && Number.isFinite((rm as any).health)
         ? Math.min(maxHp ?? 1000, Math.max(0, (rm as any).health))
         : (existingIdx !== -1 ? next[existingIdx].health : undefined);
@@ -1669,6 +1697,7 @@ export class MultiplayerCoordinator {
         originZ: (rm as any).originZ,
       };
       if (maxHp !== undefined) record.maxHealth = maxHp;
+      if (arrivingSeq !== undefined) (record as any).vitalsSeq = arrivingSeq;
       if (existingIdx !== -1) {
         next[existingIdx] = { ...next[existingIdx], ...record };
       } else {
