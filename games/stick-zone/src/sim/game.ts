@@ -966,40 +966,43 @@ export class SectorDepotSimulation {
 
     this.tick += 1;
 
-    // Handle ongoing action countdowns and cooldowns
-    if (this.shootCooldownTicks > 0) this.shootCooldownTicks -= 1;
-    this.player.shootCooldownTicks = this.shootCooldownTicks;
-    if (this.rollCooldownTicks > 0) this.rollCooldownTicks -= 1;
-    if (this.kickCooldownTicks > 0) this.kickCooldownTicks -= 1;
+    // Freeze related action timers, cooldowns, and local physics together during disconnect
+    if (!this.isSocketDisconnected) {
+      // Handle ongoing action countdowns and cooldowns
+      if (this.shootCooldownTicks > 0) this.shootCooldownTicks -= 1;
+      this.player.shootCooldownTicks = this.shootCooldownTicks;
+      if (this.rollCooldownTicks > 0) this.rollCooldownTicks -= 1;
+      if (this.kickCooldownTicks > 0) this.kickCooldownTicks -= 1;
 
-    // Check combat roll initiation (Space) BEFORE machine and rival attacks run
-    // so 12 iframes apply immediately on frame 1
-    if (!this.isInputLocked() && input.roll && this.rollCooldownTicks <= 0 && this.player.action !== 'roll' && this.player.action !== 'slide' && this.slideTicksRemaining <= 0) {
-      this.player.action = 'roll';
-      this.player.actionTicks = SIM_CONFIG.ROLL_TICKS;
-      this.rollCooldownTicks = 30;
-      this.player.isInvulnerable = true;
-      this.slideTicksRemaining = 0;
-      this.slideVx = 0;
-      this.slideVz = 0;
-    }
-
-    // Decrement actionTicks and strictly enforce 12 iframes at start of tick so machines and rivals see exact state
-    if (this.player.actionTicks > 0) {
-      this.player.actionTicks -= 1;
-      if (this.player.action === 'roll') {
-        const elapsed = SIM_CONFIG.ROLL_TICKS - this.player.actionTicks;
-        this.player.isInvulnerable = elapsed <= SIM_CONFIG.ROLL_IFRAMES;
+      // Check combat roll initiation (Space) BEFORE machine and rival attacks run
+      // so 12 iframes apply immediately on frame 1
+      if (!this.isInputLocked() && input.roll && this.rollCooldownTicks <= 0 && this.player.action !== 'roll' && this.player.action !== 'slide' && this.slideTicksRemaining <= 0) {
+        this.player.action = 'roll';
+        this.player.actionTicks = SIM_CONFIG.ROLL_TICKS;
+        this.rollCooldownTicks = 30;
+        this.player.isInvulnerable = true;
+        this.slideTicksRemaining = 0;
+        this.slideVx = 0;
+        this.slideVz = 0;
       }
-      if (this.player.actionTicks === 0) {
-        this.player.action = (this.player.isJumping || this.player.y > 0) ? 'jump' : 'idle';
+
+      // Decrement actionTicks and strictly enforce 12 iframes at start of tick so machines and rivals see exact state
+      if (this.player.actionTicks > 0) {
+        this.player.actionTicks -= 1;
+        if (this.player.action === 'roll') {
+          const elapsed = SIM_CONFIG.ROLL_TICKS - this.player.actionTicks;
+          this.player.isInvulnerable = elapsed <= SIM_CONFIG.ROLL_IFRAMES;
+        }
+        if (this.player.actionTicks === 0) {
+          this.player.action = (this.player.isJumping || this.player.y > 0) ? 'jump' : 'idle';
+          this.player.isInvulnerable = false;
+        }
+      } else {
+        if (this.player.action === 'roll' || this.player.action === 'slide' || this.player.action === 'kick' || this.player.action === 'shoot') {
+          this.player.action = (this.player.isJumping || this.player.y > 0) ? 'jump' : 'idle';
+        }
         this.player.isInvulnerable = false;
       }
-    } else {
-      if (this.player.action === 'roll' || this.player.action === 'slide' || this.player.action === 'kick' || this.player.action === 'shoot') {
-        this.player.action = (this.player.isJumping || this.player.y > 0) ? 'jump' : 'idle';
-      }
-      this.player.isInvulnerable = false;
     }
 
     // 1. Check Zero-Liquidity Fallback at Tick 7,200 (2:00)

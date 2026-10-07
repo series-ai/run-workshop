@@ -85,6 +85,7 @@ export interface ServerRaidRecord {
 }
 
 interface PersistentStoreData {
+  generation?: number;
   raids: Record<string, ServerRaidRecord>;
   auditLog: Record<string, { receipt: SettlementReceipt; outcomePayload: CanonicalOutcomePayload }>;
   idempotencyMap: Record<string, string>;
@@ -111,6 +112,11 @@ function failLog(line: number, msg: string): boolean {
 }
 export function validateStoreIntegrity(data: any): boolean {
   if (!data || typeof data !== "object" || Array.isArray(data)) return false;
+  if (data.generation !== undefined) {
+    if (typeof data.generation !== "number" || !Number.isSafeInteger(data.generation) || data.generation < 0) {
+      return false;
+    }
+  }
   if (!data.raids || typeof data.raids !== "object" || Array.isArray(data.raids)) return false;
   for (const rId of Object.keys(data.raids)) {
     if (!Object.prototype.hasOwnProperty.call(data.raids, rId)) return false;
@@ -480,6 +486,7 @@ export function validateStoreIntegrity(data: any): boolean {
 
 export class ServerSettlementAuthority {
   public static activeAuthorities = new Set<ServerSettlementAuthority>();
+  public generation: number = 0;
   private storePath: string;
   public activeRaidId: string = "raid_sector7_1042";
   public claimedSessions = new Set<string>();
@@ -780,10 +787,11 @@ export class ServerSettlementAuthority {
       }
     }
 
-    // If primary store does not exist or fails integrity validation, recover from .prev backup
+    // If primary store does not exist or fails integrity validation, recover from backups
     if (!isValid) {
       let recovered = false;
       let archivedCorruptPath: string | null = null;
+      let hasBackupHistory = false;
 
       // If primary store file exists on disk but is invalid, archive it to unique .corrupt file and flush before restoration
       if (fs.existsSync(this.storePath)) {
@@ -806,40 +814,73 @@ export class ServerSettlementAuthority {
         const base = path.basename(this.storePath);
         if (fs.existsSync(dir)) {
           const prevFiles = fs.readdirSync(dir)
-            .filter(f => f === `${base}.prev` || (f.startsWith(`${base}.prev.`) && !f.includes(".prev.prev")))
-            .sort((a, b) => {
-              if (a === `${base}.prev`) return -1;
-              if (b === `${base}.prev`) return 1;
-              return b.localeCompare(a);
-            });
+            .filter(f => f === `${base}.prev` || (f.startsWith(`${base}.prev.`) && !f.includes(".prev.prev")));
+          if (prevFiles.length > 0) {
+            hasBackupHistory = true;
+          }
+
+          let bestCandidate: { file: string; data: PersistentStoreData; gen: number } | null = null;
           for (const pf of prevFiles) {
             try {
               const prevRaw = fs.readFileSync(path.join(dir, pf), "utf8");
               const prevParsed = JSON.parse(prevRaw);
               if (validateStoreIntegrity(prevParsed)) {
-                data = prevParsed;
-                isValid = true;
-                recovered = true;
-                try {
-                  const tmpRestore = `${this.storePath}.restore.${Date.now()}`;
-                  fs.copyFileSync(path.join(dir, pf), tmpRestore);
-                  const tFd = fs.openSync(tmpRestore, "r");
-                  try { fs.fsyncSync(tFd); } finally { fs.closeSync(tFd); }
-                  fs.renameSync(tmpRestore, this.storePath);
-                  const sFd = fs.openSync(this.storePath, "r");
-                  try { fs.fsyncSync(sFd); } finally { fs.closeSync(sFd); }
-                  const dFd = fs.openSync(dir, "r");
-                  try { fs.fsyncSync(dFd); } finally { fs.closeSync(dFd); }
-                } catch {}
-                break;
+                let gen = typeof (prevParsed as any).generation === "number" ? (prevParsed as any).generation : 0;
+                if (gen === 0 && pf.startsWith(`${base}.prev.`)) {
+                  const suffix = pf.slice(`${base}.prev.`.length);
+                  const ts = parseInt(suffix, 10);
+                  if (!Number.isNaN(ts)) gen = ts;
+                }
+                if (!bestCandidate || gen > bestCandidate.gen) {
+                  bestCandidate = { file: pf, data: prevParsed, gen };
+                }
               }
             } catch {}
           }
-        }
-      } catch {}
 
-      if (!recovered && fs.existsSync(this.storePath)) {
-        if (!archivedCorruptPath) {
+          if (bestCandidate) {
+            try {
+              const tmpRestore = `${this.storePath}.restore.${Date.now()}`;
+              fs.copyFileSync(path.join(dir, bestCandidate.file), tmpRestore);
+              const tFd = fs.openSync(tmpRestore, "r");
+              try { fs.fsyncSync(tFd); } finally { fs.closeSync(tFd); }
+              fs.renameSync(tmpRestore, this.storePath);
+              const sFd = fs.openSync(this.storePath, "r");
+              try { fs.fsyncSync(sFd); } finally { fs.closeSync(sFd); }
+              const dFd = fs.openSync(dir, "r");
+              try { fs.fsyncSync(dFd); } finally { fs.closeSync(dFd); }
+
+              // Update canonical .prev atomically if bestCandidate was a timestamp backup
+              if (bestCandidate.file !== `${base}.prev`) {
+                try {
+                  const tmpPrev = `${this.storePath}.prev.tmp.${Date.now()}`;
+                  fs.copyFileSync(path.join(dir, bestCandidate.file), tmpPrev);
+                  const tpFd = fs.openSync(tmpPrev, "r");
+                  try { fs.fsyncSync(tpFd); } finally { fs.closeSync(tpFd); }
+                  fs.renameSync(tmpPrev, `${this.storePath}.prev`);
+                  const pFd = fs.openSync(`${this.storePath}.prev`, "r");
+                  try { fs.fsyncSync(pFd); } finally { fs.closeSync(pFd); }
+                  const dirFd2 = fs.openSync(dir, "r");
+                  try { fs.fsyncSync(dirFd2); } finally { fs.closeSync(dirFd2); }
+                } catch {}
+              }
+
+              // Set recovery flags ONLY AFTER restoration and required flushes succeed!
+              data = bestCandidate.data;
+              isValid = true;
+              recovered = true;
+            } catch (restoreErr) {
+              this.isCorrupted = true;
+              throw new Error(`Failed to atomically restore settlement store from ${bestCandidate.file}: ${restoreErr}`);
+            }
+          }
+        }
+      } catch (err: any) {
+        if (this.isCorrupted) throw err;
+      }
+
+      if (!recovered && (fs.existsSync(this.storePath) || hasBackupHistory)) {
+        if (fs.existsSync(this.storePath) && !archivedCorruptPath) {
           archivedCorruptPath = `${this.storePath}.corrupt.${Date.now()}`;
           try {
             fs.copyFileSync(this.storePath, archivedCorruptPath);
@@ -848,11 +889,14 @@ export class ServerSettlementAuthority {
           } catch {}
         }
         this.isCorrupted = true;
-        throw new Error(`Settlement store at ${this.storePath} contains invalid structural schema or corruption. Backed up to ${archivedCorruptPath}. Refusing to overwrite existing ledger.`);
+        throw new Error(`Settlement store at ${this.storePath} contains invalid structural schema or corruption in primary or historical backups. Refusing to overwrite existing ledger.`);
       }
     }
 
     if (data && typeof data === "object" && isValid) {
+      if (typeof (data as any).generation === "number") {
+        this.generation = Math.max(this.generation, (data as any).generation);
+      }
       if (data.profiles) {
         for (const [opId, prof] of Object.entries(data.profiles)) {
           if (prof && typeof prof.inventoryRevision === "number") {
@@ -952,7 +996,9 @@ export class ServerSettlementAuthority {
       }
       cleanRaids[rid] = rCopy;
     }
+    this.generation = (this.generation || 0) + 1;
     const data: PersistentStoreData = {
+      generation: this.generation,
       raids: cleanRaids,
       auditLog: Object.fromEntries(this.auditLog),
       idempotencyMap: Object.fromEntries(this.idempotencyMap),
@@ -1007,9 +1053,16 @@ export class ServerSettlementAuthority {
 
       if (hadExisting) {
         try {
-          fs.copyFileSync(backupPath, `${this.storePath}.prev`);
+          const tmpPrev = `${this.storePath}.prev.tmp.${Date.now()}`;
+          fs.copyFileSync(backupPath, tmpPrev);
+          const tpFd = fs.openSync(tmpPrev, "r");
+          try { fs.fsyncSync(tpFd); } finally { fs.closeSync(tpFd); }
+          fs.renameSync(tmpPrev, `${this.storePath}.prev`);
           const pFd = fs.openSync(`${this.storePath}.prev`, "r");
           try { fs.fsyncSync(pFd); } finally { fs.closeSync(pFd); }
+          const dirFd2 = fs.openSync(dir, "r");
+          try { fs.fsyncSync(dirFd2); } finally { fs.closeSync(dirFd2); }
+          // Retain timestamp backup until promotion is durable
           fs.unlinkSync(backupPath);
         } catch {}
       }

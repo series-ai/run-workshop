@@ -1060,8 +1060,9 @@ export class MultiplayerCoordinator {
       wsUrl = `${proto}//${window.location.host}/syncplay-ws?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
     } else if ((this as any).wsUrl) {
       wsUrl = `${(this as any).wsUrl}?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
+    } else {
+      wsUrl = `ws://localhost:3000/syncplay-ws?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
     }
-    if (!wsUrl) return;
     try {
       const createdSocket = new WSClass(wsUrl);
       this.ws = createdSocket; // ownership: callbacks verify they still serve the CURRENT socket
@@ -1100,6 +1101,23 @@ export class MultiplayerCoordinator {
           if (data && (data.type === "auth_success" || data.type === "auth")) {
             // Strictly guard: only accept server auth_success once during initial handshake (peers cannot send it!)
             if (!this.authenticated && data.type === "auth_success" && !data.senderId) {
+              // Before unlocking input: clear stale movement velocities and reconcile action state
+              this.sim.walkVx = 0;
+              this.sim.walkVz = 0;
+              this.sim.slideVx = 0;
+              this.sim.slideVz = 0;
+              this.sim.jumpVy = 0;
+              this.sim.slideTicksRemaining = 0;
+              (this.sim.player as any).knockbackVx = 0;
+              (this.sim.player as any).knockbackVz = 0;
+              this.sim.player.isSliding = false;
+              this.sim.player.slideTicksRemaining = 0;
+              this.sim.player.isJumping = false;
+              if (this.sim.player.action === 'slide' || this.sim.player.action === 'roll' || this.sim.player.action === 'kick' || this.sim.player.action === 'shoot') {
+                this.sim.player.action = 'idle';
+                this.sim.player.actionTicks = 0;
+                this.sim.player.isInvulnerable = false;
+              }
               this.authenticated = true;
               this.sim.isSocketDisconnected = false;
               this.sim.terminalRecoveryError = undefined;

@@ -7907,6 +7907,41 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     try { fs.unlinkSync(recoverPrevPath); } catch {}
     if (corruptFile) try { fs.unlinkSync(path.resolve(process.cwd(), corruptFile)); } catch {}
 
+    // Verify missing primary with invalid backup strictly rejects startup without initializing fresh ledger
+    const missingPrimaryStore = path.resolve(process.cwd(), `.test-missing-${Date.now()}.json`);
+    const invalidBackupPath = `${missingPrimaryStore}.prev`;
+    fs.writeFileSync(invalidBackupPath, JSON.stringify({ broken: true }), "utf8");
+    expect(() => new ServerSettlementAuthority(missingPrimaryStore)).toThrow(/contains invalid structural schema or corruption/);
+    try { fs.unlinkSync(invalidBackupPath); } catch {}
+
+    // Verify higher generation timestamp backup recovered over stale .prev
+    const genStore = path.resolve(process.cwd(), `.test-gen-${Date.now()}.json`);
+    const genPrev = `${genStore}.prev`;
+    const genTimestamp = `${genStore}.prev.9999999999`;
+    const newerRaidId = `raid_newer_${Date.now().toString(36)}`;
+
+    const temp1 = new ServerSettlementAuthority(genPrev);
+    temp1.initRaid(raidId, 50000, ["op_player"]);
+    temp1.generation = 1;
+    temp1.saveToDisk();
+
+    const temp2 = new ServerSettlementAuthority(genTimestamp);
+    temp2.initRaid(newerRaidId, 50000, ["op_player"]);
+    temp2.generation = 5;
+    temp2.saveToDisk();
+
+    fs.writeFileSync(genStore, JSON.stringify({ corrupted: true }), "utf8");
+
+    const genAuthority = new ServerSettlementAuthority(genStore);
+    expect(genAuthority.hasRaid(newerRaidId)).toBe(true);
+    expect(genAuthority.generation).toBeGreaterThanOrEqual(5);
+
+    try { fs.unlinkSync(genStore); } catch {}
+    try { fs.unlinkSync(genPrev); } catch {}
+    try { fs.unlinkSync(genTimestamp); } catch {}
+    const genCorrupt = fs.readdirSync(process.cwd()).find(f => f.startsWith(path.basename(genStore) + ".corrupt."));
+    if (genCorrupt) try { fs.unlinkSync(path.resolve(process.cwd(), genCorrupt)); } catch {}
+
     // C) Unified machine custody validator & rejection reconciliation
     const sim = new SectorDepotSimulation();
     sim.raidId = raidId;
@@ -8055,11 +8090,40 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       expect(simDisc.player.health).toBe(100);
       expect(deathCallbackCount).toBe(0);
 
-      // Simulate authentication restoring custody
-      coordDisc.authenticated = true;
+      // Advance ticks during active slide:
       simDisc.isSocketDisconnected = false;
-      simDisc.terminalRecoveryError = undefined;
+      simDisc.step({ dx: 1, dz: 0, sprint: true, slide: true, roll: false, jump: false, kick: false, shoot: false, aimAngle: 0, interact: false });
+      expect(simDisc.player.action === 'slide' || simDisc.slideTicksRemaining > 0).toBe(true);
+
+      // Now disconnect during slide:
+      simDisc.isSocketDisconnected = true;
+      const initialX = simDisc.player.x;
+      for (let t = 0; t < 30; t++) {
+        simDisc.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, jump: false, kick: false, shoot: false, aimAngle: 0, interact: false });
+      }
+      // Action timers and physics were frozen:
+      expect(simDisc.player.x).toBe(initialX);
+
+      // Deliver auth_success through real socket callback:
+      await (coordDisc as any).ws?.onmessage?.({
+        data: JSON.stringify({
+          type: "auth_success",
+          serverTime: Date.now(),
+          currentRaidTick: 200,
+        }),
+      });
+
+      expect(coordDisc.authenticated).toBe(true);
+      expect(simDisc.isSocketDisconnected).toBe(false);
       expect(simDisc.isInputLocked()).toBe(false);
+      expect(simDisc.slideVx).toBe(0);
+      expect(simDisc.slideTicksRemaining).toBe(0);
+      expect(simDisc.player.action).toBe("idle");
+
+      // Verify neutral input does not move the player
+      const preStepX = simDisc.player.x;
+      simDisc.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, jump: false, kick: false, shoot: false, aimAngle: 0, interact: false });
+      expect(simDisc.player.x).toBe(preStepX);
       coordDisc.cleanup();
     } finally {
       globalThis.fetch = origFetch;
@@ -8073,7 +8137,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     try {
       const cwdFiles = fs.readdirSync(process.cwd());
       for (const f of cwdFiles) {
-        if (f.startsWith(".test-store-") || (f.startsWith(".test-") && f.endsWith(".json.prev"))) {
+        if (f.startsWith(".test-")) {
           try { fs.unlinkSync(path.resolve(process.cwd(), f)); } catch {}
         }
       }
