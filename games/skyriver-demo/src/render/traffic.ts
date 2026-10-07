@@ -146,7 +146,11 @@ const SPEED_SCALE = 1.3;
 const CHASE_COUNT = 110;
 const CHASE_SIZE_MIN = 3.2;
 const CHASE_SIZE_SPAN = 1.4;
-const CHASE_WINDOW_M = 1400;
+/**
+ * R15: the window must divide the loop length. The route's canyon coordinate wraps by a whole loop
+ * at the lap's halfway point; with a 1400 m window that shifted every close car ~200 m in one frame.
+ */
+const CHASE_WINDOW_M = CANYON_LOOP_LENGTH_M / 9;
 const CHASE_FADE_M = 160;
 /**
  * R11 established traffic patterns. Cars belong to STREAMS — flight corridors, not drawn lanes:
@@ -1112,6 +1116,94 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const streamScratch = new Float64Array(3);
   const streamRank = [0, 1, 2, 3, 4, 5, 6, 7].slice(0, STREAMS.length);
   const streamRankDist = new Float64Array(STREAMS.length);
+
+  // ---- R15 sticky near-shuttle stream assignment (glitch fix). R11 re-ranked the streams every
+  // frame, so when the order flipped every close car in that rank teleported 150-360 m at once
+  // (measured: 27 cars at one tick). Ranks now hold their stream until another is nearer by a clear
+  // margin and the current one has been held >= 2 s; on a switch each car hands over at its own
+  // hashed moment, fading out on the old stream and in on the new (no car ever jumps visibly).
+  const RANK_SWITCH_MARGIN_M = 160;
+  const RANK_MIN_HOLD_S = 2;
+  const HANDOFF_FADE_S = 0.35;
+  const HANDOFF_SPREAD_S = 1.2;
+  const rankCurrent = new Int16Array([-1, -1]);
+  const rankPrevious = new Int16Array([-1, -1]);
+  const rankSwitchT = new Float64Array([-1e9, -1e9]);
+  function updateRankAssignment(t: number): void {
+    for (let r = 0; r < 2; r += 1) {
+      // A clock that ran backwards (restore/replay) drops any handoff in flight.
+      if (t < rankSwitchT[r]!) { rankSwitchT[r] = -1e9; rankPrevious[r] = -1; }
+      const other = rankCurrent[1 - r]!;
+      let best = -1;
+      for (let k = 0; k < streamRank.length; k += 1) {
+        const candidate = streamRank[k]!;
+        if (r === 1 && candidate === rankCurrent[0]) continue;
+        if (r === 0 && candidate === other && other !== -1 && k > 0) continue;
+        best = candidate;
+        break;
+      }
+      const cur = rankCurrent[r]!;
+      if (cur === -1) { rankCurrent[r] = best; continue; }
+      if (best === cur || best === -1) continue;
+      const better = streamRankDist[cur]! - streamRankDist[best]! > RANK_SWITCH_MARGIN_M;
+      const held = t - rankSwitchT[r]! >= RANK_MIN_HOLD_S;
+      const curTaken = r === 1 && cur === rankCurrent[0];
+      // Never start a switch while the previous handoff is still running: cars not yet handed over
+      // would jump straight from the old-old stream to the new one.
+      const settled = t - rankSwitchT[r]! >= HANDOFF_SPREAD_S + 2 * HANDOFF_FADE_S;
+      if (settled && ((better && held) || curTaken)) {
+        rankPrevious[r] = cur;
+        rankCurrent[r] = best;
+        rankSwitchT[r] = t;
+      }
+    }
+  }
+  /** Stream for a chase car of rank r at time t, and the handoff fade multiplier (via out). */
+  const handoff = { stream: 0, fade: 1 };
+  function chaseStream(r: number, car: number, t: number): void {
+    const prev = rankPrevious[r]!;
+    const cur = rankCurrent[r]!;
+    handoff.fade = 1;
+    handoff.stream = cur;
+    if (prev < 0) return;
+    const d = t - rankSwitchT[r]! - hash01(car, 0x5b1f) * HANDOFF_SPREAD_S;
+    if (d < 0) { handoff.stream = prev; return; }
+    if (d < HANDOFF_FADE_S) { handoff.stream = prev; handoff.fade = 1 - d / HANDOFF_FADE_S; return; }
+    if (d < 2 * HANDOFF_FADE_S) { handoff.fade = (d - HANDOFF_FADE_S) / HANDOFF_FADE_S; return; }
+  }
+
+  // ---- R15 tier transitions (glitch fix): a quality change no longer drops or adds 1,200 cars in one
+  // frame. The larger set stays drawn for TIER_FADE_S while the cars beyond the smaller count fade.
+  const TIER_FADE_S = 1.2;
+  let tierFrom = -1;
+  let tierTo = -1;
+  let tierChangeT = -1;
+  let tierPending = false;
+  let tierBudget = 0;
+  function applyTierTransition(t: number): void {
+    if (tierPending) { tierChangeT = t; tierPending = false; }
+    if (tierFrom < 0) return;
+    if (t - tierChangeT >= TIER_FADE_S || t < tierChangeT) {
+      tierFrom = -1;
+      streakBudget = tierBudget;
+      setActiveCount(tierTo);
+    }
+  }
+  function tierFadeFor(car: number, t: number): number {
+    if (tierFrom < 0 || car < Math.min(tierFrom, tierTo)) return 1;
+    const k = Math.min(1, Math.max(0, (t - tierChangeT) / TIER_FADE_S));
+    return tierTo > tierFrom ? k : 1 - k;
+  }
+  function setActiveCount(n: number): void {
+    activeCars = n;
+    for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
+      const group = groupCars[archetype];
+      let active = 0;
+      while (active < group.length && group[active] < n) active += 1;
+      groupActive[archetype] = active;
+      meshes[archetype].count = active;
+    }
+  }
   function swapWeight(v: number, at: number): number {
     let d = (v - at) % CANYON_LOOP_LENGTH_M;
     if (d < 0) d += CANYON_LOOP_LENGTH_M;
@@ -1168,16 +1260,18 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     assertQuality(quality, maxCarCount);
     if (quality.thrusterBudget > streakCapacity) fail('SKYRIVER_TRAFFIC_TIER_GLOW_OVER_CAPACITY');
 
-    activeCars = quality.carCount;
     streakBudget = quality.thrusterBudget;
-
-    for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
-      const group = groupCars[archetype];
-      let active = 0;
-      while (active < group.length && group[active] < activeCars) active += 1;
-      groupActive[archetype] = active;
-      meshes[archetype].count = active;
+    if (activeCars > 0 && quality.carCount !== activeCars && tierTo !== quality.carCount) {
+      // Mid-flight change: draw the larger set while the difference fades (applyTierTransition).
+      tierFrom = tierFrom >= 0 ? tierTo : activeCars;
+      tierTo = quality.carCount;
+      tierPending = true;
+      tierBudget = quality.thrusterBudget;
+      streakBudget = Math.min(streakCapacity, Math.max(quality.thrusterBudget, tierFrom));
+      setActiveCount(Math.max(tierFrom, tierTo));
+      return;
     }
+    setActiveCount(quality.carCount);
   }
 
   /**
@@ -1198,7 +1292,9 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         streamRank[k] = k;
       }
       streamRank.sort((a, b) => streamRankDist[a]! - streamRankDist[b]!);
+      updateRankAssignment(t);
     }
+    applyTierTransition(t);
 
     for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
       const group = groupCars[archetype];
@@ -1229,6 +1325,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           if (car === ESCORT_COUNT - 1) {
             forward = 520 - ((t * 330) % 1040);
             heading = -1;
+            // R15: fade at the wrap ends (it used to pop in 520 m ahead and vanish 520 m behind).
+            fade = smoothstep(0, 140, 520 - Math.abs(forward));
           } else {
             forward = ESCORTS[e + 2]! + ESCORTS[e + 3]! * Math.sin(t * (0.13 + car * 0.04) + car * 1.7);
           }
@@ -1259,7 +1357,12 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           if (carStream[car]! !== 255 && (anchorValid || !isChase)) {
             // Stream member: the stream sets direction, speed band, shelf and corridor.
             inStream = true;
-            const k = isChase ? streamRank[carStream[car]!]! : carStream[car]!;
+            let k = carStream[car]!;
+            if (isChase) {
+              chaseStream(carStream[car]!, car, t);
+              k = handoff.stream;
+              fade *= handoff.fade;
+            }
             const st = STREAMS[k]!;
             direction = st[2]!;
             speed = st[5]! * (0.9 + 0.2 * carRow[car]!);
@@ -1272,7 +1375,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
               let rel = (absolute - anchor[6]! + CHASE_WINDOW_M * 0.5) % CHASE_WINDOW_M;
               if (rel < 0) rel += CHASE_WINDOW_M;
               rel -= CHASE_WINDOW_M * 0.5;
-              fade = smoothstep(0, CHASE_FADE_M, CHASE_WINDOW_M * 0.5 - Math.abs(rel));
+              fade *= smoothstep(0, CHASE_FADE_M, CHASE_WINDOW_M * 0.5 - Math.abs(rel));
               v = anchor[6]! + rel;
             } else {
               v = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * st[5]! * t + surge;
@@ -1328,10 +1431,15 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         const toCarZ = pz - camZ;
         // T7 hull LOD: past HULL_DRAW_DISTANCE_M a body is a few pixels that only bites dark beads
         // out of the ribbon behind it, so it collapses to nothing and the light carries the read.
-        const hullVisible = toCarX * toCarX + toCarY * toCarY + toCarZ * toCarZ < HULL_DRAW_DISTANCE_M * HULL_DRAW_DISTANCE_M;
+        // R15 glitch fix: the hard cut made ~20 bodies a second blink in or out on screen; bodies now
+        // shrink away over the last 220 m (sub-pixel by then), so nothing pops.
+        const toCarDist = Math.sqrt(toCarX * toCarX + toCarY * toCarY + toCarZ * toCarZ);
+        const hullLod = 1 - smoothstep(HULL_DRAW_DISTANCE_M - 220, HULL_DRAW_DISTANCE_M, toCarDist);
+        fade *= tierFadeFor(car, t);
 
         // Basis: forward f (with a little pitch), right = f x up, then banked about f.
-        const scale = hullVisible ? sizeScale[car]! : 0;
+        // Bodies vanish with their fade (a faded car is never left as a small dark block).
+        const scale = sizeScale[car]! * hullLod * smoothstep(0, 0.45, fade);
         const pitchY = clamp(fy, -0.35, 0.35);
         const fl = Math.sqrt(1 + pitchY * pitchY);
         const f0 = fx / fl;

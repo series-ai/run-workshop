@@ -53,6 +53,8 @@ export const SKYRIVER_TOTAL_DRAW_CALL_BUDGET = 18;
  * pass + 5 mips x 2 blurs + 1 composite + 1 blend = 13 full-screen draws) and OutputPass (1).
  */
 export const SKYRIVER_FRAME_DRAW_CALL_CEILING = 32;
+/** Bloom strength at full level (R14 tuning). */
+const SKYRIVER_BLOOM_STRENGTH = 0.85;
 /** T4's share (plan R4: "<= 4 traffic draw calls"). Defined here so T4 can import it on day one. */
 /** T7-5: six hull archetypes + one light batch (frame ceiling 32 still holds: 16 scene + 14 post + 1). */
 export const SKYRIVER_TRAFFIC_DRAW_CALL_BUDGET = 8;
@@ -259,6 +261,7 @@ export class SkyriverScene {
   private readonly bloomPass: UnrealBloomPass;
   /** Debug/A-B override: false forces the bloom chain off regardless of tier. */
   private bloomAllowed = true;
+  private bloomLevel = 0;
   private interiorsAllowed = true;
   private readonly listeners: SkyriverFrameListener[] = [];
   private readonly frame: MutableFrame;
@@ -328,7 +331,8 @@ export class SkyriverScene {
     // concrete, haze, sky and the dim window field, so only true emissives bloom — sign tubes, the
     // taillight strip, light-trail lamps, the plume core, beacons. A tight radius keeps it a halo,
     // not a wash.
-    this.bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.85, 0.45, 1.2);
+    this.bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), SKYRIVER_BLOOM_STRENGTH, 0.45, 1.2);
+    this.bloomLevel = this.bloomEnabled ? SKYRIVER_BLOOM_STRENGTH : 0;
     this.composer.addPass(this.bloomPass);
     this.composer.addPass(new OutputPass());
 
@@ -436,7 +440,12 @@ export class SkyriverScene {
     // blended HDR frame. Rendering straight to the canvas tone-mapped each additive layer before
     // blending, which blew near signs out to white on the low tier (and made the T7 bloom A/B pair
     // differ in two variables). With bloom off only the bloom pass is skipped.
-    this.bloomPass.enabled = this.bloomEnabled;
+    // R15: bloom eases in/out over ~0.5 s on a tier change instead of switching in one frame.
+    const bloomTarget = this.bloomEnabled ? SKYRIVER_BLOOM_STRENGTH : 0;
+    this.bloomLevel += (bloomTarget - this.bloomLevel) * Math.min(1, dt * 5);
+    if (Math.abs(bloomTarget - this.bloomLevel) < 0.005) this.bloomLevel = bloomTarget;
+    this.bloomPass.strength = this.bloomLevel;
+    this.bloomPass.enabled = this.bloomLevel > 0.005;
     this.composer.render(dt);
   }
 
@@ -454,6 +463,8 @@ export class SkyriverScene {
   /** A/B evidence and debugging: force bloom off (false) or back to the tier default (true). */
   setBloomAllowed(allowed: boolean): void {
     this.bloomAllowed = allowed;
+    // A/B and debug switch: snap, no ease (the A/B pair must differ in exactly this one variable).
+    this.bloomLevel = this.bloomEnabled ? SKYRIVER_BLOOM_STRENGTH : 0;
   }
 
   /** Called after a restore or a long background pause, so the next dt is not a spike. */

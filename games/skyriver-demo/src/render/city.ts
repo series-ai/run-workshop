@@ -170,6 +170,8 @@ export interface SkyriverMass {
   readonly height: number;
   readonly depth: number;
   readonly tint: number;
+  /** R15 depth layer: 0 = the real city; 1-3 = simplified far-skyline silhouettes, deeper = dimmer. */
+  readonly layer?: number;
 }
 
 /**
@@ -734,6 +736,41 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     }
   }
 
+  // --- R15 far-city depth layers -----------------------------------------------------------------
+  // Three silhouette layers per side behind the walls, so gaps between towers, the canyon's open
+  // stretches and the sky band above the rooflines show more city receding into the haze (city
+  // forever) instead of a single fog-dimmed wall or blue void. Simple dark massing with sparse
+  // window grids (no interiors, no signs, shaded by layer in the tower shader: deeper = dimmer and
+  // hazier). They draw in the existing tower batch (a per-instance layer attribute), no new call.
+  // Each layer keeps clear of every other stretch of the loop and of folding bend interiors.
+  const FAR_LAYERS: readonly (readonly [number, number, number, number, number])[] = [
+    // [min |x|, span, min height, height span, along spacing]
+    // Heights clear the walls in front (inner 2.5-3.8 km): they read above the rooflines.
+    [1750, 550, 3400, 2000, 150],
+    [2700, 700, 4200, 2600, 190],
+    [3800, 1100, 5000, 3200, 240],
+  ];
+  FAR_LAYERS.forEach(([minX, spanX, minH, spanH, spacing], li) => {
+    for (const side of [-1, 1] as const) {
+      for (let v = -CANYON_LOOP_LENGTH_M / 2; v < CANYON_LOOP_LENGTH_M / 2; v += spacing * (0.7 + random.nextInt(0, 600) / 1000)) {
+        const x = side * (minX + random.nextInt(0, 1000) / 1000 * spanX);
+        const width = 120 + random.nextInt(0, 160) + li * 40;
+        if (intrudesOtherStretch(x, v, width, 700) || foldsInsideBend(x, v, width)) continue;
+        const height = minH + random.nextInt(0, 1000) / 1000 * spanH;
+        const tint = 0x2a3038;
+        masses.push({ x, y0: SKYRIVER_CITY_VOID_BASE_Y, z: v, width, height: height - SKYRIVER_CITY_VOID_BASE_Y, depth: width * (0.7 + random.nextInt(0, 600) / 1000), tint, layer: li + 1 });
+        // A stepped top on about half: crowns and spires break the line into thousands-and-parts.
+        if (random.nextInt(0, 99) < 55) {
+          const capH = 120 + random.nextInt(0, 500);
+          masses.push({ x, y0: height - 2, z: v, width: width * 0.5, height: capH, depth: width * 0.45, tint, layer: li + 1 });
+          if (random.nextInt(0, 99) < 40) {
+            masses.push({ x, y0: height + capH - 2, z: v, width: width * 0.16, height: 150 + random.nextInt(0, 350), depth: width * 0.16, tint, layer: li + 1 });
+          }
+        }
+      }
+    }
+  });
+
   // Far spears beyond the outer columns, on the outside of the loop: distant silhouettes that the
   // winding sightline swings across.
   for (let v = -CANYON_LOOP_LENGTH_M / 2; v < CANYON_LOOP_LENGTH_M / 2; v += 260 + random.nextInt(0, 160)) {
@@ -1141,6 +1178,7 @@ const TOWER_VERTEX = /* glsl */ `
 attribute float aSeed;
 attribute vec3 aTint;
 attribute vec3 aSize;   // width, height, depth in metres
+attribute float aLayer; // R15 far-city depth layer (0 = near city)
 
 varying vec2 vSurf;      // position on the face, metres
 varying float vSeed;
@@ -1152,6 +1190,7 @@ varying float vIsSide;   // 1 on a facade, 0 on the roof
 varying float vFaceId;
 varying vec2 vFaceHalf;  // half extents of this face in vSurf metres
 varying vec3 vTangentW;  // T7-4: world direction of increasing vSurf.x (interior mapping frame)
+varying float vLayer;
 
 #include <fog_pars_vertex>
 
@@ -1183,6 +1222,7 @@ void main() {
 
   vSeed = aSeed;
   vTint = aTint;
+  vLayer = aLayer;
 
   vec4 world = modelMatrix * instanceMatrix * vec4( transformed, 1.0 );
   vWorldPos = world.xyz;
@@ -1220,6 +1260,7 @@ varying float vIsSide;
 varying float vFaceId;
 varying vec2 vFaceHalf;
 varying vec3 vTangentW;
+varying float vLayer;
 
 // --- T7-4 interior mapping ------------------------------------------------------------------------
 // Every window cell is a box room [0,1]^3 (x across, y up, z depth from the glass). The view ray is
@@ -1288,6 +1329,7 @@ vec3 traceRoom( vec2 cellLocal, vec3 ray, float room, float mirror, out float de
 uniform vec4 uHeroBlades[ HERO_MAX ];   // x, centre y, z, half height
 uniform vec3 uHeroColors[ HERO_MAX ];
 uniform int uHeroCount;
+uniform float uHeroWeight[ HERO_MAX ];
 // R13 landmark face-wash: [world x, world z, half size, strength] per mega-tower.
 uniform vec4 uMegaWash[ 4 ];
 uniform vec3 uMegaTint;
@@ -1306,6 +1348,29 @@ float windowSdf( vec2 cellLocal, float ribbon ) {
 }
 
 void main() {
+  // R15 far-city layers: near-black massing with a sparse, coarse window grid, dimmer and hazier per
+  // layer; no interiors, signs or wet sheen. Same fog as the city, so depth still grades with haze.
+  if ( vLayer > 0.5 ) {
+    float layerDim = vLayer < 1.5 ? 0.6 : ( vLayer < 2.5 ? 0.34 : 0.18 );
+    vec2 farCell = vSurf / vec2( 14.0, 9.0 );
+    vec2 farId = floor( farCell );
+    vec2 farLocal = fract( farCell );
+    float farZone = step( 0.45, skyHash12( vec2( floor( farId.y / 9.0 ), vSeed * 31.0 + vFaceId ) ) );
+    float farLit = step( 0.86, skyHash12( farId + vSeed * 17.0 ) ) * farZone * vIsSide;
+    float farGlass = step( 0.2, farLocal.x ) * step( farLocal.x, 0.8 ) * step( 0.3, farLocal.y ) * step( farLocal.y, 0.7 );
+    float farPixels = 9.0 * uProjScale / max( vFogDepth, 1.0 );
+    float farResolve = smoothstep( 1.5, 4.0, farPixels );
+    float farTemp = skyHash11( farId.x * 3.1 + farId.y * 7.7 + vSeed * 11.0 );
+    vec3 farPane = mix( vec3( 1.0, 0.55, 0.22 ), vec3( 0.45, 0.65, 1.0 ), step( 0.6, farTemp ) );
+    float farAverage = 0.14 * 0.24 * farZone * vIsSide;
+    vec3 farColor = vec3( 0.004, 0.005, 0.007 ) + farPane * mix( farAverage, farLit * farGlass, farResolve ) * 1.6 * layerDim;
+    // Crown tips catch a little sky so stacked silhouettes separate against the haze band.
+    farColor += vec3( 0.012, 0.016, 0.024 ) * layerDim * smoothstep( 0.5, 1.0, vWorldPos.y / 6500.0 ) * ( 1.0 - vIsSide );
+    gl_FragColor = vec4( farColor, 1.0 );
+${SKYRIVER_OUTPUT_APPLY_GLSL}
+    #include <fog_fragment>
+    return;
+  }
   vec3 viewDir = normalize( cameraPosition - vWorldPos );
 
   // Procedural-detail antialiasing. A 3.6 m floor seen from 600 m covers well under a pixel, and
@@ -1417,7 +1482,7 @@ void main() {
     vec3 nearest = vec3( blade.x, clamp( vWorldPos.y, blade.y - blade.w, blade.y + blade.w ), blade.z );
     float d = length( vWorldPos - nearest );
     heroSpill += uHeroColors[ i ] * exp( - d / 60.0 );
-    heroShadow = max( heroShadow, exp( - d / 90.0 ) );
+    heroShadow = max( heroShadow, exp( - d / 90.0 ) * uHeroWeight[ i ] );
   }
   color += heroSpill * 0.2;
   // T7 wet sheen: the rain-slick facade mirrors the nearest giant sign's colour at grazing angles.
@@ -1506,6 +1571,9 @@ void main() {
   if ( interiorFade > 0.001 && glassRaw > 0.001 ) {
     vec3 d = normalize( vWorldPos - cameraPosition );
     vec3 ray = vec3( dot( d, vTangentW ) / uCellWidth, d.y / uCellHeight, - dot( d, vNormalW ) / ROOM_DEPTH_M );
+    // R15: at grazing angles the room ray runs nearly parallel to the glass and the hit swims across
+    // the atlas between frames; rooms fade back to the plain pane below ~10 degrees.
+    interiorFade *= smoothstep( 0.1, 0.3, - dot( d, vNormalW ) );
     // Strata pick the room set: grime 0-9, mid 10-21, pristine 22-31 (dithered at the borders).
     float roomHash = skyHash12( cell * vec2( 1.7, 2.3 ) + faceOffset * 0.71 );
     float bandPick = vWorldPos.y + ( skyHash11( roomHash * 91.0 ) - 0.5 ) * 160.0;
@@ -1562,7 +1630,10 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
     // Floodlights on every ~300 m ledge throw light up the faces and decay with height (the classic
     // floodlit-landmark look); the faces keep their windows; the upper stages burn brightest.
     float band = fract( vWorldPos.y / 300.0 );
-    float throwUp = exp( - band * 5.5 );
+    // R15: the ledge is a hard dark->bright step; antialias it over the pixel footprint so distant
+    // bands do not shimmer or crawl as the camera moves.
+    float bandAA = max( fwidth( vWorldPos.y / 300.0 ), 1e-4 );
+    float throwUp = exp( - band * 5.5 ) * smoothstep( 0.0, bandAA * 1.5, band ) + exp( - 5.5 ) * ( 1.0 - smoothstep( 0.0, bandAA * 1.5, band ) );
     float rise = smoothstep( 1400.0, 3400.0, vWorldPos.y );
     // R14: no flat base term (it read as a pale sheet at exposure 1.75); light only rises off ledges.
     float face = vIsSide * ( 0.02 + 0.3 * throwUp ) * ( 0.6 + 0.9 * rise );
@@ -2041,6 +2112,7 @@ export class SkyriverCity {
         uHeroBlades: { value: heroUniforms.blades },
         uHeroColors: { value: heroUniforms.colors },
         uHeroCount: { value: heroUniforms.count },
+        uHeroWeight: { value: new Array<number>(12).fill(1) },
         ...skyriverFogUniforms(),
       },
       fog: true,
@@ -2161,9 +2233,15 @@ export class SkyriverCity {
     const blades = u.uHeroBlades!.value as THREE.Vector4[];
     const colors = u.uHeroColors!.value as THREE.Color[];
     const n = Math.min(12, order.length);
+    // R15 glitch fix: spill weight falls to zero toward the 12th-nearest sign, so a sign entering or
+    // leaving the uploaded set does so with no light on the facades (no one-frame spill pop).
+    const edge = order.length > 12 ? Math.sqrt(d2(order[12]!)) : Infinity;
     for (let k = 0; k < n; k += 1) {
       blades[k]!.copy(world[order[k]!]!);
-      colors[k]!.copy(this.heroWorldColors[order[k]!]!);
+      const dist = Math.sqrt(d2(order[k]!));
+      const w = edge === Infinity ? 1 : 1 - THREE.MathUtils.smoothstep(dist, edge * 0.7, edge);
+      colors[k]!.copy(this.heroWorldColors[order[k]!]!).multiplyScalar(w);
+      (u.uHeroWeight!.value as number[])[k] = w;
     }
     u.uHeroCount!.value = n;
     const { time } = frame;
@@ -2206,9 +2284,11 @@ export class SkyriverCity {
     const seeds = new Float32Array(slots);
     const tints = new Float32Array(slots * 3);
     const sizes = new Float32Array(slots * 3);
+    const layers = new Float32Array(slots);
 
     for (let i = 0; i < masses.length; i += 1) {
       const mass = masses[i]!;
+      layers[i] = mass.layer ?? 0;
       // T7-3: canyon space -> the winding loop. Each box keeps its shape, placed at its warped centre
       // and turned to the local canyon heading.
       warpCanyon(mass.x, mass.z, warp);
@@ -2236,6 +2316,7 @@ export class SkyriverCity {
     this.towerMesh.geometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seeds, 1));
     this.towerMesh.geometry.setAttribute('aTint', new THREE.InstancedBufferAttribute(tints, 3));
     this.towerMesh.geometry.setAttribute('aSize', new THREE.InstancedBufferAttribute(sizes, 3));
+    this.towerMesh.geometry.setAttribute('aLayer', new THREE.InstancedBufferAttribute(layers, 1));
     // Culling off keeps the draw-call count fixed, which is what the A3 smoke test asserts.
     this.towerMesh.frustumCulled = false;
   }
