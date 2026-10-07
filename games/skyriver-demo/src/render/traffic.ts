@@ -94,7 +94,10 @@ const MAX_TRIANGLES_PER_ARCHETYPE = 800;
  * shape and a variant (cab -> hunchback van, interceptor -> saucer commuter, commuter -> long bus
  * with a window strip), so near traffic reads as many kinds of vehicle. Presentation only.
  */
-const RENDER_ARCHETYPES = TRAFFIC_ARCHETYPE_COUNT * 2;
+const RENDER_ARCHETYPES = TRAFFIC_ARCHETYPE_COUNT * 2 + 1;
+/** R14: the seventh render archetype, a flatbed truck (freight). Share of all cars. */
+const FLATBED_ARCHETYPE = TRAFFIC_ARCHETYPE_COUNT * 2;
+const FLATBED_SHARE = 0.12;
 const VARIANT_SHARE = 0.45;
 const TRAFFIC_DRAW_CALLS = RENDER_ARCHETYPES + 1;
 
@@ -620,12 +623,54 @@ function buildBus(): MeshBuild {
   return build;
 }
 
+/** R14 — flatbed truck: a low cab up front and a long open bed carrying crates (freight streams). */
+function buildFlatbed(): MeshBuild {
+  const build = newBuild();
+  const r = 0.08;
+  const g = 0.078;
+  const b = 0.072;
+  pushBox(build, 0, 0.35, 2.6, 2.3, 1.5, 1.9, r, g, b);
+  pushBox(build, 0, 0.75, 2.2, 2.0, 0.5, 0.6, 0.04, 0.07, 0.1);
+  pushBox(build, 0, -0.35, -1.3, 2.5, 0.35, 5.8, r * 0.9, g * 0.9, b * 0.9);
+  pushBox(build, -0.5, 0.3, -0.4, 1.0, 0.95, 1.4, 0.16, 0.11, 0.07);
+  pushBox(build, 0.55, 0.15, -2.2, 1.1, 0.65, 1.6, 0.09, 0.12, 0.13);
+  pushBox(build, 0, 0.55, -3.6, 1.6, 1.15, 1.0, 0.14, 0.1, 0.08);
+  pushBox(build, 1.3, -0.6, -1.3, 0.3, 0.4, 5.0, 0.15, 0.15, 0.16);
+  pushBox(build, -1.3, -0.6, -1.3, 0.3, 0.4, 5.0, 0.15, 0.15, 0.16);
+  pushLightPatch(build, 0, 0.1, 3.56, 1.7, 0.18, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
+  pushLightPatch(build, 0, -0.35, -4.21, 2.1, 0.16, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  return build;
+}
+
 /** Converts a build to a non-indexed, flat-shaded BufferGeometry and enforces the triangle budget. */
 function toGeometry(build: MeshBuild, label: string): BufferGeometry {
   const triangles = buildTriangles(build);
   if (triangles === 0) fail('SKYRIVER_TRAFFIC_EMPTY_ARCHETYPE: ' + label);
   if (triangles > MAX_TRIANGLES_PER_ARCHETYPE) {
     fail('SKYRIVER_TRAFFIC_ARCHETYPE_OVER_BUDGET: ' + label + ' ' + String(triangles));
+  }
+  // R14 two-tone hull: a dark upper body over a lighter, warm-grey underside, so a close car reads
+  // as a painted vehicle rather than a dark brick. Lamps (values > 0.9) are left untouched.
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (let i = 1; i < build.position.length; i += 3) {
+    minY = Math.min(minY, build.position[i]!);
+    maxY = Math.max(maxY, build.position[i]!);
+  }
+  const split = minY + (maxY - minY) * 0.42;
+  for (let v = 0; v < build.position.length / 3; v += 1) {
+    const y = build.position[v * 3 + 1]!;
+    const c = v * 3;
+    if (Math.max(build.color[c]!, build.color[c + 1]!, build.color[c + 2]!) > 0.9) continue;
+    // Body paint at 55% (exposure 1.75 lifted the R13 hulls to pale bricks); underside lifted a touch.
+    build.color[c] = build.color[c]! * 0.55;
+    build.color[c + 1] = build.color[c + 1]! * 0.55;
+    build.color[c + 2] = build.color[c + 2]! * 0.55;
+    if (y < split) {
+      build.color[c] = build.color[c]! + 0.03;
+      build.color[c + 1] = build.color[c + 1]! + 0.027;
+      build.color[c + 2] = build.color[c + 2]! + 0.023;
+    }
   }
   const geometry = new BufferGeometry();
   geometry.setAttribute('position', new BufferAttribute(new Float32Array(build.position), 3));
@@ -645,7 +690,7 @@ attribute vec2 aCorner;      // x: 0 lamp end, 1 trail end; y: side -1..1
 attribute float aLamp;       // 0/2 head (left/right), 1/3 tail (left/right)
 attribute vec3 aCarPos;
 attribute vec4 aCarDir;      // xyz unit velocity, w speed (m/s)
-attribute vec2 aCarFade;     // fade, body scale
+attribute vec3 aCarFade;     // fade, body scale, headlamp warmth (R14)
 
 uniform float uPixelAngle;   // radians per drawing-buffer pixel, vertically
 uniform float uHeadOffset;
@@ -656,6 +701,7 @@ uniform float uTailTrail;
 varying vec2 vCapsule;       // x along in radius units, y across -1..1
 varying float vLengthR;      // capsule body length in radius units
 varying float vLamp;
+varying float vWarm;
 varying float vIntensity;
 
 #include <fog_pars_vertex>
@@ -693,6 +739,7 @@ void main() {
   vLengthR = len / rMean;
   vCapsule = vec2( mix( -1.0, vLengthR + 1.0, end ), aCorner.y );
   vLamp = kind;
+  vWarm = aCarFade.z;
 
   // Directional lamps: a headlight shows to the front, a taillight to the rear.
   vec3 toCam = normalize( cameraPosition - lamp );
@@ -718,6 +765,7 @@ uniform float uFogPenetration;
 varying vec2 vCapsule;
 varying float vLengthR;
 varying float vLamp;
+varying float vWarm;
 varying float vIntensity;
 
 #include <fog_pars_fragment>
@@ -735,7 +783,8 @@ void main() {
   // Head: a white-to-bright gradient that stays lit most of its length; tail: a red falloff.
   float trail = pow( max( 1.0 - t, 0.0 ), vLamp < 0.5 ? 0.7 : 1.2 );
 
-  vec3 headColor = vec3( 1.0, 0.93, 0.82 );
+  // R14: express streams burn pure white, freight mixes amber; tails are red everywhere.
+  vec3 headColor = mix( vec3( 1.0, 0.97, 0.93 ), vec3( 1.0, 0.62, 0.22 ), vWarm );
   vec3 tailColor = vec3( 1.0, 0.07, 0.045 );
   vec3 lampColor = vLamp < 0.5 ? headColor : tailColor;
   vec3 color = ( lampColor * body + mix( lampColor, vec3( 1.0 ), 0.5 ) * core * 0.4 ) * trail;
@@ -770,7 +819,7 @@ function buildStreakGeometry(capacity: number): InstancedBufferGeometry {
   geometry.setIndex(index);
   const pos = new InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
   const dir = new InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
-  const fade = new InstancedBufferAttribute(new Float32Array(capacity * 2), 2);
+  const fade = new InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
   pos.setUsage(DynamicDrawUsage);
   dir.setUsage(DynamicDrawUsage);
   fade.setUsage(DynamicDrawUsage);
@@ -850,6 +899,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const carRow = new Float32Array(maxCarCount);
   /** R12: 40% of express cars drop out beyond ~1 km, breaking the distant white dot-chains. */
   const carThinFar = new Uint8Array(maxCarCount);
+  /** R14: headlamp warmth 0 (white) .. 1 (amber). */
+  const carWarm = new Float32Array(maxCarCount);
   const shareCumulative = STREAMS.reduce<number[]>((acc, st) => { acc.push((acc[acc.length - 1] ?? 0) + st[9]!); return acc; }, []);
   const tintR = new Float32Array(maxCarCount);
   const tintG = new Float32Array(maxCarCount);
@@ -860,7 +911,9 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   for (let car = 0; car < maxCarCount; car += 1) {
     const archetype = params.archetype[car];
     if (archetype >= TRAFFIC_ARCHETYPE_COUNT) fail('SKYRIVER_TRAFFIC_ARCHETYPE_OUT_OF_RANGE');
-    const render = archetype + (hash01(car, 0x7e57) < VARIANT_SHARE ? TRAFFIC_ARCHETYPE_COUNT : 0);
+    const render = hash01(car, 0xf1a7) < FLATBED_SHARE
+      ? FLATBED_ARCHETYPE
+      : archetype + (hash01(car, 0x7e57) < VARIANT_SHARE ? TRAFFIC_ARCHETYPE_COUNT : 0);
     renderArchetype[car] = render;
     archetypeTotals[render] = archetypeTotals[render] + 1;
   }
@@ -905,6 +958,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       const st = STREAMS[stream]!;
       carStream[car] = stream;
       carThinFar[car] = st[5]! > 150 && h(0x51) < 0.4 ? 1 : 0;
+      // Express white, freight (broad slow channels) half amber, standard a little warm.
+      carWarm[car] = st[5]! > 150 ? 0 : st[4]! >= 90 ? (h(0x52) < 0.5 ? 1 : 0.15) : 0.25 * h(0x52);
       carDirection[car] = st[2]!;
       carRow[car] = h(0x43);
       carHomeX[car] = (h(0x21) * 2 - 1);
@@ -956,8 +1011,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   // T6R: the shared fog was never wired to the hulls, so distant cars stayed full-bright pills.
   applySkyriverFog(carMaterial);
 
-  const archetypeBuilds: MeshBuild[] = [buildCab(), buildInterceptor(), buildCommuter(), buildVan(), buildSaucer(), buildBus()];
-  const archetypeLabels: string[] = ['cab', 'interceptor', 'commuter', 'van', 'saucer', 'bus'];
+  const archetypeBuilds: MeshBuild[] = [buildCab(), buildInterceptor(), buildCommuter(), buildVan(), buildSaucer(), buildBus(), buildFlatbed()];
+  const archetypeLabels: string[] = ['cab', 'interceptor', 'commuter', 'van', 'saucer', 'bus', 'flatbed'];
   const trianglesPerArchetype: number[] = [];
   const geometries: BufferGeometry[] = [];
   const meshes: InstancedMesh[] = [];
@@ -1336,8 +1391,9 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           streakDirArray[d + 1] = fy;
           streakDirArray[d + 2] = fz;
           streakDirArray[d + 3] = streakSpeed;
-          streakFadeArray[streaksUsed * 2] = fade;
-          streakFadeArray[streaksUsed * 2 + 1] = sizeScale[car]!;
+          streakFadeArray[streaksUsed * 3] = fade;
+          streakFadeArray[streaksUsed * 3 + 1] = sizeScale[car]!;
+          streakFadeArray[streaksUsed * 3 + 2] = carWarm[car]!;
           streaksUsed += 1;
         }
       }

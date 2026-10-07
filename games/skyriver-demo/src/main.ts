@@ -848,6 +848,12 @@ export function boot(): SkyriverApp {
 
   // T7 A/B evidence: ?bloom=0 renders the same frame without the post chain.
   if (params.get('bloom') === '0') app.scene.setBloomAllowed(false);
+  // R14 device testing: ?tier=high|medium|low pins a quality tier (auto-tiering off), so each tier
+  // can be checked on a phone deterministically without waiting for the frame-time manager.
+  const tierParam = params.get('tier');
+  if (tierParam === 'high' || tierParam === 'medium' || tierParam === 'low') {
+    app.tiers.pin(tierParam === 'high' ? SkyriverQualityTier.High : tierParam === 'medium' ? SkyriverQualityTier.Medium : SkyriverQualityTier.Low);
+  }
   // T7-4 A/B: ?interiors=0 renders the same frames with the emissive window term only.
   if (params.get('interiors') === '0') app.scene.setInteriorsAllowed(false);
 

@@ -91,10 +91,10 @@ const COLOR_FOG_HIGH = 0x06090e;
 /** T6R-2: the depths — what the haze sinks to below the canyon floor band. */
 const COLOR_FOG_DEEP = 0x140d08;
 const COLOR_SKY_ZENITH = 0x070b14;
-const COLOR_SKY_HORIZON = 0x111a28;
+const COLOR_SKY_HORIZON = 0x0a1019;
 const COLOR_SKY_DEPTHS = 0x120c08;
 /** Neon the wet overcast throws back down. The one place warmth is allowed into the blue. */
-const COLOR_SKY_NEON = 0x4a5f86;
+const COLOR_SKY_NEON = 0x2c3a52;
 const COLOR_RAIN = 0x8fa6bd;
 
 /** Shared GLSL. city.ts imports these so both modules hash identically and stay cheap. */
@@ -797,7 +797,7 @@ export class SkyriverAtmosphere {
       capacity: SKYRIVER_ATMOSPHERE.searchlightCount,
       // T7-2: softer, and faded where a beam passes near the camera (cycle-3 foreground wash).
       // T7-3: weaker still (cycle-4: the beams dominated the frame).
-      intensity: 0.04,
+      intensity: 0.025,
       softness: 8.0,
       fadeStart: 0.45,
     });
