@@ -7627,7 +7627,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(placeIds).toContain("drone_interrupter");
     const deployedInRoster = placeRoster.data.machines.find((m: any) => m.id === "drone_interrupter");
     expect(deployedInRoster.health).toBe(200);
-    expect(deployedInRoster.maxHealth).toBeGreaterThanOrEqual(200);
+    expect(deployedInRoster.maxHealth).toBe(200);
 
     // The live packet drives the reconciler: membership + geometry + maxHealth adopted
     coord.handleMessage(placeRoster as any);
@@ -7635,7 +7635,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     if (!deployedNow) throw new Error("deployed machine missing after live roster reconcile");
     expect(deployedNow.type).toBe("drone");
     expect(deployedNow.x).toBe(45);
-    expect((deployedNow as any).maxHealth).toBeGreaterThanOrEqual(200);
+    expect((deployedNow as any).maxHealth).toBe(200);
 
     // A STALE revision replay must NOT regress the world
     const staleRoster = JSON.parse(JSON.stringify(placeRoster));

@@ -628,8 +628,9 @@ export class MultiplayerCoordinator {
               this.serverMachines = JSON.parse(JSON.stringify(data.machines));
               // Full roster reconciliation (hydration): membership + geometry + vitals
               // via the shared custody reconciler — reconnecting clients never retain
-              // removed machines or miss deployed ones.
-              this.applyMachineRosterCustody(data.machines);
+              // removed machines or miss deployed ones. Revision-gated: a delayed
+              // hydration can never regress a newer live reconciliation.
+              this.applyMachineRosterCustody(data.machines, (data as any).machineRosterRevision);
             }
             if (typeof data.holdCompleted === "boolean" || typeof data.isExtracted === "boolean" || typeof data.holdCompletedAtTick === "number") {
               this.sim.restoreExtractionCustody({
@@ -1075,7 +1076,7 @@ export class MultiplayerCoordinator {
               this.sim.serverMachineDamageAuthority = true; // relay owns machine fire now
               if (Array.isArray(data.machines)) {
                 // Full roster reconciliation (authentication): shared custody reconciler
-                this.applyMachineRosterCustody(data.machines);
+                this.applyMachineRosterCustody(data.machines, (data as any).machineRosterRevision);
               }
               if (data.crates && typeof data.crates === "object") {
                 const crateEntries = Object.entries(data.crates as Record<string, any>).map(([cid, cinfo]) => ({
@@ -1615,8 +1616,17 @@ export class MultiplayerCoordinator {
    * membership (add/remove by ID), geometry, patrol origins, vitals, and the shared
    * maxHealth contract.
    */
-  public applyMachineRosterCustody(roster: Array<{ id?: unknown; type?: unknown; x?: unknown; y?: unknown; z?: unknown; facing?: unknown; health?: unknown; isAlive?: unknown; originX?: unknown; originZ?: unknown; maxHealth?: unknown }>): void {
+  public applyMachineRosterCustody(roster: Array<{ id?: unknown; type?: unknown; x?: unknown; y?: unknown; z?: unknown; facing?: unknown; health?: unknown; isAlive?: unknown; originX?: unknown; originZ?: unknown; maxHealth?: unknown }>, revision?: number): void {
     if (!Array.isArray(roster)) return;
+    // Revision check INSIDE the shared reconciler — hydration, authentication, and
+    // live rosters all funnel here, so a DELAYED hydration response can never undo a
+    // newer live-roster reconciliation (the single applied-revision watermark guards
+    // every caller).
+    if (typeof revision === "number" && Number.isFinite(revision)) {
+      const applied = (this as any).__appliedMachineRosterRevision ?? 0;
+      if (revision <= applied) return;
+      (this as any).__appliedMachineRosterRevision = revision;
+    }
     const next = this.sim.machines;
     const seen = new Set<string>();
     for (const rm of roster) {

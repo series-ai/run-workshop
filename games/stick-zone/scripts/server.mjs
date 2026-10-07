@@ -415,11 +415,13 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
   if (url.pathname === "/api/settlement/active-raid" && req.method === "GET") {
     const requestedRaidId = url.searchParams.get("raidId") || settlement.getActiveRaidId();
     const activeRaidId = requestedRaidId;
+    const __arRec = settlement.getRaidRecord ? settlement.getRaidRecord(activeRaidId) : null;
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify({
       activeRaidId,
       raidTick: settlement.getCurrentRaidTick(activeRaidId),
       raidStartTime: settlement.getRaidStartTime(activeRaidId),
+      machineRosterRevision: (__arRec && typeof __arRec.machineRosterRevision === "number") ? __arRec.machineRosterRevision : raidRosterRevisions.get(activeRaidId) || 0,
       crates: settlement.getRaidCrates(activeRaidId),
       machines: getRaidMachines(activeRaidId),
     }));
@@ -1197,6 +1199,10 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           return;
         }
         const [removed] = machines.splice(idx, 1);
+        // Revision bump precedes the durable save: the persisted record carries the
+        // new revision (an existing client must never see a new change rejected as
+        // stale after a restart).
+        raidRevision(raidId);
         const rRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
         if (rRec?.machines) delete rRec.machines[machineId];
         if (rRec) {
@@ -1223,7 +1229,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           raidId,
           timestamp: Date.now(),
           serverAuthoritative: true,
-          data: { revision: raidRevision(raidId), machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ, maxHealth: m.maxHealth || 1000 })) },
+          data: { revision: rRec && typeof rRec.machineRosterRevision === "number" ? rRec.machineRosterRevision : raidRosterRevisions.get(raidId) || 1, machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ, maxHealth: m.maxHealth })) },
         };
         try {
           const __rosterOut = JSON.stringify(rosterMsg);
@@ -1250,7 +1256,18 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         return;
       }
       const now = Date.now();
-      const machine = { id: machineId, type, x, y: type === "drone" ? 2.2 : 0, z, facing: 0, health, isAlive: true, cooldownTicks: 0, originX: x, originZ: z, deployedAtMs: now };
+      // Shared deployment limit (matches cold-restore validation of 64): NEW insertions
+      // are rejected at the boundary; REPLACEMENT of an existing machine id is always
+      // allowed (capacity-neutral). A saved deployment can never exceed what cold
+      // restore trusts (a >64 list would silently collapse to defaults on restart).
+      const isNewInsertion = idx === -1;
+      if (isNewInsertion && machines.length >= 64) {
+        res.statusCode = 400;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ error: "Deployment limit reached (64 machines)" }));
+        return;
+      }
+      const machine = { id: machineId, type, x, y: type === "drone" ? 2.2 : 0, z, facing: 0, health, isAlive: true, cooldownTicks: 0, originX: x, originZ: z, deployedAtMs: now, maxHealth: health };
       if (idx !== -1) machines[idx] = machine;
       else machines.push(machine);
       // Persist the COMPLETE deployment set (the machine array is truth) + health map;
@@ -1259,7 +1276,10 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
       if (rRec) {
         if (!rRec.machines) rRec.machines = {};
         rRec.machines[machineId] = { health, isAlive: true };
-        rRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs, maxHealth: m.maxHealth || Math.max(m.health, m.type === "turret" ? 120 : 75) }));
+        // Revision bump precedes the durable save (the broadcast then re-reads the same
+        // committed revision — a restart can never rewind below what clients applied).
+        raidRevision(raidId);
+        rRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs, maxHealth: m.maxHealth }));
         if (settlement.saveToDisk) {
           try {
             settlement.saveToDisk();
@@ -1286,7 +1306,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           raidId,
           timestamp: Date.now(),
           serverAuthoritative: true,
-          data: { revision: raidRevision(raidId), machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ, maxHealth: m.maxHealth || 1000 })) },
+          data: { revision: rRec && typeof rRec.machineRosterRevision === "number" ? rRec.machineRosterRevision : raidRosterRevisions.get(raidId) || 1, machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ, maxHealth: m.maxHealth })) },
         });
         for (const client of wss.clients) {
           if (client.readyState === 1 && client.authenticated && client.raidId === raidId) {
@@ -1851,7 +1871,10 @@ wss.on("connection", (ws, req) => {
             }
             activeSlotSockets.set(slotKey, ws);
             const curTick = settlement.getCurrentRaidTick ? settlement.getCurrentRaidTick(resolved.raidId) : undefined;
-            ws.send(JSON.stringify({ type: "auth_success", operativeId: resolved.operativeId, raidId: resolved.raidId, currentRaidTick: curTick, serverTime: Date.now(), health: opMoveState.health, armor: opMoveState.armor, isAlive: opMoveState.isAlive, ammo: getRaidOperativeWeaponState(resolved.raidId, resolved.operativeId).ammo, machines: getRaidMachines(resolved.raidId), lastAcceptedPosition: { x: opMoveState.x, z: opMoveState.z } }));
+            (() => {
+        const __authRec = settlement.getRaidRecord ? settlement.getRaidRecord(resolved.raidId) : null;
+        ws.send(JSON.stringify({ type: "auth_success", operativeId: resolved.operativeId, raidId: resolved.raidId, currentRaidTick: curTick, serverTime: Date.now(), health: opMoveState.health, armor: opMoveState.armor, isAlive: opMoveState.isAlive, ammo: getRaidOperativeWeaponState(resolved.raidId, resolved.operativeId).ammo, machineRosterRevision: (__authRec && typeof __authRec.machineRosterRevision === "number") ? __authRec.machineRosterRevision : raidRosterRevisions.get(resolved.raidId) || 0, machines: getRaidMachines(resolved.raidId), lastAcceptedPosition: { x: opMoveState.x, z: opMoveState.z } }));
+      })();
             return;
           }
         }
@@ -1995,6 +2018,13 @@ wss.on("connection", (ws, req) => {
           // roll state, action) and custody snapshot BEFORE the first mutation, so a
           // failed persistence restores the exact prior world. ONE save commits the
           // accepted packet (all nested per-action saves were removed).
+          // Weapon state joins the transaction: ammo/reload mutations below are rolled
+          // back together with movement + custody on a failed commit.
+          const __txWeaponKey = `${ws.raidId}:${ws.operativeId}`;
+          const __txWeaponBefore = Object.assign({}, raidOperativeWeaponStates.get(__txWeaponKey) || { ammo: 30, maxAmmo: 30, isReloading: false, reloadEnd: 0 });
+          const __restoreWeapon = () => {
+            raidOperativeWeaponStates.set(__txWeaponKey, __txWeaponBefore);
+          };
           __txCbMoveBefore = Object.assign({}, moveState, {
             rollStartedAt: moveState.rollStartedAt,
             lastRollStartedAt: moveState.lastRollStartedAt,
@@ -2177,6 +2207,7 @@ wss.on("connection", (ws, req) => {
           if (settlement.saveToDisk) settlement.saveToDisk();
         } catch (__txPersistErr) {
           __txRollback();
+          __restoreWeapon();
           return; // accepted state never relays ahead of disk
         }
       }

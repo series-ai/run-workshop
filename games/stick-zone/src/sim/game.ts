@@ -812,8 +812,14 @@ export class SectorDepotSimulation {
   public applyRaidSnapshot(snapshot: RaidWorldSnapshot): void {
     if (!snapshot || typeof snapshot !== "object") return;
     if (!Array.isArray(snapshot.crates) || !Array.isArray(snapshot.machines)) return;
+    // Raid-clock adoption ALWAYS routes through the frame consumer (drains the
+    // accumulator + advances lastTime) so snapshot hydration can never double-count
+    // time with the waiting frame loop.
     if (snapshot.snapshotTick !== undefined && typeof snapshot.snapshotTick === "number" && Number.isFinite(snapshot.snapshotTick) && snapshot.snapshotTick > this.tick) {
+      const consume = (globalThis as any).__stickZoneConsumeAccumulatorMs;
+      const advTicks = snapshot.snapshotTick - this.tick;
       this.tick = snapshot.snapshotTick;
+      if (typeof consume === "function") { try { consume((advTicks * 1000) / 60); } catch {} }
     }
     if (Array.isArray(snapshot.crates)) {
       for (const snapCrate of snapshot.crates) {

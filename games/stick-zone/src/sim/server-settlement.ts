@@ -40,6 +40,8 @@ export interface OperativeCustody {
   corridorStartTime?: number;
   isAlive?: boolean;
   isKia?: boolean;
+  /** Server-authoritative pending combat damage (consumed by the next hold report). */
+  unconsumedDamage?: number;
   simTickAdvancement?: boolean;
   sessionToken?: string;
   lastObservedX?: number;
