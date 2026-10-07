@@ -782,7 +782,7 @@ export class ServerSettlementAuthority {
       raw = fs.readFileSync(this.storePath, "utf8");
       primaryExisted = true;
     } catch (readErr: any) {
-      if (readErr && (readErr.code === "ENOENT" || readErr.message?.includes("ENOENT"))) {
+      if (readErr && readErr.code === "ENOENT") {
         primaryExisted = false;
       } else {
         this.isCorrupted = true;
@@ -832,7 +832,7 @@ export class ServerSettlementAuthority {
           prevFiles = fs.readdirSync(dir)
             .filter(f => f === `${base}.prev` || (f.startsWith(`${base}.prev.`) && !f.includes(".prev.prev")));
         } catch (readDirErr: any) {
-          if (readDirErr && (readDirErr.code === "ENOENT" || readDirErr.message?.includes("ENOENT"))) {
+          if (readDirErr && readDirErr.code === "ENOENT") {
             prevFiles = [];
           } else {
             this.isCorrupted = true;

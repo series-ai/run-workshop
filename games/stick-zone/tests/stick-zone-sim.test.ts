@@ -8081,14 +8081,16 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       if (corruptBkp) try { fs.unlinkSync(path.resolve(process.cwd(), corruptBkp)); } catch {}
     }
 
-    // Native permission-failure test (unmocked filesystem EACCES): startup rejection and preservation of primary path
-    const nativePermDir = path.resolve(process.cwd(), `.test-native-perm-dir-${Date.now()}`);
+    // Native permission-failure test (unmocked filesystem EACCES):
+    // Verifies startup rejection and preservation of primary path even when directory path contains "ENOENT" substring!
+    const nativePermDir = path.resolve(process.cwd(), `.test-native-perm-dir-ENOENT-substring-${Date.now()}`);
     fs.mkdirSync(nativePermDir);
     const nativePermTarget = path.join(nativePermDir, "primary.json");
-    fs.writeFileSync(nativePermTarget, JSON.stringify({
+    const originalLedgerBytes = JSON.stringify({
       generation: 3,
       raids: { [raidId]: { status: "active", operatives: { op_player: { operativeId: "op_player", ammo: 7 } } } },
-    }), "utf8");
+    });
+    fs.writeFileSync(nativePermTarget, originalLedgerBytes, "utf8");
 
     const nativePermStore = path.resolve(process.cwd(), `.test-native-perm-link-${Date.now()}.json`);
     fs.symlinkSync(nativePermTarget, nativePermStore);
@@ -8099,20 +8101,31 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     nativeBkpAuth.initRaid(raidId, 50000, ["op_player"]);
     nativeBkpAuth.generation = 2;
     nativeBkpAuth.saveToDisk();
+    const backupBytesBefore = fs.readFileSync(nativePermBackup, "utf8");
 
-    // Revoke permissions on target directory so readFileSync and stat throw native EACCES (while existsSync returns false)
+    // Revoke permissions on target directory so readFileSync and stat throw native EACCES (with "ENOENT" in path)
     fs.chmodSync(nativePermDir, 0);
 
     try {
       expect(() => {
         new ServerSettlementAuthority(nativePermStore);
-      }).toThrow(/Failed to read primary settlement store|EACCES/);
+      }).toThrow(/Failed to read primary settlement store/);
+
+      // Verify symlink was NOT clobbered or retargeted
+      expect(fs.lstatSync(nativePermStore).isSymbolicLink()).toBe(true);
+      expect(fs.readlinkSync(nativePermStore)).toBe(nativePermTarget);
     } finally {
       fs.chmodSync(nativePermDir, 0o755);
-      // Verify primary file was NOT replaced by generation 2 backup and still has generation: 3 and ammo: 7
+      // Verify primary symlink and ledger bytes remain completely intact and unchanged
+      expect(fs.lstatSync(nativePermStore).isSymbolicLink()).toBe(true);
+      expect(fs.readlinkSync(nativePermStore)).toBe(nativePermTarget);
       const targetContent = JSON.parse(fs.readFileSync(nativePermTarget, "utf8"));
       expect(targetContent.generation).toBe(3);
       expect(targetContent.raids[raidId].operatives.op_player.ammo).toBe(7);
+      expect(fs.readFileSync(nativePermTarget, "utf8")).toBe(originalLedgerBytes);
+
+      // Verify backup was untouched and no restoration occurred
+      expect(fs.readFileSync(nativePermBackup, "utf8")).toBe(backupBytesBefore);
 
       try { fs.unlinkSync(nativePermStore); } catch {}
       try { fs.unlinkSync(nativePermTarget); } catch {}
@@ -8438,10 +8451,21 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
 
       const coordBlob = new MultiplayerCoordinator(simBlob);
       let blobResolve: any = null;
-      const deferredBlob = {
-        text: () => new Promise<string>((resolve) => {
-          blobResolve = resolve;
-        }),
+      let textInvoked = false;
+      const deferredBlob = new Blob([JSON.stringify({
+        type: "auth_success",
+        serverTime: Date.now(),
+        currentRaidTick: 300,
+      })]);
+      const origBlobText = deferredBlob.text.bind(deferredBlob);
+      deferredBlob.text = () => {
+        textInvoked = true;
+        return new Promise<string>((resolve) => {
+          blobResolve = async () => {
+            const res = await origBlobText();
+            resolve(res);
+          };
+        });
       };
 
       let fakeBlobSocket: any = {
@@ -8461,10 +8485,12 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       coordBlob.authenticated = false;
       simBlob.isSocketDisconnected = true;
 
-      // Dispatch Blob message through onmessage (begins async decode)
+      // Dispatch real Blob message through onmessage (begins async decode)
+      expect(deferredBlob instanceof Blob).toBe(true);
       const onMsgPromise = fakeBlobSocket.onmessage?.({
         data: deferredBlob,
       });
+      expect(textInvoked).toBe(true);
 
       // While decode is in flight, authentication timeout occurs and closes the socket:
       coordBlob.pruneExpiredPeers();
