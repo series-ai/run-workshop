@@ -776,15 +776,21 @@ export class ServerSettlementAuthority {
     let isValid = false;
     let hasBackupHistory = false;
 
-    if (fs.existsSync(this.storePath)) {
-      let raw = "";
-      try {
-        raw = fs.readFileSync(this.storePath, "utf8");
-      } catch (readErr: any) {
+    let primaryExisted = false;
+    let raw: string | null = null;
+    try {
+      raw = fs.readFileSync(this.storePath, "utf8");
+      primaryExisted = true;
+    } catch (readErr: any) {
+      if (readErr && (readErr.code === "ENOENT" || readErr.message?.includes("ENOENT"))) {
+        primaryExisted = false;
+      } else {
         this.isCorrupted = true;
         throw new Error(`Failed to read primary settlement store at ${this.storePath}: ${readErr?.message || readErr}`);
       }
+    }
 
+    if (raw !== null) {
       let parsed = null;
       try {
         parsed = JSON.parse(raw);
@@ -802,8 +808,8 @@ export class ServerSettlementAuthority {
       let archivedCorruptPath: string | null = null;
       hasBackupHistory = false;
 
-      // If primary store file exists on disk but is invalid, archive it to unique .corrupt file and flush before restoration
-      if (fs.existsSync(this.storePath)) {
+      // If primary store file existed on disk but is invalid, archive it to unique .corrupt file and flush before restoration
+      if (primaryExisted) {
         archivedCorruptPath = `${this.storePath}.corrupt.${Date.now()}`;
         try {
           fs.copyFileSync(this.storePath, archivedCorruptPath);
@@ -821,23 +827,20 @@ export class ServerSettlementAuthority {
       try {
         const dir = path.dirname(this.storePath);
         const base = path.basename(this.storePath);
-        let dirExists = false;
+        let prevFiles: string[] = [];
         try {
-          dirExists = fs.existsSync(dir);
-        } catch (dirCheckErr: any) {
-          this.isCorrupted = true;
-          throw new Error(`Failed to check directory for settlement backups at ${dir}: ${dirCheckErr?.message || dirCheckErr}`);
-        }
-
-        if (dirExists) {
-          let prevFiles: string[];
-          try {
-            prevFiles = fs.readdirSync(dir)
-              .filter(f => f === `${base}.prev` || (f.startsWith(`${base}.prev.`) && !f.includes(".prev.prev")));
-          } catch (readDirErr: any) {
+          prevFiles = fs.readdirSync(dir)
+            .filter(f => f === `${base}.prev` || (f.startsWith(`${base}.prev.`) && !f.includes(".prev.prev")));
+        } catch (readDirErr: any) {
+          if (readDirErr && (readDirErr.code === "ENOENT" || readDirErr.message?.includes("ENOENT"))) {
+            prevFiles = [];
+          } else {
             this.isCorrupted = true;
             throw new Error(`Failed to read directory for settlement backups at ${dir}: ${readDirErr?.message || readDirErr}`);
           }
+        }
+
+        if (true) {
 
           if (prevFiles.length > 0) {
             hasBackupHistory = true;
@@ -942,8 +945,8 @@ export class ServerSettlementAuthority {
         throw err;
       }
 
-      if (!recovered && (fs.existsSync(this.storePath) || hasBackupHistory)) {
-        if (fs.existsSync(this.storePath) && !archivedCorruptPath) {
+      if (!recovered && (primaryExisted || hasBackupHistory)) {
+        if (primaryExisted && !archivedCorruptPath) {
           archivedCorruptPath = `${this.storePath}.corrupt.${Date.now()}`;
           try {
             fs.copyFileSync(this.storePath, archivedCorruptPath);

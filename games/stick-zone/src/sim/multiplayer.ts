@@ -473,6 +473,8 @@ export class MultiplayerCoordinator {
   public snapshotAppliedLocalTime = 0;
   public onRaidRestart?: (newRaidId: string) => void;
   public authenticated = false;
+  public isSuperseded = false;
+  public isConnectionActive = false;
   public serverMachines: Array<{ id: string; health: number; isAlive: boolean }> | null = null;
   private isDisposed = false;
   private isRetryingTerminalRecovery = false;
@@ -1041,7 +1043,7 @@ export class MultiplayerCoordinator {
   }
 
   public connectWebSocket(token?: string): void {
-    if (this.isDisposed) return;
+    if (this.isDisposed || this.isSuperseded) return;
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -1052,6 +1054,7 @@ export class MultiplayerCoordinator {
       try { this.ws.close(); } catch {}
       this.ws = null;
     }
+    this.isConnectionActive = true;
     this.authenticated = false;
     this.sim.isSocketDisconnected = true;
     this.sim.serverMachineDamageAuthority = true;
@@ -1079,12 +1082,11 @@ export class MultiplayerCoordinator {
         this.lastServerMessageTime = Date.now();
         try {
           const raw = typeof event.data === "string" ? event.data : (event.data instanceof Blob ? await event.data.text() : new TextDecoder().decode(event.data));
-          // Decode fence: a Blob body may resolve AFTER cleanup or socket replacement —
-          // applying it would mutate disposed state and steal frame time (the decoded
-          // tick adoption calls the global consumer with a huge accumulated interval).
-          if (this.isDisposed || this.ws !== __msgSocket) return;
+          // Decode fence: a Blob body may resolve AFTER cleanup, socket replacement, or timeout closure —
+          // require the current socket to be OPEN (readyState === 1) and the connection to remain active before applying data.
+          if (this.isDisposed || this.isSuperseded || this.ws !== __msgSocket || __msgSocket.readyState !== 1 || !this.isConnectionActive) return;
           const data = JSON.parse(raw);
-          if (this.isDisposed || this.ws !== __msgSocket) return;
+          if (this.isDisposed || this.isSuperseded || this.ws !== __msgSocket || __msgSocket.readyState !== 1 || !this.isConnectionActive) return;
           if (data && typeof (data as any).serverTime === "number") {
             this.serverTimeOffset = (data as any).serverTime - Date.now();
             if (typeof globalThis !== "undefined") (globalThis as any).__stickZoneServerTimeOffset = this.serverTimeOffset;
@@ -1203,6 +1205,7 @@ export class MultiplayerCoordinator {
         // Ownership: only the CURRENT socket may clear live state — a superseded
         // socket's late close must not deauthorize its replacement.
         if (createdSocket !== this.ws) return;
+        this.isConnectionActive = false;
         this.authenticated = false;
         this.sim.isSocketDisconnected = true;
         // Keep multiplayer damage authority during disconnect: relay owns machine damage
@@ -1213,9 +1216,15 @@ export class MultiplayerCoordinator {
         }
         if (this.isDisposed) return;
         if (event.code === 4009 || (typeof event.reason === "string" && event.reason.includes("superseded"))) {
+          this.isSuperseded = true;
+          if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+          }
           this.sim.combatLog.push("[NETWORK] Session terminated: operative slot claimed by newer connection.");
           return;
         }
+        if (this.isSuperseded) return;
         if (event.code === 4003) {
           if (typeof fetch !== "undefined") {
             this.reconnectTimer = setTimeout(async () => {
@@ -1649,9 +1658,11 @@ export class MultiplayerCoordinator {
   }
 
   public pruneExpiredPeers(maxIdleMs = 10000): void {
+    if (this.isDisposed || this.isSuperseded) return;
     const now = Date.now();
     // Socket closing/closed guard: if socket is closing (readyState 2) or closed (readyState 3), enforce disconnected state immediately
     if (this.ws && (this.ws.readyState === 2 || this.ws.readyState === 3)) {
+      this.isConnectionActive = false;
       if (this.authenticated || !this.sim.isSocketDisconnected) {
         this.authenticated = false;
         this.sim.isSocketDisconnected = true;
@@ -1667,6 +1678,7 @@ export class MultiplayerCoordinator {
     // Socket silent stall detection: if authenticated socket has had no incoming server traffic for >5000ms, force close to trigger reconnect
     if (this.ws && (this.ws.readyState === 1 || this.ws.readyState === 0) && this.authenticated) {
       if (this.lastServerMessageTime && now - this.lastServerMessageTime > 5000) {
+        this.isConnectionActive = false;
         this.authenticated = false;
         this.sim.isSocketDisconnected = true;
         this.sim.serverMachineDamageAuthority = true;
@@ -1679,9 +1691,9 @@ export class MultiplayerCoordinator {
         try {
           sockToClose.close(4008, "Heartbeat timeout: silent connection stall");
         } catch {}
-        if (!this.reconnectTimer && !this.isDisposed) {
+        if (!this.reconnectTimer && !this.isDisposed && !this.isSuperseded) {
           this.reconnectTimer = setTimeout(() => {
-            if (this.isDisposed) return;
+            if (this.isDisposed || this.isSuperseded) return;
             if (this.sim.sessionToken) {
               this.connectWebSocket(this.sim.sessionToken);
             }
@@ -1693,6 +1705,7 @@ export class MultiplayerCoordinator {
     if (this.ws && (this.ws.readyState === 0 || this.ws.readyState === 1) && !this.authenticated) {
       const connStart = (this as any).connectionStartTime || 0;
       if (connStart && now - connStart > 5000) {
+        this.isConnectionActive = false;
         this.authenticated = false;
         this.sim.isSocketDisconnected = true;
         this.sim.serverMachineDamageAuthority = true;
@@ -1705,9 +1718,9 @@ export class MultiplayerCoordinator {
         try {
           sockToClose.close(4008, "Authentication timeout: connection stalled before auth");
         } catch {}
-        if (!this.reconnectTimer && !this.isDisposed) {
+        if (!this.reconnectTimer && !this.isDisposed && !this.isSuperseded) {
           this.reconnectTimer = setTimeout(() => {
-            if (this.isDisposed) return;
+            if (this.isDisposed || this.isSuperseded) return;
             if (this.sim.sessionToken) {
               this.connectWebSocket(this.sim.sessionToken);
             }

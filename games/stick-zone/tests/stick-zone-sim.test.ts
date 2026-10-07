@@ -8081,6 +8081,45 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       if (corruptBkp) try { fs.unlinkSync(path.resolve(process.cwd(), corruptBkp)); } catch {}
     }
 
+    // Native permission-failure test (unmocked filesystem EACCES): startup rejection and preservation of primary path
+    const nativePermDir = path.resolve(process.cwd(), `.test-native-perm-dir-${Date.now()}`);
+    fs.mkdirSync(nativePermDir);
+    const nativePermTarget = path.join(nativePermDir, "primary.json");
+    fs.writeFileSync(nativePermTarget, JSON.stringify({
+      generation: 3,
+      raids: { [raidId]: { status: "active", operatives: { op_player: { operativeId: "op_player", ammo: 7 } } } },
+    }), "utf8");
+
+    const nativePermStore = path.resolve(process.cwd(), `.test-native-perm-link-${Date.now()}.json`);
+    fs.symlinkSync(nativePermTarget, nativePermStore);
+
+    // Also create backup with generation: 2
+    const nativePermBackup = `${nativePermStore}.prev`;
+    const nativeBkpAuth = new ServerSettlementAuthority(nativePermBackup);
+    nativeBkpAuth.initRaid(raidId, 50000, ["op_player"]);
+    nativeBkpAuth.generation = 2;
+    nativeBkpAuth.saveToDisk();
+
+    // Revoke permissions on target directory so readFileSync and stat throw native EACCES (while existsSync returns false)
+    fs.chmodSync(nativePermDir, 0);
+
+    try {
+      expect(() => {
+        new ServerSettlementAuthority(nativePermStore);
+      }).toThrow(/Failed to read primary settlement store|EACCES/);
+    } finally {
+      fs.chmodSync(nativePermDir, 0o755);
+      // Verify primary file was NOT replaced by generation 2 backup and still has generation: 3 and ammo: 7
+      const targetContent = JSON.parse(fs.readFileSync(nativePermTarget, "utf8"));
+      expect(targetContent.generation).toBe(3);
+      expect(targetContent.raids[raidId].operatives.op_player.ammo).toBe(7);
+
+      try { fs.unlinkSync(nativePermStore); } catch {}
+      try { fs.unlinkSync(nativePermTarget); } catch {}
+      try { fs.unlinkSync(nativePermBackup); } catch {}
+      try { fs.rmdirSync(nativePermDir); } catch {}
+    }
+
     // C) Unified machine custody validator & rejection reconciliation
     const sim = new SectorDepotSimulation();
     sim.raidId = raidId;
@@ -8244,6 +8283,8 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       expect(simDisc.player.x).toBe(initialX);
 
       // Deliver auth_success through real socket callback:
+      (coordDisc as any).isConnectionActive = true;
+      if ((coordDisc as any).ws) Object.defineProperty((coordDisc as any).ws, "readyState", { value: 1, configurable: true, writable: true });
       await (coordDisc as any).ws?.onmessage?.({
         data: JSON.stringify({
           type: "auth_success",
@@ -8298,6 +8339,8 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       expect(simDisc.jumpVy).toBe(airborneVy);
 
       // Reconnect via auth_success:
+      (coordDisc as any).isConnectionActive = true;
+      if ((coordDisc as any).ws) Object.defineProperty((coordDisc as any).ws, "readyState", { value: 1, configurable: true, writable: true });
       await (coordDisc as any).ws?.onmessage?.({
         data: JSON.stringify({
           type: "auth_success",
@@ -8383,6 +8426,118 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       expect(simDelay.player.action).toBe('idle');
 
       coordDelay.cleanup();
+
+      // H) Deferred-Blob probe: Blob authentication message resolves AFTER timeout has closed socket
+      // Must NOT set authenticated=true or unlock input on CLOSING/closed socket!
+      const simBlob = new SectorDepotSimulation();
+      simBlob.raidId = raidId;
+      simBlob.player.id = "op_player";
+      simBlob.admitOperative(0);
+      simBlob.player.health = 100;
+      simBlob.player.ammo = 30;
+
+      const coordBlob = new MultiplayerCoordinator(simBlob);
+      let blobResolve: any = null;
+      const deferredBlob = {
+        text: () => new Promise<string>((resolve) => {
+          blobResolve = resolve;
+        }),
+      };
+
+      let fakeBlobSocket: any = {
+        readyState: 1, // OPEN
+        close: vi.fn(() => {
+          fakeBlobSocket.readyState = 2; // CLOSING
+        }),
+        send: vi.fn(),
+      };
+      const origWS1 = (globalThis as any).WebSocket;
+      (globalThis as any).WebSocket = function() { return fakeBlobSocket; };
+      coordBlob.connectWebSocket("sz_blob_token");
+      (globalThis as any).WebSocket = origWS1;
+
+      (coordBlob as any).connectionStartTime = Date.now() - 6000;
+      coordBlob.isConnectionActive = true;
+      coordBlob.authenticated = false;
+      simBlob.isSocketDisconnected = true;
+
+      // Dispatch Blob message through onmessage (begins async decode)
+      const onMsgPromise = fakeBlobSocket.onmessage?.({
+        data: deferredBlob,
+      });
+
+      // While decode is in flight, authentication timeout occurs and closes the socket:
+      coordBlob.pruneExpiredPeers();
+      expect(fakeBlobSocket.readyState).toBe(2); // CLOSING
+      expect(coordBlob.isConnectionActive).toBe(false);
+      expect(coordBlob.authenticated).toBe(false);
+      expect(simBlob.isInputLocked()).toBe(true);
+
+      // Now Blob decode finishes with auth_success:
+      blobResolve?.(JSON.stringify({
+        type: "auth_success",
+        serverTime: Date.now(),
+        currentRaidTick: 300,
+      }));
+      await onMsgPromise;
+
+      // Assert that decode fence prevented applying data: remains unauthenticated and input locked!
+      expect(coordBlob.authenticated).toBe(false);
+      expect(simBlob.isSocketDisconnected).toBe(true);
+      expect(simBlob.isInputLocked()).toBe(true);
+
+      // Stepping cannot move player or consume ammo:
+      simBlob.step({ dx: 1, dz: 1, sprint: true, slide: false, roll: false, jump: false, kick: false, shoot: true, aimAngle: 0, interact: false });
+      expect(simBlob.player.ammo).toBe(30);
+      expect(simBlob.player.x).toBe(SIM_CONFIG.SPAWN_SQUAD_A.x);
+      coordBlob.cleanup();
+
+      // I) Heartbeat timeout followed by superseded-close:
+      // Heartbeat timeout initiates socket closure and schedules reconnectTimer.
+      // Then socket receives superseded close (code: 4009 / reason: "superseded_by_new_session").
+      // The pending reconnectTimer MUST be cancelled, isSuperseded set, and client must NEVER reconnect!
+      const simSuper = new SectorDepotSimulation();
+      simSuper.raidId = raidId;
+      simSuper.player.id = "op_player";
+      simSuper.admitOperative(0);
+
+      const coordSuper = new MultiplayerCoordinator(simSuper);
+      let superSocket: any = {
+        readyState: 1,
+        close: vi.fn(() => {
+          superSocket.readyState = 2;
+        }),
+        send: vi.fn(),
+      };
+      const origWS2 = (globalThis as any).WebSocket;
+      (globalThis as any).WebSocket = function() { return superSocket; };
+      coordSuper.connectWebSocket("sz_tok_initial");
+      (globalThis as any).WebSocket = origWS2;
+
+      coordSuper.authenticated = true;
+      simSuper.isSocketDisconnected = false;
+      coordSuper.isConnectionActive = true;
+
+      // Trigger heartbeat timeout -> starts reconnectTimer
+      coordSuper.lastServerMessageTime = Date.now() - 6000;
+      coordSuper.pruneExpiredPeers();
+      expect((coordSuper as any).reconnectTimer).not.toBeNull();
+
+      // Socket now receives superseded close:
+      superSocket.onclose?.({
+        code: 4009,
+        reason: "superseded_by_new_session",
+      });
+
+      // Assert terminal state:
+      expect(coordSuper.isSuperseded).toBe(true);
+      expect((coordSuper as any).reconnectTimer).toBeNull();
+
+      // Calling connectWebSocket must be a no-op
+      coordSuper.connectWebSocket("sz_tok_another");
+      expect((coordSuper as any).ws).toBe(superSocket); // no new socket created!
+
+      coordSuper.cleanup();
     } finally {
       globalThis.fetch = origFetch;
       coord.cleanup();
