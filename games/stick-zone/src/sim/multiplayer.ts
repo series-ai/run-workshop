@@ -946,11 +946,7 @@ export class MultiplayerCoordinator {
 
     const maxAllowed = attackKind === 'kick' ? 50 : 24;
     const effectiveDmg = Math.min(maxAllowed, dmg > 0 ? dmg : maxAllowed);
-    const authorHealth = machineCustodyAuth && typeof (packet as any).data?.machineHealth === 'number' ? (packet as any).data.machineHealth : undefined;
-    const authorAlive = machineCustodyAuth && typeof (packet as any).data?.machineAlive === 'boolean' ? (packet as any).data.machineAlive : undefined;
-    const authorVitalsSeq = machineCustodyAuth && typeof (packet as any).data?.vitalsSeq === 'number' ? (packet as any).data.vitalsSeq : undefined;
-    const authorMaxHealth = machineCustodyAuth && typeof (packet as any).data?.maxHealth === 'number' ? (packet as any).data.maxHealth : undefined;
-    this.applyValidatedMachineHit(packet.senderName, machineId, effectiveDmg, authorHealth, authorAlive, authorVitalsSeq, authorMaxHealth);
+    this.applyValidatedMachineHit(packet.senderName, machineId, effectiveDmg);
     return true;
   }
 
@@ -964,6 +960,9 @@ export class MultiplayerCoordinator {
         this.validateAndAdoptMachineCustody(p);
       }
     }
+    this.pendingWorldEvents = this.pendingWorldEvents.filter(
+      (p) => !(p && typeof p === "object" && p.type === "machine_hit" && (p as any).serverAuthoritative === true)
+    );
     for (const p of this.pendingWorldEvents) {
       if (!isAuthorizedSender(p.senderId, p.senderName)) continue;
       // Universal snapshot arrival boundary filter for queued events
@@ -1043,22 +1042,32 @@ export class MultiplayerCoordinator {
 
   public connectWebSocket(token?: string): void {
     if (this.isDisposed) return;
-    if (typeof window === "undefined" || !("WebSocket" in window) || !window.location) return;
     const tok = token || (this.sim as any).sessionToken;
     if (!tok) return; // Do not connect without authenticated session token!
-    if (this.ws && (this.ws.readyState === 0 || this.ws.readyState === 1)) return;
+    if (this.ws && (this.ws.readyState === 0 || this.ws.readyState === 1)) {
+      try { this.ws.close(); } catch {}
+      this.ws = null;
+    }
     this.authenticated = false;
     (this as any).connectionStartTime = Date.now();
-    try {
+    const WSClass = typeof WebSocket !== "undefined" ? WebSocket : (typeof window !== "undefined" ? (window as any).WebSocket : null);
+    if (!WSClass) return;
+    let wsUrl = "";
+    if (typeof window !== "undefined" && window.location && window.location.host) {
       const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${proto}//${window.location.host}/syncplay-ws?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
-      const createdSocket = new WebSocket(wsUrl);
+      wsUrl = `${proto}//${window.location.host}/syncplay-ws?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
+    } else if ((this as any).wsUrl) {
+      wsUrl = `${(this as any).wsUrl}?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
+    }
+    if (!wsUrl) return;
+    try {
+      const createdSocket = new WSClass(wsUrl);
       this.ws = createdSocket; // ownership: callbacks verify they still serve the CURRENT socket
       createdSocket.onopen = () => {
         if (this.isDisposed || createdSocket !== this.ws) return;
         this.broadcastRaidDiscovery();
       };
-      this.ws.onmessage = async (event) => {
+      createdSocket.onmessage = async (event: any) => {
         const __msgSocket = createdSocket; // ownership: this handler serves ONLY the socket it was created for
         this.lastServerMessageTime = Date.now();
         try {
@@ -1090,6 +1099,7 @@ export class MultiplayerCoordinator {
             // Strictly guard: only accept server auth_success once during initial handshake (peers cannot send it!)
             if (!this.authenticated && data.type === "auth_success" && !data.senderId) {
               this.authenticated = true;
+              this.sim.terminalRecoveryError = undefined;
               if (typeof data.serverTime === "number") {
                 this.serverTimeOffset = data.serverTime - Date.now();
                 if (typeof globalThis !== "undefined") (globalThis as any).__stickZoneServerTimeOffset = this.serverTimeOffset;
@@ -1162,7 +1172,7 @@ export class MultiplayerCoordinator {
           this.handleMessage(data);
         } catch {}
       };
-      createdSocket.onclose = (event) => {
+      createdSocket.onclose = (event: any) => {
         // Ownership: only the CURRENT socket may clear live state — a superseded
         // socket's late close must not deauthorize its replacement.
         if (createdSocket !== this.ws) return;
@@ -2004,6 +2014,7 @@ export class MultiplayerCoordinator {
     // client presentation filters never discard authoritative machine vitals.
     if (packet.type === 'machine_hit' && (packet as any).serverAuthoritative === true) {
       this.validateAndAdoptMachineCustody(packet);
+      return; // Server-stamped machine custody is fully processed: never fall through to presentation filters or peer simulation
     }
 
     // 7. Universal snapshot presentation filters
@@ -2927,6 +2938,7 @@ export class MultiplayerCoordinator {
     } else if (packet.type === 'machine_hit') {
       if ((packet as any).serverAuthoritative === true) {
         this.validateAndAdoptMachineCustody(packet);
+        return;
       }
       if (!isAuthorizedSender(packet.senderId, packet.senderName)) return;
       if (!packet.data || typeof packet.data !== 'object') return;
@@ -3118,6 +3130,30 @@ export class MultiplayerCoordinator {
     }
   }
 
+  public waitForAuthentication(timeoutMs = 5000): Promise<boolean> {
+    if (this.authenticated) return Promise.resolve(true);
+    return new Promise((resolve) => {
+      const start = Date.now();
+      const check = setInterval(() => {
+        if (this.isDisposed) {
+          clearInterval(check);
+          resolve(false);
+          return;
+        }
+        if (this.authenticated) {
+          clearInterval(check);
+          resolve(true);
+          return;
+        }
+        if (Date.now() - start >= timeoutMs) {
+          clearInterval(check);
+          resolve(this.authenticated);
+          return;
+        }
+      }, 50);
+    });
+  }
+
   public async retryTerminalRecovery(maxRetries = 3): Promise<boolean> {
     if (this.isDisposed || this.isRetryingTerminalRecovery) return false;
     this.isRetryingTerminalRecovery = true;
@@ -3187,9 +3223,21 @@ export class MultiplayerCoordinator {
             this.sim.terminalRecoveryError = undefined;
             return true;
           } else if (data && data.success && data.token) {
+            if (typeof sessionStorage !== "undefined") {
+              sessionStorage.setItem(`sz_token_${this.sim.raidId}_${this.sim.player.id}`, data.token);
+              if (data.resumeKey) {
+                sessionStorage.setItem(`sz_resume_${this.sim.raidId}_${this.sim.player.id}`, data.resumeKey);
+              }
+            }
             this.sim.sessionToken = data.token;
-            this.sim.terminalRecoveryError = undefined;
-            return true;
+            this.connectWebSocket(data.token);
+            const authenticated = await this.waitForAuthentication(5000);
+            if (authenticated) {
+              this.sim.terminalRecoveryError = undefined;
+              return true;
+            } else {
+              shouldRetry = true;
+            }
           }
         } else if (res.status === 408 || res.status === 429 || (res.status >= 500 && res.status <= 599)) {
           shouldRetry = true;

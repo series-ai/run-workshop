@@ -236,7 +236,7 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isModalActive, state.kind, isDead]);
+  }, [isModalActive, state.kind, isDead, Boolean(recoveryError)]);
 
   if (!isModalActive) {
     return null;
@@ -496,8 +496,8 @@ style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", border
         );
       })()}
 
-      {/* Persistent Terminal Recovery Error Modal */}
-      {!isDead && Boolean(recoveryError) && (
+      {/* Persistent Terminal Recovery Error Modal (Priority over settlement error) */}
+      {!isDead && Boolean(recoveryError) ? (
         <div
           ref={modalRef}
           tabIndex={-1}
@@ -567,10 +567,9 @@ style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", border
             </button>
           </div>
         </div>
-      )}
-
-      {/* Recoverable Failure State using Official ExfilController Methods */}
-      {!isDead && state.kind === "failed" && (
+      ) : (
+        /* Recoverable Failure State using Official ExfilController Methods */
+        !isDead && state.kind === "failed" && (
         <div
           ref={modalRef}
           tabIndex={-1}
@@ -629,7 +628,7 @@ style={{ padding: 20, background: "#1c1917", border: "1px solid #ef4444", border
             </button>
           </div>
         </div>
-      )}
+      ))}
     </div>
   );
 };

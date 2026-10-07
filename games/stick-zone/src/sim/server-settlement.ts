@@ -121,7 +121,8 @@ export function validateStoreIntegrity(data: any): boolean {
 
   if (data.profiles !== undefined) {
     if (!data.profiles || typeof data.profiles !== "object" || Array.isArray(data.profiles)) return false;
-    for (const prof of Object.values(data.profiles)) {
+    for (const [profId, prof] of Object.entries(data.profiles)) {
+      if (!isValidOperativeId(profId)) return false;
       if (!prof || typeof prof !== "object" || Array.isArray(prof)) return false;
       const rev = (prof as any).inventoryRevision;
       if (rev !== undefined && (typeof rev !== "number" || !Number.isInteger(rev) || rev < 0)) {
@@ -180,8 +181,9 @@ export function validateStoreIntegrity(data: any): boolean {
         if (!p.profileId || typeof p.profileId !== "string") return false;
         if (seenProfiles.has(p.profileId)) return false;
         seenProfiles.add(p.profileId);
-        const isKnown = (raidRecord && raidRecord.operatives && raidRecord.operatives[p.profileId]) ||
-          (data.profiles && data.profiles[p.profileId]) ||
+        if (!isValidOperativeId(p.profileId)) return false;
+        const isKnown = (raidRecord && hasOwnOperative(raidRecord, p.profileId)) ||
+          (data.profiles && Object.prototype.hasOwnProperty.call(data.profiles, p.profileId)) ||
           (p.profileId === "op_player" || p.profileId === "op_alpha_1" || p.profileId === "op_bravo_1");
         if (!isKnown) return false;
         if (typeof p.activeRaidCleared !== "boolean") return false;
@@ -339,7 +341,8 @@ export function validateStoreIntegrity(data: any): boolean {
         if (typeof (crate as any).claimedBy !== "string" || (crate as any).claimedBy.trim() === "") return false;
         if (typeof (crate as any).claimTimestamp !== "number" || !Number.isFinite((crate as any).claimTimestamp) || (crate as any).claimTimestamp < 0) return false;
         const claimer = (crate as any).claimedBy;
-        if (!(r as any).operatives[claimer]) return false;
+        if (!isValidOperativeId(claimer)) return false;
+        if (!Object.prototype.hasOwnProperty.call((r as any).operatives, claimer)) return false;
         opClaimedTotals.set(claimer, (opClaimedTotals.get(claimer) || 0) + cVal);
       }
     }
@@ -347,8 +350,9 @@ export function validateStoreIntegrity(data: any): boolean {
     let totalOpEarnedCash = 0;
     let totalExtractedCash = 0;
     for (const [opId, op] of Object.entries((r as any).operatives)) {
+      if (!isValidOperativeId(opId)) return false;
       if (!op || typeof op !== "object" || Array.isArray(op)) return false;
-      if (typeof (op as any).operativeId !== "string" || (op as any).operativeId.trim() === "" || (op as any).operativeId !== opId) return false;
+      if (typeof (op as any).operativeId !== "string" || !isValidOperativeId((op as any).operativeId) || (op as any).operativeId !== opId) return false;
       if (typeof (op as any).admitted !== "boolean") return false;
       if (typeof (op as any).isExtracted !== "boolean") return false;
       if ((op as any).isAlive !== undefined && typeof (op as any).isAlive !== "boolean") return false;
@@ -826,9 +830,7 @@ export class ServerSettlementAuthority {
         if (v && v.operatives) {
           const nullOps: Record<string, any> = Object.create(null);
           for (const [opId, op] of Object.entries(v.operatives)) {
-            if (isValidOperativeId(opId)) {
-              nullOps[opId] = op;
-            }
+            nullOps[opId] = op;
           }
           v.operatives = nullOps;
           for (const op of Object.values(v.operatives)) {

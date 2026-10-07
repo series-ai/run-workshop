@@ -7852,7 +7852,25 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect((Object.prototype as any).owned).toBeUndefined();
     expect(auth.isSlotClaimed(raidId, "op_player")).toBe(true);
 
-    // B) Unified machine custody validator & rejection reconciliation
+    // B) Disk store integrity strictly rejects reserved operative IDs and orphan crate owners
+    const { validateStoreIntegrity } = await import("../src/sim/server-settlement.js");
+    const badStore = {
+      raids: {
+        [raidId]: {
+          status: "active",
+          allowableCashPool: 50000,
+          crates: {
+            depot_crate_01: { cashValue: 1250, claimedBy: "__proto__", claimTimestamp: 100 }
+          },
+          operatives: {
+            "__proto__": { operativeId: "__proto__", admitted: true, isExtracted: false, extractedAtTick: 0, activeRaid: raidId }
+          }
+        }
+      }
+    };
+    expect(validateStoreIntegrity(badStore)).toBe(false);
+
+    // C) Unified machine custody validator & rejection reconciliation
     const sim = new SectorDepotSimulation();
     sim.raidId = raidId;
     sim.player.id = "op_player";
@@ -7905,11 +7923,26 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(resInvalidMax).toBe(false);
     expect(turret?.health).toBe(120);
 
-    // 4. Local optimistic strike leaves prediction damage without polluting committed seq
+    // 4. Invalid bounds via handleMessage dropped immediately without mutation
+    coord.handleMessage({
+      eventId: "hit_bad_bounds",
+      type: "machine_hit",
+      serverAuthoritative: true,
+      raidId,
+      senderId: "server",
+      senderName: "CENTRAL COMMAND",
+      timestamp: Date.now(),
+      data: { machineId: "turret_depot_alpha", machineHealth: 1, maxHealth: 9999, vitalsSeq: 1.5 },
+    } as any);
+    expect(turret?.health).toBe(120);
+    expect((turret as any)?.maxHealth ?? 120).toBe(120);
+    expect((turret as any)?.vitalsSeq ?? 0).toBe(0);
+
+    // 5. Local optimistic strike leaves prediction damage without polluting committed seq
     coord.applyValidatedMachineHit("OPERATIVE GHOST-1", "turret_depot_alpha", 25);
     expect(turret?.health).toBe(95);
 
-    // 5. Stamped server rejection/custody sync reconciles health back to 120
+    // 6. Stamped server rejection/custody sync reconciles health back to 120
     const resReconcile = coord.validateAndAdoptMachineCustody({
       eventId: "hit_rejection_corr",
       type: "machine_hit",
@@ -7923,12 +7956,17 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(resReconcile).toBe(true);
     expect(turret?.health).toBe(120);
 
-    // C) Terminal recovery error, input locking, and user retry unlocking
+    // D) Terminal recovery error, input locking, and full active WebSocket recovery
     sim.terminalRecoveryError = "Terminal session recovery failed after retries. Reconnect required.";
     expect(sim.isInputLocked()).toBe(true);
 
-    // User retry succeeds and clears error, unlocking input
     let fetchCalled = 0;
+    let wsConnectCalled = false;
+    coord.connectWebSocket = (token?: string) => {
+      wsConnectCalled = true;
+      coord.authenticated = true;
+    };
+
     const origFetch = globalThis.fetch;
     try {
       globalThis.fetch = (async (url: any) => {
@@ -7936,12 +7974,15 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
         return new Response(JSON.stringify({
           success: true,
           token: "sz_recovered_token_119",
+          resumeKey: "sz_recovered_resume_119",
         }), { status: 200, headers: { "Content-Type": "application/json" } });
       }) as any;
 
       const userRecovered = await sim.retryTerminalRecovery?.();
       expect(userRecovered).toBe(true);
       expect(fetchCalled).toBe(1);
+      expect(wsConnectCalled).toBe(true);
+      expect(coord.authenticated).toBe(true);
       expect(sim.terminalRecoveryError).toBeUndefined();
       expect(sim.sessionToken).toBe("sz_recovered_token_119");
       expect(sim.isInputLocked()).toBe(false);
@@ -7952,7 +7993,6 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       try { fs.unlinkSync(`${tmpStore}.prev`); } catch {}
     }
   });
-
 
   afterAll(() => {
     try {
