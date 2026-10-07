@@ -178,9 +178,15 @@ export const App: React.FC = () => {
             }
             if (isCancelled) return;
             if (activeRaidData && activeRaidData.activeRaidId === sim.raidId && activeRaidData.machines && Array.isArray(activeRaidData.machines)) {
+              // NOTE: machine world reconciliation is owned by the shared reconciler
+              // (MultiplayerCoordinator.applyMachineRosterCustody — revision-gated, full
+              // membership/geometry). This early boot path only CONVERGES vitals on
+              // existing ids (never adds/removes/moves machines, never regresses rev).
               for (const m of activeRaidData.machines) {
                 const existing = sim.machines.find((x) => x.id === m.id);
                 if (existing) {
+                  const custodyMax = typeof (m as any).maxHealth === "number" ? (m as any).maxHealth : undefined;
+                  if (custodyMax !== undefined) (existing as any).maxHealth = custodyMax;
                   if (sim.tick < 60) {
                     existing.health = Math.min(existing.health, m.health);
                     existing.isAlive = m.isAlive && existing.health > 0;

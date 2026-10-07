@@ -1177,6 +1177,15 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
       const idx = machines.findIndex((m) => m.id === machineId);
       // Full-transaction snapshot (machine list + health map + deployment record) taken
       // BEFORE any mutation; place/replace/remove all restore through __restoreMachines.
+      // Revision stores are restored too — no uncommitted revision may survive a failed save.
+      const __revBeforeMap = raidRosterRevisions.get(raidId) || 0;
+      const __revRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
+      const __revBeforeRec = __revRec && typeof __revRec.machineRosterRevision === "number" ? __revRec.machineRosterRevision : null;
+      const __restoreRevisions = () => {
+        raidRosterRevisions.set(raidId, __revBeforeMap);
+        const rr = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
+        if (rr) { if (__revBeforeRec === null) delete rr.machineRosterRevision; else rr.machineRosterRevision = __revBeforeRec; }
+      };
       const __mListBefore = machines.map((m) => ({ ...m }));
       const __mRrec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
       const __mHealthBefore = __mRrec && __mRrec.machines ? JSON.parse(JSON.stringify(__mRrec.machines)) : null;
@@ -1213,6 +1222,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
             settlement.saveToDisk();
           } catch (removePersistErr) {
             __restoreMachines();
+            __restoreRevisions();
             res.statusCode = 500;
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify({ error: "Machine removal persistence failed; deployment state restored" }));
@@ -1285,9 +1295,10 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
             settlement.saveToDisk();
           } catch (deployPersistErr) {
             // Restore the COMPLETE pre-deployment state (list + health map + deployment
-            // record) and answer 500: handler-scoped failures take this path — never a
-            // thrown exception into the JSON parser's catch (double-response bug).
+            // record + revision stores) and answer 500: handler-scoped failures take
+            // this path — never a thrown exception into the JSON parser's catch.
             __restoreMachines();
+            __restoreRevisions();
             res.statusCode = 500;
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify({ error: "Machine deployment persistence failed; deployment state restored" }));
@@ -1748,6 +1759,7 @@ wss.on("connection", (ws, req) => {
             raidId: resolved.raidId,
             currentRaidTick: curTick,
             ammo: getRaidOperativeWeaponState(resolved.raidId, resolved.operativeId).ammo,
+            machineRosterRevision: (activeRaidRec && typeof activeRaidRec.machineRosterRevision === "number") ? activeRaidRec.machineRosterRevision : raidRosterRevisions.get(resolved.raidId) || 0,
             machines: getRaidMachines(resolved.raidId),
             crates: activeRaidRec?.crates || {},
             serverTime: Date.now(),
@@ -1922,6 +1934,8 @@ wss.on("connection", (ws, req) => {
         // would silently disable saveToDisk for machine-executor persistence).
         let __txCbMoveBefore = null;
         let __txCbCustodyBefore = null;
+        let __txWeaponKeyScoped = null;
+        let __txWeaponBeforeScoped = null;
         let __txOpen = false;
         const __txLatch = () => { settlement.__txSuppressSave = true; __txOpen = true; };
         const __txnUnlatch = () => { settlement.__txSuppressSave = false; __txOpen = false; };
@@ -2018,13 +2032,10 @@ wss.on("connection", (ws, req) => {
           // roll state, action) and custody snapshot BEFORE the first mutation, so a
           // failed persistence restores the exact prior world. ONE save commits the
           // accepted packet (all nested per-action saves were removed).
-          // Weapon state joins the transaction: ammo/reload mutations below are rolled
-          // back together with movement + custody on a failed commit.
-          const __txWeaponKey = `${ws.raidId}:${ws.operativeId}`;
-          const __txWeaponBefore = Object.assign({}, raidOperativeWeaponStates.get(__txWeaponKey) || { ammo: 30, maxAmmo: 30, isReloading: false, reloadEnd: 0 });
-          const __restoreWeapon = () => {
-            raidOperativeWeaponStates.set(__txWeaponKey, __txWeaponBefore);
-          };
+          // Weapon state snapshot assigned to the packet-scoped owners (declared above
+          // the if-chain — same scope as the commit tail).
+          __txWeaponKeyScoped = `${ws.raidId}:${ws.operativeId}`;
+          __txWeaponBeforeScoped = Object.assign({}, raidOperativeWeaponStates.get(__txWeaponKeyScoped) || { ammo: 30, maxAmmo: 30, isReloading: false, reloadEnd: 0 });
           __txCbMoveBefore = Object.assign({}, moveState, {
             rollStartedAt: moveState.rollStartedAt,
             lastRollStartedAt: moveState.lastRollStartedAt,
@@ -2207,7 +2218,9 @@ wss.on("connection", (ws, req) => {
           if (settlement.saveToDisk) settlement.saveToDisk();
         } catch (__txPersistErr) {
           __txRollback();
-          __restoreWeapon();
+          if (__txWeaponKeyScoped && __txWeaponBeforeScoped) {
+            raidOperativeWeaponStates.set(__txWeaponKeyScoped, __txWeaponBeforeScoped);
+          }
           return; // accepted state never relays ahead of disk
         }
       }
@@ -3279,9 +3292,12 @@ wss.on("connection", (ws, req) => {
               settlement.saveToDisk();
             }
           } catch (persistErr) {
+            // Restore the COMPLETE pre-strike life record — a stale isKia flag would
+            // let a later hit confirmation declare a living target dead.
             target.st.health = preHealth;
             target.st.armor = preArmor;
             target.st.isAlive = true;
+            target.st.isKia = false;
             if (oRec && preCustody) {
               for (const k of Object.keys(oRec)) delete oRec[k];
               Object.assign(oRec, preCustody);

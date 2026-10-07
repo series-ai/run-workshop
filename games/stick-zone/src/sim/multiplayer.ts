@@ -707,13 +707,10 @@ export class MultiplayerCoordinator {
                 });
               }
               if (data.machines && Array.isArray(data.machines)) {
-                for (const mData of data.machines) {
-                  const m = this.sim.machines.find((x) => x.id === mData.id);
-                  if (m) {
-                    m.health = Math.min(m.health, mData.health);
-                    m.isAlive = mData.isAlive && m.health > 0;
-                  }
-                }
+                // Shared reconciler path (revision-gated, full membership/geometry/
+                // maxhealth) — replaces the legacy vitals-only min-merge that could
+                // never add/remove machines on reconnect.
+                this.applyMachineRosterCustody(data.machines, (data as any).machineRosterRevision);
               }
               const kind = this.sim.ingressController.getState().kind;
               if (kind === "corridor_entered" || kind === "idle" || kind === "waiting_squad") {
@@ -975,13 +972,27 @@ export class MultiplayerCoordinator {
       if (this.isDisposed || !this.authenticated) return;
       const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
       const tid = ctrl ? setTimeout(() => ctrl.abort(), 4000) : null;
+      if (ctrl) {
+        (this as any).__clockSyncInFlight = (this as any).__clockSyncInFlight || [];
+        (this as any).__clockSyncInFlight.push(ctrl);
+      }
       fetch(`/api/settlement/active-raid?raidId=${encodeURIComponent(this.sim.raidId)}`, {
         signal: ctrl ? ctrl.signal : undefined,
         headers: this.sim.sessionToken ? { Authorization: `Bearer ${this.sim.sessionToken}` } : {},
       })
         .then((res) => (res.ok ? res.json() : null))
-        .finally(() => { if (tid) clearTimeout(tid); })
+        .finally(() => {
+            if (tid) clearTimeout(tid);
+            // In-flight registry: cleanup removes the controller once settled so the
+            // disposal abort list stays bounded.
+            const reg = (this as any).__clockSyncInFlight;
+            if (reg && ctrl) { const ix = reg.indexOf(ctrl); if (ix !== -1) reg.splice(ix, 1); }
+          })
         .then((data) => {
+          // Disposal fence: a request issued before cleanup may resolve AFTER disposal —
+          // its adoption would advance a dead simulation and steal frame time from
+          // the next one.
+          if (this.isDisposed) return;
           const serverTick = data?.raidTick;
           if (typeof serverTick === "number" && Number.isFinite(serverTick) && serverTick > this.sim.tick && serverTick <= 57600) {
             // Fast-forward only — and CONSUME the equivalent elapsed time from the
@@ -1623,8 +1634,12 @@ export class MultiplayerCoordinator {
     // newer live-roster reconciliation (the single applied-revision watermark guards
     // every caller).
     if (typeof revision === "number" && Number.isFinite(revision)) {
+      // Unset-initial-watermark: the FIRST authoritative roster (even revision 0 –
+      // never-deployed raids) is always accepted; after that the monotonic watermark
+      // rejects only STRICTLY OLDER revisions.
+      const hasApplied = (this as any).__appliedMachineRosterRevision !== undefined;
       const applied = (this as any).__appliedMachineRosterRevision ?? 0;
-      if (revision <= applied) return;
+      if (hasApplied && revision < applied) return;
       (this as any).__appliedMachineRosterRevision = revision;
     }
     const next = this.sim.machines;
@@ -2713,8 +2728,9 @@ export class MultiplayerCoordinator {
       // Monotonic roster revisions: reject rosters older than the last applied (no
       // regression to stale geometry from a delayed delivery).
       if (typeof d.revision === "number" && Number.isFinite(d.revision)) {
+        const hasAppliedRev = (this as any).__appliedMachineRosterRevision !== undefined;
         const appliedRev = (this as any).__appliedMachineRosterRevision ?? 0;
-        if (d.revision <= appliedRev) return;
+        if (hasAppliedRev && d.revision < appliedRev) return;
         (this as any).__appliedMachineRosterRevision = d.revision;
       }
       // Shared custody reconciler (same function as hydration/authentication)
@@ -2957,6 +2973,13 @@ export class MultiplayerCoordinator {
     if (this.raidClockSyncInterval) {
       clearInterval(this.raidClockSyncInterval);
       this.raidClockSyncInterval = null;
+    }
+    // Abort outstanding clock-sync fetches: their late resolution must never adopt
+    // into a disposed simulation (or steal frame time from the next one).
+    const inFlight = (this as any).__clockSyncInFlight;
+    if (Array.isArray(inFlight)) {
+      for (const c of inFlight) { try { c.abort(); } catch {} }
+      inFlight.length = 0;
     }
     if (this.ws) {
       try {
