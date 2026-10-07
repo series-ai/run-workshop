@@ -637,11 +637,22 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
       if (presented.revealWeight > 0.001) {
         // R12 landmark reveal: lean the aim toward the bend's floodlit mega-tower so its lit edge
         // frames one side of the view (at most ~35% of the way, eased in and out).
-        const k = 0.2 * presented.revealWeight;
-        const ty = poseScratch.position.y + 260;
-        poseScratch.target.x += (presented.revealX - poseScratch.target.x) * k * 0.6;
-        poseScratch.target.z += (presented.revealZ - poseScratch.target.z) * k * 0.6;
-        poseScratch.target.y += (ty - poseScratch.target.y) * k * 0.4;
+        // R13: a sustained 28% hold toward the tower at the showcase bend (weight 1), 15% elsewhere.
+        // The target is re-projected to the boom's look-ahead distance so the lean is an angle, not
+        // a zoom toward the tower.
+        const k = 0.28 * presented.revealWeight;
+        const ax = poseScratch.target.x - poseScratch.position.x;
+        const az = poseScratch.target.z - poseScratch.position.z;
+        const aimLen = Math.hypot(ax, az) || 1;
+        let tx = presented.revealX - poseScratch.position.x;
+        let tz = presented.revealZ - poseScratch.position.z;
+        const tl = Math.hypot(tx, tz) || 1;
+        tx = (tx / tl) * aimLen;
+        tz = (tz / tl) * aimLen;
+        poseScratch.target.x = poseScratch.position.x + ax + (tx - ax) * k;
+        poseScratch.target.z = poseScratch.position.z + az + (tz - az) * k;
+        // Tilt up toward the crown: up to ~12 degrees at the full hold.
+        poseScratch.target.y += aimLen * 0.11 * presented.revealWeight;
       }
       applyCameraPose(scene.camera, poseScratch);
 

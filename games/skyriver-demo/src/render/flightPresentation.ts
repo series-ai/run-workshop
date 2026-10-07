@@ -35,6 +35,7 @@ import {
 } from '../sim/systems';
 import { CANYON_LOOP_LENGTH_M, canyonBendApexes, canyonHeading, warpCanyon, type WarpOut } from './canyonWarp';
 import { SKYRIVER_ROOFLINE_MIN_M } from './presentationLayout';
+import { SKYRIVER_SHOWCASE_BEND_V } from './city';
 import { ROUTE_MAX_ALTITUDE_M, routeAltitude, routeAltitudeSlope, routeLateral, routeLateralSlope } from './routeProfile';
 
 const TAU = Math.PI * 2;
@@ -114,6 +115,11 @@ function catmullRom(p0: number, p1: number, p2: number, p3: number, t: number): 
 function wrap(value: number, period: number): number {
   const w = value % period;
   return w < 0 ? w + period : w;
+}
+
+function smoothstep01(x: number): number {
+  const t = x < 0 ? 0 : x > 1 ? 1 : x;
+  return t * t * (3 - 2 * t);
 }
 
 function wrapTurns(turns: number): number {
@@ -247,13 +253,26 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
       result.speed = flight.speed * speedScale;
       result.canyonV = poseA.v;
       result.canyonX = poseA.lateral;
-      // Reveal: ramps up 1.4 km before a bend's apex, peaks ~700 m out, gone by the apex.
+      // R13 reveal. The showcase bend: the aim eases in over 2.1 -> 0.8 km before the apex, holds
+      // through the last 800 m, and releases in the final 150 m (~4-5 s of the tower owning one side
+      // of the frame). Other tight bends get a shorter, weaker version of the same curve.
       let best = 0;
       for (const apex of apexes) {
         let d = apex.v - poseA.v;
         d -= trackLength * Math.round(d / trackLength);
-        if (d <= 0 || d > 1500) continue;
-        const w = Math.sin(Math.PI * Math.min(1, Math.max(0, (1500 - d) / 1350)));
+        const showcase = Math.abs(apex.v - SKYRIVER_SHOWCASE_BEND_V) < 1;
+        // Measured (R13): on the showcase approach the tower is ahead within ~±30 degrees from ~2.6
+        // to ~1.0 km before the apex, then swings abeam. The hold sits on that stretch.
+        // All four tight bends share the loop's local geometry, so they share the timing; the others
+        // run the same recipe at 55% strength (and a 55% face-wash, city.ts).
+        const far = 2900;
+        const hold = 2300;
+        const end = 1000;
+        const tail = 400;
+        if (d <= end - tail || d > far) continue;
+        const ease = smoothstep01((far - d) / (far - hold));
+        const release = smoothstep01((d - (end - tail)) / tail);
+        const w = ease * release * (showcase ? 1 : 0.55);
         if (w > best) {
           best = w;
           warpCanyon(apex.side * apex.radius * 0.995, apex.v, revealWarp);

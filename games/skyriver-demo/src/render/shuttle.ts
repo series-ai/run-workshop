@@ -499,7 +499,8 @@ function buildPlumeGeometry(): THREE.BufferGeometry {
 /** Cruise and boost plume shapes, metres. Boost roughly doubles the jet and brightens the core. */
 // T7: intensities halved for the bloom pass, which now supplies the glow the raw values used to fake.
 const PLUME_CRUISE = Object.freeze({ length: 8, width: 1.4, flare: 1.2, intensity: 0.55 });
-const PLUME_BOOST = Object.freeze({ length: 30, width: 2.6, flare: 2.2, intensity: 1.15 });
+// R13: boost glare capped (cycle-6: the boost plume bloomed into a white blob over the craft).
+const PLUME_BOOST = Object.freeze({ length: 30, width: 2.3, flare: 1.5, intensity: 0.8 });
 
 export function createSkyriverShuttle(): SkyriverShuttle {
   const build = buildHull();

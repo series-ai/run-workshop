@@ -47,7 +47,7 @@ import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
 import { HERO_HORIZONTAL_CELLS, HERO_VERTICAL_CELLS, createSignAtlas, type SignAtlas } from './signAtlas';
 import { createInteriorAtlas, type InteriorAtlas } from './interiorAtlas';
 import { CANYON_LOOP_LENGTH_M, canyonBendApexes, foldsInsideBend, intrudesOtherStretch, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
-import { GRIME_PASS_V_M, ROUTE_MAX_ALTITUDE_M, STRATA_GRIME_TOP_M, STRATA_PRISTINE_BASE_M, routeAltitude } from './routeProfile';
+import { ROUTE_MAX_ALTITUDE_M, STRATA_GRIME_TOP_M, STRATA_PRISTINE_BASE_M, routeAltitude, routeLateral } from './routeProfile';
 
 /** Draw calls this module may spend (plan T3 allows 10 city-only; the shared budget allots 8). */
 export const SKYRIVER_CITY_DRAW_CALL_BUDGET = 8;
@@ -183,6 +183,12 @@ const TOWER_FAR_TINT = 0x3c4450;
 const GRIME_TINT = 0x6a5440;
 /** T7-5 landmark mega-towers: pale clean concrete so they stand apart from the walls. */
 const MEGA_TINT = 0x9aa3ad;
+/** R13: the showcase bend (the lap's second tight bend, reached ~15 s in). */
+export const SKYRIVER_SHOWCASE_BEND_V = (() => {
+  const apexes = canyonBendApexes(900).map((a) => a.v).map((v) => ((v % CANYON_LOOP_LENGTH_M) + CANYON_LOOP_LENGTH_M) % CANYON_LOOP_LENGTH_M).sort((a, b) => a - b);
+  const second = apexes[1] ?? apexes[0] ?? 0;
+  return second > CANYON_LOOP_LENGTH_M / 2 ? second - CANYON_LOOP_LENGTH_M : second;
+})();
 
 /** |x| of the inner column on a tower's side (for telling inner-wall slabs from outer columns). */
 function innerWallX(layout: SkyriverCityLayout, tower: SkyriverTower): number {
@@ -649,7 +655,13 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     megaAnchors.push({ x, v: apex.v });
     const base = Math.min(240, (apex.radius - 500) * 2);
     if (base < 120) continue;
-    const tops = [3500 + random.nextInt(0, 400), 4400 + random.nextInt(0, 300), 5000 + random.nextInt(0, 300)];
+    const showcaseTower = Math.abs(apex.v - SKYRIVER_SHOWCASE_BEND_V) < 1;
+    const topsRandom = [random.nextInt(0, 400), random.nextInt(0, 300), random.nextInt(0, 300)];
+    // R13: the showcase tower's crown is lowered into the approach's view (crown ~3.2 km, spire
+    // above); the others keep their 5 km scale.
+    const tops = showcaseTower
+      ? [2700 + topsRandom[0]! * 0.25, 3050 + topsRandom[1]! * 0.25, 3300 + topsRandom[2]! * 0.25]
+      : [3500 + topsRandom[0]!, 4400 + topsRandom[1]!, 5000 + topsRandom[2]!];
     masses.push({ x, y0: SKYRIVER_CITY_VOID_BASE_Y, z: apex.v, width: base, height: tops[0]! - SKYRIVER_CITY_VOID_BASE_Y, depth: base, tint: MEGA_TINT });
     masses.push({ x, y0: tops[0]! - 4, z: apex.v, width: base * 0.72, height: tops[1]! - tops[0]! + 4, depth: base * 0.72, tint: MEGA_TINT });
     masses.push({ x, y0: tops[1]! - 4, z: apex.v, width: base * 0.42, height: tops[2]! - tops[1]! + 4, depth: base * 0.42, tint: MEGA_TINT });
@@ -834,30 +846,72 @@ export function deriveHeroBlades(layout: SkyriverCityLayout): readonly SkyriverH
     const pristineStation = routeAltitude(v) > STRATA_PRISTINE_BASE_M - 50;
     stations.push([k % 2 === 0 ? -1 : 1, v, pristineStation || k % 3 === 2 ? 'panel' : 'blade']);
   }
-  // R12 near-wall clusters: where the camera holds a wall longest — the outer wall at each tight
-  // bend's entry, and the wall the route hugs through the grime pass — three big blades stand close
-  // together (70 m apart, staggered in height), facing along the route at chase distance.
-  const clusterCentres: [-1 | 1, number][] = canyonBendApexes(900).flatMap((apex): [-1 | 1, number][] => [
-    [(-apex.side) as -1 | 1, apex.v - 420],
-    // ... and mid-section, on the wall the route's snake leans toward, ~1.6 km after the bend.
-    [apex.side, apex.v + 1600],
-  ]);
-  clusterCentres.push([-1, GRIME_PASS_V_M]);
-  const clusterLift = new Map<number, number>();
-  for (const [side, centre] of clusterCentres) {
-    for (const dv of [-70, 0, 70]) {
-      stations.push([side, centre + dv, 'blade']);
-      clusterLift.set(centre + dv, dv === 0 ? 60 : dv < 0 ? -40 : 20);
+  // R13 sign walls: one per lap section (mid-way between tight bends), on the wall the route's
+  // snake leans toward, so at the closest the camera passes ~250 m from them. Four big blades in a
+  // row along the wall, 45 m apart, each 60-90 m deep and ~5x as tall (the atlas cell's aspect, so
+  // the lettering is not stretched), staggered in height: the concept's near-wall kanji sign wall.
+  // They replace R12's nine small clusters (fewer, bigger).
+  const signWalls: { side: -1 | 1; v: number }[] = [];
+  const bendVs = canyonBendApexes(900).map((a) => a.v).sort((a, b) => a - b);
+  for (let k = 0; k < bendVs.length; k += 1) {
+    const a = bendVs[k]!;
+    let b = bendVs[(k + 1) % bendVs.length]!;
+    if (b <= a) b += CANYON_LOOP_LENGTH_M;
+    // Search the middle half of the section for the strongest lean.
+    let bestV = (a + b) / 2;
+    let bestLean = 0;
+    // The section leading into the showcase bend keeps its sign wall early, out of the tower's view.
+    const intoShowcase = Math.abs(((b % CANYON_LOOP_LENGTH_M) + CANYON_LOOP_LENGTH_M) % CANYON_LOOP_LENGTH_M
+      - ((SKYRIVER_SHOWCASE_BEND_V % CANYON_LOOP_LENGTH_M) + CANYON_LOOP_LENGTH_M) % CANYON_LOOP_LENGTH_M) < 1;
+    const lo = intoShowcase ? 0.12 : 0.3;
+    const hi = intoShowcase ? 0.3 : 0.7;
+    for (let v = a + (b - a) * lo; v <= a + (b - a) * hi; v += 40) {
+      const lean = Math.abs(routeLateral(v));
+      if (lean > bestLean) { bestLean = lean; bestV = v; }
+    }
+    let v = bestV > CANYON_LOOP_LENGTH_M / 2 ? bestV - CANYON_LOOP_LENGTH_M : bestV;
+    const side = (Math.sign(routeLateral(bestV)) || 1) as -1 | 1;
+    // Centre the row on the deepest inner-wall slab near v, so all four blades share one backing wall.
+    const wallTowers = innerWallOf(layout, side).filter((t) => Math.abs(t.z - v) < 500);
+    if (wallTowers.length > 0) {
+      const host = wallTowers.reduce((best, t) => (t.depth - Math.abs(t.z - v) * 0.2 > best.depth - Math.abs(best.z - v) * 0.2 ? t : best));
+      v = host.z;
+    }
+    signWalls.push({ side, v });
+  }
+  const signWallBlade = new Map<number, number>();
+  for (const wall of signWalls) {
+    for (let n = 0; n < 4; n += 1) {
+      const z = wall.v + (n - 1.5) * 38;
+      stations.push([wall.side, z, 'blade']);
+      signWallBlade.set(z, n);
     }
   }
   for (const [side, z, kind] of stations) {
-    const HERO_CENTRE_Y = routeAltitude(z) + 20 + (clusterLift.get(z) ?? 0);
+    const wallIndex = signWallBlade.get(z);
+    const HERO_CENTRE_Y = routeAltitude(z) + 20 + (wallIndex === undefined ? 0 : [40, -60, 90, -20][wallIndex]!);
     const wall = innerWallOf(layout, side);
     if (wall.length === 0) continue;
     const tower = wall.reduce((best, candidate) => (Math.abs(candidate.z - z) < Math.abs(best.z - z) ? candidate : best));
     const zOnTower = (half: number): number =>
       Math.max(tower.z - tower.depth * 0.5 + half, Math.min(tower.z + tower.depth * 0.5 - half, z));
-    if (kind === 'blade') {
+    if (kind === 'blade' && wallIndex !== undefined) {
+      // Sign-wall blade: deep and tall; stops at |x| >= 405 (outside the flight box).
+      const width = 60 + random.nextInt(0, 30);
+      const height = width * 5.2;
+      const y = HERO_CENTRE_Y;
+      const face = Math.abs(tower.x) - tower.width * 0.5
+        - tierProjectionOver(layout.seed, tower, y - height * 0.5, y + height * 0.5);
+      const w = Math.min(width, face - 405);
+      const zPlaced = zOnTower(6);
+      // A blade that would be clamped onto another blade's spot, or squeezed thin, is not placed.
+      if (w < 40 || Math.abs(zPlaced - z) > 8) continue;
+      blades.push({
+        kind, cell: bladeCell, x: side * (face - w * 0.5), y, z: zPlaced, width: w, height: w * 5.2,
+        color: HERO_COLORS[(wallIndex * 2 + blades.length) % HERO_COLORS.length]!, seed: random.nextInt(0, 9999) / 9999,
+      });
+      bladeCell += 1;
+    } else if (kind === 'blade') {
       const height = 230 + random.nextInt(0, 100);
       const y = HERO_CENTRE_Y + random.nextInt(-50, 50);
       const face = Math.abs(tower.x) - tower.width * 0.5
@@ -1206,6 +1260,9 @@ vec3 traceRoom( vec2 cellLocal, vec3 ray, float room, float mirror, out float de
 uniform vec4 uHeroBlades[ HERO_MAX ];   // x, centre y, z, half height
 uniform vec3 uHeroColors[ HERO_MAX ];
 uniform int uHeroCount;
+// R13 landmark face-wash: [world x, world z, half size, strength] per mega-tower.
+uniform vec4 uMegaWash[ 4 ];
+uniform vec3 uMegaTint;
 
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
@@ -1328,10 +1385,10 @@ void main() {
     vec4 blade = uHeroBlades[ i ];
     vec3 nearest = vec3( blade.x, clamp( vWorldPos.y, blade.y - blade.w, blade.y + blade.w ), blade.z );
     float d = length( vWorldPos - nearest );
-    heroSpill += uHeroColors[ i ] * exp( - d / 45.0 );
+    heroSpill += uHeroColors[ i ] * exp( - d / 60.0 );
     heroShadow = max( heroShadow, exp( - d / 90.0 ) );
   }
-  color += heroSpill * 0.16;
+  color += heroSpill * 0.2;
   // T7 wet sheen: the rain-slick facade mirrors the nearest giant sign's colour at grazing angles.
   color += heroSpill / ( 1.0 + length( heroSpill ) ) * fresnel * 1.4 * vIsSide;
 
@@ -1459,6 +1516,32 @@ void main() {
 
 ${SKYRIVER_OUTPUT_APPLY_GLSL}
   #include <fog_fragment>
+  // R13 landmark wash, after the fog: the floodlit mega-tower stays a block of light through the haze.
+  float megaMatch = 1.0 - step( 0.02, distance( vTint, uMegaTint ) );
+  if ( megaMatch > 0.5 ) {
+    float wash = 0.0;
+    for ( int i = 0; i < 4; i ++ ) {
+      vec4 m = uMegaWash[ i ];
+      float dxz = length( vWorldPos.xz - m.xy );
+      wash = max( wash, m.w * step( dxz, m.z * 1.5 ) );
+    }
+    // Floodlights on every ~300 m ledge throw light up the faces and decay with height (the classic
+    // floodlit-landmark look); the faces keep their windows; the upper stages burn brightest.
+    float band = fract( vWorldPos.y / 300.0 );
+    float throwUp = exp( - band * 3.2 );
+    float rise = smoothstep( 1400.0, 3400.0, vWorldPos.y );
+    float face = vIsSide * ( 0.08 + 0.42 * throwUp ) * ( 0.6 + 0.9 * rise );
+    // Saturated cool cyan-blue: a coloured floodlight, so the landmark is colour as well as light.
+    vec3 washColor = vec3( 0.12, 0.55, 1.0 ) * face + vec3( 0.5, 0.8, 1.0 ) * ( 1.0 - vIsSide ) * 0.5;
+    #ifdef USE_FOG
+      float through = pow( max( 1.0 - skyriverFogFactor(), 0.0 ), 0.3 );
+    #else
+      float through = 1.0;
+    #endif
+    // Close by, the wash eases off so the face keeps its windows instead of reading as a flat slab.
+    float near = 0.35 + 0.65 * smoothstep( 250.0, 900.0, vFogDepth );
+    gl_FragColor.rgb += washColor * wash * through * near;
+  }
 }
 `;
 
@@ -1765,7 +1848,14 @@ void main() {
   // Tube core: where the lettering saturates it runs white-hot, the glow around it keeps the hue.
   // T7-5: keep the tubes saturated — ACES and bloom already push the cores toward white.
   vec3 hot = mix( vSignColor * vSignColor * 1.2, vec3( 1.0 ), 0.06 * smoothstep( 0.8, 1.0, mask ) );
-  vec3 color = hot * mask * angle * uIntensity + vSignColor * ( plate + halo * uHalo );
+  // R13: a big sign near the camera covers a lot of screen; ease its core and halo with proximity so
+  // bloom does not wash it to white (keeps the R12 saturation discipline at sign-wall scale).
+  #ifdef USE_FOG
+    float signNear = mix( 0.72, 1.0, smoothstep( 120.0, 600.0, vFogDepth ) );
+  #else
+    float signNear = 1.0;
+  #endif
+  vec3 color = ( hot * mask * angle * uIntensity + vSignColor * ( plate + halo * uHalo * 0.85 ) ) * signNear;
   gl_FragColor = vec4( color * flicker, 1.0 );
 
   #include <tonemapping_fragment>
@@ -1852,6 +1942,16 @@ export class SkyriverCity {
     const wetTint = new THREE.Color(0x567ba3);
 
     // --- towers -----------------------------------------------------------------------------------
+    // R13: landmark face-wash entries — bend 2 (the lap's second tight bend) is the showcase at full
+    // strength; the others get a cheaper 55% wash.
+    const megaWash: THREE.Vector4[] = [];
+    const washWarp: WarpOut = { x: 0, z: 0, heading: 0 };
+    const showcaseV = SKYRIVER_SHOWCASE_BEND_V;
+    for (const anchor of megaAnchorCache.get(layout.seed) ?? []) {
+      warpCanyon(anchor.x, anchor.v, washWarp);
+      megaWash.push(new THREE.Vector4(washWarp.x, washWarp.z, 120, Math.abs(anchor.v - showcaseV) < 1 ? 1.0 : 0.55));
+    }
+    while (megaWash.length < 4) megaWash.push(new THREE.Vector4(0, 0, 0, 0));
     // R12: all heroes are kept CPU-side in world space; each frame the 12 nearest to the camera are
     // uploaded, so the facade's spill loop stays at 12 however many heroes the lap carries.
     const heroBlades = deriveHeroBlades(layout);
@@ -1888,6 +1988,8 @@ export class SkyriverCity {
         uInterior: { value: this.interiorAtlas.texture },
         uInteriorFade: { value: new THREE.Vector2(SKYRIVER_INTERIOR_FADE.full[0], SKYRIVER_INTERIOR_FADE.full[1]) },
         uInteriorStrength: { value: 1 },
+        uMegaWash: { value: megaWash },
+        uMegaTint: { value: new THREE.Color().setHex(MEGA_TINT, THREE.SRGBColorSpace) },
         uHeroBlades: { value: heroUniforms.blades },
         uHeroColors: { value: heroUniforms.colors },
         uHeroCount: { value: heroUniforms.count },

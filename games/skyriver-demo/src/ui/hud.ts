@@ -75,13 +75,15 @@ const HUD_CSS = `
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: #6f8099;
+  /* R13: higher-contrast boost readout (cycle-6 note). */
+  color: #b4c3d8;
 }
 .skyriver-hud__boost-bar {
-  width: 66px;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(150, 180, 220, 0.2);
+  width: 88px;
+  height: 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(180, 210, 240, 0.55);
+  background: rgba(6, 10, 18, 0.85);
   overflow: hidden;
 }
 .skyriver-hud__boost-fill {
