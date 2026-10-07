@@ -1977,6 +1977,31 @@ export class MultiplayerCoordinator {
     if (typeof (packet as any)._receivedAt !== "number") {
       (packet as any)._receivedAt = Date.now();
     }
+    // RELAY CUSTODY ABSOLUTE FIRST — above the raid check and ALL presentation
+    // snapshot filters: sequenced server custody applies by vitalsSeq ordering alone.
+    // A delayed relay result (old timestamp) still carries NEWER authoritative vitals —
+    // filters that discard it by time must never discard its custody payload.
+    if (packet.type === 'machine_hit' && (packet as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel) {
+      const dseq = (packet.data as any)?.vitalsSeq;
+      if (typeof dseq === "number" && Number.isFinite(dseq)) {
+        const mHit = this.sim.machines.find((x) => x.id === (packet.data as any)?.machineId);
+        if (!mHit || dseq > ((mHit as any).vitalsSeq ?? 0)) {
+          this.adoptMachineVitals(
+            (packet.data as any).machineId,
+            (packet.data as any).machineHealth,
+            (packet.data as any).machineAlive,
+            dseq,
+            (packet.data as any).maxHealth
+          );
+        }
+      }
+    }
+
+    // Discard packets from different raids if raidId is stamped
+    if (packet.raidId && this.sim.raidId && packet.raidId !== this.sim.raidId) {
+      return;
+    }
+
     // Universal snapshot arrival boundary: drop packets that arrived before current snapshot was applied
     if (this.snapshotAppliedLocalTime && (packet as any)._receivedAt < this.snapshotAppliedLocalTime) {
       if (packet.type === 'state' || packet.type === 'hit' || packet.type === 'machine_hit' || packet.type === 'crate_looted' || packet.type === 'crate_loot_request') {
@@ -2003,10 +2028,7 @@ export class MultiplayerCoordinator {
       return;
     }
 
-    // Discard packets from different raids if raidId is stamped
-    if (packet.raidId && this.sim.raidId && packet.raidId !== this.sim.raidId) {
-      return;
-    }
+
 
     // Strictly restrict unauthenticated BroadcastChannel: all combat, admission, damage, and loot must arrive via authenticated server relay!
     if ((packet as any)._fromBroadcastChannel && packet.type !== "raid_discovery") {

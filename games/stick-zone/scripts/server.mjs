@@ -10,7 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer } from "ws";
-import { ServerSettlementAuthority } from "../src/sim/server-settlement.js";
+import { ServerSettlementAuthority, isValidRaidId } from "../src/sim/server-settlement.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -522,6 +522,19 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         // If authenticated caller or valid resumption key is resuming an ongoing session, allow even if ingress is closed!
         if ((caller && (caller.callerId === opId || caller.isSystem) && caller.raidId === raidId) || isResumeValid) {
           if (targetRaid && (targetRaid.status === "concluded" || targetOp?.isExtracted || targetOp?.isKia || targetOp?.isAlive === false)) {
+            if (targetOp?.failedPersistence === true) {
+              try {
+                if (typeof settlement.saveToDisk === "function") {
+                  settlement.saveToDisk();
+                  targetOp.failedPersistence = false;
+                }
+              } catch (saveErr) {
+                res.statusCode = 500;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ error: "Failed to persist terminal state to disk" }));
+                return;
+              }
+            }
             let receipt = null;
             if (targetOp?.isExtracted && typeof settlement.getCommittedReceiptByExtractor === "function") {
               receipt = settlement.getCommittedReceiptByExtractor(raidId, opId);
@@ -1516,6 +1529,12 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           return;
         }
         const data = JSON.parse(body || "{}");
+        if (data.raidId !== undefined && data.raidId !== null && !isValidRaidId(data.raidId)) {
+          res.statusCode = 400;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: `Invalid raidId: must match ^[a-zA-Z0-9_-]{1,64}$` }));
+          return;
+        }
         const raidId = data.raidId || `raid_sector7_${Date.now()}`;
         // Raid IDs are immutable at the authority layer: a coordinator "reset" of a
         // raid whose operatives have concluded (extracted/K.I.A./concluded) is the only
@@ -1622,16 +1641,15 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         // SANCTIONED same-ID reset (expired/terminal only): clear ALL volatile
         // raid-scoped caches so the new raid starts atomically (movement, weapons,
         // machines, roster revision, attack cadence — nothing leaks across resets).
-        const __prefixEscape = (str) => str.replace(/[.*+?^${}()|[]\\]/g, "\\$&");
-        const __pfx = new RegExp("^" + __prefixEscape(raidId) + ":");
-        for (const k of [...operativeMovementStates.keys()]) if (__pfx.test(k)) operativeMovementStates.delete(k);
-        for (const k of [...raidOperativeWeaponStates.keys()]) if (__pfx.test(k)) raidOperativeWeaponStates.delete(k);
+        const raidPrefix = raidId + ":";
+        for (const k of [...operativeMovementStates.keys()]) if (k.startsWith(raidPrefix)) operativeMovementStates.delete(k);
+        for (const k of [...raidOperativeWeaponStates.keys()]) if (k.startsWith(raidPrefix)) raidOperativeWeaponStates.delete(k);
         raidMachines.delete(raidId);
         raidRosterRevisions.delete(raidId);
-        for (const k of [...machineVitalsSeq.keys()]) if (k.startsWith(raidId + ":")) machineVitalsSeq.delete(k);
-        for (const k of [...raidOperativeSeenEvents.keys()]) if (__pfx.test(k)) raidOperativeSeenEvents.delete(k);
-        for (const k of [...machineAttackClock.keys()]) if (k.startsWith(raidId + ":")) machineAttackClock.delete(k);
-        for (const k of [...raidOperativeAttackTimes.keys()]) if (__pfx.test(k)) raidOperativeAttackTimes.delete(k);
+        for (const k of [...machineVitalsSeq.keys()]) if (k.startsWith(raidPrefix)) machineVitalsSeq.delete(k);
+        for (const k of [...raidOperativeSeenEvents.keys()]) if (k.startsWith(raidPrefix)) raidOperativeSeenEvents.delete(k);
+        for (const k of [...machineAttackClock.keys()]) if (k.startsWith(raidPrefix)) machineAttackClock.delete(k);
+        for (const k of [...raidOperativeAttackTimes.keys()]) if (k.startsWith(raidPrefix)) raidOperativeAttackTimes.delete(k);
 
 
         const tokens = settlement.getSessionTokens(raidId);

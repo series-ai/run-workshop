@@ -7,6 +7,11 @@
 
 import fs from "fs";
 import path from "path";
+
+export const RAID_ID_REGEX = /^[a-zA-Z0-9_-]{1,64}$/;
+export function isValidRaidId(id: unknown): id is string {
+  return typeof id === "string" && RAID_ID_REGEX.test(id);
+}
 import crypto from "crypto";
 import type { SettlementReceipt, ProfileId, RaidId } from "@series-inc/rundot-syncplay/extensions/hub";
 import type { CanonicalOutcomePayload, SettlementCommitment } from "./airlock.js";
@@ -982,6 +987,9 @@ export class ServerSettlementAuthority {
   }
 
   public initRaid(raidId: string, allowablePool = 50000, operatives = ["op_player", "op_alpha_1", "op_bravo_1"], callerClaimOpId?: string, oldRaidIdToConclude?: string): ServerRaidRecord {
+    if (!isValidRaidId(raidId)) {
+      throw new Error(`Invalid raidId: must match ^[a-zA-Z0-9_-]{1,64}$, got ${raidId}`);
+    }
     if (typeof allowablePool !== "number" || !Number.isInteger(allowablePool) || allowablePool < 0 || allowablePool > 1000000) {
       throw new Error(`Invalid allowable cash pool: must be an integer between 0 and 1,000,000, got ${allowablePool}`);
     }
@@ -1771,16 +1779,14 @@ export class ServerSettlementAuthority {
     if (op.isExtracted) {
       return;
     }
-    // DURABILITY RETRY: if a prior terminal save failed and left custody in memory,
-    // the next report retries the save before confirming terminal state.
+    // DURABILITY RETRY: a prior terminal save failure left custody ahead of disk —
+    // the retry must persist before ANY confirmation; on failure the error rethrows
+    // (the HTTP surface must report the failure, never success on a stale ledger).
     if ((op as any).failedPersistence === true) {
-      try {
-        this.saveToDisk();
-        if (op.isKia || op.isAlive === false) {
-          return; // persisted terminal custody reconciled
-        }
-      } catch {
-        return; // still failing — do not confirm new terminal state on a un-durable ledger
+      this.saveToDisk(); // throws on failure — no success past this line on a stale disk
+      (op as any).failedPersistence = false;
+      if (op.isKia || op.isAlive === false) {
+        return; // persisted terminal custody reconciled durably
       }
     }
     if (op.isKia || op.isAlive === false) {
