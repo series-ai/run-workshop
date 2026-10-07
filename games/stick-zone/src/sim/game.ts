@@ -352,6 +352,7 @@ export class SectorDepotSimulation {
   public ingressController: StagedIngressController;
   public proximityAlert: ProximityAlert = { active: false, distance: 999, bearing: 0 };
   public combatLog: string[] = [];
+  public terminalRecoveryError?: string;
   public lastInterruptionTick = 0;
   public shootCooldownTicks = 0;
   public rollCooldownTicks = 0;

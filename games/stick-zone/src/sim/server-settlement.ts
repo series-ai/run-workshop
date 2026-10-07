@@ -9,8 +9,9 @@ import fs from "fs";
 import path from "path";
 
 export const RAID_ID_REGEX = /^[a-zA-Z0-9_-]{1,64}$/;
+const RESERVED_RAID_IDS = new Set(["__proto__", "prototype", "constructor"]);
 export function isValidRaidId(id: unknown): id is string {
-  return typeof id === "string" && RAID_ID_REGEX.test(id);
+  return typeof id === "string" && RAID_ID_REGEX.test(id) && !RESERVED_RAID_IDS.has(id.toLowerCase());
 }
 import crypto from "crypto";
 import type { SettlementReceipt, ProfileId, RaidId } from "@series-inc/rundot-syncplay/extensions/hub";
@@ -101,6 +102,10 @@ function failLog(line: number, msg: string): boolean {
 export function validateStoreIntegrity(data: any): boolean {
   if (!data || typeof data !== "object" || Array.isArray(data)) return false;
   if (!data.raids || typeof data.raids !== "object" || Array.isArray(data.raids)) return false;
+  for (const rId of Object.keys(data.raids)) {
+    if (!Object.prototype.hasOwnProperty.call(data.raids, rId)) return false;
+    if (!isValidRaidId(rId)) return false;
+  }
   const VALID_STATUSES = new Set(["active", "settled", "concluded"]);
 
 
@@ -126,7 +131,7 @@ export function validateStoreIntegrity(data: any): boolean {
       if (!payload || typeof payload !== "object" || Array.isArray(payload)) return false;
       if (typeof rec.receiptId !== "string" || rec.receiptId !== receiptId) return false;
       if (typeof rec.raidId !== "string" || !rec.raidId) return false;
-      if (!data.raids || !data.raids[rec.raidId]) return false;
+      if (!data.raids || !Object.prototype.hasOwnProperty.call(data.raids, rec.raidId) || !data.raids[rec.raidId]) return false;
       const raidRecord = data.raids[rec.raidId];
       if (typeof rec.outcomeDigest !== "string" || !/^[0-9a-fA-F]{64}$/.test(rec.outcomeDigest)) return false;
       if (typeof rec.throughTick !== "number" || !Number.isInteger(rec.throughTick) || rec.throughTick < 0) return false;
@@ -224,7 +229,8 @@ export function validateStoreIntegrity(data: any): boolean {
     for (const tok of Object.values(data.sessionTokens)) {
       if (!tok || typeof tok !== "object" || Array.isArray(tok)) return false;
       if (typeof (tok as any).operativeId !== "string" || typeof (tok as any).raidId !== "string") return false;
-      const targetRaid = data.raids && data.raids[(tok as any).raidId];
+      if (!data.raids || !Object.prototype.hasOwnProperty.call(data.raids, (tok as any).raidId)) return false;
+      const targetRaid = data.raids[(tok as any).raidId];
       if (!targetRaid || !targetRaid.operatives || !targetRaid.operatives[(tok as any).operativeId]) {
         return false; // Reject orphan session token
       }
@@ -254,6 +260,9 @@ export function validateStoreIntegrity(data: any): boolean {
   }
 
   for (const [rId, r] of Object.entries(data.raids)) {
+    if (!Object.prototype.hasOwnProperty.call(data.raids, rId)) return false;
+    if (!isValidRaidId(rId)) return false;
+    if ((r as any).raidId && (r as any).raidId !== rId) return false;
     if (!r || typeof r !== "object" || Array.isArray(r)) return false;
     if (typeof (r as any).status !== "string" || !VALID_STATUSES.has((r as any).status)) return false;
 
@@ -871,8 +880,9 @@ export class ServerSettlementAuthority {
       console.error("Refusing to save to disk: settlement store is marked corrupted to protect historical ledger.");
       return;
     }
-    const cleanRaids: Record<string, ServerRaidRecord> = {};
+    const cleanRaids: Record<string, ServerRaidRecord> = Object.create(null);
     for (const [rid, r] of this.raids.entries()) {
+      if (!isValidRaidId(rid)) continue;
       const rCopy: ServerRaidRecord = JSON.parse(JSON.stringify(r));
       if (rCopy.operatives) {
         for (const op of Object.values(rCopy.operatives as Record<string, any>)) {
@@ -901,9 +911,15 @@ export class ServerSettlementAuthority {
     let fd: number | null = null;
     const hadExistingOnDisk = fs.existsSync(this.storePath);
     let hadExisting = false;
+    const serializedJson = JSON.stringify(data, null, 2);
+    const parsedData = JSON.parse(serializedJson);
+    if (!validateStoreIntegrity(parsedData)) {
+      throw new Error("Store validation failed on serialized data: round-trip integrity check failed");
+    }
+
     try {
       fd = fs.openSync(tmpPath, "w");
-      const buf = Buffer.from(JSON.stringify(data, null, 2), "utf8");
+      const buf = Buffer.from(serializedJson, "utf8");
       let bytesWritten = 0;
       while (bytesWritten < buf.length) {
         bytesWritten += fs.writeSync(fd, buf, bytesWritten, buf.length - bytesWritten);

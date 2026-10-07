@@ -957,13 +957,20 @@ export class MultiplayerCoordinator {
     // Relay machine custody FIRST and UNCONDITIONALLY: sequenced server results are
     // applied through the ordered channel before any time/peer filter can discard them.
     for (const p of [...this.pendingWorldEvents]) {
+      if (!p || typeof p !== "object" || Array.isArray(p)) continue;
+      if (p.raidId && this.sim.raidId && p.raidId !== this.sim.raidId) continue;
+      if (typeof p.senderId !== "string" || !p.senderId || typeof p.senderName !== "string" || !p.senderName) continue;
+      if ((p as any)._fromBroadcastChannel) continue;
+      if (!p.eventId || typeof p.eventId !== "string" || p.eventId.trim() === "") continue;
       if (p.type === "machine_hit" && (p as any).serverAuthoritative === true) {
-        const seq = (p as any).data?.vitalsSeq;
-        if (typeof seq === "number" && Number.isFinite(seq)) {
-          const tgt = this.sim.machines.find((x) => x.id === (p as any).data?.machineId);
-          if (!tgt || seq > ((tgt as any).vitalsSeq ?? 0)) {
-            this.adoptMachineVitals((p as any).data.machineId, (p as any).data.machineHealth, (p as any).data.machineAlive, seq, (p as any).data.maxHealth);
-          }
+        const d = (p as any).data;
+        if (!d || typeof d !== "object") continue;
+        const seq = d.vitalsSeq;
+        const mid = d.machineId;
+        if (typeof mid !== "string" || !mid || typeof seq !== "number" || !Number.isFinite(seq)) continue;
+        const tgt = this.sim.machines.find((x) => x.id === mid);
+        if (!tgt || seq > ((tgt as any).vitalsSeq ?? 0)) {
+          this.adoptMachineVitals(mid, d.machineHealth, d.machineAlive, seq, d.maxHealth);
         }
       }
     }
@@ -1184,66 +1191,11 @@ export class MultiplayerCoordinator {
           if (typeof fetch !== "undefined") {
             this.reconnectTimer = setTimeout(async () => {
               if (this.isDisposed) return;
-              let resumeKey: string | null = null;
-              if (typeof sessionStorage !== "undefined") {
-                resumeKey = sessionStorage.getItem(`sz_resume_${this.sim.raidId}_${this.sim.player.id}`);
-              }
-              const termCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-              const termTid = termCtrl ? setTimeout(() => termCtrl.abort(), 4000) : null;
-              // Registry: cleanup aborts the terminal recovery request too
-              if (termCtrl) {
-                (this as any).__clockSyncInFlight = (this as any).__clockSyncInFlight || [];
-                (this as any).__clockSyncInFlight.push(termCtrl);
-              }
-              try {
-                const res = await fetch("/api/settlement/join", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    ...(this.sim.sessionToken ? { Authorization: `Bearer ${this.sim.sessionToken}` } : {}),
-                    ...(resumeKey ? { "x-resumption-key": resumeKey } : {}),
-                  },
-                  signal: termCtrl ? termCtrl.signal : undefined,
-                  body: JSON.stringify({
-                    raidId: this.sim.raidId,
-                    operativeId: this.sim.player.id,
-                    ...(resumeKey ? { resumeKey } : {}),
-                  }),
-                });
-                if (res.ok) {
-                  const data = await res.json();
-                  if (this.isDisposed) return; // disposal fence AFTER body resolve
-                  if (data && (data.isTerminal || data.isExtracted || data.isKia)) {
-                    if (data.isExtracted) {
-                      this.sim.restoreExtractionCustody({
-                        isExtracted: true,
-                        holdCompleted: true,
-                        extractedAtTick: data.extractedAtTick || this.sim.tick,
-                        receipt: data.receipt,
-                      });
-                      if (typeof sessionStorage !== "undefined") {
-                        sessionStorage.setItem(`sz_exfil_${this.sim.raidId}_${this.sim.player.id}`, JSON.stringify({
-                          isExtracted: true,
-                          holdCompleted: true,
-                          extractedAtTick: data.extractedAtTick || this.sim.tick,
-                          receipt: data.receipt,
-                        }));
-                      }
-                    } else if (data.isKia) {
-                      this.sim.player.health = 0;
-                      this.sim.player.isAlive = false;
-                      if (typeof sessionStorage !== "undefined") {
-                        sessionStorage.setItem(`sz_kia_${this.sim.raidId}_${this.sim.player.id}`, "true");
-                      }
-                    }
-                    return;
-                  }
-                }
-              } catch {} finally {
-                if (termTid) clearTimeout(termTid);
-                const __termReg = (this as any).__clockSyncInFlight;
-                if (__termReg && termCtrl) { const ix = __termReg.indexOf(termCtrl); if (ix !== -1) __termReg.splice(ix, 1); }
-              }
+              const recovered = await this.retryTerminalRecovery();
+              if (this.isDisposed) return;
+              if (recovered) return;
+              this.sim.terminalRecoveryError = "Terminal session recovery failed after retries. Reconnect required.";
+              this.sim.combatLog.push("[NETWORK] Terminal recovery failed. Please retry connection.");
 
               try {
                 const restartCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
@@ -1973,35 +1925,57 @@ export class MultiplayerCoordinator {
     if (packet && ((packet as any).type === "auth" || (packet as any).type === "auth_success" || (packet as any).type === "server_init")) {
       return; // Reject forged server control packets from peers
     }
+    // 1. Envelope validation
     if (!packet || typeof packet !== "object" || Array.isArray(packet)) return;
     if (typeof (packet as any)._receivedAt !== "number") {
       (packet as any)._receivedAt = Date.now();
     }
-    // RELAY CUSTODY ABSOLUTE FIRST — above the raid check and ALL presentation
-    // snapshot filters: sequenced server custody applies by vitalsSeq ordering alone.
-    // A delayed relay result (old timestamp) still carries NEWER authoritative vitals —
-    // filters that discard it by time must never discard its custody payload.
-    if (packet.type === 'machine_hit' && (packet as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel) {
-      const dseq = (packet.data as any)?.vitalsSeq;
-      if (typeof dseq === "number" && Number.isFinite(dseq)) {
-        const mHit = this.sim.machines.find((x) => x.id === (packet.data as any)?.machineId);
-        if (!mHit || dseq > ((mHit as any).vitalsSeq ?? 0)) {
-          this.adoptMachineVitals(
-            (packet.data as any).machineId,
-            (packet.data as any).machineHealth,
-            (packet.data as any).machineAlive,
-            dseq,
-            (packet.data as any).maxHealth
-          );
-        }
-      }
-    }
+    if (typeof packet.type !== "string") return;
 
-    // Discard packets from different raids if raidId is stamped
+    // 2. Exact raid validation: drop cross-raid packets immediately
     if (packet.raidId && this.sim.raidId && packet.raidId !== this.sim.raidId) {
       return;
     }
 
+    // 3. Sender validation
+    if (typeof packet.senderId !== "string" || !packet.senderId) return;
+    if (typeof packet.senderName !== "string" || !packet.senderName) return;
+
+    // 4. Relay source boundary: unauthenticated BroadcastChannel strictly restricted
+    if ((packet as any)._fromBroadcastChannel && packet.type !== "raid_discovery") {
+      return;
+    }
+
+    // 5. Event ID validation
+    if (!packet.eventId || typeof packet.eventId !== "string" || packet.eventId.trim() === "") {
+      return;
+    }
+
+    // 6. RELAY CUSTODY FIRST (before presentation snapshot filters):
+    // Envelope, exact raid, sender, relay source, and custody fields must all be validated
+    // BEFORE adoption. Once validated, adoption happens BEFORE presentation snapshot filters so
+    // client presentation filters never discard authoritative machine vitals.
+    if (packet.type === 'machine_hit' && (packet as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel) {
+      const d = (packet as any).data;
+      if (d && typeof d === 'object') {
+        const dseq = d.vitalsSeq;
+        const mid = d.machineId;
+        if (typeof mid === 'string' && mid && typeof dseq === "number" && Number.isFinite(dseq)) {
+          const mHit = this.sim.machines.find((x) => x.id === mid);
+          if (!mHit || dseq > ((mHit as any).vitalsSeq ?? 0)) {
+            this.adoptMachineVitals(
+              mid,
+              d.machineHealth,
+              d.machineAlive,
+              dseq,
+              d.maxHealth
+            );
+          }
+        }
+      }
+    }
+
+    // 7. Universal snapshot presentation filters
     // Universal snapshot arrival boundary: drop packets that arrived before current snapshot was applied
     if (this.snapshotAppliedLocalTime && (packet as any)._receivedAt < this.snapshotAppliedLocalTime) {
       if (packet.type === 'state' || packet.type === 'hit' || packet.type === 'machine_hit' || packet.type === 'crate_looted' || packet.type === 'crate_loot_request') {
@@ -2014,8 +1988,6 @@ export class MultiplayerCoordinator {
         return;
       }
     }
-    if (typeof packet.senderId !== "string" || !packet.senderId) return;
-    if (typeof packet.senderName !== "string" || !packet.senderName) return;
 
     const now = this.getServerNow();
     if (
@@ -2030,18 +2002,9 @@ export class MultiplayerCoordinator {
 
 
 
-    // Strictly restrict unauthenticated BroadcastChannel: all combat, admission, damage, and loot must arrive via authenticated server relay!
-    if ((packet as any)._fromBroadcastChannel && packet.type !== "raid_discovery") {
-      return;
-    }
-
-    // Mandatory Event ID & envelope validation. Deduplication is keyed by
-    // REFERENCE + raid + sender + event ID (never the bare event ID — a collision
-    // across senders must not suppress an unrelated valid event, and server-stamped
+    // Deduplication is keyed by REFERENCE + raid + sender + event ID (never the bare event ID —
+    // a collision across senders must not suppress an unrelated valid event, and server-stamped
     // packets carry their own reserved namespace).
-    if (!packet.eventId || typeof packet.eventId !== "string" || packet.eventId.trim() === "") {
-      return;
-    }
     const isServerOrigin = !(packet as any)._fromBroadcastChannel && (packet.senderId === "server" || (packet as any).senderName === "CENTRAL COMMAND");
     const dedupNamespace = isServerOrigin
       ? `srv:${typeof packet.raidId === "string" ? packet.raidId : "any"}`
@@ -3142,6 +3105,82 @@ export class MultiplayerCoordinator {
 
       this.sim.combatLog.push(`[SETTLEMENT REJECTED] Unverified extraction receipt ${receiptId} for ${packet.senderName}`);
     }
+  }
+
+  public async retryTerminalRecovery(maxRetries = 3): Promise<boolean> {
+    if (this.isDisposed) return false;
+    let resumeKey: string | null = null;
+    if (typeof sessionStorage !== "undefined") {
+      resumeKey = sessionStorage.getItem(`sz_resume_${this.sim.raidId}_${this.sim.player.id}`);
+    }
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      if (this.isDisposed) return false;
+      const termCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+      const termTid = termCtrl ? setTimeout(() => termCtrl.abort(), 4000) : null;
+      if (termCtrl) {
+        (this as any).__clockSyncInFlight = (this as any).__clockSyncInFlight || [];
+        (this as any).__clockSyncInFlight.push(termCtrl);
+      }
+      let shouldRetry = false;
+      try {
+        const res = await fetch("/api/settlement/join", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(this.sim.sessionToken ? { Authorization: `Bearer ${this.sim.sessionToken}` } : {}),
+            ...(resumeKey ? { "x-resumption-key": resumeKey } : {}),
+          },
+          signal: termCtrl ? termCtrl.signal : undefined,
+          body: JSON.stringify({
+            raidId: this.sim.raidId,
+            operativeId: this.sim.player.id,
+            ...(resumeKey ? { resumeKey } : {}),
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (this.isDisposed) return false;
+          if (data && (data.isTerminal || data.isExtracted || data.isKia)) {
+            if (data.isExtracted) {
+              this.sim.restoreExtractionCustody({
+                isExtracted: true,
+                holdCompleted: true,
+                extractedAtTick: data.extractedAtTick || this.sim.tick,
+                receipt: data.receipt,
+              });
+              if (typeof sessionStorage !== "undefined") {
+                sessionStorage.setItem(`sz_exfil_${this.sim.raidId}_${this.sim.player.id}`, JSON.stringify({
+                  isExtracted: true,
+                  holdCompleted: true,
+                  extractedAtTick: data.extractedAtTick || this.sim.tick,
+                  receipt: data.receipt,
+                }));
+              }
+            } else if (data.isKia) {
+              this.sim.player.health = 0;
+              this.sim.player.isAlive = false;
+              if (typeof sessionStorage !== "undefined") {
+                sessionStorage.setItem(`sz_kia_${this.sim.raidId}_${this.sim.player.id}`, "true");
+              }
+            }
+            this.sim.terminalRecoveryError = undefined;
+            return true;
+          }
+        } else if (res.status === 408 || res.status === 429 || (res.status >= 500 && res.status <= 599)) {
+          shouldRetry = true;
+        }
+      } catch {
+        if (this.isDisposed) return false;
+        shouldRetry = true;
+      } finally {
+        if (termTid) clearTimeout(termTid);
+        const __termReg = (this as any).__clockSyncInFlight;
+        if (__termReg && termCtrl) { const ix = __termReg.indexOf(termCtrl); if (ix !== -1) __termReg.splice(ix, 1); }
+      }
+      if (!shouldRetry || attempt === maxRetries - 1) break;
+      await new Promise((r) => setTimeout(r, Math.min(1000, 200 * Math.pow(2, attempt))));
+    }
+    return false;
   }
 
   public cleanup(): void {

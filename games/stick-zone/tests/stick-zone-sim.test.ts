@@ -7766,6 +7766,72 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     try { fs.unlinkSync(`${tmpStore}.prev`); } catch {}
   }, 45000);
 
+  it("118. persistence round-trip integrity for accepted raid names and terminal JOIN recovery retry", async () => {
+    // A) Persistence round-trip integrity & prototype pollution rejection
+    const validRaidId = `raid_valid_${Date.now().toString(36)}`;
+    const tmpStore = `/tmp/test-purity-${validRaidId}.json`;
+    try { fs.unlinkSync(tmpStore); } catch {}
+    const auth = new ServerSettlementAuthority(tmpStore);
+
+    // Forbidden names and syntax are strictly rejected:
+    expect(() => auth.initRaid("__proto__", 50000, ["op_player"])).toThrow(/Invalid raidId/);
+    expect(() => auth.initRaid("prototype", 50000, ["op_player"])).toThrow(/Invalid raidId/);
+    expect(() => auth.initRaid("constructor", 50000, ["op_player"])).toThrow(/Invalid raidId/);
+    expect(() => auth.initRaid("raid.dot", 50000, ["op_player"])).toThrow(/Invalid raidId/);
+    expect(() => auth.initRaid("raid:colon", 50000, ["op_player"])).toThrow(/Invalid raidId/);
+
+    // Valid raid name saves cleanly and round-trips:
+    auth.initRaid(validRaidId, 50000, ["op_player", "op_alpha_1"]);
+    auth.saveToDisk();
+
+    // Reload from disk to verify complete round-trip integrity
+    const reloaded = new ServerSettlementAuthority(tmpStore);
+    expect(reloaded.hasRaid(validRaidId)).toBe(true);
+    expect(reloaded.getRaidRecord(validRaidId)?.allowableCashPool).toBe(50000);
+
+    // B) Terminal JOIN recovery retry: transient failures retried, terminal custody adopted
+    let joinAttempts = 0;
+    const originalFetch = globalThis.fetch;
+    try {
+      globalThis.fetch = (async (url: any, opts: any) => {
+        if (typeof url === "string" && url.includes("/api/settlement/join")) {
+          joinAttempts++;
+          if (joinAttempts === 1) {
+            // Simulate transient server error
+            return new Response(JSON.stringify({ error: "Transient DB error" }), { status: 500 });
+          }
+          // Second attempt succeeds with terminal state
+          return new Response(JSON.stringify({
+            success: true,
+            isTerminal: true,
+            isExtracted: true,
+            extractedAtTick: 500,
+            receipt: { receiptId: "receipt_s7_recovered" }
+          }), { status: 200, headers: { "Content-Type": "application/json" } });
+        }
+        return originalFetch(url, opts);
+      }) as any;
+
+      const sim = new SectorDepotSimulation();
+      sim.raidId = validRaidId;
+      sim.player.id = "op_player";
+      const coord = new MultiplayerCoordinator(sim);
+
+      const recovered = await coord.retryTerminalRecovery();
+      expect(recovered).toBe(true);
+      expect(joinAttempts).toBe(2);
+      expect(sim.exfilController.getState().kind).toBe("extracted");
+      expect(sim.terminalRecoveryError).toBeUndefined();
+
+      coord.cleanup();
+    } finally {
+      globalThis.fetch = originalFetch;
+      try { fs.unlinkSync(tmpStore); } catch {}
+      try { fs.unlinkSync(`${tmpStore}.prev`); } catch {}
+    }
+  });
+
+
   afterAll(() => {
     try {
       const cwdFiles = fs.readdirSync(process.cwd());
