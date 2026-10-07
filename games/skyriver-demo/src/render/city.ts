@@ -46,7 +46,7 @@ import {
 import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
 import { HERO_HORIZONTAL_CELLS, HERO_VERTICAL_CELLS, createSignAtlas, type SignAtlas } from './signAtlas';
 import { createInteriorAtlas, type InteriorAtlas } from './interiorAtlas';
-import { CANYON_LOOP_LENGTH_M, intrudesOtherStretch, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
+import { CANYON_LOOP_LENGTH_M, canyonBendApexes, foldsInsideBend, intrudesOtherStretch, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
 import { ROUTE_MAX_ALTITUDE_M, STRATA_GRIME_TOP_M, STRATA_PRISTINE_BASE_M, routeAltitude } from './routeProfile';
 
 /** Draw calls this module may spend (plan T3 allows 10 city-only; the shared budget allots 8). */
@@ -76,10 +76,10 @@ export const SKYRIVER_CITY = Object.freeze({
   ribSpacingM: 19,
   /** Hard caps on the locally derived passes. */
   maxTrims: 16000,
-  maxSigns: 1600,
+  maxSigns: 2600,
   /** Target sign count before the cap and the per-tower fit test. */
   /** T6R-2: halved — the review read the T6R density as confetti competing with the windows. */
-  signTarget: 1300,
+  signTarget: 2200,
   /** Signs sit this far off the facade so they never z-fight with it. */
   signStandoffM: 0.45,
   drawCallBudget: SKYRIVER_CITY_DRAW_CALL_BUDGET,
@@ -179,6 +179,8 @@ export const SKYRIVER_CITY_VOID_BASE_Y = -2600;
 const TOWER_FAR_TINT = 0x3c4450;
 /** T7-3 grime annexes: stained brown concrete and rust. */
 const GRIME_TINT = 0x6a5440;
+/** T7-5 landmark mega-towers: pale clean concrete so they stand apart from the walls. */
+const MEGA_TINT = 0x9aa3ad;
 
 /** |x| of the inner column on a tower's side (for telling inner-wall slabs from outer columns). */
 function innerWallX(layout: SkyriverCityLayout, tower: SkyriverTower): number {
@@ -591,6 +593,62 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     }
   }
 
+  // --- T7-5 canyon-bottom service deck (cycle-5 P1: the hole at the bottom) ---------------------
+  // The depths are filled with stacked low architecture: blocks of 30-110 m footprint at varied
+  // heights (tops -140 to +70 m), a second smaller level on a third of them, rooftop plant and
+  // masts — a cluttered roofscape seen from above, never a plane: heights jump by tens of metres
+  // between neighbours, and there is no continuous surface or straight edge to read as ground or
+  // road. Everything stays below 80 m, under every car (>= 120 m) and the route (>= ~350 m).
+  {
+    const DECK_HALF_X = 540;
+    let v = -CANYON_LOOP_LENGTH_M / 2;
+    while (v < CANYON_LOOP_LENGTH_M / 2) {
+      const stepV = 35 + random.nextInt(0, 75);
+      let x = -DECK_HALF_X + random.nextInt(0, 30);
+      while (x < DECK_HALF_X) {
+        const w = 30 + random.nextInt(0, 80);
+        const d = Math.min(stepV + 10, 30 + random.nextInt(0, 80));
+        const cx = x + w * 0.5;
+        if (!foldsInsideBend(cx, v, w * 0.5)) {
+          const top = -140 + random.nextInt(0, 210);
+          masses.push({ x: cx, y0: SKYRIVER_CITY_VOID_BASE_Y, z: v + random.nextInt(-8, 8), width: w, height: top - SKYRIVER_CITY_VOID_BASE_Y, depth: d, tint: GRIME_TINT });
+          if (random.nextInt(0, 99) < 34) {
+            const h2 = 12 + random.nextInt(0, 30);
+            masses.push({ x: cx + random.nextInt(-8, 8), y0: top - 1, z: v, width: w * 0.55, height: h2, depth: d * 0.6, tint: GRIME_TINT });
+          }
+          if (random.nextInt(0, 99) < 40) {
+            push(SKYRIVER_TRIM_ROOF_PLANT, cx + random.nextInt(-10, 10), top + 3, v + random.nextInt(-10, 10), 4 + random.nextInt(0, 6), 6, 4 + random.nextInt(0, 6));
+          }
+          if (random.nextInt(0, 99) < 12) {
+            const mh = 20 + random.nextInt(0, 40);
+            push(SKYRIVER_TRIM_ANTENNA, cx, top + mh * 0.5, v, 0.8, mh, 0.8);
+          }
+        }
+        x += w + random.nextInt(4, 30);
+      }
+      v += stepV;
+    }
+  }
+
+  // --- T7-5 landmark mega-towers: the route curves AROUND these ---------------------------------
+  // One colossus at the centre of curvature of each tight bend. Its nearest face stays >= ~500 m from
+  // the route's centreline, so the corridor is clear; at speed it reads as the tower the canyon bends
+  // around, crowned with a lit stepped top, a spire and beacons.
+  for (const apex of canyonBendApexes(900)) {
+    const x = apex.side * apex.radius * 0.995;
+    const base = Math.min(240, (apex.radius - 500) * 2);
+    if (base < 120) continue;
+    const tops = [3500 + random.nextInt(0, 400), 4400 + random.nextInt(0, 300), 5000 + random.nextInt(0, 300)];
+    masses.push({ x, y0: SKYRIVER_CITY_VOID_BASE_Y, z: apex.v, width: base, height: tops[0]! - SKYRIVER_CITY_VOID_BASE_Y, depth: base, tint: MEGA_TINT });
+    masses.push({ x, y0: tops[0]! - 4, z: apex.v, width: base * 0.72, height: tops[1]! - tops[0]! + 4, depth: base * 0.72, tint: MEGA_TINT });
+    masses.push({ x, y0: tops[1]! - 4, z: apex.v, width: base * 0.42, height: tops[2]! - tops[1]! + 4, depth: base * 0.42, tint: MEGA_TINT });
+    const spire = 520 + random.nextInt(0, 300);
+    push(SKYRIVER_TRIM_ANTENNA, x, tops[2]! + spire * 0.5, apex.v, 7, spire, 7);
+    for (const corner of [-1, 1]) {
+      push(SKYRIVER_TRIM_ANTENNA, x + corner * base * 0.3, tops[1]! + 110, apex.v + corner * base * 0.25, 3, 220, 3);
+    }
+  }
+
   // --- T7-3 tower profile variety: spears, flat tops, masts --------------------------------------
   for (const tower of layout.towers) {
     const roll = random.nextInt(0, 99);
@@ -625,7 +683,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     for (const side of [-1, 1] as const) {
       const x = side * (1950 + random.nextInt(0, 900));
       const width = 90 + random.nextInt(0, 110);
-      if (intrudesOtherStretch(x, v, width)) continue;
+      if (intrudesOtherStretch(x, v, width) || foldsInsideBend(x, v, width)) continue;
       const height = 2600 + random.nextInt(0, 2600);
       masses.push({ x, y0: SKYRIVER_CITY_VOID_BASE_Y, z: v, width, height: height - SKYRIVER_CITY_VOID_BASE_Y, depth: width * (0.8 + random.nextInt(0, 400) / 1000), tint: TOWER_FAR_TINT });
       masses.push({ x, y0: height - 2, z: v, width: width * 0.45, height: 120 + random.nextInt(0, 400), depth: width * 0.4, tint: TOWER_FAR_TINT });
@@ -866,8 +924,9 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     if (roll < 48) {
       // Blade: perpendicular to the facade, projecting into the canyon, facing along it.
       signKind = SKYRIVER_SIGN_BANNER;
-      width = 8 + random.nextInt(0, 100) / 10;
-      height = 35 + random.nextInt(0, 1050) / 10;
+      // T7-5: ~1.4x larger, so signage carries the frame's colour at chase distance.
+      width = 10 + random.nextInt(0, 130) / 10;
+      height = 55 + random.nextInt(0, 1500) / 10;
       normalZ = random.nextInt(0, 1) === 0 ? -1 : 1;
       px = 0;
       pz = tower.z + along * (tower.depth * 0.5 - 4);
@@ -876,12 +935,12 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
       normalX = -side;
       if (roll < 76) {
         signKind = SKYRIVER_SIGN_STRIP;
-        width = 26 + random.nextInt(0, 640) / 10;
-        height = 8 + random.nextInt(0, 140) / 10;
+        width = 34 + random.nextInt(0, 800) / 10;
+        height = 12 + random.nextInt(0, 180) / 10;
       } else if (roll < 91) {
         signKind = SKYRIVER_SIGN_BANNER;
-        width = 9 + random.nextInt(0, 70) / 10;
-        height = 30 + random.nextInt(0, 700) / 10;
+        width = 12 + random.nextInt(0, 90) / 10;
+        height = 45 + random.nextInt(0, 1000) / 10;
       } else {
         signKind = SKYRIVER_SIGN_OUTLINE;
         width = 18 + random.nextInt(0, 260) / 10;
@@ -1184,14 +1243,14 @@ void main() {
   // T6R: the wet sheen picks up the neon around it — a slow cyan/magenta drift over the facade.
   float neonDrift = skyValueNoise( vWorldPos.yz * vec2( 0.004, 0.003 ) + vSeed * 7.0 );
   vec3 sheen = mix( uWetTint, mix( vec3( 0.15, 0.55, 0.75 ), vec3( 0.7, 0.18, 0.55 ), neonDrift ), 0.55 );
-  color += sheen * fresnel * ( 0.2 + 0.8 * wet ) * vIsSide * ( 1.0 - 0.6 * smoothstep( 1750.0, 2250.0, vWorldPos.y ) );
+  color += sheen * fresnel * ( 0.2 + 0.8 * wet ) * vIsSide * ( 1.0 - 0.6 * smoothstep( 1750.0, 2250.0, vWorldPos.y ) ) * 0.45;
 
   // Wet arrises: a 1-2 px highlight on every box edge, so each mass separates from the one behind.
   vec2 edgeDistance = vFaceHalf - abs( vSurf );
   vec2 surfPerPixel = max( fwidth( vSurf ), vec2( 1e-4 ) );
   float edgePixels = min( edgeDistance.x / surfPerPixel.x, edgeDistance.y / surfPerPixel.y );
   float arrisLine = 1.0 - smoothstep( 0.5, 2.0, edgePixels );
-  color += mix( sheen, vec3( 0.55, 0.7, 0.85 ), 0.5 ) * arrisLine * ( 0.1 + 0.18 * faceShade );
+  color += mix( sheen, vec3( 0.55, 0.7, 0.85 ), 0.5 ) * arrisLine * ( 0.1 + 0.18 * faceShade ) * 0.5;
 
   // Hero blade light: coloured spill on the concrete around each giant sign, and the windows behind
   // and beside it go dark so the sign owns its patch of wall.
@@ -1234,7 +1293,7 @@ void main() {
   // Dark at street level, brightest through the mid-high floors, thinning again at the parapet.
   // T7-3 strata: the grime is crowded with small warm lit rooms (and carries city light down into
   // the void), the mid city is as before, the pristine heights are nearly dark glass.
-  float litShare = mix( 0.12, 0.075, smoothstep( 300.0, 900.0, vWorldPos.y ) ) * ( 1.0 - 0.85 * pristine )
+  float litShare = mix( 0.14, 0.1, smoothstep( 300.0, 900.0, vWorldPos.y ) ) * ( 1.0 - 0.8 * pristine )
     + 0.06 * ( 1.0 - smoothstep( -600.0, 0.0, vWorldPos.y ) );
   // T7-2 lit runs: a floor lights in runs of 3-9 panes (an office, a corridor) sharing one colour
   // temperature, with the odd dark pane inside a run. Per-pane hashing read as confetti noise.
@@ -1248,10 +1307,11 @@ void main() {
   // Grime rooms are sodium and warm; pristine panes are cold.
   tempHash = mix( mix( tempHash, tempHash * 0.45, grime ), 0.55 + 0.4 * tempHash, pristine );
   // T6R: a wider spread of colour temperatures, so lit panes read as rooms, not as one decal.
-  vec3 sodium = vec3( 1.0, 0.55, 0.22 );
-  vec3 warm = vec3( 1.0, 0.76, 0.46 );
-  vec3 pale = vec3( 0.78, 0.86, 1.0 );
-  vec3 cold = vec3( 0.48, 0.72, 1.0 );
+  // T7-5: saturated temperatures — near-white panes read as grey glare under ACES and bloom.
+  vec3 sodium = vec3( 1.0, 0.42, 0.1 );
+  vec3 warm = vec3( 1.0, 0.6, 0.24 );
+  vec3 pale = vec3( 0.5, 0.68, 1.0 );
+  vec3 cold = vec3( 0.25, 0.5, 1.0 );
   vec3 neonCyan = vec3( 0.22, 0.95, 1.0 );
   vec3 neonMagenta = vec3( 1.0, 0.24, 0.72 );
   vec3 paneColor = sodium;
@@ -1269,8 +1329,8 @@ void main() {
   vec3 resolved = paneColor * ( lit * brightness * buzz ) * ( glass + halo * 0.28 ) * ( 1.0 - heroShadow );
 
   // --- T7-4 interiors: within uInteriorFade of the camera, the glass shows a traced room. -----------
-  float interiorFade = uInteriorStrength * ( 1.0 - smoothstep( uInteriorFade.x, uInteriorFade.y, viewDepth ) ) * vIsSide;
   float glassRaw = ( 1.0 - smoothstep( -0.012, 0.012, sd ) );
+  float interiorFade = uInteriorStrength * ( 1.0 - smoothstep( uInteriorFade.x, uInteriorFade.y, viewDepth ) ) * vIsSide;
   if ( interiorFade > 0.001 && glassRaw > 0.001 ) {
     vec3 d = normalize( vWorldPos - cameraPosition );
     vec3 ray = vec3( dot( d, vTangentW ) / uCellWidth, d.y / uCellHeight, - dot( d, vNormalW ) / ROOM_DEPTH_M );
@@ -1285,26 +1345,30 @@ void main() {
     // Light: the bright rooms are the existing lit runs (so the far average is unchanged); a second
     // set is dimly lit (a lamp, a screen) — about 60% of mid-city rooms read as occupied up close;
     // the rest sit dark, picked out only by city spill. Pristine floors are mostly dark.
-    float dimShare = mix( mix( 0.5, 0.42, smoothstep( 500.0, 700.0, vWorldPos.y ) ), 0.3, pristine );
+    float dimShare = mix( mix( 0.5, 0.42, smoothstep( 500.0, 700.0, vWorldPos.y ) ), 0.55, pristine );
     float dim = ( 1.0 - lit ) * step( 1.0 - dimShare, skyHash11( roomHash * 53.0 + 11.0 ) );
     float screen = step( 0.7, skyHash11( roomHash * 19.0 ) );
     vec3 dimLight = mix( paneColor * 0.55, vec3( 0.25, 0.45, 0.9 ) * ( 0.5 + 0.15 * sin( uTime * 7.0 + roomHash * 40.0 ) ), screen * ( 1.0 - grime ) );
     // Pristine floors: only the thin cool ceiling light lines are on.
-    dimLight = mix( dimLight, vec3( 0.7, 0.85, 1.0 ) * 0.7, pristine );
+    dimLight = mix( dimLight, vec3( 0.55, 0.75, 1.0 ) * 0.22, pristine );
     // Exposure is set against the facade's 0.55 window scale below: lit rooms read as rooms, dim
     // rooms as lamp-lit silhouettes, dark rooms as shapes in the city's spill light.
-    vec3 roomLight = paneColor * ( lit * blockLive * brightness * buzz * 7.0 ) + dimLight * dim * 5.5 + vec3( 0.42, 0.45, 0.58 ) * mix( 1.0, 0.55, pristine );
+    vec3 roomLight = paneColor * ( lit * blockLive * brightness * buzz * 7.0 ) + dimLight * dim * 5.5 + vec3( 0.42, 0.45, 0.58 ) * mix( 1.0, 0.25, pristine );
     vec3 interior = roomColor * roomLight;
     // Glass: a faint sheen of the city over the room, stronger at grazing angles.
     interior += sheen * fresnel * 0.35;
     vec3 resolvedInterior = ( interior * glassRaw + paneColor * ( lit * blockLive * brightness ) * halo * 0.1 ) * ( 1.0 - heroShadow );
     resolved = mix( resolved, resolvedInterior, interiorFade );
   }
+  // T7-5 pristine glass: the curtain wall reflects the cool night sky at grazing angles.
+  color += vec3( 0.02, 0.035, 0.065 ) * glassRaw * pristine * ( 0.25 + 0.75 * fresnel ) * vIsSide;
   // What the grid averages out to once it stops resolving: lit share times mean pane brightness,
   // in the mean pane colour. Distant walls read as a dim glow rather than a field of sparks.
   vec3 averaged = vec3( 0.86, 0.72, 0.56 ) * ( litShare * 0.22 * blockLive * vIsSide );
   // T7: dimmer panes — under bloom they compete with the signage otherwise.
-  color += mix( averaged * ( 1.0 - heroShadow ), resolved, detail ) * 0.55;
+  // T7-5 value range: emissives carry the frame — panes at 2x the T7 level.
+  // Pristine heights stay calm: their panes run at a third of the mid-city level.
+  color += mix( averaged * ( 1.0 - heroShadow ), resolved, detail ) * 1.55 * ( 1.0 - 0.65 * pristine );
 
   gl_FragColor = vec4( max( color, vec3( 0.0 ) ), 1.0 );
 
@@ -1609,7 +1673,8 @@ void main() {
   );
 
   // Tube core: where the lettering saturates it runs white-hot, the glow around it keeps the hue.
-  vec3 hot = mix( vSignColor, vec3( 1.0 ), 0.08 + 0.5 * smoothstep( 0.8, 1.0, mask ) );
+  // T7-5: keep the tubes saturated — ACES and bloom already push the cores toward white.
+  vec3 hot = mix( vSignColor * vSignColor * 1.2, vec3( 1.0 ), 0.02 + 0.18 * smoothstep( 0.8, 1.0, mask ) );
   vec3 color = hot * mask * angle * uIntensity + vSignColor * ( plate + halo * uHalo );
   gl_FragColor = vec4( color * flicker, 1.0 );
 
@@ -1693,7 +1758,7 @@ export class SkyriverCity {
 
     // T6R contrast: near-black concrete against the luminous haze (atmosphere.ts).
     // T6R-2: albedo crushed further toward black; the haze, signs and edges carry the read.
-    const concreteAmbient = new THREE.Color(0x0b111b);
+    const concreteAmbient = new THREE.Color(0x020305);
     const wetTint = new THREE.Color(0x567ba3);
 
     // --- towers -----------------------------------------------------------------------------------
@@ -1720,7 +1785,7 @@ export class SkyriverCity {
         uCellHeight: { value: SKYRIVER_CITY.windowCellHeightM },
         uRibSpacing: { value: SKYRIVER_CITY.ribSpacingM },
         uProjScale: { value: 400 },
-        uConcreteLevel: { value: 0.032 },
+        uConcreteLevel: { value: 0.016 },
         uConcreteAmbient: { value: concreteAmbient },
         uWetTint: { value: wetTint },
         uInterior: { value: this.interiorAtlas.texture },
@@ -1774,8 +1839,8 @@ export class SkyriverCity {
       fragmentShader: SIGN_FRAGMENT,
       uniforms: {
         uTime: { value: 0 },
-        uIntensity: { value: 1.9 },
-        uHalo: { value: 0.32 },
+        uIntensity: { value: 1.8 },
+        uHalo: { value: 0.75 },
         uFogPenetration: { value: 0.55 },
         uAtlas: { value: this.atlas.texture },
         ...skyriverFogUniforms(),

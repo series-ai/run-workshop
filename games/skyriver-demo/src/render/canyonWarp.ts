@@ -24,8 +24,13 @@
 
 /** Loop length, metres: 40 rows of the derived 320 m tower grid. */
 export const CANYON_LOOP_LENGTH_M = 12800;
-const SNAKES = 3;
-const SNAKE_AMPLITUDE = 0.52;
+/**
+ * T7-5: four strong snakes (cycle 5: "a rounded triangle with wiggles"). The heading now swings
+ * ~70 degrees either way of the lap's mean turn, the curvature changes sign 7 times (real S-bends,
+ * tightest radius ~640 m), and stretches of the loop stay >= 1.5 km apart.
+ */
+const SNAKES = 4;
+const SNAKE_AMPLITUDE = 0.55;
 const TABLE_SIZE = 4096;
 
 const L = CANYON_LOOP_LENGTH_M;
@@ -171,6 +176,44 @@ export function intrudesOtherStretch(x: number, v: number, halfFootprint: number
     if (d < corridorHalf + halfFootprint) return true;
   }
   return false;
+}
+
+/**
+ * True when a footprint at canyon (x, v) sits on the inside of a bend beyond ~85% of its radius:
+ * there the warp would fold it back through the curve's centre. Such footprints are not drawn.
+ */
+export function foldsInsideBend(x: number, v: number, halfFootprint: number): boolean {
+  let worst = 0;
+  for (const dv of [-300, -150, 0, 150, 300]) {
+    const k = canyonCurvature(v + dv);
+    if (Math.sign(k) !== Math.sign(x)) continue;
+    worst = Math.max(worst, Math.abs(k));
+  }
+  if (worst === 0) return false;
+  return Math.abs(x) + halfFootprint > 0.85 / worst;
+}
+
+export interface CanyonBendApex {
+  readonly v: number;
+  /** The bend's inside: the side (sign of canyon x) the route curves around. */
+  readonly side: -1 | 1;
+  readonly radius: number;
+}
+
+/** The tightest point of every bend tighter than `maxRadius` (local curvature maxima). */
+export function canyonBendApexes(maxRadius = 1400): readonly CanyonBendApex[] {
+  const out: CanyonBendApex[] = [];
+  const n = TABLE_SIZE;
+  for (let i = 0; i < n; i += 1) {
+    const k = Math.abs(tableCurvature[i]!);
+    const prev = Math.abs(tableCurvature[(i - 1 + n) % n]!);
+    const next = Math.abs(tableCurvature[(i + 1) % n]!);
+    if (k > prev && k >= next && 1 / k < maxRadius) {
+      const v = (i / n) * L;
+      out.push({ v: v > L / 2 ? v - L : v, side: (Math.sign(tableCurvature[i]!) || 1) as -1 | 1, radius: 1 / k });
+    }
+  }
+  return out;
 }
 
 /** Diagnostics for tests and probes. */

@@ -43,8 +43,10 @@ const TAU = Math.PI * 2;
  * T7-3 bank: roll, in turns, per unit of path curvature (1/m), and its cap. At the loop's tightest
  * S-bends (~1/800 m) plus the route's own snake this banks the craft ~20-25 degrees into the turn.
  */
-const BANK_TURNS_PER_CURVATURE = 52;
-const BANK_MAX_TURNS = 0.07;
+/** T7-5: soft-limited bank (tanh, never rail-hits a clamp) with a slow per-stretch variation. */
+const BANK_TURNS_PER_CURVATURE = 46;
+const BANK_MAX_TURNS = 0.1;
+const BANK_VARIATION_WAVELENGTH_M = 2300;
 /** Arc-length step for the numeric heading derivative, metres. */
 const CURVATURE_STEP_M = 12;
 
@@ -163,7 +165,8 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
     let dh = routeHeading(v + CURVATURE_STEP_M) - routeHeading(v - CURVATURE_STEP_M);
     dh -= TAU * Math.round(dh / TAU);
     const curvature = dh / (2 * CURVATURE_STEP_M);
-    const bank = Math.max(-BANK_MAX_TURNS, Math.min(BANK_MAX_TURNS, -curvature * BANK_TURNS_PER_CURVATURE));
+    const character = 0.7 + 0.3 * Math.sin((TAU * v) / BANK_VARIATION_WAVELENGTH_M + 0.8);
+    const bank = BANK_MAX_TURNS * Math.tanh((-curvature * BANK_TURNS_PER_CURVATURE * character) / BANK_MAX_TURNS);
     const lateralSlope = routeLateralSlope(v);
     out.cutFade = 0;
     out.v = v;

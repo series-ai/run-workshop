@@ -15,7 +15,7 @@
  */
 import type { SkyriverCityLayout, SkyriverTower } from '../sim/derive';
 import { CHASM_BOUNDS } from '../sim/systems';
-import { CANYON_LOOP_LENGTH_M, intrudesOtherStretch, wrapCanyonV } from './canyonWarp';
+import { CANYON_LOOP_LENGTH_M, foldsInsideBend, intrudesOtherStretch, wrapCanyonV } from './canyonWarp';
 
 /** Derived height range (derive.ts TOWER_MIN/MAX_HEIGHT_M), used to recover each tower's grade. */
 const DERIVED_MIN_HEIGHT_M = 240;
@@ -109,8 +109,10 @@ export function presentCityLayout(layout: SkyriverCityLayout): SkyriverCityLayou
         };
       }
       tower = { ...tower, x: tower.x + sign * INNER_SETBACK_M, height: regrade(tower, cell) };
-      if (Math.abs(tower.x) > 900
-        && intrudesOtherStretch(tower.x, tower.z, Math.max(tower.width, tower.depth) * 0.5)) continue;
+      const half = Math.max(tower.width, tower.depth) * 0.5;
+      if (Math.abs(tower.x) > 900 && intrudesOtherStretch(tower.x, tower.z, half)) continue;
+      // T7-5: tighter S-bends — drop footprints that would fold back through a bend's centre.
+      if (Math.abs(tower.x) > 600 && foldsInsideBend(tower.x, tower.z, half)) continue;
       towers.push(tower);
     }
   }

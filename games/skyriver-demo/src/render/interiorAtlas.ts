@@ -209,13 +209,28 @@ function drawFurniture(ctx: Ctx, theme: Theme, rect: [number, number, number, nu
       glowDot(ctx, x + w * 0.12, floorY - h * 0.25, 10);
     }
     // kind 4: empty room.
-  } else if (r() < 0.25) {
-    // Pristine: rarely a single plant or a sculpture.
-    silhouette(x + w * 0.45, floorY - h * 0.2, w * 0.1, h * 0.2);
-    ctx.fillStyle = ink;
-    ctx.beginPath();
-    ctx.arc(x + w * 0.5, floorY - h * 0.28, w * 0.08, 0, Math.PI * 2);
-    ctx.fill();
+  } else if (r() < 0.6) {
+    // T7-5 pristine: open-plan office rows — low desks with cool monitor glows, receding in two rows.
+    for (let row = 0; row < 2; row += 1) {
+      const deskY = floorY - h * (0.22 + row * 0.12);
+      const scale = row === 0 ? 1 : 0.7;
+      for (let k = 0; k < 4; k += 1) {
+        const dx = x + w * (0.08 + k * 0.23 + row * 0.1);
+        silhouette(dx, deskY, w * 0.16 * scale, h * 0.03);
+        ctx.fillStyle = 'rgba(150,200,255,1)';
+        ctx.fillRect(dx + w * 0.04 * scale, deskY - h * 0.08 * scale, w * 0.08 * scale, h * 0.06 * scale);
+      }
+    }
+  } else {
+    // Pristine lobby: a thin lit grid on a glass partition.
+    ctx.strokeStyle = 'rgba(200,225,255,0.9)';
+    ctx.lineWidth = 1;
+    for (let k = 1; k < 6; k += 1) {
+      ctx.beginPath(); ctx.moveTo(x + (w * k) / 6, y + h * 0.15); ctx.lineTo(x + (w * k) / 6, floorY); ctx.stroke();
+    }
+    for (let k = 1; k < 4; k += 1) {
+      ctx.beginPath(); ctx.moveTo(x, y + h * (0.15 + k * 0.2)); ctx.lineTo(x + w, y + h * (0.15 + k * 0.2)); ctx.stroke();
+    }
   }
 }
 

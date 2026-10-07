@@ -31,17 +31,37 @@ const ALTITUDE_B_CYCLES = 4;
 /** Phase so the lap starts mid-climb at ~1250 m through the free-flight stretch. */
 const ALTITUDE_PHASE = 0;
 
+/**
+ * T7-5 grime pass: through the lap's low point the route swings out to hug the grime wall on the
+ * outside of the canyon, ~150 m off its facade, so the parallax interiors show in actual play.
+ */
+export const GRIME_PASS_V_M = -0.25 * L;
+const GRIME_PASS_SIDE = -1;
+const GRIME_PASS_OFFSET_M = 255;
+const GRIME_PASS_WIDTH_M = 1100;
+
+function grimePass(v: number): number {
+  let d = v - GRIME_PASS_V_M;
+  d -= L * Math.round(d / L);
+  return GRIME_PASS_SIDE * GRIME_PASS_OFFSET_M * Math.exp(-(d * d) / (GRIME_PASS_WIDTH_M * GRIME_PASS_WIDTH_M));
+}
+
+
 export function routeLateral(v: number): number {
   const p = (TAU * v) / L;
-  return LATERAL_A_M * Math.sin(p * LATERAL_A_CYCLES + 0.4) + LATERAL_B_M * Math.sin(p * LATERAL_B_CYCLES + 1.7);
+  const snake = LATERAL_A_M * Math.sin(p * LATERAL_A_CYCLES + 0.4) + LATERAL_B_M * Math.sin(p * LATERAL_B_CYCLES + 1.7);
+  // The snake fades out through the grime pass so the hug is steady.
+  let d = v - GRIME_PASS_V_M;
+  d -= L * Math.round(d / L);
+  const keep = 1 - 0.85 * Math.exp(-(d * d) / (GRIME_PASS_WIDTH_M * GRIME_PASS_WIDTH_M));
+  return snake * keep + grimePass(v);
 }
 
 export function routeLateralSlope(v: number): number {
-  const p = (TAU * v) / L;
-  const k = TAU / L;
-  return LATERAL_A_M * LATERAL_A_CYCLES * k * Math.cos(p * LATERAL_A_CYCLES + 0.4)
-    + LATERAL_B_M * LATERAL_B_CYCLES * k * Math.cos(p * LATERAL_B_CYCLES + 1.7);
+  const step = 2;
+  return (routeLateral(v + step) - routeLateral(v - step)) / (2 * step);
 }
+
 
 export function routeAltitude(v: number): number {
   const p = (TAU * v) / L;

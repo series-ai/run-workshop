@@ -84,13 +84,14 @@ export const SKYRIVER_ATMOSPHERE = Object.freeze({
  */
 // T6R contrast pass: the haze is a lit volume, brighter than the near-black concrete, so towers and
 // their ribs silhouette against it (Neon Rain still); a faint teal/magenta neon cast tints the depths.
-const COLOR_FOG_LOW = 0x1a2638;
-const COLOR_FOG_HIGH = 0x18222f;
+// T7-5 value range: the haze sits near black so emissives carry the frame (concept p5 ~8).
+const COLOR_FOG_LOW = 0x070b11;
+const COLOR_FOG_HIGH = 0x06090e;
 /** T6R-2: the depths — what the haze sinks to below the canyon floor band. */
-const COLOR_FOG_DEEP = 0x2a1c12;
+const COLOR_FOG_DEEP = 0x140d08;
 const COLOR_SKY_ZENITH = 0x070b14;
-const COLOR_SKY_HORIZON = 0x1d2a3d;
-const COLOR_SKY_DEPTHS = 0x241810;
+const COLOR_SKY_HORIZON = 0x111a28;
+const COLOR_SKY_DEPTHS = 0x120c08;
 /** Neon the wet overcast throws back down. The one place warmth is allowed into the blue. */
 const COLOR_SKY_NEON = 0x4a5f86;
 const COLOR_RAIN = 0x8fa6bd;
@@ -186,8 +187,8 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
     color += vec3( 0.0, 0.03, 0.04 ) * exp( - midBand * midBand );
     // T7-3 strata: warm smog over the grime, cool clean air in the pristine heights.
     float grimeAir = 1.0 - smoothstep( 300.0, 800.0, h );
-    color = mix( color, vec3( 0.075, 0.052, 0.036 ), grimeAir * 0.55 );
-    color = mix( color, vec3( 0.07, 0.095, 0.13 ), smoothstep( 1800.0, 2700.0, h ) * 0.45 );
+    color = mix( color, vec3( 0.03, 0.02, 0.013 ), grimeAir * 0.55 );
+    color = mix( color, vec3( 0.025, 0.035, 0.05 ), smoothstep( 1800.0, 2700.0, h ) * 0.45 );
     return mix( color, uSkyFogColorDeep, skyriverFogDeep() );
   }
 #endif
@@ -791,7 +792,7 @@ export class SkyriverAtmosphere {
       capacity: SKYRIVER_ATMOSPHERE.searchlightCount,
       // T7-2: softer, and faded where a beam passes near the camera (cycle-3 foreground wash).
       // T7-3: weaker still (cycle-4: the beams dominated the frame).
-      intensity: 0.065,
+      intensity: 0.04,
       softness: 8.0,
       fadeStart: 0.45,
     });
@@ -807,7 +808,8 @@ export class SkyriverAtmosphere {
       uniforms: {
         uTime: { value: 0 },
         uAspect: { value: 1 },
-        uIntensity: { value: 0.16 },
+        // T7-5: rain at half strength — it was lifting the blacks.
+        uIntensity: { value: 0.05 },
         uColor: { value: new THREE.Color(COLOR_RAIN) },
       },
       transparent: true,

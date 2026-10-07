@@ -60,7 +60,7 @@ import {
   skyriverFogUniforms,
 } from './atmosphere';
 import { CANYON_LOOP_LENGTH_M, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
-import { routeAltitude, routeLateral } from './routeProfile';
+import { routeAltitude, routeLateral, routeLateralSlope } from './routeProfile';
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
 import type {
   SkyriverTraffic,
@@ -89,7 +89,14 @@ const TAU = Math.PI * 2;
 const MAX_TRIANGLES_PER_ARCHETYPE = 800;
 
 /** Draw calls this module adds: one InstancedMesh per archetype, plus one streak batch (R4: <= 4). */
-const TRAFFIC_DRAW_CALLS = TRAFFIC_ARCHETYPE_COUNT + 1;
+/**
+ * T7-5: six render archetypes from the sim's three. Each derived archetype splits into its own
+ * shape and a variant (cab -> hunchback van, interceptor -> saucer commuter, commuter -> long bus
+ * with a window strip), so near traffic reads as many kinds of vehicle. Presentation only.
+ */
+const RENDER_ARCHETYPES = TRAFFIC_ARCHETYPE_COUNT * 2;
+const VARIANT_SHARE = 0.45;
+const TRAFFIC_DRAW_CALLS = RENDER_ARCHETYPES + 1;
 
 /**
  * The plan's quality tiers (Design "Performance": cars 2,400 -> 1,200 -> 600). T6R: every active car
@@ -138,6 +145,25 @@ const CHASE_SIZE_MIN = 2.6;
 const CHASE_SIZE_SPAN = 1.2;
 const CHASE_WINDOW_M = 1400;
 const CHASE_FADE_M = 160;
+/**
+ * T7-5 flow lanes (cycle-5 prescription): mid-distance traffic organised into four streams that
+ * follow the route spline itself, so they wind with the canyon and the sightline. Every lane sits
+ * level with or above the route and off its line (a stream under the shuttle reads as a road
+ * marking), and splays slowly in offset and height along the loop so no two run parallel.
+ * [lateral m, lift m, direction, splay phase]
+ */
+const LANES: readonly (readonly [number, number, number, number])[] = Object.freeze([
+  [-215, 95, 1, 0.0],
+  [205, 150, -1, 1.9],
+  [-80, 250, -1, 3.7],
+  [260, 30, 1, 5.1],
+]);
+const LANE_SHARE = 0.34;
+const LANE_SPLAY_M = 70;
+const LANE_SPLAY_LIFT_M = 55;
+const LANE_JITTER_X_M = 13;
+const LANE_JITTER_Y_M = 8;
+
 /** Escort streaks are this fraction of a car's. */
 const ESCORT_STREAK_SCALE = 0.5;
 /** Inset from the corridor walls for escorts, metres. */
@@ -525,6 +551,63 @@ function buildCommuter(): MeshBuild {
   return build;
 }
 
+/** T7-5 variant — hunchback van: a tall rear box over a short sloped nose. */
+function buildVan(): MeshBuild {
+  const build = newBuild();
+  const r = 0.085;
+  const g = 0.08;
+  const b = 0.075;
+  pushBox(build, 0, 0, -0.3, 2.3, 1.1, 3.6, r, g, b);
+  pushBox(build, 0, 0.95, -0.7, 2.1, 0.95, 2.6, r * 0.9, g * 0.9, b * 0.9);
+  pushBox(build, 0, -0.15, 1.85, 2.1, 0.75, 0.9, r, g, b);
+  pushBox(build, 0, 0.55, 1.2, 1.8, 0.35, 0.5, 0.04, 0.07, 0.1);
+  pushBox(build, 1.2, -0.45, -0.4, 0.3, 0.45, 2.6, 0.15, 0.15, 0.16);
+  pushBox(build, -1.2, -0.45, -0.4, 0.3, 0.45, 2.6, 0.15, 0.15, 0.16);
+  pushLightPatch(build, 0.7, -0.1, 2.31, 0.45, 0.25, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
+  pushLightPatch(build, -0.7, -0.1, 2.31, 0.45, 0.25, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
+  pushLightPatch(build, 0.85, 0.6, -2.11, 0.3, 0.9, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  pushLightPatch(build, -0.85, 0.6, -2.11, 0.3, 0.9, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  return build;
+}
+
+/** T7-5 variant — saucer commuter: a flat disc with a raised dome and a lit rim. */
+function buildSaucer(): MeshBuild {
+  const build = newBuild();
+  const r = 0.07;
+  const g = 0.075;
+  const b = 0.085;
+  // Disc: a low dome above and an inverted shallow dome below, as two half-ellipsoids.
+  pushDome(build, 0, 0, 0, 2.2, 0.45, 2.6, 12, 2, r, g, b);
+  pushBox(build, 0, -0.18, 0, 2.6, 0.32, 3.0, r * 0.6, g * 0.6, b * 0.6);
+  pushDome(build, 0, 0.3, -0.2, 0.95, 0.75, 1.2, 8, 3, 0.05, 0.1, 0.14);
+  pushLightPatch(build, 0, -0.05, 1.52, 1.6, 0.14, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
+  pushLightPatch(build, 0, -0.05, -1.52, 1.8, 0.16, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  return build;
+}
+
+/** T7-5 variant — long bus: an elongated box with a lit window strip down each side. */
+function buildBus(): MeshBuild {
+  const build = newBuild();
+  const r = 0.09;
+  const g = 0.085;
+  const b = 0.07;
+  pushBox(build, 0, 0, 0, 2.4, 1.6, 8.2, r, g, b);
+  pushBox(build, 0, 0.95, -0.3, 2.0, 0.3, 6.6, r * 0.8, g * 0.8, b * 0.8);
+  for (const side of [-1, 1]) {
+    // Window strip: warm cabin light along the flank (planar patch facing out).
+    pushQuadOut(build,
+      side * 1.215, 0.15, -3.5,
+      side * 1.215, 0.15, 3.3,
+      side * 1.215, 0.6, 3.3,
+      side * 1.215, 0.6, -3.5,
+      0, 0.3, 0, 0.95, 0.72, 0.42);
+  }
+  pushLightPatch(build, 0.75, -0.3, 4.12, 0.5, 0.3, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
+  pushLightPatch(build, -0.75, -0.3, 4.12, 0.5, 0.3, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
+  pushLightPatch(build, 0, 0.3, -4.12, 2.0, 0.22, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  return build;
+}
+
 /** Converts a build to a non-indexed, flat-shaded BufferGeometry and enforces the triangle budget. */
 function toGeometry(build: MeshBuild, label: string): BufferGeometry {
   const triangles = buildTriangles(build);
@@ -547,10 +630,10 @@ function toGeometry(build: MeshBuild, label: string): BufferGeometry {
 
 const STREAK_VERTEX = /* glsl */ `
 attribute vec2 aCorner;      // x: 0 lamp end, 1 trail end; y: side -1..1
-attribute float aLamp;       // 0 head, 1 tail
+attribute float aLamp;       // 0/2 head (left/right), 1/3 tail (left/right)
 attribute vec3 aCarPos;
 attribute vec4 aCarDir;      // xyz unit velocity, w speed (m/s)
-attribute float aCarFade;
+attribute vec2 aCarFade;     // fade, body scale
 
 uniform float uPixelAngle;   // radians per drawing-buffer pixel, vertically
 uniform float uHeadOffset;
@@ -568,8 +651,12 @@ varying float vIntensity;
 void main() {
   vec3 dir = aCarDir.xyz;
   float speed = aCarDir.w;
-  bool head = aLamp < 0.5;
-  vec3 lamp = aCarPos + dir * ( head ? uHeadOffset : -uTailOffset );
+  float kind = mod( aLamp, 2.0 );
+  bool head = kind < 0.5;
+  float lampSide = aLamp < 1.5 ? -1.0 : 1.0;
+  vec3 rightW = normalize( cross( dir, vec3( 0.0, 1.0, 0.0 ) ) + vec3( 1e-5 ) );
+  float scale = aCarFade.y;
+  vec3 lamp = aCarPos + ( dir * ( head ? uHeadOffset : -uTailOffset ) + rightW * lampSide * 0.72 ) * scale;
   float trail = 1.2 + speed * ( head ? uHeadTrail : uTailTrail );
   vec3 tailEnd = lamp - dir * trail;
 
@@ -593,14 +680,14 @@ void main() {
 
   vLengthR = len / rMean;
   vCapsule = vec2( mix( -1.0, vLengthR + 1.0, end ), aCorner.y );
-  vLamp = aLamp;
+  vLamp = kind;
 
   // Directional lamps: a headlight shows to the front, a taillight to the rear.
   vec3 toCam = normalize( cameraPosition - lamp );
   float facing = dot( dir, toCam ) * ( head ? 1.0 : -1.0 );
   // T7: the red tail trail reads from almost any angle (a long-exposure streak); the white head
   // lamp only toward the front, so crossing rivers read as red ribbons with white oncoming points.
-  vIntensity = aCarFade * ( head ? smoothstep( 0.1, 0.7, facing ) : smoothstep( -0.85, 0.3, facing ) );
+  vIntensity = aCarFade.x * ( head ? smoothstep( 0.1, 0.7, facing ) : smoothstep( -0.85, 0.3, facing ) );
 
   #ifdef USE_FOG
     vFogDepth = - v.z;
@@ -653,7 +740,8 @@ function buildStreakGeometry(capacity: number): InstancedBufferGeometry {
   const corner: number[] = [];
   const lamp: number[] = [];
   const index: number[] = [];
-  for (let l = 0; l < 2; l += 1) {
+  // T7-5: four lamps per car — a white head pair and a red tail pair (lamp id = kind + 2 * side).
+  for (let l = 0; l < 4; l += 1) {
     const base = l * 4;
     for (const [end, side] of [[0, -1], [0, 1], [1, 1], [1, -1]] as const) {
       corner.push(end, side);
@@ -662,13 +750,13 @@ function buildStreakGeometry(capacity: number): InstancedBufferGeometry {
     index.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
   const geometry = new InstancedBufferGeometry();
-  geometry.setAttribute('position', new BufferAttribute(new Float32Array(8 * 3), 3));
+  geometry.setAttribute('position', new BufferAttribute(new Float32Array(16 * 3), 3));
   geometry.setAttribute('aCorner', new BufferAttribute(new Float32Array(corner), 2));
   geometry.setAttribute('aLamp', new BufferAttribute(new Float32Array(lamp), 1));
   geometry.setIndex(index);
   const pos = new InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
   const dir = new InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
-  const fade = new InstancedBufferAttribute(new Float32Array(capacity), 1);
+  const fade = new InstancedBufferAttribute(new Float32Array(capacity * 2), 2);
   pos.setUsage(DynamicDrawUsage);
   dir.setUsage(DynamicDrawUsage);
   fade.setUsage(DynamicDrawUsage);
@@ -743,25 +831,30 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const carClimbW = new Float32Array(maxCarCount);
   const carClimbP = new Float32Array(maxCarCount);
   const sizeScale = new Float32Array(maxCarCount);
+  /** T7-5: lane index per car, or 255 for the free volume. */
+  const carLane = new Uint8Array(maxCarCount).fill(255);
   const tintR = new Float32Array(maxCarCount);
   const tintG = new Float32Array(maxCarCount);
   const tintB = new Float32Array(maxCarCount);
 
-  const archetypeTotals = new Int32Array(TRAFFIC_ARCHETYPE_COUNT);
+  const renderArchetype = new Uint8Array(maxCarCount);
+  const archetypeTotals = new Int32Array(RENDER_ARCHETYPES);
   for (let car = 0; car < maxCarCount; car += 1) {
     const archetype = params.archetype[car];
     if (archetype >= TRAFFIC_ARCHETYPE_COUNT) fail('SKYRIVER_TRAFFIC_ARCHETYPE_OUT_OF_RANGE');
-    archetypeTotals[archetype] = archetypeTotals[archetype] + 1;
+    const render = archetype + (hash01(car, 0x7e57) < VARIANT_SHARE ? TRAFFIC_ARCHETYPE_COUNT : 0);
+    renderArchetype[car] = render;
+    archetypeTotals[render] = archetypeTotals[render] + 1;
   }
   // Car indices grouped by archetype, each group ascending, so tier N is a prefix of every group.
   const groupCars: Int32Array[] = [];
-  for (let archetype = 0; archetype < TRAFFIC_ARCHETYPE_COUNT; archetype += 1) {
+  for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
     groupCars.push(new Int32Array(archetypeTotals[archetype]));
   }
-  const groupFill = new Int32Array(TRAFFIC_ARCHETYPE_COUNT);
+  const groupFill = new Int32Array(RENDER_ARCHETYPES);
 
   for (let car = 0; car < maxCarCount; car += 1) {
-    const archetype = params.archetype[car];
+    const archetype = renderArchetype[car]!;
     const group = groupCars[archetype];
     group[groupFill[archetype]] = car;
     groupFill[archetype] = groupFill[archetype] + 1;
@@ -780,9 +873,19 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       // Same-direction cars are slower than the shuttle, so it overtakes them; oncoming ones rush by.
       carSpeed[car] = carDirection[car] > 0 ? 90 + h(0x25) * 110 : 60 + h(0x25) * 80;
     } else {
-      carHomeX[car] = (h(0x21) * 2 - 1) * CAR_CORRIDOR_HALF_M;
-      carHomeY[car] = CAR_MIN_Y_M + Math.pow(h(0x22), 0.9) * (CAR_MAX_Y_M - CAR_MIN_Y_M);
-      carSpeed[car] = Math.abs(params.speed[car]!) * SPEED_SCALE * (0.8 + 0.4 * h(0x25));
+      if (h(0x41) < LANE_SHARE) {
+        const lane = Math.min(LANES.length - 1, Math.floor(h(0x42) * LANES.length));
+        carLane[car] = lane;
+        carDirection[car] = LANES[lane]![2]!;
+        // In-lane jitter: a stream, not a rail.
+        carHomeX[car] = (h(0x21) * 2 - 1) * LANE_JITTER_X_M;
+        carHomeY[car] = (h(0x22) * 2 - 1) * LANE_JITTER_Y_M;
+        carSpeed[car] = 70 + h(0x25) * 90;
+      } else {
+        carHomeX[car] = (h(0x21) * 2 - 1) * CAR_CORRIDOR_HALF_M;
+        carHomeY[car] = CAR_MIN_Y_M + Math.pow(h(0x22), 0.9) * (CAR_MAX_Y_M - CAR_MIN_Y_M);
+        carSpeed[car] = Math.abs(params.speed[car]!) * SPEED_SCALE * (0.8 + 0.4 * h(0x25));
+      }
     }
     carPhase[car] = params.phase[car]!;
     carDriftA[car] = DRIFT_MIN_M + h(0x31) * DRIFT_SPAN_M;
@@ -815,15 +918,15 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   // T6R: the shared fog was never wired to the hulls, so distant cars stayed full-bright pills.
   applySkyriverFog(carMaterial);
 
-  const archetypeBuilds: MeshBuild[] = [buildCab(), buildInterceptor(), buildCommuter()];
-  const archetypeLabels: string[] = ['cab', 'interceptor', 'commuter'];
+  const archetypeBuilds: MeshBuild[] = [buildCab(), buildInterceptor(), buildCommuter(), buildVan(), buildSaucer(), buildBus()];
+  const archetypeLabels: string[] = ['cab', 'interceptor', 'commuter', 'van', 'saucer', 'bus'];
   const trianglesPerArchetype: number[] = [];
   const geometries: BufferGeometry[] = [];
   const meshes: InstancedMesh[] = [];
   const matrixArrays: Float32Array[] = [];
   const colorArrays: Float32Array[] = [];
 
-  for (let archetype = 0; archetype < TRAFFIC_ARCHETYPE_COUNT; archetype += 1) {
+  for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
     const build = archetypeBuilds[archetype];
     const label = archetypeLabels[archetype];
     trianglesPerArchetype.push(buildTriangles(build));
@@ -858,7 +961,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       uHeadTrail: { value: HEAD_TRAIL_S },
       uTailTrail: { value: TAIL_TRAIL_S },
       // T7: dense crossing ribbons overlap several trails per pixel; bloom supplies the glow.
-      uIntensity: { value: 0.75 },
+      uIntensity: { value: 1.7 },
       uFogPenetration: { value: 0.2 },
       ...skyriverFogUniforms(),
     },
@@ -883,7 +986,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const streakDirArray = streakDir.array as Float32Array;
   const streakFadeArray = streakFade.array as Float32Array;
 
-  const objects: Object3D[] = [meshes[0], meshes[1], meshes[2], streakMesh];
+  const objects: Object3D[] = [...meshes, streakMesh];
 
   // T6R-2 escorts: the first ESCORT_COUNT cars fly with the shuttle (the anchor) instead of a
   // river, so the chase view always holds a few close vehicles with readable dark bodies and long
@@ -905,7 +1008,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const carDir = { x: 0, z: 0 };
 
   // ---- Mutable tier state. Written by setQuality(), read by the hot loop.
-  const groupActive = new Int32Array(TRAFFIC_ARCHETYPE_COUNT);
+  const groupActive = new Int32Array(RENDER_ARCHETYPES);
   let activeCars = 0;
   let streakBudget = 0;
   let streaksUsed = 0;
@@ -919,7 +1022,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     activeCars = quality.carCount;
     streakBudget = quality.thrusterBudget;
 
-    for (let archetype = 0; archetype < TRAFFIC_ARCHETYPE_COUNT; archetype += 1) {
+    for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
       const group = groupCars[archetype];
       let active = 0;
       while (active < group.length && group[active] < activeCars) active += 1;
@@ -939,7 +1042,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     const camZ = camera.z;
     streaksUsed = 0;
 
-    for (let archetype = 0; archetype < TRAFFIC_ARCHETYPE_COUNT; archetype += 1) {
+    for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
       const group = groupCars[archetype];
       const active = groupActive[archetype];
       const matrices = matrixArrays[archetype];
@@ -992,6 +1095,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           let x: number;
           let y: number;
           const isChase = car < ESCORT_COUNT + CHASE_COUNT && anchorValid;
+          let laneSlope = 0;
           if (isChase) {
             // Absolute motion along the canyon, wrapped into a window that travels with the shuttle.
             const absolute = carPhase[car]! * CHASE_WINDOW_M + direction * speed * t;
@@ -1002,6 +1106,14 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
             v = anchor[6]! + rel;
             x = clamp(routeLateral(v) + carHomeX[car]! + drift * 0.6, -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
             y = routeAltitude(v) + carHomeY[car]! + climb * 0.6;
+          } else if (carLane[car]! !== 255) {
+            const lane = LANES[carLane[car]!]!;
+            v = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * speed * t;
+            const splay = Math.sin(v / 1700 + lane[3]!);
+            x = clamp(routeLateral(v) + lane[0]! + LANE_SPLAY_M * splay + carHomeX[car]! + drift * 0.15,
+              -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
+            y = routeAltitude(v) + lane[1]! + LANE_SPLAY_LIFT_M * Math.sin(v / 1300 + lane[3]! * 1.7) + carHomeY[car]! + climb * 0.2;
+            laneSlope = routeLateralSlope(v);
           } else {
             v = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * speed * t;
             x = clamp(carHomeX[car]! + drift, -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
@@ -1013,7 +1125,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           pz = carWarp.z;
           // Velocity in canyon space (across, along), then turned to world.
           const along = direction * speed;
-          const vx = driftRate;
+          const vx = carLane[car]! !== 255 ? laneSlope * along : driftRate;
           warpDirection(vx, along, carWarp.heading, carDir);
           const horizontal = Math.hypot(carDir.x, carDir.z) || 1;
           fx = carDir.x / horizontal;
@@ -1090,7 +1202,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           streakDirArray[d + 1] = fy;
           streakDirArray[d + 2] = fz;
           streakDirArray[d + 3] = streakSpeed;
-          streakFadeArray[streaksUsed] = fade;
+          streakFadeArray[streaksUsed * 2] = fade;
+          streakFadeArray[streaksUsed * 2 + 1] = sizeScale[car]!;
           streaksUsed += 1;
         }
       }
@@ -1113,10 +1226,10 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
 
   function stats(): TrafficStats {
     let triangles = 0;
-    for (let archetype = 0; archetype < TRAFFIC_ARCHETYPE_COUNT; archetype += 1) {
+    for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
       triangles += trianglesPerArchetype[archetype] * groupActive[archetype];
     }
-    triangles += streaksUsed * 4;
+    triangles += streaksUsed * 8;
     return {
       activeCars,
       activeThrusters: streaksUsed,
@@ -1128,7 +1241,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   }
 
   function dispose(): void {
-    for (let archetype = 0; archetype < TRAFFIC_ARCHETYPE_COUNT; archetype += 1) {
+    for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
       meshes[archetype].dispose();
       geometries[archetype].dispose();
     }

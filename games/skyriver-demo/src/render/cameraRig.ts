@@ -210,7 +210,11 @@ export function writeCameraPose(
   out.position.x = flight.mode === 1
     ? clamp(flight.x - boomX * distance, -CHASE_MAX_ABS_X_M, CHASE_MAX_ABS_X_M)
     : flight.x - boomX * distance;
-  out.position.y = clamp(flight.y - boomY * distance + CHASE_HEIGHT_M, CHASE_MIN_ALTITUDE_M, CHASE_MAX_ALTITUDE_M);
+  // T7-5 descent framing: on a dive the boom drops with the craft instead of hanging above it, so the
+  // shuttle keeps its size in frame rather than shrinking into a top-down view.
+  const climb = Math.sin(flight.pitch * TURNS_TO_RADIANS);
+  const descentDrop = flight.mode === 0 ? Math.max(0, -climb) * distance * 0.6 : 0;
+  out.position.y = clamp(flight.y - boomY * distance + CHASE_HEIGHT_M - descentDrop, CHASE_MIN_ALTITUDE_M, CHASE_MAX_ALTITUDE_M);
   out.position.z = flight.z - boomZ * distance;
 
   // The aim runs along the *boom*, not along the craft's own heading.
@@ -222,7 +226,9 @@ export function writeCameraPose(
   // rig's geometry instead of a function of how steeply it happens to be climbing, and it gives the
   // orbit offsets their natural meaning: orbiting circles the shuttle rather than panning off it.
   out.target.x = flight.x + boomX * CHASE_LOOK_AHEAD_M;
-  out.target.y = flight.y + boomY * CHASE_LOOK_AHEAD_M - (flight.mode === 0 ? CHASE_LOOK_DOWN_AUTOPILOT_M : CHASE_LOOK_DOWN_M);
+  // T7-5: on climbs the aim lifts toward the skyline, so crowns and the haze band frame the view.
+  const climbLift = flight.mode === 0 ? Math.min(0.25, Math.max(0, climb)) * CHASE_LOOK_AHEAD_M * 0.55 : 0;
+  out.target.y = flight.y + boomY * CHASE_LOOK_AHEAD_M - (flight.mode === 0 ? CHASE_LOOK_DOWN_AUTOPILOT_M : CHASE_LOOK_DOWN_M) + climbLift;
   const rollTurns = (flight as { roll?: number }).roll ?? 0;
   out.roll = rollTurns * TURNS_TO_RADIANS * CHASE_BANK_FOLLOW;
   out.target.z = flight.z + boomZ * CHASE_LOOK_AHEAD_M;

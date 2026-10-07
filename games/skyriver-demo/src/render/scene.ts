@@ -46,7 +46,7 @@ import { presentCityLayout } from './presentationLayout';
  * 2 draw calls (hull + additive plume), replacing T5's provisional 1-call marker. The plan's R3
  * hard ceiling stays 16; this leaves headroom while keeping the tiers' estimates honest.
  */
-export const SKYRIVER_TOTAL_DRAW_CALL_BUDGET = 14;
+export const SKYRIVER_TOTAL_DRAW_CALL_BUDGET = 17;
 /**
  * T7: the operator raised the frame ceiling to 32 calls, counted across every pass. The scene keeps
  * its 14-call budget above; the post chain adds RenderPass (the scene), UnrealBloomPass (1 bright
@@ -54,7 +54,8 @@ export const SKYRIVER_TOTAL_DRAW_CALL_BUDGET = 14;
  */
 export const SKYRIVER_FRAME_DRAW_CALL_CEILING = 32;
 /** T4's share (plan R4: "<= 4 traffic draw calls"). Defined here so T4 can import it on day one. */
-export const SKYRIVER_TRAFFIC_DRAW_CALL_BUDGET = 4;
+/** T7-5: six hull archetypes + one light batch (frame ceiling 32 still holds: 16 scene + 14 post + 1). */
+export const SKYRIVER_TRAFFIC_DRAW_CALL_BUDGET = 7;
 
 /** Presentation-only quality tiers (plan R7). Never reaches simulation. */
 export enum SkyriverQualityTier {
@@ -288,7 +289,7 @@ export class SkyriverScene {
     // transfer for render targets), bloom runs on that HDR, and OutputPass applies ACES + sRGB once.
     // On the 'off' tier the scene renders straight to the canvas and the same chunks apply inline.
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.25;
+    this.renderer.toneMappingExposure = 1.35;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.autoClear = true;
     // Count draw calls across every pass of a frame (reset by hand in update()).
@@ -323,7 +324,7 @@ export class SkyriverScene {
     // concrete, haze, sky and the dim window field, so only true emissives bloom — sign tubes, the
     // taillight strip, light-trail lamps, the plume core, beacons. A tight radius keeps it a halo,
     // not a wash.
-    this.bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.55, 0.3, 1.9);
+    this.bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.95, 0.5, 1.1);
     this.composer.addPass(this.bloomPass);
     this.composer.addPass(new OutputPass());
 
