@@ -839,6 +839,13 @@ export class SectorDepotSimulation {
         if (!snapMachine || typeof snapMachine !== "object") continue;
         const m = this.machines.find((x) => x.id === snapMachine.id);
         if (m) {
+          // Ordered vitals: a snapshot with an OLDER sequence never overrides a newer
+          // local machine (prevents a stale-cache snapshot from zeroing a live machine).
+          const snapSeq = (snapMachine as any).vitalsSeq;
+          const localSeq = (m as any).vitalsSeq ?? 0;
+          if (typeof snapSeq === "number" && Number.isFinite(snapSeq) && snapSeq < localSeq) {
+            continue;
+          }
           // If the machine is ALREADY destroyed locally, a peer snapshot MUST NOT resurrect it!
           if (!m.isAlive || m.health <= 0) {
             continue;

@@ -286,6 +286,10 @@ export function validateAndSanitizeSnapshot(snapshot: any): RaidWorldSnapshot | 
       health: m.health,
       isAlive: m.health > 0 && m.isAlive !== false,
       cooldownTicks: typeof m.cooldownTicks === "number" && Number.isFinite(m.cooldownTicks) && m.cooldownTicks >= 0 ? m.cooldownTicks : 0,
+      // Ordered-adoption carry-through: sequences and shared maxHealth survive the
+      // sanitize rebuild so downstream adoption stays ordered (snapshot interface types them).
+      maxHealth: typeof m.maxHealth === "number" && Number.isFinite(m.maxHealth) && m.maxHealth > 0 ? m.maxHealth : undefined,
+      vitalsSeq: typeof m.vitalsSeq === "number" && Number.isFinite(m.vitalsSeq) && m.vitalsSeq >= 0 ? m.vitalsSeq : undefined,
     });
   }
 
@@ -626,11 +630,9 @@ export class MultiplayerCoordinator {
               this.sim.restoreCrateStateFromSnapshot(crateEntries);
             }
             if (data.machines && Array.isArray(data.machines)) {
-              this.serverMachines = JSON.parse(JSON.stringify(data.machines));
-              // Full roster reconciliation (hydration): membership + geometry + vitals
-              // via the shared custody reconciler — reconnecting clients never retain
-              // removed machines or miss deployed ones. Revision-gated: a delayed
-              // hydration can never regress a newer live reconciliation.
+              // Reconcile FIRST (the revision-gated reconciler also updates the cache
+              // from the ACCEPTED world) — a rejected stale response never poisons the
+              // cache that later snapshot applications substitute.
               this.applyMachineRosterCustody(data.machines, (data as any).machineRosterRevision);
             }
             if (typeof data.holdCompleted === "boolean" || typeof data.isExtracted === "boolean" || typeof data.holdCompletedAtTick === "number") {
@@ -1792,7 +1794,10 @@ export class MultiplayerCoordinator {
       this.hostPeerId = hostId;
     }
     if (this.serverMachines && Array.isArray(this.serverMachines)) {
-      sanitized.machines = JSON.parse(JSON.stringify(this.serverMachines));
+      // Snapshot substitution stays ORDERED: the cached machines carry vitalsSeq, and
+      // the applying client adopts them through the reconciler below (not a raw
+      // applyRaidSnapshot) — so a stale cache can never zero a live machine.
+      this.applyMachineRosterCustody(this.serverMachines as any, undefined);
     }
     this.lastAppliedSnapshotTimestamp = snapshotTime;
     this.lastAppliedSnapshotTick = sanitized.snapshotTick;
@@ -2191,7 +2196,15 @@ export class MultiplayerCoordinator {
           return;
         }
         if (this.serverMachines && Array.isArray(this.serverMachines)) {
-          sanitized.machines = JSON.parse(JSON.stringify(this.serverMachines));
+          // Ordered substitution: replace the peer's machine claims with the CACHED
+          // authoritative set — INCLUDING vitalsSeq/maxHealth (sanitizer rebuild
+          // preserves them so adopting stays ordered downstream).
+          const cacheWithSeq = this.serverMachines.map((m: any) => ({
+            ...m,
+            maxHealth: m.maxHealth,
+            vitalsSeq: m.vitalsSeq ?? 0,
+          }));
+          sanitized.machines = cacheWithSeq;
         }
 
         const snapshotTime = packet.timestamp || this.getServerNow();

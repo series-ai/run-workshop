@@ -271,7 +271,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         const machines = rRecord.machineDeployment.map((m) => ({
           ...m,
           maxHealth: typeof m.maxHealth === "number" && m.maxHealth > 0 ? m.maxHealth : Math.max(m.health, m.type === "turret" ? 120 : 75),
-          vitalsSeq: Math.max(machineVitalsSeq.get(m.id) || 0, typeof m.vitalsSeq === "number" ? m.vitalsSeq : 0),
+          vitalsSeq: Math.max(machineVitalsSeq.get(`${raidId}:${m.id}`) || 0, typeof m.vitalsSeq === "number" ? m.vitalsSeq : 0),
           health: (rRecord.machines && rRecord.machines[m.id] && typeof rRecord.machines[m.id].health === "number")
             ? rRecord.machines[m.id].health
             : m.health,
@@ -283,8 +283,8 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         return machines;
       }
       const defaultMachines = [
-        { id: "turret_depot_alpha", type: "turret", x: -5, y: 0, z: 12, facing: Math.PI, health: 120, isAlive: true, cooldownTicks: 0, maxHealth: 120, vitalsSeq: nextVitalsSeq("turret_depot_alpha") },
-        { id: "drone_patrol_beta", type: "drone", x: 14, y: 2.2, z: -8, facing: -Math.PI / 2, health: 75, isAlive: true, cooldownTicks: 0, maxHealth: 75, vitalsSeq: nextVitalsSeq("drone_patrol_beta") },
+        { id: "turret_depot_alpha", type: "turret", x: -5, y: 0, z: 12, facing: Math.PI, health: 120, isAlive: true, cooldownTicks: 0, maxHealth: 120, vitalsSeq: nextVitalsSeq("turret_depot_alpha", raidId) },
+        { id: "drone_patrol_beta", type: "drone", x: 14, y: 2.2, z: -8, facing: -Math.PI / 2, health: 75, isAlive: true, cooldownTicks: 0, maxHealth: 75, vitalsSeq: nextVitalsSeq("drone_patrol_beta", raidId) },
       ];
       if (rRecord && rRecord.machines) {
         for (const m of defaultMachines) {
@@ -296,8 +296,8 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
             // or above everything clients applied (never resets to 1).
             if (typeof persisted.vitalsSeq === "number" && Number.isFinite(persisted.vitalsSeq)) {
               m.vitalsSeq = Math.max(m.vitalsSeq || 0, persisted.vitalsSeq);
-              const cur = machineVitalsSeq.get(m.id) || 0;
-              if (m.vitalsSeq > cur) machineVitalsSeq.set(m.id, m.vitalsSeq);
+              const cur = machineVitalsSeq.get(`${raidId}:${m.id}`) || 0;
+              if (m.vitalsSeq > cur) machineVitalsSeq.set(`${raidId}:${m.id}`, m.vitalsSeq);
             }
           }
         }
@@ -322,14 +322,20 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
   // Monotonic roster revision per raid: bumped on every committed deployment change;
   // receivers reject rosters older than the last applied revision (no stale regression).
   const raidRosterRevisions = new Map();
+  const machineVitalsSeq = new Map(); // `${raidId}:${machineId}` -> seq counter
   // Authoritative vitals sequence: STAMPED on every custody mutation of a machine
   // (deploy, strike, cold-restore build). Receivers treat it as ordered INDEPENDENT of
   // the roster membership revision — fresh vitals at unchanged membership apply; older
   // vitals are rejected regardless of revision equality.
-  const machineVitalsSeq = new Map();
-  function nextVitalsSeq(machineId) {
-    const v = (machineVitalsSeq.get(machineId) || 0) + 1;
-    machineVitalsSeq.set(machineId, v);
+  // Sequence counters are RAID-SCOPED (raid:machine) — machines with equal IDs in
+  // different raids cannot contaminate each other's sequences.
+  const __seqKey = (raidId, machineId) => `${raidId}:${machineId}`;
+  function nextVitalsSeq(machineId, raidId) {
+    const r = raidId || globalThis.__stickZoneActiveRaidForSeq || null;
+    if (!r) return 1; // no raid context: static floor (never contaminates another raid)
+    const k = __seqKey(r, machineId);
+    const v = (machineVitalsSeq.get(k) || 0) + 1;
+    machineVitalsSeq.set(k, v);
     return v;
   }
   // Restore counters from persisted custody: the deployment record's vitalsSeq is the
@@ -339,8 +345,9 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
     if (!Array.isArray(deployment)) return;
     for (const m of deployment) {
       if (m && typeof m.vitalsSeq === "number" && Number.isFinite(m.vitalsSeq)) {
-        const cur = machineVitalsSeq.get(m.id) || 0;
-        if (m.vitalsSeq > cur) machineVitalsSeq.set(m.id, m.vitalsSeq);
+        const k = __seqKey(raidId, m.id);
+        const cur = machineVitalsSeq.get(k) || 0;
+        if (m.vitalsSeq > cur) machineVitalsSeq.set(k, m.vitalsSeq);
       }
     }
     // The combat health map carries the LATEST durable per-machine sequences (strikes
@@ -350,8 +357,9 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
     if (rrForSeed && rrForSeed.machines) {
       for (const [mid, rec] of Object.entries(rrForSeed.machines)) {
         if (rec && typeof rec.vitalsSeq === "number" && Number.isFinite(rec.vitalsSeq)) {
-          const cur = machineVitalsSeq.get(mid) || 0;
-          if (rec.vitalsSeq > cur) machineVitalsSeq.set(mid, rec.vitalsSeq);
+          const k = __seqKey(raidId, mid);
+          const cur = machineVitalsSeq.get(k) || 0;
+          if (rec.vitalsSeq > cur) machineVitalsSeq.set(k, rec.vitalsSeq);
         }
       }
     }
@@ -1188,6 +1196,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
     // server-authoritative via the machine-attack executor.
     readJsonBody(req, res, (err, data) => {
       if (err) {
+
         res.statusCode = 400;
         res.setHeader("Content-Type", "application/json");
         res.end(JSON.stringify({ error: "Invalid JSON body" }));
@@ -1339,7 +1348,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         res.end(JSON.stringify({ error: "Deployment limit reached (64 machines)" }));
         return;
       }
-      const machine = { id: machineId, type, x, y: type === "drone" ? 2.2 : 0, z, facing: 0, health, isAlive: true, cooldownTicks: 0, originX: x, originZ: z, deployedAtMs: now, maxHealth: health, vitalsSeq: nextVitalsSeq(machineId) };
+      const machine = { id: machineId, type, x, y: type === "drone" ? 2.2 : 0, z, facing: 0, health, isAlive: true, cooldownTicks: 0, originX: x, originZ: z, deployedAtMs: now, maxHealth: health, vitalsSeq: nextVitalsSeq(machineId, raidId) };
       if (idx !== -1) machines[idx] = machine;
       else machines.push(machine);
       // Persist the COMPLETE deployment set (the machine array is truth) + health map;
@@ -2785,7 +2794,7 @@ wss.on("connection", (ws, req) => {
           const preDmgAlive = m.isAlive;
           const preDmgSeq = m.vitalsSeq || 0;
           m.health = Math.max(0, m.health - safeDmg);
-          m.vitalsSeq = nextVitalsSeq(m.id);
+          m.vitalsSeq = nextVitalsSeq(m.id, ws.raidId);
           if (m.health <= 0) m.isAlive = false;
           const rRecord = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
           try {
@@ -3050,7 +3059,7 @@ wss.on("connection", (ws, req) => {
         // Sequence advances ONCE, BEFORE the durable save — health, alive, and vitalsSeq
         // persist in the SAME transaction; the durable copy can never trail the live
         // sequence (which would make valid recovery updates look stale to clients).
-        m.vitalsSeq = nextVitalsSeq(m.id);
+        m.vitalsSeq = nextVitalsSeq(m.id, ws.raidId);
         const rRecord = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
         try {
           if (rRecord) {

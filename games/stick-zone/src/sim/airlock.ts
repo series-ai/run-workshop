@@ -26,7 +26,7 @@ export {
 export interface RaidWorldSnapshot {
   snapshotTick: number;
   crates: Array<{ id: string; opened: boolean; claimedBy?: string; claimedAt?: number }>;
-  machines: Array<{ id: string; health: number; isAlive: boolean; cooldownTicks?: number }>;
+  machines: Array<{ id: string; health: number; isAlive: boolean; cooldownTicks?: number; maxHealth?: number; vitalsSeq?: number; type?: string; x?: number; y?: number; z?: number; facing?: number; originX?: number; originZ?: number }>;
   rivals?: Array<{ id: string; name: string; x: number; z: number; health: number; armor?: number; ammo?: number; isAlive: boolean; isExtracted?: boolean; isKia?: boolean }>;
 }
 
