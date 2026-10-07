@@ -1107,13 +1107,14 @@ export class MultiplayerCoordinator {
               this.sim.slideVx = 0;
               this.sim.slideVz = 0;
               this.sim.jumpVy = 0;
+              this.sim.player.y = 0;
               this.sim.slideTicksRemaining = 0;
               (this.sim.player as any).knockbackVx = 0;
               (this.sim.player as any).knockbackVz = 0;
               this.sim.player.isSliding = false;
               this.sim.player.slideTicksRemaining = 0;
               this.sim.player.isJumping = false;
-              if (this.sim.player.action === 'slide' || this.sim.player.action === 'roll' || this.sim.player.action === 'kick' || this.sim.player.action === 'shoot') {
+              if (this.sim.player.action === 'slide' || this.sim.player.action === 'roll' || this.sim.player.action === 'kick' || this.sim.player.action === 'shoot' || this.sim.player.action === 'jump') {
                 this.sim.player.action = 'idle';
                 this.sim.player.actionTicks = 0;
                 this.sim.player.isInvulnerable = false;

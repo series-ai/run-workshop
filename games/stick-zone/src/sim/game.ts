@@ -1098,31 +1098,33 @@ export class SectorDepotSimulation {
 
     const dt = SIM_CONFIG.TICK_INTERVAL_MS / 1000;
 
-    // Lingering physical knockback velocity on player
-    if ((this.player as any).knockbackVx || (this.player as any).knockbackVz) {
-      const kx = ((this.player as any).knockbackVx || 0) * dt;
-      const kz = ((this.player as any).knockbackVz || 0) * dt;
-      const targetX = Math.max(SIM_CONFIG.MAP_MIN_X, Math.min(SIM_CONFIG.MAP_MAX_X, this.player.x + kx));
-      const targetZ = Math.max(SIM_CONFIG.MAP_MIN_Z, Math.min(SIM_CONFIG.MAP_MAX_Z, this.player.z + kz));
-      if (!this.checkContainerCollision(targetX, this.player.z, 0.45)) this.player.x = targetX;
-      if (!this.checkContainerCollision(this.player.x, targetZ, 0.45)) this.player.z = targetZ;
-      (this.player as any).knockbackVx = ((this.player as any).knockbackVx || 0) * 0.85;
-      (this.player as any).knockbackVz = ((this.player as any).knockbackVz || 0) * 0.85;
-      if (Math.hypot((this.player as any).knockbackVx, (this.player as any).knockbackVz) < 0.05) {
-        (this.player as any).knockbackVx = 0;
-        (this.player as any).knockbackVz = 0;
+    if (!this.isSocketDisconnected) {
+      // Lingering physical knockback velocity on player
+      if ((this.player as any).knockbackVx || (this.player as any).knockbackVz) {
+        const kx = ((this.player as any).knockbackVx || 0) * dt;
+        const kz = ((this.player as any).knockbackVz || 0) * dt;
+        const targetX = Math.max(SIM_CONFIG.MAP_MIN_X, Math.min(SIM_CONFIG.MAP_MAX_X, this.player.x + kx));
+        const targetZ = Math.max(SIM_CONFIG.MAP_MIN_Z, Math.min(SIM_CONFIG.MAP_MAX_Z, this.player.z + kz));
+        if (!this.checkContainerCollision(targetX, this.player.z, 0.45)) this.player.x = targetX;
+        if (!this.checkContainerCollision(this.player.x, targetZ, 0.45)) this.player.z = targetZ;
+        (this.player as any).knockbackVx = ((this.player as any).knockbackVx || 0) * 0.85;
+        (this.player as any).knockbackVz = ((this.player as any).knockbackVz || 0) * 0.85;
+        if (Math.hypot((this.player as any).knockbackVx, (this.player as any).knockbackVz) < 0.05) {
+          (this.player as any).knockbackVx = 0;
+          (this.player as any).knockbackVz = 0;
+        }
       }
-    }
 
-    // Continuous jump gravity resolution executes every tick, even when input is locked
-    if (this.jumpVy > 0 || this.player.y > 0) {
-      this.player.y = Math.max(0, this.player.y + this.jumpVy * dt);
-      this.jumpVy -= 12.0 * dt; // Gravity
-      if (this.player.y <= 0) {
-        this.player.y = 0;
-        this.jumpVy = 0;
-        this.player.isJumping = false;
-        if (this.player.action === 'jump') this.player.action = 'idle';
+      // Continuous jump gravity resolution executes every tick, even when input is locked
+      if (this.jumpVy > 0 || this.player.y > 0) {
+        this.player.y = Math.max(0, this.player.y + this.jumpVy * dt);
+        this.jumpVy -= 12.0 * dt; // Gravity
+        if (this.player.y <= 0) {
+          this.player.y = 0;
+          this.jumpVy = 0;
+          this.player.isJumping = false;
+          if (this.player.action === 'jump') this.player.action = 'idle';
+        }
       }
     }
 

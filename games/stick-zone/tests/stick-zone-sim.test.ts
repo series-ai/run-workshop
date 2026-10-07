@@ -7942,6 +7942,62 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     const genCorrupt = fs.readdirSync(process.cwd()).find(f => f.startsWith(path.basename(genStore) + ".corrupt."));
     if (genCorrupt) try { fs.unlinkSync(path.resolve(process.cwd(), genCorrupt)); } catch {}
 
+    // Mixed-format recovery test: snapshot with generation: 2 ranks over legacy snapshot with generation: undefined (even if legacy has huge timestamp)
+    const mixedStore = path.resolve(process.cwd(), `.test-mixed-${Date.now()}.json`);
+    const legacyTimestampFile = `${mixedStore}.prev.9999999999`;
+    const gen2File = `${mixedStore}.prev.2`;
+    const legacyRaidId = `raid_legacy_${Date.now().toString(36)}`;
+    const gen2RaidId = `raid_gen2_${Date.now().toString(36)}`;
+
+    // Create legacy backup file with NO generation property in JSON
+    const legacyAuthority = new ServerSettlementAuthority(legacyTimestampFile);
+    legacyAuthority.initRaid(legacyRaidId, 50000, ["op_player"]);
+    legacyAuthority.saveToDisk();
+    const legacyRaw = JSON.parse(fs.readFileSync(legacyTimestampFile, "utf8"));
+    delete legacyRaw.generation;
+    fs.writeFileSync(legacyTimestampFile, JSON.stringify(legacyRaw), "utf8");
+
+    // Create generation 2 backup file with explicit generation: 2
+    const gen2Authority = new ServerSettlementAuthority(gen2File);
+    gen2Authority.initRaid(gen2RaidId, 50000, ["op_player"]);
+    gen2Authority.generation = 2;
+    gen2Authority.saveToDisk();
+
+    // Primary store is damaged
+    fs.writeFileSync(mixedStore, JSON.stringify({ corrupted: true }), "utf8");
+
+    // Recovering must pick gen2RaidId (gen 2) over legacyRaidId (timestamp 9999999999 with gen undefined)
+    const mixedRecovered = new ServerSettlementAuthority(mixedStore);
+    expect(mixedRecovered.hasRaid(gen2RaidId)).toBe(true);
+    expect(mixedRecovered.hasRaid(legacyRaidId)).toBe(false);
+    expect(mixedRecovered.generation).toBeGreaterThanOrEqual(2);
+
+    try { fs.unlinkSync(mixedStore); } catch {}
+    try { fs.unlinkSync(legacyTimestampFile); } catch {}
+    try { fs.unlinkSync(gen2File); } catch {}
+    const mixedCorrupt = fs.readdirSync(process.cwd()).find(f => f.startsWith(path.basename(mixedStore) + ".corrupt."));
+    if (mixedCorrupt) try { fs.unlinkSync(path.resolve(process.cwd(), mixedCorrupt)); } catch {}
+
+    // Directory read failure test: startup rejection on readdir failure and no primary creation
+    const dirFailStore = path.resolve(process.cwd(), `.test-dirfail-${Date.now()}.json`);
+    const readdirSpy = vi.spyOn(fs, "readdirSync").mockImplementation((dirPath: any, opts: any) => {
+      const err: any = new Error("EIO: i/o error reading directory");
+      err.code = "EIO";
+      throw err;
+    });
+
+    try {
+      expect(() => {
+        new ServerSettlementAuthority(dirFailStore);
+      }).toThrow(/Failed to read directory for settlement backups|EIO/);
+
+      // Startup must be rejected and primary file must NOT be created
+      expect(fs.existsSync(dirFailStore)).toBe(false);
+    } finally {
+      readdirSpy.mockRestore();
+      try { if (fs.existsSync(dirFailStore)) fs.unlinkSync(dirFailStore); } catch {}
+    }
+
     // C) Unified machine custody validator & rejection reconciliation
     const sim = new SectorDepotSimulation();
     sim.raidId = raidId;
@@ -8124,6 +8180,64 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       const preStepX = simDisc.player.x;
       simDisc.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, jump: false, kick: false, shoot: false, aimAngle: 0, interact: false });
       expect(simDisc.player.x).toBe(preStepX);
+
+      // F) Disconnect and reconnect during a normal jump:
+      simDisc.isSocketDisconnected = false;
+      simDisc.player.y = 0;
+      simDisc.jumpVy = 0;
+      simDisc.player.isJumping = false;
+      simDisc.player.action = 'idle';
+
+      // Step with jump input to initiate jump
+      simDisc.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, jump: true, kick: false, shoot: false, aimAngle: 0, interact: false });
+      expect(simDisc.jumpVy).toBeGreaterThan(0);
+      expect(simDisc.player.isJumping).toBe(true);
+      expect(simDisc.player.action).toBe('jump');
+
+      // Advance one tick for gravity resolution to establish airborne height
+      simDisc.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, jump: false, kick: false, shoot: false, aimAngle: 0, interact: false });
+      expect(simDisc.player.y).toBeGreaterThan(0);
+
+      const airborneY = simDisc.player.y;
+      const airborneVy = simDisc.jumpVy;
+
+      // Disconnect during airborne jump:
+      simDisc.isSocketDisconnected = true;
+      coordDisc.authenticated = false;
+
+      // Advance ticks during disconnect with various inputs (including jump input):
+      for (let t = 0; t < 15; t++) {
+        simDisc.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, jump: true, kick: false, shoot: false, aimAngle: 0, interact: false });
+      }
+
+      // Height and jump velocity must remain completely frozen:
+      expect(simDisc.player.y).toBe(airborneY);
+      expect(simDisc.jumpVy).toBe(airborneVy);
+
+      // Reconnect via auth_success:
+      await (coordDisc as any).ws?.onmessage?.({
+        data: JSON.stringify({
+          type: "auth_success",
+          serverTime: Date.now(),
+          currentRaidTick: 250,
+        }),
+      });
+
+      // Position, velocity, action, and flags reconciled:
+      expect(coordDisc.authenticated).toBe(true);
+      expect(simDisc.isSocketDisconnected).toBe(false);
+      expect(simDisc.player.y).toBe(0);
+      expect(simDisc.jumpVy).toBe(0);
+      expect(simDisc.player.isJumping).toBe(false);
+      expect(simDisc.player.action).toBe('idle');
+
+      // Neutral input keeps player at ground level and idle:
+      simDisc.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, jump: false, kick: false, shoot: false, aimAngle: 0, interact: false });
+      expect(simDisc.player.y).toBe(0);
+      expect(simDisc.jumpVy).toBe(0);
+      expect(simDisc.player.isJumping).toBe(false);
+      expect(simDisc.player.action).toBe('idle');
+
       coordDisc.cleanup();
     } finally {
       globalThis.fetch = origFetch;

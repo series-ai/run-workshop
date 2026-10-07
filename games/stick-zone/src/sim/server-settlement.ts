@@ -769,6 +769,7 @@ export class ServerSettlementAuthority {
   private loadFromDisk(): void {
     let data: PersistentStoreData | null = null;
     let isValid = false;
+    let hasBackupHistory = false;
 
     if (fs.existsSync(this.storePath)) {
       let raw = "";
@@ -791,7 +792,7 @@ export class ServerSettlementAuthority {
     if (!isValid) {
       let recovered = false;
       let archivedCorruptPath: string | null = null;
-      let hasBackupHistory = false;
+      hasBackupHistory = false;
 
       // If primary store file exists on disk but is invalid, archive it to unique .corrupt file and flush before restoration
       if (fs.existsSync(this.storePath)) {
@@ -812,33 +813,79 @@ export class ServerSettlementAuthority {
       try {
         const dir = path.dirname(this.storePath);
         const base = path.basename(this.storePath);
-        if (fs.existsSync(dir)) {
-          const prevFiles = fs.readdirSync(dir)
-            .filter(f => f === `${base}.prev` || (f.startsWith(`${base}.prev.`) && !f.includes(".prev.prev")));
+        let dirExists = false;
+        try {
+          dirExists = fs.existsSync(dir);
+        } catch (dirCheckErr: any) {
+          this.isCorrupted = true;
+          throw new Error(`Failed to check directory for settlement backups at ${dir}: ${dirCheckErr?.message || dirCheckErr}`);
+        }
+
+        if (dirExists) {
+          let prevFiles: string[];
+          try {
+            prevFiles = fs.readdirSync(dir)
+              .filter(f => f === `${base}.prev` || (f.startsWith(`${base}.prev.`) && !f.includes(".prev.prev")));
+          } catch (readDirErr: any) {
+            this.isCorrupted = true;
+            throw new Error(`Failed to read directory for settlement backups at ${dir}: ${readDirErr?.message || readDirErr}`);
+          }
+
           if (prevFiles.length > 0) {
             hasBackupHistory = true;
           }
 
-          let bestCandidate: { file: string; data: PersistentStoreData; gen: number } | null = null;
+          interface BackupCandidate {
+            file: string;
+            data: PersistentStoreData;
+            hasExplicitGen: boolean;
+            generation: number;
+            timestamp: number;
+          }
+          const candidates: BackupCandidate[] = [];
+
           for (const pf of prevFiles) {
             try {
               const prevRaw = fs.readFileSync(path.join(dir, pf), "utf8");
               const prevParsed = JSON.parse(prevRaw);
               if (validateStoreIntegrity(prevParsed)) {
-                let gen = typeof (prevParsed as any).generation === "number" ? (prevParsed as any).generation : 0;
-                if (gen === 0 && pf.startsWith(`${base}.prev.`)) {
+                const hasExplicitGen = typeof (prevParsed as any).generation === "number" && Number.isSafeInteger((prevParsed as any).generation);
+                const generation = hasExplicitGen ? (prevParsed as any).generation : 0;
+                let timestamp = 0;
+                if (pf.startsWith(`${base}.prev.`)) {
                   const suffix = pf.slice(`${base}.prev.`.length);
                   const ts = parseInt(suffix, 10);
-                  if (!Number.isNaN(ts)) gen = ts;
+                  if (!Number.isNaN(ts)) timestamp = ts;
                 }
-                if (!bestCandidate || gen > bestCandidate.gen) {
-                  bestCandidate = { file: pf, data: prevParsed, gen };
+                if (timestamp === 0) {
+                  try {
+                    timestamp = fs.statSync(path.join(dir, pf)).mtimeMs;
+                  } catch {}
                 }
+                candidates.push({ file: pf, data: prevParsed, hasExplicitGen, generation, timestamp });
               }
             } catch {}
           }
 
-          if (bestCandidate) {
+          if (candidates.length > 0) {
+            candidates.sort((a, b) => {
+              // 1. Explicit generation backups rank strictly before legacy backups
+              if (a.hasExplicitGen && !b.hasExplicitGen) return -1;
+              if (!a.hasExplicitGen && b.hasExplicitGen) return 1;
+
+              // 2. Compare explicit generations numerically descending
+              if (a.hasExplicitGen && b.hasExplicitGen) {
+                if (b.generation !== a.generation) {
+                  return b.generation - a.generation;
+                }
+                return b.timestamp - a.timestamp;
+              }
+
+              // 3. Separate deterministic order only among legacy backups
+              return b.timestamp - a.timestamp;
+            });
+
+            const bestCandidate = candidates[0];
             try {
               const tmpRestore = `${this.storePath}.restore.${Date.now()}`;
               fs.copyFileSync(path.join(dir, bestCandidate.file), tmpRestore);
@@ -876,7 +923,8 @@ export class ServerSettlementAuthority {
           }
         }
       } catch (err: any) {
-        if (this.isCorrupted) throw err;
+        this.isCorrupted = true;
+        throw err;
       }
 
       if (!recovered && (fs.existsSync(this.storePath) || hasBackupHistory)) {
@@ -969,8 +1017,8 @@ export class ServerSettlementAuthority {
       }
     }
 
-    // Default initialization for default raid if empty and not corrupted
-    if (!this.isCorrupted && !this.raids.has("raid_sector7_1042")) {
+    // Default initialization for default raid only if empty, not corrupted, and no prior backup history
+    if (!this.isCorrupted && !hasBackupHistory && !this.raids.has("raid_sector7_1042")) {
       this.initRaid("raid_sector7_1042", 50000, ["op_player", "op_alpha_1", "op_bravo_1"]);
     }
   }
