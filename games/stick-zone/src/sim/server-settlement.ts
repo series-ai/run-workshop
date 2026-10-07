@@ -762,7 +762,12 @@ export class ServerSettlementAuthority {
     if (storePath || !isTest) {
       ServerSettlementAuthority.activeAuthorities.add(this);
     }
-    this.loadFromDisk();
+    try {
+      this.loadFromDisk();
+    } catch (loadErr) {
+      ServerSettlementAuthority.activeAuthorities.delete(this);
+      throw loadErr;
+    }
   }
 
 
@@ -775,7 +780,10 @@ export class ServerSettlementAuthority {
       let raw = "";
       try {
         raw = fs.readFileSync(this.storePath, "utf8");
-      } catch (readErr) {}
+      } catch (readErr: any) {
+        this.isCorrupted = true;
+        throw new Error(`Failed to read primary settlement store at ${this.storePath}: ${readErr?.message || readErr}`);
+      }
 
       let parsed = null;
       try {
@@ -845,8 +853,15 @@ export class ServerSettlementAuthority {
           const candidates: BackupCandidate[] = [];
 
           for (const pf of prevFiles) {
+            let prevRaw: string;
             try {
-              const prevRaw = fs.readFileSync(path.join(dir, pf), "utf8");
+              prevRaw = fs.readFileSync(path.join(dir, pf), "utf8");
+            } catch (readErr: any) {
+              this.isCorrupted = true;
+              throw new Error(`Failed to read candidate settlement backup ${pf} at ${dir}: ${readErr?.message || readErr}`);
+            }
+
+            try {
               const prevParsed = JSON.parse(prevRaw);
               if (validateStoreIntegrity(prevParsed)) {
                 const hasExplicitGen = typeof (prevParsed as any).generation === "number" && Number.isSafeInteger((prevParsed as any).generation);

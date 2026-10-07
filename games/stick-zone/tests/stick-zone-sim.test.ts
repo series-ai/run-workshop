@@ -7998,6 +7998,89 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       try { if (fs.existsSync(dirFailStore)) fs.unlinkSync(dirFailStore); } catch {}
     }
 
+    // Primary store read failure test (EIO and EACCES): startup rejection and preservation of primary file
+    const primaryReadFailStore = path.resolve(process.cwd(), `.test-primary-readfail-${Date.now()}.json`);
+    const primaryAuthority = new ServerSettlementAuthority(primaryReadFailStore);
+    primaryAuthority.initRaid(raidId, 50000, ["op_player"]);
+    primaryAuthority.generation = 3;
+    primaryAuthority.saveToDisk();
+
+    // Also create a backup with generation: 1
+    const primaryBackupPrev = `${primaryReadFailStore}.prev`;
+    const bkpAuthority = new ServerSettlementAuthority(primaryBackupPrev);
+    bkpAuthority.initRaid(raidId, 50000, ["op_player"]);
+    bkpAuthority.generation = 1;
+    bkpAuthority.saveToDisk();
+
+    // Verify read error (EIO) on primary file throws and rejects startup WITHOUT overwriting primary with backup
+    const origReadFileSync = fs.readFileSync;
+    const readFileSyncSpy = vi.spyOn(fs, "readFileSync").mockImplementation((filePath: any, opts: any) => {
+      if (filePath === primaryReadFailStore) {
+        const err: any = new Error("EIO: i/o error reading primary store");
+        err.code = "EIO";
+        throw err;
+      }
+      return origReadFileSync(filePath, opts);
+    });
+
+    try {
+      expect(() => {
+        new ServerSettlementAuthority(primaryReadFailStore);
+      }).toThrow(/Failed to read primary settlement store|EIO/);
+
+      // Restore spy to read actual primary file on disk:
+      readFileSyncSpy.mockRestore();
+
+      // Primary file was NOT deleted, NOT overwritten, and retained generation: 3
+      const primaryDisk = JSON.parse(fs.readFileSync(primaryReadFailStore, "utf8"));
+      expect(primaryDisk.generation).toBe(4);
+    } finally {
+      readFileSyncSpy.mockRestore();
+      try { if (fs.existsSync(primaryReadFailStore)) fs.unlinkSync(primaryReadFailStore); } catch {}
+      try { if (fs.existsSync(primaryBackupPrev)) fs.unlinkSync(primaryBackupPrev); } catch {}
+    }
+
+    // Candidate backup read failure test (EIO on newest candidate backup): startup rejection and no fallback to older backup
+    const bkpFailStore = path.resolve(process.cwd(), `.test-bkpfail-${Date.now()}.json`);
+    const bkpGen2 = `${bkpFailStore}.prev.2`;
+    const bkpGen1 = `${bkpFailStore}.prev.1`;
+
+    const authBkp2 = new ServerSettlementAuthority(bkpGen2);
+    authBkp2.initRaid(`raid_2_${Date.now()}`, 50000, ["op_player"]);
+    authBkp2.generation = 2;
+    authBkp2.saveToDisk();
+
+    const authBkp1 = new ServerSettlementAuthority(bkpGen1);
+    authBkp1.initRaid(`raid_1_${Date.now()}`, 50000, ["op_player"]);
+    authBkp1.generation = 1;
+    authBkp1.saveToDisk();
+
+    // Damage primary store
+    fs.writeFileSync(bkpFailStore, JSON.stringify({ corrupted: true }), "utf8");
+
+    // Spy on readFileSync: throw EIO when reading bkpGen2
+    const readBkpSpy = vi.spyOn(fs, "readFileSync").mockImplementation((filePath: any, opts: any) => {
+      if (typeof filePath === "string" && filePath.endsWith(".prev.2")) {
+        const err: any = new Error("EIO: read error on candidate backup");
+        err.code = "EIO";
+        throw err;
+      }
+      return origReadFileSync(filePath, opts);
+    });
+
+    try {
+      expect(() => {
+        new ServerSettlementAuthority(bkpFailStore);
+      }).toThrow(/Failed to read candidate settlement backup|EIO/);
+    } finally {
+      readBkpSpy.mockRestore();
+      try { if (fs.existsSync(bkpFailStore)) fs.unlinkSync(bkpFailStore); } catch {}
+      try { if (fs.existsSync(bkpGen2)) fs.unlinkSync(bkpGen2); } catch {}
+      try { if (fs.existsSync(bkpGen1)) fs.unlinkSync(bkpGen1); } catch {}
+      const corruptBkp = fs.readdirSync(process.cwd()).find(f => f.startsWith(path.basename(bkpFailStore) + ".corrupt."));
+      if (corruptBkp) try { fs.unlinkSync(path.resolve(process.cwd(), corruptBkp)); } catch {}
+    }
+
     // C) Unified machine custody validator & rejection reconciliation
     const sim = new SectorDepotSimulation();
     sim.raidId = raidId;
@@ -8239,6 +8322,67 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       expect(simDisc.player.action).toBe('idle');
 
       coordDisc.cleanup();
+
+      // G) Delayed-close probe: heartbeat timeout closes socket into CLOSING state (readyState 2)
+      // but onclose does NOT fire immediately. Input, movement, and ammo must freeze immediately!
+      const simDelay = new SectorDepotSimulation();
+      simDelay.raidId = raidId;
+      simDelay.player.id = "op_player";
+      simDelay.admitOperative(0);
+      simDelay.player.health = 100;
+      simDelay.player.armor = 100;
+      simDelay.player.ammo = 30;
+
+      const coordDelay = new MultiplayerCoordinator(simDelay);
+      let closeCalled = false;
+      let delayedSocket: any = {
+        readyState: 1, // OPEN
+        close: vi.fn((code?: number, reason?: string) => {
+          closeCalled = true;
+          delayedSocket.readyState = 2; // Transition to CLOSING without firing onclose
+        }),
+        send: vi.fn(),
+      };
+      (coordDelay as any).ws = delayedSocket;
+      coordDelay.authenticated = true;
+      simDelay.isSocketDisconnected = false;
+      simDelay.serverMachineDamageAuthority = false;
+
+      // Simulate silent heartbeat stall: >5000ms since last incoming server message
+      coordDelay.lastServerMessageTime = Date.now() - 6000;
+      coordDelay.pruneExpiredPeers();
+
+      // Verify socket close was initiated and readyState is CLOSING (2)
+      expect(closeCalled).toBe(true);
+      expect(delayedSocket.readyState).toBe(2);
+
+      // Verify that EVEN BEFORE onclose runs:
+      // authenticated is false, isSocketDisconnected is true, serverMachineDamageAuthority is true, and isInputLocked is true
+      expect(coordDelay.authenticated).toBe(false);
+      expect(simDelay.isSocketDisconnected).toBe(true);
+      expect(simDelay.serverMachineDamageAuthority).toBe(true);
+      expect(simDelay.isInputLocked()).toBe(true);
+      expect((coordDelay as any).reconnectTimer).not.toBeNull();
+
+      const preStepAmmo = simDelay.player.ammo; // 30
+      const preStepPos = { x: simDelay.player.x, z: simDelay.player.z, y: simDelay.player.y };
+
+      // Attempt to move, shoot, jump, kick during CLOSING state:
+      for (let t = 0; t < 10; t++) {
+        simDelay.step({ dx: 1, dz: 1, sprint: true, slide: false, roll: false, jump: true, kick: true, shoot: true, aimAngle: 0, interact: false });
+      }
+
+      // Assert that position, velocity, timers, and ammo are strictly frozen
+      expect(simDelay.player.ammo).toBe(preStepAmmo); // strictly 30, not 29!
+      expect(simDelay.player.x).toBe(preStepPos.x);
+      expect(simDelay.player.z).toBe(preStepPos.z);
+      expect(simDelay.player.y).toBe(preStepPos.y);
+      expect(simDelay.walkVx).toBe(0);
+      expect(simDelay.walkVz).toBe(0);
+      expect(simDelay.jumpVy).toBe(0);
+      expect(simDelay.player.action).toBe('idle');
+
+      coordDelay.cleanup();
     } finally {
       globalThis.fetch = origFetch;
       coord.cleanup();

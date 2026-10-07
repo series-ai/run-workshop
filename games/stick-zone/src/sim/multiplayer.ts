@@ -1042,6 +1042,10 @@ export class MultiplayerCoordinator {
 
   public connectWebSocket(token?: string): void {
     if (this.isDisposed) return;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
     const tok = token || (this.sim as any).sessionToken;
     if (!tok) return; // Do not connect without authenticated session token!
     if (this.ws && (this.ws.readyState === 0 || this.ws.readyState === 1)) {
@@ -1646,21 +1650,69 @@ export class MultiplayerCoordinator {
 
   public pruneExpiredPeers(maxIdleMs = 10000): void {
     const now = Date.now();
+    // Socket closing/closed guard: if socket is closing (readyState 2) or closed (readyState 3), enforce disconnected state immediately
+    if (this.ws && (this.ws.readyState === 2 || this.ws.readyState === 3)) {
+      if (this.authenticated || !this.sim.isSocketDisconnected) {
+        this.authenticated = false;
+        this.sim.isSocketDisconnected = true;
+        this.sim.serverMachineDamageAuthority = true;
+        this.sim.walkVx = 0;
+        this.sim.walkVz = 0;
+        this.sim.slideVx = 0;
+        this.sim.slideVz = 0;
+        this.sim.jumpVy = 0;
+      }
+    }
+
     // Socket silent stall detection: if authenticated socket has had no incoming server traffic for >5000ms, force close to trigger reconnect
-    if (this.ws && this.ws.readyState === 1 && this.authenticated) {
+    if (this.ws && (this.ws.readyState === 1 || this.ws.readyState === 0) && this.authenticated) {
       if (this.lastServerMessageTime && now - this.lastServerMessageTime > 5000) {
+        this.authenticated = false;
+        this.sim.isSocketDisconnected = true;
+        this.sim.serverMachineDamageAuthority = true;
+        this.sim.walkVx = 0;
+        this.sim.walkVz = 0;
+        this.sim.slideVx = 0;
+        this.sim.slideVz = 0;
+        this.sim.jumpVy = 0;
+        const sockToClose = this.ws;
         try {
-          this.ws.close(4008, "Heartbeat timeout: silent connection stall");
+          sockToClose.close(4008, "Heartbeat timeout: silent connection stall");
         } catch {}
+        if (!this.reconnectTimer && !this.isDisposed) {
+          this.reconnectTimer = setTimeout(() => {
+            if (this.isDisposed) return;
+            if (this.sim.sessionToken) {
+              this.connectWebSocket(this.sim.sessionToken);
+            }
+          }, 1000);
+        }
       }
     }
     // Connection & authentication deadline: if socket opened or connecting but not authenticated within 5000ms, force close
     if (this.ws && (this.ws.readyState === 0 || this.ws.readyState === 1) && !this.authenticated) {
       const connStart = (this as any).connectionStartTime || 0;
       if (connStart && now - connStart > 5000) {
+        this.authenticated = false;
+        this.sim.isSocketDisconnected = true;
+        this.sim.serverMachineDamageAuthority = true;
+        this.sim.walkVx = 0;
+        this.sim.walkVz = 0;
+        this.sim.slideVx = 0;
+        this.sim.slideVz = 0;
+        this.sim.jumpVy = 0;
+        const sockToClose = this.ws;
         try {
-          this.ws.close(4008, "Authentication timeout: connection stalled before auth");
+          sockToClose.close(4008, "Authentication timeout: connection stalled before auth");
         } catch {}
+        if (!this.reconnectTimer && !this.isDisposed) {
+          this.reconnectTimer = setTimeout(() => {
+            if (this.isDisposed) return;
+            if (this.sim.sessionToken) {
+              this.connectWebSocket(this.sim.sessionToken);
+            }
+          }, 1000);
+        }
       }
     }
     const toRemove: string[] = [];
