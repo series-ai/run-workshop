@@ -1049,6 +1049,8 @@ export class MultiplayerCoordinator {
       this.ws = null;
     }
     this.authenticated = false;
+    this.sim.isSocketDisconnected = true;
+    this.sim.serverMachineDamageAuthority = true;
     (this as any).connectionStartTime = Date.now();
     const WSClass = typeof WebSocket !== "undefined" ? WebSocket : (typeof window !== "undefined" ? (window as any).WebSocket : null);
     if (!WSClass) return;
@@ -1099,7 +1101,9 @@ export class MultiplayerCoordinator {
             // Strictly guard: only accept server auth_success once during initial handshake (peers cannot send it!)
             if (!this.authenticated && data.type === "auth_success" && !data.senderId) {
               this.authenticated = true;
+              this.sim.isSocketDisconnected = false;
               this.sim.terminalRecoveryError = undefined;
+              this.sim.serverMachineDamageAuthority = true;
               if (typeof data.serverTime === "number") {
                 this.serverTimeOffset = data.serverTime - Date.now();
                 if (typeof globalThis !== "undefined") (globalThis as any).__stickZoneServerTimeOffset = this.serverTimeOffset;
@@ -1177,7 +1181,9 @@ export class MultiplayerCoordinator {
         // socket's late close must not deauthorize its replacement.
         if (createdSocket !== this.ws) return;
         this.authenticated = false;
-        this.sim.serverMachineDamageAuthority = false; // relay authority lost: local simulation resumes
+        this.sim.isSocketDisconnected = true;
+        // Keep multiplayer damage authority during disconnect: relay owns machine damage
+        this.sim.serverMachineDamageAuthority = true;
         if (this.raidClockSyncInterval) {
           clearInterval(this.raidClockSyncInterval);
           this.raidClockSyncInterval = null;
@@ -3258,6 +3264,8 @@ export class MultiplayerCoordinator {
 
   public cleanup(): void {
     this.isDisposed = true;
+    this.authenticated = false;
+    this.sim.isSocketDisconnected = false;
     if (this.pruneInterval) {
       clearInterval(this.pruneInterval);
       this.pruneInterval = null;

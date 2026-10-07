@@ -7870,6 +7870,43 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     };
     expect(validateStoreIntegrity(badStore)).toBe(false);
 
+    // Verify .corrupt file archival with byte-for-byte equality when invalid primary and valid .prev exist
+    const recoverStorePath = path.resolve(process.cwd(), `.test-recover-${Date.now()}.json`);
+    const recoverPrevPath = `${recoverStorePath}.prev`;
+    const setupStore = new ServerSettlementAuthority(recoverStorePath);
+    setupStore.initRaid(raidId, 50000, ["op_player"]);
+    setupStore.saveToDisk();
+    fs.copyFileSync(recoverStorePath, recoverPrevPath);
+
+    const invalidJsonContent = JSON.stringify({
+      version: 1,
+      raids: {
+        [raidId]: {
+          status: "active",
+          allowableCashPool: 50000,
+          crates: { c1: { cashValue: 100, claimedBy: "__proto__", claimTimestamp: 1 } },
+          operatives: { "__proto__": { operativeId: "__proto__", admitted: true, isExtracted: false, extractedAtTick: 0, activeRaid: raidId } }
+        }
+      }
+    });
+    fs.writeFileSync(recoverStorePath, invalidJsonContent, "utf8");
+
+    const recoveredStore = new ServerSettlementAuthority(recoverStorePath);
+    expect((recoveredStore as any).isCorrupted).toBe(false);
+    expect(recoveredStore.hasRaid(raidId)).toBe(true);
+    expect(recoveredStore.getRaidRecord(raidId)?.operatives["op_player"]).toBeDefined();
+
+    const dirFiles = fs.readdirSync(process.cwd());
+    const baseName = path.basename(recoverStorePath);
+    const corruptFile = dirFiles.find(f => f.startsWith(`${baseName}.corrupt.`));
+    expect(corruptFile).toBeDefined();
+    const corruptContent = fs.readFileSync(path.resolve(process.cwd(), corruptFile!), "utf8");
+    expect(corruptContent).toBe(invalidJsonContent);
+
+    try { fs.unlinkSync(recoverStorePath); } catch {}
+    try { fs.unlinkSync(recoverPrevPath); } catch {}
+    if (corruptFile) try { fs.unlinkSync(path.resolve(process.cwd(), corruptFile)); } catch {}
+
     // C) Unified machine custody validator & rejection reconciliation
     const sim = new SectorDepotSimulation();
     sim.raidId = raidId;
@@ -7986,6 +8023,44 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       expect(sim.terminalRecoveryError).toBeUndefined();
       expect(sim.sessionToken).toBe("sz_recovered_token_119");
       expect(sim.isInputLocked()).toBe(false);
+
+      // E) Disconnect near live machine retains damage authority and blocks input/combat mutations
+      const simDisc = new SectorDepotSimulation();
+      simDisc.raidId = raidId;
+      simDisc.player.id = "op_player";
+      simDisc.admitOperative(0);
+      simDisc.player.health = 100;
+      simDisc.player.armor = 100;
+      let deathCallbackCount = 0;
+      simDisc.onPlayerDeath = () => {
+        deathCallbackCount++;
+      };
+
+      const coordDisc = new MultiplayerCoordinator(simDisc);
+      coordDisc.connectWebSocket("sz_token_live");
+      expect(simDisc.isSocketDisconnected).toBe(true);
+      expect(simDisc.serverMachineDamageAuthority).toBe(true);
+      expect(simDisc.isInputLocked()).toBe(true);
+
+      // Advance ticks near live turret — turret fire must NOT damage player
+      for (let t = 0; t < 120; t++) {
+        simDisc.step({ dx: 1, dz: 0, sprint: false, slide: false, roll: false, jump: false, kick: true, shoot: true, aimAngle: 0, interact: false });
+      }
+      expect(simDisc.player.health).toBe(100);
+      expect(simDisc.player.armor).toBe(100);
+      expect(deathCallbackCount).toBe(0);
+
+      // Direct applyDamageToPlayer is also blocked during disconnect
+      simDisc.applyDamageToPlayer(50);
+      expect(simDisc.player.health).toBe(100);
+      expect(deathCallbackCount).toBe(0);
+
+      // Simulate authentication restoring custody
+      coordDisc.authenticated = true;
+      simDisc.isSocketDisconnected = false;
+      simDisc.terminalRecoveryError = undefined;
+      expect(simDisc.isInputLocked()).toBe(false);
+      coordDisc.cleanup();
     } finally {
       globalThis.fetch = origFetch;
       coord.cleanup();

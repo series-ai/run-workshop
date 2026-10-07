@@ -394,6 +394,7 @@ export class SectorDepotSimulation {
    * broadcasts, so a client cannot under-report machine fire to keep an hold alive.
    */
   public serverMachineDamageAuthority = false;
+  public isSocketDisconnected = false;
 
   public isAdmitted(): boolean {
     return this.ingressController.getState().kind === 'confirmed_active';
@@ -638,6 +639,7 @@ export class SectorDepotSimulation {
 
   public isInputLocked(): boolean {
     if (this.terminalRecoveryError) return true;
+    if (this.isSocketDisconnected) return true;
     const exfilState = this.exfilController.getState();
     return this.exfilController.isInputLocked() || exfilState.kind === "failed" || exfilState.kind === "submitting_settlement" || exfilState.kind === "extracted" || !this.isAdmitted() || !this.player.isAlive || this.player.health <= 0;
   }
@@ -902,7 +904,7 @@ export class SectorDepotSimulation {
   }
 
   public applyDamageToPlayer(rawDmg: number): void {
-    if (this.player.isInvulnerable || !this.player.isAlive) return;
+    if (this.player.isInvulnerable || !this.player.isAlive || this.isSocketDisconnected) return;
 
     const { newHealth, newArmor } = applyStandardDamage(this.player.health, this.player.armor, rawDmg);
     this.player.health = newHealth;

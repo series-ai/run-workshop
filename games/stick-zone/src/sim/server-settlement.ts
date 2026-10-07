@@ -783,11 +783,35 @@ export class ServerSettlementAuthority {
     // If primary store does not exist or fails integrity validation, recover from .prev backup
     if (!isValid) {
       let recovered = false;
+      let archivedCorruptPath: string | null = null;
+
+      // If primary store file exists on disk but is invalid, archive it to unique .corrupt file and flush before restoration
+      if (fs.existsSync(this.storePath)) {
+        archivedCorruptPath = `${this.storePath}.corrupt.${Date.now()}`;
+        try {
+          fs.copyFileSync(this.storePath, archivedCorruptPath);
+          const cFd = fs.openSync(archivedCorruptPath, "r");
+          try { fs.fsyncSync(cFd); } finally { fs.closeSync(cFd); }
+          const dir = path.dirname(this.storePath);
+          const dFd = fs.openSync(dir, "r");
+          try { fs.fsyncSync(dFd); } finally { fs.closeSync(dFd); }
+        } catch (archiveErr) {
+          this.isCorrupted = true;
+          throw new Error(`Failed to archive damaged store before recovery: ${archiveErr}`);
+        }
+      }
+
       try {
         const dir = path.dirname(this.storePath);
         const base = path.basename(this.storePath);
         if (fs.existsSync(dir)) {
-          const prevFiles = fs.readdirSync(dir).filter(f => f === `${base}.prev` || f.startsWith(`${base}.prev`)).sort().reverse();
+          const prevFiles = fs.readdirSync(dir)
+            .filter(f => f === `${base}.prev` || (f.startsWith(`${base}.prev.`) && !f.includes(".prev.prev")))
+            .sort((a, b) => {
+              if (a === `${base}.prev`) return -1;
+              if (b === `${base}.prev`) return 1;
+              return b.localeCompare(a);
+            });
           for (const pf of prevFiles) {
             try {
               const prevRaw = fs.readFileSync(path.join(dir, pf), "utf8");
@@ -797,7 +821,11 @@ export class ServerSettlementAuthority {
                 isValid = true;
                 recovered = true;
                 try {
-                  fs.copyFileSync(path.join(dir, pf), this.storePath);
+                  const tmpRestore = `${this.storePath}.restore.${Date.now()}`;
+                  fs.copyFileSync(path.join(dir, pf), tmpRestore);
+                  const tFd = fs.openSync(tmpRestore, "r");
+                  try { fs.fsyncSync(tFd); } finally { fs.closeSync(tFd); }
+                  fs.renameSync(tmpRestore, this.storePath);
                   const sFd = fs.openSync(this.storePath, "r");
                   try { fs.fsyncSync(sFd); } finally { fs.closeSync(sFd); }
                   const dFd = fs.openSync(dir, "r");
@@ -811,10 +839,16 @@ export class ServerSettlementAuthority {
       } catch {}
 
       if (!recovered && fs.existsSync(this.storePath)) {
-        const corruptBackup = `${this.storePath}.corrupt.${Date.now()}`;
-        try { fs.copyFileSync(this.storePath, corruptBackup); } catch {}
+        if (!archivedCorruptPath) {
+          archivedCorruptPath = `${this.storePath}.corrupt.${Date.now()}`;
+          try {
+            fs.copyFileSync(this.storePath, archivedCorruptPath);
+            const cFd = fs.openSync(archivedCorruptPath, "r");
+            try { fs.fsyncSync(cFd); } finally { fs.closeSync(cFd); }
+          } catch {}
+        }
         this.isCorrupted = true;
-        throw new Error(`Settlement store at ${this.storePath} contains invalid structural schema or corruption. Backed up to ${corruptBackup}. Refusing to overwrite existing ledger.`);
+        throw new Error(`Settlement store at ${this.storePath} contains invalid structural schema or corruption. Backed up to ${archivedCorruptPath}. Refusing to overwrite existing ledger.`);
       }
     }
 

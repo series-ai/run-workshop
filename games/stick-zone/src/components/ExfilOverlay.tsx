@@ -165,7 +165,16 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
   };
 
   const isDead = !sim.player.isAlive && !sim.player.isExtracted;
-  const isModalActive = isDead || (state.kind !== "idle" && state.kind !== "holding_zone") || Boolean(recoveryError);
+  const activeModalKind: "none" | "kia" | "recovery" | "corridor" | "submitting" | "extracted" | "failed" = (() => {
+    if (isDead) return "kia";
+    if (Boolean(recoveryError)) return "recovery";
+    if (state.kind === "corridor_presentation") return "corridor";
+    if (state.kind === "submitting_settlement") return "submitting";
+    if (state.kind === "extracted") return "extracted";
+    if (state.kind === "failed") return "failed";
+    return "none";
+  })();
+  const isModalActive = activeModalKind !== "none";
 
   const modalRef = useRef<HTMLDivElement>(null);
   // Single-flight settlement guard: exactly one corridor->settlement continuation runs.
@@ -236,7 +245,7 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isModalActive, state.kind, isDead, Boolean(recoveryError)]);
+  }, [isModalActive, activeModalKind]);
 
   if (!isModalActive) {
     return null;
@@ -245,7 +254,7 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
   return (
     <div className="exfil-overlay-backdrop">
       {/* Operative Eliminated (K.I.A.) Screen */}
-      {isDead && (
+      {activeModalKind === "kia" && (
         <div
           ref={modalRef}
           tabIndex={-1}
@@ -296,42 +305,45 @@ style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", border
       )}
 
       {/* 2500ms Corridor Presentation */}
-      {!isDead && state.kind === "corridor_presentation" && (
-        <div
-          ref={modalRef}
-          tabIndex={-1}
-          className="exfil-corridor-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="corridor-dialog-title"
-        >
-          <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(245, 158, 11, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, color: "#f59e0b" }}>
-            <Lock style={{ width: 24, height: 24 }} />
+      {activeModalKind === "corridor" && (() => {
+        const corridorDurationMs = state.kind === "corridor_presentation" ? state.durationMs : 2500;
+        return (
+          <div
+            ref={modalRef}
+            tabIndex={-1}
+            className="exfil-corridor-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="corridor-dialog-title"
+          >
+            <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(245, 158, 11, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, color: "#f59e0b" }}>
+              <Lock style={{ width: 24, height: 24 }} />
+            </div>
+            <h2 id="corridor-dialog-title" style={{ fontSize: 20, fontWeight: 800, letterSpacing: "2px", color: "#f59e0b", textTransform: "uppercase", marginBottom: 8 }}>
+              Airlock Corridor Presentation
+            </h2>
+            <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 24 }}>
+              Input frozen. Closing extraction corridor LZ-Charlie before authoritative ledger settlement.
+            </p>
+            <div style={{ width: "100%", height: 10, background: "#1e293b", borderRadius: 9999, overflow: "hidden", border: "1px solid #334155", marginBottom: 8 }}>
+              <div
+                style={{
+                  width: `${Math.min(100, (corridorElapsed / corridorDurationMs) * 100)}%`,
+                  height: "100%",
+                  background: "#f59e0b",
+                  transition: "width 75ms linear",
+                }}
+              />
+            </div>
+            <span style={{ fontSize: 12, color: "#cbd5e1" }}>
+              {Math.max(0, corridorDurationMs - corridorElapsed)}ms remaining
+            </span>
           </div>
-          <h2 id="corridor-dialog-title" style={{ fontSize: 20, fontWeight: 800, letterSpacing: "2px", color: "#f59e0b", textTransform: "uppercase", marginBottom: 8 }}>
-            Airlock Corridor Presentation
-          </h2>
-          <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 24 }}>
-            Input frozen. Closing extraction corridor LZ-Charlie before authoritative ledger settlement.
-          </p>
-          <div style={{ width: "100%", height: 10, background: "#1e293b", borderRadius: 9999, overflow: "hidden", border: "1px solid #334155", marginBottom: 8 }}>
-            <div
-              style={{
-                width: `${Math.min(100, (corridorElapsed / state.durationMs) * 100)}%`,
-                height: "100%",
-                background: "#f59e0b",
-                transition: "width 75ms linear",
-              }}
-            />
-          </div>
-          <span style={{ fontSize: 12, color: "#cbd5e1" }}>
-            {Math.max(0, state.durationMs - corridorElapsed)}ms remaining
-          </span>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Submitting Settlement */}
-      {!isDead && state.kind === "submitting_settlement" && (
+      {activeModalKind === "submitting" && (
         <div
           ref={modalRef}
           tabIndex={-1}
@@ -352,7 +364,7 @@ style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", border
       )}
 
       {/* Extracted Receipt Debrief */}
-      {!isDead && state.kind === "extracted" && (() => {
+      {activeModalKind === "extracted" && (() => {
         const rawReceipt = (state as any).receipt || (sim as any).lastSettlementReceipt || null;
         const isCryptographicallyVerified = Boolean(
           rawReceipt &&
@@ -496,8 +508,8 @@ style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", border
         );
       })()}
 
-      {/* Persistent Terminal Recovery Error Modal (Priority over settlement error) */}
-      {!isDead && Boolean(recoveryError) ? (
+      {/* Persistent Terminal Recovery Error Modal (Priority over extraction states) */}
+      {activeModalKind === "recovery" && (
         <div
           ref={modalRef}
           tabIndex={-1}
@@ -567,68 +579,74 @@ style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", border
             </button>
           </div>
         </div>
-      ) : (
-        /* Recoverable Failure State using Official ExfilController Methods */
-        !isDead && state.kind === "failed" && (
-        <div
-          ref={modalRef}
-          tabIndex={-1}
-          className="exfil-error-card"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="error-dialog-title"
-style={{ padding: 20, background: "#1c1917", border: "1px solid #ef4444", borderRadius: 10, maxWidth: 440, width: "100%", display: "flex", flexDirection: "column", gap: 12, alignItems: "center", textAlign: "center" }}>
-          <div id="error-dialog-title" style={{ color: "#ef4444", fontWeight: 800, fontSize: 14, letterSpacing: "1px", textTransform: "uppercase" }}>
-            Settlement Pipeline Error
-          </div>
-          <div style={{ color: "#fca5a5", fontSize: 12, lineHeight: 1.5 }}>
-            {state.reason}
-          </div>
-          <div style={{ display: "flex", gap: 10, width: "100%", marginTop: 8 }}>
-            {state.canRetry && (
+      )}
+
+      {/* Recoverable Failure State using Official ExfilController Methods */}
+      {activeModalKind === "failed" && (() => {
+        const failReason = state.kind === "failed" ? state.reason : "Settlement pipeline error";
+        const canRetry = state.kind === "failed" ? state.canRetry : true;
+        return (
+          <div
+            ref={modalRef}
+            tabIndex={-1}
+            className="exfil-error-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="error-dialog-title"
+            style={{ padding: 20, background: "#1c1917", border: "1px solid #ef4444", borderRadius: 10, maxWidth: 440, width: "100%", display: "flex", flexDirection: "column", gap: 12, alignItems: "center", textAlign: "center" }}
+          >
+            <div id="error-dialog-title" style={{ color: "#ef4444", fontWeight: 800, fontSize: 14, letterSpacing: "1px", textTransform: "uppercase" }}>
+              Settlement Pipeline Error
+            </div>
+            <div style={{ color: "#fca5a5", fontSize: 12, lineHeight: 1.5 }}>
+              {failReason}
+            </div>
+            <div style={{ display: "flex", gap: 10, width: "100%", marginTop: 8 }}>
+              {canRetry && (
+                <button
+                  onClick={handleRetry}
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleRetry(); } }}
+                  className="exfil-retry-btn"
+                  style={{
+                    flex: 1,
+                    padding: "10px 0",
+                    background: "#dc2626",
+                    border: "none",
+                    borderRadius: 6,
+                    color: "#fff",
+                    fontWeight: 700,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Retry Settlement
+                </button>
+              )}
               <button
-                onClick={handleRetry}
-                autoFocus
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleRetry(); } }}
-                className="exfil-retry-btn"
+                onClick={handleReturnToRaid}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleReturnToRaid(); } }}
+                className="exfil-cancel-btn"
                 style={{
                   flex: 1,
                   padding: "10px 0",
-                  background: "#dc2626",
+                  background: "#334155",
                   border: "none",
                   borderRadius: 6,
-                  color: "#fff",
+                  color: "#e2e8f0",
                   fontWeight: 700,
                   fontSize: 12,
                   cursor: "pointer",
                   textTransform: "uppercase",
                 }}
               >
-                Retry Settlement
+                Return to Raid
               </button>
-            )}
-            <button
-              onClick={handleReturnToRaid}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleReturnToRaid(); } }}
-              className="exfil-cancel-btn"
-              style={{
-                flex: 1,
-                padding: "10px 0",
-                background: "#334155",
-                border: "none",
-                borderRadius: 6,
-                color: "#e2e8f0",
-                fontWeight: 700,
-                fontSize: 12,
-                cursor: "pointer",
-                textTransform: "uppercase",
-              }}
-            >
-              Return to Raid
-            </button>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })()}
     </div>
   );
 };
