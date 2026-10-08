@@ -12,8 +12,8 @@
  *       materials: dark-red paint with baked face shading, near-black glazing, and HDR emissive
  *       values (> 1) for the taillight strip and nozzle throats. ACES rolls the HDR values off into
  *       a hot, saturated red instead of a clipped white.
- *   (2) Plume: one additive ShaderMaterial holding two axial-billboard flames (tapered, with a
- *       white-hot core) plus two camera-facing throat flares. It swells on boost.
+ *   (2) Plume: one additive ShaderMaterial holding twin axial core flames, throat flares, and two
+ *       analytic world ribbons. It swells on boost.
  * Draw-call budget (plan R3 <= 16): 7 city/atmosphere + 4 traffic + 2 shuttle = 13.
  *
  * Unlit by design: the scene has no Light objects, so shading is baked per face from a fixed key
@@ -22,17 +22,20 @@
 import * as THREE from 'three';
 
 import { applySkyriverFog } from './atmosphere';
+import type { WorldWakeSamples } from './flightPresentation';
 
 export interface SkyriverShuttleUpdate {
-  /** Boost intensity from the projection: 1 at rest cruise, ~1.8 while boosting. */
-  readonly boostIntensity: number;
+  /** Shared 0..1 boost presentation value for the core plume and the world wake. */
+  readonly boostVisual: number;
   /** Continuous time in seconds (tick + alpha) for the plume flicker phase. */
   readonly time: number;
+  /** Reused world wake buffer from flightPresentation.sampleWorldWake(). */
+  readonly wake: WorldWakeSamples;
 }
 
 export interface SkyriverShuttle {
   readonly objects: readonly THREE.Object3D[];
-  /** Direct pose write (sim turns: yaw/pitch/roll are revolutions). The plume rides the hull. */
+  /** The hull and short core flames follow this pose. The world wake uses explicit samples. */
   setPose(x: number, y: number, z: number, yawTurns: number, pitchTurns: number, rollTurns?: number): void;
   update(update: SkyriverShuttleUpdate): void;
   dispose(): void;
@@ -220,6 +223,11 @@ const TAIL_Z = -5.6;
 /** T7-3: nozzles sit in the two engine pods (rear corners, under the deck). */
 const NOZZLE_X = 2.05;
 const NOZZLE_Y = -0.42;
+export const SHUTTLE_NOZZLE_ROOTS_LOCAL: readonly [Vec3, Vec3] = Object.freeze([
+  Object.freeze([-NOZZLE_X, NOZZLE_Y, TAIL_Z - 0.5] as const),
+  Object.freeze([NOZZLE_X, NOZZLE_Y, TAIL_Z - 0.5] as const),
+]);
+export const SHUTTLE_WAKE_SAMPLE_COUNT = 32;
 
 function buildHull(): HullBuild {
   const build: HullBuild = { positions: [], colors: [] };
@@ -363,16 +371,41 @@ const PLUME_VERTEX = /* glsl */ `
 attribute vec3 aNozzle;
 attribute vec2 aTS;     // t along the flame 0..1, s across -1..1
 attribute float aKind;
+attribute vec3 aWakeCenter;
+attribute vec3 aWakeTangent;
 
 uniform float uLength;
 uniform vec2 uStripSize;
 uniform float uWidth;
 uniform float uFlare;
+uniform float uWakeRootWidth;
+uniform float uWakeTailWidth;
 
 varying vec2 vTS;
 varying float vKind;
+varying float vWakeDistance;
 
 void main() {
+  if ( aKind > 2.5 ) {
+    vec3 centre = aWakeCenter;
+    vec3 tangent = normalize( aWakeTangent );
+    vec3 right = cross( cameraPosition - centre, tangent );
+    float rightLength = length( right );
+    if ( rightLength < 1e-4 ) {
+      right = cross( vec3( 0.0, 1.0, 0.0 ), tangent );
+      rightLength = length( right );
+    }
+    right = rightLength > 1e-4 ? right / rightLength : vec3( 1.0, 0.0, 0.0 );
+    float t = clamp( aTS.x, 0.0, 1.0 );
+    float halfWidth = 0.5 * mix( uWakeRootWidth, uWakeTailWidth, t );
+    vec3 world = centre + right * ( aTS.y * halfWidth );
+    vTS = vec2( t, aTS.y );
+    vKind = aKind;
+    vWakeDistance = length( cameraPosition - centre );
+    gl_Position = projectionMatrix * viewMatrix * vec4( world, 1.0 );
+    return;
+  }
+
   vec3 nozzle = ( modelMatrix * vec4( aNozzle, 1.0 ) ).xyz;
   vec3 axis = normalize( mat3( modelMatrix ) * vec3( 0.0, 0.0, -1.0 ) );
   vec3 world;
@@ -399,6 +432,7 @@ void main() {
   }
   vTS = aTS;
   vKind = aKind;
+  vWakeDistance = 0.0;
   gl_Position = projectionMatrix * viewMatrix * vec4( world, 1.0 );
 }
 `;
@@ -409,11 +443,14 @@ uniform float uTime;
 
 varying vec2 vTS;
 varying float vKind;
+varying float vWakeDistance;
 
 void main() {
   vec3 outer = vec3( 0.18, 0.5, 1.0 );
   vec3 hot = vec3( 0.85, 0.95, 1.0 );
   vec3 color;
+  float outputIntensity = uIntensity;
+  float outputAlpha = 1.0;
   if ( vKind < 0.5 ) {
     float t = vTS.x;
     float s = vTS.y;
@@ -431,17 +468,35 @@ void main() {
     float disc = exp( - r * r * 5.0 );
     float pin = exp( - r * r * 40.0 );
     color = outer * disc * 0.35 + hot * pin * 0.7;
-  } else {
+  } else if ( vKind < 2.5 ) {
     // The taillight strip's bloom: a hot red bar fading out vertically and at the ends.
     float across = exp( - vTS.y * vTS.y * 7.0 );
     float ends = 1.0 - smoothstep( 0.72, 1.0, abs( vTS.x ) );
     color = vec3( 1.0, 0.04, 0.03 ) * across * ends * 0.3 / max( uIntensity, 0.001 );
+  } else {
+    float t = clamp( vTS.x, 0.0, 1.0 );
+    float side = vTS.y;
+    float halo = exp( - side * side * 2.4 ) * pow( max( 1.0 - t, 0.0 ), 0.65 );
+    float core = exp( - side * side * 18.0 ) * ( 1.0 - smoothstep( 0.12, 0.2, t ) );
+    float tailFade = 1.0 - smoothstep( 0.86, 1.0, t );
+    float distanceFade = 1.0 - smoothstep( 600.0, 3000.0, vWakeDistance );
+    color = outer * halo * 0.42 + hot * core * 0.7;
+    // Two ribbons overlap after the weld, so each carries half the shared brightness cap.
+    outputIntensity = min( uIntensity * 0.16, 0.13 );
+    outputAlpha = tailFade * distanceFade;
   }
-  gl_FragColor = vec4( color * uIntensity, 1.0 );
+  gl_FragColor = vec4( color * outputIntensity, outputAlpha );
 }
 `;
 
-function buildPlumeGeometry(): THREE.BufferGeometry {
+interface PlumeBuild {
+  readonly geometry: THREE.BufferGeometry;
+  readonly wakeStartVertices: readonly [number, number];
+  readonly wakeCenters: Float32Array;
+  readonly wakeTangents: Float32Array;
+}
+
+function buildPlumeGeometry(): PlumeBuild {
   const nozzle: number[] = [];
   const ts: number[] = [];
   const kind: number[] = [];
@@ -449,14 +504,15 @@ function buildPlumeGeometry(): THREE.BufferGeometry {
   let vertex = 0;
   const SEGMENTS = 10;
 
-  for (const side of [-1, 1]) {
-    const nx = side * NOZZLE_X;
-    const nz = TAIL_Z - 0.5;
+  for (const nozzleRoot of SHUTTLE_NOZZLE_ROOTS_LOCAL) {
+    const nx = nozzleRoot[0];
+    const ny = nozzleRoot[1];
+    const nz = nozzleRoot[2];
     // Flame strip: SEGMENTS quads along t.
     const base = vertex;
     for (let i = 0; i <= SEGMENTS; i += 1) {
       for (const s of [-1, 1]) {
-        nozzle.push(nx, NOZZLE_Y, nz);
+        nozzle.push(nx, ny, nz);
         ts.push(i / SEGMENTS, s);
         kind.push(0);
         vertex += 1;
@@ -469,7 +525,7 @@ function buildPlumeGeometry(): THREE.BufferGeometry {
     // Throat flare quad.
     const flare = vertex;
     for (const [u, v] of [[-1, -1], [1, -1], [1, 1], [-1, 1]] as const) {
-      nozzle.push(nx, NOZZLE_Y, nz);
+      nozzle.push(nx, ny, nz);
       ts.push(u, v);
       kind.push(1);
       vertex += 1;
@@ -486,21 +542,48 @@ function buildPlumeGeometry(): THREE.BufferGeometry {
   }
   index.push(strip, strip + 1, strip + 2, strip, strip + 2, strip + 3);
 
+  // Two world ribbons leave the exact nozzle roots and converge onto one path.
+  const wakeStartVertices: [number, number] = [vertex, 0];
+  for (let ribbon = 0; ribbon < 2; ribbon += 1) {
+    wakeStartVertices[ribbon] = vertex;
+    for (let i = 0; i < SHUTTLE_WAKE_SAMPLE_COUNT; i += 1) {
+      const t = i / (SHUTTLE_WAKE_SAMPLE_COUNT - 1);
+      for (const side of [-1, 1]) {
+        nozzle.push(0, 0, 0);
+        ts.push(t, side);
+        kind.push(3);
+        vertex += 1;
+      }
+    }
+    for (let i = 0; i < SHUTTLE_WAKE_SAMPLE_COUNT - 1; i += 1) {
+      const a = wakeStartVertices[ribbon] + i * 2;
+      index.push(a, a + 1, a + 3, a, a + 3, a + 2);
+    }
+  }
+
   const geometry = new THREE.BufferGeometry();
   // three requires a `position` attribute to size the draw; the shader builds positions itself.
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(vertex * 3), 3));
   geometry.setAttribute('aNozzle', new THREE.Float32BufferAttribute(nozzle, 3));
   geometry.setAttribute('aTS', new THREE.Float32BufferAttribute(ts, 2));
   geometry.setAttribute('aKind', new THREE.Float32BufferAttribute(kind, 1));
+  const wakeCenters = new Float32Array(vertex * 3);
+  const wakeTangents = new Float32Array(vertex * 3);
+  const wakeCenterAttribute = new THREE.BufferAttribute(wakeCenters, 3);
+  const wakeTangentAttribute = new THREE.BufferAttribute(wakeTangents, 3);
+  wakeCenterAttribute.setUsage(THREE.DynamicDrawUsage);
+  wakeTangentAttribute.setUsage(THREE.DynamicDrawUsage);
+  geometry.setAttribute('aWakeCenter', wakeCenterAttribute);
+  geometry.setAttribute('aWakeTangent', wakeTangentAttribute);
   geometry.setIndex(index);
-  return geometry;
+  return { geometry, wakeStartVertices, wakeCenters, wakeTangents };
 }
 
-/** Cruise and boost plume shapes, metres. Boost roughly doubles the jet and brightens the core. */
+/** Attached nozzle flames stay short; the world ribbon carries the long exhaust trail. */
 // T7: intensities halved for the bloom pass, which now supplies the glow the raw values used to fake.
 const PLUME_CRUISE = Object.freeze({ length: 8, width: 1.4, flare: 1.2, intensity: 0.55 });
 // R13: boost glare capped (cycle-6: the boost plume bloomed into a white blob over the craft).
-const PLUME_BOOST = Object.freeze({ length: 30, width: 2.3, flare: 1.5, intensity: 0.8 });
+const PLUME_BOOST = Object.freeze({ length: 15, width: 2.3, flare: 1.5, intensity: 0.8 });
 
 export function createSkyriverShuttle(): SkyriverShuttle {
   const build = buildHull();
@@ -516,7 +599,10 @@ export function createSkyriverShuttle(): SkyriverShuttle {
   hull.rotation.order = 'YXZ';
   hull.frustumCulled = false;
 
-  const plumeGeometry = buildPlumeGeometry();
+  const plumeBuild = buildPlumeGeometry();
+  const plumeGeometry = plumeBuild.geometry;
+  const wakeCenterAttribute = plumeGeometry.getAttribute('aWakeCenter') as THREE.BufferAttribute;
+  const wakeTangentAttribute = plumeGeometry.getAttribute('aWakeTangent') as THREE.BufferAttribute;
   const plumeMaterial = new THREE.ShaderMaterial({
     name: 'skyriver.shuttle.plume',
     vertexShader: PLUME_VERTEX,
@@ -530,6 +616,8 @@ export function createSkyriverShuttle(): SkyriverShuttle {
       uWidth: { value: PLUME_CRUISE.width },
       uFlare: { value: PLUME_CRUISE.flare },
       uIntensity: { value: PLUME_CRUISE.intensity },
+      uWakeRootWidth: { value: 2.5 },
+      uWakeTailWidth: { value: 0.5 },
       uTime: { value: 0 },
       uStripSize: { value: new THREE.Vector2(8.6, 2.4) },
     },
@@ -547,16 +635,38 @@ export function createSkyriverShuttle(): SkyriverShuttle {
       hull.position.set(x, y, z);
       hull.rotation.set(-pitchTurns * Math.PI * 2, yawTurns * Math.PI * 2, rollTurns * Math.PI * 2);
     },
-    update({ boostIntensity, time }: SkyriverShuttleUpdate): void {
+    update({ boostVisual, time, wake }: SkyriverShuttleUpdate): void {
       // Pure function of the arguments: no accumulators, so a restore cannot leave a stale flare.
-      const boost = Math.min(1, Math.max(0, (boostIntensity - 1) / 0.8));
+      const boost = Math.min(1, Math.max(0, boostVisual));
       const flicker = 0.92 + 0.08 * Math.sin(time * 37.0) * Math.sin(time * 11.0);
       const u = plumeMaterial.uniforms;
       u.uLength!.value = THREE.MathUtils.lerp(PLUME_CRUISE.length, PLUME_BOOST.length, boost) * (0.95 + 0.05 * flicker);
       u.uWidth!.value = THREE.MathUtils.lerp(PLUME_CRUISE.width, PLUME_BOOST.width, boost);
       u.uFlare!.value = THREE.MathUtils.lerp(PLUME_CRUISE.flare, PLUME_BOOST.flare, boost) * flicker;
       u.uIntensity!.value = THREE.MathUtils.lerp(PLUME_CRUISE.intensity, PLUME_BOOST.intensity, boost) * flicker;
+      u.uWakeRootWidth!.value = wake.rootWidthM;
+      u.uWakeTailWidth!.value = wake.tailWidthM;
       u.uTime!.value = time;
+
+      for (let i = 0; i < SHUTTLE_WAKE_SAMPLE_COUNT; i += 1) {
+        const source = i * 3;
+        for (let ribbon = 0; ribbon < 2; ribbon += 1) {
+          const ribbonCenters = ribbon === 0 ? wake.leftCenters : wake.rightCenters;
+          const ribbonTangents = ribbon === 0 ? wake.leftTangents : wake.rightTangents;
+          const left = (plumeBuild.wakeStartVertices[ribbon] + i * 2) * 3;
+          const right = left + 3;
+          for (let axis = 0; axis < 3; axis += 1) {
+            const center = ribbonCenters[source + axis]!;
+            const tangent = ribbonTangents[source + axis]!;
+            plumeBuild.wakeCenters[left + axis] = center;
+            plumeBuild.wakeCenters[right + axis] = center;
+            plumeBuild.wakeTangents[left + axis] = tangent;
+            plumeBuild.wakeTangents[right + axis] = tangent;
+          }
+        }
+      }
+      wakeCenterAttribute.needsUpdate = true;
+      wakeTangentAttribute.needsUpdate = true;
     },
     dispose(): void {
       hullGeometry.dispose();

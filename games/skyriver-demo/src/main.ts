@@ -33,7 +33,7 @@ import { TRAFFIC_QUALITY_TIERS, createSkyriverTraffic } from './render/traffic';
 import { deriveImpostorAttributes, impostorPosition } from './render/trafficStreams';
 import type { SkyriverTraffic, TrafficQuality } from './render/trafficTypes';
 import { createSkyriverShuttle } from './render/shuttle';
-import { createFlightPresenter } from './render/flightPresentation';
+import { createFlightPresenter, createWorldWakeSamples, sampleWorldWake, SHUTTLE_DRAW_PITCH_SHARE } from './render/flightPresentation';
 import { warpCanyon } from './render/canyonWarp';
 import {
   applyCameraPose,
@@ -373,6 +373,7 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   // T6R: the drawn shuttle pose. Autopilot rides a canyon-run track mapped 1:1 from the sim's own arc
   // length; free flight draws the sim pose (render/flightPresentation.ts). Pure, presentation-only.
   const presenter = createFlightPresenter(seed);
+  const wakeSamples = createWorldWakeSamples();
   for (const object of shuttle.objects) scene.scene.add(object);
 
   const session = createSkyriverRunnerSession(seed, startMode);
@@ -666,7 +667,9 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
 
       // T6R-2: the drawn nose follows under half the climb angle (the sim allows 54 degrees), so the
       // chase view keeps reading the wedge from behind, never a capsule from above or a belly from below.
-      shuttle.setPose(presented.x, presented.y, presented.z, presented.yaw, presented.pitch * 0.45, presented.roll);
+      const time = (state.current.tick + state.alpha) / 30;
+      sampleWorldWake(presented, time, wakeSamples);
+      shuttle.setPose(presented.x, presented.y, presented.z, presented.yaw, presented.pitch * SHUTTLE_DRAW_PITCH_SHARE, presented.roll);
       traffic.setAnchor(
         presented.x, presented.y, presented.z, presented.yaw,
         // 1.8 matches the sim's BOOST_MULTIPLIER (systems.ts).
@@ -674,9 +677,9 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
         presented.canyonV, presented.canyonX,
       );
       shuttle.update({
-        // 1.8 matches the sim's BOOST_MULTIPLIER (systems.ts); the plume pulse softens the edge.
-        boostIntensity: state.flight.boostT > 0 ? 1.8 : 1.0,
-        time: (state.current.tick + state.alpha) / 30,
+        boostVisual: presented.boostVisual,
+        time,
+        wake: wakeSamples,
       });
 
       scene.update(state.current.tick, state.current, state.alpha);

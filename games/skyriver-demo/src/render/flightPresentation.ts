@@ -37,6 +37,7 @@ import { CANYON_LOOP_LENGTH_M, canyonBendApexes, canyonHeading, warpCanyon, type
 import { SKYRIVER_ROOFLINE_MIN_M } from './presentationLayout';
 import { SKYRIVER_SHOWCASE_BEND_V } from './city';
 import { ROUTE_MAX_ALTITUDE_M, routeAltitude, routeAltitudeSlope, routeLateral, routeLateralSlope } from './routeProfile';
+import { SHUTTLE_NOZZLE_ROOTS_LOCAL, SHUTTLE_WAKE_SAMPLE_COUNT } from './shuttle';
 
 const TAU = Math.PI * 2;
 
@@ -58,6 +59,18 @@ const BOOST_RAMP_S = 0.2;
 const BOOST_RELEASE_TICKS = 18;
 /** Mirrors systems.ts PATH_TANGENT_STEP: the sim reads its own heading this far ahead. */
 const PATH_TANGENT_STEP = 0.02;
+/** main.ts uses this same shallow pitch on the hull and in the exhaust nozzle transform. */
+export const SHUTTLE_DRAW_PITCH_SHARE = 0.45;
+export const SHUTTLE_WAKE_CRUISE_LENGTH_M = 80;
+export const SHUTTLE_WAKE_BOOST_LENGTH_M = 160;
+export const SHUTTLE_WAKE_CRUISE_WIDTH_M = 2.5;
+export const SHUTTLE_WAKE_BOOST_WIDTH_M = 4.5;
+export const SHUTTLE_WAKE_TAIL_WIDTH_M = 0.5;
+/** Blend the transformed nozzle into exact route samples over a short weld region. */
+export const SHUTTLE_WAKE_WELD_BLEND_M = 15;
+const WAKE_TURBULENCE_CYCLES = 23;
+const WAKE_TURBULENCE_RATE = 2.7;
+const WAKE_TURBULENCE_M = 0.12;
 
 if (ROUTE_MAX_ALTITUDE_M > SKYRIVER_ROOFLINE_MIN_M - 200) {
   throw new Error('SKYRIVER_ROUTE_ABOVE_ROOFLINE');
@@ -83,6 +96,9 @@ export interface PresentedFlight extends SkyriverFlight {
   /** T7-3: the pose in canyon space (v along the loop, x across). Free flight: the box is straight. */
   readonly canyonV: number;
   readonly canyonX: number;
+  /** Route coordinate and blend weight for the wake's existing autopilot-to-free hand-off. */
+  readonly wakeTrackV: number;
+  readonly wakeTrackWeight: number;
 }
 
 type MutablePresented = { -readonly [K in keyof PresentedFlight]: PresentedFlight[K] };
@@ -97,6 +113,38 @@ export interface TrackPose {
   yaw: number;
   pitch: number;
   roll: number;
+}
+
+/** Minimal current render pose needed to sample the world-space exhaust. */
+export interface ShuttleWakePose {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  readonly yaw: number;
+  readonly pitch: number;
+  readonly roll: number;
+  readonly mode: number;
+  readonly boostVisual: number;
+  readonly canyonV: number;
+  readonly wakeTrackV: number;
+  readonly wakeTrackWeight: number;
+}
+
+/** Reusable arrays and scratch poses for 32 world-space wake samples. */
+export interface WorldWakeSamples {
+  readonly centers: Float32Array;
+  readonly tangents: Float32Array;
+  readonly leftCenters: Float32Array;
+  readonly rightCenters: Float32Array;
+  readonly leftTangents: Float32Array;
+  readonly rightTangents: Float32Array;
+  readonly routeCenters: Float32Array;
+  readonly freeCenters: Float32Array;
+  readonly track: TrackPose;
+  readonly roots: readonly [Float64Array, Float64Array];
+  lengthM: number;
+  rootWidthM: number;
+  tailWidthM: number;
 }
 
 export interface SkyriverFlightPresenter {
@@ -177,6 +225,185 @@ export function autopilotTrackPose(uIn: number, out: TrackPose): TrackPose {
   return out;
 }
 
+function emptyTrackPose(): TrackPose {
+  return { cutFade: 0, v: 0, lateral: 0, x: 0, y: 0, z: 0, yaw: 0, pitch: 0, roll: 0 };
+}
+
+/** Allocate once and reuse for each frame's world-space exhaust update. */
+export function createWorldWakeSamples(): WorldWakeSamples {
+  const floats = SHUTTLE_WAKE_SAMPLE_COUNT * 3;
+  return {
+    centers: new Float32Array(floats),
+    tangents: new Float32Array(floats),
+    leftCenters: new Float32Array(floats),
+    rightCenters: new Float32Array(floats),
+    leftTangents: new Float32Array(floats),
+    rightTangents: new Float32Array(floats),
+    routeCenters: new Float32Array(floats),
+    freeCenters: new Float32Array(floats),
+    track: emptyTrackPose(),
+    roots: [new Float64Array(3), new Float64Array(3)],
+    lengthM: SHUTTLE_WAKE_CRUISE_LENGTH_M,
+    rootWidthM: SHUTTLE_WAKE_CRUISE_WIDTH_M,
+    tailWidthM: SHUTTLE_WAKE_TAIL_WIDTH_M,
+  };
+}
+
+/**
+ * Samples an analytic wake behind the presented pose. Autopilot points use the exact route mapping;
+ * free flight uses the current forward tangent because past input is not available. The explicit
+ * output buffer owns all scratch state, so rewinds and repeated calls need no frame history.
+ */
+export function sampleWorldWake(pose: ShuttleWakePose, time: number, out: WorldWakeSamples): void {
+  const boost = Math.min(1, Math.max(0, pose.boostVisual));
+  const lengthM = SHUTTLE_WAKE_CRUISE_LENGTH_M +
+    (SHUTTLE_WAKE_BOOST_LENGTH_M - SHUTTLE_WAKE_CRUISE_LENGTH_M) * boost;
+  out.lengthM = lengthM;
+  out.rootWidthM = SHUTTLE_WAKE_CRUISE_WIDTH_M +
+    (SHUTTLE_WAKE_BOOST_WIDTH_M - SHUTTLE_WAKE_CRUISE_WIDTH_M) * boost;
+  out.tailWidthM = SHUTTLE_WAKE_TAIL_WIDTH_M;
+
+  const pitch = pose.pitch * SHUTTLE_DRAW_PITCH_SHARE * TAU;
+  const yaw = pose.yaw * TAU;
+  const roll = pose.roll * TAU;
+  const cp = Math.cos(pitch);
+  const sp = Math.sin(pitch);
+  const cy = Math.cos(yaw);
+  const sy = Math.sin(yaw);
+  const cr = Math.cos(roll);
+  const sr = Math.sin(roll);
+  // Match hull.rotation.order = 'YXZ', including the negative draw pitch in setPose().
+  for (let nozzle = 0; nozzle < 2; nozzle += 1) {
+    const [localX, localY, localZ] = SHUTTLE_NOZZLE_ROOTS_LOCAL[nozzle]!;
+    const rzX = localX * cr - localY * sr;
+    const rzY = localX * sr + localY * cr;
+    const rxY = rzY * cp + localZ * sp;
+    const rxZ = -rzY * sp + localZ * cp;
+    const root = out.roots[nozzle]!;
+    root[0] = pose.x + rzX * cy + rxZ * sy;
+    root[1] = pose.y + rxY;
+    root[2] = pose.z - rzX * sy + rxZ * cy;
+  }
+
+  const forwardX = Math.sin(yaw) * cp;
+  const forwardY = sp;
+  const forwardZ = Math.cos(yaw) * cp;
+  const trackWeight = pose.mode === 0 ? 1 : Math.min(1, Math.max(0, pose.wakeTrackWeight));
+  const trackV = pose.mode === 0 ? pose.canyonV : pose.wakeTrackV;
+  const hasTrack = pose.mode === 0 || trackWeight > 0;
+
+  for (let i = 0; i < SHUTTLE_WAKE_SAMPLE_COUNT; i += 1) {
+    const t = i / (SHUTTLE_WAKE_SAMPLE_COUNT - 1);
+    const distance = lengthM * t;
+    const offset = i * 3;
+    const freeX = pose.x - forwardX * distance;
+    const freeY = pose.y - forwardY * distance;
+    const freeZ = pose.z - forwardZ * distance;
+    out.freeCenters[offset] = freeX;
+    out.freeCenters[offset + 1] = freeY;
+    out.freeCenters[offset + 2] = freeZ;
+
+    if (hasTrack) {
+      autopilotTrackPose(trackV - distance, out.track);
+      out.routeCenters[offset] = out.track.x;
+      out.routeCenters[offset + 1] = out.track.y;
+      out.routeCenters[offset + 2] = out.track.z;
+    } else {
+      out.routeCenters[offset] = freeX;
+      out.routeCenters[offset + 1] = freeY;
+      out.routeCenters[offset + 2] = freeZ;
+    }
+
+    if (pose.mode === 0) {
+      out.centers[offset] = out.routeCenters[offset]!;
+      out.centers[offset + 1] = out.routeCenters[offset + 1]!;
+      out.centers[offset + 2] = out.routeCenters[offset + 2]!;
+    } else {
+      out.centers[offset] = out.routeCenters[offset]! * trackWeight + freeX * (1 - trackWeight);
+      out.centers[offset + 1] = out.routeCenters[offset + 1]! * trackWeight + freeY * (1 - trackWeight);
+      out.centers[offset + 2] = out.routeCenters[offset + 2]! * trackWeight + freeZ * (1 - trackWeight);
+    }
+  }
+
+  for (let i = 0; i < SHUTTLE_WAKE_SAMPLE_COUNT; i += 1) {
+    const current = i * 3;
+    const before = (i === 0 ? 0 : i - 1) * 3;
+    const after = (i === SHUTTLE_WAKE_SAMPLE_COUNT - 1 ? i : i + 1) * 3;
+    let tx = out.centers[before]! - out.centers[after]!;
+    let ty = out.centers[before + 1]! - out.centers[after + 1]!;
+    let tz = out.centers[before + 2]! - out.centers[after + 2]!;
+    let tangentLength = Math.hypot(tx, ty, tz) || 1;
+    tx /= tangentLength;
+    ty /= tangentLength;
+    tz /= tangentLength;
+    out.tangents[current] = tx;
+    out.tangents[current + 1] = ty;
+    out.tangents[current + 2] = tz;
+
+    const t = i / (SHUTTLE_WAKE_SAMPLE_COUNT - 1);
+    const distance = lengthM * t;
+    const horizontalLength = Math.hypot(tx, tz);
+    const rightX = horizontalLength > 1e-4 ? tz / horizontalLength : Math.cos(yaw);
+    const rightZ = horizontalLength > 1e-4 ? -tx / horizontalLength : -Math.sin(yaw);
+    const arc = (hasTrack ? trackV : pose.canyonV) - distance;
+    const phase = (TAU * WAKE_TURBULENCE_CYCLES * arc) / CANYON_LOOP_LENGTH_M + time * WAKE_TURBULENCE_RATE;
+    const turbulence = Math.sin(phase) * WAKE_TURBULENCE_M * smoothstep01(distance / SHUTTLE_WAKE_WELD_BLEND_M);
+    out.centers[current] += rightX * turbulence;
+    out.centers[current + 2] += rightZ * turbulence;
+  }
+
+  const rootTangentX = out.tangents[0]!;
+  const rootTangentY = out.tangents[1]!;
+  const rootTangentZ = out.tangents[2]!;
+  for (let i = 0; i < SHUTTLE_WAKE_SAMPLE_COUNT; i += 1) {
+    const t = i / (SHUTTLE_WAKE_SAMPLE_COUNT - 1);
+    const distance = lengthM * t;
+    const current = i * 3;
+    const weld = smoothstep01(distance / SHUTTLE_WAKE_WELD_BLEND_M);
+    for (let nozzle = 0; nozzle < 2; nozzle += 1) {
+      const centers = nozzle === 0 ? out.leftCenters : out.rightCenters;
+      const roots = out.roots[nozzle]!;
+      const rootX = roots[0]! - rootTangentX * distance;
+      const rootY = roots[1]! - rootTangentY * distance;
+      const rootZ = roots[2]! - rootTangentZ * distance;
+      centers[current] = rootX + (out.centers[current]! - rootX) * weld;
+      centers[current + 1] = rootY + (out.centers[current + 1]! - rootY) * weld;
+      centers[current + 2] = rootZ + (out.centers[current + 2]! - rootZ) * weld;
+    }
+  }
+
+  for (let i = 0; i < SHUTTLE_WAKE_SAMPLE_COUNT; i += 1) {
+    const current = i * 3;
+    const before = (i === 0 ? 0 : i - 1) * 3;
+    const after = (i === SHUTTLE_WAKE_SAMPLE_COUNT - 1 ? i : i + 1) * 3;
+    let tx = out.centers[before]! - out.centers[after]!;
+    let ty = out.centers[before + 1]! - out.centers[after + 1]!;
+    let tz = out.centers[before + 2]! - out.centers[after + 2]!;
+    const centerLength = Math.hypot(tx, ty, tz) || 1;
+    tx /= centerLength;
+    ty /= centerLength;
+    tz /= centerLength;
+    out.tangents[current] = tx;
+    out.tangents[current + 1] = ty;
+    out.tangents[current + 2] = tz;
+
+    for (let nozzle = 0; nozzle < 2; nozzle += 1) {
+      const centers = nozzle === 0 ? out.leftCenters : out.rightCenters;
+      const tangents = nozzle === 0 ? out.leftTangents : out.rightTangents;
+      let ribbonX = centers[before]! - centers[after]!;
+      let ribbonY = centers[before + 1]! - centers[after + 1]!;
+      let ribbonZ = centers[before + 2]! - centers[after + 2]!;
+      const ribbonLength = Math.hypot(ribbonX, ribbonY, ribbonZ) || 1;
+      ribbonX /= ribbonLength;
+      ribbonY /= ribbonLength;
+      ribbonZ /= ribbonLength;
+      tangents[current] = ribbonX;
+      tangents[current + 1] = ribbonY;
+      tangents[current + 2] = ribbonZ;
+    }
+  }
+}
+
 export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
   const path = deriveFlightPath(seed);
   const cumulative = new Float64Array(path.count + 1);
@@ -201,7 +428,7 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
   }
 
   const result: MutablePresented = {
-    x: 0, y: 0, z: 0, yaw: 0, pitch: 0, speed: 0, mode: 0, autopilotT: 0, boostT: 0, roll: 0, boostVisual: 0, cutFade: 0, canyonV: 0, canyonX: 0, revealX: 0, revealZ: 0, revealWeight: 0,
+    x: 0, y: 0, z: 0, yaw: 0, pitch: 0, speed: 0, mode: 0, autopilotT: 0, boostT: 0, roll: 0, boostVisual: 0, cutFade: 0, canyonV: 0, canyonX: 0, wakeTrackV: 0, wakeTrackWeight: 1, revealX: 0, revealZ: 0, revealWeight: 0,
   };
   const apexes = canyonBendApexes(900);
   const revealWarp: WarpOut = { x: 0, z: 0, heading: 0 };
@@ -260,6 +487,8 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
       result.speed = flight.speed * speedScale;
       result.canyonV = poseA.v;
       result.canyonX = poseA.lateral;
+      result.wakeTrackV = poseA.v;
+      result.wakeTrackWeight = 1;
       // R13 reveal. The showcase bend: the aim eases in over 2.1 -> 0.8 km before the apex, holds
       // through the last 800 m, and releases in the final 150 m (~4-5 s of the tower owning one side
       // of the frame). Other tight bends get a shorter, weaker version of the same curve.
@@ -297,6 +526,8 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
     // The free-flight box is the loop's straight stretch at v = 0, so canyon space ~ world there.
     result.canyonV = flight.z;
     result.canyonX = flight.x;
+    result.wakeTrackV = flight.z;
+    result.wakeTrackWeight = 0;
     result.yaw = flight.yaw;
     result.pitch = flight.pitch;
 
@@ -311,6 +542,8 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
     // autopilotT is frozen in free flight, so the hand-off point is recoverable from any later tick.
     const frozenT = current.flight.autopilotT;
     autopilotTrackPose(trackU(frozenT), poseA);
+    result.wakeTrackV = poseA.v;
+    result.wakeTrackWeight = ease;
     sampleRing(path, frozenT, ring);
     sampleRing(path, frozenT + PATH_TANGENT_STEP, ringAhead);
     const ringYaw = Math.atan2(ringAhead.x - ring.x, ringAhead.z - ring.z) / TAU;
