@@ -23,6 +23,7 @@ import * as THREE from 'three';
 
 import { applySkyriverFog } from './atmosphere';
 import type { WorldWakeSamples } from './flightPresentation';
+import { SKYRIVER_DEPTH_FADE_GLSL, SkyriverDepthSnapshot } from './depthFade';
 
 export interface SkyriverShuttleUpdate {
   /** Shared 0..1 boost presentation value for the core plume and the world wake. */
@@ -441,6 +442,8 @@ const PLUME_FRAGMENT = /* glsl */ `
 uniform float uIntensity;
 uniform float uTime;
 
+${SKYRIVER_DEPTH_FADE_GLSL}
+
 varying vec2 vTS;
 varying float vKind;
 varying float vWakeDistance;
@@ -485,6 +488,7 @@ void main() {
     outputIntensity = min( uIntensity * 0.16, 0.13 );
     outputAlpha = tailFade * distanceFade;
   }
+  outputIntensity *= skyriverVisibilityFade();
   gl_FragColor = vec4( color * outputIntensity, outputAlpha );
 }
 `;
@@ -585,7 +589,7 @@ const PLUME_CRUISE = Object.freeze({ length: 8, width: 1.4, flare: 1.2, intensit
 // R13: boost glare capped (cycle-6: the boost plume bloomed into a white blob over the craft).
 const PLUME_BOOST = Object.freeze({ length: 15, width: 2.3, flare: 1.5, intensity: 0.8 });
 
-export function createSkyriverShuttle(): SkyriverShuttle {
+export function createSkyriverShuttle(options: { readonly depthFade?: SkyriverDepthSnapshot } = {}): SkyriverShuttle {
   const build = buildHull();
   const hullGeometry = new THREE.BufferGeometry();
   hullGeometry.setAttribute('position', new THREE.Float32BufferAttribute(build.positions, 3));
@@ -603,6 +607,21 @@ export function createSkyriverShuttle(): SkyriverShuttle {
   const plumeGeometry = plumeBuild.geometry;
   const wakeCenterAttribute = plumeGeometry.getAttribute('aWakeCenter') as THREE.BufferAttribute;
   const wakeTangentAttribute = plumeGeometry.getAttribute('aWakeTangent') as THREE.BufferAttribute;
+  const fallbackVisibilityDepth = options.depthFade === undefined
+    ? new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1, THREE.RGBAFormat)
+    : null;
+  if (fallbackVisibilityDepth !== null) {
+    fallbackVisibilityDepth.minFilter = THREE.NearestFilter;
+    fallbackVisibilityDepth.magFilter = THREE.NearestFilter;
+    fallbackVisibilityDepth.generateMipmaps = false;
+    fallbackVisibilityDepth.needsUpdate = true;
+  }
+  const visibilityUniforms = options.depthFade?.uniforms ?? {
+    uVisibilityDepth: { value: fallbackVisibilityDepth },
+    uVisibilityResolution: { value: new THREE.Vector2(1, 1) },
+    uVisibilityCameraRange: { value: new THREE.Vector2(1, 14000) },
+    uVisibilityFadeEnabled: { value: 0 },
+  };
   const plumeMaterial = new THREE.ShaderMaterial({
     name: 'skyriver.shuttle.plume',
     vertexShader: PLUME_VERTEX,
@@ -610,6 +629,7 @@ export function createSkyriverShuttle(): SkyriverShuttle {
     transparent: true,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
+    depthTest: true,
     side: THREE.DoubleSide,
     uniforms: {
       uLength: { value: PLUME_CRUISE.length },
@@ -620,6 +640,7 @@ export function createSkyriverShuttle(): SkyriverShuttle {
       uWakeTailWidth: { value: 0.5 },
       uTime: { value: 0 },
       uStripSize: { value: new THREE.Vector2(8.6, 2.4) },
+      ...visibilityUniforms,
     },
   });
   // The plume is parented to the hull, so the hull's pose is its pose — no copy per frame.
@@ -627,6 +648,9 @@ export function createSkyriverShuttle(): SkyriverShuttle {
   plume.name = 'skyriver.shuttle.plume';
   plume.frustumCulled = false;
   plume.renderOrder = 12;
+  if (options.depthFade !== undefined) {
+    plume.onBeforeRender = (renderer) => options.depthFade!.capture(renderer);
+  }
   hull.add(plume);
 
   return {
@@ -673,6 +697,7 @@ export function createSkyriverShuttle(): SkyriverShuttle {
       hullMaterial.dispose();
       plumeGeometry.dispose();
       plumeMaterial.dispose();
+      fallbackVisibilityDepth?.dispose();
     },
   };
 }

@@ -369,7 +369,7 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   if (options.impostors !== undefined) traffic.setImpostorCount(options.impostors);
   for (const object of traffic.objects) scene.scene.add(object);
 
-  const shuttle = createSkyriverShuttle();
+  const shuttle = createSkyriverShuttle({ depthFade: scene.depthFade });
   // T6R: the drawn shuttle pose. Autopilot rides a canyon-run track mapped 1:1 from the sim's own arc
   // length; free flight draws the sim pose (render/flightPresentation.ts). Pure, presentation-only.
   const presenter = createFlightPresenter(seed);
@@ -865,6 +865,10 @@ export function boot(): SkyriverApp {
 
   // T7 A/B evidence: ?bloom=0 renders the same frame without the post chain.
   if (params.get('bloom') === '0') app.scene.setBloomAllowed(false);
+  // R20 visibility A/B: compare additive-light depth fades with the same opaque scene.
+  if (params.get('depthfade') === '0') app.scene.setVisibilityAllowed(false);
+  if (params.get('contact') === '0') app.scene.setContactAllowed(false);
+  if (params.get('murk') === '0') app.scene.setMurkAllowed(false);
   // R14 device testing: ?tier=high|medium|low pins a quality tier (auto-tiering off), so each tier
   // can be checked on a phone deterministically without waiting for the frame-time manager.
   const tierParam = params.get('tier');

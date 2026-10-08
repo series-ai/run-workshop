@@ -12,6 +12,9 @@ const [url, out] = [process.argv[2], process.argv[3]];
 (async () => {
   const browser = await chromium.launch({ headless: true, args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] });
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  const logs = [];
+  page.on('console', m => { if (m.type() === 'error' || m.text().includes('gl adapter')) logs.push(m.text()); });
+  page.on('pageerror', e => logs.push(e.message));
   await page.goto(url);
   await page.waitForFunction(() => window.__skyriver && window.__skyriver.stats().firstFrameMs !== null, null, { timeout: 20000 });
   await page.waitForTimeout(6000);
@@ -83,6 +86,7 @@ const [url, out] = [process.argv[2], process.argv[3]];
   await page.screenshot({ path: `${out}-vanishing-point.png` });
   const ok = [report.chase, report.vanishingPoint].every((r) => Number.isInteger(r.measured) && r.measured > 0 && Number.isFinite(r.capCarLengths) && r.capCarLengths > 0 && Number.isFinite(r.maxTrailToCarRatio) && r.maxTrailToCarRatio <= r.capCarLengths * 1.02 + 1e-6 && Number.isFinite(r.endWidthShare) && r.endWidthShare > 0 && r.endWidthShare <= 0.6);
   report.pass = ok;
+  report.logs = logs;
   fs.writeFileSync(`${out}-trails.json`, JSON.stringify(report, null, 1));
   console.log(JSON.stringify(report));
   await browser.close();

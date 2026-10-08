@@ -38,6 +38,7 @@ import type { SkyriverProjection } from '../sim/runtime';
 import { SKYRIVER_TICK_RATE } from '../sim/systems';
 import { SkyriverAtmosphere, SKYRIVER_ATMOSPHERE_DRAW_CALL_BUDGET, SKYRIVER_EXPOSURE } from './atmosphere';
 import { SkyriverCity, SKYRIVER_CITY_DRAW_CALL_BUDGET, type SkyriverInteriorMode } from './city';
+import { SkyriverDepthSnapshot } from './depthFade';
 import { presentCityLayout } from './presentationLayout';
 
 /** Bloom pickup spans a broad luminance range. */
@@ -258,6 +259,7 @@ export class SkyriverScene {
   readonly layout: SkyriverCityLayout;
   readonly city: SkyriverCity;
   readonly atmosphere: SkyriverAtmosphere;
+  readonly depthFade: SkyriverDepthSnapshot;
 
   private quality: SkyriverQualitySettings;
   private maxPixelRatio: number;
@@ -320,16 +322,6 @@ export class SkyriverScene {
     // (presentationLayout.ts). Every T3 pass reads this one layout, so they stay consistent.
     this.layout = presentCityLayout(deriveCityLayout(seed));
 
-    this.atmosphere = new SkyriverAtmosphere({ layout: this.layout, quality: this.quality });
-    // The haze colour and depths density live on scene.fog, so three refreshes them into every
-    // fogged material — including anything T4 builds from a built-in material.
-    this.scene.fog = this.atmosphere.fog;
-    this.scene.add(this.atmosphere.group);
-
-    this.city = new SkyriverCity({ layout: this.layout, quality: this.quality });
-    this.scene.add(this.city.group);
-    this.city.setInteriorMode(this.quality.interiors);
-
     const hdrTarget = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType });
     this.composer = new EffectComposer(this.renderer, hdrTarget);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
@@ -342,6 +334,28 @@ export class SkyriverScene {
     this.bloomLevel = this.bloomEnabled ? SKYRIVER_BLOOM_STRENGTH : 0;
     this.composer.addPass(this.bloomPass);
     this.composer.addPass(new OutputPass());
+
+    this.depthFade = new SkyriverDepthSnapshot(this.renderer, [
+      this.composer.renderTarget1,
+      this.composer.renderTarget2,
+    ]);
+    // Reset from the active render target every render. Diagnostic probes also call composer.render
+    // directly after moving the camera, so update() is not the correct reset boundary.
+    this.scene.onBeforeRender = (_renderer, _scene, camera) => this.depthFade.beginSceneRender(camera);
+
+    this.atmosphere = new SkyriverAtmosphere({
+      layout: this.layout,
+      quality: this.quality,
+      depthFade: this.depthFade,
+    });
+    // The haze colour and depths density live on scene.fog, so three refreshes them into every
+    // fogged material — including anything T4 builds from a built-in material.
+    this.scene.fog = this.atmosphere.fog;
+    this.scene.add(this.atmosphere.group);
+
+    this.city = new SkyriverCity({ layout: this.layout, quality: this.quality });
+    this.scene.add(this.city.group);
+    this.city.setInteriorMode(this.quality.interiors);
 
     this.frame = {
       tick: 0,
@@ -382,8 +396,11 @@ export class SkyriverScene {
     const pixelRatio = Math.min(devicePixelRatio, this.maxPixelRatio);
     this.renderer.setPixelRatio(pixelRatio);
     this.renderer.setSize(this.width, this.height, false);
-    this.composer.setPixelRatio(pixelRatio);
-    this.composer.setSize(this.width, this.height);
+    const drawingBuffer = this.renderer.getDrawingBufferSize(this.scratchSize);
+    // Every target uses the same integer drawing-buffer dimensions.
+    this.composer.setPixelRatio(1);
+    this.composer.setSize(drawingBuffer.x, drawingBuffer.y);
+    this.depthFade.resize(drawingBuffer.x, drawingBuffer.y);
     if (this.quality.bloom === 'half') {
       this.bloomPass.setSize(Math.round(this.width * pixelRatio * 0.5), Math.round(this.height * pixelRatio * 0.5));
     }
@@ -467,6 +484,21 @@ export class SkyriverScene {
     this.city.setInteriorMode(allowed ? this.quality.interiors : 'off');
   }
 
+  /** A/B evidence: fade beams and plume against the current opaque depth buffer. */
+  setVisibilityAllowed(allowed: boolean): void {
+    this.depthFade.setAllowed(allowed);
+  }
+
+  /** A/B evidence: use the legacy foot shadow (false) or the tuned contact shading (true). */
+  setContactAllowed(allowed: boolean): void {
+    this.city.setContactAllowed(allowed);
+  }
+
+  /** A/B evidence: use the legacy haze response (false) or the widened, dithered haze (true). */
+  setMurkAllowed(allowed: boolean): void {
+    this.atmosphere.setMurkAllowed(allowed);
+  }
+
   /** A/B evidence and debugging: force bloom off (false) or back to the tier default (true). */
   setBloomAllowed(allowed: boolean): void {
     this.bloomAllowed = allowed;
@@ -532,6 +564,7 @@ export class SkyriverScene {
     this.listeners.length = 0;
     this.city.dispose();
     this.atmosphere.dispose();
+    this.depthFade.dispose();
     this.bloomPass.dispose();
     this.composer.dispose();
     this.renderer.dispose();

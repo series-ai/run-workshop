@@ -88,6 +88,31 @@ export type SkyriverInteriorMode = 'full' | 'near' | 'off';
 /** View-depth fade windows (start, end), metres: rooms within start, emissive panes beyond end. */
 export { SKYRIVER_INTERIOR_FADE };
 
+export const SKYRIVER_CONTACT_AO = Object.freeze({
+  legacyMinimum: 0.35,
+  legacyHeightM: 40,
+  tunedMinimum: 0.6,
+  tunedHeightM: 60,
+  topEdgeDarken: 0.06,
+  topEdgeWidthM: 4,
+});
+
+function contactSmoothstep(edge0: number, edge1: number, value: number): number {
+  const t = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
+export function contactShadowFactor(footHeightM: number, tuned = true): number {
+  const minimum = tuned ? SKYRIVER_CONTACT_AO.tunedMinimum : SKYRIVER_CONTACT_AO.legacyMinimum;
+  const height = tuned ? SKYRIVER_CONTACT_AO.tunedHeightM : SKYRIVER_CONTACT_AO.legacyHeightM;
+  return minimum + (1 - minimum) * contactSmoothstep(0, height, footHeightM);
+}
+
+export function contactTopEdgeFactor(distanceM: number, tuned = true): number {
+  return 1 - (tuned ? SKYRIVER_CONTACT_AO.topEdgeDarken : 0)
+    * (1 - contactSmoothstep(0, SKYRIVER_CONTACT_AO.topEdgeWidthM, distanceM));
+}
+
 /**
  * Tunables, exported so a node-only check can assert them without a GL context. Metres throughout.
  * The window pitch is a real floor height, so windows stay the same size on a 240 m slab and a
@@ -2328,6 +2353,7 @@ uniform float uProjScale;
 uniform float uConcreteLevel;
 uniform vec3 uConcreteAmbient;
 uniform vec3 uWetTint;
+uniform float uContactAllowed;
 
 varying vec2 vSurf;
 varying float vSeed;
@@ -2604,7 +2630,15 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // T7 mass: a contact shadow along the foot of every box (under terraces, crowns, seam blocks) —
   // the deep recesses that make stacked massing read as weight, not decals.
   float footHeight = vSurf.y + vFaceHalf.y;
-  color *= mix( 1.0, mix( 0.35, 1.0, smoothstep( 0.0, 40.0, footHeight ) ), vIsSide );
+  float legacyFoot = mix( ${SKYRIVER_CONTACT_AO.legacyMinimum.toFixed(2)}, 1.0,
+    smoothstep( 0.0, ${SKYRIVER_CONTACT_AO.legacyHeightM.toFixed(1)}, footHeight ) );
+  float tunedFoot = mix( ${SKYRIVER_CONTACT_AO.tunedMinimum.toFixed(2)}, 1.0,
+    smoothstep( 0.0, ${SKYRIVER_CONTACT_AO.tunedHeightM.toFixed(1)}, footHeight ) );
+  float contactFoot = mix( legacyFoot, tunedFoot, uContactAllowed );
+  float topEdgeDistance = max( vFaceHalf.y - vSurf.y, 0.0 );
+  float topEdge = 1.0 - ${SKYRIVER_CONTACT_AO.topEdgeDarken.toFixed(2)}
+    * ( 1.0 - smoothstep( 0.0, ${SKYRIVER_CONTACT_AO.topEdgeWidthM.toFixed(1)}, topEdgeDistance ) ) * uContactAllowed;
+  color *= mix( 1.0, contactFoot * topEdge, vIsSide );
   // Lit parapets on some crowns and terrace tops: a cold line along the top edge that silhouettes
   // the roofline against the haze once bloom catches it.
   float parapetLive = step( 0.6, skyHash11( vSeed * 97.0 + 3.0 ) ) * step( 700.0, vWorldPos.y );
@@ -3361,6 +3395,7 @@ export class SkyriverCity {
         uConcreteLevel: { value: 0.008 },
         uConcreteAmbient: { value: concreteAmbient },
         uWetTint: { value: wetTint },
+        uContactAllowed: { value: 1 },
         uInterior: { value: this.interiorAtlas.texture },
         uInteriorFade: { value: new THREE.Vector2(SKYRIVER_INTERIOR_FADE.full[0], SKYRIVER_INTERIOR_FADE.full[1]) },
         uInteriorStrength: { value: 1 },
@@ -3496,6 +3531,10 @@ export class SkyriverCity {
     u.uInteriorStrength!.value = mode === 'off' ? 0 : 1;
     const fade = mode === 'near' ? SKYRIVER_INTERIOR_FADE.near : SKYRIVER_INTERIOR_FADE.full;
     (u.uInteriorFade!.value as THREE.Vector2).set(fade[0], fade[1]);
+  }
+
+  setContactAllowed(allowed: boolean): void {
+    this.towerMaterial.uniforms.uContactAllowed!.value = allowed ? 1 : 0;
   }
 
   /** The fade window currently in use, metres (for the debug stats). */

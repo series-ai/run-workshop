@@ -32,6 +32,10 @@ import * as THREE from 'three';
 import type { SkyriverCityLayout } from '../sim/derive';
 import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
 import { CANYON_LOOP_LENGTH_M, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
+import {
+  SKYRIVER_DEPTH_FADE_GLSL,
+  SkyriverDepthSnapshot,
+} from './depthFade';
 import { podiumLotHeight } from './presentationLayout';
 
 /** T7-3: god rays and searchlights are derived in canyon space and bent onto the loop here. */
@@ -109,6 +113,50 @@ const COLOR_RAIN = 0x8fa6bd;
 export const SKYRIVER_EXPOSURE = 1.9;
 export const SKYRIVER_EMISSIVE_GAIN = 2.2 / SKYRIVER_EXPOSURE;
 
+export const SKYRIVER_FOG_MIDBAND = Object.freeze({
+  center: 950,
+  legacySpread: 380,
+  broadSpread: 560,
+  gateStart: 400,
+  gateEnd: 700,
+});
+export const SKYRIVER_FOG_DITHER_LEVELS = 255;
+
+function fogSmoothstep(edge0: number, edge1: number, value: number): number {
+  const t = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
+export function skyriverFogMidbandResponse(height: number, murkAllowed = true): number {
+  const oldOffset = (height - SKYRIVER_FOG_MIDBAND.center) / SKYRIVER_FOG_MIDBAND.legacySpread;
+  const broadOffset = (height - SKYRIVER_FOG_MIDBAND.center) / SKYRIVER_FOG_MIDBAND.broadSpread;
+  const oldResponse = Math.exp(-oldOffset * oldOffset);
+  const broadCandidate = Math.exp(-broadOffset * broadOffset);
+  const broadResponse = oldResponse + Math.max(0, broadCandidate - oldResponse)
+    * fogSmoothstep(SKYRIVER_FOG_MIDBAND.gateStart, SKYRIVER_FOG_MIDBAND.gateEnd, height);
+  return murkAllowed ? broadResponse : oldResponse;
+}
+
+export function skyriverFogDither(
+  samples: readonly [number, number, number],
+  fogFactor: number,
+  deepFactor = 0,
+): number {
+  return ((2 * samples[0] - samples[1] - samples[2]) / 4)
+    * Math.min(1, Math.max(0, fogFactor))
+    * (1 - Math.min(1, Math.max(0, deepFactor)))
+    / SKYRIVER_FOG_DITHER_LEVELS;
+}
+
+/** Region systems can set a shared haze tint without changing the fog material contract. */
+export function setSkyriverFogRegionTint(tint: THREE.Color): void {
+  (fogExtraUniforms.uSkyFogRegionTint!.value as THREE.Color).copy(tint);
+}
+
+export function setSkyriverFogMurkAllowed(allowed: boolean): void {
+  fogExtraUniforms.uSkyFogMurkAllowed!.value = allowed ? 1 : 0;
+}
+
 /**
  * R16 rain motion. Stylised: the fall is fast against the share of the craft's speed taken off it,
  * so the streaks fall down the frame with a slight spread toward the camera, not as warp lines.
@@ -182,6 +230,8 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
   uniform float uSkyFogFloorY;
   uniform float uSkyFogRangeY;
   uniform vec3 uSkyFogColorDeep;
+  uniform float uSkyFogMurkAllowed;
+  uniform vec3 uSkyFogRegionTint;
   varying float vFogDepth;
   varying float vSkyFogHeight;
 
@@ -210,13 +260,18 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
     // Squares, not pow(): GLSL pow() is undefined for a negative base, and one NaN pixel blacks out
     // the whole frame once the bloom blur spreads it (found in T7).
     float lowBand = ( h - 250.0 ) / 260.0;
-    float midBand = ( h - 950.0 ) / 380.0;
+    float oldMidBand = ( h - ${SKYRIVER_FOG_MIDBAND.center.toFixed(1)} ) / ${SKYRIVER_FOG_MIDBAND.legacySpread.toFixed(1)};
+    float broadMidBand = ( h - ${SKYRIVER_FOG_MIDBAND.center.toFixed(1)} ) / ${SKYRIVER_FOG_MIDBAND.broadSpread.toFixed(1)};
     // R16 ambient III: the scattered-light terms of the haze are the ambient the operator still read
     // in the low half of the lap (fog colour ~0.03-0.055 linear lands at 48-68/255 after ACES + sRGB,
     // and every distant pixel is fogged). Low-band colours cut to a quarter, mid and high to ~60%;
     // density untouched.
     color += vec3( 0.01, 0.0, 0.0075 ) * exp( - lowBand * lowBand );
-    color += vec3( 0.0, 0.018, 0.024 ) * exp( - midBand * midBand );
+    float oldMidResponse = exp( - oldMidBand * oldMidBand );
+    float broadCandidate = exp( - broadMidBand * broadMidBand );
+    float broadMidResponse = oldMidResponse + max( broadCandidate - oldMidResponse, 0.0 )
+      * smoothstep( ${SKYRIVER_FOG_MIDBAND.gateStart.toFixed(1)}, ${SKYRIVER_FOG_MIDBAND.gateEnd.toFixed(1)}, h );
+    color += vec3( 0.0, 0.018, 0.024 ) * mix( oldMidResponse, broadMidResponse, uSkyFogMurkAllowed );
     // T7-3 strata: warm smog over the grime, cool clean air in the pristine heights.
     float grimeAir = 1.0 - smoothstep( 300.0, 800.0, h );
     // R17: the grime smog is a near-neutral grey at the old smog's luminance; warmth stays in the lit
@@ -227,14 +282,29 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
     // R17: the deck's scattered light is a neutral grey, not orange: down the canyon it was the amber
     // 'distance' the operator read (same luminance, no hue).
     color += vec3( 0.0083, 0.0079, 0.0086 ) * exp( - max( h - 40.0, 0.0 ) / 220.0 ) * ( 1.0 - skyriverFogDeep() * 0.6 );
-    return mix( color, uSkyFogColorDeep, skyriverFogDeep() );
+    color = mix( color, uSkyFogColorDeep, skyriverFogDeep() );
+    return color * mix( vec3( 1.0 ), uSkyFogRegionTint, 0.12 * uSkyFogMurkAllowed );
+  }
+  float skyriverFogInterleavedGradient( vec2 pixel ) {
+    return fract( 52.9829189 * fract( dot( pixel, vec2( 0.06711056, 0.00583715 ) ) ) );
+  }
+  // A three-tap high-pass removes the constant term and concentrates dither energy at pixel scale.
+  float skyriverFogDither( vec2 pixel ) {
+    float centre = skyriverFogInterleavedGradient( pixel );
+    float right = skyriverFogInterleavedGradient( pixel + vec2( 1.0, 0.0 ) );
+    float up = skyriverFogInterleavedGradient( pixel + vec2( 0.0, 1.0 ) );
+    return ( 2.0 * centre - right - up ) * 0.25;
   }
 #endif
 `;
 
 const FOG_FRAGMENT = /* glsl */ `
 #ifdef USE_FOG
-  gl_FragColor.rgb = mix( gl_FragColor.rgb, skyriverFogColor(), skyriverFogFactor() );
+  float fogFactor = skyriverFogFactor();
+  gl_FragColor.rgb = mix( gl_FragColor.rgb, skyriverFogColor(), fogFactor );
+  float dither = skyriverFogDither( floor( gl_FragCoord.xy ) );
+  float ditherGate = 1.0 - skyriverFogDeep();
+  gl_FragColor.rgb += vec3( dither * fogFactor * ditherGate * uSkyFogMurkAllowed / ${SKYRIVER_FOG_DITHER_LEVELS.toFixed(1)} );
 #endif
 `;
 
@@ -281,6 +351,8 @@ const fogExtraUniforms: Record<string, THREE.IUniform> = {
   uSkyFogFloorY: { value: SKYRIVER_ATMOSPHERE.fogFloorY },
   uSkyFogRangeY: { value: SKYRIVER_ATMOSPHERE.fogRangeY },
   uSkyFogColorDeep: { value: new THREE.Color(COLOR_FOG_DEEP) },
+  uSkyFogRegionTint: { value: new THREE.Color(1, 1, 1) },
+  uSkyFogMurkAllowed: { value: 1 },
 };
 
 /**
@@ -398,6 +470,7 @@ varying float vBeamSeed;
 varying vec3 vBeamParams;
 
 #include <fog_pars_fragment>
+${SKYRIVER_DEPTH_FADE_GLSL}
 ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${SKYRIVER_HASH_GLSL}
 
@@ -418,12 +491,14 @@ void main() {
     // Additive: fade the beam out with distance instead of mixing it toward the haze colour.
     gl_FragColor.rgb *= 1.0 - skyriverFogFactor();
   #endif
+  gl_FragColor.rgb *= skyriverVisibilityFade();
 }
 `;
 
 interface BeamFieldOptions {
   readonly name: string;
   readonly capacity: number;
+  readonly depthFade: SkyriverDepthSnapshot;
 }
 
 /** Per-beam look: brightness, Gaussian softness across the shaft, where it starts to fade along it. */
@@ -495,6 +570,7 @@ class BeamField {
       fragmentShader: BEAM_FRAGMENT,
       uniforms: {
         uTime: { value: 0 },
+        ...options.depthFade.uniforms,
         ...ownFogUniforms(),
       },
       transparent: true,
@@ -512,6 +588,7 @@ class BeamField {
     // what the A3 smoke test asserts.
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = 5;
+    this.mesh.onBeforeRender = (renderer) => options.depthFade.capture(renderer);
     quad.dispose();
   }
 
@@ -774,6 +851,7 @@ export function deriveGodRayAnchors(layout: SkyriverCityLayout): readonly Skyriv
 export interface SkyriverAtmosphereOptions {
   readonly layout: SkyriverCityLayout;
   readonly quality: SkyriverQualitySettings;
+  readonly depthFade: SkyriverDepthSnapshot;
 }
 
 export interface SkyriverAtmosphereStats {
@@ -816,8 +894,11 @@ export class SkyriverAtmosphere {
   private readonly scratchAxis = new THREE.Vector3();
   private readonly scratchColor = new THREE.Color();
   private readonly searchlightOrigins: readonly THREE.Vector3[];
+  private readonly fogRegionTint = new THREE.Color(1, 1, 1);
+  private fogTintRegion = Number.NaN;
+  private fogTintElapsed = 0;
 
-  constructor({ layout, quality }: SkyriverAtmosphereOptions) {
+  constructor({ layout, quality, depthFade }: SkyriverAtmosphereOptions) {
     installSkyriverFogChunks();
     this.quality = quality;
     this.group.name = 'skyriver.atmosphere';
@@ -860,6 +941,7 @@ export class SkyriverAtmosphere {
     this.beams = new BeamField({
       name: 'skyriver.beams',
       capacity: SKYRIVER_ATMOSPHERE.searchlightCount + SKYRIVER_ATMOSPHERE.godRayMaxCount,
+      depthFade,
     });
     this.group.add(this.beams.mesh);
     this.searchlightOrigins = this.deriveSearchlightOrigins(layout);
@@ -905,6 +987,10 @@ export class SkyriverAtmosphere {
     this.updateScreenPass();
   }
 
+  setMurkAllowed(allowed: boolean): void {
+    setSkyriverFogMurkAllowed(allowed);
+  }
+
   /** Searchlights always; god rays only on the tiers that have them (they sit after the lights). */
   private updateBeamCount(): void {
     this.beams.setCount(this.searchlightOrigins.length + (this.quality.godRays ? this.anchors.length : 0));
@@ -921,6 +1007,7 @@ export class SkyriverAtmosphere {
 
   update(frame: SkyriverFrame): void {
     const { time, camera } = frame;
+    this.updateFogRegionTint(frame.dt, camera.position.z);
 
     // One copy, no allocation: the dome is a unit sphere riding the camera.
     this.skyMesh.position.copy(camera.position);
@@ -937,6 +1024,30 @@ export class SkyriverAtmosphere {
 
     if (this.quality.rainStreaks) this.updateRain(frame);
     this.rainMaterial.uniforms.uTime.value = time;
+  }
+
+  private updateFogRegionTint(dt: number, worldZ: number): void {
+    const region = Math.floor(worldZ / 5000);
+    if (!Number.isFinite(this.fogTintRegion)) {
+      this.applyFogRegionTint(region);
+      return;
+    }
+    this.fogTintElapsed += dt;
+    if (this.fogTintElapsed < 1) return;
+    this.fogTintElapsed = 0;
+    if (region === this.fogTintRegion) return;
+    this.applyFogRegionTint(region);
+  }
+
+  private applyFogRegionTint(region: number): void {
+    this.fogTintRegion = region;
+    const seed = region * 17.17 + 3.71;
+    this.fogRegionTint.setRGB(
+      1 + (hash1(seed) - 0.5) * 0.02,
+      1 + (hash1(seed + 11.3) - 0.5) * 0.02,
+      1 + (hash1(seed + 29.7) - 0.5) * 0.02,
+    );
+    setSkyriverFogRegionTint(this.fogRegionTint);
   }
 
   /**
