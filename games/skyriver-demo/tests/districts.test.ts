@@ -821,6 +821,23 @@ describe('R22 single district query', () => {
 describe('R22 shader colour paths', () => {
   const source = SKYRIVER_CITY_SHADER_SOURCE;
 
+  it('keeps the owner material seed constant across each rendered face', () => {
+    expect(source.towerVertex).toContain('flat varying float vMaterial;');
+    expect(source.towerFragment).toContain('flat varying float vMaterial;');
+    expect(source.towerFragment).toContain('color += heroSpill * 0.2 * contactAo;');
+    expect(source.towerFragment).toContain('fresnel * 1.4 * vIsSide * contactAo;');
+  });
+
+  it('matches the pane and room source records to the rendered hue rule', () => {
+    const terms = SKYRIVER_DISTRICT_SOURCE_TERMS.filter((term) =>
+      term.role === 'resolved pane' || term.role === 'room glass tint');
+    expect(terms).toHaveLength(10);
+    const define = source.towerFragment.match(/#define DISTRICT_PANE_SATURATION ([0-9.]+)/);
+    expect(define).not.toBeNull();
+    for (const term of terms) expect(term.saturation).toBe(Number(define![1]));
+    expect(source.towerFragment).toContain('resolved = skyriverDistrictTint( resolved, vDistrict, DISTRICT_PANE_SATURATION );');
+  });
+
   it('carries one colour chunk, one switch and one luminance definition per fragment shader', () => {
     expect(source.districtColour).toContain('uniform float uDistrictColour;');
     expect(source.districtColour).toContain('mix( c, y * mix( vec3( 1.0 ), unitHue, saturation ), uDistrictColour )');
@@ -839,7 +856,7 @@ describe('R22 shader colour paths', () => {
     // Signs: the complete emission, after core, halo, plate, angle, intensity and proximity ease.
     expect(source.signFragment).toContain('color = skyriverDistrictEmission( color, vDistrictTint.rgb, vDistrictTint.w );');
     // Rooms and resolved panes, then the matched far pane average.
-    expect(source.towerFragment).toContain('resolved = skyriverDistrictTint( resolved, vDistrict, DISTRICT_ROOM_SATURATION );');
+    expect(source.towerFragment).toContain('resolved = skyriverDistrictTint( resolved, vDistrict, DISTRICT_PANE_SATURATION );');
     expect(source.towerFragment).toContain('averaged = skyriverDistrictTint( averaged, vDistrict, DISTRICT_PANE_SATURATION );');
     // R15 far box windows, the crown parapet line, the deck skylights and the R13 landmark wash.
     expect(source.towerFragment).toContain('skyriverDistrictTint( farWindow, vDistrict, DISTRICT_PANE_SATURATION )');
