@@ -127,8 +127,8 @@ const [url, out, secs] = [process.argv[2], process.argv[3], +(process.argv[4] ||
       const src = [];
       const useImp = !only || only.has('skyriver.traffic.impostors'); const useCpu = !only || only.has('skyriver.traffic.streaks');
       if (useImp) for (let i = 0; i < n; i += 1) { D.impostorPosition(attrs, i, t, ip); pv.set(ip.x, ip.y, ip.z).project(cam); if (pv.z < 1 && Math.abs(pv.x) < 1.05 && Math.abs(pv.y) < 1.05) { const k = (attrs.pathArcPhaseSeed || attrs.streamArcPhaseSeed)[i * 4]; src.push([(pv.x + 1) * W / 2, (pv.y + 1) * H / 2, Math.hypot(ip.x - cam.position.x, ip.y - cam.position.y, ip.z - cam.position.z), k < 8 ? 'stream' : k < 14 ? 'lane' : k < 20 ? 'ring' : 'free', i, ip.x, ip.y, ip.z]); } }
-      const g = streak.geometry; const P = g.getAttribute('aCarPos').array;
-      if (useCpu) for (let i = 0; i < g.instanceCount; i += 1) { pv.set(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]).project(cam); if (pv.z < 1 && Math.abs(pv.x) < 1.05 && Math.abs(pv.y) < 1.05) src.push([(pv.x + 1) * W / 2, (pv.y + 1) * H / 2, Math.hypot(P[i * 3] - cam.position.x, P[i * 3 + 1] - cam.position.y, P[i * 3 + 2] - cam.position.z), 'cpu', -1, P[i * 3], P[i * 3 + 1], P[i * 3 + 2]]); }
+      const g = streak.geometry; const P = g.getAttribute('aCarPos').array; const L = g.getAttribute('aCarLod')?.array;
+      if (useCpu) for (let i = 0; i < g.instanceCount; i += 1) { pv.set(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]).project(cam); if (pv.z < 1 && Math.abs(pv.x) < 1.05 && Math.abs(pv.y) < 1.05) src.push([(pv.x + 1) * W / 2, (pv.y + 1) * H / 2, Math.hypot(P[i * 3] - cam.position.x, P[i * 3 + 1] - cam.position.y, P[i * 3 + 2] - cam.position.z), L && L[i * 3 + 1] > 0.001 ? 'same_car_impostor' : 'cpu', -1, P[i * 3], P[i * 3 + 1], P[i * 3 + 2]]); }
       for (; attributed < lightEvents.length; attributed += 1) {
         const e = lightEvents[attributed]; const ex = e.px[0] + 2; const ey = H - e.px[1] - 2;
         let best = null; let bd = 100;
@@ -209,9 +209,9 @@ const [url, out, secs] = [process.argv[2], process.argv[3], +(process.argv[4] ||
       requestAnimationFrame(frame);
     });
     a.scene.update = origUpdate;
-    const impostorEvents = lightEvents.filter(e => ['stream','lane','ring','free'].includes(e.cls) && e.occluded === false).map(e => ({...e, eventClass: 'impostorPop'}));
-    counts.impostorPop = impostorEvents.length;
-    return { counts, events, lightEvents, impostorEvents, endTick: a.stats().tick, towers: n, dumps: window.__dumps || [] };
+    const impostorEvents = lightEvents.filter(e => ['stream','lane','ring','free','same_car_impostor'].includes(e.cls) && e.occluded === false).map(e => ({...e, eventClass: 'impostorPop'}));
+    counts.impostorPop = window.__POP_LAYER === 'traffic' ? impostorEvents.length : null;
+    return { counts, impostorAttributionEnabled: window.__POP_LAYER === 'traffic', events, lightEvents, impostorEvents, endTick: a.stats().tick, towers: n, dumps: window.__dumps || [] };
   }, secs);
   result.logs = logs; result.adapter = logs.find(x => x.includes('gl adapter')); fs.writeFileSync(out, JSON.stringify(result, null, 1));
   const ticks = result.events.filter((e) => e.type === 'cameraInsideBuilding').map((e) => e.tick);
