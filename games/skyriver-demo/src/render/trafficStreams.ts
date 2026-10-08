@@ -62,24 +62,13 @@ export const IMPOSTOR_RINGS: readonly (readonly number[])[] = Object.freeze([
   [7000, 10900, 1, 6, 600, 230, 900, 250, 5, 0.16],
   [8200, 11600, -1, 4, 500, 160, 1000, 300, 3, 0.14],
 ]);
-/** Impostor shares: canyon streams, canyon lanes, sky rings. */
-const IMPOSTOR_STREAM_SHARE = 0.25;
-const IMPOSTOR_LANE_SHARE = 0.1;
-const IMPOSTOR_RING_SHARE = 0.2;
-/**
- * The rest are free floaters: scattered through the whole corridor volume like the CPU free cars
- * (random lateral and height homes, slow drift and climb, either direction). Measured (R18): the
- * baseline's scattered distant dots were mostly those, and stream rows alone left the far canyon
- * emptier than before.
- */
-export const IMPOSTOR_FREE_MIN_Y_M = 120;
-export const IMPOSTOR_FREE_MAX_Y_M = 2600;
-/**
- * Impostor path indices: streams and lanes (table rows, < IMPOSTOR_PATHS.length), then rings, then
- * one index for every free floater.
- */
-export const IMPOSTOR_PATH_COUNT = 8 + 6 + 6 + 1;
-export const IMPOSTOR_FREE_INDEX = IMPOSTOR_PATH_COUNT - 1;
+/** Normalize the existing stream, lane, and ring shares to fill the GPU impostor set. */
+const IMPOSTOR_EXISTING_SHARE = 0.25 + 0.1 + 0.2;
+const IMPOSTOR_STREAM_SHARE = 0.25 / IMPOSTOR_EXISTING_SHARE;
+const IMPOSTOR_LANE_SHARE = 0.1 / IMPOSTOR_EXISTING_SHARE;
+const IMPOSTOR_RING_SHARE = 0.2 / IMPOSTOR_EXISTING_SHARE;
+/** Path indices: streams and lanes use the baked table, then the world-space rings. */
+export const IMPOSTOR_PATH_COUNT = IMPOSTOR_PATHS.length + IMPOSTOR_RINGS.length;
 
 let centroidCache: { x: number; z: number } | null = null;
 /** The loop's centroid in world xz, the rings' centre. */
@@ -227,8 +216,8 @@ export function impostorHash(i: number, channel: number): number {
 }
 
 /**
- * Per-impostor attributes. `streamArcPhaseSeed` packs (stream index, arc offset 0..1 of the loop,
- * motion phase 0..1, appearance seed 0..1); `row` is the sub-row position 0..1.
+ * Per-impostor attributes. `streamArcPhaseSeed` packs a path index (stream, lane, or ring), arc
+ * offset 0..1 of the loop, motion phase 0..1, and appearance seed 0..1. `row` is 0..1.
  */
 export interface ImpostorAttributes {
   readonly count: number;
@@ -237,8 +226,8 @@ export interface ImpostorAttributes {
 }
 
 /**
- * Impostor population for a seed: stream membership by the streams' shares, arc offsets squeezed
- * into the same density pulses (clumps and gaps) the CPU stream cars use. Pure.
+ * Impostor population for a seed: normalized path shares and arc offsets squeezed into density
+ * pulses (clumps and gaps). Pure.
  */
 export function deriveImpostorAttributes(seed: number, count: number): ImpostorAttributes {
   if (!Number.isInteger(count) || count < 0) throw new Error('SKYRIVER_IMPOSTOR_COUNT_INVALID');
@@ -251,8 +240,6 @@ export function deriveImpostorAttributes(seed: number, count: number): ImpostorA
   for (const st of STREAMS) { total += st[9]! * IMPOSTOR_STREAM_SHARE; shares.push(total); }
   for (const lane of IMPOSTOR_LANES) { total += (lane[9]! / laneTotal) * IMPOSTOR_LANE_SHARE; shares.push(total); }
   for (const ring of IMPOSTOR_RINGS) { total += (ring[9]! / ringTotal) * IMPOSTOR_RING_SHARE; shares.push(total); }
-  total += 1 - IMPOSTOR_STREAM_SHARE - IMPOSTOR_LANE_SHARE - IMPOSTOR_RING_SHARE;
-  shares.push(total);
   const salt = mix32(Math.imul(seed | 0, 0x2545f491) ^ 0x1f2e3d4c);
   for (let i = 0; i < count; i += 1) {
     const h = (k: number): number => impostorHash((i + salt) | 0, k);
@@ -260,14 +247,12 @@ export function deriveImpostorAttributes(seed: number, count: number): ImpostorA
     let k = 0;
     while (k < IMPOSTOR_PATH_COUNT - 1 && shares[k]! <= pick) k += 1;
     // Clumps: rings use 6-10 pulses (their [8] is the meander lobe count).
-    const pulses = k < IMPOSTOR_PATHS.length ? IMPOSTOR_PATHS[k]![8]! : k === IMPOSTOR_FREE_INDEX ? 1 : 6 + (k % 5);
+    const pulses = k < IMPOSTOR_PATHS.length ? IMPOSTOR_PATHS[k]![8]! : 6 + (k % 5);
     const slot = h(0x102) * pulses;
     const pulse = Math.floor(slot);
     const fill = 0.22 + 0.4 * hash01(k * 97 + pulse, 0x9a11);
     const offset = hash01(k * 131 + pulse, 0x9a12) * (1 - fill);
-    // Free floaters are spread evenly round the loop (no clumps: one "pulse" squeezed them all into
-    // a third of it, and end-on that pile-up bloomed into blocks).
-    const arc = k === IMPOSTOR_FREE_INDEX ? h(0x102) : (pulse + offset + Math.pow(slot - pulse, 0.8) * fill) / pulses;
+    const arc = (pulse + offset + Math.pow(slot - pulse, 0.8) * fill) / pulses;
     streamArcPhaseSeed[i * 4] = k;
     streamArcPhaseSeed[i * 4 + 1] = arc;
     streamArcPhaseSeed[i * 4 + 2] = h(0x103);
@@ -288,35 +273,6 @@ export function impostorPosition(attrs: ImpostorAttributes, i: number, t: number
   const phase = attrs.streamArcPhaseSeed[i * 4 + 2]!;
   const seed = attrs.streamArcPhaseSeed[i * 4 + 3]!;
   const row = attrs.row[i]!;
-  if (k === IMPOSTOR_FREE_INDEX) {
-    // Free floater: a home across the corridor and in height, drifting; either direction.
-    const dir = phase < 0.5 ? -1 : 1;
-    const speed = 60 + 150 * seed;
-    const homeX = (seed * 2 - 1) * STREAM_CORRIDOR_HALF_M;
-    const homeY = IMPOSTOR_FREE_MIN_Y_M + Math.pow(row, 0.9) * (IMPOSTOR_FREE_MAX_Y_M - IMPOSTOR_FREE_MIN_Y_M);
-    let v = (arc * L + dir * speed * t) % L;
-    if (v < 0) v += L;
-    const xf = Math.min(STREAM_CORRIDOR_HALF_M, Math.max(-STREAM_CORRIDOR_HALF_M, homeX + (12 + 40 * row) * Math.sin(t * (0.05 + 0.13 * seed) + phase * 37.0)));
-    const yf = homeY + (6 + 30 * seed) * Math.sin(t * (0.04 + 0.12 * row) + phase * 23.0);
-    const f = v / STREAM_PATH_STEP_M;
-    const i0 = Math.min(STREAM_PATH_SAMPLES - 1, Math.floor(f));
-    const fr = f - i0;
-    const r0 = (IMPOSTOR_PATHS.length * table.width + i0) * 4;
-    const r1 = r0 + 4;
-    const wx = table.data[r0]! + (table.data[r1]! - table.data[r0]!) * fr;
-    const wz = table.data[r0 + 1]! + (table.data[r1 + 1]! - table.data[r0 + 1]!) * fr;
-    let hc = table.data[r0 + 2]! + (table.data[r1 + 2]! - table.data[r0 + 2]!) * fr;
-    let hs = table.data[r0 + 3]! + (table.data[r1 + 3]! - table.data[r0 + 3]!) * fr;
-    const hl = Math.hypot(hc, hs) || 1;
-    hc /= hl;
-    hs /= hl;
-    out.x = wx + xf * hc;
-    out.y = yf;
-    out.z = wz - xf * hs;
-    out.dx = hs * dir;
-    out.dz = hc * dir;
-    return;
-  }
   if (k >= IMPOSTOR_PATHS.length) {
     // Air-traffic ring (world space).
     const rg = IMPOSTOR_RINGS[k - IMPOSTOR_PATHS.length]!;

@@ -75,7 +75,7 @@ import {
   IMPOSTOR_LIGHT_HANDOVER_BAND_M,
   IMPOSTOR_SUPPORT_TAPER_BAND,
 } from './lightHandover';
-import { IMPOSTOR_FREE_MAX_Y_M, IMPOSTOR_FREE_MIN_Y_M, IMPOSTOR_PATHS, IMPOSTOR_RINGS, STREAMS, loopCentroid, STREAM_CORRIDOR_HALF_M, STREAM_PATH_SAMPLES, STREAM_PATH_STEP_M, deriveImpostorAttributes, streamPathTable } from './trafficStreams';
+import { IMPOSTOR_PATHS, IMPOSTOR_RINGS, STREAMS, loopCentroid, STREAM_CORRIDOR_HALF_M, STREAM_PATH_SAMPLES, STREAM_PATH_STEP_M, deriveImpostorAttributes, streamPathTable } from './trafficStreams';
 import type {
   SkyriverTraffic,
   SkyriverTrafficOptions,
@@ -886,7 +886,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
 `;
 
 /* ------------------------------------------------------------------------------------------------
- * R18 GPU impostor cars: one instanced quad per car, position evaluated here from the baked stream
+ * R18 GPU impostor cars: one instanced quad per car, position evaluated here from the baked path
  * path table (trafficStreams.ts; impostorPosition is the CPU mirror — keep the two in step). Each
  * instance carries only (stream, arc offset, phase, seed) and a sub-row; update() advances uTime.
  * Drawn as a lamp sprite with a short micro-streak behind it: the head lamps' warm white seen from
@@ -895,7 +895,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
 
 const IMPOSTOR_VERTEX = /* glsl */ `
 attribute vec2 aCorner;      // x: 0 lamp end, 1 streak end; y: side -1..1
-attribute vec4 aImp;         // stream, arc offset 0..1, phase 0..1, seed 0..1
+attribute vec4 aImp;         // path index, arc offset 0..1, phase 0..1, seed 0..1
 attribute float aImpRow;     // sub-row 0..1
 
 uniform sampler2D uPaths;    // rows 0..NSTREAMS-1: stream centre (x, y); row NSTREAMS: warp (cx, cz, cos, sin)
@@ -952,24 +952,6 @@ void ringPose( int ring, out vec3 pos, out vec3 dir ) {
   dir = vec3( - sin( theta ), 0.0, cos( theta ) ) * ra.z;
 }
 
-void freePose( out vec3 pos, out vec3 dir ) {
-  // R18 free floater (trafficStreams.impostorPosition's free branch): scattered through the corridor.
-  float row = aImpRow;
-  float phase = aImp.z;
-  float seed = aImp.w;
-  float d = phase < 0.5 ? - 1.0 : 1.0;
-  float speed = 60.0 + 150.0 * seed;
-  float homeX = ( seed * 2.0 - 1.0 ) * uCorridor;
-  float homeY = FREE_MIN_Y + pow( row, 0.9 ) * ( FREE_MAX_Y - FREE_MIN_Y );
-  float v = mod( aImp.y * uLoop + d * speed * uTime, uLoop );
-  float xf = clamp( homeX + ( 12.0 + 40.0 * row ) * sin( uTime * ( 0.05 + 0.13 * seed ) + phase * 37.0 ), - uCorridor, uCorridor );
-  float yf = homeY + ( 6.0 + 30.0 * seed ) * sin( uTime * ( 0.04 + 0.12 * row ) + phase * 23.0 );
-  vec4 w = pathAt( NSTREAMS, v / uPathStep );
-  vec2 h = normalize( w.zw );
-  pos = vec3( w.x + xf * h.x, yf, w.y - xf * h.y );
-  dir = vec3( h.y, 0.0, h.x ) * d;
-}
-
 void main() {
   int k = int( aImp.x + 0.5 );
   float row = aImpRow;
@@ -977,9 +959,7 @@ void main() {
   float seed = aImp.w;
   vec3 pos;
   vec3 dir;
-  if ( k >= NSTREAMS + NRINGS ) {
-    freePose( pos, dir );
-  } else if ( k >= NSTREAMS ) {
+  if ( k >= NSTREAMS ) {
     ringPose( k - NSTREAMS, pos, dir );
   } else {
   vec4 st = uStreamA[ k ];
@@ -1386,7 +1366,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     name: 'skyriver.traffic.impostors',
     vertexShader: IMPOSTOR_VERTEX,
     fragmentShader: IMPOSTOR_FRAGMENT,
-    defines: { NSTREAMS: IMPOSTOR_PATHS.length, NRINGS: IMPOSTOR_RINGS.length, FREE_MIN_Y: IMPOSTOR_FREE_MIN_Y_M.toFixed(1), FREE_MAX_Y: IMPOSTOR_FREE_MAX_Y_M.toFixed(1) },
+    defines: { NSTREAMS: IMPOSTOR_PATHS.length, NRINGS: IMPOSTOR_RINGS.length },
     uniforms: {
       uPaths: { value: pathTexture },
       uStreamA: { value: IMPOSTOR_PATHS.map((st) => new Vector4(st[2]!, st[5]!, st[3]!, st[4]!)) },

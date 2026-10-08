@@ -13,7 +13,15 @@ import { deriveCityMasses, deriveCityTrims } from '../src/render/city';
 import { presentCityLayout } from '../src/render/presentationLayout';
 import { SKYRIVER_BLOOM_PICKUP_WIDTH } from '../src/render/scene';
 import { IMPOSTOR_INTENSITY } from '../src/render/traffic';
-import { IMPOSTOR_FREE_INDEX, IMPOSTOR_PATHS, IMPOSTOR_PATH_COUNT, IMPOSTOR_RINGS, deriveImpostorAttributes, impostorPosition } from '../src/render/trafficStreams';
+import {
+  IMPOSTOR_LANES,
+  IMPOSTOR_PATHS,
+  IMPOSTOR_PATH_COUNT,
+  IMPOSTOR_RINGS,
+  STREAMS,
+  deriveImpostorAttributes,
+  impostorPosition,
+} from '../src/render/trafficStreams';
 import {
   cpuLightHandoverAlpha,
   farImpostorBrightness,
@@ -69,6 +77,9 @@ describe('impostor light response', () => {
 
 describe('GPU impostor traffic', () => {
   it('generates pure, seeded, in-range attributes', () => {
+    expect(IMPOSTOR_PATH_COUNT).toBe(20);
+    expect(IMPOSTOR_PATHS.length).toBe(STREAMS.length + IMPOSTOR_LANES.length);
+    expect(IMPOSTOR_PATH_COUNT).toBe(IMPOSTOR_PATHS.length + IMPOSTOR_RINGS.length);
     const a = deriveImpostorAttributes(DEMO_SEED, 20000);
     const b = deriveImpostorAttributes(DEMO_SEED, 20000);
     const c = deriveImpostorAttributes(DEMO_SEED + 1, 20000);
@@ -88,18 +99,18 @@ describe('GPU impostor traffic', () => {
     }
   });
 
-  it('splits across canyon streams, canyon lanes, sky rings and free floaters as designed', () => {
+  it('normalizes stream, lane, and ring shares to fill the GPU population', () => {
     const a = deriveImpostorAttributes(DEMO_SEED, 20000);
-    const n = [0, 0, 0, 0];
+    const n = [0, 0, 0];
     for (let i = 0; i < a.count; i += 1) {
       const k = a.streamArcPhaseSeed[i * 4]!;
-      n[k < 8 ? 0 : k < IMPOSTOR_PATHS.length ? 1 : k < IMPOSTOR_FREE_INDEX ? 2 : 3] += 1;
+      n[k < STREAMS.length ? 0 : k < IMPOSTOR_PATHS.length ? 1 : 2] += 1;
     }
     const share = n.map((x) => x / a.count);
-    expect(Math.abs(share[0]! - 0.25)).toBeLessThan(0.02);
-    expect(Math.abs(share[1]! - 0.1)).toBeLessThan(0.02);
-    expect(Math.abs(share[2]! - 0.2)).toBeLessThan(0.02);
-    expect(Math.abs(share[3]! - 0.45)).toBeLessThan(0.02);
+    expect(Math.abs(share[0]! - 0.25 / 0.55)).toBeLessThan(0.02);
+    expect(Math.abs(share[1]! - 0.1 / 0.55)).toBeLessThan(0.02);
+    expect(Math.abs(share[2]! - 0.2 / 0.55)).toBeLessThan(0.02);
+    expect(share.reduce((sum, value) => sum + value, 0)).toBeCloseTo(1, 12);
   });
 
   it('never stacks impostors on one spot (no correlated attributes)', () => {
@@ -146,7 +157,7 @@ describe('GPU impostor traffic', () => {
     let ringInside = 0;
     let ringSamples = 0;
     for (let i = 0; i < a.count; i += 1) {
-      const ring = a.streamArcPhaseSeed[i * 4]! >= IMPOSTOR_PATHS.length && a.streamArcPhaseSeed[i * 4]! < IMPOSTOR_FREE_INDEX;
+      const ring = a.streamArcPhaseSeed[i * 4]! >= IMPOSTOR_PATHS.length;
       for (let t = 0; t < 120; t += 4) {
         impostorPosition(a, i, t, p);
         const inside = field.gap(p.x, p.y, p.z) < 0;
