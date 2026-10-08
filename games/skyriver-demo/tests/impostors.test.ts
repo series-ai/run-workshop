@@ -23,8 +23,13 @@ import {
   impostorPosition,
 } from '../src/render/trafficStreams';
 import {
+  CPU_LIGHT_HANDOVER_BLEND_PRESENCE,
+  cpuLightVisibilityAlpha,
   cpuLightHandoverAlpha,
   farImpostorBrightness,
+  HULL_DRAW_DISTANCE_M,
+  HULL_DRAW_FADE_START_M,
+  hullLodAlpha,
   IMPOSTOR_FAR_FALLOFF_BAND_M,
   IMPOSTOR_LIGHT_HANDOVER_BAND_M,
   IMPOSTOR_SUPPORT_TAPER_BAND,
@@ -36,10 +41,15 @@ import {
 const DEMO_SEED = 424242;
 
 describe('impostor light response', () => {
-  it('uses one distance band and complementary CPU and GPU light shares at every presence', () => {
-    expect(IMPOSTOR_LIGHT_HANDOVER_BAND_M).toEqual([450, 750]);
+  it('uses the shared 220 m hull band and complementary CPU and GPU shares', () => {
+    expect(IMPOSTOR_LIGHT_HANDOVER_BAND_M).toEqual([1080, 1300]);
+    expect(HULL_DRAW_FADE_START_M).toBe(IMPOSTOR_LIGHT_HANDOVER_BAND_M[0]);
+    expect(HULL_DRAW_DISTANCE_M).toBe(IMPOSTOR_LIGHT_HANDOVER_BAND_M[1]);
+    expect(hullLodAlpha(1080)).toBe(1);
+    expect(hullLodAlpha(1190)).toBeCloseTo(0.5, 12);
+    expect(hullLodAlpha(1300)).toBe(0);
     for (const presence of [0, 0.1, 0.5, 0.9, 1]) {
-      for (const distanceM of [0, 449, 450, 525, 600, 675, 750, 751, 1000, 1300]) {
+      for (const distanceM of [0, 1079, 1080, 1135, 1190, 1245, 1300, 1301, 2000]) {
         const cpu = cpuLightHandoverAlpha(distanceM, presence);
         const impostor = impostorLightHandoverAlpha(distanceM, presence);
         expect(cpu + impostor).toBeCloseTo(1, 12);
@@ -49,10 +59,78 @@ describe('impostor light response', () => {
     }
   });
 
-  it('keeps far brightness monotone and within bloom pickup width over 20 m', () => {
+  it('caps active CPU lights to hull LOD and ends them at 1300 m', () => {
+    for (const presence of [CPU_LIGHT_HANDOVER_BLEND_PRESENCE, 0.5, 1]) {
+      for (const distanceM of [0, 900, 1080, 1135, 1190, 1245, 1299.9, 1300, 1400]) {
+        const lightFade = cpuLightVisibilityAlpha(distanceM, presence, 0.4);
+        expect(lightFade).toBeLessThanOrEqual(hullLodAlpha(distanceM));
+        if (distanceM >= HULL_DRAW_DISTANCE_M) expect(lightFade).toBe(0);
+      }
+    }
+    // Hull bars, streak lamps, and trails read this same scalar in traffic.ts.
+    for (const distanceM of [0, 900, 1080, 1190, 1300, 1800]) {
+      const cpu = cpuLightVisibilityAlpha(distanceM, 1, 0.37);
+      const gpu = impostorLightHandoverAlpha(distanceM, 1);
+      expect(cpu).toBeCloseTo(cpuLightHandoverAlpha(distanceM, 1), 12);
+      expect(cpu + gpu).toBeCloseTo(1, 12);
+    }
+    // At full presence, the 900–1150 m low-tier thin-far fade no longer applies.
+    expect(cpuLightVisibilityAlpha(1000, 1, 0)).toBe(1);
+  });
+
+  it('keeps the low-tier legacy fade and smooths the tier handover', () => {
+    const legacyFarAlpha = 0.37;
+    expect(cpuLightVisibilityAlpha(1400, 0, legacyFarAlpha)).toBe(legacyFarAlpha);
+    expect(CPU_LIGHT_HANDOVER_BLEND_PRESENCE).toBe(0.5);
+    let previous = legacyFarAlpha;
+    for (let step = 1; step <= 10; step += 1) {
+      const presence = (CPU_LIGHT_HANDOVER_BLEND_PRESENCE * step) / 10;
+      const current = cpuLightVisibilityAlpha(1190, presence, legacyFarAlpha);
+      expect(current).toBeGreaterThanOrEqual(previous);
+      expect(current - previous).toBeLessThan(0.03);
+      previous = current;
+    }
+    const before = cpuLightVisibilityAlpha(1190, 0.024, legacyFarAlpha);
+    const atThreshold = cpuLightVisibilityAlpha(1190, CPU_LIGHT_HANDOVER_BLEND_PRESENCE, legacyFarAlpha);
+    expect(before).toBeGreaterThan(legacyFarAlpha);
+    expect(atThreshold).toBe(hullLodAlpha(1190));
+    // The strict hull cap can lower combined CPU+GPU light during partial presence.
+    const partialCpu = cpuLightVisibilityAlpha(1190, CPU_LIGHT_HANDOVER_BLEND_PRESENCE, 1);
+    const partialGpu = impostorLightHandoverAlpha(1190, CPU_LIGHT_HANDOVER_BLEND_PRESENCE);
+    expect(partialCpu + partialGpu).toBeLessThan(1);
+  });
+
+  it('limits CPU fade changes to 0.1 per frame through a full 1.2 s tier transition', () => {
+    const frames = Math.round(1.2 * 30);
+    const distancesM = [900, 1080, 1190, 1300, 1800];
+    const legacyFades = [0, 0.37, 1];
+    for (const distanceM of distancesM) {
+      for (const legacyFarAlpha of legacyFades) {
+        for (const direction of [1, -1]) {
+          let previous = cpuLightVisibilityAlpha(
+            distanceM,
+            direction === 1 ? 0 : 1,
+            legacyFarAlpha,
+          );
+          for (let frame = 1; frame <= frames; frame += 1) {
+            const progress = frame / frames;
+            const presence = direction === 1 ? progress : 1 - progress;
+            const current = cpuLightVisibilityAlpha(distanceM, presence, legacyFarAlpha);
+            expect(Math.abs(current - previous)).toBeLessThanOrEqual(0.1);
+            previous = current;
+          }
+        }
+      }
+    }
+  });
+
+  it('fades far brightness to zero smoothly and within bloom pickup width over 20 m', () => {
     const [startM, endM] = IMPOSTOR_FAR_FALLOFF_BAND_M;
     expect(farImpostorBrightness(startM)).toBe(1);
-    expect(farImpostorBrightness(endM)).toBe(0.25);
+    expect(farImpostorBrightness(1500)).toBe(1);
+    expect(farImpostorBrightness(2000)).toBe(1);
+    expect(farImpostorBrightness(endM)).toBe(0);
+    expect(farImpostorBrightness(endM + 1)).toBe(0);
     let largest20mDrop = 0;
     const maximumSeededIntensity = 1.15 * IMPOSTOR_INTENSITY * SKYRIVER_EMISSIVE_GAIN;
     for (let distanceM = 0; distanceM <= endM + 1000; distanceM += 20) {

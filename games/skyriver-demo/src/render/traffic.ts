@@ -70,7 +70,9 @@ import { CANYON_LOOP_LENGTH_M, warpCanyon, warpDirection, type WarpOut } from '.
 import { routeAltitude, routeLateral } from './routeProfile';
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
 import {
-  cpuLightHandoverAlpha,
+  cpuLightVisibilityAlpha,
+  HULL_DRAW_DISTANCE_M,
+  HULL_DRAW_FADE_START_M,
   IMPOSTOR_FAR_FALLOFF_BAND_M,
   IMPOSTOR_LIGHT_HANDOVER_BAND_M,
   IMPOSTOR_SUPPORT_TAPER_BAND,
@@ -205,8 +207,6 @@ const JINK_RAD = 0.055;
 const ESCORT_STREAK_SCALE = 0.5;
 /** Inset from the corridor walls for escorts, metres. */
 const WALL_MARGIN_M = 18;
-/** Bodies stay drawn to here (fog takes them first); beyond, only the light dots remain. */
-const HULL_DRAW_DISTANCE_M = 1300;
 
 /** Escort cars: [lateral, lift, forward mean, forward swing] in metres, shuttle frame. */
 const ESCORT_COUNT = 4;
@@ -1008,10 +1008,10 @@ void main() {
   float facing = dot( dir, toCam / max( dist, 1.0 ) );
   vWarm = smoothstep( - 0.2, 0.3, facing );
   float tierPresence = float( gl_InstanceID ) >= uFadeFrom ? uFadeK : 1.0;
-  // Far impostors integrate into the haze instead of stacking into a bloom wash: a pixel-size dot
-  // keeps its size with distance, so its brightness has to fall instead (to 25% by 9 km).
+  // Far impostors integrate into the haze instead of stacking into a bloom wash. Their brightness
+  // falls over the shared 2.5–6.5 km band and reaches zero with a smooth derivative.
   float handover = smoothstep( uBand.x, uBand.y, dist );
-  float farBrightness = 1.0 - 0.75 * smoothstep( uFarFalloff.x, uFarFalloff.y, dist );
+  float farBrightness = 1.0 - smoothstep( uFarFalloff.x, uFarFalloff.y, dist );
   vIntensity = ( 0.55 + 0.6 * fract( seed * 29.7 ) ) * handover * tierPresence * farBrightness;
   if ( vIntensity <= 0.001 ) {
     // Inside the CPU cars' band (or faded out): no fragments at all.
@@ -1791,7 +1791,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         // R15 glitch fix: the hard cut made ~20 bodies a second blink in or out on screen; bodies now
         // shrink away over the last 220 m (sub-pixel by then), so nothing pops.
         const toCarDist = Math.sqrt(toCarX * toCarX + toCarY * toCarY + toCarZ * toCarZ);
-        const hullLod = 1 - smoothstep(HULL_DRAW_DISTANCE_M - 220, HULL_DRAW_DISTANCE_M, toCarDist);
+        const hullLod = 1 - smoothstep(HULL_DRAW_FADE_START_M, HULL_DRAW_DISTANCE_M, toCarDist);
         fade *= tierFadeFor(car, t);
 
         // Basis: forward f (with a little pitch), right = f x up, then banked about f.
@@ -1839,10 +1839,13 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         const dy = py - camY;
         const dz = pz - camZ;
         const distanceSq = dx * dx + dy * dy + dz * dz;
-        if (carThinFar[car] === 1) fade *= 1 - smoothstep(900 * 900, 1150 * 1150, distanceSq);
-        // R19: use the same Euclidean distance and complementary share as the GPU impostor sprites.
-        if (impostorPresence > 0) fade *= cpuLightHandoverAlpha(Math.sqrt(distanceSq), impostorPresence);
-        const dim = (1 - (1 - DISTANCE_DIM_FLOOR) * Math.min(1, distanceSq * invDimRangeSq)) * fade;
+        const distanceM = Math.sqrt(distanceSq);
+        const legacyFarAlpha = carThinFar[car] === 1
+          ? 1 - smoothstep(900 * 900, 1150 * 1150, distanceSq)
+          : 1;
+        // Hull bars, streak lamps, and trails use one fade. Low tier keeps its prior far response.
+        const lightFade = fade * cpuLightVisibilityAlpha(distanceM, impostorPresence, legacyFarAlpha);
+        const dim = (1 - (1 - DISTANCE_DIM_FLOOR) * Math.min(1, distanceSq * invDimRangeSq)) * lightFade;
         const colorOffset = slot * 3;
         colors[colorOffset] = tintR[car] * dim;
         colors[colorOffset + 1] = tintG[car] * dim;
@@ -1859,7 +1862,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           streakDirArray[d + 2] = fz;
           streakDirArray[d + 3] = streakSpeed;
           const f4 = streaksUsed * 4;
-          streakFadeArray[f4] = fade;
+          streakFadeArray[f4] = lightFade;
           streakFadeArray[f4 + 1] = sizeScale[car]!;
           streakFadeArray[f4 + 2] = carWarm[car]!;
           streakFadeArray[f4 + 3] = trailWeight(car < ESCORT_COUNT && anchorValid ? 0 : carStream[car]! !== 255 ? 1 : 2, distanceSq, t);
