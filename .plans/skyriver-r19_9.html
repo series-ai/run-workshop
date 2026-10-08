@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Skyriver R19.9 design</title>
+<style>:root{color-scheme:dark;--bg:#07090e;--panel:#0a0d13;--ink:#dfeaf2;--accent:#7ad9ff;--line:#263843}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui}main{max-width:1100px;margin:auto;padding:28px}h1,h2{line-height:1.2}h2{margin-top:32px}p{max-width:90ch}code,pre{font:13px/1.5 ui-monospace,monospace}pre{padding:18px;background:var(--panel);overflow:auto;border:1px solid var(--line)}table{border-collapse:collapse;width:100%;font-size:14px}td,th{text-align:left;padding:10px;border:1px solid var(--line);vertical-align:top}a{color:var(--accent)}.frames{display:grid;grid-template-columns:390px 1fr;gap:20px;overflow:auto}.frame{border:1px solid var(--line);background:var(--panel);padding:12px;min-width:0}.phone{width:390px}.desktop{min-width:480px}.frame svg{width:100%;height:220px}.controls{display:flex;gap:12px;flex-wrap:wrap}.controls label{cursor:pointer}input{accent-color:var(--accent)}.state{display:none}body:has(#default:checked) .state.default,body:has(#empty:checked) .state.empty,body:has(#loading:checked) .state.loading,body:has(#error:checked) .state.error{display:block}.note{color:#a8bdca}@media(max-width:700px){main{padding:18px}.frames{grid-template-columns:1fr}.phone{width:100%}.desktop{min-width:0}table{font-size:12px}}</style>
+<main><h1>Skyriver R19.9: façade steps and sign fit</h1>
+<p>Change the existing inner wall faces. Keep the existing lots, core footprints, route, and simulation identity. Add more visible steps in the low and middle city. Use one face model for concrete, signs, and checks.</p>
+<p class="note">Status: verified. 74 tests pass. Final proof: /tmp/t719f/report.html. Commit pending archive. Base: R19.8, fd0dee1. Source read on 7 October 2026. R20 is parked in stash ef7a58d0eef92a9de2c0cceb929539915a35ce8a. Restore it after the R19.9 commit. Line numbers below refer to the earlier inspected R20 file. Function names are the stable source anchors.</p>
+<h2>Reference evidence</h2>
+<p>Inspected local images: massing_strip.png, massing_55.png, massing_130.png, massing_190.png, and massing_265.png. Their location is the reference folder in the thr_apyfknwrv7-1 checkout. The low wall has broad horizontal ledges. Signs occupy separate wall areas. The sky view has many existing roof and step shapes. Add façade graduation. Do not add lots.</p>
+<h2>Source faults and change sites</h2>
+<table><tr><th>Source anchor</th><th>Finding</th><th>Required change</th></tr>
+<tr><td>city.ts:334–349<br>tierCache, tierProjectionOver</td><td>The tuple has height and depth bounds. The query uses height only. Maximum projection across several tiers can place a sign in front of several steps.</td><td>Replace the tuple with named face records. Keep projection-over-range only for existing structural clearance queries. Use full face containment for all sign placement.</td></tr>
+<tr><td>city.ts:536–642<br>inner-wall tier pass</td><td>All eligible inner slabs already have three tiers. The 25% test controls extra-wide base plates. It does not control tier coverage. First step height scales with a tall roof, so low walls have few visible transitions.</td><td>Use five to seven levels on 80–90% of eligible existing lots. Put three or four transitions below 1800 m. Keep sparse variation on the remaining lots.</td></tr>
+<tr><td>city.ts:1494–1635<br>deriveHeroBlades</td><td>Hero fit uses the same projection query. Four-blade rows are a single planned composition.</td><td>Fit each hero to one face. Select a common host and movement for a row. Keep the row shape and unique atlas cells. Add explicit composition identity.</td></tr>
+<tr><td>city.ts:1657–1813<br>deriveNeonSigns</td><td>The generator fills a target of 2200 ordinary signs. It has no sign spacing test. Mount ownership uses the full base tower.</td><td>Consume a fixed candidate budget. Fit each candidate to one face. Reject conflicts. Accept a lower count. Store the face owner and base building identity.</td></tr>
+<tr><td>city.ts:1434–1465<br>auditCityAnchors</td><td>The sign check measures base tower depth only. It cannot detect step crossing or wrong mounting depth.</td><td>Add full face bounds, mount-plane, and spacing checks. Retain the R16 rigid-frame drift check.</td></tr>
+<tr><td>city.ts:2037–2059,2190–2335<br>tower fragment shader</td><td>Window runs are per mass. Structural and step masks must apply to all room and pane energy paths.</td><td>Add one step-edge mask. Apply it to glass, halo, resolved rooms, dim screens, far average, and glass reflection.</td></tr></table>
+<h2>One domain model</h2>
+<pre>type FaceId = string;
+interface FacadeFace {
+  readonly id: FaceId;
+  readonly buildingId: string;
+  readonly side: -1 | 1;
+  readonly y0: number;
+  readonly y1: number;
+  readonly z0: number;
+  readonly z1: number;
+  readonly planeX: number;
+  readonly owner: SkyriverTrimOwner;
+  readonly stepBottom: boolean;
+  readonly stepTop: boolean;
+}
+type SignMount =
+  | { readonly kind: 'flat'; readonly face: FacadeFace }
+  | { readonly kind: 'blade'; readonly face: FacadeFace; readonly rootHalfWidthM: number }
+  | { readonly kind: 'landmark'; readonly face: FacadeFace };
+interface SignReservation {
+  readonly buildingId: string;
+  readonly side: -1 | 1;
+  readonly z0: number;
+  readonly z1: number;
+  readonly y0: number;
+  readonly y1: number;
+  readonly heightM: number;
+  readonly compositionId: string;
+  readonly role: 'ordinary' | 'hero';
+}</pre>
+<p>Derive face records from the same tier plan that creates concrete and trim instances. A tier front is a rectangle. The top core face is another rectangle. It is safe to omit exposed base strips beside a narrow tier from sign candidates. Do not label the full base face as exposed below a tier. For the landmark brand, use its actual along-canyon face and its rigid landmark frame.</p>
+<p>Keep buildingId separate from owner. The owner is the drawn tier mass. The building identity is the base lot. Existing roof tests must use buildingId to find the tower. They must not infer the tower from the new owner centre.</p>
+<h2>Step geometry</h2>
+<p>Keep the existing maximum projection: min(82 m, available clearance × 0.62). Do not increase the footprint beyond the current widest permitted plate. Use nested depth spans and one centre for the main tier sequence. Keep each successive span inside the previous span. Broad faces near 90–100% of the existing tower depth make the horizontal ledges visible.</p>
+<p>Choose low and middle tops from metre ranges, then clamp them to the roof. Start with transitions near 300–450 m, 600–850 m, 1000–1250 m, and 1450–1750 m. Place one or two further transitions below the roof. Keep projected faces thick enough for useful signs. Avoid repeated tiny steps. Use visible projection differences near 10–20 m when clearance permits.</p>
+<p>Reserve tall host faces for hero compositions. A 470 m blade cannot fit in a 250 m tier. Use a 650–850 m clear face interval on selected existing hero hosts. Put extra transitions below or above that interval. Extract raw hero stations into a pure helper if needed. The helper must not call deriveCityTrims. This prevents a recursive dependency.</p>
+<p>Use the existing band trim pass for horizontal ledges. Retain its 4.5–6.5 m structural thickness and 8 m step parapet. Keep ledges darker than signs. Do not add a new neon pass or light every step.</p>
+<h2>Full sign fit</h2>
+<p>Require the entire sign height to lie in one face interval. Require a flat sign width to lie in the same face depth interval. Use a 4 m edge margin. For a blade, fit its mounting root in the face depth interval. Its projecting width must also keep the full blade outside |x| = 405 m. A blade may project from its slab. Its mounting root must not cross a step.</p>
+<p>Mount flat signs at face.planeX minus the side times the existing 0.45 m standoff. Mount a blade from the same plane with the existing 0.8 m root offset. Check this relation after float32 storage. Keep a 0.05 m tolerance for the plane and rigid-frame drift. Use an explicit boundary test with a sign that fits the base tower but exceeds a narrow tier.</p>
+<p>For ordinary signs, preserve generated size and text. Reject a candidate if no face contains it. If a small centre correction is used, compute it inside one selected face. Do not extend a face, bridge steps, or join two faces to make room.</p>
+<h2>Spacing and hero areas</h2>
+<p>Use one pure rectangle-distance function in wall coordinates. For two rectangles, dz is the positive gap between their z intervals. dy is the positive gap between their y intervals. Their edge distance is hypot(dz, dy). Use the loop wrap for neighbouring lots at the lap seam.</p>
+<p>Require ordinary sign edge distance ≥ 2 × max(heightA, heightB). Apply this rule to flat signs, strips, outlines, and banner roots on one building façade. Compare neighbouring inner-wall lots on the same side as well. This prevents a second column of signs from bypassing the rule. Do not limit checks to identical faceId values.</p>
+<p>Require ordinary sign edge distance from each hero composition ≥ 1.5 × the largest hero height in that composition. Reserve the union of a four-blade row as one area. Do not apply spacing between blades with the same planned composition identity. Require at least 1.5 times the largest height between separate hero compositions. Keep the four planned rows and the brand first. Move or remove standalone heroes that cannot meet this rule. Apply the exclusion to ordinary signs on nearby lots. Store this composition identity explicitly.</p>
+<p>Place heroes first. Keep a fixed ordinary candidate budget, stable candidate order, and one rejection function. Stop after that budget. Do not keep retrying until 2200 signs survive. Failure to fill that old target is expected. Report the actual count and wall-section coverage.</p>
+<h2>Window and room breaks</h2>
+<p>Use the mass face altitude bounds for the step mask. Pass two step-edge flags per mass, or encode them in one small attribute. Mask a band of about 8–12 m at real step edges. A whole pane must remain outside the band. Use the same mask for each window and interior branch. Otherwise a dim screen or far pane average can bridge a dark structural line.</p>
+<p>Keep building culture, room atlas, interior depth fade, and screen response from R19.7. The change only clips their visible support at actual step edges. Keep high city faces calm.</p>
+<h2>Determinism and scope</h2>
+<p>Use a new keyed hash salt or a separate skyriver.city.facade.r19.9 random stream. The geometry model remains pure. Keep the existing lot list, mass identities, hero text order, and other random streams where possible. Added tier loops change legacy trim draw consumption. Do not claim an unchanged décor hash unless the implementation isolates that consumption. Prefer a clear new hash for new façade details over a legacy dry-run system.</p>
+<p>Keep the current instanced tower, trim, and sign draw passes. Extra masses increase instance count. They do not require more draw calls. Touch render/city.ts and permanent render tests. A small pure face helper is permitted if it reduces the city module. Do not edit sim/derive.ts, simulation systems, package files, build settings, or protected configuration.</p>
+<h2>Clearance and proof</h2>
+<p>Preserve CORRIDOR_CLEAR_X = 405 m. Recheck the complete route after the change. Rigid canyon frames can move a broad plate into a nearby route segment even when its canyon-space x bound is valid. Do not weaken the existing clearance test to accept a new collision.</p>
+<table><tr><th>Permanent check</th><th>Required result</th></tr>
+<tr><td>anchors.test.ts:14–46</td><td>Retain every trim and sign rigid-frame check. Add zero full-face failures, zero wrong-plane failures, zero ordinary spacing failures, and zero hero exclusion failures, and zero conflicts between separate hero compositions across the full loop.</td></tr>
+<tr><td>Face boundary tests</td><td>Reject vertical step crossing, depth overrun on a narrow tier, invalid blade root, and a sign that fits only the base tower. Accept one complete face fit. Include both sides and a tight bend.</td></tr>
+<tr><td>Spacing boundary tests</td><td>Accept exactly 2 × maximum ordinary height. Reject a smaller gap. Test adjacent lots, loop seam, separate faces on one building, and a valid four-blade composition.</td></tr>
+<tr><td>Geometry tests</td><td>No new lots. Most eligible lots have the new tier frequency. More than two low/middle transitions remain visible where roof and hero reservations permit. Projections and nested depth spans stay in bounds.</td></tr>
+<tr><td>Shader mask tests</td><td>One CPU reference for the band mask. Test edge and pane bounds. Inspect actual room, pane, screen, halo, and far-average paths in the rendered output.</td></tr>
+<tr><td>clearance.test.ts</td><td>More than 6000 route samples. Zero violations. Retain current sphere and hull margins.</td></tr>
+<tr><td>Existing count assertion</td><td>Replace signsChecked &gt; 1000 with a measured nonzero coverage check and actual count report. The old density threshold conflicts with the requested sign reduction.</td></tr></table>
+<p>Run type check, full tests, build, diff checks, and smart-route review. Compare simulation files with the R19.7 base. Capture render call counts for high, medium, and low tiers. Record shader errors and frame time.</p>
+<h2>Three capture sections</h2>
+<p>Capture the grime wall, a middle city straight, and the hero sign-wall section. Use fixed route ticks and camera matrices for before and after. Capture each at 390 px and 1440 px. Save façade views at 200 m, 350 m, and 500 m. Save one normal flight clip across each section. Keep fog, exposure, bloom, and tier identical.</p>
+<p>Use the existing saturated-pixel metric in tools/render-evidence/metrics.py with identical crops. Keep the existing neon ≥ 0.9 acceptance gate in its original metric units. Report neonPct and the after/before ratio for each section and the aggregate. A 0.90 ratio is useful supporting evidence. It must not replace an absolute 0.9 gate. Tune the intensity of surviving signs only if needed. Do not restore rejected signs to recover density. Reject clipped white glow that removes sign colour or hides the ledges.</p>
+<div class="controls" role="group" aria-label="Fit state"><label><input id="default" type="radio" name="state" checked>Default</label><label><input id="empty" type="radio" name="state">Empty</label><label><input id="loading" type="radio" name="state">Loading</label><label><input id="error" type="radio" name="state">Error</label></div>
+<div class="state default"><div class="frames"><figure class="frame phone"><figcaption>390 px: one sign inside one step face</figcaption><svg viewBox="0 0 366 220" role="img" aria-label="Five wall steps and one fitted sign"><path d="M10 215V170H40V130H65V90H90V50H120V10H330V215Z" fill="#202f3a"/><path d="M10 170H330M40 130H330M65 90H330M90 50H330" stroke="#678697" stroke-width="5"/><rect x="170" y="97" width="60" height="25" fill="#7ad9ff"/><path d="M166 93H234V126H166Z" stroke="#55ff7a" fill="none"/><text x="125" y="199" fill="#a8bdca" font-size="12">Keep pane runs outside each step band.</text></svg></figure><figure class="frame desktop"><figcaption>1440 px: sparse signs and a clear hero area</figcaption><svg viewBox="0 0 640 220" role="img" aria-label="Two wall lots, one hero area, and sparse signs"><path d="M5 215V160H40V110H75V60H110V10H305V215ZM330 215V165H365V115H400V65H435V10H635V215Z" fill="#202f3a"/><path d="M5 160H305M40 110H305M75 60H305M330 165H635M365 115H635M400 65H635" stroke="#678697" stroke-width="5"/><rect x="175" y="117" width="70" height="25" fill="#7ad9ff"/><rect x="475" y="30" width="26" height="150" fill="#ffb13c"/><rect x="443" y="10" width="90" height="197" stroke="#ffb13c" stroke-dasharray="5 5" fill="none"/><text x="363" y="210" fill="#a8bdca" font-size="12">Reserved hero area</text></svg></figure></div></div>
+<p class="state empty">No candidate fits. Keep the face clear. Keep its structural ledge.</p><p class="state loading">Derive the face model at boot. Show the complete model after derivation.</p><p class="state error">A permanent check reports the building, face, sign, and failed bound. Do not accept an invalid placement.</p>
+<h2>Implementation order</h2>
+<p>First define the face model and add the failing fit tests. Next change the existing tier plan and shared face derivation. Then fit hero compositions and ordinary signs. Add spacing rejection and room masks. Run deterministic checks. Capture the three sections. Tune surviving sign brightness only after the geometry and spacing pass. Stop after review and verification.</p>
+<p class="note">Main risks: tall heroes cannot fit short step faces; broad plates can fail route clearance; owner changes can invalidate roof tests; extra tier loops can change trim hashes; a room energy path can miss the step mask; the old density assertion can force unwanted sign fill. The common face model addresses the fit faults. The fixed candidate budget prevents sign fill from undoing the spacing rules.</p>
+</main></html>

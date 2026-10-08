@@ -5,8 +5,18 @@
 import { describe, expect, it } from 'vitest';
 
 import { deriveCityLayout } from '../src/sim/derive';
-import { auditCityAnchors, deriveHeroBlades, deriveNeonSigns } from '../src/render/city';
+import {
+  auditCityAnchors,
+  deriveFacadeFaces,
+  deriveHeroBlades,
+  deriveHeroRowPlans,
+  deriveNeonSigns,
+  SKYRIVER_CITY_SIGN_CANDIDATE_BUDGET,
+} from '../src/render/city';
 import { presentCityLayout } from '../src/render/presentationLayout';
+import { CANYON_LOOP_LENGTH_M } from '../src/render/canyonWarp';
+import { routeAltitude, STRATA_PRISTINE_BASE_M } from '../src/render/routeProfile';
+import { HERO_HORIZONTAL_CELLS, HERO_VERTICAL_CELLS } from '../src/render/signAtlas';
 
 /** main.ts SKYRIVER_DEMO_SEED (not imported: main.ts boots the app). */
 const DEMO_SEED = 424242;
@@ -17,9 +27,100 @@ describe('city trim anchors', () => {
     expect(audit.checked).toBeGreaterThan(5000);
     expect(audit.floating).toBe(0);
     expect(audit.maxDriftM).toBeLessThan(0.05);
-    expect(audit.signsChecked).toBeGreaterThan(1000);
+    expect(audit.signsChecked).toBeGreaterThan(0);
     expect(audit.signsOffFace).toBe(0);
     expect(audit.signMaxDriftM).toBeLessThan(0.05);
+    expect(audit.fullFaceFailures).toBe(0);
+    expect(audit.wrongPlaneFailures).toBe(0);
+    expect(audit.spacingConflicts).toBe(0);
+    expect(audit.heroExclusionConflicts).toBe(0);
+    expect(audit.heroCompositionConflicts).toBe(0);
+    expect(audit.ordinaryCount).toBeGreaterThan(0);
+    expect(audit.heroCount).toBeGreaterThan(0);
+    expect(audit.acceptedByLoopSection.filter((count) => count > 0).length).toBeGreaterThanOrEqual(6);
+    expect(audit.acceptedByLoopSection.reduce((sum, count) => sum + count, 0)).toBe(audit.ordinaryCount);
+    expect(audit.ordinaryCount).toBeLessThan(SKYRIVER_CITY_SIGN_CANDIDATE_BUDGET);
+  });
+
+  it('keeps distinct hero compositions spaced across held-out full-loop seeds', () => {
+    for (const seed of [0, 2147483647, 4294967295]) {
+      const layout = presentCityLayout(deriveCityLayout(seed));
+      const audit = auditCityAnchors(layout);
+      const heroes = deriveHeroBlades(layout);
+      expect(audit.heroCompositionConflicts).toBe(0);
+      expect(heroes.filter((hero) => hero.kind === 'brand')).toHaveLength(1);
+      const rows = new Map<string, number>();
+      for (const hero of heroes) {
+        if (!hero.compositionId.startsWith('hero-row-')) continue;
+        rows.set(hero.compositionId, (rows.get(hero.compositionId) ?? 0) + 1);
+      }
+      expect(rows.size).toBe(deriveHeroRowPlans(layout).length);
+      expect([...rows.values()].every((count) => count === 4)).toBe(true);
+    }
+  });
+});
+
+describe('exposed facade levels and hero rows', () => {
+  it('keeps stepped faces on the existing lots and reserves four-blade hosts', () => {
+    const base = deriveCityLayout(DEMO_SEED);
+    const layout = presentCityLayout(base);
+    const plannedRows = deriveHeroRowPlans(layout);
+    const faces = deriveFacadeFaces(layout).filter((face) => face.planeAxis === 'x');
+    const freshLots = presentCityLayout(deriveCityLayout(DEMO_SEED)).towers;
+    expect(layout.towers).toHaveLength(freshLots.length);
+    expect(layout.towers.map((tower) => `${tower.x}:${tower.z}:${tower.height}`))
+      .toEqual(freshLots.map((tower) => `${tower.x}:${tower.z}:${tower.height}`));
+
+    const towersById = new Map(layout.towers.map((tower) => [`tower:${tower.x.toFixed(2)}:${tower.z.toFixed(2)}`, tower]));
+    const levels = new Map<string, typeof faces>();
+    for (const face of faces) levels.set(face.buildingId, [...(levels.get(face.buildingId) ?? []), face]);
+    const tall = [...levels].filter(([id]) => (towersById.get(id)?.height ?? 0) >= 1800);
+    expect(tall.length).toBeGreaterThan(0);
+    expect(tall.filter(([, buildingFaces]) => buildingFaces.length >= 6 && buildingFaces.length <= 7).length)
+      .toBeGreaterThan(tall.length * 0.6);
+    for (const [, buildingFaces] of tall) {
+      const tiers = buildingFaces.filter((face) => face.projection > 0);
+      for (let i = 1; i < tiers.length; i += 1) {
+        expect(tiers[i]!.projection).toBeLessThan(tiers[i - 1]!.projection);
+        expect(tiers[i]!.u1 - tiers[i]!.u0).toBeLessThan(tiers[i - 1]!.u1 - tiers[i - 1]!.u0);
+      }
+    }
+    const lowMid = [...levels].filter(([id]) => {
+      const height = towersById.get(id)?.height ?? 0;
+      return height >= 700 && height < 1800;
+    });
+    expect(lowMid.length).toBeGreaterThan(0);
+    expect(lowMid.filter(([, buildingFaces]) => buildingFaces.length >= 4 && buildingFaces.length <= 6).length)
+      .toBeGreaterThan(lowMid.length * 0.75);
+
+    const rows = new Map<string, number>();
+    const heroes = deriveHeroBlades(layout);
+    const stations = heroes.filter((hero) => hero.compositionId.startsWith('hero-') && !hero.compositionId.startsWith('hero-row-'));
+    expect(stations).toHaveLength(25);
+    expect(heroes).toHaveLength(42);
+    let bladeSlot = 0;
+    let panelSlot = 0;
+    for (let k = 0; k * 530 < CANYON_LOOP_LENGTH_M; k += 1) {
+      const z = -CANYON_LOOP_LENGTH_M / 2 + (k + 0.5) * 530;
+      const kind = routeAltitude(z) > STRATA_PRISTINE_BASE_M - 50 || k % 3 === 2 ? 'panel' : 'blade';
+      const hero = stations.find((candidate) => candidate.compositionId === `hero-${k}`);
+      expect(hero).toBeDefined();
+      expect(hero?.cell).toBe(kind === 'blade' ? bladeSlot++ : panelSlot++);
+    }
+    for (const hero of heroes) {
+      if (hero.compositionId.startsWith('hero-row-')) rows.set(hero.compositionId, (rows.get(hero.compositionId) ?? 0) + 1);
+    }
+    expect(rows.size).toBe(plannedRows.length);
+    expect(plannedRows.length).toBeGreaterThan(0);
+    expect([...rows.values()].every((count) => count === 4)).toBe(true);
+    const verticalCells = heroes.filter((hero) => hero.kind !== 'panel')
+      .map((hero) => hero.cell % HERO_VERTICAL_CELLS);
+    const horizontalCells = heroes.filter((hero) => hero.kind === 'panel').map((hero) => hero.cell);
+    const rowCells = heroes.filter((hero) => hero.compositionId.startsWith('hero-row-')).map((hero) => hero.cell % HERO_VERTICAL_CELLS);
+    expect(new Set(rowCells).size).toBe(16);
+    expect(verticalCells.every((cell) => cell >= 0 && cell < HERO_VERTICAL_CELLS)).toBe(true);
+    expect(horizontalCells.every((cell) => Number.isInteger(cell) && cell >= 0)).toBe(true);
+    expect(heroes.find((hero) => hero.kind === 'brand')?.cell).toBe(0);
   });
 });
 
@@ -31,12 +132,13 @@ describe('signs under their roofs', () => {
     for (let i = 0; i < signs.count; i += 1) {
       const owner = signs.owner[i];
       if (!owner) continue;
-      const tower = layout.towers.find((t) => t.x === owner.x && t.z === owner.z);
+      const buildingId = signs.buildingId[i];
+      const tower = layout.towers.find((t) => `tower:${t.x.toFixed(2)}:${t.z.toFixed(2)}` === buildingId);
       if (tower !== undefined && signs.cy[i]! + signs.sh[i]! / 2 > tower.height + 1) above += 1;
     }
     for (const hero of deriveHeroBlades(layout)) {
       if (hero.kind === 'brand') continue;
-      const slabs = layout.towers.filter((t) => Math.sign(t.x) === Math.sign(hero.x) && Math.abs(t.z - hero.z) < t.depth / 2 + 5);
+      const slabs = layout.towers.filter((t) => `tower:${t.x.toFixed(2)}:${t.z.toFixed(2)}` === hero.buildingId);
       if (slabs.length === 0) continue;
       const slab = slabs.reduce((best, t) => (Math.abs(t.x) < Math.abs(best.x) ? t : best));
       if (hero.y + hero.height / 2 > slab.height + 1) above += 1;

@@ -9,7 +9,7 @@
  *
  * Approved visual direction: concrete mega-slabs with structural ribs and connecting gantries — a
  * kilometre-deep vertical canyon, not Kowloon clutter. Mostly desaturated concrete lost in the dark,
- * sparse lit window grids, wet surfaces catching the neon, thousands of signs.
+ * sparse lit window grids, wet surfaces catching the neon, and spaced signs.
  *
  * Draw-call budget: 8 owned, 3 spent.
  *   towers 1 + trim 1 + neon signs 1. Every pass is a single instanced mesh, so the count does not
@@ -47,6 +47,16 @@ import {
 import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
 import { HERO_HORIZONTAL_CELLS, HERO_VERTICAL_CELLS, createSignAtlas, type SignAtlas } from './signAtlas';
 import { createInteriorAtlas, type InteriorAtlas } from './interiorAtlas';
+import {
+  FACADE_FACE_EDGE_MARGIN_M,
+  FACADE_STEP_MASK_BAND_M,
+  facadeFaceContains,
+  fitOnNearestFacadeFace,
+  facadeReservationsConflict,
+  type FacadeFace,
+  type FacadeRect,
+  type FacadeReservation,
+} from './facadeGeometry';
 import {
   SKYRIVER_INTERIOR_AVERAGE_GAIN,
   SKYRIVER_INTERIOR_DARKROOM_SPILL,
@@ -95,8 +105,7 @@ export const SKYRIVER_CITY = Object.freeze({
   /** Hard caps on the locally derived passes. */
   maxTrims: 16000,
   maxSigns: 2600,
-  /** Target sign count before the cap and the per-tower fit test. */
-  /** T6R-2: halved — the review read the T6R density as confetti competing with the windows. */
+  /** R19.9 reference value. The fixed candidate budget sets current sign density. */
   signTarget: 2200,
   /** Signs sit this far off the facade so they never z-fight with it. */
   signStandoffM: 0.45,
@@ -194,10 +203,14 @@ export interface SkyriverNeonSigns {
   /** One of SKYRIVER_SIGN_*. */
   readonly kind: Uint8Array;
   readonly seedValue: Float32Array;
-  /**
-   * R16: the tower a facade sign is mounted on (null for hero signs, which keep their own placement).
-   * A mounted sign is placed rigidly in its tower's frame, so it never slides off the face at a bend.
-   */
+  readonly faceId: readonly (string | null)[];
+  readonly buildingId: readonly (string | null)[];
+  readonly compositionId: readonly (string | null)[];
+  readonly rootHalfWidthM: Float32Array;
+  readonly ordinaryCount: number;
+  readonly heroCount: number;
+  readonly acceptedByLoopSection: readonly number[];
+  /** Every mounted sign's face owner, so it stays attached through canyon bends. */
   readonly owner: readonly (SkyriverTrimOwner | null)[];
 }
 
@@ -223,6 +236,14 @@ export interface SkyriverMass {
   readonly anchorV?: number;
   /** R16: the building's identity seed (0..1) when this mass belongs to another's slab. */
   readonly building?: number;
+  /** R19.9 pane mask at an actual facade tier edge. */
+  readonly stepBottom?: boolean;
+  readonly stepTop?: boolean;
+}
+
+export interface SkyriverFacadeFace extends FacadeFace {
+  readonly projection: number;
+  readonly owner: SkyriverTrimOwner;
 }
 
 /** R16: per-building identity seed, from the slab's canyon centre. */
@@ -306,8 +327,13 @@ export function deriveFarTowers(layout: SkyriverCityLayout): readonly SkyriverFa
  * centre instead of being warped one by one.
  */
 const megaAnchorCache = new Map<number, { x: number; v: number }[]>();
-/** Per seed: inner-wall slab key -> its corridor-face tiers [bottom, top, projection, zCentre, zSpan]. */
-const tierCache = new Map<number, Map<string, readonly (readonly [number, number, number, number, number])[]>>();
+interface FacadeTier {
+  readonly face: SkyriverFacadeFace;
+}
+
+/** Per seed: exposed corridor faces for each existing inner-wall lot. */
+const tierCache = new Map<number, Map<string, readonly FacadeTier[]>>();
+const facadeFaceCache = new Map<number, readonly SkyriverFacadeFace[]>();
 
 function towerKey(tower: SkyriverTower): string {
   return `${tower.x.toFixed(2)}:${tower.z.toFixed(2)}`;
@@ -318,10 +344,18 @@ function tierProjectionOver(seed: number, tower: SkyriverTower, y0: number, y1: 
   const tiers = tierCache.get(seed)?.get(towerKey(tower));
   if (tiers === undefined) return 0;
   let projection = 0;
-  for (const [bottom, top, p] of tiers) {
-    if (top > y0 && bottom < y1) projection = Math.max(projection, p);
+  for (const tier of tiers) {
+    if (tier.face.y1 > y0 && tier.face.y0 < y1) projection = Math.max(projection, tier.face.projection);
   }
   return projection;
+}
+
+/** Named exposed face records used by sign fitting and facade diagnostics. */
+export function deriveFacadeFaces(layout: SkyriverCityLayout): readonly SkyriverFacadeFace[] {
+  deriveCityTrims(layout);
+  const faces = facadeFaceCache.get(layout.seed);
+  if (faces === undefined) fail('SKYRIVER_CITY_FACADE_FACES_MISSING');
+  return faces;
 }
 
 /** All drawn concrete masses for a layout. Pure and cached; derived alongside the trims. */
@@ -526,7 +560,9 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     const back = Math.abs(tower.x) + tower.width * 0.5;
     return { x: Math.sign(tower.x) * (wallFace + back) * 0.5, z: tower.z, width: back - wallFace, depth: tower.depth, anchorV: tower.z };
   };
-  const tierMap = new Map<string, readonly (readonly [number, number, number, number, number])[]>();
+  const tierMap = new Map<string, readonly FacadeTier[]>();
+  const exposedFaces: SkyriverFacadeFace[] = [];
+  const heroRows = deriveHeroRowPlans(layout);
   tierCache.set(layout.seed, tierMap);
   for (const wall of innerWalls) {
     for (let index = 0; index < wall.length; index += 1) {
@@ -536,56 +572,97 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
       const available = face - CORRIDOR_CLEAR_X;
       const h = tower.height;
 
-      // Tier faces: [bottom, top, projection, zCentre, zSpan]. The core face above the last tier
-      // is the slab itself (projection 0).
-      const tiers: [number, number, number, number, number][] = [];
-      // R16: each tier is placed rigidly in its slab's frame, and so is the kit on its face.
-      const tierOwners: SkyriverTrimOwner[] = [];
-      // T7: 40-80 m terraces (the inner wall now stands 70 m further back; see presentationLayout).
       const base = Math.min(82, available * 0.62);
-      if (base >= 10) {
-        const tops = [
-          h * (0.26 + random.nextInt(0, 160) / 1000),
-          h * (0.52 + random.nextInt(0, 160) / 1000),
-          h * (0.76 + random.nextInt(0, 130) / 1000),
-        ];
-        const projections = [base, base * 0.56, base * 0.24];
-        let bottom = SKYRIVER_CITY_VOID_BASE_Y;
-        // A quarter of the slabs carry a mega-plate podium: a 150-250 m wide terrace spanning the
-        // seams to both neighbours (broad-slab variety, not just narrow towers).
-        const megaPlate = random.nextInt(0, 99) < 25;
-        for (let k = 0; k < 3; k += 1) {
-          const zSpan = k === 0 && megaPlate
-            ? Math.max(tower.depth + 60, 150 + random.nextInt(0, 100))
-            : tower.depth * (0.62 + random.nextInt(0, 330) / 1000);
-          const zCentre = tower.z + (random.nextInt(-1000, 1000) / 1000) * (tower.depth - zSpan) * 0.5;
-          tiers.push([bottom, tops[k]!, projections[k]!, zCentre, zSpan]);
-          // Overlap the slab by 6 m so no seam shows between tier and core.
-          const tierMass: SkyriverMass = {
-            x: side * (face - projections[k]! * 0.5 + 3),
+      if (base < 10) continue;
+      const buildingId = `tower:${towerKey(tower)}`;
+      const row = heroRows.find((candidate) => candidate.tower === tower);
+      let tops = h >= 1800
+        ? [180, 390, 720, 1080, 1410, 1680].map((value, i) => value + (facadeHash01(layout.seed, tower, i + 1) - 0.5) * 34)
+        : h >= 1100
+          ? [h * 0.16, h * 0.34, h * 0.52, h * 0.70].map((value, i) => value + (facadeHash01(layout.seed, tower, i + 1) - 0.5) * 26)
+          : h >= 700
+            ? [h * 0.22, h * 0.46, h * 0.70].map((value, i) => value + (facadeHash01(layout.seed, tower, i + 1) - 0.5) * 22)
+            : [];
+      tops = tops.filter((top) => top >= 130 && top <= h - 150);
+      if (row !== undefined && row.faceBottom > 130 && row.faceTop < h - 130) {
+        tops = tops.filter((top) => top < row.faceBottom - 130 || top > row.faceTop + 130);
+        tops.push(row.faceBottom, row.faceTop);
+      }
+      tops.sort((a, b) => a - b);
+      const separated: number[] = [];
+      for (const top of tops) {
+        const reserved = row !== undefined && (Math.abs(top - row.faceBottom) < 0.01 || Math.abs(top - row.faceTop) < 0.01);
+        if (reserved || separated.length === 0 || top - separated[separated.length - 1]! >= 130) separated.push(top);
+      }
+      while (separated.length > 6) {
+        const drop = separated.findIndex((top) => row === undefined
+          || (Math.abs(top - row.faceBottom) >= 0.01 && Math.abs(top - row.faceTop) >= 0.01));
+        if (drop < 0) break;
+        separated.splice(drop, 1);
+      }
+      tops = separated;
+
+      const facesForTower: FacadeTier[] = [];
+      const projections = tops.map((_, i) => base * Math.max(0.16, 1 - i * 0.15));
+      const spans = tops.map((_, i) => tower.depth * Math.max(0.5, 1 - i * 0.085));
+      let bottom = SKYRIVER_CITY_VOID_BASE_Y;
+      for (let k = 0; k <= tops.length; k += 1) {
+        const top = tops[k] ?? h;
+        const isHeroFace = row !== undefined && Math.abs(bottom - row.faceBottom) < 0.05 && Math.abs(top - row.faceTop) < 0.05;
+        const projection = k < tops.length && !isHeroFace ? projections[k]! : 0;
+        const zSpan = isHeroFace ? tower.depth : (k < tops.length ? spans[k]! : tower.depth);
+        const zCentre = tower.z;
+        const tierMass: SkyriverMass = k < tops.length && projection > 0
+          ? {
+            x: side * (face - projection * 0.5 + 3),
             y0: bottom,
             z: zCentre,
-            width: projections[k]! + 6,
-            height: tops[k]! - bottom,
+            width: projection + 6,
+            height: top - bottom,
             depth: zSpan,
             tint: tower.tint,
             anchorV: tower.z,
             building: buildingSeedOf(tower.x, tower.z),
+            stepBottom: k > 0,
+            stepTop: true,
+          }
+          : {
+            x: tower.x,
+            y0: bottom,
+            z: tower.z,
+            width: tower.width,
+            height: top - bottom,
+            depth: tower.depth,
+            tint: tower.tint,
+            anchorV: tower.z,
+            building: buildingSeedOf(tower.x, tower.z),
+            stepBottom: tops.length > 0,
+            stepTop: k < tops.length,
           };
-          masses.push(tierMass);
-          tierOwners.push(ownerOf(tierMass, tower.z));
-          bottom = tops[k]!;
-        }
-      }
-      const coreBottom = tiers.length > 0 ? tiers[tiers.length - 1]![1] : 40;
-      tiers.push([coreBottom, h, 0, tower.z, tower.depth]);
-      tierOwners.push(ownerOf(tower));
-      tierMap.set(towerKey(tower), tiers);
-
-      for (let t = 0; t < tiers.length; t += 1) {
-        const [bottom, top, projection, zCentre, zSpan] = tiers[t]!;
-        const tierOwner = tierOwners[t]!;
+        if (k < tops.length && projection > 0) masses.push(tierMass);
+        const faceOwnerMass = projection > 0 ? tierMass : tower;
+        const faceOwner = ownerOf(faceOwnerMass, tower.z);
+        const facadeFace: SkyriverFacadeFace = {
+          id: `${buildingId}:face-${k}`,
+          buildingId,
+          side,
+          planeAxis: 'x',
+          plane: side * (face - projection),
+          outward: -side as -1 | 1,
+          u0: tower.z - zSpan * 0.5,
+          u1: tower.z + zSpan * 0.5,
+          y0: bottom,
+          y1: top,
+          stepBottom: k > 0,
+          stepTop: k < tops.length,
+          projection,
+          owner: faceOwner,
+        };
+        const tier: FacadeTier = { face: facadeFace };
+        facesForTower.push(tier);
+        exposedFaces.push(facadeFace);
         const outer = face - projection;
+        const tierOwner = faceOwner;
         // Ribs on this tier's face.
         const ribDepth = Math.min(14, outer - CORRIDOR_CLEAR_X - 1);
         if (ribDepth >= 3) {
@@ -614,7 +691,9 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
               slabDepth + 1, 8, zSpan + 4, tierOwner);
           }
         }
+        bottom = top;
       }
+      tierMap.set(towerKey(tower), facesForTower);
 
       // Crown: one or two stepped blocks on the roof.
       const crownW = tower.width * (0.42 + random.nextInt(0, 250) / 1000);
@@ -658,7 +737,8 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
       // Cantilevered gantries reaching toward the corridor from the outermost tier.
       const cantilevers = random.nextInt(0, 2);
       for (let c = 0; c < cantilevers; c += 1) {
-        const [bottom, top, projection] = tiers[random.nextInt(0, tiers.length - 1)]!;
+        const tier = facesForTower[random.nextInt(0, facesForTower.length - 1)]!;
+        const { y0: bottom, y1: top, projection } = tier.face;
         const outer = face - projection;
         const length = Math.min(30, outer - 412);
         if (length < 8) continue;
@@ -821,6 +901,25 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     masses.push({ x, y0: tops[0]! - 4, z: apex.v, width: base * 0.72, height: tops[1]! - tops[0]! + 4, depth: base * 0.72, tint: MEGA_TINT });
     masses.push({ x, y0: tops[1]! - 4, z: apex.v, width: base * 0.42, height: tops[2]! - tops[1]! + 4, depth: base * 0.42, tint: MEGA_TINT });
     const megaOwner = ownerOf({ x, z: apex.v, width: base, depth: base });
+    if (showcaseTower) {
+      const buildingId = `mega:${apex.v.toFixed(2)}`;
+      exposedFaces.push({
+        id: `${buildingId}:brand-face`,
+        buildingId,
+        side: apex.side as -1 | 1,
+        planeAxis: 'z',
+        plane: apex.v - base * 0.5,
+        outward: -1,
+        u0: x - base * 0.5,
+        u1: x + base * 0.5,
+        y0: SKYRIVER_CITY_VOID_BASE_Y,
+        y1: tops[0]!,
+        stepBottom: false,
+        stepTop: true,
+        projection: 0,
+        owner: megaOwner,
+      });
+    }
     const spire = 520 + random.nextInt(0, 300);
     push(SKYRIVER_TRIM_ANTENNA, x, tops[2]! + spire * 0.5, apex.v, 7, spire, 7, megaOwner);
     // R11 crown lighting: floodlit edges on each stage's top 260 m and a rim at every setback,
@@ -976,16 +1075,37 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
 
   // Every derived slab, extended down into the void so no wall has a visible foot.
   for (const tower of layout.towers) {
-    masses.unshift({
-      x: tower.x,
-      y0: SKYRIVER_CITY_VOID_BASE_Y,
-      z: tower.z,
-      width: tower.width,
-      height: tower.height - SKYRIVER_CITY_VOID_BASE_Y,
-      depth: tower.depth,
-      tint: tower.tint,
-    });
+    const tiers = tierMap.get(towerKey(tower));
+    if (tiers === undefined || tiers.length < 2) {
+      masses.unshift({
+        x: tower.x,
+        y0: SKYRIVER_CITY_VOID_BASE_Y,
+        z: tower.z,
+        width: tower.width,
+        height: tower.height - SKYRIVER_CITY_VOID_BASE_Y,
+        depth: tower.depth,
+        tint: tower.tint,
+      });
+      continue;
+    }
+    for (let i = tiers.length - 1; i >= 0; i -= 1) {
+      const face = tiers[i]!.face;
+      masses.unshift({
+        x: tower.x,
+        y0: face.y0,
+        z: tower.z,
+        width: tower.width,
+        height: face.y1 - face.y0,
+        depth: tower.depth,
+        tint: tower.tint,
+        anchorV: tower.z,
+        building: buildingSeedOf(tower.x, tower.z),
+        stepBottom: face.stepBottom,
+        stepTop: face.stepTop,
+      });
+    }
   }
+  facadeFaceCache.set(layout.seed, exposedFaces);
   massCache.set(layout.seed, masses);
 
   owner.length = count;
@@ -1305,6 +1425,16 @@ export interface SkyriverAnchorAudit {
   readonly signMaxDriftM: number;
   readonly signsOffFace: number;
   readonly pointWarpSignsOffFace: number;
+  readonly fullFaceFailures: number;
+  readonly wrongPlaneFailures: number;
+  readonly spacingConflicts: number;
+  readonly heroExclusionConflicts: number;
+  readonly heroCompositionConflicts: number;
+  readonly ordinaryCount: number;
+  readonly heroCount: number;
+  readonly acceptedByLoopSection: readonly number[];
+  readonly corridorFaceCount: number;
+  readonly tallInnerBuildingCount: number;
   /** Every pre-R16 floater, worst first: kind, canyon centre, world centre and how far off it was. */
   readonly pointWarpFloaters: readonly { kind: number; index: number; x: number; y: number; v: number; wx: number; wz: number; driftM: number; gapM: number }[];
 }
@@ -1413,19 +1543,44 @@ export function auditCityAnchors(layout: SkyriverCityLayout): SkyriverAnchorAudi
   let signMaxDrift = 0;
   let signsOff = 0;
   let pointSignsOff = 0;
+  let wrongPlaneFailures = 0;
+  let spacingConflicts = 0;
+  let heroExclusionConflicts = 0;
+  let heroCompositionConflicts = 0;
+  const facadeFaces = deriveFacadeFaces(layout);
+  const faceById = new Map(facadeFaces.map((face) => [face.id, face]));
+  const ordinaryReservations: FacadeReservation[] = [];
+  const heroByComposition = new Map<string, FacadeReservation>();
   for (let i = 0; i < signs.count; i += 1) {
     const mount = signs.owner[i];
     if (!mount) continue;
     signsChecked += 1;
     const cx = signs.cx[i]!;
     const cz = signs.cz[i]!;
-    const halfAlong = signs.nz[i] === 0 ? signs.sw[i]! * 0.5 : 0;
+    const face = faceById.get(signs.faceId[i] ?? '');
+    if (face === undefined) {
+      signsOff += 1;
+      wrongPlaneFailures += 1;
+      continue;
+    }
+    const alongCentre = face.planeAxis === 'x' ? cz : cx;
+    const halfAlong = face.planeAxis === 'z' || signs.nz[i] === 0 ? signs.sw[i]! * 0.5 : signs.rootHalfWidthM[i]!;
+    const faceRect: FacadeRect = {
+      u0: alongCentre - halfAlong,
+      u1: alongCentre + halfAlong,
+      y0: signs.cy[i]! - signs.sh[i]! * 0.5,
+      y1: signs.cy[i]! + signs.sh[i]! * 0.5,
+    };
+    if (!facadeFaceContains(face, faceRect)) signsOff += 1;
+    const expectedPlane = face.planeAxis === 'z'
+      ? face.plane + face.outward * 1.2
+      : face.plane + face.outward * (signs.nz[i] !== 0 ? signs.sw[i]! * 0.5 + 0.8 : (i < signs.heroCount ? 0.8 : SKYRIVER_CITY.signStandoffM));
+    const placedPlane = face.planeAxis === 'z' ? cz : cx;
+    if (Math.abs(placedPlane - expectedPlane) > 0.05) wrongPlaneFailures += 1;
     warpRigid(cx, cz, mount.anchorV, auditPoint);
     const drawn = check(mount, mount.anchorV, auditPoint.x, auditPoint.z, cx, cz, 0, 0);
     signMaxDrift = Math.max(signMaxDrift, drawn.drift);
     // Along-face overrun past the tower's end (the across offset is the standoff, exact either way).
-    const overrun = (d: number): boolean => d + halfAlong > mount.depth * 0.5 + 0.5;
-    if (overrun(Math.abs(cz - mount.z) + drawn.drift)) signsOff += 1;
     warpCanyon(cx, cz, auditPoint);
     const point = check(mount, mount.z, auditPoint.x, auditPoint.z, cx, cz, 0, 0);
     // Along-face position of the pre-R16 placement in the tower's frame.
@@ -1433,11 +1588,74 @@ export function auditCityAnchors(layout: SkyriverCityLayout): SkyriverAnchorAudi
     const c = Math.cos(auditOwner.heading);
     const sn = Math.sin(auditOwner.heading);
     const lz = (auditPoint.x - auditOwner.x) * sn + (auditPoint.z - auditOwner.z) * c;
-    if (point.drift > 0.5 && overrun(Math.abs(lz))) pointSignsOff += 1;
+    const legacyOverrun = (d: number): boolean => d + halfAlong > mount.depth * 0.5 + 0.5;
+    if (point.drift > 0.5 && legacyOverrun(Math.abs(lz))) pointSignsOff += 1;
+
+    const alongHalfForSpacing = face.planeAxis === 'z' ? 4 : (signs.nz[i] !== 0 ? signs.rootHalfWidthM[i]! : signs.sw[i]! * 0.5);
+    const reservation: FacadeReservation = {
+      side: face.side,
+      buildingId: face.buildingId,
+      u0: cz - alongHalfForSpacing,
+      u1: cz + alongHalfForSpacing,
+      y0: signs.cy[i]! - signs.sh[i]! * 0.5,
+      y1: signs.cy[i]! + signs.sh[i]! * 0.5,
+      heightM: signs.sh[i]!,
+      compositionId: signs.compositionId[i] ?? `sign-${i}`,
+      role: i < signs.heroCount ? 'hero' : 'ordinary',
+    };
+    if (i < signs.heroCount) {
+      const current = heroByComposition.get(reservation.compositionId);
+      heroByComposition.set(reservation.compositionId, current === undefined ? reservation : {
+        ...current,
+        u0: Math.min(current.u0, reservation.u0),
+        u1: Math.max(current.u1, reservation.u1),
+        y0: Math.min(current.y0, reservation.y0),
+        y1: Math.max(current.y1, reservation.y1),
+        heightM: Math.max(current.heightM, reservation.heightM),
+      });
+    } else ordinaryReservations.push(reservation);
+  }
+  for (let i = 0; i < ordinaryReservations.length; i += 1) {
+    const reservation = ordinaryReservations[i]!;
+    for (let j = i + 1; j < ordinaryReservations.length; j += 1) {
+      if (facadeReservationsConflict(reservation, ordinaryReservations[j]!, CANYON_LOOP_LENGTH_M)) spacingConflicts += 1;
+    }
+    for (const hero of heroByComposition.values()) {
+      if (facadeReservationsConflict(reservation, hero, CANYON_LOOP_LENGTH_M)) heroExclusionConflicts += 1;
+    }
+  }
+  const heroCompositions = [...heroByComposition.values()];
+  for (let i = 0; i < heroCompositions.length; i += 1) {
+    for (let j = i + 1; j < heroCompositions.length; j += 1) {
+      if (facadeReservationsConflict(heroCompositions[i]!, heroCompositions[j]!, CANYON_LOOP_LENGTH_M)) heroCompositionConflicts += 1;
+    }
   }
 
   worst.sort((a, b) => b.driftM - a.driftM);
-  return { checked: trims.count, maxDriftM: maxDrift, floating, failures: drawnFailures.slice(0, 40), pointWarpMaxDriftM: pointMaxDrift, pointWarpFloating: pointFloating, signsChecked, signMaxDriftM: signMaxDrift, signsOffFace: signsOff, pointWarpSignsOffFace: pointSignsOff, pointWarpFloatingByKind: Array.from({ length: SKYRIVER_TRIM_FLOOD + 1 }, (_, k) => pointByKind[k] ?? 0), pointWarpFloaters: worst };
+  return {
+    checked: trims.count,
+    maxDriftM: maxDrift,
+    floating,
+    failures: drawnFailures.slice(0, 40),
+    pointWarpMaxDriftM: pointMaxDrift,
+    pointWarpFloating: pointFloating,
+    signsChecked,
+    signMaxDriftM: signMaxDrift,
+    signsOffFace: signsOff,
+    pointWarpSignsOffFace: pointSignsOff,
+    fullFaceFailures: signsOff,
+    wrongPlaneFailures,
+    spacingConflicts,
+    heroExclusionConflicts,
+    heroCompositionConflicts,
+    ordinaryCount: signs.ordinaryCount,
+    heroCount: signs.heroCount,
+    acceptedByLoopSection: signs.acceptedByLoopSection,
+    corridorFaceCount: facadeFaces.filter((face) => face.planeAxis === 'x').length,
+    tallInnerBuildingCount: new Set(facadeFaces.filter((face) => face.planeAxis === 'x' && face.y1 - face.y0 >= 150).map((face) => face.buildingId)).size,
+    pointWarpFloatingByKind: Array.from({ length: SKYRIVER_TRIM_FLOOD + 1 }, (_, k) => pointByKind[k] ?? 0),
+    pointWarpFloaters: worst,
+  };
 }
 
 
@@ -1449,12 +1667,69 @@ function innerWallOf(layout: SkyriverCityLayout, side: -1 | 1): readonly Skyrive
   return wall.filter((tower) => Math.abs(tower.x) < innerX + layout.cell * 0.5);
 }
 
+export interface HeroRowPlan {
+  readonly compositionId: string;
+  readonly side: -1 | 1;
+  readonly tower: SkyriverTower;
+  readonly centreY: number;
+  readonly faceBottom: number;
+  readonly faceTop: number;
+}
+
+function facadeHash01(seed: number, tower: SkyriverTower, salt: number): number {
+  return hash1(seed * 0.019 + tower.x * 0.0317 + tower.z * 0.00713 + salt * 71.3);
+}
+
+/** Selects tall hero hosts from the existing lots before the tier faces are derived. */
+export function deriveHeroRowPlans(layout: SkyriverCityLayout): readonly HeroRowPlan[] {
+  const bends = canyonBendApexes(900).map((bend) => bend.v).sort((a, b) => a - b);
+  const rows: HeroRowPlan[] = [];
+  for (let section = 0; section < bends.length; section += 1) {
+    const start = bends[section]!;
+    let end = bends[(section + 1) % bends.length]!;
+    if (end <= start) end += CANYON_LOOP_LENGTH_M;
+    const intoShowcase = Math.abs(((end % CANYON_LOOP_LENGTH_M) + CANYON_LOOP_LENGTH_M) % CANYON_LOOP_LENGTH_M
+      - ((SKYRIVER_SHOWCASE_BEND_V % CANYON_LOOP_LENGTH_M) + CANYON_LOOP_LENGTH_M) % CANYON_LOOP_LENGTH_M) < 1;
+    const lo = intoShowcase ? 0.12 : 0.3;
+    const hi = intoShowcase ? 0.3 : 0.7;
+    let best: HeroRowPlan & { score: number } | null = null;
+    for (const side of [-1, 1] as const) {
+      for (const tower of innerWallOf(layout, side)) {
+        let hostV = tower.z;
+        while (hostV < start + (end - start) * lo) hostV += CANYON_LOOP_LENGTH_M;
+        if (hostV > start + (end - start) * hi) continue;
+        if (tower.depth < 136) continue;
+        const faceAbsX = Math.abs(tower.x) - tower.width * 0.5;
+        const bladeWidth = Math.min(90, faceAbsX - 407);
+        if (bladeWidth < 60) continue;
+        for (const lift of [0, 150, 300, 450]) {
+          const centreY = routeAltitude(hostV) + 20 + lift;
+          const faceBottom = centreY - 350;
+          const faceTop = centreY + 350;
+          if (faceBottom < 150 || faceTop > tower.height - 150) continue;
+          const score = routeLateral(hostV) * side + Math.min(faceAbsX - 405, 110) * 0.55
+            - lift * 0.22 + (tower.height - faceTop) * 0.015;
+          if (best === null || score > best.score) {
+            best = { compositionId: `hero-row-${section}`, side, tower, centreY, faceBottom, faceTop, score };
+          }
+          break;
+        }
+      }
+    }
+    if (best !== null) {
+      const { score: _score, ...row } = best;
+      rows.push(row);
+    }
+  }
+  return rows;
+}
+
 
 export interface SkyriverHeroBlade {
   /** T7-2: 'blade' projects into the canyon facing along it; 'panel' is a giant sign flat on the wall. */
   /** R14 'brand': a giant vertical sign flat on the showcase tower's corridor face. */
   readonly kind: 'blade' | 'panel' | 'brand';
-  /** Index within its kind: selects the reserved atlas cell, so every hero's text is unique. */
+  /** Stable source slot within its kind. Rendering wraps this slot through the reserved cells. */
   readonly cell: number;
   readonly x: number;
   readonly y: number;
@@ -1463,6 +1738,11 @@ export interface SkyriverHeroBlade {
   readonly height: number;
   readonly color: number;
   readonly seed: number;
+  readonly buildingId: string;
+  readonly faceId: string;
+  readonly compositionId: string;
+  readonly rootHalfWidthM: number;
+  readonly owner: SkyriverTrimOwner;
 }
 
 /**
@@ -1477,136 +1757,248 @@ const HERO_COLORS: readonly number[] = Object.freeze([0x2ff2ff, 0xffb13c, 0xff2f
 const heroCache = new Map<number, readonly SkyriverHeroBlade[]>();
 
 /**
- * The hero blades: 10 huge vertical glyph signs, 24-60 m deep and 170-240 m tall, projecting from
- * the inner walls into the canyon at shuttle height and facing along it. Pure; cached per seed.
+ * The hero signs use named exposed faces. Bend sections reserve four-blade rows. Pure; cached per seed.
  */
 export function deriveHeroBlades(layout: SkyriverCityLayout): readonly SkyriverHeroBlade[] {
   const cached = heroCache.get(layout.seed);
   if (cached !== undefined) return cached;
   deriveCityTrims(layout);
-  const random = new DeterministicRandom(layout.seed).fork('skyriver.city.hero');
+  const faces = deriveFacadeFaces(layout);
+  const rowRandom = new DeterministicRandom(layout.seed).fork('skyriver.city.hero.rows');
+  const brandRandom = new DeterministicRandom(layout.seed).fork('skyriver.city.hero.brand');
   const blades: SkyriverHeroBlade[] = [];
-  let bladeCell = 0;
-  let panelCell = 0;
-  const stations: [-1 | 1, number, 'blade' | 'panel'][] = [];
-  for (let k = 0; k * HERO_SPACING_M < CANYON_LOOP_LENGTH_M; k += 1) {
-    const v = -CANYON_LOOP_LENGTH_M / 2 + (k + 0.5) * HERO_SPACING_M;
-    // R12: the pristine heights carry corporate wordmark panels only (calm, but lit), every station.
-    const pristineStation = routeAltitude(v) > STRATA_PRISTINE_BASE_M - 50;
-    stations.push([k % 2 === 0 ? -1 : 1, v, pristineStation || k % 3 === 2 ? 'panel' : 'blade']);
+  const rows = deriveHeroRowPlans(layout);
+  const facesByBuilding = new Map<string, SkyriverFacadeFace[]>();
+  for (const face of faces) {
+    const bucket = facesByBuilding.get(face.buildingId) ?? [];
+    bucket.push(face);
+    facesByBuilding.set(face.buildingId, bucket);
   }
-  // R13 sign walls: one per lap section (mid-way between tight bends), on the wall the route's
-  // snake leans toward, so at the closest the camera passes ~250 m from them. Four big blades in a
-  // row along the wall, 45 m apart, each 60-90 m deep and ~5x as tall (the atlas cell's aspect, so
-  // the lettering is not stretched), staggered in height: the concept's near-wall kanji sign wall.
-  // They replace R12's nine small clusters (fewer, bigger).
-  const signWalls: { side: -1 | 1; v: number; lift: number }[] = [];
-  const bendVs = canyonBendApexes(900).map((a) => a.v).sort((a, b) => a - b);
-  for (let k = 0; k < bendVs.length; k += 1) {
-    const a = bendVs[k]!;
-    let b = bendVs[(k + 1) % bendVs.length]!;
-    if (b <= a) b += CANYON_LOOP_LENGTH_M;
-    // The section leading into the showcase bend keeps its sign wall early, out of the tower's view.
-    const intoShowcase = Math.abs(((b % CANYON_LOOP_LENGTH_M) + CANYON_LOOP_LENGTH_M) % CANYON_LOOP_LENGTH_M
-      - ((SKYRIVER_SHOWCASE_BEND_V % CANYON_LOOP_LENGTH_M) + CANYON_LOOP_LENGTH_M) % CANYON_LOOP_LENGTH_M) < 1;
-    const lo = intoShowcase ? 0.12 : 0.3;
-    const hi = intoShowcase ? 0.3 : 0.7;
-    // R14: a fit search instead of "strongest lean, then hope". Every inner slab on either wall in
-    // the window is a candidate host; it must be deep enough for the four-blade row and leave >= 55 m
-    // of clear face at the route's height after its terraces. Best score: lean toward the route
-    // (the camera passes closer), then free face depth. One wall per section, four in all.
-    let best: { side: -1 | 1; v: number; score: number; lift: number } | null = null;
-    for (const candidateSide of [-1, 1] as const) {
-      for (const host of innerWallOf(layout, candidateSide)) {
-        let hv = host.z;
-        while (hv < a + (b - a) * lo) hv += CANYON_LOOP_LENGTH_M;
-        if (hv > a + (b - a) * hi) continue;
-        if (host.depth < 4 * 38 + 12) continue;
-        // The whole row (blades up to ~470 m tall, staggered +-90 m) must clear the terraces. Where
-        // the low setbacks squeeze it (the grime section), the row lifts until it fits, at most 450 m.
-        for (const lift of [0, 150, 300, 450]) {
-          const y = routeAltitude(hv) + 20 + lift;
-          const face = Math.abs(host.x) - host.width * 0.5 - tierProjectionOver(layout.seed, host, y - 340, y + 340);
-          const room = face - 405;
-          if (room < 62) continue;
-          const lean = routeLateral(hv) * candidateSide;
-          const score = lean + Math.min(room, 90) * 0.6 - lift * 0.25;
-          if (best === null || score > best.score) best = { side: candidateSide, v: host.z, score, lift };
-          break;
+  const stations: { readonly k: number; readonly z: number; readonly side: -1 | 1; readonly kind: 'blade' | 'panel'; readonly cell: number }[] = [];
+  let bladeCandidateCount = 0;
+  let panelCandidateCount = 0;
+
+  for (let k = 0; k * HERO_SPACING_M < CANYON_LOOP_LENGTH_M; k += 1) {
+    const z = -CANYON_LOOP_LENGTH_M / 2 + (k + 0.5) * HERO_SPACING_M;
+    const side = k % 2 === 0 ? -1 : 1;
+    const kind = routeAltitude(z) > STRATA_PRISTINE_BASE_M - 50 || k % 3 === 2 ? 'panel' : 'blade';
+    const cell = kind === 'blade' ? bladeCandidateCount++ : panelCandidateCount++;
+    stations.push({ k, z, side, kind, cell });
+  }
+
+  for (const station of stations) {
+    const { k, z, side, kind, cell } = station;
+    const stationRandom = new DeterministicRandom(layout.seed).fork(`skyriver.city.hero.station.${k}`);
+    const wall = innerWallOf(layout, side);
+    if (wall.length === 0) continue;
+    const tower = wall.reduce((best, candidate) => Math.abs(candidate.z - z) < Math.abs(best.z - z) ? candidate : best);
+    const candidates = (facesByBuilding.get(`tower:${towerKey(tower)}`) ?? [])
+      .filter((face) => face.side === side && face.planeAxis === 'x');
+    if (kind === 'blade') {
+      const height = 230 + stationRandom.nextInt(0, 100);
+      const targetY = routeAltitude(z) + 20 + stationRandom.nextInt(-50, 50);
+      const targetWidth = Math.min(70, Math.max(30, Math.abs(tower.x) - tower.width * 0.5 - 410));
+      let best: { readonly face: SkyriverFacadeFace; readonly rect: FacadeRect; readonly width: number; readonly offsetM: number } | undefined;
+      for (const face of candidates) {
+        const width = Math.min(targetWidth, Math.abs(face.plane) - 410);
+        if (width < 30) continue;
+        const fit = fitOnNearestFacadeFace([face], z, targetY, 6, height * 0.5, FACADE_FACE_EDGE_MARGIN_M + 0.25);
+        if (fit !== undefined && (best === undefined || fit.offsetM < best.offsetM)) {
+          best = { face, rect: fit.rect, width, offsetM: fit.offsetM };
+        }
+      }
+      if (best === undefined) continue;
+      const y = (best.rect.y0 + best.rect.y1) * 0.5;
+      const placedZ = (best.rect.u0 + best.rect.u1) * 0.5;
+      blades.push({
+        kind, cell, x: best.face.plane + best.face.outward * (best.width * 0.5 + 0.8), y, z: placedZ,
+        width: best.width, height,
+        color: HERO_COLORS[k % HERO_COLORS.length]!, seed: stationRandom.nextInt(0, 9999) / 9999,
+        buildingId: best.face.buildingId, faceId: best.face.id, compositionId: `hero-${k}`, rootHalfWidthM: 6,
+        owner: best.face.owner,
+      });
+    } else {
+      const height = 44 + stationRandom.nextInt(0, 12);
+      const targetY = routeAltitude(z) + 130 + stationRandom.nextInt(-40, 40);
+      let best: { readonly face: SkyriverFacadeFace; readonly rect: FacadeRect; readonly width: number; readonly offsetM: number } | undefined;
+      for (const face of candidates) {
+        const width = Math.min(160, face.u1 - face.u0 - 8.5);
+        if (width < 60) continue;
+        const fit = fitOnNearestFacadeFace([face], z, targetY, width * 0.5, height * 0.5, FACADE_FACE_EDGE_MARGIN_M + 0.25);
+        if (fit !== undefined && (best === undefined || fit.offsetM < best.offsetM
+          || (fit.offsetM === best.offsetM && width > best.width))) {
+          best = { face, rect: fit.rect, width, offsetM: fit.offsetM };
+        }
+      }
+      if (best === undefined) continue;
+      const y = (best.rect.y0 + best.rect.y1) * 0.5;
+      const placedZ = (best.rect.u0 + best.rect.u1) * 0.5;
+      blades.push({
+        kind, cell, x: best.face.plane + best.face.outward * 0.8, y, z: placedZ,
+        width: best.width, height,
+        color: HERO_COLORS[(k + 2) % HERO_COLORS.length]!, seed: stationRandom.nextInt(0, 9999) / 9999,
+        buildingId: best.face.buildingId, faceId: best.face.id, compositionId: `hero-${k}`,
+        rootHalfWidthM: best.width * 0.5, owner: best.face.owner,
+      });
+    }
+  }
+
+  const rowOffsets = [40, -60, 90, -20] as const;
+  for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+    const row = rows[rowIndex]!;
+    const buildingId = `tower:${towerKey(row.tower)}`;
+    const face = faces.find((candidate) => candidate.buildingId === buildingId
+      && Math.abs(candidate.y0 - row.faceBottom) < 0.05
+      && Math.abs(candidate.y1 - row.faceTop) < 0.05);
+    if (face === undefined) continue;
+    const corridorRoom = Math.abs(face.plane) - 407;
+    const width = Math.min(90, corridorRoom);
+    if (width < 60) continue;
+    for (let n = 0; n < 4; n += 1) {
+      const z = row.tower.z + (n - 1.5) * 38;
+      const y = row.centreY + rowOffsets[n]!;
+      const height = width * 5.2;
+      if (!facadeFaceContains(face, { u0: z - 3, u1: z + 3, y0: y - height * 0.5, y1: y + height * 0.5 }, FACADE_FACE_EDGE_MARGIN_M + 0.25)) continue;
+      blades.push({
+        kind: 'blade', cell: (bladeCandidateCount + rowIndex * 4 + n) % HERO_VERTICAL_CELLS,
+        x: face.plane + face.outward * (width * 0.5 + 0.8), y, z, width, height,
+        color: HERO_COLORS[(rowIndex * 2 + n) % HERO_COLORS.length]!,
+        seed: rowRandom.nextInt(0, 9999) / 9999,
+        buildingId: face.buildingId, faceId: face.id, compositionId: row.compositionId,
+        rootHalfWidthM: 3, owner: face.owner,
+      });
+    }
+  }
+
+  for (const apex of canyonBendApexes(900)) {
+    if (Math.abs(apex.v - SKYRIVER_SHOWCASE_BEND_V) >= 1) continue;
+    const face = faces.find((candidate) => candidate.id.endsWith(':brand-face'));
+    if (face === undefined) continue;
+    const x = apex.side * apex.radius * 0.995;
+    const y = 2380;
+    const width = 92;
+    const height = width * 5.2;
+    if (!facadeFaceContains(face, { u0: x - width * 0.5, u1: x + width * 0.5, y0: y - height * 0.5, y1: y + height * 0.5 })) continue;
+    blades.push({
+      kind: 'brand', cell: 0, x, y, z: face.plane + face.outward * 1.2,
+      width, height, color: 0x2ff2ff, seed: brandRandom.nextInt(0, 9999) / 9999,
+      buildingId: face.buildingId, faceId: face.id, compositionId: 'showcase-brand',
+      rootHalfWidthM: width * 0.5, owner: face.owner,
+    });
+  }
+
+  const faceById = new Map(faces.map((face) => [face.id, face]));
+  const reservationForHero = (hero: SkyriverHeroBlade, face: SkyriverFacadeFace): FacadeReservation => {
+    const halfAlong = face.planeAxis === 'z' ? 4 : hero.kind === 'blade' ? hero.rootHalfWidthM : hero.width * 0.5;
+    return {
+      side: face.side,
+      buildingId: face.buildingId,
+      u0: hero.z - halfAlong,
+      u1: hero.z + halfAlong,
+      y0: hero.y - hero.height * 0.5,
+      y1: hero.y + hero.height * 0.5,
+      heightM: hero.height,
+      compositionId: hero.compositionId,
+      role: 'hero',
+    };
+  };
+
+  const occupied: FacadeReservation[] = [];
+  const priorityUnions = new Map<string, FacadeReservation>();
+  for (const hero of blades) {
+    if (!hero.compositionId.startsWith('hero-row-') && hero.kind !== 'brand') continue;
+    const face = faceById.get(hero.faceId);
+    if (face === undefined) continue;
+    const reservation = reservationForHero(hero, face);
+    const previous = priorityUnions.get(hero.compositionId);
+    priorityUnions.set(hero.compositionId, previous === undefined ? reservation : {
+      ...previous,
+      u0: Math.min(previous.u0, reservation.u0),
+      u1: Math.max(previous.u1, reservation.u1),
+      y0: Math.min(previous.y0, reservation.y0),
+      y1: Math.max(previous.y1, reservation.y1),
+      heightM: Math.max(previous.heightM, reservation.heightM),
+    });
+  }
+  occupied.push(...priorityUnions.values());
+
+  const stationPlacements = new Map<string, SkyriverHeroBlade>();
+  const rejectedStations = new Set<string>();
+  const stationHeroes = blades.filter((hero) => hero.compositionId.startsWith('hero-') && !hero.compositionId.startsWith('hero-row-'))
+    .sort((a, b) => b.height - a.height || a.compositionId.localeCompare(b.compositionId));
+  for (const hero of stationHeroes) {
+    const originalFace = faceById.get(hero.faceId);
+    if (originalFace === undefined) continue;
+    let best: { readonly hero: SkyriverHeroBlade; readonly score: number } | undefined;
+    const hostFaces = (facesByBuilding.get(hero.buildingId) ?? [])
+      .filter((face) => face.side === originalFace.side && face.planeAxis === 'x');
+    for (const face of hostFaces) {
+      const margin = FACADE_FACE_EDGE_MARGIN_M + 0.25;
+      const isBlade = hero.kind === 'blade';
+      const minWidth = isBlade ? 30 : 60;
+      const maxWidth = isBlade
+        ? Math.abs(face.plane) - 410
+        : face.u1 - face.u0 - 2 * margin;
+      const width = Math.min(hero.width, maxWidth);
+      if (width < minWidth) continue;
+      const halfU = isBlade ? hero.rootHalfWidthM : width * 0.5;
+      const halfY = hero.height * 0.5;
+      const minU = face.u0 + halfU + margin;
+      const maxU = face.u1 - halfU - margin;
+      const minY = face.y0 + halfY + margin;
+      const maxY = face.y1 - halfY - margin;
+      if (minU > maxU || minY > maxY) continue;
+      const clampU = (u: number): number => Math.max(minU, Math.min(maxU, u));
+      const clampY = (y: number): number => Math.max(minY, Math.min(maxY, y));
+      const uCandidates = new Set([clampU(hero.z), minU, maxU]);
+      const yCandidates = new Set([clampY(hero.y), minY, maxY]);
+      for (const reservation of occupied) {
+        if (reservation.side !== face.side) continue;
+        for (const shift of [-CANYON_LOOP_LENGTH_M, 0, CANYON_LOOP_LENGTH_M]) {
+          uCandidates.add(clampU(reservation.u0 + shift - halfU - 0.5));
+          uCandidates.add(clampU(reservation.u1 + shift + halfU + 0.5));
+        }
+        const clearance = 1.5 * Math.max(hero.height, reservation.heightM) + 0.5;
+        yCandidates.add(clampY(reservation.y0 - halfY - clearance));
+        yCandidates.add(clampY(reservation.y1 + halfY + clearance));
+      }
+      for (const u of uCandidates) {
+        for (const y of yCandidates) {
+          const rect = { u0: u - halfU, u1: u + halfU, y0: y - halfY, y1: y + halfY };
+          if (!facadeFaceContains(face, rect, margin)) continue;
+          const candidate: SkyriverHeroBlade = {
+            ...hero,
+            x: face.plane + face.outward * (isBlade ? width * 0.5 + 0.8 : 0.8),
+            y,
+            z: u,
+            width,
+            faceId: face.id,
+            rootHalfWidthM: isBlade ? hero.rootHalfWidthM : width * 0.5,
+            owner: face.owner,
+          };
+          const reservation = reservationForHero(candidate, face);
+          if (occupied.some((placed) => facadeReservationsConflict(reservation, placed, CANYON_LOOP_LENGTH_M))) continue;
+          const score = Math.hypot(u - hero.z, y - hero.y) + (hero.width - width) * 2;
+          if (best === undefined || score < best.score) best = { hero: candidate, score };
         }
       }
     }
-    if (best === null) continue;
-    signWalls.push({ side: best.side, v: best.v, lift: best.lift });
-  }
-  const signWallBlade = new Map<number, number>();
-  const signWallLift = new Map<number, number>();
-  for (const wall of signWalls) {
-    for (let n = 0; n < 4; n += 1) {
-      const z = wall.v + (n - 1.5) * 38;
-      stations.push([wall.side, z, 'blade']);
-      signWallBlade.set(z, n);
-      signWallLift.set(z, wall.lift);
+    if (best === undefined) {
+      rejectedStations.add(hero.compositionId);
+      continue;
     }
+    stationPlacements.set(hero.compositionId, best.hero);
+    const face = faceById.get(best.hero.faceId)!;
+    occupied.push(reservationForHero(best.hero, face));
   }
-  for (const [side, z, kind] of stations) {
-    const wallIndex = signWallBlade.get(z);
-    const HERO_CENTRE_Y = routeAltitude(z) + 20 + (wallIndex === undefined ? 0 : [40, -60, 90, -20][wallIndex]! + (signWallLift.get(z) ?? 0));
-    const wall = innerWallOf(layout, side);
-    if (wall.length === 0) continue;
-    const tower = wall.reduce((best, candidate) => (Math.abs(candidate.z - z) < Math.abs(best.z - z) ? candidate : best));
-    const zOnTower = (half: number): number =>
-      Math.max(tower.z - tower.depth * 0.5 + half, Math.min(tower.z + tower.depth * 0.5 - half, z));
-    if (kind === 'blade' && wallIndex !== undefined) {
-      // Sign-wall blade: deep and tall; stops at |x| >= 405 (outside the flight box).
-      const width = 60 + random.nextInt(0, 30);
-      const height = width * 5.2;
-      const y = HERO_CENTRE_Y;
-      const face = Math.abs(tower.x) - tower.width * 0.5
-        - tierProjectionOver(layout.seed, tower, y - height * 0.5, y + height * 0.5);
-      const w = Math.min(width, face - 405);
-      const zPlaced = zOnTower(6);
-      // A blade that would be clamped onto another blade's spot, or squeezed thin, is not placed.
-      if (w < 40 || Math.abs(zPlaced - z) > 8) continue;
-      blades.push({
-        kind, cell: bladeCell, x: side * (face - w * 0.5), y, z: zPlaced, width: w, height: w * 5.2,
-        color: HERO_COLORS[(wallIndex * 2 + blades.length) % HERO_COLORS.length]!, seed: random.nextInt(0, 9999) / 9999,
-      });
-      bladeCell += 1;
-    } else if (kind === 'blade') {
-      const height = 230 + random.nextInt(0, 100);
-      const y = HERO_CENTRE_Y + random.nextInt(-50, 50);
-      const face = Math.abs(tower.x) - tower.width * 0.5
-        - tierProjectionOver(layout.seed, tower, y - height * 0.5, y + height * 0.5);
-      const width = Math.min(70, Math.max(30, face - 410));
-      blades.push({
-        kind, cell: bladeCell, x: side * (face - width * 0.5), y, z: zOnTower(6), width, height,
-        color: HERO_COLORS[blades.length % HERO_COLORS.length]!, seed: random.nextInt(0, 9999) / 9999,
-      });
-      bladeCell += 1;
-    } else {
-      const height = 44 + random.nextInt(0, 12);
-      const y = HERO_CENTRE_Y + 110 + random.nextInt(-40, 40);
-      const width = Math.min(160, tower.depth - 10);
-      const face = Math.abs(tower.x) - tower.width * 0.5
-        - tierProjectionOver(layout.seed, tower, y - height * 0.5, y + height * 0.5);
-      blades.push({
-        kind, cell: panelCell, x: side * (face - 0.8), y, z: zOnTower(width * 0.5 + 4), width, height,
-        color: HERO_COLORS[(blades.length + 2) % HERO_COLORS.length]!, seed: random.nextInt(0, 9999) / 9999,
-      });
-      panelCell += 1;
-    }
+
+  const retained: SkyriverHeroBlade[] = [];
+  for (let i = 0; i < blades.length; i += 1) {
+    const placed = stationPlacements.get(blades[i]!.compositionId);
+    if (rejectedStations.has(blades[i]!.compositionId)) continue;
+    retained.push(placed ?? blades[i]!);
   }
-  // R14 brand: one giant vertical sign high on the showcase tower's corridor face (cell 0, the
-  // NEO-KYOTO stack), so the landmark's silhouette carries an identity like a real tower's brand.
-  for (const apex of canyonBendApexes(900)) {
-    if (Math.abs(apex.v - SKYRIVER_SHOWCASE_BEND_V) >= 1) continue;
-    // On the face the approach looks at (the one facing back along the canyon), not the bend side.
-    blades.push({
-      kind: 'brand', cell: 0, x: apex.side * apex.radius * 0.995, y: 2380, z: apex.v - SKYRIVER_SHOWCASE_BASE_M * 0.5 - 1.2,
-      width: 92, height: 92 * 5.2, color: 0x2ff2ff, seed: random.nextInt(0, 9999) / 9999,
-    });
-  }
+  blades.splice(0, blades.length, ...retained);
   heroCache.set(layout.seed, blades);
   return blades;
 }
@@ -1629,6 +2021,8 @@ export function deriveHeroBlades(layout: SkyriverCityLayout): readonly SkyriverH
  *
  * Pure and GL-free; cached per seed.
  */
+export const SKYRIVER_CITY_SIGN_CANDIDATE_BUDGET = 12000;
+
 export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
   const cached = signCache.get(layout.seed);
   if (cached !== undefined) return cached;
@@ -1646,84 +2040,107 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
   const color = new Float32Array(cap * 3);
   const kind = new Uint8Array(cap);
   const seedValue = new Float32Array(cap);
+  const faceId: (string | null)[] = [];
+  const buildingId: (string | null)[] = [];
+  const compositionId: (string | null)[] = [];
+  const rootHalfWidthM = new Float32Array(cap);
   const owner: (SkyriverTrimOwner | null)[] = [];
+  const faces = deriveFacadeFaces(layout).filter((face) => face.planeAxis === 'x');
+  if (faces.length === 0) fail('SKYRIVER_CITY_INNER_FACES_EMPTY');
+  const faceById = new Map(deriveFacadeFaces(layout).map((face) => [face.id, face]));
+  const tint = new THREE.Color();
+  const reservations: FacadeReservation[] = [];
+  const acceptedByLoopSection = new Array<number>(8).fill(0);
+  const heroUnions = new Map<string, FacadeReservation>();
   let count = 0;
 
-  // Only the stretch the camera actually flies (the autopilot track reaches |z| ~ 1.6 km; the view
-  // carries another ~1.5 km down the canyon). Beyond that the haze would swallow them anyway.
-  const inner = [...innerWallOf(layout, -1), ...innerWallOf(layout, 1)];
-  if (inner.length === 0) fail('SKYRIVER_CITY_INNER_WALL_EMPTY');
-  const tint = new THREE.Color();
-  // Signs mount on the outermost tier face at their height, never inside a setback mass.
-  deriveCityTrims(layout);
-
-  // Hero blades first (T6R-2 P1): a few huge vertical glyph blades at shuttle height along the
-  // autopilot straights, the dominant signage read (the Neon Rain still's vertical kanji blades).
-  for (const hero of deriveHeroBlades(layout)) {
-    if (count >= cap) break;
-    cx[count] = hero.x;
-    cy[count] = hero.y;
-    cz[count] = hero.z;
-    nx[count] = hero.kind === 'panel' ? -Math.sign(hero.x) : 0;
-    nz[count] = hero.kind === 'blade' ? 1 : hero.kind === 'brand' ? -1 : 0;
-    sw[count] = hero.width;
-    sh[count] = hero.height;
-    tint.setHex(hero.color, THREE.SRGBColorSpace);
+  const add = (
+    sign: { readonly x: number; readonly y: number; readonly z: number; readonly nx: number; readonly nz: number; readonly width: number; readonly height: number; readonly color: number; readonly seed: number; readonly kind: number; readonly face: SkyriverFacadeFace; readonly compositionId: string; readonly rootHalfWidth: number },
+  ): void => {
+    cx[count] = sign.x;
+    cy[count] = sign.y;
+    cz[count] = sign.z;
+    nx[count] = sign.nx;
+    nz[count] = sign.nz;
+    sw[count] = sign.width;
+    sh[count] = sign.height;
+    tint.setHex(sign.color, THREE.SRGBColorSpace);
     color[count * 3] = tint.r;
     color[count * 3 + 1] = tint.g;
     color[count * 3 + 2] = tint.b;
-    kind[count] = hero.kind === 'panel' ? SKYRIVER_SIGN_STRIP : SKYRIVER_SIGN_BANNER;
-    seedValue[count] = hero.seed;
-    owner[count] = null;
+    kind[count] = sign.kind;
+    seedValue[count] = sign.seed;
+    faceId[count] = sign.face.id;
+    buildingId[count] = sign.face.buildingId;
+    compositionId[count] = sign.compositionId;
+    rootHalfWidthM[count] = sign.rootHalfWidth;
+    owner[count] = sign.face.owner;
     count += 1;
+  };
+
+  const heroes = deriveHeroBlades(layout);
+  for (const hero of heroes) {
+    const face = faceById.get(hero.faceId);
+    if (face === undefined || count >= cap) continue;
+    const heroKind = hero.kind === 'panel' ? SKYRIVER_SIGN_STRIP : SKYRIVER_SIGN_BANNER;
+    add({
+      x: hero.x,
+      y: hero.y,
+      z: hero.z,
+      nx: hero.kind === 'panel' ? face.outward : 0,
+      nz: hero.kind === 'blade' || hero.kind === 'brand' ? (hero.kind === 'brand' ? -1 : 1) : 0,
+      width: hero.width,
+      height: hero.height,
+      color: hero.color,
+      seed: hero.seed,
+      kind: heroKind,
+      face,
+      compositionId: hero.compositionId,
+      rootHalfWidth: hero.rootHalfWidthM,
+    });
+    const halfAlong = face.planeAxis === 'x' && hero.kind === 'blade' ? hero.rootHalfWidthM : (hero.kind === 'brand' ? 4 : hero.width * 0.5);
+    const key = hero.compositionId;
+    const current = heroUnions.get(key);
+    const rect = {
+      side: face.side,
+      buildingId: face.buildingId,
+      u0: hero.z - halfAlong,
+      u1: hero.z + halfAlong,
+      y0: hero.y - hero.height * 0.5,
+      y1: hero.y + hero.height * 0.5,
+      heightM: hero.height,
+      compositionId: key,
+      role: 'hero' as const,
+    };
+    heroUnions.set(key, current === undefined ? rect : {
+      ...current,
+      u0: Math.min(current.u0, rect.u0),
+      u1: Math.max(current.u1, rect.u1),
+      y0: Math.min(current.y0, rect.y0),
+      y1: Math.max(current.y1, rect.y1),
+      heightM: Math.max(current.heightM, rect.heightM),
+    });
   }
+  const heroCount = count;
+  const heroReservations = [...heroUnions.values()];
 
-  const target = Math.min(SKYRIVER_CITY.signTarget + count, cap);
-  const attemptLimit = target * 8;
-  let attempts = 0;
-
-  while (count < target) {
-    attempts += 1;
-    if (attempts > attemptLimit) fail('SKYRIVER_CITY_NEON_PLACEMENT_STALLED');
-
-    const tower = inner[random.nextInt(0, inner.length - 1)]!;
-    // R17: a podium lot keeps the sign density of the wall it was cut from, not of a full wall
-    // crammed into its lower height (that packed signage at route height and lifted the frame).
-    const full = podiumLotHeight(tower);
-    if (full !== undefined && random.nextInt(0, 999) / 1000 > tower.height / full) continue;
-    const side = Math.sign(tower.x) as -1 | 1;
-    const slabFace = Math.abs(tower.x) - tower.width * 0.5;
+  for (let attempt = 0; attempt < SKYRIVER_CITY_SIGN_CANDIDATE_BUDGET && count < cap; attempt += 1) {
+    const face = faces[random.nextInt(0, faces.length - 1)]!;
     const roll = random.nextInt(0, 99);
-
-    // Altitude: weighted into the flight band, otherwise anywhere on the lit part of the slab.
-    const ceiling = Math.min(tower.height - 60, 2050);
-    const inBand = random.nextInt(0, 99) < 60;
-    // T7-3 strata: signage lives in the grime and the mid city; the pristine heights stay calm.
-    const low = inBand ? 350 : 40;
-    const high = inBand ? Math.min(STRATA_PRISTINE_BASE_M - 100, ceiling) : Math.min(STRATA_PRISTINE_BASE_M, ceiling);
-    const centreYRaw = low + (random.nextInt(0, 1000) / 1000) * Math.max(high - low, 0);
-
     let width: number;
     let height: number;
-    let normalX = 0;
-    let normalZ = 0;
-    let px: number;
-    let pz: number;
     let signKind: number;
-    const along = random.nextInt(-1000, 1000) / 1000;
-
+    let normalZ = 0;
+    let normalX = 0;
+    let rootHalf = 0;
     if (roll < 48) {
-      // Blade: perpendicular to the facade, projecting into the canyon, facing along it.
       signKind = SKYRIVER_SIGN_BANNER;
-      // T7-5: ~1.4x larger, so signage carries the frame's colour at chase distance.
       width = 10 + random.nextInt(0, 130) / 10;
       height = 55 + random.nextInt(0, 1500) / 10;
       normalZ = random.nextInt(0, 1) === 0 ? -1 : 1;
-      px = 0;
-      pz = tower.z + along * (tower.depth * 0.5 - 4);
+      rootHalf = 3;
     } else {
-      // Flat on the corridor face.
-      normalX = -side;
+      normalX = face.outward;
       if (roll < 76) {
         signKind = SKYRIVER_SIGN_STRIP;
         width = 34 + random.nextInt(0, 800) / 10;
@@ -1737,36 +2154,52 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
         width = 18 + random.nextInt(0, 260) / 10;
         height = 12 + random.nextInt(0, 160) / 10;
       }
-      if (width > tower.depth - 6) continue;
-      px = 0;
-      pz = tower.z + along * (tower.depth - width) * 0.5;
+      rootHalf = width * 0.5;
     }
-    // R17: podium lots are lower than any wall was before; the whole sign stays under the roof.
-    const centreY = Math.min(Math.max(centreYRaw, height * 0.5 + 20), tower.height - height * 0.5 - 20);
-    const innerFace = slabFace - tierProjectionOver(layout.seed, tower, centreY - height * 0.5, centreY + height * 0.5);
-    if (normalZ !== 0) px = side * (innerFace - width * 0.5 - 0.8);
-    else px = side * (innerFace - SKYRIVER_CITY.signStandoffM);
+
+    const inBand = random.nextInt(0, 99) < 60;
+    const low = inBand ? 350 : 40;
+    const high = inBand ? Math.min(STRATA_PRISTINE_BASE_M - 100, 2050) : Math.min(STRATA_PRISTINE_BASE_M, 2050);
+    const yMin = Math.max(low, face.y0 + FACADE_FACE_EDGE_MARGIN_M + height * 0.5 + 0.25);
+    const yMax = Math.min(high, face.y1 - FACADE_FACE_EDGE_MARGIN_M - height * 0.5 - 0.25);
+    if (yMax < yMin) continue;
+    const y = yMin + random.nextInt(0, 1000) / 1000 * (yMax - yMin);
+    const halfU = normalZ !== 0 ? rootHalf : width * 0.5;
+    const uRoom = (face.u1 - face.u0) * 0.5 - FACADE_FACE_EDGE_MARGIN_M - halfU - 0.25;
+    if (uRoom < 0) continue;
+    const z = (face.u0 + face.u1) * 0.5 + random.nextInt(-1000, 1000) / 1000 * uRoom;
+    if (!facadeFaceContains(face, { u0: z - halfU, u1: z + halfU, y0: y - height * 0.5, y1: y + height * 0.5 })) continue;
+
+    let x: number;
+    if (normalZ !== 0) {
+      if (width + 0.8 > Math.abs(face.plane) - 405) continue;
+      x = face.plane + face.outward * (width * 0.5 + 0.8);
+    } else {
+      x = face.plane + face.outward * SKYRIVER_CITY.signStandoffM;
+    }
+    const reservation: FacadeReservation = {
+      side: face.side,
+      buildingId: face.buildingId,
+      u0: z - halfU,
+      u1: z + halfU,
+      y0: y - height * 0.5,
+      y1: y + height * 0.5,
+      heightM: height,
+      compositionId: `ordinary-${attempt}`,
+      role: 'ordinary',
+    };
+    if (reservations.some((placed) => facadeReservationsConflict(reservation, placed, CANYON_LOOP_LENGTH_M))
+      || heroReservations.some((hero) => facadeReservationsConflict(reservation, hero, CANYON_LOOP_LENGTH_M))) continue;
 
     const packed = random.weighted(NEON_PALETTE, NEON_WEIGHTS);
-    if (!Number.isInteger(packed) || packed < 0 || packed > 0xffffff) {
-      fail('SKYRIVER_CITY_NEON_TINT_INVALID');
-    }
-    tint.setHex(packed, THREE.SRGBColorSpace);
-
-    cx[count] = px;
-    cy[count] = centreY;
-    cz[count] = pz;
-    nx[count] = normalX;
-    nz[count] = normalZ;
-    sw[count] = width;
-    sh[count] = height;
-    color[count * 3] = tint.r;
-    color[count * 3 + 1] = tint.g;
-    color[count * 3 + 2] = tint.b;
-    kind[count] = signKind;
-    seedValue[count] = random.nextInt(0, 9999) / 9999;
-    owner[count] = ownerOf(tower);
-    count += 1;
+    if (!Number.isInteger(packed) || packed < 0 || packed > 0xffffff) fail('SKYRIVER_CITY_NEON_TINT_INVALID');
+    const composition = `ordinary-${attempt}`;
+    add({ x, y, z, nx: normalX, nz: normalZ, width, height, color: packed,
+      seed: random.nextInt(0, 9999) / 9999, kind: signKind, face, compositionId: composition, rootHalfWidth: rootHalf });
+    reservations.push(reservation);
+    let section = Math.floor((((z + CANYON_LOOP_LENGTH_M * 0.5) % CANYON_LOOP_LENGTH_M) / CANYON_LOOP_LENGTH_M) * 8);
+    if (section < 0) section += 8;
+    acceptedByLoopSection[section] = (acceptedByLoopSection[section] ?? 0) + 1;
   }
 
   const signs: SkyriverNeonSigns = {
@@ -1779,14 +2212,22 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     nz,
     sw,
     sh,
-    color,
-    kind,
-    seedValue,
-    owner,
+    color: color.slice(0, count * 3),
+    kind: kind.slice(0, count),
+    seedValue: seedValue.slice(0, count),
+    faceId: faceId.slice(0, count),
+    buildingId: buildingId.slice(0, count),
+    compositionId: compositionId.slice(0, count),
+    rootHalfWidthM: rootHalfWidthM.slice(0, count),
+    ordinaryCount: count - heroCount,
+    heroCount,
+    acceptedByLoopSection,
+    owner: owner.slice(0, count),
   };
   signCache.set(layout.seed, signs);
   return signs;
 }
+
 
 // --- tower shader ---------------------------------------------------------------------------------
 
@@ -1811,6 +2252,7 @@ attribute vec3 aTint;
 attribute vec3 aSize;   // width, height, depth in metres
 attribute float aLayer; // R15 far-city depth layer (0 = near city)
 attribute float aBuilding; // R16 per-building identity seed (interior culture)
+attribute vec2 aStepEdges; // R19.9: actual tier edges at the bottom and top of this mass
 
 varying vec2 vSurf;      // position on the face, metres
 varying float vSeed;
@@ -1824,6 +2266,7 @@ varying vec2 vFaceHalf;  // half extents of this face in vSurf metres
 varying vec3 vTangentW;  // T7-4: world direction of increasing vSurf.x (interior mapping frame)
 varying float vLayer;
 varying float vBuilding;
+varying vec2 vStepEdges;
 
 #include <fog_pars_vertex>
 
@@ -1857,6 +2300,7 @@ void main() {
   vTint = aTint;
   vLayer = aLayer;
   vBuilding = aBuilding;
+  vStepEdges = aStepEdges;
 
   vec4 world = modelMatrix * instanceMatrix * vec4( transformed, 1.0 );
   vWorldPos = world.xyz;
@@ -1897,6 +2341,7 @@ varying vec2 vFaceHalf;
 varying vec3 vTangentW;
 varying float vLayer;
 varying float vBuilding;
+varying vec2 vStepEdges;
 
 // --- T7-4 interior mapping ------------------------------------------------------------------------
 // Every window cell is a box room [0,1]^3 (x across, y up, z depth from the glass). The view ray is
@@ -2001,7 +2446,12 @@ void main() {
     float farTemp = skyHash11( farId.x * 3.1 + farId.y * 7.7 + vSeed * 11.0 );
     vec3 farPane = mix( vec3( 1.0, 0.55, 0.22 ), vec3( 0.45, 0.65, 1.0 ), step( 0.6, farTemp ) );
     float farAverage = 0.14 * 0.24 * farZone * vIsSide;
-    vec3 farColor = vec3( 0.004, 0.005, 0.007 ) + farPane * mix( farAverage, farLit * farGlass, farResolve ) * 1.6 * layerDim * EMISSIVE_GAIN;
+    float farBottomClearance = vFaceHalf.y + farId.y * 9.0;
+    float farTopClearance = vFaceHalf.y - ( farId.y + 1.0 ) * 9.0;
+    float farStepMask = 1.0;
+    if ( vIsSide > 0.5 && vStepEdges.x > 0.5 && farBottomClearance < ${FACADE_STEP_MASK_BAND_M.toFixed(1)} ) farStepMask = 0.0;
+    if ( vIsSide > 0.5 && vStepEdges.y > 0.5 && farTopClearance < ${FACADE_STEP_MASK_BAND_M.toFixed(1)} ) farStepMask = 0.0;
+    vec3 farColor = vec3( 0.004, 0.005, 0.007 ) + farPane * mix( farAverage, farLit * farGlass, farResolve ) * farStepMask * 1.6 * layerDim * EMISSIVE_GAIN;
     // Crown tips catch a little sky so stacked silhouettes separate against the haze band.
     farColor += vec3( 0.012, 0.016, 0.024 ) * layerDim * smoothstep( 0.5, 1.0, vWorldPos.y / 6500.0 ) * ( 1.0 - vIsSide );
     // R17: far layers grade further toward steel per layer (0.35 / 0.55 / 0.7 on top of distance).
@@ -2026,6 +2476,11 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   vec2 cellUv = vSurf / cellSize;
   vec2 cell = floor( cellUv );
   vec2 cellLocal = fract( cellUv );
+  float paneStepMask = 1.0;
+  float bottomStepClearance = vFaceHalf.y + cell.y * uCellHeight;
+  float topStepClearance = vFaceHalf.y - ( cell.y + 1.0 ) * uCellHeight;
+  if ( vIsSide > 0.5 && vStepEdges.x > 0.5 && bottomStepClearance < ${FACADE_STEP_MASK_BAND_M.toFixed(1)} ) paneStepMask = 0.0;
+  if ( vIsSide > 0.5 && vStepEdges.y > 0.5 && topStepClearance < ${FACADE_STEP_MASK_BAND_M.toFixed(1)} ) paneStepMask = 0.0;
   // Per-face offset so opposite facades never mirror each other.
   vec2 faceOffset = vec2( vFaceId * 311.0 + vSeed * 613.0, vFaceId * 97.0 - vSeed * 271.0 );
 
@@ -2121,7 +2576,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // T6R: the wet sheen picks up the neon around it — a slow cyan/magenta drift over the facade.
   float neonDrift = skyValueNoise( vWorldPos.yz * vec2( 0.004, 0.003 ) + vSeed * 7.0 );
   vec3 sheen = mix( uWetTint, mix( vec3( 0.15, 0.55, 0.75 ), vec3( 0.7, 0.18, 0.55 ), neonDrift ), 0.55 );
-  color += sheen * fresnel * ( 0.2 + 0.8 * wet ) * vIsSide * ( 1.0 - 0.6 * smoothstep( 1750.0, 2250.0, vWorldPos.y ) ) * 0.45;
+  color += sheen * fresnel * ( 0.2 + 0.8 * wet ) * vIsSide * paneStepMask * ( 1.0 - 0.6 * smoothstep( 1750.0, 2250.0, vWorldPos.y ) ) * 0.45;
 
   // Wet arrises: a 1-2 px highlight on every box edge, so each mass separates from the one behind.
   vec2 edgeDistance = vFaceHalf - abs( vSurf );
@@ -2166,9 +2621,9 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // R12: no glass in the structural bands (spandrel), computed again below for the lit gate.
   float bandFloor = mod( floor( vSurf.y / uCellHeight + vSeed * 37.0 ), 12.0 );
   sd = mix( sd, 1.0, step( bandFloor, 1.4 ) * vIsSide );
-  float glass = ( 1.0 - smoothstep( -0.012, 0.012, sd ) ) * vIsSide * blockLive;
+  float glass = ( 1.0 - smoothstep( -0.012, 0.012, sd ) ) * vIsSide * blockLive * paneStepMask;
   // Soft halo: the glow the wet haze smears around every lit pane.
-  float halo = ( 1.0 - smoothstep( -0.02, 0.3, sd ) ) * vIsSide * blockLive;
+  float halo = ( 1.0 - smoothstep( -0.02, 0.3, sd ) ) * vIsSide * blockLive * paneStepMask;
 
   float paneHash = skyHash12( cell + faceOffset );
   // Dark at street level, brightest through the mid-high floors, thinning again at the parapet.
@@ -2199,7 +2654,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // R16 ambient III: fewer crowded grime zones (0.35 -> 0.15): at play distance their fine grid of
   // lit rooms averaged into a warm grey floor over the whole low half of the lap.
   float zoneLit = step( 0.5 - 0.15 * grime, skyHash12( vec2( zone, vSeed * 71.0 + vFaceId ) ) );
-  lit *= zoneLit * ( 1.0 - structuralBand );
+  lit *= zoneLit * ( 1.0 - structuralBand ) * paneStepMask;
 
   // Colour temperature, per run: mostly warm interior light, some cold office pale, sparse neon.
   float tempHash = skyHash11( runHash * 311.7 + vSeed * 53.0 );
@@ -2232,7 +2687,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // lit panes), so the crown rim's light separates cleanly from the facade texture below it.
   float crownGap = ( 1.0 - step( 0.02, distance( vTint, uMegaTint ) ) ) * ( 1.0 - smoothstep( 50.0, 64.0, vFaceHalf.y - vSurf.y ) ) * vIsSide;
   lit *= 1.0 - crownGap;
-  float glassRaw = ( 1.0 - smoothstep( -0.012, 0.012, sd ) );
+  float glassRaw = ( 1.0 - smoothstep( -0.012, 0.012, sd ) ) * paneStepMask;
   float interiorDepthMix = interiorDepthWeight( viewDepth, uInteriorFade );
   float roomHash = skyHash12( cell * vec2( 1.7, 2.3 ) + faceOffset * 0.71 );
   float dimShare = mix( ${SKYRIVER_INTERIOR_DIM_SHARE.mid.toFixed(2)}, ${SKYRIVER_INTERIOR_DIM_SHARE.grime.toFixed(2)}, grime );
@@ -2241,7 +2696,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   float screen = step( 0.7, skyHash11( roomHash * 19.0 ) );
   float screenActive = screen * ( 1.0 - grime ) * ( 1.0 - pristine );
   float interiorFade = uInteriorStrength * interiorDepthMix * vIsSide;
-  float screenBlueRoom = interiorScreenBlueEnergy( interiorDepthMix, screenActive, dim, uInteriorStrength ) * vIsSide;
+  float screenBlueRoom = interiorScreenBlueEnergy( interiorDepthMix, screenActive, dim, uInteriorStrength ) * vIsSide * paneStepMask;
   float screenBluePane = screenBlueRoom * glassRaw;
   vec3 resolved = paneColor * ( lit * brightness * buzz ) * ( glass + halo * 0.28 ) * ( 1.0 - heroShadow );
   resolved += interiorScreenMean( interiorPaneScreenInput( screenBluePane * ( 1.0 - heroShadow ) ) );
@@ -2291,7 +2746,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   }
   // T7-5 pristine glass: the curtain wall reflects the cool night sky at grazing angles.
   // R14: a hint only — at 0.02-0.065 linear this sheet covered every high tower in 40-70/255 grey.
-  color += vec3( 0.003, 0.006, 0.012 ) * glassRaw * pristine * ( 0.25 + 0.75 * fresnel ) * vIsSide;
+  color += vec3( 0.003, 0.006, 0.012 ) * glassRaw * pristine * ( 0.25 + 0.75 * fresnel ) * vIsSide * paneStepMask;
   // What the grid averages out to once it stops resolving: lit share times mean pane brightness,
   // in the mean pane colour. Distant walls read as a dim glow rather than a field of sparks.
   // R12: the far average keeps the zone and band structure, so distant towers read as shapes.
@@ -2303,7 +2758,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // R16 ambient III: the unresolved fill is cut again (0.55 -> 0.3; it is ambient, not a light) and
   // the resolved panes and rooms take the emissive gain of the exposure trade.
   averaged += interiorScreenMean( interiorAverageScreenInput( screenBluePane ) );
-  color += mix( averaged * ( 1.0 - heroShadow ) * ${SKYRIVER_INTERIOR_AVERAGE_GAIN.toFixed(2)}, resolved * EMISSIVE_GAIN, detail ) * 1.55 * ( 1.0 - 0.65 * pristine );
+  color += mix( averaged * ( 1.0 - heroShadow ) * ${SKYRIVER_INTERIOR_AVERAGE_GAIN.toFixed(2)}, resolved * EMISSIVE_GAIN, detail ) * 1.55 * ( 1.0 - 0.65 * pristine ) * paneStepMask;
 
   color = skyriverDistanceGrade( color, viewDepth, 0.0 );
   gl_FragColor = vec4( max( color, vec3( 0.0 ) ), 1.0 );
@@ -2876,7 +3331,7 @@ export class SkyriverCity {
           const ch = Math.cos(heroWarp.heading);
           return new THREE.Vector4(heroWarp.x + dx * ch + dz * sh, b.y, heroWarp.z - dx * sh + dz * ch, b.height * 0.5);
         }
-        warpCanyon(b.x, b.z, heroWarp);
+        warpRigid(b.x, b.z, b.owner.anchorV, heroWarp);
         return new THREE.Vector4(heroWarp.x, b.y, heroWarp.z, b.height * 0.5);
       }),
       colors: heroBlades.map((b) => heroColor.setHex(b.color, THREE.SRGBColorSpace).clone()),
@@ -3149,6 +3604,7 @@ export class SkyriverCity {
     const tints = new Float32Array(slots * 3);
     const sizes = new Float32Array(slots * 3);
     const layers = new Float32Array(slots);
+    const stepEdges = new Float32Array(slots * 2);
 
     const buildings = new Float32Array(slots);
     let i = 0;
@@ -3157,6 +3613,8 @@ export class SkyriverCity {
       // R16: in impostor mode the far layers are cards (writeImpostors), not boxes.
       if (this.farMode === 'impostor' && (mass.layer ?? 0) >= IMPOSTOR_MIN_LAYER) continue;
       layers[i] = mass.layer ?? 0;
+      stepEdges[i * 2] = mass.stepBottom ? 1 : 0;
+      stepEdges[i * 2 + 1] = mass.stepTop ? 1 : 0;
       // R16 interior culture: one seed per building (its slab, tiers, crowns and annexes share it).
       buildings[i] = mass.building ?? buildingSeedOf(mass.x, mass.z);
       // T7-3: canyon space -> the winding loop. Each box keeps its shape, placed at its warped centre
@@ -3189,6 +3647,7 @@ export class SkyriverCity {
     this.towerMesh.geometry.setAttribute('aSize', new THREE.InstancedBufferAttribute(sizes, 3));
     this.towerMesh.geometry.setAttribute('aLayer', new THREE.InstancedBufferAttribute(layers, 1));
     this.towerMesh.geometry.setAttribute('aBuilding', new THREE.InstancedBufferAttribute(buildings, 1));
+    this.towerMesh.geometry.setAttribute('aStepEdges', new THREE.InstancedBufferAttribute(stepEdges, 2));
     // Culling off keeps the draw-call count fixed, which is what the A3 smoke test asserts.
     this.towerMesh.frustumCulled = false;
   }
@@ -3261,22 +3720,23 @@ export class SkyriverCity {
     const sizes = new Float32Array(count * 2);
     const kinds = new Float32Array(count);
     const atlasRects = new Float32Array(count * 4);
-    // Hero blades come first in the sign list (deriveNeonSigns) and each gets its own vertical cell;
-    // other banners and strips pick a cell by their seed; outline frames stay procedural.
+    // Hero blades keep stable atlas slots; ordinary signs use the remaining cells.
     const heroes = deriveHeroBlades(this.layout);
     const { vertical, horizontal } = this.atlas;
     // Hero cells are reserved: ordinary signs draw only from the cells after them, so no hero text
     // ever repeats on a small sign (cycle-3 caught duplicates reading as repetition).
-    const verticalPool = vertical.length - HERO_VERTICAL_CELLS;
+    const verticalPool = vertical.length - HERO_VERTICAL_CELLS - 1;
     const horizontalPool = horizontal.length - HERO_HORIZONTAL_CELLS;
 
     for (let i = 0; i < count; i += 1) {
       let rect: readonly number[] = [0, 0, -1, -1];
       const hero = heroes[i];
       if (i < heroes.length && hero !== undefined) {
-        rect = hero.kind === 'panel' ? horizontal[hero.cell % HERO_HORIZONTAL_CELLS]! : vertical[hero.cell % HERO_VERTICAL_CELLS]!;
+        rect = hero.kind === 'panel'
+          ? horizontal[hero.cell % HERO_HORIZONTAL_CELLS]!
+          : vertical[hero.cell % HERO_VERTICAL_CELLS]!;
       } else if (kind[i] === SKYRIVER_SIGN_BANNER) {
-        rect = vertical[HERO_VERTICAL_CELLS + (Math.floor(seedValue[i]! * verticalPool) % verticalPool)]!;
+        rect = vertical[HERO_VERTICAL_CELLS + 1 + (Math.floor(seedValue[i]! * verticalPool) % verticalPool)]!;
       } else if (kind[i] === SKYRIVER_SIGN_STRIP) {
         rect = horizontal[HERO_HORIZONTAL_CELLS + (Math.floor(seedValue[i]! * horizontalPool) % horizontalPool)]!;
       }
