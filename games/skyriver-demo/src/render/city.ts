@@ -77,6 +77,37 @@ import {
   type ImpostorAtlas,
 } from './impostorAtlas';
 import { CANYON_LOOP_LENGTH_M, canyonBendApexes, foldsInsideBend, intrudesOtherStretch, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
+import {
+  SKYRIVER_DISTRICT_COLOUR_GLSL,
+  SKYRIVER_DISTRICT_COUNT,
+  SKYRIVER_DISTRICT_DISTANCE_GRADE_GLSL,
+  SKYRIVER_DISTRICT_SATURATION,
+  SKYRIVER_DISTRICT_SOURCE_TERMS,
+  SKYRIVER_DISTRICT_UNIT_HUE,
+  SKYRIVER_DISTRICT_UNTOUCHED_TERMS,
+  SKYRIVER_LUMA,
+  assignSkyriverSignDistricts,
+  deriveSkyriverDistrictModel,
+  skyriverDistanceGradeBrightness,
+  skyriverDistanceGradeK,
+  skyriverDistrictAt,
+  skyriverDistrictDistanceGrade,
+  skyriverDistrictIdAt,
+  skyriverDistrictSignEmission,
+  skyriverGlslFloat,
+  skyriverHexToLinear,
+  skyriverLegacyDistanceGrade,
+  skyriverLinearY,
+  skyriverRecolorPreservingY,
+  skyriverSignFinalEmission,
+  type SkyriverDistrict,
+  type SkyriverDistrictColourSwitch,
+  type SkyriverDistrictModel,
+  type SkyriverDistrictSignAssignment,
+  type SkyriverDistrictSignCounts,
+  type SkyriverDistrictSignInput,
+  type SkyriverLinearRgb,
+} from './districts';
 import { ROUTE_MAX_ALTITUDE_M, STRATA_GRIME_TOP_M, STRATA_PRISTINE_BASE_M, routeAltitude, routeLateral } from './routeProfile';
 import { podiumLotHeight } from './presentationLayout';
 
@@ -152,6 +183,12 @@ export const SKYRIVER_TRIM_BALCONY = 7;
 export const SKYRIVER_TRIM_RAILING = 8;
 /** R11 landmark lighting: emissive floodlight edge strips and spires on the mega-towers. */
 export const SKYRIVER_TRIM_FLOOD = 9;
+/**
+ * The floor band carries two source colours, warm and cold, selected by the instance's own seed.
+ * The trim shader interpolates this threshold into its `step( …, vSeed )`, and the source evidence
+ * reads the same constant, so the two can never disagree about which band emits which colour.
+ */
+export const SKYRIVER_TRIM_BAND_COLD_SEED = 0.6;
 /** Skybridge altitude band and the canyon stretch they keep out of (the free-flight box, |z| <= 400). */
 export const SKYRIVER_SKYBRIDGE_MIN_Y_M = 2700;
 export const SKYRIVER_SKYBRIDGE_MIN_ABS_Z_M = 600;
@@ -237,6 +274,13 @@ export interface SkyriverNeonSigns {
   readonly acceptedByLoopSection: readonly number[];
   /** Every mounted sign's face owner, so it stays attached through canyon bends. */
   readonly owner: readonly (SkyriverTrimOwner | null)[];
+  /**
+   * R22: the canyon route position, in float64, that this sign is classified by — a hero's own z,
+   * and every other sign's building anchor (the same double its facade's masses, trims and rooms
+   * are classified by). Never `cz`: cz is float32, and an anchor one float32 ulp from a jittered
+   * district boundary would put a facade and its own signs in two different districts.
+   */
+  readonly anchorV: Float64Array;
 }
 
 /**
@@ -2070,6 +2114,7 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
   const compositionId: (string | null)[] = [];
   const rootHalfWidthM = new Float32Array(cap);
   const owner: (SkyriverTrimOwner | null)[] = [];
+  const anchorV = new Float64Array(cap);
   const faces = deriveFacadeFaces(layout).filter((face) => face.planeAxis === 'x');
   if (faces.length === 0) fail('SKYRIVER_CITY_INNER_FACES_EMPTY');
   const faceById = new Map(deriveFacadeFaces(layout).map((face) => [face.id, face]));
@@ -2080,7 +2125,7 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
   let count = 0;
 
   const add = (
-    sign: { readonly x: number; readonly y: number; readonly z: number; readonly nx: number; readonly nz: number; readonly width: number; readonly height: number; readonly color: number; readonly seed: number; readonly kind: number; readonly face: SkyriverFacadeFace; readonly compositionId: string; readonly rootHalfWidth: number },
+    sign: { readonly x: number; readonly y: number; readonly z: number; readonly nx: number; readonly nz: number; readonly width: number; readonly height: number; readonly color: number; readonly seed: number; readonly kind: number; readonly face: SkyriverFacadeFace; readonly compositionId: string; readonly rootHalfWidth: number; readonly anchorV: number },
   ): void => {
     cx[count] = sign.x;
     cy[count] = sign.y;
@@ -2100,6 +2145,7 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     compositionId[count] = sign.compositionId;
     rootHalfWidthM[count] = sign.rootHalfWidth;
     owner[count] = sign.face.owner;
+    anchorV[count] = sign.anchorV;
     count += 1;
   };
 
@@ -2122,6 +2168,8 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
       face,
       compositionId: hero.compositionId,
       rootHalfWidth: hero.rootHalfWidthM,
+      // A hero is classified by its own route position, in double: its station or bend z.
+      anchorV: hero.z,
     });
     const halfAlong = face.planeAxis === 'x' && hero.kind === 'blade' ? hero.rootHalfWidthM : (hero.kind === 'brand' ? 4 : hero.width * 0.5);
     const key = hero.compositionId;
@@ -2220,7 +2268,9 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     if (!Number.isInteger(packed) || packed < 0 || packed > 0xffffff) fail('SKYRIVER_CITY_NEON_TINT_INVALID');
     const composition = `ordinary-${attempt}`;
     add({ x, y, z, nx: normalX, nz: normalZ, width, height, color: packed,
-      seed: random.nextInt(0, 9999) / 9999, kind: signKind, face, compositionId: composition, rootHalfWidth: rootHalf });
+      seed: random.nextInt(0, 9999) / 9999, kind: signKind, face, compositionId: composition, rootHalfWidth: rootHalf,
+      // The building's own anchor, in double: the facade and its signs classify as one.
+      anchorV: face.owner.anchorV });
     reservations.push(reservation);
     let section = Math.floor((((z + CANYON_LOOP_LENGTH_M * 0.5) % CANYON_LOOP_LENGTH_M) / CANYON_LOOP_LENGTH_M) * 8);
     if (section < 0) section += 8;
@@ -2248,6 +2298,7 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     heroCount,
     acceptedByLoopSection,
     owner: owner.slice(0, count),
+    anchorV: anchorV.slice(0, count),
   };
   signCache.set(layout.seed, signs);
   return signs;
@@ -2262,14 +2313,12 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
  * brightness; `extra` raises it for the far layers. Depth separation is left to brightness and
  * contrast falloff (fog), never to hue warmth.
  */
-const SKYRIVER_DISTANCE_GRADE_GLSL = /* glsl */ `
-vec3 skyriverDistanceGrade( vec3 c, float depth, float extra ) {
-  float k = clamp( smoothstep( 900.0, 5000.0, depth ) * 0.75 + extra, 0.0, 0.92 );
-  float lum = dot( c, vec3( 0.2126, 0.7152, 0.0722 ) );
-  // Brightness falls off with the same grade: the layers separate by value, not by warmth.
-  return mix( c, lum * vec3( 0.66, 0.79, 0.98 ), k ) * ( 1.0 - 0.55 * k );
-}
-`;
+/**
+ * R22: the grade and the equal-luminance district recolour share one chunk (render/districts.ts), so
+ * every pass that grades depth also carries the one colour switch. `uDistrictColour` at 0 restores
+ * the R17 grade exactly, including its brightness/chroma coupling.
+ */
+const SKYRIVER_DISTANCE_GRADE_GLSL = SKYRIVER_DISTRICT_COLOUR_GLSL + SKYRIVER_DISTRICT_DISTANCE_GRADE_GLSL;
 
 const TOWER_VERTEX = /* glsl */ `
 attribute float aSeed;
@@ -2278,6 +2327,7 @@ attribute vec3 aSize;   // width, height, depth in metres
 attribute float aLayer; // R15 far-city depth layer (0 = near city)
 attribute float aBuilding; // R16 per-building identity seed (interior culture)
 attribute vec2 aStepEdges; // R19.9: actual tier edges at the bottom and top of this mass
+attribute float aDistrict; // R22 colour district, from this mass's own canyon anchor
 
 varying vec2 vSurf;      // position on the face, metres
 varying float vSeed;
@@ -2292,6 +2342,7 @@ varying vec3 vTangentW;  // T7-4: world direction of increasing vSurf.x (interio
 varying float vLayer;
 varying float vBuilding;
 varying vec2 vStepEdges;
+varying float vDistrict;
 
 #include <fog_pars_vertex>
 
@@ -2326,6 +2377,7 @@ void main() {
   vLayer = aLayer;
   vBuilding = aBuilding;
   vStepEdges = aStepEdges;
+  vDistrict = aDistrict;
 
   vec4 world = modelMatrix * instanceMatrix * vec4( transformed, 1.0 );
   vWorldPos = world.xyz;
@@ -2368,6 +2420,7 @@ varying vec3 vTangentW;
 varying float vLayer;
 varying float vBuilding;
 varying vec2 vStepEdges;
+varying float vDistrict;
 
 // --- T7-4 interior mapping ------------------------------------------------------------------------
 // Every window cell is a box room [0,1]^3 (x across, y up, z depth from the glass). The view ray is
@@ -2477,7 +2530,10 @@ void main() {
     float farStepMask = 1.0;
     if ( vIsSide > 0.5 && vStepEdges.x > 0.5 && farBottomClearance < ${FACADE_STEP_MASK_BAND_M.toFixed(1)} ) farStepMask = 0.0;
     if ( vIsSide > 0.5 && vStepEdges.y > 0.5 && farTopClearance < ${FACADE_STEP_MASK_BAND_M.toFixed(1)} ) farStepMask = 0.0;
-    vec3 farColor = vec3( 0.004, 0.005, 0.007 ) + farPane * mix( farAverage, farLit * farGlass, farResolve ) * farStepMask * 1.6 * layerDim * EMISSIVE_GAIN;
+    // R22: the complete far window emission is desaturated at equal luminance, so the old warm /
+    // cold chroma goes while every per-cell brightness term (zone, lit, resolve, dim) stays.
+    vec3 farWindow = farPane * mix( farAverage, farLit * farGlass, farResolve ) * farStepMask * 1.6 * layerDim * EMISSIVE_GAIN;
+    vec3 farColor = vec3( 0.004, 0.005, 0.007 ) + skyriverDistrictTint( farWindow, vDistrict, DISTRICT_PANE_SATURATION );
     // Crown tips catch a little sky so stacked silhouettes separate against the haze band.
     farColor += vec3( 0.012, 0.016, 0.024 ) * layerDim * smoothstep( 0.5, 1.0, vWorldPos.y / 6500.0 ) * ( 1.0 - vIsSide );
     // R17: far layers grade further toward steel per layer (0.35 / 0.55 / 0.7 on top of distance).
@@ -2590,7 +2646,8 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   float deckRoof = ( 1.0 - smoothstep( 70.0, 140.0, vWorldPos.y ) ) * ( 1.0 - vIsSide );
   vec2 skyCell = floor( vSurf / 7.0 );
   float skylight = step( 0.82, skyHash12( skyCell + vSeed * 13.0 ) ) * ( 1.0 - smoothstep( 0.25, 0.42, length( fract( vSurf / 7.0 ) - 0.5 ) ) );
-  color += vec3( 1.0, 0.55, 0.2 ) * skylight * deckRoof * 1.4;
+  // R22: a small background lamp — neutral at the same luminance, amber only in the dock.
+  color += skyriverDistrictLamp( vec3( 1.0, 0.55, 0.2 ) * skylight * deckRoof * 1.4, vDistrict );
 
   // --- wet reflection ---------------------------------------------------------------------------
   // Rain-slick facades: a grazing-angle sheen, broken into vertical runnels and heavier low down
@@ -2643,7 +2700,8 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // the roofline against the haze once bloom catches it.
   float parapetLive = step( 0.6, skyHash11( vSeed * 97.0 + 3.0 ) ) * step( 700.0, vWorldPos.y );
   float parapet = 1.0 - smoothstep( 0.6, 2.2, vFaceHalf.y - vSurf.y );
-  color += vec3( 0.75, 0.9, 1.0 ) * parapet * parapetLive * vIsSide * 2.4 * EMISSIVE_GAIN;
+  color += skyriverDistrictTint( vec3( 0.75, 0.9, 1.0 ) * parapet * parapetLive * vIsSide * 2.4 * EMISSIVE_GAIN,
+    vDistrict, DISTRICT_TRIM_LARGE_SATURATION );
 
   // --- window grid ------------------------------------------------------------------------------
   // Coarse blocks gate whole stacks dark, so the lit windows stay sparse and clustered instead of
@@ -2778,6 +2836,11 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
     vec3 resolvedInterior = ( interior * glassRaw + paneColor * ( lit * blockLive * brightness ) * halo * 0.1 ) * ( 1.0 - heroShadow );
     resolved = mix( resolved, resolvedInterior, interiorFade );
   }
+  // R22: ONE equal-luminance recolour of the finished pane-and-room emission. Atlas colour, room
+  // light, glass tint, screen light and the R19.7 fade are already inside resolved, so the old
+  // sodium / cold / neon pane chroma is replaced by neutral light with a weak district tint without
+  // touching occupancy, window runs, room detail, screen energy or any fade.
+  resolved = skyriverDistrictTint( resolved, vDistrict, DISTRICT_ROOM_SATURATION );
   // T7-5 pristine glass: the curtain wall reflects the cool night sky at grazing angles.
   // R14: a hint only — at 0.02-0.065 linear this sheet covered every high tower in 40-70/255 grey.
   color += vec3( 0.003, 0.006, 0.012 ) * glassRaw * pristine * ( 0.25 + 0.75 * fresnel ) * vIsSide * paneStepMask;
@@ -2792,6 +2855,8 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // R16 ambient III: the unresolved fill is cut again (0.55 -> 0.3; it is ambient, not a light) and
   // the resolved panes and rooms take the emissive gain of the exposure trade.
   averaged += interiorScreenMean( interiorAverageScreenInput( screenBluePane ) );
+  // The same rule for the unresolved mean, so the room fade boundary does not cross a warm average.
+  averaged = skyriverDistrictTint( averaged, vDistrict, DISTRICT_PANE_SATURATION );
   color += mix( averaged * ( 1.0 - heroShadow ) * ${SKYRIVER_INTERIOR_AVERAGE_GAIN.toFixed(2)}, resolved * EMISSIVE_GAIN, detail ) * 1.55 * ( 1.0 - 0.65 * pristine ) * paneStepMask;
 
   color = skyriverDistanceGrade( color, viewDepth, 0.0 );
@@ -2827,7 +2892,10 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
     #endif
     // Close by, the wash eases off so the face keeps its windows instead of reading as a flat slab.
     float near = 0.35 + 0.65 * smoothstep( 250.0, 900.0, vFogDepth );
-    gl_FragColor.rgb += washColor * wash * through * near * EMISSIVE_GAIN;
+    // R22: the complete face-and-roof wash, recoloured at equal luminance. Its brightness curve and
+    // its fog response are the pre-R22 terms.
+    gl_FragColor.rgb += skyriverDistrictTint( washColor * wash * through * near * EMISSIVE_GAIN,
+      vDistrict, DISTRICT_WASH_SATURATION );
   }
 }
 `;
@@ -2838,12 +2906,13 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
 // tile repeated down the card on a metric scale. Per-layer dim and haze grade the depth.
 
 const IMPOSTOR_VERTEX = /* glsl */ `
-attribute vec4 aCard;   // variant, layer, u flip, unused
+attribute vec4 aCard;   // variant, layer, u flip, R22 colour district
 
 varying vec2 vCardUv;
 varying vec2 vCardSize; // width, height, metres
 varying float vVariant;
 varying float vCardLayer;
+varying float vCardDistrict;
 
 #include <fog_pars_vertex>
 
@@ -2853,6 +2922,7 @@ void main() {
   vCardSize = vec2( length( instanceMatrix[ 0 ].xyz ), length( instanceMatrix[ 1 ].xyz ) );
   vVariant = aCard.x;
   vCardLayer = aCard.y;
+  vCardDistrict = aCard.w;
   vec4 mvPosition = modelViewMatrix * ( instanceMatrix * vec4( transformed, 1.0 ) );
   #include <fog_vertex>
   gl_Position = projectionMatrix * mvPosition;
@@ -2869,6 +2939,7 @@ varying vec2 vCardUv;
 varying vec2 vCardSize;
 varying float vVariant;
 varying float vCardLayer;
+varying float vCardDistrict;
 
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
@@ -2898,7 +2969,10 @@ void main() {
   float dim = vCardLayer < 1.5 ? uLayerDim.x : ( vCardLayer < 2.5 ? uLayerDim.y : uLayerDim.z );
   float haze = vCardLayer < 1.5 ? uLayerHaze.x : ( vCardLayer < 2.5 ? uLayerHaze.y : uLayerHaze.z );
   // Windows a little under the R15 boxes' level: on a card every lit window resolves as a dot.
-  vec3 color = vec3( 0.004, 0.005, 0.007 ) + card.rgb * 1.1 * dim * uEmissive;
+  // R22: the baked card carries the old warm / cold window chroma. Desaturating the sampled
+  // emission at equal luminance keeps its silhouette, its sampled brightness and its alpha test.
+  vec3 color = vec3( 0.004, 0.005, 0.007 )
+    + skyriverDistrictTint( card.rgb * 1.1 * dim * uEmissive, vCardDistrict, DISTRICT_FAR_CARD_SATURATION );
   color = skyriverDistanceGrade( color, vFogDepth, vCardLayer < 2.5 ? 0.55 : 0.7 );
   gl_FragColor = vec4( color, 1.0 );
 ${SKYRIVER_OUTPUT_APPLY_GLSL}
@@ -2938,6 +3012,7 @@ const TRIM_VERTEX = /* glsl */ `
 attribute float aSeed;
 attribute float aKind;
 attribute vec3 aSize;
+attribute float aDistrict; // R22 colour district, from this trim owner's canyon anchor
 
 varying vec3 vTrimLocal;
 varying vec3 vNormalW;
@@ -2945,6 +3020,7 @@ varying vec3 vWorldPos;
 varying float vSeed;
 varying float vKind;
 varying vec3 vSizeM;
+varying float vDistrict;
 
 #include <fog_pars_vertex>
 
@@ -2954,6 +3030,7 @@ void main() {
   vSizeM = aSize;
   vSeed = aSeed;
   vKind = aKind;
+  vDistrict = aDistrict;
 
   vec4 world = modelMatrix * instanceMatrix * vec4( transformed, 1.0 );
   vWorldPos = world.xyz;
@@ -2978,10 +3055,12 @@ varying vec3 vWorldPos;
 varying float vSeed;
 varying float vKind;
 varying vec3 vSizeM;
+varying float vDistrict;
 
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${SKYRIVER_HASH_GLSL}
+${SKYRIVER_DISTRICT_COLOUR_GLSL}
 
 void main() {
   vec3 viewDir = normalize( cameraPosition - vWorldPos );
@@ -3005,7 +3084,8 @@ void main() {
     + ( step( 4.5, vKind ) * ( 1.0 - step( 5.5, vKind ) ) );
   float lamp = 1.0 - smoothstep( 0.0, 0.12, abs( fract( run / 6.0 ) - 0.5 ) );
   float lampLive = step( 0.25, skyHash11( floor( run / 6.0 ) + vSeed * 83.0 ) );
-  color += vec3( 1.0, 0.68, 0.33 ) * ( isGantry * lamp * lampLive * 0.9 * EMISSIVE_GAIN );
+  // R22 small lamp: neutral at the same luminance, amber only where the dock owns the light.
+  color += skyriverDistrictLamp( vec3( 1.0, 0.68, 0.33 ) * ( isGantry * lamp * lampLive * 0.9 * EMISSIVE_GAIN ), vDistrict );
 
   // Antenna: a slow aircraft-warning beacon at the mast head.
   float isAntenna = 1.0 - step( 0.5, vKind );
@@ -3021,15 +3101,17 @@ void main() {
   float isBand = step( 3.5, vKind ) * ( 1.0 - step( 4.5, vKind ) );
   float soffit = step( vNormalW.y, -0.5 );
   float runLive = step( 0.35, skyHash11( floor( run / 22.0 ) + vSeed * 57.0 ) );
-  vec3 bandLight = mix( vec3( 1.0, 0.72, 0.42 ), vec3( 0.55, 0.85, 1.0 ), step( 0.6, vSeed ) );
+  vec3 bandLight = mix( vec3( 1.0, 0.72, 0.42 ), vec3( 0.55, 0.85, 1.0 ), step( ${skyriverGlslFloat(SKYRIVER_TRIM_BAND_COLD_SEED)}, vSeed ) );
   float edge = smoothstep( 0.5, 0.36, abs( vTrimLocal.y ) ) * ( 1.0 - soffit );
-  color += bandLight * isBand * runLive * ( soffit * 0.55 + edge * 0.15 ) * EMISSIVE_GAIN;
+  // R22 large accent: the long soffit strips take the district hue at equal luminance.
+  color += skyriverDistrictTint( bandLight * isBand * runLive * ( soffit * 0.55 + edge * 0.15 ) * EMISSIVE_GAIN,
+    vDistrict, DISTRICT_TRIM_LARGE_SATURATION );
 
   // T7-4 balcony (7): a stained grime slab with a warm underlight here and there.
   float isBalcony = step( 6.5, vKind ) * ( 1.0 - step( 7.5, vKind ) );
   color = mix( color, vec3( 0.07, 0.05, 0.035 ) * ( 0.7 + 0.6 * grain ) + uConcreteAmbient * 0.15, isBalcony );
   float underLit = step( 0.72, skyHash11( floor( run / 7.0 ) + vSeed * 31.0 ) ) * step( vNormalW.y, -0.5 );
-  color += vec3( 1.0, 0.62, 0.3 ) * underLit * isBalcony * 0.5 * EMISSIVE_GAIN;
+  color += skyriverDistrictLamp( vec3( 1.0, 0.62, 0.3 ) * underLit * isBalcony * 0.5 * EMISSIVE_GAIN, vDistrict );
   // Railing (8): vertical bars every ~0.4 m and a top rail, painted on the thin rail box.
   float isRailing = step( 7.5, vKind ) * ( 1.0 - step( 8.5, vKind ) );
   float bars = step( 0.62, fract( run / 0.42 ) );
@@ -3039,7 +3121,13 @@ void main() {
   // R11 flood (9): emissive cool-white floodlight strip, pulsing slowly at the spire tip.
   float isFlood = step( 8.5, vKind );
   float tip = smoothstep( 0.85, 1.0, vTrimLocal.y + 0.5 ) * step( 100.0, vSizeM.y );
-  color = mix( color, ( vec3( 0.75, 0.85, 1.05 ) * ( 1.0 + 0.5 * step( 50.0, vSizeM.y ) ) * ( 0.85 + 0.15 * sin( uTime * 1.3 + vSeed * 6.28 ) ) + vec3( 3.0, 0.4, 0.3 ) * tip * ( 0.5 + 0.5 * sin( uTime * 2.0 ) ) ) * EMISSIVE_GAIN, isFlood );
+  // R22: the floodlight strip is a large district accent; its red spire-tip warning is a separate
+  // term and is never recoloured.
+  vec3 floodStrip = skyriverDistrictTint(
+    vec3( 0.75, 0.85, 1.05 ) * ( 1.0 + 0.5 * step( 50.0, vSizeM.y ) ) * ( 0.85 + 0.15 * sin( uTime * 1.3 + vSeed * 6.28 ) ) * EMISSIVE_GAIN,
+    vDistrict, DISTRICT_TRIM_LARGE_SATURATION );
+  vec3 floodWarning = vec3( 3.0, 0.4, 0.3 ) * tip * ( 0.5 + 0.5 * sin( uTime * 2.0 ) ) * EMISSIVE_GAIN;
+  color = mix( color, floodStrip + floodWarning, isFlood );
 
   // Skybridge (6): a dark mass with a ribbon of cold windows on each side and blue underlights.
   float isBridge = step( 5.5, vKind ) * ( 1.0 - step( 6.5, vKind ) );
@@ -3047,7 +3135,8 @@ void main() {
   float ribbon = smoothstep( 0.12, 0.08, abs( vTrimLocal.y - 0.05 ) );
   float pane = step( 0.3, fract( run / 4.0 ) ) * step( 0.3, skyHash11( floor( run / 4.0 ) + vSeed * 19.0 ) );
   color = mix( color, color * 0.55, isBridge );
-  color += vec3( 0.72, 0.86, 1.0 ) * ( isBridge * sideFace * ribbon * pane * 1.1 * EMISSIVE_GAIN );
+  color += skyriverDistrictTint( vec3( 0.72, 0.86, 1.0 ) * ( isBridge * sideFace * ribbon * pane * 1.1 * EMISSIVE_GAIN ),
+    vDistrict, DISTRICT_TRIM_LARGE_SATURATION );
   float under = step( vNormalW.y, -0.5 ) * ( 1.0 - smoothstep( 0.0, 0.1, abs( fract( run / 12.0 ) - 0.5 ) ) );
   color += vec3( 0.3, 0.6, 1.0 ) * ( isBridge * under * 1.4 * EMISSIVE_GAIN );
 
@@ -3068,6 +3157,7 @@ attribute vec3 aColor;
 attribute float aKind;
 attribute float aSeed;
 attribute vec4 aAtlas;    // T7: lettered atlas cell (u0, v0, u1, v1); u1 <= u0 means procedural
+attribute vec4 aDistrictTint; // R22: unit-luminance target hue (rgb) and its saturation (w)
 
 varying vec2 vSignUv;     // 0..1 across the sign face; outside that range is the halo
 varying vec4 vAtlas;
@@ -3079,6 +3169,7 @@ varying vec3 vSignNormal;
 varying vec3 vWorldPos;
 varying vec2 vSignSize;
 varying float vMargin;
+varying vec4 vDistrictTint;
 
 #include <fog_pars_vertex>
 
@@ -3104,6 +3195,7 @@ void main() {
   vSignSize = aSize;
   vMargin = margin;
   vAtlas = aAtlas;
+  vDistrictTint = aDistrictTint;
   vWorldPos = world;
 
   vec4 mvPosition = viewMatrix * vec4( world, 1.0 );
@@ -3132,11 +3224,13 @@ varying vec3 vWorldPos;
 varying vec2 vSignSize;
 varying float vMargin;
 varying vec4 vAtlas;
+varying vec4 vDistrictTint;
 uniform sampler2D uAtlas;
 
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${SKYRIVER_HASH_GLSL}
+${SKYRIVER_DISTRICT_COLOUR_GLSL}
 
 float roundedRect( vec2 uv, vec2 halfExtent, float radius ) {
   vec2 d = abs( uv - 0.5 ) - halfExtent + radius;
@@ -3245,6 +3339,11 @@ void main() {
     float signNear = 1.0;
   #endif
   vec3 color = ( hot * mask * angle * uIntensity + vSignColor * ( plate + halo * uHalo * 0.85 ) ) * signNear * EMISSIVE_GAIN;
+  // R22: the district hue replaces the chroma of the COMPLETE emission at equal linear luminance.
+  // Core, halo, plate, facing angle, proximity ease and intensity are all already inside color;
+  // an aColor change alone could not hold the luminance, because the core squares RGB and the
+  // white-hot blend adds a neutral term on top of it.
+  color = skyriverDistrictEmission( color, vDistrictTint.rgb, vDistrictTint.w );
   gl_FragColor = vec4( color * flicker, 1.0 );
 
   #include <tonemapping_fragment>
@@ -3257,11 +3356,32 @@ void main() {
 }
 `;
 
+/**
+ * The four city shader sources, exported so a node check can assert the R22 colour paths exist
+ * without a GL context: which contributions are recoloured, which terms are deliberately left
+ * alone (the red warnings, the blue skybridge underlight), and that no path tints a factor in
+ * succession instead of recolouring the finished contribution once.
+ */
+export const SKYRIVER_CITY_SHADER_SOURCE = Object.freeze({
+  towerVertex: TOWER_VERTEX,
+  towerFragment: TOWER_FRAGMENT,
+  trimVertex: TRIM_VERTEX,
+  trimFragment: TRIM_FRAGMENT,
+  signVertex: SIGN_VERTEX,
+  signFragment: SIGN_FRAGMENT,
+  impostorVertex: IMPOSTOR_VERTEX,
+  impostorFragment: IMPOSTOR_FRAGMENT,
+  districtColour: SKYRIVER_DISTRICT_COLOUR_GLSL,
+  distanceGrade: SKYRIVER_DISTRICT_DISTANCE_GRADE_GLSL,
+});
+
 // --- city -----------------------------------------------------------------------------------------
 
 export interface SkyriverCityOptions {
   readonly layout: SkyriverCityLayout;
   readonly quality: SkyriverQualitySettings;
+  /** The scene's one R22 colour-switch flag. The city reads it and never writes it. */
+  readonly colourSwitch: SkyriverDistrictColourSwitch;
 }
 
 export interface SkyriverCityStats {
@@ -3294,6 +3414,297 @@ export function deriveTowerCount(layout: SkyriverCityLayout): number {
   return layout.towers.length;
 }
 
+// --- R22 district plumbing ------------------------------------------------------------------------
+
+/** A sign's stable identity: its building, its face and its composition slot, not its draw index. */
+function signIdentity(signs: SkyriverNeonSigns, index: number): string {
+  return `${signs.buildingId[index] ?? '-'}|${signs.faceId[index] ?? '-'}|${signs.compositionId[index] ?? '-'}`;
+}
+
+function buildSignDistrictInput(signs: SkyriverNeonSigns): SkyriverDistrictSignInput {
+  const areaM2 = new Float32Array(signs.count);
+  const key: string[] = [];
+  for (let i = 0; i < signs.count; i += 1) {
+    areaM2[i] = signs.sw[i]! * signs.sh[i]!;
+    key.push(signIdentity(signs, i));
+  }
+  // `signs.anchorV` is the float64 route position deriveNeonSigns classified the sign by, so the
+  // quota, the masses and the trims all compare the same double against the same boundary.
+  return {
+    count: signs.count,
+    heroCount: signs.heroCount,
+    anchorV: signs.anchorV,
+    colour: signs.color,
+    areaM2,
+    key,
+  };
+}
+
+/**
+ * T7-3 hero clearance: true when trim instance `i` would cross in front of a hero sign, so it is
+ * not drawn (cycle-4 P1: strips occluding signage). Exported because the drawn trim set is what the
+ * source palette and the light sources report, and a check must be able to reproduce it exactly.
+ */
+export function skyriverTrimBlocksHero(
+  trims: SkyriverCityTrims,
+  i: number,
+  heroes: readonly SkyriverHeroBlade[],
+): boolean {
+  const k = trims.kind[i];
+  if (k !== SKYRIVER_TRIM_BAND && k !== SKYRIVER_TRIM_RIB && k !== SKYRIVER_TRIM_CANTILEVER) return false;
+  for (const hero of heroes) {
+    const hx = hero.kind === 'blade' ? hero.width * 0.5 + 14 : 16;
+    const hz = hero.kind === 'blade' ? 14 : hero.width * 0.5 + 14;
+    if (Math.abs(trims.cx[i]! - hero.x) < hx + trims.sx[i]! * 0.5
+      && Math.abs(trims.cy[i]! - hero.y) < hero.height * 0.5 + 18 + trims.sy[i]! * 0.5
+      && Math.abs(trims.cz[i]! - hero.z) < hz + trims.sz[i]! * 0.5) return true;
+  }
+  return false;
+}
+
+/** The ids in SKYRIVER_DISTRICT_SOURCE_TERMS that a trim instance can emit. */
+export type SkyriverTrimSourceTermId = 'trim-flood' | 'trim-skybridge-ribbon'
+  | 'trim-band-warm' | 'trim-band-cold' | 'trim-deck-lamp' | 'trim-balcony-underlight';
+
+/**
+ * The source-colour term one trim instance emits, or null where the kind has no emissive source in
+ * SKYRIVER_DISTRICT_SOURCE_TERMS (antenna beacons and the skybridge underlight are untouched by R22,
+ * and ribs, railings and roof plant emit nothing).
+ *
+ * The floor band is the one kind with two source colours. `seed` selects between them exactly as the
+ * trim fragment shader does, from the same SKYRIVER_TRIM_BAND_COLD_SEED threshold — so the palette,
+ * the weights and the light sources report the colour the band actually emits.
+ */
+export function skyriverTrimSourceTermId(kind: number, seed: number): SkyriverTrimSourceTermId | null {
+  switch (kind) {
+    case SKYRIVER_TRIM_FLOOD:
+      return 'trim-flood';
+    case SKYRIVER_TRIM_SKYBRIDGE:
+      return 'trim-skybridge-ribbon';
+    case SKYRIVER_TRIM_BAND:
+      return seed < SKYRIVER_TRIM_BAND_COLD_SEED ? 'trim-band-warm' : 'trim-band-cold';
+    case SKYRIVER_TRIM_GANTRY:
+    case SKYRIVER_TRIM_CANTILEVER:
+      return 'trim-deck-lamp';
+    case SKYRIVER_TRIM_BALCONY:
+      return 'trim-balcony-underlight';
+    default:
+      return null;
+  }
+}
+
+/** The large trim lights: the kinds `lightSources` reports as emitters a later round can light from. */
+export function skyriverTrimIsLargeLight(kind: number): boolean {
+  return kind === SKYRIVER_TRIM_FLOOD || kind === SKYRIVER_TRIM_SKYBRIDGE || kind === SKYRIVER_TRIM_BAND;
+}
+
+/** One group of drawn trim instances that emit the same source term in the same district. */
+export interface SkyriverTrimSourceGroup {
+  readonly termId: SkyriverTrimSourceTermId;
+  readonly districtId: number;
+  readonly count: number;
+}
+
+/**
+ * Groups drawn trim instances by the source term they emit and the district they stand in. Pure and
+ * GL-free over the drawn instance buffers, so a node check can assert the grouping `sourcePalette`
+ * reports — including the floor band's warm/cold split — against the real trims of a seed.
+ */
+export function skyriverTrimSourceGroups(
+  kind: ArrayLike<number>,
+  seed: ArrayLike<number>,
+  district: ArrayLike<number>,
+): readonly SkyriverTrimSourceGroup[] {
+  if (seed.length < kind.length || district.length < kind.length) {
+    throw new Error('SKYRIVER_TRIM_SOURCE_GROUP_INPUT_SHORT');
+  }
+  const counts = new Map<string, { termId: SkyriverTrimSourceTermId; districtId: number; count: number }>();
+  for (let i = 0; i < kind.length; i += 1) {
+    const termId = skyriverTrimSourceTermId(kind[i]!, seed[i]!);
+    if (termId === null) continue;
+    const districtId = district[i]!;
+    const key = `${districtId}:${termId}`;
+    const entry = counts.get(key) ?? { termId, districtId, count: 0 };
+    entry.count += 1;
+    counts.set(key, entry);
+  }
+  return Object.freeze([...counts.values()]
+    .map((entry) => Object.freeze(entry))
+    .sort((a, b) => a.districtId - b.districtId || a.termId.localeCompare(b.termId)));
+}
+
+const DISTRICT_SOURCE_TERM_BY_ID = new Map(SKYRIVER_DISTRICT_SOURCE_TERMS.map((term) => [term.id, term]));
+
+/** The source term a drawn instance claims. A miss is a broken invariant, never a skipped source. */
+function districtSourceTerm(id: SkyriverTrimSourceTermId): (typeof SKYRIVER_DISTRICT_SOURCE_TERMS)[number] {
+  const term = DISTRICT_SOURCE_TERM_BY_ID.get(id);
+  if (term === undefined) throw new Error(`SKYRIVER_DISTRICT_SOURCE_TERM_MISSING:${id}`);
+  return term;
+}
+
+/**
+ * The uniform block every recoloured material carries. Fresh objects per material (three compares
+ * uniform objects by identity), with the switch collected so one call flips all of them.
+ */
+function districtUniformBlock(model: SkyriverDistrictModel, allowed: boolean): {
+  readonly uDistrictColour: { value: number };
+  readonly uDistrictUnitHue: { value: THREE.Vector3[] };
+  readonly uDistrictLampSaturation: { value: number[] };
+} {
+  const hues: THREE.Vector3[] = [];
+  const lamps: number[] = [];
+  for (let i = 0; i < SKYRIVER_DISTRICT_COUNT; i += 1) {
+    const district = model.districts[i]!;
+    const hue = SKYRIVER_DISTRICT_UNIT_HUE[district.primary];
+    hues.push(new THREE.Vector3(hue[0], hue[1], hue[2]));
+    // Only an amber district lights its small service lamps with its own hue.
+    lamps.push(district.primary === 'amber'
+      ? SKYRIVER_DISTRICT_SATURATION.dockLamp
+      : SKYRIVER_DISTRICT_SATURATION.trimSmall);
+  }
+  return {
+    uDistrictColour: { value: allowed ? 1 : 0 },
+    uDistrictUnitHue: { value: hues },
+    uDistrictLampSaturation: { value: lamps },
+  };
+}
+
+/** FNV-1a over the float bit patterns of an instance buffer. Geometry identity, never colour. */
+const identityScratch = new DataView(new ArrayBuffer(4));
+
+function hashNumbers(state: number, values: ArrayLike<number>): number {
+  let h = state >>> 0;
+  for (let i = 0; i < values.length; i += 1) {
+    identityScratch.setFloat32(0, values[i]!, true);
+    const bits = identityScratch.getUint32(0, true);
+    h = Math.imul(h ^ (bits & 0xff), 0x01000193) >>> 0;
+    h = Math.imul(h ^ ((bits >>> 8) & 0xff), 0x01000193) >>> 0;
+    h = Math.imul(h ^ ((bits >>> 16) & 0xff), 0x01000193) >>> 0;
+    h = Math.imul(h ^ ((bits >>> 24) & 0xff), 0x01000193) >>> 0;
+  }
+  return h >>> 0;
+}
+
+function hashText(state: number, values: readonly (string | null)[]): number {
+  let h = state >>> 0;
+  for (const value of values) {
+    const text = value ?? '\u0000';
+    for (let i = 0; i < text.length; i += 1) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
+    h = Math.imul(h ^ 0x1f, 0x01000193) >>> 0;
+  }
+  return h >>> 0;
+}
+
+function hex32(value: number): string {
+  return (value >>> 0).toString(16).padStart(8, '0');
+}
+
+/** Geometry, placement and text identity of one instanced pass. Colour treatment is excluded. */
+export interface SkyriverGeometryIdentity {
+  readonly towers: string;
+  readonly towerAttributes: string;
+  readonly trims: string;
+  readonly trimAttributes: string;
+  readonly signPlacement: string;
+  readonly signText: string;
+  readonly impostors: string;
+  readonly impostorCards: string;
+  readonly counts: { readonly towers: number; readonly trims: number; readonly signs: number; readonly impostors: number };
+  readonly excludes: readonly string[];
+}
+
+/** Actual drawn source populations. No colour: the frame-identity hash reads this record. */
+export interface SkyriverDistrictSourceCounts {
+  readonly masses: number;
+  readonly massesByDistrict: readonly number[];
+  readonly trims: number;
+  readonly trimsByKind: readonly number[];
+  readonly trimsByDistrict: readonly number[];
+  readonly ordinarySigns: number;
+  readonly heroSigns: number;
+  readonly signsByDistrict: readonly number[];
+  readonly heroesByDistrict: readonly number[];
+  readonly heroSpillSlots: number;
+  readonly farCards: number;
+  readonly farCardsByDistrict: readonly number[];
+  readonly paneCells: number;
+  readonly roomCells: number;
+  readonly meaning: Readonly<Record<string, string>>;
+}
+
+export interface SkyriverDistrictRoleEvidence {
+  readonly id: string;
+  readonly role: string;
+  readonly saturation: number;
+  readonly samples: number;
+  readonly oldFinalY: number;
+  readonly newFinalY: number;
+  readonly maxAbsoluteYDelta: number;
+  readonly measurement: string;
+}
+
+export interface SkyriverDistrictSourceEvidence {
+  readonly colourSpace: 'linear-rec709';
+  readonly luminanceCoefficients: readonly [number, number, number];
+  readonly declaredRelativeTolerance: number;
+  readonly maxAbsoluteYDelta: number;
+  readonly roles: readonly SkyriverDistrictRoleEvidence[];
+  readonly signs: {
+    readonly ordinary: number;
+    readonly heroes: number;
+    readonly byRole: Readonly<Record<string, number>>;
+    readonly brightAccents: number;
+    readonly brightAccentProxy: string;
+  };
+  readonly districts: readonly SkyriverDistrictSignCounts[];
+  readonly distanceGrade: readonly {
+    readonly depthM: number;
+    readonly extra: number;
+    readonly k: number;
+    readonly brightnessFactor: number;
+    readonly oldY: number;
+    readonly newY: number;
+    readonly absoluteDelta: number;
+  }[];
+  readonly untouched: readonly { readonly id: string; readonly role: string; readonly rgb: readonly number[] }[];
+  readonly limits: readonly string[];
+}
+
+export interface SkyriverDistrictPaletteEntry {
+  readonly id: string;
+  readonly role: string;
+  readonly district: string;
+  readonly rgb: readonly [number, number, number];
+  readonly weight: number;
+}
+
+export interface SkyriverDistrictPalette {
+  readonly label: string;
+  readonly colorSpace: 'linear';
+  readonly weightMeaning: string;
+  readonly limits: string;
+  readonly entries: readonly SkyriverDistrictPaletteEntry[];
+}
+
+/** One emissive source a later round can light the air from. World space, as drawn. */
+export interface SkyriverLightSource {
+  readonly id: string;
+  /**
+   * A trim light's role is the source term it actually emits, so the floor band's warm and cold
+   * sources are two roles rather than one averaged 'trim-band'.
+   */
+  readonly role: 'ordinary-sign' | 'hero-sign' | SkyriverTrimSourceTermId;
+  readonly districtId: number;
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  readonly sizeM: readonly [number, number, number];
+  /** Final linear emission with the district recolour applied, at the reference shader terms. */
+  readonly emission: readonly [number, number, number];
+  /** The same emission on the colour-off path. */
+  readonly legacyEmission: readonly [number, number, number];
+}
+
 /**
  * The canyon: three instanced passes, three draw calls.
  *
@@ -3313,6 +3724,8 @@ export class SkyriverCity {
   private readonly impostorAtlas: ImpostorAtlas;
   /** R16 A/B: far layers as cards ('impostor', default) or as R15's box masses ('geometry'). */
   private farMode: 'impostor' | 'geometry' = 'impostor';
+  /** The interior mapping mode currently applied, for the diagnostic settings record. */
+  private roomMode: SkyriverInteriorMode = 'full';
   private readonly trimMaterial: THREE.ShaderMaterial;
   private readonly signMaterial: THREE.ShaderMaterial;
   private readonly signGeometry: THREE.InstancedBufferGeometry;
@@ -3321,12 +3734,41 @@ export class SkyriverCity {
   private readonly layout: SkyriverCityLayout;
   private readonly trims: SkyriverCityTrims;
   private readonly signs: SkyriverNeonSigns;
+  /** R22: the permanent colour map, its sign quota, and the one A/B switch over both. */
+  private readonly districts: SkyriverDistrictModel;
+  private readonly signDistricts: SkyriverDistrictSignAssignment;
+  private readonly districtSwitches: { value: number }[] = [];
+  /** R22: the scene's colour flag, held once (see SkyriverDistrictColourSwitch). Read-only here. */
+  private readonly colourSwitch: SkyriverDistrictColourSwitch;
+  /** Hero source colours as drawn before R22, and after the equal-luminance district recolour. */
+  private readonly heroDistrictColours: THREE.Color[] = [];
+  private readonly heroDistrictIds: number[] = [];
+  /** Actual drawn source populations, counted as the instance buffers are written. */
+  private readonly drawnTrimsByKind = new Int32Array(SKYRIVER_TRIM_FLOOD + 1);
+  private readonly drawnTrimsByDistrict = new Int32Array(SKYRIVER_DISTRICT_COUNT);
+  private readonly drawnMassesByDistrict = new Int32Array(SKYRIVER_DISTRICT_COUNT);
+  private readonly farCardsByDistrict = new Int32Array(SKYRIVER_DISTRICT_COUNT);
+  /** Facade window cells on the drawn near-city masses: the pane and room source capacity. */
+  private paneCellCapacity = 0;
+  /** Drawn world centres, so a later round can light the air from the sources actually on screen. */
+  private signWorldCentres = new Float32Array(0);
+  private trimWorldCentres = new Float32Array(0);
+  private trimDrawnKind = new Float32Array(0);
+  private trimDrawnSize = new Float32Array(0);
+  private trimDrawnDistrict = new Float32Array(0);
+  /** The drawn instances' own seeds: the trim shader selects the band's warm or cold source with it. */
+  private trimDrawnSeed = new Float32Array(0);
 
-  constructor({ layout }: SkyriverCityOptions) {
+  constructor({ layout, colourSwitch }: SkyriverCityOptions) {
     installSkyriverFogChunks();
     this.layout = layout;
+    this.colourSwitch = colourSwitch;
     this.trims = deriveCityTrims(layout);
     this.signs = deriveNeonSigns(layout);
+    // R22: the colour map and the sign hue quota are derived from the finished geometry, so no
+    // existing random stream moves and no sign changes place, size, kind or text seed.
+    this.districts = deriveSkyriverDistrictModel(layout.seed);
+    this.signDistricts = assignSkyriverSignDistricts(this.districts, buildSignDistrictInput(this.signs));
     this.atlas = createSignAtlas();
     this.interiorAtlas = createInteriorAtlas(layout.seed);
     this.group.name = 'skyriver.city';
@@ -3373,6 +3815,25 @@ export class SkyriverCity {
     };
     this.heroWorld = heroUniforms.blades.map((b) => b.clone());
     this.heroWorldColors = heroUniforms.colors.map((c) => c.clone());
+    // R22: every hero takes its district's primary hue at its own final luminance, so the blade and
+    // the spill it throws down the facade keep exactly the brightness they had before.
+    for (let i = 0; i < this.heroWorldColors.length; i += 1) {
+      const district = skyriverDistrictAt(this.districts, heroBlades[i]!.z);
+      const old = this.heroWorldColors[i]!;
+      const tinted = skyriverRecolorPreservingY(
+        [old.r, old.g, old.b],
+        SKYRIVER_DISTRICT_UNIT_HUE[district.primary],
+        SKYRIVER_DISTRICT_SATURATION.hero,
+      );
+      this.heroDistrictIds.push(district.id);
+      this.heroDistrictColours.push(new THREE.Color(tinted[0], tinted[1], tinted[2]));
+    }
+    // Seed the uniform in the state the switch starts in, so even the first frame is consistent.
+    if (this.colourSwitch.allowed) {
+      for (let i = 0; i < heroUniforms.colors.length; i += 1) {
+        heroUniforms.colors[i]!.copy(this.heroDistrictColours[i]!);
+      }
+    }
     heroUniforms.blades = heroUniforms.blades.slice(0, 12);
     heroUniforms.colors = heroUniforms.colors.slice(0, 12);
     heroUniforms.count = Math.min(12, heroUniforms.count);
@@ -3381,6 +3842,8 @@ export class SkyriverCity {
       heroUniforms.colors.push(new THREE.Color(0));
     }
     const towerGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const towerDistrict = districtUniformBlock(this.districts, this.colourSwitch.allowed);
+    this.districtSwitches.push(towerDistrict.uDistrictColour);
     this.towerMaterial = new THREE.ShaderMaterial({
       name: 'skyriver.city.towers',
       vertexShader: TOWER_VERTEX,
@@ -3405,6 +3868,7 @@ export class SkyriverCity {
         uHeroColors: { value: heroUniforms.colors },
         uHeroCount: { value: heroUniforms.count },
         uHeroWeight: { value: new Array<number>(12).fill(1) },
+        ...towerDistrict,
         ...skyriverFogUniforms(),
       },
       fog: true,
@@ -3420,6 +3884,8 @@ export class SkyriverCity {
 
     // --- trim -------------------------------------------------------------------------------------
     const trimGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const trimDistrict = districtUniformBlock(this.districts, this.colourSwitch.allowed);
+    this.districtSwitches.push(trimDistrict.uDistrictColour);
     this.trimMaterial = new THREE.ShaderMaterial({
       name: 'skyriver.city.trim',
       vertexShader: TRIM_VERTEX,
@@ -3429,6 +3895,7 @@ export class SkyriverCity {
         uConcreteLevel: { value: 0.03 },
         uConcreteAmbient: { value: concreteAmbient },
         uWetTint: { value: wetTint },
+        ...trimDistrict,
         ...skyriverFogUniforms(),
       },
       fog: true,
@@ -3444,6 +3911,8 @@ export class SkyriverCity {
     this.group.add(this.trimMesh);
 
     // --- neon signs -------------------------------------------------------------------------------
+    const signDistrict = districtUniformBlock(this.districts, this.colourSwitch.allowed);
+    this.districtSwitches.push(signDistrict.uDistrictColour);
     this.signMaterial = new THREE.ShaderMaterial({
       name: 'skyriver.city.signs',
       vertexShader: SIGN_VERTEX,
@@ -3455,6 +3924,7 @@ export class SkyriverCity {
         uHalo: { value: 0.75 },
         uFogPenetration: { value: 0.55 },
         uAtlas: { value: this.atlas.texture },
+        ...signDistrict,
         ...skyriverFogUniforms(),
       },
       transparent: true,
@@ -3474,6 +3944,8 @@ export class SkyriverCity {
 
     // --- R16 far-city impostor cards --------------------------------------------------------------
     this.impostorAtlas = createImpostorAtlas();
+    const impostorDistrict = districtUniformBlock(this.districts, this.colourSwitch.allowed);
+    this.districtSwitches.push(impostorDistrict.uDistrictColour);
     this.impostorMaterial = new THREE.ShaderMaterial({
       name: 'skyriver.city.impostors',
       vertexShader: IMPOSTOR_VERTEX,
@@ -3484,6 +3956,7 @@ export class SkyriverCity {
         uLayerDim: { value: new THREE.Vector3(0.6, 0.34, 0.18) },
         uLayerHaze: { value: new THREE.Vector3(0.0, 0.12, 0.25) },
         uEmissive: { value: SKYRIVER_EMISSIVE_GAIN },
+        ...impostorDistrict,
         ...skyriverFogUniforms(),
       },
       side: THREE.DoubleSide,
@@ -3500,6 +3973,9 @@ export class SkyriverCity {
     applySkyriverFog(this.trimMaterial);
     applySkyriverFog(this.signMaterial);
     applySkyriverFog(this.impostorMaterial);
+
+    // R22: the materials above were built in the switch's current state, so only a change applies.
+    colourSwitch.onChange((allowed) => this.applyDistrictColour(allowed));
   }
 
   /**
@@ -3527,6 +4003,7 @@ export class SkyriverCity {
    * tier), 'off' keeps the emissive window term (low tier, perf-safe fallback).
    */
   setInteriorMode(mode: SkyriverInteriorMode): void {
+    this.roomMode = mode;
     const u = this.towerMaterial.uniforms;
     u.uInteriorStrength!.value = mode === 'off' ? 0 : 1;
     const fade = mode === 'near' ? SKYRIVER_INTERIOR_FADE.near : SKYRIVER_INTERIOR_FADE.full;
@@ -3542,6 +4019,499 @@ export class SkyriverCity {
     const u = this.towerMaterial.uniforms;
     const fade = u.uInteriorFade!.value as THREE.Vector2;
     return { strength: u.uInteriorStrength!.value as number, start: fade.x, end: fade.y };
+  }
+
+  /** The interior mapping mode and the far-city mode actually applied, for the settings record. */
+  currentRoomMode(): SkyriverInteriorMode {
+    return this.roomMode;
+  }
+
+  currentFarMode(): 'impostor' | 'geometry' {
+    return this.farMode;
+  }
+
+  // --- R22 districts ------------------------------------------------------------------------------
+
+  /** The permanent colour map this city was built against. */
+  districtModel(): SkyriverDistrictModel {
+    return this.districts;
+  }
+
+  /** The one authoritative query, over a canyon route position in metres. */
+  districtAt(v: number): SkyriverDistrict {
+    return skyriverDistrictAt(this.districts, v);
+  }
+
+  get districtColourAllowed(): boolean {
+    return this.colourSwitch.allowed;
+  }
+
+  /**
+   * Applies the R22 colour A/B state: synchronous, presentation only, idempotent.
+   *
+   * Registered on the scene's `SkyriverDistrictColourSwitch` — the city never decides the state, so
+   * the frame and `renderSettings` always report the one flag. It writes one uniform per recoloured
+   * material and selects the hero colour set the next update uploads. It touches no instance buffer,
+   * no geometry, no sign placement, no random stream and no simulation state, so the next
+   * `scene.update` at the same tick and the same alpha draws the same frame with only the colour
+   * treatment changed.
+   */
+  private applyDistrictColour(allowed: boolean): void {
+    const value = allowed ? 1 : 0;
+    for (const uniform of this.districtSwitches) uniform.value = value;
+    // The hero spill uniform is written per frame from the selected colour set; refresh it now so
+    // the switch is complete even if nothing calls update() before the next read.
+    const colors = this.towerMaterial.uniforms.uHeroColors!.value as THREE.Color[];
+    const weights = this.towerMaterial.uniforms.uHeroWeight!.value as number[];
+    const source = allowed ? this.heroDistrictColours : this.heroWorldColors;
+    const count = this.towerMaterial.uniforms.uHeroCount!.value as number;
+    for (let k = 0; k < count && k < this.heroOrder.length; k += 1) {
+      const index = this.heroOrder[k]!;
+      const colour = source[index];
+      // heroOrder indexes the same hero arrays this colour set was built from, so a miss means the
+      // switch would leave the previous colour set bound on that slot: an internal invariant broke.
+      if (colour === undefined) throw new Error(`SKYRIVER_HERO_COLOUR_INDEX:${index}`);
+      colors[k]!.copy(colour).multiplyScalar(weights[k] ?? 1);
+    }
+  }
+
+  /**
+   * The bound scalar and vector uniform values of the four city materials.
+   *
+   * The R22 colour switch and the district hues are deliberately absent: this record goes into the
+   * frame-identity hash of the A/B pair, so it must be byte-identical in both switch states. The
+   * emitted colours live in sourceEvidence and the haze tint in hazeEvidence.
+   */
+  renderUniforms(): Readonly<Record<string, number | readonly number[]>> {
+    const tower = this.towerMaterial.uniforms;
+    const sign = this.signMaterial.uniforms;
+    const trim = this.trimMaterial.uniforms;
+    const impostor = this.impostorMaterial.uniforms;
+    const fade = tower.uInteriorFade!.value as THREE.Vector2;
+    const layerDim = impostor.uLayerDim!.value as THREE.Vector3;
+    const layerHaze = impostor.uLayerHaze!.value as THREE.Vector3;
+    return Object.freeze({
+      towerCellWidth: tower.uCellWidth!.value as number,
+      towerCellHeight: tower.uCellHeight!.value as number,
+      towerRibSpacing: tower.uRibSpacing!.value as number,
+      towerProjScale: tower.uProjScale!.value as number,
+      towerConcreteLevel: tower.uConcreteLevel!.value as number,
+      towerContactAllowed: tower.uContactAllowed!.value as number,
+      towerInteriorStrength: tower.uInteriorStrength!.value as number,
+      towerInteriorFade: Object.freeze([fade.x, fade.y]),
+      towerHeroCount: tower.uHeroCount!.value as number,
+      signIntensity: sign.uIntensity!.value as number,
+      signHalo: sign.uHalo!.value as number,
+      signFogPenetration: sign.uFogPenetration!.value as number,
+      trimConcreteLevel: trim.uConcreteLevel!.value as number,
+      impostorEmissive: impostor.uEmissive!.value as number,
+      impostorLayerDim: Object.freeze([layerDim.x, layerDim.y, layerDim.z]),
+      impostorLayerHaze: Object.freeze([layerHaze.x, layerHaze.y, layerHaze.z]),
+    });
+  }
+
+  /** Actual drawn source populations, counted while the instance buffers were written. */
+  sourceCounts(): SkyriverDistrictSourceCounts {
+    const signsByDistrict = this.signDistricts.counts.map((entry) => entry.ordinary + entry.heroes);
+    return {
+      masses: this.towerMesh.count,
+      massesByDistrict: Array.from(this.drawnMassesByDistrict),
+      trims: this.trimMesh.count,
+      trimsByKind: Array.from(this.drawnTrimsByKind),
+      trimsByDistrict: Array.from(this.drawnTrimsByDistrict),
+      ordinarySigns: this.signs.ordinaryCount,
+      heroSigns: this.signs.heroCount,
+      signsByDistrict,
+      heroesByDistrict: this.districts.districts.map((district) =>
+        this.heroDistrictIds.reduce((total, id) => total + (id === district.id ? 1 : 0), 0)),
+      heroSpillSlots: (this.towerMaterial.uniforms.uHeroBlades!.value as THREE.Vector4[]).length,
+      farCards: this.impostorMesh.count,
+      farCardsByDistrict: Array.from(this.farCardsByDistrict),
+      paneCells: this.paneCellCapacity,
+      roomCells: this.paneCellCapacity,
+      meaning: Object.freeze({
+        masses: 'Drawn tower-batch instances (slabs, tiers, crowns, seam blocks and the far boxes still drawn as geometry).',
+        trims: 'Drawn trim instances after the hero-sign clearance pass.',
+        signs: 'Sign instances in the one neon draw. Heroes occupy the first heroSigns slots.',
+        paneCells: 'Facade window cells on the near-city masses, from side area / (7.2 m x 5.4 m). Panes and rooms are procedural per cell, so this is their source capacity, not a per-instance population.',
+        roomCells: 'The same cells: a room is the traced interior of one pane cell inside the R19.7 fade window.',
+        farCards: 'R16 impostor card instances in the far-city draw.',
+      }),
+    };
+  }
+
+  /**
+   * Old and new FINAL emitted luminance per source role, the sign quota, and the distance grade.
+   *
+   * Signs and heroes are measured over every real instance, through the CPU twin of the complete
+   * sign emission (core, white-hot blend, halo, plate, angle, intensity, proximity ease and the
+   * emissive gain). The procedural roles are measured on the actual shader source vectors: the
+   * recolour is applied to the finished contribution, so every scalar term in front of it
+   * multiplies the old and the new value identically and the comparison holds for all of them.
+   */
+  sourceEvidence(): SkyriverDistrictSourceEvidence {
+    const roles: SkyriverDistrictRoleEvidence[] = [];
+    let worst = 0;
+    const measureSigns = (
+      id: string,
+      role: string,
+      from: number,
+      to: number,
+    ): void => {
+      let oldSum = 0;
+      let newSum = 0;
+      let maxDelta = 0;
+      let saturation = 0;
+      for (let i = from; i < to; i += 1) {
+        const source: SkyriverLinearRgb = [
+          this.signs.color[i * 3]!, this.signs.color[i * 3 + 1]!, this.signs.color[i * 3 + 2]!,
+        ];
+        const hue: SkyriverLinearRgb = [
+          this.signDistricts.unitHue[i * 3]!,
+          this.signDistricts.unitHue[i * 3 + 1]!,
+          this.signDistricts.unitHue[i * 3 + 2]!,
+        ];
+        const sat = this.signDistricts.saturation[i]!;
+        const oldFinal = skyriverSignFinalEmission(source);
+        const newFinal = skyriverDistrictSignEmission(source, hue, sat);
+        const oldY = skyriverLinearY(oldFinal);
+        const newY = skyriverLinearY(newFinal);
+        oldSum += oldY;
+        newSum += newY;
+        maxDelta = Math.max(maxDelta, Math.abs(oldY - newY));
+        saturation += sat;
+      }
+      const samples = Math.max(0, to - from);
+      worst = Math.max(worst, maxDelta);
+      roles.push({
+        id,
+        role,
+        saturation: samples === 0 ? 0 : saturation / samples,
+        samples,
+        oldFinalY: oldSum,
+        newFinalY: newSum,
+        maxAbsoluteYDelta: maxDelta,
+        measurement: 'Summed final linear Y over every real instance, through the CPU twin of the complete sign emission at SKYRIVER_SIGN_EMISSION_REFERENCE. Saturation is the mean target saturation, not a measured value.',
+      });
+    };
+    measureSigns('hero-signs', 'hero sign face', 0, this.signs.heroCount);
+    measureSigns('ordinary-signs', 'ordinary sign face', this.signs.heroCount, this.signs.count);
+
+    let heroSpillOld = 0;
+    let heroSpillNew = 0;
+    let heroSpillDelta = 0;
+    for (let i = 0; i < this.heroWorldColors.length; i += 1) {
+      const oldY = skyriverLinearY([
+        this.heroWorldColors[i]!.r, this.heroWorldColors[i]!.g, this.heroWorldColors[i]!.b,
+      ]);
+      const newY = skyriverLinearY([
+        this.heroDistrictColours[i]!.r, this.heroDistrictColours[i]!.g, this.heroDistrictColours[i]!.b,
+      ]);
+      heroSpillOld += oldY;
+      heroSpillNew += newY;
+      heroSpillDelta = Math.max(heroSpillDelta, Math.abs(oldY - newY));
+    }
+    worst = Math.max(worst, heroSpillDelta);
+    roles.push({
+      id: 'hero-spill',
+      role: 'hero facade spill source colour',
+      saturation: SKYRIVER_DISTRICT_SATURATION.hero,
+      samples: this.heroWorldColors.length,
+      oldFinalY: heroSpillOld,
+      newFinalY: heroSpillNew,
+      maxAbsoluteYDelta: heroSpillDelta,
+      measurement: 'Summed linear Y of the uHeroColors source colour over every hero. The shader multiplies it by a scalar distance falloff and a scalar weight, so the spill carries this luminance ratio exactly.',
+    });
+
+    for (const term of SKYRIVER_DISTRICT_SOURCE_TERMS) {
+      // The district hue a term meets depends on where it is drawn; the delta does not. The reported
+      // newFinalY is the one district that produced maxAbsoluteYDelta — the worst case, not the last
+      // district visited, and not a sum over the five.
+      const termOldY = skyriverLinearY(term.rgb);
+      let maxDelta = 0;
+      let worstNewY = termOldY;
+      for (const district of this.districts.districts) {
+        const tinted = skyriverRecolorPreservingY(
+          term.rgb,
+          SKYRIVER_DISTRICT_UNIT_HUE[district.primary],
+          term.saturation,
+        );
+        const y = skyriverLinearY(tinted);
+        const delta = Math.abs(y - termOldY);
+        if (delta > maxDelta) {
+          maxDelta = delta;
+          worstNewY = y;
+        }
+      }
+      worst = Math.max(worst, maxDelta);
+      roles.push({
+        id: term.id,
+        role: term.role,
+        saturation: term.saturation,
+        samples: this.districts.districts.length,
+        oldFinalY: termOldY,
+        newFinalY: worstNewY,
+        maxAbsoluteYDelta: maxDelta,
+        measurement: 'Actual shader source vector, recoloured over all five district hues. oldFinalY is the one source luminance; newFinalY is the worst case of the five recoloured values, the one that produced maxAbsoluteYDelta. Neither is a sum. The recolour is applied to the finished contribution, so the scalar terms in front of it cancel in the comparison.',
+      });
+    }
+
+    const distanceGrade: SkyriverDistrictSourceEvidence['distanceGrade'][number][] = [];
+    const probes: SkyriverLinearRgb[] = [
+      skyriverHexToLinear(0x2ff2ff), skyriverHexToLinear(0xff2fb4), skyriverHexToLinear(0xffb13c),
+      [0.004, 0.005, 0.007], [1, 0.42, 0.1], [0, 0, 0],
+    ];
+    for (const [depthM, extra] of [[900, 0], [1500, 0], [2500, 0], [5000, 0], [2500, 0.35], [2500, 0.55], [2500, 0.7]] as const) {
+      const k = skyriverDistanceGradeK(depthM, extra);
+      let oldY = 0;
+      let newY = 0;
+      let delta = 0;
+      for (const probe of probes) {
+        const before = skyriverLinearY(skyriverLegacyDistanceGrade(probe, k));
+        const after = skyriverLinearY(skyriverDistrictDistanceGrade(probe, k));
+        oldY += before;
+        newY += after;
+        delta = Math.max(delta, Math.abs(before - after));
+      }
+      worst = Math.max(worst, delta);
+      distanceGrade.push({
+        depthM, extra, k,
+        brightnessFactor: skyriverDistanceGradeBrightness(k),
+        oldY, newY, absoluteDelta: delta,
+      });
+    }
+
+    const byRole: Record<string, number> = {};
+    for (const role of this.signDistricts.role) byRole[role] = (byRole[role] ?? 0) + 1;
+
+    return {
+      colourSpace: 'linear-rec709',
+      luminanceCoefficients: [SKYRIVER_LUMA[0], SKYRIVER_LUMA[1], SKYRIVER_LUMA[2]],
+      declaredRelativeTolerance: 1e-5,
+      maxAbsoluteYDelta: worst,
+      roles,
+      signs: {
+        ordinary: this.signs.ordinaryCount,
+        heroes: this.signs.heroCount,
+        byRole,
+        brightAccents: this.signDistricts.brightAccents,
+        brightAccentProxy: this.signDistricts.brightAccentProxy,
+      },
+      districts: this.signDistricts.counts,
+      distanceGrade,
+      untouched: SKYRIVER_DISTRICT_UNTOUCHED_TERMS.map((term) => ({ id: term.id, role: term.role, rgb: [...term.rgb] })),
+      limits: Object.freeze([
+        'These are source and CPU-twin values. They are not rendered pixel measurements, and a source weight is not image energy.',
+        'Pane, room, trim, wash and far-card roles are procedural per pixel; their evidence is the actual shader source vector, not a per-instance population.',
+        'The sign and hero figures use SKYRIVER_SIGN_EMISSION_REFERENCE. Per-pixel mask, flicker, facing and fog vary across the frame and are scalar, so they scale old and new identically.',
+        'Deltas are computed in double precision. The GPU evaluates the same expression in float32, hence the declared relative tolerance.',
+      ]),
+    };
+  }
+
+  /**
+   * The actual emitted source palette, grouped by the hue each drawn source group now carries.
+   *
+   * Each entry's RGB is the group's mean emitted source colour normalised to a peak channel of 1,
+   * and its weight is the instance count times that peak — so (source linear Y x weight) is exactly
+   * the group's total source luminance, and the hue stays inside [0, 1] where a display-space hue
+   * classification is defined. HDR source colours are therefore reported as direction plus weight,
+   * never clipped.
+   */
+  sourcePalette(): SkyriverDistrictPalette {
+    const groups = new Map<string, { sum: [number, number, number]; count: number; role: string; district: string }>();
+    /** Colour-pure groups: two sources only share an entry when they emit the same hue. */
+    const hueSignature = (rgb: SkyriverLinearRgb): string => {
+      const peak = Math.max(rgb[0], rgb[1], rgb[2]);
+      if (!(peak > 0)) return 'black';
+      return rgb.map((channel) => (channel / peak).toFixed(3)).join('/');
+    };
+    const push = (group: string, role: string, district: string, rgb: SkyriverLinearRgb, instances = 1): void => {
+      const key = `${group}:${hueSignature(rgb)}`;
+      const entry = groups.get(key) ?? { sum: [0, 0, 0] as [number, number, number], count: 0, role, district };
+      entry.sum[0] += rgb[0] * instances;
+      entry.sum[1] += rgb[1] * instances;
+      entry.sum[2] += rgb[2] * instances;
+      entry.count += instances;
+      groups.set(key, entry);
+    };
+    for (let i = 0; i < this.signs.count; i += 1) {
+      const district = this.districts.districts[this.signDistricts.district[i]!]!;
+      const role = this.signDistricts.role[i]!;
+      const source: SkyriverLinearRgb = [
+        this.signs.color[i * 3]!, this.signs.color[i * 3 + 1]!, this.signs.color[i * 3 + 2]!,
+      ];
+      const hue: SkyriverLinearRgb = [
+        this.signDistricts.unitHue[i * 3]!,
+        this.signDistricts.unitHue[i * 3 + 1]!,
+        this.signDistricts.unitHue[i * 3 + 2]!,
+      ];
+      const emitted = this.colourSwitch.allowed
+        ? skyriverRecolorPreservingY(source, hue, this.signDistricts.saturation[i]!)
+        : source;
+      push(`${district.name}:${role}-sign`, `${role} sign face`, district.name, emitted);
+    }
+    // Every instance of one term in one district emits the same colour, so the groups carry their
+    // own instance counts. The floor band's warm and cold sources are two terms here, split by the
+    // same seed threshold the trim shader uses.
+    for (const group of skyriverTrimSourceGroups(this.trimDrawnKind, this.trimDrawnSeed, this.trimDrawnDistrict)) {
+      const term = districtSourceTerm(group.termId);
+      const district = this.districts.districts[group.districtId]!;
+      const saturation = term.saturation === SKYRIVER_DISTRICT_SATURATION.trimSmall && district.primary === 'amber'
+        ? SKYRIVER_DISTRICT_SATURATION.dockLamp
+        : term.saturation;
+      const emitted = this.colourSwitch.allowed
+        ? skyriverRecolorPreservingY(term.rgb, SKYRIVER_DISTRICT_UNIT_HUE[district.primary], saturation)
+        : term.rgb;
+      push(`${district.name}:${group.termId}`, `${term.role} (${group.termId})`, district.name, emitted, group.count);
+    }
+    const entries: SkyriverDistrictPaletteEntry[] = [];
+    for (const [id, entry] of groups) {
+      const mean: SkyriverLinearRgb = [
+        entry.sum[0] / entry.count, entry.sum[1] / entry.count, entry.sum[2] / entry.count,
+      ];
+      const peak = Math.max(mean[0], mean[1], mean[2]);
+      if (!(peak > 0)) continue;
+      entries.push({
+        id,
+        role: entry.role,
+        district: entry.district,
+        rgb: [mean[0] / peak, mean[1] / peak, mean[2] / peak],
+        weight: entry.count * peak,
+      });
+    }
+    return {
+      label: `Skyriver R22 emitted source palette, seed ${this.districts.seed}, district colour ${this.colourSwitch.allowed ? 'on' : 'off'}`,
+      colorSpace: 'linear',
+      weightMeaning: 'Drawn instance count of the group times the group mean peak linear channel, so (source linear Y x weight) is the group total source luminance. RGB is the mean emitted source colour normalised to a peak of 1. A source count is not screen area and not rendered image energy.',
+      limits: 'Procedural per-pixel sources (window panes, traced rooms, the far pane average, the landmark wash and the haze) have no instance count and are reported in sourceEvidence instead. The neutral ice-white sign group is kept in this table rather than dropped. Hue is unstable near grey, so read the neutral group by its role, not by its hue family.',
+      entries: entries.sort((a, b) => a.id.localeCompare(b.id)),
+    };
+  }
+
+  /**
+   * The emissive sources a later round can light the air from: the drawn sign and hero faces, and
+   * the large trim lights. World centres are the rigid transforms the instances were written with,
+   * so a removed sign or a hero-cleared trim is absent here too.
+   */
+  lightSources(): readonly SkyriverLightSource[] {
+    const sources: SkyriverLightSource[] = [];
+    for (let i = 0; i < this.signs.count; i += 1) {
+      const source: SkyriverLinearRgb = [
+        this.signs.color[i * 3]!, this.signs.color[i * 3 + 1]!, this.signs.color[i * 3 + 2]!,
+      ];
+      const hue: SkyriverLinearRgb = [
+        this.signDistricts.unitHue[i * 3]!,
+        this.signDistricts.unitHue[i * 3 + 1]!,
+        this.signDistricts.unitHue[i * 3 + 2]!,
+      ];
+      const legacy = skyriverSignFinalEmission(source);
+      const tinted = skyriverDistrictSignEmission(source, hue, this.signDistricts.saturation[i]!);
+      sources.push({
+        id: signIdentity(this.signs, i),
+        role: i < this.signs.heroCount ? 'hero-sign' : 'ordinary-sign',
+        districtId: this.signDistricts.district[i]!,
+        x: this.signWorldCentres[i * 3] ?? 0,
+        y: this.signWorldCentres[i * 3 + 1] ?? 0,
+        z: this.signWorldCentres[i * 3 + 2] ?? 0,
+        sizeM: [this.signs.sw[i]!, this.signs.sh[i]!, 0],
+        emission: tinted,
+        legacyEmission: legacy,
+      });
+    }
+    for (let i = 0; i < this.trimDrawnKind.length; i += 1) {
+      const kind = this.trimDrawnKind[i]!;
+      if (!skyriverTrimIsLargeLight(kind)) continue;
+      // The band emits warm or cold by its own seed; this reads the shader's selector, not a guess.
+      const id = skyriverTrimSourceTermId(kind, this.trimDrawnSeed[i]!);
+      if (id === null) throw new Error(`SKYRIVER_TRIM_SOURCE_TERM_MISSING:${kind}`);
+      const term = districtSourceTerm(id);
+      const districtId = this.trimDrawnDistrict[i]!;
+      const district = this.districts.districts[districtId]!;
+      sources.push({
+        id: `trim:${i}:${kind}`,
+        role: id,
+        districtId,
+        x: this.trimWorldCentres[i * 3]!,
+        y: this.trimWorldCentres[i * 3 + 1]!,
+        z: this.trimWorldCentres[i * 3 + 2]!,
+        sizeM: [this.trimDrawnSize[i * 3]!, this.trimDrawnSize[i * 3 + 1]!, this.trimDrawnSize[i * 3 + 2]!],
+        emission: skyriverRecolorPreservingY(term.rgb, SKYRIVER_DISTRICT_UNIT_HUE[district.primary], term.saturation),
+        legacyEmission: term.rgb,
+      });
+    }
+    return sources;
+  }
+
+  /**
+   * Geometry, placement and text identity of every instanced pass. Colour treatment outputs
+   * (`aColor`, `aDistrictTint`, `aDistrict`, `aCard.w`) are excluded on purpose: this hash is what
+   * proves the colour A/B moved no geometry, so it must not move with the colour.
+   */
+  geometryIdentity(): SkyriverGeometryIdentity {
+    const signs = this.signs;
+    const signPlacement = new Float32Array(signs.count * 9);
+    for (let i = 0; i < signs.count; i += 1) {
+      signPlacement[i * 9] = signs.cx[i]!;
+      signPlacement[i * 9 + 1] = signs.cy[i]!;
+      signPlacement[i * 9 + 2] = signs.cz[i]!;
+      signPlacement[i * 9 + 3] = signs.nx[i]!;
+      signPlacement[i * 9 + 4] = signs.nz[i]!;
+      signPlacement[i * 9 + 5] = signs.sw[i]!;
+      signPlacement[i * 9 + 6] = signs.sh[i]!;
+      signPlacement[i * 9 + 7] = signs.kind[i]!;
+      signPlacement[i * 9 + 8] = signs.rootHalfWidthM[i]!;
+    }
+    // A renamed or dropped attribute must break this proof, not hash an empty buffer: the A/B
+    // geometry-identity hash is only evidence while it covers every attribute it claims to cover.
+    const attribute = (mesh: THREE.InstancedMesh | THREE.Mesh, name: string): ArrayLike<number> => {
+      const found = mesh.geometry.getAttribute(name);
+      if (found === undefined) throw new Error(`SKYRIVER_IDENTITY_ATTRIBUTE_MISSING:${name}`);
+      return found.array;
+    };
+    let towerAttributes = 0x811c9dc5;
+    for (const name of ['aSeed', 'aTint', 'aSize', 'aLayer', 'aBuilding', 'aStepEdges']) {
+      towerAttributes = hashNumbers(towerAttributes, attribute(this.towerMesh, name));
+    }
+    let trimAttributes = 0x811c9dc5;
+    for (const name of ['aSeed', 'aKind', 'aSize']) {
+      trimAttributes = hashNumbers(trimAttributes, attribute(this.trimMesh, name));
+    }
+    // aCard.w is the district, so the card hash reads its first three components only.
+    const cards = attribute(this.impostorMesh, 'aCard');
+    const cardGeometry = new Float32Array(Math.floor(cards.length / 4) * 3);
+    for (let i = 0; i * 4 < cards.length; i += 1) {
+      cardGeometry[i * 3] = cards[i * 4]!;
+      cardGeometry[i * 3 + 1] = cards[i * 4 + 1]!;
+      cardGeometry[i * 3 + 2] = cards[i * 4 + 2]!;
+    }
+    let signText = hashNumbers(0x811c9dc5, attribute(this.signMesh, 'aAtlas'));
+    signText = hashNumbers(signText, signs.seedValue.slice(0, signs.count));
+    signText = hashText(signText, signs.faceId.slice(0, signs.count));
+    signText = hashText(signText, signs.buildingId.slice(0, signs.count));
+    signText = hashText(signText, signs.compositionId.slice(0, signs.count));
+    return {
+      towers: hex32(hashNumbers(0x811c9dc5, this.towerMesh.instanceMatrix.array)),
+      towerAttributes: hex32(towerAttributes),
+      trims: hex32(hashNumbers(0x811c9dc5, this.trimMesh.instanceMatrix.array)),
+      trimAttributes: hex32(trimAttributes),
+      signPlacement: hex32(hashNumbers(hashNumbers(0x811c9dc5, signPlacement), attribute(this.signMesh, 'aCentre'))),
+      signText: hex32(signText),
+      impostors: hex32(hashNumbers(0x811c9dc5, this.impostorMesh.instanceMatrix.array)),
+      impostorCards: hex32(hashNumbers(0x811c9dc5, cardGeometry)),
+      counts: {
+        towers: this.towerMesh.count,
+        trims: this.trimMesh.count,
+        signs: this.signGeometry.instanceCount,
+        impostors: this.impostorMesh.count,
+      },
+      excludes: Object.freeze([
+        'aColor (the drawn source colour)',
+        'aDistrictTint (R22 target hue and saturation)',
+        'aDistrict (R22 district id on towers and trims)',
+        'aCard.w (R22 district id on far cards)',
+      ]),
+    };
   }
 
   /** One uniform write per material. No allocation, nothing per instance. */
@@ -3572,7 +4542,10 @@ export class SkyriverCity {
       blades[k]!.copy(world[order[k]!]!);
       const dist = Math.sqrt(d2(order[k]!));
       const w = edge === Infinity ? 1 : 1 - THREE.MathUtils.smoothstep(dist, edge * 0.7, edge);
-      colors[k]!.copy(this.heroWorldColors[order[k]!]!).multiplyScalar(w);
+      // R22: the colour-off path uploads the pre-R22 hero colours, so the A/B pair differs in the
+      // district recolour alone — same heroes, same order, same spill weights.
+      const heroColours = this.colourSwitch.allowed ? this.heroDistrictColours : this.heroWorldColors;
+      colors[k]!.copy(heroColours[order[k]!]!).multiplyScalar(w);
       (u.uHeroWeight!.value as number[])[k] = w;
     }
     u.uHeroCount!.value = n;
@@ -3611,6 +4584,7 @@ export class SkyriverCity {
   }
 
   private writeImpostors(far: readonly SkyriverFarTower[]): void {
+    this.farCardsByDistrict.fill(0);
     const matrix = new THREE.Matrix4();
     const cards = new Float32Array(Math.max(far.length, 1) * 4);
     for (let i = 0; i < far.length; i += 1) {
@@ -3626,6 +4600,10 @@ export class SkyriverCity {
       cards[i * 4] = range[0] + Math.floor(h * (range[1] - range[0]));
       cards[i * 4 + 1] = f.layer;
       cards[i * 4 + 2] = hash1(h * 91.7 + 3.1) < 0.5 ? 1 : 0;
+      // R22: the card's fourth component was unused. It now carries the far tower's own district,
+      // from its canyon v, so the far layers desaturate with the same map and keep one draw.
+      cards[i * 4 + 3] = skyriverDistrictIdAt(this.districts, f.v);
+      this.farCardsByDistrict[cards[i * 4 + 3]!] += 1;
     }
     this.impostorMesh.count = far.length;
     this.impostorMesh.instanceMatrix.needsUpdate = true;
@@ -3644,8 +4622,12 @@ export class SkyriverCity {
     const sizes = new Float32Array(slots * 3);
     const layers = new Float32Array(slots);
     const stepEdges = new Float32Array(slots * 2);
+    const districts = new Float32Array(slots);
 
     const buildings = new Float32Array(slots);
+    this.drawnMassesByDistrict.fill(0);
+    this.paneCellCapacity = 0;
+    const cellArea = SKYRIVER_CITY.windowCellWidthM * SKYRIVER_CITY.windowCellHeightM;
     let i = 0;
     for (let m = 0; m < masses.length; m += 1) {
       const mass = masses[m]!;
@@ -3656,6 +4638,14 @@ export class SkyriverCity {
       stepEdges[i * 2 + 1] = mass.stepTop ? 1 : 0;
       // R16 interior culture: one seed per building (its slab, tiers, crowns and annexes share it).
       buildings[i] = mass.building ?? buildingSeedOf(mass.x, mass.z);
+      // R22: the base building's own canyon anchor, so a slab, its tiers, its crowns and its annexes
+      // always share one district. Never the warped world z this mass is drawn at.
+      districts[i] = skyriverDistrictIdAt(this.districts, mass.anchorV ?? mass.z);
+      this.drawnMassesByDistrict[districts[i]!] += 1;
+      if ((mass.layer ?? 0) === 0) {
+        const sideArea = 2 * (mass.width + mass.depth) * mass.height;
+        this.paneCellCapacity += Math.floor(sideArea / cellArea);
+      }
       // T7-3: canyon space -> the winding loop. Each box keeps its shape, placed at its warped centre
       // and turned to the local canyon heading. R16: tiers and annexes ride their slab's frame.
       warpRigid(mass.x, mass.z, mass.anchorV ?? mass.z, warp);
@@ -3687,37 +4677,29 @@ export class SkyriverCity {
     this.towerMesh.geometry.setAttribute('aLayer', new THREE.InstancedBufferAttribute(layers, 1));
     this.towerMesh.geometry.setAttribute('aBuilding', new THREE.InstancedBufferAttribute(buildings, 1));
     this.towerMesh.geometry.setAttribute('aStepEdges', new THREE.InstancedBufferAttribute(stepEdges, 2));
+    this.towerMesh.geometry.setAttribute('aDistrict', new THREE.InstancedBufferAttribute(districts, 1));
     // Culling off keeps the draw-call count fixed, which is what the A3 smoke test asserts.
     this.towerMesh.frustumCulled = false;
   }
 
   private writeTrims(): void {
-    const { count, cx, cy, cz, sx, sy, sz, kind, seedValue } = this.trims;
+    const { count, cy, sx, sy, sz, kind, seedValue } = this.trims;
     const matrix = new THREE.Matrix4();
     const slots = Math.max(count, 1);
     const seeds = new Float32Array(slots);
     const kinds = new Float32Array(slots);
     const sizes = new Float32Array(slots * 3);
+    const districts = new Float32Array(slots);
+    const centres = new Float32Array(slots * 3);
+    this.drawnTrimsByKind.fill(0);
+    this.drawnTrimsByDistrict.fill(0);
 
-    // T7-3: clear space around the hero signs — facade bands, ribs and cantilevers that would cross
-    // in front of a giant sign are not drawn (cycle-4 P1: strips occluding signage).
+    // T7-3: clear space around the hero signs (see skyriverTrimBlocksHero).
     const heroes = deriveHeroBlades(this.layout);
-    const blocksHero = (i: number): boolean => {
-      const k = kind[i];
-      if (k !== SKYRIVER_TRIM_BAND && k !== SKYRIVER_TRIM_RIB && k !== SKYRIVER_TRIM_CANTILEVER) return false;
-      for (const hero of heroes) {
-        const hx = hero.kind === 'blade' ? hero.width * 0.5 + 14 : 16;
-        const hz = hero.kind === 'blade' ? 14 : hero.width * 0.5 + 14;
-        if (Math.abs(cx[i]! - hero.x) < hx + sx[i]! * 0.5
-          && Math.abs(cy[i]! - hero.y) < hero.height * 0.5 + 18 + sy[i]! * 0.5
-          && Math.abs(cz[i]! - hero.z) < hz + sz[i]! * 0.5) return true;
-      }
-      return false;
-    };
     let drawn = 0;
     const placed: SkyriverTrimPlacement = { x: 0, z: 0, heading: 0, length: 0 };
     for (let i = 0; i < count; i += 1) {
-      if (blocksHero(i)) continue;
+      if (skyriverTrimBlocksHero(this.trims, i, heroes)) continue;
       // R16: rigid in the owner's frame (spans: each end on its own building). See placeTrim.
       placeTrim(this.trims, i, placed);
       quaternion.setFromAxisAngle(UP, placed.heading);
@@ -3731,17 +4713,30 @@ export class SkyriverCity {
       this.trimMesh.setMatrixAt(drawn, matrix);
       seeds[drawn] = seedValue[i]!;
       kinds[drawn] = kind[i]!;
+      // R22: the trim's owner anchor — the same building anchor its facade's rooms and signs use.
+      districts[drawn] = skyriverDistrictIdAt(this.districts, this.trims.owner[i]!.anchorV);
+      this.drawnTrimsByDistrict[districts[drawn]!] += 1;
+      this.drawnTrimsByKind[kind[i]!] += 1;
       sizes[drawn * 3] = ex;
       sizes[drawn * 3 + 1] = sy[i]!;
       sizes[drawn * 3 + 2] = ez;
+      centres[drawn * 3] = placed.x;
+      centres[drawn * 3 + 1] = cy[i]!;
+      centres[drawn * 3 + 2] = placed.z;
       drawn += 1;
     }
     this.trimMesh.count = drawn;
+    this.trimWorldCentres = centres.slice(0, drawn * 3);
+    this.trimDrawnKind = kinds.slice(0, drawn);
+    this.trimDrawnSize = sizes.slice(0, drawn * 3);
+    this.trimDrawnDistrict = districts.slice(0, drawn);
+    this.trimDrawnSeed = seeds.slice(0, drawn);
 
     this.trimMesh.instanceMatrix.needsUpdate = true;
     this.trimMesh.geometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seeds, 1));
     this.trimMesh.geometry.setAttribute('aKind', new THREE.InstancedBufferAttribute(kinds, 1));
     this.trimMesh.geometry.setAttribute('aSize', new THREE.InstancedBufferAttribute(sizes, 3));
+    this.trimMesh.geometry.setAttribute('aDistrict', new THREE.InstancedBufferAttribute(districts, 1));
     this.trimMesh.frustumCulled = false;
   }
 
@@ -3817,6 +4812,17 @@ export class SkyriverCity {
     geometry.setAttribute('aKind', new THREE.InstancedBufferAttribute(kinds, 1));
     geometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seedValue.slice(0, count), 1));
     geometry.setAttribute('aAtlas', new THREE.InstancedBufferAttribute(atlasRects, 4));
+    // R22: unit-luminance target hue and its saturation per sign. `aColor` still carries the colour
+    // the existing random.weighted draw produced, so the shader can hold its final luminance.
+    const districtTint = new Float32Array(count * 4);
+    for (let i = 0; i < count; i += 1) {
+      districtTint[i * 4] = this.signDistricts.unitHue[i * 3]!;
+      districtTint[i * 4 + 1] = this.signDistricts.unitHue[i * 3 + 1]!;
+      districtTint[i * 4 + 2] = this.signDistricts.unitHue[i * 3 + 2]!;
+      districtTint[i * 4 + 3] = this.signDistricts.saturation[i]!;
+    }
+    geometry.setAttribute('aDistrictTint', new THREE.InstancedBufferAttribute(districtTint, 4));
+    this.signWorldCentres = centres.slice(0, count * 3);
 
     quad.dispose();
     return geometry;

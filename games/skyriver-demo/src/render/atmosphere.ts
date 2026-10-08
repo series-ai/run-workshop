@@ -32,6 +32,18 @@ import * as THREE from 'three';
 import type { SkyriverCityLayout } from '../sim/derive';
 import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
 import { CANYON_LOOP_LENGTH_M, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
+import { SKYRIVER_TICK_RATE } from '../sim/systems';
+import {
+  SKYRIVER_DISTRICT_HAZE_BLEND_M,
+  SKYRIVER_DISTRICT_SATURATION,
+  deriveSkyriverDistrictModel,
+  skyriverDistrictHazeMixAt,
+  skyriverDistrictHazeTint,
+  skyriverGlslFloat,
+  skyriverHazeRefresh,
+  type SkyriverDistrictColourSwitch,
+  type SkyriverDistrictModel,
+} from './districts';
 import {
   SKYRIVER_DEPTH_FADE_GLSL,
   SkyriverDepthSnapshot,
@@ -121,6 +133,14 @@ export const SKYRIVER_FOG_MIDBAND = Object.freeze({
   gateEnd: 700,
 });
 export const SKYRIVER_FOG_DITHER_LEVELS = 255;
+/**
+ * The weight the R20 fog shader gives the shared region tint:
+ * `color * mix(vec3(1), uSkyFogRegionTint, SKYRIVER_FOG_REGION_TINT_WEIGHT * uSkyFogMurkAllowed)`.
+ *
+ * The fog GLSL interpolates this constant and `SkyriverAtmosphere.hazeEvidence` reads the same one,
+ * so the evidence cannot keep reporting a weight the shader no longer applies.
+ */
+export const SKYRIVER_FOG_REGION_TINT_WEIGHT = 0.12;
 
 function fogSmoothstep(edge0: number, edge1: number, value: number): number {
   const t = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
@@ -283,7 +303,7 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
     // 'distance' the operator read (same luminance, no hue).
     color += vec3( 0.0083, 0.0079, 0.0086 ) * exp( - max( h - 40.0, 0.0 ) / 220.0 ) * ( 1.0 - skyriverFogDeep() * 0.6 );
     color = mix( color, uSkyFogColorDeep, skyriverFogDeep() );
-    return color * mix( vec3( 1.0 ), uSkyFogRegionTint, 0.12 * uSkyFogMurkAllowed );
+    return color * mix( vec3( 1.0 ), uSkyFogRegionTint, ${skyriverGlslFloat(SKYRIVER_FOG_REGION_TINT_WEIGHT)} * uSkyFogMurkAllowed );
   }
   float skyriverFogInterleavedGradient( vec2 pixel ) {
     return fract( 52.9829189 * fract( dot( pixel, vec2( 0.06711056, 0.00583715 ) ) ) );
@@ -331,6 +351,9 @@ const FOG_VERTEX = /* glsl */ `
   #endif
 #endif
 `;
+
+/** The installed fog chunk, so a node check can assert the one tint weight it carries. */
+export const SKYRIVER_FOG_PARS_FRAGMENT_SOURCE = FOG_PARS_FRAGMENT;
 
 let fogChunksInstalled = false;
 
@@ -852,6 +875,8 @@ export interface SkyriverAtmosphereOptions {
   readonly layout: SkyriverCityLayout;
   readonly quality: SkyriverQualitySettings;
   readonly depthFade: SkyriverDepthSnapshot;
+  /** The scene's one R22 colour-switch flag. The atmosphere reads it and never writes it. */
+  readonly colourSwitch: SkyriverDistrictColourSwitch;
 }
 
 export interface SkyriverAtmosphereStats {
@@ -861,6 +886,51 @@ export interface SkyriverAtmosphereStats {
   readonly meshes: number;
   readonly drawCalls: number;
   readonly drawCallBudget: number;
+}
+
+/** The actual bound haze tint and its refresh history, in both colour-switch states. */
+export interface SkyriverDistrictHazeEvidence {
+  readonly api: string;
+  readonly districtAllowed: boolean;
+  readonly boundTint: readonly [number, number, number];
+  readonly tintSaturation: number;
+  readonly shaderWeight: number;
+  readonly effectiveSaturation: number;
+  /**
+   * The per-channel factor the fog colour is actually multiplied by, min and max over the three
+   * channels: `1 + shaderWeight * (boundTint - 1)` with the murk on, and exactly 1 with it off.
+   * Y(fogColor x factor) lies between these two numbers for every fog colour, which is the honest
+   * bound on what the tint does to the haze brightness.
+   */
+  readonly channelFactorRange: readonly [number, number];
+  /** max(|factor - 1|) over the three channels: how far from neutral the multiplication goes. */
+  readonly maxChannelDeviation: number;
+  readonly murkAllowed: boolean;
+  readonly blendWidthM: number;
+  readonly tickRate: number;
+  readonly refreshHz: number;
+  readonly bucket: number;
+  readonly lastTick: number;
+  readonly routeV: number;
+  readonly districtId: number;
+  readonly neighbourId: number;
+  readonly neighbourWeight: number;
+  readonly boundaryDistanceM: number;
+  readonly legacyRegion: number;
+  readonly updates: readonly {
+    readonly reason: string;
+    readonly tick: number;
+    readonly bucket: number;
+    readonly routeV: number;
+    readonly districtId: number;
+    readonly neighbourId: number;
+    readonly neighbourWeight: number;
+    readonly boundaryDistanceM: number;
+    readonly tint: readonly [number, number, number];
+    readonly atMs: number;
+  }[];
+  readonly resets: readonly { readonly reason: string; readonly tick: number; readonly atMs: number }[];
+  readonly limits: readonly string[];
 }
 
 /**
@@ -898,11 +968,48 @@ export class SkyriverAtmosphere {
   private fogTintRegion = Number.NaN;
   private fogTintElapsed = 0;
 
-  constructor({ layout, quality, depthFade }: SkyriverAtmosphereOptions) {
+  /**
+   * R22 district haze. The shared R20 tint API is now driven by the canyon district query instead of
+   * a 5000 m world-Z region, refreshed at most once a second on a tick bucket (not on elapsed wall
+   * time, which a frozen frame never advances). A colour switch, a time reversal, a replay seek or a
+   * scene reset invalidates the bucket, so a tint sampled at a later tick can never survive a
+   * rollback and the next update re-samples at the tick actually being drawn.
+   */
+  private readonly districts: SkyriverDistrictModel;
+  /** R22: the scene's colour flag, held once (see SkyriverDistrictColourSwitch). Read-only here. */
+  private readonly colourSwitch: SkyriverDistrictColourSwitch;
+  private hazeBucket = Number.NaN;
+  private hazeTick = Number.NaN;
+  private hazeRouteV = 0;
+  private hazeWorldZ = 0;
+  private readonly hazeUpdates: {
+    readonly reason: string;
+    readonly tick: number;
+    readonly bucket: number;
+    readonly routeV: number;
+    readonly districtId: number;
+    readonly neighbourId: number;
+    readonly neighbourWeight: number;
+    readonly boundaryDistanceM: number;
+    readonly tint: readonly [number, number, number];
+    readonly atMs: number;
+  }[] = [];
+  private readonly hazeResets: {
+    readonly reason: string;
+    readonly tick: number;
+    readonly atMs: number;
+  }[] = [];
+
+  constructor({ layout, quality, depthFade, colourSwitch }: SkyriverAtmosphereOptions) {
     installSkyriverFogChunks();
     this.quality = quality;
     this.group.name = 'skyriver.atmosphere';
     this.anchors = deriveGodRayAnchors(layout);
+    this.districts = deriveSkyriverDistrictModel(layout.seed);
+    this.colourSwitch = colourSwitch;
+    // The first update writes the tint for whichever state the switch starts in, so only a change
+    // needs applying here.
+    colourSwitch.onChange((allowed) => this.applyDistrictColour(allowed));
 
     this.fog = new THREE.FogExp2(COLOR_FOG_LOW, SKYRIVER_ATMOSPHERE.fogDensityLow);
 
@@ -991,6 +1098,11 @@ export class SkyriverAtmosphere {
     setSkyriverFogMurkAllowed(allowed);
   }
 
+  /** The widened-haze state actually bound in the shared fog uniforms. */
+  murkAllowed(): boolean {
+    return (fogExtraUniforms.uSkyFogMurkAllowed!.value as number) > 0.5;
+  }
+
   /** Searchlights always; god rays only on the tiers that have them (they sit after the lights). */
   private updateBeamCount(): void {
     this.beams.setCount(this.searchlightOrigins.length + (this.quality.godRays ? this.anchors.length : 0));
@@ -1007,7 +1119,14 @@ export class SkyriverAtmosphere {
 
   update(frame: SkyriverFrame): void {
     const { time, camera } = frame;
-    this.updateFogRegionTint(frame.dt, camera.position.z);
+    this.hazeRouteV = frame.routeV;
+    this.hazeWorldZ = camera.position.z;
+    // ARCH-4: the tick is current on both paths, so a 'switch' update entry, its bucket and the
+    // reset log can never record a tick from before a stretch with the districts off.
+    const previousTick = this.hazeTick;
+    this.hazeTick = frame.tick;
+    if (this.colourSwitch.allowed) this.updateDistrictHazeTint(frame, previousTick);
+    else this.updateFogRegionTint(frame.dt, camera.position.z);
 
     // One copy, no allocation: the dome is a unit sphere riding the camera.
     this.skyMesh.position.copy(camera.position);
@@ -1037,6 +1156,109 @@ export class SkyriverAtmosphere {
     this.fogTintElapsed = 0;
     if (region === this.fogTintRegion) return;
     this.applyFogRegionTint(region);
+  }
+
+  /**
+   * R22 colour A/B, haze side. Synchronous: it discards the refresh bucket and writes the shared
+   * tint for the state requested, so the next `scene.update` at the same tick and the same alpha
+   * draws with the new haze instead of waiting for a timer the frozen frame never advances.
+   *
+   * Registered on the scene's `SkyriverDistrictColourSwitch`: the atmosphere never decides the
+   * state, so the haze and the city can never be in two different colour states.
+   */
+  private applyDistrictColour(allowed: boolean): void {
+    this.resetDistrictHazeTint(allowed ? 'district-haze-on' : 'district-haze-off');
+    if (allowed) this.applyDistrictHazeTint(this.hazeRouteV, this.hazeTick, 'switch');
+    else this.applyFogRegionTint(Math.floor(this.hazeWorldZ / 5000));
+  }
+
+  /** Drops the refresh bucket. Called on a colour switch, a time reversal and a scene reset. */
+  resetDistrictHazeTint(reason: string): void {
+    this.hazeBucket = Number.NaN;
+    this.fogTintRegion = Number.NaN;
+    this.fogTintElapsed = 0;
+    this.hazeResets.push({
+      reason,
+      tick: Number.isFinite(this.hazeTick) ? this.hazeTick : -1,
+      atMs: typeof performance === 'undefined' ? 0 : performance.now(),
+    });
+    if (this.hazeResets.length > 16) this.hazeResets.shift();
+  }
+
+  /** `previousTick` is the tick the held tint was sampled at; `update` has already advanced it. */
+  private updateDistrictHazeTint(frame: SkyriverFrame, previousTick: number): void {
+    const decision = skyriverHazeRefresh(
+      { bucket: this.hazeBucket, tick: previousTick },
+      frame.tick,
+      SKYRIVER_TICK_RATE,
+    );
+    // A tick that moved backwards is a rollback or a replay seek: the tint in the uniform was
+    // sampled at a later tick, so it is discarded rather than carried over.
+    if (decision.reset) this.resetDistrictHazeTint('time-reversal');
+    if (!decision.refresh) return;
+    this.applyDistrictHazeTint(frame.routeV, frame.tick, decision.reset ? 'time-reversal' : 'bucket');
+  }
+
+  private applyDistrictHazeTint(routeV: number, tick: number, reason: string): void {
+    const bucket = Number.isFinite(tick) ? Math.floor(tick / SKYRIVER_TICK_RATE) : Number.NaN;
+    this.hazeBucket = bucket;
+    const blend = skyriverDistrictHazeMixAt(this.districts, routeV);
+    const tint = skyriverDistrictHazeTint(this.districts, routeV);
+    this.fogRegionTint.setRGB(tint[0], tint[1], tint[2]);
+    setSkyriverFogRegionTint(this.fogRegionTint);
+    this.hazeUpdates.push({
+      reason,
+      tick: Number.isFinite(tick) ? tick : -1,
+      bucket,
+      routeV,
+      districtId: blend.districtId,
+      neighbourId: blend.neighbourId,
+      neighbourWeight: blend.neighbourWeight,
+      boundaryDistanceM: blend.boundaryDistanceM,
+      tint: [tint[0], tint[1], tint[2]],
+      atMs: typeof performance === 'undefined' ? 0 : performance.now(),
+    });
+    if (this.hazeUpdates.length > 16) this.hazeUpdates.shift();
+  }
+
+  /** The actual bound tint, its refresh bucket, its update log and its reset log, in both states. */
+  hazeEvidence(): SkyriverDistrictHazeEvidence {
+    const bound = fogExtraUniforms.uSkyFogRegionTint!.value as THREE.Color;
+    const murkAllowed = (fogExtraUniforms.uSkyFogMurkAllowed!.value as number) > 0.5;
+    const latest = this.hazeUpdates[this.hazeUpdates.length - 1];
+    // What the shader actually multiplies the fog colour by, read from the bound tint and the one
+    // shader weight — not from the tint alone, and not from a hand-copied number.
+    const weight = murkAllowed ? SKYRIVER_FOG_REGION_TINT_WEIGHT : 0;
+    const factors = [bound.r, bound.g, bound.b].map((channel) => 1 + weight * (channel - 1));
+    return {
+      api: 'setSkyriverFogRegionTint (the shared R20 tint API; fogColor, density and the height terms are unchanged)',
+      districtAllowed: this.colourSwitch.allowed,
+      boundTint: [bound.r, bound.g, bound.b],
+      tintSaturation: SKYRIVER_DISTRICT_SATURATION.haze,
+      shaderWeight: SKYRIVER_FOG_REGION_TINT_WEIGHT,
+      effectiveSaturation: SKYRIVER_FOG_REGION_TINT_WEIGHT * SKYRIVER_DISTRICT_SATURATION.haze,
+      channelFactorRange: [Math.min(...factors), Math.max(...factors)],
+      maxChannelDeviation: Math.max(...factors.map((factor) => Math.abs(factor - 1))),
+      murkAllowed,
+      blendWidthM: SKYRIVER_DISTRICT_HAZE_BLEND_M,
+      tickRate: SKYRIVER_TICK_RATE,
+      refreshHz: 1,
+      bucket: this.hazeBucket,
+      lastTick: this.hazeTick,
+      routeV: this.hazeRouteV,
+      districtId: latest?.districtId ?? -1,
+      neighbourId: latest?.neighbourId ?? -1,
+      neighbourWeight: latest?.neighbourWeight ?? 0,
+      boundaryDistanceM: latest?.boundaryDistanceM ?? -1,
+      legacyRegion: this.fogTintRegion,
+      updates: [...this.hazeUpdates],
+      resets: [...this.hazeResets],
+      limits: Object.freeze([
+        'The R20 fog shader applies this tint as color * mix(vec3(1), uSkyFogRegionTint, SKYRIVER_FOG_REGION_TINT_WEIGHT * uSkyFogMurkAllowed), and shaderWeight here is that same constant. With ?murk=0 the tint is off, which is the existing R20 contract, not an R22 change.',
+        'The tint is a per-channel multiplication of the finished fog colour, not a replacement of it, and not a luminance-preserving recolour. Y(tint) is 1, but that does NOT make Y(fogColor x tint) equal Y(fogColor): the two are equal only where the fog colour is neutral, and the skyriver fog colour is not. The honest statement is the bound: Y(fogColor x factor) / Y(fogColor) lies inside channelFactorRange for every fog colour, so maxChannelDeviation is the most the haze brightness can move at the worst district hue. Density and the height colour terms are untouched, and the tint is applied after them.',
+        'The colour-off path writes the R20 world-Z region tint for the current camera region at once instead of waiting out its 1 s timer. The value is the same function of the region, so the only difference from a pre-R22 build is refresh latency, not the tint itself.',
+      ]),
+    };
   }
 
   private applyFogRegionTint(region: number): void {

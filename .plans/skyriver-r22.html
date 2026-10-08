@@ -1,0 +1,78 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>R22 district color design</title>
+<style>body{margin:0;background:#08121e;color:#d9e7f7;font:15px/1.6 system-ui}main{max-width:1100px;margin:auto;padding:28px}h1,h2{line-height:1.25}section{padding:20px;background:#112034;margin:18px 0;border-radius:12px}p,li{color:#acc1d8}table{width:100%;border-collapse:collapse}th,td{text-align:left;vertical-align:top;padding:9px;border-bottom:1px solid #294158}.scroll,pre{overflow:auto}pre{padding:14px;background:#071320;border-radius:8px;line-height:1.5;font-size:13px}code{color:#76dcea}@media(max-width:650px){main{padding:16px}section{padding:14px}}</style>
+<main><h1>R22 district color design</h1><p>Status: source and render evidence checked. 155 tests, typecheck, build, and dual review pass. Draw calls stay within32. Amber energy remains above target. Final timing is recorded in the evidence report. Base:abe8ce5. Gemini authentication failed. The native Opus5High writer owns render colour source and tests. Root owns plans, git, proof, and archive. No deployment step is authorized.</p>
+<section><h2>Permanent district map</h2><p>Use five fixed render districts. Seed their boundaries and color choices once. Keep the map unchanged during play.</p>
+<div class="scroll"><table><thead><tr><th>District</th><th>Length</th><th>Primary</th><th>Light use</th></tr></thead><tbody>
+<tr><td>Ice towers</td><td>3400 m</td><td>Cyan/ice</td><td>Signs, crown lights</td></tr>
+<tr><td>Market</td><td>2800 m</td><td>Magenta</td><td>Sign groups, selected rooms</td></tr>
+<tr><td>Mid city</td><td>2600 m</td><td>Cyan/ice</td><td>Signs, low-saturation office light</td></tr>
+<tr><td>Dock</td><td>1800 m</td><td>Amber</td><td>Dock lights, grime lamps</td></tr>
+<tr><td>Upper city</td><td>2200 m</td><td>Cyan/ice</td><td>Signs, cool floodlights</td></tr>
+</tbody></table></div>
+<p>The lengths total 12800 m. Vary boundaries by up to 160 m. Keep a minimum district length. Put small green groups inside two districts. Do not add a green district.</p>
+<p>Use these full-lap energy targets: cyan/ice 45%, magenta 23%, amber 11%, green 2.5%. Reserve the remaining 18.5% for neutral and red light. These are measured energy targets. District length and palette weights cannot prove them.</p>
+<pre><code>type DistrictHue = 'cyan' | 'magenta' | 'amber';
+
+interface District {
+  readonly id: number;
+  readonly startM: number;
+  readonly endM: number;
+  readonly primary: DistrictHue;
+  readonly primarySignShare: number; // 0.8
+  readonly greenGroups: readonly number[];
+}
+
+interface DistrictModel {
+  readonly seed: number;
+  readonly loopM: number;
+  readonly districts: readonly District[];
+}</code></pre>
+<p>Assign every building by its original canyon anchor. Its tiers, rooms, signs, and trims use the same district. Use hero z, far-card v, and trim owner anchors. Normalize negative coordinates with positive modulo. Do not derive districts from warped world z.</p>
+<p>Use independent seeded color channels. Keep the existing geometry random sequence. Retain the old random.weighted call at city.ts:1745. Its removal would change later sign positions.</p>
+<p>Assign at least 80% of signs in each district to its primary hue. Use a deterministic quota over stable sign IDs. This proves the requested ≥70% count. Give every hero the district hue. Keep magenta accents in market groups. Keep green in selected shop or equipment groups. Keep small lights neutral, with existing red warning lamps and intentional amber dock/headlamp exceptions.</p></section>
+<section><h2>Preserve source luminance</h2><p>Apply color changes to complete emission contributions in linear RGB:</p>
+<pre><code>Y(c) = dot(c, [0.2126, 0.7152, 0.0722])
+unit(h) = h / max(Y(h), 0.000001)
+recolor(c,h,s) = Y(c) × mix(unit(neutral), unit(h), s)</code></pre>
+<p>This preserves source luminance. Do not clamp HDR RGB to one. Keep black sources black.</p>
+<p>Rooms should keep low-saturation district light. Bright selected room lamps can use more color. The grid itself must remain neutral. Preserve building occupancy, brightness profiles, and room detail. Do not multiply a district tint into the existing warm pane, warm atlas, and warm glass colors.</p>
+<p>Use high saturation for the brightest 15% of eligible accent sources. Use lower saturation for background sources. Verify this in rendered frames. A hash that selects 15% of sources does not select the brightest 15% of image pixels.</p>
+<p>The current distance grade at city.ts:1794 changes luminance. Its steel target has luminance about 0.776. Preserve the old total brightness factor when normalizing its color:</p>
+<pre><code>g(k) = (1 − k + 0.776 × k) × (1 − 0.55 × k)
+newGrade = mix(c, Y(c) × unit(steel), k) × g(k)</code></pre>
+<p>This preserves the old graded luminance while making desaturation independent of brightness.</p></section>
+<section><h2>Concrete source changes</h2><div class="scroll"><table><thead><tr><th>Source</th><th>Anchor</th><th>Required change</th></tr></thead><tbody>
+<tr><td>Ordinary signs</td><td>city.ts:130, 1745</td><td>Replace global hue weights with district selection. Keep the old color to calculate luminance.</td></tr>
+<tr><td>Hero signs</td><td>city.ts:1470, 1568–1602</td><td>Replace rotating HERO_COLORS and the fixed brand hue with district hue.</td></tr>
+<tr><td>Sign core and halo</td><td>city.ts:2732–2742</td><td>Recolor the final emission. The current core squares RGB. An aColor change alone changes luminance.</td></tr>
+<tr><td>Hero spill</td><td>city.ts:2139, 2865, 3064</td><td>Use the same hero hue and preserved source luminance.</td></tr>
+<tr><td>Pane grid</td><td>city.ts:2033, 2198–2222</td><td>Replace saturated sodium/blue pane colors with neutral light. Keep a small district tint with saturation about 0.05–0.10.</td></tr>
+<tr><td>Rooms</td><td>city.ts:2261–2274</td><td>Recolor the final roomColor × roomLight × glassTint contribution. A pane change alone leaves warm atlas boxes.</td></tr>
+<tr><td>Room atlas</td><td>interiorAtlas.ts:451–478</td><td>Keep room detail and texture luminance. Apply district light in the shader. R19.7 owns occupancy and screen reductions.</td></tr>
+<tr><td>Window average</td><td>city.ts:2281</td><td>Use the same low-saturation light rule as resolved panes. Avoid a warm average at the room fade boundary.</td></tr>
+<tr><td>Deck, trim, floods</td><td>city.ts:2106, 2502, 2520, 2526, 2536, 2544–2546</td><td>Use neutral small lamps. Use district hue for large floods. Keep red warning terms separate. Allow amber in the dock.</td></tr>
+<tr><td>Landmark wash</td><td>city.ts:2316</td><td>Recolor the complete face/roof contribution. Keep its brightness and fog response.</td></tr>
+<tr><td>Far box windows</td><td>city.ts:1999</td><td>Desaturate the old warm/cold contribution at equal luminance.</td></tr>
+<tr><td>Far cards</td><td>city.ts:2334, 2395, 3105</td><td>Use unused aCard.w for district ID. Keep one atlas and one draw.</td></tr>
+<tr><td>Far atlas</td><td>impostorAtlas.ts:64–65, 124</td><td>Remove strong warm/cold chroma through shader desaturation. Preserve sampled luminance and alpha.</td></tr>
+<tr><td>Haze</td><td>atmosphere.ts:206–230</td><td>Send a weak district tint through the R20 shared API. Keep density and height rules unchanged.</td></tr>
+</tbody></table></div><p>These anchors refer to the source read for this design. Later changes can move their line numbers.</p>
+<p>Add one district attribute to tower and trim instances. Reuse aCard.w for far cards. Signs already carry RGB. Pass five district palette entries as uniforms. This adds no draws or dependencies.</p></section>
+<section><h2>Shared haze tint</h2><p>Use the R20 tint API at most once per second. Blend haze tint across district boundaries over 300–500 m. Permanent source colors stay fixed. Haze uses a low saturation value. Apply the tint after the existing height color terms so their fixed magenta/cyan terms do not override the district.</p></section>
+<section><h2>Regression checks</h2><ul>
+<li>Verify repeated-seed equality and complete lap coverage.</li>
+<li>Verify ≥70% primary signs per district, including heroes.</li>
+<li>Compare old/new source luminance after each complete emission calculation.</li>
+<li>Verify unchanged instance counts, geometry, draw counts, and simulation hashes.</li>
+<li>Capture matched frames in every district and at boundaries. Fix seed, time, camera, tier, viewport, exposure, bloom, and room mode.</li>
+<li>Measure full-lap hue energy and district primary share. Check bright accents separately from neutral panes and background.</li>
+<li>Compare room/pane fades and far box/card modes. Check the loop seam.</li>
+<li>Save comparison and measurements as HTML.</li>
+</ul><p>The reported 28% dominant share and 2.7-bit entropy are supplied baseline values. They were not measured in the read-only design pass.</p></section>
+<section><h2>Measurement limits</h2><p>Hue is unstable near grey and black. Keep those pixels separate in hue counts. Report luminance-weighted energy separately from pixel counts. Bloom spreads one source across many pixels. Magenta and cyan combine into other hues. Tone mapping can reduce saturation even when linear luminance is preserved.</p>
+<p>The interior atlas uses SRGBColorSpace. The far atlas uses NoColorSpace. Use the correct conversion for each. Do not use reduced occupancy or a darker background to claim a color-only improvement.</p>
+<p>The measurement script keeps the original saturated bright-neon mask: HSV saturation ≥0.35 and max sRGB code value ≥0.45. All-pixel linear energy keeps dim colors, grey, and white. Blue has a separate family. The script reports full frames and the old centre crop separately.</p><p>State the energy target denominator before comparison. Whole-frame energy and saturated neon energy are different measures. Do not select a denominator after measurement to make the target pass.</p><pre><code>python3 /tmp/t719b/scripts/color-metrics.py /tmp/t722/after \
+  --output /tmp/t722/comparison \
+  --reference /tmp/t722/before \
+  --source-palette /tmp/t722/source-palette-after.json</code></pre><p>Provide six matched lap-*s.png frames in each directory. Keep camera, time, tier, viewport, exposure, bloom, and adapter settings fixed. Source palette JSON uses a colorSpace field and entries with id, rgb, weight, district, and role. The weight meaning must be stated.</p></section>
+</main></html>

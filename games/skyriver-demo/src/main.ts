@@ -28,7 +28,17 @@ import {
   SkyriverScene,
   skyriverNextTierDown,
   type SkyriverFrame,
+  type SkyriverRenderSettings,
 } from './render/scene';
+import type {
+  SkyriverDistrictPalette,
+  SkyriverDistrictSourceCounts,
+  SkyriverDistrictSourceEvidence,
+  SkyriverGeometryIdentity,
+  SkyriverLightSource,
+} from './render/city';
+import type { SkyriverDistrict, SkyriverDistrictModel } from './render/districts';
+import type { SkyriverDistrictHazeEvidence } from './render/atmosphere';
 import { TRAFFIC_QUALITY_TIERS, createSkyriverTraffic } from './render/traffic';
 import { deriveImpostorAttributes, impostorFlow, impostorPosition } from './render/trafficStreams';
 import type { SkyriverTraffic, TrafficQuality } from './render/trafficTypes';
@@ -682,6 +692,10 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
         wake: wakeSamples,
       });
 
+      // R22: the colour districts and the district haze are queried with the presented canyon route
+      // position, never with a warped world z, so the frame and every diagnostic read the same value.
+      scene.setRoutePosition(presented.canyonV);
+
       scene.update(state.current.tick, state.current, state.alpha);
 
       hud.update({
@@ -881,6 +895,9 @@ export function boot(): SkyriverApp {
   if (params.get('trails') === '0') app.traffic.setTrailsAllowed(false);
   // R16 A/B and cost probe: ?farcity=geometry draws the far-city layers as R15's box masses.
   if (params.get('farcity') === 'geometry') app.scene.city.setFarMode('geometry');
+  // R22 A/B: ?district=0 renders the same frames with the pre-R22 source colours, distance grade and
+  // haze tint. The geometry, the sign placement and the instance counts are identical either way.
+  if (params.get('district') === '0') app.scene.setDistrictAllowed(false);
 
   (window as unknown as { __skyriver?: SkyriverApp }).__skyriver = app;
   // T7-4 evidence hook (presentation-only, read-only): the canyon warp and a tower raycast, so the
@@ -897,6 +914,26 @@ export function boot(): SkyriverApp {
       const ray = new THREE.Raycaster(new THREE.Vector3(ox, oy, oz), new THREE.Vector3(dx, dy, dz).normalize(), 0, 3000);
       const hit = ray.intersectObject(app.scene.city.towerMesh, false)[0];
       return hit === undefined ? null : { x: hit.point.x, y: hit.point.y, z: hit.point.z };
+    },
+    // R22 colour districts. Read-only except `setDistrictAllowed`, which is the real presentation
+    // A/B switch. Every value here is read from the live render code: the immutable seeded model and
+    // its one query, the exact presented route position the frame used, geometry and text identity
+    // hashes with the colour attributes excluded, the drawn source populations, the final-emission
+    // luminance evidence, the emitted palette, the bound haze tint with its refresh and reset log,
+    // and every active render setting. No value is synthesised for a proof.
+    district: {
+      version: 1,
+      model: (): SkyriverDistrictModel => app.scene.city.districtModel(),
+      at: (v: number): SkyriverDistrict => app.scene.city.districtAt(v),
+      routePosition: (): number => app.scene.routePosition(),
+      geometryIdentity: (): SkyriverGeometryIdentity => app.scene.city.geometryIdentity(),
+      sourceCounts: (): SkyriverDistrictSourceCounts => app.scene.city.sourceCounts(),
+      sourceEvidence: (): SkyriverDistrictSourceEvidence => app.scene.city.sourceEvidence(),
+      sourcePalette: (): SkyriverDistrictPalette => app.scene.city.sourcePalette(),
+      hazeEvidence: (): SkyriverDistrictHazeEvidence => app.scene.atmosphere.hazeEvidence(),
+      renderSettings: (): SkyriverRenderSettings => app.scene.renderSettings(),
+      lightSources: (): readonly SkyriverLightSource[] => app.scene.city.lightSources(),
+      setDistrictAllowed: (enabled: boolean): void => app.scene.setDistrictAllowed(enabled === true),
     },
   };
 

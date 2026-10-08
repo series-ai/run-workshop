@@ -38,6 +38,7 @@ import type { SkyriverProjection } from '../sim/runtime';
 import { SKYRIVER_TICK_RATE } from '../sim/systems';
 import { SkyriverAtmosphere, SKYRIVER_ATMOSPHERE_DRAW_CALL_BUDGET, SKYRIVER_EXPOSURE } from './atmosphere';
 import { SkyriverCity, SKYRIVER_CITY_DRAW_CALL_BUDGET, type SkyriverInteriorMode } from './city';
+import { SkyriverDistrictColourSwitch } from './districts';
 import { SkyriverDepthSnapshot } from './depthFade';
 import { presentCityLayout } from './presentationLayout';
 
@@ -159,6 +160,12 @@ export interface SkyriverFrame {
   readonly dt: number;
   /** Null before the runner produces its first projection. */
   readonly projection: SkyriverProjection | null;
+  /**
+   * R22: the presented canyon route position, metres, exactly as the flight presenter produced it
+   * for this frame. The runner owns it; T5 writes it with `setRoutePosition` before `update`. It is
+   * the only coordinate the colour districts are ever queried with — never a warped world z.
+   */
+  readonly routeV: number;
   readonly camera: THREE.PerspectiveCamera;
   readonly quality: SkyriverQualitySettings;
 }
@@ -249,6 +256,49 @@ export interface SkyriverGlDiagnostics {
   readonly timerQuery: boolean;
 }
 
+/**
+ * Every active rendering setting, for the R22 A/B evidence.
+ *
+ * `districtAllowed` is the only field the colour switch may move: the paired proof hashes this whole
+ * record and removes that one name, so the emitted colours live in the city's source evidence and
+ * the haze tint in the atmosphere's haze evidence, never here.
+ */
+export interface SkyriverRenderSettings {
+  readonly tier: SkyriverQualityTier;
+  readonly bloom: SkyriverBloomMode;
+  readonly bloomEnabled: boolean;
+  readonly bloomAllowed: boolean;
+  readonly bloomStrength: number;
+  readonly bloomRadius: number;
+  readonly bloomThreshold: number;
+  readonly bloomSmoothWidth: number;
+  readonly roomMode: SkyriverInteriorMode;
+  readonly roomModeAllowed: boolean;
+  readonly roomFade: readonly [number, number];
+  readonly roomStrength: number;
+  readonly farMode: 'impostor' | 'geometry';
+  readonly districtAllowed: boolean;
+  readonly contactAllowed: boolean;
+  readonly murkAllowed: boolean;
+  readonly depthFadeAllowed: boolean;
+  readonly depthFadeEnabled: boolean;
+  readonly godRays: boolean;
+  readonly rainStreaks: boolean;
+  readonly cars: number;
+  readonly pixelRatio: number;
+  readonly maxPixelRatio: number;
+  readonly cssSize: readonly [number, number];
+  readonly drawingBufferSize: readonly [number, number];
+  readonly exposure: number;
+  readonly toneMapping: number;
+  readonly outputColorSpace: string;
+  readonly fov: number;
+  readonly near: number;
+  readonly far: number;
+  readonly projectionScale: number;
+  readonly uniforms: Readonly<Record<string, number | readonly number[]>>;
+}
+
 /** Longest frame we will integrate. A backgrounded WebView must not produce one giant dt. */
 const MAX_FRAME_DT_S = 1 / 15;
 
@@ -267,6 +317,11 @@ export class SkyriverScene {
   private readonly bloomPass: UnrealBloomPass;
   /** Debug/A-B override: false forces the bloom chain off regardless of tier. */
   private bloomAllowed = true;
+  /**
+   * R22: the one colour-switch flag for the whole scene. The city and the atmosphere receive it and
+   * read it; `setDistrictAllowed` is the only write, so a frame can never be half switched.
+   */
+  private readonly colourSwitch = new SkyriverDistrictColourSwitch();
   private bloomLevel = 0;
   private interiorsAllowed = true;
   private readonly listeners: SkyriverFrameListener[] = [];
@@ -347,13 +402,18 @@ export class SkyriverScene {
       layout: this.layout,
       quality: this.quality,
       depthFade: this.depthFade,
+      colourSwitch: this.colourSwitch,
     });
     // The haze colour and depths density live on scene.fog, so three refreshes them into every
     // fogged material — including anything T4 builds from a built-in material.
     this.scene.fog = this.atmosphere.fog;
     this.scene.add(this.atmosphere.group);
 
-    this.city = new SkyriverCity({ layout: this.layout, quality: this.quality });
+    this.city = new SkyriverCity({
+      layout: this.layout,
+      quality: this.quality,
+      colourSwitch: this.colourSwitch,
+    });
     this.scene.add(this.city.group);
     this.city.setInteriorMode(this.quality.interiors);
 
@@ -363,6 +423,7 @@ export class SkyriverScene {
       time: 0,
       dt: 0,
       projection: null,
+      routeV: 0,
       camera: this.camera,
       quality: this.quality,
     };
@@ -499,6 +560,33 @@ export class SkyriverScene {
     this.atmosphere.setMurkAllowed(allowed);
   }
 
+  /**
+   * R22 colour A/B: false restores the pre-R22 source colours, distance grade and haze tint; true is
+   * the district colour map. Synchronous and presentation-only — it writes uniforms, selects the
+   * hero colour set and invalidates the haze refresh bucket, and touches no geometry, no instance
+   * buffer, no random stream and no simulation state. The next `update` at the same tick and the
+   * same alpha redraws the identical frame with only the colour treatment changed.
+   *
+   * This is the one writer of the flag. The city and the atmosphere subscribe to `colourSwitch` and
+   * apply it; neither keeps a copy, so the frame and `renderSettings` cannot disagree.
+   */
+  setDistrictAllowed(allowed: boolean): void {
+    this.colourSwitch.set(allowed);
+  }
+
+  /**
+   * The presented canyon route position for the next frame, metres. T5 writes it from the flight
+   * presenter; the city and the haze read it from the frame.
+   */
+  setRoutePosition(routeV: number): void {
+    this.frame.routeV = routeV;
+  }
+
+  /** The route position the last rendered frame actually used. */
+  routePosition(): number {
+    return this.frame.routeV;
+  }
+
   /** A/B evidence and debugging: force bloom off (false) or back to the tier default (true). */
   setBloomAllowed(allowed: boolean): void {
     this.bloomAllowed = allowed;
@@ -509,6 +597,9 @@ export class SkyriverScene {
   /** Called after a restore or a long background pause, so the next dt is not a spike. */
   resetFrameClock(): void {
     this.lastUpdateMs = null;
+    // R22: a restore is a scene reset for the haze, so its once-a-second refresh bucket is dropped
+    // and the next frame re-samples the district at the tick it actually draws.
+    this.atmosphere.resetDistrictHazeTint('scene-reset');
   }
 
   /** Debug getter for the smoke tests (plan A3). Reads `renderer.info` straight. */
@@ -532,6 +623,48 @@ export class SkyriverScene {
       drawCalls: skyriverDrawCallEstimate(this.quality),
       pixelRatio: this.renderer.getPixelRatio(),
       tier: this.quality.tier,
+    };
+  }
+
+  /** Every active rendering setting and bound uniform value. See `SkyriverRenderSettings`. */
+  renderSettings(): SkyriverRenderSettings {
+    const buffer = this.renderer.getDrawingBufferSize(new THREE.Vector2());
+    const fade = this.city.interiorFade();
+    const depth = this.depthFade.stats();
+    return {
+      tier: this.quality.tier,
+      bloom: this.quality.bloom,
+      bloomEnabled: this.bloomEnabled,
+      bloomAllowed: this.bloomAllowed,
+      bloomStrength: this.bloomPass.strength,
+      bloomRadius: this.bloomPass.radius,
+      bloomThreshold: this.bloomPass.threshold,
+      bloomSmoothWidth: this.bloomPass.materialHighPassFilter.uniforms['smoothWidth']!.value as number,
+      roomMode: this.city.currentRoomMode(),
+      roomModeAllowed: this.interiorsAllowed,
+      roomFade: [fade.start, fade.end],
+      roomStrength: fade.strength,
+      farMode: this.city.currentFarMode(),
+      districtAllowed: this.colourSwitch.allowed,
+      contactAllowed: (this.city.renderUniforms().towerContactAllowed as number) > 0.5,
+      murkAllowed: this.atmosphere.murkAllowed(),
+      depthFadeAllowed: depth.allowed,
+      depthFadeEnabled: depth.enabled,
+      godRays: this.quality.godRays,
+      rainStreaks: this.quality.rainStreaks,
+      cars: this.quality.cars,
+      pixelRatio: this.renderer.getPixelRatio(),
+      maxPixelRatio: this.maxPixelRatio,
+      cssSize: [this.width, this.height],
+      drawingBufferSize: [buffer.x, buffer.y],
+      exposure: this.renderer.toneMappingExposure,
+      toneMapping: this.renderer.toneMapping,
+      outputColorSpace: this.renderer.outputColorSpace,
+      fov: this.camera.fov,
+      near: this.camera.near,
+      far: this.camera.far,
+      projectionScale: this.projectionScale(),
+      uniforms: this.city.renderUniforms(),
     };
   }
 
