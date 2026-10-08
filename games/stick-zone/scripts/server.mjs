@@ -31,14 +31,8 @@ export function checkContainerCollision(x, z, radius = 0.45) {
 const serverSettlement = new ServerSettlementAuthority();
 
 const RESERVED_IDENTITIES = new Set(["system", "server", "admin", "root"]);
-const SERVER_INTERNAL_SECRET = process.env.STICK_ZONE_SERVER_SECRET || (process.env.NODE_ENV === "test" ? "sz_test_internal_sec" : crypto.randomUUID());
 
 export const activeClaimedSessions = new Set();
-const SQUAD_CREDENTIALS = {
-  op_player: process.env.SZ_SECRET_PLAYER || (process.env.NODE_ENV === "production" ? null : "sz_cred_player_ghost_s7"),
-  op_alpha_1: process.env.SZ_SECRET_ALPHA || (process.env.NODE_ENV === "production" ? null : "sz_cred_alpha_ghost_s7"),
-  op_bravo_1: process.env.SZ_SECRET_BRAVO || (process.env.NODE_ENV === "production" ? null : "sz_cred_bravo_phantom_s7"),
-};
 
 function getAuthenticatedCaller(req, settlement) {
   let token = null;
@@ -49,8 +43,6 @@ function getAuthenticatedCaller(req, settlement) {
     token = String(req.headers["x-session-token"]).trim();
   } else if (req.headers["x-operative-token"]) {
     token = String(req.headers["x-operative-token"]).trim();
-  } else if (req.headers["x-server-secret"]) {
-    token = String(req.headers["x-server-secret"]).trim();
   }
 
   // Reject unauthenticated requests or empty tokens immediately
@@ -58,12 +50,7 @@ function getAuthenticatedCaller(req, settlement) {
     return null;
   }
 
-  // 1. Privileged internal secret derives "system"
-  if (SERVER_INTERNAL_SECRET && token === SERVER_INTERNAL_SECRET) {
-    return { callerId: "system", raidId: "*", isSystem: true };
-  }
-
-  // 2. Operative session token verifies and derives operative ID and raidId
+  // Operative session token verifies and derives operative ID and raidId
   if (settlement && typeof settlement.resolveOperativeByToken === "function") {
     const resolved = settlement.resolveOperativeByToken(token);
     if (resolved) {
@@ -525,7 +512,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         const isResumeValid = Boolean(resumeKey && targetOp?.resumeKey && targetOp.resumeKey === resumeKey);
 
         // If authenticated caller or valid resumption key is resuming an ongoing session, allow even if ingress is closed!
-        if ((caller && (caller.callerId === opId || caller.isSystem) && caller.raidId === raidId) || isResumeValid) {
+        if ((caller && caller.callerId === opId && caller.raidId === raidId) || isResumeValid) {
           if (targetRaid && (targetRaid.status === "concluded" || targetOp?.isExtracted || targetOp?.isKia || targetOp?.isAlive === false)) {
             if (targetOp?.failedPersistence === true) {
               try {
@@ -631,87 +618,6 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
     return;
   }
 
-  if (url.pathname === "/api/settlement/session" && req.method === "POST") {
-    let body = "";
-    let byteLen = 0;
-    let exceeded = false;
-    req.on("data", (chunk) => {
-      if (exceeded) return;
-      const len = Buffer.isBuffer(chunk) ? chunk.length : Buffer.byteLength(chunk);
-      byteLen += len;
-      if (byteLen > 65536) {
-        exceeded = true;
-        res.statusCode = 413;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: "Payload Too Large: exceeded 64KB limit" }));
-        try { req.resume(); } catch {}
-        return;
-      }
-      body += chunk;
-    });
-    req.on("end", () => {
-      if (exceeded) return;
-      try {
-        const data = JSON.parse(body || "{}");
-        const raidId = data.raidId || settlement.getActiveRaidId();
-        const opId = data.operativeId || data.playerId;
-        const RESERVED = new Set(["system", "server", "admin", "root"]);
-        if (!opId || RESERVED.has(String(opId).toLowerCase())) {
-          res.statusCode = 403;
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ error: "Cannot issue token for reserved operative ID" }));
-          return;
-        }
-
-        // Authenticate caller: require matching operative secret or authorized coordinator/owner caller
-        const caller = getAuthenticatedCaller(req, settlement);
-        if (caller && !caller.isSystem && caller.raidId !== raidId) {
-          res.statusCode = 403;
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ error: `Forbidden: Token for raid ${caller.raidId} cannot access raid ${raidId}` }));
-          return;
-        }
-        const expectedSecret = SQUAD_CREDENTIALS[opId];
-        const suppliedSecret = req.headers["x-operative-secret"] || data.operativeSecret;
-        const hasValidSecret = Boolean(expectedSecret && suppliedSecret && suppliedSecret === expectedSecret);
-        const isAuthorizedCaller = Boolean(caller && (caller.isSystem || (caller.callerId === opId && caller.raidId === raidId)));
-
-        if (!hasValidSecret && !isAuthorizedCaller) {
-          res.statusCode = 401;
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ error: "Unauthorized: Operative credentials or coordinator authorization required to obtain session token" }));
-          return;
-        }
-
-        if (settlement.isIngressClosed(raidId)) {
-          const rRaid = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
-          const rOp = rRaid?.operatives?.[opId];
-          const isPriorAdmitted = rOp?.admitted && (settlement.isSlotClaimed(raidId, opId) || (caller && caller.callerId === opId));
-          if (!isPriorAdmitted) {
-            res.statusCode = 403;
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ error: "Raid ingress window has closed (exceeded 8-minute limit)" }));
-            return;
-          }
-        }
-
-        const token = settlement.getSessionToken(raidId, opId);
-        if (!token) {
-          res.statusCode = 404;
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ error: `Operative ${opId} not found in raid ${raidId}` }));
-          return;
-        }
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ token }));
-      } catch (err) {
-        res.statusCode = 400;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: (err && err.message) || String(err) }));
-      }
-    });
-    return;
-  }
 
   if (url.pathname === "/api/settlement/verify-receipt") {
     let receiptId = url.searchParams.get("receiptId");
@@ -804,14 +710,14 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         const opId = data.operativeId || data.playerId;
         const targetRaidId = data.raidId || settlement.getActiveRaidId();
 
-        if (!caller.isSystem && caller.raidId !== targetRaidId) {
+        if (caller.raidId !== targetRaidId) {
           res.statusCode = 403;
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ error: `Forbidden: Token for raid ${caller.raidId} cannot mutate raid ${targetRaidId}` }));
           return;
         }
 
-        if (!caller.isSystem && caller.callerId !== opId) {
+        if (caller.callerId !== opId) {
           res.statusCode = 403;
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ error: `Forbidden: Operative ${caller.callerId} cannot report hold for ${opId}` }));
@@ -970,14 +876,14 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         const opId = data.operativeId || data.playerId;
         const targetRaidId = data.raidId || settlement.getActiveRaidId();
 
-        if (!caller.isSystem && caller.raidId !== targetRaidId) {
+        if (caller.raidId !== targetRaidId) {
           res.statusCode = 403;
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ error: `Forbidden: Token for raid ${caller.raidId} cannot mutate raid ${targetRaidId}` }));
           return;
         }
 
-        if (!caller.isSystem && caller.callerId !== opId) {
+        if (caller.callerId !== opId) {
           res.statusCode = 403;
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ error: `Forbidden: Operative ${caller.callerId} cannot eliminate ${opId}` }));
@@ -1028,13 +934,13 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           res.end(JSON.stringify({ error: "Unauthorized: Operative credentials required" }));
           return;
         }
-        if (!caller.isSystem && caller.raidId !== targetRaidId) {
+        if (caller.raidId !== targetRaidId) {
           res.statusCode = 403;
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ error: `Forbidden: Token for raid ${caller.raidId} cannot mutate raid ${targetRaidId}` }));
           return;
         }
-        if (!caller.isSystem && caller.callerId !== extractingId) {
+        if (caller.callerId !== extractingId) {
           res.statusCode = 403;
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ error: `Forbidden: Operative ${caller.callerId} cannot commit settlement for ${extractingId}` }));
@@ -1122,13 +1028,13 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           res.end(JSON.stringify({ error: "Unauthorized: Operative credentials required" }));
           return;
         }
-        if (!caller.isSystem && caller.raidId !== targetRaidId) {
+        if (caller.raidId !== targetRaidId) {
           res.statusCode = 403;
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ error: `Forbidden: Token for raid ${caller.raidId} cannot mutate raid ${targetRaidId}` }));
           return;
         }
-        if (!caller.isSystem && caller.callerId !== claimantId) {
+        if (caller.callerId !== claimantId) {
           res.statusCode = 403;
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ error: `Forbidden: Operative ${caller.callerId} cannot claim loot for ${claimantId}` }));
@@ -1198,529 +1104,6 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         }
         res.setHeader("Content-Type", "application/json");
         res.end(JSON.stringify({ success: ok, isNewClaim }));
-      } catch (err) {
-        res.statusCode = 400;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: (err && err.message) || String(err) }));
-      }
-    });
-    return;
-  }
-
-  if (url.pathname === "/api/settlement/deploy-machine" && req.method === "POST") {
-    // Authoritative lifecycle-coordinator machine deployment: the raid coordinator
-    // (system credentials only) may place or withdraw an automated defense machine into
-    // raid custody (e.g. facility defense escalation). The machine's fire is then fully
-    // server-authoritative via the machine-attack executor.
-    readJsonBody(req, res, (err, data) => {
-      if (err) {
-
-        res.statusCode = 400;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: "Invalid JSON body" }));
-        return;
-      }
-      const caller = getAuthenticatedCaller(req, settlement);
-      if (!caller || !caller.isSystem) {
-        res.statusCode = 403;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: "Forbidden: lifecycle coordinator (system) credentials required" }));
-        return;
-      }
-      const raidId = typeof data.raidId === "string" ? data.raidId : "";
-      const action = data.action === "remove" ? "remove" : "place";
-      const machineId = typeof data.machineId === "string" ? data.machineId.trim() : "";
-      if (!raidId || !machineId || !/^[A-Za-z0-9_-]{2,48}$/.test(machineId)) {
-        res.statusCode = 400;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: "Invalid payload: raidId and machineId are required" }));
-        return;
-      }
-      if (!settlement.hasRaid || !settlement.hasRaid(raidId)) {
-        res.statusCode = 404;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: `Raid ${raidId} does not exist` }));
-        return;
-      }
-
-      // PRE-INITIALIZATION SNAPSHOT: capture custody field presence BEFORE getRaidMachines
-      // runs (which lazily creates the optional machines health map). First-deployment
-      // failures restore even that lazy initialization.
-      const __preRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
-      const __machMapExisted = !(__preRec && __preRec.machines === undefined);
-      const __machMapSnapshot = __preRec && __preRec.machines ? JSON.parse(JSON.stringify(__preRec.machines)) : null;
-      const machines = getRaidMachines(raidId);
-      const idx = machines.findIndex((m) => m.id === machineId);
-      // Full-transaction snapshot (machine list + health map + deployment record) taken
-      // BEFORE any mutation; place/replace/remove all restore through __restoreMachines.
-      // Revision stores are restored too — no uncommitted revision may survive a failed save.
-      const __revBeforeMap = raidRosterRevisions.get(raidId) || 0;
-      const __revRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
-      const __revBeforeRec = __revRec && typeof __revRec.machineRosterRevision === "number" ? __revRec.machineRosterRevision : null;
-      const __restoreRevisions = () => {
-        raidRosterRevisions.set(raidId, __revBeforeMap);
-        const rr = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
-        if (rr) { if (__revBeforeRec === null) delete rr.machineRosterRevision; else rr.machineRosterRevision = __revBeforeRec; }
-      };
-      const __mListBefore = machines.map((m) => ({ ...m }));
-      const __mRrec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
-      // Optional-map rollback: restore deletes a newly created health map when it was
-      // absent before the deployment (a failed placement can leave uncommitted state).
-      const __machMapRestore = () => {
-        // Full optional-map restoration: a failed deployment returns the health map to
-        // its PRE-DEPLOYMENT state — including deleting a map lazily created by the
-        // getRaidMachines call itself (not just mutations after the snapshot).
-        if (__machMapExisted) {
-          if (__machMapSnapshot && __mRrec) __mRrec.machines = JSON.parse(JSON.stringify(__machMapSnapshot));
-        } else if (__mRrec) {
-          delete __mRrec.machines;
-        }
-      };
-      const __mHealthBefore = __mRrec && __mRrec.machines ? JSON.parse(JSON.stringify(__mRrec.machines)) : null;
-      const __mDeployBefore = __mRrec && __mRrec.machineDeployment ? JSON.parse(JSON.stringify(__mRrec.machineDeployment)) : null;
-      const __restoreMachines = () => {
-        machines.length = 0;
-        for (const m of __mListBefore) machines.push(m);
-        if (__mRrec) {
-          if (__mHealthBefore) __mRrec.machines = JSON.parse(JSON.stringify(__mHealthBefore));
-          if (__mDeployBefore) __mRrec.machineDeployment = JSON.parse(JSON.stringify(__mDeployBefore));
-          else if (__mRrec.machineDeployment !== undefined) delete __mRrec.machineDeployment;
-        }
-      };
-
-      if (action === "remove") {
-        if (idx === -1) {
-          res.statusCode = 404;
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ error: `Machine ${machineId} not deployed in raid ${raidId}` }));
-          return;
-        }
-        const [removed] = machines.splice(idx, 1);
-        // Revision bump precedes the durable save: the persisted record carries the
-        // new revision (an existing client must never see a new change rejected as
-        // stale after a restart).
-        raidRevision(raidId);
-        const rRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
-        if (rRec?.machines) delete rRec.machines[machineId];
-        if (rRec) {
-          rRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs, maxHealth: m.maxHealth || Math.max(m.health, m.type === "turret" ? 120 : 75), vitalsSeq: m.vitalsSeq || 0 }));
-        }
-        if (settlement.saveToDisk) {
-          try {
-            settlement.saveToDisk();
-          } catch (removePersistErr) {
-            __restoreMachines();
-            __machMapRestore();
-            __restoreRevisions();
-            res.statusCode = 500;
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ error: "Machine removal persistence failed; deployment state restored" }));
-            return;
-          }
-        }
-        // Versioned full-roster broadcast: connected raid clients reconcile their machine
-        // world (membership, geometry, patrol origins, vitals) to the deployment truth.
-        const rosterMsg = {
-          eventId: `machine_roster_${raidId}_${Date.now()}`,
-          type: "machine_roster",
-          senderId: "server",
-          senderName: "CENTRAL COMMAND",
-          raidId,
-          timestamp: Date.now(),
-          serverAuthoritative: true,
-          data: { revision: rRec && typeof rRec.machineRosterRevision === "number" ? rRec.machineRosterRevision : raidRosterRevisions.get(raidId) || 1, machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ, maxHealth: m.maxHealth, vitalsSeq: m.vitalsSeq || 0 })) },
-        };
-        try {
-          const __rosterOut = JSON.stringify(rosterMsg);
-          for (const client of wss.clients) {
-            if (client.readyState === 1 && client.authenticated && client.raidId === raidId) {
-              try { client.send(__rosterOut); } catch {}
-            }
-          }
-        } catch {}
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ success: true, action, raidId, machineId, removedType: removed.type }));
-        return;
-      }
-
-      // place
-      const type = data.type === "turret" ? "turret" : (data.type === "drone" ? "drone" : null);
-      const x = typeof data.x === "number" && Number.isFinite(data.x) ? data.x : NaN;
-      const z = typeof data.z === "number" && Number.isFinite(data.z) ? data.z : NaN;
-      const health = typeof data.health === "number" && Number.isFinite(data.health) ? Math.min(1000, Math.max(1, Math.floor(data.health))) : (type === "turret" ? 120 : 75);
-      if (!type || !Number.isFinite(x) || !Number.isFinite(z) || Math.abs(x) > 80 || Math.abs(z) > 80) {
-        res.statusCode = 400;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: "Invalid payload: type (turret|drone), finite x/z within +/-80 required" }));
-        return;
-      }
-      const now = Date.now();
-      // Shared deployment limit (matches cold-restore validation of 64): NEW insertions
-      // are rejected at the boundary; REPLACEMENT of an existing machine id is always
-      // allowed (capacity-neutral). A saved deployment can never exceed what cold
-      // restore trusts (a >64 list would silently collapse to defaults on restart).
-      const isNewInsertion = idx === -1;
-      if (isNewInsertion && machines.length >= 64) {
-        res.statusCode = 400;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: "Deployment limit reached (64 machines)" }));
-        return;
-      }
-      const machine = { id: machineId, type, x, y: type === "drone" ? 2.2 : 0, z, facing: 0, health, isAlive: true, cooldownTicks: 0, originX: x, originZ: z, deployedAtMs: now, maxHealth: health, vitalsSeq: nextVitalsSeq(machineId, raidId) };
-      if (idx !== -1) machines[idx] = machine;
-      else machines.push(machine);
-      // Persist the COMPLETE deployment set (the machine array is truth) + health map;
-      // restarts rebuild exactly this set through getRaidMachines.
-      const rRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
-      if (rRec) {
-        if (!rRec.machines) rRec.machines = {};
-        rRec.machines[machineId] = { health, isAlive: true };
-        // Revision bump precedes the durable save (the broadcast then re-reads the same
-        // committed revision — a restart can never rewind below what clients applied).
-        raidRevision(raidId);
-        rRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs, maxHealth: m.maxHealth, vitalsSeq: m.vitalsSeq || 0 }));
-        if (settlement.saveToDisk) {
-          try {
-            settlement.saveToDisk();
-          } catch (deployPersistErr) {
-            // Restore the COMPLETE pre-deployment state (list + health map + deployment
-            // record + revision stores) and answer 500: handler-scoped failures take
-            // this path — never a thrown exception into the JSON parser's catch.
-            __restoreMachines();
-            __machMapRestore();
-            __restoreRevisions();
-            res.statusCode = 500;
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ error: "Machine deployment persistence failed; deployment state restored" }));
-            return;
-          }
-        }
-      }
-      // Versioned full-roster broadcast (place): connected raid clients reconcile their
-      // machine world (membership, geometry, patrol origins, vitals) to the deployment truth.
-      try {
-        const __placeRosterOut = JSON.stringify({
-          eventId: `machine_roster_${raidId}_${Date.now()}`,
-          type: "machine_roster",
-          senderId: "server",
-          senderName: "CENTRAL COMMAND",
-          raidId,
-          timestamp: Date.now(),
-          serverAuthoritative: true,
-          data: { revision: rRec && typeof rRec.machineRosterRevision === "number" ? rRec.machineRosterRevision : raidRosterRevisions.get(raidId) || 1, machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ, maxHealth: m.maxHealth, vitalsSeq: m.vitalsSeq || 0 })) },
-        });
-        for (const client of wss.clients) {
-          if (client.readyState === 1 && client.authenticated && client.raidId === raidId) {
-            try { client.send(__placeRosterOut); } catch {}
-          }
-        }
-      } catch {}
-      res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({ success: true, action, raidId, machine: { id: machineId, type, x, z, health } }));
-    });
-    return;
-  }
-
-  if (url.pathname === "/api/settlement/reposition" && req.method === "POST") {
-    // Authoritative lifecycle-coordinator placement: the raid coordinator (system credentials only)
-    // may place an operative at a legal map coordinate (e.g. staged ingress spawn placement).
-    // This updates the server-side movement authority so the position is accepted as ground truth
-    // and no anti-teleport state_correction is emitted for the coordinated placement.
-    readJsonBody(req, res, (err, data) => {
-      if (err) {
-        res.statusCode = 400;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: "Invalid JSON body" }));
-        return;
-      }
-      const caller = getAuthenticatedCaller(req, settlement);
-      if (!caller || !caller.isSystem) {
-        res.statusCode = 403;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: "Forbidden: lifecycle coordinator (system) credentials required" }));
-        return;
-      }
-      const raidId = typeof data.raidId === "string" ? data.raidId : "";
-      const operativeId = typeof data.operativeId === "string" ? data.operativeId : "";
-      const x = typeof data.x === "number" && Number.isFinite(data.x) ? data.x : NaN;
-      const z = typeof data.z === "number" && Number.isFinite(data.z) ? data.z : NaN;
-      if (!raidId || !operativeId || !Number.isFinite(x) || !Number.isFinite(z) || Math.abs(x) > 80 || Math.abs(z) > 80) {
-        res.statusCode = 400;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: "Invalid reposition payload: raidId, operativeId, and finite x/z within +/-80 are required" }));
-        return;
-      }
-      if (!settlement.hasRaid || !settlement.hasRaid(raidId)) {
-        res.statusCode = 404;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: `Raid ${raidId} does not exist` }));
-        return;
-      }
-      const slotKey = `${raidId}:${operativeId}`;
-      const existing = operativeMovementStates.get(slotKey);
-      const now = Date.now();
-      // NORMAL-PATH CONSISTENCY: derive combat state from raid custody, falling back to
-      // the SAME defaults the authenticated-movement path uses at first registration
-      // (health 100, armor 100 on the socket path) — never a zero-armor cold state that
-      // disagrees with pre-authentication movement defaults.
-      const rRecPos = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
-      const oRecPos = rRecPos?.operatives?.[operativeId];
-      const health = existing?.health ?? oRecPos?.health ?? 100;
-      const armor = existing?.armor ?? oRecPos?.armor ?? 100;
-      const isAlive = existing?.isAlive ?? oRecPos?.isAlive ?? true;
-      const placement = {
-        x,
-        z,
-        health,
-        armor,
-        isAlive,
-        lastServerTime: now,
-        packetTimestamp: 0, // next client report is accepted regardless of prior ordering
-        timestamp: now,
-        budget: SERVER_MAX_BURST_CAP, // full budget after coordinated placement
-        lastRollStartedAt: existing?.lastRollStartedAt,
-        rollStartedAt: existing?.rollStartedAt,
-        lastCrateObservedX: existing?.lastCrateObservedX,
-        lastCrateObservedZ: existing?.lastCrateObservedZ,
-        lastCrateObservedServerTimestamp: existing?.lastCrateObservedServerTimestamp,
-        action: existing?.action,
-      };
-      operativeMovementStates.set(slotKey, placement);
-      // ONE PLACEMENT OPERATION: also update the ACTIVE socket's relayed position and the
-      // settlement custody so every authority view agrees immediately (no stale
-      // lastRelayedPos snapping a subsequent hold/combat validation back to the old spot).
-      const activeWs = activeSlotSockets.get(slotKey);
-      if (activeWs && activeWs.readyState === 1) {
-        activeWs.lastRelayedPos = placement;
-      }
-      if (oRecPos) {
-        oRecPos.lastObservedX = x;
-        oRecPos.lastObservedZ = z;
-        oRecPos.hasLiveMovement = true;
-        oRecPos.lastObservedTimestamp = now;
-      }
-      res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({ success: true, raidId, operativeId, x, z }));
-    });
-    return;
-  }
-
-  if ((url.pathname === "/api/settlement/init-raid" || url.pathname === "/api/settlement/new-raid") && req.method === "POST") {
-    let body = "";
-    let byteLen = 0;
-    let exceeded = false;
-    req.on("data", (chunk) => {
-      if (exceeded) return;
-      const len = Buffer.isBuffer(chunk) ? chunk.length : Buffer.byteLength(chunk);
-      byteLen += len;
-      if (byteLen > 65536) {
-        exceeded = true;
-        res.statusCode = 413;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: "Payload Too Large: exceeded 64KB limit" }));
-        try { req.resume(); } catch {}
-        return;
-      }
-      body += chunk;
-    });
-    req.on("end", async () => {
-      if (exceeded) return;
-      try {
-        const caller = getAuthenticatedCaller(req, settlement);
-        if (!caller) {
-          res.statusCode = 401;
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ error: "Unauthorized: Lifecycle coordinator credentials required" }));
-          return;
-        }
-        const data = JSON.parse(body || "{}");
-        if (data.raidId !== undefined && data.raidId !== null && !isValidRaidId(data.raidId)) {
-          res.statusCode = 400;
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ error: `Invalid raidId: must match ^[a-zA-Z0-9_-]{1,64}$` }));
-          return;
-        }
-        const raidId = data.raidId || `raid_sector7_${Date.now()}`;
-        // Raid IDs are immutable at the authority layer: a coordinator "reset" of a
-        // raid whose operatives have concluded (extracted/K.I.A./concluded) is the only
-        // sanctioned reinitialization; a reset of a LIVE or ledger-touched raid under
-        // the same ID is rejected — replacement raids MUST use a fresh raid ID (which
-        // also keeps operative caches, machine seq counters, and custody in sync).
-        const isResettingExisting = settlement.hasRaid(raidId);
-        if (isResettingExisting) {
-          if (!caller.isSystem && caller.raidId !== raidId) {
-            res.statusCode = 403;
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ error: `Forbidden: Caller from raid ${caller.raidId} cannot reset raid ${raidId}` }));
-            return;
-          }
-          if (!caller.isSystem && caller.callerId !== "op_player" && caller.callerId !== "op_alpha_1") {
-            res.statusCode = 403;
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ error: `Forbidden: Caller ${caller.callerId} is not an authorized lifecycle coordinator` }));
-            return;
-          }
-          if (!caller.isSystem) {
-            const activeRaidRec = settlement.getRaidRecord(raidId);
-            const op = activeRaidRec?.operatives?.[caller.callerId];
-            const isRaidExpired = Boolean(activeRaidRec?.createdAtMs && (Date.now() - activeRaidRec.createdAtMs) > 15 * 60 * 1000);
-            const canRedeploy = (op && (op.isExtracted || op.isKia || op.isAlive === false)) || (activeRaidRec && (activeRaidRec.status === "concluded" || isRaidExpired));
-            if (!canRedeploy) {
-              res.statusCode = 403;
-              res.setHeader("Content-Type", "application/json");
-              res.end(JSON.stringify({ error: "Forbidden: Operative must be extracted, K.I.A., or raid concluded before resetting raid" }));
-              return;
-            }
-            // Same-raid resets of a LIVE (non-terminal) raid are rejected BELOW the
-            // caller rules — immutability applies to system and coordinators alike;
-            // replacement raids MUST use a new raid ID (caches + seq counters sync).
-            if (!(isRaidExpired || activeRaidRec?.status === "concluded")) {
-              const __liveRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
-              const __allTerminal = __liveRec
-                ? Object.values(__liveRec.operatives || {}).every((o) => o.isExtracted || o.isKia || o.isAlive === false)
-                : false;
-              if (!__allTerminal) {
-                res.statusCode = 403;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify({ error: "Cross-token forbidden: raid already exists and is live: replacement raids require a new raid ID" }));
-                return;
-              }
-            }
-          }
-        } else {
-          // Starting next raid / redeploying: permitted for system or participants of any recorded raid who are extracted, KIA, or raid concluded
-          const callerRaidRec = settlement.getRaidRecord(caller.raidId);
-          if (!caller.isSystem && !callerRaidRec) {
-            res.statusCode = 403;
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ error: "Forbidden: Caller raid does not exist" }));
-            return;
-          }
-          if (!caller.isSystem) {
-            const op = callerRaidRec?.operatives?.[caller.callerId];
-            const isRaidExpired = Boolean(callerRaidRec?.createdAtMs && (Date.now() - callerRaidRec.createdAtMs) > 15 * 60 * 1000);
-            const canRedeploy = (op && (op.isExtracted || op.isKia || op.isAlive === false)) || (callerRaidRec && (callerRaidRec.status === "concluded" || isRaidExpired));
-            if (!canRedeploy) {
-              res.statusCode = 403;
-              res.setHeader("Content-Type", "application/json");
-              res.end(JSON.stringify({ error: "Forbidden: Operative must be extracted, K.I.A., or raid concluded before creating new raid" }));
-              return;
-            }
-          }
-        }
-
-        // FINAL same-ID immutability gate (applies to EVERY caller class, including
-        // system): reinitializing an EXISTING raid that is live (operative-carrying
-        // custody, not lease-expired, not concluded) is rejected — replacement raids
-        // require a fresh raid ID so caches and machine sequence counters stay in sync.
-        const recForImmutable = settlement.hasRaid ? settlement.hasRaid(raidId) ? settlement.getRaidRecord(raidId) : null : null;
-        if (recForImmutable) {
-          const expired = Boolean(recForImmutable.createdAtMs && (Date.now() - recForImmutable.createdAtMs) > 15 * 60 * 1000);
-          const allTerminal = Object.values(recForImmutable.operatives || {}).every((o) => o.isExtracted || o.isKia || o.isAlive === false);
-          if (!(expired || recForImmutable.status === "concluded" || allTerminal)) {
-            res.statusCode = 403;
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ error: "Cross-token forbidden: raid already exists and is live: replacement raids require a new raid ID" }));
-            return;
-          }
-        }
-
-        const pool = data.allowablePool || 50000;
-        const ops = data.operatives || ["op_player", "op_alpha_1", "op_bravo_1"];
-        const oldRaidId = settlement.getActiveRaidId();
-
-        const oldRaidRec = settlement.getRaidRecord(oldRaidId);
-        const nowMs = Date.now();
-        const hasUnsettledHoldInGrace = oldRaidRec && Object.values(oldRaidRec.operatives || {}).some((o) => {
-          return o.holdCompleted && !o.isExtracted && !o.isKia && o.isAlive !== false && oldRaidRec.createdAtMs && (nowMs - oldRaidRec.createdAtMs) <= (15 * 60 + 60) * 1000;
-        });
-        const isPastFullGrace = oldRaidRec?.createdAtMs && (nowMs - oldRaidRec.createdAtMs) > (15 * 60 + 60) * 1000;
-        const allOldOpsConcluded = !oldRaidRec || Object.values(oldRaidRec.operatives || {}).every((o) => o.isExtracted || o.isKia || o.isAlive === false);
-        const allOldOpsDone = !hasUnsettledHoldInGrace && (allOldOpsConcluded || isPastFullGrace);
-
-        const callerClaimId = (!caller.isSystem && caller.callerId && ops.includes(caller.callerId)) ? caller.callerId : undefined;
-        const shouldConcludeOld = Boolean(oldRaidId && oldRaidId !== raidId && (caller.isSystem || allOldOpsDone));
-
-        // 1. Commit both new raid creation AND old raid conclusion atomically in a SINGLE persistence transaction!
-        const raid = settlement.initRaid(raidId, pool, ops, callerClaimId, shouldConcludeOld ? oldRaidId : undefined);
-        // SANCTIONED same-ID reset (expired/terminal only): clear ALL volatile
-        // raid-scoped caches so the new raid starts atomically (movement, weapons,
-        // machines, roster revision, attack cadence — nothing leaks across resets).
-        const raidPrefix = raidId + ":";
-        for (const k of [...operativeMovementStates.keys()]) if (k.startsWith(raidPrefix)) operativeMovementStates.delete(k);
-        for (const k of [...raidOperativeWeaponStates.keys()]) if (k.startsWith(raidPrefix)) raidOperativeWeaponStates.delete(k);
-        raidMachines.delete(raidId);
-        raidRosterRevisions.delete(raidId);
-        for (const k of [...machineVitalsSeq.keys()]) if (k.startsWith(raidPrefix)) machineVitalsSeq.delete(k);
-        for (const k of [...raidOperativeSeenEvents.keys()]) if (k.startsWith(raidPrefix)) raidOperativeSeenEvents.delete(k);
-        for (const k of [...machineAttackClock.keys()]) if (k.startsWith(raidPrefix)) machineAttackClock.delete(k);
-        for (const k of [...raidOperativeAttackTimes.keys()]) if (k.startsWith(raidPrefix)) raidOperativeAttackTimes.delete(k);
-
-
-        const tokens = settlement.getSessionTokens(raidId);
-
-        // 2. Snapshot sockets belonging to old raid
-        const socketsToClose = [];
-        for (const client of wss.clients) {
-          if (client.raidId === oldRaidId || client.raidId === raidId) {
-            socketsToClose.push(client);
-          }
-        }
-
-        if (caller.isSystem || allOldOpsDone) {
-          // Broadcast restart notification to existing peers
-          const restartMsg = JSON.stringify({
-            eventId: `sys_restart_${Date.now()}`,
-            type: "raid_restart",
-            senderId: "system",
-            senderName: "CENTRAL COMMAND",
-            squad: "SQUAD ALPHA",
-            raidId: oldRaidId,
-            timestamp: Date.now(),
-            data: { newRaidId: raidId },
-          });
-          for (const client of socketsToClose) {
-            try { client.send(restartMsg); } catch {}
-            client.authenticated = false;
-          }
-
-          // Gracefully close ONLY the snapshotted sockets after 150ms
-          setTimeout(() => {
-            for (const client of socketsToClose) {
-              try { client.close(4003, "Raid reset"); } catch {}
-            }
-          }, 150);
-        } else {
-          // Old raid still contains live operatives (e.g. Bravo)! Broadcast raid_restart to live operatives before disconnecting caller
-          const restartNotice = JSON.stringify({
-            eventId: `server:restart:${Date.now()}`,
-            type: "raid_restart",
-            senderId: "server",
-            senderName: "CENTRAL COMMAND",
-            raidId: oldRaidId,
-            timestamp: Date.now(),
-            data: { newRaidId: raidId },
-          });
-          for (const client of socketsToClose) {
-            if (client.raidId === oldRaidId && client.operativeId !== caller.callerId) {
-              try { client.send(restartNotice); } catch {}
-            }
-          }
-
-          // Disconnect only caller old socket
-          for (const client of socketsToClose) {
-            if (client.operativeId === caller.callerId && client.raidId === oldRaidId) {
-              try { client.close(4003, "Operative redeployed"); } catch {}
-            }
-          }
-        }
-
-        res.setHeader("Content-Type", "application/json");
-        if (caller.isSystem) {
-          res.end(JSON.stringify({ raid, tokens }));
-        } else {
-          res.end(JSON.stringify({ raid, token: tokens[caller.callerId] || null }));
-        }
       } catch (err) {
         res.statusCode = 400;
         res.setHeader("Content-Type", "application/json");
@@ -3544,22 +2927,142 @@ wss.on("connection", (ws, req) => {
     return origClose(cb);
   };
 
+  server.deployMachine = function(raidId, data) {
+    const action = data.action === "remove" ? "remove" : "place";
+    const machineId = typeof data.machineId === "string" ? data.machineId.trim() : "";
+    if (!raidId || !machineId || !/^[A-Za-z0-9_-]{2,48}$/.test(machineId)) {
+      throw new Error("Invalid payload: raidId and machineId are required");
+    }
+    if (!settlement.hasRaid || !settlement.hasRaid(raidId)) {
+      throw new Error(`Raid ${raidId} does not exist`);
+    }
+
+    const __preRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
+    const machines = getRaidMachines(raidId);
+    const idx = machines.findIndex((m) => m.id === machineId);
+
+    if (action === "remove") {
+      if (idx !== -1) machines.splice(idx, 1);
+      if (__preRec && __preRec.machines && __preRec.machines[machineId]) {
+        delete __preRec.machines[machineId];
+      }
+      raidRevision(raidId);
+      if (__preRec) {
+        __preRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs, maxHealth: m.maxHealth, vitalsSeq: m.vitalsSeq || 0 }));
+      }
+      if (settlement.saveToDisk) settlement.saveToDisk();
+      try {
+        const out = JSON.stringify({
+          eventId: `machine_roster_${raidId}_${Date.now()}`,
+          type: "machine_roster",
+          senderId: "server",
+          senderName: "CENTRAL COMMAND",
+          raidId,
+          timestamp: Date.now(),
+          serverAuthoritative: true,
+          data: {
+            revision: __preRec && typeof __preRec.machineRosterRevision === "number" ? __preRec.machineRosterRevision : raidRosterRevisions.get(raidId) || 1,
+            machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ, maxHealth: m.maxHealth, vitalsSeq: m.vitalsSeq || 0 })),
+          },
+        });
+        for (const client of wss.clients) {
+          if (client.readyState === 1 && client.authenticated && client.raidId === raidId) {
+            try { client.send(out); } catch {}
+          }
+        }
+      } catch {}
+      return { success: true, action: "remove", raidId, machineId };
+    }
+
+    const type = data.type === "turret" ? "turret" : (data.type === "drone" ? "drone" : null);
+    const x = typeof data.x === "number" && Number.isFinite(data.x) ? data.x : NaN;
+    const z = typeof data.z === "number" && Number.isFinite(data.z) ? data.z : NaN;
+    const health = typeof data.health === "number" && Number.isFinite(data.health) ? Math.min(1000, Math.max(1, Math.floor(data.health))) : (type === "turret" ? 120 : 75);
+    if (!type || !Number.isFinite(x) || !Number.isFinite(z) || Math.abs(x) > 80 || Math.abs(z) > 80) {
+      throw new Error("Invalid payload: type (turret|drone), finite x/z within +/-80 required");
+    }
+    const now = Date.now();
+    const machine = { id: machineId, type, x, y: type === "drone" ? 2.2 : 0, z, facing: 0, health, isAlive: true, cooldownTicks: 0, originX: x, originZ: z, deployedAtMs: now, maxHealth: health, vitalsSeq: nextVitalsSeq(machineId, raidId) };
+    if (idx !== -1) machines[idx] = machine;
+    else machines.push(machine);
+
+    if (__preRec) {
+      if (!__preRec.machines) __preRec.machines = {};
+      __preRec.machines[machineId] = { health, isAlive: true };
+      raidRevision(raidId);
+      __preRec.machineDeployment = machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, cooldownTicks: m.cooldownTicks || 0, originX: m.originX, originZ: m.originZ, deployedAtMs: m.deployedAtMs, maxHealth: m.maxHealth, vitalsSeq: m.vitalsSeq || 0 }));
+    }
+    if (settlement.saveToDisk) settlement.saveToDisk();
+
+    try {
+      const out = JSON.stringify({
+        eventId: `machine_roster_${raidId}_${Date.now()}`,
+        type: "machine_roster",
+        senderId: "server",
+        senderName: "CENTRAL COMMAND",
+        raidId,
+        timestamp: Date.now(),
+        serverAuthoritative: true,
+        data: {
+          revision: __preRec && typeof __preRec.machineRosterRevision === "number" ? __preRec.machineRosterRevision : raidRosterRevisions.get(raidId) || 1,
+          machines: machines.map((m) => ({ id: m.id, type: m.type, x: m.x, y: m.y, z: m.z, facing: m.facing, health: m.health, isAlive: m.isAlive, originX: m.originX, originZ: m.originZ, maxHealth: m.maxHealth, vitalsSeq: m.vitalsSeq || 0 })),
+        },
+      });
+      for (const client of wss.clients) {
+        if (client.readyState === 1 && client.authenticated && client.raidId === raidId) {
+          try { client.send(out); } catch {}
+        }
+      }
+    } catch {}
+    return { success: true, action: "place", raidId, machine: { id: machineId, type, x, z, health } };
+  };
+
+  server.repositionOperative = function(raidId, operativeId, x, z) {
+    const slotKey = `${raidId}:${operativeId}`;
+    const existing = operativeMovementStates.get(slotKey);
+    const now = Date.now();
+    const rRecPos = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
+    const oRecPos = rRecPos?.operatives?.[operativeId];
+    const health = existing?.health ?? oRecPos?.health ?? 100;
+    const armor = existing?.armor ?? oRecPos?.armor ?? 100;
+    const isAlive = existing?.isAlive ?? oRecPos?.isAlive ?? true;
+    const placement = {
+      x,
+      z,
+      health,
+      armor,
+      isAlive,
+      lastServerTime: now,
+      packetTimestamp: 0,
+      timestamp: now,
+      budget: SERVER_MAX_BURST_CAP,
+      lastRollStartedAt: existing?.lastRollStartedAt,
+      rollStartedAt: existing?.rollStartedAt,
+      lastCrateObservedX: existing?.lastCrateObservedX,
+      lastCrateObservedZ: existing?.lastCrateObservedZ,
+      lastCrateObservedServerTimestamp: existing?.lastCrateObservedServerTimestamp,
+      action: existing?.action,
+    };
+    operativeMovementStates.set(slotKey, placement);
+    const activeWs = activeSlotSockets.get(slotKey);
+    if (activeWs && activeWs.readyState === 1) {
+      activeWs.lastRelayedPos = placement;
+    }
+    if (oRecPos) {
+      oRecPos.lastObservedX = x;
+      oRecPos.lastObservedZ = z;
+      oRecPos.hasLiveMovement = true;
+      oRecPos.lastObservedTimestamp = now;
+    }
+    return { success: true, raidId, operativeId, x, z };
+  };
+
   server.settlement = settlement;
   server.requestHandler = requestHandler;
   return server;
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
-  if (process.env.NODE_ENV === "production") {
-    if (!process.env.STICK_ZONE_SERVER_SECRET) {
-      console.error("FATAL: STICK_ZONE_SERVER_SECRET environment variable is required to start production server");
-      process.exit(1);
-    }
-    if (!process.env.SZ_SECRET_PLAYER || !process.env.SZ_SECRET_ALPHA || !process.env.SZ_SECRET_BRAVO) {
-      console.error("FATAL: SZ_SECRET_PLAYER, SZ_SECRET_ALPHA, and SZ_SECRET_BRAVO environment variables are required in production");
-      process.exit(1);
-    }
-  }
   const server = createStickZoneServer();
   server.listen(PORT, () => {
     console.log(`Stick Zone production server listening on http://localhost:${PORT} (WebSocket at /syncplay-ws)`);

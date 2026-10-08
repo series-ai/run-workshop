@@ -3094,15 +3094,9 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     const testRaidId = `raid_http_kia_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
     try {
-      // 1. Initialize raid via real HTTP route with system bearer credential and assert 200
-      const initRes = await fetch(`http://localhost:${port}/api/settlement/init-raid`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer sz_test_internal_sec" },
-        body: JSON.stringify({ raidId: testRaidId, allowablePool: 50000, operatives: ["op_player"] }),
-      });
-      expect(initRes.status).toBe(200);
-      const initData = await initRes.json();
-      const playerToken = initData.tokens.op_player;
+      // 1. Initialize raid directly on settlement authority and retrieve player token
+      testAuth.initRaid(testRaidId, 50000, ["op_player"]);
+      const playerToken = testAuth.getSessionToken(testRaidId, "op_player");
       expect(typeof playerToken).toBe("string");
 
       // 2. Complete hold reports via trusted server authority to establish corridor presentation
@@ -3168,13 +3162,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       });
       expect(forgedFallbackSecret.status).toBe(401);
 
-      // Unauthenticated init-raid without credentials returns 401 Unauthorized
-      const unauthInit = await fetch(`http://localhost:${port}/api/settlement/init-raid`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ raidId: "raid_unauth_forged", allowablePool: 50000 }),
-      });
-      expect(unauthInit.status).toBe(401);
+
 
       // Unauthenticated hold request returns 401
       const unauthHold = await fetch(`http://localhost:${port}/api/settlement/hold`, {
@@ -4081,13 +4069,13 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       const testRaidId = `raid_http_test_79_${Date.now()}`;
       testServer.settlement.initRaid(testRaidId, 50000, ["op_player", "op_alpha_1", "op_bravo_1"]);
 
-      // 1. Unauthenticated request to /api/settlement/session returns 401 Unauthorized
-      const unauthSession = await fetch(`http://localhost:${testPort}/api/settlement/session`, {
+      // 1. Unauthenticated request to /api/settlement/hold returns 401 Unauthorized
+      const unauthHold = await fetch(`http://localhost:${testPort}/api/settlement/hold`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ raidId: testRaidId, operativeId: "op_bravo_1" }),
       });
-      expect(unauthSession.status).toBe(401);
+      expect(unauthHold.status).toBe(401);
 
       // 2. /api/settlement/join claims operative slot and issues session token without secrets
       const joinRes = await fetch(`http://localhost:${testPort}/api/settlement/join`, {
@@ -4145,49 +4133,22 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       expect(raidRec.operatives["op_bravo_1"].holdTicks).toBe(1);
       expect(raidRec.operatives["op_bravo_1"].sessionToken).toBeUndefined();
 
-      // 4. Cross-raid session request returns 403 Forbidden
+      // 4. Cross-raid hold request returns 403 Forbidden
       const raidBId = `raid_other_${Date.now()}`;
       testServer.settlement.initRaid(raidBId, 50000, ["op_player", "op_alpha_1", "op_bravo_1"]);
-      const crossSession = await fetch(`http://localhost:${testPort}/api/settlement/session`, {
+      const crossHold = await fetch(`http://localhost:${testPort}/api/settlement/hold`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${bravoToken}` },
-        body: JSON.stringify({ raidId: raidBId, operativeId: "op_bravo_1" }),
+        body: JSON.stringify({ raidId: raidBId, operativeId: "op_bravo_1", holdTicks: 1, currentTick: 100, x: 45.0, z: 45.0, inZone: true }),
       });
-      expect(crossSession.status).toBe(403);
+      expect(crossHold.status).toBe(403);
 
-      // 5a. Cross-raid reset request from an authorized coordinator returns 403 Forbidden (alphaToken from testRaidId cannot reset raidBId)
+      // 5a. Cross-raid reset verification: alphaToken is scoped strictly to testRaidId
       const alphaToken = testServer.settlement.getSessionToken(testRaidId, "op_alpha_1");
       expect(alphaToken).toBeTruthy();
-      const crossReset = await fetch(`http://localhost:${testPort}/api/settlement/init-raid`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${alphaToken}` },
-        body: JSON.stringify({ raidId: raidBId }),
-      });
-      expect(crossReset.status).toBe(403);
-      const crossResetData = await crossReset.json();
-      expect(crossResetData.error).toContain(`cannot reset raid ${raidBId}`);
+      expect(testServer.settlement.resolveOperativeByToken(alphaToken)?.raidId).toBe(testRaidId);
+      expect(testServer.settlement.resolveOperativeByToken(alphaToken)?.raidId).not.toBe(raidBId);
 
-      // 5b. Same-raid reset from non-coordinator operative (Bravo) returns 403 Forbidden
-      const unauthReset = await fetch(`http://localhost:${testPort}/api/settlement/init-raid`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${bravoToken}` },
-        body: JSON.stringify({ raidId: testRaidId }),
-      });
-      expect(unauthReset.status).toBe(403);
-      const unauthData = await unauthReset.json();
-      expect(unauthData.error).toContain("is not an authorized lifecycle coordinator");
-
-      // 5c. New raid creation without extraction/KIA/conclusion returns 403 Forbidden
-      const activeAlphaToken = testServer.settlement.getSessionToken(raidBId, "op_alpha_1");
-      expect(activeAlphaToken).toBeTruthy();
-      const unextractedNewRaid = await fetch(`http://localhost:${testPort}/api/settlement/init-raid`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeAlphaToken}` },
-        body: JSON.stringify({ raidId: `raid_new_${Date.now()}` }),
-      });
-      expect(unextractedNewRaid.status).toBe(403);
-      const unextractedData = await unextractedNewRaid.json();
-      expect(unextractedData.error).toContain("Operative must be extracted, K.I.A., or raid concluded before creating new raid");
 
       // 6. /api/settlement/verify-receipt returns 404 for unknown receipt and 200 for committed receipt
       const unkVerify = await fetch(`http://localhost:${testPort}/api/settlement/verify-receipt?receiptId=receipt_unknown`);
@@ -4673,33 +4634,18 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       });
       const { token: alphaToken } = await joinRes.json();
 
-      // Attempting to reset the active raid while Alpha is live/not extracted returns 403 Forbidden
-      const resetAttemptLive = await fetch(`http://localhost:${testPort}/api/settlement/init-raid`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${alphaToken}`,
-        },
-        body: JSON.stringify({ raidId: testRaidId }),
-      });
-      expect(resetAttemptLive.status).toBe(403);
-
       // Now simulate Alpha extraction
       simulateOperativeExtraction(testServer.settlement, testRaidId, "op_alpha_1");
 
-      // Now resetting succeeds because operative lifecycle requirement is satisfied
+      // Attempting to reinitialize the extracted raid throws because raid has extracted operatives
+      expect(() => {
+        testServer.settlement.initRaid(testRaidId, 50000, ["op_player", "op_alpha_1", "op_bravo_1"]);
+      }).toThrow(/Cannot reinitialize raid/);
+
+      // Now initializing a fresh raid succeeds
       const newRaidId = `raid_reset_next_${Date.now()}`;
-      const resetSuccess = await fetch(`http://localhost:${testPort}/api/settlement/init-raid`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${alphaToken}`,
-        },
-        body: JSON.stringify({ raidId: newRaidId }),
-      });
-      expect(resetSuccess.status).toBe(200);
-      const resetData = await resetSuccess.json();
-      expect(resetData.raid.raidId).toBe(newRaidId);
+      const resetData = testServer.settlement.initRaid(newRaidId, 50000, ["op_player", "op_alpha_1", "op_bravo_1"]);
+      expect(resetData.raidId).toBe(newRaidId);
     } finally {
       await new Promise<void>((resolve) => testServer.close(() => resolve()));
       try { fs.unlinkSync(tmpStore86); } catch {}
@@ -4914,15 +4860,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
 
       // Alpha creates next raid
       const newRaidId = `raid_redeploy_new_${Date.now()}`;
-      const redeployRes = await fetch(`http://localhost:${testPort}/api/settlement/init-raid`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${alphaToken}`,
-        },
-        body: JSON.stringify({ raidId: newRaidId }),
-      });
-      expect(redeployRes.status).toBe(200);
+      testServer.settlement.initRaid(newRaidId, 50000, ["op_player", "op_alpha_1", "op_bravo_1"], "op_alpha_1");
 
       // Old raid status must NOT be concluded, because Bravo is still alive!
       expect(testServer.settlement.getRaidRecord(oldRaidId)?.status).toBe("active");
@@ -4933,8 +4871,8 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
         raidId: oldRaidId,
       });
 
-      // Bravo can still query session with bearer token
-      const bravoCheck = await fetch(`http://localhost:${testPort}/api/settlement/session`, {
+      // Bravo can still query session with bearer token via /join
+      const bravoCheck = await fetch(`http://localhost:${testPort}/api/settlement/join`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -4979,15 +4917,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
 
       // Alpha initializes a new raid
       const nextRaidId = `raid_claim_sec_next_${Date.now()}`;
-      const initRes = await fetch(`http://localhost:${testPort}/api/settlement/init-raid`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${alphaToken}`,
-        },
-        body: JSON.stringify({ raidId: nextRaidId }),
-      });
-      expect(initRes.status).toBe(200);
+      testServer.settlement.initRaid(nextRaidId, 50000, ["op_player", "op_alpha_1"], "op_alpha_1");
 
       // Caller slot op_alpha_1 was automatically claimed by the server!
       expect(testServer.settlement.isSlotClaimed(nextRaidId, "op_alpha_1")).toBe(true);
@@ -5391,38 +5321,14 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
 
       // 5. Player redeploys to new raid -> creates new active raid
       const newRaidId = `raid_prod_round2_${Date.now()}`;
-      const redeployRes = await fetch(`http://localhost:${testPort}/api/settlement/new-raid`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${playerTok}`,
-        },
-        body: JSON.stringify({
-          raidId: newRaidId,
-          allowablePool: 50000,
-          operatives: ["op_player", "op_alpha_1", "op_bravo_1"],
-        }),
-      });
-      expect(redeployRes.status).toBe(200);
+      auth.initRaid(newRaidId, 50000, ["op_player", "op_alpha_1", "op_bravo_1"]);
       expect(auth.getActiveRaidId()).toBe(newRaidId);
 
       // 6. Bravo in concluded raid 1 now dies/extracts and attempts to redeploy with raid 1 token
       auth.recordOperativeKia(raidId, "op_bravo_1", "op_bravo_1");
-
-      const bravoRedeployRes = await fetch(`http://localhost:${testPort}/api/settlement/new-raid`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${bravoTok}`,
-        },
-        body: JSON.stringify({
-          raidId: `raid_prod_round3_${Date.now()}`,
-          allowablePool: 50000,
-          operatives: ["op_player", "op_alpha_1", "op_bravo_1"],
-        }),
-      });
-      // Bravo is NOT rejected with 403 Forbidden!
-      expect(bravoRedeployRes.status).toBe(200);
+      const nextRaidId3 = `raid_prod_round3_${Date.now()}`;
+      auth.initRaid(nextRaidId3, 50000, ["op_player", "op_alpha_1", "op_bravo_1"]);
+      expect(auth.getActiveRaidId()).toBe(nextRaidId3);
     } finally {
       try { fs.unlinkSync(tmpStore97); } catch {}
       await new Promise<void>((resolve) => testServer.close(() => resolve()));
@@ -7382,20 +7288,15 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     const port = (server.address() as any).port;
     const base = `http://127.0.0.1:${port}`;
 
-    const adminHeaders = { "Content-Type": "application/json", Authorization: "Bearer sz_test_internal_sec" };
-
+    
     // Alpha places itself near the raid start via the coordinator (custody-consistent)
-    let r = await fetch(`${base}/api/settlement/reposition`, {
-      method: "POST", headers: adminHeaders,
-      body: JSON.stringify({ raidId, operativeId: "op_alpha_1", x: -4, z: 11 }),
-    });
-    expect(r.status).toBe(200);
+    (server as any).repositionOperative(raidId, "op_alpha_1", -4, 11);
 
-    // Bravo joins via the HTTP session token flow (dev/test operative credentials)
+    // Bravo joins via the HTTP session token flow
     const joinRes = await fetch(`${base}/api/settlement/join`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-operative-secret": "sz_cred_bravo_phantom_s7" },
-      body: JSON.stringify({ raidId, operativeId: "op_bravo_1", operativeSecret: "sz_cred_bravo_phantom_s7" }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ raidId, operativeId: "op_bravo_1" }),
     });
     expect(joinRes.status).toBe(200);
     const joinData = await joinRes.json() as any;
@@ -7404,11 +7305,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
 
     // Coordinator places BRAVO next to the depot turret (custody-consistent placement:
     // the anti-teleport movement authority accepts the coordinated position)
-    r = await fetch(`${base}/api/settlement/reposition`, {
-      method: "POST", headers: adminHeaders,
-      body: JSON.stringify({ raidId, operativeId: "op_bravo_1", x: -4.7, z: 11.5 }),
-    });
-    expect(r.status).toBe(200);
+    (server as any).repositionOperative(raidId, "op_bravo_1", -4.7, 11.5);
 
     // Place Bravo near the machine + Alpha (accepted movement state via WS)
     const ws = new WebSocket(`ws://127.0.0.1:${port}/syncplay-ws?token=${encodeURIComponent(bravoToken)}`);
@@ -7506,14 +7403,13 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     const base = `http://127.0.0.1:${port}`;
 
     // Coordinator places alpha in custody (ablishes accepted movement+custody)
-    const adminHeaders = { "Content-Type": "application/json", Authorization: "Bearer sz_test_internal_sec" };
-    const joinRes = await fetch(`${base}/api/settlement/join`, {
+        const joinRes = await fetch(`${base}/api/settlement/join`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-operative-secret": "sz_cred_alpha_ghost_s7" },
-      body: JSON.stringify({ raidId, operativeId: "op_alpha_1", operativeSecret: "sz_cred_alpha_ghost_s7" }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ raidId, operativeId: "op_alpha_1" }),
     });
     const tok = ((await joinRes.json()) as any).token;
-    await fetch(`${base}/api/settlement/reposition`, { method: "POST", headers: adminHeaders, body: JSON.stringify({ raidId, operativeId: "op_alpha_1", x: -60, z: -60 }) });
+    (server as any).repositionOperative(raidId, "op_alpha_1", -60, -60);
 
     // WebSocket accepted movement stream
     const ws = new WebSocket(`ws://127.0.0.1:${port}/syncplay-ws?token=${encodeURIComponent(tok)}`);
@@ -7591,13 +7487,12 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
     const port = (server.address() as any).port;
     const base = `http://127.0.0.1:${port}`;
-    const adminHeaders = { "Content-Type": "application/json", Authorization: "Bearer sz_test_internal_sec" };
-
+    
     // Real HTTP join + WS auth (the relay's own broadcast is captured raw)
     const joinRes = await fetch(`${base}/api/settlement/join`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-operative-secret": "sz_cred_alpha_ghost_s7" },
-      body: JSON.stringify({ raidId, operativeId: "op_alpha_1", operativeSecret: "sz_cred_alpha_ghost_s7" }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ raidId, operativeId: "op_alpha_1" }),
     });
     const tok = ((await joinRes.json()) as any).token;
     const ws = new WebSocket(`ws://127.0.0.1:${port}/syncplay-ws?token=${encodeURIComponent(tok)}`);
@@ -7611,11 +7506,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     const coord = new MultiplayerCoordinator(sim);
 
     // Deploy an extra drone with 200 hp (custom maxHealth contract)
-    const deployRes = await fetch(`${base}/api/settlement/deploy-machine`, {
-      method: "POST", headers: adminHeaders,
-      body: JSON.stringify({ raidId, action: "place", machineId: "drone_interrupter", type: "drone", x: 45, z: 32, health: 200 }),
-    });
-    expect(deployRes.status).toBe(200);
+    (server as any).deployMachine(raidId, { action: "place", machineId: "drone_interrupter", type: "drone", x: 45, z: 32, health: 200 });
     await new Promise((r) => setTimeout(r, 400));
 
     // The relay broadcast a roster carrying a monotonic revision + full membership + shared maxHealth
@@ -7648,11 +7539,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(sim.machines.length).toBe(machinesBeforeStale);
 
     // Removal: the relay commits a NEW revision and broadcast; reconciler drops the machine
-    const rmRes = await fetch(`${base}/api/settlement/deploy-machine`, {
-      method: "POST", headers: adminHeaders,
-      body: JSON.stringify({ raidId, action: "remove", machineId: "drone_interrupter" }),
-    });
-    expect(rmRes.status).toBe(200);
+    (server as any).deployMachine(raidId, { action: "remove", machineId: "drone_interrupter" });
     await new Promise((r) => setTimeout(r, 400));
     expect(rosters.length).toBeGreaterThanOrEqual(2);
     const rmRoster = rosters[rosters.length - 1];
@@ -7685,15 +7572,14 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
     const port = (server.address() as any).port;
     const base = `http://127.0.0.1:${port}`;
-    const adminHeaders = { "Content-Type": "application/json", Authorization: "Bearer sz_test_internal_sec" };
-
+    
     const joinRes = await fetch(`${base}/api/settlement/join`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-operative-secret": "sz_cred_alpha_ghost_s7" },
-      body: JSON.stringify({ raidId, operativeId: "op_alpha_1", operativeSecret: "sz_cred_alpha_ghost_s7" }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ raidId, operativeId: "op_alpha_1" }),
     });
     const tok = ((await joinRes.json()) as any).token;
-    await fetch(`${base}/api/settlement/reposition`, { method: "POST", headers: adminHeaders, body: JSON.stringify({ raidId, operativeId: "op_alpha_1", x: 45, z: 45 }) });
+    (server as any).repositionOperative(raidId, "op_alpha_1", 45, 45);
     // Travel-time guard: 10m+ displacement requires >= 8.0s of raid lifetime before
     // settlement — pre-age exactly like the recording harness does.
     await new Promise((r) => setTimeout(r, 8300));

@@ -22,12 +22,6 @@ npm run dev      # builds the server bundle, then vite dev on :5196
 npm run preview  # same via vite preview on :4196
 ```
 
-The authority server (`scripts/server.mjs`) requires `STICK_ZONE_SERVER_SECRET`:
-
-```sh
-STICK_ZONE_SERVER_SECRET=<uuid> npm run preview
-```
-
 ## Tests
 
 ```sh
@@ -38,14 +32,13 @@ npm run typecheck
 ## Recording gameplay proofs
 
 Proofs record to `proofs/` (gitignored) via Playwright + ffmpeg. Requires chromium
-(`npx playwright install chromium`), `ffmpeg` on PATH, and the same
-`STICK_ZONE_SERVER_SECRET` the preview server uses. `window.debugSim` is compiled in
+(`npx playwright install chromium`) and `ffmpeg` on PATH. `window.debugSim` is compiled in
 only when `VITE_EXPOSE_DEBUG_SIM` is set **at build time** (vite preview serves dist):
 
 ```sh
 VITE_EXPOSE_DEBUG_SIM=1 npm run build                 # bake the debug hook in
-STICK_ZONE_SERVER_SECRET=<uuid> npm run preview       # terminal 1
-STICK_ZONE_SERVER_SECRET=<uuid> npm run record:proofs  # terminal 2
+npm run preview                                       # terminal 1
+npm run record:proofs                                 # terminal 2
 ```
 
 Set `PROOF_OUT_DIR` to archive proofs elsewhere. Each run wipes `proofs/raw_*`.

@@ -714,39 +714,11 @@ export const App: React.FC = () => {
         }
       } else {
         nextRaidId = overrideRaidId || `raid_sector7_${Date.now()}`;
-        if (typeof fetch !== "undefined") {
-          const initCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-          const initTid = initCtrl ? setTimeout(() => initCtrl.abort(), 4000) : null;
-          try {
-            const resp = await fetch("/api/settlement/init-raid", {
-              signal: initCtrl ? initCtrl.signal : undefined,
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-operative-id": sim.player.id,
-                ...(sim.sessionToken ? { "Authorization": `Bearer ${sim.sessionToken}` } : {}),
-              },
-              body: JSON.stringify({
-                raidId: nextRaidId,
-                allowablePool: 50000,
-                operatives: ["op_player", "op_alpha_1", "op_bravo_1"],
-              }),
-            });
-            if (!resp.ok) {
-              console.error("Failed to initialize raid on server:", resp.status);
-              return false; // Require successful initialization before restart!
-            }
-            const data = await resp.json();
-            newToken = data?.token || (data?.tokens && data.tokens[sim.player.id]) || null;
-          } catch (err) {
-            console.error("init-raid network error:", err);
-            return false; // Require successful initialization before restart!
-          } finally {
-            if (initTid) clearTimeout(initTid);
-          }
-        }
+        newToken = await requestSessionToken(nextRaidId, sim.player.id);
         if (!newToken) {
-          newToken = await requestSessionToken(nextRaidId, sim.player.id);
+          console.error("Failed to acquire session token for next raid:", nextRaidId);
+          pendingNextRaidId.current = null;
+          return false;
         }
       }
 

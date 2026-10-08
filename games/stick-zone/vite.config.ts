@@ -18,7 +18,6 @@ export function setupMultiplayerAndSettlement(server: any, customSettlement?: an
     "/api/settlement/verify-receipt",
     "/api/settlement/kia",
     "/api/settlement/corridor-status",
-    "/api/settlement/new-raid",
   ];
 
   for (const ep of endpoints) {
