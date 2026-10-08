@@ -79,7 +79,7 @@ import {
   createImpostorAtlas,
   type ImpostorAtlas,
 } from './impostorAtlas';
-import { CANYON_LOOP_LENGTH_M, canyonBendApexes, foldsInsideBend, intrudesOtherStretch, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
+import { CANYON_LOOP_LENGTH_M, canyonBendApexes, foldsInsideBend, intrudesOtherStretch, warpCanyon, warpDirection, wrapCanyonV, type WarpOut } from './canyonWarp';
 import {
   SKYRIVER_DISTRICT_COLOUR_GLSL,
   SKYRIVER_DISTRICT_COUNT,
@@ -251,6 +251,18 @@ export interface SkyriverTrimOwner {
   readonly anchorV: number;
 }
 
+export type PushTrim = (
+  kind: number,
+  px: number,
+  py: number,
+  pz: number,
+  ex: number,
+  ey: number,
+  ez: number,
+  on: SkyriverTrimOwner,
+  to?: SkyriverTrimOwner | null,
+) => void;
+
 export interface SkyriverNeonSigns {
   readonly seed: number;
   readonly count: number;
@@ -286,6 +298,15 @@ export interface SkyriverNeonSigns {
   readonly anchorV: Float64Array;
 }
 
+export type SkyriverLowBaseKind = 'skirt' | 'infill' | 'link' | 'equipment';
+export type SkyriverLowBaseCluster = 0 | 1 | 2 | 3;
+
+export interface SkyriverLowBaseRecord {
+  readonly kind: SkyriverLowBaseKind;
+  readonly towerOwner: string;
+  readonly cluster: SkyriverLowBaseCluster;
+}
+
 /**
  * One drawn mass of concrete: a derived slab, or a T6R-2 setback tier, crown, seam block or far
  * skyline block. All of them render through the tower mesh (one draw call) with the facade shader.
@@ -313,6 +334,12 @@ export interface SkyriverMass {
   readonly stepTop?: boolean;
   /** R25: canonical canyon-space owner seed for seeded material profiles. */
   readonly materialOwner?: number;
+  /** R27: low-city base sprawl identity record. */
+  readonly baseRecord?: SkyriverLowBaseRecord;
+}
+
+export function isLowBaseMass(mass: SkyriverMass): mass is SkyriverMass & { readonly baseRecord: SkyriverLowBaseRecord } {
+  return mass.baseRecord !== undefined;
 }
 
 export interface SkyriverFacadeFace extends FacadeFace {
@@ -1184,6 +1211,35 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
       });
     }
   }
+
+  // --- R27 low-city base sprawl pass -------------------------------------------------------------
+  const baseRandom = new DeterministicRandom(layout.seed).fork('skyriver.city.r27.base_sprawl');
+  const pushBaseTrim: PushTrim = (
+    trimKind: number,
+    px: number,
+    py: number,
+    pz: number,
+    ex: number,
+    ey: number,
+    ez: number,
+    on: SkyriverTrimOwner,
+    to: SkyriverTrimOwner | null = null,
+  ): void => {
+    if (count >= cap) fail('SKYRIVER_BASE_TRIM_CAP_EXCEEDED');
+    owner[count] = on;
+    spanTo[count] = to;
+    cx[count] = px;
+    cy[count] = py;
+    cz[count] = pz;
+    sx[count] = ex;
+    sy[count] = ey;
+    sz[count] = ez;
+    kind[count] = trimKind;
+    seedValue[count] = baseRandom.nextInt(0, 9999) / 9999;
+    count += 1;
+  };
+  appendLowBaseSprawl(layout, masses, pushBaseTrim, baseRandom, () => count, cap);
+
   facadeFaceCache.set(layout.seed, exposedFaces);
   massCache.set(layout.seed, masses);
 
@@ -1207,6 +1263,712 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
   return trims;
 }
 
+// --- R27 low-city base sprawl implementation -----------------------------------------------------
+
+interface InfillClusterPattern {
+  readonly id: SkyriverLowBaseCluster;
+  readonly dx: number;
+  readonly dv: number;
+  readonly widthRange: readonly [number, number];
+  readonly depthRange: readonly [number, number];
+  readonly heightRange: readonly [number, number];
+}
+
+const INFILL_CLUSTERS: readonly InfillClusterPattern[] = Object.freeze([
+  { id: 0, dx: -35, dv: -45, widthRange: [32, 58], depthRange: [35, 62], heightRange: [18, 38] },
+  { id: 1, dx: 45, dv: -30, widthRange: [38, 64], depthRange: [30, 52], heightRange: [22, 42] },
+  { id: 2, dx: -40, dv: 40, widthRange: [30, 54], depthRange: [40, 68], heightRange: [16, 36] },
+  { id: 3, dx: 40, dv: 35, widthRange: [36, 60], depthRange: [34, 56], heightRange: [24, 44] },
+]);
+
+function createLowBaseRecord(tower: SkyriverTower, cluster: SkyriverLowBaseCluster, kind: SkyriverLowBaseKind): SkyriverLowBaseRecord {
+  return Object.freeze({
+    kind,
+    towerOwner: towerKey(tower),
+    cluster,
+  });
+}
+
+function checkLowBaseSafety(x: number, z: number, w: number, d: number): boolean {
+  const reach = Math.hypot(w, d) * 0.5;
+  if (foldsInsideBend(x, z, reach)) return false;
+  if (intrudesOtherStretch(x, z, reach, 580)) return false;
+  const innerFaceX = Math.abs(x) - w * 0.5;
+  const requiredClearX = Math.abs(z) < 650 ? 408 : 374;
+  if (innerFaceX < requiredClearX) return false;
+  return true;
+}
+
+interface LowBaseSpatialItem {
+  readonly cx: number;
+  readonly cz: number;
+  readonly y0: number;
+  readonly y1: number;
+  readonly c: number;
+  readonly s: number;
+  readonly hx: number;
+  readonly hz: number;
+  readonly reach: number;
+  readonly mass: SkyriverMass;
+}
+
+interface LowBaseSpatialGrid {
+  readonly grid: Map<number, LowBaseSpatialItem[]>;
+  readonly cellSize: number;
+}
+
+function insertLowBaseSpatialMass(spatial: LowBaseSpatialGrid, mass: SkyriverMass): void {
+  if (mass.y0 >= 160) return;
+  const placed: WarpOut = { x: 0, z: 0, heading: 0 };
+  warpRigid(mass.x, mass.z, mass.anchorV ?? mass.z, placed);
+  const reach = Math.hypot(mass.width, mass.depth) * 0.5;
+  const item: LowBaseSpatialItem = {
+    cx: placed.x, cz: placed.z, y0: mass.y0, y1: mass.y0 + mass.height,
+    c: Math.cos(placed.heading), s: Math.sin(placed.heading),
+    hx: mass.width * 0.5, hz: mass.depth * 0.5, reach, mass,
+  };
+  const minX = Math.floor((placed.x - reach) / spatial.cellSize);
+  const maxX = Math.floor((placed.x + reach) / spatial.cellSize);
+  const minZ = Math.floor((placed.z - reach) / spatial.cellSize);
+  const maxZ = Math.floor((placed.z + reach) / spatial.cellSize);
+  for (let gx = minX; gx <= maxX; gx += 1) {
+    for (let gz = minZ; gz <= maxZ; gz += 1) {
+      const key = (gx << 16) ^ gz;
+      let cell = spatial.grid.get(key);
+      if (!cell) { cell = []; spatial.grid.set(key, cell); }
+      cell.push(item);
+    }
+  }
+}
+
+function buildSpatialGrid(masses: readonly SkyriverMass[], cellSize = 200): LowBaseSpatialGrid {
+  const spatial: LowBaseSpatialGrid = { grid: new Map(), cellSize };
+  for (const mass of masses) insertLowBaseSpatialMass(spatial, mass);
+  return spatial;
+}
+
+function queryCandidates(
+  spatial: LowBaseSpatialGrid,
+  x: number,
+  z: number,
+  anchorV: number,
+  w: number,
+  d: number,
+): { readonly boxWarp: WarpOut; readonly cands: readonly LowBaseSpatialItem[] } {
+  const boxWarp: WarpOut = { x: 0, z: 0, heading: 0 };
+  warpRigid(x, z, anchorV, boxWarp);
+  const reach = Math.hypot(w, d) * 0.5;
+  const cellSize = spatial.cellSize;
+  const minX = Math.floor((boxWarp.x - reach) / cellSize);
+  const maxX = Math.floor((boxWarp.x + reach) / cellSize);
+  const minZ = Math.floor((boxWarp.z - reach) / cellSize);
+  const maxZ = Math.floor((boxWarp.z + reach) / cellSize);
+  const seen = new Set<LowBaseSpatialItem>();
+  const cands: LowBaseSpatialItem[] = [];
+  for (let gx = minX; gx <= maxX; gx++) {
+    for (let gz = minZ; gz <= maxZ; gz++) {
+      const key = (gx << 16) ^ gz;
+      const cell = spatial.grid.get(key);
+      if (!cell) continue;
+      for (let i = 0; i < cell.length; i++) {
+        const item = cell[i]!;
+        if (seen.has(item)) continue;
+        seen.add(item);
+        if (Math.hypot(item.cx - boxWarp.x, item.cz - boxWarp.z) <= item.reach + reach) {
+          cands.push(item);
+        }
+      }
+    }
+  }
+  return { boxWarp, cands };
+}
+
+function lowRoofPlaneConflicts(spatial: LowBaseSpatialGrid, mass: SkyriverMass): boolean {
+  const { boxWarp, cands } = queryCandidates(spatial, mass.x, mass.z, mass.anchorV ?? mass.z, mass.width, mass.depth);
+  const c = Math.cos(boxWarp.heading), s = Math.sin(boxWarp.heading);
+  const hx = mass.width * 0.5, hz = mass.depth * 0.5;
+  for (const other of cands) {
+    if (!other.mass.baseRecord || Math.abs(mass.y0 + mass.height - other.y1) >= 0.25) continue;
+    const dx = other.cx - boxWarp.x, dz = other.cz - boxWarp.z;
+    const axes = [[c, -s], [s, c], [other.c, -other.s], [other.s, other.c]];
+    const overlaps = axes.every(([ax, az]) => {
+      const aRadius = hx * Math.abs(c * ax - s * az) + hz * Math.abs(s * ax + c * az);
+      const bRadius = other.hx * Math.abs(other.c * ax - other.s * az) + other.hz * Math.abs(other.s * ax + other.c * az);
+      return Math.abs(dx * ax + dz * az) < aRadius + bRadius - 0.01;
+    });
+    if (overlaps) return true;
+  }
+  return false;
+}
+
+function isLowRoofCovered(
+  spatial: LowBaseSpatialGrid,
+  x: number,
+  z: number,
+  anchorV: number,
+  w: number,
+  d: number,
+  y0: number,
+  h: number,
+): boolean {
+  const { boxWarp, cands } = queryCandidates(spatial, x, z, anchorV, w, d);
+  const sc = Math.cos(boxWarp.heading);
+  const ss = Math.sin(boxWarp.heading);
+  const py = y0 + h;
+  let coveredCount = 0;
+  const N = 7;
+  const total = N * N;
+  for (let ix = 0; ix < N; ix++) {
+    const u = -1 + (2 * (ix + 0.5)) / N;
+    for (let iz = 0; iz < N; iz++) {
+      const v = -1 + (2 * (iz + 0.5)) / N;
+      const px = boxWarp.x + u * (w * 0.5) * sc + v * (d * 0.5) * ss;
+      const pz = boxWarp.z - u * (w * 0.5) * ss + v * (d * 0.5) * sc;
+      let hit = false;
+      for (let i = 0; i < cands.length; i++) {
+        const ob = cands[i]!;
+        if (py < ob.y0 || py > ob.y1) continue;
+        const dx = px - ob.cx;
+        const dz = pz - ob.cz;
+        const lx = Math.abs(dx * ob.c - dz * ob.s);
+        const lz = Math.abs(dx * ob.s + dz * ob.c);
+        if (lx <= ob.hx && lz <= ob.hz) {
+          hit = true;
+          break;
+        }
+      }
+      if (hit) coveredCount++;
+    }
+  }
+  return coveredCount / total >= 0.5;
+}
+
+function getMaxLowDeckTop(
+  spatial: LowBaseSpatialGrid,
+  x: number,
+  z: number,
+  anchorV: number,
+  w: number,
+  d: number,
+): number {
+  const { cands } = queryCandidates(spatial, x, z, anchorV, w, d);
+  let maxTop = -Infinity;
+  for (let i = 0; i < cands.length; i++) {
+    const ob = cands[i]!;
+    if (!ob.mass.baseRecord && ob.y1 < 160) {
+      if (ob.y1 > maxTop) maxTop = ob.y1;
+    }
+  }
+  return maxTop === -Infinity ? 0 : maxTop;
+}
+
+function touch(a: SkyriverMass, b: SkyriverMass): boolean {
+  return (
+    Math.min(a.x + a.width * 0.5, b.x + b.width * 0.5) > Math.max(a.x - a.width * 0.5, b.x - b.width * 0.5) &&
+    Math.min(a.z + a.depth * 0.5, b.z + b.depth * 0.5) > Math.max(a.z - a.depth * 0.5, b.z - b.depth * 0.5) &&
+    Math.min(a.y0 + a.height, b.y0 + b.height) > Math.max(a.y0, b.y0)
+  );
+}
+
+function appendLowBaseSprawl(
+  layout: SkyriverCityLayout,
+  masses: SkyriverMass[],
+  pushTrim: PushTrim,
+  random: DeterministicRandom,
+  getCurrentTrimCount: () => number,
+  trimCap: number,
+): void {
+  const baseTrimBudget = Math.min(900, Math.max(0, trimCap - getCurrentTrimCount()));
+  let addedTrims = 0;
+  const safePushTrim: PushTrim = (
+    tKind: number,
+    px: number,
+    py: number,
+    pz: number,
+    ex: number,
+    ey: number,
+    ez: number,
+    on: SkyriverTrimOwner,
+  ): void => {
+    if (addedTrims >= baseTrimBudget) fail('SKYRIVER_BASE_TRIM_BUDGET_EXCEEDED');
+    pushTrim(tKind, px, py, pz, ex, ey, ez, on);
+    addedTrims += 1;
+  };
+
+  const spatial = buildSpatialGrid(masses);
+
+  // Compute tier projections for inner towers
+  const tierMap = new Map<string, number>();
+  for (const t of layout.towers) {
+    if (Math.abs(t.x) < 700) {
+      const key = towerKey(t);
+      const side = Math.sign(t.x);
+      const towerMasses = masses.filter(
+        (m) =>
+          m.anchorV !== undefined &&
+          Math.abs(m.anchorV - t.z) < 1e-4 &&
+          Math.sign(m.x) === side &&
+          m.y0 === SKYRIVER_CITY_VOID_BASE_Y,
+      );
+      let maxProj = 0;
+      for (const m of towerMasses) {
+        if (m.width > 6 && Math.abs(m.x - t.x) > 1) {
+          const proj = m.width - 6;
+          if (proj > maxProj && proj < 120) maxProj = proj;
+        }
+      }
+      tierMap.set(key, maxProj);
+    }
+  }
+
+  const towersBySide: Record<-1 | 1, SkyriverTower[]> = {
+    [-1]: layout.towers.filter((t) => t.x < 0),
+    [1]: layout.towers.filter((t) => t.x > 0),
+  };
+
+  const findNearest = (x: number, z: number, side: -1 | 1): SkyriverTower => {
+    const list = towersBySide[side];
+    let best = list[0]!;
+    let bestD = Infinity;
+    for (const t of list) {
+      const d = Math.hypot(t.x - x, t.z - z);
+      if (d < bestD) {
+        bestD = d;
+        best = t;
+      }
+    }
+    return best;
+  };
+
+  const skirtsByTower = new Map<string, SkyriverMass[]>();
+
+  // 1. Skirts per major tower
+  for (const tower of layout.towers) {
+    const towerSide = (Math.sign(tower.x) || 1) as -1 | 1;
+    const isInner = Math.abs(tower.x) < 700;
+    const tKey = towerKey(tower);
+    const list: SkyriverMass[] = [];
+    skirtsByTower.set(tKey, list);
+
+    const nomLeft = tower.x - tower.width * 0.5;
+    const nomRight = tower.x + tower.width * 0.5;
+    const nomBack = tower.z - tower.depth * 0.5;
+    const nomFront = tower.z + tower.depth * 0.5;
+
+    const tierProj = tierMap.get(tKey) || 0;
+    const nomInnerFace = Math.abs(tower.x) - tower.width * 0.5;
+    const exposedFace = isInner ? nomInnerFace - tierProj : nomInnerFace;
+    const safeBoundary = Math.abs(tower.z) < 650 ? 408 : 374;
+    const availProj = exposedFace - safeBoundary;
+
+    const targetCount = 2 + (random.nextInt(0, 99) < 60 ? 1 : 0) + (random.nextInt(0, 99) < 20 ? 1 : 0);
+
+    const pickHeight = (hPref?: number): number => {
+      if (hPref !== undefined) return hPref;
+      const idx = list.length;
+      const h = 14 + ((idx * 8 + random.nextInt(0, 5)) % 25);
+      return Math.min(38, Math.max(14, h));
+    };
+
+    const tryAdd = (bx: number, bz: number, bw: number, bd: number, altPref?: number, hPref?: number): boolean => {
+      if (!checkLowBaseSafety(bx, bz, bw, bd)) return false;
+      const maxDeck = getMaxLowDeckTop(spatial, bx, bz, tower.z, bw, bd);
+      const bh = pickHeight(hPref);
+      let by0 = 0;
+      if (maxDeck > 10) {
+        by0 = Math.max(0, maxDeck - random.nextInt(2, 6));
+      } else {
+        if (altPref !== undefined) {
+          by0 = altPref;
+        } else {
+          by0 = random.nextInt(0, 99) < 35 ? -random.nextInt(4, 18) : random.nextInt(0, 15);
+        }
+      }
+      if (by0 + bh > 148) by0 = 148 - bh;
+
+      if (isLowRoofCovered(spatial, bx, bz, tower.z, bw, bd, by0, bh)) {
+        if (maxDeck > 0 && maxDeck + bh < 148) {
+          by0 = maxDeck + 1;
+          if (isLowRoofCovered(spatial, bx, bz, tower.z, bw, bd, by0, bh)) return false;
+        } else {
+          return false;
+        }
+      }
+
+      const clusterId = Math.min(3, Math.max(0, Math.round((Math.abs(tower.x) - 630) / 320))) as SkyriverLowBaseCluster;
+      const record = createLowBaseRecord(tower, clusterId, 'skirt');
+      const placedMass: SkyriverMass = {
+        x: bx,
+        y0: by0,
+        z: bz,
+        width: bw,
+        height: bh,
+        depth: bd,
+        tint: tower.tint,
+        anchorV: tower.z,
+        building: buildingSeedOf(tower.x, tower.z),
+        materialOwner: buildingSeedOf(tower.x, tower.z),
+        baseRecord: record,
+      };
+      let separatedMass = placedMass;
+      for (let attempt = 0; lowRoofPlaneConflicts(spatial, separatedMass); attempt += 1) {
+        if (attempt >= 64) return false;
+        separatedMass = { ...separatedMass, y0: separatedMass.y0 - 0.35 };
+      }
+      if (isLowRoofCovered(spatial, bx, bz, tower.z, bw, bd, separatedMass.y0, bh)) return false;
+      by0 = separatedMass.y0;
+      masses.push(separatedMass);
+      insertLowBaseSpatialMass(spatial, separatedMass);
+      list.push(separatedMass);
+
+      // Roof trims on actual low roofs
+      const roofY = by0 + bh;
+      const roofOwner: SkyriverTrimOwner = { x: bx, z: bz, width: bw, depth: bd, anchorV: tower.z };
+      if (random.nextInt(0, 99) < 55) {
+        const roll = random.nextInt(0, 99);
+        if (roll < 45) {
+          const d = 3.2 + random.nextInt(0, 20) / 10;
+          const h = 4.5 + random.nextInt(0, 15) / 10;
+          const maxOx = Math.max(0, (bw - d) * 0.5 - 1);
+          const maxOz = Math.max(0, (bd - d) * 0.5 - 1);
+          const ox = (random.nextInt(-1000, 1000) / 1000) * maxOx;
+          const oz = (random.nextInt(-1000, 1000) / 1000) * maxOz;
+          safePushTrim(SKYRIVER_TRIM_ROOF_PLANT, bx + ox, roofY + h * 0.5, bz + oz, d, h, d, roofOwner);
+        } else if (roll < 80) {
+          const pw = 2.4;
+          const ph = 1.8;
+          const pd = 2.0;
+          const maxOx = Math.max(0, (bw - pw) * 0.5 - 1);
+          const maxOz = Math.max(0, (bd - pd) * 0.5 - 1);
+          const ox = (random.nextInt(-1000, 1000) / 1000) * maxOx;
+          const oz = (random.nextInt(-1000, 1000) / 1000) * maxOz;
+          safePushTrim(SKYRIVER_TRIM_ROOF_PLANT, bx + ox, roofY + ph * 0.5, bz + oz, pw, ph, pd, roofOwner);
+        } else {
+          const mh = 14 + random.nextInt(0, 16);
+          safePushTrim(SKYRIVER_TRIM_ANTENNA, bx, roofY + mh * 0.5, bz, 0.6, mh, 0.6, roofOwner);
+        }
+      }
+
+      // Tower-mass equipment penthouse on a fraction of roofs
+      if (random.nextInt(0, 99) < 25) {
+        const eh = 4 + random.nextInt(0, 4);
+        const ew = Math.min(bw * 0.4, 12);
+        const ed = Math.min(bd * 0.4, 12);
+        const ex = bx + (random.nextInt(-1000, 1000) / 1000) * Math.max(0, (bw - ew) * 0.35);
+        const ez = bz + (random.nextInt(-1000, 1000) / 1000) * Math.max(0, (bd - ed) * 0.35);
+        const ey0 = by0 + bh - 0.5;
+        const eqRecord = createLowBaseRecord(tower, clusterId, 'equipment');
+        const equipment: SkyriverMass = {
+          x: ex,
+          y0: ey0,
+          z: ez,
+          width: ew,
+          height: eh,
+          depth: ed,
+          tint: tower.tint,
+          anchorV: tower.z,
+          building: buildingSeedOf(tower.x, tower.z),
+          materialOwner: buildingSeedOf(tower.x, tower.z),
+          baseRecord: eqRecord,
+        };
+        if (!lowRoofPlaneConflicts(spatial, equipment)) {
+          masses.push(equipment);
+          insertLowBaseSpatialMass(spatial, equipment);
+        }
+      }
+
+      return true;
+    };
+
+    interface CandidateBase {
+      readonly x: number;
+      readonly z: number;
+      readonly w: number;
+      readonly d: number;
+      readonly alt?: number;
+      readonly hPref?: number;
+    }
+
+    const cands: CandidateBase[] = [];
+    if (isInner) {
+      if (availProj >= 6) {
+        const frontProj = Math.min(availProj, Math.max(14, 18 + random.nextInt(0, 12)));
+        const bw = frontProj + 4.0;
+        const bx = towerSide < 0 ? -(exposedFace - frontProj * 0.5 + 2.0) : +(exposedFace - frontProj * 0.5 + 2.0);
+        const bd = Math.min(tower.depth * 0.9, Math.max(70, 80 + random.nextInt(0, 40)));
+        cands.push({
+          x: bx,
+          z: tower.z + random.nextInt(-6, 6),
+          w: bw,
+          d: bd,
+          alt: 25 + random.nextInt(0, 25),
+          hPref: 34 + random.nextInt(0, 4),
+        });
+      }
+
+      if (availProj >= 6) {
+        const frontProj2 = Math.min(availProj, Math.max(10, 12 + random.nextInt(0, 10)));
+        const bw2 = frontProj2 + 4.0;
+        const bx2 = towerSide < 0 ? -(exposedFace - frontProj2 * 0.5 + 2.0) : +(exposedFace - frontProj2 * 0.5 + 2.0);
+        const bd2 = Math.min(tower.depth * 0.65, Math.max(50, 60 + random.nextInt(0, 30)));
+        const shiftZ = (random.nextInt(0, 99) < 50 ? 1 : -1) * (tower.depth * 0.22);
+        cands.push({ x: bx2, z: tower.z + shiftZ, w: bw2, d: bd2, alt: 10 + random.nextInt(0, 20) });
+      }
+
+      const pitchChoice = random.nextInt(0, 99) < 50 ? 'north' : 'south';
+      const bd = 18 + random.nextInt(0, 20);
+      const bz = pitchChoice === 'north' ? nomFront + bd * 0.5 - 2.0 : nomBack - bd * 0.5 + 2.0;
+      const bw = Math.min(tower.width * 0.6, Math.max(35, 45 + random.nextInt(0, 10)));
+      const pitchX = towerSide < 0 ? nomRight - bw * 0.5 + 4 : nomLeft + bw * 0.5 - 4;
+      cands.push({ x: pitchX, z: bz, w: bw, d: bd });
+      cands.push({ x: tower.x + random.nextInt(-8, 8), z: bz, w: bw, d: bd });
+
+      const bzOpp = pitchChoice === 'north' ? nomBack - bd * 0.5 + 2.0 : nomFront + bd * 0.5 - 2.0;
+      cands.push({ x: pitchX, z: bzOpp, w: bw, d: bd });
+      cands.push({ x: tower.x + random.nextInt(-8, 8), z: bzOpp, w: bw, d: bd });
+    } else {
+      // Outer towers
+      {
+        const bd = 16 + random.nextInt(0, 20);
+        const bz = nomFront + bd * 0.5 - 2.0;
+        const bw = Math.min(tower.width * 0.8, Math.max(35, 50 + random.nextInt(0, 30)));
+        const pitchOuterX = towerSide > 0 ? nomRight - bw * 0.4 : nomLeft + bw * 0.4;
+        cands.push({ x: pitchOuterX, z: bz, w: bw, d: bd });
+        cands.push({ x: tower.x + random.nextInt(-10, 10), z: bz, w: bw, d: bd });
+      }
+      {
+        const bd = 16 + random.nextInt(0, 20);
+        const bz = nomBack - bd * 0.5 + 2.0;
+        const bw = Math.min(tower.width * 0.8, Math.max(35, 50 + random.nextInt(0, 30)));
+        const pitchOuterX = towerSide > 0 ? nomRight - bw * 0.4 : nomLeft + bw * 0.4;
+        cands.push({ x: pitchOuterX, z: bz, w: bw, d: bd });
+        cands.push({ x: tower.x + random.nextInt(-10, 10), z: bz, w: bw, d: bd });
+      }
+      {
+        const extX = 14 + random.nextInt(0, 18);
+        const bw = extX + 3.0;
+        const bx = towerSide > 0 ? nomRight + extX * 0.5 - 1.5 : nomLeft - extX * 0.5 + 1.5;
+        const bd = Math.min(tower.depth * 0.75, Math.max(35, 45 + random.nextInt(0, 30)));
+        cands.push({ x: bx, z: tower.z + random.nextInt(-15, 15), w: bw, d: bd });
+        cands.push({ x: bx, z: nomBack + 20, w: bw, d: 35 });
+        cands.push({ x: bx, z: nomFront - 20, w: bw, d: 35 });
+      }
+      {
+        const extX = 12 + random.nextInt(0, 14);
+        const bw = extX + 2.0;
+        const bx = towerSide > 0 ? nomLeft - extX * 0.5 + 1.0 : nomRight + extX * 0.5 - 1.0;
+        const bd = Math.min(tower.depth * 0.6, 40);
+        cands.push({ x: bx, z: tower.z + random.nextInt(-10, 10), w: bw, d: bd });
+        cands.push({ x: bx, z: nomBack + 20, w: bw, d: 35 });
+        cands.push({ x: bx, z: nomFront - 20, w: bw, d: 35 });
+      }
+    }
+
+    for (const c of cands) {
+      if (list.length >= targetCount) break;
+      tryAdd(c.x, c.z, c.w, c.d, c.alt, c.hPref);
+    }
+
+    if (list.length < 2) {
+      const extraCands: CandidateBase[] = [];
+      for (const ozShift of [-190, -140, -90, -40, -20, 0, 20, 40, 90, 140, 190]) {
+        for (const ox of [0, 25, 45, 70, 95]) {
+          const outX = towerSide > 0 ? nomRight + ox : nomLeft - ox;
+          const innX = towerSide > 0 ? nomLeft - ox : nomRight + ox;
+          extraCands.push({ x: outX, z: tower.z + ozShift, w: 32, d: 32 });
+          extraCands.push({ x: innX, z: tower.z + ozShift, w: 30, d: 30 });
+          extraCands.push({ x: tower.x + ox * towerSide, z: nomFront + 20 + ozShift, w: 32, d: 32 });
+          extraCands.push({ x: tower.x + ox * towerSide, z: nomBack - 20 + ozShift, w: 32, d: 32 });
+        }
+      }
+      for (const c of extraCands) {
+        if (list.length >= 2) break;
+        tryAdd(c.x, c.z, c.w, c.d);
+      }
+    }
+  }
+
+  // 2. Lower infill using 2-4 offset subgrid cluster patterns
+  const loopRows = Math.round(CANYON_LOOP_LENGTH_M / layout.cell);
+  for (let r = 0; r < loopRows; r += 1) {
+    const vHalf = wrapCanyonV((r + 0.5 - loopRows / 2) * layout.cell);
+    for (const side of [-1, 1] as const) {
+      for (const colX of [790, 1110, 1430]) {
+        const clusterId = ((r * 3 + Math.floor(colX / 300)) % 4) as SkyriverLowBaseCluster;
+        const pattern = INFILL_CLUSTERS[clusterId]!;
+        const baseX = side * (colX + pattern.dx);
+        const baseZ = wrapCanyonV(vHalf + pattern.dv);
+
+        const parentTower = findNearest(baseX, baseZ, side);
+        const w = pattern.widthRange[0] + random.nextInt(0, pattern.widthRange[1] - pattern.widthRange[0]);
+        const d = pattern.depthRange[0] + random.nextInt(0, pattern.depthRange[1] - pattern.depthRange[0]);
+        const h = pattern.heightRange[0] + random.nextInt(0, pattern.heightRange[1] - pattern.heightRange[0]);
+
+        if (!checkLowBaseSafety(baseX, baseZ, w, d)) continue;
+        if (
+          Math.abs(baseX - parentTower.x) < (w + parentTower.width) * 0.45 &&
+          Math.abs(baseZ - parentTower.z) < (d + parentTower.depth) * 0.45
+        ) {
+          continue;
+        }
+
+        const maxDeck = getMaxLowDeckTop(spatial, baseX, baseZ, parentTower.z, w, d);
+        let y0 = maxDeck > 10 ? Math.max(0, maxDeck - random.nextInt(2, 6)) : random.nextInt(0, 15);
+        if (y0 + h > 148) y0 = 148 - h;
+
+        if (isLowRoofCovered(spatial, baseX, baseZ, parentTower.z, w, d, y0, h)) {
+          if (maxDeck > 0 && maxDeck + h < 148) {
+            y0 = maxDeck + 1;
+            if (isLowRoofCovered(spatial, baseX, baseZ, parentTower.z, w, d, y0, h)) continue;
+          } else {
+            continue;
+          }
+        }
+
+        const record = createLowBaseRecord(parentTower, pattern.id, 'infill');
+        const mass: SkyriverMass = {
+          x: baseX,
+          y0,
+          z: baseZ,
+          width: w,
+          height: h,
+          depth: d,
+          tint: parentTower.tint,
+          anchorV: parentTower.z,
+          building: buildingSeedOf(parentTower.x, parentTower.z),
+          materialOwner: buildingSeedOf(parentTower.x, parentTower.z),
+          baseRecord: record,
+        };
+        let separatedMass = mass;
+        for (let attempt = 0; lowRoofPlaneConflicts(spatial, separatedMass); attempt += 1) {
+          if (attempt >= 64) fail('SKYRIVER_BASE_ROOF_SEPARATION_FAILED');
+          separatedMass = { ...separatedMass, y0: separatedMass.y0 - 0.35 };
+        }
+        if (isLowRoofCovered(spatial, baseX, baseZ, parentTower.z, w, d, separatedMass.y0, h)) continue;
+        y0 = separatedMass.y0;
+        masses.push(separatedMass);
+        insertLowBaseSpatialMass(spatial, separatedMass);
+
+        if (random.nextInt(0, 99) < 45) {
+          const roofY = y0 + h;
+          const roofOwner: SkyriverTrimOwner = { x: baseX, z: baseZ, width: w, depth: d, anchorV: parentTower.z };
+          const pw = 3.0;
+          const ph = 4.0;
+          safePushTrim(SKYRIVER_TRIM_ROOF_PLANT, baseX, roofY + ph * 0.5, baseZ, pw, ph, pw, roofOwner);
+        }
+      }
+    }
+  }
+
+  // 3. Short covered architectural links between adjacent base blocks
+  for (const [tKey, tSkirts] of skirtsByTower) {
+    if (tSkirts.length < 2) continue;
+    for (let i = 0; i < tSkirts.length; i++) {
+      for (let j = i + 1; j < tSkirts.length; j++) {
+        const a = tSkirts[i]!;
+        const b = tSkirts[j]!;
+
+        const ax0 = a.x - a.width * 0.5;
+        const ax1 = a.x + a.width * 0.5;
+        const az0 = a.z - a.depth * 0.5;
+        const ay0 = a.y0;
+        const ay1 = a.y0 + a.height;
+
+        const bx0 = b.x - b.width * 0.5;
+        const bx1 = b.x + b.width * 0.5;
+        const bz0 = b.z - b.depth * 0.5;
+        const by0 = b.y0;
+        const by1 = b.y0 + b.height;
+
+        const commonY0 = Math.max(ay0, by0);
+        const commonY1 = Math.min(ay1, by1);
+        if (commonY1 - commonY0 < 4) continue;
+
+        const lh = Math.min(5, commonY1 - commonY0 - 1.0);
+        const ly0 = commonY0 + 0.5;
+
+        interface LinkCandidate {
+          readonly x: number;
+          readonly y0: number;
+          readonly z: number;
+          readonly width: number;
+          readonly height: number;
+          readonly depth: number;
+        }
+
+        let linkCandidate: LinkCandidate | null = null;
+        const [firstZ, secondZ] = az0 < bz0 ? [a, b] : [b, a];
+        const fz1 = firstZ.z + firstZ.depth * 0.5;
+        const sz0 = secondZ.z - secondZ.depth * 0.5;
+        const fx0 = firstZ.x - firstZ.width * 0.5;
+        const fx1 = firstZ.x + firstZ.width * 0.5;
+        const sx0 = secondZ.x - secondZ.width * 0.5;
+        const sx1 = secondZ.x + secondZ.width * 0.5;
+
+        const gapZ = sz0 - fz1;
+        const xOverlap0 = Math.max(fx0, sx0);
+        const xOverlap1 = Math.min(fx1, sx1);
+        const xOverlap = xOverlap1 - xOverlap0;
+
+        if (gapZ >= 1.5 && gapZ <= 42 && xOverlap >= 5) {
+          const lz0 = fz1 - 0.25;
+          const lz1 = sz0 + 0.25;
+          const ld = lz1 - lz0;
+          let lw = Math.min(6, xOverlap - 0.8);
+          if (ld <= lw) lw = Math.max(1, ld - 0.5);
+          const lx = (xOverlap0 + xOverlap1) * 0.5;
+          const lz = (lz0 + lz1) * 0.5;
+          linkCandidate = { x: lx, y0: ly0, z: lz, width: lw, height: lh, depth: ld };
+        } else {
+          const [firstX, secondX] = ax0 < bx0 ? [a, b] : [b, a];
+          const fx0_ = firstX.x - firstX.width * 0.5;
+          const fx1_ = firstX.x + firstX.width * 0.5;
+          const sx0_ = secondX.x - secondX.width * 0.5;
+          const sx1_ = secondX.x + secondX.width * 0.5;
+          const fz0_ = firstX.z - firstX.depth * 0.5;
+          const fz1_ = firstX.z + firstX.depth * 0.5;
+          const sz0_ = secondX.z - secondX.depth * 0.5;
+          const sz1_ = secondX.z + secondX.depth * 0.5;
+
+          const gapX = sx0_ - fx1_;
+          const zOverlap0 = Math.max(fz0_, sz0_);
+          const zOverlap1 = Math.min(fz1_, sz1_);
+          const zOverlap = zOverlap1 - zOverlap0;
+
+          if (gapX >= 1.5 && gapX <= 42 && zOverlap >= 5) {
+            const lx0 = fx1_ - 0.25;
+            const lx1 = sx0_ + 0.25;
+            const lw = lx1 - lx0;
+            let ld = Math.min(6, zOverlap - 0.8);
+            if (lw <= ld) ld = Math.max(1, lw - 0.5);
+            const lx = (lx0 + lx1) * 0.5;
+            const lz = (zOverlap0 + zOverlap1) * 0.5;
+            linkCandidate = { x: lx, y0: ly0, z: lz, width: lw, height: lh, depth: ld };
+          }
+        }
+
+        if (
+          linkCandidate &&
+          checkLowBaseSafety(linkCandidate.x, linkCandidate.z, linkCandidate.width, linkCandidate.depth)
+        ) {
+          const lMass: SkyriverMass = {
+            ...linkCandidate,
+            tint: a.tint,
+            anchorV: a.anchorV,
+            building: a.building,
+            materialOwner: a.materialOwner,
+            baseRecord: { kind: 'link', towerOwner: tKey, cluster: a.baseRecord!.cluster },
+          };
+          if (touch(lMass, a) && touch(lMass, b) && !lowRoofPlaneConflicts(spatial, lMass)) {
+            masses.push(lMass);
+            insertLowBaseSpatialMass(spatial, lMass);
+          }
+        }
+      }
+    }
+  }
+}
+
 
 // --- R17 building variation ----------------------------------------------------------------------
 // Operator headline: adopt the reference's massing language (scratch/reference/massing_*.png): lots
@@ -1217,8 +1979,6 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
 // Its own seeded stream: the T2 and trim streams are untouched.
 
 export type SkyriverMassingArchetype = 'plain' | 'complex' | 'ziggurat' | 'setback' | 'crown' | 'spire' | 'plateau';
-
-type PushTrim = (kind: number, px: number, py: number, pz: number, ex: number, ey: number, ez: number, on: SkyriverTrimOwner) => void;
 
 /** Shares per archetype, inner wall and outer columns (cumulative order below). */
 const MASSING_INNER: readonly (readonly [SkyriverMassingArchetype, number])[] = [
