@@ -48,6 +48,14 @@ import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
 import { HERO_HORIZONTAL_CELLS, HERO_VERTICAL_CELLS, createSignAtlas, type SignAtlas } from './signAtlas';
 import { createInteriorAtlas, type InteriorAtlas } from './interiorAtlas';
 import {
+  SKYRIVER_INTERIOR_AVERAGE_GAIN,
+  SKYRIVER_INTERIOR_DARKROOM_SPILL,
+  SKYRIVER_INTERIOR_DIM_SHARE,
+  SKYRIVER_INTERIOR_FADE,
+  SKYRIVER_INTERIOR_RESPONSE_GLSL,
+  SKYRIVER_INTERIOR_SHEEN_GAIN,
+} from './interiorResponse';
+import {
   IMPOSTOR_BODY_PX,
   IMPOSTOR_CAP,
   IMPOSTOR_COLUMNS,
@@ -68,10 +76,7 @@ export const SKYRIVER_CITY_DRAW_CALL_BUDGET = 8;
 /** T7-4 interior mapping per tier. */
 export type SkyriverInteriorMode = 'full' | 'near' | 'off';
 /** View-depth fade windows (start, end), metres: rooms within start, emissive panes beyond end. */
-export const SKYRIVER_INTERIOR_FADE = Object.freeze({
-  full: Object.freeze([600, 800] as const),
-  near: Object.freeze([260, 380] as const),
-});
+export { SKYRIVER_INTERIOR_FADE };
 
 /**
  * Tunables, exported so a node-only check can assert them without a GL context. Metres throughout.
@@ -1968,6 +1973,7 @@ uniform vec3 uMegaTint;
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${SKYRIVER_HASH_GLSL}
+${SKYRIVER_INTERIOR_RESPONSE_GLSL}
 ${SKYRIVER_DISTANCE_GRADE_GLSL}
 
 /** Rounded-box signed distance in cell units; the window glass. */
@@ -2226,11 +2232,21 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // lit panes), so the crown rim's light separates cleanly from the facade texture below it.
   float crownGap = ( 1.0 - step( 0.02, distance( vTint, uMegaTint ) ) ) * ( 1.0 - smoothstep( 50.0, 64.0, vFaceHalf.y - vSurf.y ) ) * vIsSide;
   lit *= 1.0 - crownGap;
+  float glassRaw = ( 1.0 - smoothstep( -0.012, 0.012, sd ) );
+  float interiorDepthMix = interiorDepthWeight( viewDepth, uInteriorFade );
+  float roomHash = skyHash12( cell * vec2( 1.7, 2.3 ) + faceOffset * 0.71 );
+  float dimShare = mix( ${SKYRIVER_INTERIOR_DIM_SHARE.mid.toFixed(2)}, ${SKYRIVER_INTERIOR_DIM_SHARE.grime.toFixed(2)}, grime );
+  dimShare = mix( dimShare, ${SKYRIVER_INTERIOR_DIM_SHARE.pristine.toFixed(2)}, pristine );
+  float dim = ( 1.0 - lit ) * step( 1.0 - dimShare, skyHash11( roomHash * 53.0 + 11.0 ) );
+  float screen = step( 0.7, skyHash11( roomHash * 19.0 ) );
+  float screenActive = screen * ( 1.0 - grime ) * ( 1.0 - pristine );
+  float interiorFade = uInteriorStrength * interiorDepthMix * vIsSide;
+  float screenBlueRoom = interiorScreenBlueEnergy( interiorDepthMix, screenActive, dim, uInteriorStrength ) * vIsSide;
+  float screenBluePane = screenBlueRoom * glassRaw;
   vec3 resolved = paneColor * ( lit * brightness * buzz ) * ( glass + halo * 0.28 ) * ( 1.0 - heroShadow );
+  resolved += interiorScreenMean( interiorPaneScreenInput( screenBluePane * ( 1.0 - heroShadow ) ) );
 
   // --- T7-4 interiors: within uInteriorFade of the camera, the glass shows a traced room. -----------
-  float glassRaw = ( 1.0 - smoothstep( -0.012, 0.012, sd ) );
-  float interiorFade = uInteriorStrength * ( 1.0 - smoothstep( uInteriorFade.x, uInteriorFade.y, viewDepth ) ) * vIsSide;
   if ( interiorFade > 0.001 && glassRaw > 0.001 ) {
     vec3 d = normalize( vWorldPos - cameraPosition );
     vec3 ray = vec3( dot( d, vTangentW ) / uCellWidth, d.y / uCellHeight, - dot( d, vNormalW ) / ROOM_DEPTH_M );
@@ -2238,7 +2254,6 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
     // the atlas between frames; rooms fade back to the plain pane below ~10 degrees.
     interiorFade *= smoothstep( 0.1, 0.3, - dot( d, vNormalW ) );
     // Strata pick the room set: grime 0-9, mid 10-21, pristine 22-31 (dithered at the borders).
-    float roomHash = skyHash12( cell * vec2( 1.7, 2.3 ) + faceOffset * 0.71 );
     float bandPick = vWorldPos.y + ( skyHash11( roomHash * 91.0 ) - 0.5 ) * 160.0;
     // R16: each stratum's set includes the new archetypes (grime + noodle, laundry, workshop; mid +
     // server, karaoke, gym, grow; pristine + gallery, server), and each building draws from its own
@@ -2253,23 +2268,24 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
     float mirror = step( 0.5, skyHash11( roomHash * 37.0 + 3.0 ) );
     float depth01;
     vec3 roomColor = traceRoom( cellLocal, ray, room, mirror, depth01 );
-    // Light: the bright rooms are the existing lit runs (so the far average is unchanged); a second
-    // set is dimly lit (a lamp, a screen) — about 60% of mid-city rooms read as occupied up close;
-    // the rest sit dark, picked out only by city spill. Pristine floors are mostly dark.
-    float dimShare = mix( mix( 0.5, 0.42, smoothstep( 500.0, 700.0, vWorldPos.y ) ), 0.55, pristine );
-    float dim = ( 1.0 - lit ) * step( 1.0 - dimShare, skyHash11( roomHash * 53.0 + 11.0 ) );
-    float screen = step( 0.7, skyHash11( roomHash * 19.0 ) );
-    vec3 dimLight = mix( paneColor * 0.55, vec3( 0.25, 0.45, 0.9 ) * ( 0.5 + 0.15 * sin( uTime * 7.0 + roomHash * 40.0 ) ), screen * ( 1.0 - grime ) );
+    // Existing lit runs stay intact. Non-screen dim lamps keep their pane tint.
+    vec3 screenSource = interiorScreenSource( interiorDepthMix, sin( uTime * 7.0 + roomHash * 40.0 ) );
+    vec3 dimLight = mix( paneColor * 0.55, screenSource, screenActive );
     // Pristine floors: only the thin cool ceiling light lines are on.
     dimLight = mix( dimLight, vec3( 0.55, 0.75, 1.0 ) * 0.08, pristine );
     // Exposure is set against the facade's 0.55 window scale below: lit rooms read as rooms, dim
     // rooms as lamp-lit silhouettes, dark rooms as shapes in the city's spill light.
-    // R14: dark rooms are dark (city spill 0.42 -> 0.16); lit and lamp-lit rooms carry the read.
-    vec3 roomLight = paneColor * ( lit * blockLive * brightness * buzz * 7.0 ) + dimLight * dim * 5.5 + vec3( 0.16, 0.17, 0.22 ) * glassTint * mix( 1.0, 0.25, pristine );
+    vec3 roomLight = paneColor * ( lit * blockLive * brightness * buzz * 7.0 ) + dimLight * dim * 5.5
+      + vec3( ${SKYRIVER_INTERIOR_DARKROOM_SPILL[0].toFixed(2)}, ${SKYRIVER_INTERIOR_DARKROOM_SPILL[1].toFixed(2)}, ${SKYRIVER_INTERIOR_DARKROOM_SPILL[2].toFixed(2)} ) * glassTint * mix( 1.0, 0.25, pristine );
     // The glass colour sits over the whole room (the building's culture), not only its lamps.
     vec3 interior = roomColor * roomLight * glassTint;
-    // Glass: a faint sheen of the city over the room, stronger at grazing angles.
-    interior += sheen * fresnel * 0.35;
+    vec3 screenAtlas = roomColor * screenSource * ( screenActive * dim * 5.5 * ( 1.0 - pristine ) ) * glassTint;
+    interior -= screenAtlas;
+    vec3 matchedScreenMean = interiorScreenMean( interiorPaneScreenInput( screenBlueRoom ) );
+    // Start at the pane mean, then reveal atlas detail as the room resolves.
+    interior += interiorScreenTraceBlend( interiorDepthMix, matchedScreenMean, screenAtlas );
+    // Keep grazing glass sheen low.
+    interior += sheen * fresnel * ${SKYRIVER_INTERIOR_SHEEN_GAIN.toFixed(2)};
     vec3 resolvedInterior = ( interior * glassRaw + paneColor * ( lit * blockLive * brightness ) * halo * 0.1 ) * ( 1.0 - heroShadow );
     resolved = mix( resolved, resolvedInterior, interiorFade );
   }
@@ -2286,7 +2302,8 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // R14: the far-field window average (a uniform fill) is cut; resolved panes keep their punch.
   // R16 ambient III: the unresolved fill is cut again (0.55 -> 0.3; it is ambient, not a light) and
   // the resolved panes and rooms take the emissive gain of the exposure trade.
-  color += mix( averaged * ( 1.0 - heroShadow ) * 0.3, resolved * EMISSIVE_GAIN, detail ) * 1.55 * ( 1.0 - 0.65 * pristine );
+  averaged += interiorScreenMean( interiorAverageScreenInput( screenBluePane ) );
+  color += mix( averaged * ( 1.0 - heroShadow ) * ${SKYRIVER_INTERIOR_AVERAGE_GAIN.toFixed(2)}, resolved * EMISSIVE_GAIN, detail ) * 1.55 * ( 1.0 - 0.65 * pristine );
 
   color = skyriverDistanceGrade( color, viewDepth, 0.0 );
   gl_FragColor = vec4( max( color, vec3( 0.0 ) ), 1.0 );
