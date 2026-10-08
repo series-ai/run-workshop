@@ -19,9 +19,11 @@
  *   - Passing. A faster-than-median car slides to one side by up to 12 m and back, with no
  *     neighbour query: a continuous sin-squared lateral offset. Convoy members never pass.
  *   - Forks. Each stream carries one or two seeded fork nodes. A car picks each fork at spawn from
- *     its own avalanche hash bit, so four baked variants per stream cover every choice: main,
- *     fork 0, fork 1, both. Every branch leaves the main line over a 600 m ramp, runs 1200-1500 m
- *     off it, and merges back over a second 600 m ramp.
+ *     its own avalanche hash bit with a per-node take share of 0.27 (R26), so four baked variants
+ *     per stream cover every choice: main, fork 0, fork 1, both. Each branch has 1200-1500 m
+ *     of total support, including two 600 m ramps. Lateral separation is 80-160 m.
+ *     The first fork on every stream has 60-100 m of vertical separation,
+ *     while an optional second fork has 30-60 m.
  *   - Course changes. A seeded share of cars make one smooth same-direction stream change per lap
  *     over a 600-900 m ramp, alternating A -> B then B -> A, so no car ever teleports at the seam.
  *
@@ -217,16 +219,26 @@ export const STREAM_PATH_ROWS = WARP_ROW + 1;
 export const FORK_RAMP_M = 600;
 export const FORK_LENGTH_MIN_M = 1200;
 export const FORK_LENGTH_SPAN_M = 300;
-export const FORK_LATERAL_MIN_M = 60;
-export const FORK_LATERAL_SPAN_M = 60;
+export const FORK_LATERAL_MIN_M = 80;
+export const FORK_LATERAL_SPAN_M = 80;
+/** Generic vertical bounds describing the overall 30-100 m range across all forks. */
 export const FORK_VERTICAL_MIN_M = 30;
-export const FORK_VERTICAL_SPAN_M = 30;
+export const FORK_VERTICAL_SPAN_M = 70;
+/** First-vs-secondary vertical separation ranges: node 0 has 60-100 m, optional node 1 has 30-60 m. */
+export const FORK_FIRST_VERTICAL_MIN_M = 60;
+export const FORK_FIRST_VERTICAL_SPAN_M = 40;
+export const FORK_SECONDARY_VERTICAL_MIN_M = 30;
+export const FORK_SECONDARY_VERTICAL_SPAN_M = 30;
+export const FORK_VERTICAL_BY_ROLE: readonly { readonly minM: number; readonly spanM: number }[] = Object.freeze([
+  Object.freeze({ minM: FORK_FIRST_VERTICAL_MIN_M, spanM: FORK_FIRST_VERTICAL_SPAN_M }),
+  Object.freeze({ minM: FORK_SECONDARY_VERTICAL_MIN_M, spanM: FORK_SECONDARY_VERTICAL_SPAN_M }),
+]);
 /** Clear arc between any two supports, and between a support and an interchange ramp, metres. */
 export const FORK_GAP_M = 200;
 /** Clear arc a course-change ramp keeps from a reserved interval, metres. */
 export const HOP_GAP_M = 120;
-/** A car takes each of its stream's forks with this probability, from its own hash bit. */
-export const FORK_TAKE_SHARE = 0.5;
+/** A car takes each of its stream's forks with this probability, from its own hash bit. Reduced in R26 to 0.27. */
+export const FORK_TAKE_SHARE = 0.27;
 /** Branch altitudes stay inside this window, metres (above the service deck, under the skybridges). */
 export const FORK_Y_MIN_M = 150;
 export const FORK_Y_MAX_M = 2600;
@@ -558,8 +570,18 @@ function forkAltitudeExcessM(k: number, startM: number, lengthM: number, vertica
  * Picks the branch offsets. The lateral sign points inward (toward the canyon centreline) first, so
  * a branch never pushes its cars into a wall; the magnitude shrinks in 10 m steps only if both signs
  * would overshoot the corridor by more than the main line already does.
+ *
+ * Node 0 (first fork on a stream) has an absolute vertical range of 60-100 m. An optional secondary
+ * node has 30-60 m.
  */
-function chooseForkOffsets(seed: number, k: number, startM: number, lengthM: number, channel: number): { lateralM: number; verticalM: number } {
+function chooseForkOffsets(
+  seed: number,
+  k: number,
+  startM: number,
+  lengthM: number,
+  channel: number,
+  nodeIndex: number,
+): { lateralM: number; verticalM: number } {
   const centre = { x: 0, y: 0 };
   let meanX = 0;
   let samples = 0;
@@ -582,10 +604,12 @@ function chooseForkOffsets(seed: number, k: number, startM: number, lengthM: num
   }
   if (lateralM === 0) fail('SKYRIVER_R21_FORK_LATERAL_UNPLACEABLE');
 
-  const wantedUp = FORK_VERTICAL_MIN_M + modelHash(seed, channel + 1) * FORK_VERTICAL_SPAN_M;
+  const role = nodeIndex === 0 ? 0 : 1;
+  const vertBounds = FORK_VERTICAL_BY_ROLE[role]!;
+  const wantedUp = vertBounds.minM + modelHash(seed, channel + 1) * vertBounds.spanM;
   const up = modelHash(seed, channel + 2) < 0.5 ? 1 : -1;
   let verticalM = 0;
-  for (let magnitude = wantedUp; magnitude >= FORK_VERTICAL_MIN_M - 1e-9 && verticalM === 0; magnitude -= 5) {
+  for (let magnitude = wantedUp; magnitude >= vertBounds.minM - 1e-9 && verticalM === 0; magnitude -= 5) {
     for (const sign of [up, -up]) {
       if (forkAltitudeExcessM(k, startM, lengthM, sign * magnitude) <= 1e-9) {
         verticalM = sign * magnitude;
@@ -729,7 +753,7 @@ function buildRenderTrafficModel(seed: number): RenderTrafficModel {
       // rejoins the main line exactly there instead of within one cell of it.
       const lengthM = Math.round((FORK_LENGTH_MIN_M + modelHash(seed, channel) * FORK_LENGTH_SPAN_M) / PLACEMENT_CELL_M) * PLACEMENT_CELL_M;
       const startM = placeSupport(seed, channel + 1, lengthM, [...reserved, ...ownSpans], FORK_GAP_M, false, 'SKYRIVER_R21_FORK_PLACEMENT');
-      const { lateralM, verticalM } = chooseForkOffsets(seed, k, startM, lengthM, channel + 0xc0);
+      const { lateralM, verticalM } = chooseForkOffsets(seed, k, startM, lengthM, channel + 0xc0, f);
       own.push({ startM, lengthM, rampM: FORK_RAMP_M, lateralM, verticalM });
       ownSpans.push({ startM, lengthM });
     }
