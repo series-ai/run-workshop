@@ -473,7 +473,7 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   const bufferSize = new THREE.Vector2();
   const onFrame = (frame: SkyriverFrame): void => {
     scene.renderer.getDrawingBufferSize(bufferSize);
-    traffic.setPixelAngle(((frame.camera.fov * Math.PI) / 180) / Math.max(1, bufferSize.y));
+    traffic.setPixelAngle((2 * Math.tan((frame.camera.fov * Math.PI) / 360)) / Math.max(1, bufferSize.y));
     traffic.update({ tick: frame.tick, alpha: frame.alpha }, frame.camera.position);
   };
   scene.addFrameListener(onFrame);

@@ -131,10 +131,10 @@ export interface SkyriverTraffic {
   update(time: TrafficTime, camera: TrafficPoint): void;
 
   /**
-   * Radians per drawing-buffer pixel, vertically (field of view / buffer height). The light streaks
-   * use it to keep a pixel-size floor, so distant rivers never alias away. Call on resize/DPR change.
+   * Inverse vertical focal length per drawing-buffer pixel: 2 * tan(FOV / 2) / buffer height.
+   * The lamps use this value for the pixel floor. Call this on resize or DPR change.
    */
-  setPixelAngle(radiansPerPixel: number): void;
+  setPixelAngle(inverseFocalLengthPx: number): void;
 
   /**
    * T6R-2: the presented shuttle pose (sim turns for yaw) and its speed, m/s. The escort vehicles
