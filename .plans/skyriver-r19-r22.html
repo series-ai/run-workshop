@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><title>Skyriver render rounds</title>
+<style>:root{color-scheme:dark;--bg:#04060b;--ink:#d9f2ff;--accent:#72dbed}body{background:var(--bg);color:var(--ink);font:16px system-ui;margin:24px;max-width:1100px}article{border:1px solid #314754;padding:16px;margin:16px 0}small{color:var(--accent)}@media(max-width:420px){body{margin:12px}}</style>
+<h1>Skyriver render rounds</h1><p>Status: in progress. Branch: ph/skyriver-renderer-rounds-r19-r22-sol-rebuild-bas-thr_exgdwg7mf6.</p>
+<p>Source: R18 at af7b7e0. Restore: e8e437e. Baseline: 49 tests pass. Type check and build pass.</p>
+<article><h2>R19: Traffic light transitions</h2><p>Use one distance band. Test complementary alpha. Keep sky rings clear of towers. Measure light events over a lap and tier changes.</p><small>R19: 52 tests pass. Browser: 32 calls. Pop target remains open. Evidence: /tmp/t719b/r19/report.html.</small></article>
+<article><h2>R19.5: World exhaust</h2><p>Sample the ship path behind its current arc. Use no history. Add the ribbon to the existing plume draw. Check bank and boost release.</p><small>Pending.</small></article>
+<article><h2>R19.6: Remove GPU free floaters</h2><p>Keep CPU free cars. Use only existing structured paths. Keep the existing path share ratio. Measure open-section density.</p><small>Pending.</small></article>
+<article><h2>R19.7: Interior transitions</h2><p>Widen the fade. Reduce room occupancy. Reduce blue-screen light. Compare one wall across the distance band.</p><small>Pending.</small></article>
+<article><h2>R20: Visibility</h2><p>Read opaque scene depth for soft beam intersections. Tune contact shadows and haze. Measure cost at DPR 1 and 1.5.</p><small>Pending.</small></article>
+<article><h2>R21: Traffic paths</h2><p>Use seeded speed bands, branches, and stream changes. CPU and GPU paths must agree. Keep cars clear of buildings.</p><small>Pending.</small></article>
+<article><h2>R22: District colors</h2><p>Use seeded districts. Concentrate sign and hero colors. Reduce background saturation. Measure six matched frames.</p><small>Pending.</small></article>
+<p>Each round requires passing tests, type check, build, a render call check, an evidence copy, and a commit. Simulation files must match R18. Archive: thr_apyfknwrv7-1/run-workshop/scratch/execution-evidence.</p>
+<h2>Execution record</h2><p>Evidence root: /tmp/t719b. Each round has its own directory. No publish or deployment step is authorized.</p>

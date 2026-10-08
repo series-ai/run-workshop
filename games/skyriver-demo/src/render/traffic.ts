@@ -69,6 +69,12 @@ import {
 import { CANYON_LOOP_LENGTH_M, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
 import { routeAltitude, routeLateral } from './routeProfile';
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
+import {
+  cpuLightHandoverAlpha,
+  IMPOSTOR_FAR_FALLOFF_BAND_M,
+  IMPOSTOR_LIGHT_HANDOVER_BAND_M,
+  IMPOSTOR_SUPPORT_TAPER_BAND,
+} from './lightHandover';
 import { IMPOSTOR_FREE_MAX_Y_M, IMPOSTOR_FREE_MIN_Y_M, IMPOSTOR_PATHS, IMPOSTOR_RINGS, STREAMS, loopCentroid, STREAM_CORRIDOR_HALF_M, STREAM_PATH_SAMPLES, STREAM_PATH_STEP_M, deriveImpostorAttributes, streamPathTable } from './trafficStreams';
 import type {
   SkyriverTraffic,
@@ -114,20 +120,16 @@ const TRAFFIC_DRAW_CALLS = RENDER_ARCHETYPES + 2;
 /**
  * R18 GPU impostor traffic: per-tier counts (set from the measured frame-time curve, see the R18
  * report), and the band where they take over from the CPU cars: impostors fade in and the CPU cars'
- * lights fade out across it, so far traffic hands over without a seam.
+ * lights fade out across one shared distance band, so far traffic hands over without a seam.
  */
 export const IMPOSTORS_HIGH = 20000;
 export const IMPOSTORS_MEDIUM = 10000;
 /**
- * Impostors fade in over this band; the CPU cars' lights hand over at 1.0-1.3 km (their hulls are
- * drawn to 1.3 km either way), so the mid range carries both and the far range impostors only.
+ * Impostors fade in over the shared band; the CPU cars' lights use its exact complement. Their hulls
+ * are drawn to 1.3 km either way, so the mid range carries bodies while lights hand over smoothly.
  * Measured (R18): the chase frame is ~50-65% wall surface at 0.7-1.5 km, so the air the camera can
  * see traffic in is mostly the corridor in front of those walls; impostors start at 450 m to fill it.
  */
-const IMPOSTOR_BAND_START_M = 450;
-const IMPOSTOR_BAND_END_M = 750;
-const CPU_LIGHT_HANDOVER_START_M = 1000;
-const CPU_LIGHT_HANDOVER_END_M = 1300;
 /** Impostor tier change: the larger set stays drawn while the difference fades, seconds. */
 const IMPOSTOR_FADE_S = 1.2;
 
@@ -238,7 +240,7 @@ const HEAD_TRAIL_S = 0.02;
  * 60 m, low alpha so bloom integrates it. Red seen from behind, warm white seen from the front.
  */
 /** R18 impostor sprite brightness before the emissive gain (bloom A/B tuned). */
-const IMPOSTOR_INTENSITY = 1.2;
+export const IMPOSTOR_INTENSITY = 1.2;
 const TRAIL_SECONDS = 0.45;
 const TRAIL_MAX_M = 60;
 const TRAIL_ALPHA = 0.25;
@@ -853,7 +855,8 @@ void main() {
   float x = vCapsule.x;
   float along = clamp( x, 0.0, vLengthR );
   float dist = length( vec2( x - along, vCapsule.y ) );
-  float body = exp( - dist * dist * 1.6 );
+  float support = 1.0 - smoothstep( ${IMPOSTOR_SUPPORT_TAPER_BAND[0].toFixed(2)}, ${IMPOSTOR_SUPPORT_TAPER_BAND[1].toFixed(2)}, dist );
+  float body = exp( - dist * dist * 1.6 ) * support;
   float core = exp( - dist * dist * 10.0 );
   // Brightest at the lamp, fading down the trail.
   float t = vLengthR > 0.0 ? along / vLengthR : 0.0;
@@ -908,6 +911,7 @@ uniform float uPathLast;
 uniform float uCorridor;
 uniform float uPixelAngle;
 uniform vec2 uBand;          // impostors fade in over [x, y] metres from the camera
+uniform vec2 uFarFalloff;    // brightness fades over [x, y] metres from the camera
 uniform float uFadeFrom;     // instances at or above this index fade by uFadeK (tier change)
 uniform float uFadeK;
 
@@ -1023,11 +1027,12 @@ void main() {
 
   float facing = dot( dir, toCam / max( dist, 1.0 ) );
   vWarm = smoothstep( - 0.2, 0.3, facing );
-  float tierFade = float( gl_InstanceID ) >= uFadeFrom ? uFadeK : 1.0;
+  float tierPresence = float( gl_InstanceID ) >= uFadeFrom ? uFadeK : 1.0;
   // Far impostors integrate into the haze instead of stacking into a bloom wash: a pixel-size dot
   // keeps its size with distance, so its brightness has to fall instead (to 25% by 9 km).
-  vIntensity = ( 0.55 + 0.6 * fract( seed * 29.7 ) ) * smoothstep( uBand.x, uBand.y, dist ) * tierFade
-    * mix( 1.0, 0.25, smoothstep( 2500.0, 9000.0, dist ) );
+  float handover = smoothstep( uBand.x, uBand.y, dist );
+  float farBrightness = 1.0 - 0.75 * smoothstep( uFarFalloff.x, uFarFalloff.y, dist );
+  vIntensity = ( 0.55 + 0.6 * fract( seed * 29.7 ) ) * handover * tierPresence * farBrightness;
   if ( vIntensity <= 0.001 ) {
     // Inside the CPU cars' band (or faded out): no fragments at all.
     gl_Position = vec4( 2.0, 2.0, 2.0, 1.0 );
@@ -1057,7 +1062,8 @@ void main() {
   float x = vCapsule.x;
   float along = clamp( x, 0.0, vLengthR );
   float dist = length( vec2( x - along, vCapsule.y ) );
-  float body = exp( - dist * dist * 1.6 );
+  float support = 1.0 - smoothstep( ${IMPOSTOR_SUPPORT_TAPER_BAND[0].toFixed(2)}, ${IMPOSTOR_SUPPORT_TAPER_BAND[1].toFixed(2)}, dist );
+  float body = exp( - dist * dist * 1.6 ) * support;
   float t = vLengthR > 0.0 ? along / vLengthR : 0.0;
   float fall = pow( max( 1.0 - t, 0.0 ), 1.2 );
   vec3 color = mix( vec3( 1.0, 0.07, 0.045 ), vec3( 1.0, 0.86, 0.66 ), vWarm ) * body * fall;
@@ -1394,7 +1400,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       uPathLast: { value: STREAM_PATH_SAMPLES },
       uCorridor: { value: STREAM_CORRIDOR_HALF_M },
       uPixelAngle: { value: 0.0012 },
-      uBand: { value: new Vector2(IMPOSTOR_BAND_START_M, IMPOSTOR_BAND_END_M) },
+      uBand: { value: new Vector2(...IMPOSTOR_LIGHT_HANDOVER_BAND_M) },
+      uFarFalloff: { value: new Vector2(...IMPOSTOR_FAR_FALLOFF_BAND_M) },
       uFadeFrom: { value: 1e9 },
       uFadeK: { value: 1 },
       // Dim on purpose: tens of thousands of sub-pixel dots must integrate into the haze as light-river
@@ -1479,8 +1486,6 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   let streaksUsed = 0;
 
   const invDimRangeSq = 1 / (DISTANCE_DIM_RANGE_M * DISTANCE_DIM_RANGE_M);
-  const impostorBandStartSq = CPU_LIGHT_HANDOVER_START_M * CPU_LIGHT_HANDOVER_START_M;
-  const impostorBandEndSq = CPU_LIGHT_HANDOVER_END_M * CPU_LIGHT_HANDOVER_END_M;
 
   // ---- R11 stream geometry: centre (x across, y) of stream k at canyon arc length v.
   const streamScratch = new Float64Array(3);
@@ -1855,8 +1860,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         const dz = pz - camZ;
         const distanceSq = dx * dx + dy * dy + dz * dz;
         if (carThinFar[car] === 1) fade *= 1 - smoothstep(900 * 900, 1150 * 1150, distanceSq);
-        // R18: with impostors on, the CPU cars' far lights hand over to them across the impostor band.
-        if (impostorPresence > 0) fade *= 1 - impostorPresence * smoothstep(impostorBandStartSq, impostorBandEndSq, distanceSq);
+        // R19: use the same Euclidean distance and complementary share as the GPU impostor sprites.
+        if (impostorPresence > 0) fade *= cpuLightHandoverAlpha(Math.sqrt(distanceSq), impostorPresence);
         const dim = (1 - (1 - DISTANCE_DIM_FLOOR) * Math.min(1, distanceSq * invDimRangeSq)) * fade;
         const colorOffset = slot * 3;
         colors[colorOffset] = tintR[car] * dim;

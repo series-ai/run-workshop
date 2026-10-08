@@ -1,0 +1,12 @@
+<!doctype html><meta charset="utf-8"><title>Render checks</title><style>body{background:#04060b;color:#d9f2ff;font:16px system-ui;max-width:900px;margin:24px}pre{white-space:pre-wrap;background:#14212b;padding:16px}</style>
+<h1>Render checks</h1><p>Install Playwright in a separate tools directory. Set PLAYWRIGHT_MODULE to its module path. Start the built game with an HTTP server. Each browser closes after its check.</p>
+<pre>node tools/render-evidence/tiers.cjs URL
+LAYER=traffic node tools/render-evidence/popdetect.cjs URL OUT.json 50
+TIER_TEST=1 LAYER=traffic node tools/render-evidence/popdetect.cjs URL OUT.json 16
+node tools/render-evidence/roadgate.cjs URL OUTPREFIX
+node tools/render-evidence/capture.cjs URL OUTDIR
+REPEATS=3 node tools/render-evidence/perf.cjs URL 1.5 '?tier=high' '?tier=high&amp;visibility=0'
+python3 tools/render-evidence/metrics.py OUTDIR</pre>
+<p>The impostorPop class includes screen-cell light events assigned to a GPU traffic source with no detected tower occlusion. Light pixels use fixed luminance thresholds: 170 for entry and 60 for exit. The detector saves raw events. Pixel aliasing, other occluders, and source matching can affect counts. A nonzero count requires inspection.</p>
+<p>The road check measures traffic trail length and width. Review the saved top views for road shapes. The script does not replace that review.</p>
+<p>Frame metrics exclude the HUD. Neon pixels have saturation at least 0.35 and maximum channel at least 0.45. Hue bins span 30 degrees. Keep these settings fixed in all comparisons.</p>

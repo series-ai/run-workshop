@@ -40,6 +40,9 @@ import { SkyriverAtmosphere, SKYRIVER_ATMOSPHERE_DRAW_CALL_BUDGET, SKYRIVER_EXPO
 import { SkyriverCity, SKYRIVER_CITY_DRAW_CALL_BUDGET, type SkyriverInteriorMode } from './city';
 import { presentCityLayout } from './presentationLayout';
 
+/** Bloom pickup spans a broad luminance range. */
+export const SKYRIVER_BLOOM_PICKUP_WIDTH = 0.2;
+
 /** Plan R3: 16 total. The approved night look spends less — the hard ceiling we hold to is 12. */
 /**
  * T6: raised from 12 to 14 — the shuttle now renders through its own module (render/shuttle.ts) as
@@ -335,6 +338,7 @@ export class SkyriverScene {
     // taillight strip, light-trail lamps, the plume core, beacons. A tight radius keeps it a halo,
     // not a wash.
     this.bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), SKYRIVER_BLOOM_STRENGTH, 0.45, 1.2);
+    this.bloomPass.materialHighPassFilter.uniforms['smoothWidth']!.value = SKYRIVER_BLOOM_PICKUP_WIDTH;
     this.bloomLevel = this.bloomEnabled ? SKYRIVER_BLOOM_STRENGTH : 0;
     this.composer.addPass(this.bloomPass);
     this.composer.addPass(new OutputPass());

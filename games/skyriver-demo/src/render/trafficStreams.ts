@@ -47,7 +47,7 @@ export const IMPOSTOR_LANES: readonly (readonly number[])[] = Object.freeze([
 /** Every path an impostor can fly: the CPU streams (indices 0..7, same rows) then the lanes. */
 export const IMPOSTOR_PATHS: readonly (readonly number[])[] = Object.freeze([...STREAMS, ...IMPOSTOR_LANES]);
 /**
- * R18 air-traffic rings: world-space closed lanes round the city, high over the rooflines. From
+ * R18 air-traffic rings: world-space closed lanes round the city, above the full tower skyline. From
  * inside the winding canyon the chase camera cannot see any canyon traffic beyond ~700 m (measured:
  * 0 of 19,000 canyon impostors in the frustum at 14 s and 26 s; the canyon turns behind its walls),
  * so the volume the operator asked for has to fly where the camera sees range: the sky over the
@@ -55,12 +55,12 @@ export const IMPOSTOR_PATHS: readonly (readonly number[])[] = Object.freeze([...
  * radial meander m, wobble m, meander lobes, share]. Centred on the loop's centroid.
  */
 export const IMPOSTOR_RINGS: readonly (readonly number[])[] = Object.freeze([
-  [3000, 3600, 1, 5, 420, 170, 600, 180, 5, 0.17],
-  [3900, 4100, -1, 6, 520, 150, 750, 220, 4, 0.19],
-  [4900, 3800, 1, 4, 380, 210, 900, 200, 7, 0.17],
-  [5900, 4600, -1, 5, 480, 180, 800, 260, 6, 0.17],
-  [7000, 4300, 1, 6, 600, 230, 900, 250, 5, 0.16],
-  [8200, 5000, -1, 4, 500, 160, 1000, 300, 3, 0.14],
+  [3000, 10200, 1, 5, 420, 170, 600, 180, 5, 0.17],
+  [3900, 10700, -1, 6, 520, 150, 750, 220, 4, 0.19],
+  [4900, 10400, 1, 4, 380, 210, 900, 200, 7, 0.17],
+  [5900, 11200, -1, 5, 480, 180, 800, 260, 6, 0.17],
+  [7000, 10900, 1, 6, 600, 230, 900, 250, 5, 0.16],
+  [8200, 11600, -1, 4, 500, 160, 1000, 300, 3, 0.14],
 ]);
 /** Impostor shares: canyon streams, canyon lanes, sky rings. */
 const IMPOSTOR_STREAM_SHARE = 0.25;

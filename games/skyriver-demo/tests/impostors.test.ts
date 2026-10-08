@@ -7,12 +7,65 @@
 import { describe, expect, it } from 'vitest';
 
 import { deriveCityLayout } from '../src/sim/derive';
+import { SKYRIVER_EMISSIVE_GAIN } from '../src/render/atmosphere';
 import { createMassField } from '../src/render/clearance';
+import { deriveCityMasses, deriveCityTrims } from '../src/render/city';
 import { presentCityLayout } from '../src/render/presentationLayout';
-import { IMPOSTOR_FREE_INDEX, IMPOSTOR_PATHS, IMPOSTOR_PATH_COUNT, deriveImpostorAttributes, impostorPosition } from '../src/render/trafficStreams';
+import { SKYRIVER_BLOOM_PICKUP_WIDTH } from '../src/render/scene';
+import { IMPOSTOR_INTENSITY } from '../src/render/traffic';
+import { IMPOSTOR_FREE_INDEX, IMPOSTOR_PATHS, IMPOSTOR_PATH_COUNT, IMPOSTOR_RINGS, deriveImpostorAttributes, impostorPosition } from '../src/render/trafficStreams';
+import {
+  cpuLightHandoverAlpha,
+  farImpostorBrightness,
+  IMPOSTOR_FAR_FALLOFF_BAND_M,
+  IMPOSTOR_LIGHT_HANDOVER_BAND_M,
+  IMPOSTOR_SUPPORT_TAPER_BAND,
+  impostorLightHandoverAlpha,
+  impostorSupportTaperAlpha,
+} from '../src/render/lightHandover';
 
 /** main.ts SKYRIVER_DEMO_SEED (not imported: main.ts boots the app). */
 const DEMO_SEED = 424242;
+
+describe('impostor light response', () => {
+  it('uses one distance band and complementary CPU and GPU light shares at every presence', () => {
+    expect(IMPOSTOR_LIGHT_HANDOVER_BAND_M).toEqual([450, 750]);
+    for (const presence of [0, 0.1, 0.5, 0.9, 1]) {
+      for (const distanceM of [0, 449, 450, 525, 600, 675, 750, 751, 1000, 1300]) {
+        const cpu = cpuLightHandoverAlpha(distanceM, presence);
+        const impostor = impostorLightHandoverAlpha(distanceM, presence);
+        expect(cpu + impostor).toBeCloseTo(1, 12);
+        expect(cpu).toBeGreaterThanOrEqual(0);
+        expect(impostor).toBeLessThanOrEqual(presence);
+      }
+    }
+  });
+
+  it('keeps far brightness monotone and within bloom pickup width over 20 m', () => {
+    const [startM, endM] = IMPOSTOR_FAR_FALLOFF_BAND_M;
+    expect(farImpostorBrightness(startM)).toBe(1);
+    expect(farImpostorBrightness(endM)).toBe(0.25);
+    let largest20mDrop = 0;
+    const maximumSeededIntensity = 1.15 * IMPOSTOR_INTENSITY * SKYRIVER_EMISSIVE_GAIN;
+    for (let distanceM = 0; distanceM <= endM + 1000; distanceM += 20) {
+      const near = farImpostorBrightness(distanceM) * maximumSeededIntensity;
+      const far = farImpostorBrightness(distanceM + 20) * maximumSeededIntensity;
+      expect(far).toBeLessThanOrEqual(near);
+      largest20mDrop = Math.max(largest20mDrop, near - far);
+    }
+    expect(SKYRIVER_BLOOM_PICKUP_WIDTH).toBeGreaterThan(0);
+    expect(largest20mDrop).toBeLessThan(SKYRIVER_BLOOM_PICKUP_WIDTH);
+  });
+
+  it('fades fragment support to zero at the capsule edge', () => {
+    const [start, end] = IMPOSTOR_SUPPORT_TAPER_BAND;
+    expect(impostorSupportTaperAlpha(0)).toBe(1);
+    expect(impostorSupportTaperAlpha(start)).toBe(1);
+    expect(impostorSupportTaperAlpha((start + end) / 2)).toBeCloseTo(0.5, 12);
+    expect(impostorSupportTaperAlpha(end)).toBe(0);
+    expect(impostorSupportTaperAlpha(end + 0.01)).toBe(0);
+  });
+});
 
 describe('GPU impostor traffic', () => {
   it('generates pure, seeded, in-range attributes', () => {
@@ -84,7 +137,8 @@ describe('GPU impostor traffic', () => {
   });
 
   it('keeps every canyon impostor out of the buildings; reports the sky rings', () => {
-    const field = createMassField(presentCityLayout(deriveCityLayout(DEMO_SEED)));
+    const layout = presentCityLayout(deriveCityLayout(DEMO_SEED));
+    const field = createMassField(layout);
     const a = deriveImpostorAttributes(DEMO_SEED, 4000);
     const p = { x: 0, y: 0, z: 0, dx: 0, dz: 0 };
     let canyonInside = 0;
@@ -105,5 +159,19 @@ describe('GPU impostor traffic', () => {
     }
     expect(canyonSamples).toBeGreaterThan(50000);
     expect(canyonInside).toBe(0);
+    expect(ringSamples).toBeGreaterThan(0);
+
+    const masses = deriveCityMasses(layout);
+    const trims = deriveCityTrims(layout);
+    let cityTop = -Infinity;
+    for (const mass of masses) cityTop = Math.max(cityTop, mass.y0 + mass.height);
+    for (let i = 0; i < trims.count; i += 1) cityTop = Math.max(cityTop, trims.cy[i]! + trims.sy[i]! / 2);
+    const ringFloor = Math.min(...IMPOSTOR_RINGS.map((ring) => {
+      const rowSpacing = ring[4]! / Math.max(1, ring[3]! - 1);
+      const maxRowDrop = ring[4]! / 2 + rowSpacing * 0.3;
+      return ring[1]! - ring[7]! - 12 - 15 - 6 - maxRowDrop;
+    }));
+    expect(ringFloor).toBeGreaterThan(cityTop);
+    expect(ringInside).toBe(0);
   });
 });
