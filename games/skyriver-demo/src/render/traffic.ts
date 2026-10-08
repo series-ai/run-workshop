@@ -71,12 +71,14 @@ import { CANYON_LOOP_LENGTH_M, warpCanyon, type WarpOut } from './canyonWarp';
 import { routeAltitude, routeLateral } from './routeProfile';
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
 import {
-  cpuLightVisibilityAlpha,
+  createImpostorTierTransition,
   HULL_DRAW_DISTANCE_M,
   HULL_DRAW_FADE_START_M,
   IMPOSTOR_FAR_FALLOFF_BAND_M,
   IMPOSTOR_LIGHT_HANDOVER_BAND_M,
   IMPOSTOR_SUPPORT_TAPER_BAND,
+  writeSameCarLightLod,
+  type SameCarLightLod,
 } from './lightHandover';
 import {
   FORK_RAMP_M,
@@ -932,6 +934,7 @@ attribute vec2 aCorner;      // x: 0 lamp end, 1 streak end; y: side -1..1
 attribute vec4 aImp;         // logical path, arc offset 0..1, phase 0..1, appearance seed 0..1
 attribute vec4 aFlow;        // sub-row, effective speed m/s, signed pass period s, pass amplitude m
 attribute vec4 aRoute;       // baked row A, baked row B, hop start m, hop ramp m
+attribute float aFromAlpha;  // captured tier alpha at start of retarget
 
 uniform sampler2D uPaths;    // 8 streams x 4 variants, then 6 lanes, then the canyon warp row
 uniform vec4 uStreamA[ NSTREAMS ]; // direction, nominal speed, sub-rows, width
@@ -949,8 +952,9 @@ uniform float uCorridor;
 uniform float uPixelAngle;
 uniform vec2 uBand;          // impostors fade in over [x, y] metres from the camera
 uniform vec2 uFarFalloff;    // brightness fades over [x, y] metres from the camera
-uniform float uFadeFrom;     // instances at or above this index fade by uFadeK (tier change)
-uniform float uFadeK;
+uniform float uFadeFrom;     // kept for legacy / probe compatibility
+uniform float uFadeK;        // tier crossfade progress 0..1
+uniform float uTargetCount;  // target instance count for current transition
 
 varying vec2 vCapsule;
 varying float vLengthR;
@@ -1145,7 +1149,8 @@ void main() {
 
   float facing = dot( dir, toCam / max( dist, 1.0 ) );
   vWarm = smoothstep( - 0.2, 0.3, facing );
-  float tierPresence = float( gl_InstanceID ) >= uFadeFrom ? uFadeK : 1.0;
+  float toAlpha = float( gl_InstanceID ) < uTargetCount ? 1.0 : 0.0;
+  float tierPresence = mix( aFromAlpha, toAlpha, uFadeK );
   // Far impostors integrate into the haze instead of stacking into a bloom wash. Their brightness
   // falls over the shared 2.5–6.5 km band and reaches zero with a smooth derivative.
   float handover = smoothstep( uBand.x, uBand.y, dist );
@@ -1276,6 +1281,9 @@ function buildImpostorGeometry(model: RenderTrafficModel, capacity: number): Ins
   geometry.setAttribute('aImp', new InstancedBufferAttribute(attrs.streamArcPhaseSeed, 4));
   geometry.setAttribute('aFlow', new InstancedBufferAttribute(attrs.flow, 4));
   geometry.setAttribute('aRoute', new InstancedBufferAttribute(attrs.route, 4));
+  const fromAlpha = new InstancedBufferAttribute(new Float32Array(capacity), 1);
+  fromAlpha.setUsage(DynamicDrawUsage);
+  geometry.setAttribute('aFromAlpha', fromAlpha);
   geometry.instanceCount = 0;
   return geometry;
 }
@@ -1302,12 +1310,15 @@ function buildStreakGeometry(capacity: number): InstancedBufferGeometry {
   const pos = new InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
   const dir = new InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
   const fade = new InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
+  const lod = new InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
   pos.setUsage(DynamicDrawUsage);
   dir.setUsage(DynamicDrawUsage);
   fade.setUsage(DynamicDrawUsage);
+  lod.setUsage(DynamicDrawUsage);
   geometry.setAttribute('aCarPos', pos);
   geometry.setAttribute('aCarDir', dir);
   geometry.setAttribute('aCarFade', fade);
+  geometry.setAttribute('aCarLod', lod);
   geometry.instanceCount = 0;
   return geometry;
 }
@@ -1632,9 +1643,12 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const streakPos = streakGeometry.getAttribute('aCarPos') as InstancedBufferAttribute;
   const streakDir = streakGeometry.getAttribute('aCarDir') as InstancedBufferAttribute;
   const streakFade = streakGeometry.getAttribute('aCarFade') as InstancedBufferAttribute;
+  const streakLod = streakGeometry.getAttribute('aCarLod') as InstancedBufferAttribute;
   const streakPosArray = streakPos.array as Float32Array;
   const streakDirArray = streakDir.array as Float32Array;
   const streakFadeArray = streakFade.array as Float32Array;
+  const streakLodArray = streakLod.array as Float32Array;
+  const sameCarLodScratch: SameCarLightLod = { nearAlpha: 0, impostorAlpha: 0, totalAlpha: 0 };
 
   // ---- R18 GPU impostor cars, on the R21 shared model.
   const impostorCapacity = Math.max(0, options.maxImpostors ?? options.quality.impostors);
@@ -1673,8 +1687,9 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       uPixelAngle: { value: 0.0012 },
       uBand: { value: new Vector2(...IMPOSTOR_LIGHT_HANDOVER_BAND_M) },
       uFarFalloff: { value: new Vector2(...IMPOSTOR_FAR_FALLOFF_BAND_M) },
-      uFadeFrom: { value: 1e9 },
+      uFadeFrom: { value: 0 },
       uFadeK: { value: 1 },
+      uTargetCount: { value: 0 },
       // Dim on purpose: tens of thousands of sub-pixel dots must integrate into the haze as light-river
       // texture, not bloom the sky into foam (the R12 sign-core lesson). Tuned in the R18 bloom A/B.
       uIntensity: { value: IMPOSTOR_INTENSITY * SKYRIVER_EMISSIVE_GAIN },
@@ -1696,12 +1711,18 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   // R23 draw role: transparent additive GPU impostors, depthWrite false.
   skyriverDeclareStageRole(impostorMesh, 'transparent');
   impostorMesh.visible = false;
+  const impostorFromAlphaAttr = impostorGeometry.getAttribute('aFromAlpha') as InstancedBufferAttribute;
+  const impostorFromAlphaArray = impostorFromAlphaAttr.array as Float32Array;
+  const impostorTransition = createImpostorTierTransition(
+    impostorCapacity,
+    0,
+    IMPOSTOR_FADE_S,
+    impostorFromAlphaArray,
+  );
   let impostorTier = 0;
   let impostorOverride: number | null = null;
-  let impostorFrom = 0;
-  let impostorTo = 0;
-  let impostorChangeT = -1e9;
   let impostorPending = false;
+  let pendingTarget = 0;
   /**
    * 0..1: how far the CPU cars' far lights have handed over to the impostors. Follows the impostor
    * crossfade on a tier change (on/off), so the far lights never switch in one frame.
@@ -1709,9 +1730,12 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   let impostorPresence = 0;
   function retargetImpostors(): void {
     const target = Math.min(impostorCapacity, impostorOverride ?? impostorTier);
-    if (target === impostorTo) return;
-    impostorFrom = impostorTo;
-    impostorTo = target;
+    if (target === impostorTransition.targetCount) {
+      impostorPending = false;
+      return;
+    }
+    if (target === pendingTarget && impostorPending) return;
+    pendingTarget = target;
     impostorPending = true;
   }
   function setImpostorCount(count: number | null): void {
@@ -1719,16 +1743,19 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     retargetImpostors();
   }
   function applyImpostors(t: number): void {
-    if (impostorPending) { impostorChangeT = t; impostorPending = false; }
+    if (impostorPending) {
+      if (impostorTransition.retarget(t, pendingTarget)) impostorFromAlphaAttr.needsUpdate = true;
+      impostorPending = false;
+    }
+    const state = impostorTransition.evaluate(t);
     const u = impostorMaterial.uniforms;
     u.uTime!.value = t;
-    const k = Math.min(1, Math.max(0, (t - impostorChangeT) / IMPOSTOR_FADE_S));
-    const drawn = k >= 1 ? impostorTo : Math.max(impostorFrom, impostorTo);
-    impostorGeometry.instanceCount = drawn;
-    u.uFadeFrom!.value = Math.min(impostorFrom, impostorTo);
-    u.uFadeK!.value = k >= 1 ? 1 : impostorTo > impostorFrom ? k : 1 - k;
-    impostorMesh.visible = drawn > 0;
-    impostorPresence = impostorFrom === 0 && impostorTo > 0 ? k : impostorTo === 0 && impostorFrom > 0 ? 1 - k : impostorTo > 0 ? 1 : 0;
+    u.uFadeK!.value = state.k;
+    u.uTargetCount!.value = state.targetCount;
+    u.uFadeFrom!.value = state.targetCount;
+    impostorGeometry.instanceCount = state.drawnCount;
+    impostorMesh.visible = state.drawnCount > 0;
+    impostorPresence = state.presence;
   }
 
   const objects: Object3D[] = [...meshes, streakMesh, impostorMesh];
@@ -1964,6 +1991,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       updateRankAssignment(t);
     }
     applyTierTransition(t);
+    applyImpostors(t);
 
     for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
       const group = groupCars[archetype];
@@ -2174,9 +2202,11 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         const legacyFarAlpha = carThinFar[car] === 1
           ? 1 - smoothstep(900 * 900, 1150 * 1150, distanceSq)
           : 1;
-        // Hull bars, streak lamps, and trails use one fade. Low tier keeps its prior far response.
-        const lightFade = fade * cpuLightVisibilityAlpha(distanceM, impostorPresence, legacyFarAlpha);
-        const dim = (1 - (1 - DISTANCE_DIM_FLOOR) * Math.min(1, distanceSq * invDimRangeSq)) * lightFade;
+        writeSameCarLightLod(distanceM, impostorPresence, legacyFarAlpha, sameCarLodScratch);
+        const nearFade = fade * sameCarLodScratch.nearAlpha;
+        const totalFade = fade * sameCarLodScratch.totalAlpha;
+        // Hull bars and instance colour use the near share.
+        const dim = (1 - (1 - DISTANCE_DIM_FLOOR) * Math.min(1, distanceSq * invDimRangeSq)) * nearFade;
         const colorOffset = slot * 3;
         colors[colorOffset] = tintR[car] * dim;
         colors[colorOffset + 1] = tintG[car] * dim;
@@ -2193,10 +2223,18 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           streakDirArray[d + 2] = fz;
           streakDirArray[d + 3] = streakSpeed;
           const f4 = streaksUsed * 4;
-          streakFadeArray[f4] = lightFade;
+          // Streak lamp fade uses the total share, pairing profiles without size or peak mismatch.
+          streakFadeArray[f4] = totalFade;
           streakFadeArray[f4 + 1] = sizeScale[car]!;
           streakFadeArray[f4 + 2] = carWarm[car]!;
-          streakFadeArray[f4 + 3] = trailWeight(car < ESCORT_COUNT && anchorValid ? 0 : carStream[car]! !== 255 ? 1 : 2, distanceSq, t);
+          // Trails use only the near share: scale parent weight so they never outlive the car.
+          const baseTrail = trailWeight(car < ESCORT_COUNT && anchorValid ? 0 : carStream[car]! !== 255 ? 1 : 2, distanceSq, t);
+          const trailScale = sameCarLodScratch.totalAlpha > 0 ? sameCarLodScratch.nearAlpha / sameCarLodScratch.totalAlpha : 0;
+          streakFadeArray[f4 + 3] = baseTrail * trailScale;
+          const l3 = streaksUsed * 3;
+          streakLodArray[l3] = sameCarLodScratch.nearAlpha;
+          streakLodArray[l3 + 1] = sameCarLodScratch.impostorAlpha;
+          streakLodArray[l3 + 2] = car;
           streaksUsed += 1;
         }
       }
@@ -2207,7 +2245,6 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     }
 
     streakGeometry.instanceCount = streaksUsed;
-    applyImpostors(t);
     streakPos.needsUpdate = true;
     streakDir.needsUpdate = true;
     streakFade.needsUpdate = true;
