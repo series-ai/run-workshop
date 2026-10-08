@@ -107,7 +107,7 @@ export const SKYRIVER_DISTRICT_SATURATION = Object.freeze({
   sign: 0.85,
   /** The ice-white background signs: near neutral on purpose. */
   signNeutral: 0.22,
-  /** Resolved panes and traced rooms. */
+  /** Previous room setting. Active room emission uses the pane setting. */
   room: 0.08,
   /** The unresolved far pane average and the R15 far-box window grid. */
   pane: 0.07,
@@ -885,19 +885,19 @@ export const SKYRIVER_DISTRICT_SOURCE_TERMS: readonly {
   readonly srgb: boolean;
   readonly rgb: SkyriverLinearRgb;
 }[] = Object.freeze([
-  { id: 'pane-sodium', role: 'resolved pane', saturation: SKYRIVER_DISTRICT_SATURATION.room, srgb: false, rgb: [1, 0.42, 0.1] },
-  { id: 'pane-warm', role: 'resolved pane', saturation: SKYRIVER_DISTRICT_SATURATION.room, srgb: false, rgb: [1, 0.6, 0.24] },
-  { id: 'pane-pale', role: 'resolved pane', saturation: SKYRIVER_DISTRICT_SATURATION.room, srgb: false, rgb: [0.5, 0.68, 1] },
-  { id: 'pane-cold', role: 'resolved pane', saturation: SKYRIVER_DISTRICT_SATURATION.room, srgb: false, rgb: [0.25, 0.5, 1] },
-  { id: 'pane-neon-cyan', role: 'resolved pane', saturation: SKYRIVER_DISTRICT_SATURATION.room, srgb: false, rgb: [0.22, 0.95, 1] },
-  { id: 'pane-neon-magenta', role: 'resolved pane', saturation: SKYRIVER_DISTRICT_SATURATION.room, srgb: false, rgb: [1, 0.24, 0.72] },
+  { id: 'pane-sodium', role: 'resolved pane', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [1, 0.42, 0.1] },
+  { id: 'pane-warm', role: 'resolved pane', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [1, 0.6, 0.24] },
+  { id: 'pane-pale', role: 'resolved pane', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [0.5, 0.68, 1] },
+  { id: 'pane-cold', role: 'resolved pane', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [0.25, 0.5, 1] },
+  { id: 'pane-neon-cyan', role: 'resolved pane', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [0.22, 0.95, 1] },
+  { id: 'pane-neon-magenta', role: 'resolved pane', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [1, 0.24, 0.72] },
   { id: 'pane-average', role: 'far pane average', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [0.86, 0.72, 0.56] },
   { id: 'far-box-warm', role: 'far box window', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [1, 0.55, 0.22] },
   { id: 'far-box-cold', role: 'far box window', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [0.45, 0.65, 1] },
-  { id: 'glass-warm', role: 'room glass tint', saturation: SKYRIVER_DISTRICT_SATURATION.room, srgb: false, rgb: [1, 0.84, 0.66] },
-  { id: 'glass-cool', role: 'room glass tint', saturation: SKYRIVER_DISTRICT_SATURATION.room, srgb: false, rgb: [0.7, 0.83, 1] },
-  { id: 'glass-teal', role: 'room glass tint', saturation: SKYRIVER_DISTRICT_SATURATION.room, srgb: false, rgb: [0.62, 1, 0.88] },
-  { id: 'glass-amber', role: 'room glass tint', saturation: SKYRIVER_DISTRICT_SATURATION.room, srgb: false, rgb: [1, 0.72, 0.4] },
+  { id: 'glass-warm', role: 'room glass tint', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [1, 0.84, 0.66] },
+  { id: 'glass-cool', role: 'room glass tint', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [0.7, 0.83, 1] },
+  { id: 'glass-teal', role: 'room glass tint', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [0.62, 1, 0.88] },
+  { id: 'glass-amber', role: 'room glass tint', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [1, 0.72, 0.4] },
   { id: 'deck-skylight', role: 'small lamp', saturation: SKYRIVER_DISTRICT_SATURATION.trimSmall, srgb: false, rgb: [1, 0.55, 0.2] },
   { id: 'trim-deck-lamp', role: 'small lamp', saturation: SKYRIVER_DISTRICT_SATURATION.trimSmall, srgb: false, rgb: [1, 0.68, 0.33] },
   { id: 'trim-balcony-underlight', role: 'small lamp', saturation: SKYRIVER_DISTRICT_SATURATION.trimSmall, srgb: false, rgb: [1, 0.62, 0.3] },
