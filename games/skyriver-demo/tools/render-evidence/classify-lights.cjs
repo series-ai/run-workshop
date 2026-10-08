@@ -63,7 +63,22 @@ async function capture(page,target,tier,referenceCamera){
   }
   const impCount=imp.geometry.instanceCount,attrs=impCount?D.deriveImpostorAttributes(424242,impCount):null;
   const attribute=attrs&&(attrs.streamArcPhaseSeed||attrs.pathArcPhaseSeed);
-  if(attrs){const raw=imp.geometry.getAttribute('aImp').array;for(let i=0;i<attribute.length;i++)if(attribute[i]!==raw[i])throw new Error('GPU diagnostic attributes differ from geometry.');const row=imp.geometry.getAttribute('aImpRow').array;for(let i=0;i<attrs.row.length;i++)if(attrs.row[i]!==row[i])throw new Error('GPU diagnostic rows differ from geometry.');}
+  if(attrs){
+   const compareAttribute=(name,expected)=>{
+    const actual=imp.geometry.getAttribute(name)?.array;
+    if(!actual||actual.length<expected.length)throw new Error(`GPU attribute ${name} is missing or too short.`);
+    for(let i=0;i<expected.length;i++)if(expected[i]!==actual[i])throw new Error(`GPU diagnostic ${name} differs at ${i}.`);
+   };
+   compareAttribute('aImp',attribute);
+   if(attrs.flow&&attrs.route){
+    compareAttribute('aFlow',attrs.flow);
+    compareAttribute('aRoute',attrs.route);
+    for(let i=0;i<attrs.row.length;i++)if(attrs.row[i]!==attrs.flow[i*4])throw new Error('GPU diagnostic sub-row differs from flow.');
+   }else{
+    // R20 and earlier use one sub-row attribute.
+    compareAttribute('aImpRow',attrs.row);
+   }
+  }
   const iu=imp.material.uniforms,band=iu.uBand.value.toArray(),t=iu.uTime.value,q={x:0,y:0,z:0,dx:0,dz:0};
   for(let i=0;i<impCount&&imp.visible;i++){
    D.impostorPosition(attrs,i,t,q);const p=[q.x,q.y,q.z],screen=project(p),d=distance(p),k=attribute[i*4];

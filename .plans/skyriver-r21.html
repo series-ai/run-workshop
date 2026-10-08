@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>R21 shared traffic path design</title>
+<style>
+:root{color-scheme:dark;--bg:#08121e;--panel:#112034;--ink:#d9e7f7;--muted:#acc1d8;--accent:#76dcea}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 system-ui}main{max-width:1080px;margin:auto;padding:30px}h1,h2{line-height:1.2}section{padding:20px;margin:18px 0;background:var(--panel);border-radius:12px}p,li{color:var(--muted)}pre{overflow:auto;padding:14px;background:#071320;border-radius:8px;font-size:13px;line-height:1.5}code{color:var(--accent)}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid #294158;vertical-align:top}@media(max-width:650px){main{padding:16px}section{padding:14px}.scroll{overflow:auto}}
+</style>
+<main>
+<h1>R21 shared traffic path design</h1>
+<p>Design status: proposed. This file records the read-only design. It does not report an implementation or a test pass.</p>
+<section><h2>One render model</h2>
+<p>Use one seed-owned <code>RenderTrafficModel</code> in <code>trafficStreams.ts</code>. CPU cars and GPU cars read the same baked paths and motion constants. The simulation stays unchanged.</p>
+<div class="scroll"><table><thead><tr><th>Source</th><th>Change point</th></tr></thead><tbody>
+<tr><td>trafficStreams.ts:145</td><td>Analytic stream centres and interchanges</td></tr>
+<tr><td>trafficStreams.ts:174</td><td>Shared path table</td></tr>
+<tr><td>trafficStreams.ts:239</td><td>Seeded GPU attributes</td></tr>
+<tr><td>trafficStreams.ts:283</td><td>CPU shader mirror</td></tr>
+<tr><td>traffic.ts:898</td><td>GPU attributes and shader</td></tr>
+<tr><td>traffic.ts:1186</td><td>CPU stream assignment</td></tr>
+<tr><td>traffic.ts:1745–1758</td><td>CPU motion. Normal cars use st[5] for position. This drops their per-car speed.</td></tr>
+<tr><td>traffic.ts:1495</td><td>Sticky chase handoffs. Keep this block and escort motion separate.</td></tr>
+</tbody></table></div><p>These anchors refer to the source read for the design. Later changes can move their line numbers.</p>
+<pre><code>type StreamClass = 'freight' | 'standard' | 'express';
+
+interface TrafficStream {
+  readonly kind: StreamClass;
+  readonly direction: -1 | 1;
+  readonly x: number;
+  readonly y: number;
+  readonly rows: number;
+  readonly widthM: number;
+  readonly meanderM: number;
+  readonly wobbleM: number;
+  readonly pulses: number;
+  readonly share: number;
+}
+
+interface Fork {
+  readonly startM: number;
+  readonly lengthM: number;
+  readonly rampM: number;
+  readonly lateralM: number;
+  readonly verticalM: number;
+}
+
+interface HopLink {
+  readonly a: number;
+  readonly b: number;
+  readonly startM: number;
+  readonly rampM: number;
+}
+
+interface RenderTrafficModel {
+  readonly seed: number;
+  readonly streams: readonly TrafficStream[];
+  readonly forks: readonly (readonly Fork[])[];
+  readonly hops: readonly HopLink[];
+  readonly table: StreamPathTable;
+}</code></pre>
+<p>Build the model once at render creation. Pass it to attribute generation and CPU evaluation. Remove the seed-free global table cache. Use the existing avalanche hash, <code>impostorHash</code>, for separate motion channels. Do not use the weaker local CPU hash for new motion.</p>
+</section>
+<section><h2>Speed and passing</h2>
+<pre><code>freight  = 40  + 35 H(speed)
+standard = 70  + 60 H(speed)
+express  = 150 + 45 H(speed)
+q(t)     = arc × L + speed × t
+v(t)     = mod(direction × q(t), L)</code></pre>
+<p>Remove the longitudinal surge from these paths. Its derivative changes speed by up to 60.5 m/s. Keep small lateral and height motion.</p>
+<p>Select convoy membership by the seeded density pulse. Use a shared pulse factor <code>0.70 + 0.15 H(convoyFactor)</code>. Give each member a small seeded speed difference. Fast cars use this signed passing offset:</p>
+<pre><code>pass(t) = sign × 12 × sin²(π × (t/T + phase))
+T       = 16 + 16 H(passPeriod)</code></pre>
+<p>Convoy members use zero passing offset. Fast cars keep higher forward speed. This gives a continuous ±12 m passing movement without neighbour queries.</p>
+</section>
+<section><h2>Forks</h2>
+<p>For each CPU stream, seed one or two fork intervals. A car selects each fork at spawn with independent hash bits. Bake four variants per stream: main, fork 0, fork 1, both. Eight streams, six unchanged GPU lanes, and one warp row require 39 table rows. The width remains 1601 samples. The table uses about 1 MB.</p>
+<pre><code>S(u) = u³ × (10 − 15u + 6u²), with u clamped to [0,1]
+B(d) = S(d/600) × [1 − S((d − length + 600)/600)]
+Cfork(v) = Cmain(v) + B(d) × (lateral, vertical)</code></pre>
+<p>Use total support length 1200–1500 m. This stays within the stated 800–1500 m range and permits two full 600 m ramps. Use lateral magnitude 60–120 m and vertical magnitude 30–60 m. Select the lateral sign from valid directions. Check the full row width, jitter, passing offset, and hull margin before accepting the fork.</p>
+<p>Reserve both interchange ramp intervals for each existing interchange:</p>
+<pre><code>[at, at + 1100]
+[at + L/2, at + L/2 + 1100]</code></pre>
+<p>Use wrapped intervals with a margin. Place forks and hop ramps outside these intervals. Keep fork and hop supports separate. Use bounded seeded placement. Fail model validation if placement cannot meet the rules.</p>
+</section>
+<section><h2>One stream change per lap</h2>
+<p>Select 15% of normal stream cars for hops. This meets the 10–20% target. Apply the new hop model to medium and high traffic. Keep cars 0–113 on their current escort and chase rules.</p>
+<p>Only connect streams with the same direction. Seed a fixed source/target pair. Use one transition per lap. Alternate the pair across successive laps:</p>
+<pre><code>n = floor(q/L)
+p = mod(q,L)
+s = S((p − hopStart)/hopRamp)
+w = even(n) ? s : 1 − s
+C = mix(CA(v), CB(v), w)</code></pre>
+<p>Use a 600–900 m ramp. The hop has period <code>2L</code>. The target stays active at the lap boundary. The next lap starts on that target. A weight that resets to zero each lap would cause a teleport.</p>
+<p>Blend complete canyon positions, including row offsets. Keep one seeded forward speed through the transition. Do not blend opposite directions.</p>
+</section>
+<section><h2>GPU attributes and path parity</h2>
+<pre><code>aImp   = logicalPath, arc, phase, appearanceSeed
+aFlow  = row, effectiveSpeed, signedPassPeriod, hopRamp
+aRoute = bakedRowA, bakedRowB, hopStart, reserved</code></pre>
+<p>Set <code>bakedRowB = bakedRowA</code> for cars without a hop. The physical row includes the branch choice. Rings keep their existing logical path IDs and pose code. R19.6 removes GPU free cars.</p>
+<p>Store each canyon path texel as <code>(centreX, centreY, slopeX, slopeY)</code>. Keep the warp row as <code>(worldX, worldZ, cosHeading, sinHeading)</code>. Use the same linear sample lookup on CPU and GPU. CPU cars must also use the baked warp row. Exact <code>warpCanyon</code> and the GPU table are different paths.</p>
+<p>For heading, include the branch and hop slopes:</p>
+<pre><code>C' = mix(CA', CB', w) + (CB − CA) × dw/dv</code></pre>
+<p>Add the passing offset derivative. Convert the result through the sampled warp. Use the normalized position derivative for lights, hull heading, and pitch. This prevents cars from facing along the original stream during a branch or hop.</p>
+<p>For CPU free cars, set drift periods to <code>20 + 20 H(period)</code> seconds. Derive heading from drift velocity and forward velocity. Reduce each home range by its drift amplitude and hull margin. This avoids a hard lateral clamp.</p>
+</section>
+<section><h2>Verification</h2><ul>
+<li>Hold out seeds from implementation. Include zero, negative, maximum int32, and several fixed ordinary seeds.</li>
+<li>Check model equality for repeated seeds. Check prefix stability across car counts.</li>
+<li>Check every fork endpoint, ramp endpoint, hop endpoint, and lap boundary at t ±0.001. Include negative time and skipped frames.</li>
+<li>Check one completed hop per lap over at least four laps.</li>
+<li>Compare actual GPU position output with CPU output at branch and hop boundaries. A second CPU formula does not prove shader parity.</li>
+<li>Sweep every baked variant and every hop envelope at ≤8 m spacing against createMassField. Subtract the maximum hull radius.</li>
+<li>Check forward speed separately from world speed. Canyon curvature changes world speed.</li>
+<li>Keep the R19 450–750 m light band, tier prefix behavior, ring clearance, and draw count.</li>
+</ul></section>
+<section><h2>Required range interpretation</h2>
+<p>An 800 m total branch cannot contain two 600 m ramps. The proposal uses total support of 1200–1500 m. If total support must include 800 m, shorten each ramp to <code>min(600, length/2)</code>. Another option defines the 800–1500 m value as the offset run between the ramps.</p>
+<p>Strict express speed of 150–195 m/s cannot include a convoy at 70% of an in-band cruise speed: <code>0.70 × 195 = 136.5</code>. Treat speed bands as normal cruise bands, with convoy reduction as an exception. Otherwise, clamp convoy factors to feasible values.</p>
+</section>
+</main></html>
+
+<section><h2>Execution record · 2026-10-08</h2><p>Implementation and core checks are complete. Base40c8674. All121 tests, type check, build, simulation diff, and diff check pass. Dual architecture/visual review passed after the chase initialization and fork permission repair. Additional architecture review passed after classifier migration, complete diagnostic types, and portable GPU tool input.</p><p>Actual GPU:15.6M positions, maximum0.036719m error. Repaired GPU shader, table, and uniforms match that proof. Repaired direct probe:180000 positions, maximum0.015612m. Calls high32/32, medium31/32, low17/18. Road64/74 samples, ratio2 and end width0.3.</p><p>Six exact camera/time value pairs retain neon above2%. Density mean falls11.51%. Static high-tier CPU orphan count0. Unknown and ambiguous light clusters remain. Steady50s detector:18 blinks,146 candidate GPU pops. Tier18s:4 blinks,109 fade jumps,30 candidate GPU pops. Zero-event acceptance remains open. Nearest-source attribution can assign faded GPU sprites.</p><p>Full-frame six-pair median delta:+0.003ms DPR1, -0.004ms DPR1.5. Pair ranges exceed0.05ms. Strict timing acceptance remains open. Speed bands measure canyon progress. Physical speed changes on bends and climbs. This is a stated alternative, not a world-speed band pass.</p><p>Evidence:/tmp/t721/report.html. Archive:BASE/scratch/execution-evidence/r21. Root commits this round after the archive copy. R22 then R23 follow.</p></section>

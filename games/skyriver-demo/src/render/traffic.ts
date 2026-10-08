@@ -66,7 +66,7 @@ import {
   applySkyriverFog,
   skyriverFogUniforms,
 } from './atmosphere';
-import { CANYON_LOOP_LENGTH_M, warpCanyon, warpDirection, type WarpOut } from './canyonWarp';
+import { CANYON_LOOP_LENGTH_M, warpCanyon, type WarpOut } from './canyonWarp';
 import { routeAltitude, routeLateral } from './routeProfile';
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
 import {
@@ -77,7 +77,36 @@ import {
   IMPOSTOR_LIGHT_HANDOVER_BAND_M,
   IMPOSTOR_SUPPORT_TAPER_BAND,
 } from './lightHandover';
-import { IMPOSTOR_PATHS, IMPOSTOR_RINGS, STREAMS, loopCentroid, STREAM_CORRIDOR_HALF_M, STREAM_PATH_SAMPLES, STREAM_PATH_STEP_M, deriveImpostorAttributes, streamPathTable } from './trafficStreams';
+import {
+  FORK_RAMP_M,
+  FORK_STREAM_COUNT,
+  IMPOSTOR_PATHS,
+  IMPOSTOR_RINGS,
+  LANE_ROW_0,
+  STREAMS,
+  STREAM_CORRIDOR_HALF_M,
+  STREAM_PATH_SAMPLES,
+  STREAM_DESCRIPTORS,
+  STREAM_PATH_STEP_M,
+  STREAM_VARIANTS,
+  WARP_ROW,
+  bakedPathRow,
+  carHops,
+  cpuHopShare,
+  deriveImpostorAttributes,
+  evaluateCanyonPose,
+  loopCentroid,
+  newCanyonPose,
+  newFlowSample,
+  pathOfBakedRow,
+  renderTrafficModel,
+  sampleStreamFlow,
+  sampleStreamPath,
+  sampleWarpRow,
+  scatterRowOf,
+  type FlowInput,
+  type RenderTrafficModel,
+} from './trafficStreams';
 import type {
   SkyriverTraffic,
   SkyriverTrafficOptions,
@@ -172,6 +201,9 @@ const CAR_MIN_Y_M = 120;
 const CAR_MAX_Y_M = 2600;
 const DRIFT_MIN_M = 12;
 const DRIFT_SPAN_M = 50;
+/** R21: a free car's drift and climb sines run on a 20-40 s period (its heading preference). */
+const FREE_DRIFT_PERIOD_MIN_S = 20;
+const FREE_DRIFT_PERIOD_SPAN_S = 20;
 const CLIMB_MIN_M = 6;
 const CLIMB_SPAN_M = 34;
 const SPEED_SCALE = 1.3;
@@ -196,10 +228,11 @@ const CHASE_FADE_M = 160;
  * surges ±40 m around its clump (speed varies inside the stream's band) and drifts a few metres in
  * its row. The pattern is carried by the flow, not by geometry: no crisp rows, no even spacing.
  * The stream table itself (and its R18 GPU twin) lives in trafficStreams.ts.
+ * R21 replaces the longitudinal surge with per-car band speeds, convoys and a lateral passing
+ * offset, and adds the seeded fork and course-change network. The model owns all of it.
  */
 const STREAM_SHARE = 0.85;
 const CHASE_STREAM_SHARE = 0.8;
-const SURGE_M = 40;
 /** Personal jink: heading wobble amplitude, radians (~3 degrees). */
 const JINK_RAD = 0.055;
 
@@ -895,11 +928,14 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
 
 const IMPOSTOR_VERTEX = /* glsl */ `
 attribute vec2 aCorner;      // x: 0 lamp end, 1 streak end; y: side -1..1
-attribute vec4 aImp;         // path index, arc offset 0..1, phase 0..1, seed 0..1
-attribute float aImpRow;     // sub-row 0..1
+attribute vec4 aImp;         // logical path, arc offset 0..1, phase 0..1, appearance seed 0..1
+attribute vec4 aFlow;        // sub-row, effective speed m/s, signed pass period s, pass amplitude m
+attribute vec4 aRoute;       // baked row A, baked row B, hop start m, hop ramp m
 
-uniform sampler2D uPaths;    // rows 0..NSTREAMS-1: stream centre (x, y); row NSTREAMS: warp (cx, cz, cos, sin)
-uniform vec4 uStreamA[ NSTREAMS ]; // direction, speed, sub-rows, width
+uniform sampler2D uPaths;    // 8 streams x 4 variants, then 6 lanes, then the canyon warp row
+uniform vec4 uStreamA[ NSTREAMS ]; // direction, nominal speed, sub-rows, width
+uniform vec4 uForkSpan[ NFORKS ];  // fork 0 (start m, length m), fork 1 (start m, length m)
+uniform vec4 uForkRamp[ NFORKS ];  // fork 0 ramp m, fork 1 ramp m, spare, spare
 uniform vec4 uRingA[ NRINGS ];     // radius, altitude, direction, speed
 uniform vec4 uRingB[ NRINGS ];     // sub-rows, width, radial meander, wobble
 uniform float uRingLobes[ NRINGS ];
@@ -930,11 +966,73 @@ vec4 pathAt( int row, float f ) {
   return mix( a, b, fr );
 }
 
-void ringPose( int ring, out vec3 pos, out vec3 dir ) {
-  // R18 air-traffic ring, world space (trafficStreams.impostorPosition's ring branch).
+// R21 smooth ramps. The quintic has zero first and second derivative at both ends, so a branch or a
+// course change starts and ends without a kink (trafficStreams.quintic is the same function).
+float quintic( float u ) {
+  float c = clamp( u, 0.0, 1.0 );
+  return c * c * c * ( 10.0 - 15.0 * c + 6.0 * c * c );
+}
+
+float quinticRate( float u ) {
+  if ( u <= 0.0 || u >= 1.0 ) return 0.0;
+  float k = 1.0 - u;
+  return 30.0 * u * u * k * k;
+}
+
+float forkBump( float d, float len, float ramp ) {
+  if ( len <= 0.0 || d <= 0.0 || d >= len ) return 0.0;
+  return quintic( d / ramp ) * ( 1.0 - quintic( ( d - len + ramp ) / ramp ) );
+}
+
+float forkBumpRate( float d, float len, float ramp ) {
+  if ( len <= 0.0 || d <= 0.0 || d >= len ) return 0.0;
+  return ( quinticRate( d / ramp ) / ramp ) * ( 1.0 - quintic( ( d - len + ramp ) / ramp ) )
+    - quintic( d / ramp ) * ( quinticRate( ( d - len + ramp ) / ramp ) / ramp );
+}
+
+// One path's canyon offset for one car: the baked centre and slopes, the car's own sub-row, and the
+// merge re-scatter. The re-scatter dissolves the sub-row structure across a branch using a
+// decorrelated phase and restores it exactly at both ends of the support, so a branch never reads as
+// a copy of the main line's rows and the join stays continuous.
+void pathOffset( int bakedRow, int stream, int forkBits, float row, float seed, float scatter,
+    float p, float f, out vec4 off ) {
+  vec4 c = pathAt( bakedRow, f );
+  vec4 st = uStreamA[ stream ];
+  float rows = st.z;
+  float spacing = st.w / max( 1.0, rows - 1.0 );
+  float rowIndex = min( rows - 1.0, floor( row * rows ) );
+  float rowLat = ( rowIndex - ( rows - 1.0 ) * 0.5 ) * spacing + ( seed - 0.5 ) * spacing * 0.6;
+  float rowVert = mod( rowIndex, 2.0 ) < 0.5 ? - 3.0 : 3.0;
+  float scatterLat = ( scatter - 0.5 ) * st.w;
+  float scatterVert = ( scatter - 0.5 ) * 6.0;
+  float bump = 0.0;
+  float rate = 0.0;
+  if ( stream < NFORKS && forkBits != 0 ) {
+    vec4 span = uForkSpan[ stream ];
+    vec4 ramp = uForkRamp[ stream ];
+    if ( ( forkBits & 1 ) != 0 ) {
+      float d = mod( p - span.x, uLoop );
+      bump += forkBump( d, span.y, ramp.x );
+      rate += forkBumpRate( d, span.y, ramp.x );
+    }
+    if ( ( forkBits & 2 ) != 0 ) {
+      float d = mod( p - span.z, uLoop );
+      bump += forkBump( d, span.w, ramp.y );
+      rate += forkBumpRate( d, span.w, ramp.y );
+    }
+  }
+  off.x = c.x + rowLat + ( scatterLat - rowLat ) * bump;
+  off.y = c.y + rowVert + ( scatterVert - rowVert ) * bump;
+  off.z = c.z + ( scatterLat - rowLat ) * rate;
+  off.w = c.w + ( scatterVert - rowVert ) * rate;
+}
+
+void ringPose( int ring, out vec3 pos, out vec3 dir, out float arcM ) {
+  // R18 air-traffic ring, world space (trafficStreams.impostorPosition's ring branch). Unchanged by
+  // R21: the rings keep logical path ids 14..19, their surge, and their normalized population.
   vec4 ra = uRingA[ ring ];
   vec4 rb = uRingB[ ring ];
-  float row = aImpRow;
+  float row = aFlow.x;
   float phase = aImp.z;
   float seed = aImp.w;
   float speed = ra.w * ( 0.9 + 0.2 * row );
@@ -950,34 +1048,73 @@ void ringPose( int ring, out vec3 pos, out vec3 dir ) {
     ra.y + rb.w * sin( 3.0 * theta + fr * 2.3 ) + ( mod( rowIndex, 2.0 ) < 0.5 ? - 12.0 : 12.0 ) + ( fract( seed * 7.3 ) - 0.5 ) * 30.0 + 6.0 * sin( uTime * 0.33 + phase * 17.0 ),
     uRingCentre.y + r * sin( theta ) );
   dir = vec3( - sin( theta ), 0.0, cos( theta ) ) * ra.z;
+  arcM = theta * ra.x;
 }
 
 void main() {
   int k = int( aImp.x + 0.5 );
-  float row = aImpRow;
+  float row = aFlow.x;
   float phase = aImp.z;
   float seed = aImp.w;
   vec3 pos;
   vec3 dir;
+  // Nominal canyon progress, unwrapped and signed, metres. It advances at exactly the car's
+  // effective speed, so a probe can read it apart from the geometric world speed. Rings report
+  // their circumferential arc. This is the variable in scope at the position capture anchor below.
+  float canyonArcM = 0.0;
   if ( k >= NSTREAMS ) {
-    ringPose( k - NSTREAMS, pos, dir );
+    ringPose( k - NSTREAMS, pos, dir, canyonArcM );
   } else {
   vec4 st = uStreamA[ k ];
-  float speed = st.y * ( 0.9 + 0.2 * row );
-  float surge = ( st.y > 150.0 ? 110.0 : 40.0 ) * sin( uTime * ( 0.3 + 0.25 * row ) + phase * 97.0 );
-  float v = mod( aImp.y * uLoop + st.x * speed * uTime + surge, uLoop );
-  float f = v / uPathStep;
-  vec4 c = pathAt( k, f );
-  vec4 w = pathAt( NSTREAMS, f );
+  // R21: one seeded cruise speed per car, inside its class band. The R18 longitudinal surge is gone
+  // (its derivative reached 60.5 m/s, which put most express cars outside their band).
+  float speed = aFlow.y;
+  float q = aImp.y * uLoop + st.x * speed * uTime;
+  float lapIndex = floor( q / uLoop );
+  float p = q - lapIndex * uLoop;
+  canyonArcM = q;
+  float f = p / uPathStep;
+  int rowA = int( aRoute.x + 0.5 );
+  int rowB = int( aRoute.y + 0.5 );
+  int streamB = rowB < LANE_ROW_0 ? rowB / NVARIANTS : rowB - LANE_ROW_0 + NFORKS;
+  int forkBits = k < NFORKS ? rowA - k * NVARIANTS : 0;
+  float scatter = fract( aImp.z * 41.7 + aImp.w * 17.3 );
+  // One course change per lap. Even laps run A -> B, odd laps B -> A: at the lap seam the ramp
+  // weight and the lap parity flip together, so the weight is continuous and the car never snaps
+  // back to its source stream. A weight that reset to zero each lap would teleport it.
+  float u = ( p - aRoute.z ) / aRoute.w;
+  float s = quintic( u );
+  float sRate = quinticRate( u ) / aRoute.w;
+  bool evenLap = mod( lapIndex, 2.0 ) < 0.5;
+  float hopW = evenLap ? s : 1.0 - s;
+  float hopRate = evenLap ? sRate : - sRate;
+  vec4 offA;
+  pathOffset( rowA, k, forkBits, row, seed, scatter, p, f, offA );
+  vec4 offB = offA;
+  if ( rowB != rowA ) pathOffset( rowB, streamB, forkBits, row, seed, scatter, p, f, offB );
+  // Passing: a faster-than-median car slides to one side and back, with no neighbour query.
+  float passPeriod = abs( aFlow.z );
+  float passAmp = aFlow.z < 0.0 ? - aFlow.w : aFlow.w;
+  float passArg = 6.28318530718 * ( uTime / passPeriod + phase );
+  float passSin = sin( passArg * 0.5 );
+  float pass = passAmp * passSin * passSin;
+  float passRate = passAmp * ( 3.14159265359 / passPeriod ) * sin( passArg );
+  float driftArg = uTime * 0.4 + phase * 31.0;
+  float bobArg = uTime * 0.33 + phase * 17.0;
+  float x = offA.x + ( offB.x - offA.x ) * hopW + pass + 3.0 * sin( driftArg );
+  float y = offA.y + ( offB.y - offA.y ) * hopW + ( fract( seed * 7.3 ) - 0.5 ) * 6.0 + 2.0 * sin( bobArg );
+  float dxdv = offA.z + ( offB.z - offA.z ) * hopW + ( offB.x - offA.x ) * hopRate;
+  float dydv = offA.w + ( offB.w - offA.w ) * hopW + ( offB.y - offA.y ) * hopRate;
+  x = clamp( x, - uCorridor, uCorridor );
+  vec4 w = pathAt( WARP_ROW, f );
   vec2 h = normalize( w.zw );
-  float rows = st.z;
-  float rowIndex = min( rows - 1.0, floor( row * rows ) );
-  float spacing = st.w / max( 1.0, rows - 1.0 );
-  float rowOffset = ( rowIndex - ( rows - 1.0 ) * 0.5 ) * spacing;
-  float x = clamp( c.x + rowOffset + ( seed - 0.5 ) * spacing * 0.6 + 3.0 * sin( uTime * 0.4 + phase * 31.0 ), - uCorridor, uCorridor );
-  float y = c.y + ( mod( rowIndex, 2.0 ) < 0.5 ? - 3.0 : 3.0 ) + ( fract( seed * 7.3 ) - 0.5 ) * 6.0 + 2.0 * sin( uTime * 0.33 + phase * 17.0 );
   pos = vec3( w.x + x * h.x, y, w.y - x * h.y );
-  dir = vec3( h.y, 0.0, h.x ) * st.x;
+  // Heading from the car's own path, branch and course-change slopes included, so a branching car
+  // never faces along the stream it left.
+  float along = st.x * speed;
+  float across = dxdv * along + passRate + 1.2 * cos( driftArg );
+  float up = dydv * along + 0.66 * cos( bobArg );
+  dir = normalize( vec3( along * h.y + across * h.x, up, along * h.x - across * h.y ) );
   }
 
   vec3 toCam = cameraPosition - pos;
@@ -1055,14 +1192,89 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
 }
 `;
 
-function buildImpostorGeometry(seed: number, capacity: number): InstancedBufferGeometry {
+/**
+ * The impostor vertex source and the two names a GPU probe needs, exported read-only so a test or a
+ * transform-feedback probe can check them without adding a production draw.
+ *   - `IMPOSTOR_POSITION_ANCHOR_GLSL` occurs exactly once, after both position branches.
+ *   - `IMPOSTOR_CANYON_ARC_GLSL` names the nominal canyon progress variable in scope there: the
+ *     unwrapped signed canyon arc in metres, which advances at exactly the car's effective speed.
+ */
+export const IMPOSTOR_VERTEX_GLSL = IMPOSTOR_VERTEX;
+export const IMPOSTOR_POSITION_ANCHOR_GLSL = 'vec3 toCam = cameraPosition - pos;';
+export const IMPOSTOR_CANYON_ARC_GLSL = 'canyonArcM';
+
+/** What a permanent car index is: its role in the swarm and the stream it belongs to. */
+export type CarRole = 'escort' | 'chase-stream' | 'chase-free' | 'stream' | 'free';
+
+export interface CarPlan {
+  role: CarRole;
+  /** Stream index, a chase rank for 'chase-stream', or 255 for a free car. */
+  stream: number;
+}
+
+const carPlanShares = STREAMS.reduce<number[]>((acc, st) => { acc.push((acc[acc.length - 1] ?? 0) + st[9]!); return acc; }, []);
+
+/**
+ * The permanent role and stream of one car index. Pure in (seed, car) — no tier, no time — so a
+ * quality change can never move a car, and the hop census below is exact rather than sampled.
+ */
+export function carTrafficPlan(seed: number, car: number, out: CarPlan): void {
+  const h = (k: number): number => hash01(car ^ (seed | 0), k);
+  if (car < ESCORT_COUNT) { out.role = 'escort'; out.stream = 255; return; }
+  if (car < ESCORT_COUNT + CHASE_COUNT) {
+    if (h(0x41) < CHASE_STREAM_SHARE) { out.role = 'chase-stream'; out.stream = h(0x42) < 0.65 ? 0 : 1; return; }
+    out.role = 'chase-free';
+    out.stream = 255;
+    return;
+  }
+  if (h(0x41) < STREAM_SHARE) {
+    const pick = h(0x42) * carPlanShares[carPlanShares.length - 1]!;
+    let stream = 0;
+    while (stream < STREAMS.length - 1 && carPlanShares[stream]! <= pick) stream += 1;
+    out.role = 'stream';
+    out.stream = stream;
+    return;
+  }
+  out.role = 'free';
+  out.stream = 255;
+}
+
+export interface HopCensus {
+  readonly carCount: number;
+  /** Normal stream cars in this tier. Escorts and the R15 sticky chase band are excluded. */
+  readonly streamCars: number;
+  readonly hopCars: number;
+  readonly share: number;
+}
+
+/**
+ * R21 course-change census for one tier. The hop decision depends only on the car index and the
+ * seed's salt, so this reports exactly what the renderer does.
+ */
+export function trafficHopCensus(seed: number, carCount: number): HopCensus {
+  const model = renderTrafficModel(seed);
+  const plan: CarPlan = { role: 'free', stream: 255 };
+  let streamCars = 0;
+  let hopCars = 0;
+  for (let car = 0; car < carCount; car += 1) {
+    carTrafficPlan(seed, car, plan);
+    if (plan.role !== 'stream') continue;
+    streamCars += 1;
+    if (carHops(car, model.carSalt, cpuHopShare(car))) hopCars += 1;
+  }
+  return { carCount, streamCars, hopCars, share: streamCars === 0 ? 0 : hopCars / streamCars };
+}
+
+function buildImpostorGeometry(model: RenderTrafficModel, capacity: number): InstancedBufferGeometry {
   const geometry = new InstancedBufferGeometry();
   geometry.setAttribute('position', new BufferAttribute(new Float32Array(4 * 3), 3));
   geometry.setAttribute('aCorner', new BufferAttribute(new Float32Array([0, -1, 0, 1, 1, 1, 1, -1]), 2));
   geometry.setIndex([0, 1, 2, 0, 2, 3]);
-  const attrs = deriveImpostorAttributes(seed, capacity);
+  // R21: the same model instance the CPU cars read, so neither population rebakes the path table.
+  const attrs = deriveImpostorAttributes(model.seed, capacity, model);
   geometry.setAttribute('aImp', new InstancedBufferAttribute(attrs.streamArcPhaseSeed, 4));
-  geometry.setAttribute('aImpRow', new InstancedBufferAttribute(attrs.row, 1));
+  geometry.setAttribute('aFlow', new InstancedBufferAttribute(attrs.flow, 4));
+  geometry.setAttribute('aRoute', new InstancedBufferAttribute(attrs.route, 4));
   geometry.instanceCount = 0;
   return geometry;
 }
@@ -1147,6 +1359,12 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   if (laneMaxX <= laneMinX) fail('SKYRIVER_TRAFFIC_BOUNDS_TOO_SMALL');
 
   const params = deriveTrafficParams(options.seed, maxCarCount);
+  /**
+   * R21: one seed-owned traffic model. It holds the seeded fork and course-change network and the
+   * baked path table, and both populations read it — the CPU cars below and the GPU impostors — so
+   * they fly exactly the same corridors. The simulation never sees it.
+   */
+  const model = renderTrafficModel(options.seed);
 
   const seedSalt = options.seed | 0;
 
@@ -1170,10 +1388,32 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const carThinFar = new Uint8Array(maxCarCount);
   /** R14: headlamp warmth 0 (white) .. 1 (amber). */
   const carWarm = new Float32Array(maxCarCount);
-  const shareCumulative = STREAMS.reduce<number[]>((acc, st) => { acc.push((acc[acc.length - 1] ?? 0) + st[9]!); return acc; }, []);
+  /**
+   * R21 per-car flow, from the shared model. A stream car's speed is its own sample inside its class
+   * band, not the stream's nominal speed, and its route records the branch it took and the course
+   * change it makes once a lap. Every value is a function of the permanent car index, so a tier
+   * change never moves a car.
+   */
+  const carCruiseMps = new Float32Array(maxCarCount);
+  const carEffectiveMps = new Float32Array(maxCarCount);
+  const carConvoy = new Uint8Array(maxCarCount);
+  const carPassAmpM = new Float32Array(maxCarCount);
+  const carPassPeriodS = new Float32Array(maxCarCount);
+  const carForkBits = new Uint8Array(maxCarCount);
+  const carRouteA = new Uint8Array(maxCarCount);
+  const carRouteB = new Uint8Array(maxCarCount);
+  const carHopStartM = new Float32Array(maxCarCount);
+  const carHopRampM = new Float32Array(maxCarCount);
+  /** Appearance seed 0..1: the sub-row jitter and the merge re-scatter read it. */
+  const carAppearance = new Float32Array(maxCarCount);
   const tintR = new Float32Array(maxCarCount);
   const tintG = new Float32Array(maxCarCount);
   const tintB = new Float32Array(maxCarCount);
+
+  /** Density pulse per stream car, so its convoy is shared with the rest of its clump. */
+  const carFlowInput: FlowInput = { path: 0, index: 0, salt: 0, pulse: 0, row: 0, phase: 0, appearanceSeed: 0, hopShare: 0, allowForks: true };
+  const carFlowScratch = newFlowSample();
+  const carPlan: CarPlan = { role: 'free', stream: 255 };
 
   const renderArchetype = new Uint8Array(maxCarCount);
   const archetypeTotals = new Int32Array(RENDER_ARCHETYPES);
@@ -1202,45 +1442,44 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     const h = (k: number): number => hash01(car ^ seedSalt, k);
     const chase = car >= ESCORT_COUNT && car < ESCORT_COUNT + CHASE_COUNT;
     carDirection[car] = h(0x11) < (chase ? 0.3 : 0.5) ? -1 : 1;
-    if (chase) {
-      // Chase band: mostly members of the streams nearest the shuttle (rank 0 or 1, re-picked each
-      // frame), the rest free floaters at offsets kept off the shuttle's own line.
-      if (h(0x41) < CHASE_STREAM_SHARE) {
-        carStream[car] = h(0x42) < 0.65 ? 0 : 1;
-        carRow[car] = h(0x43);
-        carHomeX[car] = (h(0x21) * 2 - 1);
-        carHomeY[car] = (h(0x22) * 2 - 1);
-        carSpeed[car] = 0;
-      } else {
-        let lateral = (h(0x21) * 2 - 1) * 175;
-        let lift = (h(0x22) * 2 - 1) * 70;
-        if (Math.abs(lateral) < 35 && Math.abs(lift) < 20) lift = Math.sign(lift || 1) * (20 + h(0x23) * 30);
-        if (lift < -10 && Math.abs(lateral) < 110) lateral = Math.sign(lateral || 1) * (110 + h(0x24) * 100);
-        carHomeX[car] = lateral;
-        carHomeY[car] = lift;
-        carSpeed[car] = carDirection[car] > 0 ? 90 + h(0x25) * 110 : 60 + h(0x25) * 80;
-      }
-    } else if (h(0x41) < STREAM_SHARE) {
-      const pick = h(0x42) * shareCumulative[shareCumulative.length - 1]!;
-      let stream = 0;
-      while (stream < STREAMS.length - 1 && shareCumulative[stream]! <= pick) stream += 1;
-      const st = STREAMS[stream]!;
-      carStream[car] = stream;
+    // One definition of a car's role and stream, shared with trafficHopCensus.
+    carTrafficPlan(options.seed, car, carPlan);
+    if (carPlan.role === 'chase-stream') {
+      // Chase band: members of the streams nearest the shuttle (rank 0 or 1, re-picked each frame).
+      carStream[car] = carPlan.stream;
+      carRow[car] = h(0x43);
+      carHomeX[car] = (h(0x21) * 2 - 1);
+      carHomeY[car] = (h(0x22) * 2 - 1);
+      carSpeed[car] = 0;
+    } else if (carPlan.role === 'chase-free') {
+      // Free floaters near the shuttle, at offsets kept off its own line.
+      let lateral = (h(0x21) * 2 - 1) * 175;
+      let lift = (h(0x22) * 2 - 1) * 70;
+      if (Math.abs(lateral) < 35 && Math.abs(lift) < 20) lift = Math.sign(lift || 1) * (20 + h(0x23) * 30);
+      if (lift < -10 && Math.abs(lateral) < 110) lateral = Math.sign(lateral || 1) * (110 + h(0x24) * 100);
+      carHomeX[car] = lateral;
+      carHomeY[car] = lift;
+      carSpeed[car] = carDirection[car] > 0 ? 90 + h(0x25) * 110 : 60 + h(0x25) * 80;
+    } else if (carPlan.role === 'stream') {
+      const st = STREAMS[carPlan.stream]!;
+      carStream[car] = carPlan.stream;
       carThinFar[car] = st[5]! > 150 && h(0x51) < 0.4 ? 1 : 0;
-      // Express white, freight (broad slow channels) half amber, standard a little warm.
-      carWarm[car] = st[5]! > 150 ? 0 : st[4]! >= 90 ? (h(0x52) < 0.5 ? 1 : 0.15) : 0.25 * h(0x52);
       carDirection[car] = st[2]!;
       carRow[car] = h(0x43);
       carHomeX[car] = (h(0x21) * 2 - 1);
       carHomeY[car] = (h(0x22) * 2 - 1);
+      // The R21 flow below replaces the stream's nominal speed with this car's own band sample.
       carSpeed[car] = st[5]!;
-    } else {
-      carHomeX[car] = (h(0x21) * 2 - 1) * CAR_CORRIDOR_HALF_M;
-      carHomeY[car] = CAR_MIN_Y_M + Math.pow(h(0x22), 0.9) * (CAR_MAX_Y_M - CAR_MIN_Y_M);
+    } else if (carPlan.role === 'free' || carPlan.role === 'escort') {
       carSpeed[car] = Math.abs(params.speed[car]!) * SPEED_SCALE * (0.8 + 0.4 * h(0x25));
     }
     carPhase[car] = params.phase[car]!;
-    if (carStream[car] !== 255 && !chase) {
+    if (carStream[car] !== 255) {
+      // The sub-row jitter and the merge re-scatter read this as the car's appearance channel. The
+      // 0.6 spacing factor reproduces the R11 jitter exactly: carHomeX is already in [-1, 1].
+      carAppearance[car] = (carHomeX[car]! + 1) * 0.5;
+    }
+    if (carStream[car] !== 255) {
       // Density pulses: squeeze the phase into clumps of varying fill, one set per stream.
       const st = STREAMS[carStream[car]!]!;
       const pulses = st[8]!;
@@ -1248,14 +1487,52 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       const pulse = Math.floor(slot);
       const fill = 0.22 + 0.4 * hash01(carStream[car]! * 97 + pulse, 0x9a11);
       const offset = hash01(carStream[car]! * 131 + pulse, 0x9a12) * (1 - fill);
-      carPhase[car] = (pulse + offset + Math.pow(slot - pulse, 0.8) * fill) / pulses;
+      if (!chase) carPhase[car] = (pulse + offset + Math.pow(slot - pulse, 0.8) * fill) / pulses;
+      // R21 flow: the class band, the convoy, the passing offset, the branch bits, and the course
+      // change. The hop share follows the permanent index cohort, so the low tier (cars 0..599)
+      // keeps fixed trajectories and the medium and high tiers both land near 15%.
+      carFlowInput.path = carStream[car]!;
+      carFlowInput.index = car;
+      carFlowInput.salt = model.carSalt;
+      carFlowInput.pulse = pulse;
+      carFlowInput.row = carRow[car]!;
+      carFlowInput.phase = carPhase[car]!;
+      carFlowInput.appearanceSeed = carAppearance[car]!;
+      carFlowInput.hopShare = chase ? 0 : cpuHopShare(car);
+      carFlowInput.allowForks = !chase;
+      sampleStreamFlow(model, carFlowInput, carFlowScratch);
+      carCruiseMps[car] = carFlowScratch.sampledCruiseMps;
+      carEffectiveMps[car] = carFlowScratch.effectiveMps;
+      carConvoy[car] = carFlowScratch.convoy ? 1 : 0;
+      carPassAmpM[car] = carFlowScratch.passAmplitudeM;
+      carPassPeriodS[car] = carFlowScratch.passPeriodS;
+      carForkBits[car] = carFlowScratch.forkBits;
+      carRouteA[car] = carFlowScratch.bakedRowA;
+      carRouteB[car] = carFlowScratch.bakedRowB;
+      carHopStartM[car] = carFlowScratch.hopStartM;
+      carHopRampM[car] = carFlowScratch.hopRampM;
+      carSpeed[car] = carFlowScratch.effectiveMps;
+      carWarm[car] = carFlowScratch.kind === 'express'
+        ? 0
+        : carFlowScratch.kind === 'freight' ? (h(0x52) < 0.5 ? 1 : 0.15) : 0.25 * h(0x52);
     }
     carDriftA[car] = DRIFT_MIN_M + h(0x31) * DRIFT_SPAN_M;
-    carDriftW[car] = 0.05 + h(0x32) * 0.13;
+    // R21: a free car's heading preference rotates on a 20-40 s period, so its slow weave reads as
+    // a flying car choosing its line instead of a near-static offset.
+    carDriftW[car] = TAU / (FREE_DRIFT_PERIOD_MIN_S + h(0x32) * FREE_DRIFT_PERIOD_SPAN_S);
     carDriftP[car] = h(0x33) * TAU;
     carClimbA[car] = CLIMB_MIN_M + h(0x34) * CLIMB_SPAN_M;
-    carClimbW[car] = 0.04 + h(0x35) * 0.12;
+    carClimbW[car] = TAU / (FREE_DRIFT_PERIOD_MIN_S + h(0x35) * FREE_DRIFT_PERIOD_SPAN_S);
     carClimbP[car] = h(0x36) * TAU;
+    if (carStream[car] === 255 && !chase) {
+      // R21: each free car's home range is inset by its own drift amplitude and a wall margin, so
+      // its analytic motion stays inside the corridor and no lateral clamp can snap it.
+      const lateralRoom = Math.max(0, CAR_CORRIDOR_HALF_M - carDriftA[car]! - WALL_MARGIN_M);
+      carHomeX[car] = (h(0x21) * 2 - 1) * lateralRoom;
+      const lowY = CAR_MIN_Y_M + carClimbA[car]! + WALL_MARGIN_M;
+      const highY = CAR_MAX_Y_M - carClimbA[car]! - WALL_MARGIN_M;
+      carHomeY[car] = lowY + Math.pow(h(0x22), 0.9) * (highY - lowY);
+    }
     sizeScale[car] = chase
       ? CHASE_SIZE_MIN + hash01(car, 0x4e8d) * CHASE_SIZE_SPAN
       : SIZE_MIN_SCALE + hash01(car, 0x4e8d) * SIZE_SCALE_SPAN;
@@ -1354,22 +1631,31 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const streakDirArray = streakDir.array as Float32Array;
   const streakFadeArray = streakFade.array as Float32Array;
 
-  // ---- R18 GPU impostor cars.
+  // ---- R18 GPU impostor cars, on the R21 shared model.
   const impostorCapacity = Math.max(0, options.maxImpostors ?? options.quality.impostors);
-  const table = streamPathTable();
+  const table = model.table;
   const pathTexture = new DataTexture(table.data, table.width, table.height, RGBAFormat, FloatType);
   pathTexture.minFilter = NearestFilter;
   pathTexture.magFilter = NearestFilter;
   pathTexture.needsUpdate = true;
-  const impostorGeometry = buildImpostorGeometry(options.seed, impostorCapacity);
+  const impostorGeometry = buildImpostorGeometry(model, impostorCapacity);
   const impostorMaterial = new ShaderMaterial({
     name: 'skyriver.traffic.impostors',
     vertexShader: IMPOSTOR_VERTEX,
     fragmentShader: IMPOSTOR_FRAGMENT,
-    defines: { NSTREAMS: IMPOSTOR_PATHS.length, NRINGS: IMPOSTOR_RINGS.length },
+    defines: {
+      NSTREAMS: IMPOSTOR_PATHS.length,
+      NRINGS: IMPOSTOR_RINGS.length,
+      NFORKS: FORK_STREAM_COUNT,
+      NVARIANTS: STREAM_VARIANTS,
+      LANE_ROW_0: LANE_ROW_0,
+      WARP_ROW: WARP_ROW,
+    },
     uniforms: {
       uPaths: { value: pathTexture },
       uStreamA: { value: IMPOSTOR_PATHS.map((st) => new Vector4(st[2]!, st[5]!, st[3]!, st[4]!)) },
+      uForkSpan: { value: model.forks.map((list) => new Vector4(list[0]!.startM, list[0]!.lengthM, list[1]?.startM ?? 0, list[1]?.lengthM ?? 0)) },
+      uForkRamp: { value: model.forks.map((list) => new Vector4(list[0]!.rampM, list[1]?.rampM ?? FORK_RAMP_M, 0, 0)) },
       uRingA: { value: IMPOSTOR_RINGS.map((r) => new Vector4(r[0]!, r[1]!, r[2]!, r[5]!)) },
       uRingB: { value: IMPOSTOR_RINGS.map((r) => new Vector4(r[3]!, r[4]!, r[6]!, r[7]!)) },
       uRingLobes: { value: IMPOSTOR_RINGS.map((r) => r[8]!) },
@@ -1457,6 +1743,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     anchorValid = true;
   }
   const carWarp: WarpOut = { x: 0, z: 0, heading: 0 };
+  const carWarpRow = { x: 0, z: 0, cos: 0, sin: 0 };
+  const carPose = newCanyonPose();
   const carDir = { x: 0, z: 0 };
 
   // ---- Mutable tier state. Written by setQuality(), read by the hot loop.
@@ -1589,21 +1877,38 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   }
   // R12 perf: each stream's centre line is baked once into a path table (8 m steps around the loop),
   // so a car costs one table lookup. R18: the table is shared with the GPU impostor cars
-  // (trafficStreams.ts), so both populations fly exactly the same corridors.
-  const pathTable = streamPathTable();
-  /** Table lookup: writes centre x, y and the lateral slope dx/dv into out[0..2]. */
+  // (trafficStreams.ts), so both populations fly exactly the same corridors. R21: the table now
+  // holds four branch variants per stream and the analytic d/dv slopes.
+  const mainRowSample = { cx: 0, cy: 0, sx: 0, sy: 0 };
+  /** Main-variant centre (x, y) and lateral slope of stream k at v, for the chase-rank ranking. */
   function streamCentre(k: number, v: number, out: Float64Array): void {
     let w = v % CANYON_LOOP_LENGTH_M;
     if (w < 0) w += CANYON_LOOP_LENGTH_M;
-    const f = w / STREAM_PATH_STEP_M;
-    const i = Math.min(STREAM_PATH_SAMPLES - 1, Math.floor(f));
-    const t = f - i;
-    const o0 = (k * pathTable.width + i) * 4;
-    const o1 = o0 + 4;
-    const d = pathTable.data;
-    out[0] = d[o0]! + (d[o1]! - d[o0]!) * t;
-    out[1] = d[o0 + 1]! + (d[o1 + 1]! - d[o0 + 1]!) * t;
-    out[2] = (d[o1]! - d[o0]!) / STREAM_PATH_STEP_M;
+    sampleStreamPath(model.table, bakedPathRow(k, 0), w / STREAM_PATH_STEP_M, mainRowSample);
+    out[0] = mainRowSample.cx;
+    out[1] = mainRowSample.cy;
+    out[2] = mainRowSample.sx;
+  }
+  /** Loads a non-chase stream car's stored R21 flow back into the shared sample shape. */
+  function loadCarFlow(car: number, out: typeof carFlowScratch): void {
+    const path = carStream[car]!;
+    out.path = path;
+    out.kind = STREAM_DESCRIPTORS[path]!.kind;
+    out.direction = STREAM_DESCRIPTORS[path]!.direction;
+    out.sampledCruiseMps = carCruiseMps[car]!;
+    out.convoy = carConvoy[car] === 1;
+    out.convoyRatio = out.convoy ? carEffectiveMps[car]! / carCruiseMps[car]! : 1;
+    out.effectiveMps = carEffectiveMps[car]!;
+    out.passAmplitudeM = carPassAmpM[car]!;
+    out.passPeriodS = carPassPeriodS[car]!;
+    out.forkBits = carForkBits[car]!;
+    out.bakedRowA = carRouteA[car]!;
+    out.bakedRowB = carRouteB[car]!;
+    out.hop = out.bakedRowB !== out.bakedRowA;
+    out.hopTarget = out.hop ? pathOfBakedRow(out.bakedRowB) : path;
+    out.hopStartM = carHopStartM[car]!;
+    out.hopRampM = carHopRampM[car]!;
+    out.scatterRow = scatterRowOf(carPhase[car]!, carAppearance[car]!);
   }
 
   function setQuality(quality: TrafficQuality): void {
@@ -1708,46 +2013,47 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           let x: number;
           let y: number;
           const isChase = car < ESCORT_COUNT + CHASE_COUNT && anchorValid;
-          let streamSlope = 0;
           let inStream = false;
           let jink = 0;
           if (carStream[car]! !== 255 && (anchorValid || !isChase)) {
-            // Stream member: the stream sets direction, speed band, shelf and corridor.
+            // Stream member on the shared R21 model: the stream sets direction, shelf and corridor;
+            // the car's own flow sets its cruise speed, convoy, passing, branch and course change.
             inStream = true;
             let k = carStream[car]!;
             if (isChase) {
               chaseStream(carStream[car]!, car, t);
               k = handoff.stream;
               fade *= handoff.fade;
+              // A sticky R15 car's stream is a rank the handoff can move, so its flow is sampled for
+              // the stream it is on now. It never forks and never hops: R15 owns its route.
+              carFlowInput.path = k;
+              carFlowInput.index = car;
+              carFlowInput.salt = model.carSalt;
+              carFlowInput.pulse = Math.floor(carPhase[car]! * STREAMS[k]![8]!);
+              carFlowInput.row = carRow[car]!;
+              carFlowInput.phase = carPhase[car]!;
+              carFlowInput.appearanceSeed = carAppearance[car]!;
+              carFlowInput.hopShare = 0;
+              carFlowInput.allowForks = false;
+              sampleStreamFlow(model, carFlowInput, carFlowScratch);
+            } else {
+              loadCarFlow(car, carFlowScratch);
             }
-            const st = STREAMS[k]!;
-            direction = st[2]!;
-            speed = st[5]! * (0.9 + 0.2 * carRow[car]!);
-            const surgeArg = t * (0.3 + 0.25 * carRow[car]!) + carPhase[car]! * 97.0;
-            // R12: express streams surge harder (±110 m) so their spacing is irregular and a distant
-            // white chain breaks up instead of reading as an evenly dotted line.
-            const surge = (st[5]! > 150 ? 110 : SURGE_M) * Math.sin(surgeArg);
+            direction = carFlowScratch.direction;
+            speed = carFlowScratch.effectiveMps;
             if (isChase) {
-              const absolute = carPhase[car]! * CHASE_WINDOW_M + direction * speed * t + surge;
+              const absolute = carPhase[car]! * CHASE_WINDOW_M + direction * speed * t;
               let rel = (absolute - anchor[6]! + CHASE_WINDOW_M * 0.5) % CHASE_WINDOW_M;
               if (rel < 0) rel += CHASE_WINDOW_M;
               rel -= CHASE_WINDOW_M * 0.5;
               fade *= smoothstep(0, CHASE_FADE_M, CHASE_WINDOW_M * 0.5 - Math.abs(rel));
               v = anchor[6]! + rel;
             } else {
-              v = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * st[5]! * t + surge;
+              v = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * speed * t;
             }
-            streamCentre(k, v, streamScratch);
-            const cx = streamScratch[0]!;
-            const cy = streamScratch[1]!;
-            streamSlope = streamScratch[2]!;
-            const rows = st[3]!;
-            const rowIndex = Math.min(rows - 1, Math.floor(carRow[car]! * rows));
-            const spacing = st[4]! / Math.max(1, rows - 1);
-            const rowOffset = (rowIndex - (rows - 1) / 2) * spacing;
-            x = clamp(cx + rowOffset + carHomeX[car]! * spacing * 0.3 + 3 * Math.sin(driftArg),
-              -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
-            y = cy + (rowIndex % 2 === 0 ? -3 : 3) + carHomeY[car]! * 3 + 2 * Math.sin(climbArg);
+            evaluateCanyonPose(model, carFlowScratch, v, t, carPhase[car]!, carAppearance[car]!, carRow[car]!, carPose);
+            x = clamp(carPose.x, -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
+            y = carPose.y;
             jink = JINK_RAD * Math.sin(t * (0.5 + 0.4 * carRow[car]!) + carPhase[car]! * 53.0);
           } else if (isChase) {
             // Free floater near the shuttle.
@@ -1764,19 +2070,37 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
             x = clamp(carHomeX[car]! + drift, -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
             y = carHomeY[car]! + climb;
           }
-          warpCanyon(x, v, carWarp);
-          px = carWarp.x;
+          let headingCos: number;
+          let headingSin: number;
+          if (inStream) {
+            // R21: a stream car reads the baked warp row, the row the GPU impostors sample, so both
+            // populations share one corridor instead of two near-identical ones.
+            sampleWarpRow(model.table, carPose.wrappedM / STREAM_PATH_STEP_M, carWarpRow);
+            px = carWarpRow.x + x * carWarpRow.cos;
+            pz = carWarpRow.z - x * carWarpRow.sin;
+            headingCos = carWarpRow.cos;
+            headingSin = carWarpRow.sin;
+          } else {
+            warpCanyon(x, v, carWarp);
+            px = carWarp.x;
+            pz = carWarp.z;
+            headingCos = Math.cos(carWarp.heading);
+            headingSin = Math.sin(carWarp.heading);
+          }
           py = y;
-          pz = carWarp.z;
-          // Velocity in canyon space (across, along), then turned to world.
+          // Velocity in canyon space (across, along, up), then turned to world. A stream car's
+          // across and up rates come from its own path: branch and course-change slopes included.
           const along = direction * speed;
-          const vx = inStream ? (streamSlope + Math.tan(jink)) * along : driftRate;
+          const across = inStream ? (carPose.dxdv + Math.tan(jink)) * along + carPose.xRate : driftRate;
+          const up = inStream ? carPose.dydv * along + carPose.yRate : climbRate;
           if (inStream) streakSpeed = speed;
-          warpDirection(vx, along, carWarp.heading, carDir);
+          // along = (sin h, cos h), across = (cos h, -sin h)
+          carDir.x = along * headingSin + across * headingCos;
+          carDir.z = along * headingCos - across * headingSin;
           const horizontal = Math.hypot(carDir.x, carDir.z) || 1;
           fx = carDir.x / horizontal;
           fz = carDir.z / horizontal;
-          fy = inStream ? 0 : climbRate / Math.max(20, speed);
+          fy = up / Math.max(20, Math.abs(speed));
           // Bank into the drift (free) or the jink (stream): lateral acceleration over speed.
           bank = inStream
             ? clamp(jink * 3.0 * direction, -0.25, 0.25)

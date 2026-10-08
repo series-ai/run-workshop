@@ -19,8 +19,11 @@ import {
   IMPOSTOR_PATH_COUNT,
   IMPOSTOR_RINGS,
   STREAMS,
+  STREAM_PATH_ROWS,
+  WARP_ROW,
   deriveImpostorAttributes,
   impostorPosition,
+  renderTrafficModel,
 } from '../src/render/trafficStreams';
 import {
   CPU_LIGHT_HANDOVER_BLEND_PRESENCE,
@@ -163,9 +166,28 @@ describe('GPU impostor traffic', () => {
     const c = deriveImpostorAttributes(DEMO_SEED + 1, 20000);
     expect(Array.from(a.streamArcPhaseSeed)).toEqual(Array.from(b.streamArcPhaseSeed));
     expect(Array.from(a.row)).toEqual(Array.from(b.row));
+    // R21: the flow and route the vertex shader reads are seeded and pure in the same way.
+    expect(Array.from(a.flow)).toEqual(Array.from(b.flow));
+    expect(Array.from(a.route)).toEqual(Array.from(b.route));
+    expect(a.seed).toBe(DEMO_SEED);
     expect(Array.from(a.streamArcPhaseSeed.slice(0, 400))).not.toEqual(Array.from(c.streamArcPhaseSeed.slice(0, 400)));
+    expect(Array.from(a.route.slice(0, 400))).not.toEqual(Array.from(c.route.slice(0, 400)));
     // A smaller count is a prefix of a larger one (tiers draw prefixes).
-    expect(Array.from(deriveImpostorAttributes(DEMO_SEED, 500).streamArcPhaseSeed)).toEqual(Array.from(a.streamArcPhaseSeed.slice(0, 2000)));
+    const small = deriveImpostorAttributes(DEMO_SEED, 500);
+    expect(Array.from(small.streamArcPhaseSeed)).toEqual(Array.from(a.streamArcPhaseSeed.slice(0, 2000)));
+    expect(Array.from(small.flow)).toEqual(Array.from(a.flow.slice(0, 2000)));
+    expect(Array.from(small.route)).toEqual(Array.from(a.route.slice(0, 2000)));
+    // R21 route values address real baked rows, and every speed is positive.
+    for (let i = 0; i < a.count; i += 1) {
+      for (const row of [a.route[i * 4]!, a.route[i * 4 + 1]!]) {
+        expect(Number.isInteger(row) && row >= 0 && row < WARP_ROW).toBe(true);
+      }
+      expect(a.flow[i * 4]!).toBe(a.row[i]!);
+      expect(a.flow[i * 4 + 1]!).toBeGreaterThan(0);
+      expect(Math.abs(a.flow[i * 4 + 2]!)).toBeGreaterThan(0);
+      expect(a.route[i * 4 + 3]!).toBeGreaterThan(0);
+    }
+    expect(renderTrafficModel(DEMO_SEED).table.height).toBe(STREAM_PATH_ROWS);
     for (let i = 0; i < a.count; i += 1) {
       const k = a.streamArcPhaseSeed[i * 4]!;
       expect(Number.isInteger(k) && k >= 0 && k < IMPOSTOR_PATH_COUNT).toBe(true);
@@ -213,16 +235,34 @@ describe('GPU impostor traffic', () => {
     const p = { x: 0, y: 0, z: 0, dx: 0, dz: 0 };
     const q = { x: 0, y: 0, z: 0, dx: 0, dz: 0 };
     let worst = 0;
-    // 100 s covers a full loop for the slow streams' seam crossings at many phases.
+    // 100 s covers a full loop for the slow streams' seam crossings at many phases. R21 walks
+    // backward time too, because a restore or a replay can move the render clock either way.
     for (let i = 0; i < a.count; i += 1) {
-      impostorPosition(a, i, 0, p);
-      for (let f = 1; f <= 3000; f += 1) {
+      impostorPosition(a, i, -50, p);
+      for (let f = -1499; f <= 3000; f += 1) {
         impostorPosition(a, i, f / 30, q);
         worst = Math.max(worst, Math.hypot(q.x - p.x, q.y - p.y, q.z - p.z));
         p.x = q.x; p.y = q.y; p.z = q.z;
       }
     }
     expect(worst).toBeLessThan(25);
+  });
+
+  it('keeps every travel direction a finite unit vector, branch and course-change slopes included', () => {
+    const a = deriveImpostorAttributes(DEMO_SEED, 2000);
+    const p = { x: 0, y: 0, z: 0, dx: 0, dz: 0, dy: 0 };
+    let steepest = 0;
+    for (let i = 0; i < a.count; i += 1) {
+      for (const t of [-13.5, 0, 7.25, 61, 240]) {
+        impostorPosition(a, i, t, p);
+        const length = Math.hypot(p.dx, p.dy ?? 0, p.dz);
+        expect(Number.isFinite(length)).toBe(true);
+        expect(length).toBeCloseTo(1, 9);
+        steepest = Math.max(steepest, Math.abs(p.dy ?? 0));
+      }
+    }
+    // Canyon cars really do climb on a course change, instead of facing along the stream they left.
+    expect(steepest).toBeGreaterThan(0.1);
   });
 
   it('keeps every canyon impostor out of the buildings; reports the sky rings', () => {

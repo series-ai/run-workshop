@@ -30,7 +30,7 @@ import {
   type SkyriverFrame,
 } from './render/scene';
 import { TRAFFIC_QUALITY_TIERS, createSkyriverTraffic } from './render/traffic';
-import { deriveImpostorAttributes, impostorPosition } from './render/trafficStreams';
+import { deriveImpostorAttributes, impostorFlow, impostorPosition } from './render/trafficStreams';
 import type { SkyriverTraffic, TrafficQuality } from './render/trafficTypes';
 import { createSkyriverShuttle } from './render/shuttle';
 import { createFlightPresenter, createWorldWakeSamples, sampleWorldWake, SHUTTLE_DRAW_PITCH_SHARE } from './render/flightPresentation';
@@ -890,6 +890,9 @@ export function boot(): SkyriverApp {
     // R18: the GPU impostor cars' CPU mirror (density and continuity probes).
     deriveImpostorAttributes,
     impostorPosition,
+    // R21: the same cars' read-only flow metadata (speed band, convoy, branch and course change).
+    // It reads the cached model for the attributes' own seed, so it never rebakes the path table.
+    impostorFlow,
     raycastTowers(ox: number, oy: number, oz: number, dx: number, dy: number, dz: number): { x: number; y: number; z: number } | null {
       const ray = new THREE.Raycaster(new THREE.Vector3(ox, oy, oz), new THREE.Vector3(dx, dy, dz).normalize(), 0, 3000);
       const hit = ray.intersectObject(app.scene.city.towerMesh, false)[0];
