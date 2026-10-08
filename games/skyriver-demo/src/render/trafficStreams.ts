@@ -32,6 +32,7 @@
  *
  * Pure, GL-free, node-testable. Everything is a function of the seed.
  */
+import { packTrafficAppearance, TRAFFIC_APPEARANCE_PROFILES } from './trafficAppearance';
 import { CANYON_LOOP_LENGTH_M, warpCanyon, type WarpOut } from './canyonWarp';
 
 const TAU = Math.PI * 2;
@@ -1203,6 +1204,8 @@ export interface ImpostorAttributes {
   readonly row: Float32Array;
   readonly flow: Float32Array;
   readonly route: Float32Array;
+  /** Fixed type + physical scale / 8. One float per independent GPU car. */
+  readonly appearance: Float32Array;
 }
 
 /** One impostor's derived state. Pure in (model, index). */
@@ -1283,9 +1286,14 @@ export function deriveImpostorAttributes(seed: number, count: number, model?: Re
   const row = new Float32Array(count);
   const flow = new Float32Array(count * 4);
   const route = new Float32Array(count * 4);
+  const appearance = new Float32Array(count);
   const car = newImpostorCar();
   for (let i = 0; i < count; i += 1) {
     deriveImpostorCar(resolved, i, car);
+    // Separate avalanche channels. Motion and route records do not read these values.
+    const type = Math.floor(impostorHash(i ^ resolved.carSalt, 0x201) * TRAFFIC_APPEARANCE_PROFILES.length);
+    const scale = 1.5 + impostorHash(i ^ resolved.carSalt, 0x202);
+    appearance[i] = packTrafficAppearance(type, scale);
     streamArcPhaseSeed[i * 4] = car.path;
     streamArcPhaseSeed[i * 4 + 1] = car.arc;
     streamArcPhaseSeed[i * 4 + 2] = car.phase;
@@ -1301,7 +1309,7 @@ export function deriveImpostorAttributes(seed: number, count: number, model?: Re
     route[i * 4 + 2] = car.flow.hopStartM;
     route[i * 4 + 3] = car.flow.hopRampM;
   }
-  return { seed: resolved.seed, count, streamArcPhaseSeed, row, flow, route };
+  return { seed: resolved.seed, count, streamArcPhaseSeed, row, flow, route, appearance };
 }
 
 /** The pose `impostorPosition` writes. `dy` is the vertical travel component (R21 branch slopes). */

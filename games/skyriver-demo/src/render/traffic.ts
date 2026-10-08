@@ -69,6 +69,7 @@ import {
 import { skyriverDeclareStageRole } from './stageRoles';
 import { CANYON_LOOP_LENGTH_M, warpCanyon, type WarpOut } from './canyonWarp';
 import { routeAltitude, routeLateral } from './routeProfile';
+import { TRAFFIC_APPEARANCE_GLSL, TRAFFIC_APPEARANCE_PROFILES } from './trafficAppearance';
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
 import {
   createImpostorTierTransition,
@@ -264,13 +265,7 @@ const SIZE_SCALE_SPAN = 1.0;
 const DISTANCE_DIM_RANGE_M = 900;
 const DISTANCE_DIM_FLOOR = 0.42;
 
-/** Streak tuning: lamp offsets from the car centre, metres; trail seconds of motion. */
-const HEAD_OFFSET_M = 2.4;
-const TAIL_OFFSET_M = 2.5;
-/** T6R-2: long continuous trails (platoon-mates' trails overlap into one ribbon), never dashes. */
-/** T7-3: short per-car tails only — lights are dots with a brief smear, never ribbons. */
-const TAIL_TRAIL_S = 0.09;
-const HEAD_TRAIL_S = 0.02;
+
 /**
  * R16 light trails: a modest additive smear behind every car, length ~0.45 s of travel capped at
  * 60 m, low alpha so bloom integrates it. Red seen from behind, warm white seen from the front.
@@ -287,8 +282,8 @@ const TRAIL_ALPHA = 0.25;
  */
 export const TRAIL_MAX_CAR_LENGTHS = 2;
 export const TRAIL_END_WIDTH_SHARE = 0.3;
-/** Lamp-to-lamp body length of a car at scale 1, metres (head + tail lamp offsets). */
-export const TRAFFIC_CAR_LENGTH_M = HEAD_OFFSET_M + TAIL_OFFSET_M;
+/** Legacy length reference in metres. Rendered trails use the actual profile length. */
+export const TRAFFIC_CAR_LENGTH_M = 4.9;
 /** 'near' tier: trails on cars inside this camera distance (faded over the last 200 m). */
 const TRAIL_NEAR_M = 700;
 
@@ -522,6 +517,22 @@ const SIGN_R = 1;
 const SIGN_G = 0.72;
 const SIGN_B = 0.2;
 
+/** Use the same source patches for hulls and sprites. Keep the original patch order. */
+function pushProfileLights(build: MeshBuild, type: number): void {
+  const profile = TRAFFIC_APPEARANCE_PROFILES[type]!;
+  for (const [lamp, r, g, b] of [
+    [profile.front, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B],
+    [profile.rear, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B],
+  ] as const) {
+    if (lamp.kind === 'pair') {
+      pushLightPatch(build, lamp.centreXM, lamp.yM, lamp.zM, lamp.widthM, lamp.heightM, r, g, b);
+      pushLightPatch(build, -lamp.centreXM, lamp.yM, lamp.zM, lamp.widthM, lamp.heightM, r, g, b);
+    } else {
+      pushLightPatch(build, 0, lamp.yM, lamp.zM, lamp.widthM, lamp.heightM, r, g, b);
+    }
+  }
+}
+
 /**
  * Archetype 0 — "cab": a boxy yellow compact, the workhorse silhouette of the swarm.
  * Forward is +Z throughout, matching the orientation basis evaluate() builds.
@@ -541,9 +552,7 @@ function buildCab(): MeshBuild {
   pushBox(build, 1.14, -0.16, -0.6, 0.36, 0.5, 1.9, 0.2, 0.2, 0.22);
   pushBox(build, -1.14, -0.16, -0.6, 0.36, 0.5, 1.9, 0.2, 0.2, 0.22);
 
-  pushLightPatch(build, 0.56, -0.04, 2.61, 0.5, 0.3, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
-  pushLightPatch(build, -0.56, -0.04, 2.61, 0.5, 0.3, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
-  pushLightPatch(build, 0, 0.1, -2.21, 1.75, 0.2, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  pushProfileLights(build, 0);
 
   return build;
 }
@@ -619,8 +628,7 @@ function buildInterceptor(): MeshBuild {
   pushQuadOut(build, -0.9, -0.1, -1.1, -1.9, 0.72, -2.5, -1.9, 0.52, -2.72, -0.9, -0.3, -1.3,
     0, -2, -1.8, r * 0.9, g * 0.9, b * 0.9);
 
-  pushLightPatch(build, 0, 0.06, 3.14, 0.9, 0.12, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
-  pushLightPatch(build, 0, -0.02, -2.97, 1.4, 0.16, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  pushProfileLights(build, 1);
 
   return build;
 }
@@ -637,9 +645,7 @@ function buildCommuter(): MeshBuild {
   pushBox(build, 0.96, -0.74, -0.1, 0.26, 0.4, 2.6, 0.16, 0.17, 0.19);
   pushBox(build, -0.96, -0.74, -0.1, 0.26, 0.4, 2.6, 0.16, 0.17, 0.19);
 
-  pushLightPatch(build, 0.62, -0.26, 2.11, 0.5, 0.26, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
-  pushLightPatch(build, -0.62, -0.26, 2.11, 0.5, 0.26, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
-  pushLightPatch(build, 0, -0.26, -2.11, 1.5, 0.2, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  pushProfileLights(build, 2);
 
   return build;
 }
@@ -656,9 +662,7 @@ function buildVan(): MeshBuild {
   pushBox(build, 0, 0.55, 1.2, 1.8, 0.35, 0.5, 0.04, 0.07, 0.1);
   pushBox(build, 1.2, -0.45, -0.4, 0.3, 0.45, 2.6, 0.15, 0.15, 0.16);
   pushBox(build, -1.2, -0.45, -0.4, 0.3, 0.45, 2.6, 0.15, 0.15, 0.16);
-  pushLightPatch(build, 0.7, -0.1, 2.31, 0.45, 0.25, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
-  pushLightPatch(build, -0.7, -0.1, 2.31, 0.45, 0.25, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
-  pushLightPatch(build, 0, 1.05, -2.11, 1.9, 0.18, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  pushProfileLights(build, 3);
   return build;
 }
 
@@ -672,8 +676,7 @@ function buildSaucer(): MeshBuild {
   pushDome(build, 0, 0, 0, 2.2, 0.45, 2.6, 12, 2, r, g, b);
   pushBox(build, 0, -0.18, 0, 2.6, 0.32, 3.0, r * 0.6, g * 0.6, b * 0.6);
   pushDome(build, 0, 0.3, -0.2, 0.95, 0.75, 1.2, 8, 3, 0.05, 0.1, 0.14);
-  pushLightPatch(build, 0, -0.05, 1.52, 1.6, 0.14, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
-  pushLightPatch(build, 0, -0.05, -1.52, 1.8, 0.16, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  pushProfileLights(build, 4);
   return build;
 }
 
@@ -694,9 +697,7 @@ function buildBus(): MeshBuild {
       side * 1.215, 0.6, -3.5,
       0, 0.3, 0, 1.0, 0.62, 0.3);
   }
-  pushLightPatch(build, 0.75, -0.3, 4.12, 0.5, 0.3, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
-  pushLightPatch(build, -0.75, -0.3, 4.12, 0.5, 0.3, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
-  pushLightPatch(build, 0, 0.3, -4.12, 2.0, 0.22, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  pushProfileLights(build, 5);
   return build;
 }
 
@@ -714,8 +715,7 @@ function buildFlatbed(): MeshBuild {
   pushBox(build, 0, 0.55, -3.6, 1.6, 1.15, 1.0, 0.14, 0.1, 0.08);
   pushBox(build, 1.3, -0.6, -1.3, 0.3, 0.4, 5.0, 0.15, 0.15, 0.16);
   pushBox(build, -1.3, -0.6, -1.3, 0.3, 0.4, 5.0, 0.15, 0.15, 0.16);
-  pushLightPatch(build, 0, 0.1, 3.56, 1.7, 0.18, HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B);
-  pushLightPatch(build, 0, -0.35, -4.21, 2.1, 0.16, TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B);
+  pushProfileLights(build, 6);
   return build;
 }
 
@@ -767,13 +767,10 @@ attribute vec2 aCorner;      // x: 0 lamp end, 1 trail end; y: side -1..1
 attribute float aLamp;       // 0/2 head (left/right), 1/3 tail (left/right)
 attribute vec3 aCarPos;
 attribute vec4 aCarDir;      // xyz unit velocity, w speed (m/s)
-attribute vec4 aCarFade;     // fade, body scale, headlamp warmth (R14), trail weight (R16)
+attribute vec4 aCarFade;     // fade, physical scale, warmth, trail weight
+attribute vec2 aCarShape;    // actual hull type, bank radians
 
-uniform float uPixelAngle;   // radians per drawing-buffer pixel, vertically
-uniform float uHeadOffset;
-uniform float uTailOffset;
-uniform float uHeadTrail;
-uniform float uTailTrail;
+uniform float uPixelAngle;   // inverse vertical focal length, per drawing-buffer pixel
 uniform float uTrailSeconds;
 uniform float uTrailMax;
 uniform float uTrailCarLengths;
@@ -786,9 +783,10 @@ varying float vWarm;
 varying float vIntensity;
 
 #include <fog_pars_vertex>
+${TRAFFIC_APPEARANCE_GLSL}
 
 void main() {
-  vec3 dir = aCarDir.xyz;
+  vec3 dir = normalize(vec3(aCarDir.x, clamp(aCarDir.y, -0.35, 0.35), aCarDir.z));
   float speed = aCarDir.w;
   // R16: lamp 4 is the car's light trail, a long thin smear from the tail back along the velocity.
   bool isTrail = aLamp > 3.5;
@@ -800,22 +798,25 @@ void main() {
   float kind = isTrail ? 4.0 : mod( aLamp, 2.0 );
   bool head = kind < 0.5;
   float lampSide = isTrail ? 0.0 : ( aLamp < 1.5 ? -1.0 : 1.0 );
-  vec3 rightW = normalize( cross( dir, vec3( 0.0, 1.0, 0.0 ) ) + vec3( 1e-5 ) );
   float scale = aCarFade.y;
-  vec3 lamp = aCarPos + ( dir * ( head ? uHeadOffset : -uTailOffset ) + rightW * lampSide * 0.72 ) * scale;
+  float type = aCarShape.x;
+  vec3 lamp;
+  vec4 v0;
+  vec2 lampAxis;
+  vec2 lampHalfSize;
+  trafficLampKernel(aCarPos, dir, aCarShape.y, type, scale, head ? 1.0 : 0.0, lampSide,
+    uPixelAngle, lamp, v0, lampAxis, lampHalfSize);
   float trail = isTrail
-    ? min( speed * uTrailSeconds, min( uTrailMax, uTrailCarLengths * ( uHeadOffset + uTailOffset ) * scale ) )
-    : 1.2 + speed * ( head ? uHeadTrail : uTailTrail );
+    ? min(speed * uTrailSeconds, min(uTrailMax, uTrailCarLengths * trafficCarLength(type) * scale))
+    : 0.0;
   vec3 tailEnd = lamp - dir * trail;
-
-  vec4 v0 = viewMatrix * vec4( lamp, 1.0 );
-  vec4 v1 = viewMatrix * vec4( tailEnd, 1.0 );
+  vec4 v1 = viewMatrix * vec4(tailEnd, 1.0);
   if ( isTrail ) {
     // R17: the cap is on screen. A trail nearer the camera than its car projects longer than its
     // world length suggests, so it is shortened until its projected length is at most
     // uTrailCarLengths times the car's own projected length (two refinement steps).
-    vec4 ch = viewMatrix * vec4( aCarPos + dir * uHeadOffset * scale, 1.0 );
-    vec4 ct = viewMatrix * vec4( aCarPos - dir * uTailOffset * scale, 1.0 );
+    vec4 ch = viewMatrix * vec4( aCarPos + dir * trafficLampShape(type, true).w * scale, 1.0 );
+    vec4 ct = viewMatrix * vec4( aCarPos + dir * trafficLampShape(type, false).w * scale, 1.0 );
     float carScreen = length( ch.xy / max( - ch.z, 1.0 ) - ct.xy / max( - ct.z, 1.0 ) );
     for ( int k = 0; k < 2; k ++ ) {
       float trailScreen = length( v0.xy / max( - v0.z, 1.0 ) - v1.xy / max( - v1.z, 1.0 ) );
@@ -827,26 +828,29 @@ void main() {
       }
     }
   }
-  // Radius: a real lamp size up close, a pixel floor far away (~1.3 px radius).
-  // T6R-2: 3-4x thicker at the lamp, tapering to a thread at the trail end.
-  // R16 trails: a thinner ribbon (~0.8 px floor), so they smear rather than paint bars.
-  float r0 = isTrail ? max( 0.6, -v0.z * uPixelAngle * 1.6 ) : max( 0.9, -v0.z * uPixelAngle * 3.4 );
-  // R17: the trail tapers to uTrailEndWidth of its head width (a rod, never a constant-width line).
-  float r1 = isTrail ? r0 * uTrailEndWidth : max( 0.35, -v1.z * uPixelAngle * 1.1 );
-  vec2 d = v1.xy - v0.xy;
-  float len = length( d );
-  vec2 axis = len > 1e-4 ? d / len : vec2( 0.0, -1.0 );
-  vec2 side = vec2( -axis.y, axis.x );
-  float rMean = 0.5 * ( r0 + r1 );
-
-  float end = aCorner.x;
-  float r = mix( r0, r1, end );
-  vec4 v = mix( v0, v1, end );
-  // Extend past both ends by the radius, so the quad covers the rounded caps.
-  v.xy += axis * ( end * 2.0 - 1.0 ) * r + side * aCorner.y * r;
-
-  vLengthR = len / rMean;
-  vCapsule = vec2( mix( -1.0, vLengthR + 1.0, end ), aCorner.y );
+  vec4 v;
+  if (isTrail) {
+    float startRadius = max(0.6, -v0.z * uPixelAngle * 1.6);
+    float endRadius = startRadius * uTrailEndWidth;
+    vec2 delta = v1.xy - v0.xy;
+    float len = length(delta);
+    vec2 axis = len > 1e-4 ? delta / len : vec2(0.0, -1.0);
+    vec2 side = vec2(-axis.y, axis.x);
+    float end = aCorner.x;
+    float radius = mix(startRadius, endRadius, end);
+    v = mix(v0, v1, end);
+    v.xy += axis * (end * 2.0 - 1.0) * radius + side * aCorner.y * radius;
+    vLengthR = len / (0.5 * (startRadius + endRadius));
+    vCapsule = vec2(mix(-1.0, vLengthR + 1.0, end), aCorner.y);
+  } else {
+    vec2 corner = vec2(aCorner.x * 2.0 - 1.0, aCorner.y);
+    vec2 filterSize = lampHalfSize + vec2(max(-v0.z, 1.0) * uPixelAngle * 0.5);
+    vec2 uv = corner * filterSize / lampHalfSize;
+    v = v0;
+    v.xy += lampAxis * uv.x * lampHalfSize.x + vec2(-lampAxis.y, lampAxis.x) * uv.y * lampHalfSize.y;
+    vLengthR = 0.0;
+    vCapsule = uv;
+  }
   vLamp = kind;
   vWarm = aCarFade.z;
 
@@ -873,6 +877,20 @@ void main() {
 }
 `;
 
+const LAMP_FILTER_GLSL = /* glsl */ `
+vec2 trafficLampSample(vec2 uv) {
+  float radiusSq = dot(uv, uv);
+  float support = 1.0 - smoothstep(${IMPOSTOR_SUPPORT_TAPER_BAND[0].toFixed(2)}, ${IMPOSTOR_SUPPORT_TAPER_BAND[1].toFixed(2)}, sqrt(radiusSq));
+  return vec2(exp(-radiusSq * 1.6), exp(-radiusSq * 10.0)) * support;
+}
+vec2 trafficFilteredLamp(vec2 uv) {
+  vec2 dx = dFdx(uv) * 0.25;
+  vec2 dy = dFdy(uv) * 0.25;
+  return 0.25 * (trafficLampSample(uv - dx - dy) + trafficLampSample(uv - dx + dy)
+    + trafficLampSample(uv + dx - dy) + trafficLampSample(uv + dx + dy));
+}
+`;
+
 const STREAK_FRAGMENT = /* glsl */ `
 uniform float uIntensity;
 uniform float uFogPenetration;
@@ -886,6 +904,7 @@ varying float vIntensity;
 
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
+${LAMP_FILTER_GLSL}
 
 void main() {
   float x = vCapsule.x;
@@ -894,6 +913,11 @@ void main() {
   float support = 1.0 - smoothstep( ${IMPOSTOR_SUPPORT_TAPER_BAND[0].toFixed(2)}, ${IMPOSTOR_SUPPORT_TAPER_BAND[1].toFixed(2)}, dist );
   float body = exp( - dist * dist * 1.6 ) * support;
   float core = exp( - dist * dist * 10.0 );
+  if (vLamp < 3.5) {
+    vec2 filtered = trafficFilteredLamp(vCapsule);
+    body = filtered.x;
+    core = filtered.y;
+  }
   // Brightest at the lamp, fading down the trail.
   float t = vLengthR > 0.0 ? along / vLengthR : 0.0;
   // max(): with fast-math division t can land a hair above 1, and pow(negative) is NaN.
@@ -922,18 +946,18 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
 `;
 
 /* ------------------------------------------------------------------------------------------------
- * R18 GPU impostor cars: one instanced quad per car, position evaluated here from the baked path
+ * R18 GPU cars: two lamp kernels per car. Read position from the baked path
  * path table (trafficStreams.ts; impostorPosition is the CPU mirror — keep the two in step). Each
  * instance carries only (stream, arc offset, phase, seed) and a sub-row; update() advances uTime.
- * Drawn as a lamp sprite with a short micro-streak behind it: the head lamps' warm white seen from
- * the front, the tails' red from behind, 2-5 px at distance, brightness and size varied per car.
+ * Use the physical hull profile with a short trail. Type and scale stay fixed per car.
  * ---------------------------------------------------------------------------------------------- */
 
 const IMPOSTOR_VERTEX = /* glsl */ `
-attribute vec2 aCorner;      // x: 0 lamp end, 1 streak end; y: side -1..1
+attribute vec2 aCorner;      // x: 0/1 left kernel, 2/3 right kernel; y: side -1..1
 attribute vec4 aImp;         // logical path, arc offset 0..1, phase 0..1, appearance seed 0..1
 attribute vec4 aFlow;        // sub-row, effective speed m/s, signed pass period s, pass amplitude m
 attribute vec4 aRoute;       // baked row A, baked row B, hop start m, hop ramp m
+attribute float aAppearance; // type + physical scale / 8, scale in [1, 6]
 attribute float aFromAlpha;  // captured tier alpha at start of retarget
 
 uniform sampler2D uPaths;    // 8 streams x 4 variants, then 6 lanes, then the canyon warp row
@@ -956,12 +980,14 @@ uniform float uFadeFrom;     // kept for legacy / probe compatibility
 uniform float uFadeK;        // tier crossfade progress 0..1
 uniform float uTargetCount;  // target instance count for current transition
 
+varying vec2 vCoreUv;
 varying vec2 vCapsule;
 varying float vLengthR;
 varying float vWarm;
 varying float vIntensity;
 
 #include <fog_pars_vertex>
+${TRAFFIC_APPEARANCE_GLSL}
 
 vec4 pathAt( int row, float f ) {
   float i0 = min( floor( f ), uPathLast - 1.0 );
@@ -1124,31 +1150,43 @@ void main() {
 
   vec3 toCam = cameraPosition - pos;
   float dist = length( toCam );
-  // Size and brightness vary per car; the streak is ~1.3 car lengths of motion behind the lamp.
-  float scale = 1.6 + 1.0 * fract( seed * 13.37 );
-  vec4 v0 = viewMatrix * vec4( pos, 1.0 );
-  // Radius in pixels, not metres: every impostor is a crisp 3-5 px lamp dot at any range (a world-
-  // size floor turned the mid-range ones into soft blobs under bloom), varied per car.
-  float r0 = - v0.z * uPixelAngle * ( 1.8 + 1.0 * fract( seed * 5.1 ) );
-  // Micro-streak: ~1.3 car lengths of motion, but never longer on screen than 2.2 dot radii.
-  float streak = min( 5.0 * scale * 1.3, 2.2 * r0 );
-  vec3 tailEnd = pos - dir * streak;
-  vec4 v1 = viewMatrix * vec4( tailEnd, 1.0 );
-  float r1 = r0 * 0.45;
-  vec2 d = v1.xy - v0.xy;
-  float len = length( d );
-  vec2 axis = len > 1e-4 ? d / len : vec2( 0.0, - 1.0 );
-  vec2 side = vec2( - axis.y, axis.x );
-  float rMean = 0.5 * ( r0 + r1 );
-  float end = aCorner.x;
-  float r = mix( r0, r1, end );
-  vec4 vv = mix( v0, v1, end );
-  vv.xy += axis * ( end * 2.0 - 1.0 ) * r + side * aCorner.y * r;
-  vLengthR = len / rMean;
-  vCapsule = vec2( mix( - 1.0, vLengthR + 1.0, end ), aCorner.y );
+  float facing = dot(dir, toCam / max(dist, 1.0));
+  float frontMix = smoothstep(-0.2, 0.3, facing);
+  float type = floor(aAppearance);
+  float scale = fract(aAppearance) * 8.0;
+  float lampSide = aCorner.x < 1.5 ? -1.0 : 1.0;
+  float end = mod(aCorner.x, 2.0);
+  vec3 lamp;
+  vec4 v0;
+  vec2 lampAxis;
+  vec2 halfSize;
+  trafficLampKernel(pos, dir, 0.0, type, scale, frontMix, lampSide,
+    uPixelAngle, lamp, v0, lampAxis, halfSize);
+  vec2 lampUp = vec2(-lampAxis.y, lampAxis.x);
+  // The micro-trail stays behind its parent. Its length stays below two car lengths.
+  float startRadius = max(1e-6, min(halfSize.x, halfSize.y));
+  float streak = min(2.0 * trafficCarLength(type) * scale, 2.2 * startRadius);
+  vec4 v1 = viewMatrix * vec4(lamp - dir * streak, 1.0);
+  // Project the end at the lamp depth. This keeps the shared core profile exact.
+  vec2 delta = v1.xy * max(-v0.z, 1.0) / max(-v1.z, 1.0) - v0.xy;
+  float len = length(delta);
+  vec2 trailAxis = len > 1e-4 ? delta / len : vec2(0.0, -1.0);
+  vec2 trailSide = vec2(-trailAxis.y, trailAxis.x);
+  vec2 endLocal = vec2(dot(delta, lampAxis), dot(delta, lampUp));
+  float endRadius = startRadius * 0.45;
+  vec2 filterSize = halfSize + vec2(max(-v0.z, 1.0) * uPixelAngle * 0.5);
+  vec2 lo = min(-filterSize, min(vec2(-startRadius), endLocal - endRadius));
+  vec2 hi = max(filterSize, max(vec2(startRadius), endLocal + endRadius));
+  vec2 local = mix(lo, hi, vec2(end, (aCorner.y + 1.0) * 0.5));
+  vec2 offset = lampAxis * local.x + lampUp * local.y;
+  vec4 vv = v0;
+  vv.xy += offset;
+  vCoreUv = local / max(halfSize, vec2(1e-6));
+  float alongM = dot(offset, trailAxis);
+  vLengthR = len / startRadius;
+  vCapsule = vec2(alongM / startRadius, dot(offset, trailSide) / startRadius);
 
-  float facing = dot( dir, toCam / max( dist, 1.0 ) );
-  vWarm = smoothstep( - 0.2, 0.3, facing );
+  vWarm = frontMix;
   float toAlpha = float( gl_InstanceID ) < uTargetCount ? 1.0 : 0.0;
   float tierPresence = mix( aFromAlpha, toAlpha, uFadeK );
   // Far impostors integrate into the haze instead of stacking into a bloom wash. Their brightness
@@ -1173,6 +1211,7 @@ const IMPOSTOR_FRAGMENT = /* glsl */ `
 uniform float uIntensity;
 uniform float uFogPenetration;
 
+varying vec2 vCoreUv;
 varying vec2 vCapsule;
 varying float vLengthR;
 varying float vWarm;
@@ -1180,16 +1219,17 @@ varying float vIntensity;
 
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
+${LAMP_FILTER_GLSL}
 
 void main() {
   float x = vCapsule.x;
   float along = clamp( x, 0.0, vLengthR );
-  float dist = length( vec2( x - along, vCapsule.y ) );
-  float support = 1.0 - smoothstep( ${IMPOSTOR_SUPPORT_TAPER_BAND[0].toFixed(2)}, ${IMPOSTOR_SUPPORT_TAPER_BAND[1].toFixed(2)}, dist );
-  float body = exp( - dist * dist * 1.6 ) * support;
   float t = vLengthR > 0.0 ? along / vLengthR : 0.0;
-  float fall = pow( max( 1.0 - t, 0.0 ), 1.2 );
-  vec3 color = mix( vec3( 1.0, 0.07, 0.045 ), vec3( 1.0, 0.86, 0.66 ), vWarm ) * body * fall;
+  float dist = length(vec2(x - along, vCapsule.y)) / mix(1.0, 0.45, t);
+  float support = 1.0 - smoothstep(${IMPOSTOR_SUPPORT_TAPER_BAND[0].toFixed(2)}, ${IMPOSTOR_SUPPORT_TAPER_BAND[1].toFixed(2)}, dist);
+  float trailBody = exp(-dist * dist * 1.6) * support * pow(max(1.0 - t, 0.0), 1.2);
+  float body = max(trafficFilteredLamp(vCoreUv).x, vLengthR > 0.0001 ? trailBody : 0.0);
+  vec3 color = mix( vec3( 1.0, 0.07, 0.045 ), vec3( 1.0, 0.86, 0.66 ), vWarm ) * body;
   gl_FragColor = vec4( color * ( vIntensity * uIntensity ), 1.0 );
 ${SKYRIVER_OUTPUT_APPLY_GLSL}
   #ifdef USE_FOG
@@ -1273,14 +1313,15 @@ export function trafficHopCensus(seed: number, carCount: number): HopCensus {
 
 function buildImpostorGeometry(model: RenderTrafficModel, capacity: number): InstancedBufferGeometry {
   const geometry = new InstancedBufferGeometry();
-  geometry.setAttribute('position', new BufferAttribute(new Float32Array(4 * 3), 3));
-  geometry.setAttribute('aCorner', new BufferAttribute(new Float32Array([0, -1, 0, 1, 1, 1, 1, -1]), 2));
-  geometry.setIndex([0, 1, 2, 0, 2, 3]);
+  geometry.setAttribute('position', new BufferAttribute(new Float32Array(8 * 3), 3));
+  geometry.setAttribute('aCorner', new BufferAttribute(new Float32Array([0, -1, 0, 1, 1, 1, 1, -1, 2, -1, 2, 1, 3, 1, 3, -1]), 2));
+  geometry.setIndex([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7]);
   // R21: the same model instance the CPU cars read, so neither population rebakes the path table.
   const attrs = deriveImpostorAttributes(model.seed, capacity, model);
   geometry.setAttribute('aImp', new InstancedBufferAttribute(attrs.streamArcPhaseSeed, 4));
   geometry.setAttribute('aFlow', new InstancedBufferAttribute(attrs.flow, 4));
   geometry.setAttribute('aRoute', new InstancedBufferAttribute(attrs.route, 4));
+  geometry.setAttribute('aAppearance', new InstancedBufferAttribute(attrs.appearance, 1));
   const fromAlpha = new InstancedBufferAttribute(new Float32Array(capacity), 1);
   fromAlpha.setUsage(DynamicDrawUsage);
   geometry.setAttribute('aFromAlpha', fromAlpha);
@@ -1311,14 +1352,17 @@ function buildStreakGeometry(capacity: number): InstancedBufferGeometry {
   const dir = new InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
   const fade = new InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
   const lod = new InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
+  const shape = new InstancedBufferAttribute(new Float32Array(capacity * 2), 2);
   pos.setUsage(DynamicDrawUsage);
   dir.setUsage(DynamicDrawUsage);
   fade.setUsage(DynamicDrawUsage);
   lod.setUsage(DynamicDrawUsage);
+  shape.setUsage(DynamicDrawUsage);
   geometry.setAttribute('aCarPos', pos);
   geometry.setAttribute('aCarDir', dir);
   geometry.setAttribute('aCarFade', fade);
   geometry.setAttribute('aCarLod', lod);
+  geometry.setAttribute('aCarShape', shape);
   geometry.instanceCount = 0;
   return geometry;
 }
@@ -1609,10 +1653,6 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     fragmentShader: STREAK_FRAGMENT,
     uniforms: {
       uPixelAngle: { value: 0.0012 },
-      uHeadOffset: { value: HEAD_OFFSET_M },
-      uTailOffset: { value: TAIL_OFFSET_M },
-      uHeadTrail: { value: HEAD_TRAIL_S },
-      uTailTrail: { value: TAIL_TRAIL_S },
       uTrailSeconds: { value: TRAIL_SECONDS },
       uTrailMax: { value: TRAIL_MAX_M },
       uTrailAlpha: { value: TRAIL_ALPHA },
@@ -1648,6 +1688,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const streakDirArray = streakDir.array as Float32Array;
   const streakFadeArray = streakFade.array as Float32Array;
   const streakLodArray = streakLod.array as Float32Array;
+  const streakShape = streakGeometry.getAttribute('aCarShape') as InstancedBufferAttribute;
+  const streakShapeArray = streakShape.array as Float32Array;
   const sameCarLodScratch: SameCarLightLod = { nearAlpha: 0, impostorAlpha: 0, totalAlpha: 0 };
 
   // ---- R18 GPU impostor cars, on the R21 shared model.
@@ -2213,6 +2255,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         colors[colorOffset + 2] = tintB[car] * dim;
 
         if (streaksUsed < streakBudget) {
+          streakShapeArray[streaksUsed * 2] = archetype;
+          streakShapeArray[streaksUsed * 2 + 1] = bank;
           const p = streaksUsed * 3;
           streakPosArray[p] = px;
           streakPosArray[p + 1] = py;
@@ -2248,12 +2292,13 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     streakPos.needsUpdate = true;
     streakDir.needsUpdate = true;
     streakFade.needsUpdate = true;
+    streakShape.needsUpdate = true;
   }
 
-  /** Radians per drawing-buffer pixel, vertically. The scene calls this on resize. */
-  function setPixelAngle(radiansPerPixel: number): void {
-    impostorMaterial.uniforms.uPixelAngle!.value = radiansPerPixel;
-    streakMaterial.uniforms.uPixelAngle!.value = radiansPerPixel;
+  /** Inverse vertical focal length per drawing-buffer pixel. Call this on resize. */
+  function setPixelAngle(inverseFocalLengthPx: number): void {
+    impostorMaterial.uniforms.uPixelAngle!.value = inverseFocalLengthPx;
+    streakMaterial.uniforms.uPixelAngle!.value = inverseFocalLengthPx;
   }
 
   function stats(): TrafficStats {
@@ -2261,7 +2306,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
       triangles += trianglesPerArchetype[archetype] * groupActive[archetype];
     }
-    triangles += streaksUsed * 10 + impostorGeometry.instanceCount * 2;
+    triangles += streaksUsed * 10 + impostorGeometry.instanceCount * 4;
     return {
       activeCars,
       activeThrusters: streaksUsed,
