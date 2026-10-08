@@ -394,7 +394,10 @@ describe('R21 branch choice independence', () => {
       }
       // The two bits are independent of each other, and all four variants are populated.
       expect(Math.abs(correlate(columns.forkBit0!, columns.forkBit1!))).toBeLessThan(0.05);
-      for (const count of variants) expect(count / n).toBeGreaterThan(0.18);
+      const expectedVariants = [0.5329, 0.1971, 0.1971, 0.0729];
+      for (let variant = 0; variant < variants.length; variant += 1) {
+        expect(Math.abs(variants[variant]! / n - expectedVariants[variant]!)).toBeLessThan(0.02);
+      }
       // The course-change share of GPU stream cars matches the model constant.
       const hopShare = columns.hop!.reduce((sum, v) => sum + v, 0) / n;
       expect(Math.abs(hopShare - IMPOSTOR_HOP_SHARE)).toBeLessThan(0.02);
