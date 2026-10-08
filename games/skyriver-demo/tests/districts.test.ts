@@ -72,6 +72,7 @@ import {
   skyriverDistrictSignEmission,
   skyriverGlslFloat,
   skyriverHazeRefresh,
+  skyriverHeldHazeTint,
   skyriverHexToLinear,
   skyriverInGreenGroup,
   skyriverLegacyDistanceGrade,
@@ -80,6 +81,7 @@ import {
   skyriverRoutePosition,
   skyriverSignFinalEmission,
   skyriverUnitHue,
+  skyriverWriteHeldHazeTint,
   type SkyriverLinearRgb,
 } from '../src/render/districts';
 
@@ -872,5 +874,91 @@ describe('R22 shader colour paths', () => {
     expect(source.distanceGrade).not.toContain('0.776 ');
     expect(source.distanceGrade).toContain('vec3 legacy = mix( c, lum * SKYRIVER_STEEL, k ) * ( 1.0 - 0.55 * k );');
     expect(source.distanceGrade).toContain('return mix( legacy, graded, uDistrictColour );');
+  });
+});
+
+
+// --- the held haze tint record (R23 repair) -----------------------------------------------------
+
+describe('R22 held haze tint record', () => {
+  it('starts neutral, with the district colour off and nothing sampled', () => {
+    const held = skyriverHeldHazeTint();
+    expect(held.districtAllowed).toBe(false);
+    expect(held.districtId).toBe(-1);
+    expect(held.tintLinear).toEqual([1, 1, 1]);
+    expect(Number.isNaN(held.tick)).toBe(true);
+    expect(Number.isNaN(held.bucket)).toBe(true);
+    expect(held.version).toBe(0);
+  });
+
+  it('moves version only when the tint a reader would use actually changes', () => {
+    const held = skyriverHeldHazeTint();
+    const model = deriveSkyriverDistrictModel(SEED);
+    const tint = skyriverDistrictHazeTint(model, 2000);
+
+    expect(skyriverWriteHeldHazeTint(held, true, 2, tint[0], tint[1], tint[2], 60, 2)).toBe(true);
+    expect(held.version).toBe(1);
+    expect(held.tintLinear).toEqual([tint[0], tint[1], tint[2]]);
+    expect(held.tick).toBe(60);
+    expect(held.bucket).toBe(2);
+
+    // Idempotent: the same tint re-written at a later tick is not a refresh. This is what lets the
+    // colour-off path write its neutral record on every frame without looking like a change.
+    expect(skyriverWriteHeldHazeTint(held, true, 2, tint[0], tint[1], tint[2], 90, 3)).toBe(false);
+    expect(held.version).toBe(1);
+    // The sampled tick and bucket still track the write.
+    expect(held.tick).toBe(90);
+    expect(held.bucket).toBe(3);
+
+    // A different district, a different channel, and the colour-off flip are each one change.
+    expect(skyriverWriteHeldHazeTint(held, true, 3, tint[0], tint[1], tint[2], 120, 4)).toBe(true);
+    expect(held.version).toBe(2);
+    expect(skyriverWriteHeldHazeTint(held, true, 3, tint[0], tint[1] + 0.01, tint[2], 150, 5)).toBe(true);
+    expect(held.version).toBe(3);
+    expect(skyriverWriteHeldHazeTint(held, false, -1, 1, 1, 1, Number.NaN, Number.NaN)).toBe(true);
+    expect(held.version).toBe(4);
+    expect(held.tintLinear).toEqual([1, 1, 1]);
+    expect(Number.isNaN(held.tick)).toBe(true);
+
+    // Re-writing the colour-off record, as every colour-off frame does, changes nothing.
+    for (let i = 0; i < 5; i += 1) {
+      expect(skyriverWriteHeldHazeTint(held, false, -1, 1, 1, 1, Number.NaN, Number.NaN)).toBe(false);
+    }
+    expect(held.version).toBe(4);
+  });
+
+  it('is written in place, so a per-frame reader allocates nothing', () => {
+    const held = skyriverHeldHazeTint();
+    const record = held;
+    const channels = held.tintLinear;
+    skyriverWriteHeldHazeTint(held, true, 1, 0.9, 1, 1.1, 30, 1);
+    // Same objects: the writer mutates the record and its channel array, never replaces them.
+    expect(held).toBe(record);
+    expect(held.tintLinear).toBe(channels);
+    expect(channels).toEqual([0.9, 1, 1.1]);
+  });
+
+  it('holds a tint that only a bucket refresh may change', () => {
+    // The record carries the bucket it was sampled in, so the once-a-second refresh contract and
+    // the held value are one record rather than two pieces of state that can disagree.
+    const held = skyriverHeldHazeTint();
+    const model = deriveSkyriverDistrictModel(SEED);
+    const tickRate = 30;
+    let bucket = Number.NaN;
+    let lastTick = Number.NaN;
+    const writes: number[] = [];
+    for (let tick = 0; tick < 150; tick += 1) {
+      const decision = skyriverHazeRefresh({ bucket, tick: lastTick }, tick, tickRate);
+      lastTick = tick;
+      if (!decision.refresh) continue;
+      bucket = decision.bucket;
+      const tint = skyriverDistrictHazeTint(model, tick * 40);
+      if (skyriverWriteHeldHazeTint(held, true, 0, tint[0], tint[1], tint[2], tick, bucket)) {
+        writes.push(tick);
+      }
+    }
+    // Five seconds of ticks, so at most five refreshes reached the held record.
+    expect(writes.length).toBeLessThanOrEqual(5);
+    expect(held.bucket).toBe(4);
   });
 });

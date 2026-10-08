@@ -66,6 +66,7 @@ import {
   applySkyriverFog,
   skyriverFogUniforms,
 } from './atmosphere';
+import { skyriverDeclareStageRole } from './stageRoles';
 import { CANYON_LOOP_LENGTH_M, warpCanyon, type WarpOut } from './canyonWarp';
 import { routeAltitude, routeLateral } from './routeProfile';
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
@@ -1582,6 +1583,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     instanceColor.setUsage(DynamicDrawUsage);
     mesh.instanceColor = instanceColor;
     mesh.count = 0;
+    // R23 draw role, declared here where the hull material is built: opaque, depth-writing.
+    skyriverDeclareStageRole(mesh, 'opaque');
     meshes.push(mesh);
     matrixArrays.push(mesh.instanceMatrix.array as Float32Array);
     colorArrays.push(instanceColor.array as Float32Array);
@@ -1624,6 +1627,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   streakMesh.frustumCulled = false;
   // Additive light on top of the opaque city and hulls.
   streakMesh.renderOrder = 10;
+  // R23 draw role: transparent additive, depthWrite false.
+  skyriverDeclareStageRole(streakMesh, 'transparent');
   const streakPos = streakGeometry.getAttribute('aCarPos') as InstancedBufferAttribute;
   const streakDir = streakGeometry.getAttribute('aCarDir') as InstancedBufferAttribute;
   const streakFade = streakGeometry.getAttribute('aCarFade') as InstancedBufferAttribute;
@@ -1688,6 +1693,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   impostorMesh.name = 'skyriver.traffic.impostors';
   impostorMesh.frustumCulled = false;
   impostorMesh.renderOrder = 9;
+  // R23 draw role: transparent additive GPU impostors, depthWrite false.
+  skyriverDeclareStageRole(impostorMesh, 'transparent');
   impostorMesh.visible = false;
   let impostorTier = 0;
   let impostorOverride: number | null = null;

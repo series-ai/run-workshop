@@ -534,6 +534,84 @@ export function skyriverHazeRefresh(
   return { reset, refresh, bucket };
 }
 
+/**
+ * The HELD district haze tint: the exact multiplier bound in the shared fog uniform right now, the
+ * district it was sampled in, and the tick it was sampled at.
+ *
+ * One record per scene, mutated in place by its one writer, so a per-frame reader allocates nothing.
+ * `version` moves only when the tint a reader would use actually changes. A reader may therefore
+ * cache whatever it derives from this record and rebuild it only on a real change, and the refresh
+ * rate stays the one `skyriverHazeRefresh` sets: at most once per second of simulated time.
+ *
+ * `districtAllowed` false is the R22 colour-off state. The district map is not driving the haze
+ * then, so the tint a reader must use is neutral whatever the legacy world-Z region tint holds.
+ */
+export interface SkyriverHeldHazeTint {
+  readonly districtAllowed: boolean;
+  /** The district the tint was sampled in, or -1 while the district colour is off. */
+  readonly districtId: number;
+  readonly tintLinear: readonly [number, number, number];
+  /** The tick the tint was sampled at. NaN while the district colour is off. */
+  readonly tick: number;
+  readonly bucket: number;
+  readonly version: number;
+}
+
+/** The same record as its one writer sees it. Readers take `SkyriverHeldHazeTint`. */
+export interface SkyriverMutableHeldHazeTint {
+  districtAllowed: boolean;
+  districtId: number;
+  tintLinear: [number, number, number];
+  tick: number;
+  bucket: number;
+  version: number;
+}
+
+/** A new record: the district colour off, no tint sampled yet, version zero. */
+export function skyriverHeldHazeTint(): SkyriverMutableHeldHazeTint {
+  return {
+    districtAllowed: false,
+    districtId: -1,
+    tintLinear: [1, 1, 1],
+    tick: Number.NaN,
+    bucket: Number.NaN,
+    version: 0,
+  };
+}
+
+/**
+ * Writes the held record in place and reports whether the tint changed.
+ *
+ * Idempotent: writing the same tint twice leaves `version` alone, so a caller that re-writes the
+ * neutral colour-off record on every frame never looks like a refresh. Scalar parameters, not an
+ * options object, because this runs on the frame path.
+ */
+export function skyriverWriteHeldHazeTint(
+  held: SkyriverMutableHeldHazeTint,
+  districtAllowed: boolean,
+  districtId: number,
+  r: number,
+  g: number,
+  b: number,
+  tick: number,
+  bucket: number,
+): boolean {
+  const changed = held.districtAllowed !== districtAllowed
+    || held.districtId !== districtId
+    || held.tintLinear[0] !== r
+    || held.tintLinear[1] !== g
+    || held.tintLinear[2] !== b;
+  held.districtAllowed = districtAllowed;
+  held.districtId = districtId;
+  held.tintLinear[0] = r;
+  held.tintLinear[1] = g;
+  held.tintLinear[2] = b;
+  held.tick = tick;
+  held.bucket = bucket;
+  if (changed) held.version += 1;
+  return changed;
+}
+
 // --- sign hue quota -------------------------------------------------------------------------------
 
 export type SkyriverDistrictSignRole = 'hero' | 'primary' | 'green' | 'secondary' | 'neutral';

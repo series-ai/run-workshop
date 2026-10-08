@@ -44,6 +44,7 @@ import {
   installSkyriverFogChunks,
   skyriverFogUniforms,
 } from './atmosphere';
+import { skyriverDeclareStageRole } from './stageRoles';
 import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
 import { HERO_HORIZONTAL_CELLS, HERO_VERTICAL_CELLS, createSignAtlas, type SignAtlas } from './signAtlas';
 import { createInteriorAtlas, type InteriorAtlas } from './interiorAtlas';
@@ -2978,11 +2979,21 @@ void main() {
 ${SKYRIVER_OUTPUT_APPLY_GLSL}
   #include <fog_fragment>
   #ifdef USE_FOG
-    // Deeper layers sink further into the haze than distance alone gives them.
-    gl_FragColor.rgb = mix( gl_FragColor.rgb, skyriverFogColor(), haze );
+    // Deeper layers sink further into the haze than distance alone gives them. This uLayerHaze mix
+    // is independent of the shared analytic fog, so R23's opaque bypass has to gate it as well —
+    // otherwise a far card would still be hazed inside the stage that marches its absorption.
+    gl_FragColor.rgb = mix( gl_FragColor.rgb, skyriverFogColor(), haze * skyriverFogBypassGate() );
   #endif
 }
 `;
+
+/**
+ * The far-card fragment source, exported so a node check can assert that R23's opaque analytic
+ * bypass also gates this card's INDEPENDENT uLayerHaze mix. That term does not go through
+ * `fog_fragment`, so bypassing the shared fog alone would leave far cards hazed inside the very
+ * stage that marches their absorption.
+ */
+export const SKYRIVER_IMPOSTOR_FRAGMENT_SOURCE = IMPOSTOR_FRAGMENT;
 
 /** Card base altitude, metres: below every wall foot the haze hides; cards run from here to the top. */
 const IMPOSTOR_BASE_Y = -600;
@@ -3699,6 +3710,14 @@ export interface SkyriverLightSource {
   readonly y: number;
   readonly z: number;
   readonly sizeM: readonly [number, number, number];
+  /**
+   * The source's own longest axis in world space, from the rigid frame its instance was drawn with.
+   *
+   * A sign's long axis lies in its warped facade plane (horizontal for a strip, vertical for a
+   * banner); a trim's is the axis its shader measures `run` along. A later round approximating one
+   * of these as a line light needs the drawn axis, not a derivation-space one.
+   */
+  readonly axis: readonly [number, number, number];
   /** Final linear emission with the district recolour applied, at the reference shader terms. */
   readonly emission: readonly [number, number, number];
   /** The same emission on the colour-off path. */
@@ -3752,6 +3771,14 @@ export class SkyriverCity {
   private paneCellCapacity = 0;
   /** Drawn world centres, so a later round can light the air from the sources actually on screen. */
   private signWorldCentres = new Float32Array(0);
+  /**
+   * The drawn sign's warped facade normal (x, z per sign) and the drawn trim's world long axis.
+   *
+   * R23 lights the air from these sources, so it needs the same rigid frame the instance was
+   * written with — a sign on a canyon bend must light where it is drawn, not where it was derived.
+   */
+  private signDrawnNormal = new Float32Array(0);
+  private trimDrawnAxis = new Float32Array(0);
   private trimWorldCentres = new Float32Array(0);
   private trimDrawnKind = new Float32Array(0);
   private trimDrawnSize = new Float32Array(0);
@@ -3880,6 +3907,8 @@ export class SkyriverCity {
     );
     this.towerMesh.name = 'skyriver.city.towers';
     this.writeTowers();
+    // R23 draw role. Opaque: the near-city masses, depth-writing.
+    skyriverDeclareStageRole(this.towerMesh, 'opaque');
     this.group.add(this.towerMesh);
 
     // --- trim -------------------------------------------------------------------------------------
@@ -3908,6 +3937,8 @@ export class SkyriverCity {
     this.trimMesh.name = 'skyriver.city.trim';
     this.trimMesh.count = this.trims.count;
     this.writeTrims();
+    // R23 draw role. Opaque: the structural kit and its emissive strips, depth-writing.
+    skyriverDeclareStageRole(this.trimMesh, 'opaque');
     this.group.add(this.trimMesh);
 
     // --- neon signs -------------------------------------------------------------------------------
@@ -3940,6 +3971,8 @@ export class SkyriverCity {
     // Built in world space in the vertex shader, so three's object-space bounds mean nothing here.
     this.signMesh.frustumCulled = false;
     this.signMesh.renderOrder = 4;
+    // R23 draw role. Transparent additive, depthWrite false, own-source analytic fog (penetration 0.55).
+    skyriverDeclareStageRole(this.signMesh, 'transparent');
     this.group.add(this.signMesh);
 
     // --- R16 far-city impostor cards --------------------------------------------------------------
@@ -3967,6 +4000,8 @@ export class SkyriverCity {
     this.impostorMesh.name = 'skyriver.city.impostors';
     this.writeImpostors(far);
     this.impostorMesh.frustumCulled = false;
+    // R23 draw role. Opaque despite DoubleSide and the atlas alpha discard: it depth-writes.
+    skyriverDeclareStageRole(this.impostorMesh, 'opaque');
     this.group.add(this.impostorMesh);
 
     applySkyriverFog(this.towerMaterial);
@@ -4415,6 +4450,10 @@ export class SkyriverCity {
         y: this.signWorldCentres[i * 3 + 1] ?? 0,
         z: this.signWorldCentres[i * 3 + 2] ?? 0,
         sizeM: [this.signs.sw[i]!, this.signs.sh[i]!, 0],
+        // In the warped facade plane: across it for a strip, up it for a banner.
+        axis: this.signs.sw[i]! >= this.signs.sh[i]!
+          ? [-(this.signDrawnNormal[i * 2 + 1] ?? 0), 0, this.signDrawnNormal[i * 2] ?? 1]
+          : [0, 1, 0],
         emission: tinted,
         legacyEmission: legacy,
       });
@@ -4436,6 +4475,7 @@ export class SkyriverCity {
         y: this.trimWorldCentres[i * 3 + 1]!,
         z: this.trimWorldCentres[i * 3 + 2]!,
         sizeM: [this.trimDrawnSize[i * 3]!, this.trimDrawnSize[i * 3 + 1]!, this.trimDrawnSize[i * 3 + 2]!],
+        axis: [this.trimDrawnAxis[i * 3]!, this.trimDrawnAxis[i * 3 + 1]!, this.trimDrawnAxis[i * 3 + 2]!],
         emission: skyriverRecolorPreservingY(term.rgb, SKYRIVER_DISTRICT_UNIT_HUE[district.primary], term.saturation),
         legacyEmission: term.rgb,
       });
@@ -4691,6 +4731,7 @@ export class SkyriverCity {
     const sizes = new Float32Array(slots * 3);
     const districts = new Float32Array(slots);
     const centres = new Float32Array(slots * 3);
+    const axes = new Float32Array(slots * 3);
     this.drawnTrimsByKind.fill(0);
     this.drawnTrimsByDistrict.fill(0);
 
@@ -4723,10 +4764,29 @@ export class SkyriverCity {
       centres[drawn * 3] = placed.x;
       centres[drawn * 3 + 1] = cy[i]!;
       centres[drawn * 3 + 2] = placed.z;
+      // The instance's own longest axis in world space, from the same heading the matrix composes
+      // with. This is the axis the trim shader's `run` measures along, so a band's soffit strip and
+      // the light R23 derives from it point the same way.
+      const sinH = Math.sin(placed.heading);
+      const cosH = Math.cos(placed.heading);
+      if (sy[i]! >= ex && sy[i]! >= ez) {
+        axes[drawn * 3] = 0;
+        axes[drawn * 3 + 1] = 1;
+        axes[drawn * 3 + 2] = 0;
+      } else if (ez >= ex) {
+        axes[drawn * 3] = sinH;
+        axes[drawn * 3 + 1] = 0;
+        axes[drawn * 3 + 2] = cosH;
+      } else {
+        axes[drawn * 3] = cosH;
+        axes[drawn * 3 + 1] = 0;
+        axes[drawn * 3 + 2] = -sinH;
+      }
       drawn += 1;
     }
     this.trimMesh.count = drawn;
     this.trimWorldCentres = centres.slice(0, drawn * 3);
+    this.trimDrawnAxis = axes.slice(0, drawn * 3);
     this.trimDrawnKind = kinds.slice(0, drawn);
     this.trimDrawnSize = sizes.slice(0, drawn * 3);
     this.trimDrawnDistrict = districts.slice(0, drawn);
@@ -4823,6 +4883,7 @@ export class SkyriverCity {
     }
     geometry.setAttribute('aDistrictTint', new THREE.InstancedBufferAttribute(districtTint, 4));
     this.signWorldCentres = centres.slice(0, count * 3);
+    this.signDrawnNormal = normals.slice(0, count * 2);
 
     quad.dispose();
     return geometry;

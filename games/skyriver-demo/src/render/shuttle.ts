@@ -24,6 +24,7 @@ import * as THREE from 'three';
 import { applySkyriverFog } from './atmosphere';
 import type { WorldWakeSamples } from './flightPresentation';
 import { SKYRIVER_DEPTH_FADE_GLSL, SkyriverDepthSnapshot } from './depthFade';
+import { skyriverDeclareStageRole } from './stageRoles';
 
 export interface SkyriverShuttleUpdate {
   /** Shared 0..1 boost presentation value for the core plume and the world wake. */
@@ -602,6 +603,8 @@ export function createSkyriverShuttle(options: { readonly depthFade?: SkyriverDe
   hull.name = 'skyriver.shuttle.hull';
   hull.rotation.order = 'YXZ';
   hull.frustumCulled = false;
+  // R23 draw role: the player hull is opaque and depth-writing.
+  skyriverDeclareStageRole(hull, 'opaque');
 
   const plumeBuild = buildPlumeGeometry();
   const plumeGeometry = plumeBuild.geometry;
@@ -648,6 +651,9 @@ export function createSkyriverShuttle(options: { readonly depthFade?: SkyriverDe
   plume.name = 'skyriver.shuttle.plume';
   plume.frustumCulled = false;
   plume.renderOrder = 12;
+  // R23 draw role: transparent additive, depthWrite false. The plume is a CHILD of the opaque hull,
+  // which is why the stages select by camera layer rather than by `visible`.
+  skyriverDeclareStageRole(plume, 'transparent');
   if (options.depthFade !== undefined) {
     plume.onBeforeRender = (renderer) => options.depthFade!.capture(renderer);
   }

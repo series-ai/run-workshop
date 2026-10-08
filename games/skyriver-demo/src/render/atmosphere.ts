@@ -41,13 +41,18 @@ import {
   skyriverDistrictHazeTint,
   skyriverGlslFloat,
   skyriverHazeRefresh,
+  skyriverHeldHazeTint,
+  skyriverWriteHeldHazeTint,
   type SkyriverDistrictColourSwitch,
   type SkyriverDistrictModel,
+  type SkyriverHeldHazeTint,
+  type SkyriverMutableHeldHazeTint,
 } from './districts';
 import {
   SKYRIVER_DEPTH_FADE_GLSL,
   SkyriverDepthSnapshot,
 } from './depthFade';
+import { skyriverDeclareStageRole } from './stageRoles';
 import { podiumLotHeight } from './presentationLayout';
 
 /** T7-3: god rays and searchlights are derived in canyon space and bent onto the loop here. */
@@ -178,6 +183,23 @@ export function setSkyriverFogMurkAllowed(allowed: boolean): void {
 }
 
 /**
+ * R23: suppresses the shared analytic haze for the duration of one render stage.
+ *
+ * Set true for the opaque stage only, where the volume pass marches the same density field and
+ * blends absorption over the raw opaque colour. The transparent stage clears it again and keeps its
+ * own-source analytic attenuation, which is an explicit approximation rather than marched
+ * absorption. The off and Low paths never touch it.
+ */
+export function setSkyriverFogBypass(bypass: boolean): void {
+  fogExtraUniforms.uSkyFogBypass!.value = bypass ? 1 : 0;
+}
+
+/** The bypass state actually bound in the shared fog uniforms. */
+export function skyriverFogBypassed(): boolean {
+  return (fogExtraUniforms.uSkyFogBypass!.value as number) > 0.5;
+}
+
+/**
  * R16 rain motion. Stylised: the fall is fast against the share of the craft's speed taken off it,
  * so the streaks fall down the frame with a slight spread toward the camera, not as warp lines.
  */
@@ -252,8 +274,21 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
   uniform vec3 uSkyFogColorDeep;
   uniform float uSkyFogMurkAllowed;
   uniform vec3 uSkyFogRegionTint;
+  uniform float uSkyFogBypass;
   varying float vFogDepth;
   varying float vSkyFogHeight;
+
+  /**
+   * R23: 0 while the analytic haze applies, 1 while the physical volume owns absorption.
+   *
+   * The R23 opaque stage sets the bypass, marches the same density field itself, and blends the
+   * result over the raw opaque colour — so an opaque pixel is attenuated exactly once. It is
+   * cleared again before the transparent stage, which keeps its own-source analytic attenuation.
+   * Off and Low never set it, so the legacy path is the pre-R23 arithmetic.
+   */
+  float skyriverFogBypassGate() {
+    return 1.0 - clamp( uSkyFogBypass, 0.0, 1.0 );
+  }
 
   float skyriverFogGrade() {
     float h = clamp( ( vSkyFogHeight - uSkyFogFloorY ) / uSkyFogRangeY, 0.0, 1.0 );
@@ -271,7 +306,9 @@ const FOG_PARS_FRAGMENT = /* glsl */ `
     density *= 1.0 - 0.45 * skyriverFogDeep();
     // R12: a thick warm smog layer over the grime and the deck.
     density *= 1.0 + 0.45 * ( 1.0 - smoothstep( 120.0, 600.0, vSkyFogHeight ) ) * ( 1.0 - skyriverFogDeep() );
-    return clamp( 1.0 - exp( - density * vFogDepth ), 0.0, 1.0 );
+    // The one gate: at bypass the shared analytic haze contributes nothing, in this single place,
+    // so the opaque mix, the landmark wash's penetration term and every other reader agree.
+    return clamp( 1.0 - exp( - density * vFogDepth ), 0.0, 1.0 ) * skyriverFogBypassGate();
   }
   vec3 skyriverFogColor() {
     vec3 color = mix( fogColor, uSkyFogColorHigh, skyriverFogGrade() );
@@ -376,6 +413,8 @@ const fogExtraUniforms: Record<string, THREE.IUniform> = {
   uSkyFogColorDeep: { value: new THREE.Color(COLOR_FOG_DEEP) },
   uSkyFogRegionTint: { value: new THREE.Color(1, 1, 1) },
   uSkyFogMurkAllowed: { value: 1 },
+  /** R23 opaque-stage analytic bypass. See `skyriverFogBypassGate` in the fog chunk. */
+  uSkyFogBypass: { value: 0 },
 };
 
 /**
@@ -530,6 +569,69 @@ interface BeamLook {
   readonly softness: number;
   readonly fadeStart: number;
 }
+/**
+ * One drawn beam, exactly as its instance attributes hold it.
+ *
+ * R23 needs the searchlights as light sources. No public beam getter existed, so this is a
+ * read-only view over the same records `BeamField.write` puts on the GPU — the origins, axes, cone
+ * widths and look parameters the shafts are actually drawn from. Searchlights occupy slots 0..4;
+ * the god rays follow them in the same batch.
+ */
+export interface SkyriverBeamRecord {
+  readonly slot: number;
+  readonly start: readonly [number, number, number];
+  readonly axis: readonly [number, number, number];
+  readonly lengthM: number;
+  readonly widthStartM: number;
+  readonly widthEndM: number;
+  readonly colorLinear: readonly [number, number, number];
+  readonly seed: number;
+  readonly intensity: number;
+  readonly softness: number;
+  readonly fadeStart: number;
+}
+
+/** The writable twin of `SkyriverBeamRecord`: a caller-owned scratch slot for `read`. */
+export interface SkyriverMutableBeamRecord {
+  slot: number;
+  start: [number, number, number];
+  axis: [number, number, number];
+  lengthM: number;
+  widthStartM: number;
+  widthEndM: number;
+  colorLinear: [number, number, number];
+  seed: number;
+  intensity: number;
+  softness: number;
+  fadeStart: number;
+}
+
+/**
+ * The read-only searchlight view. `read` fills a caller-owned record, so a per-frame refresh of
+ * every selected cone allocates nothing.
+ */
+export interface SkyriverBeamView {
+  readonly searchlightCount: number;
+  read(slot: number, out: SkyriverMutableBeamRecord): SkyriverBeamRecord;
+}
+
+/** Allocates one mutable beam record. Handy for callers that need a scratch slot. */
+export function skyriverBeamRecord(): SkyriverMutableBeamRecord {
+  return {
+    slot: 0,
+    start: [0, 0, 0],
+    axis: [0, 1, 0],
+    lengthM: 1,
+    widthStartM: 1,
+    widthEndM: 1,
+    colorLinear: [0, 0, 0],
+    seed: 0,
+    intensity: 0,
+    softness: 1,
+    fadeStart: 0.5,
+  };
+}
+
 /** T7-2/T7-3: searchlights soft and weak (they dominated the frame); god rays brighter, wider. */
 const SEARCHLIGHT_LOOK: BeamLook = { intensity: 0.025, softness: 8.0, fadeStart: 0.45 };
 const GOD_RAY_LOOK: BeamLook = { intensity: 0.17, softness: 7.0, fadeStart: 0.5 };
@@ -666,6 +768,34 @@ class BeamField {
   /** Cheap per-frame path: only the axes moved. */
   commitAxes(): void {
     this.axisAttr.needsUpdate = true;
+  }
+
+  /**
+   * Reads one drawn beam's own attribute record into `out`. R23's read-only view over the same
+   * `aStart` / `aAxis` / `aSize` / `aColor` / `aSeed` / `aParams` records the GPU draws — not a
+   * second cone model derived alongside it.
+   */
+  readRecord(slot: number, out: SkyriverMutableBeamRecord): SkyriverBeamRecord {
+    const index = Math.max(0, Math.min(this.seed.length - 1, Math.floor(slot)));
+    const v = index * 3;
+    out.slot = index;
+    out.start[0] = this.start[v]!;
+    out.start[1] = this.start[v + 1]!;
+    out.start[2] = this.start[v + 2]!;
+    out.axis[0] = this.axis[v]!;
+    out.axis[1] = this.axis[v + 1]!;
+    out.axis[2] = this.axis[v + 2]!;
+    out.lengthM = this.size[v]!;
+    out.widthStartM = this.size[v + 1]!;
+    out.widthEndM = this.size[v + 2]!;
+    out.colorLinear[0] = this.color[v]!;
+    out.colorLinear[1] = this.color[v + 1]!;
+    out.colorLinear[2] = this.color[v + 2]!;
+    out.seed = this.seed[index]!;
+    out.intensity = this.params[v]!;
+    out.softness = this.params[v + 1]!;
+    out.fadeStart = this.params[v + 2]!;
+    return out;
   }
 
   setTime(time: number): void {
@@ -917,6 +1047,21 @@ export interface SkyriverDistrictHazeEvidence {
   readonly neighbourWeight: number;
   readonly boundaryDistanceM: number;
   readonly legacyRegion: number;
+  /**
+   * The held tint record the R23 marcher reads, copied out of the live record.
+   *
+   * `boundTint` above is read back from the fog uniform; this is the record the volume pass's
+   * district profile is built from. The two must agree on every frame, which is exactly what makes
+   * the marcher's air the held R22 haze and not a second per-frame sample.
+   */
+  readonly held: {
+    readonly districtAllowed: boolean;
+    readonly districtId: number;
+    readonly tintLinear: readonly [number, number, number];
+    readonly tick: number;
+    readonly bucket: number;
+    readonly version: number;
+  };
   readonly updates: readonly {
     readonly reason: string;
     readonly tick: number;
@@ -945,10 +1090,16 @@ export class SkyriverAtmosphere {
   readonly fog: THREE.FogExp2;
 
   private readonly skyMaterial: THREE.ShaderMaterial;
-  private readonly skyMesh: THREE.Mesh;
+  /**
+   * R23 declares a typed stage role per drawn mesh, so the three meshes this module owns are
+   * readable. The sky is opaque-stage (depth test and write off, `fog = false`, renderOrder -1000);
+   * the beam batch and the rain overlay are transparent. Their materials and flags are unchanged.
+   */
+  readonly skyMesh: THREE.Mesh;
   private readonly beams: BeamField;
   private readonly rainMaterial: THREE.ShaderMaterial;
-  private readonly rainMesh: THREE.Mesh;
+  /** Transparent screen overlay (depth off, `fog = false`, renderOrder 1000). Role: transparent. */
+  readonly rainMesh: THREE.Mesh;
 
   private quality: SkyriverQualitySettings;
   private readonly anchors: readonly SkyriverGodRayAnchor[];
@@ -982,6 +1133,13 @@ export class SkyriverAtmosphere {
   private hazeTick = Number.NaN;
   private hazeRouteV = 0;
   private hazeWorldZ = 0;
+  /**
+   * The held tint record every other module reads instead of re-sampling the district map.
+   *
+   * It is written in exactly two places — `applyDistrictHazeTint` for the district state and the
+   * neutral colour-off write below — so the bound uniform and this record cannot disagree.
+   */
+  private readonly heldTint: SkyriverMutableHeldHazeTint = skyriverHeldHazeTint();
   private readonly hazeUpdates: {
     readonly reason: string;
     readonly tick: number;
@@ -1040,6 +1198,8 @@ export class SkyriverAtmosphere {
     this.skyMesh.name = 'skyriver.sky';
     this.skyMesh.frustumCulled = false;
     this.skyMesh.renderOrder = -1000;
+    // R23 draw role. Opaque-stage sky: depth test and write off, fog false, renderOrder -1000. Its clear depth is what caps the volume range toward the sky.
+    skyriverDeclareStageRole(this.skyMesh, 'opaque');
     this.group.add(this.skyMesh);
 
     // R18: searchlights and god rays share one beam field (one draw call; the call went to the GPU
@@ -1050,6 +1210,8 @@ export class SkyriverAtmosphere {
       capacity: SKYRIVER_ATMOSPHERE.searchlightCount + SKYRIVER_ATMOSPHERE.godRayMaxCount,
       depthFade,
     });
+    // R23 draw role: transparent additive, depth test on, depthWrite off.
+    skyriverDeclareStageRole(this.beams.mesh, 'transparent');
     this.group.add(this.beams.mesh);
     this.searchlightOrigins = this.deriveSearchlightOrigins(layout);
     this.writeGodRays();
@@ -1082,6 +1244,8 @@ export class SkyriverAtmosphere {
     this.rainMesh.name = 'skyriver.rain';
     this.rainMesh.frustumCulled = false;
     this.rainMesh.renderOrder = 1000;
+    // R23 draw role. Transparent screen overlay: depth off, fog false, renderOrder 1000.
+    skyriverDeclareStageRole(this.rainMesh, 'transparent');
     this.group.add(this.rainMesh);
 
     this.setQuality(quality);
@@ -1096,6 +1260,26 @@ export class SkyriverAtmosphere {
 
   setMurkAllowed(allowed: boolean): void {
     setSkyriverFogMurkAllowed(allowed);
+  }
+
+  /** The one drawn beam batch: god rays and searchlights. Role: transparent, additive. */
+  get beamMesh(): THREE.Mesh {
+    return this.beams.mesh;
+  }
+
+  /**
+   * The read-only searchlight view R23 reads its cone sources from.
+   *
+   * It reads the same instance attributes the shafts are drawn from, every frame, so a selected
+   * searchlight's axis is never a frozen copy. Slots 0..4 are the searchlights; `searchlightCount`
+   * is the actual number of origins this layout produced.
+   */
+  beamView(): SkyriverBeamView {
+    const beams = this.beams;
+    return {
+      searchlightCount: this.searchlightOrigins.length,
+      read: (slot, out) => beams.readRecord(slot, out),
+    };
   }
 
   /** The widened-haze state actually bound in the shared fog uniforms. */
@@ -1125,8 +1309,12 @@ export class SkyriverAtmosphere {
     // reset log can never record a tick from before a stretch with the districts off.
     const previousTick = this.hazeTick;
     this.hazeTick = frame.tick;
-    if (this.colourSwitch.allowed) this.updateDistrictHazeTint(frame, previousTick);
-    else this.updateFogRegionTint(frame.dt, camera.position.z);
+    if (this.colourSwitch.allowed) {
+      this.updateDistrictHazeTint(frame, previousTick);
+    } else {
+      this.updateFogRegionTint(frame.dt, camera.position.z);
+      this.writeNeutralHeldTint();
+    }
 
     // One copy, no allocation: the dome is a unit sphere riding the camera.
     this.skyMesh.position.copy(camera.position);
@@ -1168,8 +1356,33 @@ export class SkyriverAtmosphere {
    */
   private applyDistrictColour(allowed: boolean): void {
     this.resetDistrictHazeTint(allowed ? 'district-haze-on' : 'district-haze-off');
-    if (allowed) this.applyDistrictHazeTint(this.hazeRouteV, this.hazeTick, 'switch');
-    else this.applyFogRegionTint(Math.floor(this.hazeWorldZ / 5000));
+    if (allowed) {
+      this.applyDistrictHazeTint(this.hazeRouteV, this.hazeTick, 'switch');
+    } else {
+      this.applyFogRegionTint(Math.floor(this.hazeWorldZ / 5000));
+      this.writeNeutralHeldTint();
+    }
+  }
+
+  /**
+   * The colour-off held record: neutral, no district, no sampled tick.
+   *
+   * Idempotent, so calling it on every colour-off frame never looks like a tint refresh. The legacy
+   * world-Z region tint still goes to the fog uniform on its own 1 s timer; it is not a district
+   * tint, so no reader may scatter with it.
+   */
+  private writeNeutralHeldTint(): void {
+    skyriverWriteHeldHazeTint(this.heldTint, false, -1, 1, 1, 1, Number.NaN, Number.NaN);
+  }
+
+  /**
+   * The held district haze tint: what is bound now, not a fresh sample.
+   *
+   * Returns the live record, which is mutated in place on a refresh — the caller must read it, not
+   * keep it as a snapshot. `version` is the change counter a caller keys its own cache off.
+   */
+  heldHazeTint(): SkyriverHeldHazeTint {
+    return this.heldTint;
   }
 
   /** Drops the refresh bucket. Called on a colour switch, a time reversal and a scene reset. */
@@ -1206,6 +1419,11 @@ export class SkyriverAtmosphere {
     const tint = skyriverDistrictHazeTint(this.districts, routeV);
     this.fogRegionTint.setRGB(tint[0], tint[1], tint[2]);
     setSkyriverFogRegionTint(this.fogRegionTint);
+    // The same three numbers that just went to the uniform, so a reader of the held record and the
+    // fog shader can never scatter in two different districts' air.
+    skyriverWriteHeldHazeTint(
+      this.heldTint, true, blend.districtId, tint[0], tint[1], tint[2], tick, bucket,
+    );
     this.hazeUpdates.push({
       reason,
       tick: Number.isFinite(tick) ? tick : -1,
@@ -1251,6 +1469,14 @@ export class SkyriverAtmosphere {
       neighbourWeight: latest?.neighbourWeight ?? 0,
       boundaryDistanceM: latest?.boundaryDistanceM ?? -1,
       legacyRegion: this.fogTintRegion,
+      held: {
+        districtAllowed: this.heldTint.districtAllowed,
+        districtId: this.heldTint.districtId,
+        tintLinear: [this.heldTint.tintLinear[0], this.heldTint.tintLinear[1], this.heldTint.tintLinear[2]],
+        tick: this.heldTint.tick,
+        bucket: this.heldTint.bucket,
+        version: this.heldTint.version,
+      },
       updates: [...this.hazeUpdates],
       resets: [...this.hazeResets],
       limits: Object.freeze([

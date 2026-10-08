@@ -215,8 +215,14 @@ function drainGlErrors(gl: WebGLRenderingContext | WebGL2RenderingContext): void
 export interface SkyriverDepthSnapshotStats {
   readonly supported: boolean;
   readonly allowed: boolean;
+  /** Set by a reader other than the beam fade (the R23 volume) that needs the copy. */
+  readonly snapshotRequired: boolean;
   readonly copied: boolean;
   readonly enabled: boolean;
+  /** A capture can succeed on this context: WebGL 2 and no rejected copy. */
+  readonly canCapture: boolean;
+  /** This frame holds a usable copy. Independent of the beam-fade A/B switch. */
+  readonly snapshotValid: boolean;
   readonly copyMethod: SkyriverDepthCopyMethod;
   readonly copyFallback: SkyriverDepthCopyFallback | null;
   readonly copyValidated: boolean;
@@ -243,12 +249,14 @@ export class SkyriverDepthSnapshot {
   private sourceDepth: THREE.DepthTexture | null = null;
   private copied = false;
   private allowed = true;
+  private snapshotRequired = false;
   private copyFailed = false;
   private blitRejected = false;
   private copyMethod: SkyriverDepthCopyMethod = 'none';
   private copyFallback: SkyriverDepthCopyFallback | null = null;
   private copyError: number | null = null;
   private copyCount = 0;
+  private beginSuppressed = false;
   private width = 1;
   private height = 1;
 
@@ -319,9 +327,49 @@ export class SkyriverDepthSnapshot {
     for (const source of this.sources) this.copyPlan(source, destination);
   }
 
+  /**
+   * The BEAM-FADE A/B switch. It gates the fade the additive shaders apply, and nothing else.
+   *
+   * It deliberately does NOT gate the capture any more. The R23 volume marcher needs a valid
+   * opaque depth snapshot to know where the surfaces are, so tying the snapshot to this switch made
+   * one A/B change two things: turning the beam fade off also made the marcher run every ray
+   * through the walls. The copy is now requested independently — see `setSnapshotRequired` — and
+   * the volume reads `opaqueSnapshotValid`, not this flag.
+   */
   setAllowed(allowed: boolean): void {
     this.allowed = allowed;
     this.updateEnabledUniform();
+  }
+
+  /**
+   * Declares that something OTHER than the beam fade needs the opaque depth copy this frame.
+   *
+   * The R23 staged chain sets it from the composition plan. With it set, the capture runs even
+   * while the beam-fade A/B is off, so the two switches are independent again. It costs the same
+   * one framebuffer blit the fade already paid for, and no draw call.
+   */
+  setSnapshotRequired(required: boolean): void {
+    this.snapshotRequired = required;
+  }
+
+  /**
+   * Whether a capture CAN succeed on this context: WebGL 2, and no copy has been rejected.
+   *
+   * This is a capability, readable before the frame's own capture has run, which is what a plan
+   * has to decide on. `opaqueSnapshotValid` is the stronger per-frame fact.
+   */
+  canCaptureOpaqueDepth(): boolean {
+    return this.supported && !this.copyFailed;
+  }
+
+  /**
+   * Whether THIS frame holds a usable opaque depth copy, independent of the beam-fade A/B switch.
+   *
+   * The volume marcher's precondition. `depthIsValid` answers the different question "is the beam
+   * fade live", which also requires `allowed`.
+   */
+  opaqueSnapshotValid(): boolean {
+    return this.supported && !this.copyFailed && this.copied;
   }
 
   resize(width: number, height: number): void {
@@ -337,7 +385,54 @@ export class SkyriverDepthSnapshot {
     this.primeRoutes();
   }
 
+  /**
+   * R23: suppresses the per-render reset for the duration of one stage.
+   *
+   * The R23 transparent stage is a second `renderer.render` call on the same frame, which fires
+   * `scene.onBeforeRender` again. Letting it reset would drop the completed opaque snapshot and
+   * make the first transparent draw start a fresh copy lifecycle against a depth buffer that now
+   * holds nothing new. With the reset suppressed, the cloud, beam and plume callbacks reuse the
+   * snapshot captured explicitly after the opaque stage, and no second blit happens.
+   */
+  setBeginSuppressed(suppressed: boolean): void {
+    this.beginSuppressed = suppressed;
+  }
+
+  /** Whether the per-render reset is currently suppressed. Reported in the stage evidence. */
+  beginIsSuppressed(): boolean {
+    return this.beginSuppressed;
+  }
+
+  /**
+   * The owned COPY of the completed opaque depth: what the additive shaders sample and what the R23
+   * volume marches against. Null when unsupported.
+   *
+   * This is not the attachment the scene drew into. For that, see `opaqueDepthAttachment`.
+   */
+  depthTexture(): THREE.Texture | null {
+    return (this.uniforms.uVisibilityDepth!.value as THREE.Texture | null) ?? null;
+  }
+
+  /**
+   * The ORIGINAL opaque depth attachment: the depth texture of the composer target this frame's
+   * scene render was drawn into, or null when no render has claimed one (unsupported context, or
+   * before the first scene render).
+   *
+   * Nothing samples this during a frame. It is the surface a diagnostic has to pack and hash to
+   * show that the volume blend left the real depth buffer's CONTENT alone — comparing the copy
+   * against itself cannot show that.
+   */
+  opaqueDepthAttachment(): THREE.DepthTexture | null {
+    return this.sourceDepth;
+  }
+
+  /** True when this frame actually holds a usable opaque depth copy. */
+  depthIsValid(): boolean {
+    return (this.uniforms.uVisibilityFadeEnabled!.value as number) > 0.5;
+  }
+
   beginSceneRender(camera: THREE.Camera): void {
+    if (this.beginSuppressed) return;
     const target = this.renderer.getRenderTarget();
     this.sourceTarget = this.supported && target !== null ? target : null;
     this.sourceDepth = this.sourceTarget?.depthTexture ?? null;
@@ -479,7 +574,9 @@ export class SkyriverDepthSnapshot {
 
   /** This frame's copy inputs, or null when the frame must not copy. */
   private captureTargets(renderer: THREE.WebGLRenderer): DepthCaptureTargets | null {
-    if (!this.allowed || !this.supported || this.copyFailed) return null;
+    // The fade's own A/B switch no longer gates the copy on its own: a reader that declared it
+    // needs the snapshot (the R23 volume) keeps it alive. See `setSnapshotRequired`.
+    if (!(this.allowed || this.snapshotRequired) || !this.supported || this.copyFailed) return null;
     if (renderer !== this.renderer) return null;
 
     const source = this.sourceTarget;
@@ -506,8 +603,11 @@ export class SkyriverDepthSnapshot {
     return {
       supported: this.supported,
       allowed: this.allowed,
+      snapshotRequired: this.snapshotRequired,
       copied: this.copied,
       enabled: this.uniforms.uVisibilityFadeEnabled!.value === 1,
+      canCapture: this.canCaptureOpaqueDepth(),
+      snapshotValid: this.opaqueSnapshotValid(),
       copyMethod: this.copyMethod,
       copyFallback: this.copyFallback,
       copyValidated: this.validated.has(this.copyMethod),

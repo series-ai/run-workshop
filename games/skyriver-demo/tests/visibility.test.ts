@@ -395,6 +395,74 @@ describe('R21 depth copy plan boundary', () => {
   });
 });
 
+describe('R23 depth snapshot: the beam fade and the volume are separate readers', () => {
+  it('still captures while the beam-fade A/B is off, when another reader needs the copy', () => {
+    // The coupling this removes: `captureTargets` returned null whenever the beam-fade A/B switch
+    // was off, so `setVisibilityAllowed(false)` ALSO left the R23 marcher with no depth — and the
+    // marcher's no-depth branch ran every ray the full bounded range through the walls. One A/B
+    // switch must not change the other's variable.
+    const { fake, source, snapshot, camera } = createSnapshot();
+    snapshot.setSnapshotRequired(true);
+    snapshot.setAllowed(false);
+
+    captureFrame(fake, snapshot, source, camera);
+
+    expect(fake.blits).toHaveLength(1);
+    // The volume's precondition holds: there IS a valid opaque depth copy this frame.
+    expect(snapshot.opaqueSnapshotValid()).toBe(true);
+    expect(snapshot.canCaptureOpaqueDepth()).toBe(true);
+    // And the beam fade is still off, which is what the A/B asked for.
+    expect(snapshot.depthIsValid()).toBe(false);
+    expect(snapshot.uniforms.uVisibilityFadeEnabled!.value).toBe(0);
+    expect(snapshot.stats()).toMatchObject({
+      allowed: false, snapshotRequired: true, copied: true, snapshotValid: true, enabled: false,
+    });
+  });
+
+  it('skips the copy when neither reader wants it', () => {
+    const { fake, source, snapshot, camera } = createSnapshot();
+    snapshot.setSnapshotRequired(false);
+    snapshot.setAllowed(false);
+
+    captureFrame(fake, snapshot, source, camera);
+
+    expect(fake.blits).toEqual([]);
+    expect(snapshot.opaqueSnapshotValid()).toBe(false);
+    expect(snapshot.depthIsValid()).toBe(false);
+    // The capability is still there: nothing has failed, so a plan may still stage the next frame
+    // once the volume declares that it needs the snapshot.
+    expect(snapshot.canCaptureOpaqueDepth()).toBe(true);
+  });
+
+  it('reports no capability on a context that cannot copy depth, before any capture runs', () => {
+    // What the composition plan reads BEFORE the frame's own capture: a capability, so there is no
+    // first-frame chicken and egg. A WebGL 1 context can never produce the snapshot.
+    const { snapshot } = createSnapshot(8, 4, { isWebGL2: false });
+    expect(snapshot.canCaptureOpaqueDepth()).toBe(false);
+    expect(snapshot.opaqueSnapshotValid()).toBe(false);
+  });
+
+  it('drops the capability after a copy failure, so the next frame plans legacy', () => {
+    const { fake, source, snapshot, camera } = createSnapshot();
+    snapshot.setSnapshotRequired(true);
+    // Both routes rejected: the blit demotes to the public copy, and that fails too.
+    fake.failures.blit = 1282;
+    captureFrame(fake, snapshot, source, camera);
+    fake.failures.copy = 1282;
+    captureFrame(fake, snapshot, source, camera);
+
+    expect(snapshot.canCaptureOpaqueDepth()).toBe(false);
+    expect(snapshot.opaqueSnapshotValid()).toBe(false);
+    expect(snapshot.stats()).toMatchObject({ canCapture: false, snapshotValid: false });
+    // A later frame does not try again: the failure is recorded once and respected.
+    const blits = fake.blits.length;
+    const copies = fake.copies.length;
+    captureFrame(fake, snapshot, source, camera);
+    expect(fake.blits).toHaveLength(blits);
+    expect(fake.copies).toHaveLength(copies);
+  });
+});
+
 describe('R21 depth snapshot capture', () => {
   it('blits depth once per frame with no GL queries and no render-target change', () => {
     const { fake, source, snapshot, camera } = createSnapshot();

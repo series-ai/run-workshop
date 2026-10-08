@@ -28,6 +28,7 @@ import {
   SkyriverScene,
   skyriverNextTierDown,
   type SkyriverFrame,
+  type SkyriverPresentationChain,
   type SkyriverRenderSettings,
 } from './render/scene';
 import type {
@@ -135,6 +136,54 @@ const TIER_LADDER: readonly SkyriverQualityTier[] = Object.freeze([
   SkyriverQualityTier.Medium,
   SkyriverQualityTier.Low,
 ]);
+
+/**
+ * SHA-256 of a byte buffer, as hex.
+ *
+ * `crypto.subtle.digest` is the only hash available in the browser without a dependency, and it is
+ * async — so the depth-content probe returns a promise. The bytes never leave the page.
+ */
+async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const copy = new Uint8Array(bytes.length);
+  copy.set(bytes);
+  const digest = await crypto.subtle.digest('SHA-256', copy);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/** One packed depth probe, hashed. The bytes themselves stay in the page. */
+interface DepthProbeReadback {
+  readonly width: number;
+  readonly height: number;
+  readonly sourceUuid: string;
+  readonly packingShader: string;
+  readonly quantization: string;
+  readonly probeDraws: number;
+  readonly sha256Hex: string;
+}
+
+/** Hashes a packed probe, or passes a missing surface straight through as "no evidence". */
+async function depthProbeReadback(
+  packed: {
+    readonly bytes: Uint8Array;
+    readonly width: number;
+    readonly height: number;
+    readonly sourceUuid: string;
+    readonly packingShader: string;
+    readonly quantization: string;
+    readonly probeDraws: number;
+  } | null,
+): Promise<DepthProbeReadback | null> {
+  if (packed === null) return null;
+  return {
+    width: packed.width,
+    height: packed.height,
+    sourceUuid: packed.sourceUuid,
+    packingShader: packed.packingShader,
+    quantization: packed.quantization,
+    probeDraws: packed.probeDraws,
+    sha256Hex: await sha256Hex(packed.bytes),
+  };
+}
 
 function nextTierUp(tier: SkyriverQualityTier): SkyriverQualityTier | null {
   const index = TIER_LADDER.indexOf(tier);
@@ -378,6 +427,9 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   });
   if (options.impostors !== undefined) traffic.setImpostorCount(options.impostors);
   for (const object of traffic.objects) scene.scene.add(object);
+  // R23: bind each traffic mesh's declared draw role, so the staged opaque/transparent split draws
+  // every one of them exactly once. The role was declared by traffic.ts at creation.
+  scene.registerStageRoles(traffic.objects);
 
   const shuttle = createSkyriverShuttle({ depthFade: scene.depthFade });
   // T6R: the drawn shuttle pose. Autopilot rides a canyon-run track mapped 1:1 from the sim's own arc
@@ -385,6 +437,8 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   const presenter = createFlightPresenter(seed);
   const wakeSamples = createWorldWakeSamples();
   for (const object of shuttle.objects) scene.scene.add(object);
+  // The plume is a child of the hull and carries the other role, so this traverses the subtree.
+  scene.registerStageRoles(shuttle.objects);
 
   const session = createSkyriverRunnerSession(seed, startMode);
 
@@ -898,6 +952,13 @@ export function boot(): SkyriverApp {
   // R22 A/B: ?district=0 renders the same frames with the pre-R22 source colours, distance grade and
   // haze tint. The geometry, the sign placement and the instance counts are identical either way.
   if (params.get('district') === '0') app.scene.setDistrictAllowed(false);
+  // R23 presentation chain: ?chain=legacy-five restores the R22 analytic frame with the five
+  // original bloom samplers; ?chain=three-only draws that same analytic frame, with the volume fog
+  // and the clouds off, through the actual three-level bloom. ?chain=r23-staged is the default.
+  const chainParam = params.get('chain');
+  if (chainParam === 'r23-staged' || chainParam === 'legacy-five' || chainParam === 'three-only') {
+    app.scene.setPresentationChain(chainParam);
+  }
 
   (window as unknown as { __skyriver?: SkyriverApp }).__skyriver = app;
   // T7-4 evidence hook (presentation-only, read-only): the canyon warp and a tower raycast, so the
@@ -934,6 +995,79 @@ export function boot(): SkyriverApp {
       renderSettings: (): SkyriverRenderSettings => app.scene.renderSettings(),
       lightSources: (): readonly SkyriverLightSource[] => app.scene.city.lightSources(),
       setDistrictAllowed: (enabled: boolean): void => app.scene.setDistrictAllowed(enabled === true),
+    },
+    // R23 volume fog, drifting smog and the staged post chain. Every getter reads live render
+    // state; nothing here is copied from a plan. `setVolumeAllowed(false)` is the reversible R23
+    // off switch and restores the verified R22 analytic scene with its original five-mip bloom.
+    volume: {
+      version: 1,
+      stats: () => app.scene.volumeEvidence(),
+      compositionEvidence: () => app.scene.compositionEvidence(),
+      lightSet: () => app.scene.lightSetEvidence(),
+      cloudEvidence: () => app.scene.cloudEvidence(),
+      bloomEvidence: () => app.scene.bloomEvidence(),
+      componentBindings: () => app.scene.componentBindings(),
+      renderSettings: (): SkyriverRenderSettings => app.scene.renderSettings(),
+      presentationInputs: () => app.scene.presentationInputs(),
+      referenceEvidence: () => app.scene.referenceEvidence(),
+      sourceTimeEvidence: () => app.scene.sourceTimeEvidence(),
+      // Diagnostic probes: one extra draw plus a readback each, outside the normal count and all
+      // timing. `opaque` packs the ORIGINAL depth attachment the scene drew into — the surface a
+      // before/after pair has to hash to show the volume blend preserved it. `snapshot` packs the
+      // owned copy the marcher actually sampled. Both return null when the surface does not exist.
+      probeOpaqueDepthContent: async (): Promise<DepthProbeReadback | null> =>
+        depthProbeReadback(app.scene.probeOpaqueDepthContent()),
+      probeSnapshotDepthContent: async (): Promise<DepthProbeReadback | null> =>
+        depthProbeReadback(app.scene.probeSnapshotDepthContent()),
+      /**
+       * The in-frame depth-content pair, which is the procedure the depth claim actually rests on:
+       * arm it, render ONE frame, then read the result and hash both byte arrays. Both packs
+       * happen inside the opaque and volume invocations, at the two points that matter. Two calls
+       * to `probeOpaqueDepthContent` cannot do this — between frames they compare the attachment
+       * with itself.
+       */
+      armStageDepthProbe: (): void => app.scene.armStageDepthProbe(),
+      stageDepthProbe: async (): Promise<{
+        readonly procedure: string;
+        readonly afterOpaque: DepthProbeReadback | null;
+        readonly afterVolume: DepthProbeReadback | null;
+        readonly sameSurface: boolean;
+      } | null> => {
+        const probe = app.scene.stageDepthProbe();
+        if (probe === null) return null;
+        return {
+          procedure: probe.procedure,
+          afterOpaque: await depthProbeReadback(probe.afterOpaque),
+          afterVolume: await depthProbeReadback(probe.afterVolume),
+          sameSurface: probe.sameSurface,
+        };
+      },
+      /**
+       * The presentation chain selector. `legacy-five` is the R23 off path (the verified R22
+       * analytic scene with all five original bloom samplers) and `three-only` is the diagnostic
+       * frame: the same analytic scene with the volume and the clouds off, drawn through the actual
+       * three-level bloom. `r23-staged` restores the default.
+       */
+      setPresentationChain: (chain: SkyriverPresentationChain): void =>
+        app.scene.setPresentationChain(chain),
+      presentationChain: (): SkyriverPresentationChain => app.scene.presentationChain,
+      setVolumeAllowed: (enabled: boolean): void => app.scene.setVolumeAllowed(enabled === true),
+      // Tuning overrides. They are scene state the composition plan reads, so a later bloom A/B,
+      // tier change or chain change keeps drawing the requested value instead of silently putting
+      // the profile default back. Pass null to return to the profile's own value.
+      setVolumeSteps: (steps: number | null): void => app.scene.setVolumeSteps(steps),
+      setCloudCount: (count: number | null): void => app.scene.setCloudCount(count),
+      volumeOverrides: () => app.scene.volumeOverrides(),
+      setReferenceMode: (enabled: boolean): void => app.scene.setVolumeReferenceMode(enabled === true),
+      resetHistory: (): void => app.scene.resetVolumeHistory('explicit'),
+      /**
+       * Advances presentation only: it suspends nothing in the simulation and writes no sim state.
+       * The convergence capture calls this with a frozen tick and alpha so the only inputs that
+       * move are the history delta and the jitter phase.
+       */
+      renderFrozen: (tick: number, alpha: number): void => {
+        app.scene.update(tick, app.renderState()?.current ?? null, alpha);
+      },
     },
   };
 
