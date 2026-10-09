@@ -335,7 +335,7 @@ describe('R28 Float32 appearance codec', () => {
 });
 
 function addedAppearanceAttribute(geometry: BufferGeometry): InstancedBufferAttribute {
-  const original = new Set(['position', 'aCorner', 'aImp', 'aFlow', 'aRoute', 'aFromAlpha']);
+  const original = new Set(['position', 'aCorner', 'aLamp', 'aImp', 'aFlow', 'aRoute', 'aFromAlpha']);
   const added = Object.entries(geometry.attributes).filter(([name]) => !original.has(name));
   expect(added).toHaveLength(1);
   const attribute = added[0]![1];

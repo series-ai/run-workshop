@@ -300,7 +300,12 @@ describe('R29 independent vehicle and presentation contracts', () => {
       const shader = { vertexShader: THREE.ShaderLib.basic.vertexShader, fragmentShader: THREE.ShaderLib.basic.fragmentShader, uniforms: {} };
       Reflect.apply(material.onBeforeCompile, material, [shader, null]);
       expect(shader.vertexShader).toContain('aSurfaceNormal');
-      expect(shader.fragmentShader).toContain('uDistrictTint * vGlass * glassGrazing * glassStreak');
+      expect(shader.fragmentShader).toContain('uniform vec4 uDistrictTint;');
+      expect(shader.fragmentShader).toContain('uDistrictTint.rgb * vGlass * glassGrazing * glassStreak');
+      const tint = Reflect.get(shader.uniforms, 'uDistrictTint') as { value: THREE.Vector4 };
+      expect(tint.value).toBeInstanceOf(THREE.Vector4);
+      expect(tint.value.toArray().every(Number.isFinite)).toBe(true);
+      expect(shader.fragmentShader).toContain('* uDistrictTint.w;');
     } finally { shuttle.dispose(); }
   });
 

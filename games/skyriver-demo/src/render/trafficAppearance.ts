@@ -29,6 +29,20 @@ export const TRAFFIC_APPEARANCE_PROFILES: readonly TrafficAppearanceProfile[] = 
 export const TRAFFIC_LAMP_MIN_DIAMETER_PX = 1.3;
 export const TRAFFIC_LAMP_FLOOR_BLEND_SHARE = 0.2;
 export const TRAFFIC_LAMP_FLOOR_MIN_GAIN = 0.8;
+export const TRAFFIC_LAMP_HEAD_FACING_BAND = Object.freeze([0.1, 0.7] as const);
+export const TRAFFIC_LAMP_TAIL_FACING_BAND = Object.freeze([-0.85, 0.3] as const);
+
+function smoothstep(edge0: number, edge1: number, value: number): number {
+  const t = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
+/** Shared facing gain for CPU and GPU lamps. The tail band reads the opposite direction. */
+export function trafficLampFacingGain(facing: number, head: boolean): number {
+  return head
+    ? smoothstep(TRAFFIC_LAMP_HEAD_FACING_BAND[0], TRAFFIC_LAMP_HEAD_FACING_BAND[1], facing)
+    : smoothstep(TRAFFIC_LAMP_TAIL_FACING_BAND[0], TRAFFIC_LAMP_TAIL_FACING_BAND[1], -facing);
+}
 
 /** Store type + scale / 8. Scale must be in [1, 6]. Fractions stay clear of integers. */
 export function packTrafficAppearance(type: number, scale: number): number {
@@ -69,6 +83,10 @@ vec4 trafficLampShape(float type, bool front) {
 float trafficCarLength(float type) {
   return trafficLampShape(type, true).w - trafficLampShape(type, false).w;
 }
+float trafficLampFacingGain(float facing, bool head) {
+  if (head) return smoothstep(${glslNumber(TRAFFIC_LAMP_HEAD_FACING_BAND[0])}, ${glslNumber(TRAFFIC_LAMP_HEAD_FACING_BAND[1])}, facing);
+  return smoothstep(${glslNumber(TRAFFIC_LAMP_TAIL_FACING_BAND[0])}, ${glslNumber(TRAFFIC_LAMP_TAIL_FACING_BAND[1])}, -facing);
+}
 float trafficLampPhysicalRadius(float type, float scale) {
 ${TRAFFIC_APPEARANCE_PROFILES.map((profile, i) => {
   const radius = (lamp: TrafficLampProfile): number => Math.hypot(
@@ -104,23 +122,13 @@ float trafficLampFloor(float physical, float floorSize) {
   return max(physical, floorSize) + overlap * overlap / (4.0 * width);
 }
 void trafficLampKernel(vec3 pos, vec3 forward, float bank, float type, float scale,
-  float frontMix, float lampSide, float pixelScale, out vec3 lamp, out vec4 centre,
+  bool front, float lampSide, float pixelScale, out vec3 lamp, out vec4 centre,
   out vec2 axis, out vec2 halfSize, out float pairHalfSpan, out float lampGain) {
   vec3 right0 = normalize(vec3(forward.z, 0.0, -forward.x));
   vec3 up0 = cross(forward, right0);
   vec3 rightW = right0 * cos(bank) + up0 * sin(bank);
   vec3 upW = up0 * cos(bank) - right0 * sin(bank);
-  TrafficLampShape profile;
-  if (frontMix <= 0.0) {
-    profile = trafficLampProfile(type, false);
-  } else if (frontMix >= 1.0) {
-    profile = trafficLampProfile(type, true);
-  } else {
-    TrafficLampShape rear = trafficLampProfile(type, false);
-    TrafficLampShape front = trafficLampProfile(type, true);
-    profile = TrafficLampShape(mix(rear.dimensions, front.dimensions, frontMix),
-      mix(rear.y, front.y, frontMix));
-  }
+  TrafficLampShape profile = trafficLampProfile(type, front);
   vec4 shape = profile.dimensions;
   vec3 group = pos + scale * (forward * shape.w + upW * profile.y);
   lamp = group + rightW * lampSide * shape.x * scale;

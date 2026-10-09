@@ -1,6 +1,6 @@
 /** Independent R28b material algebra and real batch geometry checks. No GL context. */
 import { afterAll, describe, expect, it } from 'vitest';
-import { AdditiveBlending, DoubleSide, InstancedBufferGeometry, InstancedMesh, Mesh, ShaderMaterial, Vector3, Vector4, PerspectiveCamera, Matrix4, Sphere, Frustum } from 'three';
+import { AdditiveBlending, DoubleSide, InstancedBufferAttribute, InstancedBufferGeometry, InstancedMesh, Mesh, ShaderMaterial, Vector3, Vector4, PerspectiveCamera, Matrix4, Sphere, Frustum } from 'three';
 import { createSkyriverTraffic, TRAFFIC_QUALITY_TIERS } from '../src/render/traffic';
 import { deriveImpostorAttributes, impostorPosition } from '../src/render/trafficStreams';
 import { unpackTrafficAppearance } from '../src/render/trafficAppearance';
@@ -193,7 +193,7 @@ describe('R28b actual shared floor gain', () => {
       }
     }
     expect(cpuMaterial.vertexShader).toContain('vIntensity *= lampGain;');
-    expect(gpuMaterial.vertexShader).toMatch(/vIntensity\s*=\s*[^;]*lampGain\s*\*\s*handover\s*\*\s*tierPresence\s*\*\s*farBrightness/);
+    expect(gpuMaterial.vertexShader).toMatch(/vIntensity\s*=\s*[^;]*lampGain\s*\*\s*trafficLampFacingGain\(facing,\s*head\)\s*\*\s*handover\s*\*\s*tierPresence\s*\*\s*farBrightness/);
   });
 
   it('has continuous first derivatives at the scalar extent thresholds', () => {
@@ -258,11 +258,19 @@ describe('R28b actual traffic batches', () => {
     }
   });
 
-  it('uses one GPU quad per logical source with full twenty-thousand capacity', () => {
-    expect(gpu.geometry.getAttribute('aCorner').count).toBe(4);
-    expect(gpu.geometry.getAttribute('position').count).toBe(4);
-    expect(gpu.geometry.getIndex()!.count).toBe(6);
-    expect(Array.from(gpu.geometry.getIndex()!.array)).toEqual([0, 1, 2, 0, 2, 3]);
+  it('uses fixed head and tail quads per logical car with full twenty-thousand capacity', () => {
+    expect(gpu.geometry.getAttribute('aCorner').count).toBe(8);
+    expect(gpu.geometry.getAttribute('position').count).toBe(8);
+    expect(gpu.geometry.getIndex()!.count).toBe(12);
+    expect(Array.from(gpu.geometry.getIndex()!.array)).toEqual([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7]);
+    const lamp = gpu.geometry.getAttribute('aLamp');
+    expect(lamp).not.toBeInstanceOf(InstancedBufferAttribute);
+    expect(lamp.itemSize).toBe(1);
+    expect(Array.from(lamp.array)).toEqual([0, 0, 0, 0, 1, 1, 1, 1]);
+    for (let at = 0; at < gpu.geometry.getIndex()!.count; at += 3) {
+      const selectors = [0, 1, 2].map(offset => lamp.getX(gpu.geometry.getIndex()!.getX(at + offset)));
+      expect(new Set(selectors).size).toBe(1);
+    }
     for (const name of ['aImp', 'aFlow', 'aRoute', 'aAppearance', 'aFromAlpha']) {
       expect(gpu.geometry.getAttribute(name).count).toBe(20000);
     }

@@ -772,7 +772,7 @@ export function createSkyriverShuttle(options: { readonly depthFade?: SkyriverDe
   hullGeometry.computeBoundingSphere();
   const hullMaterial = new THREE.MeshBasicMaterial({ vertexColors: true, fog: true, side: THREE.DoubleSide });
   hullMaterial.name = 'skyriver.shuttle.hull';
-  const districtTintUniform = { value: new THREE.Vector3(1, 1, 1) };
+  const districtTintUniform = { value: new THREE.Vector4(1, 1, 1, 1) };
   hullMaterial.onBeforeCompile = (shader) => {
     shader.uniforms.uDistrictTint = districtTintUniform;
     shader.vertexShader = shader.vertexShader.replace(
@@ -785,7 +785,7 @@ export function createSkyriverShuttle(options: { readonly depthFade?: SkyriverDe
     );
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <common>',
-      '#include <common>\nuniform vec3 uDistrictTint;\nvarying vec3 vGlassNormal;\nvarying vec3 vGlassWorldPosition;\nvarying float vGlass;',
+      '#include <common>\nuniform vec4 uDistrictTint;\nvarying vec3 vGlassNormal;\nvarying vec3 vGlassWorldPosition;\nvarying float vGlass;',
     );
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <color_fragment>',
@@ -794,14 +794,18 @@ vec3 glassNormal = normalize( vGlassNormal );
 vec3 glassView = normalize( cameraPosition - vGlassWorldPosition );
 vec3 glassReflection = reflect( -glassView, glassNormal );
 float glassGrazing = pow( 1.0 - abs( dot( glassNormal, glassView ) ), 2.0 );
-float glassLongitude = atan( glassReflection.z, glassReflection.x );
-float glassBandA = smoothstep( 0.76, 0.98, cos( glassLongitude * 11.0 + glassReflection.y * 2.7 ) );
-float glassBandB = smoothstep( 0.84, 0.99, cos( glassLongitude * 4.0 - glassReflection.y * 4.2 ) );
-float glassStreak = 0.035 + 0.2 * glassBandA + 0.08 * glassBandB;
-diffuseColor.rgb += uDistrictTint * vGlass * glassGrazing * glassStreak;`,
+// Three vertical reflection planes stay fixed in world space.
+vec3 glassBandDistance = abs( vec3(
+  dot( glassReflection.xz, vec2( 0.939693, 0.342020 ) ),
+  dot( glassReflection.xz, vec2( -0.173648, 0.984808 ) ),
+  dot( glassReflection.xz, vec2( -0.819152, 0.573576 ) ) ) );
+vec3 glassBandWidth = vec3( 0.04, 0.032, 0.024 ) * uDistrictTint.w;
+vec3 glassBands = 1.0 - smoothstep( glassBandWidth, glassBandWidth + 0.025, glassBandDistance );
+float glassStreak = 0.035 + dot( glassBands, vec3( 0.16, 0.08, 0.04 ) );
+diffuseColor.rgb += uDistrictTint.rgb * vGlass * glassGrazing * glassStreak;`,
     );
   };
-  hullMaterial.customProgramCacheKey = () => 'skyriver-shuttle-hull-district-glass-v1';
+  hullMaterial.customProgramCacheKey = () => 'skyriver-shuttle-hull-world-glass-v2';
   applySkyriverFog(hullMaterial);
   const hull = new THREE.Mesh(hullGeometry, hullMaterial);
   hull.name = 'skyriver.shuttle.hull';
@@ -881,7 +885,9 @@ diffuseColor.rgb += uDistrictTint * vGlass * glassGrazing * glassStreak;`,
       u.uWakeRootWidth!.value = wake.rootWidthM;
       u.uWakeTailWidth!.value = wake.tailWidthM;
       u.uTime!.value = time;
-      districtTintUniform.value.set(districtTint[0], districtTint[1], districtTint[2]);
+      // Reuse the tint vector's fourth component for boost width and a small shimmer.
+      const glassWidth = 1 + 0.08 * boost + 0.1875 * (flicker - 0.92);
+      districtTintUniform.value.set(districtTint[0], districtTint[1], districtTint[2], glassWidth);
 
       for (let i = 0; i < SHUTTLE_WAKE_SAMPLE_COUNT; i += 1) {
         const source = i * 3;
