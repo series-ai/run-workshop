@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", "lib": ["DOM", "DOM.Iterable", "ES2023"],
+    "skipLibCheck": true, "esModuleInterop": true, "strict": true,
+    "module": "ESNext", "moduleResolution": "bundler", "resolveJsonModule": true,
+    "isolatedModules": true, "noEmit": true, "jsx": "react-jsx", "types": ["node"]
+  },
+  "include": ["src", "scripts/**/*.ts", "e2e", "vite.config.ts", "playwright.config.ts"]
+}

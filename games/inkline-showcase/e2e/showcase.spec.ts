@@ -1,0 +1,233 @@
+import { readFile } from 'node:fs/promises'
+import { test, expect, type Page } from '@playwright/test'
+
+test.use({ channel: 'chromium' })
+
+async function ready(page: Page): Promise<void> {
+  await expect(page.getByRole('application')).toBeVisible()
+  await expect(page.getByLabel('Loading scene', { exact: true })).toBeHidden()
+  await expect(page.locator('.ink-stage-runtime-error')).toBeHidden()
+}
+async function mode(page: Page, name: RegExp): Promise<void> {
+  await page.getByRole('tab', { name }).click()
+  await ready(page)
+}
+test.beforeEach(async ({ page }) => { await page.goto('/'); await ready(page) })
+
+test('catalog searches all models and downloads the selected GLB', async ({ page }) => {
+  await mode(page, /Model Catalog/)
+  await page.getByRole('searchbox').fill('pipe-elbow')
+  await expect(page.getByRole('option', { name: /Pipe 90-Deg Elbow/i })).toBeVisible()
+  await page.getByRole('option', { name: /Pipe 90-Deg Elbow/i }).click()
+  await ready(page)
+  const download = page.waitForEvent('download')
+  await page.getByRole('link', { name: /Download.*GLB/i }).click()
+  const downloaded = await download
+  expect(downloaded.suggestedFilename()).toBe('pipe-elbow.glb')
+  const path = await downloaded.path()
+  expect(path).not.toBeNull()
+  const bytes = await readFile(path!)
+  expect(bytes.subarray(0, 4).toString()).toBe('glTF')
+  expect(bytes.readUInt32LE(8)).toBe(bytes.length)
+  await page.getByRole('searchbox').fill('missing-example-asset')
+  await expect(page.getByText(/No .*match/)).toBeVisible()
+})
+
+test('avatar presets, headwear, proportions and equipment persist', async ({ page }) => {
+  await mode(page, /Avatar Lab/)
+  await page.getByRole('radio', { name: 'Cap', exact: true }).click()
+  await page.getByLabel('Weapons / Sports / Sci-Fi / Held Props:').selectOption('rifle')
+  await page.getByRole('slider', { name: /Limb Thickness/i }).fill('1.2')
+  await ready(page)
+  await page.reload(); await ready(page); await mode(page, /Avatar Lab/)
+  await expect(page.getByRole('radio', { name: 'Cap', exact: true })).toHaveAttribute('aria-checked', 'true')
+  await expect(page.getByLabel('Weapons / Sports / Sci-Fi / Held Props:')).toHaveValue('rifle')
+  await expect(page.getByRole('slider', { name: /Limb Thickness/i })).toHaveValue('1.2')
+  await expect(page.getByRole('option', { name: /Soccer Goal/i })).toHaveCount(0)
+  await page.getByRole('button', { name: /Stick Staff Adept/ }).click()
+  await page.getByRole('button', { name: 'Apply Staff Adept kit', exact: true }).click()
+  await ready(page)
+  await expect(page.getByLabel('Weapons / Sports / Sci-Fi / Held Props:')).toHaveValue('staff')
+  await expect(page.getByRole('slider', { name: /Limb Thickness/i })).toHaveValue('1')
+  await page.getByLabel('Weapons / Sports / Sci-Fi / Held Props:').selectOption('sword')
+  await expect(page.getByLabel('Weapons / Sports / Sci-Fi / Held Props:')).toHaveValue('sword')
+})
+
+test('animation seek freezes its exact pose and other modes keep playing', async ({ page }) => {
+  await mode(page, /Animation Library/)
+  await page.getByRole('searchbox').fill('punch-right')
+  await page.getByRole('option', { name: /Punch Right/ }).click()
+  await page.getByRole('slider', { name: 'Animation position', exact: true }).fill('0.25')
+  await expect(page.getByRole('button', { name: 'Play animation', exact: true })).toBeVisible()
+  await expect(page.locator('.ink-timecode')).toContainText('0.25s')
+  await page.waitForTimeout(600)
+  await expect(page.locator('.ink-timecode')).toContainText('0.25s')
+  await mode(page, /VFX Catalog/)
+  await page.getByRole('button', { name: /trigger/i }).click()
+  await expect(page.locator('.ink-stage-runtime-error')).toBeHidden()
+  await mode(page, /Combat Arena/)
+  await expect(page.getByRole('button', { name: /Third-Person/ })).toHaveAttribute('aria-pressed', 'true')
+  await page.getByRole('application').focus()
+  await page.keyboard.down('w'); await page.waitForTimeout(560); await page.keyboard.up('w')
+  await page.keyboard.press('j')
+  await expect(page.locator('.ink-stage-gamepad-overlay .ink-hud-score')).not.toHaveText('0')
+})
+
+test('rapid mode changes recover and stress scene renders 100 figures', async ({ page }) => {
+  for (const name of [/District Scene/, /Avatar Lab/, /Parkour Trial/, /Animation Library/, /Performance Stress/]) await page.getByRole('tab', { name }).click()
+  await ready(page)
+  await page.getByRole('button', { name: /Max Stress/ }).click()
+  await ready(page)
+  await expect(page.getByRole('slider', { name: /Active Figures/ })).toHaveValue('100')
+  await expect(page.locator('.ink-header-stat-chip .ink-stat-num')).not.toHaveText('0')
+  await page.getByRole('button', { name: 'Reset stage', exact: true }).click(); await ready(page)
+})
+
+test('phone controls stay in view and a run can start with touch', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect(page.getByRole('button', { name: 'Close control panel', exact: true })).toBeHidden()
+  const open = page.getByRole('button', { name: 'Open control panel', exact: true })
+  const box = await open.boundingBox(); expect(box && box.x >= 0 && box.x + box.width <= 391).toBeTruthy()
+  await open.click(); await expect(page.getByRole('button', { name: 'Close control panel', exact: true })).toBeVisible()
+  await mode(page, /Parkour/)
+  const back = page.getByRole('button', { name: 'Move Back (S / Down)', exact: true }).first()
+  await back.dispatchEvent('pointerdown', { pointerId: 1 })
+  await page.waitForTimeout(300)
+  await back.dispatchEvent('pointerup', { pointerId: 1 })
+  await expect(page.locator('.ink-stage-gamepad-overlay .ink-hud-score')).toHaveText('100')
+  await page.screenshot({ path: 'docs/verification/phone-parkour.png' })
+})
+
+test('manifest failure has a visible retry path', async ({ page }) => {
+  await page.route('**/assets/manifest.json', route => route.fulfill({ status: 503, body: 'Unavailable' }))
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Asset Manifest Unavailable' })).toBeVisible()
+  await page.unroute('**/assets/manifest.json')
+  await page.getByRole('button', { name: 'Retry Loading Manifest', exact: true }).click()
+  await ready(page)
+})
+
+for (const fail of [false, true]) test(`stale weapon ${fail ? 'failure' : 'completion'} leaves the new scene valid`, async ({ page }) => {
+  let release: (() => void) | undefined
+  const held = new Promise<void>(resolve => { release = resolve })
+  await page.route('**/props/rifle.glb', async route => {
+    await held
+    if (fail) await route.abort('failed')
+    else await route.continue()
+  })
+  await mode(page, /Avatar Lab/)
+  await page.getByLabel('Weapons / Sports / Sci-Fi / Held Props:').selectOption('rifle')
+  await mode(page, /Performance Stress/)
+  release!()
+  await page.waitForTimeout(700)
+  await expect(page.locator('.ink-stage-runtime-error')).toBeHidden()
+  await expect(page.getByRole('heading', { name: 'Benchmark', exact: true })).toBeVisible()
+  await expect(page.locator('.ink-header-stat-chip .ink-stat-num')).not.toHaveText('0')
+})
+
+test('paused clip selection shows the new pose and keeps the final frame', async ({ page }) => {
+  await mode(page, /Animation Library/)
+  const frameSide = async () => {
+    await page.getByRole('button', { name: 'Perspective', exact: true }).click()
+    await page.getByRole('button', { name: 'Side', exact: true }).click()
+  }
+  const seek = page.getByRole('slider', { name: 'Animation position', exact: true })
+  await seek.fill('0.2')
+  await frameSide()
+  await page.waitForTimeout(120)
+  const idle = await page.getByRole('application').screenshot()
+  await page.getByRole('searchbox').fill('death')
+  await page.getByRole('option', { name: /^Death/ }).click()
+  await seek.fill('1.3')
+  await page.waitForTimeout(120)
+  const death = await page.getByRole('application').screenshot()
+  expect(death.equals(idle)).toBe(false)
+  await seek.focus(); await page.keyboard.press('End')
+  await page.waitForTimeout(120)
+  const end = await page.getByRole('application').screenshot()
+  expect(end.equals(idle)).toBe(false)
+  await page.getByRole('searchbox').fill('idle')
+  await page.getByRole('option', { name: /^Idle\s/ }).click()
+  await seek.fill('0.2')
+  // Clip changes can expand the view. Use the same fitted view to compare poses.
+  await frameSide()
+  await page.waitForTimeout(120)
+  expect((await page.getByRole('application').screenshot()).equals(idle)).toBe(true)
+})
+
+
+test('new level options load, switch effects, and download their own scenes', async ({ page }) => {
+  await mode(page, /District Scene/)
+  for (const [label, id] of [['Service Yard', 'service-yard'], ['Roof Works', 'roof-works']]) {
+    await page.getByRole('radio', { name: label, exact: true }).click()
+    await ready(page)
+    await expect(page.getByRole('heading', { name: label, exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Scene effects: ON', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Scene effects: OFF', exact: true })).toHaveAttribute('aria-pressed', 'false')
+    await page.getByRole('button', { name: 'Scene effects: OFF', exact: true }).click()
+    const download = page.waitForEvent('download')
+    await page.getByRole('link', { name: 'Download scene GLB', exact: true }).click()
+    const result = await download
+    expect(result.suggestedFilename()).toBe(`${id}.glb`)
+    const bytes = await readFile((await result.path())!)
+    expect(bytes.subarray(0, 4).toString()).toBe('glTF')
+    expect(bytes.readUInt32LE(8)).toBe(bytes.length)
+    await expect(page.getByRole('link', { name: 'Layout JSON', exact: true })).toHaveAttribute('href', `/assets/${id}.json`)
+  }
+})
+
+test('new effects and clips remain available in the phone inspector', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await mode(page, /Effects/)
+  await page.getByRole('button', { name: 'Open control panel', exact: true }).click()
+  await page.getByRole('searchbox').fill('welding-arc')
+  await page.getByRole('option').first().click()
+  await page.getByRole('button', { name: /TRIGGER/ }).click()
+  await ready(page)
+  await mode(page, /Motion/)
+  await page.getByRole('searchbox').fill('shield-bash')
+  await page.getByRole('listbox', { name: 'Animation Clips', exact: true }).getByRole('option').first().click()
+  await page.getByRole('slider', { name: 'Animation position', exact: true }).fill('0.3')
+  await expect(page.locator('.ink-timecode')).toContainText('0.30s')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})
+
+
+test('animation library previews a weapon without leaving the clip', async ({ page }) => {
+  await mode(page, /Animation Library/)
+  await page.getByRole('searchbox').fill('staff-thrust')
+  await page.getByRole('option', { name: /Staff Thrust/ }).click()
+  await ready(page)
+  await expect(page.getByRole('heading', { name: 'Staff Thrust', exact: true })).toBeVisible()
+  await expect(page.getByLabel('Preview equipment', { exact: true })).toHaveValue('staff')
+  await page.getByRole('slider', { name: 'Animation position', exact: true }).fill('0.3')
+  await page.getByLabel('Preview equipment', { exact: true }).selectOption('')
+  await ready(page)
+  await expect(page.getByLabel('Preview equipment', { exact: true })).toHaveValue('')
+  await expect(page.getByRole('heading', { name: 'Staff Thrust', exact: true })).toBeVisible()
+  await expect(page.locator('.ink-timecode')).toContainText('0.30s')
+})
+
+
+test('keyboard mode tabs follow desktop and phone orientation', async ({ page }) => {
+  const tabs = page.getByRole('tablist')
+  await expect(tabs).toHaveAttribute('aria-orientation', 'vertical')
+  await expect(tabs.locator('[tabindex="0"]')).toHaveCount(1)
+  await tabs.locator('[aria-selected="true"]').focus()
+  await page.keyboard.press('ArrowDown')
+  await expect(page.getByRole('tab', { name: /Model Catalog/ })).toBeFocused()
+  await expect(page.getByRole('tab', { name: /Model Catalog/ })).toHaveAttribute('aria-selected', 'true')
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect(tabs).toHaveAttribute('aria-orientation', 'horizontal')
+  await page.keyboard.press('ArrowRight')
+  await expect(page.getByRole('tab', { name: /Avatar/ })).toBeFocused()
+  await page.keyboard.press('End')
+  await expect(page.getByRole('tab', { name: /Perf/ })).toBeFocused()
+  await page.keyboard.press('Home')
+  await expect(page.getByRole('tab', { name: /Home/ })).toBeFocused()
+  await expect(tabs.locator('[tabindex="0"]')).toHaveCount(1)
+  const selected = tabs.locator('[aria-selected="true"]')
+  await expect(selected).toHaveAttribute('aria-controls', 'panel-view')
+  await expect(page.locator('#panel-view')).toHaveAttribute('aria-labelledby', await selected.getAttribute('id') ?? '')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})
