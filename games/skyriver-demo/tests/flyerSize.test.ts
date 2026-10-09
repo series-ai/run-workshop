@@ -1,5 +1,6 @@
 /** R28 independent physical geometry and traffic identity contracts. No GL context is used. */
 import { createHash } from 'node:crypto';
+import geometryR29 from './fixtures/r29-traffic-geometry.json';
 import { describe, expect, it } from 'vitest';
 import { BufferGeometry, InstancedBufferAttribute, InstancedMesh, Mesh, PerspectiveCamera, ShaderMaterial, Vector3 } from 'three';
 import { createSkyriverTraffic, TRAFFIC_QUALITY_TIERS } from '../src/render/traffic';
@@ -9,149 +10,9 @@ import {
   TRAFFIC_APPEARANCE_GLSL, TRAFFIC_LAMP_MIN_DIAMETER_PX,
 } from '../src/render/trafficAppearance';
 
-// Actual old Three geometry and four-seed motion buffers, captured before R28.
-const GEOMETRY_BEFORE = [
-  {
-    "renderId": 0,
-    "name": "cab",
-    "vertices": 234,
-    "indexed": false,
-    "attributes": {
-      "position": {
-        "bytes": 2808,
-        "sha256": "06b95c384e74d491e0b994b2d154741ee9d0f217510e334087e21c2755db483a"
-      },
-      "color": {
-        "bytes": 2808,
-        "sha256": "bf66a1fb020a6c5d06f3386dc5b3d1538b998c53bb5c472214b46ded97f245e4"
-      },
-      "normal": {
-        "bytes": 2808,
-        "sha256": "0f81dbdbd15f1c5d735b7c9cdc682ad0409425677bede521e3740a0628d7f66e"
-      }
-    }
-  },
-  {
-    "renderId": 1,
-    "name": "interceptor",
-    "vertices": 174,
-    "indexed": false,
-    "attributes": {
-      "position": {
-        "bytes": 2088,
-        "sha256": "c7e3fabe8a1a8584a04ec44ec5ebb7f449bf91cd7a3be9f25ba31ca5854ebcf3"
-      },
-      "color": {
-        "bytes": 2088,
-        "sha256": "0f121d0bdb17111795d397eb4f13ee08cc4f2eed2d4db6e57092377b3139a0c2"
-      },
-      "normal": {
-        "bytes": 2088,
-        "sha256": "09b57c1148d9ffd95295bded610ac65cee0ae4b985290af3dfb9890c6f34078f"
-      }
-    }
-  },
-  {
-    "renderId": 2,
-    "name": "commuter",
-    "vertices": 246,
-    "indexed": false,
-    "attributes": {
-      "position": {
-        "bytes": 2952,
-        "sha256": "f80af05eb0d53e15a42a10cd69b8381a55663f324deb6c943e89c5f2ac54da34"
-      },
-      "color": {
-        "bytes": 2952,
-        "sha256": "cfcda8c6b3071a7fad5f02b73e97c91504b94a4873adcd45e3a97d44da5b46eb"
-      },
-      "normal": {
-        "bytes": 2952,
-        "sha256": "c70db6610dd4e4225a6524c5d0b745bbe4579c1dd22b7b0e9a56075eda681609"
-      }
-    }
-  },
-  {
-    "renderId": 3,
-    "name": "van",
-    "vertices": 234,
-    "indexed": false,
-    "attributes": {
-      "position": {
-        "bytes": 2808,
-        "sha256": "572a72e1b59b6d8ca9e7401667387695b8aadc5747d6aea761df0cd36422d839"
-      },
-      "color": {
-        "bytes": 2808,
-        "sha256": "6508d7f81422bfcfc0e352b857808db868de078eace9d8009db1e9a938fa162a"
-      },
-      "normal": {
-        "bytes": 2808,
-        "sha256": "0f81dbdbd15f1c5d735b7c9cdc682ad0409425677bede521e3740a0628d7f66e"
-      }
-    }
-  },
-  {
-    "renderId": 4,
-    "name": "saucer",
-    "vertices": 276,
-    "indexed": false,
-    "attributes": {
-      "position": {
-        "bytes": 3312,
-        "sha256": "bae0df2150c0d83d6a5d71b90e3152477633c28b494b136a1c8c0795c9d167b3"
-      },
-      "color": {
-        "bytes": 3312,
-        "sha256": "4627e8c67067f7d963aebb7ba7981cac9b80d45783de55d1f13c1a98e36b6f3a"
-      },
-      "normal": {
-        "bytes": 3312,
-        "sha256": "6c1884a9d66213fa7492892f7585b3f9c0b6907b450f9a039932b1b539077d24"
-      }
-    }
-  },
-  {
-    "renderId": 5,
-    "name": "bus",
-    "vertices": 102,
-    "indexed": false,
-    "attributes": {
-      "position": {
-        "bytes": 1224,
-        "sha256": "866a1e8f5456a1b931dac0fea4fc59fb9db1fed464e55e0311d239ca248100cc"
-      },
-      "color": {
-        "bytes": 1224,
-        "sha256": "7c5c50a29f75fbbf3302b8a7f8225ad034f82a1f7f0cb85d8291aebb2b3f9376"
-      },
-      "normal": {
-        "bytes": 1224,
-        "sha256": "61f52a49b23f25bec590f841f9e84297f6a1d4b1a7b0a291538f4cba5e9667c7"
-      }
-    }
-  },
-  {
-    "renderId": 6,
-    "name": "flatbed",
-    "vertices": 300,
-    "indexed": false,
-    "attributes": {
-      "position": {
-        "bytes": 3600,
-        "sha256": "4d7130a2e438356ae2184d6fa054722f2f2da54db178b1451d2cedcdf906eed6"
-      },
-      "color": {
-        "bytes": 3600,
-        "sha256": "e6443785edf9515b945b2c7a3161c1c068070f816dbd89bbd0acd31b76a95c38"
-      },
-      "normal": {
-        "bytes": 3600,
-        "sha256": "2037a7e2b1f6ebed62475f96e865eeb4f27c480fd5dd4aec6dfd70566a5c205e"
-      }
-    }
-  }
-] as const;
+// R29 changes only non-lamp hull shape. Independent R29 tests keep the old lamp triangles and bounds.
+// The four-seed motion buffers still come from before R28.
+const GEOMETRY_BEFORE = geometryR29;
 const MOTION_BEFORE = [
   {
     "seed": 424242,
@@ -274,17 +135,19 @@ function measurePatches(geometry: BufferGeometry, rgb: readonly number[]): Patch
   const color = geometry.getAttribute('color');
   const normal = geometry.getAttribute('normal');
   const triangles: { points: Point[]; keys: Set<string>; normal: Point }[] = [];
-  for (let at = 0; at < position.count; at += 3) {
+  const index = geometry.index;
+  const triangleCorners = index ? index.count : position.count;
+  for (let at = 0; at < triangleCorners; at += 3) {
     const points: Point[] = [];
     let match = true;
     for (let j = 0; j < 3; j += 1) {
-      const i = at + j;
+      const i = index ? index.getX(at + j) : at + j;
       const c = [color.getX(i), color.getY(i), color.getZ(i)];
       if (c.some((v, k) => Math.abs(v - rgb[k]!) > 1e-6)) { match = false; break; }
       points.push({ x: position.getX(i), y: position.getY(i), z: position.getZ(i) });
     }
     if (match) triangles.push({ points, keys: new Set(points.map(p => `${p.x},${p.y},${p.z}`)),
-      normal: { x: normal.getX(at), y: normal.getY(at), z: normal.getZ(at) } });
+      normal: { x: normal.getX(index ? index.getX(at) : at), y: normal.getY(index ? index.getX(at) : at), z: normal.getZ(index ? index.getX(at) : at) } });
   }
   const remaining = new Set(triangles.map((_, i) => i));
   const patches: Patch[] = [];
@@ -317,13 +180,15 @@ function measurePatches(geometry: BufferGeometry, rgb: readonly number[]): Patch
 }
 
 describe('R28 actual hull lamp geometry', () => {
-  it('preserves all seven old position, colour, normal and triangle records', () => {
+  it('matches the approved indexed R29 non-lamp hull fixture', () => {
     withTraffic(424242, traffic => {
       for (const before of GEOMETRY_BEFORE) {
         const mesh = meshNamed(traffic, 'skyriver.traffic.' + before.name);
         expect(mesh).toBeInstanceOf(InstancedMesh);
         expect(mesh.geometry.getAttribute('position').count).toBe(before.vertices);
         expect(mesh.geometry.index !== null).toBe(before.indexed);
+        expect(mesh.geometry.index!.count).toBe(before.indexCount);
+        expect(hash(mesh.geometry.index!.array)).toBe(before.indexSha256);
         for (const name of ['position', 'color', 'normal'] as const) {
           const array = mesh.geometry.getAttribute(name).array;
           expect(array.byteLength).toBe(before.attributes[name].bytes);

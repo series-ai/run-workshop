@@ -333,10 +333,10 @@ export function createSkyriverHud(options: SkyriverHudOptions): SkyriverHud {
   const hint = element(doc, 'div', 'skyriver-hud__hint');
   const hintDesktop = element(doc, 'span', 'skyriver-hud__hint-desktop');
   const desktopParts: readonly (readonly [string, string])[] = [
-    ['wasd', ' steer · '],
+    ['wasd', ' steer in free flight · '],
     ['b', ' boost · '],
     ['m', ' fly / autopilot · '],
-    ['shift z', ' throttle · '],
+    ['shift z', ' throttle in free flight · '],
     ['f3', ' stats'],
   ];
   for (const [key, label] of desktopParts) {
@@ -415,7 +415,7 @@ export function createSkyriverHud(options: SkyriverHudOptions): SkyriverHud {
         modeBadge.classList.toggle('skyriver-hud__badge--mode-freefly', state.mode === 1);
       }
 
-      const speedText = String(Math.round(state.speed * (state.boosting ? 1.8 : 1)));
+      const speedText = String(Math.round(state.speed * (state.mode === 1 && state.boosting ? 1.8 : 1)));
       if (speedText !== lastSpeedText) {
         lastSpeedText = speedText;
         speedValue.textContent = speedText;

@@ -352,19 +352,22 @@ function actualInView(camera: PerspectiveCamera, pos: Vector3, type: number, sca
 }
 const names = ['cab', 'interceptor', 'commuter', 'van', 'saucer', 'bus', 'flatbed'] as const;
 // These are original emissive vertices from the real constructor, not profile-table vertices.
-const physicalVertices = names.map(name => {
+const physicalVertices = names.map((name, type) => {
   const hull = traffic.objects.find(o => o.name === 'skyriver.traffic.' + name);
   if (!(hull instanceof InstancedMesh)) throw new Error('R28B_REAL_HULL_MISSING:' + name);
   const geometry = hull.geometry;
   const position = geometry.getAttribute('position'), color = geometry.getAttribute('color');
   const vertices: Vector3[] = [];
-  for (let i = 0; i < position.count; i++) {
-    const c = [color.getX(i), color.getY(i), color.getZ(i)];
-    if ([[2, 2.15, 2.3], [4, 0.3, 0.2]].some(rgb => rgb.every((v, k) => Math.abs(v - c[k]!) < 1e-5))) {
-      vertices.push(new Vector3(position.getX(i), position.getY(i), position.getZ(i)));
-    }
+  const index = geometry.index, cornerCount = index ? index.count : position.count;
+  for (let at = 0; at < cornerCount; at += 3) {
+    const ids = [0, 1, 2].map(k => index ? index.getX(at + k) : at + k);
+    const lamp = [[2, 2.15, 2.3], [4, 0.3, 0.2]].some(rgb => ids.every(i =>
+      rgb.every((v, k) => Math.abs(v - [color.getX(i), color.getY(i), color.getZ(i)][k]!) < 1e-5)));
+    if (lamp) for (const i of ids) vertices.push(new Vector3(position.getX(i), position.getY(i), position.getZ(i)));
   }
-  if (vertices.length < 12) throw new Error('R28B_ORIGINAL_LAMP_VERTICES_MISSING:' + name);
+  // These literal counts come from the old physical lamp triangles. Index reuse cannot change them.
+  const oldLampTriangleCount = [6, 4, 6, 6, 4, 6, 4][type]!;
+  if (vertices.length !== oldLampTriangleCount * 3) throw new Error('R28B_ORIGINAL_LAMP_TRIANGLES_CHANGED:' + name);
   return vertices;
 });
 function cameraForGuard(fov = 62, aspect = 1280 / 720, skew = false): PerspectiveCamera {
