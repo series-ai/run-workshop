@@ -3380,8 +3380,8 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   float slabWave = abs( fract( vSurf.y / uCellHeight + 0.5 ) - 0.5 ) * 2.0;
   float slab = smoothstep( 0.84, 0.99, slabWave ) * detail;
 
-  float grain = skyValueNoise( vSurf * 0.07 + faceOffset * 0.013 ) * ( 0.5 + 0.5 * ( 1.0 - detail ) )
-    + skyValueNoise( vSurf * 0.31 ) * 0.5 * detail;
+  float grain = skyValueNoise( vSurf * 0.07 + faceOffset * 0.013 ) * ( 0.5 + 0.5 * ( 1.0 - detail ) );
+  if ( detail > 0.0 ) grain += skyValueNoise( vSurf * 0.31 ) * 0.5 * detail;
   vec3 concrete = vTint * uConcreteLevel * ( 0.78 + 0.44 * grain );
   concrete *= 1.0 - 0.52 * groove * vIsSide - 0.22 * slab * vIsSide;
   concrete += vTint * uConcreteLevel * 0.35 * arris * vIsSide;
@@ -3407,15 +3407,18 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // large panel joints.
   float grime = 1.0 - smoothstep( 420.0, 780.0, vWorldPos.y );
   float pristine = smoothstep( 1750.0, 2250.0, vWorldPos.y );
-  float stain = skyValueNoise( vec2( vSurf.x * 0.11 + vSeed * 13.0, vSurf.y * 0.008 ) );
-  float soot = skyValueNoise( vec2( vSurf.x * 0.4, vSurf.y * 0.05 ) + faceOffset * 0.02 );
-  vec3 grimeTone = vec3( 0.62, 0.45, 0.31 ) * uConcreteLevel * 2.4 * ( 0.45 + 0.75 * stain ) * ( 0.7 + 0.5 * soot );
-  float ledge = smoothstep( 0.86, 0.94, cellLocal.y ) * ( 1.0 - smoothstep( 0.97, 1.0, cellLocal.y ) );
-  float acBox = step( 0.72, skyHash12( cell * vec2( 1.3, 0.7 ) + faceOffset ) )
-    * step( 0.2, cellLocal.x ) * step( cellLocal.x, 0.55 ) * step( 0.55, cellLocal.y ) * step( cellLocal.y, 0.86 );
-  grimeTone += vec3( 0.5, 0.4, 0.3 ) * uConcreteLevel * ( ledge * 1.6 + acBox * 1.2 ) * detail;
-  // R16 ambient III: the grime floor drops (0.4 -> 0.28).
-  concrete = mix( concrete, grimeTone * 0.28 + uConcreteAmbient * 0.15, grime * vIsSide );
+  // These terms have no contribution outside the grime stratum.
+  if ( grime * vIsSide > 0.0 ) {
+    float stain = skyValueNoise( vec2( vSurf.x * 0.11 + vSeed * 13.0, vSurf.y * 0.008 ) );
+    float soot = skyValueNoise( vec2( vSurf.x * 0.4, vSurf.y * 0.05 ) + faceOffset * 0.02 );
+    vec3 grimeTone = vec3( 0.62, 0.45, 0.31 ) * uConcreteLevel * 2.4 * ( 0.45 + 0.75 * stain ) * ( 0.7 + 0.5 * soot );
+    float ledge = smoothstep( 0.86, 0.94, cellLocal.y ) * ( 1.0 - smoothstep( 0.97, 1.0, cellLocal.y ) );
+    float acBox = step( 0.72, skyHash12( cell * vec2( 1.3, 0.7 ) + faceOffset ) )
+      * step( 0.2, cellLocal.x ) * step( cellLocal.x, 0.55 ) * step( 0.55, cellLocal.y ) * step( cellLocal.y, 0.86 );
+    grimeTone += vec3( 0.5, 0.4, 0.3 ) * uConcreteLevel * ( ledge * 1.6 + acBox * 1.2 ) * detail;
+    // R16 ambient III: the grime floor drops (0.4 -> 0.28).
+    concrete = mix( concrete, grimeTone * 0.28 + uConcreteAmbient * 0.15, grime * vIsSide );
+  }
   // R14: tiny linear values still land at 40-50/255 after ACES + sRGB; the base tones are the real
   // 'ambient', so they go near black and the emissives carry the frame.
   // R16: pristine glass/concrete a further ~30% down.
