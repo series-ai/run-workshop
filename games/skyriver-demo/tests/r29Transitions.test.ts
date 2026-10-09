@@ -11,7 +11,7 @@ import { CLEARANCE_SHUTTLE_RADIUS_M, CLEARANCE_CAMERA_RADIUS_M, createMassField 
 import { deriveCityLayout } from '../src/sim/derive';
 import { presentCityLayout } from '../src/render/presentationLayout';
 import { createCameraPoseScratch, writeCameraPose } from '../src/render/cameraRig';
-import { deriveCityMasses, warpRigid } from '../src/render/city';
+import { indexedDrawnBoxes, nearestDrawnBox } from './support/drawnMassOracle';
 
 function realFrames(toggles: readonly number[], end = 850, startMode: SkyriverStartMode = 'autopilot'): SkyriverRenderState[] {
   const config = createSkyriverSimConfig(424242, startMode);
@@ -40,32 +40,6 @@ function initializedPresenter(seed: number) {
 }
 function ingestModeEdge(presenter: ReturnType<typeof createFlightPresenter>, state: SkyriverRenderState, epoch = 1): void {
   if (state.previous.flight.mode !== state.current.flight.mode) presenter.observeModeEdge(state, epoch);
-}
-
-function indexedDrawnBoxes(seed = 424242) {
-  return deriveCityMasses(presentCityLayout(deriveCityLayout(seed))).map((mass, index) => {
-    const warped = warpRigid(mass.x, mass.z, mass.anchorV ?? mass.z, { x: 0, z: 0, heading: 0 });
-    const inverse = new THREE.Matrix4().compose(
-      new THREE.Vector3(warped.x, mass.y0 + mass.height / 2, warped.z),
-      new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), warped.heading),
-      new THREE.Vector3(1, 1, 1),
-    ).invert();
-    return { index, inverse, half: new THREE.Vector3(mass.width / 2, mass.height / 2, mass.depth / 2) };
-  });
-}
-
-function nearestDrawnBox(boxes: ReturnType<typeof indexedDrawnBoxes>, point: Pick<PresentedFlight, 'x' | 'y' | 'z'>) {
-  const local = new THREE.Vector3();
-  let nearest = { index: -1, gapM: Infinity };
-  for (const box of boxes) {
-    const e = box.inverse.elements;
-    local.set(point.x * e[0]! + point.z * e[8]! + e[12]!, point.y + e[13]!, point.x * e[2]! + point.z * e[10]! + e[14]!);
-    const dx = Math.abs(local.x) - box.half.x, dy = Math.abs(local.y) - box.half.y, dz = Math.abs(local.z) - box.half.z;
-    const outside = Math.hypot(Math.max(0, dx), Math.max(0, dy), Math.max(0, dz));
-    const gapM = outside > 0 ? outside : Math.max(dx, dy, dz);
-    if (gapM < nearest.gapM) nearest = { index: box.index, gapM };
-  }
-  return nearest;
 }
 
 describe('R29 independent interrupted mode transitions', () => {
@@ -243,41 +217,27 @@ describe('R29 independent interrupted mode transitions', () => {
     expect(hits, `real mass sphere violations for toggles ${toggles}`).toEqual([]);
   });
 
-  it('does not add safe-target collisions and retains the unsafe raw free-flight endpoint in the interrupted trace', () => {
-    const frames = realFrames([600, 610, 620]), presenter = initializedPresenter(424242), target = initializedPresenter(424242);
-    const field = createMassField(presentCityLayout(deriveCityLayout(424242))), boxes = indexedDrawnBoxes();
+  it('keeps the formerly unsafe raw endpoint and its handoffs clear inside the smaller free-flight volume', () => {
+    const frames = realFrames([600, 610, 620]), presenter = initializedPresenter(424242), target = initializedPresenter(424242), boxes = indexedDrawnBoxes();
     const camera = createCameraPoseScratch();
-    const rows: { tick: number; rawSphereGapM: number; targetSphereGapM: number; drawnSphereGapM: number; cameraSphereGapM: number; exactRawEndpoint: boolean; rawMass: number | null; drawnMass: number | null }[] = [];
-    for (const frame of frames) {
+    const rows = frames.map(frame => {
       ingestModeEdge(presenter, frame);
       const pose = { ...presenter.present(frame, 1) }, unblended = { ...target.present(frame, 1) };
-      const rawSphereGapM = field.gap(frame.flight.x, frame.flight.y, frame.flight.z) - CLEARANCE_SHUTTLE_RADIUS_M;
-      const targetSphereGapM = field.gap(unblended.x, unblended.y, unblended.z) - CLEARANCE_SHUTTLE_RADIUS_M;
-      const drawnSphereGapM = field.gap(pose.x, pose.y, pose.z) - CLEARANCE_SHUTTLE_RADIUS_M;
+      const rawSphereGapM = nearestDrawnBox(boxes, frame.flight).gapM - CLEARANCE_SHUTTLE_RADIUS_M;
+      const targetSphereGapM = nearestDrawnBox(boxes, unblended).gapM - CLEARANCE_SHUTTLE_RADIUS_M;
+      const drawnSphereGapM = nearestDrawnBox(boxes, pose).gapM - CLEARANCE_SHUTTLE_RADIUS_M;
       writeCameraPose(camera, pose, frame.camera, { boost: pose.boostVisual, time: (frame.current.tick + frame.alpha) / 30 });
-      const cameraSphereGapM = field.gap(camera.position.x, camera.position.y, camera.position.z) - CLEARANCE_CAMERA_RADIUS_M;
-      if (targetSphereGapM >= 0) expect(drawnSphereGapM, `safe target at tick ${frame.tick}`).toBeGreaterThanOrEqual(0);
-      expect(cameraSphereGapM, `camera at tick ${frame.tick}`).toBeGreaterThanOrEqual(0);
+      const cameraSphereGapM = nearestDrawnBox(boxes, camera.position).gapM - CLEARANCE_CAMERA_RADIUS_M;
+      expect(rawSphereGapM, `raw hull tick${frame.tick}`).toBeGreaterThanOrEqual(0);
+      expect(targetSphereGapM, `target hull tick${frame.tick}`).toBeGreaterThanOrEqual(0);
+      expect(drawnSphereGapM, `drawn hull tick${frame.tick}`).toBeGreaterThanOrEqual(0);
+      expect(cameraSphereGapM, `camera tick${frame.tick}`).toBeGreaterThanOrEqual(0);
       const exactRawEndpoint = [pose.x, pose.y, pose.z, pose.yaw, pose.pitch, pose.speed].every((value, i) => value === [frame.flight.x, frame.flight.y, frame.flight.z, frame.flight.yaw, frame.flight.pitch, frame.flight.speed][i]);
-      let rawMass: number | null = null, drawnMass: number | null = null;
-      if (frame.tick >= 692 && frame.tick <= 694) {
-        const rawHit = nearestDrawnBox(boxes, frame.flight), drawnHit = nearestDrawnBox(boxes, pose);
-        expect(rawHit.index).toBe(2793);
-        expect(drawnHit.index).toBe(rawHit.index);
-        expect(rawHit.gapM).toBeCloseTo(rawSphereGapM + CLEARANCE_SHUTTLE_RADIUS_M, 8);
-        expect(drawnHit.gapM).toBeCloseTo(drawnSphereGapM + CLEARANCE_SHUTTLE_RADIUS_M, 8);
-        expect(drawnSphereGapM).toBeGreaterThanOrEqual(rawSphereGapM);
-        rawMass = rawHit.index; drawnMass = drawnHit.index;
-      }
-      if (frame.tick >= 695 && frame.tick <= 700) expect(exactRawEndpoint, `unchanged endpoint at tick ${frame.tick}`).toBe(true);
-      rows.push({ tick: frame.tick, rawSphereGapM, targetSphereGapM, drawnSphereGapM, cameraSphereGapM, exactRawEndpoint, rawMass, drawnMass });
-    }
-    expect(rows.filter(row => row.rawSphereGapM < 0).map(row => row.tick)).toEqual(Array.from({ length: 19 }, (_, i) => 682 + i));
-    expect(rows.filter(row => row.drawnSphereGapM < 0).map(row => row.tick)).toEqual(Array.from({ length: 9 }, (_, i) => 692 + i));
-    expect(rows[694]!.rawSphereGapM).toBe(-13);
-    expect(rows[694]!.drawnSphereGapM).toBe(-13);
-    if (process.env.SKYRIVER_HANDOFF_CLEARANCE_OUT) writeFileSync(process.env.SKYRIVER_HANDOFF_CLEARANCE_OUT, JSON.stringify({ radii: { hull: CLEARANCE_SHUTTLE_RADIUS_M, camera: CLEARANCE_CAMERA_RADIUS_M }, inheritedRawViolations: 19, retainedDrawnViolations: 9, globalClearancePass: false, rows }, null, 2));
-  });
+      if (frame.tick >= 695 && frame.tick <= 700) expect(exactRawEndpoint, `unchanged endpoint tick${frame.tick}`).toBe(true);
+      return { tick: frame.tick, rawSphereGapM, targetSphereGapM, drawnSphereGapM, cameraSphereGapM, exactRawEndpoint };
+    });
+    if (process.env.SKYRIVER_HANDOFF_CLEARANCE_OUT) writeFileSync(process.env.SKYRIVER_HANDOFF_CLEARANCE_OUT, JSON.stringify({ radii: { hull: 14, camera: 8 }, frames: rows.length, rawViolations: 0, drawnViolations: 0, cameraViolations: 0, globalClearancePass: false, scope: 'One real neutral interrupted trace. All drawn rigid boxes.', rows }, null, 2));
+  }, 15_000);
 
   it.each([{ toggles: [600, 610, 620] }, { toggles: [600, 740, 750] }])('keeps the presented hull continuous at real toggles $toggles', ({ toggles }) => {
     const frames = realFrames(toggles), presenter = initializedPresenter(424242);

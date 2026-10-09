@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import baseline from './fixtures/r29-baseline.json';
 import cameraBaseline from './fixtures/r29-camera-baseline.json';
+import simControl from './fixtures/r29b-sim-control.json';
 import exportsBefore from './fixtures/r29-exports.json';
 import * as trafficExports from '../src/render/traffic';
 import * as shuttleExports from '../src/render/shuttle';
@@ -21,6 +22,7 @@ import { interpolateSkyriverFlight } from '../src/sim/session';
 import type { SkyriverRenderState } from '../src/sim/session';
 import { skyriverDeclaredStageRole } from '../src/render/stageRoles';
 import { createCameraPoseScratch, writeCameraPose } from '../src/render/cameraRig';
+import { SKYRIVER_SIM_MODULE_MANIFEST } from '../src/sim/module-manifest';
 
 function frame(sample: typeof baseline.samples[number], alpha = sample.alpha): SkyriverRenderState {
   return { tick: sample.tick, alpha, previous: sample.previous, current: sample.current,
@@ -123,10 +125,35 @@ describe('R29 independent vehicle and presentation contracts', () => {
     expect(skyriverQualityFor(SkyriverQualityTier.High).dpr).toBe(1.25);
   });
 
-  it('keeps the simulation source bytes equal to the pre-R29 source', () => {
+  it('keeps simulation source bytes except the authorized numeric bounds shrink', () => {
     for (const [file, sha] of Object.entries(baseline.simHashes)) {
       const bytes = readFileSync(new URL('../src/sim/' + file, import.meta.url));
-      expect(createHash('sha256').update(bytes).digest('hex'), file).toBe(sha);
+      if (file !== 'systems.ts') {
+        expect(createHash('sha256').update(bytes).digest('hex'), file).toBe(sha);
+        continue;
+      }
+      expect(simControl.systemsSha256).toBe(sha);
+      const source = bytes.toString('utf8');
+      const declaration = /export const CHASM_BOUNDS = Object.freeze\(\{([\s\S]*?)\}\);/.exec(source);
+      expect(declaration).not.toBeNull();
+      const body = declaration![1]!, fields = [...body.matchAll(/\b(minX|maxX|minY|maxY|minZ|maxZ)\s*:\s*(-?\d+(?:\.\d+)?)/g)];
+      expect(fields.map(match => match[1])).toEqual(Object.keys(simControl.bounds));
+      for (const match of fields) {
+        const key = match[1]! as keyof typeof simControl.bounds, value = Number(match[2]);
+        if (key === 'minX' || key === 'minY') expect(value).toBeGreaterThanOrEqual(simControl.bounds[key]);
+        else if (key === 'maxX') expect(value).toBeLessThanOrEqual(simControl.bounds[key]);
+        else expect(value).toBe(simControl.bounds[key]);
+      }
+      const maskedBody = body.replace(/(\b(?:minX|maxX|minY)\s*:\s*)-?\d+(?:\.\d+)?/g, '$1<BOUND>');
+      const normalized = source.replace(declaration![0], declaration![0].replace(body, maskedBody));
+      expect(createHash('sha256').update(normalized).digest('hex')).toBe(simControl.systemsOutsideBoundsSha256);
+    }
+    expect(createHash('sha256').update(readFileSync(new URL('../src/sim/identity.ts', import.meta.url))).digest('hex')).toBe(simControl.identitySourceSha256);
+    const manifest = readFileSync(new URL('../src/sim/module-manifest.ts', import.meta.url), 'utf8');
+    const normalizedManifest = manifest.replace(/(path: 'systems.ts', digest: ')[a-f0-9]+(')/, '$1<SYSTEMS>$2').replace(/(engineIdentityHash: ')[a-f0-9]+(')/, '$1<ENGINE>$2');
+    expect(createHash('sha256').update(normalizedManifest).digest('hex')).toBe(simControl.manifestOutsideAllowedDigestsSha256);
+    for (const module of SKYRIVER_SIM_MODULE_MANIFEST) {
+      expect(createHash('sha256').update(readFileSync(new URL('../src/sim/' + module.path, import.meta.url))).digest('hex'), module.path).toBe(module.digest);
     }
   });
 

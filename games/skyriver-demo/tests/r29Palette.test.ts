@@ -1,4 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import materialBaseline from './fixtures/r29b-material-baseline.json';
 import * as THREE from 'three';
 // These external texture stubs permit real geometry construction. They do not supply an oracle.
 vi.mock('../src/render/signAtlas', async importOriginal => {
@@ -21,7 +24,7 @@ import { presentCityLayout } from '../src/render/presentationLayout';
 import { skyriverQualityFor, SkyriverQualityTier } from '../src/render/scene';
 import { SkyriverDistrictColourSwitch, deriveSkyriverDistrictModel, skyriverDistrictIdAt } from '../src/render/districts';
 import { windowPaletteCode, windowPaletteCodeFromQ, windowPaletteHash, windowPaletteMean, windowPaletteUnit, recolourWindow, decodeWindowPalette } from '../src/render/windowPalette';
-import { normalizeFamilyMaterial, normalizeMaterial, STRUCTURE_MATERIAL_FAMILY_GAINS, STRUCTURE_MATERIAL_COMBINED_GAIN_RANGE } from '../src/render/structureMaterial';
+import { normalizeFamilyMaterial, normalizeMaterial, STRUCTURE_MATERIAL_FAMILY_GAINS, STRUCTURE_MATERIAL_COMBINED_GAIN_RANGE, STRUCTURE_MATERIAL_BASE_GAIN } from '../src/render/structureMaterial';
 import { SKYRIVER_INTERIOR_SCREEN_NEAR_SCALE } from '../src/render/interiorResponse';
 
 const y = (rgb: readonly number[]) => rgb[0]! * 0.2126 + rgb[1]! * 0.7152 + rgb[2]! * 0.0722;
@@ -41,6 +44,41 @@ function actualMesh(city: SkyriverCity, name: string): THREE.InstancedMesh {
 }
 
 describe('R29 independent building palette and value controls', () => {
+  it('changes only the non-emissive family gain in the actual uploaded city shaders', () => {
+    for (const file of ['city.ts', 'windowPalette.ts'] as const) {
+      expect(createHash('sha256').update(readFileSync(new URL('../src/render/' + file, import.meta.url))).digest('hex')).toBe(materialBaseline.sourceHashes[file]);
+    }
+    const withoutBaseGain = (source: string) => source.replaceAll('(structureFamilyGain(family) * 0.65)', 'structureFamilyGain(family)');
+    for (const [key, source] of Object.entries(SKYRIVER_CITY_SHADER_SOURCE)) {
+      expect(createHash('sha256').update(withoutBaseGain(source)).digest('hex'), key).toBe(materialBaseline.shaderHashes[key as keyof typeof materialBaseline.shaderHashes]);
+    }
+    const city = new SkyriverCity({ layout: presentCityLayout(deriveCityLayout(424242)), quality: skyriverQualityFor(SkyriverQualityTier.High), colourSwitch: new SkyriverDistrictColourSwitch(true) });
+    try {
+      for (const [name, prefix] of [['towers', 'tower'], ['trim', 'trim'], ['impostors', 'impostor']] as const) {
+        const mesh = actualMesh(city, 'skyriver.city.' + name), material = mesh.material;
+        expect(material).toBeInstanceOf(THREE.ShaderMaterial);
+        const shader = material as THREE.ShaderMaterial;
+        expect(shader.vertexShader).toBe(SKYRIVER_CITY_SHADER_SOURCE[`${prefix}Vertex`]);
+        expect(shader.fragmentShader).toBe(SKYRIVER_CITY_SHADER_SOURCE[`${prefix}Fragment`]);
+      }
+    } finally { city.dispose(); }
+  });
+
+  it('dims non-emissive RGB by thirty-five percent and preserves every family separation ratio', () => {
+    const nominal = [0.4, 0.9, 2.1, 0.6];
+    for (const c0 of [[0.2, 0.4, 0.6], [0.03, 0.012, 0.007], [0.8, 0.02, 0.01]] as const) {
+      for (const proposed of [[0.8, 0.05, 0.01], [0.01, 0.06, 0.9]] as const) for (const b of [-1, 0, 1]) for (const w of [-1, 0, 1]) for (const f of [-1, 0, 1]) {
+        const residualGain = Math.max(0.82, Math.min(1.18, 1 + 0.12 * b + 0.04 * w + 0.02 * f));
+        const values = nominal.map((gain, family) => {
+          const result = normalizeFamilyMaterial(c0, proposed, b, w, f, family);
+          result.forEach((channel, i) => expect(channel).toBeCloseTo(proposed[i]! * y(c0) * residualGain / y(proposed) * gain * 0.65, 12));
+          return y(result);
+        });
+        for (let a = 0; a < 4; a += 1) for (let b = 0; b < 4; b += 1) expect(values[a]! / values[b]!).toBeCloseTo(nominal[a]! / nominal[b]!, 12);
+      }
+    }
+  });
+
   it.each([424242, 0, 2147483647, 4294967295])('uses real uploaded owners for room, far-box and card identities, seed %i', seed => {
     const layout = presentCityLayout(deriveCityLayout(seed)), model = deriveSkyriverDistrictModel(seed);
     const city = new SkyriverCity({ layout, quality: skyriverQualityFor(SkyriverQualityTier.High), colourSwitch: new SkyriverDistrictColourSwitch(true) });
@@ -164,15 +202,16 @@ describe('R29 independent building palette and value controls', () => {
 
   it('keeps the old residual value guard and bounds the declared family prototype separately', () => {
     expect(STRUCTURE_MATERIAL_FAMILY_GAINS).toEqual([0.4, 0.9, 2.1, 0.6]);
-    expect(STRUCTURE_MATERIAL_COMBINED_GAIN_RANGE[0]).toBeCloseTo(0.328, 12);
-    expect(STRUCTURE_MATERIAL_COMBINED_GAIN_RANGE[1]).toBeCloseTo(2.478, 12);
+    expect(STRUCTURE_MATERIAL_BASE_GAIN).toBe(0.65);
+    expect(STRUCTURE_MATERIAL_COMBINED_GAIN_RANGE[0]).toBeCloseTo(0.2132, 12);
+    expect(STRUCTURE_MATERIAL_COMBINED_GAIN_RANGE[1]).toBeCloseTo(1.6107, 12);
     for (const b of [-1, 0, 1]) for (const w of [-1, 0, 1]) for (const f of [-1, 0, 1]) for (let family = 0; family < 4; family += 1) {
       const c0 = [0.2, 0.4, 0.6] as const, proposed = [0.8, 0.05, 0.01] as const;
       const residual = y(normalizeMaterial(c0, proposed, b, w, f)) / y(c0);
       expect(residual).toBeGreaterThanOrEqual(0.82 - 1e-12); expect(residual).toBeLessThanOrEqual(1.18 + 1e-12);
       const combined = y(normalizeFamilyMaterial(c0, proposed, b, w, f, family)) / y(c0);
-      expect(combined).toBeCloseTo(residual * [0.4, 0.9, 2.1, 0.6][family]!, 12);
-      expect(combined).toBeGreaterThanOrEqual(0.328 - 1e-12); expect(combined).toBeLessThanOrEqual(2.478 + 1e-12);
+      expect(combined).toBeCloseTo(residual * [0.4, 0.9, 2.1, 0.6][family]! * 0.65, 12);
+      expect(combined).toBeGreaterThanOrEqual(0.2132 - 1e-12); expect(combined).toBeLessThanOrEqual(1.6107 + 1e-12);
     }
   });
 });

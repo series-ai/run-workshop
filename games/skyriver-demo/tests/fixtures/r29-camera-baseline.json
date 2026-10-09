@@ -1,5 +1,5 @@
 {
-  "provenance": "Actual frozen pre-R29 camera function. Inputs use real neutral sim states and steady R29 presentation poses. No mode edges are ingested.",
+  "provenance": "Actual frozen pre-R29 camera function. Inputs use real R29b bounded neutral sim states and steady presentation poses. Old removed-domain y60 inputs are preserved separately. No mode edges are ingested.",
   "oracleSourceSha256": "3ebd656a22423ba53bd9594059362a78c911957e30ee26cc2930d62406fb199b",
   "samples": [
     {
@@ -25,7 +25,9 @@
         "wakeTrackWeight": 1,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 192.81294594002904
       },
       "camera": {
         "orbitYaw": 0,
@@ -74,7 +76,9 @@
         "wakeTrackWeight": 1,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 192.81294594002904
       },
       "camera": {
         "orbitYaw": 0,
@@ -123,7 +127,9 @@
         "wakeTrackWeight": 1,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 192.81294594002904
       },
       "camera": {
         "orbitYaw": 0,
@@ -172,7 +178,9 @@
         "wakeTrackWeight": 1,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 192.81294594002904
       },
       "camera": {
         "orbitYaw": 0,
@@ -221,7 +229,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2344.479219567578,
         "revealZ": -2192.664364835588,
-        "revealWeight": 0.2978151567084889
+        "revealWeight": 0.2978151567084889,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 192.81294594002904
       },
       "camera": {
         "orbitYaw": 0,
@@ -270,7 +280,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2344.479219567578,
         "revealZ": -2192.664364835588,
-        "revealWeight": 0.2978151567084889
+        "revealWeight": 0.2978151567084889,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 192.81294594002904
       },
       "camera": {
         "orbitYaw": 0,
@@ -319,7 +331,9 @@
         "wakeTrackWeight": 1,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 192.81294594002904
       },
       "camera": {
         "orbitYaw": 0,
@@ -368,7 +382,9 @@
         "wakeTrackWeight": 1,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 192.81294594002904
       },
       "camera": {
         "orbitYaw": 0,
@@ -399,7 +415,7 @@
       "startMode": "freefly",
       "tick": 200,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 1780.0031985,
         "z": 400,
         "yaw": 0.141618,
@@ -412,12 +428,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -429,16 +447,16 @@
       },
       "expected": {
         "position": {
-          "x": 383.4415071630867,
-          "y": 1785.1014390624903,
-          "z": 370.18402506017856
+          "x": 349.24150716308674,
+          "y": 1785.688640269948,
+          "z": 373.4251868869384
         },
         "target": {
-          "x": 467.13454381472343,
+          "x": 431.13454381472343,
           "y": 1776.9040236056323,
           "z": 520.8855114828964
         },
-        "distance": 34.530494518076246,
+        "distance": 30.776838267793764,
         "fov": 62,
         "roll": 0
       }
@@ -448,7 +466,7 @@
       "startMode": "freefly",
       "tick": 200,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 1780.0031985,
         "z": 400,
         "yaw": 0.141618,
@@ -461,12 +479,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -478,16 +498,16 @@
       },
       "expected": {
         "position": {
-          "x": 383.40250459922913,
-          "y": 1785.08895851667,
-          "z": 370.18402506017856
+          "x": 349.20250459922914,
+          "y": 1785.6761597241277,
+          "z": 373.4251868869384
         },
         "target": {
-          "x": 467.13454381472343,
+          "x": 431.13454381472343,
           "y": 1777.2985068505634,
           "z": 520.8855114828964
         },
-        "distance": 34.530494518076246,
+        "distance": 30.776838267793764,
         "fov": 70.619,
         "roll": 0
       }
@@ -497,7 +517,7 @@
       "startMode": "freefly",
       "tick": 600,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 2000,
         "z": 400,
         "yaw": 0.141618,
@@ -510,12 +530,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -527,16 +549,16 @@
       },
       "expected": {
         "position": {
-          "x": 383.4415071630867,
-          "y": 2005.0982405624902,
-          "z": 370.18402506017856
+          "x": 349.24150716308674,
+          "y": 2005.685441769948,
+          "z": 373.4251868869384
         },
         "target": {
-          "x": 467.13454381472343,
+          "x": 431.13454381472343,
           "y": 1996.9008251056323,
           "z": 520.8855114828964
         },
-        "distance": 34.530494518076246,
+        "distance": 30.776838267793764,
         "fov": 62,
         "roll": 0
       }
@@ -546,7 +568,7 @@
       "startMode": "freefly",
       "tick": 600,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 2000,
         "z": 400,
         "yaw": 0.141618,
@@ -559,12 +581,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -576,16 +600,16 @@
       },
       "expected": {
         "position": {
-          "x": 383.50356870005686,
-          "y": 2005.081740393556,
-          "z": 370.18402506017856
+          "x": 349.30356870005687,
+          "y": 2005.6689416010138,
+          "z": 373.4251868869384
         },
         "target": {
-          "x": 467.13454381472343,
+          "x": 431.13454381472343,
           "y": 1997.0151257926725,
           "z": 520.8855114828964
         },
-        "distance": 34.530494518076246,
+        "distance": 30.776838267793764,
         "fov": 70.619,
         "roll": 0
       }
@@ -595,7 +619,7 @@
       "startMode": "freefly",
       "tick": 1032,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 2000,
         "z": 400,
         "yaw": 0.141618,
@@ -608,12 +632,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -625,16 +651,16 @@
       },
       "expected": {
         "position": {
-          "x": 383.4415071630867,
-          "y": 2005.0982405624902,
-          "z": 370.18402506017856
+          "x": 349.24150716308674,
+          "y": 2005.685441769948,
+          "z": 373.4251868869384
         },
         "target": {
-          "x": 467.13454381472343,
+          "x": 431.13454381472343,
           "y": 1996.9008251056323,
           "z": 520.8855114828964
         },
-        "distance": 34.530494518076246,
+        "distance": 30.776838267793764,
         "fov": 62,
         "roll": 0
       }
@@ -644,7 +670,7 @@
       "startMode": "freefly",
       "tick": 1032,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 2000,
         "z": 400,
         "yaw": 0.141618,
@@ -657,12 +683,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -674,16 +702,16 @@
       },
       "expected": {
         "position": {
-          "x": 383.61321681273284,
-          "y": 2005.0108014572165,
-          "z": 370.18402506017856
+          "x": 349.41321681273286,
+          "y": 2005.5980026646744,
+          "z": 373.4251868869384
         },
         "target": {
-          "x": 467.13454381472343,
+          "x": 431.13454381472343,
           "y": 1996.6562541413666,
           "z": 520.8855114828964
         },
-        "distance": 34.530494518076246,
+        "distance": 30.776838267793764,
         "fov": 70.619,
         "roll": 0
       }
@@ -693,7 +721,7 @@
       "startMode": "freefly",
       "tick": 1200,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 2000,
         "z": 400,
         "yaw": 0.141618,
@@ -706,12 +734,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -723,16 +753,16 @@
       },
       "expected": {
         "position": {
-          "x": 383.4415071630867,
-          "y": 2005.0982405624902,
-          "z": 370.18402506017856
+          "x": 349.24150716308674,
+          "y": 2005.685441769948,
+          "z": 373.4251868869384
         },
         "target": {
-          "x": 467.13454381472343,
+          "x": 431.13454381472343,
           "y": 1996.9008251056323,
           "z": 520.8855114828964
         },
-        "distance": 34.530494518076246,
+        "distance": 30.776838267793764,
         "fov": 62,
         "roll": 0
       }
@@ -742,7 +772,7 @@
       "startMode": "freefly",
       "tick": 1200,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 2000,
         "z": 400,
         "yaw": 0.141618,
@@ -755,12 +785,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -772,16 +804,16 @@
       },
       "expected": {
         "position": {
-          "x": 383.36578961336494,
-          "y": 2005.2099504500777,
-          "z": 370.18402506017856
+          "x": 349.16578961336495,
+          "y": 2005.7971516575356,
+          "z": 373.4251868869384
         },
         "target": {
-          "x": 467.13454381472343,
+          "x": 431.13454381472343,
           "y": 1996.508132217875,
           "z": 520.8855114828964
         },
-        "distance": 34.530494518076246,
+        "distance": 30.776838267793764,
         "fov": 70.619,
         "roll": 0
       }
@@ -809,7 +841,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2809.1640785579057,
         "revealZ": -66.40796429179767,
-        "revealWeight": 0.012587423093912297
+        "revealWeight": 0.012587423093912297,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 207.575622199974
       },
       "camera": {
         "orbitYaw": 0,
@@ -858,7 +892,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2809.1640785579057,
         "revealZ": -66.40796429179767,
-        "revealWeight": 0.012587423093912297
+        "revealWeight": 0.012587423093912297,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 207.575622199974
       },
       "camera": {
         "orbitYaw": 0,
@@ -907,7 +943,9 @@
         "wakeTrackWeight": 1,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 207.575622199974
       },
       "camera": {
         "orbitYaw": 0,
@@ -956,7 +994,9 @@
         "wakeTrackWeight": 1,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 207.575622199974
       },
       "camera": {
         "orbitYaw": 0,
@@ -1005,7 +1045,9 @@
         "wakeTrackWeight": 1,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 207.575622199974
       },
       "camera": {
         "orbitYaw": 0,
@@ -1054,7 +1096,9 @@
         "wakeTrackWeight": 1,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 207.575622199974
       },
       "camera": {
         "orbitYaw": 0,
@@ -1103,7 +1147,9 @@
         "wakeTrackWeight": 1,
         "revealX": 218.22281902346856,
         "revealZ": -1727.9795058427176,
-        "revealWeight": 0.5426254831009127
+        "revealWeight": 0.5426254831009127,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 207.575622199974
       },
       "camera": {
         "orbitYaw": 0,
@@ -1152,7 +1198,9 @@
         "wakeTrackWeight": 1,
         "revealX": 218.22281902346856,
         "revealZ": -1727.9795058427176,
-        "revealWeight": 0.5426254831009127
+        "revealWeight": 0.5426254831009127,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 207.575622199974
       },
       "camera": {
         "orbitYaw": 0,
@@ -1183,7 +1231,7 @@
       "startMode": "freefly",
       "tick": 200,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 151.9968015,
         "z": 1.313095,
         "yaw": 0.316446,
@@ -1196,12 +1244,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 1.313095,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 1.313095,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -1213,16 +1263,16 @@
       },
       "expected": {
         "position": {
-          "x": 373.3200913151534,
-          "y": 169.6431409616452,
-          "z": 27.611681252631804
+          "x": 339.12009131515333,
+          "y": 169.1610024662362,
+          "z": 25.837407741657483
         },
         "target": {
-          "x": 497.9388530997636,
+          "x": 461.9388530997636,
           "y": 100.76341745799856,
           "z": -95.22596763895348
         },
-        "distance": 38.13795136107782,
+        "distance": 35.56491735032312,
         "fov": 62,
         "roll": 0
       }
@@ -1232,7 +1282,7 @@
       "startMode": "freefly",
       "tick": 200,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 151.9968015,
         "z": 1.313095,
         "yaw": 0.316446,
@@ -1245,12 +1295,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 1.313095,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 1.313095,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -1262,16 +1314,16 @@
       },
       "expected": {
         "position": {
-          "x": 373.2810887512958,
-          "y": 169.63066041582476,
-          "z": 27.611681252631804
+          "x": 339.08108875129574,
+          "y": 169.14852192041576,
+          "z": 25.837407741657483
         },
         "target": {
-          "x": 497.9388530997636,
+          "x": 461.9388530997636,
           "y": 101.15790070292967,
           "z": -95.22596763895348
         },
-        "distance": 38.13795136107782,
+        "distance": 35.56491735032312,
         "fov": 70.619,
         "roll": 0
       }
@@ -1281,8 +1333,8 @@
       "startMode": "freefly",
       "tick": 600,
       "flight": {
-        "x": 400,
-        "y": 60,
+        "x": 364,
+        "y": 122,
         "z": -400,
         "yaw": 0.316446,
         "pitch": -0.15,
@@ -1294,12 +1346,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": -400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": -400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -1311,16 +1365,16 @@
       },
       "expected": {
         "position": {
-          "x": 373.3200913151534,
-          "y": 77.64633946164518,
-          "z": -373.7014137473682
+          "x": 339.12009131515333,
+          "y": 139.1642009662362,
+          "z": -375.47568725834253
         },
         "target": {
-          "x": 497.9388530997636,
-          "y": 8.766615957998553,
+          "x": 461.9388530997636,
+          "y": 70.76661595799855,
           "z": -496.5390626389535
         },
-        "distance": 38.13795136107782,
+        "distance": 35.56491735032312,
         "fov": 62,
         "roll": 0
       }
@@ -1330,8 +1384,8 @@
       "startMode": "freefly",
       "tick": 600,
       "flight": {
-        "x": 400,
-        "y": 60,
+        "x": 364,
+        "y": 122,
         "z": -400,
         "yaw": 0.316446,
         "pitch": -0.15,
@@ -1343,12 +1397,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": -400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": -400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -1360,16 +1416,16 @@
       },
       "expected": {
         "position": {
-          "x": 373.3821528521235,
-          "y": 77.62983929271088,
-          "z": -373.7014137473682
+          "x": 339.18215285212347,
+          "y": 139.1477007973019,
+          "z": -375.47568725834253
         },
         "target": {
-          "x": 497.9388530997636,
-          "y": 8.880916645038715,
+          "x": 461.9388530997636,
+          "y": 70.88091664503871,
           "z": -496.5390626389535
         },
-        "distance": 38.13795136107782,
+        "distance": 35.56491735032312,
         "fov": 70.619,
         "roll": 0
       }
@@ -1379,8 +1435,8 @@
       "startMode": "freefly",
       "tick": 1032,
       "flight": {
-        "x": 400,
-        "y": 60,
+        "x": 364,
+        "y": 122,
         "z": -400,
         "yaw": 0.316446,
         "pitch": -0.15,
@@ -1392,12 +1448,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": -400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": -400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -1409,16 +1467,16 @@
       },
       "expected": {
         "position": {
-          "x": 373.3200913151534,
-          "y": 77.64633946164518,
-          "z": -373.7014137473682
+          "x": 339.12009131515333,
+          "y": 139.1642009662362,
+          "z": -375.47568725834253
         },
         "target": {
-          "x": 497.9388530997636,
-          "y": 8.766615957998553,
+          "x": 461.9388530997636,
+          "y": 70.76661595799855,
           "z": -496.5390626389535
         },
-        "distance": 38.13795136107782,
+        "distance": 35.56491735032312,
         "fov": 62,
         "roll": 0
       }
@@ -1428,8 +1486,8 @@
       "startMode": "freefly",
       "tick": 1032,
       "flight": {
-        "x": 400,
-        "y": 60,
+        "x": 364,
+        "y": 122,
         "z": -400,
         "yaw": 0.316446,
         "pitch": -0.15,
@@ -1441,12 +1499,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": -400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": -400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -1458,16 +1518,16 @@
       },
       "expected": {
         "position": {
-          "x": 373.4918009647995,
-          "y": 77.55890035637138,
-          "z": -373.7014137473682
+          "x": 339.29180096479945,
+          "y": 139.0767618609624,
+          "z": -375.47568725834253
         },
         "target": {
-          "x": 497.9388530997636,
-          "y": 8.522044993732827,
+          "x": 461.9388530997636,
+          "y": 70.52204499373282,
           "z": -496.5390626389535
         },
-        "distance": 38.13795136107782,
+        "distance": 35.56491735032312,
         "fov": 70.619,
         "roll": 0
       }
@@ -1477,8 +1537,8 @@
       "startMode": "freefly",
       "tick": 1200,
       "flight": {
-        "x": 400,
-        "y": 60,
+        "x": 364,
+        "y": 122,
         "z": -400,
         "yaw": 0.316446,
         "pitch": -0.15,
@@ -1490,12 +1550,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": -400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": -400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -1507,16 +1569,16 @@
       },
       "expected": {
         "position": {
-          "x": 373.3200913151534,
-          "y": 77.64633946164518,
-          "z": -373.7014137473682
+          "x": 339.12009131515333,
+          "y": 139.1642009662362,
+          "z": -375.47568725834253
         },
         "target": {
-          "x": 497.9388530997636,
-          "y": 8.766615957998553,
+          "x": 461.9388530997636,
+          "y": 70.76661595799855,
           "z": -496.5390626389535
         },
-        "distance": 38.13795136107782,
+        "distance": 35.56491735032312,
         "fov": 62,
         "roll": 0
       }
@@ -1526,8 +1588,8 @@
       "startMode": "freefly",
       "tick": 1200,
       "flight": {
-        "x": 400,
-        "y": 60,
+        "x": 364,
+        "y": 122,
         "z": -400,
         "yaw": 0.316446,
         "pitch": -0.15,
@@ -1539,12 +1601,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": -400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": -400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -1556,16 +1620,16 @@
       },
       "expected": {
         "position": {
-          "x": 373.2443737654316,
-          "y": 77.75804934923275,
-          "z": -373.7014137473682
+          "x": 339.04437376543154,
+          "y": 139.27591085382377,
+          "z": -375.47568725834253
         },
         "target": {
-          "x": 497.9388530997636,
-          "y": 8.37392307024143,
+          "x": 461.9388530997636,
+          "y": 70.37392307024143,
           "z": -496.5390626389535
         },
-        "distance": 38.13795136107782,
+        "distance": 35.56491735032312,
         "fov": 70.619,
         "roll": 0
       }
@@ -1593,7 +1657,9 @@
         "wakeTrackWeight": 1,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 155.57814440674883
       },
       "camera": {
         "orbitYaw": 0,
@@ -1642,7 +1708,9 @@
         "wakeTrackWeight": 1,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 155.57814440674883
       },
       "camera": {
         "orbitYaw": 0,
@@ -1691,7 +1759,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2809.1640785579057,
         "revealZ": -66.40796429179767,
-        "revealWeight": 1
+        "revealWeight": 1,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 155.57814440674883
       },
       "camera": {
         "orbitYaw": 0,
@@ -1740,7 +1810,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2809.1640785579057,
         "revealZ": -66.40796429179767,
-        "revealWeight": 1
+        "revealWeight": 1,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 155.57814440674883
       },
       "camera": {
         "orbitYaw": 0,
@@ -1789,7 +1861,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2344.479219567578,
         "revealZ": -2192.664364835588,
-        "revealWeight": 0.55
+        "revealWeight": 0.55,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 155.57814440674883
       },
       "camera": {
         "orbitYaw": 0,
@@ -1838,7 +1912,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2344.479219567578,
         "revealZ": -2192.664364835588,
-        "revealWeight": 0.55
+        "revealWeight": 0.55,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 155.57814440674883
       },
       "camera": {
         "orbitYaw": 0,
@@ -1887,7 +1963,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2344.479219567578,
         "revealZ": -2192.664364835588,
-        "revealWeight": 0.55
+        "revealWeight": 0.55,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 155.57814440674883
       },
       "camera": {
         "orbitYaw": 0,
@@ -1936,7 +2014,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2344.479219567578,
         "revealZ": -2192.664364835588,
-        "revealWeight": 0.55
+        "revealWeight": 0.55,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 155.57814440674883
       },
       "camera": {
         "orbitYaw": 0,
@@ -1967,7 +2047,7 @@
       "startMode": "freefly",
       "tick": 200,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 1326.0031985,
         "z": 367.40977399999997,
         "yaw": 0.198243,
@@ -1980,12 +2060,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 367.40977399999997,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 367.40977399999997,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -1997,16 +2079,16 @@
       },
       "expected": {
         "position": {
-          "x": 369.1402423241832,
-          "y": 1330.3957220394975,
-          "z": 344.2876434313683
+          "x": 334.9402423241832,
+          "y": 1330.7519613121578,
+          "z": 345.636320095027
         },
         "target": {
-          "x": 510.6601327129215,
+          "x": 474.6601327129215,
           "y": 1322.9040236056323,
           "z": 450.32351765960755
         },
-        "distance": 39.041757575173,
+        "distance": 36.76451468903127,
         "fov": 62,
         "roll": 0
       }
@@ -2016,7 +2098,7 @@
       "startMode": "freefly",
       "tick": 200,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 1326.0031985,
         "z": 367.40977399999997,
         "yaw": 0.198243,
@@ -2029,12 +2111,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 367.40977399999997,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 367.40977399999997,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -2046,16 +2130,16 @@
       },
       "expected": {
         "position": {
-          "x": 369.1012397603256,
-          "y": 1330.3832414936771,
-          "z": 344.2876434313683
+          "x": 334.9012397603256,
+          "y": 1330.7394807663375,
+          "z": 345.636320095027
         },
         "target": {
-          "x": 510.6601327129215,
+          "x": 474.6601327129215,
           "y": 1323.2985068505634,
           "z": 450.32351765960755
         },
-        "distance": 39.041757575173,
+        "distance": 36.76451468903127,
         "fov": 70.619,
         "roll": 0
       }
@@ -2065,7 +2149,7 @@
       "startMode": "freefly",
       "tick": 600,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 2000,
         "z": 400,
         "yaw": 0.198243,
@@ -2078,12 +2162,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -2095,16 +2181,16 @@
       },
       "expected": {
         "position": {
-          "x": 369.1402423241832,
-          "y": 2004.3925235394975,
-          "z": 376.8778694313683
+          "x": 334.9402423241832,
+          "y": 2004.7487628121578,
+          "z": 378.226546095027
         },
         "target": {
-          "x": 510.6601327129215,
+          "x": 474.6601327129215,
           "y": 1996.9008251056323,
           "z": 482.9137436596076
         },
-        "distance": 39.041757575173,
+        "distance": 36.76451468903127,
         "fov": 62,
         "roll": 0
       }
@@ -2114,7 +2200,7 @@
       "startMode": "freefly",
       "tick": 600,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 2000,
         "z": 400,
         "yaw": 0.198243,
@@ -2127,12 +2213,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -2144,16 +2232,16 @@
       },
       "expected": {
         "position": {
-          "x": 369.2023038611533,
-          "y": 2004.3760233705632,
-          "z": 376.8778694313683
+          "x": 335.00230386115334,
+          "y": 2004.7322626432235,
+          "z": 378.226546095027
         },
         "target": {
-          "x": 510.6601327129215,
+          "x": 474.6601327129215,
           "y": 1997.0151257926725,
           "z": 482.9137436596076
         },
-        "distance": 39.041757575173,
+        "distance": 36.76451468903127,
         "fov": 70.619,
         "roll": 0
       }
@@ -2163,7 +2251,7 @@
       "startMode": "freefly",
       "tick": 1032,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 2000,
         "z": 400,
         "yaw": 0.198243,
@@ -2176,12 +2264,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -2193,16 +2283,16 @@
       },
       "expected": {
         "position": {
-          "x": 369.1402423241832,
-          "y": 2004.3925235394975,
-          "z": 376.8778694313683
+          "x": 334.9402423241832,
+          "y": 2004.7487628121578,
+          "z": 378.226546095027
         },
         "target": {
-          "x": 510.6601327129215,
+          "x": 474.6601327129215,
           "y": 1996.9008251056323,
           "z": 482.9137436596076
         },
-        "distance": 39.041757575173,
+        "distance": 36.76451468903127,
         "fov": 62,
         "roll": 0
       }
@@ -2212,7 +2302,7 @@
       "startMode": "freefly",
       "tick": 1032,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 2000,
         "z": 400,
         "yaw": 0.198243,
@@ -2225,12 +2315,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -2242,16 +2334,16 @@
       },
       "expected": {
         "position": {
-          "x": 369.3119519738293,
-          "y": 2004.3050844342238,
-          "z": 376.8778694313683
+          "x": 335.1119519738293,
+          "y": 2004.661323706884,
+          "z": 378.226546095027
         },
         "target": {
-          "x": 510.6601327129215,
+          "x": 474.6601327129215,
           "y": 1996.6562541413666,
           "z": 482.9137436596076
         },
-        "distance": 39.041757575173,
+        "distance": 36.76451468903127,
         "fov": 70.619,
         "roll": 0
       }
@@ -2261,7 +2353,7 @@
       "startMode": "freefly",
       "tick": 1200,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 2000,
         "z": 400,
         "yaw": 0.198243,
@@ -2274,12 +2366,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -2291,16 +2385,16 @@
       },
       "expected": {
         "position": {
-          "x": 369.1402423241832,
-          "y": 2004.3925235394975,
-          "z": 376.8778694313683
+          "x": 334.9402423241832,
+          "y": 2004.7487628121578,
+          "z": 378.226546095027
         },
         "target": {
-          "x": 510.6601327129215,
+          "x": 474.6601327129215,
           "y": 1996.9008251056323,
           "z": 482.9137436596076
         },
-        "distance": 39.041757575173,
+        "distance": 36.76451468903127,
         "fov": 62,
         "roll": 0
       }
@@ -2310,7 +2404,7 @@
       "startMode": "freefly",
       "tick": 1200,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 2000,
         "z": 400,
         "yaw": 0.198243,
@@ -2323,12 +2417,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": 400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": 400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -2340,16 +2436,16 @@
       },
       "expected": {
         "position": {
-          "x": 369.0645247744614,
-          "y": 2004.504233427085,
-          "z": 376.8778694313683
+          "x": 334.8645247744614,
+          "y": 2004.8604726997453,
+          "z": 378.226546095027
         },
         "target": {
-          "x": 510.6601327129215,
+          "x": 474.6601327129215,
           "y": 1996.508132217875,
           "z": 482.9137436596076
         },
-        "distance": 39.041757575173,
+        "distance": 36.76451468903127,
         "fov": 70.619,
         "roll": 0
       }
@@ -2377,7 +2473,9 @@
         "wakeTrackWeight": 1,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 140.58843705602138
       },
       "camera": {
         "orbitYaw": 0,
@@ -2426,7 +2524,9 @@
         "wakeTrackWeight": 1,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 140.58843705602138
       },
       "camera": {
         "orbitYaw": 0,
@@ -2475,7 +2575,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2809.1640785579057,
         "revealZ": -66.40796429179767,
-        "revealWeight": 1
+        "revealWeight": 1,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 140.58843705602138
       },
       "camera": {
         "orbitYaw": 0,
@@ -2524,7 +2626,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2809.1640785579057,
         "revealZ": -66.40796429179767,
-        "revealWeight": 1
+        "revealWeight": 1,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 140.58843705602138
       },
       "camera": {
         "orbitYaw": 0,
@@ -2573,7 +2677,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2344.479219567578,
         "revealZ": -2192.664364835588,
-        "revealWeight": 0.2657534288995863
+        "revealWeight": 0.2657534288995863,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 140.58843705602138
       },
       "camera": {
         "orbitYaw": 0,
@@ -2622,7 +2728,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2344.479219567578,
         "revealZ": -2192.664364835588,
-        "revealWeight": 0.2657534288995863
+        "revealWeight": 0.2657534288995863,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 140.58843705602138
       },
       "camera": {
         "orbitYaw": 0,
@@ -2671,7 +2779,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2344.479219567578,
         "revealZ": -2192.664364835588,
-        "revealWeight": 0.55
+        "revealWeight": 0.55,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 140.58843705602138
       },
       "camera": {
         "orbitYaw": 0,
@@ -2720,7 +2830,9 @@
         "wakeTrackWeight": 1,
         "revealX": 2344.479219567578,
         "revealZ": -2192.664364835588,
-        "revealWeight": 0.55
+        "revealWeight": 0.55,
+        "cameraFreeFlightWeight": 0,
+        "cameraSpeedMps": 140.58843705602138
       },
       "camera": {
         "orbitYaw": 0,
@@ -2751,7 +2863,7 @@
       "startMode": "freefly",
       "tick": 200,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 430.88225350000005,
         "z": -214.1503485,
         "yaw": 0.323866,
@@ -2764,12 +2876,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": -214.1503485,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": -214.1503485,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -2781,16 +2895,16 @@
       },
       "expected": {
         "position": {
-          "x": 374.86039753052626,
-          "y": 444.61431600800427,
-          "z": -186.1848965003916
+          "x": 340.6603975305262,
+          "y": 444.3828997586236,
+          "z": -188.1872278284394
         },
         "target": {
-          "x": 493.2509645904002,
+          "x": 457.2509645904002,
           "y": 393.8934821240869,
           "z": -317.88330837224123
         },
-        "distance": 37.742712487594474,
+        "distance": 35.04032757279068,
         "fov": 62,
         "roll": 0
       }
@@ -2800,7 +2914,7 @@
       "startMode": "freefly",
       "tick": 200,
       "flight": {
-        "x": 400,
+        "x": 364,
         "y": 430.88225350000005,
         "z": -214.1503485,
         "yaw": 0.323866,
@@ -2813,12 +2927,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": -214.1503485,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": -214.1503485,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -2830,16 +2946,16 @@
       },
       "expected": {
         "position": {
-          "x": 374.82139496666866,
-          "y": 444.60183546218383,
-          "z": -186.1848965003916
+          "x": 340.6213949666686,
+          "y": 444.37041921280314,
+          "z": -188.1872278284394
         },
         "target": {
-          "x": 493.2509645904002,
+          "x": 457.2509645904002,
           "y": 394.287965369018,
           "z": -317.88330837224123
         },
-        "distance": 37.742712487594474,
+        "distance": 35.04032757279068,
         "fov": 70.619,
         "roll": 0
       }
@@ -2849,8 +2965,8 @@
       "startMode": "freefly",
       "tick": 600,
       "flight": {
-        "x": 400,
-        "y": 60,
+        "x": 364,
+        "y": 122,
         "z": -400,
         "yaw": 0.323866,
         "pitch": -0.068229,
@@ -2862,12 +2978,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": -400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": -400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -2879,16 +2997,16 @@
       },
       "expected": {
         "position": {
-          "x": 374.86039753052626,
-          "y": 73.73206250800422,
-          "z": -372.0345480003916
+          "x": 340.6603975305262,
+          "y": 135.50064625862353,
+          "z": -374.0368793284394
         },
         "target": {
-          "x": 493.2509645904002,
-          "y": 23.011228624086876,
+          "x": 457.2509645904002,
+          "y": 85.01122862408687,
           "z": -503.7329598722412
         },
-        "distance": 37.742712487594474,
+        "distance": 35.04032757279068,
         "fov": 62,
         "roll": 0
       }
@@ -2898,8 +3016,8 @@
       "startMode": "freefly",
       "tick": 600,
       "flight": {
-        "x": 400,
-        "y": 60,
+        "x": 364,
+        "y": 122,
         "z": -400,
         "yaw": 0.323866,
         "pitch": -0.068229,
@@ -2911,12 +3029,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": -400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": -400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -2928,16 +3048,16 @@
       },
       "expected": {
         "position": {
-          "x": 374.9224590674964,
-          "y": 73.71556233906992,
-          "z": -372.0345480003916
+          "x": 340.72245906749635,
+          "y": 135.48414608968923,
+          "z": -374.0368793284394
         },
         "target": {
-          "x": 493.2509645904002,
-          "y": 23.125529311127035,
+          "x": 457.2509645904002,
+          "y": 85.12552931112702,
           "z": -503.7329598722412
         },
-        "distance": 37.742712487594474,
+        "distance": 35.04032757279068,
         "fov": 70.619,
         "roll": 0
       }
@@ -2947,8 +3067,8 @@
       "startMode": "freefly",
       "tick": 1032,
       "flight": {
-        "x": 400,
-        "y": 60,
+        "x": 364,
+        "y": 122,
         "z": -400,
         "yaw": 0.323866,
         "pitch": -0.068229,
@@ -2960,12 +3080,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": -400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": -400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -2977,16 +3099,16 @@
       },
       "expected": {
         "position": {
-          "x": 374.86039753052626,
-          "y": 73.73206250800422,
-          "z": -372.0345480003916
+          "x": 340.6603975305262,
+          "y": 135.50064625862353,
+          "z": -374.0368793284394
         },
         "target": {
-          "x": 493.2509645904002,
-          "y": 23.011228624086876,
+          "x": 457.2509645904002,
+          "y": 85.01122862408687,
           "z": -503.7329598722412
         },
-        "distance": 37.742712487594474,
+        "distance": 35.04032757279068,
         "fov": 62,
         "roll": 0
       }
@@ -2996,8 +3118,8 @@
       "startMode": "freefly",
       "tick": 1032,
       "flight": {
-        "x": 400,
-        "y": 60,
+        "x": 364,
+        "y": 122,
         "z": -400,
         "yaw": 0.323866,
         "pitch": -0.068229,
@@ -3009,12 +3131,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": -400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": -400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -3026,16 +3150,16 @@
       },
       "expected": {
         "position": {
-          "x": 375.0321071801724,
-          "y": 73.64462340273042,
-          "z": -372.0345480003916
+          "x": 340.83210718017233,
+          "y": 135.41320715334973,
+          "z": -374.0368793284394
         },
         "target": {
-          "x": 493.2509645904002,
-          "y": 22.76665765982115,
+          "x": 457.2509645904002,
+          "y": 84.76665765982113,
           "z": -503.7329598722412
         },
-        "distance": 37.742712487594474,
+        "distance": 35.04032757279068,
         "fov": 70.619,
         "roll": 0
       }
@@ -3045,8 +3169,8 @@
       "startMode": "freefly",
       "tick": 1200,
       "flight": {
-        "x": 400,
-        "y": 60,
+        "x": 364,
+        "y": 122,
         "z": -400,
         "yaw": 0.323866,
         "pitch": -0.068229,
@@ -3058,12 +3182,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": -400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": -400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -3075,16 +3201,16 @@
       },
       "expected": {
         "position": {
-          "x": 374.86039753052626,
-          "y": 73.73206250800422,
-          "z": -372.0345480003916
+          "x": 340.6603975305262,
+          "y": 135.50064625862353,
+          "z": -374.0368793284394
         },
         "target": {
-          "x": 493.2509645904002,
-          "y": 23.011228624086876,
+          "x": 457.2509645904002,
+          "y": 85.01122862408687,
           "z": -503.7329598722412
         },
-        "distance": 37.742712487594474,
+        "distance": 35.04032757279068,
         "fov": 62,
         "roll": 0
       }
@@ -3094,8 +3220,8 @@
       "startMode": "freefly",
       "tick": 1200,
       "flight": {
-        "x": 400,
-        "y": 60,
+        "x": 364,
+        "y": 122,
         "z": -400,
         "yaw": 0.323866,
         "pitch": -0.068229,
@@ -3107,12 +3233,14 @@
         "boostVisual": 0,
         "cutFade": 0,
         "canyonV": -400,
-        "canyonX": 400,
+        "canyonX": 364,
         "wakeTrackV": -400,
         "wakeTrackWeight": 0,
         "revealX": 0,
         "revealZ": 0,
-        "revealWeight": 0
+        "revealWeight": 0,
+        "cameraFreeFlightWeight": 1,
+        "cameraSpeedMps": 149.999994
       },
       "camera": {
         "orbitYaw": 0,
@@ -3124,16 +3252,16 @@
       },
       "expected": {
         "position": {
-          "x": 374.78467998080447,
-          "y": 73.84377239559178,
-          "z": -372.0345480003916
+          "x": 340.5846799808044,
+          "y": 135.6123561462111,
+          "z": -374.0368793284394
         },
         "target": {
-          "x": 493.2509645904002,
-          "y": 22.618535736329754,
+          "x": 457.2509645904002,
+          "y": 84.61853573632975,
           "z": -503.7329598722412
         },
-        "distance": 37.742712487594474,
+        "distance": 35.04032757279068,
         "fov": 70.619,
         "roll": 0
       }

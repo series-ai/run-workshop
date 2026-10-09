@@ -13,9 +13,11 @@ export const STRUCTURE_MATERIAL_GAIN_RANGE = Object.freeze([0.82, 1.18] as const
 
 /** Family separation is outside the residual weather and face guard. Mean family gain is one. */
 export const STRUCTURE_MATERIAL_FAMILY_GAINS = Object.freeze([0.4, 0.9, 2.1, 0.6] as const);
+/** Shared non-emissive base gain. Family ratios are unchanged. */
+export const STRUCTURE_MATERIAL_BASE_GAIN = 0.65;
 export const STRUCTURE_MATERIAL_COMBINED_GAIN_RANGE = Object.freeze([
-  STRUCTURE_MATERIAL_GAIN_RANGE[0] * Math.min(...STRUCTURE_MATERIAL_FAMILY_GAINS),
-  STRUCTURE_MATERIAL_GAIN_RANGE[1] * Math.max(...STRUCTURE_MATERIAL_FAMILY_GAINS),
+  STRUCTURE_MATERIAL_GAIN_RANGE[0] * Math.min(...STRUCTURE_MATERIAL_FAMILY_GAINS) * STRUCTURE_MATERIAL_BASE_GAIN,
+  STRUCTURE_MATERIAL_GAIN_RANGE[1] * Math.max(...STRUCTURE_MATERIAL_FAMILY_GAINS) * STRUCTURE_MATERIAL_BASE_GAIN,
 ] as const);
 
 export const STRUCTURE_MATERIAL_FAMILIES = 4;
@@ -144,7 +146,7 @@ export function normalizeMaterial(
   ];
 }
 
-/** Apply one family gain to the complete normalized non-emissive material. */
+/** Apply the family gain and shared base gain to normalized non-emissive material. */
 export function normalizeFamilyMaterial(
   c0: readonly [number, number, number], proposed: readonly [number, number, number],
   base: number, weather: number, face: number, family: number,
@@ -153,7 +155,7 @@ export function normalizeFamilyMaterial(
     throw new Error('SKYRIVER_STRUCTURE_MATERIAL_FAMILY_INVALID');
   }
   const normalized = normalizeMaterial(c0, proposed, base, weather, face);
-  const gain = STRUCTURE_MATERIAL_FAMILY_GAINS[family]!;
+  const gain = STRUCTURE_MATERIAL_FAMILY_GAINS[family]! * STRUCTURE_MATERIAL_BASE_GAIN;
   return [normalized[0] * gain, normalized[1] * gain, normalized[2] * gain];
 }
 
@@ -197,7 +199,7 @@ ${STRUCTURE_MATERIAL_FAMILY_GAINS.map((gain, i) => `  if (family < ${(i + 0.5).t
   return 1.0;
 }
 vec3 normalizeFamilyMaterial(vec3 c0, vec3 proposed, float b, float w, float f, float family) {
-  return normalizeMaterial(c0, proposed, b, w, f) * structureFamilyGain(family);
+  return normalizeMaterial(c0, proposed, b, w, f) * (structureFamilyGain(family) * ${STRUCTURE_MATERIAL_BASE_GAIN.toFixed(2)});
 }
 
 void structureMaterialProfile( float q, float faceId, out float family, out float b, out float w, out float f, out float edge, out vec3 chroma ) {
