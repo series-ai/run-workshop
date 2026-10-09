@@ -69,7 +69,61 @@ import {
 import { skyriverDeclareStageRole } from './stageRoles';
 import { CANYON_LOOP_LENGTH_M, warpCanyon, type WarpOut } from './canyonWarp';
 import { routeAltitude, routeLateral } from './routeProfile';
-import { TRAFFIC_APPEARANCE_GLSL, TRAFFIC_APPEARANCE_PROFILES } from './trafficAppearance';
+import {
+  IMPOSTORS_HIGH as SHARED_IMPOSTORS_HIGH,
+  IMPOSTORS_MEDIUM as SHARED_IMPOSTORS_MEDIUM,
+  IMPOSTOR_INTENSITY as SHARED_IMPOSTOR_INTENSITY,
+  TRAIL_MAX_CAR_LENGTHS as SHARED_TRAIL_MAX_CAR_LENGTHS,
+  trafficCpuTierFade,
+  trafficCpuTierProgress,
+  trafficDistanceDim,
+  trafficThinFarAlpha,
+  trafficTrailModeProgress,
+  trafficTrailModeWeights,
+  trafficTrailWeightFromModeWeights,
+  TRAFFIC_APPEARANCE_GLSL,
+  TRAFFIC_APPEARANCE_PROFILES,
+  TRAFFIC_CPU_LAMP_PICKUP_BAND_M,
+  TRAFFIC_CPU_TRAIL_ATTRIBUTE_CUTOFF,
+  TRAFFIC_CPU_TRAIL_PICKUP_BAND_M,
+  TRAFFIC_FOG_PENETRATION,
+  TRAFFIC_GPU_IMPOSTOR_INTENSITY_CUTOFF,
+  TRAFFIC_GPU_SEED_BRIGHTNESS_BASE,
+  TRAFFIC_GPU_SEED_BRIGHTNESS_MULTIPLIER,
+  TRAFFIC_GPU_SEED_BRIGHTNESS_SPAN,
+  TRAFFIC_HULL_FADE_RAMP_END,
+  TRAFFIC_HULL_HEADLIGHT_RGB,
+  TRAFFIC_HULL_SIGN_RGB,
+  TRAFFIC_HULL_TAILLIGHT_RGB,
+  TRAFFIC_LAMP_FRUSTUM_MARGIN_CSS_PX,
+  TRAFFIC_LAMP_KERNEL_CENTER_EPSILON,
+  TRAFFIC_LAMP_KERNEL_CORE_SCALE,
+  TRAFFIC_LAMP_KERNEL_CORE_SHARE,
+  TRAFFIC_LAMP_KERNEL_CORE_WHITE_MIX,
+  TRAFFIC_LAMP_KERNEL_LIMIT,
+  TRAFFIC_LAMP_KERNEL_MIN_PIXEL_SIZE,
+  TRAFFIC_LAMP_KERNEL_QUADRATIC_DENOMINATOR,
+  TRAFFIC_LAMP_KERNEL_QUADRATIC_NUMERATOR,
+  TRAFFIC_LAMP_KERNEL_QUARTIC_COEFFICIENT,
+  TRAFFIC_LAMP_STREAK_BODY_EXPONENT,
+  TRAFFIC_QUALITY_SETTINGS,
+  TRAFFIC_STREAK_HEAD_WARM_RGB,
+  TRAFFIC_STREAK_HEAD_WHITE_RGB,
+  TRAFFIC_STREAK_TAIL_RGB,
+  TRAFFIC_STREAK_TRAIL_WARM_RGB,
+  TRAFFIC_DIRECTION_PITCH_CLAMP,
+  TRAFFIC_TRAIL_SCREEN_CAP_REFINEMENTS,
+  TRAFFIC_TRAIL_ALPHA,
+  TRAFFIC_TRAIL_END_FADE_EXPONENT,
+  TRAFFIC_TRAIL_END_WIDTH_SHARE,
+  TRAFFIC_TRAIL_HEAD_FADE_EXPONENT,
+  TRAFFIC_TRAIL_MAX_M,
+  TRAFFIC_TRAIL_SECONDS,
+  TRAFFIC_TRAIL_START_CSS_PIXEL_SCALE,
+  TRAFFIC_TRAIL_START_RADIUS_M,
+  TRAFFIC_TRAIL_TAIL_FADE_EXPONENT,
+  TRAFFIC_TRAIL_WARM_FACING_BAND,
+} from './trafficAppearance';
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
 import {
   createImpostorTierTransition,
@@ -78,6 +132,7 @@ import {
   IMPOSTOR_FAR_FALLOFF_BAND_M,
   IMPOSTOR_LIGHT_HANDOVER_BAND_M,
   IMPOSTOR_SUPPORT_TAPER_BAND,
+  IMPOSTOR_TIER_FADE_S,
   writeSameCarLightLod,
   type SameCarLightLod,
 } from './lightHandover';
@@ -157,8 +212,8 @@ const TRAFFIC_DRAW_CALLS = RENDER_ARCHETYPES + 2;
  * report), and the band where they take over from the CPU cars: impostors fade in and the CPU cars'
  * lights fade out across one shared distance band, so far traffic hands over without a seam.
  */
-export const IMPOSTORS_HIGH = 20000;
-export const IMPOSTORS_MEDIUM = 10000;
+export const IMPOSTORS_HIGH = SHARED_IMPOSTORS_HIGH;
+export const IMPOSTORS_MEDIUM = SHARED_IMPOSTORS_MEDIUM;
 /**
  * Impostors fade in over the shared band; the CPU cars' lights use its exact complement. Their hulls
  * are drawn to 1.3 km either way, so the mid range carries bodies while lights hand over smoothly.
@@ -166,7 +221,7 @@ export const IMPOSTORS_MEDIUM = 10000;
  * see traffic in is mostly the corridor in front of those walls; impostors start at 450 m to fill it.
  */
 /** Impostor tier change: the larger set stays drawn while the difference fades, seconds. */
-const IMPOSTOR_FADE_S = 1.2;
+const IMPOSTOR_FADE_S = IMPOSTOR_TIER_FADE_S;
 
 /**
  * The plan's quality tiers (Design "Performance": cars 2,400 -> 1,200 -> 600). T6R: every active car
@@ -177,11 +232,7 @@ export const TRAFFIC_QUALITY_TIERS: {
   readonly high: TrafficQuality;
   readonly medium: TrafficQuality;
   readonly low: TrafficQuality;
-} = Object.freeze({
-  high: Object.freeze({ carCount: 2400, thrusterBudget: 2400, trails: 'all' as const, impostors: IMPOSTORS_HIGH }),
-  medium: Object.freeze({ carCount: 1200, thrusterBudget: 1200, trails: 'streams' as const, impostors: IMPOSTORS_MEDIUM }),
-  low: Object.freeze({ carCount: 600, thrusterBudget: 600, trails: 'near' as const, impostors: 0 }),
-});
+} = TRAFFIC_QUALITY_SETTINGS;
 
 /**
  * T7-3 traffic model: actual cars, not light ribbons. The reference footage's traffic is a volume
@@ -262,8 +313,6 @@ const SIZE_MIN_SCALE = 1.5;
 const SIZE_SCALE_SPAN = 1.0;
 
 /** Distance dimming of the hull tint: far hulls sink into the haze. */
-const DISTANCE_DIM_RANGE_M = 900;
-const DISTANCE_DIM_FLOOR = 0.42;
 
 
 /**
@@ -271,21 +320,20 @@ const DISTANCE_DIM_FLOOR = 0.42;
  * 60 m, low alpha so bloom integrates it. Red seen from behind, warm white seen from the front.
  */
 /** R18 impostor sprite brightness before the emissive gain (bloom A/B tuned). */
-export const IMPOSTOR_INTENSITY = 1.7;
-const TRAIL_SECONDS = 0.45;
-const TRAIL_MAX_M = 60;
-const TRAIL_ALPHA = 0.25;
+export const IMPOSTOR_INTENSITY = SHARED_IMPOSTOR_INTENSITY;
+const TRAIL_SECONDS = TRAFFIC_TRAIL_SECONDS;
+const TRAIL_MAX_M = TRAFFIC_TRAIL_MAX_M;
+const TRAIL_ALPHA = TRAFFIC_TRAIL_ALPHA;
 /**
  * R17 rods, not lines (cycle-7: long thin trails re-read as lane lines). A trail is at most this many
  * of its own car's lengths (so on screen it can never outrun 2 car lengths at any distance), its
  * width tapers from the lamp to this share at the end, and its alpha fades to zero along it.
  */
-export const TRAIL_MAX_CAR_LENGTHS = 2;
-export const TRAIL_END_WIDTH_SHARE = 0.3;
+export const TRAIL_MAX_CAR_LENGTHS = SHARED_TRAIL_MAX_CAR_LENGTHS;
+export const TRAIL_END_WIDTH_SHARE = TRAFFIC_TRAIL_END_WIDTH_SHARE;
 /** Legacy length reference in metres. Rendered trails use the actual profile length. */
 export const TRAFFIC_CAR_LENGTH_M = 4.9;
 /** 'near' tier: trails on cars inside this camera distance (faded over the last 200 m). */
-const TRAIL_NEAR_M = 700;
 
 function fail(code: string): never {
   throw new Error(code);
@@ -566,15 +614,9 @@ function pushDome(
 /** Emissive patch colours. Values near 1 read as lights against the dim hull shades at night. */
 // R11: HDR lamp bars — above the bloom threshold, so a near car reads as a dark body with one hot
 // light bar (the streak lamp dots fade out up close; far away only the lamp pairs remain).
-const HEADLIGHT_R = 2.0;
-const HEADLIGHT_G = 2.15;
-const HEADLIGHT_B = 2.3;
-const TAILLIGHT_R = 4.0;
-const TAILLIGHT_G = 0.3;
-const TAILLIGHT_B = 0.2;
-const SIGN_R = 1;
-const SIGN_G = 0.72;
-const SIGN_B = 0.2;
+const [HEADLIGHT_R, HEADLIGHT_G, HEADLIGHT_B] = TRAFFIC_HULL_HEADLIGHT_RGB;
+const [TAILLIGHT_R, TAILLIGHT_G, TAILLIGHT_B] = TRAFFIC_HULL_TAILLIGHT_RGB;
+const [SIGN_R, SIGN_G, SIGN_B] = TRAFFIC_HULL_SIGN_RGB;
 
 /** Use the same source patches for hulls and sprites. Keep the original patch order. */
 function pushProfileLights(build: MeshBuild, type: number): void {
@@ -896,11 +938,11 @@ varying float vIntensity;
 ${TRAFFIC_APPEARANCE_GLSL}
 
 void main() {
-  vec3 dir = normalize(vec3(aCarDir.x, clamp(aCarDir.y, -0.35, 0.35), aCarDir.z));
+  vec3 dir = normalize(vec3(aCarDir.x, clamp(aCarDir.y, -${TRAFFIC_DIRECTION_PITCH_CLAMP.toFixed(2)}, ${TRAFFIC_DIRECTION_PITCH_CLAMP.toFixed(2)}), aCarDir.z));
   float speed = aCarDir.w;
   // R16: lamp 4 is the car's light trail, a long thin smear from the tail back along the velocity.
   bool isTrail = aLamp > 3.5;
-  if ( isTrail && aCarFade.w <= 0.001 ) {
+  if ( isTrail && aCarFade.w <= ${TRAFFIC_CPU_TRAIL_ATTRIBUTE_CUTOFF.toFixed(3)} ) {
     // No trail this tier: a degenerate vertex outside the clip volume (no fragments, no fill).
     gl_Position = vec4( 2.0, 2.0, 2.0, 1.0 );
     return;
@@ -925,6 +967,7 @@ void main() {
   vPairOffset = pairHalfSpan / lampHalfSize.x;
   float trail = isTrail
     ? min(speed * uTrailSeconds, min(uTrailMax, uTrailCarLengths * trafficCarLength(type) * scale))
+      * trafficTrailFarFade(length(cameraPosition - aCarPos))
     : 0.0;
   vec3 tailEnd = lamp - dir * trail;
   vec4 v1 = viewMatrix * vec4(tailEnd, 1.0);
@@ -935,7 +978,7 @@ void main() {
     vec4 ch = viewMatrix * vec4( aCarPos + dir * trafficLampShape(type, true).w * scale, 1.0 );
     vec4 ct = viewMatrix * vec4( aCarPos + dir * trafficLampShape(type, false).w * scale, 1.0 );
     float carScreen = length( ch.xy / max( - ch.z, 1.0 ) - ct.xy / max( - ct.z, 1.0 ) );
-    for ( int k = 0; k < 2; k ++ ) {
+    for ( int k = 0; k < ${TRAFFIC_TRAIL_SCREEN_CAP_REFINEMENTS}; k ++ ) {
       float trailScreen = length( v0.xy / max( - v0.z, 1.0 ) - v1.xy / max( - v1.z, 1.0 ) );
       float limit = uTrailCarLengths * carScreen;
       if ( trailScreen > limit && trailScreen > 0.0 ) {
@@ -947,7 +990,7 @@ void main() {
   }
   vec4 v;
   if (isTrail) {
-    float startRadius = max(0.6, -v0.z * uCssPixelAngle * 1.6);
+    float startRadius = max(${TRAFFIC_TRAIL_START_RADIUS_M.toFixed(1)}, -v0.z * uCssPixelAngle * ${TRAFFIC_TRAIL_START_CSS_PIXEL_SCALE.toFixed(1)});
     float endRadius = startRadius * uTrailEndWidth;
     vec2 delta = v1.xy - v0.xy;
     float len = length(delta);
@@ -978,12 +1021,12 @@ void main() {
   // lamp only toward the front, so crossing rivers read as red ribbons with white oncoming points.
   vIntensity = aCarFade.x * trafficLampFacingGain( facing, head );
   // R11: up close the body's own lamp bar carries the read; the dot pair fades in with distance.
-  vIntensity *= smoothstep( 140.0, 300.0, length( cameraPosition - lamp ) );
+  vIntensity *= smoothstep( ${TRAFFIC_CPU_LAMP_PICKUP_BAND_M[0].toFixed(1)}, ${TRAFFIC_CPU_LAMP_PICKUP_BAND_M[1].toFixed(1)}, length( cameraPosition - lamp ) );
   if ( isTrail ) {
     // Seen from the front the trail is the headlamps' warm white, from behind the tails' red
     // (vWarm carries the blend); it never slices through the camera.
-    vWarm = smoothstep( -0.2, 0.4, dot( dir, toCam ) );
-    vIntensity = aCarFade.x * aCarFade.w * smoothstep( 30.0, 90.0, length( cameraPosition - lamp ) );
+    vWarm = smoothstep( ${TRAFFIC_TRAIL_WARM_FACING_BAND[0].toFixed(1)}, ${TRAFFIC_TRAIL_WARM_FACING_BAND[1].toFixed(1)}, dot( dir, toCam ) );
+    vIntensity = aCarFade.x * aCarFade.w * smoothstep( ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0].toFixed(1)}, ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1].toFixed(1)}, length( cameraPosition - lamp ) );
   }
 
   vIntensity *= lampGain;
@@ -998,20 +1041,21 @@ void main() {
 const LAMP_FILTER_GLSL = /* glsl */ `
 // Integrate a compact smooth kernel over one pixel. No sample count changes with distance.
 vec2 trafficLampPrimitive(vec2 u) {
-  vec2 c = clamp(u, -1.0, 1.0);
+  vec2 c = clamp(u, -${TRAFFIC_LAMP_KERNEL_LIMIT.toFixed(1)}, ${TRAFFIC_LAMP_KERNEL_LIMIT.toFixed(1)});
   vec2 c2 = c * c;
-  return c * (1.0 - c2 * (2.0 / 3.0) + c2 * c2 * 0.2);
+  return c * (1.0 - c2 * (${TRAFFIC_LAMP_KERNEL_QUADRATIC_NUMERATOR.toFixed(1)} / ${TRAFFIC_LAMP_KERNEL_QUADRATIC_DENOMINATOR.toFixed(1)})
+    + c2 * c2 * ${TRAFFIC_LAMP_KERNEL_QUARTIC_COEFFICIENT.toFixed(1)});
 }
 float trafficBoxLamp(vec2 uv, vec2 halfPixel) {
   vec2 integral = (trafficLampPrimitive(uv + halfPixel) - trafficLampPrimitive(uv - halfPixel))
-    / max(2.0 * halfPixel, vec2(1e-5));
+    / max(2.0 * halfPixel, vec2(${TRAFFIC_LAMP_KERNEL_MIN_PIXEL_SIZE.toExponential(0)}));
   return max(integral.x * integral.y, 0.0);
 }
 vec2 trafficFilteredLamp(vec2 uv) {
   vec2 dx = dFdx(uv);
   vec2 dy = dFdy(uv);
   vec2 halfPixel = 0.5 * sqrt(dx * dx + dy * dy);
-  return vec2(trafficBoxLamp(uv, halfPixel), trafficBoxLamp(uv * 2.5, halfPixel * 2.5));
+  return vec2(trafficBoxLamp(uv, halfPixel), trafficBoxLamp(uv * ${TRAFFIC_LAMP_KERNEL_CORE_SCALE.toFixed(1)}, halfPixel * ${TRAFFIC_LAMP_KERNEL_CORE_SCALE.toFixed(1)}));
 }
 vec2 trafficLampPair(vec2 uv, float offset) {
   // Mean contribution keeps overlapping sub-pixel lamps from doubling the peak.
@@ -1041,7 +1085,7 @@ void main() {
   float along = clamp( x, 0.0, vLengthR );
   float dist = length( vec2( x - along, vCapsule.y ) );
   float support = 1.0 - smoothstep( ${IMPOSTOR_SUPPORT_TAPER_BAND[0].toFixed(2)}, ${IMPOSTOR_SUPPORT_TAPER_BAND[1].toFixed(2)}, dist );
-  float body = exp( - dist * dist * 1.6 ) * support;
+  float body = exp( - dist * dist * ${TRAFFIC_LAMP_STREAK_BODY_EXPONENT.toFixed(1)} ) * support;
   float core = exp( - dist * dist * 10.0 );
   if (vLamp < 3.5) {
     vec2 filtered = trafficLampPair(vCapsule, vPairOffset);
@@ -1052,17 +1096,17 @@ void main() {
   float t = vLengthR > 0.0 ? along / vLengthR : 0.0;
   // max(): with fast-math division t can land a hair above 1, and pow(negative) is NaN.
   // Head: a white-to-bright gradient that stays lit most of its length; tail: a red falloff.
-  float trail = pow( max( 1.0 - t, 0.0 ), vLamp < 0.5 ? 0.7 : 1.2 );
+  float trail = pow( max( 1.0 - t, 0.0 ), vLamp < 0.5 ? ${TRAFFIC_TRAIL_HEAD_FADE_EXPONENT.toFixed(1)} : ${TRAFFIC_TRAIL_TAIL_FADE_EXPONENT.toFixed(1)} );
 
   // R14: express streams burn pure white, freight mixes amber; tails are red everywhere.
-  vec3 headColor = mix( vec3( 1.0, 0.97, 0.93 ), vec3( 1.0, 0.62, 0.22 ), vWarm );
-  vec3 tailColor = vec3( 1.0, 0.07, 0.045 );
+  vec3 headColor = mix( vec3( ${TRAFFIC_STREAK_HEAD_WHITE_RGB.map((value) => value.toFixed(2)).join(', ')} ), vec3( ${TRAFFIC_STREAK_HEAD_WARM_RGB.map((value) => value.toFixed(2)).join(', ')} ), vWarm );
+  vec3 tailColor = vec3( ${TRAFFIC_STREAK_TAIL_RGB.map((value) => value.toFixed(3)).join(', ')} );
   vec3 lampColor = vLamp < 0.5 ? headColor : tailColor;
-  vec3 color = ( lampColor * body + mix( lampColor, vec3( 1.0 ), 0.5 ) * core * 0.4 ) * trail;
+  vec3 color = ( lampColor * body + mix( lampColor, vec3( 1.0 ), ${TRAFFIC_LAMP_KERNEL_CORE_WHITE_MIX.toFixed(1)} ) * core * ${TRAFFIC_LAMP_KERNEL_CORE_SHARE.toFixed(1)} ) * trail;
   if ( vLamp > 3.5 ) {
     // R16 trail: soft body only (no hot core), red from behind / warm white from the front, low alpha.
-    vec3 trailColor = mix( tailColor, vec3( 1.0, 0.86, 0.66 ), vWarm );
-    color = trailColor * body * pow( max( 1.0 - t, 0.0 ), 1.4 ) * uTrailAlpha;
+    vec3 trailColor = mix( tailColor, vec3( ${TRAFFIC_STREAK_TRAIL_WARM_RGB.map((value) => value.toFixed(2)).join(', ')} ), vWarm );
+    color = trailColor * body * pow( max( 1.0 - t, 0.0 ), ${TRAFFIC_TRAIL_END_FADE_EXPONENT.toFixed(1)} ) * uTrailAlpha;
   }
 
   gl_FragColor = vec4( color * ( vIntensity * uIntensity ), 1.0 );
@@ -1316,9 +1360,9 @@ void main() {
   // falls over the shared 2.5–6.5 km band and reaches zero with a smooth derivative.
   float handover = smoothstep( uBand.x, uBand.y, dist );
   float farBrightness = 1.0 - smoothstep( uFarFalloff.x, uFarFalloff.y, dist );
-  vIntensity = (0.55 + 0.6 * fract(seed * 29.7)) * lampGain
+  vIntensity = (${TRAFFIC_GPU_SEED_BRIGHTNESS_BASE.toFixed(2)} + ${TRAFFIC_GPU_SEED_BRIGHTNESS_SPAN.toFixed(1)} * fract(seed * ${TRAFFIC_GPU_SEED_BRIGHTNESS_MULTIPLIER.toFixed(1)})) * lampGain
     * trafficLampFacingGain(facing, head) * handover * tierPresence * farBrightness;
-  if ( vIntensity <= 0.001 ) {
+  if ( vIntensity <= ${TRAFFIC_GPU_IMPOSTOR_INTENSITY_CUTOFF.toFixed(3)} ) {
     // Inside the CPU cars' band (or faded out): no fragments at all.
     gl_Position = vec4( 2.0, 2.0, 2.0, 1.0 );
     return;
@@ -1346,8 +1390,8 @@ ${LAMP_FILTER_GLSL}
 
 void main() {
   vec2 filtered = trafficLampPair(vCoreUv, vPairOffset);
-  vec3 lampColor = mix(vec3(1.0, 0.07, 0.045), vec3(1.0, 0.97, 0.93), vWarm);
-  vec3 color = lampColor * filtered.x + mix(lampColor, vec3(1.0), 0.5) * filtered.y * 0.4;
+  vec3 lampColor = mix(vec3(${TRAFFIC_STREAK_TAIL_RGB.map((value) => value.toFixed(3)).join(', ')}), vec3(${TRAFFIC_STREAK_HEAD_WHITE_RGB.map((value) => value.toFixed(2)).join(', ')}), vWarm);
+  vec3 color = lampColor * filtered.x + mix(lampColor, vec3(1.0), ${TRAFFIC_LAMP_KERNEL_CORE_WHITE_MIX.toFixed(1)}) * filtered.y * ${TRAFFIC_LAMP_KERNEL_CORE_SHARE.toFixed(1)};
   gl_FragColor = vec4( color * ( vIntensity * uIntensity ), 1.0 );
 ${SKYRIVER_OUTPUT_APPLY_GLSL}
   #ifdef USE_FOG
@@ -1782,8 +1826,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       uTrailEndWidth: { value: TRAIL_END_WIDTH_SHARE },
       // T7: dense crossing ribbons overlap several trails per pixel; bloom supplies the glow.
       // R16: raised with the exposure trade (SKYRIVER_EMISSIVE_GAIN), so the lights hold their level.
-      uIntensity: { value: 1.7 * SKYRIVER_EMISSIVE_GAIN },
-      uFogPenetration: { value: 0.2 },
+      uIntensity: { value: IMPOSTOR_INTENSITY * SKYRIVER_EMISSIVE_GAIN },
+      uFogPenetration: { value: TRAFFIC_FOG_PENETRATION },
       ...skyriverFogUniforms(),
     },
     transparent: true,
@@ -1859,7 +1903,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       // Dim on purpose: tens of thousands of sub-pixel dots must integrate into the haze as light-river
       // texture, not bloom the sky into foam (the R12 sign-core lesson). Tuned in the R18 bloom A/B.
       uIntensity: { value: IMPOSTOR_INTENSITY * SKYRIVER_EMISSIVE_GAIN },
-      uFogPenetration: { value: 0.2 },
+      uFogPenetration: { value: TRAFFIC_FOG_PENETRATION },
       ...skyriverFogUniforms(),
     },
     transparent: true,
@@ -1953,8 +1997,10 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   let activeCars = 0;
   let streakBudget = 0;
   let streaksUsed = 0;
+  const cpuTierAlpha = new Float32Array(maxCarCount);
+  const cpuTierFromAlpha = new Float32Array(maxCarCount);
+  for (let car = 0; car < options.quality.carCount; car += 1) cpuTierAlpha[car] = 1;
 
-  const invDimRangeSq = 1 / (DISTANCE_DIM_RANGE_M * DISTANCE_DIM_RANGE_M);
 
   // ---- R11 stream geometry: centre (x across, y) of stream k at canyon arc length v.
   const streamScratch = new Float64Array(3);
@@ -2018,25 +2064,30 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
 
   // ---- R15 tier transitions (glitch fix): a quality change no longer drops or adds 1,200 cars in one
   // frame. The larger set stays drawn for TIER_FADE_S while the cars beyond the smaller count fade.
-  const TIER_FADE_S = 1.2;
+  const TIER_FADE_S = IMPOSTOR_TIER_FADE_S;
   let tierFrom = -1;
-  let tierTo = -1;
+  let tierTo = options.quality.carCount;
   let tierChangeT = -1;
   let tierPending = false;
   let tierBudget = 0;
   function applyTierTransition(t: number): void {
     if (tierPending) { tierChangeT = t; tierPending = false; }
     if (tierFrom < 0) return;
+    const progress = trafficCpuTierProgress(t, tierChangeT, TIER_FADE_S);
+    for (let car = 0; car < maxCarCount; car += 1) {
+      cpuTierAlpha[car] = trafficCpuTierFade(car, tierFrom, tierTo, progress, cpuTierFromAlpha);
+    }
     if (t - tierChangeT >= TIER_FADE_S || t < tierChangeT) {
+      if (t < tierChangeT) {
+        for (let car = 0; car < maxCarCount; car += 1) cpuTierAlpha[car] = car < tierTo ? 1 : 0;
+      }
       tierFrom = -1;
       streakBudget = tierBudget;
       setActiveCount(tierTo);
     }
   }
-  function tierFadeFor(car: number, t: number): number {
-    if (tierFrom < 0 || car < Math.min(tierFrom, tierTo)) return 1;
-    const k = Math.min(1, Math.max(0, (t - tierChangeT) / TIER_FADE_S));
-    return tierTo > tierFrom ? k : 1 - k;
+  function tierFadeFor(car: number): number {
+    return cpuTierAlpha[car] ?? 0;
   }
 
   // ---- R16 light trails: per-tier budget, crossfaded on a tier change like the car counts.
@@ -2044,23 +2095,37 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   let trailTo: TrafficTrailMode = options.quality.trails;
   let trailChangeT = -1e9;
   let trailPending = false;
+  let trailChanging = false;
   let trailsAllowed = true;
-  const trailNearStartSq = (TRAIL_NEAR_M - 200) * (TRAIL_NEAR_M - 200);
-  const trailNearEndSq = TRAIL_NEAR_M * TRAIL_NEAR_M;
-  /** cls: 0 escort, 1 stream car, 2 free car. */
-  function trailWeightFor(mode: TrafficTrailMode, cls: number, distanceSq: number): number {
-    if (mode === 'all') return 1;
-    if (mode === 'streams') return cls === 1 ? 1 : 0;
-    return 1 - smoothstep(trailNearStartSq, trailNearEndSq, distanceSq);
+  const trailFromModeWeights = new Float32Array(3);
+  const trailModeWeights = new Float32Array(3);
+  const trailTargetModeWeights = new Float32Array(3);
+  const initialTrailWeights = trafficTrailModeWeights(options.quality.trails);
+  trailFromModeWeights.set(initialTrailWeights);
+  trailModeWeights.set(initialTrailWeights);
+  trailTargetModeWeights.set(initialTrailWeights);
+  function applyTrailModeTransition(t: number): void {
+    if (trailPending) {
+      trailChangeT = t;
+      trailPending = false;
+      trailChanging = true;
+    }
+    const progress = trailChanging ? trafficTrailModeProgress(t - trailChangeT, TIER_FADE_S) : 1;
+    for (let i = 0; i < 3; i += 1) {
+      const from = trailFromModeWeights[i]!;
+      const target = trailTargetModeWeights[i]!;
+      trailModeWeights[i] = from * (1 - progress) + target * progress;
+    }
+    if (progress >= 1) {
+      trailFrom = trailTo;
+      trailChanging = false;
+      trailFromModeWeights.set(trailTargetModeWeights);
+    }
   }
-  function trailWeight(cls: number, distanceSq: number, t: number): number {
+  /** cls: 0 escort, 1 stream car, 2 free car. Distance stays live through a retarget. */
+  function trailWeight(cls: number, distanceSq: number): number {
     if (!trailsAllowed) return 0;
-    if (trailPending) { trailChangeT = t; trailPending = false; }
-    const to = trailWeightFor(trailTo, cls, distanceSq);
-    if (trailFrom === trailTo) return to;
-    const k = smoothstep(0, TIER_FADE_S, t - trailChangeT);
-    if (k >= 1) trailFrom = trailTo;
-    return trailWeightFor(trailFrom, cls, distanceSq) * (1 - k) + to * k;
+    return trafficTrailWeightFromModeWeights(trailModeWeights, cls, distanceSq);
   }
   function setTrailsAllowed(allowed: boolean): void {
     trailsAllowed = allowed;
@@ -2122,18 +2187,28 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     if (quality.trails !== trailTo) {
       trailFrom = trailTo;
       trailTo = quality.trails;
+      trailFromModeWeights.set(trailModeWeights);
+      trailTargetModeWeights.set(trafficTrailModeWeights(quality.trails));
+      trailChanging = true;
       trailPending = true;
     }
-    if (activeCars > 0 && quality.carCount !== activeCars && tierTo !== quality.carCount) {
-      // Mid-flight change: draw the larger set while the difference fades (applyTierTransition).
-      tierFrom = tierFrom >= 0 ? tierTo : activeCars;
+    if (quality.carCount !== tierTo) {
+      // Retarget from the last rendered per-car alpha, not from the prior count prefix.
+      cpuTierFromAlpha.set(cpuTierAlpha);
+      tierFrom = activeCars;
       tierTo = quality.carCount;
       tierPending = true;
       tierBudget = quality.thrusterBudget;
-      streakBudget = Math.min(streakCapacity, Math.max(quality.thrusterBudget, tierFrom));
-      setActiveCount(Math.max(tierFrom, tierTo));
+      streakBudget = Math.min(streakCapacity, Math.max(quality.thrusterBudget, activeCars, tierTo));
+      setActiveCount(Math.max(activeCars, tierTo));
       return;
     }
+    if (tierFrom >= 0) {
+      tierBudget = quality.thrusterBudget;
+      streakBudget = Math.min(streakCapacity, Math.max(quality.thrusterBudget, activeCars));
+      return;
+    }
+    streakBudget = quality.thrusterBudget;
     setActiveCount(quality.carCount);
   }
 
@@ -2158,6 +2233,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       updateRankAssignment(t);
     }
     applyTierTransition(t);
+    applyTrailModeTransition(t);
     applyImpostors(t);
 
     for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
@@ -2318,12 +2394,12 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         // shrink away over the last 220 m (sub-pixel by then), so nothing pops.
         const toCarDist = Math.sqrt(toCarX * toCarX + toCarY * toCarY + toCarZ * toCarZ);
         const hullLod = 1 - smoothstep(HULL_DRAW_FADE_START_M, HULL_DRAW_DISTANCE_M, toCarDist);
-        fade *= tierFadeFor(car, t);
+        fade *= tierFadeFor(car);
 
         // Basis: forward f (with a little pitch), right = f x up, then banked about f.
         // Bodies vanish with their fade (a faded car is never left as a small dark block).
-        const scale = sizeScale[car]! * hullLod * smoothstep(0, 0.45, fade);
-        const pitchY = clamp(fy, -0.35, 0.35);
+        const scale = sizeScale[car]! * hullLod * smoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, fade);
+        const pitchY = clamp(fy, -TRAFFIC_DIRECTION_PITCH_CLAMP, TRAFFIC_DIRECTION_PITCH_CLAMP);
         const fl = Math.sqrt(1 + pitchY * pitchY);
         const f0 = fx / fl;
         const f1 = pitchY / fl;
@@ -2366,14 +2442,12 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         const dz = pz - camZ;
         const distanceSq = dx * dx + dy * dy + dz * dz;
         const distanceM = Math.sqrt(distanceSq);
-        const legacyFarAlpha = carThinFar[car] === 1
-          ? 1 - smoothstep(900 * 900, 1150 * 1150, distanceSq)
-          : 1;
+        const legacyFarAlpha = trafficThinFarAlpha(distanceSq, carThinFar[car] === 1);
         writeSameCarLightLod(distanceM, impostorPresence, legacyFarAlpha, sameCarLodScratch);
         const nearFade = fade * sameCarLodScratch.nearAlpha;
         const totalFade = fade * sameCarLodScratch.totalAlpha;
         // Hull bars and instance colour use the near share.
-        const dim = (1 - (1 - DISTANCE_DIM_FLOOR) * Math.min(1, distanceSq * invDimRangeSq)) * nearFade;
+        const dim = trafficDistanceDim(distanceSq) * nearFade;
         const colorOffset = slot * 3;
         colors[colorOffset] = tintR[car] * dim;
         colors[colorOffset + 1] = tintG[car] * dim;
@@ -2396,8 +2470,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
           streakFadeArray[f4] = totalFade;
           streakFadeArray[f4 + 1] = sizeScale[car]!;
           streakFadeArray[f4 + 2] = carWarm[car]!;
-          // Trails use only the near share: scale parent weight so they never outlive the car.
-          const baseTrail = trailWeight(car < ESCORT_COUNT && anchorValid ? 0 : carStream[car]! !== 255 ? 1 : 2, distanceSq, t);
+          // Trails use only the near share, and the vertex shader shortens them across the far band.
+          const baseTrail = trailWeight(car < ESCORT_COUNT && anchorValid ? 0 : carStream[car]! !== 255 ? 1 : 2, distanceSq);
           const trailScale = sameCarLodScratch.totalAlpha > 0 ? sameCarLodScratch.nearAlpha / sameCarLodScratch.totalAlpha : 0;
           streakFadeArray[f4 + 3] = baseTrail * trailScale;
           const l3 = streaksUsed * 3;
