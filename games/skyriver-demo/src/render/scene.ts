@@ -364,7 +364,7 @@ export const SKYRIVER_QUALITY: Readonly<Record<SkyriverQualityTier, SkyriverQual
       cars: 2400,
       godRays: true,
       rainStreaks: true,
-      dpr: 1.5,
+      dpr: 1.25,
       bloom: 'full',
       interiors: 'full',
     }),
