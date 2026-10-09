@@ -44,6 +44,8 @@ const CURVATURE_STEP_M = 12;
 
 /** Free-flight hand-off easing, ticks (30 Hz). */
 const HANDOFF_TICKS = 75;
+const ROUTE_INGRESS_PROGRESS = 0.1;
+const ROUTE_EGRESS_PROGRESS = 0.1;
 /** Boost drama ramp-in seconds and release ticks (30 Hz). */
 const BOOST_RAMP_S = 0.2;
 const BOOST_RELEASE_TICKS = 18;
@@ -91,6 +93,10 @@ export interface PresentedFlight extends SkyriverFlight {
   /** Route coordinate and blend weight for the wake during either flight-mode hand-off. */
   readonly wakeTrackV: number;
   readonly wakeTrackWeight: number;
+  /** 0 uses the route camera X policy; 1 uses the free-flight corridor clamp. */
+  readonly cameraFreeFlightWeight: number;
+  /** Continuous speed input for camera boom sizing during a mode hand-off. */
+  readonly cameraSpeedMps: number;
 }
 
 type MutablePresented = { -readonly [K in keyof PresentedFlight]: PresentedFlight[K] };
@@ -160,12 +166,16 @@ interface ModeTransition {
   readonly targetFlightKey: string;
   readonly targetAnchorV: number;
   readonly initialArcDelta: number;
+  readonly sourceCameraFreeFlightWeight: number;
+  readonly sourceCameraSpeedMps: number;
   readonly source: TransitionPose;
 }
 
 interface TransitionEvaluation {
   active: boolean;
   progress: number;
+  cameraFreeFlightWeight: number;
+  cameraSpeedMps: number;
 }
 
 export interface SkyriverFlightPresenter {
@@ -439,7 +449,7 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
   const autopilotSpeedMps = SKYRIVER_AUTOPILOT_PRESENTATION_SHARE * SKYRIVER_AUTOPILOT_REFERENCE_SPEED_MPS * trackLength / ringLength;
 
   const result: MutablePresented = {
-    x: 0, y: 0, z: 0, yaw: 0, pitch: 0, speed: 0, mode: 0, autopilotT: 0, boostT: 0, roll: 0, boostVisual: 0, cutFade: 0, canyonV: 0, canyonX: 0, wakeTrackV: 0, wakeTrackWeight: 1, revealX: 0, revealZ: 0, revealWeight: 0,
+    x: 0, y: 0, z: 0, yaw: 0, pitch: 0, speed: 0, mode: 0, autopilotT: 0, boostT: 0, roll: 0, boostVisual: 0, cutFade: 0, canyonV: 0, canyonX: 0, wakeTrackV: 0, wakeTrackWeight: 1, revealX: 0, revealZ: 0, revealWeight: 0, cameraFreeFlightWeight: 0, cameraSpeedMps: autopilotSpeedMps,
   };
   const apexes = canyonBendApexes(900);
   const revealWarp: WarpOut = { x: 0, z: 0, heading: 0 };
@@ -472,7 +482,8 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
   const blendWarp: WarpOut = { x: 0, z: 0, heading: 0 };
   // Keep one edge per observed tick for reverse seeks in this epoch. Evaluation scans this history.
   const transitions = new Map<number, ModeTransition>();
-  const currentEvaluation: TransitionEvaluation = { active: false, progress: 0 };
+  const currentEvaluation: TransitionEvaluation = { active: false, progress: 0, cameraFreeFlightWeight: 0, cameraSpeedMps: autopilotSpeedMps };
+  const sourceEvaluation: TransitionEvaluation = { active: false, progress: 0, cameraFreeFlightWeight: 0, cameraSpeedMps: autopilotSpeedMps };
   let timelineEpoch = -1;
 
   function requireTimelineEpoch(epoch: number): void {
@@ -546,20 +557,28 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
       return;
     }
 
-    const v = wrapCanyonV(source.canyonV + arcDelta * progress);
-    const lateral = source.canyonX + (target.canyonX - source.canyonX) * progress;
+    const ingress = smoothstep01(progress / ROUTE_INGRESS_PROGRESS);
+    const egress = smoothstep01((progress - (1 - ROUTE_EGRESS_PROGRESS)) / ROUTE_EGRESS_PROGRESS);
+    const routeProgress = smoothstep01(
+      (progress - ROUTE_INGRESS_PROGRESS) / (1 - ROUTE_INGRESS_PROGRESS - ROUTE_EGRESS_PROGRESS),
+    );
+    const v = wrapCanyonV(source.canyonV + arcDelta * routeProgress);
+    const routeWeight = ingress * (1 - egress);
+    const endpointLateral = source.canyonX + (target.canyonX - source.canyonX) * progress;
+    const lateral = endpointLateral + (routeLateral(v) - endpointLateral) * routeWeight;
     warpCanyon(lateral, v, blendWarp);
     warpCanyon(source.canyonX, source.canyonV, sourceWarp);
     warpCanyon(target.canyonX, target.canyonV, targetWarp);
 
-    const sourceYawLocal = wrapTurns(source.yaw - canyonHeading(source.canyonV) / TAU);
-    const targetYawLocal = wrapTurns(target.yaw - canyonHeading(target.canyonV) / TAU);
-    const yawLocal = sourceYawLocal + wrapTurns(targetYawLocal - sourceYawLocal) * progress;
-    out.yaw = wrapTurns(canyonHeading(v) / TAU + yawLocal);
-    out.pitch = routePitch(v) +
-      (source.pitch - routePitch(source.canyonV)) * (1 - progress) +
-      (target.pitch - routePitch(target.canyonV)) * progress;
-    out.roll = source.roll + (target.roll - source.roll) * progress;
+    const sourceYawLocal = wrapTurns(source.yaw - routeHeading(source.canyonV) / TAU);
+    const targetYawLocal = wrapTurns(target.yaw - routeHeading(target.canyonV) / TAU);
+    const endpointYawLocal = sourceYawLocal + wrapTurns(targetYawLocal - sourceYawLocal) * progress;
+    out.yaw = wrapTurns(routeHeading(v) / TAU + endpointYawLocal * (1 - routeWeight));
+    const endpointPitch = source.pitch + (target.pitch - source.pitch) * progress;
+    out.pitch = endpointPitch + (routePitch(v) - endpointPitch) * routeWeight;
+    const endpointRoll = source.roll + (target.roll - source.roll) * progress;
+    autopilotTrackPose(v, poseA);
+    out.roll = endpointRoll + (poseA.roll - endpointRoll) * routeWeight;
     out.canyonV = v;
     out.canyonX = lateral;
 
@@ -568,11 +587,10 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
     const targetResidualX = target.x - targetWarp.x;
     const sourceResidualZ = source.z - sourceWarp.z;
     const targetResidualZ = target.z - targetWarp.z;
-    out.x = blendWarp.x + sourceResidualX * (1 - progress) + targetResidualX * progress;
-    out.z = blendWarp.z + sourceResidualZ * (1 - progress) + targetResidualZ * progress;
-    const sourceHeightResidual = source.y - routeAltitude(source.canyonV);
-    const targetHeightResidual = target.y - routeAltitude(target.canyonV);
-    out.y = routeAltitude(v) + sourceHeightResidual * (1 - progress) + targetHeightResidual * progress;
+    out.x = blendWarp.x + sourceResidualX * (1 - ingress) + targetResidualX * egress;
+    out.z = blendWarp.z + sourceResidualZ * (1 - ingress) + targetResidualZ * egress;
+    const endpointHeight = source.y + (target.y - source.y) * progress;
+    out.y = endpointHeight + (routeAltitude(v) - endpointHeight) * routeWeight;
   }
 
   function writeModeTarget(
@@ -634,6 +652,8 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
       if (evaluation) {
         evaluation.active = false;
         evaluation.progress = flight.mode === 0 ? 1 : 0;
+        evaluation.cameraFreeFlightWeight = flight.mode === 1 ? 1 : 0;
+        evaluation.cameraSpeedMps = flight.mode === 0 ? autopilotSpeedMps : flight.speed;
       }
       return;
     }
@@ -644,6 +664,8 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
       if (evaluation) {
         evaluation.active = false;
         evaluation.progress = flight.mode === 0 ? 1 : 0;
+        evaluation.cameraFreeFlightWeight = flight.mode === 1 ? 1 : 0;
+        evaluation.cameraSpeedMps = flight.mode === 0 ? autopilotSpeedMps : flight.speed;
       }
       return;
     }
@@ -655,6 +677,12 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
     if (evaluation) {
       evaluation.active = true;
       evaluation.progress = progress;
+      const ingress = smoothstep01(progress / ROUTE_INGRESS_PROGRESS);
+      const egress = smoothstep01((progress - (1 - ROUTE_EGRESS_PROGRESS)) / ROUTE_EGRESS_PROGRESS);
+      const targetCameraWeight = transition.toMode === 1 ? 1 : 0;
+      evaluation.cameraFreeFlightWeight = transition.sourceCameraFreeFlightWeight * (1 - ingress) + targetCameraWeight * egress;
+      const targetCameraSpeed = transition.toMode === 0 ? autopilotSpeedMps : flight.speed;
+      evaluation.cameraSpeedMps = transition.sourceCameraSpeedMps + (targetCameraSpeed - transition.sourceCameraSpeedMps) * progress;
     }
   }
 
@@ -684,7 +712,7 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
       return;
     }
 
-    evaluatePose(startTick, previous.flight, sourcePose, startTick);
+    evaluatePose(startTick, previous.flight, sourcePose, startTick, sourceEvaluation);
     const previousFlightKey = flightKey(previous.flight);
     writeModeTarget(current.tick, current.flight.mode, current.flight, targetPose);
     const targetFlightKey = flightKey(current.flight);
@@ -693,6 +721,8 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
     if (old && old.fromMode === previous.flight.mode && old.toMode === current.flight.mode &&
       old.previousFlightKey === previousFlightKey && old.targetFlightKey === targetFlightKey &&
       old.targetAnchorV === targetAnchorV && old.initialArcDelta === initialArcDelta &&
+      old.sourceCameraFreeFlightWeight === sourceEvaluation.cameraFreeFlightWeight &&
+      old.sourceCameraSpeedMps === sourceEvaluation.cameraSpeedMps &&
       samePose(old.source, sourcePose)) return;
 
     removeTransitionsFrom(startTick);
@@ -704,6 +734,8 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
       targetFlightKey,
       targetAnchorV,
       initialArcDelta,
+      sourceCameraFreeFlightWeight: sourceEvaluation.cameraFreeFlightWeight,
+      sourceCameraSpeedMps: sourceEvaluation.cameraSpeedMps,
       source: {
         x: sourcePose.x, y: sourcePose.y, z: sourcePose.z, yaw: sourcePose.yaw, pitch: sourcePose.pitch,
         roll: sourcePose.roll, canyonV: sourcePose.canyonV, canyonX: sourcePose.canyonX,
@@ -725,6 +757,8 @@ export function createFlightPresenter(seed: number): SkyriverFlightPresenter {
     result.boostVisual = boostVisualOf(state);
 
     evaluatePose(timeTick, flight, result, Number.POSITIVE_INFINITY, currentEvaluation);
+    result.cameraFreeFlightWeight = currentEvaluation.cameraFreeFlightWeight;
+    result.cameraSpeedMps = currentEvaluation.cameraSpeedMps;
     if (flight.mode !== 0 && !currentEvaluation.active) {
       // Keep the steady free-flight traffic anchor and pose contract unchanged.
       result.canyonV = flight.z;

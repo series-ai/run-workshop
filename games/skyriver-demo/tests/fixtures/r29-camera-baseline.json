@@ -1,0 +1,3142 @@
+{
+  "provenance": "Actual frozen pre-R29 camera function. Inputs use real neutral sim states and steady R29 presentation poses. No mode edges are ingested.",
+  "oracleSourceSha256": "3ebd656a22423ba53bd9594059362a78c911957e30ee26cc2930d62406fb199b",
+  "samples": [
+    {
+      "seed": 424242,
+      "startMode": "autopilot",
+      "tick": 200,
+      "flight": {
+        "x": 556.589239123528,
+        "y": 1659.7965345112207,
+        "z": 1058.1574957658547,
+        "yaw": 0.15073771586464957,
+        "pitch": 0.05025230461764325,
+        "speed": 192.81294594002904,
+        "mode": 0,
+        "autopilotT": 3.454183,
+        "boostT": 0,
+        "roll": -0.023501046624072434,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 1282.206090501193,
+        "canyonX": -37.610844206649716,
+        "wakeTrackV": 1282.206090501193,
+        "wakeTrackWeight": 1,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 533.1396204467231,
+          "y": 1668.469838136995,
+          "z": 1041.2858636732303
+        },
+        "target": {
+          "x": 670.0053152021082,
+          "y": 1674.8815069603288,
+          "z": 1139.7585800035117
+        },
+        "distance": 28.94604299727405,
+        "fov": 62,
+        "roll": -0.08121378696844288
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "autopilot",
+      "tick": 200,
+      "flight": {
+        "x": 556.589239123528,
+        "y": 1659.7965345112207,
+        "z": 1058.1574957658547,
+        "yaw": 0.15073771586464957,
+        "pitch": 0.05025230461764325,
+        "speed": 192.81294594002904,
+        "mode": 0,
+        "autopilotT": 3.454183,
+        "boostT": 0,
+        "roll": -0.023501046624072434,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 1282.206090501193,
+        "canyonX": -37.610844206649716,
+        "wakeTrackV": 1282.206090501193,
+        "wakeTrackWeight": 1,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 533.1006178828655,
+          "y": 1668.4573575911745,
+          "z": 1041.2858636732303
+        },
+        "target": {
+          "x": 670.0053152021082,
+          "y": 1675.2759902052599,
+          "z": 1139.7585800035117
+        },
+        "distance": 28.94604299727405,
+        "fov": 70.619,
+        "roll": -0.08121378696844288
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "autopilot",
+      "tick": 600,
+      "flight": {
+        "x": 3084.1769325420933,
+        "y": 2064.0593918004156,
+        "z": 593.8923908854389,
+        "yaw": 0.24802933341662428,
+        "pitch": -0.050197441115897364,
+        "speed": 192.81294594002904,
+        "mode": 0,
+        "autopilotT": 7.781288,
+        "boostT": 0,
+        "roll": -0.03539732742537173,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 3853.04536970158,
+        "canyonX": -77.55043731808966,
+        "wakeTrackV": 3853.04536970158,
+        "wakeTrackWeight": 1,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 3055.290674287123,
+          "y": 2070.99671806622,
+          "z": 593.5347011266091
+        },
+        "target": {
+          "x": 3223.8877785488075,
+          "y": 2042.2340522248069,
+          "z": 595.6223878401483
+        },
+        "distance": 28.94604299727405,
+        "fov": 62,
+        "roll": -0.12232438217588637
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "autopilot",
+      "tick": 600,
+      "flight": {
+        "x": 3084.1769325420933,
+        "y": 2064.0593918004156,
+        "z": 593.8923908854389,
+        "yaw": 0.24802933341662428,
+        "pitch": -0.050197441115897364,
+        "speed": 192.81294594002904,
+        "mode": 0,
+        "autopilotT": 7.781288,
+        "boostT": 0,
+        "roll": -0.03539732742537173,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 3853.04536970158,
+        "canyonX": -77.55043731808966,
+        "wakeTrackV": 3853.04536970158,
+        "wakeTrackWeight": 1,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 3055.352735824093,
+          "y": 2070.980217897286,
+          "z": 593.5347011266091
+        },
+        "target": {
+          "x": 3223.8877785488075,
+          "y": 2042.348352911847,
+          "z": 595.6223878401483
+        },
+        "distance": 28.94604299727405,
+        "fov": 70.619,
+        "roll": -0.12232438217588637
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "autopilot",
+      "tick": 1032,
+      "flight": {
+        "x": 3152.513334832907,
+        "y": 1205.3686656403154,
+        "z": -2030.6875379571109,
+        "yaw": -0.4998618027201488,
+        "pitch": -0.09127499398158774,
+        "speed": 192.81294594002904,
+        "mode": 0,
+        "autopilotT": 13.934916,
+        "boostT": 0,
+        "roll": -0.046959181045185996,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -6170.448208762002,
+        "canyonX": -129.2916510933033,
+        "wakeTrackV": -6170.448208762002,
+        "wakeTrackWeight": 1,
+        "revealX": 2344.479219567578,
+        "revealZ": -2192.664364835588,
+        "revealWeight": 0.2978151567084889
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 3152.5383040795773,
+          "y": 1209.7582755733997,
+          "z": -2001.9317039897578
+        },
+        "target": {
+          "x": 3152.3925689467296,
+          "y": 1176.3459165147192,
+          "z": -2169.7675757988477
+        },
+        "distance": 28.94604299727405,
+        "fov": 62,
+        "roll": -0.16227928000916433
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "autopilot",
+      "tick": 1032,
+      "flight": {
+        "x": 3152.513334832907,
+        "y": 1205.3686656403154,
+        "z": -2030.6875379571109,
+        "yaw": -0.4998618027201488,
+        "pitch": -0.09127499398158774,
+        "speed": 192.81294594002904,
+        "mode": 0,
+        "autopilotT": 13.934916,
+        "boostT": 0,
+        "roll": -0.046959181045185996,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -6170.448208762002,
+        "canyonX": -129.2916510933033,
+        "wakeTrackV": -6170.448208762002,
+        "wakeTrackWeight": 1,
+        "revealX": 2344.479219567578,
+        "revealZ": -2192.664364835588,
+        "revealWeight": 0.2978151567084889
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 3152.7100137292236,
+          "y": 1209.670836468126,
+          "z": -2001.9317039897578
+        },
+        "target": {
+          "x": 3152.3925689467296,
+          "y": 1176.1013455504535,
+          "z": -2169.7675757988477
+        },
+        "distance": 28.94604299727405,
+        "fov": 70.619,
+        "roll": -0.16227928000916433
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "autopilot",
+      "tick": 1200,
+      "flight": {
+        "x": 2431.1517364410206,
+        "y": 590.7793809944301,
+        "z": -2786.579134921898,
+        "yaw": -0.21676215658500395,
+        "pitch": -0.04884245959722211,
+        "speed": 192.81294594002904,
+        "mode": 0,
+        "autopilotT": 18.472016,
+        "boostT": 0,
+        "roll": -0.031643068706219545,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -5090.6957114978395,
+        "canyonX": 34.41417444052833,
+        "wakeTrackV": -5090.6957114978395,
+        "wakeTrackWeight": 1,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 2459.4155237862497,
+          "y": 597.808276595613,
+          "z": -2792.569066751228
+        },
+        "target": {
+          "x": 2294.451523955857,
+          "y": 569.1919607853379,
+          "z": -2757.608319940894
+        },
+        "distance": 28.94604299727405,
+        "fov": 62,
+        "roll": -0.10935059540294605
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "autopilot",
+      "tick": 1200,
+      "flight": {
+        "x": 2431.1517364410206,
+        "y": 590.7793809944301,
+        "z": -2786.579134921898,
+        "yaw": -0.21676215658500395,
+        "pitch": -0.04884245959722211,
+        "speed": 192.81294594002904,
+        "mode": 0,
+        "autopilotT": 18.472016,
+        "boostT": 0,
+        "roll": -0.031643068706219545,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -5090.6957114978395,
+        "canyonX": 34.41417444052833,
+        "wakeTrackV": -5090.6957114978395,
+        "wakeTrackWeight": 1,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 2459.3398062365277,
+          "y": 597.9199864832007,
+          "z": -2792.569066751228
+        },
+        "target": {
+          "x": 2294.451523955857,
+          "y": 568.7992678975808,
+          "z": -2757.608319940894
+        },
+        "distance": 28.94604299727405,
+        "fov": 70.619,
+        "roll": -0.10935059540294605
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "freefly",
+      "tick": 200,
+      "flight": {
+        "x": 400,
+        "y": 1780.0031985,
+        "z": 400,
+        "yaw": 0.141618,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 400,
+        "canyonX": 400,
+        "wakeTrackV": 400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 383.4415071630867,
+          "y": 1785.1014390624903,
+          "z": 370.18402506017856
+        },
+        "target": {
+          "x": 467.13454381472343,
+          "y": 1776.9040236056323,
+          "z": 520.8855114828964
+        },
+        "distance": 34.530494518076246,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "freefly",
+      "tick": 200,
+      "flight": {
+        "x": 400,
+        "y": 1780.0031985,
+        "z": 400,
+        "yaw": 0.141618,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 400,
+        "canyonX": 400,
+        "wakeTrackV": 400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 383.40250459922913,
+          "y": 1785.08895851667,
+          "z": 370.18402506017856
+        },
+        "target": {
+          "x": 467.13454381472343,
+          "y": 1777.2985068505634,
+          "z": 520.8855114828964
+        },
+        "distance": 34.530494518076246,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "freefly",
+      "tick": 600,
+      "flight": {
+        "x": 400,
+        "y": 2000,
+        "z": 400,
+        "yaw": 0.141618,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 400,
+        "canyonX": 400,
+        "wakeTrackV": 400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 383.4415071630867,
+          "y": 2005.0982405624902,
+          "z": 370.18402506017856
+        },
+        "target": {
+          "x": 467.13454381472343,
+          "y": 1996.9008251056323,
+          "z": 520.8855114828964
+        },
+        "distance": 34.530494518076246,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "freefly",
+      "tick": 600,
+      "flight": {
+        "x": 400,
+        "y": 2000,
+        "z": 400,
+        "yaw": 0.141618,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 400,
+        "canyonX": 400,
+        "wakeTrackV": 400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 383.50356870005686,
+          "y": 2005.081740393556,
+          "z": 370.18402506017856
+        },
+        "target": {
+          "x": 467.13454381472343,
+          "y": 1997.0151257926725,
+          "z": 520.8855114828964
+        },
+        "distance": 34.530494518076246,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "freefly",
+      "tick": 1032,
+      "flight": {
+        "x": 400,
+        "y": 2000,
+        "z": 400,
+        "yaw": 0.141618,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 400,
+        "canyonX": 400,
+        "wakeTrackV": 400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 383.4415071630867,
+          "y": 2005.0982405624902,
+          "z": 370.18402506017856
+        },
+        "target": {
+          "x": 467.13454381472343,
+          "y": 1996.9008251056323,
+          "z": 520.8855114828964
+        },
+        "distance": 34.530494518076246,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "freefly",
+      "tick": 1032,
+      "flight": {
+        "x": 400,
+        "y": 2000,
+        "z": 400,
+        "yaw": 0.141618,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 400,
+        "canyonX": 400,
+        "wakeTrackV": 400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 383.61321681273284,
+          "y": 2005.0108014572165,
+          "z": 370.18402506017856
+        },
+        "target": {
+          "x": 467.13454381472343,
+          "y": 1996.6562541413666,
+          "z": 520.8855114828964
+        },
+        "distance": 34.530494518076246,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "freefly",
+      "tick": 1200,
+      "flight": {
+        "x": 400,
+        "y": 2000,
+        "z": 400,
+        "yaw": 0.141618,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 400,
+        "canyonX": 400,
+        "wakeTrackV": 400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 383.4415071630867,
+          "y": 2005.0982405624902,
+          "z": 370.18402506017856
+        },
+        "target": {
+          "x": 467.13454381472343,
+          "y": 1996.9008251056323,
+          "z": 520.8855114828964
+        },
+        "distance": 34.530494518076246,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 424242,
+      "startMode": "freefly",
+      "tick": 1200,
+      "flight": {
+        "x": 400,
+        "y": 2000,
+        "z": 400,
+        "yaw": 0.141618,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 400,
+        "canyonX": 400,
+        "wakeTrackV": 400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 383.36578961336494,
+          "y": 2005.2099504500777,
+          "z": 370.18402506017856
+        },
+        "target": {
+          "x": 467.13454381472343,
+          "y": 1996.508132217875,
+          "z": 520.8855114828964
+        },
+        "distance": 34.530494518076246,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "autopilot",
+      "tick": 200,
+      "flight": {
+        "x": 656.1601460481221,
+        "y": 1696.570528453663,
+        "z": 1116.1992928823745,
+        "yaw": 0.17271878492448448,
+        "pitch": 0.05445253617701112,
+        "speed": 207.575622199974,
+        "mode": 0,
+        "autopilotT": 1.739956,
+        "boostT": 0,
+        "roll": -0.028762294843599347,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 1380.3778876298275,
+        "canyonX": -82.3045044286203,
+        "wakeTrackV": 1380.3778876298275,
+        "wakeTrackWeight": 1,
+        "revealX": 2809.1640785579057,
+        "revealZ": -66.40796429179767,
+        "revealWeight": 0.012587423093912297
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 630.0278665585205,
+          "y": 1705.0454998766506,
+          "z": 1102.408923610859
+        },
+        "target": {
+          "x": 779.6875127660727,
+          "y": 1712.3928448582262,
+          "z": 1181.3864114747764
+        },
+        "distance": 29.617073736362453,
+        "fov": 62,
+        "roll": -0.09939535559913884
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "autopilot",
+      "tick": 200,
+      "flight": {
+        "x": 656.1601460481221,
+        "y": 1696.570528453663,
+        "z": 1116.1992928823745,
+        "yaw": 0.17271878492448448,
+        "pitch": 0.05445253617701112,
+        "speed": 207.575622199974,
+        "mode": 0,
+        "autopilotT": 1.739956,
+        "boostT": 0,
+        "roll": -0.028762294843599347,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 1380.3778876298275,
+        "canyonX": -82.3045044286203,
+        "wakeTrackV": 1380.3778876298275,
+        "wakeTrackWeight": 1,
+        "revealX": 2809.1640785579057,
+        "revealZ": -66.40796429179767,
+        "revealWeight": 0.012587423093912297
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 629.9888639946629,
+          "y": 1705.0330193308303,
+          "z": 1102.408923610859
+        },
+        "target": {
+          "x": 779.6875127660727,
+          "y": 1712.7873281031573,
+          "z": 1181.3864114747764
+        },
+        "distance": 29.617073736362453,
+        "fov": 70.619,
+        "roll": -0.09939535559913884
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "autopilot",
+      "tick": 600,
+      "flight": {
+        "x": 3410.3145481661354,
+        "y": 1958.8229999048394,
+        "z": 456.2126830403371,
+        "yaw": 0.37583510791499775,
+        "pitch": -0.05220169343726385,
+        "speed": 207.575622199974,
+        "mode": 0,
+        "autopilotT": 11.104571,
+        "boostT": 0,
+        "roll": -0.06775118783476082,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 4148.052850296146,
+        "canyonX": -163.07810688057543,
+        "wakeTrackV": 4148.052850296146,
+        "wakeTrackWeight": 1,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 3389.5270964617853,
+          "y": 1965.5398746308301,
+          "z": 477.21943671140116
+        },
+        "target": {
+          "x": 3508.576897259589,
+          "y": 1936.6457835005647,
+          "z": 356.91369286568613
+        },
+        "distance": 29.617073736362453,
+        "fov": 62,
+        "roll": -0.23413129737103347
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "autopilot",
+      "tick": 600,
+      "flight": {
+        "x": 3410.3145481661354,
+        "y": 1958.8229999048394,
+        "z": 456.2126830403371,
+        "yaw": 0.37583510791499775,
+        "pitch": -0.05220169343726385,
+        "speed": 207.575622199974,
+        "mode": 0,
+        "autopilotT": 11.104571,
+        "boostT": 0,
+        "roll": -0.06775118783476082,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 4148.052850296146,
+        "canyonX": -163.07810688057543,
+        "wakeTrackV": 4148.052850296146,
+        "wakeTrackWeight": 1,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 3389.5891579987556,
+          "y": 1965.5233744618959,
+          "z": 477.21943671140116
+        },
+        "target": {
+          "x": 3508.576897259589,
+          "y": 1936.760084187605,
+          "z": 356.91369286568613
+        },
+        "distance": 29.617073736362453,
+        "fov": 70.619,
+        "roll": -0.23413129737103347
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "autopilot",
+      "tick": 1032,
+      "flight": {
+        "x": 2984.5290184330042,
+        "y": 873.2618272114343,
+        "z": -2563.6020767194163,
+        "yaw": -0.40066915971888156,
+        "pitch": -0.0880170346148286,
+        "speed": 207.575622199974,
+        "mode": 0,
+        "autopilotT": 17.260391,
+        "boostT": 0,
+        "roll": -0.03124934997603983,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -5662.858190024228,
+        "canyonX": -104.55568288611202,
+        "wakeTrackV": -5662.858190024228,
+        "wakeTrackWeight": 1,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 3001.730843397737,
+          "y": 877.6968624834359,
+          "z": -2539.715238724433
+        },
+        "target": {
+          "x": 2903.215938130076,
+          "y": 844.80861474786,
+          "z": -2676.5152344832713
+        },
+        "distance": 29.617073736362453,
+        "fov": 62,
+        "roll": -0.10799000114560144
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "autopilot",
+      "tick": 1032,
+      "flight": {
+        "x": 2984.5290184330042,
+        "y": 873.2618272114343,
+        "z": -2563.6020767194163,
+        "yaw": -0.40066915971888156,
+        "pitch": -0.0880170346148286,
+        "speed": 207.575622199974,
+        "mode": 0,
+        "autopilotT": 17.260391,
+        "boostT": 0,
+        "roll": -0.03124934997603983,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -5662.858190024228,
+        "canyonX": -104.55568288611202,
+        "wakeTrackV": -5662.858190024228,
+        "wakeTrackWeight": 1,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 3001.902553047383,
+          "y": 877.6094233781621,
+          "z": -2539.715238724433
+        },
+        "target": {
+          "x": 2903.215938130076,
+          "y": 844.5640437835943,
+          "z": -2676.5152344832713
+        },
+        "distance": 29.617073736362453,
+        "fov": 70.619,
+        "roll": -0.10799000114560144
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "autopilot",
+      "tick": 1200,
+      "flight": {
+        "x": 1886.9416849816453,
+        "y": 485.6971512207252,
+        "z": -2663.9160224568736,
+        "yaw": -0.24881062628945608,
+        "pitch": -0.00620632220021441,
+        "speed": 207.575622199974,
+        "mode": 0,
+        "autopilotT": 20.53408,
+        "boostT": 0,
+        "roll": 0.025582162326740678,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -4500.434705704372,
+        "canyonX": 61.840145897796255,
+        "wakeTrackV": -4500.434705704372,
+        "wakeTrackWeight": 1,
+        "revealX": 218.22281902346856,
+        "revealZ": -1727.9795058427176,
+        "revealWeight": 0.5426254831009127
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 1916.5570310035591,
+          "y": 495.7353517767692,
+          "z": -2664.137343699087
+        },
+        "target": {
+          "x": 1746.9498518932364,
+          "y": 471.60528906083533,
+          "z": -2662.8698362540877
+        },
+        "distance": 29.617073736362453,
+        "fov": 62,
+        "roll": 0.0884056065514931
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "autopilot",
+      "tick": 1200,
+      "flight": {
+        "x": 1886.9416849816453,
+        "y": 485.6971512207252,
+        "z": -2663.9160224568736,
+        "yaw": -0.24881062628945608,
+        "pitch": -0.00620632220021441,
+        "speed": 207.575622199974,
+        "mode": 0,
+        "autopilotT": 20.53408,
+        "boostT": 0,
+        "roll": 0.025582162326740678,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -4500.434705704372,
+        "canyonX": 61.840145897796255,
+        "wakeTrackV": -4500.434705704372,
+        "wakeTrackWeight": 1,
+        "revealX": 218.22281902346856,
+        "revealZ": -1727.9795058427176,
+        "revealWeight": 0.5426254831009127
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 1916.4813134538374,
+          "y": 495.8470616643568,
+          "z": -2664.137343699087
+        },
+        "target": {
+          "x": 1746.9498518932364,
+          "y": 471.2125961730782,
+          "z": -2662.8698362540877
+        },
+        "distance": 29.617073736362453,
+        "fov": 70.619,
+        "roll": 0.0884056065514931
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "freefly",
+      "tick": 200,
+      "flight": {
+        "x": 400,
+        "y": 151.9968015,
+        "z": 1.313095,
+        "yaw": 0.316446,
+        "pitch": -0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 1.313095,
+        "canyonX": 400,
+        "wakeTrackV": 1.313095,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 373.3200913151534,
+          "y": 169.6431409616452,
+          "z": 27.611681252631804
+        },
+        "target": {
+          "x": 497.9388530997636,
+          "y": 100.76341745799856,
+          "z": -95.22596763895348
+        },
+        "distance": 38.13795136107782,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "freefly",
+      "tick": 200,
+      "flight": {
+        "x": 400,
+        "y": 151.9968015,
+        "z": 1.313095,
+        "yaw": 0.316446,
+        "pitch": -0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 1.313095,
+        "canyonX": 400,
+        "wakeTrackV": 1.313095,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 373.2810887512958,
+          "y": 169.63066041582476,
+          "z": 27.611681252631804
+        },
+        "target": {
+          "x": 497.9388530997636,
+          "y": 101.15790070292967,
+          "z": -95.22596763895348
+        },
+        "distance": 38.13795136107782,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "freefly",
+      "tick": 600,
+      "flight": {
+        "x": 400,
+        "y": 60,
+        "z": -400,
+        "yaw": 0.316446,
+        "pitch": -0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -400,
+        "canyonX": 400,
+        "wakeTrackV": -400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 373.3200913151534,
+          "y": 77.64633946164518,
+          "z": -373.7014137473682
+        },
+        "target": {
+          "x": 497.9388530997636,
+          "y": 8.766615957998553,
+          "z": -496.5390626389535
+        },
+        "distance": 38.13795136107782,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "freefly",
+      "tick": 600,
+      "flight": {
+        "x": 400,
+        "y": 60,
+        "z": -400,
+        "yaw": 0.316446,
+        "pitch": -0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -400,
+        "canyonX": 400,
+        "wakeTrackV": -400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 373.3821528521235,
+          "y": 77.62983929271088,
+          "z": -373.7014137473682
+        },
+        "target": {
+          "x": 497.9388530997636,
+          "y": 8.880916645038715,
+          "z": -496.5390626389535
+        },
+        "distance": 38.13795136107782,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "freefly",
+      "tick": 1032,
+      "flight": {
+        "x": 400,
+        "y": 60,
+        "z": -400,
+        "yaw": 0.316446,
+        "pitch": -0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -400,
+        "canyonX": 400,
+        "wakeTrackV": -400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 373.3200913151534,
+          "y": 77.64633946164518,
+          "z": -373.7014137473682
+        },
+        "target": {
+          "x": 497.9388530997636,
+          "y": 8.766615957998553,
+          "z": -496.5390626389535
+        },
+        "distance": 38.13795136107782,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "freefly",
+      "tick": 1032,
+      "flight": {
+        "x": 400,
+        "y": 60,
+        "z": -400,
+        "yaw": 0.316446,
+        "pitch": -0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -400,
+        "canyonX": 400,
+        "wakeTrackV": -400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 373.4918009647995,
+          "y": 77.55890035637138,
+          "z": -373.7014137473682
+        },
+        "target": {
+          "x": 497.9388530997636,
+          "y": 8.522044993732827,
+          "z": -496.5390626389535
+        },
+        "distance": 38.13795136107782,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "freefly",
+      "tick": 1200,
+      "flight": {
+        "x": 400,
+        "y": 60,
+        "z": -400,
+        "yaw": 0.316446,
+        "pitch": -0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -400,
+        "canyonX": 400,
+        "wakeTrackV": -400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 373.3200913151534,
+          "y": 77.64633946164518,
+          "z": -373.7014137473682
+        },
+        "target": {
+          "x": 497.9388530997636,
+          "y": 8.766615957998553,
+          "z": -496.5390626389535
+        },
+        "distance": 38.13795136107782,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 0,
+      "startMode": "freefly",
+      "tick": 1200,
+      "flight": {
+        "x": 400,
+        "y": 60,
+        "z": -400,
+        "yaw": 0.316446,
+        "pitch": -0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -400,
+        "canyonX": 400,
+        "wakeTrackV": -400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 373.2443737654316,
+          "y": 77.75804934923275,
+          "z": -373.7014137473682
+        },
+        "target": {
+          "x": 497.9388530997636,
+          "y": 8.37392307024143,
+          "z": -496.5390626389535
+        },
+        "distance": 38.13795136107782,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "autopilot",
+      "tick": 200,
+      "flight": {
+        "x": 366.4969679914081,
+        "y": 1581.2882964340656,
+        "z": 881.9847205993304,
+        "yaw": 0.11531434085835085,
+        "pitch": 0.04155600929953254,
+        "speed": 155.57814440674883,
+        "mode": 0,
+        "autopilotT": 3.483385,
+        "boostT": 0,
+        "roll": -0.018246001075163814,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 1034.5946603048797,
+        "canyonX": 55.43685378647249,
+        "wakeTrackV": 1034.5946603048797,
+        "wakeTrackWeight": 1,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 348.4581533117023,
+          "y": 1590.3657403221669,
+          "z": 861.6049856480561
+        },
+        "target": {
+          "x": 459.1613683398685,
+          "y": 1594.8458890565144,
+          "z": 986.6742998234566
+        },
+        "distance": 27.253552018488584,
+        "fov": 62,
+        "roll": -0.06305365322863872
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "autopilot",
+      "tick": 200,
+      "flight": {
+        "x": 366.4969679914081,
+        "y": 1581.2882964340656,
+        "z": 881.9847205993304,
+        "yaw": 0.11531434085835085,
+        "pitch": 0.04155600929953254,
+        "speed": 155.57814440674883,
+        "mode": 0,
+        "autopilotT": 3.483385,
+        "boostT": 0,
+        "roll": -0.018246001075163814,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 1034.5946603048797,
+        "canyonX": 55.43685378647249,
+        "wakeTrackV": 1034.5946603048797,
+        "wakeTrackWeight": 1,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 348.4191507478447,
+          "y": 1590.3532597763465,
+          "z": 861.6049856480561
+        },
+        "target": {
+          "x": 459.1613683398685,
+          "y": 1595.2403723014454,
+          "z": 986.6742998234566
+        },
+        "distance": 27.253552018488584,
+        "fov": 70.619,
+        "roll": -0.06305365322863872
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "autopilot",
+      "tick": 600,
+      "flight": {
+        "x": 2318.8206058169817,
+        "y": 2257.1309307682814,
+        "z": 479.70097546720723,
+        "yaw": 0.26498418066941015,
+        "pitch": -0.01310703623337115,
+        "speed": 155.57814440674883,
+        "mode": 0,
+        "autopilotT": 10.406551,
+        "boostT": 0,
+        "roll": 0.024597623363253048,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 3108.969919061532,
+        "canyonX": 137.0341361097767,
+        "wakeTrackV": 3108.969919061532,
+        "wakeTrackWeight": 1,
+        "revealX": 2809.1640785579057,
+        "revealZ": -66.40796429179767,
+        "revealWeight": 1
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 2291.691431542169,
+          "y": 2266.734657244368,
+          "z": 482.26271687822134
+        },
+        "target": {
+          "x": 2458.1816841783334,
+          "y": 2241.8251247778835,
+          "z": 466.54145052533283
+        },
+        "distance": 27.253552018488584,
+        "fov": 62,
+        "roll": 0.08500328413914088
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "autopilot",
+      "tick": 600,
+      "flight": {
+        "x": 2318.8206058169817,
+        "y": 2257.1309307682814,
+        "z": 479.70097546720723,
+        "yaw": 0.26498418066941015,
+        "pitch": -0.01310703623337115,
+        "speed": 155.57814440674883,
+        "mode": 0,
+        "autopilotT": 10.406551,
+        "boostT": 0,
+        "roll": 0.024597623363253048,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 3108.969919061532,
+        "canyonX": 137.0341361097767,
+        "wakeTrackV": 3108.969919061532,
+        "wakeTrackWeight": 1,
+        "revealX": 2809.1640785579057,
+        "revealZ": -66.40796429179767,
+        "revealWeight": 1
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 2291.7534930791394,
+          "y": 2266.7181570754337,
+          "z": 482.26271687822134
+        },
+        "target": {
+          "x": 2458.1816841783334,
+          "y": 2241.9394254649237,
+          "z": 466.54145052533283
+        },
+        "distance": 27.253552018488584,
+        "fov": 70.619,
+        "roll": 0.08500328413914088
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "autopilot",
+      "tick": 1032,
+      "flight": {
+        "x": 3143.1889107457696,
+        "y": 1710.2614624931311,
+        "z": -733.9888009160526,
+        "yaw": -0.3829978602427605,
+        "pitch": -0.022722719258776395,
+        "speed": 155.57814440674883,
+        "mode": 0,
+        "autopilotT": 15.846908,
+        "boostT": 0,
+        "roll": 0.007643129952327666,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 5349.295198518714,
+        "canyonX": 100.94241579481644,
+        "wakeTrackV": 5349.295198518714,
+        "wakeTrackWeight": 1,
+        "revealX": 2344.479219567578,
+        "revealZ": -2192.664364835588,
+        "revealWeight": 0.55
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 3161.4602955200453,
+          "y": 1719.212872595528,
+          "z": -713.7821891352129
+        },
+        "target": {
+          "x": 3049.3298105938593,
+          "y": 1693.2644161434075,
+          "z": -837.7890559212879
+        },
+        "distance": 27.253552018488584,
+        "fov": 62,
+        "roll": 0.026412760999531174
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "autopilot",
+      "tick": 1032,
+      "flight": {
+        "x": 3143.1889107457696,
+        "y": 1710.2614624931311,
+        "z": -733.9888009160526,
+        "yaw": -0.3829978602427605,
+        "pitch": -0.022722719258776395,
+        "speed": 155.57814440674883,
+        "mode": 0,
+        "autopilotT": 15.846908,
+        "boostT": 0,
+        "roll": 0.007643129952327666,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 5349.295198518714,
+        "canyonX": 100.94241579481644,
+        "wakeTrackV": 5349.295198518714,
+        "wakeTrackWeight": 1,
+        "revealX": 2344.479219567578,
+        "revealZ": -2192.664364835588,
+        "revealWeight": 0.55
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 3161.6320051696916,
+          "y": 1719.1254334902544,
+          "z": -713.7821891352129
+        },
+        "target": {
+          "x": 3049.3298105938593,
+          "y": 1693.0198451791418,
+          "z": -837.7890559212879
+        },
+        "distance": 27.253552018488584,
+        "fov": 70.619,
+        "roll": 0.026412760999531174
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "autopilot",
+      "tick": 1200,
+      "flight": {
+        "x": 3043.0843130080098,
+        "y": 1444.615166822006,
+        "z": -1615.3304127393371,
+        "yaw": 0.4321778126801065,
+        "pitch": -0.06773151797114374,
+        "speed": 155.57814440674883,
+        "mode": 0,
+        "autopilotT": 17.691946,
+        "boostT": 0,
+        "roll": -0.0028207076086349055,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 6220.532807196509,
+        "canyonX": -13.976438331545125,
+        "wakeTrackV": 6220.532807196509,
+        "wakeTrackWeight": 1,
+        "revealX": 2344.479219567578,
+        "revealZ": -2192.664364835588,
+        "revealWeight": 0.55
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 3031.8596060692003,
+          "y": 1450.6812149906498,
+          "z": -1590.6040255422415
+        },
+        "target": {
+          "x": 3100.7450161107554,
+          "y": 1419.7135978957685,
+          "z": -1742.3485058394583
+        },
+        "distance": 27.253552018488584,
+        "fov": 62,
+        "roll": -0.009747665731333479
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "autopilot",
+      "tick": 1200,
+      "flight": {
+        "x": 3043.0843130080098,
+        "y": 1444.615166822006,
+        "z": -1615.3304127393371,
+        "yaw": 0.4321778126801065,
+        "pitch": -0.06773151797114374,
+        "speed": 155.57814440674883,
+        "mode": 0,
+        "autopilotT": 17.691946,
+        "boostT": 0,
+        "roll": -0.0028207076086349055,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 6220.532807196509,
+        "canyonX": -13.976438331545125,
+        "wakeTrackV": 6220.532807196509,
+        "wakeTrackWeight": 1,
+        "revealX": 2344.479219567578,
+        "revealZ": -2192.664364835588,
+        "revealWeight": 0.55
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 3031.7838885194783,
+          "y": 1450.7929248782373,
+          "z": -1590.6040255422415
+        },
+        "target": {
+          "x": 3100.7450161107554,
+          "y": 1419.3209050080113,
+          "z": -1742.3485058394583
+        },
+        "distance": 27.253552018488584,
+        "fov": 70.619,
+        "roll": -0.009747665731333479
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "freefly",
+      "tick": 200,
+      "flight": {
+        "x": 400,
+        "y": 1326.0031985,
+        "z": 367.40977399999997,
+        "yaw": 0.198243,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 367.40977399999997,
+        "canyonX": 400,
+        "wakeTrackV": 367.40977399999997,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 369.1402423241832,
+          "y": 1330.3957220394975,
+          "z": 344.2876434313683
+        },
+        "target": {
+          "x": 510.6601327129215,
+          "y": 1322.9040236056323,
+          "z": 450.32351765960755
+        },
+        "distance": 39.041757575173,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "freefly",
+      "tick": 200,
+      "flight": {
+        "x": 400,
+        "y": 1326.0031985,
+        "z": 367.40977399999997,
+        "yaw": 0.198243,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 367.40977399999997,
+        "canyonX": 400,
+        "wakeTrackV": 367.40977399999997,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 369.1012397603256,
+          "y": 1330.3832414936771,
+          "z": 344.2876434313683
+        },
+        "target": {
+          "x": 510.6601327129215,
+          "y": 1323.2985068505634,
+          "z": 450.32351765960755
+        },
+        "distance": 39.041757575173,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "freefly",
+      "tick": 600,
+      "flight": {
+        "x": 400,
+        "y": 2000,
+        "z": 400,
+        "yaw": 0.198243,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 400,
+        "canyonX": 400,
+        "wakeTrackV": 400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 369.1402423241832,
+          "y": 2004.3925235394975,
+          "z": 376.8778694313683
+        },
+        "target": {
+          "x": 510.6601327129215,
+          "y": 1996.9008251056323,
+          "z": 482.9137436596076
+        },
+        "distance": 39.041757575173,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "freefly",
+      "tick": 600,
+      "flight": {
+        "x": 400,
+        "y": 2000,
+        "z": 400,
+        "yaw": 0.198243,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 400,
+        "canyonX": 400,
+        "wakeTrackV": 400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 369.2023038611533,
+          "y": 2004.3760233705632,
+          "z": 376.8778694313683
+        },
+        "target": {
+          "x": 510.6601327129215,
+          "y": 1997.0151257926725,
+          "z": 482.9137436596076
+        },
+        "distance": 39.041757575173,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "freefly",
+      "tick": 1032,
+      "flight": {
+        "x": 400,
+        "y": 2000,
+        "z": 400,
+        "yaw": 0.198243,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 400,
+        "canyonX": 400,
+        "wakeTrackV": 400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 369.1402423241832,
+          "y": 2004.3925235394975,
+          "z": 376.8778694313683
+        },
+        "target": {
+          "x": 510.6601327129215,
+          "y": 1996.9008251056323,
+          "z": 482.9137436596076
+        },
+        "distance": 39.041757575173,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "freefly",
+      "tick": 1032,
+      "flight": {
+        "x": 400,
+        "y": 2000,
+        "z": 400,
+        "yaw": 0.198243,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 400,
+        "canyonX": 400,
+        "wakeTrackV": 400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 369.3119519738293,
+          "y": 2004.3050844342238,
+          "z": 376.8778694313683
+        },
+        "target": {
+          "x": 510.6601327129215,
+          "y": 1996.6562541413666,
+          "z": 482.9137436596076
+        },
+        "distance": 39.041757575173,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "freefly",
+      "tick": 1200,
+      "flight": {
+        "x": 400,
+        "y": 2000,
+        "z": 400,
+        "yaw": 0.198243,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 400,
+        "canyonX": 400,
+        "wakeTrackV": 400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 369.1402423241832,
+          "y": 2004.3925235394975,
+          "z": 376.8778694313683
+        },
+        "target": {
+          "x": 510.6601327129215,
+          "y": 1996.9008251056323,
+          "z": 482.9137436596076
+        },
+        "distance": 39.041757575173,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 2147483647,
+      "startMode": "freefly",
+      "tick": 1200,
+      "flight": {
+        "x": 400,
+        "y": 2000,
+        "z": 400,
+        "yaw": 0.198243,
+        "pitch": 0.15,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 400,
+        "canyonX": 400,
+        "wakeTrackV": 400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 369.0645247744614,
+          "y": 2004.504233427085,
+          "z": 376.8778694313683
+        },
+        "target": {
+          "x": 510.6601327129215,
+          "y": 1996.508132217875,
+          "z": 482.9137436596076
+        },
+        "distance": 39.041757575173,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "autopilot",
+      "tick": 200,
+      "flight": {
+        "x": 309.8181288571937,
+        "y": 1555.1277821106612,
+        "z": 809.4602879026068,
+        "yaw": 0.10356965838055149,
+        "pitch": 0.03813195959437761,
+        "speed": 140.58843705602138,
+        "mode": 0,
+        "autopilotT": 1.507694,
+        "boostT": 0,
+        "roll": -0.022783392465426863,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 934.9131064225421,
+        "canyonX": 78.28736316293082,
+        "wakeTrackV": 934.9131064225421,
+        "wakeTrackWeight": 1,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 293.7396656414642,
+          "y": 1564.354981674234,
+          "z": 788.3428803433438
+        },
+        "target": {
+          "x": 394.5301477158581,
+          "y": 1567.106187976809,
+          "z": 920.7208109640588
+        },
+        "distance": 26.572201684364607,
+        "fov": 62,
+        "roll": -0.07873375223256189
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "autopilot",
+      "tick": 200,
+      "flight": {
+        "x": 309.8181288571937,
+        "y": 1555.1277821106612,
+        "z": 809.4602879026068,
+        "yaw": 0.10356965838055149,
+        "pitch": 0.03813195959437761,
+        "speed": 140.58843705602138,
+        "mode": 0,
+        "autopilotT": 1.507694,
+        "boostT": 0,
+        "roll": -0.022783392465426863,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 934.9131064225421,
+        "canyonX": 78.28736316293082,
+        "wakeTrackV": 934.9131064225421,
+        "wakeTrackWeight": 1,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 293.70066307760663,
+          "y": 1564.3425011284137,
+          "z": 788.3428803433438
+        },
+        "target": {
+          "x": 394.5301477158581,
+          "y": 1567.50067122174,
+          "z": 920.7208109640588
+        },
+        "distance": 26.572201684364607,
+        "fov": 70.619,
+        "roll": -0.07873375223256189
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "autopilot",
+      "tick": 600,
+      "flight": {
+        "x": 2009.0894159202087,
+        "y": 2252.374004728328,
+        "z": 533.9247217355312,
+        "yaw": 0.2896078053264845,
+        "pitch": 0.018307447531184698,
+        "speed": 140.58843705602138,
+        "mode": 0,
+        "autopilotT": 5.482329,
+        "boostT": 0,
+        "roll": 0.021158355864897213,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 2809.4256005028274,
+        "canyonX": 99.67243263909221,
+        "wakeTrackV": 2809.4256005028274,
+        "wakeTrackWeight": 1,
+        "revealX": 2809.1640785579057,
+        "revealZ": -66.40796429179767,
+        "revealWeight": 1
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 1983.3426377164017,
+          "y": 2262.262743440748,
+          "z": 540.4677847886294
+        },
+        "target": {
+          "x": 2144.740537018464,
+          "y": 2251.432254794133,
+          "z": 499.4515215726427
+        },
+        "distance": 26.572201684364607,
+        "fov": 62,
+        "roll": 0.07311802888191957
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "autopilot",
+      "tick": 600,
+      "flight": {
+        "x": 2009.0894159202087,
+        "y": 2252.374004728328,
+        "z": 533.9247217355312,
+        "yaw": 0.2896078053264845,
+        "pitch": 0.018307447531184698,
+        "speed": 140.58843705602138,
+        "mode": 0,
+        "autopilotT": 5.482329,
+        "boostT": 0,
+        "roll": 0.021158355864897213,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 2809.4256005028274,
+        "canyonX": 99.67243263909221,
+        "wakeTrackV": 2809.4256005028274,
+        "wakeTrackWeight": 1,
+        "revealX": 2809.1640785579057,
+        "revealZ": -66.40796429179767,
+        "revealWeight": 1
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 1983.4046992533717,
+          "y": 2262.246243271814,
+          "z": 540.4677847886294
+        },
+        "target": {
+          "x": 2144.740537018464,
+          "y": 2251.546555481173,
+          "z": 499.4515215726427
+        },
+        "distance": 26.572201684364607,
+        "fov": 70.619,
+        "roll": 0.07311802888191957
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "autopilot",
+      "tick": 1032,
+      "flight": {
+        "x": 3452.1972454996194,
+        "y": 1783.6110642884773,
+        "z": -303.3689335386319,
+        "yaw": -0.43141015377848435,
+        "pitch": -0.025724371425285948,
+        "speed": 140.58843705602138,
+        "mode": 0,
+        "autopilotT": 11.213168,
+        "boostT": 0,
+        "roll": -0.034837551041618516,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 4833.899094109536,
+        "canyonX": -30.971953440298947,
+        "wakeTrackV": 4833.899094109536,
+        "wakeTrackWeight": 1,
+        "revealX": 2344.479219567578,
+        "revealZ": -2192.664364835588,
+        "revealWeight": 0.2657534288995863
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 3463.291868673479,
+          "y": 1792.4041637352584,
+          "z": -279.2390008346718
+        },
+        "target": {
+          "x": 3393.743404798332,
+          "y": 1766.0861846629075,
+          "z": -430.50143910523605
+        },
+        "distance": 26.572201684364607,
+        "fov": 62,
+        "roll": -0.120389933863549
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "autopilot",
+      "tick": 1032,
+      "flight": {
+        "x": 3452.1972454996194,
+        "y": 1783.6110642884773,
+        "z": -303.3689335386319,
+        "yaw": -0.43141015377848435,
+        "pitch": -0.025724371425285948,
+        "speed": 140.58843705602138,
+        "mode": 0,
+        "autopilotT": 11.213168,
+        "boostT": 0,
+        "roll": -0.034837551041618516,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 4833.899094109536,
+        "canyonX": -30.971953440298947,
+        "wakeTrackV": 4833.899094109536,
+        "wakeTrackWeight": 1,
+        "revealX": 2344.479219567578,
+        "revealZ": -2192.664364835588,
+        "revealWeight": 0.2657534288995863
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 3463.463578323125,
+          "y": 1792.3167246299847,
+          "z": -279.2390008346718
+        },
+        "target": {
+          "x": 3393.743404798332,
+          "y": 1765.8416136986418,
+          "z": -430.50143910523605
+        },
+        "distance": 26.572201684364607,
+        "fov": 70.619,
+        "roll": -0.120389933863549
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "autopilot",
+      "tick": 1200,
+      "flight": {
+        "x": 2973.680422048249,
+        "y": 1660.3412730141117,
+        "z": -971.7071346376653,
+        "yaw": -0.42917167005043544,
+        "pitch": -0.03507434169508557,
+        "speed": 140.58843705602138,
+        "mode": 0,
+        "autopilotT": 14.537096,
+        "boostT": 0,
+        "roll": 0.04597249359989313,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 5621.194341623255,
+        "canyonX": 167.56310873847107,
+        "wakeTrackV": 5621.194341623255,
+        "wakeTrackWeight": 1,
+        "revealX": 2344.479219567578,
+        "revealZ": -2192.664364835588,
+        "revealWeight": 0.55
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 2985.108186581548,
+          "y": 1668.5268875454162,
+          "z": -947.7463895575682
+        },
+        "target": {
+          "x": 2913.4713714898494,
+          "y": 1641.1726702505205,
+          "z": -1097.9482474765541
+        },
+        "distance": 26.572201684364607,
+        "fov": 62,
+        "roll": 0.15886953297669085
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "autopilot",
+      "tick": 1200,
+      "flight": {
+        "x": 2973.680422048249,
+        "y": 1660.3412730141117,
+        "z": -971.7071346376653,
+        "yaw": -0.42917167005043544,
+        "pitch": -0.03507434169508557,
+        "speed": 140.58843705602138,
+        "mode": 0,
+        "autopilotT": 14.537096,
+        "boostT": 0,
+        "roll": 0.04597249359989313,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": 5621.194341623255,
+        "canyonX": 167.56310873847107,
+        "wakeTrackV": 5621.194341623255,
+        "wakeTrackWeight": 1,
+        "revealX": 2344.479219567578,
+        "revealZ": -2192.664364835588,
+        "revealWeight": 0.55
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 2985.032469031826,
+          "y": 1668.6385974330037,
+          "z": -947.7463895575682
+        },
+        "target": {
+          "x": 2913.4713714898494,
+          "y": 1640.7799773627632,
+          "z": -1097.9482474765541
+        },
+        "distance": 26.572201684364607,
+        "fov": 70.619,
+        "roll": 0.15886953297669085
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "freefly",
+      "tick": 200,
+      "flight": {
+        "x": 400,
+        "y": 430.88225350000005,
+        "z": -214.1503485,
+        "yaw": 0.323866,
+        "pitch": -0.068229,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -214.1503485,
+        "canyonX": 400,
+        "wakeTrackV": -214.1503485,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 374.86039753052626,
+          "y": 444.61431600800427,
+          "z": -186.1848965003916
+        },
+        "target": {
+          "x": 493.2509645904002,
+          "y": 393.8934821240869,
+          "z": -317.88330837224123
+        },
+        "distance": 37.742712487594474,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "freefly",
+      "tick": 200,
+      "flight": {
+        "x": 400,
+        "y": 430.88225350000005,
+        "z": -214.1503485,
+        "yaw": 0.323866,
+        "pitch": -0.068229,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -214.1503485,
+        "canyonX": 400,
+        "wakeTrackV": -214.1503485,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 6.683333333333334
+      },
+      "expected": {
+        "position": {
+          "x": 374.82139496666866,
+          "y": 444.60183546218383,
+          "z": -186.1848965003916
+        },
+        "target": {
+          "x": 493.2509645904002,
+          "y": 394.287965369018,
+          "z": -317.88330837224123
+        },
+        "distance": 37.742712487594474,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "freefly",
+      "tick": 600,
+      "flight": {
+        "x": 400,
+        "y": 60,
+        "z": -400,
+        "yaw": 0.323866,
+        "pitch": -0.068229,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -400,
+        "canyonX": 400,
+        "wakeTrackV": -400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 374.86039753052626,
+          "y": 73.73206250800422,
+          "z": -372.0345480003916
+        },
+        "target": {
+          "x": 493.2509645904002,
+          "y": 23.011228624086876,
+          "z": -503.7329598722412
+        },
+        "distance": 37.742712487594474,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "freefly",
+      "tick": 600,
+      "flight": {
+        "x": 400,
+        "y": 60,
+        "z": -400,
+        "yaw": 0.323866,
+        "pitch": -0.068229,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -400,
+        "canyonX": 400,
+        "wakeTrackV": -400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 20.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 374.9224590674964,
+          "y": 73.71556233906992,
+          "z": -372.0345480003916
+        },
+        "target": {
+          "x": 493.2509645904002,
+          "y": 23.125529311127035,
+          "z": -503.7329598722412
+        },
+        "distance": 37.742712487594474,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "freefly",
+      "tick": 1032,
+      "flight": {
+        "x": 400,
+        "y": 60,
+        "z": -400,
+        "yaw": 0.323866,
+        "pitch": -0.068229,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -400,
+        "canyonX": 400,
+        "wakeTrackV": -400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 374.86039753052626,
+          "y": 73.73206250800422,
+          "z": -372.0345480003916
+        },
+        "target": {
+          "x": 493.2509645904002,
+          "y": 23.011228624086876,
+          "z": -503.7329598722412
+        },
+        "distance": 37.742712487594474,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "freefly",
+      "tick": 1032,
+      "flight": {
+        "x": 400,
+        "y": 60,
+        "z": -400,
+        "yaw": 0.323866,
+        "pitch": -0.068229,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -400,
+        "canyonX": 400,
+        "wakeTrackV": -400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 34.416666666666664
+      },
+      "expected": {
+        "position": {
+          "x": 375.0321071801724,
+          "y": 73.64462340273042,
+          "z": -372.0345480003916
+        },
+        "target": {
+          "x": 493.2509645904002,
+          "y": 22.76665765982115,
+          "z": -503.7329598722412
+        },
+        "distance": 37.742712487594474,
+        "fov": 70.619,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "freefly",
+      "tick": 1200,
+      "flight": {
+        "x": 400,
+        "y": 60,
+        "z": -400,
+        "yaw": 0.323866,
+        "pitch": -0.068229,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -400,
+        "canyonX": 400,
+        "wakeTrackV": -400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 374.86039753052626,
+          "y": 73.73206250800422,
+          "z": -372.0345480003916
+        },
+        "target": {
+          "x": 493.2509645904002,
+          "y": 23.011228624086876,
+          "z": -503.7329598722412
+        },
+        "distance": 37.742712487594474,
+        "fov": 62,
+        "roll": 0
+      }
+    },
+    {
+      "seed": 4294967295,
+      "startMode": "freefly",
+      "tick": 1200,
+      "flight": {
+        "x": 400,
+        "y": 60,
+        "z": -400,
+        "yaw": 0.323866,
+        "pitch": -0.068229,
+        "speed": 149.999994,
+        "mode": 1,
+        "autopilotT": 0,
+        "boostT": 0,
+        "roll": 0,
+        "boostVisual": 0,
+        "cutFade": 0,
+        "canyonV": -400,
+        "canyonX": 400,
+        "wakeTrackV": -400,
+        "wakeTrackWeight": 0,
+        "revealX": 0,
+        "revealZ": 0,
+        "revealWeight": 0
+      },
+      "camera": {
+        "orbitYaw": 0,
+        "orbitPitch": 0
+      },
+      "effects": {
+        "boost": 0.65,
+        "time": 40.016666666666666
+      },
+      "expected": {
+        "position": {
+          "x": 374.78467998080447,
+          "y": 73.84377239559178,
+          "z": -372.0345480003916
+        },
+        "target": {
+          "x": 493.2509645904002,
+          "y": 22.618535736329754,
+          "z": -503.7329598722412
+        },
+        "distance": 37.742712487594474,
+        "fov": 70.619,
+        "roll": 0
+      }
+    }
+  ]
+}

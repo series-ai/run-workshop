@@ -42,8 +42,8 @@ function ingestModeEdge(presenter: ReturnType<typeof createFlightPresenter>, sta
   if (state.previous.flight.mode !== state.current.flight.mode) presenter.observeModeEdge(state, epoch);
 }
 
-function indexedDrawnBoxes() {
-  return deriveCityMasses(presentCityLayout(deriveCityLayout(424242))).map((mass, index) => {
+function indexedDrawnBoxes(seed = 424242) {
+  return deriveCityMasses(presentCityLayout(deriveCityLayout(seed))).map((mass, index) => {
     const warped = warpRigid(mass.x, mass.z, mass.anchorV ?? mass.z, { x: 0, z: 0, heading: 0 });
     const inverse = new THREE.Matrix4().compose(
       new THREE.Vector3(warped.x, mass.y0 + mass.height / 2, warped.z),
@@ -58,7 +58,8 @@ function nearestDrawnBox(boxes: ReturnType<typeof indexedDrawnBoxes>, point: Pic
   const local = new THREE.Vector3();
   let nearest = { index: -1, gapM: Infinity };
   for (const box of boxes) {
-    local.set(point.x, point.y, point.z).applyMatrix4(box.inverse);
+    const e = box.inverse.elements;
+    local.set(point.x * e[0]! + point.z * e[8]! + e[12]!, point.y + e[13]!, point.x * e[2]! + point.z * e[10]! + e[14]!);
     const dx = Math.abs(local.x) - box.half.x, dy = Math.abs(local.y) - box.half.y, dz = Math.abs(local.z) - box.half.z;
     const outside = Math.hypot(Math.max(0, dx), Math.max(0, dy), Math.max(0, dz));
     const gapM = outside > 0 ? outside : Math.max(dx, dy, dz);
@@ -68,6 +69,115 @@ function nearestDrawnBox(boxes: ReturnType<typeof indexedDrawnBoxes>, point: Pic
 }
 
 describe('R29 independent interrupted mode transitions', () => {
+  it.each([{ toggles: [600, 740] }, { toggles: [600, 610, 620] }, { toggles: [600, 740, 750] }])('keeps actual camera position and aim continuous at real mode edges $toggles', ({ toggles }) => {
+    const frames = realFrames(toggles), presenter = initializedPresenter(424242), camera = createCameraPoseScratch();
+    frames.forEach(frame => { ingestModeEdge(presenter, frame); presenter.present(frame, 1); });
+    const at = (frame: SkyriverRenderState, alpha: number) => {
+      const state = { ...frame, ...interpolateSkyriverFlight(frame.previous, frame.current, alpha) };
+      const pose = { ...presenter.present(state, 1) };
+      writeCameraPose(camera, pose, state.camera, { boost: pose.boostVisual, time: (state.current.tick + state.alpha) / 30 });
+      return { ...camera, position: { ...camera.position }, target: { ...camera.target } };
+    };
+    for (const tick of toggles) {
+      const before = at(frames[tick - 2]!, 1 - 1e-6), after = at(frames[tick - 1]!, 1e-6);
+      expect(gap(before.position, after.position), `camera position tick${tick} trace${toggles}`).toBeLessThan(0.01);
+      expect(gap(before.target, after.target), `camera aim tick${tick} trace${toggles}`).toBeLessThan(0.01);
+      expect(Math.abs(before.roll - after.roll), `camera roll tick${tick}`).toBeLessThan(0.0001);
+      expect(Math.abs(before.fov - after.fov), `camera FOV tick${tick}`).toBeLessThan(0.0001);
+      presenter.present(frames[849]!, 1);
+      expect(at(frames[tick - 2]!, 1 - 1e-6)).toEqual(before);
+      expect(at(frames[tick - 1]!, 1e-6)).toEqual(after);
+    }
+  });
+
+  it('keeps the real safe-endpoint990 outbound handoff outside mass2241 with full box distances', () => {
+    const frames = realFrames([990], 1070), presenter = initializedPresenter(424242), target = initializedPresenter(424242), boxes = indexedDrawnBoxes();
+    let source: PresentedFlight | null = null;
+    for (const frame of frames) {
+      ingestModeEdge(presenter, frame);
+      if (frame.tick === 990) source = { ...presenter.present({ ...frame, ...interpolateSkyriverFlight(frame.previous, frame.current, 0) }, 1) };
+      const pose = { ...presenter.present(frame, 1) };
+      if (frame.tick !== 1032) continue;
+      expect(nearestDrawnBox(boxes, source!).gapM - 14).toBeGreaterThan(0);
+      expect(nearestDrawnBox(boxes, target.present(frame, 1)).gapM - 14).toBeGreaterThan(0);
+      expect(nearestDrawnBox(boxes, pose).gapM - 14, 'full box distance at tick1032').toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it.each([424242, 0, 2147483647, 4294967295])('keeps safe hull and camera endpoints clear across sixteen real lap phases for seed%s', seed => {
+    const boxes = indexedDrawnBoxes(seed), clock = initializedPresenter(seed), camera = createCameraPoseScratch();
+    const lapTicks = clock.trackLength * 30 / clock.autopilotSpeedMps;
+    const hits: { startMode: SkyriverStartMode; toggle: number; tick: number; what: 'hull' | 'camera'; sourceGapM: number; targetGapM: number; drawnGapM: number; mass: number }[] = [];
+    const inherited: { startMode: SkyriverStartMode; toggle: number; tick: number; what: 'hull' | 'camera'; sourceGapM: number; targetGapM: number; drawnGapM: number }[] = [];
+    let samples = 0, safeHullSamples = 0, safeCameraSamples = 0, reverseQueries = 0, maxSubtickGapM = 0;
+    for (const startMode of ['autopilot', 'freefly'] as const) {
+      const config = createSkyriverSimConfig(seed, startMode), prefix = [createInitialState(config)];
+      const toggles = Array.from({ length: 16 }, (_, i) => Math.max(1, Math.round((i + 0.5) / 16 * lapTicks)));
+      for (let tick = 1; tick < Math.max(...toggles); tick += 1) prefix.push(advanceState(prefix[tick - 1]!, [SKYRIVER_NEUTRAL_INPUT], config));
+      for (const toggle of toggles) {
+        let previous = prefix[toggle - 1]!;
+        const presenter = initializedPresenter(seed), target = initializedPresenter(seed);
+        const observed: { frame: SkyriverRenderState; pose: PresentedFlight; camera: ReturnType<typeof createCameraPoseScratch> }[] = [];
+        let sourceHullGap = Infinity, sourceCameraGap = Infinity;
+        for (let tick = toggle; tick <= toggle + 75; tick += 1) {
+          const current = advanceState(previous, [{ ...SKYRIVER_NEUTRAL_INPUT, modeToggle: tick === toggle }], config);
+          const p = projectSkyriverState(previous, null), c = projectSkyriverState(current, previous);
+          const frame: SkyriverRenderState = { tick: c.tick, previous: p, current: c, ...interpolateSkyriverFlight(p, c, 0.5), localSlot: 0, status: 'offline' };
+          ingestModeEdge(presenter, frame);
+          if (tick === toggle) {
+            const sourceFrame = { ...frame, ...interpolateSkyriverFlight(p, c, 0) };
+            const source = { ...presenter.present(sourceFrame, 1) };
+            sourceHullGap = nearestDrawnBox(boxes, source).gapM - 14;
+            writeCameraPose(camera, source, sourceFrame.camera, { boost: source.boostVisual, time: (sourceFrame.current.tick + sourceFrame.alpha) / 30 });
+            sourceCameraGap = nearestDrawnBox(boxes, camera.position).gapM - 8;
+          }
+          const pose = { ...presenter.present(frame, 1) }, unblended = { ...target.present(frame, 1) };
+          const before = { ...presenter.present({ ...frame, ...interpolateSkyriverFlight(p, c, 0.49995) }, 1) };
+          const after = { ...presenter.present({ ...frame, ...interpolateSkyriverFlight(p, c, 0.50005) }, 1) };
+          const subtickGapM = gap(before, after);
+          maxSubtickGapM = Math.max(maxSubtickGapM, subtickGapM);
+          expect(subtickGapM, `seed${seed} ${startMode} toggle${toggle} tick${tick} alpha continuity`).toBeLessThan(0.1);
+          const hullHit = nearestDrawnBox(boxes, pose), targetHullGap = nearestDrawnBox(boxes, unblended).gapM - 14;
+          writeCameraPose(camera, pose, frame.camera, { boost: pose.boostVisual, time: (frame.current.tick + frame.alpha) / 30 });
+          const drawnCamera = { ...camera, position: { ...camera.position }, target: { ...camera.target } };
+          observed.push({ frame, pose, camera: drawnCamera });
+          const cameraHit = nearestDrawnBox(boxes, camera.position);
+          writeCameraPose(camera, unblended, frame.camera, { boost: unblended.boostVisual, time: (frame.current.tick + frame.alpha) / 30 });
+          const targetCameraGap = nearestDrawnBox(boxes, camera.position).gapM - 8;
+          samples += 1;
+          for (const [what, sourceGapM, targetGapM, drawnGapM, mass] of [
+            ['hull', sourceHullGap, targetHullGap, hullHit.gapM - 14, hullHit.index],
+            ['camera', sourceCameraGap, targetCameraGap, cameraHit.gapM - 8, cameraHit.index],
+          ] as const) {
+            if (sourceGapM >= 0 && targetGapM >= 0) {
+              if (what === 'hull') safeHullSamples += 1; else safeCameraSamples += 1;
+              if (drawnGapM < 0) hits.push({ startMode, toggle, tick, what, sourceGapM, targetGapM, drawnGapM, mass });
+            } else inherited.push({ startMode, toggle, tick, what, sourceGapM, targetGapM, drawnGapM });
+          }
+          if (tick === toggle + 75) {
+            expect({ ...presenter.present(frame, 1) }).toEqual(pose);
+            expect([pose.x, pose.y, pose.z, pose.yaw, pose.pitch, pose.speed]).toEqual([unblended.x, unblended.y, unblended.z, unblended.yaw, unblended.pitch, unblended.speed]);
+            expect(drawnCamera).toEqual(camera);
+          }
+          previous = current;
+        }
+        for (const { frame, pose, camera: expectedCamera } of observed.reverse()) {
+          const reversePose = { ...presenter.present(frame, 1) };
+          expect(reversePose, `seed${seed} ${startMode} toggle${toggle} reverse tick${frame.tick}`).toEqual(pose);
+          writeCameraPose(camera, reversePose, frame.camera, { boost: reversePose.boostVisual, time: (frame.current.tick + frame.alpha) / 30 });
+          expect(camera, `seed${seed} ${startMode} toggle${toggle} reverse camera tick${frame.tick}`).toEqual(expectedCamera);
+          reverseQueries += 1;
+        }
+      }
+    }
+    expect(samples).toBe(16 * 2 * 76);
+    expect(reverseQueries).toBe(samples);
+    expect(safeHullSamples).toBeGreaterThan(0);
+    expect(safeCameraSamples).toBeGreaterThan(0);
+    if (process.env.SKYRIVER_HANDOFF_SWEEP_OUT) writeFileSync(`${process.env.SKYRIVER_HANDOFF_SWEEP_OUT}-${seed}.json`, JSON.stringify({ seed, phases: 16, radii: { hull: 14, camera: 8 }, samples, reverseQueries, maxSubtickGapM, safeHullSamples, safeCameraSamples, introducedHits: hits, inheritedEndpointSamples: inherited }, null, 2));
+    expect(hits, `full drawn-box safe-endpoint violations for seed${seed}`).toEqual([]);
+  }, 60_000);
+
   it('keeps a real free-flight return continuous at the target half-loop boundary and after reverse seeks', () => {
     const frames = realFrames([1030], 1130, 'freefly'), presenter = initializedPresenter(424242);
     frames.forEach(frame => { ingestModeEdge(presenter, frame); presenter.present(frame, 1); });

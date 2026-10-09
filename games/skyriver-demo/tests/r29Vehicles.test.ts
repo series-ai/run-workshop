@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import baseline from './fixtures/r29-baseline.json';
+import cameraBaseline from './fixtures/r29-camera-baseline.json';
 import exportsBefore from './fixtures/r29-exports.json';
 import * as trafficExports from '../src/render/traffic';
 import * as shuttleExports from '../src/render/shuttle';
@@ -19,6 +20,7 @@ import { projectSkyriverState } from '../src/sim/runtime';
 import { interpolateSkyriverFlight } from '../src/sim/session';
 import type { SkyriverRenderState } from '../src/sim/session';
 import { skyriverDeclaredStageRole } from '../src/render/stageRoles';
+import { createCameraPoseScratch, writeCameraPose } from '../src/render/cameraRig';
 
 function frame(sample: typeof baseline.samples[number], alpha = sample.alpha): SkyriverRenderState {
   return { tick: sample.tick, alpha, previous: sample.previous, current: sample.current,
@@ -104,6 +106,16 @@ function ingestModeEdge(presenter: ReturnType<typeof createFlightPresenter>, sta
 }
 
 describe('R29 independent vehicle and presentation contracts', () => {
+  it('keeps steady camera endpoints equal to the frozen pre-R29 rig in both modes', () => {
+    expect(cameraBaseline.samples).toHaveLength(64);
+    expect(new Set(cameraBaseline.samples.map(sample => sample.flight.mode))).toEqual(new Set([0, 1]));
+    const camera = createCameraPoseScratch();
+    for (const sample of cameraBaseline.samples) {
+      const flight = { ...sample.flight, mode: sample.flight.mode === 0 ? 0 as const : 1 as const };
+      expect(writeCameraPose(camera, flight, sample.camera, sample.effects), `seed${sample.seed} mode${flight.mode} tick${sample.tick} boost${sample.effects.boost}`).toEqual(sample.expected);
+    }
+  });
+
   it('keeps old public exports and the selected high DPR cap', () => {
     for (const [key, module] of [['traffic', trafficExports], ['shuttle', shuttleExports], ['flight', flightExports]] as const) {
       for (const name of exportsBefore[key]) expect(Object.keys(module)).toContain(name);
