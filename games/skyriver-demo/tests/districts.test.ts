@@ -858,11 +858,12 @@ describe('R22 shader colour paths', () => {
     // Rooms and resolved panes, then the matched far pane average.
     expect(source.towerFragment).toContain('resolved = skyriverDistrictTint( resolved, vDistrict, DISTRICT_PANE_SATURATION );');
     expect(source.towerFragment).toContain('averaged = skyriverDistrictTint( averaged, vDistrict, DISTRICT_PANE_SATURATION );');
-    // R15 far-box windows, deck skylights, and the R13 landmark wash.
+    // R15 far-box windows and the R13 landmark wash stay active.
     expect(source.towerFragment).toContain('skyriverDistrictTint( farWindow, vDistrict, DISTRICT_PANE_SATURATION )');
     expect(source.towerFragment).not.toContain('parapetLive');
     expect(SKYRIVER_DISTRICT_SOURCE_TERMS.map(term => term.id)).not.toContain('tower-parapet');
-    expect(source.towerFragment).toContain('skyriverDistrictLamp( vec3( 1.0, 0.55, 0.2 ) * skylight');
+    expect(source.towerFragment).not.toContain('skylight * deckRoof');
+    expect(SKYRIVER_DISTRICT_SOURCE_TERMS.map(term => term.id)).not.toContain('deck-skylight');
     expect(source.towerFragment).toContain('gl_FragColor.rgb += skyriverDistrictTint( washColor * wash * through * near * EMISSIVE_GAIN,');
     // Trim: neutral small lamps, large district accents.
     expect(source.trimFragment).toContain('skyriverDistrictLamp( vec3( 1.0, 0.68, 0.33 )');

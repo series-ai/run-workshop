@@ -1,0 +1,309 @@
+{
+  "referenceSha256": "baacbda51c03d869b4dc1aa794ef6fea2ffb5c2d9b5a0dd4552227cab8cd35f9",
+  "protocol": "six shared CPU buffers; frozen CSS-runner result; no rendered frames",
+  "rows": [
+    {
+      "css": [
+        1280,
+        720
+      ],
+      "dpr": 1,
+      "expected": {
+        "counts": {
+          "lightPopIn": 3,
+          "lightPopOut": 3,
+          "lightFlicker": 1,
+          "readbacks": 6
+        },
+        "events": [
+          {
+            "tick": 1,
+            "type": "lightPopIn",
+            "pxCss": [
+              448,
+              356
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          },
+          {
+            "tick": 2,
+            "type": "lightPopOut",
+            "pxCss": [
+              448,
+              356
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          },
+          {
+            "tick": 2,
+            "type": "lightPopIn",
+            "pxCss": [
+              832,
+              356
+            ],
+            "v": 220,
+            "cls": "same_car_impostor",
+            "idx": null,
+            "occluded": false
+          },
+          {
+            "tick": 3,
+            "type": "lightPopIn",
+            "pxCss": [
+              448,
+              356
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          },
+          {
+            "tick": 3,
+            "type": "lightFlicker",
+            "pxCss": [
+              448,
+              356
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          },
+          {
+            "tick": 4,
+            "type": "lightPopOut",
+            "pxCss": [
+              832,
+              356
+            ],
+            "v": 220,
+            "cls": "same_car_impostor",
+            "idx": null,
+            "occluded": false
+          },
+          {
+            "tick": 5,
+            "type": "lightPopOut",
+            "pxCss": [
+              448,
+              356
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          }
+        ]
+      }
+    },
+    {
+      "css": [
+        1280,
+        720
+      ],
+      "dpr": 1.25,
+      "expected": {
+        "counts": {
+          "lightPopIn": 3,
+          "lightPopOut": 3,
+          "lightFlicker": 1,
+          "readbacks": 6
+        },
+        "events": [
+          {
+            "tick": 1,
+            "type": "lightPopIn",
+            "pxCss": [
+              448,
+              356
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          },
+          {
+            "tick": 2,
+            "type": "lightPopOut",
+            "pxCss": [
+              448,
+              356
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          },
+          {
+            "tick": 2,
+            "type": "lightPopIn",
+            "pxCss": [
+              832,
+              356
+            ],
+            "v": 220,
+            "cls": "same_car_impostor",
+            "idx": null,
+            "occluded": false
+          },
+          {
+            "tick": 3,
+            "type": "lightPopIn",
+            "pxCss": [
+              448,
+              356
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          },
+          {
+            "tick": 3,
+            "type": "lightFlicker",
+            "pxCss": [
+              448,
+              356
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          },
+          {
+            "tick": 4,
+            "type": "lightPopOut",
+            "pxCss": [
+              832,
+              356
+            ],
+            "v": 220,
+            "cls": "same_car_impostor",
+            "idx": null,
+            "occluded": false
+          },
+          {
+            "tick": 5,
+            "type": "lightPopOut",
+            "pxCss": [
+              448,
+              356
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          }
+        ]
+      }
+    },
+    {
+      "css": [
+        1001,
+        563
+      ],
+      "dpr": 1.25,
+      "expected": {
+        "counts": {
+          "lightPopIn": 3,
+          "lightPopOut": 3,
+          "lightFlicker": 1,
+          "readbacks": 6
+        },
+        "events": [
+          {
+            "tick": 1,
+            "type": "lightPopIn",
+            "pxCss": [
+              348,
+              276
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          },
+          {
+            "tick": 2,
+            "type": "lightPopOut",
+            "pxCss": [
+              348,
+              276
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          },
+          {
+            "tick": 2,
+            "type": "lightPopIn",
+            "pxCss": [
+              648,
+              276
+            ],
+            "v": 220,
+            "cls": "same_car_impostor",
+            "idx": null,
+            "occluded": false
+          },
+          {
+            "tick": 3,
+            "type": "lightPopIn",
+            "pxCss": [
+              348,
+              276
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          },
+          {
+            "tick": 3,
+            "type": "lightFlicker",
+            "pxCss": [
+              348,
+              276
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          },
+          {
+            "tick": 4,
+            "type": "lightPopOut",
+            "pxCss": [
+              648,
+              276
+            ],
+            "v": 220,
+            "cls": "same_car_impostor",
+            "idx": null,
+            "occluded": false
+          },
+          {
+            "tick": 5,
+            "type": "lightPopOut",
+            "pxCss": [
+              348,
+              276
+            ],
+            "v": 220,
+            "cls": "stream",
+            "idx": 0,
+            "occluded": false
+          }
+        ]
+      }
+    }
+  ]
+}

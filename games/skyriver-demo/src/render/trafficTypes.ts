@@ -131,10 +131,11 @@ export interface SkyriverTraffic {
   update(time: TrafficTime, camera: TrafficPoint): void;
 
   /**
-   * Inverse vertical focal length per drawing-buffer pixel: 2 * tan(FOV / 2) / buffer height.
-   * The lamps use this value for the pixel floor. Call this on resize or DPR change.
+   * Inverse vertical focal lengths per drawing-buffer pixel and CSS pixel.
+   * The first value drives physical-pixel filtering. The second keeps lamp floors, culling, and
+   * trail width stable in CSS pixels. Call on resize or DPR change.
    */
-  setPixelAngle(inverseFocalLengthPx: number): void;
+  setPixelAngle(inverseFocalLengthBufferPx: number, inverseFocalLengthCssPx: number): void;
 
   /**
    * T6R-2: the presented shuttle pose (sim turns for yaw) and its speed, m/s. The escort vehicles

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import materialBaseline from './fixtures/r29b-material-baseline.json';
-import { withoutR31RoofPolicy } from './support/r31RoofPolicy';
+import { withoutR32RoofPolicy } from './support/r32RoofPolicy';
 import * as THREE from 'three';
 // These external texture stubs permit real geometry construction. They do not supply an oracle.
 vi.mock('../src/render/signAtlas', async importOriginal => {
@@ -45,13 +45,13 @@ function actualMesh(city: SkyriverCity, name: string): THREE.InstancedMesh {
 }
 
 describe('R29 independent building palette and value controls', () => {
-  it('keeps the material oracle outside the explicit R31 roof policy in the actual city shaders', () => {
+  it('keeps the material oracle outside the explicit R31 and R32 roof policies in the actual city shaders', () => {
     for (const file of ['windowPalette.ts'] as const) {
       expect(createHash('sha256').update(readFileSync(new URL('../src/render/' + file, import.meta.url))).digest('hex')).toBe(materialBaseline.sourceHashes[file]);
     }
     const withoutBaseGain = (source: string) => source.replaceAll('(structureFamilyGain(family) * 0.65)', 'structureFamilyGain(family)');
     for (const [key, source] of Object.entries(SKYRIVER_CITY_SHADER_SOURCE)) {
-      expect(createHash('sha256').update(withoutBaseGain(withoutR31RoofPolicy(source, key))).digest('hex'), key).toBe(materialBaseline.shaderHashes[key as keyof typeof materialBaseline.shaderHashes]);
+      expect(createHash('sha256').update(withoutBaseGain(withoutR32RoofPolicy(source, key))).digest('hex'), key).toBe(materialBaseline.shaderHashes[key as keyof typeof materialBaseline.shaderHashes]);
     }
     const city = new SkyriverCity({ layout: presentCityLayout(deriveCityLayout(424242)), quality: skyriverQualityFor(SkyriverQualityTier.High), colourSwitch: new SkyriverDistrictColourSwitch(true) });
     try {

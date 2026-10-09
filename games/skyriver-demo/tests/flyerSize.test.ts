@@ -436,7 +436,7 @@ describe('R28 real CPU identities and shared shader inputs', () => {
         expect(material.vertexShader.match(/trafficLampKernel\(/g)).toHaveLength(2);
       }
       const inverseFocal = 2 * Math.tan(62 * Math.PI / 360) / 900;
-      traffic.setPixelAngle(inverseFocal);
+      traffic.setPixelAngle(inverseFocal, inverseFocal);
       expect(cpu.uniforms.uPixelAngle!.value).toBe(inverseFocal);
       expect(gpu.uniforms.uPixelAngle!.value).toBe(inverseFocal);
       expect(TRAFFIC_LAMP_MIN_DIAMETER_PX).toBe(1.3);

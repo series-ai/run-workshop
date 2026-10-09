@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import * as THREE from 'three';
 import baseline from './fixtures/r31-city-policy-baseline.json';
-import { withoutR31RoofPolicy } from './support/r31RoofPolicy';
+import { withoutR32RoofPolicy } from './support/r32RoofPolicy';
 // External texture stubs permit the real factory. They do not provide the oracle.
 vi.mock('../src/render/signAtlas', async importOriginal => {
   const original = await importOriginal<typeof import('../src/render/signAtlas')>();
@@ -73,6 +73,7 @@ describe('R31 independent roof emission policy', () => {
         const { emissionPolicy: changedPolicy, ...changedOld } = changed; expect(changedOld).toEqual(oldIdentity);
         mask.setX(at, 0); expect(city.geometryIdentity()).toEqual(identity);
         expect(city.sourceEvidence().roles.map(role => role.id)).not.toContain('tower-parapet');
+        expect(city.sourceEvidence().roles.map(role => role.id)).not.toContain('deck-skylight');
         evidence.push({ seed, mode, drawnMasses: rows.length, equipment, emittingRows: rows.length - equipment, paneCells: cells, emissionPolicy, mutationPolicy: changedPolicy, identity: oldIdentity });
       }
     } finally { city.dispose(); }
@@ -80,12 +81,16 @@ describe('R31 independent roof emission policy', () => {
   });
 
   it('changes only the approved roof shader terms and retains all other lighting', () => {
-    for (const [key, source] of Object.entries(SKYRIVER_CITY_SHADER_SOURCE)) expect(createHash('sha256').update(withoutR31RoofPolicy(source, key)).digest('hex'), key).toBe(baseline.shaderHashes[key as keyof typeof baseline.shaderHashes]);
+    for (const [key, source] of Object.entries(SKYRIVER_CITY_SHADER_SOURCE)) expect(createHash('sha256').update(withoutR32RoofPolicy(source, key)).digest('hex'), key).toBe(baseline.shaderHashes[key as keyof typeof baseline.shaderHashes]);
     const source = SKYRIVER_CITY_SHADER_SOURCE;
     expect(source.towerVertex).toContain('vEmissionAllowed = aEmissionAllowed;');
     expect(source.towerFragment).toContain('flat varying float vEmissionAllowed;');
     expect(source.towerFragment).not.toContain('parapetLive');
+    for (const removed of ['float deckRoof', 'vec2 skyCell', 'float skylight', 'skylight * deckRoof']) expect(source.towerFragment).not.toContain(removed);
+    expect(source.towerFragment).toContain('float deckZone = 1.0 - smoothstep( 70.0, 160.0, vWorldPos.y );');
+    expect(source.towerFragment).toContain('float F = clamp( S * furnitureDepthMix * furniturePixelMix, 0.0, 1.0 );');
     expect(SKYRIVER_DISTRICT_SOURCE_TERMS.map(term => term.id)).not.toContain('tower-parapet');
+    expect(SKYRIVER_DISTRICT_SOURCE_TERMS.map(term => term.id)).not.toContain('deck-skylight');
     for (const kept of ['trim-flood', 'trim-band-warm', 'trim-band-cold', 'landmark-wash-face', 'landmark-wash-roof', 'trim-balcony-underlight']) expect(SKYRIVER_DISTRICT_SOURCE_TERMS.map(term => term.id)).toContain(kept);
     const instanceFields = [...source.towerVertex.matchAll(/^attribute\s+\w+\s+(\w+);/gm)].map(m => m[1]);
     expect(instanceFields).toHaveLength(9); expect(new Set(instanceFields).size + 2 + 4).toBe(15);
@@ -103,6 +108,6 @@ describe('R31 independent roof emission policy', () => {
     let previous = 1;
     for (let i = 0; i <= 200; i += 1) { const v = run(0.9 + i / 10000, smooth); expect(v).toBeGreaterThanOrEqual(0); expect(v).toBeLessThanOrEqual(previous + 1e-12); previous = v; }
     expect(source.indexOf('if ( card.a < 0.5 ) discard;')).toBeLessThan(source.indexOf('card.rgb *='));
-    expect(createHash('sha256').update(withoutR31RoofPolicy(source, 'impostorFragment')).digest('hex')).toBe(baseline.shaderHashes.impostorFragment);
+    expect(createHash('sha256').update(withoutR32RoofPolicy(source, 'impostorFragment')).digest('hex')).toBe(baseline.shaderHashes.impostorFragment);
   });
 });
