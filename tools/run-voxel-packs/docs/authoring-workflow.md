@@ -136,6 +136,18 @@ shows the same defect in several assets.
 
 ### How the four-pack expansion ran
 
+The first four-pack build used voxel-as-code sources and Pirate Nation rig
+data as its reference. The first scale pass followed the user's report that
+mixed voxel sizes looked poor. It set a 36-voxel person and a 16-voxel tile.
+Authors re-authored detail at one-voxel resolution instead of scaling a
+finished grid. The next art pass followed the user's report that one-voxel
+relief looked too small. It moved small detail into a painted atlas and used
+large forms and true slopes for geometry. The palette limits came from
+area-weighted Pirate Nation measurements. Later passes added effect aim and
+timing, z-fighting checks, and closing loop helpers. These decisions were
+saved in local project memory and in the original art direction plan. This
+workflow carries their current rules into the repository.
+
 The expansion first measured Pirate Nation references. It tested 40 pilot
 models, 10 per pack, with every category represented. Two reviewers judged
 each pilot model without seeing the author or each other's verdict. A pack
