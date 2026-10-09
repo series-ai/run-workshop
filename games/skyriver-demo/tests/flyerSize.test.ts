@@ -391,6 +391,65 @@ describe('R28 actual hull lamp geometry', () => {
       expect(bus.centreXM * 2 + bus.widthM).toBeGreaterThan(interceptor.widthM);
     });
   });
+
+  it('preserves physical lamp bounds in lateral views with real hull vertices', () => {
+    withTraffic(424242, traffic => {
+      const width = 1280, height = 720;
+      const camera = new PerspectiveCamera(62, width / height, 1, 14000);
+      camera.updateMatrixWorld();
+      for (const before of GEOMETRY_BEFORE) {
+        const geometry = meshNamed(traffic, 'skyriver.traffic.' + before.name).geometry;
+        const positions = geometry.getAttribute('position');
+        const colors = geometry.getAttribute('color');
+        const profile = TRAFFIC_APPEARANCE_PROFILES[before.renderId]!;
+        for (const [key, rgb] of [['front', [2, 2.15, 2.3]], ['rear', [4, 0.3, 0.2]]] as const) {
+          const actual: Vector3[] = [];
+          for (let vertex = 0; vertex < positions.count; vertex++) {
+            const color = [colors.getX(vertex), colors.getY(vertex), colors.getZ(vertex)];
+            if (color.every((value, component) => Math.abs(value - rgb[component]!) < 1e-6)) {
+              actual.push(new Vector3().fromBufferAttribute(positions, vertex));
+            }
+          }
+          expect(actual.length).toBeGreaterThan(0);
+          const lamp = profile[key];
+          const separation = lamp.kind === 'pair' ? lamp.centreXM : lamp.widthM / 4;
+          const kernelWidth = lamp.kind === 'pair' ? lamp.widthM : lamp.widthM / 2;
+          const expected: Vector3[] = [];
+          for (const side of [-1, 1]) for (const x of [-1, 1]) for (const y of [-1, 1]) {
+            expected.push(new Vector3(side * separation + x * kernelWidth / 2,
+              lamp.yM + y * lamp.heightM / 2, lamp.zM));
+          }
+          for (const yawDegrees of [-100, -90, -80, 80, 90, 100]) {
+            const yaw = yawDegrees * Math.PI / 180;
+            const forward = new Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+            const right = new Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+            const up = new Vector3(0, 1, 0);
+            for (const bank of [0, 0.25]) {
+              const rightBank = right.clone().multiplyScalar(Math.cos(bank)).addScaledVector(up, Math.sin(bank));
+              const upBank = up.clone().multiplyScalar(Math.cos(bank)).addScaledVector(right, -Math.sin(bank));
+              for (const distance of [1200, 1300, 1400]) for (const lateralM of [-30, 0, 30]) {
+                const projectBounds = (points: Vector3[]): number[] => {
+                  const projected = points.map(point => new Vector3(lateralM, 0, -distance)
+                    .addScaledVector(rightBank, point.x * 2)
+                    .addScaledVector(upBank, point.y * 2)
+                    .addScaledVector(forward, point.z * 2).project(camera));
+                  return [Math.min(...projected.map(point => point.x)) * width / 2,
+                    Math.max(...projected.map(point => point.x)) * width / 2,
+                    Math.min(...projected.map(point => point.y)) * height / 2,
+                    Math.max(...projected.map(point => point.y)) * height / 2];
+                };
+                const measured = projectBounds(actual), predicted = projectBounds(expected);
+                for (let bound = 0; bound < 4; bound++) {
+                  expect(Number.isFinite(measured[bound])).toBe(true);
+                  expect(Math.abs(measured[bound]! - predicted[bound]!)).toBeLessThan(1e-5);
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+  });
 });
 
 describe('R28 Float32 appearance codec', () => {
