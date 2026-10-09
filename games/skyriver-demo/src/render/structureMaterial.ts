@@ -11,6 +11,13 @@ export const REC709_LUMINANCE_WEIGHTS = Object.freeze([0.2126, 0.7152, 0.0722] a
 
 export const STRUCTURE_MATERIAL_GAIN_RANGE = Object.freeze([0.82, 1.18] as const);
 
+/** Family separation is outside the residual weather and face guard. Mean family gain is one. */
+export const STRUCTURE_MATERIAL_FAMILY_GAINS = Object.freeze([0.4, 0.9, 2.1, 0.6] as const);
+export const STRUCTURE_MATERIAL_COMBINED_GAIN_RANGE = Object.freeze([
+  STRUCTURE_MATERIAL_GAIN_RANGE[0] * Math.min(...STRUCTURE_MATERIAL_FAMILY_GAINS),
+  STRUCTURE_MATERIAL_GAIN_RANGE[1] * Math.max(...STRUCTURE_MATERIAL_FAMILY_GAINS),
+] as const);
+
 export const STRUCTURE_MATERIAL_FAMILIES = 4;
 
 export interface StructureMaterialProfile {
@@ -72,10 +79,10 @@ export function decodeCard(packed: number): CardCodecResult {
 
 /** Weak family chroma vectors in linear Rec.709 space. */
 const FAMILY_CHROMA: readonly (readonly [number, number, number])[] = Object.freeze([
-  Object.freeze([1.0, 1.0, 1.0] as const),      // Family 0: Neutral grey
-  Object.freeze([0.96, 1.0, 1.06] as const),   // Family 1: Cool grey
-  Object.freeze([1.05, 1.0, 0.95] as const),   // Family 2: Warm grey
-  Object.freeze([1.02, 1.02, 1.03] as const),  // Family 3: Pale clean grey
+  Object.freeze([0.95, 1.0, 1.05] as const),
+  Object.freeze([0.9, 1.0, 1.15] as const),
+  Object.freeze([1.12, 0.98, 0.82] as const),
+  Object.freeze([0.92, 1.0, 1.2] as const),
 ]);
 
 const FAMILY_EDGE_BASE = Object.freeze([1.0, 1.10, 0.90, 1.0] as const);
@@ -137,6 +144,19 @@ export function normalizeMaterial(
   ];
 }
 
+/** Apply one family gain to the complete normalized non-emissive material. */
+export function normalizeFamilyMaterial(
+  c0: readonly [number, number, number], proposed: readonly [number, number, number],
+  base: number, weather: number, face: number, family: number,
+): [number, number, number] {
+  if (!Number.isInteger(family) || family < 0 || family >= STRUCTURE_MATERIAL_FAMILIES) {
+    throw new Error('SKYRIVER_STRUCTURE_MATERIAL_FAMILY_INVALID');
+  }
+  const normalized = normalizeMaterial(c0, proposed, base, weather, face);
+  const gain = STRUCTURE_MATERIAL_FAMILY_GAINS[family]!;
+  return [normalized[0] * gain, normalized[1] * gain, normalized[2] * gain];
+}
+
 /** Continuous monotonic interior stage weights: S for silhouette, F for furniture detail. */
 export function stageWeights(input: StageWeightsInput): StageWeightsResult {
   const { mode, strength, grazing, isSide, cellPixels, viewDepth } = input;
@@ -172,6 +192,14 @@ vec3 normalizeMaterial( vec3 c0, vec3 proposed, float b, float w, float f ) {
   return proposed * ( ( y0 * gain ) / y1 );
 }
 
+float structureFamilyGain(float family) {
+${STRUCTURE_MATERIAL_FAMILY_GAINS.map((gain, i) => `  if (family < ${(i + 0.5).toFixed(1)}) return ${gain.toFixed(2)};`).join('\n')}
+  return 1.0;
+}
+vec3 normalizeFamilyMaterial(vec3 c0, vec3 proposed, float b, float w, float f, float family) {
+  return normalizeMaterial(c0, proposed, b, w, f) * structureFamilyGain(family);
+}
+
 void structureMaterialProfile( float q, float faceId, out float family, out float b, out float w, out float f, out float edge, out vec3 chroma ) {
   family = floor( q / 16384.0 );
   float low14 = mod( q, 16384.0 );
@@ -183,16 +211,16 @@ void structureMaterialProfile( float q, float faceId, out float family, out floa
   f = hashF * 2.0 - 1.0;
 
   if ( family < 0.5 ) {
-    chroma = vec3( 1.0, 1.0, 1.0 );
+    chroma = vec3( ${FAMILY_CHROMA[0]!.join(', ')} );
     edge = clamp( 1.0 + 0.04 * b, 0.88, 1.12 );
   } else if ( family < 1.5 ) {
-    chroma = vec3( 0.96, 1.0, 1.06 );
+    chroma = vec3( ${FAMILY_CHROMA[1]!.join(', ')} );
     edge = clamp( 1.10 + 0.04 * b, 0.88, 1.12 );
   } else if ( family < 2.5 ) {
-    chroma = vec3( 1.05, 1.0, 0.95 );
+    chroma = vec3( ${FAMILY_CHROMA[2]!.join(', ')} );
     edge = clamp( 0.90 + 0.04 * b, 0.88, 1.12 );
   } else {
-    chroma = vec3( 1.02, 1.02, 1.03 );
+    chroma = vec3( ${FAMILY_CHROMA[3]!.join(', ')} );
     edge = clamp( 1.0 + 0.04 * b, 0.88, 1.12 );
   }
 }

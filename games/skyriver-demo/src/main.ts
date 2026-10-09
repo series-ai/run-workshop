@@ -38,7 +38,7 @@ import type {
   SkyriverGeometryIdentity,
   SkyriverLightSource,
 } from './render/city';
-import type { SkyriverDistrict, SkyriverDistrictModel } from './render/districts';
+import { skyriverDistrictHazeTint, type SkyriverDistrict, type SkyriverDistrictModel, type SkyriverLinearRgb } from './render/districts';
 import type { SkyriverDistrictHazeEvidence } from './render/atmosphere';
 import { TRAFFIC_QUALITY_TIERS, createSkyriverTraffic } from './render/traffic';
 import { deriveImpostorAttributes, impostorFlow, impostorPosition } from './render/trafficStreams';
@@ -432,15 +432,44 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   scene.registerStageRoles(traffic.objects);
 
   const shuttle = createSkyriverShuttle({ depthFade: scene.depthFade });
-  // T6R: the drawn shuttle pose. Autopilot rides a canyon-run track mapped 1:1 from the sim's own arc
-  // length; free flight draws the sim pose (render/flightPresentation.ts). Pure, presentation-only.
+  // R29: autopilot uses a slower pure tick route; free flight draws the sim pose.
   const presenter = createFlightPresenter(seed);
   const wakeSamples = createWorldWakeSamples();
+  let districtTintBucket = Number.NaN;
+  let districtTintTick = Number.NaN;
+  let districtTintAllowed = true;
+  let shuttleDistrictTint: SkyriverLinearRgb = [1, 1, 1];
   for (const object of shuttle.objects) scene.scene.add(object);
   // The plume is a child of the hull and carries the other role, so this traverses the subtree.
   scene.registerStageRoles(shuttle.objects);
 
   const session = createSkyriverRunnerSession(seed, startMode);
+  let presentationEpoch = 0;
+  presenter.resetTimeline(presentationEpoch);
+  let observedRollbackCount = session.runner.rollbackCount;
+  let observedLifecycle = runnerLifecycleIdentity();
+
+  function runnerLifecycleIdentity(): string {
+    const lifecycle = session.runner.lifecycle;
+    return 'mode' in lifecycle ? `${lifecycle.state}:${lifecycle.mode}` : lifecycle.state;
+  }
+
+  // An epoch identifies one runner history. Rollback or lifecycle replacement clears observed edges;
+  // a reverse seek within the same history keeps them for deterministic replay.
+  function resetPresentationTimeline(): void {
+    presentationEpoch += 1;
+    presenter.resetTimeline(presentationEpoch);
+    observedRollbackCount = session.runner.rollbackCount;
+    observedLifecycle = runnerLifecycleIdentity();
+  }
+
+  function syncPresentationTimeline(): void {
+    const rollbackCount = session.runner.rollbackCount;
+    const lifecycle = runnerLifecycleIdentity();
+    if (rollbackCount !== observedRollbackCount || lifecycle !== observedLifecycle) {
+      resetPresentationTimeline();
+    }
+  }
 
   const hud = createSkyriverHud({
     root,
@@ -480,7 +509,21 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
 
   const unsubscribeEvents = session.runner.subscribeEvents((record) => {
     eventCount += 1;
-    hud.showEvent(record.payload as SkyriverHudEvent);
+    const event = record.payload as SkyriverHudEvent;
+    syncPresentationTimeline();
+    if (event.kind === 'mode') {
+      // The SDK dispatches after it installs this stepped frame as current, even if the display skips it.
+      const edge = session.runner.getRenderState();
+      if (
+        record.frame !== edge.current.tick || event.tick !== record.frame ||
+        edge.current.tick - edge.previous.tick !== 1 ||
+        edge.previous.flight.mode === edge.current.flight.mode
+      ) {
+        fail('SKYRIVER_MODE_EVENT_PROJECTION_MISMATCH');
+      }
+      presenter.observeModeEdge(edge, presentationEpoch);
+    }
+    hud.showEvent(event);
   });
 
   /* ---- input ---------------------------------------------------------------------------------- */
@@ -692,6 +735,7 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
     session.update(deltaMs);
 
     if (session.runner.ready) {
+      syncPresentationTimeline();
       const state = session.runner.getRenderState();
       renderState = state;
 
@@ -701,7 +745,7 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
       }
       lastTick = state.current.tick;
 
-      const presented = presenter.present(state);
+      const presented = presenter.present(state, presentationEpoch);
       scene.atmosphere.setBoost(presented.boostVisual);
       writeCameraPose(poseScratch, presented, state.camera, {
         boost: presented.boostVisual,
@@ -737,12 +781,23 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
       traffic.setAnchor(
         presented.x, presented.y, presented.z, presented.yaw,
         // 1.8 matches the sim's BOOST_MULTIPLIER (systems.ts).
-        presented.speed * (presented.boostT > 0 ? 1.8 : 1),
+        presented.speed * (presented.mode !== 0 && presented.boostT > 0 ? 1.8 : 1),
         presented.canyonV, presented.canyonX,
       );
+      const tintBucket = Math.floor(state.current.tick / 30);
+      const districtAllowed = scene.city.districtColourAllowed;
+      if (tintBucket !== districtTintBucket || state.current.tick < districtTintTick || districtAllowed !== districtTintAllowed) {
+        shuttleDistrictTint = districtAllowed
+          ? skyriverDistrictHazeTint(scene.city.districtModel(), presented.canyonV)
+          : [1, 1, 1];
+        districtTintBucket = tintBucket;
+        districtTintAllowed = districtAllowed;
+      }
+      districtTintTick = state.current.tick;
       shuttle.update({
         boostVisual: presented.boostVisual,
         time,
+        districtTint: shuttleDistrictTint,
         wake: wakeSamples,
       });
 
@@ -816,7 +871,9 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
     tiers,
 
     async start(): Promise<void> {
+      resetPresentationTimeline();
       await session.start();
+      syncPresentationTimeline();
       running = true;
       lastFrameMs = null;
       scene.resetFrameClock();
@@ -868,6 +925,7 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
       running = false;
       if (rafHandle !== null && view !== null) view.cancelAnimationFrame(rafHandle);
       rafHandle = null;
+      resetPresentationTimeline();
       unsubscribeEvents();
       doc.removeEventListener('visibilitychange', onVisibilityChange);
       view?.removeEventListener('resize', resize);

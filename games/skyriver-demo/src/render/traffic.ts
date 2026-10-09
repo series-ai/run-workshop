@@ -438,6 +438,65 @@ function pushBox(
     r * SHADE_SIDE_LEFT, g * SHADE_SIDE_LEFT, b * SHADE_SIDE_LEFT);
 }
 
+/** A low hull cassette with clipped corners and small chamfers on both ends. */
+function pushChamferedPrism(
+  build: MeshBuild,
+  cx: number, cy: number, cz: number,
+  sx: number, sy: number, sz: number,
+  bevel: number,
+  r: number, g: number, b: number,
+): void {
+  const hx = sx / 2;
+  const hy = sy / 2;
+  const hz = sz / 2;
+  const cut = Math.min(bevel, hx * 0.32, hy * 0.32, hz * 0.4);
+  const stations = [
+    { z: cz - hz, scale: 0.92 },
+    { z: cz - hz + cut, scale: 1 },
+    { z: cz + hz - cut, scale: 1 },
+    { z: cz + hz, scale: 0.92 },
+  ];
+  const cross = (z: number, scale: number): readonly [number, number, number][] => {
+    const x = hx * scale;
+    const y = hy * scale;
+    const c = Math.min(cut, x * 0.35, y * 0.35);
+    return [
+      [cx - x + c, cy - y, z], [cx + x - c, cy - y, z],
+      [cx + x, cy - y + c, z], [cx + x, cy + y - c, z],
+      [cx + x - c, cy + y, z], [cx - x + c, cy + y, z],
+      [cx - x, cy + y - c, z], [cx - x, cy - y + c, z],
+    ];
+  };
+  const shades = [SHADE_BOTTOM, SHADE_SIDE_RIGHT, SHADE_SIDE_RIGHT, SHADE_TOP, SHADE_TOP, SHADE_SIDE_LEFT, SHADE_SIDE_LEFT, SHADE_BOTTOM];
+  const rings = stations.map((station) => cross(station.z, station.scale));
+  const inside = [cx, cy, cz] as const;
+  for (let i = 0; i + 1 < rings.length; i += 1) {
+    const a = rings[i]!;
+    const c = rings[i + 1]!;
+    for (let j = 0; j < a.length; j += 1) {
+      const k = (j + 1) % a.length;
+      const shade = shades[j]!;
+      pushQuadOut(build, ...a[j]!, ...c[j]!, ...c[k]!, ...a[k]!, ...inside,
+        r * shade, g * shade, b * shade);
+    }
+  }
+  for (let j = 0; j < rings[0]!.length; j += 1) {
+    const k = (j + 1) % rings[0]!.length;
+    const rear = rings[0]!;
+    const front = rings[rings.length - 1]!;
+    pushTriOut(build, cx, cy, stations[0]!.z, ...rear[k]!, ...rear[j]!, ...inside,
+      r * SHADE_BACK, g * SHADE_BACK, b * SHADE_BACK);
+    pushTriOut(build, cx, cy, stations[stations.length - 1]!.z, ...front[j]!, ...front[k]!, ...inside,
+      r * SHADE_FRONT, g * SHADE_FRONT, b * SHADE_FRONT);
+  }
+}
+
+function pushTopSeam(build: MeshBuild, cx: number, y: number, z0: number, z1: number, width: number, r: number, g: number, b: number): void {
+  const inner = [cx, y - 0.1, (z0 + z1) / 2] as const;
+  pushQuadOut(build, cx - width / 2, y, z0, cx + width / 2, y, z0,
+    cx + width / 2, y, z1, cx - width / 2, y, z1, ...inner, r, g, b);
+}
+
 /**
  * Appends an emissive patch in the XY plane: a headlight or taillight. Set slightly off the hull face
  * it sits on, so it never z-fights with it.
@@ -545,12 +604,20 @@ function buildCab(): MeshBuild {
   const g = body * 0.9;
   const b = body * 0.85;
 
-  pushBox(build, 0, 0, 0, 2, 0.8, 4.4, r, g, b);
-  pushBox(build, 0, 0.72, -0.2, 1.72, 0.76, 2.4, r * 0.82, g * 0.82, b * 0.82);
+  pushChamferedPrism(build, 0, 0, 0, 2, 0.8, 4.4, 0.16, r, g, b);
+  pushChamferedPrism(build, 0, 0.72, -0.2, 1.72, 0.76, 2.4, 0.18, r * 0.82, g * 0.82, b * 0.82);
   pushBox(build, 0, -0.08, 2.32, 1.6, 0.52, 0.56, r * 0.9, g * 0.9, b * 0.9);
+  // Keep the taxi lamp's original faces, vertices, and profile. The hull below gains the chamfers.
   pushBox(build, 0, 1.2, 0.1, 0.9, 0.24, 0.5, SIGN_R, SIGN_G, SIGN_B);
-  pushBox(build, 1.14, -0.16, -0.6, 0.36, 0.5, 1.9, 0.2, 0.2, 0.22);
-  pushBox(build, -1.14, -0.16, -0.6, 0.36, 0.5, 1.9, 0.2, 0.2, 0.22);
+  pushChamferedPrism(build, 1.14, -0.16, -0.6, 0.36, 0.5, 1.9, 0.08, 0.2, 0.2, 0.22);
+  pushChamferedPrism(build, -1.14, -0.16, -0.6, 0.36, 0.5, 1.9, 0.08, 0.2, 0.2, 0.22);
+  pushTopSeam(build, 0, 0.405, -1.82, 1.1, 1.62, 0.018, 0.016, 0.02);
+  pushTopSeam(build, 0, 1.12, -1.04, 0.76, 1.48, 0.026, 0.03, 0.038);
+  for (const side of [-1, 1]) {
+    pushQuadOut(build, side * 0.58, -0.405, -1.36, side * 0.7, -0.405, -1.36,
+      side * 0.7, -0.405, 1.78, side * 0.58, -0.405, 1.78,
+      0, -0.1, 0, 0.018, 0.02, 0.024);
+  }
 
   pushProfileLights(build, 0);
 
@@ -617,9 +684,9 @@ function buildInterceptor(): MeshBuild {
   pushQuadOut(build, t0x, t0y, tailZ, t1x, t1y, tailZ, t2x, t2y, tailZ, t3x, t3y, tailZ,
     0, 0, 0, r * SHADE_BACK, g * SHADE_BACK, b * SHADE_BACK);
 
-  pushBox(build, 0, 0.48, 1, 0.56, 0.32, 1.3, 0.1, 0.16, 0.2);
-  pushBox(build, 0.52, -0.02, -2.78, 0.4, 0.4, 0.36, 0.14, 0.15, 0.17);
-  pushBox(build, -0.52, -0.02, -2.78, 0.4, 0.4, 0.36, 0.14, 0.15, 0.17);
+  pushChamferedPrism(build, 0, 0.48, 1, 0.56, 0.32, 1.3, 0.09, 0.1, 0.16, 0.2);
+  pushChamferedPrism(build, 0.52, -0.02, -2.78, 0.4, 0.4, 0.36, 0.07, 0.14, 0.15, 0.17);
+  pushChamferedPrism(build, -0.52, -0.02, -2.78, 0.4, 0.4, 0.36, 0.07, 0.14, 0.15, 0.17);
 
   // Swept fins, one quad each. Interior reference below the fin so both faces wind outward-ish;
   // fins are thin plates, so a single-sided plate is the honest low-poly choice here.
@@ -627,6 +694,12 @@ function buildInterceptor(): MeshBuild {
     0, -2, -1.8, r * 0.9, g * 0.9, b * 0.9);
   pushQuadOut(build, -0.9, -0.1, -1.1, -1.9, 0.72, -2.5, -1.9, 0.52, -2.72, -0.9, -0.3, -1.3,
     0, -2, -1.8, r * 0.9, g * 0.9, b * 0.9);
+  pushTopSeam(build, 0, 0.422, -1.85, 2.3, 0.8, 0.014, 0.018, 0.022);
+  for (const side of [-1, 1]) {
+    pushQuadOut(build, side * 0.23, -0.27, -1.9, side * 0.34, -0.27, -1.9,
+      side * 0.34, -0.27, 1.4, side * 0.23, -0.27, 1.4,
+      0, -0.55, 0, 0.018, 0.02, 0.024);
+  }
 
   pushProfileLights(build, 1);
 
@@ -640,10 +713,16 @@ function buildCommuter(): MeshBuild {
   const g = 0.076;
   const b = 0.085;
 
-  pushBox(build, 0, -0.26, 0, 2.2, 0.72, 4.2, r, g, b);
+  pushChamferedPrism(build, 0, -0.26, 0, 2.2, 0.72, 4.2, 0.18, r, g, b);
   pushDome(build, 0, 0.06, 0.1, 1.02, 1.1, 1.9, 8, 3, 0.05, 0.09, 0.12);
-  pushBox(build, 0.96, -0.74, -0.1, 0.26, 0.4, 2.6, 0.16, 0.17, 0.19);
-  pushBox(build, -0.96, -0.74, -0.1, 0.26, 0.4, 2.6, 0.16, 0.17, 0.19);
+  pushChamferedPrism(build, 0.96, -0.74, -0.1, 0.26, 0.4, 2.6, 0.07, 0.16, 0.17, 0.19);
+  pushChamferedPrism(build, -0.96, -0.74, -0.1, 0.26, 0.4, 2.6, 0.07, 0.16, 0.17, 0.19);
+  pushTopSeam(build, 0, 0.1, -1.3, 1.5, 1.8, 0.016, 0.019, 0.022);
+  for (const side of [-1, 1]) {
+    pushQuadOut(build, side * 0.48, -0.64, -1.45, side * 0.66, -0.64, -1.45,
+      side * 0.66, -0.64, 1.45, side * 0.48, -0.64, 1.45,
+      0, -0.9, 0, 0.014, 0.018, 0.022);
+  }
 
   pushProfileLights(build, 2);
 
@@ -656,12 +735,17 @@ function buildVan(): MeshBuild {
   const r = 0.085;
   const g = 0.08;
   const b = 0.075;
-  pushBox(build, 0, 0, -0.3, 2.3, 1.1, 3.6, r, g, b);
-  pushBox(build, 0, 0.95, -0.7, 2.1, 0.95, 2.6, r * 0.9, g * 0.9, b * 0.9);
-  pushBox(build, 0, -0.15, 1.85, 2.1, 0.75, 0.9, r, g, b);
-  pushBox(build, 0, 0.55, 1.2, 1.8, 0.35, 0.5, 0.04, 0.07, 0.1);
-  pushBox(build, 1.2, -0.45, -0.4, 0.3, 0.45, 2.6, 0.15, 0.15, 0.16);
-  pushBox(build, -1.2, -0.45, -0.4, 0.3, 0.45, 2.6, 0.15, 0.15, 0.16);
+  pushChamferedPrism(build, 0, 0, -0.3, 2.3, 1.1, 3.6, 0.2, r, g, b);
+  pushChamferedPrism(build, 0, 0.95, -0.7, 2.1, 0.95, 2.6, 0.18, r * 0.9, g * 0.9, b * 0.9);
+  pushChamferedPrism(build, 0, -0.15, 1.85, 2.1, 0.75, 0.9, 0.14, r, g, b);
+  pushChamferedPrism(build, 0, 0.55, 1.2, 1.8, 0.35, 0.5, 0.1, 0.04, 0.07, 0.1);
+  pushChamferedPrism(build, 1.2, -0.45, -0.4, 0.3, 0.45, 2.6, 0.07, 0.15, 0.15, 0.16);
+  pushChamferedPrism(build, -1.2, -0.45, -0.4, 0.3, 0.45, 2.6, 0.07, 0.15, 0.15, 0.16);
+  pushTopSeam(build, 0, 1.425, -1.8, 0.48, 1.65, 0.022, 0.024, 0.026);
+  for (let slot = 0; slot < 3; slot += 1) {
+    const z = -1.6 + slot * 0.52;
+    pushTopSeam(build, 0, 1.425, z, z + 0.06, 1.55, 0.018, 0.02, 0.022);
+  }
   pushProfileLights(build, 3);
   return build;
 }
@@ -750,9 +834,33 @@ function toGeometry(build: MeshBuild, label: string): BufferGeometry {
     }
   }
   const geometry = new BufferGeometry();
-  geometry.setAttribute('position', new BufferAttribute(new Float32Array(build.position), 3));
-  geometry.setAttribute('normal', new BufferAttribute(new Float32Array(build.normal), 3));
-  geometry.setAttribute('color', new BufferAttribute(new Float32Array(build.color), 3));
+  const indexedPosition: number[] = [];
+  const indexedNormal: number[] = [];
+  const indexedColor: number[] = [];
+  const index: number[] = [];
+  const vertexSlots = new Map<string, number>();
+  for (let vertex = 0; vertex < build.position.length / 3; vertex += 1) {
+    const offset = vertex * 3;
+    const values = [
+      build.position[offset]!, build.position[offset + 1]!, build.position[offset + 2]!,
+      build.normal[offset]!, build.normal[offset + 1]!, build.normal[offset + 2]!,
+      build.color[offset]!, build.color[offset + 1]!, build.color[offset + 2]!,
+    ];
+    const key = values.join(',');
+    let slot = vertexSlots.get(key);
+    if (slot === undefined) {
+      slot = vertexSlots.size;
+      vertexSlots.set(key, slot);
+      indexedPosition.push(values[0]!, values[1]!, values[2]!);
+      indexedNormal.push(values[3]!, values[4]!, values[5]!);
+      indexedColor.push(values[6]!, values[7]!, values[8]!);
+    }
+    index.push(slot);
+  }
+  geometry.setAttribute('position', new BufferAttribute(new Float32Array(indexedPosition), 3));
+  geometry.setAttribute('normal', new BufferAttribute(new Float32Array(indexedNormal), 3));
+  geometry.setAttribute('color', new BufferAttribute(new Float32Array(indexedColor), 3));
+  geometry.setIndex(index);
   geometry.computeBoundingSphere();
   return geometry;
 }

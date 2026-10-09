@@ -1,0 +1,156 @@
+[
+  {
+    "renderId": 0,
+    "name": "cab",
+    "vertices": 636,
+    "indexed": true,
+    "indexCount": 882,
+    "indexSha256": "734bae4a01c907f3ed47111d1e92b4aea3a20ab8eb701829f3713e39cb97ec5c",
+    "attributes": {
+      "position": {
+        "bytes": 7632,
+        "sha256": "f17a387cadc425906be5f8e9d2cf3410eab235d3b6febcb7f50dd97c23fe3341"
+      },
+      "color": {
+        "bytes": 7632,
+        "sha256": "59e330e2f0bb541f0bbd3d521a25535ba1326970a456f8797541d2e2553dfec0"
+      },
+      "normal": {
+        "bytes": 7632,
+        "sha256": "8fa1ded34dda7353a716d13ae4470e9391e21101be22b34acc6364fc18ab2296"
+      }
+    }
+  },
+  {
+    "renderId": 1,
+    "name": "interceptor",
+    "vertices": 490,
+    "indexed": true,
+    "indexCount": 660,
+    "indexSha256": "7bae03c45935d46d1ffe13b69c263c910bcc6b9b074923ecf003d60bbc8a32e8",
+    "attributes": {
+      "position": {
+        "bytes": 5880,
+        "sha256": "9cc2eec0927fc10811156dcc9c988388c8f165ebc4c27a885ce5ab6aa7cde0d3"
+      },
+      "color": {
+        "bytes": 5880,
+        "sha256": "39aa8d3c7eb878986d6c2cc7e3c123a702979bb743c46a16d617380018a400bc"
+      },
+      "normal": {
+        "bytes": 5880,
+        "sha256": "518ae8c6faec8779661518388aab1043aa8a3498026e0d591f8c4cf78d706f6c"
+      }
+    }
+  },
+  {
+    "renderId": 2,
+    "name": "commuter",
+    "vertices": 564,
+    "indexed": true,
+    "indexCount": 732,
+    "indexSha256": "3f95ff3ac8e0d698bcadbd957185b21541c2209111b5ef371b6277f9ea919d88",
+    "attributes": {
+      "position": {
+        "bytes": 6768,
+        "sha256": "9c87b64fe6ae8c04c46334ebc08bd257ac4ae914c3f5c71032394547cd2078bd"
+      },
+      "color": {
+        "bytes": 6768,
+        "sha256": "d1a00da1315164dfa728e9e1a89b772b0f42d4412fe661466face81dd2bac171"
+      },
+      "normal": {
+        "bytes": 6768,
+        "sha256": "501711e9b9d76aee5dbe67ba704a71904a7da436fbba5b76f5a1186465a6e709"
+      }
+    }
+  },
+  {
+    "renderId": 3,
+    "name": "van",
+    "vertices": 866,
+    "indexed": true,
+    "indexCount": 1194,
+    "indexSha256": "e6180b767a6940858ba4f2bd38aea2d87b5123208b8ec6505da411500a4e71e5",
+    "attributes": {
+      "position": {
+        "bytes": 10392,
+        "sha256": "8869cf95f42858df940d0303a6589c39400b0061509da38404628881066c7dce"
+      },
+      "color": {
+        "bytes": 10392,
+        "sha256": "7ba9a483c9af698738ebee0c9c94d54d8e1048bf8f5fa4e0039b484986733752"
+      },
+      "normal": {
+        "bytes": 10392,
+        "sha256": "827baff37096ceef95c1e86279a4b1b1a9e8f438927e9e23416f17dff70dbc53"
+      }
+    }
+  },
+  {
+    "renderId": 4,
+    "name": "saucer",
+    "vertices": 260,
+    "indexed": true,
+    "indexCount": 276,
+    "indexSha256": "1e4cc6edb51280fab0a840919e50ba494241f3f8d82260f962fca668417dc519",
+    "attributes": {
+      "position": {
+        "bytes": 3120,
+        "sha256": "78bdef6125fcb87507c6d8df0560a859a110495a20519e748bf38d2117f09c0d"
+      },
+      "color": {
+        "bytes": 3120,
+        "sha256": "6694066009ebb5c066c08064094599b0c535e2d4a49534f4f36d2abbcd0154ec"
+      },
+      "normal": {
+        "bytes": 3120,
+        "sha256": "3838684e19c2620e9d548131b1e58c291d55a349c8043b2bd774b6fb34bb9bb0"
+      }
+    }
+  },
+  {
+    "renderId": 5,
+    "name": "bus",
+    "vertices": 68,
+    "indexed": true,
+    "indexCount": 102,
+    "indexSha256": "d6ea3f9a5ac9dc1839cb42dfb60dc4e615b23b174d075b6b6bbf952f42a2df3d",
+    "attributes": {
+      "position": {
+        "bytes": 816,
+        "sha256": "cf9626410090af6e3870383c684089c20dcc0f0328c1928bf9c242603e58d4c3"
+      },
+      "color": {
+        "bytes": 816,
+        "sha256": "79001583a310fdb12066b269671e7ea25fd93559afdc65a01b2bf6c683ffcb15"
+      },
+      "normal": {
+        "bytes": 816,
+        "sha256": "757d58e949dc0cc98850f454a48131880210c67eb1ed2262611d648d7074a278"
+      }
+    }
+  },
+  {
+    "renderId": 6,
+    "name": "flatbed",
+    "vertices": 200,
+    "indexed": true,
+    "indexCount": 300,
+    "indexSha256": "be6ba7277c7d4e8f3d3e6ff3f83020c6368fc918441af89d13769dd67f06b9c2",
+    "attributes": {
+      "position": {
+        "bytes": 2400,
+        "sha256": "686cb4ad31951843766bc414defe249034df02291d7f5c687ff5903a2af32c63"
+      },
+      "color": {
+        "bytes": 2400,
+        "sha256": "037450f05e52336248c13f7f8fcd2048c167a7a66e28e2a34d2356c589a52a63"
+      },
+      "normal": {
+        "bytes": 2400,
+        "sha256": "04ecfea0a20facfc8cc0f9f76178aca3b7549f5964ff4b5136319053fa986348"
+      }
+    }
+  }
+]

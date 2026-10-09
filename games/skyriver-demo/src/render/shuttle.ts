@@ -31,6 +31,8 @@ export interface SkyriverShuttleUpdate {
   readonly boostVisual: number;
   /** Continuous time in seconds (tick + alpha) for the plume flicker phase. */
   readonly time: number;
+  /** District hue multiplier used by the canopy reflection. */
+  readonly districtTint?: readonly [number, number, number];
   /** Reused world wake buffer from flightPresentation.sampleWorldWake(). */
   readonly wake: WorldWakeSamples;
 }
@@ -55,7 +57,7 @@ const TRIM: Rgb = [0.018, 0.018, 0.022];
 /** T7: tuned for the bloom pass — above its threshold, so the strip glows without washing out. */
 const TAILLIGHT: Rgb = [2.4, 0.0, 0.0];
 const TAILLIGHT_SOFT: Rgb = [0.9, 0.01, 0.008];
-const THROAT: Rgb = [0.9, 1.3, 2.0];
+const THROAT: Rgb = [1.5, 0.32, 0.07];
 const MARKER: Rgb = [0.25, 1.6, 2.0];
 /** T7-2: panel seams (true black) and the bevel catch-light along the canopy base. */
 const SEAM: Rgb = [0.004, 0.0, 0.0];
@@ -79,10 +81,52 @@ function normalize3(v: Vec3): Vec3 {
 interface HullBuild {
   readonly positions: number[];
   readonly colors: number[];
+  readonly normals: number[];
+  readonly surfaceNormals: number[];
+  readonly glass: number[];
+}
+
+interface IndexedHull {
+  readonly positions: number[];
+  readonly colors: number[];
+  readonly normals: number[];
+  readonly surfaceNormals: number[];
+  readonly glass: number[];
+  readonly indices: number[];
+}
+
+function indexHull(build: HullBuild): IndexedHull {
+  const indexed: { positions: number[]; colors: number[]; normals: number[]; surfaceNormals: number[]; glass: number[]; indices: number[] } = {
+    positions: [], colors: [], normals: [], surfaceNormals: [], glass: [], indices: [],
+  };
+  const slots = new Map<string, number>();
+  for (let vertex = 0; vertex < build.positions.length / 3; vertex += 1) {
+    const p = vertex * 3;
+    const values = [
+      build.positions[p]!, build.positions[p + 1]!, build.positions[p + 2]!,
+      build.colors[p]!, build.colors[p + 1]!, build.colors[p + 2]!,
+      build.normals[p]!, build.normals[p + 1]!, build.normals[p + 2]!,
+      build.surfaceNormals[p]!, build.surfaceNormals[p + 1]!, build.surfaceNormals[p + 2]!,
+      build.glass[vertex]!,
+    ];
+    const key = values.join(',');
+    let slot = slots.get(key);
+    if (slot === undefined) {
+      slot = slots.size;
+      slots.set(key, slot);
+      indexed.positions.push(values[0]!, values[1]!, values[2]!);
+      indexed.colors.push(values[3]!, values[4]!, values[5]!);
+      indexed.normals.push(values[6]!, values[7]!, values[8]!);
+      indexed.surfaceNormals.push(values[9]!, values[10]!, values[11]!);
+      indexed.glass.push(values[12]!);
+    }
+    indexed.indices.push(slot);
+  }
+  return indexed;
 }
 
 /** One flat-shaded triangle. `emissive` colours skip the baked shading entirely. */
-function pushTri(build: HullBuild, a: Vec3, b: Vec3, c: Vec3, color: Rgb, emissive: boolean): void {
+function pushTri(build: HullBuild, a: Vec3, b: Vec3, c: Vec3, color: Rgb, emissive: boolean, glass = 0): void {
   const e1: Vec3 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
   const e2: Vec3 = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
   const n = normalize3([
@@ -117,12 +161,69 @@ function pushTri(build: HullBuild, a: Vec3, b: Vec3, c: Vec3, color: Rgb, emissi
   for (const p of [a, b, c]) {
     build.positions.push(p[0], p[1], p[2]);
     build.colors.push(rgb[0], rgb[1], rgb[2]);
+    build.normals.push(n[0], n[1], n[2]);
+    build.surfaceNormals.push(n[0], n[1], n[2]);
+    build.glass.push(glass);
   }
 }
 
-function pushQuad(build: HullBuild, a: Vec3, b: Vec3, c: Vec3, d: Vec3, color: Rgb, emissive = false): void {
-  pushTri(build, a, b, c, color, emissive);
-  pushTri(build, a, c, d, color, emissive);
+/** Give the canopy reflection a continuous normal while keeping flat geometry normals for faces. */
+function smoothGlassNormals(build: HullBuild): void {
+  const sums = new Map<string, [number, number, number]>();
+  for (let vertex = 0; vertex < build.glass.length; vertex += 3) {
+    if (build.glass[vertex] !== 1) continue;
+    const p = vertex * 3;
+    const n = build.normals;
+    const ax = build.positions[p]!;
+    const ay = build.positions[p + 1]!;
+    const az = build.positions[p + 2]!;
+    const e1x = build.positions[p + 3]! - ax;
+    const e1y = build.positions[p + 4]! - ay;
+    const e1z = build.positions[p + 5]! - az;
+    const e2x = build.positions[p + 6]! - ax;
+    const e2y = build.positions[p + 7]! - ay;
+    const e2z = build.positions[p + 8]! - az;
+    const faceArea = Math.hypot(e1y * e2z - e1z * e2y, e1z * e2x - e1x * e2z, e1x * e2y - e1y * e2x) * 0.5;
+    for (let corner = 0; corner < 3; corner += 1) {
+      const at = p + corner * 3;
+      const key = `${build.positions[at]},${build.positions[at + 1]},${build.positions[at + 2]}`;
+      const sum = sums.get(key) ?? [0, 0, 0];
+      sum[0] += n[p]! * faceArea;
+      sum[1] += n[p + 1]! * faceArea;
+      sum[2] += n[p + 2]! * faceArea;
+      sums.set(key, sum);
+    }
+  }
+  for (let vertex = 0; vertex < build.glass.length; vertex += 1) {
+    if (build.glass[vertex] !== 1) continue;
+    const p = vertex * 3;
+    const key = `${build.positions[p]},${build.positions[p + 1]},${build.positions[p + 2]}`;
+    const sum = sums.get(key)!;
+    const length = Math.hypot(sum[0], sum[1], sum[2]) || 1;
+    build.surfaceNormals[p] = sum[0] / length;
+    build.surfaceNormals[p + 1] = sum[1] / length;
+    build.surfaceNormals[p + 2] = sum[2] / length;
+  }
+}
+
+function pushQuad(build: HullBuild, a: Vec3, b: Vec3, c: Vec3, d: Vec3, color: Rgb, emissive = false, glass = 0): void {
+  pushTri(build, a, b, c, color, emissive, glass);
+  pushTri(build, a, c, d, color, emissive, glass);
+}
+
+/** Emits the same six flat box faces as the baseline shuttle lights. */
+function pushBox(build: HullBuild, centre: Vec3, size: Vec3, color: Rgb, emissive = false): void {
+  const [cx, cy, cz] = centre;
+  const hx = size[0] / 2;
+  const hy = size[1] / 2;
+  const hz = size[2] / 2;
+  const p = (sx: number, sy: number, sz: number): Vec3 => [cx + sx * hx, cy + sy * hy, cz + sz * hz];
+  pushQuad(build, p(-1, -1, -1), p(1, -1, -1), p(1, 1, -1), p(-1, 1, -1), color, emissive);
+  pushQuad(build, p(-1, -1, 1), p(1, -1, 1), p(1, 1, 1), p(-1, 1, 1), color, emissive);
+  pushQuad(build, p(-1, -1, -1), p(-1, -1, 1), p(-1, 1, 1), p(-1, 1, -1), color, emissive);
+  pushQuad(build, p(1, -1, -1), p(1, -1, 1), p(1, 1, 1), p(1, 1, -1), color, emissive);
+  pushQuad(build, p(-1, 1, -1), p(1, 1, -1), p(1, 1, 1), p(-1, 1, 1), color, emissive);
+  pushQuad(build, p(-1, -1, -1), p(1, -1, -1), p(1, -1, 1), p(-1, -1, 1), color, emissive);
 }
 
 /**
@@ -131,6 +232,7 @@ function pushQuad(build: HullBuild, a: Vec3, b: Vec3, c: Vec3, d: Vec3, color: R
  */
 interface Ring {
   readonly z: number;
+  readonly centerX?: number;
   readonly yLow: number;
   readonly yHigh: number;
   readonly halfLow: number;
@@ -144,6 +246,7 @@ type EdgeRole = 'floor' | 'side' | 'roof';
 /** T7-4 rounded section: an octagon (two chamfers per side) so the hull stops reading as a slab. */
 function ringOutline(r: Ring): { readonly points: readonly Vec3[]; readonly roles: readonly EdgeRole[] } {
   const c = r.round ?? 0;
+  const cx = r.centerX ?? 0;
   if (c <= 0) {
     const [c0, c1, c2, c3] = ringCorners(r);
     return { points: [c0, c1, c2, c3], roles: ['floor', 'side', 'roof', 'side'] };
@@ -151,29 +254,30 @@ function ringOutline(r: Ring): { readonly points: readonly Vec3[]; readonly role
   const cl = c * 0.55;
   return {
     points: [
-      [-r.halfLow + cl, r.yLow, r.z],
-      [r.halfLow - cl, r.yLow, r.z],
-      [r.halfLow, r.yLow + cl, r.z],
-      [r.halfHigh, r.yHigh - c, r.z],
-      [r.halfHigh - c, r.yHigh, r.z],
-      [-r.halfHigh + c, r.yHigh, r.z],
-      [-r.halfHigh, r.yHigh - c, r.z],
-      [-r.halfLow, r.yLow + cl, r.z],
+      [cx - r.halfLow + cl, r.yLow, r.z],
+      [cx + r.halfLow - cl, r.yLow, r.z],
+      [cx + r.halfLow, r.yLow + cl, r.z],
+      [cx + r.halfHigh, r.yHigh - c, r.z],
+      [cx + r.halfHigh - c, r.yHigh, r.z],
+      [cx - r.halfHigh + c, r.yHigh, r.z],
+      [cx - r.halfHigh, r.yHigh - c, r.z],
+      [cx - r.halfLow, r.yLow + cl, r.z],
     ],
     roles: ['floor', 'floor', 'side', 'roof', 'roof', 'roof', 'side', 'floor'],
   };
 }
 
 function ringCorners(r: Ring): readonly [Vec3, Vec3, Vec3, Vec3] {
+  const cx = r.centerX ?? 0;
   return [
-    [-r.halfLow, r.yLow, r.z],
-    [r.halfLow, r.yLow, r.z],
-    [r.halfHigh, r.yHigh, r.z],
-    [-r.halfHigh, r.yHigh, r.z],
+    [cx - r.halfLow, r.yLow, r.z],
+    [cx + r.halfLow, r.yLow, r.z],
+    [cx + r.halfHigh, r.yHigh, r.z],
+    [cx - r.halfHigh, r.yHigh, r.z],
   ];
 }
 
-function loft(build: HullBuild, rings: readonly Ring[], side: Rgb, roof: Rgb, floor: Rgb): void {
+function loft(build: HullBuild, rings: readonly Ring[], side: Rgb, roof: Rgb, floor: Rgb, glass = 0): void {
   if (rings.some((ring) => (ring.round ?? 0) > 0)) {
     for (let i = 0; i + 1 < rings.length; i += 1) {
       const a = ringOutline(rings[i]!);
@@ -182,7 +286,7 @@ function loft(build: HullBuild, rings: readonly Ring[], side: Rgb, roof: Rgb, fl
       for (let j = 0; j < n; j += 1) {
         const k = (j + 1) % n;
         const role = a.roles[j]!;
-        pushQuad(build, a.points[j]!, b.points[j]!, b.points[k]!, a.points[k]!, role === 'roof' ? roof : role === 'floor' ? floor : side);
+        pushQuad(build, a.points[j]!, b.points[j]!, b.points[k]!, a.points[k]!, role === 'roof' ? roof : role === 'floor' ? floor : side, false, glass);
       }
     }
     return;
@@ -190,34 +294,65 @@ function loft(build: HullBuild, rings: readonly Ring[], side: Rgb, roof: Rgb, fl
   for (let i = 0; i + 1 < rings.length; i += 1) {
     const [a0, a1, a2, a3] = ringCorners(rings[i]!);
     const [b0, b1, b2, b3] = ringCorners(rings[i + 1]!);
-    pushQuad(build, a1, b1, b2, a2, side); // starboard
-    pushQuad(build, a3, b3, b0, a0, side); // port
-    pushQuad(build, a2, b2, b3, a3, roof); // roof
-    pushQuad(build, a0, b0, b1, a1, floor); // floor
+    pushQuad(build, a1, b1, b2, a2, side, false, glass); // starboard
+    pushQuad(build, a3, b3, b0, a0, side, false, glass); // port
+    pushQuad(build, a2, b2, b3, a3, roof, false, glass); // roof
+    pushQuad(build, a0, b0, b1, a1, floor, false, glass); // floor
   }
 }
 
 function capRing(build: HullBuild, ring: Ring, color: Rgb): void {
   const { points } = ringOutline(ring);
-  const centre: Vec3 = [0, (ring.yLow + ring.yHigh) / 2, ring.z];
+  const centre: Vec3 = [ring.centerX ?? 0, (ring.yLow + ring.yHigh) / 2, ring.z];
   for (let j = 0; j < points.length; j += 1) {
     pushTri(build, centre, points[j]!, points[(j + 1) % points.length]!, color, false);
   }
 }
 
-/** Axis-aligned box: centre and full extents. */
-function pushBox(build: HullBuild, centre: Vec3, size: Vec3, color: Rgb, emissive = false): void {
-  const [cx, cy, cz] = centre;
-  const hx = size[0] / 2;
-  const hy = size[1] / 2;
-  const hz = size[2] / 2;
-  const p = (sx: number, sy: number, sz: number): Vec3 => [cx + sx * hx, cy + sy * hy, cz + sz * hz];
-  pushQuad(build, p(-1, -1, -1), p(1, -1, -1), p(1, 1, -1), p(-1, 1, -1), color, emissive); // -Z tail
-  pushQuad(build, p(-1, -1, 1), p(1, -1, 1), p(1, 1, 1), p(-1, 1, 1), color, emissive); // +Z
-  pushQuad(build, p(-1, -1, -1), p(-1, -1, 1), p(-1, 1, 1), p(-1, 1, -1), color, emissive);
-  pushQuad(build, p(1, -1, -1), p(1, -1, 1), p(1, 1, 1), p(1, 1, -1), color, emissive);
-  pushQuad(build, p(-1, 1, -1), p(1, 1, -1), p(1, 1, 1), p(-1, 1, 1), color, emissive); // top
-  pushQuad(build, p(-1, -1, -1), p(1, -1, -1), p(1, -1, 1), p(-1, -1, 1), color, emissive);
+function capPoint(build: HullBuild, ring: Ring, tip: Vec3, color: Rgb): void {
+  const { points } = ringOutline(ring);
+  for (let i = 0; i < points.length; i += 1) {
+    pushTri(build, points[i]!, points[(i + 1) % points.length]!, tip, color, false);
+  }
+}
+
+interface CanopyStation {
+  readonly z: number;
+  readonly halfWidth: number;
+  readonly baseY: number;
+  readonly crownY: number;
+}
+
+function canopyArch(station: CanopyStation): Vec3[] {
+  const points: Vec3[] = [];
+  for (let i = 0; i <= 8; i += 1) {
+    const angle = (Math.PI * i) / 8;
+    points.push([
+      station.halfWidth * Math.cos(angle),
+      station.baseY + (station.crownY - station.baseY) * Math.sin(angle),
+      station.z,
+    ]);
+  }
+  return points;
+}
+
+function loftCanopy(build: HullBuild, stations: readonly CanopyStation[]): void {
+  const arches = stations.map(canopyArch);
+  for (let i = 0; i + 1 < arches.length; i += 1) {
+    const rear = arches[i]!;
+    const front = arches[i + 1]!;
+    for (let j = 0; j + 1 < rear.length; j += 1) {
+      pushQuad(build, rear[j]!, rear[j + 1]!, front[j + 1]!, front[j]!, GLAZING, false, 1);
+    }
+  }
+  const rear = arches[0]!;
+  const front = arches[arches.length - 1]!;
+  const rearCentre: Vec3 = [0, stations[0]!.baseY + 0.02, stations[0]!.z];
+  const frontCentre: Vec3 = [0, stations[stations.length - 1]!.baseY + 0.02, stations[stations.length - 1]!.z];
+  for (let i = 0; i + 1 < rear.length; i += 1) {
+    pushTri(build, rearCentre, rear[i + 1]!, rear[i]!, GLAZING, false, 1);
+    pushTri(build, frontCentre, front[i]!, front[i + 1]!, GLAZING, false, 1);
+  }
 }
 
 /** Tail at z = TAIL_Z; the strip and the nozzles sit just behind it. */
@@ -232,36 +367,37 @@ export const SHUTTLE_NOZZLE_ROOTS_LOCAL: readonly [Vec3, Vec3] = Object.freeze([
 export const SHUTTLE_WAKE_SAMPLE_COUNT = 32;
 
 function buildHull(): HullBuild {
-  const build: HullBuild = { positions: [], colors: [] };
+  const build: HullBuild = { positions: [], colors: [], normals: [], surfaceNormals: [], glass: [] };
 
   // Low wedge body: widest over the rear deck, pinching to a blade nose. Nose at +Z.
   // T7-4 rounded wedge: ~10% wider, chamfered roof and floor edges and a softened nose, so the
   // side and top views read as a sculpted craft (the reference's bulk) while the chase keeps the
   // passing-wedge profile.
   const body: Ring[] = [
-    { z: TAIL_Z, yLow: -0.72, yHigh: 0.82, halfLow: 3.1, halfHigh: 2.9, round: 0.5 },
+    { z: TAIL_Z, yLow: -0.72, yHigh: 0.82, halfLow: 2.7, halfHigh: 2.55, round: 0.5 },
     { z: -2.4, yLow: -0.84, yHigh: 0.9, halfLow: 3.3, halfHigh: 2.95, round: 0.55 },
     { z: 1.6, yLow: -0.76, yHigh: 0.66, halfLow: 3.0, halfHigh: 2.5, round: 0.5 },
     { z: 4.4, yLow: -0.62, yHigh: 0.28, halfLow: 2.35, halfHigh: 1.75, round: 0.4 },
     { z: 5.9, yLow: -0.5, yHigh: 0.0, halfLow: 1.55, halfHigh: 1.05, round: 0.25 },
-    { z: 6.7, yLow: -0.4, yHigh: -0.16, halfLow: 0.85, halfHigh: 0.55, round: 0.1 },
+    { z: 6.5, yLow: -0.38, yHigh: -0.2, halfLow: 0.72, halfHigh: 0.5, round: 0.1 },
   ];
   loft(build, body, PAINT, PAINT, PAINT_DARK);
   capRing(build, body[0]!, PAINT_DARK);
-  capRing(build, body[body.length - 1]!, PAINT);
+  capPoint(build, body[body.length - 1]!, [0, -0.24, 8.15], PAINT);
 
-  // Fastback canopy: dark glazing, raked toward the nose.
-  const canopy: Ring[] = [
-    // T6R-2: flatter and wider, so from above the craft reads as a wedge, not a capsule.
-    { z: -4.3, yLow: 0.78, yHigh: 0.96, halfLow: 2.35, halfHigh: 2.15 },
-    { z: -2.0, yLow: 0.86, yHigh: 1.28, halfLow: 2.35, halfHigh: 1.95 },
-    { z: 1.0, yLow: 0.66, yHigh: 1.18, halfLow: 2.1, halfHigh: 1.75 },
-    { z: 3.2, yLow: 0.36, yHigh: 0.46, halfLow: 1.75, halfHigh: 1.6 },
+  // The canopy rises and falls across the hull as a continuous spine.
+  const canopy: CanopyStation[] = [
+    { z: -4.25, halfWidth: 1.88, baseY: 0.77, crownY: 0.86 },
+    { z: -3.5, halfWidth: 2.18, baseY: 0.79, crownY: 1.24 },
+    { z: -2.2, halfWidth: 2.2, baseY: 0.81, crownY: 1.53 },
+    { z: -0.3, halfWidth: 2.0, baseY: 0.7, crownY: 1.72 },
+    { z: 1.55, halfWidth: 1.68, baseY: 0.5, crownY: 1.49 },
+    { z: 3.0, halfWidth: 1.28, baseY: 0.29, crownY: 0.92 },
+    { z: 3.9, halfWidth: 0.82, baseY: 0.05, crownY: 0.25 },
   ];
-  loft(build, canopy, GLAZING, GLAZING, GLAZING);
-  capRing(build, canopy[0]!, GLAZING);
+  loftCanopy(build, canopy);
 
-  // Clearcoat highlight: a thin hot line riding each shoulder (roof-to-side edge) of the body loft.
+  // Fine red bevels follow the outer shoulder of the hull.
   for (let i = 0; i + 1 < body.length; i += 1) {
     const a = body[i]!;
     const b = body[i + 1]!;
@@ -282,7 +418,7 @@ function buildHull(): HullBuild {
     }
   }
 
-  // T7-2 panel seams: a side seam along each flank at ~55% height, and a hood seam across the nose.
+  // Panel seams follow the side plates and the pointed nose.
   for (let i = 0; i + 1 < body.length; i += 1) {
     const a = body[i]!;
     const b = body[i + 1]!;
@@ -296,67 +432,100 @@ function buildHull(): HullBuild {
     }
   }
   pushQuad(build, [-1.45, 0.29, 4.12], [1.45, 0.29, 4.12], [1.45, 0.27, 4.26], [-1.45, 0.27, 4.26], SEAM, true);
-  // T7-3 glass reflection: a soft cool band of city light sliding across the canopy roof.
-  const glassBand: Rgb = [0.09, 0.14, 0.2];
-  pushQuad(build, [-1.6, 1.3, -2.6], [1.1, 1.36, -1.6], [1.25, 1.33, -0.9], [-1.45, 1.27, -1.9], glassBand, true);
-  // Bevel catch-light where the canopy meets the body.
   for (let i = 0; i + 1 < canopy.length; i += 1) {
     const a = canopy[i]!;
     const b = canopy[i + 1]!;
     for (const side of [-1, 1]) {
-      pushQuad(
-        build,
-        [side * (a.halfLow + 0.02), a.yLow + 0.01, a.z],
-        [side * (b.halfLow + 0.02), b.yLow + 0.01, b.z],
-        [side * (b.halfLow + 0.12), b.yLow - 0.04, b.z],
-        [side * (a.halfLow + 0.12), a.yLow - 0.04, a.z],
-        BEVEL,
-        true,
-      );
+      pushQuad(build,
+        [side * a.halfWidth, a.baseY + 0.01, a.z],
+        [side * b.halfWidth, b.baseY + 0.01, b.z],
+        [side * (b.halfWidth + 0.1), b.baseY - 0.07, b.z],
+        [side * (a.halfWidth + 0.1), a.baseY - 0.07, a.z],
+        BEVEL, true);
     }
   }
 
-  // Rear deck lip above the strip, and the dark diffuser below it.
-  pushBox(build, [0, 0.86, TAIL_Z + 0.1], [5.5, 0.16, 0.6], PAINT);
-  pushBox(build, [0, -0.62, TAIL_Z - 0.02], [5.3, 0.22, 0.2], TRIM);
+  // Two low pods hang below the hull. Their centres are the exported plume roots.
+  for (const side of [-1, 1]) {
+    const pod: Ring[] = [
+      { centerX: side * NOZZLE_X, z: -5.92, yLow: -1.04, yHigh: -0.36, halfLow: 0.5, halfHigh: 0.62, round: 0.16 },
+      { centerX: side * NOZZLE_X, z: -5.4, yLow: -1.08, yHigh: -0.34, halfLow: 0.62, halfHigh: 0.68, round: 0.18 },
+      { centerX: side * NOZZLE_X, z: -3.35, yLow: -1.02, yHigh: -0.3, halfLow: 0.68, halfHigh: 0.72, round: 0.18 },
+      { centerX: side * NOZZLE_X, z: -1.25, yLow: -0.86, yHigh: -0.26, halfLow: 0.52, halfHigh: 0.56, round: 0.14 },
+    ];
+    loft(build, pod, PAINT_DARK, TRIM, PAINT_DARK);
+    capRing(build, pod[pod.length - 1]!, PAINT_DARK);
+    for (let k = 0; k < 4; k += 1) {
+      const z = -4.95 + k * 0.38;
+      pushQuad(build,
+        [side * NOZZLE_X - 0.38, -0.3, z], [side * NOZZLE_X + 0.38, -0.3, z],
+        [side * NOZZLE_X + 0.38, -0.24, z + 0.06], [side * NOZZLE_X - 0.38, -0.24, z + 0.06],
+        k === 0 ? BEVEL : SEAM, k === 0);
+    }
+  }
 
-  // T7-3 double strip (the reference's signature): a second, thinner hot line above the main one.
+  // Angled fins grow from the shoulder and meet the rear pod fairings.
+  for (const side of [-1, 1]) {
+    pushQuad(build,
+      [side * 2.85, 0.15, -2.45], [side * 4.15, -0.02, -4.3],
+      [side * 4.0, -0.35, -5.15], [side * 2.7, -0.38, -4.62], PAINT_DARK);
+    pushQuad(build,
+      [side * 2.9, 0.18, -2.5], [side * 3.42, 0.22, -3.7],
+      [side * 3.28, 0.18, -4.22], [side * 2.8, 0.13, -3.65], BEVEL, true);
+  }
+
+  // Recessed intake channels run under the belly. A narrow lip marks each channel edge.
+  for (const side of [-1, 1]) {
+    const x = side * 0.84;
+    pushQuad(build, [x - 0.22, -0.88, -3.3], [x + 0.22, -0.88, -3.3],
+      [x + 0.18, -0.88, 2.9], [x - 0.18, -0.88, 2.9], SEAM, true);
+    pushQuad(build, [x - 0.28, -0.84, -3.1], [x - 0.22, -0.84, -3.1],
+      [x - 0.18, -0.84, 2.7], [x - 0.24, -0.84, 2.7], TRIM);
+    pushQuad(build, [x + 0.22, -0.84, -3.1], [x + 0.28, -0.84, -3.1],
+      [x + 0.24, -0.84, 2.7], [x + 0.18, -0.84, 2.7], TRIM);
+  }
+
+  // Keep the established three-bar signature. The upper bar gives the full-width tail a clear edge.
   pushBox(build, [0, 0.7, TAIL_Z - 0.09], [5.0, 0.11, 0.1], TAILLIGHT, true);
-  // The signature: one hot horizontal taillight strip across the full tail, plus a softer
-  // under-bar so the strip has a glow footprint even before the camera resolves its thickness.
   pushBox(build, [0, 0.46, TAIL_Z - 0.08], [5.4, 0.3, 0.1], TAILLIGHT, true);
   pushBox(build, [0, 0.24, TAIL_Z - 0.06], [4.6, 0.08, 0.08], TAILLIGHT_SOFT, true);
 
-  // T7-3 engine pods: two distinct blocks at the rear corners, proud of the body, with horizontal
-  // grille slats across their rear faces (the reference's chunky rear assembly).
-  for (const side of [-1, 1]) {
-    pushBox(build, [side * NOZZLE_X, NOZZLE_Y + 0.05, TAIL_Z + 1.1], [1.75, 1.15, 3.2], PAINT_DARK);
-    pushBox(build, [side * NOZZLE_X, NOZZLE_Y + 0.66, TAIL_Z + 1.2], [1.55, 0.08, 2.8], BEVEL, true);
-    for (let k = 0; k < 4; k += 1) {
-      pushBox(build, [side * NOZZLE_X, NOZZLE_Y + 0.42 - k * 0.12, TAIL_Z - 0.52], [1.6, 0.05, 0.06], k % 2 === 0 ? SEAM : TRIM);
+  // The throat centres stay on the two public roots. The collars follow the pod chamfer.
+  for (const nozzleRoot of SHUTTLE_NOZZLE_ROOTS_LOCAL) {
+    const [x, y] = nozzleRoot;
+    const ellipse = (rx: number, ry: number, z: number): Vec3[] => Array.from({ length: 12 }, (_, i) => {
+      const angle = (Math.PI * 2 * i) / 12;
+      return [x + Math.cos(angle) * rx, y + Math.sin(angle) * ry, z];
+    });
+    const rearOuter = ellipse(0.68, 0.34, nozzleRoot[2] - 0.01);
+    const rearInner = ellipse(0.52, 0.26, nozzleRoot[2] - 0.01);
+    for (let i = 0; i < rearOuter.length; i += 1) {
+      const next = (i + 1) % rearOuter.length;
+      pushQuad(build, rearOuter[i]!, rearOuter[next]!, rearInner[next]!, rearInner[i]!, TRIM);
+    }
+    const outer = ellipse(0.52, 0.26, TAIL_Z - 0.453);
+    const inner = ellipse(0.34, 0.15, TAIL_Z - 0.458);
+    for (let i = 0; i < outer.length; i += 1) {
+      const next = (i + 1) % outer.length;
+      pushQuad(build, outer[i]!, outer[next]!, inner[next]!, inner[i]!, PAINT_DARK);
+    }
+    const core = ellipse(0.28, 0.11, TAIL_Z - 0.463);
+    for (let i = 0; i < inner.length; i += 1) {
+      const next = (i + 1) % inner.length;
+      pushQuad(build, inner[i]!, inner[next]!, core[next]!, core[i]!, TRIM);
+    }
+    const centre: Vec3 = [x, y, TAIL_Z - 0.463];
+    for (let i = 0; i < core.length; i += 1) {
+      pushTri(build, centre, core[i]!, core[(i + 1) % core.length]!, THROAT, true);
     }
   }
 
-  // Twin thruster nozzles in the pods: dark collars with incandescent throats facing the camera.
+  // Keep the two cyan service lights. They sit on the canopy shoulders, inside the hull profile.
   for (const side of [-1, 1]) {
-    pushBox(build, [side * NOZZLE_X, NOZZLE_Y, TAIL_Z - 0.18], [1.35, 0.72, 0.5], TRIM);
-    pushQuad(
-      build,
-      [side * NOZZLE_X - 0.48, NOZZLE_Y - 0.24, TAIL_Z - 0.45],
-      [side * NOZZLE_X + 0.48, NOZZLE_Y - 0.24, TAIL_Z - 0.45],
-      [side * NOZZLE_X + 0.48, NOZZLE_Y + 0.24, TAIL_Z - 0.45],
-      [side * NOZZLE_X - 0.48, NOZZLE_Y + 0.24, TAIL_Z - 0.45],
-      THROAT,
-      true,
-    );
-  }
-
-  // Side intakes and cyan cockpit markers: small cold accents that sell scale against the red.
-  for (const side of [-1, 1]) {
-    pushBox(build, [side * 2.92, -0.12, -1.6], [0.16, 0.42, 3.2], TRIM);
     pushBox(build, [side * 1.62, 1.08, -3.9], [0.12, 0.08, 0.8], MARKER, true);
   }
 
+  smoothGlassNormals(build);
   return build;
 }
 
@@ -592,12 +761,47 @@ const PLUME_BOOST = Object.freeze({ length: 15, width: 2.3, flare: 1.5, intensit
 
 export function createSkyriverShuttle(options: { readonly depthFade?: SkyriverDepthSnapshot } = {}): SkyriverShuttle {
   const build = buildHull();
+  const indexedHull = indexHull(build);
   const hullGeometry = new THREE.BufferGeometry();
-  hullGeometry.setAttribute('position', new THREE.Float32BufferAttribute(build.positions, 3));
-  hullGeometry.setAttribute('color', new THREE.Float32BufferAttribute(build.colors, 3));
+  hullGeometry.setAttribute('position', new THREE.Float32BufferAttribute(indexedHull.positions, 3));
+  hullGeometry.setAttribute('color', new THREE.Float32BufferAttribute(indexedHull.colors, 3));
+  hullGeometry.setAttribute('normal', new THREE.Float32BufferAttribute(indexedHull.normals, 3));
+  hullGeometry.setAttribute('aSurfaceNormal', new THREE.Float32BufferAttribute(indexedHull.surfaceNormals, 3));
+  hullGeometry.setAttribute('aGlass', new THREE.Float32BufferAttribute(indexedHull.glass, 1));
+  hullGeometry.setIndex(indexedHull.indices);
   hullGeometry.computeBoundingSphere();
   const hullMaterial = new THREE.MeshBasicMaterial({ vertexColors: true, fog: true, side: THREE.DoubleSide });
   hullMaterial.name = 'skyriver.shuttle.hull';
+  const districtTintUniform = { value: new THREE.Vector3(1, 1, 1) };
+  hullMaterial.onBeforeCompile = (shader) => {
+    shader.uniforms.uDistrictTint = districtTintUniform;
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <common>',
+      '#include <common>\nattribute vec3 aSurfaceNormal;\nattribute float aGlass;\nvarying vec3 vGlassNormal;\nvarying vec3 vGlassWorldPosition;\nvarying float vGlass;',
+    );
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      '#include <begin_vertex>\nvGlassNormal = normalize( mat3( modelMatrix ) * aSurfaceNormal );\nvGlassWorldPosition = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;\nvGlass = aGlass;',
+    );
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <common>',
+      '#include <common>\nuniform vec3 uDistrictTint;\nvarying vec3 vGlassNormal;\nvarying vec3 vGlassWorldPosition;\nvarying float vGlass;',
+    );
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <color_fragment>',
+      `#include <color_fragment>
+vec3 glassNormal = normalize( vGlassNormal );
+vec3 glassView = normalize( cameraPosition - vGlassWorldPosition );
+vec3 glassReflection = reflect( -glassView, glassNormal );
+float glassGrazing = pow( 1.0 - abs( dot( glassNormal, glassView ) ), 2.0 );
+float glassLongitude = atan( glassReflection.z, glassReflection.x );
+float glassBandA = smoothstep( 0.76, 0.98, cos( glassLongitude * 11.0 + glassReflection.y * 2.7 ) );
+float glassBandB = smoothstep( 0.84, 0.99, cos( glassLongitude * 4.0 - glassReflection.y * 4.2 ) );
+float glassStreak = 0.035 + 0.2 * glassBandA + 0.08 * glassBandB;
+diffuseColor.rgb += uDistrictTint * vGlass * glassGrazing * glassStreak;`,
+    );
+  };
+  hullMaterial.customProgramCacheKey = () => 'skyriver-shuttle-hull-district-glass-v1';
   applySkyriverFog(hullMaterial);
   const hull = new THREE.Mesh(hullGeometry, hullMaterial);
   hull.name = 'skyriver.shuttle.hull';
@@ -665,7 +869,7 @@ export function createSkyriverShuttle(options: { readonly depthFade?: SkyriverDe
       hull.position.set(x, y, z);
       hull.rotation.set(-pitchTurns * Math.PI * 2, yawTurns * Math.PI * 2, rollTurns * Math.PI * 2);
     },
-    update({ boostVisual, time, wake }: SkyriverShuttleUpdate): void {
+    update({ boostVisual, time, districtTint = [1, 1, 1], wake }: SkyriverShuttleUpdate): void {
       // Pure function of the arguments: no accumulators, so a restore cannot leave a stale flare.
       const boost = Math.min(1, Math.max(0, boostVisual));
       const flicker = 0.92 + 0.08 * Math.sin(time * 37.0) * Math.sin(time * 11.0);
@@ -677,6 +881,7 @@ export function createSkyriverShuttle(options: { readonly depthFade?: SkyriverDe
       u.uWakeRootWidth!.value = wake.rootWidthM;
       u.uWakeTailWidth!.value = wake.tailWidthM;
       u.uTime!.value = time;
+      districtTintUniform.value.set(districtTint[0], districtTint[1], districtTint[2]);
 
       for (let i = 0; i < SHUTTLE_WAKE_SAMPLE_COUNT; i += 1) {
         const source = i * 3;

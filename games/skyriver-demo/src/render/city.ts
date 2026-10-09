@@ -34,7 +34,8 @@
 import { DeterministicRandom } from '@series-inc/rundot-syncplay';
 import * as THREE from 'three';
 
-import { encodeCard, quantize, SKYRIVER_STRUCTURE_MATERIAL_GLSL } from './structureMaterial.js';
+import { decodeCard, encodeCard, quantize, SKYRIVER_STRUCTURE_MATERIAL_GLSL } from './structureMaterial.js';
+import { WINDOW_PALETTE_GLSL, windowPaletteCode, windowPaletteCodeFromQ, windowPaletteHash, windowPaletteMean } from './windowPalette';
 
 import type { SkyriverCityLayout, SkyriverTower } from '../sim/derive';
 import {
@@ -249,6 +250,8 @@ export interface SkyriverTrimOwner {
   readonly depth: number;
   /** The along-canyon coordinate the owner is placed rigidly around (its own z, or its tower's). */
   readonly anchorV: number;
+  /** Canonical building seed for the attached non-emissive material. */
+  readonly materialOwner?: number;
 }
 
 export type PushTrim = (
@@ -352,9 +355,15 @@ export function buildingSeedOf(x: number, z: number): number {
   return hash1(x * 0.0173 + z * 0.00411 + 0.5);
 }
 
+/** Canonical material seed carried by the actual trim placement owner. */
+export function trimMaterialOwnerSeed(owner: SkyriverTrimOwner): number {
+  return Math.fround(owner.materialOwner ?? buildingSeedOf(owner.x, owner.z));
+}
+
 /** A tower or mass as a trim owner, placed around its own centre unless told otherwise. */
-function ownerOf(mass: { readonly x: number; readonly z: number; readonly width: number; readonly depth: number }, anchorV = mass.z): SkyriverTrimOwner {
-  return { x: mass.x, z: mass.z, width: mass.width, depth: mass.depth, anchorV };
+function ownerOf(mass: { readonly x: number; readonly z: number; readonly width: number; readonly depth: number; readonly materialOwner?: number }, anchorV = mass.z): SkyriverTrimOwner {
+  return { x: mass.x, z: mass.z, width: mass.width, depth: mass.depth, anchorV,
+    materialOwner: mass.materialOwner ?? buildingSeedOf(mass.x, mass.z) };
 }
 
 /**
@@ -659,7 +668,8 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
   /** R16: a slab plus its tier projection out to `wallFace` (|x|), as the owner of face-mounted kit. */
   const faceOwner = (tower: SkyriverTower, wallFace: number): SkyriverTrimOwner => {
     const back = Math.abs(tower.x) + tower.width * 0.5;
-    return { x: Math.sign(tower.x) * (wallFace + back) * 0.5, z: tower.z, width: back - wallFace, depth: tower.depth, anchorV: tower.z };
+    return { x: Math.sign(tower.x) * (wallFace + back) * 0.5, z: tower.z, width: back - wallFace, depth: tower.depth, anchorV: tower.z,
+      materialOwner: buildingSeedOf(tower.x, tower.z) };
   };
   const tierMap = new Map<string, readonly FacadeTier[]>();
   const exposedFaces: SkyriverFacadeFace[] = [];
@@ -1623,7 +1633,8 @@ function appendLowBaseSprawl(
 
       // Roof trims on actual low roofs
       const roofY = by0 + bh;
-      const roofOwner: SkyriverTrimOwner = { x: bx, z: bz, width: bw, depth: bd, anchorV: tower.z };
+      const roofOwner: SkyriverTrimOwner = { x: bx, z: bz, width: bw, depth: bd, anchorV: tower.z,
+        materialOwner: separatedMass.materialOwner ?? buildingSeedOf(tower.x, tower.z) };
       if (random.nextInt(0, 99) < 55) {
         const roll = random.nextInt(0, 99);
         if (roll < 45) {
@@ -1851,7 +1862,8 @@ function appendLowBaseSprawl(
 
         if (random.nextInt(0, 99) < 45) {
           const roofY = y0 + h;
-          const roofOwner: SkyriverTrimOwner = { x: baseX, z: baseZ, width: w, depth: d, anchorV: parentTower.z };
+          const roofOwner: SkyriverTrimOwner = { x: baseX, z: baseZ, width: w, depth: d, anchorV: parentTower.z,
+            materialOwner: separatedMass.materialOwner ?? buildingSeedOf(parentTower.x, parentTower.z) };
           const pw = 3.0;
           const ph = 4.0;
           safePushTrim(SKYRIVER_TRIM_ROOF_PLANT, baseX, roofY + ph * 0.5, baseZ, pw, ph, pw, roofOwner);
@@ -3115,8 +3127,10 @@ varying float vBuilding;
 varying vec2 vStepEdges;
 varying float vDistrict;
 flat varying float vMaterial;
+flat varying float vWindowPalette;
 
 #include <fog_pars_vertex>
+${WINDOW_PALETTE_GLSL}
 
 void main() {
   vec3 transformed = vec3( position );
@@ -3151,6 +3165,7 @@ void main() {
   vStepEdges = aStepEdges;
   vDistrict = aDistrict;
   vMaterial = aMaterial;
+  vWindowPalette = windowPaletteCodeFromQ(floor(clamp(aMaterial, 0.0, 1.0 - 1.0 / 65536.0) * 65536.0), aDistrict);
 
   vec4 world = modelMatrix * instanceMatrix * vec4( transformed, 1.0 );
   vWorldPos = world.xyz;
@@ -3195,6 +3210,7 @@ varying float vBuilding;
 varying vec2 vStepEdges;
 varying float vDistrict;
 flat varying float vMaterial;
+flat varying float vWindowPalette;
 
 // --- T7-4 interior mapping ------------------------------------------------------------------------
 // Every window cell is a box room [0,1]^3 (x across, y up, z depth from the glass). The view ray is
@@ -3280,6 +3296,7 @@ ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${SKYRIVER_HASH_GLSL}
 ${SKYRIVER_INTERIOR_RESPONSE_GLSL}
 ${SKYRIVER_STRUCTURE_MATERIAL_GLSL}
+${WINDOW_PALETTE_GLSL}
 ${SKYRIVER_DISTANCE_GRADE_GLSL}
 
 /** Rounded-box signed distance in cell units; the window glass. */
@@ -3323,8 +3340,10 @@ void main() {
     vec3 farChroma;
     structureMaterialProfile( farQ, vFaceId, farFamily, farB, farW, farF, farEdge, farChroma );
     vec3 farBase1 = farBase0 * farChroma;
-    vec3 farBase = normalizeMaterial( farBase0, farBase1, farB, farW, farF );
-    vec3 farColor = farBase + skyriverDistrictTint( farWindow, vDistrict, DISTRICT_PANE_SATURATION );
+    vec3 farBase = normalizeFamilyMaterial( farBase0, farBase1, farB, farW, farF, farFamily );
+    vec3 farUnit = mix(windowPaletteMean(vWindowPalette), windowPaletteUnit(vWindowPalette, farTemp), farResolve);
+    vec3 farColor = farBase + recolourWindow(
+      skyriverDistrictTint( farWindow, vDistrict, DISTRICT_PANE_SATURATION ), farUnit, uDistrictColour);
     // R17: far layers grade further toward steel per layer (0.35 / 0.55 / 0.7 on top of distance).
     farColor = skyriverDistanceGrade( farColor, max( vFogDepth, 1.0 ), vLayer < 1.5 ? 0.35 : ( vLayer < 2.5 ? 0.55 : 0.7 ) );
     gl_FragColor = vec4( farColor, 1.0 );
@@ -3473,7 +3492,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   vec3 matChroma;
   structureMaterialProfile( q, vFaceId, matFamily, matB, matW, matF, matEdge, matChroma );
   vec3 matC1 = ( concrete * matChroma + wetSheen * matChroma * ( 1.0 + 0.05 * matW ) + wetArris * matChroma * matEdge ) * contactAo;
-  vec3 color = normalizeMaterial( matC0, matC1, matB, matW, matF );
+  vec3 color = normalizeFamilyMaterial( matC0, matC1, matB, matW, matF, matFamily );
 
   // R12: lit skylights and rooftop lamps on the deck's roofs.
   float deckRoof = ( 1.0 - smoothstep( 70.0, 140.0, vWorldPos.y ) ) * ( 1.0 - vIsSide );
@@ -3647,6 +3666,8 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // sodium / cold / neon pane chroma is replaced by neutral light with a weak district tint without
   // touching occupancy, window runs, room detail, screen energy or any fade.
   resolved = skyriverDistrictTint( resolved, vDistrict, DISTRICT_PANE_SATURATION );
+  // One palette owns panes, silhouette rooms, furniture lamps and screens through every fade.
+  resolved = recolourWindow(resolved, windowPaletteUnit(vWindowPalette, roomHash), uDistrictColour);
   // T7-5 pristine glass: the curtain wall reflects the cool night sky at grazing angles.
   // R14: a hint only — at 0.02-0.065 linear this sheet covered every high tower in 40-70/255 grey.
   color += vec3( 0.003, 0.006, 0.012 ) * glassRaw * pristine * ( 0.25 + 0.75 * fresnel ) * vIsSide * paneStepMask;
@@ -3663,6 +3684,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   averaged += interiorScreenMean( interiorAverageScreenInput( screenBluePane ) );
   // The same rule for the unresolved mean, so the room fade boundary does not cross a warm average.
   averaged = skyriverDistrictTint( averaged, vDistrict, DISTRICT_PANE_SATURATION );
+  averaged = recolourWindow(averaged, windowPaletteMean(vWindowPalette), uDistrictColour);
   color += mix( averaged * ( 1.0 - heroShadow ) * ${SKYRIVER_INTERIOR_AVERAGE_GAIN.toFixed(2)}, resolved * EMISSIVE_GAIN, detail ) * 1.55 * ( 1.0 - 0.65 * pristine ) * paneStepMask;
 
   color = skyriverDistanceGrade( color, viewDepth, 0.0 );
@@ -3750,6 +3772,7 @@ varying float vCardDistrict;
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${SKYRIVER_STRUCTURE_MATERIAL_GLSL}
+${WINDOW_PALETTE_GLSL}
 ${SKYRIVER_DISTANCE_GRADE_GLSL}
 
 #define CARD_COLUMNS ${IMPOSTOR_COLUMNS.toFixed(1)}
@@ -3785,9 +3808,11 @@ void main() {
   vec3 cardChroma;
   structureMaterialProfile( cardQ, 0.0, cardFamily, cardB, cardW, cardF, cardEdge, cardChroma );
   vec3 cardBase1 = cardBase0 * cardChroma;
-  vec3 cardBase = normalizeMaterial( cardBase0, cardBase1, cardB, cardW, cardF );
+  vec3 cardBase = normalizeFamilyMaterial( cardBase0, cardBase1, cardB, cardW, cardF, cardFamily );
+  float cardPalette = windowPaletteCodeFromQ(cardQ, vCardDistrict);
   vec3 color = cardBase
-    + skyriverDistrictTint( card.rgb * 1.1 * dim * uEmissive, vCardDistrict, DISTRICT_FAR_CARD_SATURATION );
+    + recolourWindow(skyriverDistrictTint( card.rgb * 1.1 * dim * uEmissive, vCardDistrict, DISTRICT_FAR_CARD_SATURATION ),
+      windowPaletteMean(cardPalette), uDistrictColour);
   color = skyriverDistanceGrade( color, vFogDepth, vCardLayer < 2.5 ? 0.55 : 0.7 );
   gl_FragColor = vec4( color, 1.0 );
 ${SKYRIVER_OUTPUT_APPLY_GLSL}
@@ -3838,6 +3863,7 @@ attribute float aSeed;
 attribute float aKind;
 attribute vec3 aSize;
 attribute float aDistrict; // R22 colour district, from this trim owner's canyon anchor
+attribute float aMaterial;
 
 varying vec3 vTrimLocal;
 varying vec3 vNormalW;
@@ -3846,6 +3872,7 @@ varying float vSeed;
 varying float vKind;
 varying vec3 vSizeM;
 varying float vDistrict;
+flat varying float vMaterial;
 
 #include <fog_pars_vertex>
 
@@ -3856,6 +3883,7 @@ void main() {
   vSeed = aSeed;
   vKind = aKind;
   vDistrict = aDistrict;
+  vMaterial = aMaterial;
 
   vec4 world = modelMatrix * instanceMatrix * vec4( transformed, 1.0 );
   vWorldPos = world.xyz;
@@ -3881,11 +3909,13 @@ varying float vSeed;
 varying float vKind;
 varying vec3 vSizeM;
 varying float vDistrict;
+flat varying float vMaterial;
 
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${SKYRIVER_HASH_GLSL}
 ${SKYRIVER_DISTRICT_COLOUR_GLSL}
+${SKYRIVER_STRUCTURE_MATERIAL_GLSL}
 
 void main() {
   vec3 viewDir = normalize( cameraPosition - vWorldPos );
@@ -3902,7 +3932,11 @@ void main() {
   float fresnel = pow( 1.0 - clamp( dot( vNormalW, viewDir ), 0.0, 1.0 ), 4.0 );
   base += uWetTint * fresnel * 0.2;
 
-  vec3 color = base;
+  float matFamily, matB, matW, matF, matEdge;
+  vec3 matChroma;
+  structureMaterialProfile(quantizeMaterialSeed(vMaterial), 0.0,
+    matFamily, matB, matW, matF, matEdge, matChroma);
+  vec3 color = normalizeFamilyMaterial(base, base * matChroma, matB, matW, matF, matFamily);
 
   // Gantry (1) and cantilever (5): a line of amber deck lights spaced every ~6 m down the run.
   float isGantry = ( step( 0.5, vKind ) * ( 1.0 - step( 1.5, vKind ) ) )
@@ -4198,6 +4232,7 @@ export const SKYRIVER_CITY_SHADER_SOURCE = Object.freeze({
   impostorFragment: IMPOSTOR_FRAGMENT,
   districtColour: SKYRIVER_DISTRICT_COLOUR_GLSL,
   distanceGrade: SKYRIVER_DISTRICT_DISTANCE_GRADE_GLSL,
+  windowPalette: WINDOW_PALETTE_GLSL,
 });
 
 // --- city -----------------------------------------------------------------------------------------
@@ -4891,6 +4926,30 @@ export class SkyriverCity {
     return skyriverDistrictAt(this.districts, v);
   }
 
+  /** Read palette identities from the actual uploaded geometry attributes. No render or update. */
+  windowPaletteEvidence(): {
+    readonly towers: readonly { slot: number; layer: number; ownerQ: number; district: number; code: number; hash: number; meanUnit: readonly number[] }[];
+    readonly cards: readonly { slot: number; layer: number; ownerQ: number; district: number; code: number; hash: number; meanUnit: readonly number[] }[];
+  } {
+    const towerOwner = this.towerMesh.geometry.getAttribute('aMaterial');
+    const towerDistrict = this.towerMesh.geometry.getAttribute('aDistrict');
+    const layer = this.towerMesh.geometry.getAttribute('aLayer');
+    const card = this.impostorMesh.geometry.getAttribute('aCard');
+    const towers = Array.from({ length: this.towerMesh.count }, (_, slot) => {
+      const owner = towerOwner.getX(slot), district = towerDistrict.getX(slot);
+      const code = windowPaletteCode(owner, district);
+      return { slot, layer: layer.getX(slot), ownerQ: quantize(owner), district, code,
+        hash: windowPaletteHash(code), meanUnit: windowPaletteMean(code) };
+    });
+    const cards = Array.from({ length: this.impostorMesh.count }, (_, slot) => {
+      const ownerQ = decodeCard(card.getX(slot)).q, district = card.getW(slot);
+      const code = windowPaletteCodeFromQ(ownerQ, district);
+      return { slot, layer: card.getY(slot), ownerQ, district, code,
+        hash: windowPaletteHash(code), meanUnit: windowPaletteMean(code) };
+    });
+    return { towers, cards };
+  }
+
   get districtColourAllowed(): boolean {
     return this.colourSwitch.allowed;
   }
@@ -5150,6 +5209,7 @@ export class SkyriverCity {
       distanceGrade,
       untouched: SKYRIVER_DISTRICT_UNTOUCHED_TERMS.map((term) => ({ id: term.id, role: term.role, rgb: [...term.rgb] })),
       limits: Object.freeze([
+        'R29 applies the building palette after the R22 pane, room and card recolour. These role saturations describe the R22 input. windowPaletteEvidence reports the actual building palette identities and means.',
         'These are source and CPU-twin values. They are not rendered pixel measurements, and a source weight is not image energy.',
         'Pane, room, trim, wash and far-card roles are procedural per pixel; their evidence is the actual shader source vector, not a per-instance population.',
         'The sign and hero figures use SKYRIVER_SIGN_EMISSION_REFERENCE. Per-pixel mask, flicker, facing and fog vary across the frame and are scalar, so they scale old and new identically.',
@@ -5547,6 +5607,7 @@ export class SkyriverCity {
     const matrix = new THREE.Matrix4();
     const slots = Math.max(count, 1);
     const seeds = new Float32Array(slots);
+    const materials = new Float32Array(slots);
     const kinds = new Float32Array(slots);
     const sizes = new Float32Array(slots * 3);
     const districts = new Float32Array(slots);
@@ -5573,6 +5634,8 @@ export class SkyriverCity {
       matrix.compose(position, quaternion, scale);
       this.trimMesh.setMatrixAt(drawn, matrix);
       seeds[drawn] = seedValue[i]!;
+      const owner = this.trims.owner[i]!;
+      materials[drawn] = trimMaterialOwnerSeed(owner);
       kinds[drawn] = kind[i]!;
       // R22: the trim's owner anchor — the same building anchor its facade's rooms and signs use.
       districts[drawn] = skyriverDistrictIdAt(this.districts, this.trims.owner[i]!.anchorV);
@@ -5614,6 +5677,7 @@ export class SkyriverCity {
 
     this.trimMesh.instanceMatrix.needsUpdate = true;
     this.trimMesh.geometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seeds, 1));
+    this.trimMesh.geometry.setAttribute('aMaterial', new THREE.InstancedBufferAttribute(materials, 1));
     this.trimMesh.geometry.setAttribute('aKind', new THREE.InstancedBufferAttribute(kinds, 1));
     this.trimMesh.geometry.setAttribute('aSize', new THREE.InstancedBufferAttribute(sizes, 3));
     this.trimMesh.geometry.setAttribute('aDistrict', new THREE.InstancedBufferAttribute(districts, 1));

@@ -22,6 +22,7 @@ import {
   type SkyriverLowBaseKind,
 } from '../src/render/city';
 import { presentCityLayout } from '../src/render/presentationLayout';
+import r29Baseline from './fixtures/r29-city-baseline.json';
 
 const DEMO_SEED = 424242;
 const TEST_SEEDS = [DEMO_SEED, 0, 2147483647, 4294967295] as const;
@@ -70,7 +71,9 @@ function towerKey(tower: SkyriverTower): string {
 }
 
 function sha256(data: unknown): string {
-  return createHash('sha256').update(JSON.stringify(data)).digest('hex');
+  // Material identity is checked separately. Keep all geometry and random results in this hash.
+  return createHash('sha256').update(JSON.stringify(data, (key, value) =>
+    key === 'materialOwner' ? undefined : value)).digest('hex');
 }
 
 describe('R27 base sprawl: legacy preservation and trim capacity', () => {
@@ -101,15 +104,24 @@ describe('R27 base sprawl: legacy preservation and trim capacity', () => {
     expect(trims.count).toBeGreaterThan(legacyMasses.length);
   });
 
+  it.each(TEST_SEEDS)('keeps all original model and random results for seed %i', seed => {
+    const raw = deriveCityLayout(seed), layout = presentCityLayout(raw);
+    const actual = { raw, layout, masses: deriveCityMasses(layout), trims: deriveCityTrims(layout),
+      faces: deriveFacadeFaces(layout), far: deriveFarTowers(layout), heroes: deriveHeroBlades(layout), signs: deriveNeonSigns(layout) };
+    const before = r29Baseline.find(record => record.seed === seed)!;
+    for (const key of Object.keys(actual) as (keyof typeof actual)[]) expect(sha256(actual[key]), key).toBe(before.hashes[key]);
+  });
+
   it('matches saved baseline hashes on the canonical demo seed', () => {
     const layout = presentCityLayout(deriveCityLayout(DEMO_SEED));
     const heroes = deriveHeroBlades(layout);
     const faces = deriveFacadeFaces(layout);
     const far = deriveFarTowers(layout);
 
-    expect(sha256(heroes)).toBe('06196d1af64229654ce22adfe7f82c95ba34709c570b6c7a0ce0432175464e2c');
-    expect(sha256(faces)).toBe('9aee3ab3c2c499a12555ca0923e16927fb4c44f81885147a5d83836c9dfa9aee');
-    expect(sha256(far)).toBe('bb34a25f2672f9af0ec031ed233cfc352d9cc258341400c8da79ac32281739cc');
+    const before = r29Baseline.find(record => record.seed === DEMO_SEED)!;
+    expect(sha256(heroes)).toBe(before.hashes.heroes);
+    expect(sha256(faces)).toBe(before.hashes.faces);
+    expect(sha256(far)).toBe(before.hashes.far);
   });
 });
 
