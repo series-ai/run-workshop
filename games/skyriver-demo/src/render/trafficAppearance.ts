@@ -27,6 +27,8 @@ export const TRAFFIC_APPEARANCE_PROFILES: readonly TrafficAppearanceProfile[] = 
 ] satisfies TrafficAppearanceProfile[]).map((profile) => Object.freeze({ ...profile, front: Object.freeze(profile.front), rear: Object.freeze(profile.rear) })));
 
 export const TRAFFIC_LAMP_MIN_DIAMETER_PX = 1.3;
+export const TRAFFIC_LAMP_FLOOR_BLEND_SHARE = 0.2;
+export const TRAFFIC_LAMP_FLOOR_MIN_GAIN = 0.8;
 
 /** Store type + scale / 8. Scale must be in [1, 6]. Fractions stay clear of integers. */
 export function packTrafficAppearance(type: number, scale: number): number {
@@ -67,9 +69,43 @@ vec4 trafficLampShape(float type, bool front) {
 float trafficCarLength(float type) {
   return trafficLampShape(type, true).w - trafficLampShape(type, false).w;
 }
+float trafficLampPhysicalRadius(float type, float scale) {
+${TRAFFIC_APPEARANCE_PROFILES.map((profile, i) => {
+  const radius = (lamp: TrafficLampProfile): number => Math.hypot(
+    (lamp.kind === 'pair' ? lamp.centreXM : 0) + lamp.widthM / 2,
+    Math.abs(lamp.yM) + lamp.heightM / 2, Math.abs(lamp.zM));
+  const bound = Math.ceil(Math.max(radius(profile.front), radius(profile.rear)) * 1e8) / 1e8;
+  return `  if (type < ${glslNumber(i + 0.5)}) return ${glslNumber(bound)} * scale;`;
+}).join('\n')}
+  return 0.0;
+}
+bool trafficLampOutsidePlane(vec4 plane, vec4 point, float radius) {
+  return dot(plane, point) < -radius * length(plane.xyz);
+}
+bool trafficLampInView(vec3 pos, float type, float scale, float pixelScale, float extraM) {
+  vec4 point = viewMatrix * vec4(pos, 1.0);
+  float physicalRadius = trafficLampPhysicalRadius(type, scale) + extraM;
+  // Bound the physical patches, pixel filter and trail cap before perspective expansion.
+  float radius = physicalRadius + 3.0 * pixelScale * max(-point.z + physicalRadius, 1.0);
+  vec4 row0 = vec4(projectionMatrix[0][0], projectionMatrix[1][0], projectionMatrix[2][0], projectionMatrix[3][0]);
+  vec4 row1 = vec4(projectionMatrix[0][1], projectionMatrix[1][1], projectionMatrix[2][1], projectionMatrix[3][1]);
+  vec4 row2 = vec4(projectionMatrix[0][2], projectionMatrix[1][2], projectionMatrix[2][2], projectionMatrix[3][2]);
+  vec4 row3 = vec4(projectionMatrix[0][3], projectionMatrix[1][3], projectionMatrix[2][3], projectionMatrix[3][3]);
+  return !(trafficLampOutsidePlane(row3 + row0, point, radius)
+    || trafficLampOutsidePlane(row3 - row0, point, radius)
+    || trafficLampOutsidePlane(row3 + row1, point, radius)
+    || trafficLampOutsidePlane(row3 - row1, point, radius)
+    || trafficLampOutsidePlane(row3 + row2, point, radius)
+    || trafficLampOutsidePlane(row3 - row2, point, radius));
+}
+float trafficLampFloor(float physical, float floorSize) {
+  float width = floorSize * ${glslNumber(TRAFFIC_LAMP_FLOOR_BLEND_SHARE)};
+  float overlap = max(width - abs(physical - floorSize), 0.0);
+  return max(physical, floorSize) + overlap * overlap / (4.0 * width);
+}
 void trafficLampKernel(vec3 pos, vec3 forward, float bank, float type, float scale,
   float frontMix, float lampSide, float pixelScale, out vec3 lamp, out vec4 centre,
-  out vec2 axis, out vec2 halfSize) {
+  out vec2 axis, out vec2 halfSize, out float pairHalfSpan, out float lampGain) {
   vec3 right0 = normalize(vec3(forward.z, 0.0, -forward.x));
   vec3 up0 = cross(forward, right0);
   vec3 rightW = right0 * cos(bank) + up0 * sin(bank);
@@ -99,9 +135,16 @@ void trafficLampKernel(vec3 pos, vec3 forward, float bank, float type, float sca
   axis = rightLength > 1e-5 ? rightP / rightLength : vec2(1.0, 0.0);
   float pixelM = depth * pixelScale;
   // Each lamp needs pixel coverage. The gap between lamps cannot provide it.
-  halfSize = vec2(max(shape.y * scale * rightLength * 0.5,
-      ${glslNumber(TRAFFIC_LAMP_MIN_DIAMETER_PX / 2)} * pixelM),
-    max(shape.z * scale * abs(dot(upP, vec2(-axis.y, axis.x))) * 0.5,
-      ${glslNumber(TRAFFIC_LAMP_MIN_DIAMETER_PX / 2)} * pixelM));
+  float floorSize = ${glslNumber(TRAFFIC_LAMP_MIN_DIAMETER_PX / 2)} * pixelM;
+  vec2 physicalHalfSize = vec2(shape.y * scale * rightLength * 0.5,
+    shape.z * scale * abs(dot(upP, vec2(-axis.y, axis.x))) * 0.5);
+  halfSize = vec2(trafficLampFloor(physicalHalfSize.x, floorSize),
+    trafficLampFloor(physicalHalfSize.y, floorSize));
+  // Bound the extra light from the pixel floor. Resolved patches keep full gain.
+  float extent = max(physicalHalfSize.x, physicalHalfSize.y) / floorSize;
+  lampGain = mix(${glslNumber(TRAFFIC_LAMP_FLOOR_MIN_GAIN)}, 1.0,
+    smoothstep(${glslNumber(1 - TRAFFIC_LAMP_FLOOR_BLEND_SHARE)},
+      ${glslNumber(1 + TRAFFIC_LAMP_FLOOR_BLEND_SHARE)}, extent));
+  pairHalfSpan = shape.x * scale * rightLength;
 }
 `;
