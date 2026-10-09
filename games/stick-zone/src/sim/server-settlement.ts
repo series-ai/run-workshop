@@ -1,3 +1,5 @@
+export { DEPOT_CRATE_LOCATIONS } from "./crates.js";
+export { isPositionInExfilZone } from "./game.js";
 /**
  * @file server-settlement.ts
  * Authoritative server-side settlement authority with disk persistence,
@@ -31,6 +33,8 @@ export const KNOWN_DEPOT_CRATES: Record<string, number> = {
   crate_01: 1250,
   crate_02: 2400,
   crate_03: 3800,
+  crate_04: 2500,
+  crate_05: 3200,
 };
 
 export interface OperativeCustody {
@@ -69,6 +73,11 @@ export interface OperativeCustody {
   lastDamageTimestamp?: number;
   lastDamageTick?: number;
   ammo?: number;
+  rifleAmmo?: number;
+  shotgunAmmo?: number;
+  selectedWeapon?: "rifle" | "shotgun";
+  stimsRemaining?: number;
+  hasKeycard?: boolean;
   pendingRevocationSave?: boolean;
   failedPersistence?: boolean;
 }
@@ -80,7 +89,7 @@ export interface ServerRaidRecord {
   totalBanked: number;
   createdAtMs?: number;
   operatives: Record<string, OperativeCustody>;
-  crates: Record<string, { cashValue: number; claimedBy?: string; claimTimestamp?: number; serverClaimedAt?: number; prevAmmo?: number; ammoGranted?: number }>;
+  crates: Record<string, { cashValue: number; claimedBy?: string; claimTimestamp?: number; serverClaimedAt?: number; prevAmmo?: number; ammoGranted?: number; prevRifleAmmo?: number; prevShotgunAmmo?: number }>;
   machines?: Record<string, { health: number; isAlive: boolean }>;
 }
 
@@ -636,12 +645,26 @@ export class ServerSettlementAuthority {
     return this.raids.get(id);
   }
 
-  public recordOperativeAmmo(raidId: string, operativeId: string, ammo: number): void {
+  public recordOperativeAmmo(
+    raidId: string,
+    operativeId: string,
+    ammo: number,
+    rifleAmmo?: number,
+    shotgunAmmo?: number,
+    selectedWeapon?: "rifle" | "shotgun"
+  ): void {
     const id = raidId || this.getActiveRaidId();
     const raid = this.raids.get(id);
     if (!raid || !raid.operatives || !raid.operatives[operativeId]) return;
     const prevAmmo = raid.operatives[operativeId].ammo;
+    const prevRifleAmmo = raid.operatives[operativeId].rifleAmmo;
+    const prevShotgunAmmo = raid.operatives[operativeId].shotgunAmmo;
+    const prevWeapon = raid.operatives[operativeId].selectedWeapon;
+
     raid.operatives[operativeId].ammo = Math.max(0, Math.min(30, Math.floor(ammo)));
+    if (typeof rifleAmmo === "number") raid.operatives[operativeId].rifleAmmo = Math.max(0, Math.min(30, Math.floor(rifleAmmo)));
+    if (typeof shotgunAmmo === "number") raid.operatives[operativeId].shotgunAmmo = Math.max(0, Math.min(8, Math.floor(shotgunAmmo)));
+    if (selectedWeapon) raid.operatives[operativeId].selectedWeapon = selectedWeapon;
     try {
       this.saveToDisk();
     } catch (err) {
@@ -650,6 +673,9 @@ export class ServerSettlementAuthority {
       } else {
         delete raid.operatives[operativeId].ammo;
       }
+      raid.operatives[operativeId].rifleAmmo = prevRifleAmmo;
+      raid.operatives[operativeId].shotgunAmmo = prevShotgunAmmo;
+      raid.operatives[operativeId].selectedWeapon = prevWeapon;
       throw err;
     }
   }
@@ -720,6 +746,10 @@ export class ServerSettlementAuthority {
     return tok;
   }
 
+  public deleteReceiptForTesting(receiptId: string): void {
+    this.auditLog.delete(receiptId);
+  }
+
   public hasCommittedReceipt(receiptId: string): boolean {
     return this.auditLog.has(receiptId);
   }
@@ -754,6 +784,10 @@ export class ServerSettlementAuthority {
   constructor(storePath?: string) {
     const env = typeof process !== "undefined" ? (process as any)["env"] : {};
     const isTest = typeof process !== "undefined" && (env["NODE_ENV"] === "test" || env["VITEST"] !== undefined);
+    if (storePath === ":memory:") {
+      this.storePath = ":memory:";
+      return;
+    }
     if (!storePath && isTest) {
       this.storePath = path.resolve("/tmp", `.settlement-store-test-default-${process.pid}.json`);
     } else {
@@ -772,6 +806,7 @@ export class ServerSettlementAuthority {
 
 
   private loadFromDisk(): void {
+    if (this.storePath === ":memory:") return;
     let data: PersistentStoreData | null = null;
     let isValid = false;
     let hasBackupHistory = false;
@@ -1244,6 +1279,13 @@ export class ServerSettlementAuthority {
           operativeId: opId,
           resumeKey,
           admitted: true,
+          health: 100,
+          armor: 100,
+          ammo: 30,
+          rifleAmmo: 30,
+          shotgunAmmo: 8,
+          selectedWeapon: "rifle",
+          stimsRemaining: 2,
           earnedCash: 0, // Strictly starts at $0; earned cash is strictly tracked from looted crates
           cratesLooted: [],
           isExtracted: false,
@@ -1275,6 +1317,8 @@ export class ServerSettlementAuthority {
           crate_01: { cashValue: Math.min(KNOWN_DEPOT_CRATES.crate_01, allowablePool) },
           crate_02: { cashValue: Math.min(KNOWN_DEPOT_CRATES.crate_02, allowablePool) },
           crate_03: { cashValue: Math.min(KNOWN_DEPOT_CRATES.crate_03, allowablePool) },
+          crate_04: { cashValue: Math.min(KNOWN_DEPOT_CRATES.crate_04, allowablePool) },
+          crate_05: { cashValue: Math.min(KNOWN_DEPOT_CRATES.crate_05, allowablePool) },
         },
         machines: {
           turret_depot_alpha: { health: 120, isAlive: true },
@@ -1434,11 +1478,19 @@ export class ServerSettlementAuthority {
               prevOp.cratesLooted = prevOp.cratesLooted.filter((id) => id !== crateId);
               prevOp.earnedCash = Math.max(0, prevOp.earnedCash - crateVal);
               const granted = typeof (crate as any).ammoGranted === "number" ? (crate as any).ammoGranted : 25;
+              if (typeof (crate as any).prevRifleAmmo === "number") {
+                prevOp.rifleAmmo = (crate as any).prevRifleAmmo;
+              }
+              if (typeof (crate as any).prevShotgunAmmo === "number") {
+                prevOp.shotgunAmmo = (crate as any).prevShotgunAmmo;
+              }
               if (typeof (crate as any).prevAmmo === "number") {
                 const shotsFired = Math.max(0, 30 - (prevOp.ammo ?? 30));
                 prevOp.ammo = Math.max(0, (crate as any).prevAmmo - shotsFired);
               } else if (typeof prevOp.ammo === "number") {
-                prevOp.ammo = Math.max(0, prevOp.ammo - granted);
+                prevOp.ammo = prevOp.selectedWeapon === "shotgun" ? (prevOp.shotgunAmmo ?? 8) : Math.max(0, prevOp.ammo - granted);
+              } else {
+                prevOp.ammo = prevOp.selectedWeapon === "shotgun" ? (prevOp.shotgunAmmo ?? 8) : (prevOp.rifleAmmo ?? 30);
               }
             }
             // Credit the new winning claimant
@@ -1449,7 +1501,9 @@ export class ServerSettlementAuthority {
             const opAmmoBefore = typeof op.ammo === "number" ? op.ammo : 5;
             (crate as any).prevAmmo = opAmmoBefore;
             (crate as any).ammoGranted = Math.max(0, 30 - opAmmoBefore);
-            op.ammo = 30;
+            op.rifleAmmo = 30;
+            op.shotgunAmmo = 8;
+            op.ammo = op.selectedWeapon === "shotgun" ? 8 : 30;
             crate.claimedBy = claimantId;
             crate.claimTimestamp = effectiveTimestamp;
             crate.serverClaimedAt = serverNow;
@@ -1482,8 +1536,12 @@ export class ServerSettlementAuthority {
       op.earnedCash += crateVal;
       const opAmmoBefore = typeof op.ammo === "number" ? op.ammo : 5;
       (crate as any).prevAmmo = opAmmoBefore;
+      (crate as any).prevRifleAmmo = typeof op.rifleAmmo === "number" ? op.rifleAmmo : 20;
+      (crate as any).prevShotgunAmmo = typeof op.shotgunAmmo === "number" ? op.shotgunAmmo : 3;
       (crate as any).ammoGranted = Math.max(0, 30 - opAmmoBefore);
-      op.ammo = 30;
+      op.rifleAmmo = 30;
+      op.shotgunAmmo = 8;
+      op.ammo = op.selectedWeapon === "shotgun" ? 8 : 30;
       crate.claimedBy = claimantId;
       crate.claimTimestamp = effectiveTimestamp;
       crate.serverClaimedAt = serverNow;
@@ -1767,12 +1825,9 @@ export class ServerSettlementAuthority {
       const holdChainX = (op as any).lastHoldObservedX;
       const holdChainZ = (op as any).lastHoldObservedZ;
       const holdChainT = (op as any).lastHoldObservedTimestamp;
-      const lastX = typeof holdChainX === "number" ? holdChainX : op.lastObservedX;
-      const lastZ = typeof holdChainZ === "number" ? holdChainZ : op.lastObservedZ;
-      const lastT = typeof holdChainT === "number" ? holdChainT : op.lastObservedTimestamp || now;
-      if (lastX !== undefined && lastZ !== undefined) {
-        const dt = Math.max(0.05, (now - lastT) / 1000);
-        const dist = Math.hypot(px - lastX, pz - lastZ);
+      if (typeof holdChainX === "number" && typeof holdChainZ === "number") {
+        const dt = Math.max(0.05, (now - (holdChainT || now)) / 1000);
+        const dist = Math.hypot(px - holdChainX, pz - holdChainZ);
         const speed = dist / dt;
         if (!simTickAdvancement && dist > 0.75 && speed > 15.0) {
           // Do NOT overwrite any movement evidence with rejected coordinates!
@@ -2009,6 +2064,7 @@ export class ServerSettlementAuthority {
     rivalId?: string;
     exfilSubmitted?: boolean;
     sim?: any;
+    simulationRef?: any;
     simTickAdvancement?: boolean;
   }): Promise<SettlementCommitment> {
     const raidId = params.raidId || "raid_sector7_1042";
@@ -2468,3 +2524,49 @@ export function recordGameplayExtractionHold(
 try {
   (globalThis as any).__stickZoneHoldReporter = recordGameplayExtractionHold;
 } catch {}
+
+
+import { AuthoritativeSettlementLedger } from "./airlock.js";
+
+export class ServerSettlementAdapter extends AuthoritativeSettlementLedger {
+  public serverAuthority: ServerSettlementAuthority;
+  public wsCoordinator?: any;
+
+  constructor(serverAuthority?: ServerSettlementAuthority, wsCoordinator?: any) {
+    super();
+    this.serverAuthority = serverAuthority || new ServerSettlementAuthority();
+    this.wsCoordinator = wsCoordinator;
+    try {
+      this.serverAuthority.initRaid("raid_sector7_1042", 50000, ["op_player", "op_alpha_1", "op_bravo_1"]);
+    } catch {}
+  }
+
+  public deleteReceiptForTesting(receiptId: string): void {
+    this.auditLog.delete(receiptId);
+  }
+
+  public hasCommittedReceipt(receiptId: string): boolean {
+    return this.serverAuthority.hasCommittedReceipt(receiptId);
+  }
+
+  public getCommittedReceipt(receiptId: string) {
+    return this.serverAuthority.getCommittedReceipt(receiptId);
+  }
+
+  public override async commitSettlement(params: any): Promise<{ receipt: any; outcomePayload: any }> {
+    const raidId = params.raidId || "raid_sector7_1042";
+    const extractingId = params.extractingId || params.player?.id || "op_player";
+    const snapshotTick = typeof params.snapshotTick === "number" ? params.snapshotTick : params.tick;
+    const snapshotCash = typeof params.snapshotCash === "number" ? params.snapshotCash : params.player?.cash;
+    const simObj = params.sim || params.simulationRef || (params.exfilController ? params : undefined);
+    return this.serverAuthority.commitSettlement({
+      raidId,
+      extractingId,
+      snapshotTick,
+      snapshotCash,
+      exfilSubmitted: params.exfilSubmitted ?? true,
+      sim: simObj,
+      simulationRef: simObj,
+    });
+  }
+}

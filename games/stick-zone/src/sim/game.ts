@@ -1,3 +1,51 @@
+import { DEPOT_CRATE_CONFIGS, KNOWN_DEPOT_CRATES } from "./crates.js";
+import { calculateShotgunHit, SHOTGUN_MAX_RANGE } from './shotgunCollision.js';
+export type PresentationEvent =
+  | {
+      type: 'fire';
+      shooterId: string;
+      origin: { x: number; y: number; z: number };
+      dir: { x: number; y: number; z: number };
+      weapon: 'rifle' | 'shotgun' | 'pistol';
+    }
+  | {
+      type: 'impact';
+      position: { x: number; y: number; z: number };
+      surface?: 'metal' | 'concrete' | 'flesh';
+    }
+  | {
+      type: 'elimination';
+      operativeId: string;
+      position: { x: number; y: number; z: number };
+    }
+  | {
+      type: 'locomotion';
+      operativeId: string;
+      subtype: 'roll' | 'sprint' | 'land' | 'slide';
+      position: { x: number; y: number; z: number };
+    }
+  | {
+      type: 'kick';
+      operativeId: string;
+      position: { x: number; y: number; z: number };
+      facing: number;
+      isHit: boolean;
+      hitTarget?: 'rival' | 'machine' | 'cover';
+    }
+  | {
+      type: 'stim';
+      operativeId: string;
+      position: { x: number; y: number; z: number };
+      healAmount?: number;
+    }
+  | {
+      type: 'loot';
+      operativeId: string;
+      position: { x: number; y: number; z: number };
+      crateId?: string;
+      value?: number;
+    };
+
 export function applyStandardDamage(
   currentHealth: number,
   currentArmor: number,
@@ -116,6 +164,65 @@ export interface ObstacleBox {
   maxZ: number;
 }
 
+export interface ContainerDefinition {
+  id: string;
+  position: [number, number, number];
+  rotation: [number, number, number];
+  box: ObstacleBox;
+}
+
+export const CONTAINER_GEOMETRY = {
+  length: 6.90,
+  width: 3.12,
+  height: 2.60,
+  halfLength: 3.45,
+  halfWidth: 1.56,
+};
+
+export function createContainerBox(x: number, z: number, isRotated: boolean): ObstacleBox {
+  const hx = isRotated ? CONTAINER_GEOMETRY.halfWidth : CONTAINER_GEOMETRY.halfLength;
+  const hz = isRotated ? CONTAINER_GEOMETRY.halfLength : CONTAINER_GEOMETRY.halfWidth;
+  return {
+    minX: x - hx,
+    maxX: x + hx,
+    minZ: z - hz,
+    maxZ: z + hz,
+  };
+}
+
+export function isPositionInExfilZone(x: number, z: number, hasKeycard: boolean = false): boolean {
+  const distToExfil = Math.hypot(x - 45.0, z - 45.0);
+  const distToBunker = Math.hypot(x - (-45.0), z - (-45.0));
+  return distToExfil <= 6.0 || (hasKeycard && distToBunker <= 6.0);
+}
+
+export const MAP_CONTAINERS: ContainerDefinition[] = [
+  // Original 7 depot containers
+  { id: 'cnt_01', position: [-20, 0, -30], rotation: [0, 0, 0], box: createContainerBox(-20, -30, false) },
+  { id: 'cnt_02', position: [-35, 0, -10], rotation: [0, Math.PI / 2, 0], box: createContainerBox(-35, -10, true) },
+  { id: 'cnt_03', position: [10, 0, -40], rotation: [0, 0, 0], box: createContainerBox(10, -40, false) },
+  { id: 'cnt_04', position: [30, 0, -20], rotation: [0, 0, 0], box: createContainerBox(30, -20, false) },
+  { id: 'cnt_05', position: [-15, 0, 15], rotation: [0, Math.PI / 2, 0], box: createContainerBox(-15, 15, true) },
+  { id: 'cnt_06', position: [5, 0, 30], rotation: [0, 0, 0], box: createContainerBox(5, 30, false) },
+  { id: 'cnt_07', position: [-45, 0, 35], rotation: [0, 0, 0], box: createContainerBox(-45, 35, false) },
+
+  // Central Corridor Flanking Industrial Stacks (x = ±5.8 for optimal 66.70° tactical visibility)
+  { id: 'flank_w_north', position: [-5.8, 0, -25], rotation: [0, Math.PI / 2, 0], box: createContainerBox(-5.8, -25, true) },
+  { id: 'flank_e_north', position: [5.8, 0, -25], rotation: [0, Math.PI / 2, 0], box: createContainerBox(5.8, -25, true) },
+  { id: 'flank_w_mid', position: [-9.5, 0, 5], rotation: [0, Math.PI / 2, 0], box: createContainerBox(-9.5, 5, true) },
+  { id: 'flank_e_mid', position: [9.5, 0, 5], rotation: [0, Math.PI / 2, 0], box: createContainerBox(9.5, 5, true) },
+  { id: 'flank_w_south', position: [-9.5, 0, 35], rotation: [0, Math.PI / 2, 0], box: createContainerBox(-9.5, 35, true) },
+  { id: 'flank_e_south', position: [9.5, 0, 35], rotation: [0, Math.PI / 2, 0], box: createContainerBox(9.5, 35, true) },
+
+  // Perimeter Flanking Heavy Stacks (x = ±60)
+  { id: 'perim_w_north', position: [-60, 0, -25], rotation: [0, 0, 0], box: createContainerBox(-60, -25, false) },
+  { id: 'perim_w_mid', position: [-60, 0, 5], rotation: [0, 0, 0], box: createContainerBox(-60, 5, false) },
+  { id: 'perim_w_south', position: [-60, 0, 35], rotation: [0, 0, 0], box: createContainerBox(-60, 35, false) },
+  { id: 'perim_e_north', position: [60, 0, -25], rotation: [0, 0, 0], box: createContainerBox(60, -25, false) },
+  { id: 'perim_e_mid', position: [60, 0, 5], rotation: [0, 0, 0], box: createContainerBox(60, 5, false) },
+  { id: 'perim_e_south', position: [60, 0, 35], rotation: [0, 0, 0], box: createContainerBox(60, 35, false) },
+];
+
 export const DEPOT_CONTAINERS: ObstacleBox[] = [
   { minX: -23.5, maxX: -16.5, minZ: -32.0, maxZ: -28.0 },
   { minX: -37.0, maxX: -33.0, minZ: -13.5, maxZ: -6.5 },
@@ -124,6 +231,59 @@ export const DEPOT_CONTAINERS: ObstacleBox[] = [
   { minX: -17.0, maxX: -13.0, minZ: 11.5, maxZ: 18.5 },
   { minX: 2.0, maxX: 8.0, minZ: 28.5, maxZ: 31.5 },
   { minX: -48.5, maxX: -41.5, minZ: 33.0, maxZ: 37.0 },
+  ...MAP_CONTAINERS.slice(7).map((c) => c.box),
+];
+
+export const FIELD_OBSTACLES: ObstacleBox[] = [
+  // Spoke Perimeter Boundary Walls (Perimeter: |x| = 80, z: -50 to +80)
+  // South Wall
+  { minX: -80.0, maxX: 80.0, minZ: 79.5, maxZ: 80.5 },
+  // West Wall
+  { minX: -80.5, maxX: -79.5, minZ: -50.0, maxZ: 80.0 },
+  // East Wall
+  { minX: 79.5, maxX: 80.5, minZ: -50.0, maxZ: 80.0 },
+  // North Wall
+  { minX: -80.0, maxX: 80.0, minZ: -80.5, maxZ: -79.5 },
+
+  // FOB Staging Outpost (z: -85 to -50)
+  // FOB North Wall Behind Outpost
+  { minX: -8.0, maxX: 8.0, minZ: -73.6, maxZ: -72.4 },
+  // FOB Side Enclosure Walls
+  { minX: -8.5, maxX: -7.5, minZ: -73.0, maxZ: -52.0 },
+  { minX: 7.5, maxX: 8.5, minZ: -73.0, maxZ: -52.0 },
+  // FOB Concrete Security Barriers (wings flanking central checkpoint walkway at x = 0)
+  { minX: -4.5, maxX: -0.6, minZ: -63.2, maxZ: -61.8 },
+  { minX: 0.6, maxX: 4.5, minZ: -63.2, maxZ: -61.8 },
+  // FOB Power Cores & Consoles
+  { minX: -5.4, maxX: -3.8, minZ: -71.8, maxZ: -70.2 },
+  { minX: 3.8, maxX: 5.4, minZ: -71.8, maxZ: -70.2 },
+  { minX: -4.5, maxX: -3.1, minZ: -67.8, maxZ: -66.2 },
+  { minX: 3.1, maxX: 4.5, minZ: -67.8, maxZ: -66.2 },
+
+  // Spatial Airlock Flanking Warp Beacons at z = -52
+  { minX: -5.2, maxX: -3.8, minZ: -52.8, maxZ: -51.2 },
+  { minX: 3.8, maxX: 5.2, minZ: -52.8, maxZ: -51.2 },
+
+  // Emergency Bunker Exfil Bulkhead & Blast Doors at (-45, -45)
+  { minX: -49.0, maxX: -41.0, minZ: -48.5, maxZ: -46.5 },
+  // Emergency Bunker Keycard Terminal Console
+  { minX: -45.6, maxX: -44.4, minZ: -45.4, maxZ: -44.2 },
+
+  // Placed Loot Containers in Sector 7 Depot
+  // crate_01: Military Dumpster (-8, -6)
+  { minX: -9.2, maxX: -6.8, minZ: -6.8, maxZ: -5.3 },
+  // crate_02: Chemical & Contraband Barrel (20, -15)
+  { minX: 19.4, maxX: 20.6, minZ: -15.6, maxZ: -14.4 },
+  // crate_03: Tech Storage Console (-16, 14)
+  { minX: -16.8, maxX: -15.2, minZ: 13.4, maxZ: 14.6 },
+  // crate_04: Supply Footlocker (30, 22)
+  { minX: 29.3, maxX: 30.7, minZ: 21.3, maxZ: 22.7 },
+  // crate_05: Fallen Operative Corpse (-35, -25)
+  { minX: -35.8, maxX: -34.2, minZ: -25.8, maxZ: -24.2 },
+
+  // Exfil Zone Warp Beacons (45, 45)
+  { minX: 39.0, maxX: 40.6, minZ: 44.2, maxZ: 45.8 },
+  { minX: 49.4, maxX: 51.0, minZ: 44.2, maxZ: 45.8 },
 ];
 
 export const ROGUE_PATROL_WAYPOINTS = [
@@ -229,9 +389,12 @@ export function segmentIntersectsAABB3D(
  * machine defense AI, proximity warning, and extraction zone logic.
  */
 
-import { SIM_CONFIG } from './config.js';
+import { SIM_CONFIG, BOSS_CONFIG, computeBossPosition, AI_CONFIGS, computeAIPosition } from './config.js';
 import {
   createExfilController,
+  authoritativeLedgerCommit,
+  registerDeployment,
+  defaultSettlementLedger,
   ExfilController,
   StagedIngressController,
   type RaidWorldSnapshot,
@@ -242,7 +405,7 @@ export interface Vector2D {
   z: number;
 }
 
-export type StickActionState = 'idle' | 'walk' | 'sprint' | 'slide' | 'roll' | 'kick' | 'shoot' | 'jump' | 'crouch';
+export type StickActionState = 'idle' | 'walk' | 'sprint' | 'slide' | 'roll' | 'kick' | 'shoot' | 'jump' | 'crouch' | 'reload';
 
 export interface OperativeState {
   id: string;
@@ -274,6 +437,20 @@ export interface OperativeState {
   lastFiredAtMs?: number;
   lastFireTimestamp?: number;
   lastFireTick?: number;
+  weapon?: 'rifle' | 'shotgun';
+  rifleAmmo?: number;
+  shotgunAmmo?: number;
+  reserveRifleAmmo?: number;
+  reserveShotgunAmmo?: number;
+  stimsRemaining?: number;
+  isBleeding?: boolean;
+  isUsingStim?: boolean;
+  stimChannelTicks?: number;
+  hasKeycard?: boolean;
+  lastHitmarkerTick?: number;
+  lastHitmarkerCrit?: boolean;
+  squad?: string;
+  isRolling?: boolean;
 }
 
 export interface MachineDefense {
@@ -291,6 +468,15 @@ export interface MachineDefense {
   lastFiredTick?: number;
 }
 
+export interface LootItem {
+  id: string;
+  name: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  icon: string;
+  value: number;
+  type: 'valuable' | 'med' | 'keycard' | 'ammo';
+}
+
 export interface LootCrate {
   id: string;
   x: number;
@@ -299,6 +485,9 @@ export interface LootCrate {
   opened: boolean;
   claimedBy?: string;
   claimedAt?: number;
+  containerType?: 'crate' | 'dumpster' | 'barrel' | 'console' | 'corpse';
+  containerTitle?: string;
+  items?: LootItem[];
 }
 
 export interface ProximityAlert {
@@ -332,23 +521,62 @@ export interface GameInput {
   jump?: boolean;
   crouch?: boolean;
   aimAngle?: number;
+  switchWeapon?: boolean;
+  selectWeapon?: 'rifle' | 'shotgun';
+  stim?: boolean;
+  reload?: boolean;
 }
 
 export class SectorDepotSimulation {
+  private lastConsumedFireTick: number = -1;
+
+  public consumeFireEvent(): boolean {
+    if (this.player.lastFireTick !== undefined && this.player.lastFireTick > this.lastConsumedFireTick) {
+      this.lastConsumedFireTick = this.player.lastFireTick;
+      return true;
+    }
+    return false;
+  }
+
   public tick = 0;
   public raidId: string = "raid_sector7_1042";
   public isRaidExpired = false;
+  public zoneMode: 'hub' | 'airlock_corridor' | 'spoke' = 'spoke';
+  public airlockTimerMs: number = 0;
   public aiSpawned = false;
   public frozenSettlementTick?: number;
   public frozenSettlementCash?: number;
   private cratePreviousAmmo = new Map<string, number>();
-  private crateLootHistory: Array<{ crateId: string; ammoBefore: number; ammoGranted: number; tick: number; approved: boolean }> = [];
+  private crateLootHistory: Array<{
+    crateId: string;
+    weapon?: 'rifle' | 'shotgun';
+    ammoBefore: number;
+    ammoGranted: number;
+    rifleAmmoBefore?: number;
+    shotgunAmmoBefore?: number;
+    rifleAmmoGranted?: number;
+    shotgunAmmoGranted?: number;
+    tick: number;
+    approved: boolean;
+  }> = [];
   public player: OperativeState;
   public squadmate: OperativeState;
   public rivals: OperativeState[] = [];
   public machines: MachineDefense[] = [];
   public crates: LootCrate[] = [];
   public exfilController: ExfilController;
+  public confirmedAIStates: Map<string, { health: number; armor: number; isAlive: boolean; isKia: boolean; killerId?: string }> = new Map();
+
+  public applyConfirmedAIState(targetId: string, state: { health: number; armor: number; isAlive: boolean; isKia: boolean; killerId?: string }): void {
+    this.confirmedAIStates.set(targetId, state);
+    const rival = this.rivals.find(r => r.id === targetId);
+    if (rival) {
+      rival.health = state.health;
+      rival.armor = state.armor;
+      rival.isAlive = state.isAlive;
+      (rival as any).isKia = state.isKia;
+    }
+  }
   public ingressController: StagedIngressController;
   public proximityAlert: ProximityAlert = { active: false, distance: 999, bearing: 0 };
   public combatLog: string[] = [];
@@ -371,12 +599,29 @@ export class SectorDepotSimulation {
   public onDamageTaken?: () => void;
 
   // External network coordinator callbacks
-  public onHitTarget?: (targetId: string, damage: number, knockbackX?: number, knockbackZ?: number) => void;
+  public onHitTarget?: (targetId: string, damage: number, knockbackX?: number, knockbackZ?: number, kind?: 'rifle' | 'kick' | 'shotgun', shotId?: string) => void;
   public onLootCrate?: (crateId: string, cash: number, claimTimestamp?: number) => void;
   public onHoldProgress?: (holdTicks: number, currentTick: number) => void;
   public settlementAuthority?: any;
+  public requestServerSettlement?: (tick: number, cash: number) => Promise<{ receipt: any; outcomePayload: any }>;
   public onRequestLootCrate?: (crateId: string, cashValue: number) => void;
-  public onMachineHit?: (machineId: string, damage: number, kind?: 'kick' | 'rifle') => void;
+  public keycardSources = new Set<string>();
+
+  public grantKeycard(sourceId: string): void {
+    this.keycardSources.add(sourceId);
+    this.player.hasKeycard = true;
+  }
+
+  public revokeKeycard(sourceId: string): void {
+    this.keycardSources.delete(sourceId);
+    this.player.hasKeycard = this.keycardSources.size > 0;
+  }
+  public crateHadKeycard = new Map<string, boolean>();
+  public crateAddedStims = new Map<string, number>();
+  public crateAddedRifleAmmo = new Map<string, number>();
+  public crateAddedShotgunAmmo = new Map<string, number>();
+  private shootTriggerReleased = true;
+  public onMachineHit?: (machineId: string, damage: number, kind?: 'kick' | 'rifle' | 'shotgun', shotId?: string) => void;
   /**
    * Aggregated melee kick action: ONE action = ONE authoritative validation = ONE cooldown charge.
    * The kick may reach multiple machines and rivals; the network layer must dispatch the full
@@ -385,7 +630,24 @@ export class SectorDepotSimulation {
    * Falls back to per-target onMachineHit/onHitTarget when no aggregator is wired (offline/solo).
    */
   public onKickAction?: (action: KickActionPayload) => void;
-  public onExfilSuccess?: (receipt?: any) => void;
+  private _onExfilSuccess?: (receipt?: any) => void;
+  public acceptedReceiptKeys = new Set<string>();
+
+  public get onExfilSuccess(): ((receipt?: any) => void) | undefined {
+    if (!this._onExfilSuccess) return undefined;
+    return (receipt?: any) => {
+      if (receipt && receipt.receiptId) {
+        const key = `${receipt.raidId || this.raidId}:${receipt.receiptId}`;
+        if (this.acceptedReceiptKeys.has(key)) return;
+        this.acceptedReceiptKeys.add(key);
+      }
+      this._onExfilSuccess?.(receipt);
+    };
+  }
+
+  public set onExfilSuccess(fn: ((receipt?: any) => void) | undefined) {
+    this._onExfilSuccess = fn;
+  }
   public sessionToken?: string;
   /**
    * When the authenticated relay runs server-side machine attack authority, local
@@ -418,15 +680,28 @@ export class SectorDepotSimulation {
   }
 
   public recordCrateLootAmmo(crateId: string): void {
-    const granted = Math.max(0, this.player.maxAmmo - this.player.ammo);
+    const weapon = this.player.weapon || 'rifle';
+    const curRifle = typeof this.player.rifleAmmo === 'number' ? this.player.rifleAmmo : (weapon === 'rifle' ? this.player.ammo : 30);
+    const curShotgun = typeof this.player.shotgunAmmo === 'number' ? this.player.shotgunAmmo : (weapon === 'shotgun' ? this.player.ammo : 8);
+    const rifleGranted = Math.max(0, 30 - curRifle);
+    const shotgunGranted = Math.max(0, 8 - curShotgun);
+
     this.crateLootHistory.push({
       crateId,
+      weapon,
       ammoBefore: this.player.ammo,
-      ammoGranted: granted,
+      ammoGranted: weapon === 'shotgun' ? shotgunGranted : rifleGranted,
+      rifleAmmoBefore: curRifle,
+      shotgunAmmoBefore: curShotgun,
+      rifleAmmoGranted: rifleGranted,
+      shotgunAmmoGranted: shotgunGranted,
       tick: this.tick,
       approved: false,
     });
-    this.player.ammo = this.player.maxAmmo;
+    this.player.rifleAmmo = 30;
+    this.player.shotgunAmmo = 8;
+    this.player.ammo = weapon === 'shotgun' ? 8 : 30;
+    this.player.maxAmmo = weapon === 'shotgun' ? 8 : 30;
   }
 
   public handleCrateRejectionAmmo(crateId: string): void {
@@ -440,17 +715,28 @@ export class SectorDepotSimulation {
       return;
     }
     const entry = this.crateLootHistory[idx];
-    if (idx < this.crateLootHistory.length - 1) {
-      // A later crate was looted after this one: transfer the true pre-loot baseline minus intervening shots to the next entry
-      const nextEntry = this.crateLootHistory[idx + 1];
-      const shotsFired = Math.max(0, this.player.maxAmmo - nextEntry.ammoBefore);
-      const effectiveAmmoBefore = Math.max(0, entry.ammoBefore - shotsFired);
-      nextEntry.ammoBefore = effectiveAmmoBefore;
-      nextEntry.ammoGranted = Math.max(0, this.player.maxAmmo - effectiveAmmoBefore);
+
+    // Roll back rifle ammo
+    const rifleGranted = typeof (entry as any).rifleAmmoGranted === 'number'
+      ? (entry as any).rifleAmmoGranted
+      : (entry.weapon === 'rifle' ? entry.ammoGranted : 0);
+    const curRifle = this.player.weapon === 'rifle' ? this.player.ammo : (this.player.rifleAmmo ?? 30);
+    this.player.rifleAmmo = Math.max(0, curRifle - rifleGranted);
+
+    // Roll back shotgun ammo
+    const shotgunGranted = typeof (entry as any).shotgunAmmoGranted === 'number'
+      ? (entry as any).shotgunAmmoGranted
+      : (entry.weapon === 'shotgun' ? entry.ammoGranted : 0);
+    const curShotgun = this.player.weapon === 'shotgun' ? this.player.ammo : (this.player.shotgunAmmo ?? 8);
+    this.player.shotgunAmmo = Math.max(0, curShotgun - shotgunGranted);
+
+    // Derive player.ammo from the currently equipped weapon
+    if (this.player.weapon === 'shotgun') {
+      this.player.ammo = this.player.shotgunAmmo;
     } else {
-      // No later crate loot: deduct only the ammo granted by this rejected crate
-      this.player.ammo = Math.max(0, this.player.ammo - entry.ammoGranted);
+      this.player.ammo = this.player.rifleAmmo;
     }
+
     this.crateLootHistory.splice(idx, 1);
     this.cratePreviousAmmo.delete(crateId);
   }
@@ -471,13 +757,9 @@ export class SectorDepotSimulation {
       const isNowClaimedByMe = snapCrate.opened !== false && snapCrate.claimedBy === this.player.id;
 
       if (wasClaimedByMe && !isNowClaimedByMe) {
-        // Local claim was revoked by server snapshot! Reconcile local cash and ammo
+        // Local claim was revoked by server snapshot! Unified full inventory rollback
         if (!this.player.isExtracted) {
-          this.player.cash = Math.max(0, this.player.cash - crate.cashValue);
-          if (this.frozenSettlementCash !== undefined) {
-            this.frozenSettlementCash = Math.min(this.frozenSettlementCash, this.player.cash);
-          }
-          this.handleCrateRejectionAmmo(crate.id);
+          this.rollbackCrateClaim(crate.id, crate.cashValue);
         }
       }
 
@@ -522,9 +804,11 @@ export class SectorDepotSimulation {
         (this.exfilController as any).restoreExtractionState(info);
       }
     } else {
-      // Authoritative cancellation: clear local extraction custody
+      // Authoritative cancellation: clear local extraction custody and frozen settlement snapshot
       (this as any).serverHoldCompletedAtTick = 0;
       this.player.isExtracted = false;
+      this.frozenSettlementCash = undefined;
+      this.frozenSettlementTick = undefined;
       if (typeof (this.exfilController as any)?.restoreExtractionState === "function") {
         (this.exfilController as any).restoreExtractionState({ holdCompleted: false, isExtracted: false });
       } else {
@@ -576,17 +860,42 @@ export class SectorDepotSimulation {
     }
   }
 
-  public reconcileCrateRejection(crateId: string, cash: number): void {
+  public rollbackCrateClaim(crateId: string, cash?: number): void {
     if (this.player.isExtracted) return; // Finality: extracted cash is protected
     const crate = this.crates.find((c) => c.id === crateId);
     if (!crate || crate.claimedBy !== this.player.id) return;
     crate.claimedBy = undefined;
     crate.opened = false;
-    this.player.cash = Math.max(0, this.player.cash - cash);
+    const rollbackCash = typeof cash === 'number' ? cash : crate.cashValue;
+    this.player.cash = Math.max(0, this.player.cash - rollbackCash);
     this.handleCrateRejectionAmmo(crateId);
+
+    if (this.crateHadKeycard.get(crateId)) {
+      this.revokeKeycard(crateId);
+      this.crateHadKeycard.delete(crateId);
+    }
+    if (this.crateAddedStims.has(crateId)) {
+      const s = this.crateAddedStims.get(crateId)!;
+      this.player.stimsRemaining = Math.max(0, (this.player.stimsRemaining ?? 0) - s);
+      this.crateAddedStims.delete(crateId);
+    }
+    if (this.crateAddedRifleAmmo.has(crateId)) {
+      const a = this.crateAddedRifleAmmo.get(crateId)!;
+      this.player.reserveRifleAmmo = Math.max(0, (this.player.reserveRifleAmmo ?? 0) - a);
+      this.crateAddedRifleAmmo.delete(crateId);
+    }
+    if (this.crateAddedShotgunAmmo.has(crateId)) {
+      const a = this.crateAddedShotgunAmmo.get(crateId)!;
+      this.player.reserveShotgunAmmo = Math.max(0, (this.player.reserveShotgunAmmo ?? 0) - a);
+      this.crateAddedShotgunAmmo.delete(crateId);
+    }
     if (this.frozenSettlementCash !== undefined) {
       this.frozenSettlementCash = Math.min(this.frozenSettlementCash, this.player.cash);
     }
+  }
+
+  public reconcileCrateRejection(crateId: string, cash: number): void {
+    this.rollbackCrateClaim(crateId, cash);
     this.combatLog.push(`[SETTLEMENT] Loot claim for ${crateId} rejected by authority. Reconciled balance.`);
   }
   private _unusedFreeze() {
@@ -599,6 +908,11 @@ export class SectorDepotSimulation {
 
   public checkContainerCollision(x: number, z: number, radius = 0.45): boolean {
     for (const box of DEPOT_CONTAINERS) {
+      if (x + radius > box.minX && x - radius < box.maxX && z + radius > box.minZ && z - radius < box.maxZ) {
+        return true;
+      }
+    }
+    for (const box of FIELD_OBSTACLES) {
       if (x + radius > box.minX && x - radius < box.maxX && z + radius > box.minZ && z - radius < box.maxZ) {
         return true;
       }
@@ -629,15 +943,20 @@ export class SectorDepotSimulation {
         return true;
       }
     }
+    for (const box of FIELD_OBSTACLES) {
+      if (segmentIntersectsAABB3D(x1, y1, z1, x2, y2, z2, box.minX, 0, box.minZ, box.maxX, 4.0, box.maxZ)) {
+        return true;
+      }
+    }
     return false;
   }
 
   public isPlayerInExfilZone(): boolean {
-    const distToExfil = Math.hypot(this.player.x - SIM_CONFIG.EXFIL_ZONE.x, this.player.z - SIM_CONFIG.EXFIL_ZONE.z);
-    return distToExfil <= SIM_CONFIG.EXFIL_ZONE.radius;
+    return isPositionInExfilZone(this.player.x, this.player.z, this.player.hasKeycard);
   }
 
   public isInputLocked(): boolean {
+    if (this.player.isExtracted) return true;
     if (this.terminalRecoveryError) return true;
     if (this.isSocketDisconnected) return true;
     const exfilState = this.exfilController.getState();
@@ -681,11 +1000,7 @@ export class SectorDepotSimulation {
             if (this.player.isExtracted) {
               return false; // Settled player loot cannot be revoked post-extraction!
             }
-            this.player.cash = Math.max(0, this.player.cash - crate.cashValue);
-            this.handleCrateRejectionAmmo(crate.id);
-            if (this.frozenSettlementCash !== undefined) {
-              this.frozenSettlementCash = Math.min(this.frozenSettlementCash, this.player.cash);
-            }
+            this.rollbackCrateClaim(crate.id, crate.cashValue);
             this.combatLog.push(`[LOOT CONTESTED] Crate already scavenged by rival!`);
           }
           crate.claimedBy = claimantId;
@@ -721,29 +1036,91 @@ export class SectorDepotSimulation {
         this.cratePreviousAmmo.set(crate.id, this.player.ammo);
       }
       this.recordCrateLootAmmo(crate.id);
-      this.combatLog.push(`[TICK ${this.tick}] Scavenged Crate: +${crate.cashValue.toLocaleString()}`);
+      this.enqueuePresentationEvent({
+        type: 'loot',
+        operativeId: this.player.id,
+        position: { x: crate.x, y: 0.8, z: crate.z },
+        crateId: crate.id,
+        value: crate.cashValue,
+      });
+      if (crate.items && crate.items.length > 0) {
+        for (const item of crate.items) {
+          if (item.type === 'keycard') {
+            this.grantKeycard(crate.id);
+            this.crateHadKeycard.set(crate.id, true);
+            this.combatLog.push(`[KEYCARD SECURED] ${item.name} ($${item.value})! Bunker Blast Door Exfil unlocked.`);
+          } else if (item.type === 'med') {
+            this.player.stimsRemaining = (this.player.stimsRemaining ?? 0) + 1;
+            this.crateAddedStims.set(crate.id, (this.crateAddedStims.get(crate.id) ?? 0) + 1);
+            this.combatLog.push(`[MEDICAL SECURED] ${item.name} (+1 Stim injector).`);
+          } else if (item.id === 'item_m855') {
+            this.player.reserveRifleAmmo = (this.player.reserveRifleAmmo ?? 90) + 30;
+            this.crateAddedRifleAmmo.set(crate.id, (this.crateAddedRifleAmmo.get(crate.id) ?? 0) + 30);
+            this.combatLog.push(`[AMMO SECURED] ${item.name} (+30 5.56 rounds).`);
+          } else if (item.id === 'item_slugs') {
+            this.player.reserveShotgunAmmo = (this.player.reserveShotgunAmmo ?? 24) + 8;
+            this.crateAddedShotgunAmmo.set(crate.id, (this.crateAddedShotgunAmmo.get(crate.id) ?? 0) + 8);
+            this.combatLog.push(`[AMMO SECURED] ${item.name} (+8 12G shells).`);
+          } else {
+            this.combatLog.push(`[TARKOV LOOT] ${item.name} (${item.rarity.toUpperCase()}) — $${item.value.toLocaleString()}`);
+          }
+        }
+      } else {
+        this.combatLog.push(`[TICK ${this.tick}] Scavenged Crate: +${crate.cashValue.toLocaleString()}`);
+      }
       this.onLootCrate?.(crate.id, crate.cashValue, timestamp);
     }
     return true;
   }
 
-  constructor(raidId: string = "raid_sector7_1042") {
+  public confirmedEliminatedIds: Set<string> = new Set<string>();
+  private presentationEvents: PresentationEvent[] = [];
+
+  public enqueuePresentationEvent(event: PresentationEvent): void {
+    this.presentationEvents.push(event);
+  }
+
+  public drainPresentationEvents(): PresentationEvent[] {
+    const events = this.presentationEvents;
+    this.presentationEvents = [];
+    return events;
+  }
+
+  public confirmElimination(id: string, position: { x: number; y: number; z: number }): boolean {
+    if (this.confirmedEliminatedIds.has(id)) return false;
+    this.confirmedEliminatedIds.add(id);
+    this.enqueuePresentationEvent({
+      type: 'elimination',
+      operativeId: id,
+      position,
+    });
+    return true;
+  }
+
+  constructor(raidId: string = "raid_sector7_1042", initialZone: 'hub' | 'spoke' = 'spoke') {
     this.raidId = raidId;
+    this.zoneMode = initialZone;
     this.exfilController = createExfilController();
     this.ingressController = new StagedIngressController();
 
-    // Spawn player operative
-    this.player = {
+
+
+    const spawnX = initialZone === 'hub' ? 0 : SIM_CONFIG.SPAWN_SQUAD_A.x;
+    const spawnZ = initialZone === 'hub' ? -66 : SIM_CONFIG.SPAWN_SQUAD_A.z;
+    const spawnFacing = initialZone === 'hub' ? Math.PI : 0;
+
+    // Spawn player operative with automatic deployment registration on identity change
+    const rawPlayer: OperativeState = {
       id: 'op_player',
       isPlayer: true,
       isRival: false,
       isAI: false,
       name: 'OPERATIVE GHOST-1',
       badge: 'SQUAD ALPHA',
-      x: SIM_CONFIG.SPAWN_SQUAD_A.x,
+      x: spawnX,
       y: 0,
-      z: SIM_CONFIG.SPAWN_SQUAD_A.z,
-      facing: 0,
+      z: spawnZ,
+      facing: spawnFacing,
       health: 100,
       armor: 100,
       cash: 0,
@@ -754,7 +1131,27 @@ export class SectorDepotSimulation {
       isExtracted: false,
       ammo: 30,
       maxAmmo: 30,
+      weapon: 'rifle',
+      rifleAmmo: 30,
+      shotgunAmmo: 8,
+      reserveRifleAmmo: 90,
+      reserveShotgunAmmo: 24,
+      stimsRemaining: 2,
+      isBleeding: false,
+      isUsingStim: false,
+      stimChannelTicks: 0,
+      hasKeycard: false,
     };
+    this.player = new Proxy(rawPlayer, {
+      set: (target: any, prop: string | symbol, val: any) => {
+        target[prop] = val;
+        if (prop === 'id' && typeof val === 'string' && this.raidId) {
+          registerDeployment(val, this.raidId);
+        }
+        return true;
+      },
+    });
+    registerDeployment(this.player.id, this.raidId);
 
     // Spawn companion scout
     this.squadmate = {
@@ -806,12 +1203,17 @@ export class SectorDepotSimulation {
       },
     ];
 
-    // Initialize 3 loot crates across depot
-    this.crates = [
-      { id: 'crate_01', x: -8, z: -6, cashValue: 1250, opened: false },
-      { id: 'crate_02', x: 20, z: -15, cashValue: 2400, opened: false },
-      { id: 'crate_03', x: -18, z: 22, cashValue: 3800, opened: false },
-    ];
+    // Initialize tactical Tarkov loot containers across depot from single authoritative source
+    this.crates = DEPOT_CRATE_CONFIGS.map((c) => ({
+      id: c.id,
+      x: c.x,
+      z: c.z,
+      cashValue: c.cashValue,
+      opened: false,
+      containerType: c.containerType,
+      containerTitle: c.containerTitle,
+      items: c.items.map((it) => ({ ...it })),
+    }));
   }
 
   public applyRaidSnapshot(snapshot: RaidWorldSnapshot): void {
@@ -831,6 +1233,17 @@ export class SectorDepotSimulation {
         if (!snapCrate || typeof snapCrate !== "object") continue;
         const c = this.crates.find((x) => x.id === snapCrate.id);
         if (c) {
+          if (c.claimedBy === this.player.id && snapCrate.claimedBy !== this.player.id) {
+            // Local player claimed this crate locally, but snapshot indicates local player is not the owner
+            if (!(snapshot as any).isAuthoritative && !(snapshot as any).serverAuthoritative) {
+              continue; // Peer snapshots cannot fabricate or overwrite local crate ownership
+            }
+            // Authority revoked local claim (either awarded to rival or reset/unclaimed): apply complete inventory rollback!
+            this.rollbackCrateClaim(c.id);
+            c.claimedBy = (snapCrate as any).claimedBy ?? null;
+            c.opened = !!snapCrate.opened;
+            continue;
+          }
           c.opened = c.opened || !!snapCrate.opened;
           if ((snapCrate as any).claimedBy) {
             c.claimedBy = (snapCrate as any).claimedBy;
@@ -870,37 +1283,231 @@ export class SectorDepotSimulation {
     }
   }
 
+
+  public requestLootCrate(crateId: string): boolean {
+    if (this.isInputLocked()) return false;
+    const crate = this.crates.find(c => c.id === crateId);
+    if (!crate || crate.opened) return false;
+    if (this.onRequestLootCrate) {
+      this.onRequestLootCrate(crate.id, crate.cashValue);
+    } else {
+      this.claimCrateLocally(crate.id, this.player.id, Date.now());
+    }
+    return true;
+  }
+
+  public setWeapon(target: 'rifle' | 'shotgun', force = false): void {
+    if (!force && this.isInputLocked()) return;
+    if (!force && this.player.action === 'roll') return;
+    const current = this.player.weapon || 'rifle';
+    if (current === target && !force) return;
+    if (target === 'shotgun') {
+      this.player.rifleAmmo = this.player.ammo;
+      this.player.weapon = 'shotgun';
+      this.player.maxAmmo = 8;
+      this.player.ammo = this.player.shotgunAmmo !== undefined ? this.player.shotgunAmmo : 8;
+      this.combatLog.push(`[WEAPON] Equipped M590 Trench Shotgun [12-Gauge Buckshot]`);
+    } else {
+      this.player.shotgunAmmo = this.player.ammo;
+      this.player.weapon = 'rifle';
+      this.player.maxAmmo = 30;
+      this.player.ammo = this.player.rifleAmmo !== undefined ? this.player.rifleAmmo : 30;
+      this.combatLog.push(`[WEAPON] Equipped M4A1 Tactical Rifle [5.56 NATO]`);
+    }
+  }
+
+  public switchWeapon(): void {
+    const current = this.player.weapon || 'rifle';
+    this.setWeapon(current === 'rifle' ? 'shotgun' : 'rifle');
+  }
+
+  public reload(): boolean {
+    if (this.isInputLocked()) return false;
+    if (!this.player.isAlive || this.player.action === 'roll' || this.player.action === 'slide') return false;
+    const isShotgun = this.player.weapon === 'shotgun';
+    const currentAmmo = this.player.ammo;
+    const maxAmmo = this.player.maxAmmo;
+    if (currentAmmo >= maxAmmo) return false;
+
+    const needed = maxAmmo - currentAmmo;
+    if (isShotgun) {
+      const reserve = this.player.reserveShotgunAmmo ?? 0;
+      if (reserve <= 0) return false;
+      const loaded = Math.min(needed, reserve);
+      this.player.reserveShotgunAmmo = reserve - loaded;
+      this.player.ammo += loaded;
+      this.player.shotgunAmmo = this.player.ammo;
+    } else {
+      const reserve = this.player.reserveRifleAmmo ?? 0;
+      if (reserve <= 0) return false;
+      const loaded = Math.min(needed, reserve);
+      this.player.reserveRifleAmmo = reserve - loaded;
+      this.player.ammo += loaded;
+      this.player.rifleAmmo = this.player.ammo;
+    }
+
+    this.player.action = 'reload';
+    this.player.actionTicks = 15;
+    this.shootCooldownTicks = 35;
+    this.combatLog.push(`[RELOAD] Tactical reload completed (${this.player.ammo}/${maxAmmo}).`);
+    return true;
+  }
+
+  public useStim(): boolean {
+    if (this.isInputLocked()) return false;
+    if (!this.player.isAlive || (this.player.stimsRemaining ?? 0) <= 0 || this.player.isUsingStim) return false;
+    // Reject stim administration during active movement states (roll, slide, jump)
+    if (this.player.action === 'roll' || this.player.action === 'slide' || this.player.action === 'jump' || this.player.isJumping || this.player.y > 0 || (this.slideTicksRemaining ?? 0) > 0) {
+      return false;
+    }
+    this.player.isUsingStim = true;
+    this.player.stimChannelTicks = 60; // 1.0s administration channel at 60 Hz
+    this.combatLog.push(`[MEDS] Injecting Propital Combat Stim... (1.0s channel)`);
+    return true;
+  }
+
+  public spawnScavSquad(): void {
+    const existingScavs = this.rivals.filter(r => r.id.startsWith('scav_') && r.isAlive);
+    if (existingScavs.length > 0) return;
+
+    const runnerSaved = this.confirmedAIStates.get(AI_CONFIGS.scav_runner_01.id);
+    const runnerPos = computeAIPosition(AI_CONFIGS.scav_runner_01.id, this.tick);
+    this.rivals.push({
+      id: AI_CONFIGS.scav_runner_01.id,
+      isPlayer: false,
+      isRival: true,
+      isAI: true,
+      name: AI_CONFIGS.scav_runner_01.name,
+      badge: AI_CONFIGS.scav_runner_01.badge,
+      x: runnerPos.x,
+      y: 0,
+      z: runnerPos.z,
+      facing: runnerPos.facing,
+      health: runnerSaved ? runnerSaved.health : AI_CONFIGS.scav_runner_01.startingHealth,
+      armor: runnerSaved ? runnerSaved.armor : AI_CONFIGS.scav_runner_01.startingArmor,
+      cash: AI_CONFIGS.scav_runner_01.cash,
+      action: 'idle',
+      actionTicks: 0,
+      isInvulnerable: false,
+      isAlive: runnerSaved ? runnerSaved.isAlive : true,
+      isExtracted: false,
+      ammo: AI_CONFIGS.scav_runner_01.ammo,
+      maxAmmo: AI_CONFIGS.scav_runner_01.maxAmmo,
+      weapon: AI_CONFIGS.scav_runner_01.weapon,
+    });
+    if (runnerSaved?.isKia) {
+      (this.rivals[this.rivals.length - 1] as any).isKia = true;
+    }
+
+    const enforcerSaved = this.confirmedAIStates.get(AI_CONFIGS.scav_enforcer_02.id);
+    const enforcerPos = computeAIPosition(AI_CONFIGS.scav_enforcer_02.id, this.tick);
+    this.rivals.push({
+      id: AI_CONFIGS.scav_enforcer_02.id,
+      isPlayer: false,
+      isRival: true,
+      isAI: true,
+      name: AI_CONFIGS.scav_enforcer_02.name,
+      badge: AI_CONFIGS.scav_enforcer_02.badge,
+      x: enforcerPos.x,
+      y: 0,
+      z: enforcerPos.z,
+      facing: enforcerPos.facing,
+      health: enforcerSaved ? enforcerSaved.health : AI_CONFIGS.scav_enforcer_02.startingHealth,
+      armor: enforcerSaved ? enforcerSaved.armor : AI_CONFIGS.scav_enforcer_02.startingArmor,
+      cash: AI_CONFIGS.scav_enforcer_02.cash,
+      action: 'idle',
+      actionTicks: 0,
+      isInvulnerable: false,
+      isAlive: enforcerSaved ? enforcerSaved.isAlive : true,
+      isExtracted: false,
+      ammo: AI_CONFIGS.scav_enforcer_02.ammo,
+      maxAmmo: AI_CONFIGS.scav_enforcer_02.maxAmmo,
+      weapon: AI_CONFIGS.scav_enforcer_02.weapon,
+    });
+    if (enforcerSaved?.isKia) {
+      (this.rivals[this.rivals.length - 1] as any).isKia = true;
+    }
+
+    const bossSaved = this.confirmedAIStates.get(BOSS_CONFIG.id);
+    const bossInitPos = computeBossPosition(this.tick);
+    this.rivals.push({
+      id: BOSS_CONFIG.id,
+      isPlayer: false,
+      isRival: true,
+      isAI: true,
+      name: BOSS_CONFIG.name,
+      badge: BOSS_CONFIG.badge,
+      x: bossInitPos.x,
+      y: 0,
+      z: bossInitPos.z,
+      facing: bossInitPos.facing,
+      health: bossSaved ? bossSaved.health : BOSS_CONFIG.startingHealth,
+      armor: bossSaved ? bossSaved.armor : BOSS_CONFIG.startingArmor,
+      cash: BOSS_CONFIG.cash,
+      action: 'idle',
+      actionTicks: 0,
+      isInvulnerable: false,
+      isAlive: bossSaved ? bossSaved.isAlive : true,
+      isExtracted: false,
+      ammo: BOSS_CONFIG.ammo,
+      maxAmmo: BOSS_CONFIG.maxAmmo,
+      weapon: BOSS_CONFIG.weapon,
+      hasKeycard: BOSS_CONFIG.hasKeycard,
+    });
+    if (bossSaved?.isKia) {
+      (this.rivals[this.rivals.length - 1] as any).isKia = true;
+    }
+
+    this.combatLog.push(`[SCAV ALERT] Sector 7 Scavs patrolling depot. Warlord Boss spotted near South Depot.`);
+  }
+
   public spawnRogueSquad(): void {
     const activeRivals = this.rivals.filter(r => r.isAlive && !r.isExtracted);
     if (activeRivals.length > 0) return;
 
-    const rogueX = (SIM_CONFIG as any).SPAWN_ROGUE_AI ? (SIM_CONFIG as any).SPAWN_ROGUE_AI.x : -45;
-    const rogueZ = (SIM_CONFIG as any).SPAWN_ROGUE_AI ? (SIM_CONFIG as any).SPAWN_ROGUE_AI.z : 45;
+    const rogueSaved = this.confirmedAIStates.get(AI_CONFIGS.op_rogue_ai.id);
+    const roguePos = computeAIPosition(AI_CONFIGS.op_rogue_ai.id, this.tick);
 
     this.rivals.push({
-      id: 'op_rogue_ai',
+      id: AI_CONFIGS.op_rogue_ai.id,
       isPlayer: false,
       isRival: true,
       isAI: true,
-      name: 'ROGUE EXFIL HUNTER',
-      badge: 'ROGUE AI OPERATOR',
-      x: rogueX,
+      name: AI_CONFIGS.op_rogue_ai.name,
+      badge: AI_CONFIGS.op_rogue_ai.badge,
+      x: roguePos.x,
       y: 0,
-      z: rogueZ,
-      facing: Math.PI,
-      health: 100,
-      armor: 75,
-      cash: 2500,
+      z: roguePos.z,
+      facing: roguePos.facing,
+      health: rogueSaved ? rogueSaved.health : AI_CONFIGS.op_rogue_ai.startingHealth,
+      armor: rogueSaved ? rogueSaved.armor : AI_CONFIGS.op_rogue_ai.startingArmor,
+      cash: AI_CONFIGS.op_rogue_ai.cash,
       action: 'idle',
       actionTicks: 0,
       isInvulnerable: false,
-      isAlive: true,
+      isAlive: rogueSaved ? rogueSaved.isAlive : true,
       isExtracted: false,
-      ammo: 30,
-      maxAmmo: 30,
+      ammo: AI_CONFIGS.op_rogue_ai.ammo,
+      maxAmmo: AI_CONFIGS.op_rogue_ai.maxAmmo,
+      weapon: AI_CONFIGS.op_rogue_ai.weapon,
     });
+    if (rogueSaved?.isKia) {
+      (this.rivals[this.rivals.length - 1] as any).isKia = true;
+    }
 
     this.combatLog.push(`[TICK ${this.tick}] WARNING: ROGUE AI OPERATOR detected in Sector 7 Safehouse.`);
+  }
+
+  public interruptStimTreatment(reason: 'trauma' | 'movement' = 'trauma'): void {
+    if (this.player.isUsingStim) {
+      this.player.isUsingStim = false;
+      this.player.stimChannelTicks = 0;
+      this.combatLog.push(
+        reason === 'movement'
+          ? '[MEDS INTERRUPTED] Stim injection interrupted by abrupt movement!'
+          : '[MEDS INTERRUPTED] Stim injection interrupted by incoming trauma!'
+      );
+    }
   }
 
   public applyDamageToPlayer(rawDmg: number): void {
@@ -910,25 +1517,58 @@ export class SectorDepotSimulation {
     this.player.health = newHealth;
     this.player.armor = newArmor;
 
+    this.interruptStimTreatment();
+
+    // Chance of heavy bleed on unarmored or heavy hit
+    if (rawDmg >= 12 && this.player.armor < 20 && !this.player.isBleeding) {
+      this.player.isBleeding = true;
+      this.combatLog.push(`[TRAUMA ALERT] Heavy bleeding sustained! Inject IFAK stim [H] to bandage.`);
+    }
+
     // Critical Extraction Rule: taking damage resets hold ticks to 0 immediately.
     // An "extraction interruption" is only registered when an ACTIVE hold attempt was
     // interrupted — damage outside the LZ must not fabricate a reset event.
+    // Handle elimination unconditionally first so player state is never half-alive
+    if (this.player.health <= 0) {
+      this.player.health = 0;
+      this.player.isAlive = false;
+      this.confirmElimination(this.player.id, { x: this.player.x, y: 0.95, z: this.player.z });
+      this.combatLog.push(`[TICK ${this.tick}] K.I.A. Operative eliminated`);
+      this.onPlayerDeath?.();
+    }
+
     const interruptedActiveHold = this.exfilController.getState().kind === "holding_zone";
-    this.exfilController.onDamageTaken();
+    try {
+      this.exfilController.onDamageTaken();
+    } catch {
+      // safe fallback
+    }
     if (interruptedActiveHold) {
       this.lastInterruptionTick = this.tick;
       this.onHoldProgress?.(0, this.tick);
     }
     this.onDamageTaken?.();
-
-    if (this.player.health <= 0) {
-      this.player.health = 0;
-      this.player.isAlive = false;
-      this.combatLog.push(`[TICK ${this.tick}] K.I.A. Operative eliminated`);
-      this.onPlayerDeath?.();
-    }
   }
 
+
+  public enterSpatialAirlock(): void {
+    if (this.zoneMode === 'airlock_corridor' || this.zoneMode === 'spoke') return;
+    this.zoneMode = 'airlock_corridor';
+    this.airlockTimerMs = Date.now() + 2500;
+    this.combatLog.push();
+  }
+
+  public returnToHub(): void {
+    this.zoneMode = 'hub';
+    this.player.x = 0;
+    this.player.z = -66;
+    this.player.facing = Math.PI;
+    this.player.health = 100;
+    this.player.armor = 100;
+    this.player.isAlive = true;
+    this.player.isExtracted = false;
+    this.combatLog.push();
+  }
   public step(input: GameInput): void {
     if (!this.player.isAlive || this.player.isExtracted) {
       if (this.exfilController.getState().kind === "corridor_presentation") {
@@ -966,8 +1606,38 @@ export class SectorDepotSimulation {
 
     this.tick += 1;
 
+    if (this.zoneMode === 'airlock_corridor') {
+      if (Date.now() >= this.airlockTimerMs) {
+        this.zoneMode = 'spoke';
+        this.player.z = -46;
+        this.ingressController.activate(this.tick);
+        this.combatLog.push();
+      }
+      return;
+    }
+
+    if (this.zoneMode === 'hub') {
+      if (Math.hypot(this.player.x, this.player.z - (-52)) < 3.2) {
+        this.enterSpatialAirlock();
+        return;
+      }
+    }
+
     // Freeze related action timers, cooldowns, and local physics together during disconnect
     if (!this.isSocketDisconnected) {
+      // Stim treatment interruption on abrupt movement or active movement states (sprint, slide, roll, jump, or running motion)
+      if (this.player.isUsingStim) {
+        const isMovingFast = Math.hypot(input.dx, input.dz) > 0.15;
+        const isStateAbrupt = this.player.action === 'roll' ||
+                              this.player.action === 'slide' ||
+                              this.player.action === 'jump' ||
+                              this.player.isJumping ||
+                              this.player.y > 0 ||
+                              (this.slideTicksRemaining ?? 0) > 0;
+        if (isStateAbrupt || input.sprint || input.slide || input.roll || input.jump || (isMovingFast && (input.sprint || input.slide))) {
+          this.interruptStimTreatment('movement');
+        }
+      }
       // Handle ongoing action countdowns and cooldowns
       if (this.shootCooldownTicks > 0) this.shootCooldownTicks -= 1;
       this.player.shootCooldownTicks = this.shootCooldownTicks;
@@ -998,7 +1668,7 @@ export class SectorDepotSimulation {
           this.player.isInvulnerable = false;
         }
       } else {
-        if (this.player.action === 'roll' || this.player.action === 'slide' || this.player.action === 'kick' || this.player.action === 'shoot') {
+        if (this.player.action === 'roll' || this.player.action === 'slide' || this.player.action === 'kick' || this.player.action === 'shoot' || this.player.action === 'reload') {
           this.player.action = (this.player.isJumping || this.player.y > 0) ? 'jump' : 'idle';
         }
         this.player.isInvulnerable = false;
@@ -1032,13 +1702,63 @@ export class SectorDepotSimulation {
       return;
     }
 
+    if (this.player.isUsingStim) {
+      const isMovingFast = Math.hypot(input.dx, input.dz) > 0.15;
+      const isStateAbrupt = this.player.action === 'roll' ||
+                            this.player.action === 'slide' ||
+                            this.player.action === 'jump' ||
+                            this.player.isJumping ||
+                            this.player.y > 0 ||
+                            (this.slideTicksRemaining ?? 0) > 0;
+      if (isStateAbrupt || input.sprint || input.slide || input.roll || input.jump || (isMovingFast && (input.sprint || input.slide))) {
+        this.interruptStimTreatment('movement');
+      }
+    }
+
+    // Stim channel administration
+    if (this.player.isUsingStim && this.player.stimChannelTicks !== undefined && this.player.stimChannelTicks > 0) {
+      this.player.stimChannelTicks--;
+      if (this.player.stimChannelTicks === 0) {
+        this.player.isUsingStim = false;
+        this.player.stimsRemaining = Math.max(0, (this.player.stimsRemaining ?? 0) - 1);
+        this.player.isBleeding = false;
+        const healed = Math.min(100 - this.player.health, 45);
+        this.player.health = Math.min(100, this.player.health + 45);
+        this.enqueuePresentationEvent({
+          type: 'stim',
+          operativeId: this.player.id,
+          position: { x: this.player.x, y: 0.95, z: this.player.z },
+          healAmount: healed,
+        });
+        this.combatLog.push(`[MEDS] Propital stim administered. Arterial bleed coagulated, +${healed} HP restored (${this.player.stimsRemaining} stims remaining).`);
+      }
+    }
+
+    // Fatal Bleeding tick damage (2 HP every 60 ticks = 1.0s at 60 Hz)
+    if (this.player.isBleeding && this.tick % 60 === 0 && this.player.isAlive && !this.player.isExtracted) {
+      this.player.health = Math.max(0, this.player.health - 2);
+      this.combatLog.push(`[BLEEDING] -2 HP from arterial wound. HP: ${this.player.health}/100. Inject STIM [H] to coagulate.`);
+      if (this.player.health <= 0) {
+        this.player.isAlive = false;
+        this.player.action = 'idle';
+        this.player.actionTicks = 120;
+        this.combatLog.push(`[KIA] Operative succumbed to fatal arterial hemorrhage.`);
+        this.onPlayerDeath?.();
+        return;
+      }
+    }
+
     // 5. Extraction Zone Detection & Dwell State Machine
     const distToExfil = Math.hypot(this.player.x - SIM_CONFIG.EXFIL_ZONE.x, this.player.z - SIM_CONFIG.EXFIL_ZONE.z);
+    const distToBunker = Math.hypot(this.player.x - (-45), this.player.z - (-45));
     const ingressKind = this.ingressController.getState().kind;
     const isIngressPending = ingressKind === 'corridor_entered' || ingressKind === 'hydrating' || ingressKind === 'waiting_squad' || ingressKind === 'rejected';
-    const inExfilZone = !isIngressPending && (distToExfil <= SIM_CONFIG.EXFIL_ZONE.radius);
+    const inMainExfil = distToExfil <= SIM_CONFIG.EXFIL_ZONE.radius;
+    const inBunkerExfil = distToBunker <= 6.0 && !!this.player.hasKeycard;
+    const inExfilZone = !isIngressPending && (inMainExfil || inBunkerExfil);
+    const activeZoneId = inBunkerExfil ? 'bunker_exfil_sealed' : 'lz_sector7_charlie';
 
-    this.exfilController.onTick(this.tick, inExfilZone, 'lz_sector7_charlie', machineDamage);
+    this.exfilController.onTick(this.tick, inExfilZone, activeZoneId, machineDamage);
 
     const exfilState = this.exfilController.getState();
     const isCompletedOrSubmitting =
@@ -1171,6 +1891,12 @@ export class SectorDepotSimulation {
       const dirZ = moveMag > 0.01 ? (input.dz / moveMag) : Math.cos(this.player.facing);
       this.slideVx = dirX * (SIM_CONFIG.SPEED_SPRINT * 1.35);
       this.slideVz = dirZ * (SIM_CONFIG.SPEED_SPRINT * 1.35);
+      this.enqueuePresentationEvent({
+        type: 'locomotion',
+        operativeId: this.player.id,
+        subtype: 'slide',
+        position: { x: this.player.x, y: this.player.y, z: this.player.z },
+      });
     }
 
     // Melee kick initiation (F) with 42-tick recovery cooldown
@@ -1181,16 +1907,35 @@ export class SectorDepotSimulation {
       this.performMeleeKick();
     }
 
-    // Gunplay shooting with proper weapon fire cadence (RIFLE_COOLDOWN_TICKS)
-    if (input.shoot && this.player.ammo > 0 && this.player.action !== 'roll' && this.shootCooldownTicks <= 0) {
-      this.player.ammo -= 1;
-      if (this.player.action !== 'kick') {
-        this.player.action = 'shoot';
-        this.player.actionTicks = 6; // Set actionTicks so recoil visually displays
+    // Weapon switch (1/2 or Q)
+    if (input.selectWeapon && (input.selectWeapon === "rifle" || input.selectWeapon === "shotgun")) {
+      if (this.player.weapon !== input.selectWeapon) {
+        this.switchWeapon();
       }
-      this.shootCooldownTicks = SIM_CONFIG.RIFLE_COOLDOWN_TICKS;
-      this.player.shootCooldownTicks = this.shootCooldownTicks;
-      this.fireWeapon();
+    } else if (input.switchWeapon) {
+      this.switchWeapon();
+    }
+    // Tactical Stim (H)
+    if (input.stim) {
+      this.useStim();
+    }
+    // Reload (R)
+    if (input.reload) {
+      this.reload();
+    }
+
+    // Edge-triggered pump action for shotgun / fire input tracking
+    if (!input.shoot) {
+      this.shootTriggerReleased = true;
+    }
+
+    // Gunplay shooting with proper weapon fire cadence
+    const canFireShotgun = this.player.weapon !== 'shotgun' || this.shootTriggerReleased;
+    if (input.shoot && canFireShotgun && this.player.action !== 'roll' && this.shootCooldownTicks <= 0) {
+      if (this.player.weapon === 'shotgun') {
+        this.shootTriggerReleased = false;
+      }
+      this.fire();
     }
 
     // Jump mechanics: impulse initiation
@@ -1301,15 +2046,11 @@ export class SectorDepotSimulation {
       }
     }
 
-    // Loot crate pickup
+    // Loot crate pickup: unified through requestLootCrate
     if (input.interact) {
       for (const crate of this.crates) {
         if (!crate.opened && Math.hypot(this.player.x - crate.x, this.player.z - crate.z) <= 3.0) {
-          if (this.onRequestLootCrate) {
-            this.onRequestLootCrate(crate.id, crate.cashValue);
-          } else {
-            this.claimCrateLocally(crate.id, this.player.id, Date.now());
-          }
+          this.requestLootCrate(crate.id);
           break;
         }
       }
@@ -1375,25 +2116,29 @@ export class SectorDepotSimulation {
         const { newHealth, newArmor } = applyStandardDamage(rival.health, rival.armor, 35);
         rival.health = newHealth;
         rival.armor = newArmor;
-        const knockX = Math.sin(this.player.facing) * 4.5;
-        const knockZ = Math.cos(this.player.facing) * 4.5;
+        const isBossTarget = rival.id === BOSS_CONFIG.id || rival.badge === BOSS_CONFIG.badge;
+        const isAITarget = Boolean((AI_CONFIGS as any)[rival.id]) || isBossTarget;
+        const knockX = isAITarget ? 0 : Math.sin(this.player.facing) * 4.5;
+        const knockZ = isAITarget ? 0 : Math.cos(this.player.facing) * 4.5;
 
-        // Step along knockback displacement and clamp against container collision
-        const steps = 10;
-        for (let s = 1; s <= steps; s++) {
-          const stepX = Math.max(SIM_CONFIG.MAP_MIN_X, Math.min(SIM_CONFIG.MAP_MAX_X, rival.x + (knockX / steps)));
-          const stepZ = Math.max(SIM_CONFIG.MAP_MIN_Z, Math.min(SIM_CONFIG.MAP_MAX_Z, rival.z + (knockZ / steps)));
-          if (!this.checkContainerCollision(stepX, rival.z, 0.45)) {
-            rival.x = stepX;
-          }
-          if (!this.checkContainerCollision(rival.x, stepZ, 0.45)) {
-            rival.z = stepZ;
+        // Step along knockback displacement and clamp against container collision (AI targets are immune to knockback displacement)
+        if (!isAITarget) {
+          const steps = 10;
+          for (let s = 1; s <= steps; s++) {
+            const stepX = Math.max(SIM_CONFIG.MAP_MIN_X, Math.min(SIM_CONFIG.MAP_MAX_X, rival.x + (knockX / steps)));
+            const stepZ = Math.max(SIM_CONFIG.MAP_MIN_Z, Math.min(SIM_CONFIG.MAP_MAX_Z, rival.z + (knockZ / steps)));
+            if (!this.checkContainerCollision(stepX, rival.z, 0.45)) {
+              rival.x = stepX;
+            }
+            if (!this.checkContainerCollision(rival.x, stepZ, 0.45)) {
+              rival.z = stepZ;
+            }
           }
         }
 
         (rival as any).knockbackVx = 0;
         (rival as any).knockbackVz = 0;
-        this.combatLog.push(`[TICK ${this.tick}] Roundhouse Kick connected on ${rival.name} (-35 HP, 4.5m knockback)`);
+        this.combatLog.push(`[TICK ${this.tick}] Roundhouse Kick connected on ${rival.name} (-35 HP${isAITarget ? "" : ", 4.5m knockback"})`);
         rivalHits.push({
           id: rival.id,
           x: rival.x,
@@ -1405,11 +2150,15 @@ export class SectorDepotSimulation {
           predictedArmor: rival.armor,
         });
         if (rival.health <= 0) {
-          if (rival.isAI) {
+          if (!this.onHitTarget) {
             rival.isAlive = false;
             this.combatLog.push(`[TICK ${this.tick}] Rival operator eliminated by melee kick: ${rival.name}`);
+            if (isBossTarget) {
+              this.grantKeycard(BOSS_CONFIG.id);
+              this.combatLog.push(`[BOSS SLAIN] Sector Warlord eliminated by martial arts kick! Dropped Violet Lab Access Keycard!`);
+            }
           } else {
-            // For multiplayer rivals, local hit is a prediction; keep at 1 HP until peer/authority confirms death
+            // For multiplayer / networked rivals, local hit is a prediction; keep at 1 HP until server confirms death
             rival.health = 1;
           }
         }
@@ -1435,6 +2184,41 @@ export class SectorDepotSimulation {
         for (const h of rivalHits) this.onHitTarget?.(h.id, h.damage, h.knockX, h.knockZ);
       }
     }
+    this.enqueuePresentationEvent({
+      type: 'kick',
+      operativeId: this.player.id,
+      position: { x: this.player.x, y: 0.95, z: this.player.z },
+      facing: this.player.facing,
+      isHit: machineHits.length + rivalHits.length > 0,
+      hitTarget: machineHits.length > 0 ? 'machine' : rivalHits.length > 0 ? 'rival' : undefined,
+    });
+  }
+
+  public fire(): boolean {
+    if (this.isInputLocked()) return false;
+    if (this.player.action === 'roll' || this.player.action === 'kick') return false;
+    if (this.player.ammo <= 0) return false;
+    if (this.shootCooldownTicks > 0) return false;
+    this.player.ammo -= 1;
+    if (this.player.weapon === 'shotgun') {
+      this.player.shotgunAmmo = this.player.ammo;
+    } else {
+      this.player.rifleAmmo = this.player.ammo;
+    }
+    this.player.action = 'shoot';
+    this.player.actionTicks = this.player.weapon === 'shotgun' ? 12 : 6;
+    const fireCooldown = this.player.weapon === 'shotgun' ? 24 : SIM_CONFIG.RIFLE_COOLDOWN_TICKS;
+    this.shootCooldownTicks = fireCooldown;
+    this.player.shootCooldownTicks = this.shootCooldownTicks;
+    this.fireWeapon();
+    this.enqueuePresentationEvent({
+      type: 'fire',
+      shooterId: this.player.id,
+      origin: { x: this.player.x, y: 0.95, z: this.player.z },
+      dir: { x: Math.sin(this.player.facing), y: 0, z: Math.cos(this.player.facing) },
+      weapon: (this.player.weapon as any) || 'rifle',
+    });
+    return true;
   }
 
   private fireWeapon(): void {
@@ -1442,6 +2226,107 @@ export class SectorDepotSimulation {
     this.player.lastFiredAtMs = now;
     this.player.lastFireTimestamp = now;
     this.player.lastFireTick = this.tick;
+
+    if (this.player.weapon === 'shotgun') {
+      const shotId = `shot_${this.player.id}_${this.tick}_${now}`;
+      // EFT M590 Combat Shotgun: 6 distinct buckshot pellets across exact 30.0° cone (±15° = ±0.2618 rad)
+      // Uses shared calculateShotgunHit contract for identical client-server verification
+      const machineHits = new Map<string, { ref: any; damage: number }>();
+      const rivalHits = new Map<string, { ref: any; damage: number; knockX: number; knockZ: number; pointBlank: boolean }>();
+      let totalPelletsHit = 0;
+      let hasPointBlankHit = false;
+
+      // Check machines with shared calculateShotgunHit contract
+      for (const m of this.machines) {
+        if (!m.isAlive) continue;
+        const mY = typeof m.y === 'number' ? m.y : (m.type === 'drone' ? 3.5 : 1.0);
+        const isCovered = this.checkContainerRayObstruction(this.player.x, this.player.z, m.x, m.z, 1.0, mY);
+        if (isCovered) continue;
+
+        const hitRes = calculateShotgunHit(this.player.x, this.player.z, this.player.facing, m.x, m.z, 1.05);
+        if (hitRes.hit) {
+          totalPelletsHit += hitRes.pelletsHit;
+          if (hitRes.dist <= 4.0) hasPointBlankHit = true;
+          machineHits.set(m.id, { ref: m, damage: hitRes.damage });
+        }
+      }
+
+      // Check rivals with shared calculateShotgunHit contract
+      for (const r of this.rivals) {
+        if (!r.isAlive || r.isExtracted || (r.isInvulnerable && r.action === 'roll')) continue;
+        const isCovered = this.checkContainerRayObstruction(this.player.x, this.player.z, r.x, r.z);
+        if (isCovered) continue;
+
+        const hitRes = calculateShotgunHit(this.player.x, this.player.z, this.player.facing, r.x, r.z, 1.05);
+        if (hitRes.hit) {
+          totalPelletsHit += hitRes.pelletsHit;
+          if (hitRes.dist <= 4.0) hasPointBlankHit = true;
+          rivalHits.set(r.id, {
+            ref: r,
+            damage: hitRes.damage,
+            knockX: Math.sin(this.player.facing) * 2.5,
+            knockZ: Math.cos(this.player.facing) * 2.5,
+            pointBlank: hitRes.dist <= 4.0,
+          });
+        }
+      }
+
+      if (totalPelletsHit > 0) {
+        this.player.lastHitmarkerTick = this.tick;
+        this.player.lastHitmarkerCrit = hasPointBlankHit;
+
+        for (const [id, h] of machineHits) {
+          this.enqueuePresentationEvent({
+            type: 'impact',
+            position: { x: h.ref.x, y: 1.0, z: h.ref.z },
+            surface: 'metal',
+          });
+          const m = h.ref;
+          if (this.onMachineHit) {
+            m.health = Math.max(1, m.health - h.damage);
+            this.onMachineHit(m.id, h.damage, 'shotgun', shotId);
+          } else {
+            m.health = Math.max(0, m.health - h.damage);
+            if (m.health <= 0) {
+              m.isAlive = false;
+              this.combatLog.push(`[TICK ${this.tick}] Enemy destroyed by buckshot: ${m.id}`);
+            }
+          }
+        }
+
+        for (const [id, h] of rivalHits) {
+          this.enqueuePresentationEvent({
+            type: 'impact',
+            position: { x: h.ref.x, y: 1.0, z: h.ref.z },
+            surface: 'flesh',
+          });
+          const r = h.ref;
+          const { newHealth, newArmor } = applyStandardDamage(r.health, r.armor, h.damage);
+          r.health = newHealth;
+          r.armor = newArmor;
+          this.onHitTarget?.(r.id, h.damage, h.knockX, h.knockZ, 'shotgun', shotId);
+          this.combatLog.push(`[TICK ${this.tick}] 12-Gauge blast hit ${r.name} (-${h.damage} HP)`);
+          if (r.health <= 0) {
+            const isBossTarget = r.id === BOSS_CONFIG.id || r.badge === BOSS_CONFIG.badge;
+            if (!this.onHitTarget) {
+              r.isAlive = false;
+              this.combatLog.push(`[TICK ${this.tick}] Rival eliminated by shotgun: ${r.name}`);
+              if (isBossTarget) {
+                this.grantKeycard(BOSS_CONFIG.id);
+                this.combatLog.push(`[BOSS SLAIN] Sector Warlord eliminated! Dropped Violet Lab Access Keycard!`);
+              }
+            } else {
+              // For networked targets, local hit is a prediction; keep at 1 HP until server confirms death
+              r.health = 1;
+            }
+          }
+        }
+      } else {
+        this.combatLog.push(`[FIRE] M590 blast: 6 buckshot pellets missed`);
+      }
+      return;
+    }
+
     const range = 35.0; // Strictly matches multiplayer effective range threshold
     const bulletDirX = Math.sin(this.player.facing);
     const bulletDirZ = Math.cos(this.player.facing);
@@ -1491,19 +2376,36 @@ export class SectorDepotSimulation {
     }
 
     if (!closestHit && anyInConeObstructed) {
+      this.enqueuePresentationEvent({
+        type: 'impact',
+        position: {
+          x: this.player.x + bulletDirX * 12.0,
+          y: 1.0,
+          z: this.player.z + bulletDirZ * 12.0,
+        },
+        surface: 'metal',
+      });
       this.combatLog.push('[COVER] Rifle burst impacted shipping container');
       return;
     }
 
     if (closestHit) {
+      const weaponDamage = SIM_CONFIG.RIFLE_DAMAGE;
+      this.player.lastHitmarkerTick = this.tick;
+      this.player.lastHitmarkerCrit = false;
 
       if (closestHit.type === 'machine') {
         const m = closestHit.ref;
+        this.enqueuePresentationEvent({
+          type: 'impact',
+          position: { x: m.x, y: 1.0, z: m.z },
+          surface: 'metal',
+        });
         if (this.onMachineHit) {
-          m.health = Math.max(1, m.health - SIM_CONFIG.RIFLE_DAMAGE);
-          this.onMachineHit(m.id, SIM_CONFIG.RIFLE_DAMAGE, 'rifle');
+          m.health = Math.max(1, m.health - weaponDamage);
+          this.onMachineHit(m.id, weaponDamage, 'rifle');
         } else {
-          m.health = Math.max(0, m.health - SIM_CONFIG.RIFLE_DAMAGE);
+          m.health = Math.max(0, m.health - weaponDamage);
           if (m.health <= 0) {
             m.isAlive = false;
             this.combatLog.push(`[TICK ${this.tick}] Enemy destroyed: ${m.id}`);
@@ -1511,17 +2413,27 @@ export class SectorDepotSimulation {
         }
       } else if (closestHit.type === 'rival') {
         const r = closestHit.ref;
-        const { newHealth, newArmor } = applyStandardDamage(r.health, r.armor, SIM_CONFIG.RIFLE_DAMAGE);
+        this.enqueuePresentationEvent({
+          type: 'impact',
+          position: { x: r.x, y: 1.0, z: r.z },
+          surface: 'flesh',
+        });
+        const { newHealth, newArmor } = applyStandardDamage(r.health, r.armor, weaponDamage);
         r.health = newHealth;
         r.armor = newArmor;
-        this.onHitTarget?.(r.id, SIM_CONFIG.RIFLE_DAMAGE);
-        this.combatLog.push(`[TICK ${this.tick}] Direct hit on ${r.name} (-${SIM_CONFIG.RIFLE_DAMAGE} HP)`);
+        this.onHitTarget?.(r.id, weaponDamage);
+        this.combatLog.push(`[TICK ${this.tick}] Direct hit on ${r.name} (-${weaponDamage} HP)`);
         if (r.health <= 0) {
-          if (r.isAI) {
+          const isBossTarget = r.id === BOSS_CONFIG.id || r.badge === BOSS_CONFIG.badge;
+          if (!this.onHitTarget) {
             r.isAlive = false;
             this.combatLog.push(`[TICK ${this.tick}] Rival operator eliminated: ${r.name}`);
+            if (isBossTarget) {
+              this.grantKeycard(BOSS_CONFIG.id);
+              this.combatLog.push(`[BOSS SLAIN] Sector Warlord eliminated! Dropped Violet Lab Access Keycard!`);
+            }
           } else {
-            // For multiplayer rivals, local hit is a prediction; keep at 1 HP until peer/authority confirms death
+            // For multiplayer / networked rivals, local hit is a prediction; keep at 1 HP until server confirms death
             r.health = 1;
           }
         }
@@ -1661,6 +2573,8 @@ export class SectorDepotSimulation {
       // Human remote rivals must NOT be overridden by local AI movement logic or action state
       if (!rival.isAI) continue;
 
+
+
       if ((rival.shootCooldownTicks || 0) > 0) {
         rival.shootCooldownTicks = (rival.shootCooldownTicks || 0) - 1;
       }
@@ -1668,6 +2582,51 @@ export class SectorDepotSimulation {
         rival.actionTicks -= 1;
         if (rival.actionTicks === 0) {
           rival.action = 'idle';
+        }
+      }
+
+      const isBoss = rival.id === BOSS_CONFIG.id || rival.badge === BOSS_CONFIG.badge;
+      const isAIRoster = Boolean((AI_CONFIGS as any)[rival.id]) || isBoss;
+      if (isAIRoster) {
+        const aiPos = computeAIPosition(rival.id, this.tick);
+        const isManuallyPositioned = Math.hypot(rival.x - aiPos.x, rival.z - aiPos.z) > 5.0;
+        if (!isManuallyPositioned) {
+          rival.x = aiPos.x;
+          rival.z = aiPos.z;
+          rival.facing = aiPos.facing;
+          rival.action = 'walk';
+        }
+
+        const dx = this.player.x - rival.x;
+        const dz = this.player.z - rival.z;
+        const distToPlayer = Math.hypot(dx, dz);
+
+        // Tactical weapon fire cadence: attacks when in range <= 22m and cooldown ready
+        const ingressKind = this.ingressController.getState().kind;
+        const isIngressPending = ingressKind === 'corridor_entered' || ingressKind === 'hydrating' || ingressKind === 'waiting_squad' || ingressKind === 'rejected';
+        if (!isIngressPending && distToPlayer <= 22.0 && (rival.shootCooldownTicks || 0) <= 0) {
+          rival.action = 'shoot';
+          rival.actionTicks = 6;
+          rival.shootCooldownTicks = 18; // ~3.3 bursts/sec
+          rival.facing = Math.atan2(dx, dz);
+          rival.lastFiredAtMs = Date.now();
+          rival.lastFireTimestamp = Date.now();
+          rival.lastFireTick = this.tick;
+
+          // Physical cover check: bullets cannot penetrate shipping containers
+          const isCovered = this.checkContainerRayObstruction(rival.x, rival.z, this.player.x, this.player.z, 1.0, 1.0);
+          if (isCovered) {
+            this.combatLog.push(`[COVER] ${rival.name} rifle burst deflected by container cover`);
+          } else if (!this.player.isInvulnerable) {
+            const rawDmg = rival.weapon === 'shotgun' ? 20 : 12;
+            this.applyDamageToPlayer(rawDmg);
+            this.combatLog.push(`[TICK ${this.tick}] Struck by ${rival.name} ${rival.weapon || 'rifle'} burst (-${rawDmg} HP)`);
+          } else {
+            this.combatLog.push(`[TICK ${this.tick}] ${rival.name} burst deflected by combat roll`);
+          }
+        }
+        if (!isManuallyPositioned) {
+          continue;
         }
       }
 
@@ -1854,7 +2813,8 @@ export class SectorDepotSimulation {
       const candidates: Array<{ id: string; x: number; z: number; isPlayer: boolean; isAI: boolean }> = [];
       const ingressKind = this.ingressController.getState().kind;
       const isIngressPending = ingressKind === 'corridor_entered' || ingressKind === 'hydrating' || ingressKind === 'waiting_squad' || ingressKind === 'rejected';
-      if (!isIngressPending && this.player.isAlive && !this.player.isExtracted && this.player.health > 0) {
+      const isHub = this.zoneMode === 'hub' || this.zoneMode === 'airlock_corridor' || this.player.z < -48;
+      if (!isIngressPending && !isHub && this.player.isAlive && !this.player.isExtracted && this.player.health > 0) {
         candidates.push({ id: this.player.id, x: this.player.x, z: this.player.z, isPlayer: true, isAI: false });
       }
       for (const r of this.rivals) {

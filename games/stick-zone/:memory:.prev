@@ -1,0 +1,171 @@
+{
+  "generation": 2,
+  "raids": {
+    "raid_defensive_receipt_check_1791584651713": {
+      "raidId": "raid_defensive_receipt_check_1791584651713",
+      "status": "active",
+      "allowableCashPool": 50000,
+      "totalBanked": 0,
+      "createdAtMs": 1791584651713,
+      "operatives": {
+        "op_alpha_1": {
+          "operativeId": "op_alpha_1",
+          "resumeKey": "sz_res_op_alpha_1_8be1718fce692830cfcbc1626593d35d",
+          "admitted": true,
+          "health": 100,
+          "armor": 100,
+          "ammo": 30,
+          "rifleAmmo": 30,
+          "shotgunAmmo": 8,
+          "selectedWeapon": "rifle",
+          "stimsRemaining": 2,
+          "earnedCash": 0,
+          "cratesLooted": [],
+          "isExtracted": true,
+          "isAlive": true,
+          "isKia": false,
+          "extractedAtTick": 180,
+          "activeRaid": "",
+          "holdTicks": 180,
+          "holdCompleted": true,
+          "inventoryRevision": 14,
+          "accumulatedObservedTicks": 0,
+          "spawnX": -50,
+          "spawnZ": -50,
+          "lastObservedX": -50,
+          "lastObservedZ": -50,
+          "lastObservedTimestamp": 1791584651713,
+          "holdCompletedAtTick": 180
+        },
+        "op_bravo_1": {
+          "operativeId": "op_bravo_1",
+          "resumeKey": "sz_res_op_bravo_1_9740775b6a23d7a7d1db684a392ac9e7",
+          "admitted": true,
+          "health": 100,
+          "armor": 100,
+          "ammo": 30,
+          "rifleAmmo": 30,
+          "shotgunAmmo": 8,
+          "selectedWeapon": "rifle",
+          "stimsRemaining": 2,
+          "earnedCash": 0,
+          "cratesLooted": [],
+          "isExtracted": false,
+          "isAlive": true,
+          "isKia": false,
+          "extractedAtTick": 0,
+          "activeRaid": "raid_defensive_receipt_check_1791584651713",
+          "holdTicks": 0,
+          "holdCompleted": false,
+          "inventoryRevision": 1,
+          "accumulatedObservedTicks": 0,
+          "spawnX": 50,
+          "spawnZ": -50,
+          "lastObservedX": 50,
+          "lastObservedZ": -50,
+          "lastObservedTimestamp": 1791584651713
+        }
+      },
+      "crates": {
+        "crate_01": {
+          "cashValue": 1250
+        },
+        "crate_02": {
+          "cashValue": 2400
+        },
+        "crate_03": {
+          "cashValue": 3800
+        },
+        "crate_04": {
+          "cashValue": 2500
+        },
+        "crate_05": {
+          "cashValue": 3200
+        }
+      },
+      "machines": {
+        "turret_depot_alpha": {
+          "health": 120,
+          "isAlive": true
+        },
+        "drone_patrol_beta": {
+          "health": 75,
+          "isAlive": true
+        }
+      }
+    }
+  },
+  "auditLog": {
+    "receipt_s7_a4a4cb170eff9f00": {
+      "receipt": {
+        "v": 1,
+        "receiptId": "receipt_s7_a4a4cb170eff9f00",
+        "raidId": "raid_defensive_receipt_check_1791584651713",
+        "outcomeId": "a4a4cb170eff9f00800a0c0c93b1d80b5ffd21c965d469f073e61154f8666b09",
+        "intentHash": "intent_800a0c0c93b1d80b",
+        "outcomeDigest": "a4a4cb170eff9f00800a0c0c93b1d80b5ffd21c965d469f073e61154f8666b09",
+        "throughTick": 180,
+        "committedAtMs": 1791584651748,
+        "participantResults": [
+          {
+            "profileId": "op_alpha_1",
+            "releasedEscrowIds": [
+              "escrow_op_alpha_1_loadout"
+            ],
+            "inventoryRevision": 14,
+            "activeRaidCleared": true
+          },
+          {
+            "profileId": "op_bravo_1",
+            "releasedEscrowIds": [],
+            "inventoryRevision": 1,
+            "activeRaidCleared": false
+          }
+        ],
+        "transfers": [
+          {
+            "itemId": "currency_credits",
+            "quantity": "BE:0",
+            "toProfileId": "op_alpha_1",
+            "source": "world_spawn"
+          }
+        ]
+      },
+      "outcomePayload": {
+        "raidId": "raid_defensive_receipt_check_1791584651713",
+        "verifiedPrefixTick": 180,
+        "cutoffTick": 54000,
+        "isFinalClose": false,
+        "cashBanked": 0,
+        "extractedSquad": "op_alpha_1",
+        "retainedSquads": [
+          "op_bravo_1"
+        ]
+      }
+    }
+  },
+  "idempotencyMap": {
+    "raid_defensive_receipt_check_1791584651713:op_alpha_1:180:0": "receipt_s7_a4a4cb170eff9f00"
+  },
+  "activeRaidId": "raid_defensive_receipt_check_1791584651713",
+  "sessionTokens": {
+    "sz_tok_op_alpha_1_7ea3a512e637e47f3f56276cff9b29da": {
+      "operativeId": "op_alpha_1",
+      "raidId": "raid_defensive_receipt_check_1791584651713"
+    },
+    "sz_tok_op_bravo_1_c5f45b1abafd07774f2aa6d59be805a4": {
+      "operativeId": "op_bravo_1",
+      "raidId": "raid_defensive_receipt_check_1791584651713"
+    }
+  },
+  "claimedSessions": [],
+  "slotClaimTimestamps": {},
+  "profiles": {
+    "op_alpha_1": {
+      "inventoryRevision": 14
+    },
+    "op_bravo_1": {
+      "inventoryRevision": 1
+    }
+  }
+}

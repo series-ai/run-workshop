@@ -1,90 +1,128 @@
+import { defaultSettlementLedger } from "./sim/airlock.js";
 import React, { useEffect, useRef, useState } from "react";
 import { SectorDepotSimulation, type GameInput, computeGroundAimAngle } from "./sim/game.js";
 import { MultiplayerCoordinator } from "./sim/multiplayer.js";
+import { registerDeployment } from "./sim/airlock.js";
 import { GameCanvas } from "./components/GameCanvas.js";
 import { TacticalHud } from "./components/TacticalHud.js";
 import { ExfilOverlay } from "./components/ExfilOverlay.js";
 import { sound } from "./audio.js";
 import "./styles.css";
 
-async function requestSessionToken(raidId: string, opId: string, maxAttempts = 4): Promise<string | null> {
-  if (typeof fetch === "undefined") return null;
+async function requestSessionToken(raidId: string, opId: string, forceFresh = false): Promise<string | null> {
   const storageKey = `sz_session_${raidId}_${opId}`;
   const resumeStorageKey = `sz_resume_${raidId}_${opId}`;
   let savedToken: string | null = null;
   let savedResumeKey: string | null = null;
-  if (typeof sessionStorage !== "undefined") {
+  if (!forceFresh && typeof sessionStorage !== "undefined") {
     savedToken = sessionStorage.getItem(storageKey);
     savedResumeKey = sessionStorage.getItem(resumeStorageKey);
   }
+  if (!forceFresh && savedToken) return savedToken;
 
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+  if (typeof XMLHttpRequest !== "undefined") {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (savedToken) {
-        headers["Authorization"] = `Bearer ${savedToken}`;
-      }
-      if (savedResumeKey) {
-        headers["x-resumption-key"] = savedResumeKey;
-      }
-      try {
-        const res = await fetch("/api/settlement/join", {
-          method: "POST",
-          headers,
-          signal: controller.signal,
-          body: JSON.stringify({
-            raidId,
-            operativeId: opId,
-            ...(savedResumeKey ? { resumeKey: savedResumeKey } : {}),
-          }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const tok = data?.token || null;
-          const resKey = data?.resumeKey || null;
-          if (typeof sessionStorage !== "undefined") {
-            if (tok) sessionStorage.setItem(storageKey, tok);
-            if (resKey) sessionStorage.setItem(resumeStorageKey, resKey);
-            if (typeof data?.ammo === "number") {
-              sessionStorage.setItem(`sz_ammo_${raidId}_${opId}`, String(data.ammo));
-            }
-            if (data && (data.holdCompleted || data.holdCompletedAtTick || data.isExtracted || data.receipt)) {
-              sessionStorage.setItem(`sz_exfil_${raidId}_${opId}`, JSON.stringify({
-                holdCompleted: !!data.holdCompleted,
-                holdCompletedAtTick: data.holdCompletedAtTick || 0,
-                isExtracted: !!data.isExtracted,
-                extractedAtTick: data.extractedAtTick || 0,
-                receipt: data.receipt,
-              }));
-            } else if (data && data.holdCompleted === false && data.isExtracted === false) {
-              sessionStorage.removeItem(`sz_exfil_${raidId}_${opId}`);
-            }
-            if (data?.isKia) {
-              sessionStorage.setItem(`sz_kia_${raidId}_${opId}`, "true");
-            }
-          }
-          if (data?.isTerminal) {
-            return tok || `sz_term_${raidId}_${opId}`;
-          }
-          return tok;
+      const xhr = new XMLHttpRequest();
+      const token = await new Promise<string | null>((resolve) => {
+        xhr.open("POST", "/api/settlement/join");
+        xhr.setRequestHeader("Content-Type", "application/json");
+        if (savedResumeKey) {
+          xhr.setRequestHeader("x-resumption-key", savedResumeKey);
         }
-        if (res.status >= 400 && res.status < 500 && res.status !== 408 && res.status !== 429) {
-          if (!savedResumeKey || attempt >= 1) return null;
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              if (data.resumeKey && typeof sessionStorage !== "undefined") {
+                sessionStorage.setItem(resumeStorageKey, data.resumeKey);
+              }
+              if (data.token) return resolve(data.token);
+            } catch {}
+          }
+          resolve(null);
+        };
+        xhr.onerror = () => resolve(null);
+        xhr.send(JSON.stringify({ raidId, operativeId: opId, resumeKey: savedResumeKey || undefined }));
+      });
+      if (token) {
+        if (typeof sessionStorage !== "undefined") {
+          sessionStorage.setItem(storageKey, token);
         }
-      } finally {
-        clearTimeout(timeoutId);
+        return token;
       }
     } catch {}
-    if (attempt < maxAttempts - 1) {
-      await new Promise((r) => setTimeout(r, Math.min(2500, 400 * Math.pow(1.5, attempt))));
-    }
   }
   return null;
 }
 
-export const App: React.FC = () => {
+async function requestServerRedeployment(targetRaidId: string, opId: string, currentRaidId?: string, currentToken?: string | null): Promise<{ raidId: string; token: string; resumeKey?: string } | null> {
+  if (typeof XMLHttpRequest === "undefined") return null;
+  return new Promise((resolve) => {
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/settlement/redeploy");
+      xhr.setRequestHeader("Content-Type", "application/json");
+      if (currentToken) {
+        xhr.setRequestHeader("Authorization", `Bearer ${currentToken}`);
+        xhr.setRequestHeader("x-operative-token", currentToken);
+      }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.success && data.raidId && data.token) {
+              return resolve({ raidId: data.raidId, token: data.token, resumeKey: data.resumeKey });
+            }
+          } catch {}
+        }
+        resolve(null);
+      };
+      xhr.onerror = () => resolve(null);
+      xhr.send(JSON.stringify({ raidId: targetRaidId, operativeId: opId, currentRaidId, token: currentToken }));
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+const MainApp: React.FC = () => {
+  const [dismissRotate, setDismissRotate] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(() => {
+    if (typeof window !== "undefined") {
+      return (
+        ("ontouchstart" in window || navigator.maxTouchPoints > 0) &&
+        window.matchMedia("(pointer: coarse)").matches &&
+        window.innerWidth <= 844
+      );
+    }
+    return false;
+  });
+  const [isPortrait, setIsPortrait] = useState(() => {
+    if (typeof window !== "undefined") {
+      const isTouch = ("ontouchstart" in window || navigator.maxTouchPoints > 0) &&
+        window.matchMedia("(pointer: coarse)").matches &&
+        window.innerWidth <= 844;
+      return isTouch && window.innerHeight > window.innerWidth;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handleOrientation = () => {
+      const isTouch = ("ontouchstart" in window || navigator.maxTouchPoints > 0) &&
+        window.matchMedia("(pointer: coarse)").matches &&
+        window.innerWidth <= 844;
+      setIsTouchDevice(isTouch);
+      setIsPortrait(isTouch && window.innerHeight > window.innerWidth);
+    };
+    window.addEventListener("resize", handleOrientation);
+    window.addEventListener("orientationchange", handleOrientation);
+    return () => {
+      window.removeEventListener("resize", handleOrientation);
+      window.removeEventListener("orientationchange", handleOrientation);
+    };
+  }, []);
+
   const [sim, setSim] = useState(() => {
     let initialRaidId: string | undefined = undefined;
     // Allow an explicit raidId from the URL (?raidId=raid_sector7_...) — used by
@@ -102,7 +140,7 @@ export const App: React.FC = () => {
       const savedRaid = sessionStorage.getItem("sz_active_raid");
       if (savedRaid) initialRaidId = savedRaid;
     }
-    const s = new SectorDepotSimulation(initialRaidId);
+    const s = new SectorDepotSimulation(initialRaidId, "hub");
     if (typeof sessionStorage !== "undefined" && initialRaidId) {
       const savedExfil = sessionStorage.getItem(`sz_exfil_${initialRaidId}_${s.player.id}`);
       if (savedExfil) {
@@ -123,6 +161,12 @@ export const App: React.FC = () => {
     return s;
   });
   const [, setFrame] = useState(0);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as any).__stickZoneSim = sim;
+      (window as any).__stickZoneLedger = defaultSettlementLedger;
+    }
+  }, [sim]);
 
   const coordinatorRef = useRef<MultiplayerCoordinator | null>(null);
   const keysPressed = useRef<Set<string>>(new Set());
@@ -130,6 +174,12 @@ export const App: React.FC = () => {
   const hasMouseMovedRef = useRef(false);
   const lastMouseMoveTimeRef = useRef(0);
   const isMouseDown = useRef(false);
+  const queuedSelectWeapon = useRef<'rifle' | 'shotgun' | null>(null);
+  const queuedSwitchWeapon = useRef(false);
+  const queuedStim = useRef(false);
+  const queuedReload = useRef(false);
+  const queuedInteract = useRef(false);
+  const fireTouchOrigin = useRef<{ x: number; y: number } | null>(null);
   const touchInputRef = useRef<{ dx: number; dz: number; sprint?: boolean; slide?: boolean; crouch?: boolean; roll?: boolean; jump?: boolean; kick?: boolean; shoot?: boolean; interact?: boolean; aimAngle?: number }>({ dx: 0, dz: 0 });
   const actionPointersRef = useRef<Map<string, Set<number>>>(new Map());
   const prevActionRef = useRef<string>("idle");
@@ -155,303 +205,42 @@ export const App: React.FC = () => {
       handleRestart(newRaidId, true);
     };
     let isCancelled = false;
-    // Fetch active raid and obtain verified session token on mount
-    if (typeof fetch !== "undefined") {
-      (async () => {
-        try {
-          let savedRaidId: string | null = null;
-          if (typeof sessionStorage !== "undefined") {
-            savedRaidId = sessionStorage.getItem("sz_active_raid");
-          }
-          let tok: string | null = null;
-          let currentRaidId = sim.raidId;
-
-          let activeRaidData: any = null;
-          try {
-            const activeCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-            const activeTid = activeCtrl ? setTimeout(() => activeCtrl.abort(), 4000) : null;
-            try {
-              const res = await fetch("/api/settlement/active-raid", { signal: activeCtrl ? activeCtrl.signal : undefined });
-              activeRaidData = await res.json();
-            } finally {
-              if (activeTid) clearTimeout(activeTid);
-            }
-            if (isCancelled) return;
-            if (activeRaidData && activeRaidData.activeRaidId === sim.raidId && activeRaidData.machines && Array.isArray(activeRaidData.machines)) {
-              // NOTE: machine world reconciliation is owned by the shared reconciler
-              // (MultiplayerCoordinator.applyMachineRosterCustody — revision-gated, full
-              // membership/geometry). This early boot path only CONVERGES vitals on
-              // existing ids (never adds/removes/moves machines, never regresses rev).
-              for (const m of activeRaidData.machines) {
-                const existing = sim.machines.find((x) => x.id === m.id);
-                if (existing) {
-                  const custodyMax = typeof (m as any).maxHealth === "number" ? (m as any).maxHealth : undefined;
-                  if (custodyMax !== undefined) (existing as any).maxHealth = custodyMax;
-                  if (sim.tick < 60) {
-                    existing.health = Math.min(existing.health, m.health);
-                    existing.isAlive = m.isAlive && existing.health > 0;
-                  } else if (m.isAlive === false || m.health <= 0) {
-                    existing.health = 0;
-                    existing.isAlive = false;
-                  }
-                }
-              }
-            }
-          } catch {}
-
-          // If the browser already has an ongoing session in savedRaidId, resume that raid!
-          if (savedRaidId) {
-            tok = await requestSessionToken(savedRaidId, sim.player.id);
-            if (isCancelled) return;
-            if (tok) {
-              sim.raidId = savedRaidId;
-              currentRaidId = savedRaidId;
-              try {
-                const savedCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-                const savedTid = savedCtrl ? setTimeout(() => savedCtrl.abort(), 4000) : null;
-                let raidData: any = null;
-                try {
-                  const raidRes = await fetch(`/api/settlement/active-raid?raidId=${encodeURIComponent(savedRaidId)}`, { signal: savedCtrl ? savedCtrl.signal : undefined });
-                  raidData = await raidRes.json();
-                } finally {
-                  if (savedTid) clearTimeout(savedTid);
-                }
-                if (raidData && raidData.machines && Array.isArray(raidData.machines)) {
-                  for (const m of raidData.machines) {
-                    const existing = sim.machines.find((x) => x.id === m.id);
-                    if (existing) {
-                      if (typeof (m as any).maxHealth === "number") (existing as any).maxHealth = (m as any).maxHealth;
-                      if (sim.tick < 60) {
-                        existing.health = Math.min(existing.health, m.health);
-                        existing.isAlive = m.isAlive && existing.health > 0;
-                      } else if (m.isAlive === false || m.health <= 0) {
-                        existing.health = 0;
-                        existing.isAlive = false;
-                      }
-                    }
-                  }
-                }
-                if (raidData && (raidData.holdCompleted || raidData.holdCompletedAtTick || raidData.isExtracted)) {
-                  sim.restoreExtractionCustody({
-                    holdCompleted: !!raidData.holdCompleted,
-                    holdCompletedAtTick: raidData.holdCompletedAtTick || 0,
-                    isExtracted: !!raidData.isExtracted,
-                    extractedAtTick: raidData.extractedAtTick || 0,
-                  });
-                }
-              } catch {}
-            }
-          }
-
-          if (!tok) {
-            if (activeRaidData && activeRaidData.activeRaidId && activeRaidData.activeRaidId !== sim.raidId) {
-              if (sim.ingressController.getState().kind !== "confirmed_active") {
-                sim.raidId = activeRaidData.activeRaidId;
-                currentRaidId = activeRaidData.activeRaidId;
-              }
-            }
-            tok = await requestSessionToken(currentRaidId, sim.player.id);
-          }
-
-          if (isCancelled) return;
-          if (tok) {
-            sim.sessionToken = tok;
-            const savedAmmo = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(`sz_ammo_${currentRaidId}_${sim.player.id}`) : null;
-            if (savedAmmo && !isNaN(Number(savedAmmo))) {
-              sim.player.ammo = Number(savedAmmo);
-            }
-            const savedExfil = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(`sz_exfil_${currentRaidId}_${sim.player.id}`) : null;
-            if (savedExfil) {
-              try {
-                const exfilInfo = JSON.parse(savedExfil);
-                sim.restoreExtractionCustody(exfilInfo);
-              } catch {}
-            }
-            const savedKia = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(`sz_kia_${currentRaidId}_${sim.player.id}`) : null;
-            if (savedKia === "true") {
-              sim.player.health = 0;
-              sim.player.isAlive = false;
-            }
-            if (typeof sessionStorage !== "undefined") {
-              sessionStorage.setItem("sz_active_raid", currentRaidId);
-            }
-            if (coordinatorRef.current && !sim.player.isExtracted && sim.player.isAlive && !tok.startsWith("sz_term_")) {
-              coordinatorRef.current.connectWebSocket(tok);
-            }
-          }
-        } catch {
-          const tok = await requestSessionToken(sim.raidId, sim.player.id);
-          if (tok) sim.sessionToken = tok;
+    // Turnkey local session token initialization on mount
+    (async () => {
+      const tok = await requestSessionToken(sim.raidId, sim.player.id);
+      if (isCancelled || coordinatorRef.current !== coordinator) return;
+      if (tok) {
+        sim.sessionToken = tok;
+        if (!sim.player.isExtracted && sim.player.isAlive) {
+          coordinator.connectWebSocket(tok);
         }
-      })();
-    }
-
-    let lastReportedHoldTicks = 0;
-    let lastReportTick = 0;
-    let lastReportWallClock = 0;
-    let mainHoldInFlight = false;
-  sim.onHoldProgress = (holdTicks: number, currentTick: number) => {
-      const now = Date.now();
-      if (holdTicks === 0 && lastReportedHoldTicks === 0) {
-        return;
       }
-      const isReset = holdTicks === 0 && lastReportedHoldTicks !== 0;
-      const isComplete = holdTicks >= 180;
-      let shouldReport = false;
-      if (isReset) {
-        shouldReport = true;
-      } else if (isComplete) {
-        // Completed-phase custody reports: continue at a fine cadence (40ms) so the
-        // relay's tick ladder and duration criteria (>=50 reports, >=3000ms) are fully
-        // satisfied through corridor presentation and settlement submission.
-        if (lastReportedHoldTicks < 180 || now - lastReportWallClock >= 40) {
-          shouldReport = true;
+    })();
+
+      sim.onHoldProgress = (holdTicks: number, currentTick: number) => {
+        if (coordinatorRef.current && !sim.player.isExtracted && sim.player.isAlive) {
+          coordinatorRef.current.reportHoldProgress(holdTicks, currentTick);
         }
-      } else {
-        shouldReport = (now - lastReportWallClock >= 40 && currentTick - lastReportTick >= 2);
-      }
-      if (!shouldReport) {
-        return;
-      }
-      lastReportWallClock = now;
-      lastReportedHoldTicks = holdTicks;
-      lastReportTick = currentTick;
-
-      if (typeof fetch !== "undefined" && !mainHoldInFlight) {
-        mainHoldInFlight = true;
-        const sentAttemptId = typeof sim.exfilController?.getHoldAttemptId === "function" ? sim.exfilController.getHoldAttemptId() : 0;
-        const holdCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-        const holdTid = holdCtrl ? setTimeout(() => holdCtrl.abort(), 3000) : null;
-        fetch("/api/settlement/hold", {
-          signal: holdCtrl ? holdCtrl.signal : undefined,
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-operative-id": sim.player.id,
-            ...(sim.sessionToken ? { "Authorization": `Bearer ${sim.sessionToken}` } : {}),
-          },
-          body: JSON.stringify({
-            raidId: sim.raidId,
-            operativeId: sim.player.id,
-            holdTicks,
-            currentTick,
-            attemptId: sentAttemptId,
-            x: sim.player.x,
-            z: sim.player.z,
-            inZone: sim.isPlayerInExfilZone(),
-            isAlive: sim.player.isAlive,
-            isKia: !sim.player.isAlive,
-          }),
-        })
-          .then((res) => (res.ok ? res.json() : null))
-          .finally(() => { if (holdTid) clearTimeout(holdTid); mainHoldInFlight = false; })
-          .then((data) => {
-            if (!data) return;
-            const respAttemptId = typeof data.attemptId === "number" ? data.attemptId : sentAttemptId;
-            const currentAttemptId = typeof (sim.exfilController as any)?.getHoldAttemptId === "function"
-              ? (sim.exfilController as any).getHoldAttemptId()
-              : sentAttemptId;
-            if (respAttemptId !== currentAttemptId) {
-              return; // Validate attempt before applying any response fields!
-            }
-            const exState = sim.exfilController.getState();
-            const isCompletedInGrace = (exState.kind === "corridor_presentation" ||
-              exState.kind === "submitting_settlement" ||
-              exState.kind === "failed") &&
-              ((sim as any).serverHoldCompletedAtTick > 0 && (sim as any).serverHoldCompletedAtTick <= 54000) &&
-              sim.tick <= 57600;
-            if ((data.reset === true || data.currentHoldTicks === 0) && !isCompletedInGrace) {
-              lastReportedHoldTicks = 0;
-              sim.exfilController.reconcileAuthoritativeHold(0, true, respAttemptId);
-            } else if (typeof data.currentHoldTicks === "number") {
-              lastReportedHoldTicks = data.currentHoldTicks;
-              sim.exfilController.reconcileAuthoritativeHold(data.currentHoldTicks, false, respAttemptId);
-            }
-            if (typeof data.holdCompletedAtTick === "number") {
-              (sim as any).serverHoldCompletedAtTick = data.holdCompletedAtTick;
-            }
-          })
-          .catch(() => {});
-      }
-    };
-
-    const prevDeath = sim.onPlayerDeath;
-    sim.onPlayerDeath = () => {
-      if (typeof prevDeath === "function") {
-        prevDeath();
-      } else if (coordinatorRef.current) {
-        coordinatorRef.current.broadcastState(0);
-      }
-      if (typeof fetch !== "undefined") {
-        const kiaCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-        const kiaTid = kiaCtrl ? setTimeout(() => kiaCtrl.abort(), 4000) : null;
-        fetch("/api/settlement/kia", {
-          signal: kiaCtrl ? kiaCtrl.signal : undefined,
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-operative-id": sim.player.id,
-            ...(sim.sessionToken ? { "Authorization": `Bearer ${sim.sessionToken}` } : {}),
-          },
-          body: JSON.stringify({
-            raidId: sim.raidId,
-            operativeId: sim.player.id,
-            playerId: sim.player.id,
-          }),
-        })
-          .finally(() => { if (kiaTid) clearTimeout(kiaTid); })
-          .catch(() => {});
-      }
-    };
-
-    sim.onLootCrate = (crateId: string, cash: number, claimTimestamp?: number) => {
-      const ts = claimTimestamp || Date.now();
-      if (typeof fetch !== 'undefined') {
-        const lootCtrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-        const lootTid = lootCtrl ? setTimeout(() => lootCtrl.abort(), 4000) : null;
-        (async () => {
-          try {
-            const res = await fetch('/api/settlement/loot', {
-              signal: lootCtrl ? lootCtrl.signal : undefined,
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-operative-id': sim.player.id,
-                ...(sim.sessionToken ? { 'Authorization': `Bearer ${sim.sessionToken}` } : {}),
-              },
-              body: JSON.stringify({
-                raidId: sim.raidId,
-                crateId,
-                claimantId: sim.player.id,
-                cashValue: cash,
-                claimTimestamp: ts,
-                timestamp: ts,
-                x: sim.player.x,
-                z: sim.player.z,
-              }),
-            });
-            if (!res.ok) {
-              sim.reconcileCrateRejection(crateId, cash);
-              return;
-            }
-            const data = await res.json();
-            if (data && (data.success === false || data.error)) {
-              sim.reconcileCrateRejection(crateId, cash);
-            } else if (data && data.success === true) {
-              sim.reconcileCrateApproval?.(crateId, cash, data.claimTimestamp || ts);
-            }
-          } catch {
-            sim.reconcileCrateRejection(crateId, cash);
-          } finally {
-            if (lootTid) clearTimeout(lootTid);
-          }
-        })();
-      }
-    };
+      };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (sim.isInputLocked()) return;
+      if (e.repeat) return; // Ignore physical OS repeat
       keysPressed.current.add(e.code);
+
+      if (e.code === "Digit1") {
+        queuedSelectWeapon.current = "rifle";
+      } else if (e.code === "Digit2") {
+        queuedSelectWeapon.current = "shotgun";
+      } else if (e.code === "KeyQ") {
+        queuedSwitchWeapon.current = true;
+      } else if (e.code === "KeyH") {
+        queuedStim.current = true;
+      } else if (e.code === "KeyR") {
+        queuedReload.current = true;
+      } else if (e.code === "KeyE" || e.code === "KeyF") {
+        queuedInteract.current = true;
+      }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -585,6 +374,26 @@ export const App: React.FC = () => {
         }
 
         const isSprinting = keys.has("ShiftLeft") || keys.has("ShiftRight") || !!touchInputRef.current.sprint || !!touchInputRef.current.slide;
+
+        const selectWeapon = queuedSelectWeapon.current || undefined;
+        queuedSelectWeapon.current = null;
+        const switchWeapon = queuedSwitchWeapon.current || !!(touchInputRef.current as any).switchWeapon;
+        queuedSwitchWeapon.current = false;
+        (touchInputRef.current as any).switchWeapon = false;
+
+        const stim = queuedStim.current || !!(touchInputRef.current as any).stim;
+        if (stim) sound.playHealInject();
+        queuedStim.current = false;
+        (touchInputRef.current as any).stim = false;
+
+        const reload = queuedReload.current || !!(touchInputRef.current as any).reload;
+        if (reload) sound.playReload();
+        queuedReload.current = false;
+        (touchInputRef.current as any).reload = false;
+
+        const interact = queuedInteract.current || !!touchInputRef.current.interact;
+        queuedInteract.current = false;
+
         const input: GameInput = {
           dx,
           dz,
@@ -593,9 +402,13 @@ export const App: React.FC = () => {
           crouch: (keys.has("KeyC") && !isSprinting) || (!!touchInputRef.current.crouch && !touchInputRef.current.slide),
           roll: (keys.has("Space") && isSprinting) || !!touchInputRef.current.roll,
           jump: (keys.has("Space") && !isSprinting) || !!touchInputRef.current.jump,
-          kick: keys.has("KeyF") || !!touchInputRef.current.kick,
+          kick: keys.has("KeyV") || !!touchInputRef.current.kick,
           shoot: keys.has("KeyJ") || keys.has("KeyK") || keys.has("Enter") || isMouseDown.current || !!touchInputRef.current.shoot,
-          interact: keys.has("KeyE") || !!touchInputRef.current.interact,
+          interact,
+          selectWeapon,
+          switchWeapon,
+          stim,
+          reload,
           aimAngle,
         };
 
@@ -611,15 +424,35 @@ export const App: React.FC = () => {
           prevActionRef.current = currentAction;
         }
 
-        // Gunshot audio on ammo consumption
-        if (sim.player.ammo < prevAmmo) {
-          sound.playGunshot();
+        // Gunshot audio on actual shot event (consume each fire event once to avoid false shots on weapon switch or death)
+        if (sim.consumeFireEvent()) {
+          if (sim.player.weapon === 'shotgun') {
+            sound.playShotgun();
+          } else {
+            sound.playGunshot();
+          }
           if (coordinatorRef.current) {
             coordinatorRef.current.broadcastFire(
               sim.player.x + Math.sin(sim.player.facing) * 20,
               sim.player.z + Math.cos(sim.player.facing) * 20
             );
           }
+        }
+
+        // Hitmarker sound feedback
+        if (sim.player.lastHitmarkerTick === sim.tick) {
+          sound.playHitmarker(!!sim.player.lastHitmarkerCrit);
+        }
+
+        // Critical low health heartbeat
+        if (sim.player.isAlive && sim.player.health < 30 && sim.tick % 50 === 0) {
+          sound.playHeartbeat();
+        }
+
+        // Automatic Scav Squad deployment in Sector 7 Spoke
+        if (sim.zoneMode === 'spoke' && sim.rivals.length === 0 && !sim.aiSpawned) {
+          sim.spawnScavSquad();
+          sound.playScavBark();
         }
 
         // Cash loot chime
@@ -681,63 +514,60 @@ export const App: React.FC = () => {
     if (isRestartingRef.current) return false;
     isRestartingRef.current = true;
     try {
-      let nextRaidId = overrideRaidId || pendingNextRaidId.current || undefined;
-      const isPeerRaid = fromPeer || (!overrideRaidId && !!pendingNextRaidId.current);
-      let newToken: string | null = null;
+      const candidateRaidId = overrideRaidId || (pendingNextRaidId.current && pendingNextRaidId.current !== sim.raidId ? pendingNextRaidId.current : `raid_sector7_${Date.now()}`);
 
-      if (isPeerRaid && nextRaidId) {
-        if (typeof fetch !== "undefined") {
-          const actCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-          const actTid = actCtrl ? setTimeout(() => actCtrl.abort(), 4000) : null;
-          try {
-            const res = await fetch("/api/settlement/active-raid", { signal: actCtrl ? actCtrl.signal : undefined });
-            if (res.ok) {
-              const activeData = await res.json();
-              if (activeData.activeRaidId !== nextRaidId) {
-                console.warn(`[REJECT RESTART] Peer announced raid ${nextRaidId} does not match server active raid ${activeData.activeRaidId}`);
-                pendingNextRaidId.current = null;
-                return false;
-              }
-            }
-          } catch {
-            pendingNextRaidId.current = null;
-            return false;
-          } finally {
-            if (actTid) clearTimeout(actTid);
-          }
-        }
-        newToken = await requestSessionToken(nextRaidId, sim.player.id);
-        if (!newToken) {
-          console.error("Failed to acquire session token for peer raid:", nextRaidId);
-          pendingNextRaidId.current = null;
-          return false;
-        }
+      // Confirm new raid and obtain verified operative token from server BEFORE replacing simulation
+      let confirmedRaidId = candidateRaidId;
+      let confirmedToken: string | null = null;
+      let confirmedResumeKey: string | null = null;
+
+      const currentToken = typeof sessionStorage !== "undefined" ? (sessionStorage.getItem(`sz_session_${sim.raidId}_${sim.player.id}`) || sessionStorage.getItem(`sz_token_${sim.raidId}_${sim.player.id}`)) : null;
+
+      // 1. Try server redeployment endpoint with current session token
+      const redeployResult = await requestServerRedeployment(candidateRaidId, sim.player.id, sim.raidId, currentToken);
+      if (redeployResult && redeployResult.raidId && redeployResult.token) {
+        confirmedRaidId = redeployResult.raidId;
+        confirmedToken = redeployResult.token;
+        confirmedResumeKey = redeployResult.resumeKey || null;
       } else {
-        nextRaidId = overrideRaidId || `raid_sector7_${Date.now()}`;
-        newToken = await requestSessionToken(nextRaidId, sim.player.id);
-        if (!newToken) {
-          console.error("Failed to acquire session token for next raid:", nextRaidId);
-          pendingNextRaidId.current = null;
-          return false;
+        // 2. Fall back to standard session join on target raid with mandatory live server verification (forceFresh: true)
+        const joinToken = await requestSessionToken(candidateRaidId, sim.player.id, true);
+        if (joinToken) {
+          confirmedToken = joinToken;
         }
       }
 
-      if (newToken && typeof sessionStorage !== "undefined") {
-        sessionStorage.setItem(`sz_session_${nextRaidId}_${sim.player.id}`, newToken);
-        sessionStorage.setItem("sz_active_raid", nextRaidId);
+      // If server rejects or fails to confirm new raid, keep current session and report failure
+      if (!confirmedToken) {
+        return false;
       }
-      pendingNextRaidId.current = null; // Cleared strictly upon successful redeployment
-      const newSim = new SectorDepotSimulation(nextRaidId);
-      if (newToken) {
-        newSim.sessionToken = newToken;
+
+      if (typeof sessionStorage !== "undefined") {
+        sessionStorage.removeItem(`sz_kia_${sim.raidId}_${sim.player.id}`);
+        sessionStorage.removeItem(`sz_exfil_${sim.raidId}_${sim.player.id}`);
+        sessionStorage.removeItem(`sz_ammo_${sim.raidId}_${sim.player.id}`);
+        sessionStorage.removeItem(`sz_resume_${sim.raidId}_${sim.player.id}`);
+        sessionStorage.removeItem(`sz_kia_${confirmedRaidId}_${sim.player.id}`);
+        sessionStorage.removeItem(`sz_exfil_${confirmedRaidId}_${sim.player.id}`);
+        sessionStorage.setItem("sz_active_raid", confirmedRaidId);
+        sessionStorage.setItem(`sz_session_${confirmedRaidId}_${sim.player.id}`, confirmedToken);
+        if (confirmedResumeKey) {
+          sessionStorage.setItem(`sz_resume_${confirmedRaidId}_${sim.player.id}`, confirmedResumeKey);
+        }
       }
+      pendingNextRaidId.current = null;
+
+      const newSim = new SectorDepotSimulation(confirmedRaidId);
+      registerDeployment(newSim.player.id, confirmedRaidId);
+      newSim.sessionToken = confirmedToken;
+
       setSim(newSim);
       if (typeof window !== "undefined") {
         if ((import.meta as any).env?.VITE_EXPOSE_DEBUG_SIM === "1") (window as any).debugSim = newSim;
       }
 
       if (!fromPeer && coordinatorRef.current) {
-        coordinatorRef.current.broadcastRaidRestart(nextRaidId);
+        coordinatorRef.current.broadcastRaidRestart(confirmedRaidId);
       }
       return true;
     } finally {
@@ -902,10 +732,43 @@ export const App: React.FC = () => {
     <div className="game-viewport">
       <GameCanvas sim={sim} />
       <TacticalHud sim={sim} />
+
+      {/* Landscape Orientation Advisory for Mobile/Tablet */}
+      {isTouchDevice && isPortrait && !dismissRotate && (
+        <div className="landscape-advisory-banner">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '18px' }}>🔄</span>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '11px', color: '#f59e0b', letterSpacing: '0.05em' }}>
+                TACTICAL LANDSCAPE RECOMMENDED
+              </div>
+              <div style={{ fontSize: '10px', color: '#cbd5e1' }}>
+                Rotate device for top-down wide-angle radar & dual-thumb controls
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setDismissRotate(true)}
+            style={{
+              background: '#334155',
+              border: '1px solid #64748b',
+              color: '#fff',
+              borderRadius: '4px',
+              padding: '4px 10px',
+              fontSize: '10px',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            DISMISS
+          </button>
+        </div>
+      )}
       <ExfilOverlay sim={sim} onRestart={() => handleRestart()} />
 
       {/* Mobile Tactical Touch Controls */}
-      <div className="mobile-touch-controls">
+      {isTouchDevice && (
+        <div className="mobile-touch-controls">
         <div
           className="mobile-dpad"
           onTouchStart={handleTouchDpadStart}
@@ -918,112 +781,173 @@ export const App: React.FC = () => {
         <div className="mobile-action-buttons" onMouseDown={(e) => e.stopPropagation()}>
           <button
             className="mobile-btn mobile-btn-fire"
-            onPointerDown={(e) => handleActionPointerDown("shoot", e)}
-            onPointerUp={(e) => handleActionPointerUp("shoot", e)}
-            onPointerCancel={(e) => handleActionPointerUp("shoot", e)}
-            onMouseDown={(e) => handleActionMouseDown("shoot", e)}
-            onMouseUp={(e) => handleActionMouseUp("shoot", e)}
-            onKeyDown={(e) => handleButtonKeyDown("shoot", e)}
-            onKeyUp={(e) => handleButtonKeyUp("shoot", e)}
-            onBlur={() => handleButtonBlur("shoot")}
+            onPointerDown={(e) => {
+              if (sim.isInputLocked()) return;
+              e.stopPropagation();
+              try { (e.currentTarget as any).setPointerCapture(e.pointerId); } catch {}
+              const rect = e.currentTarget.getBoundingClientRect();
+              fireTouchOrigin.current = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+              touchInputRef.current.shoot = true;
+            }}
+            onPointerMove={(e) => {
+              if (fireTouchOrigin.current) {
+                const fdx = e.clientX - fireTouchOrigin.current.x;
+                const fdz = e.clientY - fireTouchOrigin.current.y;
+                if (Math.hypot(fdx, fdz) > 8) {
+                  touchInputRef.current.aimAngle = Math.atan2(fdx, fdz);
+                }
+              }
+            }}
+            onPointerUp={() => {
+              fireTouchOrigin.current = null;
+              touchInputRef.current.shoot = false;
+            }}
+            onPointerCancel={() => {
+              fireTouchOrigin.current = null;
+              touchInputRef.current.shoot = false;
+            }}
           >
-            Fire
+            FIRE
           </button>
           <button
             className="mobile-btn"
-            onPointerDown={(e) => handleActionPointerDown("kick", e)}
-            onPointerUp={(e) => handleActionPointerUp("kick", e)}
-            onPointerCancel={(e) => handleActionPointerUp("kick", e)}
-            onMouseDown={(e) => handleActionMouseDown("kick", e)}
-            onMouseUp={(e) => handleActionMouseUp("kick", e)}
-            onKeyDown={(e) => handleButtonKeyDown("kick", e)}
-            onKeyUp={(e) => handleButtonKeyUp("kick", e)}
-            onBlur={() => handleButtonBlur("kick")}
+            style={{
+              background: sim.player.weapon === 'shotgun' ? '#d97706' : '#0284c7',
+              fontSize: '10px',
+              fontWeight: 800,
+            }}
+            onClick={() => { if (!sim.isInputLocked()) sim.switchWeapon(); }}
           >
-            Kick
+            {sim.player.weapon === 'shotgun' ? '12G' : 'M4'}
           </button>
           <button
             className="mobile-btn"
-            onPointerDown={(e) => handleActionPointerDown("interact", e)}
-            onPointerUp={(e) => handleActionPointerUp("interact", e)}
-            onPointerCancel={(e) => handleActionPointerUp("interact", e)}
-            onMouseDown={(e) => handleActionMouseDown("interact", e)}
-            onMouseUp={(e) => handleActionMouseUp("interact", e)}
-            onKeyDown={(e) => handleButtonKeyDown("interact", e)}
-            onKeyUp={(e) => handleButtonKeyUp("interact", e)}
-            onBlur={() => handleButtonBlur("interact")}
+            style={{
+              background: sim.player.isBleeding ? '#ef4444' : '#15803d',
+              fontSize: '9px',
+              fontWeight: 800,
+            }}
+            onClick={() => {
+              if (sim.isInputLocked()) return;
+              if (sim.useStim()) sound.playHealInject();
+            }}
           >
-            Loot (E)
+            STIM ({sim.player.stimsRemaining || 0})
           </button>
           <button
             className="mobile-btn"
-            onPointerDown={(e) => handleActionPointerDown("slide", e)}
-            onPointerUp={(e) => handleActionPointerUp("slide", e)}
-            onPointerCancel={(e) => handleActionPointerUp("slide", e)}
-            onMouseDown={(e) => handleActionMouseDown("slide", e)}
-            onMouseUp={(e) => handleActionMouseUp("slide", e)}
-            onKeyDown={(e) => handleButtonKeyDown("slide", e)}
-            onKeyUp={(e) => handleButtonKeyUp("slide", e)}
-            onBlur={() => handleButtonBlur("slide")}
+            style={{ fontSize: '9px', fontWeight: 800 }}
+            onClick={() => {
+              if (sim.isInputLocked()) return;
+              if (sim.reload()) sound.playReload();
+            }}
           >
-            Slide (C)
+            RELOAD
           </button>
           <button
             className="mobile-btn"
-            onPointerDown={(e) => handleActionPointerDown("sprint", e)}
-            onPointerUp={(e) => handleActionPointerUp("sprint", e)}
-            onPointerCancel={(e) => handleActionPointerUp("sprint", e)}
-            onMouseDown={(e) => handleActionMouseDown("sprint", e)}
-            onMouseUp={(e) => handleActionMouseUp("sprint", e)}
-            onKeyDown={(e) => handleButtonKeyDown("sprint", e)}
-            onKeyUp={(e) => handleButtonKeyUp("sprint", e)}
-            onBlur={() => handleButtonBlur("sprint")}
+            style={{ fontSize: '10px', fontWeight: 800, background: '#ca8a04' }}
+            onClick={() => {
+              if (sim.isInputLocked()) return;
+              for (const c of sim.crates) {
+                if (!c.opened && Math.hypot(sim.player.x - c.x, sim.player.z - c.z) <= 3.5) {
+                  sim.requestLootCrate(c.id);
+                  sound.playLootChime();
+                  break;
+                }
+              }
+            }}
           >
-            Sprint
+            LOOT
           </button>
           <button
             className="mobile-btn"
-            onPointerDown={(e) => handleActionPointerDown("jump", e)}
-            onPointerUp={(e) => handleActionPointerUp("jump", e)}
-            onPointerCancel={(e) => handleActionPointerUp("jump", e)}
-            onMouseDown={(e) => handleActionMouseDown("jump", e)}
-            onMouseUp={(e) => handleActionMouseUp("jump", e)}
-            onKeyDown={(e) => handleButtonKeyDown("jump", e)}
-            onKeyUp={(e) => handleButtonKeyUp("jump", e)}
-            onBlur={() => handleButtonBlur("jump")}
+            style={{
+              background: '#854d0e',
+              fontSize: '10px',
+              fontWeight: 800,
+            }}
+            onPointerDown={(e) => {
+              if (sim.isInputLocked()) return;
+              e.stopPropagation();
+              touchInputRef.current.kick = true;
+            }}
+            onPointerUp={() => { touchInputRef.current.kick = false; }}
+            onPointerCancel={() => { touchInputRef.current.kick = false; }}
           >
-            Jump
+            KICK
           </button>
           <button
             className="mobile-btn"
-            onPointerDown={(e) => handleActionPointerDown("crouch", e)}
-            onPointerUp={(e) => handleActionPointerUp("crouch", e)}
-            onPointerCancel={(e) => handleActionPointerUp("crouch", e)}
-            onMouseDown={(e) => handleActionMouseDown("crouch", e)}
-            onMouseUp={(e) => handleActionMouseUp("crouch", e)}
-            onKeyDown={(e) => handleButtonKeyDown("crouch", e)}
-            onKeyUp={(e) => handleButtonKeyUp("crouch", e)}
-            onBlur={() => handleButtonBlur("crouch")}
+            style={{
+              background: '#475569',
+              fontSize: '10px',
+              fontWeight: 800,
+            }}
+            onPointerDown={(e) => {
+              if (sim.isInputLocked()) return;
+              e.stopPropagation();
+              touchInputRef.current.roll = true;
+              touchInputRef.current.sprint = true;
+            }}
+            onPointerUp={() => {
+              touchInputRef.current.roll = false;
+              touchInputRef.current.sprint = false;
+            }}
+            onPointerCancel={() => {
+              touchInputRef.current.roll = false;
+              touchInputRef.current.sprint = false;
+            }}
           >
-            Crouch
+            ROLL
           </button>
-          <button
-            className="mobile-btn"
-            onPointerDown={(e) => handleActionPointerDown("roll", e)}
-            onPointerUp={(e) => handleActionPointerUp("roll", e)}
-            onPointerCancel={(e) => handleActionPointerUp("roll", e)}
-            onMouseDown={(e) => handleActionMouseDown("roll", e)}
-            onMouseUp={(e) => handleActionMouseUp("roll", e)}
-            onKeyDown={(e) => handleButtonKeyDown("roll", e)}
-            onKeyUp={(e) => handleButtonKeyUp("roll", e)}
-            onBlur={() => handleButtonBlur("roll")}
-          >
-            Roll
-          </button>
-        </div>
-      </div>
+
+        </div>      </div>
+      )}
     </div>
   );
 };
 
+export const App: React.FC = () => {
+  const isTestMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("testMode") === "1";
+  if (isTestMode) {
+    return <TestApp />;
+  }
+  return <MainApp />;
+};
+
 export default App;
+
+function TestApp() {
+  const [sim] = useState(() => {
+    const s = new SectorDepotSimulation("test_sandbox_raid", "spoke");
+    s.admitOperative(0);
+    if (!s.isAdmitted()) {
+      throw new Error("Test operative admission failed");
+    }
+    s.player.id = "test-operative-01";
+    s.player.name = "SPECTRE-1";
+    s.player.isAlive = true;
+    s.player.health = 100;
+    s.player.weapon = "shotgun";
+    s.player.ammo = 8;
+    s.player.shotgunAmmo = 8;
+    s.player.x = 0;
+    s.player.y = 0;
+    s.player.z = 0;
+    s.player.facing = 0;
+    s.player.action = "idle";
+    return s;
+  });
+
+  return (
+    <div className="relative w-screen h-screen bg-[#dde0e4] overflow-hidden select-none">
+      <GameCanvas sim={sim} />
+      <div className="hud-panel" style={{ position: "absolute", top: 16, left: 16 }}>
+        <TacticalHud sim={sim} />
+      </div>
+    </div>
+  );
+}
+
+

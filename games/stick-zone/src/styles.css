@@ -1,33 +1,35 @@
 /* Venus Client Semantic Design Tokens & Cyberpunk Tactical Styling */
 :root {
-  --color-background: #090c10;
-  --color-surface: #10151f;
-  --color-overlay: #171f2d;
-  --color-border: #263347;
-  --color-input: #334155;
-  --color-foreground: #f0f4f8;
-  --color-foreground-secondary: #94a3b8;
-  --color-foreground-tertiary: #94a3b8;
-  --color-primary: #06b6d4;
-  --color-primary-foreground: #090c10;
-  --color-success: #22c55e;
-  --color-success-foreground: #090c10;
-  --color-warning: #f59e0b;
-  --color-warning-foreground: #090c10;
-  --color-destructive: #ef4444;
+  --color-background: #dde0e4;
+  --color-surface: #f3f4f6;
+  --color-overlay: #f3f4f6;
+  --color-border: #151716;
+  --color-input: #eeece5;
+  --color-foreground: #151716;
+  --color-foreground-secondary: #494c46;
+  --color-foreground-tertiary: #64748b;
+  --color-primary: #151716;
+  --color-primary-foreground: #f3f4f6;
+  --color-success: #151716;
+  --color-success-foreground: #f3f4f6;
+  --color-warning: #d45538;
+  --color-warning-foreground: #f3f4f6;
+  --color-destructive: #ff2212;
   --color-destructive-foreground: #ffffff;
 
-  --bg-dark: var(--color-background);
-  --bg-surface: var(--color-surface);
-  --bg-card: var(--color-overlay);
-  --border-color: var(--color-border);
-  --text-main: var(--color-foreground);
-  --text-muted: var(--color-foreground-secondary);
-  --text-dim: var(--color-foreground-tertiary);
-  --exfil-green: var(--color-success);
-  --alert-crimson: var(--color-destructive);
-  --loot-amber: var(--color-warning);
-  --tactical-cyan: var(--color-primary);
+  --bg-dark: #dde0e4;
+  --bg-surface: #f3f4f6;
+  --bg-card: #f3f4f6;
+  --border-color: #151716;
+  --text-main: #151716;
+  --text-muted: #494c46;
+  --text-dim: #64748b;
+  --exfil-green: #151716;
+  --alert-crimson: #ff2212;
+  --loot-amber: #d45538;
+  --tactical-cyan: #151716;
+  --tactical-ink: #151716;
+  --tactical-paper: #f3f4f6;
 }
 
 * {
@@ -51,7 +53,7 @@ html, body, #root {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: radial-gradient(circle at center, #131a26 0%, #080c14 100%);
+  background: #dde0e4;
 }
 
 .canvas-container {
@@ -92,30 +94,33 @@ html, body, #root {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-family: monospace;
+  background: #f3f4f6;
+  color: #151716;
+  border: 2px solid #151716;
 }
 
 .badge-cyan {
-  background: rgba(6, 182, 212, 0.15);
-  color: var(--tactical-cyan);
-  border: 1px solid rgba(6, 182, 212, 0.4);
+  background: #f3f4f6;
+  color: #151716;
+  border: 2px solid #151716;
 }
 
 .badge-green {
-  background: rgba(34, 197, 94, 0.15);
-  color: var(--exfil-green);
-  border: 1px solid rgba(34, 197, 94, 0.4);
+  background: #f3f4f6;
+  color: #151716;
+  border: 2px solid #151716;
 }
 
 .badge-crimson {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--alert-crimson);
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: #f3f4f6;
+  color: #ff2212;
+  border: 2px solid #151716;
 }
 
 .badge-amber {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--loot-amber);
-  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: #f3f4f6;
+  color: #d45538;
+  border: 2px solid #151716;
 }
 
 /* Radar & Compass */
@@ -163,12 +168,11 @@ html, body, #root {
   width: 100%;
   max-width: 520px;
   padding: 28px;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(245, 158, 11, 0.6);
-  border-radius: 16px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px rgba(245, 158, 11, 0.2);
+  background: #f3f4f6;
+  border: 2px solid #151716;
+  border-radius: 4px;
+  color: #151716;
   display: flex;
-
   flex-direction: column;
   align-items: center;
   text-align: center;
@@ -180,10 +184,10 @@ html, body, #root {
   max-height: 90vh;
   overflow-y: auto;
   padding: 28px;
-  background: rgba(15, 23, 42, 0.96);
-  border: 1px solid rgba(34, 197, 94, 0.6);
-  border-radius: 16px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(34, 197, 94, 0.25);
+  background: #f3f4f6;
+  border: 2px solid #151716;
+  border-radius: 4px;
+  color: #151716;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -339,7 +343,7 @@ html, body, #root {
   display: none;
 }
 
-@media (pointer: coarse), (max-width: 1024px) {
+@media (pointer: coarse) and (max-width: 844px) {
   .mobile-touch-controls {
     display: block;
   }
@@ -505,12 +509,22 @@ html, body, #root {
     padding: 8px 12px !important;
   }
   .tactical-top-bar {
-    transform: scale(0.85);
-    transform-origin: top center;
+    /* unscaled for crisp mobile readability */
+    transform: none;
   }
   .compass-bar {
     display: none !important;
   }
+  .quick-loot-modal {
+    bottom: auto !important;
+    top: 106px !important;
+    right: 16px !important;
+    max-width: 260px !important;
+    min-width: 220px !important;
+    padding: 8px 12px !important;
+    gap: 6px !important;
+  }
+
   .tactical-bottom-bar {
     margin-bottom: 0 !important;
     flex-direction: row !important;
@@ -526,6 +540,16 @@ html, body, #root {
   .tactical-combat-log {
     display: none !important;
   }
+  .quick-loot-modal {
+    bottom: auto !important;
+    top: 106px !important;
+    right: 16px !important;
+    max-width: 260px !important;
+    min-width: 220px !important;
+    padding: 8px 12px !important;
+    gap: 6px !important;
+  }
+
   .tactical-vitals-column {
     min-width: 170px !important;
     flex: 1 1 170px !important;
@@ -570,4 +594,331 @@ html, body, #root {
 
 .spin {
   animation: spin 1s linear infinite;
+}
+
+/* Escape from Tarkov Tactical UI Additions */
+@keyframes bleedPulse {
+  0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.85); }
+  100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+}
+
+@keyframes hitmarkerAnim {
+  0% { transform: scale(1.5) rotate(45deg); opacity: 1; filter: drop-shadow(0 0 6px #ef4444); }
+  60% { transform: scale(1.2) rotate(45deg); opacity: 0.95; filter: drop-shadow(0 0 4px #ef4444); }
+  100% { transform: scale(1.0) rotate(45deg); opacity: 0; }
+}
+
+.bleed-alert-pulse {
+  animation: bleedPulse 1.2s infinite;
+}
+
+.hitmarker-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  margin-top: -22px;
+  margin-left: -22px;
+  pointer-events: none;
+  z-index: 9999;
+  filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.9));
+  animation: hitmarkerAnim 0.25s ease-out forwards;
+}
+
+.critical-health-vignette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  box-shadow: inset 0 0 80px rgba(220, 38, 38, 0.6);
+  z-index: 5;
+  animation: bleedPulse 1.5s infinite;
+}
+
+.tarkov-item-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.95);
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.rarity-legendary {
+  border: 1px solid #f59e0b;
+  color: #fef3c7;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+}
+
+.rarity-epic {
+  border: 1px solid #a855f7;
+  color: #f3e8ff;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+}
+
+.rarity-rare {
+  border: 1px solid #38bdf8;
+  color: #e0f2fe;
+}
+
+.rarity-common {
+  border: 1px solid #64748b;
+  color: #cbd5e1;
+}
+
+/* Landscape Advisory Banner */
+.landscape-advisory-banner {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 9999;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  pointer-events: auto;
+  max-width: 90vw;
+}
+
+@media (pointer: coarse) and (max-width: 844px) {
+  .landscape-advisory-banner {
+    display: flex;
+  }
+}
+
+/* Landscape Mode Responsive Rules (Mobile & Desktop Widescreen) */
+@media screen and (orientation: landscape) and (max-height: 600px) {
+  .hud-layer {
+    padding: 6px 14px !important;
+  }
+  .tactical-top-bar {
+    /* unscaled for crisp mobile readability */
+    transform: none;
+  }
+  .mobile-dpad {
+    bottom: 16px !important;
+    left: 20px !important;
+    width: 105px !important;
+    height: 105px !important;
+  }
+  .mobile-stick-thumb {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  .mobile-action-buttons {
+    bottom: 12px !important;
+    right: 16px !important;
+    grid-template-columns: repeat(4, 44px) !important;
+    gap: 6px !important;
+  }
+  .mobile-btn-fire {
+    grid-column: span 2 !important;
+    width: 100% !important;
+    height: 44px !important;
+    background: rgba(220, 38, 38, 0.75) !important;
+    border: 2px solid #ef4444 !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5) !important;
+  }
+  .mobile-btn {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 9px !important;
+  }
+  .mobile-btn.mobile-btn-fire {
+    grid-column: span 2 !important;
+    width: 100% !important;
+    height: 44px !important;
+    background: rgba(220, 38, 38, 0.75) !important;
+    border: 2px solid #ef4444 !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5) !important;
+  }
+  .mobile-btn-fire {
+    background: rgba(239, 68, 68, 0.5) !important;
+    border-color: #ef4444 !important;
+    font-weight: 900 !important;
+  }
+  .tactical-bottom-bar {
+    display: none !important;
+  }
+  .quick-loot-modal {
+    bottom: auto !important;
+    top: 106px !important;
+    right: 16px !important;
+    max-width: 260px !important;
+    min-width: 220px !important;
+    padding: 8px 12px !important;
+    gap: 6px !important;
+  }
+
+}
+
+.hud-panel {
+  background: #f3f4f6;
+  border: 2px solid #151716;
+  border-radius: 4px;
+  color: #151716;
+}
+
+/* ============================================================
+   FLASH ANIMATION & GRAPHIC NOVEL INKLINE KINETIC ENGINE
+   ============================================================ */
+.anime-speed-lines-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0.88;
+}
+
+.comic-callouts-container {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.comic-callout-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 20px;
+  background: #f3f4f6;
+  border: 2.5px solid #151716;
+  border-radius: 6px;
+  box-shadow: 4px 4px 0px #151716;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transform: skewX(-8deg);
+  animation: comicCalloutPop 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.comic-callout-card .main-text {
+  font-weight: 900;
+  font-style: italic;
+  font-size: 20px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #151716;
+  line-height: 1.1;
+}
+
+.comic-callout-card .sub-text {
+  font-size: 10px;
+  font-weight: 800;
+  font-family: monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #494c46;
+}
+
+.comic-callout-crit {
+  background: #ff2212;
+  border-color: #151716;
+  box-shadow: 5px 5px 0px #151716;
+}
+.comic-callout-crit .main-text {
+  color: #ffffff;
+  font-size: 24px;
+  text-shadow: 2px 2px 0px #151716;
+}
+.comic-callout-crit .sub-text {
+  color: #fee2e2;
+}
+
+.comic-callout-amber {
+  background: #d45538;
+  border-color: #151716;
+  box-shadow: 5px 5px 0px #151716;
+}
+.comic-callout-amber .main-text {
+  color: #ffffff;
+  font-size: 22px;
+}
+.comic-callout-amber .sub-text {
+  color: #fef3c7;
+}
+
+.comic-callout-green {
+  background: #151716;
+  border-color: #151716;
+  box-shadow: 4px 4px 0px #151716;
+}
+.comic-callout-green .main-text {
+  color: #22c55e;
+}
+.comic-callout-green .sub-text {
+  color: #86efac;
+}
+
+@keyframes comicCalloutPop {
+  0% {
+    opacity: 0;
+    transform: skewX(-8deg) scale(0.35) translateY(24px);
+  }
+  20% {
+    opacity: 1;
+    transform: skewX(-8deg) scale(1.18) translateY(-4px);
+  }
+  35% {
+    transform: skewX(-8deg) scale(1.0) translateY(0);
+  }
+  80% {
+    opacity: 1;
+    transform: skewX(-8deg) scale(1.0) translateY(-8px);
+  }
+  100% {
+    opacity: 0;
+    transform: skewX(-8deg) scale(0.92) translateY(-22px);
+  }
+}
+
+.tactical-ink-card {
+  background: #f3f4f6;
+  border: 2px solid #151716;
+  box-shadow: 3px 3px 0px #151716;
+  border-radius: 6px;
+  color: #151716;
+}
+
+.tactical-ink-btn {
+  background: #151716;
+  color: #f3f4f6;
+  border: 2px solid #151716;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.4);
+  font-weight: 800;
+  font-style: italic;
+  transform: skewX(-4deg);
+  cursor: pointer;
+  transition: transform 0.06s ease, box-shadow 0.06s ease;
+}
+
+.tactical-ink-btn:active {
+  transform: skewX(-4deg) translate(2px, 2px);
+  box-shadow: 0px 0px 0px transparent;
 }

@@ -1,7 +1,8 @@
 /**
  * @file audio.ts
- * Tactical Web Audio synthesizer for punchy gunshots, slides,
- * rolls, melee kicks, radar alerts, and exfil sirens without external audio files.
+ * Tactical Web Audio synthesizer for punchy gunshots, shotgun blasts,
+ * slides, rolls, melee kicks, scav radio squawks, hitmarkers, medpen injections,
+ * and exfil sirens without external audio files.
  */
 
 class SoundSystem {
@@ -26,7 +27,6 @@ class SoundSystem {
     if (!ctx) return;
 
     const t = ctx.currentTime;
-    // Fast noise burst
     const bufferSize = ctx.sampleRate * 0.12;
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
@@ -51,6 +51,188 @@ class SoundSystem {
     gain.connect(ctx.destination);
 
     noise.start(t);
+  }
+
+  /** Heavy Tarkov-style 12-gauge shotgun blast with low-end concussive thump */
+  public playShotgun(): void {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const t = ctx.currentTime;
+    // 1. Concussive Sub-bass Thump
+    const subOsc = ctx.createOscillator();
+    const subGain = ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(140, t);
+    subOsc.frequency.exponentialRampToValueAtTime(32, t + 0.28);
+    subGain.gain.setValueAtTime(0.7, t);
+    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+    subOsc.connect(subGain);
+    subGain.connect(ctx.destination);
+    subOsc.start(t);
+    subOsc.stop(t + 0.28);
+
+    // 2. High-energy Buckshot Noise Transient
+    const bufferSize = ctx.sampleRate * 0.22;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.045));
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2200, t);
+    filter.frequency.exponentialRampToValueAtTime(300, t + 0.22);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.65, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.22);
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start(t);
+  }
+
+  /** Sharp EFT metallic hitmarker ping */
+  public playHitmarker(isCrit = false): void {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    const freq = isCrit ? 2400 : 1800;
+    osc.frequency.setValueAtTime(freq, t);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.6, t + 0.06);
+
+    gain.gain.setValueAtTime(isCrit ? 0.35 : 0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.06);
+  }
+
+  /** Scav Radio Bark / Squawk Alert */
+  public playScavBark(): void {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const t = ctx.currentTime;
+    // Walkie-talkie chirp
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(800, t);
+    osc.frequency.setValueAtTime(1100, t + 0.05);
+    osc.frequency.setValueAtTime(650, t + 0.1);
+    gain.gain.setValueAtTime(0.18, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.2);
+  }
+
+  /** Pneumatic Medpen / IFAK Stim Injection Hiss */
+  public playHealInject(): void {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const t = ctx.currentTime;
+    // Pneumatic hiss
+    const bufferSize = ctx.sampleRate * 0.35;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * 0.3;
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(3200, t);
+    filter.frequency.linearRampToValueAtTime(1200, t + 0.35);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start(t);
+
+    // Healing chime
+    const tone = ctx.createOscillator();
+    const toneGain = ctx.createGain();
+    tone.type = 'sine';
+    tone.frequency.setValueAtTime(523.25, t + 0.1);
+    tone.frequency.setValueAtTime(659.25, t + 0.2);
+    toneGain.gain.setValueAtTime(0.12, t + 0.1);
+    toneGain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    tone.connect(toneGain);
+    toneGain.connect(ctx.destination);
+    tone.start(t + 0.1);
+    tone.stop(t + 0.4);
+  }
+
+  /** Tactical magazine lock and bolt rack */
+  public playReload(): void {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const t = ctx.currentTime;
+    // Mag eject click
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'triangle';
+    osc1.frequency.setValueAtTime(600, t);
+    gain1.gain.setValueAtTime(0.25, t);
+    gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(t);
+    osc1.stop(t + 0.08);
+
+    // Mag insert and bolt rack
+    setTimeout(() => {
+      const c = this.getContext();
+      if (!c) return;
+      const t2 = c.currentTime;
+      const osc2 = c.createOscillator();
+      const gain2 = c.createGain();
+      osc2.type = 'sawtooth';
+      osc2.frequency.setValueAtTime(950, t2);
+      osc2.frequency.setValueAtTime(450, t2 + 0.06);
+      gain2.gain.setValueAtTime(0.3, t2);
+      gain2.gain.exponentialRampToValueAtTime(0.001, t2 + 0.12);
+      osc2.connect(gain2);
+      gain2.connect(c.destination);
+      osc2.start(t2);
+      osc2.stop(t2 + 0.12);
+    }, 280);
+  }
+
+  public playHeartbeat(): void {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(65, t);
+    osc.frequency.exponentialRampToValueAtTime(35, t + 0.15);
+    gain.gain.setValueAtTime(0.4, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.15);
   }
 
   public playHitGrunt(): void {

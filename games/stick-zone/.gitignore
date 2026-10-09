@@ -6,4 +6,4 @@ src/sim/server-settlement.js
 
 public/run-inkline
 proofs/
-*.log
+*.log:memory*

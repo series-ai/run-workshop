@@ -1,3 +1,41 @@
+const FIELD_OBSTACLES = [
+  // Spoke Perimeter Boundary Walls (Perimeter: |x| = 80, z: -50 to +80)
+  { minX: -80.0, maxX: 80.0, minZ: 79.5, maxZ: 80.5 },
+  { minX: -80.5, maxX: -79.5, minZ: -50.0, maxZ: 80.0 },
+  { minX: 79.5, maxX: 80.5, minZ: -50.0, maxZ: 80.0 },
+  { minX: -80.0, maxX: -4.0, minZ: -50.5, maxZ: -49.5 },
+  { minX: 4.0, maxX: 80.0, minZ: -50.5, maxZ: -49.5 },
+
+  // FOB Staging Outpost (z: -85 to -50)
+  { minX: -8.0, maxX: 8.0, minZ: -73.6, maxZ: -72.4 },
+  { minX: -8.5, maxX: -7.5, minZ: -73.0, maxZ: -52.0 },
+  { minX: 7.5, maxX: 8.5, minZ: -73.0, maxZ: -52.0 },
+  { minX: -4.5, maxX: -0.6, minZ: -63.2, maxZ: -61.8 },
+  { minX: 0.6, maxX: 4.5, minZ: -63.2, maxZ: -61.8 },
+  { minX: -5.4, maxX: -3.8, minZ: -71.8, maxZ: -70.2 },
+  { minX: 3.8, maxX: 5.4, minZ: -71.8, maxZ: -70.2 },
+  { minX: -4.5, maxX: -3.1, minZ: -67.8, maxZ: -66.2 },
+  { minX: 3.1, maxX: 4.5, minZ: -67.8, maxZ: -66.2 },
+
+  // Spatial Airlock Flanking Warp Beacons at z = -52
+  { minX: -5.2, maxX: -3.8, minZ: -52.8, maxZ: -51.2 },
+  { minX: 3.8, maxX: 5.2, minZ: -52.8, maxZ: -51.2 },
+
+  // Emergency Bunker Exfil Bulkhead & Blast Doors at (-45, -45)
+  { minX: -49.0, maxX: -41.0, minZ: -48.5, maxZ: -46.5 },
+  { minX: -45.6, maxX: -44.4, minZ: -45.4, maxZ: -44.2 },
+
+  // Placed Loot Containers in Sector 7 Depot
+  { minX: -9.2, maxX: -6.8, minZ: -6.8, maxZ: -5.3 },
+  { minX: 19.4, maxX: 20.6, minZ: -15.6, maxZ: -14.4 },
+  { minX: -16.8, maxX: -15.2, minZ: 13.4, maxZ: 14.6 },
+  { minX: 29.3, maxX: 30.7, minZ: 21.3, maxZ: 22.7 },
+  { minX: -35.8, maxX: -34.2, minZ: -25.8, maxZ: -24.2 },
+
+  // Exfil Zone Warp Beacons (45, 45)
+  { minX: 39.0, maxX: 40.6, minZ: 44.2, maxZ: 45.8 },
+  { minX: 49.4, maxX: 51.0, minZ: 44.2, maxZ: 45.8 },
+];
 /**
  * @file server.mjs
  * Production HTTP and WebSocket server for Stick Zone: Exfil.
@@ -10,7 +48,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer } from "ws";
-import { ServerSettlementAuthority, isValidRaidId, isValidOperativeId } from "../src/sim/server-settlement.js";
+import { ServerSettlementAuthority, isValidRaidId, isValidOperativeId, DEPOT_CRATE_LOCATIONS, isPositionInExfilZone } from "./server-settlement.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +59,11 @@ const PORT = parseInt(process.env.PORT || "5196", 10);
 
 export function checkContainerCollision(x, z, radius = 0.45) {
   for (const box of DEPOT_CONTAINERS) {
+    if (x + radius > box.minX && x - radius < box.maxX && z + radius > box.minZ && z - radius < box.maxZ) {
+      return true;
+    }
+  }
+  for (const box of FIELD_OBSTACLES) {
     if (x + radius > box.minX && x - radius < box.maxX && z + radius > box.minZ && z - radius < box.maxZ) {
       return true;
     }
@@ -84,6 +127,20 @@ const DEPOT_CONTAINERS = [
   { minX: -17.0, maxX: -13.0, minZ: 11.5, maxZ: 18.5 },
   { minX: 2.0, maxX: 8.0, minZ: 28.5, maxZ: 31.5 },
   { minX: -48.5, maxX: -41.5, minZ: 33.0, maxZ: 37.0 },
+  // Central Corridor Flanking Industrial Stacks
+  { minX: -8.3, maxX: -3.3, minZ: -28.5, maxZ: -21.5 },
+  { minX: 3.3, maxX: 8.3, minZ: -28.5, maxZ: -21.5 },
+  { minX: -12.0, maxX: -7.0, minZ: 1.5, maxZ: 8.5 },
+  { minX: 7.0, maxX: 12.0, minZ: 1.5, maxZ: 8.5 },
+  { minX: -12.0, maxX: -7.0, minZ: 31.5, maxZ: 38.5 },
+  { minX: 7.0, maxX: 12.0, minZ: 31.5, maxZ: 38.5 },
+  // Perimeter Flanking Heavy Stacks
+  { minX: -63.5, maxX: -56.5, minZ: -27.5, maxZ: -22.5 },
+  { minX: -63.5, maxX: -56.5, minZ: 2.5, maxZ: 7.5 },
+  { minX: -63.5, maxX: -56.5, minZ: 32.5, maxZ: 37.5 },
+  { minX: 56.5, maxX: 63.5, minZ: -27.5, maxZ: -22.5 },
+  { minX: 56.5, maxX: 63.5, minZ: 2.5, maxZ: 7.5 },
+  { minX: 56.5, maxX: 63.5, minZ: 32.5, maxZ: 37.5 },
 ];
 
 function segmentIntersectsAABB3D(x1, y1, z1, x2, y2, z2, minX, minY, minZ, maxX, maxY, maxZ) {
@@ -186,18 +243,123 @@ function getRaidOperativeAttackTimes(raidId, opId) {
 }
 
 const raidOperativeWeaponStates = new Map();
-function getRaidOperativeWeaponState(raidId, opId) {
+export function getRaidOperativeWeaponState(raidId, opId, settlement = null) {
   const opKey = `${raidId}:${opId}`;
   let wsState = raidOperativeWeaponStates.get(opKey);
   if (!wsState) {
-    wsState = { ammo: 30, maxAmmo: 30, isReloading: false, reloadEnd: 0 };
+    const s = settlement || serverSettlement;
+    const rRec = s && s.getRaidRecord ? s.getRaidRecord(raidId) : null;
+    const oRec = rRec?.operatives?.[opId];
+    const initialWeapon = oRec?.selectedWeapon === "shotgun" || oRec?.selectedWeapon === "rifle" ? oRec.selectedWeapon : "rifle";
+    const initialRifle = typeof oRec?.rifleAmmo === "number" ? oRec.rifleAmmo : 30;
+    const initialShotgun = typeof oRec?.shotgunAmmo === "number" ? oRec.shotgunAmmo : 8;
+    const initialAmmo = typeof oRec?.ammo === "number" ? oRec.ammo : (initialWeapon === "shotgun" ? initialShotgun : initialRifle);
+    wsState = {
+      selectedWeapon: initialWeapon,
+      rifleAmmo: initialRifle,
+      shotgunAmmo: initialShotgun,
+      ammo: initialAmmo,
+      maxAmmo: initialWeapon === "shotgun" ? 8 : 30,
+      isReloading: false,
+      reloadEnd: 0,
+      reloadingWeapon: null,
+    };
     raidOperativeWeaponStates.set(opKey, wsState);
   }
   return wsState;
 }
+export function findCommittedReceiptForOperative(settlement, raidId, operativeId) {
+  if (!settlement || !settlement.auditLog) return null;
+  const entries = typeof settlement.auditLog.values === "function"
+    ? Array.from(settlement.auditLog.values())
+    : Object.values(settlement.auditLog);
+  for (const entry of entries) {
+    if (!entry) continue;
+    const r = entry.receipt || (entry.receiptId ? entry : null);
+    if (!r) continue;
+    if (r.raidId === raidId) {
+      const op = entry.outcomePayload || settlement.auditPayloads?.get(r.receiptId);
+      if (op && op.extractedSquad === operativeId) {
+        return { receipt: r, outcomePayload: op };
+      }
+      if (r.transfers?.[0]?.toProfileId === operativeId) {
+        return {
+          receipt: r,
+          outcomePayload: op || {
+            raidId: r.raidId,
+            verifiedPrefixTick: r.throughTick,
+            cutoffTick: 54000,
+            isFinalClose: false,
+            cashBanked: r.transfers[0]?.quantity ? Number(String(r.transfers[0].quantity).replace(/^BE:/, '')) : 0,
+            extractedSquad: operativeId,
+            retainedSquads: r.participantResults?.map((p) => p.profileId).filter((id) => id !== operativeId) || [],
+          },
+        };
+      }
+      const participant = r.participantResults?.find((p) => p.profileId === operativeId);
+      if (participant && participant.activeRaidCleared === true) {
+        return {
+          receipt: r,
+          outcomePayload: op || {
+            raidId: r.raidId,
+            verifiedPrefixTick: r.throughTick,
+            cutoffTick: 54000,
+            isFinalClose: false,
+            cashBanked: 0,
+            extractedSquad: operativeId,
+            retainedSquads: r.participantResults?.map((p) => p.profileId).filter((id) => id !== operativeId) || [],
+          },
+        };
+      }
+    }
+  }
+  return null;
+}
+
+function applyAuthoritativeCrateGrantToRelay(settlement, raidId, claimantId, prevClaimant) {
+  const raidRec = settlement && settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
+  const claimantCustody = raidRec?.operatives?.[claimantId];
+
+  const wsState = getRaidOperativeWeaponState(raidId, claimantId, settlement);
+  if (claimantCustody && (claimantCustody.selectedWeapon === "shotgun" || claimantCustody.selectedWeapon === "rifle")) {
+    wsState.selectedWeapon = claimantCustody.selectedWeapon;
+  }
+  wsState.rifleAmmo = typeof claimantCustody?.rifleAmmo === "number" ? claimantCustody.rifleAmmo : 30;
+  wsState.shotgunAmmo = typeof claimantCustody?.shotgunAmmo === "number" ? claimantCustody.shotgunAmmo : 8;
+  wsState.ammo = wsState.selectedWeapon === "shotgun" ? wsState.shotgunAmmo : wsState.rifleAmmo;
+  wsState.maxAmmo = wsState.selectedWeapon === "shotgun" ? 8 : 30;
+  wsState.isReloading = false;
+  wsState.reloadingWeapon = null;
+  setAuthoritativeOperativeAmmo(settlement, raidId, claimantId, wsState.ammo);
+
+  if (prevClaimant && prevClaimant !== claimantId) {
+    const prevCustody = raidRec?.operatives?.[prevClaimant];
+    if (prevCustody) {
+      const prevWsState = getRaidOperativeWeaponState(raidId, prevClaimant, settlement);
+      if (prevCustody.selectedWeapon === "shotgun" || prevCustody.selectedWeapon === "rifle") {
+        prevWsState.selectedWeapon = prevCustody.selectedWeapon;
+      }
+      if (typeof prevCustody.rifleAmmo === "number") prevWsState.rifleAmmo = prevCustody.rifleAmmo;
+      if (typeof prevCustody.shotgunAmmo === "number") prevWsState.shotgunAmmo = prevCustody.shotgunAmmo;
+      prevWsState.ammo = prevWsState.selectedWeapon === "shotgun" ? prevWsState.shotgunAmmo : prevWsState.rifleAmmo;
+      prevWsState.maxAmmo = prevWsState.selectedWeapon === "shotgun" ? 8 : 30;
+      setAuthoritativeOperativeAmmo(settlement, raidId, prevClaimant, prevWsState.ammo);
+    }
+  }
+}
+
+const activeShotgunShots = new Map(); // `${raidId}:${opId}:${shotId}` -> { createdAt, originX, originZ, facing, targetsHit: Set<string> }
+function cleanExpiredShotgunShots() {
+  if (activeShotgunShots.size > 500) {
+    const cutoff = Date.now() - 5000;
+    for (const [k, s] of activeShotgunShots.entries()) {
+      if (s.createdAt < cutoff) activeShotgunShots.delete(k);
+    }
+  }
+}
 
 function setAuthoritativeOperativeAmmo(settlement, raidId, opId, newAmmo, clearReload = false) {
-  const wsState = getRaidOperativeWeaponState(raidId, opId);
+  const wsState = getRaidOperativeWeaponState(raidId, opId, settlement);
   const prevAmmo = wsState.ammo;
   const prevReloading = wsState.isReloading;
   wsState.ammo = Math.max(0, Math.min(30, Math.floor(newAmmo)));
@@ -206,7 +368,14 @@ function setAuthoritativeOperativeAmmo(settlement, raidId, opId, newAmmo, clearR
   }
   if (typeof settlement?.recordOperativeAmmo === "function") {
     try {
-      settlement.recordOperativeAmmo(raidId, opId, wsState.ammo);
+      settlement.recordOperativeAmmo(
+        raidId,
+        opId,
+        wsState.ammo,
+        wsState.rifleAmmo,
+        wsState.shotgunAmmo,
+        wsState.selectedWeapon
+      );
     } catch (err) {
       wsState.ammo = prevAmmo;
       wsState.isReloading = prevReloading;
@@ -225,24 +394,37 @@ function restoreWeaponStateFromCustody(settlement, raidId, opId) {
     if (typeof settlement?.getRaidRecord !== "function") return;
     const rRec = settlement.getRaidRecord(raidId);
     const oRec = rRec?.operatives?.[opId];
-    const custodyAmmo = oRec?.ammo;
+    if (!oRec) return;
+    const wsState = getRaidOperativeWeaponState(raidId, opId, settlement);
+    if (oRec.selectedWeapon === "rifle" || oRec.selectedWeapon === "shotgun") {
+      wsState.selectedWeapon = oRec.selectedWeapon;
+    }
+    if (typeof oRec.rifleAmmo === "number" && Number.isFinite(oRec.rifleAmmo)) {
+      wsState.rifleAmmo = Math.max(0, Math.min(30, Math.floor(oRec.rifleAmmo)));
+    }
+    if (typeof oRec.shotgunAmmo === "number" && Number.isFinite(oRec.shotgunAmmo)) {
+      wsState.shotgunAmmo = Math.max(0, Math.min(8, Math.floor(oRec.shotgunAmmo)));
+    }
+    const custodyAmmo = oRec.ammo;
     if (typeof custodyAmmo === "number" && Number.isFinite(custodyAmmo) && custodyAmmo >= 0 && custodyAmmo <= 30) {
-      const wsState = getRaidOperativeWeaponState(raidId, opId);
       if (!wsState.isReloading) {
         wsState.ammo = Math.floor(custodyAmmo);
       }
-      if (wsState.isReloading && wsState.reloadEnd <= Date.now()) {
-        wsState.isReloading = false;
-      }
+    } else {
+      wsState.ammo = wsState.selectedWeapon === "shotgun" ? wsState.shotgunAmmo : wsState.rifleAmmo;
+    }
+    if (wsState.isReloading && wsState.reloadEnd <= Date.now()) {
+      wsState.isReloading = false;
     }
   } catch {}
 }
 
-const CRATE_LOCATIONS = {
-  crate_01: { x: -8, z: -6 },
-  crate_02: { x: 20, z: -15 },
-  crate_03: { x: -18, z: 22 },
-};
+export function resetServerModuleState() {
+  raidOperativeSeenEvents.clear();
+  raidOperativeAttackTimes.clear();
+  raidOperativeWeaponStates.clear();
+  activeShotgunShots.clear();
+}
 
 export function createStickZoneServer(customSettlement, existingHttpServer) {
   const settlement = customSettlement || serverSettlement;
@@ -463,6 +645,115 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
       crates: settlement.getRaidCrates(activeRaidId),
       machines: getRaidMachines(activeRaidId),
     }));
+    return;
+  }
+
+  if ((url.pathname === "/api/settlement/active-raid" || url.pathname === "/api/settlement/redeploy") && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", () => {
+      try {
+        const data = JSON.parse(body || "{}");
+        const nextRaidId = data.raidId || ("raid_sector7_" + Date.now());
+        const opId = data.operativeId || "op_player";
+        if (!isValidRaidId(nextRaidId) || !isValidOperativeId(opId)) {
+          res.statusCode = 400;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: "Invalid raid or operative ID" }));
+          return;
+        }
+
+        // Authentication & Session Ownership Verification
+        const authCaller = getAuthenticatedCaller(req, settlement);
+        const rawBodyCaller = data.token ? settlement.resolveOperativeByToken(data.token) : null;
+        const caller = authCaller || (rawBodyCaller ? { callerId: rawBodyCaller.operativeId || rawBodyCaller.callerId, raidId: rawBodyCaller.raidId, isSystem: false } : null);
+        if (!caller) {
+          res.statusCode = 401;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: "Unauthorized: Operative credentials required for redeployment" }));
+          return;
+        }
+        if (caller.callerId !== opId) {
+          res.statusCode = 403;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: "Forbidden: Operative credentials do not match requested operative" }));
+          return;
+        }
+
+        const slotKey = `${nextRaidId}:${opId}`;
+        const hasActiveSocket = activeSlotSockets.has(slotKey) && activeSlotSockets.get(slotKey)?.readyState === 1;
+
+        // Repeat-safe raid creation / joining:
+        if (settlement.hasRaid(nextRaidId)) {
+          const targetRaid = settlement.getRaidRecord(nextRaidId);
+          if (targetRaid && targetRaid.status === "concluded") {
+            res.statusCode = 409;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: "Cannot redeploy into concluded raid" }));
+            return;
+          }
+          const targetOp = targetRaid?.operatives?.[opId];
+          if (targetOp && (targetOp.isExtracted || targetOp.isKia || targetOp.isAlive === false)) {
+            res.statusCode = 409;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: "Cannot redeploy into terminal operative" }));
+            return;
+          }
+          if (hasActiveSocket) {
+            res.statusCode = 409;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: "Operative slot already claimed by an active session in target raid" }));
+            return;
+          }
+          const isTargetSlotOwned = settlement.isSlotClaimed ? settlement.isSlotClaimed(nextRaidId, opId) : Boolean(settlement.getSessionToken(nextRaidId, opId));
+          if (isTargetSlotOwned) {
+            const targetToken = settlement.getSessionToken(nextRaidId, opId);
+            const canAccess = (caller.raidId === nextRaidId && caller.callerId === opId) || (data.token && data.token === targetToken);
+            if (!canAccess) {
+              res.statusCode = 409;
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ error: "Target operative slot already claimed by another session in target raid" }));
+              return;
+            }
+          }
+        } else {
+          if (typeof settlement.initRaid === "function") {
+            settlement.initRaid(nextRaidId, 50000, [opId, "op_alpha_1", "op_bravo_1"], opId);
+          }
+        }
+
+        let token = settlement.getSessionToken(nextRaidId, opId);
+        if (!token && typeof settlement.allocateSessionToken === "function") {
+          token = settlement.allocateSessionToken(nextRaidId, opId);
+        }
+
+        if (typeof settlement.claimSession === "function") {
+          settlement.claimSession(nextRaidId, opId, token);
+        } else if (typeof settlement.claimSlot === "function") {
+          settlement.claimSlot(nextRaidId, opId);
+        }
+
+        const targetRec = settlement.getRaidRecord ? settlement.getRaidRecord(nextRaidId) : null;
+        const finalOp = targetRec?.operatives?.[opId];
+        const resumeKey = finalOp?.resumeKey || `sz_resume_${nextRaidId}_${opId}`;
+        if (finalOp && !finalOp.resumeKey) {
+          finalOp.resumeKey = resumeKey;
+        }
+
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({
+          success: true,
+          raidId: nextRaidId,
+          operativeId: opId,
+          token,
+          resumeKey,
+        }));
+      } catch (err) {
+        res.statusCode = 500;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ error: (err && err.message) || String(err) }));
+      }
+    });
     return;
   }
 
@@ -763,14 +1054,15 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
             return;
           }
 
-          const distToLz = Math.hypot(observedPos.x - 45.0, observedPos.z - 45.0);
-          if (distToLz > 6.0) {
+          const hasKeycard = Boolean(oRec?.hasKeycard);
+          const inValidZone = isPositionInExfilZone(observedPos.x, observedPos.z, hasKeycard);
+          if (!inValidZone) {
             if (typeof settlement.recordExtractionHold === "function") {
               settlement.recordExtractionHold(targetRaidId, opId, 0, currentTickNum, { inZone: false });
             }
             res.statusCode = 400;
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ error: `Operative outside LZ on authoritative stream (${distToLz.toFixed(1)}m > 6.0m LZ radius)`, success: false }));
+            res.end(JSON.stringify({ error: `Operative outside extraction zone on authoritative stream`, success: false }));
             return;
           }
 
@@ -785,10 +1077,10 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           }
         }
 
+        const holdKeycard = Boolean(oRec?.hasKeycard);
         let inZone = false;
         if (typeof data.x === "number" && typeof data.z === "number" && Number.isFinite(data.x) && Number.isFinite(data.z)) {
-          const dist = Math.hypot(data.x - 45.0, data.z - 45.0);
-          inZone = dist <= 6.0;
+          inZone = isPositionInExfilZone(data.x, data.z, holdKeycard);
         } else if (caller.isSystem) {
           inZone = !!data.inZone;
         } else {
@@ -819,9 +1111,9 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           const exfilPkt = JSON.stringify({
             eventId: `evt_srv_exfil_${Date.now()}`,
             type: "exfil_success",
-            senderId: extractingId,
-            senderName: extractingId === "op_bravo_1" ? "INFILTRATOR PHANTOM-1" : "OPERATIVE ALPHA",
-            squad: extractingId === "op_bravo_1" ? "SQUAD BRAVO" : "SQUAD ALPHA",
+            senderId: opId,
+            senderName: opId === "op_bravo_1" ? "INFILTRATOR PHANTOM-1" : "OPERATIVE ALPHA",
+            squad: opId === "op_bravo_1" ? "SQUAD BRAVO" : "SQUAD ALPHA",
             raidId: targetRaidId,
             timestamp: Date.now(),
             data: { receipt: result.receipt },
@@ -1041,7 +1333,7 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
           return;
         }
         if (!caller.isSystem) {
-          const cratePos = CRATE_LOCATIONS[data.crateId];
+          const cratePos = DEPOT_CRATE_LOCATIONS[data.crateId];
           if (cratePos) {
             const activeWs = activeSlotSockets.get(`${targetRaidId}:${claimantId}`);
             const rRec = settlement.getRaidRecord ? settlement.getRaidRecord(targetRaidId) : null;
@@ -1090,20 +1382,13 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
         );
         const isNewClaim = ok && !isDuplicate && !settlement.lastClaimIsDuplicate;
         if (isNewClaim) {
-          const wsState = getRaidOperativeWeaponState(raidId, claimantId);
-          wsState.ammo = 30;
-          wsState.isReloading = false;
-          if (prevClaimant && prevClaimant !== claimantId) {
-            const updatedRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
-            const prevCustody = updatedRec?.operatives?.[prevClaimant];
-            if (prevCustody && typeof prevCustody.ammo === "number") {
-              const prevWsState = getRaidOperativeWeaponState(raidId, prevClaimant);
-              prevWsState.ammo = prevCustody.ammo;
-            }
-          }
+          applyAuthoritativeCrateGrantToRelay(settlement, raidId, claimantId, prevClaimant);
         }
+        const targetRaidRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
+        const targetOpRec = targetRaidRec?.operatives?.[claimantId];
+        const stimsRemaining = typeof targetOpRec?.stimsRemaining === "number" ? targetOpRec.stimsRemaining : 2;
         res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ success: ok, isNewClaim }));
+        res.end(JSON.stringify({ success: ok, isNewClaim, stimsRemaining }));
       } catch (err) {
         res.statusCode = 400;
         res.setHeader("Content-Type", "application/json");
@@ -1149,7 +1434,22 @@ export function createStickZoneServer(customSettlement, existingHttpServer) {
   const server = existingHttpServer || http.createServer(requestHandler);
 
 // WebSocket Server for Multi-Browser Relay with Authenticated Binding & Raid Scope Isolation
-const wss = new WebSocketServer({ server, path: "/syncplay-ws", maxPayload: 65536 });
+let wss;
+if (existingHttpServer) {
+  wss = new WebSocketServer({ noServer: true, maxPayload: 65536 });
+  existingHttpServer.on("upgrade", (request, socket, head) => {
+    try {
+      const pathname = request.url ? new URL(request.url, "http://localhost").pathname : "";
+      if (pathname === "/syncplay-ws") {
+        wss.handleUpgrade(request, socket, head, (ws) => {
+          wss.emit("connection", ws, request);
+        });
+      }
+    } catch {}
+  });
+} else {
+  wss = new WebSocketServer({ server, path: "/syncplay-ws", maxPayload: 65536 });
+}
 const activeSlotSockets = new Map();
 const operativeMovementStates = new Map(); // `${raidId}:${opId}` -> persistent movement state across sessions
 const SERVER_MAX_MOVEMENT_SPEED = 12.0; // 12 m/s maximum sprint/roll speed (matches ws relay authority)
@@ -1214,14 +1514,17 @@ wss.on("connection", (ws, req) => {
       if (resolved) {
         const rRaid = settlement.getRaidRecord ? settlement.getRaidRecord(resolved.raidId) : null;
         const rOp = rRaid?.operatives?.[resolved.operativeId];
+        const recoveryReceipt = findCommittedReceiptForOperative(settlement, resolved.raidId, resolved.operativeId);
         if (rRaid && (rRaid.status === "concluded" || rOp?.isExtracted || rOp?.isKia || rOp?.isAlive === false)) {
-          try { ws.close(4003, "Operative lifecycle concluded"); } catch {}
-          return;
+          if (!recoveryReceipt) {
+            try { ws.close(4003, "Operative lifecycle concluded"); } catch {}
+            return;
+          }
         }
         if (typeof settlement.isIngressClosed === "function" && settlement.isIngressClosed(resolved.raidId)) {
           const slotKey = `${resolved.raidId}:${resolved.operativeId}`;
           const isSlotActive = (settlement.claimedSessions && settlement.claimedSessions.has(slotKey)) || activeSlotSockets.has(slotKey);
-          if (!isSlotActive) {
+          if (!isSlotActive && !recoveryReceipt) {
             try { ws.close(4003, "Raid admission cutoff exceeded (8-minute limit)"); } catch {}
             return;
           }
@@ -1280,13 +1583,20 @@ wss.on("connection", (ws, req) => {
         const curTick = settlement.getCurrentRaidTick ? settlement.getCurrentRaidTick(resolved.raidId) : undefined;
         const activeRaidRec = settlement.getRaidRecord ? settlement.getRaidRecord(resolved.raidId) : null;
         const authOp = activeRaidRec?.operatives?.[resolved.operativeId];
+        const authWsState = getRaidOperativeWeaponState(resolved.raidId, resolved.operativeId, settlement);
         try {
           ws.send(JSON.stringify({
             type: "auth_success",
             operativeId: resolved.operativeId,
             raidId: resolved.raidId,
             currentRaidTick: curTick,
-            ammo: getRaidOperativeWeaponState(resolved.raidId, resolved.operativeId).ammo,
+            admitted: true,
+            data: { admitted: true, operativeId: resolved.operativeId, raidId: resolved.raidId },
+            weapon: authWsState.selectedWeapon || "rifle",
+            selectedWeapon: authWsState.selectedWeapon || "rifle",
+            rifleAmmo: authWsState.rifleAmmo,
+            shotgunAmmo: authWsState.shotgunAmmo,
+            ammo: authWsState.ammo,
             machineRosterRevision: (activeRaidRec && typeof activeRaidRec.machineRosterRevision === "number") ? activeRaidRec.machineRosterRevision : raidRosterRevisions.get(resolved.raidId) || 0,
             machines: getRaidMachines(resolved.raidId),
             crates: activeRaidRec?.crates || {},
@@ -1301,6 +1611,20 @@ wss.on("connection", (ws, req) => {
             extractedAtTick: authOp?.extractedAtTick || 0,
           }));
         } catch {}
+        if (recoveryReceipt) {
+          try {
+            ws.send(JSON.stringify({
+              type: "settlement_committed",
+              senderId: "server",
+              serverAuthoritative: true,
+              recovery: true,
+              data: {
+                receipt: recoveryReceipt.receipt,
+                outcomePayload: recoveryReceipt.outcomePayload,
+              },
+            }));
+          } catch {}
+        }
       }
     }
   } catch {}
@@ -1311,7 +1635,7 @@ wss.on("connection", (ws, req) => {
     }
   }, 3000);
 
-  ws.on("message", (message) => {
+  ws.on("message", async (message) => {
     ws.lastActivity = Date.now();
     // Tx safety latch: any stale suppression from an aborted prior handler is cleared
     // at message entry (a leaked latch must never disable persistence).
@@ -1348,14 +1672,17 @@ wss.on("connection", (ws, req) => {
           if (resolved) {
             const rRaid = settlement.getRaidRecord ? settlement.getRaidRecord(resolved.raidId) : null;
             const rOp = rRaid?.operatives?.[resolved.operativeId];
+            const recoveryReceipt = findCommittedReceiptForOperative(settlement, resolved.raidId, resolved.operativeId);
             if (rRaid && (rRaid.status === "concluded" || rOp?.isExtracted || rOp?.isKia || rOp?.isAlive === false)) {
-              try { ws.close(4003, "Operative lifecycle concluded"); } catch {}
-              return;
+              if (!recoveryReceipt) {
+                try { ws.close(4003, "Operative lifecycle concluded"); } catch {}
+                return;
+              }
             }
             if (typeof settlement.isIngressClosed === "function" && settlement.isIngressClosed(resolved.raidId)) {
               const slotKey = `${resolved.raidId}:${resolved.operativeId}`;
               const isSlotActive = (settlement.claimedSessions && settlement.claimedSessions.has(slotKey)) || activeSlotSockets.has(slotKey);
-              if (!isSlotActive) {
+              if (!isSlotActive && !recoveryReceipt) {
                 try { ws.close(4003, "Raid admission cutoff exceeded (8-minute limit)"); } catch {}
                 return;
               }
@@ -1411,10 +1738,52 @@ wss.on("connection", (ws, req) => {
             }
             activeSlotSockets.set(slotKey, ws);
             const curTick = settlement.getCurrentRaidTick ? settlement.getCurrentRaidTick(resolved.raidId) : undefined;
+            const authWsState = getRaidOperativeWeaponState(resolved.raidId, resolved.operativeId, settlement);
             (() => {
-        const __authRec = settlement.getRaidRecord ? settlement.getRaidRecord(resolved.raidId) : null;
-        ws.send(JSON.stringify({ type: "auth_success", operativeId: resolved.operativeId, raidId: resolved.raidId, currentRaidTick: curTick, serverTime: Date.now(), health: opMoveState.health, armor: opMoveState.armor, isAlive: opMoveState.isAlive, ammo: getRaidOperativeWeaponState(resolved.raidId, resolved.operativeId).ammo, machineRosterRevision: (__authRec && typeof __authRec.machineRosterRevision === "number") ? __authRec.machineRosterRevision : raidRosterRevisions.get(resolved.raidId) || 0, machines: getRaidMachines(resolved.raidId), lastAcceptedPosition: { x: opMoveState.x, z: opMoveState.z } }));
-      })();
+              const __authRec = settlement.getRaidRecord ? settlement.getRaidRecord(resolved.raidId) : null;
+              const authOp = __authRec?.operatives?.[resolved.operativeId];
+              try {
+                ws.send(JSON.stringify({
+                  type: "auth_success",
+                  operativeId: resolved.operativeId,
+                  raidId: resolved.raidId,
+                  currentRaidTick: curTick,
+                  admitted: true,
+                  data: { admitted: true, operativeId: resolved.operativeId, raidId: resolved.raidId },
+                  weapon: authWsState.selectedWeapon || "rifle",
+                  selectedWeapon: authWsState.selectedWeapon || "rifle",
+                  rifleAmmo: authWsState.rifleAmmo,
+                  shotgunAmmo: authWsState.shotgunAmmo,
+                  ammo: authWsState.ammo,
+                  serverTime: Date.now(),
+                  health: opMoveState.health,
+                  armor: opMoveState.armor,
+                  isAlive: opMoveState.isAlive,
+                  machineRosterRevision: (__authRec && typeof __authRec.machineRosterRevision === "number") ? __authRec.machineRosterRevision : raidRosterRevisions.get(resolved.raidId) || 0,
+                  machines: getRaidMachines(resolved.raidId),
+                  crates: __authRec?.crates || {},
+                  lastAcceptedPosition: { x: opMoveState.x, z: opMoveState.z },
+                  holdCompleted: !!authOp?.holdCompleted,
+                  holdCompletedAtTick: authOp?.holdCompletedAtTick || 0,
+                  isExtracted: !!authOp?.isExtracted,
+                  extractedAtTick: authOp?.extractedAtTick || 0,
+                }));
+              } catch {}
+              if (recoveryReceipt) {
+                try {
+                  ws.send(JSON.stringify({
+                    type: "settlement_committed",
+                    senderId: "server",
+                    serverAuthoritative: true,
+                    recovery: true,
+                    data: {
+                      receipt: recoveryReceipt.receipt,
+                      outcomePayload: recoveryReceipt.outcomePayload,
+                    },
+                  }));
+                } catch {}
+              }
+            })();
             return;
           }
         }
@@ -1423,16 +1792,22 @@ wss.on("connection", (ws, req) => {
       }
 
       // Revalidate that session token has not been revoked by raid reset, raid conclusion, or operative extraction/KIA
-      const isExfilNotice = packet.type === "exfil_success";
+      const isExfilNotice = packet.type === "exfil_success" || packet.type === "settlement_commit";
+      const isRecovery = !!findCommittedReceiptForOperative(settlement, ws.raidId, ws.operativeId);
       const callerRaid = ws.raidId && typeof settlement.getRaidRecord === "function" ? settlement.getRaidRecord(ws.raidId) : null;
       const callerOp = callerRaid?.operatives?.[ws.operativeId];
-      if (!isExfilNotice) {
-        if (
-          (callerRaid && callerRaid.status === "concluded") ||
-          (callerOp && (callerOp.isExtracted || callerOp.isKia || callerOp.isAlive === false)) ||
-          (ws.authToken && !settlement.resolveOperativeByToken(ws.authToken))
-        ) {
-          ws.close(4003, "Session revoked or operative concluded");
+
+      const isTerminalOrConcluded = (callerRaid && callerRaid.status === "concluded") ||
+        (callerOp && (callerOp.isExtracted || callerOp.isKia || callerOp.isAlive === false)) ||
+        (ws.authToken && !settlement.resolveOperativeByToken(ws.authToken));
+
+      if (isTerminalOrConcluded) {
+        if (!isExfilNotice) {
+          if (!isRecovery) {
+            ws.close(4003, "Session revoked or operative concluded");
+          }
+          // STRICT TERMINAL CUSTODY: Extracted/KIA operatives and concluded raids are strictly
+          // restricted to receipt recovery and settlement retries. ZERO combat, movement, or state authority!
           return;
         }
       }
@@ -1442,7 +1817,7 @@ wss.on("connection", (ws, req) => {
       }
 
       // CRITICAL: Prevent malicious client packet relay
-      const FORBIDDEN_CLIENT_PACKETS = new Set(["auth", "auth_success", "server_init", "server_handshake", "state_correction", "hit_confirmed"]);
+      const FORBIDDEN_CLIENT_PACKETS = new Set(["auth", "auth_success", "server_init", "server_handshake", "state_correction", "hit_confirmed", "settlement_committed", "settlement_rejected", "settlement_error"]);
       if (FORBIDDEN_CLIENT_PACKETS.has(packet.type)) return;
 
       if (ws.authenticated && ws.raidId && ws.operativeId) {
@@ -1454,6 +1829,111 @@ wss.on("connection", (ws, req) => {
 
       packet.senderId = ws.operativeId;
       packet.raidId = ws.raidId;
+
+      if (packet.type === "hold_tick") {
+        const callerRaid = ws.raidId && typeof settlement.getRaidRecord === "function" ? settlement.getRaidRecord(ws.raidId) : null;
+        const callerOp = callerRaid?.operatives?.[ws.operativeId];
+        if (!callerOp || callerOp.isExtracted || callerOp.isKia || callerOp.isAlive === false || callerRaid?.status === "concluded") {
+          return;
+        }
+
+        const slotKey = `${ws.raidId}:${ws.operativeId}`;
+        const activeMove = operativeMovementStates.get(slotKey) || ws.lastRelayedPos;
+        const opX = (activeMove && typeof activeMove.x === "number") ? activeMove.x : callerOp.lastObservedX;
+        const opZ = (activeMove && typeof activeMove.z === "number") ? activeMove.z : callerOp.lastObservedZ;
+        const hasKeycard = Boolean(callerOp.hasKeycard);
+        const inZone = (typeof opX === "number" && typeof opZ === "number") ? isPositionInExfilZone(opX, opZ, hasKeycard) : false;
+
+        const holdTicks = typeof packet.data?.holdTicks === "number" ? packet.data.holdTicks : 0;
+        const currentTick = typeof packet.data?.currentTick === "number" ? packet.data.currentTick : (settlement.getCurrentRaidTick ? settlement.getCurrentRaidTick(ws.raidId) : 0);
+        const zoneId = (typeof opX === "number" && typeof opZ === "number" && Math.hypot(opX - (-45.0), opZ - (-45.0)) <= 6.0 && hasKeycard) ? "bunker" : "lz";
+
+        let holdResult = null;
+        if (typeof settlement.recordExtractionHold === "function") {
+          try {
+            holdResult = settlement.recordExtractionHold(
+              ws.raidId,
+              ws.operativeId,
+              holdTicks,
+              currentTick,
+              {
+                inZone,
+                zoneId,
+                hasKeycard,
+                isAlive: !callerOp.isKia && callerOp.isAlive !== false,
+                x: opX,
+                z: opZ,
+              }
+            );
+          } catch (err) {
+            console.error("Error recording extraction hold from WS:", err);
+          }
+        }
+
+        try {
+          ws.send(JSON.stringify({
+            type: "hold_tick_ack",
+            eventId: packet.eventId,
+            senderId: "server",
+            serverAuthoritative: true,
+            raidId: ws.raidId,
+            operativeId: ws.operativeId,
+            data: {
+              operativeId: ws.operativeId,
+              holdTicks: holdResult?.currentHoldTicks ?? holdTicks,
+              holdCompleted: Boolean(holdResult?.holdCompleted || callerOp.holdCompleted),
+              holdCompletedAtTick: holdResult?.holdCompletedAtTick ?? callerOp.holdCompletedAtTick ?? 0,
+              inZone,
+              hasKeycard,
+            },
+          }));
+        } catch {}
+        return;
+      }
+
+      if (packet.type === "settlement_commit") {
+        try {
+          const extractingId = ws.operativeId || packet.senderId || packet.data?.extractingId || packet.data?.playerId;
+          const targetRaidId = ws.raidId || packet.raidId || settlement.getActiveRaidId();
+          const rRaid = typeof settlement.getRaidRecord === "function" ? settlement.getRaidRecord(targetRaidId) : null;
+          const rOp = rRaid?.operatives?.[extractingId];
+
+          if (rOp && (rOp.isKia || rOp.isAlive === false || rOp.health <= 0)) {
+            ws.send(JSON.stringify({
+              type: "settlement_rejected",
+              eventId: packet.eventId,
+              error: `Cannot commit settlement: Operative ${extractingId} is K.I.A.`,
+            }));
+            return;
+          }
+
+          const result = await settlement.commitSettlement({
+            raidId: targetRaidId,
+            extractingId,
+            snapshotTick: packet.data?.tick,
+            snapshotCash: packet.data?.cash,
+            exfilSubmitted: packet.data?.exfilSubmitted === true,
+          });
+
+          ws.send(JSON.stringify({
+            type: "settlement_committed",
+            eventId: packet.eventId,
+            senderId: "server",
+            serverAuthoritative: true,
+            recovery: false,
+            data: result,
+          }));
+        } catch (err) {
+          ws.send(JSON.stringify({
+            type: "settlement_rejected",
+            eventId: packet.eventId,
+            senderId: "server",
+            serverAuthoritative: true,
+            error: (err && err.message) || String(err),
+          }));
+        }
+        return;
+      }
 
       if (packet.type === "state" && packet.data) {
         // TRANSACTION OWNER (packet-handler scope): snapshots + latch live here so the
@@ -1577,23 +2057,84 @@ wss.on("connection", (ws, req) => {
           moveState.budget -= dist;
           moveState.x = px;
           moveState.z = pz;
+
+
           moveState.packetTimestamp = packet.timestamp;
           moveState.timestamp = packet.timestamp || Date.now();
+          // Authoritative server custody for stims
+          const rRecMove = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
+          const oRecMove = rRecMove?.operatives?.[ws.operativeId];
+          const serverStims = typeof settlement.getOperativeStims === "function"
+            ? settlement.getOperativeStims(ws.raidId, ws.operativeId)
+            : (typeof oRecMove?.stimsRemaining === "number" ? oRecMove.stimsRemaining : 2);
+          moveState.stimsRemaining = serverStims;
+
+          // Compute damage amounts first
           let acceptedDamageAmount = 0;
+          let safeHp = moveState.health ?? 100;
+          const preAcceptedHp = moveState.health ?? 100;
           if (typeof packet.data.health === "number" && Number.isFinite(packet.data.health)) {
-            const safeHp = Math.max(0, Math.min(100, packet.data.health));
-            const preAcceptedHp = moveState.health ?? 100;
-            moveState.health = Math.min(preAcceptedHp, safeHp);
-            if (safeHp < preAcceptedHp) acceptedDamageAmount += preAcceptedHp - safeHp;
+            safeHp = Math.max(0, Math.min(100, packet.data.health));
+            if (safeHp < preAcceptedHp) {
+              moveState.health = safeHp;
+              acceptedDamageAmount += preAcceptedHp - safeHp;
+            }
           }
           if (typeof packet.data.armor === "number" && Number.isFinite(packet.data.armor)) {
             const safeArmor = Math.max(0, Math.min(100, packet.data.armor));
             const preAcceptedArmor = moveState.armor ?? 100;
             moveState.armor = Math.min(preAcceptedArmor, safeArmor);
-            // Armor absorbs incoming fire FIRST: an accepted armor decrease is combat
-            // damage even when health is unchanged — it must break extraction custody
-            // exactly like a health decrease.
             if (safeArmor < preAcceptedArmor) acceptedDamageAmount += preAcceptedArmor - safeArmor;
+          }
+
+          // Abrupt movement check (roll, slide, sprint, or position jump > 0.25m)
+          const hasAbruptMovement = packet.data.action === "roll" ||
+            packet.data.action === "slide" ||
+            moveState.action === "roll" ||
+            moveState.action === "slide" ||
+            packet.data.sprint === true ||
+            dist > 0.25;
+
+          // Stim treatment verification:
+          // 1. Process cancellation FIRST if active channel suffered trauma or abrupt movement
+          if (moveState.isUsingStim && (acceptedDamageAmount > 0 || hasAbruptMovement)) {
+            moveState.isUsingStim = false;
+            moveState.stimChannelStartedAt = 0;
+          }
+
+          // 2. Channel completion check (channel duration >= 950ms completed cleanly without trauma/movement)
+          if (moveState.isUsingStim && packet.data.isUsingStim !== true) {
+            const channelDuration = now - (moveState.stimChannelStartedAt || 0);
+            if (channelDuration >= 950 && moveState.stimsRemaining > 0 && acceptedDamageAmount === 0 && !hasAbruptMovement) {
+              const consumed = typeof settlement.consumeOperativeStim === "function"
+                ? settlement.consumeOperativeStim(ws.raidId, ws.operativeId)
+                : false;
+              if (consumed) {
+                moveState.stimsRemaining = typeof settlement.getOperativeStims === "function"
+                  ? settlement.getOperativeStims(ws.raidId, ws.operativeId)
+                  : Math.max(0, moveState.stimsRemaining - 1);
+                moveState.health = Math.min(100, (moveState.health ?? 100) + 45);
+              }
+            }
+            moveState.isUsingStim = false;
+            moveState.stimChannelStartedAt = 0;
+          } else if (packet.data.isUsingStim === true) {
+            // 3. Initiate channel if not already using stim
+            if (!moveState.isUsingStim) {
+              if (moveState.stimsRemaining > 0 && !hasAbruptMovement && acceptedDamageAmount === 0) {
+                moveState.isUsingStim = true;
+                moveState.stimChannelStartedAt = now;
+              }
+            }
+          }
+
+          // 4. Validate client health increase against authoritative state
+          if (safeHp > preAcceptedHp) {
+            if (moveState.health > preAcceptedHp) {
+              moveState.health = Math.min(safeHp, moveState.health);
+            } else {
+              moveState.health = preAcceptedHp;
+            }
           }
           // An ACCEPTED health OR armor decrease is combat damage: authoritatively break
           // the operative's extraction hold custody server-side, so the hold cannot stay
@@ -1655,23 +2196,68 @@ wss.on("connection", (ws, req) => {
 
 
         // Weapon state is updated authoritatively ONLY after packet timestamp, bounds, and movement validation have passed!
-        if (typeof packet.data.ammo === "number" && Number.isFinite(packet.data.ammo)) {
-          const weaponState = getRaidOperativeWeaponState(ws.raidId, ws.operativeId);
-          const reportedAmmo = Math.max(0, Math.min(30, Math.floor(packet.data.ammo)));
-          const now = Date.now();
-          if (packet.data.action === "reload") {
-            if (!weaponState.isReloading) {
-              weaponState.isReloading = true;
-              weaponState.reloadEnd = now + 1200;
+        const weaponState = getRaidOperativeWeaponState(ws.raidId, ws.operativeId);
+        if (packet.data.weapon === "shotgun" || packet.data.weapon === "rifle") {
+          weaponState.selectedWeapon = packet.data.weapon;
+        }
+        const currentWeapon = weaponState.selectedWeapon || "rifle";
+
+        if (packet.data.action === "reload") {
+          if (!weaponState.isReloading) {
+            weaponState.isReloading = true;
+            weaponState.reloadingWeapon = currentWeapon;
+            weaponState.reloadEnd = now + 350;
+          }
+          const reloadedWeapon = weaponState.reloadingWeapon || currentWeapon;
+          if (reloadedWeapon === "shotgun") {
+            const reportedS = typeof packet.data.shotgunAmmo === "number" ? Math.floor(packet.data.shotgunAmmo) : (typeof packet.data.ammo === "number" ? Math.floor(packet.data.ammo) : 8);
+            weaponState.shotgunAmmo = Math.max(0, Math.min(8, Math.max(weaponState.shotgunAmmo, reportedS)));
+            if (typeof packet.data.rifleAmmo === "number" && Number.isFinite(packet.data.rifleAmmo)) {
+              const rAmmo = Math.max(0, Math.min(30, Math.floor(packet.data.rifleAmmo)));
+              if (rAmmo <= weaponState.rifleAmmo) weaponState.rifleAmmo = rAmmo;
             }
-          } else if (weaponState.isReloading && now >= weaponState.reloadEnd) {
-            setAuthoritativeOperativeAmmo(settlement, ws.raidId, ws.operativeId, 30, true);
-          } else if (!weaponState.isReloading) {
-            if (reportedAmmo <= weaponState.ammo) {
-              setAuthoritativeOperativeAmmo(settlement, ws.raidId, ws.operativeId, reportedAmmo);
+          } else {
+            const reportedR = typeof packet.data.rifleAmmo === "number" ? Math.floor(packet.data.rifleAmmo) : (typeof packet.data.ammo === "number" ? Math.floor(packet.data.ammo) : 30);
+            weaponState.rifleAmmo = Math.max(0, Math.min(30, Math.max(weaponState.rifleAmmo, reportedR)));
+            if (typeof packet.data.shotgunAmmo === "number" && Number.isFinite(packet.data.shotgunAmmo)) {
+              const sAmmo = Math.max(0, Math.min(8, Math.floor(packet.data.shotgunAmmo)));
+              if (sAmmo <= weaponState.shotgunAmmo) weaponState.shotgunAmmo = sAmmo;
             }
           }
+          weaponState.ammo = currentWeapon === "shotgun" ? weaponState.shotgunAmmo : weaponState.rifleAmmo;
+          setAuthoritativeOperativeAmmo(settlement, ws.raidId, ws.operativeId, weaponState.ammo);
+        } else {
+          if (weaponState.isReloading && now >= weaponState.reloadEnd) {
+            weaponState.isReloading = false;
+            weaponState.reloadingWeapon = null;
+          }
+          if (!weaponState.isReloading) {
+            if (typeof packet.data.rifleAmmo === "number" && Number.isFinite(packet.data.rifleAmmo)) {
+              const rAmmo = Math.max(0, Math.min(30, Math.floor(packet.data.rifleAmmo)));
+              if (rAmmo <= weaponState.rifleAmmo) {
+                weaponState.rifleAmmo = rAmmo;
+              }
+            }
+            if (typeof packet.data.shotgunAmmo === "number" && Number.isFinite(packet.data.shotgunAmmo)) {
+              const sAmmo = Math.max(0, Math.min(8, Math.floor(packet.data.shotgunAmmo)));
+              if (sAmmo <= weaponState.shotgunAmmo) {
+                weaponState.shotgunAmmo = sAmmo;
+              }
+            }
+            if (typeof packet.data.ammo === "number" && Number.isFinite(packet.data.ammo)) {
+              const reportedA = Math.max(0, Math.floor(packet.data.ammo));
+              if (currentWeapon === "shotgun" && reportedA <= weaponState.shotgunAmmo) {
+                weaponState.shotgunAmmo = reportedA;
+              } else if (currentWeapon === "rifle" && reportedA <= weaponState.rifleAmmo) {
+                weaponState.rifleAmmo = reportedA;
+              }
+            }
+            weaponState.ammo = currentWeapon === "shotgun" ? weaponState.shotgunAmmo : weaponState.rifleAmmo;
+            setAuthoritativeOperativeAmmo(settlement, ws.raidId, ws.operativeId, weaponState.ammo);
+          }
         }
+        weaponState.ammo = currentWeapon === "shotgun" ? weaponState.shotgunAmmo : weaponState.rifleAmmo;
+        weaponState.maxAmmo = currentWeapon === "shotgun" ? 8 : 30;
 
         // Authoritative life-state clamp for the relayed view
         packet.data.health = moveState.health;
@@ -1698,8 +2284,8 @@ wss.on("connection", (ws, req) => {
           if (moveState.health <= 0) oRec.isKia = true;
           delete oRec.pendingRevocationSave; // resolved within this commit
 
-          const distToLz = Math.hypot(px - 45.0, pz - 45.0);
-          if (distToLz > 6.0) {
+          const inValidExfil = isPositionInExfilZone(px, pz, Boolean(oRec?.hasKeycard));
+          if (!inValidExfil) {
             if (typeof settlement.resetOperativeHoldAttempt === "function") {
               settlement.resetOperativeHoldAttempt(ws.raidId, ws.operativeId);
             } else {
@@ -1757,9 +2343,129 @@ wss.on("connection", (ws, req) => {
         packet.senderName = ws.operativeId === "op_bravo_1" ? "INFILTRATOR PHANTOM-1" : "OPERATIVE ALPHA";
       }
 
+        const AI_ROSTER = new Map([
+          ["scav_boss_warlord", { id: "scav_boss_warlord", name: "SECTOR WARLORD BOSS", type: "boss", health: 100, startingHealth: 100, maxHealth: 100, armor: 100, startingArmor: 100, maxArmor: 100, cash: 6500, ammo: 30, maxAmmo: 30, weapon: "rifle", hasKeycard: true, dropsKeycard: true, originX: 0, originZ: 42, speed: 0.005, ampX: 2.0, ampZ: 1.5 }],
+          ["scav_runner_01", { id: "scav_runner_01", name: "SCAV RUNNER // RECON", type: "scav", health: 80, startingHealth: 80, maxHealth: 80, armor: 40, startingArmor: 40, maxArmor: 40, cash: 1800, ammo: 30, maxAmmo: 30, weapon: "rifle", hasKeycard: false, dropsKeycard: false, originX: -25, originZ: 5, speed: 0.006, ampX: 3.0, ampZ: 2.0 }],
+          ["scav_enforcer_02", { id: "scav_enforcer_02", name: "SCAV ENFORCER // SHOTGUN", type: "scav", health: 100, startingHealth: 100, maxHealth: 100, armor: 60, startingArmor: 60, maxArmor: 60, cash: 2800, ammo: 6, maxAmmo: 6, weapon: "shotgun", hasKeycard: false, dropsKeycard: false, originX: 18, originZ: 28, speed: 0.004, ampX: 2.5, ampZ: 2.5 }],
+          ["op_rogue_ai", { id: "op_rogue_ai", name: "ROGUE EXFIL HUNTER", type: "scav", health: 100, startingHealth: 100, maxHealth: 100, armor: 75, startingArmor: 75, maxArmor: 75, cash: 2500, ammo: 30, maxAmmo: 30, weapon: "rifle", hasKeycard: false, dropsKeycard: false, originX: -45, originZ: 45, speed: 0.005, ampX: 3.5, ampZ: 2.0 }],
+        ]);
+        const BOSS_CONFIG = AI_ROSTER.get("scav_boss_warlord");
+
+        const computeAIPosition = (targetId, tick) => {
+          const cfg = AI_ROSTER.get(targetId) || AI_ROSTER.get("scav_boss_warlord");
+          const x = cfg.originX + Math.sin(tick * cfg.speed) * cfg.ampX;
+          const z = cfg.originZ + Math.cos(tick * cfg.speed) * cfg.ampZ;
+          const vx = Math.cos(tick * cfg.speed) * cfg.ampX * cfg.speed;
+          const vz = -Math.sin(tick * cfg.speed) * cfg.ampZ * cfg.speed;
+          const facing = Math.atan2(vx, vz);
+          return { x, z, facing };
+        };
+
+        const computeBossPosition = (tick) => computeAIPosition("scav_boss_warlord", tick);
+
         // Applies + persists a single validated operative strike (geometry, roll iframes,
         // armor absorption, K.I.A. custody, extraction-hold break, hit_confirmed ack,
         // knockback movement budget). Callers own dedup, damage bounds, cooldown, and ammo.
+        const getOrRegisterTargetState = (raidId, targetId) => {
+          const targetSlotKey = `${raidId}:${targetId}`;
+          let targetMove = operativeMovementStates.get(targetSlotKey);
+          let isNewRegistration = false;
+          const aiConfig = AI_ROSTER.get(targetId);
+          const isBoss = targetId === BOSS_CONFIG.id;
+          const rRec = settlement.getRaidRecord ? settlement.getRaidRecord(raidId) : null;
+          const existingCustody = rRec?.operatives?.[targetId];
+
+          if (existingCustody) {
+            // Reject strikes against terminal custody
+            if (existingCustody.isKia || existingCustody.isAlive === false) {
+              if (targetMove) {
+                targetMove.isAlive = false;
+                targetMove.isKia = true;
+                targetMove.health = 0;
+              }
+              return { targetMove: null, isNewRegistration: false, isTerminal: true };
+            }
+
+            // Restore movement state from custody if missing (e.g. after server restart)
+            if (!targetMove) {
+              const currentRaidTick = settlement.getCurrentRaidTick ? settlement.getCurrentRaidTick(raidId) : 0;
+              const pos = aiConfig
+                ? computeAIPosition(targetId, currentRaidTick)
+                : { x: existingCustody.lastObservedX ?? 0, z: existingCustody.lastObservedZ ?? 42 };
+              targetMove = {
+                x: pos.x,
+                z: pos.z,
+                health: typeof existingCustody.health === "number" ? existingCustody.health : (aiConfig?.health ?? 100),
+                armor: typeof existingCustody.armor === "number" ? existingCustody.armor : (aiConfig?.armor ?? 100),
+                isAlive: true,
+                isKia: false,
+                isInvulnerable: false,
+                action: "idle",
+                type: aiConfig?.type ?? (isBoss ? "boss" : "operative"),
+                dropsKeycard: isBoss ? true : Boolean(existingCustody.dropsKeycard || aiConfig?.dropsKeycard),
+                timestamp: existingCustody.lastObservedTimestamp || Date.now(),
+              };
+              operativeMovementStates.set(targetSlotKey, targetMove);
+            } else if (aiConfig) {
+              // Update authoritative AI position from deterministic raid tick
+              const currentRaidTick = settlement.getCurrentRaidTick ? settlement.getCurrentRaidTick(raidId) : 0;
+              const pos = computeAIPosition(targetId, currentRaidTick);
+              targetMove.x = pos.x;
+              targetMove.z = pos.z;
+              targetMove.timestamp = Date.now();
+            }
+            return { targetMove, isNewRegistration: false, isTerminal: false };
+          }
+
+          // Restrict target registration strictly to the server raid roster or known AI roster (Map.has check)
+          if (!AI_ROSTER.has(targetId)) {
+            return { targetMove: null, isNewRegistration: false, isTerminal: false };
+          }
+
+          // If no custody exists yet and target is in AI roster, initialize target record
+          if (!targetMove) {
+            const currentRaidTick = settlement.getCurrentRaidTick ? settlement.getCurrentRaidTick(raidId) : 0;
+            const pos = computeAIPosition(targetId, currentRaidTick);
+            targetMove = {
+              x: pos.x,
+              z: pos.z,
+              health: aiConfig.health,
+              armor: aiConfig.armor,
+              isAlive: true,
+              isKia: false,
+              isInvulnerable: false,
+              action: "idle",
+              type: aiConfig.type,
+              dropsKeycard: Boolean(aiConfig.dropsKeycard),
+              timestamp: Date.now(),
+            };
+            operativeMovementStates.set(targetSlotKey, targetMove);
+            if (rRec && rRec.operatives && !rRec.operatives[targetId]) {
+              rRec.operatives[targetId] = {
+                operativeId: targetId,
+                admitted: true,
+                isExtracted: false,
+                cratesLooted: [],
+                earnedCash: 0,
+                health: aiConfig.health,
+                armor: aiConfig.armor,
+                extractedAtTick: 0,
+                activeRaid: raidId,
+                isAlive: true,
+                isKia: false,
+                dropsKeycard: Boolean(aiConfig.dropsKeycard),
+                hasKeycard: Boolean(aiConfig.hasKeycard),
+                inventoryRevision: 1,
+                lastObservedX: pos.x,
+                lastObservedZ: pos.z,
+                lastObservedTimestamp: Date.now(),
+              };
+              isNewRegistration = true;
+            }
+          }
+          return { targetMove, isNewRegistration, isTerminal: false };
+        };
+
         const applyOperativeStrike = (ctx) => {
           const { ws, packet, targetId, kind, dmg, ackEventId } = ctx;
           const currentRaidTick = settlement.getCurrentRaidTick ? settlement.getCurrentRaidTick(ws.raidId) : 0;
@@ -1779,7 +2485,10 @@ wss.on("connection", (ws, req) => {
           let strikeOriginX = moveState.x;
           let strikeOriginZ = moveState.z;
 
-          if (hasAxField || hasAzField) {
+          if (kind === "shotgun" && ctx.shotRecord) {
+            strikeOriginX = ctx.shotRecord.originX;
+            strikeOriginZ = ctx.shotRecord.originZ;
+          } else if (hasAxField || hasAzField) {
             // Field presence check: if either field was passed, both must be present, valid finite numbers
             if (!hasAxField || !hasAzField) {
               return; // Malformed / incomplete coordinates: drop packet!
@@ -1802,16 +2511,39 @@ wss.on("connection", (ws, req) => {
 
           // 5. Validate target presence, life-state, and geometry
           const targetSlotKey = `${ws.raidId}:${targetId}`;
-          const targetMove = operativeMovementStates.get(targetSlotKey);
+          const targetLookup = getOrRegisterTargetState(ws.raidId, targetId);
+          if (targetLookup?.isTerminal) {
+            return; // Reject strike against terminal (K.I.A.) custody!
+          }
+          const targetMove = targetLookup?.targetMove || operativeMovementStates.get(targetSlotKey);
+          const isNewBossRegistration = Boolean(targetLookup?.isNewRegistration);
           if (!targetMove || !targetMove.isAlive) {
             return;
           }
           const distToTarget = Math.hypot(strikeOriginX - targetMove.x, strikeOriginZ - targetMove.z);
           const moveDistToTarget = Math.hypot(moveState.x - targetMove.x, moveState.z - targetMove.z);
           if (kind === "kick" && (distToTarget > 2.5 || moveDistToTarget > 2.5)) return; // Kick out of range
+          if (kind === "shotgun" && (distToTarget > 18.0 || moveDistToTarget > 18.0)) return; // Shotgun out of range
           if (kind === "rifle" && (distToTarget > 35.0 || moveDistToTarget > 35.0)) return; // Rifle out of range
           if (checkContainerRayObstruction(strikeOriginX, strikeOriginZ, targetMove.x, targetMove.z, 1.0, 1.0)) {
             return; // Strike line of sight obstructed by container
+          }
+
+          // Validate attacker facing for shotgun attacks (cone dot >= 0.6)
+          if (kind === "shotgun") {
+            const facing = (ctx.shotRecord && typeof ctx.shotRecord.facing === "number")
+              ? ctx.shotRecord.facing
+              : packet.data?.attackerFacing;
+            if (typeof facing === "number" && Number.isFinite(facing)) {
+              const dx = targetMove.x - strikeOriginX;
+              const dz = targetMove.z - strikeOriginZ;
+              const forwardX = Math.sin(facing);
+              const forwardZ = Math.cos(facing);
+              const dot = (dx * forwardX + dz * forwardZ) / Math.max(0.001, distToTarget);
+              if (dot < 0.6) {
+                return; // Outside shotgun spread cone
+              }
+            }
           }
 
           // Validate attacker facing for kick attacks (symmetrical: forward attack cone dot >= 0.2)
@@ -1860,6 +2592,7 @@ wss.on("connection", (ws, req) => {
           const preHitArmor = targetMove.armor ?? 100;
           const preHitAlive = targetMove.isAlive ?? true;
           const preHitKia = targetMove.isKia ?? false;
+          const preMoveSnapshot = JSON.parse(JSON.stringify(targetMove));
 
           const rRecTarget = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
           const oRecTarget = rRecTarget?.operatives?.[targetId];
@@ -1871,10 +2604,20 @@ wss.on("connection", (ws, req) => {
           targetMove.armor -= absorbed;
           const leftover = dmg - absorbed;
           targetMove.health = Math.max(0, targetMove.health - leftover);
+          // Server combat damage immediately cancels any active stim treatment channel!
+          targetMove.isUsingStim = false;
+          targetMove.stimChannelStartedAt = 0;
+
+          const callerOpStrike = rRecTarget?.operatives?.[ws.operativeId];
+          const preCallerKeycardStrike = callerOpStrike ? Boolean(callerOpStrike.hasKeycard) : false;
+          const isBossStrike = targetId === BOSS_CONFIG.id || targetMove.type === "boss" || targetMove.dropsKeycard;
           if (targetMove.health <= 0) {
             targetMove.health = 0;
             targetMove.isAlive = false;
             targetMove.isKia = true;
+            if (preHitAlive && isBossStrike && callerOpStrike) {
+              callerOpStrike.hasKeycard = true;
+            }
           }
 
           try {
@@ -1911,32 +2654,42 @@ wss.on("connection", (ws, req) => {
                 }
               }
             }
-            try {
-              ws.send(JSON.stringify({
-                eventId: `hit_confirm_${packet.eventId}`,
-                type: "hit_confirmed",
-                senderId: "server",
-                senderName: "CENTRAL COMMAND",
-                raidId: ws.raidId,
-                timestamp: Date.now(),
-                data: {
-                  targetId,
-                  targetHealth: targetMove.health,
-                  targetArmor: targetMove.armor,
-                  targetAlive: targetMove.isAlive,
-                  targetKia: targetMove.isKia,
-                  damage: dmg,
-                  kind: kind,
-                },
-              }));
-            } catch {}
+            const confirmMsg = {
+              eventId: `hit_confirm_${packet.eventId}`,
+              type: "hit_confirmed",
+              senderId: "server",
+              senderName: "CENTRAL COMMAND",
+              raidId: ws.raidId,
+              timestamp: Date.now(),
+              data: {
+                targetId,
+                targetHealth: targetMove.health,
+                targetArmor: targetMove.armor,
+                targetAlive: targetMove.isAlive,
+                targetKia: targetMove.isKia,
+                damage: dmg,
+                kind: kind,
+                killerId: targetMove.health <= 0 ? ws.operativeId : undefined,
+              },
+            };
+            try { ws.send(JSON.stringify(confirmMsg)); } catch {}
+            // Send AI life-state updates to all clients in the raid
+            if (AI_ROSTER.has(targetId) || targetMove.type === "boss" || targetMove.type === "scav") {
+              broadcastToRaid(ws.raidId, confirmMsg, ws);
+            }
           } catch (saveErr) {
             // Atomic rollback on persistence failure: restore complete memory & custody snapshot cleanly
-            targetMove.health = preHitHealth;
-            targetMove.armor = preHitArmor;
-            targetMove.isAlive = preHitAlive;
-            targetMove.isKia = preHitKia;
-            if (oRecTarget && preCustodySnapshot) {
+            for (const k of Object.keys(targetMove)) {
+              delete targetMove[k];
+            }
+            Object.assign(targetMove, preMoveSnapshot);
+            if (callerOpStrike) callerOpStrike.hasKeycard = preCallerKeycardStrike;
+            if (isNewBossRegistration) {
+              if (rRecTarget?.operatives?.[targetId]) {
+                delete rRecTarget.operatives[targetId];
+              }
+              operativeMovementStates.delete(targetSlotKey);
+            } else if (oRecTarget && preCustodySnapshot) {
               for (const k of Object.keys(oRecTarget)) {
                 delete oRecTarget[k];
               }
@@ -1948,6 +2701,9 @@ wss.on("connection", (ws, req) => {
           packet.data.targetHealth = targetMove.health;
           packet.data.targetArmor = targetMove.armor;
           packet.data.targetAlive = targetMove.isAlive;
+          if (targetMove.health <= 0) {
+            packet.data.killerId = ws.operativeId;
+          }
           // Authoritative stamp: this strike was validated AND persisted by the relay
           // authority. Receivers apply target vitals ONLY on this marker.
           packet.data.serverAuthoritative = true;
@@ -1958,7 +2714,9 @@ wss.on("connection", (ws, req) => {
             const rawKnockX = packet.data?.knockX;
             const rawKnockZ = packet.data?.knockZ;
             const knockAllowance = Math.min(5.0, Math.hypot(rawKnockX || 0, rawKnockZ || 0) || 4.5);
-            targetMove.budget = Math.min(8.0, targetMove.budget + knockAllowance);
+            if (!AI_ROSTER.has(targetId)) {
+              targetMove.budget = Math.min(8.0, targetMove.budget + knockAllowance);
+            }
           }
           return true;
         };
@@ -1978,6 +2736,11 @@ wss.on("connection", (ws, req) => {
         };
 
       if (packet.type === "hit") {
+        const callerRaid = ws.raidId && typeof settlement.getRaidRecord === "function" ? settlement.getRaidRecord(ws.raidId) : null;
+        const callerOp = callerRaid?.operatives?.[ws.operativeId];
+        if (!callerOp || callerOp.isExtracted || callerOp.isKia || callerOp.isAlive === false || callerRaid?.status === "concluded") {
+          return;
+        }
         if (!packet.eventId || typeof packet.eventId !== "string" || !packet.eventId.trim()) {
           return;
         }
@@ -1985,7 +2748,7 @@ wss.on("connection", (ws, req) => {
           return;
         }
         const rawKind = packet.data?.kind;
-        if (rawKind !== "kick" && rawKind !== "rifle") {
+        if (rawKind !== "kick" && rawKind !== "rifle" && rawKind !== "shotgun") {
           return; // Strictly drop hit with missing or invalid attack kind
         }
 
@@ -2009,8 +2772,8 @@ wss.on("connection", (ws, req) => {
           return;
         }
 
-        // 3. Validate damage > 0 and bounded strictly by weapon type (rifle <= 24, kick <= 35)
-        const maxAllowedDmg = rawKind === "kick" ? 35 : 24;
+        // 3. Validate damage > 0 and bounded strictly by weapon type (rifle <= 24, kick <= 35, shotgun <= 80)
+        const maxAllowedDmg = rawKind === "kick" ? 35 : (rawKind === "shotgun" ? 80 : 24);
         const dmg = packet.data?.damage;
         if (typeof dmg !== "number" || !Number.isFinite(dmg) || dmg <= 0 || dmg > maxAllowedDmg) {
           return;
@@ -2030,13 +2793,49 @@ wss.on("connection", (ws, req) => {
           if (attackTimes.kickBucket.tokens < 1.0) return;
           attackTimes.kickBucket.tokens -= 1.0;
           attackTimes.kick = hitNow;
+        } else if (rawKind === "shotgun") {
+          const weaponState = getRaidOperativeWeaponState(ws.raidId, ws.operativeId);
+          if (weaponState.isReloading && hitNow < weaponState.reloadEnd) {
+            return; // Operative is reloading: cannot fire
+          }
+          const shotId = packet.data?.shotId;
+          const shotKey = shotId ? `${ws.raidId}:${ws.operativeId}:${shotId}` : null;
+          let shotRecord = shotKey ? activeShotgunShots.get(shotKey) : null;
+          const curMove = operativeMovementStates.get(opKey) || ws.lastRelayedPos;
+          const curOriginX = typeof packet.data?.attackerX === "number" ? packet.data.attackerX : (curMove ? curMove.x : 0);
+          const curOriginZ = typeof packet.data?.attackerZ === "number" ? packet.data.attackerZ : (curMove ? curMove.z : 0);
+
+          if (shotRecord) {
+            if (hitNow - shotRecord.createdAt > 150) return; // Shot expired
+            if (shotRecord.targetsHit.has(targetId)) return; // Target already damaged by this shell
+            if (shotRecord.targetsHit.size >= 6) return; // Max 6 targets per shell
+            const originDist = Math.hypot(curOriginX - shotRecord.originX, curOriginZ - shotRecord.originZ);
+            if (originDist > 1.5) return;
+          } else {
+            if (weaponState.shotgunAmmo <= 0) return;
+            if (!attackTimes.shotgunBucket) {
+              attackTimes.shotgunBucket = { tokens: 1.5, lastTime: hitNow };
+            } else {
+              const elapsed = Math.max(0, hitNow - attackTimes.shotgunBucket.lastTime);
+              attackTimes.shotgunBucket.tokens = Math.min(2.0, attackTimes.shotgunBucket.tokens + elapsed / 350);
+              attackTimes.shotgunBucket.lastTime = Math.max(attackTimes.shotgunBucket.lastTime, hitNow);
+            }
+            if (attackTimes.shotgunBucket.tokens < 1.0) return;
+            attackTimes.shotgunBucket.tokens -= 1.0;
+            attackTimes.shotgun = hitNow;
+            attackTimes.lastShotgunTime = hitNow;
+            if (shotId) attackTimes.lastShotgunShotId = shotId;
+            weaponState.shotgunAmmo = Math.max(0, weaponState.shotgunAmmo - 1);
+            weaponState.ammo = weaponState.selectedWeapon === "shotgun" ? weaponState.shotgunAmmo : weaponState.rifleAmmo;
+            setAuthoritativeOperativeAmmo(settlement, ws.raidId, ws.operativeId, weaponState.ammo);
+          }
         } else {
           const weaponState = getRaidOperativeWeaponState(ws.raidId, ws.operativeId);
           if (weaponState.isReloading && hitNow < weaponState.reloadEnd) {
             return; // Operative is reloading: cannot fire
           }
-          if (weaponState.ammo <= 0) {
-            return; // Operative out of ammunition: cannot fire
+          if (weaponState.rifleAmmo <= 0) {
+            return; // Operative out of rifle ammunition: cannot fire
           }
           if (!attackTimes.rifleBucket) {
             attackTimes.rifleBucket = { tokens: 2.0, lastTime: hitNow };
@@ -2048,10 +2847,43 @@ wss.on("connection", (ws, req) => {
           if (attackTimes.rifleBucket.tokens < 1.0) return;
           attackTimes.rifleBucket.tokens -= 1.0;
           attackTimes.rifle = hitNow;
-          setAuthoritativeOperativeAmmo(settlement, ws.raidId, ws.operativeId, weaponState.ammo - 1);
+          weaponState.rifleAmmo = Math.max(0, weaponState.rifleAmmo - 1);
+          weaponState.ammo = weaponState.selectedWeapon === "rifle" ? weaponState.rifleAmmo : weaponState.shotgunAmmo;
+          setAuthoritativeOperativeAmmo(settlement, ws.raidId, ws.operativeId, weaponState.ammo);
         }
 
-        const strikeApplied = applyOperativeStrike({ ws, packet, targetId, kind: rawKind, dmg, ackEventId: packet.eventId });
+        const shotId = packet.data?.shotId;
+        const shotKey = shotId ? `${ws.raidId}:${ws.operativeId}:${shotId}` : null;
+        const curShotRecord = (rawKind === "shotgun" && shotKey) ? activeShotgunShots.get(shotKey) : null;
+
+        const strikeApplied = applyOperativeStrike({
+          ws,
+          packet,
+          targetId,
+          kind: rawKind,
+          dmg,
+          ackEventId: packet.eventId,
+          shotRecord: curShotRecord,
+        });
+
+        if (strikeApplied && rawKind === "shotgun") {
+          if (curShotRecord) {
+            curShotRecord.targetsHit.add(targetId);
+          } else if (shotKey) {
+            cleanExpiredShotgunShots();
+            const curMove = operativeMovementStates.get(opKey) || ws.lastRelayedPos;
+            const ax = typeof packet.data?.attackerX === "number" ? packet.data.attackerX : (curMove ? curMove.x : 0);
+            const az = typeof packet.data?.attackerZ === "number" ? packet.data.attackerZ : (curMove ? curMove.z : 0);
+            const facing = typeof packet.data?.attackerFacing === "number" ? packet.data.attackerFacing : 0;
+            activeShotgunShots.set(shotKey, {
+              createdAt: hitNow,
+              originX: ax,
+              originZ: az,
+              facing,
+              targetsHit: new Set([targetId]),
+            });
+          }
+        }
         if (!strikeApplied) {
           // Validation or persistence FAILED: drop the strike entirely — receivers must
           // never see client-supplied damage that the authoritative relay rejected (not
@@ -2249,10 +3081,18 @@ wss.on("connection", (ws, req) => {
           const preDmgHealth = m.health;
           const preDmgAlive = m.isAlive;
           const preDmgSeq = m.vitalsSeq || 0;
+          const rRecord = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
+          const callerOpKick = rRecord?.operatives?.[ws.operativeId];
+          const preCallerKeycardKick = callerOpKick ? Boolean(callerOpKick.hasKeycard) : false;
+          const isBossKick = m.id.includes("boss") || m.type === "boss" || m.dropsKeycard;
           m.health = Math.max(0, m.health - safeDmg);
           m.vitalsSeq = nextVitalsSeq(m.id, ws.raidId);
-          if (m.health <= 0) m.isAlive = false;
-          const rRecord = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
+          if (m.health <= 0) {
+            m.isAlive = false;
+            if (preDmgAlive && isBossKick && callerOpKick) {
+              callerOpKick.hasKeycard = true;
+            }
+          }
           try {
             if (rRecord) {
               if (!rRecord.machines) rRecord.machines = {};
@@ -2263,6 +3103,7 @@ wss.on("connection", (ws, req) => {
             m.health = preDmgHealth;
             m.isAlive = preDmgAlive;
             m.vitalsSeq = preDmgSeq;
+            if (callerOpKick) callerOpKick.hasKeycard = preCallerKeycardKick;
             if (rRecord?.machines) rRecord.machines[m.id] = { health: preDmgHealth, isAlive: preDmgAlive, vitalsSeq: preDmgSeq };
             // FAILED SAVE = strike rejected: an authoritative correction restores the
             // client's optimistic prediction to COMMITTED custody (pre-save sequence).
@@ -2350,6 +3191,11 @@ wss.on("connection", (ws, req) => {
       }
 
       if (packet.type === "machine_hit") {
+        const callerRaid = ws.raidId && typeof settlement.getRaidRecord === "function" ? settlement.getRaidRecord(ws.raidId) : null;
+        const callerOp = callerRaid?.operatives?.[ws.operativeId];
+        if (!callerOp || callerOp.isExtracted || callerOp.isKia || callerOp.isAlive === false || callerRaid?.status === "concluded") {
+          return;
+        }
         if (!packet.data?.machineId) return;
         delete packet.data.machineHealth;
         delete packet.data.machineAlive;
@@ -2382,7 +3228,7 @@ wss.on("connection", (ws, req) => {
         const m = machines.find((x) => x.id === packet.data.machineId);
 
         const rawKind = packet.data.kind;
-        if (rawKind !== "kick" && rawKind !== "rifle") {
+        if (rawKind !== "kick" && rawKind !== "rifle" && rawKind !== "shotgun") {
           return; // Strictly reject unknown kind
         }
         const kind = rawKind;
@@ -2428,7 +3274,7 @@ wss.on("connection", (ws, req) => {
           sendRejectionSync(m);
           return;
         }
-        const safeDmg = kind === "kick" ? Math.min(rawDmg, 50) : Math.min(rawDmg, 24);
+        const safeDmg = kind === "kick" ? Math.min(rawDmg, 50) : (kind === "shotgun" ? Math.min(rawDmg, 80) : Math.min(rawDmg, 24));
         const currentPos = ws.lastRelayedPos || (ws.operativeId === "op_bravo_1" ? { x: 50, z: -50 } : { x: -50, z: -50 });
         let targetX = m.x;
         let targetZ = m.z;
@@ -2469,15 +3315,93 @@ wss.on("connection", (ws, req) => {
           const mY = typeof m.y === "number" ? m.y : 1.0;
           if (checkContainerRayObstruction(currentPos.x, currentPos.z, targetX, targetZ, 1.0, mY)) { sendRejectionSync(m); return; }
           attackTimes.kick = now;
-        } else {
+        } else if (kind === "shotgun") {
           const weaponState = getRaidOperativeWeaponState(ws.raidId, ws.operativeId);
           if (weaponState.isReloading && now < weaponState.reloadEnd) {
             sendRejectionSync(m);
             return; // Operative is reloading: cannot fire
           }
-          if (weaponState.ammo <= 0) {
+          const shotId = packet.data?.shotId;
+          const shotKey = shotId ? `${ws.raidId}:${ws.operativeId}:${shotId}` : null;
+          let shotRecord = shotKey ? activeShotgunShots.get(shotKey) : null;
+          let isInitialMachineShot = false;
+
+          const attackerX = typeof packet.data?.attackerX === "number" ? packet.data.attackerX : currentPos.x;
+          const attackerZ = typeof packet.data?.attackerZ === "number" ? packet.data.attackerZ : currentPos.z;
+          const attackerFacing = typeof packet.data?.attackerFacing === "number" ? packet.data.attackerFacing : facing;
+
+          if (shotRecord) {
+            if (now - shotRecord.createdAt > 150) { sendRejectionSync(m); return; }
+            if (shotRecord.targetsHit.has(m.id)) { sendRejectionSync(m); return; }
+            if (shotRecord.targetsHit.size >= 6) { sendRejectionSync(m); return; }
+            const originDist = Math.hypot(attackerX - shotRecord.originX, attackerZ - shotRecord.originZ);
+            if (originDist > 1.5) { sendRejectionSync(m); return; }
+          } else {
+            if (weaponState.shotgunAmmo <= 0) {
+              sendRejectionSync(m);
+              return; // Operative out of shotgun ammunition: cannot fire
+            }
+            if (!attackTimes.shotgunBucket) {
+              attackTimes.shotgunBucket = { tokens: 1.5, lastTime: now };
+            } else {
+              const elapsed = Math.max(0, now - attackTimes.shotgunBucket.lastTime);
+              attackTimes.shotgunBucket.tokens = Math.min(2.0, attackTimes.shotgunBucket.tokens + elapsed / 350);
+              attackTimes.shotgunBucket.lastTime = Math.max(attackTimes.shotgunBucket.lastTime, now);
+            }
+            if (attackTimes.shotgunBucket.tokens < 1.0) { sendRejectionSync(m); return; }
+            attackTimes.shotgunBucket.tokens -= 1.0;
+            attackTimes.shotgun = now;
+            attackTimes.lastShotgunTime = now;
+            if (shotId) attackTimes.lastShotgunShotId = shotId;
+            weaponState.shotgunAmmo = Math.max(0, weaponState.shotgunAmmo - 1);
+            weaponState.ammo = weaponState.selectedWeapon === "shotgun" ? weaponState.shotgunAmmo : weaponState.rifleAmmo;
+            setAuthoritativeOperativeAmmo(settlement, ws.raidId, ws.operativeId, weaponState.ammo);
+            isInitialMachineShot = true;
+          }
+
+          const effOriginX = shotRecord ? shotRecord.originX : attackerX;
+          const effOriginZ = shotRecord ? shotRecord.originZ : attackerZ;
+          const effFacing = (shotRecord && typeof shotRecord.facing === "number") ? shotRecord.facing : attackerFacing;
+
+          const distToM = Math.hypot(targetX - effOriginX, targetZ - effOriginZ);
+          if (distToM > 18.0 || distToM <= 0.001) { sendRejectionSync(m); return; }
+
+          const dx = targetX - effOriginX;
+          const dz = targetZ - effOriginZ;
+          const forwardX = Math.sin(effFacing);
+          const forwardZ = Math.cos(effFacing);
+          const dot = (dx * forwardX + dz * forwardZ) / distToM;
+          if (dot < 0.6) {
             sendRejectionSync(m);
-            return; // Operative out of ammunition: cannot fire
+            return;
+          }
+          const mY = typeof m.y === "number" ? m.y : (m.type === "drone" ? 3.5 : 1.0);
+          if (checkContainerRayObstruction(effOriginX, effOriginZ, targetX, targetZ, 1.0, mY)) {
+            sendRejectionSync(m);
+            return;
+          }
+
+          if (shotRecord) {
+            shotRecord.targetsHit.add(m.id);
+          } else if (isInitialMachineShot && shotKey) {
+            cleanExpiredShotgunShots();
+            activeShotgunShots.set(shotKey, {
+              createdAt: now,
+              originX: effOriginX,
+              originZ: effOriginZ,
+              facing: effFacing,
+              targetsHit: new Set([m.id]),
+            });
+          }
+        } else {
+          const weaponState = getRaidOperativeWeaponState(ws.raidId, ws.operativeId);
+          if (weaponState.isReloading && (weaponState.reloadingWeapon === "rifle" || !weaponState.reloadingWeapon) && now < weaponState.reloadEnd) {
+            sendRejectionSync(m);
+            return; // Operative is reloading: cannot fire
+          }
+          if (weaponState.rifleAmmo <= 0) {
+            sendRejectionSync(m);
+            return; // Operative out of rifle ammunition: cannot fire
           }
           if (distToM > 35.0 || distToM <= 0.001) { sendRejectionSync(m); return; }
           if (!attackTimes.rifleBucket) {
@@ -2490,7 +3414,9 @@ wss.on("connection", (ws, req) => {
           if (attackTimes.rifleBucket.tokens < 1.0) { sendRejectionSync(m); return; }
           attackTimes.rifleBucket.tokens -= 1.0;
           attackTimes.rifle = now;
-          setAuthoritativeOperativeAmmo(settlement, ws.raidId, ws.operativeId, weaponState.ammo - 1);
+          weaponState.rifleAmmo = Math.max(0, weaponState.rifleAmmo - 1);
+          weaponState.ammo = weaponState.selectedWeapon === "rifle" ? weaponState.rifleAmmo : weaponState.shotgunAmmo;
+          setAuthoritativeOperativeAmmo(settlement, ws.raidId, ws.operativeId, weaponState.ammo);
           const dx = targetX - currentPos.x;
           const dz = targetZ - currentPos.z;
           const forwardX = Math.sin(facing);
@@ -2511,13 +3437,21 @@ wss.on("connection", (ws, req) => {
         const preDmgHealth = m.health;
         const preDmgAlive = m.isAlive;
         const preDmgSeq = m.vitalsSeq || 0;
+        const rRecord = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
+        const callerOpMach = rRecord?.operatives?.[ws.operativeId];
+        const preCallerKeycard = callerOpMach ? Boolean(callerOpMach.hasKeycard) : false;
+        const isBoss = m.id.includes("boss") || m.type === "boss" || m.dropsKeycard;
         m.health = Math.max(0, m.health - safeDmg);
-        if (m.health <= 0) m.isAlive = false;
+        if (m.health <= 0) {
+          m.isAlive = false;
+          if (preDmgAlive && isBoss && callerOpMach) {
+            callerOpMach.hasKeycard = true;
+          }
+        }
         // Sequence advances ONCE, BEFORE the durable save — health, alive, and vitalsSeq
         // persist in the SAME transaction; the durable copy can never trail the live
         // sequence (which would make valid recovery updates look stale to clients).
         m.vitalsSeq = nextVitalsSeq(m.id, ws.raidId);
-        const rRecord = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
         try {
           if (rRecord) {
             if (!rRecord.machines) rRecord.machines = {};
@@ -2531,6 +3465,7 @@ wss.on("connection", (ws, req) => {
           m.health = preDmgHealth;
           m.isAlive = preDmgAlive;
           m.vitalsSeq = preDmgSeq;
+          if (callerOpMach) callerOpMach.hasKeycard = preCallerKeycard;
           if (rRecord?.machines) {
             rRecord.machines[m.id] = { health: preDmgHealth, isAlive: preDmgAlive };
             if (rRecord.machines[m.id]) rRecord.machines[m.id].vitalsSeq = preDmgSeq;
@@ -2573,12 +3508,7 @@ wss.on("connection", (ws, req) => {
 
       if (packet.type === "crate_looted" || packet.type === "crate_loot_request") {
         const cid = packet.data?.crateId;
-        const CRATE_LOCATIONS = {
-          crate_01: { x: -8, z: -6 },
-          crate_02: { x: 20, z: -15 },
-          crate_03: { x: -18, z: 22 },
-        };
-        const cratePos = cid ? CRATE_LOCATIONS[cid] : null;
+        const cratePos = cid ? DEPOT_CRATE_LOCATIONS[cid] : null;
         const px = packet.data?.x;
         const pz = packet.data?.z;
         const hasCoords = typeof px === "number" && typeof pz === "number" && Number.isFinite(px) && Number.isFinite(pz);
@@ -2600,18 +3530,33 @@ wss.on("connection", (ws, req) => {
           if (!lootOk) return; // Drop packet forwarding if recordCrateLoot rejected
           const isNewClaim = !isDuplicate && !settlement.lastClaimIsDuplicate;
           if (isNewClaim) {
-            const wsState = getRaidOperativeWeaponState(ws.raidId, ws.operativeId);
-            wsState.ammo = 30;
-            wsState.isReloading = false;
-            if (prevClaimant && prevClaimant !== ws.operativeId) {
-              const updatedRec = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
-              const prevCustody = updatedRec?.operatives?.[prevClaimant];
-              if (prevCustody && typeof prevCustody.ammo === "number") {
-                const prevWsState = getRaidOperativeWeaponState(ws.raidId, prevClaimant);
-                prevWsState.ammo = prevCustody.ammo;
-              }
-            }
+            applyAuthoritativeCrateGrantToRelay(settlement, ws.raidId, ws.operativeId, prevClaimant);
           }
+          const raidRecLoot = settlement.getRaidRecord ? settlement.getRaidRecord(ws.raidId) : null;
+          const opRecLoot = raidRecLoot?.operatives?.[ws.operativeId];
+          const serverStims = typeof opRecLoot?.stimsRemaining === "number" ? opRecLoot.stimsRemaining : 2;
+          packet.data.stimsRemaining = serverStims;
+          const curMoveLoot = operativeMovementStates.get(`${ws.raidId}:${ws.operativeId}`);
+          if (curMoveLoot) curMoveLoot.stimsRemaining = serverStims;
+
+          const ackMsg = {
+            eventId: `crate_looted_ack_${cid}_${Date.now()}`,
+            type: "crate_looted_ack",
+            senderId: "server",
+            senderName: "CENTRAL COMMAND",
+            raidId: ws.raidId,
+            timestamp: Date.now(),
+            serverAuthoritative: true,
+            data: {
+              crateId: cid,
+              claimantId: ws.operativeId,
+              stimsRemaining: serverStims,
+              cashEarned: opRecLoot?.earnedCash || 0,
+            },
+          };
+          try {
+            ws.send(JSON.stringify(ackMsg));
+          } catch {}
         } else if (cid && !inProximity) {
           return; // Drop packet forwarding if coordinate or proximity check fails!
         }
@@ -2828,6 +3773,9 @@ wss.on("connection", (ws, req) => {
           const absorbed = Math.min(preArmor, dmg);
           target.st.armor = preArmor - absorbed;
           target.st.health = Math.max(0, preHealth - (dmg - absorbed));
+          // Machine damage immediately cancels any active stim treatment channel!
+          target.st.isUsingStim = false;
+          target.st.stimChannelStartedAt = 0;
           const nowAlive = target.st.health > 0;
           if (!nowAlive) {
             target.st.isAlive = false;
@@ -2851,15 +3799,17 @@ wss.on("connection", (ws, req) => {
               oRec.armor = target.st.armor;
               oRec.lastDamageTimestamp = now;
               oRec.unconsumedDamage = dmg;
-              if (!nowAlive) oRec.isAlive = false;
-            }
-            if (nowAlive && typeof settlement.recordOperativeKia === "function") {
-              // no-op guard for clarity: K.I.A. only recorded when health reaches 0
             }
             if (!nowAlive && typeof settlement.recordOperativeKia === "function") {
               // Approved internal lifecycle caller ('system') — operative fell to
               // automated facility defenses in an authoritative machine attack.
               settlement.recordOperativeKia(raidId, target.id, "system");
+            } else if (!nowAlive) {
+              if (oRec) {
+                oRec.isAlive = false;
+                oRec.isKia = true;
+              }
+              if (settlement.saveToDisk) settlement.saveToDisk();
             } else if (settlement.saveToDisk) {
               settlement.saveToDisk();
             }

@@ -4,7 +4,12 @@ import {
   type ExfilState,
   authoritativeLedgerCommit,
   verifySettlementReceipt,
+  defaultSettlementLedger,
   verifyReceiptIntegrity,
+  verifiedReceiptInstances,
+  verifiedReceiptSnapshots,
+  recordVerifiedReceipt,
+  isReceiptContentVerified,
 } from "../sim/airlock.js";
 import { Loader2, CheckCircle, ArrowRight, ShieldCheck, ShieldAlert, Database, Lock, AlertTriangle } from "lucide-react";
 
@@ -21,6 +26,7 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
   const [restartError, setRestartError] = useState<string | null>(null);
   const [recoveryError, setRecoveryError] = useState<string | undefined>(sim.terminalRecoveryError);
   const [isRetryingRecovery, setIsRetryingRecovery] = useState(false);
+  const [receiptCryptoVerified, setReceiptCryptoVerified] = useState(false);
 
   useEffect(() => {
     setIsRestarting(false);
@@ -49,8 +55,11 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
     const timer = setInterval(async () => {
       const currentState = sim.exfilController.getState();
       setState(currentState);
-      if (sim.terminalRecoveryError !== recoveryError) {
-        setRecoveryError(sim.terminalRecoveryError);
+      if (currentState.kind === "extracted" || sim.player.isExtracted) {
+        if (sim.terminalRecoveryError) sim.terminalRecoveryError = undefined;
+        setRecoveryError(undefined);
+      } else {
+        setRecoveryError(sim.terminalRecoveryError || undefined);
       }
 
       if (currentState.kind === "corridor_presentation") {
@@ -74,11 +83,26 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
           const t0 = Date.now();
           while (!(sim as any).serverHoldCompletedAtTick && Date.now() - t0 < 12000) {
             await new Promise((r) => setTimeout(r, 100));
+            if (sim.exfilController.getState().kind !== "corridor_presentation" || !sim.player.isAlive || sim.player.health <= 0) {
+              corridorSettlingRef.current = false;
+              setIsSubmitting(false);
+              return;
+            }
           }
           corridorSettlingRef.current = false;
+
+          if (sim.exfilController.getState().kind !== "corridor_presentation" || !sim.player.isAlive || sim.player.health <= 0) {
+            setIsSubmitting(false);
+            return;
+          }
+
           try {
             sim.exfilController.submitSettlement();
             setState(sim.exfilController.getState());
+
+            if (sim.isSocketDisconnected === false && sim.serverMachineDamageAuthority && !(sim as any).serverHoldCompletedAtTick) {
+              throw new Error("Relay authority hold verification required but not confirmed");
+            }
 
             // Freeze settlement snapshot for idempotent retries, preserving eligible hold completion tick through submission
             const serverHoldTick = (sim as any).serverHoldCompletedAtTick || 0;
@@ -90,36 +114,158 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
             // Invoke authoritative ledger commitment authority with automatic corridor retry
             let canonicalReceipt: any = null;
             let outcomePayload: any = null;
-            for (let attempt = 1; attempt <= 5; attempt++) {
-              try {
-                const res = await authoritativeLedgerCommit(sim);
-                canonicalReceipt = res.receipt;
-                outcomePayload = res.outcomePayload;
-                break;
-              } catch (commitErr: any) {
-                if (commitErr?.message?.includes("Airlock corridor presentation in progress") && attempt < 5) {
-                  const backoffMs = 200 * Math.pow(2, attempt - 1);
-                  await new Promise((r) => setTimeout(r, backoffMs));
-                  continue;
+            const activeLedger = (sim as any).settlementAuthority || defaultSettlementLedger;
+
+            if (typeof (sim as any).requestServerSettlement === "function") {
+              for (let attempt = 1; attempt <= 5; attempt++) {
+                try {
+                  const res = await (sim as any).requestServerSettlement(targetSnapshotTick, sim.player.cash);
+                  canonicalReceipt = res.receipt;
+                  outcomePayload = res.outcomePayload;
+                  break;
+                } catch (commitErr: any) {
+                  if (commitErr?.message?.includes("Airlock corridor presentation in progress") && attempt < 5) {
+                    const backoffMs = 200 * Math.pow(2, attempt - 1);
+                    await new Promise((r) => setTimeout(r, backoffMs));
+                    continue;
+                  }
+                  throw commitErr;
                 }
-                throw commitErr;
+              }
+            } else {
+              for (let attempt = 1; attempt <= 5; attempt++) {
+                try {
+                  const res = await authoritativeLedgerCommit(sim, activeLedger);
+                  canonicalReceipt = res.receipt;
+                  outcomePayload = res.outcomePayload;
+                  break;
+                } catch (commitErr: any) {
+                  if (commitErr?.message?.includes("Airlock corridor presentation in progress") && attempt < 5) {
+                    const backoffMs = 200 * Math.pow(2, attempt - 1);
+                    await new Promise((r) => setTimeout(r, backoffMs));
+                    continue;
+                  }
+                  throw commitErr;
+                }
               }
             }
 
-            // Verify strict canonical BigInt, SHA-256 digest, and structural invariants
-            const verification = await verifySettlementReceipt(canonicalReceipt, outcomePayload);
+            (sim as any).lastSettlementReceipt = canonicalReceipt;
+            (sim as any).lastOutcomePayload = outcomePayload;
 
-            if (verification.valid) {
-              sim.player.isExtracted = true;
-              sim.exfilController.onReceipt(canonicalReceipt);
+            // Strict server audit evidence check: require valid, matching server audit response before inserting
+            let srvReceipt: any = null;
+            if ((activeLedger as any)?.serverAuthority && typeof (activeLedger as any).serverAuthority.getCommittedReceipt === "function") {
+              const localRec = (activeLedger as any).serverAuthority.getCommittedReceipt(canonicalReceipt.receiptId);
+              if (localRec?.receipt) srvReceipt = localRec.receipt;
+            }
+            if (!srvReceipt && canonicalReceipt && canonicalReceipt.receiptId) {
+              const auditUrl = `/api/settlement/verify-receipt?receiptId=${encodeURIComponent(canonicalReceipt.receiptId)}&raidId=${encodeURIComponent(canonicalReceipt.raidId || sim.raidId)}`;
+              try {
+                const srvAudit = await new Promise<any>((resolve) => {
+                  try {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open("GET", auditUrl, true);
+                    xhr.timeout = 2500;
+                    xhr.onload = () => {
+                      if (xhr.status >= 200 && xhr.status < 300) {
+                        try { resolve(JSON.parse(xhr.responseText)); } catch { resolve(null); }
+                      } else {
+                        resolve(null);
+                      }
+                    };
+                    xhr.onerror = () => resolve(null);
+                    xhr.ontimeout = () => resolve(null);
+                    xhr.send();
+                  } catch {
+                    resolve(null);
+                  }
+                });
+                if (srvAudit?.receipt) {
+                  srvReceipt = srvAudit.receipt;
+                }
+              } catch {}
+            }
+
+            if (!srvReceipt || JSON.stringify(srvReceipt) !== JSON.stringify(canonicalReceipt)) {
+              // Server audit evidence is unavailable or mismatched: transition controller to recoverable failure
+              const reason = !srvReceipt
+                ? "Server audit verification timed out: tap to retry settlement verification"
+                : "Server audit receipt mismatch: tap to retry settlement verification";
+              if (sim.exfilController.getState().kind === "submitting_settlement") {
+                sim.exfilController.onFailure(reason, true);
+              }
+              setState(sim.exfilController.getState());
+              return;
+            }
+
+            if (activeLedger?.auditLog && typeof activeLedger.auditLog.set === "function") {
+              activeLedger.auditLog.set(canonicalReceipt.receiptId, srvReceipt);
+            }
+            if (defaultSettlementLedger?.auditLog && typeof defaultSettlementLedger.auditLog.set === "function") {
+              defaultSettlementLedger.auditLog.set(canonicalReceipt.receiptId, srvReceipt);
+            }
+
+            // Verify strict canonical BigInt, SHA-256 digest, and structural invariants against authoritative ledger BEFORE any profile or audit mutations
+            const verification = await verifySettlementReceipt(canonicalReceipt, outcomePayload, activeLedger);
+
+            const curState = sim.exfilController.getState();
+            if (verification.valid && sim.player.isAlive && sim.player.health > 0 && (curState.kind === "submitting_settlement" || curState.kind === "extracted")) {
+              if (canonicalReceipt && canonicalReceipt.receiptId) {
+                if (activeLedger?.auditLog && typeof activeLedger.auditLog.set === "function") {
+                  activeLedger.auditLog.set(canonicalReceipt.receiptId, canonicalReceipt);
+                }
+                if (defaultSettlementLedger?.auditLog && typeof defaultSettlementLedger.auditLog.set === "function") {
+                  defaultSettlementLedger.auditLog.set(canonicalReceipt.receiptId, canonicalReceipt);
+                }
+                for (const p of canonicalReceipt.participantResults || []) {
+                  if (p.activeRaidCleared) {
+                    const prof1 = activeLedger?.profiles?.get(p.profileId);
+                    if (prof1 && (prof1.activeRaid === canonicalReceipt.raidId || !prof1.activeRaid)) {
+                      prof1.activeRaid = null;
+                    }
+                    const prof2 = defaultSettlementLedger?.profiles?.get(p.profileId);
+                    if (prof2 && (prof2.activeRaid === canonicalReceipt.raidId || !prof2.activeRaid)) {
+                      prof2.activeRaid = null;
+                    }
+                  }
+                }
+              }
+              if (curState.kind !== "extracted") {
+                sim.exfilController.onReceipt(canonicalReceipt);
+                sim.player.isExtracted = true;
+              }
+              recordVerifiedReceipt(canonicalReceipt);
+              (sim as any).__cryptographicallyVerifiedReceiptId = canonicalReceipt.receiptId;
+              setReceiptCryptoVerified(true);
+              const receiptKey = `${canonicalReceipt.raidId || sim.raidId}:${canonicalReceipt.receiptId}`;
+              const coordinator = (sim as any).multiplayerCoordinator || (sim as any).coordinator;
+              if (
+                sim.acceptedReceiptKeys?.has(receiptKey) ||
+                coordinator?.acceptedReceiptKeys?.has(receiptKey) ||
+                (sim as any).__acceptedReceiptKeys?.has(receiptKey)
+              ) {
+                return;
+              }
               sim.onExfilSuccess?.(canonicalReceipt);
+              sim.acceptedReceiptKeys?.add(receiptKey);
+              coordinator?.acceptedReceiptKeys?.add(receiptKey);
+              if (!(sim as any).__acceptedReceiptKeys) (sim as any).__acceptedReceiptKeys = new Set<string>();
+              (sim as any).__acceptedReceiptKeys.add(receiptKey);
               setState(sim.exfilController.getState());
             } else {
-              sim.exfilController.onFailure(`Settlement verification failed: ${verification.reason}`, true);
+              const reason = !verification.valid
+                ? `Settlement verification failed: ${verification.reason}`
+                : "Operative eliminated or settlement state invalid";
+              if (sim.exfilController.getState().kind === "submitting_settlement") {
+                sim.exfilController.onFailure(reason, true);
+              }
               setState(sim.exfilController.getState());
             }
           } catch (err: any) {
-            sim.exfilController.onFailure(err.message || "Settlement pipeline error", true);
+            if (sim.exfilController.getState().kind === "submitting_settlement") {
+              sim.exfilController.onFailure(err.message || "Settlement pipeline error", true);
+            }
             setState(sim.exfilController.getState());
           } finally {
             setIsSubmitting(false);
@@ -133,25 +279,126 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
 
   const handleRetry = async () => {
     if (state.kind !== "failed") return;
+    if (!sim.player.isAlive || sim.player.health <= 0) return;
     sim.exfilController.retrySettlement();
     setState(sim.exfilController.getState());
     setIsSubmitting(true);
 
     try {
-      const { receipt: canonicalReceipt, outcomePayload } = await authoritativeLedgerCommit(sim);
-      const verification = await verifySettlementReceipt(canonicalReceipt, outcomePayload);
+      const activeLedger = (sim as any).settlementAuthority || defaultSettlementLedger;
+      let canonicalReceipt: any = null;
+      let outcomePayload: any = null;
+      const targetSnapshotTick = sim.frozenSettlementTick ?? sim.tick;
+      const targetSnapshotCash = sim.frozenSettlementCash ?? sim.player.cash;
 
-      if (verification.valid) {
-        sim.player.isExtracted = true;
+      if (typeof (sim as any).requestServerSettlement === "function") {
+        for (let attempt = 1; attempt <= 5; attempt++) {
+          try {
+            const res = await (sim as any).requestServerSettlement(targetSnapshotTick, targetSnapshotCash);
+            canonicalReceipt = res.receipt;
+            outcomePayload = res.outcomePayload;
+            break;
+          } catch (commitErr: any) {
+            if (commitErr?.message?.includes("Airlock corridor presentation in progress") && attempt < 5) {
+              const backoffMs = 200 * Math.pow(2, attempt - 1);
+              await new Promise((r) => setTimeout(r, backoffMs));
+              continue;
+            }
+            throw commitErr;
+          }
+        }
+      } else {
+        const res = await authoritativeLedgerCommit(sim, activeLedger);
+        canonicalReceipt = res.receipt;
+        outcomePayload = res.outcomePayload;
+      }
+
+      let srvReceiptRetry: any = null;
+      if ((activeLedger as any)?.serverAuthority && typeof (activeLedger as any).serverAuthority.getCommittedReceipt === "function") {
+        const localRec = (activeLedger as any).serverAuthority.getCommittedReceipt(canonicalReceipt.receiptId);
+        if (localRec?.receipt) srvReceiptRetry = localRec.receipt;
+      }
+      if (!srvReceiptRetry && canonicalReceipt && canonicalReceipt.receiptId) {
+        const auditUrl = `/api/settlement/verify-receipt?receiptId=${encodeURIComponent(canonicalReceipt.receiptId)}&raidId=${encodeURIComponent(canonicalReceipt.raidId || sim.raidId)}`;
+        try {
+          const srvAudit = await new Promise<any>((resolve) => {
+            try {
+              const xhr = new XMLHttpRequest();
+              xhr.open("GET", auditUrl, true);
+              xhr.timeout = 2500;
+              xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                  try { resolve(JSON.parse(xhr.responseText)); } catch { resolve(null); }
+                } else {
+                  resolve(null);
+                }
+              };
+              xhr.onerror = () => resolve(null);
+              xhr.ontimeout = () => resolve(null);
+              xhr.send();
+            } catch {
+              resolve(null);
+            }
+          });
+          if (srvAudit?.receipt) {
+            srvReceiptRetry = srvAudit.receipt;
+          }
+        } catch {}
+      }
+
+      if (!srvReceiptRetry || JSON.stringify(srvReceiptRetry) !== JSON.stringify(canonicalReceipt)) {
+        // Server audit evidence unavailable or mismatched: transition controller to recoverable failure
+        const reason = !srvReceiptRetry
+          ? "Server audit verification timed out: tap to retry settlement verification"
+          : "Server audit receipt mismatch: tap to retry settlement verification";
+        if (sim.exfilController.getState().kind === "submitting_settlement") {
+          sim.exfilController.onFailure(reason, true);
+        }
+        setState(sim.exfilController.getState());
+        return;
+      }
+
+      if (activeLedger?.auditLog && typeof activeLedger.auditLog.set === "function") {
+        activeLedger.auditLog.set(canonicalReceipt.receiptId, srvReceiptRetry);
+      }
+      if (defaultSettlementLedger?.auditLog && typeof defaultSettlementLedger.auditLog.set === "function") {
+        defaultSettlementLedger.auditLog.set(canonicalReceipt.receiptId, srvReceiptRetry);
+      }
+
+      const verification = await verifySettlementReceipt(canonicalReceipt, outcomePayload, activeLedger);
+
+      if (verification.valid && sim.player.isAlive && sim.player.health > 0 && sim.exfilController.getState().kind === "submitting_settlement") {
+        const receiptKey = `${canonicalReceipt.raidId || sim.raidId}:${canonicalReceipt.receiptId}`;
+        const coordinator = (sim as any).multiplayerCoordinator || (sim as any).coordinator;
+        if (
+          sim.acceptedReceiptKeys?.has(receiptKey) ||
+          coordinator?.acceptedReceiptKeys?.has(receiptKey) ||
+          (sim as any).__acceptedReceiptKeys?.has(receiptKey)
+        ) {
+          return;
+        }
+        recordVerifiedReceipt(canonicalReceipt);
         sim.exfilController.onReceipt(canonicalReceipt);
+        sim.player.isExtracted = true;
         sim.onExfilSuccess?.(canonicalReceipt);
+        sim.acceptedReceiptKeys?.add(receiptKey);
+        coordinator?.acceptedReceiptKeys?.add(receiptKey);
+        if (!(sim as any).__acceptedReceiptKeys) (sim as any).__acceptedReceiptKeys = new Set<string>();
+        (sim as any).__acceptedReceiptKeys.add(receiptKey);
         setState(sim.exfilController.getState());
       } else {
-        sim.exfilController.onFailure(`Settlement verification failed: ${verification.reason}`, true);
+        const reason = !verification.valid
+          ? `Settlement verification failed: ${verification.reason}`
+          : "Operative eliminated or settlement state invalid";
+        if (sim.exfilController.getState().kind === "submitting_settlement") {
+          sim.exfilController.onFailure(reason, true);
+        }
         setState(sim.exfilController.getState());
       }
     } catch (err: any) {
-      sim.exfilController.onFailure(err.message || "Settlement pipeline error", true);
+      if (sim.exfilController.getState().kind === "submitting_settlement") {
+        sim.exfilController.onFailure(err.message || "Settlement retry failed", true);
+      }
       setState(sim.exfilController.getState());
     } finally {
       setIsSubmitting(false);
@@ -175,6 +422,76 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
     return "none";
   })();
   const isModalActive = activeModalKind !== "none";
+
+  useEffect(() => {
+    if (activeModalKind === "extracted") {
+      const rawReceipt = (state as any).receipt || (sim as any).lastSettlementReceipt || null;
+      if (!rawReceipt || typeof rawReceipt !== "object") {
+        setReceiptCryptoVerified(false);
+        return;
+      }
+      // Bound strictly to immutable verified snapshot and content parity
+      if (isReceiptContentVerified(rawReceipt)) {
+        setReceiptCryptoVerified(true);
+        return;
+      }
+      setReceiptCryptoVerified(false);
+      let active = true;
+      (async () => {
+        try {
+          const ledger = sim.settlementAuthority || defaultSettlementLedger;
+          let outcomePayload = (state as any).outcomePayload || (sim as any).lastOutcomePayload;
+          if (!outcomePayload && rawReceipt.receiptId) {
+            const verifyUrl = `/api/settlement/verify-receipt?receiptId=${encodeURIComponent(rawReceipt.receiptId)}&raidId=${encodeURIComponent(rawReceipt.raidId || sim.raidId)}`;
+            try {
+              const srvAudit = await new Promise<any>((resolve) => {
+                try {
+                  const xhr = new XMLHttpRequest();
+                  xhr.open("GET", verifyUrl, true);
+                  xhr.timeout = 2500;
+                  xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                      try { resolve(JSON.parse(xhr.responseText)); } catch { resolve(null); }
+                    } else {
+                      resolve(null);
+                    }
+                  };
+                  xhr.onerror = () => resolve(null);
+                  xhr.ontimeout = () => resolve(null);
+                  xhr.send();
+                } catch {
+                  resolve(null);
+                }
+              });
+              if (active && srvAudit?.outcomePayload) {
+                outcomePayload = srvAudit.outcomePayload;
+                if (srvAudit?.receipt && JSON.stringify(srvAudit.receipt) === JSON.stringify(rawReceipt)) {
+                  ledger?.auditLog?.set(rawReceipt.receiptId, srvAudit.receipt);
+                }
+              }
+            } catch {}
+          }
+          if (!outcomePayload) {
+            if (active) setReceiptCryptoVerified(false);
+            return;
+          }
+          const verification = await verifySettlementReceipt(rawReceipt, outcomePayload, ledger);
+          if (active) {
+            const isValid = Boolean(verification && verification.valid);
+            if (isValid) {
+              recordVerifiedReceipt(rawReceipt);
+            }
+            setReceiptCryptoVerified(isValid);
+          }
+        } catch {
+          if (active) setReceiptCryptoVerified(false);
+        }
+      })();
+      return () => { active = false; };
+    } else {
+      setReceiptCryptoVerified(false);
+    }
+  }, [activeModalKind, (state as any)?.receipt, (sim as any)?.lastSettlementReceipt]);
 
   const modalRef = useRef<HTMLDivElement>(null);
   // Single-flight settlement guard: exactly one corridor->settlement continuation runs.
@@ -366,20 +683,16 @@ style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", border
       {/* Extracted Receipt Debrief */}
       {activeModalKind === "extracted" && (() => {
         const rawReceipt = (state as any).receipt || (sim as any).lastSettlementReceipt || null;
-        const isCryptographicallyVerified = Boolean(
-          rawReceipt &&
-          typeof rawReceipt.outcomeDigest === "string" &&
-          !/^0+$/.test(rawReceipt.outcomeDigest) &&
-          typeof verifyReceiptIntegrity === "function" &&
-          verifyReceiptIntegrity(rawReceipt)
-        );
-        const receipt = rawReceipt || {
+        const isContentVerified = isReceiptContentVerified(rawReceipt);
+        const verifiedSnapshot = (rawReceipt && rawReceipt.receiptId) ? verifiedReceiptSnapshots.get(rawReceipt.receiptId) : null;
+        const isCryptographicallyVerified = receiptCryptoVerified && isContentVerified;
+        const receipt = (isCryptographicallyVerified && verifiedSnapshot) ? verifiedSnapshot : (rawReceipt || {
           receiptId: "pending_recovery",
           raidId: sim.raidId || "raid_sector7_1042",
           outcomeDigest: "Settlement record pending cryptographic verification",
           transfers: [],
           participantResults: [{ profileId: sim.player.id || "op_player", activeRaidCleared: true, inventoryRevision: 1 }],
-        };
+        });
         return (
           <div
             ref={modalRef}

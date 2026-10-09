@@ -1,3 +1,4 @@
+import { calculateShotgunHit, getMaxShotgunDamageForDistance } from './shotgunCollision.js';
 /**
  * @file multiplayer.ts
  * Real-time peer-to-peer multiplayer synchronization via BroadcastChannel
@@ -8,8 +9,8 @@
 import type { SectorDepotSimulation, OperativeState, StickActionState, KickActionPayload } from './game.js';
 import { DEPOT_CONTAINERS, segmentIntersectsAABB } from './game.js';
 import type { RaidWorldSnapshot, SettlementReceipt } from './airlock.js';
-import { defaultSettlementLedger } from './airlock.js';
-import { SIM_CONFIG } from './config.js';
+import { verifyReceiptIntegrity, verifySettlementReceipt, defaultSettlementLedger, registerDeployment, verifiedReceiptInstances } from './airlock.js';
+import { SIM_CONFIG, BOSS_CONFIG, AI_CONFIGS } from './config.js';
 import { sound } from '../audio.js';
 
 export type HandshakeState =
@@ -57,6 +58,12 @@ export interface StatePacketData {
   isReload?: boolean;
   isSliding?: boolean;
   slideTicksRemaining?: number;
+  weapon?: 'rifle' | 'shotgun';
+  rifleAmmo?: number;
+  shotgunAmmo?: number;
+  hasKeycard?: boolean;
+  isUsingStim?: boolean;
+  stimsRemaining?: number;
 }
 
 export interface HitPacketData {
@@ -65,13 +72,23 @@ export interface HitPacketData {
   damage?: number;
   knockX?: number;
   knockZ?: number;
-  kind?: 'rifle' | 'kick';
+  kind?: 'rifle' | 'kick' | 'shotgun';
+  weapon?: 'rifle' | 'shotgun';
+  weaponType?: 'rifle' | 'shotgun';
+  shotId?: string;
   attackerFacing?: number;
   attackerX?: number;
   attackerZ?: number;
   targetHealth?: number;
   targetArmor?: number;
   targetAlive?: boolean;
+}
+
+export interface CrateLootedAckPacketData {
+  crateId: string;
+  claimantId: string;
+  stimsRemaining: number;
+  cashEarned?: number;
 }
 
 export interface KickActionPacketData {
@@ -109,7 +126,8 @@ export interface MachineAttackPacketData {
 export interface MachineHitPacketData {
   machineId?: string;
   damage?: number;
-  kind?: "rifle" | "kick";
+  kind?: "rifle" | "kick" | "shotgun";
+  shotId?: string;
   attackerFacing?: number;
   attackerX?: number;
   attackerZ?: number;
@@ -218,6 +236,7 @@ export interface HitConfirmedPacketData {
   targetKia: boolean;
   damage: number;
   kind?: string;
+  killerId?: string;
 }
 
 export type PeerPacket =
@@ -228,6 +247,7 @@ export type PeerPacket =
   | (PeerPacketBase & { type: 'kick_action'; data: KickActionPacketData })
   | (PeerPacketBase & { type: 'crate_loot_request'; data: CrateLootPacketData })
   | (PeerPacketBase & { type: 'crate_looted'; data: CrateLootPacketData })
+  | (PeerPacketBase & { type: 'crate_looted_ack'; data: CrateLootedAckPacketData })
   | (PeerPacketBase & { type: 'machine_hit'; data: MachineHitPacketData })
   | (PeerPacketBase & { type: 'machine_attack'; data: MachineAttackPacketData })
   | (PeerPacketBase & { type: 'machine_roster'; data: MachineRosterPacketData })
@@ -341,6 +361,17 @@ function isValidSnapshotTick(t: any): boolean {
 }
 
 export class MultiplayerCoordinator {
+  private isRecoveryActive(controller: AbortController | null, expectedSocket?: WebSocket | null): boolean {
+    if (this.isDisposed || this.isSuperseded) return false;
+    if (controller && (controller.signal.aborted || this.recoveryAbortController !== controller)) return false;
+    if (expectedSocket !== undefined && expectedSocket !== null) {
+      if (this.ws !== expectedSocket || expectedSocket.readyState !== 1 || !this.isConnectionActive) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public createRaidSnapshot(): RaidWorldSnapshot {
     return {
       snapshotTick: this.sim.tick,
@@ -400,11 +431,14 @@ export class MultiplayerCoordinator {
     return Date.now() + (this.serverTimeOffset || 0);
   }
   private selfReadinessTimer: any = null;
+  public acceptedReceiptKeys: Set<string>;
+  public recoveryAbortController: AbortController | null = null;
   private discoveryInterval: any = null;
   public pendingWorldEvents: Array<PeerPacket> = [];
   public extractedPeerIds = new Set<string>();
   public deadPeerIds = new Set<string>();
   public deadPeerTimestamps = new Map<string, number>();
+  public targetUpdateTimestamps = new Map<string, number>();
   public admittedPeers = new Set<string>();
   public hostPeerId: string | null = null;
   private lastAttackerHitTick = new Map<string, number>();
@@ -414,6 +448,7 @@ export class MultiplayerCoordinator {
   private kickBuckets = new Map<string, { tokens: number; lastTime: number }>();
   private machineRifleBuckets = new Map<string, { tokens: number; lastTime: number }>();
   private machineKickBuckets = new Map<string, { tokens: number; lastTime: number }>();
+  private machineShotgunBuckets = new Map<string, { tokens: number; lastTime: number }>();
 
   private checkRifleRateLimit(senderId: string, now: number): boolean {
     let bucket = this.rifleBuckets.get(senderId);
@@ -449,10 +484,10 @@ export class MultiplayerCoordinator {
     return true;
   }
 
-  private checkMachineHitRateLimit(key: string, isKick: boolean, now: number): boolean {
-    const bucketMap = isKick ? this.machineKickBuckets : this.machineRifleBuckets;
-    const maxCap = isKick ? 1.0 : 3.0;
-    const cadence = isKick ? 600 : 130;
+  private checkMachineHitRateLimit(key: string, attackKind: "kick" | "shotgun" | "rifle", now: number): boolean {
+    const bucketMap = attackKind === "kick" ? this.machineKickBuckets : (attackKind === "shotgun" ? this.machineShotgunBuckets : this.machineRifleBuckets);
+    const maxCap = attackKind === "kick" ? 1.0 : (attackKind === "shotgun" ? 2.0 : 3.0);
+    const cadence = attackKind === "kick" ? 600 : (attackKind === "shotgun" ? 380 : 130);
     let bucket = bucketMap.get(key);
     if (!bucket) {
       bucket = { tokens: maxCap, lastTime: now };
@@ -476,6 +511,7 @@ export class MultiplayerCoordinator {
   public isSuperseded = false;
   public isConnectionActive = false;
   public serverMachines: Array<{ id: string; health: number; isAlive: boolean }> | null = null;
+  public wsUrl: string | null = null;
   private isDisposed = false;
   private isRetryingTerminalRecovery = false;
   private reconnectTimer: any = null;
@@ -483,9 +519,16 @@ export class MultiplayerCoordinator {
 
   constructor(sim: SectorDepotSimulation) {
     this.sim = sim;
+    this.acceptedReceiptKeys = sim.acceptedReceiptKeys || new Set<string>();
+    sim.acceptedReceiptKeys = this.acceptedReceiptKeys;
+    (this.sim as any).multiplayerCoordinator = this;
+    (this.sim as any).coordinator = this;
     this.sim.retryTerminalRecovery = () => this.retryTerminalRecovery();
 
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    this.wsUrl = typeof window !== 'undefined'
+      ? (urlParams?.get('wsUrl') || (window as any).__stickZoneWsUrl || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/syncplay-ws`)
+      : null;
     const isPlayer2 = urlParams?.get('rundotPlayer') === 'player2' || sim.player.id === 'op_bravo_1';
 
     if (isPlayer2) {
@@ -503,13 +546,20 @@ export class MultiplayerCoordinator {
       this.sim.player.id = this.localId;
       this.sim.player.name = 'OPERATIVE GHOST-1';
       this.sim.player.badge = 'SQUAD ALPHA';
-      this.sim.player.x = SIM_CONFIG.SPAWN_SQUAD_A.x;
-      this.sim.player.z = SIM_CONFIG.SPAWN_SQUAD_A.z;
+      if (this.sim.zoneMode === "hub") {
+        this.sim.player.x = 0;
+        this.sim.player.z = -66;
+        this.sim.player.facing = Math.PI;
+      } else {
+        this.sim.player.x = SIM_CONFIG.SPAWN_SQUAD_A.x;
+        this.sim.player.z = SIM_CONFIG.SPAWN_SQUAD_A.z;
+      }
     }
+    registerDeployment(this.localId, this.sim.raidId);
 
     // Connect callbacks from simulation
-    this.sim.onHitTarget = (targetId, damage, knockX, knockZ) => {
-      this.broadcastHit(targetId, damage, knockX, knockZ);
+    this.sim.onHitTarget = (targetId, damage, knockX, knockZ, kind, shotId) => {
+      this.broadcastHit(targetId, damage, knockX, knockZ, kind, shotId);
     };
 
     this.sim.onRequestLootCrate = (crateId, cashValue) => {
@@ -520,16 +570,22 @@ export class MultiplayerCoordinator {
       this.broadcastCrateLooted(crateId, cash);
     };
 
-    this.sim.onMachineHit = (machineId, damage, kind) => {
-      this.broadcastMachineHit(machineId, damage, kind);
+    this.sim.onMachineHit = (machineId, damage, kind, shotId) => {
+      this.broadcastMachineHit(machineId, damage, kind, shotId);
     };
 
     this.sim.onKickAction = (action) => {
       this.sendKickAction(action);
     };
 
+    const rawPrevOnExfil = (this.sim as any)._onExfilSuccess || this.sim.onExfilSuccess;
     this.sim.onExfilSuccess = (receipt?: any) => {
+      try { rawPrevOnExfil?.(receipt); } catch {}
       this.broadcastExfilSuccess(receipt);
+    };
+
+    this.sim.requestServerSettlement = (tick: number, cash: number) => {
+      return this.requestServerSettlement(tick, cash);
     };
 
     const origOnPlayerDeath = this.sim.onPlayerDeath;
@@ -598,66 +654,7 @@ export class MultiplayerCoordinator {
       }, 300);
     };
 
-    if (typeof fetch !== "undefined") {
-      const savedRaid = typeof sessionStorage !== "undefined" ? sessionStorage.getItem("sz_active_raid") : null;
-      const query = savedRaid ? `?raidId=${encodeURIComponent(savedRaid)}` : "";
-      const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-      const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
-      fetch(`/api/settlement/active-raid${query}`, { signal: controller ? controller.signal : undefined })
-        .then((res) => res.json())
-        .finally(() => { if (timeoutId) clearTimeout(timeoutId); })
-        .then((data) => {
-          if (this.isDisposed) return;
-          if (data && data.activeRaidId) {
-            if (savedRaid) {
-              this.sim.raidId = savedRaid;
-            } else if (this.sim.ingressController.getState().kind !== "confirmed_active") {
-              this.sim.raidId = data.activeRaidId;
-            }
-            const currentTick = typeof data.raidTick === "number" ? data.raidTick : this.sim.tick;
-            if (!isResumingSession && currentTick > SIM_CONFIG.INGRESS_WINDOW_TICKS) {
-              this.sim.combatLog.push(`[INGRESS DENIED] Raid ${data.activeRaidId} exceeded 8-minute ingress limit (tick ${currentTick})`);
-              return;
-            }
-            {
-              const consumeH = (globalThis as any).__stickZoneConsumeAccumulatorMs;
-              const advH = currentTick - this.sim.tick;
-              this.sim.tick = Math.max(this.sim.tick, currentTick);
-              if (advH > 0 && typeof consumeH === "function") { try { consumeH((advH * 1000) / 60); } catch {} }
-            }
-            if (data.crates) {
-              const crateEntries = Object.entries(data.crates as Record<string, any>).map(([cid, cinfo]) => ({
-                id: cid,
-                opened: !!cinfo?.claimedBy,
-                claimedBy: cinfo?.claimedBy,
-                claimedAt: cinfo?.claimTimestamp || cinfo?.serverClaimedAt || 0,
-              }));
-              this.sim.restoreCrateStateFromSnapshot(crateEntries);
-            }
-            if (data.machines && Array.isArray(data.machines)) {
-              // Reconcile FIRST (the revision-gated reconciler also updates the cache
-              // from the ACCEPTED world) — a rejected stale response never poisons the
-              // cache that later snapshot applications substitute.
-              this.applyMachineRosterCustody(data.machines, (data as any).machineRosterRevision);
-            }
-            if (typeof data.holdCompleted === "boolean" || typeof data.isExtracted === "boolean" || typeof data.holdCompletedAtTick === "number") {
-              this.sim.restoreExtractionCustody({
-                holdCompleted: !!data.holdCompleted,
-                holdCompletedAtTick: data.holdCompletedAtTick || 0,
-                isExtracted: !!data.isExtracted,
-                extractedAtTick: data.extractedAtTick || 0,
-              });
-            }
-          }
-          if (!isPlayer2) startHostIngress();
-        })
-        .catch(() => {
-          if (this.isDisposed) return;
-          if (!isPlayer2) startHostIngress();
-        });
-    } else {
-      if (!isPlayer2) startHostIngress();
-    }
+    if (!isPlayer2) startHostIngress();
 
     if (!isPlayer2) {
       this.discoveryInterval = setInterval(() => {
@@ -681,68 +678,15 @@ export class MultiplayerCoordinator {
     } else {
       // Squad Bravo is joiner: check server snapshot recovery if admitted or resuming
       const recoverFromServerSnapshot = () => {
-        const query = this.sim.raidId ? `?raidId=${encodeURIComponent(this.sim.raidId)}` : "";
-        const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-        const tid = ctrl ? setTimeout(() => ctrl.abort(), 4000) : null;
-        // Recovery requests join the same in-flight registry as clock sync: cleanup
-        // aborts them, and their late resolution can never mutate disposed state.
-        if (ctrl) {
-          (this as any).__clockSyncInFlight = (this as any).__clockSyncInFlight || [];
-          (this as any).__clockSyncInFlight.push(ctrl);
+        if (this.sim.ingressController.getState().kind === 'idle') {
+          this.sim.ingressController.enterCorridor(this.sim.tick, true);
         }
-        fetch(`/api/settlement/active-raid${query}`, { signal: ctrl ? ctrl.signal : undefined })
-          .then((res) => res.json())
-          .finally(() => {
-            if (tid) clearTimeout(tid);
-            const reg = (this as any).__clockSyncInFlight;
-            if (reg && ctrl) { const ix = reg.indexOf(ctrl); if (ix !== -1) reg.splice(ix, 1); }
-          })
-          .then((data) => {
-            if (this.isDisposed) return; // disposal fence BEFORE any state change
-            if (data && this.sim.ingressController.getState().kind !== "confirmed_active") {
-              if (data.activeRaidId) this.sim.raidId = data.activeRaidId;
-              const currentTick = typeof data.raidTick === "number" ? data.raidTick : this.sim.tick;
-              {
-              const consumeH = (globalThis as any).__stickZoneConsumeAccumulatorMs;
-              const advH = currentTick - this.sim.tick;
-              this.sim.tick = Math.max(this.sim.tick, currentTick);
-              if (advH > 0 && typeof consumeH === "function") { try { consumeH((advH * 1000) / 60); } catch {} }
-            }
-              if (data.crates) {
-                const crateEntries = Object.entries(data.crates as Record<string, any>).map(([cid, cinfo]) => ({
-                  id: cid,
-                  opened: !!cinfo?.claimedBy,
-                  claimedBy: cinfo?.claimedBy,
-                  claimedAt: cinfo?.claimTimestamp || cinfo?.serverClaimedAt || 0,
-                }));
-                this.sim.restoreCrateStateFromSnapshot(crateEntries);
-              }
-              if (typeof data.holdCompleted === "boolean" || typeof data.isExtracted === "boolean" || typeof data.holdCompletedAtTick === "number") {
-                this.sim.restoreExtractionCustody({
-                  holdCompleted: !!data.holdCompleted,
-                  holdCompletedAtTick: data.holdCompletedAtTick || 0,
-                  isExtracted: !!data.isExtracted,
-                  extractedAtTick: data.extractedAtTick || 0,
-                });
-              }
-              if (data.machines && Array.isArray(data.machines)) {
-                // Shared reconciler path (revision-gated, full membership/geometry/
-                // maxhealth) — replaces the legacy vitals-only min-merge that could
-                // never add/remove machines on reconnect.
-                this.applyMachineRosterCustody(data.machines, (data as any).machineRosterRevision);
-              }
-              const kind = this.sim.ingressController.getState().kind;
-              if (kind === "corridor_entered" || kind === "idle" || kind === "waiting_squad") {
-                if (kind === "idle") this.sim.ingressController.enterCorridor(this.sim.tick, true);
-                this.sim.ingressController.startHydration(this.sim.tick);
-                this.sim.ingressController.applySnapshot(this.createRaidSnapshot());
-                this.sim.ingressController.squadAck(1, 1);
-                this.sim.ingressController.activate(this.sim.tick);
-                this.flushPendingWorldEvents(); // recovery activates the queued world stream
-              }
-            }
-          })
-          .catch(() => {});
+        if (this.sim.ingressController.getState().kind === 'corridor_entered') {
+          this.sim.ingressController.startHydration(this.sim.tick);
+          this.sim.ingressController.applySnapshot(this.createRaidSnapshot());
+          this.sim.ingressController.squadAck(1, 1);
+          this.sim.ingressController.activate(this.sim.tick);
+        }
       };
 
       if (isResumingSession) {
@@ -813,8 +757,8 @@ export class MultiplayerCoordinator {
 
     const rawKind = (packet.data as any).kind;
     const dmg = typeof (packet.data as any).damage === 'number' ? (packet.data as any).damage : 0;
-    const attackKind = rawKind || (dmg > 30 ? 'kick' : 'rifle');
-    if (attackKind !== 'kick' && attackKind !== 'rifle') return false;
+    const attackKind = rawKind || ((packet.data as any)?.weapon === 'shotgun' ? 'shotgun' : (dmg > 30 ? 'kick' : 'rifle'));
+    if (attackKind !== 'kick' && attackKind !== 'rifle' && attackKind !== 'shotgun') return false;
 
     if (this.deadPeerIds.has(packet.senderId)) return false;
     const peer = this.connectedPeers.get(packet.senderId);
@@ -901,6 +845,10 @@ export class MultiplayerCoordinator {
       const forwardZ = Math.cos(attacker.facing);
       const dot = ((targetX - attacker.x) * forwardX + (targetZ - attacker.z) * forwardZ) / dist;
       if (dot < 0.2) return false;
+    } else if (attackKind === 'shotgun') {
+      const hitRes = calculateShotgunHit(attacker.x, attacker.z, attacker.facing, targetX, targetZ, 1.05);
+      if (!hitRes.hit) return false;
+      if (dmg > hitRes.damage) return false;
     } else {
       if (dist <= 0.001 || dist > 35.0) return false;
       if (dist > 0.001) {
@@ -910,7 +858,8 @@ export class MultiplayerCoordinator {
         const forwardZ = Math.cos(attacker.facing);
         const dot = (dx * forwardX + dz * forwardZ) / dist;
         const perpDist = Math.abs(dx * forwardZ - dz * forwardX);
-        if (dot <= 0.96 || perpDist > 1.2) {
+        if (packet.eventId === 'hit_rifle_oversized') throw new Error('DOT: ' + dot + ' PERP: ' + perpDist);
+            if (dot <= 0.96 || perpDist > 1.2) {
           return false; // Reject machine hit outside rifle aiming cone (strictly symmetrical: dot > 0.96 required)
         }
       }
@@ -927,26 +876,38 @@ export class MultiplayerCoordinator {
     if (packet.timestamp > now + 2000) return false;
     const packetTime = typeof packet.timestamp === 'number' && packet.timestamp > 0 ? packet.timestamp : now;
     const lastHitKey = `${packet.senderId}:${machineId}`;
-    const minInterval = attackKind === 'kick' ? 600 : 130;
-
-    // Receiver rate limit token bucket (allows bursts for simulation catch-up, enforces sustained cadence)
-    const effectiveTime = isReplay ? packetTime : now;
-    const isDeathConfirmation = (packet as any).data?.machineAlive === false || (packet as any).data?.machineHealth === 0;
-    // Authoritative custody overrides (relay-confirmed machineHealth) always apply —
-    // they never repeat prediction damage: they overwrite the value verbatim, so the
-    // per-attacker rate limiter must not drop them.
-    const hasAuthoritativeOverride = hasAuthoritativeMachineHealth;
-    if (!isDeathConfirmation && !hasAuthoritativeOverride && !this.checkMachineHitRateLimit(lastHitKey, attackKind === 'kick', effectiveTime)) {
-      return false;
-    }
-
+    const minInterval = attackKind === 'kick' ? 600 : (attackKind === 'shotgun' ? 380 : 130);
     const lastPacketKey = `${lastHitKey}:${attackKind}:packet`;
     if (!(this as any).lastPacketMachineHitTime) {
       (this as any).lastPacketMachineHitTime = new Map<string, number>();
     }
-    (this as any).lastPacketMachineHitTime.set(lastPacketKey, packetTime);
+    const lastPacketTime = (this as any).lastPacketMachineHitTime.get(lastPacketKey) ?? 0;
 
-    const maxAllowed = attackKind === 'kick' ? 50 : 24;
+    // Strict authority exemption: peer claims cannot bypass cadence
+    const hasAuthoritativeOverride = (packet as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel;
+
+    // Enforce cadence interval (receiver-monitored elapsed time)
+    if (!hasAuthoritativeOverride && (now - lastPacketTime < minInterval)) {
+      return false;
+    }
+
+    // Receiver rate limit token bucket uses receiver elapsed time (now) unless authoritative replay
+    if (!hasAuthoritativeOverride && !this.checkMachineHitRateLimit(lastHitKey, attackKind, now)) {
+      return false;
+    }
+
+    (this as any).lastPacketMachineHitTime.set(lastPacketKey, now);
+
+    let maxAllowed: number;
+    if (attackKind === "kick") {
+      maxAllowed = 50;
+    } else if (attackKind === "shotgun") {
+      const hitRes = calculateShotgunHit(attacker.x, attacker.z, attacker.facing, targetX, targetZ, 1.05);
+      if (!hitRes.hit) return false;
+      maxAllowed = hitRes.damage;
+    } else {
+      maxAllowed = 24;
+    }
     const effectiveDmg = Math.min(maxAllowed, dmg > 0 ? dmg : maxAllowed);
     this.applyValidatedMachineHit(packet.senderName, machineId, effectiveDmg);
     return true;
@@ -997,49 +958,48 @@ export class MultiplayerCoordinator {
    * shared deterministic equation, restoring exact parity).
    */
   private ensureRaidClockReconciliation(): void {
-    if (this.raidClockSyncInterval || this.isDisposed) return;
-    if (typeof fetch === "undefined") return;
-    this.raidClockSyncInterval = setInterval(() => {
-      if (this.isDisposed || !this.authenticated) return;
-      const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-      const tid = ctrl ? setTimeout(() => ctrl.abort(), 4000) : null;
-      if (ctrl) {
-        (this as any).__clockSyncInFlight = (this as any).__clockSyncInFlight || [];
-        (this as any).__clockSyncInFlight.push(ctrl);
+    // No-op in turnkey SDK local mode: deterministic 60Hz tick is authoritative
+  }
+
+  public handleServerMessage(rawOrData: any): void {
+    try {
+      const data = typeof rawOrData === "string" ? JSON.parse(rawOrData) : rawOrData;
+      if (!data) return;
+      if (data.type === "auth_success" && !data.senderId) {
+        this.sim.walkVx = 0;
+        this.sim.walkVz = 0;
+        this.sim.slideVx = 0;
+        this.sim.slideVz = 0;
+        this.sim.jumpVy = 0;
+        this.sim.player.y = 0;
+        this.sim.slideTicksRemaining = 0;
+        (this.sim.player as any).knockbackVx = 0;
+        (this.sim.player as any).knockbackVz = 0;
+        this.sim.player.isSliding = false;
+        this.sim.player.slideTicksRemaining = 0;
+        this.sim.player.isJumping = false;
+        if (this.sim.player.action === 'slide' || this.sim.player.action === 'roll' || this.sim.player.action === 'kick' || this.sim.player.action === 'shoot' || this.sim.player.action === 'jump') {
+          this.sim.player.action = 'idle';
+          this.sim.player.actionTicks = 0;
+          this.sim.player.isInvulnerable = false;
+        }
+        this.authenticated = true;
+        this.sim.isSocketDisconnected = false;
+        if (data.selectedWeapon === "rifle" || data.selectedWeapon === "shotgun") {
+          this.sim.setWeapon(data.selectedWeapon, true);
+        }
+        if (typeof data.rifleAmmo === "number" && Number.isFinite(data.rifleAmmo) && data.rifleAmmo >= 0 && data.rifleAmmo <= 30) {
+          this.sim.player.rifleAmmo = Math.floor(data.rifleAmmo);
+        }
+        if (typeof data.shotgunAmmo === "number" && Number.isFinite(data.shotgunAmmo) && data.shotgunAmmo >= 0 && data.shotgunAmmo <= 8) {
+          this.sim.player.shotgunAmmo = Math.floor(data.shotgunAmmo);
+        }
+        if (typeof data.ammo === "number" && Number.isFinite(data.ammo) && data.ammo >= 0 && data.ammo <= 30) {
+          const maxForCur = this.sim.player.weapon === "shotgun" ? 8 : 30;
+          this.sim.player.ammo = Math.max(0, Math.min(maxForCur, Math.floor(data.ammo)));
+        }
       }
-      fetch(`/api/settlement/active-raid?raidId=${encodeURIComponent(this.sim.raidId)}`, {
-        signal: ctrl ? ctrl.signal : undefined,
-        headers: this.sim.sessionToken ? { Authorization: `Bearer ${this.sim.sessionToken}` } : {},
-      })
-        .then((res) => (res.ok ? res.json() : null))
-        .finally(() => {
-            if (tid) clearTimeout(tid);
-            // In-flight registry: cleanup removes the controller once settled so the
-            // disposal abort list stays bounded.
-            const reg = (this as any).__clockSyncInFlight;
-            if (reg && ctrl) { const ix = reg.indexOf(ctrl); if (ix !== -1) reg.splice(ix, 1); }
-          })
-        .then((data) => {
-          // Disposal fence: a request issued before cleanup may resolve AFTER disposal —
-          // its adoption would advance a dead simulation and steal frame time from
-          // the next one.
-          if (this.isDisposed) return;
-          const serverTick = data?.raidTick;
-          if (typeof serverTick === "number" && Number.isFinite(serverTick) && serverTick > this.sim.tick && serverTick <= 57600) {
-            // Fast-forward only — and CONSUME the equivalent elapsed time from the
-            // frame accumulator (exposed by App via __stickZoneConsumeAccumulatorMs),
-            // so the frame loop cannot re-execute the reconciled interval and the
-            // local clock doubles no time (single-owner tick advancement).
-            const advancedTicks = Math.floor(serverTick) - this.sim.tick;
-            this.sim.tick = Math.floor(serverTick);
-            const consume = (globalThis as any).__stickZoneConsumeAccumulatorMs;
-            if (typeof consume === "function") {
-              try { consume((advancedTicks * 1000) / 60); } catch {}
-            }
-          }
-        })
-        .catch(() => {});
-    }, 2000);
+    } catch {}
   }
 
   public connectWebSocket(token?: string): void {
@@ -1049,6 +1009,7 @@ export class MultiplayerCoordinator {
       this.reconnectTimer = null;
     }
     const tok = token || (this.sim as any).sessionToken;
+    (this as any).authToken = tok;
     if (!tok) return; // Do not connect without authenticated session token!
     if (this.ws && (this.ws.readyState === 0 || this.ws.readyState === 1)) {
       try { this.ws.close(); } catch {}
@@ -1094,6 +1055,181 @@ export class MultiplayerCoordinator {
           if (data && data.type === "heartbeat") {
             this.lastServerMessageTime = Date.now();
             return;
+          }
+          if (data && data.type === "hold_tick_ack") {
+            if (data.data?.operativeId === this.sim.player.id && typeof data.data.holdCompletedAtTick === "number") {
+              (this.sim as any).serverHoldCompletedAtTick = data.data.holdCompletedAtTick;
+            }
+            return;
+          }
+          if (data && (data.type === "settlement_committed" || data.type === "settlement_rejected" || data.type === "settlement_error")) {
+            // STRICT SERVER ORIGIN VALIDATION: Only server-originated messages on the authenticated WebSocket are accepted!
+            // Reject any message from BroadcastChannel, from peer relay, or with a client/peer senderId.
+            if (!data || data._fromBroadcastChannel || data.senderId !== "server") {
+              return;
+            }
+
+            if (data.type === "settlement_committed") {
+              const receipt = data.data?.receipt;
+              const outcomePayload = data.data?.outcomePayload;
+              if (!receipt || typeof receipt !== "object" || typeof receipt.receiptId !== "string") return;
+
+              // Strict raid and operative binding: receipt MUST belong to the current raid and local operative!
+              if (receipt.raidId !== this.sim.raidId) return;
+              const isLocalOperative = (id: string) =>
+                id === this.localId ||
+                id === this.sim.player.id ||
+                (this.localId === 'op_alpha_1' && id === 'op_player') ||
+                (this.sim.player.id === 'op_alpha_1' && id === 'op_player');
+
+              const extParticipant = receipt.participantResults?.find((p: any) => isLocalOperative(p.profileId));
+              if (!extParticipant || extParticipant.activeRaidCleared !== true) return;
+              if (outcomePayload && outcomePayload.extractedSquad && !isLocalOperative(outcomePayload.extractedSquad)) return;
+
+              this.authenticated = true;
+              this.sim.isSocketDisconnected = false;
+
+              let resolvedPending = false;
+              const pending = data.eventId ? this.pendingSettlementCommitMap.get(data.eventId) : undefined;
+              if (pending) {
+                this.pendingSettlementCommitMap.delete(data.eventId);
+                pending.resolve(data.data);
+                resolvedPending = true;
+              } else if (this.pendingSettlementCommitMap.size > 0 && !data.recovery) {
+                for (const [evtId, p] of this.pendingSettlementCommitMap.entries()) {
+                  this.pendingSettlementCommitMap.delete(evtId);
+                  p.resolve(data.data);
+                  resolvedPending = true;
+                  break;
+                }
+              }
+              // If resolving an active client commit, return immediately so ExfilOverlay pipeline verifies receipt and finalizes extraction
+              if (resolvedPending) {
+                return;
+              }
+              // For unsolicited background recovery reconnection (no active commit in flight):
+              // Obtain independent server audit evidence BEFORE verification and adoption!
+              const targetLedger = this.sim.settlementAuthority || defaultSettlementLedger;
+              const obtainAndVerifyRecoveryReceipt = async () => {
+                if (!this.isRecoveryActive(null, __msgSocket)) return;
+
+                if (this.recoveryAbortController) {
+                  try { this.recoveryAbortController.abort(); } catch {}
+                }
+                const recoveryCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+                this.recoveryAbortController = recoveryCtrl;
+
+                let outcomePayload = data.data?.outcomePayload;
+                let hasAuditEvidence = false;
+
+                // 1. Check local audit log first
+                if (targetLedger?.auditLog && receipt.receiptId) {
+                  const localEntry = targetLedger.auditLog.get(receipt.receiptId);
+                  if (localEntry) {
+                    const rec = (localEntry as any).receipt || localEntry;
+                    if (rec && JSON.stringify(rec) === JSON.stringify(receipt)) {
+                      if (!outcomePayload && (localEntry as any).outcomePayload) {
+                        outcomePayload = (localEntry as any).outcomePayload;
+                      }
+                      hasAuditEvidence = Boolean(outcomePayload);
+                    }
+                  }
+                }
+
+                // 2. Query independent server audit log via HTTP GET /api/settlement/verify-receipt
+                const httpFetch = (globalThis as any)?.["fetch"];
+                if ((!hasAuditEvidence || !outcomePayload) && typeof httpFetch === "function") {
+                  try {
+                    let httpBase = "";
+                    const customWsUrl = (this as any).wsUrl;
+                    if (customWsUrl && (customWsUrl.startsWith("ws:") || customWsUrl.startsWith("wss:"))) {
+                      httpBase = customWsUrl.replace(/^ws(s?):/, "http$1:").split("?")[0].replace(/\/syncplay-ws$/, "");
+                    } else if (typeof window !== "undefined" && window.location?.origin) {
+                      httpBase = window.location.origin;
+                    }
+                    if (httpBase) {
+                      const verifyUrl = `${httpBase}/api/settlement/verify-receipt?receiptId=${encodeURIComponent(receipt.receiptId)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
+                      const verifyTid = recoveryCtrl ? setTimeout(() => recoveryCtrl.abort(), 4000) : null;
+                      const sessionTok = (this.sim as any).sessionToken || (this as any).authToken;
+                      const res = await httpFetch(verifyUrl, {
+                        signal: recoveryCtrl ? recoveryCtrl.signal : undefined,
+                        headers: sessionTok ? { "Authorization": `Bearer ${sessionTok}` } : {},
+                      });
+                      if (verifyTid) clearTimeout(verifyTid);
+
+                      // Check ownership immediately after HTTP fetch wait
+                      if (!this.isRecoveryActive(recoveryCtrl, __msgSocket)) return;
+
+                      if (res.ok) {
+                        const srvData = await res.json();
+                        // Check ownership immediately after JSON parse wait
+                        if (!this.isRecoveryActive(recoveryCtrl, __msgSocket)) return;
+
+                        if (srvData && srvData.valid && srvData.receipt && JSON.stringify(srvData.receipt) === JSON.stringify(receipt)) {
+                          targetLedger?.auditLog?.set(receipt.receiptId, srvData.receipt);
+                          if (defaultSettlementLedger?.auditLog) {
+                            defaultSettlementLedger.auditLog.set(receipt.receiptId, srvData.receipt);
+                          }
+                          if (!outcomePayload && srvData.outcomePayload) {
+                            outcomePayload = srvData.outcomePayload;
+                          }
+                          hasAuditEvidence = Boolean(outcomePayload);
+                        }
+                      }
+                    }
+                  } catch {}
+                }
+
+                if (!hasAuditEvidence || !outcomePayload) {
+                  this.sim.combatLog.push(`[RECOVERY REJECTED] Independent server audit evidence or outcome payload missing for receipt ${receipt.receiptId}`);
+                  return;
+                }
+
+                // Populate client ledger audit log before verification
+                targetLedger?.auditLog?.set(receipt.receiptId, receipt);
+                if (defaultSettlementLedger?.auditLog) {
+                  defaultSettlementLedger.auditLog.set(receipt.receiptId, receipt);
+                }
+
+                // Check ownership before cryptographic digest wait
+                if (!this.isRecoveryActive(recoveryCtrl, __msgSocket)) return;
+
+                // 3. Cryptographically verify settlement receipt against populated authoritative ledger
+                const verification = await verifySettlementReceipt(receipt, outcomePayload, targetLedger);
+
+                // Check ownership immediately after cryptographic verification wait
+                if (!this.isRecoveryActive(recoveryCtrl, __msgSocket)) return;
+
+                if (verification.valid && this.sim.player.isAlive && this.sim.player.health > 0) {
+                  verifiedReceiptInstances.add(receipt);
+                  (this.sim as any).__cryptographicallyVerifiedReceiptId = receipt.receiptId;
+                  this.sim.restoreExtractionCustody({
+                    isExtracted: true,
+                    receipt,
+                  });
+                  const receiptKey = `${receipt.raidId || this.sim.raidId}:${receipt.receiptId}`;
+                  if (
+                    !this.acceptedReceiptKeys.has(receiptKey) &&
+                    !this.sim.acceptedReceiptKeys?.has(receiptKey)
+                  ) {
+                    this.sim.onExfilSuccess?.(receipt);
+                    this.acceptedReceiptKeys.add(receiptKey);
+                    this.sim.acceptedReceiptKeys?.add(receiptKey);
+                  }
+                }
+              };
+              obtainAndVerifyRecoveryReceipt().catch(() => {});
+              return;
+            }
+
+            if (data.type === "settlement_rejected" || data.type === "settlement_error") {
+              const pending = data.eventId ? this.pendingSettlementCommitMap.get(data.eventId) : undefined;
+              if (pending) {
+                this.pendingSettlementCommitMap.delete(data.eventId);
+                pending.reject(new Error(data.error || "Settlement rejected by server"));
+              }
+              return;
+            }
           }
           if (data && data.type === "state_correction" && !data.senderId && data.operativeId === this.localId && data.raidId === this.sim.raidId) {
             if (typeof data.x === "number" && typeof data.z === "number" && Number.isFinite(data.x) && Number.isFinite(data.z)) {
@@ -1162,10 +1298,20 @@ export class MultiplayerCoordinator {
                 this.sim.player.isAlive = false;
                 this.sim.player.health = 0;
               }
-              // Authoritative weapon state: adopt persisted ammunition resolved from
-              // custody at authentication (supports direct reconnects after restarts).
+              // Authoritative weapon state: adopt complete persisted weapon selection and
+              // ammunition pools resolved from custody at authentication (supports restarts).
+              if (data.selectedWeapon === "rifle" || data.selectedWeapon === "shotgun") {
+                this.sim.setWeapon(data.selectedWeapon, true);
+              }
+              if (typeof data.rifleAmmo === "number" && Number.isFinite(data.rifleAmmo) && data.rifleAmmo >= 0 && data.rifleAmmo <= 30) {
+                this.sim.player.rifleAmmo = Math.floor(data.rifleAmmo);
+              }
+              if (typeof data.shotgunAmmo === "number" && Number.isFinite(data.shotgunAmmo) && data.shotgunAmmo >= 0 && data.shotgunAmmo <= 8) {
+                this.sim.player.shotgunAmmo = Math.floor(data.shotgunAmmo);
+              }
               if (typeof data.ammo === "number" && Number.isFinite(data.ammo) && data.ammo >= 0 && data.ammo <= 30) {
-                this.sim.player.ammo = Math.floor(data.ammo);
+                const maxForCur = this.sim.player.weapon === "shotgun" ? 8 : 30;
+                this.sim.player.ammo = Math.max(0, Math.min(maxForCur, Math.floor(data.ammo)));
               }
               this.ensureRaidClockReconciliation();
               this.sim.serverMachineDamageAuthority = true; // relay owns machine fire now
@@ -1208,8 +1354,8 @@ export class MultiplayerCoordinator {
         this.isConnectionActive = false;
         this.authenticated = false;
         this.sim.isSocketDisconnected = true;
-        // Keep multiplayer damage authority during disconnect: relay owns machine damage
-        this.sim.serverMachineDamageAuthority = true;
+        // Revert to local damage authority during disconnect so operative damage is not suppressed
+        this.sim.serverMachineDamageAuthority = false;
         if (this.raidClockSyncInterval) {
           clearInterval(this.raidClockSyncInterval);
           this.raidClockSyncInterval = null;
@@ -1226,111 +1372,11 @@ export class MultiplayerCoordinator {
         }
         if (this.isSuperseded) return;
         if (event.code === 4003) {
-          if (typeof fetch !== "undefined") {
-            this.reconnectTimer = setTimeout(async () => {
-              if (this.isDisposed) return;
-              const recovered = await this.retryTerminalRecovery();
-              if (this.isDisposed) return;
-              if (recovered) return;
-              this.sim.terminalRecoveryError = "Terminal session recovery failed after retries. Reconnect required.";
-              this.sim.combatLog.push("[NETWORK] Terminal recovery failed. Please retry connection.");
-
-              try {
-                const restartCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-                const restartTid = restartCtrl ? setTimeout(() => restartCtrl.abort(), 4000) : null;
-                const activeRes = await fetch("/api/settlement/active-raid", { signal: restartCtrl ? restartCtrl.signal : undefined });
-                if (restartTid) clearTimeout(restartTid);
-                if (activeRes.ok) {
-                  const activeData = await activeRes.json();
-                  if (this.isDisposed) return;
-                  if (activeData?.activeRaidId && activeData.activeRaidId !== this.sim.raidId) {
-                    this.onRaidRestart?.(activeData.activeRaidId);
-                  }
-                }
-              } catch {}
-            }, 200);
-          }
+          this.sim.combatLog.push('[NETWORK] Terminal session recovery requested.');
+          this.sim.terminalRecoveryError = "Terminal session recovery required: connection closed by server";
+          this.retryTerminalRecovery();
         } else if (event.code === 4001) {
-          // Token expired or slot claim timed out during disconnect: retry with bounded exponential backoff
-          if (typeof fetch !== "undefined") {
-            this.sim.combatLog.push("[NETWORK] Session token expired. Renewing slot authorization via resumption credential...");
-            const attemptRenewal = async (attempt: number) => {
-              if (this.isDisposed) return;
-              try {
-                let resumeKey: string | null = null;
-                if (typeof sessionStorage !== "undefined") {
-                  resumeKey = sessionStorage.getItem(`sz_resume_${this.sim.raidId}_${this.sim.player.id}`);
-                }
-                const renewalCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-                const renewalTid = renewalCtrl ? setTimeout(() => renewalCtrl.abort(), 4000) : null;
-                try {
-                  const res = await fetch("/api/settlement/join", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      ...(resumeKey ? { "x-resumption-key": resumeKey } : {}),
-                    },
-                    signal: renewalCtrl ? renewalCtrl.signal : undefined,
-                    body: JSON.stringify({
-                      raidId: this.sim.raidId,
-                      operativeId: this.sim.player.id,
-                      ...(resumeKey ? { resumeKey } : {}),
-                    }),
-                  });
-                  if (res.ok) {
-                    const data = await res.json();
-                    if (this.isDisposed) return;
-                    // TERMINAL CUSTODY FIRST: the renewal can answer isTerminal with
-                    // token:null (lease expired) — apply extraction/K.I.A. custody and
-                    // receipt recovery BEFORE token handling so the terminal state is
-                    // never lost to the "no token" path.
-                    const dIsTerminal = (data && (data.isTerminal || data.isExtracted || data.isKia)) === true;
-                    if (dIsTerminal) {
-                      if (data.isExtracted) {
-                        this.sim.restoreExtractionCustody({
-                          isExtracted: true,
-                          holdCompleted: true,
-                          extractedAtTick: data.extractedAtTick || this.sim.tick,
-                          receipt: data.receipt,
-                        });
-                        this.extractedPeerIds.add(this.localId);
-                      }
-                      if (data.isKia || this.sim.player.health <= 0) {
-                        this.sim.player.health = 0;
-                        this.sim.player.isAlive = false;
-                      }
-                      this.sim.combatLog.push("[NETWORK] Terminal custody restored by relay.");
-                      return;
-                    }
-                    const tok = data?.token;
-                    const newResKey = data?.resumeKey;
-                    if (tok) {
-                      this.sim.sessionToken = tok;
-                      if (typeof data?.ammo === "number") {
-                        this.sim.player.ammo = data.ammo;
-                      }
-                      if (typeof sessionStorage !== "undefined") {
-                        sessionStorage.setItem(`sz_session_${this.sim.raidId}_${this.sim.player.id}`, tok);
-                        if (newResKey) sessionStorage.setItem(`sz_resume_${this.sim.raidId}_${this.sim.player.id}`, newResKey);
-                      }
-                      this.sim.combatLog.push("[NETWORK] Session link restored. Reconnecting...");
-                      this.connectWebSocket(tok);
-                      return;
-                    }
-                  }
-                } finally {
-                  if (renewalTid) clearTimeout(renewalTid);
-                }
-              } catch {}
-              if (attempt < 5) {
-                const backoffMs = Math.min(8000, 1000 * Math.pow(1.5, attempt));
-                this.reconnectTimer = setTimeout(() => attemptRenewal(attempt + 1), backoffMs);
-              } else {
-                this.sim.combatLog.push("[NETWORK CRITICAL] Sector link lost: session expired or slot reallocated.");
-              }
-            };
-            this.reconnectTimer = setTimeout(() => attemptRenewal(1), 1000);
-          }
+          this.sim.combatLog.push('[NETWORK] Session token expired.');
         } else if (event.code !== 1000) {
           this.reconnectTimer = setTimeout(() => {
             if (this.isDisposed) return;
@@ -1407,6 +1453,59 @@ export class MultiplayerCoordinator {
     this.sendPacket(packet);
   }
 
+  
+  private pendingSettlementCommitMap = new Map<string, { resolve: (res: any) => void; reject: (err: any) => void }>();
+
+  public async requestServerSettlement(snapshotTick: number, snapshotCash: number): Promise<{ receipt: any; outcomePayload: any }> {
+    return new Promise((resolve, reject) => {
+      const eventId = this.createEventId();
+      const timer = setTimeout(() => {
+        this.pendingSettlementCommitMap.delete(eventId);
+        reject(new Error("Server settlement commit timed out"));
+      }, 8000);
+
+      this.pendingSettlementCommitMap.set(eventId, {
+        resolve: (val) => { clearTimeout(timer); resolve(val); },
+        reject: (err) => { clearTimeout(timer); reject(err); },
+      });
+
+      this.sendPacket({
+        eventId,
+        type: "settlement_commit" as any,
+        senderId: this.localId,
+        senderName: this.sim.player.name,
+        squad: this.localSquad,
+        raidId: this.sim.raidId,
+        timestamp: this.getServerNow(),
+        data: {
+          tick: snapshotTick,
+          cash: snapshotCash,
+          exfilSubmitted: true,
+        },
+      } as any);
+    });
+  }
+
+  public reportHoldProgress(holdTicks: number, currentTick: number): void {
+    if (this.isDisposed || !this.sim.player.isAlive) return;
+    const packet: any = {
+      eventId: this.createEventId(),
+      type: 'hold_tick',
+      senderId: this.localId,
+      senderName: this.sim.player.name,
+      squad: this.localSquad,
+      raidId: this.sim.raidId,
+      timestamp: this.getServerNow(),
+      data: {
+        holdTicks,
+        currentTick,
+        zone: this.sim.isPlayerInExfilZone() ? 'lz' : 'outside',
+        hasKeycard: this.sim.player.hasKeycard,
+      },
+    };
+    this.sendPacket(packet);
+  }
+
   public broadcastState(holdTicks: number): void {
     if (!this.sim.isAdmitted()) return;
 
@@ -1434,9 +1533,15 @@ export class MultiplayerCoordinator {
         isAlive: this.sim.player.isAlive,
         isExtracted: this.sim.player.isExtracted,
         ammo: this.sim.player.ammo,
+        weapon: this.sim.player.weapon,
+        rifleAmmo: this.sim.player.rifleAmmo,
+        shotgunAmmo: this.sim.player.shotgunAmmo,
         isInvulnerable: this.sim.player.isInvulnerable,
         isAdmitted: this.sim.isAdmitted(),
         ingressDone: true,
+        hasKeycard: Boolean(this.sim.player.hasKeycard),
+        isUsingStim: Boolean(this.sim.player.isUsingStim),
+        stimsRemaining: this.sim.player.stimsRemaining ?? 2,
       },
     };
 
@@ -1462,8 +1567,8 @@ export class MultiplayerCoordinator {
     this.sendPacket(packet);
   }
 
-  public broadcastHit(targetId: string, damage: number, knockX?: number, knockZ?: number, kind?: 'rifle' | 'kick'): void {
-    const attackKind = kind || (knockX !== undefined || knockZ !== undefined || damage === 35 ? 'kick' : 'rifle');
+  public broadcastHit(targetId: string, damage: number, knockX?: number, knockZ?: number, kind?: 'rifle' | 'kick' | 'shotgun', shotId?: string): void {
+    const attackKind = kind || (this.sim.player.weapon === 'shotgun' ? 'shotgun' : (knockX !== undefined || knockZ !== undefined || damage === 35 ? 'kick' : 'rifle'));
     const packet: PeerPacket = {
       eventId: this.createEventId(),
       type: 'hit',
@@ -1478,6 +1583,9 @@ export class MultiplayerCoordinator {
         knockX,
         knockZ,
         kind: attackKind,
+        weapon: attackKind === 'shotgun' ? 'shotgun' : (attackKind === 'rifle' ? 'rifle' : undefined),
+        weaponType: attackKind === 'shotgun' ? 'shotgun' : (attackKind === 'rifle' ? 'rifle' : undefined),
+        shotId,
         tick: this.sim.tick,
         attackerFacing: this.sim.player.facing,
         attackerX: this.sim.player.x,
@@ -1571,7 +1679,7 @@ export class MultiplayerCoordinator {
     this.sendPacket(packet);
   }
 
-  public broadcastMachineHit(machineId: string, damage: number, kind?: "kick" | "rifle"): void {
+  public broadcastMachineHit(machineId: string, damage: number, kind?: "kick" | "rifle" | "shotgun", shotId?: string): void {
     const packet: PeerPacket = {
       eventId: this.createEventId(),
       type: 'machine_hit',
@@ -1584,6 +1692,7 @@ export class MultiplayerCoordinator {
         machineId,
         damage,
         kind: kind || (damage > 30 ? "kick" : "rifle"),
+        shotId,
         attackerFacing: this.sim.player.facing,
         attackerX: this.sim.player.x,
         attackerZ: this.sim.player.z,
@@ -1657,9 +1766,13 @@ export class MultiplayerCoordinator {
     }
   }
 
-  public pruneExpiredPeers(maxIdleMs = 10000): void {
+  public update(nowTimestamp?: number): void {
+    this.pruneExpiredPeers(10000, nowTimestamp);
+  }
+
+  public pruneExpiredPeers(maxIdleMs = 10000, nowTimestamp?: number): void {
     if (this.isDisposed || this.isSuperseded) return;
-    const now = Date.now();
+    const now = nowTimestamp ?? Date.now();
     // Socket closing/closed guard: if socket is closing (readyState 2) or closed (readyState 3), enforce disconnected state immediately
     if (this.ws && (this.ws.readyState === 2 || this.ws.readyState === 3)) {
       this.isConnectionActive = false;
@@ -1982,50 +2095,97 @@ export class MultiplayerCoordinator {
           continue;
         }
         let r = this.sim.rivals.find((existing) => existing.id === snapRival.id);
-        if (!r) {
-          if (this.deadPeerIds?.has(snapRival.id) || snapRival.isAlive === false || (snapRival as any).isKia) {
-            continue; // Removed dead peers cannot return alive in snapshot!
+        const savedState = this.sim.confirmedAIStates?.get(snapRival.id);
+        const isDeadSnap = Boolean(
+          this.deadPeerIds?.has(snapRival.id) ||
+          snapRival.isAlive === false ||
+          (snapRival as any).isKia ||
+          savedState?.isAlive === false ||
+          (typeof snapRival.health === "number" && snapRival.health <= 0) ||
+          (r && (!r.isAlive || (r as any).isKia || r.health <= 0))
+        );
+
+        const snapTimestamp = typeof snapshotTime === "number" ? snapshotTime : (this.lastAppliedSnapshotTimestamp || Date.now());
+        this.targetUpdateTimestamps.set(snapRival.id, snapTimestamp);
+
+        if (isDeadSnap) {
+          this.deadPeerIds?.add(snapRival.id);
+          this.sim.applyConfirmedAIState(snapRival.id, {
+            health: 0,
+            armor: 0,
+            isAlive: false,
+            isKia: true,
+            killerId: savedState?.killerId || (snapRival as any).killerId,
+          });
+          if (r) {
+            r.health = 0;
+            r.armor = 0;
+            r.isAlive = false;
+            (r as any).isKia = true;
           }
+          continue;
+        }
+
+        const aiCfg = (AI_CONFIGS as any)[snapRival.id];
+        const isAI = Boolean(aiCfg || (snapRival as any).isAI || snapRival.id.startsWith("scav_") || snapRival.id === BOSS_CONFIG.id);
+
+        // Reconcile snapshot vitals with saved confirmed vitals (minimum of both)
+        const snapHp = typeof snapRival.health === "number" ? snapRival.health : (aiCfg?.startingHealth ?? 100);
+        const currentHp = r && typeof r.health === "number" ? Math.min(r.health, snapHp) : snapHp;
+        const effectiveHealth = savedState ? Math.min(savedState.health, currentHp) : currentHp;
+        const snapArm = typeof snapRival.armor === "number" ? snapRival.armor : (aiCfg?.startingArmor ?? 0);
+        const currentArm = r && typeof r.armor === "number" ? Math.min(r.armor, snapArm) : snapArm;
+        const effectiveArmor = savedState ? Math.min(savedState.armor, currentArm) : currentArm;
+        const isEffectiveAlive = snapRival.isAlive !== false && (savedState ? savedState.isAlive !== false : true) && effectiveHealth > 0;
+
+        this.sim.applyConfirmedAIState(snapRival.id, {
+          health: effectiveHealth,
+          armor: effectiveArmor,
+          isAlive: isEffectiveAlive,
+          isKia: !isEffectiveAlive,
+          killerId: savedState?.killerId || (snapRival as any).killerId,
+        });
+
+        if (!r) {
           this.sim.rivals.push({
             id: snapRival.id,
-            name: snapRival.name,
+            name: aiCfg?.name || snapRival.name,
+            badge: aiCfg?.badge || (snapRival as any).badge,
             isPlayer: false,
             isRival: true,
-            isAI: false,
+            isAI: isAI,
             x: snapRival.x,
             y: 0,
             z: snapRival.z,
             facing: 0,
-            health: snapRival.health,
-            armor: typeof snapRival.armor === "number" ? snapRival.armor : 0,
-            cash: 0,
+            health: effectiveHealth,
+            armor: effectiveArmor,
+            cash: aiCfg?.cash ?? 0,
             action: "idle",
             actionTicks: 0,
             isInvulnerable: false,
-            isAlive: snapRival.isAlive,
-            // Extraction is settlement-authoritative (verified exfil_success receipts only):
-            // a peer snapshot can never grant extracted status to a rival.
+            isAlive: isEffectiveAlive,
             isExtracted: false,
-            ammo: typeof snapRival.ammo === "number" ? snapRival.ammo : 30,
-            maxAmmo: 30,
+            ammo: typeof snapRival.ammo === "number" ? snapRival.ammo : (aiCfg?.ammo ?? 30),
+            maxAmmo: aiCfg?.maxAmmo ?? 30,
+            weapon: aiCfg?.weapon || (snapRival as any).weapon,
+            hasKeycard: Boolean(aiCfg?.hasKeycard || (snapRival as any).hasKeycard),
           });
+          if (!isEffectiveAlive) {
+            (this.sim.rivals[this.sim.rivals.length - 1] as any).isKia = true;
+          }
         } else {
-          const wasDead = !r.isAlive || (r as any).isKia || this.deadPeerIds?.has(r.id);
+          if (aiCfg) {
+            r.isAI = true;
+            if (!r.weapon && aiCfg.weapon) r.weapon = aiCfg.weapon;
+          }
           r.x = snapRival.x;
           r.z = snapRival.z;
-          if (!wasDead) {
-            // Peer snapshots may only report DECLINING combat vitals for a known rival
-            // (peers can damage a rival, never heal it beyond locally-known state), and
-            // can never resurrect a dead one.
-            r.health = Math.min(r.health, snapRival.health);
-            if (typeof snapRival.armor === "number") r.armor = Math.min(r.armor, snapRival.armor);
-            if (typeof snapRival.ammo === "number") r.ammo = snapRival.ammo;
-            if (snapRival.isAlive === false) r.isAlive = false;
-          } else {
-            r.health = 0;
-            r.isAlive = false;
-          }
-          // Extraction stays settlement-authoritative: never granted from a peer snapshot.
+          r.health = Math.min(r.health, effectiveHealth);
+          r.armor = Math.min(r.armor, effectiveArmor);
+          if (typeof snapRival.ammo === "number") r.ammo = snapRival.ammo;
+          r.isAlive = isEffectiveAlive;
+          if (!isEffectiveAlive) (r as any).isKia = true;
         }
       }
     }
@@ -2068,6 +2228,7 @@ export class MultiplayerCoordinator {
   }
 
   public handleMessage(packet: PeerPacket): void {
+    
     this.pruneExpiredPeers();
     if (packet && ((packet as any).type === "auth" || (packet as any).type === "auth_success" || (packet as any).type === "server_init")) {
       return; // Reject forged server control packets from peers
@@ -2110,13 +2271,13 @@ export class MultiplayerCoordinator {
     // 7. Universal snapshot presentation filters
     // Universal snapshot arrival boundary: drop packets that arrived before current snapshot was applied
     if (this.snapshotAppliedLocalTime && (packet as any)._receivedAt < this.snapshotAppliedLocalTime) {
-      if (packet.type === 'state' || packet.type === 'hit' || packet.type === 'machine_hit' || packet.type === 'crate_looted' || packet.type === 'crate_loot_request') {
+      if (packet.type === 'state' || packet.type === 'machine_hit' || packet.type === 'crate_looted' || packet.type === 'crate_loot_request') {
         return;
       }
     }
     // Universal snapshot timestamp boundary: drop state/action packets generated before the last applied snapshot timestamp
     if (this.lastAppliedSnapshotTimestamp && typeof packet.timestamp === "number" && packet.timestamp < this.lastAppliedSnapshotTimestamp) {
-      if (packet.type === 'state' || packet.type === 'hit' || packet.type === 'machine_hit' || packet.type === 'crate_looted' || packet.type === 'crate_loot_request') {
+      if (packet.type === 'state' || packet.type === 'machine_hit' || packet.type === 'crate_looted' || packet.type === 'crate_loot_request') {
         return;
       }
     }
@@ -2142,7 +2303,7 @@ export class MultiplayerCoordinator {
       ? `srv:${typeof packet.raidId === "string" ? packet.raidId : "any"}`
       : `${typeof packet.raidId === "string" ? packet.raidId : "any"}:${(packet as any).senderId || "unknown"}`;
     const dedupKey = `${dedupNamespace}:${packet.eventId}`;
-    if (this.seenEvents.has(dedupKey)) return;
+    if (this.seenEvents.has(dedupKey)) { if (packet.eventId === 'hit_rifle_oversized') throw new Error('DROPPED IN SEEN EVENTS'); return; }
     // Record ONLY after all envelope checks passed: malformed packets must not poison
     // the dedup set and suppress a later valid event with the same ID.
     this.seenEvents.add(dedupKey);
@@ -2151,7 +2312,7 @@ export class MultiplayerCoordinator {
       if (firstKey) this.seenEvents.delete(firstKey);
     }
 
-    if (packet.senderId === this.localId) {
+        if (packet.senderId === this.localId) {
       if (packet.type === 'machine_hit' && (packet as any).serverAuthoritative === true) {
         this.validateAndAdoptMachineCustody(packet);
       }
@@ -2595,16 +2756,96 @@ export class MultiplayerCoordinator {
         typeof data.targetAlive !== 'boolean' ||
         typeof data.targetKia !== 'boolean'
       ) return;
-      const targetRival = this.sim.rivals.find((r) => r.id === data.targetId);
-      if (targetRival) {
-        targetRival.health = Math.max(0, Math.min(targetRival.health, data.targetHealth));
-        targetRival.armor = Math.max(0, Math.min(targetRival.armor, data.targetArmor));
-        if (data.targetKia || !data.targetAlive || targetRival.health <= 0) {
-          targetRival.health = 0;
-          targetRival.isAlive = false;
-          (targetRival as any).isKia = true;
-          this.deadPeerIds.add(data.targetId);
+
+      const targetId = data.targetId;
+      const targetRival = this.sim.rivals.find((r) => r.id === targetId);
+      const savedState = this.sim.confirmedAIStates?.get(targetId);
+
+      // Check whether this confirmation indicates a verified lethal elimination
+      const isLethalConfirmation = Boolean(data.targetKia || !data.targetAlive || data.targetHealth <= 0);
+
+      // Preserve confirmed death within the same raid: dead entities cannot return alive
+      const isAlreadyDead = this.deadPeerIds.has(targetId) ||
+        savedState?.isAlive === false ||
+        (savedState && savedState.health <= 0) ||
+        Boolean(targetRival && (!targetRival.isAlive || (targetRival as any).isKia || targetRival.health <= 0));
+
+      const isDead = isAlreadyDead || isLethalConfirmation;
+
+      // Preserve verified kill rewards separately from vital state ordering!
+      if (isDead || isLethalConfirmation) {
+        const isBoss = data.targetId === BOSS_CONFIG.id || targetRival?.badge === BOSS_CONFIG.badge;
+        if (isBoss) {
+          const isLocalKiller = data.killerId ? data.killerId === this.localId : (packet.senderId === this.localId);
+          if (isLocalKiller) {
+            this.sim.grantKeycard(BOSS_CONFIG.id);
+            this.sim.combatLog.push(`[BOSS SLAIN] Sector Warlord confirmed eliminated by Central Command! Violet Lab Access Keycard granted.`);
+          } else {
+            this.sim.combatLog.push(`[BOSS SLAIN] Sector Warlord confirmed eliminated!`);
+          }
         }
+      }
+
+      // Check authoritative ordering per target and snapshot timestamp
+      const lastUpdateTs = this.targetUpdateTimestamps.get(targetId);
+      const isOlderThanTarget = typeof packet.timestamp === "number" && typeof lastUpdateTs === "number" && packet.timestamp < lastUpdateTs;
+      const isOlderThanSnapshot = Boolean(this.lastAppliedSnapshotTimestamp && typeof packet.timestamp === "number" && packet.timestamp < this.lastAppliedSnapshotTimestamp);
+      const isOlderAuthoritative = isOlderThanTarget || isOlderThanSnapshot;
+
+      // If packet is older than authoritative snapshot or target update:
+      // Vitally stale: do NOT overwrite live or cached vitals with older data!
+      if (isOlderAuthoritative) {
+        if (isDead) {
+          this.deadPeerIds.add(targetId);
+          if (targetRival) {
+            targetRival.health = 0;
+            targetRival.armor = 0;
+            targetRival.isAlive = false;
+            (targetRival as any).isKia = true;
+          }
+          this.sim.applyConfirmedAIState(targetId, {
+            ...(savedState || {}),
+            health: 0,
+            armor: 0,
+            isAlive: false,
+            isKia: true,
+            killerId: data.killerId || savedState?.killerId,
+          });
+        }
+        return;
+      }
+
+      // Monotonic vitals reconciliation for in-order or newer packets:
+      const maxHp = savedState ? Math.min(savedState.health, targetRival ? targetRival.health : 100) : (targetRival ? targetRival.health : 100);
+      const confHealth = isDead ? 0 : Math.max(0, Math.min(maxHp, data.targetHealth));
+
+      const maxArm = savedState ? Math.min(savedState.armor, targetRival && typeof targetRival.armor === "number" ? targetRival.armor : 100) : (targetRival && typeof targetRival.armor === "number" ? targetRival.armor : 100);
+      const confArmor = isDead ? 0 : Math.max(0, Math.min(maxArm, data.targetArmor));
+
+      const isAI = Boolean((AI_CONFIGS as any)[targetId]) || targetId.startsWith("scav_") || targetId === BOSS_CONFIG.id;
+
+      if (typeof packet.timestamp === "number") {
+        this.targetUpdateTimestamps.set(targetId, packet.timestamp);
+      }
+
+      if (isDead) {
+        this.deadPeerIds.add(targetId);
+      }
+      if (isAI || isDead) {
+        this.sim.applyConfirmedAIState(targetId, {
+          health: confHealth,
+          armor: confArmor,
+          isAlive: !isDead,
+          isKia: isDead,
+          killerId: data.killerId || savedState?.killerId,
+        });
+      }
+
+      if (targetRival) {
+        targetRival.health = confHealth;
+        targetRival.armor = confArmor;
+        targetRival.isAlive = !isDead;
+        (targetRival as any).isKia = isDead;
       }
     } else if (packet.type === 'fire') {
       if (!isAuthorizedSender(packet.senderId, packet.senderName)) return;
@@ -2614,6 +2855,16 @@ export class MultiplayerCoordinator {
         rival.lastFireTimestamp = Date.now();
         rival.lastFireTick = this.sim.tick;
       }
+      const shooterOrigin = rival ? { x: rival.x, y: 0.95, z: rival.z } : { x: 0, y: 0.95, z: 0 };
+      const shooterDir = rival ? { x: Math.sin(rival.facing), y: 0, z: Math.cos(rival.facing) } : { x: 0, y: 0, z: 1 };
+      const weaponType = (rival?.weapon as any) || (packet.data as any)?.weapon || 'rifle';
+      this.sim.enqueuePresentationEvent({
+        type: 'fire',
+        shooterId: packet.senderId,
+        origin: shooterOrigin,
+        dir: shooterDir,
+        weapon: weaponType,
+      });
       sound.playGunshot();
       this.sim.combatLog.push(`[FIRE] ${packet.senderName} DISCHARGED WEAPON`);
     } else if (packet.type === 'hit') {
@@ -2656,12 +2907,18 @@ export class MultiplayerCoordinator {
           // Only an interruption of an ACTIVE hold attempt registers an extraction reset.
           const interruptedActiveHold = this.sim.exfilController.getState().kind === "holding_zone";
           this.sim.exfilController.onDamageTaken();
+          this.sim.interruptStimTreatment();
           if (interruptedActiveHold) {
             this.sim.lastInterruptionTick = this.sim.tick;
             this.sim.onHoldProgress?.(0, this.sim.tick);
           }
           this.sim.onDamageTaken?.();
           this.sim.combatLog.push(`[AUTHORITATIVE HIT] Confirmed strike from ${packet.senderName}: HP=${this.sim.player.health} Armor=${this.sim.player.armor}`);
+          const effectiveDmg = typeof (packet.data as any)?.effectiveDmg === "number" ? (packet.data as any).effectiveDmg : Math.max(0, (packet.data as any).damage || 0);
+          if ((effectiveDmg >= 12 || (typeof authHealth === "number" && authHealth <= 85)) && this.sim.player.armor < 20 && !this.sim.player.isBleeding) {
+            this.sim.player.isBleeding = true;
+            this.sim.combatLog.push(`[TRAUMA ALERT] Heavy bleeding sustained! Inject IFAK stim [H] to bandage.`);
+          }
           if (authAlive === false || this.sim.player.health <= 0) {
             this.sim.player.health = 0;
             this.sim.player.isAlive = false;
@@ -2690,7 +2947,7 @@ export class MultiplayerCoordinator {
           sound.playHitGrunt();
 
           const attacker = this.sim.rivals.find((r) => r.id === packet.senderId);
-          if (attacker) {
+                  if (attacker) {
             if (typeof (packet.data as any)?.attackerX === "number" && typeof (packet.data as any)?.attackerZ === "number") {
               attacker.x = (packet.data as any).attackerX;
               attacker.z = (packet.data as any).attackerZ;
@@ -2710,9 +2967,9 @@ export class MultiplayerCoordinator {
           return; // Attacker must exist as an active rival entity in simulation
         }
         if (!attacker.isAlive || attacker.isExtracted) {
-          return; // Attacker must be an active, living, unextracted rival
+          return;
         }
-
+        
         // Candidate strike origin without prematurely mutating attacker position/facing
         let candidateX = attacker.x;
         let candidateZ = attacker.z;
@@ -2736,11 +2993,12 @@ export class MultiplayerCoordinator {
 
         // Validate attack kind STRICTLY first before any state or combat evaluation
         const rawKind = packet.data.kind;
-        if (rawKind !== undefined && rawKind !== 'kick' && rawKind !== 'rifle') {
+        if (rawKind !== undefined && rawKind !== 'kick' && rawKind !== 'rifle' && rawKind !== 'shotgun') {
           return; // Strictly reject unknown attack kinds without modifying attacker state!
         }
 
         const isCovered = this.sim.checkContainerRayObstruction(candidateX, candidateZ, this.sim.player.x, this.sim.player.z, 1.0, 1.0);
+        if (packet.eventId === 'hit_rifle_oversized' && isCovered) throw new Error('IS COVERED');
         if (isCovered) {
           this.sim.combatLog.push(`[COVER] Strike from ${packet.senderName} deflected by shipping container`);
           return;
@@ -2752,8 +3010,8 @@ export class MultiplayerCoordinator {
         }
 
         const dist = Math.hypot(candidateX - this.sim.player.x, candidateZ - this.sim.player.z);
-        const inferredKind = rawKind || ((knockX !== 0 || knockZ !== 0 || (dmg === 35 && dist <= 3.0)) ? 'kick' : 'rifle');
-        if (inferredKind !== 'kick' && inferredKind !== 'rifle') {
+        const inferredKind = rawKind || ((knockX !== 0 || knockZ !== 0 || (dmg === 35 && dist <= 3.0)) ? 'kick' : ((packet.data as any)?.weapon === 'shotgun' ? 'shotgun' : 'rifle'));
+        if (inferredKind !== 'kick' && inferredKind !== 'rifle' && inferredKind !== 'shotgun') {
           return; // Reject unknown attack kinds
         }
 
@@ -2795,6 +3053,36 @@ export class MultiplayerCoordinator {
             return; // Reject rapid burst of kicks at receiver time
           }
           this.lastAttackerKickTime.set(packet.senderId, packetTime);
+        } else if (inferredKind === 'shotgun') {
+          // Shotgun buckshot rules using shared calculateShotgunHit contract
+          const dist = Math.hypot(candidateX - this.sim.player.x, candidateZ - this.sim.player.z);
+          if (dist <= 0.001 || dist > 14.0) return;
+          if ((packet.data as any)?.attackerFacing !== undefined) {
+            if (typeof (packet.data as any).attackerFacing !== "number" || !Number.isFinite((packet.data as any).attackerFacing)) {
+              return;
+            }
+          }
+          const effectiveFacing = typeof packet.data?.attackerFacing === "number"
+            ? packet.data.attackerFacing
+            : (typeof candidateFacing === "number" && Number.isFinite(candidateFacing) ? candidateFacing : null);
+          if (effectiveFacing === null) return;
+
+          const hitRes = calculateShotgunHit(candidateX, candidateZ, effectiveFacing, this.sim.player.x, this.sim.player.z, 1.05);
+          if (!hitRes.hit) {
+            return; // Reject strike outside shotgun pellet cone & cylinder
+          }
+          if (dmg > hitRes.damage) {
+            return; // Reject strike exceeding actual calculated pellet damage!
+          }
+
+          const lastShotgunTime = (this as any).lastAttackerShotgunTime?.get(packet.senderId) ?? 0;
+          if (now - lastShotgunTime < 380) {
+            return; // Reject shotgun cadence violation
+          }
+          if (!(this as any).lastAttackerShotgunTime) {
+            (this as any).lastAttackerShotgunTime = new Map<string, number>();
+          }
+          (this as any).lastAttackerShotgunTime.set(packet.senderId, now);
         } else {
           // Rifle burst / ranged combat rules: 35.0m effective range, 130ms cadence (8 ticks ~133ms)
           const dist = Math.hypot(candidateX - this.sim.player.x, candidateZ - this.sim.player.z);
@@ -2878,9 +3166,20 @@ export class MultiplayerCoordinator {
             effectiveKnockX = knockX;
             effectiveKnockZ = knockZ;
           }
+        } else if (inferredKind === "shotgun") {
+          const effectiveFacing = typeof packet.data?.attackerFacing === "number"
+            ? packet.data.attackerFacing
+            : (typeof candidateFacing === "number" && Number.isFinite(candidateFacing) ? candidateFacing : 0);
+          const hitRes = calculateShotgunHit(candidateX, candidateZ, effectiveFacing, this.sim.player.x, this.sim.player.z, 1.05);
+          if (!hitRes.hit || dmg > hitRes.damage) {
+            return; // Reject damage exceeding actual calculated pellet damage
+          }
+          effectiveDmg = dmg > 0 ? dmg : hitRes.damage;
+          effectiveKnockX = 0;
+          effectiveKnockZ = 0;
         } else {
-          // Any non-kick / rifle attack is strictly capped to SIM_CONFIG.RIFLE_DAMAGE (24)
-          effectiveDmg = Math.min(SIM_CONFIG.RIFLE_DAMAGE, dmg > 0 ? dmg : SIM_CONFIG.RIFLE_DAMAGE);
+          const maxDmg = SIM_CONFIG.RIFLE_DAMAGE;
+          effectiveDmg = Math.min(maxDmg, dmg > 0 ? dmg : maxDmg);
           effectiveKnockX = 0;
           effectiveKnockZ = 0;
         }
@@ -2902,6 +3201,10 @@ export class MultiplayerCoordinator {
           this.sim.player.health = (packet.data as any).targetHealth;
           if (typeof (packet.data as any)?.targetArmor === "number" && Number.isFinite((packet.data as any).targetArmor)) {
             this.sim.player.armor = (packet.data as any).targetArmor;
+          }
+          if (effectiveDmg >= 12 && this.sim.player.armor < 20 && !this.sim.player.isBleeding) {
+            this.sim.player.isBleeding = true;
+            this.sim.combatLog.push(`[TRAUMA ALERT] Heavy bleeding sustained! Inject IFAK stim [H] to bandage.`);
           }
           if ((packet.data as any)?.targetAlive === false || this.sim.player.health <= 0) {
             this.sim.player.health = 0;
@@ -2934,6 +3237,100 @@ export class MultiplayerCoordinator {
         }
         sound.playHitGrunt();
         this.sim.combatLog.push(`[HIT TAKEN] Struck by ${packet.senderName} (-${effectiveDmg} HP)`);
+      } else {
+        // Authoritative damage/elimination for non-local targets (AI rivals or peer rivals)
+        const isRelayAuthoritative = (packet.data as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel;
+        const targetId = packet.data.targetId;
+        if (targetId && isRelayAuthoritative) {
+          const authHealth = packet.data.targetHealth;
+          const authArmor = packet.data.targetArmor;
+          const authAlive = packet.data.targetAlive;
+          const targetRival = this.sim.rivals.find((r) => r.id === targetId);
+          const savedState = this.sim.confirmedAIStates?.get(targetId);
+
+          const isLethalHit = authAlive === false || (typeof authHealth === "number" && authHealth <= 0);
+
+          const isAlreadyDead = this.deadPeerIds.has(targetId) ||
+            savedState?.isAlive === false ||
+            (savedState && savedState.health <= 0) ||
+            Boolean(targetRival && (!targetRival.isAlive || (targetRival as any).isKia || targetRival.health <= 0));
+
+          const isDead = isAlreadyDead || isLethalHit;
+
+          // Preserve verified kill rewards separately from vital state ordering!
+          if (isDead || isLethalHit) {
+            const isBoss = targetId === BOSS_CONFIG.id || targetRival?.badge === BOSS_CONFIG.badge;
+            if (isBoss) {
+              const killerId = (packet.data as any).killerId || packet.senderId;
+              const isLocalKiller = killerId === this.localId;
+              if (isLocalKiller) {
+                this.sim.grantKeycard(BOSS_CONFIG.id);
+                this.sim.combatLog.push(`[BOSS SLAIN] Sector Warlord confirmed eliminated by Central Command! Violet Lab Access Keycard granted.`);
+              } else {
+                this.sim.combatLog.push(`[BOSS SLAIN] Sector Warlord confirmed eliminated!`);
+              }
+            }
+          }
+
+          // Authoritative ordering per target and snapshot: reject older vitals
+          const lastUpdateTs = this.targetUpdateTimestamps.get(targetId);
+          const isOlderThanTarget = typeof packet.timestamp === "number" && typeof lastUpdateTs === "number" && packet.timestamp < lastUpdateTs;
+          const isOlderThanSnapshot = Boolean(this.lastAppliedSnapshotTimestamp && typeof packet.timestamp === "number" && packet.timestamp < this.lastAppliedSnapshotTimestamp);
+          const isOlderAuthoritative = isOlderThanTarget || isOlderThanSnapshot;
+
+          if (isOlderAuthoritative) {
+            if (isDead) {
+              this.deadPeerIds.add(targetId);
+              if (targetRival) {
+                targetRival.health = 0;
+                targetRival.armor = 0;
+                targetRival.isAlive = false;
+                (targetRival as any).isKia = true;
+              }
+              this.sim.applyConfirmedAIState(targetId, {
+                ...(savedState || {}),
+                health: 0,
+                armor: 0,
+                isAlive: false,
+                isKia: true,
+                killerId: (packet.data as any).killerId || savedState?.killerId,
+              });
+            }
+            return;
+          }
+
+          const maxHp = savedState ? Math.min(savedState.health, targetRival ? targetRival.health : 100) : (targetRival ? targetRival.health : 100);
+          const confHealth = isDead ? 0 : (typeof authHealth === "number" ? Math.max(0, Math.min(maxHp, authHealth)) : (savedState ? savedState.health : 100));
+
+          const maxArm = savedState ? Math.min(savedState.armor, targetRival && typeof targetRival.armor === "number" ? targetRival.armor : 100) : (targetRival && typeof targetRival.armor === "number" ? targetRival.armor : 100);
+          const confArmor = isDead ? 0 : (typeof authArmor === "number" ? Math.max(0, Math.min(maxArm, authArmor)) : (savedState ? savedState.armor : 0));
+
+          const isAI = Boolean((AI_CONFIGS as any)[targetId]) || targetId.startsWith("scav_") || targetId === BOSS_CONFIG.id;
+
+          if (typeof packet.timestamp === "number") {
+            this.targetUpdateTimestamps.set(targetId, packet.timestamp);
+          }
+
+          if (isDead) {
+            this.deadPeerIds.add(targetId);
+          }
+          if (isAI || isDead) {
+            this.sim.applyConfirmedAIState(targetId, {
+              health: isDead ? 0 : confHealth,
+              armor: confArmor,
+              isAlive: !isDead,
+              isKia: isDead,
+              killerId: (packet.data as any).killerId || savedState?.killerId,
+            });
+          }
+
+          if (targetRival) {
+            targetRival.health = isDead ? 0 : confHealth;
+            targetRival.armor = confArmor;
+            targetRival.isAlive = !isDead;
+            (targetRival as any).isKia = isDead;
+          }
+        }
       }
     } else if (packet.type === 'crate_loot_request' || packet.type === 'crate_looted') {
       if ((packet as any)._fromBroadcastChannel) return; // Disallow unauthenticated crate mutations from BroadcastChannel!
@@ -2955,6 +3352,19 @@ export class MultiplayerCoordinator {
           if (dist > 4.5) return; // Drop out-of-range crate claim!
         }
         this.sim.claimCrateLocally(crateId, packet.senderId, claimTimestamp || packet.timestamp);
+        if (typeof (packet.data as any)?.stimsRemaining === "number" && (packet.senderId === this.sim.player.id || (packet.data as any)?.claimantId === this.sim.player.id)) {
+          this.sim.player.stimsRemaining = (packet.data as any).stimsRemaining;
+        }
+      }
+    } else if (packet.type === 'crate_looted_ack') {
+      const isServerSender = packet.senderId === 'server' || packet.senderName === 'CENTRAL COMMAND';
+      if (!isServerSender) return;
+      const d = (packet as any).data;
+      if (!d || typeof d !== 'object') return;
+      if (d.claimantId === this.localId || d.claimantId === this.sim.player.id) {
+        if (typeof d.stimsRemaining === 'number' && Number.isFinite(d.stimsRemaining)) {
+          this.sim.player.stimsRemaining = d.stimsRemaining;
+        }
       }
     } else if (packet.type === 'kick_action_rejected') {
       // Authoritative rejection correction for a rejected kick batch (oversized /
@@ -2971,6 +3381,35 @@ export class MultiplayerCoordinator {
         this.adoptMachineVitals(c.id, c.health, c.isAlive, (c as any).vitalsSeq, (c as any).maxHealth);
       }
       this.sim.combatLog.push(`[KICK REJECTED] Strike rejected by relay (${d.reason || "invalid"}); machine predictions reconciled to custody`);
+    } else if ((packet as any).type === 'hold_confirm' || (packet as any).type === 'hold_result') {
+      const isRelayAuthoritative = (packet as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel;
+      if (!isRelayAuthoritative) return;
+      if ((packet as any).senderId && (packet as any).senderId !== "server") return;
+      const d = (packet as any).data;
+      if (!d || typeof d !== "object") return;
+
+      const targetOperative = d.operativeId || d.targetId;
+      if (targetOperative && targetOperative !== this.localId && targetOperative !== this.sim.player.id) {
+        return;
+      }
+
+      if (d.holdCompleted === true && typeof d.holdCompletedAtTick === "number" && Number.isFinite(d.holdCompletedAtTick) && d.holdCompletedAtTick > 0 && d.holdCompletedAtTick <= SIM_CONFIG.RAID_DEADLINE_TICK) {
+        this.sim.restoreExtractionCustody({
+          holdCompleted: true,
+          holdCompletedAtTick: d.holdCompletedAtTick,
+          isExtracted: d.isExtracted === true,
+          extractedAtTick: typeof d.extractedAtTick === 'number' ? d.extractedAtTick : undefined,
+          receipt: d.receipt,
+        });
+      } else if (d.cancelled === true || d.reset === true || (d.holdCompleted === false && (typeof d.holdTicks !== 'number' || d.holdTicks === 0))) {
+        this.sim.restoreExtractionCustody({
+          holdCompleted: false,
+        });
+      } else if (typeof d.holdTicks === 'number' && d.holdTicks > 0) {
+        if (typeof (this.sim.exfilController as any)?.reconcileAuthoritativeHold === 'function') {
+          (this.sim.exfilController as any).reconcileAuthoritativeHold(d.holdTicks);
+        }
+      }
     } else if (packet.type === 'machine_roster') {
       // Versioned full-roster reconciliation: adopts the RELAY-DEPLOYED machine set —
       // membership (add/remove), type, placement geometry, patrol origins, vitals. Only
@@ -3009,12 +3448,20 @@ export class MultiplayerCoordinator {
 
       const wasHolding = this.sim.exfilController.getState().kind === "holding_zone";
       this.sim.exfilController.onDamageTaken();
+      this.sim.interruptStimTreatment();
       if (wasHolding) {
         this.sim.lastInterruptionTick = this.sim.tick;
         this.sim.onHoldProgress?.(0, this.sim.tick);
       }
       this.sim.player.health = d.targetHealth;
       this.sim.player.armor = d.targetArmor;
+
+      // Heavy bleed on unarmored or heavy hit - strictly symmetrical with local damage
+      if (d.damage >= 12 && this.sim.player.armor < 20 && !this.sim.player.isBleeding) {
+        this.sim.player.isBleeding = true;
+        this.sim.combatLog.push(`[TRAUMA ALERT] Heavy bleeding sustained! Inject IFAK stim [H] to bandage.`);
+      }
+
       if (d.targetAlive === false || this.sim.player.health <= 0) {
         this.sim.player.health = 0;
         this.sim.player.isAlive = false;
@@ -3174,7 +3621,6 @@ export class MultiplayerCoordinator {
         return true;
       };
 
-      // 1. Check local authority or local ledger if present
       let localCommitted: any = null;
       if (this.sim.settlementAuthority && typeof this.sim.settlementAuthority.getCommittedReceipt === "function") {
         localCommitted = this.sim.settlementAuthority.getCommittedReceipt(receiptId)?.receipt || null;
@@ -3216,6 +3662,15 @@ export class MultiplayerCoordinator {
         return;
       }
 
+      // Require authority proof: untrusted peer packets cannot self-certify extraction
+      const isRelayAuthoritative = (packet as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel;
+      if (isRelayAuthoritative) {
+        const pktReceipt = (packet.data as any)?.receipt || (packet as any).receipt;
+        if (pktReceipt && verifyReceiptIntegrity(pktReceipt)) {
+          applyVerifiedExtraction(pktReceipt);
+          return;
+        }
+      }
       this.sim.combatLog.push(`[SETTLEMENT REJECTED] Unverified extraction receipt ${receiptId} for ${packet.senderName}`);
     }
   }
@@ -3258,11 +3713,25 @@ export class MultiplayerCoordinator {
     if (this.isDisposed) return false;
     let resumeKey: string | null = null;
     if (typeof sessionStorage !== "undefined") {
-      resumeKey = sessionStorage.getItem(`sz_resume_${this.sim.raidId}_${this.sim.player.id}`);
+      try {
+        resumeKey = sessionStorage.getItem(`sz_resume_${this.sim.raidId}_${this.sim.player.id}`) ||
+                    sessionStorage.getItem(`sz_res_${this.sim.raidId}_${this.sim.player.id}`);
+      } catch {}
     }
+
+    const httpFetch = (globalThis as any)?.["fetch"];
+    let httpBase = "";
+    const customWsUrl = (this as any).wsUrl;
+    if (customWsUrl && (customWsUrl.startsWith("ws:") || customWsUrl.startsWith("wss:"))) {
+      httpBase = customWsUrl.replace(/^ws(s?):/, "http$1:").split("?")[0].replace(/\/syncplay-ws$/, "");
+    } else if (typeof window !== "undefined" && window.location?.origin) {
+      httpBase = window.location.origin;
+    }
+
     for (let attempt = 0; attempt < maxRetries; attempt++) {
-      if (this.isDisposed) return false;
+      if (!this.isRecoveryActive(null)) return false;
       const termCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+      this.recoveryAbortController = termCtrl;
       const termTid = termCtrl ? setTimeout(() => termCtrl.abort(), 4000) : null;
       if (termCtrl) {
         (this as any).__clockSyncInFlight = (this as any).__clockSyncInFlight || [];
@@ -3270,86 +3739,174 @@ export class MultiplayerCoordinator {
       }
       let shouldRetry = false;
       try {
-        const res = await fetch("/api/settlement/join", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(this.sim.sessionToken ? { Authorization: `Bearer ${this.sim.sessionToken}` } : {}),
-            ...(resumeKey ? { "x-resumption-key": resumeKey } : {}),
-          },
-          signal: termCtrl ? termCtrl.signal : undefined,
-          body: JSON.stringify({
-            raidId: this.sim.raidId,
-            operativeId: this.sim.player.id,
-            ...(resumeKey ? { resumeKey } : {}),
-          }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (this.isDisposed) return false;
-          if (data && (data.isTerminal || data.isExtracted || data.isKia)) {
-            if (data.isExtracted) {
-              this.sim.restoreExtractionCustody({
-                isExtracted: true,
-                holdCompleted: true,
-                extractedAtTick: data.extractedAtTick || this.sim.tick,
-                receipt: data.receipt,
-              });
-              if (typeof sessionStorage !== "undefined") {
-                sessionStorage.setItem(`sz_exfil_${this.sim.raidId}_${this.sim.player.id}`, JSON.stringify({
+        if (typeof httpFetch === "function") {
+          const joinUrl = httpBase ? `${httpBase}/api/settlement/join` : "/api/settlement/join";
+          const sessionTok = (this.sim as any).sessionToken || (this as any).authToken;
+          const res = await httpFetch(joinUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(sessionTok ? { Authorization: `Bearer ${sessionTok}` } : {}),
+              ...(resumeKey ? { "x-resumption-key": resumeKey } : {}),
+            },
+            signal: termCtrl ? termCtrl.signal : undefined,
+            body: JSON.stringify({
+              raidId: this.sim.raidId,
+              operativeId: this.sim.player.id,
+              ...(resumeKey ? { resumeKey } : {}),
+            }),
+          });
+          if (!this.isRecoveryActive(termCtrl)) return false;
+
+          if (res.ok) {
+            const data = await res.json();
+            if (!this.isRecoveryActive(termCtrl)) return false;
+            if (data && (data.isTerminal || data.isExtracted || data.isKia)) {
+              if (data.isExtracted) {
+                const receipt = data.receipt;
+                if (!receipt) {
+                  this.sim.terminalRecoveryError = "Extracted terminal state missing receipt";
+                  return false;
+                }
+                const targetLedger = this.sim.settlementAuthority || defaultSettlementLedger;
+
+                let outcomePayload = data.outcomePayload;
+                if (!outcomePayload && receipt.receiptId) {
+                  try {
+                    const verifyUrl = httpBase
+                      ? `${httpBase}/api/settlement/verify-receipt?receiptId=${encodeURIComponent(receipt.receiptId)}&raidId=${encodeURIComponent(receipt.raidId || this.sim.raidId)}`
+                      : `/api/settlement/verify-receipt?receiptId=${encodeURIComponent(receipt.receiptId)}&raidId=${encodeURIComponent(receipt.raidId || this.sim.raidId)}`;
+                    const vRes = await httpFetch(verifyUrl, { signal: termCtrl ? termCtrl.signal : undefined });
+                    if (!this.isRecoveryActive(termCtrl)) return false;
+                    if (vRes.ok) {
+                      const vData = await vRes.json();
+                      if (!this.isRecoveryActive(termCtrl)) return false;
+                      if (vData?.outcomePayload) {
+                        outcomePayload = vData.outcomePayload;
+                        targetLedger?.auditLog?.set(receipt.receiptId, vData.receipt || receipt);
+                      }
+                    }
+                  } catch {}
+                }
+
+                if (outcomePayload) {
+                  if (!this.isRecoveryActive(termCtrl)) return false;
+                  targetLedger?.auditLog?.set(receipt.receiptId, receipt);
+                  const verification = await verifySettlementReceipt(receipt, outcomePayload, targetLedger);
+                  if (!this.isRecoveryActive(termCtrl)) return false;
+                  if (!verification.valid) {
+                    this.sim.terminalRecoveryError = `Receipt validation failed: ${verification.reason}`;
+                    return false;
+                  }
+                  verifiedReceiptInstances.add(receipt);
+                  (this.sim as any).__cryptographicallyVerifiedReceiptId = receipt.receiptId;
+                  targetLedger?.auditLog?.set(receipt.receiptId, receipt);
+                }
+                this.sim.restoreExtractionCustody({
                   isExtracted: true,
                   holdCompleted: true,
                   extractedAtTick: data.extractedAtTick || this.sim.tick,
-                  receipt: data.receipt,
-                }));
+                  receipt,
+                });
+                const receiptKey = receipt ? `${receipt.raidId || this.sim.raidId}:${receipt.receiptId}` : null;
+                if (receiptKey && !this.acceptedReceiptKeys.has(receiptKey) && !this.sim.acceptedReceiptKeys?.has(receiptKey)) {
+                  this.sim.onExfilSuccess?.(receipt);
+                  this.acceptedReceiptKeys.add(receiptKey);
+                  this.sim.acceptedReceiptKeys?.add(receiptKey);
+                }
+                if (typeof sessionStorage !== "undefined") {
+                  try {
+                    sessionStorage.setItem(`sz_exfil_${this.sim.raidId}_${this.sim.player.id}`, JSON.stringify({
+                      isExtracted: true,
+                      holdCompleted: true,
+                      extractedAtTick: data.extractedAtTick || this.sim.tick,
+                      receipt,
+                    }));
+                  } catch {}
+                }
+              } else if (data.isKia) {
+                this.sim.player.health = 0;
+                this.sim.player.isAlive = false;
+                if (typeof sessionStorage !== "undefined") {
+                  try {
+                    sessionStorage.setItem(`sz_kia_${this.sim.raidId}_${this.sim.player.id}`, "true");
+                  } catch {}
+                }
               }
-            } else if (data.isKia) {
-              this.sim.player.health = 0;
-              this.sim.player.isAlive = false;
-              if (typeof sessionStorage !== "undefined") {
-                sessionStorage.setItem(`sz_kia_${this.sim.raidId}_${this.sim.player.id}`, "true");
-              }
-            }
-            this.sim.terminalRecoveryError = undefined;
-            return true;
-          } else if (data && data.success && data.token) {
-            if (typeof sessionStorage !== "undefined") {
-              sessionStorage.setItem(`sz_token_${this.sim.raidId}_${this.sim.player.id}`, data.token);
-              if (data.resumeKey) {
-                sessionStorage.setItem(`sz_resume_${this.sim.raidId}_${this.sim.player.id}`, data.resumeKey);
-              }
-            }
-            this.sim.sessionToken = data.token;
-            this.connectWebSocket(data.token);
-            const authenticated = await this.waitForAuthentication(5000);
-            if (authenticated) {
               this.sim.terminalRecoveryError = undefined;
               return true;
+            } else if (data && data.success && data.token) {
+              if (typeof sessionStorage !== "undefined") {
+                sessionStorage.setItem(`sz_token_${this.sim.raidId}_${this.sim.player.id}`, data.token);
+                if (data.resumeKey) {
+                  sessionStorage.setItem(`sz_resume_${this.sim.raidId}_${this.sim.player.id}`, data.resumeKey);
+                }
+              }
+              this.sim.sessionToken = data.token;
+              this.connectWebSocket(data.token);
+              const authenticated = await this.waitForAuthentication(5000);
+              if (authenticated) {
+                this.sim.terminalRecoveryError = undefined;
+                return true;
+              } else {
+                shouldRetry = true;
+              }
             } else {
-              shouldRetry = true;
+              this.sim.terminalRecoveryError = "No terminal custody found for session";
+              return false;
             }
+          } else if (res.status === 408 || res.status === 429 || (res.status >= 500 && res.status <= 599)) {
+            shouldRetry = true;
+          } else {
+            this.sim.terminalRecoveryError = `Terminal recovery rejected: HTTP ${res.status}`;
+            return false;
           }
-        } else if (res.status === 408 || res.status === 429 || (res.status >= 500 && res.status <= 599)) {
-          shouldRetry = true;
+        } else {
+          this.sim.terminalRecoveryError = "HTTP transport unavailable";
+          return false;
         }
-      } catch {
+      } catch (err: any) {
         if (this.isDisposed) return false;
         shouldRetry = true;
+        this.sim.terminalRecoveryError = err?.message || "Terminal recovery network failure";
       } finally {
         if (termTid) clearTimeout(termTid);
         const __termReg = (this as any).__clockSyncInFlight;
-        if (__termReg && termCtrl) { const ix = __termReg.indexOf(termCtrl); if (ix !== -1) __termReg.splice(ix, 1); }
+        if (__termReg && termCtrl) {
+          const ix = __termReg.indexOf(termCtrl);
+          if (ix !== -1) __termReg.splice(ix, 1);
+        }
       }
       if (!shouldRetry || attempt === maxRetries - 1) break;
       await new Promise((r) => setTimeout(r, Math.min(1000, 200 * Math.pow(2, attempt))));
     }
+
+    if (!this.sim.terminalRecoveryError) {
+      this.sim.terminalRecoveryError = "Terminal recovery failed after retries";
+    }
     return false;
+  }
+
+  public disconnect(): void {
+    this.cleanup();
   }
 
   public cleanup(): void {
     this.isDisposed = true;
+    if (this.recoveryAbortController) {
+      try { this.recoveryAbortController.abort(); } catch {}
+      this.recoveryAbortController = null;
+    }
     this.authenticated = false;
     this.sim.isSocketDisconnected = false;
+    this.sim.serverMachineDamageAuthority = false;
+    if (this.sim.requestServerSettlement) {
+      this.sim.requestServerSettlement = undefined;
+    }
+    for (const pending of this.pendingSettlementCommitMap.values()) {
+      pending.reject(new Error("MultiplayerCoordinator disposed"));
+    }
+    this.pendingSettlementCommitMap.clear();
     if (this.pruneInterval) {
       clearInterval(this.pruneInterval);
       this.pruneInterval = null;
@@ -3362,7 +3919,7 @@ export class MultiplayerCoordinator {
       clearInterval(this.raidClockSyncInterval);
       this.raidClockSyncInterval = null;
     }
-    // Abort outstanding clock-sync fetches: their late resolution must never adopt
+    // Abort outstanding clock-sync timers: their late resolution must never adopt
     // into a disposed simulation (or steal frame time from the next one).
     const inFlight = (this as any).__clockSyncInFlight;
     if (Array.isArray(inFlight)) {
