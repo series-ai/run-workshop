@@ -1,0 +1,103 @@
+{
+ "width": 1024,
+ "height": 1024,
+ "fov": 25,
+ "eye": [
+  1.0,
+  1.55,
+  6.0
+ ],
+ "target": [
+  0.08,
+  0.62,
+  0
+ ],
+ "fog": [
+  4,
+  21
+ ],
+ "figures": [
+  {
+   "id": "stick-fighter",
+   "role": "player",
+   "clip": "kick-roundhouse",
+   "time": 0.267,
+   "at": [
+    -0.55,
+    0,
+    0
+   ],
+   "yaw": 1.5708,
+   "avatar": {
+    "headwear": "headband",
+    "accent": "#d45538"
+   }
+  },
+  {
+   "id": "stick-striker",
+   "role": "threat",
+   "clip": "hit-front",
+   "time": 0.13,
+   "at": [
+    0.6,
+    0,
+    0
+   ],
+   "yaw": -1.5708
+  }
+ ],
+ "effects": [
+  {
+   "id": "heavy-impact",
+   "at": [
+    0.22,
+    1.12,
+    0.05
+   ],
+   "time": 0.05,
+   "scale": 0.95
+  }
+ ],
+ "props": [
+  {
+   "id": "wall-panel-window",
+   "at": [
+    -3.0,
+    0,
+    -9
+   ]
+  },
+  {
+   "id": "wall-panel",
+   "at": [
+    1.0,
+    0,
+    -9
+   ]
+  },
+  {
+   "id": "wall-panel-corrugated",
+   "at": [
+    5.0,
+    0,
+    -9
+   ]
+  },
+  {
+   "id": "wall-pillar",
+   "at": [
+    -1.0,
+    0,
+    -8.8
+   ]
+  },
+  {
+   "id": "wall-pillar",
+   "at": [
+    3.0,
+    0,
+    -8.8
+   ]
+  }
+ ]
+}

@@ -95,7 +95,7 @@ export const UIInspector: FC<InspectorProps> = ({
             onReset={() =>
               onUpdateSettings((prev) => ({
                 ...prev,
-                animationId: 'block',
+                animationId: 'idle',
                 avatar: {
                   preset: 'stick-standard',
                   color: '#151716',

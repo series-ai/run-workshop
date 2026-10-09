@@ -9,12 +9,12 @@
       "thumbnail": "assets/previews/sword.png",
       "dimensions": [
         0.24,
-        1.27,
-        0.07
+        1.22,
+        0.067
       ],
-      "triangles": 134,
-      "vertices": 280,
-      "materials": 2,
+      "triangles": 132,
+      "vertices": 276,
+      "materials": 3,
       "description": "Classic double-edged steel sword with cruciform hilt and counterweighted pommel.",
       "tags": [
         "held",
@@ -38,7 +38,7 @@
       ],
       "triangles": 124,
       "vertices": 228,
-      "materials": 2,
+      "materials": 3,
       "description": "Traditional single-edge curved katana with wrapped tsuka and disc tsuba.",
       "tags": [
         "held",
@@ -62,7 +62,7 @@
       ],
       "triangles": 400,
       "vertices": 672,
-      "materials": 2,
+      "materials": 3,
       "description": "Reinforced 1.8m martial arts quarterstaff with steel ferrule collars.",
       "tags": [
         "held",
@@ -86,7 +86,7 @@
       ],
       "triangles": 76,
       "vertices": 144,
-      "materials": 2,
+      "materials": 3,
       "description": "Semi-automatic polymer sidearm with tactical slide and high-visibility front sight.",
       "tags": [
         "held",
@@ -110,7 +110,7 @@
       ],
       "triangles": 128,
       "vertices": 240,
-      "materials": 2,
+      "materials": 3,
       "description": "Modular combat assault rifle with curved magazine, muzzle brake, and rear stock.",
       "tags": [
         "held",
@@ -134,7 +134,7 @@
       ],
       "triangles": 132,
       "vertices": 240,
-      "materials": 2,
+      "materials": 3,
       "description": "Tactical 12-gauge pump-action shotgun with ribbed slide and twin tube magazine.",
       "tags": [
         "held",
@@ -158,7 +158,7 @@
       ],
       "triangles": 176,
       "vertices": 312,
-      "materials": 2,
+      "materials": 3,
       "description": "Laminated recurve composite hunting bow with contoured riser grip.",
       "tags": [
         "held",
@@ -182,7 +182,7 @@
       ],
       "triangles": 356,
       "vertices": 672,
-      "materials": 2,
+      "materials": 3,
       "description": "Tapered wooden baseball bat with friction grip tape and safety accent ring.",
       "tags": [
         "held",
@@ -202,12 +202,12 @@
       "thumbnail": "assets/previews/dagger.png",
       "dimensions": [
         0.08,
-        0.46,
+        0.45,
         0.04
       ],
-      "triangles": 94,
-      "vertices": 196,
-      "materials": 2,
+      "triangles": 92,
+      "vertices": 192,
+      "materials": 3,
       "description": "Double-edged tactical combat dagger with grooved rubber grip.",
       "tags": [
         "held",
@@ -231,7 +231,7 @@
       ],
       "triangles": 210,
       "vertices": 372,
-      "materials": 2,
+      "materials": 3,
       "description": "Double-bitted medieval combat battleaxe with reinforced top thrusting spike.",
       "tags": [
         "held",
@@ -255,7 +255,7 @@
       ],
       "triangles": 96,
       "vertices": 198,
-      "materials": 2,
+      "materials": 3,
       "description": "Compact single-handed tactical hatchet with hammer poll.",
       "tags": [
         "held",
@@ -279,7 +279,7 @@
       ],
       "triangles": 190,
       "vertices": 392,
-      "materials": 2,
+      "materials": 3,
       "description": "Six-flanged steel mace with crown spike for heavy armor penetration.",
       "tags": [
         "held",
@@ -303,7 +303,7 @@
       ],
       "triangles": 74,
       "vertices": 136,
-      "materials": 2,
+      "materials": 3,
       "description": "Long 2.2m ash-wood spear with leaf-shaped broadhead blade.",
       "tags": [
         "held",
@@ -327,7 +327,7 @@
       ],
       "triangles": 194,
       "vertices": 340,
-      "materials": 2,
+      "materials": 3,
       "description": "Combined axe blade, rear armor hook, and top thrusting spearhead on 2.2m pole.",
       "tags": [
         "held",
@@ -351,7 +351,7 @@
       ],
       "triangles": 116,
       "vertices": 216,
-      "materials": 2,
+      "materials": 3,
       "description": "Sweeping curved combat war scythe with bilateral steering handles.",
       "tags": [
         "held",
@@ -375,7 +375,7 @@
       ],
       "triangles": 78,
       "vertices": 148,
-      "materials": 2,
+      "materials": 3,
       "description": "Knightly warhammer with flat rectangular face and rear armor-piercing raven beak.",
       "tags": [
         "held",
@@ -399,7 +399,7 @@
       ],
       "triangles": 164,
       "vertices": 372,
-      "materials": 2,
+      "materials": 3,
       "description": "Heavy hardwood trench club reinforced with iron pyramid studs.",
       "tags": [
         "held",
@@ -423,7 +423,7 @@
       ],
       "triangles": 488,
       "vertices": 816,
-      "materials": 2,
+      "materials": 3,
       "description": "Dual linked martial arts hardwood sticks connected by steel chain links.",
       "tags": [
         "held",
@@ -447,7 +447,7 @@
       ],
       "triangles": 256,
       "vertices": 456,
-      "materials": 2,
+      "materials": 3,
       "description": "Traditional pointed martial arts truncheon with twin curved prong guards.",
       "tags": [
         "held",
@@ -471,7 +471,7 @@
       ],
       "triangles": 72,
       "vertices": 132,
-      "materials": 2,
+      "materials": 3,
       "description": "Precision four-pointed throwing star with beveled aerodynamic edges.",
       "tags": [
         "held",
@@ -495,7 +495,7 @@
       ],
       "triangles": 198,
       "vertices": 346,
-      "materials": 2,
+      "materials": 3,
       "description": "Diamond-bladed ninja throwing dagger with circular ring pommel.",
       "tags": [
         "held",
@@ -519,7 +519,7 @@
       ],
       "triangles": 196,
       "vertices": 336,
-      "materials": 2,
+      "materials": 3,
       "description": "Segmented fragmentation grenade with spring-loaded spoon lever and pull ring.",
       "tags": [
         "held",
@@ -543,7 +543,7 @@
       ],
       "triangles": 304,
       "vertices": 528,
-      "materials": 2,
+      "materials": 3,
       "description": "Heavy anti-materiel bolt-action rifle with high-power telescopic optic and bipod.",
       "tags": [
         "held",
@@ -567,7 +567,7 @@
       ],
       "triangles": 88,
       "vertices": 168,
-      "materials": 2,
+      "materials": 3,
       "description": "High-rate tactical submachine gun with integral silencer and vertical foregrip.",
       "tags": [
         "held",
@@ -591,7 +591,7 @@
       ],
       "triangles": 92,
       "vertices": 168,
-      "materials": 2,
+      "materials": 3,
       "description": "Solid-frame six-shot heavy magnum revolver with fluted cylinder.",
       "tags": [
         "held",
@@ -615,7 +615,7 @@
       ],
       "triangles": 76,
       "vertices": 144,
-      "materials": 2,
+      "materials": 3,
       "description": "Tactical curved ballistic riot shield with horizontal vision viewport slit.",
       "tags": [
         "held",

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { ACTION_BUFFER_SECONDS, getImpactProfile, sampleRecoil, sampleKnockdown, selectReaction, stepActionBuffer } from './kinetics'
+import * as THREE from 'three'
+import { ACTION_BUFFER_SECONDS, deathFlight, getImpactProfile, planDeathImpact, sampleDeathFlight, sampleRecoil, sampleKnockdown, selectReaction, stepActionBuffer } from './kinetics'
 
 const profileFields = [
   'reach', 'facingDot', 'hitHold', 'recoilDistance', 'recoilLift', 'recoilDuration',
@@ -152,5 +153,76 @@ describe('directional reactions', () => {
   it('rejects non-finite direction input', () => {
     expect(() => selectReaction({ x: NaN, z: 1 }, 0, false)).toThrow()
     expect(() => selectReaction({ x: 0, z: 1 }, Infinity, false)).toThrow()
+  })
+})
+
+describe('death flight', () => {
+  const heavy = getImpactProfile('punch-heavy', 'unarmed'), light = getImpactProfile('punch-left', 'unarmed')
+  it('throws a body far only for heavy and kick strikes', () => {
+    expect(deathFlight(heavy, .53).distance).toBeGreaterThan(2)
+    expect(deathFlight(light, .53).distance).toBeLessThan(.6)
+  })
+  it('shatters on the floor at the clip ground time when nothing is in the way', () => {
+    const flight = deathFlight(heavy, .53)
+    expect(planDeathImpact(flight, { x: 0, y: 0, z: 0 }, { x: 1, z: 0 }, [])).toEqual({ surface: 'floor', time: .53, distance: flight.distance })
+  })
+  it('shatters on the first wall in the path, before the floor', () => {
+    const flight = deathFlight(heavy, .53)
+    const wall = { minX: 1.2, maxX: 1.5, minY: 0, maxY: 3, minZ: -2, maxZ: 2 }
+    const behind = { minX: -2, maxX: -1.5, minY: 0, maxY: 3, minZ: -2, maxZ: 2 }
+    const impact = planDeathImpact(flight, { x: 0, y: 0, z: 0 }, { x: 1, z: 0 }, [behind, wall])
+    expect(impact.surface).toBe('wall')
+    expect(impact.distance).toBeCloseTo(1.2 - .22)
+    expect(impact.time).toBeGreaterThan(0); expect(impact.time).toBeLessThan(.53)
+    expect(sampleDeathFlight(flight, impact.time, impact.distance).travel).toBeCloseTo(impact.distance, 5)
+  })
+  it('ignores low curbs and boxes above the body', () => {
+    const flight = deathFlight(heavy, .53)
+    const curb = { minX: 1, maxX: 1.2, minY: 0, maxY: .08, minZ: -2, maxZ: 2 }, beam = { minX: 1, maxX: 1.2, minY: 2, maxY: 2.3, minZ: -2, maxZ: 2 }
+    expect(planDeathImpact(flight, { x: 0, y: 0, z: 0 }, { x: 1, z: 0 }, [curb, beam]).surface).toBe('floor')
+  })
+  it('lets a light strike drop the body short of a distant wall', () => {
+    const wall = { minX: 1.2, maxX: 1.5, minY: 0, maxY: 3, minZ: -2, maxZ: 2 }
+    expect(planDeathImpact(deathFlight(light, .53), { x: 0, y: 0, z: 0 }, { x: 1, z: 0 }, [wall]).surface).toBe('floor')
+  })
+})
+
+describe('anatomical joint invariants', () => {
+  it('enforces maximum wrist cone deflection <= 75 degrees across complex melee rotations', async () => {
+    const { readFile } = await import('node:fs/promises')
+    const THREE = await import('three')
+    const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js')
+
+    const bytes = await readFile('public/assets/characters/stick-standard.glb')
+    const actor = await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '')
+    const clip = actor.animations.find(a => a.name === 'staff-spin')
+    expect(clip).toBeDefined()
+    if (!clip) return
+
+    const mixer = new THREE.AnimationMixer(actor.scene)
+    const action = mixer.clipAction(clip)
+    action.play()
+
+    const farmR = actor.scene.getObjectByName('Forearm_R') as THREE.Bone
+    const handR = actor.scene.getObjectByName('Hand_R') as THREE.Bone
+    expect(farmR).toBeDefined()
+    expect(handR).toBeDefined()
+
+    const Y = new THREE.Vector3(0, 1, 0)
+    let maxConeAngle = 0
+
+    for (let i = 0; i <= 96; i++) {
+      const t = (i / 96) * clip.duration
+      mixer.setTime(t)
+      actor.scene.updateMatrixWorld(true)
+
+      const fY = Y.clone().applyQuaternion(farmR.getWorldQuaternion(new THREE.Quaternion()))
+      const hY = Y.clone().applyQuaternion(handR.getWorldQuaternion(new THREE.Quaternion()))
+      const angle = (fY.angleTo(hY) * 180) / Math.PI
+      if (angle > maxConeAngle) maxConeAngle = angle
+    }
+
+    // Wrist deflection must be strictly within anatomical cone limit (<= 75 degrees)
+    expect(maxConeAngle).toBeLessThanOrEqual(75.0)
   })
 })

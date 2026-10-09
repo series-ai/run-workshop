@@ -3,7 +3,7 @@
 **Specification:** T4 Showcase UI (`.plans/inkline.html`)  
 **Package:** `games/inkline-showcase`  
 **Date:** 2026-09-24  
-**Design Aesthetic:** Editorial industrial design-tool (`#eeece5` warm off-white, `#151716` charcoal, `#d45538` burnt orange).
+**Design Aesthetic:** Editorial industrial design-tool (`#f3f4f6` cool paper, `#151716` charcoal, `#d45538` burnt orange). The stage colors come from `src/runtime/palette.ts`..
 
 ---
 

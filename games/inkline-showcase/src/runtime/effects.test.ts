@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 import { EFFECTS, effectEnvelope, effectPreviewBounds, effectPreviewRadius, InkEffects, resolveEffectColor } from './effects'
+import { INK, PAPER } from './palette'
 
 describe('effect pool', () => {
   it('has 64 unique authored recipes across five groups', () => {
@@ -181,8 +182,8 @@ describe('effect pool', () => {
     effects.trigger('heavy-impact', new THREE.Vector3(), '#337755'); effects.update(.12, camera)
     const color = new THREE.Color(), star = effects.group.children[6] as THREE.InstancedMesh, spark = effects.group.children[1] as THREE.InstancedMesh
     expect(star.count).toBe(2)
-    star.getColorAt(0, color); expect(color.getHexString()).toBe(new THREE.Color('#151716').getHexString())
-    star.getColorAt(1, color); expect(color.getHexString()).toBe(new THREE.Color('#eeece5').getHexString())
+    star.getColorAt(0, color); expect(color.getHexString()).toBe(new THREE.Color(INK).getHexString())
+    star.getColorAt(1, color); expect(color.getHexString()).toBe(new THREE.Color(PAPER).getHexString())
     const outerMatrix = new THREE.Matrix4(), coreMatrix = new THREE.Matrix4()
     const outerPosition = new THREE.Vector3(), corePosition = new THREE.Vector3()
     const outerRotation = new THREE.Quaternion(), coreRotation = new THREE.Quaternion()
@@ -195,10 +196,10 @@ describe('effect pool', () => {
     const starColors = new Set<string>(), sparkColors = new Set<string>()
     for (let i = 0; i < star.count; i++) { star.getColorAt(i, color); starColors.add(color.getHexString()) }
     for (let i = 0; i < spark.count; i++) { spark.getColorAt(i, color); sparkColors.add(color.getHexString()) }
-    expect(starColors).toEqual(new Set([new THREE.Color('#151716').getHexString(), new THREE.Color('#eeece5').getHexString()]))
+    expect(starColors).toEqual(new Set([new THREE.Color(INK).getHexString(), new THREE.Color(PAPER).getHexString()]))
     expect(sparkColors).toEqual(new Set([expected.getHexString()]))
-    expect(resolveEffectColor('paper', '#337755')).toBe('#eeece5')
-    expect(resolveEffectColor('ink', '#337755')).toBe('#151716')
+    expect(resolveEffectColor('paper', '#337755')).toBe(PAPER)
+    expect(resolveEffectColor('ink', '#337755')).toBe(INK)
     expect(resolveEffectColor('accent', '#337755')).toBe('#337755')
     expect(() => effects.trigger('heavy-impact', new THREE.Vector3(NaN, 0, 0))).toThrow()
     expect(() => effects.update(NaN, camera)).toThrow()

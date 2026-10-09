@@ -121,7 +121,7 @@ async function exportPack() {
     throw new Error(`Export requires all previews and sprites: ${missingPreviews.length} previews and ${missingSprites.length} sprites missing.`)
   }
 
-  const required = ['public/assets/source/characters.blend', 'public/assets/source/industrial.blend', 'public/assets/source/industrial-district.blend', 'public/assets/scenes/industrial-district.glb', 'scripts/blender/characters.py', 'scripts/blender/props.py', 'scripts/blender/level.py', 'src/types.ts', ...['assets', 'effects', 'district', 'physics', 'presentation', 'roles', 'camera', 'layouts', 'kinetics', 'trails', 'cutaway', 'index'].map(name => `src/runtime/${name}.ts`)]
+  const required = ['public/assets/source/characters.blend', 'public/assets/source/industrial.blend', 'public/assets/source/industrial-district.blend', 'public/assets/scenes/industrial-district.glb', 'scripts/blender/characters.py', 'scripts/blender/props.py', 'scripts/blender/level.py', 'src/types.ts', ...['assets', 'palette', 'effects', 'district', 'physics', 'presentation', 'roles', 'camera', 'layouts', 'kinetics', 'trails', 'cutaway', 'index'].map(name => `src/runtime/${name}.ts`)]
   for (const id of ['service-yard', 'roof-works']) required.push(`public/assets/${id}.json`, `public/assets/scenes/${id}.glb`, `public/assets/source/${id}.blend`)
   required.push('public/assets/environment-layouts.json', 'src/runtime/firearms.json')
   for (const path of required) if (!(await stat(resolve(appRoot, path))).size) throw new Error(`Required source is empty: ${path}`)
@@ -274,6 +274,7 @@ This directory contains the master consumer manifest, editable Blender sources, 
 - \`types.ts\`: Common TypeScript interfaces (\`PackManifest\`, \`ModelEntry\`, \`AvatarConfig\`, \`StageSettings\`).
 - \`runtime/\`: Modular runtime libraries matching the showcase source structure:
   - \`assets.ts\`: \`AssetLibrary\` loader supporting local base URLs or remote mirrors.
+  - \`palette.ts\`: Graphic-novel palette and cel bands for figures, props, effects, and the stage. \`applyFigureShading\` and \`applyPropShading\` apply it to loaded models.
   - \`firearms.json\`: Shared firearm sizes, grip targets, and support timing. Enable \`resolveJsonModule\` in the consumer TypeScript configuration.
   - \`effects.ts\`: \`InkEffects\` particle manager with ${effectsCatalog.effects.length} procedural presets.
   - \`district.ts\`: Assembly for Industrial District, Service Yard, and Roof Works.
@@ -291,7 +292,7 @@ This directory contains the master consumer manifest, editable Blender sources, 
   if (existsSync(srcTypes)) {
     await copyFile(srcTypes, resolve(charSourceDir, 'types.ts'))
   }
-  const runtimeFiles = ['effects.ts', 'assets.ts', 'firearms.json', 'physics.ts', 'district.ts', 'presentation.ts', 'roles.ts', 'camera.ts', 'layouts.ts', 'kinetics.ts', 'trails.ts', 'cutaway.ts', 'index.ts']
+  const runtimeFiles = ['effects.ts', 'assets.ts', 'palette.ts', 'firearms.json', 'physics.ts', 'district.ts', 'presentation.ts', 'roles.ts', 'camera.ts', 'layouts.ts', 'kinetics.ts', 'trails.ts', 'cutaway.ts', 'index.ts']
   for (const file of runtimeFiles) {
     const srcFile = resolve(appRoot, 'src/runtime', file)
     if (existsSync(srcFile)) {
@@ -352,7 +353,8 @@ This directory contains the master consumer manifest, editable Blender sources, 
   const evidenceDir = resolve(charSourceDir, 'docs/verification')
   await mkdir(evidenceDir, { recursive: true })
   for (const name of ['README.md', 'asset-report.json', 'motion-bounds.json', 'browser-tests.json', 'district-report.json', 'effect-frame-bounds.json', 'evidence-files.md']) {
-    await copyFile(resolve(appRoot, 'docs/verification', name), resolve(evidenceDir, name))
+    const src = resolve(appRoot, 'docs/verification', name)
+    if (existsSync(src)) await copyFile(src, resolve(evidenceDir, name))
   }
   await mkdir(resolve(evidenceDir, 'expansion'), { recursive: true })
   for (const name of ['runtime.json', 'report.json', 'game-performance.json', 'level-support.json', 'animation-compatibility.json', 'independent-review.json', 'contact-poses.json', 'contact-timing.md', 'animation-expansion-contact-overview.png', 'animation-expansion-side-contact-overview.png', 'effects-64.png', ...Array.from({ length: 6 }, (_, index) => `animation-expansion-${String(index + 1).padStart(2, '0')}.png`)]) {
@@ -360,7 +362,10 @@ This directory contains the master consumer manifest, editable Blender sources, 
     if (existsSync(src)) await copyFile(src, resolve(evidenceDir, 'expansion', name))
   }
   await mkdir(resolve(evidenceDir, 'kinetic'), { recursive: true })
-  for (const name of ['runtime.json', 'contact-poses.json', 'grounded-export.json', 'camera-motion.json', 'camera-performance.json', 'avatar-framing.json', 'cpu-stress.json', 'independent-review.json', 'final-review.md']) await copyFile(resolve(appRoot, 'docs/verification/kinetic', name), resolve(evidenceDir, 'kinetic', name))
+  for (const name of ['runtime.json', 'contact-poses.json', 'grounded-export.json', 'camera-motion.json', 'camera-performance.json', 'avatar-framing.json', 'cpu-stress.json', 'independent-review.json', 'final-review.md']) {
+    const src = resolve(appRoot, 'docs/verification/kinetic', name)
+    if (existsSync(src)) await copyFile(src, resolve(evidenceDir, 'kinetic', name))
+  }
   for (const name of ['consumer.json', 'weapon-alignment-review.md', 'camera-performance-before.json']) {
     const path = resolve(appRoot, 'docs/verification/kinetic', name)
     if (existsSync(path)) await copyFile(path, resolve(evidenceDir, 'kinetic', name))

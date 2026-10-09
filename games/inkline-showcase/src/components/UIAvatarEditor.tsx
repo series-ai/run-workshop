@@ -52,7 +52,7 @@ export const QUICK_MOTIONS: { id: string; label: string; isAuto?: boolean }[] = 
   { id: 'hit-front', label: 'Reaction' },
 ]
 
-const SWATCH_COLORS = ['#151716', '#2b2e2a', '#3f443e', '#faf9f5', '#485055']
+const SWATCH_COLORS = ['#151716', '#2a2f37', '#3d4552', '#faf9f5', '#485466']
 const SWATCH_ACCENTS = ['#d45538', '#d99b26', '#3a7d66', '#4361ee', '#b83a28']
 
 /**

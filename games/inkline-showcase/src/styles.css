@@ -1,17 +1,17 @@
 /**
  * INKLINE / STICK FIGURE WORKS — Showcase Styles
  * Editorial Industrial Design-Tool Aesthetic
- * Color Palette: Warm off-white #eeece5, Charcoal #151716, Burnt Orange #d45538
+ * Color Palette: Cool paper #f3f4f6, Charcoal #151716, Burnt Orange #d45538 (matches src/runtime/palette.ts)
  */
 
 :root {
-  --ink-bg: #eeece5;
-  --ink-panel: #f7f6f0;
+  --ink-bg: #f3f4f6;
+  --ink-panel: #f8f9fa;
   --ink-surface: #ffffff;
   --ink-text: #151716;
-  --ink-text-dim: #656863;
-  --ink-text-faint: #9c9f98;
-  --ink-border: #dcdad2;
+  --ink-text-dim: #5f6670;
+  --ink-text-faint: #99a0a9;
+  --ink-border: #d9dde3;
   --ink-border-strong: #151716;
   --ink-border-focus: #d45538;
   --ink-accent: #d45538;
@@ -498,7 +498,7 @@ button:active {
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  background-color: rgba(247, 246, 240, 0.94);
+  background-color: rgba(248, 249, 250, 0.94);
   border: 1px solid var(--ink-border);
   border-radius: 2px;
   backdrop-filter: blur(4px);
@@ -520,7 +520,7 @@ button:active {
   top: 12px;
   left: 12px;
   right: 12px;
-  background-color: rgba(247, 246, 240, 0.94);
+  background-color: rgba(248, 249, 250, 0.94);
   border: 1px solid var(--ink-border);
   border-left: 3px solid var(--ink-accent);
   padding: 8px 12px;
@@ -535,7 +535,7 @@ button:active {
 
 /* Stage runtime error overlay from StageStats */
 .ink-stage-runtime-error {
-  background-color: rgba(247, 246, 240, 0.96);
+  background-color: rgba(248, 249, 250, 0.96);
   border-left: 4px solid var(--ink-accent);
   padding: 10px 14px;
   z-index: 25;
@@ -582,7 +582,7 @@ button:active {
 
 .ink-stage-gamepad-overlay .ink-play-controls-panel {
   pointer-events: auto;
-  background: linear-gradient(0deg, rgba(238, 236, 229, 0.95) 0%, rgba(238, 236, 229, 0.75) 80%, transparent 100%);
+  background: linear-gradient(0deg, rgba(243, 244, 246, 0.95) 0%, rgba(243, 244, 246, 0.75) 80%, transparent 100%);
   border-top: 1px solid var(--ink-border);
   padding: 12px 16px;
 }
@@ -752,7 +752,7 @@ button:active {
 }
 
 .ink-btn-primary:hover {
-  background-color: #2b2e2c;
+  background-color: #2a2e35;
 }
 
 .ink-btn-secondary {
@@ -1096,7 +1096,7 @@ button:active {
   position: relative;
   width: 100%;
   height: 90px;
-  background-color: #f0eee7;
+  background-color: #eceef1;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -1391,12 +1391,12 @@ button:active {
 
 .ink-play-btn-compact:hover {
   border-color: var(--ink-border-strong);
-  background-color: #e8e6df;
+  background-color: #e3e6ea;
 }
 
 .ink-play-btn-compact.paused {
   background-color: var(--ink-accent);
-  color: #faf9f5;
+  color: #fafbfc;
   border-color: var(--ink-accent);
 }
 
@@ -1545,7 +1545,7 @@ button:active {
 }
 
 .ink-play-btn:hover {
-  background-color: #2b2e2c;
+  background-color: #2a2e35;
 }
 
 .ink-trigger-btn {
@@ -1926,7 +1926,7 @@ button:active {
 .ink-hud-label {
   font-family: var(--font-mono);
   font-size: 9px;
-  color: #9c9f98;
+  color: #99a0a9;
 }
 
 .ink-hud-score {
@@ -1942,7 +1942,7 @@ button:active {
 .ink-hud-msg {
   font-size: 11px;
   font-weight: 600;
-  color: #eeece5;
+  color: #f3f4f6;
 }
 
 .ink-gamepad-deck {
@@ -2492,7 +2492,7 @@ button:active {
     left: 0;
     width: 20px;
     justify-content: flex-start;
-    background: linear-gradient(90deg, var(--ink-panel) 45%, rgba(247, 246, 241, 0));
+    background: linear-gradient(90deg, var(--ink-panel) 45%, rgba(248, 249, 250, 0));
     color: var(--ink-accent);
     font-family: var(--font-sans);
     font-size: 18px;
@@ -2505,7 +2505,7 @@ button:active {
     gap: 3px;
     padding-right: 5px;
     justify-content: flex-end;
-    background: linear-gradient(90deg, rgba(247, 246, 241, 0), var(--ink-panel) 42%);
+    background: linear-gradient(90deg, rgba(248, 249, 250, 0), var(--ink-panel) 42%);
   }
 
   .ink-nav-scroll-arrow {
@@ -2672,7 +2672,7 @@ button:active {
   .ink-stage-gamepad-overlay .ink-hud-banner { gap: 8px; padding: 8px 10px; }
 }
 
-.ink-clip-preview { width: 48px; height: 48px; flex: 0 0 48px; object-fit: contain; background: #eeece5; border-radius: 2px; }
+.ink-clip-preview { width: 48px; height: 48px; flex: 0 0 48px; object-fit: contain; background: #f3f4f6; border-radius: 2px; }
 .ink-clip-row-left { flex: 1; min-width: 0; }
 @media (min-width: 901px) and (max-width: 1550px) {
   .ink-cam-full { display: none; }
