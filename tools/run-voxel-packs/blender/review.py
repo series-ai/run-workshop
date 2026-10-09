@@ -26,15 +26,17 @@ VIEWS = {
 
 def args():
     argv = sys.argv[sys.argv.index("--") + 1:]
-    out, size, asset, refs, clips = None, 480, None, [], []
+    out, thumb_out, size, asset, refs, clips = None, None, 480, None, [], []
     i = 0
     while i < len(argv):
         flag = argv[i]
-        if flag in ("--out", "--size", "--asset", "--ref", "--clip"):
+        if flag in ("--out", "--thumb-out", "--size", "--asset", "--ref", "--clip"):
             value = argv[i + 1]
             i += 2
             if flag == "--out":
                 out = value
+            elif flag == "--thumb-out":
+                thumb_out = value
             elif flag == "--size":
                 size = int(value)
             elif flag == "--asset":
@@ -47,7 +49,7 @@ def args():
             raise SystemExit(f"unknown argument {flag}")
     if not out or not asset:
         raise SystemExit("usage: review.py -- --out <png> --asset <glb> [--ref <glb>] [--clip name@t]")
-    return out, size, asset, refs, clips
+    return out, thumb_out, size, asset, refs, clips
 
 
 def load(path: str) -> list:
@@ -77,9 +79,12 @@ def play(name: str, seconds: float) -> None:
 
 
 def main() -> None:
-    out, size, asset, refs, clips = args()
+    out, thumb_out, size, asset, refs, clips = args()
     tmp = tempfile.mkdtemp()
     pngs = []
+    if thumb_out:
+        load(asset)
+        render_scene(thumb_out, 128, VIEWS["front"])
     for name, view in VIEWS.items():
         load(asset)
         png = os.path.join(tmp, f"view-{name}.png")
