@@ -905,7 +905,6 @@ export const SKYRIVER_DISTRICT_SOURCE_TERMS: readonly {
   { id: 'trim-band-cold', role: 'large accent', saturation: SKYRIVER_DISTRICT_SATURATION.trimLarge, srgb: false, rgb: [0.55, 0.85, 1] },
   { id: 'trim-flood', role: 'large accent', saturation: SKYRIVER_DISTRICT_SATURATION.trimLarge, srgb: false, rgb: [0.75, 0.85, 1.05] },
   { id: 'trim-skybridge-ribbon', role: 'large accent', saturation: SKYRIVER_DISTRICT_SATURATION.trimLarge, srgb: false, rgb: [0.72, 0.86, 1] },
-  { id: 'tower-parapet', role: 'large accent', saturation: SKYRIVER_DISTRICT_SATURATION.trimLarge, srgb: false, rgb: [0.75, 0.9, 1] },
   { id: 'landmark-wash-face', role: 'landmark wash', saturation: SKYRIVER_DISTRICT_SATURATION.wash, srgb: false, rgb: [0.12, 0.55, 1] },
   { id: 'landmark-wash-roof', role: 'landmark wash', saturation: SKYRIVER_DISTRICT_SATURATION.wash, srgb: false, rgb: [0.5, 0.8, 1] },
 ]);

@@ -1,0 +1,1748 @@
+{
+  "provenance": "Actual R30 a92a414 city module. Only external atlas constructors are texture stubs. Geometry, attribute writes and shaders are real.",
+  "rows": [
+    {
+      "seed": 424242,
+      "mode": "impostor",
+      "identity": {
+        "towers": "e4947915",
+        "towerAttributes": "810a8688",
+        "trims": "66abce4c",
+        "trimAttributes": "b121dea3",
+        "signPlacement": "b68b104a",
+        "signText": "16bb2bd4",
+        "impostors": "1d893787",
+        "impostorCards": "b84bbdb9",
+        "counts": {
+          "towers": 6575,
+          "trims": 13599,
+          "signs": 361,
+          "impostors": 70
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6575,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "8243f43f91c64eb722caa807114864cb51736471c08ac0e9368bedc6849ebb8e",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6705,
+              "sha256": "35c1da0365ec556f737671d9af86644545aa6baa12afa873f52fccc898c1bb75"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6705,
+              "sha256": "0b1423c71d6d8e7d4db7770772a17cf27c656c791c5f339f37b115f782377ed0"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6705,
+              "sha256": "3654e9a5ede68873478c4a724baa9e4671d20f141f0196c6db64e00b47276209"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6705,
+              "sha256": "e41d63e3d8fb781be8d195ad9358259fc82c3c73445b233767f30e5758b2cc31"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6705,
+              "sha256": "f2218bf2f9ad23cadd6f864e6c52385bbb526a5bc1d252b3dc1203a49751d3fb"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6705,
+              "sha256": "0570ea22ac4557cb53947d71dd68378dcb8684eacf0431a42f69b395189b75b1"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6705,
+              "sha256": "293e22fe14f759ae058ca217713b06e8343c4f86e013f91dc7400cbf010f2b07"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6705,
+              "sha256": "331218643f06fee5298df24bf01a21b2fe2c6d2a689cc2d41d7d0188785cb38b"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13599,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "7a6d240b29675f1947c20f24840b64552a8a4d37f79e19f85b7a14b609765fb0",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13734,
+              "sha256": "b8bc091beeb0c72d368f7be722fd02662211fda7a30d936608c6e07e953270f0"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13734,
+              "sha256": "f438081838b40c9b12ad9915e5c94d0eefdbd8838a148b43f7737748c3ae7aaa"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13734,
+              "sha256": "c75c0858308faaa00fb2ea088eac93ba3a262ed771f818a9d48256cf6cff3cf0"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13734,
+              "sha256": "f07920fb5181853680974780bab5ec84bd6566a4316a761b87d71ae5879163f0"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13734,
+              "sha256": "aa4721e2b7d3d7c7344868052da33665c1a3af4a0fc5c913e41cd4dd442f018d"
+            }
+          }
+        },
+        "skyriver.city.signs": {
+          "count": 361,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "instanceMatrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 361,
+              "sha256": "0dba7d096afffeb195a2d86201202be39b6348838ed875db28f81383db0de4a8"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 361,
+              "sha256": "bbf6b05cc66d72d6bd1bff5afd59be90d257f2f4dfe8e9bd9bb18926cbb67684"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 361,
+              "sha256": "711cbda2023c7833183c7eef9c89a87955c7fa2404ffd6dc984730535a47e1a1"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 361,
+              "sha256": "ce952558cbeb6a44771aa8f95a3a8ab34dded3607c885899b14ebce1075369d6"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 361,
+              "sha256": "9db6deee4e0cd0237cd313f9cc70ca6788baf000315d20444ea8bb6823e8e74a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 361,
+              "sha256": "8323e456c62232e80135116ed15a62da399d87dd152e7e82194fba5b8b024802"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 361,
+              "sha256": "d9ed0fa72bb3febb4037c2a4ae754bdfd06725be92d356614f5c12765e31dbf4"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 361,
+              "sha256": "a8014c04085a322b0f074b3287ce4e76c625155c8a491a95b97f5fbb2da612b9"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 70,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "instanceMatrix": "05ab93d0296873280fbc1764194df693b903909717edee706b27a13650ed2e11",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 70,
+              "sha256": "3f6cbc42dce61b44bbd486385503641e9f596aac76b305cef92347f02237ba07"
+            }
+          }
+        }
+      }
+    },
+    {
+      "seed": 424242,
+      "mode": "geometry",
+      "identity": {
+        "towers": "02f85fae",
+        "towerAttributes": "80b123df",
+        "trims": "66abce4c",
+        "trimAttributes": "b121dea3",
+        "signPlacement": "b68b104a",
+        "signText": "16bb2bd4",
+        "impostors": "1d893787",
+        "impostorCards": "b84bbdb9",
+        "counts": {
+          "towers": 6705,
+          "trims": 13599,
+          "signs": 361,
+          "impostors": 70
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6705,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "e1c7dbcb81e1eab45d97abdfef0648682437a65ad09d0f665993dae3d5fc8260",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6705,
+              "sha256": "6c18293a234ebfdfc4781fdd05b401809d178aa978f244ebc39b0a9a94153a8c"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6705,
+              "sha256": "ac3e69d14981c28fcef023cbd2927fd3ad3e2e4da0ac046b22a5ad632755d07f"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6705,
+              "sha256": "f53fd3e3f2dc5b6827302a90c7689e2f14f895400e045f40bfb93f2846bab9db"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6705,
+              "sha256": "74e73e703a2f44ce5aa353f7fe81cb714740dcc2b6ba30c2083ffbff430ba4c3"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6705,
+              "sha256": "db285b6393ad99b0d92b0e14dab0513ecc823b0263c346740bcb85bce9a201c9"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6705,
+              "sha256": "27e736e520e03d8d2c9c3a2931094e75da83c8ef4204715078c26653f262e5a9"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6705,
+              "sha256": "293e22fe14f759ae058ca217713b06e8343c4f86e013f91dc7400cbf010f2b07"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6705,
+              "sha256": "db29893eea099fa5fc46a3629be7810c335121d9715dbc237db0238f18a08b50"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13599,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "7a6d240b29675f1947c20f24840b64552a8a4d37f79e19f85b7a14b609765fb0",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13734,
+              "sha256": "b8bc091beeb0c72d368f7be722fd02662211fda7a30d936608c6e07e953270f0"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13734,
+              "sha256": "f438081838b40c9b12ad9915e5c94d0eefdbd8838a148b43f7737748c3ae7aaa"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13734,
+              "sha256": "c75c0858308faaa00fb2ea088eac93ba3a262ed771f818a9d48256cf6cff3cf0"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13734,
+              "sha256": "f07920fb5181853680974780bab5ec84bd6566a4316a761b87d71ae5879163f0"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13734,
+              "sha256": "aa4721e2b7d3d7c7344868052da33665c1a3af4a0fc5c913e41cd4dd442f018d"
+            }
+          }
+        },
+        "skyriver.city.signs": {
+          "count": 361,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "instanceMatrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 361,
+              "sha256": "0dba7d096afffeb195a2d86201202be39b6348838ed875db28f81383db0de4a8"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 361,
+              "sha256": "bbf6b05cc66d72d6bd1bff5afd59be90d257f2f4dfe8e9bd9bb18926cbb67684"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 361,
+              "sha256": "711cbda2023c7833183c7eef9c89a87955c7fa2404ffd6dc984730535a47e1a1"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 361,
+              "sha256": "ce952558cbeb6a44771aa8f95a3a8ab34dded3607c885899b14ebce1075369d6"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 361,
+              "sha256": "9db6deee4e0cd0237cd313f9cc70ca6788baf000315d20444ea8bb6823e8e74a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 361,
+              "sha256": "8323e456c62232e80135116ed15a62da399d87dd152e7e82194fba5b8b024802"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 361,
+              "sha256": "d9ed0fa72bb3febb4037c2a4ae754bdfd06725be92d356614f5c12765e31dbf4"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 361,
+              "sha256": "a8014c04085a322b0f074b3287ce4e76c625155c8a491a95b97f5fbb2da612b9"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 70,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "instanceMatrix": "05ab93d0296873280fbc1764194df693b903909717edee706b27a13650ed2e11",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 70,
+              "sha256": "3f6cbc42dce61b44bbd486385503641e9f596aac76b305cef92347f02237ba07"
+            }
+          }
+        }
+      }
+    },
+    {
+      "seed": 0,
+      "mode": "impostor",
+      "identity": {
+        "towers": "37fa35e0",
+        "towerAttributes": "2ddff6ba",
+        "trims": "c85a447d",
+        "trimAttributes": "77adcb33",
+        "signPlacement": "89602502",
+        "signText": "6c4ad7b0",
+        "impostors": "e453bcbd",
+        "impostorCards": "2a6b4153",
+        "counts": {
+          "towers": 6538,
+          "trims": 13726,
+          "signs": 436,
+          "impostors": 73
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6538,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "eee1aaa5329bc5faaf912cf61153416d68206d41ff11ce693346a6c44655c961",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6670,
+              "sha256": "b34d525d60430ab5eaea9c29a323be78f8c3b2dc0fd789ef4ebe1d0314177662"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6670,
+              "sha256": "2868857532772289577e77cad3fc9e6980e937e91974732b5cb16c4f9f7f038c"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6670,
+              "sha256": "8a060de0256308434d65e77f0d6e8d8e5a4297ad066d8e687db148aabc0a6c02"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6670,
+              "sha256": "5462c47aa60aa899d079e47c43a06e885407105b6683c9c0ab2958a5121b9038"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6670,
+              "sha256": "f59ba88d2b4bdbb356c528b38e1769c5a8ef4d504032e32e61355c7135f5d1b2"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6670,
+              "sha256": "3df5668ac9f50fcd72acd5b6b82a5f2e54f15b0ceedc02d8e956925c1d41d3c4"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6670,
+              "sha256": "0fb3675173b648a7c6a6f2ef636d9a311a739adbe34f6eea5a98471cfb498c84"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6670,
+              "sha256": "bfea25143b693494b5ba55d7e82403252165d22726e08c883190d102c2735f8b"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13726,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "5a5d7091dae636eb53d52ce939fe5ec030cc600616c52858217f391783ec8895",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13855,
+              "sha256": "bf74af359d6a95940e0bf5b4b61a7ca196c9260c740fd5234f420126d47e51fc"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13855,
+              "sha256": "9faa6d85d2623da9e70840cbe64d1e74cba2578076b7f156861f7e61fe1fc56a"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13855,
+              "sha256": "83f2411e222a51375f77eca547bf1875b835b5c2c9080b7fd1825357f601f738"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13855,
+              "sha256": "4c68cf221a91a1e2cde3a454e611d50564de1d30aba08bafe5b3e091d58e1c8e"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13855,
+              "sha256": "73a57d7b77bcb6d166129bbbe3726f4b9893085c5b17ee1efaa55f245145ec2e"
+            }
+          }
+        },
+        "skyriver.city.signs": {
+          "count": 436,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "instanceMatrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 436,
+              "sha256": "aa99b343af565932b3208ad1329be48b5560e0520ba831207879f4d6d36196a8"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 436,
+              "sha256": "d58bca0b33166c0b522c219bf13997a2af9e7041ff55fb21a729714f40533feb"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 436,
+              "sha256": "a47cf6b492c7aaae446770bd27bf6825b229805133e5d38d4a7bce67db3679d6"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 436,
+              "sha256": "a378f8f6bfde120e79625c7b9bb9cb979be33a873039b26356942f519f66838d"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 436,
+              "sha256": "7e3ad3ac0fd496646ae4da7430480bd6c0d7a56471e63b4b2e91bc09dcc7179c"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 436,
+              "sha256": "94122b22181020867729cb37465ec9f93162d5acc78f1bd0b45c579709174e49"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 436,
+              "sha256": "a22f960c07cd583c7232683da72869bb3e7d9d96b2145c3aa96dd1d6eebfc5b2"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 436,
+              "sha256": "89aaba17f77321bfb64711a49978a403b35e30e4d64eb51fa3823ddfbcbb4c4a"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 73,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "instanceMatrix": "2d774f49f633ef3026757440a45a64216d110edd43d905926f0dffe80edb8021",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 73,
+              "sha256": "ec4c326f68c2ab16aab3b94dcb2a18114f9cbb2e85ebdb130dfa6764174aa1a3"
+            }
+          }
+        }
+      }
+    },
+    {
+      "seed": 0,
+      "mode": "geometry",
+      "identity": {
+        "towers": "13ba820f",
+        "towerAttributes": "e9fb4215",
+        "trims": "c85a447d",
+        "trimAttributes": "77adcb33",
+        "signPlacement": "89602502",
+        "signText": "6c4ad7b0",
+        "impostors": "e453bcbd",
+        "impostorCards": "2a6b4153",
+        "counts": {
+          "towers": 6670,
+          "trims": 13726,
+          "signs": 436,
+          "impostors": 73
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6670,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "a8d7221a171cbd9618ee927a924e9d899a786a35b52cdb8d7a43a37de97ac8cc",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6670,
+              "sha256": "4a149ca5eed7a88ee27f07839e3c0ef63afb3df5d09b1d64e34f92e81e324b1c"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6670,
+              "sha256": "f1a332e1c528f17d5889f81e9774620e7e99d163c77cd0274e66be2e2bbd469e"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6670,
+              "sha256": "d4f4829f8371f10feb6b398fa6c22acb85fa58776fd0422ef753e3e3c19f5adc"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6670,
+              "sha256": "35231f98b8503d4c668fbef2dc2eec4e8753fa41d8a424df15cce860e5c734e1"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6670,
+              "sha256": "4b853f4de03dc3480fc6ae96e0e965142b8691d6624106416242a96ec3574548"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6670,
+              "sha256": "90b72491b53d1fa83f08fe7ef0f56af7417c6a937229052a3e3bff905ccf5cc6"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6670,
+              "sha256": "0fb3675173b648a7c6a6f2ef636d9a311a739adbe34f6eea5a98471cfb498c84"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6670,
+              "sha256": "67bbe34171e1eebdc4f1188475c7cb5c0c8c57814d4180498cd68b9354df624f"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13726,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "5a5d7091dae636eb53d52ce939fe5ec030cc600616c52858217f391783ec8895",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13855,
+              "sha256": "bf74af359d6a95940e0bf5b4b61a7ca196c9260c740fd5234f420126d47e51fc"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13855,
+              "sha256": "9faa6d85d2623da9e70840cbe64d1e74cba2578076b7f156861f7e61fe1fc56a"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13855,
+              "sha256": "83f2411e222a51375f77eca547bf1875b835b5c2c9080b7fd1825357f601f738"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13855,
+              "sha256": "4c68cf221a91a1e2cde3a454e611d50564de1d30aba08bafe5b3e091d58e1c8e"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13855,
+              "sha256": "73a57d7b77bcb6d166129bbbe3726f4b9893085c5b17ee1efaa55f245145ec2e"
+            }
+          }
+        },
+        "skyriver.city.signs": {
+          "count": 436,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "instanceMatrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 436,
+              "sha256": "aa99b343af565932b3208ad1329be48b5560e0520ba831207879f4d6d36196a8"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 436,
+              "sha256": "d58bca0b33166c0b522c219bf13997a2af9e7041ff55fb21a729714f40533feb"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 436,
+              "sha256": "a47cf6b492c7aaae446770bd27bf6825b229805133e5d38d4a7bce67db3679d6"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 436,
+              "sha256": "a378f8f6bfde120e79625c7b9bb9cb979be33a873039b26356942f519f66838d"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 436,
+              "sha256": "7e3ad3ac0fd496646ae4da7430480bd6c0d7a56471e63b4b2e91bc09dcc7179c"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 436,
+              "sha256": "94122b22181020867729cb37465ec9f93162d5acc78f1bd0b45c579709174e49"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 436,
+              "sha256": "a22f960c07cd583c7232683da72869bb3e7d9d96b2145c3aa96dd1d6eebfc5b2"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 436,
+              "sha256": "89aaba17f77321bfb64711a49978a403b35e30e4d64eb51fa3823ddfbcbb4c4a"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 73,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "instanceMatrix": "2d774f49f633ef3026757440a45a64216d110edd43d905926f0dffe80edb8021",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 73,
+              "sha256": "ec4c326f68c2ab16aab3b94dcb2a18114f9cbb2e85ebdb130dfa6764174aa1a3"
+            }
+          }
+        }
+      }
+    },
+    {
+      "seed": 2147483647,
+      "mode": "impostor",
+      "identity": {
+        "towers": "282a897e",
+        "towerAttributes": "add1c8e8",
+        "trims": "557c0a7b",
+        "trimAttributes": "0d687f8e",
+        "signPlacement": "cc7bef46",
+        "signText": "47c0c723",
+        "impostors": "f1d49a0a",
+        "impostorCards": "c364d7f6",
+        "counts": {
+          "towers": 6680,
+          "trims": 13818,
+          "signs": 406,
+          "impostors": 69
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6680,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "43894455f7acb608c8ae66418399adad6b8b224fb91c0dce10d7ff345c1bb3eb",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6816,
+              "sha256": "3bfd60beda1a60ce73745644764a16ba5d54f812fdb39bff971d8112471dc124"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6816,
+              "sha256": "c0b3dc077399bdeadc36405203810cb3d65942852bccdb598f1ca3b25d985224"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6816,
+              "sha256": "9a02a21759ac30ec569e48301e1fae3631b15c67a18c24d07a154828782ea7f4"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6816,
+              "sha256": "b63ac8fd2fddea76667a75a286896951904dd26cbc5609aff3c3596c28b873b3"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6816,
+              "sha256": "90f04490c26e0d363a4a2d97d8bc2270f7502fb918bc6f4428c3366ead168e2e"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6816,
+              "sha256": "e1969d262eefca04c352c8cd639c8b5ea877550d4a74180e6e7ec5fe839405e5"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6816,
+              "sha256": "1d185100844510c7ec2d413a99140d894dec96b77580c3ce18351d9c8c75ff13"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6816,
+              "sha256": "c8d5df4ba6bdb6aad473e1613a445cc203b7e30d8294d1aaf37b9799eb9ed131"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13818,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "b0a201acc539a6b4fb36b35283e87763904be1a5cb94bdfec04f283dea28b153",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13948,
+              "sha256": "2978456425d6a0f76914734d066d5c66cfc60d231574896e5569c9e642d3aa68"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13948,
+              "sha256": "d9c64d26e063e829ec166e6871c9969069e63a32d38dcc2158985bd2a71f44f3"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13948,
+              "sha256": "c3cab3e1f0964c463394991e03aa03420dd5e102c6746975a2efd2e11fbfd158"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13948,
+              "sha256": "8cd05b14951d6134c8cda5f38576b12606e253fa61de49bc7d830a741ac168a8"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13948,
+              "sha256": "b733b5088e5e24933710400eff34f0849bcce6c4e2ed7fb85a42b10e43329614"
+            }
+          }
+        },
+        "skyriver.city.signs": {
+          "count": 406,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "instanceMatrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 406,
+              "sha256": "2217a819f9cbef432c897b61481c84603cde43dd7470af07101ea48f2470bbab"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 406,
+              "sha256": "e8ba22fbd87d008d45f730afcb4a877ba73424c422b1cb73492939798f50f546"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 406,
+              "sha256": "847735d32f08f93d82aa598fd7c492210014b99adb5e659189a3bb54ca88596b"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 406,
+              "sha256": "a3b362522080fa2f8f52df034591171ad1772c3248b87f3a8b9be7b45bc13698"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 406,
+              "sha256": "aaaa432ab7bd9ebc757ed9c664d78478c9d0f303196e25feaab3c4e38e1c415a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 406,
+              "sha256": "271044dfd39ae98acd9007991a182ec3683408f7078b44b4d4b9e1c83bd18ae8"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 406,
+              "sha256": "351d9f31726479dd0bbe5c610197623b9a1e8f7b7f02f19fd2a2e39cc89c645c"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 406,
+              "sha256": "72f681a250da7b4ad539bd3214b07998b9b219af9860c5d22caedf5fa812d6a9"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 69,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "instanceMatrix": "9a0956ac2998294cfdb007639689079b3e6b2a1fec67d77e1b4db6228bb0d924",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 69,
+              "sha256": "1e7d9c73a6a4d64b1ff3b6fc797c7815f0ba2cdbec3cb363dca274fbad280447"
+            }
+          }
+        }
+      }
+    },
+    {
+      "seed": 2147483647,
+      "mode": "geometry",
+      "identity": {
+        "towers": "b8a3acb9",
+        "towerAttributes": "54dc9fc2",
+        "trims": "557c0a7b",
+        "trimAttributes": "0d687f8e",
+        "signPlacement": "cc7bef46",
+        "signText": "47c0c723",
+        "impostors": "f1d49a0a",
+        "impostorCards": "c364d7f6",
+        "counts": {
+          "towers": 6816,
+          "trims": 13818,
+          "signs": 406,
+          "impostors": 69
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6816,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "7b8660cda069e99b488d966f514650f42237dc716a12d2269f25ed98e1ab9b8f",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6816,
+              "sha256": "773147f413ef05129086043d1c5ec4bc2d396fb9ed9bbced46fadd07f7d04738"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6816,
+              "sha256": "cd5bb67b787e9c7c47ffc717cfcab34d426a5524b42d9e0878c78d97615e9d5a"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6816,
+              "sha256": "f11e9c8b51235cee573f4391574f07bed8675f206ce576ffa27978939689646a"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6816,
+              "sha256": "254df78df4760dd773226cbf4eb2f6c9fa086ea0eae8ef4234d2672a38419327"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6816,
+              "sha256": "a2df32246f43cec2ca801631cfcbcd38b6d17b0e7c3a1d7181b41747d4da1d6d"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6816,
+              "sha256": "c870c6ecde6f31a896766db329563af6c7a84d9793f37fa066b74f475eb46e7f"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6816,
+              "sha256": "1d185100844510c7ec2d413a99140d894dec96b77580c3ce18351d9c8c75ff13"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6816,
+              "sha256": "d969cb8445a4a477256dce70412789476c60edb0d7cb773c1b9d7f9c1cb9186a"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13818,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "b0a201acc539a6b4fb36b35283e87763904be1a5cb94bdfec04f283dea28b153",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13948,
+              "sha256": "2978456425d6a0f76914734d066d5c66cfc60d231574896e5569c9e642d3aa68"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13948,
+              "sha256": "d9c64d26e063e829ec166e6871c9969069e63a32d38dcc2158985bd2a71f44f3"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13948,
+              "sha256": "c3cab3e1f0964c463394991e03aa03420dd5e102c6746975a2efd2e11fbfd158"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13948,
+              "sha256": "8cd05b14951d6134c8cda5f38576b12606e253fa61de49bc7d830a741ac168a8"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13948,
+              "sha256": "b733b5088e5e24933710400eff34f0849bcce6c4e2ed7fb85a42b10e43329614"
+            }
+          }
+        },
+        "skyriver.city.signs": {
+          "count": 406,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "instanceMatrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 406,
+              "sha256": "2217a819f9cbef432c897b61481c84603cde43dd7470af07101ea48f2470bbab"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 406,
+              "sha256": "e8ba22fbd87d008d45f730afcb4a877ba73424c422b1cb73492939798f50f546"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 406,
+              "sha256": "847735d32f08f93d82aa598fd7c492210014b99adb5e659189a3bb54ca88596b"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 406,
+              "sha256": "a3b362522080fa2f8f52df034591171ad1772c3248b87f3a8b9be7b45bc13698"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 406,
+              "sha256": "aaaa432ab7bd9ebc757ed9c664d78478c9d0f303196e25feaab3c4e38e1c415a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 406,
+              "sha256": "271044dfd39ae98acd9007991a182ec3683408f7078b44b4d4b9e1c83bd18ae8"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 406,
+              "sha256": "351d9f31726479dd0bbe5c610197623b9a1e8f7b7f02f19fd2a2e39cc89c645c"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 406,
+              "sha256": "72f681a250da7b4ad539bd3214b07998b9b219af9860c5d22caedf5fa812d6a9"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 69,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "instanceMatrix": "9a0956ac2998294cfdb007639689079b3e6b2a1fec67d77e1b4db6228bb0d924",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 69,
+              "sha256": "1e7d9c73a6a4d64b1ff3b6fc797c7815f0ba2cdbec3cb363dca274fbad280447"
+            }
+          }
+        }
+      }
+    },
+    {
+      "seed": 4294967295,
+      "mode": "impostor",
+      "identity": {
+        "towers": "bc56b24f",
+        "towerAttributes": "d11d30a1",
+        "trims": "64e1ff2d",
+        "trimAttributes": "0b837652",
+        "signPlacement": "d1aafc76",
+        "signText": "f52631b3",
+        "impostors": "8ef69e4b",
+        "impostorCards": "42370e99",
+        "counts": {
+          "towers": 6761,
+          "trims": 13852,
+          "signs": 355,
+          "impostors": 70
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6761,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "b85cc785d317962d7fd18fe5d0e0b7c1832dcc7b5f6514bce02c8e78f27bd24a",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6894,
+              "sha256": "622fe31f341b0f571d5ae5146f5b4f208843f361284e524531920736a6f3d2cb"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6894,
+              "sha256": "4cbdf39daeca00708a35458ce2919e2b896ae284315c392ed405f093007c8379"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6894,
+              "sha256": "a22a918fc1646fe8fae54785ff8f8618bd0c8d0ddd78b949280908b83346d143"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6894,
+              "sha256": "d922feab824d61c57714101452727a570ca72f607d0451f0712472763eecb434"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6894,
+              "sha256": "194f61f35965d9757421451e33f86f708250c3be6a99b747eaf2a0c4556b394d"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6894,
+              "sha256": "26a1cd0e44aee105bfcf014e0c2f34ca9377b1e9ffd4621b93bfd03b13634bb9"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6894,
+              "sha256": "eee1e549772fbd22542df77b9d2685a71b72018594d26251276840d7a1fd379c"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6894,
+              "sha256": "6b578b347293d70e5a0114cdd76eb5874242b5ec631e6266dcffbe3687a58a5f"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13852,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "2a08bfb337a349fc31e999a3b8a0894d8b78430c61e32b41b6cf3cc1f1b86c59",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13992,
+              "sha256": "1f0f5150d74ab7d52cc7f014287079b8e8d7d28fd0a2fca4ba4e40d1cb0bf6c5"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13992,
+              "sha256": "272d4b790e8bc64eedf50a4f954c317a76ad8943970cb48233054a97ad989178"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13992,
+              "sha256": "afd439afd278928ab4f5eac6e05f122fa8b8a61d09c3f0a1e5998033170490b8"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13992,
+              "sha256": "e0dafc1e5217cf8321335dad2c3012ed5dea297c75e2a30eae1c2965ccc9388d"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13992,
+              "sha256": "b8f42590ba4e9380468c4c6c2c4087b1fdf4ffdeffec44b1f441969c5dad11bb"
+            }
+          }
+        },
+        "skyriver.city.signs": {
+          "count": 355,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "instanceMatrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 355,
+              "sha256": "aeffc7ed1f98a9eb411304aecaa6ede082050b5a6237c149c3b02a12d8b997bc"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 355,
+              "sha256": "7d00be1be8e9115d583f2f1fc00bfffc4848b3ca1f689eb54b7bce1084f420b5"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 355,
+              "sha256": "b83410321c7bb12dd81da140ead582905f46af8e4100835a5c46832e85188eb0"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 355,
+              "sha256": "ad64062480268a5522e8eedb3f680df27ede5fca20391f695373043cc7b19134"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 355,
+              "sha256": "13f6de0ced1e1eb319fa62f60156e63dc09ab8c9762f4a1befaa8c77c3cedb9f"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 355,
+              "sha256": "f8b838d7a085d7b256a87a17fe25d4f8517248447d334630132af6f0afffef13"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 355,
+              "sha256": "2d4022c7a14ba8d5c0aa7c4020dd27a43729a2b5f41cdb38cfbe7d4b34393afa"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 355,
+              "sha256": "1c118b564fd0aba54c79f841e0fa61707beb31c26130718707783181a5b746a0"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 70,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "instanceMatrix": "70c04e74bb5ad2771c9330b15a8cd187273fbd323d146abb7e298508ac70fc71",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 70,
+              "sha256": "989f23af2d86aa2ca19f2bb3d65b3daef1a22dd9be5ae00514aed0af033e80cd"
+            }
+          }
+        }
+      }
+    },
+    {
+      "seed": 4294967295,
+      "mode": "geometry",
+      "identity": {
+        "towers": "7811025b",
+        "towerAttributes": "5bbe4dc3",
+        "trims": "64e1ff2d",
+        "trimAttributes": "0b837652",
+        "signPlacement": "d1aafc76",
+        "signText": "f52631b3",
+        "impostors": "8ef69e4b",
+        "impostorCards": "42370e99",
+        "counts": {
+          "towers": 6894,
+          "trims": 13852,
+          "signs": 355,
+          "impostors": 70
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6894,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "329a1582a45fec5eba89d21ba03de2d7fb4710ed9f17f3e0ea5690b7aab9091f",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6894,
+              "sha256": "ae460543d8edb5f85daac0b29171cccc045b8da450502ca26a42592b6f36718a"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6894,
+              "sha256": "4098978bea1b94075e9156c3524b03e5a5732a284675dfe4fd67834a0e544d5b"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6894,
+              "sha256": "1afef9c8ffce038072822345107bf2b60da01d23061e52ad64c6e0653cf64353"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6894,
+              "sha256": "07369c983c096434ebc2c2efe35750ae858afc83e0761f3310171ab957d1f4bb"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6894,
+              "sha256": "e6108793e31659cc7cef36def593a70cce428135dddbb96c3c6f9a4e2af52c1b"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6894,
+              "sha256": "048534c3d2f4156f28f386217f475f0e4774e8554a4254082360576a8269e189"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6894,
+              "sha256": "eee1e549772fbd22542df77b9d2685a71b72018594d26251276840d7a1fd379c"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6894,
+              "sha256": "bfbcbf52e1d0fb72dba03446b15d2247b9978fb9de4babe1f366c89e9f8118e6"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13852,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "instanceMatrix": "2a08bfb337a349fc31e999a3b8a0894d8b78430c61e32b41b6cf3cc1f1b86c59",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13992,
+              "sha256": "1f0f5150d74ab7d52cc7f014287079b8e8d7d28fd0a2fca4ba4e40d1cb0bf6c5"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13992,
+              "sha256": "272d4b790e8bc64eedf50a4f954c317a76ad8943970cb48233054a97ad989178"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13992,
+              "sha256": "afd439afd278928ab4f5eac6e05f122fa8b8a61d09c3f0a1e5998033170490b8"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13992,
+              "sha256": "e0dafc1e5217cf8321335dad2c3012ed5dea297c75e2a30eae1c2965ccc9388d"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13992,
+              "sha256": "b8f42590ba4e9380468c4c6c2c4087b1fdf4ffdeffec44b1f441969c5dad11bb"
+            }
+          }
+        },
+        "skyriver.city.signs": {
+          "count": 355,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "instanceMatrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 355,
+              "sha256": "aeffc7ed1f98a9eb411304aecaa6ede082050b5a6237c149c3b02a12d8b997bc"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 355,
+              "sha256": "7d00be1be8e9115d583f2f1fc00bfffc4848b3ca1f689eb54b7bce1084f420b5"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 355,
+              "sha256": "b83410321c7bb12dd81da140ead582905f46af8e4100835a5c46832e85188eb0"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 355,
+              "sha256": "ad64062480268a5522e8eedb3f680df27ede5fca20391f695373043cc7b19134"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 355,
+              "sha256": "13f6de0ced1e1eb319fa62f60156e63dc09ab8c9762f4a1befaa8c77c3cedb9f"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 355,
+              "sha256": "f8b838d7a085d7b256a87a17fe25d4f8517248447d334630132af6f0afffef13"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 355,
+              "sha256": "2d4022c7a14ba8d5c0aa7c4020dd27a43729a2b5f41cdb38cfbe7d4b34393afa"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 355,
+              "sha256": "1c118b564fd0aba54c79f841e0fa61707beb31c26130718707783181a5b746a0"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 70,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "instanceMatrix": "70c04e74bb5ad2771c9330b15a8cd187273fbd323d146abb7e298508ac70fc71",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 70,
+              "sha256": "989f23af2d86aa2ca19f2bb3d65b3daef1a22dd9be5ae00514aed0af033e80cd"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "sourceSha256": "44b9cc4c5c0055959ed5316e90622b9b15b6f1af3874ba829e6ae95cc13ecb91",
+  "parapetBlock": "  // Lit parapets on some crowns and terrace tops: a cold line along the top edge that silhouettes\n  // the roofline against the haze once bloom catches it.\n  float parapetLive = step( 0.6, skyHash11( vSeed * 97.0 + 3.0 ) ) * step( 700.0, vWorldPos.y );\n  float parapet = 1.0 - smoothstep( 0.6, 2.2, vFaceHalf.y - vSurf.y );\n  color += skyriverDistrictTint( vec3( 0.75, 0.9, 1.0 ) * parapet * parapetLive * vIsSide * 2.4 * EMISSIVE_GAIN,\n    vDistrict, DISTRICT_TRIM_LARGE_SATURATION );\n\n",
+  "shaderHashes": {
+    "towerVertex": "f723c841e82faad0c10236d7d9d20ec9ce492687b3cbb29e4d5d14a0c3e0d2af",
+    "towerFragment": "5083e2db8d9c52c3736b15cc961aaa46e860f7c03e5ee6df16e0043d65091b8a",
+    "trimVertex": "d0ffee8f790a551af95c333dd4ec895a033accb5cea9a9cdab9516b646418b03",
+    "trimFragment": "63bc1df082457731686d702ccfaa7b08f69f4425675c30660607daf2827a82aa",
+    "signVertex": "b14b03b960c311a458b84cf7fe168a3e37b6b7f5d5d524a580783f32ff38d57e",
+    "signFragment": "22638d5914625dfe9da0de8cb02cdb3cbb9919736c3ec8de65c1e9b44bff9fbe",
+    "impostorVertex": "dacc61fadf59ae59efaa94f59e88a0840f65531cc658d079592546198d787ba7",
+    "impostorFragment": "4c69c913d1cf6fd0dc50197aba9de4d0447f5a88ac27cc01ea5c853d06fa1819",
+    "districtColour": "905a45c717badd7b1394d7231fd497ed8696c689e7ef018e288ced9d0b5116ae",
+    "distanceGrade": "3459c1defa5e90dd6c62e60460117923927da0dbaa47afbb73abcccf23a44a33",
+    "windowPalette": "915e8d85fbff6fa86ea6be2d8bcdafdf84bf5a76b204d2e47ec18397211052db"
+  }
+}
