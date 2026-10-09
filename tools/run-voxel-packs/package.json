@@ -1,0 +1,40 @@
+{
+  "name": "run-voxel-packs",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "description": "Authoring pipeline for the RUN voxel asset packs (fantasy, space, monster, post-apocalypse): voxel-as-code sources, headless Blender build, generation route, and a contract validator shared with games/run-voxel-showcase.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "gen:rig": "node --import tsx scripts/gen-avatar-rig.ts",
+    "build:pack": "node --import tsx scripts/build-pack.ts",
+    "validate": "node --import tsx scripts/validate-pack.ts",
+    "catalog": "node --import tsx scripts/export-catalog.ts",
+    "stage": "node --import tsx scripts/stage-jam.ts",
+    "body-ref": "node --import tsx scripts/body-ref.ts",
+    "snapshot": "node --import tsx scripts/snapshot.ts",
+    "test:integration": "RVX_INTEGRATION=1 vitest run",
+    "avatar-sheet": "node --import tsx scripts/avatar-sheet.ts",
+    "pack-sheet": "node --import tsx scripts/pack-sheet.ts",
+    "ui": "node --import tsx scripts/render-ui.ts",
+    "lineup": "node --import tsx scripts/lineup.ts",
+    "review": "node --import tsx scripts/review.ts"
+  },
+  "dependencies": {
+    "@gltf-transform/core": "^4.5.0",
+    "@gltf-transform/extensions": "^4.5.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/pngjs": "^6.0.5",
+    "@types/three": "~0.170.0",
+    "pngjs": "^7.0.0",
+    "three": "~0.170.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}
