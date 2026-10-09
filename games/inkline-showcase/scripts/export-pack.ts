@@ -16,11 +16,19 @@ async function getRunLicenseText(appRoot: string): Promise<string> {
   for (const candidate of candidates) {
     if (existsSync(candidate)) {
       const content = await readFile(candidate, 'utf8')
-      return `SPDX-License-Identifier: LicenseRef-RUN-Repository-Supplemental-1.0
-Source: https://github.com/series-ai/run-workshop/tree/main/games/inkline-showcase (original INKLINE assets generated for this project)
-Verified-by: run-workshop maintainers
-
-${content}`
+      return [
+        'SPDX-License-Identifier: LicenseRef-RUN-Repository-Supplemental-1.0',
+        'Source: https://github.com/series-ai/run-workshop/tree/main/games/inkline-showcase',
+        'Verified-by: run-workshop maintainers, 2026-10-09',
+        '',
+        'INKLINE — Stick figure game asset pack',
+        'Copyright (c) 2026 Series Entertainment, Inc.',
+        'Made for the RUN platform. Licensed under the RUN Repository Supplemental',
+        'License v1.0 below: use it in RUN projects; it converts to MIT on January 1,',
+        '2028.',
+        '',
+        content.trimStart(),
+      ].join('\n')
     }
   }
   throw new Error('Could not find LICENSE.md')

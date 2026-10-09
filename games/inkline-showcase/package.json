@@ -2,6 +2,7 @@
   "name": "inkline-showcase",
   "version": "1.0.0",
   "private": true,
+  "license": "SEE LICENSE IN ../../LICENSE.md",
   "type": "module",
   "description": "Original drawn-stick 3D asset pack and industrial district showcase for RUN.",
   "scripts": {
