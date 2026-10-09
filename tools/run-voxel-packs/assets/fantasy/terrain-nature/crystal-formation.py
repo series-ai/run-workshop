@@ -1,15 +1,4 @@
-"""Arcane crystal outcrop in the Pirate Nation style.
-
-Three faceted boulders (true slopes, painted stone blocks, a little moss)
-burst open by a cluster of six-sided gem spires that lean out from the
-centre: magic cyan, royal blue and a few violet. Facets alternate light and
-dark with bright edges; the stone round each spire foot is lit by a
-painted cyan glow. The tall centre spire is the `heart`: a separate part
-that pulses on `idle` (the frost-nova PFX fires at `socket-heart` on
-demand).
-
-About 46 wide and 52 tall (terrain class). Faces -Z.
-"""
+"""Painted crystal faces rise from broken rock ledges."""
 import math
 
 import numpy as np
@@ -17,6 +6,7 @@ import numpy as np
 import paint as P
 from _life import asset, boulder, coords, crystal, pfx, rig
 from voxgrid import Clip, Grid, Socket
+from _scenery import broken_rock
 
 S = (54, 60, 48)
 CX, CZ = 27.0, 24.0
@@ -40,19 +30,20 @@ def spire(g: Grid, x, z, y0, r, h, tip, ramp: str, base: int, lean, turn) -> np.
     facets; per-facet paint would zigzag at every facet border on these
     sheared faces (tested), so the only paint border is the level ring where
     the tip starts."""
-    m = crystal(g, x, z, y0, r, h, tip, ramp, base, n=6, lean=lean, turn=turn, paint=False)
-    _X, Y, _Z = coords(g)
-    P.flat(g, m, ramp, base)
-    P.flat(g, m & (Y > y0 + h), ramp, min(7, base + 1))
+    m=crystal(g,x,z,y0,r,h,tip,ramp,base,n=6,lean=lean,turn=turn,paint=True)
+    X,Y,Z=coords(g)
+    P.flat(g,m & (np.abs(X-x)<.8) & (Y>y0+h*.4),ramp,7)
     return m
 
 
 def outcrop() -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
-    rock = boulder(g, CX, CZ, 0, 13.0, 10.0, "stone", 4, n=8, seed=3, lean=(0.5, 0.5), squash=(1.0, 0.9))
-    rock |= boulder(g, CX - 14, CZ + 6, 0, 8.0, 8.0, "stone", 4, n=7, seed=5, lean=(-1.0, 0.5))
-    rock |= boulder(g, CX + 14, CZ - 7, 0, 7.0, 6.5, "stone", 4, n=7, seed=8, lean=(1.0, -0.5))
+    rock=broken_rock(g,CX,CZ,0,13,10,3)
+    rock|=broken_rock(g,CX-14,CZ+6,0,8,8,5)
+    rock|=broken_rock(g,CX+14,CZ-7,0,7,6.5,8)
+    for x,z in ((10,14),(40,34),(35,10)):
+        crystal(g,x,z,0,1.8,4,3,"cyan",5,n=6)
     feet = []
     gems = np.zeros(S, dtype=bool)
     for x, z, y0, r, h, tip, ramp, base, ls, turn in SPIRES:
@@ -85,8 +76,7 @@ def heart() -> Grid:
 def build():
     hinge = (CX, HEART_Y0, CZ)
     root, to_root = rig([("crystal-formation", outcrop(), None, None), ("heart", heart(), hinge, None)])
-    idle = {"heart": {"scale": [(0.0, (1.0, 1.0, 1.0)), (1.2, (1.06, 1.03, 1.06)), (2.4, (1.0, 1.0, 1.0))],
-                      "rot": [(0.0, (0.0, 0.0, 0.0)), (1.2, (0.0, 0.0, 1.5)), (2.4, (0.0, 0.0, 0.0))]}}
+    idle={"heart":{"rot":[(0,(0,0,0)),(1.2,(0,0,1.5)),(2.4,(0,0,0))]}}
     return asset("terrain-nature", "crystal-formation", "Arcane Crystal Outcrop", root, clips=[Clip("idle", idle)],
                  sockets=[Socket("socket-heart", at=to_root((CX + 0.8, HEART_Y0 + 22, CZ)), parent="heart")],
                  # the nova bursts round the lower spire, just above the rock (the socket is 22 voxels up it)

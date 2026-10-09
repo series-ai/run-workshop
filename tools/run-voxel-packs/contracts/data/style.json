@@ -64,6 +64,13 @@
    ],
    "diagonalMin": 0.05
   },
+  "vehicle-flat": {
+   "triangles": [
+    60,
+    2500
+   ],
+   "diagonalMin": 0.05
+  },
   "creature-boss": {
    "triangles": [
     300,
@@ -180,6 +187,34 @@
    "triangles": [
     2,
     800
+   ],
+   "diagonalMin": 0
+  },
+  "seat": {
+   "triangles": [
+    12,
+    2000
+   ],
+   "diagonalMin": 0
+  },
+  "table": {
+   "triangles": [
+    12,
+    2000
+   ],
+   "diagonalMin": 0
+  },
+  "container": {
+   "triangles": [
+    12,
+    2000
+   ],
+   "diagonalMin": 0
+  },
+  "appliance": {
+   "triangles": [
+    12,
+    2000
    ],
    "diagonalMin": 0
   }

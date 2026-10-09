@@ -1,18 +1,10 @@
-"""Frost pine in the Pirate Nation style.
-
-PN pines are a short trunk under stacked, tapering clumps of big leaf
-blocks. Here: a curved faceted trunk on a root flare, five octagonal leaf
-tiers (sloped frustums, each turned a little and shifted off-centre so the
-tree leans and is not a perfect cone, rule F5) and a pointed top. Painted
-needles, snow caps with drips on every tier and a few blue-white frost
-glints. About 36 wide and 66 tall (PN pine 26×60). Faces -Z.
-"""
+"""A frost pine uses thick branch groups with uneven snow caps."""
 import math
 
 import numpy as np
 
 import paint as P
-from _life import asset, coords, leaves, ngon, plan, trunk
+from _life import asset, coords, leaves, leaf_block, ngon, plan, trunk
 from voxgrid import Grid, Part
 
 S = (44, 72, 44)
@@ -33,20 +25,14 @@ def build():
     # root flare and a curved trunk (sheared frustums: true slopes)
     trunk(g, [(CX, 0, CZ), (CX + 0.3, 3, CZ), (CX + 0.6, 10, CZ - 0.2), (CX + 1.2, 18, CZ - 0.4)], [6.5, 4.2, 3.6, 3.0], ramp="wood", base=3, n=6, seed=1)
     Xi, Yi, Zi = (np.floor(a).astype(int) for a in (X, Y, Z))
-    for k, (y0, y1, r0, r1, dx, dz, turn) in enumerate(TIERS):
-        start = len(g.solids)
-        tier = plan(g, ngon(CX + dx, CZ + dz, r0, 8, turn + math.pi / 8), y0, y1, "forest", 5,
-                    top=ngon(CX + dx + 0.6, CZ + dz, r1, 8, turn + math.pi / 8))
-        leaves(g, g.solids[start:], "forest", 5, seed=10 + k)
-        # the tier's lower rim a shade darker (a painted overhang shadow)
-        P.flat(g, tier & (Y < y0 + 1.5), "forest", 3)
-        # a snow cap with round drips down the slope (bands, no speckle)
-        drip = (P._hash(np.floor(np.arctan2(Z - CZ, X - CX) * 4).astype(int), seed=20 + k) % np.uint64(3)).astype(int)
-        # snow sits on the visible upper slope, just under the next tier's rim
-        cover = TIERS[k + 1][0] if k + 1 < len(TIERS) else 58
-        snow = tier & (Y > cover - 3.5 - drip * 1.5)
-        P.flat(g, snow, "bone", 7)
-        P.flat(g, snow & (Y < cover - 2.5 - drip * 1.5 + 1.0), "bone", 6)
+    for k,(y0,y1,r0,r1,dx,dz,angle) in enumerate(TIERS):
+        crown=leaf_block(g,CX+dx,y0+5,CZ+dz,r0*1.15,11,r0*1.1,"forest",5,bevel=2,seed=10+k)
+        for j,(bx,bz) in enumerate(((-r0*.65,0),(r0*.65,0),(0,-r0*.65),(0,r0*.65))):
+            if k==4 and j==3: continue
+            branch=leaf_block(g,CX+dx+bx,y0+2+j%2,CZ+dz+bz,r0*.78,7,r0*.70,"forest",5,bevel=1.5,seed=20+k*4+j)
+            P.flat(g,branch & (Y>y0+3.5+j%2),"bone",7)
+            P.flat(g,branch & (Y<y0+.5+j%2),"forest",4)
+        P.flat(g,crown & (Y>y0+8.5)&((X+Z).astype(int)%7<5),"bone",7)
     # the tip: a pointed snowy cone
     plan(g, ngon(CX + 2.6, CZ, 3.5, 8, math.pi / 8), 58, 66, "bone", 7, top=[(CX + 3.4, CZ + 0.2)] * 8)
     tip = g.solids[-1].mask(g.shape)

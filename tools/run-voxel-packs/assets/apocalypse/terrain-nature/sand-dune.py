@@ -14,7 +14,7 @@ import paint as P
 import pnglyph as G
 import pnpaint as PP
 import pnshapes as S
-from _life import Rig, ctr, limb, make, slab, tuft
+from _life import Rig, ctr, limb, make, slab, tuft, rock
 from pnkit import box
 from voxgrid import C, Grid
 
@@ -36,7 +36,11 @@ def dune() -> Grid:
     toe_l = [38.0, 42.0, 44.0, 44.0, 43.0, 40.0]
 
     def prof(i):  # (y, z) triangle: windward toe, lee toe, crest
-        return [(0.0, toe_w[i]), (0.0, toe_l[i]), (hs[i], cs[i])]
+        w,c,h=toe_w[i],cs[i],hs[i]
+        return [(0.0,w),(0.0,toe_l[i]),(h,c),
+                (h*.78,w+(c-w)*.78),(h*.72,w+(c-w)*.65),
+                (h*.50,w+(c-w)*.58),(h*.44,w+(c-w)*.40),
+                (h*.23,w+(c-w)*.34),(h*.18,w+(c-w)*.18)]
 
     m = np.zeros(g.shape, dtype=bool)
     for i in range(len(xs) - 1):
@@ -59,6 +63,9 @@ def dune() -> Grid:
     P.outline(g, door, "darkwood", 3, normal="x")
     P.flat(g, door & (Y > 5) & (Y < 8) & (Z > 12) & (Z < 14), "teal", 5)
     PP.blotch(g, door, "rust", 5, cell=4, chance=0.08, seed=2)
+    for k,(xx,zz,hh,rr) in enumerate(((10,30,5,7),(21,35,7,8),(47,32,8,7),(60,32,5,6))):
+        ridge=rock(g,xx,zz,2,rr,rr*0.8,hh,"sand",5,shrink=0.55,n=6,seed=35+k)
+        P.flat(g,ridge & (Y > hh*0.65),"sand",6)
     # dry scrub on the lee side
     for k, (tx, tz) in enumerate(((26.5, 42.5), (40.5, 41.5), (55.5, 40.5))):
         tuft(g, tx, tz, 0, 8, blades=7, spread=4.2, ramp="sand", shade=6, seed=k)

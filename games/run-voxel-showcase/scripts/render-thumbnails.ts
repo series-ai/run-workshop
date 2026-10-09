@@ -8,6 +8,7 @@
  * `icons/` leaf as `icon-<model id>.png` instead.
  *
  * Usage: npm run thumbnails -- --pack fantasy [--force] [--icons]
+ * Set RVX_THUMB_PORT to use a separate local port for concurrent pack renders.
  * Every failure is named; the process exits non-zero if any model failed.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -19,7 +20,7 @@ import { leafFor, RVX_PACK_KEYS, type RvxPackKey } from '../../../tools/run-voxe
 
 const ROOT = resolve(import.meta.dirname, '..')
 const STAGE = process.env.VITE_RVX_STAGE_DIR ?? resolve(ROOT, '../../tools/run-voxel-packs/out/jam-stage')
-const PORT = 5193
+const PORT = Number(process.env.RVX_THUMB_PORT ?? 5193)
 
 async function main(): Promise<void> {
   const packFlag = process.argv.indexOf('--pack')

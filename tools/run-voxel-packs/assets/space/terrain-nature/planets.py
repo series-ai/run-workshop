@@ -20,6 +20,17 @@ from pnshapes import cone, ngon_radius
 from voxgrid import C
 
 
+def stepped_globe(g, cx, cy, cz, r):
+    """Build two-unit terraces from fixed one-unit voxels."""
+    X,Y,Z=coords(g)
+    dx=2*np.floor((X-cx)/2)+1
+    dy=2*np.floor((Y-cy)/2)+1
+    dz=2*np.floor((Z-cz)/2)+1
+    m=dx*dx+dy*dy+dz*dz<=r*r
+    g.a[m]=C('bone',5)
+    return m
+
+
 def cradle(g: Grid, cx, cz, r, ramp: str, shade: int, seed: int) -> np.ndarray:
     """A low faceted rock ring the planet sits in, with two boulders."""
     m = ngon_y(g, cx, cz, r, 0, 4, ramp, shade, n=9, r_top=r * 0.72)
@@ -73,13 +84,22 @@ def planet_asset(slug: str, name: str, r: float, paint, base, extra=None):
     cx = cz = size / 2
     cy = r + 1.5
     root_g = Grid(*S)
-    if slug == "terra-planet":
-        terra_cradle(root_g, cx, cz, r * 0.8, *base)
-    else:
-        cradle(root_g, cx, cz, r * 0.8, *base)
+    from _repair_terrain import ground, stone
+    ground(root_g,cx,cz,r*.82,base[0],base[1])
+    for dx,dz in ((-r*.65,-r*.35),(r*.52,r*.52)):
+        stone(root_g,cx+dx,cz+dz,1,3,5,base[0],base[1],round(dx+20))
     body = Grid(*S)
-    solids = globe(body, cx, cy, cz, r, "bone", 5)
-    paint(body, mask_of(body, solids), cx, cy, cz, r)
+    m=stepped_globe(body,cx,cy,cz,r)
+    paint(body,m,cx,cy,cz,r)
+    X,Y,Z=coords(body)
+    # Soft mineral changes follow the terraces without grid seams.
+    surface=m & ((np.floor(X/3)+np.floor(Y/4)+np.floor(Z/3))%7==0)
+    if slug=='lava-planet':
+        P.flat(body,surface & (body.a==C('iron',4)),'iron',5)
+    elif slug=='ice-planet':
+        P.flat(body,surface & (body.a==C('bone',6)),'bone',5)
+    elif slug=='terra-planet':
+        P.flat(body,surface & (body.a==C('sky',3)),'sky',4)
     rig = Rig()
     rig.add(f"{slug}-base", root_g, (cx, 0, cz))
     rig.add(slug, body, (cx, cy, cz), f"{slug}-base")
@@ -123,23 +143,36 @@ def paint_gas(g, m, cx, cy, cz, r):
 
 
 def paint_ice(g, m, cx, cy, cz, r):
-    X, Y, Z = coords(g)
-    P.flat(g, m, "cyan", 6)
-    P.flat(g, m & (np.abs(Y - cy) > r * 0.55), "bone", 7)  # polar caps
-    crack = m & (np.abs(np.sin((X - cx) * 0.5 + (Z - cz) * 0.3) * 2.5 - (Y - cy)) < 0.6) & (np.abs(Y - cy) < r * 0.55)
-    P.flat(g, crack, "cyan", 4)
-    spots(g, m & (np.abs(Y - cy) <= r * 0.55), "bone", 7, cell=6, r=1.4, chance=3, seed=5)
+    X,Y,Z=coords(g)
+    dx,dy,dz=X-cx,Y-cy,Z-cz
+    P.flat(g,m,"cyan",5)
+    cap=m & ((dy > r*.35+dx*.2)|(dy < -r*.40+dz*.2))
+    P.flat(g,cap,"bone",6)
+    # Wide angular floes remain visible on both flat poles.
+    seams=(np.abs(dx*.65+dz*.45-dy*.3)<.75)|(np.abs(dz*.7-dx*.25+dy*.4-2)<.75)
+    P.flat(g,m & seams,"cyan",3)
+    P.flat(g,m & cap & (dx>2)&~seams,"bone",7)
+    P.flat(g,m & ~cap & (dx-dz>4)&~seams,"cyan",6)
 
 
 def paint_lava(g, m, cx, cy, cz, r):
-    X, Y, Z = coords(g)
-    P.flat(g, m, "steel", 3)
-    P.flat(g, m & (Y > cy + r * 0.6), "steel", 4)
-    cracks = m & ((np.abs(np.sin((X - cx) * 0.7) * 2 + (Y - cy) * 0.8 - (Z - cz) * 0.3) < 0.7) | (np.abs((X - cx) * 0.5 - np.sin(Y * 0.6) * 2.5 + (Z - cz) * 0.4) < 0.6))
-    P.flat(g, cracks, "orange", 6)
-    spots(g, m, "red", 5, cell=7, r=2.4, chance=2, seed=8)  # lava pools
-    spots(g, m, "orange", 7, cell=7, r=1.6, chance=2, seed=8)
-    spots(g, m, "gold", 7, cell=7, r=0.8, chance=2, seed=8)
+    """A dark iron crust split by wide glowing channels. One channel family
+    runs over the top cap, so the glow shows from every view."""
+    X,Y,Z=coords(g)
+    dx,dy,dz=X-cx,Y-cy,Z-cz
+    P.flat(g,m,"iron",4)
+    c1=np.abs(dx*.55+dy*.65-dz*.35-1.5*np.sin(dy*.35))
+    c2=np.abs(dx*.35-dy*.4+dz*.65+1.3*np.cos(dx*.4))
+    c3=np.abs(dx*.7-dz*.7+1.6*np.sin(dz*.3))
+    channel=np.minimum(np.minimum(c1,c2),c3+(dy<r*.3)*9)
+    P.flat(g,m & (channel>3.4)&(dy>r*.45),"iron",5)
+    # Thin dark cracks and a few ember dots break the large crust faces.
+    crust=m & (channel>2.4)
+    P.flat(g,crust & ((np.floor(dx*.8+dz*.5)%6==0)|(np.floor(dy*.9-dx*.3)%7==0)),"iron",3)
+    spots(g,crust,"ember",6,cell=6,r=0.9,chance=3,seed=31)
+    P.flat(g,m & (channel<2.4),"rust",4)
+    P.flat(g,m & (channel<1.7),"orange",6)
+    P.flat(g,m & (channel<.7),"gold",7)
 
 
 def paint_terra(g, m, cx, cy, cz, r):
@@ -198,35 +231,44 @@ def paint_terra(g, m, cx, cy, cz, r):
 # ------------------------------------------------------------ extras
 def gas_rings(rig, S, cx, cy, cz, r, clips):
     g = Grid(*S)
-    ring_band(g, cx, cy, cz, r * 1.3, r * 1.75, 14, ("gold", 6), ("bone", 6))
+    from _repair_terrain import layer
+    for k in range(22):
+        a=k*2*math.pi/22
+        rr=r*(1.48+.08*math.sin(k*2))
+        layer(g,cx+rr*math.cos(a),cz+rr*math.sin(a),3.1,2.4,cy-1+(k%3)*.6,cy+1+(k%3)*.6,'gold' if k%3 else 'bone',6,seed=k,inset=.5)
+        if k%2==0:
+            layer(g,cx+(rr+3)*math.cos(a+.05),cz+(rr+3)*math.sin(a+.05),1.5,1.3,cy-1,cy+1,'bone',5,seed=k+2,inset=.4)
     X, Y, Z = coords(g)
     radius = np.hypot(X - cx, Z - cz)
     angle = (np.arctan2(Z - cz, X - cx) + math.pi) % (2 * math.pi)
     segment = np.floor(angle * 14 / (2 * math.pi)).astype(int)
-    ring = (radius >= r * 1.3) & (radius <= r * 1.75) & (Y >= cy - 1) & (Y <= cy + 1)
+    ring = (g.a!=0)&(radius >= r * 1.3) & (radius <= r * 1.75) & (Y >= cy - 1) & (Y <= cy + 1)
     segment_phase = angle * 14 / (2 * math.pi)
     segment_local = segment_phase - segment
     seam = ring & ((segment_local < 0.045) | (segment_local > 0.955))
-    P.flat(g, seam, "steel", 3)
+    P.flat(g, seam & (g.a!=0), "gold", 4)
     # Small cyan ports sit inside selected plates. Most of the ring stays hull white.
     ports = ring & (radius > r * 1.48) & (radius < r * 1.58)
     ports &= (segment % 4 == 0) & (segment_local > 0.28) & (segment_local < 0.56)
-    P.flat(g, ports, "teal", 5)
+    P.flat(g, ports & (g.a!=0), "gold", 7)
     tabs = ring & (radius > r * 1.62) & (radius < r * 1.69) & (segment % 7 == 0)
     tabs &= (segment_local > 0.18) & (segment_local < 0.33)
-    P.flat(g, tabs, "orange", 5)
+    P.flat(g, tabs & (g.a!=0), "rust", 5)
     rig.add("gas-giant-rings", g, (cx, cy, cz), "gas-giant-base", rot=(16.0, 0.0, -10.0))
     clips["gas-giant-rings"] = {"rot": spin(16.0, "y", 360)}
 
 
 def ice_rings(rig, S, cx, cy, cz, r, clips):
     g = Grid(*S)
-    ring_band(g, cx, cy, cz, r * 1.3, r * 1.62, 12, ("cyan", 5), ("cyan", 7))
-    for k in range(6):  # ice shards on the ring
-        a = 2 * math.pi * k / 6 + 0.3
-        rr = r * 1.46
-        c = cone(g, "y", cx + rr * math.cos(a), cz + rr * math.sin(a), 1.4, cy + 1, cy + 5, "bone", 7, n=6)
-        P.flat(g, c, "bone", 7)
+    from _repair_terrain import crystal,layer
+    for k in range(16):
+        a=k*2*math.pi/16
+        rr=r*(1.44+.035*(k%3))
+        layer(g,cx+rr*math.cos(a),cz+rr*math.sin(a),2.5,2.1,cy-1,cy+1+(k%3)*.7,'cyan',5,seed=k,inset=.6)
+    for k in range(8):
+        a=2*math.pi*k/8+.3
+        rr=r*(1.43+.05*(k%3))
+        crystal(g,cx+rr*math.cos(a),cz+rr*math.sin(a),cy,2.1+(k%2),4+(k%3)*2,"cyan",(math.cos(a)*2,math.sin(a)*2))
     rig.add("ice-planet-rings", g, (cx, cy, cz), "ice-planet-base", rot=(-14.0, 0.0, 12.0))
     clips["ice-planet-rings"] = {"rot": spin(12.0, "y", -360)}
 
@@ -269,6 +311,6 @@ def build():
     return [
         planet_asset("gas-giant", "Ringed Gas Giant", 15, paint_gas, ("steel", 4, 1), gas_rings),
         planet_asset("ice-planet", "Ice Planet", 12, paint_ice, ("bone", 6, 2), ice_rings),
-        planet_asset("lava-planet", "Lava Planet", 10, paint_lava, ("steel", 4, 3)),
+        planet_asset("lava-planet", "Lava Planet", 12, paint_lava, ("iron", 3, 3)),
         planet_asset("terra-planet", "Terra Planet with Moon", 12, paint_terra, ("steel", 5, 4), terra_moon),
     ]

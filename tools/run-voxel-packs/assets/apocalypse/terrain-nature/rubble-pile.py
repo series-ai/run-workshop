@@ -75,6 +75,11 @@ def pile() -> Grid:
     for k, (bx, bz) in enumerate(((7, 11), (34, 25), (32, 12))):
         rock(g, bx, bz, 0, 2.2, 1.8, 2.2, ramp="stone", shade=5,
              shrink=0.55, n=5, seed=12 + k)
+    for k,(xx,yy,zz,w,h,angle) in enumerate(((10,6,18,14,4,-24),(27,9,15,15,4,28),(25,14,25,12,5,-19),(16,12,29,12,4,17))):
+        chunk=slab(g,"z",xx,yy,w,h,zz-3,zz+3,angle,"stone",5)
+        PP.concrete(g,chunk,"stone",5,size=5,cracks=2,seed=k)
+    for k,(xx,zz) in enumerate(((10,29),(28,9),(34,29))):
+        rock(g,xx,zz,2,3,2.5,3,"rust",5,shrink=.5,n=5,seed=40+k)
     return g
 
 

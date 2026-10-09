@@ -31,7 +31,11 @@
    "tall-prop",
    "fence",
    "kit",
-   "tile"
+   "tile",
+   "seat",
+   "table",
+   "container",
+   "appliance"
   ],
   "animated-props": [
    "prop",
@@ -42,7 +46,11 @@
    "lamp",
    "tall-prop",
    "fence",
-   "kit"
+   "kit",
+   "seat",
+   "table",
+   "container",
+   "appliance"
   ],
   "buildings": [
    "building",
@@ -64,6 +72,7 @@
   ],
   "vehicles": [
    "vehicle-small",
+   "vehicle-flat",
    "vehicle",
    "vehicle-large"
   ]
@@ -193,6 +202,21 @@
     60
    ],
    "use": "one-rider vehicles: motorbikes, hover bikes, brooms"
+  },
+  "vehicle-flat": {
+   "length": [
+    36,
+    56
+   ],
+   "width": [
+    24,
+    44
+   ],
+   "height": [
+    4,
+    12
+   ],
+   "use": "flat one-rider vehicles such as flying carpets and hoverboards"
   },
   "vehicle": {
    "length": [
@@ -328,6 +352,50 @@
     90
    ],
    "use": "rocks, ground tiles, craters, pools, bridges, plants, wrecks, planets as scenery"
+  },
+  "seat": {
+   "largest": [
+    12,
+    48
+   ],
+   "height": [
+    14,
+    34
+   ],
+   "use": "chairs, stools, benches and rocking chairs: seat about 9-11 high, back 20-30"
+  },
+  "table": {
+   "largest": [
+    14,
+    64
+   ],
+   "height": [
+    10,
+    24
+   ],
+   "use": "tables, desks, workbenches, slabs and altars a person stands at: top 14-20"
+  },
+  "container": {
+   "largest": [
+    6,
+    36
+   ],
+   "height": [
+    6,
+    28
+   ],
+   "use": "barrels, drums, kegs, jugs, coolers, single crates and chests (PN oil drum 19 high)"
+  },
+  "appliance": {
+   "largest": [
+    12,
+    36
+   ],
+   "height": [
+    14,
+    34
+   ],
+   "use": "washing machines, newspaper boxes, parking meters, generators and other waist-to-chest-high fixtures"
   }
  }
 }

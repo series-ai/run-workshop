@@ -16,12 +16,16 @@ npm run ui -- --all        # themed UI tiles → out/jam-stage/<pack dir>/ui/
 npm run pack-sheet -- --pack monster --category props [--clip open@0.5]      # review sheet
 npm run avatar-sheet -- --pack monster --mode parts|skins|held               # on the PN body
 npm run stage -- --target <jam-ready-assets checkout> [--packs fantasy,space]  # licences + previews
+node --import tsx scripts/check-expansion.ts  # exact counts, clips, bindings and avatar preservation
 npm run catalog            # games/run-voxel-showcase/public/catalog/{index.json,<pack>/catalog.json}
 npm run snapshot -- --out sheet.png [--clip open@0.5] [--clip-from other.glb] a.glb …   # dev contact sheet
 npm run lineup -- --out lineup.png <rvx id | pn:<file stem> | a.glb> …   # native-scale lineup next to a person gauge
 # previews and icons come from the showcase: (cd ../../games/run-voxel-showcase && npm run thumbnails -- --pack fantasy [--icons])
 npm test                   # unit tests;  npm run test:integration  needs a built fantasy pack
 ```
+
+Tests need a jam-ready-assets checkout with the current RUN licence policy.
+Set `JAM_ASSETS_DIR` to that checkout if the default checkout is older.
 
 Blender 5.1 runs headless (`BLENDER_BIN` overrides the path). The PN pack is
 read from `~/dev/jam-ready-assets` (`JAM_ASSETS_DIR` overrides it).
@@ -182,10 +186,14 @@ distance but do not flicker in place; a z-fight does.
 
 The validator is the gate: every GLB must pass `--level asset`; the style
 slice passes `--level slice`; authored content passes `--level content`
-(counts: 95–105 GLBs, ≥20 animated world models, ≥30 parts, 6–8 clips, 6
+(counts: 175 GLBs, ≥20 animated world models, ≥30 parts, 6–8 clips, 6
 skins, 16 held items); a staged pack passes `--level release` (plus previews,
 ≥40 icons, ≥40 UI tiles, one licence per leaf). Two clean builds are
 byte-identical.
+
+Each pack has 60 props, 24 animated props, 20 buildings, 20 terrain models,
+16 creatures, and 12 vehicles. Avatar content stays at 6 skins, 16 held
+items, and one parts file. The four packs contain 700 models.
 
 ## Full release flow
 

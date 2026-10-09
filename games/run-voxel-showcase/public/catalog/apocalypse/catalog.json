@@ -3,6 +3,101 @@
  "label": "Post-Apocalypse",
  "models": [
   {
+   "id": "apocalypse-animated-props-alarm-siren",
+   "pack": "apocalypse",
+   "name": "Alarm Siren",
+   "category": "animated-props",
+   "filename": "apocalypse-animated-props-alarm-siren.glb",
+   "relativePath": "animated-props/apocalypse-animated-props-alarm-siren.glb",
+   "leaf": "world",
+   "sizeBytes": 25024,
+   "bounds": {
+    "min": [
+     -11,
+     0,
+     -9
+    ],
+    "max": [
+     11,
+     65,
+     9
+    ],
+    "size": [
+     22,
+     65,
+     18
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-beacon"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-lamp-flicker",
+     "socket": "socket-beacon",
+     "trigger": "clip:active",
+     "size": 18
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-animated-props-arcade-machine",
+   "pack": "apocalypse",
+   "name": "Wasteland Arcade Cabinet",
+   "category": "animated-props",
+   "filename": "apocalypse-animated-props-arcade-machine.glb",
+   "relativePath": "animated-props/apocalypse-animated-props-arcade-machine.glb",
+   "leaf": "world",
+   "sizeBytes": 22944,
+   "bounds": {
+    "min": [
+     -11,
+     0,
+     -17
+    ],
+    "max": [
+     11,
+     41,
+     16.6547
+    ],
+    "size": [
+     22,
+     41,
+     33.6547
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-joystick"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-metal-clang",
+     "socket": "socket-joystick",
+     "trigger": "clip:active",
+     "size": 6,
+     "at": 0.25
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-animated-props-bear-trap",
    "pack": "apocalypse",
    "name": "Bear Trap",
@@ -272,6 +367,107 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-animated-props-moonshine-still",
+   "pack": "apocalypse",
+   "name": "Moonshine Still",
+   "category": "animated-props",
+   "filename": "apocalypse-animated-props-moonshine-still.glb",
+   "relativePath": "animated-props/apocalypse-animated-props-moonshine-still.glb",
+   "leaf": "world",
+   "sizeBytes": 47692,
+   "bounds": {
+    "min": [
+     -24.1481,
+     0,
+     -17.2205
+    ],
+    "max": [
+     24.1191,
+     45.9,
+     17.2721
+    ],
+    "size": [
+     48.2673,
+     45.9,
+     34.4927
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-steam"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-exhaust-smoke",
+     "socket": "socket-steam",
+     "trigger": "clip:active",
+     "size": 12
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-animated-props-oil-pumpjack",
+   "pack": "apocalypse",
+   "name": "Oil Pumpjack",
+   "category": "animated-props",
+   "filename": "apocalypse-animated-props-oil-pumpjack.glb",
+   "relativePath": "animated-props/apocalypse-animated-props-oil-pumpjack.glb",
+   "leaf": "world",
+   "sizeBytes": 114092,
+   "bounds": {
+    "min": [
+     -13,
+     0,
+     -44
+    ],
+    "max": [
+     13,
+     55,
+     44
+    ],
+    "size": [
+     26,
+     55,
+     88
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-exhaust",
+    "socket-head"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-exhaust-smoke",
+     "socket": "socket-exhaust",
+     "trigger": "clip:active",
+     "size": 18
+    },
+    {
+     "effectId": "rvx-apocalypse-exhaust-smoke",
+     "socket": "socket-exhaust",
+     "trigger": "idle",
+     "size": 12
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-animated-props-porta-potty",
    "pack": "apocalypse",
    "name": "Porta-Potty",
@@ -345,6 +541,209 @@
     "socket-beacon"
    ],
    "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-animated-props-scrap-crane",
+   "pack": "apocalypse",
+   "name": "Scrap Crane",
+   "category": "animated-props",
+   "filename": "apocalypse-animated-props-scrap-crane.glb",
+   "relativePath": "animated-props/apocalypse-animated-props-scrap-crane.glb",
+   "leaf": "world",
+   "sizeBytes": 69360,
+   "bounds": {
+    "min": [
+     -40,
+     0,
+     -19
+    ],
+    "max": [
+     40.375,
+     85,
+     19
+    ],
+    "size": [
+     80.375,
+     85,
+     38
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-hook"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-crate-dust",
+     "socket": "socket-hook",
+     "trigger": "clip:active",
+     "size": 12,
+     "at": 1.2
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-animated-props-scrap-forge",
+   "pack": "apocalypse",
+   "name": "Scrap Forge",
+   "category": "animated-props",
+   "filename": "apocalypse-animated-props-scrap-forge.glb",
+   "relativePath": "animated-props/apocalypse-animated-props-scrap-forge.glb",
+   "leaf": "world",
+   "sizeBytes": 45996,
+   "bounds": {
+    "min": [
+     -30,
+     -0.0312,
+     -21.5
+    ],
+    "max": [
+     30.4063,
+     53,
+     21.7188
+    ],
+    "size": [
+     60.4063,
+     53.0313,
+     43.2188
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-fire",
+    "socket-smoke"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-barrel-fire",
+     "socket": "socket-fire",
+     "trigger": "idle",
+     "size": 18
+    },
+    {
+     "effectId": "rvx-apocalypse-exhaust-smoke",
+     "socket": "socket-smoke",
+     "trigger": "clip:active",
+     "size": 14
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-animated-props-scrap-turret",
+   "pack": "apocalypse",
+   "name": "Scrap Turret",
+   "category": "animated-props",
+   "filename": "apocalypse-animated-props-scrap-turret.glb",
+   "relativePath": "animated-props/apocalypse-animated-props-scrap-turret.glb",
+   "leaf": "world",
+   "sizeBytes": 38484,
+   "bounds": {
+    "min": [
+     -22.5,
+     0,
+     -24
+    ],
+    "max": [
+     22.5,
+     40.2,
+     24.5
+    ],
+    "size": [
+     45,
+     40.2,
+     48.5
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-muzzle"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-shotgun-blast",
+     "socket": "socket-muzzle",
+     "trigger": "clip:active",
+     "size": 14,
+     "aim": [
+      0,
+      0,
+      -1
+     ],
+     "at": 0.12
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-animated-props-spike-trap",
+   "pack": "apocalypse",
+   "name": "Road Spike Trap",
+   "category": "animated-props",
+   "filename": "apocalypse-animated-props-spike-trap.glb",
+   "relativePath": "animated-props/apocalypse-animated-props-spike-trap.glb",
+   "leaf": "world",
+   "sizeBytes": 19460,
+   "bounds": {
+    "min": [
+     -24,
+     0,
+     -19
+    ],
+    "max": [
+     24,
+     18,
+     19
+    ],
+    "size": [
+     48,
+     18,
+     38
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-teeth"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-metal-clang",
+     "socket": "socket-teeth",
+     "trigger": "clip:active",
+     "size": 12,
+     "at": 0.42
+    }
+   ],
    "route": "code",
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
@@ -491,6 +890,195 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-animated-props-traffic-light",
+   "pack": "apocalypse",
+   "name": "Dead Traffic Light",
+   "category": "animated-props",
+   "filename": "apocalypse-animated-props-traffic-light.glb",
+   "relativePath": "animated-props/apocalypse-animated-props-traffic-light.glb",
+   "leaf": "world",
+   "sizeBytes": 71108,
+   "bounds": {
+    "min": [
+     -21.25,
+     -0.125,
+     -11.0781
+    ],
+    "max": [
+     21.5286,
+     55.7,
+     11.3906
+    ],
+    "size": [
+     42.7786,
+     55.825,
+     22.4688
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-lamp"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-lamp-flicker",
+     "socket": "socket-lamp",
+     "trigger": "idle",
+     "size": 16
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-animated-props-vault-door",
+   "pack": "apocalypse",
+   "name": "Vault Door",
+   "category": "animated-props",
+   "filename": "apocalypse-animated-props-vault-door.glb",
+   "relativePath": "animated-props/apocalypse-animated-props-vault-door.glb",
+   "leaf": "world",
+   "sizeBytes": 62840,
+   "bounds": {
+    "min": [
+     -34,
+     0,
+     -12.9219
+    ],
+    "max": [
+     34,
+     75,
+     12.5
+    ],
+    "size": [
+     68,
+     75,
+     25.4219
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-handwheel"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-metal-clang",
+     "socket": "socket-handwheel",
+     "trigger": "clip:active",
+     "size": 14,
+     "at": 0.8
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-animated-props-water-purifier",
+   "pack": "apocalypse",
+   "name": "Rain Water Purifier",
+   "category": "animated-props",
+   "filename": "apocalypse-animated-props-water-purifier.glb",
+   "relativePath": "animated-props/apocalypse-animated-props-water-purifier.glb",
+   "leaf": "world",
+   "sizeBytes": 58820,
+   "bounds": {
+    "min": [
+     -28,
+     0,
+     -22
+    ],
+    "max": [
+     28,
+     51,
+     22
+    ],
+    "size": [
+     56,
+     51,
+     44
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-intake"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-toxic-bubbles",
+     "socket": "socket-intake",
+     "trigger": "clip:active",
+     "size": 11
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-animated-props-wind-turbine",
+   "pack": "apocalypse",
+   "name": "Salvage Wind Turbine",
+   "category": "animated-props",
+   "filename": "apocalypse-animated-props-wind-turbine.glb",
+   "relativePath": "animated-props/apocalypse-animated-props-wind-turbine.glb",
+   "leaf": "world",
+   "sizeBytes": 40908,
+   "bounds": {
+    "min": [
+     -26.5138,
+     0,
+     -11.5
+    ],
+    "max": [
+     26.3138,
+     87,
+     11.5
+    ],
+    "size": [
+     52.8275,
+     87,
+     23
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "active",
+    "idle"
+   ],
+   "sockets": [
+    "socket-beacon"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-lamp-flicker",
+     "socket": "socket-beacon",
+     "trigger": "idle",
+     "size": 12
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-animated-props-windmill-pump",
    "pack": "apocalypse",
    "name": "Windmill Water Pump",
@@ -594,6 +1182,41 @@
    "clips": [
     "idle"
    ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-buildings-church-ruin",
+   "pack": "apocalypse",
+   "name": "Storm-Broken Chapel",
+   "category": "buildings",
+   "filename": "apocalypse-buildings-church-ruin.glb",
+   "relativePath": "buildings/apocalypse-buildings-church-ruin.glb",
+   "leaf": "world",
+   "sizeBytes": 130808,
+   "bounds": {
+    "min": [
+     -48.5,
+     0,
+     -52
+    ],
+    "max": [
+     48.898,
+     142.2316,
+     52
+    ],
+    "size": [
+     97.398,
+     142.2316,
+     104
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
    "sockets": [],
    "pfx": [],
    "route": "code",
@@ -710,6 +1333,253 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-buildings-greenhouse-shelter",
+   "pack": "apocalypse",
+   "name": "Greenhouse Shelter",
+   "category": "buildings",
+   "filename": "apocalypse-buildings-greenhouse-shelter.glb",
+   "relativePath": "buildings/apocalypse-buildings-greenhouse-shelter.glb",
+   "leaf": "world",
+   "sizeBytes": 75648,
+   "bounds": {
+    "min": [
+     -56.5,
+     0,
+     -45.5
+    ],
+    "max": [
+     56.5,
+     99,
+     45.5
+    ],
+    "size": [
+     113,
+     99,
+     91
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-buildings-grocery-store",
+   "pack": "apocalypse",
+   "name": "Neighborhood Grocery Store",
+   "category": "buildings",
+   "filename": "apocalypse-buildings-grocery-store.glb",
+   "relativePath": "buildings/apocalypse-buildings-grocery-store.glb",
+   "leaf": "world",
+   "sizeBytes": 110104,
+   "bounds": {
+    "min": [
+     -60,
+     0,
+     -50.5
+    ],
+    "max": [
+     60,
+     76,
+     50.5
+    ],
+    "size": [
+     120,
+     76,
+     101
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-buildings-hospital-ruin",
+   "pack": "apocalypse",
+   "name": "Field Hospital Ruin",
+   "category": "buildings",
+   "filename": "apocalypse-buildings-hospital-ruin.glb",
+   "relativePath": "buildings/apocalypse-buildings-hospital-ruin.glb",
+   "leaf": "world",
+   "sizeBytes": 347380,
+   "bounds": {
+    "min": [
+     -61,
+     0,
+     -50
+    ],
+    "max": [
+     61,
+     102,
+     50
+    ],
+    "size": [
+     122,
+     102,
+     100
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-buildings-mechanic-garage",
+   "pack": "apocalypse",
+   "name": "Mechanic Garage",
+   "category": "buildings",
+   "filename": "apocalypse-buildings-mechanic-garage.glb",
+   "relativePath": "buildings/apocalypse-buildings-mechanic-garage.glb",
+   "leaf": "world",
+   "sizeBytes": 59860,
+   "bounds": {
+    "min": [
+     -58.5,
+     0,
+     -49
+    ],
+    "max": [
+     58.25,
+     84,
+     49
+    ],
+    "size": [
+     116.75,
+     84,
+     98
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-buildings-motel",
+   "pack": "apocalypse",
+   "name": "Roadside Motel",
+   "category": "buildings",
+   "filename": "apocalypse-buildings-motel.glb",
+   "relativePath": "buildings/apocalypse-buildings-motel.glb",
+   "leaf": "world",
+   "sizeBytes": 238748,
+   "bounds": {
+    "min": [
+     -74.6777,
+     0,
+     -44.8281
+    ],
+    "max": [
+     74.5,
+     134,
+     45
+    ],
+    "size": [
+     149.1777,
+     134,
+     89.8281
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle"
+   ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-buildings-police-station",
+   "pack": "apocalypse",
+   "name": "Police Station",
+   "category": "buildings",
+   "filename": "apocalypse-buildings-police-station.glb",
+   "relativePath": "buildings/apocalypse-buildings-police-station.glb",
+   "leaf": "world",
+   "sizeBytes": 66600,
+   "bounds": {
+    "min": [
+     -52,
+     0,
+     -44.5
+    ],
+    "max": [
+     52,
+     101,
+     44.5
+    ],
+    "size": [
+     104,
+     101,
+     89
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-buildings-radio-station",
+   "pack": "apocalypse",
+   "name": "Community Radio Station",
+   "category": "buildings",
+   "filename": "apocalypse-buildings-radio-station.glb",
+   "relativePath": "buildings/apocalypse-buildings-radio-station.glb",
+   "leaf": "world",
+   "sizeBytes": 148268,
+   "bounds": {
+    "min": [
+     -54.5,
+     0,
+     -43
+    ],
+    "max": [
+     54,
+     135,
+     43
+    ],
+    "size": [
+     108.5,
+     135,
+     86
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-buildings-roadside-diner",
    "pack": "apocalypse",
    "name": "Roadside Diner",
@@ -740,6 +1610,41 @@
    "clips": [
     "idle"
    ],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-buildings-scrap-gate",
+   "pack": "apocalypse",
+   "name": "Scrap Road Gate",
+   "category": "buildings",
+   "filename": "apocalypse-buildings-scrap-gate.glb",
+   "relativePath": "buildings/apocalypse-buildings-scrap-gate.glb",
+   "leaf": "world",
+   "sizeBytes": 81336,
+   "bounds": {
+    "min": [
+     -64,
+     0,
+     -26
+    ],
+    "max": [
+     64,
+     107,
+     26
+    ],
+    "size": [
+     128,
+     107,
+     52
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
    "sockets": [],
    "pfx": [],
    "route": "code",
@@ -788,6 +1693,41 @@
      "size": 30
     }
    ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-buildings-trading-post",
+   "pack": "apocalypse",
+   "name": "Trading Post",
+   "category": "buildings",
+   "filename": "apocalypse-buildings-trading-post.glb",
+   "relativePath": "buildings/apocalypse-buildings-trading-post.glb",
+   "leaf": "world",
+   "sizeBytes": 115788,
+   "bounds": {
+    "min": [
+     -52,
+     0,
+     -48
+    ],
+    "max": [
+     52,
+     82,
+     48
+    ],
+    "size": [
+     104,
+     82,
+     96
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
    "route": "code",
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
@@ -959,6 +1899,76 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-creatures-giant-scorpion",
+   "pack": "apocalypse",
+   "name": "Irradiated Giant Scorpion",
+   "category": "creatures",
+   "filename": "apocalypse-creatures-giant-scorpion.glb",
+   "relativePath": "creatures/apocalypse-creatures-giant-scorpion.glb",
+   "leaf": "world",
+   "sizeBytes": 119448,
+   "bounds": {
+    "min": [
+     -35.9374,
+     0.2,
+     -45
+    ],
+    "max": [
+     35.9374,
+     57.2,
+     45.2
+    ],
+    "size": [
+     71.8748,
+     57,
+     90.2
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "death",
+    "attack",
+    "hit",
+    "idle",
+    "move"
+   ],
+   "sockets": [
+    "socket-feet",
+    "socket-jaw",
+    "socket-sting"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-toxic-bubbles",
+     "socket": "socket-sting",
+     "trigger": "idle",
+     "size": 14
+    },
+    {
+     "effectId": "rvx-apocalypse-dust-kick",
+     "socket": "socket-feet",
+     "trigger": "clip:move",
+     "size": 44,
+     "aim": [
+      0,
+      0,
+      1
+     ]
+    },
+    {
+     "effectId": "rvx-apocalypse-gore-burst",
+     "socket": "socket-sting",
+     "trigger": "clip:attack",
+     "size": 36,
+     "at": 0.45
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-creatures-mutant-behemoth",
    "pack": "apocalypse",
    "name": "Mutant Behemoth",
@@ -1032,6 +2042,106 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-creatures-mutant-boar",
+   "pack": "apocalypse",
+   "name": "Mutant Boar",
+   "category": "creatures",
+   "filename": "apocalypse-creatures-mutant-boar.glb",
+   "relativePath": "creatures/apocalypse-creatures-mutant-boar.glb",
+   "leaf": "world",
+   "sizeBytes": 56012,
+   "bounds": {
+    "min": [
+     -11.3991,
+     0,
+     -22.5
+    ],
+    "max": [
+     11.3991,
+     35,
+     22
+    ],
+    "size": [
+     22.7983,
+     35,
+     44.5
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "move",
+    "idle"
+   ],
+   "sockets": [
+    "socket-snout"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-gore-burst",
+     "socket": "socket-snout",
+     "trigger": "clip:attack",
+     "size": 14
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-creatures-mutant-cow",
+   "pack": "apocalypse",
+   "name": "Mutant Cow",
+   "category": "creatures",
+   "filename": "apocalypse-creatures-mutant-cow.glb",
+   "relativePath": "creatures/apocalypse-creatures-mutant-cow.glb",
+   "leaf": "world",
+   "sizeBytes": 73804,
+   "bounds": {
+    "min": [
+     -23.2309,
+     0,
+     -37
+    ],
+    "max": [
+     23.2309,
+     41.5,
+     37.3
+    ],
+    "size": [
+     46.4619,
+     41.5,
+     74.3
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle",
+    "move"
+   ],
+   "sockets": [
+    "socket-horns"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-gore-burst",
+     "socket": "socket-horns",
+     "trigger": "clip:attack",
+     "size": 12
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-creatures-mutant-dog",
    "pack": "apocalypse",
    "name": "Mutant Dog",
@@ -1081,6 +2191,56 @@
       0,
       1
      ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-creatures-mutant-vulture",
+   "pack": "apocalypse",
+   "name": "Mutant Vulture",
+   "category": "creatures",
+   "filename": "apocalypse-creatures-mutant-vulture.glb",
+   "relativePath": "creatures/apocalypse-creatures-mutant-vulture.glb",
+   "leaf": "world",
+   "sizeBytes": 71764,
+   "bounds": {
+    "min": [
+     -45.5,
+     0,
+     -28.5
+    ],
+    "max": [
+     45.5,
+     49.7,
+     29
+    ],
+    "size": [
+     91,
+     49.7,
+     57.5
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "death",
+    "move",
+    "attack",
+    "hit",
+    "idle"
+   ],
+   "sockets": [
+    "socket-beak"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-gore-burst",
+     "socket": "socket-beak",
+     "trigger": "clip:attack",
+     "size": 10
     }
    ],
    "route": "code",
@@ -1197,6 +2357,118 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-creatures-scavenger-drone",
+   "pack": "apocalypse",
+   "name": "Scavenger Drone",
+   "category": "creatures",
+   "filename": "apocalypse-creatures-scavenger-drone.glb",
+   "relativePath": "creatures/apocalypse-creatures-scavenger-drone.glb",
+   "leaf": "world",
+   "sizeBytes": 35376,
+   "bounds": {
+    "min": [
+     -11.8281,
+     0.2,
+     -8.5
+    ],
+    "max": [
+     11.8281,
+     20.5,
+     8.5
+    ],
+    "size": [
+     23.6563,
+     20.3,
+     17
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "death",
+    "hit",
+    "move",
+    "attack",
+    "idle"
+   ],
+   "sockets": [
+    "socket-muzzle"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-pistol-shot",
+     "socket": "socket-muzzle",
+     "trigger": "clip:attack",
+     "size": 7,
+     "aim": [
+      0,
+      0,
+      -1
+     ],
+     "at": 0.1
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-creatures-sewer-croc",
+   "pack": "apocalypse",
+   "name": "Sewer Crocodile",
+   "category": "creatures",
+   "filename": "apocalypse-creatures-sewer-croc.glb",
+   "relativePath": "creatures/apocalypse-creatures-sewer-croc.glb",
+   "leaf": "world",
+   "sizeBytes": 94920,
+   "bounds": {
+    "min": [
+     -22.1,
+     0,
+     -45
+    ],
+    "max": [
+     22.1,
+     21.4375,
+     45
+    ],
+    "size": [
+     44.2,
+     21.4375,
+     90
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "idle",
+    "move"
+   ],
+   "sockets": [
+    "socket-jaw"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-vomit-spray",
+     "socket": "socket-jaw",
+     "trigger": "clip:attack",
+     "size": 11,
+     "aim": [
+      0,
+      0,
+      -1
+     ],
+     "at": 0.22
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-creatures-zombie-bloated",
    "pack": "apocalypse",
    "name": "Bloated Zombie",
@@ -1260,6 +2532,62 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-creatures-zombie-crawler",
+   "pack": "apocalypse",
+   "name": "Zombie Crawler",
+   "category": "creatures",
+   "filename": "apocalypse-creatures-zombie-crawler.glb",
+   "relativePath": "creatures/apocalypse-creatures-zombie-crawler.glb",
+   "leaf": "world",
+   "sizeBytes": 44316,
+   "bounds": {
+    "min": [
+     -15,
+     0,
+     -24.5
+    ],
+    "max": [
+     14.5,
+     32.2,
+     24
+    ],
+    "size": [
+     29.5,
+     32.2,
+     48.5
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "attack",
+    "death",
+    "hit",
+    "move",
+    "idle"
+   ],
+   "sockets": [
+    "socket-jaw"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-vomit-spray",
+     "socket": "socket-jaw",
+     "trigger": "clip:attack",
+     "size": 10,
+     "aim": [
+      0,
+      0,
+      -1
+     ],
+     "at": 0.28
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-creatures-zombie-runner",
    "pack": "apocalypse",
    "name": "Zombie Runner",
@@ -1304,6 +2632,57 @@
      "trigger": "clip:death",
      "size": 30,
      "at": 0.26
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-creatures-zombie-soldier",
+   "pack": "apocalypse",
+   "name": "Zombie Soldier",
+   "category": "creatures",
+   "filename": "apocalypse-creatures-zombie-soldier.glb",
+   "relativePath": "creatures/apocalypse-creatures-zombie-soldier.glb",
+   "leaf": "world",
+   "sizeBytes": 45880,
+   "bounds": {
+    "min": [
+     -13.1,
+     0,
+     -10.5312
+    ],
+    "max": [
+     13.6,
+     43.9,
+     10.5
+    ],
+    "size": [
+     26.7,
+     43.9,
+     21.0313
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "death",
+    "hit",
+    "move",
+    "attack",
+    "idle"
+   ],
+   "sockets": [
+    "socket-rifle"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-shotgun-blast",
+     "socket": "socket-rifle",
+     "trigger": "clip:attack",
+     "size": 9,
+     "at": 0.22
     }
    ],
    "route": "code",
@@ -2136,6 +3515,216 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-props-barbed-wire-coil",
+   "pack": "apocalypse",
+   "name": "Razor Wire Coil",
+   "category": "props",
+   "filename": "apocalypse-props-barbed-wire-coil.glb",
+   "relativePath": "props/apocalypse-props-barbed-wire-coil.glb",
+   "leaf": "world",
+   "sizeBytes": 58540,
+   "bounds": {
+    "min": [
+     -18,
+     0,
+     -13
+    ],
+    "max": [
+     18,
+     20.7309,
+     13
+    ],
+    "size": [
+     36,
+     20.7309,
+     26
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-battery-bank",
+   "pack": "apocalypse",
+   "name": "Battery Bank",
+   "category": "props",
+   "filename": "apocalypse-props-battery-bank.glb",
+   "relativePath": "props/apocalypse-props-battery-bank.glb",
+   "leaf": "world",
+   "sizeBytes": 47572,
+   "bounds": {
+    "min": [
+     -16,
+     0,
+     -11
+    ],
+    "max": [
+     16,
+     30,
+     10.6412
+    ],
+    "size": [
+     32,
+     30,
+     21.6412
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-bicycle-wreck",
+   "pack": "apocalypse",
+   "name": "Abandoned Bicycle",
+   "category": "props",
+   "filename": "apocalypse-props-bicycle-wreck.glb",
+   "relativePath": "props/apocalypse-props-bicycle-wreck.glb",
+   "leaf": "world",
+   "sizeBytes": 44724,
+   "bounds": {
+    "min": [
+     -9,
+     0,
+     -19
+    ],
+    "max": [
+     9,
+     27,
+     19
+    ],
+    "size": [
+     18,
+     27,
+     38
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-billboard-wreck",
+   "pack": "apocalypse",
+   "name": "Wrecked Billboard",
+   "category": "props",
+   "filename": "apocalypse-props-billboard-wreck.glb",
+   "relativePath": "props/apocalypse-props-billboard-wreck.glb",
+   "leaf": "world",
+   "sizeBytes": 49536,
+   "bounds": {
+    "min": [
+     -32.4561,
+     -0.0312,
+     -15.5
+    ],
+    "max": [
+     32.4505,
+     74.1007,
+     15.5
+    ],
+    "size": [
+     64.9067,
+     74.1319,
+     31
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-bus-stop-shelter",
+   "pack": "apocalypse",
+   "name": "Ruined Bus Stop",
+   "category": "props",
+   "filename": "apocalypse-props-bus-stop-shelter.glb",
+   "relativePath": "props/apocalypse-props-bus-stop-shelter.glb",
+   "leaf": "world",
+   "sizeBytes": 44988,
+   "bounds": {
+    "min": [
+     -22.0312,
+     0,
+     -14.0312
+    ],
+    "max": [
+     22.0313,
+     49.5172,
+     14.0313
+    ],
+    "size": [
+     44.0625,
+     49.5172,
+     28.0625
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-canned-food-stack",
+   "pack": "apocalypse",
+   "name": "Tin Cache",
+   "category": "props",
+   "filename": "apocalypse-props-canned-food-stack.glb",
+   "relativePath": "props/apocalypse-props-canned-food-stack.glb",
+   "leaf": "world",
+   "sizeBytes": 48324,
+   "bounds": {
+    "min": [
+     -14.5,
+     0,
+     -12.5
+    ],
+    "max": [
+     14.5,
+     25,
+     12.7058
+    ],
+    "size": [
+     29,
+     25,
+     25.2058
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-props-chainlink-fence",
    "pack": "apocalypse",
    "name": "Chain-Link Fence",
@@ -2159,6 +3748,76 @@
      32,
      28.4588,
      6.6554
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-cooler-box",
+   "pack": "apocalypse",
+   "name": "Cool Box",
+   "category": "props",
+   "filename": "apocalypse-props-cooler-box.glb",
+   "relativePath": "props/apocalypse-props-cooler-box.glb",
+   "leaf": "world",
+   "sizeBytes": 19652,
+   "bounds": {
+    "min": [
+     -11,
+     0,
+     -8
+    ],
+    "max": [
+     11,
+     22.9833,
+     7.847
+    ],
+    "size": [
+     22,
+     22.9833,
+     15.847
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-couch-ruin",
+   "pack": "apocalypse",
+   "name": "Gutted Couch",
+   "category": "props",
+   "filename": "apocalypse-props-couch-ruin.glb",
+   "relativePath": "props/apocalypse-props-couch-ruin.glb",
+   "leaf": "world",
+   "sizeBytes": 13120,
+   "bounds": {
+    "min": [
+     -21.5,
+     0,
+     -9
+    ],
+    "max": [
+     21.5,
+     20,
+     9
+    ],
+    "size": [
+     43,
+     20,
+     18
     ]
    },
    "normalizedShift": 0,
@@ -2311,6 +3970,41 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-props-extension-reel",
+   "pack": "apocalypse",
+   "name": "Extension Cable Reel",
+   "category": "props",
+   "filename": "apocalypse-props-extension-reel.glb",
+   "relativePath": "props/apocalypse-props-extension-reel.glb",
+   "leaf": "world",
+   "sizeBytes": 24588,
+   "bounds": {
+    "min": [
+     -18,
+     -0.0312,
+     -12
+    ],
+    "max": [
+     18,
+     25,
+     12
+    ],
+    "size": [
+     36,
+     25.0313,
+     24
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-props-fire-hydrant",
    "pack": "apocalypse",
    "name": "Cracked Fire Hydrant",
@@ -2369,6 +4063,146 @@
      27.6553,
      18.0469,
      19.908
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-gas-mask-rack",
+   "pack": "apocalypse",
+   "name": "Gas Mask Rack",
+   "category": "props",
+   "filename": "apocalypse-props-gas-mask-rack.glb",
+   "relativePath": "props/apocalypse-props-gas-mask-rack.glb",
+   "leaf": "world",
+   "sizeBytes": 38576,
+   "bounds": {
+    "min": [
+     -19.5,
+     0,
+     -8.5
+    ],
+    "max": [
+     19.5,
+     28,
+     8.5
+    ],
+    "size": [
+     39,
+     28,
+     17
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-graffiti-wall",
+   "pack": "apocalypse",
+   "name": "Tagged Wall",
+   "category": "props",
+   "filename": "apocalypse-props-graffiti-wall.glb",
+   "relativePath": "props/apocalypse-props-graffiti-wall.glb",
+   "leaf": "world",
+   "sizeBytes": 19344,
+   "bounds": {
+    "min": [
+     -16.5,
+     -0.0625,
+     -9.4687
+    ],
+    "max": [
+     16.3225,
+     27,
+     9.5
+    ],
+    "size": [
+     32.8225,
+     27.0625,
+     18.9688
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-grocery-shelf",
+   "pack": "apocalypse",
+   "name": "Looted Grocery Shelf",
+   "category": "props",
+   "filename": "apocalypse-props-grocery-shelf.glb",
+   "relativePath": "props/apocalypse-props-grocery-shelf.glb",
+   "leaf": "world",
+   "sizeBytes": 34944,
+   "bounds": {
+    "min": [
+     -18,
+     0,
+     -9
+    ],
+    "max": [
+     18,
+     40,
+     9
+    ],
+    "size": [
+     36,
+     40,
+     18
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-handcart",
+   "pack": "apocalypse",
+   "name": "Loaded Hand Truck",
+   "category": "props",
+   "filename": "apocalypse-props-handcart.glb",
+   "relativePath": "props/apocalypse-props-handcart.glb",
+   "leaf": "world",
+   "sizeBytes": 28268,
+   "bounds": {
+    "min": [
+     -12.0312,
+     0,
+     -10
+    ],
+    "max": [
+     12.0313,
+     26.9688,
+     9.7316
+    ],
+    "size": [
+     24.0625,
+     26.9688,
+     19.7316
     ]
    },
    "normalizedShift": 0,
@@ -2521,6 +4355,76 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-props-medical-cabinet",
+   "pack": "apocalypse",
+   "name": "Medical Cabinet",
+   "category": "props",
+   "filename": "apocalypse-props-medical-cabinet.glb",
+   "relativePath": "props/apocalypse-props-medical-cabinet.glb",
+   "leaf": "world",
+   "sizeBytes": 36984,
+   "bounds": {
+    "min": [
+     -13.4021,
+     0,
+     -15.7371
+    ],
+    "max": [
+     13.5,
+     30,
+     16
+    ],
+    "size": [
+     26.9021,
+     30,
+     31.7371
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-newspaper-box",
+   "pack": "apocalypse",
+   "name": "Street Newspaper Box",
+   "category": "props",
+   "filename": "apocalypse-props-newspaper-box.glb",
+   "relativePath": "props/apocalypse-props-newspaper-box.glb",
+   "leaf": "world",
+   "sizeBytes": 10640,
+   "bounds": {
+    "min": [
+     -9.1384,
+     0,
+     -8.5
+    ],
+    "max": [
+     9,
+     25.8714,
+     8.7577
+    ],
+    "size": [
+     18.1384,
+     25.8714,
+     17.2577
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-props-oil-drum",
    "pack": "apocalypse",
    "name": "Rusted Oil Drum",
@@ -2579,6 +4483,41 @@
      27,
      18.0781,
      24.5
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-parking-meter",
+   "pack": "apocalypse",
+   "name": "Dead Parking Meter",
+   "category": "props",
+   "filename": "apocalypse-props-parking-meter.glb",
+   "relativePath": "props/apocalypse-props-parking-meter.glb",
+   "leaf": "world",
+   "sizeBytes": 22028,
+   "bounds": {
+    "min": [
+     -10.1095,
+     0,
+     -10
+    ],
+    "max": [
+     10.5,
+     31.212,
+     10
+    ],
+    "size": [
+     20.6095,
+     31.212,
+     20
     ]
    },
    "normalizedShift": 0,
@@ -2698,6 +4637,76 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-props-rain-barrel",
+   "pack": "apocalypse",
+   "name": "Rain Barrel",
+   "category": "props",
+   "filename": "apocalypse-props-rain-barrel.glb",
+   "relativePath": "props/apocalypse-props-rain-barrel.glb",
+   "leaf": "world",
+   "sizeBytes": 38952,
+   "bounds": {
+    "min": [
+     -12,
+     0,
+     -13.7
+    ],
+    "max": [
+     12,
+     23,
+     13.5
+    ],
+    "size": [
+     24,
+     23,
+     27.2
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-rooftop-antenna",
+   "pack": "apocalypse",
+   "name": "Scrap Radio Mast",
+   "category": "props",
+   "filename": "apocalypse-props-rooftop-antenna.glb",
+   "relativePath": "props/apocalypse-props-rooftop-antenna.glb",
+   "leaf": "world",
+   "sizeBytes": 31976,
+   "bounds": {
+    "min": [
+     -11,
+     0,
+     -11.5
+    ],
+    "max": [
+     11,
+     38,
+     11.5
+    ],
+    "size": [
+     22,
+     38,
+     23
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-props-sandbag-wall",
    "pack": "apocalypse",
    "name": "Sandbag Wall",
@@ -2756,6 +4765,146 @@
      35.5233,
      36.7932,
      28.7377
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-scrap-shield-wall",
+   "pack": "apocalypse",
+   "name": "Scrap Shield Wall",
+   "category": "props",
+   "filename": "apocalypse-props-scrap-shield-wall.glb",
+   "relativePath": "props/apocalypse-props-scrap-shield-wall.glb",
+   "leaf": "world",
+   "sizeBytes": 36452,
+   "bounds": {
+    "min": [
+     -17.7969,
+     -0.0312,
+     -10.7031
+    ],
+    "max": [
+     17.5,
+     23,
+     11
+    ],
+    "size": [
+     35.2969,
+     23.0313,
+     21.7031
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-scrap-workbench",
+   "pack": "apocalypse",
+   "name": "Scrap Workbench",
+   "category": "props",
+   "filename": "apocalypse-props-scrap-workbench.glb",
+   "relativePath": "props/apocalypse-props-scrap-workbench.glb",
+   "leaf": "world",
+   "sizeBytes": 36644,
+   "bounds": {
+    "min": [
+     -20,
+     0,
+     -8
+    ],
+    "max": [
+     20,
+     36.0156,
+     8
+    ],
+    "size": [
+     40,
+     36.0156,
+     16
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-seed-crates",
+   "pack": "apocalypse",
+   "name": "Seed Crates",
+   "category": "props",
+   "filename": "apocalypse-props-seed-crates.glb",
+   "relativePath": "props/apocalypse-props-seed-crates.glb",
+   "leaf": "world",
+   "sizeBytes": 12324,
+   "bounds": {
+    "min": [
+     -16.5312,
+     -0.0312,
+     -8.0312
+    ],
+    "max": [
+     16.5,
+     27.2401,
+     8.0313
+    ],
+    "size": [
+     33.0313,
+     27.2713,
+     16.0625
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-shipping-container",
+   "pack": "apocalypse",
+   "name": "Rusted Shipping Container",
+   "category": "props",
+   "filename": "apocalypse-props-shipping-container.glb",
+   "relativePath": "props/apocalypse-props-shipping-container.glb",
+   "leaf": "world",
+   "sizeBytes": 60652,
+   "bounds": {
+    "min": [
+     -25,
+     0,
+     -31.5389
+    ],
+    "max": [
+     25,
+     53,
+     32.0313
+    ],
+    "size": [
+     50,
+     53,
+     63.5701
     ]
    },
    "normalizedShift": 0,
@@ -2833,6 +4982,85 @@
    "clips": [],
    "sockets": [],
    "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-sleeping-bag",
+   "pack": "apocalypse",
+   "name": "Survivor Bedroll",
+   "category": "props",
+   "filename": "apocalypse-props-sleeping-bag.glb",
+   "relativePath": "props/apocalypse-props-sleeping-bag.glb",
+   "leaf": "world",
+   "sizeBytes": 32620,
+   "bounds": {
+    "min": [
+     -18,
+     0,
+     -8.5312
+    ],
+    "max": [
+     18,
+     16.0313,
+     8.5
+    ],
+    "size": [
+     36,
+     16.0313,
+     17.0313
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-smoker-grill",
+   "pack": "apocalypse",
+   "name": "Oil-Drum Smoker",
+   "category": "props",
+   "filename": "apocalypse-props-smoker-grill.glb",
+   "relativePath": "props/apocalypse-props-smoker-grill.glb",
+   "leaf": "world",
+   "sizeBytes": 48144,
+   "bounds": {
+    "min": [
+     -16,
+     0,
+     -9.5
+    ],
+    "max": [
+     16.0313,
+     38.5,
+     9.8
+    ],
+    "size": [
+     32.0313,
+     38.5,
+     19.3
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [
+    "socket-chimney"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-chimney-smoke",
+     "socket": "socket-chimney",
+     "trigger": "idle",
+     "size": 14
+    }
+   ],
    "route": "code",
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
@@ -3048,6 +5276,41 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-props-trash-bags",
+   "pack": "apocalypse",
+   "name": "Refuse Sacks",
+   "category": "props",
+   "filename": "apocalypse-props-trash-bags.glb",
+   "relativePath": "props/apocalypse-props-trash-bags.glb",
+   "leaf": "world",
+   "sizeBytes": 46180,
+   "bounds": {
+    "min": [
+     -14.8468,
+     0,
+     -13.5
+    ],
+    "max": [
+     15.2,
+     17.6094,
+     13.1837
+    ],
+    "size": [
+     30.0468,
+     17.6094,
+     26.6837
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-props-vending-machine",
    "pack": "apocalypse",
    "name": "Busted Vending Machine",
@@ -3071,6 +5334,76 @@
      30.6245,
      49.022,
      19.7856
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-washing-machine",
+   "pack": "apocalypse",
+   "name": "Scavenged Washing Machine",
+   "category": "props",
+   "filename": "apocalypse-props-washing-machine.glb",
+   "relativePath": "props/apocalypse-props-washing-machine.glb",
+   "leaf": "world",
+   "sizeBytes": 23540,
+   "bounds": {
+    "min": [
+     -9,
+     0,
+     -12
+    ],
+    "max": [
+     9,
+     19,
+     12
+    ],
+    "size": [
+     18,
+     19,
+     24
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-water-jugs",
+   "pack": "apocalypse",
+   "name": "Water Jug Cache",
+   "category": "props",
+   "filename": "apocalypse-props-water-jugs.glb",
+   "relativePath": "props/apocalypse-props-water-jugs.glb",
+   "leaf": "world",
+   "sizeBytes": 48056,
+   "bounds": {
+    "min": [
+     -16.5,
+     0,
+     -12.5
+    ],
+    "max": [
+     16.5,
+     24,
+     12.1
+    ],
+    "size": [
+     33,
+     24,
+     24.6
     ]
    },
    "normalizedShift": 0,
@@ -3118,6 +5451,76 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-props-weapon-locker",
+   "pack": "apocalypse",
+   "name": "Weapon Locker",
+   "category": "props",
+   "filename": "apocalypse-props-weapon-locker.glb",
+   "relativePath": "props/apocalypse-props-weapon-locker.glb",
+   "leaf": "world",
+   "sizeBytes": 43348,
+   "bounds": {
+    "min": [
+     -20,
+     0,
+     -12.9343
+    ],
+    "max": [
+     20,
+     38,
+     13
+    ],
+    "size": [
+     40,
+     38,
+     25.9343
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-wheelbarrow",
+   "pack": "apocalypse",
+   "name": "Scrapper's Wheelbarrow",
+   "category": "props",
+   "filename": "apocalypse-props-wheelbarrow.glb",
+   "relativePath": "props/apocalypse-props-wheelbarrow.glb",
+   "leaf": "world",
+   "sizeBytes": 27976,
+   "bounds": {
+    "min": [
+     -9.5,
+     0,
+     -19.5
+    ],
+    "max": [
+     9.5,
+     30.5617,
+     19.3594
+    ],
+    "size": [
+     19,
+     30.5617,
+     38.8594
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-props-wooden-crate",
    "pack": "apocalypse",
    "name": "Salvage Crates",
@@ -3141,6 +5544,216 @@
      33,
      24,
      27.5781
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-props-wooden-palisade",
+   "pack": "apocalypse",
+   "name": "Wooden Palisade",
+   "category": "props",
+   "filename": "apocalypse-props-wooden-palisade.glb",
+   "relativePath": "props/apocalypse-props-wooden-palisade.glb",
+   "leaf": "world",
+   "sizeBytes": 34200,
+   "bounds": {
+    "min": [
+     -16,
+     -0.0312,
+     -6.5
+    ],
+    "max": [
+     16,
+     25,
+     6.5
+    ],
+    "size": [
+     32,
+     25.0313,
+     13
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-terrain-nature-broken-overpass",
+   "pack": "apocalypse",
+   "name": "Broken Overpass",
+   "category": "terrain-nature",
+   "filename": "apocalypse-terrain-nature-broken-overpass.glb",
+   "relativePath": "terrain-nature/apocalypse-terrain-nature-broken-overpass.glb",
+   "leaf": "world",
+   "sizeBytes": 109016,
+   "bounds": {
+    "min": [
+     -70,
+     0,
+     -36
+    ],
+    "max": [
+     70,
+     89,
+     36
+    ],
+    "size": [
+     140,
+     89,
+     72
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-terrain-nature-cactus-cluster",
+   "pack": "apocalypse",
+   "name": "Cactus Cluster",
+   "category": "terrain-nature",
+   "filename": "apocalypse-terrain-nature-cactus-cluster.glb",
+   "relativePath": "terrain-nature/apocalypse-terrain-nature-cactus-cluster.glb",
+   "leaf": "world",
+   "sizeBytes": 52556,
+   "bounds": {
+    "min": [
+     -32.75,
+     0,
+     -28.0503
+    ],
+    "max": [
+     33.0624,
+     55.6094,
+     28.0412
+    ],
+    "size": [
+     65.8124,
+     55.6094,
+     56.0914
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-terrain-nature-charred-stumps",
+   "pack": "apocalypse",
+   "name": "Charred Stumps",
+   "category": "terrain-nature",
+   "filename": "apocalypse-terrain-nature-charred-stumps.glb",
+   "relativePath": "terrain-nature/apocalypse-terrain-nature-charred-stumps.glb",
+   "leaf": "world",
+   "sizeBytes": 47800,
+   "bounds": {
+    "min": [
+     -32.0093,
+     0,
+     -27.8937
+    ],
+    "max": [
+     31.5757,
+     34,
+     28.0191
+    ],
+    "size": [
+     63.5849,
+     34,
+     55.9128
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-terrain-nature-concrete-ruins",
+   "pack": "apocalypse",
+   "name": "Concrete Shelter Ruins",
+   "category": "terrain-nature",
+   "filename": "apocalypse-terrain-nature-concrete-ruins.glb",
+   "relativePath": "terrain-nature/apocalypse-terrain-nature-concrete-ruins.glb",
+   "leaf": "world",
+   "sizeBytes": 35432,
+   "bounds": {
+    "min": [
+     -43,
+     0,
+     -37
+    ],
+    "max": [
+     43,
+     52.0679,
+     37
+    ],
+    "size": [
+     86,
+     52.0679,
+     74
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-terrain-nature-cracked-earth",
+   "pack": "apocalypse",
+   "name": "Cracked Earth",
+   "category": "terrain-nature",
+   "filename": "apocalypse-terrain-nature-cracked-earth.glb",
+   "relativePath": "terrain-nature/apocalypse-terrain-nature-cracked-earth.glb",
+   "leaf": "world",
+   "sizeBytes": 41320,
+   "bounds": {
+    "min": [
+     -29.724,
+     0,
+     -29.2015
+    ],
+    "max": [
+     30.0426,
+     10,
+     29.5678
+    ],
+    "size": [
+     59.7665,
+     10,
+     58.7693
     ]
    },
    "normalizedShift": 0,
@@ -3195,11 +5808,11 @@
    "filename": "apocalypse-terrain-nature-crater.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-crater.glb",
    "leaf": "world",
-   "sizeBytes": 26112,
+   "sizeBytes": 49972,
    "bounds": {
     "min": [
      -27.5625,
-     -0.0625,
+     -0.0312,
      -27.5625
     ],
     "max": [
@@ -3209,7 +5822,7 @@
     ],
     "size": [
      55.125,
-     13.0625,
+     13.0313,
      55.125
     ]
    },
@@ -3293,6 +5906,76 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-terrain-nature-dry-riverbed",
+   "pack": "apocalypse",
+   "name": "Dry Riverbed",
+   "category": "terrain-nature",
+   "filename": "apocalypse-terrain-nature-dry-riverbed.glb",
+   "relativePath": "terrain-nature/apocalypse-terrain-nature-dry-riverbed.glb",
+   "leaf": "world",
+   "sizeBytes": 71076,
+   "bounds": {
+    "min": [
+     -37,
+     -0.0312,
+     -32
+    ],
+    "max": [
+     37,
+     14.8281,
+     32
+    ],
+    "size": [
+     74,
+     14.8594,
+     64
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-terrain-nature-fallen-power-pole",
+   "pack": "apocalypse",
+   "name": "Fallen Power Pole",
+   "category": "terrain-nature",
+   "filename": "apocalypse-terrain-nature-fallen-power-pole.glb",
+   "relativePath": "terrain-nature/apocalypse-terrain-nature-fallen-power-pole.glb",
+   "leaf": "world",
+   "sizeBytes": 32472,
+   "bounds": {
+    "min": [
+     -52.8498,
+     0,
+     -27.8409
+    ],
+    "max": [
+     52.6003,
+     24,
+     27.5412
+    ],
+    "size": [
+     105.4501,
+     24,
+     55.382
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-terrain-nature-flipped-car",
    "pack": "apocalypse",
    "name": "Flipped Burnt Car",
@@ -3328,6 +6011,41 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-terrain-nature-oil-slick",
+   "pack": "apocalypse",
+   "name": "Oil Slick",
+   "category": "terrain-nature",
+   "filename": "apocalypse-terrain-nature-oil-slick.glb",
+   "relativePath": "terrain-nature/apocalypse-terrain-nature-oil-slick.glb",
+   "leaf": "world",
+   "sizeBytes": 16000,
+   "bounds": {
+    "min": [
+     -31.6254,
+     0,
+     -24.1858
+    ],
+    "max": [
+     32.0586,
+     17.9,
+     23.7228
+    ],
+    "size": [
+     63.684,
+     17.9,
+     47.9086
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-terrain-nature-rock-mesa",
    "pack": "apocalypse",
    "name": "Mesa Rock",
@@ -3335,7 +6053,7 @@
    "filename": "apocalypse-terrain-nature-rock-mesa.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-rock-mesa.glb",
    "leaf": "world",
-   "sizeBytes": 43296,
+   "sizeBytes": 64412,
    "bounds": {
     "min": [
      -48.1406,
@@ -3370,20 +6088,20 @@
    "filename": "apocalypse-terrain-nature-rubble-pile.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-rubble-pile.glb",
    "leaf": "world",
-   "sizeBytes": 20896,
+   "sizeBytes": 28032,
    "bounds": {
     "min": [
-     -22.448,
+     -22.7083,
      -0.0312,
      -15.5488
     ],
     "max": [
-     22.2683,
+     22.7683,
      35.3904,
      15.826
     ],
     "size": [
-     44.7163,
+     45.4766,
      35.4217,
      31.3748
     ]
@@ -3405,22 +6123,57 @@
    "filename": "apocalypse-terrain-nature-sand-dune.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-sand-dune.glb",
    "leaf": "world",
-   "sizeBytes": 29720,
+   "sizeBytes": 43560,
    "bounds": {
     "min": [
-     -32,
+     -32.7511,
      -0.2187,
      -22
     ],
     "max": [
-     32,
+     32.5,
      29.5,
      21.5469
     ],
     "size": [
-     64,
+     65.2511,
      29.7188,
      43.5469
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-terrain-nature-sinkhole",
+   "pack": "apocalypse",
+   "name": "Road Sinkhole",
+   "category": "terrain-nature",
+   "filename": "apocalypse-terrain-nature-sinkhole.glb",
+   "relativePath": "terrain-nature/apocalypse-terrain-nature-sinkhole.glb",
+   "leaf": "world",
+   "sizeBytes": 36460,
+   "bounds": {
+    "min": [
+     -41.881,
+     0,
+     -39.498
+    ],
+    "max": [
+     42.0679,
+     17,
+     39.8868
+    ],
+    "size": [
+     83.9489,
+     17,
+     79.3849
     ]
    },
    "normalizedShift": 0,
@@ -3440,7 +6193,7 @@
    "filename": "apocalypse-terrain-nature-toxic-pool.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-toxic-pool.glb",
    "leaf": "world",
-   "sizeBytes": 76048,
+   "sizeBytes": 74968,
    "bounds": {
     "min": [
      -43.3919,
@@ -3479,6 +6232,41 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-terrain-nature-tumbleweed-patch",
+   "pack": "apocalypse",
+   "name": "Tumbleweed Patch",
+   "category": "terrain-nature",
+   "filename": "apocalypse-terrain-nature-tumbleweed-patch.glb",
+   "relativePath": "terrain-nature/apocalypse-terrain-nature-tumbleweed-patch.glb",
+   "leaf": "world",
+   "sizeBytes": 153380,
+   "bounds": {
+    "min": [
+     -35.2833,
+     0,
+     -30.9892
+    ],
+    "max": [
+     35.5827,
+     30.5744,
+     31.3591
+    ],
+    "size": [
+     70.866,
+     30.5744,
+     62.3483
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [],
+   "sockets": [],
+   "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-terrain-nature-wrecked-sedan",
    "pack": "apocalypse",
    "name": "Wrecked Sedan",
@@ -3509,6 +6297,60 @@
    "clips": [],
    "sockets": [],
    "pfx": [],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-vehicles-ambulance",
+   "pack": "apocalypse",
+   "name": "Fortified Ambulance",
+   "category": "vehicles",
+   "filename": "apocalypse-vehicles-ambulance.glb",
+   "relativePath": "vehicles/apocalypse-vehicles-ambulance.glb",
+   "leaf": "world",
+   "sizeBytes": 41056,
+   "bounds": {
+    "min": [
+     -27,
+     0,
+     -53
+    ],
+    "max": [
+     27,
+     70,
+     53
+    ],
+    "size": [
+     54,
+     70,
+     106
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move"
+   ],
+   "sockets": [
+    "socket-beacon",
+    "socket-exhaust"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-engine-smoke",
+     "socket": "socket-exhaust",
+     "trigger": "clip:move",
+     "size": 22
+    },
+    {
+     "effectId": "rvx-apocalypse-lamp-flicker",
+     "socket": "socket-beacon",
+     "trigger": "idle",
+     "size": 18
+    }
+   ],
    "route": "code",
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
@@ -3611,6 +6453,133 @@
       0,
       0,
       1
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-vehicles-garbage-truck",
+   "pack": "apocalypse",
+   "name": "Scavenger Garbage Truck",
+   "category": "vehicles",
+   "filename": "apocalypse-vehicles-garbage-truck.glb",
+   "relativePath": "vehicles/apocalypse-vehicles-garbage-truck.glb",
+   "leaf": "world",
+   "sizeBytes": 104172,
+   "bounds": {
+    "min": [
+     -31,
+     -0.0625,
+     -66
+    ],
+    "max": [
+     30.9375,
+     89,
+     66
+    ],
+    "size": [
+     61.9375,
+     89.0625,
+     132
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move",
+    "active"
+   ],
+   "sockets": [
+    "socket-exhaust",
+    "socket-mouth",
+    "socket-stack"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-engine-smoke",
+     "socket": "socket-exhaust",
+     "trigger": "clip:move",
+     "size": 26,
+     "aim": [
+      0,
+      1,
+      0
+     ]
+    },
+    {
+     "effectId": "rvx-apocalypse-exhaust-smoke",
+     "socket": "socket-stack",
+     "trigger": "idle",
+     "size": 18
+    },
+    {
+     "effectId": "rvx-apocalypse-crate-dust",
+     "socket": "socket-mouth",
+     "trigger": "clip:active",
+     "size": 36,
+     "at": 2.9
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-vehicles-gyrocopter",
+   "pack": "apocalypse",
+   "name": "Rescue Gyrocopter",
+   "category": "vehicles",
+   "filename": "apocalypse-vehicles-gyrocopter.glb",
+   "relativePath": "vehicles/apocalypse-vehicles-gyrocopter.glb",
+   "leaf": "world",
+   "sizeBytes": 42688,
+   "bounds": {
+    "min": [
+     -33,
+     0,
+     -50.5
+    ],
+    "max": [
+     33,
+     56,
+     50.5
+    ],
+    "size": [
+     66,
+     56,
+     101
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "move",
+    "idle"
+   ],
+   "sockets": [
+    "socket-exhaust",
+    "socket-searchlight"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-exhaust-smoke",
+     "socket": "socket-exhaust",
+     "trigger": "clip:move",
+     "size": 20
+    },
+    {
+     "effectId": "rvx-apocalypse-searchlight",
+     "socket": "socket-searchlight",
+     "trigger": "idle",
+     "size": 25,
+     "aim": [
+      0,
+      -0.3,
+      -1
      ]
     }
    ],
@@ -3723,6 +6692,62 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "apocalypse-vehicles-rv-camper",
+   "pack": "apocalypse",
+   "name": "Wasteland Camper",
+   "category": "vehicles",
+   "filename": "apocalypse-vehicles-rv-camper.glb",
+   "relativePath": "vehicles/apocalypse-vehicles-rv-camper.glb",
+   "leaf": "world",
+   "sizeBytes": 75828,
+   "bounds": {
+    "min": [
+     -33.5,
+     0,
+     -66
+    ],
+    "max": [
+     33.8125,
+     83,
+     66
+    ],
+    "size": [
+     67.3125,
+     83,
+     132
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move",
+    "active"
+   ],
+   "sockets": [
+    "socket-awning",
+    "socket-awning-lamp",
+    "socket-exhaust"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-exhaust-smoke",
+     "socket": "socket-exhaust",
+     "trigger": "clip:move",
+     "size": 24
+    },
+    {
+     "effectId": "rvx-apocalypse-lamp-flicker",
+     "socket": "socket-awning-lamp",
+     "trigger": "idle",
+     "size": 14
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "apocalypse-vehicles-school-bus",
    "pack": "apocalypse",
    "name": "Fortified School Bus",
@@ -3768,6 +6793,128 @@
       0,
       1
      ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-vehicles-scrap-tank",
+   "pack": "apocalypse",
+   "name": "Scrap Tank",
+   "category": "vehicles",
+   "filename": "apocalypse-vehicles-scrap-tank.glb",
+   "relativePath": "vehicles/apocalypse-vehicles-scrap-tank.glb",
+   "leaf": "world",
+   "sizeBytes": 111352,
+   "bounds": {
+    "min": [
+     -37.0312,
+     0,
+     -54
+    ],
+    "max": [
+     37.0313,
+     72,
+     54
+    ],
+    "size": [
+     74.0625,
+     72,
+     108
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move",
+    "attack"
+   ],
+   "sockets": [
+    "socket-exhaust",
+    "socket-gun-muzzle",
+    "socket-track-dust"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-engine-smoke",
+     "socket": "socket-exhaust",
+     "trigger": "clip:move",
+     "size": 28
+    },
+    {
+     "effectId": "rvx-apocalypse-dust-kick",
+     "socket": "socket-track-dust",
+     "trigger": "clip:move",
+     "size": 28
+    },
+    {
+     "effectId": "rvx-apocalypse-shotgun-blast",
+     "socket": "socket-gun-muzzle",
+     "trigger": "clip:attack",
+     "size": 32,
+     "aim": [
+      0,
+      0,
+      -1
+     ]
+    }
+   ],
+   "route": "code",
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "apocalypse-vehicles-tractor",
+   "pack": "apocalypse",
+   "name": "Farm Tractor",
+   "category": "vehicles",
+   "filename": "apocalypse-vehicles-tractor.glb",
+   "relativePath": "vehicles/apocalypse-vehicles-tractor.glb",
+   "leaf": "world",
+   "sizeBytes": 61348,
+   "bounds": {
+    "min": [
+     -28.9375,
+     0,
+     -43.5
+    ],
+    "max": [
+     28.9375,
+     70.0313,
+     43.5
+    ],
+    "size": [
+     57.875,
+     70.0313,
+     87
+    ]
+   },
+   "normalizedShift": 0,
+   "space": "world",
+   "clips": [
+    "idle",
+    "move",
+    "active"
+   ],
+   "sockets": [
+    "socket-bucket",
+    "socket-exhaust"
+   ],
+   "pfx": [
+    {
+     "effectId": "rvx-apocalypse-exhaust-smoke",
+     "socket": "socket-exhaust",
+     "trigger": "idle",
+     "size": 20
+    },
+    {
+     "effectId": "rvx-apocalypse-dust-kick",
+     "socket": "socket-bucket",
+     "trigger": "clip:active",
+     "size": 24
     }
    ],
    "route": "code",
@@ -4609,6 +7756,30 @@
  },
  "sprites": [
   {
+   "id": "icon-apocalypse-animated-props-alarm-siren",
+   "pack": "apocalypse",
+   "name": "animated props alarm siren",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-apocalypse-animated-props-alarm-siren.png",
+   "leaf": "icons",
+   "sizeBytes": 7923,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-animated-props-arcade-machine",
+   "pack": "apocalypse",
+   "name": "animated props arcade machine",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-apocalypse-animated-props-arcade-machine.png",
+   "leaf": "icons",
+   "sizeBytes": 12755,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "icon-apocalypse-animated-props-bear-trap",
    "pack": "apocalypse",
    "name": "animated props bear trap",
@@ -4616,7 +7787,7 @@
    "subCategory": "animated",
    "relativePath": "icon-apocalypse-animated-props-bear-trap.png",
    "leaf": "icons",
-   "sizeBytes": 4238,
+   "sizeBytes": 4383,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4628,7 +7799,7 @@
    "subCategory": "animated",
    "relativePath": "icon-apocalypse-animated-props-burning-barrel.png",
    "leaf": "icons",
-   "sizeBytes": 10776,
+   "sizeBytes": 10791,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4640,7 +7811,7 @@
    "subCategory": "animated",
    "relativePath": "icon-apocalypse-animated-props-campfire.png",
    "leaf": "icons",
-   "sizeBytes": 12819,
+   "sizeBytes": 12816,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4652,7 +7823,7 @@
    "subCategory": "animated",
    "relativePath": "icon-apocalypse-animated-props-garage-door.png",
    "leaf": "icons",
-   "sizeBytes": 19891,
+   "sizeBytes": 19989,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4676,7 +7847,31 @@
    "subCategory": "animated",
    "relativePath": "icon-apocalypse-animated-props-generator.png",
    "leaf": "icons",
-   "sizeBytes": 12521,
+   "sizeBytes": 12386,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-animated-props-moonshine-still",
+   "pack": "apocalypse",
+   "name": "animated props moonshine still",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-apocalypse-animated-props-moonshine-still.png",
+   "leaf": "icons",
+   "sizeBytes": 11222,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-animated-props-oil-pumpjack",
+   "pack": "apocalypse",
+   "name": "animated props oil pumpjack",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-apocalypse-animated-props-oil-pumpjack.png",
+   "leaf": "icons",
+   "sizeBytes": 20989,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4688,7 +7883,7 @@
    "subCategory": "animated",
    "relativePath": "icon-apocalypse-animated-props-porta-potty.png",
    "leaf": "icons",
-   "sizeBytes": 9756,
+   "sizeBytes": 10340,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4700,7 +7895,55 @@
    "subCategory": "animated",
    "relativePath": "icon-apocalypse-animated-props-radio-tower.png",
    "leaf": "icons",
-   "sizeBytes": 14966,
+   "sizeBytes": 14956,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-animated-props-scrap-crane",
+   "pack": "apocalypse",
+   "name": "animated props scrap crane",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-apocalypse-animated-props-scrap-crane.png",
+   "leaf": "icons",
+   "sizeBytes": 18793,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-animated-props-scrap-forge",
+   "pack": "apocalypse",
+   "name": "animated props scrap forge",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-apocalypse-animated-props-scrap-forge.png",
+   "leaf": "icons",
+   "sizeBytes": 12704,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-animated-props-scrap-turret",
+   "pack": "apocalypse",
+   "name": "animated props scrap turret",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-apocalypse-animated-props-scrap-turret.png",
+   "leaf": "icons",
+   "sizeBytes": 12523,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-animated-props-spike-trap",
+   "pack": "apocalypse",
+   "name": "animated props spike trap",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-apocalypse-animated-props-spike-trap.png",
+   "leaf": "icons",
+   "sizeBytes": 8982,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4712,7 +7955,7 @@
    "subCategory": "animated",
    "relativePath": "icon-apocalypse-animated-props-street-lamp.png",
    "leaf": "icons",
-   "sizeBytes": 11184,
+   "sizeBytes": 11133,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4724,7 +7967,7 @@
    "subCategory": "animated",
    "relativePath": "icon-apocalypse-animated-props-supply-crate.png",
    "leaf": "icons",
-   "sizeBytes": 7723,
+   "sizeBytes": 7785,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4736,7 +7979,55 @@
    "subCategory": "animated",
    "relativePath": "icon-apocalypse-animated-props-toxic-barrel.png",
    "leaf": "icons",
-   "sizeBytes": 8681,
+   "sizeBytes": 8592,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-animated-props-traffic-light",
+   "pack": "apocalypse",
+   "name": "animated props traffic light",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-apocalypse-animated-props-traffic-light.png",
+   "leaf": "icons",
+   "sizeBytes": 18990,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-animated-props-vault-door",
+   "pack": "apocalypse",
+   "name": "animated props vault door",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-apocalypse-animated-props-vault-door.png",
+   "leaf": "icons",
+   "sizeBytes": 25676,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-animated-props-water-purifier",
+   "pack": "apocalypse",
+   "name": "animated props water purifier",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-apocalypse-animated-props-water-purifier.png",
+   "leaf": "icons",
+   "sizeBytes": 15401,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-animated-props-wind-turbine",
+   "pack": "apocalypse",
+   "name": "animated props wind turbine",
+   "category": "icons",
+   "subCategory": "animated",
+   "relativePath": "icon-apocalypse-animated-props-wind-turbine.png",
+   "leaf": "icons",
+   "sizeBytes": 10789,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4748,7 +8039,7 @@
    "subCategory": "animated",
    "relativePath": "icon-apocalypse-animated-props-windmill-pump.png",
    "leaf": "icons",
-   "sizeBytes": 18297,
+   "sizeBytes": 18267,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4760,7 +8051,19 @@
    "subCategory": "creatures",
    "relativePath": "icon-apocalypse-creatures-crow.png",
    "leaf": "icons",
-   "sizeBytes": 10327,
+   "sizeBytes": 10514,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-creatures-giant-scorpion",
+   "pack": "apocalypse",
+   "name": "creatures giant scorpion",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-apocalypse-creatures-giant-scorpion.png",
+   "leaf": "icons",
+   "sizeBytes": 14721,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4777,6 +8080,30 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "icon-apocalypse-creatures-mutant-boar",
+   "pack": "apocalypse",
+   "name": "creatures mutant boar",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-apocalypse-creatures-mutant-boar.png",
+   "leaf": "icons",
+   "sizeBytes": 16209,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-creatures-mutant-cow",
+   "pack": "apocalypse",
+   "name": "creatures mutant cow",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-apocalypse-creatures-mutant-cow.png",
+   "leaf": "icons",
+   "sizeBytes": 13447,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "icon-apocalypse-creatures-mutant-dog",
    "pack": "apocalypse",
    "name": "creatures mutant dog",
@@ -4785,6 +8112,18 @@
    "relativePath": "icon-apocalypse-creatures-mutant-dog.png",
    "leaf": "icons",
    "sizeBytes": 10850,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-creatures-mutant-vulture",
+   "pack": "apocalypse",
+   "name": "creatures mutant vulture",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-apocalypse-creatures-mutant-vulture.png",
+   "leaf": "icons",
+   "sizeBytes": 15451,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4808,7 +8147,31 @@
    "subCategory": "creatures",
    "relativePath": "icon-apocalypse-creatures-raider-bot.png",
    "leaf": "icons",
-   "sizeBytes": 17438,
+   "sizeBytes": 17421,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-creatures-scavenger-drone",
+   "pack": "apocalypse",
+   "name": "creatures scavenger drone",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-apocalypse-creatures-scavenger-drone.png",
+   "leaf": "icons",
+   "sizeBytes": 10714,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-creatures-sewer-croc",
+   "pack": "apocalypse",
+   "name": "creatures sewer croc",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-apocalypse-creatures-sewer-croc.png",
+   "leaf": "icons",
+   "sizeBytes": 9900,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4825,6 +8188,18 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "icon-apocalypse-creatures-zombie-crawler",
+   "pack": "apocalypse",
+   "name": "creatures zombie crawler",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-apocalypse-creatures-zombie-crawler.png",
+   "leaf": "icons",
+   "sizeBytes": 12335,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "icon-apocalypse-creatures-zombie-runner",
    "pack": "apocalypse",
    "name": "creatures zombie runner",
@@ -4832,7 +8207,19 @@
    "subCategory": "creatures",
    "relativePath": "icon-apocalypse-creatures-zombie-runner.png",
    "leaf": "icons",
-   "sizeBytes": 11239,
+   "sizeBytes": 11274,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-creatures-zombie-soldier",
+   "pack": "apocalypse",
+   "name": "creatures zombie soldier",
+   "category": "icons",
+   "subCategory": "creatures",
+   "relativePath": "icon-apocalypse-creatures-zombie-soldier.png",
+   "leaf": "icons",
+   "sizeBytes": 12266,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4856,7 +8243,7 @@
    "subCategory": "held",
    "relativePath": "icon-apocalypse-held-items-chainsaw.png",
    "leaf": "icons",
-   "sizeBytes": 11993,
+   "sizeBytes": 13180,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4868,7 +8255,7 @@
    "subCategory": "held",
    "relativePath": "icon-apocalypse-held-items-crossbow.png",
    "leaf": "icons",
-   "sizeBytes": 9029,
+   "sizeBytes": 9600,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4880,7 +8267,7 @@
    "subCategory": "held",
    "relativePath": "icon-apocalypse-held-items-crowbar.png",
    "leaf": "icons",
-   "sizeBytes": 9050,
+   "sizeBytes": 10269,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4904,7 +8291,7 @@
    "subCategory": "held",
    "relativePath": "icon-apocalypse-held-items-fire-axe.png",
    "leaf": "icons",
-   "sizeBytes": 10582,
+   "sizeBytes": 14037,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4928,7 +8315,7 @@
    "subCategory": "held",
    "relativePath": "icon-apocalypse-held-items-frying-pan.png",
    "leaf": "icons",
-   "sizeBytes": 9419,
+   "sizeBytes": 9493,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4964,7 +8351,7 @@
    "subCategory": "held",
    "relativePath": "icon-apocalypse-held-items-molotov.png",
    "leaf": "icons",
-   "sizeBytes": 12285,
+   "sizeBytes": 12240,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -4976,7 +8363,7 @@
    "subCategory": "held",
    "relativePath": "icon-apocalypse-held-items-nail-bat.png",
    "leaf": "icons",
-   "sizeBytes": 12467,
+   "sizeBytes": 13285,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5012,7 +8399,7 @@
    "subCategory": "held",
    "relativePath": "icon-apocalypse-held-items-pump-shotgun.png",
    "leaf": "icons",
-   "sizeBytes": 10963,
+   "sizeBytes": 12694,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5053,6 +8440,78 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "icon-apocalypse-props-barbed-wire-coil",
+   "pack": "apocalypse",
+   "name": "props barbed wire coil",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-barbed-wire-coil.png",
+   "leaf": "icons",
+   "sizeBytes": 14937,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-battery-bank",
+   "pack": "apocalypse",
+   "name": "props battery bank",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-battery-bank.png",
+   "leaf": "icons",
+   "sizeBytes": 11166,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-bicycle-wreck",
+   "pack": "apocalypse",
+   "name": "props bicycle wreck",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-bicycle-wreck.png",
+   "leaf": "icons",
+   "sizeBytes": 15657,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-billboard-wreck",
+   "pack": "apocalypse",
+   "name": "props billboard wreck",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-billboard-wreck.png",
+   "leaf": "icons",
+   "sizeBytes": 20239,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-bus-stop-shelter",
+   "pack": "apocalypse",
+   "name": "props bus stop shelter",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-bus-stop-shelter.png",
+   "leaf": "icons",
+   "sizeBytes": 14474,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-canned-food-stack",
+   "pack": "apocalypse",
+   "name": "props canned food stack",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-canned-food-stack.png",
+   "leaf": "icons",
+   "sizeBytes": 10073,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "icon-apocalypse-props-chainlink-fence",
    "pack": "apocalypse",
    "name": "props chainlink fence",
@@ -5060,7 +8519,31 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-chainlink-fence.png",
    "leaf": "icons",
-   "sizeBytes": 25249,
+   "sizeBytes": 24325,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-cooler-box",
+   "pack": "apocalypse",
+   "name": "props cooler box",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-cooler-box.png",
+   "leaf": "icons",
+   "sizeBytes": 11651,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-couch-ruin",
+   "pack": "apocalypse",
+   "name": "props couch ruin",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-couch-ruin.png",
+   "leaf": "icons",
+   "sizeBytes": 6960,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5072,7 +8555,7 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-crt-tv.png",
    "leaf": "icons",
-   "sizeBytes": 9997,
+   "sizeBytes": 9995,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5084,7 +8567,7 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-drum-pallet.png",
    "leaf": "icons",
-   "sizeBytes": 10968,
+   "sizeBytes": 11007,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5096,7 +8579,7 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-dumpster.png",
    "leaf": "icons",
-   "sizeBytes": 10435,
+   "sizeBytes": 10414,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5108,7 +8591,19 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-engine-block.png",
    "leaf": "icons",
-   "sizeBytes": 14718,
+   "sizeBytes": 14753,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-extension-reel",
+   "pack": "apocalypse",
+   "name": "props extension reel",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-extension-reel.png",
+   "leaf": "icons",
+   "sizeBytes": 12581,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5132,7 +8627,55 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-fuel-can.png",
    "leaf": "icons",
-   "sizeBytes": 6195,
+   "sizeBytes": 6162,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-gas-mask-rack",
+   "pack": "apocalypse",
+   "name": "props gas mask rack",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-gas-mask-rack.png",
+   "leaf": "icons",
+   "sizeBytes": 16419,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-graffiti-wall",
+   "pack": "apocalypse",
+   "name": "props graffiti wall",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-graffiti-wall.png",
+   "leaf": "icons",
+   "sizeBytes": 10998,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-grocery-shelf",
+   "pack": "apocalypse",
+   "name": "props grocery shelf",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-grocery-shelf.png",
+   "leaf": "icons",
+   "sizeBytes": 16858,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-handcart",
+   "pack": "apocalypse",
+   "name": "props handcart",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-handcart.png",
+   "leaf": "icons",
+   "sizeBytes": 11672,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5156,7 +8699,7 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-keep-out-sign.png",
    "leaf": "icons",
-   "sizeBytes": 16453,
+   "sizeBytes": 16395,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5180,7 +8723,31 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-mattress.png",
    "leaf": "icons",
-   "sizeBytes": 8315,
+   "sizeBytes": 8313,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-medical-cabinet",
+   "pack": "apocalypse",
+   "name": "props medical cabinet",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-medical-cabinet.png",
+   "leaf": "icons",
+   "sizeBytes": 7573,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-newspaper-box",
+   "pack": "apocalypse",
+   "name": "props newspaper box",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-newspaper-box.png",
+   "leaf": "icons",
+   "sizeBytes": 12544,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5204,7 +8771,19 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-pallet-stack.png",
    "leaf": "icons",
-   "sizeBytes": 11593,
+   "sizeBytes": 9852,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-parking-meter",
+   "pack": "apocalypse",
+   "name": "props parking meter",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-parking-meter.png",
+   "leaf": "icons",
+   "sizeBytes": 14463,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5245,6 +8824,30 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "icon-apocalypse-props-rain-barrel",
+   "pack": "apocalypse",
+   "name": "props rain barrel",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-rain-barrel.png",
+   "leaf": "icons",
+   "sizeBytes": 8939,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-rooftop-antenna",
+   "pack": "apocalypse",
+   "name": "props rooftop antenna",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-rooftop-antenna.png",
+   "leaf": "icons",
+   "sizeBytes": 14637,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "icon-apocalypse-props-sandbag-wall",
    "pack": "apocalypse",
    "name": "props sandbag wall",
@@ -5252,7 +8855,7 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-sandbag-wall.png",
    "leaf": "icons",
-   "sizeBytes": 9760,
+   "sizeBytes": 9891,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5264,7 +8867,55 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-scrap-pile.png",
    "leaf": "icons",
-   "sizeBytes": 14300,
+   "sizeBytes": 14441,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-scrap-shield-wall",
+   "pack": "apocalypse",
+   "name": "props scrap shield wall",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-scrap-shield-wall.png",
+   "leaf": "icons",
+   "sizeBytes": 10227,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-scrap-workbench",
+   "pack": "apocalypse",
+   "name": "props scrap workbench",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-scrap-workbench.png",
+   "leaf": "icons",
+   "sizeBytes": 12043,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-seed-crates",
+   "pack": "apocalypse",
+   "name": "props seed crates",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-seed-crates.png",
+   "leaf": "icons",
+   "sizeBytes": 10501,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-shipping-container",
+   "pack": "apocalypse",
+   "name": "props shipping container",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-shipping-container.png",
+   "leaf": "icons",
+   "sizeBytes": 12016,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5276,7 +8927,7 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-shopping-cart.png",
    "leaf": "icons",
-   "sizeBytes": 20037,
+   "sizeBytes": 19946,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5288,7 +8939,31 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-skull-pike.png",
    "leaf": "icons",
-   "sizeBytes": 14198,
+   "sizeBytes": 14149,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-sleeping-bag",
+   "pack": "apocalypse",
+   "name": "props sleeping bag",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-sleeping-bag.png",
+   "leaf": "icons",
+   "sizeBytes": 8901,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-smoker-grill",
+   "pack": "apocalypse",
+   "name": "props smoker grill",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-smoker-grill.png",
+   "leaf": "icons",
+   "sizeBytes": 14515,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5312,7 +8987,7 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-stop-sign.png",
    "leaf": "icons",
-   "sizeBytes": 15933,
+   "sizeBytes": 15772,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5324,7 +8999,7 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-survivor-tent.png",
    "leaf": "icons",
-   "sizeBytes": 13764,
+   "sizeBytes": 13792,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5336,7 +9011,7 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-tire-stack.png",
    "leaf": "icons",
-   "sizeBytes": 12736,
+   "sizeBytes": 10117,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5348,7 +9023,7 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-toolbox.png",
    "leaf": "icons",
-   "sizeBytes": 6594,
+   "sizeBytes": 6596,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5360,7 +9035,19 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-traffic-cone.png",
    "leaf": "icons",
-   "sizeBytes": 7591,
+   "sizeBytes": 8582,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-trash-bags",
+   "pack": "apocalypse",
+   "name": "props trash bags",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-trash-bags.png",
+   "leaf": "icons",
+   "sizeBytes": 10354,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5377,6 +9064,30 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "icon-apocalypse-props-washing-machine",
+   "pack": "apocalypse",
+   "name": "props washing machine",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-washing-machine.png",
+   "leaf": "icons",
+   "sizeBytes": 9850,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-water-jugs",
+   "pack": "apocalypse",
+   "name": "props water jugs",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-water-jugs.png",
+   "leaf": "icons",
+   "sizeBytes": 9921,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "icon-apocalypse-props-water-tank",
    "pack": "apocalypse",
    "name": "props water tank",
@@ -5384,7 +9095,31 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-water-tank.png",
    "leaf": "icons",
-   "sizeBytes": 13157,
+   "sizeBytes": 13164,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-weapon-locker",
+   "pack": "apocalypse",
+   "name": "props weapon locker",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-weapon-locker.png",
+   "leaf": "icons",
+   "sizeBytes": 14649,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-wheelbarrow",
+   "pack": "apocalypse",
+   "name": "props wheelbarrow",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-wheelbarrow.png",
+   "leaf": "icons",
+   "sizeBytes": 13478,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5396,7 +9131,31 @@
    "subCategory": "props",
    "relativePath": "icon-apocalypse-props-wooden-crate.png",
    "leaf": "icons",
-   "sizeBytes": 9638,
+   "sizeBytes": 9577,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-props-wooden-palisade",
+   "pack": "apocalypse",
+   "name": "props wooden palisade",
+   "category": "icons",
+   "subCategory": "props",
+   "relativePath": "icon-apocalypse-props-wooden-palisade.png",
+   "leaf": "icons",
+   "sizeBytes": 13926,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-vehicles-ambulance",
+   "pack": "apocalypse",
+   "name": "vehicles ambulance",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-apocalypse-vehicles-ambulance.png",
+   "leaf": "icons",
+   "sizeBytes": 14429,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5420,7 +9179,31 @@
    "subCategory": "vehicles",
    "relativePath": "icon-apocalypse-vehicles-dune-buggy.png",
    "leaf": "icons",
-   "sizeBytes": 18018,
+   "sizeBytes": 18006,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-vehicles-garbage-truck",
+   "pack": "apocalypse",
+   "name": "vehicles garbage truck",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-apocalypse-vehicles-garbage-truck.png",
+   "leaf": "icons",
+   "sizeBytes": 17318,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-vehicles-gyrocopter",
+   "pack": "apocalypse",
+   "name": "vehicles gyrocopter",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-apocalypse-vehicles-gyrocopter.png",
+   "leaf": "icons",
+   "sizeBytes": 12097,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5432,7 +9215,7 @@
    "subCategory": "vehicles",
    "relativePath": "icon-apocalypse-vehicles-motorbike.png",
    "leaf": "icons",
-   "sizeBytes": 13948,
+   "sizeBytes": 13968,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
@@ -5449,6 +9232,18 @@
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },
   {
+   "id": "icon-apocalypse-vehicles-rv-camper",
+   "pack": "apocalypse",
+   "name": "vehicles rv camper",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-apocalypse-vehicles-rv-camper.png",
+   "leaf": "icons",
+   "sizeBytes": 16391,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
    "id": "icon-apocalypse-vehicles-school-bus",
    "pack": "apocalypse",
    "name": "vehicles school bus",
@@ -5456,7 +9251,31 @@
    "subCategory": "vehicles",
    "relativePath": "icon-apocalypse-vehicles-school-bus.png",
    "leaf": "icons",
-   "sizeBytes": 14881,
+   "sizeBytes": 14894,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-vehicles-scrap-tank",
+   "pack": "apocalypse",
+   "name": "vehicles scrap tank",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-apocalypse-vehicles-scrap-tank.png",
+   "leaf": "icons",
+   "sizeBytes": 14560,
+   "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+   "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+  },
+  {
+   "id": "icon-apocalypse-vehicles-tractor",
+   "pack": "apocalypse",
+   "name": "vehicles tractor",
+   "category": "icons",
+   "subCategory": "vehicles",
+   "relativePath": "icon-apocalypse-vehicles-tractor.png",
+   "leaf": "icons",
+   "sizeBytes": 15665,
    "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
    "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
   },

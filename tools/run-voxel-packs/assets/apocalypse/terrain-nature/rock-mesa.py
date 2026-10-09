@@ -52,6 +52,13 @@ def build():
     # the flat tops of each tier: sandy
     P.flat(g, tops, "sand", 6)
     PP.blotch(g, tops, "sand", 5, cell=4, chance=0.06, seed=7)
+    for k,(xx,zz,yy,rr,hh) in enumerate(((23,34,12,11,20),(83,42,23,10,19),(43,69,37,10,15),(69,35,51,8,15))):
+        rk=rock(g,xx,zz,yy,rr,rr*0.8,hh,"rust",5,shrink=0.7,n=6,seed=51+k)
+        P.flat(g,rk & (np.floor(Y/5)%2==0),"sand",5)
+    for k,(xx,zz,yy,rr) in enumerate(((16,31,6,10),(88,30,9,9),(19,70,10,9),(84,75,14,8),(27,16,17,8),(63,79,29,8),(77,17,31,7))):
+        foot=rock(g,xx,zz,yy,rr,rr*.75,8,"rust",4,shrink=.85,n=5,seed=80+k)
+        cap=rock(g,xx-1,zz+1,yy+8,rr*.72,rr*.5,5,"sand",5,shrink=.65,n=5,seed=100+k)
+        P.flat(g,foot & (Y<yy+2),"sand",4)
     # a balanced boulder on the top
     boulder = rock(g, CX + 3, CZ + 6, 66, 7.5, 6.5, 9, ramp="sand", shade=5, shrink=0.7, lean=(1, 0), n=7, seed=4)
     P.mottle(g, boulder, "sand", 5, cell=3, seed=5)

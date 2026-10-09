@@ -3,6 +3,13 @@
 Browse the RUN voxel packs next to Pirate Nation, see them at native scale in
 one scene, and dress one avatar in parts from every pack.
 
+The expanded release has 175 models per pack and 700 models in total. Each
+pack has 60 props, 24 animated props, 20 buildings, 20 terrain models,
+16 creatures, and 12 vehicles. The avatar models are unchanged.
+
+Production uses the published pack versions in `src/pins.ts`. Update each
+version from the public asset manifest when a pack changes.
+
 ```bash
 npm install
 npm run dev                # http://localhost:5192 — local assets (tools/run-voxel-packs stage + ~/dev/jam-ready-assets)

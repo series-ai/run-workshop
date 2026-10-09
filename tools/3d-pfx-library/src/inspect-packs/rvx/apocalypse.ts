@@ -16,7 +16,7 @@ const GORE = [t('red', 3), t('red', 4), hex('#6e1a14')]
 
 export const APOCALYPSE_RECIPES: RvxRecipe[] = [
   // ---------------------------------------------------------------- loops
-  fire({ ...id('barrel-fire', 'barrel fire'), source: 'burning barrel, campfire', effectType: 'fire', role: 'loop' }, {
+  fire({ ...id('barrel-fire', 'barrel fire'), source: 'burning barrel, campfire, scrap forge', effectType: 'fire', role: 'loop' }, {
     kind: 'hearth',
     smoke: OILY,
   }),
@@ -34,11 +34,11 @@ export const APOCALYPSE_RECIPES: RvxRecipe[] = [
     rate: 5,
     embers: [t('toxic', 7)],
   }),
-  lampGlow({ ...id('lamp-flicker', 'lamp flicker'), source: 'street lamp bulb', effectType: 'aura', role: 'loop' }, {
+  lampGlow({ ...id('lamp-flicker', 'lamp flicker'), source: 'street lamp bulb, warning siren, turbine beacon, camper lamp', effectType: 'aura', role: 'loop' }, {
     halo: dim(t('gold', 7), 0.6),
     motes: [t('gold', 7), WHITE],
   }),
-  bubbles({ ...id('toxic-bubbles', 'toxic bubbles'), source: 'toxic barrel, bloated zombie', effectType: 'environment', role: 'loop' }, {
+  bubbles({ ...id('toxic-bubbles', 'toxic bubbles'), source: 'toxic barrel, bloated zombie, purifier intake', effectType: 'environment', role: 'loop' }, {
     bubble: [t('toxic', 6), t('toxic', 5)],
     chips: [t('toxic', 7)],
     width: 0.5,
@@ -50,7 +50,7 @@ export const APOCALYPSE_RECIPES: RvxRecipe[] = [
     // the green pool is about half the island: wider, bubbles rose from the barrels and the sand
     width: 0.5,
   }),
-  beam({ ...id('searchlight', 'searchlight'), source: 'watchtower light', effectType: 'environment', role: 'beam' }, {
+  beam({ ...id('searchlight', 'searchlight'), source: 'watchtower light, rescue gyrocopter', effectType: 'environment', role: 'beam' }, {
     color: hex('#fff3c4'),
     length: 3,
     width: 0.7,
@@ -59,17 +59,17 @@ export const APOCALYPSE_RECIPES: RvxRecipe[] = [
     color: hex('#fff3c4'),
     length: 2.4,
   }),
-  exhaust({ ...id('engine-smoke', 'engine smoke'), source: 'van, pickups, bus, buggy, motorbike exhausts', effectType: 'movement', role: 'trail' }, {
+  exhaust({ ...id('engine-smoke', 'engine smoke'), source: 'van, pickups, bus, buggy, motorbike, tank, ambulance, tractor, gyrocopter, camper exhausts', effectType: 'movement', role: 'trail' }, {
     smoke: EXHAUST,
     rate: 9,
     lift: 0.6,
   }),
-  exhaust({ ...id('dust-kick', 'dust kick'), source: 'mutant dog paws', effectType: 'movement', role: 'trail' }, {
+  exhaust({ ...id('dust-kick', 'dust kick'), source: 'mutant dog paws, tank tracks', effectType: 'movement', role: 'trail' }, {
     smoke: DUST,
     rate: 7,
   }),
   // ---------------------------------------------------------------- one-shots
-  burst({ ...id('metal-clang', 'metal clang'), source: 'crowbar, frying pan, pipe wrench', effectType: 'impact', role: 'impact' }, {
+  burst({ ...id('metal-clang', 'metal clang'), source: 'crowbar, frying pan, pipe wrench, arcade joystick, vault door, road spikes', effectType: 'impact', role: 'impact' }, {
     flash: dim(FIRE.yellow, 0.6),
     star: WHITE,
     sparks: [FIRE.yellow, FIRE.white],
@@ -91,13 +91,13 @@ export const APOCALYPSE_RECIPES: RvxRecipe[] = [
     cubes: [t('steel', 5), t('rust', 5)],
     cubeCount: 5,
   }),
-  burst({ ...id('gore-burst', 'gore burst'), source: 'zombie hits, chainsaw, machete, axe, nail bat, spear', effectType: 'impact', role: 'impact' }, {
+  burst({ ...id('gore-burst', 'gore burst'), source: 'zombie hits, chainsaw, machete, axe, nail bat, spear, mutant boar, vulture, cow', effectType: 'impact', role: 'impact' }, {
     star: hex('#ffe9e0'),
     pieces: { texture: 'rvx-drop', colors: GORE, count: 9, size: 0.15, gravity: 1 },
     cubes: [...GORE, t('toxic', 5)],
     cubeCount: 7,
   }),
-  burst({ ...id('crate-dust', 'crate dust'), source: 'supply crate', effectType: 'loot', role: 'reward' }, {
+  burst({ ...id('crate-dust', 'crate dust'), source: 'supply crate, scrap crane hook', effectType: 'loot', role: 'reward' }, {
     puffs: DUST,
     cubes: [t('wood', 5), t('wood', 4), t('khaki', 5)],
     cubeCount: 8,
@@ -125,14 +125,14 @@ export const APOCALYPSE_RECIPES: RvxRecipe[] = [
     length: 1.4,
     duration: 0.6,
   }),
-  muzzle({ ...id('shotgun-blast', 'shotgun blast'), source: 'double barrel, pump shotgun, sawn-off', effectType: 'weapon', role: 'release' }, {
+  muzzle({ ...id('shotgun-blast', 'shotgun blast'), source: 'double barrel, pump shotgun, sawn-off, scrap turret, tank gun', effectType: 'weapon', role: 'release' }, {
     flash: dim(FIRE.yellow, 0.9),
     core: FIRE.white,
     smoke: [SMOKE.light, SMOKE.mid],
     sparks: [FIRE.yellow, FIRE.white],
     big: true,
   }),
-  muzzle({ ...id('pistol-shot', 'pistol shot'), source: 'pistol', effectType: 'weapon', role: 'release' }, {
+  muzzle({ ...id('pistol-shot', 'pistol shot'), source: 'pistol, scavenger drone cannon', effectType: 'weapon', role: 'release' }, {
     flash: dim(FIRE.yellow, 0.8),
     core: FIRE.white,
     smoke: [SMOKE.light],

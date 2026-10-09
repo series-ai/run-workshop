@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { sizeOutliers, unexpectedFiles } from './pack'
+import { checkLevel, sizeOutliers, unexpectedFiles, type GlbRecord } from './pack'
 
 describe('pack file inventory', () => {
   it('flags files that would ship unchecked', () => {
@@ -31,5 +31,22 @@ describe('size outliers', () => {
     expect(sizeOutliers([glb('s1', 50, null, 'held-items'), glb('s2', 40, null, 'held-items'), glb('s3', 300, null, 'held-items')]).map((i) => i.message)).toEqual([expect.stringMatching(/^s3: .*held-items median/)])
     expect(sizeOutliers([glb('x', 10), glb('y', 100)])).toEqual([])
     expect(sizeOutliers([glb('p', 1, null, 'avatar'), glb('q', 1, null, 'avatar'), glb('r', 999, null, 'avatar')])).toEqual([])
+  })
+})
+
+
+describe('expanded release inventory', () => {
+  it('rejects a correct total with models in the wrong categories', () => {
+    const glbs: GlbRecord[] = Array.from({ length: 175 }, (_, index) => ({
+      id: `test-${index}`, leaf: 'world', category: 'props', path: '',
+      violations: [], clips: [], partNodes: [], hasPreview: false,
+      scaleClass: 'prop', surface: null, size: 20,
+    }))
+    const inventory = { pack: 'fantasy' as const, glbs, leaves: [], strayFiles: [] }
+    const issues = checkLevel(inventory, 'content')
+    expect(issues.filter((issue) => issue.rule === 'release.models')).toEqual([])
+    expect(issues.filter((issue) => issue.rule === 'release.category')).toHaveLength(6)
+    expect(issues).toContainEqual({ rule: 'release.category', message: 'vehicles: 0 models, expected 12' })
+    expect(checkLevel(inventory, 'asset').filter((issue) => issue.rule === 'release.category')).toEqual([])
   })
 })

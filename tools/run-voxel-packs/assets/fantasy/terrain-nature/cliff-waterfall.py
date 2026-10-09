@@ -1,19 +1,10 @@
-"""Cliff waterfall in the Pirate Nation style.
-
-A chunky cliff of three big faceted rock masses (irregular frustums: true
-slopes, never voxel stairs) with grass caps and moss drapes. A stream
-spills through the notch between the two front masses as one wide water
-sheet that leans out as it falls (a sloped prism), into a round pool
-ringed by boulders. Painted water: streak lanes down the sheet, a foam
-band at the lip and at the foot, ripple rings and a foam ring in the pool.
-The `water` part (the sheet and its foam) bobs on `idle`. About 100 wide
-and 70 tall (the PN coastal rocks are 83–140 × 38–78). Faces -Z.
-"""
+"""Broken rock banks surround a water channel, fall, and pool."""
 import numpy as np
 
 import paint as P
 from _life import asset, boulder, coords, facet_paint, grass, keys, ngon, pfx, plan, rig, side
 from voxgrid import Clip, Grid, Socket
+from _scenery import broken_rock
 
 S = (104, 76, 84)
 WX0, WX1 = 43, 61  # the water sheet (x)
@@ -25,9 +16,15 @@ POOL_C, POOL_R = (52.0, 24.0), 20.0
 def cliff() -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
-    boulder(g, 52, 58, 0, 26.0, 66, "sand", 3, n=8, seed=4, belly=1.08, top=0.62, lean=(0.0, 3.0), squash=(1.2, 0.8), moss="leaf", moss_drape=0.12)
-    boulder(g, 26, 46, 0, 20.0, 52, "sand", 2, n=7, seed=7, belly=1.1, top=0.55, lean=(-2.0, 2.0), moss="leaf", moss_drape=0.16)
-    boulder(g, 80, 46, 0, 18.0, 44, "sand", 3, n=7, seed=11, belly=1.1, top=0.58, lean=(2.0, 2.0), squash=(1.0, 0.95), moss="leaf", moss_drape=0.18)
+    broken_rock(g,52,58,0,24,66,4,patch_moss=True)
+    broken_rock(g,25,47,0,20,52,7,patch_moss=True)
+    broken_rock(g,80,47,0,18,44,11,patch_moss=True)
+    broken_rock(g,18,31,0,11,21,15,patch_moss=True)
+    broken_rock(g,86,32,0,10,18,16,patch_moss=True)
+    # the source: a spring pool painted on the rear rock top runs down to the lip (no loose plates)
+    source = (g.a > 0) & (X > WX0) & (X < WX1) & (Z < LIP_Z + 14) & (Y > LIP_Y)
+    P.flat(g, source, "sky", 5)
+    P.flat(g, source & (np.floor(X).astype(int) % 5 == 0), "cyan", 6)
     # the gorge face behind the falls: wet, darker, with a mossy lip
     wet = (g.a > 0) & (X > WX0 - 2) & (X < WX1 + 2) & (Z < LIP_Z + 8) & (Y < LIP_Y + 1)
     P.flat(g, wet, "sand", 2)
@@ -72,8 +69,7 @@ def build():
     c, w = cliff(), water()
     hinge = ((WX0 + WX1) / 2, float(LIP_Y), float(LIP_Z))
     root, to_root = rig([("cliff-waterfall", c, None, None), ("water", w, hinge, None)])
-    idle = {"water": {"scale": keys((0, 1, 1, 1), (0.35, 1.02, 1.01, 1), (0.7, 1, 1, 1), (1.05, 1.02, 0.99, 1), (1.4, 1, 1, 1)),
-                      "loc": keys((0, 0, 0, 0), (0.35, 0, -0.5, 0), (0.7, 0, 0, 0), (1.05, 0, -0.5, 0), (1.4, 0, 0, 0))}}
+    idle = {"water": {"loc": keys((0,0,0,0),(.35,0,-.5,0),(.7,0,0,0),(1.05,0,-.5,0),(1.4,0,0,0))}}
     return asset("terrain-nature", "cliff-waterfall", "Cliff Waterfall", root, clips=[Clip("idle", idle)],
                  sockets=[Socket("socket-splash", at=to_root(((WX0 + WX1) / 2, FOOT_Y + 3, FOOT_Z - 2)))],
                  fx=[pfx("rvx-fantasy-waterfall-mist", "socket-splash", "idle", size=70)])

@@ -28,7 +28,7 @@ CX, CZ = 45.0, 37.0  # the middle of the bed (the root origin)
 PX, PZ = 39.0, 39.0  # the middle of the pool
 RX, KZ = 21.0, 0.82  # pool radius along x, and the z/x squash
 GROUND = 3.0  # top of the upper bed tier
-SURF = 3.6  # the sludge surface
+SURF = 5.0  # the sludge surface
 BUBBLES = ((33.5, 32.5), (46.5, 36.5), (40.5, 28.5))
 SIGN = (27.0, 14.0)
 FISH = (48.0, 47.0)  # (x, z) of the sign post
@@ -57,8 +57,8 @@ def pool() -> Grid:
     g = Grid(*SZ)
     X, Y, Z = ctr(g)
     # ---- the two-tier sand bed
-    lower = plan(g, blob(CX, CZ, 43.5, 35.5, n=16, jitter=0.03, seed=3, turn=0.1), 0, 1.5, "sand", 3)
-    upper = plan(g, blob(CX, CZ, 41.0, 33.0, n=14, jitter=0.05, seed=4, turn=0.3), 1.5, GROUND, "sand", 5)
+    lower = plan(g, blob(CX, CZ, 43.5, 35.5, n=16, jitter=0.03, seed=3, turn=0.1), 0, 1, "sand", 3)
+    upper = plan(g, blob(CX, CZ, 41.0, 33.0, n=14, jitter=0.05, seed=4, turn=0.3), 1, GROUND, "sand", 5)
     bed = lower | upper
     P.mottle(g, bed, "sand", 5, cell=6, seed=5)
     P.flat(g, lower & (Y < 1.5), "sand", 3)
@@ -73,7 +73,7 @@ def pool() -> Grid:
     P.flat(g, mud & crack, "sand", 3)
     PP.blotch(g, top & (near >= RX + 10), "sand", 6, cell=6, chance=0.04, seed=7)  # sun-bleached dust
     # ---- the sludge, sunk below the bank
-    goo = plan(g, [ell(RX + 2, 2 * math.pi * k / 16) for k in range(16)], 1, SURF, "toxic", 5)
+    goo = plan(g, [ell(RX + 2, 2 * math.pi * k / 16) for k in range(16)], GROUND, SURF, "toxic", 5)
     gd = near / RX
     P.flat(g, goo & (gd > 0.8), "toxic", 4)  # darker at the shore
     P.flat(g, goo & (gd < 0.45), "toxic", 6)  # glowing heart
@@ -90,11 +90,11 @@ def pool() -> Grid:
     # ---- the bank: sixteen faceted segments, sloped inside and out
     bank = np.zeros(g.shape, dtype=bool)
     for k in range(16):
-        a0, a1 = 2 * math.pi * k / 16, 2 * math.pi * (k + 1) / 16
+        a0, a1 = 2 * math.pi * k / 16 + 0.008, 2 * math.pi * (k + 1) / 16 - 0.008
         h = GROUND + 1.8 + 0.8 * math.sin(k * 1.9) + (0.8 if k in (3, 4, 11) else 0.0)
         base = [ell(RX + 5, a0), ell(RX + 5, a1), ell(RX - 1.0, a1), ell(RX - 1.0, a0)]
         crown = [ell(RX + 3, a0), ell(RX + 3, a1), ell(RX + 1.0, a1), ell(RX + 1.0, a0)]
-        bank |= plan(g, base, GROUND - 0.5, h, "sand", 5, top=crown)
+        bank |= plan(g, base, GROUND, round(h)+1, "sand", 5, top=crown)
     P.mottle(g, bank, "sand", 5, cell=4, seed=8)
     inner = bank & (near < RX + 1.8)
     P.flat(g, inner, "moss", 3)  # the wet, stained inner slope frames the liquid
@@ -136,7 +136,7 @@ def pool() -> Grid:
     P.flat(g, open_end, "gold", 3)
     P.flat(g, open_end & (S.ngon_radius(g, "x", GROUND - 0.5 + tr, tz, 8) < tr - 1.5), "toxic", 6)
     PP.blotch(g, lying & ~rings, "rust", 4, cell=3, chance=0.05, seed=24)
-    spill = plan(g, blob(tx0 + 5, tz - 8.5, 4.5, 2.5, n=9, jitter=0.15, seed=25), GROUND - 1, GROUND + 0.4, "toxic", 5)
+    spill = plan(g, blob(tx0 + 5, tz - 8.5, 4.5, 2.5, n=9, jitter=0.15, seed=25), GROUND, GROUND + 1, "toxic", 5)
     P.outline(g, spill, "toxic", 3, normal="y")
     # ---- rusty rebar sticking out of the bank
     for k, (a, lean) in enumerate(((0.9, (3, 2)), (1.25, (1, 4)), (4.2, (-3, 2)))):

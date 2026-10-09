@@ -10,6 +10,7 @@ import numpy as np
 
 from _life import P, Clip, Grid, Rig, asset, coords, facet_paint, keys, light_top, mask_of, ngon_y, rock, spots, wave
 from pnshapes import cone
+from _repair_terrain import ground, stone
 
 S = (48, 40, 44)
 CX, CZ = 22, 22
@@ -27,12 +28,9 @@ def paint_rock(g: Grid, solids, ramp: str = "rust", base: int = 4, seed: int = 0
 def cluster() -> Grid:
     g = Grid(*S)
     X, Y, Z = coords(g)
-    mound = ngon_y(g, CX, CZ, 20, 0, 3, "sand", 5, n=9, r_top=16)
-    P.mottle(g, mound, "sand", 5, cell=3, seed=1)
-    light_top(g, mound, "sand", 6)
-    big = rock(g, CX - 2, CZ, 1, 13, 22, "rust", 4, n=7, seed=4, lean=(2, -1))
-    m = paint_rock(g, big, "rust", 4, seed=2)
-    P.flat(g, m & (np.abs(Y - 9 - (X - CX) * 0.3) < 1.2), "gold", 5)  # an ore band
+    ground(g,CX,CZ,20,"sand",5)
+    stone(g,CX-2,CZ,3,13,24,"rust",4,4)
+    stone(g,CX+8,CZ+2,3,7,12,"steel",5,7)
     # teal crystals growing out of the rock (true slopes)
     for bx, by, bz, r, h in ((CX + 3, 15, CZ - 6, 3.2, 12), (CX + 8, 11, CZ - 4, 2.2, 8), (CX - 7, 17, CZ - 4, 2.4, 9)):
         c = cone(g, "y", bx, bz, r, by, by + h, "cyan", 6, n=6)

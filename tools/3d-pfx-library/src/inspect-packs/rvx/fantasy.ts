@@ -31,6 +31,13 @@ export const FANTASY_RECIPES: RvxRecipe[] = [
     glints: [t('gold', 7), WHITE],
     halo: dim(t('leaf', 6), 0.22),
   }),
+  motes({ ...id('bee-swarm', 'bee swarm'), source: 'beehive doorway', effectType: 'environment', role: 'loop' }, {
+    // bees, not fairy dust: amber and dark cubes that mill about with no halo
+    colors: [t('gold', 6), t('gold', 5), t('darkwood', 2)],
+    rate: 12,
+    spread: 0.45,
+    rise: 0,
+  }),
   glint({ ...id('treasure-glint', 'treasure glint'), source: 'treasure pile', effectType: 'loot', role: 'loop' }, { colors: [t('gold', 7), WHITE] }),
   orbit({ ...id('arcane-orbit', 'arcane orbit'), source: 'wizard tower spire, scrying orb', effectType: 'magic', role: 'loop' }, {
     colors: [t('magenta', 6), t('magenta', 7), t('sky', 7)],

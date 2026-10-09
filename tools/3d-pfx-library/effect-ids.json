@@ -563,6 +563,7 @@
   "rvx-fantasy-lantern-glow",
   "rvx-fantasy-cauldron-brew",
   "rvx-fantasy-fairy-motes",
+  "rvx-fantasy-bee-swarm",
   "rvx-fantasy-treasure-glint",
   "rvx-fantasy-arcane-orbit",
   "rvx-fantasy-portal-swirl",
@@ -682,6 +683,10 @@
   },
   {
    "id": "rvx-fantasy-fairy-motes",
+   "looping": true
+  },
+  {
+   "id": "rvx-fantasy-bee-swarm",
    "looping": true
   },
   {

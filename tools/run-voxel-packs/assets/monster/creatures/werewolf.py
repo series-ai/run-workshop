@@ -175,8 +175,8 @@ def build():
             "arm-r": {"rot": keys((0, (0, 0, 0)), (1.2, (-6, 0, 4)), (2.4, (0, 0, 0)))}}
     attack = {"torso": {"rot": keys((0, (0, 0, 0)), (0.2, (-12, 0, 0)), (0.4, (22, 0, 0)), (0.9, (0, 0, 0)))},
               "jaw": {"rot": keys((0, (0, 0, 0)), (0.2, (30, 0, 0)), (0.5, (30, 0, 0)), (0.9, (0, 0, 0)))},
-              "arm-r": {"rot": keys((0, (0, 0, 0)), (0.2, (-150, 0, 15)), (0.4, (55, 0, -10)), (0.9, (0, 0, 0)))},
-              "arm-l": {"rot": keys((0, (0, 0, 0)), (0.3, (-150, 0, -15)), (0.55, (55, 0, 10)), (0.9, (0, 0, 0)))}}
+              "arm-r": {"rot": keys((0, (0, 0, 0)), (0.12, (65, 0, 8)), (0.22, (125, 0, 15)), (0.4, (42, 0, -10)), (0.57, (20, 0, -4)), (0.9, (0, 0, 0)))},
+              "arm-l": {"rot": keys((0, (0, 0, 0)), (0.18, (60, 0, -8)), (0.31, (125, 0, -15)), (0.55, (42, 0, 10)), (0.72, (15, 0, 4)), (0.9, (0, 0, 0)))}}
     hit = {"torso": {"rot": keys((0, (0, 0, 0)), (0.12, (-18, 8, 0)), (0.5, (0, 0, 0)))},
            "head": {"rot": keys((0, (0, 0, 0)), (0.12, (-20, -10, 0)), (0.5, (0, 0, 0)))}}
     death = {"hips": {"rot": keys((0, (0, 0, 0)), (0.3, (-10, 0, 0)), (0.9, (-80, 0, 0)), (1.2, (-75, 0, 0))),
@@ -186,9 +186,7 @@ def build():
     # sockets in root (hips joint) space: the mouth tip and the right claw tips
     mouth = (0.0, 40.0 - HIP[1], 1.0 - HIP[2])
     claw = (CX + 19.0 - HIP[0], 2.0 - HIP[1], 8.0 - HIP[2])
-    # Claw marks snap open at the claws as the swing crosses the front (0.36 s); a trail of the
-    # 205-degree swing drew a hoop round the body. The howl comes after the sweep, with the jaw
-    # still open, so its rings do not read as a hand effect.
+    # The claw effect starts when the right hand moves down in front of the body.
     return world("werewolf", "creatures", "Werewolf", root,
                  clips=[Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False), Clip("idle", idle)],
                  sockets=[Socket("socket-mouth", at=mouth, parent="head"), Socket("socket-claw-r", at=claw, parent="arm-r")],

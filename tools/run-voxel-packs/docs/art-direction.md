@@ -67,6 +67,13 @@ example "true slopes (F2)"). The scale classes are in the README
   where possible (the skull lamp, the tiki mask, the goblin totem). Few parts,
   big features.
 
+## Motion
+
+- **M1 Attack shape.** Give each creature an attack that fits its body and weapon. Show a clear windup, action, and recovery.
+- **M2 Pack variety.** Compare all creature attacks at the same clip times. Change attacks that use the same arm path and timing.
+- **M3 Contact.** Keep feet and weapons above the ground unless contact is part of the action. Check the full clip, not one pose.
+- **M4 Effect timing.** Start each attack effect at the action. Check its socket and aim in the RUN viewer.
+
 ## Theme palettes
 
 Area-weighted, from every PN model. Each pack keeps the PN envelope (C2).

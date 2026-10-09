@@ -11,7 +11,7 @@ import numpy as np
 
 import paint as P
 import pnshapes as S
-from _life import ctr, limb, make, plan
+from _life import ctr, limb, make, plan, rock
 from voxgrid import Grid, Part
 
 N = 58
@@ -26,8 +26,8 @@ def build():
     rim = np.zeros(g.shape, dtype=bool)
     ro0, ri0, ro1, ri1 = 27.5, 14.0, 22.5, 19.0
     for k in range(12):
-        a0, a1 = 2 * math.pi * k / 12, 2 * math.pi * (k + 1) / 12
-        h = 9 + math.sin(k * 1.7)
+        a0, a1 = 2 * math.pi * k / 12+0.008, 2 * math.pi * (k + 1) / 12-0.008
+        h = 7 + (k % 4)
         pt = lambda r, a: (C0 + r * math.cos(a), C0 + r * math.sin(a))  # noqa: E731
         base = [pt(ro0, a0), pt(ro0, a1), pt(ri0, a1), pt(ri0, a0)]
         top = [pt(ro1, a0), pt(ro1, a1), pt(ri1, a1), pt(ri1, a0)]
@@ -49,6 +49,12 @@ def build():
         layer = rim & (np.abs(Y - layer_y) < 0.65) & (np.sin(wall_angle * 4 + level) > -0.2)
         P.flat(g, layer, "sand", 3)
         P.flat(g, layer & (np.abs(Y - (layer_y - 1.0)) < 0.55), "sand", 6)
+    for k in range(9):
+        a = k*2*math.pi/9 + .13
+        radius = 24 + (k%2)
+        xx,zz=C0+radius*math.cos(a),C0+radius*math.sin(a)
+        m=rock(g,xx,zz,1,3.3,3.0,4+(k%3),"sand",4,shrink=.8,n=5,seed=70+k)
+        rock(g,xx-.7,zz+.6,4+(k%3),2.5,2.2,2,"sand",5,shrink=.65,n=5,seed=90+k)
     # the scorched floor with radial soot and a glowing fallout puddle
     ang = np.arctan2(Z - C0, X - C0)
     P.flat(g, floor & ((np.floor((ang + math.pi) / (math.pi / 10)) % 2) == 0), "sand", 2)
@@ -81,6 +87,9 @@ def build():
             rx, rz = cx + dx * math.cos(rr) - dz * math.sin(rr), cz + dx * math.sin(rr) + dz * math.cos(rr)
             rivet = top & (np.abs(X - rx) < 0.7) & (np.abs(Z - rz) < 0.7)
             P.flat(g, rivet, "steel", 7)
+    for k,(xx,zz,rr) in enumerate(((9,23,5),(44,19,6),(39,46,4),(17,47,4))):
+        ejecta=rock(g,xx,zz,1,rr,rr*0.8,rr+3,"sand",5,shrink=0.6,n=5,seed=44+k)
+        P.flat(g,ejecta & (np.floor(Y/3)%2==0),"sand",4)
     # A leaning toxic shard rises from the pool, with a steel point and a
     # rusted warning collar. Its silhouette remains the same from every view.
     body = limb(g, (C0 + 2, 1.2, C0 + 2), (C0 + 3, 10.5, C0 + 3), 3.8, 2.8, "teal", 6, n=6)

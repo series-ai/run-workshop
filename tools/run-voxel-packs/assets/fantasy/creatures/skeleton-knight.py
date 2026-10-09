@@ -172,8 +172,15 @@ def arm(s: int) -> Grid:
     front(g, S.quad((sx + s * 2.2, 16), (sx + s * 2.6, 10), 1.8, 1.7), CZ - 1.8, CZ + 1.8, BONE, BONE_B)
     bones(g, st, seed=7 + s)
     hx = sx + s * 2.6
-    # a big bony hand with dark finger splits
-    hand = box(g, int(round(hx)) - 3, 6, int(CZ) - 3, int(round(hx)) + 2, 11, int(CZ) + 2, BONE, BONE_B)
+    # The right fingers close around the sword grip.
+    if s > 0:
+        hand = box(g, int(round(hx)) - 3, 6, int(CZ), int(round(hx)) + 2, 11, int(CZ) + 2, BONE, BONE_B)
+        hand |= box(g, int(round(hx)) - 3, 8, int(CZ) - 3, int(round(hx)) - 1, 11, int(CZ) + 1, BONE, BONE_B)
+        for finger_y in (7, 9):
+            hand |= box(g, int(round(hx)) - 2, finger_y, int(CZ) - 3,
+                        int(round(hx)) + 2, finger_y + 1, int(CZ) + 1, BONE, BONE_B)
+    else:
+        hand = box(g, int(round(hx)) - 3, 6, int(CZ) - 3, int(round(hx)) + 2, 11, int(CZ) + 2, BONE, BONE_B)
     bone_paint(g, hand, seed=9)
     P.flat(g, hand & (np.floor(X) % 2 == 0) & (Y < 9) & (Z < CZ - 2), BONE, 3)
     st = len(g.solids)

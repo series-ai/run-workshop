@@ -4,7 +4,7 @@ One chunky humpbacked span: the side profile (a faceted hump with one big
 arch cut from below) is a single prism, so the deck ramps and the arch are
 true slopes. Thick parapets follow the hump, with square end posts and
 gold-capped pyramid finials. Painted dressed stone, a voussoir ring with
-a keystone carrying a royal-blue elven rune, a cobbled deck, moss at the
+a keystone carrying a royal-blue elven rune, a grey-blue cobbled deck, moss at the
 feet and a little ivy. About 100 long, 40 tall, 32 deep. Faces -Z (the
 river runs along z, under the arch).
 """
@@ -49,13 +49,13 @@ def body(g: Grid) -> np.ndarray:
     def painter(gg, mm, fr):
         if isinstance(fr, str) or abs(fr[1][1]) > 0.2:  # the side walls and the arch soffit: dressed stone
             P.stone(gg, mm, "sand", 4, block=(7, 4), cracks=0.08, frame=fr, seed=3)
-        else:  # the deck: red brick pavers (PN red/orange tiles)
-            P.stone(gg, mm, "orange", 3, block=(4, 2), cracks=0.0, frame=fr, seed=4)
+        else:  # the deck: grey-blue cobbles (the theme stone), not roof tiles
+            P.stone(gg, mm, "steel", 4, block=(4, 3), cracks=0.0, frame=fr, seed=4)
 
     facet_paint(g, solid, painter)
-    # the deck top reads as a warm cobbled path between the parapets
+    # the deck top reads as a grey-blue cobbled path between the parapets
     deck = m & (Y > deck_y(X) - 1.2) & (Z > Z0 + PAR) & (Z < Z1 - PAR)
-    P.stone(g, deck, "orange", 3, block=(4, 2), cracks=0.0, frame="top", seed=4)
+    P.stone(g, deck, "steel", 4, block=(4, 3), cracks=0.0, frame="top", seed=4)
     # the arch soffit a shade darker, the voussoir ring lighter, radial blocks
     ex = ((X - AX) / ARX) ** 2 + (Y / ARY) ** 2
     ring = m & (ex > 1.0) & (np.sqrt(((X - AX) / (ARX + 4)) ** 2 + (Y / (ARY + 4)) ** 2) <= 1.0)

@@ -189,3 +189,96 @@ def crate(g: Grid, x0, y0, z0, w, h, d, ramp: str = "sand", base: int = 5, frame
 def hazard_band(g: Grid, mask: np.ndarray, period: int = 6, frame=None) -> None:
     """Gold and dark hazard stripes (PN warning paint)."""
     pnpaint.hazard(g, mask, period=period, a=("gold", 5), b=("darkwood", 4), frame=frame)
+
+
+# ------------------------------------------------------------- weathering
+def _hash3(g: Grid, seed: int) -> np.ndarray:
+    """A deterministic per-voxel hash of the grid coordinates."""
+    X, Y, Z = coords(g)
+    return P._hash(np.floor(X).astype(np.int64), np.floor(Y).astype(np.int64), np.floor(Z).astype(np.int64), seed=seed)
+
+
+def rust_wear(g: Grid, mask: np.ndarray, seed: int = 0, shade: int = 4, run: int = 4, grime: int = 4, ramp: str = "rust") -> np.ndarray:
+    """Deliberate corrosion on a painted metal volume (rules S1–S3): copper
+    wear broken along the volume's own edges, short run-off streaks bleeding
+    down from them and dirt at its foot. The rust follows the form, so it
+    never reads as speckle scattered over a whole face. Returns the mask it
+    painted."""
+    rim = edges(mask)
+    h = _hash3(g, seed)
+    worn = rim & ((h % np.uint64(4)) == np.uint64(0))
+    P.flat(g, worn, ramp, shade)
+    P.flat(g, rim & ((h % np.uint64(13)) == np.uint64(0)), ramp, max(1, shade - 2))
+    streak = np.zeros(g.shape, dtype=bool)
+    src = worn
+    for _ in range(run):
+        src = np.roll(src, -1, axis=1)
+        src[:, -1, :] = False
+        streak |= src
+    keep = (_hash3(g, seed + 11) % np.uint64(4)) == np.uint64(0)
+    P.flat(g, streak & mask & ~rim & keep, ramp, max(1, shade - 1))
+    if grime:
+        P.grime(g, mask, height=grime, seed=seed + 5)
+    return worn | (streak & mask)
+
+
+def chips(g: Grid, mask: np.ndarray, spots, ramp: str = "rust", base: int = 5, seed: int = 0) -> np.ndarray:
+    """A few chunky chipped-paint patches placed by hand: `spots` are
+    (x, y, z, r) blobs with a ragged border and a darker rim, so the wear
+    reads as bare metal under paint and not as a tidy rectangle."""
+    out = np.zeros(g.shape, dtype=bool)
+    X, Y, Z = coords(g)
+    for k, (cx, cy, cz, r) in enumerate(spots):
+        wob = (_hash3(g, seed + k) % np.uint64(3)).astype(float) * 0.55
+        blob = mask & (np.sqrt((X - cx) ** 2 + (Y - cy) ** 2 + (Z - cz) ** 2) < r - wob)
+        P.flat(g, blob, ramp, base)
+        P.outline(g, blob, ramp, max(1, base - 2))
+        out |= blob
+    return out
+
+
+def weeds(g: Grid, x: int, z: int, seed: int = 0, ramp: str = "khaki", pad: int = 5, dirt: str = "wood") -> np.ndarray:
+    """A grass clump on its own patch of dust, so it reads as grounded
+    rather than as loose cubes floating beside the prop."""
+    m = box(g, x - 1, 0, z - 1, x - 1 + pad, 1, z - 1 + pad, dirt, 3)
+    P.mottle(g, m, dirt, 3, cell=2, seed=seed)
+    P.flat(g, edges(m), dirt, 2)
+    return m | tuft(g, x, z, y0=1, ramp=ramp, seed=seed)
+
+
+def rubble(g: Grid, cx, cz, y0: int = 0, r: float = 3.0, h: float = 3.0, seed: int = 0, ramp: str = "stone", base: int = 5) -> np.ndarray:
+    """A chunk of broken concrete at a base: a faceted rock with painted
+    block divisions, so bases read as dressed like the house assets."""
+    m = rock(g, cx, cz, y0, r, h, n=6, seed=seed, ramp=ramp, base=base)
+    P.flat(g, edges(m), ramp, max(1, base - 2))
+    return m
+
+
+def rust_runs(g: Grid, mask: np.ndarray, spots, ramp: str = "rust", base: int = 5, drip: int = 6, seed: int = 0) -> np.ndarray:
+    """Hand-placed corrosion (rules S1–S3): a few chunky blooms with one
+    solid run-off tail under each, so the wear sits where water would sit
+    and no face ever carries scattered speckle. `spots` are (x, y, z, r).
+    Prefer this to `rust_wear` on a volume the camera sees up close."""
+    X, Y, Z = coords(g)
+    out = chips(g, mask, spots, ramp=ramp, base=base, seed=seed)
+    for cx, cy, cz, r in spots:
+        if drip <= 0:
+            break
+        w = max(1.0, r * 0.4)
+        tail = mask & (np.abs(X - cx) < w) & (np.abs(Z - cz) < w) & (Y < cy) & (Y > cy - drip)
+        P.flat(g, tail, ramp, max(1, base - 1))
+        out |= tail
+    return out
+
+
+def seam_rust(g: Grid, mask: np.ndarray, ys, ramp: str = "rust", shade: int = 4, thick: float = 1.0) -> np.ndarray:
+    """Unbroken rust lines along the horizontal seams of a volume (rule
+    S4): the corrosion follows a construction line instead of speckling a
+    whole face, so long stretches of clean paint survive."""
+    _X, Y, _Z = coords(g)
+    out = np.zeros(g.shape, dtype=bool)
+    for y in ys:
+        line = mask & (np.abs(Y - y) < thick)
+        P.flat(g, line, ramp, shade)
+        out |= line
+    return out

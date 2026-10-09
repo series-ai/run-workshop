@@ -57,8 +57,8 @@ export interface LevelIssue {
 export const MAX_GLB_BYTES = 1.5 * 1024 * 1024
 
 export const RELEASE_COUNTS = {
-  modelsMin: 95,
-  modelsMax: 105,
+  modelsMin: 175,
+  modelsMax: 175,
   animatedMin: 20,
   partsMin: 30,
   clipsMin: 6,
@@ -68,6 +68,15 @@ export const RELEASE_COUNTS = {
   iconsMin: 40,
   uiMin: 40,
 } as const
+
+export const RELEASE_WORLD_COUNTS = {
+  props: 60,
+  'animated-props': 24,
+  buildings: 20,
+  'terrain-nature': 20,
+  creatures: 16,
+  vehicles: 12,
+} as const satisfies Partial<Record<Category, number>>
 
 const SLICE_GROUPS: readonly Category[] = [
   'props',
@@ -288,6 +297,11 @@ export function checkLevel(inventory: PackInventory, level: Level): LevelIssue[]
     if (median < wantSat) issues.push({ rule: 'style.pack', message: `median saturation of the world assets is ${median.toFixed(2)}, the ${inventory.pack} theme needs ≥${wantSat}` })
     const dark = stats.reduce((sum, s) => sum + s.darkShare, 0) / stats.length
     if (dark > STYLE.pack.meanDarkMax) issues.push({ rule: 'style.pack', message: `mean dark area of the world assets is ${(dark * 100).toFixed(0)}%, max ${(STYLE.pack.meanDarkMax * 100).toFixed(0)}%` })
+  }
+
+  for (const [category, expected] of Object.entries(RELEASE_WORLD_COUNTS)) {
+    const count = inventory.glbs.filter((glb) => glb.category === category).length
+    if (count !== expected) issues.push({ rule: 'release.category', message: `${category}: ${count} models, expected ${expected}` })
   }
 
   const c = RELEASE_COUNTS

@@ -52,6 +52,11 @@ def sconce() -> Grid:
     S.paint_facets(g, grab(g, s0), lambda gg, m, fr: P.tiles(gg, m, "purple", 4, row=2, width=3, frame=fr))
     moss_top(g, plinth, depth=1, seed=3)
     P.flat(g, shaft & (Y < 6) & ((P._hash(X, Z, seed=4) % np.uint64(3)) == 0), "moss", 5)
+    # A small amethyst rune panel adds a clear haunted accent to the stone.
+    rune = shaft & (Z == WZ) & (X >= 6) & (X <= 10) & (Y >= 23) & (Y <= 29)
+    P.flat(g, rune, "purple", 5)
+    glyph = rune & ((np.abs(X - CX) < 0.6) | (np.abs(Y - 26) < 0.6))
+    P.flat(g, glyph, "toxic", 6)
     # a bone skull plaque under the bracket
     stamp(g, "-z", WZ, int(CX) - 4, 5, SKULL, {"#": C("bone", 6), "o": C("toxic", 5)}, depth=1)
     # the iron bat bracket and its arm
