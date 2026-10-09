@@ -174,13 +174,22 @@ function speedFactor(speed: number, boostT: number): number {
  */
 export function writeCameraPose(
   out: SkyriverCameraPoseScratch,
-  flight: SkyriverFlight,
+  flight: SkyriverFlight & { readonly cameraFreeFlightWeight?: number; readonly cameraSpeedMps?: number },
   camera: SkyriverCamera,
   effects: SkyriverCameraEffects = { boost: 0, time: 0 },
 ): SkyriverCameraPoseScratch {
-  let headingRad = flight.yaw * TURNS_TO_RADIANS;
-  if (flight.mode === 1) {
-    headingRad = Math.atan2(Math.sin(headingRad) * CHASE_FLY_YAW_COMPRESSION, Math.cos(headingRad));
+  const freeFlightWeight = clamp(flight.cameraFreeFlightWeight ?? (flight.mode === 1 ? 1 : 0), 0, 1);
+  const routeHeadingRad = flight.yaw * TURNS_TO_RADIANS;
+  const freeHeadingRad = Math.atan2(
+    Math.sin(routeHeadingRad) * CHASE_FLY_YAW_COMPRESSION,
+    Math.cos(routeHeadingRad),
+  );
+  let headingRad = routeHeadingRad;
+  if (freeFlightWeight >= 1) headingRad = freeHeadingRad;
+  else if (freeFlightWeight > 0) {
+    let headingDelta = freeHeadingRad - routeHeadingRad;
+    headingDelta -= Math.round(headingDelta / TURNS_TO_RADIANS) * TURNS_TO_RADIANS;
+    headingRad += headingDelta * freeFlightWeight;
   }
   const boomYawRad = headingRad + camera.orbitYaw * TURNS_TO_RADIANS;
   const boomPitchRad = clamp(
@@ -196,24 +205,29 @@ export function writeCameraPose(
   const boomZ = Math.cos(boomYawRad) * boomCosPitch;
 
   let distance = CHASE_DISTANCE_M
-    + CHASE_SPEED_PULLBACK_M * speedFactor(flight.speed, flight.boostT);
-  if (flight.mode === 1 && Math.abs(boomX) > 0.05) {
+    + CHASE_SPEED_PULLBACK_M * speedFactor(flight.cameraSpeedMps ?? flight.speed, flight.boostT);
+  if (freeFlightWeight > 0 && Math.abs(boomX) > 0.05) {
     // Distance to the inner wall face (|x| ~ 510) along the boom's heading.
     const wallAhead = ((Math.sign(boomX) * 510) - flight.x) / boomX;
     if (wallAhead < CHASE_WALL_PULLBACK_RANGE_M) {
-      distance += Math.min(14, (CHASE_WALL_PULLBACK_RANGE_M - Math.max(wallAhead, 0)) * 0.05);
+      distance += Math.min(14, (CHASE_WALL_PULLBACK_RANGE_M - Math.max(wallAhead, 0)) * 0.05) * freeFlightWeight;
     }
   }
 
   out.distance = distance;
-  // The |x| corridor clamp is a free-flight guard: autopilot runs around the whole loop in world space.
-  out.position.x = flight.mode === 1
-    ? clamp(flight.x - boomX * distance, -CHASE_MAX_ABS_X_M, CHASE_MAX_ABS_X_M)
-    : flight.x - boomX * distance;
+  // Free-flight mode blends toward the corridor clamp only when its camera policy reaches that
+  // endpoint. Mode transitions can keep the chase camera on the world-space route between modes.
+  const rawCameraX = flight.x - boomX * distance;
+  const clampedCameraX = clamp(rawCameraX, -CHASE_MAX_ABS_X_M, CHASE_MAX_ABS_X_M);
+  out.position.x = freeFlightWeight <= 0
+    ? rawCameraX
+    : freeFlightWeight >= 1
+      ? clampedCameraX
+      : rawCameraX + (clampedCameraX - rawCameraX) * freeFlightWeight;
   // T7-5 descent framing: on a dive the boom drops with the craft instead of hanging above it, so the
   // shuttle keeps its size in frame rather than shrinking into a top-down view.
   const climb = Math.sin(flight.pitch * TURNS_TO_RADIANS);
-  const descentDrop = flight.mode === 0 ? Math.max(0, -climb) * distance * 0.6 : 0;
+  const descentDrop = Math.max(0, -climb) * distance * 0.6 * (1 - freeFlightWeight);
   out.position.y = clamp(flight.y - boomY * distance + CHASE_HEIGHT_M - descentDrop, CHASE_MIN_ALTITUDE_M, CHASE_MAX_ALTITUDE_M);
   out.position.z = flight.z - boomZ * distance;
 
@@ -227,8 +241,13 @@ export function writeCameraPose(
   // orbit offsets their natural meaning: orbiting circles the shuttle rather than panning off it.
   out.target.x = flight.x + boomX * CHASE_LOOK_AHEAD_M;
   // T7-5: on climbs the aim lifts toward the skyline, so crowns and the haze band frame the view.
-  const climbLift = flight.mode === 0 ? Math.min(0.25, Math.max(0, climb)) * CHASE_LOOK_AHEAD_M * 0.55 : 0;
-  out.target.y = flight.y + boomY * CHASE_LOOK_AHEAD_M - (flight.mode === 0 ? CHASE_LOOK_DOWN_AUTOPILOT_M : CHASE_LOOK_DOWN_M) + climbLift;
+  const climbLift = Math.min(0.25, Math.max(0, climb)) * CHASE_LOOK_AHEAD_M * 0.55 * (1 - freeFlightWeight);
+  const lookDown = freeFlightWeight <= 0
+    ? CHASE_LOOK_DOWN_AUTOPILOT_M
+    : freeFlightWeight >= 1
+      ? CHASE_LOOK_DOWN_M
+      : CHASE_LOOK_DOWN_AUTOPILOT_M + (CHASE_LOOK_DOWN_M - CHASE_LOOK_DOWN_AUTOPILOT_M) * freeFlightWeight;
+  out.target.y = flight.y + boomY * CHASE_LOOK_AHEAD_M - lookDown + climbLift;
   const rollTurns = (flight as { roll?: number }).roll ?? 0;
   out.roll = rollTurns * TURNS_TO_RADIANS * CHASE_BANK_FOLLOW;
   out.target.z = flight.z + boomZ * CHASE_LOOK_AHEAD_M;
