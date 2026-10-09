@@ -3111,6 +3111,7 @@ attribute float aBuilding; // R16 per-building identity seed (interior culture)
 attribute vec2 aStepEdges; // R19.9: actual tier edges at the bottom and top of this mass
 attribute float aDistrict; // R22 colour district, from this mass's own canyon anchor
 attribute float aMaterial; // R25 seeded material owner
+attribute float aEmissionAllowed; // R31: equipment has no self-emission
 
 varying vec2 vSurf;      // position on the face, metres
 varying float vSeed;
@@ -3128,6 +3129,7 @@ varying vec2 vStepEdges;
 varying float vDistrict;
 flat varying float vMaterial;
 flat varying float vWindowPalette;
+flat varying float vEmissionAllowed;
 
 #include <fog_pars_vertex>
 ${WINDOW_PALETTE_GLSL}
@@ -3165,6 +3167,7 @@ void main() {
   vStepEdges = aStepEdges;
   vDistrict = aDistrict;
   vMaterial = aMaterial;
+  vEmissionAllowed = aEmissionAllowed;
   vWindowPalette = windowPaletteCodeFromQ(floor(clamp(aMaterial, 0.0, 1.0 - 1.0 / 65536.0) * 65536.0), aDistrict);
 
   vec4 world = modelMatrix * instanceMatrix * vec4( transformed, 1.0 );
@@ -3211,6 +3214,7 @@ varying vec2 vStepEdges;
 varying float vDistrict;
 flat varying float vMaterial;
 flat varying float vWindowPalette;
+flat varying float vEmissionAllowed;
 
 // --- T7-4 interior mapping ------------------------------------------------------------------------
 // Every window cell is a box room [0,1]^3 (x across, y up, z depth from the glass). The view ray is
@@ -3331,7 +3335,7 @@ void main() {
     if ( vIsSide > 0.5 && vStepEdges.y > 0.5 && farTopClearance < ${FACADE_STEP_MASK_BAND_M.toFixed(1)} ) farStepMask = 0.0;
     // R22: the complete far window emission is desaturated at equal luminance, so the old warm /
     // cold chroma goes while every per-cell brightness term (zone, lit, resolve, dim) stays.
-    vec3 farWindow = farPane * mix( farAverage, farLit * farGlass, farResolve ) * farStepMask * 1.6 * layerDim * EMISSIVE_GAIN;
+    vec3 farWindow = farPane * mix( farAverage, farLit * farGlass, farResolve ) * farStepMask * 1.6 * layerDim * EMISSIVE_GAIN * vEmissionAllowed;
     vec3 farBase0 = vec3( 0.004, 0.005, 0.007 );
     // Crown tips catch a little sky so stacked silhouettes separate against the haze band.
     farBase0 += vec3( 0.012, 0.016, 0.024 ) * layerDim * smoothstep( 0.5, 1.0, vWorldPos.y / 6500.0 ) * ( 1.0 - vIsSide );
@@ -3495,7 +3499,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   vec3 color = normalizeFamilyMaterial( matC0, matC1, matB, matW, matF, matFamily );
 
   // R12: lit skylights and rooftop lamps on the deck's roofs.
-  float deckRoof = ( 1.0 - smoothstep( 70.0, 140.0, vWorldPos.y ) ) * ( 1.0 - vIsSide );
+  float deckRoof = ( 1.0 - smoothstep( 70.0, 140.0, vWorldPos.y ) ) * ( 1.0 - vIsSide ) * vEmissionAllowed;
   vec2 skyCell = floor( vSurf / 7.0 );
   float skylight = step( 0.82, skyHash12( skyCell + vSeed * 13.0 ) ) * ( 1.0 - smoothstep( 0.25, 0.42, length( fract( vSurf / 7.0 ) - 0.5 ) ) );
   // R22: a small background lamp — neutral at the same luminance, amber only in the dock.
@@ -3516,13 +3520,6 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   color += heroSpill * 0.2 * contactAo;
   // T7 wet sheen: the rain-slick facade mirrors the nearest giant sign's colour at grazing angles.
   color += heroSpill / ( 1.0 + length( heroSpill ) ) * fresnel * 1.4 * vIsSide * contactAo;
-
-  // Lit parapets on some crowns and terrace tops: a cold line along the top edge that silhouettes
-  // the roofline against the haze once bloom catches it.
-  float parapetLive = step( 0.6, skyHash11( vSeed * 97.0 + 3.0 ) ) * step( 700.0, vWorldPos.y );
-  float parapet = 1.0 - smoothstep( 0.6, 2.2, vFaceHalf.y - vSurf.y );
-  color += skyriverDistrictTint( vec3( 0.75, 0.9, 1.0 ) * parapet * parapetLive * vIsSide * 2.4 * EMISSIVE_GAIN,
-    vDistrict, DISTRICT_TRIM_LARGE_SATURATION );
 
   // --- window grid ------------------------------------------------------------------------------
   // Coarse blocks gate whole stacks dark, so the lit windows stay sparse and clustered instead of
@@ -3611,7 +3608,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
 
   vec3 d = normalize( vWorldPos - cameraPosition );
   float grazingFade = smoothstep( 0.1, 0.3, - dot( d, vNormalW ) );
-  float S = clamp( uInteriorStrength * interiorDepthMix * grazingFade * vIsSide, 0.0, 1.0 );
+  float S = clamp( uInteriorStrength * interiorDepthMix * grazingFade * vIsSide * vEmissionAllowed, 0.0, 1.0 );
   float furnitureDepthMix = interiorDepthWeight( viewDepth, vec2( 0.4 * uInteriorFade.x, uInteriorFade.x ) );
   float furniturePixelMix = smoothstep( 4.0, 10.0, cellPixels );
   float F = clamp( S * furnitureDepthMix * furniturePixelMix, 0.0, 1.0 );
@@ -3685,7 +3682,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // The same rule for the unresolved mean, so the room fade boundary does not cross a warm average.
   averaged = skyriverDistrictTint( averaged, vDistrict, DISTRICT_PANE_SATURATION );
   averaged = recolourWindow(averaged, windowPaletteMean(vWindowPalette), uDistrictColour);
-  color += mix( averaged * ( 1.0 - heroShadow ) * ${SKYRIVER_INTERIOR_AVERAGE_GAIN.toFixed(2)}, resolved * EMISSIVE_GAIN, detail ) * 1.55 * ( 1.0 - 0.65 * pristine ) * paneStepMask;
+  color += mix( averaged * ( 1.0 - heroShadow ) * ${SKYRIVER_INTERIOR_AVERAGE_GAIN.toFixed(2)}, resolved * EMISSIVE_GAIN, detail ) * 1.55 * ( 1.0 - 0.65 * pristine ) * paneStepMask * vEmissionAllowed;
 
   color = skyriverDistanceGrade( color, viewDepth, 0.0 );
   gl_FragColor = vec4( max( color, vec3( 0.0 ) ), 1.0 );
@@ -3798,6 +3795,8 @@ void main() {
   // Gradients from the unwrapped coordinate: no smeared seam where the body tile repeats.
   vec4 card = textureGrad( uAtlas, uv, dFdx( uvCont ), dFdy( uvCont ) );
   if ( card.a < 0.5 ) discard;
+  // Keep the far silhouette. Only the upper cap's sampled emission is dark.
+  card.rgb *= 1.0 - smoothstep( 0.90, 0.92, vCardUv.y );
   float dim = vCardLayer < 1.5 ? uLayerDim.x : ( vCardLayer < 2.5 ? uLayerDim.y : uLayerDim.z );
   float haze = vCardLayer < 1.5 ? uLayerHaze.x : ( vCardLayer < 2.5 ? uLayerHaze.y : uLayerHaze.z );
   // Windows a little under the R15 boxes' level: on a card every lit window resolves as a dot.
@@ -4463,6 +4462,8 @@ function hex32(value: number): string {
 export interface SkyriverGeometryIdentity {
   readonly towers: string;
   readonly towerAttributes: string;
+  /** Source policy has its own hash. Existing geometry hashes remain unchanged. */
+  readonly emissionPolicy: string;
   readonly trims: string;
   readonly trimAttributes: string;
   readonly signPlacement: string;
@@ -5041,7 +5042,7 @@ export class SkyriverCity {
         masses: 'Drawn tower-batch instances (slabs, tiers, crowns, seam blocks and the far boxes still drawn as geometry).',
         trims: 'Drawn trim instances after the hero-sign clearance pass.',
         signs: 'Sign instances in the one neon draw. Heroes occupy the first heroSigns slots.',
-        paneCells: 'Facade window cells on the near-city masses, from side area / (7.2 m x 5.4 m). Panes and rooms are procedural per cell, so this is their source capacity, not a per-instance population.',
+        paneCells: 'Facade window cells on emitting near-city masses, from side area / (7.2 m x 5.4 m). Equipment is excluded. This is procedural source capacity, not a per-instance population.',
         roomCells: 'The same cells: a room is the traced interior of one pane cell inside the R19.7 fade window.',
         farCards: 'R16 impostor card instances in the far-city draw.',
       }),
@@ -5407,6 +5408,7 @@ export class SkyriverCity {
     return {
       towers: hex32(hashNumbers(0x811c9dc5, this.towerMesh.instanceMatrix.array)),
       towerAttributes: hex32(towerAttributes),
+      emissionPolicy: hex32(hashNumbers(0x811c9dc5, attribute(this.towerMesh, 'aEmissionAllowed'))),
       trims: hex32(hashNumbers(0x811c9dc5, this.trimMesh.instanceMatrix.array)),
       trimAttributes: hex32(trimAttributes),
       signPlacement: hex32(hashNumbers(hashNumbers(0x811c9dc5, signPlacement), attribute(this.signMesh, 'aCentre'))),
@@ -5542,6 +5544,7 @@ export class SkyriverCity {
 
     const buildings = new Float32Array(slots);
     const materials = new Float32Array(slots);
+    const emissionAllowed = new Float32Array(slots);
     this.drawnMassesByDistrict.fill(0);
     this.paneCellCapacity = 0;
     const cellArea = SKYRIVER_CITY.windowCellWidthM * SKYRIVER_CITY.windowCellHeightM;
@@ -5557,11 +5560,12 @@ export class SkyriverCity {
       buildings[i] = mass.building ?? buildingSeedOf(mass.x, mass.z);
       // R25 material identity: canonical owner seed, separate from interior culture.
       materials[i] = Math.fround(mass.materialOwner ?? mass.building ?? buildingSeedOf(mass.x, mass.z));
+      emissionAllowed[i] = mass.baseRecord?.kind === 'equipment' ? 0 : 1;
       // R22: the base building's own canyon anchor, so a slab, its tiers, its crowns and its annexes
       // always share one district. Never the warped world z this mass is drawn at.
       districts[i] = skyriverDistrictIdAt(this.districts, mass.anchorV ?? mass.z);
       this.drawnMassesByDistrict[districts[i]!] += 1;
-      if ((mass.layer ?? 0) === 0) {
+      if ((mass.layer ?? 0) === 0 && emissionAllowed[i] === 1) {
         const sideArea = 2 * (mass.width + mass.depth) * mass.height;
         this.paneCellCapacity += Math.floor(sideArea / cellArea);
       }
@@ -5596,6 +5600,7 @@ export class SkyriverCity {
     this.towerMesh.geometry.setAttribute('aLayer', new THREE.InstancedBufferAttribute(layers, 1));
     this.towerMesh.geometry.setAttribute('aBuilding', new THREE.InstancedBufferAttribute(buildings, 1));
     this.towerMesh.geometry.setAttribute('aMaterial', new THREE.InstancedBufferAttribute(materials, 1));
+    this.towerMesh.geometry.setAttribute('aEmissionAllowed', new THREE.InstancedBufferAttribute(emissionAllowed, 1));
     this.towerMesh.geometry.setAttribute('aStepEdges', new THREE.InstancedBufferAttribute(stepEdges, 2));
     this.towerMesh.geometry.setAttribute('aDistrict', new THREE.InstancedBufferAttribute(districts, 1));
     // Culling off keeps the draw-call count fixed, which is what the A3 smoke test asserts.
