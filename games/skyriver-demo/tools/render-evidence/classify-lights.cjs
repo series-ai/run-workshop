@@ -67,6 +67,22 @@ async function capture(page,target,tier,referenceCamera){
    const point=new V(...base).addScaledVector(direction,profile.zM*scale).addScaledVector(upW,profile.yM*scale).addScaledVector(rightW,profile.sideCenterM*side*scale);
    return {point,rightW,upW};
   };
+
+  const sharedFacing=source=>{
+   const match=source.match(/float\s+trafficLampFacingGain\s*\([^)]*\)\s*\{([^}]+)\}/);
+   if(!match)return null;
+   const numbers=[...match[1].matchAll(/smoothstep\(\s*([\d.-]+)\s*,\s*([\d.-]+)\s*,\s*(-?)facing\s*\)/g)];
+   if(numbers.length!==2||numbers[0][3]!==''||numbers[1][3]!=='-')throw new Error('Unknown live shared facing function.');
+   return {body:match[1],head:numbers[0].slice(1,3).map(Number),tail:numbers[1].slice(1,3).map(Number)};
+  };
+  const cpuFacing=sharedFacing(streak.material.vertexShader),gpuFacing=sharedFacing(imp.material.vertexShader);
+  const facingGain=(facing,head,rule)=>rule?(head?smooth(...rule.head,facing):smooth(...rule.tail,-facing)):(head?smooth(.1,.7,facing):smooth(-.85,.3,-facing));
+  const gpuSelector=imp.geometry.getAttribute('aLamp');
+  const discreteGpu=!!gpuSelector;
+  if(discreteGpu){
+   if(gpuSelector.isInstancedBufferAttribute||gpuSelector.itemSize!==1||gpuSelector.count!==8||Array.from(gpuSelector.array).join(',')!=='0,0,0,0,1,1,1,1')throw new Error('Unknown live GPU lamp group layout.');
+   if(!cpuFacing||!gpuFacing||cpuFacing.body!==gpuFacing.body)throw new Error('Discrete GPU groups require the actual shared facing rule.');
+  }
   for(let i=0;i<streak.geometry.instanceCount;i++){
    const p=Array.from(P.subarray(i*3,i*3+3)),rawDirection=Array.from(Q.subarray(i*4,i*4+3)),direction=new V(rawDirection[0],Math.max(-0.35,Math.min(0.35,rawDirection[1])),rawDirection[2]).normalize(),fade=F[i*4],scale=F[i*4+1],d=distance(p);
    const matches=hullMap.get(posKey(p))||[];
@@ -90,8 +106,9 @@ async function capture(page,target,tier,referenceCamera){
      const offset=head?U.uHeadOffset.value:-U.uTailOffset.value;
      lp=new V(...p).addScaledVector(direction,offset*scale).addScaledVector(right,side*0.72*scale).toArray();profileName=head?'legacy-front':'legacy-rear';
     }
-    const ld=distance(lp),toCam=lp.map((v,j)=>(c.position.toArray()[j]-v)/ld),facing=direction.toArray().reduce((sum,v,j)=>sum+v*toCam[j],0)*(head?1:-1);
-    const intensity=trail?fade*F[i*4+3]*smooth(30,90,ld):fade*(head?smooth(0.1,0.7,facing):smooth(-0.85,0.3,facing))*smooth(140,300,ld);
+    const group=profile?lampPosition(p,direction,bank,head?profile.front:profile.rear,0,scale).point.toArray():lp;
+    const ld=distance(group),toCam=group.map((v,j)=>(c.position.toArray()[j]-v)/ld),facing=direction.toArray().reduce((sum,v,j)=>sum+v*toCam[j],0);
+    const intensity=trail?fade*F[i*4+3]*smooth(30,90,ld):fade*facingGain(facing,head,cpuFacing)*smooth(140,300,ld);
     const screen=project(lp);if(screen&&intensity>0.001)record.lamps.push({lamp,side,position:lp,screen,intensity,profile:profileName});
    }
    if(record.lamps.length)sources.cpu.push(record);
@@ -129,18 +146,29 @@ async function capture(page,target,tier,referenceCamera){
    const dir=new V(q.dx,q.dy,q.dz).normalize(),toCam=new V(c.position.x-p[0],c.position.y-p[1],c.position.z-p[2]).normalize(),facing=dir.dot(toCam),frontMix=smooth(-0.2,0.3,facing);
    const packed=appearance?Number(appearance.array[i]):null,typeIndex=packed===null?-1:Math.floor(packed),scale=packed===null?null:(packed-typeIndex)*8,profile=lampProfiles?.[typeIndex]||null;
    if(lampProfiles&&!profile)throw new Error(`No live GPU lamp profile for type index ${typeIndex}.`);
-   const kernelCenters=[];
+   const kernelCenters=[],lampGroups=[];
    if(profile){
-    const shape={sideCenterM:profile.rear.sideCenterM+(profile.front.sideCenterM-profile.rear.sideCenterM)*frontMix,widthParamM:profile.rear.widthParamM+(profile.front.widthParamM-profile.rear.widthParamM)*frontMix,heightM:profile.rear.heightM+(profile.front.heightM-profile.rear.heightM)*frontMix,zM:profile.rear.zM+(profile.front.zM-profile.rear.zM)*frontMix,yM:profile.rear.yM+(profile.front.yM-profile.rear.yM)*frontMix};
-    const right0=new V(dir.z,0,-dir.x).normalize(),up0=new V().crossVectors(dir,right0),group=new V(...p).addScaledVector(dir,shape.zM*scale).addScaledVector(up0,shape.yM*scale);
-    const groupView=group.clone().applyMatrix4(c.matrixWorldInverse),rightView=right0.clone().transformDirection(c.matrixWorldInverse),depth=Math.max(-groupView.z,1),pixelM=depth*gpuPixelAngle;
-    const rightProjection=new V(rightView.x+groupView.x*rightView.z/depth,rightView.y+groupView.y*rightView.z/depth,0),rightLength=rightProjection.length(),physicalHalfPx=shape.widthParamM*scale*rightLength/pixelM/2,coreHalfPx=Math.max(physicalHalfPx,0.65);
-    for(const side of [-1,1]){const world=group.clone().addScaledVector(right0,side*shape.sideCenterM*scale).toArray();kernelCenters.push({side,world,screen:project(world),widthM:shape.widthParamM*scale,physicalCoreWidthPx:2*physicalHalfPx,filteredCoreWidthPx:2*coreHalfPx,aaPaddedSupportWidthPx:2*(coreHalfPx+0.5),minimumCoreWidthPx:1.3});}
+    const selections=discreteGpu?[{head:true,shape:profile.front},{head:false,shape:profile.rear}]:[{head:null,shape:{sideCenterM:profile.rear.sideCenterM+(profile.front.sideCenterM-profile.rear.sideCenterM)*frontMix,widthParamM:profile.rear.widthParamM+(profile.front.widthParamM-profile.rear.widthParamM)*frontMix,heightM:profile.rear.heightM+(profile.front.heightM-profile.rear.heightM)*frontMix,zM:profile.rear.zM+(profile.front.zM-profile.rear.zM)*frontMix,yM:profile.rear.yM+(profile.front.yM-profile.rear.yM)*frontMix}}];
+    for(const {head,shape} of selections){
+     const right0=new V(dir.z,0,-dir.x).normalize(),up0=new V().crossVectors(dir,right0),group=new V(...p).addScaledVector(dir,shape.zM*scale).addScaledVector(up0,shape.yM*scale);
+     const groupView=group.clone().applyMatrix4(c.matrixWorldInverse),rightView=right0.clone().transformDirection(c.matrixWorldInverse),upView=up0.clone().transformDirection(c.matrixWorldInverse),depth=Math.max(-groupView.z,1),pixelM=depth*gpuPixelAngle;
+     const rightProjection=new V(rightView.x+groupView.x*rightView.z/depth,rightView.y+groupView.y*rightView.z/depth,0),rightLength=rightProjection.length(),axis=rightLength>1e-5?rightProjection.clone().multiplyScalar(1/rightLength):new V(1,0,0),upProjection=new V(upView.x+groupView.x*upView.z/depth,upView.y+groupView.y*upView.z/depth,0);
+     const physicalHalfPx=shape.widthParamM*scale*rightLength/pixelM/2,physicalHeightHalfPx=shape.heightM*scale*Math.abs(upProjection.dot(new V(-axis.y,axis.x,0)))/pixelM/2;
+     const floorPx=physical=>{const overlap=Math.max(.65*.2-Math.abs(physical-.65),0);return Math.max(physical,.65)+overlap*overlap/(4*.65*.2);};
+     const coreHalfPx=floorPx(physicalHalfPx),floorGain=.8+.2*smooth(.8,1.2,Math.max(physicalHalfPx,physicalHeightHalfPx)/.65);
+     const groupDelta=new V(c.position.x-group.x,c.position.y-group.y,c.position.z-group.z),groupFacing=dir.dot(groupDelta)/Math.max(groupDelta.length(),1),directionGain=head===null?1:facingGain(groupFacing,head,gpuFacing),sourceIntensity=active*floorGain*directionGain;
+     const name=head===null?'legacy-mixed':head?'front':'rear';
+     lampGroups.push({group:name,world:group.toArray(),screen:project(group.toArray()),facing:groupFacing,facingGain:directionGain,lampGain:floorGain,sourceIntensity,outputIntensity:sourceIntensity*gpuIntensity,gpuThresholdVisible:sourceIntensity>gpuThresholdVisible});
+     for(const side of [-1,1]){const world=group.clone().addScaledVector(right0,side*shape.sideCenterM*scale).toArray();kernelCenters.push({group:name,side,world,screen:project(world),widthM:shape.widthParamM*scale,physicalCoreWidthPx:2*physicalHalfPx,filteredCoreWidthPx:2*coreHalfPx,aaPaddedSupportWidthPx:2*(coreHalfPx+0.5),minimumCoreWidthPx:1.3,sourceIntensity,gpuThresholdVisible:sourceIntensity>gpuThresholdVisible});}
+    }
    }
-   const record={id:i+1,group:`gpu:${i}`,kind:'gpu',class:k<8?'gpu_stream':k<14?'gpu_lane':k<14+iu.uRingA.value.length?'gpu_ring':'unknown',path:k,position:p,screen,distanceM:d,presence,tierPresence:presence,handoverAlpha,farBrightness,seedBrightness,sourceIntensity:active,outputIntensity:active*gpuIntensity,gpuThresholdVisible:active>gpuThresholdVisible,appearancePacked:packed,typeIndex,scale,frontMix,facing,pixelAngle:gpuPixelAngle,kernelCenters};
-   if(screen)gpuProjected.push(record);
-   if(screen&&active>gpuThresholdVisible)sources.gpu.push(record);
+   const effectiveIntensity=lampGroups.length?Math.max(...lampGroups.map(g=>g.sourceIntensity)):active;
+   const record={id:i+1,group:`gpu:${i}`,kind:'gpu',class:k<8?'gpu_stream':k<14?'gpu_lane':k<14+iu.uRingA.value.length?'gpu_ring':'unknown',path:k,position:p,screen,distanceM:d,presence,tierPresence:presence,handoverAlpha,farBrightness,seedBrightness,baseSourceIntensity:active,sourceIntensity:effectiveIntensity,sourceIntensityMeaning:'Maximum group vertex intensity. This is not summed pixel energy.',outputIntensity:effectiveIntensity*gpuIntensity,gpuThresholdVisible:effectiveIntensity>gpuThresholdVisible,appearancePacked:packed,typeIndex,scale,gpuLayout:discreteGpu?'discrete-head-tail':'legacy-view-morph',frontMix:discreteGpu?null:frontMix,facing,pixelAngle:gpuPixelAngle,lampGroups,kernelCenters};
+   const projected=screen||kernelCenters.some(k=>k.screen);
+   if(projected)gpuProjected.push(record);
+   if(projected&&effectiveIntensity>gpuThresholdVisible)sources.gpu.push(record);
   }
+
   const savedObjects=[],savedMaterials=new Map(),originalBg=scene.background;
   // Use the existing Color constructor from a material. Vector constructors are not Color.
   const clearColor=r.getClearColor(imp.material.uniforms.fogColor.value.clone());
@@ -155,7 +183,9 @@ async function capture(page,target,tier,referenceCamera){
    const mainPattern=/void\s+main\s*\(\s*\)\s*\{/;
    if(!mainPattern.test(original.vertexShader)||!mainPattern.test(original.fragmentShader))throw new Error('Source-ID pass cannot find the live shader main.');
    clone.vertexShader=original.vertexShader.replace(mainPattern,'varying float vProofId;\nvoid main() {\n vProofId = float(gl_InstanceID) + 1.0;');
-   clone.fragmentShader=original.fragmentShader.replace(mainPattern,'varying float vProofId;\nvoid main() {').replace(/}\s*$/,`\n  if (vIntensity <= 0.001 || body <= 0.0) discard;\n  float n = floor(vProofId + 0.5);\n  gl_FragColor = vec4(mod(n,256.0), mod(floor(n/256.0),256.0), floor(n/65536.0), 255.0) / 255.0;\n}`);
+   const support=/float\s+body\s*=/.test(original.fragmentShader)?'body':original.fragmentShader.includes('vec2 filtered = trafficLampPair(vCoreUv')?'max(filtered.x, filtered.y)':null;
+   if(!support)throw new Error('Unknown live lamp support for source-ID pass.');
+   clone.fragmentShader=original.fragmentShader.replace(mainPattern,'varying float vProofId;\nvoid main() {').replace(/}\s*$/,`\n  if (vIntensity <= 0.001 || ${support} <= 0.0) discard;\n  float n = floor(vProofId + 0.5);\n  gl_FragColor = vec4(mod(n,256.0), mod(floor(n/256.0),256.0), floor(n/65536.0), 255.0) / 255.0;\n}`);
    clones.push(clone);return clone;
   };
   let isolated,gpuIds,cpuIds;
@@ -196,7 +226,7 @@ async function capture(page,target,tier,referenceCamera){
     const x=cx*C+dx,y=cy*C+dy,o=((H-1-y)*W+x)*4,lum=.2126*isolated[o]+.7152*isolated[o+1]+.0722*isolated[o+2];if(lum<LO)continue;
     for(const [buf,map]of [[gpuIds,gpuMap],[cpuIds,cpuMap]]){const id=idAt(buf,x,y),source=map.get(id);if(source){const rec=support.get(source.group)||{source,pixels:0};rec.pixels++;support.set(source.group,rec);}}
    }}
-   return [...support.values()].map(({source,pixels})=>{const points=source.kind==='cpu'?source.lamps.map(l=>l.screen):[source.screen];const nearestPx=Math.min(...points.map(p=>Math.hypot(p[0]-blob.peak[0],p[1]-blob.peak[1])));return{...source,supportPixels:pixels,nearestProjectedDistancePx:nearestPx};}).sort((a,b)=>a.nearestProjectedDistancePx-b.nearestProjectedDistancePx);
+   return [...support.values()].map(({source,pixels})=>{const points=source.kind==='cpu'?source.lamps.map(l=>l.screen):source.kernelCenters.filter(k=>k.screen&&k.gpuThresholdVisible).map(k=>k.screen);if(!points.length&&source.screen)points.push(source.screen);const nearestPx=Math.min(...points.map(p=>Math.hypot(p[0]-blob.peak[0],p[1]-blob.peak[1])));return{...source,supportPixels:pixels,nearestProjectedDistancePx:nearestPx};}).sort((a,b)=>a.nearestProjectedDistancePx-b.nearestProjectedDistancePx);
   };
   const blobs=detected.small.map((blob,index)=>{const candidates=groupsAt(blob);const nearest=candidates[0]||null;return{...blob,id:index,class:candidates.length>1?'ambiguous':nearest?.class||'unknown',ambiguous:candidates.length>1,clusterBlend:candidates.length>1,candidates,nearest,reason:candidates.length>1?'Multiple legitimate groups have raster support in this blob.':nearest?'Projected source has actual depth-tested raster support.':'No valid traffic source-ID support matched this blob.'};});
   const classifiedLarge=detected.large.map((blob,index)=>{const candidates=groupsAt(blob);return{...blob,id:`large-${index}`,class:candidates.length>1?'ambiguous':candidates[0]?.class||'unknown',candidates,reason:'Cluster exceeds the stated small-blob area. Source support remains in this audit.'};});

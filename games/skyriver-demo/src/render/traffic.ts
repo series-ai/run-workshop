@@ -919,7 +919,7 @@ void main() {
   vec2 lampHalfSize;
   float pairHalfSpan;
   float lampGain;
-  trafficLampKernel(aCarPos, dir, aCarShape.y, type, scale, head ? 1.0 : 0.0, lampSide,
+  trafficLampKernel(aCarPos, dir, aCarShape.y, type, scale, head, lampSide,
     uPixelAngle, lamp, v0, lampAxis, lampHalfSize, pairHalfSpan, lampGain);
   vPairOffset = pairHalfSpan / lampHalfSize.x;
   float trail = isTrail
@@ -972,10 +972,10 @@ void main() {
 
   // Directional lamps: a headlight shows to the front, a taillight to the rear.
   vec3 toCam = normalize( cameraPosition - lamp );
-  float facing = dot( dir, toCam ) * ( head ? 1.0 : -1.0 );
+  float facing = dot( dir, toCam );
   // T7: the red tail trail reads from almost any angle (a long-exposure streak); the white head
   // lamp only toward the front, so crossing rivers read as red ribbons with white oncoming points.
-  vIntensity = aCarFade.x * ( head ? smoothstep( 0.1, 0.7, facing ) : smoothstep( -0.85, 0.3, facing ) );
+  vIntensity = aCarFade.x * trafficLampFacingGain( facing, head );
   // R11: up close the body's own lamp bar carries the read; the dot pair fades in with distance.
   vIntensity *= smoothstep( 140.0, 300.0, length( cameraPosition - lamp ) );
   if ( isTrail ) {
@@ -1075,14 +1075,15 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
 `;
 
 /* ------------------------------------------------------------------------------------------------
- * R18 GPU cars: two lamp kernels per car. Read position from the baked path
+ * R18 GPU cars: separate front and rear lamp kernels per car. Read position from the baked path
  * path table (trafficStreams.ts; impostorPosition is the CPU mirror — keep the two in step). Each
  * instance carries only (stream, arc offset, phase, seed) and a sub-row; update() advances uTime.
- * One quad covers the physical lamp pair. Type and scale stay fixed per car.
+ * Two fixed-profile quads share each logical instance. Type and scale stay fixed per car.
  * ---------------------------------------------------------------------------------------------- */
 
 const IMPOSTOR_VERTEX = /* glsl */ `
 attribute vec2 aCorner;      // x: group edge 0/1; y: side -1..1
+attribute float aLamp;      // non-instanced selector: 0 front profile, 1 rear profile
 attribute vec4 aImp;         // logical path, arc offset 0..1, phase 0..1, appearance seed 0..1
 attribute vec4 aFlow;        // sub-row, effective speed m/s, signed pass period s, pass amplitude m
 attribute vec4 aRoute;       // baked row A, baked row B, hop start m, hop ramp m
@@ -1278,8 +1279,7 @@ void main() {
 
   vec3 toCam = cameraPosition - pos;
   float dist = length( toCam );
-  float facing = dot(dir, toCam / max(dist, 1.0));
-  float frontMix = smoothstep(-0.2, 0.3, facing);
+  bool head = aLamp < 0.5;
   float type = floor(aAppearance);
   float scale = fract(aAppearance) * 8.0;
   if (!trafficLampInView(pos, type, scale, uPixelAngle, 0.0)) {
@@ -1287,15 +1287,17 @@ void main() {
     return;
   }
   float lampSide = 0.0;
-  float end = mod(aCorner.x, 2.0);
+  float end = aCorner.x;
   vec3 lamp;
   vec4 v0;
   vec2 lampAxis;
   vec2 halfSize;
   float pairHalfSpan;
   float lampGain;
-  trafficLampKernel(pos, dir, 0.0, type, scale, frontMix, lampSide,
+  trafficLampKernel(pos, dir, 0.0, type, scale, head, lampSide,
     uPixelAngle, lamp, v0, lampAxis, halfSize, pairHalfSpan, lampGain);
+  vec3 toLamp = cameraPosition - lamp;
+  float facing = dot(dir, toLamp / max(length(toLamp), 1.0));
   vec2 lampUp = vec2(-lampAxis.y, lampAxis.x);
   vec2 filterSize = halfSize + vec2(pairHalfSpan, 0.0)
     + vec2(max(-v0.z, 1.0) * uPixelAngle * 0.5);
@@ -1305,14 +1307,15 @@ void main() {
   vCoreUv = local / max(halfSize, vec2(1e-6));
   vPairOffset = pairHalfSpan / halfSize.x;
 
-  vWarm = frontMix;
+  vWarm = head ? 1.0 : 0.0;
   float toAlpha = float( gl_InstanceID ) < uTargetCount ? 1.0 : 0.0;
   float tierPresence = mix( aFromAlpha, toAlpha, uFadeK );
   // Far impostors integrate into the haze instead of stacking into a bloom wash. Their brightness
   // falls over the shared 2.5–6.5 km band and reaches zero with a smooth derivative.
   float handover = smoothstep( uBand.x, uBand.y, dist );
   float farBrightness = 1.0 - smoothstep( uFarFalloff.x, uFarFalloff.y, dist );
-  vIntensity = (0.55 + 0.6 * fract(seed * 29.7)) * lampGain * handover * tierPresence * farBrightness;
+  vIntensity = (0.55 + 0.6 * fract(seed * 29.7)) * lampGain
+    * trafficLampFacingGain(facing, head) * handover * tierPresence * farBrightness;
   if ( vIntensity <= 0.001 ) {
     // Inside the CPU cars' band (or faded out): no fragments at all.
     gl_Position = vec4( 2.0, 2.0, 2.0, 1.0 );
@@ -1426,9 +1429,13 @@ export function trafficHopCensus(seed: number, carCount: number): HopCensus {
 
 function buildImpostorGeometry(model: RenderTrafficModel, capacity: number): InstancedBufferGeometry {
   const geometry = new InstancedBufferGeometry();
-  geometry.setAttribute('position', new BufferAttribute(new Float32Array(4 * 3), 3));
-  geometry.setAttribute('aCorner', new BufferAttribute(new Float32Array([0, -1, 0, 1, 1, 1, 1, -1]), 2));
-  geometry.setIndex([0, 1, 2, 0, 2, 3]);
+  geometry.setAttribute('position', new BufferAttribute(new Float32Array(8 * 3), 3));
+  geometry.setAttribute('aCorner', new BufferAttribute(new Float32Array([
+    0, -1, 0, 1, 1, 1, 1, -1,
+    0, -1, 0, 1, 1, 1, 1, -1,
+  ]), 2));
+  geometry.setAttribute('aLamp', new BufferAttribute(new Float32Array([0, 0, 0, 0, 1, 1, 1, 1]), 1));
+  geometry.setIndex([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7]);
   // R21: the same model instance the CPU cars read, so neither population rebakes the path table.
   const attrs = deriveImpostorAttributes(model.seed, capacity, model);
   geometry.setAttribute('aImp', new InstancedBufferAttribute(attrs.streamArcPhaseSeed, 4));
@@ -2420,7 +2427,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
       triangles += trianglesPerArchetype[archetype] * groupActive[archetype];
     }
-    triangles += streaksUsed * 6 + impostorGeometry.instanceCount * 2;
+    triangles += streaksUsed * 6 + impostorGeometry.instanceCount * 4;
     return {
       activeCars,
       activeThrusters: streaksUsed,
