@@ -1,11 +1,23 @@
 import * as THREE from 'three'
-import { AssetLibrary, addOutlines, applyAvatar, disposeInstance, mountEquipment, supportEquipment } from './runtime/assets'
+import { AssetLibrary, addOutlines, applyAvatar, applyFigureShading, applyPropShading, disposeInstance, mountEquipment, supportEquipment } from './runtime/assets'
+import { CONTACT_SHADOW, DISTRICT_OUTLINE, FLOOR, PAPER, type FigureRole } from './runtime/palette'
 import { fitPerspectiveBox } from './runtime/camera'
 import { EFFECT_BY_ID, effectPreviewBounds, InkEffects } from './runtime/effects'
-import type { AvatarConfig, PackManifest } from './types'
+import { DEFAULT_AVATAR, type AvatarConfig, type PackManifest } from './types'
 
 interface MotionBounds { character: string; clip: string; minY: number; maxFloorY: number; maxExtent: number; finite: boolean }
+type Vec3 = [number, number, number]
+/** One posed figure in a key-art frame. */
+interface KeyArtFigure { id: string; role: FigureRole; clip: string; time: number; at: Vec3; yaw: number; avatar?: Partial<AvatarConfig> }
+/** A composed still from real runtime figures, for store art and promo frames. */
+interface KeyArtShot {
+  width: number; height: number; fov: number; eye: Vec3; target: Vec3; fog?: [number, number]
+  figures: KeyArtFigure[]
+  props?: { id: string; at: Vec3; yaw?: number }[]
+  effects?: { id: string; at: Vec3; time: number; color?: string; scale?: number }[]
+}
 interface CaptureAPI {
+  keyArt(shot: KeyArtShot): Promise<string>
   verifyMotion(): Promise<MotionBounds[]>
   model(id: string, animation?: string, time?: number, side?: boolean, framingHeight?: number, avatar?: AvatarConfig): Promise<{ png: string; triangles: number; calls: number }>
   effect(id: string, time: number): string
@@ -17,7 +29,7 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffe
 renderer.setSize(384, 384); renderer.setPixelRatio(1); renderer.outputColorSpace = THREE.SRGBColorSpace
 document.body.appendChild(renderer.domElement)
 const camera = new THREE.PerspectiveCamera(32, 1, .01, 200)
-const scene = new THREE.Scene(); scene.background = new THREE.Color('#eeece5')
+const scene = new THREE.Scene(); scene.background = new THREE.Color(PAPER)
 let current: THREE.Object3D | null = null
 let mixer: THREE.AnimationMixer | null = null
 let effects: InkEffects | null = null
@@ -58,20 +70,21 @@ window.inklineCapture = {
     return results
   },
   async model(id, animation = 'idle', time = .35, side = false, framingHeight, avatar) {
-    clear(); scene.background = new THREE.Color('#eeece5')
+    clear(); scene.background = new THREE.Color(PAPER)
     const model = await library.create(id)
     current = model.root; scene.add(current)
     if (model.entry.kind === 'character') {
       if (avatar) applyAvatar(model.root, avatar)
+      else applyFigureShading(model.root, 'player')
       const clip = model.clips.find(item => item.name === animation)
       if (clip) { mixer = new THREE.AnimationMixer(current); mixer.clipAction(clip).play(); mixer.setTime(time) }
       if (avatar?.equipment) {
         const gear = await library.create(avatar.equipment)
         mountEquipment(model.root, gear, model.clips, manifest.animations)
-        addOutlines(gear.root)
+        applyPropShading(gear.root); addOutlines(gear.root)
         supportEquipment(model.root, gear.root, animation, time)
       }
-    } else addOutlines(current)
+    } else { applyPropShading(current); addOutlines(current) }
     current.updateMatrixWorld(true)
     current.traverse(object => { if (object instanceof THREE.SkinnedMesh) object.computeBoundingBox() })
     const box = new THREE.Box3().setFromObject(current), size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3())
@@ -89,6 +102,44 @@ window.inklineCapture = {
     camera.lookAt(center); camera.updateProjectionMatrix()
     renderer.render(scene, camera)
     return { png: renderer.domElement.toDataURL('image/png'), triangles: renderer.info.render.triangles, calls: renderer.info.render.calls }
+  },
+  async keyArt(shot) {
+    clear(); scene.background = new THREE.Color(PAPER)
+    scene.fog = shot.fog ? new THREE.Fog(PAPER, ...shot.fog) : null
+    const root = new THREE.Group(); current = root; scene.add(root)
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshBasicMaterial({ color: FLOOR }))
+    floor.rotation.x = -Math.PI / 2; floor.position.y = -.025; floor.userData.ownedGeometry = true; root.add(floor)
+    for (const placement of shot.props ?? []) {
+      const prop = await library.create(placement.id)
+      if (prop.entry.kind === 'character') throw new Error(`Key art prop is a character: ${placement.id}`)
+      prop.root.position.set(...placement.at); prop.root.rotation.y = placement.yaw ?? 0
+      applyPropShading(prop.root); root.add(prop.root); addOutlines(prop.root, DISTRICT_OUTLINE)
+    }
+    for (const figure of shot.figures) {
+      const model = await library.create(figure.id)
+      if (model.entry.kind !== 'character') throw new Error(`Key art figure is not a character: ${figure.id}`)
+      applyAvatar(model.root, { ...DEFAULT_AVATAR, preset: figure.id, ...figure.avatar }, figure.role)
+      const clip = model.clips.find(item => item.name === figure.clip)
+      if (!clip) throw new Error(`Animation '${figure.clip}' is missing from ${figure.id}.`)
+      const motion = new THREE.AnimationMixer(model.root); motion.clipAction(clip).play(); motion.setTime(figure.time)
+      model.root.position.set(...figure.at); model.root.rotation.y = figure.yaw; root.add(model.root)
+      const shadow = new THREE.Mesh(new THREE.CircleGeometry(.34, 24), new THREE.MeshBasicMaterial({ color: CONTACT_SHADOW, transparent: true, opacity: .38, depthWrite: false }))
+      shadow.rotation.x = -Math.PI / 2; shadow.position.set(figure.at[0], .012, figure.at[2]); shadow.scale.set(1, .65, 1); shadow.userData.ownedGeometry = true; root.add(shadow)
+    }
+    renderer.setSize(shot.width, shot.height)
+    const view = new THREE.PerspectiveCamera(shot.fov, shot.width / shot.height, .01, 200)
+    view.position.set(...shot.eye); view.lookAt(new THREE.Vector3(...shot.target)); view.updateMatrixWorld(); view.updateProjectionMatrix()
+    if (shot.effects?.length) {
+      effects = new InkEffects(); scene.add(effects.group)
+      for (const burst of shot.effects) {
+        effects.trigger(burst.id, new THREE.Vector3(...burst.at), burst.color, burst.scale ?? 1)
+        for (let t = 0; t < burst.time; t += 1 / 60) effects.update(Math.min(1 / 60, burst.time - t), view)
+      }
+    }
+    renderer.render(scene, view)
+    const png = renderer.domElement.toDataURL('image/png')
+    renderer.setSize(384, 384); scene.fog = null
+    return png
   },
   effect(id, time) {
     clear(); scene.background = null; renderer.setClearColor(0, 0)

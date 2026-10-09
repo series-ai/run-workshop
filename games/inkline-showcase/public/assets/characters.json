@@ -3418,7 +3418,7 @@
         "phases": [
           {
             "name": "load",
-            "frame": 6
+            "frame": 5
           },
           {
             "name": "contact",
@@ -3470,7 +3470,7 @@
         "phases": [
           {
             "name": "load",
-            "frame": 7
+            "frame": 6
           },
           {
             "name": "contact",

@@ -1,6 +1,6 @@
 # INKLINE — Stick Figure Works
 
-An original 3D stick-figure pack and RUN showcase. The style uses thin black figures, strong poses, warm paper colors, and graphic effects.
+An original 3D stick-figure pack and RUN showcase. The style uses thin cel-shaded gunmetal figures with ink edges, red threats, strong poses, cool white architecture, and graphic effects.
 
 The pack contains 12 skinned characters, 85 clips in each character, 291 props, and 64 effect presets. The props include 185 industrial parts for complete levels. Three assembled scenes cover an industrial district, a service yard, and roof works. They include ramps, platforms, rails, pipes, machines, warehouses, fencing, cargo, loading docks, repair bays, and roof access.
 

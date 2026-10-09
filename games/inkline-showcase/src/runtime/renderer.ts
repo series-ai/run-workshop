@@ -1,7 +1,8 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { AnimationEntry, PackManifest, StageSettings, StageStats } from '../types'
-import { AssetLibrary, addOutlines, applyAvatar, animationBounds, disposeInstance, equipmentContactPoint, equipmentPose, mountEquipment, supportEquipment } from './assets'
+import { AssetLibrary, addOutlines, applyAvatar, applyFigureShading, applyPropShading, animationBounds, disposeInstance, equipmentContactPoint, equipmentPose, mountEquipment, supportEquipment } from './assets'
+import { ACCENT, CONTACT_SHADOW, FLOOR, GRID_MAJOR, GRID_MINOR, INK, PAPER, STRIKE_TRAIL, THREAT, THREAT_ACCENT } from './palette'
 import { CHECKPOINTS, createDistrict, DISTRICT_COLLISION } from './district'
 import { EXTRA_LAYOUTS } from './layouts'
 import { ROLE_BY_ID } from './roles'
@@ -9,12 +10,15 @@ import { EFFECTS, EFFECT_BY_ID, effectPreviewBounds, InkEffects } from './effect
 import { CameraClearance, CameraMotion, fitPerspectiveBox, minimumBodyDistance } from './camera'
 import { ForegroundCutaway } from './cutaway'
 import { InkTrails } from './trails'
-import { ACTION_BUFFER_SECONDS, getImpactProfile, sampleRecoil, sampleKnockdown, selectReaction, stepActionBuffer, type ImpactProfile } from './kinetics'
+import { ACTION_BUFFER_SECONDS, deathFlight, getImpactProfile, HEAVY_CLIPS, planDeathImpact, sampleDeathFlight, sampleRecoil, selectReaction, stepActionBuffer, type DeathFlight, type DeathImpact, type ImpactProfile } from './kinetics'
 import { moveBody, supportAt, type Body } from './physics'
 import { advanceAttack, attackContactBone, cameraImpulse, combatMove, startAttack, type AttackBeat, type AttackKind } from './presentation'
+import { CrystalShatterSystem } from './shatter'
 
 interface ReactionBase { profile: ImpactProfile; age: number; direction: THREE.Vector3; startOffset: THREE.Vector3; rotation: THREE.Quaternion }
-type Reaction = (ReactionBase & { kind: 'hit' }) | (ReactionBase & { kind: 'fall'; facing: THREE.Quaternion; clip: 'knockdown' | 'death' })
+/** A lethal fall flies until its planned impact, where the threat shatters. */
+interface Death { flight: DeathFlight; impact: DeathImpact; shattered: boolean }
+type Reaction = (ReactionBase & { kind: 'hit' }) | (ReactionBase & { kind: 'fall'; facing: THREE.Quaternion; clip: 'knockdown' | 'death'; death: Death })
 interface Actor {
   root: THREE.Group; mixer: THREE.AnimationMixer; actions: Map<string, THREE.AnimationAction>
   clips: Map<string, THREE.AnimationClip>
@@ -129,6 +133,7 @@ export class InklineRenderer {
   private bufferRemaining = 0
   private readonly reactionAxis = new THREE.Vector3()
   private readonly reactionRotation = new THREE.Quaternion()
+  private readonly shatterSystem = new CrystalShatterSystem()
   private floor: THREE.Mesh
   constructor(private readonly container: HTMLElement, manifest: PackManifest, settings: StageSettings,
     private readonly onStats: (stats: StageStats) => void) {
@@ -137,14 +142,14 @@ export class InklineRenderer {
     this.clips = new Map(manifest.animations.map(clip => [clip.id, clip]))
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' })
     this.renderer.outputColorSpace = THREE.SRGBColorSpace
-    this.renderer.setClearColor('#eeece5')
+    this.renderer.setClearColor(PAPER)
     this.renderer.setPixelRatio(1)
     this.renderer.domElement.setAttribute('aria-label', 'Interactive 3D asset view. Drag to orbit. Use the labeled controls to change the scene.')
     this.renderer.domElement.setAttribute('role', 'application')
     this.renderer.domElement.tabIndex = 0
     this.container.appendChild(this.renderer.domElement)
-    this.scene.background = new THREE.Color('#eeece5')
-    this.scene.fog = new THREE.Fog('#eeece5', 95, 175)
+    this.scene.background = new THREE.Color(PAPER)
+    this.scene.fog = new THREE.Fog(PAPER, 75, 160)
     this.camera.position.set(5, 3, 6)
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
     this.controls.addEventListener('start', () => { this.previewAspect = this.container.clientWidth / Math.max(1, this.container.clientHeight) })
@@ -152,10 +157,10 @@ export class InklineRenderer {
     this.controls.minDistance = 1; this.controls.maxDistance = 160
     this.controls.maxPolarAngle = Math.PI / 2 - .015
     this.controls.target.set(0, 1, 0)
-    this.scene.add(this.content, this.effects.group, this.trails.group)
-    this.floor = new THREE.Mesh(new THREE.PlaneGeometry(180, 180), new THREE.MeshBasicMaterial({ color: '#eeece5' }))
+    this.scene.add(this.content, this.effects.group, this.trails.group, this.shatterSystem.group)
+    this.floor = new THREE.Mesh(new THREE.PlaneGeometry(180, 180), new THREE.MeshBasicMaterial({ color: FLOOR }))
     this.floor.rotation.x = -Math.PI / 2; this.floor.position.y = -.025; this.scene.add(this.floor)
-    this.grid = new THREE.GridHelper(40, 40, '#ccd0c4', '#dfe1d7')
+    this.grid = new THREE.GridHelper(40, 40, GRID_MAJOR, GRID_MINOR)
     this.grid.position.y = -.02; this.scene.add(this.grid)
     this.resizeObserver = new ResizeObserver(() => {
       this.resizeReviewView()
@@ -351,7 +356,7 @@ export class InklineRenderer {
     for (const actor of this.actors) { actor.mixer.stopAllAction(); actor.mixer.uncacheRoot(actor.root) }
     for (const child of [...this.content.children]) disposeInstance(child)
     this.content.clear(); this.actors = []; this.outlines = []; this.pickups = []; this.equipment = null; this.previewFrame = null
-    this.effects.clear(); this.trails.clear(); this.trailTime = 0; this.trailClipTime = 0; this.effectSlots = []; this.clearInput()
+    this.effects.clear(); this.shatterSystem.clear(); this.trails.clear(); this.trailTime = 0; this.trailClipTime = 0; this.effectSlots = []; this.clearInput()
   }
   private async rebuild(preserveView = false): Promise<void> {
     if (this.contextUnavailable) return
@@ -375,7 +380,7 @@ export class InklineRenderer {
         else {
           const model = await this.library.create(entry.id)
           if (generation !== this.generation || this.disposed) { disposeInstance(model.root); return }
-          this.content.add(model.root); this.outlines.push(addOutlines(model.root))
+          applyPropShading(model.root); this.content.add(model.root); this.outlines.push(addOutlines(model.root))
         }
       } else if (mode === 'performance') {
         const count = Math.max(1, Math.min(100, Math.round(this.settings.figureCount)))
@@ -387,8 +392,8 @@ export class InklineRenderer {
       } else if (mode === 'overview') {
         const hero = await this.addActor('stick-fighter', new THREE.Vector3(...SHOWCASE_POSITIONS.hero), generation, 'block')
         const rival = await this.addActor('stick-striker', new THREE.Vector3(...SHOWCASE_POSITIONS.rival), generation, 'block')
-        if (hero) hero.root.rotation.y = Math.PI / 2
-        if (rival) { rival.root.rotation.y = -Math.PI / 2; applyAvatar(rival.root, { ...this.settings.avatar, height: 1, thickness: 1, headScale: 1, color: '#a63e2c', headwear: 'none', equipment: null }) }
+        if (hero) { hero.root.rotation.y = Math.PI / 2; applyAvatar(hero.root, this.settings.avatar) }
+        if (rival) { rival.root.rotation.y = -Math.PI / 2; applyAvatar(rival.root, { ...this.settings.avatar, height: 1, thickness: 1, headScale: 1, color: THREAT, accent: THREAT_ACCENT, headwear: 'none', equipment: null }, 'threat') }
         const acrobat = await this.addActor('stick-acrobat', new THREE.Vector3(2.8, .8, -3), generation, 'vault')
         if (acrobat) acrobat.root.rotation.y = Math.PI / 2
       } else if (mode === 'district') {
@@ -407,10 +412,10 @@ export class InklineRenderer {
         await this.addActor(this.settings.avatar.preset, new THREE.Vector3(0, 0, 8), generation, 'idle')
         if (generation !== this.generation || this.disposed) return
         if (mode === 'combat') for (const [x, z] of [[0, 5], [-2, 2], [1.5, -1], [-1.5, -5]]) {
-          const actor = await this.addActor('stick-fighter', new THREE.Vector3(x, 0, z), generation, 'block')
+          const actor = await this.addActor('stick-fighter', new THREE.Vector3(x, 0, z), generation, 'idle')
           if (generation !== this.generation || this.disposed) return
           if (actor) {
-            applyAvatar(actor.root, { ...this.settings.avatar, color: '#bd4c34', headwear: 'none', equipment: null })
+            applyAvatar(actor.root, { ...this.settings.avatar, color: THREAT, accent: THREAT_ACCENT, headwear: 'none', equipment: null }, 'threat')
             actor.root.rotation.y = 0
             actor.spawnRotation = actor.root.quaternion.clone()
           }
@@ -439,10 +444,11 @@ export class InklineRenderer {
   private async addActor(id: string, position: THREE.Vector3, generation: number, clip = this.settings.animationId): Promise<Actor | null> {
     const model = await this.library.create(id)
     if (generation !== this.generation || this.disposed) { disposeInstance(model.root); return null }
+    applyFigureShading(model.root, 'player')
     model.root.position.copy(position)
     const mixer = new THREE.AnimationMixer(model.root)
     const clips = new Map(model.clips.map(animation => [animation.name, animation]))
-    const shadow = new THREE.Mesh(new THREE.CircleGeometry(.34, 18), new THREE.MeshBasicMaterial({ color: '#b8bcb1', transparent: true, opacity: .38, depthWrite: false }))
+    const shadow = new THREE.Mesh(new THREE.CircleGeometry(.34, 18), new THREE.MeshBasicMaterial({ color: CONTACT_SHADOW, transparent: true, opacity: .38, depthWrite: false }))
     shadow.rotation.x = -Math.PI / 2; shadow.position.copy(position); shadow.position.y += .012
     shadow.scale.set(1, .65, 1); shadow.userData.ownedGeometry = true
     this.content.add(model.root, shadow)
@@ -498,7 +504,7 @@ export class InklineRenderer {
       if (generation !== this.generation || equipmentGeneration !== this.equipmentGeneration || this.disposed || this.settings.avatar.equipment !== id) { disposeInstance(model.root); return }
       mountEquipment(actor.root, model, [...actor.clips.values()], [...this.clips.values()])
       this.equipment = model.root
-      addOutlines(model.root).visible = this.settings.outlines
+      applyPropShading(model.root); addOutlines(model.root).visible = this.settings.outlines
       if (this.settings.mode === 'avatars') {
         this.play(actor, this.avatarPreviewClip(), true)
         actor.mixer.update(0)
@@ -581,7 +587,7 @@ export class InklineRenderer {
   }
   private createCheckpoints(): void {
     for (const point of CHECKPOINTS) {
-      const pickup = new THREE.Mesh(new THREE.OctahedronGeometry(.2), new THREE.MeshBasicMaterial({ color: '#d45538' }))
+      const pickup = new THREE.Mesh(new THREE.OctahedronGeometry(.2), new THREE.MeshBasicMaterial({ color: ACCENT }))
       pickup.position.set(...point); pickup.userData.ownedGeometry = true; this.content.add(pickup); this.pickups.push(pickup)
     }
   }
@@ -602,18 +608,18 @@ export class InklineRenderer {
     this.body.position = { x: 0, y: 0, z: 8 }; this.body.velocityY = 0; this.body.grounded = true; this.body.facing = Math.PI
     this.score = 0; this.checkpoint = 0; this.combo = 0
     this.attack = null; this.pendingContact = null; this.impactHold = 0; this.impulseAge = 1; this.impulseZoom = 0; this.cameraLead.set(0, 0, 0); this.contacts.length = 0
-    this.effects.clear(); this.effectSlots.length = 0; this.effectTimer = 0; this.stepTimer = 0
+    this.effects.clear(); this.shatterSystem.clear(); this.effectSlots.length = 0; this.effectTimer = 0; this.stepTimer = 0
     this.moving = false; this.dashing = false; this.movementAccentCooldown = 0
     this.showcasePhase = -1; this.showcaseTime = 0; this.showcaseAttack = null
     this.pickups.forEach(pickup => { pickup.visible = true })
     for (const [index, actor] of this.actors.entries()) {
-      actor.health = 3; actor.respawn = 0; actor.sequencePhase = -1; actor.hold = 0; actor.root.visible = true
+      actor.health = 3; actor.respawn = 0; actor.sequencePhase = -1; actor.hold = 0; actor.root.visible = true; actor.shadow.visible = true
       if (actor.spawnRotation) actor.root.quaternion.copy(actor.spawnRotation)
       if (this.isGame() && index === 0) actor.root.rotation.set(0, this.body.facing, 0)
       actor.origin.copy(actor.spawn); actor.reaction = null; actor.recoil.set(0, 0, 0); actor.root.position.copy(actor.origin)
       const clip = this.isGame()
-        ? index > 0 || this.settings.mode === 'combat' && !this.settings.avatar.equipment ? 'block' : this.avatarIdleClip()
-        : this.settings.mode === 'overview' ? index < 2 ? 'block' : 'idle' : actor.active
+        ? index > 0 ? 'idle' : this.avatarIdleClip()
+        : this.settings.mode === 'overview' ? 'idle' : actor.active
       actor.mixer.stopAllAction(); actor.active = ''
       this.play(actor, clip, true); actor.mixer.update(0)
       this.updateReaction(actor, 0)
@@ -671,7 +677,7 @@ export class InklineRenderer {
       this.trailAxis.copy(this.trailInner).sub(this.trailOuter).normalize()
       this.trailInner.copy(this.trailOuter).addScaledVector(this.trailAxis, actor.active.startsWith('kick') ? profile.trailWidth : Math.min(.065, profile.trailWidth))
     }
-    this.trails.sample(0, this.trailInner, this.trailOuter, this.trailTime, weapon ? this.settings.avatar.accent : '#151716', profile.trailDuration)
+    this.trails.sample(0, this.trailInner, this.trailOuter, this.trailTime, weapon ? this.settings.avatar.accent : INK, profile.trailDuration)
   }
   private resolveContact(beat: AttackBeat): void {
     const actor = this.actors[0]
@@ -707,7 +713,7 @@ export class InklineRenderer {
       hits++
       const showcase = this.settings.mode === 'overview'
       if (!showcase) { target.health--; this.score += 10 }
-      const heavy = target.health <= 0 || beat.clip.includes('heavy') || beat.clip.startsWith('kick')
+      const heavy = target.health <= 0 || beat.clip.includes('heavy') || beat.clip.startsWith('kick') || HEAVY_CLIPS.has(beat.clip)
       const rotation = target.reaction?.rotation.clone() ?? target.root.quaternion.clone()
       if (!target.spawnRotation) target.spawnRotation = rotation.clone()
       const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(rotation)
@@ -719,12 +725,17 @@ export class InklineRenderer {
       const reactionProfile = target.health <= 0 ? getImpactProfile('punch-heavy', 'unarmed') : profile
       if (reactionProfile.hitHold > impactProfile.hitHold) impactProfile = reactionProfile
       const base = { profile: reactionProfile, age: 0, direction: force, startOffset: target.root.position.clone().sub(target.origin), rotation }
-      target.reaction = reactionChoice.clip === 'death' || reactionChoice.clip === 'knockdown'
-        ? { ...base, kind: 'fall', clip: reactionChoice.clip, facing: new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), reactionChoice.facing) }
-        : { ...base, kind: 'hit' }
+      if (reactionChoice.clip === 'death' || reactionChoice.clip === 'knockdown') {
+        const flight = deathFlight(profile, this.groundTime(reactionChoice.clip))
+        const impact = planDeathImpact(flight, target.root.position, force, this.isGame() ? DISTRICT_COLLISION.obstacles : [])
+        target.reaction = { ...base, kind: 'fall', clip: reactionChoice.clip, facing: new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), reactionChoice.facing), death: { flight, impact, shattered: false } }
+      } else target.reaction = { ...base, kind: 'hit' }
       const contact = ranged ? targetPoint : heldStrike ? equipmentContactPoint(heldStrike, targetPoint) : strike.clone().lerp(targetPoint, .35)
       this.effects.trigger(beat.clip.startsWith('shield') ? 'guard-shock' : beat.kind === 'blade' ? 'blade-contact' : heavy ? 'heavy-impact' : 'punch-impact', contact, this.settings.avatar.accent, heavy ? .88 : .75)
-      if (target.health <= 0) { this.score += 50; target.respawn = 3 }
+      if (target.health <= 0) {
+        this.score += 50
+        target.respawn = 3
+      }
       if (ranged) { rangedEnd = contact; break }
     }
     if (ranged) {
@@ -750,8 +761,8 @@ export class InklineRenderer {
     this.camera.updateMatrixWorld()
     this.trailAxis.copy(end).sub(start).cross(this.camera.getWorldDirection(this.trailOuter))
     if (this.trailAxis.lengthSq() < .0001) this.trailAxis.setFromMatrixColumn(this.camera.matrixWorld, 0)
-    this.trailAxis.normalize().multiplyScalar(.018)
-    this.trails.line(3, start, end, this.trailAxis, this.trailTime, this.settings.avatar.accent, .075)
+    this.trailAxis.normalize().multiplyScalar(.032)
+    this.trails.line(3, start, end, this.trailAxis, this.trailTime, STRIKE_TRAIL, .22)
   }
   private updateShowcase(delta: number): void {
     const hero = this.actors[0], rival = this.actors[1]
@@ -774,10 +785,10 @@ export class InklineRenderer {
       const result = advanceAttack(this.showcaseAttack, delta)
       this.showcaseAttack = result.finished ? null : result.beat
       if (result.contact) this.pendingContact = result.beat
-      if (result.finished) this.play(hero, 'block')
+      if (result.finished) this.play(hero, 'idle')
     }
     rival.hold = Math.max(0, rival.hold - delta)
-    if (!rival.hold) this.play(rival, 'block')
+    if (!rival.hold) this.play(rival, 'idle')
     this.updateReaction(rival, delta)
     if (this.actors[2]) this.updateAcrobat(this.actors[2])
   }
@@ -785,7 +796,7 @@ export class InklineRenderer {
     const reaction = actor.reaction
     if (reaction) {
       reaction.age += delta
-      const pose = reaction.kind === 'fall' ? sampleKnockdown(reaction.profile, reaction.age) : sampleRecoil(reaction.profile, reaction.age)
+      const pose = reaction.kind === 'fall' ? sampleDeathFlight(reaction.death.flight, reaction.age, reaction.death.impact.distance) : sampleRecoil(reaction.profile, reaction.age)
       const carry = Math.max(0, 1 - reaction.age / reaction.profile.recoilDuration)
       actor.recoil.copy(reaction.direction).multiplyScalar(pose.travel).addScaledVector(reaction.startOffset, reaction.kind === 'fall' ? 1 : carry * carry)
       actor.recoil.y += pose.lift
@@ -799,10 +810,27 @@ export class InklineRenderer {
       if (pose.done && reaction.kind === 'hit') { actor.reaction = null; actor.recoil.set(0, 0, 0) }
     }
     actor.root.position.copy(actor.origin).add(actor.recoil)
+    if (reaction?.kind === 'fall' && !reaction.death.shattered && reaction.age >= reaction.death.impact.time) this.shatterOnImpact(actor, reaction)
     actor.shadow.position.set(actor.root.position.x, actor.origin.y + .016, actor.root.position.z)
     const height = Math.max(0, actor.recoil.y)
     actor.shadow.scale.set(1 + height * .4, .65 + height * .2, 1)
     ;(actor.shadow.material as THREE.MeshBasicMaterial).opacity = Math.max(.12, .38 - height * .4)
+  }
+  /** The fall clip's authored floor contact, in seconds. */
+  private groundTime(clip: 'knockdown' | 'death'): number {
+    const contact = this.clips.get(clip)?.motion?.phases.find(phase => phase.name === 'contact')
+    if (!contact) throw new Error(`Fall clip ${clip} has no authored floor contact.`)
+    return contact.frame / 30
+  }
+  /** Shards burst at the impact: they rebound off a wall, or splash up and along the fall on the floor. */
+  private shatterOnImpact(actor: Actor, reaction: Extract<Reaction, { kind: 'fall' }>): void {
+    reaction.death.shattered = true
+    const wall = reaction.death.impact.surface === 'wall'
+    const burst = wall ? reaction.direction.clone().multiplyScalar(-.6).setY(.2) : reaction.direction.clone().multiplyScalar(.5).setY(.6)
+    // The posed body itself breaks into pieces of its own surface.
+    this.shatterSystem.shatterFigure(actor.root, burst, actor.origin.y)
+    actor.root.visible = false
+    actor.shadow.visible = false
   }
   private jumpStartTime(): number {
     const clip = this.clips.get('jump-start')!
@@ -887,7 +915,7 @@ export class InklineRenderer {
     }
     const groundSpeed = delta > 0 ? Math.hypot(this.body.position.x - previousX, this.body.position.z - previousZ) / delta : 0
     if (actor.hold === 0 && !this.attack) {
-      this.play(actor, !this.body.grounded ? 'jump-loop' : groundSpeed > .01 ? this.input.has('dash') ? 'sprint' : 'run' : this.settings.mode === 'combat' && !this.settings.avatar.equipment ? 'block' : this.avatarIdleClip())
+      this.play(actor, !this.body.grounded ? 'jump-loop' : groundSpeed > .01 ? this.input.has('dash') ? 'sprint' : 'run' : this.avatarIdleClip())
       const authoredSpeed = this.clips.get(actor.active)?.travelSpeed
       if (authoredSpeed && groundSpeed > .01) actor.actions.get(actor.active)!.setEffectiveTimeScale(groundSpeed / (authoredSpeed * this.settings.avatar.height))
     }
@@ -910,6 +938,8 @@ export class InklineRenderer {
       if (target.respawn > 0) {
         target.respawn -= delta
         if (target.respawn <= 0) {
+          target.root.visible = true
+          target.shadow.visible = true
           const forwardFall = target.reaction?.kind === 'fall' && target.reaction.clip === 'death'
           target.origin.copy(target.root.position); target.recoil.set(0, 0, 0); target.reaction = null
           target.health = 3
@@ -920,7 +950,7 @@ export class InklineRenderer {
         }
       } else {
         target.hold = Math.max(0, target.hold - animationDelta)
-        if (target.hold === 0) this.play(target, 'block')
+        if (target.hold === 0) this.play(target, 'idle')
       }
       this.updateReaction(target, animationDelta)
     }
@@ -1032,6 +1062,7 @@ export class InklineRenderer {
           }
         }
         this.effects.update(speed, this.camera)
+        this.shatterSystem.update(speed)
       }
       if (this.equipment && this.actors[0]) {
         const actor = this.actors[0]
@@ -1097,7 +1128,7 @@ export class InklineRenderer {
           const point = bone?.getWorldPosition(new THREE.Vector3())
           return [name, point ? this.clearance !== null && !this.clearance.inView(point, this.camera) : false]
         }))
-        return { clip: actor.active, health: actor.health, position: actor.root.position.toArray(), facing: actor.root.rotation.y, worldJoints: Object.fromEntries(CAMERA_POSE_BONES.map(name => [name, actor.root.getObjectByName(name)?.getWorldPosition(new THREE.Vector3()).toArray()])), joints, blocked, reaction: { magnitude: actor.recoil.length(), done: actor.reaction === null, age: actor.reaction?.age ?? 0, kind: actor.reaction?.kind ?? null, direction: actor.reaction?.direction.toArray() ?? null } }
+        return { clip: actor.active, health: actor.health, position: actor.root.position.toArray(), facing: actor.root.rotation.y, worldJoints: Object.fromEntries(CAMERA_POSE_BONES.map(name => [name, actor.root.getObjectByName(name)?.getWorldPosition(new THREE.Vector3()).toArray()])), joints, blocked, reaction: { magnitude: actor.recoil.length(), done: actor.reaction === null, age: actor.reaction?.age ?? 0, kind: actor.reaction?.kind ?? null, direction: actor.reaction?.direction.toArray() ?? null, impact: actor.reaction?.kind === 'fall' ? { ...actor.reaction.death.impact, shattered: actor.reaction.death.shattered } : null }, visible: actor.root.visible }
       }),
     }
   }
@@ -1107,7 +1138,7 @@ export class InklineRenderer {
   }
   dispose(): void {
     this.disposed = true; this.generation++; cancelAnimationFrame(this.raf)
-    this.resizeObserver.disconnect(); this.controls.dispose(); this.clearScene(); this.effects.dispose(); this.trails.dispose(); this.library.dispose()
+    this.resizeObserver.disconnect(); this.controls.dispose(); this.clearScene(); this.effects.dispose(); this.shatterSystem.dispose(); this.trails.dispose(); this.library.dispose()
     window.removeEventListener('keydown', this.keyDown); window.removeEventListener('keyup', this.keyUp)
     window.removeEventListener('blur', this.clearInput); window.removeEventListener('inkline-input', this.customInput)
     this.renderer.domElement.removeEventListener('webglcontextlost', this.contextLost)

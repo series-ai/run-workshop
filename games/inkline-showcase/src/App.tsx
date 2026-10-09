@@ -181,7 +181,7 @@ export const App: FC = () => {
       ...prev,
       mode,
       animationId: mode === 'avatars' && (!prev.animationId || prev.animationId === 'idle')
-        ? (ROLE_BY_ID.get(prev.avatar.preset)?.preview ?? 'block')
+        ? (ROLE_BY_ID.get(prev.avatar.preset)?.preview ?? 'idle')
         : prev.animationId,
     }))
     // On mobile, auto-close or open inspector sensibly
