@@ -3498,13 +3498,6 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   vec3 matC1 = ( concrete * matChroma + wetSheen * matChroma * ( 1.0 + 0.05 * matW ) + wetArris * matChroma * matEdge ) * contactAo;
   vec3 color = normalizeFamilyMaterial( matC0, matC1, matB, matW, matF, matFamily );
 
-  // R12: lit skylights and rooftop lamps on the deck's roofs.
-  float deckRoof = ( 1.0 - smoothstep( 70.0, 140.0, vWorldPos.y ) ) * ( 1.0 - vIsSide ) * vEmissionAllowed;
-  vec2 skyCell = floor( vSurf / 7.0 );
-  float skylight = step( 0.82, skyHash12( skyCell + vSeed * 13.0 ) ) * ( 1.0 - smoothstep( 0.25, 0.42, length( fract( vSurf / 7.0 ) - 0.5 ) ) );
-  // R22: a small background lamp — neutral at the same luminance, amber only in the dock.
-  color += skyriverDistrictLamp( vec3( 1.0, 0.55, 0.2 ) * skylight * deckRoof * 1.4, vDistrict ) * contactAo;
-
   // Hero blade light: coloured spill on the concrete around each giant sign, and the windows behind
   // and beside it go dark so the sign owns its patch of wall.
   vec3 heroSpill = vec3( 0.0 );

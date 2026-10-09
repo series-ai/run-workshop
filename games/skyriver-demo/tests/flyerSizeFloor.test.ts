@@ -1,5 +1,6 @@
 /** Independent R28b material algebra and real batch geometry checks. No GL context. */
 import { afterAll, describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { AdditiveBlending, DoubleSide, InstancedBufferAttribute, InstancedBufferGeometry, InstancedMesh, Mesh, ShaderMaterial, Vector3, Vector4, PerspectiveCamera, Matrix4, Sphere, Frustum } from 'three';
 import { createSkyriverTraffic, TRAFFIC_QUALITY_TIERS } from '../src/render/traffic';
 import { deriveImpostorAttributes, impostorPosition } from '../src/render/trafficStreams';
@@ -345,7 +346,7 @@ const inViewBody = guardBody(gpuMaterial.vertexShader, 'trafficLampInView')
   .replace(/point\.z/g, 'point[2]')
   .replace(/(row[0-3])\s*([+-])\s*(row[0-3])/g, (_, a: string, op: string, b: string) =>
     `${op === '+' ? 'add' : 'subtract'}(${a}, ${b})`);
-const viewRun = new Function('pos', 'type', 'scale', 'pixelScale', 'extraM', 'projectionMatrix', 'transformPoint',
+const viewRun = new Function('pos', 'type', 'scale', 'cssPixelScale', 'extraM', 'projectionMatrix', 'transformPoint',
   'vec4', 'max', 'trafficLampPhysicalRadius', 'trafficLampOutsidePlane', 'add', 'subtract', inViewBody) as
   (pos: number[], type: number, scale: number, pixelScale: number, extraM: number, projection: number[][],
     transform: (v: number[]) => number[], vec4: (...v: number[]) => number[], max: typeof Math.max,
@@ -499,8 +500,8 @@ describe('R28b independent physical frustum bound', () => {
         expect(main.indexOf('trafficLampInView(')).toBeLessThan(main.indexOf('trafficLampKernel('));
       }
     }
-    expect(cpuMaterial.vertexShader).toMatch(/trafficLampInView\(aCarPos,\s*type,\s*scale,\s*uPixelAngle,\s*isTrail\s*\?\s*uTrailMax\s*:\s*0\.0\)/);
-    expect(gpuMaterial.vertexShader).toMatch(/trafficLampInView\(pos,\s*type,\s*scale,\s*uPixelAngle,\s*0\.0\)/);
+    expect(cpuMaterial.vertexShader).toMatch(/trafficLampInView\(aCarPos,\s*type,\s*scale,\s*uCssPixelAngle,\s*isTrail\s*\?\s*uTrailMax\s*:\s*0\.0\)/);
+    expect(gpuMaterial.vertexShader).toMatch(/trafficLampInView\(pos,\s*type,\s*scale,\s*uCssPixelAngle,\s*0\.0\)/);
     for (const name of ['trafficLampPhysicalRadius', 'trafficLampOutsidePlane', 'trafficLampInView']) {
       expect(guardBody(cpuMaterial.vertexShader, name)).toBe(guardBody(gpuMaterial.vertexShader, name));
     }
@@ -539,4 +540,69 @@ describe('R28b independent physical frustum bound', () => {
     expect(independentSphereIntersections).toBeGreaterThan(insideSources - 1);
     expect(rejectedInsideSources).toBe(0);
   }, 20000);
+});
+
+
+describe('R32 independent CSS coverage and physical pixel filter', () => {
+  it('installs both actual material angles through FOV, resize, and DPR changes', () => {
+    const main = readFileSync(new URL('../src/main.ts', import.meta.url), 'utf8');
+    expect(main).toContain('scene.renderer.getDrawingBufferSize(bufferSize);');
+    expect(main).toContain('scene.renderer.getSize(cssSize);');
+    expect(main).toMatch(/traffic\.setPixelAngle\(\s*inverseFocalLength \/ Math\.max\(1, bufferSize\.y\),\s*inverseFocalLength \/ Math\.max\(1, cssSize\.y\),?\s*\)/);
+    const expression = main.match(/const inverseFocalLength = ([^;]+);/);
+    if (!expression) throw new Error('R32_ACTUAL_FOCAL_EXPRESSION_MISSING');
+    const run = new Function('frame', 'return ' + expression[1]) as (frame: { camera: { fov: number } }) => number;
+    for (const fov of [45, 62, 78]) for (const cssHeight of [390, 720, 1001]) for (const dpr of [1, 1.25]) {
+      const camera = new PerspectiveCamera(fov, 16 / 9, 1, 10000);
+      const bufferHeight = Math.floor(cssHeight * dpr);
+      const cssAngle = run({ camera }) / cssHeight, bufferAngle = run({ camera }) / bufferHeight;
+      expect(cssAngle).toBeCloseTo(2 / (cssHeight * camera.projectionMatrix.elements[5]!), 14);
+      traffic.setPixelAngle(bufferAngle, cssAngle);
+      for (const material of [cpuMaterial, gpuMaterial]) {
+        expect(material.uniforms.uPixelAngle!.value).toBe(bufferAngle);
+        expect(material.uniforms.uCssPixelAngle!.value).toBe(cssAngle);
+        expect(material.uniforms.uCssPixelAngle!.value / material.uniforms.uPixelAngle!.value).toBeCloseTo(bufferHeight / cssHeight, 14);
+      }
+    }
+  });
+
+  it('uses CSS angle only for coverage and culling while physical padding remains buffer-sized', () => {
+    for (const source of [cpuMaterial.vertexShader, gpuMaterial.vertexShader]) {
+      expect(source).toContain('float cssPixelM = depth * cssPixelScale;');
+      expect(source).toContain('float floorSize = 0.65000000 * cssPixelM;');
+      expect(source).toContain('float radius = physicalRadius + 3.0 * cssPixelScale * max(-point.z + physicalRadius, 1.0);');
+      expect(source).toMatch(/trafficLampKernel\([\s\S]*?uCssPixelAngle, lamp, v0,/);
+      expect(source).toMatch(/trafficLampInView\([^;]+uCssPixelAngle/);
+      expect(source).toContain('vec2(max(-v0.z, 1.0) * uPixelAngle * 0.5)');
+      const uses = source.match(/uCssPixelAngle/g) ?? [];
+      expect(uses).toHaveLength(source === cpuMaterial.vertexShader ? 4 : 3);
+    }
+    expect(cpuMaterial.vertexShader).toContain('float startRadius = max(0.6, -v0.z * uCssPixelAngle * 1.6);');
+    expect(body(cpuMaterial.fragmentShader, 'trafficFilteredLamp')).toContain('vec2 halfPixel = 0.5 * sqrt(dx * dx + dy * dy);');
+  });
+
+  it('retains CSS footprint and integrated pair energy across DPR and sample phase', () => {
+    const rows = [...gpuMaterial.vertexShader.matchAll(/TrafficLampShape\(vec4\(([^)]+)\),\s*[\d.-]+\)/g)].slice(0, 14);
+    expect(rows).toHaveLength(14);
+    const cssAngle = 2 * Math.tan(62 * Math.PI / 360) / 720;
+    for (const row of rows) {
+      const [separation, width, height] = row[1]!.split(',').map(Number);
+      for (const depth of [200, 900, 3000]) {
+        const minimum = 0.65 * depth * cssAngle;
+        const hx = actualFloor(width!, minimum) / (depth * cssAngle);
+        const hy = actualFloor(height!, minimum) / (depth * cssAngle);
+        const offset = separation! * 2 / (depth * cssAngle);
+        expect(2 * hx).toBeGreaterThanOrEqual(1.3); expect(2 * hy).toBeGreaterThanOrEqual(1.3);
+        const expected = hx * hy * (16 / 15) ** 2;
+        const gain = gpuGain(width!, height!, minimum);
+        for (const dpr of [1, 1.25]) for (const phase of [0, 0.25, 0.7]) {
+          const energy = totalPairEnergy(hx * dpr, hy * dpr, offset * dpr, phase, 1 - phase) / (dpr * dpr);
+          expect(energy * gain).toBeCloseTo(expected * gain, 9);
+          expect((hx * dpr) / dpr).toBeCloseTo(hx, 14);
+          // One physical filter pixel is 1/DPR CSS pixels.
+          expect(0.5 / (hx * dpr)).toBeCloseTo((0.5 / dpr) / hx, 14);
+        }
+      }
+    }
+  });
 });

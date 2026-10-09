@@ -879,6 +879,7 @@ attribute vec4 aCarFade;     // fade, physical scale, warmth, trail weight
 attribute vec2 aCarShape;    // actual hull type, bank radians
 
 uniform float uPixelAngle;   // inverse vertical focal length, per drawing-buffer pixel
+uniform float uCssPixelAngle; // inverse vertical focal length, per CSS pixel
 uniform float uTrailSeconds;
 uniform float uTrailMax;
 uniform float uTrailCarLengths;
@@ -909,7 +910,7 @@ void main() {
   float lampSide = 0.0;
   float scale = aCarFade.y;
   float type = aCarShape.x;
-  if (!trafficLampInView(aCarPos, type, scale, uPixelAngle, isTrail ? uTrailMax : 0.0)) {
+  if (!trafficLampInView(aCarPos, type, scale, uCssPixelAngle, isTrail ? uTrailMax : 0.0)) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
@@ -920,7 +921,7 @@ void main() {
   float pairHalfSpan;
   float lampGain;
   trafficLampKernel(aCarPos, dir, aCarShape.y, type, scale, head, lampSide,
-    uPixelAngle, lamp, v0, lampAxis, lampHalfSize, pairHalfSpan, lampGain);
+    uCssPixelAngle, lamp, v0, lampAxis, lampHalfSize, pairHalfSpan, lampGain);
   vPairOffset = pairHalfSpan / lampHalfSize.x;
   float trail = isTrail
     ? min(speed * uTrailSeconds, min(uTrailMax, uTrailCarLengths * trafficCarLength(type) * scale))
@@ -946,7 +947,7 @@ void main() {
   }
   vec4 v;
   if (isTrail) {
-    float startRadius = max(0.6, -v0.z * uPixelAngle * 1.6);
+    float startRadius = max(0.6, -v0.z * uCssPixelAngle * 1.6);
     float endRadius = startRadius * uTrailEndWidth;
     vec2 delta = v1.xy - v0.xy;
     float len = length(delta);
@@ -1104,6 +1105,7 @@ uniform float uPathStep;
 uniform float uPathLast;
 uniform float uCorridor;
 uniform float uPixelAngle;
+uniform float uCssPixelAngle;
 uniform vec2 uBand;          // impostors fade in over [x, y] metres from the camera
 uniform vec2 uFarFalloff;    // brightness fades over [x, y] metres from the camera
 uniform float uFadeFrom;     // kept for legacy / probe compatibility
@@ -1282,7 +1284,7 @@ void main() {
   bool head = aLamp < 0.5;
   float type = floor(aAppearance);
   float scale = fract(aAppearance) * 8.0;
-  if (!trafficLampInView(pos, type, scale, uPixelAngle, 0.0)) {
+  if (!trafficLampInView(pos, type, scale, uCssPixelAngle, 0.0)) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
@@ -1295,7 +1297,7 @@ void main() {
   float pairHalfSpan;
   float lampGain;
   trafficLampKernel(pos, dir, 0.0, type, scale, head, lampSide,
-    uPixelAngle, lamp, v0, lampAxis, halfSize, pairHalfSpan, lampGain);
+    uCssPixelAngle, lamp, v0, lampAxis, halfSize, pairHalfSpan, lampGain);
   vec3 toLamp = cameraPosition - lamp;
   float facing = dot(dir, toLamp / max(length(toLamp), 1.0));
   vec2 lampUp = vec2(-lampAxis.y, lampAxis.x);
@@ -1772,6 +1774,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     fragmentShader: STREAK_FRAGMENT,
     uniforms: {
       uPixelAngle: { value: 0.0012 },
+      uCssPixelAngle: { value: 0.0012 },
       uTrailSeconds: { value: TRAIL_SECONDS },
       uTrailMax: { value: TRAIL_MAX_M },
       uTrailAlpha: { value: TRAIL_ALPHA },
@@ -1847,6 +1850,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       uPathLast: { value: STREAM_PATH_SAMPLES },
       uCorridor: { value: STREAM_CORRIDOR_HALF_M },
       uPixelAngle: { value: 0.0012 },
+      uCssPixelAngle: { value: 0.0012 },
       uBand: { value: new Vector2(...IMPOSTOR_LIGHT_HANDOVER_BAND_M) },
       uFarFalloff: { value: new Vector2(...IMPOSTOR_FAR_FALLOFF_BAND_M) },
       uFadeFrom: { value: 0 },
@@ -2416,10 +2420,12 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     streakShape.needsUpdate = true;
   }
 
-  /** Inverse vertical focal length per drawing-buffer pixel. Call this on resize. */
-  function setPixelAngle(inverseFocalLengthPx: number): void {
-    impostorMaterial.uniforms.uPixelAngle!.value = inverseFocalLengthPx;
-    streakMaterial.uniforms.uPixelAngle!.value = inverseFocalLengthPx;
+  /** Inverse vertical focal lengths per drawing-buffer pixel and CSS pixel. Call on resize. */
+  function setPixelAngle(inverseFocalLengthBufferPx: number, inverseFocalLengthCssPx: number): void {
+    impostorMaterial.uniforms.uPixelAngle!.value = inverseFocalLengthBufferPx;
+    streakMaterial.uniforms.uPixelAngle!.value = inverseFocalLengthBufferPx;
+    impostorMaterial.uniforms.uCssPixelAngle!.value = inverseFocalLengthCssPx;
+    streakMaterial.uniforms.uCssPixelAngle!.value = inverseFocalLengthCssPx;
   }
 
   function stats(): TrafficStats {

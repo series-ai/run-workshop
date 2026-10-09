@@ -1,0 +1,4 @@
+{
+  "commit": "52222b829501f3362386a788fef0c36ae00bdb6a",
+  "block": "  // R12: lit skylights and rooftop lamps on the deck's roofs.\n  float deckRoof = ( 1.0 - smoothstep( 70.0, 140.0, vWorldPos.y ) ) * ( 1.0 - vIsSide ) * vEmissionAllowed;\n  vec2 skyCell = floor( vSurf / 7.0 );\n  float skylight = step( 0.82, skyHash12( skyCell + vSeed * 13.0 ) ) * ( 1.0 - smoothstep( 0.25, 0.42, length( fract( vSurf / 7.0 ) - 0.5 ) ) );\n  // R22: a small background lamp \u2014 neutral at the same luminance, amber only in the dock.\n  color += skyriverDistrictLamp( vec3( 1.0, 0.55, 0.2 ) * skylight * deckRoof * 1.4, vDistrict ) * contactAo;\n\n"
+}

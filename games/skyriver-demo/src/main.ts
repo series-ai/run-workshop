@@ -500,9 +500,15 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   // Traffic rides the scene's frame listener, so it updates with the same interpolated time the city
   // and the atmosphere use, after the camera is in place.
   const bufferSize = new THREE.Vector2();
+  const cssSize = new THREE.Vector2();
   const onFrame = (frame: SkyriverFrame): void => {
     scene.renderer.getDrawingBufferSize(bufferSize);
-    traffic.setPixelAngle((2 * Math.tan((frame.camera.fov * Math.PI) / 360)) / Math.max(1, bufferSize.y));
+    scene.renderer.getSize(cssSize);
+    const inverseFocalLength = 2 * Math.tan((frame.camera.fov * Math.PI) / 360);
+    traffic.setPixelAngle(
+      inverseFocalLength / Math.max(1, bufferSize.y),
+      inverseFocalLength / Math.max(1, cssSize.y),
+    );
     traffic.update({ tick: frame.tick, alpha: frame.alpha }, frame.camera.position);
   };
   scene.addFrameListener(onFrame);

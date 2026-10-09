@@ -898,7 +898,6 @@ export const SKYRIVER_DISTRICT_SOURCE_TERMS: readonly {
   { id: 'glass-cool', role: 'room glass tint', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [0.7, 0.83, 1] },
   { id: 'glass-teal', role: 'room glass tint', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [0.62, 1, 0.88] },
   { id: 'glass-amber', role: 'room glass tint', saturation: SKYRIVER_DISTRICT_SATURATION.pane, srgb: false, rgb: [1, 0.72, 0.4] },
-  { id: 'deck-skylight', role: 'small lamp', saturation: SKYRIVER_DISTRICT_SATURATION.trimSmall, srgb: false, rgb: [1, 0.55, 0.2] },
   { id: 'trim-deck-lamp', role: 'small lamp', saturation: SKYRIVER_DISTRICT_SATURATION.trimSmall, srgb: false, rgb: [1, 0.68, 0.33] },
   { id: 'trim-balcony-underlight', role: 'small lamp', saturation: SKYRIVER_DISTRICT_SATURATION.trimSmall, srgb: false, rgb: [1, 0.62, 0.3] },
   { id: 'trim-band-warm', role: 'large accent', saturation: SKYRIVER_DISTRICT_SATURATION.trimLarge, srgb: false, rgb: [1, 0.72, 0.42] },

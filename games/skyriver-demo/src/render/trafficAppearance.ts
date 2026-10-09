@@ -100,11 +100,11 @@ ${TRAFFIC_APPEARANCE_PROFILES.map((profile, i) => {
 bool trafficLampOutsidePlane(vec4 plane, vec4 point, float radius) {
   return dot(plane, point) < -radius * length(plane.xyz);
 }
-bool trafficLampInView(vec3 pos, float type, float scale, float pixelScale, float extraM) {
+bool trafficLampInView(vec3 pos, float type, float scale, float cssPixelScale, float extraM) {
   vec4 point = viewMatrix * vec4(pos, 1.0);
   float physicalRadius = trafficLampPhysicalRadius(type, scale) + extraM;
   // Bound the physical patches, pixel filter and trail cap before perspective expansion.
-  float radius = physicalRadius + 3.0 * pixelScale * max(-point.z + physicalRadius, 1.0);
+  float radius = physicalRadius + 3.0 * cssPixelScale * max(-point.z + physicalRadius, 1.0);
   vec4 row0 = vec4(projectionMatrix[0][0], projectionMatrix[1][0], projectionMatrix[2][0], projectionMatrix[3][0]);
   vec4 row1 = vec4(projectionMatrix[0][1], projectionMatrix[1][1], projectionMatrix[2][1], projectionMatrix[3][1]);
   vec4 row2 = vec4(projectionMatrix[0][2], projectionMatrix[1][2], projectionMatrix[2][2], projectionMatrix[3][2]);
@@ -122,7 +122,7 @@ float trafficLampFloor(float physical, float floorSize) {
   return max(physical, floorSize) + overlap * overlap / (4.0 * width);
 }
 void trafficLampKernel(vec3 pos, vec3 forward, float bank, float type, float scale,
-  bool front, float lampSide, float pixelScale, out vec3 lamp, out vec4 centre,
+  bool front, float lampSide, float cssPixelScale, out vec3 lamp, out vec4 centre,
   out vec2 axis, out vec2 halfSize, out float pairHalfSpan, out float lampGain) {
   vec3 right0 = normalize(vec3(forward.z, 0.0, -forward.x));
   vec3 up0 = cross(forward, right0);
@@ -141,9 +141,9 @@ void trafficLampKernel(vec3 pos, vec3 forward, float bank, float type, float sca
   vec2 upP = upV.xy + groupV.xy * upV.z / depth;
   float rightLength = length(rightP);
   axis = rightLength > 1e-5 ? rightP / rightLength : vec2(1.0, 0.0);
-  float pixelM = depth * pixelScale;
-  // Each lamp needs pixel coverage. The gap between lamps cannot provide it.
-  float floorSize = ${glslNumber(TRAFFIC_LAMP_MIN_DIAMETER_PX / 2)} * pixelM;
+  float cssPixelM = depth * cssPixelScale;
+  // Keep the lamp coverage floor stable when the drawing buffer uses a different DPR.
+  float floorSize = ${glslNumber(TRAFFIC_LAMP_MIN_DIAMETER_PX / 2)} * cssPixelM;
   vec2 physicalHalfSize = vec2(shape.y * scale * rightLength * 0.5,
     shape.z * scale * abs(dot(upP, vec2(-axis.y, axis.x))) * 0.5);
   halfSize = vec2(trafficLampFloor(physicalHalfSize.x, floorSize),
