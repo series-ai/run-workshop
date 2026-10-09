@@ -1,0 +1,15 @@
+{
+  "revision": "4bd2cc8",
+  "systemsSha256": "9939001678327ad9963d9376d2893d3275b3c78d5a9615cda88a7f044b98868d",
+  "systemsOutsideBoundsSha256": "18d735d0a5105e62d9c0094cc4c4a8c0ce18396ba5d9ef2b024163283f2b875e",
+  "bounds": {
+    "minX": -400.0,
+    "maxX": 400.0,
+    "minY": 60.0,
+    "maxY": 2000.0,
+    "minZ": -400.0,
+    "maxZ": 400.0
+  },
+  "manifestOutsideAllowedDigestsSha256": "d4e17b761f69ffd55840cd9f0b9471140e4e7c65ff84391d7fab294b6f8ae7b5",
+  "identitySourceSha256": "a8b88d907eeaaf6b9f545166f23180a810e90db0c8dad0b22df5e5716d79407d"
+}

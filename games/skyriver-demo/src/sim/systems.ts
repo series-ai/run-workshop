@@ -47,9 +47,9 @@ const STATE_QUANTUM = 1_000_000;
 
 /** The flyable volume. Free flight clamps to it; the autopilot path is generated inside it. */
 export const CHASM_BOUNDS = Object.freeze({
-  minX: -400,
-  maxX: 400,
-  minY: 60,
+  minX: -364,
+  maxX: 364,
+  minY: 122,
   maxY: 2000,
   minZ: -400,
   maxZ: 400,
