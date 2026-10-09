@@ -271,7 +271,7 @@ const DISTANCE_DIM_FLOOR = 0.42;
  * 60 m, low alpha so bloom integrates it. Red seen from behind, warm white seen from the front.
  */
 /** R18 impostor sprite brightness before the emissive gain (bloom A/B tuned). */
-export const IMPOSTOR_INTENSITY = 1.2;
+export const IMPOSTOR_INTENSITY = 1.7;
 const TRAIL_SECONDS = 0.45;
 const TRAIL_MAX_M = 60;
 const TRAIL_ALPHA = 0.25;
@@ -764,7 +764,7 @@ function toGeometry(build: MeshBuild, label: string): BufferGeometry {
 
 const STREAK_VERTEX = /* glsl */ `
 attribute vec2 aCorner;      // x: 0 lamp end, 1 trail end; y: side -1..1
-attribute float aLamp;       // 0/2 head (left/right), 1/3 tail (left/right)
+attribute float aLamp;       // 0 head pair, 1 tail pair, 4 trail
 attribute vec3 aCarPos;
 attribute vec4 aCarDir;      // xyz unit velocity, w speed (m/s)
 attribute vec4 aCarFade;     // fade, physical scale, warmth, trail weight
@@ -779,6 +779,7 @@ uniform float uTrailEndWidth;
 varying vec2 vCapsule;       // x along in radius units, y across -1..1
 varying float vLengthR;      // capsule body length in radius units
 varying float vLamp;
+varying float vPairOffset;
 varying float vWarm;
 varying float vIntensity;
 
@@ -797,15 +798,22 @@ void main() {
   }
   float kind = isTrail ? 4.0 : mod( aLamp, 2.0 );
   bool head = kind < 0.5;
-  float lampSide = isTrail ? 0.0 : ( aLamp < 1.5 ? -1.0 : 1.0 );
+  float lampSide = 0.0;
   float scale = aCarFade.y;
   float type = aCarShape.x;
+  if (!trafficLampInView(aCarPos, type, scale, uPixelAngle, isTrail ? uTrailMax : 0.0)) {
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    return;
+  }
   vec3 lamp;
   vec4 v0;
   vec2 lampAxis;
   vec2 lampHalfSize;
+  float pairHalfSpan;
+  float lampGain;
   trafficLampKernel(aCarPos, dir, aCarShape.y, type, scale, head ? 1.0 : 0.0, lampSide,
-    uPixelAngle, lamp, v0, lampAxis, lampHalfSize);
+    uPixelAngle, lamp, v0, lampAxis, lampHalfSize, pairHalfSpan, lampGain);
+  vPairOffset = pairHalfSpan / lampHalfSize.x;
   float trail = isTrail
     ? min(speed * uTrailSeconds, min(uTrailMax, uTrailCarLengths * trafficCarLength(type) * scale))
     : 0.0;
@@ -844,7 +852,7 @@ void main() {
     vCapsule = vec2(mix(-1.0, vLengthR + 1.0, end), aCorner.y);
   } else {
     vec2 corner = vec2(aCorner.x * 2.0 - 1.0, aCorner.y);
-    vec2 filterSize = lampHalfSize + vec2(max(-v0.z, 1.0) * uPixelAngle * 0.5);
+    vec2 filterSize = lampHalfSize + vec2(pairHalfSpan, 0.0) + vec2(max(-v0.z, 1.0) * uPixelAngle * 0.5);
     vec2 uv = corner * filterSize / lampHalfSize;
     v = v0;
     v.xy += lampAxis * uv.x * lampHalfSize.x + vec2(-lampAxis.y, lampAxis.x) * uv.y * lampHalfSize.y;
@@ -869,6 +877,7 @@ void main() {
     vIntensity = aCarFade.x * aCarFade.w * smoothstep( 30.0, 90.0, length( cameraPosition - lamp ) );
   }
 
+  vIntensity *= lampGain;
   #ifdef USE_FOG
     vFogDepth = - v.z;
     vSkyFogHeight = lamp.y;
@@ -878,16 +887,27 @@ void main() {
 `;
 
 const LAMP_FILTER_GLSL = /* glsl */ `
-vec2 trafficLampSample(vec2 uv) {
-  float radiusSq = dot(uv, uv);
-  float support = 1.0 - smoothstep(${IMPOSTOR_SUPPORT_TAPER_BAND[0].toFixed(2)}, ${IMPOSTOR_SUPPORT_TAPER_BAND[1].toFixed(2)}, sqrt(radiusSq));
-  return vec2(exp(-radiusSq * 1.6), exp(-radiusSq * 10.0)) * support;
+// Integrate a compact smooth kernel over one pixel. No sample count changes with distance.
+vec2 trafficLampPrimitive(vec2 u) {
+  vec2 c = clamp(u, -1.0, 1.0);
+  vec2 c2 = c * c;
+  return c * (1.0 - c2 * (2.0 / 3.0) + c2 * c2 * 0.2);
+}
+float trafficBoxLamp(vec2 uv, vec2 halfPixel) {
+  vec2 integral = (trafficLampPrimitive(uv + halfPixel) - trafficLampPrimitive(uv - halfPixel))
+    / max(2.0 * halfPixel, vec2(1e-5));
+  return max(integral.x * integral.y, 0.0);
 }
 vec2 trafficFilteredLamp(vec2 uv) {
-  vec2 dx = dFdx(uv) * 0.25;
-  vec2 dy = dFdy(uv) * 0.25;
-  return 0.25 * (trafficLampSample(uv - dx - dy) + trafficLampSample(uv - dx + dy)
-    + trafficLampSample(uv + dx - dy) + trafficLampSample(uv + dx + dy));
+  vec2 dx = dFdx(uv);
+  vec2 dy = dFdy(uv);
+  vec2 halfPixel = 0.5 * sqrt(dx * dx + dy * dy);
+  return vec2(trafficBoxLamp(uv, halfPixel), trafficBoxLamp(uv * 2.5, halfPixel * 2.5));
+}
+vec2 trafficLampPair(vec2 uv, float offset) {
+  // Mean contribution keeps overlapping sub-pixel lamps from doubling the peak.
+  return 0.5 * (trafficFilteredLamp(uv - vec2(offset, 0.0))
+    + trafficFilteredLamp(uv + vec2(offset, 0.0)));
 }
 `;
 
@@ -899,6 +919,7 @@ uniform float uTrailAlpha;
 varying vec2 vCapsule;
 varying float vLengthR;
 varying float vLamp;
+varying float vPairOffset;
 varying float vWarm;
 varying float vIntensity;
 
@@ -914,7 +935,7 @@ void main() {
   float body = exp( - dist * dist * 1.6 ) * support;
   float core = exp( - dist * dist * 10.0 );
   if (vLamp < 3.5) {
-    vec2 filtered = trafficFilteredLamp(vCapsule);
+    vec2 filtered = trafficLampPair(vCapsule, vPairOffset);
     body = filtered.x;
     core = filtered.y;
   }
@@ -949,11 +970,11 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
  * R18 GPU cars: two lamp kernels per car. Read position from the baked path
  * path table (trafficStreams.ts; impostorPosition is the CPU mirror — keep the two in step). Each
  * instance carries only (stream, arc offset, phase, seed) and a sub-row; update() advances uTime.
- * Use the physical hull profile with a short trail. Type and scale stay fixed per car.
+ * One quad covers the physical lamp pair. Type and scale stay fixed per car.
  * ---------------------------------------------------------------------------------------------- */
 
 const IMPOSTOR_VERTEX = /* glsl */ `
-attribute vec2 aCorner;      // x: 0/1 left kernel, 2/3 right kernel; y: side -1..1
+attribute vec2 aCorner;      // x: group edge 0/1; y: side -1..1
 attribute vec4 aImp;         // logical path, arc offset 0..1, phase 0..1, appearance seed 0..1
 attribute vec4 aFlow;        // sub-row, effective speed m/s, signed pass period s, pass amplitude m
 attribute vec4 aRoute;       // baked row A, baked row B, hop start m, hop ramp m
@@ -981,8 +1002,7 @@ uniform float uFadeK;        // tier crossfade progress 0..1
 uniform float uTargetCount;  // target instance count for current transition
 
 varying vec2 vCoreUv;
-varying vec2 vCapsule;
-varying float vLengthR;
+varying float vPairOffset;
 varying float vWarm;
 varying float vIntensity;
 
@@ -1154,37 +1174,28 @@ void main() {
   float frontMix = smoothstep(-0.2, 0.3, facing);
   float type = floor(aAppearance);
   float scale = fract(aAppearance) * 8.0;
-  float lampSide = aCorner.x < 1.5 ? -1.0 : 1.0;
+  if (!trafficLampInView(pos, type, scale, uPixelAngle, 0.0)) {
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    return;
+  }
+  float lampSide = 0.0;
   float end = mod(aCorner.x, 2.0);
   vec3 lamp;
   vec4 v0;
   vec2 lampAxis;
   vec2 halfSize;
+  float pairHalfSpan;
+  float lampGain;
   trafficLampKernel(pos, dir, 0.0, type, scale, frontMix, lampSide,
-    uPixelAngle, lamp, v0, lampAxis, halfSize);
+    uPixelAngle, lamp, v0, lampAxis, halfSize, pairHalfSpan, lampGain);
   vec2 lampUp = vec2(-lampAxis.y, lampAxis.x);
-  // The micro-trail stays behind its parent. Its length stays below two car lengths.
-  float startRadius = max(1e-6, min(halfSize.x, halfSize.y));
-  float streak = min(2.0 * trafficCarLength(type) * scale, 2.2 * startRadius);
-  vec4 v1 = viewMatrix * vec4(lamp - dir * streak, 1.0);
-  // Project the end at the lamp depth. This keeps the shared core profile exact.
-  vec2 delta = v1.xy * max(-v0.z, 1.0) / max(-v1.z, 1.0) - v0.xy;
-  float len = length(delta);
-  vec2 trailAxis = len > 1e-4 ? delta / len : vec2(0.0, -1.0);
-  vec2 trailSide = vec2(-trailAxis.y, trailAxis.x);
-  vec2 endLocal = vec2(dot(delta, lampAxis), dot(delta, lampUp));
-  float endRadius = startRadius * 0.45;
-  vec2 filterSize = halfSize + vec2(max(-v0.z, 1.0) * uPixelAngle * 0.5);
-  vec2 lo = min(-filterSize, min(vec2(-startRadius), endLocal - endRadius));
-  vec2 hi = max(filterSize, max(vec2(startRadius), endLocal + endRadius));
-  vec2 local = mix(lo, hi, vec2(end, (aCorner.y + 1.0) * 0.5));
-  vec2 offset = lampAxis * local.x + lampUp * local.y;
+  vec2 filterSize = halfSize + vec2(pairHalfSpan, 0.0)
+    + vec2(max(-v0.z, 1.0) * uPixelAngle * 0.5);
+  vec2 local = vec2(end * 2.0 - 1.0, aCorner.y) * filterSize;
   vec4 vv = v0;
-  vv.xy += offset;
+  vv.xy += lampAxis * local.x + lampUp * local.y;
   vCoreUv = local / max(halfSize, vec2(1e-6));
-  float alongM = dot(offset, trailAxis);
-  vLengthR = len / startRadius;
-  vCapsule = vec2(alongM / startRadius, dot(offset, trailSide) / startRadius);
+  vPairOffset = pairHalfSpan / halfSize.x;
 
   vWarm = frontMix;
   float toAlpha = float( gl_InstanceID ) < uTargetCount ? 1.0 : 0.0;
@@ -1193,7 +1204,7 @@ void main() {
   // falls over the shared 2.5–6.5 km band and reaches zero with a smooth derivative.
   float handover = smoothstep( uBand.x, uBand.y, dist );
   float farBrightness = 1.0 - smoothstep( uFarFalloff.x, uFarFalloff.y, dist );
-  vIntensity = ( 0.55 + 0.6 * fract( seed * 29.7 ) ) * handover * tierPresence * farBrightness;
+  vIntensity = (0.55 + 0.6 * fract(seed * 29.7)) * lampGain * handover * tierPresence * farBrightness;
   if ( vIntensity <= 0.001 ) {
     // Inside the CPU cars' band (or faded out): no fragments at all.
     gl_Position = vec4( 2.0, 2.0, 2.0, 1.0 );
@@ -1212,8 +1223,7 @@ uniform float uIntensity;
 uniform float uFogPenetration;
 
 varying vec2 vCoreUv;
-varying vec2 vCapsule;
-varying float vLengthR;
+varying float vPairOffset;
 varying float vWarm;
 varying float vIntensity;
 
@@ -1222,14 +1232,9 @@ ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${LAMP_FILTER_GLSL}
 
 void main() {
-  float x = vCapsule.x;
-  float along = clamp( x, 0.0, vLengthR );
-  float t = vLengthR > 0.0 ? along / vLengthR : 0.0;
-  float dist = length(vec2(x - along, vCapsule.y)) / mix(1.0, 0.45, t);
-  float support = 1.0 - smoothstep(${IMPOSTOR_SUPPORT_TAPER_BAND[0].toFixed(2)}, ${IMPOSTOR_SUPPORT_TAPER_BAND[1].toFixed(2)}, dist);
-  float trailBody = exp(-dist * dist * 1.6) * support * pow(max(1.0 - t, 0.0), 1.2);
-  float body = max(trafficFilteredLamp(vCoreUv).x, vLengthR > 0.0001 ? trailBody : 0.0);
-  vec3 color = mix( vec3( 1.0, 0.07, 0.045 ), vec3( 1.0, 0.86, 0.66 ), vWarm ) * body;
+  vec2 filtered = trafficLampPair(vCoreUv, vPairOffset);
+  vec3 lampColor = mix(vec3(1.0, 0.07, 0.045), vec3(1.0, 0.97, 0.93), vWarm);
+  vec3 color = lampColor * filtered.x + mix(lampColor, vec3(1.0), 0.5) * filtered.y * 0.4;
   gl_FragColor = vec4( color * ( vIntensity * uIntensity ), 1.0 );
 ${SKYRIVER_OUTPUT_APPLY_GLSL}
   #ifdef USE_FOG
@@ -1313,9 +1318,9 @@ export function trafficHopCensus(seed: number, carCount: number): HopCensus {
 
 function buildImpostorGeometry(model: RenderTrafficModel, capacity: number): InstancedBufferGeometry {
   const geometry = new InstancedBufferGeometry();
-  geometry.setAttribute('position', new BufferAttribute(new Float32Array(8 * 3), 3));
-  geometry.setAttribute('aCorner', new BufferAttribute(new Float32Array([0, -1, 0, 1, 1, 1, 1, -1, 2, -1, 2, 1, 3, 1, 3, -1]), 2));
-  geometry.setIndex([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7]);
+  geometry.setAttribute('position', new BufferAttribute(new Float32Array(4 * 3), 3));
+  geometry.setAttribute('aCorner', new BufferAttribute(new Float32Array([0, -1, 0, 1, 1, 1, 1, -1]), 2));
+  geometry.setIndex([0, 1, 2, 0, 2, 3]);
   // R21: the same model instance the CPU cars read, so neither population rebakes the path table.
   const attrs = deriveImpostorAttributes(model.seed, capacity, model);
   geometry.setAttribute('aImp', new InstancedBufferAttribute(attrs.streamArcPhaseSeed, 4));
@@ -1333,10 +1338,9 @@ function buildStreakGeometry(capacity: number): InstancedBufferGeometry {
   const corner: number[] = [];
   const lamp: number[] = [];
   const index: number[] = [];
-  // T7-5: four lamps per car — a white head pair and a red tail pair (lamp id = kind + 2 * side).
-  // R16: a fifth quad (lamp 4) is the car's light trail.
-  for (let l = 0; l < 5; l += 1) {
-    const base = l * 4;
+  // One quad covers each lamp pair. The third quad carries the near-car trail.
+  for (const l of [0, 1, 4]) {
+    const base = corner.length / 2;
     for (const [end, side] of [[0, -1], [0, 1], [1, 1], [1, -1]] as const) {
       corner.push(end, side);
       lamp.push(l);
@@ -1344,7 +1348,7 @@ function buildStreakGeometry(capacity: number): InstancedBufferGeometry {
     index.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
   const geometry = new InstancedBufferGeometry();
-  geometry.setAttribute('position', new BufferAttribute(new Float32Array(20 * 3), 3));
+  geometry.setAttribute('position', new BufferAttribute(new Float32Array(12 * 3), 3));
   geometry.setAttribute('aCorner', new BufferAttribute(new Float32Array(corner), 2));
   geometry.setAttribute('aLamp', new BufferAttribute(new Float32Array(lamp), 1));
   geometry.setIndex(index);
@@ -1631,7 +1635,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     const capacity = Math.max(1, archetypeTotals[archetype]);
     const mesh = new InstancedMesh(geometry, carMaterial, capacity);
     mesh.name = 'skyriver.traffic.' + label;
-    // Every matrix changes per frame across the whole canyon; culling the batch is never a win.
+    // Every matrix changes per frame across the whole canyon.
     mesh.frustumCulled = false;
     mesh.instanceMatrix.setUsage(DynamicDrawUsage);
     const instanceColor = new InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
@@ -1670,6 +1674,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     depthTest: true,
     // The capsule is built in view space and its winding flips with the projected axis: never cull.
     side: DoubleSide,
+    forceSinglePass: true,
     fog: true,
   });
   applySkyriverFog(streakMaterial);
@@ -1743,6 +1748,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     depthWrite: false,
     depthTest: true,
     side: DoubleSide,
+    forceSinglePass: true,
     fog: true,
   });
   applySkyriverFog(impostorMaterial);
@@ -2306,7 +2312,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
       triangles += trianglesPerArchetype[archetype] * groupActive[archetype];
     }
-    triangles += streaksUsed * 10 + impostorGeometry.instanceCount * 4;
+    triangles += streaksUsed * 6 + impostorGeometry.instanceCount * 2;
     return {
       activeCars,
       activeThrusters: streaksUsed,
