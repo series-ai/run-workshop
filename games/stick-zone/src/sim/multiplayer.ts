@@ -455,14 +455,12 @@ export class MultiplayerCoordinator {
   private seenEvents = new Set<string>();
   public pruneInterval: any = null;
   public serverTimeOffset: number = 0;
-  public lastServerMessageTime: number = Date.now();
 
   public getServerNow(): number {
     return Date.now() + (this.serverTimeOffset || 0);
   }
   private selfReadinessTimer: any = null;
   public acceptedReceiptKeys: Set<string>;
-  public recoveryAbortController: AbortController | null = null;
   private discoveryInterval: any = null;
   public pendingWorldEvents: Array<PeerPacket> = [];
   public extractedPeerIds = new Set<string>();
@@ -538,13 +536,8 @@ export class MultiplayerCoordinator {
   public snapshotAppliedLocalTime = 0;
   public onRaidRestart?: (newRaidId: string) => void;
   public authenticated = false;
-  public isSuperseded = false;
-  public isConnectionActive = false;
   public serverMachines: Array<{ id: string; health: number; isAlive: boolean }> | null = null;
   private isDisposed = false;
-  private isRetryingTerminalRecovery = false;
-  private reconnectTimer: any = null;
-  private raidClockSyncInterval: any = null;
 
   constructor(sim: SectorDepotSimulation) {
     this.sim = sim;
@@ -552,7 +545,6 @@ export class MultiplayerCoordinator {
     sim.acceptedReceiptKeys = this.acceptedReceiptKeys;
     (this.sim as any).multiplayerCoordinator = this;
     (this.sim as any).coordinator = this;
-    this.sim.retryTerminalRecovery = () => this.retryTerminalRecovery();
 
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const isPlayer2 = urlParams?.get('rundotPlayer') === 'player2' || sim.player.id === 'op_bravo_1';
@@ -1370,7 +1362,7 @@ export class MultiplayerCoordinator {
   }
 
   public pruneExpiredPeers(maxIdleMs = 10000, nowTimestamp?: number): void {
-    if (this.isDisposed || this.isSuperseded) return;
+    if (this.isDisposed) return;
     const now = nowTimestamp ?? Date.now();
     const toRemove: string[] = [];
     for (const [peerId, peer] of this.connectedPeers.entries()) {
@@ -3180,54 +3172,12 @@ export class MultiplayerCoordinator {
     }
   }
 
-  public waitForAuthentication(timeoutMs = 5000): Promise<boolean> {
-    if (this.authenticated) return Promise.resolve(true);
-    return new Promise((resolve) => {
-      const start = Date.now();
-      const check = setInterval(() => {
-        if (this.isDisposed) {
-          clearInterval(check);
-          resolve(false);
-          return;
-        }
-        if (this.authenticated) {
-          clearInterval(check);
-          resolve(true);
-          return;
-        }
-        if (Date.now() - start >= timeoutMs) {
-          clearInterval(check);
-          resolve(this.authenticated);
-          return;
-        }
-      }, 50);
-    });
-  }
-
-  public async retryTerminalRecovery(maxRetries = 3): Promise<boolean> {
-    if (this.isDisposed || this.isRetryingTerminalRecovery) return false;
-    this.isRetryingTerminalRecovery = true;
-    try {
-      return await this._doRetryTerminalRecovery(maxRetries);
-    } finally {
-      this.isRetryingTerminalRecovery = false;
-    }
-  }
-
-  private async _doRetryTerminalRecovery(maxRetries = 3): Promise<boolean> {
-    return false;
-  }
-
   public disconnect(): void {
     this.cleanup();
   }
 
   public cleanup(): void {
     this.isDisposed = true;
-    if (this.recoveryAbortController) {
-      try { this.recoveryAbortController.abort(); } catch {}
-      this.recoveryAbortController = null;
-    }
     this.authenticated = false;
     this.sim.isSocketDisconnected = false;
     this.sim.serverMachineDamageAuthority = false;
@@ -3241,21 +3191,6 @@ export class MultiplayerCoordinator {
     if (this.pruneInterval) {
       clearInterval(this.pruneInterval);
       this.pruneInterval = null;
-    }
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-    if (this.raidClockSyncInterval) {
-      clearInterval(this.raidClockSyncInterval);
-      this.raidClockSyncInterval = null;
-    }
-    // Abort outstanding clock-sync timers: their late resolution must never adopt
-    // into a disposed simulation (or steal frame time from the next one).
-    const inFlight = (this as any).__clockSyncInFlight;
-    if (Array.isArray(inFlight)) {
-      for (const c of inFlight) { try { c.abort(); } catch {} }
-      inFlight.length = 0;
     }
     if (this.discoveryInterval) {
       clearInterval(this.discoveryInterval);

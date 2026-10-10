@@ -166,36 +166,16 @@ export function parseCanonicalQuantity(val: string | number | undefined): number
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function loadPersistedState(): Partial<StashState> {
-  return {};
-}
-
-function persistState(state: {
-  bankCash: number;
-  operativeLevel: number;
-  xp: number;
-  stats: PlayerStats;
-  loadout: Loadout;
-  stashItems: StashItem[];
-  contracts: Contract[];
-  settledReceiptIds: string[];
-}) {
-  // Authoritative state lives strictly in RundotGameAPI.simulation.
-  // Game client does not issue client-side mutations to appStorage or localStorage.
-}
-
 export const useStashStore = create<StashState>((set, get) => {
-  const initialPersisted = loadPersistedState();
-
   const initial = {
-    bankCash: initialPersisted.bankCash ?? 5000,
-    operativeLevel: initialPersisted.operativeLevel ?? 1,
-    xp: initialPersisted.xp ?? 0,
-    stats: initialPersisted.stats ?? DEFAULT_STATS,
-    loadout: initialPersisted.loadout ?? DEFAULT_LOADOUT,
-    stashItems: initialPersisted.stashItems ?? DEFAULT_STASH_ITEMS,
-    contracts: initialPersisted.contracts ?? INITIAL_CONTRACTS,
-    settledReceiptIds: initialPersisted.settledReceiptIds ?? [],
+    bankCash: 5000,
+    operativeLevel: 1,
+    xp: 0,
+    stats: DEFAULT_STATS,
+    loadout: DEFAULT_LOADOUT,
+    stashItems: DEFAULT_STASH_ITEMS,
+    contracts: INITIAL_CONTRACTS,
+    settledReceiptIds: [],
     activeRaidLoot: [],
   };
 
@@ -312,17 +292,6 @@ export const useStashStore = create<StashState>((set, get) => {
         settledReceiptIds: updatedReceipts,
       });
 
-      persistState({
-        bankCash: newCash,
-        operativeLevel: newLevel,
-        xp: newXp,
-        stats: newStats,
-        loadout: state.loadout,
-        stashItems: updatedStash,
-        contracts: updatedContracts,
-        settledReceiptIds: updatedReceipts,
-      });
-
       return { success: true, xpGained, cashCredited: authoritativeCash };
     },
 
@@ -341,17 +310,6 @@ export const useStashStore = create<StashState>((set, get) => {
 
       set({
         stats: newStats,
-        settledReceiptIds: updatedReceipts,
-      });
-
-      persistState({
-        bankCash: state.bankCash,
-        operativeLevel: state.operativeLevel,
-        xp: state.xp,
-        stats: newStats,
-        loadout: state.loadout,
-        stashItems: state.stashItems,
-        contracts: state.contracts,
         settledReceiptIds: updatedReceipts,
       });
     },
@@ -441,17 +399,6 @@ export const useStashStore = create<StashState>((set, get) => {
         contracts: updatedContracts,
       });
 
-      persistState({
-        bankCash: newCash,
-        operativeLevel: newLevel,
-        xp: newXp,
-        stats: newStats,
-        loadout: state.loadout,
-        stashItems: updatedStash,
-        contracts: updatedContracts,
-        settledReceiptIds: state.settledReceiptIds,
-      });
-
       return { xpGained, leveledUp, newLevel };
     },
 
@@ -477,11 +424,6 @@ export const useStashStore = create<StashState>((set, get) => {
       }
 
       set({ bankCash: newCash, stashItems: updatedStash });
-      persistState({
-        ...state,
-        bankCash: newCash,
-        stashItems: updatedStash,
-      });
       return true;
     },
 
@@ -510,11 +452,6 @@ export const useStashStore = create<StashState>((set, get) => {
       }
 
       set({ bankCash: newCash, stashItems: updatedStash });
-      persistState({
-        ...state,
-        bankCash: newCash,
-        stashItems: updatedStash,
-      });
       return true;
     },
 
@@ -525,21 +462,18 @@ export const useStashStore = create<StashState>((set, get) => {
         [slot === "primary" ? "primaryWeapon" : "secondaryWeapon"]: weapon,
       };
       set({ loadout: newLoadout });
-      persistState({ ...state, loadout: newLoadout });
     },
 
     equipArmor: (tier) => {
       const state = get();
       const newLoadout = { ...state.loadout, armorTier: tier };
       set({ loadout: newLoadout });
-      persistState({ ...state, loadout: newLoadout });
     },
 
     setStimsCount: (count) => {
       const state = get();
       const newLoadout = { ...state.loadout, stims: Math.max(0, Math.min(4, count)) };
       set({ loadout: newLoadout });
-      persistState({ ...state, loadout: newLoadout });
     },
 
     claimContractReward: (contractId) => {
@@ -561,14 +495,6 @@ export const useStashStore = create<StashState>((set, get) => {
       );
 
       set({
-        bankCash: newCash,
-        xp: newXp,
-        operativeLevel: newLevel,
-        contracts: updatedContracts,
-      });
-
-      persistState({
-        ...state,
         bankCash: newCash,
         xp: newXp,
         operativeLevel: newLevel,

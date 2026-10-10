@@ -580,8 +580,6 @@ export class SectorDepotSimulation {
   public ingressController: StagedIngressController;
   public proximityAlert: ProximityAlert = { active: false, distance: 999, bearing: 0 };
   public combatLog: string[] = [];
-  public terminalRecoveryError?: string;
-  public retryTerminalRecovery?: () => Promise<boolean>;
   public lastInterruptionTick = 0;
   public shootCooldownTicks = 0;
   public rollCooldownTicks = 0;
@@ -956,7 +954,6 @@ export class SectorDepotSimulation {
 
   public isInputLocked(): boolean {
     if (this.player.isExtracted) return true;
-    if (this.terminalRecoveryError) return true;
     if (this.isSocketDisconnected) return true;
     const exfilState = this.exfilController.getState();
     return this.exfilController.isInputLocked() || exfilState.kind === "failed" || exfilState.kind === "submitting_settlement" || exfilState.kind === "extracted" || !this.isAdmitted() || !this.player.isAlive || this.player.health <= 0;
