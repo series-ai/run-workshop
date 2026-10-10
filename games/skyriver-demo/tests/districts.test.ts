@@ -825,7 +825,7 @@ describe('R22 shader colour paths', () => {
     expect(source.towerVertex).toContain('flat varying float vMaterial;');
     expect(source.towerFragment).toContain('flat varying float vMaterial;');
     expect(source.towerFragment).toContain('color += heroSpill * 0.2 * contactAo;');
-    expect(source.towerFragment).toContain('fresnel * 1.4 * vIsSide * contactAo;');
+    expect(source.towerFragment).toContain('wetSpill * fresnel * 0.65 * vIsSide * contactAo;');
   });
 
   it('matches the pane and room source records to the rendered hue rule', () => {

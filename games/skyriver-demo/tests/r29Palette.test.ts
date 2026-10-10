@@ -45,7 +45,7 @@ function actualMesh(city: SkyriverCity, name: string): THREE.InstancedMesh {
 }
 
 describe('R29 independent building palette and value controls', () => {
-  it('keeps the material oracle outside the explicit R31 and R32 roof policies in the actual city shaders', () => {
+  it('keeps the material oracle outside the R31 and R32 roof policies with the approved R38 lighting', () => {
     for (const file of ['windowPalette.ts'] as const) {
       expect(createHash('sha256').update(readFileSync(new URL('../src/render/' + file, import.meta.url))).digest('hex')).toBe(materialBaseline.sourceHashes[file]);
     }

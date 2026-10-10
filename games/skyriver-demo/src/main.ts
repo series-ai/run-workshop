@@ -38,7 +38,7 @@ import type {
   SkyriverGeometryIdentity,
   SkyriverLightSource,
 } from './render/city';
-import { skyriverDistrictHazeTint, type SkyriverDistrict, type SkyriverDistrictModel, type SkyriverLinearRgb } from './render/districts';
+import { type SkyriverDistrict, type SkyriverDistrictModel } from './render/districts';
 import type { SkyriverDistrictHazeEvidence } from './render/atmosphere';
 import { TRAFFIC_QUALITY_TIERS, createSkyriverTraffic } from './render/traffic';
 import { deriveImpostorAttributes, impostorFlow, impostorPosition } from './render/trafficStreams';
@@ -431,14 +431,10 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   // every one of them exactly once. The role was declared by traffic.ts at creation.
   scene.registerStageRoles(traffic.objects);
 
-  const shuttle = createSkyriverShuttle({ depthFade: scene.depthFade });
+  const shuttle = createSkyriverShuttle({ depthFade: scene.depthFade, lights: scene.city.lightSources() });
   // R29: autopilot uses a slower pure tick route; free flight draws the sim pose.
   const presenter = createFlightPresenter(seed);
   const wakeSamples = createWorldWakeSamples();
-  let districtTintBucket = Number.NaN;
-  let districtTintTick = Number.NaN;
-  let districtTintAllowed = true;
-  let shuttleDistrictTint: SkyriverLinearRgb = [1, 1, 1];
   for (const object of shuttle.objects) scene.scene.add(object);
   // The plume is a child of the hull and carries the other role, so this traverses the subtree.
   scene.registerStageRoles(shuttle.objects);
@@ -790,20 +786,11 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
         presented.speed * (presented.mode !== 0 && presented.boostT > 0 ? 1.8 : 1),
         presented.canyonV, presented.canyonX,
       );
-      const tintBucket = Math.floor(state.current.tick / 30);
       const districtAllowed = scene.city.districtColourAllowed;
-      if (tintBucket !== districtTintBucket || state.current.tick < districtTintTick || districtAllowed !== districtTintAllowed) {
-        shuttleDistrictTint = districtAllowed
-          ? skyriverDistrictHazeTint(scene.city.districtModel(), presented.canyonV)
-          : [1, 1, 1];
-        districtTintBucket = tintBucket;
-        districtTintAllowed = districtAllowed;
-      }
-      districtTintTick = state.current.tick;
       shuttle.update({
         boostVisual: presented.boostVisual,
         time,
-        districtTint: shuttleDistrictTint,
+        districtAllowed,
         wake: wakeSamples,
       });
 

@@ -89,7 +89,7 @@ describe('R31 independent roof emission policy', () => {
     if (process.env.SKYRIVER_ROOF_POLICY_OUT) writeFileSync(`${process.env.SKYRIVER_ROOF_POLICY_OUT}-${seed}.json`, JSON.stringify(evidence, null, 2));
   });
 
-  it('changes only the approved roof shader terms and retains all other lighting', () => {
+  it('retains the roof shader rules with the approved R38 lighting', () => {
     for (const [key, source] of Object.entries(SKYRIVER_CITY_SHADER_SOURCE)) expect(createHash('sha256').update(withoutR32RoofPolicy(source, key)).digest('hex'), key).toBe(baseline.shaderHashes[key as keyof typeof baseline.shaderHashes]);
     const source = SKYRIVER_CITY_SHADER_SOURCE;
     expect(source.towerVertex).toContain('vEmissionAllowed = aEmissionAllowed;');

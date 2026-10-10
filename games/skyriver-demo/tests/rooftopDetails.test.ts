@@ -155,7 +155,7 @@ describe('R35 independent dark roof details', () => {
     if (process.env.SKYRIVER_ROOF_DETAIL_OUT) writeFileSync(`${process.env.SKYRIVER_ROOF_DETAIL_OUT}-uploaded-${seed}.json`, JSON.stringify(evidence, null, 2));
   });
 
-  it('keeps every real shader byte and dark kind2 source rule unchanged', () => {
+  it('keeps the approved R38 shader bytes and dark kind2 source rule', () => {
     for (const [key, source] of Object.entries(SKYRIVER_CITY_SHADER_SOURCE)) expect(sha(source), key).toBe(baseline.shaderHashes[key as keyof typeof baseline.shaderHashes]);
     expect(skyriverTrimSourceTermId(2, 0)).toBeNull(); expect(skyriverTrimSourceTermId(2, 1)).toBeNull();
   });

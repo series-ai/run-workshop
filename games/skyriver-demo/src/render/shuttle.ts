@@ -23,6 +23,8 @@ import * as THREE from 'three';
 
 import { applySkyriverFog } from './atmosphere';
 import type { WorldWakeSamples } from './flightPresentation';
+import type { SkyriverLightSource } from './city';
+import { SKYRIVER_STRUCTURED_LIGHT_GLSL } from './structuredLight';
 import { SKYRIVER_DEPTH_FADE_GLSL, SkyriverDepthSnapshot } from './depthFade';
 import { skyriverDeclareStageRole } from './stageRoles';
 
@@ -31,8 +33,7 @@ export interface SkyriverShuttleUpdate {
   readonly boostVisual: number;
   /** Continuous time in seconds (tick + alpha) for the plume flicker phase. */
   readonly time: number;
-  /** District hue multiplier used by the canopy reflection. */
-  readonly districtTint?: readonly [number, number, number];
+  readonly districtAllowed?: boolean;
   /** Reused world wake buffer from flightPresentation.sampleWorldWake(). */
   readonly wake: WorldWakeSamples;
 }
@@ -62,10 +63,6 @@ const MARKER: Rgb = [0.25, 1.6, 2.0];
 /** T7-2: panel seams (true black) and the bevel catch-light along the canopy base. */
 const SEAM: Rgb = [0.004, 0.0, 0.0];
 const BEVEL: Rgb = [0.34, 0.03, 0.035];
-/** T7-2 neon environment tint per face side: the city's cyan on the right, magenta on the left. */
-const ENV_RIGHT: Rgb = [0.0, 0.03, 0.045];
-const ENV_LEFT: Rgb = [0.04, 0.0, 0.03];
-const ENV_TOP: Rgb = [0.01, 0.02, 0.035];
 /** T6R-2: the clearcoat catching the city — a narrow hot highlight along each shoulder line. */
 const CLEARCOAT: Rgb = [0.8, 0.3, 0.33];
 
@@ -147,15 +144,10 @@ function pushTri(build: HullBuild, a: Vec3, b: Vec3, c: Vec3, color: Rgb, emissi
     const gradient = vertical > 0.6 ? (facesUp ? 1.35 : 0.12) : 0.55 + 0.45 * Math.min(1, Math.max(0, (centreY + 0.8) / 1.8));
     const shade = (0.3 + 0.75 * key) * gradient;
     const up = facesUp ? vertical : 0;
-    // Environment reflection: which way the face looks decides which neon it mirrors.
-    const centreX = (a[0] + b[0] + c[0]) / 3;
-    const sideways = 1 - vertical;
-    const env: Rgb = vertical > 0.6 && facesUp ? ENV_TOP : centreX > 0.4 ? ENV_RIGHT : centreX < -0.4 ? ENV_LEFT : [0, 0, 0];
-    const envAmount = vertical > 0.6 ? 1 : sideways;
     rgb = [
-      color[0] * shade + RIM[0] * up + env[0] * envAmount,
-      color[1] * shade + RIM[1] * up + env[1] * envAmount,
-      color[2] * shade + RIM[2] * up + env[2] * envAmount,
+      color[0] * shade + RIM[0] * up,
+      color[1] * shade + RIM[1] * up,
+      color[2] * shade + RIM[2] * up,
     ];
   }
   for (const p of [a, b, c]) {
@@ -568,7 +560,7 @@ void main() {
     }
     right = rightLength > 1e-4 ? right / rightLength : vec3( 1.0, 0.0, 0.0 );
     float t = clamp( aTS.x, 0.0, 1.0 );
-    float halfWidth = 0.5 * mix( uWakeRootWidth, uWakeTailWidth, t );
+    float halfWidth = 0.5 * mix( uWakeRootWidth * 0.24, uWakeTailWidth * 0.3, t );
     vec3 world = centre + right * ( aTS.y * halfWidth );
     vTS = vec2( t, aTS.y );
     vKind = aKind;
@@ -588,7 +580,7 @@ void main() {
     float len = length( right );
     right = len > 1e-4 ? right / len : vec3( 1.0, 0.0, 0.0 );
     // Bulb just behind the throat, then a long taper to a point.
-    float width = uWidth * ( 0.75 + 0.55 * sin( min( t * 6.0, 3.14159 ) * 0.5 ) ) * ( 1.0 - t );
+    float width = uWidth * ( 1.0 - t ) * ( 0.85 + 0.15 * exp( - t * 12.0 ) );
     world = centre + right * ( aTS.y * 0.5 * width );
   } else if ( aKind < 1.5 ) {
     vec3 toCam = normalize( cameraPosition - nozzle );
@@ -609,6 +601,8 @@ void main() {
 `;
 
 const PLUME_FRAGMENT = /* glsl */ `
+${SKYRIVER_STRUCTURED_LIGHT_GLSL}
+
 uniform float uIntensity;
 uniform float uTime;
 
@@ -627,7 +621,8 @@ void main() {
   if ( vKind < 0.5 ) {
     float t = vTS.x;
     float s = vTS.y;
-    float halo = exp( - s * s * 2.6 );
+    float sideFade = 1.0 - smoothstep( 0.65, 0.95, abs( s ) );
+    float halo = exp( - s * s * 8.0 ) * sideFade;
     float rest = max( 1.0 - t, 0.0 );
     float core = exp( - s * s * 26.0 ) * pow( rest, 2.2 );
     float along = smoothstep( 0.0, 0.03, t ) * pow( rest, 1.25 );
@@ -635,28 +630,33 @@ void main() {
     float diamonds = 0.82 + 0.18 * sin( t * 46.0 - uTime * 70.0 );
     // T6R-2: the first fifth of the jet is white-hot.
     float throat = ( 1.0 - smoothstep( 0.12, 0.24, t ) ) * exp( - s * s * 5.0 );
-    color = ( outer * halo * along * 0.8 + hot * core * 1.4 ) * diamonds + vec3( 1.0 ) * throat * 1.1;
+    color = ( outer * halo * along * 0.25 + hot * core * 1.4 ) * diamonds + vec3( 1.0 ) * throat * 1.1;
+    color *= sideFade * smoothstep( 0.01, 0.16, t ) * ( 1.0 - smoothstep( 0.88, 0.98, t ) );
   } else if ( vKind < 1.5 ) {
     float r = length( vTS );
     float disc = exp( - r * r * 5.0 );
     float pin = exp( - r * r * 40.0 );
-    color = outer * disc * 0.35 + hot * pin * 0.7;
+    color = ( outer * disc * 0.18 + hot * pin * 0.7 ) * ( 1.0 - smoothstep( 0.65, 0.95, r ) );
   } else if ( vKind < 2.5 ) {
     // The taillight strip's bloom: a hot red bar fading out vertically and at the ends.
-    float across = exp( - vTS.y * vTS.y * 7.0 );
-    float ends = 1.0 - smoothstep( 0.72, 1.0, abs( vTS.x ) );
+    float across = exp( - vTS.y * vTS.y * 7.0 ) * ( 1.0 - smoothstep( 0.65, 0.95, abs( vTS.y ) ) );
+    float ends = 1.0 - smoothstep( 0.65, 0.95, abs( vTS.x ) );
     color = vec3( 1.0, 0.04, 0.03 ) * across * ends * 0.3 / max( uIntensity, 0.001 );
   } else {
     float t = clamp( vTS.x, 0.0, 1.0 );
     float side = vTS.y;
-    float halo = exp( - side * side * 2.4 ) * pow( max( 1.0 - t, 0.0 ), 0.65 );
+    float sideFade = 1.0 - smoothstep( 0.65, 0.95, abs( side ) );
+    float halo = exp( - side * side * 10.0 ) * pow( max( 1.0 - t, 0.0 ), 1.6 );
     float core = exp( - side * side * 18.0 ) * ( 1.0 - smoothstep( 0.12, 0.2, t ) );
     float tailFade = 1.0 - smoothstep( 0.86, 1.0, t );
     float distanceFade = 1.0 - smoothstep( 600.0, 3000.0, vWakeDistance );
-    color = outer * halo * 0.42 + hot * core * 0.7;
+    color = ( outer * halo * 0.12 + hot * core * 0.5 ) * sideFade;
     // Two ribbons overlap after the weld, so each carries half the shared brightness cap.
     outputIntensity = min( uIntensity * 0.16, 0.13 );
-    outputAlpha = tailFade * distanceFade;
+    outputAlpha = tailFade * distanceFade * smoothstep( 0.01, 0.2, t ) * ( 1.0 - smoothstep( 0.9, 0.98, t ) );
+  }
+  if ( vKind < 1.5 || vKind > 2.5 ) {
+    color *= lightBreakup( vec3( vTS.x * 96.0, vTS.y * 48.0, uTime * 0.6 ), vKind + 0.31 );
   }
   outputIntensity *= skyriverVisibilityFade();
   gl_FragColor = vec4( color * outputIntensity, outputAlpha );
@@ -755,11 +755,11 @@ function buildPlumeGeometry(): PlumeBuild {
 
 /** Attached nozzle flames stay short; the world ribbon carries the long exhaust trail. */
 // T7: intensities halved for the bloom pass, which now supplies the glow the raw values used to fake.
-const PLUME_CRUISE = Object.freeze({ length: 8, width: 1.4, flare: 1.2, intensity: 0.55 });
+const PLUME_CRUISE = Object.freeze({ length: 8, width: 0.85, flare: 0.7, intensity: 0.55 });
 // R13: boost glare capped (cycle-6: the boost plume bloomed into a white blob over the craft).
-const PLUME_BOOST = Object.freeze({ length: 15, width: 2.3, flare: 1.5, intensity: 0.8 });
+const PLUME_BOOST = Object.freeze({ length: 15, width: 1.1, flare: 0.85, intensity: 0.8 });
 
-export function createSkyriverShuttle(options: { readonly depthFade?: SkyriverDepthSnapshot } = {}): SkyriverShuttle {
+export function createSkyriverShuttle(options: { readonly depthFade?: SkyriverDepthSnapshot; readonly lights?: readonly SkyriverLightSource[] } = {}): SkyriverShuttle {
   const build = buildHull();
   const indexedHull = indexHull(build);
   const hullGeometry = new THREE.BufferGeometry();
@@ -772,9 +772,17 @@ export function createSkyriverShuttle(options: { readonly depthFade?: SkyriverDe
   hullGeometry.computeBoundingSphere();
   const hullMaterial = new THREE.MeshBasicMaterial({ vertexColors: true, fog: true, side: THREE.DoubleSide });
   hullMaterial.name = 'skyriver.shuttle.hull';
-  const districtTintUniform = { value: new THREE.Vector4(1, 1, 1, 1) };
+  const pickupSources = (options.lights ?? []).filter(source => source.role === 'hero-sign' || source.role === 'ordinary-sign');
+  const pickupPosition = Array.from({ length: 8 }, () => new THREE.Vector4());
+  const pickupAxis = Array.from({ length: 8 }, () => new THREE.Vector4());
+  const pickupColor = Array.from({ length: 8 }, () => new THREE.Vector3());
+  const pickupCount = { value: 0 };
+  const pickupOrder: { source: SkyriverLightSource; distance: number }[] = pickupSources.map(source => ({ source, distance: Infinity }));
   hullMaterial.onBeforeCompile = (shader) => {
-    shader.uniforms.uDistrictTint = districtTintUniform;
+    shader.uniforms.uPickupCount = pickupCount;
+    shader.uniforms.uPickupPosition = { value: pickupPosition };
+    shader.uniforms.uPickupAxis = { value: pickupAxis };
+    shader.uniforms.uPickupColor = { value: pickupColor };
     shader.vertexShader = shader.vertexShader.replace(
       '#include <common>',
       '#include <common>\nattribute vec3 aSurfaceNormal;\nattribute float aGlass;\nvarying vec3 vGlassNormal;\nvarying vec3 vGlassWorldPosition;\nvarying float vGlass;',
@@ -785,27 +793,43 @@ export function createSkyriverShuttle(options: { readonly depthFade?: SkyriverDe
     );
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <common>',
-      '#include <common>\nuniform vec4 uDistrictTint;\nvarying vec3 vGlassNormal;\nvarying vec3 vGlassWorldPosition;\nvarying float vGlass;',
+      `#include <common>
+uniform int uPickupCount;
+uniform vec4 uPickupPosition[8];
+uniform vec4 uPickupAxis[8];
+uniform vec3 uPickupColor[8];
+varying vec3 vGlassNormal;
+varying vec3 vGlassWorldPosition;
+varying float vGlass;
+${SKYRIVER_STRUCTURED_LIGHT_GLSL}`,
     );
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <color_fragment>',
       `#include <color_fragment>
 vec3 glassNormal = normalize( vGlassNormal );
 vec3 glassView = normalize( cameraPosition - vGlassWorldPosition );
-vec3 glassReflection = reflect( -glassView, glassNormal );
 float glassGrazing = pow( 1.0 - abs( dot( glassNormal, glassView ) ), 2.0 );
-// Three vertical reflection planes stay fixed in world space.
-vec3 glassBandDistance = abs( vec3(
-  dot( glassReflection.xz, vec2( 0.939693, 0.342020 ) ),
-  dot( glassReflection.xz, vec2( -0.173648, 0.984808 ) ),
-  dot( glassReflection.xz, vec2( -0.819152, 0.573576 ) ) ) );
-vec3 glassBandWidth = vec3( 0.04, 0.032, 0.024 ) * uDistrictTint.w;
-vec3 glassBands = 1.0 - smoothstep( glassBandWidth, glassBandWidth + 0.025, glassBandDistance );
-float glassStreak = 0.035 + dot( glassBands, vec3( 0.16, 0.08, 0.04 ) );
-diffuseColor.rgb += uDistrictTint.rgb * vGlass * glassGrazing * glassStreak;`,
+vec3 pickup = vec3(0.0);
+vec3 pickupNormal = gl_FrontFacing ? glassNormal : -glassNormal;
+vec3 reflectedView = reflect( -glassView, pickupNormal );
+for ( int i = 0; i < 8; i++ ) {
+  if ( i >= uPickupCount ) break;
+  vec3 delta = vGlassWorldPosition - uPickupPosition[i].xyz;
+  vec3 axis = uPickupAxis[i].xyz;
+  float along = clamp( dot(delta, axis), -uPickupAxis[i].w, uPickupAxis[i].w );
+  vec3 toLight = axis * along - delta;
+  float distanceM = length(toLight);
+  vec3 lightDir = toLight / max(distanceM, 1e-4);
+  float facing = max( dot(pickupNormal, lightDir), 0.0 );
+  float streak = pow( max(dot(reflectedView, lightDir), 0.0), mix(32.0, 72.0, vGlass) );
+  float response = localAreaLight( uPickupPosition[i].w, distanceM );
+  float detail = wetMicrodetail(vGlassWorldPosition, 0.37);
+  pickup += uPickupColor[i] * response * detail * ( facing * 0.06 + streak * (0.18 + glassGrazing * 0.45) );
+}
+diffuseColor.rgb += pickup;`,
     );
   };
-  hullMaterial.customProgramCacheKey = () => 'skyriver-shuttle-hull-world-glass-v2';
+  hullMaterial.customProgramCacheKey = () => 'skyriver-shuttle-hull-world-glass-v3';
   applySkyriverFog(hullMaterial);
   const hull = new THREE.Mesh(hullGeometry, hullMaterial);
   hull.name = 'skyriver.shuttle.hull';
@@ -873,8 +897,26 @@ diffuseColor.rgb += uDistrictTint.rgb * vGlass * glassGrazing * glassStreak;`,
       hull.position.set(x, y, z);
       hull.rotation.set(-pitchTurns * Math.PI * 2, yawTurns * Math.PI * 2, rollTurns * Math.PI * 2);
     },
-    update({ boostVisual, time, districtTint = [1, 1, 1], wake }: SkyriverShuttleUpdate): void {
+    update({ boostVisual, time, districtAllowed = true, wake }: SkyriverShuttleUpdate): void {
       // Pure function of the arguments: no accumulators, so a restore cannot leave a stale flare.
+      for (const row of pickupOrder) {
+        const source = row.source;
+        const dx = hull.position.x - source.x, dy = hull.position.y - source.y, dz = hull.position.z - source.z;
+        const half = Math.max(source.sizeM[0], source.sizeM[1]) * 0.5;
+        const along = Math.max(-half, Math.min(half, dx * source.axis[0] + dy * source.axis[1] + dz * source.axis[2]));
+        row.distance = Math.hypot(dx - source.axis[0] * along, dy - source.axis[1] * along, dz - source.axis[2] * along);
+      }
+      pickupOrder.sort((a, b) => a.distance - b.distance);
+      const cutoff = pickupOrder[8]?.distance ?? Infinity;
+      pickupCount.value = Math.min(8, pickupOrder.length);
+      for (let i = 0; i < pickupCount.value; i++) {
+        const row = pickupOrder[i]!, source = row.source;
+        const weight = Number.isFinite(cutoff) ? 1 - THREE.MathUtils.smoothstep(row.distance, cutoff * 0.7, cutoff) : 1;
+        pickupPosition[i]!.set(source.x, source.y, source.z, source.sizeM[0] * source.sizeM[1]);
+        pickupAxis[i]!.set(...source.axis, Math.max(source.sizeM[0], source.sizeM[1]) * 0.5);
+        const color = districtAllowed ? source.emission : source.legacyEmission;
+        pickupColor[i]!.set(color[0] * weight, color[1] * weight, color[2] * weight);
+      }
       const boost = Math.min(1, Math.max(0, boostVisual));
       const flicker = 0.92 + 0.08 * Math.sin(time * 37.0) * Math.sin(time * 11.0);
       const u = plumeMaterial.uniforms;
@@ -885,9 +927,6 @@ diffuseColor.rgb += uDistrictTint.rgb * vGlass * glassGrazing * glassStreak;`,
       u.uWakeRootWidth!.value = wake.rootWidthM;
       u.uWakeTailWidth!.value = wake.tailWidthM;
       u.uTime!.value = time;
-      // Reuse the tint vector's fourth component for boost width and a small shimmer.
-      const glassWidth = 1 + 0.08 * boost + 0.1875 * (flicker - 0.92);
-      districtTintUniform.value.set(districtTint[0], districtTint[1], districtTint[2], glassWidth);
 
       for (let i = 0; i < SHUTTLE_WAKE_SAMPLE_COUNT; i += 1) {
         const source = i * 3;

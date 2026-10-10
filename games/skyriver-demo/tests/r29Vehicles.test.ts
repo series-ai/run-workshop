@@ -300,12 +300,11 @@ describe('R29 independent vehicle and presentation contracts', () => {
       const shader = { vertexShader: THREE.ShaderLib.basic.vertexShader, fragmentShader: THREE.ShaderLib.basic.fragmentShader, uniforms: {} };
       Reflect.apply(material.onBeforeCompile, material, [shader, null]);
       expect(shader.vertexShader).toContain('aSurfaceNormal');
-      expect(shader.fragmentShader).toContain('uniform vec4 uDistrictTint;');
-      expect(shader.fragmentShader).toContain('uDistrictTint.rgb * vGlass * glassGrazing * glassStreak');
-      const tint = Reflect.get(shader.uniforms, 'uDistrictTint') as { value: THREE.Vector4 };
-      expect(tint.value).toBeInstanceOf(THREE.Vector4);
-      expect(tint.value.toArray().every(Number.isFinite)).toBe(true);
-      expect(shader.fragmentShader).toContain('* uDistrictTint.w;');
+      expect(shader.fragmentShader).toContain('uniform vec3 uPickupColor[8];');
+      expect(shader.fragmentShader).toContain('diffuseColor.rgb += pickup;');
+      expect(shader.fragmentShader).toContain('localAreaLight( uPickupPosition[i].w, distanceM )');
+      const count = Reflect.get(shader.uniforms, 'uPickupCount') as { value: number };
+      expect(count.value).toBe(0);
     } finally { shuttle.dispose(); }
   });
 

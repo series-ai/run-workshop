@@ -37,6 +37,7 @@
  *     moving-camera capture in the runtime gate, and this module must not be read as evidence for it.
  */
 import * as THREE from 'three';
+import { SKYRIVER_STRUCTURED_LIGHT_GLSL } from './structuredLight';
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js';
 
 import {
@@ -663,6 +664,7 @@ uniform vec4 uLightShape[ LIGHT_LIMIT ];      // area: x lit area m^2, y scatter
 
 ${SKYRIVER_VOLUME_DENSITY_GLSL}
 ${SKYRIVER_SCATTER_RESPONSE_GLSL}
+${SKYRIVER_STRUCTURED_LIGHT_GLSL}
 
 float linearViewDepth( float depth01 ) {
   float nearPlane = uCameraRange.x;
@@ -711,7 +713,8 @@ vec3 localRadiance( vec3 world ) {
     }
     // The source's own emission, once, times the bounded area/solid-angle proxy and the cutoff
     // weight. No source luminance and no source area multiplies the colour here.
-    sum += colorWeight.rgb * ( scatterResponse( litAreaM2, distanceM ) * colorWeight.a );
+    sum += colorWeight.rgb * ( scatterResponse( litAreaM2, distanceM ) * localLightRange( distanceM )
+      * lightBreakup( world, dot( positionKind.xyz, vec3( 0.011, 0.017, 0.023 ) ) ) * colorWeight.a );
   }
 
   // The deck's own scattered light, as the R22 fog colour already carries it, district-tinted.
