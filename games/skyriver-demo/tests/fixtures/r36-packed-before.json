@@ -1,0 +1,281 @@
+{
+  "sourceSha256": "c21b0bab5f530a5441d1f5277fb1176c4ba4e8bb5233a070621b779becdfaf2b",
+  "modes": {
+    "impostor": {
+      "skyriver.city.towers": {
+        "index": {
+          "type": "Uint16Array",
+          "length": 36,
+          "hash": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898"
+        },
+        "attributes": {
+          "position": {
+            "itemSize": 3,
+            "count": 24,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 72,
+              "hash": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            }
+          },
+          "normal": {
+            "itemSize": 3,
+            "count": 24,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 72,
+              "hash": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            }
+          },
+          "uv": {
+            "itemSize": 2,
+            "count": 24,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 48,
+              "hash": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            }
+          }
+        }
+      },
+      "skyriver.city.trim": {
+        "index": {
+          "type": "Uint16Array",
+          "length": 36,
+          "hash": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898"
+        },
+        "attributes": {
+          "position": {
+            "itemSize": 3,
+            "count": 24,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 72,
+              "hash": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            }
+          },
+          "normal": {
+            "itemSize": 3,
+            "count": 24,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 72,
+              "hash": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            }
+          },
+          "uv": {
+            "itemSize": 2,
+            "count": 24,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 48,
+              "hash": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            }
+          }
+        }
+      },
+      "skyriver.city.signs": {
+        "index": {
+          "type": "Uint16Array",
+          "length": 6,
+          "hash": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443"
+        },
+        "attributes": {
+          "position": {
+            "itemSize": 3,
+            "count": 4,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 12,
+              "hash": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            }
+          },
+          "uv": {
+            "itemSize": 2,
+            "count": 4,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 8,
+              "hash": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            }
+          }
+        }
+      },
+      "skyriver.city.impostors": {
+        "index": {
+          "type": "Uint16Array",
+          "length": 12,
+          "hash": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd"
+        },
+        "attributes": {
+          "position": {
+            "itemSize": 3,
+            "count": 8,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 24,
+              "hash": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            }
+          },
+          "uv": {
+            "itemSize": 2,
+            "count": 8,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 16,
+              "hash": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            }
+          }
+        }
+      }
+    },
+    "geometry": {
+      "skyriver.city.towers": {
+        "index": {
+          "type": "Uint16Array",
+          "length": 36,
+          "hash": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898"
+        },
+        "attributes": {
+          "position": {
+            "itemSize": 3,
+            "count": 24,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 72,
+              "hash": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            }
+          },
+          "normal": {
+            "itemSize": 3,
+            "count": 24,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 72,
+              "hash": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            }
+          },
+          "uv": {
+            "itemSize": 2,
+            "count": 24,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 48,
+              "hash": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            }
+          }
+        }
+      },
+      "skyriver.city.trim": {
+        "index": {
+          "type": "Uint16Array",
+          "length": 36,
+          "hash": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898"
+        },
+        "attributes": {
+          "position": {
+            "itemSize": 3,
+            "count": 24,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 72,
+              "hash": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            }
+          },
+          "normal": {
+            "itemSize": 3,
+            "count": 24,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 72,
+              "hash": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            }
+          },
+          "uv": {
+            "itemSize": 2,
+            "count": 24,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 48,
+              "hash": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            }
+          }
+        }
+      },
+      "skyriver.city.signs": {
+        "index": {
+          "type": "Uint16Array",
+          "length": 6,
+          "hash": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443"
+        },
+        "attributes": {
+          "position": {
+            "itemSize": 3,
+            "count": 4,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 12,
+              "hash": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            }
+          },
+          "uv": {
+            "itemSize": 2,
+            "count": 4,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 8,
+              "hash": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            }
+          }
+        }
+      },
+      "skyriver.city.impostors": {
+        "index": {
+          "type": "Uint16Array",
+          "length": 12,
+          "hash": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd"
+        },
+        "attributes": {
+          "position": {
+            "itemSize": 3,
+            "count": 8,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 24,
+              "hash": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            }
+          },
+          "uv": {
+            "itemSize": 2,
+            "count": 8,
+            "isInstanced": false,
+            "array": {
+              "type": "Float32Array",
+              "length": 16,
+              "hash": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            }
+          }
+        }
+      }
+    }
+  }
+}

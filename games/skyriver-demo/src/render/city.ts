@@ -114,6 +114,9 @@ import {
 } from './districts';
 import { ROUTE_MAX_ALTITUDE_M, STRATA_GRIME_TOP_M, STRATA_PRISTINE_BASE_M, routeAltitude, routeLateral } from './routeProfile';
 import { podiumLotHeight } from './presentationLayout';
+import { autopilotTrackPose } from './flightPresentation';
+import { createCameraPoseScratch, writeCameraPose } from './cameraRig';
+import { CLEARANCE_CAMERA_RADIUS_M, CLEARANCE_SHUTTLE_RADIUS_M } from './clearance';
 
 /** Draw calls this module may spend (plan T3 allows 10 city-only; the shared budget allots 8). */
 export const SKYRIVER_CITY_DRAW_CALL_BUDGET = 8;
@@ -300,6 +303,146 @@ export interface SkyriverTrimOwner {
   readonly materialOwner?: number;
 }
 
+/** R36 D1: Actual 3D bounding geometry for legacy trim records and dispositions. */
+export interface SkyriverTrimGeometry {
+  readonly cx: number;
+  readonly cy: number;
+  readonly cz: number;
+  readonly sx: number;
+  readonly sy: number;
+  readonly sz: number;
+}
+
+/** R36 D1: Immutable source inventory record captured before reconciliation. */
+export interface SkyriverLegacyTrimSourceRecord {
+  readonly sourceIndex: number;
+  readonly kind: number;
+  readonly cx: number;
+  readonly cy: number;
+  readonly cz: number;
+  readonly sx: number;
+  readonly sy: number;
+  readonly sz: number;
+  readonly seedValue: number;
+  readonly seedBits: number;
+  readonly canonicalOwner: number;
+  readonly owner: SkyriverTrimOwner;
+  readonly spanTo: SkyriverTrimOwner | null;
+}
+
+export interface SkyriverUnchangedTrimDisposition {
+  readonly kind: 'unchanged';
+  readonly sourceIndex: number;
+  readonly finalIndex: number;
+  readonly heroFiltered: boolean;
+  readonly blockingHeroIds: readonly string[];
+  readonly oldGeometry: SkyriverTrimGeometry;
+  readonly newGeometry: SkyriverTrimGeometry;
+}
+
+export interface SkyriverSideRehostedTrimDisposition {
+  readonly kind: 'side-rehosted';
+  readonly sourceIndex: number;
+  readonly finalIndex: number;
+  readonly heroFiltered: boolean;
+  readonly blockingHeroIds: readonly string[];
+  readonly oldGeometry: SkyriverTrimGeometry;
+  readonly newGeometry: SkyriverTrimGeometry;
+  readonly hostMassIndex: number;
+  readonly faceId: string;
+}
+
+export interface SkyriverRoofRehostedTrimDisposition {
+  readonly kind: 'roof-rehosted';
+  readonly sourceIndex: number;
+  readonly finalIndex: number;
+  readonly heroFiltered: boolean;
+  readonly blockingHeroIds: readonly string[];
+  readonly oldGeometry: SkyriverTrimGeometry;
+  readonly newGeometry: SkyriverTrimGeometry;
+  readonly hostMassIndex: number;
+  readonly horizontalScale: number;
+}
+
+export interface SkyriverInheritedRoofUnsupportedTrimDisposition {
+  readonly kind: 'inherited-roof-unsupported';
+  readonly sourceIndex: number;
+  readonly finalIndex: number;
+  readonly heroFiltered: boolean;
+  readonly blockingHeroIds: readonly string[];
+  readonly oldGeometry: SkyriverTrimGeometry;
+  readonly newGeometry: SkyriverTrimGeometry;
+}
+
+export interface SkyriverSpanHost {
+  readonly massIndex: number;
+  readonly canonicalOwner: number;
+  readonly anchorV: number;
+}
+
+export interface SkyriverSpanEndpoint {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
+
+export interface SkyriverSpanWorldMetrics {
+  readonly endpoints: readonly [SkyriverSpanEndpoint, SkyriverSpanEndpoint];
+  readonly sourceLengthM: number;
+  readonly worldLengthM: number;
+  readonly exposedLengthM: number;
+}
+
+export interface SkyriverSpanEndpointContact {
+  readonly crossOverlapM: number;
+  readonly verticalOverlapM: number;
+}
+
+export interface SkyriverSpanRehostedTrimDisposition {
+  readonly kind: 'span-rehosted';
+  readonly sourceIndex: number;
+  readonly finalIndex: number;
+  readonly heroFiltered: boolean;
+  readonly blockingHeroIds: readonly string[];
+  readonly oldGeometry: SkyriverTrimGeometry;
+  readonly newGeometry: SkyriverTrimGeometry;
+  readonly hosts: readonly [SkyriverSpanHost, SkyriverSpanHost];
+  readonly oldWorld: SkyriverSpanWorldMetrics;
+  readonly newWorld: SkyriverSpanWorldMetrics;
+  readonly endpointContacts: readonly [SkyriverSpanEndpointContact, SkyriverSpanEndpointContact];
+}
+
+export interface SkyriverInheritedSpanUnsupportedTrimDisposition {
+  readonly kind: 'inherited-span-unsupported';
+  readonly sourceIndex: number;
+  readonly finalIndex: number;
+  readonly heroFiltered: boolean;
+  readonly blockingHeroIds: readonly string[];
+  readonly oldGeometry: SkyriverTrimGeometry;
+  readonly newGeometry: SkyriverTrimGeometry;
+}
+
+export type SkyriverTrimDisposition =
+  | SkyriverUnchangedTrimDisposition
+  | SkyriverSideRehostedTrimDisposition
+  | SkyriverRoofRehostedTrimDisposition
+  | SkyriverInheritedRoofUnsupportedTrimDisposition
+  | SkyriverSpanRehostedTrimDisposition
+  | SkyriverInheritedSpanUnsupportedTrimDisposition;
+
+export interface SkyriverLegacyTrimReconciliation {
+  readonly seed: number;
+  readonly sourceCount: number;
+  readonly finalCount: number;
+  readonly inventoryIdentity: string;
+  readonly sourceInventory: readonly SkyriverLegacyTrimSourceRecord[];
+  readonly dispositions: readonly SkyriverTrimDisposition[];
+  readonly unchangedCount: number;
+  readonly rehostedCount: number;
+  readonly roofRowsDeferred: number;
+  readonly spanRowsDeferred: number;
+}
+
 export type PushTrim = (
   kind: number,
   px: number,
@@ -385,6 +528,20 @@ export interface SkyriverMass {
   readonly materialOwner?: number;
   /** R27: low-city base sprawl identity record. */
   readonly baseRecord?: SkyriverLowBaseRecord;
+  readonly supportRole?: 'retained-child-bridge';
+  readonly crownRole?: 'ordinary-dark-crown';
+}
+
+export interface SkyriverRetainedMassSupportRecord {
+  readonly supportMassIndex: number;
+  readonly childSourceIndex: number;
+  readonly childFinalIndex: number;
+  readonly hostMassIndex: number;
+  readonly owner: number;
+  readonly anchorV: number;
+  readonly geometry:
+    | { readonly kind: 'strict-clear' }
+    | { readonly kind: 'original-owner-contained'; readonly sourceMassIndices: readonly number[] };
 }
 
 export function isLowBaseMass(mass: SkyriverMass): mass is SkyriverMass & { readonly baseRecord: SkyriverLowBaseRecord } {
@@ -456,7 +613,10 @@ function innerWallX(layout: SkyriverCityLayout, tower: SkyriverTower): number {
 
 const trimCache = new Map<number, SkyriverCityTrims>();
 const massCache = new Map<number, SkyriverMass[]>();
+const massSeedIndexCache = new Map<number, WeakMap<SkyriverMass, number>>();
 const roofDetailCache = new Map<number, SkyriverRoofDetailDerivation>();
+const trimReconciliationCache = new Map<number, SkyriverLegacyTrimReconciliation>();
+const retainedMassSupportCache = new Map<number, readonly SkyriverRetainedMassSupportRecord[]>();
 /** R16: the far-city layers as impostor cards, one per far tower (body, cap and spire together). */
 export interface SkyriverFarTower {
   readonly x: number;
@@ -491,6 +651,7 @@ interface FacadeTier {
 /** Per seed: exposed corridor faces for each existing inner-wall lot. */
 const tierCache = new Map<number, Map<string, readonly FacadeTier[]>>();
 const facadeFaceCache = new Map<number, readonly SkyriverFacadeFace[]>();
+const legacyFaceCache = new Map<number, readonly SkyriverFacadeFace[]>();
 
 function towerKey(tower: SkyriverTower): string {
   return `${tower.x.toFixed(2)}:${tower.z.toFixed(2)}`;
@@ -515,6 +676,14 @@ export function deriveFacadeFaces(layout: SkyriverCityLayout): readonly Skyriver
   return faces;
 }
 
+/** Named legacy exposed face records from the c6 generation path used for hero art planning. */
+export function deriveLegacyFacadeFaces(layout: SkyriverCityLayout): readonly SkyriverFacadeFace[] {
+  deriveCityTrims(layout);
+  const faces = legacyFaceCache.get(layout.seed);
+  if (faces === undefined) fail('SKYRIVER_CITY_LEGACY_FACES_MISSING');
+  return faces;
+}
+
 /** All drawn concrete masses for a layout. Pure and cached; derived alongside the trims. */
 export function deriveCityMasses(layout: SkyriverCityLayout): readonly SkyriverMass[] {
   deriveCityTrims(layout);
@@ -522,6 +691,1075 @@ export function deriveCityMasses(layout: SkyriverCityLayout): readonly SkyriverM
   if (masses === undefined) fail('SKYRIVER_CITY_MASSES_MISSING');
   return masses;
 }
+
+/** Return the support records from the complete trim derivation. */
+export function deriveRetainedMassSupportRecords(layout: SkyriverCityLayout): readonly SkyriverRetainedMassSupportRecord[] {
+  deriveCityTrims(layout);
+  const records = retainedMassSupportCache.get(layout.seed);
+  if (records === undefined) fail('SKYRIVER_RETAINED_SUPPORT_RECORDS_MISSING');
+  return records;
+}
+
+/** Named legacy trim reconciliation result (R36 D1). Pure and cached; derived alongside the trims. */
+export function deriveLegacyTrimReconciliation(layout: SkyriverCityLayout): SkyriverLegacyTrimReconciliation {
+  deriveCityTrims(layout);
+  const rec = trimReconciliationCache.get(layout.seed);
+  if (rec === undefined) fail('SKYRIVER_CITY_TRIM_RECONCILIATION_MISSING');
+  return rec;
+}
+
+export type SkyriverShapeFamily =
+  | 'offset-decks'
+  | 'broad-shelf'
+  | 'thin-slab-companion'
+  | 'supported-spine';
+
+export interface SkyriverStageOffset {
+  readonly axis: 'x' | 'z';
+  readonly parentKind: 'stage' | 'original-footprint';
+  readonly parentStageIndex: number;
+  readonly parentSpanM: number;
+  readonly deltaM: number;
+  readonly ratio: number;
+}
+
+export interface SkyriverStageProfile {
+  readonly stageIndex: number;
+  readonly massIndices: readonly number[];
+  readonly footprint: {
+    readonly x: number;
+    readonly z: number;
+    readonly width: number;
+    readonly depth: number;
+  };
+  readonly verticalBounds: {
+    readonly y0: number;
+    readonly y1: number;
+    readonly height: number;
+  };
+  readonly offset: SkyriverStageOffset | null;
+}
+
+export interface SkyriverSplitCrownProfile {
+  readonly kind: 'split';
+  readonly axis: 'x' | 'z';
+  readonly gapM: number;
+  readonly crownSpanM: number;
+  readonly bounds: {
+    readonly y0: number;
+    readonly y1: number;
+    readonly width: number;
+    readonly height: number;
+    readonly depth: number;
+  };
+  readonly massIndices: readonly [number, number];
+}
+
+export interface SkyriverUnsplitFinProfile {
+  readonly kind: 'unsplit-fin';
+  readonly axis: 'x' | 'z';
+  readonly gapM: 0;
+  readonly crownSpanM: number;
+  readonly bounds: {
+    readonly y0: number;
+    readonly y1: number;
+    readonly width: number;
+    readonly height: number;
+    readonly depth: number;
+  };
+  readonly massIndices: readonly [number];
+}
+
+export type SkyriverCrownProfile = SkyriverSplitCrownProfile | SkyriverUnsplitFinProfile;
+
+export interface SkyriverLeanProfile {
+  readonly axis: 'z';
+  readonly angleDeg: number;
+  readonly riseM: number;
+  readonly totalOffsetM: number;
+}
+
+export interface SkyriverEligibleTowerProfile {
+  readonly eligibility: {
+    readonly kind: 'eligible';
+    readonly reason: string;
+  };
+  readonly towerIndex: number;
+  readonly towerKey: string;
+  readonly building: number;
+  readonly materialOwner: number;
+  readonly family: SkyriverShapeFamily;
+  readonly stages: readonly SkyriverStageProfile[];
+  readonly crown: SkyriverCrownProfile;
+  readonly lean: SkyriverLeanProfile | null;
+  readonly supportSpineIndex: number | null;
+  readonly companionMassIndices: readonly number[];
+  readonly hostFace: SkyriverFacadeFace;
+}
+
+export interface SkyriverExcludedTowerProfile {
+  readonly eligibility: {
+    readonly kind: 'excluded';
+    readonly reason: string;
+  };
+  readonly towerIndex: number;
+  readonly towerKey: string;
+  readonly building: number;
+  readonly materialOwner: number;
+  readonly archetype: SkyriverMassingArchetype;
+}
+
+export type SkyriverTowerProfileRow = SkyriverEligibleTowerProfile | SkyriverExcludedTowerProfile;
+
+const towerProfileCache = new Map<number, readonly SkyriverTowerProfileRow[]>();
+
+/** R36: axis-aligned canyon-space box stage profiles for ordinary towers. Pure, GL-free, backed by actual emitted masses. */
+export function deriveTowerProfiles(layout: SkyriverCityLayout): readonly SkyriverTowerProfileRow[] {
+  deriveCityTrims(layout);
+  const profiles = towerProfileCache.get(layout.seed);
+  if (profiles === undefined) fail('SKYRIVER_CITY_TOWER_PROFILES_MISSING');
+  return profiles;
+}
+
+function r36Hash01(seed: number, tower: SkyriverTower, salt: number): number {
+  const n = seed * 0.0001 + tower.x * 0.0173 + tower.z * 0.00911 + salt * 37.19;
+  const s = Math.sin(n * 127.1 + 311.7) * 43758.5453123;
+  return s - Math.floor(s);
+}
+
+function towerExclusionReason(layout: SkyriverCityLayout, tower: SkyriverTower): string | null {
+  // Exclude only a true named landmark or a proven per-tower clearance failure.
+  // In the presented layout, all 211 ordinary towers clear flight paths and are eligible.
+  return null;
+}
+
+function isEligibleTower(layout: SkyriverCityLayout, tower: SkyriverTower): boolean {
+  return towerExclusionReason(layout, tower) === null;
+}
+
+interface R36StageDraft {
+  readonly stageIndex: number;
+  readonly masses: readonly SkyriverMass[];
+  readonly footprint: {
+    readonly x: number;
+    readonly z: number;
+    readonly width: number;
+    readonly depth: number;
+  };
+  readonly verticalBounds: {
+    readonly y0: number;
+    readonly y1: number;
+    readonly height: number;
+  };
+  readonly offset: SkyriverStageOffset | null;
+}
+
+interface R36EmittedData {
+  readonly family: SkyriverShapeFamily;
+  readonly stageMasses: readonly SkyriverMass[];
+  readonly stageDrafts: readonly R36StageDraft[];
+  readonly spineMass: SkyriverMass | null;
+  readonly deckWingMasses: readonly SkyriverMass[];
+  readonly crownMasses: readonly SkyriverMass[];
+  readonly crownProfile: SkyriverCrownProfile;
+  readonly crownBounds: { readonly y0: number; readonly y1: number; readonly width: number; readonly height: number; readonly depth: number };
+  readonly crownSpan: number;
+  readonly companionMasses: readonly SkyriverMass[];
+  readonly leanProfile: SkyriverLeanProfile | 'none';
+  readonly hostFace: SkyriverFacadeFace;
+  readonly faces: readonly SkyriverFacadeFace[];
+  readonly tiers: readonly FacadeTier[];
+}
+
+const R36_ORDINARY_CROWN_HEIGHT_M = 200;
+
+function deriveR36TowerData(
+  layout: SkyriverCityLayout,
+  tower: SkyriverTower,
+  towerIndex: number,
+  isSplitCrown: boolean,
+  heroRow?: HeroRowPlan,
+  isReservedHero = false,
+  heroReservedTop?: number,
+  familyOverride?: SkyriverShapeFamily,
+  stage0Override?: { readonly width: number; readonly depth: number; readonly x: number; readonly z: number },
+  companionScale = 1,
+  resolveOriginal = false,
+): R36EmittedData {
+  const side = Math.sign(tower.x) as -1 | 1;
+  const buildingId = `tower:${towerKey(tower)}`;
+  const towerSeed = buildingSeedOf(tower.x, tower.z);
+
+  const u1 = r36Hash01(layout.seed, tower, 1);
+  const u3 = r36Hash01(layout.seed, tower, 3);
+  const u4 = r36Hash01(layout.seed, tower, 4);
+  const u5 = r36Hash01(layout.seed, tower, 5);
+
+  const familyIndex = towerIndex % 4;
+  let family: SkyriverShapeFamily =
+    familyOverride !== undefined ? familyOverride
+    : familyIndex === 0 ? 'supported-spine'
+    : familyIndex === 1 ? 'thin-slab-companion'
+    : familyIndex === 2 ? 'broad-shelf'
+    : 'offset-decks';
+
+  if (heroRow !== undefined || isReservedHero) {
+    family = 'offset-decks';
+  }
+
+  const isLeaning = (towerIndex % 15 === 3) && (heroRow === undefined) && !isReservedHero;
+  const voidY = SKYRIVER_CITY_VOID_BASE_Y;
+
+  if (family === 'supported-spine') {
+    const spineW = Math.max(12, Math.round(tower.width * 0.16));
+    const spineD = Math.max(12, Math.round(tower.depth * 0.16));
+    const wingW = Math.round(tower.width * 0.75);
+    const wingD = Math.max(14, Math.round((tower.depth - spineD) * 0.45));
+    const maxSpineArea = wingW * wingD * 0.25;
+    const actualSpineW = spineW * spineD >= maxSpineArea
+      ? Math.max(1, Math.min(spineW, Math.floor((maxSpineArea - 0.01) / spineD)))
+      : spineW;
+    let wingY1: number;
+    if (heroRow !== undefined) {
+      wingY1 = Math.min(Math.round(tower.height * 0.20), Math.round(heroRow.faceBottom - 60));
+    } else {
+      wingY1 = Math.min(450, Math.max(120, Math.round(tower.height * 0.20)));
+    }
+    const airGap = 20;
+    const elevatedBodyY0 = wingY1 + airGap;
+
+    const wing0: SkyriverMass = {
+      x: tower.x,
+      y0: voidY,
+      z: tower.z - spineD * 0.5 - wingD * 0.5,
+      width: wingW,
+      height: wingY1 - voidY,
+      depth: wingD,
+      tint: tower.tint,
+      anchorV: tower.z,
+      building: towerSeed,
+      materialOwner: towerSeed,
+      stepBottom: false,
+      stepTop: true,
+    };
+    const wing1: SkyriverMass = {
+      x: tower.x,
+      y0: voidY,
+      z: tower.z + spineD * 0.5 + wingD * 0.5,
+      width: wingW,
+      height: wingY1 - voidY,
+      depth: wingD,
+      tint: tower.tint,
+      anchorV: tower.z,
+      building: towerSeed,
+      materialOwner: towerSeed,
+      stepBottom: false,
+      stepTop: true,
+    };
+
+    const spineStageCount: 3 | 4 = (tower.height >= 3200 && u1 < 0.4 && heroRow === undefined) ? 4 : 3;
+    let stage1Y1: number;
+    if (heroRow !== undefined) {
+      stage1Y1 = Math.ceil(heroRow.faceTop + 10);
+    } else {
+      stage1Y1 = Math.round(elevatedBodyY0 + (tower.height - elevatedBodyY0) * (spineStageCount === 4 ? 0.40 : 0.55));
+    }
+
+    const sw1 = Math.round(tower.width * 0.82);
+    const sd1 = Math.round(tower.depth * 0.82);
+    const parentSpan1 = spineD + 2 * wingD;
+    const parentSpan1X = wingW;
+
+    let sx1 = tower.x;
+    let sz1 = tower.z;
+    let axis1: 'x' | 'z' = 'z';
+    let parentSpan1Used = parentSpan1;
+    let delta1 = 0;
+    let ratio1 = 0;
+
+    let sx2 = tower.x;
+    let sz2 = tower.z;
+    let stage2Y1 = tower.height;
+    let sw2 = Math.round(sw1 * 0.72);
+    let sd2 = Math.round(sd1 * 0.72);
+    let axis2: 'x' | 'z' = 'z';
+    let parentSpan2Used = sd1;
+    let delta2 = 0;
+    let ratio2 = 0;
+
+    let leanProfile: SkyriverLeanProfile | 'none' = 'none';
+
+    if (isLeaning) {
+      const targetAngle = 4.85;
+      const tanTheta = Math.tan(targetAngle * Math.PI / 180);
+      const elevatedRise = tower.height - elevatedBodyY0;
+      const targetTotalOffset = Math.round(elevatedRise * tanTheta);
+
+      const minDelta1 = Math.ceil(parentSpan1 * 0.085);
+      const maxDelta1 = Math.floor(parentSpan1 * 0.325);
+      const minDelta2 = Math.ceil(sd1 * 0.085);
+      const maxDelta2 = Math.floor(sd1 * 0.325);
+
+      const d1 = Math.max(minDelta1, Math.min(maxDelta1, Math.round(targetTotalOffset * 0.48)));
+      const d2 = Math.max(minDelta2, Math.min(maxDelta2, targetTotalOffset - d1));
+
+      axis1 = 'z';
+      delta1 = d1;
+      parentSpan1Used = parentSpan1;
+      ratio1 = delta1 / parentSpan1Used;
+      sz1 = tower.z + delta1;
+
+      axis2 = 'z';
+      delta2 = d2;
+      parentSpan2Used = sd1;
+      ratio2 = delta2 / parentSpan2Used;
+      sz2 = sz1 + delta2;
+
+      const actualRise = elevatedRise;
+      const actualTotalOffset = delta1 + delta2;
+      const actualAngle = Number((Math.atan(actualTotalOffset / actualRise) * 180 / Math.PI).toFixed(2));
+      if (actualAngle >= 4.0 && actualAngle <= 6.0) {
+        leanProfile = {
+          axis: 'z',
+          angleDeg: actualAngle,
+          riseM: actualRise,
+          totalOffsetM: actualTotalOffset,
+        };
+      }
+    } else {
+      axis1 = ((u3 + 1 * 0.37) % 1.0 < 0.6) ? 'z' : 'x';
+      parentSpan1Used = axis1 === 'x' ? parentSpan1X : parentSpan1;
+      const targetRatio1 = 0.22 + 0.07 * u4;
+      const minDelta1 = Math.ceil(parentSpan1Used * 0.085);
+      const maxDelta1 = Math.floor(parentSpan1Used * 0.325);
+      const centerDelta1 = Math.max(minDelta1, Math.min(maxDelta1, Math.round(targetRatio1 * parentSpan1Used)));
+      ratio1 = centerDelta1 / parentSpan1Used;
+      const dir1 = ((u5 + 1 * 0.5) % 1.0 < 0.5 ? -1 : 1);
+      sx1 = axis1 === 'x' ? tower.x + side * centerDelta1 : tower.x;
+      sz1 = axis1 === 'z' ? tower.z + dir1 * centerDelta1 : tower.z;
+      delta1 = axis1 === 'x' ? (sx1 - tower.x) : (sz1 - tower.z);
+
+      stage2Y1 = spineStageCount === 4 ? Math.round(stage1Y1 + (tower.height - stage1Y1) * 0.5) : tower.height;
+      axis2 = ((u3 + 2 * 0.37) % 1.0 < 0.6) ? 'z' : 'x';
+      parentSpan2Used = axis2 === 'x' ? sw1 : sd1;
+      const targetRatio2 = 0.22 + 0.07 * u4;
+      const minDelta2 = Math.ceil(parentSpan2Used * 0.085);
+      const maxDelta2 = Math.floor(parentSpan2Used * 0.325);
+      const centerDelta2 = Math.max(minDelta2, Math.min(maxDelta2, Math.round(targetRatio2 * parentSpan2Used)));
+      ratio2 = centerDelta2 / parentSpan2Used;
+      const dir2 = ((u5 + 2 * 0.5) % 1.0 < 0.5 ? -1 : 1);
+      sx2 = axis2 === 'x' ? sx1 + side * centerDelta2 : sx1;
+      sz2 = axis2 === 'z' ? sz1 + dir2 * centerDelta2 : sz1;
+      delta2 = axis2 === 'x' ? (sx2 - sx1) : (sz2 - sz1);
+    }
+
+    const stage1Mass: SkyriverMass = {
+      x: sx1,
+      y0: elevatedBodyY0,
+      z: sz1,
+      width: sw1,
+      height: stage1Y1 - elevatedBodyY0,
+      depth: sd1,
+      tint: tower.tint,
+      anchorV: tower.z,
+      building: towerSeed,
+      materialOwner: towerSeed,
+      stepBottom: true,
+      stepTop: true,
+    };
+
+    const stage2Mass: SkyriverMass = {
+      x: sx2,
+      y0: stage1Y1,
+      z: sz2,
+      width: sw2,
+      height: stage2Y1 - stage1Y1,
+      depth: sd2,
+      tint: tower.tint,
+      anchorV: tower.z,
+      building: towerSeed,
+      materialOwner: towerSeed,
+      stepBottom: true,
+      stepTop: true,
+    };
+
+    const stageMasses: SkyriverMass[] = [wing0, wing1, stage1Mass, stage2Mass];
+
+    let topStage = { x: sx2, z: sz2, width: sw2, depth: sd2, y0: stage1Y1, y1: stage2Y1 };
+    const stageDrafts: R36StageDraft[] = [
+      {
+        stageIndex: 0,
+        masses: [wing0, wing1],
+        footprint: { x: tower.x, z: tower.z, width: wingW, depth: spineD + 2 * wingD },
+        verticalBounds: { y0: voidY, y1: wingY1, height: wingY1 - voidY },
+        offset: null,
+      },
+      {
+        stageIndex: 1,
+        masses: [stage1Mass],
+        footprint: { x: sx1, z: sz1, width: sw1, depth: sd1 },
+        verticalBounds: { y0: elevatedBodyY0, y1: stage1Y1, height: stage1Y1 - elevatedBodyY0 },
+        offset: {
+          axis: axis1,
+          parentKind: 'stage',
+          parentStageIndex: 0,
+          parentSpanM: parentSpan1Used,
+          deltaM: delta1,
+          ratio: ratio1,
+        },
+      },
+      {
+        stageIndex: 2,
+        masses: [stage2Mass],
+        footprint: { x: sx2, z: sz2, width: sw2, depth: sd2 },
+        verticalBounds: { y0: stage1Y1, y1: stage2Y1, height: stage2Y1 - stage1Y1 },
+        offset: {
+          axis: axis2,
+          parentKind: 'stage',
+          parentStageIndex: 1,
+          parentSpanM: parentSpan2Used,
+          deltaM: delta2,
+          ratio: ratio2,
+        },
+      },
+    ];
+
+    if (spineStageCount === 4 && !isLeaning) {
+      const sw3 = Math.round(sw2 * 0.72);
+      const sd3 = Math.round(sd2 * 0.72);
+      const axis3: 'x' | 'z' = ((u3 + 3 * 0.37) % 1.0 < 0.6) ? 'z' : 'x';
+      const parentSpan3 = axis3 === 'x' ? sw2 : sd2;
+      const targetRatio3 = 0.22 + 0.07 * u4;
+      const minDelta3 = Math.ceil(parentSpan3 * 0.085);
+      const maxDelta3 = Math.floor(parentSpan3 * 0.325);
+      const centerDelta3 = Math.max(minDelta3, Math.min(maxDelta3, Math.round(targetRatio3 * parentSpan3)));
+      const ratio3 = centerDelta3 / parentSpan3;
+      const dir3 = ((u5 + 3 * 0.5) % 1.0 < 0.5 ? -1 : 1);
+      const sx3 = axis3 === 'x' ? sx2 + side * centerDelta3 : sx2;
+      const sz3 = axis3 === 'z' ? sz2 + dir3 * centerDelta3 : sz2;
+      const stage3Mass: SkyriverMass = {
+        x: sx3,
+        y0: stage2Y1,
+        z: sz3,
+        width: sw3,
+        height: tower.height - stage2Y1,
+        depth: sd3,
+        tint: tower.tint,
+        anchorV: tower.z,
+        building: towerSeed,
+        materialOwner: towerSeed,
+        stepBottom: true,
+        stepTop: true,
+      };
+      stageMasses.push(stage3Mass);
+      topStage = { x: sx3, z: sz3, width: sw3, depth: sd3, y0: stage2Y1, y1: tower.height };
+      stageDrafts.push({
+        stageIndex: 3,
+        masses: [stage3Mass],
+        footprint: { x: sx3, z: sz3, width: sw3, depth: sd3 },
+        verticalBounds: { y0: stage2Y1, y1: tower.height, height: tower.height - stage2Y1 },
+        offset: {
+          axis: axis3,
+          parentKind: 'stage',
+          parentStageIndex: 2,
+          parentSpanM: parentSpan3,
+          deltaM: axis3 === 'x' ? (sx3 - sx2) : (sz3 - sz2),
+          ratio: ratio3,
+        },
+      });
+    }
+
+    const spineTop = topStage.y0;
+    const spineMass: SkyriverMass = {
+      x: tower.x,
+      y0: voidY,
+      z: tower.z,
+      width: actualSpineW,
+      height: Math.max(10, spineTop - voidY),
+      depth: spineD,
+      tint: tower.tint,
+      anchorV: tower.z,
+      building: towerSeed,
+      materialOwner: towerSeed,
+    };
+
+    const crownMasses: SkyriverMass[] = [];
+    let crownProfile: SkyriverCrownProfile;
+    let crownBounds: { readonly y0: number; readonly y1: number; readonly width: number; readonly height: number; readonly depth: number };
+    let crownSpan: number;
+
+    if (isSplitCrown) {
+      const rawSpan = Math.round(topStage.depth * 0.85);
+      const gap = Math.round(rawSpan * 0.22);
+      const blockD = Math.floor((rawSpan - gap) * 0.5);
+      const actualSpan = gap + 2 * blockD;
+      const blockW = Math.round(topStage.width * 0.7);
+      const crownH = resolveOriginal ? 45 : R36_ORDINARY_CROWN_HEIGHT_M;
+      const yCrown = topStage.y1;
+      const b0z = topStage.z - (gap + blockD) * 0.5;
+      const b1z = topStage.z + (gap + blockD) * 0.5;
+
+      const block0: SkyriverMass = {
+        x: topStage.x, y0: yCrown, z: b0z, width: blockW, height: crownH, depth: blockD,
+        tint: tower.tint, anchorV: tower.z, materialOwner: towerSeed, building: towerSeed,
+      };
+      const block1: SkyriverMass = {
+        x: topStage.x, y0: yCrown, z: b1z, width: blockW, height: crownH, depth: blockD,
+        tint: tower.tint, anchorV: tower.z, materialOwner: towerSeed, building: towerSeed,
+      };
+      crownMasses.push(block0, block1);
+      crownSpan = actualSpan;
+      crownBounds = { y0: yCrown, y1: yCrown + crownH, width: blockW, height: crownH, depth: actualSpan };
+      crownProfile = { kind: 'split', axis: 'z', gapM: gap, crownSpanM: actualSpan, bounds: crownBounds, massIndices: [0, 0] };
+    } else {
+      const uCorner = r36Hash01(layout.seed, tower, 7);
+      const uCornerX = r36Hash01(layout.seed, tower, 8);
+      const uCornerZ = r36Hash01(layout.seed, tower, 9);
+      const uFinH = r36Hash01(layout.seed, tower, 10);
+      const isCorner = uCorner < 0.40;
+
+      const finW = Math.max(3, Math.round(topStage.width * (isCorner ? 0.18 : 0.15)));
+      const finD = Math.round(topStage.depth * (isCorner ? 0.45 : 0.75));
+      const finH = resolveOriginal
+        ? (isCorner ? Math.round(36 + uFinH * 40) : Math.round(42 + uFinH * 24))
+        : R36_ORDINARY_CROWN_HEIGHT_M;
+      const yCrown = topStage.y1;
+
+      const shiftX = Math.max(0, (topStage.width - finW) * 0.5 - 2);
+      const shiftZ = Math.max(0, (topStage.depth - finD) * 0.5 - 2);
+      const cornerX = uCornerX < 0.5 ? -1 : 1;
+      const cornerZ = uCornerZ < 0.5 ? -1 : 1;
+      const finX = isCorner ? topStage.x + cornerX * shiftX : topStage.x;
+      const finZ = isCorner ? topStage.z + cornerZ * shiftZ : topStage.z;
+
+      const fin: SkyriverMass = {
+        x: finX, y0: yCrown, z: finZ, width: finW, height: finH, depth: finD,
+        tint: tower.tint, anchorV: tower.z, materialOwner: towerSeed, building: towerSeed,
+      };
+      crownMasses.push(fin);
+      crownSpan = finD;
+      crownBounds = { y0: yCrown, y1: yCrown + finH, width: finW, height: finH, depth: finD };
+      crownProfile = { kind: 'unsplit-fin', axis: 'z', gapM: 0, crownSpanM: finD, bounds: crownBounds, massIndices: [0] };
+    }
+
+    const faces: SkyriverFacadeFace[] = [];
+    const tiers: FacadeTier[] = [];
+
+    const wing0Face: SkyriverFacadeFace = {
+      id: `${buildingId}:face-w0`,
+      buildingId,
+      side,
+      planeAxis: 'x',
+      plane: side * (Math.abs(wing0.x) - wing0.width * 0.5),
+      outward: -side as -1 | 1,
+      u0: wing0.z - wing0.depth * 0.5,
+      u1: wing0.z + wing0.depth * 0.5,
+      y0: Math.max(0, wing0.y0),
+      y1: wingY1,
+      stepBottom: false,
+      stepTop: true,
+      projection: 0,
+      owner: ownerOf(wing0, tower.z),
+    };
+    const wing1Face: SkyriverFacadeFace = {
+      id: `${buildingId}:face-w1`,
+      buildingId,
+      side,
+      planeAxis: 'x',
+      plane: side * (Math.abs(wing1.x) - wing1.width * 0.5),
+      outward: -side as -1 | 1,
+      u0: wing1.z - wing1.depth * 0.5,
+      u1: wing1.z + wing1.depth * 0.5,
+      y0: Math.max(0, wing1.y0),
+      y1: wingY1,
+      stepBottom: false,
+      stepTop: true,
+      projection: 0,
+      owner: ownerOf(wing1, tower.z),
+    };
+
+    const st1FacePlane = side * (Math.abs(stage1Mass.x) - stage1Mass.width * 0.5);
+    const st1Face: SkyriverFacadeFace = {
+      id: `${buildingId}:face-1`,
+      buildingId,
+      side,
+      planeAxis: 'x',
+      plane: st1FacePlane,
+      outward: -side as -1 | 1,
+      u0: stage1Mass.z - stage1Mass.depth * 0.5,
+      u1: stage1Mass.z + stage1Mass.depth * 0.5,
+      y0: stage1Mass.y0,
+      y1: stage1Mass.y0 + stage1Mass.height,
+      stepBottom: true,
+      stepTop: true,
+      projection: 0,
+      owner: ownerOf(stage1Mass, tower.z),
+    };
+
+    const hostFace = st1Face;
+
+    faces.push(st1Face, wing0Face, wing1Face);
+    tiers.push({ face: st1Face }, { face: wing0Face }, { face: wing1Face });
+
+    for (let s = 2; s < stageMasses.length; s++) {
+      const stMass = stageMasses[s]!;
+      const stFace: SkyriverFacadeFace = {
+        id: `${buildingId}:face-${s}`,
+        buildingId,
+        side,
+        planeAxis: 'x',
+        plane: side * (Math.abs(stMass.x) - stMass.width * 0.5),
+        outward: -side as -1 | 1,
+        u0: stMass.z - stMass.depth * 0.5,
+        u1: stMass.z + stMass.depth * 0.5,
+        y0: stMass.y0,
+        y1: stMass.y0 + stMass.height,
+        stepBottom: true,
+        stepTop: s < stageMasses.length - 1,
+        projection: 0,
+        owner: ownerOf(stMass, tower.z),
+      };
+      faces.push(stFace);
+      tiers.push({ face: stFace });
+    }
+
+    return {
+      family,
+      stageMasses,
+      stageDrafts,
+      spineMass,
+      deckWingMasses: [],
+      crownMasses: crownMasses.map((mass) => ({ ...mass, crownRole: 'ordinary-dark-crown' as const })),
+      crownProfile,
+      crownBounds,
+      crownSpan,
+      companionMasses: [],
+      leanProfile,
+      hostFace,
+      faces,
+      tiers,
+    };
+  }
+
+  let stageCount: 2 | 3 | 4;
+  if (heroRow !== undefined || isReservedHero) {
+    stageCount = 2;
+  } else if (family === 'broad-shelf') {
+    stageCount = 3;
+  } else if (family === 'offset-decks') {
+    stageCount = tower.height >= 2500 ? 4 : 3;
+  } else {
+    stageCount = tower.height >= 3000 ? 3 : 2;
+  }
+
+  interface IntermediateStage {
+    y0: number;
+    y1: number;
+    width: number;
+    depth: number;
+    x: number;
+    z: number;
+    parentStage: number | null;
+    offsetAxis: 'x' | 'z' | 'none';
+    parentSpan: number;
+    centerDelta: number;
+    ratio: number;
+  }
+  const stages: IntermediateStage[] = [];
+
+  const defaultY1 = Math.round(tower.height * (stageCount === 2 ? 0.55 : stageCount === 3 ? 0.38 : 0.28));
+  const reqTop = heroRow !== undefined ? Math.ceil(heroRow.faceTop + 10) : (heroReservedTop !== undefined ? Math.ceil(heroReservedTop) : 0);
+  const y1 = reqTop > 0 ? Math.min(tower.height - 100, Math.max(defaultY1, reqTop)) : defaultY1;
+  const w0 = stage0Override !== undefined ? stage0Override.width : (family === 'thin-slab-companion' ? Math.round(tower.width * 0.72) : tower.width);
+  const d0 = stage0Override !== undefined ? stage0Override.depth : (family === 'thin-slab-companion' ? Math.round(tower.depth * 0.85) : tower.depth);
+  const x0 = stage0Override !== undefined ? stage0Override.x : tower.x;
+  const z0 = stage0Override !== undefined ? stage0Override.z : tower.z;
+  stages.push({
+    y0: voidY,
+    y1,
+    width: w0,
+    depth: d0,
+    x: x0,
+    z: z0,
+    parentStage: null,
+    offsetAxis: 'none',
+    parentSpan: 0,
+    centerDelta: 0,
+    ratio: 0,
+  });
+
+  let leanProfile: SkyriverLeanProfile | 'none' = 'none';
+
+  if (isLeaning) {
+    const targetAngle = 4.85;
+    const tanTheta = Math.tan(targetAngle * Math.PI / 180);
+    let curD = d0;
+    let totalOffset = 0;
+    const stageDeltas: number[] = [];
+    for (let s = 1; s < stageCount; s++) {
+      const minDelta = Math.ceil(curD * 0.085);
+      const maxDelta = Math.floor(curD * 0.325);
+      const deltaZ = Math.max(minDelta, Math.min(maxDelta, Math.round(0.20 * curD)));
+      stageDeltas.push(deltaZ);
+      totalOffset += deltaZ;
+      if (family === 'broad-shelf') {
+        curD = Math.round(curD * (s === 1 ? 1.25 : 0.60));
+      } else {
+        curD = Math.round(curD * (s === stageCount - 1 ? 0.65 : 0.82));
+      }
+    }
+    const rise = Math.round(totalOffset / tanTheta);
+    const upperY0 = Math.max(y1, tower.height - rise);
+    stages[0]!.y1 = upperY0;
+
+    let curY = upperY0;
+    const numUpper = stageCount - 1;
+    const stageH = (tower.height - upperY0) / numUpper;
+    for (let s = 1; s < stageCount; s++) {
+      const parent = stages[s - 1]!;
+      const parentSpan = parent.depth;
+      const sY0 = curY;
+      const sY1 = s === stageCount - 1 ? tower.height : Math.round(curY + stageH);
+      curY = sY1;
+      let sw: number;
+      let sd: number;
+      if (family === 'broad-shelf') {
+        sw = s === 1 ? parent.width : Math.round(stages[0]!.width * 0.60);
+        sd = s === 1 ? Math.round(parent.depth * 1.25) : Math.round(stages[0]!.depth * 0.60);
+      } else {
+        sw = Math.round(parent.width * (s === stageCount - 1 ? 0.65 : 0.82));
+        sd = Math.round(parent.depth * (s === stageCount - 1 ? 0.65 : 0.82));
+      }
+      const sDeltaZ = stageDeltas[s - 1]!;
+      const sRatio = sDeltaZ / parentSpan;
+      stages.push({
+        y0: sY0,
+        y1: sY1,
+        width: sw,
+        depth: sd,
+        x: parent.x,
+        z: parent.z + sDeltaZ,
+        parentStage: s - 1,
+        offsetAxis: 'z',
+        parentSpan,
+        centerDelta: sDeltaZ,
+        ratio: sRatio,
+      });
+    }
+
+    const actualRise = tower.height - upperY0;
+    const actualTotalOffset = Math.abs(stages[stageCount - 1]!.z - stages[0]!.z);
+    const actualAngle = Number((Math.atan(actualTotalOffset / actualRise) * 180 / Math.PI).toFixed(2));
+    if (actualAngle >= 4.0 && actualAngle <= 6.0) {
+      leanProfile = {
+        axis: 'z',
+        angleDeg: actualAngle,
+        riseM: actualRise,
+        totalOffsetM: actualTotalOffset,
+      };
+    }
+  } else {
+    let curY = y1;
+    const remainingH = tower.height - y1;
+    for (let s = 1; s < stageCount; s++) {
+      const parent = stages[s - 1]!;
+      const sY0 = curY;
+      const sY1 = s === stageCount - 1 ? tower.height : Math.round(curY + remainingH / (stageCount - 1));
+      curY = sY1;
+      const axis = ((u3 + s * 0.37) % 1.0 < 0.6) ? 'z' : 'x';
+      let sw: number;
+      let sd: number;
+      if (family === 'broad-shelf') {
+        if (s === 1) {
+          sd = Math.round(parent.depth * 1.25);
+          sw = axis === 'x' ? Math.round(parent.width * 1.10) : parent.width;
+        } else {
+          sw = Math.round(stages[0]!.width * 0.60);
+          sd = Math.round(stages[0]!.depth * 0.60);
+        }
+      } else {
+        sw = Math.round(parent.width * (s === stageCount - 1 ? 0.68 : 0.82));
+        sd = Math.round(parent.depth * (s === stageCount - 1 ? 0.68 : 0.82));
+      }
+      const parentSpan = axis === 'x' ? parent.width : parent.depth;
+      const targetRatio =
+        family === 'broad-shelf' ? (0.18 + 0.06 * u4)
+        : (0.12 + 0.12 * u4);
+      const minDelta = Math.ceil(parentSpan * 0.085);
+      const maxDelta = Math.floor(parentSpan * 0.325);
+      const centerDelta = Math.max(minDelta, Math.min(maxDelta, Math.round(targetRatio * parentSpan)));
+      const ratio = centerDelta / parentSpan;
+      const dir = ((u5 + s * 0.5) % 1.0 < 0.5 ? -1 : 1);
+      const sx = axis === 'x' ? parent.x + side * centerDelta : parent.x;
+      const sz = axis === 'z' ? parent.z + dir * centerDelta : parent.z;
+      stages.push({
+        y0: sY0,
+        y1: sY1,
+        width: sw,
+        depth: sd,
+        x: sx,
+        z: sz,
+        parentStage: s - 1,
+        offsetAxis: axis,
+        parentSpan,
+        centerDelta,
+        ratio,
+      });
+    }
+  }
+
+  const stageMasses: SkyriverMass[] = stages.map((st, sIdx) => ({
+    x: st.x,
+    y0: st.y0,
+    z: st.z,
+    width: st.width,
+    height: st.y1 - st.y0,
+    depth: st.depth,
+    tint: tower.tint,
+    anchorV: tower.z,
+    building: towerSeed,
+    materialOwner: towerSeed,
+    stepBottom: sIdx > 0,
+    stepTop: true,
+  }));
+
+  const top = stages[stages.length - 1]!;
+  const crownMasses: SkyriverMass[] = [];
+  let crownProfile: SkyriverCrownProfile;
+  let crownBounds: { readonly y0: number; readonly y1: number; readonly width: number; readonly height: number; readonly depth: number };
+  let crownSpan: number;
+
+  if (isSplitCrown) {
+    const rawSpan = Math.round(top.depth * 0.85);
+    const gap = Math.round(rawSpan * 0.22);
+    const blockD = Math.floor((rawSpan - gap) * 0.5);
+    const actualSpan = gap + 2 * blockD;
+    const blockW = Math.round(top.width * 0.7);
+    const crownH = resolveOriginal ? 45 : R36_ORDINARY_CROWN_HEIGHT_M;
+    const yCrown = top.y1;
+    const b0z = top.z - (gap + blockD) * 0.5;
+    const b1z = top.z + (gap + blockD) * 0.5;
+
+    const block0: SkyriverMass = {
+      x: top.x,
+      y0: yCrown,
+      z: b0z,
+      width: blockW,
+      height: crownH,
+      depth: blockD,
+      tint: tower.tint,
+      anchorV: tower.z,
+      materialOwner: towerSeed,
+      building: towerSeed,
+    };
+    const block1: SkyriverMass = {
+      x: top.x,
+      y0: yCrown,
+      z: b1z,
+      width: blockW,
+      height: crownH,
+      depth: blockD,
+      tint: tower.tint,
+      anchorV: tower.z,
+      materialOwner: towerSeed,
+      building: towerSeed,
+    };
+    crownMasses.push(block0, block1);
+    crownSpan = actualSpan;
+    crownBounds = {
+      y0: yCrown,
+      y1: yCrown + crownH,
+      width: blockW,
+      height: crownH,
+      depth: actualSpan,
+    };
+    crownProfile = {
+      kind: 'split',
+      axis: 'z',
+      gapM: gap,
+      crownSpanM: actualSpan,
+      bounds: crownBounds,
+      massIndices: [0, 0],
+    };
+  } else {
+    const uCorner = r36Hash01(layout.seed, tower, 7);
+    const uCornerX = r36Hash01(layout.seed, tower, 8);
+    const uCornerZ = r36Hash01(layout.seed, tower, 9);
+    const uFinH = r36Hash01(layout.seed, tower, 10);
+    const isCorner = uCorner < 0.40;
+
+    const finW = Math.max(3, Math.round(top.width * (isCorner ? 0.18 : 0.15)));
+    const finD = Math.round(top.depth * (isCorner ? 0.45 : 0.75));
+    const finH = resolveOriginal
+      ? (isCorner ? Math.round(36 + uFinH * 40) : Math.round(42 + uFinH * 24))
+      : R36_ORDINARY_CROWN_HEIGHT_M;
+    const yCrown = top.y1;
+
+    const shiftX = Math.max(0, (top.width - finW) * 0.5 - 2);
+    const shiftZ = Math.max(0, (top.depth - finD) * 0.5 - 2);
+    const cornerX = uCornerX < 0.5 ? -1 : 1;
+    const cornerZ = uCornerZ < 0.5 ? -1 : 1;
+    const finX = isCorner ? top.x + cornerX * shiftX : top.x;
+    const finZ = isCorner ? top.z + cornerZ * shiftZ : top.z;
+
+    const fin: SkyriverMass = {
+      x: finX,
+      y0: yCrown,
+      z: finZ,
+      width: finW,
+      height: finH,
+      depth: finD,
+      tint: tower.tint,
+      anchorV: tower.z,
+      materialOwner: towerSeed,
+      building: towerSeed,
+    };
+    crownMasses.push(fin);
+    crownSpan = finD;
+    crownBounds = {
+      y0: yCrown,
+      y1: yCrown + finH,
+      width: finW,
+      height: finH,
+      depth: finD,
+    };
+    crownProfile = {
+      kind: 'unsplit-fin',
+      axis: 'z',
+      gapM: 0,
+      crownSpanM: finD,
+      bounds: crownBounds,
+      massIndices: [0],
+    };
+  }
+
+  const companionMasses: SkyriverMass[] = [];
+  if (family === 'thin-slab-companion') {
+    const originalCompW = Math.round(tower.width * 0.60);
+    const originalCompD = Math.round(tower.depth * 0.60);
+    const compW = Math.round(originalCompW * companionScale);
+    const compD = Math.round(originalCompD * companionScale);
+    const compH = Math.round(tower.height * 0.35);
+    const compX = tower.x + side * (tower.width * 0.5 + originalCompW * 0.5 + 4);
+    const compZ = tower.z + side * 15;
+    companionMasses.push({
+      x: compX,
+      y0: SKYRIVER_CITY_VOID_BASE_Y,
+      z: compZ,
+      width: compW,
+      height: compH - SKYRIVER_CITY_VOID_BASE_Y,
+      depth: compD,
+      tint: tower.tint,
+      anchorV: tower.z,
+      materialOwner: towerSeed,
+      building: towerSeed,
+    });
+  }
+
+  const st0 = stages[0]!;
+  const st0Mass = stageMasses[0]!;
+  const st0FaceOwner = ownerOf(st0Mass, tower.z);
+
+  const faces: SkyriverFacadeFace[] = [];
+  const tiers: FacadeTier[] = [];
+
+  const hostFace: SkyriverFacadeFace = {
+    id: `${buildingId}:face-0`,
+    buildingId,
+    side,
+    planeAxis: 'x',
+    plane: side * (Math.abs(st0.x) - st0.width * 0.5),
+    outward: -side as -1 | 1,
+    u0: st0.z - st0.depth * 0.5,
+    u1: st0.z + st0.depth * 0.5,
+    y0: Math.max(0, st0.y0),
+    y1: st0.y1,
+    stepBottom: false,
+    stepTop: true,
+    projection: 0,
+    owner: st0FaceOwner,
+  };
+
+  faces.push(hostFace);
+  tiers.push({ face: hostFace });
+
+  for (let s = 1; s < stages.length; s++) {
+    const st = stages[s]!;
+    const stMass = stageMasses[s]!;
+    const facePlane = side * (Math.abs(st.x) - st.width * 0.5);
+    const stageFace: SkyriverFacadeFace = {
+      id: `${buildingId}:face-${s}`,
+      buildingId,
+      side,
+      planeAxis: 'x',
+      plane: facePlane,
+      outward: -side as -1 | 1,
+      u0: st.z - st.depth * 0.5,
+      u1: st.z + st.depth * 0.5,
+      y0: st.y0,
+      y1: st.y1,
+      stepBottom: true,
+      stepTop: s < stages.length - 1,
+      projection: 0,
+      owner: ownerOf(stMass, tower.z),
+    };
+    faces.push(stageFace);
+    tiers.push({ face: stageFace });
+  }
+
+  const stageDrafts: R36StageDraft[] = stages.map((st, sIdx) => {
+    let offset: SkyriverStageOffset | null = null;
+    if (sIdx > 0) {
+      const parent = stages[st.parentStage ?? (sIdx - 1)]!;
+      const axis = st.offsetAxis as 'x' | 'z';
+      const span = axis === 'x' ? parent.width : parent.depth;
+      const delta = axis === 'x' ? (st.x - parent.x) : (st.z - parent.z);
+      const ratio = Math.abs(delta) / span;
+      offset = {
+        axis,
+        parentKind: 'stage',
+        parentStageIndex: st.parentStage ?? (sIdx - 1),
+        parentSpanM: span,
+        deltaM: delta,
+        ratio,
+      };
+    }
+    return {
+      stageIndex: sIdx,
+      masses: [stageMasses[sIdx]!],
+      footprint: {
+        x: st.x,
+        z: st.z,
+        width: st.width,
+        depth: st.depth,
+      },
+      verticalBounds: {
+        y0: st.y0,
+        y1: st.y1,
+        height: st.y1 - st.y0,
+      },
+      offset,
+    };
+  });
+
+  return {
+    family,
+    stageMasses,
+    stageDrafts,
+    spineMass: null,
+    deckWingMasses: [],
+    crownMasses: crownMasses.map((mass) => ({ ...mass, crownRole: 'ordinary-dark-crown' as const })),
+    crownProfile,
+    crownBounds,
+    crownSpan,
+    companionMasses,
+    leanProfile,
+    hostFace: heroRow !== undefined ? faces[0]! : hostFace,
+    faces,
+    tiers,
+  };
+}
+
 const signCache = new Map<number, SkyriverNeonSigns>();
 
 function fail(code: string): never {
@@ -721,7 +1959,44 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
   const tierMap = new Map<string, readonly FacadeTier[]>();
   const exposedFaces: SkyriverFacadeFace[] = [];
   const heroRows = deriveHeroRowPlans(layout);
+  const reservedHeroTowers = deriveReservedHeroTowers(layout);
   tierCache.set(layout.seed, tierMap);
+  const legacyBodyMassesByTower = new Map<string, Set<SkyriverMass>>();
+  const legacyCapMassesByTower = new Map<string, Set<SkyriverMass>>();
+  const legacyFacesByTower = new Map<string, Set<SkyriverFacadeFace>>();
+  const towerKeyByLegacyFace = new Map<SkyriverFacadeFace, string>();
+
+  const recordLegacyBody = (tower: SkyriverTower, mass: SkyriverMass): void => {
+    const key = towerKey(tower);
+    let bucket = legacyBodyMassesByTower.get(key);
+    if (bucket === undefined) {
+      bucket = new Set<SkyriverMass>();
+      legacyBodyMassesByTower.set(key, bucket);
+    }
+    bucket.add(mass);
+  };
+
+  const recordLegacyCap = (tower: SkyriverTower, mass: SkyriverMass): void => {
+    const key = towerKey(tower);
+    let bucket = legacyCapMassesByTower.get(key);
+    if (bucket === undefined) {
+      bucket = new Set<SkyriverMass>();
+      legacyCapMassesByTower.set(key, bucket);
+    }
+    bucket.add(mass);
+  };
+
+  const recordLegacyFace = (tower: SkyriverTower, face: SkyriverFacadeFace): void => {
+    const key = towerKey(tower);
+    let bucket = legacyFacesByTower.get(key);
+    if (bucket === undefined) {
+      bucket = new Set<SkyriverFacadeFace>();
+      legacyFacesByTower.set(key, bucket);
+    }
+    bucket.add(face);
+    towerKeyByLegacyFace.set(face, key);
+  };
+
   for (const wall of innerWalls) {
     for (let index = 0; index < wall.length; index += 1) {
       const tower = wall[index]!;
@@ -799,7 +2074,10 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
             stepBottom: tops.length > 0,
             stepTop: k < tops.length,
           };
-        if (k < tops.length && projection > 0) masses.push(tierMass);
+        if (k < tops.length && projection > 0) {
+          masses.push(tierMass);
+          recordLegacyBody(tower, tierMass);
+        }
         const faceOwnerMass = projection > 0 ? tierMass : tower;
         const faceOwner = ownerOf(faceOwnerMass, tower.z);
         const facadeFace: SkyriverFacadeFace = {
@@ -821,6 +2099,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
         const tier: FacadeTier = { face: facadeFace };
         facesForTower.push(tier);
         exposedFaces.push(facadeFace);
+        recordLegacyFace(tower, facadeFace);
         const outer = face - projection;
         const tierOwner = faceOwner;
         // Ribs on this tier's face.
@@ -859,9 +2138,13 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
       const crownW = tower.width * (0.42 + random.nextInt(0, 250) / 1000);
       const crownD = tower.depth * (0.42 + random.nextInt(0, 250) / 1000);
       const crownH = 50 + random.nextInt(0, 110);
-      masses.push({ x: tower.x, y0: h - 2, z: tower.z, width: crownW, height: crownH, depth: crownD, tint: tower.tint, materialOwner: buildingSeedOf(tower.x, tower.z) });
+      const crown1: SkyriverMass = { x: tower.x, y0: h - 2, z: tower.z, width: crownW, height: crownH, depth: crownD, tint: tower.tint, materialOwner: buildingSeedOf(tower.x, tower.z) };
+      masses.push(crown1);
+      recordLegacyBody(tower, crown1);
       if (random.nextInt(0, 99) < 60) {
-        masses.push({ x: tower.x, y0: h + crownH - 2, z: tower.z, width: crownW * 0.5, height: 25 + random.nextInt(0, 50), depth: crownD * 0.55, tint: tower.tint, materialOwner: buildingSeedOf(tower.x, tower.z) });
+        const crown2: SkyriverMass = { x: tower.x, y0: h + crownH - 2, z: tower.z, width: crownW * 0.5, height: 25 + random.nextInt(0, 50), depth: crownD * 0.55, tint: tower.tint, materialOwner: buildingSeedOf(tower.x, tower.z) };
+        masses.push(crown2);
+        recordLegacyBody(tower, crown2);
       }
 
       // Recessed mid-layer block in the seam to the next slab along the canyon.
@@ -1133,7 +2416,11 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
       let y = tower.height - 2;
       for (let stage = 0; stage < 3; stage += 1) {
         const h = 90 + random.nextInt(0, 220);
-        if (legacy) masses.push({ x: tower.x, y0: y, z: tower.z, width: w, height: h, depth: d, tint: tower.tint, materialOwner: buildingSeedOf(tower.x, tower.z) });
+        if (legacy) {
+          const capMass: SkyriverMass = { x: tower.x, y0: y, z: tower.z, width: w, height: h, depth: d, tint: tower.tint, materialOwner: buildingSeedOf(tower.x, tower.z) };
+          recordLegacyCap(tower, capMass);
+          masses.push(capMass);
+        }
         y += h - 2;
         w *= 0.62;
         d *= 0.62;
@@ -1232,13 +2519,13 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     bridges += 1;
   }
 
-  deriveMassingVariation(layout, innerWalls, masses, push);
+  deriveMassingVariation(layout, innerWalls, masses, push, recordLegacyBody);
 
   // Every derived slab, extended down into the void so no wall has a visible foot.
   for (const tower of layout.towers) {
     const tiers = tierMap.get(towerKey(tower));
     if (tiers === undefined || tiers.length < 2) {
-      masses.unshift({
+      const slabMass: SkyriverMass = {
         x: tower.x,
         y0: SKYRIVER_CITY_VOID_BASE_Y,
         z: tower.z,
@@ -1247,12 +2534,14 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
         depth: tower.depth,
         tint: tower.tint,
         materialOwner: buildingSeedOf(tower.x, tower.z),
-      });
+      };
+      recordLegacyBody(tower, slabMass);
+      masses.unshift(slabMass);
       continue;
     }
     for (let i = tiers.length - 1; i >= 0; i -= 1) {
       const face = tiers[i]!.face;
-      masses.unshift({
+      const slabMass: SkyriverMass = {
         x: tower.x,
         y0: face.y0,
         z: tower.z,
@@ -1265,9 +2554,185 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
         materialOwner: buildingSeedOf(tower.x, tower.z),
         stepBottom: face.stepBottom,
         stepTop: face.stepTop,
-      });
+      };
+      recordLegacyBody(tower, slabMass);
+      masses.unshift(slabMass);
     }
   }
+
+  const legacyWorld = [...masses];
+  const legacyPrefixLength = legacyWorld.length;
+  const seedIndices = new WeakMap<SkyriverMass, number>();
+  for (let m = 0; m < legacyPrefixLength; m += 1) {
+    seedIndices.set(legacyWorld[m]!, m);
+  }
+
+  // --- R36 profile deterministic overlay --------------------------------------------------------
+  // 1. Derive R36 rows after the old random stream is complete.
+  //    Use the existing layout index, inner-wall predicate, near-mega test,
+  //    innerEligibleCount rule, heroRows, reservedHeroTowers, and deriveR36TowerData.
+  const r36DataByTower = new Map<string, R36EmittedData>();
+  const apexes = canyonBendApexes(900);
+  const r36InputsByTower = new Map<string, {
+    readonly tower: SkyriverTower;
+    readonly index: number;
+    readonly isSplitCrown: boolean;
+    readonly row?: HeroRowPlan;
+    readonly isReservedHero: boolean;
+    readonly heroReservedTop?: number;
+  }>();
+  let innerEligibleCount = 0;
+  for (let index = 0; index < layout.towers.length; index += 1) {
+    const tower = layout.towers[index]!;
+    if (isEligibleTower(layout, tower)) {
+      const isInner = Math.abs(Math.abs(tower.x) - innerWallX(layout, tower)) < 1;
+      const side = Math.sign(tower.x);
+      const nearMega = side === 1 && apexes.some((a) => Math.abs(tower.z - a.v) < 950);
+      let isSplitCrown = false;
+      if (isInner && !nearMega) {
+        if (innerEligibleCount % 4 !== 3) {
+          isSplitCrown = true;
+        }
+        innerEligibleCount += 1;
+      }
+      const row = heroRows.find((candidate) => candidate.tower === tower);
+      const isReservedHero = reservedHeroTowers.has(towerKey(tower));
+      const heroReservedTop = reservedHeroTowers.get(towerKey(tower));
+      // Resolve the original geometry before the final crown and stage pass.
+      const r36Data = deriveR36TowerData(
+        layout, tower, index, isSplitCrown, row, isReservedHero, heroReservedTop,
+        undefined, undefined, 1, true,
+      );
+      r36InputsByTower.set(towerKey(tower), {
+        tower,
+        index,
+        isSplitCrown,
+        row,
+        isReservedHero,
+        heroReservedTop,
+      });
+      r36DataByTower.set(towerKey(tower), r36Data);
+    }
+  }
+
+  // 2. Remove only legacy body objects recorded for towers with an R36 profile.
+  const replacedMasses = new Set<SkyriverMass>();
+  for (const [key, bodies] of legacyBodyMassesByTower) {
+    if (r36DataByTower.has(key)) {
+      for (const mass of bodies) replacedMasses.add(mass);
+    }
+  }
+  for (const [key, caps] of legacyCapMassesByTower) {
+    if (r36DataByTower.has(key)) {
+      for (const mass of caps) replacedMasses.add(mass);
+    }
+  }
+  const keptMasses = masses.filter((mass) => !replacedMasses.has(mass));
+  masses.length = 0;
+  masses.push(...keptMasses);
+
+  // Preserve an immutable per-seed copy of the actual legacy exposed face objects
+  // before Stage A replaces them in the overlay.
+  legacyFaceCache.set(layout.seed, Object.freeze([...exposedFaces]));
+
+  // 3. Replace legacy faces by object identity. Preserve all untagged faces.
+  //    For an inner-wall profile, append the same r36Data.faces that the current
+  //    inner loop exposes. Keep current outer-face exposure policy in Stage A.
+  //    Set tierMap[key] = r36Data.tiers for every eligible profile.
+  const replacedFaces = new Set<SkyriverFacadeFace>();
+  for (const [key, faces] of legacyFacesByTower) {
+    if (r36DataByTower.has(key)) {
+      for (const face of faces) replacedFaces.add(face);
+    }
+  }
+
+  const finalExposedFaces: SkyriverFacadeFace[] = [];
+  const emittedTowers = new Set<string>();
+  for (const face of exposedFaces) {
+    if (replacedFaces.has(face)) {
+      const key = towerKeyByLegacyFace.get(face)!;
+      if (!emittedTowers.has(key)) {
+        emittedTowers.add(key);
+        const data = r36DataByTower.get(key);
+        if (data !== undefined) {
+          for (const f of data.faces) {
+            finalExposedFaces.push(f);
+          }
+        }
+      }
+    } else {
+      finalExposedFaces.push(face);
+    }
+  }
+  for (const wall of innerWalls) {
+    for (const tower of wall) {
+      const key = towerKey(tower);
+      if (!emittedTowers.has(key)) {
+        const data = r36DataByTower.get(key);
+        if (data !== undefined) {
+          emittedTowers.add(key);
+          for (const f of data.faces) {
+            finalExposedFaces.push(f);
+          }
+        }
+      }
+    }
+  }
+  exposedFaces.length = 0;
+  exposedFaces.push(...finalExposedFaces);
+
+  for (const [key, data] of r36DataByTower) {
+    tierMap.set(key, data.tiers);
+  }
+
+  const initialFirstMassByTower = new Map<SkyriverMass, string>();
+  const initialRemainingMasses = new Set<SkyriverMass>();
+  const allInitialProfileMasses = new Set<SkyriverMass>();
+  for (const tower of layout.towers) {
+    const key = towerKey(tower);
+    const data = r36DataByTower.get(key);
+    if (data !== undefined) {
+      const towerMasses: SkyriverMass[] = [
+        ...data.stageMasses,
+        ...data.crownMasses,
+        ...(data.spineMass ? [data.spineMass] : []),
+        ...data.deckWingMasses,
+        ...data.companionMasses,
+      ];
+      if (towerMasses.length > 0) {
+        initialFirstMassByTower.set(towerMasses[0]!, key);
+        for (let m = 1; m < towerMasses.length; m += 1) {
+          initialRemainingMasses.add(towerMasses[m]!);
+        }
+      }
+      for (const m of towerMasses) allInitialProfileMasses.add(m);
+    }
+  }
+  const initialFirstFaceByTower = new Map<SkyriverFacadeFace, string>();
+  const initialRemainingFaces = new Set<SkyriverFacadeFace>();
+  for (const [key, data] of r36DataByTower) {
+    if (data.faces.length > 0) {
+      initialFirstFaceByTower.set(data.faces[0]!, key);
+      for (let f = 1; f < data.faces.length; f += 1) initialRemainingFaces.add(data.faces[f]!);
+    }
+  }
+
+  // 4. Append R36 masses once in layout.towers order:
+  //    stageMasses, crownMasses, spineMass (when present), deckWingMasses,
+  //    companionMasses. Do not call random or push here.
+  for (const tower of layout.towers) {
+    const r36Data = r36DataByTower.get(towerKey(tower));
+    if (r36Data !== undefined) {
+      for (const sm of r36Data.stageMasses) masses.push(sm);
+      for (const cm of r36Data.crownMasses) masses.push(cm);
+      if (r36Data.spineMass) masses.push(r36Data.spineMass);
+      for (const wm of r36Data.deckWingMasses) masses.push(wm);
+      for (const cpm of r36Data.companionMasses) masses.push(cpm);
+    }
+  }
+
+  // 5. tierCache.set(layout.seed, tierMap) now points to final profile tiers.
+  tierCache.set(layout.seed, tierMap);
 
   // --- R27 low-city base sprawl pass -------------------------------------------------------------
   const baseRandom = new DeterministicRandom(layout.seed).fork('skyriver.city.r27.base_sprawl');
@@ -1295,13 +2760,1893 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     seedValue[count] = baseRandom.nextInt(0, 9999) / 9999;
     count += 1;
   };
-  appendLowBaseSprawl(layout, masses, pushBaseTrim, baseRandom, () => count, cap);
+  const r27StartIndex = count;
+  appendLowBaseSprawl(layout, legacyWorld, pushBaseTrim, baseRandom, () => count, cap);
+  const r27EndIndex = count;
+  const r27Tail = legacyWorld.slice(legacyPrefixLength);
+  for (let tailOrdinal = 0; tailOrdinal < r27Tail.length; tailOrdinal += 1) {
+    const tailMass = r27Tail[tailOrdinal]!;
+    masses.push(tailMass);
+    seedIndices.set(tailMass, legacyPrefixLength + tailOrdinal);
+  }
+
+  const createSpatialIndex = (expectedCapacity: number): RoofDetailCollisionIndex => ({
+    cellSize: ROOF_DETAIL_SPATIAL_CELL_M,
+    cells: new Map(),
+    boxes: [],
+    stamps: new Int32Array(Math.max(expectedCapacity + 256, 1024)),
+    stamp: 0,
+  });
+
+  const fixedMasses = masses.filter((m) => !allInitialProfileMasses.has(m));
+  const fixedIndex = createSpatialIndex(fixedMasses.length);
+  for (let massIndex = 0; massIndex < fixedMasses.length; massIndex += 1) {
+    const mass = fixedMasses[massIndex]!;
+    if (mass.width <= 0 || mass.height <= 0 || mass.depth <= 0) continue;
+    roofDetailInsert(fixedIndex, roofDetailMassObb(mass, massIndex));
+  }
+
+  const buildProfileIndex = (r36Map: Map<string, R36EmittedData>): RoofDetailCollisionIndex => {
+    let massCount = 0;
+    for (const d of r36Map.values()) {
+      massCount += d.stageMasses.length + d.crownMasses.length + (d.spineMass ? 1 : 0) + d.deckWingMasses.length + d.companionMasses.length;
+    }
+    const idx = createSpatialIndex(massCount);
+    let massIdx = 0;
+    for (const d of r36Map.values()) {
+      for (const m of d.stageMasses) {
+        if (m.width > 0 && m.height > 0 && m.depth > 0) roofDetailInsert(idx, roofDetailMassObb(m, massIdx));
+        massIdx += 1;
+      }
+      for (const m of d.crownMasses) {
+        if (m.width > 0 && m.height > 0 && m.depth > 0) roofDetailInsert(idx, roofDetailMassObb(m, massIdx));
+        massIdx += 1;
+      }
+      if (d.spineMass && d.spineMass.width > 0 && d.spineMass.height > 0 && d.spineMass.depth > 0) {
+        roofDetailInsert(idx, roofDetailMassObb(d.spineMass, massIdx));
+        massIdx += 1;
+      }
+      for (const m of d.deckWingMasses) {
+        if (m.width > 0 && m.height > 0 && m.depth > 0) roofDetailInsert(idx, roofDetailMassObb(m, massIdx));
+        massIdx += 1;
+      }
+      for (const m of d.companionMasses) {
+        if (m.width > 0 && m.height > 0 && m.depth > 0) roofDetailInsert(idx, roofDetailMassObb(m, massIdx));
+        massIdx += 1;
+      }
+    }
+    return idx;
+  };
+
+  const isAirBlocked = (data: R36EmittedData, tower: SkyriverTower, pIndex: RoofDetailCollisionIndex): boolean => {
+    const spine = data.spineMass;
+    const sx0 = spine ? spine.x - spine.width * 0.5 : 0;
+    const sx1 = spine ? spine.x + spine.width * 0.5 : 0;
+    const sz0 = spine ? spine.z - spine.depth * 0.5 : 0;
+    const sz1 = spine ? spine.z + spine.depth * 0.5 : 0;
+
+    if (data.family !== 'supported-spine' || !data.stageDrafts[0] || data.stageDrafts[0].stageIndex !== 0 || data.stageDrafts[0].masses.length !== 2) return true;
+
+    for (const wing of data.stageDrafts[0].masses) {
+      const wingTop = wing.y0 + wing.height;
+      const rx0 = wing.x - wing.width * 0.5;
+      const rx1 = wing.x + wing.width * 0.5;
+      const rz0 = wing.z - wing.depth * 0.5;
+      const rz1 = wing.z + wing.depth * 0.5;
+
+      const rects: { readonly x0: number; readonly x1: number; readonly z0: number; readonly z1: number }[] = [];
+      let hasInt = false;
+      if (spine !== null) {
+        const ix0 = Math.max(rx0, sx0);
+        const ix1 = Math.min(rx1, sx1);
+        const iz0 = Math.max(rz0, sz0);
+        const iz1 = Math.min(rz1, sz1);
+        if (ix1 > ix0 && iz1 > iz0) {
+          hasInt = true;
+          if (ix0 > rx0) rects.push({ x0: rx0, x1: ix0, z0: rz0, z1: rz1 });
+          if (rx1 > ix1) rects.push({ x0: ix1, x1: rx1, z0: rz0, z1: rz1 });
+          if (iz0 > rz0) rects.push({ x0: ix0, x1: ix1, z0: rz0, z1: iz0 });
+          if (rz1 > iz1) rects.push({ x0: ix0, x1: ix1, z0: iz1, z1: rz1 });
+        }
+      }
+      if (!hasInt) rects.push({ x0: rx0, x1: rx1, z0: rz0, z1: rz1 });
+
+      const anchorV = wing.anchorV ?? tower.z;
+      const prismY = wingTop + 4;
+      for (const r of rects) {
+        const pw = r.x1 - r.x0;
+        const pd = r.z1 - r.z0;
+        if (pw <= 0 || pd <= 0) continue;
+        warpRigid((r.x0 + r.x1) * 0.5, (r.z0 + r.z1) * 0.5, anchorV, roofDetailWarp);
+        const obb = roofDetailBox(roofDetailWarp.x, prismY, roofDetailWarp.z, pw, 8, pd, roofDetailWarp.heading);
+        if (roofDetailIndexConflicts(fixedIndex, obb, 0) || roofDetailIndexConflicts(pIndex, obb, 0)) return true;
+      }
+    }
+    return false;
+  };
+
+  let profileIndex = buildProfileIndex(r36DataByTower);
+  const maxScans = layout.towers.length + 1;
+  for (let scan = 0; scan < maxScans; scan += 1) {
+    let convertedAny = false;
+    for (let i = 0; i < layout.towers.length; i += 1) {
+      const tower = layout.towers[i]!;
+      const key = towerKey(tower);
+      const data = r36DataByTower.get(key);
+      if (data === undefined || data.family !== 'supported-spine') continue;
+      if (isAirBlocked(data, tower, profileIndex)) {
+        const inp = r36InputsByTower.get(key)!;
+        const rebuilt = deriveR36TowerData(
+          layout, inp.tower, inp.index, inp.isSplitCrown, inp.row, inp.isReservedHero, inp.heroReservedTop,
+          'offset-decks', undefined, 1, true,
+        );
+        r36DataByTower.set(key, rebuilt);
+        profileIndex = buildProfileIndex(r36DataByTower);
+        convertedAny = true;
+        break;
+      }
+    }
+    if (!convertedAny) break;
+  }
+
+  // --- R36 Stage C: bounded indexed roof-fit pass ------------------------------------------------
+  interface SkirtRoofEntry {
+    readonly id: number;
+    readonly mass: SkyriverMass;
+    readonly samples: readonly { readonly x: number; readonly y: number; readonly z: number }[];
+  }
+
+  const skirtRoofs: SkirtRoofEntry[] = [];
+  const sampleCellMap = new Map<string, number[]>();
+  for (let mIdx = 0; mIdx < masses.length; mIdx += 1) {
+    const m = masses[mIdx]!;
+    if (isLowBaseMass(m) && m.baseRecord.kind === 'skirt') {
+      const rId = skirtRoofs.length;
+      const roofY = m.y0 + m.height;
+      const anchorV = m.anchorV ?? m.z;
+      const pts: { readonly x: number; readonly y: number; readonly z: number }[] = [];
+      const touchedCells = new Set<string>();
+      for (let gx = 0; gx < 7; gx += 1) {
+        for (let gz = 0; gz < 7; gz += 1) {
+          const u = (gx + 0.5) / 7;
+          const v = (gz + 0.5) / 7;
+          const px = m.x - m.width * 0.5 + u * m.width;
+          const pz = m.z - m.depth * 0.5 + v * m.depth;
+          warpRigid(px, pz, anchorV, roofDetailWarp);
+          const wx = roofDetailWarp.x;
+          const wz = roofDetailWarp.z;
+          pts.push({ x: wx, y: roofY, z: wz });
+          const cx = Math.floor(wx / ROOF_DETAIL_SPATIAL_CELL_M);
+          const cz = Math.floor(wz / ROOF_DETAIL_SPATIAL_CELL_M);
+          touchedCells.add(roofDetailCellKey(cx, cz));
+        }
+      }
+      for (const cellKey of touchedCells) {
+        const list = sampleCellMap.get(cellKey);
+        if (list === undefined) sampleCellMap.set(cellKey, [rId]);
+        else list.push(rId);
+      }
+      skirtRoofs.push({ id: rId, mass: m, samples: Object.freeze(pts) });
+    }
+  }
+
+  const fixedBoxToMass = new Map<RoofDetailObb, SkyriverMass>();
+  for (let bIdx = 0; bIdx < fixedIndex.boxes.length; bIdx += 1) {
+    const box = fixedIndex.boxes[bIdx]!;
+    if (box.massIndex !== undefined) {
+      const fm = fixedMasses[box.massIndex];
+      if (fm !== undefined) fixedBoxToMass.set(box, fm);
+    }
+  }
+
+  const boxToMass = new Map<RoofDetailObb, SkyriverMass>();
+  const boxToProfileKey = new Map<RoofDetailObb, string>();
+  const profileMasses = new Map<string, SkyriverMass[]>();
+  const profileBoxes = new Map<string, RoofDetailObb[]>();
+  const activeMasses = new Set<SkyriverMass>();
+
+  const activeProfileIndex = createSpatialIndex(2048);
+  for (const [key, data] of r36DataByTower) {
+    const mList: SkyriverMass[] = [
+      ...data.stageMasses,
+      ...data.crownMasses,
+      ...(data.spineMass ? [data.spineMass] : []),
+      ...data.deckWingMasses,
+      ...data.companionMasses,
+    ];
+    const bList: RoofDetailObb[] = [];
+    for (let i = 0; i < mList.length; i += 1) {
+      const m = mList[i]!;
+      if (m.width <= 0 || m.height <= 0 || m.depth <= 0) continue;
+      activeMasses.add(m);
+      const obb = roofDetailMassObb(m, 0);
+      boxToMass.set(obb, m);
+      boxToProfileKey.set(obb, key);
+      bList.push(obb);
+      roofDetailInsert(activeProfileIndex, obb);
+    }
+    profileMasses.set(key, mList);
+    profileBoxes.set(key, bList);
+  }
+
+  const pointInObb = (pt: { readonly x: number; readonly y: number; readonly z: number }, box: RoofDetailObb): boolean => {
+    if (Math.abs(pt.y - box.y) > box.halfY + 0.01) return false;
+    const dx = pt.x - box.x;
+    const dz = pt.z - box.z;
+    if (Math.abs(dx * box.ux + dz * box.uz) > box.halfX + 0.01) return false;
+    if (Math.abs(dx * box.vx + dz * box.vz) > box.halfZ + 0.01) return false;
+    return true;
+  };
+
+  const isCoveredPoint = (
+    pt: { readonly x: number; readonly y: number; readonly z: number },
+    maskProfileKey?: string,
+    candBoxes?: readonly RoofDetailObb[],
+  ): boolean => {
+    const fMinGx = Math.floor((pt.x - 0.01) / fixedIndex.cellSize);
+    const fMaxGx = Math.floor((pt.x + 0.01) / fixedIndex.cellSize);
+    const fMinGz = Math.floor((pt.z - 0.01) / fixedIndex.cellSize);
+    const fMaxGz = Math.floor((pt.z + 0.01) / fixedIndex.cellSize);
+    for (let gx = fMinGx; gx <= fMaxGx; gx += 1) {
+      for (let gz = fMinGz; gz <= fMaxGz; gz += 1) {
+        const bucket = fixedIndex.cells.get(roofDetailCellKey(gx, gz));
+        if (bucket !== undefined) {
+          for (let i = 0; i < bucket.length; i += 1) {
+            const box = fixedIndex.boxes[bucket[i]!]!;
+            const fm = fixedBoxToMass.get(box);
+            if (fm !== undefined && isLowBaseMass(fm)) continue;
+            if (pointInObb(pt, box)) return true;
+          }
+        }
+      }
+    }
+    if (candBoxes !== undefined) {
+      for (let i = 0; i < candBoxes.length; i += 1) {
+        if (pointInObb(pt, candBoxes[i]!)) return true;
+      }
+    }
+    const pMinGx = Math.floor((pt.x - 0.01) / activeProfileIndex.cellSize);
+    const pMaxGx = Math.floor((pt.x + 0.01) / activeProfileIndex.cellSize);
+    const pMinGz = Math.floor((pt.z - 0.01) / activeProfileIndex.cellSize);
+    const pMaxGz = Math.floor((pt.z + 0.01) / activeProfileIndex.cellSize);
+    for (let gx = pMinGx; gx <= pMaxGx; gx += 1) {
+      for (let gz = pMinGz; gz <= pMaxGz; gz += 1) {
+        const bucket = activeProfileIndex.cells.get(roofDetailCellKey(gx, gz));
+        if (bucket !== undefined) {
+          for (let i = 0; i < bucket.length; i += 1) {
+            const box = activeProfileIndex.boxes[bucket[i]!]!;
+            if (maskProfileKey !== undefined && boxToProfileKey.get(box) === maskProfileKey) continue;
+            const m = boxToMass.get(box);
+            if (m === undefined || !activeMasses.has(m)) continue;
+            if (pointInObb(pt, box)) return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  const roofCoveredCounts = new Int32Array(skirtRoofs.length);
+  for (let rId = 0; rId < skirtRoofs.length; rId += 1) {
+    const skirt = skirtRoofs[rId]!;
+    let cov = 0;
+    for (let sIdx = 0; sIdx < 49; sIdx += 1) {
+      if (isCoveredPoint(skirt.samples[sIdx]!)) cov += 1;
+    }
+    roofCoveredCounts[rId] = cov;
+  }
+
+  const wingAirPrisms: RoofDetailObb[] = [];
+  for (let i = 0; i < layout.towers.length; i += 1) {
+    const tower = layout.towers[i]!;
+    const key = towerKey(tower);
+    const d = r36DataByTower.get(key);
+    if (d === undefined || d.family !== 'supported-spine') continue;
+    if (!d.stageDrafts[0] || d.stageDrafts[0].stageIndex !== 0 || d.stageDrafts[0].masses.length !== 2) continue;
+    const spine = d.spineMass;
+    const sx0 = spine ? spine.x - spine.width * 0.5 : 0;
+    const sx1 = spine ? spine.x + spine.width * 0.5 : 0;
+    const sz0 = spine ? spine.z - spine.depth * 0.5 : 0;
+    const sz1 = spine ? spine.z + spine.depth * 0.5 : 0;
+    for (const wing of d.stageDrafts[0].masses) {
+      const wingTop = wing.y0 + wing.height;
+      const rx0 = wing.x - wing.width * 0.5;
+      const rx1 = wing.x + wing.width * 0.5;
+      const rz0 = wing.z - wing.depth * 0.5;
+      const rz1 = wing.z + wing.depth * 0.5;
+      const rects: { readonly x0: number; readonly x1: number; readonly z0: number; readonly z1: number }[] = [];
+      let hasInt = false;
+      if (spine !== null) {
+        const ix0 = Math.max(rx0, sx0);
+        const ix1 = Math.min(rx1, sx1);
+        const iz0 = Math.max(rz0, sz0);
+        const iz1 = Math.min(rz1, sz1);
+        if (ix1 > ix0 && iz1 > iz0) {
+          hasInt = true;
+          if (ix0 > rx0) rects.push({ x0: rx0, x1: ix0, z0: rz0, z1: rz1 });
+          if (rx1 > ix1) rects.push({ x0: ix1, x1: rx1, z0: rz0, z1: rz1 });
+          if (iz0 > rz0) rects.push({ x0: ix0, x1: ix1, z0: rz0, z1: iz0 });
+          if (rz1 > iz1) rects.push({ x0: ix0, x1: ix1, z0: iz1, z1: rz1 });
+        }
+      }
+      if (!hasInt) rects.push({ x0: rx0, x1: rx1, z0: rz0, z1: rz1 });
+      const anchorV = wing.anchorV ?? tower.z;
+      const prismY = wingTop + 4;
+      for (const r of rects) {
+        const pw = r.x1 - r.x0;
+        const pd = r.z1 - r.z0;
+        if (pw <= 0 || pd <= 0) continue;
+        warpRigid((r.x0 + r.x1) * 0.5, (r.z0 + r.z1) * 0.5, anchorV, roofDetailWarp);
+        const obb = roofDetailBox(roofDetailWarp.x, prismY, roofDetailWarp.z, pw, 8, pd, roofDetailWarp.heading);
+        wingAirPrisms.push(obb);
+      }
+    }
+  }
+  const wingAirIndex = createSpatialIndex(wingAirPrisms.length);
+  for (let pIdx = 0; pIdx < wingAirPrisms.length; pIdx += 1) {
+    roofDetailInsert(wingAirIndex, wingAirPrisms[pIdx]!);
+  }
+
+  const checkStageContact = (drafts: readonly R36StageDraft[]): boolean => {
+    for (let s = 1; s < drafts.length; s += 1) {
+      const parent = drafts[s - 1]!;
+      const child = drafts[s]!;
+      if (Math.abs(child.verticalBounds.y0 - parent.verticalBounds.y1) > 0.01) return false;
+      const xOverlap = Math.min(parent.footprint.x + parent.footprint.width * 0.5, child.footprint.x + child.footprint.width * 0.5) -
+        Math.max(parent.footprint.x - parent.footprint.width * 0.5, child.footprint.x - child.footprint.width * 0.5);
+      const zOverlap = Math.min(parent.footprint.z + parent.footprint.depth * 0.5, child.footprint.z + child.footprint.depth * 0.5) -
+        Math.max(parent.footprint.z - parent.footprint.depth * 0.5, child.footprint.z - child.footprint.depth * 0.5);
+      if (xOverlap <= 0 || zOverlap <= 0) return false;
+    }
+    return true;
+  };
+
+  const computeLowerCorridorExtent = (side: number, data: R36EmittedData): number => {
+    const lowerMasses: SkyriverMass[] = [
+      ...(data.stageDrafts[0] ? data.stageDrafts[0].masses : []),
+      ...data.companionMasses,
+      ...data.deckWingMasses,
+    ];
+    let minExtent = Infinity;
+    for (let i = 0; i < lowerMasses.length; i += 1) {
+      const m = lowerMasses[i]!;
+      if (m.width <= 0 || m.height <= 0 || m.depth <= 0) continue;
+      const ext = side * m.x - m.width * 0.5;
+      if (ext < minExtent) minExtent = ext;
+    }
+    return minExtent;
+  };
+
+  const CANDIDATE_SCALES = [0.90, 0.80, 0.60, 0.40, 0.25, 0.10] as const;
+
+  interface MutableProfileRecord {
+    readonly key: string;
+    readonly tower: SkyriverTower;
+    readonly side: number;
+    readonly initialFamily: SkyriverShapeFamily;
+    readonly initialStage0: { readonly width: number; readonly depth: number; readonly x: number; readonly z: number };
+    readonly initialCorridorExtent: number;
+    cursor: number;
+  }
+
+  const mutableRecords = new Map<string, MutableProfileRecord>();
+  for (let i = 0; i < layout.towers.length; i += 1) {
+    const tower = layout.towers[i]!;
+    const key = towerKey(tower);
+    const data = r36DataByTower.get(key);
+    if (data === undefined || data.family === 'supported-spine') continue;
+    const inp = r36InputsByTower.get(key)!;
+    if (inp.row !== undefined || inp.isReservedHero) continue;
+    const side = Math.sign(tower.x);
+    const st0 = data.stageDrafts[0]!.footprint;
+    const initialCorridorExtent = computeLowerCorridorExtent(side, data);
+    mutableRecords.set(key, {
+      key,
+      tower,
+      side,
+      initialFamily: data.family,
+      initialStage0: { width: st0.width, depth: st0.depth, x: st0.x, z: st0.z },
+      initialCorridorExtent,
+      cursor: 0,
+    });
+  }
+
+  const queue: string[] = [];
+  const inQueue = new Set<string>();
+
+  const findActiveCoveringMutableProfiles = (rId: number): readonly string[] => {
+    const skirt = skirtRoofs[rId]!;
+    const matched = new Set<string>();
+    for (let sIdx = 0; sIdx < 49; sIdx += 1) {
+      const pt = skirt.samples[sIdx]!;
+      const pMinGx = Math.floor((pt.x - 0.01) / activeProfileIndex.cellSize);
+      const pMaxGx = Math.floor((pt.x + 0.01) / activeProfileIndex.cellSize);
+      const pMinGz = Math.floor((pt.z - 0.01) / activeProfileIndex.cellSize);
+      const pMaxGz = Math.floor((pt.z + 0.01) / activeProfileIndex.cellSize);
+      for (let gx = pMinGx; gx <= pMaxGx; gx += 1) {
+        for (let gz = pMinGz; gz <= pMaxGz; gz += 1) {
+          const bucket = activeProfileIndex.cells.get(roofDetailCellKey(gx, gz));
+          if (bucket !== undefined) {
+            for (let i = 0; i < bucket.length; i += 1) {
+              const box = activeProfileIndex.boxes[bucket[i]!]!;
+              const m = boxToMass.get(box);
+              if (m === undefined || !activeMasses.has(m)) continue;
+              if (pointInObb(pt, box)) {
+                const k = boxToProfileKey.get(box);
+                if (k !== undefined && mutableRecords.has(k)) matched.add(k);
+              }
+            }
+          }
+        }
+      }
+    }
+    return Array.from(matched).sort();
+  };
+
+  for (let rId = 0; rId < skirtRoofs.length; rId += 1) {
+    if (roofCoveredCounts[rId] === 49) {
+      for (const k of findActiveCoveringMutableProfiles(rId)) {
+        if (!inQueue.has(k)) {
+          queue.push(k);
+          inQueue.add(k);
+        }
+      }
+    }
+  }
+
+  let qHead = 0;
+  while (qHead < queue.length) {
+    const key = queue[qHead++]!;
+    inQueue.delete(key);
+
+    const rec = mutableRecords.get(key);
+    if (rec === undefined || rec.cursor >= CANDIDATE_SCALES.length) continue;
+
+    const inp = r36InputsByTower.get(key)!;
+    const origFamily = rec.initialFamily;
+    const origW = rec.initialStage0.width;
+    const origD = rec.initialStage0.depth;
+    const origX = rec.initialStage0.x;
+    const origZ = rec.initialStage0.z;
+
+    while (rec.cursor < CANDIDATE_SCALES.length) {
+      const scale = CANDIDATE_SCALES[rec.cursor]!;
+      rec.cursor += 1;
+
+      const candW = Math.round(origW * scale);
+      const candD = Math.round(origD * scale);
+      const s0Override = { width: candW, depth: candD, x: origX, z: origZ };
+
+      const candData = deriveR36TowerData(
+        layout, inp.tower, inp.index, inp.isSplitCrown, inp.row, inp.isReservedHero, inp.heroReservedTop,
+        origFamily, s0Override, scale, true,
+      );
+
+      const candCorridorExtent = computeLowerCorridorExtent(rec.side, candData);
+      if (candCorridorExtent < rec.initialCorridorExtent - 0.01) continue;
+      if (!checkStageContact(candData.stageDrafts)) continue;
+
+      let invalidDraft = false;
+      for (let i = 0; i < candData.stageDrafts.length; i += 1) {
+        const d = candData.stageDrafts[i]!;
+        const fp = d.footprint;
+        const vb = d.verticalBounds;
+        if (
+          !Number.isFinite(fp.x) || !Number.isFinite(fp.z) ||
+          !Number.isFinite(fp.width) || !Number.isFinite(fp.depth) ||
+          fp.width <= 0 || fp.depth <= 0 ||
+          !Number.isFinite(vb.y0) || !Number.isFinite(vb.y1) ||
+          !Number.isFinite(vb.height) || vb.height <= 0
+        ) {
+          invalidDraft = true;
+          break;
+        }
+        if (d.offset !== null && (!Number.isFinite(d.offset.ratio) || d.offset.ratio < 0.08 || d.offset.ratio > 0.33)) {
+          invalidDraft = true;
+          break;
+        }
+      }
+      if (invalidDraft) continue;
+
+      if ((inp.index % 15 === 3) && candData.leanProfile === 'none') continue;
+      if (candData.leanProfile !== 'none' && (candData.leanProfile.angleDeg < 4.0 || candData.leanProfile.angleDeg > 6.0)) {
+        continue;
+      }
+
+      const candM: SkyriverMass[] = [
+        ...candData.stageMasses,
+        ...candData.crownMasses,
+        ...(candData.spineMass ? [candData.spineMass] : []),
+        ...candData.deckWingMasses,
+        ...candData.companionMasses,
+      ];
+      let invalidMass = false;
+      for (let i = 0; i < candM.length; i += 1) {
+        const m = candM[i]!;
+        if (
+          !Number.isFinite(m.x) || !Number.isFinite(m.y0) || !Number.isFinite(m.z) ||
+          !Number.isFinite(m.width) || !Number.isFinite(m.height) || !Number.isFinite(m.depth) ||
+          m.width <= 0 || m.height <= 0 || m.depth <= 0
+        ) {
+          invalidMass = true;
+          break;
+        }
+      }
+      if (invalidMass) continue;
+
+      const candB: RoofDetailObb[] = candM.map((m) => roofDetailMassObb(m, 0));
+
+      let wingAirConflict = false;
+      for (let i = 0; i < candB.length; i += 1) {
+        if (roofDetailIndexConflicts(wingAirIndex, candB[i]!, 0)) {
+          wingAirConflict = true;
+          break;
+        }
+      }
+      if (wingAirConflict) continue;
+
+      const oldB = profileBoxes.get(key) ?? [];
+      const affectedRoofs = new Set<number>();
+      const findRoofs = (boxes: readonly RoofDetailObb[]): void => {
+        for (let i = 0; i < boxes.length; i += 1) {
+          const b = boxes[i]!;
+          const minGx = Math.floor((b.minX - 0.01) / ROOF_DETAIL_SPATIAL_CELL_M);
+          const maxGx = Math.floor((b.maxX + 0.01) / ROOF_DETAIL_SPATIAL_CELL_M);
+          const minGz = Math.floor((b.minZ - 0.01) / ROOF_DETAIL_SPATIAL_CELL_M);
+          const maxGz = Math.floor((b.maxZ + 0.01) / ROOF_DETAIL_SPATIAL_CELL_M);
+          for (let gx = minGx; gx <= maxGx; gx += 1) {
+            for (let gz = minGz; gz <= maxGz; gz += 1) {
+              const list = sampleCellMap.get(roofDetailCellKey(gx, gz));
+              if (list !== undefined) {
+                for (let j = 0; j < list.length; j += 1) affectedRoofs.add(list[j]!);
+              }
+            }
+          }
+        }
+      };
+      findRoofs(oldB);
+      findRoofs(candB);
+
+      let makesNewBuried = false;
+      let oldLocalBuriedSum = 0;
+      let candLocalBuriedSum = 0;
+      const tempCounts = new Map<number, number>();
+
+      for (const rId of affectedRoofs) {
+        const curCov = roofCoveredCounts[rId]!;
+        const skirt = skirtRoofs[rId]!;
+        let candCov = 0;
+        let oldLocalCov = 0;
+        let candLocalCov = 0;
+        for (let sIdx = 0; sIdx < 49; sIdx += 1) {
+          const pt = skirt.samples[sIdx]!;
+          if (isCoveredPoint(pt, key, candB)) candCov += 1;
+          if (curCov === 49) {
+            let inOld = false;
+            for (let b = 0; b < oldB.length; b += 1) {
+              if (pointInObb(pt, oldB[b]!)) {
+                inOld = true;
+                break;
+              }
+            }
+            if (inOld) oldLocalCov += 1;
+
+            let inCand = false;
+            for (let b = 0; b < candB.length; b += 1) {
+              if (pointInObb(pt, candB[b]!)) {
+                inCand = true;
+                break;
+              }
+            }
+            if (inCand) candLocalCov += 1;
+          }
+        }
+        if (curCov < 49 && candCov === 49) {
+          makesNewBuried = true;
+          break;
+        }
+        if (curCov === 49) {
+          oldLocalBuriedSum += oldLocalCov;
+          candLocalBuriedSum += candLocalCov;
+        }
+        tempCounts.set(rId, candCov);
+      }
+
+      if (!makesNewBuried && candLocalBuriedSum < oldLocalBuriedSum) {
+        for (const om of profileMasses.get(key) ?? []) activeMasses.delete(om);
+        for (let i = 0; i < candB.length; i += 1) {
+          const b = candB[i]!;
+          roofDetailInsert(activeProfileIndex, b);
+        }
+        for (let i = 0; i < candM.length; i += 1) {
+          const m = candM[i]!;
+          activeMasses.add(m);
+          const b = candB[i]!;
+          boxToMass.set(b, m);
+          boxToProfileKey.set(b, key);
+        }
+        profileMasses.set(key, candM);
+        profileBoxes.set(key, candB);
+        r36DataByTower.set(key, candData);
+
+        for (const [rId, c] of tempCounts) {
+          roofCoveredCounts[rId] = c;
+        }
+
+        for (const [rId, c] of tempCounts) {
+          if (c === 49) {
+            for (const coveringKey of findActiveCoveringMutableProfiles(rId)) {
+              if (!inQueue.has(coveringKey)) {
+                const targetRec = mutableRecords.get(coveringKey);
+                if (targetRec !== undefined && targetRec.cursor < CANDIDATE_SCALES.length) {
+                  queue.push(coveringKey);
+                  inQueue.add(coveringKey);
+                }
+              }
+            }
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  let finalBuried = 0;
+  let finalExposed = 0;
+  for (let rId = 0; rId < skirtRoofs.length; rId += 1) {
+    const skirt = skirtRoofs[rId]!;
+    let cov = 0;
+    for (let sIdx = 0; sIdx < 49; sIdx += 1) {
+      if (isCoveredPoint(skirt.samples[sIdx]!)) cov += 1;
+    }
+    if (cov === 49) finalBuried += 1;
+    else finalExposed += 1;
+  }
+  if (finalBuried > 0 || (skirtRoofs.length > 0 && finalExposed / skirtRoofs.length < 0.80)) {
+    fail('SKYRIVER_ROOF_FIT_AUDIT_FAILED');
+  }
+  profileIndex = activeProfileIndex;
+
+  const finalMasses: SkyriverMass[] = [];
+  for (let i = 0; i < masses.length; i += 1) {
+    const m = masses[i]!;
+    const key = initialFirstMassByTower.get(m);
+    if (key !== undefined) {
+      const fd = r36DataByTower.get(key)!;
+      for (const sm of fd.stageMasses) finalMasses.push(sm);
+      for (const cm of fd.crownMasses) finalMasses.push(cm);
+      if (fd.spineMass) finalMasses.push(fd.spineMass);
+      for (const wm of fd.deckWingMasses) finalMasses.push(wm);
+      for (const cpm of fd.companionMasses) finalMasses.push(cpm);
+    } else if (initialRemainingMasses.has(m)) {
+      continue;
+    } else {
+      finalMasses.push(m);
+    }
+  }
+  masses.length = 0;
+  masses.push(...finalMasses);
+
+  const finalExposedFacesList: SkyriverFacadeFace[] = [];
+  for (let i = 0; i < exposedFaces.length; i += 1) {
+    const f = exposedFaces[i]!;
+    const key = initialFirstFaceByTower.get(f);
+    if (key !== undefined) {
+      const fd = r36DataByTower.get(key)!;
+      for (const nf of fd.faces) finalExposedFacesList.push(nf);
+    } else if (initialRemainingFaces.has(f)) {
+      continue;
+    } else {
+      finalExposedFacesList.push(f);
+    }
+  }
+  exposedFaces.length = 0;
+  exposedFaces.push(...finalExposedFacesList);
+
+  for (const [key, data] of r36DataByTower) {
+    tierMap.set(key, data.tiers);
+  }
+
+  tierCache.set(layout.seed, tierMap);
+
+  // --- R36 Stage E: Crown-only repair pass --------------------------------------------------------
+  let targetSplitCount = 0;
+  for (const data of r36DataByTower.values()) {
+    if (data.crownProfile.kind === 'split') targetSplitCount += 1;
+  }
+
+  const computeSplitCrownNotch = (
+    cm0: SkyriverMass,
+    cm1: SkyriverMass,
+    axis: 'x' | 'z',
+    anchorV: number,
+  ): {
+    readonly notchObb: RoofDetailObb;
+    readonly gapM: number;
+    readonly gapX: number;
+    readonly gapZ: number;
+    readonly gapW: number;
+    readonly gapD: number;
+  } => {
+    const b0 = axis === 'x' ? (cm0.x < cm1.x ? cm0 : cm1) : (cm0.z < cm1.z ? cm0 : cm1);
+    const b1 = axis === 'x' ? (cm0.x < cm1.x ? cm1 : cm0) : (cm0.z < cm1.z ? cm1 : cm0);
+    const facing0 = axis === 'x' ? b0.x + b0.width * 0.5 : b0.z + b0.depth * 0.5;
+    const facing1 = axis === 'x' ? b1.x - b1.width * 0.5 : b1.z - b1.depth * 0.5;
+    const gapM = facing1 - facing0;
+    const gapX = axis === 'x' ? (facing0 + facing1) * 0.5 : b0.x;
+    const gapZ = axis === 'z' ? (facing0 + facing1) * 0.5 : b0.z;
+    const gapW = axis === 'x' ? gapM : b0.width;
+    const gapD = axis === 'z' ? gapM : b0.depth;
+    const gapY = b0.y0 + b0.height * 0.5;
+    const gapH = b0.height;
+
+    warpRigid(gapX, gapZ, anchorV, roofDetailWarp);
+    const notchObb = roofDetailBox(
+      roofDetailWarp.x,
+      gapY,
+      roofDetailWarp.z,
+      gapW,
+      gapH,
+      gapD,
+      roofDetailWarp.heading,
+    );
+
+    return { notchObb, gapM, gapX, gapZ, gapW, gapD };
+  };
+
+  const crownRepairWorldIndex = createSpatialIndex(masses.length + 256);
+  const crownBoxToMass = new Map<RoofDetailObb, SkyriverMass>();
+  const activeWorldMasses = new Set<SkyriverMass>(masses);
+
+  for (let mIdx = 0; mIdx < masses.length; mIdx += 1) {
+    const m = masses[mIdx]!;
+    if (m.width <= 0 || m.height <= 0 || m.depth <= 0) continue;
+    const obb = roofDetailMassObb(m, mIdx);
+    roofDetailInsert(crownRepairWorldIndex, obb);
+    crownBoxToMass.set(obb, m);
+  }
+
+  const checkNotchWorldConflict = (
+    notchObb: RoofDetailObb,
+    maskedMasses: Set<SkyriverMass>,
+  ): boolean => {
+    const minGx = Math.floor((notchObb.minX - 0.01) / crownRepairWorldIndex.cellSize);
+    const maxGx = Math.floor((notchObb.maxX + 0.01) / crownRepairWorldIndex.cellSize);
+    const minGz = Math.floor((notchObb.minZ - 0.01) / crownRepairWorldIndex.cellSize);
+    const maxGz = Math.floor((notchObb.maxZ + 0.01) / crownRepairWorldIndex.cellSize);
+
+    crownRepairWorldIndex.stamp += 1;
+    if (crownRepairWorldIndex.stamp >= 0x7ffffffe) {
+      crownRepairWorldIndex.stamps.fill(0);
+      crownRepairWorldIndex.stamp = 1;
+    }
+    const stamp = crownRepairWorldIndex.stamp;
+
+    for (let gx = minGx; gx <= maxGx; gx += 1) {
+      for (let gz = minGz; gz <= maxGz; gz += 1) {
+        const bucket = crownRepairWorldIndex.cells.get(roofDetailCellKey(gx, gz));
+        if (bucket === undefined) continue;
+        for (let i = 0; i < bucket.length; i += 1) {
+          const bIdx = bucket[i]!;
+          if (crownRepairWorldIndex.stamps[bIdx] === stamp) continue;
+          crownRepairWorldIndex.stamps[bIdx] = stamp;
+          const box = crownRepairWorldIndex.boxes[bIdx]!;
+          const m = crownBoxToMass.get(box);
+          if (m === undefined || !activeWorldMasses.has(m) || maskedMasses.has(m)) continue;
+          if (roofDetailObbsConflict(notchObb, box, 0)) return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  interface CrownCandidateResult {
+    readonly axis: 'x' | 'z';
+    readonly masses: readonly [SkyriverMass, SkyriverMass];
+    readonly profile: SkyriverSplitCrownProfile;
+    readonly bounds: { readonly y0: number; readonly y1: number; readonly width: number; readonly height: number; readonly depth: number };
+    readonly crownSpan: number;
+    readonly notchObb: RoofDetailObb;
+  }
+
+  const findSplitCandidate = (
+    tower: SkyriverTower,
+    data: R36EmittedData,
+    maskedMasses: Set<SkyriverMass>,
+    acceptedNotchesIter: Iterable<RoofDetailObb>,
+    resolveOriginal = false,
+    preserveFootprint = false,
+  ): CrownCandidateResult | null => {
+    const topDraft = data.stageDrafts[data.stageDrafts.length - 1]!;
+    const topFace = {
+      x: topDraft.footprint.x,
+      z: topDraft.footprint.z,
+      width: topDraft.footprint.width,
+      depth: topDraft.footprint.depth,
+      y1: topDraft.verticalBounds.y1,
+    };
+    const towerSeed = buildingSeedOf(tower.x, tower.z);
+    if (preserveFootprint) {
+      if (data.crownProfile.kind !== 'split') return null;
+      const cm0: SkyriverMass = {
+        ...data.crownMasses[0]!, height: R36_ORDINARY_CROWN_HEIGHT_M,
+        crownRole: 'ordinary-dark-crown',
+      };
+      const cm1: SkyriverMass = {
+        ...data.crownMasses[1]!, height: R36_ORDINARY_CROWN_HEIGHT_M,
+        crownRole: 'ordinary-dark-crown',
+      };
+      const axis = data.crownProfile.axis;
+      const { notchObb } = computeSplitCrownNotch(cm0, cm1, axis, cm0.anchorV ?? tower.z);
+      if (checkNotchWorldConflict(notchObb, maskedMasses)) return null;
+      const boxes = [roofDetailMassObb(cm0, 0), roofDetailMassObb(cm1, 0)];
+      if (boxes.some((box) => roofDetailIndexConflicts(wingAirIndex, box, 0))) return null;
+      for (const notch of acceptedNotchesIter) {
+        if (boxes.some((box) => roofDetailObbsConflict(box, notch, 0))) return null;
+      }
+      const bounds = {
+        ...data.crownBounds,
+        y1: cm0.y0 + R36_ORDINARY_CROWN_HEIGHT_M,
+        height: R36_ORDINARY_CROWN_HEIGHT_M,
+      };
+      return {
+        axis, masses: [cm0, cm1],
+        profile: { ...data.crownProfile, bounds, massIndices: [0, 0] },
+        bounds, crownSpan: data.crownSpan, notchObb,
+      };
+    }
+    const origAxis: 'x' | 'z' = data.crownProfile.axis === 'x' ? 'x' : 'z';
+    const axes: readonly ('x' | 'z')[] = [origAxis, origAxis === 'z' ? 'x' : 'z'];
+
+    for (const axis of axes) {
+      const faceSpan = axis === 'z' ? topFace.depth : topFace.width;
+      const faceCross = axis === 'z' ? topFace.width : topFace.depth;
+      const faceU = axis === 'z' ? topFace.z : topFace.x;
+
+      const rawSpan = Math.round(faceSpan * 0.85);
+      const gap = Math.round(rawSpan * 0.22);
+      const blockD = Math.floor((rawSpan - gap) * 0.5);
+      const actualSpan = gap + 2 * blockD;
+      const crossDim = Math.round(faceCross * 0.7);
+      const crownH = resolveOriginal ? 45 : R36_ORDINARY_CROWN_HEIGHT_M;
+      const yCrown = topFace.y1;
+
+      if (actualSpan <= 0 || crossDim <= 0 || actualSpan > faceSpan + 1e-4 || crossDim > faceCross + 1e-4) {
+        continue;
+      }
+
+      const shiftQuarter = 0.25 * actualSpan;
+      const shifts = [0, shiftQuarter, -shiftQuarter] as const;
+
+      for (const shift of shifts) {
+        const uMin = faceU - actualSpan * 0.5;
+        const uMax = faceU + actualSpan * 0.5;
+        const gapCenter = faceU + shift;
+        const g0 = gapCenter - gap * 0.5;
+        const g1 = gapCenter + gap * 0.5;
+        const L0 = g0 - uMin;
+        const L1 = uMax - g1;
+        const measuredGap = g1 - g0;
+
+        if (measuredGap < 0.15 * actualSpan - 1e-4) continue;
+        if (L0 <= 0 || L1 <= 0) continue;
+        if (uMin < faceU - faceSpan * 0.5 - 1e-4 || uMax > faceU + faceSpan * 0.5 + 1e-4) continue;
+
+        const u0 = (uMin + g0) * 0.5;
+        const u1 = (g1 + uMax) * 0.5;
+
+        let cm0: SkyriverMass;
+        let cm1: SkyriverMass;
+        if (axis === 'z') {
+          cm0 = {
+            x: topFace.x,
+            y0: yCrown,
+            z: u0,
+            width: crossDim,
+            height: crownH,
+            depth: L0,
+            tint: tower.tint,
+            anchorV: tower.z,
+            materialOwner: towerSeed,
+            building: towerSeed,
+            crownRole: 'ordinary-dark-crown',
+          };
+          cm1 = {
+            x: topFace.x,
+            y0: yCrown,
+            z: u1,
+            width: crossDim,
+            height: crownH,
+            depth: L1,
+            tint: tower.tint,
+            anchorV: tower.z,
+            materialOwner: towerSeed,
+            building: towerSeed,
+            crownRole: 'ordinary-dark-crown',
+          };
+        } else {
+          cm0 = {
+            x: u0,
+            y0: yCrown,
+            z: topFace.z,
+            width: L0,
+            height: crownH,
+            depth: crossDim,
+            tint: tower.tint,
+            anchorV: tower.z,
+            materialOwner: towerSeed,
+            building: towerSeed,
+            crownRole: 'ordinary-dark-crown',
+          };
+          cm1 = {
+            x: u1,
+            y0: yCrown,
+            z: topFace.z,
+            width: L1,
+            height: crownH,
+            depth: crossDim,
+            tint: tower.tint,
+            anchorV: tower.z,
+            materialOwner: towerSeed,
+            building: towerSeed,
+            crownRole: 'ordinary-dark-crown',
+          };
+        }
+
+        const { notchObb, gapM } = computeSplitCrownNotch(cm0, cm1, axis, tower.z);
+
+        if (checkNotchWorldConflict(notchObb, maskedMasses)) continue;
+
+        const obb0 = roofDetailMassObb(cm0, 0);
+        const obb1 = roofDetailMassObb(cm1, 0);
+        let blocksAcceptedNotch = false;
+        for (const acceptedNotch of acceptedNotchesIter) {
+          if (roofDetailObbsConflict(obb0, acceptedNotch, 0) || roofDetailObbsConflict(obb1, acceptedNotch, 0)) {
+            blocksAcceptedNotch = true;
+            break;
+          }
+        }
+        if (blocksAcceptedNotch) continue;
+
+        if (roofDetailIndexConflicts(wingAirIndex, obb0, 0) || roofDetailIndexConflicts(wingAirIndex, obb1, 0)) {
+          continue;
+        }
+
+        const bounds = {
+          y0: yCrown,
+          y1: yCrown + crownH,
+          width: axis === 'x' ? actualSpan : crossDim,
+          height: crownH,
+          depth: axis === 'z' ? actualSpan : crossDim,
+        };
+
+        const profile: SkyriverSplitCrownProfile = {
+          kind: 'split',
+          axis,
+          gapM,
+          crownSpanM: actualSpan,
+          bounds,
+          massIndices: [0, 0],
+        };
+
+        return {
+          axis,
+          masses: [cm0, cm1],
+          profile,
+          bounds,
+          crownSpan: actualSpan,
+          notchObb,
+        };
+      }
+    }
+
+    return null;
+  };
+
+  const createSeededFin = (
+    tower: SkyriverTower,
+    data: R36EmittedData,
+    resolveOriginal = false,
+    preserveFootprint = false,
+  ): {
+    readonly fin: SkyriverMass;
+    readonly profile: SkyriverUnsplitFinProfile;
+    readonly bounds: { readonly y0: number; readonly y1: number; readonly width: number; readonly height: number; readonly depth: number };
+    readonly crownSpan: number;
+  } => {
+    const topDraft = data.stageDrafts[data.stageDrafts.length - 1]!;
+    const topFace = {
+      x: topDraft.footprint.x,
+      z: topDraft.footprint.z,
+      width: topDraft.footprint.width,
+      depth: topDraft.footprint.depth,
+      y1: topDraft.verticalBounds.y1,
+    };
+    const towerSeed = buildingSeedOf(tower.x, tower.z);
+
+    const uCorner = r36Hash01(layout.seed, tower, 7);
+    const uCornerX = r36Hash01(layout.seed, tower, 8);
+    const uCornerZ = r36Hash01(layout.seed, tower, 9);
+    const uFinH = r36Hash01(layout.seed, tower, 10);
+    const isCorner = uCorner < 0.40;
+
+    const finW = Math.max(3, Math.round(topFace.width * (isCorner ? 0.18 : 0.15)));
+    const finD = Math.round(topFace.depth * (isCorner ? 0.45 : 0.75));
+    const finH = resolveOriginal
+      ? (isCorner ? Math.round(36 + uFinH * 40) : Math.round(42 + uFinH * 24))
+      : R36_ORDINARY_CROWN_HEIGHT_M;
+    const yCrown = topFace.y1;
+
+    const shiftX = Math.max(0, (topFace.width - finW) * 0.5 - 2);
+    const shiftZ = Math.max(0, (topFace.depth - finD) * 0.5 - 2);
+    const cornerX = uCornerX < 0.5 ? -1 : 1;
+    const cornerZ = uCornerZ < 0.5 ? -1 : 1;
+    const finX = isCorner ? topFace.x + cornerX * shiftX : topFace.x;
+    const finZ = isCorner ? topFace.z + cornerZ * shiftZ : topFace.z;
+
+    const fin: SkyriverMass = preserveFootprint ? {
+      ...data.crownMasses[0]!,
+      height: R36_ORDINARY_CROWN_HEIGHT_M,
+      crownRole: 'ordinary-dark-crown',
+    } : {
+      x: finX,
+      y0: yCrown,
+      z: finZ,
+      width: finW,
+      height: finH,
+      depth: finD,
+      tint: tower.tint,
+      anchorV: tower.z,
+      materialOwner: towerSeed,
+      building: towerSeed,
+      crownRole: 'ordinary-dark-crown',
+    };
+
+    const finMinX = fin.x - fin.width * 0.5;
+    const finMaxX = fin.x + fin.width * 0.5;
+    const finMinZ = fin.z - fin.depth * 0.5;
+    const finMaxZ = fin.z + fin.depth * 0.5;
+    const roofMinX = topFace.x - topFace.width * 0.5;
+    const roofMaxX = topFace.x + topFace.width * 0.5;
+    const roofMinZ = topFace.z - topFace.depth * 0.5;
+    const roofMaxZ = topFace.z + topFace.depth * 0.5;
+
+    if (
+      !Number.isFinite(fin.x) || !Number.isFinite(fin.y0) || !Number.isFinite(fin.z) ||
+      !Number.isFinite(fin.width) || !Number.isFinite(fin.height) || !Number.isFinite(fin.depth) ||
+      fin.width <= 0 || fin.height <= 0 || fin.depth <= 0 ||
+      finMinX < roofMinX - 1e-4 || finMaxX > roofMaxX + 1e-4 ||
+      finMinZ < roofMinZ - 1e-4 || finMaxZ > roofMaxZ + 1e-4
+    ) {
+      fail(`SKYRIVER_CROWN_REPAIR_INVALID_FIN: ${towerKey(tower)}`);
+    }
+
+    const bounds = {
+      y0: fin.y0,
+      y1: fin.y0 + fin.height,
+      width: fin.width,
+      height: fin.height,
+      depth: fin.depth,
+    };
+
+    const profile: SkyriverUnsplitFinProfile = {
+      kind: 'unsplit-fin',
+      axis: 'z',
+      gapM: 0,
+      crownSpanM: fin.depth,
+      bounds,
+      massIndices: [0],
+    };
+
+    return { fin, profile, bounds, crownSpan: fin.depth };
+  };
+
+  const applyCrownReplacement = (
+    key: string,
+    oldCrownMasses: readonly SkyriverMass[],
+    newCrownMasses: readonly SkyriverMass[],
+    newProfile: SkyriverCrownProfile,
+    newBounds: { readonly y0: number; readonly y1: number; readonly width: number; readonly height: number; readonly depth: number },
+    newSpan: number,
+  ): void => {
+    for (const om of oldCrownMasses) {
+      let occurrences = 0;
+      for (let i = 0; i < masses.length; i += 1) {
+        if (masses[i] === om) occurrences += 1;
+      }
+      if (occurrences !== 1) {
+        fail(`SKYRIVER_CROWN_REPAIR_OLD_MASS_NOT_ONCE: ${key}`);
+      }
+    }
+
+    const newSet = new Set<SkyriverMass>();
+    for (const nm of newCrownMasses) {
+      if (newSet.has(nm)) {
+        fail(`SKYRIVER_CROWN_REPAIR_DUPLICATE_REPLACEMENT: ${key}`);
+      }
+      newSet.add(nm);
+      if (masses.includes(nm)) {
+        fail(`SKYRIVER_CROWN_REPAIR_REPLACEMENT_ALREADY_EXISTS: ${key}`);
+      }
+    }
+
+    for (const om of oldCrownMasses) {
+      activeWorldMasses.delete(om);
+    }
+    for (const nm of newCrownMasses) {
+      activeWorldMasses.add(nm);
+      if (nm.width > 0 && nm.height > 0 && nm.depth > 0) {
+        const obb = roofDetailMassObb(nm, 0);
+        roofDetailInsert(crownRepairWorldIndex, obb);
+        crownBoxToMass.set(obb, nm);
+      }
+    }
+
+    const oldSet = new Set(oldCrownMasses);
+    const firstIdx = masses.findIndex((m) => oldSet.has(m));
+    if (firstIdx === -1) {
+      fail(`SKYRIVER_CROWN_REPAIR_MISSING_OLD_MASS: ${key}`);
+    }
+    const kept = masses.filter((m) => !oldSet.has(m));
+    if (masses.length - kept.length !== oldCrownMasses.length) {
+      fail(`SKYRIVER_CROWN_REPAIR_OLD_MASS_COUNT_MISMATCH: ${key}`);
+    }
+    kept.splice(firstIdx, 0, ...newCrownMasses);
+    masses.length = 0;
+    masses.push(...kept);
+
+    const currentData = r36DataByTower.get(key)!;
+    r36DataByTower.set(key, {
+      ...currentData,
+      crownMasses: Object.freeze([...newCrownMasses]),
+      crownProfile: newProfile,
+      crownBounds: newBounds,
+      crownSpan: newSpan,
+    });
+  };
+
+  const acceptedNotches = new Map<string, RoofDetailObb>();
+  const blockedSplitKeys: string[] = [];
+
+  for (let i = 0; i < layout.towers.length; i += 1) {
+    const tower = layout.towers[i]!;
+    const key = towerKey(tower);
+    const data = r36DataByTower.get(key);
+    if (data !== undefined && data.crownProfile.kind === 'split') {
+      const cm0 = data.crownMasses[0]!;
+      const cm1 = data.crownMasses[1]!;
+      const { notchObb } = computeSplitCrownNotch(cm0, cm1, data.crownProfile.axis, cm0.anchorV ?? tower.z);
+      const selfMask = new Set(data.crownMasses);
+      if (checkNotchWorldConflict(notchObb, selfMask)) {
+        blockedSplitKeys.push(key);
+      } else {
+        acceptedNotches.set(key, notchObb);
+      }
+    }
+  }
+
+  const verifyAllAcceptedNotches = (): boolean => {
+    for (const [k, notch] of acceptedNotches) {
+      const d = r36DataByTower.get(k)!;
+      const selfMask = new Set(d.crownMasses);
+      if (checkNotchWorldConflict(notch, selfMask)) return false;
+    }
+    return true;
+  };
+
+  for (const blockedKey of blockedSplitKeys) {
+    const towerData = r36DataByTower.get(blockedKey)!;
+    const towerInput = r36InputsByTower.get(blockedKey)!;
+    const tower = towerInput.tower;
+    const oldCrown = towerData.crownMasses;
+    const oldMask = new Set(oldCrown);
+
+    const localCand = findSplitCandidate(tower, towerData, oldMask, acceptedNotches.values(), true);
+
+    if (localCand !== null) {
+      applyCrownReplacement(
+        blockedKey,
+        oldCrown,
+        localCand.masses,
+        localCand.profile,
+        localCand.bounds,
+        localCand.crownSpan,
+      );
+      acceptedNotches.set(blockedKey, localCand.notchObb);
+      if (!verifyAllAcceptedNotches()) {
+        fail(`SKYRIVER_CROWN_REPAIR_NOTCH_INVALIDATED: ${blockedKey}`);
+      }
+      continue;
+    }
+
+    const { fin, profile: finProfile, bounds: finBounds, crownSpan: finSpan } = createSeededFin(tower, towerData, true);
+    const finObb = roofDetailMassObb(fin, 0);
+
+    for (const acceptedNotch of acceptedNotches.values()) {
+      if (roofDetailObbsConflict(finObb, acceptedNotch, 0)) {
+        fail(`SKYRIVER_CROWN_REPAIR_FIN_BLOCKS_NOTCH: ${blockedKey}`);
+      }
+    }
+    if (roofDetailIndexConflicts(wingAirIndex, finObb, 0)) {
+      fail(`SKYRIVER_CROWN_REPAIR_FIN_BLOCKS_WING: ${blockedKey}`);
+    }
+
+    applyCrownReplacement(blockedKey, oldCrown, [fin], finProfile, finBounds, finSpan);
+    acceptedNotches.delete(blockedKey);
+
+    const candidateTransferKeys: string[] = [];
+    for (const [key, data] of r36DataByTower) {
+      if (key === blockedKey) continue;
+      if (data.crownProfile.kind === 'split') continue;
+      const inp = r36InputsByTower.get(key)!;
+      if (inp.row !== undefined || inp.isReservedHero) continue;
+      const side = Math.sign(inp.tower.x);
+      const nearMega = side === 1 && apexes.some((a) => Math.abs(inp.tower.z - a.v) < 950);
+      if (nearMega) continue;
+      candidateTransferKeys.push(key);
+    }
+    candidateTransferKeys.sort();
+
+    let transferSuccess = false;
+    for (const targetKey of candidateTransferKeys) {
+      const targetData = r36DataByTower.get(targetKey)!;
+      const targetTower = r36InputsByTower.get(targetKey)!.tower;
+      const targetOldCrown = targetData.crownMasses;
+      const targetOldMask = new Set(targetOldCrown);
+
+      const transferCand = findSplitCandidate(
+        targetTower,
+        targetData,
+        targetOldMask,
+        acceptedNotches.values(),
+        true,
+      );
+
+      if (transferCand !== null) {
+        applyCrownReplacement(
+          targetKey,
+          targetOldCrown,
+          transferCand.masses,
+          transferCand.profile,
+          transferCand.bounds,
+          transferCand.crownSpan,
+        );
+        acceptedNotches.set(targetKey, transferCand.notchObb);
+        if (!verifyAllAcceptedNotches()) {
+          applyCrownReplacement(
+            targetKey,
+            transferCand.masses,
+            targetOldCrown,
+            targetData.crownProfile,
+            targetData.crownBounds,
+            targetData.crownSpan,
+          );
+          acceptedNotches.delete(targetKey);
+          continue;
+        }
+        transferSuccess = true;
+        break;
+      }
+    }
+
+    if (!transferSuccess) {
+      fail(`SKYRIVER_CROWN_REPAIR_TRANSFER_FAILED: ${blockedKey}`);
+    }
+  }
+
+  let finalSplitCount = 0;
+  for (const data of r36DataByTower.values()) {
+    if (data.crownProfile.kind === 'split') finalSplitCount += 1;
+  }
+  if (finalSplitCount !== targetSplitCount) {
+    fail('SKYRIVER_CROWN_REPAIR_SPLIT_COUNT_MISMATCH');
+  }
+  const ordinarySplitShare = r36DataByTower.size > 0 ? finalSplitCount / r36DataByTower.size : 0;
+  if (ordinarySplitShare < 0.15 || ordinarySplitShare > 0.25) {
+    fail('SKYRIVER_CROWN_REPAIR_SHARE_OUT_OF_BOUNDS');
+  }
+
+  for (let index = 0; index < masses.length; index += 1) {
+    const mass = masses[index]!;
+    if (!seedIndices.has(mass)) seedIndices.set(mass, index);
+  }
+  const resolvedHeroes = placeHeroArtwork(
+    layout,
+    planHeroArtwork(layout, legacyFaceCache.get(layout.seed)!),
+    exposedFaces,
+    masses,
+  );
+  const shapeHeroBoxes = roofDetailHeroObbs(layout, resolvedHeroes, exposedFaces);
+  const shapeRouteBlocked = createCityRouteBlocker();
+  const shapeRoofPlanes = masses.filter((mass) => mass.baseRecord !== undefined).map((mass) => {
+    const box = roofDetailMassObb(mass, 0);
+    return { ...box, y: mass.y0 + mass.height, halfY: 0.01 };
+  });
+  const finalNotches = new Map<string, RoofDetailObb>();
+  for (const [key, data] of r36DataByTower) {
+    if (data.crownProfile.kind !== 'split') continue;
+    const cm0 = data.crownMasses[0]!;
+    const cm1 = data.crownMasses[1]!;
+    finalNotches.set(key, computeSplitCrownNotch(
+      cm0, cm1, data.crownProfile.axis, cm0.anchorV ?? cm0.z,
+    ).notchObb);
+  }
+
+  const addedProfileFragments = (
+    mass: SkyriverMass,
+    oldProfileMasses: readonly SkyriverMass[],
+  ): SkyriverMass[] => {
+    type Box = { x0: number; x1: number; y0: number; y1: number; z0: number; z1: number };
+    const massBox: Box = {
+      x0: mass.x - mass.width * 0.5, x1: mass.x + mass.width * 0.5,
+      y0: mass.y0, y1: mass.y0 + mass.height,
+      z0: mass.z - mass.depth * 0.5, z1: mass.z + mass.depth * 0.5,
+    };
+    let fragments: Box[] = [massBox];
+    const anchor = mass.anchorV ?? mass.z;
+    for (const old of oldProfileMasses) {
+      if ((old.anchorV ?? old.z) !== anchor) continue;
+      const cut: Box = {
+        x0: old.x - old.width * 0.5, x1: old.x + old.width * 0.5,
+        y0: old.y0, y1: old.y0 + old.height,
+        z0: old.z - old.depth * 0.5, z1: old.z + old.depth * 0.5,
+      };
+      const next: Box[] = [];
+      for (const box of fragments) {
+        const x0 = Math.max(box.x0, cut.x0); const x1 = Math.min(box.x1, cut.x1);
+        const y0 = Math.max(box.y0, cut.y0); const y1 = Math.min(box.y1, cut.y1);
+        const z0 = Math.max(box.z0, cut.z0); const z1 = Math.min(box.z1, cut.z1);
+        if (x1 <= x0 || y1 <= y0 || z1 <= z0) { next.push(box); continue; }
+        if (box.x0 < x0) next.push({ ...box, x1: x0 });
+        if (x1 < box.x1) next.push({ ...box, x0: x1 });
+        if (box.y0 < y0) next.push({ ...box, x0, x1, y1: y0 });
+        if (y1 < box.y1) next.push({ ...box, x0, x1, y0: y1 });
+        if (box.z0 < z0) next.push({ ...box, x0, x1, y0, y1, z1: z0 });
+        if (z1 < box.z1) next.push({ ...box, x0, x1, y0, y1, z0: z1 });
+      }
+      fragments = next;
+      if (fragments.length === 0) break;
+    }
+    return fragments.map((box) => ({
+      ...mass,
+      x: (box.x0 + box.x1) * 0.5,
+      y0: box.y0,
+      z: (box.z0 + box.z1) * 0.5,
+      width: box.x1 - box.x0,
+      height: box.y1 - box.y0,
+      depth: box.z1 - box.z0,
+    }));
+  };
+
+  const rebuildUpperFaces = (data: R36EmittedData, drafts: readonly R36StageDraft[]): R36EmittedData => {
+    const first = data.faces[0]!;
+    const buildingId = first.buildingId;
+    const side = first.side;
+    const upperFaces = drafts.slice(1).map((draft): SkyriverFacadeFace => {
+      const mass = draft.masses[0]!;
+      return {
+        ...first,
+        id: `${buildingId}:face-${draft.stageIndex}`,
+        plane: side * (Math.abs(mass.x) - mass.width * 0.5),
+        u0: mass.z - mass.depth * 0.5,
+        u1: mass.z + mass.depth * 0.5,
+        y0: mass.y0,
+        y1: mass.y0 + mass.height,
+        stepBottom: true,
+        stepTop: draft.stageIndex < drafts.length - 1,
+        projection: 0,
+        owner: ownerOf(mass, mass.anchorV ?? mass.z),
+      };
+    });
+    const faces = data.family === 'supported-spine'
+      ? [upperFaces[0]!, ...data.faces.filter((face) => face.id.endsWith(':face-w0') || face.id.endsWith(':face-w1')), ...upperFaces.slice(1)]
+      : [first, ...upperFaces];
+    return {
+      ...data,
+      stageDrafts: drafts,
+      stageMasses: drafts.flatMap((draft) => draft.masses),
+      hostFace: data.family === 'supported-spine' ? upperFaces[0]! : data.hostFace,
+      faces,
+      tiers: faces.map((face) => ({ face })),
+    };
+  };
+
+  for (const tower of layout.towers) {
+    const key = towerKey(tower);
+    const resolved = r36DataByTower.get(key);
+    if (resolved === undefined) continue;
+    if (resolved.leanProfile !== 'none') continue;
+    const inp = r36InputsByTower.get(key)!;
+    const first = resolved.stageDrafts[1]!;
+    const oldTop = resolved.stageDrafts[resolved.stageDrafts.length - 1]!;
+    const originalCrownHeight = Math.max(...resolved.crownMasses.map((mass) => mass.height));
+    const bodyTopY1 = oldTop.verticalBounds.y1 - Math.max(0, R36_ORDINARY_CROWN_HEIGHT_M - originalCrownHeight);
+    const rise = bodyTopY1 - first.verticalBounds.y0;
+    const firstFace = resolved.faces.find((face) => face.id.endsWith(':face-1'));
+    const profileFaceIds = new Set(resolved.faces.map((face) => face.id));
+    const profileHeroes = resolvedHeroes.filter((hero) =>
+      hero.buildingId === resolved.faces[0]?.buildingId && profileFaceIds.has(hero.faceId),
+    );
+    const heroFaceMargin = FACADE_FACE_EDGE_MARGIN_M + 0.25;
+    const actualFirstFaceHeroTop = profileHeroes
+      .filter((hero) => hero.faceId === firstFace?.id)
+      .reduce((top, hero) => Math.max(top, hero.y + hero.height * 0.5 + heroFaceMargin), first.verticalBounds.y0);
+    const protectedTop = Math.max(
+      inp.row !== undefined ? Math.ceil(inp.row.faceTop + 10) : first.verticalBounds.y0,
+      inp.heroReservedTop !== undefined ? Math.ceil(inp.heroReservedTop) : first.verticalBounds.y0,
+      Math.ceil(actualFirstFaceHeroTop),
+    );
+    const divide = resolved.leanProfile === 'none'
+      && resolved.stageDrafts.slice(1).some((draft) => draft.verticalBounds.height > 900);
+    // A rise above 2700 m still exceeds 900 m per stage after the three-stage cap.
+    const upperCount = divide ? Math.min(3, Math.ceil(rise / 900)) : 1;
+    const preserveOldUpperBoundary = divide
+      && resolved.stageDrafts.length > 2
+      && bodyTopY1 > first.verticalBounds.y1
+      && protectedTop <= first.verticalBounds.y1
+      && upperCount > 1;
+    const firstUpperY1 = !divide
+      ? bodyTopY1
+      : preserveOldUpperBoundary
+        ? first.verticalBounds.y1
+        : Math.min(
+          bodyTopY1,
+          Math.max(first.verticalBounds.y0 + rise / upperCount, protectedTop),
+        );
+    const remainingUpperRise = bodyTopY1 - firstUpperY1;
+    const side = Math.sign(tower.x);
+    const crownMinX = Math.min(...resolved.crownMasses.map((mass) => mass.x - mass.width * 0.5));
+    const crownMaxX = Math.max(...resolved.crownMasses.map((mass) => mass.x + mass.width * 0.5));
+    const crownMinZ = Math.min(...resolved.crownMasses.map((mass) => mass.z - mass.depth * 0.5));
+    const crownMaxZ = Math.max(...resolved.crownMasses.map((mass) => mass.z + mass.depth * 0.5));
+    const oldProfileMasses = [
+      ...resolved.stageMasses, ...resolved.crownMasses,
+      ...(resolved.spineMass ? [resolved.spineMass] : []),
+      ...resolved.deckWingMasses, ...resolved.companionMasses,
+    ];
+    const oldMask = new Set(oldProfileMasses);
+    const otherNotches = [...finalNotches].filter(([otherKey]) => otherKey !== key).map(([, notch]) => notch);
+    let accepted: R36EmittedData | undefined;
+    const geometryPatterns: { axis: 'x' | 'z'; directionSign: -1 | 1; ratio: number; factor: number }[] = [];
+    for (const ratio of [0.085, 0.14, 0.22, 0.30]) {
+      for (const axis of ['x', 'z'] as const) {
+        for (const directionSign of [-1, 1] as const) {
+          for (const factor of [0.55, 0.42, 0.25]) geometryPatterns.push({ axis, directionSign, ratio, factor });
+        }
+      }
+    }
+    const seenGeometry = new Set<string>();
+
+    for (let attempt = 0; attempt < (divide ? geometryPatterns.length : 1); attempt += 1) {
+      const pattern = geometryPatterns[attempt];
+      let candidate = resolved;
+      if (divide) {
+        const drafts: R36StageDraft[] = [resolved.stageDrafts[0]!];
+        for (let stageIndex = 1; stageIndex <= upperCount; stageIndex += 1) {
+          const y0 = stageIndex === 1
+            ? first.verticalBounds.y0
+            : firstUpperY1 + remainingUpperRise * (stageIndex - 2) / (upperCount - 1);
+          const y1 = stageIndex === 1
+            ? firstUpperY1
+            : stageIndex === upperCount
+              ? bodyTopY1
+              : firstUpperY1 + remainingUpperRise * (stageIndex - 1) / (upperCount - 1);
+          let mass: SkyriverMass;
+          let offset: SkyriverStageOffset | null;
+          if (stageIndex === 1) {
+            mass = { ...first.masses[0]!, height: y1 - first.verticalBounds.y0 };
+            offset = first.offset;
+          } else if (stageIndex === 2 && preserveOldUpperBoundary) {
+            const parent = drafts[stageIndex - 1]!;
+            const parentMass = parent.masses[0]!;
+            const oldMass = oldTop.masses[0]!;
+            const oldDx = oldMass.x - parentMass.x;
+            const oldDz = oldMass.z - parentMass.z;
+            const xRatio = Math.abs(oldDx) / parentMass.width;
+            const zRatio = Math.abs(oldDz) / parentMass.depth;
+            const oldAxis = Math.abs(oldDz) <= 1e-4 && Math.abs(oldDx) > 1e-4
+              ? 'x'
+              : Math.abs(oldDx) <= 1e-4 && Math.abs(oldDz) > 1e-4
+                ? 'z'
+                : null;
+            const oldDelta = oldAxis === 'x' ? oldDx : oldAxis === 'z' ? oldDz : 0;
+            const oldSpan = oldAxis === 'x' ? parentMass.width : oldAxis === 'z' ? parentMass.depth : 0;
+            const oldRatio = oldSpan > 0 ? Math.abs(oldDelta) / oldSpan : 0;
+            const keepOldCenter = oldAxis !== null && oldRatio >= 0.08 && oldRatio <= 0.33;
+            if (keepOldCenter) {
+              mass = { ...oldMass, y0, height: y1 - y0 };
+              offset = {
+                axis: oldAxis,
+                parentKind: 'stage',
+                parentStageIndex: parent.stageIndex,
+                parentSpanM: oldSpan,
+                deltaM: oldDelta,
+                ratio: oldRatio,
+              };
+            } else {
+              const axis = pattern!.axis;
+              const span = axis === 'x' ? parentMass.width : parentMass.depth;
+              const ratio = pattern!.ratio;
+              const direction = axis === 'x' ? side * pattern!.directionSign : pattern!.directionSign;
+              const delta = direction * ratio * span;
+              mass = {
+                ...oldMass,
+                x: parentMass.x + (axis === 'x' ? delta : 0),
+                z: parentMass.z + (axis === 'z' ? delta : 0),
+                y0,
+                height: y1 - y0,
+              };
+              offset = {
+                axis, parentKind: 'stage', parentStageIndex: parent.stageIndex,
+                parentSpanM: span, deltaM: delta, ratio,
+              };
+            }
+          } else {
+            const parent = drafts[stageIndex - 1]!;
+            const parentMass = parent.masses[0]!;
+            const axis = pattern!.axis;
+            const span = axis === 'x' ? parentMass.width : parentMass.depth;
+            const ratio = pattern!.ratio;
+            const direction = axis === 'x' ? side * pattern!.directionSign : pattern!.directionSign;
+            const delta = direction * ratio * span;
+            const factor = pattern!.factor;
+            const x = parentMass.x + (axis === 'x' ? delta : 0);
+            const z = parentMass.z + (axis === 'z' ? delta : 0);
+            const crownWidth = stageIndex === upperCount
+              ? 2 * Math.max(Math.abs(x - crownMinX), Math.abs(crownMaxX - x)) : 0;
+            const crownDepth = stageIndex === upperCount
+              ? 2 * Math.max(Math.abs(z - crownMinZ), Math.abs(crownMaxZ - z)) : 0;
+            mass = {
+              ...first.masses[0]!,
+              x, z,
+              y0, height: y1 - y0,
+              width: Math.max(Math.round(parentMass.width * factor), crownWidth),
+              depth: Math.max(Math.round(parentMass.depth * factor), crownDepth),
+            };
+            offset = {
+              axis, parentKind: 'stage', parentStageIndex: stageIndex - 1,
+              parentSpanM: span, deltaM: delta, ratio,
+            };
+          }
+          drafts.push({
+            stageIndex, masses: [mass],
+            footprint: { x: mass.x, z: mass.z, width: mass.width, depth: mass.depth },
+            verticalBounds: { y0: mass.y0, y1, height: mass.height },
+            offset,
+          });
+        }
+        candidate = rebuildUpperFaces(resolved, drafts);
+      } else {
+        const lastIndex = resolved.stageDrafts.length - 1;
+        const drafts = resolved.stageDrafts.map((draft, index) => {
+          if (index !== lastIndex) return draft;
+          const height = bodyTopY1 - draft.verticalBounds.y0;
+          return {
+            ...draft,
+            masses: draft.masses.map((mass) => ({ ...mass, height })),
+            verticalBounds: {
+              y0: draft.verticalBounds.y0,
+              y1: bodyTopY1,
+              height,
+            },
+          };
+        });
+        candidate = rebuildUpperFaces(resolved, drafts);
+      }
+
+      const top = candidate.stageDrafts[candidate.stageDrafts.length - 1]!.masses[0]!;
+      const crownY0 = top.y0 + top.height;
+      const crownMasses = resolved.crownMasses.map((mass) => ({
+        ...mass, y0: crownY0, height: R36_ORDINARY_CROWN_HEIGHT_M,
+        crownRole: 'ordinary-dark-crown' as const,
+      }));
+      const crownBounds = {
+        ...resolved.crownBounds,
+        y0: crownY0,
+        y1: crownY0 + R36_ORDINARY_CROWN_HEIGHT_M,
+        height: R36_ORDINARY_CROWN_HEIGHT_M,
+      };
+      candidate = {
+        ...candidate,
+        crownMasses,
+        crownBounds,
+        crownProfile: { ...resolved.crownProfile, bounds: crownBounds },
+        crownSpan: resolved.crownSpan,
+      };
+      if (candidate.leanProfile !== 'none') {
+        const base = candidate.stageDrafts[0]!;
+        const baseMass = base.masses[0]!;
+        const finalMass = candidate.stageDrafts[candidate.stageDrafts.length - 1]!.masses[0]!;
+        const leanRise = finalMass.y0 + finalMass.height - base.verticalBounds.y1;
+        const leanOffset = Math.abs(finalMass.z - baseMass.z);
+        const angleDeg = leanRise > 0
+          ? Number((Math.atan(leanOffset / leanRise) * 180 / Math.PI).toFixed(2))
+          : Number.NaN;
+        if (!Number.isFinite(angleDeg) || angleDeg < 4.0 || angleDeg > 6.0) continue;
+        candidate = {
+          ...candidate,
+          leanProfile: { axis: 'z', angleDeg, riseM: leanRise, totalOffsetM: leanOffset },
+        };
+      }
+      const geometrySignature = JSON.stringify({
+        stages: candidate.stageDrafts.map((draft) => draft.masses.map((mass) => [mass.x, mass.y0, mass.z, mass.width, mass.height, mass.depth])),
+        crowns: candidate.crownMasses.map((mass) => [mass.x, mass.y0, mass.z, mass.width, mass.height, mass.depth]),
+      });
+      if (seenGeometry.has(geometrySignature)) continue;
+      seenGeometry.add(geometrySignature);
+      const topBox = roofDetailMassObb(top, 0);
+      let invalid = false;
+      const candidateFacesById = new Map(candidate.faces.map((face) => [face.id, face]));
+      const candidateSupportMasses = [
+        ...candidate.stageMasses,
+        ...candidate.crownMasses,
+        ...(candidate.spineMass ? [candidate.spineMass] : []),
+        ...candidate.deckWingMasses,
+        ...candidate.companionMasses,
+      ];
+      for (const hero of profileHeroes) {
+        const face = candidateFacesById.get(hero.faceId);
+        if (face === undefined || face.buildingId !== hero.buildingId || face.planeAxis !== 'x') {
+          invalid = true;
+          break;
+        }
+        const reservation = reservationForHero(hero, face);
+        const rect = { u0: reservation.u0, u1: reservation.u1, y0: reservation.y0, y1: reservation.y1 };
+        const isBlade = hero.kind === 'blade';
+        const expectedX = face.plane + face.outward * (hero.kind === 'brand' ? 1.2 : isBlade ? hero.width * 0.5 + 0.8 : 0.8);
+        if (!facadeFaceContains(face, rect, heroFaceMargin)
+          || !faceBackedByMass(face, candidateSupportMasses, rect.u0, rect.u1, rect.y0, rect.y1)
+          || Math.abs(hero.x - expectedX) > 0.5) {
+          invalid = true;
+          break;
+        }
+      }
+      if (invalid) continue;
+      for (let index = 1; index < candidate.stageDrafts.length; index += 1) {
+        const draft = candidate.stageDrafts[index]!;
+        if (draft.masses.some((mass) => ![mass.x, mass.y0, mass.z, mass.width, mass.height, mass.depth].every(Number.isFinite)
+          || mass.width <= 0 || mass.height <= 0 || mass.depth <= 0)) {
+          invalid = true;
+          break;
+        }
+        if (index === 1) {
+          const supports = candidate.family === 'supported-spine' && candidate.spineMass
+            ? [candidate.spineMass] : candidate.stageDrafts[0]!.masses;
+          if (!supports.some((mass) => retainedSupportContacts(
+            roofDetailMassObb(mass, 0), roofDetailMassObb(draft.masses[0]!, 0),
+          ))) invalid = true;
+          continue;
+        }
+        const parent = candidate.stageDrafts[index - 1]!;
+        if (Math.abs(draft.verticalBounds.y0 - parent.verticalBounds.y1) > 0.01
+          || !parent.masses.some((mass) => retainedSupportContacts(
+            roofDetailMassObb(mass, 0), roofDetailMassObb(draft.masses[0]!, 0),
+          ))
+          || (draft.offset !== null && (
+            draft.offset.parentStageIndex !== index - 1
+            || draft.offset.ratio < 0.08 || draft.offset.ratio > 0.33
+          ))) {
+          invalid = true;
+          break;
+        }
+      }
+      if (invalid) continue;
+      if (candidate.crownMasses.some((mass) =>
+        Math.abs(mass.y0 - (top.y0 + top.height)) > 0.01
+        || mass.x - mass.width * 0.5 < top.x - top.width * 0.5 - 1e-4
+        || mass.x + mass.width * 0.5 > top.x + top.width * 0.5 + 1e-4
+        || mass.z - mass.depth * 0.5 < top.z - top.depth * 0.5 - 1e-4
+        || mass.z + mass.depth * 0.5 > top.z + top.depth * 0.5 + 1e-4
+        || !retainedSupportContacts(roofDetailMassObb(mass, 0), topBox))) continue;
+
+      const firstMass = candidate.stageDrafts[1]!.masses[0]!;
+      const addedFirstHeight = firstMass.height - first.masses[0]!.height;
+      const changedMasses: SkyriverMass[] = [
+        ...(divide ? candidate.stageDrafts.slice(2).flatMap((draft) => draft.masses) : []),
+        ...(divide && addedFirstHeight > 0 ? [{
+          ...firstMass, y0: first.verticalBounds.y1, height: addedFirstHeight,
+        }] : []),
+        ...candidate.crownMasses,
+      ];
+      for (const mass of changedMasses) {
+        const box = roofDetailMassObb(mass, 0);
+        if (!Number.isFinite(mass.height) || mass.height <= 0
+          || addedProfileFragments(mass, oldProfileMasses).some((fragment) =>
+            checkNotchWorldConflict(roofDetailMassObb(fragment, 0), oldMask),
+          )
+          || roofDetailIndexConflicts(wingAirIndex, box, 0)
+          || roofDetailBlocksHero(box, shapeHeroBoxes)
+          || shapeRouteBlocked(box)
+          || [...finalNotches].some(([notchKey, notch]) => notchKey !== key && roofDetailObbsConflict(box, notch, 0))
+          || shapeRoofPlanes.some((roof) => roof.y > mass.y0 + 0.001
+            && roof.y < mass.y0 + mass.height - 0.001 && roofDetailObbsConflict(box, roof, 0))) {
+          invalid = true;
+          break;
+        }
+      }
+      if (!invalid && candidate.crownProfile.kind === 'split') {
+        const [cm0, cm1] = candidate.crownMasses;
+        const candidateNotch = computeSplitCrownNotch(
+          cm0!, cm1!, candidate.crownProfile.axis, cm0!.anchorV ?? tower.z,
+        ).notchObb;
+        if (checkNotchWorldConflict(candidateNotch, oldMask)
+          || candidate.stageMasses.some((mass) => roofDetailObbsConflict(candidateNotch, roofDetailMassObb(mass, 0), 0))
+          || candidate.companionMasses.some((mass) => roofDetailObbsConflict(candidateNotch, roofDetailMassObb(mass, 0), 0))
+          || (candidate.spineMass !== null && roofDetailObbsConflict(candidateNotch, roofDetailMassObb(candidate.spineMass, 0), 0))
+          || candidate.deckWingMasses.some((mass) => roofDetailObbsConflict(candidateNotch, roofDetailMassObb(mass, 0), 0))) {
+          invalid = true;
+        }
+      }
+      if (invalid) continue;
+      accepted = candidate;
+      break;
+    }
+    if (accepted === undefined) continue;
+
+    for (let index = 1; index < accepted.stageDrafts.length; index += 1) {
+      const original = resolved.stageDrafts[Math.min(index, resolved.stageDrafts.length - 1)]!.masses[0]!;
+      seedIndices.set(accepted.stageDrafts[index]!.masses[0]!, seedIndices.get(original)!);
+    }
+    for (let index = 0; index < accepted.crownMasses.length; index += 1) {
+      seedIndices.set(accepted.crownMasses[index]!, seedIndices.get(resolved.crownMasses[index]!)!);
+    }
+    const newProfileMasses = [
+      ...accepted.stageMasses, ...accepted.crownMasses,
+      ...(accepted.spineMass ? [accepted.spineMass] : []),
+      ...accepted.deckWingMasses, ...accepted.companionMasses,
+    ];
+    const firstIndex = masses.findIndex((mass) => oldMask.has(mass));
+    if (firstIndex < 0) fail(`SKYRIVER_R36_FIXED_SHAPE_MISSING: ${key}`);
+    const kept = masses.filter((mass) => !oldMask.has(mass));
+    kept.splice(firstIndex, 0, ...newProfileMasses);
+    masses.length = 0;
+    masses.push(...kept);
+    for (const mass of oldProfileMasses) activeWorldMasses.delete(mass);
+    for (const mass of newProfileMasses) {
+      activeWorldMasses.add(mass);
+      const box = roofDetailMassObb(mass, 0);
+      roofDetailInsert(crownRepairWorldIndex, box);
+      crownBoxToMass.set(box, mass);
+    }
+    const oldFaces = new Set(resolved.faces);
+    const firstFaceIndex = exposedFaces.findIndex((face) => oldFaces.has(face));
+    if (firstFaceIndex >= 0) {
+      const keptFaces = exposedFaces.filter((face) => !oldFaces.has(face));
+      keptFaces.splice(firstFaceIndex, 0, ...accepted.faces);
+      exposedFaces.length = 0;
+      exposedFaces.push(...keptFaces);
+    }
+    r36DataByTower.set(key, accepted);
+    if (accepted.crownProfile.kind === 'split') {
+      const [cm0, cm1] = accepted.crownMasses;
+      finalNotches.set(key, computeSplitCrownNotch(
+        cm0!, cm1!, accepted.crownProfile.axis, cm0!.anchorV ?? tower.z,
+      ).notchObb);
+    }
+    tierMap.set(key, accepted.tiers);
+  }
+  acceptedNotches.clear();
+  for (const [key, notch] of finalNotches) acceptedNotches.set(key, notch);
+  if (!verifyAllAcceptedNotches()) fail('SKYRIVER_R36_FIXED_CROWN_NOTCH_BLOCKED');
+
+  const notchAuditIndex = createSpatialIndex(masses.length + legacyWorld.length);
+  for (let massIndex = 0; massIndex < masses.length; massIndex += 1) {
+    const mass = masses[massIndex]!;
+    if (mass.width <= 0 || mass.height <= 0 || mass.depth <= 0) continue;
+    roofDetailInsert(notchAuditIndex, roofDetailMassObb(mass, massIndex));
+  }
+
+  for (let i = 0; i < layout.towers.length; i += 1) {
+    const tower = layout.towers[i]!;
+    const key = towerKey(tower);
+    const data = r36DataByTower.get(key);
+    if (data !== undefined && data.crownProfile.kind === 'split') {
+      const crown = data.crownProfile;
+      const cm0 = data.crownMasses[0]!;
+      const cm1 = data.crownMasses[1]!;
+      const anchorV = cm0.anchorV ?? tower.z;
+      const { notchObb } = computeSplitCrownNotch(cm0, cm1, crown.axis, anchorV);
+      if (roofDetailIndexConflicts(notchAuditIndex, notchObb, 0)) {
+        let blockerIndex = -1;
+        for (const box of notchAuditIndex.boxes) {
+          if (box.massIndex !== undefined && roofDetailObbsConflict(notchObb, box, 0)) {
+            blockerIndex = box.massIndex;
+            break;
+          }
+        }
+        fail(`SKYRIVER_SPLIT_NOTCH_BLOCKED: ${key} mass ${blockerIndex}`);
+      }
+    }
+  }
 
   facadeFaceCache.set(layout.seed, exposedFaces);
   massCache.set(layout.seed, masses);
 
+  // Build R36 tower profile rows backed by the final masses array
+  const profileRows: SkyriverTowerProfileRow[] = [];
+  for (let i = 0; i < layout.towers.length; i += 1) {
+    const tower = layout.towers[i]!;
+    const arch = massingArchetype(layout, tower);
+    const eligible = isEligibleTower(layout, tower);
+    const towerKeyStr = `tower:${towerKey(tower)}`;
+    const towerSeed = buildingSeedOf(tower.x, tower.z);
+
+    if (!eligible) {
+      profileRows.push(Object.freeze({
+        eligibility: Object.freeze({
+          kind: 'excluded',
+          reason: towerExclusionReason(layout, tower) ?? 'excluded',
+        }),
+        towerIndex: i,
+        towerKey: towerKeyStr,
+        building: towerSeed,
+        materialOwner: towerSeed,
+        archetype: arch,
+      }));
+    } else {
+      const data = r36DataByTower.get(towerKey(tower))!;
+      const profileStages: SkyriverStageProfile[] = data.stageDrafts.map((sd) => {
+        const massIndices = Object.freeze(sd.masses.map((m) => masses.indexOf(m)));
+        return Object.freeze({
+          stageIndex: sd.stageIndex,
+          massIndices,
+          footprint: sd.footprint,
+          verticalBounds: sd.verticalBounds,
+          offset: sd.offset,
+        });
+      });
+      const supportSpineIndex = data.spineMass ? masses.indexOf(data.spineMass) : null;
+      const companionMassIndices = Object.freeze(data.companionMasses.map((m) => masses.indexOf(m)));
+
+      let finalCrown: SkyriverCrownProfile;
+      if (data.crownProfile.kind === 'split') {
+        const m0 = masses.indexOf(data.crownMasses[0]!);
+        const m1 = masses.indexOf(data.crownMasses[1]!);
+        finalCrown = Object.freeze({
+          kind: 'split',
+          axis: data.crownProfile.axis,
+          gapM: data.crownProfile.gapM,
+          crownSpanM: data.crownProfile.crownSpanM,
+          bounds: data.crownProfile.bounds,
+          massIndices: Object.freeze([m0, m1]) as readonly [number, number],
+        });
+      } else {
+        const m0 = masses.indexOf(data.crownMasses[0]!);
+        finalCrown = Object.freeze({
+          kind: 'unsplit-fin',
+          axis: data.crownProfile.axis,
+          gapM: 0,
+          crownSpanM: data.crownProfile.crownSpanM,
+          bounds: data.crownProfile.bounds,
+          massIndices: Object.freeze([m0]) as readonly [number],
+        });
+      }
+
+      profileRows.push(Object.freeze({
+        eligibility: Object.freeze({
+          kind: 'eligible',
+          reason: 'ordinary-box-stage',
+        }),
+        towerIndex: i,
+        towerKey: towerKeyStr,
+        building: towerSeed,
+        materialOwner: towerSeed,
+        family: data.family,
+        stages: Object.freeze(profileStages),
+        crown: finalCrown,
+        lean: data.leanProfile === 'none' ? null : Object.freeze(data.leanProfile),
+        supportSpineIndex,
+        companionMassIndices,
+        hostFace: data.hostFace,
+      }));
+    }
+  }
+
+  towerProfileCache.set(layout.seed, Object.freeze(profileRows));
+
   owner.length = count;
   spanTo.length = count;
+  const sourceCount = count;
   const legacyTrims: SkyriverCityTrims = {
     seed: layout.seed,
     count,
@@ -1322,8 +4667,72 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
   trimCache.set(layout.seed, legacyTrims);
   let heroes: readonly SkyriverHeroBlade[];
   let detailResult: { readonly totalTrimCount: number; readonly derivation: SkyriverRoofDetailDerivation };
+  let reconciliation: SkyriverLegacyTrimReconciliation;
+  let supportRecords: readonly SkyriverRetainedMassSupportRecord[];
   try {
-    heroes = deriveHeroBlades(layout);
+    heroes = resolvedHeroes;
+    heroCache.set(layout.seed, heroes);
+    const repairFaces = new Set<SkyriverFacadeFace>(exposedFaces);
+    for (const data of r36DataByTower.values()) {
+      for (const face of data.faces) {
+        repairFaces.add(face);
+      }
+    }
+    reconciliation = reconcileLegacyTrimsD1(
+      layout,
+      legacyTrims,
+      sourceCount,
+      r27StartIndex,
+      r27EndIndex,
+      Array.from(repairFaces),
+      masses,
+      heroes,
+    );
+    reconciliation = reconcileLegacyTrimsD2(
+      layout,
+      legacyTrims,
+      sourceCount,
+      r27StartIndex,
+      r27EndIndex,
+      legacyWorld,
+      masses,
+      heroes,
+      wingAirIndex,
+      acceptedNotches,
+      notchAuditIndex,
+      reconciliation,
+    );
+    reconciliation = reconcileLegacyTrimsD3(
+      layout,
+      legacyTrims,
+      sourceCount,
+      r27StartIndex,
+      r27EndIndex,
+      legacyWorld,
+      masses,
+      heroes,
+      wingAirIndex,
+      acceptedNotches,
+      reconciliation,
+    );
+    const visibleLegacyTrimIndex = createSpatialIndex(sourceCount);
+    for (let i = 0; i < sourceCount; i += 1) {
+      if (skyriverTrimBlocksHero(legacyTrims, i, heroes)) continue;
+      roofDetailInsert(visibleLegacyTrimIndex, roofDetailTrimObb(legacyTrims, i));
+    }
+    supportRecords = appendRetainedMassSupports(
+      layout,
+      legacyWorld,
+      masses,
+      heroes,
+      visibleLegacyTrimIndex,
+      wingAirIndex,
+      acceptedNotches,
+      notchAuditIndex,
+      createSpatialIndex,
+      shapeRouteBlocked,
+      exposedFaces,
+    );
     const collisionIndex = buildRoofDetailCollisionIndex(masses, legacyTrims, heroes, layout);
     detailResult = appendRoofDetailSuffix(
       masses,
@@ -1335,6 +4744,8 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     );
   } catch (error) {
     trimCache.delete(layout.seed);
+    trimReconciliationCache.delete(layout.seed);
+    retainedMassSupportCache.delete(layout.seed);
     throw error;
   }
   count = detailResult.totalTrimCount;
@@ -1342,6 +4753,9 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
 
   const trims: SkyriverCityTrims = { ...legacyTrims, count };
   trimCache.set(layout.seed, trims);
+  trimReconciliationCache.set(layout.seed, reconciliation);
+  massSeedIndexCache.set(layout.seed, seedIndices);
+  retainedMassSupportCache.set(layout.seed, supportRecords);
   return trims;
 }
 
@@ -1370,6 +4784,7 @@ interface RoofDetailObb {
   readonly maxX: number;
   readonly minZ: number;
   readonly maxZ: number;
+  readonly coordinateUlpM: number;
   /** Only a roof-mounted candidate's own support may meet it at zero vertical clearance. */
   readonly massIndex?: number;
 }
@@ -1426,6 +4841,12 @@ function roofDetailRandomFloat(random: DeterministicRandom, min: number, max: nu
   return min + (max - min) * random.nextInt(0, 10000) / 10000;
 }
 
+function roofDetailScalarUlp(value: number): number {
+  const absolute = Math.abs(value);
+  if (absolute === 0) return 2 ** -149;
+  return 2 ** (Math.floor(Math.log2(absolute)) - 23);
+}
+
 function roofDetailBox(
   x: number,
   y: number,
@@ -1448,6 +4869,11 @@ function roofDetailBox(
     x, y, z, halfX, halfY: sy * 0.5, halfZ, ux, uz, vx, vz,
     minX: x - radiusX, maxX: x + radiusX,
     minZ: z - radiusZ, maxZ: z + radiusZ,
+    coordinateUlpM: Math.max(
+      roofDetailScalarUlp(x),
+      roofDetailScalarUlp(y),
+      roofDetailScalarUlp(z),
+    ),
     ...(massIndex === undefined ? {} : { massIndex }),
   };
 }
@@ -1486,15 +4912,7 @@ function roofDetailTrimObb(trims: SkyriverCityTrims, index: number): RoofDetailO
 }
 
 function roofDetailFloatTolerance(a: RoofDetailObb, b: RoofDetailObb): number {
-  const ulp = (value: number): number => {
-    const absolute = Math.abs(value);
-    if (absolute === 0) return 2 ** -149;
-    return 2 ** (Math.floor(Math.log2(absolute)) - 23);
-  };
-  return Math.max(
-    ulp(a.x), ulp(a.y), ulp(a.z),
-    ulp(b.x), ulp(b.y), ulp(b.z),
-  ) * 2;
+  return Math.max(a.coordinateUlpM, b.coordinateUlpM) * 2;
 }
 
 function roofDetailRadiusOn(box: RoofDetailObb, axisX: number, axisZ: number): number {
@@ -1526,6 +4944,524 @@ function roofDetailObbsConflict(a: RoofDetailObb, b: RoofDetailObb, gapM: number
   return true;
 }
 
+type RetainedSupportPoint = readonly [number, number];
+
+interface RetainedSupportEntry {
+  readonly mass: SkyriverMass;
+  readonly massIndex: number;
+  readonly box: RoofDetailObb;
+}
+
+interface RetainedSupportGroup {
+  readonly entries: RetainedSupportEntry[];
+  readonly envelope: [number, number, number, number];
+}
+
+interface RetainedSupportCandidate {
+  readonly mass: SkyriverMass;
+  readonly box: RoofDetailObb;
+  readonly hostMassIndex: number;
+  readonly sourceHostIndex: number;
+  readonly volume: number;
+}
+
+function retainedSupportOwner(mass: SkyriverMass): number {
+  return mass.materialOwner ?? mass.building ?? buildingSeedOf(mass.x, mass.z);
+}
+
+function retainedSupportKey(mass: SkyriverMass): string {
+  return hostIndexKey(retainedSupportOwner(mass), mass.anchorV ?? mass.z);
+}
+
+function retainedSupportFootprint(box: RoofDetailObb): RetainedSupportPoint[] {
+  return ([[-1, -1], [1, -1], [1, 1], [-1, 1]] as const).map(([u, v]) => [
+    box.x + u * box.halfX * box.ux + v * box.halfZ * box.vx,
+    box.z + u * box.halfX * box.uz + v * box.halfZ * box.vz,
+  ]);
+}
+
+function retainedSupportClip(
+  polygon: readonly RetainedSupportPoint[],
+  axis: 0 | 1,
+  value: number,
+  sign: 1 | -1,
+): RetainedSupportPoint[] {
+  const result: RetainedSupportPoint[] = [];
+  for (let i = 0; i < polygon.length; i += 1) {
+    const a = polygon[i]!;
+    const b = polygon[(i + 1) % polygon.length]!;
+    const insideA = sign * (a[axis] - value) >= 0;
+    const insideB = sign * (b[axis] - value) >= 0;
+    if (insideA) result.push(a);
+    if (insideA !== insideB) {
+      const t = (value - a[axis]) / (b[axis] - a[axis]);
+      result.push([a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])]);
+    }
+  }
+  return result;
+}
+
+function retainedSupportRectClip(
+  polygon: readonly RetainedSupportPoint[],
+  x0: number, x1: number, z0: number, z1: number,
+): RetainedSupportPoint[] {
+  return retainedSupportClip(
+    retainedSupportClip(
+      retainedSupportClip(retainedSupportClip(polygon, 0, x0, 1), 0, x1, -1),
+      1, z0, 1,
+    ),
+    1, z1, -1,
+  );
+}
+
+function retainedSupportArea(polygon: readonly RetainedSupportPoint[]): number {
+  if (polygon.length < 3) return 0;
+  const origin = polygon[0]!;
+  let twiceArea = 0;
+  for (let i = 1; i + 1 < polygon.length; i += 1) {
+    const a = polygon[i]!;
+    const b = polygon[i + 1]!;
+    twiceArea += (a[0] - origin[0]) * (b[1] - origin[1])
+      - (a[1] - origin[1]) * (b[0] - origin[0]);
+  }
+  return Math.abs(twiceArea) * 0.5;
+}
+
+function retainedSupportInFrame(
+  box: RoofDetailObb,
+  host: RoofDetailObb,
+  x = 0,
+  z = 0,
+): RetainedSupportPoint[] {
+  return retainedSupportFootprint(box).map(([wx, wz]) => {
+    const dx = wx - host.x;
+    const dz = wz - host.z;
+    return [x + dx * host.ux + dz * host.uz, z + dx * host.vx + dz * host.vz];
+  });
+}
+
+/** Volume and face contact count. Edge and corner contact do not count. */
+function retainedSupportContacts(a: RoofDetailObb, b: RoofDetailObb): boolean {
+  if (roofDetailObbsConflict(a, b, 0)) return true;
+  const tolerance = roofDetailFloatTolerance(a, b);
+  const vertical = Math.min(a.y + a.halfY, b.y + b.halfY)
+    - Math.max(a.y - a.halfY, b.y - b.halfY);
+  if (vertical < -tolerance) return false;
+  const polygon = retainedSupportInFrame(a, b);
+  if (Math.abs(vertical) <= tolerance) {
+    return retainedSupportArea(retainedSupportRectClip(
+      polygon, -b.halfX, b.halfX, -b.halfZ, b.halfZ,
+    )) > tolerance * tolerance;
+  }
+  // A side face needs a parallel edge and a positive vertical interval.
+  for (const axis of [0, 1] as const) {
+    const cross = axis === 0 ? 1 : 0;
+    const half = axis === 0 ? b.halfX : b.halfZ;
+    const crossHalf = cross === 0 ? b.halfX : b.halfZ;
+    for (const sign of [-1, 1] as const) {
+      const face = sign * half;
+      if (!polygon.every((p) => sign * (p[axis] - face) >= -tolerance)) continue;
+      for (let i = 0; i < polygon.length; i += 1) {
+        const p = polygon[i]!;
+        const q = polygon[(i + 1) % polygon.length]!;
+        if (Math.abs(p[axis] - face) > tolerance || Math.abs(q[axis] - face) > tolerance) continue;
+        const overlap = Math.min(crossHalf, Math.max(p[cross], q[cross]))
+          - Math.max(-crossHalf, Math.min(p[cross], q[cross]));
+        if (overlap > tolerance && vertical > tolerance) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function retainedSupportNearby(
+  index: RoofDetailCollisionIndex,
+  box: RoofDetailObb,
+  margin = 0,
+): RoofDetailObb[] {
+  const seen = new Set<number>();
+  const result: RoofDetailObb[] = [];
+  const minX = Math.floor((box.minX - margin) / index.cellSize);
+  const maxX = Math.floor((box.maxX + margin) / index.cellSize);
+  const minZ = Math.floor((box.minZ - margin) / index.cellSize);
+  const maxZ = Math.floor((box.maxZ + margin) / index.cellSize);
+  for (let x = minX; x <= maxX; x += 1) {
+    for (let z = minZ; z <= maxZ; z += 1) {
+      for (const i of index.cells.get(roofDetailCellKey(x, z)) ?? []) {
+        if (seen.has(i)) continue;
+        seen.add(i);
+        result.push(index.boxes[i]!);
+      }
+    }
+  }
+  return result;
+}
+
+/** All boxes use the exact owner frame. Cell boundaries include every box face. */
+function retainedSupportContained(
+  support: SkyriverMass,
+  originals: readonly RetainedSupportEntry[],
+): boolean {
+  const bounds = (mass: SkyriverMass): readonly [number, number, number, number, number, number] => [
+    mass.x - mass.width * 0.5, mass.x + mass.width * 0.5,
+    mass.y0, mass.y0 + mass.height,
+    mass.z - mass.depth * 0.5, mass.z + mass.depth * 0.5,
+  ];
+  const piece = bounds(support);
+  const boxes = originals.map((entry) => bounds(entry.mass)).filter((b) =>
+    b[1] > piece[0] && b[0] < piece[1]
+    && b[3] > piece[2] && b[2] < piece[3]
+    && b[5] > piece[4] && b[4] < piece[5]);
+  const axes = ([0, 2, 4] as const).map((axis) => [...new Set([
+    piece[axis], piece[axis + 1]!,
+    ...boxes.flatMap((b) => [
+      Math.max(piece[axis], b[axis]),
+      Math.min(piece[axis + 1]!, b[axis + 1]!),
+    ]),
+  ])].sort((a, b) => a - b));
+  const xs = axes[0]!;
+  const ys = axes[1]!;
+  const zs = axes[2]!;
+  for (let x = 0; x + 1 < xs.length; x += 1) {
+    for (let y = 0; y + 1 < ys.length; y += 1) {
+      for (let z = 0; z + 1 < zs.length; z += 1) {
+        const x0 = xs[x]!, x1 = xs[x + 1]!;
+        const y0 = ys[y]!, y1 = ys[y + 1]!;
+        const z0 = zs[z]!, z1 = zs[z + 1]!;
+        if (x1 <= x0 || y1 <= y0 || z1 <= z0) continue;
+        // Membership is constant in each open cell. Check its full bounds.
+        if (!boxes.some((b) => b[0] <= x0 && b[1] >= x1
+          && b[2] <= y0 && b[3] >= y1 && b[4] <= z0 && b[5] >= z1)) return false;
+      }
+    }
+  }
+  return true;
+}
+
+function createCityRouteBlocker(): (box: RoofDetailObb) => boolean {
+  const routeCellSize = 200;
+  const routeCells = new Map<string, { readonly x: number; readonly y: number; readonly z: number; readonly radius: number }[]>();
+  const addRoutePose = (x: number, y: number, z: number, radius: number): void => {
+    const key = roofDetailCellKey(Math.floor(x / routeCellSize), Math.floor(z / routeCellSize));
+    const bucket = routeCells.get(key) ?? [];
+    bucket.push({ x, y, z, radius });
+    routeCells.set(key, bucket);
+  };
+  const pose = { cutFade: 0, v: 0, lateral: 0, x: 0, y: 0, z: 0, yaw: 0, pitch: 0, roll: 0 };
+  const camera = createCameraPoseScratch();
+  for (let v = 0; v < CANYON_LOOP_LENGTH_M; v += 2) {
+    autopilotTrackPose(v, pose);
+    addRoutePose(pose.x, pose.y, pose.z, CLEARANCE_SHUTTLE_RADIUS_M);
+    for (const [speed, boostT] of [[40, 0], [260, 0], [260, 1]] as const) {
+      writeCameraPose(camera, { ...pose, speed, mode: 0, autopilotT: 0, boostT }, { orbitYaw: 0, orbitPitch: 0 });
+      addRoutePose(camera.position.x, camera.position.y, camera.position.z, CLEARANCE_CAMERA_RADIUS_M);
+    }
+  }
+  return (box: RoofDetailObb): boolean => {
+    const radius = Math.max(CLEARANCE_SHUTTLE_RADIUS_M, CLEARANCE_CAMERA_RADIUS_M);
+    const minX = Math.floor((box.minX - radius) / routeCellSize);
+    const maxX = Math.floor((box.maxX + radius) / routeCellSize);
+    const minZ = Math.floor((box.minZ - radius) / routeCellSize);
+    const maxZ = Math.floor((box.maxZ + radius) / routeCellSize);
+    for (let x = minX; x <= maxX; x += 1) {
+      for (let z = minZ; z <= maxZ; z += 1) {
+        for (const p of routeCells.get(roofDetailCellKey(x, z)) ?? []) {
+          const dx = p.x - box.x;
+          const dz = p.z - box.z;
+          const distance = Math.hypot(
+            Math.max(0, Math.abs(dx * box.ux + dz * box.uz) - box.halfX),
+            Math.max(0, Math.abs(p.y - box.y) - box.halfY),
+            Math.max(0, Math.abs(dx * box.vx + dz * box.vz) - box.halfZ),
+          );
+          if (distance < p.radius) return true;
+        }
+      }
+    }
+    return false;
+  };
+}
+
+function appendRetainedMassSupports(
+  layout: SkyriverCityLayout,
+  legacyWorld: readonly SkyriverMass[],
+  masses: SkyriverMass[],
+  heroes: readonly SkyriverHeroBlade[],
+  visibleLegacyTrimIndex: RoofDetailCollisionIndex,
+  wingAirIndex: RoofDetailCollisionIndex,
+  acceptedNotches: ReadonlyMap<string, RoofDetailObb>,
+  worldIndex: RoofDetailCollisionIndex,
+  createIndex: (capacity: number) => RoofDetailCollisionIndex,
+  routeBlocked: (box: RoofDetailObb) => boolean,
+  sourceFaces?: readonly SkyriverFacadeFace[],
+): readonly SkyriverRetainedMassSupportRecord[] {
+  const originalGroups = new Map<string, RetainedSupportGroup>();
+  const baselineIndex = createIndex(legacyWorld.length);
+  const sourceEntries = new Map<number, RetainedSupportEntry>();
+  for (let i = 0; i < legacyWorld.length; i += 1) {
+    const mass = legacyWorld[i]!;
+    if ((mass.layer ?? 0) !== 0 || mass.width <= 0 || mass.height <= 0 || mass.depth <= 0) continue;
+    const entry = { mass, massIndex: i, box: roofDetailMassObb(mass, i) };
+    sourceEntries.set(i, entry);
+    roofDetailInsert(baselineIndex, entry.box);
+    const key = retainedSupportKey(mass);
+    let group = originalGroups.get(key);
+    if (group === undefined) {
+      group = { entries: [], envelope: [Infinity, -Infinity, Infinity, -Infinity] };
+      originalGroups.set(key, group);
+    }
+    group.entries.push(entry);
+    const e = group.envelope;
+    e[0] = Math.min(e[0], mass.x - mass.width * 0.5);
+    e[1] = Math.max(e[1], mass.x + mass.width * 0.5);
+    e[2] = Math.min(e[2], mass.z - mass.depth * 0.5);
+    e[3] = Math.max(e[3], mass.z + mass.depth * 0.5);
+  }
+
+  const finalCount = masses.length;
+  const finalEntries = new Map<number, RetainedSupportEntry>();
+  const finalGroups = new Map<string, RetainedSupportEntry[]>();
+  const finalOccurrences = new Map<SkyriverMass, number[]>();
+  for (let i = 0; i < finalCount; i += 1) {
+    const mass = masses[i]!;
+    const occurrences = finalOccurrences.get(mass) ?? [];
+    occurrences.push(i);
+    finalOccurrences.set(mass, occurrences);
+    if ((mass.layer ?? 0) !== 0 || mass.width <= 0 || mass.height <= 0 || mass.depth <= 0) continue;
+    const entry = { mass, massIndex: i, box: roofDetailMassObb(mass, i) };
+    finalEntries.set(i, entry);
+    const key = retainedSupportKey(mass);
+    const group = finalGroups.get(key) ?? [];
+    group.push(entry);
+    finalGroups.set(key, group);
+  }
+
+  let contactMargin = 0;
+  for (const box of [...baselineIndex.boxes, ...worldIndex.boxes]) {
+    contactMargin = Math.max(contactMargin, box.coordinateUlpM * 2);
+  }
+  const rooted = new Set<number>();
+  const queue: RetainedSupportEntry[] = [];
+  for (const entry of finalEntries.values()) {
+    if (entry.mass.y0 !== SKYRIVER_CITY_VOID_BASE_Y) continue;
+    const originals = originalGroups.get(retainedSupportKey(entry.mass));
+    if (!originals?.entries.some((old) => old.mass.y0 === SKYRIVER_CITY_VOID_BASE_Y)) continue;
+    rooted.add(entry.massIndex);
+    queue.push(entry);
+  }
+  for (let cursor = 0; cursor < queue.length; cursor += 1) {
+    const entry = queue[cursor]!;
+    for (const box of retainedSupportNearby(worldIndex, entry.box, contactMargin)) {
+      if (box.massIndex === undefined || rooted.has(box.massIndex)) continue;
+      const next = finalEntries.get(box.massIndex);
+      if (next === undefined
+        || retainedSupportKey(next.mass) !== retainedSupportKey(entry.mass)
+        || !retainedSupportContacts(entry.box, next.box)) continue;
+      rooted.add(next.massIndex);
+      queue.push(next);
+    }
+  }
+
+  const losses: {
+    readonly child: RetainedSupportEntry;
+    readonly childFinalIndex: number;
+    readonly oldContacts: readonly RetainedSupportEntry[];
+  }[] = [];
+  const occurrenceCursors = new Map<SkyriverMass, number>();
+  for (let sourceIndex = 0; sourceIndex < legacyWorld.length; sourceIndex += 1) {
+    const mass = legacyWorld[sourceIndex]!;
+    const cursor = occurrenceCursors.get(mass) ?? 0;
+    occurrenceCursors.set(mass, cursor + 1);
+    const childFinalIndex = finalOccurrences.get(mass)?.[cursor];
+    const child = sourceEntries.get(sourceIndex);
+    if (child === undefined || childFinalIndex === undefined || mass.y0 === SKYRIVER_CITY_VOID_BASE_Y) continue;
+    const current = finalEntries.get(childFinalIndex);
+    if (current === undefined) fail('SKYRIVER_RETAINED_SUPPORT_CHILD_MISSING');
+    if (retainedSupportNearby(worldIndex, current.box, contactMargin).some((box) =>
+      box.massIndex !== childFinalIndex && box.massIndex !== undefined
+      && finalEntries.has(box.massIndex) && retainedSupportContacts(current.box, box))) continue;
+    const oldContacts = retainedSupportNearby(baselineIndex, child.box, contactMargin)
+      .filter((box) => box.massIndex !== sourceIndex && retainedSupportContacts(child.box, box))
+      .map((box) => sourceEntries.get(box.massIndex!)!)
+      .sort((a, b) => a.massIndex - b.massIndex);
+    if (oldContacts.length > 0) losses.push({ child, childFinalIndex, oldContacts });
+  }
+
+  if (losses.length === 0) return Object.freeze([]);
+
+  const heroBoxes = roofDetailHeroObbs(layout, heroes, sourceFaces);
+  const r27Roofs = [...finalEntries.values()].filter((entry) => entry.mass.baseRecord !== undefined);
+  const acceptedBoxes: RoofDetailObb[] = [];
+  const records: SkyriverRetainedMassSupportRecord[] = [];
+  type ContactCandidate = RetainedSupportCandidate & {
+    readonly contactCap: number;
+    readonly patchRadius: number;
+  };
+  const compareCandidates = (a: ContactCandidate, b: ContactCandidate): number =>
+    b.contactCap - a.contactCap || b.patchRadius - a.patchRadius
+    || a.volume - b.volume || a.hostMassIndex - b.hostMassIndex || a.sourceHostIndex - b.sourceHostIndex;
+  for (const { child, childFinalIndex, oldContacts } of losses) {
+    const unique = new Map<string, ContactCandidate>();
+    for (const old of oldContacts) {
+      const key = retainedSupportKey(old.mass);
+      const group = originalGroups.get(key)!;
+      for (const host of finalGroups.get(key) ?? []) {
+        if (!rooted.has(host.massIndex) || host.massIndex === childFinalIndex) continue;
+        const y0 = Math.max(child.mass.y0, host.mass.y0);
+        const y1 = Math.min(child.mass.y0 + child.mass.height, host.mass.y0 + host.mass.height);
+        if (y1 - y0 < 0.01) continue;
+        const polygon = retainedSupportRectClip(
+          retainedSupportInFrame(child.box, host.box, host.mass.x, host.mass.z),
+          old.mass.x - old.mass.width * 0.5, old.mass.x + old.mass.width * 0.5,
+          old.mass.z - old.mass.depth * 0.5, old.mass.z + old.mass.depth * 0.5,
+        );
+        if (polygon.length < 3 || retainedSupportArea(polygon) < 0.01) continue;
+        const centre: RetainedSupportPoint = polygon.reduce<[number, number]>(
+          (sum, p) => [sum[0] + p[0] / polygon.length, sum[1] + p[1] / polygon.length], [0, 0],
+        );
+        const points: RetainedSupportPoint[] = [
+          centre,
+          ...polygon.map<RetainedSupportPoint>((p) => [centre[0] * 0.25 + p[0] * 0.75, centre[1] * 0.25 + p[1] * 0.75]),
+          ...polygon.map<RetainedSupportPoint>((p, i) => {
+            const q = polygon[(i + 1) % polygon.length]!;
+            return [centre[0] * 0.25 + (p[0] + q[0]) * 0.375, centre[1] * 0.25 + (p[1] + q[1]) * 0.375];
+          }),
+        ];
+        for (const fraction of [0.95, 0.995] as const) {
+          points.push(...polygon.map<RetainedSupportPoint>((p) => [
+            centre[0] + (p[0] - centre[0]) * fraction,
+            centre[1] + (p[1] - centre[1]) * fraction,
+          ]));
+          points.push(...polygon.map<RetainedSupportPoint>((p, i) => {
+            const q = polygon[(i + 1) % polygon.length]!;
+            return [
+              centre[0] + ((p[0] + q[0]) * 0.5 - centre[0]) * fraction,
+              centre[1] + ((p[1] + q[1]) * 0.5 - centre[1]) * fraction,
+            ];
+          }));
+        }
+        const heights: (readonly [number, number])[] = y1 - y0 <= 4
+          ? [[y0, y1]]
+          : [[(y0 + y1) * 0.5 - 2, (y0 + y1) * 0.5 + 2], [y0, y0 + 4], [y1 - 4, y1]];
+        for (const point of points) {
+          let distance = Infinity;
+          for (let i = 0; i < polygon.length; i += 1) {
+            const a = polygon[i]!;
+            const b = polygon[(i + 1) % polygon.length]!;
+            distance = Math.min(distance, Math.abs(
+              (b[0] - a[0]) * (a[1] - point[1]) - (a[0] - point[0]) * (b[1] - a[1]),
+            ) / Math.hypot(b[0] - a[0], b[1] - a[1]));
+          }
+          for (const contactCap of [4, 2, 1] as const) {
+            const patchRadius = Math.min(contactCap, distance / Math.SQRT2 * 0.9);
+            if (!Number.isFinite(patchRadius) || patchRadius < 0.02) continue;
+            const inset = Math.min(contactCap, host.mass.width / 4, host.mass.depth / 4);
+            const targetX = Math.max(host.mass.x - host.mass.width * 0.5 + inset,
+              Math.min(host.mass.x + host.mass.width * 0.5 - inset, point[0]));
+            const targetZ = Math.max(host.mass.z - host.mass.depth * 0.5 + inset,
+              Math.min(host.mass.z + host.mass.depth * 0.5 - inset, point[1]));
+            const x0 = Math.min(point[0] - patchRadius, targetX - inset);
+            const x1 = Math.max(point[0] + patchRadius, targetX + inset);
+            const z0 = Math.min(point[1] - patchRadius, targetZ - inset);
+            const z1 = Math.max(point[1] + patchRadius, targetZ + inset);
+            const e = group.envelope;
+            if (x0 < e[0] - 0.001 || x1 > e[1] + 0.001 || z0 < e[2] - 0.001 || z1 > e[3] + 0.001) continue;
+            const contactMass: SkyriverMass = {
+              x: (x0 + x1) * 0.5, y0, z: (z0 + z1) * 0.5,
+              width: x1 - x0, height: y1 - y0, depth: z1 - z0,
+              tint: old.mass.tint, anchorV: old.mass.anchorV ?? old.mass.z,
+              building: old.mass.building ?? retainedSupportOwner(old.mass),
+              materialOwner: retainedSupportOwner(old.mass),
+              supportRole: 'retained-child-bridge',
+            };
+            const bands = [...heights];
+            const contactBox = roofDetailMassObb(contactMass, masses.length);
+            for (const blocker of retainedSupportNearby(visibleLegacyTrimIndex, contactBox)) {
+              if (!roofDetailObbsConflict(contactBox, blocker, 0)) continue;
+              for (const [face, direction] of [
+                [blocker.y + blocker.halfY + 0.02, 1],
+                [blocker.y - blocker.halfY - 0.02, -1],
+              ] as const) {
+                const bottom = Math.max(y0, direction === 1 ? face : face - 4);
+                const top = Math.min(y1, direction === 1 ? face + 4 : face);
+                if (top - bottom < 4) continue;
+                bands.push([bottom, top]);
+              }
+            }
+            for (const [bottom, top] of bands) {
+              const mass: SkyriverMass = { ...contactMass, y0: bottom, height: top - bottom };
+              const box = roofDetailMassObb(mass, masses.length);
+              if (!roofDetailObbsConflict(box, child.box, 0) || !roofDetailObbsConflict(box, host.box, 0)) continue;
+              const candidate: ContactCandidate = {
+                mass, box, hostMassIndex: host.massIndex, sourceHostIndex: old.massIndex,
+                contactCap, patchRadius, volume: mass.width * mass.height * mass.depth,
+              };
+              const candidateKey = JSON.stringify(mass);
+              const existing = unique.get(candidateKey);
+              if (existing === undefined || compareCandidates(candidate, existing) < 0) {
+                unique.set(candidateKey, candidate);
+              }
+            }
+          }
+        }
+      }
+    }
+    const candidates = [...unique.values()].sort(compareCandidates);
+    const containedCandidates: RetainedSupportCandidate[] = [];
+    let selected: RetainedSupportCandidate | undefined;
+    let geometry: SkyriverRetainedMassSupportRecord['geometry'] = Object.freeze({ kind: 'strict-clear' });
+    for (const candidate of candidates) {
+      const box = candidate.box;
+      if (roofDetailIndexConflicts(visibleLegacyTrimIndex, box, 0)) continue;
+      if (roofDetailIndexConflicts(wingAirIndex, box, 0)
+        || [...acceptedNotches.values()].some((notch) => roofDetailObbsConflict(box, notch, 0))
+        || roofDetailBlocksHero(box, heroBoxes)
+        || acceptedBoxes.some((other) => roofDetailObbsConflict(box, other, 0))
+        || routeBlocked(box)) continue;
+      if (r27Roofs.some((entry) => {
+        const roofY = entry.mass.y0 + entry.mass.height;
+        return roofY > candidate.mass.y0 + 0.001 && roofY < candidate.mass.y0 + candidate.mass.height - 0.001
+          && roofDetailObbsConflict(box, { ...entry.box, y: roofY, halfY: 0.01 }, 0);
+      })) continue;
+      // The two measured endpoints must overlap. Every other solid must be clear.
+      const blocked = retainedSupportNearby(worldIndex, box).some((other) =>
+        other.massIndex !== childFinalIndex && other.massIndex !== candidate.hostMassIndex
+        && roofDetailObbsConflict(box, other, 0));
+      if (blocked) containedCandidates.push(candidate);
+      else {
+        selected = candidate;
+        break;
+      }
+    }
+    if (selected === undefined) {
+      for (const candidate of containedCandidates) {
+        const originals = originalGroups.get(retainedSupportKey(candidate.mass))!.entries;
+        if (!retainedSupportContained(candidate.mass, originals)) continue;
+        selected = candidate;
+        geometry = Object.freeze({
+          kind: 'original-owner-contained',
+          sourceMassIndices: Object.freeze(originals.map((entry) => entry.massIndex)),
+        });
+        break;
+      }
+    }
+    if (selected === undefined) {
+      fail(`SKYRIVER_RETAINED_SUPPORT_NO_BOUNDED_CANDIDATE: ${layout.seed} source ${child.massIndex}`);
+    }
+    const supportMassIndex = masses.length;
+    masses.push(selected.mass);
+    acceptedBoxes.push(selected.box);
+    roofDetailInsert(worldIndex, selected.box);
+    records.push(Object.freeze({
+      supportMassIndex, childSourceIndex: child.massIndex, childFinalIndex,
+      hostMassIndex: selected.hostMassIndex,
+      owner: retainedSupportOwner(selected.mass),
+      anchorV: selected.mass.anchorV ?? selected.mass.z,
+      geometry,
+    }));
+  }
+  return Object.freeze(records);
+}
+
 function roofDetailCellKey(x: number, z: number): string {
   return String(x) + ':' + String(z);
 }
@@ -1552,7 +5488,7 @@ function roofDetailIndexConflicts(
   index: RoofDetailCollisionIndex,
   box: RoofDetailObb,
   gapM: number,
-  supportMassIndex: number,
+  supportMassIndex?: number,
 ): boolean {
   index.stamp += 1;
   if (index.stamp >= 0x7ffffffe) {
@@ -1573,7 +5509,7 @@ function roofDetailIndexConflicts(
         if (index.stamps[candidateIndex] === stamp) continue;
         index.stamps[candidateIndex] = stamp;
         const other = index.boxes[candidateIndex]!;
-        if (other.massIndex === supportMassIndex) continue;
+        if (supportMassIndex !== undefined && other.massIndex === supportMassIndex) continue;
         if (roofDetailObbsConflict(box, other, gapM)) return true;
       }
     }
@@ -1591,8 +5527,9 @@ function roofDetailBlocksHero(box: RoofDetailObb, heroes: readonly RoofDetailObb
 function roofDetailHeroObbs(
   layout: SkyriverCityLayout,
   heroes: readonly SkyriverHeroBlade[],
+  sourceFaces: readonly SkyriverFacadeFace[] = deriveFacadeFaces(layout),
 ): readonly RoofDetailObb[] {
-  const faces = new Map(deriveFacadeFaces(layout).map((face) => [face.id, face]));
+  const faces = new Map(sourceFaces.map((face) => [face.id, face]));
   const anchors = megaAnchorCache.get(layout.seed) ?? [];
   const result: RoofDetailObb[] = [];
   const normal = { x: 0, z: 0 };
@@ -1649,6 +5586,11 @@ function roofDetailHeroObbs(
       maxX: wx + tangentRadiusX,
       minZ: wz - tangentRadiusZ,
       maxZ: wz + tangentRadiusZ,
+      coordinateUlpM: Math.max(
+        roofDetailScalarUlp(wx),
+        roofDetailScalarUlp(hero.y),
+        roofDetailScalarUlp(wz),
+      ),
     });
   }
   return result;
@@ -1850,7 +5792,8 @@ function appendRoofDetailSuffix(
   const pools: RoofDetailSupport[][] = [[], [], []];
   for (let massIndex = 0; massIndex < masses.length; massIndex += 1) {
     const mass = masses[massIndex]!;
-    if ((mass.layer ?? 0) !== 0 || mass.width <= 0 || mass.depth <= 0 || mass.height <= 0) continue;
+    if ((mass.layer ?? 0) !== 0 || mass.supportRole === 'retained-child-bridge'
+      || mass.width <= 0 || mass.depth <= 0 || mass.height <= 0) continue;
     const roofY = mass.y0 + mass.height;
     const stratum = roofDetailStratumFor(roofY);
     pools[roofDetailStratumIndex(stratum)]!.push({ mass, massIndex, stratum, roofY });
@@ -2117,12 +6060,28 @@ function lowRoofPlaneConflicts(spatial: LowBaseSpatialGrid, mass: SkyriverMass):
     if (!other.mass.baseRecord || Math.abs(mass.y0 + mass.height - other.y1) >= 0.25) continue;
     const dx = other.cx - boxWarp.x, dz = other.cz - boxWarp.z;
     const axes = [[c, -s], [s, c], [other.c, -other.s], [other.s, other.c]];
-    const overlaps = axes.every(([ax, az]) => {
+    const satOverlap = axes.every(([ax, az]) => {
       const aRadius = hx * Math.abs(c * ax - s * az) + hz * Math.abs(s * ax + c * az);
       const bRadius = other.hx * Math.abs(other.c * ax - other.s * az) + other.hz * Math.abs(other.s * ax + other.c * az);
-      return Math.abs(dx * ax + dz * az) < aRadius + bRadius - 0.01;
+      return Math.abs(dx * ax + dz * az) <= aRadius + bRadius;
     });
-    if (overlaps) return true;
+    if (satOverlap) return true;
+
+    const ax0 = mass.x - mass.width * 0.5;
+    const ax1 = mass.x + mass.width * 0.5;
+    const az0 = mass.z - mass.depth * 0.5;
+    const az1 = mass.z + mass.depth * 0.5;
+    const bx0 = other.mass.x - other.mass.width * 0.5;
+    const bx1 = other.mass.x + other.mass.width * 0.5;
+    const bz0 = other.mass.z - other.mass.depth * 0.5;
+    const bz1 = other.mass.z + other.mass.depth * 0.5;
+
+    const rawOverlap = Math.min(ax1, bx1) > Math.max(ax0, bx0) && Math.min(az1, bz1) > Math.max(az0, bz0);
+    if (rawOverlap) return true;
+
+    const roundXOverlap = Math.min(Math.round(ax1 * 100), Math.round(bx1 * 100)) >= Math.max(Math.round(ax0 * 100), Math.round(bx0 * 100));
+    const roundZOverlap = Math.min(Math.round(az1 * 100), Math.round(bz1 * 100)) >= Math.max(Math.round(az0 * 100), Math.round(bz0 * 100));
+    if (roundXOverlap && roundZOverlap) return true;
   }
   return false;
 }
@@ -2738,13 +6697,16 @@ function deriveMassingVariation(
   innerWalls: readonly (readonly SkyriverTower[])[],
   masses: SkyriverMass[],
   push: PushTrim,
+  recordLegacyBody: (tower: SkyriverTower, mass: SkyriverMass) => void,
 ): void {
   const rng = new DeterministicRandom(layout.seed).fork('skyriver.city.massing');
   const u = (): number => rng.nextInt(0, 10000) / 10000;
   const between = (a: number, b: number): number => a + (b - a) * u();
   /** A box on the lot, in the lot's frame (rides the slab through the bends). */
   const box = (tower: SkyriverTower, dx: number, dz: number, y0: number, w: number, hgt: number, d: number, building?: number): void => {
-    masses.push({ x: tower.x + dx, y0, z: tower.z + dz, width: w, height: hgt, depth: d, tint: tower.tint, anchorV: tower.z, ...(building === undefined ? {} : { building }), materialOwner: buildingSeedOf(tower.x, tower.z) });
+    const mass: SkyriverMass = { x: tower.x + dx, y0, z: tower.z + dz, width: w, height: hgt, depth: d, tint: tower.tint, anchorV: tower.z, ...(building === undefined ? {} : { building }), materialOwner: buildingSeedOf(tower.x, tower.z) };
+    masses.push(mass);
+    recordLegacyBody(tower, mass);
   };
   /** Lit edge bands round a step: the line each terrace reads by at night. */
   const stepBands = (tower: SkyriverTower, dx: number, dz: number, y: number, w: number, d: number): void => {
@@ -3016,6 +6978,149 @@ const auditPoint: WarpOut = { x: 0, z: 0, heading: 0 };
  */
 export function auditCityAnchors(layout: SkyriverCityLayout): SkyriverAnchorAudit {
   const trims = deriveCityTrims(layout);
+  const reconciliation = deriveLegacyTrimReconciliation(layout);
+  const masses = deriveCityMasses(layout);
+  const dispositionByIndex = new Map(reconciliation.dispositions.map((row) => [row.finalIndex, row] as const));
+  const sourceByIndex = new Map(reconciliation.sourceInventory.map((row) => [row.sourceIndex, row] as const));
+  const towerIdentity = new Map(layout.towers.map((tower) => [towerKey(tower), {
+    owner: buildingSeedOf(tower.x, tower.z), anchorV: tower.z,
+  }] as const));
+  const massIdentity = (mass: SkyriverMass): { readonly owner: number; readonly anchorV: number } => {
+    const base = mass.baseRecord === undefined ? undefined : towerIdentity.get(mass.baseRecord.towerOwner);
+    return {
+      owner: mass.materialOwner ?? mass.building ?? base?.owner ?? buildingSeedOf(mass.x, mass.z),
+      anchorV: mass.anchorV ?? base?.anchorV ?? mass.z,
+    };
+  };
+  const sameOwnerFrameMassIndices = (owner: SkyriverTrimOwner): number[] => {
+    const canonicalOwner = owner.materialOwner ?? buildingSeedOf(owner.x, owner.z);
+    const result: number[] = [];
+    for (let index = 0; index < masses.length; index += 1) {
+      const mass = masses[index]!;
+      const identity = massIdentity(mass);
+      if (identity.owner === canonicalOwner && identity.anchorV === owner.anchorV
+        && mass.width > 0 && mass.height > 0 && mass.depth > 0) result.push(index);
+    }
+    return result;
+  };
+  const rectUnionArea = (rectangles: readonly { readonly x0: number; readonly x1: number; readonly y0: number; readonly y1: number }[]): number => {
+    if (rectangles.length === 0) return 0;
+    const xs = [...new Set(rectangles.flatMap((rect) => [rect.x0, rect.x1]))].sort((a, b) => a - b);
+    let area = 0;
+    for (let index = 0; index + 1 < xs.length; index += 1) {
+      const x0 = xs[index]!;
+      const x1 = xs[index + 1]!;
+      if (!(x1 > x0)) continue;
+      const intervals = rectangles.filter((rect) => rect.x0 < x1 && rect.x1 > x0)
+        .map((rect) => [rect.y0, rect.y1] as const).sort((a, b) => a[0] - b[0]);
+      let covered = 0;
+      let low = -Infinity;
+      let high = -Infinity;
+      for (const interval of intervals) {
+        if (interval[0] > high) {
+          if (high > low) covered += high - low;
+          low = interval[0];
+          high = interval[1];
+        } else high = Math.max(high, interval[1]);
+      }
+      if (high > low) covered += high - low;
+      area += (x1 - x0) * covered;
+    }
+    return area;
+  };
+  const exposedSideHostArea = (
+    trimIndex: number,
+    sourceOwner: SkyriverTrimOwner,
+    hostMassIndex: number,
+  ): number => {
+    const host = masses[hostMassIndex];
+    if (!host || host.supportRole === 'retained-child-bridge') return 0;
+    const side = Math.sign(sourceOwner.x) as -1 | 1;
+    const requested = {
+      x0: Math.max(trims.cz[trimIndex]! - trims.sz[trimIndex]! * 0.5, sourceOwner.z - sourceOwner.depth * 0.5),
+      x1: Math.min(trims.cz[trimIndex]! + trims.sz[trimIndex]! * 0.5, sourceOwner.z + sourceOwner.depth * 0.5),
+      y0: trims.cy[trimIndex]! - trims.sy[trimIndex]! * 0.5,
+      y1: trims.cy[trimIndex]! + trims.sy[trimIndex]! * 0.5,
+    };
+    const identity = massIdentity(host);
+    if (identity.owner !== (sourceOwner.materialOwner ?? buildingSeedOf(sourceOwner.x, sourceOwner.z))
+      || identity.anchorV !== sourceOwner.anchorV) return 0;
+    const plane = host.x - side * host.width * 0.5;
+    if (!(trims.cx[trimIndex]! - trims.sx[trimIndex]! * 0.5 < plane
+      && trims.cx[trimIndex]! + trims.sx[trimIndex]! * 0.5 > plane)) return 0;
+    const contact = {
+      x0: Math.max(requested.x0, host.z - host.depth * 0.5),
+      x1: Math.min(requested.x1, host.z + host.depth * 0.5),
+      y0: Math.max(requested.y0, host.y0),
+      y1: Math.min(requested.y1, host.y0 + host.height),
+    };
+    if (!(contact.x1 > contact.x0 && contact.y1 > contact.y0)) return 0;
+    const blockers: { x0: number; x1: number; y0: number; y1: number }[] = [];
+    for (const otherIndex of sameOwnerFrameMassIndices(sourceOwner)) {
+      if (otherIndex === hostMassIndex) continue;
+      const other = masses[otherIndex]!;
+      const otherPlane = other.x - side * other.width * 0.5;
+      if (side * otherPlane >= side * plane) continue;
+      const overlap = {
+        x0: Math.max(contact.x0, other.z - other.depth * 0.5),
+        x1: Math.min(contact.x1, other.z + other.depth * 0.5),
+        y0: Math.max(contact.y0, other.y0),
+        y1: Math.min(contact.y1, other.y0 + other.height),
+      };
+      if (overlap.x1 > overlap.x0 && overlap.y1 > overlap.y0) blockers.push(overlap);
+    }
+    const contactArea = (contact.x1 - contact.x0) * (contact.y1 - contact.y0);
+    return Math.max(0, contactArea - rectUnionArea(blockers));
+  };
+  const spanEndpointContact = (
+    endpoint: { readonly x: number; readonly y: number; readonly z: number },
+    crossX: number,
+    crossZ: number,
+    crossHalf: number,
+    halfY: number,
+    host: RoofDetailObb,
+  ): { readonly contacts: boolean; readonly crossOverlapM: number; readonly verticalOverlapM: number } => {
+    const tolerance = Math.max(
+      host.coordinateUlpM,
+      roofDetailScalarUlp(endpoint.x),
+      roofDetailScalarUlp(endpoint.y),
+      roofDetailScalarUlp(endpoint.z),
+    ) * 2;
+    const vertical = Math.min(endpoint.y + halfY, host.y + host.halfY)
+      - Math.max(endpoint.y - halfY, host.y - host.halfY);
+    const verticalTolerance = Math.max(roofDetailScalarUlp(endpoint.y), roofDetailScalarUlp(host.y)) * 2;
+    const dx = endpoint.x - host.x;
+    const dz = endpoint.z - host.z;
+    const pU = dx * host.ux + dz * host.uz;
+    const pV = dx * host.vx + dz * host.vz;
+    const dU = crossX * host.ux + crossZ * host.uz;
+    const dV = crossX * host.vx + crossZ * host.vz;
+    const clip = (padding: number): number => {
+      let low = -crossHalf;
+      let high = crossHalf;
+      for (const [position, direction, extent] of [
+        [pU, dU, host.halfX] as const,
+        [pV, dV, host.halfZ] as const,
+      ]) {
+        if (Math.abs(direction) < 1e-12) {
+          if (Math.abs(position) > extent + padding) return -1;
+          continue;
+        }
+        const a = (-extent - padding - position) / direction;
+        const b = (extent + padding - position) / direction;
+        low = Math.max(low, Math.min(a, b));
+        high = Math.min(high, Math.max(a, b));
+        if (low > high) return -1;
+      }
+      return high - low;
+    };
+    const physical = clip(0);
+    return {
+      contacts: vertical >= -verticalTolerance && clip(tolerance) >= 0,
+      crossOverlapM: physical > 0 ? Math.min(crossHalf * 2, physical) : 0,
+      verticalOverlapM: Math.min(halfY * 2, Math.max(0, vertical)),
+    };
+  };
   const placed: SkyriverTrimPlacement = { x: 0, z: 0, heading: 0, length: 0 };
   let maxDrift = 0;
   let floating = 0;
@@ -3046,12 +7151,42 @@ export function auditCityAnchors(layout: SkyriverCityLayout): SkyriverAnchorAudi
     const touches = Math.max(Math.abs(cx - owner.x) - (owner.width + ex) * 0.5, Math.abs(cz - owner.z) - (owner.depth + ez) * 0.5) <= 0.5;
     placeTrim(trims, i, placed);
     const drawn = check(owner, owner.anchorV, placed.x, placed.z, cx, cz, ex, ez);
+    const disposition = dispositionByIndex.get(i);
     // Spans are checked at their ends below; their centre legitimately moves with the span.
     if (trims.spanTo[i] === null) {
-      maxDrift = Math.max(maxDrift, drawn.drift);
-      if (touches && drawn.gap > 0.5) {
-        floating += 1;
-        drawnFailures.push({ kind: trims.kind[i]!, index: i, x: cx, y: trims.cy[i]!, v: cz, wx: placed.x, wz: placed.z, driftM: drawn.drift, gapM: drawn.gap });
+      if (disposition?.kind === 'side-rehosted') {
+        const source = sourceByIndex.get(disposition.sourceIndex);
+        const host = masses[disposition.hostMassIndex];
+        const identity = host === undefined ? undefined : massIdentity(host);
+        warpRigid(cx, cz, owner.anchorV, auditOwner);
+        const drift = Math.hypot(placed.x - auditOwner.x, placed.z - auditOwner.z);
+        maxDrift = Math.max(maxDrift, drift);
+        const geometry = disposition.newGeometry;
+        const declaredGeometry = [geometry.cx, geometry.cy, geometry.cz, geometry.sx, geometry.sy, geometry.sz];
+        const actualGeometry = [trims.cx[i]!, trims.cy[i]!, trims.cz[i]!, trims.sx[i]!, trims.sy[i]!, trims.sz[i]!];
+        const geometryMatches = declaredGeometry.every((value, component) =>
+          Number.isFinite(value) && Number.isFinite(actualGeometry[component])
+          && Math.abs(value - actualGeometry[component]!) <= Math.max(roofDetailScalarUlp(value), roofDetailScalarUlp(actualGeometry[component]!)) * 2,
+        );
+        const exposedArea = source === undefined ? 0 : exposedSideHostArea(i, source.owner, disposition.hostMassIndex);
+        const threshold = Math.max(1e-7, trims.sy[i]! * trims.sz[i]! * 1e-10);
+        const valid = source !== undefined
+          && disposition.sourceIndex === i && disposition.finalIndex === i
+          && Number.isInteger(disposition.hostMassIndex) && disposition.hostMassIndex >= 0
+          && host !== undefined && disposition.faceId.length > 0
+          && identity?.owner === source.canonicalOwner && identity.anchorV === source.owner.anchorV
+          && geometryMatches && Number.isFinite(exposedArea) && exposedArea > threshold
+          && Number.isFinite(drift) && drift < 0.05;
+        if (!valid) {
+          floating += 1;
+          drawnFailures.push({ kind: trims.kind[i]!, index: i, x: cx, y: trims.cy[i]!, v: cz, wx: placed.x, wz: placed.z, driftM: Number.isFinite(drift) ? drift : Number.MAX_VALUE, gapM: 1 });
+        }
+      } else {
+        maxDrift = Math.max(maxDrift, drawn.drift);
+        if (touches && drawn.gap > 0.5) {
+          floating += 1;
+          drawnFailures.push({ kind: trims.kind[i]!, index: i, x: cx, y: trims.cy[i]!, v: cz, wx: placed.x, wz: placed.z, driftM: drawn.drift, gapM: drawn.gap });
+        }
       }
     }
     // Pre-R16: warped at its own centre (landmark floods were already rigid around their tower);
@@ -3084,21 +7219,101 @@ export function auditCityAnchors(layout: SkyriverCityLayout): SkyriverAnchorAudi
       worst.push({ kind: trims.kind[i]!, index: i, x: cx, y: trims.cy[i]!, v: cz, wx: auditPoint.x, wz: auditPoint.z, driftM: point.drift, gapM: point.gap });
     }
     if (to !== null) {
-      // Both ends of a span must land on their buildings' faces.
-      const alongAxis = ez >= ex;
-      const half = placed.length * 0.5;
-      const ux = alongAxis ? Math.sin(placed.heading) : Math.cos(placed.heading);
-      const uz = alongAxis ? Math.cos(placed.heading) : -Math.sin(placed.heading);
-      const canyonHalf = (alongAxis ? ez : ex) * 0.5;
-      for (const sign of [-1, 1]) {
-        const ecx = alongAxis ? cx : cx + sign * canyonHalf;
-        const ecz = alongAxis ? cz + sign * canyonHalf : cz;
-        const nearOwner = footprintGap(owner, ecx, ecz) <= footprintGap(to, ecx, ecz) ? owner : to;
-        const end = check(nearOwner, nearOwner.anchorV, placed.x + ux * half * sign, placed.z + uz * half * sign, ecx, ecz, 0, 0);
-        maxDrift = Math.max(maxDrift, end.drift);
-        if (end.gap > 0.5) {
+      if (disposition?.kind === 'span-rehosted') {
+        const source = sourceByIndex.get(disposition.sourceIndex);
+        const alongAxis = ez >= ex;
+        const alongX = alongAxis ? Math.sin(placed.heading) : Math.cos(placed.heading);
+        const alongZ = alongAxis ? Math.cos(placed.heading) : -Math.sin(placed.heading);
+        const crossX = alongAxis ? Math.cos(placed.heading) : Math.sin(placed.heading);
+        const crossZ = alongAxis ? -Math.sin(placed.heading) : Math.cos(placed.heading);
+        const halfLength = placed.length * 0.5;
+        const halfCross = (alongAxis ? ex : ez) * 0.5;
+        const endpoints = [
+          { x: placed.x - alongX * halfLength, y: trims.cy[i]!, z: placed.z - alongZ * halfLength },
+          { x: placed.x + alongX * halfLength, y: trims.cy[i]!, z: placed.z + alongZ * halfLength },
+        ] as const;
+        const canyonHalf = (alongAxis ? ez : ex) * 0.5;
+        const canyonEndpoints = [
+          { x: alongAxis ? cx : cx - canyonHalf, z: alongAxis ? cz - canyonHalf : cz },
+          { x: alongAxis ? cx : cx + canyonHalf, z: alongAxis ? cz + canyonHalf : cz },
+        ] as const;
+        const lowOwner = footprintGap(owner, canyonEndpoints[0].x, canyonEndpoints[0].z)
+          <= footprintGap(to, canyonEndpoints[0].x, canyonEndpoints[0].z);
+        const endpointOwners = lowOwner ? [owner, to] as const : [to, owner] as const;
+        const actualOwnerKeys = disposition.hosts.map((host) => `${host.canonicalOwner}:${host.anchorV}`).sort();
+        const expectedOwnerKeys = source?.spanTo === null || source === undefined ? [] : [
+          `${source.canonicalOwner}:${source.owner.anchorV}`,
+          `${source.spanTo.materialOwner ?? buildingSeedOf(source.spanTo.x, source.spanTo.z)}:${source.spanTo.anchorV}`,
+        ].sort();
+        let rowValid = source !== undefined && source.spanTo !== null
+          && disposition.sourceIndex === i && disposition.finalIndex === i
+          && JSON.stringify(actualOwnerKeys) === JSON.stringify(expectedOwnerKeys)
+          && [disposition.newWorld.sourceLengthM, disposition.newWorld.worldLengthM, disposition.newWorld.exposedLengthM].every(Number.isFinite);
+        let rowDrift = 0;
+        for (const endIndex of [0, 1] as const) {
+          const end = endpoints[endIndex];
+          const canyonEnd = canyonEndpoints[endIndex];
+          const endpointOwner = endpointOwners[endIndex];
+          warpRigid(canyonEnd.x, canyonEnd.z, endpointOwner.anchorV, auditPoint);
+          const drift = Math.hypot(end.x - auditPoint.x, end.z - auditPoint.z);
+          rowDrift = Math.max(rowDrift, drift);
+          const declaredPoint = disposition.newWorld.endpoints[endIndex];
+          const pointValues = [declaredPoint.x, declaredPoint.y, declaredPoint.z];
+          const actualValues = [end.x, end.y, end.z];
+          const pointFinite = pointValues.every(Number.isFinite) && actualValues.every(Number.isFinite);
+          const endpointTolerance = Math.max(
+            roofDetailScalarUlp(end.x), roofDetailScalarUlp(end.y), roofDetailScalarUlp(end.z),
+            roofDetailScalarUlp(declaredPoint.x), roofDetailScalarUlp(declaredPoint.y), roofDetailScalarUlp(declaredPoint.z),
+          ) * 2;
+          if (!pointFinite || !Number.isFinite(endpointTolerance)
+            || pointValues.some((value, component) => Math.abs(value - actualValues[component]!) > endpointTolerance)) rowValid = false;
+
+          const publishedHost = disposition.hosts[endIndex];
+          const host = masses[publishedHost.massIndex];
+          if (!host || !Number.isInteger(publishedHost.massIndex) || publishedHost.massIndex < 0) {
+            rowValid = false;
+            continue;
+          }
+          const identity = massIdentity(host);
+          if (identity.owner !== publishedHost.canonicalOwner || identity.anchorV !== publishedHost.anchorV
+            || identity.owner !== (endpointOwner.materialOwner ?? buildingSeedOf(endpointOwner.x, endpointOwner.z))
+            || identity.anchorV !== endpointOwner.anchorV) rowValid = false;
+          const hostObb = roofDetailMassObb(host, publishedHost.massIndex);
+          const measured = spanEndpointContact(end, crossX, crossZ, halfCross, trims.sy[i]! * 0.5, hostObb);
+          const claimed = disposition.endpointContacts[endIndex];
+          const contactTolerance = Math.max(
+            hostObb.coordinateUlpM,
+            roofDetailScalarUlp(end.x), roofDetailScalarUlp(end.y), roofDetailScalarUlp(end.z),
+          ) * 2;
+          if (!measured.contacts
+            || !Number.isFinite(measured.crossOverlapM) || !Number.isFinite(measured.verticalOverlapM)
+            || !Number.isFinite(contactTolerance)
+            || !Number.isFinite(claimed.crossOverlapM) || !Number.isFinite(claimed.verticalOverlapM)
+            || Math.abs(claimed.crossOverlapM - measured.crossOverlapM) > contactTolerance
+            || Math.abs(claimed.verticalOverlapM - measured.verticalOverlapM) > contactTolerance) rowValid = false;
+          maxDrift = Math.max(maxDrift, drift);
+        }
+        if (!rowValid || !Number.isFinite(rowDrift) || rowDrift >= 0.05) {
           floating += 1;
-          drawnFailures.push({ kind: trims.kind[i]!, index: i, x: ecx, y: trims.cy[i]!, v: ecz, wx: placed.x, wz: placed.z, driftM: end.drift, gapM: end.gap });
+          drawnFailures.push({ kind: trims.kind[i]!, index: i, x: cx, y: trims.cy[i]!, v: cz, wx: placed.x, wz: placed.z, driftM: Number.isFinite(rowDrift) ? rowDrift : Number.MAX_VALUE, gapM: 1 });
+        }
+      } else {
+        // Both ends of a legacy span must land on their original owner frames.
+        const alongAxis = ez >= ex;
+        const half = placed.length * 0.5;
+        const ux = alongAxis ? Math.sin(placed.heading) : Math.cos(placed.heading);
+        const uz = alongAxis ? Math.cos(placed.heading) : -Math.sin(placed.heading);
+        const canyonHalf = (alongAxis ? ez : ex) * 0.5;
+        for (const sign of [-1, 1]) {
+          const ecx = alongAxis ? cx : cx + sign * canyonHalf;
+          const ecz = alongAxis ? cz + sign * canyonHalf : cz;
+          const nearOwner = footprintGap(owner, ecx, ecz) <= footprintGap(to, ecx, ecz) ? owner : to;
+          const end = check(nearOwner, nearOwner.anchorV, placed.x + ux * half * sign, placed.z + uz * half * sign, ecx, ecz, 0, 0);
+          maxDrift = Math.max(maxDrift, end.drift);
+          if (end.gap > 0.5) {
+            floating += 1;
+            drawnFailures.push({ kind: trims.kind[i]!, index: i, x: ecx, y: trims.cy[i]!, v: ecz, wx: placed.x, wz: placed.z, driftM: end.drift, gapM: end.gap });
+          }
         }
       }
     }
@@ -3291,6 +7506,30 @@ export function deriveHeroRowPlans(layout: SkyriverCityLayout): readonly HeroRow
   return rows;
 }
 
+const HERO_SPACING_M = 530;
+
+function deriveReservedHeroTowers(layout: SkyriverCityLayout): Map<string, number> {
+  const reserved = new Map<string, number>();
+  for (const row of deriveHeroRowPlans(layout)) {
+    reserved.set(towerKey(row.tower), row.faceTop + 10);
+  }
+  for (let k = 0; k * HERO_SPACING_M < CANYON_LOOP_LENGTH_M; k += 1) {
+    const z = -CANYON_LOOP_LENGTH_M / 2 + (k + 0.5) * HERO_SPACING_M;
+    const side = k % 2 === 0 ? -1 : 1;
+    const wall = innerWallOf(layout, side);
+    if (wall.length === 0) continue;
+    const tower = wall.reduce((best, candidate) => Math.abs(candidate.z - z) < Math.abs(best.z - z) ? candidate : best);
+    const alt = routeAltitude(z);
+    const kind = alt > STRATA_PRISTINE_BASE_M - 50 || k % 3 === 2 ? 'panel' : 'blade';
+    const targetY = alt + (kind === 'blade' ? 70 : 170);
+    const height = kind === 'blade' ? 330 : 56;
+    const top = targetY + height * 0.5 + 20;
+    const key = towerKey(tower);
+    const prev = reserved.get(key) ?? 0;
+    reserved.set(key, Math.max(prev, top));
+  }
+  return reserved;
+}
 
 export interface SkyriverHeroBlade {
   /** T7-2: 'blade' projects into the canyon facing along it; 'panel' is a giant sign flat on the wall. */
@@ -3317,7 +7556,6 @@ export interface SkyriverHeroBlade {
  * rhythm, at the route's own altitude there. Stations where the route is in the pristine heights
  * are skipped (calm, clean slabs up there).
  */
-const HERO_SPACING_M = 530;
 // R12: weighted toward cyan, amber and green — the hues that stay saturated *and* bright under ACES.
 const HERO_COLORS: readonly number[] = Object.freeze([0x2ff2ff, 0xffb13c, 0xff2fb4, 0x55ff7a, 0x2ff2ff, 0xffb13c, 0xff4a8c]);
 
@@ -3326,11 +7564,55 @@ const heroCache = new Map<number, readonly SkyriverHeroBlade[]>();
 /**
  * The hero signs use named exposed faces. Bend sections reserve four-blade rows. Pure; cached per seed.
  */
-export function deriveHeroBlades(layout: SkyriverCityLayout): readonly SkyriverHeroBlade[] {
-  const cached = heroCache.get(layout.seed);
-  if (cached !== undefined) return cached;
-  deriveCityTrims(layout);
-  const faces = deriveFacadeFaces(layout);
+function reservationForHero(hero: SkyriverHeroBlade, face: SkyriverFacadeFace): FacadeReservation {
+  const halfAlong = face.planeAxis === 'z' ? 4 : hero.kind === 'blade' ? hero.rootHalfWidthM : hero.width * 0.5;
+  return {
+    side: face.side,
+    buildingId: face.buildingId,
+    u0: hero.z - halfAlong,
+    u1: hero.z + halfAlong,
+    y0: hero.y - hero.height * 0.5,
+    y1: hero.y + hero.height * 0.5,
+    heightM: hero.height,
+    compositionId: hero.compositionId,
+    role: 'hero',
+  };
+}
+
+function faceBackedByMass(
+  face: SkyriverFacadeFace,
+  masses: readonly SkyriverMass[],
+  u0: number,
+  u1: number,
+  y0: number,
+  y1: number,
+): boolean {
+  for (const m of masses) {
+    if (face.planeAxis === 'x') {
+      const massPlane = face.side === 1 ? m.x - m.width * 0.5 : m.x + m.width * 0.5;
+      if (Math.abs(face.plane - massPlane) > 0.5) continue;
+      if (m.z - m.depth * 0.5 > u0 + 0.5 || m.z + m.depth * 0.5 < u1 - 0.5) continue;
+      if (m.y0 > y0 + 0.5 || m.y0 + m.height < y1 - 0.5) continue;
+      return true;
+    } else {
+      const massPlane = face.outward === -1 ? m.z - m.depth * 0.5 : m.z + m.depth * 0.5;
+      if (Math.abs(face.plane - massPlane) > 0.5) continue;
+      if (m.x - m.width * 0.5 > u0 + 0.5 || m.x + m.width * 0.5 < u1 - 0.5) continue;
+      if (m.y0 > y0 + 0.5 || m.y0 + m.height < y1 - 0.5) continue;
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Plans original hero sign artwork intents against provided faces (legacy faces).
+ * Pure and self-contained; does not invoke deriveCityTrims or deriveFacadeFaces.
+ */
+export function planHeroArtwork(
+  layout: SkyriverCityLayout,
+  faces: readonly SkyriverFacadeFace[],
+): readonly SkyriverHeroBlade[] {
   const rowRandom = new DeterministicRandom(layout.seed).fork('skyriver.city.hero.rows');
   const brandRandom = new DeterministicRandom(layout.seed).fork('skyriver.city.hero.brand');
   const blades: SkyriverHeroBlade[] = [];
@@ -3455,21 +7737,6 @@ export function deriveHeroBlades(layout: SkyriverCityLayout): readonly SkyriverH
   }
 
   const faceById = new Map(faces.map((face) => [face.id, face]));
-  const reservationForHero = (hero: SkyriverHeroBlade, face: SkyriverFacadeFace): FacadeReservation => {
-    const halfAlong = face.planeAxis === 'z' ? 4 : hero.kind === 'blade' ? hero.rootHalfWidthM : hero.width * 0.5;
-    return {
-      side: face.side,
-      buildingId: face.buildingId,
-      u0: hero.z - halfAlong,
-      u1: hero.z + halfAlong,
-      y0: hero.y - hero.height * 0.5,
-      y1: hero.y + hero.height * 0.5,
-      heightM: hero.height,
-      compositionId: hero.compositionId,
-      role: 'hero',
-    };
-  };
-
   const occupied: FacadeReservation[] = [];
   const priorityUnions = new Map<string, FacadeReservation>();
   for (const hero of blades) {
@@ -3565,9 +7832,240 @@ export function deriveHeroBlades(layout: SkyriverCityLayout): readonly SkyriverH
     if (rejectedStations.has(blades[i]!.compositionId)) continue;
     retained.push(placed ?? blades[i]!);
   }
-  blades.splice(0, blades.length, ...retained);
-  heroCache.set(layout.seed, blades);
-  return blades;
+  return Object.freeze(retained);
+}
+
+/**
+ * Places the planned hero artwork records on actual final mass-backed R36 faces.
+ * Updates host faceId, owner, and position without shrinking artwork or changing tower assignment.
+ */
+export function placeHeroArtwork(
+  layout: SkyriverCityLayout,
+  artIntents: readonly SkyriverHeroBlade[],
+  finalFaces: readonly SkyriverFacadeFace[],
+  finalMasses: readonly SkyriverMass[],
+): readonly SkyriverHeroBlade[] {
+  const faceById = new Map(finalFaces.map((face) => [face.id, face]));
+  const facesByBuilding = new Map<string, SkyriverFacadeFace[]>();
+  for (const face of finalFaces) {
+    const bucket = facesByBuilding.get(face.buildingId) ?? [];
+    bucket.push(face);
+    facesByBuilding.set(face.buildingId, bucket);
+  }
+
+  // 1. Place brand
+  let placedBrand: SkyriverHeroBlade | undefined;
+  const brandArt = artIntents.find((hero) => hero.compositionId === 'showcase-brand');
+  if (brandArt !== undefined) {
+    const brandFace = finalFaces.find((face) => face.id.endsWith(':brand-face'));
+    if (brandFace !== undefined) {
+      const u0 = brandArt.x - brandArt.width * 0.5;
+      const u1 = brandArt.x + brandArt.width * 0.5;
+      const y0 = brandArt.y - brandArt.height * 0.5;
+      const y1 = brandArt.y + brandArt.height * 0.5;
+      if (facadeFaceContains(brandFace, { u0, u1, y0, y1 }) && faceBackedByMass(brandFace, finalMasses, u0, u1, y0, y1)) {
+        placedBrand = {
+          ...brandArt,
+          x: brandArt.x,
+          y: brandArt.y,
+          z: brandFace.plane + brandFace.outward * 1.2,
+          faceId: brandFace.id,
+          owner: brandFace.owner,
+        };
+      }
+    }
+  }
+
+  // 2. Place four-blade rows
+  const placedRowBlades = new Map<SkyriverHeroBlade, SkyriverHeroBlade>();
+  const rowCompositions = new Map<string, SkyriverHeroBlade[]>();
+  for (const hero of artIntents) {
+    if (hero.compositionId.startsWith('hero-row-')) {
+      let group = rowCompositions.get(hero.compositionId);
+      if (group === undefined) {
+        group = [];
+        rowCompositions.set(hero.compositionId, group);
+      }
+      group.push(hero);
+    }
+  }
+
+  for (const [, rowBlades] of rowCompositions) {
+    if (rowBlades.length === 0) continue;
+    const buildingId = rowBlades[0]!.buildingId;
+    const rowSide = Math.sign(rowBlades[0]!.x) as -1 | 1;
+    const candidateFaces = (facesByBuilding.get(buildingId) ?? [])
+      .filter((face) => face.side === rowSide && face.planeAxis === 'x');
+    let bestRowHost: { readonly face: SkyriverFacadeFace; readonly dist: number } | undefined;
+    for (const face of candidateFaces) {
+      let allFit = true;
+      for (const b of rowBlades) {
+        if (Math.abs(face.plane) - b.width < 406.9) { allFit = false; break; }
+        const rect = {
+          u0: b.z - b.rootHalfWidthM,
+          u1: b.z + b.rootHalfWidthM,
+          y0: b.y - b.height * 0.5,
+          y1: b.y + b.height * 0.5,
+        };
+        if (!facadeFaceContains(face, rect, FACADE_FACE_EDGE_MARGIN_M + 0.25)) { allFit = false; break; }
+        if (!faceBackedByMass(face, finalMasses, rect.u0, rect.u1, rect.y0, rect.y1)) { allFit = false; break; }
+      }
+      if (!allFit) continue;
+      const placedX = face.plane + face.outward * (rowBlades[0]!.width * 0.5 + 0.8);
+      const dist = Math.abs(placedX - rowBlades[0]!.x);
+      if (bestRowHost === undefined || dist < bestRowHost.dist - 1e-4 || (Math.abs(dist - bestRowHost.dist) <= 1e-4 && face.id.localeCompare(bestRowHost.face.id) < 0)) {
+        bestRowHost = { face, dist };
+      }
+    }
+    if (bestRowHost !== undefined) {
+      const face = bestRowHost.face;
+      for (const b of rowBlades) {
+        placedRowBlades.set(b, {
+          ...b,
+          x: face.plane + face.outward * (b.width * 0.5 + 0.8),
+          y: b.y,
+          z: b.z,
+          faceId: face.id,
+          owner: face.owner,
+        });
+      }
+    }
+  }
+
+  // 3. Build priority reservations
+  const occupied: FacadeReservation[] = [];
+  const priorityUnions = new Map<string, FacadeReservation>();
+  const placedPriority: SkyriverHeroBlade[] = [];
+  if (placedBrand !== undefined) placedPriority.push(placedBrand);
+  for (const b of placedRowBlades.values()) placedPriority.push(b);
+
+  for (const hero of placedPriority) {
+    const face = faceById.get(hero.faceId);
+    if (face === undefined) continue;
+    const reservation = reservationForHero(hero, face);
+    const previous = priorityUnions.get(hero.compositionId);
+    priorityUnions.set(hero.compositionId, previous === undefined ? reservation : {
+      ...previous,
+      u0: Math.min(previous.u0, reservation.u0),
+      u1: Math.max(previous.u1, reservation.u1),
+      y0: Math.min(previous.y0, reservation.y0),
+      y1: Math.max(previous.y1, reservation.y1),
+      heightM: Math.max(previous.heightM, reservation.heightM),
+    });
+  }
+  occupied.push(...priorityUnions.values());
+
+  // 4. Place stations
+  const stationPlacements = new Map<string, SkyriverHeroBlade>();
+  const rejectedStations = new Set<string>();
+  const stationHeroes = artIntents
+    .filter((hero) => hero.compositionId.startsWith('hero-') && !hero.compositionId.startsWith('hero-row-'))
+    .sort((a, b) => b.height - a.height || a.compositionId.localeCompare(b.compositionId));
+
+  for (const hero of stationHeroes) {
+    const originalSide = Math.sign(hero.x) as -1 | 1;
+    let best: { readonly hero: SkyriverHeroBlade; readonly face: SkyriverFacadeFace; readonly dist: number } | undefined;
+    const hostFaces = (facesByBuilding.get(hero.buildingId) ?? [])
+      .filter((face) => face.side === originalSide && face.planeAxis === 'x');
+    for (const face of hostFaces) {
+      const margin = FACADE_FACE_EDGE_MARGIN_M + 0.25;
+      const isBlade = hero.kind === 'blade';
+      if (isBlade && Math.abs(face.plane) - hero.width < 409.9) continue;
+      if (!isBlade && face.u1 - face.u0 < hero.width + 2 * margin) continue;
+
+      const halfU = isBlade ? hero.rootHalfWidthM : hero.width * 0.5;
+      const halfY = hero.height * 0.5;
+      const minU = face.u0 + halfU + margin;
+      const maxU = face.u1 - halfU - margin;
+      const minY = face.y0 + halfY + margin;
+      const maxY = face.y1 - halfY - margin;
+      if (minU > maxU || minY > maxY) continue;
+
+      const clampU = (u: number): number => Math.max(minU, Math.min(maxU, u));
+      const clampY = (y: number): number => Math.max(minY, Math.min(maxY, y));
+      const uCandidates = new Set([clampU(hero.z), minU, maxU]);
+      const yCandidates = new Set([clampY(hero.y), minY, maxY]);
+      for (const reservation of occupied) {
+        if (reservation.side !== face.side) continue;
+        for (const shift of [-CANYON_LOOP_LENGTH_M, 0, CANYON_LOOP_LENGTH_M]) {
+          uCandidates.add(clampU(reservation.u0 + shift - halfU - 0.5));
+          uCandidates.add(clampU(reservation.u1 + shift + halfU + 0.5));
+        }
+        const clearance = 1.5 * Math.max(hero.height, reservation.heightM) + 0.5;
+        yCandidates.add(clampY(reservation.y0 - halfY - clearance));
+        yCandidates.add(clampY(reservation.y1 + halfY + clearance));
+      }
+
+      for (const u of uCandidates) {
+        for (const y of yCandidates) {
+          const rect = { u0: u - halfU, u1: u + halfU, y0: y - halfY, y1: y + halfY };
+          if (!facadeFaceContains(face, rect, margin)) continue;
+          if (!faceBackedByMass(face, finalMasses, rect.u0, rect.u1, rect.y0, rect.y1)) continue;
+          const candidate: SkyriverHeroBlade = {
+            ...hero,
+            x: face.plane + face.outward * (isBlade ? hero.width * 0.5 + 0.8 : 0.8),
+            y,
+            z: u,
+            faceId: face.id,
+            owner: face.owner,
+          };
+          const reservation = reservationForHero(candidate, face);
+          if (occupied.some((placed) => facadeReservationsConflict(reservation, placed, CANYON_LOOP_LENGTH_M))) continue;
+          const dist = Math.hypot(candidate.x - hero.x, candidate.y - hero.y, candidate.z - hero.z);
+          if (best === undefined || dist < best.dist - 1e-4 || (Math.abs(dist - best.dist) <= 1e-4 && face.id.localeCompare(best.face.id) < 0)) {
+            best = { hero: candidate, face, dist };
+          }
+        }
+      }
+    }
+    if (best === undefined) {
+      rejectedStations.add(hero.compositionId);
+      continue;
+    }
+    stationPlacements.set(hero.compositionId, best.hero);
+    occupied.push(reservationForHero(best.hero, best.face));
+  }
+
+  // 5. Retain in original intent order
+  const retained: SkyriverHeroBlade[] = [];
+  for (const hero of artIntents) {
+    if (hero.compositionId === 'showcase-brand') {
+      if (placedBrand !== undefined) retained.push(placedBrand);
+    } else if (hero.compositionId.startsWith('hero-row-')) {
+      const placedBlade = placedRowBlades.get(hero);
+      if (placedBlade !== undefined) retained.push(placedBlade);
+    } else {
+      const placedStation = stationPlacements.get(hero.compositionId);
+      if (placedStation !== undefined && !rejectedStations.has(hero.compositionId)) {
+        retained.push(placedStation);
+      }
+    }
+  }
+  return Object.freeze(retained);
+}
+
+/**
+ * The hero signs use named exposed faces. Bend sections reserve four-blade rows. Pure; cached per seed.
+ */
+export function deriveHeroBlades(layout: SkyriverCityLayout): readonly SkyriverHeroBlade[] {
+  const cached = heroCache.get(layout.seed);
+  if (cached !== undefined) return cached;
+  if (!legacyFaceCache.has(layout.seed) || !facadeFaceCache.has(layout.seed) || !massCache.has(layout.seed)) {
+    deriveCityTrims(layout);
+  }
+  const cachedAfter = heroCache.get(layout.seed);
+  if (cachedAfter !== undefined) return cachedAfter;
+  const legacyFaces = legacyFaceCache.get(layout.seed);
+  if (legacyFaces === undefined) fail('SKYRIVER_CITY_LEGACY_FACES_MISSING');
+  const finalFaces = facadeFaceCache.get(layout.seed);
+  if (finalFaces === undefined) fail('SKYRIVER_CITY_FACADE_FACES_MISSING');
+  const finalMasses = massCache.get(layout.seed);
+  if (finalMasses === undefined) fail('SKYRIVER_CITY_MASSES_MISSING');
+
+  const artIntents = planHeroArtwork(layout, legacyFaces);
+  const placed = placeHeroArtwork(layout, artIntents, finalFaces, finalMasses);
+  heroCache.set(layout.seed, placed);
+  return placed;
 }
 
 /**
@@ -5167,6 +9665,2178 @@ function hex32(value: number): string {
   return (value >>> 0).toString(16).padStart(8, '0');
 }
 
+/** Computes union area of 2D axis-aligned rectangles in YZ space. */
+function computeClippedUnionAreaYZ(rects: readonly { y0: number; y1: number; z0: number; z1: number }[]): number {
+  if (rects.length === 0) return 0;
+  if (rects.length === 1) return (rects[0]!.y1 - rects[0]!.y0) * (rects[0]!.z1 - rects[0]!.z0);
+  const ys: number[] = [];
+  for (const r of rects) ys.push(r.y0, r.y1);
+  ys.sort((a, b) => a - b);
+  let totalArea = 0;
+  for (let i = 0; i < ys.length - 1; i += 1) {
+    const y0 = ys[i]!;
+    const y1 = ys[i + 1]!;
+    if (y1 - y0 < 1e-9) continue;
+    const midY = (y0 + y1) * 0.5;
+    const spans: [number, number][] = [];
+    for (const r of rects) {
+      if (r.y0 <= midY && midY <= r.y1) spans.push([r.z0, r.z1]);
+    }
+    if (spans.length === 0) continue;
+    spans.sort((a, b) => a[0] - b[0]);
+    let zSpan = 0;
+    let cz0 = spans[0]![0];
+    let cz1 = spans[0]![1];
+    for (let j = 1; j < spans.length; j += 1) {
+      const nz0 = spans[j]![0];
+      const nz1 = spans[j]![1];
+      if (nz0 <= cz1) {
+        cz1 = Math.max(cz1, nz1);
+      } else {
+        zSpan += cz1 - cz0;
+        cz0 = nz0;
+        cz1 = nz1;
+      }
+    }
+    zSpan += cz1 - cz0;
+    totalArea += (y1 - y0) * zSpan;
+  }
+  return totalArea;
+}
+
+interface HostMassEntry {
+  readonly mass: SkyriverMass;
+  readonly massIndex: number;
+  readonly x0: number;
+  readonly x1: number;
+  readonly y0: number;
+  readonly y1: number;
+  readonly z0: number;
+  readonly z1: number;
+}
+
+interface HostBucket {
+  readonly faces: SkyriverFacadeFace[];
+  readonly masses: HostMassEntry[];
+}
+
+function hostIndexKey(canonicalOwner: number, anchorV: number): string {
+  return `${canonicalOwner}:${anchorV}`;
+}
+
+function massTouchesFacePlane(m: HostMassEntry, f: SkyriverFacadeFace): boolean {
+  const plane = f.side === 1 ? m.x0 : m.x1;
+  return Math.abs(f.plane - plane) <= 0.5;
+}
+
+function isCoveredByNearerFace(
+  f: SkyriverFacadeFace,
+  y0: number,
+  y1: number,
+  z0: number,
+  z1: number,
+  sameOwnerFaces: readonly SkyriverFacadeFace[],
+): boolean {
+  for (const other of sameOwnerFaces) {
+    if (other === f || other.side !== f.side) continue;
+    if (Math.abs(other.plane) >= Math.abs(f.plane) - 0.1) continue;
+    if (other.y0 <= y0 + 0.1 && other.y1 >= y1 - 0.1 && other.u0 <= z0 + 0.1 && other.u1 >= z1 - 0.1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function checkTrimSupportWithBucket(
+  cx: number, cy: number, cz: number,
+  sx: number, sy: number, sz: number,
+  ow: SkyriverTrimOwner,
+  bucket: HostBucket,
+  targetMassIndex?: number,
+): { readonly supported: boolean; readonly bestMassIndex: number } {
+  const side = cx >= 0 ? 1 : -1;
+  const tx0 = cx - sx * 0.5;
+  const tx1 = cx + sx * 0.5;
+  const ty0 = cy - sy * 0.5;
+  const ty1 = cy + sy * 0.5;
+  const tz0 = cz - sz * 0.5;
+  const tz1 = cz + sz * 0.5;
+  const ownerZ0 = ow.z - ow.depth * 0.5;
+  const ownerZ1 = ow.z + ow.depth * 0.5;
+  const minThreshold = Math.max(1e-7, sy * sz * 1e-10);
+  let bestMassIndex = -1;
+  let bestExposedArea = -1;
+
+  for (const m of bucket.masses) {
+    if (targetMassIndex !== undefined && m.massIndex !== targetMassIndex) continue;
+
+    const hostPlane = side === 1 ? m.x0 : m.x1;
+    if (!(tx0 < hostPlane && tx1 > hostPlane)) continue;
+
+    const hy0 = Math.max(ty0, m.y0);
+    const hy1 = Math.min(ty1, m.y1);
+    const hz0 = Math.max(tz0, ownerZ0, m.z0);
+    const hz1 = Math.min(tz1, ownerZ1, m.z1);
+    if (!(hy1 > hy0 && hz1 > hz0)) continue;
+
+    const hostArea = (hy1 - hy0) * (hz1 - hz0);
+    const blockers: { y0: number; y1: number; z0: number; z1: number }[] = [];
+
+    for (const other of bucket.masses) {
+      if (other === m) continue;
+      const otherPlane = side === 1 ? other.x0 : other.x1;
+      if (!(side * otherPlane < side * hostPlane)) continue;
+      const by0 = Math.max(hy0, other.y0);
+      const by1 = Math.min(hy1, other.y1);
+      const bz0 = Math.max(hz0, other.z0);
+      const bz1 = Math.min(hz1, other.z1);
+      if (by1 > by0 && bz1 > bz0) {
+        blockers.push({ y0: by0, y1: by1, z0: bz0, z1: bz1 });
+      }
+    }
+
+    const unionArea = computeClippedUnionAreaYZ(blockers);
+    const exposedArea = Math.max(0, hostArea - unionArea);
+    if (exposedArea > minThreshold && exposedArea > bestExposedArea) {
+      bestExposedArea = exposedArea;
+      bestMassIndex = m.massIndex;
+    }
+  }
+
+  return {
+    supported: bestMassIndex >= 0,
+    bestMassIndex,
+  };
+}
+
+function reconcileLegacyTrimsD1(
+  layout: SkyriverCityLayout,
+  trims: SkyriverCityTrims,
+  sourceCount: number,
+  r27StartIndex: number,
+  r27EndIndex: number,
+  faces: readonly SkyriverFacadeFace[],
+  masses: readonly SkyriverMass[],
+  heroes: readonly SkyriverHeroBlade[],
+): SkyriverLegacyTrimReconciliation {
+  const seed = layout.seed;
+  const { cx, cy, cz, sx, sy, sz, kind, seedValue, owner, spanTo } = trims;
+
+  const sourceInventory: SkyriverLegacyTrimSourceRecord[] = new Array(sourceCount);
+  const ownerJson: string[] = new Array(sourceCount);
+  const spanToJson: (string | null)[] = new Array(sourceCount);
+
+  for (let i = 0; i < sourceCount; i += 1) {
+    const ow = owner[i]!;
+    const sp = spanTo[i] ?? null;
+    identityScratch.setFloat32(0, seedValue[i]!, true);
+    const seedBits = identityScratch.getUint32(0, true);
+    const canonicalOwner = ow.materialOwner ?? buildingSeedOf(ow.x, ow.z);
+
+    const ownerSnapshot: SkyriverTrimOwner = Object.freeze({
+      x: ow.x,
+      z: ow.z,
+      width: ow.width,
+      depth: ow.depth,
+      anchorV: ow.anchorV,
+      ...(ow.materialOwner !== undefined ? { materialOwner: ow.materialOwner } : {}),
+    });
+    const spanToSnapshot: SkyriverTrimOwner | null = sp !== null ? Object.freeze({
+      x: sp.x,
+      z: sp.z,
+      width: sp.width,
+      depth: sp.depth,
+      anchorV: sp.anchorV,
+      ...(sp.materialOwner !== undefined ? { materialOwner: sp.materialOwner } : {}),
+    }) : null;
+
+    sourceInventory[i] = Object.freeze({
+      sourceIndex: i,
+      kind: kind[i]!,
+      cx: cx[i]!,
+      cy: cy[i]!,
+      cz: cz[i]!,
+      sx: sx[i]!,
+      sy: sy[i]!,
+      sz: sz[i]!,
+      seedValue: seedValue[i]!,
+      seedBits,
+      canonicalOwner,
+      owner: ownerSnapshot,
+      spanTo: spanToSnapshot,
+    });
+    ownerJson[i] = JSON.stringify(ow);
+    spanToJson[i] = sp !== null ? JSON.stringify(sp) : null;
+  }
+  Object.freeze(sourceInventory);
+
+  let h = 0x811c9dc5;
+  h = hashNumbers(h, cx.subarray(0, sourceCount));
+  h = hashNumbers(h, cy.subarray(0, sourceCount));
+  h = hashNumbers(h, cz.subarray(0, sourceCount));
+  h = hashNumbers(h, sx.subarray(0, sourceCount));
+  h = hashNumbers(h, sy.subarray(0, sourceCount));
+  h = hashNumbers(h, sz.subarray(0, sourceCount));
+  h = hashNumbers(h, kind.subarray(0, sourceCount));
+  h = hashNumbers(h, seedValue.subarray(0, sourceCount));
+  h = hashText(h, ownerJson);
+  h = hashText(h, spanToJson);
+  const inventoryIdentity = hex32(h);
+
+  const hostIndex = new Map<string, HostBucket>();
+  const getHostBucket = (canonicalOwner: number, anchorV: number): HostBucket => {
+    const key = hostIndexKey(canonicalOwner, anchorV);
+    let bucket = hostIndex.get(key);
+    if (bucket === undefined) {
+      bucket = { faces: [], masses: [] };
+      hostIndex.set(key, bucket);
+    }
+    return bucket;
+  };
+
+  for (let massIndex = 0; massIndex < masses.length; massIndex += 1) {
+    const m = masses[massIndex]!;
+    if (m.width <= 0 || m.height <= 0 || m.depth <= 0) continue;
+    const mOwner = m.materialOwner ?? m.building ?? buildingSeedOf(m.x, m.z);
+    const mAnchorV = m.anchorV ?? m.z;
+    const bucket = getHostBucket(mOwner, mAnchorV);
+    bucket.masses.push({
+      mass: m,
+      massIndex,
+      x0: m.x - m.width * 0.5,
+      x1: m.x + m.width * 0.5,
+      y0: m.y0,
+      y1: m.y0 + m.height,
+      z0: m.z - m.depth * 0.5,
+      z1: m.z + m.depth * 0.5,
+    });
+  }
+
+  for (const face of faces) {
+    if (face.planeAxis !== 'x') continue;
+    const fOwner = face.owner.materialOwner ?? buildingSeedOf(face.owner.x, face.owner.z);
+    const fAnchorV = face.owner.anchorV;
+    const bucket = getHostBucket(fOwner, fAnchorV);
+    bucket.faces.push(face);
+  }
+
+  const dispositions: SkyriverTrimDisposition[] = new Array(sourceCount);
+  let unchangedCount = 0;
+  let rehostedCount = 0;
+  let roofRowsDeferred = 0;
+  let spanRowsDeferred = 0;
+  const towerAnchorBySeed = new Map<number, Set<number>>();
+  for (const t of layout.towers) {
+    const seed = buildingSeedOf(t.x, t.z);
+    let anchors = towerAnchorBySeed.get(seed);
+    if (anchors === undefined) {
+      anchors = new Set<number>();
+      towerAnchorBySeed.set(seed, anchors);
+    }
+    anchors.add(t.z);
+  }
+
+  for (let i = 0; i < sourceCount; i += 1) {
+    const k = kind[i]!;
+    const ocx = cx[i]!;
+    const ocy = cy[i]!;
+    const ocz = cz[i]!;
+    const osx = sx[i]!;
+    const osy = sy[i]!;
+    const osz = sz[i]!;
+    const ow = owner[i]!;
+    const sp = spanTo[i] ?? null;
+    const oldGeom = Object.freeze({ cx: ocx, cy: ocy, cz: ocz, sx: osx, sy: osy, sz: osz });
+
+    const isRoof = k === SKYRIVER_TRIM_ANTENNA || k === SKYRIVER_TRIM_ROOF_PLANT;
+    const isSpan = sp !== null || k === SKYRIVER_TRIM_GANTRY || k === SKYRIVER_TRIM_SKYBRIDGE;
+    if (isRoof) roofRowsDeferred += 1;
+    if (isSpan) spanRowsDeferred += 1;
+
+    const isR27 = i >= r27StartIndex && i < r27EndIndex;
+    const isSideKind = k === SKYRIVER_TRIM_RIB || k === SKYRIVER_TRIM_BAND || k === SKYRIVER_TRIM_CANTILEVER;
+    const canonicalOwner = ow.materialOwner ?? buildingSeedOf(ow.x, ow.z);
+    const isOrdinaryTower = towerAnchorBySeed.get(canonicalOwner)?.has(ow.anchorV) === true;
+
+    const isHeroFiltered = skyriverTrimBlocksHero(trims, i, heroes);
+    let blockingHeroIds: readonly string[] = Object.freeze([]);
+    if (isHeroFiltered) {
+      const ids: string[] = [];
+      if (isSideKind) {
+        for (const hero of heroes) {
+          const hx = hero.kind === 'blade' ? hero.width * 0.5 + 14 : 16;
+          const hz = hero.kind === 'blade' ? 14 : hero.width * 0.5 + 14;
+          if (Math.abs(ocx - hero.x) < hx + osx * 0.5
+            && Math.abs(ocy - hero.y) < hero.height * 0.5 + 18 + osy * 0.5
+            && Math.abs(ocz - hero.z) < hz + osz * 0.5) {
+            ids.push(`${hero.kind}:${hero.cell}:${hero.buildingId}:${hero.faceId}:${hero.compositionId}`);
+          }
+        }
+      }
+      blockingHeroIds = Object.freeze(ids);
+    }
+
+    if (isRoof || isSpan || isR27 || !isSideKind || !isOrdinaryTower || isHeroFiltered) {
+      dispositions[i] = Object.freeze({
+        kind: 'unchanged',
+        sourceIndex: i,
+        finalIndex: i,
+        heroFiltered: isHeroFiltered,
+        blockingHeroIds,
+        oldGeometry: oldGeom,
+        newGeometry: oldGeom,
+      });
+      unchangedCount += 1;
+      continue;
+    }
+
+    const trimAnchorV = ow.anchorV;
+    const bucket = hostIndex.get(hostIndexKey(canonicalOwner, trimAnchorV));
+
+    let alreadySupported = false;
+    if (bucket !== undefined) {
+      const sup = checkTrimSupportWithBucket(ocx, ocy, ocz, osx, osy, osz, ow, bucket);
+      if (sup.supported) {
+        alreadySupported = true;
+      }
+    }
+
+    if (alreadySupported) {
+      dispositions[i] = Object.freeze({
+        kind: 'unchanged',
+        sourceIndex: i,
+        finalIndex: i,
+        heroFiltered: false,
+        blockingHeroIds: Object.freeze([]),
+        oldGeometry: oldGeom,
+        newGeometry: oldGeom,
+      });
+      unchangedCount += 1;
+      continue;
+    }
+
+    if (bucket === undefined || bucket.faces.length === 0) {
+      fail(`SKYRIVER_SIDE_TRIM_HOST_MISSING: seed ${seed} trim ${i}`);
+    }
+
+    const cands: { readonly face: SkyriverFacadeFace; readonly faceIndex: number; readonly distSq: number }[] = [];
+    for (let fIdx = 0; fIdx < bucket.faces.length; fIdx += 1) {
+      const f = bucket.faces[fIdx]!;
+      if (f.side !== (ocx >= 0 ? 1 : -1)) continue;
+
+      const dx = ocx - f.plane;
+      const dy = ocy - Math.max(f.y0, Math.min(f.y1, ocy));
+      const dz = ocz - Math.max(f.u0, Math.min(f.u1, ocz));
+      cands.push({ face: f, faceIndex: fIdx, distSq: dx * dx + dy * dy + dz * dz });
+    }
+    cands.sort((a, b) => a.distSq !== b.distSq ? a.distSq - b.distSq : a.faceIndex - b.faceIndex);
+
+    let chosen: {
+      readonly fcx: number; readonly fcy: number; readonly fcz: number;
+      readonly fsx: number; readonly fsy: number; readonly fsz: number;
+      readonly hostMassIndex: number; readonly faceId: string;
+    } | null = null;
+
+    for (const cand of cands) {
+      const f = cand.face;
+      const touchingMasses = bucket.masses.filter((m) => massTouchesFacePlane(m, f));
+      if (touchingMasses.length === 0) continue;
+
+      for (const m of touchingMasses) {
+        const clipZ0 = Math.max(f.u0, ow.z - ow.depth * 0.5, m.z0);
+        const clipZ1 = Math.min(f.u1, ow.z + ow.depth * 0.5, m.z1);
+        const clipY0 = Math.max(f.y0, m.y0);
+        const clipY1 = Math.min(f.y1, m.y1);
+        if (clipZ1 <= clipZ0 + 1.0 || clipY1 <= clipY0 + 1.0) continue;
+
+        const nsx = osx;
+        const ncx = f.plane - f.outward * (1.0 - nsx * 0.5);
+        let ncy: number;
+        let nsy: number;
+        let ncz: number;
+        let nsz: number;
+
+        if (k === SKYRIVER_TRIM_RIB) {
+          const ribZ0 = Math.max(f.u0 + 2.02, m.z0 + 2.02, ow.z - ow.depth * 0.5);
+          const ribZ1 = Math.min(f.u1 - 2.02, m.z1 - 2.02, ow.z + ow.depth * 0.5);
+          if (ribZ1 - ribZ0 < 1.0) continue;
+          nsz = Math.min(osz, ribZ1 - ribZ0);
+          ncz = Math.max(ribZ0 + nsz * 0.5, Math.min(ribZ1 - nsz * 0.5, ocz));
+
+          const y0 = Math.max(clipY0, Math.min(clipY1 - 1.0, ocy - osy * 0.5));
+          const y1 = Math.min(clipY1, Math.max(clipY0 + 1.0, ocy + osy * 0.5));
+          ncy = (y0 + y1) * 0.5;
+          nsy = Math.max(1.0, y1 - y0);
+        } else if (k === SKYRIVER_TRIM_BAND) {
+          nsy = osy;
+          ncy = clipY1 - clipY0 >= nsy
+            ? Math.max(clipY0 + nsy * 0.5, Math.min(clipY1 - nsy * 0.5, ocy))
+            : (clipY0 + clipY1) * 0.5;
+          if (clipY1 - clipY0 < nsy) nsy = Math.max(1.0, clipY1 - clipY0);
+
+          const overhangTotal = osy === 8 ? 4 : 3;
+          const targetZSpan = (clipZ1 - clipZ0) + overhangTotal;
+          nsz = Math.min(osz, targetZSpan);
+          ncz = (clipZ0 + clipZ1) * 0.5;
+        } else {
+          nsy = osy;
+          ncy = clipY1 - clipY0 >= nsy
+            ? Math.max(clipY0 + nsy * 0.5, Math.min(clipY1 - nsy * 0.5, ocy))
+            : (clipY0 + clipY1) * 0.5;
+          if (clipY1 - clipY0 < nsy) nsy = Math.max(1.0, clipY1 - clipY0);
+
+          nsz = osz;
+          ncz = clipZ1 - clipZ0 >= nsz
+            ? Math.max(clipZ0 + nsz * 0.5, Math.min(clipZ1 - nsz * 0.5, ocz))
+            : (clipZ0 + clipZ1) * 0.5;
+          if (clipZ1 - clipZ0 < nsz) nsz = Math.max(1.0, clipZ1 - clipZ0);
+        }
+
+        if (isCoveredByNearerFace(f, ncy - nsy * 0.5, ncy + nsy * 0.5, ncz - nsz * 0.5, ncz + nsz * 0.5, bucket.faces)) continue;
+
+        const fcx = Math.fround(ncx);
+        const fcy = Math.fround(ncy);
+        const fcz = Math.fround(ncz);
+        const fsx = Math.fround(nsx);
+        const fsy = Math.fround(nsy);
+        const fsz = Math.fround(nsz);
+
+        if (!(fcx - fsx * 0.5 < f.plane - 1e-4 && fcx + fsx * 0.5 > f.plane + 1e-4)) continue;
+
+        cx[i] = fcx;
+        cy[i] = fcy;
+        cz[i] = fcz;
+        sx[i] = fsx;
+        sy[i] = fsy;
+        sz[i] = fsz;
+        const blocked = skyriverTrimBlocksHero(trims, i, heroes);
+        cx[i] = ocx;
+        cy[i] = ocy;
+        cz[i] = ocz;
+        sx[i] = osx;
+        sy[i] = osy;
+        sz[i] = osz;
+        if (blocked) continue;
+
+        const sup = checkTrimSupportWithBucket(fcx, fcy, fcz, fsx, fsy, fsz, ow, bucket, m.massIndex);
+        if (!sup.supported) continue;
+
+        chosen = { fcx, fcy, fcz, fsx, fsy, fsz, hostMassIndex: sup.bestMassIndex, faceId: f.id };
+        break;
+      }
+      if (chosen !== null) break;
+    }
+
+    if (chosen === null) {
+      fail(`SKYRIVER_SIDE_TRIM_HOST_MISSING: seed ${seed} trim ${i}`);
+    }
+
+    cx[i] = chosen.fcx;
+    cy[i] = chosen.fcy;
+    cz[i] = chosen.fcz;
+    sx[i] = chosen.fsx;
+    sy[i] = chosen.fsy;
+    sz[i] = chosen.fsz;
+
+    const newGeom = Object.freeze({
+      cx: chosen.fcx, cy: chosen.fcy, cz: chosen.fcz,
+      sx: chosen.fsx, sy: chosen.fsy, sz: chosen.fsz,
+    });
+    dispositions[i] = Object.freeze({
+      kind: 'side-rehosted',
+      sourceIndex: i,
+      finalIndex: i,
+      heroFiltered: false,
+      blockingHeroIds: Object.freeze([]),
+      oldGeometry: oldGeom,
+      newGeometry: newGeom,
+      hostMassIndex: chosen.hostMassIndex,
+      faceId: chosen.faceId,
+    });
+    rehostedCount += 1;
+  }
+
+  return Object.freeze({
+    seed,
+    sourceCount,
+    finalCount: sourceCount,
+    inventoryIdentity,
+    sourceInventory,
+    dispositions: Object.freeze(dispositions),
+    unchangedCount,
+    rehostedCount,
+    roofRowsDeferred,
+    spanRowsDeferred,
+  });
+}
+
+function roofDetailPrefixInsertCell(
+  cells: Map<string, number[]>,
+  rowId: number,
+  box: RoofDetailObb,
+  cellSize: number,
+): void {
+  const minX = Math.floor(box.minX / cellSize);
+  const maxX = Math.floor(box.maxX / cellSize);
+  const minZ = Math.floor(box.minZ / cellSize);
+  const maxZ = Math.floor(box.maxZ / cellSize);
+  for (let gx = minX; gx <= maxX; gx += 1) {
+    for (let gz = minZ; gz <= maxZ; gz += 1) {
+      const key = roofDetailCellKey(gx, gz);
+      const bucket = cells.get(key);
+      if (bucket === undefined) {
+        cells.set(key, [rowId]);
+      } else {
+        bucket.push(rowId);
+      }
+    }
+  }
+}
+
+function reconcileLegacyTrimsD2(
+  layout: SkyriverCityLayout,
+  trims: SkyriverCityTrims,
+  sourceCount: number,
+  r27StartIndex: number,
+  r27EndIndex: number,
+  legacyWorld: readonly SkyriverMass[],
+  masses: readonly SkyriverMass[],
+  heroes: readonly SkyriverHeroBlade[],
+  wingAirIndex: RoofDetailCollisionIndex,
+  acceptedNotches: ReadonlyMap<string, RoofDetailObb>,
+  notchAuditIndex: RoofDetailCollisionIndex,
+  reconciliationD1: SkyriverLegacyTrimReconciliation,
+): SkyriverLegacyTrimReconciliation {
+  const seed = layout.seed;
+  const { cx, cy, cz, sx, sy, sz, kind, owner, spanTo } = trims;
+  const sourceInventory = reconciliationD1.sourceInventory;
+
+  const towerAnchorBySeed = new Map<number, Set<number>>();
+  const towerByKey = new Map<string, { seed: number; anchorV: number }>();
+  for (const t of layout.towers) {
+    const s = buildingSeedOf(t.x, t.z);
+    let anchors = towerAnchorBySeed.get(s);
+    if (anchors === undefined) {
+      anchors = new Set<number>();
+      towerAnchorBySeed.set(s, anchors);
+    }
+    anchors.add(t.z);
+    towerByKey.set(towerKey(t), { seed: s, anchorV: t.z });
+  }
+
+  const getMassOwnerSeed = (m: SkyriverMass): number => {
+    if (m.materialOwner !== undefined) return m.materialOwner;
+    if (m.building !== undefined) return m.building;
+    if (m.baseRecord !== undefined) {
+      const t = towerByKey.get(m.baseRecord.towerOwner);
+      if (t !== undefined) return t.seed;
+    }
+    return buildingSeedOf(m.x, m.z);
+  };
+
+  const getMassAnchorV = (m: SkyriverMass): number => {
+    if (m.anchorV !== undefined) return m.anchorV;
+    if (m.baseRecord !== undefined) {
+      const t = towerByKey.get(m.baseRecord.towerOwner);
+      if (t !== undefined) return t.anchorV;
+    }
+    return m.z;
+  };
+
+  const float32Ulp = (value: number): number => {
+    const absolute = Math.abs(value);
+    if (absolute === 0) return 2 ** -149;
+    return 2 ** (Math.floor(Math.log2(absolute)) - 23);
+  };
+
+  const float32Tol = (a: number, b: number): number => {
+    return Math.max(float32Ulp(a), float32Ulp(b)) * 2;
+  };
+
+  type SupportEntry = { mass: SkyriverMass; massIndex: number };
+
+  const checkRoofSupport = (
+    px: number, py: number, pz: number,
+    psx: number, psy: number, psz: number,
+    hosts: readonly SupportEntry[] | undefined,
+  ): boolean => {
+    if (hosts === undefined) return false;
+    for (let massIndex = 0; massIndex < hosts.length; massIndex += 1) {
+      const m = hosts[massIndex]!.mass;
+      if (m.width <= 0 || m.height <= 0 || m.depth <= 0) continue;
+
+      const roofY = m.y0 + m.height;
+      const bottomY = py - psy * 0.5;
+      if (Math.abs(bottomY - roofY) > float32Tol(bottomY, roofY)) continue;
+
+      const px0 = px - psx * 0.5;
+      const px1 = px + psx * 0.5;
+      const mx0 = m.x - m.width * 0.5;
+      const mx1 = m.x + m.width * 0.5;
+      if (px0 < mx0 - float32Tol(px0, mx0) || px1 > mx1 + float32Tol(px1, mx1)) continue;
+
+      const pz0 = pz - psz * 0.5;
+      const pz1 = pz + psz * 0.5;
+      const mz0 = m.z - m.depth * 0.5;
+      const mz1 = m.z + m.depth * 0.5;
+      if (pz0 < mz0 - float32Tol(pz0, mz0) || pz1 > mz1 + float32Tol(pz1, mz1)) continue;
+
+      return true;
+    }
+    return false;
+  };
+
+  const baselineHostsByKey = new Map<string, SupportEntry[]>();
+  for (let massIndex = 0; massIndex < legacyWorld.length; massIndex += 1) {
+    const m = legacyWorld[massIndex]!;
+    if (m.width <= 0 || m.height <= 0 || m.depth <= 0) continue;
+    const mOwner = getMassOwnerSeed(m);
+    const mAnchor = getMassAnchorV(m);
+    const key = hostIndexKey(mOwner, mAnchor);
+    let list = baselineHostsByKey.get(key);
+    if (list === undefined) {
+      list = [];
+      baselineHostsByKey.set(key, list);
+    }
+    list.push({ mass: m, massIndex });
+  }
+
+  const candidateHostsByKey = new Map<string, SupportEntry[]>();
+  for (let massIndex = 0; massIndex < masses.length; massIndex += 1) {
+    const m = masses[massIndex]!;
+    if (m.width <= 0 || m.height <= 0 || m.depth <= 0) continue;
+    const mOwner = getMassOwnerSeed(m);
+    const mAnchor = getMassAnchorV(m);
+    const key = hostIndexKey(mOwner, mAnchor);
+    let list = candidateHostsByKey.get(key);
+    if (list === undefined) {
+      list = [];
+      candidateHostsByKey.set(key, list);
+    }
+    list.push({ mass: m, massIndex });
+  }
+
+  const heroBoxes = roofDetailHeroBoxCache.get(layout.seed) ?? roofDetailHeroObbs(layout, heroes);
+  const cellSize = ROOF_DETAIL_SPATIAL_CELL_M;
+  const currentObbs: (RoofDetailObb | null)[] = new Array(sourceCount);
+  const prefixCells = new Map<string, number[]>();
+
+  for (let j = 0; j < sourceCount; j += 1) {
+    const disp = reconciliationD1.dispositions[j]!;
+    if (disp.heroFiltered) {
+      currentObbs[j] = null;
+      continue;
+    }
+    currentObbs[j] = roofDetailTrimObb(trims, j);
+    roofDetailPrefixInsertCell(prefixCells, j, currentObbs[j]!, cellSize);
+  }
+
+  const stamps = new Int32Array(sourceCount);
+  let currentStamp = 0;
+
+  const checkPrefixConflict = (candObb: RoofDetailObb, rowId: number): boolean => {
+    currentStamp += 1;
+    if (currentStamp >= 0x7ffffffe) {
+      stamps.fill(0);
+      currentStamp = 1;
+    }
+    const stamp = currentStamp;
+
+    const minX = Math.floor(candObb.minX / cellSize);
+    const maxX = Math.floor(candObb.maxX / cellSize);
+    const minZ = Math.floor(candObb.minZ / cellSize);
+    const maxZ = Math.floor(candObb.maxZ / cellSize);
+
+    for (let gx = minX; gx <= maxX; gx += 1) {
+      for (let gz = minZ; gz <= maxZ; gz += 1) {
+        const bucket = prefixCells.get(roofDetailCellKey(gx, gz));
+        if (bucket === undefined) continue;
+        for (let idx = 0; idx < bucket.length; idx += 1) {
+          const otherId = bucket[idx]!;
+          if (otherId === rowId) continue;
+          if (stamps[otherId] === stamp) continue;
+          stamps[otherId] = stamp;
+
+          const otherObb = currentObbs[otherId];
+          if (otherObb === null) continue;
+
+          if (roofDetailObbsConflict(candObb, otherObb, 0)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  interface CandidateRecord {
+    readonly scale: number;
+    readonly distSq: number;
+    readonly hostMassIndex: number;
+    readonly pointOrder: number;
+    readonly cx: number;
+    readonly cy: number;
+    readonly cz: number;
+    readonly sx: number;
+    readonly sy: number;
+    readonly sz: number;
+    readonly obb: RoofDetailObb;
+  }
+
+  const testHostAtScale = (
+    mEntry: { mass: SkyriverMass; massIndex: number },
+    scale: number,
+    sourceCx: number,
+    sourceCy: number,
+    sourceCz: number,
+    origSx: number,
+    origSy: number,
+    origSz: number,
+    anchorV: number,
+    rowId: number,
+    accepted: CandidateRecord[],
+    rejections: {
+      support: number;
+      solid: number;
+      hero: number;
+      wingAir: number;
+      notch: number;
+      prefix: number;
+    },
+  ): void => {
+    const m = mEntry.mass;
+    const fsx = Math.fround(origSx * scale);
+    const fsz = Math.fround(origSz * scale);
+
+    const mx0 = m.x - m.width * 0.5;
+    const mx1 = m.x + m.width * 0.5;
+    const mz0 = m.z - m.depth * 0.5;
+    const mz1 = m.z + m.depth * 0.5;
+
+    let minCx = mx0 + fsx * 0.5;
+    let maxCx = mx1 - fsx * 0.5;
+    let minCz = mz0 + fsz * 0.5;
+    let maxCz = mz1 - fsz * 0.5;
+
+    if (minCx > maxCx + 1e-4 || minCz > maxCz + 1e-4) return;
+    if (minCx > maxCx) minCx = maxCx = (minCx + maxCx) * 0.5;
+    if (minCz > maxCz) minCz = maxCz = (minCz + maxCz) * 0.5;
+
+    const midCx = (minCx + maxCx) * 0.5;
+    const midCz = (minCz + maxCz) * 0.5;
+    const clampedX = Math.max(minCx, Math.min(maxCx, sourceCx));
+    const clampedZ = Math.max(minCz, Math.min(maxCz, sourceCz));
+
+    const points: [number, number][] = [
+      [clampedX, clampedZ],
+      [midCx, midCz],
+      [minCx, minCz],
+      [maxCx, minCz],
+      [minCx, maxCz],
+      [maxCx, maxCz],
+      [midCx, minCz],
+      [midCx, maxCz],
+      [minCx, midCz],
+      [maxCx, midCz],
+    ];
+
+    const seenPoints = new Set<string>();
+    for (let ptIdx = 0; ptIdx < points.length; ptIdx += 1) {
+      const [ptX, ptZ] = points[ptIdx]!;
+      const fcx = Math.fround(ptX);
+      const fcz = Math.fround(ptZ);
+      const ptKey = `${fcx}:${fcz}`;
+      if (seenPoints.has(ptKey)) continue;
+      seenPoints.add(ptKey);
+
+      const fsy = Math.fround(origSy);
+      const roofY = m.y0 + m.height;
+      const fcy = Math.fround(roofY + fsy * 0.5);
+
+      const px0 = fcx - fsx * 0.5;
+      const px1 = fcx + fsx * 0.5;
+      if (px0 < mx0 - float32Tol(px0, mx0) || px1 > mx1 + float32Tol(px1, mx1)) {
+        rejections.support += 1;
+        continue;
+      }
+
+      const pz0 = fcz - fsz * 0.5;
+      const pz1 = fcz + fsz * 0.5;
+      if (pz0 < mz0 - float32Tol(pz0, mz0) || pz1 > mz1 + float32Tol(pz1, mz1)) {
+        rejections.support += 1;
+        continue;
+      }
+
+      const bottomY = fcy - fsy * 0.5;
+      if (Math.abs(bottomY - roofY) > float32Tol(bottomY, roofY)) {
+        rejections.support += 1;
+        continue;
+      }
+
+      const candObb = roofDetailMakeCandidateObb(fcx, fcy, fcz, fsx, fsy, fsz, anchorV);
+      if (roofDetailIndexConflicts(notchAuditIndex, candObb, 0, mEntry.massIndex)) {
+        rejections.solid += 1;
+        continue;
+      }
+      if (roofDetailBlocksHero(candObb, heroBoxes)) {
+        rejections.hero += 1;
+        continue;
+      }
+      if (roofDetailIndexConflicts(wingAirIndex, candObb, 0)) {
+        rejections.wingAir += 1;
+        continue;
+      }
+
+      let notchBlocked = false;
+      for (const notchObb of acceptedNotches.values()) {
+        if (roofDetailObbsConflict(candObb, notchObb, 0)) {
+          notchBlocked = true;
+          break;
+        }
+      }
+      if (notchBlocked) {
+        rejections.notch += 1;
+        continue;
+      }
+
+      if (checkPrefixConflict(candObb, rowId)) {
+        rejections.prefix += 1;
+        continue;
+      }
+
+      const distSq = (fcx - sourceCx) ** 2 + (fcy - sourceCy) ** 2 + (fcz - sourceCz) ** 2;
+      accepted.push({
+        scale,
+        distSq,
+        hostMassIndex: mEntry.massIndex,
+        pointOrder: ptIdx,
+        cx: fcx,
+        cy: fcy,
+        cz: fcz,
+        sx: fsx,
+        sy: fsy,
+        sz: fsz,
+        obb: candObb,
+      });
+    }
+  };
+
+  const dispositions: SkyriverTrimDisposition[] = new Array(sourceCount);
+  let unchangedCount = 0;
+  let rehostedCount = 0;
+
+  for (let i = 0; i < sourceCount; i += 1) {
+    const k = kind[i]!;
+    const ow = owner[i]!;
+    const sp = spanTo[i] ?? null;
+    const isRoof = (k === SKYRIVER_TRIM_ANTENNA || k === SKYRIVER_TRIM_ROOF_PLANT) && sp === null;
+    const isR27 = i >= r27StartIndex && i < r27EndIndex;
+    const canonicalOwner = ow.materialOwner ?? buildingSeedOf(ow.x, ow.z);
+    const isOrdinaryTower = towerAnchorBySeed.get(canonicalOwner)?.has(ow.anchorV) === true;
+    const isOrdinaryRoof = isRoof && !isR27 && isOrdinaryTower;
+
+    if (!isOrdinaryRoof) {
+      const prevDisp = reconciliationD1.dispositions[i]!;
+      dispositions[i] = prevDisp;
+      if (prevDisp.kind === 'side-rehosted') {
+        rehostedCount += 1;
+      } else {
+        unchangedCount += 1;
+      }
+      continue;
+    }
+
+    const src = sourceInventory[i]!;
+    const ocx = src.cx;
+    const ocy = src.cy;
+    const ocz = src.cz;
+    const osx = src.sx;
+    const osy = src.sy;
+    const osz = src.sz;
+    const oldGeom = Object.freeze({ cx: ocx, cy: ocy, cz: ocz, sx: osx, sy: osy, sz: osz });
+
+    const hostKey = hostIndexKey(canonicalOwner, ow.anchorV);
+    const supportedInBaseline = checkRoofSupport(
+      ocx, ocy, ocz, osx, osy, osz, baselineHostsByKey.get(hostKey),
+    );
+
+    if (!supportedInBaseline) {
+      dispositions[i] = Object.freeze({
+        kind: 'inherited-roof-unsupported',
+        sourceIndex: i,
+        finalIndex: i,
+        heroFiltered: false,
+        blockingHeroIds: Object.freeze([]),
+        oldGeometry: oldGeom,
+        newGeometry: oldGeom,
+      });
+      unchangedCount += 1;
+      continue;
+    }
+
+    const candidateHosts = candidateHostsByKey.get(hostKey) ?? [];
+    const supportedInFinal = checkRoofSupport(
+      ocx, ocy, ocz, osx, osy, osz, candidateHosts,
+    );
+
+    if (supportedInFinal) {
+      dispositions[i] = Object.freeze({
+        kind: 'unchanged',
+        sourceIndex: i,
+        finalIndex: i,
+        heroFiltered: false,
+        blockingHeroIds: Object.freeze([]),
+        oldGeometry: oldGeom,
+        newGeometry: oldGeom,
+      });
+      unchangedCount += 1;
+      continue;
+    }
+
+    let chosen: CandidateRecord | null = null;
+    const rejections = {
+      support: 0,
+      solid: 0,
+      hero: 0,
+      wingAir: 0,
+      notch: 0,
+      prefix: 0,
+    };
+
+    const fullSizeAccepted: CandidateRecord[] = [];
+    for (let hIdx = 0; hIdx < candidateHosts.length; hIdx += 1) {
+      testHostAtScale(
+        candidateHosts[hIdx]!, 1.0, ocx, ocy, ocz, osx, osy, osz, ow.anchorV, i, fullSizeAccepted, rejections,
+      );
+    }
+
+    if (fullSizeAccepted.length > 0) {
+      fullSizeAccepted.sort((a, b) => {
+        if (Math.abs(a.distSq - b.distSq) > 1e-6) return a.distSq - b.distSq;
+        if (a.hostMassIndex !== b.hostMassIndex) return a.hostMassIndex - b.hostMassIndex;
+        return a.pointOrder - b.pointOrder;
+      });
+      chosen = fullSizeAccepted[0]!;
+    } else {
+      const scaleFractions = [1.0, 0.9, 0.75, 0.5, 0.25, 0.1];
+      const scaledAccepted: CandidateRecord[] = [];
+      for (let hIdx = 0; hIdx < candidateHosts.length; hIdx += 1) {
+        const mEntry = candidateHosts[hIdx]!;
+        const m = mEntry.mass;
+        const fitScale = Math.min(1.0, m.width / osx, m.depth / osz);
+        if (fitScale <= 0) continue;
+        const fractions = fitScale < 1.0 - 1e-6 ? scaleFractions : [0.9, 0.75, 0.5, 0.25, 0.1];
+        for (let fIdx = 0; fIdx < fractions.length; fIdx += 1) {
+          const s = fitScale * fractions[fIdx]!;
+          testHostAtScale(
+            mEntry, s, ocx, ocy, ocz, osx, osy, osz, ow.anchorV, i, scaledAccepted, rejections,
+          );
+        }
+      }
+
+      if (scaledAccepted.length > 0) {
+        scaledAccepted.sort((a, b) => {
+          if (Math.abs(a.scale - b.scale) > 1e-6) return b.scale - a.scale;
+          if (Math.abs(a.distSq - b.distSq) > 1e-6) return a.distSq - b.distSq;
+          if (a.hostMassIndex !== b.hostMassIndex) return a.hostMassIndex - b.hostMassIndex;
+          return a.pointOrder - b.pointOrder;
+        });
+        chosen = scaledAccepted[0]!;
+      }
+    }
+
+    if (chosen === null) {
+      fail(
+        `SKYRIVER_ROOF_TRIM_HOST_MISSING: seed ${seed} trim ${i}, hosts: ${candidateHosts.length}, ` +
+          `support: ${rejections.support}, solid: ${rejections.solid}, hero: ${rejections.hero}, ` +
+          `wing air: ${rejections.wingAir}, notch: ${rejections.notch}, prefix: ${rejections.prefix}`,
+      );
+    }
+
+    cx[i] = chosen.cx;
+    cy[i] = chosen.cy;
+    cz[i] = chosen.cz;
+    sx[i] = chosen.sx;
+    sy[i] = chosen.sy;
+    sz[i] = chosen.sz;
+
+    currentObbs[i] = chosen.obb;
+    roofDetailPrefixInsertCell(prefixCells, i, chosen.obb, cellSize);
+
+    const newGeom = Object.freeze({
+      cx: chosen.cx,
+      cy: chosen.cy,
+      cz: chosen.cz,
+      sx: chosen.sx,
+      sy: chosen.sy,
+      sz: chosen.sz,
+    });
+
+    dispositions[i] = Object.freeze({
+      kind: 'roof-rehosted',
+      sourceIndex: i,
+      finalIndex: i,
+      heroFiltered: false,
+      blockingHeroIds: Object.freeze([]),
+      oldGeometry: oldGeom,
+      newGeometry: newGeom,
+      hostMassIndex: chosen.hostMassIndex,
+      horizontalScale: chosen.scale,
+    });
+    rehostedCount += 1;
+  }
+
+  return Object.freeze({
+    seed,
+    sourceCount,
+    finalCount: sourceCount,
+    inventoryIdentity: reconciliationD1.inventoryIdentity,
+    sourceInventory,
+    dispositions: Object.freeze(dispositions),
+    unchangedCount,
+    rehostedCount,
+    roofRowsDeferred: 0,
+    spanRowsDeferred: reconciliationD1.spanRowsDeferred,
+  });
+}
+function reconcileLegacyTrimsD3(
+  layout: SkyriverCityLayout,
+  trims: SkyriverCityTrims,
+  sourceCount: number,
+  r27StartIndex: number,
+  r27EndIndex: number,
+  legacyWorld: readonly SkyriverMass[],
+  masses: readonly SkyriverMass[],
+  heroes: readonly SkyriverHeroBlade[],
+  wingAirIndex: RoofDetailCollisionIndex,
+  acceptedNotches: ReadonlyMap<string, RoofDetailObb>,
+  reconciliationD2: SkyriverLegacyTrimReconciliation,
+): SkyriverLegacyTrimReconciliation {
+  const seed = layout.seed;
+  const { cx, cy, cz, sx, sy, sz, kind, seedValue, owner, spanTo } = trims;
+  const sourceInventory = reconciliationD2.sourceInventory;
+
+  const spanPlacementEndpoints = (
+    placement: SkyriverTrimPlacement,
+    sx: number,
+    sz: number,
+  ): readonly [{ readonly x: number; readonly z: number }, { readonly x: number; readonly z: number }] => {
+    const along = sz >= sx;
+    const ux = along ? Math.sin(placement.heading) : Math.cos(placement.heading);
+    const uz = along ? Math.cos(placement.heading) : -Math.sin(placement.heading);
+    const halfLength = placement.length * 0.5;
+    return [
+      { x: placement.x - halfLength * ux, z: placement.z - halfLength * uz },
+      { x: placement.x + halfLength * ux, z: placement.z + halfLength * uz },
+    ];
+  };
+
+  const towerAnchorBySeed = new Map<number, Set<number>>();
+  const towerByKey = new Map<string, { seed: number; anchorV: number }>();
+  for (const t of layout.towers) {
+    const s = buildingSeedOf(t.x, t.z);
+    let anchors = towerAnchorBySeed.get(s);
+    if (anchors === undefined) {
+      anchors = new Set<number>();
+      towerAnchorBySeed.set(s, anchors);
+    }
+    anchors.add(t.z);
+    towerByKey.set(towerKey(t), { seed: s, anchorV: t.z });
+  }
+
+  const getMassOwnerSeed = (m: SkyriverMass): number => {
+    if (m.materialOwner !== undefined) return m.materialOwner;
+    if (m.building !== undefined) return m.building;
+    if (m.baseRecord !== undefined) {
+      const t = towerByKey.get(m.baseRecord.towerOwner);
+      if (t !== undefined) return t.seed;
+    }
+    return buildingSeedOf(m.x, m.z);
+  };
+
+  const getMassAnchorV = (m: SkyriverMass): number => {
+    if (m.anchorV !== undefined) return m.anchorV;
+    if (m.baseRecord !== undefined) {
+      const t = towerByKey.get(m.baseRecord.towerOwner);
+      if (t !== undefined) return t.anchorV;
+    }
+    return m.z;
+  };
+
+  const checkSpanEndpointContact = (
+    ex: number,
+    ey: number,
+    ez: number,
+    ux: number,
+    uz: number,
+    crossHalf: number,
+    halfY: number,
+    hostObb: RoofDetailObb,
+  ): { readonly contacts: boolean; readonly crossOverlapM: number; readonly verticalOverlapM: number } => {
+    const tol = Math.max(hostObb.coordinateUlpM, roofDetailScalarUlp(ex), roofDetailScalarUlp(ey), roofDetailScalarUlp(ez)) * 2;
+
+    const trimY0 = ey - halfY;
+    const trimY1 = ey + halfY;
+    const hostY0 = hostObb.y - hostObb.halfY;
+    const hostY1 = hostObb.y + hostObb.halfY;
+    const vertOverlap = Math.min(trimY1, hostY1) - Math.max(trimY0, hostY0);
+    const vertTol = Math.max(roofDetailScalarUlp(ey), roofDetailScalarUlp(hostObb.y)) * 2;
+    if (vertOverlap < -vertTol) {
+      return { contacts: false, crossOverlapM: 0, verticalOverlapM: 0 };
+    }
+
+    const dx = ex - hostObb.x;
+    const dz = ez - hostObb.z;
+    const pU = dx * hostObb.ux + dz * hostObb.uz;
+    const pV = dx * hostObb.vx + dz * hostObb.vz;
+    const dU = ux * hostObb.ux + uz * hostObb.uz;
+    const dV = ux * hostObb.vx + uz * hostObb.vz;
+
+    let tMin = -crossHalf;
+    let tMax = crossHalf;
+
+    if (Math.abs(dU) < 1e-12) {
+      if (Math.abs(pU) > hostObb.halfX + tol) {
+        return { contacts: false, crossOverlapM: 0, verticalOverlapM: 0 };
+      }
+    } else {
+      const t0 = (-hostObb.halfX - tol - pU) / dU;
+      const t1 = (hostObb.halfX + tol - pU) / dU;
+      tMin = Math.max(tMin, Math.min(t0, t1));
+      tMax = Math.min(tMax, Math.max(t0, t1));
+    }
+
+    if (Math.abs(dV) < 1e-12) {
+      if (Math.abs(pV) > hostObb.halfZ + tol) {
+        return { contacts: false, crossOverlapM: 0, verticalOverlapM: 0 };
+      }
+    } else {
+      const t0 = (-hostObb.halfZ - tol - pV) / dV;
+      const t1 = (hostObb.halfZ + tol - pV) / dV;
+      tMin = Math.max(tMin, Math.min(t0, t1));
+      tMax = Math.min(tMax, Math.max(t0, t1));
+    }
+
+    if (tMax < tMin) {
+      return { contacts: false, crossOverlapM: 0, verticalOverlapM: 0 };
+    }
+
+    let physMin = -crossHalf;
+    let physMax = crossHalf;
+    let physMissed = false;
+
+    if (Math.abs(dU) < 1e-12) {
+      if (Math.abs(pU) > hostObb.halfX) {
+        physMissed = true;
+      }
+    } else {
+      const t0 = (-hostObb.halfX - pU) / dU;
+      const t1 = (hostObb.halfX - pU) / dU;
+      physMin = Math.max(physMin, Math.min(t0, t1));
+      physMax = Math.min(physMax, Math.max(t0, t1));
+    }
+
+    if (!physMissed) {
+      if (Math.abs(dV) < 1e-12) {
+        if (Math.abs(pV) > hostObb.halfZ) {
+          physMissed = true;
+        }
+      } else {
+        const t0 = (-hostObb.halfZ - pV) / dV;
+        const t1 = (hostObb.halfZ - pV) / dV;
+        physMin = Math.max(physMin, Math.min(t0, t1));
+        physMax = Math.min(physMax, Math.max(t0, t1));
+      }
+    }
+
+    const crossOverlapM = !physMissed && physMax > physMin
+      ? Math.min(crossHalf * 2, physMax - physMin)
+      : 0;
+    const verticalOverlapM = Math.min(halfY * 2, Math.max(0, vertOverlap));
+    return {
+      contacts: true,
+      crossOverlapM,
+      verticalOverlapM,
+    };
+  };
+
+  type SupportEntry = { mass: SkyriverMass; massIndex: number };
+
+  const baselineHostsByKey = new Map<string, SupportEntry[]>();
+  for (let massIndex = 0; massIndex < legacyWorld.length; massIndex += 1) {
+    const m = legacyWorld[massIndex]!;
+    if (m.width <= 0 || m.height <= 0 || m.depth <= 0) continue;
+    const mOwner = getMassOwnerSeed(m);
+    const mAnchor = getMassAnchorV(m);
+    const key = hostIndexKey(mOwner, mAnchor);
+    let list = baselineHostsByKey.get(key);
+    if (list === undefined) {
+      list = [];
+      baselineHostsByKey.set(key, list);
+    }
+    list.push({ mass: m, massIndex });
+  }
+
+  const candidateHostsByKey = new Map<string, SupportEntry[]>();
+  for (let massIndex = 0; massIndex < masses.length; massIndex += 1) {
+    const m = masses[massIndex]!;
+    if (m.width <= 0 || m.height <= 0 || m.depth <= 0) continue;
+    const mOwner = getMassOwnerSeed(m);
+    const mAnchor = getMassAnchorV(m);
+    const key = hostIndexKey(mOwner, mAnchor);
+    let list = candidateHostsByKey.get(key);
+    if (list === undefined) {
+      list = [];
+      candidateHostsByKey.set(key, list);
+    }
+    list.push({ mass: m, massIndex });
+  }
+
+  const baselineMassObbs: RoofDetailObb[] = new Array(legacyWorld.length);
+  const baselineMassGrid = new Map<string, number[]>();
+  for (let mIdx = 0; mIdx < legacyWorld.length; mIdx += 1) {
+    const obb = roofDetailMassObb(legacyWorld[mIdx]!, mIdx);
+    baselineMassObbs[mIdx] = obb;
+    const minX = Math.floor(obb.minX / ROOF_DETAIL_SPATIAL_CELL_M);
+    const maxX = Math.floor(obb.maxX / ROOF_DETAIL_SPATIAL_CELL_M);
+    const minZ = Math.floor(obb.minZ / ROOF_DETAIL_SPATIAL_CELL_M);
+    const maxZ = Math.floor(obb.maxZ / ROOF_DETAIL_SPATIAL_CELL_M);
+    for (let gx = minX; gx <= maxX; gx += 1) {
+      for (let gz = minZ; gz <= maxZ; gz += 1) {
+        const cellK = roofDetailCellKey(gx, gz);
+        const bucket = baselineMassGrid.get(cellK);
+        if (bucket === undefined) baselineMassGrid.set(cellK, [mIdx]);
+        else bucket.push(mIdx);
+      }
+    }
+  }
+  const baselineMassStamps = new Int32Array(legacyWorld.length);
+  let baselineMassStamp = 0;
+
+  const finalMassObbs: RoofDetailObb[] = new Array(masses.length);
+  const finalMassGrid = new Map<string, number[]>();
+  for (let mIdx = 0; mIdx < masses.length; mIdx += 1) {
+    const obb = roofDetailMassObb(masses[mIdx]!, mIdx);
+    finalMassObbs[mIdx] = obb;
+    const minX = Math.floor(obb.minX / ROOF_DETAIL_SPATIAL_CELL_M);
+    const maxX = Math.floor(obb.maxX / ROOF_DETAIL_SPATIAL_CELL_M);
+    const minZ = Math.floor(obb.minZ / ROOF_DETAIL_SPATIAL_CELL_M);
+    const maxZ = Math.floor(obb.maxZ / ROOF_DETAIL_SPATIAL_CELL_M);
+    for (let gx = minX; gx <= maxX; gx += 1) {
+      for (let gz = minZ; gz <= maxZ; gz += 1) {
+        const cellK = roofDetailCellKey(gx, gz);
+        const bucket = finalMassGrid.get(cellK);
+        if (bucket === undefined) finalMassGrid.set(cellK, [mIdx]);
+        else bucket.push(mIdx);
+      }
+    }
+  }
+  const finalMassStamps = new Int32Array(masses.length);
+  let finalMassStamp = 0;
+
+  const computeChordExposedLength = (
+    x0: number,
+    z0: number,
+    x1: number,
+    z1: number,
+    y: number,
+    chordLength: number,
+    activeBoxes: readonly RoofDetailObb[],
+    grid: ReadonlyMap<string, number[]>,
+    stamps: Int32Array,
+    isBaseline: boolean,
+  ): number => {
+    if (chordLength <= 1e-6) return 0;
+    const dx = x1 - x0;
+    const dz = z1 - z0;
+    const minX = Math.min(x0, x1);
+    const maxX = Math.max(x0, x1);
+    const minZ = Math.min(z0, z1);
+    const maxZ = Math.max(z0, z1);
+
+    const minGX = Math.floor(minX / ROOF_DETAIL_SPATIAL_CELL_M);
+    const maxGX = Math.floor(maxX / ROOF_DETAIL_SPATIAL_CELL_M);
+    const minGZ = Math.floor(minZ / ROOF_DETAIL_SPATIAL_CELL_M);
+    const maxGZ = Math.floor(maxZ / ROOF_DETAIL_SPATIAL_CELL_M);
+
+    if (isBaseline) {
+      baselineMassStamp += 1;
+      if (baselineMassStamp >= 0x7ffffffe) {
+        stamps.fill(0);
+        baselineMassStamp = 1;
+      }
+    } else {
+      finalMassStamp += 1;
+      if (finalMassStamp >= 0x7ffffffe) {
+        stamps.fill(0);
+        finalMassStamp = 1;
+      }
+    }
+    const stamp = isBaseline ? baselineMassStamp : finalMassStamp;
+
+    const intervals: [number, number][] = [];
+
+    for (let gx = minGX; gx <= maxGX; gx += 1) {
+      for (let gz = minGZ; gz <= maxGZ; gz += 1) {
+        const bucket = grid.get(roofDetailCellKey(gx, gz));
+        if (bucket === undefined) continue;
+        for (let idx = 0; idx < bucket.length; idx += 1) {
+          const mIdx = bucket[idx]!;
+          if (stamps[mIdx] === stamp) continue;
+          stamps[mIdx] = stamp;
+
+          const b = activeBoxes[mIdx]!;
+          if (b.maxX < minX || b.minX > maxX || b.maxZ < minZ || b.minZ > maxZ) continue;
+
+          const roofY = b.y + b.halfY;
+          const bottomY = b.y - b.halfY;
+          if (y >= roofY || y <= bottomY) continue;
+
+          const p0 = (x0 - b.x) * b.ux + (z0 - b.z) * b.uz;
+          const p1 = (x0 - b.x) * b.vx + (z0 - b.z) * b.vz;
+          const v0 = dx * b.ux + dz * b.uz;
+          const v1 = dx * b.vx + dz * b.vz;
+          const h0 = b.halfX;
+          const h1 = b.halfZ;
+
+          let lo = 0;
+          let hi = 1;
+          let missed = false;
+
+          if (Math.abs(v0) < 1e-12) {
+            if (Math.abs(p0) >= h0) missed = true;
+          } else {
+            const t0 = (-h0 - p0) / v0;
+            const t1 = (h0 - p0) / v0;
+            lo = Math.max(lo, Math.min(t0, t1));
+            hi = Math.min(hi, Math.max(t0, t1));
+          }
+
+          if (!missed) {
+            if (Math.abs(v1) < 1e-12) {
+              if (Math.abs(p1) >= h1) missed = true;
+            } else {
+              const t0 = (-h1 - p1) / v1;
+              const t1 = (h1 - p1) / v1;
+              lo = Math.max(lo, Math.min(t0, t1));
+              hi = Math.min(hi, Math.max(t0, t1));
+            }
+          }
+
+          if (!missed && hi > lo + 1e-9) {
+            intervals.push([lo, hi]);
+          }
+        }
+      }
+    }
+
+    if (intervals.length === 0) {
+      return chordLength;
+    }
+
+    intervals.sort((a, b) => a[0] - b[0]);
+    let covered = 0;
+    let curLo = intervals[0]![0];
+    let curHi = intervals[0]![1];
+
+    for (let i = 1; i < intervals.length; i += 1) {
+      const r = intervals[i]!;
+      if (r[0] <= curHi) {
+        curHi = Math.max(curHi, r[1]);
+      } else {
+        covered += curHi - curLo;
+        curLo = r[0];
+        curHi = r[1];
+      }
+    }
+    covered += curHi - curLo;
+
+    const coveredFraction = Math.min(1, Math.max(0, covered));
+    return Math.max(0, (1 - coveredFraction) * chordLength);
+  };
+
+  const heroBoxes = roofDetailHeroBoxCache.get(layout.seed) ?? roofDetailHeroObbs(layout, heroes);
+  const cellSize = ROOF_DETAIL_SPATIAL_CELL_M;
+  const currentObbs: (RoofDetailObb | null)[] = new Array(sourceCount);
+  const prefixCells = new Map<string, number[]>();
+
+  for (let j = 0; j < sourceCount; j += 1) {
+    const disp = reconciliationD2.dispositions[j]!;
+    if (disp.heroFiltered) {
+      currentObbs[j] = null;
+      continue;
+    }
+    currentObbs[j] = roofDetailTrimObb(trims, j);
+    roofDetailPrefixInsertCell(prefixCells, j, currentObbs[j]!, cellSize);
+  }
+
+  const stamps = new Int32Array(sourceCount);
+  let currentStamp = 0;
+
+  const checkPrefixConflict = (candObb: RoofDetailObb, rowId: number): boolean => {
+    currentStamp += 1;
+    if (currentStamp >= 0x7ffffffe) {
+      stamps.fill(0);
+      currentStamp = 1;
+    }
+    const stamp = currentStamp;
+
+    const minX = Math.floor(candObb.minX / cellSize);
+    const maxX = Math.floor(candObb.maxX / cellSize);
+    const minZ = Math.floor(candObb.minZ / cellSize);
+    const maxZ = Math.floor(candObb.maxZ / cellSize);
+
+    for (let gx = minX; gx <= maxX; gx += 1) {
+      for (let gz = minZ; gz <= maxZ; gz += 1) {
+        const bucket = prefixCells.get(roofDetailCellKey(gx, gz));
+        if (bucket === undefined) continue;
+        for (let idx = 0; idx < bucket.length; idx += 1) {
+          const otherId = bucket[idx]!;
+          if (otherId === rowId) continue;
+          if (stamps[otherId] === stamp) continue;
+          stamps[otherId] = stamp;
+
+          const otherObb = currentObbs[otherId];
+          if (otherObb === null) continue;
+
+          if (roofDetailObbsConflict(candObb, otherObb, 0)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  const trialOwner: SkyriverTrimOwner[] = [owner[0]!];
+  const trialSpanTo: (SkyriverTrimOwner | null)[] = [spanTo[0]!];
+  const trialTrims: SkyriverCityTrims = {
+    seed,
+    count: 1,
+    cx: new Float32Array(1),
+    cy: new Float32Array(1),
+    cz: new Float32Array(1),
+    sx: new Float32Array(1),
+    sy: new Float32Array(1),
+    sz: new Float32Array(1),
+    kind: new Uint8Array(1),
+    seedValue: new Float32Array(1),
+    owner: trialOwner,
+    spanTo: trialSpanTo,
+  };
+  const trialPlacement: SkyriverTrimPlacement = { x: 0, z: 0, heading: 0, length: 0 };
+  const origPlacement: SkyriverTrimPlacement = { x: 0, z: 0, heading: 0, length: 0 };
+
+  interface BaselineSpanPath {
+    readonly supportedInBaseline: boolean;
+    readonly contactHosts: readonly number[];
+    readonly allowedForeignOwners: ReadonlySet<number>;
+    readonly openMeters: number;
+    readonly origPlacement: SkyriverTrimPlacement;
+    readonly origP0: { readonly x: number; readonly z: number };
+    readonly origP1: { readonly x: number; readonly z: number };
+  }
+
+  const baselinePathByIndex = new Map<number, BaselineSpanPath>();
+
+  for (let i = 0; i < sourceCount; i += 1) {
+    const k = kind[i]!;
+    const ow = owner[i]!;
+    const sp = spanTo[i] ?? null;
+    const isSpan = (k === SKYRIVER_TRIM_GANTRY || k === SKYRIVER_TRIM_SKYBRIDGE) && sp !== null;
+    const isR27 = i >= r27StartIndex && i < r27EndIndex;
+    const canonicalOwner = ow.materialOwner ?? buildingSeedOf(ow.x, ow.z);
+    const spanToCanonical = sp !== null ? (sp.materialOwner ?? buildingSeedOf(sp.x, sp.z)) : 0;
+    const isOrdinaryTower =
+      sp !== null &&
+      towerAnchorBySeed.get(canonicalOwner)?.has(ow.anchorV) === true &&
+      towerAnchorBySeed.get(spanToCanonical)?.has(sp.anchorV) === true;
+    const isOrdinarySpan = isSpan && !isR27 && isOrdinaryTower;
+
+    if (!isOrdinarySpan) continue;
+
+    const src = sourceInventory[i]!;
+    trialTrims.cx[0] = src.cx;
+    trialTrims.cy[0] = src.cy;
+    trialTrims.cz[0] = src.cz;
+    trialTrims.sx[0] = src.sx;
+    trialTrims.sy[0] = src.sy;
+    trialTrims.sz[0] = src.sz;
+    trialTrims.kind[0] = src.kind;
+    trialTrims.seedValue[0] = src.seedValue;
+    trialOwner[0] = ow;
+    trialSpanTo[0] = sp;
+
+    placeTrim(trialTrims, 0, origPlacement);
+    const [origP0, origP1] = spanPlacementEndpoints(origPlacement, src.sx, src.sz);
+    const savedOrigPlacement = { ...origPlacement };
+    const origObb = roofDetailTrimObb(trialTrims, 0);
+
+    const along = src.sz >= src.sx;
+    const half = (along ? src.sz : src.sx) * 0.5;
+    const e0x = along ? src.cx : src.cx - half;
+    const e0z = along ? src.cz - half : src.cz;
+    const ownerAtLow = footprintGap(ow, e0x, e0z) <= footprintGap(sp, e0x, e0z);
+    const crossHalf = (along ? src.sx : src.sz) * 0.5;
+    const halfY = src.sy * 0.5;
+
+    const end0Canonical = ownerAtLow ? canonicalOwner : spanToCanonical;
+    const end0AnchorV = ownerAtLow ? ow.anchorV : sp.anchorV;
+    const end1Canonical = ownerAtLow ? spanToCanonical : canonicalOwner;
+    const end1AnchorV = ownerAtLow ? sp.anchorV : ow.anchorV;
+
+    const baseHosts0 = baselineHostsByKey.get(hostIndexKey(end0Canonical, end0AnchorV)) ?? [];
+    const baseHosts1 = baselineHostsByKey.get(hostIndexKey(end1Canonical, end1AnchorV)) ?? [];
+
+    const heading = savedOrigPlacement.heading;
+    const crossUnitX = along ? Math.cos(heading) : Math.sin(heading);
+    const crossUnitZ = along ? -Math.sin(heading) : Math.cos(heading);
+
+    let baselineFound = false;
+    let baseHost0Idx = -1;
+    let baseHost1Idx = -1;
+
+    for (let h0Idx = 0; h0Idx < baseHosts0.length && !baselineFound; h0Idx += 1) {
+      const h0 = baseHosts0[h0Idx]!;
+      const c0 = checkSpanEndpointContact(
+        origP0.x, src.cy, origP0.z, crossUnitX, crossUnitZ, crossHalf, halfY, baselineMassObbs[h0.massIndex]!,
+      );
+      if (!c0.contacts) continue;
+      for (let h1Idx = 0; h1Idx < baseHosts1.length && !baselineFound; h1Idx += 1) {
+        const h1 = baseHosts1[h1Idx]!;
+        const c1 = checkSpanEndpointContact(
+          origP1.x, src.cy, origP1.z, crossUnitX, crossUnitZ, crossHalf, halfY, baselineMassObbs[h1.massIndex]!,
+        );
+        if (!c1.contacts) continue;
+        baselineFound = true;
+        baseHost0Idx = h0.massIndex;
+        baseHost1Idx = h1.massIndex;
+      }
+    }
+
+    if (!baselineFound) {
+      baselinePathByIndex.set(i, {
+        supportedInBaseline: false,
+        contactHosts: [],
+        allowedForeignOwners: new Set(),
+        openMeters: 0,
+        origPlacement: savedOrigPlacement,
+        origP0,
+        origP1,
+      });
+      continue;
+    }
+
+    const contactHosts = [baseHost0Idx, baseHost1Idx];
+    const allowedForeignOwners = new Set<number>();
+    for (let j = 0; j < legacyWorld.length; j += 1) {
+      if (j === baseHost0Idx || j === baseHost1Idx) continue;
+      if (roofDetailObbsConflict(origObb, baselineMassObbs[j]!, 0)) {
+        const o = getMassOwnerSeed(legacyWorld[j]!);
+        if (o !== canonicalOwner && o !== spanToCanonical) {
+          allowedForeignOwners.add(o);
+        }
+      }
+    }
+
+    const openMeters = computeChordExposedLength(
+      origP0.x, origP0.z, origP1.x, origP1.z, src.cy, savedOrigPlacement.length,
+      baselineMassObbs, baselineMassGrid, baselineMassStamps, true,
+    );
+
+    baselinePathByIndex.set(i, {
+      supportedInBaseline: true,
+      contactHosts,
+      allowedForeignOwners,
+      openMeters,
+      origPlacement: savedOrigPlacement,
+      origP0,
+      origP1,
+    });
+  }
+
+  const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
+
+  const dispositions: SkyriverTrimDisposition[] = new Array(sourceCount);
+  let unchangedCount = 0;
+  let rehostedCount = 0;
+
+  for (let i = 0; i < sourceCount; i += 1) {
+    const k = kind[i]!;
+    const ow = owner[i]!;
+    const sp = spanTo[i] ?? null;
+    const isSpan = (k === SKYRIVER_TRIM_GANTRY || k === SKYRIVER_TRIM_SKYBRIDGE) && sp !== null;
+    const isR27 = i >= r27StartIndex && i < r27EndIndex;
+    const canonicalOwner = ow.materialOwner ?? buildingSeedOf(ow.x, ow.z);
+    const spanToCanonical = sp !== null ? (sp.materialOwner ?? buildingSeedOf(sp.x, sp.z)) : 0;
+    const isOrdinaryTower =
+      sp !== null &&
+      towerAnchorBySeed.get(canonicalOwner)?.has(ow.anchorV) === true &&
+      towerAnchorBySeed.get(spanToCanonical)?.has(sp.anchorV) === true;
+    const isOrdinarySpan = isSpan && !isR27 && isOrdinaryTower;
+
+    if (!isOrdinarySpan) {
+      const prevDisp = reconciliationD2.dispositions[i]!;
+      dispositions[i] = prevDisp;
+      if (prevDisp.kind === 'side-rehosted' || prevDisp.kind === 'roof-rehosted') {
+        rehostedCount += 1;
+      } else {
+        unchangedCount += 1;
+      }
+      continue;
+    }
+
+    const src = sourceInventory[i]!;
+    const ocx = src.cx;
+    const ocy = src.cy;
+    const ocz = src.cz;
+    const osx = src.sx;
+    const osy = src.sy;
+    const osz = src.sz;
+    const oldGeom = Object.freeze({ cx: ocx, cy: ocy, cz: ocz, sx: osx, sy: osy, sz: osz });
+
+    const basePath = baselinePathByIndex.get(i)!;
+    if (!basePath.supportedInBaseline) {
+      dispositions[i] = Object.freeze({
+        kind: 'inherited-span-unsupported',
+        sourceIndex: i,
+        finalIndex: i,
+        heroFiltered: false,
+        blockingHeroIds: Object.freeze([]),
+        oldGeometry: oldGeom,
+        newGeometry: oldGeom,
+      });
+      unchangedCount += 1;
+      continue;
+    }
+
+    const along = osz >= osx;
+    const originalL = along ? osz : osx;
+    const originalWidth = along ? osx : osz;
+    const oldCross = along ? ocx : ocz;
+    const oldLong = along ? ocz : ocx;
+    const half = originalL * 0.5;
+    const e0x = along ? ocx : ocx - half;
+    const e0z = along ? ocz - half : ocz;
+    const ownerAtLow = footprintGap(ow, e0x, e0z) <= footprintGap(sp, e0x, e0z);
+    const crossHalf = originalWidth * 0.5;
+    const halfY = osy * 0.5;
+
+    const end0Canonical = ownerAtLow ? canonicalOwner : spanToCanonical;
+    const end0AnchorV = ownerAtLow ? ow.anchorV : sp.anchorV;
+    const end1Canonical = ownerAtLow ? spanToCanonical : canonicalOwner;
+    const end1AnchorV = ownerAtLow ? sp.anchorV : ow.anchorV;
+
+    const candHosts0 = candidateHostsByKey.get(hostIndexKey(end0Canonical, end0AnchorV)) ?? [];
+    const candHosts1 = candidateHostsByKey.get(hostIndexKey(end1Canonical, end1AnchorV)) ?? [];
+
+    const heading = basePath.origPlacement.heading;
+    const crossUnitX = along ? Math.cos(heading) : Math.sin(heading);
+    const crossUnitZ = along ? -Math.sin(heading) : Math.cos(heading);
+
+    let supportedInFinal = false;
+    let finalHost0Idx = -1;
+    let finalHost1Idx = -1;
+    for (let h0Idx = 0; h0Idx < candHosts0.length && !supportedInFinal; h0Idx += 1) {
+      const h0 = candHosts0[h0Idx]!;
+      const c0 = checkSpanEndpointContact(
+        basePath.origP0.x, ocy, basePath.origP0.z, crossUnitX, crossUnitZ, crossHalf, halfY, finalMassObbs[h0.massIndex]!,
+      );
+      if (!c0.contacts) continue;
+      for (let h1Idx = 0; h1Idx < candHosts1.length && !supportedInFinal; h1Idx += 1) {
+        const h1 = candHosts1[h1Idx]!;
+        const c1 = checkSpanEndpointContact(
+          basePath.origP1.x, ocy, basePath.origP1.z, crossUnitX, crossUnitZ, crossHalf, halfY, finalMassObbs[h1.massIndex]!,
+        );
+        if (!c1.contacts) continue;
+        supportedInFinal = true;
+        finalHost0Idx = h0.massIndex;
+        finalHost1Idx = h1.massIndex;
+      }
+    }
+
+    if (supportedInFinal) {
+      trialTrims.cx[0] = ocx;
+      trialTrims.cy[0] = ocy;
+      trialTrims.cz[0] = ocz;
+      trialTrims.sx[0] = osx;
+      trialTrims.sy[0] = osy;
+      trialTrims.sz[0] = osz;
+      trialTrims.kind[0] = k;
+      trialTrims.seedValue[0] = src.seedValue;
+      trialOwner[0] = ow;
+      trialSpanTo[0] = sp;
+      const curObb = roofDetailTrimObb(trialTrims, 0);
+
+      let hasNewForeignOwner = false;
+      for (let j = 0; j < masses.length; j += 1) {
+        if (j === finalHost0Idx || j === finalHost1Idx) continue;
+        if (roofDetailObbsConflict(curObb, finalMassObbs[j]!, 0)) {
+          const o = getMassOwnerSeed(masses[j]!);
+          if (o !== canonicalOwner && o !== spanToCanonical && !basePath.allowedForeignOwners.has(o)) {
+            hasNewForeignOwner = true;
+            break;
+          }
+        }
+      }
+
+      const curExposedLengthM = computeChordExposedLength(
+        basePath.origP0.x, basePath.origP0.z, basePath.origP1.x, basePath.origP1.z, ocy, basePath.origPlacement.length,
+        finalMassObbs, finalMassGrid, finalMassStamps, false,
+      );
+      const tol = roofDetailFloatTolerance(curObb, curObb);
+      const lostExposure = basePath.openMeters > tol && curExposedLengthM <= tol;
+
+      if (!hasNewForeignOwner && !lostExposure) {
+        dispositions[i] = Object.freeze({
+          kind: 'unchanged',
+          sourceIndex: i,
+          finalIndex: i,
+          heroFiltered: false,
+          blockingHeroIds: Object.freeze([]),
+          oldGeometry: oldGeom,
+          newGeometry: oldGeom,
+        });
+        unchangedCount += 1;
+        continue;
+      }
+    }
+
+    const candHostsA = candidateHostsByKey.get(hostIndexKey(canonicalOwner, ow.anchorV)) ?? [];
+    const candHostsB = candidateHostsByKey.get(hostIndexKey(spanToCanonical, sp.anchorV)) ?? [];
+
+    let minimumSkyCrossGapM = Infinity;
+    let eligibleSkyPairs = 0;
+    const sameSkyFrame = ow.anchorV === sp.anchorV;
+    if (k === SKYRIVER_TRIM_SKYBRIDGE && sameSkyFrame) {
+      for (let aIdx = 0; aIdx < candHostsA.length; aIdx += 1) {
+        const aMass = candHostsA[aIdx]!.mass;
+        for (let bIdx = 0; bIdx < candHostsB.length; bIdx += 1) {
+          const bMass = candHostsB[bIdx]!.mass;
+          const loY = Math.max(aMass.y0, bMass.y0, SKYRIVER_SKYBRIDGE_MIN_Y_M);
+          const hiY = Math.min(aMass.y0 + aMass.height, bMass.y0 + bMass.height);
+          if (hiY < loY - osy) continue;
+          const crossA = along ? aMass.x : aMass.z;
+          const crossB = along ? bMass.x : bMass.z;
+          const halfA = (along ? aMass.width : aMass.depth) * 0.5;
+          const halfB = (along ? bMass.width : bMass.depth) * 0.5;
+          const gap = Math.max(
+            0,
+            Math.max(crossA - halfA, crossB - halfB) - Math.min(crossA + halfA, crossB + halfB),
+          );
+          eligibleSkyPairs += 1;
+          minimumSkyCrossGapM = Math.min(minimumSkyCrossGapM, gap);
+        }
+      }
+    }
+
+    let maxHostTol = 0;
+    for (let aIdx = 0; aIdx < candHostsA.length; aIdx += 1) {
+      const obb = finalMassObbs[candHostsA[aIdx]!.massIndex]!;
+      maxHostTol = Math.max(maxHostTol, roofDetailFloatTolerance(obb, obb));
+    }
+    for (let bIdx = 0; bIdx < candHostsB.length; bIdx += 1) {
+      const obb = finalMassObbs[candHostsB[bIdx]!.massIndex]!;
+      maxHostTol = Math.max(maxHostTol, roofDetailFloatTolerance(obb, obb));
+    }
+
+    const originalWidthMathematicallyImpossible =
+      k === SKYRIVER_TRIM_SKYBRIDGE &&
+      sameSkyFrame &&
+      eligibleSkyPairs > 0 &&
+      minimumSkyCrossGapM > originalWidth + maxHostTol * 2;
+
+    const widthCases = [originalWidth];
+    if (originalWidthMathematicallyImpossible && minimumSkyCrossGapM <= 30) {
+      widthCases.push(Math.fround(Math.min(30, Math.max(28, minimumSkyCrossGapM + 2))));
+    }
+
+    interface BestSpanCandidate {
+      readonly cost: number;
+      readonly cx: number;
+      readonly cy: number;
+      readonly cz: number;
+      readonly sx: number;
+      readonly sy: number;
+      readonly sz: number;
+      readonly sourceLengthM: number;
+      readonly placementLength: number;
+      readonly obb: RoofDetailObb;
+      readonly host0: SkyriverSpanHost;
+      readonly host1: SkyriverSpanHost;
+      readonly contact0: SkyriverSpanEndpointContact;
+      readonly contact1: SkyriverSpanEndpointContact;
+      readonly newEnd0: SkyriverSpanEndpoint;
+      readonly newEnd1: SkyriverSpanEndpoint;
+      readonly exposedLengthM: number;
+    }
+
+    const uniqueCandidates = new Set<string>();
+
+    const rejections = {
+      support: 0,
+      solid: 0,
+      hero: 0,
+      wingAir: 0,
+      notch: 0,
+      prefix: 0,
+    };
+
+    const findBestSpanCandidate = (): BestSpanCandidate | null => {
+      let best: BestSpanCandidate | null = null;
+    for (let wIdx = 0; wIdx < widthCases.length; wIdx += 1) {
+      const width = widthCases[wIdx]!;
+      for (const changeLength of [false, true]) {
+        for (let aIdx = 0; aIdx < candHostsA.length; aIdx += 1) {
+          const a = candHostsA[aIdx]!;
+          for (let bIdx = 0; bIdx < candHostsB.length; bIdx += 1) {
+            const b = candHostsB[bIdx]!;
+            let low = a;
+            let high = b;
+            const longA = along ? a.mass.z : a.mass.x;
+            const longB = along ? b.mass.z : b.mass.x;
+            const crossA = along ? a.mass.x : a.mass.z;
+            const crossB = along ? b.mass.x : b.mass.z;
+            const crossHalfA = (along ? a.mass.width : a.mass.depth) * 0.5;
+            const crossHalfB = (along ? b.mass.width : b.mass.depth) * 0.5;
+
+            if (longA > longB) {
+              low = b;
+              high = a;
+            }
+            const loLong = along ? low.mass.z : low.mass.x;
+            const hiLong = along ? high.mass.z : high.mass.x;
+            const loHalf = (along ? low.mass.depth : low.mass.width) * 0.5;
+            const hiHalf = (along ? high.mass.depth : high.mass.width) * 0.5;
+
+            let crossMin = Math.max(crossA - crossHalfA, crossB - crossHalfB);
+            let crossMax = Math.min(crossA + crossHalfA, crossB + crossHalfB);
+            if (crossMax < crossMin) {
+              crossMin -= width * 0.5;
+              crossMax += width * 0.5;
+            }
+            if (crossMax < crossMin) continue;
+
+            let minY = Math.max(
+              a.mass.y0,
+              b.mass.y0,
+              k === SKYRIVER_TRIM_SKYBRIDGE ? SKYRIVER_SKYBRIDGE_MIN_Y_M : -Infinity,
+            );
+            let maxY = Math.min(a.mass.y0 + a.mass.height, b.mass.y0 + b.mass.height);
+            if (maxY < minY) {
+              minY = Math.max(
+                Math.max(a.mass.y0, b.mass.y0) - osy * 0.5 + 0.005,
+                k === SKYRIVER_TRIM_SKYBRIDGE ? SKYRIVER_SKYBRIDGE_MIN_Y_M : -Infinity,
+              );
+              maxY = Math.min(a.mass.y0 + a.mass.height, b.mass.y0 + b.mass.height) + osy * 0.5 - 0.005;
+            }
+            if (maxY < minY) continue;
+
+            const loMin = loLong - loHalf;
+            const loMax = loLong + loHalf;
+            const hiMin = hiLong - hiHalf;
+            const hiMax = hiLong + hiHalf;
+
+            let longCases: { readonly centre: number; readonly length: number }[];
+            if (!changeLength) {
+              const e0Min = Math.max(loMin, hiMin - originalL);
+              const e0Max = Math.min(loMax, hiMax - originalL);
+              if (e0Max < e0Min) continue;
+              longCases = [
+                clamp(oldLong - originalL * 0.5, e0Min, e0Max),
+                (e0Min + e0Max) * 0.5,
+              ].map((e0) => ({ centre: e0 + originalL * 0.5, length: originalL }));
+            } else {
+              const e0 = loMax - 0.005;
+              const e1 = hiMin + 0.005;
+              longCases = [{ centre: (e0 + e1) * 0.5, length: e1 - e0 }];
+            }
+
+            const xs = [
+              clamp(oldCross, crossMin, crossMax),
+              (crossMin + crossMax) * 0.5,
+              crossMin + Math.min(0.005, (crossMax - crossMin) * 0.5),
+              crossMax - Math.min(0.005, (crossMax - crossMin) * 0.5),
+            ];
+            const ys = [
+              clamp(ocy, minY, maxY),
+              (minY + maxY) * 0.5,
+              minY + Math.min(0.005, (maxY - minY) * 0.5),
+              maxY - Math.min(0.005, (maxY - minY) * 0.5),
+            ];
+
+            for (let lIdx = 0; lIdx < longCases.length; lIdx += 1) {
+              const lc = longCases[lIdx]!;
+              if (lc.length <= Math.max(width, 8)) continue;
+              if (k === SKYRIVER_TRIM_GANTRY && lc.length > SKYRIVER_GANTRY_MAX_SPAN_M) continue;
+
+              for (let xIdx = 0; xIdx < xs.length; xIdx += 1) {
+                const cr = xs[xIdx]!;
+                for (let yIdx = 0; yIdx < ys.length; yIdx += 1) {
+                  const y = ys[yIdx]!;
+                  const fx = Math.fround(along ? cr : lc.centre);
+                  const fy = Math.fround(y);
+                  const fz = Math.fround(along ? lc.centre : cr);
+                  const fsx = Math.fround(along ? width : lc.length);
+                  const fsy = Math.fround(osy);
+                  const fsz = Math.fround(along ? lc.length : width);
+
+                  if ((osz >= osx) !== (fsz >= fsx)) continue;
+
+                  const candidateKey = `${a.massIndex}/${b.massIndex}/${fx}/${fy}/${fz}/${fsx}/${fsz}`;
+                  if (uniqueCandidates.has(candidateKey)) continue;
+                  uniqueCandidates.add(candidateKey);
+
+                  trialTrims.cx[0] = fx;
+                  trialTrims.cy[0] = fy;
+                  trialTrims.cz[0] = fz;
+                  trialTrims.sx[0] = fsx;
+                  trialTrims.sy[0] = fsy;
+                  trialTrims.sz[0] = fsz;
+                  trialTrims.kind[0] = k;
+                  trialTrims.seedValue[0] = seedValue[i]!;
+                  trialOwner[0] = ow;
+                  trialSpanTo[0] = sp;
+
+                  placeTrim(trialTrims, 0, trialPlacement);
+                  const [curEnd0, curEnd1] = spanPlacementEndpoints(trialPlacement, fsx, fsz);
+                  const curEnd0x = curEnd0.x;
+                  const curEnd0z = curEnd0.z;
+                  const curEnd1x = curEnd1.x;
+                  const curEnd1z = curEnd1.z;
+
+                  const alongAxis = fsz >= fsx;
+                  const halfLen = (alongAxis ? fsz : fsx) * 0.5;
+                  const e0x = alongAxis ? fx : fx - halfLen;
+                  const e0z = alongAxis ? fz - halfLen : fz;
+                  const candOwnerAtLow = footprintGap(ow, e0x, e0z) <= footprintGap(sp, e0x, e0z);
+                  const hostAtEnd0 = candOwnerAtLow ? a : b;
+                  const hostAtEnd1 = candOwnerAtLow ? b : a;
+
+                  const candHeading = trialPlacement.heading;
+                  const crossUnitX = alongAxis ? Math.cos(candHeading) : Math.sin(candHeading);
+                  const crossUnitZ = alongAxis ? -Math.sin(candHeading) : Math.cos(candHeading);
+                  const candCrossHalf = (alongAxis ? fsx : fsz) * 0.5;
+                  const candHalfY = fsy * 0.5;
+
+                  const c0 = checkSpanEndpointContact(
+                    curEnd0x, fy, curEnd0z, crossUnitX, crossUnitZ, candCrossHalf, candHalfY, finalMassObbs[hostAtEnd0.massIndex]!,
+                  );
+                  if (!c0.contacts) {
+                    rejections.support += 1;
+                    continue;
+                  }
+                  const c1 = checkSpanEndpointContact(
+                    curEnd1x, fy, curEnd1z, crossUnitX, crossUnitZ, candCrossHalf, candHalfY, finalMassObbs[hostAtEnd1.massIndex]!,
+                  );
+                  if (!c1.contacts) {
+                    rejections.support += 1;
+                    continue;
+                  }
+
+                  const candObb = roofDetailTrimObb(trialTrims, 0);
+                  if (roofDetailBlocksHero(candObb, heroBoxes)) {
+                    rejections.hero += 1;
+                    continue;
+                  }
+                  if (roofDetailIndexConflicts(wingAirIndex, candObb, 0)) {
+                    rejections.wingAir += 1;
+                    continue;
+                  }
+
+                  let notchBlocked = false;
+                  for (const notchObb of acceptedNotches.values()) {
+                    if (roofDetailObbsConflict(candObb, notchObb, 0)) {
+                      notchBlocked = true;
+                      break;
+                    }
+                  }
+                  if (notchBlocked) {
+                    rejections.notch += 1;
+                    continue;
+                  }
+
+                  finalMassStamp += 1;
+                  if (finalMassStamp >= 0x7ffffffe) {
+                    finalMassStamps.fill(0);
+                    finalMassStamp = 1;
+                  }
+                  const mStamp = finalMassStamp;
+                  const minGX = Math.floor(candObb.minX / ROOF_DETAIL_SPATIAL_CELL_M);
+                  const maxGX = Math.floor(candObb.maxX / ROOF_DETAIL_SPATIAL_CELL_M);
+                  const minGZ = Math.floor(candObb.minZ / ROOF_DETAIL_SPATIAL_CELL_M);
+                  const maxGZ = Math.floor(candObb.maxZ / ROOF_DETAIL_SPATIAL_CELL_M);
+                  let foreignBlocked = false;
+
+                  for (let gx = minGX; gx <= maxGX && !foreignBlocked; gx += 1) {
+                    for (let gz = minGZ; gz <= maxGZ && !foreignBlocked; gz += 1) {
+                      const bucket = finalMassGrid.get(roofDetailCellKey(gx, gz));
+                      if (bucket === undefined) continue;
+                      for (let mEntryIdx = 0; mEntryIdx < bucket.length; mEntryIdx += 1) {
+                        const mIdx = bucket[mEntryIdx]!;
+                        if (mIdx === a.massIndex || mIdx === b.massIndex) continue;
+                        if (finalMassStamps[mIdx] === mStamp) continue;
+                        finalMassStamps[mIdx] = mStamp;
+                        if (roofDetailObbsConflict(candObb, finalMassObbs[mIdx]!, 0)) {
+                          const o = getMassOwnerSeed(masses[mIdx]!);
+                          if (o !== canonicalOwner && o !== spanToCanonical && !basePath.allowedForeignOwners.has(o)) {
+                            foreignBlocked = true;
+                            break;
+                          }
+                        }
+                      }
+                    }
+                  }
+                  if (foreignBlocked) {
+                    rejections.solid += 1;
+                    continue;
+                  }
+
+                  const exposedLengthM = computeChordExposedLength(
+                    curEnd0x, curEnd0z, curEnd1x, curEnd1z, fy, trialPlacement.length,
+                    finalMassObbs, finalMassGrid, finalMassStamps, false,
+                  );
+                  const tol = roofDetailFloatTolerance(candObb, candObb);
+                  if (basePath.openMeters > tol && exposedLengthM <= tol) {
+                    rejections.solid += 1;
+                    continue;
+                  }
+
+                  if (checkPrefixConflict(candObb, i)) {
+                    rejections.prefix += 1;
+                    continue;
+                  }
+
+                  const candSourceLengthM = along ? fsz : fsx;
+                  const candCrossWidthM = along ? fsx : fsz;
+                  const origP = basePath.origPlacement;
+                  const dx = trialPlacement.x - origP.x;
+                  const dy = fy - ocy;
+                  const dz = trialPlacement.z - origP.z;
+                  const displacement = Math.hypot(dx, dy, dz);
+                  const worldLengthChange = Math.abs(trialPlacement.length - origP.length);
+                  const crosswidthChange = Math.abs(candCrossWidthM - originalWidth);
+                  const cost = displacement + 0.5 * worldLengthChange + 0.5 * crosswidthChange;
+
+                  if (best === null || cost < best.cost - 1e-6) {
+                    best = {
+                      cost,
+                      cx: fx,
+                      cy: fy,
+                      cz: fz,
+                      sx: fsx,
+                      sy: fsy,
+                      sz: fsz,
+                      sourceLengthM: candSourceLengthM,
+                      placementLength: trialPlacement.length,
+                      obb: candObb,
+                      host0: Object.freeze({
+                        massIndex: hostAtEnd0.massIndex,
+                        canonicalOwner: getMassOwnerSeed(hostAtEnd0.mass),
+                        anchorV: getMassAnchorV(hostAtEnd0.mass),
+                      }),
+                      host1: Object.freeze({
+                        massIndex: hostAtEnd1.massIndex,
+                        canonicalOwner: getMassOwnerSeed(hostAtEnd1.mass),
+                        anchorV: getMassAnchorV(hostAtEnd1.mass),
+                      }),
+                      contact0: Object.freeze({
+                        crossOverlapM: c0.crossOverlapM,
+                        verticalOverlapM: c0.verticalOverlapM,
+                      }),
+                      contact1: Object.freeze({
+                        crossOverlapM: c1.crossOverlapM,
+                        verticalOverlapM: c1.verticalOverlapM,
+                      }),
+                      newEnd0: Object.freeze({ x: curEnd0x, y: fy, z: curEnd0z }),
+                      newEnd1: Object.freeze({ x: curEnd1x, y: fy, z: curEnd1z }),
+                      exposedLengthM,
+                    };
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      if (best !== null) break;
+    }
+      return best;
+    };
+
+    const best = findBestSpanCandidate();
+
+    if (best === null) {
+      fail(
+        `SKYRIVER_SPAN_TRIM_HOST_MISSING: seed ${seed} trim ${i}, hosts: ${candHostsA.length + candHostsB.length}, ` +
+          `support: ${rejections.support}, solid: ${rejections.solid}, hero: ${rejections.hero}, ` +
+          `wing air: ${rejections.wingAir}, notch: ${rejections.notch}, prefix: ${rejections.prefix}`,
+      );
+    }
+
+    cx[i] = best.cx;
+    cy[i] = best.cy;
+    cz[i] = best.cz;
+    sx[i] = best.sx;
+    sy[i] = best.sy;
+    sz[i] = best.sz;
+
+    currentObbs[i] = best.obb;
+    roofDetailPrefixInsertCell(prefixCells, i, best.obb, cellSize);
+
+    const newGeom = Object.freeze({
+      cx: best.cx,
+      cy: best.cy,
+      cz: best.cz,
+      sx: best.sx,
+      sy: best.sy,
+      sz: best.sz,
+    });
+
+    dispositions[i] = Object.freeze({
+      kind: 'span-rehosted',
+      sourceIndex: i,
+      finalIndex: i,
+      heroFiltered: false,
+      blockingHeroIds: Object.freeze([]),
+      oldGeometry: oldGeom,
+      newGeometry: newGeom,
+      hosts: Object.freeze([best.host0, best.host1] as const),
+      oldWorld: Object.freeze({
+        endpoints: Object.freeze([
+          Object.freeze({ x: basePath.origP0.x, y: ocy, z: basePath.origP0.z }),
+          Object.freeze({ x: basePath.origP1.x, y: ocy, z: basePath.origP1.z }),
+        ] as const),
+        sourceLengthM: originalL,
+        worldLengthM: basePath.origPlacement.length,
+        exposedLengthM: basePath.openMeters,
+      }),
+      newWorld: Object.freeze({
+        endpoints: Object.freeze([best.newEnd0, best.newEnd1] as const),
+        sourceLengthM: best.sourceLengthM,
+        worldLengthM: best.placementLength,
+        exposedLengthM: best.exposedLengthM,
+      }),
+      endpointContacts: Object.freeze([best.contact0, best.contact1] as const),
+    });
+    rehostedCount += 1;
+  }
+
+  return Object.freeze({
+    seed,
+    sourceCount,
+    finalCount: sourceCount,
+    inventoryIdentity: reconciliationD2.inventoryIdentity,
+    sourceInventory,
+    dispositions: Object.freeze(dispositions),
+    unchangedCount,
+    rehostedCount,
+    roofRowsDeferred: 0,
+    spanRowsDeferred: 0,
+  });
+}
+
+
 /** Geometry, placement and text identity of one instanced pass. Colour treatment is excluded. */
 export interface SkyriverGeometryIdentity {
   readonly towers: string;
@@ -6270,6 +12940,8 @@ export class SkyriverCity {
 
   private writeTowers(): void {
     const masses = deriveCityMasses(this.layout);
+    const seedIndexMap = massSeedIndexCache.get(this.layout.seed);
+    if (seedIndexMap === undefined) fail('SKYRIVER_CITY_SEED_INDEX_CACHE_MISSING');
     const matrix = new THREE.Matrix4();
     const tint = new THREE.Color();
     const slots = Math.max(masses.length, 1);
@@ -6298,7 +12970,9 @@ export class SkyriverCity {
       buildings[i] = mass.building ?? buildingSeedOf(mass.x, mass.z);
       // R25 material identity: canonical owner seed, separate from interior culture.
       materials[i] = Math.fround(mass.materialOwner ?? mass.building ?? buildingSeedOf(mass.x, mass.z));
-      emissionAllowed[i] = mass.baseRecord?.kind === 'equipment' ? 0 : 1;
+      emissionAllowed[i] = mass.baseRecord?.kind === 'equipment'
+        || mass.supportRole === 'retained-child-bridge'
+        || mass.crownRole === 'ordinary-dark-crown' ? 0 : 1;
       // R22: the base building's own canyon anchor, so a slab, its tiers, its crowns and its annexes
       // always share one district. Never the warped world z this mass is drawn at.
       districts[i] = skyriverDistrictIdAt(this.districts, mass.anchorV ?? mass.z);
@@ -6326,7 +13000,17 @@ export class SkyriverCity {
       sizes[i * 3 + 2] = mass.depth;
 
       // Seeded off the layout, not off a fresh stream: same seed, same facades, on every peer.
-      seeds[i] = hash1(mass.x * 0.173 + mass.z * 0.0411 + mass.height * 0.0017 + m * 0.37);
+      let seedIndex = m;
+      if (seedIndexMap.has(mass)) {
+        const mappedIndex = seedIndexMap.get(mass);
+        if (mappedIndex === undefined || !Number.isFinite(mappedIndex) || mappedIndex < 0) {
+          fail('SKYRIVER_CITY_MASS_SEED_INDEX_MISSING');
+        }
+        seedIndex = mappedIndex;
+      } else if (isLowBaseMass(mass)) {
+        fail('SKYRIVER_CITY_MASS_SEED_INDEX_MISSING');
+      }
+      seeds[i] = hash1(mass.x * 0.173 + mass.z * 0.0411 + mass.height * 0.0017 + seedIndex * 0.37);
       i += 1;
     }
 

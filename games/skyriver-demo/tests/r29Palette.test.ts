@@ -135,7 +135,11 @@ describe('R29 independent building palette and value controls', () => {
       const trimOwner = trim.geometry.getAttribute('aMaterial');
       expect(trimOwner).toBeDefined();
       const heroes = deriveHeroBlades(layout);
-      const sourceIds = Array.from({ length: trims.count }, (_, i) => i).filter(i => !skyriverTrimBlocksHero(trims, i, heroes));
+      const detail = city.getRoofDetailEvidence();
+      const prefixIds = Array.from({ length: detail.oldTrimCount }, (_, i) => i).filter(i => !skyriverTrimBlocksHero(trims, i, heroes));
+      const suffixRows = detail.records.filter(r => r.drawState === 'drawn').sort((a, b) => a.drawIndex! - b.drawIndex!);
+      const sourceIds = [...prefixIds, ...suffixRows.map(r => r.trimIndex)];
+      for (const [i, row] of suffixRows.entries()) expect(row.drawIndex).toBe(prefixIds.length + i);
       expect(trim.count).toBe(sourceIds.length);
       for (let i = 0; i < trim.count; i += 1) {
         const sourceId = sourceIds[i]!, owner = trims.owner[sourceId]!;

@@ -1,0 +1,1519 @@
+{
+  "baselineCommit": "c6e81f5f698f7fb98b89c259f8a43eae2c3f5d27",
+  "sourceSha256": "c21b0bab5f530a5441d1f5277fb1176c4ba4e8bb5233a070621b779becdfaf2b",
+  "scope": "Real c6 city factory, existing atlas constructors replaced only at canvas boundaries. Actual uploaded protected tower rows selected by canonical ordinary-owner exclusion and non-base class, preserving row order. All active instance attributes and matrices are hashed. Facade owner IDs come from the real before cache. No candidate value enters this fixture.",
+  "rows": [
+    {
+      "seed": 424242,
+      "mode": "impostor",
+      "protectedCount": 3138,
+      "protectedModelSha256": "2f2f989e8394fabd000c357831070af90af8272d259585dbcd45fb8eeb10c374",
+      "instanceMatrixSha256": "09da3c3092fd71d0ab1ec323aa5d2bce2cddded6d49114b09f5cf60cba54c222",
+      "attributes": {
+        "aSeed": {
+          "itemSize": 1,
+          "sha256": "fedda707a557478998cb5824ca3f3494d555ff106791f3ea90ec6d7883e4acd4"
+        },
+        "aTint": {
+          "itemSize": 3,
+          "sha256": "09c13ec3a991900731b3432ed25ee08a5b6ba00ff33fbd8bd2b1795b7b018dcc"
+        },
+        "aSize": {
+          "itemSize": 3,
+          "sha256": "bb0579728eb3eeaa58bad0e05ef00f71151cb19a4bf02b498570521183b1bcef"
+        },
+        "aLayer": {
+          "itemSize": 1,
+          "sha256": "b45cae45d69cae817893ec50286e2761d8e9ed15e51a6496d523548fefcc61c0"
+        },
+        "aBuilding": {
+          "itemSize": 1,
+          "sha256": "57dcceaba2afe66f3faabc19a04500fff0ca80dafc874f5d33d786ce5e34d0eb"
+        },
+        "aMaterial": {
+          "itemSize": 1,
+          "sha256": "bc422ffb3c6f6e4342b04dab80ce318ea4249febab424d36c91f125c0358b17b"
+        },
+        "aEmissionAllowed": {
+          "itemSize": 1,
+          "sha256": "d5b89c39d2c36db4e5194b2f261929a054f3df47e678ffd396a3618f5b189818"
+        },
+        "aStepEdges": {
+          "itemSize": 2,
+          "sha256": "e8d2360839638e9f76ea4c6e8ad3a1522a2095b4b1f9ab09a8abfad9dcdc8c2e"
+        },
+        "aDistrict": {
+          "itemSize": 1,
+          "sha256": "abef5918cee0179233f011769680281b5d87c6987025d67ad5063a91b09ea84e"
+        }
+      },
+      "faceOwners": [
+        "mega:4240.63",
+        "tower:-630.00:-1280.00",
+        "tower:-630.00:-1600.00",
+        "tower:-630.00:-1920.00",
+        "tower:-630.00:-2240.00",
+        "tower:-630.00:-2560.00",
+        "tower:-630.00:-2880.00",
+        "tower:-630.00:-320.00",
+        "tower:-630.00:-3200.00",
+        "tower:-630.00:-3520.00",
+        "tower:-630.00:-3840.00",
+        "tower:-630.00:-4160.00",
+        "tower:-630.00:-4480.00",
+        "tower:-630.00:-4800.00",
+        "tower:-630.00:-5120.00",
+        "tower:-630.00:-5440.00",
+        "tower:-630.00:-5760.00",
+        "tower:-630.00:-6080.00",
+        "tower:-630.00:-640.00",
+        "tower:-630.00:-6400.00",
+        "tower:-630.00:-960.00",
+        "tower:-630.00:0.00",
+        "tower:-630.00:1280.00",
+        "tower:-630.00:1600.00",
+        "tower:-630.00:1920.00",
+        "tower:-630.00:2240.00",
+        "tower:-630.00:2560.00",
+        "tower:-630.00:2880.00",
+        "tower:-630.00:320.00",
+        "tower:-630.00:3200.00",
+        "tower:-630.00:3520.00",
+        "tower:-630.00:3840.00",
+        "tower:-630.00:4160.00",
+        "tower:-630.00:4480.00",
+        "tower:-630.00:4800.00",
+        "tower:-630.00:5120.00",
+        "tower:-630.00:5440.00",
+        "tower:-630.00:5760.00",
+        "tower:-630.00:6080.00",
+        "tower:-630.00:640.00",
+        "tower:-630.00:960.00",
+        "tower:630.00:-1280.00",
+        "tower:630.00:-320.00",
+        "tower:630.00:-3200.00",
+        "tower:630.00:-3520.00",
+        "tower:630.00:-3840.00",
+        "tower:630.00:-4160.00",
+        "tower:630.00:-4480.00",
+        "tower:630.00:-640.00",
+        "tower:630.00:-6400.00",
+        "tower:630.00:-960.00",
+        "tower:630.00:0.00",
+        "tower:630.00:1920.00",
+        "tower:630.00:2240.00",
+        "tower:630.00:2560.00",
+        "tower:630.00:2880.00",
+        "tower:630.00:3200.00",
+        "tower:630.00:5120.00",
+        "tower:630.00:5440.00",
+        "tower:630.00:5760.00",
+        "tower:630.00:6080.00"
+      ],
+      "base": {
+        "count": 857,
+        "modelSha256": "751ed38ae04954d915a0c5c229f4b0ed20c7fda6eb5953cf864cf566bccc6d38",
+        "instanceMatrixSha256": "af9f25c3ea3e90fd0b3d2d67ef21a9e006b79644e193b8b3697847fe2da25990",
+        "attributes": {
+          "aSeed": {
+            "itemSize": 1,
+            "sha256": "78c5f8e9f39d13385cc4fba3ef08e099cf4f6dccec90371cc23ca6e5c9b3d0d5"
+          },
+          "aTint": {
+            "itemSize": 3,
+            "sha256": "d36e2fe93e0b786ed698ef8e0bded030cc57540c81b11a2809297a6b03166929"
+          },
+          "aSize": {
+            "itemSize": 3,
+            "sha256": "f4c76a3166c8be9b571e5fdd41e267d9fa4dc4c0fee29e98e0ce6ba6dcdc8539"
+          },
+          "aLayer": {
+            "itemSize": 1,
+            "sha256": "265989120f1559dd755a7c0bc3f731bc754e92c9e7487e5d1b8057825bf2e498"
+          },
+          "aBuilding": {
+            "itemSize": 1,
+            "sha256": "06ab183a1035221c1f8d273ac749f58e15913367e4999ee5bc7e84b1f55132a2"
+          },
+          "aMaterial": {
+            "itemSize": 1,
+            "sha256": "06ab183a1035221c1f8d273ac749f58e15913367e4999ee5bc7e84b1f55132a2"
+          },
+          "aEmissionAllowed": {
+            "itemSize": 1,
+            "sha256": "31ff8bc2a699abebd36a2bef5d1d5c2e2b5f1736aa53e3315050a35a579ae06f"
+          },
+          "aStepEdges": {
+            "itemSize": 2,
+            "sha256": "4ddcddbf6f162a78ea5398c6fc9db26c8ad6395f18ebb55ea79c1ee3fba13680"
+          },
+          "aDistrict": {
+            "itemSize": 1,
+            "sha256": "7fcb83ecc3a422e05938a4e5b8351546ec9c6e20b8a933c7f62b8ca8e0ce8763"
+          }
+        }
+      }
+    },
+    {
+      "seed": 424242,
+      "mode": "geometry",
+      "protectedCount": 3268,
+      "protectedModelSha256": "98a1f1f3d50e86ebbcd10c42f6388511daf62fc43133f2773e387114771e9753",
+      "instanceMatrixSha256": "34abef4d8c4e50c8bb4552e1eb7a791e14cf3dcde81fa744c0e7a54f40c67154",
+      "attributes": {
+        "aSeed": {
+          "itemSize": 1,
+          "sha256": "7e7a56e68ed5783ad45feb93a251ebad71727a3b13d4052c82c52300080dae78"
+        },
+        "aTint": {
+          "itemSize": 3,
+          "sha256": "2fb3a018e13203402bd8fb3155907b1797315879fd1ebcfe19ddfd6fa63c107e"
+        },
+        "aSize": {
+          "itemSize": 3,
+          "sha256": "10597857ce1da07578ae5a0ddc1a5e1dcdb51e8ac3bb2477c3647117ca2311c2"
+        },
+        "aLayer": {
+          "itemSize": 1,
+          "sha256": "847d146aca257345ed51bc196ac6f1f1655f7dc35862b8cd89d96d7666db4bee"
+        },
+        "aBuilding": {
+          "itemSize": 1,
+          "sha256": "78ff4143bac556d0a5f7707e6dd9ed33840736be77856ee03294afabdb15387b"
+        },
+        "aMaterial": {
+          "itemSize": 1,
+          "sha256": "faa27b218310a2a2d9af9d309e110f0408b476f0063bb810063803cd624515df"
+        },
+        "aEmissionAllowed": {
+          "itemSize": 1,
+          "sha256": "c15b7529711eb7d6f6f1d2ce2a133d1c0a9878228dff0e0c760e08fcdc3c1ef7"
+        },
+        "aStepEdges": {
+          "itemSize": 2,
+          "sha256": "114dedb602dbd3d7dfb4da992a20f303d228f66a4ed495ffe425a7109ed680a6"
+        },
+        "aDistrict": {
+          "itemSize": 1,
+          "sha256": "da1a3aad765ea3f7a262647597b50b064aff4627c8de59b13530c8ec62fdd44b"
+        }
+      },
+      "faceOwners": [
+        "mega:4240.63",
+        "tower:-630.00:-1280.00",
+        "tower:-630.00:-1600.00",
+        "tower:-630.00:-1920.00",
+        "tower:-630.00:-2240.00",
+        "tower:-630.00:-2560.00",
+        "tower:-630.00:-2880.00",
+        "tower:-630.00:-320.00",
+        "tower:-630.00:-3200.00",
+        "tower:-630.00:-3520.00",
+        "tower:-630.00:-3840.00",
+        "tower:-630.00:-4160.00",
+        "tower:-630.00:-4480.00",
+        "tower:-630.00:-4800.00",
+        "tower:-630.00:-5120.00",
+        "tower:-630.00:-5440.00",
+        "tower:-630.00:-5760.00",
+        "tower:-630.00:-6080.00",
+        "tower:-630.00:-640.00",
+        "tower:-630.00:-6400.00",
+        "tower:-630.00:-960.00",
+        "tower:-630.00:0.00",
+        "tower:-630.00:1280.00",
+        "tower:-630.00:1600.00",
+        "tower:-630.00:1920.00",
+        "tower:-630.00:2240.00",
+        "tower:-630.00:2560.00",
+        "tower:-630.00:2880.00",
+        "tower:-630.00:320.00",
+        "tower:-630.00:3200.00",
+        "tower:-630.00:3520.00",
+        "tower:-630.00:3840.00",
+        "tower:-630.00:4160.00",
+        "tower:-630.00:4480.00",
+        "tower:-630.00:4800.00",
+        "tower:-630.00:5120.00",
+        "tower:-630.00:5440.00",
+        "tower:-630.00:5760.00",
+        "tower:-630.00:6080.00",
+        "tower:-630.00:640.00",
+        "tower:-630.00:960.00",
+        "tower:630.00:-1280.00",
+        "tower:630.00:-320.00",
+        "tower:630.00:-3200.00",
+        "tower:630.00:-3520.00",
+        "tower:630.00:-3840.00",
+        "tower:630.00:-4160.00",
+        "tower:630.00:-4480.00",
+        "tower:630.00:-640.00",
+        "tower:630.00:-6400.00",
+        "tower:630.00:-960.00",
+        "tower:630.00:0.00",
+        "tower:630.00:1920.00",
+        "tower:630.00:2240.00",
+        "tower:630.00:2560.00",
+        "tower:630.00:2880.00",
+        "tower:630.00:3200.00",
+        "tower:630.00:5120.00",
+        "tower:630.00:5440.00",
+        "tower:630.00:5760.00",
+        "tower:630.00:6080.00"
+      ],
+      "base": {
+        "count": 857,
+        "modelSha256": "751ed38ae04954d915a0c5c229f4b0ed20c7fda6eb5953cf864cf566bccc6d38",
+        "instanceMatrixSha256": "af9f25c3ea3e90fd0b3d2d67ef21a9e006b79644e193b8b3697847fe2da25990",
+        "attributes": {
+          "aSeed": {
+            "itemSize": 1,
+            "sha256": "78c5f8e9f39d13385cc4fba3ef08e099cf4f6dccec90371cc23ca6e5c9b3d0d5"
+          },
+          "aTint": {
+            "itemSize": 3,
+            "sha256": "d36e2fe93e0b786ed698ef8e0bded030cc57540c81b11a2809297a6b03166929"
+          },
+          "aSize": {
+            "itemSize": 3,
+            "sha256": "f4c76a3166c8be9b571e5fdd41e267d9fa4dc4c0fee29e98e0ce6ba6dcdc8539"
+          },
+          "aLayer": {
+            "itemSize": 1,
+            "sha256": "265989120f1559dd755a7c0bc3f731bc754e92c9e7487e5d1b8057825bf2e498"
+          },
+          "aBuilding": {
+            "itemSize": 1,
+            "sha256": "06ab183a1035221c1f8d273ac749f58e15913367e4999ee5bc7e84b1f55132a2"
+          },
+          "aMaterial": {
+            "itemSize": 1,
+            "sha256": "06ab183a1035221c1f8d273ac749f58e15913367e4999ee5bc7e84b1f55132a2"
+          },
+          "aEmissionAllowed": {
+            "itemSize": 1,
+            "sha256": "31ff8bc2a699abebd36a2bef5d1d5c2e2b5f1736aa53e3315050a35a579ae06f"
+          },
+          "aStepEdges": {
+            "itemSize": 2,
+            "sha256": "4ddcddbf6f162a78ea5398c6fc9db26c8ad6395f18ebb55ea79c1ee3fba13680"
+          },
+          "aDistrict": {
+            "itemSize": 1,
+            "sha256": "7fcb83ecc3a422e05938a4e5b8351546ec9c6e20b8a933c7f62b8ca8e0ce8763"
+          }
+        }
+      }
+    },
+    {
+      "seed": 0,
+      "mode": "impostor",
+      "protectedCount": 3150,
+      "protectedModelSha256": "dc7357e4e3e81a2e5a8b024de0652b2452dcf50e7f1147bbfaffb34b49808509",
+      "instanceMatrixSha256": "fe45b6f675ded8e4fcd7b3e7e5e60519208f515971c18f82870cb17ac6dd63be",
+      "attributes": {
+        "aSeed": {
+          "itemSize": 1,
+          "sha256": "7987b923a45ef7e02cd1d7216b9ac66e63289d322b8ddbb6c9a392cccd7b3913"
+        },
+        "aTint": {
+          "itemSize": 3,
+          "sha256": "ed3b02fe101cde69bcf9cf6e6357c81a301a86d508749e91c223f6602a2378db"
+        },
+        "aSize": {
+          "itemSize": 3,
+          "sha256": "376ce693cdccb0421a4ea8351c221a6a45f1df2a67b930b9efc94c35caefd5a7"
+        },
+        "aLayer": {
+          "itemSize": 1,
+          "sha256": "1a2751a66005099a0d19d22cd05c6ca633673a320123dc125f39ca58bad3f5bc"
+        },
+        "aBuilding": {
+          "itemSize": 1,
+          "sha256": "651f8877359764b1b8a8a2294c6e3526da77f221e7e970bb65394c9d064ca3c5"
+        },
+        "aMaterial": {
+          "itemSize": 1,
+          "sha256": "da67733c95c02b13b6ccb4c1d084c8817a7816ccf7665e66932020959903e20e"
+        },
+        "aEmissionAllowed": {
+          "itemSize": 1,
+          "sha256": "3d2fde3f9b0791f00b160a0688b0f44e6ff18d1be1c4b65addde9d34d9c01bfc"
+        },
+        "aStepEdges": {
+          "itemSize": 2,
+          "sha256": "d254f55b2b40b53ed015ee795b480c5c5c0740c2f0fbac38422e4e580235119d"
+        },
+        "aDistrict": {
+          "itemSize": 1,
+          "sha256": "85640c713d8375ea977802bc386e1cd970196e7d0ec7441543adddb8a2a13322"
+        }
+      },
+      "faceOwners": [
+        "mega:4240.63",
+        "tower:-630.00:-1280.00",
+        "tower:-630.00:-1600.00",
+        "tower:-630.00:-1920.00",
+        "tower:-630.00:-2240.00",
+        "tower:-630.00:-2560.00",
+        "tower:-630.00:-2880.00",
+        "tower:-630.00:-320.00",
+        "tower:-630.00:-3200.00",
+        "tower:-630.00:-3520.00",
+        "tower:-630.00:-3840.00",
+        "tower:-630.00:-4160.00",
+        "tower:-630.00:-4480.00",
+        "tower:-630.00:-4800.00",
+        "tower:-630.00:-5120.00",
+        "tower:-630.00:-5440.00",
+        "tower:-630.00:-5760.00",
+        "tower:-630.00:-6080.00",
+        "tower:-630.00:-640.00",
+        "tower:-630.00:-6400.00",
+        "tower:-630.00:-960.00",
+        "tower:-630.00:0.00",
+        "tower:-630.00:1280.00",
+        "tower:-630.00:1600.00",
+        "tower:-630.00:1920.00",
+        "tower:-630.00:2240.00",
+        "tower:-630.00:2560.00",
+        "tower:-630.00:2880.00",
+        "tower:-630.00:320.00",
+        "tower:-630.00:3200.00",
+        "tower:-630.00:3520.00",
+        "tower:-630.00:3840.00",
+        "tower:-630.00:4160.00",
+        "tower:-630.00:4480.00",
+        "tower:-630.00:4800.00",
+        "tower:-630.00:5120.00",
+        "tower:-630.00:5440.00",
+        "tower:-630.00:5760.00",
+        "tower:-630.00:6080.00",
+        "tower:-630.00:640.00",
+        "tower:-630.00:960.00",
+        "tower:630.00:-1280.00",
+        "tower:630.00:-320.00",
+        "tower:630.00:-3200.00",
+        "tower:630.00:-3520.00",
+        "tower:630.00:-3840.00",
+        "tower:630.00:-4160.00",
+        "tower:630.00:-4480.00",
+        "tower:630.00:-640.00",
+        "tower:630.00:-6400.00",
+        "tower:630.00:-960.00",
+        "tower:630.00:0.00",
+        "tower:630.00:1920.00",
+        "tower:630.00:2240.00",
+        "tower:630.00:2560.00",
+        "tower:630.00:2880.00",
+        "tower:630.00:3200.00",
+        "tower:630.00:5120.00",
+        "tower:630.00:5440.00",
+        "tower:630.00:5760.00",
+        "tower:630.00:6080.00"
+      ],
+      "base": {
+        "count": 834,
+        "modelSha256": "c6a5f94b0e128c54af370b3333d41700ac0b59cafbd1456a7d3cd4d28997179f",
+        "instanceMatrixSha256": "2697a9467eac0347e6c4a1ccea7ba3b930577d89a2c75ab65cb749d8b71cb8c8",
+        "attributes": {
+          "aSeed": {
+            "itemSize": 1,
+            "sha256": "50f855b094f7aef52ca89f70cb701a7501f7dfe2af0db6e27cdad5d680366de2"
+          },
+          "aTint": {
+            "itemSize": 3,
+            "sha256": "26c92280a7057a263ed84a58f9fb054ab9c498ca9e3417d97ade3959a7ea0887"
+          },
+          "aSize": {
+            "itemSize": 3,
+            "sha256": "03953ac6db91fc9a6477d7fe3c4d16f6c92da97694c6bfc7cfc1dab4277b15d3"
+          },
+          "aLayer": {
+            "itemSize": 1,
+            "sha256": "e1a162587da12ecc43d92eaefeb12d96a215432376e1c4ac9856ed400c0e8359"
+          },
+          "aBuilding": {
+            "itemSize": 1,
+            "sha256": "2e00b709bc908fc5c8bd545c6356b1b9e11708cbb6cd009c885197b94132ed40"
+          },
+          "aMaterial": {
+            "itemSize": 1,
+            "sha256": "2e00b709bc908fc5c8bd545c6356b1b9e11708cbb6cd009c885197b94132ed40"
+          },
+          "aEmissionAllowed": {
+            "itemSize": 1,
+            "sha256": "200c1098aa2a18c8b639a7925b109d73a42bd5d3e9ab10a3cc9f95dd5081caff"
+          },
+          "aStepEdges": {
+            "itemSize": 2,
+            "sha256": "0ceb2c36117a172cd14a5df6db76867e299efb7e79aa3c997e86df2700e32cc6"
+          },
+          "aDistrict": {
+            "itemSize": 1,
+            "sha256": "036cacf56b34c936d69964c101dfe8b59dc523262d188d225716ab88b9f25898"
+          }
+        }
+      }
+    },
+    {
+      "seed": 0,
+      "mode": "geometry",
+      "protectedCount": 3282,
+      "protectedModelSha256": "1f532fe27b84561e5485d40a2fff71e0a9f337d93bd8a31d33de9643b2efbe16",
+      "instanceMatrixSha256": "c199dfd2078298c1bddd068f6aac5def0dbf1459d4a20df735b37a68e8aa8ad3",
+      "attributes": {
+        "aSeed": {
+          "itemSize": 1,
+          "sha256": "0c92fa0994e70856842f0e57ade9fbb321372c435ff2d579f6a76fff2f97ee6d"
+        },
+        "aTint": {
+          "itemSize": 3,
+          "sha256": "406ffc9dc513398a6046aa64f5cc0c3fa2a98ba45f213ea7c63418f86e4edbdd"
+        },
+        "aSize": {
+          "itemSize": 3,
+          "sha256": "1531409b508f5d7f8075bae11984b94a775269f6d2fc2aa4355b323361730b56"
+        },
+        "aLayer": {
+          "itemSize": 1,
+          "sha256": "cb86b247a2a6edf6da63dc828a4ea303f33d64349b6cfd8f2f1ceb7902d54eef"
+        },
+        "aBuilding": {
+          "itemSize": 1,
+          "sha256": "8b47340415abe463d6a070c727a7aa232052406522f3ef53b756ac72f5bf4d28"
+        },
+        "aMaterial": {
+          "itemSize": 1,
+          "sha256": "7110e383560ad8d0a9a3ad22938864f8c5dd8c8c374e21194c06434e68eb29cf"
+        },
+        "aEmissionAllowed": {
+          "itemSize": 1,
+          "sha256": "214ff09835bbe72bddd7c89fd9138dafbe406c794341806ab610ead6846f255a"
+        },
+        "aStepEdges": {
+          "itemSize": 2,
+          "sha256": "de5a0cceb6adf02b5a7e6a8b30d74f25dc3e0a3e82080a704a5c2b3e4e7e061e"
+        },
+        "aDistrict": {
+          "itemSize": 1,
+          "sha256": "09b7405458c8ac1d590af4244299730bdaf2c6260f7bff0f2d2e90b66241e4ee"
+        }
+      },
+      "faceOwners": [
+        "mega:4240.63",
+        "tower:-630.00:-1280.00",
+        "tower:-630.00:-1600.00",
+        "tower:-630.00:-1920.00",
+        "tower:-630.00:-2240.00",
+        "tower:-630.00:-2560.00",
+        "tower:-630.00:-2880.00",
+        "tower:-630.00:-320.00",
+        "tower:-630.00:-3200.00",
+        "tower:-630.00:-3520.00",
+        "tower:-630.00:-3840.00",
+        "tower:-630.00:-4160.00",
+        "tower:-630.00:-4480.00",
+        "tower:-630.00:-4800.00",
+        "tower:-630.00:-5120.00",
+        "tower:-630.00:-5440.00",
+        "tower:-630.00:-5760.00",
+        "tower:-630.00:-6080.00",
+        "tower:-630.00:-640.00",
+        "tower:-630.00:-6400.00",
+        "tower:-630.00:-960.00",
+        "tower:-630.00:0.00",
+        "tower:-630.00:1280.00",
+        "tower:-630.00:1600.00",
+        "tower:-630.00:1920.00",
+        "tower:-630.00:2240.00",
+        "tower:-630.00:2560.00",
+        "tower:-630.00:2880.00",
+        "tower:-630.00:320.00",
+        "tower:-630.00:3200.00",
+        "tower:-630.00:3520.00",
+        "tower:-630.00:3840.00",
+        "tower:-630.00:4160.00",
+        "tower:-630.00:4480.00",
+        "tower:-630.00:4800.00",
+        "tower:-630.00:5120.00",
+        "tower:-630.00:5440.00",
+        "tower:-630.00:5760.00",
+        "tower:-630.00:6080.00",
+        "tower:-630.00:640.00",
+        "tower:-630.00:960.00",
+        "tower:630.00:-1280.00",
+        "tower:630.00:-320.00",
+        "tower:630.00:-3200.00",
+        "tower:630.00:-3520.00",
+        "tower:630.00:-3840.00",
+        "tower:630.00:-4160.00",
+        "tower:630.00:-4480.00",
+        "tower:630.00:-640.00",
+        "tower:630.00:-6400.00",
+        "tower:630.00:-960.00",
+        "tower:630.00:0.00",
+        "tower:630.00:1920.00",
+        "tower:630.00:2240.00",
+        "tower:630.00:2560.00",
+        "tower:630.00:2880.00",
+        "tower:630.00:3200.00",
+        "tower:630.00:5120.00",
+        "tower:630.00:5440.00",
+        "tower:630.00:5760.00",
+        "tower:630.00:6080.00"
+      ],
+      "base": {
+        "count": 834,
+        "modelSha256": "c6a5f94b0e128c54af370b3333d41700ac0b59cafbd1456a7d3cd4d28997179f",
+        "instanceMatrixSha256": "2697a9467eac0347e6c4a1ccea7ba3b930577d89a2c75ab65cb749d8b71cb8c8",
+        "attributes": {
+          "aSeed": {
+            "itemSize": 1,
+            "sha256": "50f855b094f7aef52ca89f70cb701a7501f7dfe2af0db6e27cdad5d680366de2"
+          },
+          "aTint": {
+            "itemSize": 3,
+            "sha256": "26c92280a7057a263ed84a58f9fb054ab9c498ca9e3417d97ade3959a7ea0887"
+          },
+          "aSize": {
+            "itemSize": 3,
+            "sha256": "03953ac6db91fc9a6477d7fe3c4d16f6c92da97694c6bfc7cfc1dab4277b15d3"
+          },
+          "aLayer": {
+            "itemSize": 1,
+            "sha256": "e1a162587da12ecc43d92eaefeb12d96a215432376e1c4ac9856ed400c0e8359"
+          },
+          "aBuilding": {
+            "itemSize": 1,
+            "sha256": "2e00b709bc908fc5c8bd545c6356b1b9e11708cbb6cd009c885197b94132ed40"
+          },
+          "aMaterial": {
+            "itemSize": 1,
+            "sha256": "2e00b709bc908fc5c8bd545c6356b1b9e11708cbb6cd009c885197b94132ed40"
+          },
+          "aEmissionAllowed": {
+            "itemSize": 1,
+            "sha256": "200c1098aa2a18c8b639a7925b109d73a42bd5d3e9ab10a3cc9f95dd5081caff"
+          },
+          "aStepEdges": {
+            "itemSize": 2,
+            "sha256": "0ceb2c36117a172cd14a5df6db76867e299efb7e79aa3c997e86df2700e32cc6"
+          },
+          "aDistrict": {
+            "itemSize": 1,
+            "sha256": "036cacf56b34c936d69964c101dfe8b59dc523262d188d225716ab88b9f25898"
+          }
+        }
+      }
+    },
+    {
+      "seed": 2147483647,
+      "mode": "impostor",
+      "protectedCount": 3238,
+      "protectedModelSha256": "5f11afa169dca88192140c6d65a59a9e7f31f74ff78ad47f76f80298832ba43a",
+      "instanceMatrixSha256": "3775c5ee49088b6af415e4243060346f953bcdfe12aef7110f5081fc80b64d93",
+      "attributes": {
+        "aSeed": {
+          "itemSize": 1,
+          "sha256": "e00038f925be0b1c1908ac5d4ca49ba335d55481aa0457b7abc9459b45289219"
+        },
+        "aTint": {
+          "itemSize": 3,
+          "sha256": "70deaeedad1b62fbee1ed73bdd0a29be29e145d4d7576024a856f6044f1c0cee"
+        },
+        "aSize": {
+          "itemSize": 3,
+          "sha256": "a1d55a55e91f96688abb7781bebb0ab68f65dc6898d94e3e425cbc67a8965ef4"
+        },
+        "aLayer": {
+          "itemSize": 1,
+          "sha256": "8972dfd32aa57864f3b37dbd1cf14663d1c48b557511a2f2d96aa05e0d137190"
+        },
+        "aBuilding": {
+          "itemSize": 1,
+          "sha256": "b6e3eb3406f8e4560029f20253c2fb3fa0a37a4344766cc7f861e088c828bae4"
+        },
+        "aMaterial": {
+          "itemSize": 1,
+          "sha256": "dde2f1fde373e9507cc4e1603d20f20e4ccea16b0f0c19a4143198b914ccb4b6"
+        },
+        "aEmissionAllowed": {
+          "itemSize": 1,
+          "sha256": "ef092ea2c56a8a942dc0362f13f688931d91e2796d24b0997219b9a810826282"
+        },
+        "aStepEdges": {
+          "itemSize": 2,
+          "sha256": "fc9a59d07e5a247855e9c83b547372d7630bd0d6af126b8373ee055dc4e8bb95"
+        },
+        "aDistrict": {
+          "itemSize": 1,
+          "sha256": "b56f03a5da97930500bdfad185b4fd3e64d212edfe32d3406dbe6f50995100e9"
+        }
+      },
+      "faceOwners": [
+        "mega:4240.63",
+        "tower:-630.00:-1280.00",
+        "tower:-630.00:-1600.00",
+        "tower:-630.00:-1920.00",
+        "tower:-630.00:-2240.00",
+        "tower:-630.00:-2560.00",
+        "tower:-630.00:-2880.00",
+        "tower:-630.00:-320.00",
+        "tower:-630.00:-3200.00",
+        "tower:-630.00:-3520.00",
+        "tower:-630.00:-3840.00",
+        "tower:-630.00:-4160.00",
+        "tower:-630.00:-4480.00",
+        "tower:-630.00:-4800.00",
+        "tower:-630.00:-5120.00",
+        "tower:-630.00:-5440.00",
+        "tower:-630.00:-5760.00",
+        "tower:-630.00:-6080.00",
+        "tower:-630.00:-640.00",
+        "tower:-630.00:-6400.00",
+        "tower:-630.00:-960.00",
+        "tower:-630.00:0.00",
+        "tower:-630.00:1280.00",
+        "tower:-630.00:1600.00",
+        "tower:-630.00:1920.00",
+        "tower:-630.00:2240.00",
+        "tower:-630.00:2560.00",
+        "tower:-630.00:2880.00",
+        "tower:-630.00:320.00",
+        "tower:-630.00:3200.00",
+        "tower:-630.00:3520.00",
+        "tower:-630.00:3840.00",
+        "tower:-630.00:4160.00",
+        "tower:-630.00:4480.00",
+        "tower:-630.00:4800.00",
+        "tower:-630.00:5120.00",
+        "tower:-630.00:5440.00",
+        "tower:-630.00:5760.00",
+        "tower:-630.00:6080.00",
+        "tower:-630.00:640.00",
+        "tower:-630.00:960.00",
+        "tower:630.00:-1280.00",
+        "tower:630.00:-320.00",
+        "tower:630.00:-3200.00",
+        "tower:630.00:-3520.00",
+        "tower:630.00:-3840.00",
+        "tower:630.00:-4160.00",
+        "tower:630.00:-4480.00",
+        "tower:630.00:-640.00",
+        "tower:630.00:-6400.00",
+        "tower:630.00:-960.00",
+        "tower:630.00:0.00",
+        "tower:630.00:1920.00",
+        "tower:630.00:2240.00",
+        "tower:630.00:2560.00",
+        "tower:630.00:2880.00",
+        "tower:630.00:3200.00",
+        "tower:630.00:5120.00",
+        "tower:630.00:5440.00",
+        "tower:630.00:5760.00",
+        "tower:630.00:6080.00"
+      ],
+      "base": {
+        "count": 908,
+        "modelSha256": "3e054e4127c4c4fd38f9614a95d17008acfe06783e61a10a2e5452f560362434",
+        "instanceMatrixSha256": "0e7565a5c5bea0f1dc5d29d9882f285d29cd0d8f9f66ac68230f19c02a8cc61e",
+        "attributes": {
+          "aSeed": {
+            "itemSize": 1,
+            "sha256": "3dae21d9431860747b9a001701cf52eea2e3527ee63eaa5c82804148ae3e5c2b"
+          },
+          "aTint": {
+            "itemSize": 3,
+            "sha256": "e194a64256d185ded877c0b2ccf73044fbbff3f802dd46b528ee4c429c8860db"
+          },
+          "aSize": {
+            "itemSize": 3,
+            "sha256": "e855acbf53e20191ab0914999fe61eccf4ba1c11f2cffee4aadb0baea0a61257"
+          },
+          "aLayer": {
+            "itemSize": 1,
+            "sha256": "ccebc31969ac094e6fd65e3c3e785ecb6785d680626eb20a8aee4bf455ff4e3f"
+          },
+          "aBuilding": {
+            "itemSize": 1,
+            "sha256": "331237ab93586c12a8dbb935990eede15dbcd13fc39c3d2e7fc99f77c7056f57"
+          },
+          "aMaterial": {
+            "itemSize": 1,
+            "sha256": "331237ab93586c12a8dbb935990eede15dbcd13fc39c3d2e7fc99f77c7056f57"
+          },
+          "aEmissionAllowed": {
+            "itemSize": 1,
+            "sha256": "88e36b31f8cc378d6f7f68dfe3c53576b71fe925acbbac45c134f714d8da1e21"
+          },
+          "aStepEdges": {
+            "itemSize": 2,
+            "sha256": "5b78d5ebbe1c123b57c118c57751051ca74f5b6cb9426100b0ef5632193a4231"
+          },
+          "aDistrict": {
+            "itemSize": 1,
+            "sha256": "b468fafdc598ffa4891bd39b3319c0937d1ce340efdae14d2e53ab0be00e63a4"
+          }
+        }
+      }
+    },
+    {
+      "seed": 2147483647,
+      "mode": "geometry",
+      "protectedCount": 3374,
+      "protectedModelSha256": "bf47ac5ac7b668a2f77044d57395ec44daf8a7f878806994d36ee3f756714d71",
+      "instanceMatrixSha256": "17781585c7ba4ce10efd1592cee4f31a5387abc0b7eddb3e5f230161dd6e99d8",
+      "attributes": {
+        "aSeed": {
+          "itemSize": 1,
+          "sha256": "cc5aaf70981768fe1cf0806254cc64381b3e898370f6c0676bb95d913bdf0509"
+        },
+        "aTint": {
+          "itemSize": 3,
+          "sha256": "0fad80985ced681ca2856c2c1da35163e3ae241c93f892a3f58b8e991bf80cdb"
+        },
+        "aSize": {
+          "itemSize": 3,
+          "sha256": "613ef3cf59eb89d7086ac9fb33610c65e9260b416b5379cf5688b807494599f9"
+        },
+        "aLayer": {
+          "itemSize": 1,
+          "sha256": "f5ef0c518954ad5e179ac4708e9b9d470ef6424b0674b4f36de7bdb636a16664"
+        },
+        "aBuilding": {
+          "itemSize": 1,
+          "sha256": "aa419e0b2e3d592144f94bc2f80c1fb7fd512a31d08600ea254fec03c743008e"
+        },
+        "aMaterial": {
+          "itemSize": 1,
+          "sha256": "f2396d09e305747fde81fcd1a0587ac97714ef9d940263b9d309912f23843a5b"
+        },
+        "aEmissionAllowed": {
+          "itemSize": 1,
+          "sha256": "20de3e59c185c77b785e691a782c583f77536e5335360a4ffd8d1348a74b9edd"
+        },
+        "aStepEdges": {
+          "itemSize": 2,
+          "sha256": "d8ed1fc91452aead37f960c3d98174ecba63ba24cbcdf9a1faeb419ec9eb51ec"
+        },
+        "aDistrict": {
+          "itemSize": 1,
+          "sha256": "c41c7226fbaa6c600ff21764f36d6a1d69d5d7d9c80e62662ed26744862225e5"
+        }
+      },
+      "faceOwners": [
+        "mega:4240.63",
+        "tower:-630.00:-1280.00",
+        "tower:-630.00:-1600.00",
+        "tower:-630.00:-1920.00",
+        "tower:-630.00:-2240.00",
+        "tower:-630.00:-2560.00",
+        "tower:-630.00:-2880.00",
+        "tower:-630.00:-320.00",
+        "tower:-630.00:-3200.00",
+        "tower:-630.00:-3520.00",
+        "tower:-630.00:-3840.00",
+        "tower:-630.00:-4160.00",
+        "tower:-630.00:-4480.00",
+        "tower:-630.00:-4800.00",
+        "tower:-630.00:-5120.00",
+        "tower:-630.00:-5440.00",
+        "tower:-630.00:-5760.00",
+        "tower:-630.00:-6080.00",
+        "tower:-630.00:-640.00",
+        "tower:-630.00:-6400.00",
+        "tower:-630.00:-960.00",
+        "tower:-630.00:0.00",
+        "tower:-630.00:1280.00",
+        "tower:-630.00:1600.00",
+        "tower:-630.00:1920.00",
+        "tower:-630.00:2240.00",
+        "tower:-630.00:2560.00",
+        "tower:-630.00:2880.00",
+        "tower:-630.00:320.00",
+        "tower:-630.00:3200.00",
+        "tower:-630.00:3520.00",
+        "tower:-630.00:3840.00",
+        "tower:-630.00:4160.00",
+        "tower:-630.00:4480.00",
+        "tower:-630.00:4800.00",
+        "tower:-630.00:5120.00",
+        "tower:-630.00:5440.00",
+        "tower:-630.00:5760.00",
+        "tower:-630.00:6080.00",
+        "tower:-630.00:640.00",
+        "tower:-630.00:960.00",
+        "tower:630.00:-1280.00",
+        "tower:630.00:-320.00",
+        "tower:630.00:-3200.00",
+        "tower:630.00:-3520.00",
+        "tower:630.00:-3840.00",
+        "tower:630.00:-4160.00",
+        "tower:630.00:-4480.00",
+        "tower:630.00:-640.00",
+        "tower:630.00:-6400.00",
+        "tower:630.00:-960.00",
+        "tower:630.00:0.00",
+        "tower:630.00:1920.00",
+        "tower:630.00:2240.00",
+        "tower:630.00:2560.00",
+        "tower:630.00:2880.00",
+        "tower:630.00:3200.00",
+        "tower:630.00:5120.00",
+        "tower:630.00:5440.00",
+        "tower:630.00:5760.00",
+        "tower:630.00:6080.00"
+      ],
+      "base": {
+        "count": 908,
+        "modelSha256": "3e054e4127c4c4fd38f9614a95d17008acfe06783e61a10a2e5452f560362434",
+        "instanceMatrixSha256": "0e7565a5c5bea0f1dc5d29d9882f285d29cd0d8f9f66ac68230f19c02a8cc61e",
+        "attributes": {
+          "aSeed": {
+            "itemSize": 1,
+            "sha256": "3dae21d9431860747b9a001701cf52eea2e3527ee63eaa5c82804148ae3e5c2b"
+          },
+          "aTint": {
+            "itemSize": 3,
+            "sha256": "e194a64256d185ded877c0b2ccf73044fbbff3f802dd46b528ee4c429c8860db"
+          },
+          "aSize": {
+            "itemSize": 3,
+            "sha256": "e855acbf53e20191ab0914999fe61eccf4ba1c11f2cffee4aadb0baea0a61257"
+          },
+          "aLayer": {
+            "itemSize": 1,
+            "sha256": "ccebc31969ac094e6fd65e3c3e785ecb6785d680626eb20a8aee4bf455ff4e3f"
+          },
+          "aBuilding": {
+            "itemSize": 1,
+            "sha256": "331237ab93586c12a8dbb935990eede15dbcd13fc39c3d2e7fc99f77c7056f57"
+          },
+          "aMaterial": {
+            "itemSize": 1,
+            "sha256": "331237ab93586c12a8dbb935990eede15dbcd13fc39c3d2e7fc99f77c7056f57"
+          },
+          "aEmissionAllowed": {
+            "itemSize": 1,
+            "sha256": "88e36b31f8cc378d6f7f68dfe3c53576b71fe925acbbac45c134f714d8da1e21"
+          },
+          "aStepEdges": {
+            "itemSize": 2,
+            "sha256": "5b78d5ebbe1c123b57c118c57751051ca74f5b6cb9426100b0ef5632193a4231"
+          },
+          "aDistrict": {
+            "itemSize": 1,
+            "sha256": "b468fafdc598ffa4891bd39b3319c0937d1ce340efdae14d2e53ab0be00e63a4"
+          }
+        }
+      }
+    },
+    {
+      "seed": 4294967295,
+      "mode": "impostor",
+      "protectedCount": 3147,
+      "protectedModelSha256": "c953b306a8db9eee62571c1ac95bf90520facd8bc010fe6aa6a2f2793baa5be0",
+      "instanceMatrixSha256": "9a92a9dda8e730cc29e71594a5703239c7e63a40793533302a6da569c91d4004",
+      "attributes": {
+        "aSeed": {
+          "itemSize": 1,
+          "sha256": "3d87ced02084a5ad2bcf198b18e7ea4f1bd99bf788967489c02844c7eb4fcb67"
+        },
+        "aTint": {
+          "itemSize": 3,
+          "sha256": "d166bbbcdcd13909181bc2ae09998851ecc7d8d07eac79a56873ff7c36c2fec1"
+        },
+        "aSize": {
+          "itemSize": 3,
+          "sha256": "b6c104699a7fd57facb9bd906246d2fc55ffae89057ed09afb4fe9c3c4362e5f"
+        },
+        "aLayer": {
+          "itemSize": 1,
+          "sha256": "f777ae9aa768fb0bcb36ca2c5714977809d45a3941555bc69661f5ff8d0240bc"
+        },
+        "aBuilding": {
+          "itemSize": 1,
+          "sha256": "1c326626857ff6958433f80aacf22803e31d73916a34ff71ed5ecdecc2806230"
+        },
+        "aMaterial": {
+          "itemSize": 1,
+          "sha256": "444ef1c398b13c541d1ece324c85dbeb78c1c8c3089f344e98c000acf54d2a66"
+        },
+        "aEmissionAllowed": {
+          "itemSize": 1,
+          "sha256": "aa413371b037408d7f4d2f4910b52ba452774adecaeaacf5bcf899503acbfac6"
+        },
+        "aStepEdges": {
+          "itemSize": 2,
+          "sha256": "c1b9c51277cc7552663652cef89e19ff681cb39aac1502bc394110db6eef52a5"
+        },
+        "aDistrict": {
+          "itemSize": 1,
+          "sha256": "027f6e0356d0563a8902674e8d7844bf4e091b08a9808a7e3a9b962c81610953"
+        }
+      },
+      "faceOwners": [
+        "mega:4240.63",
+        "tower:-630.00:-1280.00",
+        "tower:-630.00:-1600.00",
+        "tower:-630.00:-1920.00",
+        "tower:-630.00:-2240.00",
+        "tower:-630.00:-2560.00",
+        "tower:-630.00:-2880.00",
+        "tower:-630.00:-320.00",
+        "tower:-630.00:-3200.00",
+        "tower:-630.00:-3520.00",
+        "tower:-630.00:-3840.00",
+        "tower:-630.00:-4160.00",
+        "tower:-630.00:-4480.00",
+        "tower:-630.00:-4800.00",
+        "tower:-630.00:-5120.00",
+        "tower:-630.00:-5440.00",
+        "tower:-630.00:-5760.00",
+        "tower:-630.00:-6080.00",
+        "tower:-630.00:-640.00",
+        "tower:-630.00:-6400.00",
+        "tower:-630.00:-960.00",
+        "tower:-630.00:0.00",
+        "tower:-630.00:1280.00",
+        "tower:-630.00:1600.00",
+        "tower:-630.00:1920.00",
+        "tower:-630.00:2240.00",
+        "tower:-630.00:2560.00",
+        "tower:-630.00:2880.00",
+        "tower:-630.00:320.00",
+        "tower:-630.00:3200.00",
+        "tower:-630.00:3520.00",
+        "tower:-630.00:3840.00",
+        "tower:-630.00:4160.00",
+        "tower:-630.00:4480.00",
+        "tower:-630.00:4800.00",
+        "tower:-630.00:5120.00",
+        "tower:-630.00:5440.00",
+        "tower:-630.00:5760.00",
+        "tower:-630.00:6080.00",
+        "tower:-630.00:640.00",
+        "tower:-630.00:960.00",
+        "tower:630.00:-1280.00",
+        "tower:630.00:-320.00",
+        "tower:630.00:-3200.00",
+        "tower:630.00:-3520.00",
+        "tower:630.00:-3840.00",
+        "tower:630.00:-4160.00",
+        "tower:630.00:-4480.00",
+        "tower:630.00:-640.00",
+        "tower:630.00:-6400.00",
+        "tower:630.00:-960.00",
+        "tower:630.00:0.00",
+        "tower:630.00:1920.00",
+        "tower:630.00:2240.00",
+        "tower:630.00:2560.00",
+        "tower:630.00:2880.00",
+        "tower:630.00:3200.00",
+        "tower:630.00:3520.00",
+        "tower:630.00:5120.00",
+        "tower:630.00:5440.00",
+        "tower:630.00:5760.00",
+        "tower:630.00:6080.00"
+      ],
+      "base": {
+        "count": 904,
+        "modelSha256": "c635c715390dfe199134ddefbd817722c12227d0b3bae9e1a8cb34d1348fa8dd",
+        "instanceMatrixSha256": "e7e2c3007bc16000395ce82a4e5bcb7f1225d9a3fa5d943fbf461355eea7b53b",
+        "attributes": {
+          "aSeed": {
+            "itemSize": 1,
+            "sha256": "ec13e1c0b5e27c7b89148cb27fed8c400e5cd9891b374d859f4ae6c90093bcdb"
+          },
+          "aTint": {
+            "itemSize": 3,
+            "sha256": "04bd3ff240d8c354e6a55c14a69ea9f14da72c705eedc1d9b9515dd2b0caf99b"
+          },
+          "aSize": {
+            "itemSize": 3,
+            "sha256": "17fe0a56fd4932f6a0e1a7046f39cbe0574ab81d6876dcac08946a81d613569b"
+          },
+          "aLayer": {
+            "itemSize": 1,
+            "sha256": "57ad9ed0b75c4a91fb12552789bc2d0e1e680525f6b427215f7397d2e1ee73f7"
+          },
+          "aBuilding": {
+            "itemSize": 1,
+            "sha256": "efe8a0c15b692aeb75f914bc1917a145f4d57b80d322210f817a3c2ba490d89d"
+          },
+          "aMaterial": {
+            "itemSize": 1,
+            "sha256": "efe8a0c15b692aeb75f914bc1917a145f4d57b80d322210f817a3c2ba490d89d"
+          },
+          "aEmissionAllowed": {
+            "itemSize": 1,
+            "sha256": "a8760fcaab7f5d9186ecafd8879083e87947380d5e2e4efcdd95149c4e505e98"
+          },
+          "aStepEdges": {
+            "itemSize": 2,
+            "sha256": "73157131c5633504c755589305faa3460753f6df5011b08f0cc40f5ccf0b276e"
+          },
+          "aDistrict": {
+            "itemSize": 1,
+            "sha256": "cfc775e928848a901b696f534faba11b781b2b0c7882ef9418514d71c82562fc"
+          }
+        }
+      }
+    },
+    {
+      "seed": 4294967295,
+      "mode": "geometry",
+      "protectedCount": 3280,
+      "protectedModelSha256": "dea387e4e9e3fc4a354c6c217e1871696d848c4bf4914c022ff8f1eee796eb00",
+      "instanceMatrixSha256": "e8ed3b441d7f74528245b9db8d94b4a7a52dba99867936447b766cc8eaa6a5e4",
+      "attributes": {
+        "aSeed": {
+          "itemSize": 1,
+          "sha256": "3b9ca3898ce01e0aa68e224502b3b8c33aeb14ddb653945b577a1784505ee424"
+        },
+        "aTint": {
+          "itemSize": 3,
+          "sha256": "2e5fc23737d98f3c26f26f0a5b3220cc66ed1f591a1c36d47615aaf2e752f888"
+        },
+        "aSize": {
+          "itemSize": 3,
+          "sha256": "46e0fff0b8d956c170390de296358add573db6073160b6e96546a96fbbac0cb3"
+        },
+        "aLayer": {
+          "itemSize": 1,
+          "sha256": "4c767c67ea41c41c838e72b5a20503c58e98d6d711fa293ac4a39d3b5d4c916c"
+        },
+        "aBuilding": {
+          "itemSize": 1,
+          "sha256": "f6c75bc43c2b1defd123fec7a7a8d3565c1833e03d4e61d2f7292d3cf3b162f0"
+        },
+        "aMaterial": {
+          "itemSize": 1,
+          "sha256": "2395930c2e37f7a0d2539f34408e27ae8bb161974093af7fb18b556162889751"
+        },
+        "aEmissionAllowed": {
+          "itemSize": 1,
+          "sha256": "e3e154e554a87eaf575f9016c2bb51c4648c161c7b33592bcba2d53a5271474b"
+        },
+        "aStepEdges": {
+          "itemSize": 2,
+          "sha256": "4d1021570e18f9a7fe46b8f21f1dfc93435f752464bc8353d8b3fd45ddceaec3"
+        },
+        "aDistrict": {
+          "itemSize": 1,
+          "sha256": "590ce70a04e7dab8eca0cab0c7f566e9410e66f5dad45c7383821306819d25df"
+        }
+      },
+      "faceOwners": [
+        "mega:4240.63",
+        "tower:-630.00:-1280.00",
+        "tower:-630.00:-1600.00",
+        "tower:-630.00:-1920.00",
+        "tower:-630.00:-2240.00",
+        "tower:-630.00:-2560.00",
+        "tower:-630.00:-2880.00",
+        "tower:-630.00:-320.00",
+        "tower:-630.00:-3200.00",
+        "tower:-630.00:-3520.00",
+        "tower:-630.00:-3840.00",
+        "tower:-630.00:-4160.00",
+        "tower:-630.00:-4480.00",
+        "tower:-630.00:-4800.00",
+        "tower:-630.00:-5120.00",
+        "tower:-630.00:-5440.00",
+        "tower:-630.00:-5760.00",
+        "tower:-630.00:-6080.00",
+        "tower:-630.00:-640.00",
+        "tower:-630.00:-6400.00",
+        "tower:-630.00:-960.00",
+        "tower:-630.00:0.00",
+        "tower:-630.00:1280.00",
+        "tower:-630.00:1600.00",
+        "tower:-630.00:1920.00",
+        "tower:-630.00:2240.00",
+        "tower:-630.00:2560.00",
+        "tower:-630.00:2880.00",
+        "tower:-630.00:320.00",
+        "tower:-630.00:3200.00",
+        "tower:-630.00:3520.00",
+        "tower:-630.00:3840.00",
+        "tower:-630.00:4160.00",
+        "tower:-630.00:4480.00",
+        "tower:-630.00:4800.00",
+        "tower:-630.00:5120.00",
+        "tower:-630.00:5440.00",
+        "tower:-630.00:5760.00",
+        "tower:-630.00:6080.00",
+        "tower:-630.00:640.00",
+        "tower:-630.00:960.00",
+        "tower:630.00:-1280.00",
+        "tower:630.00:-320.00",
+        "tower:630.00:-3200.00",
+        "tower:630.00:-3520.00",
+        "tower:630.00:-3840.00",
+        "tower:630.00:-4160.00",
+        "tower:630.00:-4480.00",
+        "tower:630.00:-640.00",
+        "tower:630.00:-6400.00",
+        "tower:630.00:-960.00",
+        "tower:630.00:0.00",
+        "tower:630.00:1920.00",
+        "tower:630.00:2240.00",
+        "tower:630.00:2560.00",
+        "tower:630.00:2880.00",
+        "tower:630.00:3200.00",
+        "tower:630.00:3520.00",
+        "tower:630.00:5120.00",
+        "tower:630.00:5440.00",
+        "tower:630.00:5760.00",
+        "tower:630.00:6080.00"
+      ],
+      "base": {
+        "count": 904,
+        "modelSha256": "c635c715390dfe199134ddefbd817722c12227d0b3bae9e1a8cb34d1348fa8dd",
+        "instanceMatrixSha256": "e7e2c3007bc16000395ce82a4e5bcb7f1225d9a3fa5d943fbf461355eea7b53b",
+        "attributes": {
+          "aSeed": {
+            "itemSize": 1,
+            "sha256": "ec13e1c0b5e27c7b89148cb27fed8c400e5cd9891b374d859f4ae6c90093bcdb"
+          },
+          "aTint": {
+            "itemSize": 3,
+            "sha256": "04bd3ff240d8c354e6a55c14a69ea9f14da72c705eedc1d9b9515dd2b0caf99b"
+          },
+          "aSize": {
+            "itemSize": 3,
+            "sha256": "17fe0a56fd4932f6a0e1a7046f39cbe0574ab81d6876dcac08946a81d613569b"
+          },
+          "aLayer": {
+            "itemSize": 1,
+            "sha256": "57ad9ed0b75c4a91fb12552789bc2d0e1e680525f6b427215f7397d2e1ee73f7"
+          },
+          "aBuilding": {
+            "itemSize": 1,
+            "sha256": "efe8a0c15b692aeb75f914bc1917a145f4d57b80d322210f817a3c2ba490d89d"
+          },
+          "aMaterial": {
+            "itemSize": 1,
+            "sha256": "efe8a0c15b692aeb75f914bc1917a145f4d57b80d322210f817a3c2ba490d89d"
+          },
+          "aEmissionAllowed": {
+            "itemSize": 1,
+            "sha256": "a8760fcaab7f5d9186ecafd8879083e87947380d5e2e4efcdd95149c4e505e98"
+          },
+          "aStepEdges": {
+            "itemSize": 2,
+            "sha256": "73157131c5633504c755589305faa3460753f6df5011b08f0cc40f5ccf0b276e"
+          },
+          "aDistrict": {
+            "itemSize": 1,
+            "sha256": "cfc775e928848a901b696f534faba11b781b2b0c7882ef9418514d71c82562fc"
+          }
+        }
+      }
+    },
+    {
+      "seed": 20240917,
+      "mode": "impostor",
+      "protectedCount": 3144,
+      "protectedModelSha256": "f17d7b3912dda4e314eea920892a4d8454a49b0da245fb273537780cd208ab1b",
+      "instanceMatrixSha256": "98585e63f64e9cfbdeae3ddf4d4470153ca0ecce84015c9d531d30c4bda2aa2d",
+      "attributes": {
+        "aSeed": {
+          "itemSize": 1,
+          "sha256": "eb00ceb5f74011eb57ea67a43eba21ce74a7ac7df8b2084e8a8b961f13161af8"
+        },
+        "aTint": {
+          "itemSize": 3,
+          "sha256": "e305463a2d9d7cb41831b7c3e195446f8059a2da855974440a4d72163ce7a5d5"
+        },
+        "aSize": {
+          "itemSize": 3,
+          "sha256": "e24dc6bc2df699f8e73cf029ad0b754eacb2366d765aa246ac44871af0770d6c"
+        },
+        "aLayer": {
+          "itemSize": 1,
+          "sha256": "a2a5ce6a7b90e07d661d78e72f033dbb4f2780a4dc9448d206d4aa23ea3587ca"
+        },
+        "aBuilding": {
+          "itemSize": 1,
+          "sha256": "63ce1c612f29ae334346c3272f1fefdd83f2cf6ee071de6b28867f4512e60a4d"
+        },
+        "aMaterial": {
+          "itemSize": 1,
+          "sha256": "905cc6b636523579a5b900de69a5f14f855697edc28e4e7e5be99bc7260e5e22"
+        },
+        "aEmissionAllowed": {
+          "itemSize": 1,
+          "sha256": "3e837b442309ded85a35d8b6e09023aaaaa044d0e84ebc67b88c5baeaf56b418"
+        },
+        "aStepEdges": {
+          "itemSize": 2,
+          "sha256": "05a864b57adde8b7fd77cf934adfb3cd35db7d3ef55963c3da355bf612db631f"
+        },
+        "aDistrict": {
+          "itemSize": 1,
+          "sha256": "c49cbbf16eeead786da136e160acb12a3f0898fe443b85da7ca7fedc67999142"
+        }
+      },
+      "faceOwners": [
+        "mega:4240.63",
+        "tower:-630.00:-1280.00",
+        "tower:-630.00:-1600.00",
+        "tower:-630.00:-1920.00",
+        "tower:-630.00:-2240.00",
+        "tower:-630.00:-2560.00",
+        "tower:-630.00:-2880.00",
+        "tower:-630.00:-320.00",
+        "tower:-630.00:-3200.00",
+        "tower:-630.00:-3520.00",
+        "tower:-630.00:-3840.00",
+        "tower:-630.00:-4160.00",
+        "tower:-630.00:-4480.00",
+        "tower:-630.00:-4800.00",
+        "tower:-630.00:-5120.00",
+        "tower:-630.00:-5440.00",
+        "tower:-630.00:-5760.00",
+        "tower:-630.00:-6080.00",
+        "tower:-630.00:-640.00",
+        "tower:-630.00:-6400.00",
+        "tower:-630.00:-960.00",
+        "tower:-630.00:0.00",
+        "tower:-630.00:1280.00",
+        "tower:-630.00:1600.00",
+        "tower:-630.00:1920.00",
+        "tower:-630.00:2240.00",
+        "tower:-630.00:2560.00",
+        "tower:-630.00:2880.00",
+        "tower:-630.00:320.00",
+        "tower:-630.00:3200.00",
+        "tower:-630.00:3520.00",
+        "tower:-630.00:3840.00",
+        "tower:-630.00:4160.00",
+        "tower:-630.00:4480.00",
+        "tower:-630.00:4800.00",
+        "tower:-630.00:5120.00",
+        "tower:-630.00:5440.00",
+        "tower:-630.00:5760.00",
+        "tower:-630.00:6080.00",
+        "tower:-630.00:640.00",
+        "tower:-630.00:960.00",
+        "tower:630.00:-1280.00",
+        "tower:630.00:-320.00",
+        "tower:630.00:-3200.00",
+        "tower:630.00:-3520.00",
+        "tower:630.00:-3840.00",
+        "tower:630.00:-4160.00",
+        "tower:630.00:-4480.00",
+        "tower:630.00:-640.00",
+        "tower:630.00:-6400.00",
+        "tower:630.00:-960.00",
+        "tower:630.00:0.00",
+        "tower:630.00:1920.00",
+        "tower:630.00:2240.00",
+        "tower:630.00:2560.00",
+        "tower:630.00:2880.00",
+        "tower:630.00:3200.00",
+        "tower:630.00:5120.00",
+        "tower:630.00:5440.00",
+        "tower:630.00:5760.00",
+        "tower:630.00:6080.00"
+      ],
+      "base": {
+        "count": 855,
+        "modelSha256": "5295481c00a15edaaa15984cb239c8db2cd9e67ed353f3d0e36d5e832b95eaab",
+        "instanceMatrixSha256": "d8ee907e20da2df0bacda4a49294a67c7fde1fd1f9b269c1d5755ba5cc2f0f4b",
+        "attributes": {
+          "aSeed": {
+            "itemSize": 1,
+            "sha256": "c725df240a20196dac4d099378e169bdcb4fab2cb8268fa47b5b2115c9ed89af"
+          },
+          "aTint": {
+            "itemSize": 3,
+            "sha256": "bce685a5fdff02dbf33f0fc15966585471023f2e86cfd53966db89ea99a343e8"
+          },
+          "aSize": {
+            "itemSize": 3,
+            "sha256": "99546d8d75aea87c54b76fc733f010c88ac2a70ed6753f3d0055bb96ecc808b7"
+          },
+          "aLayer": {
+            "itemSize": 1,
+            "sha256": "b6c9197dbe4a567acc686afde889f4885bb1bdf62a2a8a2bd135592b14d00740"
+          },
+          "aBuilding": {
+            "itemSize": 1,
+            "sha256": "0f342c73f44e589cb311235ca025e52fdc8de286ac222eb0aca54eca39450274"
+          },
+          "aMaterial": {
+            "itemSize": 1,
+            "sha256": "0f342c73f44e589cb311235ca025e52fdc8de286ac222eb0aca54eca39450274"
+          },
+          "aEmissionAllowed": {
+            "itemSize": 1,
+            "sha256": "c51a5de16c7885102d8312332aa588637727dad6e23d4675354de656830988af"
+          },
+          "aStepEdges": {
+            "itemSize": 2,
+            "sha256": "544a1bf987082afb54c323232671fd9fed320cd69a79b7062ae04e8385fcaa17"
+          },
+          "aDistrict": {
+            "itemSize": 1,
+            "sha256": "4d340545369bf1edde5b20d50200e5accca669a519b1b769a6c1c15231803ed1"
+          }
+        }
+      }
+    },
+    {
+      "seed": 20240917,
+      "mode": "geometry",
+      "protectedCount": 3269,
+      "protectedModelSha256": "ba75c6840a596da064f69cc9d45b97fcf4946ae69494b12814a9153ee280e737",
+      "instanceMatrixSha256": "21ae24d27acb71e83666a140f2ef9ca70fc01ae661c858a375e013636eb3d134",
+      "attributes": {
+        "aSeed": {
+          "itemSize": 1,
+          "sha256": "39b67913b26e89864573c0501badfab43522f82afa6c88488e51b4180451be7c"
+        },
+        "aTint": {
+          "itemSize": 3,
+          "sha256": "f30734f2cbba8b24e39b98acba2abb06a4ca03dfb0779b74dff2754b5c9b5a24"
+        },
+        "aSize": {
+          "itemSize": 3,
+          "sha256": "ea4a1b54f5565c8b9513fbe9a7d560ae4a84dd09544a005a00a8fa08dd83e457"
+        },
+        "aLayer": {
+          "itemSize": 1,
+          "sha256": "9398a132815b34d46fe2dfdbe9153c7283840d03b4a82c15687de3b7f1612fdd"
+        },
+        "aBuilding": {
+          "itemSize": 1,
+          "sha256": "a8755bab553fb507c6d05e3825bf2265127fe492a135e983f4694c77c2b80846"
+        },
+        "aMaterial": {
+          "itemSize": 1,
+          "sha256": "af264bef7d1b051c156e55843b4e3fc080d4e63d89adc892767c094d8699287c"
+        },
+        "aEmissionAllowed": {
+          "itemSize": 1,
+          "sha256": "869c72edfa995f2d891584cf18bbb0b613a5c9233b43491e79b443c8e3469d4f"
+        },
+        "aStepEdges": {
+          "itemSize": 2,
+          "sha256": "b2df0176b9a57fbcd0316db0e3d06861ef772af856600e4edbe55c67283d69f8"
+        },
+        "aDistrict": {
+          "itemSize": 1,
+          "sha256": "b727da17bf5ddb377efcd47657e136dbebd6f4d25ac6f9fef56ec07f53f582b2"
+        }
+      },
+      "faceOwners": [
+        "mega:4240.63",
+        "tower:-630.00:-1280.00",
+        "tower:-630.00:-1600.00",
+        "tower:-630.00:-1920.00",
+        "tower:-630.00:-2240.00",
+        "tower:-630.00:-2560.00",
+        "tower:-630.00:-2880.00",
+        "tower:-630.00:-320.00",
+        "tower:-630.00:-3200.00",
+        "tower:-630.00:-3520.00",
+        "tower:-630.00:-3840.00",
+        "tower:-630.00:-4160.00",
+        "tower:-630.00:-4480.00",
+        "tower:-630.00:-4800.00",
+        "tower:-630.00:-5120.00",
+        "tower:-630.00:-5440.00",
+        "tower:-630.00:-5760.00",
+        "tower:-630.00:-6080.00",
+        "tower:-630.00:-640.00",
+        "tower:-630.00:-6400.00",
+        "tower:-630.00:-960.00",
+        "tower:-630.00:0.00",
+        "tower:-630.00:1280.00",
+        "tower:-630.00:1600.00",
+        "tower:-630.00:1920.00",
+        "tower:-630.00:2240.00",
+        "tower:-630.00:2560.00",
+        "tower:-630.00:2880.00",
+        "tower:-630.00:320.00",
+        "tower:-630.00:3200.00",
+        "tower:-630.00:3520.00",
+        "tower:-630.00:3840.00",
+        "tower:-630.00:4160.00",
+        "tower:-630.00:4480.00",
+        "tower:-630.00:4800.00",
+        "tower:-630.00:5120.00",
+        "tower:-630.00:5440.00",
+        "tower:-630.00:5760.00",
+        "tower:-630.00:6080.00",
+        "tower:-630.00:640.00",
+        "tower:-630.00:960.00",
+        "tower:630.00:-1280.00",
+        "tower:630.00:-320.00",
+        "tower:630.00:-3200.00",
+        "tower:630.00:-3520.00",
+        "tower:630.00:-3840.00",
+        "tower:630.00:-4160.00",
+        "tower:630.00:-4480.00",
+        "tower:630.00:-640.00",
+        "tower:630.00:-6400.00",
+        "tower:630.00:-960.00",
+        "tower:630.00:0.00",
+        "tower:630.00:1920.00",
+        "tower:630.00:2240.00",
+        "tower:630.00:2560.00",
+        "tower:630.00:2880.00",
+        "tower:630.00:3200.00",
+        "tower:630.00:5120.00",
+        "tower:630.00:5440.00",
+        "tower:630.00:5760.00",
+        "tower:630.00:6080.00"
+      ],
+      "base": {
+        "count": 855,
+        "modelSha256": "5295481c00a15edaaa15984cb239c8db2cd9e67ed353f3d0e36d5e832b95eaab",
+        "instanceMatrixSha256": "d8ee907e20da2df0bacda4a49294a67c7fde1fd1f9b269c1d5755ba5cc2f0f4b",
+        "attributes": {
+          "aSeed": {
+            "itemSize": 1,
+            "sha256": "c725df240a20196dac4d099378e169bdcb4fab2cb8268fa47b5b2115c9ed89af"
+          },
+          "aTint": {
+            "itemSize": 3,
+            "sha256": "bce685a5fdff02dbf33f0fc15966585471023f2e86cfd53966db89ea99a343e8"
+          },
+          "aSize": {
+            "itemSize": 3,
+            "sha256": "99546d8d75aea87c54b76fc733f010c88ac2a70ed6753f3d0055bb96ecc808b7"
+          },
+          "aLayer": {
+            "itemSize": 1,
+            "sha256": "b6c9197dbe4a567acc686afde889f4885bb1bdf62a2a8a2bd135592b14d00740"
+          },
+          "aBuilding": {
+            "itemSize": 1,
+            "sha256": "0f342c73f44e589cb311235ca025e52fdc8de286ac222eb0aca54eca39450274"
+          },
+          "aMaterial": {
+            "itemSize": 1,
+            "sha256": "0f342c73f44e589cb311235ca025e52fdc8de286ac222eb0aca54eca39450274"
+          },
+          "aEmissionAllowed": {
+            "itemSize": 1,
+            "sha256": "c51a5de16c7885102d8312332aa588637727dad6e23d4675354de656830988af"
+          },
+          "aStepEdges": {
+            "itemSize": 2,
+            "sha256": "544a1bf987082afb54c323232671fd9fed320cd69a79b7062ae04e8385fcaa17"
+          },
+          "aDistrict": {
+            "itemSize": 1,
+            "sha256": "4d340545369bf1edde5b20d50200e5accca669a519b1b769a6c1c15231803ed1"
+          }
+        }
+      }
+    }
+  ]
+}

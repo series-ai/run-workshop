@@ -1,0 +1,51 @@
+{
+  "baselineCommit": "c6e81f5f698f7fb98b89c259f8a43eae2c3f5d27",
+  "sourceSha256": "c21b0bab5f530a5441d1f5277fb1176c4ba4e8bb5233a070621b779becdfaf2b",
+  "rows": [
+    {
+      "seed": 424242,
+      "count": 857,
+      "sha256": "751ed38ae04954d915a0c5c229f4b0ed20c7fda6eb5953cf864cf566bccc6d38",
+      "baseOwnedPrefixTrims": {
+        "count": 372,
+        "sha256": "f6ff268bd246e3eac20ec0f86df7767bf32c0fc7e350465dffb6ed34d3fc56f3"
+      }
+    },
+    {
+      "seed": 0,
+      "count": 834,
+      "sha256": "c6a5f94b0e128c54af370b3333d41700ac0b59cafbd1456a7d3cd4d28997179f",
+      "baseOwnedPrefixTrims": {
+        "count": 338,
+        "sha256": "ae89250cb3a00a44936605fddfdb5164782e53c314ba2f3a810eb012f40914ef"
+      }
+    },
+    {
+      "seed": 2147483647,
+      "count": 908,
+      "sha256": "3e054e4127c4c4fd38f9614a95d17008acfe06783e61a10a2e5452f560362434",
+      "baseOwnedPrefixTrims": {
+        "count": 378,
+        "sha256": "c2869a1dbc73336671c1345458ab4db0d10393fcff50a6073fd164e4fb8449d8"
+      }
+    },
+    {
+      "seed": 4294967295,
+      "count": 904,
+      "sha256": "c635c715390dfe199134ddefbd817722c12227d0b3bae9e1a8cb34d1348fa8dd",
+      "baseOwnedPrefixTrims": {
+        "count": 362,
+        "sha256": "deb40f9bd5422edc5a894b9bf671ecaeb4a8699190ee1ecced288c2d5dfde14d"
+      }
+    },
+    {
+      "seed": 20240917,
+      "count": 855,
+      "sha256": "5295481c00a15edaaa15984cb239c8db2cd9e67ed353f3d0e36d5e832b95eaab",
+      "baseOwnedPrefixTrims": {
+        "count": 369,
+        "sha256": "11d150cee20f74bbbcb355a55bfd7c016a9ff1b8f950d2af2021a90283984ad2"
+      }
+    }
+  ]
+}
