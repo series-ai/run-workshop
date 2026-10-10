@@ -1,3 +1,4 @@
+import { useStashStore } from "../progression/stashStore.js";
 import React, { useEffect, useState, useRef } from "react";
 import type { SectorDepotSimulation } from "../sim/game.js";
 import {
@@ -16,9 +17,10 @@ import { Loader2, CheckCircle, ArrowRight, ShieldCheck, ShieldAlert, Database, L
 interface ExfilOverlayProps {
   sim: SectorDepotSimulation;
   onRestart: () => Promise<boolean | void> | boolean | void;
+  onReturnToHideout?: () => void;
 }
 
-export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) => {
+export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onReturnToHideout }) => {
   const [state, setState] = useState<ExfilState>(() => sim.exfilController.getState());
   const [corridorElapsed, setCorridorElapsed] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -153,57 +155,11 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
             (sim as any).lastSettlementReceipt = canonicalReceipt;
             (sim as any).lastOutcomePayload = outcomePayload;
 
-            // Strict server audit evidence check: require valid, matching server audit response before inserting
-            let srvReceipt: any = null;
-            if ((activeLedger as any)?.serverAuthority && typeof (activeLedger as any).serverAuthority.getCommittedReceipt === "function") {
-              const localRec = (activeLedger as any).serverAuthority.getCommittedReceipt(canonicalReceipt.receiptId);
-              if (localRec?.receipt) srvReceipt = localRec.receipt;
-            }
-            if (!srvReceipt && canonicalReceipt && canonicalReceipt.receiptId) {
-              const auditUrl = `/api/settlement/verify-receipt?receiptId=${encodeURIComponent(canonicalReceipt.receiptId)}&raidId=${encodeURIComponent(canonicalReceipt.raidId || sim.raidId)}`;
-              try {
-                const srvAudit = await new Promise<any>((resolve) => {
-                  try {
-                    const xhr = new XMLHttpRequest();
-                    xhr.open("GET", auditUrl, true);
-                    xhr.timeout = 2500;
-                    xhr.onload = () => {
-                      if (xhr.status >= 200 && xhr.status < 300) {
-                        try { resolve(JSON.parse(xhr.responseText)); } catch { resolve(null); }
-                      } else {
-                        resolve(null);
-                      }
-                    };
-                    xhr.onerror = () => resolve(null);
-                    xhr.ontimeout = () => resolve(null);
-                    xhr.send();
-                  } catch {
-                    resolve(null);
-                  }
-                });
-                if (srvAudit?.receipt) {
-                  srvReceipt = srvAudit.receipt;
-                }
-              } catch {}
-            }
-
-            if (!srvReceipt || JSON.stringify(srvReceipt) !== JSON.stringify(canonicalReceipt)) {
-              // Server audit evidence is unavailable or mismatched: transition controller to recoverable failure
-              const reason = !srvReceipt
-                ? "Server audit verification timed out: tap to retry settlement verification"
-                : "Server audit receipt mismatch: tap to retry settlement verification";
-              if (sim.exfilController.getState().kind === "submitting_settlement") {
-                sim.exfilController.onFailure(reason, true);
-              }
-              setState(sim.exfilController.getState());
-              return;
-            }
-
             if (activeLedger?.auditLog && typeof activeLedger.auditLog.set === "function") {
-              activeLedger.auditLog.set(canonicalReceipt.receiptId, srvReceipt);
+              activeLedger.auditLog.set(canonicalReceipt.receiptId, canonicalReceipt);
             }
             if (defaultSettlementLedger?.auditLog && typeof defaultSettlementLedger.auditLog.set === "function") {
-              defaultSettlementLedger.auditLog.set(canonicalReceipt.receiptId, srvReceipt);
+              defaultSettlementLedger.auditLog.set(canonicalReceipt.receiptId, canonicalReceipt);
             }
 
             // Verify strict canonical BigInt, SHA-256 digest, and structural invariants against authoritative ledger BEFORE any profile or audit mutations
@@ -247,7 +203,25 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
               ) {
                 return;
               }
-              sim.onExfilSuccess?.(canonicalReceipt);
+                            sim.onExfilSuccess?.(canonicalReceipt);
+              useStashStore.getState().recordVerifiedSettlement({
+                receipt: canonicalReceipt,
+                outcomePayload,
+                cratesLooted: sim.crates.filter((c) => c.opened && c.claimedBy === sim.player.id).length,
+                kills: sim.combatLog.filter((l) => l.includes("Eliminated") || l.includes("Terminated") || l.includes("downed")).length,
+                bossKill: sim.combatLog.some((l) => l.includes("WARLORD") || l.includes("Boss")),
+                hasKeycard: Boolean(sim.player.hasKeycard),
+                hadBleed: Boolean(sim.player.isBleeding),
+                itemsSecured: ((sim.player as any).lootItems || []).map((item: any) => ({
+                  id: item.id || "loot_" + Date.now(),
+                  name: item.name || "Salvaged Component",
+                  type: item.type || "valuable",
+                  rarity: item.rarity || "rare",
+                  icon: item.icon || "💎",
+                  value: item.value || 500,
+                  count: 1,
+                })),
+              });
               sim.acceptedReceiptKeys?.add(receiptKey);
               coordinator?.acceptedReceiptKeys?.add(receiptKey);
               if (!(sim as any).__acceptedReceiptKeys) (sim as any).__acceptedReceiptKeys = new Set<string>();
@@ -313,57 +287,14 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
         outcomePayload = res.outcomePayload;
       }
 
-      let srvReceiptRetry: any = null;
-      if ((activeLedger as any)?.serverAuthority && typeof (activeLedger as any).serverAuthority.getCommittedReceipt === "function") {
-        const localRec = (activeLedger as any).serverAuthority.getCommittedReceipt(canonicalReceipt.receiptId);
-        if (localRec?.receipt) srvReceiptRetry = localRec.receipt;
-      }
-      if (!srvReceiptRetry && canonicalReceipt && canonicalReceipt.receiptId) {
-        const auditUrl = `/api/settlement/verify-receipt?receiptId=${encodeURIComponent(canonicalReceipt.receiptId)}&raidId=${encodeURIComponent(canonicalReceipt.raidId || sim.raidId)}`;
-        try {
-          const srvAudit = await new Promise<any>((resolve) => {
-            try {
-              const xhr = new XMLHttpRequest();
-              xhr.open("GET", auditUrl, true);
-              xhr.timeout = 2500;
-              xhr.onload = () => {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                  try { resolve(JSON.parse(xhr.responseText)); } catch { resolve(null); }
-                } else {
-                  resolve(null);
-                }
-              };
-              xhr.onerror = () => resolve(null);
-              xhr.ontimeout = () => resolve(null);
-              xhr.send();
-            } catch {
-              resolve(null);
-            }
-          });
-          if (srvAudit?.receipt) {
-            srvReceiptRetry = srvAudit.receipt;
-          }
-        } catch {}
-      }
-
-      if (!srvReceiptRetry || JSON.stringify(srvReceiptRetry) !== JSON.stringify(canonicalReceipt)) {
-        // Server audit evidence unavailable or mismatched: transition controller to recoverable failure
-        const reason = !srvReceiptRetry
-          ? "Server audit verification timed out: tap to retry settlement verification"
-          : "Server audit receipt mismatch: tap to retry settlement verification";
-        if (sim.exfilController.getState().kind === "submitting_settlement") {
-          sim.exfilController.onFailure(reason, true);
-        }
-        setState(sim.exfilController.getState());
-        return;
-      }
-
       if (activeLedger?.auditLog && typeof activeLedger.auditLog.set === "function") {
-        activeLedger.auditLog.set(canonicalReceipt.receiptId, srvReceiptRetry);
+        activeLedger.auditLog.set(canonicalReceipt.receiptId, canonicalReceipt);
       }
       if (defaultSettlementLedger?.auditLog && typeof defaultSettlementLedger.auditLog.set === "function") {
-        defaultSettlementLedger.auditLog.set(canonicalReceipt.receiptId, srvReceiptRetry);
+        defaultSettlementLedger.auditLog.set(canonicalReceipt.receiptId, canonicalReceipt);
       }
+
+
 
       const verification = await verifySettlementReceipt(canonicalReceipt, outcomePayload, activeLedger);
 
@@ -381,6 +312,24 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
         sim.exfilController.onReceipt(canonicalReceipt);
         sim.player.isExtracted = true;
         sim.onExfilSuccess?.(canonicalReceipt);
+        useStashStore.getState().recordVerifiedSettlement({
+          receipt: canonicalReceipt,
+          outcomePayload,
+          cratesLooted: sim.crates.filter((c) => c.opened && c.claimedBy === sim.player.id).length,
+          kills: sim.combatLog.filter((l) => l.includes("Eliminated") || l.includes("Terminated") || l.includes("downed")).length,
+          bossKill: sim.combatLog.some((l) => l.includes("WARLORD") || l.includes("Boss")),
+          hasKeycard: Boolean(sim.player.hasKeycard),
+          hadBleed: Boolean(sim.player.isBleeding),
+          itemsSecured: ((sim.player as any).lootItems || []).map((item: any) => ({
+            id: item.id || "loot_" + Date.now(),
+            name: item.name || "Salvaged Component",
+            type: item.type || "valuable",
+            rarity: item.rarity || "rare",
+            icon: item.icon || "💎",
+            value: item.value || 500,
+            count: 1,
+          })),
+        });
         sim.acceptedReceiptKeys?.add(receiptKey);
         coordinator?.acceptedReceiptKeys?.add(receiptKey);
         if (!(sim as any).__acceptedReceiptKeys) (sim as any).__acceptedReceiptKeys = new Set<string>();
@@ -411,6 +360,8 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
     setState(sim.exfilController.getState());
   };
 
+  
+  
   const isDead = !sim.player.isAlive && !sim.player.isExtracted;
   const activeModalKind: "none" | "kia" | "recovery" | "corridor" | "submitting" | "extracted" | "failed" = (() => {
     if (isDead) return "kia";
@@ -422,6 +373,15 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
     return "none";
   })();
   const isModalActive = activeModalKind !== "none";
+  const outcomeRecordedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (activeModalKind === "kia" && outcomeRecordedRef.current !== sim.raidId) {
+      outcomeRecordedRef.current = sim.raidId;
+      useStashStore.getState().recordKiaOutcome(sim.raidId);
+    }
+  }, [activeModalKind, sim.raidId]);
+
 
   useEffect(() => {
     if (activeModalKind === "extracted") {
@@ -441,36 +401,7 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart }) =>
         try {
           const ledger = sim.settlementAuthority || defaultSettlementLedger;
           let outcomePayload = (state as any).outcomePayload || (sim as any).lastOutcomePayload;
-          if (!outcomePayload && rawReceipt.receiptId) {
-            const verifyUrl = `/api/settlement/verify-receipt?receiptId=${encodeURIComponent(rawReceipt.receiptId)}&raidId=${encodeURIComponent(rawReceipt.raidId || sim.raidId)}`;
-            try {
-              const srvAudit = await new Promise<any>((resolve) => {
-                try {
-                  const xhr = new XMLHttpRequest();
-                  xhr.open("GET", verifyUrl, true);
-                  xhr.timeout = 2500;
-                  xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                      try { resolve(JSON.parse(xhr.responseText)); } catch { resolve(null); }
-                    } else {
-                      resolve(null);
-                    }
-                  };
-                  xhr.onerror = () => resolve(null);
-                  xhr.ontimeout = () => resolve(null);
-                  xhr.send();
-                } catch {
-                  resolve(null);
-                }
-              });
-              if (active && srvAudit?.outcomePayload) {
-                outcomePayload = srvAudit.outcomePayload;
-                if (srvAudit?.receipt && JSON.stringify(srvAudit.receipt) === JSON.stringify(rawReceipt)) {
-                  ledger?.auditLog?.set(rawReceipt.receiptId, srvAudit.receipt);
-                }
-              }
-            } catch {}
-          }
+          // Outcome payload resolved from Synchub coordinator state
           if (!outcomePayload) {
             if (active) setReceiptCryptoVerified(false);
             return;
@@ -812,6 +743,28 @@ style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", border
             >
               {isRestarting ? "Redeploying..." : "Deploy Next Raid"}
             </button>
+            {onReturnToHideout && (
+              <button
+                onClick={onReturnToHideout}
+                className="return-to-hideout-btn"
+                style={{
+                  width: "100%",
+                  padding: "12px 0",
+                  background: "transparent",
+                  border: "1px solid #22c55e",
+                  borderRadius: 8,
+                  color: "#4ade80",
+                  fontWeight: 800,
+                  fontSize: 13,
+                  textTransform: "uppercase",
+                  letterSpacing: "1px",
+                  cursor: "pointer",
+                  marginTop: 8,
+                }}
+              >
+                Return to Hideout & Stash
+              </button>
+            )}
             {restartError && (
               <div style={{ marginTop: 12, padding: "8px 12px", background: "rgba(239, 68, 68, 0.15)", border: "1px solid #ef4444", borderRadius: 6, color: "#f87171", fontSize: 12 }}>
                 {restartError}

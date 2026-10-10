@@ -14,9 +14,10 @@ import { sound } from "../audio.js";
 
 interface TacticalHudProps {
   sim: SectorDepotSimulation;
+  onOpenHideout?: () => void;
 }
 
-export const TacticalHud: React.FC<TacticalHudProps> = ({ sim }) => {
+export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) => {
   const { player, proximityAlert, exfilController, tick } = sim;
   const isSlidingActive =
     player.action === "slide" ||
@@ -337,6 +338,17 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim }) => {
             <span className="tactical-badge">
               {sim.zoneMode === "hub" ? "SECTOR 7 // HUB" : "SECTOR 7 // RAID"}
             </span>
+            {onOpenHideout && (
+              <button
+                onClick={onOpenHideout}
+                className="tactical-ink-btn hud-interactive"
+                style={{ padding: "4px 10px", fontSize: "11px", fontWeight: 800, display: "flex", alignItems: "center", gap: "6px", pointerEvents: "auto" }}
+                title="Open Stash & Armory [TAB]"
+              >
+                <span>📦</span>
+                <span>HIDEOUT [TAB]</span>
+              </button>
+            )}
             {proximityAlert.distance < 45 ? (
               <span className="tactical-badge badge-crimson">
                 ⚠️ HOSTILE {Math.round(proximityAlert.distance)}M

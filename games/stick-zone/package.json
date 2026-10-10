@@ -6,13 +6,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5196",
-    "build": "node scripts/stage-inkline-assets.mjs && tsc && vite build && npm run build:server",
+    "build": "node scripts/stage-inkline-assets.mjs && tsc && vite build",
     "preview": "vite preview --port 4196",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "record:proofs": "node scripts/record-gameplay.mjs",
-    "build:server": "esbuild src/sim/server-settlement.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/server-settlement.js",
-    "start": "npm run build:server && node scripts/server.mjs",
+    "start": "vite preview --port 4196",
     "predev": "node scripts/stage-inkline-assets.mjs"
   },
   "dependencies": {

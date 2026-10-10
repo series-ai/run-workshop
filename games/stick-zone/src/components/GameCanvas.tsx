@@ -541,7 +541,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ sim }) => {
     <div className="canvas-container">
       <Canvas
         shadows
-        gl={{ preserveDrawingBuffer: true, antialias: true }}
+        dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 1, 1.75)]}
+        performance={{ min: 0.5 }}
+        gl={{ preserveDrawingBuffer: true, antialias: true, powerPreference: "high-performance" }}
         camera={{
           position: (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("testMode") === "1")
             ? [0, 10.0, -10.0]

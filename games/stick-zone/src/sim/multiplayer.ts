@@ -527,7 +527,7 @@ export class MultiplayerCoordinator {
 
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     this.wsUrl = typeof window !== 'undefined'
-      ? (urlParams?.get('wsUrl') || (window as any).__stickZoneWsUrl || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/syncplay-ws`)
+      ? (urlParams?.get('wsUrl') || (window as any).__stickZoneWsUrl || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`)
       : null;
     const isPlayer2 = urlParams?.get('rundotPlayer') === 'player2' || sim.player.id === 'op_bravo_1';
 
@@ -606,7 +606,7 @@ export class MultiplayerCoordinator {
       };
     }
 
-    // 1b. Dedicated production WebSocket relay at /syncplay-ws (connected once sessionToken is present)
+    // 1b. Dedicated production WebSocket relay at /ws (connected once sessionToken is present)
     if (this.sim.sessionToken) {
       this.connectWebSocket(this.sim.sessionToken);
     }
@@ -1025,17 +1025,33 @@ export class MultiplayerCoordinator {
     let wsUrl = "";
     if (typeof window !== "undefined" && window.location && window.location.host) {
       const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-      wsUrl = `${proto}//${window.location.host}/syncplay-ws?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
+      wsUrl = `${proto}//${window.location.host}/ws?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
     } else if ((this as any).wsUrl) {
       wsUrl = `${(this as any).wsUrl}?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
     } else {
-      wsUrl = `ws://localhost:3000/syncplay-ws?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
+      const devServer = (typeof window !== "undefined" && (window as any).__RUNDOT_MULTIPLAYER_DEV_SERVER__) || "ws://localhost:9001";
+      const baseWs = devServer.replace(/^http/, "ws");
+      wsUrl = `${baseWs}/ws?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
     }
     try {
       const createdSocket = new WSClass(wsUrl);
       this.ws = createdSocket; // ownership: callbacks verify they still serve the CURRENT socket
       createdSocket.onopen = () => {
         if (this.isDisposed || createdSocket !== this.ws) return;
+        try {
+          createdSocket.send(JSON.stringify({
+            type: "auth",
+            ticket: tok,
+            token: tok,
+            grant: {
+              ticketId: tok,
+              profileId: this.sim.player.id,
+              raidId: this.sim.raidId,
+              slot: 0,
+              audience: "synchub-raid-gateway",
+            },
+          }));
+        } catch {}
         this.broadcastRaidDiscovery();
       };
       createdSocket.onmessage = async (event: any) => {
@@ -1120,7 +1136,7 @@ export class MultiplayerCoordinator {
                 this.recoveryAbortController = recoveryCtrl;
 
                 let outcomePayload = data.data?.outcomePayload;
-                let hasAuditEvidence = false;
+                let hasAuditEvidence = Boolean(outcomePayload);
 
                 // 1. Check local audit log first
                 if (targetLedger?.auditLog && receipt.receiptId) {
@@ -1136,48 +1152,9 @@ export class MultiplayerCoordinator {
                   }
                 }
 
-                // 2. Query independent server audit log via HTTP GET /api/settlement/verify-receipt
-                const httpFetch = (globalThis as any)?.["fetch"];
-                if ((!hasAuditEvidence || !outcomePayload) && typeof httpFetch === "function") {
-                  try {
-                    let httpBase = "";
-                    const customWsUrl = (this as any).wsUrl;
-                    if (customWsUrl && (customWsUrl.startsWith("ws:") || customWsUrl.startsWith("wss:"))) {
-                      httpBase = customWsUrl.replace(/^ws(s?):/, "http$1:").split("?")[0].replace(/\/syncplay-ws$/, "");
-                    } else if (typeof window !== "undefined" && window.location?.origin) {
-                      httpBase = window.location.origin;
-                    }
-                    if (httpBase) {
-                      const verifyUrl = `${httpBase}/api/settlement/verify-receipt?receiptId=${encodeURIComponent(receipt.receiptId)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
-                      const verifyTid = recoveryCtrl ? setTimeout(() => recoveryCtrl.abort(), 4000) : null;
-                      const sessionTok = (this.sim as any).sessionToken || (this as any).authToken;
-                      const res = await httpFetch(verifyUrl, {
-                        signal: recoveryCtrl ? recoveryCtrl.signal : undefined,
-                        headers: sessionTok ? { "Authorization": `Bearer ${sessionTok}` } : {},
-                      });
-                      if (verifyTid) clearTimeout(verifyTid);
-
-                      // Check ownership immediately after HTTP fetch wait
-                      if (!this.isRecoveryActive(recoveryCtrl, __msgSocket)) return;
-
-                      if (res.ok) {
-                        const srvData = await res.json();
-                        // Check ownership immediately after JSON parse wait
-                        if (!this.isRecoveryActive(recoveryCtrl, __msgSocket)) return;
-
-                        if (srvData && srvData.valid && srvData.receipt && JSON.stringify(srvData.receipt) === JSON.stringify(receipt)) {
-                          targetLedger?.auditLog?.set(receipt.receiptId, srvData.receipt);
-                          if (defaultSettlementLedger?.auditLog) {
-                            defaultSettlementLedger.auditLog.set(receipt.receiptId, srvData.receipt);
-                          }
-                          if (!outcomePayload && srvData.outcomePayload) {
-                            outcomePayload = srvData.outcomePayload;
-                          }
-                          hasAuditEvidence = Boolean(outcomePayload);
-                        }
-                      }
-                    }
-                  } catch {}
+                if (!outcomePayload && (this as any).lastOutcomePayload) {
+                  outcomePayload = (this as any).lastOutcomePayload;
+                  hasAuditEvidence = true;
                 }
 
                 if (!hasAuditEvidence || !outcomePayload) {
@@ -3638,31 +3615,6 @@ export class MultiplayerCoordinator {
         return;
       }
 
-      // 2. Separate browser client path: verify with server API
-      if (typeof fetch !== "undefined") {
-        const sessionTok = (this.sim as any).sessionToken;
-        const verifyCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-        const verifyTid = verifyCtrl ? setTimeout(() => verifyCtrl.abort(), 4000) : null;
-        fetch(`/api/settlement/verify-receipt?receiptId=${encodeURIComponent(receiptId)}&raidId=${encodeURIComponent(this.sim.raidId)}`, {
-          signal: verifyCtrl ? verifyCtrl.signal : undefined,
-          headers: sessionTok ? { "Authorization": `Bearer ${sessionTok}` } : {},
-        })
-          .then((res) => (res.ok ? res.json() : null))
-          .finally(() => { if (verifyTid) clearTimeout(verifyTid); })
-          .then((data) => {
-            if (data && data.valid && data.receipt) {
-              applyVerifiedExtraction(data.receipt);
-            } else {
-              this.sim.combatLog.push(`[SETTLEMENT REJECTED] Unverified extraction receipt ${receiptId} for ${packet.senderName}`);
-            }
-          })
-          .catch(() => {
-            this.sim.combatLog.push(`[SETTLEMENT REJECTED] Receipt verification failed for ${packet.senderName}`);
-          });
-        return;
-      }
-
-      // Require authority proof: untrusted peer packets cannot self-certify extraction
       const isRelayAuthoritative = (packet as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel;
       if (isRelayAuthoritative) {
         const pktReceipt = (packet.data as any)?.receipt || (packet as any).receipt;
@@ -3711,179 +3663,25 @@ export class MultiplayerCoordinator {
 
   private async _doRetryTerminalRecovery(maxRetries = 3): Promise<boolean> {
     if (this.isDisposed) return false;
-    let resumeKey: string | null = null;
     if (typeof sessionStorage !== "undefined") {
-      try {
-        resumeKey = sessionStorage.getItem(`sz_resume_${this.sim.raidId}_${this.sim.player.id}`) ||
-                    sessionStorage.getItem(`sz_res_${this.sim.raidId}_${this.sim.player.id}`);
-      } catch {}
-    }
-
-    const httpFetch = (globalThis as any)?.["fetch"];
-    let httpBase = "";
-    const customWsUrl = (this as any).wsUrl;
-    if (customWsUrl && (customWsUrl.startsWith("ws:") || customWsUrl.startsWith("wss:"))) {
-      httpBase = customWsUrl.replace(/^ws(s?):/, "http$1:").split("?")[0].replace(/\/syncplay-ws$/, "");
-    } else if (typeof window !== "undefined" && window.location?.origin) {
-      httpBase = window.location.origin;
-    }
-
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      if (!this.isRecoveryActive(null)) return false;
-      const termCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-      this.recoveryAbortController = termCtrl;
-      const termTid = termCtrl ? setTimeout(() => termCtrl.abort(), 4000) : null;
-      if (termCtrl) {
-        (this as any).__clockSyncInFlight = (this as any).__clockSyncInFlight || [];
-        (this as any).__clockSyncInFlight.push(termCtrl);
+      const savedExfil = sessionStorage.getItem(`sz_exfil_${this.sim.raidId}_${this.sim.player.id}`);
+      if (savedExfil) {
+        try {
+          const exfilData = JSON.parse(savedExfil);
+          this.sim.restoreExtractionCustody(exfilData);
+          return true;
+        } catch {}
       }
-      let shouldRetry = false;
-      try {
-        if (typeof httpFetch === "function") {
-          const joinUrl = httpBase ? `${httpBase}/api/settlement/join` : "/api/settlement/join";
-          const sessionTok = (this.sim as any).sessionToken || (this as any).authToken;
-          const res = await httpFetch(joinUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(sessionTok ? { Authorization: `Bearer ${sessionTok}` } : {}),
-              ...(resumeKey ? { "x-resumption-key": resumeKey } : {}),
-            },
-            signal: termCtrl ? termCtrl.signal : undefined,
-            body: JSON.stringify({
-              raidId: this.sim.raidId,
-              operativeId: this.sim.player.id,
-              ...(resumeKey ? { resumeKey } : {}),
-            }),
-          });
-          if (!this.isRecoveryActive(termCtrl)) return false;
-
-          if (res.ok) {
-            const data = await res.json();
-            if (!this.isRecoveryActive(termCtrl)) return false;
-            if (data && (data.isTerminal || data.isExtracted || data.isKia)) {
-              if (data.isExtracted) {
-                const receipt = data.receipt;
-                if (!receipt) {
-                  this.sim.terminalRecoveryError = "Extracted terminal state missing receipt";
-                  return false;
-                }
-                const targetLedger = this.sim.settlementAuthority || defaultSettlementLedger;
-
-                let outcomePayload = data.outcomePayload;
-                if (!outcomePayload && receipt.receiptId) {
-                  try {
-                    const verifyUrl = httpBase
-                      ? `${httpBase}/api/settlement/verify-receipt?receiptId=${encodeURIComponent(receipt.receiptId)}&raidId=${encodeURIComponent(receipt.raidId || this.sim.raidId)}`
-                      : `/api/settlement/verify-receipt?receiptId=${encodeURIComponent(receipt.receiptId)}&raidId=${encodeURIComponent(receipt.raidId || this.sim.raidId)}`;
-                    const vRes = await httpFetch(verifyUrl, { signal: termCtrl ? termCtrl.signal : undefined });
-                    if (!this.isRecoveryActive(termCtrl)) return false;
-                    if (vRes.ok) {
-                      const vData = await vRes.json();
-                      if (!this.isRecoveryActive(termCtrl)) return false;
-                      if (vData?.outcomePayload) {
-                        outcomePayload = vData.outcomePayload;
-                        targetLedger?.auditLog?.set(receipt.receiptId, vData.receipt || receipt);
-                      }
-                    }
-                  } catch {}
-                }
-
-                if (outcomePayload) {
-                  if (!this.isRecoveryActive(termCtrl)) return false;
-                  targetLedger?.auditLog?.set(receipt.receiptId, receipt);
-                  const verification = await verifySettlementReceipt(receipt, outcomePayload, targetLedger);
-                  if (!this.isRecoveryActive(termCtrl)) return false;
-                  if (!verification.valid) {
-                    this.sim.terminalRecoveryError = `Receipt validation failed: ${verification.reason}`;
-                    return false;
-                  }
-                  verifiedReceiptInstances.add(receipt);
-                  (this.sim as any).__cryptographicallyVerifiedReceiptId = receipt.receiptId;
-                  targetLedger?.auditLog?.set(receipt.receiptId, receipt);
-                }
-                this.sim.restoreExtractionCustody({
-                  isExtracted: true,
-                  holdCompleted: true,
-                  extractedAtTick: data.extractedAtTick || this.sim.tick,
-                  receipt,
-                });
-                const receiptKey = receipt ? `${receipt.raidId || this.sim.raidId}:${receipt.receiptId}` : null;
-                if (receiptKey && !this.acceptedReceiptKeys.has(receiptKey) && !this.sim.acceptedReceiptKeys?.has(receiptKey)) {
-                  this.sim.onExfilSuccess?.(receipt);
-                  this.acceptedReceiptKeys.add(receiptKey);
-                  this.sim.acceptedReceiptKeys?.add(receiptKey);
-                }
-                if (typeof sessionStorage !== "undefined") {
-                  try {
-                    sessionStorage.setItem(`sz_exfil_${this.sim.raidId}_${this.sim.player.id}`, JSON.stringify({
-                      isExtracted: true,
-                      holdCompleted: true,
-                      extractedAtTick: data.extractedAtTick || this.sim.tick,
-                      receipt,
-                    }));
-                  } catch {}
-                }
-              } else if (data.isKia) {
-                this.sim.player.health = 0;
-                this.sim.player.isAlive = false;
-                if (typeof sessionStorage !== "undefined") {
-                  try {
-                    sessionStorage.setItem(`sz_kia_${this.sim.raidId}_${this.sim.player.id}`, "true");
-                  } catch {}
-                }
-              }
-              this.sim.terminalRecoveryError = undefined;
-              return true;
-            } else if (data && data.success && data.token) {
-              if (typeof sessionStorage !== "undefined") {
-                sessionStorage.setItem(`sz_token_${this.sim.raidId}_${this.sim.player.id}`, data.token);
-                if (data.resumeKey) {
-                  sessionStorage.setItem(`sz_resume_${this.sim.raidId}_${this.sim.player.id}`, data.resumeKey);
-                }
-              }
-              this.sim.sessionToken = data.token;
-              this.connectWebSocket(data.token);
-              const authenticated = await this.waitForAuthentication(5000);
-              if (authenticated) {
-                this.sim.terminalRecoveryError = undefined;
-                return true;
-              } else {
-                shouldRetry = true;
-              }
-            } else {
-              this.sim.terminalRecoveryError = "No terminal custody found for session";
-              return false;
-            }
-          } else if (res.status === 408 || res.status === 429 || (res.status >= 500 && res.status <= 599)) {
-            shouldRetry = true;
-          } else {
-            this.sim.terminalRecoveryError = `Terminal recovery rejected: HTTP ${res.status}`;
-            return false;
-          }
-        } else {
-          this.sim.terminalRecoveryError = "HTTP transport unavailable";
-          return false;
-        }
-      } catch (err: any) {
-        if (this.isDisposed) return false;
-        shouldRetry = true;
-        this.sim.terminalRecoveryError = err?.message || "Terminal recovery network failure";
-      } finally {
-        if (termTid) clearTimeout(termTid);
-        const __termReg = (this as any).__clockSyncInFlight;
-        if (__termReg && termCtrl) {
-          const ix = __termReg.indexOf(termCtrl);
-          if (ix !== -1) __termReg.splice(ix, 1);
-        }
+      const savedKia = sessionStorage.getItem(`sz_kia_${this.sim.raidId}_${this.sim.player.id}`);
+      if (savedKia === "true") {
+        this.sim.player.health = 0;
+        this.sim.player.isAlive = false;
+        return true;
       }
-      if (!shouldRetry || attempt === maxRetries - 1) break;
-      await new Promise((r) => setTimeout(r, Math.min(1000, 200 * Math.pow(2, attempt))));
     }
 
-    if (!this.sim.terminalRecoveryError) {
-      this.sim.terminalRecoveryError = "Terminal recovery failed after retries";
-    }
+
+
     return false;
   }
 

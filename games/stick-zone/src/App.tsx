@@ -1,3 +1,6 @@
+import { HideoutMenu } from "./components/HideoutMenu.js";
+import { MobileControls, type TouchInputUpdate } from "./components/MobileControls.js";
+import { gamepad } from "./input/gamepadController.js";
 import { defaultSettlementLedger } from "./sim/airlock.js";
 import React, { useEffect, useRef, useState } from "react";
 import { SectorDepotSimulation, type GameInput, computeGroundAimAngle } from "./sim/game.js";
@@ -9,84 +12,25 @@ import { ExfilOverlay } from "./components/ExfilOverlay.js";
 import { sound } from "./audio.js";
 import "./styles.css";
 
-async function requestSessionToken(raidId: string, opId: string, forceFresh = false): Promise<string | null> {
+function getRaidSessionToken(raidId: string, opId: string): string {
+  if (typeof window !== "undefined") {
+    const urlToken = new URLSearchParams(window.location.search).get("token");
+    if (urlToken) return urlToken;
+  }
   const storageKey = `sz_session_${raidId}_${opId}`;
-  const resumeStorageKey = `sz_resume_${raidId}_${opId}`;
-  let savedToken: string | null = null;
-  let savedResumeKey: string | null = null;
-  if (!forceFresh && typeof sessionStorage !== "undefined") {
-    savedToken = sessionStorage.getItem(storageKey);
-    savedResumeKey = sessionStorage.getItem(resumeStorageKey);
+  if (typeof sessionStorage !== "undefined") {
+    const saved = sessionStorage.getItem(storageKey);
+    if (saved) return saved;
+    const generated = `sz_${raidId}_${opId}`;
+    sessionStorage.setItem(storageKey, generated);
+    return generated;
   }
-  if (!forceFresh && savedToken) return savedToken;
-
-  if (typeof XMLHttpRequest !== "undefined") {
-    try {
-      const xhr = new XMLHttpRequest();
-      const token = await new Promise<string | null>((resolve) => {
-        xhr.open("POST", "/api/settlement/join");
-        xhr.setRequestHeader("Content-Type", "application/json");
-        if (savedResumeKey) {
-          xhr.setRequestHeader("x-resumption-key", savedResumeKey);
-        }
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const data = JSON.parse(xhr.responseText);
-              if (data.resumeKey && typeof sessionStorage !== "undefined") {
-                sessionStorage.setItem(resumeStorageKey, data.resumeKey);
-              }
-              if (data.token) return resolve(data.token);
-            } catch {}
-          }
-          resolve(null);
-        };
-        xhr.onerror = () => resolve(null);
-        xhr.send(JSON.stringify({ raidId, operativeId: opId, resumeKey: savedResumeKey || undefined }));
-      });
-      if (token) {
-        if (typeof sessionStorage !== "undefined") {
-          sessionStorage.setItem(storageKey, token);
-        }
-        return token;
-      }
-    } catch {}
-  }
-  return null;
-}
-
-async function requestServerRedeployment(targetRaidId: string, opId: string, currentRaidId?: string, currentToken?: string | null): Promise<{ raidId: string; token: string; resumeKey?: string } | null> {
-  if (typeof XMLHttpRequest === "undefined") return null;
-  return new Promise((resolve) => {
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", "/api/settlement/redeploy");
-      xhr.setRequestHeader("Content-Type", "application/json");
-      if (currentToken) {
-        xhr.setRequestHeader("Authorization", `Bearer ${currentToken}`);
-        xhr.setRequestHeader("x-operative-token", currentToken);
-      }
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const data = JSON.parse(xhr.responseText);
-            if (data.success && data.raidId && data.token) {
-              return resolve({ raidId: data.raidId, token: data.token, resumeKey: data.resumeKey });
-            }
-          } catch {}
-        }
-        resolve(null);
-      };
-      xhr.onerror = () => resolve(null);
-      xhr.send(JSON.stringify({ raidId: targetRaidId, operativeId: opId, currentRaidId, token: currentToken }));
-    } catch {
-      resolve(null);
-    }
-  });
+  return `sz_${raidId}_${opId}`;
 }
 
 const MainApp: React.FC = () => {
   const [dismissRotate, setDismissRotate] = useState(false);
+  const [showHideout, setShowHideout] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(() => {
     if (typeof window !== "undefined") {
       return (
@@ -206,16 +150,11 @@ const MainApp: React.FC = () => {
     };
     let isCancelled = false;
     // Turnkey local session token initialization on mount
-    (async () => {
-      const tok = await requestSessionToken(sim.raidId, sim.player.id);
-      if (isCancelled || coordinatorRef.current !== coordinator) return;
-      if (tok) {
-        sim.sessionToken = tok;
-        if (!sim.player.isExtracted && sim.player.isAlive) {
-          coordinator.connectWebSocket(tok);
-        }
-      }
-    })();
+    const tok = getRaidSessionToken(sim.raidId, sim.player.id);
+    sim.sessionToken = tok;
+    if (!sim.player.isExtracted && sim.player.isAlive) {
+      coordinator.connectWebSocket(tok);
+    }
 
       sim.onHoldProgress = (holdTicks: number, currentTick: number) => {
         if (coordinatorRef.current && !sim.player.isExtracted && sim.player.isAlive) {
@@ -228,6 +167,11 @@ const MainApp: React.FC = () => {
       if (e.repeat) return; // Ignore physical OS repeat
       keysPressed.current.add(e.code);
 
+      if (e.code === "Tab") {
+        e.preventDefault();
+        setShowHideout((s) => !s);
+        return;
+      }
       if (e.code === "Digit1") {
         queuedSelectWeapon.current = "rifle";
       } else if (e.code === "Digit2") {
@@ -373,7 +317,19 @@ const MainApp: React.FC = () => {
           aimAngle = undefined;
         }
 
-        const isSprinting = keys.has("ShiftLeft") || keys.has("ShiftRight") || !!touchInputRef.current.sprint || !!touchInputRef.current.slide;
+        
+        const pad = gamepad.poll();
+        if (pad) {
+          if (pad.dx !== 0 || pad.dz !== 0) {
+            dx = pad.dx;
+            dz = pad.dz;
+          }
+          if (pad.aimAngle !== undefined) {
+            aimAngle = pad.aimAngle;
+          }
+        }
+
+        let isSprinting = keys.has("ShiftLeft") || keys.has("ShiftRight") || !!touchInputRef.current.sprint || !!touchInputRef.current.slide || !!pad?.sprint;
 
         const selectWeapon = queuedSelectWeapon.current || undefined;
         queuedSelectWeapon.current = null;
@@ -398,13 +354,13 @@ const MainApp: React.FC = () => {
           dx,
           dz,
           sprint: isSprinting,
-          slide: keys.has("KeyC") || !!touchInputRef.current.slide,
+          slide: keys.has("KeyC") || !!touchInputRef.current.slide || !!pad?.slide,
           crouch: (keys.has("KeyC") && !isSprinting) || (!!touchInputRef.current.crouch && !touchInputRef.current.slide),
-          roll: (keys.has("Space") && isSprinting) || !!touchInputRef.current.roll,
+          roll: (keys.has("Space") && isSprinting) || !!touchInputRef.current.roll || !!pad?.roll,
           jump: (keys.has("Space") && !isSprinting) || !!touchInputRef.current.jump,
-          kick: keys.has("KeyV") || !!touchInputRef.current.kick,
-          shoot: keys.has("KeyJ") || keys.has("KeyK") || keys.has("Enter") || isMouseDown.current || !!touchInputRef.current.shoot,
-          interact,
+          kick: keys.has("KeyV") || !!touchInputRef.current.kick || !!pad?.kick,
+          shoot: keys.has("KeyJ") || keys.has("KeyK") || keys.has("Enter") || isMouseDown.current || !!touchInputRef.current.shoot || !!pad?.shoot,
+          interact: interact || !!pad?.interact,
           selectWeapon,
           switchWeapon,
           stim,
@@ -426,6 +382,7 @@ const MainApp: React.FC = () => {
 
         // Gunshot audio on actual shot event (consume each fire event once to avoid false shots on weapon switch or death)
         if (sim.consumeFireEvent()) {
+          gamepad.vibrate(35, 0.2, 0.5);
           if (sim.player.weapon === 'shotgun') {
             sound.playShotgun();
           } else {
@@ -515,32 +472,8 @@ const MainApp: React.FC = () => {
     isRestartingRef.current = true;
     try {
       const candidateRaidId = overrideRaidId || (pendingNextRaidId.current && pendingNextRaidId.current !== sim.raidId ? pendingNextRaidId.current : `raid_sector7_${Date.now()}`);
-
-      // Confirm new raid and obtain verified operative token from server BEFORE replacing simulation
-      let confirmedRaidId = candidateRaidId;
-      let confirmedToken: string | null = null;
-      let confirmedResumeKey: string | null = null;
-
-      const currentToken = typeof sessionStorage !== "undefined" ? (sessionStorage.getItem(`sz_session_${sim.raidId}_${sim.player.id}`) || sessionStorage.getItem(`sz_token_${sim.raidId}_${sim.player.id}`)) : null;
-
-      // 1. Try server redeployment endpoint with current session token
-      const redeployResult = await requestServerRedeployment(candidateRaidId, sim.player.id, sim.raidId, currentToken);
-      if (redeployResult && redeployResult.raidId && redeployResult.token) {
-        confirmedRaidId = redeployResult.raidId;
-        confirmedToken = redeployResult.token;
-        confirmedResumeKey = redeployResult.resumeKey || null;
-      } else {
-        // 2. Fall back to standard session join on target raid with mandatory live server verification (forceFresh: true)
-        const joinToken = await requestSessionToken(candidateRaidId, sim.player.id, true);
-        if (joinToken) {
-          confirmedToken = joinToken;
-        }
-      }
-
-      // If server rejects or fails to confirm new raid, keep current session and report failure
-      if (!confirmedToken) {
-        return false;
-      }
+      const confirmedRaidId = candidateRaidId;
+      const confirmedToken = getRaidSessionToken(confirmedRaidId, sim.player.id);
 
       if (typeof sessionStorage !== "undefined") {
         sessionStorage.removeItem(`sz_kia_${sim.raidId}_${sim.player.id}`);
@@ -551,9 +484,6 @@ const MainApp: React.FC = () => {
         sessionStorage.removeItem(`sz_exfil_${confirmedRaidId}_${sim.player.id}`);
         sessionStorage.setItem("sz_active_raid", confirmedRaidId);
         sessionStorage.setItem(`sz_session_${confirmedRaidId}_${sim.player.id}`, confirmedToken);
-        if (confirmedResumeKey) {
-          sessionStorage.setItem(`sz_resume_${confirmedRaidId}_${sim.player.id}`, confirmedResumeKey);
-        }
       }
       pendingNextRaidId.current = null;
 
@@ -728,10 +658,26 @@ const MainApp: React.FC = () => {
     if (action === "shoot") isMouseDown.current = false;
   };
 
+  
+  const handleTouchUpdate = (update: TouchInputUpdate) => {
+    if (update.dx !== undefined) touchInputRef.current.dx = update.dx;
+    if (update.dz !== undefined) touchInputRef.current.dz = update.dz;
+    if (update.aimAngle !== undefined) touchInputRef.current.aimAngle = update.aimAngle;
+    if (update.shoot !== undefined) {
+      touchInputRef.current.shoot = update.shoot;
+      isMouseDown.current = update.shoot;
+    }
+    if (update.sprint !== undefined) touchInputRef.current.sprint = update.sprint;
+    if (update.slide !== undefined) touchInputRef.current.slide = update.slide;
+    if (update.roll !== undefined) touchInputRef.current.roll = update.roll;
+    if (update.kick !== undefined) touchInputRef.current.kick = update.kick;
+    if (update.interact !== undefined) queuedInteract.current = update.interact;
+  };
+
   return (
     <div className="game-viewport">
       <GameCanvas sim={sim} />
-      <TacticalHud sim={sim} />
+      <TacticalHud sim={sim} onOpenHideout={() => setShowHideout(true)} />
 
       {/* Landscape Orientation Advisory for Mobile/Tablet */}
       {isTouchDevice && isPortrait && !dismissRotate && (
@@ -764,145 +710,27 @@ const MainApp: React.FC = () => {
           </button>
         </div>
       )}
-      <ExfilOverlay sim={sim} onRestart={() => handleRestart()} />
+      <ExfilOverlay sim={sim} onRestart={() => handleRestart()} onReturnToHideout={() => setShowHideout(true)} />
 
       {/* Mobile Tactical Touch Controls */}
-      {isTouchDevice && (
-        <div className="mobile-touch-controls">
-        <div
-          className="mobile-dpad"
-          onTouchStart={handleTouchDpadStart}
-          onTouchMove={handleTouchDpadMove}
-          onTouchEnd={handleTouchDpadEnd}
-          onTouchCancel={handleTouchDpadEnd}
-        >
-          <div className="mobile-stick-thumb" />
-        </div>
-        <div className="mobile-action-buttons" onMouseDown={(e) => e.stopPropagation()}>
-          <button
-            className="mobile-btn mobile-btn-fire"
-            onPointerDown={(e) => {
-              if (sim.isInputLocked()) return;
-              e.stopPropagation();
-              try { (e.currentTarget as any).setPointerCapture(e.pointerId); } catch {}
-              const rect = e.currentTarget.getBoundingClientRect();
-              fireTouchOrigin.current = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-              touchInputRef.current.shoot = true;
-            }}
-            onPointerMove={(e) => {
-              if (fireTouchOrigin.current) {
-                const fdx = e.clientX - fireTouchOrigin.current.x;
-                const fdz = e.clientY - fireTouchOrigin.current.y;
-                if (Math.hypot(fdx, fdz) > 8) {
-                  touchInputRef.current.aimAngle = Math.atan2(fdx, fdz);
-                }
-              }
-            }}
-            onPointerUp={() => {
-              fireTouchOrigin.current = null;
-              touchInputRef.current.shoot = false;
-            }}
-            onPointerCancel={() => {
-              fireTouchOrigin.current = null;
-              touchInputRef.current.shoot = false;
-            }}
-          >
-            FIRE
-          </button>
-          <button
-            className="mobile-btn"
-            style={{
-              background: sim.player.weapon === 'shotgun' ? '#d97706' : '#0284c7',
-              fontSize: '10px',
-              fontWeight: 800,
-            }}
-            onClick={() => { if (!sim.isInputLocked()) sim.switchWeapon(); }}
-          >
-            {sim.player.weapon === 'shotgun' ? '12G' : 'M4'}
-          </button>
-          <button
-            className="mobile-btn"
-            style={{
-              background: sim.player.isBleeding ? '#ef4444' : '#15803d',
-              fontSize: '9px',
-              fontWeight: 800,
-            }}
-            onClick={() => {
-              if (sim.isInputLocked()) return;
-              if (sim.useStim()) sound.playHealInject();
-            }}
-          >
-            STIM ({sim.player.stimsRemaining || 0})
-          </button>
-          <button
-            className="mobile-btn"
-            style={{ fontSize: '9px', fontWeight: 800 }}
-            onClick={() => {
-              if (sim.isInputLocked()) return;
-              if (sim.reload()) sound.playReload();
-            }}
-          >
-            RELOAD
-          </button>
-          <button
-            className="mobile-btn"
-            style={{ fontSize: '10px', fontWeight: 800, background: '#ca8a04' }}
-            onClick={() => {
-              if (sim.isInputLocked()) return;
-              for (const c of sim.crates) {
-                if (!c.opened && Math.hypot(sim.player.x - c.x, sim.player.z - c.z) <= 3.5) {
-                  sim.requestLootCrate(c.id);
-                  sound.playLootChime();
-                  break;
-                }
-              }
-            }}
-          >
-            LOOT
-          </button>
-          <button
-            className="mobile-btn"
-            style={{
-              background: '#854d0e',
-              fontSize: '10px',
-              fontWeight: 800,
-            }}
-            onPointerDown={(e) => {
-              if (sim.isInputLocked()) return;
-              e.stopPropagation();
-              touchInputRef.current.kick = true;
-            }}
-            onPointerUp={() => { touchInputRef.current.kick = false; }}
-            onPointerCancel={() => { touchInputRef.current.kick = false; }}
-          >
-            KICK
-          </button>
-          <button
-            className="mobile-btn"
-            style={{
-              background: '#475569',
-              fontSize: '10px',
-              fontWeight: 800,
-            }}
-            onPointerDown={(e) => {
-              if (sim.isInputLocked()) return;
-              e.stopPropagation();
-              touchInputRef.current.roll = true;
-              touchInputRef.current.sprint = true;
-            }}
-            onPointerUp={() => {
-              touchInputRef.current.roll = false;
-              touchInputRef.current.sprint = false;
-            }}
-            onPointerCancel={() => {
-              touchInputRef.current.roll = false;
-              touchInputRef.current.sprint = false;
-            }}
-          >
-            ROLL
-          </button>
-
-        </div>      </div>
+      {isTouchDevice && <MobileControls sim={sim} onTouchInput={handleTouchUpdate} />}
+    
+      {showHideout && (
+        <HideoutMenu
+          onDeploy={(loadout) => {
+            sim.setWeapon(loadout.primaryWeapon === "shotgun" ? "shotgun" : "rifle");
+            if (loadout.armorTier === "light") {
+              sim.player.armor = 40;
+            } else if (loadout.armorTier === "medium") {
+              sim.player.armor = 75;
+            } else {
+              sim.player.armor = 100;
+            }
+            sim.player.stimsRemaining = loadout.stims;
+            setShowHideout(false);
+            sound.playDeploy();
+          }}
+        />
       )}
     </div>
   );
