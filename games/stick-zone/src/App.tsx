@@ -89,9 +89,7 @@ const MainApp: React.FC = () => {
   const queuedStim = useRef(false);
   const queuedReload = useRef(false);
   const queuedInteract = useRef(false);
-  const fireTouchOrigin = useRef<{ x: number; y: number } | null>(null);
   const touchInputRef = useRef<{ dx: number; dz: number; sprint?: boolean; slide?: boolean; crouch?: boolean; roll?: boolean; jump?: boolean; kick?: boolean; shoot?: boolean; interact?: boolean; aimAngle?: number }>({ dx: 0, dz: 0 });
-  const actionPointersRef = useRef<Map<string, Set<number>>>(new Map());
   const prevActionRef = useRef<string>("idle");
   const prevProximityRef = useRef<boolean>(false);
   const prevCashRef = useRef<number>(0);
@@ -202,7 +200,6 @@ const MainApp: React.FC = () => {
     const resetInputs = () => {
       keysPressed.current.clear();
       isMouseDown.current = false;
-      actionPointersRef.current.clear();
       touchInputRef.current = {
         dx: 0,
         dz: 0,
@@ -215,7 +212,6 @@ const MainApp: React.FC = () => {
         jump: false,
         crouch: false,
       };
-      dpadTouchIdRef.current = null;
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -353,7 +349,6 @@ const MainApp: React.FC = () => {
           aimAngle,
         };
 
-        const prevAmmo = sim.player.ammo;
         sim.step(input);
 
         // Sound triggers on kinetic state transitions
@@ -486,159 +481,6 @@ const MainApp: React.FC = () => {
     } finally {
       isRestartingRef.current = false;
     }
-  };
-
-  const dpadTouchIdRef = useRef<number | null>(null);
-
-  const handleTouchDpadStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (dpadTouchIdRef.current !== null) return; // Prevent secondary touch from hijacking D-pad
-    const rect = e.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    for (let i = 0; i < e.changedTouches.length; i++) {
-      const touch = e.changedTouches[i];
-      const dist = Math.hypot(touch.clientX - centerX, touch.clientY - centerY);
-      if (dist <= rect.width / 2 + 25) {
-        dpadTouchIdRef.current = touch.identifier;
-        if (dist > 5) {
-          const rawDx = touch.clientX - centerX;
-          const rawDy = touch.clientY - centerY;
-          touchInputRef.current.dx = rawDx / Math.max(dist, 40);
-          touchInputRef.current.dz = rawDy / Math.max(dist, 40);
-          touchInputRef.current.aimAngle = Math.atan2(rawDx, rawDy);
-        } else {
-          touchInputRef.current.dx = 0;
-          touchInputRef.current.dz = 0;
-        }
-        break;
-      }
-    }
-  };
-
-  const handleTouchDpadMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (dpadTouchIdRef.current === null) return;
-    let targetTouch: React.Touch | null = null;
-    for (let i = 0; i < e.touches.length; i++) {
-      if (e.touches[i].identifier === dpadTouchIdRef.current) {
-        targetTouch = e.touches[i];
-        break;
-      }
-    }
-    if (!targetTouch) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    const rawDx = targetTouch.clientX - centerX;
-    const rawDy = targetTouch.clientY - centerY;
-    const dist = Math.hypot(rawDx, rawDy);
-    if (dist > 5) {
-      touchInputRef.current.dx = rawDx / Math.max(dist, 40);
-      touchInputRef.current.dz = rawDy / Math.max(dist, 40);
-      touchInputRef.current.aimAngle = Math.atan2(rawDx, rawDy);
-    } else {
-      touchInputRef.current.dx = 0;
-      touchInputRef.current.dz = 0;
-    }
-  };
-
-  const handleTouchDpadEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (dpadTouchIdRef.current === null) return;
-    for (let i = 0; i < e.changedTouches.length; i++) {
-      if (e.changedTouches[i].identifier === dpadTouchIdRef.current) {
-        dpadTouchIdRef.current = null;
-        touchInputRef.current.dx = 0;
-        touchInputRef.current.dz = 0;
-        touchInputRef.current.aimAngle = undefined;
-        break;
-      }
-    }
-  };
-
-  const handleActionPointerDown = (action: string, e: React.PointerEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    try {
-      (e.currentTarget as any).setPointerCapture(e.pointerId);
-    } catch {}
-    let pointers = actionPointersRef.current.get(action);
-    if (!pointers) {
-      pointers = new Set();
-      actionPointersRef.current.set(action, pointers);
-    }
-    pointers.add(e.pointerId);
-    (touchInputRef.current as any)[action] = true;
-    if (e.pointerType === "mouse" && action === "shoot") {
-      isMouseDown.current = true;
-    }
-  };
-
-  const handleActionPointerUp = (action: string, e: React.PointerEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    try {
-      (e.currentTarget as any).releasePointerCapture(e.pointerId);
-    } catch {}
-    if (e.pointerType === "mouse" && action === "shoot") {
-      isMouseDown.current = false;
-    }
-    const pointers = actionPointersRef.current.get(action);
-    if (pointers) {
-      pointers.delete(e.pointerId);
-      if (pointers.size === 0) {
-        (touchInputRef.current as any)[action] = false;
-      }
-    } else {
-      (touchInputRef.current as any)[action] = false;
-    }
-  };
-
-  const handleActionMouseDown = (action: string, e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    if (action === "shoot") {
-      isMouseDown.current = true;
-    }
-    (touchInputRef.current as any)[action] = true;
-  };
-
-  const handleActionMouseUp = (action: string, e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    if (action === "shoot") {
-      isMouseDown.current = false;
-    }
-    const pointers = actionPointersRef.current.get(action);
-    if (!pointers || pointers.size === 0) {
-      (touchInputRef.current as any)[action] = false;
-    }
-  };
-
-  const setTouchAction = (action: string, active: boolean) => {
-    (touchInputRef.current as any)[action] = active;
-  };
-
-  const handleButtonKeyDown = (action: string, e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === "Tab") {
-      (touchInputRef.current as any)[action] = false;
-      if (action === "shoot") isMouseDown.current = false;
-      return;
-    }
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      e.stopPropagation();
-      (touchInputRef.current as any)[action] = true;
-      if (action === "shoot") isMouseDown.current = true;
-    }
-  };
-
-  const handleButtonKeyUp = (action: string, e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      e.stopPropagation();
-      (touchInputRef.current as any)[action] = false;
-      if (action === "shoot") isMouseDown.current = false;
-    }
-  };
-
-  const handleButtonBlur = (action: string) => {
-    (touchInputRef.current as any)[action] = false;
-    if (action === "shoot") isMouseDown.current = false;
   };
 
   

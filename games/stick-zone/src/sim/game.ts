@@ -893,13 +893,6 @@ export class SectorDepotSimulation {
     this.rollbackCrateClaim(crateId, cash);
     this.combatLog.push(`[SETTLEMENT] Loot claim for ${crateId} rejected by authority. Reconciled balance.`);
   }
-  private _unusedFreeze() {
-    if (this.frozenSettlementTick === undefined) {
-      this.frozenSettlementTick = this.tick;
-      this.frozenSettlementCash = this.player.cash;
-    }
-    return { tick: this.frozenSettlementTick, cash: this.frozenSettlementCash };
-  }
 
   public checkContainerCollision(x: number, z: number, radius = 0.45): boolean {
     for (const box of DEPOT_CONTAINERS) {
@@ -2269,7 +2262,7 @@ export class SectorDepotSimulation {
         this.player.lastHitmarkerTick = this.tick;
         this.player.lastHitmarkerCrit = hasPointBlankHit;
 
-        for (const [id, h] of machineHits) {
+        for (const [, h] of machineHits) {
           this.enqueuePresentationEvent({
             type: 'impact',
             position: { x: h.ref.x, y: 1.0, z: h.ref.z },
@@ -2288,7 +2281,7 @@ export class SectorDepotSimulation {
           }
         }
 
-        for (const [id, h] of rivalHits) {
+        for (const [, h] of rivalHits) {
           this.enqueuePresentationEvent({
             type: 'impact',
             position: { x: h.ref.x, y: 1.0, z: h.ref.z },

@@ -1,6 +1,5 @@
 import synchubConfig from "../../rundot/synchub.config.json";
 import entitiesConfig from "../../rundot/simulation/entities.json";
-import realtimeConfig from "../../rundot/realtime.config.json";
 /**
  * @file config.ts
  * Sector 7 Depot simulation constants and deterministic rules.

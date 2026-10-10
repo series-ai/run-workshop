@@ -3,7 +3,7 @@
  * High-performance virtual touch dual-joystick and tactical button interface for mobile & tablet.
  */
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import type { SectorDepotSimulation } from "../sim/game.js";
 import { sound } from "../audio.js";
 

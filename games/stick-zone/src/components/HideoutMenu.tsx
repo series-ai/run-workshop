@@ -44,7 +44,6 @@ export const HideoutMenu: React.FC<HideoutMenuProps> = ({ onDeploy }) => {
     loadout,
     stashItems,
     contracts,
-    equipWeapon,
     equipArmor,
     setStimsCount,
     buyShopItem,

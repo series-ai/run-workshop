@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { SectorDepotSimulation } from "../sim/game.js";
@@ -187,7 +187,7 @@ const PresentationFXManager: React.FC<{
     shatter: ShatterMesh;
   }) => void;
 }> = ({ sim, recoilImpulseRef, onRegisterHarness }) => {
-  const { gl, scene, camera } = useThree();
+  const { camera } = useThree();
   const effects = useMemo(() => new InkEffects(2048), []);
   const trails = useMemo(() => new InkTrails(), []);
   const shatter = useMemo(() => new ShatterMesh(256), []);
@@ -420,8 +420,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ sim }) => {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    let isPaused = false;
 
+    let isPaused = false;
     const testHarness = {
       isReady: false,
       isPaused: false,

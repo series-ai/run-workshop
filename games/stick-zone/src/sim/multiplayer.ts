@@ -731,7 +731,6 @@ export class MultiplayerCoordinator {
     if (authorHealth === undefined && machine.isAlive && !(typeof authorVitalsSeq === "number" && authorVitalsSeq < seqNow)) {
       // Prediction damage (no authoritative vitals): local decrement stays ordered against
       // LOCAL seq only (relay confirmations will carry higher seq and supersede).
-      const maxHp = (machine as any).maxHealth ?? (machine.type === 'drone' ? 75 : 120);
       machine.health = Math.max(0, machine.health - damage);
       machine.isAlive = machine.health > 0;
       if (!machine.isAlive) this.sim.combatLog.push(`[MACHINE DESTROYED] ${machine.id} neutralized by ${senderName}`);
@@ -870,7 +869,6 @@ export class MultiplayerCoordinator {
 
     const now = this.getServerNow();
     if (packet.timestamp > now + 2000) return false;
-    const packetTime = typeof packet.timestamp === 'number' && packet.timestamp > 0 ? packet.timestamp : now;
     const lastHitKey = `${packet.senderId}:${machineId}`;
     const minInterval = attackKind === 'kick' ? 600 : (attackKind === 'shotgun' ? 380 : 130);
     const lastPacketKey = `${lastHitKey}:${attackKind}:packet`;

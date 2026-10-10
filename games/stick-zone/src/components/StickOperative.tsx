@@ -132,7 +132,6 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
     }
     const flashElapsed =
       lastShootTimeRef.current > 0 ? Date.now() - lastShootTimeRef.current : 999999;
-    const isFiring = flashElapsed >= 0 && flashElapsed <= 70;
 
     // Laser raycast check against containers
     let laserLen = 35.0;
