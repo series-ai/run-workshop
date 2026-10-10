@@ -18,7 +18,7 @@ Stick Zone relies strictly on first-party Venus monorepo services:
 2. **Turnkey Extraction & Airlocks (`@series-inc/rundot-synchub`)**:
    - Turnkey spatial airlock choreography, corridor presentation countdowns, and handoff tickets via `@series-inc/rundot-syncplay/extensions/hub`.
    - Client state machine driven by `ExfilController` (`idle` -> `holding_zone` -> `corridor_presentation` -> `submitting_settlement` -> `extracted`).
-   - Structural and cryptographic receipt validation via `verifyReceiptIntegrity` and canonical SHA-256 digest matching (`computeCanonicalOutcomeDigest`).
+   - Cryptographic outcome verification and canonical SHA-256 digest matching (`computeCanonicalOutcomeDigest`).
 
 3. **Deterministic Simulation & Outcome Extraction (`server/raid-runtime-worker`)**:
    - Sandboxed background worker executing deterministic raid replay via `@series-inc/rundot-syncplay/modules/extraction`.
@@ -30,7 +30,7 @@ Stick Zone relies strictly on first-party Venus monorepo services:
 5. **Client-Side Tactical Meta-Progression (`src/progression/stashStore.ts`)**:
    - Armory loadouts (weapons, armor tiers, stims), persistent bank, and leveling.
    - Zero-trust settlement: cash is credited exclusively from canonical digest-verified `SettlementReceipt` payloads (`outcomePayload.cashBanked`).
-   - Anti-replay receipt ledger and anti-tamper SHA-256 storage checksums.
+   - Anti-replay receipt ledger with server-authoritative simulation hydration (`simulation.getPlayerState()`).
 
 ---
 
@@ -56,5 +56,5 @@ npm run preview  # Previews compiled production bundle on :4196
 ```sh
 npm run typecheck # Strict TypeScript compilation (tsc --noEmit)
 npm run build     # Stages inkline assets and builds optimized production client bundle (dist/)
-npm test          # Runs all 8 test suites (206 cases) via vitest
+npm test          # Runs all 8 test suites (104 cases) via vitest
 ```
