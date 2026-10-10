@@ -5,6 +5,8 @@ import * as THREE from 'three';
 import baseline from './fixtures/r31-city-policy-baseline.json';
 import { assertR36PreservedIdentity } from './support/r36PreservedIdentity';
 import { assertR36UnchangedPackedTower } from './support/r36UnchangedPackedTower';
+import { verifiedR36DarkMassIds } from './support/r36DarkMassIds';
+import { readRetainedBridgeRecords } from './support/retainedStructuralSupport';
 import { withoutR32RoofPolicy } from './support/r32RoofPolicy';
 // External texture stubs permit the real factory. They do not provide the oracle.
 vi.mock('../src/render/signAtlas', async importOriginal => {
@@ -13,7 +15,7 @@ vi.mock('../src/render/signAtlas', async importOriginal => {
 });
 vi.mock('../src/render/interiorAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/interiorAtlas')>(), createInteriorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
 vi.mock('../src/render/impostorAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/impostorAtlas')>(), createImpostorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
-import { SkyriverCity, deriveCityMasses, SKYRIVER_CITY_SHADER_SOURCE, SKYRIVER_CITY } from '../src/render/city';
+import { SkyriverCity, deriveCityMasses, deriveTowerProfiles, deriveRetainedMassSupportRecords, SKYRIVER_CITY_SHADER_SOURCE, SKYRIVER_CITY } from '../src/render/city';
 import { deriveCityLayout } from '../src/sim/derive';
 import { presentCityLayout } from '../src/render/presentationLayout';
 import { skyriverQualityFor, SkyriverQualityTier } from '../src/render/scene';
@@ -25,6 +27,8 @@ interface BeforeMesh { count: number; index: string | null; instanceMatrix: stri
 describe('R31 independent roof emission policy', () => {
   it.each([424242, 0, 2147483647, 4294967295])('maps only real equipment rows and preserves all old geometry for seed %i', seed => {
     const layout = presentCityLayout(deriveCityLayout(seed)), masses = deriveCityMasses(layout);
+    const verifiedDark = verifiedR36DarkMassIds(layout, masses, deriveTowerProfiles(layout), readRetainedBridgeRecords(deriveRetainedMassSupportRecords(layout)));
+    const darkMasses = new Set([...verifiedDark].map(index => masses[index]));
     const city = new SkyriverCity({ layout, quality: skyriverQualityFor(SkyriverQualityTier.High), colourSwitch: new SkyriverDistrictColourSwitch(true) });
     const evidence = [];
     try {
@@ -37,11 +41,11 @@ describe('R31 independent roof emission policy', () => {
         expect(mask).toBeInstanceOf(THREE.InstancedBufferAttribute); expect(mask.itemSize).toBe(1); expect(mask.array).toBeInstanceOf(Float32Array);
         const rows = masses.filter(m => mode === 'geometry' || (m.layer ?? 0) < 2);
         expect(tower.count).toBe(rows.length);
-        let equipment = 0, structuralSupports = 0, ordinaryCrowns = 0, cells = 0; const kept = new Set<string>();
+        let equipment = 0, structuralSupports = 0, ordinaryCrowns = 0, auxiliary = 0, cells = 0; const kept = new Set<string>();
         for (let i = 0; i < rows.length; i += 1) {
-          const mass = rows[i]!, allowed = mass.baseRecord?.kind === 'equipment' || mass.supportRole === 'retained-child-bridge' || Reflect.get(mass, 'crownRole') === 'ordinary-dark-crown' ? 0 : 1;
+          const mass = rows[i]!, allowed = mass.baseRecord?.kind === 'equipment' || darkMasses.has(mass) ? 0 : 1;
           expect(mask.getX(i), `actual row${i}`).toBe(allowed);
-          if (mass.baseRecord?.kind === 'equipment') equipment += 1; else if (mass.supportRole === 'retained-child-bridge') structuralSupports += 1; else if (Reflect.get(mass, 'crownRole') === 'ordinary-dark-crown') ordinaryCrowns += 1; else kept.add(mass.baseRecord?.kind ?? 'legacy');
+          if (mass.baseRecord?.kind === 'equipment') equipment += 1; else if (mass.supportRole === 'retained-child-bridge') structuralSupports += 1; else if (Reflect.get(mass, 'crownRole') === 'ordinary-dark-crown') ordinaryCrowns += 1; else if (darkMasses.has(mass)) auxiliary += 1; else kept.add(mass.baseRecord?.kind ?? 'legacy');
           if ((mass.layer ?? 0) === 0 && allowed) cells += Math.floor(2 * (mass.width + mass.depth) * mass.height / (SKYRIVER_CITY.windowCellWidthM * SKYRIVER_CITY.windowCellHeightM));
         }
         expect(equipment).toBeGreaterThan(50);
@@ -83,7 +87,7 @@ describe('R31 independent roof emission policy', () => {
         mask.setX(at, 0); expect(city.geometryIdentity()).toEqual(identity);
         expect(city.sourceEvidence().roles.map(role => role.id)).not.toContain('tower-parapet');
         expect(city.sourceEvidence().roles.map(role => role.id)).not.toContain('deck-skylight');
-        evidence.push({ seed, mode, drawnMasses: rows.length, equipment, structuralSupports, ordinaryCrowns, emittingRows: rows.length - equipment - structuralSupports - ordinaryCrowns, paneCells: cells, emissionPolicy, mutationPolicy: changedPolicy, identity: oldIdentity });
+        evidence.push({ seed, mode, drawnMasses: rows.length, equipment, structuralSupports, ordinaryCrowns, emittingRows: rows.length - equipment - structuralSupports - ordinaryCrowns - auxiliary, paneCells: cells, emissionPolicy, mutationPolicy: changedPolicy, identity: oldIdentity });
       }
     } finally { city.dispose(); }
     if (process.env.SKYRIVER_ROOF_POLICY_OUT) writeFileSync(`${process.env.SKYRIVER_ROOF_POLICY_OUT}-${seed}.json`, JSON.stringify(evidence, null, 2));

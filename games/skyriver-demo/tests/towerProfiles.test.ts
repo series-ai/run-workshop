@@ -1,11 +1,18 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import * as City from '../src/render/city';
 import { deriveCityLayout } from '../src/sim/derive';
 import { presentCityLayout } from '../src/render/presentationLayout';
 import cohort from './fixtures/r36-ten-before.json';
-import { massRoofBox, roofBoxesConflict } from './support/rooftopDetailsGeometry';
-import { massSection, normalizedTowerGeometry, normalizedExposedTowerGeometry, canonicalSectionUnion, intersectSection, sectionUnionArea, sectionUnionBounds } from './support/towerProfileGeometry';
+import { roofBoxesConflict } from './support/rooftopDetailsGeometry';
+import { roofConflictQuery } from './support/legacyRoofGeometry';
+import { retainedMassContact } from './support/retainedMassContact';
+import { physicalDeckSection, deckMemberContainmentFailures, physicalDeckRoofAir, physicalTowerStageSupport } from './support/towerDeckGeometry';
+import { addedVolumeCells, addedVolumeConflicts, artVolumeBox, addedCellRoofBox, physicalFootprint } from './support/towerAddedVolume';
+import { supportConflictQuery } from './support/retainedStructuralSupport';
+import { independentMassRoofBox, physicalFacadeRectangles, canonicalPhysicalSectionUnion, physicalSectionUnionArea, massSection, sourceBoxSection, massIntersectsPrism, normalizedTowerGeometry, normalizedExposedTowerGeometry, canonicalSectionUnion, intersectSection, sectionUnionArea, sectionUnionBounds } from './support/towerProfileGeometry';
 
 const SEEDS = [424242, 0, 2147483647, 4294967295, 20240917] as const;
 function eligible(row: City.SkyriverTowerProfileRow): row is City.SkyriverEligibleTowerProfile {
@@ -15,6 +22,11 @@ function memberIndices(result: readonly number[]): readonly number[] {
   expect(result.every(n => Number.isSafeInteger(n) && n >= 0)).toBe(true);
   expect(new Set(result).size).toBe(result.length);
   return result;
+}
+
+function writePhysicalWitness(seed: number, kind: string, evidence: unknown): void {
+  const output = process.env.R36_PROFILE_OUT;
+  if (output) { mkdirSync(output, { recursive: true }); writeFileSync(join(output, `${seed}-${kind}.json`), JSON.stringify(evidence, null, 2) + '\n'); }
 }
 
 /** Profile fields identify members. Positions and ratios come from the real mass array. */
@@ -48,13 +60,15 @@ describe('R36 independent ordinary tower geometry', () => {
       for (let i = 1; i < stages.length; i++) {
         const offset = stages[i]!.offset; if (offset === null) throw new Error('R36_UPPER_OFFSET_MISSING'); const axis = offset.axis;
         expect(['x', 'z']).toContain(axis);
-        const parent = offset.parentKind === 'original-footprint' ? massSection({ ...tower, y0: 0 }) : footprints[offset.parentStageIndex];
+        const parent = offset.parentKind === 'original-footprint' ? massSection(tower) : footprints[offset.parentStageIndex];
         if (!parent) throw new Error('R36_PARENT_STAGE_MISSING');
         if (offset.parentKind !== 'original-footprint') expect(offset.parentStageIndex).toBeLessThan(i);
         const child = footprints[i]!;
         const span = axis === 'x' ? parent.x1 - parent.x0 : parent.z1 - parent.z0;
         const delta = axis === 'x' ? (child.x0 + child.x1 - parent.x0 - parent.x1) / 2 : (child.z0 + child.z1 - parent.z0 - parent.z1) / 2;
         const ratio = Math.abs(delta) / span;
+        if (ratio < .08 - 1e-7 || ratio > .33 + 1e-7) writePhysicalWitness(seed, 'offset', { towerIndex, stageIndex: i, axis, parent, child, span, delta, ratio,
+          members: stages.map(stage => stage.massIndices.map(index => ({ index, mass: masses[index], polygon: physicalFootprint(artVolumeBox(masses[index]!, 0)) }))) });
         expect(ratio, `tower${towerIndex}:stage${i}`).toBeGreaterThanOrEqual(.08 - 1e-7);
         expect(ratio, `tower${towerIndex}:stage${i}`).toBeLessThanOrEqual(.33 + 1e-7);
         expect(offset.parentSpanM).toBeCloseTo(span, 5);
@@ -75,7 +89,7 @@ describe('R36 independent ordinary tower geometry', () => {
       const owner = City.buildingSeedOf(tower.x, tower.z);
       expect(row.building).toBe(owner); expect(row.materialOwner).toBe(owner);
       const members = masses.filter(m => m.materialOwner === owner && (m.anchorV ?? m.z) === tower.z && (m.layer ?? 0) === 0);
-      const original = massSection({ ...tower, y0: 0 });
+      const original = massSection(tower);
       const sections: string[] = [];
       let exposedReplacement = false;
       for (const stage of row.stages) {
@@ -88,10 +102,9 @@ describe('R36 independent ordinary tower geometry', () => {
         expect(y0).toBeLessThan(tower.height); expect(y1).toBeLessThanOrEqual(tower.height + 1e-7);
         const y = (Math.max(0, y0) + y1) / 2;
         expect(y).toBeLessThan(tower.height);
-        const whole = members.filter(m => m.y0 < y && m.y0 + m.height > y).map(massSection);
-        sections.push(JSON.stringify(canonicalSectionUnion(whole)));
-        const clipped = whole.flatMap(b => { const c = intersectSection(b, original); return c ? [c] : []; });
-        if (sectionUnionArea(clipped) < tower.width * tower.depth - 1e-6) exposedReplacement = true;
+        const whole = members.filter(m => m.y0 < y && m.y0 + m.height > y);
+        sections.push(JSON.stringify(canonicalPhysicalSectionUnion(whole)));
+        if (physicalSectionUnionArea(whole, original) < tower.width * tower.depth - 1e-6) exposedReplacement = true;
       }
       expect(exposedReplacement, `tower${row.towerIndex}:root-masks-stages`).toBe(true);
       expect(new Set(sections).size, `tower${row.towerIndex}:hidden-stage-changes`).toBeGreaterThan(1);
@@ -103,12 +116,14 @@ describe('R36 independent ordinary tower geometry', () => {
           expect(m.building).toBe(owner);
           expect(Math.abs(m.x - tower.x) + Math.abs(m.z - tower.z)).toBeGreaterThan(0);
           expect(m.y0 + m.height).toBeLessThan(tower.height);
-          expect(roofBoxesConflict(massRoofBox(m), massRoofBox(masses[row.stages[0]!.massIndices[0]!]!))).toBe(false);
+          expect(roofBoxesConflict(independentMassRoofBox(m), independentMassRoofBox(masses[row.stages[0]!.massIndices[0]!]!))).toBe(false);
         }
       }
       if (row.family === 'broad-shelf') {
         const upper = row.stages.at(-1)!;
         const lower = row.stages[0]!.footprint, middle = row.stages[1]!.footprint;
+        if (!(middle.width > lower.width || middle.depth > lower.depth)) writePhysicalWitness(seed, 'shelf', { towerIndex: row.towerIndex, lower, middle,
+          stages: row.stages.map(stage => ({ bounds: sectionUnionBounds(stage.massIndices.map(index => massSection(masses[index]!))), members: stage.massIndices.map(index => ({ index, mass: masses[index], polygon: physicalFootprint(artVolumeBox(masses[index]!, 0)) })) })) });
         expect(middle.width > lower.width || middle.depth > lower.depth, `tower${row.towerIndex}:no-broad-middle-shelf`).toBe(true);
         expect(middle.width * middle.depth).toBeGreaterThan(upper.footprint.width * upper.footprint.depth);
       }
@@ -129,32 +144,28 @@ describe('R36 independent ordinary tower geometry', () => {
   it.each(SEEDS)('has exposed grime wing air of at least 8 m beside a continuous narrow spine at seed %i', seed => {
     const layout = presentCityLayout(deriveCityLayout(seed)), masses = City.deriveCityMasses(layout), rows = City.deriveTowerProfiles(layout).filter(eligible);
     let grimeWings = 0;
+    const actualBoxes = masses.map(independentMassRoofBox), query = supportConflictQuery(actualBoxes);
     for (const row of rows.filter(r => r.family === 'supported-spine')) {
       if (row.supportSpineIndex === null) throw new Error('R36_SPINE_MISSING');
       const spine = masses[row.supportSpineIndex]; if (!spine) throw new Error('R36_SPINE_INDEX_INVALID');
       const wings = memberIndices(row.stages[0]!.massIndices).map(i => {
         const mass = masses[i]; if (!mass) throw new Error('R36_GRIME_WING_MEMBER_MISSING'); return mass;
-      }).filter(m => m.y0 + m.height < 600);
+      }).filter(m => m.y0 + m.height < 600 && (m.yawWingPart === undefined || m.yawWingPart.part === 'roof'));
       expect(row.stages[0]!.massIndices.length).toBeGreaterThanOrEqual(2);
+      const support = physicalTowerStageSupport(row.stages.map(stage => stage.massIndices.map(index => masses[index]!)), spine);
+      expect(support.errors, `tower${row.towerIndex}:stage-spine-paths`).toEqual([]);
       for (const wing of wings) {
         grimeWings++;
-        const support = massSection(spine), w = massSection(wing);
         const roof = wing.y0 + wing.height;
+        if (!(spine.width * spine.depth < wing.width * wing.depth * .25)) writePhysicalWitness(seed, 'wing', { towerIndex: row.towerIndex, spine, wing,
+          spinePolygon: physicalFootprint(artVolumeBox(spine, 0)), wingPolygon: physicalFootprint(artVolumeBox(wing, 0)), spineArea: spine.width * spine.depth, wingArea: wing.width * wing.depth });
         expect(spine.width * spine.depth).toBeLessThan(wing.width * wing.depth * .25);
-        const air: { x0: number; x1: number; z0: number; z1: number }[] = [
-          { ...w, x1: Math.min(w.x1, support.x0) }, { ...w, x0: Math.max(w.x0, support.x1) },
-          { x0: Math.max(w.x0, support.x0), x1: Math.min(w.x1, support.x1), z0: w.z0, z1: Math.min(w.z1, support.z0) },
-          { x0: Math.max(w.x0, support.x0), x1: Math.min(w.x1, support.x1), z0: Math.max(w.z0, support.z1), z1: w.z1 },
-        ].filter(b => b.x1 > b.x0 && b.z1 > b.z0);
-        expect(sectionUnionArea(air)).toBeGreaterThan(0);
-        for (const a of air) {
-          const prism = massRoofBox({ x: (a.x0 + a.x1) / 2, z: (a.z0 + a.z1) / 2, y0: roof, width: a.x1 - a.x0, depth: a.z1 - a.z0, height: 8, tint: wing.tint, anchorV: wing.anchorV });
-          const hits = masses.flatMap((m, i) => roofBoxesConflict(prism, massRoofBox(m)) ? [i] : []);
-          expect(hits, `tower${row.towerIndex}:grime-wing-air`).toEqual([]);
-        }
-        const xOverlap = Math.min(w.x1, support.x1) - Math.max(w.x0, support.x0), zOverlap = Math.min(w.z1, support.z1) - Math.max(w.z0, support.z0);
-        expect(xOverlap).toBeGreaterThanOrEqual(-1e-7); expect(zOverlap).toBeGreaterThanOrEqual(-1e-7);
-        expect(Math.max(xOverlap, zOverlap), `tower${row.towerIndex}:wing-spine-contact`).toBeGreaterThan(0);
+        const owner = City.buildingSeedOf(wing.x, wing.z);
+        const air = addedVolumeCells({ ...artVolumeBox(wing, owner), y0: roof, height: 8 }, [{ ...artVolumeBox(spine, owner), y0: roof, height: 8 }]);
+        expect(air.reduce((sum, cell) => sum + cell.volumeM3, 0)).toBeGreaterThan(0);
+        const hits = addedVolumeConflicts(air, query, new Set(), actualBoxes);
+        expect(hits.map(hit => hit.blockerIndex), `tower${row.towerIndex}:grime-wing-air`).toEqual([]);
+        expect(retainedMassContact(independentMassRoofBox(wing), independentMassRoofBox(spine)), `tower${row.towerIndex}:wing-spine-contact`).not.toBeNull();
         expect(spine.y0).toBeLessThanOrEqual(wing.y0); expect(spine.y0 + spine.height).toBeGreaterThanOrEqual(roof + 8);
       }
     }
@@ -163,17 +174,10 @@ describe('R36 independent ordinary tower geometry', () => {
 
   it.each(SEEDS)('backs every cached facade rectangle with actual emitted box surface at seed %i', seed => {
     const layout = presentCityLayout(deriveCityLayout(seed)), masses = City.deriveCityMasses(layout), faces = City.deriveFacadeFaces(layout);
-    const errors: string[] = [];
+    const errors: string[] = [], hosts = masses.map(mass => ({ mass, box: independentMassRoofBox(mass) }));
     for (const face of faces) {
       const requested = { x0: face.u0, x1: face.u1, z0: face.y0, z1: face.y1 };
-      const rectangles = masses.flatMap(m => {
-        if ((m.anchorV ?? m.z) !== face.owner.anchorV) return [];
-        const bounds = massSection(m), axisX = face.planeAxis === 'x';
-        const a = axisX ? bounds.x0 : bounds.z0, b = axisX ? bounds.x1 : bounds.z1;
-        if (Math.min(Math.abs(face.plane - a), Math.abs(face.plane - b)) > 1e-7) return [];
-        const actual = { x0: axisX ? bounds.z0 : bounds.x0, x1: axisX ? bounds.z1 : bounds.x1, z0: m.y0, z1: m.y0 + m.height };
-        const clipped = intersectSection(requested, actual); return clipped ? [clipped] : [];
-      });
+      const { rectangles } = physicalFacadeRectangles(face, hosts, requested);
       const area = (face.u1 - face.u0) * (face.y1 - face.y0), covered = sectionUnionArea(rectangles);
       if (!(area > 0) || Math.abs(covered - area) > Math.max(1e-7, area * 1e-10)) errors.push(`${face.id}:unbacked-area=${area - covered}`);
     }
@@ -188,7 +192,7 @@ describe('R36 independent ordinary tower geometry', () => {
       const ids = memberIndices(crown.massIndices); expect(ids).toHaveLength(2);
       const a = masses[ids[0]!], b = masses[ids[1]!]; if (!a || !b) throw new Error('R36_CROWN_MEMBER_MISSING');
       const tower = layout.towers[row.towerIndex]!;
-      const aa = massSection(a), bb = massSection(b), bound = sectionUnionBounds([aa, bb]);
+      const aa = sourceBoxSection(a), bb = sourceBoxSection(b), bound = sectionUnionBounds([aa, bb]);
       expect(['x', 'z']).toContain(crown.axis);
       const axisX = crown.axis === 'x';
       const low = axisX ? Math.min(aa.x1, bb.x1) : Math.min(aa.z1, bb.z1);
@@ -200,12 +204,36 @@ describe('R36 independent ordinary tower geometry', () => {
       const z0 = axisX ? Math.max(aa.z0, bb.z0) : low, z1 = axisX ? Math.min(aa.z1, bb.z1) : high;
       const y0 = Math.max(a.y0, b.y0), y1 = Math.min(a.y0 + a.height, b.y0 + b.height);
       expect(Math.min(x1 - x0, z1 - z0, y1 - y0)).toBeGreaterThan(0);
-      const prism = massRoofBox({ x: (x0 + x1) / 2, z: (z0 + z1) / 2, y0, width: x1 - x0, depth: z1 - z0, height: y1 - y0, tint: tower.tint, anchorV: tower.z });
-      const hits = masses.flatMap((m, index) => roofBoxesConflict(prism, massRoofBox(m)) ? [index] : []);
+      const prism = independentMassRoofBox({ x: (x0 + x1) / 2, z: (z0 + z1) / 2, y0, width: x1 - x0, depth: z1 - z0, height: y1 - y0, tint: tower.tint, anchorV: tower.z, yawRad: a.yawRad, yawAnchor: a.yawAnchor });
+      const hits = masses.flatMap((m, index) => roofBoxesConflict(prism, independentMassRoofBox(m)) ? [index] : []);
       expect(hits, `tower${row.towerIndex}:notch`).toEqual([]);
     }
     expect(split / rows.length).toBeGreaterThanOrEqual(.15);
     expect(split / rows.length).toBeLessThanOrEqual(.25);
+  });
+
+  it('measures rotated canyon spans and excludes false prism corners', () => {
+    const rectangle = { x: 0, z: 0, width: 12, depth: 4, y0: 0, height: 2, tint: 1 };
+    expect(massSection(rectangle)).toEqual({ x0: -6, x1: 6, z0: -2, z1: 2 });
+    const turned = { ...rectangle, yawRad: Math.PI / 4, yawAnchor: { x: 1, z: 2 } };
+    const bounds = massSection(turned), centreX = 1 - 3 / Math.SQRT2, centreZ = 2 - 1 / Math.SQRT2;
+    expect(bounds.x0).toBeCloseTo(centreX - 8 / Math.SQRT2, 10);
+    expect(bounds.x1).toBeCloseTo(centreX + 8 / Math.SQRT2, 10);
+    expect(bounds.z0).toBeCloseTo(centreZ - 8 / Math.SQRT2, 10);
+    expect(bounds.z1).toBeCloseTo(centreZ + 8 / Math.SQRT2, 10);
+    const square = { ...rectangle, width: 4, depth: 4, yawRad: Math.PI / 4 };
+    expect(massIntersectsPrism(square, { x0: 2.5, x1: 2.7, z0: 2.5, z1: 2.7, y0: 0, y1: 1 })).toBe(false);
+    expect(massIntersectsPrism(square, { x0: 2.5, x1: 2.7, z0: -.1, z1: .1, y0: 0, y1: 1 })).toBe(true);
+    expect(massIntersectsPrism(square, { x0: -1, x1: 1, z0: -1, z1: 1, y0: 2, y1: 3 })).toBe(false);
+  });
+
+  it('uses true rotated wing-air cells after the broad query', () => {
+    const air = { x: 0, z: 0, y0: 2, width: 4, depth: 4, height: 8, owner: 1, anchorV: 0, yawRad: Math.PI / 4 };
+    const cells = addedVolumeCells(air, []), boxes = cells.map(cell => ({ ...addedCellRoofBox(cell), cell })), query = roofConflictQuery(boxes);
+    const box = { x: 2.6, z: 2.6, y: 3, hx: .1, hy: .1, hz: .1, c: 1, s: 0 };
+    expect(query(box)).toEqual([]);
+    expect(query({ ...box, z: 0 })).toEqual([0]);
+    expect(query({ ...box, z: 0, y: 10.1 })).toEqual([]);
   });
 
   it('keeps the official ten tower IDs and uses geometry-only fingerprints', () => {
@@ -232,8 +260,40 @@ describe('R36 independent ordinary tower geometry', () => {
     const tower = { x: 0, z: 0, width: 100, depth: 80, height: 1000 };
     const m: City.SkyriverMass = { ...tower, y0: 0, tint: 1 };
     expect(normalizedTowerGeometry([m], tower)).toEqual(normalizedTowerGeometry([{ ...m, tint: 99, materialOwner: .99 }], tower));
+    expect(normalizedExposedTowerGeometry([{ ...m, yawRad: Math.PI / 4 }], tower)).not.toEqual(normalizedExposedTowerGeometry([m], tower));
+    expect(physicalSectionUnionArea([{ ...m, yawRad: Math.PI / 4 }])).toBeCloseTo(m.width * m.depth, 8);
     expect(normalizedTowerGeometry([m], tower)).not.toEqual(normalizedTowerGeometry([{ ...m, x: 8 }], tower));
     const hidden = { ...m, y0: 200, height: 200, width: 20, depth: 20 };
     expect(normalizedExposedTowerGeometry([m, hidden], tower)).toEqual(normalizedExposedTowerGeometry([m], tower));
+  });
+
+  it('measures a connected drawn roof deck and rejects missing or displaced connectors', () => {
+    const source: City.SkyriverMass = { x: 0, z: -12, y0: 0, width: 40, depth: 16, height: 100, tint: 1, materialOwner: 1, anchorV: 0 };
+    const body = { ...source, width: 10, depth: 4, yawRad: Math.PI / 6 };
+    const spine = { ...source, z: 0, width: 4, depth: 8, height: 108 };
+    const collar = { ...source, y0: 96, height: 4 };
+    const facts = physicalDeckSection([body], [collar], spine, 100);
+    expect(facts.errors).toEqual([]);
+    expect(facts.bodyArea).toBeCloseTo(40, 10); expect(facts.deckArea).toBeCloseTo(640, 10);
+    expect(facts.bodySpineShare).toBeCloseTo(.8, 10); expect(facts.deckSpineShare).toBeCloseTo(.05, 10);
+    expect(deckMemberContainmentFailures(body, source)).toEqual([]);
+    expect(deckMemberContainmentFailures(collar, source)).toEqual([]);
+    for (const connectors of [[], [{ ...collar, z: -13 }], [{ ...collar, y0: 95 }], [{ ...collar, x: 22 }]]) {
+      const failed = physicalDeckSection([body], connectors, spine, 100);
+      expect(failed.errors).toContain('body0:spine-path');
+      expect(failed.errors).toContain('spine-share');
+      expect(failed.deckArea).toBeCloseTo(failed.bodyArea, 10);
+    }
+    expect(deckMemberContainmentFailures({ ...collar, x: 1 }, source)).toContain('source-footprint');
+    const blocker = independentMassRoofBox({ ...source, x: 15, width: 1, depth: 1, y0: 100, height: 1 });
+    const query = supportConflictQuery([blocker]);
+    expect(addedVolumeConflicts(physicalDeckRoofAir([body], spine, 100), query, new Set(), [blocker])).toEqual([]);
+    expect(addedVolumeConflicts(physicalDeckRoofAir(facts.members, spine, 100), query, new Set(), [blocker]).map(hit => hit.blockerIndex)).toContain(0);
+    const upper = { ...source, z: 0, y0: 100, height: 20, width: 10, depth: 10 };
+    const top = { ...upper, y0: 120, width: 8, depth: 8 };
+    const support = physicalTowerStageSupport([[body], [upper], [top]], spine, [collar]);
+    expect(support.errors).toEqual([]);
+    expect(support.adjacentContacts[1]).toEqual([{ lowerIndex: 0, upperIndex: 0, contact: 'roof-face' }]);
+    expect(physicalTowerStageSupport([[body], [upper], [{ ...top, x: 30 }]], spine, [collar]).errors).toContain('stage2:member0:spine-path');
   });
 });

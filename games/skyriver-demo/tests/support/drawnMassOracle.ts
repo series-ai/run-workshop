@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import { deriveCityLayout } from '../../src/sim/derive';
 import { presentCityLayout } from '../../src/render/presentationLayout';
-import { deriveCityMasses, warpRigid } from '../../src/render/city';
+import { deriveCityMasses, warpBoxPoint } from '../../src/render/city';
 
 export function indexedDrawnBoxes(seed = 424242) {
   return deriveCityMasses(presentCityLayout(deriveCityLayout(seed))).map((mass, index) => {
-    const warped = warpRigid(mass.x, mass.z, mass.anchorV ?? mass.z, { x: 0, z: 0, heading: 0 });
+    const warped = warpBoxPoint(mass, mass.x, mass.z, { x: 0, z: 0, heading: 0 });
     const inverse = new THREE.Matrix4().compose(
       new THREE.Vector3(warped.x, mass.y0 + mass.height / 2, warped.z),
       new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), warped.heading),

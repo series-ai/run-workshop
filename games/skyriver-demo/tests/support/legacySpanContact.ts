@@ -1,8 +1,10 @@
 import {
-  buildingSeedOf, placeTrim, skyriverTrimBlocksHero,
+  buildingSeedOf, skyriverTrimBlocksHero,
   type SkyriverCityTrims, type SkyriverHeroBlade, type SkyriverMass, type SkyriverTrimOwner,
 } from '../../src/render/city';
-import { massRoofBox, roofBoxDistance, roofBoxTolerance, type RoofBox } from './rooftopDetailsGeometry';
+import { roofBoxDistance, roofBoxTolerance, type RoofBox } from './rooftopDetailsGeometry';
+import { independentMassRoofBox } from './towerProfileGeometry';
+import { independentSpanPlacement } from './legacySpanGeometry';
 import { trimSeedBits } from './legacyTrimSupport';
 
 export interface SpanEndpointContact {
@@ -48,9 +50,6 @@ function faceContactsBox(
 }
 
 const ownerSeed = (owner: SkyriverTrimOwner) => owner.materialOwner ?? buildingSeedOf(owner.x, owner.z);
-const footprintGap = (owner: SkyriverTrimOwner, x: number, z: number) =>
-  Math.max(Math.abs(x - owner.x) - owner.width / 2, Math.abs(z - owner.z) - owner.depth / 2);
-
 /** Identity includes both canonical endpoints, kind and exact uploaded seed bits. */
 export function legacySpanContactKey(owner: number, to: number, kind: number, seedBits: number): string {
   return [Math.min(owner, to), Math.max(owner, to), kind, seedBits].join('/');
@@ -62,27 +61,17 @@ export function inspectLegacySpanContacts(
   const byOwner = new Map<number, { readonly index: number; readonly box: RoofBox }[]>();
   for (const [index, mass] of masses.entries()) {
     const owner = mass.materialOwner ?? mass.building ?? buildingSeedOf(mass.x, mass.z);
-    const list = byOwner.get(owner) ?? []; list.push({ index, box: massRoofBox(mass) }); byOwner.set(owner, list);
+    const list = byOwner.get(owner) ?? []; list.push({ index, box: independentMassRoofBox(mass) }); byOwner.set(owner, list);
   }
   const records: LegacySpanContactRecord[] = [];
   for (let i = 0; i < prefix; i++) {
     const to = trims.spanTo[i];
     if (!to || skyriverTrimBlocksHero(trims, i, heroes)) continue;
     const owner = trims.owner[i]!;
-    const along = trims.sz[i]! >= trims.sx[i]!;
-    const half = (along ? trims.sz[i]! : trims.sx[i]!) / 2;
-    const e0x = along ? trims.cx[i]! : trims.cx[i]! - half;
-    const e0z = along ? trims.cz[i]! - half : trims.cz[i]!;
-    const ownerAtLow = footprintGap(owner, e0x, e0z) <= footprintGap(to, e0x, e0z);
-    const owners = ownerAtLow ? [owner, to] : [to, owner];
-    const placed = placeTrim(trims, i, { x: 0, z: 0, heading: 0, length: 0 });
-    const lx = along ? Math.sin(placed.heading) : Math.cos(placed.heading);
-    const lz = along ? Math.cos(placed.heading) : -Math.sin(placed.heading);
-    const sx = along ? Math.cos(placed.heading) : Math.sin(placed.heading);
-    const sz = along ? -Math.sin(placed.heading) : Math.cos(placed.heading);
-    const ends = [-1, 1].map((sign, j): SpanEndpointContact => {
-      const x = placed.x + sign * lx * placed.length / 2;
-      const z = placed.z + sign * lz * placed.length / 2;
+    const placed = independentSpanPlacement(trims, i), along = placed.alongZ;
+    const sx = along ? placed.box.c : placed.box.s, sz = along ? -placed.box.s : placed.box.c;
+    const ends = placed.endpoints.map((point, j): SpanEndpointContact => {
+      const { x, z } = point, owners = placed.endpointOwners;
       const canonicalOwner = ownerSeed(owners[j]!);
       const body = byOwner.get(canonicalOwner) ?? [];
       const contactMassIndices: number[] = [];

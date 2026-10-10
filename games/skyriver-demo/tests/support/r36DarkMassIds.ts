@@ -1,4 +1,5 @@
-import type { SkyriverMass, SkyriverTowerProfileRow } from '../../src/render/city';
+import { deriveFacadeFaces, deriveHeroBlades, type SkyriverMass, type SkyriverTowerProfileRow } from '../../src/render/city';
+import { fixedArtBackingFailures, verifiedYawRoofCapIds, yawSpanLedgeFailures, approvedYawHostEnvelope } from './towerCrownCarve';
 import type { presentCityLayout } from '../../src/render/presentationLayout';
 import type { RetainedBridgeRecord } from './retainedStructuralSupport';
 import { verifiedSupportNonHostIds } from './legacyTrimFaceGeometry';
@@ -37,5 +38,17 @@ export function verifiedR36DarkMassIds(
     if (Reflect.get(mass, 'crownRole') === 'ordinary-dark-crown' && !crowns.has(index)) throw new Error('R36_DARK_CROWN_UNPUBLISHED');
     if (mass.supportRole === 'retained-child-bridge' && !bridges.has(index)) throw new Error('R36_DARK_BRIDGE_UNPUBLISHED');
   }
-  return new Set([...bridges, ...crowns]);
+  const auxiliary = new Set(verifiedYawRoofCapIds(profiles, masses, layout.seed));
+  for (const [index, mass] of masses.entries()) {
+    if (mass.artBacking) {
+      if (fixedArtBackingFailures(mass, masses, deriveFacadeFaces(layout), deriveHeroBlades(layout)).length) throw new Error('R36_DARK_ART_BACKING');
+      auxiliary.add(index);
+    }
+    if (mass.supportRole === 'yaw-span-ledge') {
+      const host = masses[mass.supportHostMassIndex!];
+      if (!host || yawSpanLedgeFailures(mass, host, approvedYawHostEnvelope(host, mass.supportHostMassIndex!, profiles, layout.seed, masses)).length) throw new Error('R36_DARK_SPAN_LEDGE');
+      auxiliary.add(index);
+    }
+  }
+  return new Set([...bridges, ...crowns, ...auxiliary]);
 }

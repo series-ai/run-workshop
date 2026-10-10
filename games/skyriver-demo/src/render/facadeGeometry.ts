@@ -1,3 +1,22 @@
+/** The axes of a box in canyon space. */
+export interface BoxLocalFrame {
+  readonly x: number;
+  readonly z: number;
+  readonly yawRad?: number;
+}
+
+export function boxLocalPoint(frame: BoxLocalFrame, x: number, z: number): { readonly x: number; readonly z: number } {
+  const c = Math.cos(frame.yawRad ?? 0), s = Math.sin(frame.yawRad ?? 0);
+  const dx = x - frame.x, dz = z - frame.z;
+  return { x: frame.x + dx * c + dz * s, z: frame.z - dx * s + dz * c };
+}
+
+export function boxLocalCoordinates(frame: BoxLocalFrame, x: number, z: number): { readonly x: number; readonly z: number } {
+  const c = Math.cos(frame.yawRad ?? 0), s = Math.sin(frame.yawRad ?? 0);
+  const dx = x - frame.x, dz = z - frame.z;
+  return { x: frame.x + dx * c - dz * s, z: frame.z + dx * s + dz * c };
+}
+
 /** Geometry checks shared by facade fitting, spacing audits, and pane-step masking. */
 export interface FacadeRect {
   readonly u0: number;
@@ -110,4 +129,102 @@ export function facadePaneStepMask(
   if (stepBottom && bottomClearance < bandM) return 0;
   if (stepTop && topClearance < bandM) return 0;
   return 1;
+}
+
+export type FootprintPoint = readonly [number, number];
+
+export interface RectangleLimit {
+  readonly width: number;
+  readonly depth: number;
+  readonly maximum: number;
+}
+
+/** Select the largest rectangle area within linear size limits. */
+export function fitRectangleDimensions(
+  width: number, depth: number, limits: readonly RectangleLimit[],
+): { readonly width: number; readonly depth: number } | undefined {
+  const constraints = [...limits,
+    { width: 1, depth: 0, maximum: width },
+    { width: 0, depth: 1, maximum: depth }];
+  const candidates: { width: number; depth: number }[] = [];
+  for (const limit of constraints) {
+    if (limit.width > 0 && limit.depth > 0) {
+      candidates.push({ width: limit.maximum / (2 * limit.width), depth: limit.maximum / (2 * limit.depth) });
+    }
+  }
+  for (let first = 0; first < constraints.length; first += 1) {
+    for (let second = first + 1; second < constraints.length; second += 1) {
+      const a = constraints[first]!, b = constraints[second]!;
+      const determinant = a.width * b.depth - a.depth * b.width;
+      if (Math.abs(determinant) < 1e-12) continue;
+      candidates.push({
+        width: (a.maximum * b.depth - a.depth * b.maximum) / determinant,
+        depth: (a.width * b.maximum - a.maximum * b.width) / determinant,
+      });
+    }
+  }
+  return candidates.filter(candidate => candidate.width > 0 && candidate.depth > 0
+    && constraints.every(limit => limit.width * candidate.width + limit.depth * candidate.depth <= limit.maximum + 1e-9))
+    .sort((a, b) => b.width * b.depth - a.width * a.depth)[0];
+}
+
+/** Clip a convex polygon to one side of a directed edge. */
+export function clipFootprintEdge(
+  polygon: readonly FootprintPoint[], a: FootprintPoint, b: FootprintPoint, inside: boolean,
+): FootprintPoint[] {
+  const result: FootprintPoint[] = [];
+  const distance = (p: FootprintPoint): number =>
+    (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]);
+  for (let index = 0; index < polygon.length; index += 1) {
+    const p = polygon[index]!, q = polygon[(index + 1) % polygon.length]!;
+    const dp = distance(p), dq = distance(q);
+    const pin = inside ? dp >= 0 : dp <= 0, qin = inside ? dq >= 0 : dq <= 0;
+    if (pin) result.push(p);
+    if (pin !== qin) {
+      const t = dp / (dp - dq);
+      result.push([p[0] + t * (q[0] - p[0]), p[1] + t * (q[1] - p[1])]);
+    }
+  }
+  return result;
+}
+
+/** Return disjoint convex pieces outside a counterclockwise convex cut. */
+export function subtractFootprint(
+  polygon: readonly FootprintPoint[], cut: readonly FootprintPoint[],
+): FootprintPoint[][] {
+  let remainder = [...polygon];
+  const result: FootprintPoint[][] = [];
+  for (let index = 0; index < cut.length && remainder.length >= 3; index += 1) {
+    const a = cut[index]!, b = cut[(index + 1) % cut.length]!;
+    const outside = clipFootprintEdge(remainder, a, b, false);
+    if (outside.length >= 3) result.push(outside);
+    remainder = clipFootprintEdge(remainder, a, b, true);
+  }
+  return result;
+}
+
+/** Fit a yaw rectangle inside the accepted rectangle and keep half of its long axis. */
+export function fitCrownFootprint(width: number, depth: number, yawRad: number): { width: number; depth: number } | undefined {
+  const c = Math.cos(yawRad), s = Math.abs(Math.sin(yawRad));
+  const longX = width >= depth;
+  const limits: readonly (readonly [number,number,number])[] = [
+    [c,s,width],[s,c,depth],[1,0,width],[0,1,depth],
+    longX ? [1,0,width*.5] : [0,1,depth*.5],
+  ];
+  const candidates: {width:number;depth:number}[] = [];
+  for (const [a,b,k] of limits) {
+    if (a > 0 && b > 0) candidates.push({width:k/(2*a),depth:k/(2*b)});
+  }
+  for (let i=0;i<limits.length;i+=1) for (let j=i+1;j<limits.length;j+=1) {
+    const [a,b,k]=limits[i]!, [d,e,m]=limits[j]!;
+    const determinant=a*e-b*d;
+    if (Math.abs(determinant)<1e-12) continue;
+    candidates.push({width:(k*e-b*m)/determinant,depth:(a*m-k*d)/determinant});
+  }
+  return candidates.filter(candidate => candidate.width>0 && candidate.depth>0
+    && candidate.width<=width+1e-9 && candidate.depth<=depth+1e-9
+    && c*candidate.width+s*candidate.depth<=width+1e-9
+    && s*candidate.width+c*candidate.depth<=depth+1e-9
+    && (longX ? candidate.width>=width*.5-1e-9 : candidate.depth>=depth*.5-1e-9))
+    .sort((a,b)=>b.width*b.depth-a.width*a.depth)[0];
 }

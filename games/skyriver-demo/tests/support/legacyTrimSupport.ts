@@ -3,6 +3,7 @@ import {
   SKYRIVER_TRIM_ANTENNA, SKYRIVER_TRIM_ROOF_PLANT, SKYRIVER_TRIM_RIB, SKYRIVER_TRIM_BAND,
   type SkyriverCityTrims, type SkyriverMass, type SkyriverHeroBlade,
 } from '../../src/render/city';
+import { legacyTrimExposedContact } from './legacyTrimFaceGeometry';
 import { massRoofBox, roofSupportFailures, trimRoofBox } from './rooftopDetailsGeometry';
 import { intersectSection, sectionUnionArea, type TowerSection } from './towerProfileGeometry';
 
@@ -34,6 +35,10 @@ export function legacyTrimPhysicalIdentity(trims: SkyriverCityTrims, index: numb
 /** Clip deliberate band end overhang to its owner's footprint. */
 export function legacySideContactArea(trims: SkyriverCityTrims, index: number, masses: readonly SkyriverMass[]): number {
   const owner = trims.owner[index]!;
+  if ((owner.yawRad ?? 0) !== 0 || masses.some(mass => (mass.yawRad ?? 0) !== 0)) {
+    return legacyTrimExposedContact({ cx: trims.cx[index]!, cy: trims.cy[index]!, cz: trims.cz[index]!,
+      sx: trims.sx[index]!, sy: trims.sy[index]!, sz: trims.sz[index]! }, owner, masses).area;
+  }
   const requested: TowerSection = {
     x0: Math.max(trims.cz[index]! - trims.sz[index]! / 2, owner.z - owner.depth / 2),
     x1: Math.min(trims.cz[index]! + trims.sz[index]! / 2, owner.z + owner.depth / 2),

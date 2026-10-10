@@ -12,7 +12,7 @@
 import type { SkyriverCityLayout } from '../sim/derive';
 import { CANYON_LOOP_LENGTH_M, type WarpOut } from './canyonWarp';
 import { writeCameraPose, createCameraPoseScratch } from './cameraRig';
-import { deriveCityMasses, warpRigid, type SkyriverMass } from './city';
+import { deriveCityMasses, warpBoxPoint, type SkyriverMass } from './city';
 import { autopilotTrackPose, type TrackPose } from './flightPresentation';
 
 /** Camera sphere: the near plane and its corners, plus margin, metres. */
@@ -56,7 +56,7 @@ interface PlacedBox {
 const boxWarp: WarpOut = { x: 0, z: 0, heading: 0 };
 
 function place(mass: SkyriverMass): PlacedBox {
-  warpRigid(mass.x, mass.z, mass.anchorV ?? mass.z, boxWarp);
+  warpBoxPoint(mass, mass.x, mass.z, boxWarp);
   return {
     cx: boxWarp.x,
     cz: boxWarp.z,

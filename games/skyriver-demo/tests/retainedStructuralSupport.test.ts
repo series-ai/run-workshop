@@ -17,6 +17,7 @@ import occurrenceBefore from './fixtures/r36-retained-child-support-before.json'
 import physicalBefore from './fixtures/r36-retained-support-c6-physical.json';
 import { matchRetainedMassOccurrences, readRetainedMassRecords, retainedMassContact, retainedMassContactQuery } from './support/retainedMassContact';
 import { massRoofBox, roofBoxTolerance, roofRouteClearance, trimRoofBox, uploadedRoofBox } from './support/rooftopDetailsGeometry';
+import { expectedTowerYaw } from './support/towerProfileGeometry';
 import { legacyRoofVoidBoxes } from './support/legacyRoofGeometry';
 import { readRetainedBridgeRecords, sourceSolid, supportConflictQuery, supportCrossesRoofPlane, uncoveredSupportVolume } from './support/retainedStructuralSupport';
 
@@ -150,6 +151,60 @@ describe('R36 independent short structural support geometry', () => {
         const heroConflict = supportConflictQuery(heroBoxes); for (const record of d.bridges) expect(heroConflict(d.boxes[record.supportMassIndex]!)).toEqual([]);
       }
     } finally { city.dispose(); }
+  });
+
+  it('keeps seed123456 source1161 supported through the protected hero gaps', () => {
+    const seed = 123456, layout = presentCityLayout(deriveCityLayout(seed));
+    const masses = C.deriveCityMasses(layout), trims = C.deriveCityTrims(layout), profiles = C.deriveTowerProfiles(layout);
+    const record = records(layout).find(row => row.childSourceIndex === 1161);
+    if (!record) throw new Error('R36_SEED123456_CHILD1161_RECORD');
+    const source = { x: -548.5167912226741, y0: 441, z: -3510.0215289812354, width: 24, height: 55, depth: 43,
+      tint: 6968384, anchorV: -3520, building: 0.8625438079029664, materialOwner: 0.8625438079029664 };
+    const oldHost = { x: -630, y0: 151.0804464557457, z: -3520, width: 146.9664175546518,
+      height: 700, depth: 136.69456355647444, tint: 8027520, anchorV: -3520,
+      building: source.building, materialOwner: source.materialOwner };
+    expect(retainedMassContact(massRoofBox(source), massRoofBox(oldHost))).not.toBeNull();
+    const child = masses[record.childFinalIndex]!, host = masses[record.hostMassIndex]!, support = masses[record.supportMassIndex]!;
+    expect(child).toEqual(source);
+    expect([record.owner, record.anchorV]).toEqual([source.materialOwner, source.anchorV]);
+    expect([host.x, host.z, host.materialOwner, host.anchorV]).toEqual([-630, -3520, source.materialOwner, -3520]);
+    expect(host.yawRad).toBe(expectedTowerYaw(seed, oldHost, 170, false));
+    expect(record.geometry.kind).toBe('strict-clear');
+    expect(support.supportRole).toBe('retained-child-bridge');
+    expect(support.height).toBeGreaterThan(0); expect(support.height).toBeLessThanOrEqual(4);
+    const boxes = masses.map(massRoofBox), box = boxes[record.supportMassIndex]!;
+    expect(retainedMassContact(box, boxes[record.childFinalIndex]!)).not.toBeNull();
+    expect(retainedMassContact(box, boxes[record.hostMassIndex]!)).not.toBeNull();
+    expect(host.y0).toBeLessThanOrEqual(C.SKYRIVER_CITY_VOID_BASE_Y);
+    expect(supportConflictQuery(boxes)(box).filter(index => ![record.supportMassIndex, record.childFinalIndex, record.hostMassIndex].includes(index))).toEqual([]);
+    expect(supportConflictQuery(legacyRoofVoidBoxes(masses, profiles))(box)).toEqual([]);
+    const heroes = C.deriveHeroBlades(layout), prefix = Array.from({ length: C.deriveRoofDetails(layout).oldTrimCount }, (_, index) => C.skyriverTrimBlocksHero(trims, index, heroes) ? null : trimRoofBox(trims, index));
+    expect(supportConflictQuery(prefix)(box)).toEqual([]);
+    expect(roofRouteClearance([box]).violations).toBe(0);
+    const city = new C.SkyriverCity({ layout, quality: skyriverQualityFor(SkyriverQualityTier.High), colourSwitch: new SkyriverDistrictColourSwitch(true) });
+    try {
+      city.setFarMode('geometry');
+      const signs = city.group.getObjectByName('skyriver.city.signs'), towers = city.group.getObjectByName('skyriver.city.towers');
+      if (!(signs instanceof THREE.Mesh) || !(towers instanceof THREE.InstancedMesh)) throw new Error('R36_SEED123456_REAL_BATCH');
+      const centres = signs.geometry.getAttribute('aCentre'), normals = signs.geometry.getAttribute('aNormal'), sizes = signs.geometry.getAttribute('aSize');
+      const protectedBoxes = Array.from({ length: city.sourceCounts().heroSigns }, (_, index) => {
+        const x = normals.getX(index), z = normals.getY(index), length = Math.hypot(x, z);
+        return { x: centres.getX(index), y: centres.getY(index), z: centres.getZ(index), hx: sizes.getX(index) / 2 + 14,
+          hy: sizes.getY(index) / 2 + 18, hz: 14, c: -z / length, s: -x / length };
+      });
+      expect(supportConflictQuery(protectedBoxes)(box)).toEqual([]);
+      expect(towers.geometry.getAttribute('aEmissionAllowed').getX(record.supportMassIndex)).toBe(0);
+      const actual = uploadedRoofBox(towers.instanceMatrix.array, record.supportMassIndex * 16), tolerance = Math.max(roofBoxTolerance(actual), roofBoxTolerance(box));
+      for (const key of ['x', 'y', 'z', 'hx', 'hy', 'hz', 'c', 's'] as const) expect(Math.abs(actual[key] - box[key])).toBeLessThanOrEqual(tolerance);
+    } finally { city.dispose(); }
+  });
+
+  it('measures turned support volume in the immutable source union', () => {
+    const original = { index: 0, x: 0, z: 0, y0: 0, width: 4, depth: 10, height: 4 };
+    const turned = { ...original, width: 8, depth: 2, yawRad: Math.PI / 2 };
+    expect(uncoveredSupportVolume(turned, [original])).toBe(0);
+    expect(uncoveredSupportVolume({ ...turned, x: 4 }, [original])).toBeGreaterThan(0);
+    expect(uncoveredSupportVolume({ ...turned, yawRad: 0 }, [original])).toBeGreaterThan(0);
   });
 
   it('rejects volume outside the true original solid union', () => {

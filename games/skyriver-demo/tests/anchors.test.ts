@@ -86,10 +86,15 @@ describe('exposed facade levels and hero rows', () => {
       for (const stage of profile.stages) for (const index of stage.massIndices) {
         const mass = masses[index]; if (!mass) throw new Error('R36_FACE_STAGE_MASS_MISSING');
         const plane = mass.x - Math.sign(towersById.get(id)!.x) * mass.width / 2;
+        if (mass.y0 + mass.height <= 0) continue;
         const requested = { x0: mass.z - mass.depth / 2, x1: mass.z + mass.depth / 2,
           z0: Math.max(0, mass.y0), z1: mass.y0 + mass.height };
         expect(requested.z1).toBeGreaterThan(requested.z0);
-        const stageFaces = buildingFaces.filter(f => Math.abs(f.plane - plane) < 1e-7);
+        const stageFaces = buildingFaces.filter(f => Math.abs(f.plane - plane) < 1e-7
+          && f.owner.x === mass.x && f.owner.z === mass.z
+          && f.owner.width === mass.width && f.owner.depth === mass.depth
+          && (f.owner.yawRad ?? 0) === (mass.yawRad ?? 0)
+          && JSON.stringify(f.owner.yawAnchor) === JSON.stringify(mass.yawAnchor));
         const rectangles = stageFaces.flatMap(f => {
           const clipped = intersectSection(requested, { x0: f.u0, x1: f.u1, z0: f.y0, z1: f.y1 });
           if (!clipped) return [];

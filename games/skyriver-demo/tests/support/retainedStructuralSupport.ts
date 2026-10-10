@@ -1,3 +1,4 @@
+import { addedVolumeCells } from './towerAddedVolume';
 import type { RoofBox } from './rooftopDetailsGeometry';
 import { roofBoxesConflict, roofBoxTolerance } from './rooftopDetailsGeometry';
 
@@ -44,7 +45,12 @@ export function sourceSolid(values: readonly number[]): SourceSolid {
   return { index: i, x, y0, z, width, height, depth };
 }
 /** Partition every open cell at actual box faces in the common source frame. */
-export function uncoveredSupportVolume(piece: Omit<SourceSolid, 'index'>, solids: readonly SourceSolid[]): number {
+export function uncoveredSupportVolume(piece: Omit<SourceSolid, 'index'> & { readonly yawRad?: number; readonly yawAnchor?: { readonly x: number; readonly z: number } }, solids: readonly SourceSolid[]): number {
+  if ((piece.yawRad ?? 0) !== 0) {
+    const frame = { owner: 0, anchorV: 0 };
+    return addedVolumeCells({ ...piece, ...frame }, solids.map(solid => ({ ...solid, ...frame })))
+      .reduce((volume, cell) => volume + cell.volumeM3, 0);
+  }
   const p = [piece.x - piece.width / 2, piece.x + piece.width / 2, piece.y0, piece.y0 + piece.height, piece.z - piece.depth / 2, piece.z + piece.depth / 2];
   const boxes = solids.map(b => [b.x - b.width / 2, b.x + b.width / 2, b.y0, b.y0 + b.height, b.z - b.depth / 2, b.z + b.depth / 2]).filter(b => b[1]! > p[0]! && b[0]! < p[1]! && b[3]! > p[2]! && b[2]! < p[3]! && b[5]! > p[4]! && b[4]! < p[5]!);
   const axes = [0, 2, 4].map(k => [...new Set([p[k]!, p[k + 1]!, ...boxes.flatMap(b => [Math.max(p[k]!, b[k]!), Math.min(p[k + 1]!, b[k + 1]!)])])].sort((a, b) => a - b));

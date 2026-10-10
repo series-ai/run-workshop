@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { SKYRIVER_TRIM_ANTENNA, SKYRIVER_TRIM_ROOF_PLANT, SKYRIVER_TRIM_GANTRY, SKYRIVER_TRIM_SKYBRIDGE, type SkyriverCityTrims, type SkyriverTrimOwner } from '../../src/render/city';
+import { buildingSeedOf, SKYRIVER_TRIM_ANTENNA, SKYRIVER_TRIM_ROOF_PLANT, SKYRIVER_TRIM_GANTRY, SKYRIVER_TRIM_SKYBRIDGE, type SkyriverCityTrims, type SkyriverMass, type SkyriverTrimOwner } from '../../src/render/city';
 import before from '../fixtures/r36-legacy-prefix-before.json';
 import type { SpanHost, SpanContact, SpanWorldPath } from './legacySpanGeometry';
 
@@ -104,7 +104,7 @@ export function assertLegacyTrimSourceInventory(evidence: LegacyTrimInventoryEvi
 
 /** Check retained rows against the actual final arrays. Geometry fit is a separate oracle. */
 export function assertLegacyTrimOneToOne(
-  evidence: LegacyTrimInventoryEvidence, finalTrims: SkyriverCityTrims, actualPrefixCount: number,
+  evidence: LegacyTrimInventoryEvidence, finalTrims: SkyriverCityTrims, actualPrefixCount: number, actualMasses: readonly SkyriverMass[],
 ): void {
   assertLegacyTrimSourceInventory(evidence);
   check(evidence.finalCount === evidence.sourceCount && actualPrefixCount === evidence.sourceCount, 'final-prefix-count');
@@ -117,7 +117,21 @@ export function assertLegacyTrimOneToOne(
     check(geometryEqual(disposition.oldGeometry, source), `old-geometry:${index}`);
     for (const key of GEOMETRY_FIELDS) check(disposition.newGeometry[key] === finalTrims[key][index], `final-geometry:${index}:${key}`);
     check(finalTrims.kind[index] === source.kind && finalTrims.seedValue[index] === source.seedValue, `final-identity:${index}`);
-    check(JSON.stringify(finalTrims.owner[index]) === JSON.stringify(source.owner), `final-owner:${index}`);
+    let expectedOwner = source.owner;
+    if (disposition.kind === 'side-rehosted' || disposition.kind === 'roof-rehosted') {
+      const host = actualMasses[disposition.hostMassIndex];
+      check(host !== undefined && !host.artBacking, `actual-final-host:${index}`);
+      if ((host.yawRad ?? 0) !== 0) expectedOwner = {
+        x: host.x, z: host.z, width: host.width, depth: host.depth,
+        anchorV: host.anchorV ?? host.z,
+        materialOwner: host.materialOwner ?? host.building ?? buildingSeedOf(host.x, host.z),
+        yawRad: host.yawRad,
+        ...(host.yawAnchor === undefined ? {} : { yawAnchor: { x: host.yawAnchor.x, z: host.yawAnchor.z } }),
+      };
+      check((host.materialOwner ?? host.building ?? buildingSeedOf(host.x, host.z)) === source.canonicalOwner && (host.anchorV ?? host.z) === source.owner.anchorV, `final-host-provenance:${index}`);
+    }
+    const finalOwner = finalTrims.owner[index]!;
+    check(JSON.stringify(Object.keys(finalOwner).sort()) === JSON.stringify(Object.keys(expectedOwner).sort()) && Object.keys(expectedOwner).every(key => JSON.stringify(finalOwner[key as keyof SkyriverTrimOwner]) === JSON.stringify(expectedOwner[key as keyof SkyriverTrimOwner])), `final-owner:${index}`);
     check(JSON.stringify(finalTrims.spanTo[index]) === JSON.stringify(source.spanTo), `final-span-target:${index}`);
     check(disposition.blockingHeroIds.every(id => id.length > 0), `empty-hero-id:${index}`);
     check(disposition.heroFiltered === (disposition.blockingHeroIds.length > 0), `hero-cause:${index}`);
@@ -144,7 +158,10 @@ export function assertLegacyTrimOneToOne(
       check(disposition.newGeometry.sy === source.sy, `span-height:${index}`);
       check(!disposition.heroFiltered, `span-hero-filter:${index}`);
       check(disposition.hosts.length === 2 && disposition.endpointContacts.length === 2, `span-host-tuple:${index}`);
-      for (const host of disposition.hosts) check(Number.isInteger(host.massIndex) && host.massIndex >= 0 && Number.isFinite(host.canonicalOwner) && Number.isFinite(host.anchorV), `span-host:${index}`);
+      for (const host of disposition.hosts) {
+        check(actualMasses[host.massIndex] !== undefined && !actualMasses[host.massIndex]!.artBacking, `span-actual-host:${index}`);
+        check(Number.isInteger(host.massIndex) && host.massIndex >= 0 && Number.isFinite(host.canonicalOwner) && Number.isFinite(host.anchorV), `span-host:${index}`);
+      }
     } else {
       throw new Error(`R36_LEGACY_INVENTORY:disposition-kind:${index}`);
     }

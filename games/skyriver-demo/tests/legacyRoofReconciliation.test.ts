@@ -65,8 +65,8 @@ function actualContext(seed: typeof SEEDS[number]) {
 
 describe('R36 D2 exact legacy roofs and actual joint placement', () => {
   it.each(SEEDS)('classifies every original roof and preserves inherited rows at seed %i', seed => {
-    const { layout, evidence, trims, original, indices, inScope, supported } = DATA.get(seed)!;
-    assertLegacyTrimOneToOne(evidence, trims, deriveRoofDetails(layout).oldTrimCount);
+    const { layout, evidence, trims, original, masses, indices, inScope, supported } = DATA.get(seed)!;
+    assertLegacyTrimOneToOne(evidence, trims, deriveRoofDetails(layout).oldTrimCount, masses);
     const oracle = before.rows.find(row => row.seed === seed)!;
     expect(indices.length).toBe(oracle.scopeCount); expect(hash(JSON.stringify(indices))).toBe(oracle.scopeIndexSha256);
     const inherited = new Set(oracle.inheritedUnsupportedIndices), failures: unknown[] = [];

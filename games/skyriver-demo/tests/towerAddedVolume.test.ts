@@ -5,7 +5,7 @@ import * as C from '../src/render/city';
 import { deriveCityLayout } from '../src/sim/derive';
 import { presentCityLayout } from '../src/render/presentationLayout';
 import before from './fixtures/r36-resolved-art-before.json';
-import { massRoofBox } from './support/rooftopDetailsGeometry';
+import { independentMassRoofBox } from './support/towerProfileGeometry';
 import { readRetainedBridgeRecords, supportConflictQuery } from './support/retainedStructuralSupport';
 import { verifiedSupportNonHostIds } from './support/legacyTrimFaceGeometry';
 import { readArtVolumeBox, artVolumeBox, addedCellRoofBox, addedVolumeCells, addedVolumeConflicts } from './support/towerAddedVolume';
@@ -23,7 +23,7 @@ function originalUnion(saved: typeof before.rows[number]['towers'][number]) { re
 describe('R36 independent added profile volume', () => {
   it.each(SEEDS)('checks every new stage and crown cell against actual other solids at seed %i', seed => {
     const layout = presentCityLayout(deriveCityLayout(seed)), masses = C.deriveCityMasses(layout), profiles = C.deriveTowerProfiles(layout), bridges = recordApi(layout);
-    const verified = verifiedSupportNonHostIds(bridges, masses), query = supportConflictQuery(masses.map(massRoofBox));
+    const verified = verifiedSupportNonHostIds(bridges, masses), actualBoxes = masses.map(independentMassRoofBox), query = supportConflictQuery(actualBoxes);
     const seedBefore = before.rows.find(row => row.seed === seed); if (!seedBefore) throw new Error('R36_ART_VOLUME_REFERENCE');
     const violations: { towerIndex: number; candidateMassIndex: number; blockerIndex: number; blockerLayer: number; cell: ReturnType<typeof addedVolumeCells>[number] }[] = [];
     const audit: { towerIndex: number; cells: number; volumeM3: number; intentionalJoinIds: readonly number[] }[] = [];
@@ -32,18 +32,21 @@ describe('R36 independent added profile volume', () => {
       const saved = seedBefore.towers.find(tower => tower.towerIndex === row.towerIndex); if (!saved) throw new Error('R36_ART_VOLUME_PROFILE_REFERENCE');
       expect([row.towerKey, row.materialOwner, layout.towers[row.towerIndex]!.z]).toEqual([saved.towerKey, saved.owner, saved.anchorV]);
       const own = new Set([...row.stages.flatMap(stage => stage.massIndices), ...row.crown.massIndices, ...row.companionMassIndices, ...(row.supportSpineIndex === null ? [] : [row.supportSpineIndex])]);
+      const ledgeIds = masses.flatMap((mass, index) => mass.supportRole === 'yaw-span-ledge' && mass.supportHostMassIndex !== undefined && own.has(mass.supportHostMassIndex) ? [index] : []);
+      const backingIds = masses.flatMap((mass, index) => mass.artBacking && own.has(mass.artBacking.hostMassIndex) ? [index] : []);
+      for (const index of [...backingIds, ...ledgeIds]) own.add(index);
       const joins = bridges.filter(record => verified.has(record.supportMassIndex) && own.has(record.hostMassIndex)).map(record => record.supportMassIndex);
       const excluded = new Set([...own, ...joins]), oldUnion = originalUnion(saved);
       let cells = 0, volumeM3 = 0;
-      for (const index of [...row.stages.flatMap(stage => stage.massIndices), ...row.crown.massIndices]) {
+      for (const index of [...row.stages.flatMap(stage => stage.massIndices), ...row.crown.massIndices, ...backingIds, ...ledgeIds]) {
         const mass = massAt(masses, index), added = addedVolumeCells(artVolumeBox(mass, owner(mass)), oldUnion);
         cells += added.length; volumeM3 += added.reduce((sum, cell) => sum + cell.volumeM3, 0);
-        for (const hit of addedVolumeConflicts(added, query, excluded)) violations.push({ towerIndex: row.towerIndex, candidateMassIndex: index, blockerIndex: hit.blockerIndex, blockerLayer: massAt(masses, hit.blockerIndex).layer ?? 0, cell: hit.cell });
+        for (const hit of addedVolumeConflicts(added, query, excluded, actualBoxes)) violations.push({ towerIndex: row.towerIndex, candidateMassIndex: index, blockerIndex: hit.blockerIndex, blockerLayer: massAt(masses, hit.blockerIndex).layer ?? 0, cell: hit.cell });
       }
       audit.push({ towerIndex: row.towerIndex, cells, volumeM3, intentionalJoinIds: joins });
     }
     const out = process.env.R36_ADDED_VOLUME_OUT;
-    if (out) { mkdirSync(out, { recursive: true }); writeFileSync(join(out, `${seed}-added-volume.json`), JSON.stringify({ seed, sourceAuthority: before.sourceSha256, scope: 'Old profile union only. Exclude own final members and physically verified late bridges hosted by those members. Every other mass and layer remains a blocker.', audit, violations }, null, 2) + '\n'); }
+    if (out) { mkdirSync(out, { recursive: true }); writeFileSync(join(out, `${seed}-added-volume.json`), JSON.stringify({ seed, sourceAuthority: before.sourceSha256, scope: 'Actual rotated footprint and cropped fixed-art backing minus old axis union. Old profile union only. Exclude own final members and physically verified late bridges hosted by those members. Every other mass and layer remains a blocker.', audit, violations }, null, 2) + '\n'); }
     expect(violations).toEqual([]);
   });
 
@@ -68,5 +71,41 @@ describe('R36 independent added profile volume', () => {
     expect(cells.reduce((sum, cell) => sum + cell.volumeM3, 0)).toBe(200);
     expect(cells.every(cell => cell.x - cell.width / 2 >= -1 && cell.x + cell.width / 2 <= 1)).toBe(true);
     expect(addedVolumeCells(candidate, [...old, { ...candidate, width: 2 }])).toEqual([]);
+  });
+});
+
+
+describe('yaw added-volume controls', () => {
+  const source = { x: 0, z: 0, y0: 0, width: 10, depth: 10, height: 10, owner: 1, anchorV: 0 };
+  it('detects a rotated wedge with unchanged source dimensions', () => {
+    expect(addedVolumeCells(source, [source])).toEqual([]);
+    const rotated = { ...source, yawRad: Math.PI / 4 };
+    const cells = addedVolumeCells(rotated, [source]);
+    expect(cells.reduce((sum, cell) => sum + cell.volumeM3, 0)).toBeCloseTo(40 * (5 * Math.SQRT2 - 5) ** 2, 8);
+    const blocker = addedCellRoofBox({ ...source, x: 6, z: 0, width: 0.2, depth: 0.2 });
+    const query = supportConflictQuery([blocker]);
+    expect(addedVolumeConflicts(cells, query, new Set(), [blocker]).map(hit => hit.blockerIndex)).toContain(0);
+    expect(addedVolumeConflicts(cells, query, new Set([0]), [blocker])).toEqual([]);
+  });
+  it('preserves a corner pivot when the box turns by positive ninety degrees', () => {
+    const cells = addedVolumeCells({ ...source, yawRad: Math.PI / 2, yawAnchor: { x: -5, z: -5 } }, [source]);
+    expect(cells.reduce((sum, cell) => sum + cell.volumeM3, 0)).toBeCloseTo(1000, 8);
+    expect(cells.every(cell => cell.z + cell.depth / 2 <= -5 + 1e-12)).toBe(true);
+  });
+  it('rejects AABB corner hits when the clipped footprint has no positive overlap', () => {
+    const cells = addedVolumeCells({ ...source, width: 10, depth: 2, yawRad: Math.PI / 4 }, []);
+    const cell = cells[0]!;
+    expect(cell.volumeM3).toBeCloseTo(200, 8);
+    const blocker = addedCellRoofBox({ ...source, x: 4, z: 4, width: 0.2, depth: 0.2 });
+    const query = supportConflictQuery([blocker]);
+    expect(query(addedCellRoofBox(cell))).toEqual([0]);
+    expect(addedVolumeConflicts(cells, query, new Set(), [blocker])).toEqual([]);
+    const inside = addedCellRoofBox({ ...source, x: 2, z: -2, width: 0.2, depth: 0.2 });
+    expect(addedVolumeConflicts(cells, supportConflictQuery([inside]), new Set(), [inside])).toHaveLength(1);
+  });
+  it('excludes edge contact at the existing physical tolerance', () => {
+    const cells = addedVolumeCells({ ...source, yawRad: Math.PI / 2 }, []);
+    const touching = addedCellRoofBox({ ...source, x: 6, width: 2 });
+    expect(addedVolumeConflicts(cells, () => [0], new Set(), [touching])).toEqual([]);
   });
 });

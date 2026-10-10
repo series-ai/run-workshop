@@ -8,14 +8,17 @@ vi.mock('../src/render/interiorAtlas', async original => ({ ...await original<ty
 vi.mock('../src/render/impostorAtlas', async original => ({ ...await original<typeof import('../src/render/impostorAtlas')>(), createImpostorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
 import { SkyriverDistrictColourSwitch } from '../src/render/districts';
 import { skyriverQualityFor, SkyriverQualityTier } from '../src/render/scene';
-import { SkyriverCity, buildingSeedOf, deriveCityMasses, deriveCityTrims, deriveHeroBlades, deriveLegacyTrimReconciliation, deriveRoofDetails, deriveTowerProfiles, skyriverTrimBlocksHero, SKYRIVER_TRIM_GANTRY, SKYRIVER_TRIM_SKYBRIDGE, type SkyriverCityTrims } from '../src/render/city';
+import { SkyriverCity, warpRigid, buildingSeedOf, deriveCityMasses, deriveCityTrims, deriveHeroBlades, deriveLegacyTrimReconciliation, deriveRoofDetails, deriveTowerProfiles, skyriverTrimBlocksHero, SKYRIVER_TRIM_GANTRY, SKYRIVER_TRIM_SKYBRIDGE, type SkyriverCityTrims } from '../src/render/city';
 import { deriveCityLayout } from '../src/sim/derive';
 import { presentCityLayout } from '../src/render/presentationLayout';
 import before from './fixtures/r36-legacy-span-world-before.json';
+import { retainedMassContact } from './support/retainedMassContact';
+import { yawSpanLedgeFailures, approvedYawHostEnvelope } from './support/towerCrownCarve';
+import { independentMassRoofBox } from './support/towerProfileGeometry';
 import { assertLegacyTrimOneToOne, type LegacyTrimInventoryEvidence, type LegacyTrimSource } from './support/legacyTrimInventory';
 import { legacyRoofVoidBoxes } from './support/legacyRoofGeometry';
-import { legacySpanClaimFailures, spanContactAt, spanFacts, spanMassOwner, spanOwner, type SpanBaseline, type SpanClaim, type SpanFacts } from './support/legacySpanGeometry';
-import { massRoofBox, roofBoxTolerance, trimRoofBox, type RoofBox } from './support/rooftopDetailsGeometry';
+import { independentSpanPlacement, independentTrimRoofBox, spanExposedLength, legacySpanClaimFailures, spanContactAt, spanFacts, spanMassOwner, spanOwner, type SpanBaseline, type SpanClaim, type SpanFacts } from './support/legacySpanGeometry';
+import { roofBoxTolerance, type RoofBox } from './support/rooftopDetailsGeometry';
 
 const SEEDS = [424242, 0, 2147483647, 4294967295, 20240917] as const;
 const DATA = new Map(SEEDS.map(seed => {
@@ -38,7 +41,7 @@ const DATA = new Map(SEEDS.map(seed => {
     if (row.endpoints.length !== 2) throw new Error('R36_D3_BASELINE_ENDPOINT_TUPLE');
     return [row.index, { ...row, endpoints: [row.endpoints[0]!, row.endpoints[1]!] }];
   }));
-  const roofs = evidence.dispositions.filter(row => row.kind === 'roof-rehosted').map(row => trimRoofBox(trims, row.finalIndex));
+  const roofs = evidence.dispositions.filter(row => row.kind === 'roof-rehosted').map(row => independentTrimRoofBox(trims, row.finalIndex));
   return [seed, { seed, layout, trims, original, masses, heroes, evidence, inScope, baselines, roofs, voids: legacyRoofVoidBoxes(masses, deriveTowerProfiles(layout)) }];
 }));
 
@@ -55,7 +58,7 @@ function actualObstacles(seed: typeof SEEDS[number]): { readonly heroes: readonl
       if (!(length > 0)) throw new Error('R36_D3_HERO_NORMAL');
       return { x: centres.getX(index), y: centres.getY(index), z: centres.getZ(index), hx: sizes.getX(index) / 2 + 14, hy: sizes.getY(index) / 2 + 18, hz: 14, c: nz / length, s: nx / length };
     });
-    return { heroes, prefix: data.evidence.sourceInventory.map(row => skyriverTrimBlocksHero(data.trims, row.sourceIndex, data.heroes) ? null : trimRoofBox(data.trims, row.sourceIndex)) };
+    return { heroes, prefix: data.evidence.sourceInventory.map(row => skyriverTrimBlocksHero(data.trims, row.sourceIndex, data.heroes) ? null : independentTrimRoofBox(data.trims, row.sourceIndex)) };
   } finally { city.dispose(); }
 }
 
@@ -66,19 +69,19 @@ function write(seed: number, name: string, value: unknown): void {
 function actualClaim(seed: typeof SEEDS[number], source: LegacyTrimSource, facts: SpanFacts): SpanClaim | null {
   const data = DATA.get(seed)!, hosts = ([0, 1] as const).map(end => {
     const owner = facts.endpointOwners[end];
-    const index = data.masses.findIndex(m => spanMassOwner(m) === spanOwner(owner) && (m.anchorV ?? m.z) === owner.anchorV && spanContactAt(facts, end, massRoofBox(m)).touches);
+    const index = data.masses.findIndex(m => spanMassOwner(m) === spanOwner(owner) && (m.anchorV ?? m.z) === owner.anchorV && spanContactAt(facts, end, independentMassRoofBox(m)).touches);
     return index < 0 ? null : { massIndex: index, canonicalOwner: spanOwner(owner), anchorV: owner.anchorV ?? owner.z };
   });
   if (!hosts[0] || !hosts[1]) return null;
   const oldWorld = data.baselines.get(source.sourceIndex); if (!oldWorld) throw new Error('R36_D3_ORIGINAL_INDEX');
   return { source, geometry: data.evidence.dispositions[source.sourceIndex]!.newGeometry, facts, hosts: [hosts[0], hosts[1]], oldWorld, newWorld: facts,
-    endpointContacts: [spanContactAt(facts, 0, massRoofBox(data.masses[hosts[0].massIndex]!)).measurement, spanContactAt(facts, 1, massRoofBox(data.masses[hosts[1].massIndex]!)).measurement] };
+    endpointContacts: [spanContactAt(facts, 0, independentMassRoofBox(data.masses[hosts[0].massIndex]!)).measurement, spanContactAt(facts, 1, independentMassRoofBox(data.masses[hosts[1].massIndex]!)).measurement] };
 }
 
 describe('R36 D3 exact span inventory and actual world paths', () => {
   it.each(SEEDS)('examines every ordinary span and separates inherited invalid rows at seed %i', seed => {
     const data = DATA.get(seed)!, { evidence, trims, original, baselines } = data;
-    assertLegacyTrimOneToOne(evidence, trims, deriveRoofDetails(data.layout).oldTrimCount);
+    assertLegacyTrimOneToOne(evidence, trims, deriveRoofDetails(data.layout).oldTrimCount, data.masses);
     const errors: unknown[] = []; let checked = 0, inherited = 0, moved = 0;
     for (const source of evidence.sourceInventory) {
       const record = evidence.dispositions[source.sourceIndex]!;
@@ -98,7 +101,12 @@ describe('R36 D3 exact span inventory and actual world paths', () => {
       const oldPathValid = !beforeFacts.foreignOwners.some(owner => !baseline.foreignOwners.includes(owner)) &&
         (baseline.exposedLengthM <= roofBoxTolerance(beforeFacts.box) || beforeFacts.exposedLengthM > roofBoxTolerance(beforeFacts.box));
       if (actualClaim(seed, source, beforeFacts) && oldPathValid) {
-        expect(record.kind, `supported-source:${source.sourceIndex}`).toBe('unchanged');
+        if (record.kind === 'span-rehosted') write(seed, 'source-preservation-witness', { source, record, beforeFacts, hosts: actualClaim(seed, source, beforeFacts)!.hosts.map(host => ({ ...host, mass: data.masses[host.massIndex] })) });
+        expect(['unchanged', 'span-rehosted'], `supported-source:${source.sourceIndex}`).toContain(record.kind);
+        expect(trims.kind[source.sourceIndex]).toBe(source.kind);
+        expect(trims.seedValue[source.sourceIndex]).toBe(source.seedValue);
+        expect(trims.owner[source.sourceIndex]).toEqual(source.owner);
+        expect(trims.spanTo[source.sourceIndex]).toEqual(source.spanTo);
         for (const key of ['cx', 'cy', 'cz', 'sx', 'sy', 'sz'] as const) expect(trims[key][source.sourceIndex]).toBe(original[key][source.sourceIndex]);
       }
     }
@@ -121,18 +129,77 @@ describe('R36 D3 exact span inventory and actual world paths', () => {
       const claim: SpanClaim = { source, geometry: record.newGeometry, facts, hosts: record.hosts, oldWorld: record.oldWorld, newWorld: record.newWorld, endpointContacts: record.endpointContacts };
       // D1 and D2 retain the actual upload and source-index packing checks.
       const failures = legacySpanClaimFailures(claim, data.masses, baseline, data.roofs, obstacles.heroes, data.voids, obstacles.prefix);
-      if (failures.length) errors.push({ index: source.sourceIndex, reasons: failures, hosts: record.hosts });
+      if (failures.length) errors.push({ index: source.sourceIndex, reasons: failures, hosts: record.hosts, declared: record.newWorld, actual: facts });
       const oldWidth = source.sz >= source.sx ? source.sx : source.sz;
       if (facts.crossWidthM !== oldWidth) {
         const widthWasEnough = ([0, 1] as const).every(end => {
           const host = data.masses[record.hosts[end].massIndex];
-          return host !== undefined && spanContactAt({ ...facts, crossWidthM: oldWidth }, end, massRoofBox(host)).touches;
+          return host !== undefined && spanContactAt({ ...facts, crossWidthM: oldWidth }, end, independentMassRoofBox(host)).touches;
         });
         expect(widthWasEnough, `unneeded-width:${source.sourceIndex}`).toBe(false);
       }
     }
     const result = { seed, checked, moved, failures: errors.length, violations: errors, examples: errors.slice(0, 12) }; write(seed, 'span-world', result);
     expect(errors, JSON.stringify(result)).toEqual([]); expect(moved).toBeGreaterThan(0);
+  });
+
+  it('preserves source402 and its actual endpoint contacts after yaw', () => {
+    const d = DATA.get(424242)!, source = d.evidence.sourceInventory[402]!;
+    expect([source.cx, source.cy, source.cz, source.sx, source.sy, source.sz]).toEqual([1562.567138671875, 1325.153076171875, -810.4183959960938, 5.300000190734863, 4, 161.3485107421875]);
+    expect([source.owner.x, source.owner.z, source.owner.width, source.owner.depth]).toEqual([1590, -960, 153, 137.814750833211]);
+    expect(source.spanTo).not.toBeNull();
+    expect([source.spanTo!.x, source.spanTo!.z, source.spanTo!.width, source.spanTo!.depth]).toEqual([1590, -640, 227, 179.48822944444504]);
+    const record = d.evidence.dispositions[402]!, facts = spanFacts(d.trims, 402, d.masses), actual = actualClaim(424242, source, facts);
+    expect(actual).not.toBeNull(); if (!actual) throw new Error('YAW_SOURCE402_ENDPOINT');
+    const claim: SpanClaim = record.kind === 'span-rehosted' ? { source, geometry: record.newGeometry, facts, hosts: record.hosts, oldWorld: record.oldWorld, newWorld: record.newWorld, endpointContacts: record.endpointContacts } : actual;
+    const obstacles = actualObstacles(424242);
+    expect(legacySpanClaimFailures(claim, d.masses, d.baselines.get(402)!, d.roofs, obstacles.heroes, d.voids, obstacles.prefix)).toEqual([]);
+    for (const end of [0, 1] as const) {
+      const host = d.masses[claim.hosts[end].massIndex]!;
+      expect(spanContactAt(facts, end, independentMassRoofBox(host)).touches).toBe(true);
+      if (host.supportRole === 'yaw-span-ledge') {
+        expect(host.supportSourceTrimIndex).toBe(402); expect(host.supportSpanEndpoint).toBe(end);
+        const body = d.masses[host.supportHostMassIndex!]!;
+        expect(retainedMassContact(independentMassRoofBox(host), independentMassRoofBox(body))).toBe('volume');
+      }
+    }
+  });
+
+  it.each(SEEDS)('proves every cropped ledge belongs to a real span endpoint at seed %i', seed => {
+    const d = DATA.get(seed)!, profiles = deriveTowerProfiles(d.layout);
+    for (const [index, ledge] of d.masses.entries()) {
+      if (ledge.supportRole !== 'yaw-span-ledge') continue;
+      const sourceIndex = ledge.supportSourceTrimIndex, end = ledge.supportSpanEndpoint;
+      expect(sourceIndex).toBeDefined(); expect([0, 1]).toContain(end);
+      if (sourceIndex === undefined || end === undefined) throw new Error('YAW_LEDGE_SOURCE_ENDPOINT');
+      const record = d.evidence.dispositions[sourceIndex]!;
+      expect(record.kind).toBe('span-rehosted'); if (record.kind !== 'span-rehosted') throw new Error('YAW_LEDGE_SOURCE_REPAIR');
+      expect(record.hosts[end].massIndex).toBe(index);
+      const body = d.masses[ledge.supportHostMassIndex!]!;
+      expect(yawSpanLedgeFailures(ledge, body, approvedYawHostEnvelope(body, ledge.supportHostMassIndex!, profiles, seed, d.masses)), `ledge${index}`).toEqual([]);
+      expect(spanContactAt(spanFacts(d.trims, sourceIndex, d.masses), end, independentMassRoofBox(ledge)).touches).toBe(true);
+    }
+  });
+
+  it('turns each source span endpoint in its own yaw and pivot frame', () => {
+    const owner = { x: 0, z: 0, width: 10, depth: 10, anchorV: 0, yawRad: Math.PI / 2 };
+    const to = { ...owner, z: 20, yawRad: -Math.PI / 2, yawAnchor: { x: 0, z: 20 } };
+    const trims: SkyriverCityTrims = { seed: 0, count: 1, cx: new Float32Array([0]), cy: new Float32Array([5]), cz: new Float32Array([10]),
+      sx: new Float32Array([2]), sy: new Float32Array([2]), sz: new Float32Array([10]), kind: new Uint8Array([SKYRIVER_TRIM_GANTRY]),
+      seedValue: new Float32Array([0]), owner: [owner], spanTo: [to] };
+    const placed = independentSpanPlacement(trims, 0);
+    const low = warpRigid(5, 0, 0, { x: 0, z: 0, heading: 0 }), high = warpRigid(5, 20, 0, { x: 0, z: 0, heading: 0 });
+    expect(placed.endpointOwners).toEqual([owner, to]);
+    expect(placed.endpoints[0].x).toBeCloseTo(low.x, 10); expect(placed.endpoints[0].z).toBeCloseTo(low.z, 10);
+    expect(placed.endpoints[1].x).toBeCloseTo(high.x, 10); expect(placed.endpoints[1].z).toBeCloseTo(high.z, 10);
+    expect(placed.worldLengthM).toBeCloseTo(20, 10);
+  });
+
+  it('subtracts true rotated span coverage and excludes edge contact', () => {
+    const ends = [{ x: 0, y: 0, z: 0 }, { x: 20, y: 0, z: 0 }] as const;
+    const box = { x: 10, y: 0, z: 0, hx: 2, hy: 1, hz: 2, c: Math.SQRT1_2, s: Math.SQRT1_2 };
+    expect(spanExposedLength(ends, [box])).toBeCloseTo(20 - 4 * Math.SQRT2, 10);
+    expect(spanExposedLength(ends, [{ ...box, y: 1 }])).toBe(20);
   });
 
   it.each(['host', 'anchor', 'endpoint', 'new-owner', 'buried-path', 'missing-row', 'roof-collision', 'prefix-collision'] as const)('rejects an actual %s fault with the same physical oracle', fault => {
@@ -148,7 +215,7 @@ describe('R36 D3 exact span inventory and actual world paths', () => {
     expect(legacySpanClaimFailures(good, data.masses, baseline, [], [], [])).toEqual([]);
     if (fault === 'missing-row') {
       const bad = { ...data.evidence, dispositions: data.evidence.dispositions.filter(row => row.sourceIndex !== good.source.sourceIndex) };
-      expect(() => assertLegacyTrimOneToOne(bad, data.trims, deriveRoofDetails(data.layout).oldTrimCount)).toThrow('disposition-count');
+      expect(() => assertLegacyTrimOneToOne(bad, data.trims, deriveRoofDetails(data.layout).oldTrimCount, data.masses)).toThrow('disposition-count');
     } else if (fault === 'host' || fault === 'anchor') {
       const first = good.hosts[0];
       const host = fault === 'anchor' ? { ...first, anchorV: first.anchorV + 1 } : { ...first, massIndex: data.masses.findIndex(m => spanMassOwner(m) !== first.canonicalOwner) };
@@ -170,7 +237,7 @@ describe('R36 D3 exact span inventory and actual world paths', () => {
       const invading = { ...sourceHost, x: good.geometry.cx, z: good.geometry.cz, y0: good.geometry.cy - good.geometry.sy, width: good.geometry.sx * 2, depth: good.geometry.sz * 2, height: good.geometry.sy * 2,
         materialOwner: fault === 'new-owner' ? -1 : sourceHost.materialOwner, building: fault === 'new-owner' ? -1 : sourceHost.building, anchorV: good.source.owner.anchorV };
       // Set the injection extent from both actual world endpoints.
-      const centre = massRoofBox(invading);
+      const centre = independentMassRoofBox(invading);
       const reach = Math.max(...good.facts.endpoints.map(end => Math.hypot(end.x - centre.x, end.z - centre.z))) + 1;
       const cover = { ...invading, width: 2 * reach, depth: 2 * reach };
       const alteredMasses = [...data.masses, cover], facts = spanFacts(data.trims, good.source.sourceIndex, alteredMasses);

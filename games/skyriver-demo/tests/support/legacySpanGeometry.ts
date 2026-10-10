@@ -1,6 +1,8 @@
-import { buildingSeedOf, placeTrim, SKYRIVER_TRIM_GANTRY, SKYRIVER_TRIM_SKYBRIDGE, type SkyriverCityTrims, type SkyriverMass, type SkyriverTrimOwner } from '../../src/render/city';
+import { buildingSeedOf, warpRigid, SKYRIVER_TRIM_GANTRY, SKYRIVER_TRIM_SKYBRIDGE, type SkyriverCityTrims, type SkyriverMass, type SkyriverTrimOwner } from '../../src/render/city';
+import { reservedAirConflict } from './legacyRoofGeometry';
+import { independentBoxPoint, independentMassRoofBox } from './towerProfileGeometry';
 import type { LegacyTrimGeometry, LegacyTrimSource } from './legacyTrimInventory';
-import { massRoofBox, roofBoxesConflict, roofBoxTolerance, trimRoofBox, type RoofBox } from './rooftopDetailsGeometry';
+import { roofBoxesConflict, roofBoxTolerance, type RoofBox } from './rooftopDetailsGeometry';
 
 export interface SpanPoint { readonly x: number; readonly y: number; readonly z: number }
 export interface SpanWorldPath {
@@ -26,6 +28,36 @@ export interface SpanClaim {
 export const spanOwner = (owner: SkyriverTrimOwner): number => owner.materialOwner ?? buildingSeedOf(owner.x, owner.z);
 export const spanMassOwner = (mass: SkyriverMass): number => mass.materialOwner ?? mass.building ?? buildingSeedOf(mass.x, mass.z);
 const footprintGap = (owner: SkyriverTrimOwner, x: number, z: number) => Math.max(Math.abs(x - owner.x) - owner.width / 2, Math.abs(z - owner.z) - owner.depth / 2);
+
+/** Place source endpoints with independent +Y yaw and the fixed canyon frame. */
+export function independentSpanPlacement(trims: SkyriverCityTrims, index: number) {
+  const owner = trims.owner[index], to = trims.spanTo[index];
+  if (!owner || !to) throw new Error('R36_D3_SPAN_OWNER');
+  const alongZ = trims.sz[index]! >= trims.sx[index]!, sourceLengthM = alongZ ? trims.sz[index]! : trims.sx[index]!;
+  const low = { x: trims.cx[index]! - (alongZ ? 0 : sourceLengthM / 2), z: trims.cz[index]! - (alongZ ? sourceLengthM / 2 : 0) };
+  const high = { x: trims.cx[index]! + (alongZ ? 0 : sourceLengthM / 2), z: trims.cz[index]! + (alongZ ? sourceLengthM / 2 : 0) };
+  // Endpoint ownership stays in the original source coordinate frame.
+  const endpointOwners: readonly [SkyriverTrimOwner, SkyriverTrimOwner] = footprintGap(owner, low.x, low.z) <= footprintGap(to, low.x, low.z) ? [owner, to] : [to, owner];
+  const endpoints = ([low, high] as const).map((point, end): SpanPoint => {
+    const frame = endpointOwners[end]!, rotated = independentBoxPoint(frame, point.x, point.z);
+    const world = warpRigid(rotated.x, rotated.z, frame.anchorV, { x: 0, z: 0, heading: 0 });
+    return { x: world.x, y: trims.cy[index]!, z: world.z };
+  }) as [SpanPoint, SpanPoint];
+  const dx = endpoints[1].x - endpoints[0].x, dz = endpoints[1].z - endpoints[0].z;
+  const heading = alongZ ? Math.atan2(dx, dz) : Math.atan2(-dz, dx), worldLengthM = Math.hypot(dx, dz);
+  const box: RoofBox = { x: (endpoints[0].x + endpoints[1].x) / 2, y: trims.cy[index]!, z: (endpoints[0].z + endpoints[1].z) / 2,
+    hx: (alongZ ? trims.sx[index]! : worldLengthM) / 2, hy: trims.sy[index]! / 2, hz: (alongZ ? worldLengthM : trims.sz[index]!) / 2,
+    c: Math.cos(heading), s: Math.sin(heading) };
+  return { alongZ, sourceLengthM, worldLengthM, endpoints, endpointOwners, box };
+}
+
+export function independentTrimRoofBox(trims: SkyriverCityTrims, index: number): RoofBox {
+  if (trims.spanTo[index]) return independentSpanPlacement(trims, index).box;
+  const frame = trims.owner[index]; if (!frame) throw new Error('R36_TRIM_OWNER');
+  const rotated = independentBoxPoint(frame, trims.cx[index]!, trims.cz[index]!);
+  const point = warpRigid(rotated.x, rotated.z, frame.anchorV, { x: 0, z: 0, heading: 0 }), heading = point.heading + (frame.yawRad ?? 0);
+  return { x: point.x, y: trims.cy[index]!, z: point.z, hx: trims.sx[index]! / 2, hy: trims.sy[index]! / 2, hz: trims.sz[index]! / 2, c: Math.cos(heading), s: Math.sin(heading) };
+}
 
 /** Clip the real cross-width segment. Keep the existing two-ULP contact rule. */
 export function spanEndContact(point: SpanPoint, vx: number, vz: number, halfWidth: number, halfHeight: number, box: RoofBox): { readonly touches: boolean; readonly measurement: SpanContact } {
@@ -81,21 +113,10 @@ export function spanExposedLength(endpoints: readonly [SpanPoint, SpanPoint], bo
 }
 
 export function spanFacts(trims: SkyriverCityTrims, index: number, masses: readonly SkyriverMass[]): SpanFacts {
-  const owner = trims.owner[index], to = trims.spanTo[index];
-  if (!owner || !to) throw new Error('R36_D3_SPAN_OWNER');
-  const alongZ = trims.sz[index]! >= trims.sx[index]!, sourceLengthM = alongZ ? trims.sz[index]! : trims.sx[index]!;
-  const lowX = trims.cx[index]! - (alongZ ? 0 : sourceLengthM / 2), lowZ = trims.cz[index]! - (alongZ ? sourceLengthM / 2 : 0);
-  const endpointOwners: readonly [SkyriverTrimOwner, SkyriverTrimOwner] = footprintGap(owner, lowX, lowZ) <= footprintGap(to, lowX, lowZ) ? [owner, to] : [to, owner];
-  const placed = placeTrim(trims, index, { x: 0, z: 0, heading: 0, length: 0 });
-  const lx = alongZ ? Math.sin(placed.heading) : Math.cos(placed.heading), lz = alongZ ? Math.cos(placed.heading) : -Math.sin(placed.heading);
-  const endpoints: readonly [SpanPoint, SpanPoint] = [
-    { x: placed.x - lx * placed.length / 2, y: trims.cy[index]!, z: placed.z - lz * placed.length / 2 },
-    { x: placed.x + lx * placed.length / 2, y: trims.cy[index]!, z: placed.z + lz * placed.length / 2 },
-  ];
-  const box = trimRoofBox(trims, index), ownerSet = new Set(endpointOwners.map(spanOwner));
-  const foreignOwners = [...new Set(masses.filter(m => !ownerSet.has(spanMassOwner(m)) && roofBoxesConflict(box, massRoofBox(m))).map(spanMassOwner))].sort((a, b) => a - b);
-  return { alongZ, sourceLengthM, worldLengthM: placed.length, endpoints, endpointOwners, box,
-    crossWidthM: alongZ ? trims.sx[index]! : trims.sz[index]!, foreignOwners, exposedLengthM: spanExposedLength(endpoints, masses.map(massRoofBox)) };
+  const placed = independentSpanPlacement(trims, index), { box, endpointOwners, endpoints } = placed, ownerSet = new Set(endpointOwners.map(spanOwner));
+  const foreignOwners = [...new Set(masses.filter(m => !ownerSet.has(spanMassOwner(m)) && roofBoxesConflict(box, independentMassRoofBox(m))).map(spanMassOwner))].sort((a, b) => a - b);
+  return { ...placed, crossWidthM: placed.alongZ ? trims.sx[index]! : trims.sz[index]!, foreignOwners,
+    exposedLengthM: spanExposedLength(endpoints, masses.map(independentMassRoofBox)) };
 }
 export function spanContactAt(facts: SpanFacts, endpoint: 0 | 1, box: RoofBox): ReturnType<typeof spanEndContact> {
   const vx = facts.alongZ ? facts.box.c : facts.box.s, vz = facts.alongZ ? -facts.box.s : facts.box.c;
@@ -116,7 +137,7 @@ export function legacySpanClaimFailures(claim: SpanClaim, masses: readonly Skyri
     const host = claim.hosts[end], actual = masses[host.massIndex], owner = facts.endpointOwners[end];
     if (!actual) { errors.push(`host${end}-missing`); continue; }
     if (host.canonicalOwner !== spanOwner(owner) || host.anchorV !== owner.anchorV || spanMassOwner(actual) !== spanOwner(owner) || (actual.anchorV ?? actual.z) !== owner.anchorV) errors.push(`host${end}-identity`);
-    const contact = spanContactAt(facts, end, massRoofBox(actual));
+    const contact = spanContactAt(facts, end, independentMassRoofBox(actual));
     if (!contact.touches) errors.push(`endpoint${end}-contact`);
     for (const key of ['crossOverlapM', 'verticalOverlapM'] as const) if (!Number.isFinite(claim.endpointContacts[end][key]) || Math.abs(claim.endpointContacts[end][key] - contact.measurement[key]) > tolerance) errors.push(`endpoint${end}-measurement`);
   }
@@ -129,6 +150,6 @@ export function legacySpanClaimFailures(claim: SpanClaim, masses: readonly Skyri
   if (prefixBoxes.some((box, index) => box !== null && index !== source.sourceIndex && roofBoxesConflict(facts.box, box))) errors.push('prefix-collision');
   if (roofBoxes.some(box => roofBoxesConflict(facts.box, box))) errors.push('roof-collision');
   if (heroBoxes.some(box => roofBoxesConflict(facts.box, box))) errors.push('hero-collision');
-  if (voidBoxes.some(box => roofBoxesConflict(facts.box, box))) errors.push('reserved-air-collision');
+  if (voidBoxes.some(box => reservedAirConflict(facts.box, box))) errors.push('reserved-air-collision');
   return errors;
 }

@@ -31,8 +31,8 @@ const DATA = new Map(SEEDS.map(seed => {
 
 describe('R36 D1 original trim inventory and real side hosts', () => {
   it.each(SEEDS)('retains every original index and full source identity at seed %i', seed => {
-    const { layout, evidence, trims } = DATA.get(seed)!;
-    assertLegacyTrimOneToOne(evidence, trims, deriveRoofDetails(layout).oldTrimCount);
+    const { layout, evidence, trims, masses } = DATA.get(seed)!;
+    assertLegacyTrimOneToOne(evidence, trims, deriveRoofDetails(layout).oldTrimCount, masses);
     expect(evidence.roofRowsDeferred).toBe(0);
     expect(evidence.spanRowsDeferred).toBe(0);
   });
@@ -65,10 +65,10 @@ describe('R36 D1 original trim inventory and real side hosts', () => {
         continue;
       }
       const oldContact = legacyTrimExposedContact(source, source.owner, masses, undefined, nonHosts);
-      const newContact = legacyTrimExposedContact(disposition.newGeometry, source.owner, masses, undefined, nonHosts);
+      const newContact = legacyTrimExposedContact(disposition.newGeometry, trims.owner[disposition.finalIndex]!, masses, undefined, nonHosts);
       if (!(newContact.area > Math.max(1e-7, source.sy * source.sz * 1e-10))) failures.push({ reason: 'no-exposed-contact', index, kind: source.kind, disposition, oldContact, newContact });
       if (oldContact.area > Math.max(1e-7, source.sy * source.sz * 1e-10)) {
-        if (disposition.kind !== 'unchanged') { exposedSourceMoved++; failures.push({ reason: 'exposed-source-moved', index, source, disposition, oldContact }); }
+        if (disposition.kind !== 'unchanged') { exposedSourceMoved++; failures.push({ reason: 'exposed-source-moved', index, source, disposition, oldContact, oldHostMasses: oldContact.hostMassIndices.map(hostIndex => ({ hostIndex, mass: masses[hostIndex] })), newHost: disposition.kind === 'side-rehosted' ? masses[disposition.hostMassIndex] : null }); }
         else exposedUnchanged++;
       }
       if (disposition.kind === 'side-rehosted') {
@@ -76,7 +76,7 @@ describe('R36 D1 original trim inventory and real side hosts', () => {
         const host = masses[disposition.hostMassIndex]; expect(host, `host:${index}`).toBeDefined();
         expect(host!.materialOwner ?? host!.building ?? buildingSeedOf(host!.x, host!.z)).toBe(source.canonicalOwner);
         expect(host!.anchorV ?? host!.z).toBe(source.owner.anchorV);
-        const actualHost = legacyTrimExposedContact(disposition.newGeometry, source.owner, masses, disposition.hostMassIndex, nonHosts);
+        const actualHost = legacyTrimExposedContact(disposition.newGeometry, trims.owner[disposition.finalIndex]!, masses, disposition.hostMassIndex, nonHosts);
         if (!(actualHost.area > Math.max(1e-7, source.sy * source.sz * 1e-10))) { hostExposureFailures++; failures.push({ reason: 'claimed-host-not-exposed', index, source, disposition, host, actualHost }); }
         expect(disposition.newGeometry.sx, `thickness:${index}`).toBe(source.sx);
         expect(disposition.newGeometry.sy).toBeLessThanOrEqual(source.sy);
@@ -138,12 +138,22 @@ describe('R36 D1 original trim inventory and real side hosts', () => {
   });
 
 
+  it('rejects an altered final yaw host frame while preserving source provenance', () => {
+    const d = DATA.get(424242)!;
+    const repaired = d.evidence.dispositions.find(row => (row.kind === 'side-rehosted' || row.kind === 'roof-rehosted') && (d.masses[row.hostMassIndex]!.yawRad ?? 0) !== 0);
+    if (!repaired) throw new Error('YAW_LEGACY_FRAME_CONTROL_HOST');
+    const owner = d.trims.owner[repaired.finalIndex]!;
+    const owners = [...d.trims.owner]; owners[repaired.finalIndex] = { ...owner, yawRad: (owner.yawRad ?? 0) + .001 };
+    expect(() => assertLegacyTrimOneToOne(d.evidence, { ...d.trims, owner: owners }, deriveRoofDetails(d.layout).oldTrimCount, d.masses)).toThrow(`final-owner:${repaired.finalIndex}`);
+    expect(d.evidence.sourceInventory[repaired.sourceIndex]!.owner.yawRad).toBeUndefined();
+  });
+
   it('rejects a real auxiliary-only facade host while retaining ordinary source contact', () => {
     const d = DATA.get(424242)!, record = d.supportRecords[0];
     if (!record) throw new Error('R36_CONTROL_ACTUAL_SUPPORT');
     const bridge = d.masses[record.supportMassIndex]!;
     const side = Math.sign(bridge.x), plane = bridge.x - side * bridge.width / 2;
-    const owner = { x: bridge.x, z: bridge.z, width: bridge.width, depth: bridge.depth, anchorV: record.anchorV, materialOwner: record.owner };
+    const owner = { x: bridge.x, z: bridge.z, width: bridge.width, depth: bridge.depth, anchorV: record.anchorV, materialOwner: record.owner, yawRad: bridge.yawRad, yawAnchor: bridge.yawAnchor };
     const trim = { cx: plane, cy: bridge.y0 + bridge.height / 2, cz: bridge.z, sx: 4, sy: bridge.height, sz: bridge.depth };
     // Isolate the actual bridge for this host-domain control. Test occlusion below.
     const excluded = new Set([0]);
@@ -161,8 +171,8 @@ describe('R36 D1 original trim inventory and real side hosts', () => {
     if (!record) throw new Error('R36_CONTROL_ACTUAL_SUPPORT');
     const bridge = d.masses[record.supportMassIndex]!, side = Math.sign(bridge.x), plane = bridge.x - side * bridge.width / 2;
     // Shift an ordinary host behind the actual bridge. Preserve the actual bridge box.
-    const host = { ...d.masses[record.hostMassIndex]!, x: bridge.x + side, z: bridge.z, width: bridge.width, depth: bridge.depth, y0: bridge.y0, height: bridge.height };
-    const owner = { x: bridge.x, z: bridge.z, width: bridge.width, depth: bridge.depth, anchorV: record.anchorV, materialOwner: record.owner };
+    const host = { ...d.masses[record.hostMassIndex]!, x: bridge.x + side, z: bridge.z, width: bridge.width, depth: bridge.depth, y0: bridge.y0, height: bridge.height, yawRad: bridge.yawRad, yawAnchor: bridge.yawAnchor ?? { x: bridge.x, z: bridge.z }, anchorV: bridge.anchorV };
+    const owner = { x: bridge.x, z: bridge.z, width: bridge.width, depth: bridge.depth, anchorV: record.anchorV, materialOwner: record.owner, yawRad: bridge.yawRad, yawAnchor: bridge.yawAnchor };
     const trim = { cx: plane + side, cy: bridge.y0 + bridge.height / 2, cz: bridge.z, sx: 4, sy: bridge.height, sz: bridge.depth };
     const hostOnly = legacyTrimExposedContact(trim, owner, [host], 0);
     expect(hostOnly.area).toBeGreaterThan(0);
@@ -178,6 +188,6 @@ describe('R36 D1 original trim inventory and real side hosts', () => {
     if (mutation === 'duplicate') candidate = { ...bad, sourceInventory: [bad.sourceInventory[1]!, ...bad.sourceInventory.slice(1)] };
     if (mutation === 'owner') candidate = { ...bad, sourceInventory: bad.sourceInventory.map((row, index) => index === 0 ? { ...row, owner: { ...row.owner, width: row.owner.width + 1 } } : row) };
     if (mutation === 'geometry') candidate = { ...bad, dispositions: bad.dispositions.map((row, index) => index === 0 ? { ...row, newGeometry: { ...row.newGeometry, cy: row.newGeometry.cy + 1 } } : row) };
-    expect(() => assertLegacyTrimOneToOne(candidate, trims, deriveRoofDetails(layout).oldTrimCount)).toThrow('R36_LEGACY_INVENTORY');
+    expect(() => assertLegacyTrimOneToOne(candidate, trims, deriveRoofDetails(layout).oldTrimCount, DATA.get(424242)!.masses)).toThrow('R36_LEGACY_INVENTORY');
   });
 });

@@ -54,6 +54,12 @@ import { createInteriorAtlas, type InteriorAtlas } from './interiorAtlas';
 import {
   FACADE_FACE_EDGE_MARGIN_M,
   FACADE_STEP_MASK_BAND_M,
+  boxLocalPoint,
+  boxLocalCoordinates,
+  subtractFootprint,
+  clipFootprintEdge,
+  fitCrownFootprint,
+  fitRectangleDimensions,
   facadeFaceContains,
   fitOnNearestFacadeFace,
   facadeReservationsConflict,
@@ -293,6 +299,8 @@ export interface SkyriverRoofDetailEvidence extends Omit<SkyriverRoofDetailDeriv
 
 /** A mass a trim is attached to, in canyon space. */
 export interface SkyriverTrimOwner {
+  readonly yawRad?: number;
+  readonly yawAnchor?: { readonly x: number; readonly z: number };
   readonly x: number;
   readonly z: number;
   readonly width: number;
@@ -504,6 +512,11 @@ export interface SkyriverLowBaseRecord {
  * skyline block. All of them render through the tower mesh (one draw call) with the facade shader.
  */
 export interface SkyriverMass {
+  readonly yawWingPart?: { readonly roofMassIndex: number; readonly part: 'below' | 'band' | 'roof';
+    readonly cutLow: number; readonly cutHigh: number };
+  /** Local box yaw, in radians. The canyon heading is added at placement. */
+  readonly yawRad?: number;
+  readonly yawAnchor?: { readonly x: number; readonly z: number };
   readonly x: number;
   /** Base altitude, metres. Derived slabs start in the void (SKYRIVER_CITY_VOID_BASE_Y). */
   readonly y0: number;
@@ -528,8 +541,12 @@ export interface SkyriverMass {
   readonly materialOwner?: number;
   /** R27: low-city base sprawl identity record. */
   readonly baseRecord?: SkyriverLowBaseRecord;
-  readonly supportRole?: 'retained-child-bridge';
+  readonly supportRole?: 'retained-child-bridge' | 'yaw-roof-cap' | 'yaw-span-ledge';
+  readonly supportHostMassIndex?: number;
+  readonly supportSourceTrimIndex?: number;
+  readonly supportSpanEndpoint?: 0 | 1;
   readonly crownRole?: 'ordinary-dark-crown';
+  readonly artBacking?: { readonly hostMassIndex: number; readonly faceId: string };
 }
 
 export interface SkyriverRetainedMassSupportRecord {
@@ -564,9 +581,11 @@ export function trimMaterialOwnerSeed(owner: SkyriverTrimOwner): number {
 }
 
 /** A tower or mass as a trim owner, placed around its own centre unless told otherwise. */
-function ownerOf(mass: { readonly x: number; readonly z: number; readonly width: number; readonly depth: number; readonly materialOwner?: number }, anchorV = mass.z): SkyriverTrimOwner {
+function ownerOf(mass: { readonly x: number; readonly z: number; readonly width: number; readonly depth: number; readonly materialOwner?: number; readonly yawRad?: number; readonly yawAnchor?: { readonly x: number; readonly z: number } }, anchorV = mass.z): SkyriverTrimOwner {
   return { x: mass.x, z: mass.z, width: mass.width, depth: mass.depth, anchorV,
-    materialOwner: mass.materialOwner ?? buildingSeedOf(mass.x, mass.z) };
+    materialOwner: mass.materialOwner ?? buildingSeedOf(mass.x, mass.z),
+    ...(mass.yawRad === undefined ? {} : { yawRad: mass.yawRad }),
+    ...(mass.yawAnchor === undefined ? {} : { yawAnchor: mass.yawAnchor }) };
 }
 
 /**
@@ -582,6 +601,20 @@ export function warpRigid(x: number, v: number, anchorV: number, out: WarpOut): 
   // across = (cos h, -sin h), along = (sin h, cos h)
   out.x += x * c + dv * s;
   out.z += -x * s + dv * c;
+  return out;
+}
+
+/** Place a box-local point with the box yaw and its canyon heading. */
+export function warpBoxPoint(
+  box: { readonly x: number; readonly z: number; readonly anchorV?: number; readonly yawRad?: number; readonly yawAnchor?: { readonly x: number; readonly z: number } },
+  x: number,
+  z: number,
+  out: WarpOut,
+): WarpOut {
+  const yaw = box.yawRad ?? 0;
+  const point = boxLocalPoint({ ...(box.yawAnchor ?? box), yawRad: yaw }, x, z);
+  warpRigid(point.x, point.z, box.anchorV ?? box.z, out);
+  out.heading += yaw;
   return out;
 }
 
@@ -3480,7 +3513,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     const gapY = b0.y0 + b0.height * 0.5;
     const gapH = b0.height;
 
-    warpRigid(gapX, gapZ, anchorV, roofDetailWarp);
+    warpBoxPoint({ ...b0, anchorV }, gapX, gapZ, roofDetailWarp);
     const notchObb = roofDetailBox(
       roofDetailWarp.x,
       gapY,
@@ -4075,47 +4108,38 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
   const addedProfileFragments = (
     mass: SkyriverMass,
     oldProfileMasses: readonly SkyriverMass[],
-  ): SkyriverMass[] => {
-    type Box = { x0: number; x1: number; y0: number; y1: number; z0: number; z1: number };
-    const massBox: Box = {
-      x0: mass.x - mass.width * 0.5, x1: mass.x + mass.width * 0.5,
-      y0: mass.y0, y1: mass.y0 + mass.height,
-      z0: mass.z - mass.depth * 0.5, z1: mass.z + mass.depth * 0.5,
-    };
-    let fragments: Box[] = [massBox];
-    const anchor = mass.anchorV ?? mass.z;
+  ): RoofDetailObb[] => {
+    const box = roofDetailMassObb(mass, 0);
+    let fragments: RoofDetailObb[] = [box];
     for (const old of oldProfileMasses) {
-      if ((old.anchorV ?? old.z) !== anchor) continue;
-      const cut: Box = {
-        x0: old.x - old.width * 0.5, x1: old.x + old.width * 0.5,
-        y0: old.y0, y1: old.y0 + old.height,
-        z0: old.z - old.depth * 0.5, z1: old.z + old.depth * 0.5,
-      };
-      const next: Box[] = [];
-      for (const box of fragments) {
-        const x0 = Math.max(box.x0, cut.x0); const x1 = Math.min(box.x1, cut.x1);
-        const y0 = Math.max(box.y0, cut.y0); const y1 = Math.min(box.y1, cut.y1);
-        const z0 = Math.max(box.z0, cut.z0); const z1 = Math.min(box.z1, cut.z1);
-        if (x1 <= x0 || y1 <= y0 || z1 <= z0) { next.push(box); continue; }
-        if (box.x0 < x0) next.push({ ...box, x1: x0 });
-        if (x1 < box.x1) next.push({ ...box, x0: x1 });
-        if (box.y0 < y0) next.push({ ...box, x0, x1, y1: y0 });
-        if (y1 < box.y1) next.push({ ...box, x0, x1, y0: y1 });
-        if (box.z0 < z0) next.push({ ...box, x0, x1, y0, y1, z1: z0 });
-        if (z1 < box.z1) next.push({ ...box, x0, x1, y0, y1, z0: z1 });
+      if ((old.anchorV ?? old.z) !== (mass.anchorV ?? mass.z)) continue;
+      const cut = roofDetailMassObb(old, 0);
+      const cutBottom=old.y0,cutTop=old.y0+old.height;
+      const next: RoofDetailObb[] = [];
+      for (const fragment of fragments) {
+        const fragmentBottom=fragment.verticalBounds?.[0] ?? fragment.y-fragment.halfY;
+        const fragmentTop=fragment.verticalBounds?.[1] ?? fragment.y+fragment.halfY;
+        const bottom = Math.max(fragmentBottom,cutBottom);
+        const top = Math.min(fragmentTop,cutTop);
+        if (top <= bottom || !roofDetailObbsConflict(fragment, cut, 0)) {
+          next.push(fragment);
+          continue;
+        }
+        const footprint = retainedSupportFootprint(fragment);
+        if (fragmentBottom < bottom) {
+          next.push(roofDetailPolygonBox(footprint, fragmentBottom, bottom));
+        }
+        if (top < fragmentTop) {
+          next.push(roofDetailPolygonBox(footprint, top, fragmentTop));
+        }
+        for (const piece of subtractFootprint(footprint, retainedSupportFootprint(cut))) {
+          if (retainedSupportArea(piece) > 1e-10) next.push(roofDetailPolygonBox(piece, bottom, top));
+        }
       }
       fragments = next;
       if (fragments.length === 0) break;
     }
-    return fragments.map((box) => ({
-      ...mass,
-      x: (box.x0 + box.x1) * 0.5,
-      y0: box.y0,
-      z: (box.z0 + box.z1) * 0.5,
-      width: box.x1 - box.x0,
-      height: box.y1 - box.y0,
-      depth: box.z1 - box.z0,
-    }));
+    return fragments;
   };
 
   const rebuildUpperFaces = (data: R36EmittedData, drafts: readonly R36StageDraft[]): R36EmittedData => {
@@ -4452,7 +4476,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
         const box = roofDetailMassObb(mass, 0);
         if (!Number.isFinite(mass.height) || mass.height <= 0
           || addedProfileFragments(mass, oldProfileMasses).some((fragment) =>
-            checkNotchWorldConflict(roofDetailMassObb(fragment, 0), oldMask),
+            checkNotchWorldConflict(fragment, oldMask),
           )
           || roofDetailIndexConflicts(wingAirIndex, box, 0)
           || roofDetailBlocksHero(box, shapeHeroBoxes)
@@ -4559,6 +4583,462 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     }
   }
 
+  let heroes: readonly SkyriverHeroBlade[] = resolvedHeroes;
+  const fitYawWingParts = (
+    original: SkyriverMass, yawRad: number, oldProfile: readonly SkyriverMass[],
+  ): readonly SkyriverMass[] => {
+    const full = { ...original, yawRad };
+    const fragments = addedProfileFragments(full, oldProfile);
+    const mask = new Set(oldProfile);
+    const candidates: RoofDetailObb[] = [];
+    notchAuditIndex.stamp += 1;
+    if (notchAuditIndex.stamp >= 0x7ffffffe) {
+      notchAuditIndex.stamps.fill(0);
+      notchAuditIndex.stamp = 1;
+    }
+    const stamp = notchAuditIndex.stamp;
+    for (const fragment of fragments) {
+      const x0 = Math.floor(fragment.minX / notchAuditIndex.cellSize);
+      const x1 = Math.floor(fragment.maxX / notchAuditIndex.cellSize);
+      const z0 = Math.floor(fragment.minZ / notchAuditIndex.cellSize);
+      const z1 = Math.floor(fragment.maxZ / notchAuditIndex.cellSize);
+      for (let x = x0; x <= x1; x += 1) {
+        for (let z = z0; z <= z1; z += 1) {
+          const bucket = notchAuditIndex.cells.get(roofDetailCellKey(x, z));
+          if (bucket === undefined) continue;
+          for (const index of bucket) {
+            if (notchAuditIndex.stamps[index] === stamp) continue;
+            notchAuditIndex.stamps[index] = stamp;
+            candidates.push(notchAuditIndex.boxes[index]!);
+          }
+        }
+      }
+    }
+    const blockers = candidates.filter(box => box.massIndex !== undefined
+      && !mask.has(masses[box.massIndex]!) && fragments.some(fragment => roofDetailObbsConflict(fragment, box, 0)));
+    if (blockers.length === 0) return [full];
+    const cutLow = Math.max(original.y0, Math.min(...blockers.map(box => box.verticalBounds?.[0] ?? box.y - box.halfY)));
+    const cutHigh = Math.min(original.y0 + original.height,
+      Math.max(...blockers.map(box => box.verticalBounds?.[1] ?? box.y + box.halfY)));
+    const band = { ...full, y0: cutLow, height: cutHigh - cutLow };
+    const candidateAt = (scale: number): SkyriverMass => ({ ...band,
+      width: band.width * scale, depth: band.depth * scale });
+    const accepted = (candidate: SkyriverMass): boolean => !addedProfileFragments(candidate, oldProfile)
+      .some(fragment => checkNotchWorldConflict(fragment, mask));
+    let low = 0, high = 1;
+    for (let iteration = 0; iteration < 32; iteration += 1) {
+      const middle = (low + high) * 0.5;
+      if (accepted(candidateAt(middle))) low = middle; else high = middle;
+    }
+    if (low <= 0) fail(`SKYRIVER_YAW_WING_BAND: ${layout.seed} ${original.x},${original.z}`);
+    const roofMassIndex = masses.indexOf(original);
+    const parts: SkyriverMass[] = [];
+    if (cutHigh < original.y0 + original.height) parts.push({ ...full, y0: cutHigh,
+      height: original.y0 + original.height - cutHigh,
+      yawWingPart: { roofMassIndex, part: 'roof', cutLow, cutHigh } });
+    parts.push({ ...candidateAt(low), yawWingPart: { roofMassIndex, part: 'band', cutLow, cutHigh } });
+    if (cutLow > original.y0) parts.push({ ...full, height: cutLow - original.y0,
+      yawWingPart: { roofMassIndex, part: 'below', cutLow, cutHigh } });
+    return parts;
+  };
+  const visibleWingVolume = (parts: readonly SkyriverMass[]): number => parts.reduce((volume, part) => volume
+    + part.width * part.depth * Math.max(0, part.y0 + part.height - Math.max(0, part.y0)), 0);
+  const legalYawWingParts = (
+    parts: readonly SkyriverMass[], spine: SkyriverMass, oldProfile: readonly SkyriverMass[],
+  ): boolean => {
+    const boxes = parts.map(part => roofDetailMassObb(part, 0));
+    if (!retainedSupportConnected([...boxes, roofDetailMassObb(spine, 0)])) return false;
+    if (boxes.some(shapeRouteBlocked)) return false;
+    const roof = parts.find(part => part.yawWingPart === undefined || part.yawWingPart.part === 'roof');
+    if (roof === undefined) return false;
+    const mask = new Set(oldProfile);
+    const roofPieces = subtractFootprint(retainedSupportFootprint(roofDetailMassObb(roof, 0)),
+      retainedSupportFootprint(roofDetailMassObb(spine, 0)));
+    return !roofPieces.some(piece => retainedSupportArea(piece) > 1e-10
+      && checkNotchWorldConflict(roofDetailPolygonBox(piece, roof.y0 + roof.height, roof.y0 + roof.height + 8), mask));
+  };
+  const yawWingParts = new Map<SkyriverMass, readonly SkyriverMass[]>();
+  const yawReplacements = new Map<SkyriverMass, SkyriverMass>();
+  for (let towerIndex = 0; towerIndex < layout.towers.length; towerIndex += 1) {
+    const tower = layout.towers[towerIndex]!;
+    let data = r36DataByTower.get(towerKey(tower));
+    if (data === undefined) continue;
+    for (const stage of data.stageDrafts) {
+      for (const [ordinal, original] of stage.masses.entries()) {
+        const grime = data.deckWingMasses.includes(original) || original.y0 + original.height < 600;
+        const salt = 170 + stage.stageIndex * 17 + ordinal;
+        const magnitude = (grime ? 8 : 2) + (grime ? 4 : 10) * r36Hash01(layout.seed, tower, salt);
+        const sign = r36Hash01(layout.seed, tower, salt + 1000) < 0.5 ? -1 : 1;
+        const yawRad = sign * magnitude * Math.PI / 180;
+        const c = Math.cos(yawRad), sine = Math.abs(Math.sin(yawRad));
+        const scale = Math.min(
+          original.width / (c * original.width + sine * original.depth),
+          original.depth / (sine * original.width + c * original.depth));
+        let turned: SkyriverMass = { ...original, width: original.width * scale,
+          depth: original.depth * scale, yawRad };
+        if (data.spineMass !== null && stage.stageIndex === 0) {
+          const oldProfile = [...data.stageMasses, ...data.crownMasses, ...data.deckWingMasses,
+            ...data.companionMasses, data.spineMass];
+          let parts = fitYawWingParts(original, yawRad, oldProfile);
+          if (visibleWingVolume(parts) < visibleWingVolume([original]) * 0.85) {
+            for (const fallbackSign of [sign, -sign]) {
+              const fallback = fitYawWingParts(original, fallbackSign * 2 * Math.PI / 180, oldProfile);
+              if (visibleWingVolume(fallback) > visibleWingVolume(parts)
+                && legalYawWingParts(fallback, data.spineMass, oldProfile)) parts = fallback;
+            }
+          }
+          yawWingParts.set(original, parts);
+          turned = { ...parts[0]! };
+          for (const part of parts.slice(1)) {
+            masses.push(part);
+            seedIndices.set(part, seedIndices.get(original) ?? masses.length - 1);
+          }
+        } else if (stage.masses.length === 1 && stage !== data.stageDrafts.at(-1)) {
+          interface CentreLimit { readonly base: number; readonly width: number; readonly depth: number }
+          const lowerX: CentreLimit[] = [{ base: original.x - original.width * 0.5, width: c * 0.5, depth: sine * 0.5 }];
+          const upperX: CentreLimit[] = [{ base: original.x + original.width * 0.5, width: -c * 0.5, depth: -sine * 0.5 }];
+          const lowerZ: CentreLimit[] = [{ base: original.z - original.depth * 0.5, width: sine * 0.5, depth: c * 0.5 }];
+          const upperZ: CentreLimit[] = [{ base: original.z + original.depth * 0.5, width: -sine * 0.5, depth: -c * 0.5 }];
+          let parentWidth = 0, parentDepth = 0;
+          if (stage.offset !== null) {
+            const parentCorners = stage.offset.parentKind === 'original-footprint'
+              ? massSourceFootprint({ ...original, x: tower.x, z: tower.z, width: tower.width, depth: tower.depth, yawRad: 0 })
+              : data.stageDrafts[stage.offset.parentStageIndex]!.masses.flatMap(mass => massSourceFootprint(yawReplacements.get(mass) ?? mass));
+            const parentX0 = Math.min(...parentCorners.map(point => point[0]));
+            const parentX1 = Math.max(...parentCorners.map(point => point[0]));
+            const parentZ0 = Math.min(...parentCorners.map(point => point[1]));
+            const parentZ1 = Math.max(...parentCorners.map(point => point[1]));
+            parentWidth = parentX1 - parentX0; parentDepth = parentZ1 - parentZ0;
+            const axisX = stage.offset.axis === 'x';
+            const centre = axisX ? (parentX0 + parentX1) * 0.5 : (parentZ0 + parentZ1) * 0.5;
+            const span = axisX ? parentWidth : parentDepth;
+            const direction = Math.sign(stage.offset.deltaM);
+            const first = centre + direction * span * 0.08, last = centre + direction * span * 0.33;
+            (axisX ? lowerX : lowerZ).push({ base: Math.min(first, last), width: 0, depth: 0 });
+            (axisX ? upperX : upperZ).push({ base: Math.max(first, last), width: 0, depth: 0 });
+          }
+          const next = data.stageDrafts[stage.stageIndex + 1];
+          if (next?.offset?.parentKind === 'stage'
+            && next.offset.parentStageIndex === stage.stageIndex) {
+            const axisX = next.offset.axis === 'x';
+            const nextCentre = next.footprint[next.offset.axis];
+            const direction = Math.sign(next.offset.deltaM);
+            const spanWidth = axisX ? c : sine, spanDepth = axisX ? sine : c;
+            const lowRatio = direction > 0 ? -0.33 : 0.08;
+            const highRatio = direction > 0 ? -0.08 : 0.33;
+            (axisX ? lowerX : lowerZ).push({ base: nextCentre, width: lowRatio * spanWidth, depth: lowRatio * spanDepth });
+            (axisX ? upperX : upperZ).push({ base: nextCentre, width: highRatio * spanWidth, depth: highRatio * spanDepth });
+          }
+          const limits = [lowerX.flatMap(low => upperX.map(high => ({ width: low.width - high.width, depth: low.depth - high.depth, maximum: high.base - low.base }))),
+            lowerZ.flatMap(low => upperZ.map(high => ({ width: low.width - high.width, depth: low.depth - high.depth, maximum: high.base - low.base })))].flat();
+          const shelf = data.family === 'broad-shelf' && stage.stageIndex === 1;
+          if (shelf && c * turned.width + sine * turned.depth <= parentWidth + 1e-8
+            && sine * turned.width + c * turned.depth <= parentDepth + 1e-8) {
+            const oldParent = data.stageDrafts[0]!.footprint;
+            if (original.width > oldParent.width) limits.push({ width: -c, depth: -sine, maximum: -(parentWidth + 0.001) });
+            else limits.push({ width: -sine, depth: -c, maximum: -(parentDepth + 0.001) });
+          }
+          const fits = limits.every(limit => limit.width * turned.width + limit.depth * turned.depth <= limit.maximum + 1e-9);
+          const fit = fits ? turned : fitRectangleDimensions(original.width, original.depth, limits);
+          if (fit === undefined) fail(`SKYRIVER_YAW_STAGE_FIT: ${layout.seed} ${towerKey(tower)} stage ${stage.stageIndex}`);
+          const evaluate = (limit: CentreLimit): number => limit.base + limit.width * fit.width + limit.depth * fit.depth;
+          const x = Math.max(...lowerX.map(evaluate), Math.min(original.x, ...upperX.map(evaluate)));
+          const z = Math.max(...lowerZ.map(evaluate), Math.min(original.z, ...upperZ.map(evaluate)));
+          turned = { ...turned, width: fit.width, depth: fit.depth, x, z };
+        }
+        yawReplacements.set(original, turned);
+        const parts = yawWingParts.get(original);
+        if (parts !== undefined) yawWingParts.set(original, [turned, ...parts.slice(1)]);
+        const seedIndex = seedIndices.get(original);
+        if (seedIndex !== undefined) seedIndices.set(turned, seedIndex);
+      }
+    }
+    for (const [ordinal, original] of [...data.deckWingMasses, ...data.companionMasses].entries()) {
+      if (yawReplacements.has(original)) continue;
+      const grime = data.deckWingMasses.includes(original) || original.y0 + original.height < 600;
+      const salt = 700 + ordinal * 17;
+      const magnitude = (grime ? 8 : 2) + (grime ? 4 : 10) * r36Hash01(layout.seed, tower, salt);
+      const sign = r36Hash01(layout.seed, tower, salt + 1000) < 0.5 ? -1 : 1;
+      const yawRad = sign * magnitude * Math.PI / 180;
+      const c = Math.cos(yawRad), sine = Math.abs(Math.sin(yawRad));
+      const scale = Math.min(original.width/(c*original.width+sine*original.depth),
+        original.depth/(sine*original.width+c*original.depth));
+      const turned = {...original,width:original.width*scale,depth:original.depth*scale,yawRad};
+      yawReplacements.set(original,turned);
+      const seedIndex = seedIndices.get(original);
+      if (seedIndex !== undefined) seedIndices.set(turned,seedIndex);
+    }
+    const top = data.stageDrafts.at(-1)!.masses[0]!;
+    const turnedTop = yawReplacements.get(top)!;
+    const crownX0 = Math.min(...data.crownMasses.map(mass => mass.x - mass.width * 0.5));
+    const crownX1 = Math.max(...data.crownMasses.map(mass => mass.x + mass.width * 0.5));
+    const crownZ0 = Math.min(...data.crownMasses.map(mass => mass.z - mass.depth * 0.5));
+    const crownZ1 = Math.max(...data.crownMasses.map(mass => mass.z + mass.depth * 0.5));
+    const crownCentreX = (crownX0 + crownX1) * 0.5, crownCentreZ = (crownZ0 + crownZ1) * 0.5;
+    const crownHalfX = (crownX1 - crownX0) * 0.5, crownHalfZ = (crownZ1 - crownZ0) * 0.5;
+    const cap: SkyriverMass = { ...top, y0: top.y0 + top.height - 4, height: 4,
+      crownRole: undefined, supportRole: 'yaw-roof-cap',supportHostMassIndex:masses.indexOf(top) };
+    if (!retainedSupportContacts(roofDetailMassObb(cap,0),roofDetailMassObb(turnedTop,0))) {
+      fail(`SKYRIVER_YAW_ROOF_CAP_CONTACT: ${layout.seed} ${towerKey(tower)}`);
+    }
+    masses.push(cap);
+    seedIndices.set(cap,seedIndices.get(top) ?? masses.length-1);
+    const oldProfile = [...data.stageMasses,...data.crownMasses,...data.deckWingMasses,
+      ...data.companionMasses,...(data.spineMass === null ? [] : [data.spineMass])];
+    const mask = new Set(oldProfile);
+    let selectedCrowns: SkyriverMass[] | undefined;
+    let selectedCrownScaleX = 1;
+    let selectedCrownScaleZ = 1;
+    const initialYaw = turnedTop.yawRad!;
+    for (const yaw of [initialYaw,Math.sign(initialYaw)*2*Math.PI/180]) {
+      const fit = fitCrownFootprint(crownHalfX*2,crownHalfZ*2,yaw);
+      if (fit === undefined) continue;
+      const scaleX=fit.width/(crownHalfX*2),scaleZ=fit.depth/(crownHalfZ*2);
+      const candidates = data.crownMasses.map(crown => ({ ...crown,
+        x:crownCentreX+(crown.x-crownCentreX)*scaleX,
+        z:crownCentreZ+(crown.z-crownCentreZ)*scaleZ,
+        width:crown.width*scaleX,depth:crown.depth*scaleZ,
+        yawRad:yaw,yawAnchor:{x:crownCentreX,z:crownCentreZ} }));
+      if (candidates.some(candidate => addedProfileFragments(candidate,oldProfile)
+        .some(fragment => checkNotchWorldConflict(fragment,mask)))) continue;
+      if (data.crownProfile.kind === 'split') {
+        const notch = computeSplitCrownNotch(candidates[0]!,candidates[1]!,data.crownProfile.axis,
+          top.anchorV ?? top.z).notchObb;
+        if (checkNotchWorldConflict(notch,mask)) continue;
+      }
+      selectedCrowns = candidates;
+      selectedCrownScaleX = scaleX;
+      selectedCrownScaleZ = scaleZ;
+      break;
+    }
+    if (selectedCrowns === undefined) fail(`SKYRIVER_YAW_CROWN_NO_SAFE_CAP: ${layout.seed} ${towerKey(tower)} half ${crownHalfX},${crownHalfZ} yaw ${initialYaw}`);
+    for (const [index,crown] of data.crownMasses.entries()) {
+      const turned = selectedCrowns[index]!;
+      yawReplacements.set(crown,turned);
+      const seedIndex = seedIndices.get(crown);
+      if (seedIndex !== undefined) seedIndices.set(turned,seedIndex);
+    }
+    const replace = (mass: SkyriverMass): SkyriverMass => yawReplacements.get(mass) ?? mass;
+    const replaceParts = (mass: SkyriverMass): readonly SkyriverMass[] => yawWingParts.get(mass) ?? [replace(mass)];
+    const finalStages = data.stageDrafts.map(stage => {
+        const members = stage === data.stageDrafts.at(-1) ? [...stage.masses.flatMap(replaceParts),cap] : stage.masses.flatMap(replaceParts);
+        const corners = members.flatMap(massSourceFootprint);
+        const x0 = Math.min(...corners.map(point => point[0]));
+        const x1 = Math.max(...corners.map(point => point[0]));
+        const z0 = Math.min(...corners.map(point => point[1]));
+        const z1 = Math.max(...corners.map(point => point[1]));
+        return { ...stage, masses:members, footprint:{x:(x0+x1)*.5,z:(z0+z1)*.5,width:x1-x0,depth:z1-z0} };
+      }).map((stage, index, stages) => {
+        if (stage.offset === null) return stage;
+        const parent = stage.offset.parentKind === 'original-footprint' ? tower : stages[stage.offset.parentStageIndex]!.footprint;
+        const axis = stage.offset.axis;
+        const span = axis === 'x' ? parent.width : parent.depth;
+        const delta = stage.footprint[axis] - parent[axis];
+        return { ...stage, offset: { ...stage.offset, parentSpanM: span, deltaM: delta, ratio: Math.abs(delta) / span } };
+      });
+    r36DataByTower.set(towerKey(tower), {
+      ...data,
+      stageMasses: [...data.stageMasses.flatMap(replaceParts),cap],
+      stageDrafts: finalStages,
+      leanProfile: data.leanProfile === 'none' ? 'none' : (() => {
+        const totalOffsetM = Math.abs(finalStages.at(-1)!.footprint.z - finalStages[0]!.footprint.z);
+        const riseM = finalStages.at(-1)!.verticalBounds.y1 - finalStages[1]!.verticalBounds.y0;
+        return { ...data.leanProfile, totalOffsetM, riseM, angleDeg: Math.atan2(totalOffsetM, riseM) * 180 / Math.PI };
+      })(),
+      crownMasses: data.crownMasses.map(replace),
+      deckWingMasses: data.deckWingMasses.flatMap(replaceParts),
+      companionMasses: data.companionMasses.map(replace),
+      crownProfile: { ...data.crownProfile,
+        gapM: data.crownProfile.kind === 'split' ? data.crownProfile.gapM*(data.crownProfile.axis==='x'?selectedCrownScaleX:selectedCrownScaleZ) : 0,
+        crownSpanM: data.crownProfile.crownSpanM*(data.crownProfile.axis==='x'?selectedCrownScaleX:selectedCrownScaleZ),
+        bounds: {...data.crownProfile.bounds,width:data.crownProfile.bounds.width*selectedCrownScaleX,
+          depth:data.crownProfile.bounds.depth*selectedCrownScaleZ},
+      } as SkyriverCrownProfile,
+    });
+  }
+  for (let index = 0; index < masses.length; index += 1) {
+    masses[index] = yawReplacements.get(masses[index]!) ?? masses[index]!;
+  }
+
+  const turnedFaces = new Map<SkyriverFacadeFace, SkyriverFacadeFace>();
+  const artFaces: SkyriverFacadeFace[] = [];
+  const capFaces: SkyriverFacadeFace[] = [];
+  const artFaceByHero = new Map<SkyriverHeroBlade, SkyriverFacadeFace>();
+  for (let index = 0; index < exposedFaces.length; index += 1) {
+    const face = exposedFaces[index]!;
+    const original = [...yawReplacements.keys()].find(mass =>
+      faceBackedByMass(face, [mass], face.u0, face.u1, face.y0, face.y1));
+    if (original === undefined) continue;
+    const turned = yawReplacements.get(original)!;
+    const hostMassIndex = masses.indexOf(turned);
+    for (const cap of masses.filter(mass => mass.supportRole === 'yaw-roof-cap' && mass.supportHostMassIndex === hostMassIndex)) {
+      const y0 = Math.max(face.y0, cap.y0), y1 = Math.min(face.y1, cap.y0 + cap.height);
+      const u0 = Math.max(face.u0, face.planeAxis === 'x' ? cap.z - cap.depth * 0.5 : cap.x - cap.width * 0.5);
+      const u1 = Math.min(face.u1, face.planeAxis === 'x' ? cap.z + cap.depth * 0.5 : cap.x + cap.width * 0.5);
+      if (y1 > y0 && u1 > u0) capFaces.push({ ...face, id: `${face.id}:yaw-roof-cap`, y0, y1, u0, u1,
+        plane: face.planeAxis === 'x' ? cap.x + face.outward * cap.width * 0.5
+          : cap.z + face.outward * cap.depth * 0.5,
+        owner: ownerOf(cap, cap.anchorV ?? cap.z) });
+    }
+    const turnedFace = { ...face,
+      y0: Math.max(face.y0, turned.y0), y1: Math.min(face.y1, turned.y0 + turned.height),
+      plane: face.planeAxis === 'x' ? turned.x + face.outward * turned.width * 0.5
+        : turned.z + face.outward * turned.depth * 0.5,
+      u0: Math.max(face.u0, face.planeAxis === 'x' ? turned.z - turned.depth * 0.5 : turned.x - turned.width * 0.5),
+      u1: Math.min(face.u1, face.planeAxis === 'x' ? turned.z + turned.depth * 0.5 : turned.x + turned.width * 0.5),
+      owner: ownerOf(turned, turned.anchorV ?? turned.z) };
+    turnedFaces.set(face, turnedFace);
+    exposedFaces[index] = turnedFace;
+    const wingParts = yawWingParts.get(original);
+    if (wingParts !== undefined) {
+      for (const [partIndex, part] of wingParts.entries()) {
+        if (part === turned) continue;
+        const y0 = Math.max(face.y0, part.y0), y1 = Math.min(face.y1, part.y0 + part.height);
+        const u0 = Math.max(face.u0, face.planeAxis === 'x' ? part.z - part.depth * 0.5 : part.x - part.width * 0.5);
+        const u1 = Math.min(face.u1, face.planeAxis === 'x' ? part.z + part.depth * 0.5 : part.x + part.width * 0.5);
+        if (y1 <= y0 || u1 <= u0) continue;
+        artFaces.push({ ...face, id: `${face.id}:yaw-part:${partIndex}`, y0, y1, u0, u1,
+          plane: face.planeAxis === 'x' ? part.x + face.outward * part.width * 0.5
+            : part.z + face.outward * part.depth * 0.5,
+          owner: ownerOf(part, part.anchorV ?? part.z) });
+      }
+    }
+    const frame = { ...(turned.yawAnchor ?? turned), yawRad: turned.yawRad };
+    for (const hero of heroes.filter(hero => hero.faceId === face.id)) {
+      const axisX = face.planeAxis === 'x';
+      const centre = axisX ? hero.z : hero.x;
+      const half = axisX && hero.kind === 'blade' ? hero.rootHalfWidthM : hero.width * 0.5;
+      const margin = FACADE_FACE_EDGE_MARGIN_M + 0.25;
+      const artFace: SkyriverFacadeFace = {
+        ...face, id: `${face.id}:art:${hero.compositionId}:${hero.cell}`,
+        u0: centre - half - margin, u1: centre + half + margin,
+        y0: hero.y - hero.height * 0.5 - margin, y1: hero.y + hero.height * 0.5 + margin,
+      };
+      let thickness = 1;
+      for (const u of [artFace.u0, artFace.u1]) {
+        const local = boxLocalCoordinates(frame, axisX ? face.plane : u, axisX ? u : face.plane);
+        const coordinate = axisX ? local.x - turned.x : local.z - turned.z;
+        const halfNormal = (axisX ? turned.width : turned.depth) * 0.5;
+        thickness = Math.max(thickness,
+          (face.outward * coordinate - halfNormal + 1) / Math.cos(turned.yawRad ?? 0));
+      }
+      const hostFootprint = ([[-1, -1], [1, -1], [1, 1], [-1, 1]] as const).map(([x, z]) => {
+        const point = boxLocalPoint(frame, turned.x + x * turned.width * 0.5, turned.z + z * turned.depth * 0.5);
+        return [point.x, point.z] as RetainedSupportPoint;
+      });
+      const cropped = retainedSupportClip(retainedSupportClip(hostFootprint,
+        axisX ? 1 : 0, artFace.u0, 1), axisX ? 1 : 0, artFace.u1, -1);
+      if (retainedSupportArea(cropped) <= 0.01) fail(`SKYRIVER_FIXED_ART_BACKING_CROP: ${layout.seed} ${hero.compositionId}:${hero.cell}`);
+      const targetNormal = cropped.reduce((sum, point) => sum + point[axisX ? 0 : 1] / cropped.length, 0);
+      const backingU0 = artFace.u0, backingU1 = artFace.u1;
+      const backingCentre = centre;
+      thickness = Math.max(thickness, face.outward * (face.plane - targetNormal) + 1);
+      const backing: SkyriverMass = {
+        x: axisX ? face.plane - face.outward * thickness * 0.5 : backingCentre,
+        z: axisX ? backingCentre : face.plane - face.outward * thickness * 0.5,
+        y0: artFace.y0, width: axisX ? thickness : backingU1 - backingU0,
+        depth: axisX ? backingU1 - backingU0 : thickness, height: artFace.y1 - artFace.y0,
+        tint: turned.tint, anchorV: turned.anchorV ?? turned.z,
+        materialOwner: turned.materialOwner, building: turned.building,
+        artBacking: { hostMassIndex, faceId: artFace.id },
+      };
+      if (!retainedSupportContacts(roofDetailMassObb(backing, masses.length), roofDetailMassObb(turned, hostMassIndex))) {
+        fail(`SKYRIVER_FIXED_ART_BACKING_CONTACT: ${hero.compositionId}:${hero.cell}`);
+      }
+      masses.push(backing);
+      seedIndices.set(backing, seedIndices.get(turned) ?? hostMassIndex);
+      artFaces.push(artFace);
+      artFaceByHero.set(hero, artFace);
+    }
+  }
+  exposedFaces.push(...artFaces, ...capFaces);
+  heroes = heroes.map(hero => {
+    const face = artFaceByHero.get(hero);
+    return face === undefined ? hero : { ...hero, faceId: face.id, owner: face.owner };
+  });
+  heroCache.set(layout.seed, heroes);
+  for (const [key, data] of r36DataByTower) {
+    r36DataByTower.set(key, {...data,
+      hostFace:turnedFaces.get(data.hostFace) ?? data.hostFace,
+      faces:[...data.faces.map(face => turnedFaces.get(face) ?? face), ...capFaces.filter(face => face.buildingId === data.hostFace.buildingId)],
+      tiers:data.tiers.map(tier => ({...tier,face:turnedFaces.get(tier.face) ?? tier.face})),
+    });
+  }
+
+  wingAirIndex.boxes.length = 0;
+  wingAirIndex.cells.clear();
+  for (const data of r36DataByTower.values()) {
+    if (data.family !== 'supported-spine' || data.spineMass === null) continue;
+    const spine = data.spineMass === null ? undefined : retainedSupportFootprint(roofDetailMassObb(data.spineMass, 0));
+    for (const wing of data.stageDrafts[0]!.masses.filter(mass => mass.yawWingPart === undefined || mass.yawWingPart.part === 'roof')) {
+      const footprint = retainedSupportFootprint(roofDetailMassObb(wing, 0));
+      const pieces = spine === undefined ? [footprint] : subtractFootprint(footprint, spine);
+      for (const piece of pieces) {
+        if (retainedSupportArea(piece) <= 1e-10) continue;
+        roofDetailInsert(wingAirIndex, roofDetailPolygonBox(piece, wing.y0 + wing.height, wing.y0 + wing.height + 8));
+      }
+    }
+  }
+
+  notchAuditIndex.boxes.length = 0;
+  notchAuditIndex.cells.clear();
+  for (let index = 0; index < masses.length; index += 1) {
+    roofDetailInsert(notchAuditIndex, roofDetailMassObb(masses[index]!, index));
+  }
+
+  acceptedNotches.clear();
+  for (const [key, data] of r36DataByTower) {
+    if (data.crownProfile.kind !== 'split') continue;
+    const [first, second] = data.crownMasses;
+    acceptedNotches.set(key, computeSplitCrownNotch(first!, second!, data.crownProfile.axis,
+      first!.anchorV ?? first!.z).notchObb);
+  }
+
+  const finalBoxes = masses.map((mass, index) => roofDetailMassObb(mass, index));
+  for (const [key, data] of r36DataByTower) {
+    const originalProfile = [...yawReplacements.keys()].filter(mass =>
+      retainedSupportKey(mass) === retainedSupportKey(data.stageMasses[0]!));
+    if (data.spineMass !== null) originalProfile.push(data.spineMass);
+    const ownIndices = new Set([
+      ...data.stageMasses, ...data.crownMasses,
+      ...(data.spineMass === null ? [] : [data.spineMass]),
+      ...data.deckWingMasses, ...data.companionMasses,
+    ].map(mass => masses.indexOf(mass)));
+    for (const mass of [...data.stageMasses, ...data.crownMasses, ...data.deckWingMasses, ...data.companionMasses]) {
+      const box = finalBoxes[masses.indexOf(mass)]!;
+      if (shapeRouteBlocked(box)) fail(`SKYRIVER_YAW_ROUTE: ${layout.seed} ${key} ${masses.indexOf(mass)}`);
+      if (roofDetailIndexConflicts(wingAirIndex, box, 0)) fail(`SKYRIVER_YAW_WING_AIR: ${layout.seed} ${key} ${masses.indexOf(mass)}`);
+      for (const fragment of addedProfileFragments(mass, originalProfile)) {
+        if (finalBoxes.some((other, index) => !ownIndices.has(index) && roofDetailObbsConflict(fragment, other, 0))) {
+          fail(`SKYRIVER_YAW_ADDED_VOLUME: ${layout.seed} ${key} ${masses.indexOf(mass)}`);
+        }
+      }
+    }
+    if (data.spineMass !== null) {
+      const deck = [...data.stageDrafts[0]!.masses, data.spineMass];
+      if (!retainedSupportConnected(deck.map(mass => roofDetailMassObb(mass, 0)))) {
+        fail(`SKYRIVER_YAW_WING_PATH: ${layout.seed} ${key}`);
+      }
+    }
+    for (let index = 1; index < data.stageDrafts.length; index += 1) {
+      const child = data.stageDrafts[index]!;
+      const parents = index === 1 && data.spineMass !== null ? [data.spineMass] : data.stageDrafts[index - 1]!.masses;
+      if (!child.masses.filter(mass => mass.supportRole !== 'yaw-roof-cap').every(mass => parents.some(parent => retainedSupportContacts(
+        roofDetailMassObb(parent, 0), roofDetailMassObb(mass, 0))))) {
+        fail(`SKYRIVER_YAW_STAGE_CONTACT: ${layout.seed} ${key} ${index}`);
+      }
+    }
+    const notch = acceptedNotches.get(key);
+    if (notch !== undefined && finalBoxes.some(box => roofDetailObbsConflict(notch, box, 0))) {
+      fail(`SKYRIVER_YAW_CROWN_AIR: ${layout.seed} ${key}`);
+    }
+  }
+  for (const skirt of skirtRoofs) {
+    if (skirt.samples.every(point => finalBoxes.some((box, index) => !isLowBaseMass(masses[index]!) && pointInObb(point, box)))) {
+      fail(`SKYRIVER_YAW_ROOF_COVERAGE: ${layout.seed} ${skirt.id}`);
+    }
+  }
+
   facadeFaceCache.set(layout.seed, exposedFaces);
   massCache.set(layout.seed, masses);
 
@@ -4647,6 +5127,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
   owner.length = count;
   spanTo.length = count;
   const sourceCount = count;
+  const finalOwners = [...owner];
   const legacyTrims: SkyriverCityTrims = {
     seed: layout.seed,
     count,
@@ -4658,19 +5139,17 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     sz,
     kind,
     seedValue,
-    owner,
+    owner:finalOwners,
     spanTo,
   };
   // Make the complete legacy trim prefix visible while deriving the existing heroes. The R35
   // suffix uses those real hero records for its own geometric exclusion, but it never changes the
   // old filter or calls hero derivation from inside the suffix builder.
   trimCache.set(layout.seed, legacyTrims);
-  let heroes: readonly SkyriverHeroBlade[];
   let detailResult: { readonly totalTrimCount: number; readonly derivation: SkyriverRoofDetailDerivation };
   let reconciliation: SkyriverLegacyTrimReconciliation;
   let supportRecords: readonly SkyriverRetainedMassSupportRecord[];
   try {
-    heroes = resolvedHeroes;
     heroCache.set(layout.seed, heroes);
     const repairFaces = new Set<SkyriverFacadeFace>(exposedFaces);
     for (const data of r36DataByTower.values()) {
@@ -4687,6 +5166,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
       Array.from(repairFaces),
       masses,
       heroes,
+      finalOwners,
     );
     reconciliation = reconcileLegacyTrimsD2(
       layout,
@@ -4701,6 +5181,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
       acceptedNotches,
       notchAuditIndex,
       reconciliation,
+      finalOwners,
     );
     reconciliation = reconcileLegacyTrimsD3(
       layout,
@@ -4714,7 +5195,12 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
       wingAirIndex,
       acceptedNotches,
       reconciliation,
+      new Map([...yawReplacements].map(([original,turned])=>[turned,original])),
+      shapeRouteBlocked,
     );
+    notchAuditIndex.boxes.length=0;
+    notchAuditIndex.cells.clear();
+    for (let index=0;index<masses.length;index+=1) roofDetailInsert(notchAuditIndex,roofDetailMassObb(masses[index]!,index));
     const visibleLegacyTrimIndex = createSpatialIndex(sourceCount);
     for (let i = 0; i < sourceCount; i += 1) {
       if (skyriverTrimBlocksHero(legacyTrims, i, heroes)) continue;
@@ -4737,11 +5223,20 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     detailResult = appendRoofDetailSuffix(
       masses,
       legacyTrims,
-      { cx, cy, cz, sx, sy, sz, kind, seedValue, owner, spanTo },
+      { cx, cy, cz, sx, sy, sz, kind, seedValue, owner:finalOwners, spanTo },
       cap,
       collisionIndex,
       new DeterministicRandom(layout.seed).fork('skyriver.city.r35.roof_details'),
     );
+    const finalMassBoxes = masses.map((mass, index) => roofDetailMassObb(mass, index));
+    reconciliation = Object.freeze({ ...reconciliation,
+      dispositions: Object.freeze(reconciliation.dispositions.map(disposition => {
+        if (disposition.kind !== 'span-rehosted') return disposition;
+        const [first, second] = disposition.newWorld.endpoints;
+        const exposedLengthM = chordExposedLength(first, second, disposition.newWorld.worldLengthM, finalMassBoxes);
+        return Object.freeze({ ...disposition,
+          newWorld: Object.freeze({ ...disposition.newWorld, exposedLengthM }) });
+      })) });
   } catch (error) {
     trimCache.delete(layout.seed);
     trimReconciliationCache.delete(layout.seed);
@@ -4785,6 +5280,8 @@ interface RoofDetailObb {
   readonly minZ: number;
   readonly maxZ: number;
   readonly coordinateUlpM: number;
+  readonly footprint?: readonly RetainedSupportPoint[];
+  readonly verticalBounds?: readonly [number,number];
   /** Only a roof-mounted candidate's own support may meet it at zero vertical clearance. */
   readonly massIndex?: number;
 }
@@ -4878,9 +5375,20 @@ function roofDetailBox(
   };
 }
 
+function roofDetailPolygonBox(
+  footprint: readonly RetainedSupportPoint[], bottom: number, top: number,
+): RoofDetailObb {
+  const minX = Math.min(...footprint.map(point => point[0]));
+  const maxX = Math.max(...footprint.map(point => point[0]));
+  const minZ = Math.min(...footprint.map(point => point[1]));
+  const maxZ = Math.max(...footprint.map(point => point[1]));
+  return { ...roofDetailBox((minX + maxX) * 0.5, (bottom + top) * 0.5,
+    (minZ + maxZ) * 0.5, maxX - minX, top - bottom, maxZ - minZ, 0), footprint,verticalBounds:[bottom,top] };
+}
+
 function roofDetailMassObb(mass: SkyriverMass, massIndex: number): RoofDetailObb {
-  warpRigid(mass.x, mass.z, mass.anchorV ?? mass.z, roofDetailWarp);
-  return roofDetailBox(
+  warpBoxPoint(mass, mass.x, mass.z, roofDetailWarp);
+  return { ...roofDetailBox(
     roofDetailWarp.x,
     mass.y0 + mass.height * 0.5,
     roofDetailWarp.z,
@@ -4889,7 +5397,7 @@ function roofDetailMassObb(mass: SkyriverMass, massIndex: number): RoofDetailObb
     mass.depth,
     roofDetailWarp.heading,
     massIndex,
-  );
+  ),verticalBounds:[mass.y0,mass.y0+mass.height] };
 }
 
 function roofDetailTrimObb(trims: SkyriverCityTrims, index: number): RoofDetailObb {
@@ -4927,6 +5435,25 @@ function roofDetailObbsConflict(a: RoofDetailObb, b: RoofDetailObb, gapM: number
     a.y - a.halfY - (b.y + b.halfY),
   );
   if (verticalSeparation >= gapM - tolerance) return false;
+
+  if (a.footprint !== undefined || b.footprint !== undefined) {
+    const pa = retainedSupportFootprint(a), pb = retainedSupportFootprint(b);
+    for (const polygon of [pa, pb]) {
+      for (let index = 0; index < polygon.length; index += 1) {
+        const p = polygon[index]!, q = polygon[(index + 1) % polygon.length]!;
+        const length = Math.hypot(q[0] - p[0], q[1] - p[1]);
+        if (length === 0) continue;
+        const ax = -(q[1] - p[1]) / length, az = (q[0] - p[0]) / length;
+        const project = (points: readonly RetainedSupportPoint[]): readonly [number, number] => {
+          const values = points.map(point => (point[0] - a.x) * ax + (point[1] - a.z) * az);
+          return [Math.min(...values), Math.max(...values)];
+        };
+        const ia = project(pa), ib = project(pb);
+        if (Math.max(ib[0] - ia[1], ia[0] - ib[1]) >= gapM - tolerance) return false;
+      }
+    }
+    return true;
+  }
 
   const dx = b.x - a.x;
   const dz = b.z - a.z;
@@ -4974,10 +5501,35 @@ function retainedSupportKey(mass: SkyriverMass): string {
 }
 
 function retainedSupportFootprint(box: RoofDetailObb): RetainedSupportPoint[] {
+  if (box.footprint !== undefined) return [...box.footprint];
   return ([[-1, -1], [1, -1], [1, 1], [-1, 1]] as const).map(([u, v]) => [
     box.x + u * box.halfX * box.ux + v * box.halfZ * box.vx,
     box.z + u * box.halfX * box.uz + v * box.halfZ * box.vz,
   ]);
+}
+
+function massSourceFootprint(mass: SkyriverMass): RetainedSupportPoint[] {
+  const frame = {...(mass.yawAnchor ?? mass),yawRad:mass.yawRad};
+  return ([[-1,-1],[1,-1],[1,1],[-1,1]] as const).map(([x,z]) => {
+    const point=boxLocalPoint(frame,mass.x+x*mass.width*.5,mass.z+z*mass.depth*.5);
+    return [point.x,point.z];
+  });
+}
+
+function footprintCrossSection(
+  polygon: readonly RetainedSupportPoint[], axis: 0 | 1, coordinate: number,
+): readonly [number,number] | undefined {
+  const values:number[]=[];
+  const other=axis===0?1:0;
+  for (let index=0;index<polygon.length;index+=1) {
+    const a=polygon[index]!,b=polygon[(index+1)%polygon.length]!;
+    if (a[axis]===coordinate) values.push(a[other]);
+    if ((a[axis]<coordinate && b[axis]>coordinate)||(a[axis]>coordinate && b[axis]<coordinate)) {
+      const t=(coordinate-a[axis])/(b[axis]-a[axis]);
+      values.push(a[other]+t*(b[other]-a[other]));
+    }
+  }
+  return values.length===0?undefined:[Math.min(...values),Math.max(...values)];
 }
 
 function retainedSupportClip(
@@ -5074,6 +5626,23 @@ function retainedSupportContacts(a: RoofDetailObb, b: RoofDetailObb): boolean {
   return false;
 }
 
+/** The last box is the root. Every box needs a volume or face contact path. */
+function retainedSupportConnected(boxes: readonly RoofDetailObb[]): boolean {
+  const connected = new Set([boxes.length - 1]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let index = 0; index < boxes.length; index += 1) {
+      if (connected.has(index)) continue;
+      if ([...connected].some(host => retainedSupportContacts(boxes[index]!, boxes[host]!))) {
+        connected.add(index);
+        changed = true;
+      }
+    }
+  }
+  return connected.size === boxes.length;
+}
+
 function retainedSupportNearby(
   index: RoofDetailCollisionIndex,
   box: RoofDetailObb,
@@ -5107,7 +5676,15 @@ function retainedSupportContained(
     mass.y0, mass.y0 + mass.height,
     mass.z - mass.depth * 0.5, mass.z + mass.depth * 0.5,
   ];
-  const piece = bounds(support);
+  const polygon = ([-1, 1] as const).flatMap(x => ([-1, 1] as const).map(z => {
+    const p = boxLocalPoint(support, support.x + x * support.width * 0.5,
+      support.z + z * support.depth * 0.5);
+    return [p.x, p.z] as RetainedSupportPoint;
+  }));
+  const footprint = [polygon[0]!, polygon[2]!, polygon[3]!, polygon[1]!];
+  const piece = [Math.min(...polygon.map(p => p[0])), Math.max(...polygon.map(p => p[0])),
+    support.y0, support.y0 + support.height,
+    Math.min(...polygon.map(p => p[1])), Math.max(...polygon.map(p => p[1]))] as const;
   const boxes = originals.map((entry) => bounds(entry.mass)).filter((b) =>
     b[1] > piece[0] && b[0] < piece[1]
     && b[3] > piece[2] && b[2] < piece[3]
@@ -5131,7 +5708,8 @@ function retainedSupportContained(
         if (x1 <= x0 || y1 <= y0 || z1 <= z0) continue;
         // Membership is constant in each open cell. Check its full bounds.
         if (!boxes.some((b) => b[0] <= x0 && b[1] >= x1
-          && b[2] <= y0 && b[3] >= y1 && b[4] <= z0 && b[5] >= z1)) return false;
+          && b[2] <= y0 && b[3] >= y1 && b[4] <= z0 && b[5] >= z1)
+          && retainedSupportArea(retainedSupportRectClip(footprint, x0, x1, z0, z1)) > 0) return false;
       }
     }
   }
@@ -5226,7 +5804,7 @@ function appendRetainedMassSupports(
     const occurrences = finalOccurrences.get(mass) ?? [];
     occurrences.push(i);
     finalOccurrences.set(mass, occurrences);
-    if ((mass.layer ?? 0) !== 0 || mass.width <= 0 || mass.height <= 0 || mass.depth <= 0) continue;
+    if ((mass.layer ?? 0) !== 0 || mass.artBacking !== undefined || mass.width <= 0 || mass.height <= 0 || mass.depth <= 0) continue;
     const entry = { mass, massIndex: i, box: roofDetailMassObb(mass, i) };
     finalEntries.set(i, entry);
     const key = retainedSupportKey(mass);
@@ -5303,14 +5881,15 @@ function appendRetainedMassSupports(
     const unique = new Map<string, ContactCandidate>();
     for (const old of oldContacts) {
       const key = retainedSupportKey(old.mass);
-      const group = originalGroups.get(key)!;
       for (const host of finalGroups.get(key) ?? []) {
         if (!rooted.has(host.massIndex) || host.massIndex === childFinalIndex) continue;
         const y0 = Math.max(child.mass.y0, host.mass.y0);
         const y1 = Math.min(child.mass.y0 + child.mass.height, host.mass.y0 + host.mass.height);
         if (y1 - y0 < 0.01) continue;
+        const sourceFrame = (host.mass.yawRad ?? 0) === 0 ? host.box
+          : roofDetailMassObb({ ...host.mass, yawRad: 0 }, host.massIndex);
         const polygon = retainedSupportRectClip(
-          retainedSupportInFrame(child.box, host.box, host.mass.x, host.mass.z),
+          retainedSupportInFrame(child.box, sourceFrame, host.mass.x, host.mass.z),
           old.mass.x - old.mass.width * 0.5, old.mass.x + old.mass.width * 0.5,
           old.mass.z - old.mass.depth * 0.5, old.mass.z + old.mass.depth * 0.5,
         );
@@ -5326,6 +5905,23 @@ function appendRetainedMassSupports(
             return [centre[0] * 0.25 + (p[0] + q[0]) * 0.375, centre[1] * 0.25 + (p[1] + q[1]) * 0.375];
           }),
         ];
+        let freeContactRegions: readonly (readonly RetainedSupportPoint[])[] = [polygon];
+        for (const hero of heroBoxes) {
+          if (hero.y + hero.halfY <= y0 || hero.y - hero.halfY >= y1) continue;
+          const footprint = retainedSupportInFrame(hero, sourceFrame, host.mass.x, host.mass.z);
+          freeContactRegions = freeContactRegions.flatMap(region => subtractFootprint(region, footprint));
+        }
+        for (const region of freeContactRegions) {
+          if (retainedSupportArea(region) < 0.01) continue;
+          const middle = region.reduce<[number, number]>((sum, p) =>
+            [sum[0] + p[0] / region.length, sum[1] + p[1] / region.length], [0, 0]);
+          points.push(middle);
+          for (const [index, p] of region.entries()) {
+            const q = region[(index + 1) % region.length]!;
+            points.push([middle[0] * 0.25 + p[0] * 0.75, middle[1] * 0.25 + p[1] * 0.75]);
+            points.push([middle[0] * 0.25 + (p[0] + q[0]) * 0.375, middle[1] * 0.25 + (p[1] + q[1]) * 0.375]);
+          }
+        }
         for (const fraction of [0.95, 0.995] as const) {
           points.push(...polygon.map<RetainedSupportPoint>((p) => [
             centre[0] + (p[0] - centre[0]) * fraction,
@@ -5355,16 +5951,18 @@ function appendRetainedMassSupports(
             const patchRadius = Math.min(contactCap, distance / Math.SQRT2 * 0.9);
             if (!Number.isFinite(patchRadius) || patchRadius < 0.02) continue;
             const inset = Math.min(contactCap, host.mass.width / 4, host.mass.depth / 4);
-            const targetX = Math.max(host.mass.x - host.mass.width * 0.5 + inset,
-              Math.min(host.mass.x + host.mass.width * 0.5 - inset, point[0]));
-            const targetZ = Math.max(host.mass.z - host.mass.depth * 0.5 + inset,
-              Math.min(host.mass.z + host.mass.depth * 0.5 - inset, point[1]));
+            const frame = { ...(host.mass.yawAnchor ?? host.mass), yawRad: host.mass.yawRad };
+            const local = boxLocalCoordinates(frame, point[0], point[1]);
+            const target = boxLocalPoint(frame,
+              Math.max(host.mass.x - host.mass.width * 0.5 + inset,
+                Math.min(host.mass.x + host.mass.width * 0.5 - inset, local.x)),
+              Math.max(host.mass.z - host.mass.depth * 0.5 + inset,
+                Math.min(host.mass.z + host.mass.depth * 0.5 - inset, local.z)));
+            const targetX = target.x, targetZ = target.z;
             const x0 = Math.min(point[0] - patchRadius, targetX - inset);
             const x1 = Math.max(point[0] + patchRadius, targetX + inset);
             const z0 = Math.min(point[1] - patchRadius, targetZ - inset);
             const z1 = Math.max(point[1] + patchRadius, targetZ + inset);
-            const e = group.envelope;
-            if (x0 < e[0] - 0.001 || x1 > e[1] + 0.001 || z0 < e[2] - 0.001 || z1 > e[3] + 0.001) continue;
             const contactMass: SkyriverMass = {
               x: (x0 + x1) * 0.5, y0, z: (z0 + z1) * 0.5,
               width: x1 - x0, height: y1 - y0, depth: z1 - z0,
@@ -5373,22 +5971,32 @@ function appendRetainedMassSupports(
               materialOwner: retainedSupportOwner(old.mass),
               supportRole: 'retained-child-bridge',
             };
+            const segmentX = targetX - point[0], segmentZ = targetZ - point[1];
+            const beamRadius = Math.min(patchRadius, inset);
+            const beam: SkyriverMass = {
+              ...contactMass, x: (point[0] + targetX) * 0.5, z: (point[1] + targetZ) * 0.5,
+              width: Math.hypot(segmentX, segmentZ) + 2 * beamRadius, depth: 2 * beamRadius,
+              yawRad: Math.atan2(-segmentZ, segmentX),
+            };
+            for (const candidateGeometry of [beam, contactMass]) {
             const bands = [...heights];
-            const contactBox = roofDetailMassObb(contactMass, masses.length);
+            const contactBox = roofDetailMassObb(candidateGeometry, masses.length);
             for (const blocker of retainedSupportNearby(visibleLegacyTrimIndex, contactBox)) {
               if (!roofDetailObbsConflict(contactBox, blocker, 0)) continue;
               for (const [face, direction] of [
                 [blocker.y + blocker.halfY + 0.02, 1],
                 [blocker.y - blocker.halfY - 0.02, -1],
               ] as const) {
-                const bottom = Math.max(y0, direction === 1 ? face : face - 4);
-                const top = Math.min(y1, direction === 1 ? face + 4 : face);
-                if (top - bottom < 4) continue;
-                bands.push([bottom, top]);
+                for (const bandHeight of [4, 2, 1] as const) {
+                  const bottom = Math.max(y0, direction === 1 ? face : face - bandHeight);
+                  const top = Math.min(y1, direction === 1 ? face + bandHeight : face);
+                  if (top - bottom < 0.01) continue;
+                  bands.push([bottom, top]);
+                }
               }
             }
             for (const [bottom, top] of bands) {
-              const mass: SkyriverMass = { ...contactMass, y0: bottom, height: top - bottom };
+              const mass: SkyriverMass = { ...candidateGeometry, y0: bottom, height: top - bottom };
               const box = roofDetailMassObb(mass, masses.length);
               if (!roofDetailObbsConflict(box, child.box, 0) || !roofDetailObbsConflict(box, host.box, 0)) continue;
               const candidate: ContactCandidate = {
@@ -5401,6 +6009,7 @@ function appendRetainedMassSupports(
                 unique.set(candidateKey, candidate);
               }
             }
+            }
           }
         }
       }
@@ -5409,19 +6018,20 @@ function appendRetainedMassSupports(
     const containedCandidates: RetainedSupportCandidate[] = [];
     let selected: RetainedSupportCandidate | undefined;
     let geometry: SkyriverRetainedMassSupportRecord['geometry'] = Object.freeze({ kind: 'strict-clear' });
+    const rejections = { prefix: 0, wingAir: 0, notch: 0, hero: 0, accepted: 0, route: 0, roof: 0, contained: 0 };
     for (const candidate of candidates) {
       const box = candidate.box;
-      if (roofDetailIndexConflicts(visibleLegacyTrimIndex, box, 0)) continue;
-      if (roofDetailIndexConflicts(wingAirIndex, box, 0)
-        || [...acceptedNotches.values()].some((notch) => roofDetailObbsConflict(box, notch, 0))
-        || roofDetailBlocksHero(box, heroBoxes)
-        || acceptedBoxes.some((other) => roofDetailObbsConflict(box, other, 0))
-        || routeBlocked(box)) continue;
+      if (roofDetailIndexConflicts(visibleLegacyTrimIndex, box, 0)) { rejections.prefix += 1; continue; }
+      if (roofDetailIndexConflicts(wingAirIndex, box, 0)) { rejections.wingAir += 1; continue; }
+      if ([...acceptedNotches.values()].some((notch) => roofDetailObbsConflict(box, notch, 0))) { rejections.notch += 1; continue; }
+      if (roofDetailBlocksHero(box, heroBoxes)) { rejections.hero += 1; continue; }
+      if (acceptedBoxes.some((other) => roofDetailObbsConflict(box, other, 0))) { rejections.accepted += 1; continue; }
+      if (routeBlocked(box)) { rejections.route += 1; continue; }
       if (r27Roofs.some((entry) => {
         const roofY = entry.mass.y0 + entry.mass.height;
         return roofY > candidate.mass.y0 + 0.001 && roofY < candidate.mass.y0 + candidate.mass.height - 0.001
           && roofDetailObbsConflict(box, { ...entry.box, y: roofY, halfY: 0.01 }, 0);
-      })) continue;
+      })) { rejections.roof += 1; continue; }
       // The two measured endpoints must overlap. Every other solid must be clear.
       const blocked = retainedSupportNearby(worldIndex, box).some((other) =>
         other.massIndex !== childFinalIndex && other.massIndex !== candidate.hostMassIndex
@@ -5435,7 +6045,7 @@ function appendRetainedMassSupports(
     if (selected === undefined) {
       for (const candidate of containedCandidates) {
         const originals = originalGroups.get(retainedSupportKey(candidate.mass))!.entries;
-        if (!retainedSupportContained(candidate.mass, originals)) continue;
+        if (!retainedSupportContained(candidate.mass, originals)) { rejections.contained += 1; continue; }
         selected = candidate;
         geometry = Object.freeze({
           kind: 'original-owner-contained',
@@ -5445,7 +6055,7 @@ function appendRetainedMassSupports(
       }
     }
     if (selected === undefined) {
-      fail(`SKYRIVER_RETAINED_SUPPORT_NO_BOUNDED_CANDIDATE: ${layout.seed} source ${child.massIndex}`);
+      fail(`SKYRIVER_RETAINED_SUPPORT_NO_BOUNDED_CANDIDATE: ${layout.seed} source ${child.massIndex} candidates ${candidates.length} ${JSON.stringify(rejections)}`);
     }
     const supportMassIndex = masses.length;
     masses.push(selected.mass);
@@ -5762,6 +6372,7 @@ function roofDetailMakeCandidateObb(
   sy: number,
   sz: number,
   anchorV: number,
+  frame?: SkyriverTrimOwner,
 ): RoofDetailObb {
   const fx = Math.fround(x);
   const fy = Math.fround(y);
@@ -5769,7 +6380,8 @@ function roofDetailMakeCandidateObb(
   const fsx = Math.fround(sx);
   const fsy = Math.fround(sy);
   const fsz = Math.fround(sz);
-  warpRigid(fx, fz, anchorV, roofDetailWarp);
+  if (frame) warpBoxPoint(frame, fx, fz, roofDetailWarp);
+  else warpRigid(fx, fz, anchorV, roofDetailWarp);
   return roofDetailBox(roofDetailWarp.x, fy, roofDetailWarp.z, fsx, fsy, fsz, roofDetailWarp.heading);
 }
 
@@ -5792,7 +6404,7 @@ function appendRoofDetailSuffix(
   const pools: RoofDetailSupport[][] = [[], [], []];
   for (let massIndex = 0; massIndex < masses.length; massIndex += 1) {
     const mass = masses[massIndex]!;
-    if ((mass.layer ?? 0) !== 0 || mass.supportRole === 'retained-child-bridge'
+    if ((mass.layer ?? 0) !== 0 || mass.artBacking !== undefined || mass.supportRole === 'retained-child-bridge'
       || mass.width <= 0 || mass.depth <= 0 || mass.height <= 0) continue;
     const roofY = mass.y0 + mass.height;
     const stratum = roofDetailStratumFor(roofY);
@@ -5856,6 +6468,8 @@ function appendRoofDetailSuffix(
       depth: support.mass.depth,
       anchorV: support.mass.anchorV ?? support.mass.z,
       materialOwner: support.mass.materialOwner ?? support.mass.building ?? buildingSeedOf(support.mass.x, support.mass.z),
+      ...(support.mass.yawRad === undefined ? {} : { yawRad: support.mass.yawRad }),
+      ...(support.mass.yawAnchor === undefined ? {} : { yawAnchor: support.mass.yawAnchor }),
     };
     const proposals = components.map((component) => {
       const x = support.mass.x + centerOffsetX + component.dx;
@@ -5867,7 +6481,7 @@ function appendRoofDetailSuffix(
         y,
         z,
         seedValue: random.nextInt(0, 9999) / 9999,
-        obb: roofDetailMakeCandidateObb(x, y, z, component.sx, component.sy, component.sz, owner.anchorV),
+        obb: roofDetailMakeCandidateObb(x, y, z, component.sx, component.sy, component.sz, owner.anchorV, owner),
       };
     });
     let collision = false;
@@ -6908,7 +7522,7 @@ export function placeTrim(trims: SkyriverCityTrims, i: number, out: SkyriverTrim
   const cx = trims.cx[i]!;
   const cz = trims.cz[i]!;
   if (to === null) {
-    warpRigid(cx, cz, owner.anchorV, placeEnd0);
+    warpBoxPoint(owner, cx, cz, placeEnd0);
     out.x = placeEnd0.x;
     out.z = placeEnd0.z;
     out.heading = placeEnd0.heading;
@@ -6923,8 +7537,8 @@ export function placeTrim(trims: SkyriverCityTrims, i: number, out: SkyriverTrim
   const e1x = alongAxis ? cx : cx + half;
   const e1z = alongAxis ? cz + half : cz;
   const ownerAtLow = footprintGap(owner, e0x, e0z) <= footprintGap(to, e0x, e0z);
-  warpRigid(e0x, e0z, (ownerAtLow ? owner : to).anchorV, placeEnd0);
-  warpRigid(e1x, e1z, (ownerAtLow ? to : owner).anchorV, placeEnd1);
+  warpBoxPoint(ownerAtLow ? owner : to, e0x, e0z, placeEnd0);
+  warpBoxPoint(ownerAtLow ? to : owner, e1x, e1z, placeEnd1);
   const dx = placeEnd1.x - placeEnd0.x;
   const dz = placeEnd1.z - placeEnd0.z;
   out.x = (placeEnd0.x + placeEnd1.x) * 0.5;
@@ -7003,74 +7617,19 @@ export function auditCityAnchors(layout: SkyriverCityLayout): SkyriverAnchorAudi
     }
     return result;
   };
-  const rectUnionArea = (rectangles: readonly { readonly x0: number; readonly x1: number; readonly y0: number; readonly y1: number }[]): number => {
-    if (rectangles.length === 0) return 0;
-    const xs = [...new Set(rectangles.flatMap((rect) => [rect.x0, rect.x1]))].sort((a, b) => a - b);
-    let area = 0;
-    for (let index = 0; index + 1 < xs.length; index += 1) {
-      const x0 = xs[index]!;
-      const x1 = xs[index + 1]!;
-      if (!(x1 > x0)) continue;
-      const intervals = rectangles.filter((rect) => rect.x0 < x1 && rect.x1 > x0)
-        .map((rect) => [rect.y0, rect.y1] as const).sort((a, b) => a[0] - b[0]);
-      let covered = 0;
-      let low = -Infinity;
-      let high = -Infinity;
-      for (const interval of intervals) {
-        if (interval[0] > high) {
-          if (high > low) covered += high - low;
-          low = interval[0];
-          high = interval[1];
-        } else high = Math.max(high, interval[1]);
-      }
-      if (high > low) covered += high - low;
-      area += (x1 - x0) * covered;
-    }
-    return area;
-  };
-  const exposedSideHostArea = (
-    trimIndex: number,
-    sourceOwner: SkyriverTrimOwner,
-    hostMassIndex: number,
-  ): number => {
+  const exposedSideHostArea = (trimIndex: number, sourceOwner: SkyriverTrimOwner, hostMassIndex: number): number => {
     const host = masses[hostMassIndex];
-    if (!host || host.supportRole === 'retained-child-bridge') return 0;
-    const side = Math.sign(sourceOwner.x) as -1 | 1;
-    const requested = {
-      x0: Math.max(trims.cz[trimIndex]! - trims.sz[trimIndex]! * 0.5, sourceOwner.z - sourceOwner.depth * 0.5),
-      x1: Math.min(trims.cz[trimIndex]! + trims.sz[trimIndex]! * 0.5, sourceOwner.z + sourceOwner.depth * 0.5),
-      y0: trims.cy[trimIndex]! - trims.sy[trimIndex]! * 0.5,
-      y1: trims.cy[trimIndex]! + trims.sy[trimIndex]! * 0.5,
-    };
+    if (host === undefined) return 0;
     const identity = massIdentity(host);
     if (identity.owner !== (sourceOwner.materialOwner ?? buildingSeedOf(sourceOwner.x, sourceOwner.z))
       || identity.anchorV !== sourceOwner.anchorV) return 0;
-    const plane = host.x - side * host.width * 0.5;
-    if (!(trims.cx[trimIndex]! - trims.sx[trimIndex]! * 0.5 < plane
-      && trims.cx[trimIndex]! + trims.sx[trimIndex]! * 0.5 > plane)) return 0;
-    const contact = {
-      x0: Math.max(requested.x0, host.z - host.depth * 0.5),
-      x1: Math.min(requested.x1, host.z + host.depth * 0.5),
-      y0: Math.max(requested.y0, host.y0),
-      y1: Math.min(requested.y1, host.y0 + host.height),
-    };
-    if (!(contact.x1 > contact.x0 && contact.y1 > contact.y0)) return 0;
-    const blockers: { x0: number; x1: number; y0: number; y1: number }[] = [];
-    for (const otherIndex of sameOwnerFrameMassIndices(sourceOwner)) {
-      if (otherIndex === hostMassIndex) continue;
-      const other = masses[otherIndex]!;
-      const otherPlane = other.x - side * other.width * 0.5;
-      if (side * otherPlane >= side * plane) continue;
-      const overlap = {
-        x0: Math.max(contact.x0, other.z - other.depth * 0.5),
-        x1: Math.min(contact.x1, other.z + other.depth * 0.5),
-        y0: Math.max(contact.y0, other.y0),
-        y1: Math.min(contact.y1, other.y0 + other.height),
-      };
-      if (overlap.x1 > overlap.x0 && overlap.y1 > overlap.y0) blockers.push(overlap);
-    }
-    const contactArea = (contact.x1 - contact.x0) * (contact.y1 - contact.y0);
-    return Math.max(0, contactArea - rectUnionArea(blockers));
+    const bucket: HostBucket = { faces: [], masses: sameOwnerFrameMassIndices(sourceOwner).map(massIndex => {
+      const mass = masses[massIndex]!;
+      return { mass, massIndex, x0: mass.x - mass.width * 0.5, x1: mass.x + mass.width * 0.5,
+        y0: mass.y0, y1: mass.y0 + mass.height, z0: mass.z - mass.depth * 0.5, z1: mass.z + mass.depth * 0.5 };
+    }) };
+    return checkTrimSupportWithBucket(trims.cx[trimIndex]!, trims.cy[trimIndex]!, trims.cz[trimIndex]!,
+      trims.sx[trimIndex]!, trims.sy[trimIndex]!, trims.sz[trimIndex]!, trims.owner[trimIndex]!, bucket, hostMassIndex).exposedAreaM2;
   };
   const spanEndpointContact = (
     endpoint: { readonly x: number; readonly y: number; readonly z: number },
@@ -7131,7 +7690,7 @@ export function auditCityAnchors(layout: SkyriverCityLayout): SkyriverAnchorAudi
   const pointByKind: number[] = [];
   // Offset of world point (wx, wz) in the owner's drawn frame, minus the canyon offset.
   const check = (owner: SkyriverTrimOwner, frameV: number, wx: number, wz: number, cx: number, cz: number, ex: number, ez: number): { drift: number; gap: number } => {
-    warpRigid(owner.x, owner.z, frameV, auditOwner);
+    warpBoxPoint({ ...owner, anchorV: frameV }, owner.x, owner.z, auditOwner);
     const dx = wx - auditOwner.x;
     const dz = wz - auditOwner.z;
     const c = Math.cos(auditOwner.heading);
@@ -7158,7 +7717,7 @@ export function auditCityAnchors(layout: SkyriverCityLayout): SkyriverAnchorAudi
         const source = sourceByIndex.get(disposition.sourceIndex);
         const host = masses[disposition.hostMassIndex];
         const identity = host === undefined ? undefined : massIdentity(host);
-        warpRigid(cx, cz, owner.anchorV, auditOwner);
+        warpBoxPoint(owner, cx, cz, auditOwner);
         const drift = Math.hypot(placed.x - auditOwner.x, placed.z - auditOwner.z);
         maxDrift = Math.max(maxDrift, drift);
         const geometry = disposition.newGeometry;
@@ -7254,7 +7813,7 @@ export function auditCityAnchors(layout: SkyriverCityLayout): SkyriverAnchorAudi
           const end = endpoints[endIndex];
           const canyonEnd = canyonEndpoints[endIndex];
           const endpointOwner = endpointOwners[endIndex];
-          warpRigid(canyonEnd.x, canyonEnd.z, endpointOwner.anchorV, auditPoint);
+          warpBoxPoint(endpointOwner, canyonEnd.x, canyonEnd.z, auditPoint);
           const drift = Math.hypot(end.x - auditPoint.x, end.z - auditPoint.z);
           rowDrift = Math.max(rowDrift, drift);
           const declaredPoint = disposition.newWorld.endpoints[endIndex];
@@ -7359,7 +7918,7 @@ export function auditCityAnchors(layout: SkyriverCityLayout): SkyriverAnchorAudi
       : face.plane + face.outward * (signs.nz[i] !== 0 ? signs.sw[i]! * 0.5 + 0.8 : (i < signs.heroCount ? 0.8 : SKYRIVER_CITY.signStandoffM));
     const placedPlane = face.planeAxis === 'z' ? cz : cx;
     if (Math.abs(placedPlane - expectedPlane) > 0.05) wrongPlaneFailures += 1;
-    warpRigid(cx, cz, mount.anchorV, auditPoint);
+    warpBoxPoint(mount, cx, cz, auditPoint);
     const drawn = check(mount, mount.anchorV, auditPoint.x, auditPoint.z, cx, cz, 0, 0);
     signMaxDrift = Math.max(signMaxDrift, drawn.drift);
     // Along-face overrun past the tower's end (the across offset is the standoff, exact either way).
@@ -7587,20 +8146,27 @@ function faceBackedByMass(
   y0: number,
   y1: number,
 ): boolean {
-  for (const m of masses) {
-    if (face.planeAxis === 'x') {
-      const massPlane = face.side === 1 ? m.x - m.width * 0.5 : m.x + m.width * 0.5;
-      if (Math.abs(face.plane - massPlane) > 0.5) continue;
-      if (m.z - m.depth * 0.5 > u0 + 0.5 || m.z + m.depth * 0.5 < u1 - 0.5) continue;
-      if (m.y0 > y0 + 0.5 || m.y0 + m.height < y1 - 0.5) continue;
-      return true;
-    } else {
-      const massPlane = face.outward === -1 ? m.z - m.depth * 0.5 : m.z + m.depth * 0.5;
-      if (Math.abs(face.plane - massPlane) > 0.5) continue;
-      if (m.x - m.width * 0.5 > u0 + 0.5 || m.x + m.width * 0.5 < u1 - 0.5) continue;
-      if (m.y0 > y0 + 0.5 || m.y0 + m.height < y1 - 0.5) continue;
-      return true;
-    }
+  const axisX = face.planeAxis === 'x';
+  const centreU = (u0 + u1) * 0.5;
+  const point = warpBoxPoint(face.owner, axisX ? face.plane : centreU,
+    axisX ? centreU : face.plane, { x: 0, z: 0, heading: 0 });
+  const c = Math.cos(point.heading), s = Math.sin(point.heading);
+  const nx = axisX ? c : s, nz = axisX ? -s : c;
+  for (const mass of masses) {
+    if (mass.y0 > y0 + 0.5 || mass.y0 + mass.height < y1 - 0.5) continue;
+    const box = roofDetailMassObb(mass, 0);
+    const normalAlignment = axisX ? nx * box.ux + nz * box.uz : nx * box.vx + nz * box.vz;
+    if (Math.abs(normalAlignment - 1) > 1e-8) continue;
+    const dx = point.x - box.x, dz = point.z - box.z;
+    const localX = dx * box.ux + dz * box.uz;
+    const localZ = dx * box.vx + dz * box.vz;
+    const normalCoordinate = axisX ? localX : localZ;
+    const halfNormal = axisX ? box.halfX : box.halfZ;
+    if (Math.abs(normalCoordinate - face.outward * halfNormal) > 0.5) continue;
+    const tangentCoordinate = axisX ? localZ : localX;
+    const halfTangent = axisX ? box.halfZ : box.halfX;
+    if (Math.abs(tangentCoordinate) + (u1 - u0) * 0.5 > halfTangent + 0.5) continue;
+    return true;
   }
   return false;
 }
@@ -8111,7 +8677,13 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
   const rootHalfWidthM = new Float32Array(cap);
   const owner: (SkyriverTrimOwner | null)[] = [];
   const anchorV = new Float64Array(cap);
-  const faces = deriveFacadeFaces(layout).filter((face) => face.planeAxis === 'x');
+  const faces = deriveFacadeFaces(layout).filter(face => face.planeAxis === 'x'
+    && [[6, 55], [34, 12], [12, 45], [18, 12]].some(([width, height]) => {
+      const margin = FACADE_FACE_EDGE_MARGIN_M + 0.25;
+      return face.u1 - face.u0 >= width! + margin * 2
+        && Math.max(40, face.y0 + margin + height! * 0.5)
+          <= Math.min(STRATA_PRISTINE_BASE_M, 2050, face.y1 - margin - height! * 0.5);
+    }));
   if (faces.length === 0) fail('SKYRIVER_CITY_INNER_FACES_EMPTY');
   const faceById = new Map(deriveFacadeFaces(layout).map((face) => [face.id, face]));
   const tint = new THREE.Color();
@@ -9738,7 +10310,8 @@ function isCoveredByNearerFace(
   sameOwnerFaces: readonly SkyriverFacadeFace[],
 ): boolean {
   for (const other of sameOwnerFaces) {
-    if (other === f || other.side !== f.side) continue;
+    if (other === f || other.side !== f.side || (other.owner.yawRad ?? 0) !== (f.owner.yawRad ?? 0)
+      || other.owner.x !== f.owner.x || other.owner.z !== f.owner.z) continue;
     if (Math.abs(other.plane) >= Math.abs(f.plane) - 0.1) continue;
     if (other.y0 <= y0 + 0.1 && other.y1 >= y1 - 0.1 && other.u0 <= z0 + 0.1 && other.u1 >= z1 - 0.1) {
       return true;
@@ -9753,60 +10326,62 @@ function checkTrimSupportWithBucket(
   ow: SkyriverTrimOwner,
   bucket: HostBucket,
   targetMassIndex?: number,
-): { readonly supported: boolean; readonly bestMassIndex: number } {
+): { readonly supported: boolean; readonly bestMassIndex: number; readonly exposedAreaM2: number } {
   const side = cx >= 0 ? 1 : -1;
-  const tx0 = cx - sx * 0.5;
-  const tx1 = cx + sx * 0.5;
-  const ty0 = cy - sy * 0.5;
-  const ty1 = cy + sy * 0.5;
-  const tz0 = cz - sz * 0.5;
-  const tz1 = cz + sz * 0.5;
-  const ownerZ0 = ow.z - ow.depth * 0.5;
-  const ownerZ1 = ow.z + ow.depth * 0.5;
-  const minThreshold = Math.max(1e-7, sy * sz * 1e-10);
-  let bestMassIndex = -1;
-  let bestExposedArea = -1;
-
-  for (const m of bucket.masses) {
-    if (targetMassIndex !== undefined && m.massIndex !== targetMassIndex) continue;
-
-    const hostPlane = side === 1 ? m.x0 : m.x1;
-    if (!(tx0 < hostPlane && tx1 > hostPlane)) continue;
-
-    const hy0 = Math.max(ty0, m.y0);
-    const hy1 = Math.min(ty1, m.y1);
-    const hz0 = Math.max(tz0, ownerZ0, m.z0);
-    const hz1 = Math.min(tz1, ownerZ1, m.z1);
-    if (!(hy1 > hy0 && hz1 > hz0)) continue;
-
-    const hostArea = (hy1 - hy0) * (hz1 - hz0);
-    const blockers: { y0: number; y1: number; z0: number; z1: number }[] = [];
-
-    for (const other of bucket.masses) {
-      if (other === m) continue;
-      const otherPlane = side === 1 ? other.x0 : other.x1;
-      if (!(side * otherPlane < side * hostPlane)) continue;
-      const by0 = Math.max(hy0, other.y0);
-      const by1 = Math.min(hy1, other.y1);
-      const bz0 = Math.max(hz0, other.z0);
-      const bz1 = Math.min(hz1, other.z1);
-      if (by1 > by0 && bz1 > bz0) {
-        blockers.push({ y0: by0, y1: by1, z0: bz0, z1: bz1 });
+  const tx0 = cx - sx * 0.5, tx1 = cx + sx * 0.5;
+  const ty0 = cy - sy * 0.5, ty1 = cy + sy * 0.5;
+  const tz0 = Math.max(cz - sz * 0.5, ow.z - ow.depth * 0.5);
+  const tz1 = Math.min(cz + sz * 0.5, ow.z + ow.depth * 0.5);
+  const threshold = Math.max(1e-7, sy * sz * 1e-10);
+  const frame = { ...(ow.yawAnchor ?? ow), yawRad: ow.yawRad };
+  const polygons = bucket.masses.map(entry => massSourceFootprint(entry.mass).map(point => {
+    const local = boxLocalCoordinates(frame, point[0], point[1]);
+    return [local.x, local.z] as RetainedSupportPoint;
+  }));
+  let bestMassIndex = -1, bestArea = -1;
+  for (let index = 0; index < bucket.masses.length; index += 1) {
+    const host = bucket.masses[index]!;
+    if (host.mass.artBacking !== undefined || host.mass.supportRole === 'retained-child-bridge') continue;
+    if (targetMassIndex !== undefined && host.massIndex !== targetMassIndex) continue;
+    const polygon = polygons[index]!;
+    const a = polygon[side > 0 ? 3 : 1]!, b = polygon[side > 0 ? 0 : 2]!;
+    const dx = b[0] - a[0], dz = b[1] - a[1];
+    let low = 0, high = 1;
+    const clip = (origin: number, delta: number, minimum: number, maximum: number): void => {
+      if (Math.abs(delta) < 1e-12) {
+        if (origin <= minimum || origin >= maximum) high = -1;
+      } else {
+        const first = (minimum - origin) / delta, second = (maximum - origin) / delta;
+        low = Math.max(low, Math.min(first, second));
+        high = Math.min(high, Math.max(first, second));
       }
+    };
+    clip(a[0], dx, tx0, tx1);
+    clip(a[1], dz, tz0, tz1);
+    if (high <= low || Math.abs(dz) < 1e-12) continue;
+    const zA = a[1] + low * dz, zB = a[1] + high * dz;
+    const y0 = Math.max(ty0, host.y0), y1 = Math.min(ty1, host.y1);
+    const z0 = Math.max(tz0, Math.min(zA, zB)), z1 = Math.min(tz1, Math.max(zA, zB));
+    if (y1 <= y0 || z1 <= z0) continue;
+    const epsilon = roofDetailFloatTolerance(roofDetailMassObb(host.mass, 0), roofDetailMassObb(host.mass, 0));
+    const inwardA: RetainedSupportPoint = [a[0] - side * epsilon, a[1]];
+    const inwardB: RetainedSupportPoint = [b[0] - side * epsilon, b[1]];
+    const blockers: { y0: number; y1: number; z0: number; z1: number }[] = [];
+    for (let otherIndex = 0; otherIndex < bucket.masses.length; otherIndex += 1) {
+      if (otherIndex === index) continue;
+      const other = bucket.masses[otherIndex]!;
+      const clipped = clipFootprintEdge(polygons[otherIndex]!, inwardA, inwardB, side * dz > 0);
+      if (clipped.length < 3 || retainedSupportArea(clipped) <= 1e-10) continue;
+      const by0 = Math.max(y0, other.y0), by1 = Math.min(y1, other.y1);
+      const bz0 = Math.max(z0, Math.min(...clipped.map(point => point[1])));
+      const bz1 = Math.min(z1, Math.max(...clipped.map(point => point[1])));
+      if (by1 > by0 && bz1 > bz0) blockers.push({ y0: by0, y1: by1, z0: bz0, z1: bz1 });
     }
-
-    const unionArea = computeClippedUnionAreaYZ(blockers);
-    const exposedArea = Math.max(0, hostArea - unionArea);
-    if (exposedArea > minThreshold && exposedArea > bestExposedArea) {
-      bestExposedArea = exposedArea;
-      bestMassIndex = m.massIndex;
-    }
+    const area = Math.max(0, (y1 - y0) * (z1 - z0) - computeClippedUnionAreaYZ(blockers))
+      * Math.hypot(dx, dz) / Math.abs(dz);
+    if (area > threshold && area > bestArea) { bestArea = area; bestMassIndex = host.massIndex; }
   }
-
-  return {
-    supported: bestMassIndex >= 0,
-    bestMassIndex,
-  };
+  return { supported: bestMassIndex >= 0, bestMassIndex, exposedAreaM2: Math.max(0, bestArea) };
 }
 
 function reconcileLegacyTrimsD1(
@@ -9818,9 +10393,11 @@ function reconcileLegacyTrimsD1(
   faces: readonly SkyriverFacadeFace[],
   masses: readonly SkyriverMass[],
   heroes: readonly SkyriverHeroBlade[],
+  finalOwners:SkyriverTrimOwner[],
 ): SkyriverLegacyTrimReconciliation {
   const seed = layout.seed;
-  const { cx, cy, cz, sx, sy, sz, kind, seedValue, owner, spanTo } = trims;
+  const { cx, cy, cz, sx, sy, sz, kind, seedValue, spanTo }= trims;
+  const owner=finalOwners;
 
   const sourceInventory: SkyriverLegacyTrimSourceRecord[] = new Array(sourceCount);
   const ownerJson: string[] = new Array(sourceCount);
@@ -10109,7 +10686,9 @@ function reconcileLegacyTrimsD1(
         sx[i] = fsx;
         sy[i] = fsy;
         sz[i] = fsz;
+        owner[i] = f.owner;
         const blocked = skyriverTrimBlocksHero(trims, i, heroes);
+        owner[i] = ow;
         cx[i] = ocx;
         cy[i] = ocy;
         cz[i] = ocz;
@@ -10118,7 +10697,7 @@ function reconcileLegacyTrimsD1(
         sz[i] = osz;
         if (blocked) continue;
 
-        const sup = checkTrimSupportWithBucket(fcx, fcy, fcz, fsx, fsy, fsz, ow, bucket, m.massIndex);
+        const sup = checkTrimSupportWithBucket(fcx, fcy, fcz, fsx, fsy, fsz, f.owner, bucket, m.massIndex);
         if (!sup.supported) continue;
 
         chosen = { fcx, fcy, fcz, fsx, fsy, fsz, hostMassIndex: sup.bestMassIndex, faceId: f.id };
@@ -10137,6 +10716,7 @@ function reconcileLegacyTrimsD1(
     sx[i] = chosen.fsx;
     sy[i] = chosen.fsy;
     sz[i] = chosen.fsz;
+    if (masses[chosen.hostMassIndex]!.yawRad !== undefined) owner[i] = ownerOf(masses[chosen.hostMassIndex]!,ow.anchorV);
 
     const newGeom = Object.freeze({
       cx: chosen.fcx, cy: chosen.fcy, cz: chosen.fcz,
@@ -10206,6 +10786,7 @@ function reconcileLegacyTrimsD2(
   acceptedNotches: ReadonlyMap<string, RoofDetailObb>,
   notchAuditIndex: RoofDetailCollisionIndex,
   reconciliationD1: SkyriverLegacyTrimReconciliation,
+  finalOwners:SkyriverTrimOwner[],
 ): SkyriverLegacyTrimReconciliation {
   const seed = layout.seed;
   const { cx, cy, cz, sx, sy, sz, kind, owner, spanTo } = trims;
@@ -10304,7 +10885,7 @@ function reconcileLegacyTrimsD2(
   const candidateHostsByKey = new Map<string, SupportEntry[]>();
   for (let massIndex = 0; massIndex < masses.length; massIndex += 1) {
     const m = masses[massIndex]!;
-    if (m.width <= 0 || m.height <= 0 || m.depth <= 0) continue;
+    if (m.artBacking !== undefined || m.width <= 0 || m.height <= 0 || m.depth <= 0) continue;
     const mOwner = getMassOwnerSeed(m);
     const mAnchor = getMassAnchorV(m);
     const key = hostIndexKey(mOwner, mAnchor);
@@ -10473,7 +11054,7 @@ function reconcileLegacyTrimsD2(
         continue;
       }
 
-      const candObb = roofDetailMakeCandidateObb(fcx, fcy, fcz, fsx, fsy, fsz, anchorV);
+      const candObb = roofDetailMakeCandidateObb(fcx, fcy, fcz, fsx, fsy, fsz, anchorV,ownerOf(m,anchorV));
       if (roofDetailIndexConflicts(notchAuditIndex, candObb, 0, mEntry.massIndex)) {
         rejections.solid += 1;
         continue;
@@ -10659,6 +11240,7 @@ function reconcileLegacyTrimsD2(
     sx[i] = chosen.sx;
     sy[i] = chosen.sy;
     sz[i] = chosen.sz;
+    if (masses[chosen.hostMassIndex]!.yawRad !== undefined) finalOwners[i] = ownerOf(masses[chosen.hostMassIndex]!,ow.anchorV);
 
     currentObbs[i] = chosen.obb;
     roofDetailPrefixInsertCell(prefixCells, i, chosen.obb, cellSize);
@@ -10699,6 +11281,85 @@ function reconcileLegacyTrimsD2(
     spanRowsDeferred: reconciliationD1.spanRowsDeferred,
   });
 }
+
+function chordExposedLength(
+  first: { readonly x: number; readonly y: number; readonly z: number },
+  second: { readonly x: number; readonly y: number; readonly z: number },
+  chordLength: number,
+  boxes: readonly RoofDetailObb[],
+): number {
+  if (chordLength <= 1e-6) return 0;
+  const x0 = first.x, z0 = first.z, y = first.y;
+  const dx = second.x - x0, dz = second.z - z0;
+  const minX = Math.min(x0, second.x), maxX = Math.max(x0, second.x);
+  const minZ = Math.min(z0, second.z), maxZ = Math.max(z0, second.z);
+  const intervals: [number, number][] = [];
+  for (const b of boxes) {
+    if (b.maxX < minX || b.minX > maxX || b.maxZ < minZ || b.minZ > maxZ) continue;
+    const roofY = b.y + b.halfY;
+    const bottomY = b.y - b.halfY;
+    if (y >= roofY || y <= bottomY) continue;
+
+    const p0 = (x0 - b.x) * b.ux + (z0 - b.z) * b.uz;
+    const p1 = (x0 - b.x) * b.vx + (z0 - b.z) * b.vz;
+    const v0 = dx * b.ux + dz * b.uz;
+    const v1 = dx * b.vx + dz * b.vz;
+    const h0 = b.halfX;
+    const h1 = b.halfZ;
+
+    let lo = 0;
+    let hi = 1;
+    let missed = false;
+
+    if (Math.abs(v0) < 1e-12) {
+      if (Math.abs(p0) >= h0) missed = true;
+    } else {
+      const t0 = (-h0 - p0) / v0;
+      const t1 = (h0 - p0) / v0;
+      lo = Math.max(lo, Math.min(t0, t1));
+      hi = Math.min(hi, Math.max(t0, t1));
+    }
+
+    if (!missed) {
+      if (Math.abs(v1) < 1e-12) {
+        if (Math.abs(p1) >= h1) missed = true;
+      } else {
+        const t0 = (-h1 - p1) / v1;
+        const t1 = (h1 - p1) / v1;
+        lo = Math.max(lo, Math.min(t0, t1));
+        hi = Math.min(hi, Math.max(t0, t1));
+      }
+    }
+
+    if (!missed && hi > lo + 1e-9) {
+      intervals.push([lo, hi]);
+    }
+  }
+  if (intervals.length === 0) {
+    return chordLength;
+  }
+
+  intervals.sort((a, b) => a[0] - b[0]);
+  let covered = 0;
+  let curLo = intervals[0]![0];
+  let curHi = intervals[0]![1];
+
+  for (let i = 1; i < intervals.length; i += 1) {
+    const r = intervals[i]!;
+    if (r[0] <= curHi) {
+      curHi = Math.max(curHi, r[1]);
+    } else {
+      covered += curHi - curLo;
+      curLo = r[0];
+      curHi = r[1];
+    }
+  }
+  covered += curHi - curLo;
+
+  const coveredFraction = Math.min(1, Math.max(0, covered));
+  return Math.max(0, (1 - coveredFraction) * chordLength);
+}
+
 function reconcileLegacyTrimsD3(
   layout: SkyriverCityLayout,
   trims: SkyriverCityTrims,
@@ -10706,11 +11367,13 @@ function reconcileLegacyTrimsD3(
   r27StartIndex: number,
   r27EndIndex: number,
   legacyWorld: readonly SkyriverMass[],
-  masses: readonly SkyriverMass[],
+  masses: SkyriverMass[],
   heroes: readonly SkyriverHeroBlade[],
   wingAirIndex: RoofDetailCollisionIndex,
   acceptedNotches: ReadonlyMap<string, RoofDetailObb>,
   reconciliationD2: SkyriverLegacyTrimReconciliation,
+  approvedMasses:ReadonlyMap<SkyriverMass,SkyriverMass>,
+  routeBlocked:(box:RoofDetailObb)=>boolean,
 ): SkyriverLegacyTrimReconciliation {
   const seed = layout.seed;
   const { cx, cy, cz, sx, sy, sz, kind, seedValue, owner, spanTo } = trims;
@@ -10860,7 +11523,7 @@ function reconcileLegacyTrimsD3(
     };
   };
 
-  type SupportEntry = { mass: SkyriverMass; massIndex: number };
+  type SupportEntry = { mass: SkyriverMass; massIndex: number; approved?:SkyriverMass };
 
   const baselineHostsByKey = new Map<string, SupportEntry[]>();
   for (let massIndex = 0; massIndex < legacyWorld.length; massIndex += 1) {
@@ -10880,7 +11543,7 @@ function reconcileLegacyTrimsD3(
   const candidateHostsByKey = new Map<string, SupportEntry[]>();
   for (let massIndex = 0; massIndex < masses.length; massIndex += 1) {
     const m = masses[massIndex]!;
-    if (m.width <= 0 || m.height <= 0 || m.depth <= 0) continue;
+    if (m.artBacking !== undefined || m.width <= 0 || m.height <= 0 || m.depth <= 0) continue;
     const mOwner = getMassOwnerSeed(m);
     const mAnchor = getMassAnchorV(m);
     const key = hostIndexKey(mOwner, mAnchor);
@@ -10890,6 +11553,8 @@ function reconcileLegacyTrimsD3(
       candidateHostsByKey.set(key, list);
     }
     list.push({ mass: m, massIndex });
+    const approved=approvedMasses.get(m);
+    if (approved!==undefined) list.push({mass:approved,massIndex,approved});
   }
 
   const baselineMassObbs: RoofDetailObb[] = new Array(legacyWorld.length);
@@ -10931,7 +11596,7 @@ function reconcileLegacyTrimsD3(
       }
     }
   }
-  const finalMassStamps = new Int32Array(masses.length);
+  const finalMassStamps = new Int32Array(masses.length+sourceCount*2);
   let finalMassStamp = 0;
 
   const computeChordExposedLength = (
@@ -10974,85 +11639,19 @@ function reconcileLegacyTrimsD3(
     }
     const stamp = isBaseline ? baselineMassStamp : finalMassStamp;
 
-    const intervals: [number, number][] = [];
-
+    const candidates: RoofDetailObb[] = [];
     for (let gx = minGX; gx <= maxGX; gx += 1) {
       for (let gz = minGZ; gz <= maxGZ; gz += 1) {
         const bucket = grid.get(roofDetailCellKey(gx, gz));
         if (bucket === undefined) continue;
-        for (let idx = 0; idx < bucket.length; idx += 1) {
-          const mIdx = bucket[idx]!;
-          if (stamps[mIdx] === stamp) continue;
-          stamps[mIdx] = stamp;
-
-          const b = activeBoxes[mIdx]!;
-          if (b.maxX < minX || b.minX > maxX || b.maxZ < minZ || b.minZ > maxZ) continue;
-
-          const roofY = b.y + b.halfY;
-          const bottomY = b.y - b.halfY;
-          if (y >= roofY || y <= bottomY) continue;
-
-          const p0 = (x0 - b.x) * b.ux + (z0 - b.z) * b.uz;
-          const p1 = (x0 - b.x) * b.vx + (z0 - b.z) * b.vz;
-          const v0 = dx * b.ux + dz * b.uz;
-          const v1 = dx * b.vx + dz * b.vz;
-          const h0 = b.halfX;
-          const h1 = b.halfZ;
-
-          let lo = 0;
-          let hi = 1;
-          let missed = false;
-
-          if (Math.abs(v0) < 1e-12) {
-            if (Math.abs(p0) >= h0) missed = true;
-          } else {
-            const t0 = (-h0 - p0) / v0;
-            const t1 = (h0 - p0) / v0;
-            lo = Math.max(lo, Math.min(t0, t1));
-            hi = Math.min(hi, Math.max(t0, t1));
-          }
-
-          if (!missed) {
-            if (Math.abs(v1) < 1e-12) {
-              if (Math.abs(p1) >= h1) missed = true;
-            } else {
-              const t0 = (-h1 - p1) / v1;
-              const t1 = (h1 - p1) / v1;
-              lo = Math.max(lo, Math.min(t0, t1));
-              hi = Math.min(hi, Math.max(t0, t1));
-            }
-          }
-
-          if (!missed && hi > lo + 1e-9) {
-            intervals.push([lo, hi]);
-          }
+        for (const massIndex of bucket) {
+          if (stamps[massIndex] === stamp) continue;
+          stamps[massIndex] = stamp;
+          candidates.push(activeBoxes[massIndex]!);
         }
       }
     }
-
-    if (intervals.length === 0) {
-      return chordLength;
-    }
-
-    intervals.sort((a, b) => a[0] - b[0]);
-    let covered = 0;
-    let curLo = intervals[0]![0];
-    let curHi = intervals[0]![1];
-
-    for (let i = 1; i < intervals.length; i += 1) {
-      const r = intervals[i]!;
-      if (r[0] <= curHi) {
-        curHi = Math.max(curHi, r[1]);
-      } else {
-        covered += curHi - curLo;
-        curLo = r[0];
-        curHi = r[1];
-      }
-    }
-    covered += curHi - curLo;
-
-    const coveredFraction = Math.min(1, Math.max(0, covered));
-    return Math.max(0, (1 - coveredFraction) * chordLength);
+    return chordExposedLength({ x: x0, y, z: z0 }, { x: x1, y, z: z1 }, chordLength, candidates);
   };
 
   const heroBoxes = roofDetailHeroBoxCache.get(layout.seed) ?? roofDetailHeroObbs(layout, heroes);
@@ -11136,6 +11735,43 @@ function reconcileLegacyTrimsD3(
     readonly origP0: { readonly x: number; readonly z: number };
     readonly origP1: { readonly x: number; readonly z: number };
   }
+
+  const makeSpanLedge = (entry:SupportEntry,worldX:number,y:number,worldZ:number,crossHalf:number,sourceTrimIndex:number,endpoint:0|1):SkyriverMass | undefined => {
+    if (entry.approved===undefined) return undefined;
+    const approved=entry.approved,actual=masses[entry.massIndex]!;
+    const frame=roofDetailMassObb(approved,entry.massIndex);
+    const dx=worldX-frame.x,dz=worldZ-frame.z;
+    const point:[number,number]=[approved.x+dx*frame.ux+dz*frame.uz,approved.z+dx*frame.vx+dz*frame.vz];
+    const polygon=massSourceFootprint(actual);
+    let target:[number,number]=[actual.x,actual.z],distance=Infinity;
+    for (let index=0;index<polygon.length;index+=1) {
+      const a=polygon[index]!,b=polygon[(index+1)%polygon.length]!;
+      const ex=b[0]-a[0],ez=b[1]-a[1];
+      const t=Math.max(0,Math.min(1,((point[0]-a[0])*ex+(point[1]-a[1])*ez)/(ex*ex+ez*ez)));
+      const candidate:[number,number]=[a[0]+t*ex,a[1]+t*ez];
+      const gap=Math.hypot(candidate[0]-point[0],candidate[1]-point[1]);
+      if (gap<distance) {target=candidate;distance=gap;}
+    }
+    const towardCentre=Math.hypot(actual.x-target[0],actual.z-target[1]);
+    const inset=Math.min(1,1/Math.max(1,towardCentre));
+    target=[target[0]+(actual.x-target[0])*inset,target[1]+(actual.z-target[1])*inset];
+    const radius=Math.min(4,crossHalf+0.02);
+    const x0=Math.max(approved.x-approved.width*.5,Math.min(point[0]-radius,target[0]-.02));
+    const x1=Math.min(approved.x+approved.width*.5,Math.max(point[0]+radius,target[0]+.02));
+    const z0=Math.max(approved.z-approved.depth*.5,Math.min(point[1]-radius,target[1]-.02));
+    const z1=Math.min(approved.z+approved.depth*.5,Math.max(point[1]+radius,target[1]+.02));
+    const bottom=Math.max(approved.y0,y-2),top=Math.min(approved.y0+approved.height,y+2);
+    if (x1-x0<=.01 || z1-z0<=.01 || top-bottom<=.01) return undefined;
+    const ledge:SkyriverMass={...approved,x:(x0+x1)*.5,z:(z0+z1)*.5,width:x1-x0,depth:z1-z0,
+      y0:bottom,height:top-bottom,crownRole:undefined,supportRole:'yaw-span-ledge',supportHostMassIndex:entry.massIndex,
+      supportSourceTrimIndex:sourceTrimIndex,supportSpanEndpoint:endpoint};
+    const box=roofDetailMassObb(ledge,entry.massIndex);
+    if (!retainedSupportContacts(box,finalMassObbs[entry.massIndex]!) || routeBlocked(box)
+      || roofDetailIndexConflicts(wingAirIndex,box,0)
+      || [...acceptedNotches.values()].some(notch=>roofDetailObbsConflict(box,notch,0))
+      || roofDetailBlocksHero(box,heroBoxes)) return undefined;
+    return ledge;
+  };
 
   const baselinePathByIndex = new Map<number, BaselineSpanPath>();
 
@@ -11453,6 +12089,8 @@ function reconcileLegacyTrimsD3(
 
     interface BestSpanCandidate {
       readonly cost: number;
+      readonly ledge0?:SkyriverMass;
+      readonly ledge1?:SkyriverMass;
       readonly cx: number;
       readonly cy: number;
       readonly cz: number;
@@ -11482,7 +12120,8 @@ function reconcileLegacyTrimsD3(
       prefix: 0,
     };
 
-    const findBestSpanCandidate = (): BestSpanCandidate | null => {
+    const findBestSpanCandidate = (useLedges: boolean): BestSpanCandidate | null => {
+      uniqueCandidates.clear();
       let best: BestSpanCandidate | null = null;
     for (let wIdx = 0; wIdx < widthCases.length; wIdx += 1) {
       const width = widthCases[wIdx]!;
@@ -11491,14 +12130,17 @@ function reconcileLegacyTrimsD3(
           const a = candHostsA[aIdx]!;
           for (let bIdx = 0; bIdx < candHostsB.length; bIdx += 1) {
             const b = candHostsB[bIdx]!;
+            if ((a.approved !== undefined || b.approved !== undefined) !== useLedges) continue;
             let low = a;
             let high = b;
             const longA = along ? a.mass.z : a.mass.x;
             const longB = along ? b.mass.z : b.mass.x;
-            const crossA = along ? a.mass.x : a.mass.z;
-            const crossB = along ? b.mass.x : b.mass.z;
-            const crossHalfA = (along ? a.mass.width : a.mass.depth) * 0.5;
-            const crossHalfB = (along ? b.mass.width : b.mass.depth) * 0.5;
+            const polygonA=massSourceFootprint(a.mass),polygonB=massSourceFootprint(b.mass);
+            const crossAxis=along?0:1;
+            const crossMinA=Math.min(...polygonA.map(point=>point[crossAxis]));
+            const crossMaxA=Math.max(...polygonA.map(point=>point[crossAxis]));
+            const crossMinB=Math.min(...polygonB.map(point=>point[crossAxis]));
+            const crossMaxB=Math.max(...polygonB.map(point=>point[crossAxis]));
 
             if (longA > longB) {
               low = b;
@@ -11509,8 +12151,8 @@ function reconcileLegacyTrimsD3(
             const loHalf = (along ? low.mass.depth : low.mass.width) * 0.5;
             const hiHalf = (along ? high.mass.depth : high.mass.width) * 0.5;
 
-            let crossMin = Math.max(crossA - crossHalfA, crossB - crossHalfB);
-            let crossMax = Math.min(crossA + crossHalfA, crossB + crossHalfB);
+            let crossMin = Math.max(crossMinA,crossMinB);
+            let crossMax = Math.min(crossMaxA,crossMaxB);
             if (crossMax < crossMin) {
               crossMin -= width * 0.5;
               crossMax += width * 0.5;
@@ -11537,7 +12179,7 @@ function reconcileLegacyTrimsD3(
             const hiMin = hiLong - hiHalf;
             const hiMax = hiLong + hiHalf;
 
-            let longCases: { readonly centre: number; readonly length: number }[];
+            let longCases: { readonly centre: number; readonly length: number; readonly cross?:number }[];
             if (!changeLength) {
               const e0Min = Math.max(loMin, hiMin - originalL);
               const e0Max = Math.min(loMax, hiMax - originalL);
@@ -11558,6 +12200,24 @@ function reconcileLegacyTrimsD3(
               crossMin + Math.min(0.005, (crossMax - crossMin) * 0.5),
               crossMax - Math.min(0.005, (crossMax - crossMin) * 0.5),
             ];
+            for (const cross of xs) {
+              const intervalA=footprintCrossSection(polygonA,crossAxis,cross);
+              const intervalB=footprintCrossSection(polygonB,crossAxis,cross);
+              if (intervalA===undefined || intervalB===undefined) continue;
+              const lowInterval=longA<=longB?intervalA:intervalB;
+              const highInterval=longA<=longB?intervalB:intervalA;
+              if (changeLength) {
+                const start=lowInterval[1]-0.005,end=highInterval[0]+0.005;
+                longCases.push({centre:(start+end)*.5,length:end-start,cross});
+              } else {
+                const minStart=Math.max(lowInterval[0],highInterval[0]-originalL);
+                const maxStart=Math.min(lowInterval[1],highInterval[1]-originalL);
+                if (maxStart<minStart) continue;
+                for (const start of [clamp(oldLong-originalL*.5,minStart,maxStart),(minStart+maxStart)*.5]) {
+                  longCases.push({centre:start+originalL*.5,length:originalL,cross});
+                }
+              }
+            }
             const ys = [
               clamp(ocy, minY, maxY),
               (minY + maxY) * 0.5,
@@ -11572,6 +12232,7 @@ function reconcileLegacyTrimsD3(
 
               for (let xIdx = 0; xIdx < xs.length; xIdx += 1) {
                 const cr = xs[xIdx]!;
+                if (lc.cross!==undefined && cr!==lc.cross) continue;
                 for (let yIdx = 0; yIdx < ys.length; yIdx += 1) {
                   const y = ys[yIdx]!;
                   const fx = Math.fround(along ? cr : lc.centre);
@@ -11619,15 +12280,19 @@ function reconcileLegacyTrimsD3(
                   const candCrossHalf = (alongAxis ? fsx : fsz) * 0.5;
                   const candHalfY = fsy * 0.5;
 
+                  const ledge0=makeSpanLedge(hostAtEnd0,curEnd0x,fy,curEnd0z,candCrossHalf,i,0);
+                  const ledge1=makeSpanLedge(hostAtEnd1,curEnd1x,fy,curEnd1z,candCrossHalf,i,1);
+                  if ((hostAtEnd0.approved!==undefined && ledge0===undefined)
+                    || (hostAtEnd1.approved!==undefined && ledge1===undefined)) {rejections.support+=1;continue;}
                   const c0 = checkSpanEndpointContact(
-                    curEnd0x, fy, curEnd0z, crossUnitX, crossUnitZ, candCrossHalf, candHalfY, finalMassObbs[hostAtEnd0.massIndex]!,
+                    curEnd0x, fy, curEnd0z, crossUnitX, crossUnitZ, candCrossHalf, candHalfY, ledge0===undefined?finalMassObbs[hostAtEnd0.massIndex]!:roofDetailMassObb(ledge0,hostAtEnd0.massIndex),
                   );
                   if (!c0.contacts) {
                     rejections.support += 1;
                     continue;
                   }
                   const c1 = checkSpanEndpointContact(
-                    curEnd1x, fy, curEnd1z, crossUnitX, crossUnitZ, candCrossHalf, candHalfY, finalMassObbs[hostAtEnd1.massIndex]!,
+                    curEnd1x, fy, curEnd1z, crossUnitX, crossUnitZ, candCrossHalf, candHalfY, ledge1===undefined?finalMassObbs[hostAtEnd1.massIndex]!:roofDetailMassObb(ledge1,hostAtEnd1.massIndex),
                   );
                   if (!c1.contacts) {
                     rejections.support += 1;
@@ -11720,7 +12385,7 @@ function reconcileLegacyTrimsD3(
 
                   if (best === null || cost < best.cost - 1e-6) {
                     best = {
-                      cost,
+                      cost,ledge0,ledge1,
                       cx: fx,
                       cy: fy,
                       cz: fz,
@@ -11764,7 +12429,7 @@ function reconcileLegacyTrimsD3(
       return best;
     };
 
-    const best = findBestSpanCandidate();
+    const best = findBestSpanCandidate(false) ?? findBestSpanCandidate(true);
 
     if (best === null) {
       fail(
@@ -11774,6 +12439,15 @@ function reconcileLegacyTrimsD3(
       );
     }
 
+    const attachLedge = (ledge:SkyriverMass | undefined,host:SkyriverSpanHost):SkyriverSpanHost => {
+      if (ledge===undefined) return host;
+      const index=masses.length;
+      masses.push(ledge);
+      finalMassObbs.push(roofDetailMassObb(ledge,index));
+      roofDetailPrefixInsertCell(finalMassGrid,index,finalMassObbs[index]!,ROOF_DETAIL_SPATIAL_CELL_M);
+      return {...host,massIndex:index};
+    };
+    const finalHost0=attachLedge(best.ledge0,best.host0),finalHost1=attachLedge(best.ledge1,best.host1);
     cx[i] = best.cx;
     cy[i] = best.cy;
     cz[i] = best.cz;
@@ -11801,7 +12475,7 @@ function reconcileLegacyTrimsD3(
       blockingHeroIds: Object.freeze([]),
       oldGeometry: oldGeom,
       newGeometry: newGeom,
-      hosts: Object.freeze([best.host0, best.host1] as const),
+      hosts: Object.freeze([finalHost0, finalHost1] as const),
       oldWorld: Object.freeze({
         endpoints: Object.freeze([
           Object.freeze({ x: basePath.origP0.x, y: ocy, z: basePath.origP0.z }),
@@ -12971,8 +13645,8 @@ export class SkyriverCity {
       // R25 material identity: canonical owner seed, separate from interior culture.
       materials[i] = Math.fround(mass.materialOwner ?? mass.building ?? buildingSeedOf(mass.x, mass.z));
       emissionAllowed[i] = mass.baseRecord?.kind === 'equipment'
-        || mass.supportRole === 'retained-child-bridge'
-        || mass.crownRole === 'ordinary-dark-crown' ? 0 : 1;
+        || mass.supportRole !== undefined
+        || mass.crownRole === 'ordinary-dark-crown' || mass.artBacking !== undefined ? 0 : 1;
       // R22: the base building's own canyon anchor, so a slab, its tiers, its crowns and its annexes
       // always share one district. Never the warped world z this mass is drawn at.
       districts[i] = skyriverDistrictIdAt(this.districts, mass.anchorV ?? mass.z);
@@ -12983,7 +13657,7 @@ export class SkyriverCity {
       }
       // T7-3: canyon space -> the winding loop. Each box keeps its shape, placed at its warped centre
       // and turned to the local canyon heading. R16: tiers and annexes ride their slab's frame.
-      warpRigid(mass.x, mass.z, mass.anchorV ?? mass.z, warp);
+      warpBoxPoint(mass, mass.x, mass.z, warp);
       quaternion.setFromAxisAngle(UP, warp.heading);
       position.set(warp.x, mass.y0 + mass.height * 0.5, warp.z);
       scale.set(mass.width, mass.height, mass.depth);
@@ -13192,7 +13866,8 @@ export class SkyriverCity {
       } else {
         // R16: a facade sign rides its tower's frame (see placeTrim); hero signs keep their own.
         const mount = this.signs.owner[i];
-        warpRigid(cx[i]!, cz[i]!, mount ? mount.anchorV : cz[i]!, warp);
+        if (mount) warpBoxPoint(mount, cx[i]!, cz[i]!, warp);
+        else warpRigid(cx[i]!, cz[i]!, cz[i]!, warp);
       }
       warpDirection(nx[i]!, nz[i]!, warp.heading, direction);
       centres[i * 3] = warp.x;

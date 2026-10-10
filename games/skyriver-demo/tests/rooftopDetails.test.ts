@@ -61,7 +61,9 @@ describe('R35 independent dark roof details', () => {
       const prop = trimRoofBox(trims, i), support = boxes[r.supportMassIndex]!, owner = trims.owner[i]!;
       expect(mass.layer ?? 0).toBe(0);
       expect(trims.kind[i]).toBe(SKYRIVER_TRIM_ROOF_PLANT); expect(trims.spanTo[i]).toBeNull();
-      expect(owner).toEqual({ x: mass.x, z: mass.z, width: mass.width, depth: mass.depth, anchorV: mass.anchorV ?? mass.z, materialOwner: mass.materialOwner ?? buildingSeedOf(mass.x, mass.z) });
+      expect(owner).toEqual({ x: mass.x, z: mass.z, width: mass.width, depth: mass.depth, anchorV: mass.anchorV ?? mass.z, materialOwner: mass.materialOwner ?? buildingSeedOf(mass.x, mass.z),
+        ...(mass.yawRad === undefined ? {} : { yawRad: mass.yawRad }),
+        ...(mass.yawAnchor === undefined ? {} : { yawAnchor: mass.yawAnchor }) });
       expect(Object.values(prop).every(Number.isFinite)).toBe(true); expect(Math.min(prop.hx, prop.hy, prop.hz)).toBeGreaterThan(0);
       expect(roofSupportFailures(prop, support), `support:${i}`).toEqual([]);
       const roof = mass.y0 + mass.height, stratum = roof < 600 ? 'grime' : roof < 1800 ? 'mid' : 'pristine';

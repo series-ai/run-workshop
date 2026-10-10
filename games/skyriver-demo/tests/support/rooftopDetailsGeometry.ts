@@ -1,5 +1,5 @@
 import type { SkyriverMass, SkyriverCityTrims } from '../../src/render/city';
-import { placeTrim, warpRigid } from '../../src/render/city';
+import { placeTrim, warpBoxPoint } from '../../src/render/city';
 import { CANYON_LOOP_LENGTH_M } from '../../src/render/canyonWarp';
 import { autopilotTrackPose, type TrackPose } from '../../src/render/flightPresentation';
 import { createCameraPoseScratch, writeCameraPose } from '../../src/render/cameraRig';
@@ -12,7 +12,7 @@ export interface RoofBox {
 }
 
 export function massRoofBox(mass: SkyriverMass): RoofBox {
-  const p = warpRigid(mass.x, mass.z, mass.anchorV ?? mass.z, { x: 0, z: 0, heading: 0 });
+  const p = warpBoxPoint(mass, mass.x, mass.z, { x: 0, z: 0, heading: 0 });
   return { x: p.x, y: mass.y0 + mass.height / 2, z: p.z, hx: mass.width / 2, hy: mass.height / 2, hz: mass.depth / 2, c: Math.cos(p.heading), s: Math.sin(p.heading) };
 }
 

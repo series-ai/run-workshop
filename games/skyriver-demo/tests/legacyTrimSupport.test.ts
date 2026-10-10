@@ -7,7 +7,7 @@ import { buildingSeedOf, deriveCityMasses, deriveCityTrims, deriveHeroBlades, de
 import before from './fixtures/r36-legacy-trim-support-before.json';
 import beforeSpans from './fixtures/r36-span-contact-before.json';
 import { inspectLegacySpanContacts, type LegacySpanContactRecord } from './support/legacySpanContact';
-import { inspectLegacyTrimSupport, legacyTrimSupportKey, type LegacyTrimSupportGroup } from './support/legacyTrimSupport';
+import { legacySideContactArea, inspectLegacyTrimSupport, legacyTrimSupportKey, type LegacyTrimSupportGroup } from './support/legacyTrimSupport';
 
 interface SavedGroup {
   readonly valid: number;
@@ -134,4 +134,15 @@ describe('legacy support scope', () => {
     expect(before.rows.map(row => row.counts.side.invalid)).toEqual([0, 0, 0, 0, 0]);
     expect(beforeSpans.rows.map(row => row.inheritedInvalid)).toEqual([2, 1, 1, 1, 2]);
   });
+});
+
+
+it('requires real contact in the turned side frame', () => {
+  const owner = { x: 10, z: 0, width: 10, depth: 10, anchorV: 0, materialOwner: 1, yawRad: 0.2 };
+  const mass = { ...owner, y0: 0, height: 10, tint: 0 };
+  const trims: Parameters<typeof legacySideContactArea>[0] = { seed: 0, count: 1, kind: new Uint8Array([3]),
+    seedValue: new Float32Array([0]), spanTo: [null], owner: [owner], cx: new Float32Array([5]), cy: new Float32Array([5]), cz: new Float32Array([0]),
+    sx: new Float32Array([2]), sy: new Float32Array([2]), sz: new Float32Array([4]) };
+  expect(legacySideContactArea(trims, 0, [mass])).toBeCloseTo(8, 10);
+  expect(legacySideContactArea(trims, 0, [{ ...mass, x: 100 }])).toBe(0);
 });
