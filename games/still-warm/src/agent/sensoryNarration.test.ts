@@ -1,8 +1,13 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   formatSensoryNarration,
+  formatInspectNarration,
   defaultSensoryPicker,
+  INSPECT_DARK_VARIATIONS,
+  INSPECT_FLOOR_VARIATIONS,
+  INSPECT_ROOM_VARIATIONS,
 } from "./sensoryNarration";
+import type { VisionInput } from "../game/vision";
 
 describe("sensoryNarration", () => {
   beforeEach(() => {
@@ -179,5 +184,83 @@ describe("sensoryNarration", () => {
     expect(text).toBe("I hear his frightened, shuddering whimper close to the stone.");
     expect(text).not.toContain("cabinet");
     expect(text).not.toContain("failed");
+  });
+});
+
+describe("visibility discipline", () => {
+  const SIGHT_OF_BOY =
+    /\bhis (mismatched )?(eyes|face|shape|silhouette|shadow)\b|\bwatches\b|\bstares\b|\blooks down\b|\bleans (close )?over\b/i;
+
+  beforeEach(() => {
+    defaultSensoryPicker.reset();
+  });
+
+  it("never shows the boy while pinned face down in the dark", () => {
+    const dark: VisionInput = {
+      posture: "prone",
+      stage: "pinned",
+      lamp: "away",
+      candleLit: false,
+      lanternLit: false,
+      fire: 12,
+    };
+    // Every inspect answer must stay within hearing and touch.
+    for (let i = 0; i < INSPECT_DARK_VARIATIONS.length; i++) {
+      expect(formatInspectNarration(dark)).not.toMatch(SIGHT_OF_BOY);
+    }
+    // Peak-tempo telegraphs for the pinned, frightened boy are tactile too.
+    for (let i = 0; i < 4; i++) {
+      const text = formatSensoryNarration({
+        action: "none",
+        actionSucceeded: false,
+        tempoState: "peak",
+        currentStage: "pinned",
+        creatureEmotion: "scared",
+        vocalText: "",
+      });
+      expect(text).not.toMatch(SIGHT_OF_BOY);
+    }
+    // Roll failure narration must not claim he watches.
+    for (let i = 0; i < 4; i++) {
+      const text = formatSensoryNarration({
+        action: "none",
+        actionSucceeded: false,
+        gateFailureReason: "roll_pinned",
+        vocalText: "",
+      });
+      expect(text).not.toMatch(SIGHT_OF_BOY);
+    }
+  });
+
+  it("shows only the floor, never the boy, once the cabinet is off", () => {
+    const floor: VisionInput = {
+      posture: "prone",
+      stage: "covered",
+      lamp: "away",
+      candleLit: false,
+      lanternLit: false,
+      fire: 12,
+    };
+    for (let i = 0; i < INSPECT_FLOOR_VARIATIONS.length; i++) {
+      const text = formatInspectNarration(floor);
+      expect(text).not.toMatch(SIGHT_OF_BOY);
+      expect(text).toMatch(/flagstones|grate|stone/i);
+    }
+  });
+
+  it("shows the boy only when supine under light", () => {
+    const room: VisionInput = {
+      posture: "supine",
+      stage: "covered",
+      lamp: "away",
+      candleLit: false,
+      lanternLit: true,
+      fire: 12,
+    };
+    for (let i = 0; i < INSPECT_ROOM_VARIATIONS.length; i++) {
+      const text = formatInspectNarration(room);
+      expect(text).toMatch(/lantern|light|see/i);
+      expect(text).not.toMatch(/cannot see|nothing but dark|blackness answers/i);
+    }
   });
 });

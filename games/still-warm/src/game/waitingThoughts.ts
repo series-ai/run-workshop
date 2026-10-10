@@ -1,5 +1,6 @@
 import type { GameState } from "./model";
 import type { TempoTracker } from "./tempo";
+import { visionOf } from "./vision";
 
 export interface WaitingItem {
   id: string;
@@ -27,6 +28,8 @@ export const WAITING_ITEMS_1: readonly WaitingItem[] = [
   {
     id: "shadows_move",
     text: "Shadows flicker along the damp stone wall... somewhere water drips.",
+    // Requires sight: face down in the dark he cannot see the walls.
+    available: (state) => !state || visionOf(state) !== "dark",
   },
   {
     id: "breath_shallow",
@@ -49,7 +52,7 @@ export const WAITING_ITEMS_1: readonly WaitingItem[] = [
   {
     id: "supine_ceiling",
     text: "Rotting beams crisscross the cellar ceiling... shadows hang heavy.",
-    available: (state) => !state || state.posture === "supine",
+    available: (state) => !state || visionOf(state) === "room",
   },
   {
     id: "supine_breath",
@@ -97,12 +100,12 @@ export const WAITING_ITEMS_2: readonly WaitingItem[] = [
   {
     id: "supine_rafters",
     text: "Webs drift from the rafters overhead in the cold draft.",
-    available: (state) => !state || state.posture === "supine",
+    available: (state) => !state || visionOf(state) === "room",
   },
   {
     id: "supine_shadows",
     text: "I look up, straining to see his hands in the gloom.",
-    available: (state) => !state || state.posture === "supine",
+    available: (state) => !state || visionOf(state) === "room",
   },
 ] as const;
 

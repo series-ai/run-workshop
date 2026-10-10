@@ -8,7 +8,7 @@ import {
 import type { GameStore } from "../game/store";
 import type { GameState, ItemId, VocalCue } from "../game/model";
 import { updateTempo, type TempoTracker } from "../game/tempo";
-import { formatSensoryNarration } from "./sensoryNarration";
+import { formatSensoryNarration, formatInspectNarration } from "./sensoryNarration";
 
 export type TriageIntent =
   | "soothe"
@@ -142,8 +142,8 @@ export function createCreatureTriage<TTools extends AgentToolSet>(
         currentStage: snap.stage,
         creatureEmotion: snap.emotion,
         vocalText: succeeded
-          ? `He gathers the ${item}, stepping carefully near the light.`
-          : `He hesitates over the ${item}, his clumsy hands trembling.`,
+          ? `I hear him gather the ${item} from the tray, his steps careful on the stone.`
+          : `He hesitates over the ${item}, his clumsy hands trembling out of reach.`,
       });
       return commitReply(narration);
     },
@@ -197,7 +197,7 @@ export function createCreatureTriage<TTools extends AgentToolSet>(
             creatureEmotion: snap.emotion,
             vocalText: succeeded
               ? "His weight settles close, the straw rustling beside my head."
-              : "He stays where he is, a hesitant shape in the gloom.",
+              : "He stays where he is; I hear his weight settle, hesitant, a few steps off.",
           });
           return commitReply(narration);
         },
@@ -410,14 +410,13 @@ export function createCreatureTriage<TTools extends AgentToolSet>(
         ],
         reply: () => {
           const snap = context.store.getSnapshot();
-          const narration = formatSensoryNarration({
-            action: "inspect_room",
-            actionSucceeded: true,
-            tempoState: context.getTempo().state,
-            currentStage: snap.stage,
-            creatureEmotion: snap.emotion,
-            vocalText:
-              "He leans close over my chest, his mismatched eyes wide in the gloom.",
+          const narration = formatInspectNarration({
+            posture: snap.posture,
+            stage: snap.stage,
+            lamp: snap.lamp,
+            candleLit: snap.candleLit,
+            lanternLit: snap.environment.lanternLit,
+            fire: snap.environment.fire,
           });
           return commitReply(narration);
         },

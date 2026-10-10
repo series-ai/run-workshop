@@ -1,5 +1,6 @@
 import type { RoomArea, Stage } from "../game/model";
 import type { TempoState } from "../game/tempo";
+import { resolveVision, type VisionInput } from "../game/vision";
 
 export interface SensoryNarrationInput {
   movedFrom?: RoomArea;
@@ -43,7 +44,7 @@ export const MOVEMENT_VARIATIONS: Record<RoomArea, readonly string[]> = {
     "A cold draft stirs as he drags his feet toward the instrument stand.",
     "I hear the scrape of leather soles against the flagstones beside my head.",
     "A low, shuffling cadence shifts toward the tray on the left.",
-    "His heavy shadow leans toward the tray, footsteps dragging slowly.",
+    "His weight leans toward the tray, footsteps dragging slowly.",
   ],
   cabinet: [
     "I hear him shuffle away into the dark toward the supply cabinet.",
@@ -213,7 +214,7 @@ export const GATE_FAILURE_STAND_INJURED = [
 ] as const;
 
 export const GATE_FAILURE_ROLL_PINNED = [
-  "I try to wrench my hips and turn onto my back, but the crushing oak cabinet pins me flat against the flagstones. He watches my futile struggle with a helpless whimper.",
+  "I try to wrench my hips and turn onto my back, but the crushing oak cabinet pins me flat against the flagstones. A helpless whimper answers my struggle.",
   "I twist against the stone to turn over, but the fallen beam holds my shoulders fast—the heavy timber must be lifted off my back before I can roll.",
   "The massive oak cabinet drives into my spine as I strain to turn; I cannot move an inch until the debris is heaved aside.",
 ] as const;
@@ -222,7 +223,7 @@ export const SOMATIC_TELEGRAPHS_PEAK: Record<Stage, { scared: readonly string[];
   pinned: {
     scared: [
       "From the gloom, his heavy footsteps shuffle right beside my head. I feel the brush of his ragged sleeve against my shoulder, trembling in panic, waiting for my voice to steady him.",
-      "His trembling shadow looms close over me in the dark. A fragile, frightened whimper catches in his throat—he is paralyzed by fear, desperate for reassurance.",
+      "I feel his trembling bulk settle close in the dark. A fragile, frightened whimper catches in his throat—he is paralyzed by fear, desperate for reassurance.",
     ],
     ready: [
       "Massive palms settle against the fallen oak above my shoulder blades. The timber creaks under tentative weight—he is braced, waiting only for my word to heave.",
@@ -241,8 +242,8 @@ export const SOMATIC_TELEGRAPHS_PEAK: Record<Stage, { scared: readonly string[];
   },
   exposed: {
     scared: [
-      "I hear the cold metal forceps trembling in his fist. He stares at the jagged iron shard piercing my flank, shuddering at the thought of pulling it.",
-      "His ragged breathing catches as he looks down at the impaled metal—his hands shake violently, terrified of tearing the wound.",
+      "I hear the cold metal forceps trembling in his fist. His breath catches beside my flank, shuddering at the thought of pulling the shard.",
+      "His ragged breathing catches close over my flank; his hands shake violently above the impaled metal, terrified of tearing the wound.",
     ],
     ready: [
       "He braces the cold steel forceps against the base of the metal fragment, knuckles locked, waiting for my signal to draw it free.",
@@ -468,4 +469,39 @@ export function formatSensoryNarration(
   }
 
   return parts.join(" ");
+}
+
+export const INSPECT_DARK_VARIATIONS = [
+  "The blackness answers me. I hear something large shift its weight close by, coarse cloth whispering against the cold stone—and that is all I have.",
+  "Nothing but dark against my open eyes. His breathing and the low crackle of the floor fire are the whole of the world.",
+  "I strain to see and find only black. A heavy shuffle, a wet breath, the drip of water—my boy is somewhere in it, but I cannot see him.",
+] as const;
+
+export const INSPECT_FLOOR_VARIATIONS = [
+  "The cabinet no longer crushes my back, but I still lie face down. Pale light from the breach above shows me wet flagstones, a drainage grate, and cracks running with damp. Whatever he is doing above me, I cannot see it.",
+  "I can make out cold flagstones and broken mortar in front of my face now. The boy himself stays beyond my sight, somewhere above and behind me.",
+] as const;
+
+export const INSPECT_ROOM_VARIATIONS = [
+  "He crouches close over me; lantern light picks out the mismatched seams of his face. My boy, watching me in the dark.",
+  "In the light I can see him clearly at last, broad shoulders blotting the cellar wall above me, eyes fixed on my face.",
+] as const;
+
+/**
+ * Answers "what can I see?" with only what the state actually allows: black
+ * while pinned face down, the flagstones once the cabinet is off, the boy
+ * only when supine under light.
+ */
+export function formatInspectNarration(
+  input: VisionInput,
+  picker: SensoryNarrationPicker = defaultSensoryPicker,
+): string {
+  switch (resolveVision(input)) {
+    case "room":
+      return picker.pick("inspect_room", INSPECT_ROOM_VARIATIONS);
+    case "floor":
+      return picker.pick("inspect_floor", INSPECT_FLOOR_VARIATIONS);
+    case "dark":
+      return picker.pick("inspect_dark", INSPECT_DARK_VARIATIONS);
+  }
 }
