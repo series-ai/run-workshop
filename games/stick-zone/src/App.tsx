@@ -14,21 +14,7 @@ import { ExfilOverlay } from "./components/ExfilOverlay.js";
 import { sound } from "./audio.js";
 import "./styles.css";
 
-function getRaidSessionToken(raidId: string, opId: string): string {
-  if (typeof window !== "undefined") {
-    const urlToken = new URLSearchParams(window.location.search).get("token");
-    if (urlToken) return urlToken;
-  }
-  const storageKey = `sz_session_${raidId}_${opId}`;
-  if (typeof sessionStorage !== "undefined") {
-    const saved = sessionStorage.getItem(storageKey);
-    if (saved) return saved;
-    const generated = `sz_${raidId}_${opId}`;
-    sessionStorage.setItem(storageKey, generated);
-    return generated;
-  }
-  return `sz_${raidId}_${opId}`;
-}
+
 
 const MainApp: React.FC = () => {
   useEffect(() => {
@@ -75,39 +61,16 @@ const MainApp: React.FC = () => {
 
   const [sim, setSim] = useState(() => {
     let initialRaidId: string | undefined = undefined;
-    // Allow an explicit raidId from the URL (?raidId=raid_sector7_...) — used by
-    // repeat-raid / fresh-raid flows where each raid session has an immutable ledger id.
     if (typeof window !== "undefined") {
       const urlRaid = new URLSearchParams(window.location.search).get("raidId");
       if (urlRaid && /^[A-Za-z0-9_-]{3,64}$/.test(urlRaid)) {
         initialRaidId = urlRaid;
-        try {
-          sessionStorage.setItem("sz_active_raid", urlRaid);
-        } catch {}
       }
-    }
-    if (typeof sessionStorage !== "undefined") {
-      const savedRaid = sessionStorage.getItem("sz_active_raid");
-      if (savedRaid) initialRaidId = savedRaid;
     }
     const s = new SectorDepotSimulation(initialRaidId, "hub");
-    if (typeof sessionStorage !== "undefined" && initialRaidId) {
-      const savedExfil = sessionStorage.getItem(`sz_exfil_${initialRaidId}_${s.player.id}`);
-      if (savedExfil) {
-        try {
-          const exfilInfo = JSON.parse(savedExfil);
-          s.restoreExtractionCustody(exfilInfo);
-        } catch {}
-      }
-      const savedKia = sessionStorage.getItem(`sz_kia_${initialRaidId}_${s.player.id}`);
-      if (savedKia === "true") {
-        s.player.health = 0;
-        s.player.isAlive = false;
-      }
+    if (typeof window !== "undefined" && (import.meta as any).env?.VITE_EXPOSE_DEBUG_SIM === "1") {
+      (window as any).debugSim = s;
     }
-    // Debug hook for the recording harness and dev inspection. OPT-IN via the
-    // VITE_EXPOSE_DEBUG_SIM build flag (never auto-exposed in production builds).
-    if (typeof window !== "undefined" && (import.meta as any).env?.VITE_EXPOSE_DEBUG_SIM === "1") (window as any).debugSim = s;
     return s;
   });
   const [, setFrame] = useState(0);
@@ -168,11 +131,7 @@ const MainApp: React.FC = () => {
       }
     }).catch(() => {});
 
-    const tok = getRaidSessionToken(sim.raidId, sim.player.id);
-    sim.sessionToken = tok;
-    if (!sim.player.isExtracted && sim.player.isAlive) {
-      coordinator.connectWebSocket(tok);
-    }
+
 
       sim.onHoldProgress = (holdTicks: number, currentTick: number) => {
         if (coordinatorRef.current && !sim.player.isExtracted && sim.player.isAlive) {
@@ -501,24 +460,10 @@ const MainApp: React.FC = () => {
     isRestartingRef.current = true;
     try {
       const candidateRaidId = overrideRaidId || (pendingNextRaidId.current && pendingNextRaidId.current !== sim.raidId ? pendingNextRaidId.current : `raid_sector7_${Date.now()}`);
-      const confirmedRaidId = candidateRaidId;
-      const confirmedToken = getRaidSessionToken(confirmedRaidId, sim.player.id);
-
-      if (typeof sessionStorage !== "undefined") {
-        sessionStorage.removeItem(`sz_kia_${sim.raidId}_${sim.player.id}`);
-        sessionStorage.removeItem(`sz_exfil_${sim.raidId}_${sim.player.id}`);
-        sessionStorage.removeItem(`sz_ammo_${sim.raidId}_${sim.player.id}`);
-        sessionStorage.removeItem(`sz_resume_${sim.raidId}_${sim.player.id}`);
-        sessionStorage.removeItem(`sz_kia_${confirmedRaidId}_${sim.player.id}`);
-        sessionStorage.removeItem(`sz_exfil_${confirmedRaidId}_${sim.player.id}`);
-        sessionStorage.setItem("sz_active_raid", confirmedRaidId);
-        sessionStorage.setItem(`sz_session_${confirmedRaidId}_${sim.player.id}`, confirmedToken);
-      }
       pendingNextRaidId.current = null;
 
-      const newSim = new SectorDepotSimulation(confirmedRaidId);
-      registerDeployment(newSim.player.id, confirmedRaidId);
-      newSim.sessionToken = confirmedToken;
+      const newSim = new SectorDepotSimulation(candidateRaidId);
+      registerDeployment(newSim.player.id, candidateRaidId);
 
       preparePlatformRaid({
         sector: "Sector 7 Depot",
@@ -538,7 +483,7 @@ const MainApp: React.FC = () => {
       }
 
       if (!fromPeer && coordinatorRef.current) {
-        coordinatorRef.current.broadcastRaidRestart(confirmedRaidId);
+        coordinatorRef.current.broadcastRaidRestart(candidateRaidId);
       }
       return true;
     } finally {

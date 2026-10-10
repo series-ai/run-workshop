@@ -2,8 +2,8 @@ import { getRundotGameApi } from "../sdk.js";
 import { calculateShotgunHit, getMaxShotgunDamageForDistance } from './shotgunCollision.js';
 /**
  * @file multiplayer.ts
- * Real-time peer-to-peer multiplayer synchronization via BroadcastChannel
- * and Vite HMR WebSocket relay with event-id deduplication, staged ingress lifecycle,
+ * Real-time multiplayer synchronization delegated to first-party SyncHub platform SDK
+ * (ActiveSpokeSession & GatewayServerRoom) with event-id deduplication, staged ingress lifecycle,
  * shared world loot/destruction, and cross-browser hit/knockback coordination.
  */
 
@@ -405,17 +405,6 @@ export class MultiplayerCoordinator {
     }
   }
 
-  private isRecoveryActive(controller: AbortController | null, expectedSocket?: WebSocket | null): boolean {
-    if (this.isDisposed || this.isSuperseded) return false;
-    if (controller && (controller.signal.aborted || this.recoveryAbortController !== controller)) return false;
-    if (expectedSocket !== undefined && expectedSocket !== null) {
-      if (this.ws !== expectedSocket || expectedSocket.readyState !== 1 || !this.isConnectionActive) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   public createRaidSnapshot(): RaidWorldSnapshot {
     return {
       snapshotTick: this.sim.tick,
@@ -460,13 +449,10 @@ export class MultiplayerCoordinator {
 
   public localId: string;
   public localSquad: string;
-  public channel: BroadcastChannel | null = null;
-  public ws: WebSocket | null = null;
   public connectedPeers: Map<string, PeerEntry> = new Map();
   private sim: SectorDepotSimulation;
   private seq = 0;
   private seenEvents = new Set<string>();
-  private boundHotHandler: ((data: any) => void) | null = null;
   public pruneInterval: any = null;
   public serverTimeOffset: number = 0;
   public lastServerMessageTime: number = Date.now();
@@ -555,7 +541,6 @@ export class MultiplayerCoordinator {
   public isSuperseded = false;
   public isConnectionActive = false;
   public serverMachines: Array<{ id: string; health: number; isAlive: boolean }> | null = null;
-  public wsUrl: string | null = null;
   private isDisposed = false;
   private isRetryingTerminalRecovery = false;
   private reconnectTimer: any = null;
@@ -570,9 +555,6 @@ export class MultiplayerCoordinator {
     this.sim.retryTerminalRecovery = () => this.retryTerminalRecovery();
 
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-    this.wsUrl = typeof window !== 'undefined'
-      ? (urlParams?.get('wsUrl') || (window as any).__stickZoneWsUrl || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`)
-      : null;
     const isPlayer2 = urlParams?.get('rundotPlayer') === 'player2' || sim.player.id === 'op_bravo_1';
 
     if (isPlayer2) {
@@ -638,30 +620,8 @@ export class MultiplayerCoordinator {
       this.broadcastState(0);
     };
 
-    // 1. Listen on BroadcastChannel for fast same-process tabs
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      this.channel = new BroadcastChannel('stick_zone_mesh');
-      this.channel.onmessage = (event) => {
-        const p = event.data as any;
-        if (p) {
-          p._fromBroadcastChannel = true;
-          this.handleMessage(p as PeerPacket);
-        }
-      };
-    }
-
-    // 1b. Dedicated production WebSocket relay at /ws (connected once sessionToken is present)
-    if (this.sim.sessionToken) {
-      this.connectWebSocket(this.sim.sessionToken);
-    }
-
-    // 2. Listen on Vite HMR WebSocket for separate browser contexts / external devices
-    if (typeof import.meta !== 'undefined' && (import.meta as any).hot) {
-      this.boundHotHandler = (packet: PeerPacket) => this.handleMessage(packet);
-      (import.meta as any).hot.on('stick:peer_packet', this.boundHotHandler);
-    }
-
-    const isResumingSession = (typeof sessionStorage !== 'undefined' && !!sessionStorage.getItem(`sz_session_${this.sim.raidId}_${this.localId}`));
+    // Network sessions are managed authoritatively by first-party SDK (spokeSession / GatewayServerRoom)
+    const isResumingSession = false;
     // Initiate staged ingress protocol: only enter corridor if currently idle
     if (this.sim.ingressController.getState().kind === 'idle') {
       this.sim.ingressController.enterCorridor(this.sim.tick, isResumingSession);
@@ -679,7 +639,7 @@ export class MultiplayerCoordinator {
       if (this.isDisposed || this.selfReadinessTimer) return;
       this.selfReadinessTimer = setTimeout(() => {
         if (this.isDisposed) return;
-        const isResuming = (typeof sessionStorage !== 'undefined' && !!sessionStorage.getItem(`sz_session_${this.sim.raidId}_${this.localId}`));
+        const isResuming = false;
         if (!isResuming && this.sim.tick > SIM_CONFIG.INGRESS_WINDOW_TICKS) {
           this.sim.combatLog.push(`[INGRESS DENIED] Ingress cutoff exceeded at tick ${this.sim.tick}`);
           return;
@@ -1046,384 +1006,6 @@ export class MultiplayerCoordinator {
     } catch {}
   }
 
-  public connectWebSocket(token?: string): void {
-    if (this.isDisposed || this.isSuperseded) return;
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-    const tok = token || (this.sim as any).sessionToken;
-    (this as any).authToken = tok;
-    if (!tok) return; // Do not connect without authenticated session token!
-    if (this.ws && (this.ws.readyState === 0 || this.ws.readyState === 1)) {
-      try { this.ws.close(); } catch {}
-      this.ws = null;
-    }
-    this.isConnectionActive = true;
-    this.authenticated = false;
-    this.sim.isSocketDisconnected = true;
-    this.sim.serverMachineDamageAuthority = true;
-    (this as any).connectionStartTime = Date.now();
-    const WSClass = typeof WebSocket !== "undefined" ? WebSocket : (typeof window !== "undefined" ? (window as any).WebSocket : null);
-    if (!WSClass) return;
-    let wsUrl = "";
-    if (typeof window !== "undefined" && window.location && window.location.host) {
-      const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-      wsUrl = `${proto}//${window.location.host}/ws?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
-    } else if ((this as any).wsUrl) {
-      wsUrl = `${(this as any).wsUrl}?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
-    } else {
-      const devServer = (typeof window !== "undefined" && (window as any).__RUNDOT_MULTIPLAYER_DEV_SERVER__) || "ws://localhost:9001";
-      const baseWs = devServer.replace(/^http/, "ws");
-      wsUrl = `${baseWs}/ws?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
-    }
-    // Pure RUN SDK multiplayer integration: notify SDK multiplayer layer if present
-    if (getRundotGameApi()?.multiplayer?.connectWithTicket) {
-      try {
-        getRundotGameApi().multiplayer.connectWithTicket({
-          wsUrl,
-          raidId: this.sim.raidId,
-          profileId: this.sim.player.id,
-          slot: 0,
-          ticket: tok,
-        }).then((room: any) => {
-          (this as any).sdkRoom = room;
-        }).catch(() => {});
-      } catch {}
-    }
-    try {
-      const createdSocket = new WSClass(wsUrl);
-      this.ws = createdSocket; // ownership: callbacks verify they still serve the CURRENT socket
-      createdSocket.onopen = () => {
-        if (this.isDisposed || createdSocket !== this.ws) return;
-        try {
-          createdSocket.send(JSON.stringify({
-            type: "auth",
-            ticket: tok,
-            token: tok,
-            grant: {
-              ticketId: tok,
-              profileId: this.sim.player.id,
-              raidId: this.sim.raidId,
-              slot: 0,
-              audience: "synchub-raid-gateway",
-            },
-          }));
-        } catch {}
-        this.broadcastRaidDiscovery();
-      };
-      createdSocket.onmessage = async (event: any) => {
-        const __msgSocket = createdSocket; // ownership: this handler serves ONLY the socket it was created for
-        this.lastServerMessageTime = Date.now();
-        try {
-          const raw = typeof event.data === "string" ? event.data : (event.data instanceof Blob ? await event.data.text() : new TextDecoder().decode(event.data));
-          // Decode fence: a Blob body may resolve AFTER cleanup, socket replacement, or timeout closure —
-          // require the current socket to be OPEN (readyState === 1) and the connection to remain active before applying data.
-          if (this.isDisposed || this.isSuperseded || this.ws !== __msgSocket || __msgSocket.readyState !== 1 || !this.isConnectionActive) return;
-          const data = JSON.parse(raw);
-          if (this.isDisposed || this.isSuperseded || this.ws !== __msgSocket || __msgSocket.readyState !== 1 || !this.isConnectionActive) return;
-          if (data && typeof (data as any).serverTime === "number") {
-            this.serverTimeOffset = (data as any).serverTime - Date.now();
-            if (typeof globalThis !== "undefined") (globalThis as any).__stickZoneServerTimeOffset = this.serverTimeOffset;
-          }
-          if (data && data.type === "heartbeat") {
-            this.lastServerMessageTime = Date.now();
-            return;
-          }
-          if (data && data.type === "hold_tick_ack") {
-            if (data.data?.operativeId === this.sim.player.id && typeof data.data.holdCompletedAtTick === "number") {
-              (this.sim as any).serverHoldCompletedAtTick = data.data.holdCompletedAtTick;
-            }
-            return;
-          }
-          if (data && (data.type === "settlement_committed" || data.type === "settlement_rejected" || data.type === "settlement_error")) {
-            // STRICT SERVER ORIGIN VALIDATION: Only server-originated messages on the authenticated WebSocket are accepted!
-            // Reject any message from BroadcastChannel, from peer relay, or with a client/peer senderId.
-            if (!data || data._fromBroadcastChannel || data.senderId !== "server") {
-              return;
-            }
-
-            if (data.type === "settlement_committed") {
-              const receipt = data.data?.receipt;
-              const outcomePayload = data.data?.outcomePayload;
-              if (!receipt || typeof receipt !== "object" || typeof receipt.receiptId !== "string") return;
-
-              // Strict raid and operative binding: receipt MUST belong to the current raid and local operative!
-              if (receipt.raidId !== this.sim.raidId) return;
-              const isLocalOperative = (id: string) =>
-                id === this.localId ||
-                id === this.sim.player.id ||
-                (this.localId === 'op_alpha_1' && id === 'op_player') ||
-                (this.sim.player.id === 'op_alpha_1' && id === 'op_player');
-
-              const extParticipant = receipt.participantResults?.find((p: any) => isLocalOperative(p.profileId));
-              if (!extParticipant || extParticipant.activeRaidCleared !== true) return;
-              if (outcomePayload && outcomePayload.extractedSquad && !isLocalOperative(outcomePayload.extractedSquad)) return;
-
-              this.authenticated = true;
-              this.sim.isSocketDisconnected = false;
-
-              let resolvedPending = false;
-              const pending = data.eventId ? this.pendingSettlementCommitMap.get(data.eventId) : undefined;
-              if (pending) {
-                this.pendingSettlementCommitMap.delete(data.eventId);
-                pending.resolve(data.data);
-                resolvedPending = true;
-              } else if (this.pendingSettlementCommitMap.size > 0 && !data.recovery) {
-                for (const [evtId, p] of this.pendingSettlementCommitMap.entries()) {
-                  this.pendingSettlementCommitMap.delete(evtId);
-                  p.resolve(data.data);
-                  resolvedPending = true;
-                  break;
-                }
-              }
-              // If resolving an active client commit, return immediately so ExfilOverlay pipeline verifies receipt and finalizes extraction
-              if (resolvedPending) {
-                return;
-              }
-              // For unsolicited background recovery reconnection (no active commit in flight):
-              // Obtain independent server audit evidence BEFORE verification and adoption!
-              const targetLedger = this.sim.settlementAuthority || defaultSettlementLedger;
-              const obtainAndVerifyRecoveryReceipt = async () => {
-                if (!this.isRecoveryActive(null, __msgSocket)) return;
-
-                if (this.recoveryAbortController) {
-                  try { this.recoveryAbortController.abort(); } catch {}
-                }
-                const recoveryCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-                this.recoveryAbortController = recoveryCtrl;
-
-                let outcomePayload = data.data?.outcomePayload;
-                let hasAuditEvidence = Boolean(outcomePayload);
-
-                // 1. Check local audit log first
-                if (targetLedger?.auditLog && receipt.receiptId) {
-                  const localEntry = targetLedger.auditLog.get(receipt.receiptId);
-                  if (localEntry) {
-                    const rec = (localEntry as any).receipt || localEntry;
-                    if (rec && JSON.stringify(rec) === JSON.stringify(receipt)) {
-                      if (!outcomePayload && (localEntry as any).outcomePayload) {
-                        outcomePayload = (localEntry as any).outcomePayload;
-                      }
-                      hasAuditEvidence = Boolean(outcomePayload);
-                    }
-                  }
-                }
-
-                if (!outcomePayload && (this as any).lastOutcomePayload) {
-                  outcomePayload = (this as any).lastOutcomePayload;
-                  hasAuditEvidence = true;
-                }
-
-                if (!hasAuditEvidence || !outcomePayload) {
-                  this.sim.combatLog.push(`[RECOVERY REJECTED] Independent server audit evidence or outcome payload missing for receipt ${receipt.receiptId}`);
-                  return;
-                }
-
-                // Populate client ledger audit log before verification
-                targetLedger?.auditLog?.set(receipt.receiptId, receipt);
-                if (defaultSettlementLedger?.auditLog) {
-                  defaultSettlementLedger.auditLog.set(receipt.receiptId, receipt);
-                }
-
-                // Check ownership before cryptographic digest wait
-                if (!this.isRecoveryActive(recoveryCtrl, __msgSocket)) return;
-
-                // 3. Cryptographically verify settlement receipt against populated authoritative ledger
-                const verification = await verifySettlementReceipt(receipt, outcomePayload, targetLedger);
-
-                // Check ownership immediately after cryptographic verification wait
-                if (!this.isRecoveryActive(recoveryCtrl, __msgSocket)) return;
-
-                if (verification.valid && this.sim.player.isAlive && this.sim.player.health > 0) {
-                  verifiedReceiptInstances.add(receipt);
-                  (this.sim as any).__cryptographicallyVerifiedReceiptId = receipt.receiptId;
-                  this.sim.restoreExtractionCustody({
-                    isExtracted: true,
-                    receipt,
-                  });
-                  const receiptKey = `${receipt.raidId || this.sim.raidId}:${receipt.receiptId}`;
-                  if (
-                    !this.acceptedReceiptKeys.has(receiptKey) &&
-                    !this.sim.acceptedReceiptKeys?.has(receiptKey)
-                  ) {
-                    this.sim.onExfilSuccess?.(receipt);
-                    this.acceptedReceiptKeys.add(receiptKey);
-                    this.sim.acceptedReceiptKeys?.add(receiptKey);
-                  }
-                }
-              };
-              obtainAndVerifyRecoveryReceipt().catch(() => {});
-              return;
-            }
-
-            if (data.type === "settlement_rejected" || data.type === "settlement_error") {
-              const pending = data.eventId ? this.pendingSettlementCommitMap.get(data.eventId) : undefined;
-              if (pending) {
-                this.pendingSettlementCommitMap.delete(data.eventId);
-                pending.reject(new Error(data.error || "Settlement rejected by server"));
-              }
-              return;
-            }
-          }
-          if (data && data.type === "state_correction" && !data.senderId && data.operativeId === this.localId && data.raidId === this.sim.raidId) {
-            if (typeof data.x === "number" && typeof data.z === "number" && Number.isFinite(data.x) && Number.isFinite(data.z)) {
-              if (Math.abs(data.x) <= 80 && Math.abs(data.z) <= 80) {
-                this.sim.player.x = data.x;
-                this.sim.player.z = data.z;
-              }
-            }
-            return;
-          }
-          if (data && (data.type === "auth_success" || data.type === "auth")) {
-            // Strictly guard: only accept server auth_success once during initial handshake (peers cannot send it!)
-            if (!this.authenticated && data.type === "auth_success" && !data.senderId) {
-              // Before unlocking input: clear stale movement velocities and reconcile action state
-              this.sim.walkVx = 0;
-              this.sim.walkVz = 0;
-              this.sim.slideVx = 0;
-              this.sim.slideVz = 0;
-              this.sim.jumpVy = 0;
-              this.sim.player.y = 0;
-              this.sim.slideTicksRemaining = 0;
-              (this.sim.player as any).knockbackVx = 0;
-              (this.sim.player as any).knockbackVz = 0;
-              this.sim.player.isSliding = false;
-              this.sim.player.slideTicksRemaining = 0;
-              this.sim.player.isJumping = false;
-              if (this.sim.player.action === 'slide' || this.sim.player.action === 'roll' || this.sim.player.action === 'kick' || this.sim.player.action === 'shoot' || this.sim.player.action === 'jump') {
-                this.sim.player.action = 'idle';
-                this.sim.player.actionTicks = 0;
-                this.sim.player.isInvulnerable = false;
-              }
-              this.authenticated = true;
-              this.sim.isSocketDisconnected = false;
-              this.sim.terminalRecoveryError = undefined;
-              this.sim.serverMachineDamageAuthority = true;
-              if (typeof data.serverTime === "number") {
-                this.serverTimeOffset = data.serverTime - Date.now();
-                if (typeof globalThis !== "undefined") (globalThis as any).__stickZoneServerTimeOffset = this.serverTimeOffset;
-              }
-              if (typeof data.currentRaidTick === "number" && data.currentRaidTick > this.sim.tick) {
-                // Single clock owner: adopt the server tick THROUGH the frame consumer
-                // (drains the accumulator + advances lastTime — no double count).
-                const consume = (globalThis as any).__stickZoneConsumeAccumulatorMs;
-                const advTicks = data.currentRaidTick - this.sim.tick;
-                this.sim.tick = data.currentRaidTick;
-                if (typeof consume === "function") { try { consume((advTicks * 1000) / 60); } catch {} }
-              }
-              if (data.lastAcceptedPosition && typeof data.lastAcceptedPosition.x === "number" && typeof data.lastAcceptedPosition.z === "number" && Number.isFinite(data.lastAcceptedPosition.x) && Number.isFinite(data.lastAcceptedPosition.z)) {
-                this.sim.player.x = data.lastAcceptedPosition.x;
-                this.sim.player.z = data.lastAcceptedPosition.z;
-              }
-              if (typeof data.health === "number" && Number.isFinite(data.health)) {
-                this.sim.player.health = data.health;
-              }
-              if (typeof data.armor === "number" && Number.isFinite(data.armor)) {
-                this.sim.player.armor = data.armor;
-              }
-              // Complete authoritative life-state adoption: positive custody health
-              // with nonterminal flags RESURRECTS a locally-dead player (the local
-              // death may have been predicted from a peer packet the relay never
-              // confirmed — the server is the sole life authority).
-              if (data.health > 0 && data.isAlive === true) {
-                this.sim.player.isAlive = true;
-                this.sim.player.health = data.health;
-              } else if (data.isAlive === false || (typeof data.health === "number" && data.health <= 0)) {
-                this.sim.player.isAlive = false;
-                this.sim.player.health = 0;
-              }
-              // Authoritative weapon state: adopt complete persisted weapon selection and
-              // ammunition pools resolved from custody at authentication (supports restarts).
-              if (data.selectedWeapon === "rifle" || data.selectedWeapon === "shotgun") {
-                this.sim.setWeapon(data.selectedWeapon, true);
-              }
-              if (typeof data.rifleAmmo === "number" && Number.isFinite(data.rifleAmmo) && data.rifleAmmo >= 0 && data.rifleAmmo <= 30) {
-                this.sim.player.rifleAmmo = Math.floor(data.rifleAmmo);
-              }
-              if (typeof data.shotgunAmmo === "number" && Number.isFinite(data.shotgunAmmo) && data.shotgunAmmo >= 0 && data.shotgunAmmo <= 8) {
-                this.sim.player.shotgunAmmo = Math.floor(data.shotgunAmmo);
-              }
-              if (typeof data.ammo === "number" && Number.isFinite(data.ammo) && data.ammo >= 0 && data.ammo <= 30) {
-                const maxForCur = this.sim.player.weapon === "shotgun" ? 8 : 30;
-                this.sim.player.ammo = Math.max(0, Math.min(maxForCur, Math.floor(data.ammo)));
-              }
-              this.ensureRaidClockReconciliation();
-              this.sim.serverMachineDamageAuthority = true; // relay owns machine fire now
-              if (Array.isArray(data.machines)) {
-                // Full roster reconciliation (authentication): shared custody reconciler
-                this.applyMachineRosterCustody(data.machines, (data as any).machineRosterRevision);
-              }
-              if (data.crates && typeof data.crates === "object") {
-                const crateEntries = Object.entries(data.crates as Record<string, any>).map(([cid, cinfo]) => ({
-                  id: cid,
-                  opened: !!cinfo?.claimedBy,
-                  claimedBy: cinfo?.claimedBy,
-                  claimedAt: cinfo?.claimTimestamp || cinfo?.serverClaimedAt || 0,
-                }));
-                this.sim.restoreCrateStateFromSnapshot(crateEntries);
-              }
-              if (
-                typeof data.holdCompleted === "boolean" ||
-                typeof data.isExtracted === "boolean" ||
-                typeof data.holdCompletedAtTick === "number" ||
-                typeof data.extractedAtTick === "number"
-              ) {
-                this.sim.restoreExtractionCustody({
-                  holdCompleted: !!data.holdCompleted,
-                  holdCompletedAtTick: data.holdCompletedAtTick || 0,
-                  isExtracted: !!data.isExtracted,
-                  extractedAtTick: data.extractedAtTick || 0,
-                });
-              }
-            }
-            return; // Never forward or process auth packets as peer events
-          }
-          this.handleMessage(data);
-        } catch {}
-      };
-      createdSocket.onclose = (event: any) => {
-        // Ownership: only the CURRENT socket may clear live state — a superseded
-        // socket's late close must not deauthorize its replacement.
-        if (createdSocket !== this.ws) return;
-        this.isConnectionActive = false;
-        this.authenticated = false;
-        this.sim.isSocketDisconnected = true;
-        // Revert to local damage authority during disconnect so operative damage is not suppressed
-        this.sim.serverMachineDamageAuthority = false;
-        if (this.raidClockSyncInterval) {
-          clearInterval(this.raidClockSyncInterval);
-          this.raidClockSyncInterval = null;
-        }
-        if (this.isDisposed) return;
-        if (event.code === 4009 || (typeof event.reason === "string" && event.reason.includes("superseded"))) {
-          this.isSuperseded = true;
-          if (this.reconnectTimer) {
-            clearTimeout(this.reconnectTimer);
-            this.reconnectTimer = null;
-          }
-          this.sim.combatLog.push("[NETWORK] Session terminated: operative slot claimed by newer connection.");
-          return;
-        }
-        if (this.isSuperseded) return;
-        if (event.code === 4003) {
-          this.sim.combatLog.push('[NETWORK] Terminal session recovery requested.');
-          this.sim.terminalRecoveryError = "Terminal session recovery required: connection closed by server";
-          this.retryTerminalRecovery();
-        } else if (event.code === 4001) {
-          this.sim.combatLog.push('[NETWORK] Session token expired.');
-        } else if (event.code !== 1000) {
-          this.reconnectTimer = setTimeout(() => {
-            if (this.isDisposed) return;
-            if (this.sim.sessionToken) {
-              this.connectWebSocket(this.sim.sessionToken);
-            }
-          }, 1000);
-        }
-      };
-    } catch {}
-  }
-
   public broadcastRaidDiscovery(): void {
     const packet: PeerPacket = {
       eventId: this.createEventId(),
@@ -1449,7 +1031,7 @@ export class MultiplayerCoordinator {
       timestamp: this.getServerNow(),
       data: {
         requestedTick: this.sim.tick,
-        isResuming: isResuming ?? (this.sim.ingressController.getState().kind === 'confirmed_active' || (typeof sessionStorage !== 'undefined' && !!sessionStorage.getItem(`sz_session_${this.sim.raidId}_${this.localId}`))),
+        isResuming: isResuming ?? (this.sim.ingressController.getState().kind === 'confirmed_active' ),
       },
     };
     this.sendPacket(packet);
@@ -1482,7 +1064,7 @@ export class MultiplayerCoordinator {
       data: {
         recipientId,
         isConfirmation,
-        isResuming: isResuming ?? (this.sim.ingressController.getState().kind === 'confirmed_active' || (typeof sessionStorage !== 'undefined' && !!sessionStorage.getItem(`sz_session_${this.sim.raidId}_${this.localId}`))),
+        isResuming: isResuming ?? (this.sim.ingressController.getState().kind === 'confirmed_active' ),
       },
     };
     this.sendPacket(packet);
@@ -1767,10 +1349,6 @@ export class MultiplayerCoordinator {
   }
 
   private sendPacket(packet: PeerPacket): void {
-    if (this.sim.sessionToken) {
-      (packet as any).token = this.sim.sessionToken;
-    }
-
     if (this.spokeSession) {
       try {
         this.spokeSession.submitIntent({
@@ -1785,35 +1363,6 @@ export class MultiplayerCoordinator {
         this.sdkRoom.send(packet);
       } catch {}
     }
-    // Deliver via BroadcastChannel
-    if (this.ws && this.ws.readyState === 1) {
-      if (this.ws.bufferedAmount && this.ws.bufferedAmount > 65536) {
-        if (packet.type === "state" || (packet as any).type === "hold_tick") {
-          return; // Prevent send buffer bloat on high-frequency telemetry packets
-        }
-      }
-      try {
-        this.ws.send(JSON.stringify(packet));
-      } catch {}
-    }
-
-    if (this.channel) {
-      try {
-        const channelPacket = { ...packet };
-        delete (channelPacket as any).token;
-        if (channelPacket.data && typeof channelPacket.data === "object") {
-          channelPacket.data = { ...channelPacket.data };
-          delete (channelPacket.data as any).token;
-        }
-        this.channel.postMessage(channelPacket);
-      } catch {}
-    }
-    // AND Deliver via Vite HMR WebSocket mesh (enables cross-browser & separate Playwright contexts)
-    if (typeof import.meta !== 'undefined' && (import.meta as any).hot) {
-      try {
-        (import.meta as any).hot.send('stick:peer_packet', packet);
-      } catch {}
-    }
   }
 
   public update(nowTimestamp?: number): void {
@@ -1823,74 +1372,6 @@ export class MultiplayerCoordinator {
   public pruneExpiredPeers(maxIdleMs = 10000, nowTimestamp?: number): void {
     if (this.isDisposed || this.isSuperseded) return;
     const now = nowTimestamp ?? Date.now();
-    // Socket closing/closed guard: if socket is closing (readyState 2) or closed (readyState 3), enforce disconnected state immediately
-    if (this.ws && (this.ws.readyState === 2 || this.ws.readyState === 3)) {
-      this.isConnectionActive = false;
-      if (this.authenticated || !this.sim.isSocketDisconnected) {
-        this.authenticated = false;
-        this.sim.isSocketDisconnected = true;
-        this.sim.serverMachineDamageAuthority = true;
-        this.sim.walkVx = 0;
-        this.sim.walkVz = 0;
-        this.sim.slideVx = 0;
-        this.sim.slideVz = 0;
-        this.sim.jumpVy = 0;
-      }
-    }
-
-    // Socket silent stall detection: if authenticated socket has had no incoming server traffic for >5000ms, force close to trigger reconnect
-    if (this.ws && (this.ws.readyState === 1 || this.ws.readyState === 0) && this.authenticated) {
-      if (this.lastServerMessageTime && now - this.lastServerMessageTime > 5000) {
-        this.isConnectionActive = false;
-        this.authenticated = false;
-        this.sim.isSocketDisconnected = true;
-        this.sim.serverMachineDamageAuthority = true;
-        this.sim.walkVx = 0;
-        this.sim.walkVz = 0;
-        this.sim.slideVx = 0;
-        this.sim.slideVz = 0;
-        this.sim.jumpVy = 0;
-        const sockToClose = this.ws;
-        try {
-          sockToClose.close(4008, "Heartbeat timeout: silent connection stall");
-        } catch {}
-        if (!this.reconnectTimer && !this.isDisposed && !this.isSuperseded) {
-          this.reconnectTimer = setTimeout(() => {
-            if (this.isDisposed || this.isSuperseded) return;
-            if (this.sim.sessionToken) {
-              this.connectWebSocket(this.sim.sessionToken);
-            }
-          }, 1000);
-        }
-      }
-    }
-    // Connection & authentication deadline: if socket opened or connecting but not authenticated within 5000ms, force close
-    if (this.ws && (this.ws.readyState === 0 || this.ws.readyState === 1) && !this.authenticated) {
-      const connStart = (this as any).connectionStartTime || 0;
-      if (connStart && now - connStart > 5000) {
-        this.isConnectionActive = false;
-        this.authenticated = false;
-        this.sim.isSocketDisconnected = true;
-        this.sim.serverMachineDamageAuthority = true;
-        this.sim.walkVx = 0;
-        this.sim.walkVz = 0;
-        this.sim.slideVx = 0;
-        this.sim.slideVz = 0;
-        this.sim.jumpVy = 0;
-        const sockToClose = this.ws;
-        try {
-          sockToClose.close(4008, "Authentication timeout: connection stalled before auth");
-        } catch {}
-        if (!this.reconnectTimer && !this.isDisposed && !this.isSuperseded) {
-          this.reconnectTimer = setTimeout(() => {
-            if (this.isDisposed || this.isSuperseded) return;
-            if (this.sim.sessionToken) {
-              this.connectWebSocket(this.sim.sessionToken);
-            }
-          }, 1000);
-        }
-      }
-    }
     const toRemove: string[] = [];
     for (const [peerId, peer] of this.connectedPeers.entries()) {
       if (now - peer.lastSeen > maxIdleMs) {
@@ -2432,8 +1913,7 @@ export class MultiplayerCoordinator {
         this.sim.combatLog.push(`[INGRESS DENIED] Announcement arrived with invalid or malformed snapshot`);
         return;
       }
-      const isResuming = this.sim.ingressController.getState().kind === 'confirmed_active' ||
-        (typeof sessionStorage !== 'undefined' && !!sessionStorage.getItem(`sz_session_${this.sim.raidId}_${this.localId}`)) ||
+      const isResuming = this.sim.ingressController.getState().kind === 'confirmed_active'  ||
         peerEntry.ingressDone || peerEntry.admitted;
       if (
         !isResuming && (
@@ -3735,26 +3215,6 @@ export class MultiplayerCoordinator {
   }
 
   private async _doRetryTerminalRecovery(maxRetries = 3): Promise<boolean> {
-    if (this.isDisposed) return false;
-    if (typeof sessionStorage !== "undefined") {
-      const savedExfil = sessionStorage.getItem(`sz_exfil_${this.sim.raidId}_${this.sim.player.id}`);
-      if (savedExfil) {
-        try {
-          const exfilData = JSON.parse(savedExfil);
-          this.sim.restoreExtractionCustody(exfilData);
-          return true;
-        } catch {}
-      }
-      const savedKia = sessionStorage.getItem(`sz_kia_${this.sim.raidId}_${this.sim.player.id}`);
-      if (savedKia === "true") {
-        this.sim.player.health = 0;
-        this.sim.player.isAlive = false;
-        return true;
-      }
-    }
-
-
-
     return false;
   }
 
@@ -3797,12 +3257,6 @@ export class MultiplayerCoordinator {
       for (const c of inFlight) { try { c.abort(); } catch {} }
       inFlight.length = 0;
     }
-    if (this.ws) {
-      try {
-        this.ws.close();
-      } catch {}
-      this.ws = null;
-    }
     if (this.discoveryInterval) {
       clearInterval(this.discoveryInterval);
       this.discoveryInterval = null;
@@ -3811,17 +3265,11 @@ export class MultiplayerCoordinator {
       clearTimeout(this.selfReadinessTimer);
       this.selfReadinessTimer = null;
     }
-    if (this.channel) {
+    if (this.sdkRoom) {
       try {
-        this.channel.close();
+        this.sdkRoom.leave?.();
       } catch {}
-      this.channel = null;
-    }
-    if (typeof import.meta !== 'undefined' && (import.meta as any).hot && this.boundHotHandler) {
-      try {
-        (import.meta as any).hot.off('stick:peer_packet', this.boundHotHandler);
-      } catch {}
-      this.boundHotHandler = null;
+      this.sdkRoom = null;
     }
   }
 }

@@ -112,7 +112,6 @@ export interface StashState {
   resetProgress: () => void;
 }
 
-const STORAGE_KEY = "sz_stash_storage_v2";
 
 export function computeStoreChecksum(data: {
   bankCash: number;

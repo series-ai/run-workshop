@@ -648,7 +648,6 @@ export class SectorDepotSimulation {
   public set onExfilSuccess(fn: ((receipt?: any) => void) | undefined) {
     this._onExfilSuccess = fn;
   }
-  public sessionToken?: string;
   /**
    * When the authenticated relay runs server-side machine attack authority, local
    * machine->player damage is suppressed (visual fire continues): machine damage to
