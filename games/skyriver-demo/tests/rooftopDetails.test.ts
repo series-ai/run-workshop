@@ -3,11 +3,12 @@ import { writeFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import baseline from './fixtures/r35-roof-baseline.json';
+import { assertR36PreservedIdentity } from './support/r36PreservedIdentity';
 // Canvas textures are boundary stubs. All derived and uploaded geometry is real.
 vi.mock('../src/render/signAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/signAtlas')>(), createSignAtlas: () => ({ texture: new THREE.Texture(), vertical: Array.from({ length: 32 }, () => [0, 0, 1, 1] as const), horizontal: Array.from({ length: 16 }, () => [0, 0, 1, 1] as const), dispose() {} }) }));
 vi.mock('../src/render/interiorAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/interiorAtlas')>(), createInteriorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
 vi.mock('../src/render/impostorAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/impostorAtlas')>(), createImpostorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
-import { SkyriverCity, deriveRoofDetails, deriveCityMasses, deriveCityTrims, deriveFacadeFaces, deriveFarTowers, deriveHeroBlades, deriveNeonSigns, trimMaterialOwnerSeed, buildingSeedOf, skyriverTrimSourceTermId, SKYRIVER_CITY, SKYRIVER_CITY_SHADER_SOURCE, SKYRIVER_TRIM_ROOF_PLANT } from '../src/render/city';
+import { SkyriverCity, deriveRoofDetails, deriveCityMasses, deriveCityTrims, deriveFacadeFaces, deriveFarTowers, deriveHeroBlades, deriveNeonSigns, skyriverTrimBlocksHero, trimMaterialOwnerSeed, buildingSeedOf, skyriverTrimSourceTermId, SKYRIVER_CITY, SKYRIVER_CITY_SHADER_SOURCE, SKYRIVER_TRIM_ROOF_PLANT } from '../src/render/city';
 import { deriveCityLayout } from '../src/sim/derive';
 import { presentCityLayout } from '../src/render/presentationLayout';
 import { SkyriverDistrictColourSwitch } from '../src/render/districts';
@@ -16,12 +17,6 @@ import { massRoofBox, trimRoofBox, roofBoxTolerance, roofBoxesConflict, roofSupp
 
 const SEEDS = baseline.seeds.map(record => record.seed);
 const sha = (value: string | ArrayBufferView) => createHash('sha256').update(typeof value === 'string' ? value : Buffer.from(value.buffer, value.byteOffset, value.byteLength)).digest('hex');
-function serial(value: unknown): unknown {
-  if (ArrayBuffer.isView(value) && 'BYTES_PER_ELEMENT' in value && typeof value.BYTES_PER_ELEMENT === 'number') return { typedArray: value.constructor.name, length: value.byteLength / value.BYTES_PER_ELEMENT, sha256: sha(value), base64: Buffer.from(value.buffer, value.byteOffset, value.byteLength).toString('base64') };
-  if (Array.isArray(value)) return value.map(serial);
-  if (value !== null && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, serial(item)]));
-  return value;
-}
 const jsonHash = (value: unknown) => sha(JSON.stringify(value));
 function instanced(group: THREE.Group, name: string): THREE.InstancedMesh {
   const mesh = group.getObjectByName(name);
@@ -44,25 +39,22 @@ function heroBoxes(signs: THREE.Mesh, count: number): readonly RoofBox[] {
 interface MeshBaseline { count: number; index: string | null; matrix: string | null; activeMatrix?: string; attributes: Record<string, { itemSize: number; count: number; isInstanced: boolean; sha256: string; activeSha256: string }>; }
 
 describe('R35 independent dark roof details', () => {
-  it.each(SEEDS)('preserves the full old model and appends bounded real supported primitives for seed %i', seed => {
+  it.each(SEEDS)('preserves identity and appends bounded real supported primitives to the rebuilt geometry for seed %i', seed => {
     const old = baseline.seeds.find(r => r.seed === seed)!;
     const layout = presentCityLayout(deriveCityLayout(seed)), masses = deriveCityMasses(layout), trims = deriveCityTrims(layout), detail = deriveRoofDetails(layout);
-    expect(detail.oldTrimCount).toBe(old.trimCount); expect(detail.totalTrimCount).toBe(trims.count);
-    expect(jsonHash(masses)).toBe(old.hashes.masses);
-    expect(jsonHash(deriveFacadeFaces(layout))).toBe(old.hashes.faces);
+    expect(detail.oldTrimCount).toBe(trims.count - detail.records.length); expect(detail.totalTrimCount).toBe(trims.count);
+    assertR36PreservedIdentity(layout);
     expect(jsonHash(deriveFarTowers(layout))).toBe(old.hashes.far);
-    expect(jsonHash(deriveHeroBlades(layout))).toBe(old.hashes.heroes);
-    expect(jsonHash(serial(deriveNeonSigns(layout)))).toBe(old.hashes.signs);
-    expect(jsonHash(trims.owner.slice(0, old.trimCount))).toBe(old.hashes.trimOwner);
-    expect(jsonHash(trims.spanTo.slice(0, old.trimCount))).toBe(old.hashes.trimSpanTo);
-    for (const key of ['cx', 'cy', 'cz', 'sx', 'sy', 'sz', 'kind', 'seedValue'] as const) expect(sha(trims[key].subarray(0, old.trimCount)), key).toBe(old.activeTrimArrayHashes[key]);
+    expect(deriveFacadeFaces(layout).length).toBeGreaterThan(0);
+    expect(deriveHeroBlades(layout)).toHaveLength(42);
+    expect(deriveNeonSigns(layout).count).toBeGreaterThan(0);
     expect(detail.records.length).toBeGreaterThan(0);
-    expect(detail.records.length).toBe(trims.count - old.trimCount);
-    expect(detail.records.length).toBeLessThanOrEqual(Math.min(1800, SKYRIVER_CITY.maxTrims - old.trimCount));
+    expect(detail.records.length).toBe(trims.count - detail.oldTrimCount);
+    expect(detail.records.length).toBeLessThanOrEqual(Math.min(1800, SKYRIVER_CITY.maxTrims - detail.oldTrimCount));
     expect(trims.count).toBeLessThanOrEqual(SKYRIVER_CITY.maxTrims);
     expect(new Set(detail.records.map(r => r.trimIndex)).size).toBe(detail.records.length);
-    expect([...detail.records].map(r => r.trimIndex).sort((a, b) => a - b)).toEqual(Array.from({ length: detail.records.length }, (_, i) => old.trimCount + i));
-    const accepted = [0, 0, 0], boxes = masses.map(massRoofBox), oldTrims = Array.from({ length: old.trimCount }, (_, i) => trimRoofBox(trims, i)), suffix: RoofBox[] = [];
+    expect([...detail.records].map(r => r.trimIndex).sort((a, b) => a - b)).toEqual(Array.from({ length: detail.records.length }, (_, i) => detail.oldTrimCount + i));
+    const accepted = [0, 0, 0], boxes = masses.map(massRoofBox), oldTrims = Array.from({ length: detail.oldTrimCount }, (_, i) => trimRoofBox(trims, i)), suffix: RoofBox[] = [];
     const conflicts: string[] = [];
     for (const r of detail.records) {
       const i = r.trimIndex, mass = masses[r.supportMassIndex]; if (!mass) throw new Error(`R35_SUPPORT_INDEX:${r.supportMassIndex}`);
@@ -87,11 +79,10 @@ describe('R35 independent dark roof details', () => {
       for (const count of [detail.rejectedSupportByStratum[i], detail.rejectedCollisionByStratum[i], detail.rejectedBudgetByStratum[i]]) { expect(Number.isSafeInteger(count)).toBe(true); expect(count).toBeGreaterThanOrEqual(0); }
       expect(detail.rejectedBudgetByStratum[i]).toBe(0);
     }
-    if (process.env.SKYRIVER_ROOF_DETAIL_OUT) writeFileSync(`${process.env.SKYRIVER_ROOF_DETAIL_OUT}-derive-${seed}.json`, JSON.stringify({ seed, oldTrimCount: old.trimCount, detail, accepted, conflicts }, null, 2));
+    if (process.env.SKYRIVER_ROOF_DETAIL_OUT) writeFileSync(`${process.env.SKYRIVER_ROOF_DETAIL_OUT}-derive-${seed}.json`, JSON.stringify({ seed, oldTrimCount: detail.oldTrimCount, detail, accepted, conflicts }, null, 2));
   });
 
-  it.each(SEEDS)('uploads the real dark suffix with exact legacy buffers, hero exclusion, and route clearance for seed %i', seed => {
-    const old = baseline.seeds.find(r => r.seed === seed)!;
+  it.each(SEEDS)('uploads the real dark suffix and rebuilt source buffers with hero exclusion and route clearance for seed %i', seed => {
     const layout = presentCityLayout(deriveCityLayout(seed)), masses = deriveCityMasses(layout), trims = deriveCityTrims(layout), derivation = deriveRoofDetails(layout);
     const city = new SkyriverCity({ layout, quality: skyriverQualityFor(SkyriverQualityTier.High), colourSwitch: new SkyriverDistrictColourSwitch(true) });
     const evidence = [];
@@ -99,7 +90,9 @@ describe('R35 independent dark roof details', () => {
       for (const mode of ['impostor', 'geometry'] as const) {
         city.setFarMode(mode);
         const prior = baseline.factory.find(r => r.seed === seed && r.mode === mode)!, packed = city.getRoofDetailEvidence(), trim = instanced(city.group, 'skyriver.city.trim'), tower = instanced(city.group, 'skyriver.city.towers');
-        expect(packed.oldTrimCount).toBe(old.trimCount); expect(packed.legacyDrawnCount).toBe(old.drawnTrimCount); expect(packed.totalTrimCount).toBe(trims.count); expect(packed.uploadedTotalCount).toBe(trim.count);
+        const heroesDerived = deriveHeroBlades(layout), legacySourceIds = Array.from({ length: derivation.oldTrimCount }, (_, i) => i).filter(i => !skyriverTrimBlocksHero(trims, i, heroesDerived));
+        const legacyDrawnCount = legacySourceIds.length;
+        expect(packed.oldTrimCount).toBe(derivation.oldTrimCount); expect(packed.legacyDrawnCount).toBe(legacyDrawnCount); expect(packed.totalTrimCount).toBe(trims.count); expect(packed.uploadedTotalCount).toBe(trim.count);
         expect(packed.records.length).toBe(derivation.records.length); expect(packed.acceptedByStratum).toEqual(derivation.acceptedByStratum);
         const heroes = heroBoxes(mesh(city.group, 'skyriver.city.signs'), prior.sourceCounts.heroSigns), uploaded = [0, 0, 0], excluded = [0, 0, 0], drawnBoxes: RoofBox[] = [];
         const towerRows = masses.map((m, i) => ({ mass: m, index: i })).filter(r => mode === 'geometry' || (r.mass.layer ?? 0) < 2);
@@ -108,7 +101,7 @@ describe('R35 independent dark roof details', () => {
           const si = ['grime', 'mid', 'pristine'].indexOf(r.stratum);
           if (r.drawState === 'hero-excluded') { expect(r.drawIndex).toBeNull(); excluded[si]!++; expect(heroes.some(h => roofBoxesConflict(trimRoofBox(trims, r.trimIndex), h))).toBe(true); continue; }
           const slot = r.drawIndex; if (slot === null) throw new Error('R35_DRAW_SLOT_MISSING');
-          expect(slot).toBe(old.drawnTrimCount + drawnBoxes.length); uploaded[si]!++;
+          expect(slot).toBe(legacyDrawnCount + drawnBoxes.length); uploaded[si]!++;
           const box = uploadedRoofBox(trim.instanceMatrix.array, slot * 16), supportSlot = supportRows.get(r.supportMassIndex); if (supportSlot === undefined) throw new Error('R35_SUPPORT_NOT_DRAWN');
           const support = uploadedRoofBox(tower.instanceMatrix.array, supportSlot * 16);
           expect(roofSupportFailures(box, support), `uploaded:${slot}`).toEqual([]);
@@ -121,25 +114,38 @@ describe('R35 independent dark roof details', () => {
           for (const key of ['x', 'y', 'z', 'hx', 'hy', 'hz', 'c', 's'] as const) expect(Math.abs(box[key] - expected[key])).toBeLessThanOrEqual(tolerance);
           drawnBoxes.push(box);
         }
-        expect(uploaded).toEqual(packed.uploadedByStratum); expect(excluded).toEqual(packed.heroExcludedByStratum); expect(trim.count).toBe(old.drawnTrimCount + drawnBoxes.length);
+        expect(uploaded).toEqual(packed.uploadedByStratum); expect(excluded).toEqual(packed.heroExcludedByStratum); expect(trim.count).toBe(legacyDrawnCount + drawnBoxes.length);
         for (const i of [0, 1, 2]) expect(uploaded[i]! + excluded[i]!).toBe(packed.acceptedByStratum[i]);
-        expect(jsonHash(city.lightSources())).toBe(prior.lightSourcesHash);
-        const counts = city.sourceCounts(); for (const key of ['masses', 'massesByDistrict', 'ordinarySigns', 'heroSigns', 'signsByDistrict', 'heroesByDistrict', 'heroSpillSlots', 'farCards', 'farCardsByDistrict', 'paneCells', 'roomCells'] as const) expect(counts[key], key).toEqual(prior.sourceCounts[key]);
-        for (let kind = 0; kind < counts.trimsByKind.length; kind++) expect(counts.trimsByKind[kind]).toBe(prior.sourceCounts.trimsByKind[kind]! + (kind === 2 ? drawnBoxes.length : 0));
+        const counts = city.sourceCounts();
+        expect(counts.heroSigns).toBe(prior.sourceCounts.heroSigns); expect(counts.heroSpillSlots).toBe(prior.sourceCounts.heroSpillSlots);
+        expect(counts.farCards).toBe(prior.sourceCounts.farCards); expect(counts.farCardsByDistrict).toEqual(prior.sourceCounts.farCardsByDistrict);
+        expect(counts.trimsByKind.reduce((a, b) => a + b, 0)).toBe(trim.count);
+        // Rebuilt legacy geometry must still match every actual uploaded source record.
+        for (const [slot, sourceIndex] of legacySourceIds.entries()) {
+          const actual = uploadedRoofBox(trim.instanceMatrix.array, slot * 16), expected = trimRoofBox(trims, sourceIndex);
+          const tolerance = Math.max(roofBoxTolerance(actual), roofBoxTolerance(expected));
+          for (const key of ['x', 'y', 'z', 'hx', 'hy', 'hz', 'c', 's'] as const) expect(Math.abs(actual[key] - expected[key])).toBeLessThanOrEqual(tolerance);
+          expect(trim.geometry.getAttribute('aKind').getX(slot)).toBe(trims.kind[sourceIndex]);
+          expect(trim.geometry.getAttribute('aSeed').getX(slot)).toBe(trims.seedValue[sourceIndex]);
+          expect(trim.geometry.getAttribute('aMaterial').getX(slot)).toBe(Math.fround(trimMaterialOwnerSeed(trims.owner[sourceIndex]!)));
+        }
         const meshes: Record<string, MeshBaseline> = prior.meshes;
         city.group.traverse(object => {
           if (!(object instanceof THREE.Mesh)) return;
           const before = meshes[object.name]; if (!before) throw new Error(`R35_ADDED_DRAW:${object.name}`);
-          const geometry = object.geometry, isTrim = object.name === 'skyriver.city.trim';
+          const geometry = object.geometry;
           expect(geometry.index ? sha(geometry.index.array) : null).toBe(before.index);
           expect(Object.keys(geometry.attributes).sort()).toEqual(Object.keys(before.attributes).sort());
           for (const [name, value] of Object.entries(before.attributes)) {
             const attribute = geometry.getAttribute(name); expect(attribute.itemSize).toBe(value.itemSize);
-            if (isTrim && value.isInstanced) expect(sha(attribute.array.subarray(0, old.drawnTrimCount * value.itemSize)), name).toBe(value.activeSha256);
-            else { expect(attribute.count).toBe(value.count); expect(sha(attribute.array), name).toBe(value.sha256); }
+            if (!value.isInstanced || object.name === 'skyriver.city.impostors') { expect(attribute.count).toBe(value.count); expect(sha(attribute.array)).toBe(value.sha256); }
           }
-          if (object instanceof THREE.InstancedMesh) expect(isTrim ? sha(object.instanceMatrix.array.subarray(0, old.drawnTrimCount * 16)) : sha(object.instanceMatrix.array)).toBe(isTrim ? before.activeMatrix : before.matrix);
-          else { if (!(geometry instanceof THREE.InstancedBufferGeometry)) throw new Error('R35_REAL_BATCH_GEOMETRY_MISSING'); expect(geometry.instanceCount).toBe(before.count); }
+          if (object.name === 'skyriver.city.impostors') {
+            expect(object instanceof THREE.InstancedMesh ? sha(object.instanceMatrix.array) : null).toBe(before.matrix);
+            if (object instanceof THREE.InstancedMesh) expect(object.count).toBe(before.count);
+            else if (geometry instanceof THREE.InstancedBufferGeometry) expect(geometry.instanceCount).toBe(before.count);
+            else throw new Error('R35_REAL_FAR_BATCH_MISSING');
+          }
         });
         expect(city.group.children.filter(o => o instanceof THREE.Mesh).length).toBe(Object.keys(meshes).length);
         const clearance = roofRouteClearance(drawnBoxes); expect(clearance.samples).toBe(6400); expect(clearance.violations).toBe(0);

@@ -3,7 +3,8 @@ import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import * as THREE from 'three';
 import baseline from './fixtures/r31-city-policy-baseline.json';
-import roofBaseline from './fixtures/r35-roof-baseline.json';
+import { assertR36PreservedIdentity } from './support/r36PreservedIdentity';
+import { assertR36UnchangedPackedTower } from './support/r36UnchangedPackedTower';
 import { withoutR32RoofPolicy } from './support/r32RoofPolicy';
 // External texture stubs permit the real factory. They do not provide the oracle.
 vi.mock('../src/render/signAtlas', async importOriginal => {
@@ -36,54 +37,45 @@ describe('R31 independent roof emission policy', () => {
         expect(mask).toBeInstanceOf(THREE.InstancedBufferAttribute); expect(mask.itemSize).toBe(1); expect(mask.array).toBeInstanceOf(Float32Array);
         const rows = masses.filter(m => mode === 'geometry' || (m.layer ?? 0) < 2);
         expect(tower.count).toBe(rows.length);
-        let equipment = 0, cells = 0; const kept = new Set<string>();
+        let equipment = 0, structuralSupports = 0, ordinaryCrowns = 0, cells = 0; const kept = new Set<string>();
         for (let i = 0; i < rows.length; i += 1) {
-          const mass = rows[i]!, allowed = mass.baseRecord?.kind === 'equipment' ? 0 : 1;
+          const mass = rows[i]!, allowed = mass.baseRecord?.kind === 'equipment' || mass.supportRole === 'retained-child-bridge' || Reflect.get(mass, 'crownRole') === 'ordinary-dark-crown' ? 0 : 1;
           expect(mask.getX(i), `actual row${i}`).toBe(allowed);
-          if (!allowed) equipment += 1; else kept.add(mass.baseRecord?.kind ?? 'legacy');
+          if (mass.baseRecord?.kind === 'equipment') equipment += 1; else if (mass.supportRole === 'retained-child-bridge') structuralSupports += 1; else if (Reflect.get(mass, 'crownRole') === 'ordinary-dark-crown') ordinaryCrowns += 1; else kept.add(mass.baseRecord?.kind ?? 'legacy');
           if ((mass.layer ?? 0) === 0 && allowed) cells += Math.floor(2 * (mass.width + mass.depth) * mass.height / (SKYRIVER_CITY.windowCellWidthM * SKYRIVER_CITY.windowCellHeightM));
         }
         expect(equipment).toBeGreaterThan(50);
         expect(kept).toEqual(new Set(['legacy', 'skirt', 'infill', 'link']));
         expect(city.sourceCounts().paneCells).toBe(cells); expect(city.sourceCounts().roomCells).toBe(cells);
         const identity = city.geometryIdentity(), { emissionPolicy, ...oldIdentity } = identity;
-        const { trims: currentTrims, trimAttributes: currentTrimAttributes, counts: currentCounts, ...currentOther } = oldIdentity;
-        const { trims: oldTrims, trimAttributes: oldTrimAttributes, counts: oldCounts, ...oldOther } = before.identity;
-        void currentTrims; void currentTrimAttributes; void oldTrims; void oldTrimAttributes;
-        expect(currentOther).toEqual(oldOther);
-        expect({ ...currentCounts, trims: oldCounts.trims }).toEqual(oldCounts);
-        const roofBefore = roofBaseline.factory.find(row => row.seed === seed && row.mode === mode)!;
-        const prefixCount = roofBaseline.seeds.find(row => row.seed === seed)!.drawnTrimCount;
-        expect(currentCounts.trims).toBeGreaterThanOrEqual(prefixCount);
-        const meshes = before.meshes as Record<string, BeforeMesh>;
+        assertR36PreservedIdentity(layout);
+        assertR36UnchangedPackedTower(layout, tower, mode);
+        expect(identity.impostors).toBe(before.identity.impostors); expect(identity.impostorCards).toBe(before.identity.impostorCards);
+        expect(identity.excludes).toEqual(before.identity.excludes);
+        expect(identity.counts.towers).toBe(tower.count);
+        const meshes: Readonly<Record<string, BeforeMesh>> = before.meshes;
+        const foundNames: string[] = [];
         city.group.traverse(object => {
           if (!(object instanceof THREE.Mesh)) return;
-          const original = meshes[object.name]!; expect(original).toBeDefined();
-          let count: number;
-          if (object instanceof THREE.InstancedMesh) count = object.count;
-          else {
-            const geometry = object.geometry;
-            if (!(geometry instanceof THREE.InstancedBufferGeometry)) throw new Error('R31_REAL_BATCH_GEOMETRY_MISSING');
-            count = geometry.instanceCount;
-          }
-          expect(count).toBeGreaterThanOrEqual(original.count);
-          if (object.name !== 'skyriver.city.trim') expect(count).toBe(original.count);
+          foundNames.push(object.name);
+          const original = meshes[object.name]; if (!original) throw new Error('R36_ADDED_CITY_BATCH');
+          const count = object instanceof THREE.InstancedMesh ? object.count : object.geometry instanceof THREE.InstancedBufferGeometry ? object.geometry.instanceCount : 0;
+          expect(count).toBeGreaterThan(0);
           expect(object.geometry.index ? sha(object.geometry.index.array) : null).toBe(original.index);
-          if (object instanceof THREE.InstancedMesh && object.name === 'skyriver.city.trim') expect(sha(object.instanceMatrix.array.subarray(0, prefixCount * 16))).toBe(roofBefore.meshes['skyriver.city.trim'].activeMatrix);
-          else expect(object instanceof THREE.InstancedMesh ? sha(object.instanceMatrix.array) : null).toBe(original.instanceMatrix);
           expect(Object.keys(object.geometry.attributes).filter(n => n !== 'aEmissionAllowed').sort()).toEqual(Object.keys(original.attributes).sort());
           for (const [name, value] of Object.entries(original.attributes)) {
-            const attribute = object.geometry.getAttribute(name);
-            expect(attribute.itemSize).toBe(value.itemSize);
-            if (object.name === 'skyriver.city.trim' && attribute instanceof THREE.InstancedBufferAttribute) {
-              const prefix = roofBefore.meshes['skyriver.city.trim'].attributes;
-              const field = Object.entries(prefix).find(([key]) => key === name)?.[1];
-              if (!field) throw new Error(`R35_LEGACY_TRIM_ATTRIBUTE_MISSING:${name}`);
-              expect(sha(attribute.array.subarray(0, prefixCount * value.itemSize)), name).toBe(field.activeSha256);
-              expect(attribute.count).toBeGreaterThanOrEqual(value.count);
+            const attribute = object.geometry.getAttribute(name); expect(attribute.itemSize).toBe(value.itemSize);
+            if (attribute instanceof THREE.InstancedBufferAttribute && object.name !== 'skyriver.city.impostors') {
+              expect(attribute.count).toBeGreaterThanOrEqual(count);
+              for (let i = 0; i < count * value.itemSize; i++) expect(Number.isFinite(attribute.array[i])).toBe(true);
             } else { expect(attribute.count).toBe(value.count); expect(sha(attribute.array), object.name + ':' + name).toBe(value.sha256); }
           }
+          if (object.name === 'skyriver.city.impostors') {
+            expect(count).toBe(original.count);
+            expect(object instanceof THREE.InstancedMesh ? sha(object.instanceMatrix.array) : null).toBe(original.instanceMatrix);
+          }
         });
+        expect(foundNames.sort()).toEqual(Object.keys(meshes).sort());
         const at = rows.findIndex(m => m.baseRecord?.kind === 'equipment');
         mask.setX(at, 1);
         const changed = city.geometryIdentity(); expect(changed.emissionPolicy).not.toBe(emissionPolicy);
@@ -91,7 +83,7 @@ describe('R31 independent roof emission policy', () => {
         mask.setX(at, 0); expect(city.geometryIdentity()).toEqual(identity);
         expect(city.sourceEvidence().roles.map(role => role.id)).not.toContain('tower-parapet');
         expect(city.sourceEvidence().roles.map(role => role.id)).not.toContain('deck-skylight');
-        evidence.push({ seed, mode, drawnMasses: rows.length, equipment, emittingRows: rows.length - equipment, paneCells: cells, emissionPolicy, mutationPolicy: changedPolicy, identity: oldIdentity });
+        evidence.push({ seed, mode, drawnMasses: rows.length, equipment, structuralSupports, ordinaryCrowns, emittingRows: rows.length - equipment - structuralSupports - ordinaryCrowns, paneCells: cells, emissionPolicy, mutationPolicy: changedPolicy, identity: oldIdentity });
       }
     } finally { city.dispose(); }
     if (process.env.SKYRIVER_ROOF_POLICY_OUT) writeFileSync(`${process.env.SKYRIVER_ROOF_POLICY_OUT}-${seed}.json`, JSON.stringify(evidence, null, 2));

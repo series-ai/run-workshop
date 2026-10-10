@@ -12,6 +12,7 @@ import {
   type StructureMaterialProfile,
 } from '../src/render/structureMaterial';
 import { deriveCityLayout } from '../src/sim/derive';
+import { presentCityLayout } from '../src/render/presentationLayout';
 import { buildingSeedOf, deriveFarTowers, deriveCityMasses } from '../src/render/city';
 import { SKYRIVER_INTERIOR_FADE } from '../src/render/interiorResponse';
 
@@ -134,7 +135,7 @@ describe('structure material profile and codec', () => {
 
   it('guarantees identical far tower owner q across body, cap, spire and card', () => {
     for (const seed of SEEDS) {
-      const layout = deriveCityLayout(seed);
+      const layout = presentCityLayout(deriveCityLayout(seed));
       const far = deriveFarTowers(layout);
       for (const f of far) {
         const farSeed32 = Math.fround(buildingSeedOf(f.x, f.v));

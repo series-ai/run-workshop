@@ -8,11 +8,14 @@ import { deriveCityLayout } from '../src/sim/derive';
 import {
   auditCityAnchors,
   deriveFacadeFaces,
+  deriveCityMasses,
+  deriveTowerProfiles,
   deriveHeroBlades,
   deriveHeroRowPlans,
   deriveNeonSigns,
   SKYRIVER_CITY_SIGN_CANDIDATE_BUDGET,
 } from '../src/render/city';
+import { intersectSection, sectionUnionArea } from './support/towerProfileGeometry';
 import { presentCityLayout } from '../src/render/presentationLayout';
 import { CANYON_LOOP_LENGTH_M } from '../src/render/canyonWarp';
 import { routeAltitude, STRATA_PRISTINE_BASE_M } from '../src/render/routeProfile';
@@ -76,22 +79,31 @@ describe('exposed facade levels and hero rows', () => {
     for (const face of faces) levels.set(face.buildingId, [...(levels.get(face.buildingId) ?? []), face]);
     const tall = [...levels].filter(([id]) => (towersById.get(id)?.height ?? 0) >= 1800);
     expect(tall.length).toBeGreaterThan(0);
-    expect(tall.filter(([, buildingFaces]) => buildingFaces.length >= 6 && buildingFaces.length <= 7).length)
-      .toBeGreaterThan(tall.length * 0.6);
-    for (const [, buildingFaces] of tall) {
-      const tiers = buildingFaces.filter((face) => face.projection > 0);
-      for (let i = 1; i < tiers.length; i += 1) {
-        expect(tiers[i]!.projection).toBeLessThan(tiers[i - 1]!.projection);
-        expect(tiers[i]!.u1 - tiers[i]!.u0).toBeLessThan(tiers[i - 1]!.u1 - tiers[i - 1]!.u0);
+    const profiles = deriveTowerProfiles(layout), masses = deriveCityMasses(layout);
+    for (const [id, buildingFaces] of levels) {
+      const profile = profiles.find(row => row.towerKey === id);
+      if (!profile || !('stages' in profile)) throw new Error('R36_FACE_PROFILE_MISSING');
+      for (const stage of profile.stages) for (const index of stage.massIndices) {
+        const mass = masses[index]; if (!mass) throw new Error('R36_FACE_STAGE_MASS_MISSING');
+        const plane = mass.x - Math.sign(towersById.get(id)!.x) * mass.width / 2;
+        const requested = { x0: mass.z - mass.depth / 2, x1: mass.z + mass.depth / 2,
+          z0: Math.max(0, mass.y0), z1: mass.y0 + mass.height };
+        expect(requested.z1).toBeGreaterThan(requested.z0);
+        const stageFaces = buildingFaces.filter(f => Math.abs(f.plane - plane) < 1e-7);
+        const rectangles = stageFaces.flatMap(f => {
+          const clipped = intersectSection(requested, { x0: f.u0, x1: f.u1, z0: f.y0, z1: f.y1 });
+          if (!clipped) return [];
+          expect(f.stepBottom).toBe(stage.stageIndex > 0);
+          return [clipped];
+        });
+        const area = (requested.x1 - requested.x0) * (requested.z1 - requested.z0);
+        expect(Math.abs(sectionUnionArea(rectangles) - area), `${id}:stage${stage.stageIndex}:exposed-face-area`)
+          .toBeLessThanOrEqual(Math.max(1e-7, area * 1e-10));
       }
+
     }
-    const lowMid = [...levels].filter(([id]) => {
-      const height = towersById.get(id)?.height ?? 0;
-      return height >= 700 && height < 1800;
-    });
+    const lowMid = [...levels].filter(([id]) => { const height = towersById.get(id)?.height ?? 0; return height >= 700 && height < 1800; });
     expect(lowMid.length).toBeGreaterThan(0);
-    expect(lowMid.filter(([, buildingFaces]) => buildingFaces.length >= 4 && buildingFaces.length <= 6).length)
-      .toBeGreaterThan(lowMid.length * 0.75);
 
     const rows = new Map<string, number>();
     const heroes = deriveHeroBlades(layout);

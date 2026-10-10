@@ -1,0 +1,543 @@
+{
+  "sourceCommit": "c6e81f5f698f7fb98b89c259f8a43eae2c3f5d27",
+  "sourceSha256": "c21b0bab5f530a5441d1f5277fb1176c4ba4e8bb5233a070621b779becdfaf2b",
+  "ownerFields": [
+    "x",
+    "z",
+    "width",
+    "depth",
+    "anchorV",
+    "materialOwner"
+  ],
+  "identityFields": [
+    "sourceIndex",
+    "cx",
+    "cy",
+    "cz",
+    "sx",
+    "sy",
+    "sz",
+    "kind",
+    "seedFloat32Bits",
+    "ownerTuple",
+    "spanToTuple"
+  ],
+  "scope": "Derived only from immutable actual c6 factory prefix. Complete original raw prefix was independently compared with saved c6 data in packed-prefix/comparison.json. This is a scratch proposed compact oracle, not a candidate rebaseline or installed repository fixture.",
+  "rows": [
+    {
+      "seed": 424242,
+      "sourceCount": 13734,
+      "sourceArrayHashes": {
+        "cx": {
+          "typedArray": "Float32Array",
+          "sha256": "ceea4a5cd96b48c944a7522588218703798bf893407b63e20a5b9aee0068be87"
+        },
+        "cy": {
+          "typedArray": "Float32Array",
+          "sha256": "b0a5726624116ee8b99f8de9f0dd045ac0b63da31958f365e543b782f2b77909"
+        },
+        "cz": {
+          "typedArray": "Float32Array",
+          "sha256": "483d828df340c592314bd245be9545bc88032f4a13208af0563365ab65d7a41e"
+        },
+        "sx": {
+          "typedArray": "Float32Array",
+          "sha256": "a975062581349e92bf23b93e570fad45fa269dc76c02cae26e405d39860d9469"
+        },
+        "sy": {
+          "typedArray": "Float32Array",
+          "sha256": "5ee4c6b4016da07f30af3c0dd0e179589dafb14b56e07b5901ad34b4fb43bd77"
+        },
+        "sz": {
+          "typedArray": "Float32Array",
+          "sha256": "13b2e0e5efb42e7f4f4315460760dee16140522e164fc20c567dd9f61622c89a"
+        },
+        "kind": {
+          "typedArray": "Uint8Array",
+          "sha256": "9f81b64b8f23272f14753af0f5fed1c19f0395020521764dfd536f12b3047e81"
+        },
+        "seedValue": {
+          "typedArray": "Float32Array",
+          "sha256": "bf9109cdd00899e4327103259fe123910ef30ba7e91eca57302edf6d006e777d"
+        }
+      },
+      "ownersTupleSha256": "c5d8f3db46b25057fcedb90b5de33d29a548721ab235509f87133342ee730add",
+      "spanToTupleSha256": "47dcc2d3bd558f3ecd32774fc83e2feb93ab8f6c6c358dabf1d5f779cb9d901d",
+      "indexedSourceIdentitySha256": "062c7568ce923ddb3d4f378b7391425ba6ccbd0cddf5384437fb365a38fd2a84",
+      "packedPrefixGroups": {
+        "protected": {
+          "sourceCount": 1301,
+          "drawnCount": 1301,
+          "sourceIndexSha256": "cfecbc88b5cd2f480940d9ce6eaa9402175dd2975690448369122fd3522b52c5",
+          "drawnSourceIndexSha256": "cfecbc88b5cd2f480940d9ce6eaa9402175dd2975690448369122fd3522b52c5",
+          "rawSha256": "2988aa19f251931df6e9edc057dff715da61b522eb6d6db3a859efc28a4b532d",
+          "matrixSha256": "adb3a587f604804ddb783fc1fa0d69e0d524b907c33a1315750ce49228763cac",
+          "attributes": {
+            "aSeed": {
+              "itemSize": 1,
+              "sha256": "0aa73aad30bc9420fe2e9e062a792c0a79aedf8149c7c2ef978bac2aceb15d06"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "sha256": "97a13f320cf3f7565bbabe17777f132b1c5ac4e4ae28cf907374cd9342165bbe"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "sha256": "bc2da8a97cf35a33e293b610bf66b3e2eb346c4f98936b6990996bd876401b1b"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "sha256": "80d352c6a7376bd1c1ac468728c97b18103f67f6d69c38b25adb57e12a7841d3"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "sha256": "9d89e418bbdae1ab8e39991af4fabace932ba07d8680bb0f6f81987fd32e19ae"
+            }
+          }
+        },
+        "R27": {
+          "sourceCount": 372,
+          "drawnCount": 372,
+          "sourceIndexSha256": "4e67a700550fecbb3e170c250667d0ea108d8d5359746b3af238afc1f0a6d107",
+          "drawnSourceIndexSha256": "4e67a700550fecbb3e170c250667d0ea108d8d5359746b3af238afc1f0a6d107",
+          "rawSha256": "f6ff268bd246e3eac20ec0f86df7767bf32c0fc7e350465dffb6ed34d3fc56f3",
+          "matrixSha256": "ce59d30a20f7be18cab5b6600c59d168659f049d97701fd30535fc24f925e7d8",
+          "attributes": {
+            "aSeed": {
+              "itemSize": 1,
+              "sha256": "88581aaa0d96f9232974b3ecd9fd754077b2ae1c454c7ce79bf5c9b2dc333449"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "sha256": "f5f02dd63e4f70216f21fe9f4934e5fc93b96890c381dd7a1159bad31d61b765"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "sha256": "ef4ac489a56b2aeb5955e46d636f192c9cb59fa54ed3d82b66d5b399fd7b3cf5"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "sha256": "c61e817f9ac9fb7234244236aa469ecc6bcd1912b14ff85c41a7b11df0bc2cb3"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "sha256": "4c285b0434615c58d56d52df85d86976ee24b10280b801c2c360df3a3a4af321"
+            }
+          }
+        }
+      }
+    },
+    {
+      "seed": 0,
+      "sourceCount": 13855,
+      "sourceArrayHashes": {
+        "cx": {
+          "typedArray": "Float32Array",
+          "sha256": "ab8f8fd5c313c3d090519f2f5dc7a9dff50428a7a9e65717a58bef5e383e7fd6"
+        },
+        "cy": {
+          "typedArray": "Float32Array",
+          "sha256": "761a20bbb4682381b25914e01d68748c6282c169e3e9df6908366623042ea33d"
+        },
+        "cz": {
+          "typedArray": "Float32Array",
+          "sha256": "a1cbaa4f658b042183609bfac37d77edff0438beadcbaf6859416d5e1888a69e"
+        },
+        "sx": {
+          "typedArray": "Float32Array",
+          "sha256": "c7cbb36887706a206b7aeded2ca697db99e04da2d6fc4e48b2737d6e17bdf502"
+        },
+        "sy": {
+          "typedArray": "Float32Array",
+          "sha256": "123da91f09543eb7727adadb5c909fa72173c65ec52dc98244fea97db2a7690c"
+        },
+        "sz": {
+          "typedArray": "Float32Array",
+          "sha256": "9cd0a286d53ad71a0dc379b0809176ffa84e9bfaa9566f48c169537b0e9f947e"
+        },
+        "kind": {
+          "typedArray": "Uint8Array",
+          "sha256": "01ea1c68d0c7fc38c3ea42977522b3dc2e60cd619b51d0a6df689caa8d65e982"
+        },
+        "seedValue": {
+          "typedArray": "Float32Array",
+          "sha256": "359153f21389c72aae5181141a4f7fc6ab8a599b683847bcab64beeb02a57da4"
+        }
+      },
+      "ownersTupleSha256": "40b62c3b006e2384e1e4003581981f205483389afe6c66855a4b46199915ef59",
+      "spanToTupleSha256": "055299eb6327b1cac86e7035a38b81a1bbbd7bccad3366b52ec4b992fe82f7dc",
+      "indexedSourceIdentitySha256": "b4e5e41c90a5bc3acb6be73d0e3e2cf3d1a5becf9f921cf3fabdc5de63286bf9",
+      "packedPrefixGroups": {
+        "protected": {
+          "sourceCount": 1327,
+          "drawnCount": 1327,
+          "sourceIndexSha256": "ff64174cbefd98f16c09c682011621958ce0e1dc5f9085400d1bc3858ea49083",
+          "drawnSourceIndexSha256": "ff64174cbefd98f16c09c682011621958ce0e1dc5f9085400d1bc3858ea49083",
+          "rawSha256": "b2e776cafd1cc1d3d2b411d8ade618d94193d8d44709a525b206ecdc37cbe4e2",
+          "matrixSha256": "800bb8db6843d68b9c763a544e5d6be6e9ae2fa853f271fe2f2947afcabdff84",
+          "attributes": {
+            "aSeed": {
+              "itemSize": 1,
+              "sha256": "944ee9f6ec8b68bc4980c55f293fb220f9fe84e716f48292d93c8c775cdec4e2"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "sha256": "fdd07a7869933adcc273c2c1c0996bfd3f2692d8adf84cec781997a1330ef81f"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "sha256": "561134025d1d4a897d19d9b761e90427367f0f200f5dd15f9a2f4e75d008a673"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "sha256": "b1eb796c5cafd90e93c2ca29a85c08fbff2568cdb74d8104fbdf00bf866a0cf4"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "sha256": "2f9dd72c99115f9daa48f3864923b34f6112066b4d5a2399ca66e5e8f3e0882b"
+            }
+          }
+        },
+        "R27": {
+          "sourceCount": 338,
+          "drawnCount": 338,
+          "sourceIndexSha256": "54fe282acb08f567b21d3870fb61a3063244ab662ce12c962ad214d0b3d0b4fb",
+          "drawnSourceIndexSha256": "54fe282acb08f567b21d3870fb61a3063244ab662ce12c962ad214d0b3d0b4fb",
+          "rawSha256": "ae89250cb3a00a44936605fddfdb5164782e53c314ba2f3a810eb012f40914ef",
+          "matrixSha256": "1bf0fb14e881e5b88931a79f45fa03e391052a799ab65e7f62e84f1d018699ed",
+          "attributes": {
+            "aSeed": {
+              "itemSize": 1,
+              "sha256": "cf3b75273f284e04444ff951f28956583cb4101b19ff69f50f10c2d504c064b2"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "sha256": "d91b74c1d141c94f7ba443e5aac6b9615875c724faef25557004cfe356aa00fd"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "sha256": "8c110c465c59eef9bf0b437406a08baeca3408b6c54a55ea09678b627e9cc316"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "sha256": "3719d45489081fb1690f00c1007bd8a20e3569158282f4203d44eb72bbf751ea"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "sha256": "7110a40b67279af93e0c349b3361e629125ba97109111a1cfd442fedb0b50521"
+            }
+          }
+        }
+      }
+    },
+    {
+      "seed": 2147483647,
+      "sourceCount": 13948,
+      "sourceArrayHashes": {
+        "cx": {
+          "typedArray": "Float32Array",
+          "sha256": "901792ebc538f914d2cb56c36f0bf9390cf27acd8730f0f3f108357000d740e3"
+        },
+        "cy": {
+          "typedArray": "Float32Array",
+          "sha256": "e13c07171f14be81d1bbe8cda6b52a16546bd0d3b37c845104fddb120e8a5300"
+        },
+        "cz": {
+          "typedArray": "Float32Array",
+          "sha256": "f80fa4b5b811976f8e94a786c52a3f4ca50e53e37fc13ff0b92723326504bdee"
+        },
+        "sx": {
+          "typedArray": "Float32Array",
+          "sha256": "08fbdbf96f766523012d451d8ebf5929b925fde1d97f9c7bf9c5eb73f592eaf9"
+        },
+        "sy": {
+          "typedArray": "Float32Array",
+          "sha256": "898f5af517322c304b99292f7327558f664e3e750a6ea00284fb7ae4c8a83792"
+        },
+        "sz": {
+          "typedArray": "Float32Array",
+          "sha256": "66e7d27dbce72d694c406c4c6903694fd6ed730cd0c4f3fa940be1d384d3d372"
+        },
+        "kind": {
+          "typedArray": "Uint8Array",
+          "sha256": "bbb847355091c2293c6d274df0fdcc8402bf467f274f6bf80af7b503a0011243"
+        },
+        "seedValue": {
+          "typedArray": "Float32Array",
+          "sha256": "a2261f230269a5f92def4d529c6de5ddaff36b145a239eab592e6b2d92008705"
+        }
+      },
+      "ownersTupleSha256": "835122db460acacc6095d90bcbb3a65121084133116412c8a2e6de9fd3450e39",
+      "spanToTupleSha256": "10cc48c393da007d685503156173717d4d0a94e05eb645f269f309a1962141fa",
+      "indexedSourceIdentitySha256": "e8bcc660afd627bc880be4df1e6e6e7c511f85de612c9defa6aace0d65662208",
+      "packedPrefixGroups": {
+        "protected": {
+          "sourceCount": 1357,
+          "drawnCount": 1357,
+          "sourceIndexSha256": "afafa4d54b7535992d23540db67630c45d93062e0be78b43095add429df3a068",
+          "drawnSourceIndexSha256": "afafa4d54b7535992d23540db67630c45d93062e0be78b43095add429df3a068",
+          "rawSha256": "64573652a7badc7a8a2546591d4d15363827199ad8f70de43c6b39a9993966d7",
+          "matrixSha256": "3931fd4c034039c582b070015234685569751ebe57ac381c352dc06c989b2606",
+          "attributes": {
+            "aSeed": {
+              "itemSize": 1,
+              "sha256": "3460162142015b74234d96cc9a670d051ce915223d2832c69407639f7efe1a4d"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "sha256": "054a42d6fee1fa9d997569115ea8f0b025de0695e484578f272f9cf0988ef796"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "sha256": "595e6d3993d99eebd749b1515e5ed67295b9e9d42aca6f25936c00aa6053ddf8"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "sha256": "8168a514f4f9dfcf0b5361e4a4766f344527b9c559967795ca99f3404a072e44"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "sha256": "ffb9f0086896232b2b8ebce8cce476e9c2296f0e9a37bdfa5e998ac0b9b95cee"
+            }
+          }
+        },
+        "R27": {
+          "sourceCount": 378,
+          "drawnCount": 378,
+          "sourceIndexSha256": "689504fb22c7f6409819b037419601e82c3332c31ee7aab8e2da8c5929cf620d",
+          "drawnSourceIndexSha256": "689504fb22c7f6409819b037419601e82c3332c31ee7aab8e2da8c5929cf620d",
+          "rawSha256": "c2869a1dbc73336671c1345458ab4db0d10393fcff50a6073fd164e4fb8449d8",
+          "matrixSha256": "4e8ac583d9672f1e00e77f8cdeb30ba2b162ba82221aeebd4c6455b33f79ddf6",
+          "attributes": {
+            "aSeed": {
+              "itemSize": 1,
+              "sha256": "1ac1535275e4ca7cfd804b3d5f6254fa26d106109b3ad21ff499aee57b854391"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "sha256": "13813bd7d729d8098523e51ab20dada4fcd83c6533dfa26ca8adbd9d64314e90"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "sha256": "0e1f30b87845a0e84b0bdfa5e2c6860b7036c60d3d9802edd9b21c2aa29f9895"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "sha256": "129c9b375ab7f7c87fc7433cac1378ab3049f77facae83ff9aa889dbee9707d8"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "sha256": "21899cfa2ef26c86724f6c59f665c57173c94d50dd14a49a3d81ef4006d63099"
+            }
+          }
+        }
+      }
+    },
+    {
+      "seed": 4294967295,
+      "sourceCount": 13992,
+      "sourceArrayHashes": {
+        "cx": {
+          "typedArray": "Float32Array",
+          "sha256": "b5f83a10d4c130efcd297112219770c16f4f649176010dc731db343ea13f5430"
+        },
+        "cy": {
+          "typedArray": "Float32Array",
+          "sha256": "16991c6a5f70cf265ced7505271279bf60699c51652d6b1e2d3751b931418684"
+        },
+        "cz": {
+          "typedArray": "Float32Array",
+          "sha256": "fc3d9149b0be22d8ab9bf388e529fe0508cab6e3ca5df5ab2ffe7307b269affa"
+        },
+        "sx": {
+          "typedArray": "Float32Array",
+          "sha256": "bef1784a549cce16273e2db42ee7f3e79202ca48eec81db2d25fc34c759d5646"
+        },
+        "sy": {
+          "typedArray": "Float32Array",
+          "sha256": "79eaefc08307ddd3f59b56f2a7f21871a9028a0866d5b2b901b9bdd5680f9726"
+        },
+        "sz": {
+          "typedArray": "Float32Array",
+          "sha256": "97b86151697c34ec63d35e4fd2f98a6254a42f7bb0b070ab6a9163fa5933d7ab"
+        },
+        "kind": {
+          "typedArray": "Uint8Array",
+          "sha256": "e22d01e21923c40e16eb3a5d4de31d2342f4f015b90d2c99b2f3775d427cb703"
+        },
+        "seedValue": {
+          "typedArray": "Float32Array",
+          "sha256": "b0651ec0dc0e5cee0817fb045c2dc4421ce1228479b6f58c8b1b89d7cf514417"
+        }
+      },
+      "ownersTupleSha256": "7b978a1bd5e7b680d94e04b6c9f2f933c4280aa8aaf0dc6ffcd134b94f6825f1",
+      "spanToTupleSha256": "f14141718b7663d0c87506a05389ade91bb8aeacc577f67aeaa5e8527a6328ba",
+      "indexedSourceIdentitySha256": "1ff3dd65a33b066fa91f99cfa1feaec8d19bb89db16d3ad37699e030f7475147",
+      "packedPrefixGroups": {
+        "protected": {
+          "sourceCount": 1386,
+          "drawnCount": 1386,
+          "sourceIndexSha256": "7f5560d9c62273fa0bdfee72b87cb1c34f142569f0e455c8dbb2520e215243f3",
+          "drawnSourceIndexSha256": "7f5560d9c62273fa0bdfee72b87cb1c34f142569f0e455c8dbb2520e215243f3",
+          "rawSha256": "a1e111580a0bc2eae79ae69d45e1b0d4fecfb560e00bcfc2a5be7576a4d4bf97",
+          "matrixSha256": "8e7718a2b62d0c7a30c3475786f027fbdaad456f57170b1e4688458402b88a50",
+          "attributes": {
+            "aSeed": {
+              "itemSize": 1,
+              "sha256": "3c8ca7c6ea0590ed9b23cd7b6622b9c1e44ce0ce8555438292a958a187e5a296"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "sha256": "9bb6d53ac16035ae078c903b5d290f6b445c95b93c4f34dad1c5670803007e9e"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "sha256": "a339b6243bae4ffc728b684ef0e37270d97201af501a1c464f677e32982bd2c4"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "sha256": "60f852b94f22464be9389599dc71d412d5c4692a181dfda17e652f930c6c20cb"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "sha256": "096498411000295742b4371c653095c46bf2f9798903b813693e2510baee8960"
+            }
+          }
+        },
+        "R27": {
+          "sourceCount": 362,
+          "drawnCount": 362,
+          "sourceIndexSha256": "317809af6cd00b0861417576698d084c90bded3aeee1404f5d89aa0f1ad0f0fb",
+          "drawnSourceIndexSha256": "317809af6cd00b0861417576698d084c90bded3aeee1404f5d89aa0f1ad0f0fb",
+          "rawSha256": "deb40f9bd5422edc5a894b9bf671ecaeb4a8699190ee1ecced288c2d5dfde14d",
+          "matrixSha256": "131509d1a854cd35be5d046221fd8c7ed5ac5b8e302ea4ddfc27a27bb8a04c94",
+          "attributes": {
+            "aSeed": {
+              "itemSize": 1,
+              "sha256": "1bc0051b3868d6e5553783f33b3b27a04141cd644c023d5bf1f5e1dfde2c5b03"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "sha256": "2ff9db07101ba5a1d508627103aa78452e2e074fd0633bc7ff1b9d7dde8ce0c1"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "sha256": "0ab8165eb869702f496cd63345aed54a52b7f01552db283a1a38a90593e38ab4"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "sha256": "e84699289d558619f30e71238918b425d25c64c635bca0f974abaddc15083bac"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "sha256": "0a1dfdcdf1fc1f84a3b118a4ba4a134ec622a06c5722be811edd3e60ec4d5943"
+            }
+          }
+        }
+      }
+    },
+    {
+      "seed": 20240917,
+      "sourceCount": 14011,
+      "sourceArrayHashes": {
+        "cx": {
+          "typedArray": "Float32Array",
+          "sha256": "e2af7ddf804aa8bdc88d0ac3a8ab66f881bd7b00670c27cf4e6fa5266fddd116"
+        },
+        "cy": {
+          "typedArray": "Float32Array",
+          "sha256": "48ac91acb965598469f67e02c6d173b36582efa0e695688e409802209dbe00c4"
+        },
+        "cz": {
+          "typedArray": "Float32Array",
+          "sha256": "b93325c877cf245e27d10af9d14210fddf20b2efa1e42aa8ff0db322bbe88bbd"
+        },
+        "sx": {
+          "typedArray": "Float32Array",
+          "sha256": "bda0ea39166f2a03f2e257591fab838ac6952f3145538da1282af8591bd85d37"
+        },
+        "sy": {
+          "typedArray": "Float32Array",
+          "sha256": "95b9374e64bd70991a6b1f6057bbd0082d7480520bf72eef29a3dc9c7079375d"
+        },
+        "sz": {
+          "typedArray": "Float32Array",
+          "sha256": "8237962737b65b657f311938db455bea7a5e5444e287629a5eb87880540048b0"
+        },
+        "kind": {
+          "typedArray": "Uint8Array",
+          "sha256": "05e135c7322dfa7b3cb848161effefc84c4ff836b13b09b570a8de90a9cc0200"
+        },
+        "seedValue": {
+          "typedArray": "Float32Array",
+          "sha256": "99f4d59408ae9cffa849465914f2790b5fb7058537087c368b01d80a72449127"
+        }
+      },
+      "ownersTupleSha256": "02bfb49f3c5a80541f545330e4f9e71eb2dbecdb6ba19f4db291ba02fda8171a",
+      "spanToTupleSha256": "a105384b5bc68218743abce5d9f217e8f131ed0f65a7fe15144cf35eac23a6c0",
+      "indexedSourceIdentitySha256": "e22fd59847356bb98e3cc9cff5a8aecb8036efe5eeba39fc3b33bb9a94b1a6f7",
+      "packedPrefixGroups": {
+        "protected": {
+          "sourceCount": 1351,
+          "drawnCount": 1351,
+          "sourceIndexSha256": "fe584c6ef472f8e35ec75da11611e7df0f0f4a5313c1456b8bde190ff1d5df84",
+          "drawnSourceIndexSha256": "fe584c6ef472f8e35ec75da11611e7df0f0f4a5313c1456b8bde190ff1d5df84",
+          "rawSha256": "aee9595a8d9325056d0139ea26b20cb6a34fa0c59bee9dec32fa07079630773d",
+          "matrixSha256": "4d895ee7e893fa71bde6eca294ca94b784e11a9334bce79a0b389d81b88ccec7",
+          "attributes": {
+            "aSeed": {
+              "itemSize": 1,
+              "sha256": "366d673be47f74be6d8f2130b564392a5ec427efe6bf07975c7f62cc024cbb3b"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "sha256": "e651f232b6400bd1e49d77267b25fa573af494c1a1166f270beaf63a89339be7"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "sha256": "9e423389508bacb6bddc19982f364dd50f71c2331c6f118dc0529b18e30b1b60"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "sha256": "02c0b82daee7dbe3911f1295a6aa3d615112ccc4538d788f7f098cac491b3568"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "sha256": "80dd40ec320b8c0ad145b1ae18a94e0e5eb05a8ee9f32fb497746c467e0ae27f"
+            }
+          }
+        },
+        "R27": {
+          "sourceCount": 369,
+          "drawnCount": 369,
+          "sourceIndexSha256": "e2d22918d7b06a55dfc03ef79bd49411f8a6235703e96a3fee9674a889cedf0e",
+          "drawnSourceIndexSha256": "e2d22918d7b06a55dfc03ef79bd49411f8a6235703e96a3fee9674a889cedf0e",
+          "rawSha256": "11d150cee20f74bbbcb355a55bfd7c016a9ff1b8f950d2af2021a90283984ad2",
+          "matrixSha256": "206369bd76b529d4d3cb63152f6cef20aead0aa7ff2314e5fd935d71185dad01",
+          "attributes": {
+            "aSeed": {
+              "itemSize": 1,
+              "sha256": "c55f8c266be039778ec515e550cdc230686ad29f6686fcfb172e853d6fc5fce6"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "sha256": "f0f021206536be1638537abac34de10fc13e10b55096e7c58f84bd03caf0b037"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "sha256": "9480a0c6615c73b73023161b6992f17e49de08dc151cadd073997201f394be09"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "sha256": "eda839d24a232496fef794f07af860b01b9e3306aaeffcb8b538a61374f87614"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "sha256": "0567edafe3493d40533522891e7b405e9ae7ced0d0b1e12b6b39f2fe89779789"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
