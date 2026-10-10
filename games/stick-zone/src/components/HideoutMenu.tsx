@@ -28,11 +28,12 @@ interface HideoutMenuProps {
     armorTier: ArmorTier;
     stims: number;
   }) => void;
+  onClose?: () => void;
 }
 
 type TabType = "armory" | "stash" | "trader" | "contracts" | "intel";
 
-export const HideoutMenu: React.FC<HideoutMenuProps> = ({ onDeploy }) => {
+export const HideoutMenu: React.FC<HideoutMenuProps> = ({ onDeploy, onClose }) => {
   const [activeTab, setActiveTab] = useState<TabType>("armory");
   const [soundEnabled, setSoundEnabled] = useState(true);
 
@@ -218,6 +219,30 @@ export const HideoutMenu: React.FC<HideoutMenuProps> = ({ onDeploy }) => {
             <Play size={18} fill="#ffffff" />
             DEPLOY TO SECTOR 7
           </button>
+
+          {onClose && (
+            <button
+              onClick={onClose}
+              style={{
+                background: "rgba(51, 65, 85, 0.8)",
+                color: "#e2e8f0",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                padding: "10px 16px",
+                borderRadius: "8px",
+                fontWeight: 800,
+                fontSize: "13px",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                cursor: "pointer",
+                transition: "background 0.15s ease",
+              }}
+              title="Return to Raid [ESC]"
+            >
+              <span>✕</span>
+              <span>CLOSE</span>
+            </button>
+          )}
         </div>
       </header>
 

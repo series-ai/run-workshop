@@ -157,12 +157,14 @@ const CameraController: React.FC<{
       baseCameraTarget.current.z
     );
 
-    // Dynamic FOV kinetics: Xiao Xiao kinetic speed stretch & recoil punch
+    // Dynamic FOV kinetics: ADS zoom, kinetic speed stretch & recoil punch
     if (!isTestMode && "fov" in camera) {
       const persCamera = camera as THREE.PerspectiveCamera;
       let targetFov = 46.0;
       const isSliding = sim.player.isSliding || sim.player.action === "slide" || ((sim.player.slideTicksRemaining || 0) > 0);
-      if (isSliding) {
+      if (sim.isAds) {
+        targetFov = 38.0; // Precision tactical ADS focus zoom
+      } else if (isSliding) {
         targetFov = 52.5; // Dynamic anime speed perspective stretch
       } else if (recoilImpulseRef.current[0] !== 0 || recoilImpulseRef.current[1] !== 0) {
         targetFov = 44.0; // Recoil zoom snap

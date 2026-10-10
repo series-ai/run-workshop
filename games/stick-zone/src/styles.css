@@ -334,83 +334,7 @@ html, body, #root {
   }
 }
 
-/* Mobile Touch Controls */
-.mobile-touch-controls {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1000;
-  display: none;
-}
-
-@media (pointer: coarse) and (max-width: 844px) {
-  .mobile-touch-controls {
-    display: block;
-  }
-}
-
-.mobile-dpad {
-  position: absolute;
-  bottom: 24px;
-  left: 24px;
-  width: 130px;
-  height: 130px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 2px solid rgba(56, 189, 248, 0.45);
-  border-radius: 50%;
-  pointer-events: auto;
-  touch-action: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
-}
-
-.mobile-stick-thumb {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #38bdf8;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
-  pointer-events: none;
-}
-
-.mobile-action-buttons {
-  position: absolute;
-  bottom: 24px;
-  right: 24px;
-  display: grid;
-  grid-template-columns: repeat(3, 54px);
-  gap: 8px;
-  pointer-events: auto;
-}
-
-.mobile-btn {
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: rgba(15, 23, 42, 0.85);
-  border: 2px solid rgba(245, 158, 11, 0.6);
-  color: #fff;
-  font-weight: 700;
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-transform: uppercase;
-  user-select: none;
-  touch-action: none;
-}
-
-.mobile-btn:active, .mobile-btn.active {
-  background: rgba(245, 158, 11, 0.4);
-  transform: scale(0.92);
-}
-
-.mobile-btn-fire {
-  border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.35);
-}
+/* Tactical Mobile Ergonomics & Responsive HUD */
 
 /* Final High-Specificity Responsive Layout & Mobile Controls */
 @media (max-width: 1024px), (pointer: coarse) {
@@ -673,9 +597,8 @@ html, body, #root {
   color: #cbd5e1;
 }
 
-/* Landscape Advisory Banner */
+/* Landscape Advisory Banner (Mounted Conditionally by React) */
 .landscape-advisory-banner {
-  display: none;
   position: fixed;
   top: 16px;
   left: 50%;
@@ -693,66 +616,16 @@ html, body, #root {
   max-width: 90vw;
 }
 
-@media (pointer: coarse) and (max-width: 844px) {
-  .landscape-advisory-banner {
-    display: flex;
-  }
-}
-
 /* Landscape Mode Responsive Rules (Mobile & Desktop Widescreen) */
 @media screen and (orientation: landscape) and (max-height: 600px) {
   .hud-layer {
     padding: 6px 14px !important;
   }
   .tactical-top-bar {
-    /* unscaled for crisp mobile readability */
     transform: none;
   }
-  .mobile-dpad {
-    bottom: 16px !important;
-    left: 20px !important;
-    width: 105px !important;
-    height: 105px !important;
-  }
-  .mobile-stick-thumb {
-    width: 44px !important;
-    height: 44px !important;
-  }
-  .mobile-action-buttons {
-    bottom: 12px !important;
-    right: 16px !important;
-    grid-template-columns: repeat(4, 44px) !important;
-    gap: 6px !important;
-  }
-  .mobile-btn-fire {
-    grid-column: span 2 !important;
-    width: 100% !important;
-    height: 44px !important;
-    background: rgba(220, 38, 38, 0.75) !important;
-    border: 2px solid #ef4444 !important;
-    font-size: 12px !important;
-    font-weight: 900 !important;
-    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5) !important;
-  }
-  .mobile-btn {
-    width: 44px !important;
-    height: 44px !important;
-    font-size: 9px !important;
-  }
-  .mobile-btn.mobile-btn-fire {
-    grid-column: span 2 !important;
-    width: 100% !important;
-    height: 44px !important;
-    background: rgba(220, 38, 38, 0.75) !important;
-    border: 2px solid #ef4444 !important;
-    font-size: 12px !important;
-    font-weight: 900 !important;
-    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5) !important;
-  }
-  .mobile-btn-fire {
-    background: rgba(239, 68, 68, 0.5) !important;
-    border-color: #ef4444 !important;
-    font-weight: 900 !important;
+  .tactical-vitals-mobile-pill {
+    display: flex !important;
   }
   .tactical-bottom-bar {
     display: none !important;
@@ -766,7 +639,20 @@ html, body, #root {
     padding: 8px 12px !important;
     gap: 6px !important;
   }
+}
 
+/* Hideout Screen Overlay Mobile Responsive Layout */
+@media (max-width: 768px), (max-height: 600px) {
+  .hideout-screen-overlay header {
+    height: 52px !important;
+    padding: 0 16px !important;
+  }
+  .hideout-screen-overlay main {
+    padding: 12px 16px !important;
+  }
+  .hideout-screen-overlay nav {
+    width: 170px !important;
+  }
 }
 
 .hud-panel {

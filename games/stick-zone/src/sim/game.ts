@@ -523,6 +523,7 @@ export interface GameInput {
   selectWeapon?: 'rifle' | 'shotgun';
   stim?: boolean;
   reload?: boolean;
+  ads?: boolean;
 }
 
 export class SectorDepotSimulation {
@@ -591,6 +592,7 @@ export class SectorDepotSimulation {
   public slideKeyReleased = true;
   public cameraPos?: { x: number; y: number; z: number };
   public cameraTarget?: { x: number; y: number; z: number };
+  public isAds: boolean = false;
   public onPlayerDeath?: () => void;
   public onDamageTaken?: () => void;
 
@@ -1557,6 +1559,7 @@ export class SectorDepotSimulation {
     this.combatLog.push();
   }
   public step(input: GameInput): void {
+    this.isAds = Boolean(input.ads);
     if (!this.player.isAlive || this.player.isExtracted) {
       if (this.exfilController.getState().kind === "corridor_presentation") {
         this.exfilController.cancel();

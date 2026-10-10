@@ -14,6 +14,13 @@ import "./styles.css";
 
 
 
+const checkIsTouchDevice = () => {
+  if (typeof window === "undefined") return false;
+  const hasTouch = "ontouchstart" in window || (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0);
+  const isCoarse = window.matchMedia("(pointer: coarse)").matches;
+  return hasTouch && (isCoarse || window.innerWidth <= 1366);
+};
+
 const MainApp: React.FC = () => {
   useEffect(() => {
     // Online RUN platform hydration: sync player stash and progression from cloud
@@ -21,21 +28,10 @@ const MainApp: React.FC = () => {
   }, []);
   const [dismissRotate, setDismissRotate] = useState(false);
   const [showHideout, setShowHideout] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(() => {
-    if (typeof window !== "undefined") {
-      return (
-        ("ontouchstart" in window || navigator.maxTouchPoints > 0) &&
-        window.matchMedia("(pointer: coarse)").matches &&
-        window.innerWidth <= 844
-      );
-    }
-    return false;
-  });
+  const [isTouchDevice, setIsTouchDevice] = useState(() => checkIsTouchDevice());
   const [isPortrait, setIsPortrait] = useState(() => {
     if (typeof window !== "undefined") {
-      const isTouch = ("ontouchstart" in window || navigator.maxTouchPoints > 0) &&
-        window.matchMedia("(pointer: coarse)").matches &&
-        window.innerWidth <= 844;
+      const isTouch = checkIsTouchDevice();
       return isTouch && window.innerHeight > window.innerWidth;
     }
     return false;
@@ -43,12 +39,11 @@ const MainApp: React.FC = () => {
 
   useEffect(() => {
     const handleOrientation = () => {
-      const isTouch = ("ontouchstart" in window || navigator.maxTouchPoints > 0) &&
-        window.matchMedia("(pointer: coarse)").matches &&
-        window.innerWidth <= 844;
+      const isTouch = checkIsTouchDevice();
       setIsTouchDevice(isTouch);
       setIsPortrait(isTouch && window.innerHeight > window.innerWidth);
     };
+    handleOrientation();
     window.addEventListener("resize", handleOrientation);
     window.addEventListener("orientationchange", handleOrientation);
     return () => {
@@ -84,6 +79,7 @@ const MainApp: React.FC = () => {
   const hasMouseMovedRef = useRef(false);
   const lastMouseMoveTimeRef = useRef(0);
   const isMouseDown = useRef(false);
+  const isRightMouseDown = useRef(false);
   const queuedSelectWeapon = useRef<'rifle' | 'shotgun' | null>(null);
   const queuedSwitchWeapon = useRef(false);
   const queuedStim = useRef(false);
@@ -155,6 +151,10 @@ const MainApp: React.FC = () => {
         setShowHideout((s) => !s);
         return;
       }
+      if (e.code === "Escape") {
+        setShowHideout(false);
+        return;
+      }
       if (e.code === "Digit1") {
         queuedSelectWeapon.current = "rifle";
       } else if (e.code === "Digit2") {
@@ -183,23 +183,29 @@ const MainApp: React.FC = () => {
     const handleMouseDown = (e: MouseEvent) => {
       if (sim.isInputLocked()) return;
       if (e.button === 0) isMouseDown.current = true;
+      if (e.button === 2) isRightMouseDown.current = true;
     };
 
     const handleMouseUp = (e: MouseEvent) => {
-      if (e.button === 0) {
-        isMouseDown.current = false;
-      }
+      if (e.button === 0) isMouseDown.current = false;
+      if (e.button === 2) isRightMouseDown.current = false;
     };
 
     const handlePointerUp = (e: PointerEvent) => {
-      if (e.pointerType === "mouse" && e.button === 0) {
-        isMouseDown.current = false;
+      if (e.pointerType === "mouse") {
+        if (e.button === 0) isMouseDown.current = false;
+        if (e.button === 2) isRightMouseDown.current = false;
       }
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
     };
 
     const resetInputs = () => {
       keysPressed.current.clear();
       isMouseDown.current = false;
+      isRightMouseDown.current = false;
       touchInputRef.current = {
         dx: 0,
         dz: 0,
@@ -218,6 +224,7 @@ const MainApp: React.FC = () => {
     window.addEventListener("keyup", handleKeyUp);
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("contextmenu", handleContextMenu);
     window.addEventListener("mouseup", handleMouseUp);
     window.addEventListener("pointerup", handlePointerUp);
     window.addEventListener("blur", resetInputs);
@@ -497,6 +504,7 @@ const MainApp: React.FC = () => {
     if (update.roll !== undefined) touchInputRef.current.roll = update.roll;
     if (update.kick !== undefined) touchInputRef.current.kick = update.kick;
     if (update.interact !== undefined) queuedInteract.current = update.interact;
+    if (update.ads !== undefined) (touchInputRef.current as any).ads = update.ads;
   };
 
   return (
@@ -542,6 +550,7 @@ const MainApp: React.FC = () => {
     
       {showHideout && (
         <HideoutMenu
+          onClose={() => setShowHideout(false)}
           onDeploy={(loadout) => {
             sim.setWeapon(loadout.primaryWeapon === "shotgun" ? "shotgun" : "rifle");
             if (loadout.armorTier === "light") {

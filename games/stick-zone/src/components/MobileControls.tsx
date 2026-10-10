@@ -127,8 +127,8 @@ export const MobileControls: React.FC<MobileControlsProps> = ({ sim, onTouchInpu
       <div
         style={{
           position: "absolute",
-          bottom: "32px",
-          left: "32px",
+          bottom: "max(20px, env(safe-area-inset-bottom, 20px))",
+          left: "max(24px, env(safe-area-inset-left, 24px))",
           width: "120px",
           height: "120px",
           borderRadius: "50%",
@@ -162,8 +162,8 @@ export const MobileControls: React.FC<MobileControlsProps> = ({ sim, onTouchInpu
       <div
         style={{
           position: "absolute",
-          bottom: "28px",
-          right: "28px",
+          bottom: "max(20px, env(safe-area-inset-bottom, 20px))",
+          right: "max(20px, env(safe-area-inset-right, 20px))",
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-end",

@@ -355,6 +355,31 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
                 RADAR CLEAR
               </span>
             )}
+
+            {/* Compact Mobile/Landscape Vitals Pill */}
+            <div
+              className="tactical-vitals-mobile-pill"
+              style={{
+                display: "none",
+                alignItems: "center",
+                gap: "8px",
+                background: "#f3f4f6",
+                border: "2px solid #151716",
+                borderRadius: "4px",
+                padding: "3px 8px",
+                fontFamily: "monospace",
+                fontWeight: 800,
+                fontSize: "11px",
+              }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: "3px", color: player.health > 35 ? "#16a34a" : "#ff2212" }}>
+                <Heart size={12} fill={player.health > 35 ? "#16a34a" : "#ff2212"} /> {player.health}
+              </span>
+              <span style={{ color: "#cbd5e1" }}>|</span>
+              <span style={{ display: "flex", alignItems: "center", gap: "3px", color: "#0284c7" }}>
+                <Shield size={12} fill="#0284c7" /> {player.armor}
+              </span>
+            </div>
           </div>
 
           {/* Top Center: Clean Minimal Compass */}
