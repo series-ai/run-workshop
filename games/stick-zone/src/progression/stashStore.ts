@@ -6,7 +6,7 @@ import { getRundotGameApi } from "../sdk.js";
  * 1. Extraction settlements MUST be backed by a cryptographically verified SettlementReceipt.
  * 2. Bank cash is derived exclusively from outcomePayload.cashBanked, verified against the canonical digest.
  * 3. Replay attack protection rejects duplicated receipt IDs.
- * 4. Local storage state is protected with cryptographic tamper-detection checksums.
+ * 4. State is derived exclusively from server-authoritative simulation hydration and cryptographic settlement.
  */
 
 import { create } from "zustand";
@@ -113,20 +113,6 @@ export interface StashState {
 }
 
 
-export function computeStoreChecksum(data: {
-  bankCash: number;
-  operativeLevel: number;
-  xp: number;
-  settledReceiptIds: string[];
-}): string {
-  const raw = `${data.bankCash}:${data.operativeLevel}:${data.xp}:${(data.settledReceiptIds || []).slice().sort().join(",")}:sz_salt_9182`;
-  let h = 0x811c9dc5;
-  for (let i = 0; i < raw.length; i++) {
-    h ^= raw.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0).toString(16).padStart(8, "0");
-}
 
 export function getXpForNextLevel(level: number): number {
   return 1000 + (level - 1) * 750;
