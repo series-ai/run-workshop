@@ -10,7 +10,7 @@ import {
   TRAFFIC_APPEARANCE_GLSL, TRAFFIC_LAMP_MIN_DIAMETER_PX,
 } from '../src/render/trafficAppearance';
 
-// R29 changes only non-lamp hull shape. Independent R29 tests keep the old lamp triangles and bounds.
+// R39 uses six measured hulls. Independent tests keep physical lamp patches and authorized body bounds.
 // The four-seed motion buffers still come from before R28.
 const GEOMETRY_BEFORE = geometryR29;
 const MOTION_BEFORE = [
@@ -180,7 +180,7 @@ function measurePatches(geometry: BufferGeometry, rgb: readonly number[]): Patch
 }
 
 describe('R28 actual hull lamp geometry', () => {
-  it('matches the approved indexed R29 non-lamp hull fixture', () => {
+  it('matches the approved six-type R39 indexed hull fixture', () => {
     withTraffic(424242, traffic => {
       for (const before of GEOMETRY_BEFORE) {
         const mesh = meshNamed(traffic, 'skyriver.traffic.' + before.name);
@@ -200,7 +200,7 @@ describe('R28 actual hull lamp geometry', () => {
 
   it('matches front and rear profile geometry to independently measured real emissive patches', () => {
     withTraffic(424242, traffic => {
-      expect(TRAFFIC_APPEARANCE_PROFILES).toHaveLength(7);
+      expect(TRAFFIC_APPEARANCE_PROFILES).toHaveLength(6);
       for (const before of GEOMETRY_BEFORE) {
         const profile = TRAFFIC_APPEARANCE_PROFILES[before.renderId]!;
         expect(profile.name).toBe(before.name);
@@ -318,8 +318,8 @@ describe('R28 actual hull lamp geometry', () => {
 });
 
 describe('R28 Float32 appearance codec', () => {
-  it('retains all seven types and physical scales through the actual stored scalar', () => {
-    for (let type = 0; type < 7; type += 1) {
+  it('retains all six types and physical scales through the actual stored scalar', () => {
+    for (let type = 0; type < 6; type += 1) {
       for (const scale of [1, 1.5, 1.999999, 2, 2.5, 3.2, 4.6, 5.999999, 6]) {
         const array = new Float32Array([packTrafficAppearance(type, scale)]);
         const decoded = unpackTrafficAppearance(array[0]!);
@@ -371,11 +371,11 @@ describe('R28 actual GPU storage and frozen motion identity', () => {
   });
 });
 
-const CPU_IDENTITY_BEFORE = [
-  [424242, '02a988ca875e046ca8f695e6ab661a0902c86c7c1ff5c7eb9037147d151595e9'],
-  [0, '322d4f8d7e6ed54314c9c485e60bdb8677d29ecd7f0388f738775d82726852f5'],
-  [2147483647, '7ca17500195446ce64452372d41ab1ebf8efd5e8f95d11ab92aae1ba1abbfe7d'],
-  [4294967295, 'bb725d8882d07ff3dc27139030d26b1819d492caa5236f1a31489af93e08d80d'],
+const CPU_IDENTITY_R39 = [
+  [424242, 'fcc7b8f9d49a80e542cbd57e67b53bf04cf35ee443395c1b47f0b59075f51446'],
+  [0, '7a973916ba420d0e3c8c716264fc7ea8b20cd64558a9aa62e90247fbfd846f1c'],
+  [2147483647, '3d0f7d697a52189267989484fd6bcbbcf787f46b68a9cf740acbb662ddb105c3'],
+  [4294967295, '87d37604f0f65993b7ce9f1f56214d6fea266a7333d907f64e3e01262c81ae4e'],
 ] as const;
 
 function cpuAppearanceRecords(traffic: ReturnType<typeof createSkyriverTraffic>): Float32Array {
@@ -408,7 +408,7 @@ function actualShader(traffic: ReturnType<typeof createSkyriverTraffic>, name: s
 }
 
 describe('R28 real CPU identities and shared shader inputs', () => {
-  it.each(CPU_IDENTITY_BEFORE)('preserves original CPU hull type and physical scale for seed %i', (seed, beforeHash) => {
+  it.each(CPU_IDENTITY_R39)('preserves six-class CPU routing and physical scale for seed %i', (seed, beforeHash) => {
     withTraffic(seed, traffic => {
       traffic.setAnchor(0, 1500, 0, 0, 160, 0, 0);
       for (const t of [0, 12, 24]) traffic.update(t, { x: 0, y: 1500, z: 0 });
@@ -442,7 +442,7 @@ describe('R28 real CPU identities and shared shader inputs', () => {
       expect(TRAFFIC_LAMP_MIN_DIAMETER_PX).toBe(1.3);
       // Read the shader lookup values, not a second copy of the source table.
       const rows = [...TRAFFIC_APPEARANCE_GLSL.matchAll(/if\s*\(type\s*<\s*([\d.]+)\)\s*\{\s*if\s*\(front\)\s*return\s+TrafficLampShape\(vec4\(([^)]+)\),\s*([\d.-]+)\);\s*return\s+TrafficLampShape\(vec4\(([^)]+)\),\s*([\d.-]+)\);\s*\}/g)];
-      expect(rows).toHaveLength(7);
+      expect(rows).toHaveLength(6);
       for (const before of GEOMETRY_BEFORE) {
         const geometry = meshNamed(traffic, 'skyriver.traffic.' + before.name).geometry;
         const row = rows[before.renderId]!;
@@ -463,14 +463,14 @@ describe('R28 real CPU identities and shared shader inputs', () => {
 });
 
 describe('R28 stable per-index appearance', () => {
-  it.each(SEEDS)('retains count prefixes and all seven seeded classes for seed %i', seed => {
+  it.each(SEEDS)('retains count prefixes and all six seeded classes for seed %i', seed => {
     const attrs = deriveImpostorAttributes(seed, 20000);
     for (const count of [0, 1, 37, 600, 2000]) {
       const smaller = deriveImpostorAttributes(seed, count);
       expect(hash(smaller.appearance)).toBe(hash(attrs.appearance.subarray(0, count)));
     }
     expect(hash(deriveImpostorAttributes(seed, 20000).appearance)).toBe(hash(attrs.appearance));
-    const counts = new Array<number>(7).fill(0);
+    const counts = new Array<number>(6).fill(0);
     for (const packed of attrs.appearance) {
       const decoded = unpackTrafficAppearance(packed);
       counts[decoded.type]! += 1;

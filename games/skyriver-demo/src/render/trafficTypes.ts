@@ -79,11 +79,11 @@ export interface TrafficStats {
   readonly activeThrusters: number;
   /** R18: GPU impostor cars drawn this frame (0 when off). */
   readonly impostors: number;
-  /** Draw calls this module adds to the frame: 3 archetypes + 1 light-streak batch. */
+  /** Draw calls this module adds to the frame: 6 hull batches + 2 light batches. */
   readonly drawCalls: number;
   /** Triangles in one instance of each archetype, indexed by archetype id. */
   readonly trianglesPerArchetype: readonly number[];
-  /** Triangles submitted this tier, across all four batches. */
+  /** Triangles submitted this tier, across all eight batches. */
   readonly trianglesDrawn: number;
   /** Retired with the T4 glow selection controller; always 0 since T6R (every car is lit). */
   readonly glowRadiusM: number;
@@ -118,7 +118,7 @@ export interface SkyriverTrafficOptions {
  * update() once per rendered frame.
  */
 export interface SkyriverTraffic {
-  /** The four meshes to add to the scene. Stable identities for the lifetime of the instance. */
+  /** The eight meshes to add to the scene. Stable identities for the lifetime of the instance. */
   readonly objects: readonly Object3D[];
 
   /**

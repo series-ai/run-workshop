@@ -218,6 +218,56 @@ function pushBox(build: HullBuild, centre: Vec3, size: Vec3, color: Rgb, emissiv
   pushQuad(build, p(-1, -1, -1), p(1, -1, -1), p(1, -1, 1), p(-1, -1, 1), color, emissive);
 }
 
+/** Keep the outer panel. Move only the glass or port back into its frame. */
+function pushHullRecess(build: HullBuild, corners: readonly [Vec3, Vec3, Vec3, Vec3], depth: number, glass: boolean, frame: Rgb, outward?: Vec3): void {
+  const centre: Vec3 = [
+    corners.reduce((sum, p) => sum + p[0] / 4, 0),
+    corners.reduce((sum, p) => sum + p[1] / 4, 0),
+    corners.reduce((sum, p) => sum + p[2] / 4, 0),
+  ];
+  const a = corners[0]!,
+    b = corners[1]!,
+    c = corners[2]!;
+  const rawNormal: Vec3 = [
+    (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]),
+    (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]),
+    (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]),
+  ];
+  const normalLength = Math.hypot(...rawNormal);
+  if (!Number.isFinite(normalLength) || normalLength <= 1e-10) throw new Error('INVALID_SHUTTLE_PANEL_NORMAL');
+  let n = normalize3(rawNormal);
+  // The hull uses both face directions. Resolve the physical outside at the panel centre.
+  if (outward) {
+    const outwardLength = Math.hypot(...outward);
+    if (!Number.isFinite(outwardLength) || outwardLength <= 1e-10) throw new Error('INVALID_SHUTTLE_PANEL_OUTWARD');
+    n = outward;
+  }
+  else if (n[0] * centre[0] + n[1] * centre[1] < 0) n = [-n[0], -n[1], -n[2]];
+  const share = glass ? 0.93 : 0.72;
+  const inner = corners.map<Vec3>((p) => [
+    centre[0] + (p[0] - centre[0]) * share,
+    centre[1] + (p[1] - centre[1]) * share,
+    centre[2] + (p[2] - centre[2]) * share,
+  ]);
+  const back = inner.map<Vec3>((p) => [p[0] - n[0] * depth, p[1] - n[1] * depth, p[2] - n[2] * depth]);
+  for (let j = 0; j < 4; j += 1) {
+    const k = (j + 1) % 4;
+    pushQuad(build, corners[j]!, corners[k]!, inner[k]!, inner[j]!, frame);
+    pushQuad(build, inner[j]!, inner[k]!, back[k]!, back[j]!, TRIM);
+  }
+  pushQuad(build, back[0]!, back[1]!, back[2]!, back[3]!, glass ? GLAZING : SEAM, false, glass ? 1 : 0);
+}
+
+/** Thicken a panel inside the established outline. */
+function pushSolidHullPanel(build: HullBuild, corners: readonly [Vec3, Vec3, Vec3, Vec3], thickness: number, color: Rgb): void {
+  const back = corners.map<Vec3>((p) => [p[0], p[1] - thickness, p[2]]);
+  pushQuad(build, corners[0]!, corners[1]!, corners[2]!, corners[3]!, color);
+  pushQuad(build, back[3]!, back[2]!, back[1]!, back[0]!, PAINT_DARK);
+  for (let j = 0; j < 4; j += 1) {
+    const k = (j + 1) % 4;
+    pushQuad(build, corners[j]!, corners[k]!, back[k]!, back[j]!, TRIM);
+  }
+}
 /**
  * A ring is a trapezoid cross-section at one z: half-widths at the floor and the roof line.
  * Consecutive rings are lofted into side, roof and floor panels.
@@ -269,7 +319,7 @@ function ringCorners(r: Ring): readonly [Vec3, Vec3, Vec3, Vec3] {
   ];
 }
 
-function loft(build: HullBuild, rings: readonly Ring[], side: Rgb, roof: Rgb, floor: Rgb, glass = 0): void {
+function loft(build: HullBuild, rings: readonly Ring[], side: Rgb, roof: Rgb, floor: Rgb, glass = 0, bellyChannels = false): void {
   if (rings.some((ring) => (ring.round ?? 0) > 0)) {
     for (let i = 0; i + 1 < rings.length; i += 1) {
       const a = ringOutline(rings[i]!);
@@ -278,7 +328,24 @@ function loft(build: HullBuild, rings: readonly Ring[], side: Rgb, roof: Rgb, fl
       for (let j = 0; j < n; j += 1) {
         const k = (j + 1) % n;
         const role = a.roles[j]!;
-        pushQuad(build, a.points[j]!, b.points[j]!, b.points[k]!, a.points[k]!, role === 'roof' ? roof : role === 'floor' ? floor : side, false, glass);
+        if (bellyChannels && j === 0 && i < 4) {
+          const across = (ring: readonly Vec3[], t: number): Vec3 => [
+            ring[0]![0] * (1 - t) + ring[1]![0] * t,
+            ring[0]![1],
+            ring[0]![2],
+          ];
+          const cuts = [0, 0.3, 0.4, 0.6, 0.7, 1];
+          for (let strip = 0; strip + 1 < cuts.length; strip += 1) {
+            const corners: readonly [Vec3, Vec3, Vec3, Vec3] = [
+              across(a.points, cuts[strip]!),
+              across(b.points, cuts[strip]!),
+              across(b.points, cuts[strip + 1]!),
+              across(a.points, cuts[strip + 1]!),
+            ];
+            if (strip === 1 || strip === 3) pushHullRecess(build, corners, 0.14, false, TRIM);
+            else pushQuad(build, corners[0], corners[1], corners[2], corners[3], floor);
+          }
+        } else pushQuad(build, a.points[j]!, b.points[j]!, b.points[k]!, a.points[k]!, role === 'roof' ? roof : role === 'floor' ? floor : side, false, glass);
       }
     }
     return;
@@ -330,15 +397,49 @@ function canopyArch(station: CanopyStation): Vec3[] {
 
 function loftCanopy(build: HullBuild, stations: readonly CanopyStation[]): void {
   const arches = stations.map(canopyArch);
+  const inner = stations.map((station) => canopyArch({ ...station, halfWidth: station.halfWidth * 0.985, crownY: station.crownY - 0.035 }));
   for (let i = 0; i + 1 < arches.length; i += 1) {
-    const rear = arches[i]!;
-    const front = arches[i + 1]!;
+    const rear = inner[i]!,
+      front = inner[i + 1]!;
     for (let j = 0; j + 1 < rear.length; j += 1) {
       pushQuad(build, rear[j]!, rear[j + 1]!, front[j + 1]!, front[j]!, GLAZING, false, 1);
     }
+    for (const j of [0, 4, 8]) {
+      const a = arches[i]![j]!,
+        b = arches[i + 1]![j]!;
+      pushSolidHullPanel(
+        build,
+        [
+          [a[0] - 0.025, a[1], a[2]],
+          [b[0] - 0.025, b[1], b[2]],
+          [b[0] + 0.025, b[1], b[2]],
+          [a[0] + 0.025, a[1], a[2]],
+        ],
+        0.045,
+        BEVEL,
+      );
+    }
   }
-  const rear = arches[0]!;
-  const front = arches[arches.length - 1]!;
+  for (const station of [0, 2, 4, 6]) {
+    const arch = arches[station]!;
+    for (let j = 0; j + 1 < arch.length; j += 1) {
+      const a = arch[j]!,
+        b = arch[j + 1]!;
+      pushSolidHullPanel(
+        build,
+        [
+          [a[0], a[1], a[2] - 0.025],
+          [b[0], b[1], b[2] - 0.025],
+          [b[0], b[1], b[2] + 0.025],
+          [a[0], a[1], a[2] + 0.025],
+        ],
+        0.045,
+        BEVEL,
+      );
+    }
+  }
+  const rear = inner[0]!;
+  const front = inner[inner.length - 1]!;
   const rearCentre: Vec3 = [0, stations[0]!.baseY + 0.02, stations[0]!.z];
   const frontCentre: Vec3 = [0, stations[stations.length - 1]!.baseY + 0.02, stations[stations.length - 1]!.z];
   for (let i = 0; i + 1 < rear.length; i += 1) {
@@ -346,7 +447,6 @@ function loftCanopy(build: HullBuild, stations: readonly CanopyStation[]): void 
     pushTri(build, frontCentre, front[i]!, front[i + 1]!, GLAZING, false, 1);
   }
 }
-
 /** Tail at z = TAIL_Z; the strip and the nozzles sit just behind it. */
 const TAIL_Z = -5.6;
 /** T7-3: nozzles sit in the two engine pods (rear corners, under the deck). */
@@ -373,7 +473,7 @@ function buildHull(): HullBuild {
     { z: 5.9, yLow: -0.5, yHigh: 0.0, halfLow: 1.55, halfHigh: 1.05, round: 0.25 },
     { z: 6.5, yLow: -0.38, yHigh: -0.2, halfLow: 0.72, halfHigh: 0.5, round: 0.1 },
   ];
-  loft(build, body, PAINT, PAINT, PAINT_DARK);
+  loft(build, body, PAINT, PAINT, PAINT_DARK, 0, true);
   capRing(build, body[0]!, PAINT_DARK);
   capPoint(build, body[body.length - 1]!, [0, -0.24, 8.15], PAINT);
 
@@ -458,23 +558,31 @@ function buildHull(): HullBuild {
 
   // Angled fins grow from the shoulder and meet the rear pod fairings.
   for (const side of [-1, 1]) {
-    pushQuad(build,
-      [side * 2.85, 0.15, -2.45], [side * 4.15, -0.02, -4.3],
-      [side * 4.0, -0.35, -5.15], [side * 2.7, -0.38, -4.62], PAINT_DARK);
+    pushSolidHullPanel(build,
+      [[side * 2.85, 0.15, -2.45], [side * 4.15, -0.02, -4.3],
+      [side * 4.0, -0.35, -5.15], [side * 2.7, -0.38, -4.62]], 0.09, PAINT_DARK);
     pushQuad(build,
       [side * 2.9, 0.18, -2.5], [side * 3.42, 0.22, -3.7],
       [side * 3.28, 0.18, -4.22], [side * 2.8, 0.13, -3.65], BEVEL, true);
   }
 
-  // Recessed intake channels run under the belly. A narrow lip marks each channel edge.
+  // The belly channels are cut into the main loft. Separate canted mouths feed the pods.
   for (const side of [-1, 1]) {
-    const x = side * 0.84;
-    pushQuad(build, [x - 0.22, -0.88, -3.3], [x + 0.22, -0.88, -3.3],
-      [x + 0.18, -0.88, 2.9], [x - 0.18, -0.88, 2.9], SEAM, true);
-    pushQuad(build, [x - 0.28, -0.84, -3.1], [x - 0.22, -0.84, -3.1],
-      [x - 0.18, -0.84, 2.7], [x - 0.24, -0.84, 2.7], TRIM);
-    pushQuad(build, [x + 0.22, -0.84, -3.1], [x + 0.28, -0.84, -3.1],
-      [x + 0.24, -0.84, 2.7], [x + 0.18, -0.84, 2.7], TRIM);
+    const x = side * 1.75;
+    const mouth: readonly [Vec3, Vec3, Vec3, Vec3] = [
+      [x - 0.32, -0.99, -0.9],
+      [x + 0.32, -0.99, -0.9],
+      [x + 0.32, -0.82, -1.07],
+      [x - 0.32, -0.82, -1.07],
+    ];
+    pushHullRecess(build, mouth, 0.12, false, BEVEL, [0, Math.SQRT1_2, Math.SQRT1_2]);
+    const back = mouth.map<Vec3>((p) => [p[0], p[1], -2.3]);
+    for (let j = 0; j < 4; j += 1) {
+      const k = (j + 1) % 4;
+      pushQuad(build, mouth[j]!, mouth[k]!, back[k]!, back[j]!, PAINT_DARK);
+    }
+    pushBox(build, [side * 2.85, -0.02, -1.0], [0.16, 0.14, 0.44], TRIM);
+    for (const z of [-3.1, -2.3]) pushBox(build, [side * 2.8, 0.42, z], [0.18, 0.08, 0.12], SEAM);
   }
 
   // Keep the established three-bar signature. The upper bar gives the full-width tail a clear edge.

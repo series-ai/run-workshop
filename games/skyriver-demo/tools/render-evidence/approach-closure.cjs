@@ -4,6 +4,10 @@ const path = require('node:path');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const [url, directory] = process.argv.slice(2);
 const closingVelocity = Number(process.env.CLOSING_VELOCITY || 250);
+const hullType = process.env.HULL_TYPE || '';
+const visibilityControl = process.env.HULL_VISIBILITY_CONTROL || '';
+if (visibilityControl && !['hidden', 'drop-frame'].includes(visibilityControl)) throw Error('Invalid HULL_VISIBILITY_CONTROL.');
+if (hullType && !['cab', 'interceptor', 'commuter', 'van', 'bus', 'flatbed'].includes(hullType)) throw Error('Invalid HULL_TYPE.');
 if (!url || !directory || !(closingVelocity > 0)) throw Error('Provide URL, output directory, and positive CLOSING_VELOCITY.');
 (async () => {
   fs.mkdirSync(directory, { recursive: true });
@@ -15,7 +19,7 @@ if (!url || !directory || !(closingVelocity > 0)) throw Error('Provide URL, outp
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
     await page.goto(url);
     await page.waitForFunction(() => window.__skyriver?.stats().firstFrameMs != null, null, { timeout: 60000 });
-    const result = await page.evaluate(({ closingVelocity }) => {
+    const result = await page.evaluate(({ closingVelocity, hullType, visibilityControl }) => {
       const app = window.__skyriver; app.suspend();
       const { renderer, camera, scene } = app.scene;
       const traffic = app.traffic;
@@ -23,7 +27,9 @@ if (!url || !directory || !(closingVelocity > 0)) throw Error('Provide URL, outp
       traffic.update(time, camera.position);
       const streak = traffic.objects.find(o => o.name === 'skyriver.traffic.streaks');
       const g = streak.geometry, ids = g.getAttribute('aCarLod'), positions = g.getAttribute('aCarPos');
-      const row = Array.from({ length: g.instanceCount }, (_, i) => i).find(i => ids.getZ(i) === 100);
+      const types = ['cab', 'interceptor', 'commuter', 'van', 'bus', 'flatbed'];
+      const shape = g.getAttribute('aCarShape');
+      const row = Array.from({ length: g.instanceCount }, (_, i) => i).find(i => hullType ? types[shape.getX(i)] === hullType : ids.getZ(i) === 100);
       if (row === undefined) throw Error('Car 100 is absent.');
       const pos = camera.position.clone().set(positions.getX(row), positions.getY(row), positions.getZ(row));
       const dirA = g.getAttribute('aCarDir');
@@ -67,7 +73,7 @@ if (!url || !directory || !(closingVelocity > 0)) throw Error('Provide URL, outp
         const alpha = hull.geometry.getAttribute('aHullCoverage');
         if (alpha) { alpha.array[0] = alpha.array[slot]; alpha.needsUpdate = true; }
         hull.count = 1; hull.instanceMatrix.needsUpdate = true; hull.instanceColor.needsUpdate = true;
-        hull.visible = !trails; streak.visible = trails;
+        hull.visible = !trails && visibilityControl !== 'hidden' && !(visibilityControl === 'drop-frame' && Math.abs(distance - 950) < 0.1); streak.visible = trails;
         if (trails) {
           for (const name of ['aCarPos', 'aCarDir', 'aCarFade', 'aCarShape', 'aCarLod']) {
             const a = g.getAttribute(name); a.array.copyWithin(0, row * a.itemSize, (row + 1) * a.itemSize); a.needsUpdate = true;
@@ -106,12 +112,27 @@ if (!url || !directory || !(closingVelocity > 0)) throw Error('Provide URL, outp
       const rear200 = render(200); captures.push({ name: 'rear-200m.png', image: image() });
       const trails = [];
       for (const angle of [180, 170, 155, 90, 0]) { trails.push({ angle, ...render(200, angle, true) }); captures.push({ name: `trail-${angle}-200m.png`, image: image() }); }
-      return { url: location.href, closingVelocity, fps: 60, originalStats, trafficDraws, hullStage, hull: hull.name, carId: 100, frames, rear200, trails, captures, glError: gl.getError() };
-    }, { closingVelocity });
+      return { url: location.href, visibilityControl, sourceTimeS: time, cameraFov: camera.fov, closingVelocity, fps: 60, originalStats, trafficDraws, hullStage, hull: hull.name, carId: ids.getZ(row), frames, rear200, trails, captures, glError: gl.getError() };
+    }, { closingVelocity, hullType, visibilityControl });
     for (const capture of result.captures) fs.writeFileSync(path.join(directory, capture.name), Buffer.from(capture.image.split(',')[1], 'base64'));
     delete result.captures; result.errors = errors;
+    const scales = result.frames.map(frame => frame.scale);
+    const area = result.frames.map(frame => frame.normalizedRawArea);
+    const maxAreaStep = Math.max(...area.slice(1).map((value, i) => Math.abs(value - area[i]) / Math.max(value, area[i], 1)));
+    const peakPixels = Math.max(...result.frames.map(frame => frame.litPixels));
+    const maxPixelStep = Math.max(...result.frames.slice(1).map((frame, i) => Math.abs(frame.litPixels - result.frames[i].litPixels))) / Math.max(peakPixels, 1);
+    result.pixelContinuity = { maxAdjacentStepOverPeak: maxPixelStep, limit: 0.15,
+      method: 'Actual readback lit-pixel count. Absolute adjacent change divided by the 600 to 1300 m peak. The 15 percent limit permits small raster steps in a 5 to 15 pixel wide hull. Full coverage at 600 and 200 m must remain visible.' };
+    result.acceptance = { visibleNearHull: result.frames.at(-1).hullCoverage > 0.99 && result.frames.at(-1).litPixels >= 10 && result.frames.at(-1).energy > 500 && result.rear200.hullCoverage > 0.99 && result.rear200.litPixels >= 50 && result.rear200.energy > 3000,
+      noFullCoverageGap: result.frames.filter(frame => frame.hullCoverage > 0.99).every(frame => frame.litPixels > 0),
+      pixelContinuity: maxPixelStep < 0.15,
+      constantPhysicalScale: Math.max(...scales) - Math.min(...scales) < 1e-5,
+      normalizedAreaStep: maxAreaStep < 0.015, maxNormalizedAreaStep: maxAreaStep,
+      zeroEndOnTrail: result.trails.filter(frame => frame.angle === 0 || frame.angle === 180).every(frame => frame.litPixels === 0),
+      trafficDrawBudget: result.trafficDraws <= 8, gl: result.glError === 0 && errors.length === 0 };
+    result.pass = Object.entries(result.acceptance).filter(([name]) => name !== 'maxNormalizedAreaStep').every(([, value]) => value === true);
     fs.writeFileSync(path.join(directory, 'closure.json'), JSON.stringify(result, null, 2));
     console.log(JSON.stringify({ frames: result.frames.length, glError: result.glError, errors, first: result.frames[0], middle: result.frames[26], last: result.frames.at(-1), rear200: result.rear200, trails: result.trails }));
-    if (result.glError || errors.length) process.exitCode = 1;
+    if (!result.pass) process.exitCode = 1;
   } finally { await browser.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });

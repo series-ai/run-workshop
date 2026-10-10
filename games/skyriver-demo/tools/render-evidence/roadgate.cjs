@@ -44,7 +44,7 @@ const [url, out] = [process.argv[2], process.argv[3]];
       const number = '([-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][-+]?\\d+)?)';
       const row = new RegExp(`if\\s*\\(\\s*type\\s*<\\s*${number}\\s*\\)\\s*\\{\\s*if\\s*\\(\\s*front\\s*\\)\\s*return\\s+TrafficLampShape\\(\\s*vec4\\(([^)]*)\\)\\s*,\\s*${number}\\s*\\)\\s*;\\s*return\\s+TrafficLampShape\\(\\s*vec4\\(([^)]*)\\)\\s*,\\s*${number}\\s*\\)\\s*;\\s*\\}`, 'g');
       const rows = [...body.matchAll(row)];
-      if (rows.length !== 7) throw new Error(`Expected seven live lamp profiles. Found ${rows.length}.`);
+      if (rows.length !== 6) throw new Error(`Expected six live lamp profiles. Found ${rows.length}.`);
       const shape = (dimensions, y) => {
         const values = dimensions.split(',').map((value) => Number(value.trim()));
         if (values.length !== 4 || values.some((value) => !Number.isFinite(value)) || !Number.isFinite(y)) throw new Error('Live lamp profile contains invalid values.');
@@ -120,7 +120,7 @@ const [url, out] = [process.argv[2], process.argv[3]];
     const camera = { position: c.position.toArray(), up: c.up.toArray(), quaternion: c.quaternion.toArray(), forward: forward.toArray(), fov: c.fov, suspended: a.suspended };
     return { measured, maxTrailPx: +maxTrailPx.toFixed(1), maxTrailToCarRatio: +maxRatio.toFixed(4), endWidthShare: maxEndShare, capCarLengths: u.uTrailCarLengths ? u.uTrailCarLengths.value : null,
       profileSource: profiles ? 'live streak vertexShader trafficLampProfile' : 'legacy uHeadOffset/uTailOffset fallback', profileCount: profiles?.length ?? null,
-      perTypeMeasured: typeCounts, maxKernelWidthsFromLiveProfile: profiles ? profiles.map((p) => ({ typeIndex: p.index, frontZ: p.front.zM, rearZ: p.rear.zM, rearY: p.rear.yM, lengthM: p.front.zM - p.rear.zM })) : null, camera };
+      perTypeMeasured: typeCounts, maxKernelWidthsFromLiveProfile: profiles ? profiles.map((p) => ({ typeIndex: p.index, frontZ: p.front.zM, rearZ: p.rear.zM, rearY: p.rear.yM, lengthM: p.front.zM - p.rear.zM })) : null, camera, source: a.renderState(), captureClockMs: performance.now(), settings: s.renderSettings(), glError: s.renderer.getContext().getError() };
   });
   const report = {};
   report.chase = await measure();

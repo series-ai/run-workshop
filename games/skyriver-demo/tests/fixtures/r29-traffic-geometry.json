@@ -1,156 +1,158 @@
 [
   {
+    "vertices": 1536,
+    "indexed": true,
+    "indexCount": 1914,
+    "indexSha256": "576e1ad1c0eac63b2232cb5248430f8b425ec2c015e14ce8806ae2c661d5fe65",
+    "attributes": {
+      "position": {
+        "bytes": 18432,
+        "sha256": "6d14e6021727c0c0cc5cef741645f3cc08e83ed6c92648ba1172e70402524d84"
+      },
+      "normal": {
+        "bytes": 18432,
+        "sha256": "46fb26fade570a10272268197ecd994d7a0220549fa951788634f9adedda451f"
+      },
+      "color": {
+        "bytes": 18432,
+        "sha256": "210e37e5473eff5f34271ad7dc9d0b90ce49db4f70ce075b688903a73f55b165"
+      },
+      "aGlass": {
+        "bytes": 6144,
+        "sha256": "1bd6933add18e9dac11100a65dde8d60e19e756680913c87d270615989e8b21e"
+      }
+    },
     "renderId": 0,
-    "name": "cab",
-    "vertices": 636,
-    "indexed": true,
-    "indexCount": 882,
-    "indexSha256": "734bae4a01c907f3ed47111d1e92b4aea3a20ab8eb701829f3713e39cb97ec5c",
-    "attributes": {
-      "position": {
-        "bytes": 7632,
-        "sha256": "f17a387cadc425906be5f8e9d2cf3410eab235d3b6febcb7f50dd97c23fe3341"
-      },
-      "color": {
-        "bytes": 7632,
-        "sha256": "59e330e2f0bb541f0bbd3d521a25535ba1326970a456f8797541d2e2553dfec0"
-      },
-      "normal": {
-        "bytes": 7632,
-        "sha256": "8fa1ded34dda7353a716d13ae4470e9391e21101be22b34acc6364fc18ab2296"
-      }
-    }
+    "name": "cab"
   },
   {
+    "vertices": 1306,
+    "indexed": true,
+    "indexCount": 1620,
+    "indexSha256": "7a16560443187f8e5b6af9688ee0c8d255ba3ba7b597481f417d9efb60630417",
+    "attributes": {
+      "position": {
+        "bytes": 15672,
+        "sha256": "e1cc826f8564dfa4e67a389e0d4ebdb631c939d7a539f32a808d1bc7b6c88d70"
+      },
+      "normal": {
+        "bytes": 15672,
+        "sha256": "4ff02f13620ffe5e13d1f2d43cd7486addce331af7b974ea1b555929df36c285"
+      },
+      "color": {
+        "bytes": 15672,
+        "sha256": "f6ef9e11e48133e86b9a08091ea68b56aa9301a3fac7c0d3b5ec9e82dfef1821"
+      },
+      "aGlass": {
+        "bytes": 5224,
+        "sha256": "ac7bc4ddde424b5af5f9c75e9480735a720fa3d0152c6eb8406dc1eb009b641b"
+      }
+    },
     "renderId": 1,
-    "name": "interceptor",
-    "vertices": 490,
-    "indexed": true,
-    "indexCount": 660,
-    "indexSha256": "7bae03c45935d46d1ffe13b69c263c910bcc6b9b074923ecf003d60bbc8a32e8",
-    "attributes": {
-      "position": {
-        "bytes": 5880,
-        "sha256": "9cc2eec0927fc10811156dcc9c988388c8f165ebc4c27a885ce5ab6aa7cde0d3"
-      },
-      "color": {
-        "bytes": 5880,
-        "sha256": "39aa8d3c7eb878986d6c2cc7e3c123a702979bb743c46a16d617380018a400bc"
-      },
-      "normal": {
-        "bytes": 5880,
-        "sha256": "518ae8c6faec8779661518388aab1043aa8a3498026e0d591f8c4cf78d706f6c"
-      }
-    }
+    "name": "interceptor"
   },
   {
+    "vertices": 1522,
+    "indexed": true,
+    "indexCount": 1830,
+    "indexSha256": "120d0df965f585d5918c07cfce42819de6a052616f19515575383f4d4aa0ed70",
+    "attributes": {
+      "position": {
+        "bytes": 18264,
+        "sha256": "6d7e86e4cac8c1ae1c0ea38d2330417756ed7110bd42a065042ab04e2e73e506"
+      },
+      "normal": {
+        "bytes": 18264,
+        "sha256": "c085f22d28612ddb9fb944b330c0b410890b74499d8cc06beeab27fbd3cf5b94"
+      },
+      "color": {
+        "bytes": 18264,
+        "sha256": "3e98133e88e12b630efad095c7945de88ba3403b438f119222661d1043404c6b"
+      },
+      "aGlass": {
+        "bytes": 6088,
+        "sha256": "b54806720be8844522c0115c31aadd77c19094ac3e792324831da6bf99320564"
+      }
+    },
     "renderId": 2,
-    "name": "commuter",
-    "vertices": 564,
-    "indexed": true,
-    "indexCount": 732,
-    "indexSha256": "3f95ff3ac8e0d698bcadbd957185b21541c2209111b5ef371b6277f9ea919d88",
-    "attributes": {
-      "position": {
-        "bytes": 6768,
-        "sha256": "9c87b64fe6ae8c04c46334ebc08bd257ac4ae914c3f5c71032394547cd2078bd"
-      },
-      "color": {
-        "bytes": 6768,
-        "sha256": "d1a00da1315164dfa728e9e1a89b772b0f42d4412fe661466face81dd2bac171"
-      },
-      "normal": {
-        "bytes": 6768,
-        "sha256": "501711e9b9d76aee5dbe67ba704a71904a7da436fbba5b76f5a1186465a6e709"
-      }
-    }
+    "name": "commuter"
   },
   {
+    "vertices": 1496,
+    "indexed": true,
+    "indexCount": 1902,
+    "indexSha256": "22befe75f422c78727466b86721faa420dcb032b8ab98d04b3d6f51b2baa8f4e",
+    "attributes": {
+      "position": {
+        "bytes": 17952,
+        "sha256": "d4c41fa67960d850b07cb50d3ff972d973a3e223c7b815a1c3fbc3a05864d91f"
+      },
+      "normal": {
+        "bytes": 17952,
+        "sha256": "243e0ea202ed204b148ab111d63b52697c1457394acd7d4f1e8d923bd338ca80"
+      },
+      "color": {
+        "bytes": 17952,
+        "sha256": "47a973711447e1c81176fe25d844c0ffb423143e8eff57934cb0e54e693876ca"
+      },
+      "aGlass": {
+        "bytes": 5984,
+        "sha256": "c5cb47e190093ef95ff2c3addc34deb0455baa11f107651a3d7d5066cc7d6593"
+      }
+    },
     "renderId": 3,
-    "name": "van",
-    "vertices": 866,
-    "indexed": true,
-    "indexCount": 1194,
-    "indexSha256": "e6180b767a6940858ba4f2bd38aea2d87b5123208b8ec6505da411500a4e71e5",
-    "attributes": {
-      "position": {
-        "bytes": 10392,
-        "sha256": "8869cf95f42858df940d0303a6589c39400b0061509da38404628881066c7dce"
-      },
-      "color": {
-        "bytes": 10392,
-        "sha256": "7ba9a483c9af698738ebee0c9c94d54d8e1048bf8f5fa4e0039b484986733752"
-      },
-      "normal": {
-        "bytes": 10392,
-        "sha256": "827baff37096ceef95c1e86279a4b1b1a9e8f438927e9e23416f17dff70dbc53"
-      }
-    }
+    "name": "van"
   },
   {
+    "vertices": 1772,
+    "indexed": true,
+    "indexCount": 2358,
+    "indexSha256": "50c31c0ec5b10d986642b2c28f388bc0c1b8fc0592baa02ef41ccca6ba9d5292",
+    "attributes": {
+      "position": {
+        "bytes": 21264,
+        "sha256": "3a093c0352bd47df41fe3cf51dd63cb90744a4a8d68c471d6af9fde6eca56181"
+      },
+      "normal": {
+        "bytes": 21264,
+        "sha256": "ac97e565a11fcc26c86786c5527240052478fad2a9f78b6eb31c9d6470ca9a32"
+      },
+      "color": {
+        "bytes": 21264,
+        "sha256": "006d265d7254c0d3cd9eb90f2f29ff5ba27bac5893f0306d2d456b80968b7053"
+      },
+      "aGlass": {
+        "bytes": 7088,
+        "sha256": "a8277d57c80fe3d9512232144919b83065bee194e7ca37a8ff646c0fb3a09075"
+      }
+    },
     "renderId": 4,
-    "name": "saucer",
-    "vertices": 260,
-    "indexed": true,
-    "indexCount": 276,
-    "indexSha256": "1e4cc6edb51280fab0a840919e50ba494241f3f8d82260f962fca668417dc519",
-    "attributes": {
-      "position": {
-        "bytes": 3120,
-        "sha256": "78bdef6125fcb87507c6d8df0560a859a110495a20519e748bf38d2117f09c0d"
-      },
-      "color": {
-        "bytes": 3120,
-        "sha256": "6694066009ebb5c066c08064094599b0c535e2d4a49534f4f36d2abbcd0154ec"
-      },
-      "normal": {
-        "bytes": 3120,
-        "sha256": "3838684e19c2620e9d548131b1e58c291d55a349c8043b2bd774b6fb34bb9bb0"
-      }
-    }
+    "name": "bus"
   },
   {
+    "vertices": 1614,
+    "indexed": true,
+    "indexCount": 2244,
+    "indexSha256": "a9b89fe55e8a42764fe4f9a369b195dc3c2d1a3b329be3c798068ab837897601",
+    "attributes": {
+      "position": {
+        "bytes": 19368,
+        "sha256": "7e6bf3df55f02f74a7d90c22acde7b19b7571a3a2f44ebeb55d2781a756cb791"
+      },
+      "normal": {
+        "bytes": 19368,
+        "sha256": "8d61744f393090a94863c4caee6aa1a2b1f715ca432154979ba5f5773eb7624d"
+      },
+      "color": {
+        "bytes": 19368,
+        "sha256": "084d6139ecd1f08616526b4ca4596377cd20bb9187da79ea947071f7c913879c"
+      },
+      "aGlass": {
+        "bytes": 6456,
+        "sha256": "30bde2042bfede1810e8bd144dc7417f21a72dc1e1355a594072ec00c7445c04"
+      }
+    },
     "renderId": 5,
-    "name": "bus",
-    "vertices": 68,
-    "indexed": true,
-    "indexCount": 102,
-    "indexSha256": "d6ea3f9a5ac9dc1839cb42dfb60dc4e615b23b174d075b6b6bbf952f42a2df3d",
-    "attributes": {
-      "position": {
-        "bytes": 816,
-        "sha256": "cf9626410090af6e3870383c684089c20dcc0f0328c1928bf9c242603e58d4c3"
-      },
-      "color": {
-        "bytes": 816,
-        "sha256": "79001583a310fdb12066b269671e7ea25fd93559afdc65a01b2bf6c683ffcb15"
-      },
-      "normal": {
-        "bytes": 816,
-        "sha256": "757d58e949dc0cc98850f454a48131880210c67eb1ed2262611d648d7074a278"
-      }
-    }
-  },
-  {
-    "renderId": 6,
-    "name": "flatbed",
-    "vertices": 200,
-    "indexed": true,
-    "indexCount": 300,
-    "indexSha256": "be6ba7277c7d4e8f3d3e6ff3f83020c6368fc918441af89d13769dd67f06b9c2",
-    "attributes": {
-      "position": {
-        "bytes": 2400,
-        "sha256": "686cb4ad31951843766bc414defe249034df02291d7f5c687ff5903a2af32c63"
-      },
-      "color": {
-        "bytes": 2400,
-        "sha256": "037450f05e52336248c13f7f8fcd2048c167a7a66e28e2a34d2356c589a52a63"
-      },
-      "normal": {
-        "bytes": 2400,
-        "sha256": "04ecfea0a20facfc8cc0f9f76178aca3b7549f5964ff4b5136319053fa986348"
-      }
-    }
+    "name": "flatbed"
   }
 ]

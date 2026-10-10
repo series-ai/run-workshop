@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { BufferAttribute, BufferGeometry, InstancedBufferAttribute, InstancedBufferGeometry, Mesh, ShaderMaterial, Vector3 } from 'three';
 import { createSkyriverTraffic, TRAFFIC_QUALITY_TIERS } from '../src/render/traffic';
 
-const names = ['cab', 'interceptor', 'commuter', 'van', 'saucer', 'bus', 'flatbed'] as const;
+const names = ['cab', 'interceptor', 'commuter', 'van', 'bus', 'flatbed'] as const;
 const traffic = createSkyriverTraffic({ seed: 424242, quality: TRAFFIC_QUALITY_TIERS.high, maxImpostors: 20000 });
 afterAll(() => traffic.dispose());
 function mesh(name: string): Mesh {
@@ -47,7 +47,7 @@ describe('R30 independent fixed lamp groups', () => {
   it.each(names)('keeps both %s groups at the measured indexed hull endpoints', name => {
     const shader = material('skyriver.traffic.impostors').vertexShader;
     const rows = [...shader.matchAll(/if\s*\(type\s*<\s*([\d.]+)\)\s*\{\s*if\s*\(front\)\s*return\s+TrafficLampShape\(vec4\(([^)]+)\),\s*([\d.-]+)\);\s*return\s+TrafficLampShape\(vec4\(([^)]+)\),\s*([\d.-]+)\);\s*\}/g)];
-    expect(rows).toHaveLength(7);
+    expect(rows).toHaveLength(6);
     const type = names.indexOf(name), row = rows[type]!;
     expect(Number(row[1])).toBe(type + 0.5);
     for (const head of [true, false]) {
