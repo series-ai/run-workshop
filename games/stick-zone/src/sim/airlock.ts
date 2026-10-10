@@ -1,3 +1,4 @@
+import { getRundotGameApi } from "../sdk.js";
 /**
  * @file airlock.ts
  * Turnkey Syncplay & SyncHub client integration for stick-zone.
@@ -822,4 +823,28 @@ export async function createAuthoritativeSettlement(
 ): Promise<SettlementReceipt> {
   const commitment = await authoritativeLedgerCommit(sim, ledger);
   return commitment.receipt;
+}
+
+
+/**
+ * Pure RUN SDK extraction preparation integration.
+ * Communicates with turnkey Venus platform extraction service via SDK.
+ */
+export async function preparePlatformRaid(options: {
+  sector: string;
+  loadout: Array<{ itemId: string; quantity: string }>;
+}): Promise<{ success: boolean; raidId?: string; grant?: any }> {
+  if (typeof getRundotGameApi() !== "undefined" && getRundotGameApi()?.extraction?.prepareRaidAsync) {
+    try {
+      const airlockSession = await getRundotGameApi().extraction.prepareRaidAsync(options);
+      return {
+        success: true,
+        raidId: airlockSession.raidId,
+        grant: (airlockSession as any).grant,
+      };
+    } catch (err) {
+      console.warn("[Airlock] Platform prepareRaidAsync error, fallback to deterministic sim:", err);
+    }
+  }
+  return { success: false };
 }

@@ -1,3 +1,4 @@
+import { getRundotGameApi } from "../sdk.js";
 /**
  * @file stashStore.ts
  * Authoritative player stash, bank, rank leveling, and armory loadout store.
@@ -195,18 +196,37 @@ function persistState(state: {
   contracts: Contract[];
   settledReceiptIds: string[];
 }) {
-  if (typeof localStorage === "undefined") return;
-  try {
-    const checksum = computeStoreChecksum({
-      bankCash: state.bankCash,
-      operativeLevel: state.operativeLevel,
-      xp: state.xp,
-      settledReceiptIds: state.settledReceiptIds,
-    });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, checksum }));
-  } catch {
-    // Ignore storage quota errors
+  if (typeof localStorage !== "undefined") {
+    try {
+      const checksum = computeStoreChecksum({
+        bankCash: state.bankCash,
+        operativeLevel: state.operativeLevel,
+        xp: state.xp,
+        settledReceiptIds: state.settledReceiptIds,
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, checksum }));
+    } catch {
+      // Ignore storage quota errors
+    }
   }
+
+  // Pure RUN SDK storage integration
+  try {
+    if (getRundotGameApi()?.storage?.setJsonAsync) {
+      getRundotGameApi().storage.setJsonAsync("player_stash_v1", {
+        bankCash: state.bankCash,
+        loadout: state.loadout,
+        stashItems: state.stashItems,
+        settledReceiptIds: state.settledReceiptIds,
+      }).catch(() => {});
+      getRundotGameApi().storage.setJsonAsync("operative_progression_v1", {
+        operativeLevel: state.operativeLevel,
+        xp: state.xp,
+        stats: state.stats,
+        contracts: state.contracts,
+      }).catch(() => {});
+    }
+  } catch {}
 }
 
 export const useStashStore = create<StashState>((set, get) => {
@@ -518,6 +538,14 @@ export const useStashStore = create<StashState>((set, get) => {
       const item = state.stashItems[itemIndex];
       const sellPrice = item.value || 200;
       const newCash = state.bankCash + sellPrice;
+
+      // Pure RUN SDK simulation integration
+      try {
+        if (getRundotGameApi()?.simulation?.executeRecipeAsync) {
+          const recipeName = `sell_${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
+          getRundotGameApi().simulation.executeRecipeAsync(recipeName, { [item.id || item.name]: 1 }).catch(() => {});
+        }
+      } catch {}
 
       const updatedStash = [...state.stashItems];
       if (item.count > 1) {

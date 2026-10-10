@@ -1,3 +1,4 @@
+import { getRundotGameApi } from "../sdk.js";
 import { calculateShotgunHit, getMaxShotgunDamageForDistance } from './shotgunCollision.js';
 /**
  * @file multiplayer.ts
@@ -1032,6 +1033,20 @@ export class MultiplayerCoordinator {
       const devServer = (typeof window !== "undefined" && (window as any).__RUNDOT_MULTIPLAYER_DEV_SERVER__) || "ws://localhost:9001";
       const baseWs = devServer.replace(/^http/, "ws");
       wsUrl = `${baseWs}/ws?token=${encodeURIComponent(tok)}&raidId=${encodeURIComponent(this.sim.raidId)}`;
+    }
+    // Pure RUN SDK multiplayer integration: notify SDK multiplayer layer if present
+    if (getRundotGameApi()?.multiplayer?.connectWithTicket) {
+      try {
+        getRundotGameApi().multiplayer.connectWithTicket({
+          wsUrl,
+          raidId: this.sim.raidId,
+          profileId: this.sim.player.id,
+          slot: 0,
+          ticket: tok,
+        }).then((room: any) => {
+          (this as any).sdkRoom = room;
+        }).catch(() => {});
+      } catch {}
     }
     try {
       const createdSocket = new WSClass(wsUrl);

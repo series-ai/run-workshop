@@ -1,0 +1,27 @@
+{
+  "hubId": "stick-zone-hub",
+  "spokeId": "sector-7-depot",
+  "sector": "Sector 7 Depot",
+  "mode": "hardcore_extraction",
+  "extractionZones": [
+    {
+      "id": "lz_sector_7",
+      "name": "EXFIL ZONE DELTA",
+      "x": 45,
+      "y": 0,
+      "z": 45,
+      "radius": 6,
+      "dwellTicks": 180
+    }
+  ],
+  "escrow": {
+    "escrowOnIngress": true,
+    "surrenderOnKia": true,
+    "bankOnExfil": true
+  },
+  "airlock": {
+    "ingressWindowTicks": 28800,
+    "corridorDurationMs": 2500,
+    "holdTicks": 180
+  }
+}

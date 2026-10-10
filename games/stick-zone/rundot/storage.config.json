@@ -1,0 +1,12 @@
+{
+  "keys": {
+    "player_stash_v1": {
+      "type": "json",
+      "description": "Persisted operative hideout stash and inventory"
+    },
+    "operative_progression_v1": {
+      "type": "json",
+      "description": "Operative level, contracts, and lifetime raid statistics"
+    }
+  }
+}
