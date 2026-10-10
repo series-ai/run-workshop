@@ -10,19 +10,15 @@ import {
   DollarSign,
   Package,
   Award,
-  Zap,
   Play,
   RotateCcw,
   CheckCircle2,
-  ChevronRight,
-  TrendingUp,
   MapPin,
-  HelpCircle,
   ShoppingBag,
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useStashStore, type WeaponType, type ArmorTier, type StashItem } from "../progression/stashStore.js";
+import { useStashStore, type WeaponType, type ArmorTier } from "../progression/stashStore.js";
 import { sound } from "../audio.js";
 
 interface HideoutMenuProps {

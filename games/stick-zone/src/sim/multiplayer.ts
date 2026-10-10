@@ -1,5 +1,5 @@
 import { getRundotGameApi } from "../sdk.js";
-import { calculateShotgunHit, getMaxShotgunDamageForDistance } from './shotgunCollision.js';
+import { calculateShotgunHit } from './shotgunCollision.js';
 /**
  * @file multiplayer.ts
  * Real-time multiplayer synchronization delegated to first-party SyncHub platform SDK
@@ -7,10 +7,10 @@ import { calculateShotgunHit, getMaxShotgunDamageForDistance } from './shotgunCo
  * shared world loot/destruction, and cross-browser hit/knockback coordination.
  */
 
-import type { SectorDepotSimulation, OperativeState, StickActionState, KickActionPayload } from './game.js';
+import type { SectorDepotSimulation, StickActionState, KickActionPayload } from './game.js';
 import { DEPOT_CONTAINERS, segmentIntersectsAABB } from './game.js';
 import type { RaidWorldSnapshot, SettlementReceipt } from './airlock.js';
-import { verifyReceiptIntegrity, verifySettlementReceipt, defaultSettlementLedger, registerDeployment, verifiedReceiptInstances } from './airlock.js';
+import { verifyReceiptIntegrity, defaultSettlementLedger, registerDeployment } from './airlock.js';
 import { SIM_CONFIG, BOSS_CONFIG, AI_CONFIGS } from './config.js';
 import { sound } from '../audio.js';
 

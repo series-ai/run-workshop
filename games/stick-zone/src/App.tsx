@@ -1,13 +1,11 @@
 import { hydrateStashFromCloud } from "./progression/stashStore.js";
-import { preparePlatformRaid } from "./sim/airlock.js";
 import { HideoutMenu } from "./components/HideoutMenu.js";
 import { MobileControls, type TouchInputUpdate } from "./components/MobileControls.js";
 import { gamepad } from "./input/gamepadController.js";
-import { defaultSettlementLedger } from "./sim/airlock.js";
 import React, { useEffect, useRef, useState } from "react";
 import { SectorDepotSimulation, type GameInput, computeGroundAimAngle } from "./sim/game.js";
 import { MultiplayerCoordinator } from "./sim/multiplayer.js";
-import { registerDeployment } from "./sim/airlock.js";
+import { preparePlatformRaid, registerDeployment } from "./sim/airlock.js";
 import { GameCanvas } from "./components/GameCanvas.js";
 import { TacticalHud } from "./components/TacticalHud.js";
 import { ExfilOverlay } from "./components/ExfilOverlay.js";
@@ -77,7 +75,6 @@ const MainApp: React.FC = () => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       (window as any).__stickZoneSim = sim;
-      (window as any).__stickZoneLedger = defaultSettlementLedger;
     }
   }, [sim]);
 

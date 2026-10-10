@@ -3,7 +3,6 @@ import * as THREE from "three";
 import type { LootCrate } from "../sim/game.js";
 import { MAP_CONTAINERS } from "../sim/game.js";
 import { InklineModel } from "./InklineModel.js";
-import { InklineStickCharacter } from "./InklineStickCharacter.js";
 
 interface SectorMapProps {
   crates: LootCrate[];

@@ -1,5 +1,5 @@
-import { DEPOT_CRATE_CONFIGS, KNOWN_DEPOT_CRATES } from "./crates.js";
-import { calculateShotgunHit, SHOTGUN_MAX_RANGE } from './shotgunCollision.js';
+import { DEPOT_CRATE_CONFIGS } from "./crates.js";
+import { calculateShotgunHit } from './shotgunCollision.js';
 export type PresentationEvent =
   | {
       type: 'fire';
@@ -392,9 +392,7 @@ export function segmentIntersectsAABB3D(
 import { SIM_CONFIG, BOSS_CONFIG, computeBossPosition, AI_CONFIGS, computeAIPosition } from './config.js';
 import {
   createExfilController,
-  authoritativeLedgerCommit,
   registerDeployment,
-  defaultSettlementLedger,
   ExfilController,
   StagedIngressController,
   type RaidWorldSnapshot,

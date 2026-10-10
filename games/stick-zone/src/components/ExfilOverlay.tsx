@@ -6,8 +6,6 @@ import {
   authoritativeLedgerCommit,
   verifySettlementReceipt,
   defaultSettlementLedger,
-  verifyReceiptIntegrity,
-  verifiedReceiptInstances,
   verifiedReceiptSnapshots,
   recordVerifiedReceipt,
   isReceiptContentVerified,

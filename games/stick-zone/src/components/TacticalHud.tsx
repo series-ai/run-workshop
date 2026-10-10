@@ -4,9 +4,6 @@ import {
   Heart,
   Crosshair,
   Compass,
-  AlertTriangle,
-  Radio,
-  DollarSign,
 } from "lucide-react";
 import { type SectorDepotSimulation, DEPOT_CONTAINERS } from "../sim/game.js";
 import { SIM_CONFIG } from "../sim/config.js";

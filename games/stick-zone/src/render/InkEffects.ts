@@ -5,7 +5,6 @@
 import * as THREE from 'three';
 import {
   type ShapeKind,
-  type EffectPreset,
   EFFECT_BY_ID,
   resolveEffectColor,
   effectEnvelope,
