@@ -47,8 +47,8 @@ Stick Zone relies strictly on first-party Venus monorepo services:
 ## Development
 
 ```sh
-npm run dev      # Launches local Vite client on :5196
-npm run preview  # Previews compiled production bundle on :4196
+npm run dev      # Launches local Vite client on :58392
+npm run preview  # Previews compiled production bundle on :48392
 ```
 
 ## Build & Verification

@@ -5,14 +5,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5196",
+    "dev": "vite --port 58392",
     "build": "node scripts/stage-inkline-assets.mjs && tsc && vite build",
-    "preview": "vite preview --port 4196",
+    "preview": "node scripts/kill-port.mjs 48392 && vite preview --port 48392",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "record:proofs": "node scripts/record-gameplay.mjs",
-    "start": "vite preview --port 4196",
-    "predev": "node scripts/stage-inkline-assets.mjs"
+    "start": "node scripts/kill-port.mjs 48392 && vite preview --port 48392",
+    "predev": "node scripts/stage-inkline-assets.mjs && node scripts/kill-port.mjs 58392"
   },
   "dependencies": {
     "@react-three/drei": "^9.121.4",

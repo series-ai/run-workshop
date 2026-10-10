@@ -24,13 +24,13 @@ export default defineConfig({
     target: "esnext",
   },
   server: {
-    port: 5196,
-    strictPort: true,
+    port: 58392,
+    strictPort: false,
     host: true,
   },
   preview: {
-    port: 4196,
-    strictPort: true,
+    port: 48392,
+    strictPort: false,
     host: true,
   },
 });
