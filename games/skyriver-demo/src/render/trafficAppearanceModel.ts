@@ -73,6 +73,7 @@ import {
   trafficTrailModeWeights,
   trafficTrailWeightFromModeWeights,
   trafficTrailFarFade,
+  trafficTrailViewGain,
   trafficAppearanceSmoothstep,
   trafficLampFacingGain,
   type TrafficAppearanceProfile,
@@ -198,7 +199,7 @@ export interface TrafficHullLampPatch {
   readonly sourceRgb: TrafficRgb;
   readonly preFogRgb: TrafficRgb;
   readonly foggedRgb: TrafficRgb;
-  /** Linear pixel-area estimate before and after analytic fog. Output tone mapping is not included. */
+  /** Coverage-averaged pixel energy before and after fog. Individual dither pixels differ. */
   readonly projectedPreFogEnergyRgb: TrafficRgb;
   readonly projectedFoggedEnergyRgb: TrafficRgb;
   /** Diagnostic estimate weighted by the outward normal. It does not resolve hull self-occlusion. */
@@ -278,6 +279,7 @@ export interface SameCarTrafficAppearance {
     readonly hasInstance: boolean;
     readonly hullLodAlpha: number;
     readonly scale: number;
+    readonly coverage: number;
     readonly distanceDim: number;
     readonly tintGain: number;
     readonly patches: readonly [readonly TrafficHullLampPatch[], readonly TrafficHullLampPatch[]];
@@ -843,6 +845,7 @@ function hullPatchAppearance(
   hullScale: number,
   tintGain: number,
   hasHullRecord: boolean,
+  coverage: number,
 ): TrafficHullLampPatch[] {
   const profile = sourceProfile(profileAt(input.typeIndex), side);
   const centers = profile.kind === 'pair' ? [profile.centreXM, -profile.centreXM] : [0];
@@ -883,17 +886,17 @@ function hullPatchAppearance(
       sourceRgb: source,
       preFogRgb,
       foggedRgb,
-      projectedPreFogEnergyRgb: multiplyRgb(preFogRgb, bounds.projectedAreaCssPx2),
-      projectedFoggedEnergyRgb: multiplyRgb(foggedRgb, bounds.projectedAreaCssPx2),
+      projectedPreFogEnergyRgb: multiplyRgb(preFogRgb, bounds.projectedAreaCssPx2 * coverage),
+      projectedFoggedEnergyRgb: multiplyRgb(foggedRgb, bounds.projectedAreaCssPx2 * coverage),
       frontFaceCosine,
       frontFaceFactor: Math.max(frontFaceCosine, 0),
       facesCameraOnOutwardSide: frontFaceCosine > 0,
       outwardProjectedFoggedEnergyRgb: multiplyRgb(
         foggedRgb,
-        frontFaceCosine > 0 ? bounds.projectedAreaCssPx2 : 0,
+        frontFaceCosine > 0 ? bounds.projectedAreaCssPx2 * coverage : 0,
       ),
       hasHullRecord,
-      rendered: hasHullRecord && hullScale > 0,
+      rendered: hasHullRecord && coverage > 0,
     };
   });
 }
@@ -1189,8 +1192,10 @@ function cpuTrailAppearance(input: SameCarTrafficAppearanceInput, lod: SameCarLi
   const pickupDistanceM = cameraSampleDistance(trailKernel.lampWorld, input.camera.position);
   const pickup = trafficAppearanceSmoothstep(TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0], TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1], pickupDistanceM);
   const forward = trafficForward(input.direction);
+  const toCameraAtLamp = [input.camera.position[0] - trailKernel.lampWorld[0], input.camera.position[1] - trailKernel.lampWorld[1], input.camera.position[2] - trailKernel.lampWorld[2]] as TrafficVec3;
+  const viewGain = trafficTrailViewGain(dot3(forward, scale3(toCameraAtLamp, 1 / Math.max(Math.hypot(...toCameraAtLamp), 1e-8))));
   let lengthM = Math.min(input.speedMps * TRAFFIC_TRAIL_SECONDS,
-    Math.min(TRAFFIC_TRAIL_MAX_M, TRAIL_MAX_CAR_LENGTHS * carProfileLength(input.typeIndex) * input.sizeScale)) * distanceFade;
+    Math.min(TRAFFIC_TRAIL_MAX_M, TRAIL_MAX_CAR_LENGTHS * carProfileLength(input.typeIndex) * input.sizeScale)) * distanceFade * viewGain;
   const lamp = trailKernel.lampWorld;
   let end = add3(lamp, scale3(forward, -lengthM));
   let toEndView = viewPoint(end, input.camera);
@@ -1220,7 +1225,7 @@ function cpuTrailAppearance(input: SameCarTrafficAppearanceInput, lod: SameCarLi
   const toCamera = toCameraLength > 0 ? scale3(toCameraDelta, 1 / toCameraLength) : [0, 0, 0] as const;
   const trailColorWarm = trafficAppearanceSmoothstep(TRAFFIC_TRAIL_WARM_FACING_BAND[0], TRAFFIC_TRAIL_WARM_FACING_BAND[1], dot3(forward, toCamera));
   const trailColor = mixRgb(rgb(...TRAFFIC_STREAK_TAIL_RGB), rgb(...TRAFFIC_STREAK_TRAIL_WARM_RGB), trailColorWarm);
-  const gain = finalFade * lod.nearAlpha * modeWeight * pickup * trailKernel.lampGain;
+  const gain = finalFade * lod.nearAlpha * modeWeight * pickup * trailKernel.lampGain * viewGain;
   const fogAttenuation = fogLightFactor(input.fogFactor);
   const sourceRgbLinear = multiplyRgb(trailColor, gain * IMPOSTOR_INTENSITY * input.emissiveGain * TRAFFIC_TRAIL_ALPHA);
   const deltaX = toEndView[0] - trailKernel.centerView[0];
@@ -1312,13 +1317,14 @@ export function evaluateSameCarTrafficAppearance(input: SameCarTrafficAppearance
   const legacyFarAlpha = evaluateThinFarAlpha(distanceSq, input.thinFar);
   const lod = writeSameCarLightLod(input.distanceM, input.impostorPresence, legacyFarAlpha);
   const hullLod = hullLodAlpha(input.distanceM);
-  const hullScale = input.sizeScale * hullLod * trafficAppearanceSmoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, finalFade);
+  const hullScale = input.sizeScale;
+  const hullCoverage = hullLod * trafficAppearanceSmoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, finalFade) * lod.totalAlpha;
   const nearFade = finalFade * lod.nearAlpha;
   const distanceDim = evaluateTrafficDistanceDim(distanceSq);
   const tintGain = distanceDim * nearFade;
   const hasHullRecord = input.hasHullRecord ?? true;
-  const hullHead = hullPatchAppearance(input, 'head', hullScale, tintGain, hasHullRecord);
-  const hullTail = hullPatchAppearance(input, 'tail', hullScale, tintGain, hasHullRecord);
+  const hullHead = hullPatchAppearance(input, 'head', hullScale, tintGain, hasHullRecord, hullCoverage);
+  const hullTail = hullPatchAppearance(input, 'tail', hullScale, tintGain, hasHullRecord, hullCoverage);
   const hasStreakRecord = input.hasStreakRecord ?? true;
   const headProjection = projectTrafficLampKernel({
     position: input.position, direction: input.direction, bankRadians: input.bankRadians,
@@ -1355,6 +1361,7 @@ export function evaluateSameCarTrafficAppearance(input: SameCarTrafficAppearance
       hasInstance: hasHullRecord,
       hullLodAlpha: hullLod,
       scale: hullScale,
+      coverage: hullCoverage,
       distanceDim,
       tintGain,
       patches: [hullHead, hullTail],

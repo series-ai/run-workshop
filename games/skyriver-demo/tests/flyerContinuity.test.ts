@@ -225,3 +225,38 @@ describe('flyer continuity: captured temporal state', () => {
       .some(failure => failure.channel === 'emission after declared complete fade')).toBe(true);
   });
 });
+
+import { trafficTrailViewGain } from '../src/render/trafficAppearance';
+import { evaluateSameCarTrafficAppearance } from '../src/render/trafficAppearanceModel';
+
+describe('R37 rear fade and end-on trail limits', () => {
+  it('keeps the hull physical size through source and quality fades', () => {
+    for (const sourceFade of [0, 0.1, 0.3, 0.45, 1]) {
+      const result = evaluateSameCarTrafficAppearance({ ...continuityInput(0, 1, 180, 'high', 1190), sourceFade });
+      expect(result.hull.scale).toBe(2);
+      expect(result.hull.coverage).toBeGreaterThanOrEqual(0);
+      expect(result.hull.coverage).toBeLessThanOrEqual(0.5);
+      if (sourceFade === 0) expect(result.hull.patches.flat().every(patch => !patch.rendered)).toBe(true);
+    }
+    const zero = evaluateSameCarTrafficAppearance({ ...continuityInput(0, 1, 180, 'low', 1150, true), fogColor: { r: 1, g: 1, b: 1 }, fogFactor: 1 });
+    expect(zero.hull.scale).toBe(2);
+    expect(zero.hull.coverage).toBe(0);
+    expect(zero.hull.patches.flat().every(patch => !patch.rendered && patch.projectedFoggedEnergyRgb.r === 0)).toBe(true);
+  });
+  it('preserves side-on trails and fades both end-on directions with zero edge slopes', () => {
+    expect(trafficTrailViewGain(0)).toBe(1);
+    expect(trafficTrailViewGain(0.9)).toBe(1);
+    expect(trafficTrailViewGain(1)).toBe(0);
+    expect(trafficTrailViewGain(-1)).toBe(0);
+    expect(trafficTrailViewGain(0.95)).toBeCloseTo(0.5, 12);
+    const h = 1e-6;
+    for (const edge of [0.9, 1]) expect(Math.abs(trafficTrailViewGain(edge + h) - trafficTrailViewGain(edge - h)) / (2 * h)).toBeLessThan(0.001);
+    for (const angle of [0, 180]) {
+      const result = evaluateSameCarTrafficAppearance(continuityInput(0, 1, angle, 'high', 200));
+      expect(result.streak.trail.lengthM).toBeLessThan(1e-8);
+      expect(result.streak.trail.sourceGain).toBeLessThan(1e-8);
+      for (const energy of Object.values(result.streak.trail.renderedContinuousEnergyRgb)) expect(energy).toBeLessThan(1e-8);
+    }
+    expect(evaluateSameCarTrafficAppearance(continuityInput(0, 1, 90, 'high', 200)).streak.trail.sourceGain).toBeGreaterThan(0);
+  });
+});
