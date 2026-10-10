@@ -23,6 +23,7 @@ import {
 } from '../src/render/city';
 import { presentCityLayout } from '../src/render/presentationLayout';
 import r29Baseline from './fixtures/r29-city-baseline.json';
+import r35Baseline from './fixtures/r35-roof-baseline.json';
 
 const DEMO_SEED = 424242;
 const TEST_SEEDS = [DEMO_SEED, 0, 2147483647, 4294967295] as const;
@@ -109,7 +110,19 @@ describe('R27 base sprawl: legacy preservation and trim capacity', () => {
     const actual = { raw, layout, masses: deriveCityMasses(layout), trims: deriveCityTrims(layout),
       faces: deriveFacadeFaces(layout), far: deriveFarTowers(layout), heroes: deriveHeroBlades(layout), signs: deriveNeonSigns(layout) };
     const before = r29Baseline.find(record => record.seed === seed)!;
-    for (const key of Object.keys(actual) as (keyof typeof actual)[]) expect(sha256(actual[key]), key).toBe(before.hashes[key]);
+    for (const key of Object.keys(actual) as (keyof typeof actual)[]) {
+      if (key !== 'trims') expect(sha256(actual[key]), key).toBe(before.hashes[key]);
+    }
+    // R35 appends dark props. The independent committed oracle keeps every old active byte.
+    const frozen = r35Baseline.seeds.find(record => record.seed === seed)!;
+    for (const key of ['cx', 'cy', 'cz', 'sx', 'sy', 'sz', 'kind', 'seedValue'] as const) {
+      const array = actual.trims[key].subarray(0, frozen.trimCount);
+      expect(createHash('sha256').update(Buffer.from(array.buffer, array.byteOffset, array.byteLength)).digest('hex'), key).toBe(frozen.activeTrimArrayHashes[key]);
+    }
+    const exactHash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+    expect(exactHash(actual.trims.owner.slice(0, frozen.trimCount))).toBe(frozen.hashes.trimOwner);
+    expect(exactHash(actual.trims.spanTo.slice(0, frozen.trimCount))).toBe(frozen.hashes.trimSpanTo);
+    expect(actual.trims.count).toBeGreaterThanOrEqual(frozen.trimCount);
   });
 
   it('matches saved baseline hashes on the canonical demo seed', () => {

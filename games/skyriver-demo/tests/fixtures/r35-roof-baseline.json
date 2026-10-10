@@ -1,0 +1,3734 @@
+{
+  "commit": "14c458bea8c5b337843850ba80942a3841bd8f65",
+  "sourceHashes": {
+    "src/render/city.ts": "634d0f33ac5ad1eaa6c7d38e60d942ed9de7e53d7125987106470051f063a917",
+    "src/render/presentationLayout.ts": "3eb697820b1a5e6cfb1d5d064cbb8003c67e8213819ea3062a4a01bfe75c7287",
+    "src/render/canyonWarp.ts": "3c4bbdf99588244d3681d2ce438d5b19b03395769c0e624af5f632e700b55670",
+    "src/render/structureMaterial.ts": "caec1b77a1b17870f235ca1c66df621c8b91ab160e915568f068cbbfc46b9a7e",
+    "src/render/windowPalette.ts": "de8d4b9af88795f862f07bf0f6386873ceb7bda0690a448428078f288342ad03",
+    "src/sim/derive.ts": "d851f1a95f766bc88df9484a4148498f23b9dff1197988f3b0f273f3bda72ded",
+    "src/sim/systems.ts": "147eb556eb81d38ba4e03443029a25ee3e3d573ce7e58bbcbcffd7c268b6dc48"
+  },
+  "shaderHashes": {
+    "towerVertex": "9cf010a690d6394cd9048c141e2974d0e5fc06947447ba3f66f8006ef6ba9760",
+    "towerFragment": "922c026e3cea0831c90706eb637f1ba6b596e558090e62e7347f0158a42bd0f9",
+    "trimVertex": "d0ffee8f790a551af95c333dd4ec895a033accb5cea9a9cdab9516b646418b03",
+    "trimFragment": "63bc1df082457731686d702ccfaa7b08f69f4425675c30660607daf2827a82aa",
+    "signVertex": "b14b03b960c311a458b84cf7fe168a3e37b6b7f5d5d524a580783f32ff38d57e",
+    "signFragment": "22638d5914625dfe9da0de8cb02cdb3cbb9919736c3ec8de65c1e9b44bff9fbe",
+    "impostorVertex": "dacc61fadf59ae59efaa94f59e88a0840f65531cc658d079592546198d787ba7",
+    "impostorFragment": "8992a4538d4922f5e228cf6aa80caf546a46fb42d4a72a9af224aa74baf60c02",
+    "districtColour": "905a45c717badd7b1394d7231fd497ed8696c689e7ef018e288ced9d0b5116ae",
+    "distanceGrade": "3459c1defa5e90dd6c62e60460117923927da0dbaa47afbb73abcccf23a44a33",
+    "windowPalette": "915e8d85fbff6fa86ea6be2d8bcdafdf84bf5a76b204d2e47ec18397211052db"
+  },
+  "seeds": [
+    {
+      "seed": 424242,
+      "file": "seed-424242.json",
+      "recordSha256": "a29e93d5167135a10943f786c2244ddb596365853c064c84f7998e4c73880946",
+      "massCount": 6705,
+      "trimCount": 13734,
+      "drawnTrimCount": 13599,
+      "heroCount": 42,
+      "signCount": 361,
+      "spareTrimSlots": 2266,
+      "hashes": {
+        "layout": "7a9584e182fa093cc9e98dfa289e458ea465d2522865e053eafb8d91f81b369d",
+        "masses": "a8bc6d959ee2dc4eec3fe53891548caea4fa948a9e81fb341277321eadfb87a6",
+        "heroes": "bf5bedee88cfa2a473a0f42c84013e7320fa030af2b877332e9ece989cf756bd",
+        "signs": "3f595b26e5b05efea165397bc23f907b23f036465bc7bc6612149d8d2065a69a",
+        "faces": "5b2192351106d64907cc99b1db02db70ad7de3e96a81160989d44982d5ff2140",
+        "far": "bb34a25f2672f9af0ec031ed233cfc352d9cc258341400c8da79ac32281739cc",
+        "trimOwner": "59485f39575ca1522daf5404cbde39efeed540ff801770af00bda7bf9ddcf0d7",
+        "trimSpanTo": "ac1c2cab4d75cd5eab3723cc7abbcc05dfd783f169749217ccdb446d62850d8d"
+      },
+      "activeTrimArrayHashes": {
+        "cx": "ceea4a5cd96b48c944a7522588218703798bf893407b63e20a5b9aee0068be87",
+        "cy": "b0a5726624116ee8b99f8de9f0dd045ac0b63da31958f365e543b782f2b77909",
+        "cz": "483d828df340c592314bd245be9545bc88032f4a13208af0563365ab65d7a41e",
+        "sx": "a975062581349e92bf23b93e570fad45fa269dc76c02cae26e405d39860d9469",
+        "sy": "5ee4c6b4016da07f30af3c0dd0e179589dafb14b56e07b5901ad34b4fb43bd77",
+        "sz": "13b2e0e5efb42e7f4f4315460760dee16140522e164fc20c567dd9f61622c89a",
+        "kind": "9f81b64b8f23272f14753af0f5fed1c19f0395020521764dfd536f12b3047e81",
+        "seedValue": "bf9109cdd00899e4327103259fe123910ef30ba7e91eca57302edf6d006e777d"
+      }
+    },
+    {
+      "seed": 0,
+      "file": "seed-0.json",
+      "recordSha256": "44417ee2f362f57ae3800b59c2efd12228cd63a875966a67528c817b60379631",
+      "massCount": 6670,
+      "trimCount": 13855,
+      "drawnTrimCount": 13726,
+      "heroCount": 42,
+      "signCount": 436,
+      "spareTrimSlots": 2145,
+      "hashes": {
+        "layout": "1c0b36c2011218dec91368d4a8843642f5860abbf44e5cd01cbd4669186192f5",
+        "masses": "fee8be84d9918c120e90d33d91c3f4ac2e40293baf09eec3ddfdfded13c78e37",
+        "heroes": "fb3bd24425164f1d54974b8c501354379470b7c1f686f05f0ffcf13d3d7f0ee1",
+        "signs": "0bc3a0a0719f81cab9216deef7feb94437f581018d20474227a311b5182c28f5",
+        "faces": "c4c9c67720eca45536ecb80d15db6f4a01332a1a9230cf7624f3cf5c7486eb64",
+        "far": "e3b0e1b440da0a0f012b93ba0714f28645ae5b1ec5c47a15bf22e4c99bc7bcc0",
+        "trimOwner": "a0bf82b647391253cfb07a4322e234ea78ec18acbfef219604172b2c44eee551",
+        "trimSpanTo": "1976adfcfc510a80cdc2cf973459154e8585fd01ff7d1f9fe7ba588fa76bd7e6"
+      },
+      "activeTrimArrayHashes": {
+        "cx": "ab8f8fd5c313c3d090519f2f5dc7a9dff50428a7a9e65717a58bef5e383e7fd6",
+        "cy": "761a20bbb4682381b25914e01d68748c6282c169e3e9df6908366623042ea33d",
+        "cz": "a1cbaa4f658b042183609bfac37d77edff0438beadcbaf6859416d5e1888a69e",
+        "sx": "c7cbb36887706a206b7aeded2ca697db99e04da2d6fc4e48b2737d6e17bdf502",
+        "sy": "123da91f09543eb7727adadb5c909fa72173c65ec52dc98244fea97db2a7690c",
+        "sz": "9cd0a286d53ad71a0dc379b0809176ffa84e9bfaa9566f48c169537b0e9f947e",
+        "kind": "01ea1c68d0c7fc38c3ea42977522b3dc2e60cd619b51d0a6df689caa8d65e982",
+        "seedValue": "359153f21389c72aae5181141a4f7fc6ab8a599b683847bcab64beeb02a57da4"
+      }
+    },
+    {
+      "seed": 2147483647,
+      "file": "seed-2147483647.json",
+      "recordSha256": "f1447cc2240ed451f7301442fcf600e0002c2167a9501b78ef99337ff195837b",
+      "massCount": 6816,
+      "trimCount": 13948,
+      "drawnTrimCount": 13818,
+      "heroCount": 42,
+      "signCount": 406,
+      "spareTrimSlots": 2052,
+      "hashes": {
+        "layout": "89a82ca8fb0412cb5fe0798d2137a9ee076250c5217932dfd148a37c9b4cbaae",
+        "masses": "bcca545f317ab4bdb731a98b50d4467ad8e9f91c3e22580722c249174c538235",
+        "heroes": "5ff5e3b63245bfbc634b909478ee31d2cf2f3464494ae65bbf37a23e2d09561a",
+        "signs": "6e9f1928891a949c67e3872362d9d49153f7514420fe8f0d1bab75478d28fbd8",
+        "faces": "3b51587c43edbf49f4d01eedc70dcf9b01886363518bc50dbe8b727c40474e68",
+        "far": "9e7de64ac061f1ad46d07a0614114df8b198182597160e81b4bef2c14678230d",
+        "trimOwner": "cf7736dcd3d9f5b73b0d2d7d5b92cf1b921277470ad0d3365ff4a5f4f8c955e2",
+        "trimSpanTo": "835625b550f0d7a0c152d9f3dae511cacaf257a5a07e58008d2e249b11b00fef"
+      },
+      "activeTrimArrayHashes": {
+        "cx": "901792ebc538f914d2cb56c36f0bf9390cf27acd8730f0f3f108357000d740e3",
+        "cy": "e13c07171f14be81d1bbe8cda6b52a16546bd0d3b37c845104fddb120e8a5300",
+        "cz": "f80fa4b5b811976f8e94a786c52a3f4ca50e53e37fc13ff0b92723326504bdee",
+        "sx": "08fbdbf96f766523012d451d8ebf5929b925fde1d97f9c7bf9c5eb73f592eaf9",
+        "sy": "898f5af517322c304b99292f7327558f664e3e750a6ea00284fb7ae4c8a83792",
+        "sz": "66e7d27dbce72d694c406c4c6903694fd6ed730cd0c4f3fa940be1d384d3d372",
+        "kind": "bbb847355091c2293c6d274df0fdcc8402bf467f274f6bf80af7b503a0011243",
+        "seedValue": "a2261f230269a5f92def4d529c6de5ddaff36b145a239eab592e6b2d92008705"
+      }
+    },
+    {
+      "seed": 4294967295,
+      "file": "seed-4294967295.json",
+      "recordSha256": "436ec255ae860d6a114bda4a205bbc9af805db2fb7749d172a0812af25bdfc3d",
+      "massCount": 6894,
+      "trimCount": 13992,
+      "drawnTrimCount": 13852,
+      "heroCount": 42,
+      "signCount": 355,
+      "spareTrimSlots": 2008,
+      "hashes": {
+        "layout": "871d4d49d66a17b4c9b12391e72da8fc2e95b4c5ca05274f79664e68513acf70",
+        "masses": "001e5be326dfcecb768f417c3769b7b38d91cc21f0055f6ede8433882e1b9ed0",
+        "heroes": "a66e62a189b67aa98784514ee74ead26e7c3ef7b951c2719c914c8e98171ce81",
+        "signs": "7fad84d34da4a94252d37b1df1d91dfbbabba66a0c2a8d09300e42e6482ea055",
+        "faces": "672bdb40b9bb164bc5b94ea107eba9ed623220caee37a8925ad1b3173a543e4d",
+        "far": "4d814f62bbcbb9061a18d28a5291dc81a2ee8678ecfa4fa75fedbcda0200d22f",
+        "trimOwner": "182f092ee652feda375d15749fe4dcc23c9a721b3128912fd4d28b8ca7689c30",
+        "trimSpanTo": "2aaba4cfcf8b30c193cc43a73f2b02c27dd3b1b689a7adfcdac5d511e94cc200"
+      },
+      "activeTrimArrayHashes": {
+        "cx": "b5f83a10d4c130efcd297112219770c16f4f649176010dc731db343ea13f5430",
+        "cy": "16991c6a5f70cf265ced7505271279bf60699c51652d6b1e2d3751b931418684",
+        "cz": "fc3d9149b0be22d8ab9bf388e529fe0508cab6e3ca5df5ab2ffe7307b269affa",
+        "sx": "bef1784a549cce16273e2db42ee7f3e79202ca48eec81db2d25fc34c759d5646",
+        "sy": "79eaefc08307ddd3f59b56f2a7f21871a9028a0866d5b2b901b9bdd5680f9726",
+        "sz": "97b86151697c34ec63d35e4fd2f98a6254a42f7bb0b070ab6a9163fa5933d7ab",
+        "kind": "e22d01e21923c40e16eb3a5d4de31d2342f4f015b90d2c99b2f3775d427cb703",
+        "seedValue": "b0651ec0dc0e5cee0817fb045c2dc4421ce1228479b6f58c8b1b89d7cf514417"
+      }
+    },
+    {
+      "seed": 20240917,
+      "file": "seed-20240917.json",
+      "recordSha256": "96968c128485385874a56262b3780e4b9a8a1c3f0518a07d7ed3249e92620884",
+      "massCount": 6675,
+      "trimCount": 14011,
+      "drawnTrimCount": 13872,
+      "heroCount": 42,
+      "signCount": 400,
+      "spareTrimSlots": 1989,
+      "hashes": {
+        "layout": "42b9078d9ddca10db4389d6a3efabad1f7580d6909760b367dff2cd11816d76e",
+        "masses": "01b9a050ed292ffec23a8751da591d28975de1f0a4f50571d14aaf5bd7520dcc",
+        "heroes": "ac0e6cec3d093103fd13e59a94ba5ece62992f369a837521b1d18350141f2d0d",
+        "signs": "5dfc405430547bd5189904298ee7ed3d787168dedf251befcbb10344a8bc0e7f",
+        "faces": "e713eb27f7c931301fa1b2abb5b5e03d5fa55dcdb33b9cf7f8d8bcb418886f0b",
+        "far": "9e94cf7af0843e4fd13ce7f2e931223cd584c48327d962231c8ff6e876c2001e",
+        "trimOwner": "2e6b8a08efdbee7f1f823bf8858cf88456c543ecda174034a6e28c13e7be89a0",
+        "trimSpanTo": "9151b3cb7924ad8b2de012431549074254c54ef85f44fbd3f4a3c682cdb79d5a"
+      },
+      "activeTrimArrayHashes": {
+        "cx": "e2af7ddf804aa8bdc88d0ac3a8ab66f881bd7b00670c27cf4e6fa5266fddd116",
+        "cy": "48ac91acb965598469f67e02c6d173b36582efa0e695688e409802209dbe00c4",
+        "cz": "b93325c877cf245e27d10af9d14210fddf20b2efa1e42aa8ff0db322bbe88bbd",
+        "sx": "bda0ea39166f2a03f2e257591fab838ac6952f3145538da1282af8591bd85d37",
+        "sy": "95b9374e64bd70991a6b1f6057bbd0082d7480520bf72eef29a3dc9c7079375d",
+        "sz": "8237962737b65b657f311938db455bea7a5e5444e287629a5eb87880540048b0",
+        "kind": "05e135c7322dfa7b3cb848161effefc84c4ff836b13b09b570a8de90a9cc0200",
+        "seedValue": "99f4d59408ae9cffa849465914f2790b5fb7058537087c368b01d80a72449127"
+      }
+    }
+  ],
+  "factory": [
+    {
+      "seed": 424242,
+      "mode": "impostor",
+      "identity": {
+        "towers": "e4947915",
+        "towerAttributes": "810a8688",
+        "emissionPolicy": "d546c8b5",
+        "trims": "66abce4c",
+        "trimAttributes": "b121dea3",
+        "signPlacement": "b68b104a",
+        "signText": "16bb2bd4",
+        "impostors": "1d893787",
+        "impostorCards": "b84bbdb9",
+        "counts": {
+          "towers": 6575,
+          "trims": 13599,
+          "signs": 361,
+          "impostors": 70
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "sourceCounts": {
+        "masses": 6575,
+        "massesByDistrict": [
+          1860,
+          1173,
+          1542,
+          849,
+          1151
+        ],
+        "trims": 13599,
+        "trimsByKind": [
+          916,
+          244,
+          2872,
+          1420,
+          3883,
+          68,
+          6,
+          2007,
+          2007,
+          176
+        ],
+        "trimsByDistrict": [
+          3952,
+          2497,
+          3287,
+          1831,
+          2032
+        ],
+        "ordinarySigns": 319,
+        "heroSigns": 42,
+        "signsByDistrict": [
+          123,
+          53,
+          79,
+          36,
+          70
+        ],
+        "heroesByDistrict": [
+          14,
+          8,
+          7,
+          7,
+          6
+        ],
+        "heroSpillSlots": 12,
+        "farCards": 70,
+        "farCardsByDistrict": [
+          20,
+          17,
+          15,
+          8,
+          10
+        ],
+        "paneCells": 78647732,
+        "roomCells": 78647732,
+        "meaning": {
+          "masses": "Drawn tower-batch instances (slabs, tiers, crowns, seam blocks and the far boxes still drawn as geometry).",
+          "trims": "Drawn trim instances after the hero-sign clearance pass.",
+          "signs": "Sign instances in the one neon draw. Heroes occupy the first heroSigns slots.",
+          "paneCells": "Facade window cells on emitting near-city masses, from side area / (7.2 m x 5.4 m). Equipment is excluded. This is procedural source capacity, not a per-instance population.",
+          "roomCells": "The same cells: a room is the traced interior of one pane cell inside the R19.7 fade window.",
+          "farCards": "R16 impostor card instances in the far-city draw."
+        }
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6575,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "8243f43f91c64eb722caa807114864cb51736471c08ac0e9368bedc6849ebb8e",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "35c1da0365ec556f737671d9af86644545aa6baa12afa873f52fccc898c1bb75",
+              "activeSha256": "35c1da0365ec556f737671d9af86644545aa6baa12afa873f52fccc898c1bb75"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "0b1423c71d6d8e7d4db7770772a17cf27c656c791c5f339f37b115f782377ed0",
+              "activeSha256": "0b1423c71d6d8e7d4db7770772a17cf27c656c791c5f339f37b115f782377ed0"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "3654e9a5ede68873478c4a724baa9e4671d20f141f0196c6db64e00b47276209",
+              "activeSha256": "3654e9a5ede68873478c4a724baa9e4671d20f141f0196c6db64e00b47276209"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "e41d63e3d8fb781be8d195ad9358259fc82c3c73445b233767f30e5758b2cc31",
+              "activeSha256": "e41d63e3d8fb781be8d195ad9358259fc82c3c73445b233767f30e5758b2cc31"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "f2218bf2f9ad23cadd6f864e6c52385bbb526a5bc1d252b3dc1203a49751d3fb",
+              "activeSha256": "f2218bf2f9ad23cadd6f864e6c52385bbb526a5bc1d252b3dc1203a49751d3fb"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "0570ea22ac4557cb53947d71dd68378dcb8684eacf0431a42f69b395189b75b1",
+              "activeSha256": "0570ea22ac4557cb53947d71dd68378dcb8684eacf0431a42f69b395189b75b1"
+            },
+            "aEmissionAllowed": {
+              "itemSize": 1,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "e3bd96d2b3fb9c793423d8ab0cd87aece7fd4ec7af167a1e159e6edb7fd13345",
+              "activeSha256": "e3bd96d2b3fb9c793423d8ab0cd87aece7fd4ec7af167a1e159e6edb7fd13345"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "293e22fe14f759ae058ca217713b06e8343c4f86e013f91dc7400cbf010f2b07",
+              "activeSha256": "293e22fe14f759ae058ca217713b06e8343c4f86e013f91dc7400cbf010f2b07"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "331218643f06fee5298df24bf01a21b2fe2c6d2a689cc2d41d7d0188785cb38b",
+              "activeSha256": "331218643f06fee5298df24bf01a21b2fe2c6d2a689cc2d41d7d0188785cb38b"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13599,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "7a6d240b29675f1947c20f24840b64552a8a4d37f79e19f85b7a14b609765fb0",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13734,
+              "isInstanced": true,
+              "sha256": "b8bc091beeb0c72d368f7be722fd02662211fda7a30d936608c6e07e953270f0",
+              "activeSha256": "847848d76399e98dc8586860bac133952dbc1746d96ffdfb6609795d21e191cd"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13734,
+              "isInstanced": true,
+              "sha256": "f438081838b40c9b12ad9915e5c94d0eefdbd8838a148b43f7737748c3ae7aaa",
+              "activeSha256": "16e37028c32d83a01e33fc1bade6e49db3b557ef7983ce528f960e0c19601df1"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13734,
+              "isInstanced": true,
+              "sha256": "c75c0858308faaa00fb2ea088eac93ba3a262ed771f818a9d48256cf6cff3cf0",
+              "activeSha256": "c2c2894047859741c6948223560d7aa48b816fd2ed710008bb9493775f08e963"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13734,
+              "isInstanced": true,
+              "sha256": "f07920fb5181853680974780bab5ec84bd6566a4316a761b87d71ae5879163f0",
+              "activeSha256": "7c6e2323f1b2c3d9d48ecb3ba5795d6d20cceae11853b7093e88489f56668c3e"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13734,
+              "isInstanced": true,
+              "sha256": "aa4721e2b7d3d7c7344868052da33665c1a3af4a0fc5c913e41cd4dd442f018d",
+              "activeSha256": "4c64c6da8d5e2dcc74d3dc2d4b4cc2df1c6a3a7b32782fd0cc07cdebfa61300b"
+            }
+          },
+          "activeMatrix": "1f14a9f3814175df136da938712e686ffc02eeda1d5ba55e43f9c7df3fa91350"
+        },
+        "skyriver.city.signs": {
+          "count": 361,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "matrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952",
+              "activeSha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189",
+              "activeSha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "0dba7d096afffeb195a2d86201202be39b6348838ed875db28f81383db0de4a8",
+              "activeSha256": "0dba7d096afffeb195a2d86201202be39b6348838ed875db28f81383db0de4a8"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "bbf6b05cc66d72d6bd1bff5afd59be90d257f2f4dfe8e9bd9bb18926cbb67684",
+              "activeSha256": "bbf6b05cc66d72d6bd1bff5afd59be90d257f2f4dfe8e9bd9bb18926cbb67684"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "711cbda2023c7833183c7eef9c89a87955c7fa2404ffd6dc984730535a47e1a1",
+              "activeSha256": "711cbda2023c7833183c7eef9c89a87955c7fa2404ffd6dc984730535a47e1a1"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "ce952558cbeb6a44771aa8f95a3a8ab34dded3607c885899b14ebce1075369d6",
+              "activeSha256": "ce952558cbeb6a44771aa8f95a3a8ab34dded3607c885899b14ebce1075369d6"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "9db6deee4e0cd0237cd313f9cc70ca6788baf000315d20444ea8bb6823e8e74a",
+              "activeSha256": "9db6deee4e0cd0237cd313f9cc70ca6788baf000315d20444ea8bb6823e8e74a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "8323e456c62232e80135116ed15a62da399d87dd152e7e82194fba5b8b024802",
+              "activeSha256": "8323e456c62232e80135116ed15a62da399d87dd152e7e82194fba5b8b024802"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "d9ed0fa72bb3febb4037c2a4ae754bdfd06725be92d356614f5c12765e31dbf4",
+              "activeSha256": "d9ed0fa72bb3febb4037c2a4ae754bdfd06725be92d356614f5c12765e31dbf4"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "a8014c04085a322b0f074b3287ce4e76c625155c8a491a95b97f5fbb2da612b9",
+              "activeSha256": "a8014c04085a322b0f074b3287ce4e76c625155c8a491a95b97f5fbb2da612b9"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 70,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "matrix": "05ab93d0296873280fbc1764194df693b903909717edee706b27a13650ed2e11",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d",
+              "activeSha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56",
+              "activeSha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 70,
+              "isInstanced": true,
+              "sha256": "3f6cbc42dce61b44bbd486385503641e9f596aac76b305cef92347f02237ba07",
+              "activeSha256": "3f6cbc42dce61b44bbd486385503641e9f596aac76b305cef92347f02237ba07"
+            }
+          }
+        }
+      },
+      "lightSourcesHash": "0bfb1e0d11fb9b6f8f4725a3380d42ae107b34262f551b20c6756e02f352f543"
+    },
+    {
+      "seed": 424242,
+      "mode": "geometry",
+      "identity": {
+        "towers": "02f85fae",
+        "towerAttributes": "80b123df",
+        "emissionPolicy": "764450e5",
+        "trims": "66abce4c",
+        "trimAttributes": "b121dea3",
+        "signPlacement": "b68b104a",
+        "signText": "16bb2bd4",
+        "impostors": "1d893787",
+        "impostorCards": "b84bbdb9",
+        "counts": {
+          "towers": 6705,
+          "trims": 13599,
+          "signs": 361,
+          "impostors": 70
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "sourceCounts": {
+        "masses": 6705,
+        "massesByDistrict": [
+          1899,
+          1199,
+          1567,
+          866,
+          1174
+        ],
+        "trims": 13599,
+        "trimsByKind": [
+          916,
+          244,
+          2872,
+          1420,
+          3883,
+          68,
+          6,
+          2007,
+          2007,
+          176
+        ],
+        "trimsByDistrict": [
+          3952,
+          2497,
+          3287,
+          1831,
+          2032
+        ],
+        "ordinarySigns": 319,
+        "heroSigns": 42,
+        "signsByDistrict": [
+          123,
+          53,
+          79,
+          36,
+          70
+        ],
+        "heroesByDistrict": [
+          14,
+          8,
+          7,
+          7,
+          6
+        ],
+        "heroSpillSlots": 12,
+        "farCards": 70,
+        "farCardsByDistrict": [
+          20,
+          17,
+          15,
+          8,
+          10
+        ],
+        "paneCells": 78647732,
+        "roomCells": 78647732,
+        "meaning": {
+          "masses": "Drawn tower-batch instances (slabs, tiers, crowns, seam blocks and the far boxes still drawn as geometry).",
+          "trims": "Drawn trim instances after the hero-sign clearance pass.",
+          "signs": "Sign instances in the one neon draw. Heroes occupy the first heroSigns slots.",
+          "paneCells": "Facade window cells on emitting near-city masses, from side area / (7.2 m x 5.4 m). Equipment is excluded. This is procedural source capacity, not a per-instance population.",
+          "roomCells": "The same cells: a room is the traced interior of one pane cell inside the R19.7 fade window.",
+          "farCards": "R16 impostor card instances in the far-city draw."
+        }
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6705,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "e1c7dbcb81e1eab45d97abdfef0648682437a65ad09d0f665993dae3d5fc8260",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "6c18293a234ebfdfc4781fdd05b401809d178aa978f244ebc39b0a9a94153a8c",
+              "activeSha256": "6c18293a234ebfdfc4781fdd05b401809d178aa978f244ebc39b0a9a94153a8c"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "ac3e69d14981c28fcef023cbd2927fd3ad3e2e4da0ac046b22a5ad632755d07f",
+              "activeSha256": "ac3e69d14981c28fcef023cbd2927fd3ad3e2e4da0ac046b22a5ad632755d07f"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "f53fd3e3f2dc5b6827302a90c7689e2f14f895400e045f40bfb93f2846bab9db",
+              "activeSha256": "f53fd3e3f2dc5b6827302a90c7689e2f14f895400e045f40bfb93f2846bab9db"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "74e73e703a2f44ce5aa353f7fe81cb714740dcc2b6ba30c2083ffbff430ba4c3",
+              "activeSha256": "74e73e703a2f44ce5aa353f7fe81cb714740dcc2b6ba30c2083ffbff430ba4c3"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "db285b6393ad99b0d92b0e14dab0513ecc823b0263c346740bcb85bce9a201c9",
+              "activeSha256": "db285b6393ad99b0d92b0e14dab0513ecc823b0263c346740bcb85bce9a201c9"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "27e736e520e03d8d2c9c3a2931094e75da83c8ef4204715078c26653f262e5a9",
+              "activeSha256": "27e736e520e03d8d2c9c3a2931094e75da83c8ef4204715078c26653f262e5a9"
+            },
+            "aEmissionAllowed": {
+              "itemSize": 1,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "595545514b03bbad06f5f2885b393abf02636ef5aacbf21a24dcf052569fdb2b",
+              "activeSha256": "595545514b03bbad06f5f2885b393abf02636ef5aacbf21a24dcf052569fdb2b"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "293e22fe14f759ae058ca217713b06e8343c4f86e013f91dc7400cbf010f2b07",
+              "activeSha256": "293e22fe14f759ae058ca217713b06e8343c4f86e013f91dc7400cbf010f2b07"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6705,
+              "isInstanced": true,
+              "sha256": "db29893eea099fa5fc46a3629be7810c335121d9715dbc237db0238f18a08b50",
+              "activeSha256": "db29893eea099fa5fc46a3629be7810c335121d9715dbc237db0238f18a08b50"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13599,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "7a6d240b29675f1947c20f24840b64552a8a4d37f79e19f85b7a14b609765fb0",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13734,
+              "isInstanced": true,
+              "sha256": "b8bc091beeb0c72d368f7be722fd02662211fda7a30d936608c6e07e953270f0",
+              "activeSha256": "847848d76399e98dc8586860bac133952dbc1746d96ffdfb6609795d21e191cd"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13734,
+              "isInstanced": true,
+              "sha256": "f438081838b40c9b12ad9915e5c94d0eefdbd8838a148b43f7737748c3ae7aaa",
+              "activeSha256": "16e37028c32d83a01e33fc1bade6e49db3b557ef7983ce528f960e0c19601df1"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13734,
+              "isInstanced": true,
+              "sha256": "c75c0858308faaa00fb2ea088eac93ba3a262ed771f818a9d48256cf6cff3cf0",
+              "activeSha256": "c2c2894047859741c6948223560d7aa48b816fd2ed710008bb9493775f08e963"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13734,
+              "isInstanced": true,
+              "sha256": "f07920fb5181853680974780bab5ec84bd6566a4316a761b87d71ae5879163f0",
+              "activeSha256": "7c6e2323f1b2c3d9d48ecb3ba5795d6d20cceae11853b7093e88489f56668c3e"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13734,
+              "isInstanced": true,
+              "sha256": "aa4721e2b7d3d7c7344868052da33665c1a3af4a0fc5c913e41cd4dd442f018d",
+              "activeSha256": "4c64c6da8d5e2dcc74d3dc2d4b4cc2df1c6a3a7b32782fd0cc07cdebfa61300b"
+            }
+          },
+          "activeMatrix": "1f14a9f3814175df136da938712e686ffc02eeda1d5ba55e43f9c7df3fa91350"
+        },
+        "skyriver.city.signs": {
+          "count": 361,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "matrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952",
+              "activeSha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189",
+              "activeSha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "0dba7d096afffeb195a2d86201202be39b6348838ed875db28f81383db0de4a8",
+              "activeSha256": "0dba7d096afffeb195a2d86201202be39b6348838ed875db28f81383db0de4a8"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "bbf6b05cc66d72d6bd1bff5afd59be90d257f2f4dfe8e9bd9bb18926cbb67684",
+              "activeSha256": "bbf6b05cc66d72d6bd1bff5afd59be90d257f2f4dfe8e9bd9bb18926cbb67684"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "711cbda2023c7833183c7eef9c89a87955c7fa2404ffd6dc984730535a47e1a1",
+              "activeSha256": "711cbda2023c7833183c7eef9c89a87955c7fa2404ffd6dc984730535a47e1a1"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "ce952558cbeb6a44771aa8f95a3a8ab34dded3607c885899b14ebce1075369d6",
+              "activeSha256": "ce952558cbeb6a44771aa8f95a3a8ab34dded3607c885899b14ebce1075369d6"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "9db6deee4e0cd0237cd313f9cc70ca6788baf000315d20444ea8bb6823e8e74a",
+              "activeSha256": "9db6deee4e0cd0237cd313f9cc70ca6788baf000315d20444ea8bb6823e8e74a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "8323e456c62232e80135116ed15a62da399d87dd152e7e82194fba5b8b024802",
+              "activeSha256": "8323e456c62232e80135116ed15a62da399d87dd152e7e82194fba5b8b024802"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "d9ed0fa72bb3febb4037c2a4ae754bdfd06725be92d356614f5c12765e31dbf4",
+              "activeSha256": "d9ed0fa72bb3febb4037c2a4ae754bdfd06725be92d356614f5c12765e31dbf4"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 361,
+              "isInstanced": true,
+              "sha256": "a8014c04085a322b0f074b3287ce4e76c625155c8a491a95b97f5fbb2da612b9",
+              "activeSha256": "a8014c04085a322b0f074b3287ce4e76c625155c8a491a95b97f5fbb2da612b9"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 70,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "matrix": "05ab93d0296873280fbc1764194df693b903909717edee706b27a13650ed2e11",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d",
+              "activeSha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56",
+              "activeSha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 70,
+              "isInstanced": true,
+              "sha256": "3f6cbc42dce61b44bbd486385503641e9f596aac76b305cef92347f02237ba07",
+              "activeSha256": "3f6cbc42dce61b44bbd486385503641e9f596aac76b305cef92347f02237ba07"
+            }
+          }
+        }
+      },
+      "lightSourcesHash": "0bfb1e0d11fb9b6f8f4725a3380d42ae107b34262f551b20c6756e02f352f543"
+    },
+    {
+      "seed": 0,
+      "mode": "impostor",
+      "identity": {
+        "towers": "37fa35e0",
+        "towerAttributes": "2ddff6ba",
+        "emissionPolicy": "01c96e55",
+        "trims": "c85a447d",
+        "trimAttributes": "77adcb33",
+        "signPlacement": "89602502",
+        "signText": "6c4ad7b0",
+        "impostors": "e453bcbd",
+        "impostorCards": "2a6b4153",
+        "counts": {
+          "towers": 6538,
+          "trims": 13726,
+          "signs": 436,
+          "impostors": 73
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "sourceCounts": {
+        "masses": 6538,
+        "massesByDistrict": [
+          1770,
+          1307,
+          1403,
+          845,
+          1213
+        ],
+        "trims": 13726,
+        "trimsByKind": [
+          963,
+          235,
+          2831,
+          1463,
+          3853,
+          59,
+          6,
+          2070,
+          2070,
+          176
+        ],
+        "trimsByDistrict": [
+          3709,
+          2725,
+          3021,
+          1913,
+          2358
+        ],
+        "ordinarySigns": 394,
+        "heroSigns": 42,
+        "signsByDistrict": [
+          150,
+          85,
+          74,
+          49,
+          78
+        ],
+        "heroesByDistrict": [
+          13,
+          9,
+          7,
+          7,
+          6
+        ],
+        "heroSpillSlots": 12,
+        "farCards": 73,
+        "farCardsByDistrict": [
+          19,
+          19,
+          16,
+          8,
+          11
+        ],
+        "paneCells": 77479925,
+        "roomCells": 77479925,
+        "meaning": {
+          "masses": "Drawn tower-batch instances (slabs, tiers, crowns, seam blocks and the far boxes still drawn as geometry).",
+          "trims": "Drawn trim instances after the hero-sign clearance pass.",
+          "signs": "Sign instances in the one neon draw. Heroes occupy the first heroSigns slots.",
+          "paneCells": "Facade window cells on emitting near-city masses, from side area / (7.2 m x 5.4 m). Equipment is excluded. This is procedural source capacity, not a per-instance population.",
+          "roomCells": "The same cells: a room is the traced interior of one pane cell inside the R19.7 fade window.",
+          "farCards": "R16 impostor card instances in the far-city draw."
+        }
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6538,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "eee1aaa5329bc5faaf912cf61153416d68206d41ff11ce693346a6c44655c961",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "b34d525d60430ab5eaea9c29a323be78f8c3b2dc0fd789ef4ebe1d0314177662",
+              "activeSha256": "b34d525d60430ab5eaea9c29a323be78f8c3b2dc0fd789ef4ebe1d0314177662"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "2868857532772289577e77cad3fc9e6980e937e91974732b5cb16c4f9f7f038c",
+              "activeSha256": "2868857532772289577e77cad3fc9e6980e937e91974732b5cb16c4f9f7f038c"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "8a060de0256308434d65e77f0d6e8d8e5a4297ad066d8e687db148aabc0a6c02",
+              "activeSha256": "8a060de0256308434d65e77f0d6e8d8e5a4297ad066d8e687db148aabc0a6c02"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "5462c47aa60aa899d079e47c43a06e885407105b6683c9c0ab2958a5121b9038",
+              "activeSha256": "5462c47aa60aa899d079e47c43a06e885407105b6683c9c0ab2958a5121b9038"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "f59ba88d2b4bdbb356c528b38e1769c5a8ef4d504032e32e61355c7135f5d1b2",
+              "activeSha256": "f59ba88d2b4bdbb356c528b38e1769c5a8ef4d504032e32e61355c7135f5d1b2"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "3df5668ac9f50fcd72acd5b6b82a5f2e54f15b0ceedc02d8e956925c1d41d3c4",
+              "activeSha256": "3df5668ac9f50fcd72acd5b6b82a5f2e54f15b0ceedc02d8e956925c1d41d3c4"
+            },
+            "aEmissionAllowed": {
+              "itemSize": 1,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "7ee5c884920d64d3da6d25d6422ff039a135e1a0015e0fb2acdc96d8b45851cd",
+              "activeSha256": "7ee5c884920d64d3da6d25d6422ff039a135e1a0015e0fb2acdc96d8b45851cd"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "0fb3675173b648a7c6a6f2ef636d9a311a739adbe34f6eea5a98471cfb498c84",
+              "activeSha256": "0fb3675173b648a7c6a6f2ef636d9a311a739adbe34f6eea5a98471cfb498c84"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "bfea25143b693494b5ba55d7e82403252165d22726e08c883190d102c2735f8b",
+              "activeSha256": "bfea25143b693494b5ba55d7e82403252165d22726e08c883190d102c2735f8b"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13726,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "5a5d7091dae636eb53d52ce939fe5ec030cc600616c52858217f391783ec8895",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13855,
+              "isInstanced": true,
+              "sha256": "bf74af359d6a95940e0bf5b4b61a7ca196c9260c740fd5234f420126d47e51fc",
+              "activeSha256": "a44655c77775ab6e328b8f721632c8a23318afd1c5b8f9bd51a2f8ae7e1ff24a"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13855,
+              "isInstanced": true,
+              "sha256": "9faa6d85d2623da9e70840cbe64d1e74cba2578076b7f156861f7e61fe1fc56a",
+              "activeSha256": "29a0d8ee77966644333fb2fe47b0187d1b9f4e79385b9d22d3e9613bcca9d3b1"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13855,
+              "isInstanced": true,
+              "sha256": "83f2411e222a51375f77eca547bf1875b835b5c2c9080b7fd1825357f601f738",
+              "activeSha256": "a14ebc98844d5cdaf2003ab686261f0fd0e59f6d8365f7d7dc8cf1d4d91aeea2"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13855,
+              "isInstanced": true,
+              "sha256": "4c68cf221a91a1e2cde3a454e611d50564de1d30aba08bafe5b3e091d58e1c8e",
+              "activeSha256": "2ddb7569dfde54aa82e18b1262d11fc97ea72550801e253143a3d33937bc1478"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13855,
+              "isInstanced": true,
+              "sha256": "73a57d7b77bcb6d166129bbbe3726f4b9893085c5b17ee1efaa55f245145ec2e",
+              "activeSha256": "a95a5ef85297754717b1745e8d217f9a2fc27b11441a456a968d69bd9fc68f68"
+            }
+          },
+          "activeMatrix": "8413fcb10aea0bbcf3eb91cb83f80b0afee31d288b0fa130401fa7bba09b33ad"
+        },
+        "skyriver.city.signs": {
+          "count": 436,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "matrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952",
+              "activeSha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189",
+              "activeSha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "aa99b343af565932b3208ad1329be48b5560e0520ba831207879f4d6d36196a8",
+              "activeSha256": "aa99b343af565932b3208ad1329be48b5560e0520ba831207879f4d6d36196a8"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "d58bca0b33166c0b522c219bf13997a2af9e7041ff55fb21a729714f40533feb",
+              "activeSha256": "d58bca0b33166c0b522c219bf13997a2af9e7041ff55fb21a729714f40533feb"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "a47cf6b492c7aaae446770bd27bf6825b229805133e5d38d4a7bce67db3679d6",
+              "activeSha256": "a47cf6b492c7aaae446770bd27bf6825b229805133e5d38d4a7bce67db3679d6"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "a378f8f6bfde120e79625c7b9bb9cb979be33a873039b26356942f519f66838d",
+              "activeSha256": "a378f8f6bfde120e79625c7b9bb9cb979be33a873039b26356942f519f66838d"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "7e3ad3ac0fd496646ae4da7430480bd6c0d7a56471e63b4b2e91bc09dcc7179c",
+              "activeSha256": "7e3ad3ac0fd496646ae4da7430480bd6c0d7a56471e63b4b2e91bc09dcc7179c"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "94122b22181020867729cb37465ec9f93162d5acc78f1bd0b45c579709174e49",
+              "activeSha256": "94122b22181020867729cb37465ec9f93162d5acc78f1bd0b45c579709174e49"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "a22f960c07cd583c7232683da72869bb3e7d9d96b2145c3aa96dd1d6eebfc5b2",
+              "activeSha256": "a22f960c07cd583c7232683da72869bb3e7d9d96b2145c3aa96dd1d6eebfc5b2"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "89aaba17f77321bfb64711a49978a403b35e30e4d64eb51fa3823ddfbcbb4c4a",
+              "activeSha256": "89aaba17f77321bfb64711a49978a403b35e30e4d64eb51fa3823ddfbcbb4c4a"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 73,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "matrix": "2d774f49f633ef3026757440a45a64216d110edd43d905926f0dffe80edb8021",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d",
+              "activeSha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56",
+              "activeSha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 73,
+              "isInstanced": true,
+              "sha256": "ec4c326f68c2ab16aab3b94dcb2a18114f9cbb2e85ebdb130dfa6764174aa1a3",
+              "activeSha256": "ec4c326f68c2ab16aab3b94dcb2a18114f9cbb2e85ebdb130dfa6764174aa1a3"
+            }
+          }
+        }
+      },
+      "lightSourcesHash": "7891a4ee4f5eef3136e164c261dea2fe2cbab3bb76b8038103aea22914ecfdbe"
+    },
+    {
+      "seed": 0,
+      "mode": "geometry",
+      "identity": {
+        "towers": "13ba820f",
+        "towerAttributes": "e9fb4215",
+        "emissionPolicy": "0f3e58b5",
+        "trims": "c85a447d",
+        "trimAttributes": "77adcb33",
+        "signPlacement": "89602502",
+        "signText": "6c4ad7b0",
+        "impostors": "e453bcbd",
+        "impostorCards": "2a6b4153",
+        "counts": {
+          "towers": 6670,
+          "trims": 13726,
+          "signs": 436,
+          "impostors": 73
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "sourceCounts": {
+        "masses": 6670,
+        "massesByDistrict": [
+          1807,
+          1338,
+          1428,
+          860,
+          1237
+        ],
+        "trims": 13726,
+        "trimsByKind": [
+          963,
+          235,
+          2831,
+          1463,
+          3853,
+          59,
+          6,
+          2070,
+          2070,
+          176
+        ],
+        "trimsByDistrict": [
+          3709,
+          2725,
+          3021,
+          1913,
+          2358
+        ],
+        "ordinarySigns": 394,
+        "heroSigns": 42,
+        "signsByDistrict": [
+          150,
+          85,
+          74,
+          49,
+          78
+        ],
+        "heroesByDistrict": [
+          13,
+          9,
+          7,
+          7,
+          6
+        ],
+        "heroSpillSlots": 12,
+        "farCards": 73,
+        "farCardsByDistrict": [
+          19,
+          19,
+          16,
+          8,
+          11
+        ],
+        "paneCells": 77479925,
+        "roomCells": 77479925,
+        "meaning": {
+          "masses": "Drawn tower-batch instances (slabs, tiers, crowns, seam blocks and the far boxes still drawn as geometry).",
+          "trims": "Drawn trim instances after the hero-sign clearance pass.",
+          "signs": "Sign instances in the one neon draw. Heroes occupy the first heroSigns slots.",
+          "paneCells": "Facade window cells on emitting near-city masses, from side area / (7.2 m x 5.4 m). Equipment is excluded. This is procedural source capacity, not a per-instance population.",
+          "roomCells": "The same cells: a room is the traced interior of one pane cell inside the R19.7 fade window.",
+          "farCards": "R16 impostor card instances in the far-city draw."
+        }
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6670,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "a8d7221a171cbd9618ee927a924e9d899a786a35b52cdb8d7a43a37de97ac8cc",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "4a149ca5eed7a88ee27f07839e3c0ef63afb3df5d09b1d64e34f92e81e324b1c",
+              "activeSha256": "4a149ca5eed7a88ee27f07839e3c0ef63afb3df5d09b1d64e34f92e81e324b1c"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "f1a332e1c528f17d5889f81e9774620e7e99d163c77cd0274e66be2e2bbd469e",
+              "activeSha256": "f1a332e1c528f17d5889f81e9774620e7e99d163c77cd0274e66be2e2bbd469e"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "d4f4829f8371f10feb6b398fa6c22acb85fa58776fd0422ef753e3e3c19f5adc",
+              "activeSha256": "d4f4829f8371f10feb6b398fa6c22acb85fa58776fd0422ef753e3e3c19f5adc"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "35231f98b8503d4c668fbef2dc2eec4e8753fa41d8a424df15cce860e5c734e1",
+              "activeSha256": "35231f98b8503d4c668fbef2dc2eec4e8753fa41d8a424df15cce860e5c734e1"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "4b853f4de03dc3480fc6ae96e0e965142b8691d6624106416242a96ec3574548",
+              "activeSha256": "4b853f4de03dc3480fc6ae96e0e965142b8691d6624106416242a96ec3574548"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "90b72491b53d1fa83f08fe7ef0f56af7417c6a937229052a3e3bff905ccf5cc6",
+              "activeSha256": "90b72491b53d1fa83f08fe7ef0f56af7417c6a937229052a3e3bff905ccf5cc6"
+            },
+            "aEmissionAllowed": {
+              "itemSize": 1,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "fbc4801cb302c747fe2c88e2cc2a2553179f9fc52c96b9ba6ed2a2e1cdcf5ea4",
+              "activeSha256": "fbc4801cb302c747fe2c88e2cc2a2553179f9fc52c96b9ba6ed2a2e1cdcf5ea4"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "0fb3675173b648a7c6a6f2ef636d9a311a739adbe34f6eea5a98471cfb498c84",
+              "activeSha256": "0fb3675173b648a7c6a6f2ef636d9a311a739adbe34f6eea5a98471cfb498c84"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6670,
+              "isInstanced": true,
+              "sha256": "67bbe34171e1eebdc4f1188475c7cb5c0c8c57814d4180498cd68b9354df624f",
+              "activeSha256": "67bbe34171e1eebdc4f1188475c7cb5c0c8c57814d4180498cd68b9354df624f"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13726,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "5a5d7091dae636eb53d52ce939fe5ec030cc600616c52858217f391783ec8895",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13855,
+              "isInstanced": true,
+              "sha256": "bf74af359d6a95940e0bf5b4b61a7ca196c9260c740fd5234f420126d47e51fc",
+              "activeSha256": "a44655c77775ab6e328b8f721632c8a23318afd1c5b8f9bd51a2f8ae7e1ff24a"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13855,
+              "isInstanced": true,
+              "sha256": "9faa6d85d2623da9e70840cbe64d1e74cba2578076b7f156861f7e61fe1fc56a",
+              "activeSha256": "29a0d8ee77966644333fb2fe47b0187d1b9f4e79385b9d22d3e9613bcca9d3b1"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13855,
+              "isInstanced": true,
+              "sha256": "83f2411e222a51375f77eca547bf1875b835b5c2c9080b7fd1825357f601f738",
+              "activeSha256": "a14ebc98844d5cdaf2003ab686261f0fd0e59f6d8365f7d7dc8cf1d4d91aeea2"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13855,
+              "isInstanced": true,
+              "sha256": "4c68cf221a91a1e2cde3a454e611d50564de1d30aba08bafe5b3e091d58e1c8e",
+              "activeSha256": "2ddb7569dfde54aa82e18b1262d11fc97ea72550801e253143a3d33937bc1478"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13855,
+              "isInstanced": true,
+              "sha256": "73a57d7b77bcb6d166129bbbe3726f4b9893085c5b17ee1efaa55f245145ec2e",
+              "activeSha256": "a95a5ef85297754717b1745e8d217f9a2fc27b11441a456a968d69bd9fc68f68"
+            }
+          },
+          "activeMatrix": "8413fcb10aea0bbcf3eb91cb83f80b0afee31d288b0fa130401fa7bba09b33ad"
+        },
+        "skyriver.city.signs": {
+          "count": 436,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "matrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952",
+              "activeSha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189",
+              "activeSha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "aa99b343af565932b3208ad1329be48b5560e0520ba831207879f4d6d36196a8",
+              "activeSha256": "aa99b343af565932b3208ad1329be48b5560e0520ba831207879f4d6d36196a8"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "d58bca0b33166c0b522c219bf13997a2af9e7041ff55fb21a729714f40533feb",
+              "activeSha256": "d58bca0b33166c0b522c219bf13997a2af9e7041ff55fb21a729714f40533feb"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "a47cf6b492c7aaae446770bd27bf6825b229805133e5d38d4a7bce67db3679d6",
+              "activeSha256": "a47cf6b492c7aaae446770bd27bf6825b229805133e5d38d4a7bce67db3679d6"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "a378f8f6bfde120e79625c7b9bb9cb979be33a873039b26356942f519f66838d",
+              "activeSha256": "a378f8f6bfde120e79625c7b9bb9cb979be33a873039b26356942f519f66838d"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "7e3ad3ac0fd496646ae4da7430480bd6c0d7a56471e63b4b2e91bc09dcc7179c",
+              "activeSha256": "7e3ad3ac0fd496646ae4da7430480bd6c0d7a56471e63b4b2e91bc09dcc7179c"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "94122b22181020867729cb37465ec9f93162d5acc78f1bd0b45c579709174e49",
+              "activeSha256": "94122b22181020867729cb37465ec9f93162d5acc78f1bd0b45c579709174e49"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "a22f960c07cd583c7232683da72869bb3e7d9d96b2145c3aa96dd1d6eebfc5b2",
+              "activeSha256": "a22f960c07cd583c7232683da72869bb3e7d9d96b2145c3aa96dd1d6eebfc5b2"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 436,
+              "isInstanced": true,
+              "sha256": "89aaba17f77321bfb64711a49978a403b35e30e4d64eb51fa3823ddfbcbb4c4a",
+              "activeSha256": "89aaba17f77321bfb64711a49978a403b35e30e4d64eb51fa3823ddfbcbb4c4a"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 73,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "matrix": "2d774f49f633ef3026757440a45a64216d110edd43d905926f0dffe80edb8021",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d",
+              "activeSha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56",
+              "activeSha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 73,
+              "isInstanced": true,
+              "sha256": "ec4c326f68c2ab16aab3b94dcb2a18114f9cbb2e85ebdb130dfa6764174aa1a3",
+              "activeSha256": "ec4c326f68c2ab16aab3b94dcb2a18114f9cbb2e85ebdb130dfa6764174aa1a3"
+            }
+          }
+        }
+      },
+      "lightSourcesHash": "7891a4ee4f5eef3136e164c261dea2fe2cbab3bb76b8038103aea22914ecfdbe"
+    },
+    {
+      "seed": 2147483647,
+      "mode": "impostor",
+      "identity": {
+        "towers": "282a897e",
+        "towerAttributes": "add1c8e8",
+        "emissionPolicy": "dbb943a5",
+        "trims": "557c0a7b",
+        "trimAttributes": "0d687f8e",
+        "signPlacement": "cc7bef46",
+        "signText": "47c0c723",
+        "impostors": "f1d49a0a",
+        "impostorCards": "c364d7f6",
+        "counts": {
+          "towers": 6680,
+          "trims": 13818,
+          "signs": 406,
+          "impostors": 69
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "sourceCounts": {
+        "masses": 6680,
+        "massesByDistrict": [
+          1818,
+          1520,
+          1315,
+          857,
+          1170
+        ],
+        "trims": 13818,
+        "trimsByKind": [
+          939,
+          252,
+          2923,
+          1526,
+          3721,
+          59,
+          6,
+          2108,
+          2108,
+          176
+        ],
+        "trimsByDistrict": [
+          3989,
+          3090,
+          2669,
+          1946,
+          2124
+        ],
+        "ordinarySigns": 364,
+        "heroSigns": 42,
+        "signsByDistrict": [
+          119,
+          96,
+          88,
+          38,
+          65
+        ],
+        "heroesByDistrict": [
+          11,
+          11,
+          5,
+          7,
+          8
+        ],
+        "heroSpillSlots": 12,
+        "farCards": 69,
+        "farCardsByDistrict": [
+          18,
+          16,
+          17,
+          8,
+          10
+        ],
+        "paneCells": 79382976,
+        "roomCells": 79382976,
+        "meaning": {
+          "masses": "Drawn tower-batch instances (slabs, tiers, crowns, seam blocks and the far boxes still drawn as geometry).",
+          "trims": "Drawn trim instances after the hero-sign clearance pass.",
+          "signs": "Sign instances in the one neon draw. Heroes occupy the first heroSigns slots.",
+          "paneCells": "Facade window cells on emitting near-city masses, from side area / (7.2 m x 5.4 m). Equipment is excluded. This is procedural source capacity, not a per-instance population.",
+          "roomCells": "The same cells: a room is the traced interior of one pane cell inside the R19.7 fade window.",
+          "farCards": "R16 impostor card instances in the far-city draw."
+        }
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6680,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "43894455f7acb608c8ae66418399adad6b8b224fb91c0dce10d7ff345c1bb3eb",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "3bfd60beda1a60ce73745644764a16ba5d54f812fdb39bff971d8112471dc124",
+              "activeSha256": "3bfd60beda1a60ce73745644764a16ba5d54f812fdb39bff971d8112471dc124"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "c0b3dc077399bdeadc36405203810cb3d65942852bccdb598f1ca3b25d985224",
+              "activeSha256": "c0b3dc077399bdeadc36405203810cb3d65942852bccdb598f1ca3b25d985224"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "9a02a21759ac30ec569e48301e1fae3631b15c67a18c24d07a154828782ea7f4",
+              "activeSha256": "9a02a21759ac30ec569e48301e1fae3631b15c67a18c24d07a154828782ea7f4"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "b63ac8fd2fddea76667a75a286896951904dd26cbc5609aff3c3596c28b873b3",
+              "activeSha256": "b63ac8fd2fddea76667a75a286896951904dd26cbc5609aff3c3596c28b873b3"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "90f04490c26e0d363a4a2d97d8bc2270f7502fb918bc6f4428c3366ead168e2e",
+              "activeSha256": "90f04490c26e0d363a4a2d97d8bc2270f7502fb918bc6f4428c3366ead168e2e"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "e1969d262eefca04c352c8cd639c8b5ea877550d4a74180e6e7ec5fe839405e5",
+              "activeSha256": "e1969d262eefca04c352c8cd639c8b5ea877550d4a74180e6e7ec5fe839405e5"
+            },
+            "aEmissionAllowed": {
+              "itemSize": 1,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "c594182819886172a2e2cdfb0a73222a3da2ccd186fb8046b0554052bc9ceb50",
+              "activeSha256": "c594182819886172a2e2cdfb0a73222a3da2ccd186fb8046b0554052bc9ceb50"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "1d185100844510c7ec2d413a99140d894dec96b77580c3ce18351d9c8c75ff13",
+              "activeSha256": "1d185100844510c7ec2d413a99140d894dec96b77580c3ce18351d9c8c75ff13"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "c8d5df4ba6bdb6aad473e1613a445cc203b7e30d8294d1aaf37b9799eb9ed131",
+              "activeSha256": "c8d5df4ba6bdb6aad473e1613a445cc203b7e30d8294d1aaf37b9799eb9ed131"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13818,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "b0a201acc539a6b4fb36b35283e87763904be1a5cb94bdfec04f283dea28b153",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13948,
+              "isInstanced": true,
+              "sha256": "2978456425d6a0f76914734d066d5c66cfc60d231574896e5569c9e642d3aa68",
+              "activeSha256": "7499e04c3f2f412175b9d6d57f5ba59322017595f9a95e1cf915f9c56df94e3d"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13948,
+              "isInstanced": true,
+              "sha256": "d9c64d26e063e829ec166e6871c9969069e63a32d38dcc2158985bd2a71f44f3",
+              "activeSha256": "7ccf2f9b2e7eba67659be2ed63632a94490f657e340ac4198c5cd5267bfe7573"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13948,
+              "isInstanced": true,
+              "sha256": "c3cab3e1f0964c463394991e03aa03420dd5e102c6746975a2efd2e11fbfd158",
+              "activeSha256": "3c32471eaf059701ec54830fd86a5bfe3afd90038ac5eee3de66e1ee639f7d46"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13948,
+              "isInstanced": true,
+              "sha256": "8cd05b14951d6134c8cda5f38576b12606e253fa61de49bc7d830a741ac168a8",
+              "activeSha256": "050874056abdb51383d9d7266233959bc98641046592b6b6e7dc889bdced51d8"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13948,
+              "isInstanced": true,
+              "sha256": "b733b5088e5e24933710400eff34f0849bcce6c4e2ed7fb85a42b10e43329614",
+              "activeSha256": "d23e8dbe928b1cfc021e322c69d0a65f5f18c087e78254e1764d96ec12c7b686"
+            }
+          },
+          "activeMatrix": "4dfb6dab043b17e53b90e8e14884b6b5e11461ff1c621573ebd2715f475d127e"
+        },
+        "skyriver.city.signs": {
+          "count": 406,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "matrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952",
+              "activeSha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189",
+              "activeSha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "2217a819f9cbef432c897b61481c84603cde43dd7470af07101ea48f2470bbab",
+              "activeSha256": "2217a819f9cbef432c897b61481c84603cde43dd7470af07101ea48f2470bbab"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "e8ba22fbd87d008d45f730afcb4a877ba73424c422b1cb73492939798f50f546",
+              "activeSha256": "e8ba22fbd87d008d45f730afcb4a877ba73424c422b1cb73492939798f50f546"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "847735d32f08f93d82aa598fd7c492210014b99adb5e659189a3bb54ca88596b",
+              "activeSha256": "847735d32f08f93d82aa598fd7c492210014b99adb5e659189a3bb54ca88596b"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "a3b362522080fa2f8f52df034591171ad1772c3248b87f3a8b9be7b45bc13698",
+              "activeSha256": "a3b362522080fa2f8f52df034591171ad1772c3248b87f3a8b9be7b45bc13698"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "aaaa432ab7bd9ebc757ed9c664d78478c9d0f303196e25feaab3c4e38e1c415a",
+              "activeSha256": "aaaa432ab7bd9ebc757ed9c664d78478c9d0f303196e25feaab3c4e38e1c415a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "271044dfd39ae98acd9007991a182ec3683408f7078b44b4d4b9e1c83bd18ae8",
+              "activeSha256": "271044dfd39ae98acd9007991a182ec3683408f7078b44b4d4b9e1c83bd18ae8"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "351d9f31726479dd0bbe5c610197623b9a1e8f7b7f02f19fd2a2e39cc89c645c",
+              "activeSha256": "351d9f31726479dd0bbe5c610197623b9a1e8f7b7f02f19fd2a2e39cc89c645c"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "72f681a250da7b4ad539bd3214b07998b9b219af9860c5d22caedf5fa812d6a9",
+              "activeSha256": "72f681a250da7b4ad539bd3214b07998b9b219af9860c5d22caedf5fa812d6a9"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 69,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "matrix": "9a0956ac2998294cfdb007639689079b3e6b2a1fec67d77e1b4db6228bb0d924",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d",
+              "activeSha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56",
+              "activeSha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 69,
+              "isInstanced": true,
+              "sha256": "1e7d9c73a6a4d64b1ff3b6fc797c7815f0ba2cdbec3cb363dca274fbad280447",
+              "activeSha256": "1e7d9c73a6a4d64b1ff3b6fc797c7815f0ba2cdbec3cb363dca274fbad280447"
+            }
+          }
+        }
+      },
+      "lightSourcesHash": "511771f3794dd5e589067204708d160e3af98cd3cfc9462df1a6f86abbe08bb5"
+    },
+    {
+      "seed": 2147483647,
+      "mode": "geometry",
+      "identity": {
+        "towers": "b8a3acb9",
+        "towerAttributes": "54dc9fc2",
+        "emissionPolicy": "ae304765",
+        "trims": "557c0a7b",
+        "trimAttributes": "0d687f8e",
+        "signPlacement": "cc7bef46",
+        "signText": "47c0c723",
+        "impostors": "f1d49a0a",
+        "impostorCards": "c364d7f6",
+        "counts": {
+          "towers": 6816,
+          "trims": 13818,
+          "signs": 406,
+          "impostors": 69
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "sourceCounts": {
+        "masses": 6816,
+        "massesByDistrict": [
+          1858,
+          1554,
+          1348,
+          869,
+          1187
+        ],
+        "trims": 13818,
+        "trimsByKind": [
+          939,
+          252,
+          2923,
+          1526,
+          3721,
+          59,
+          6,
+          2108,
+          2108,
+          176
+        ],
+        "trimsByDistrict": [
+          3989,
+          3090,
+          2669,
+          1946,
+          2124
+        ],
+        "ordinarySigns": 364,
+        "heroSigns": 42,
+        "signsByDistrict": [
+          119,
+          96,
+          88,
+          38,
+          65
+        ],
+        "heroesByDistrict": [
+          11,
+          11,
+          5,
+          7,
+          8
+        ],
+        "heroSpillSlots": 12,
+        "farCards": 69,
+        "farCardsByDistrict": [
+          18,
+          16,
+          17,
+          8,
+          10
+        ],
+        "paneCells": 79382976,
+        "roomCells": 79382976,
+        "meaning": {
+          "masses": "Drawn tower-batch instances (slabs, tiers, crowns, seam blocks and the far boxes still drawn as geometry).",
+          "trims": "Drawn trim instances after the hero-sign clearance pass.",
+          "signs": "Sign instances in the one neon draw. Heroes occupy the first heroSigns slots.",
+          "paneCells": "Facade window cells on emitting near-city masses, from side area / (7.2 m x 5.4 m). Equipment is excluded. This is procedural source capacity, not a per-instance population.",
+          "roomCells": "The same cells: a room is the traced interior of one pane cell inside the R19.7 fade window.",
+          "farCards": "R16 impostor card instances in the far-city draw."
+        }
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6816,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "7b8660cda069e99b488d966f514650f42237dc716a12d2269f25ed98e1ab9b8f",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "773147f413ef05129086043d1c5ec4bc2d396fb9ed9bbced46fadd07f7d04738",
+              "activeSha256": "773147f413ef05129086043d1c5ec4bc2d396fb9ed9bbced46fadd07f7d04738"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "cd5bb67b787e9c7c47ffc717cfcab34d426a5524b42d9e0878c78d97615e9d5a",
+              "activeSha256": "cd5bb67b787e9c7c47ffc717cfcab34d426a5524b42d9e0878c78d97615e9d5a"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "f11e9c8b51235cee573f4391574f07bed8675f206ce576ffa27978939689646a",
+              "activeSha256": "f11e9c8b51235cee573f4391574f07bed8675f206ce576ffa27978939689646a"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "254df78df4760dd773226cbf4eb2f6c9fa086ea0eae8ef4234d2672a38419327",
+              "activeSha256": "254df78df4760dd773226cbf4eb2f6c9fa086ea0eae8ef4234d2672a38419327"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "a2df32246f43cec2ca801631cfcbcd38b6d17b0e7c3a1d7181b41747d4da1d6d",
+              "activeSha256": "a2df32246f43cec2ca801631cfcbcd38b6d17b0e7c3a1d7181b41747d4da1d6d"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "c870c6ecde6f31a896766db329563af6c7a84d9793f37fa066b74f475eb46e7f",
+              "activeSha256": "c870c6ecde6f31a896766db329563af6c7a84d9793f37fa066b74f475eb46e7f"
+            },
+            "aEmissionAllowed": {
+              "itemSize": 1,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "ca52cf06ce1d62a24240da9c6e2687b784059237cf7dab81c1cfd5c7563fbe15",
+              "activeSha256": "ca52cf06ce1d62a24240da9c6e2687b784059237cf7dab81c1cfd5c7563fbe15"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "1d185100844510c7ec2d413a99140d894dec96b77580c3ce18351d9c8c75ff13",
+              "activeSha256": "1d185100844510c7ec2d413a99140d894dec96b77580c3ce18351d9c8c75ff13"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6816,
+              "isInstanced": true,
+              "sha256": "d969cb8445a4a477256dce70412789476c60edb0d7cb773c1b9d7f9c1cb9186a",
+              "activeSha256": "d969cb8445a4a477256dce70412789476c60edb0d7cb773c1b9d7f9c1cb9186a"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13818,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "b0a201acc539a6b4fb36b35283e87763904be1a5cb94bdfec04f283dea28b153",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13948,
+              "isInstanced": true,
+              "sha256": "2978456425d6a0f76914734d066d5c66cfc60d231574896e5569c9e642d3aa68",
+              "activeSha256": "7499e04c3f2f412175b9d6d57f5ba59322017595f9a95e1cf915f9c56df94e3d"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13948,
+              "isInstanced": true,
+              "sha256": "d9c64d26e063e829ec166e6871c9969069e63a32d38dcc2158985bd2a71f44f3",
+              "activeSha256": "7ccf2f9b2e7eba67659be2ed63632a94490f657e340ac4198c5cd5267bfe7573"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13948,
+              "isInstanced": true,
+              "sha256": "c3cab3e1f0964c463394991e03aa03420dd5e102c6746975a2efd2e11fbfd158",
+              "activeSha256": "3c32471eaf059701ec54830fd86a5bfe3afd90038ac5eee3de66e1ee639f7d46"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13948,
+              "isInstanced": true,
+              "sha256": "8cd05b14951d6134c8cda5f38576b12606e253fa61de49bc7d830a741ac168a8",
+              "activeSha256": "050874056abdb51383d9d7266233959bc98641046592b6b6e7dc889bdced51d8"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13948,
+              "isInstanced": true,
+              "sha256": "b733b5088e5e24933710400eff34f0849bcce6c4e2ed7fb85a42b10e43329614",
+              "activeSha256": "d23e8dbe928b1cfc021e322c69d0a65f5f18c087e78254e1764d96ec12c7b686"
+            }
+          },
+          "activeMatrix": "4dfb6dab043b17e53b90e8e14884b6b5e11461ff1c621573ebd2715f475d127e"
+        },
+        "skyriver.city.signs": {
+          "count": 406,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "matrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952",
+              "activeSha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189",
+              "activeSha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "2217a819f9cbef432c897b61481c84603cde43dd7470af07101ea48f2470bbab",
+              "activeSha256": "2217a819f9cbef432c897b61481c84603cde43dd7470af07101ea48f2470bbab"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "e8ba22fbd87d008d45f730afcb4a877ba73424c422b1cb73492939798f50f546",
+              "activeSha256": "e8ba22fbd87d008d45f730afcb4a877ba73424c422b1cb73492939798f50f546"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "847735d32f08f93d82aa598fd7c492210014b99adb5e659189a3bb54ca88596b",
+              "activeSha256": "847735d32f08f93d82aa598fd7c492210014b99adb5e659189a3bb54ca88596b"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "a3b362522080fa2f8f52df034591171ad1772c3248b87f3a8b9be7b45bc13698",
+              "activeSha256": "a3b362522080fa2f8f52df034591171ad1772c3248b87f3a8b9be7b45bc13698"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "aaaa432ab7bd9ebc757ed9c664d78478c9d0f303196e25feaab3c4e38e1c415a",
+              "activeSha256": "aaaa432ab7bd9ebc757ed9c664d78478c9d0f303196e25feaab3c4e38e1c415a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "271044dfd39ae98acd9007991a182ec3683408f7078b44b4d4b9e1c83bd18ae8",
+              "activeSha256": "271044dfd39ae98acd9007991a182ec3683408f7078b44b4d4b9e1c83bd18ae8"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "351d9f31726479dd0bbe5c610197623b9a1e8f7b7f02f19fd2a2e39cc89c645c",
+              "activeSha256": "351d9f31726479dd0bbe5c610197623b9a1e8f7b7f02f19fd2a2e39cc89c645c"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 406,
+              "isInstanced": true,
+              "sha256": "72f681a250da7b4ad539bd3214b07998b9b219af9860c5d22caedf5fa812d6a9",
+              "activeSha256": "72f681a250da7b4ad539bd3214b07998b9b219af9860c5d22caedf5fa812d6a9"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 69,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "matrix": "9a0956ac2998294cfdb007639689079b3e6b2a1fec67d77e1b4db6228bb0d924",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d",
+              "activeSha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56",
+              "activeSha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 69,
+              "isInstanced": true,
+              "sha256": "1e7d9c73a6a4d64b1ff3b6fc797c7815f0ba2cdbec3cb363dca274fbad280447",
+              "activeSha256": "1e7d9c73a6a4d64b1ff3b6fc797c7815f0ba2cdbec3cb363dca274fbad280447"
+            }
+          }
+        }
+      },
+      "lightSourcesHash": "511771f3794dd5e589067204708d160e3af98cd3cfc9462df1a6f86abbe08bb5"
+    },
+    {
+      "seed": 4294967295,
+      "mode": "impostor",
+      "identity": {
+        "towers": "bc56b24f",
+        "towerAttributes": "d11d30a1",
+        "emissionPolicy": "74d89228",
+        "trims": "64e1ff2d",
+        "trimAttributes": "0b837652",
+        "signPlacement": "d1aafc76",
+        "signText": "f52631b3",
+        "impostors": "8ef69e4b",
+        "impostorCards": "42370e99",
+        "counts": {
+          "towers": 6761,
+          "trims": 13852,
+          "signs": 355,
+          "impostors": 70
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "sourceCounts": {
+        "masses": 6761,
+        "massesByDistrict": [
+          1866,
+          1530,
+          1323,
+          973,
+          1069
+        ],
+        "trims": 13852,
+        "trimsByKind": [
+          969,
+          252,
+          3147,
+          1272,
+          3936,
+          58,
+          6,
+          2018,
+          2018,
+          176
+        ],
+        "trimsByDistrict": [
+          3693,
+          3274,
+          2839,
+          2122,
+          1924
+        ],
+        "ordinarySigns": 313,
+        "heroSigns": 42,
+        "signsByDistrict": [
+          103,
+          101,
+          57,
+          46,
+          48
+        ],
+        "heroesByDistrict": [
+          12,
+          12,
+          5,
+          7,
+          6
+        ],
+        "heroSpillSlots": 12,
+        "farCards": 70,
+        "farCardsByDistrict": [
+          19,
+          15,
+          15,
+          11,
+          10
+        ],
+        "paneCells": 79176837,
+        "roomCells": 79176837,
+        "meaning": {
+          "masses": "Drawn tower-batch instances (slabs, tiers, crowns, seam blocks and the far boxes still drawn as geometry).",
+          "trims": "Drawn trim instances after the hero-sign clearance pass.",
+          "signs": "Sign instances in the one neon draw. Heroes occupy the first heroSigns slots.",
+          "paneCells": "Facade window cells on emitting near-city masses, from side area / (7.2 m x 5.4 m). Equipment is excluded. This is procedural source capacity, not a per-instance population.",
+          "roomCells": "The same cells: a room is the traced interior of one pane cell inside the R19.7 fade window.",
+          "farCards": "R16 impostor card instances in the far-city draw."
+        }
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6761,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "b85cc785d317962d7fd18fe5d0e0b7c1832dcc7b5f6514bce02c8e78f27bd24a",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "622fe31f341b0f571d5ae5146f5b4f208843f361284e524531920736a6f3d2cb",
+              "activeSha256": "622fe31f341b0f571d5ae5146f5b4f208843f361284e524531920736a6f3d2cb"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "4cbdf39daeca00708a35458ce2919e2b896ae284315c392ed405f093007c8379",
+              "activeSha256": "4cbdf39daeca00708a35458ce2919e2b896ae284315c392ed405f093007c8379"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "a22a918fc1646fe8fae54785ff8f8618bd0c8d0ddd78b949280908b83346d143",
+              "activeSha256": "a22a918fc1646fe8fae54785ff8f8618bd0c8d0ddd78b949280908b83346d143"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "d922feab824d61c57714101452727a570ca72f607d0451f0712472763eecb434",
+              "activeSha256": "d922feab824d61c57714101452727a570ca72f607d0451f0712472763eecb434"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "194f61f35965d9757421451e33f86f708250c3be6a99b747eaf2a0c4556b394d",
+              "activeSha256": "194f61f35965d9757421451e33f86f708250c3be6a99b747eaf2a0c4556b394d"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "26a1cd0e44aee105bfcf014e0c2f34ca9377b1e9ffd4621b93bfd03b13634bb9",
+              "activeSha256": "26a1cd0e44aee105bfcf014e0c2f34ca9377b1e9ffd4621b93bfd03b13634bb9"
+            },
+            "aEmissionAllowed": {
+              "itemSize": 1,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "c4fc1b88e6f309af2fc2100e2da6b4fa41750a88f15ce7cb74b1a0c19a42d80d",
+              "activeSha256": "c4fc1b88e6f309af2fc2100e2da6b4fa41750a88f15ce7cb74b1a0c19a42d80d"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "eee1e549772fbd22542df77b9d2685a71b72018594d26251276840d7a1fd379c",
+              "activeSha256": "eee1e549772fbd22542df77b9d2685a71b72018594d26251276840d7a1fd379c"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "6b578b347293d70e5a0114cdd76eb5874242b5ec631e6266dcffbe3687a58a5f",
+              "activeSha256": "6b578b347293d70e5a0114cdd76eb5874242b5ec631e6266dcffbe3687a58a5f"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13852,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "2a08bfb337a349fc31e999a3b8a0894d8b78430c61e32b41b6cf3cc1f1b86c59",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13992,
+              "isInstanced": true,
+              "sha256": "1f0f5150d74ab7d52cc7f014287079b8e8d7d28fd0a2fca4ba4e40d1cb0bf6c5",
+              "activeSha256": "e3e87c4d344ba26fcf4ef31cefd17abe5e44cbc09c3689796b531e91b1232435"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13992,
+              "isInstanced": true,
+              "sha256": "272d4b790e8bc64eedf50a4f954c317a76ad8943970cb48233054a97ad989178",
+              "activeSha256": "3424ffbf9f6391824e8092f43cb4d18b214cf34a769865671f96874f60559f7d"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13992,
+              "isInstanced": true,
+              "sha256": "afd439afd278928ab4f5eac6e05f122fa8b8a61d09c3f0a1e5998033170490b8",
+              "activeSha256": "136e3ec6641e317a348d2aeccfe79f1b1252eddcdb58bb9454935d352e99d233"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13992,
+              "isInstanced": true,
+              "sha256": "e0dafc1e5217cf8321335dad2c3012ed5dea297c75e2a30eae1c2965ccc9388d",
+              "activeSha256": "dd651ce0cfd2ad9c8e5e9655e0e93a88557e91ed46eadd120d0b4e3839dee569"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13992,
+              "isInstanced": true,
+              "sha256": "b8f42590ba4e9380468c4c6c2c4087b1fdf4ffdeffec44b1f441969c5dad11bb",
+              "activeSha256": "7130ee112f13a86f62a5ad5cc8ad1db1c2a5a74b03fe12481e8e7923c8e0ecff"
+            }
+          },
+          "activeMatrix": "8bbc75b0d63fd139b77514480cb4b8518aa59daeffcea85a549e80f0cd850e59"
+        },
+        "skyriver.city.signs": {
+          "count": 355,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "matrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952",
+              "activeSha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189",
+              "activeSha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "aeffc7ed1f98a9eb411304aecaa6ede082050b5a6237c149c3b02a12d8b997bc",
+              "activeSha256": "aeffc7ed1f98a9eb411304aecaa6ede082050b5a6237c149c3b02a12d8b997bc"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "7d00be1be8e9115d583f2f1fc00bfffc4848b3ca1f689eb54b7bce1084f420b5",
+              "activeSha256": "7d00be1be8e9115d583f2f1fc00bfffc4848b3ca1f689eb54b7bce1084f420b5"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "b83410321c7bb12dd81da140ead582905f46af8e4100835a5c46832e85188eb0",
+              "activeSha256": "b83410321c7bb12dd81da140ead582905f46af8e4100835a5c46832e85188eb0"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "ad64062480268a5522e8eedb3f680df27ede5fca20391f695373043cc7b19134",
+              "activeSha256": "ad64062480268a5522e8eedb3f680df27ede5fca20391f695373043cc7b19134"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "13f6de0ced1e1eb319fa62f60156e63dc09ab8c9762f4a1befaa8c77c3cedb9f",
+              "activeSha256": "13f6de0ced1e1eb319fa62f60156e63dc09ab8c9762f4a1befaa8c77c3cedb9f"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "f8b838d7a085d7b256a87a17fe25d4f8517248447d334630132af6f0afffef13",
+              "activeSha256": "f8b838d7a085d7b256a87a17fe25d4f8517248447d334630132af6f0afffef13"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "2d4022c7a14ba8d5c0aa7c4020dd27a43729a2b5f41cdb38cfbe7d4b34393afa",
+              "activeSha256": "2d4022c7a14ba8d5c0aa7c4020dd27a43729a2b5f41cdb38cfbe7d4b34393afa"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "1c118b564fd0aba54c79f841e0fa61707beb31c26130718707783181a5b746a0",
+              "activeSha256": "1c118b564fd0aba54c79f841e0fa61707beb31c26130718707783181a5b746a0"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 70,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "matrix": "70c04e74bb5ad2771c9330b15a8cd187273fbd323d146abb7e298508ac70fc71",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d",
+              "activeSha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56",
+              "activeSha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 70,
+              "isInstanced": true,
+              "sha256": "989f23af2d86aa2ca19f2bb3d65b3daef1a22dd9be5ae00514aed0af033e80cd",
+              "activeSha256": "989f23af2d86aa2ca19f2bb3d65b3daef1a22dd9be5ae00514aed0af033e80cd"
+            }
+          }
+        }
+      },
+      "lightSourcesHash": "e70992b3722d1771d1c6927db3b61a63985098ba7b70e6bda9b007f75cba674c"
+    },
+    {
+      "seed": 4294967295,
+      "mode": "geometry",
+      "identity": {
+        "towers": "7811025b",
+        "towerAttributes": "5bbe4dc3",
+        "emissionPolicy": "e330e2c5",
+        "trims": "64e1ff2d",
+        "trimAttributes": "0b837652",
+        "signPlacement": "d1aafc76",
+        "signText": "f52631b3",
+        "impostors": "8ef69e4b",
+        "impostorCards": "42370e99",
+        "counts": {
+          "towers": 6894,
+          "trims": 13852,
+          "signs": 355,
+          "impostors": 70
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "sourceCounts": {
+        "masses": 6894,
+        "massesByDistrict": [
+          1902,
+          1557,
+          1352,
+          995,
+          1088
+        ],
+        "trims": 13852,
+        "trimsByKind": [
+          969,
+          252,
+          3147,
+          1272,
+          3936,
+          58,
+          6,
+          2018,
+          2018,
+          176
+        ],
+        "trimsByDistrict": [
+          3693,
+          3274,
+          2839,
+          2122,
+          1924
+        ],
+        "ordinarySigns": 313,
+        "heroSigns": 42,
+        "signsByDistrict": [
+          103,
+          101,
+          57,
+          46,
+          48
+        ],
+        "heroesByDistrict": [
+          12,
+          12,
+          5,
+          7,
+          6
+        ],
+        "heroSpillSlots": 12,
+        "farCards": 70,
+        "farCardsByDistrict": [
+          19,
+          15,
+          15,
+          11,
+          10
+        ],
+        "paneCells": 79176837,
+        "roomCells": 79176837,
+        "meaning": {
+          "masses": "Drawn tower-batch instances (slabs, tiers, crowns, seam blocks and the far boxes still drawn as geometry).",
+          "trims": "Drawn trim instances after the hero-sign clearance pass.",
+          "signs": "Sign instances in the one neon draw. Heroes occupy the first heroSigns slots.",
+          "paneCells": "Facade window cells on emitting near-city masses, from side area / (7.2 m x 5.4 m). Equipment is excluded. This is procedural source capacity, not a per-instance population.",
+          "roomCells": "The same cells: a room is the traced interior of one pane cell inside the R19.7 fade window.",
+          "farCards": "R16 impostor card instances in the far-city draw."
+        }
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6894,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "329a1582a45fec5eba89d21ba03de2d7fb4710ed9f17f3e0ea5690b7aab9091f",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "ae460543d8edb5f85daac0b29171cccc045b8da450502ca26a42592b6f36718a",
+              "activeSha256": "ae460543d8edb5f85daac0b29171cccc045b8da450502ca26a42592b6f36718a"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "4098978bea1b94075e9156c3524b03e5a5732a284675dfe4fd67834a0e544d5b",
+              "activeSha256": "4098978bea1b94075e9156c3524b03e5a5732a284675dfe4fd67834a0e544d5b"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "1afef9c8ffce038072822345107bf2b60da01d23061e52ad64c6e0653cf64353",
+              "activeSha256": "1afef9c8ffce038072822345107bf2b60da01d23061e52ad64c6e0653cf64353"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "07369c983c096434ebc2c2efe35750ae858afc83e0761f3310171ab957d1f4bb",
+              "activeSha256": "07369c983c096434ebc2c2efe35750ae858afc83e0761f3310171ab957d1f4bb"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "e6108793e31659cc7cef36def593a70cce428135dddbb96c3c6f9a4e2af52c1b",
+              "activeSha256": "e6108793e31659cc7cef36def593a70cce428135dddbb96c3c6f9a4e2af52c1b"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "048534c3d2f4156f28f386217f475f0e4774e8554a4254082360576a8269e189",
+              "activeSha256": "048534c3d2f4156f28f386217f475f0e4774e8554a4254082360576a8269e189"
+            },
+            "aEmissionAllowed": {
+              "itemSize": 1,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "5122e06779997d2dce421ec7deec1ffd0129dbbc39fef5d861ac37fe2e442c75",
+              "activeSha256": "5122e06779997d2dce421ec7deec1ffd0129dbbc39fef5d861ac37fe2e442c75"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "eee1e549772fbd22542df77b9d2685a71b72018594d26251276840d7a1fd379c",
+              "activeSha256": "eee1e549772fbd22542df77b9d2685a71b72018594d26251276840d7a1fd379c"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6894,
+              "isInstanced": true,
+              "sha256": "bfbcbf52e1d0fb72dba03446b15d2247b9978fb9de4babe1f366c89e9f8118e6",
+              "activeSha256": "bfbcbf52e1d0fb72dba03446b15d2247b9978fb9de4babe1f366c89e9f8118e6"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13852,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "2a08bfb337a349fc31e999a3b8a0894d8b78430c61e32b41b6cf3cc1f1b86c59",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 13992,
+              "isInstanced": true,
+              "sha256": "1f0f5150d74ab7d52cc7f014287079b8e8d7d28fd0a2fca4ba4e40d1cb0bf6c5",
+              "activeSha256": "e3e87c4d344ba26fcf4ef31cefd17abe5e44cbc09c3689796b531e91b1232435"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 13992,
+              "isInstanced": true,
+              "sha256": "272d4b790e8bc64eedf50a4f954c317a76ad8943970cb48233054a97ad989178",
+              "activeSha256": "3424ffbf9f6391824e8092f43cb4d18b214cf34a769865671f96874f60559f7d"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 13992,
+              "isInstanced": true,
+              "sha256": "afd439afd278928ab4f5eac6e05f122fa8b8a61d09c3f0a1e5998033170490b8",
+              "activeSha256": "136e3ec6641e317a348d2aeccfe79f1b1252eddcdb58bb9454935d352e99d233"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 13992,
+              "isInstanced": true,
+              "sha256": "e0dafc1e5217cf8321335dad2c3012ed5dea297c75e2a30eae1c2965ccc9388d",
+              "activeSha256": "dd651ce0cfd2ad9c8e5e9655e0e93a88557e91ed46eadd120d0b4e3839dee569"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 13992,
+              "isInstanced": true,
+              "sha256": "b8f42590ba4e9380468c4c6c2c4087b1fdf4ffdeffec44b1f441969c5dad11bb",
+              "activeSha256": "7130ee112f13a86f62a5ad5cc8ad1db1c2a5a74b03fe12481e8e7923c8e0ecff"
+            }
+          },
+          "activeMatrix": "8bbc75b0d63fd139b77514480cb4b8518aa59daeffcea85a549e80f0cd850e59"
+        },
+        "skyriver.city.signs": {
+          "count": 355,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "matrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952",
+              "activeSha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189",
+              "activeSha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "aeffc7ed1f98a9eb411304aecaa6ede082050b5a6237c149c3b02a12d8b997bc",
+              "activeSha256": "aeffc7ed1f98a9eb411304aecaa6ede082050b5a6237c149c3b02a12d8b997bc"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "7d00be1be8e9115d583f2f1fc00bfffc4848b3ca1f689eb54b7bce1084f420b5",
+              "activeSha256": "7d00be1be8e9115d583f2f1fc00bfffc4848b3ca1f689eb54b7bce1084f420b5"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "b83410321c7bb12dd81da140ead582905f46af8e4100835a5c46832e85188eb0",
+              "activeSha256": "b83410321c7bb12dd81da140ead582905f46af8e4100835a5c46832e85188eb0"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "ad64062480268a5522e8eedb3f680df27ede5fca20391f695373043cc7b19134",
+              "activeSha256": "ad64062480268a5522e8eedb3f680df27ede5fca20391f695373043cc7b19134"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "13f6de0ced1e1eb319fa62f60156e63dc09ab8c9762f4a1befaa8c77c3cedb9f",
+              "activeSha256": "13f6de0ced1e1eb319fa62f60156e63dc09ab8c9762f4a1befaa8c77c3cedb9f"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "f8b838d7a085d7b256a87a17fe25d4f8517248447d334630132af6f0afffef13",
+              "activeSha256": "f8b838d7a085d7b256a87a17fe25d4f8517248447d334630132af6f0afffef13"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "2d4022c7a14ba8d5c0aa7c4020dd27a43729a2b5f41cdb38cfbe7d4b34393afa",
+              "activeSha256": "2d4022c7a14ba8d5c0aa7c4020dd27a43729a2b5f41cdb38cfbe7d4b34393afa"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 355,
+              "isInstanced": true,
+              "sha256": "1c118b564fd0aba54c79f841e0fa61707beb31c26130718707783181a5b746a0",
+              "activeSha256": "1c118b564fd0aba54c79f841e0fa61707beb31c26130718707783181a5b746a0"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 70,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "matrix": "70c04e74bb5ad2771c9330b15a8cd187273fbd323d146abb7e298508ac70fc71",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d",
+              "activeSha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56",
+              "activeSha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 70,
+              "isInstanced": true,
+              "sha256": "989f23af2d86aa2ca19f2bb3d65b3daef1a22dd9be5ae00514aed0af033e80cd",
+              "activeSha256": "989f23af2d86aa2ca19f2bb3d65b3daef1a22dd9be5ae00514aed0af033e80cd"
+            }
+          }
+        }
+      },
+      "lightSourcesHash": "e70992b3722d1771d1c6927db3b61a63985098ba7b70e6bda9b007f75cba674c"
+    },
+    {
+      "seed": 20240917,
+      "mode": "impostor",
+      "identity": {
+        "towers": "1fc2b111",
+        "towerAttributes": "23009914",
+        "emissionPolicy": "bf73fb65",
+        "trims": "47c55837",
+        "trimAttributes": "401e6e42",
+        "signPlacement": "aa90af55",
+        "signText": "397bd817",
+        "impostors": "efa190dd",
+        "impostorCards": "c54c31bc",
+        "counts": {
+          "towers": 6550,
+          "trims": 13872,
+          "signs": 400,
+          "impostors": 72
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "sourceCounts": {
+        "masses": 6550,
+        "massesByDistrict": [
+          1814,
+          1503,
+          1283,
+          828,
+          1122
+        ],
+        "trims": 13872,
+        "trimsByKind": [
+          941,
+          255,
+          2984,
+          1370,
+          3726,
+          66,
+          6,
+          2174,
+          2174,
+          176
+        ],
+        "trimsByDistrict": [
+          3889,
+          3340,
+          2512,
+          1947,
+          2184
+        ],
+        "ordinarySigns": 358,
+        "heroSigns": 42,
+        "signsByDistrict": [
+          144,
+          85,
+          62,
+          46,
+          63
+        ],
+        "heroesByDistrict": [
+          13,
+          11,
+          5,
+          7,
+          6
+        ],
+        "heroSpillSlots": 12,
+        "farCards": 72,
+        "farCardsByDistrict": [
+          18,
+          17,
+          16,
+          7,
+          14
+        ],
+        "paneCells": 79354977,
+        "roomCells": 79354977,
+        "meaning": {
+          "masses": "Drawn tower-batch instances (slabs, tiers, crowns, seam blocks and the far boxes still drawn as geometry).",
+          "trims": "Drawn trim instances after the hero-sign clearance pass.",
+          "signs": "Sign instances in the one neon draw. Heroes occupy the first heroSigns slots.",
+          "paneCells": "Facade window cells on emitting near-city masses, from side area / (7.2 m x 5.4 m). Equipment is excluded. This is procedural source capacity, not a per-instance population.",
+          "roomCells": "The same cells: a room is the traced interior of one pane cell inside the R19.7 fade window.",
+          "farCards": "R16 impostor card instances in the far-city draw."
+        }
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6550,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "a274345d277fc95db17a6e22423898342ea1379a081f0b99b788626aae708e09",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "81687bca14856956caad506da6ad688c571e4ac439bb6ff5bd957513a46ea77e",
+              "activeSha256": "81687bca14856956caad506da6ad688c571e4ac439bb6ff5bd957513a46ea77e"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "18555a827c63d5476e7d886a7eb3899dfcf8dcbe788dabd39b94c9701b88afff",
+              "activeSha256": "18555a827c63d5476e7d886a7eb3899dfcf8dcbe788dabd39b94c9701b88afff"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "b17e5f46a93f3351214ed4c68631ed54695ac5f11eec3ab716f00fbe48cf10b1",
+              "activeSha256": "b17e5f46a93f3351214ed4c68631ed54695ac5f11eec3ab716f00fbe48cf10b1"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "af8cb90e2acde30ed976586075ef0e60c18e5e88de1a51d7e52cd0d9889e3267",
+              "activeSha256": "af8cb90e2acde30ed976586075ef0e60c18e5e88de1a51d7e52cd0d9889e3267"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "0ee3bde4a5b0a19d32f6202a5198d67cbdc670a0e9a75715fc128663c7226ab1",
+              "activeSha256": "0ee3bde4a5b0a19d32f6202a5198d67cbdc670a0e9a75715fc128663c7226ab1"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "57704464f685d6735f8e6ff2f3a37ed912f30c3a5bc57ac892816a2a612daa0b",
+              "activeSha256": "57704464f685d6735f8e6ff2f3a37ed912f30c3a5bc57ac892816a2a612daa0b"
+            },
+            "aEmissionAllowed": {
+              "itemSize": 1,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "a477791cd3f37fb4f6c51ed2be9a362157ce8206d381a6e7a73187923710b81c",
+              "activeSha256": "a477791cd3f37fb4f6c51ed2be9a362157ce8206d381a6e7a73187923710b81c"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "f56926f6ef559c536437cb2d63b56ec18549c8ec41ecd890185a9e44fc41efa5",
+              "activeSha256": "f56926f6ef559c536437cb2d63b56ec18549c8ec41ecd890185a9e44fc41efa5"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "b583c0cf7a58dbfb50fe4b7f713df203c3ac06bdecfb253d18098eb7c287c78f",
+              "activeSha256": "b583c0cf7a58dbfb50fe4b7f713df203c3ac06bdecfb253d18098eb7c287c78f"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13872,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "5afc42b813027fe6e0137934c76e524e8bd417dedf5349b70b4fdcc285e2a211",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 14011,
+              "isInstanced": true,
+              "sha256": "56a4719e84861e5b554d928f8575c490e1c0f001d1242be7f32311fd9e469c4b",
+              "activeSha256": "f757203bb8dcd2a1a6cff68b7b093cdf3ddf2c2ea169d7b9e5a75f6cf3b173a3"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 14011,
+              "isInstanced": true,
+              "sha256": "9289d8bc5c355a1f3f1a39537bfd9e7aa1ea03e4928070944ca35705c85b6ee9",
+              "activeSha256": "2b6ce0fe4474fa42ba2bb8ae2b325d1112571f252c0e9b3ca8968dc5ff65807e"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 14011,
+              "isInstanced": true,
+              "sha256": "82ea26012a823d7871b581c49038ef2ff789135f32c3735e984643ddfed5d216",
+              "activeSha256": "f0b7fd3bd868167b0c7cfa46a5d22078091032d1b6e94e0aa313892e71474355"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 14011,
+              "isInstanced": true,
+              "sha256": "b04376d6897dbc1dc4833131eedbabfa765dddce4f98bdc856f7b649f0e871cc",
+              "activeSha256": "2a698f871b7e8abf1a5411bf611e4a3a5afd8c239f6b7da37f39176d6a669f76"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 14011,
+              "isInstanced": true,
+              "sha256": "003254c254e5eafdac9beac13f2561eb5b1663639238a3f2fcfd00bc131d4efc",
+              "activeSha256": "669f8b85883676d310fc964e41a237184f50c66deb071febe2293ce61786a0d4"
+            }
+          },
+          "activeMatrix": "c187751ba9ec962ee1b71366a36602d2b341f08c7e28c371b1b3fc26ab4fe3b2"
+        },
+        "skyriver.city.signs": {
+          "count": 400,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "matrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952",
+              "activeSha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189",
+              "activeSha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "01ed8a8ecb7d70efc1e740d9a3082201b1286e0ff61376079f895e3e35ac4839",
+              "activeSha256": "01ed8a8ecb7d70efc1e740d9a3082201b1286e0ff61376079f895e3e35ac4839"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "e49ae70317af6548ff9ff780d7ee43bf4e89a4c3df6191da6bd4ff6a52b6460b",
+              "activeSha256": "e49ae70317af6548ff9ff780d7ee43bf4e89a4c3df6191da6bd4ff6a52b6460b"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "5d6443de3e6d796698bb7ebdb79d937010db073ee341fe8746960846211a06e6",
+              "activeSha256": "5d6443de3e6d796698bb7ebdb79d937010db073ee341fe8746960846211a06e6"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "c2f3e0a3c448eca09ee41410d2b4d693913fa5cb263ae0e774b6cd25114c350a",
+              "activeSha256": "c2f3e0a3c448eca09ee41410d2b4d693913fa5cb263ae0e774b6cd25114c350a"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "0b93eec1799436081fd87c70f1171d58367462ab29532e458993e3ddc26e9edb",
+              "activeSha256": "0b93eec1799436081fd87c70f1171d58367462ab29532e458993e3ddc26e9edb"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "a4c624c3930af562752675cd915595b7ab80eea109abe49b10765ac6ef57f134",
+              "activeSha256": "a4c624c3930af562752675cd915595b7ab80eea109abe49b10765ac6ef57f134"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "19695d08a55c7e82364fdd3b950ebb739c7350d07b026bd0cce3a910833a20f7",
+              "activeSha256": "19695d08a55c7e82364fdd3b950ebb739c7350d07b026bd0cce3a910833a20f7"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "08f6a90fb20952840cc8b723621a72ed12a07815c654a6452c5c4226d0e8cba1",
+              "activeSha256": "08f6a90fb20952840cc8b723621a72ed12a07815c654a6452c5c4226d0e8cba1"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 72,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "matrix": "3c986b0c22f25bedaccc444e1dd7d7e3e0a21c5300b900613d72fabf6a8eab89",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d",
+              "activeSha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56",
+              "activeSha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 72,
+              "isInstanced": true,
+              "sha256": "6736bf0833658d99df49211b75abacd61d34c873ea314866d0de423567bdb163",
+              "activeSha256": "6736bf0833658d99df49211b75abacd61d34c873ea314866d0de423567bdb163"
+            }
+          }
+        }
+      },
+      "lightSourcesHash": "9baa426ac2a3854daefaae1186bfd14e494b8d5f8007406daa41fe59b6285d66"
+    },
+    {
+      "seed": 20240917,
+      "mode": "geometry",
+      "identity": {
+        "towers": "7230331f",
+        "towerAttributes": "079fdb78",
+        "emissionPolicy": "41696768",
+        "trims": "47c55837",
+        "trimAttributes": "401e6e42",
+        "signPlacement": "aa90af55",
+        "signText": "397bd817",
+        "impostors": "efa190dd",
+        "impostorCards": "c54c31bc",
+        "counts": {
+          "towers": 6675,
+          "trims": 13872,
+          "signs": 400,
+          "impostors": 72
+        },
+        "excludes": [
+          "aColor (the drawn source colour)",
+          "aDistrictTint (R22 target hue and saturation)",
+          "aDistrict (R22 district id on towers and trims)",
+          "aCard.w (R22 district id on far cards)"
+        ]
+      },
+      "sourceCounts": {
+        "masses": 6675,
+        "massesByDistrict": [
+          1847,
+          1534,
+          1308,
+          839,
+          1147
+        ],
+        "trims": 13872,
+        "trimsByKind": [
+          941,
+          255,
+          2984,
+          1370,
+          3726,
+          66,
+          6,
+          2174,
+          2174,
+          176
+        ],
+        "trimsByDistrict": [
+          3889,
+          3340,
+          2512,
+          1947,
+          2184
+        ],
+        "ordinarySigns": 358,
+        "heroSigns": 42,
+        "signsByDistrict": [
+          144,
+          85,
+          62,
+          46,
+          63
+        ],
+        "heroesByDistrict": [
+          13,
+          11,
+          5,
+          7,
+          6
+        ],
+        "heroSpillSlots": 12,
+        "farCards": 72,
+        "farCardsByDistrict": [
+          18,
+          17,
+          16,
+          7,
+          14
+        ],
+        "paneCells": 79354977,
+        "roomCells": 79354977,
+        "meaning": {
+          "masses": "Drawn tower-batch instances (slabs, tiers, crowns, seam blocks and the far boxes still drawn as geometry).",
+          "trims": "Drawn trim instances after the hero-sign clearance pass.",
+          "signs": "Sign instances in the one neon draw. Heroes occupy the first heroSigns slots.",
+          "paneCells": "Facade window cells on emitting near-city masses, from side area / (7.2 m x 5.4 m). Equipment is excluded. This is procedural source capacity, not a per-instance population.",
+          "roomCells": "The same cells: a room is the traced interior of one pane cell inside the R19.7 fade window.",
+          "farCards": "R16 impostor card instances in the far-city draw."
+        }
+      },
+      "meshes": {
+        "skyriver.city.towers": {
+          "count": 6675,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "e937bebb6c0b23d2a0cc828ae2aaab24d646897db4088886c10bbf3a7a952632",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "2c63f5594fdab5deb75d43b6f96c90e10aef72351dd20eea96478a7bb3300ff0",
+              "activeSha256": "2c63f5594fdab5deb75d43b6f96c90e10aef72351dd20eea96478a7bb3300ff0"
+            },
+            "aTint": {
+              "itemSize": 3,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "134d437bddd2ff399e958f033839ab9554a5170927d2f60f89b5b4155ec17ad3",
+              "activeSha256": "134d437bddd2ff399e958f033839ab9554a5170927d2f60f89b5b4155ec17ad3"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "349791a0f81d54576b83c5f29208223cde0d95e23e6bde09653dde1afbb806a8",
+              "activeSha256": "349791a0f81d54576b83c5f29208223cde0d95e23e6bde09653dde1afbb806a8"
+            },
+            "aLayer": {
+              "itemSize": 1,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "a98f9a402fa0c284fd3a90bd6235fde2934caae21ba0b67235470154294d5363",
+              "activeSha256": "a98f9a402fa0c284fd3a90bd6235fde2934caae21ba0b67235470154294d5363"
+            },
+            "aBuilding": {
+              "itemSize": 1,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "4817ebf5bdcb48995b636b54b11d3361f108f78f4fcd4083bdd32235c69b5bd3",
+              "activeSha256": "4817ebf5bdcb48995b636b54b11d3361f108f78f4fcd4083bdd32235c69b5bd3"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "3e8b009b331b257758de6609225a6e893606e9f7bbb8fc4f03a9ff7928f326bb",
+              "activeSha256": "3e8b009b331b257758de6609225a6e893606e9f7bbb8fc4f03a9ff7928f326bb"
+            },
+            "aEmissionAllowed": {
+              "itemSize": 1,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "3f55dcb8d524bc8ce4ad8e936bfd6746ffc2453eb74eb9b4c0f7557f8a5f203b",
+              "activeSha256": "3f55dcb8d524bc8ce4ad8e936bfd6746ffc2453eb74eb9b4c0f7557f8a5f203b"
+            },
+            "aStepEdges": {
+              "itemSize": 2,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "f56926f6ef559c536437cb2d63b56ec18549c8ec41ecd890185a9e44fc41efa5",
+              "activeSha256": "f56926f6ef559c536437cb2d63b56ec18549c8ec41ecd890185a9e44fc41efa5"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 6675,
+              "isInstanced": true,
+              "sha256": "ecb0c5f56856a01d9786e98ce02c6b98c48ed2ae1beed87ba36f79218cf9d660",
+              "activeSha256": "ecb0c5f56856a01d9786e98ce02c6b98c48ed2ae1beed87ba36f79218cf9d660"
+            }
+          }
+        },
+        "skyriver.city.trim": {
+          "count": 13872,
+          "index": "7d2c65fffb490f18b89d5d949a36ac6fe37f052789bdc3ad49759abb3ecd0898",
+          "matrix": "5afc42b813027fe6e0137934c76e524e8bd417dedf5349b70b4fdcc285e2a211",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd",
+              "activeSha256": "684624d0687cbb7ce0a1119f1588586e3d1d758cf5bee26b78af640572a1e1bd"
+            },
+            "normal": {
+              "itemSize": 3,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+              "activeSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 24,
+              "isInstanced": false,
+              "sha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a",
+              "activeSha256": "9acbda3fe508de1f96b8f061ef5888cfba15a3e6ae752467e73665e4dfe3182a"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 14011,
+              "isInstanced": true,
+              "sha256": "56a4719e84861e5b554d928f8575c490e1c0f001d1242be7f32311fd9e469c4b",
+              "activeSha256": "f757203bb8dcd2a1a6cff68b7b093cdf3ddf2c2ea169d7b9e5a75f6cf3b173a3"
+            },
+            "aMaterial": {
+              "itemSize": 1,
+              "count": 14011,
+              "isInstanced": true,
+              "sha256": "9289d8bc5c355a1f3f1a39537bfd9e7aa1ea03e4928070944ca35705c85b6ee9",
+              "activeSha256": "2b6ce0fe4474fa42ba2bb8ae2b325d1112571f252c0e9b3ca8968dc5ff65807e"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 14011,
+              "isInstanced": true,
+              "sha256": "82ea26012a823d7871b581c49038ef2ff789135f32c3735e984643ddfed5d216",
+              "activeSha256": "f0b7fd3bd868167b0c7cfa46a5d22078091032d1b6e94e0aa313892e71474355"
+            },
+            "aSize": {
+              "itemSize": 3,
+              "count": 14011,
+              "isInstanced": true,
+              "sha256": "b04376d6897dbc1dc4833131eedbabfa765dddce4f98bdc856f7b649f0e871cc",
+              "activeSha256": "2a698f871b7e8abf1a5411bf611e4a3a5afd8c239f6b7da37f39176d6a669f76"
+            },
+            "aDistrict": {
+              "itemSize": 1,
+              "count": 14011,
+              "isInstanced": true,
+              "sha256": "003254c254e5eafdac9beac13f2561eb5b1663639238a3f2fcfd00bc131d4efc",
+              "activeSha256": "669f8b85883676d310fc964e41a237184f50c66deb071febe2293ce61786a0d4"
+            }
+          },
+          "activeMatrix": "c187751ba9ec962ee1b71366a36602d2b341f08c7e28c371b1b3fc26ab4fe3b2"
+        },
+        "skyriver.city.signs": {
+          "count": 400,
+          "index": "e6681333c21d3bedc5c5d4ea4503e8acc5b95e8d8e2aabffd97d12425a145443",
+          "matrix": null,
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952",
+              "activeSha256": "790d89949ccfb2fa2c3a7bb089a2ee773bc38e58b93ddacf647fa0896b103952"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 4,
+              "isInstanced": false,
+              "sha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189",
+              "activeSha256": "f3a0a46301c6859e5b64beadee234c4eeec1dec8c4735dc7bf40ea09e762e189"
+            },
+            "aCentre": {
+              "itemSize": 3,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "01ed8a8ecb7d70efc1e740d9a3082201b1286e0ff61376079f895e3e35ac4839",
+              "activeSha256": "01ed8a8ecb7d70efc1e740d9a3082201b1286e0ff61376079f895e3e35ac4839"
+            },
+            "aNormal": {
+              "itemSize": 2,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "e49ae70317af6548ff9ff780d7ee43bf4e89a4c3df6191da6bd4ff6a52b6460b",
+              "activeSha256": "e49ae70317af6548ff9ff780d7ee43bf4e89a4c3df6191da6bd4ff6a52b6460b"
+            },
+            "aSize": {
+              "itemSize": 2,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "5d6443de3e6d796698bb7ebdb79d937010db073ee341fe8746960846211a06e6",
+              "activeSha256": "5d6443de3e6d796698bb7ebdb79d937010db073ee341fe8746960846211a06e6"
+            },
+            "aColor": {
+              "itemSize": 3,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "c2f3e0a3c448eca09ee41410d2b4d693913fa5cb263ae0e774b6cd25114c350a",
+              "activeSha256": "c2f3e0a3c448eca09ee41410d2b4d693913fa5cb263ae0e774b6cd25114c350a"
+            },
+            "aKind": {
+              "itemSize": 1,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "0b93eec1799436081fd87c70f1171d58367462ab29532e458993e3ddc26e9edb",
+              "activeSha256": "0b93eec1799436081fd87c70f1171d58367462ab29532e458993e3ddc26e9edb"
+            },
+            "aSeed": {
+              "itemSize": 1,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "a4c624c3930af562752675cd915595b7ab80eea109abe49b10765ac6ef57f134",
+              "activeSha256": "a4c624c3930af562752675cd915595b7ab80eea109abe49b10765ac6ef57f134"
+            },
+            "aAtlas": {
+              "itemSize": 4,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "19695d08a55c7e82364fdd3b950ebb739c7350d07b026bd0cce3a910833a20f7",
+              "activeSha256": "19695d08a55c7e82364fdd3b950ebb739c7350d07b026bd0cce3a910833a20f7"
+            },
+            "aDistrictTint": {
+              "itemSize": 4,
+              "count": 400,
+              "isInstanced": true,
+              "sha256": "08f6a90fb20952840cc8b723621a72ed12a07815c654a6452c5c4226d0e8cba1",
+              "activeSha256": "08f6a90fb20952840cc8b723621a72ed12a07815c654a6452c5c4226d0e8cba1"
+            }
+          }
+        },
+        "skyriver.city.impostors": {
+          "count": 72,
+          "index": "668b099db30af4b0b9773a52497c73bca667af4084a84d8ddd703b94890b06fd",
+          "matrix": "3c986b0c22f25bedaccc444e1dd7d7e3e0a21c5300b900613d72fabf6a8eab89",
+          "attributes": {
+            "position": {
+              "itemSize": 3,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d",
+              "activeSha256": "2636e8a334c783a04b2effbb56681152788abd52ed9066e180c135c09589e57d"
+            },
+            "uv": {
+              "itemSize": 2,
+              "count": 8,
+              "isInstanced": false,
+              "sha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56",
+              "activeSha256": "1e0421f45188da013b4bf20b1fd044feea42e93b83723f4168d3daac8d1a1e56"
+            },
+            "aCard": {
+              "itemSize": 4,
+              "count": 72,
+              "isInstanced": true,
+              "sha256": "6736bf0833658d99df49211b75abacd61d34c873ea314866d0de423567bdb163",
+              "activeSha256": "6736bf0833658d99df49211b75abacd61d34c873ea314866d0de423567bdb163"
+            }
+          }
+        }
+      },
+      "lightSourcesHash": "9baa426ac2a3854daefaae1186bfd14e494b8d5f8007406daa41fe59b6285d66"
+    }
+  ]
+}

@@ -242,6 +242,52 @@ export interface SkyriverCityTrims {
   readonly spanTo: readonly (SkyriverTrimOwner | null)[];
 }
 
+export type SkyriverRoofDetailRole =
+  | 'tank'
+  | 'vent'
+  | 'pipe'
+  | 'stairhouse'
+  | 'hvac'
+  | 'pad'
+  | 'mast';
+
+export type SkyriverRoofDetailStratum = 'grime' | 'mid' | 'pristine';
+
+export const SKYRIVER_ROOF_DETAIL_CAPS = Object.freeze([1200, 480, 120] as const);
+export const SKYRIVER_ROOF_DETAIL_TOTAL_CAP = 1800;
+
+export interface SkyriverRoofDetailRecord {
+  readonly trimIndex: number;
+  readonly supportMassIndex: number;
+  readonly clusterId: number;
+  readonly role: SkyriverRoofDetailRole;
+  readonly stratum: SkyriverRoofDetailStratum;
+}
+
+export interface SkyriverRoofDetailDerivation {
+  readonly oldTrimCount: number;
+  readonly totalTrimCount: number;
+  readonly requestedByStratum: readonly [number, number, number];
+  readonly acceptedByStratum: readonly [number, number, number];
+  readonly rejectedSupportByStratum: readonly [number, number, number];
+  readonly rejectedCollisionByStratum: readonly [number, number, number];
+  readonly rejectedBudgetByStratum: readonly [number, number, number];
+  readonly records: readonly SkyriverRoofDetailRecord[];
+}
+
+export type SkyriverRoofDetailDrawRecord =
+  | (SkyriverRoofDetailRecord & { readonly drawIndex: number; readonly drawState: 'drawn' })
+  | (SkyriverRoofDetailRecord & { readonly drawIndex: null; readonly drawState: 'hero-excluded' });
+
+export interface SkyriverRoofDetailEvidence extends Omit<SkyriverRoofDetailDerivation, 'records'> {
+  readonly legacyDrawnCount: number;
+  readonly uploadedTotalCount: number;
+  readonly uploadedSuffixCount: number;
+  readonly uploadedByStratum: readonly [number, number, number];
+  readonly heroExcludedByStratum: readonly [number, number, number];
+  readonly records: readonly SkyriverRoofDetailDrawRecord[];
+}
+
 /** A mass a trim is attached to, in canyon space. */
 export interface SkyriverTrimOwner {
   readonly x: number;
@@ -410,6 +456,7 @@ function innerWallX(layout: SkyriverCityLayout, tower: SkyriverTower): number {
 
 const trimCache = new Map<number, SkyriverCityTrims>();
 const massCache = new Map<number, SkyriverMass[]>();
+const roofDetailCache = new Map<number, SkyriverRoofDetailDerivation>();
 /** R16: the far-city layers as impostor cards, one per far tower (body, cap and spire together). */
 export interface SkyriverFarTower {
   readonly x: number;
@@ -1255,7 +1302,7 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
 
   owner.length = count;
   spanTo.length = count;
-  const trims: SkyriverCityTrims = {
+  const legacyTrims: SkyriverCityTrims = {
     seed: layout.seed,
     count,
     cx,
@@ -1269,8 +1316,677 @@ export function deriveCityTrims(layout: SkyriverCityLayout): SkyriverCityTrims {
     owner,
     spanTo,
   };
+  // Make the complete legacy trim prefix visible while deriving the existing heroes. The R35
+  // suffix uses those real hero records for its own geometric exclusion, but it never changes the
+  // old filter or calls hero derivation from inside the suffix builder.
+  trimCache.set(layout.seed, legacyTrims);
+  let heroes: readonly SkyriverHeroBlade[];
+  let detailResult: { readonly totalTrimCount: number; readonly derivation: SkyriverRoofDetailDerivation };
+  try {
+    heroes = deriveHeroBlades(layout);
+    const collisionIndex = buildRoofDetailCollisionIndex(masses, legacyTrims, heroes, layout);
+    detailResult = appendRoofDetailSuffix(
+      masses,
+      legacyTrims,
+      { cx, cy, cz, sx, sy, sz, kind, seedValue, owner, spanTo },
+      cap,
+      collisionIndex,
+      new DeterministicRandom(layout.seed).fork('skyriver.city.r35.roof_details'),
+    );
+  } catch (error) {
+    trimCache.delete(layout.seed);
+    throw error;
+  }
+  count = detailResult.totalTrimCount;
+  roofDetailCache.set(layout.seed, detailResult.derivation);
+
+  const trims: SkyriverCityTrims = { ...legacyTrims, count };
   trimCache.set(layout.seed, trims);
   return trims;
+}
+
+/** The cached GL-free R35 derivation. Calling it also completes the existing trim derivation. */
+export function deriveRoofDetails(layout: SkyriverCityLayout): SkyriverRoofDetailDerivation {
+  const cached = roofDetailCache.get(layout.seed);
+  if (cached !== undefined) return cached;
+  deriveCityTrims(layout);
+  const derivation = roofDetailCache.get(layout.seed);
+  if (derivation === undefined) fail('SKYRIVER_ROOF_DETAILS_MISSING');
+  return derivation;
+}
+
+interface RoofDetailObb {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  readonly halfX: number;
+  readonly halfY: number;
+  readonly halfZ: number;
+  readonly ux: number;
+  readonly uz: number;
+  readonly vx: number;
+  readonly vz: number;
+  readonly minX: number;
+  readonly maxX: number;
+  readonly minZ: number;
+  readonly maxZ: number;
+  /** Only a roof-mounted candidate's own support may meet it at zero vertical clearance. */
+  readonly massIndex?: number;
+}
+
+interface RoofDetailCollisionIndex {
+  readonly cellSize: number;
+  readonly cells: Map<string, number[]>;
+  readonly boxes: RoofDetailObb[];
+  readonly stamps: Int32Array;
+  stamp: number;
+}
+
+const roofDetailHeroBoxCache = new Map<number, readonly RoofDetailObb[]>();
+
+interface RoofDetailComponent {
+  readonly role: SkyriverRoofDetailRole;
+  readonly dx: number;
+  readonly dz: number;
+  readonly sx: number;
+  readonly sy: number;
+  readonly sz: number;
+}
+
+interface RoofDetailSupport {
+  readonly mass: SkyriverMass;
+  readonly massIndex: number;
+  readonly stratum: SkyriverRoofDetailStratum;
+  readonly roofY: number;
+}
+
+interface RoofDetailClusterTask {
+  readonly stratumIndex: 0 | 1 | 2;
+  readonly ordinal: number;
+  readonly phase: number;
+  readonly clusterId: number;
+}
+
+const ROOF_DETAIL_STRATA = Object.freeze(['grime', 'mid', 'pristine'] as const);
+const ROOF_DETAIL_SPATIAL_CELL_M = 128;
+const ROOF_DETAIL_CLEARANCE_M = 0.35;
+const ROOF_DETAIL_SUPPORT_INSET_M = 2;
+const roofDetailWarp: WarpOut = { x: 0, z: 0, heading: 0 };
+const roofDetailPlaced: SkyriverTrimPlacement = { x: 0, z: 0, heading: 0, length: 0 };
+
+function roofDetailStratumIndex(stratum: SkyriverRoofDetailStratum): 0 | 1 | 2 {
+  return stratum === 'grime' ? 0 : stratum === 'mid' ? 1 : 2;
+}
+
+function roofDetailStratumFor(y: number): SkyriverRoofDetailStratum {
+  return y < 600 ? 'grime' : y < 1800 ? 'mid' : 'pristine';
+}
+
+function roofDetailRandomFloat(random: DeterministicRandom, min: number, max: number): number {
+  return min + (max - min) * random.nextInt(0, 10000) / 10000;
+}
+
+function roofDetailBox(
+  x: number,
+  y: number,
+  z: number,
+  sx: number,
+  sy: number,
+  sz: number,
+  heading: number,
+  massIndex?: number,
+): RoofDetailObb {
+  const ux = Math.cos(heading);
+  const uz = -Math.sin(heading);
+  const vx = Math.sin(heading);
+  const vz = Math.cos(heading);
+  const halfX = sx * 0.5;
+  const halfZ = sz * 0.5;
+  const radiusX = Math.abs(ux) * halfX + Math.abs(vx) * halfZ;
+  const radiusZ = Math.abs(uz) * halfX + Math.abs(vz) * halfZ;
+  return {
+    x, y, z, halfX, halfY: sy * 0.5, halfZ, ux, uz, vx, vz,
+    minX: x - radiusX, maxX: x + radiusX,
+    minZ: z - radiusZ, maxZ: z + radiusZ,
+    ...(massIndex === undefined ? {} : { massIndex }),
+  };
+}
+
+function roofDetailMassObb(mass: SkyriverMass, massIndex: number): RoofDetailObb {
+  warpRigid(mass.x, mass.z, mass.anchorV ?? mass.z, roofDetailWarp);
+  return roofDetailBox(
+    roofDetailWarp.x,
+    mass.y0 + mass.height * 0.5,
+    roofDetailWarp.z,
+    mass.width,
+    mass.height,
+    mass.depth,
+    roofDetailWarp.heading,
+    massIndex,
+  );
+}
+
+function roofDetailTrimObb(trims: SkyriverCityTrims, index: number): RoofDetailObb {
+  placeTrim(trims, index, roofDetailPlaced);
+  const sx = trims.sx[index]!;
+  const sz = trims.sz[index]!;
+  const acrossSpan = roofDetailPlaced.length > 0 && sx > sz;
+  const alongSpan = roofDetailPlaced.length > 0 && sz >= sx;
+  const worldXSize = acrossSpan ? roofDetailPlaced.length : sx;
+  const worldZSize = alongSpan ? roofDetailPlaced.length : sz;
+  return roofDetailBox(
+    roofDetailPlaced.x,
+    trims.cy[index]!,
+    roofDetailPlaced.z,
+    worldXSize,
+    trims.sy[index]!,
+    worldZSize,
+    roofDetailPlaced.heading,
+  );
+}
+
+function roofDetailFloatTolerance(a: RoofDetailObb, b: RoofDetailObb): number {
+  const ulp = (value: number): number => {
+    const absolute = Math.abs(value);
+    if (absolute === 0) return 2 ** -149;
+    return 2 ** (Math.floor(Math.log2(absolute)) - 23);
+  };
+  return Math.max(
+    ulp(a.x), ulp(a.y), ulp(a.z),
+    ulp(b.x), ulp(b.y), ulp(b.z),
+  ) * 2;
+}
+
+function roofDetailRadiusOn(box: RoofDetailObb, axisX: number, axisZ: number): number {
+  return box.halfX * Math.abs(box.ux * axisX + box.uz * axisZ)
+    + box.halfZ * Math.abs(box.vx * axisX + box.vz * axisZ);
+}
+
+function roofDetailObbsConflict(a: RoofDetailObb, b: RoofDetailObb, gapM: number): boolean {
+  const tolerance = roofDetailFloatTolerance(a, b);
+  const verticalSeparation = Math.max(
+    b.y - b.halfY - (a.y + a.halfY),
+    a.y - a.halfY - (b.y + b.halfY),
+  );
+  if (verticalSeparation >= gapM - tolerance) return false;
+
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const axes = [
+    [a.ux, a.uz],
+    [a.vx, a.vz],
+    [b.ux, b.uz],
+    [b.vx, b.vz],
+  ] as const;
+  for (const [axisX, axisZ] of axes) {
+    const separation = Math.abs(dx * axisX + dz * axisZ);
+    const radii = roofDetailRadiusOn(a, axisX, axisZ) + roofDetailRadiusOn(b, axisX, axisZ);
+    if (separation >= radii + gapM - tolerance) return false;
+  }
+  return true;
+}
+
+function roofDetailCellKey(x: number, z: number): string {
+  return String(x) + ':' + String(z);
+}
+
+function roofDetailInsert(index: RoofDetailCollisionIndex, box: RoofDetailObb): number {
+  const boxIndex = index.boxes.length;
+  index.boxes.push(box);
+  const minX = Math.floor(box.minX / index.cellSize);
+  const maxX = Math.floor(box.maxX / index.cellSize);
+  const minZ = Math.floor(box.minZ / index.cellSize);
+  const maxZ = Math.floor(box.maxZ / index.cellSize);
+  for (let gx = minX; gx <= maxX; gx += 1) {
+    for (let gz = minZ; gz <= maxZ; gz += 1) {
+      const key = roofDetailCellKey(gx, gz);
+      const bucket = index.cells.get(key);
+      if (bucket === undefined) index.cells.set(key, [boxIndex]);
+      else bucket.push(boxIndex);
+    }
+  }
+  return boxIndex;
+}
+
+function roofDetailIndexConflicts(
+  index: RoofDetailCollisionIndex,
+  box: RoofDetailObb,
+  gapM: number,
+  supportMassIndex: number,
+): boolean {
+  index.stamp += 1;
+  if (index.stamp >= 0x7ffffffe) {
+    index.stamps.fill(0);
+    index.stamp = 1;
+  }
+  const stamp = index.stamp;
+  const minX = Math.floor((box.minX - gapM) / index.cellSize);
+  const maxX = Math.floor((box.maxX + gapM) / index.cellSize);
+  const minZ = Math.floor((box.minZ - gapM) / index.cellSize);
+  const maxZ = Math.floor((box.maxZ + gapM) / index.cellSize);
+  for (let gx = minX; gx <= maxX; gx += 1) {
+    for (let gz = minZ; gz <= maxZ; gz += 1) {
+      const bucket = index.cells.get(roofDetailCellKey(gx, gz));
+      if (bucket === undefined) continue;
+      for (let i = 0; i < bucket.length; i += 1) {
+        const candidateIndex = bucket[i]!;
+        if (index.stamps[candidateIndex] === stamp) continue;
+        index.stamps[candidateIndex] = stamp;
+        const other = index.boxes[candidateIndex]!;
+        if (other.massIndex === supportMassIndex) continue;
+        if (roofDetailObbsConflict(box, other, gapM)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function roofDetailBlocksHero(box: RoofDetailObb, heroes: readonly RoofDetailObb[]): boolean {
+  for (const hero of heroes) {
+    if (roofDetailObbsConflict(box, hero, 0)) return true;
+  }
+  return false;
+}
+
+function roofDetailHeroObbs(
+  layout: SkyriverCityLayout,
+  heroes: readonly SkyriverHeroBlade[],
+): readonly RoofDetailObb[] {
+  const faces = new Map(deriveFacadeFaces(layout).map((face) => [face.id, face]));
+  const anchors = megaAnchorCache.get(layout.seed) ?? [];
+  const result: RoofDetailObb[] = [];
+  const normal = { x: 0, z: 0 };
+  for (const hero of heroes) {
+    const face = faces.get(hero.faceId);
+    if (face === undefined) continue;
+    let wx: number;
+    let wz: number;
+    let heading: number;
+    if (hero.kind === 'brand') {
+      const anchor = anchors.find((candidate) => Math.abs(candidate.v - hero.z) < 300);
+      if (anchor === undefined) {
+        warpRigid(hero.x, hero.z, hero.owner.anchorV, roofDetailWarp);
+        wx = roofDetailWarp.x;
+        wz = roofDetailWarp.z;
+        heading = roofDetailWarp.heading;
+      } else {
+        warpCanyon(anchor.x, anchor.v, roofDetailWarp);
+        const dx = hero.x - anchor.x;
+        const dz = hero.z - anchor.v;
+        const sinH = Math.sin(roofDetailWarp.heading);
+        const cosH = Math.cos(roofDetailWarp.heading);
+        wx = roofDetailWarp.x + dx * cosH + dz * sinH;
+        wz = roofDetailWarp.z - dx * sinH + dz * cosH;
+        heading = roofDetailWarp.heading;
+      }
+      warpDirection(0, -1, heading, normal);
+    } else {
+      warpRigid(hero.x, hero.z, hero.owner.anchorV, roofDetailWarp);
+      wx = roofDetailWarp.x;
+      wz = roofDetailWarp.z;
+      heading = roofDetailWarp.heading;
+      warpDirection(hero.kind === 'panel' ? face.outward : 0, hero.kind === 'blade' ? 1 : 0, heading, normal);
+    }
+    const tangentX = -normal.z;
+    const tangentZ = normal.x;
+    const heroHalfWidth = hero.width * 0.5 + 14;
+    const heroHalfHeight = hero.height * 0.5 + 18;
+    const heroHalfDepth = 14;
+    const tangentRadiusX = Math.abs(tangentX) * heroHalfWidth + Math.abs(normal.x) * heroHalfDepth;
+    const tangentRadiusZ = Math.abs(tangentZ) * heroHalfWidth + Math.abs(normal.z) * heroHalfDepth;
+    result.push({
+      x: wx,
+      y: hero.y,
+      z: wz,
+      halfX: heroHalfWidth,
+      halfY: heroHalfHeight,
+      halfZ: heroHalfDepth,
+      ux: tangentX,
+      uz: tangentZ,
+      vx: normal.x,
+      vz: normal.z,
+      minX: wx - tangentRadiusX,
+      maxX: wx + tangentRadiusX,
+      minZ: wz - tangentRadiusZ,
+      maxZ: wz + tangentRadiusZ,
+    });
+  }
+  return result;
+}
+
+function buildRoofDetailCollisionIndex(
+  masses: readonly SkyriverMass[],
+  legacyTrims: SkyriverCityTrims,
+  heroes: readonly SkyriverHeroBlade[],
+  layout: SkyriverCityLayout,
+): RoofDetailCollisionIndex {
+  const expected = masses.length + legacyTrims.count + SKYRIVER_ROOF_DETAIL_TOTAL_CAP;
+  const index: RoofDetailCollisionIndex = {
+    cellSize: ROOF_DETAIL_SPATIAL_CELL_M,
+    cells: new Map(),
+    boxes: [],
+    stamps: new Int32Array(expected),
+    stamp: 0,
+  };
+  for (let massIndex = 0; massIndex < masses.length; massIndex += 1) {
+    const mass = masses[massIndex]!;
+    if (mass.width <= 0 || mass.height <= 0 || mass.depth <= 0) continue;
+    roofDetailInsert(index, roofDetailMassObb(mass, massIndex));
+  }
+  const heroBoxes = roofDetailHeroObbs(layout, heroes);
+  // Preserve the existing legacy filter. Only visible old trims block roof-detail placement.
+  for (let i = 0; i < legacyTrims.count; i += 1) {
+    if (skyriverTrimBlocksHero(legacyTrims, i, heroes)) continue;
+    roofDetailInsert(index, roofDetailTrimObb(legacyTrims, i));
+  }
+  roofDetailHeroBoxCache.set(layout.seed, heroBoxes);
+  return index;
+}
+
+interface RoofDetailStorage {
+  readonly cx: Float32Array;
+  readonly cy: Float32Array;
+  readonly cz: Float32Array;
+  readonly sx: Float32Array;
+  readonly sy: Float32Array;
+  readonly sz: Float32Array;
+  readonly kind: Uint8Array;
+  readonly seedValue: Float32Array;
+  readonly owner: SkyriverTrimOwner[];
+  readonly spanTo: (SkyriverTrimOwner | null)[];
+}
+
+function roofDetailCluster(
+  stratumIndex: 0 | 1 | 2,
+  ordinal: number,
+  random: DeterministicRandom,
+): readonly RoofDetailComponent[] {
+  const unit = (min: number, max: number): number => roofDetailRandomFloat(random, min, max);
+  if (stratumIndex === 0) {
+    const pattern = ordinal % 4;
+    if (pattern === 0) {
+      const width = unit(6, 9);
+      const depth = unit(5, 8);
+      const height = unit(7, 12);
+      return [
+        { role: 'tank', dx: 0, dz: 0, sx: width, sy: height, sz: depth },
+        { role: 'tank', dx: -width * 0.5 - 0.65, dz: 0, sx: 0.6, sy: height + 0.4, sz: 0.6 },
+        { role: 'tank', dx: width * 0.5 + 0.65, dz: 0, sx: 0.6, sy: height + 0.4, sz: 0.6 },
+        { role: 'tank', dx: 0, dz: -depth * 0.5 - 0.65, sx: width * 0.65, sy: height + 0.4, sz: 0.6 },
+      ];
+    }
+    if (pattern === 1) {
+      const firstWidth = unit(2.5, 4);
+      const secondWidth = unit(2.2, 3.7);
+      return [
+        { role: 'vent', dx: -(firstWidth + secondWidth) * 0.5 - 0.55, dz: 0, sx: firstWidth, sy: unit(2.5, 4.5), sz: unit(2.5, 4) },
+        { role: 'vent', dx: (firstWidth + secondWidth) * 0.5 + 0.55, dz: 0, sx: secondWidth, sy: unit(2, 4), sz: unit(2.2, 3.8) },
+      ];
+    }
+    if (pattern === 2) {
+      const length = unit(10, 18);
+      return [
+        { role: 'pipe', dx: 0, dz: -1.05, sx: length, sy: unit(0.9, 1.6), sz: 0.8 },
+        { role: 'pipe', dx: 0, dz: 1.05, sx: length * unit(0.7, 0.95), sy: unit(0.9, 1.6), sz: 0.8 },
+      ];
+    }
+    const stepWidth = unit(1.6, 2.1);
+    const stepDepth = unit(2.4, 3);
+    const heights = [1.2, 1.9, 2.6, 3.3] as const;
+    return heights.map((height, index) => ({
+      role: 'stairhouse' as const,
+      dx: (index - 1.5) * (stepWidth + 0.45),
+      dz: 0,
+      sx: stepWidth,
+      sy: height,
+      sz: stepDepth,
+    }));
+  }
+  if (stratumIndex === 1) {
+    if (ordinal % 2 === 0) {
+      return [
+        { role: 'hvac', dx: -3.7, dz: 0, sx: 3, sy: unit(2.2, 3.7), sz: 2.8 },
+        { role: 'hvac', dx: 0, dz: 0, sx: 3, sy: unit(2.5, 4.2), sz: 2.8 },
+        { role: 'hvac', dx: 3.7, dz: 0, sx: 3, sy: unit(2.2, 3.7), sz: 2.8 },
+        { role: 'pad', dx: 0, dz: 4.2, sx: 6.2, sy: 0.8, sz: 2 },
+      ];
+    }
+    return [
+      { role: 'pad', dx: -3.6, dz: -2.3, sx: 2.8, sy: 0.8, sz: 2.2 },
+      { role: 'pad', dx: 3.6, dz: -2.3, sx: 2.8, sy: 0.8, sz: 2.2 },
+      { role: 'pad', dx: -3.6, dz: 2.3, sx: 2.8, sy: 0.8, sz: 2.2 },
+      { role: 'pad', dx: 3.6, dz: 2.3, sx: 2.8, sy: 0.8, sz: 2.2 },
+    ];
+  }
+  const heightBase = unit(10, 22);
+  return [
+    { role: 'mast', dx: -2.4, dz: 0, sx: 0.8, sy: heightBase * 0.75, sz: 0.8 },
+    { role: 'mast', dx: 0, dz: 0, sx: 0.9, sy: heightBase, sz: 0.9 },
+    { role: 'mast', dx: 2.4, dz: 0, sx: 0.8, sy: heightBase * 0.85, sz: 0.8 },
+  ];
+}
+
+function roofDetailClusterBounds(components: readonly RoofDetailComponent[]): {
+  readonly minDx: number;
+  readonly maxDx: number;
+  readonly minDz: number;
+  readonly maxDz: number;
+} {
+  let minDx = Infinity;
+  let maxDx = -Infinity;
+  let minDz = Infinity;
+  let maxDz = -Infinity;
+  for (const component of components) {
+    minDx = Math.min(minDx, component.dx - component.sx * 0.5);
+    maxDx = Math.max(maxDx, component.dx + component.sx * 0.5);
+    minDz = Math.min(minDz, component.dz - component.sz * 0.5);
+    maxDz = Math.max(maxDz, component.dz + component.sz * 0.5);
+  }
+  return { minDx, maxDx, minDz, maxDz };
+}
+
+function roofDetailPlacementRange(
+  mass: SkyriverMass,
+  bounds: ReturnType<typeof roofDetailClusterBounds>,
+): { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number } | null {
+  const inset = ROOF_DETAIL_SUPPORT_INSET_M;
+  const minX = -mass.width * 0.5 + inset - bounds.minDx;
+  const maxX = mass.width * 0.5 - inset - bounds.maxDx;
+  const minZ = -mass.depth * 0.5 + inset - bounds.minDz;
+  const maxZ = mass.depth * 0.5 - inset - bounds.maxDz;
+  return minX <= maxX && minZ <= maxZ ? { minX, maxX, minZ, maxZ } : null;
+}
+
+function roofDetailFindSupport(
+  pool: readonly RoofDetailSupport[],
+  bounds: ReturnType<typeof roofDetailClusterBounds>,
+  cursor: number,
+): { readonly support: RoofDetailSupport | null; readonly cursor: number; readonly range: ReturnType<typeof roofDetailPlacementRange> | null } {
+  if (pool.length === 0) return { support: null, cursor: 0, range: null };
+  for (let offset = 0; offset < pool.length; offset += 1) {
+    const index = (cursor + offset) % pool.length;
+    const support = pool[index]!;
+    const range = roofDetailPlacementRange(support.mass, bounds);
+    if (range !== null) return { support, cursor: (index + 1) % pool.length, range };
+  }
+  return { support: null, cursor: (cursor + 1) % pool.length, range: null };
+}
+
+function roofDetailMakeCandidateObb(
+  x: number,
+  y: number,
+  z: number,
+  sx: number,
+  sy: number,
+  sz: number,
+  anchorV: number,
+): RoofDetailObb {
+  const fx = Math.fround(x);
+  const fy = Math.fround(y);
+  const fz = Math.fround(z);
+  const fsx = Math.fround(sx);
+  const fsy = Math.fround(sy);
+  const fsz = Math.fround(sz);
+  warpRigid(fx, fz, anchorV, roofDetailWarp);
+  return roofDetailBox(roofDetailWarp.x, fy, roofDetailWarp.z, fsx, fsy, fsz, roofDetailWarp.heading);
+}
+
+function appendRoofDetailSuffix(
+  masses: readonly SkyriverMass[],
+  legacyTrims: SkyriverCityTrims,
+  storage: RoofDetailStorage,
+  capacity: number,
+  collisionIndex: RoofDetailCollisionIndex,
+  random: DeterministicRandom,
+): { readonly totalTrimCount: number; readonly derivation: SkyriverRoofDetailDerivation } {
+  const oldTrimCount = legacyTrims.count;
+  const globalBudget = Math.min(SKYRIVER_ROOF_DETAIL_TOTAL_CAP, Math.max(0, capacity - oldTrimCount));
+  const requested = [0, 0, 0];
+  const accepted = [0, 0, 0];
+  const rejectedSupport = [0, 0, 0];
+  const rejectedCollision = [0, 0, 0];
+  const rejectedBudget = [0, 0, 0];
+  const records: SkyriverRoofDetailRecord[] = [];
+  const pools: RoofDetailSupport[][] = [[], [], []];
+  for (let massIndex = 0; massIndex < masses.length; massIndex += 1) {
+    const mass = masses[massIndex]!;
+    if ((mass.layer ?? 0) !== 0 || mass.width <= 0 || mass.depth <= 0 || mass.height <= 0) continue;
+    const roofY = mass.y0 + mass.height;
+    const stratum = roofDetailStratumFor(roofY);
+    pools[roofDetailStratumIndex(stratum)]!.push({ mass, massIndex, stratum, roofY });
+  }
+  for (const pool of pools) {
+    for (let i = pool.length - 1; i > 0; i -= 1) {
+      const j = random.nextInt(0, i);
+      [pool[i], pool[j]] = [pool[j]!, pool[i]!];
+    }
+  }
+
+  const clusterCounts = [
+    SKYRIVER_ROOF_DETAIL_CAPS[0] / 12 * 4,
+    SKYRIVER_ROOF_DETAIL_CAPS[1] / 4,
+    SKYRIVER_ROOF_DETAIL_CAPS[2] / 3,
+  ] as const;
+  const tasks: RoofDetailClusterTask[] = [];
+  let clusterId = 0;
+  for (const stratumIndex of [0, 1, 2] as const) {
+    for (let ordinal = 0; ordinal < clusterCounts[stratumIndex]!; ordinal += 1) {
+      tasks.push({
+        stratumIndex,
+        ordinal,
+        phase: (ordinal + 0.5) / clusterCounts[stratumIndex]!,
+        clusterId: clusterId++,
+      });
+    }
+  }
+  tasks.sort((a, b) => a.phase - b.phase || a.stratumIndex - b.stratumIndex);
+
+  let totalTrimCount = oldTrimCount;
+  const supportCursor = [0, 0, 0];
+  for (const task of tasks) {
+    const stratum = ROOF_DETAIL_STRATA[task.stratumIndex]!;
+    const components = roofDetailCluster(task.stratumIndex, task.ordinal, random);
+    requested[task.stratumIndex]! += components.length;
+    const bounds = roofDetailClusterBounds(components);
+    const search = roofDetailFindSupport(
+      pools[task.stratumIndex]!,
+      bounds,
+      supportCursor[task.stratumIndex]!,
+    );
+    supportCursor[task.stratumIndex] = search.cursor;
+    if (search.support === null || search.range === null) {
+      rejectedSupport[task.stratumIndex]! += components.length;
+      continue;
+    }
+    if (totalTrimCount + components.length > capacity || totalTrimCount - oldTrimCount + components.length > globalBudget) {
+      rejectedBudget[task.stratumIndex]! += components.length;
+      continue;
+    }
+
+    const support = search.support;
+    const centerOffsetX = roofDetailRandomFloat(random, search.range.minX, search.range.maxX);
+    const centerOffsetZ = roofDetailRandomFloat(random, search.range.minZ, search.range.maxZ);
+    const owner: SkyriverTrimOwner = {
+      x: support.mass.x,
+      z: support.mass.z,
+      width: support.mass.width,
+      depth: support.mass.depth,
+      anchorV: support.mass.anchorV ?? support.mass.z,
+      materialOwner: support.mass.materialOwner ?? support.mass.building ?? buildingSeedOf(support.mass.x, support.mass.z),
+    };
+    const proposals = components.map((component) => {
+      const x = support.mass.x + centerOffsetX + component.dx;
+      const z = support.mass.z + centerOffsetZ + component.dz;
+      const y = support.roofY + component.sy * 0.5;
+      return {
+        component,
+        x,
+        y,
+        z,
+        seedValue: random.nextInt(0, 9999) / 9999,
+        obb: roofDetailMakeCandidateObb(x, y, z, component.sx, component.sy, component.sz, owner.anchorV),
+      };
+    });
+    let collision = false;
+    for (let i = 0; i < proposals.length; i += 1) {
+      const proposal = proposals[i]!;
+      if (roofDetailIndexConflicts(collisionIndex, proposal.obb, ROOF_DETAIL_CLEARANCE_M, support.massIndex)) {
+        collision = true;
+        break;
+      }
+      for (let j = 0; j < i; j += 1) {
+        if (roofDetailObbsConflict(proposal.obb, proposals[j]!.obb, ROOF_DETAIL_CLEARANCE_M)) {
+          collision = true;
+          break;
+        }
+      }
+      if (collision) break;
+    }
+    if (collision) {
+      rejectedCollision[task.stratumIndex]! += components.length;
+      continue;
+    }
+
+    for (const proposal of proposals) {
+      const trimIndex = totalTrimCount;
+      storage.cx[trimIndex] = proposal.x;
+      storage.cy[trimIndex] = proposal.y;
+      storage.cz[trimIndex] = proposal.z;
+      storage.sx[trimIndex] = proposal.component.sx;
+      storage.sy[trimIndex] = proposal.component.sy;
+      storage.sz[trimIndex] = proposal.component.sz;
+      storage.kind[trimIndex] = SKYRIVER_TRIM_ROOF_PLANT;
+      storage.seedValue[trimIndex] = proposal.seedValue;
+      storage.owner[trimIndex] = owner;
+      storage.spanTo[trimIndex] = null;
+      roofDetailInsert(collisionIndex, proposal.obb);
+      records.push(Object.freeze({
+        trimIndex,
+        supportMassIndex: support.massIndex,
+        clusterId: task.clusterId,
+        role: proposal.component.role,
+        stratum,
+      }));
+      accepted[task.stratumIndex]! += 1;
+      totalTrimCount += 1;
+    }
+  }
+
+  const toCounts = (values: number[]): readonly [number, number, number] => {
+    const tuple: [number, number, number] = [values[0]!, values[1]!, values[2]!];
+    return Object.freeze(tuple);
+  };
+  const derivation: SkyriverRoofDetailDerivation = Object.freeze({
+    oldTrimCount,
+    totalTrimCount,
+    requestedByStratum: toCounts(requested),
+    acceptedByStratum: toCounts(accepted),
+    rejectedSupportByStratum: toCounts(rejectedSupport),
+    rejectedCollisionByStratum: toCounts(rejectedCollision),
+    rejectedBudgetByStratum: toCounts(rejectedBudget),
+    records: Object.freeze(records),
+  });
+  return { totalTrimCount, derivation };
 }
 
 // --- R27 low-city base sprawl implementation -----------------------------------------------------
@@ -4595,6 +5311,7 @@ export class SkyriverCity {
   private readonly interiorAtlas: InteriorAtlas;
   private readonly layout: SkyriverCityLayout;
   private readonly trims: SkyriverCityTrims;
+  private readonly roofDetailDerivation: SkyriverRoofDetailDerivation;
   private readonly signs: SkyriverNeonSigns;
   /** R22: the permanent colour map, its sign quota, and the one A/B switch over both. */
   private readonly districts: SkyriverDistrictModel;
@@ -4628,12 +5345,17 @@ export class SkyriverCity {
   private trimDrawnDistrict = new Float32Array(0);
   /** The drawn instances' own seeds: the trim shader selects the band's warm or cold source with it. */
   private trimDrawnSeed = new Float32Array(0);
+  private roofDetailLegacyDrawnCount = 0;
+  private roofDetailDrawIndices = new Int32Array(0);
+  private roofDetailUploadedByStratum: [number, number, number] = [0, 0, 0];
+  private roofDetailHeroExcludedByStratum: [number, number, number] = [0, 0, 0];
 
   constructor({ layout, colourSwitch }: SkyriverCityOptions) {
     installSkyriverFogChunks();
     this.layout = layout;
     this.colourSwitch = colourSwitch;
     this.trims = deriveCityTrims(layout);
+    this.roofDetailDerivation = deriveRoofDetails(layout);
     this.signs = deriveNeonSigns(layout);
     // R22: the colour map and the sign hue quota are derived from the finished geometry, so no
     // existing random stream moves and no sign changes place, size, kind or text seed.
@@ -5040,6 +5762,29 @@ export class SkyriverCity {
         farCards: 'R16 impostor card instances in the far-city draw.',
       }),
     };
+  }
+
+  /** The derived suffix and the actual instance slots written after hero clearance. */
+  getRoofDetailEvidence(): SkyriverRoofDetailEvidence {
+    const uploadedSuffixCount = this.roofDetailUploadedByStratum[0]
+      + this.roofDetailUploadedByStratum[1]
+      + this.roofDetailUploadedByStratum[2];
+    const records = this.roofDetailDerivation.records.map((record, recordIndex) => {
+      const drawIndex = this.roofDetailDrawIndices[recordIndex] ?? -1;
+      if (drawIndex >= 0) {
+        return Object.freeze({ ...record, drawIndex, drawState: 'drawn' as const });
+      }
+      return Object.freeze({ ...record, drawIndex: null, drawState: 'hero-excluded' as const });
+    });
+    return Object.freeze({
+      ...this.roofDetailDerivation,
+      legacyDrawnCount: this.roofDetailLegacyDrawnCount,
+      uploadedTotalCount: this.trimMesh.count,
+      uploadedSuffixCount,
+      uploadedByStratum: Object.freeze([...this.roofDetailUploadedByStratum]) as readonly [number, number, number],
+      heroExcludedByStratum: Object.freeze([...this.roofDetailHeroExcludedByStratum]) as readonly [number, number, number],
+      records: Object.freeze(records),
+    });
   }
 
   /**
@@ -5602,6 +6347,13 @@ export class SkyriverCity {
 
   private writeTrims(): void {
     const { count, cy, sx, sy, sz, kind, seedValue } = this.trims;
+    const { oldTrimCount, records } = this.roofDetailDerivation;
+    const recordsByTrimIndex = new Map(records.map((record) => [record.trimIndex, record] as const));
+    const drawIndices = new Int32Array(records.length);
+    drawIndices.fill(-1);
+    const uploadedByStratum: [number, number, number] = [0, 0, 0];
+    const heroExcludedByStratum: [number, number, number] = [0, 0, 0];
+    const heroBoxes = roofDetailHeroBoxCache.get(this.layout.seed) ?? [];
     const matrix = new THREE.Matrix4();
     const slots = Math.max(count, 1);
     const seeds = new Float32Array(slots);
@@ -5617,17 +6369,29 @@ export class SkyriverCity {
     // T7-3: clear space around the hero signs (see skyriverTrimBlocksHero).
     const heroes = deriveHeroBlades(this.layout);
     let drawn = 0;
+    let legacyDrawnCount = -1;
     const placed: SkyriverTrimPlacement = { x: 0, z: 0, heading: 0, length: 0 };
     for (let i = 0; i < count; i += 1) {
-      if (skyriverTrimBlocksHero(this.trims, i, heroes)) continue;
+      const detailRecord = recordsByTrimIndex.get(i);
+      if (detailRecord === undefined && skyriverTrimBlocksHero(this.trims, i, heroes)) continue;
       // R16: rigid in the owner's frame (spans: each end on its own building). See placeTrim.
       placeTrim(this.trims, i, placed);
-      quaternion.setFromAxisAngle(UP, placed.heading);
-      position.set(placed.x, cy[i]!, placed.z);
       const alongSpan = placed.length > 0 && sz[i]! >= sx[i]!;
       const acrossSpan = placed.length > 0 && sx[i]! > sz[i]!;
       const ex = acrossSpan ? placed.length : sx[i]!;
       const ez = alongSpan ? placed.length : sz[i]!;
+      if (detailRecord !== undefined) {
+        const drawnBox = roofDetailBox(placed.x, cy[i]!, placed.z, ex, sy[i]!, ez, placed.heading);
+        if (roofDetailBlocksHero(drawnBox, heroBoxes)) {
+          heroExcludedByStratum[roofDetailStratumIndex(detailRecord.stratum)] += 1;
+          continue;
+        }
+        if (legacyDrawnCount < 0) legacyDrawnCount = drawn;
+      } else if (i === oldTrimCount) {
+        legacyDrawnCount = drawn;
+      }
+      quaternion.setFromAxisAngle(UP, placed.heading);
+      position.set(placed.x, cy[i]!, placed.z);
       scale.set(ex, sy[i]!, ez);
       matrix.compose(position, quaternion, scale);
       this.trimMesh.setMatrixAt(drawn, matrix);
@@ -5663,8 +6427,18 @@ export class SkyriverCity {
         axes[drawn * 3 + 1] = 0;
         axes[drawn * 3 + 2] = -sinH;
       }
+      if (detailRecord !== undefined) {
+        const recordIndex = i - oldTrimCount;
+        drawIndices[recordIndex] = drawn;
+        uploadedByStratum[roofDetailStratumIndex(detailRecord.stratum)] += 1;
+      }
       drawn += 1;
     }
+    if (legacyDrawnCount < 0) legacyDrawnCount = drawn;
+    this.roofDetailLegacyDrawnCount = legacyDrawnCount;
+    this.roofDetailDrawIndices = drawIndices;
+    this.roofDetailUploadedByStratum = uploadedByStratum;
+    this.roofDetailHeroExcludedByStratum = heroExcludedByStratum;
     this.trimMesh.count = drawn;
     this.trimWorldCentres = centres.slice(0, drawn * 3);
     this.trimDrawnAxis = axes.slice(0, drawn * 3);
