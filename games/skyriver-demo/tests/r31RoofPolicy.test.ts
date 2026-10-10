@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import * as THREE from 'three';
 import baseline from './fixtures/r31-city-policy-baseline.json';
+import roofBaseline from './fixtures/r35-roof-baseline.json';
 import { withoutR32RoofPolicy } from './support/r32RoofPolicy';
 // External texture stubs permit the real factory. They do not provide the oracle.
 vi.mock('../src/render/signAtlas', async importOriginal => {
@@ -46,7 +47,14 @@ describe('R31 independent roof emission policy', () => {
         expect(kept).toEqual(new Set(['legacy', 'skirt', 'infill', 'link']));
         expect(city.sourceCounts().paneCells).toBe(cells); expect(city.sourceCounts().roomCells).toBe(cells);
         const identity = city.geometryIdentity(), { emissionPolicy, ...oldIdentity } = identity;
-        expect(oldIdentity).toEqual(before.identity);
+        const { trims: currentTrims, trimAttributes: currentTrimAttributes, counts: currentCounts, ...currentOther } = oldIdentity;
+        const { trims: oldTrims, trimAttributes: oldTrimAttributes, counts: oldCounts, ...oldOther } = before.identity;
+        void currentTrims; void currentTrimAttributes; void oldTrims; void oldTrimAttributes;
+        expect(currentOther).toEqual(oldOther);
+        expect({ ...currentCounts, trims: oldCounts.trims }).toEqual(oldCounts);
+        const roofBefore = roofBaseline.factory.find(row => row.seed === seed && row.mode === mode)!;
+        const prefixCount = roofBaseline.seeds.find(row => row.seed === seed)!.drawnTrimCount;
+        expect(currentCounts.trims).toBeGreaterThanOrEqual(prefixCount);
         const meshes = before.meshes as Record<string, BeforeMesh>;
         city.group.traverse(object => {
           if (!(object instanceof THREE.Mesh)) return;
@@ -58,13 +66,22 @@ describe('R31 independent roof emission policy', () => {
             if (!(geometry instanceof THREE.InstancedBufferGeometry)) throw new Error('R31_REAL_BATCH_GEOMETRY_MISSING');
             count = geometry.instanceCount;
           }
-          expect(count).toBe(original.count);
+          expect(count).toBeGreaterThanOrEqual(original.count);
+          if (object.name !== 'skyriver.city.trim') expect(count).toBe(original.count);
           expect(object.geometry.index ? sha(object.geometry.index.array) : null).toBe(original.index);
-          expect(object instanceof THREE.InstancedMesh ? sha(object.instanceMatrix.array) : null).toBe(original.instanceMatrix);
+          if (object instanceof THREE.InstancedMesh && object.name === 'skyriver.city.trim') expect(sha(object.instanceMatrix.array.subarray(0, prefixCount * 16))).toBe(roofBefore.meshes['skyriver.city.trim'].activeMatrix);
+          else expect(object instanceof THREE.InstancedMesh ? sha(object.instanceMatrix.array) : null).toBe(original.instanceMatrix);
           expect(Object.keys(object.geometry.attributes).filter(n => n !== 'aEmissionAllowed').sort()).toEqual(Object.keys(original.attributes).sort());
           for (const [name, value] of Object.entries(original.attributes)) {
             const attribute = object.geometry.getAttribute(name);
-            expect(attribute.itemSize).toBe(value.itemSize); expect(attribute.count).toBe(value.count); expect(sha(attribute.array), object.name + ':' + name).toBe(value.sha256);
+            expect(attribute.itemSize).toBe(value.itemSize);
+            if (object.name === 'skyriver.city.trim' && attribute instanceof THREE.InstancedBufferAttribute) {
+              const prefix = roofBefore.meshes['skyriver.city.trim'].attributes;
+              const field = Object.entries(prefix).find(([key]) => key === name)?.[1];
+              if (!field) throw new Error(`R35_LEGACY_TRIM_ATTRIBUTE_MISSING:${name}`);
+              expect(sha(attribute.array.subarray(0, prefixCount * value.itemSize)), name).toBe(field.activeSha256);
+              expect(attribute.count).toBeGreaterThanOrEqual(value.count);
+            } else { expect(attribute.count).toBe(value.count); expect(sha(attribute.array), object.name + ':' + name).toBe(value.sha256); }
           }
         });
         const at = rows.findIndex(m => m.baseRecord?.kind === 'equipment');
