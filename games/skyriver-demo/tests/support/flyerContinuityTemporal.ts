@@ -103,3 +103,14 @@ export function appearanceRetargetFailures(): TemporalFailure[] {
   }
   return errors;
 }
+
+/** Rear closure samples use seconds and metres per second. */
+export function closureSamples(closingVelocity = 250, fps = 60) {
+  if (!Number.isFinite(closingVelocity) || closingVelocity <= 0 || !Number.isFinite(fps) || fps <= 0)
+    throw new Error('R37_INVALID_CLOSURE_RATE');
+  const durationS = (1300 - 600) / closingVelocity;
+  return Array.from({ length: Math.ceil(durationS * fps) + 1 }, (_, frame) => {
+    const timeS = Math.min(frame / fps, durationS);
+    return { frame, timeS, distanceM: 1300 - closingVelocity * timeS };
+  });
+}

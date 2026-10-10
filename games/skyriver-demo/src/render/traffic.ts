@@ -968,6 +968,7 @@ void main() {
   float trail = isTrail
     ? min(speed * uTrailSeconds, min(uTrailMax, uTrailCarLengths * trafficCarLength(type) * scale))
       * trafficTrailFarFade(length(cameraPosition - aCarPos))
+      * trafficTrailViewGain(dot(dir, normalize(cameraPosition - lamp)))
     : 0.0;
   vec3 tailEnd = lamp - dir * trail;
   vec4 v1 = viewMatrix * vec4(tailEnd, 1.0);
@@ -1026,7 +1027,7 @@ void main() {
     // Seen from the front the trail is the headlamps' warm white, from behind the tails' red
     // (vWarm carries the blend); it never slices through the camera.
     vWarm = smoothstep( ${TRAFFIC_TRAIL_WARM_FACING_BAND[0].toFixed(1)}, ${TRAFFIC_TRAIL_WARM_FACING_BAND[1].toFixed(1)}, dot( dir, toCam ) );
-    vIntensity = aCarFade.x * aCarFade.w * smoothstep( ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0].toFixed(1)}, ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1].toFixed(1)}, length( cameraPosition - lamp ) );
+    vIntensity = aCarFade.x * aCarFade.w * trafficTrailViewGain(dot(dir, toCam)) * smoothstep( ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0].toFixed(1)}, ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1].toFixed(1)}, length( cameraPosition - lamp ) );
   }
 
   vIntensity *= lampGain;
@@ -1777,6 +1778,25 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   carMaterial.name = 'skyriver.traffic.hull';
   // T6R: the shared fog was never wired to the hulls, so distant cars stayed full-bright pills.
   applySkyriverFog(carMaterial);
+  const fogCompile = carMaterial.onBeforeCompile;
+  carMaterial.onBeforeCompile = (shader, renderer) => {
+    fogCompile.call(carMaterial, shader, renderer);
+    shader.vertexShader = 'attribute float aHullCoverage;\nvarying float vHullCoverage;\n' + shader.vertexShader;
+    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>',
+      '#include <begin_vertex>\nvHullCoverage = aHullCoverage;');
+    shader.fragmentShader = 'varying float vHullCoverage;\n' + shader.fragmentShader;
+    // Ordered coverage leaves surviving fragments in the opaque depth stage.
+    shader.fragmentShader = shader.fragmentShader.replace('#include <clipping_planes_fragment>', `
+      #include <clipping_planes_fragment>
+      vec2 cell = mod(floor(gl_FragCoord.xy), 4.0);
+      vec2 low = mod(cell, 2.0);
+      vec2 high = floor(cell / 2.0);
+      float rank = 4.0 * (2.0 * low.x + 3.0 * low.y - 4.0 * low.x * low.y)
+        + (2.0 * high.x + 3.0 * high.y - 4.0 * high.x * high.y);
+      if (vHullCoverage <= (rank + 0.5) / 16.0) discard;
+    `);
+  };
+  carMaterial.customProgramCacheKey = () => 'skyriver-hull-coverage-v1';
 
   const archetypeBuilds: MeshBuild[] = [buildCab(), buildInterceptor(), buildCommuter(), buildVan(), buildSaucer(), buildBus(), buildFlatbed()];
   const archetypeLabels: string[] = ['cab', 'interceptor', 'commuter', 'van', 'saucer', 'bus', 'flatbed'];
@@ -1785,6 +1805,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const meshes: InstancedMesh[] = [];
   const matrixArrays: Float32Array[] = [];
   const colorArrays: Float32Array[] = [];
+  const coverageArrays: Float32Array[] = [];
 
   for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
     const build = archetypeBuilds[archetype];
@@ -1794,6 +1815,10 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     geometries.push(geometry);
 
     const capacity = Math.max(1, archetypeTotals[archetype]);
+    const coverage = new InstancedBufferAttribute(new Float32Array(capacity), 1);
+    coverage.setUsage(DynamicDrawUsage);
+    geometry.setAttribute('aHullCoverage', coverage);
+    coverageArrays.push(coverage.array as Float32Array);
     const mesh = new InstancedMesh(geometry, carMaterial, capacity);
     mesh.name = 'skyriver.traffic.' + label;
     // Every matrix changes per frame across the whole canyon.
@@ -2388,17 +2413,13 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         const toCarX = px - camX;
         const toCarY = py - camY;
         const toCarZ = pz - camZ;
-        // T7 hull LOD: past HULL_DRAW_DISTANCE_M a body is a few pixels that only bites dark beads
-        // out of the ribbon behind it, so it collapses to nothing and the light carries the read.
-        // R15 glitch fix: the hard cut made ~20 bodies a second blink in or out on screen; bodies now
-        // shrink away over the last 220 m (sub-pixel by then), so nothing pops.
+        // Keep physical size through the distance handover. Fade opaque coverage.
         const toCarDist = Math.sqrt(toCarX * toCarX + toCarY * toCarY + toCarZ * toCarZ);
         const hullLod = 1 - smoothstep(HULL_DRAW_FADE_START_M, HULL_DRAW_DISTANCE_M, toCarDist);
         fade *= tierFadeFor(car);
 
         // Basis: forward f (with a little pitch), right = f x up, then banked about f.
-        // Bodies vanish with their fade (a faded car is never left as a small dark block).
-        const scale = sizeScale[car]! * hullLod * smoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, fade);
+        const scale = sizeScale[car]!;
         const pitchY = clamp(fy, -TRAFFIC_DIRECTION_PITCH_CLAMP, TRAFFIC_DIRECTION_PITCH_CLAMP);
         const fl = Math.sqrt(1 + pitchY * pitchY);
         const f0 = fx / fl;
@@ -2444,6 +2465,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         const distanceM = Math.sqrt(distanceSq);
         const legacyFarAlpha = trafficThinFarAlpha(distanceSq, carThinFar[car] === 1);
         writeSameCarLightLod(distanceM, impostorPresence, legacyFarAlpha, sameCarLodScratch);
+        coverageArrays[archetype]![slot] = hullLod * smoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, fade) * sameCarLodScratch.totalAlpha;
         const nearFade = fade * sameCarLodScratch.nearAlpha;
         const totalFade = fade * sameCarLodScratch.totalAlpha;
         // Hull bars and instance colour use the near share.
@@ -2483,6 +2505,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       }
 
       const mesh = meshes[archetype];
+      mesh.geometry.getAttribute('aHullCoverage').needsUpdate = true;
       mesh.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor !== null) mesh.instanceColor.needsUpdate = true;
     }
