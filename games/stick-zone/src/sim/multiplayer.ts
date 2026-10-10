@@ -362,6 +362,49 @@ function isValidSnapshotTick(t: any): boolean {
 }
 
 export class MultiplayerCoordinator {
+  public sdkRoom: any = null;
+  public spokeSession: any = null;
+
+  public attachSdkSession(grant?: any, spokeSession?: any): void {
+    if (spokeSession) {
+      this.spokeSession = spokeSession;
+      this.sim.raidId = spokeSession.raidId;
+      spokeSession.onConfirmedTick((tick: number, state: unknown) => {
+        if (state && typeof state === "object") {
+          this.handleServerMessage(state);
+        }
+      });
+      this.authenticated = true;
+      this.sim.isSocketDisconnected = false;
+      return;
+    }
+
+    if (grant && grant.wsUrl) {
+      const api = getRundotGameApi();
+      const realtimeApi = api?.realtime || api?.multiplayer;
+      if (realtimeApi?.connectWithTicket) {
+        realtimeApi.connectWithTicket(grant).then((room: any) => {
+          this.sdkRoom = room;
+          this.authenticated = true;
+          this.sim.isSocketDisconnected = false;
+          room.on({
+            onMessage: (msg: any) => {
+              this.handleServerMessage(msg);
+            },
+            onDisconnect: () => {
+              this.sim.isSocketDisconnected = true;
+            },
+            onError: (err: any) => {
+              console.warn("[MultiplayerCoordinator] SDK room error:", err);
+            },
+          });
+        }).catch((err: any) => {
+          console.warn("[MultiplayerCoordinator] connectWithTicket error:", err);
+        });
+      }
+    }
+  }
+
   private isRecoveryActive(controller: AbortController | null, expectedSocket?: WebSocket | null): boolean {
     if (this.isDisposed || this.isSuperseded) return false;
     if (controller && (controller.signal.aborted || this.recoveryAbortController !== controller)) return false;
@@ -1726,6 +1769,21 @@ export class MultiplayerCoordinator {
   private sendPacket(packet: PeerPacket): void {
     if (this.sim.sessionToken) {
       (packet as any).token = this.sim.sessionToken;
+    }
+
+    if (this.spokeSession) {
+      try {
+        this.spokeSession.submitIntent({
+          action: packet.type,
+          extra: packet.data,
+        });
+      } catch {}
+    }
+
+    if (this.sdkRoom) {
+      try {
+        this.sdkRoom.send(packet);
+      } catch {}
     }
     // Deliver via BroadcastChannel
     if (this.ws && this.ws.readyState === 1) {

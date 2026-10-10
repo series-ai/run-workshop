@@ -833,17 +833,32 @@ export async function createAuthoritativeSettlement(
 export async function preparePlatformRaid(options: {
   sector: string;
   loadout: Array<{ itemId: string; quantity: string }>;
-}): Promise<{ success: boolean; raidId?: string; grant?: any }> {
-  if (typeof getRundotGameApi() !== "undefined" && getRundotGameApi()?.extraction?.prepareRaidAsync) {
+}): Promise<{
+  success: boolean;
+  raidId?: string;
+  grant?: any;
+  spokeSession?: any;
+  airlockSession?: any;
+}> {
+  const api = getRundotGameApi();
+  if (typeof api !== "undefined" && api?.extraction?.prepareRaidAsync) {
     try {
-      const airlockSession = await getRundotGameApi().extraction.prepareRaidAsync(options);
+      const airlockSession = await api.extraction.prepareRaidAsync(options);
+      let spokeSession: any = null;
+      try {
+        spokeSession = await airlockSession.enterAsync();
+      } catch (enterErr) {
+        console.warn("[Airlock] enterAsync error:", enterErr);
+      }
       return {
         success: true,
         raidId: airlockSession.raidId,
         grant: (airlockSession as any).grant,
+        spokeSession,
+        airlockSession,
       };
     } catch (err) {
-      console.warn("[Airlock] Platform prepareRaidAsync error, fallback to deterministic sim:", err);
+      console.warn("[Airlock] Platform prepareRaidAsync error:", err);
     }
   }
   return { success: false };

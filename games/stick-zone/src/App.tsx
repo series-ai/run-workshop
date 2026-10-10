@@ -1,3 +1,5 @@
+import { hydrateStashFromCloud } from "./progression/stashStore.js";
+import { preparePlatformRaid } from "./sim/airlock.js";
 import { HideoutMenu } from "./components/HideoutMenu.js";
 import { MobileControls, type TouchInputUpdate } from "./components/MobileControls.js";
 import { gamepad } from "./input/gamepadController.js";
@@ -29,6 +31,10 @@ function getRaidSessionToken(raidId: string, opId: string): string {
 }
 
 const MainApp: React.FC = () => {
+  useEffect(() => {
+    // Online RUN platform hydration: sync player stash and progression from cloud
+    hydrateStashFromCloud().catch(() => {});
+  }, []);
   const [dismissRotate, setDismissRotate] = useState(false);
   const [showHideout, setShowHideout] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(() => {
@@ -149,7 +155,19 @@ const MainApp: React.FC = () => {
       handleRestart(newRaidId, true);
     };
     let isCancelled = false;
-    // Turnkey local session token initialization on mount
+    // Turnkey platform extraction session initialization on mount (no offline)
+    preparePlatformRaid({
+      sector: "Sector 7 Depot",
+      loadout: [
+        { itemId: "weapon_rifle", quantity: "1" },
+        { itemId: "med_stim", quantity: "2" },
+      ],
+    }).then((prep) => {
+      if (prep.success && coordinatorRef.current) {
+        coordinatorRef.current.attachSdkSession(prep.grant, prep.spokeSession);
+      }
+    }).catch(() => {});
+
     const tok = getRaidSessionToken(sim.raidId, sim.player.id);
     sim.sessionToken = tok;
     if (!sim.player.isExtracted && sim.player.isAlive) {
@@ -490,6 +508,18 @@ const MainApp: React.FC = () => {
       const newSim = new SectorDepotSimulation(confirmedRaidId);
       registerDeployment(newSim.player.id, confirmedRaidId);
       newSim.sessionToken = confirmedToken;
+
+      preparePlatformRaid({
+        sector: "Sector 7 Depot",
+        loadout: [
+          { itemId: "weapon_rifle", quantity: "1" },
+          { itemId: "med_stim", quantity: "2" },
+        ],
+      }).then((prep) => {
+        if (prep.success && coordinatorRef.current) {
+          coordinatorRef.current.attachSdkSession(prep.grant, prep.spokeSession);
+        }
+      }).catch(() => {});
 
       setSim(newSim);
       if (typeof window !== "undefined") {

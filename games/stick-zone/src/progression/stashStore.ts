@@ -210,21 +210,22 @@ function persistState(state: {
     }
   }
 
-  // Pure RUN SDK storage integration
+  // Pure RUN SDK storage integration (authoritative cloud storage)
   try {
-    if (getRundotGameApi()?.storage?.setJsonAsync) {
-      getRundotGameApi().storage.setJsonAsync("player_stash_v1", {
+    const api = getRundotGameApi();
+    if (api?.appStorage?.setItem) {
+      api.appStorage.setItem("player_stash_v1", JSON.stringify({
         bankCash: state.bankCash,
         loadout: state.loadout,
         stashItems: state.stashItems,
         settledReceiptIds: state.settledReceiptIds,
-      }).catch(() => {});
-      getRundotGameApi().storage.setJsonAsync("operative_progression_v1", {
+      })).catch(() => {});
+      api.appStorage.setItem("operative_progression_v1", JSON.stringify({
         operativeLevel: state.operativeLevel,
         xp: state.xp,
         stats: state.stats,
         contracts: state.contracts,
-      }).catch(() => {});
+      })).catch(() => {});
     }
   } catch {}
 }
@@ -638,3 +639,36 @@ export const useStashStore = create<StashState>((set, get) => {
     },
   };
 });
+
+/**
+ * Cloud hydration from RUN platform storage (authoritative online state).
+ * Stick Zone is an always-connected platform game (no offline).
+ */
+export async function hydrateStashFromCloud(): Promise<void> {
+  const api = getRundotGameApi();
+  if (api?.appStorage?.getItem) {
+    try {
+      const [rawStash, rawProgression] = await Promise.all([
+        api.appStorage.getItem("player_stash_v1").catch(() => null),
+        api.appStorage.getItem("operative_progression_v1").catch(() => null),
+      ]);
+      const cloudStash = rawStash ? JSON.parse(rawStash) : null;
+      const cloudProgression = rawProgression ? JSON.parse(rawProgression) : null;
+      if (cloudStash || cloudProgression) {
+        useStashStore.setState((prev) => ({
+          ...prev,
+          bankCash: typeof cloudStash?.bankCash === "number" ? cloudStash.bankCash : prev.bankCash,
+          loadout: cloudStash?.loadout ?? prev.loadout,
+          stashItems: Array.isArray(cloudStash?.stashItems) ? cloudStash.stashItems : prev.stashItems,
+          operativeLevel: typeof cloudProgression?.operativeLevel === "number" ? cloudProgression.operativeLevel : prev.operativeLevel,
+          xp: typeof cloudProgression?.xp === "number" ? cloudProgression.xp : prev.xp,
+          stats: cloudProgression?.stats ?? prev.stats,
+          contracts: Array.isArray(cloudProgression?.contracts) ? cloudProgression.contracts : prev.contracts,
+          settledReceiptIds: Array.isArray(cloudStash?.settledReceiptIds) ? cloudStash.settledReceiptIds : prev.settledReceiptIds,
+        }));
+      }
+    } catch (err) {
+      console.warn("[StashStore] Cloud hydration error:", err);
+    }
+  }
+}
