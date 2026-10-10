@@ -159,31 +159,16 @@ const DEFAULT_STASH_ITEMS: StashItem[] = [
   { id: "item_propital_start", name: "Propital Combat Stim", type: "med", rarity: "rare", icon: "💉", value: 600, count: 2 },
 ];
 
-function loadPersistedState(): Partial<StashState> {
-  if (typeof localStorage === "undefined") return {};
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return {};
+export function parseCanonicalQuantity(val: string | number | undefined): number {
+  if (typeof val === "number") return val;
+  if (!val) return 0;
+  const clean = val.startsWith("BE:") ? val.slice(3) : val;
+  const parsed = parseFloat(clean);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 
-    // Validate anti-tamper checksum
-    if (parsed.checksum) {
-      const computed = computeStoreChecksum({
-        bankCash: parsed.bankCash ?? 5000,
-        operativeLevel: parsed.operativeLevel ?? 1,
-        xp: parsed.xp ?? 0,
-        settledReceiptIds: parsed.settledReceiptIds ?? [],
-      });
-      if (computed !== parsed.checksum) {
-        console.warn("[SECURITY] Local storage tamper detected: Checksum invalid. Reverting to audited state.");
-        return {};
-      }
-    }
-    return parsed;
-  } catch {
-    return {};
-  }
+function loadPersistedState(): Partial<StashState> {
+  return {};
 }
 
 function persistState(state: {
@@ -196,38 +181,8 @@ function persistState(state: {
   contracts: Contract[];
   settledReceiptIds: string[];
 }) {
-  if (typeof localStorage !== "undefined") {
-    try {
-      const checksum = computeStoreChecksum({
-        bankCash: state.bankCash,
-        operativeLevel: state.operativeLevel,
-        xp: state.xp,
-        settledReceiptIds: state.settledReceiptIds,
-      });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, checksum }));
-    } catch {
-      // Ignore storage quota errors
-    }
-  }
-
-  // Pure RUN SDK storage integration (authoritative cloud storage)
-  try {
-    const api = getRundotGameApi();
-    if (api?.appStorage?.setItem) {
-      api.appStorage.setItem("player_stash_v1", JSON.stringify({
-        bankCash: state.bankCash,
-        loadout: state.loadout,
-        stashItems: state.stashItems,
-        settledReceiptIds: state.settledReceiptIds,
-      })).catch(() => {});
-      api.appStorage.setItem("operative_progression_v1", JSON.stringify({
-        operativeLevel: state.operativeLevel,
-        xp: state.xp,
-        stats: state.stats,
-        contracts: state.contracts,
-      })).catch(() => {});
-    }
-  } catch {}
+  // Authoritative state lives strictly in RundotGameAPI.simulation.
+  // Game client does not issue client-side mutations to appStorage or localStorage.
 }
 
 export const useStashStore = create<StashState>((set, get) => {
@@ -633,8 +588,11 @@ export const useStashStore = create<StashState>((set, get) => {
         contracts: INITIAL_CONTRACTS,
         settledReceiptIds: [],
       });
-      if (typeof localStorage !== "undefined") {
-        localStorage.removeItem(STORAGE_KEY);
+      const api = getRundotGameApi();
+      if (api?.simulation?.resetStateAsync) {
+        api.simulation.resetStateAsync({ initializeRecipe: "grant_starter_loadout" })
+          .then(() => hydrateStashFromCloud())
+          .catch(() => {});
       }
     },
   };
@@ -644,31 +602,79 @@ export const useStashStore = create<StashState>((set, get) => {
  * Cloud hydration from RUN platform storage (authoritative online state).
  * Stick Zone is an always-connected platform game (no offline).
  */
+function mapEntityToStashItem(entityId: string, count: number): StashItem | null {
+  const entityMap: Record<string, { name: string; type: StashItem["type"]; rarity: StashItem["rarity"]; icon: string; value: number }> = {
+    weapon_rifle: { name: "Assault Rifle", type: "weapon", rarity: "rare", icon: "🔫", value: 2500 },
+    weapon_shotgun: { name: "Tactical Shotgun", type: "weapon", rarity: "common", icon: "💥", value: 1800 },
+    armor_heavy: { name: "Heavy Assault Armor", type: "armor", rarity: "rare", icon: "🛡️", value: 2200 },
+    armor_light: { name: "Light Recon Vest", type: "armor", rarity: "common", icon: "🦺", value: 1200 },
+    med_stim: { name: "Military Med Stim", type: "med", rarity: "rare", icon: "💉", value: 600 },
+    tactical_bandage: { name: "Tactical Bandage", type: "med", rarity: "common", icon: "🩹", value: 200 },
+    circuit_board: { name: "Military Circuit Board", type: "valuable", rarity: "common", icon: "📟", value: 450 },
+    encrypted_drive: { name: "Encrypted Intel Drive", type: "valuable", rarity: "rare", icon: "💾", value: 1200 },
+    military_battery: { name: "Military Battery", type: "valuable", rarity: "common", icon: "🔋", value: 850 },
+    weapon_parts: { name: "Weapon Parts", type: "valuable", rarity: "common", icon: "🔧", value: 300 },
+    depot_keycard: { name: "Sector 7 Depot Red Keycard", type: "keycard", rarity: "epic", icon: "💳", value: 5000 },
+  };
+  const def = entityMap[entityId];
+  if (!def) return null;
+  return {
+    id: `item_${entityId}`,
+    name: def.name,
+    type: def.type,
+    rarity: def.rarity,
+    icon: def.icon,
+    value: def.value,
+    count,
+  };
+}
+
+function applySimulationEntities(entities: Record<string, number | string>): void {
+  const cashVal = parseCanonicalQuantity(entities["currency_cash"]);
+  const items: StashItem[] = [];
+
+  for (const [entityId, qtyRaw] of Object.entries(entities)) {
+    if (entityId === "currency_cash") continue;
+    const qty = Math.floor(parseCanonicalQuantity(qtyRaw));
+    if (qty > 0) {
+      const item = mapEntityToStashItem(entityId, qty);
+      if (item) items.push(item);
+    }
+  }
+
+  useStashStore.setState((prev) => ({
+    ...prev,
+    bankCash: cashVal > 0 ? cashVal : prev.bankCash,
+    stashItems: items.length > 0 ? items : prev.stashItems,
+  }));
+}
+
+/**
+ * Authoritative cloud hydration from RundotGameAPI.simulation.
+ * All player currency and gear are governed by the server simulation engine.
+ */
 export async function hydrateStashFromCloud(): Promise<void> {
   const api = getRundotGameApi();
-  if (api?.appStorage?.getItem) {
+  if (api?.simulation?.getStateAsync) {
     try {
-      const [rawStash, rawProgression] = await Promise.all([
-        api.appStorage.getItem("player_stash_v1").catch(() => null),
-        api.appStorage.getItem("operative_progression_v1").catch(() => null),
-      ]);
-      const cloudStash = rawStash ? JSON.parse(rawStash) : null;
-      const cloudProgression = rawProgression ? JSON.parse(rawProgression) : null;
-      if (cloudStash || cloudProgression) {
-        useStashStore.setState((prev) => ({
-          ...prev,
-          bankCash: typeof cloudStash?.bankCash === "number" ? cloudStash.bankCash : prev.bankCash,
-          loadout: cloudStash?.loadout ?? prev.loadout,
-          stashItems: Array.isArray(cloudStash?.stashItems) ? cloudStash.stashItems : prev.stashItems,
-          operativeLevel: typeof cloudProgression?.operativeLevel === "number" ? cloudProgression.operativeLevel : prev.operativeLevel,
-          xp: typeof cloudProgression?.xp === "number" ? cloudProgression.xp : prev.xp,
-          stats: cloudProgression?.stats ?? prev.stats,
-          contracts: Array.isArray(cloudProgression?.contracts) ? cloudProgression.contracts : prev.contracts,
-          settledReceiptIds: Array.isArray(cloudStash?.settledReceiptIds) ? cloudStash.settledReceiptIds : prev.settledReceiptIds,
-        }));
+      const simState = await api.simulation.getStateAsync();
+      if (simState && "entities" in simState && simState.entities) {
+        const entities = simState.entities as Record<string, number | string>;
+        const entityKeys = Object.keys(entities);
+        if (entityKeys.length === 0 && api.simulation.executeRecipeAsync) {
+          try {
+            await api.simulation.executeRecipeAsync("grant_starter_loadout", {});
+            const refreshed = await api.simulation.getStateAsync();
+            if (refreshed && "entities" in refreshed && refreshed.entities) {
+              applySimulationEntities(refreshed.entities as Record<string, number | string>);
+              return;
+            }
+          } catch {}
+        }
+        applySimulationEntities(entities);
       }
     } catch (err) {
-      console.warn("[StashStore] Cloud hydration error:", err);
+      console.warn("[StashStore] Simulation hydration error:", err);
     }
   }
 }

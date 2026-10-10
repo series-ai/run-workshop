@@ -180,6 +180,17 @@ const MainApp: React.FC = () => {
         }
       };
 
+      const originalOnExfilSuccess = sim.onExfilSuccess;
+      sim.onExfilSuccess = (receipt?: any) => {
+        originalOnExfilSuccess?.(receipt);
+        if (coordinatorRef.current?.spokeSession) {
+          coordinatorRef.current.spokeSession.requestExtractionAsync({ zoneId: "lz_sector_7" }).catch(() => {});
+          coordinatorRef.current.spokeSession.waitForDebriefAsync().then(() => hydrateStashFromCloud()).catch(() => {});
+        } else {
+          hydrateStashFromCloud().catch(() => {});
+        }
+      };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (sim.isInputLocked()) return;
       if (e.repeat) return; // Ignore physical OS repeat
