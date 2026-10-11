@@ -483,7 +483,8 @@ export interface OperativeState {
   lastFiredAtMs?: number;
   lastFireTimestamp?: number;
   lastFireTick?: number;
-  weapon?: 'rifle' | 'shotgun';
+  weapon?: 'rifle' | 'shotgun' | 'fists' | 'grenade';
+  fragGrenades?: number;
   rifleAmmo?: number;
   shotgunAmmo?: number;
   reserveRifleAmmo?: number;
@@ -613,7 +614,7 @@ export interface GameInput {
   crouch?: boolean;
   aimAngle?: number;
   switchWeapon?: boolean;
-  selectWeapon?: 'rifle' | 'shotgun';
+  selectWeapon?: 'rifle' | 'shotgun' | 'fists' | 'grenade';
   stim?: boolean;
   reload?: boolean;
   ads?: boolean;
@@ -828,7 +829,7 @@ export class SectorDepotSimulation {
   }
 
   public recordCrateLootAmmo(crateId: string): void {
-    const weapon = this.player.weapon || 'rifle';
+    const weapon: 'rifle' | 'shotgun' = this.player.weapon === 'shotgun' ? 'shotgun' : 'rifle';
     const curRifle = typeof this.player.rifleAmmo === 'number' ? this.player.rifleAmmo : (weapon === 'rifle' ? this.player.ammo : 30);
     const curShotgun = typeof this.player.shotgunAmmo === 'number' ? this.player.shotgunAmmo : (weapon === 'shotgun' ? this.player.ammo : 8);
     const rifleGranted = Math.max(0, 30 - curRifle);
@@ -1289,6 +1290,7 @@ export class SectorDepotSimulation {
       ammo: 30,
       maxAmmo: 30,
       weapon: 'rifle',
+      fragGrenades: 2,
       rifleAmmo: 30,
       shotgunAmmo: 8,
       reserveRifleAmmo: 90,
@@ -1459,24 +1461,68 @@ export class SectorDepotSimulation {
     return true;
   }
 
-  public setWeapon(target: 'rifle' | 'shotgun', force = false): void {
+  public setWeapon(target: 'rifle' | 'shotgun' | 'fists' | 'grenade', force = false): void {
     if (!force && this.isInputLocked()) return;
     if (!force && this.player.action === 'roll') return;
     const current = this.player.weapon || 'rifle';
     if (current === target && !force) return;
-    if (target === 'shotgun') {
-      this.player.rifleAmmo = this.player.ammo;
+
+    if (current === 'rifle') this.player.rifleAmmo = this.player.ammo;
+    else if (current === 'shotgun') this.player.shotgunAmmo = this.player.ammo;
+    else if (current === 'grenade') this.player.fragGrenades = this.player.ammo;
+
+    if (target === 'fists') {
+      this.player.weapon = 'fists';
+      this.player.maxAmmo = 0;
+      this.player.ammo = 0;
+      this.combatLog.push(`[WEAPON] Equipped Martial Arts Fists & Combat Kicks`);
+    } else if (target === 'grenade') {
+      this.player.weapon = 'grenade';
+      this.player.fragGrenades = this.player.fragGrenades !== undefined ? this.player.fragGrenades : 2;
+      this.player.maxAmmo = 2;
+      this.player.ammo = this.player.fragGrenades;
+      this.combatLog.push(`[WEAPON] Equipped F-1 Concussive Frag Grenade`);
+    } else if (target === 'shotgun') {
       this.player.weapon = 'shotgun';
       this.player.maxAmmo = 8;
       this.player.ammo = this.player.shotgunAmmo !== undefined ? this.player.shotgunAmmo : 8;
       this.combatLog.push(`[WEAPON] Equipped M590 Trench Shotgun [12-Gauge Buckshot]`);
     } else {
-      this.player.shotgunAmmo = this.player.ammo;
       this.player.weapon = 'rifle';
       this.player.maxAmmo = 30;
       this.player.ammo = this.player.rifleAmmo !== undefined ? this.player.rifleAmmo : 30;
       this.combatLog.push(`[WEAPON] Equipped M4A1 Tactical Rifle [5.56 NATO]`);
     }
+  }
+
+  public throwFragGrenade(): void {
+    const forwardX = Math.sin(this.player.facing);
+    const forwardZ = Math.cos(this.player.facing);
+    const throwSpeed = 16.0;
+
+    this.activeGrenades.push({
+      id: `frag_player_${this.tick}`,
+      throwerId: this.player.id,
+      x: this.player.x,
+      y: 1.2,
+      z: this.player.z,
+      vx: forwardX * throwSpeed,
+      vy: 6.0,
+      vz: forwardZ * throwSpeed,
+      fuseTicks: 90,
+      radius: 8.0,
+      maxDamage: 90,
+      detonated: false,
+    });
+
+    this.enqueuePresentationEvent({
+      type: 'grenade_throw',
+      shooterId: this.player.id,
+      origin: { x: this.player.x, y: 1.2, z: this.player.z },
+      target: { x: this.player.x + forwardX * 12, y: 0.1, z: this.player.z + forwardZ * 12 },
+    });
+
+    this.combatLog.push(`[ORDNANCE] Operative threw F-1 Concussive Frag Grenade!`);
   }
 
   public switchWeapon(): void {
@@ -2295,9 +2341,9 @@ export class SectorDepotSimulation {
     }
 
     // Weapon switch (1/2 or Q)
-    if (input.selectWeapon && (input.selectWeapon === "rifle" || input.selectWeapon === "shotgun")) {
+    if (input.selectWeapon) {
       if (this.player.weapon !== input.selectWeapon) {
-        this.switchWeapon();
+        this.setWeapon(input.selectWeapon);
       }
     } else if (input.switchWeapon) {
       this.switchWeapon();
@@ -2622,6 +2668,30 @@ export class SectorDepotSimulation {
   public fire(): boolean {
     if (this.isInputLocked()) return false;
     if (this.player.action === "roll" || this.player.action === "kick") return false;
+
+    if (this.player.weapon === "fists") {
+      if (this.kickCooldownTicks > 0) return false;
+      this.player.action = "kick";
+      this.player.actionTicks = SIM_CONFIG.KICK_TICKS;
+      this.kickCooldownTicks = SIM_CONFIG.KICK_TICKS;
+      this.performMeleeKick();
+      return true;
+    }
+
+    if (this.player.weapon === "grenade") {
+      if ((this.player.fragGrenades ?? 0) <= 0) return false;
+      if (this.shootCooldownTicks > 0) return false;
+      this.player.fragGrenades = (this.player.fragGrenades ?? 2) - 1;
+      this.player.ammo = this.player.fragGrenades;
+      this.shootCooldownTicks = 30;
+      this.player.shootCooldownTicks = 30;
+      this.throwFragGrenade();
+      if (this.player.fragGrenades <= 0) {
+        this.setWeapon("rifle");
+      }
+      return true;
+    }
+
     if (this.player.ammo <= 0) return false;
     if (this.shootCooldownTicks > 0) return false;
     this.player.ammo -= 1;

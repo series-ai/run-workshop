@@ -344,3 +344,44 @@ describe('Player Progression, Economy & Armory Store', () => {
     expect(sim.player.hasLaser).toBe(false);
   });
 
+  it("15. Weapon Slot Selection: selecting Shotgun (1), Rifle (2), Fists/Kick (3), and Frag Grenade (4)", () => {
+    const sim = new SectorDepotSimulation("test_weapon_slots", "hub");
+    sim.admitOperative(0);
+    expect(sim.player.weapon).toBe("rifle");
+
+    // 1. Select Shotgun (Slot 1)
+    sim.setWeapon("shotgun");
+    expect(sim.player.weapon).toBe("shotgun");
+    expect(sim.player.maxAmmo).toBe(8);
+
+    // 2. Select Rifle (Slot 2)
+    sim.setWeapon("rifle");
+    expect(sim.player.weapon).toBe("rifle");
+    expect(sim.player.maxAmmo).toBe(30);
+
+    // 3. Select Fists / Kick (Slot 3)
+    sim.setWeapon("fists");
+    expect(sim.player.weapon).toBe("fists");
+    expect(sim.player.ammo).toBe(0);
+
+    // Firing with fists selected performs melee kick
+    const initialKickCooldown = sim.kickCooldownTicks;
+    const firedKick = sim.fire();
+    expect(firedKick).toBe(true);
+    expect(sim.player.action).toBe("kick");
+
+    // 4. Select Frag Grenade (Slot 4)
+    sim.player.action = "idle";
+    sim.setWeapon("grenade");
+    expect(sim.player.weapon).toBe("grenade");
+    expect(sim.player.fragGrenades).toBe(2);
+    expect(sim.player.ammo).toBe(2);
+
+    // Firing with grenade selected throws F-1 Frag Grenade
+    const initialGrenadeCount = sim.activeGrenades.length;
+    const firedGrenade = sim.fire();
+    expect(firedGrenade).toBe(true);
+    expect(sim.activeGrenades.length).toBe(initialGrenadeCount + 1);
+    expect(sim.player.fragGrenades).toBe(1);
+    expect(sim.player.ammo).toBe(1);
+  });

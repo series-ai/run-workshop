@@ -22,7 +22,7 @@ export interface InklineStickCharacterProps {
   operative?: OperativeState;
   isCurrentPlayer?: boolean;
   assetKey?: AssetKey;
-  weapon?: "rifle" | "shotgun" | "pistol";
+  weapon?: "rifle" | "shotgun" | "pistol" | "fists" | "grenade";
   isMoving: boolean;
   isFiring: boolean;
   flashElapsed?: number;
@@ -123,6 +123,9 @@ function LoadedCharacter({
   const muzzleTipRef = useRef<THREE.Group>(null);
   const _scratchMuzzlePos = useMemo(() => new THREE.Vector3(), []);
   const _scratchMuzzleDir = useMemo(() => new THREE.Vector3(), []);
+  const currentWeapon = operative ? (operative.weapon || "rifle") : (weapon || "rifle");
+  const isHoldingFirearm = hasWeapon && (currentWeapon === "shotgun" || currentWeapon === "rifle" || currentWeapon === "pistol");
+  const isHoldingGrenade = currentWeapon === "grenade";
 
   // Synthesize blended weapon-run clips (run legs + rifle/pistol upper body)
   const effectiveAnimations = useMemo(() => {
@@ -159,6 +162,7 @@ function LoadedCharacter({
     const liveIsAlive = operative ? operative.isAlive : isAlive;
     const liveIsRolling = operative ? operative.isRolling : isRolling;
     const liveWeapon = operative ? (operative.weapon || "rifle") : (weapon || "rifle");
+    const isHoldingFirearm = hasWeapon && (liveWeapon === "shotgun" || liveWeapon === "rifle" || liveWeapon === "pistol");
 
     const curX = operative ? operative.x : 0;
     const curZ = operative ? operative.z : 0;
@@ -197,18 +201,18 @@ function LoadedCharacter({
           targetClip = "rifle-fire";
         }
       } else if (liveIsMoving) {
-        if (hasWeapon && liveWeapon === "shotgun" && actions["run-shotgun"]) {
+        if (isHoldingFirearm && liveWeapon === "shotgun" && actions["run-shotgun"]) {
           targetClip = "run-shotgun";
-        } else if (hasWeapon && liveWeapon === "pistol" && actions["run-pistol"]) {
+        } else if (isHoldingFirearm && liveWeapon === "pistol" && actions["run-pistol"]) {
           targetClip = "run-pistol";
-        } else if (hasWeapon && actions["run-rifle"]) {
+        } else if (isHoldingFirearm && actions["run-rifle"]) {
           targetClip = "run-rifle";
         } else if (actions["run"]) {
           targetClip = "run";
         }
-      } else if (hasWeapon && liveWeapon === "pistol" && actions["pistol-idle"]) {
+      } else if (isHoldingFirearm && liveWeapon === "pistol" && actions["pistol-idle"]) {
         targetClip = "pistol-idle";
-      } else if (hasWeapon && actions["rifle-idle"]) {
+      } else if (isHoldingFirearm && actions["rifle-idle"]) {
         targetClip = "rifle-idle";
       } else if (actions["idle"]) {
         targetClip = "idle";
@@ -583,7 +587,7 @@ function LoadedCharacter({
       )}
 
       {/* Primary Weapon Physically Socketed Inside Hand_R Bone Hierarchy (Zero Float, Zero Latency) */}
-      {hasWeapon && isAlive && !isRolling && handBone && (
+      {isHoldingFirearm && isAlive && !isRolling && handBone && (
         createPortal(
           <group position={gripPos} rotation={gripEuler}>
             <group position={[0, 0, recoilKickRef.current]}>
@@ -625,6 +629,23 @@ function LoadedCharacter({
                 </mesh>
               )}
             </group>
+          </group>,
+          handBone
+        )
+      )}
+
+      {/* Handheld F-1 Frag Grenade Socketed Inside Hand_R */}
+      {isHoldingGrenade && isAlive && !isRolling && handBone && (
+        createPortal(
+          <group position={[0, 0.05, 0.02]}>
+            <mesh castShadow>
+              <sphereGeometry args={[0.075, 12, 12]} />
+              <meshStandardMaterial color="#3f4e2e" roughness={0.7} metalness={0.2} />
+            </mesh>
+            <mesh position={[0, 0.08, 0]}>
+              <cylinderGeometry args={[0.02, 0.02, 0.04, 8]} />
+              <meshStandardMaterial color="#94a3b8" metalness={0.8} />
+            </mesh>
           </group>,
           handBone
         )

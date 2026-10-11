@@ -37,8 +37,8 @@ const FistIcon: React.FC<{ active?: boolean }> = ({ active }) => (
   </svg>
 );
 
-const GrenadeIcon: React.FC = () => (
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="#10b981">
+const GrenadeIcon: React.FC<{ active?: boolean }> = ({ active }) => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill={active ? "#ffffff" : "#10b981"}>
     {/* Fragmentation grenade */}
     <path d="M12 2 C10.9 2 10 2.9 10 4 L14 4 C14 2.9 13.1 2 12 2 Z M10 5 L14 5 L15 7 L9 7 Z M7 9 C6.4 9 6 9.4 6 10 L6 17 C6 19.8 8.2 22 11 22 L13 22 C15.8 22 18 19.8 18 17 L18 10 C18 9.4 17.6 9 17 9 Z" />
   </svg>
@@ -278,8 +278,10 @@ export const TacticalHud: React.FC<TacticalHudProps> = React.memo(
     const aliveScavs = sim.rivals.filter((r) => r.isAlive && !r.isExtracted).length;
     const aliveTotal = aliveScavs + (player.isAlive ? 1 : 0);
 
-    const isPrimaryActive = player.weapon === "shotgun";
-    const isSecondaryActive = player.weapon === "rifle";
+    const isShotgunActive = player.weapon === "shotgun";
+    const isRifleActive = player.weapon === "rifle";
+    const isFistsActive = player.weapon === "fists";
+    const isGrenadeActive = player.weapon === "grenade";
 
     const currentAmmo = player.ammo;
     const currentReserve =
@@ -376,8 +378,22 @@ export const TacticalHud: React.FC<TacticalHudProps> = React.memo(
 
           {/* Ammo Counter Pill directly above health bar */}
           <div className="surviv-ammo-row">
-            <span className="surviv-clip-ammo">{currentAmmo}</span>
-            <span className="surviv-reserve-ammo">/ {currentReserve}</span>
+            {player.weapon === "fists" ? (
+              <>
+                <span className="surviv-clip-ammo" style={{ fontSize: "20px", color: "#f59e0b" }}>KICK</span>
+                <span className="surviv-reserve-ammo">35 DMG</span>
+              </>
+            ) : player.weapon === "grenade" ? (
+              <>
+                <span className="surviv-clip-ammo" style={{ fontSize: "22px", color: "#10b981" }}>x{player.fragGrenades ?? 2}</span>
+                <span className="surviv-reserve-ammo">/ 2 FRAG</span>
+              </>
+            ) : (
+              <>
+                <span className="surviv-clip-ammo">{currentAmmo}</span>
+                <span className="surviv-reserve-ammo">/ {currentReserve}</span>
+              </>
+            )}
           </div>
 
           {/* Armor Bar */}
@@ -410,11 +426,11 @@ export const TacticalHud: React.FC<TacticalHudProps> = React.memo(
                 sim.setWeapon("shotgun");
                 sound.playReload();
               }}
-              className={`surviv-weapon-slot ${isPrimaryActive ? "active" : ""}`}
+              className={`surviv-weapon-slot ${isShotgunActive ? "active" : ""}`}
               title="Equip M590 Breacher Shotgun [1]"
             >
               <div className="slot-key">1</div>
-              <ShotgunIcon active={isPrimaryActive} />
+              <ShotgunIcon active={isShotgunActive} />
               <div className="slot-info">
                 <span className="slot-name">M590</span>
                 <span className="slot-ammo">
@@ -429,11 +445,11 @@ export const TacticalHud: React.FC<TacticalHudProps> = React.memo(
                 sim.setWeapon("rifle");
                 sound.playReload();
               }}
-              className={`surviv-weapon-slot ${isSecondaryActive ? "active" : ""}`}
+              className={`surviv-weapon-slot ${isRifleActive ? "active" : ""}`}
               title="Equip M4A1 Tactical Rifle [2]"
             >
               <div className="slot-key">2</div>
-              <RifleIcon active={isSecondaryActive} />
+              <RifleIcon active={isRifleActive} />
               <div className="slot-info">
                 <span className="slot-name">M4A1</span>
                 <span className="slot-ammo">
@@ -444,12 +460,15 @@ export const TacticalHud: React.FC<TacticalHudProps> = React.memo(
 
             {/* Slot 3: Melee / Kick */}
             <div
-              onClick={() => onTriggerKick?.()}
-              className="surviv-weapon-slot melee-slot"
-              title="Roundhouse Kick / Strike [3 / V]"
+              onClick={() => {
+                sim.setWeapon("fists");
+                sound.playKick();
+              }}
+              className={`surviv-weapon-slot ${isFistsActive ? "active" : ""}`}
+              title="Equip Melee Fists & Kicks [3]"
             >
               <div className="slot-key">3</div>
-              <FistIcon />
+              <FistIcon active={isFistsActive} />
               <div className="slot-info">
                 <span className="slot-name">KICK</span>
                 <span className="slot-ammo" style={{ color: "#f59e0b" }}>35 DMG</span>
@@ -458,14 +477,17 @@ export const TacticalHud: React.FC<TacticalHudProps> = React.memo(
 
             {/* Slot 4: Frag Grenade */}
             <div
-              className="surviv-weapon-slot grenade-slot"
-              title="Frag Grenade [4 / G]"
+              onClick={() => {
+                sim.setWeapon("grenade");
+              }}
+              className={`surviv-weapon-slot ${isGrenadeActive ? "active" : ""}`}
+              title="Equip Frag Grenade [4 / G]"
             >
               <div className="slot-key">4</div>
-              <GrenadeIcon />
+              <GrenadeIcon active={isGrenadeActive} />
               <div className="slot-info">
                 <span className="slot-name">FRAG</span>
-                <span className="slot-ammo" style={{ color: "#10b981" }}>x2</span>
+                <span className="slot-ammo" style={{ color: "#10b981" }}>x${player.fragGrenades ?? 2}</span>
               </div>
             </div>
           </div>

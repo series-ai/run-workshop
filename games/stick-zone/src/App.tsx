@@ -87,7 +87,7 @@ const MainApp: React.FC = () => {
   const lastMouseMoveTimeRef = useRef(0);
   const isMouseDown = useRef(false);
   const isRightMouseDown = useRef(false);
-  const queuedSelectWeapon = useRef<'rifle' | 'shotgun' | null>(null);
+  const queuedSelectWeapon = useRef<'rifle' | 'shotgun' | 'fists' | 'grenade' | null>(null);
   const queuedSwitchWeapon = useRef(false);
   const queuedStim = useRef(false);
   const queuedReload = useRef(false);
@@ -165,11 +165,13 @@ const MainApp: React.FC = () => {
         return;
       }
       if (e.code === "Digit1") {
-        queuedSelectWeapon.current = "rifle";
-      } else if (e.code === "Digit2") {
         queuedSelectWeapon.current = "shotgun";
+      } else if (e.code === "Digit2") {
+        queuedSelectWeapon.current = "rifle";
       } else if (e.code === "Digit3") {
-        queuedKick.current = true;
+        queuedSelectWeapon.current = "fists";
+      } else if (e.code === "Digit4" || e.code === "KeyG") {
+        queuedSelectWeapon.current = "grenade";
       } else if (e.code === "KeyQ") {
         queuedSwitchWeapon.current = true;
       } else if (e.code === "KeyH") {

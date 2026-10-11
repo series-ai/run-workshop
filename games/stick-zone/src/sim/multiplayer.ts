@@ -59,7 +59,7 @@ export interface StatePacketData {
   isReload?: boolean;
   isSliding?: boolean;
   slideTicksRemaining?: number;
-  weapon?: 'rifle' | 'shotgun';
+  weapon?: 'rifle' | 'shotgun' | 'fists' | 'grenade';
   rifleAmmo?: number;
   shotgunAmmo?: number;
   hasKeycard?: boolean;
@@ -74,7 +74,7 @@ export interface HitPacketData {
   knockX?: number;
   knockZ?: number;
   kind?: 'rifle' | 'kick' | 'shotgun';
-  weapon?: 'rifle' | 'shotgun';
+  weapon?: 'rifle' | 'shotgun' | 'fists' | 'grenade';
   weaponType?: 'rifle' | 'shotgun';
   shotId?: string;
   attackerFacing?: number;
