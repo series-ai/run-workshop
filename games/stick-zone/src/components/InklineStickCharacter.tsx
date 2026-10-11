@@ -210,6 +210,8 @@ function LoadedCharacter({
         targetClip = actions["kick-roundhouse"] ? "kick-roundhouse" : actions["kick-front"] ? "kick-front" : "sweep";
       } else if (liveAction === "throw") {
         targetClip = actions["throw"] ? "throw" : actions["ball-throw"] ? "ball-throw" : "punch-heavy";
+      } else if (liveAction === "reload") {
+        targetClip = actions["reload"] ? "reload" : isHoldingFirearm ? (liveWeapon === "shotgun" ? "run-shotgun" : "rifle-idle") : "idle";
       } else if (liveIsFiring) {
         if (liveWeapon === "shotgun" && actions["shotgun-fire"]) {
           targetClip = "shotgun-fire";
@@ -249,7 +251,8 @@ function LoadedCharacter({
             targetClip === "kick-roundhouse" ||
             targetClip === "kick-front" ||
             targetClip === "throw" ||
-            targetClip === "ball-throw"
+            targetClip === "ball-throw" ||
+            targetClip === "reload"
           ) {
             nextAction.reset();
             nextAction.setLoop(THREE.LoopOnce, 1);

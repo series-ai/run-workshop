@@ -1807,5 +1807,77 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(targetFarLeft.health).toBe(100);
     expect(targetTooFar.health).toBe(100);
   });
+
+  it("42. Firing when out of bullets automatically triggers weapon reload from reserve and dry-fire on empty reserve", () => {
+    const testSim = new SectorDepotSimulation("raid_auto_reload_test", "spoke");
+    testSim.admitOperative();
+
+    // 1. Rifle: out of bullets with reserve ammo -> fire() reloads rifle
+    testSim.setWeapon("rifle");
+    testSim.player.ammo = 0;
+    testSim.player.rifleAmmo = 0;
+    testSim.player.reserveRifleAmmo = 60;
+    testSim.shootCooldownTicks = 0;
+    testSim.drainPresentationEvents(); // clear previous events
+
+    const reloadedRifle = testSim.fire();
+    expect(reloadedRifle).toBe(true);
+    expect(testSim.player.action).toBe("reload");
+    expect(testSim.player.actionTicks).toBe(15);
+    expect(testSim.shootCooldownTicks).toBe(35);
+    expect(testSim.player.ammo).toBe(30);
+    expect(testSim.player.rifleAmmo).toBe(30);
+    expect(testSim.player.reserveRifleAmmo).toBe(30);
+
+    const rifleEvents = testSim.drainPresentationEvents();
+    expect(rifleEvents.some(e => e.type === "reload")).toBe(true);
+
+    // 2. Shotgun: out of bullets with reserve ammo -> step({ shoot: true }) reloads shotgun
+    testSim.setWeapon("shotgun");
+    testSim.player.ammo = 0;
+    testSim.player.shotgunAmmo = 0;
+    testSim.player.reserveShotgunAmmo = 16;
+    testSim.shootCooldownTicks = 0;
+    testSim.player.action = "idle";
+    testSim.player.actionTicks = 0;
+
+    testSim.step({
+      dx: 0,
+      dz: 0,
+      sprint: false,
+      slide: false,
+      roll: false,
+      kick: false,
+      shoot: true,
+      interact: false,
+      aimAngle: 0,
+    });
+
+    expect(testSim.player.action).toBe("reload");
+    expect(testSim.player.ammo).toBe(8);
+    expect(testSim.player.shotgunAmmo).toBe(8);
+    expect(testSim.player.reserveShotgunAmmo).toBe(8);
+    expect(testSim.shootCooldownTicks).toBe(35);
+
+    const shotgunEvents = testSim.drainPresentationEvents();
+    expect(shotgunEvents.some(e => e.type === "reload")).toBe(true);
+
+    // 3. Dry fire: out of bullets and zero reserve -> fire() fails and triggers dry_fire click
+    testSim.player.ammo = 0;
+    testSim.player.shotgunAmmo = 0;
+    testSim.player.reserveShotgunAmmo = 0;
+    testSim.shootCooldownTicks = 0;
+    testSim.player.action = "idle";
+    testSim.player.actionTicks = 0;
+
+    const dryFired = testSim.fire();
+    expect(dryFired).toBe(false);
+    expect(testSim.shootCooldownTicks).toBe(18); // Dry-fire debounce
+    expect(testSim.player.ammo).toBe(0);
+
+    const dryEvents = testSim.drainPresentationEvents();
+    expect(dryEvents.some(e => e.type === "dry_fire")).toBe(true);
+  });
 });
+
 

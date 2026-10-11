@@ -58,6 +58,16 @@ export type PresentationEvent =
       type: 'explosion';
       position: { x: number; y: number; z: number };
       radius?: number;
+    }
+  | {
+      type: 'reload';
+      operativeId: string;
+      position: { x: number; y: number; z: number };
+    }
+  | {
+      type: 'dry_fire';
+      operativeId: string;
+      position: { x: number; y: number; z: number };
     };
 
 
@@ -1559,7 +1569,13 @@ export class SectorDepotSimulation {
     this.player.action = 'reload';
     this.player.actionTicks = 15;
     this.shootCooldownTicks = 35;
+    this.player.shootCooldownTicks = 35;
     this.combatLog.push(`[RELOAD] Tactical reload completed (${this.player.ammo}/${maxAmmo}).`);
+    this.enqueuePresentationEvent({
+      type: 'reload',
+      operativeId: this.player.id,
+      position: { x: this.player.x, y: 1.0, z: this.player.z },
+    });
     return true;
   }
 
@@ -2697,7 +2713,12 @@ export class SectorDepotSimulation {
 
   public fire(): boolean {
     if (this.isInputLocked()) return false;
-    if (this.player.action === "roll" || this.player.action === "kick" || this.player.action === "throw") return false;
+    if (
+      this.player.action === "roll" ||
+      this.player.action === "kick" ||
+      this.player.action === "throw" ||
+      this.player.action === "reload"
+    ) return false;
 
     if (this.player.weapon === "fists") {
       if (this.kickCooldownTicks > 0) return false;
@@ -2725,7 +2746,25 @@ export class SectorDepotSimulation {
       return true;
     }
 
-    if (this.player.ammo <= 0) return false;
+    // Firing when out of bullets automatically initiates tactical reload from reserve
+    if (this.player.ammo <= 0) {
+      if (this.player.weapon === "shotgun" || this.player.weapon === "rifle") {
+        const reloaded = this.reload();
+        if (!reloaded) {
+          this.shootCooldownTicks = 18;
+          this.player.shootCooldownTicks = 18;
+          this.combatLog.push(`[AMMO EMPTY] Out of ammunition! Reserve depleted.`);
+          this.enqueuePresentationEvent({
+            type: "dry_fire",
+            operativeId: this.player.id,
+            position: { x: this.player.x, y: 1.0, z: this.player.z },
+          });
+        }
+        return reloaded;
+      }
+      return false;
+    }
+
     if (this.shootCooldownTicks > 0) return false;
     this.player.ammo -= 1;
     if (this.player.weapon === "shotgun") {

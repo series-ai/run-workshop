@@ -827,6 +827,16 @@ const PresentationFXManager: React.FC<{
           undefined,
           0.8
         );
+      } else if (ev.type === "reload") {
+        sound.playReload();
+        effects.trigger(
+          "pickup-sparkle",
+          _scratchOrigin.set(ev.position.x, ev.position.y, ev.position.z),
+          "#38bdf8",
+          1.1
+        );
+      } else if (ev.type === "dry_fire") {
+        sound.playEmptyClick();
       } else if (ev.type === "locomotion") {
         if (ev.subtype === "roll" || ev.subtype === "slide") {
           effects.trigger(

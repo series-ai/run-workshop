@@ -360,7 +360,6 @@ const MainApp: React.FC = () => {
         (touchInputRef.current as any).stim = false;
 
         const reload = queuedReload.current || !!(touchInputRef.current as any).reload;
-        if (reload) sound.playReload();
         queuedReload.current = false;
         (touchInputRef.current as any).reload = false;
 
@@ -393,6 +392,7 @@ const MainApp: React.FC = () => {
           if (currentAction === "slide") sound.playSlide();
           else if (currentAction === "roll") sound.playRoll();
           else if (currentAction === "kick") sound.playKick();
+          else if (currentAction === "reload") sound.playReload();
           prevActionRef.current = currentAction;
         }
 
