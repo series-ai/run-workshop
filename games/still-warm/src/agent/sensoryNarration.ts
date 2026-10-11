@@ -473,8 +473,14 @@ export function formatSensoryNarration(
 
 export const INSPECT_DARK_VARIATIONS = [
   "The blackness answers me. I hear something large shift its weight close by, coarse cloth whispering against the cold stone—and that is all I have.",
-  "Nothing but dark against my open eyes. His breathing and the low crackle of the floor fire are the whole of the world.",
+  "Nothing but dark against my open eyes. His breathing close by is the whole of the world.",
   "I strain to see and find only black. A heavy shuffle, a wet breath, the drip of water—my boy is somewhere in it, but I cannot see him.",
+] as const;
+
+/** Dark vision, but the floor fire is burning and I can feel its heat. */
+export const INSPECT_DARK_WITH_FIRE_VARIATIONS = [
+  "The blackness answers me. I hear something large shift its weight close by, and the floor fire crackles somewhere past my face—that heat and his breathing are all I have.",
+  "Only black against my open eyes, lit by the low flicker of the burning oil on the stones. My boy is a sound in it, nothing more.",
 ] as const;
 
 export const INSPECT_FLOOR_VARIATIONS = [
@@ -482,8 +488,28 @@ export const INSPECT_FLOOR_VARIATIONS = [
   "I can make out cold flagstones and broken mortar in front of my face now. The boy himself stays beyond my sight, somewhere above and behind me.",
 ] as const;
 
-export const INSPECT_ROOM_VARIATIONS = [
-  "He crouches close over me; lantern light picks out the mismatched seams of his face. My boy, watching me in the dark.",
+/** Room vision from the examination lamp aimed at me. */
+export const INSPECT_ROOM_LAMP_VARIATIONS = [
+  "He crouches close over me; the examination lamp shows the mismatched seams of his face. My boy, watching me.",
+] as const;
+
+/** Room vision from the portable lantern. */
+export const INSPECT_ROOM_LANTERN_VARIATIONS = [
+  "He crouches close over me; lantern light picks out the mismatched seams of his face. My boy, watching me.",
+] as const;
+
+/** Room vision from the candle. */
+export const INSPECT_ROOM_CANDLE_VARIATIONS = [
+  "He crouches close over me; candlelight gilds the mismatched seams of his face. My boy, watching me.",
+] as const;
+
+/** Room vision from the floor fire alone. */
+export const INSPECT_ROOM_FIRE_VARIATIONS = [
+  "The burning oil throws a low amber light across him. I can make out his broad shoulders over me at last, and the seams of his face.",
+] as const;
+
+/** Room vision with no portable light in hand: name no source. */
+export const INSPECT_ROOM_UNNAMED_VARIATIONS = [
   "In the light I can see him clearly at last, broad shoulders blotting the cellar wall above me, eyes fixed on my face.",
 ] as const;
 
@@ -498,10 +524,26 @@ export function formatInspectNarration(
 ): string {
   switch (resolveVision(input)) {
     case "room":
-      return picker.pick("inspect_room", INSPECT_ROOM_VARIATIONS);
+      // Name only the light source that is actually burning.
+      if (input.lanternLit)
+        return picker.pick("inspect_room_lantern", INSPECT_ROOM_LANTERN_VARIATIONS);
+      if (input.lamp !== "away")
+        return picker.pick("inspect_room_lamp", INSPECT_ROOM_LAMP_VARIATIONS);
+      if (input.candleLit)
+        return picker.pick("inspect_room_candle", INSPECT_ROOM_CANDLE_VARIATIONS);
+      if (input.fire > 0)
+        return picker.pick("inspect_room_fire", INSPECT_ROOM_FIRE_VARIATIONS);
+      // Unreachable while resolveVision gates room on light, but name no
+      // source rather than invent one.
+      return picker.pick("inspect_room", INSPECT_ROOM_UNNAMED_VARIATIONS);
     case "floor":
       return picker.pick("inspect_floor", INSPECT_FLOOR_VARIATIONS);
     case "dark":
-      return picker.pick("inspect_dark", INSPECT_DARK_VARIATIONS);
+      return picker.pick(
+        input.fire > 0 ? "inspect_dark_fire" : "inspect_dark",
+        input.fire > 0
+          ? INSPECT_DARK_WITH_FIRE_VARIATIONS
+          : INSPECT_DARK_VARIATIONS,
+      );
   }
 }

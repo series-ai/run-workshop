@@ -5,7 +5,6 @@ import {
   defaultSensoryPicker,
   INSPECT_DARK_VARIATIONS,
   INSPECT_FLOOR_VARIATIONS,
-  INSPECT_ROOM_VARIATIONS,
 } from "./sensoryNarration";
 import type { VisionInput } from "../game/vision";
 
@@ -257,10 +256,51 @@ describe("visibility discipline", () => {
       lanternLit: true,
       fire: 12,
     };
-    for (let i = 0; i < INSPECT_ROOM_VARIATIONS.length; i++) {
-      const text = formatInspectNarration(room);
-      expect(text).toMatch(/lantern|light|see/i);
-      expect(text).not.toMatch(/cannot see|nothing but dark|blackness answers/i);
+    const text = formatInspectNarration(room);
+    expect(text).toMatch(/lantern|light|see/i);
+    expect(text).not.toMatch(/cannot see|nothing but dark|blackness answers/i);
+  });
+
+  it("names only the light source that is actually burning", () => {
+    const base: VisionInput = {
+      posture: "supine",
+      stage: "covered",
+      lamp: "away",
+      candleLit: false,
+      lanternLit: false,
+      fire: 0,
+    };
+    // Fire-only light must not claim a lantern, candle, or lamp.
+    const fireOnly = formatInspectNarration({ ...base, fire: 30 });
+    expect(fireOnly).toMatch(/burning oil|amber/i);
+    expect(fireOnly).not.toMatch(/lantern|candle|examination lamp/i);
+
+    // Candle-only must not claim a lantern.
+    const candleOnly = formatInspectNarration({ ...base, candleLit: true });
+    expect(candleOnly).toMatch(/candle/i);
+    expect(candleOnly).not.toMatch(/lantern/i);
+
+    // Lamp-only must not claim a lantern.
+    const lampOnly = formatInspectNarration({ ...base, lamp: "wound" });
+    expect(lampOnly).toMatch(/examination lamp/i);
+    expect(lampOnly).not.toMatch(/lantern light|candlelight/i);
+  });
+
+  it("never describes a fire that is not burning", () => {
+    const coldDark: VisionInput = {
+      posture: "prone",
+      stage: "pinned",
+      lamp: "away",
+      candleLit: false,
+      lanternLit: false,
+      fire: 0,
+    };
+    for (let i = 0; i < INSPECT_DARK_VARIATIONS.length; i++) {
+      const text = formatInspectNarration(coldDark);
+      expect(text).not.toMatch(/fire|crackle|burning|flame|flicker/i);
     }
+    // With a live fire the dark case may reference its heat and crackle.
+    const warmDark = formatInspectNarration({ ...coldDark, fire: 20 });
+    expect(warmDark).toMatch(/fire|crackle|flicker|burning/i);
   });
 });

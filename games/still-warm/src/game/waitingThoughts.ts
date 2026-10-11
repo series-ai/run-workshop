@@ -28,8 +28,8 @@ export const WAITING_ITEMS_1: readonly WaitingItem[] = [
   {
     id: "shadows_move",
     text: "Shadows flicker along the damp stone wall... somewhere water drips.",
-    // Requires sight: face down in the dark he cannot see the walls.
-    available: (state) => !state || visionOf(state) !== "dark",
+    // Requires full sight: face down he cannot see the walls at all.
+    available: (state) => !state || visionOf(state) === "room",
   },
   {
     id: "breath_shallow",

@@ -185,3 +185,29 @@ describe("WaitingThoughtPicker", () => {
     expect(thought.full).toContain("...");
   });
 });
+
+describe("waiting thought visibility gating", () => {
+  const base = createInitialState();
+
+  it("excludes wall and ceiling descriptions unless the room is visible", () => {
+    const SIGHT_ONLY = /shadows flicker along the damp stone wall|beams crisscross|Webs drift from the rafters|straining to see his hands/i;
+
+    const dark = base; // pinned · prone · unlit
+    const floor = { ...base, stage: "covered" as const }; // cabinet off, still prone
+    const lit = {
+      ...base,
+      stage: "covered" as const,
+      posture: "supine" as const,
+      environment: { ...base.environment, lanternLit: true },
+    };
+
+    const picker = new WaitingThoughtPicker();
+    for (let i = 0; i < 60; i++) {
+      expect(picker.pick(dark).full).not.toMatch(SIGHT_ONLY);
+      expect(picker.pick(floor).full).not.toMatch(SIGHT_ONLY);
+    }
+    // Under room light the descriptive thoughts may appear at least once.
+    const litThoughts = Array.from({ length: 120 }, () => picker.pick(lit).full);
+    expect(litThoughts.join(" ")).toMatch(SIGHT_ONLY);
+  });
+});
