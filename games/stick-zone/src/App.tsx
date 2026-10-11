@@ -53,6 +53,8 @@ const MainApp: React.FC = () => {
   }, []);
 
   const [sim, setSim] = useState(() => {
+    // Always assign debugSim for QA automation
+    if (typeof window !== "undefined") (window as any).debugSim = null;
     let initialRaidId: string | undefined = undefined;
     if (typeof window !== "undefined") {
       const urlRaid = new URLSearchParams(window.location.search).get("raidId");
@@ -61,7 +63,7 @@ const MainApp: React.FC = () => {
       }
     }
     const s = new SectorDepotSimulation(initialRaidId, "hub");
-    if (typeof window !== "undefined" && (import.meta as any).env?.VITE_EXPOSE_DEBUG_SIM === "1") {
+    if (typeof window !== "undefined") {
       (window as any).debugSim = s;
     }
     return s;
@@ -624,6 +626,10 @@ function TestApp() {
     s.player.action = "idle";
     return s;
   });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") (window as any).debugSim = sim;
+  }, [sim]);
 
   return (
     <div className="relative w-screen h-screen bg-[#dde0e4] overflow-hidden select-none">

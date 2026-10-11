@@ -131,3 +131,106 @@ export function cameraImpulse(age: number, strength: number): [number, number] {
   const decay = (1 - age / 0.2) ** 3;
   return [Math.sin(age * 100) * strength * decay, Math.cos(age * 83) * strength * 0.45 * decay];
 }
+
+
+export interface CameraLookAheadConfig {
+  aimLeadDistance: number;
+  velocityLeadFactor: number;
+  deadZone: number;
+  maxOffset: number;
+}
+
+export const DEFAULT_LOOK_AHEAD_CONFIG: CameraLookAheadConfig = {
+  aimLeadDistance: 2.2,
+  velocityLeadFactor: 0.32,
+  deadZone: 0.4,
+  maxOffset: 4.8,
+};
+
+/**
+ * Computes look-ahead camera offset based on player weapon aiming angle and movement velocity.
+ * Implements dead zone suppression and maximum offset clamping.
+ */
+export function computeCameraLookAhead(
+  facing: number,
+  velocity: { x: number; z: number } = { x: 0, z: 0 },
+  config: Partial<CameraLookAheadConfig> = {}
+): { offsetX: number; offsetZ: number } {
+  const cfg = { ...DEFAULT_LOOK_AHEAD_CONFIG, ...config };
+
+  // Facing angle: sin(facing) maps to +X, cos(facing) maps to +Z in this coordinate system
+  const aimX = Math.sin(facing) * cfg.aimLeadDistance;
+  const aimZ = Math.cos(facing) * cfg.aimLeadDistance;
+
+  const speed = Math.hypot(velocity.x, velocity.z);
+  let velX = 0;
+  let velZ = 0;
+  if (speed > cfg.deadZone) {
+    velX = velocity.x * cfg.velocityLeadFactor;
+    velZ = velocity.z * cfg.velocityLeadFactor;
+  }
+
+  const rawX = aimX + velX;
+  const rawZ = aimZ + velZ;
+  const totalMag = Math.hypot(rawX, rawZ);
+  if (totalMag > cfg.maxOffset && totalMag > 1e-5) {
+    const scale = cfg.maxOffset / totalMag;
+    return { offsetX: rawX * scale, offsetZ: rawZ * scale };
+  }
+  return { offsetX: rawX, offsetZ: rawZ };
+}
+
+/**
+ * Adjusts camera vantage height dynamically based on active movement stance (slide, sprint, ADS).
+ */
+export function computeCameraKineticHeight(
+  baseHeight: number,
+  options: {
+    isSliding?: boolean;
+    isSprinting?: boolean;
+    isAds?: boolean;
+  } = {}
+): number {
+  if (options.isAds) {
+    return baseHeight - 1.5;
+  }
+  if (options.isSliding) {
+    return baseHeight - 1.8;
+  }
+  if (options.isSprinting) {
+    return baseHeight + 1.2;
+  }
+  return baseHeight;
+}
+
+/**
+ * Computes camera flinch and trauma oscillation impulse resulting from incoming ballistic damage.
+ * Displaces camera away from damage source angle with damped spring recovery.
+ */
+export function computeTraumaImpulse(
+  damageAngleDeg: number,
+  damageAmount: number,
+  elapsedSec: number,
+  durationSec: number = 0.35
+): { x: number; y: number; z: number } {
+  if (elapsedSec < 0 || elapsedSec >= durationSec) return { x: 0, y: 0, z: 0 };
+  const progress = elapsedSec / durationSec;
+  const decay = Math.pow(1 - progress, 2.5);
+  const intensity = Math.min(1.2, (damageAmount / 25) * 0.7);
+
+  // Screen space angle: 0 deg = North (-Z), 90 deg = East (+X), 180 deg = South (+Z), 270 deg = West (-X)
+  const rad = (damageAngleDeg * Math.PI) / 180;
+  // Push direction: away from damage vector
+  const pushX = -Math.sin(rad) * intensity * 0.45 * decay;
+  const pushZ = Math.cos(rad) * intensity * 0.45 * decay;
+
+  // Damped high-frequency harmonic vibration
+  const osc = Math.sin(elapsedSec * 45) * intensity * 0.28 * decay;
+  const oscY = Math.cos(elapsedSec * 55) * intensity * 0.35 * decay;
+
+  return {
+    x: pushX + osc * Math.cos(rad),
+    y: oscY,
+    z: pushZ + osc * Math.sin(rad),
+  };
+}

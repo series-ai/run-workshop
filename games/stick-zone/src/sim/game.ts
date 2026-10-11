@@ -60,6 +60,15 @@ export type PresentationEvent =
       radius?: number;
     };
 
+
+export interface DamageIndicatorEntry {
+  id: string;
+  angleDeg: number;
+  damage: number;
+  tick: number;
+  timestamp: number;
+}
+
 export interface ActiveGrenade {
   id: string;
   throwerId: string;
@@ -596,6 +605,8 @@ export class SectorDepotSimulation {
   public lastPlayerDamageTick: number = 0;
   public lastPlayerDamageAmount: number = 0;
   public lastPlayerDamageAngle: number = 0;
+  public damageIndicators: DamageIndicatorEntry[] = [];
+  public lastDamageDirectionDeg: number | null = null;
   public recentBark?: { sender: string; text: string; tick: number; isBoss?: boolean };
   public activeGrenades: ActiveGrenade[] = [];
   public airlockTimerMs: number = 0;
@@ -1573,10 +1584,28 @@ export class SectorDepotSimulation {
 
     this.lastPlayerDamageTick = this.tick;
     this.lastPlayerDamageAmount = rawDmg;
+    let angleDeg: number;
     if (fromX !== undefined && fromZ !== undefined) {
-      this.lastPlayerDamageAngle = Math.atan2(fromX - this.player.x, fromZ - this.player.z);
+      const dx = fromX - this.player.x;
+      const dz = fromZ - this.player.z;
+      this.lastPlayerDamageAngle = Math.atan2(dx, dz);
+      // Screen space: 0 deg = North (-Z), 90 deg = East (+X), 180 deg = South (+Z), -90 deg = West (-X)
+      angleDeg = Math.round((Math.atan2(dx, -dz) * 180) / Math.PI);
     } else {
+      angleDeg = 0;
       this.lastPlayerDamageAngle = (Math.random() - 0.5) * Math.PI;
+    }
+    this.lastDamageDirectionDeg = angleDeg;
+
+    this.damageIndicators.push({
+      id: "dmg_" + this.tick + "_" + Math.random().toString(36).substring(2, 7),
+      angleDeg,
+      damage: rawDmg,
+      tick: this.tick,
+      timestamp: Date.now(),
+    });
+    if (this.damageIndicators.length > 8) {
+      this.damageIndicators.shift();
     }
 
     const { newHealth, newArmor } = applyStandardDamage(this.player.health, this.player.armor, rawDmg);
@@ -1805,9 +1834,14 @@ export class SectorDepotSimulation {
     this.player.armor = 100;
     this.player.isAlive = true;
     this.player.isExtracted = false;
+    this.damageIndicators = [];
+    this.lastDamageDirectionDeg = null;
     this.combatLog.push();
   }
   public step(input: GameInput): void {
+    if (this.damageIndicators.length > 0) {
+      this.damageIndicators = this.damageIndicators.filter((d) => this.tick - d.tick < 90);
+    }
     this.isAds = Boolean(input.ads);
     this.player.isCrouching = Boolean(input.crouch);
     if (!this.player.isAlive || this.player.isExtracted) {
@@ -3348,7 +3382,7 @@ export class SectorDepotSimulation {
           if (closestTarget.isPlayer) {
             if (!this.player.isInvulnerable && !this.serverMachineDamageAuthority) {
               const rawDmg = machine.type === 'turret' ? 14 : 10;
-              this.applyDamageToPlayer(rawDmg);
+              this.applyDamageToPlayer(rawDmg, machine.x, machine.z);
               damageToPlayer += rawDmg;
             }
             // When serverMachineDamageAuthority is active, the authoritative damage is

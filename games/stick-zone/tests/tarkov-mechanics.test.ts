@@ -1422,4 +1422,46 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
     sim.step(makeInput({ dx: 0, dz: 0, crouch: false }));
     expect((scav as any).playerAlertTicks).toBe(300);
   });
+
+  it("34. Directional damage indicator telemetry: calculates Cardinal and Ordinal angles and maintains damage indicator pool", () => {
+    sim.zoneMode = "spoke";
+    sim.player.isAlive = true;
+    sim.player.isInvulnerable = false;
+    sim.player.x = 0;
+    sim.player.z = 0;
+    sim.rivals = [];
+    sim.machines = [];
+    sim.damageIndicators = [];
+
+    // Hit from North (attacker at 0, -10): dx = 0, -dz = 10 -> angle = 0 deg
+    sim.applyDamageToPlayer(10, 0, -10);
+    expect(sim.lastDamageDirectionDeg).toBe(0);
+    expect(sim.damageIndicators.length).toBe(1);
+    expect(sim.damageIndicators[0].angleDeg).toBe(0);
+    expect(sim.damageIndicators[0].damage).toBe(10);
+
+    // Hit from East (attacker at 10, 0): dx = 10, -dz = 0 -> angle = 90 deg
+    sim.applyDamageToPlayer(15, 10, 0);
+    expect(sim.lastDamageDirectionDeg).toBe(90);
+    expect(sim.damageIndicators.length).toBe(2);
+    expect(sim.damageIndicators[1].angleDeg).toBe(90);
+
+    // Hit from South (attacker at 0, 10): dx = 0, -dz = -10 -> angle = 180 deg
+    sim.applyDamageToPlayer(20, 0, 10);
+    expect(sim.lastDamageDirectionDeg).toBe(180);
+    expect(sim.damageIndicators.length).toBe(3);
+    expect(sim.damageIndicators[2].angleDeg).toBe(180);
+
+    // Hit from West (attacker at -10, 0): dx = -10, -dz = 0 -> angle = -90 deg
+    sim.applyDamageToPlayer(12, -10, 0);
+    expect(sim.lastDamageDirectionDeg).toBe(-90);
+    expect(sim.damageIndicators.length).toBe(4);
+    expect(sim.damageIndicators[3].angleDeg).toBe(-90);
+
+    // Advance 95 ticks: step() must prune expired damage indicators
+    for (let i = 0; i < 95; i++) {
+      sim.step(makeInput());
+    }
+    expect(sim.damageIndicators.length).toBe(0);
+  });
 });

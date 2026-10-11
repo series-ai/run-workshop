@@ -386,6 +386,72 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
       {/* Critical Health Vignette */}
       {isCriticalHealth && <div className="critical-health-vignette" />}
 
+      {/* Directional Screen-Edge Trauma Vignette */}
+      {sim.lastDamageDirectionDeg !== null && sim.lastPlayerDamageTick > 0 && (sim.tick - sim.lastPlayerDamageTick < 36) && (
+        <div
+          className="damage-directional-vignette"
+          style={{
+            opacity: Math.max(0, 1 - (sim.tick - sim.lastPlayerDamageTick) / 36),
+            background: `radial-gradient(ellipse at ${Math.round(50 + 50 * Math.sin((sim.lastDamageDirectionDeg * Math.PI) / 180))}%${" "}
+              ${Math.round(50 - 50 * Math.cos((sim.lastDamageDirectionDeg * Math.PI) / 180))}%, rgba(239, 68, 68, 0.75) 0%, rgba(220, 38, 38, 0.25) 30%, transparent 65%)`,
+          }}
+        />
+      )}
+
+      {/* High-Visibility Directional Damage Arc Indicators */}
+      {sim.damageIndicators.length > 0 && (
+        <div className="directional-damage-container" aria-hidden="true">
+          {sim.damageIndicators.map((indicator) => {
+            const ageTicks = sim.tick - indicator.tick;
+            if (ageTicks < 0 || ageTicks >= 80) return null;
+            const opacity = Math.max(0, 1 - ageTicks / 75);
+            const scale = 1 + (ageTicks / 75) * 0.12;
+
+            return (
+              <div
+                key={indicator.id}
+                className="directional-damage-indicator"
+                style={{
+                  transform: `translate(-50%, -50%) rotate(${indicator.angleDeg}deg)`,
+                  opacity,
+                }}
+              >
+                <svg
+                  className="damage-indicator-arc"
+                  viewBox="0 0 160 60"
+                  width="160"
+                  height="60"
+                  style={{ transform: `scale(${scale})` }}
+                >
+                  <defs>
+                    <linearGradient id={`dmg-grad-${indicator.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#ef4444" stopOpacity="0" />
+                      <stop offset="25%" stopColor="#ef4444" stopOpacity="0.85" />
+                      <stop offset="50%" stopColor="#ff2222" stopOpacity="1" />
+                      <stop offset="75%" stopColor="#ef4444" stopOpacity="0.85" />
+                      <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  {/* Curved danger arc */}
+                  <path
+                    d="M 12 48 Q 80 8 148 48"
+                    fill="none"
+                    stroke={`url(#dmg-grad-${indicator.id})`}
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                  />
+                  {/* Directional chevron arrowhead pointing towards threat */}
+                  <polygon
+                    points="80,10 68,26 80,21 92,26"
+                    fill="#ff2222"
+                  />
+                </svg>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Tarkov Micro: Directional Trauma Impact Flash Vignette */}
       {sim.lastPlayerDamageTick > 0 && (sim.tick - sim.lastPlayerDamageTick < 12) && (
         <div className="damage-flash-vignette" />

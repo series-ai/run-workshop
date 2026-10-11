@@ -3,6 +3,9 @@ import {
   cameraImpulse,
   createCameraObstacles,
   cameraOnActorSide,
+  computeCameraLookAhead,
+  computeCameraKineticHeight,
+  computeTraumaImpulse,
 } from '../src/render/cameraKinetics.js';
 
 describe('cameraKinetics', () => {
@@ -64,6 +67,90 @@ describe('cameraKinetics', () => {
       // Camera must be clamped on the actor side (z < -5.0)
       expect(result.z).toBeLessThan(-5.0);
       expect(result.z).toBeGreaterThanOrEqual(actor.z);
+    });
+  });
+
+  describe("computeCameraLookAhead", () => {
+    it("shifts offset in weapon aim direction based on facing angle", () => {
+      // Facing South (facing = 0): sin(0)=0, cos(0)=1 -> +Z
+      const south = computeCameraLookAhead(0, { x: 0, z: 0 }, { aimLeadDistance: 2.0 });
+      expect(Math.abs(south.offsetX)).toBeLessThan(1e-5);
+      expect(south.offsetZ).toBeCloseTo(2.0, 4);
+
+      // Facing North (facing = Math.PI): sin(PI)=0, cos(PI)=-1 -> -Z
+      const north = computeCameraLookAhead(Math.PI, { x: 0, z: 0 }, { aimLeadDistance: 2.0 });
+      expect(Math.abs(north.offsetX)).toBeLessThan(1e-5);
+      expect(north.offsetZ).toBeCloseTo(-2.0, 4);
+
+      // Facing East (facing = Math.PI / 2): sin(PI/2)=1, cos(PI/2)=0 -> +X
+      const east = computeCameraLookAhead(Math.PI / 2, { x: 0, z: 0 }, { aimLeadDistance: 2.0 });
+      expect(east.offsetX).toBeCloseTo(2.0, 4);
+      expect(Math.abs(east.offsetZ)).toBeLessThan(1e-5);
+    });
+
+    it("applies velocity lead when movement exceeds deadzone threshold", () => {
+      const moving = computeCameraLookAhead(0, { x: 5, z: 0 }, {
+        aimLeadDistance: 0,
+        velocityLeadFactor: 0.3,
+        deadZone: 0.4,
+      });
+      expect(moving.offsetX).toBeCloseTo(1.5, 4);
+      expect(moving.offsetZ).toBe(0);
+
+      // Below dead zone
+      const stationary = computeCameraLookAhead(0, { x: 0.2, z: 0 }, {
+        aimLeadDistance: 0,
+        velocityLeadFactor: 0.3,
+        deadZone: 0.4,
+      });
+      expect(stationary.offsetX).toBe(0);
+      expect(stationary.offsetZ).toBe(0);
+    });
+
+    it("clamps look-ahead to configured maxOffset ceiling", () => {
+      const clamped = computeCameraLookAhead(Math.PI / 2, { x: 20, z: 0 }, {
+        aimLeadDistance: 5.0,
+        velocityLeadFactor: 0.5,
+        maxOffset: 4.0,
+      });
+      const totalDist = Math.hypot(clamped.offsetX, clamped.offsetZ);
+      expect(totalDist).toBeCloseTo(4.0, 4);
+    });
+  });
+
+  describe("computeCameraKineticHeight", () => {
+    it("lowers vantage height during slide maneuver", () => {
+      const base = 16.0;
+      const sliding = computeCameraKineticHeight(base, { isSliding: true });
+      expect(sliding).toBeLessThan(base);
+      expect(sliding).toBeCloseTo(14.2, 4);
+    });
+
+    it("expands vantage height during sprint", () => {
+      const base = 16.0;
+      const sprinting = computeCameraKineticHeight(base, { isSprinting: true });
+      expect(sprinting).toBeGreaterThan(base);
+      expect(sprinting).toBeCloseTo(17.2, 4);
+    });
+
+    it("tightens height during tactical ADS focus", () => {
+      const base = 16.0;
+      const ads = computeCameraKineticHeight(base, { isAds: true });
+      expect(ads).toBeLessThan(base);
+      expect(ads).toBeCloseTo(14.5, 4);
+    });
+  });
+
+  describe("computeTraumaImpulse", () => {
+    it("returns zero displacement when elapsed exceeds duration", () => {
+      expect(computeTraumaImpulse(90, 20, 0.4, 0.35)).toEqual({ x: 0, y: 0, z: 0 });
+    });
+
+    it("generates directional flinch away from damage source angle", () => {
+      // Hit from East (90 deg): impulse should push West (-X)
+      const impulse = computeTraumaImpulse(90, 25, 0.05, 0.35);
+      expect(impulse.x).toBeLessThan(0);
+      expect(Math.abs(impulse.y)).toBeGreaterThan(0);
     });
   });
 });

@@ -17,6 +17,9 @@ import {
   cameraImpulse,
   cameraOnActorSide,
   createCameraObstacles,
+  computeCameraLookAhead,
+  computeCameraKineticHeight,
+  computeTraumaImpulse,
 } from "../render/cameraKinetics.js";
 
 interface GameCanvasProps {
@@ -78,6 +81,8 @@ const CameraController: React.FC<{
       ? new THREE.Vector3(0, 0, 0)
       : new THREE.Vector3(playerPos.x, playerPos.y + 1.0, playerPos.z)
   );
+  const lastDamageTickRef = useRef(0);
+  const damageTraumaRef = useRef({ angleDeg: 0, amount: 0, timestamp: 0 });
 
   useFrame(({ camera }, delta) => {
     const isPaused =
@@ -111,21 +116,40 @@ const CameraController: React.FC<{
       targetY = playerPos.y + 1.2;
       targetZ = playerPos.z;
     } else if (sim.zoneMode === "hub") {
-      // FOB Outpost tactical staging vantage
-      desiredX = playerPos.x;
+      // FOB Outpost tactical staging vantage with subtle aim look-ahead
+      const vx = (sim.slideTicksRemaining > 0 ? sim.slideVx : sim.walkVx) || 0;
+      const vz = (sim.slideTicksRemaining > 0 ? sim.slideVz : sim.walkVz) || 0;
+      const hubLead = computeCameraLookAhead(sim.player.facing, { x: vx, z: vz }, { aimLeadDistance: 1.2, maxOffset: 2.2 });
+      desiredX = playerPos.x + hubLead.offsetX;
       desiredY = playerPos.y + 20.0;
-      desiredZ = playerPos.z + 10.0;
-      targetX = playerPos.x;
+      desiredZ = playerPos.z + hubLead.offsetZ + 10.0;
+      targetX = playerPos.x + hubLead.offsetX;
       targetY = playerPos.y + 1.2;
-      targetZ = playerPos.z - 1.0;
+      targetZ = playerPos.z + hubLead.offsetZ - 1.0;
     } else {
       // Top-down tactical extraction vantage (68.0 deg tactical angle)
-      desiredX = playerPos.x;
-      desiredY = playerPos.y + 16.0;
-      desiredZ = playerPos.z + 6.46;
-      targetX = playerPos.x;
+      // Look-ahead tracking downrange crosshair and movement velocity
+      const vx = (sim.slideTicksRemaining > 0 ? sim.slideVx : sim.walkVx) || 0;
+      const vz = (sim.slideTicksRemaining > 0 ? sim.slideVz : sim.walkVz) || 0;
+      const isSliding = sim.player.isSliding || sim.player.action === "slide" || ((sim.player.slideTicksRemaining || 0) > 0);
+      const isSprinting = sim.player.action === "sprint";
+      const kineticHeight = computeCameraKineticHeight(16.0, {
+        isSliding,
+        isSprinting,
+        isAds: sim.isAds,
+      });
+      const lookAhead = computeCameraLookAhead(sim.player.facing, { x: vx, z: vz }, {
+        aimLeadDistance: sim.isAds ? 3.6 : 2.2,
+        velocityLeadFactor: isSprinting ? 0.38 : 0.30,
+        maxOffset: 4.8,
+      });
+
+      desiredX = playerPos.x + lookAhead.offsetX;
+      desiredY = playerPos.y + kineticHeight;
+      desiredZ = playerPos.z + lookAhead.offsetZ + 6.46;
+      targetX = playerPos.x + lookAhead.offsetX;
       targetY = playerPos.y + 1.0;
-      targetZ = playerPos.z;
+      targetZ = playerPos.z + lookAhead.offsetZ;
     }
 
     baseCameraPos.current.x = THREE.MathUtils.lerp(
@@ -184,12 +208,31 @@ const CameraController: React.FC<{
       z: baseCameraTarget.current.z,
     };
 
-    // Apply recoil impulse strictly as transient render offset
+    // Process incoming damage camera trauma impulse
+    if (sim.lastPlayerDamageTick > 0 && sim.lastPlayerDamageTick !== lastDamageTickRef.current) {
+      lastDamageTickRef.current = sim.lastPlayerDamageTick;
+      damageTraumaRef.current = {
+        angleDeg: sim.lastDamageDirectionDeg ?? 0,
+        amount: sim.lastPlayerDamageAmount,
+        timestamp: performance.now(),
+      };
+    }
+
+    const traumaAgeSec = damageTraumaRef.current.timestamp > 0
+      ? (performance.now() - damageTraumaRef.current.timestamp) / 1000
+      : 999;
+    const traumaOffset = computeTraumaImpulse(
+      damageTraumaRef.current.angleDeg,
+      damageTraumaRef.current.amount,
+      traumaAgeSec
+    );
+
+    // Apply recoil impulse and trauma displacement strictly as transient render offset
     const [recoilX, recoilY] = recoilImpulseRef.current;
     camera.position.set(
-      baseCameraPos.current.x + recoilX,
-      baseCameraPos.current.y + recoilY,
-      baseCameraPos.current.z
+      baseCameraPos.current.x + recoilX + traumaOffset.x,
+      baseCameraPos.current.y + recoilY + traumaOffset.y,
+      baseCameraPos.current.z + traumaOffset.z
     );
     camera.lookAt(
       baseCameraTarget.current.x,
