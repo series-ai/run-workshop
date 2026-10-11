@@ -1,0 +1,6122 @@
+{
+  "purpose": "Permanent R41 coverage census and baseline. No failing towers on the current tree. No geometry mutation.",
+  "rule": {
+    "version": "r41-coverage-v1",
+    "pillowDecoderVersion": "12.2.0",
+    "targetSize": [
+      128,
+      128
+    ],
+    "crop": "Tight bounding box containing all pixels with minRGB >= 240",
+    "scaling": "Isotropic preserving aspect ratio: if crop_h >= crop_w then (new_h=128, new_w=max(1, round(crop_w * 128.0 / crop_h))) else (new_w=128, new_h=max(1, round(crop_h * 128.0 / crop_w))) with Python round (ties-to-even)",
+    "sampling": "Exact integer nearest center lookup: ((2 * np.arange(out_size, dtype=np.int64) + 1) * in_size) // (2 * out_size) clipped to in_size - 1 applied directly to binary tight crop array",
+    "padding": "Center padding with pad_top = (128 - new_h) // 2, pad_left = (128 - new_w) // 2",
+    "bitpacking": "Row-major numpy.packbits(square_mask, bitorder='big')",
+    "hash": "SHA-256 of packed 2048 bytes"
+  },
+  "seed": 424242,
+  "provenance": {
+    "HEAD": "88ddec274acf2f9e807c9e6cf56689bd39ecab02",
+    "originMain": "d46759fad4860cdfa5ddcefb6dbbdd7fbf28c9db",
+    "sharedBase": "7aae399f98a204113c1691c4f0994b0705ffb088",
+    "originMainNewSkyriverChanges": [],
+    "records": [
+      {
+        "path": "games/skyriver-demo/src/data/browser/city-snapshot-424242.binding.json",
+        "sha256": "fb6ca395ecb1fe7a501e1ba1db999862597a7728922039fb70cdc856d92c343c",
+        "bytes": 566
+      },
+      {
+        "path": "games/skyriver-demo/src/data/browser/city-snapshot-424242.json.gz",
+        "sha256": "bb01586635fe0319078fed37a632188251eeac1ee0629a752fddd40b6757d734",
+        "bytes": 1962250
+      },
+      {
+        "path": "games/skyriver-demo/src/data/browser/source-manifest.json",
+        "sha256": "16e6a793ef6097a0aa893d0509c26349a4c8b1304c91219eeb42794899d69450",
+        "bytes": 8626
+      },
+      {
+        "path": "games/skyriver-demo/src/data/node/city-snapshot-424242.binding.json",
+        "sha256": "c88aeede29fff5dd9bbef7d6906382d79acb2806497bd329c29a7f740ddda1db",
+        "bytes": 563
+      },
+      {
+        "path": "games/skyriver-demo/src/data/node/city-snapshot-424242.json.gz",
+        "sha256": "c48f324d8340bf9805263571d9445a4450089fd74f6a3c8842075bd2b81c19c8",
+        "bytes": 1962477
+      },
+      {
+        "path": "games/skyriver-demo/src/data/node/source-manifest.json",
+        "sha256": "16e6a793ef6097a0aa893d0509c26349a4c8b1304c91219eeb42794899d69450",
+        "bytes": 8626
+      },
+      {
+        "path": "games/skyriver-demo/src/main.ts",
+        "sha256": "4547c10197169c5ee2f0ea58ef20845d92879587821c5c196a8665b3e4b465ea",
+        "bytes": 51251
+      },
+      {
+        "path": "games/skyriver-demo/src/render/atmosphere.ts",
+        "sha256": "ac8c84620e462a69621724a80fd372f4ea96f7e27dbbf0bc5b9e05e28a1303ce",
+        "bytes": 70414
+      },
+      {
+        "path": "games/skyriver-demo/src/render/blueNoiseTile.ts",
+        "sha256": "8061e7b946bbe8935d781ddaf541de6c127932c8153547c81c260b168c815653",
+        "bytes": 20640
+      },
+      {
+        "path": "games/skyriver-demo/src/render/cameraRig.ts",
+        "sha256": "264ec00a7ec6b861a93ed42973162cd7eda0028f4e5eaacc136292402681e6dc",
+        "bytes": 14983
+      },
+      {
+        "path": "games/skyriver-demo/src/render/canyonWarp.ts",
+        "sha256": "3c4bbdf99588244d3681d2ce438d5b19b03395769c0e624af5f632e700b55670",
+        "bytes": 9663
+      },
+      {
+        "path": "games/skyriver-demo/src/render/city.ts",
+        "sha256": "9d977d34f7c4d5560030445d91e55a694cef06837da647a2c2c8196ac1b12c0e",
+        "bytes": 639148
+      },
+      {
+        "path": "games/skyriver-demo/src/render/citySnapshotCodec.ts",
+        "sha256": "3f09221a51b0f581b50319c24e2ceae67c72db1880ff7f352eb72df44919fced",
+        "bytes": 59394
+      },
+      {
+        "path": "games/skyriver-demo/src/render/citySnapshotLoader.ts",
+        "sha256": "f8def8de82345e23fcbb58a6d587026c7b782b4d59198b322d448789407bf6ae",
+        "bytes": 14812
+      },
+      {
+        "path": "games/skyriver-demo/src/render/citySnapshotSchema.ts",
+        "sha256": "d1308db97c4e402dd5760bdf7aff61d42bc44907f67e589b4177636276fc760d",
+        "bytes": 53609
+      },
+      {
+        "path": "games/skyriver-demo/src/render/clearance.ts",
+        "sha256": "478e10ab9146b8e3de2548f35c1ff5b6efeb128c7528c76e1debd2e568882708",
+        "bytes": 7485
+      },
+      {
+        "path": "games/skyriver-demo/src/render/depthFade.ts",
+        "sha256": "35fde2069ec46571552ed1d7cf6bcae96700256c130aefd83dc674d3471fdeff",
+        "bytes": 25550
+      },
+      {
+        "path": "games/skyriver-demo/src/render/districts.ts",
+        "sha256": "3a6e7adbd37fa9e9c0f11f03e6e7b88aee84e93738db3eb35dcdd9e480c6d667",
+        "bytes": 45674
+      },
+      {
+        "path": "games/skyriver-demo/src/render/facadeGeometry.ts",
+        "sha256": "de2f3defb6aa0d3b9fc5c3a3416c72af9c307101b9937da9b8e5291f56808664",
+        "bytes": 8993
+      },
+      {
+        "path": "games/skyriver-demo/src/render/flightPresentation.ts",
+        "sha256": "4d480c22653a9d81ea8d3dd3861ddfc2948bc284b5541baf32c3b1f67b95b995",
+        "bytes": 33932
+      },
+      {
+        "path": "games/skyriver-demo/src/render/impostorAtlas.ts",
+        "sha256": "151f059c6e177203a79b2fc45f578e2cbafd5f2306cbedd51d4072296002c3c6",
+        "bytes": 6213
+      },
+      {
+        "path": "games/skyriver-demo/src/render/interiorAtlas.ts",
+        "sha256": "7c3812d93ee193efedd727c22b31293f773fb366e9eaf30e6c64122522b08e8a",
+        "bytes": 21868
+      },
+      {
+        "path": "games/skyriver-demo/src/render/interiorResponse.ts",
+        "sha256": "104203bb157f48f731735956ce6eaffe738438d4df52ed8cb023340a69e66f8c",
+        "bytes": 5533
+      },
+      {
+        "path": "games/skyriver-demo/src/render/lightHandover.ts",
+        "sha256": "11aa5f1c80a389292ea1f4f460c5fe4edb5c4eebb53de24ff0ec096edc040e9e",
+        "bytes": 9385
+      },
+      {
+        "path": "games/skyriver-demo/src/render/presentationLayout.ts",
+        "sha256": "3eb697820b1a5e6cfb1d5d064cbb8003c67e8213819ea3062a4a01bfe75c7287",
+        "bytes": 9828
+      },
+      {
+        "path": "games/skyriver-demo/src/render/renderLightSet.ts",
+        "sha256": "ff6e267c08b8f43e646102a3e35766eec5794879515769c544f64a1331346ea7",
+        "bytes": 37345
+      },
+      {
+        "path": "games/skyriver-demo/src/render/routeProfile.ts",
+        "sha256": "b38925d9c74da62980b473b77b7002f6e23fe02a8e7f79d30e690e8407e11e2f",
+        "bytes": 3219
+      },
+      {
+        "path": "games/skyriver-demo/src/render/scene.ts",
+        "sha256": "f3480c4460c0910b703286206b36827a32494074ffe02934b5d90258e9bcc49d",
+        "bytes": 87809
+      },
+      {
+        "path": "games/skyriver-demo/src/render/shuttle.ts",
+        "sha256": "d6bcbb9829e5a5d7e88d7bdad313a3f5e4840c496b315e7817e72dd49c05d711",
+        "bytes": 47308
+      },
+      {
+        "path": "games/skyriver-demo/src/render/signAtlas.ts",
+        "sha256": "b1d1d18762866c848d54d6ec86b8ecaf39fddc627e15185eecc7b1a7867aed63",
+        "bytes": 7861
+      },
+      {
+        "path": "games/skyriver-demo/src/render/smog.ts",
+        "sha256": "49c9d95f62d7c022c8458505a0015e00b454531a0b4d8b0d5c74926b39293ff3",
+        "bytes": 20774
+      },
+      {
+        "path": "games/skyriver-demo/src/render/stageRoles.ts",
+        "sha256": "b5d3ccda6b7ca28e1a5c1fd2e6501d01808d1190d130f75e305dfd33152a0286",
+        "bytes": 17840
+      },
+      {
+        "path": "games/skyriver-demo/src/render/structureMaterial.ts",
+        "sha256": "caec1b77a1b17870f235ca1c66df621c8b91ab160e915568f068cbbfc46b9a7e",
+        "bytes": 8813
+      },
+      {
+        "path": "games/skyriver-demo/src/render/structuredLight.ts",
+        "sha256": "d6b38818f9d6d89c21bfb329d6374fea60a04535169a831c8d61f02cd49c89f9",
+        "bytes": 1664
+      },
+      {
+        "path": "games/skyriver-demo/src/render/threeMipBloom.ts",
+        "sha256": "b977177d9bad16f44455c26cda06bbf4b0db8852330e8a3b93ebebe6e785450d",
+        "bytes": 18473
+      },
+      {
+        "path": "games/skyriver-demo/src/render/traffic.ts",
+        "sha256": "5f882ce28a1c9af87ba789441bd6688b29a6bf67c0734a4138a8ec65296900db",
+        "bytes": 124503
+      },
+      {
+        "path": "games/skyriver-demo/src/render/trafficAppearance.ts",
+        "sha256": "1058fb8b56f48476feecb0d0a22e2d117dd805344f4acfbe768c225317179325",
+        "bytes": 18365
+      },
+      {
+        "path": "games/skyriver-demo/src/render/trafficAppearanceModel.ts",
+        "sha256": "ca75d48896ec5d977394c31c860fe24ecdcb97a21c63cf3678c407fe08da67c8",
+        "bytes": 62406
+      },
+      {
+        "path": "games/skyriver-demo/src/render/trafficStreams.ts",
+        "sha256": "93de633f864b6103b77bd7f34ab988fa797a60fdc378605794f45e777602177a",
+        "bytes": 65453
+      },
+      {
+        "path": "games/skyriver-demo/src/render/trafficTypes.ts",
+        "sha256": "fa2be8acd67c95d91f77e0306f0fbf0e53615ba84536278b52444d23a3454580",
+        "bytes": 6976
+      },
+      {
+        "path": "games/skyriver-demo/src/render/volumeFog.ts",
+        "sha256": "6f4a0a6c0da863fd6f616576f91e82bdda17e35b57224a11681ba3691dfc5d32",
+        "bytes": 78036
+      },
+      {
+        "path": "games/skyriver-demo/src/render/windowPalette.ts",
+        "sha256": "de8d4b9af88795f862f07bf0f6386873ceb7bda0690a448428078f288342ad03",
+        "bytes": 8728
+      },
+      {
+        "path": "games/skyriver-demo/src/sim/derive.ts",
+        "sha256": "d851f1a95f766bc88df9484a4148498f23b9dff1197988f3b0f273f3bda72ded",
+        "bytes": 9183
+      },
+      {
+        "path": "games/skyriver-demo/src/sim/identity.ts",
+        "sha256": "a8b88d907eeaaf6b9f545166f23180a810e90db0c8dad0b22df5e5716d79407d",
+        "bytes": 8176
+      },
+      {
+        "path": "games/skyriver-demo/src/sim/input.ts",
+        "sha256": "d6e11404707d6535fe1581b077ad251b771fe56408976fae9a381283dcdc7b8a",
+        "bytes": 7373
+      },
+      {
+        "path": "games/skyriver-demo/src/sim/module-manifest.ts",
+        "sha256": "fa67e4deb40e0db3f11ec84fa39011b777f9f9857e842bf7883123c214e26d71",
+        "bytes": 2080
+      },
+      {
+        "path": "games/skyriver-demo/src/sim/runtime.ts",
+        "sha256": "dd7ba63859ab81016ca5894db6ff73cea9cad76db1f491f53d665a57bbe10f0a",
+        "bytes": 13169
+      },
+      {
+        "path": "games/skyriver-demo/src/sim/session.ts",
+        "sha256": "d270ab8fd1abb3bf5cab8c39362d74890fad1cc364939a14f1bdb3cb005a77c2",
+        "bytes": 19031
+      },
+      {
+        "path": "games/skyriver-demo/src/sim/systems.ts",
+        "sha256": "147eb556eb81d38ba4e03443029a25ee3e3d573ce7e58bbcbcffd7c268b6dc48",
+        "bytes": 19365
+      },
+      {
+        "path": "games/skyriver-demo/src/ui/hud.ts",
+        "sha256": "b950651792bd84bad8a57b66e0498ce47c895a0503dd3f20d3f9a396cf09f66c",
+        "bytes": 17211
+      },
+      {
+        "path": "games/skyriver-demo/dist/assets/_rundot_bootstrap.0fd54b56.js",
+        "sha256": "0fd54b564e5781ff7304e4cc5247bd5acc53b164ae614473986b7e175d007f6b",
+        "bytes": 4653
+      },
+      {
+        "path": "games/skyriver-demo/dist/assets/city-snapshot-424242.json-B0YPMuMW.gz",
+        "sha256": "bb01586635fe0319078fed37a632188251eeac1ee0629a752fddd40b6757d734",
+        "bytes": 1962250
+      },
+      {
+        "path": "games/skyriver-demo/dist/assets/index-B2OmhGW4.js",
+        "sha256": "e5bf390b9185268b13f7685edc2ee646d52ca921c610000a06fec334a0ff6cdb",
+        "bytes": 854401
+      },
+      {
+        "path": "games/skyriver-demo/dist/index.html",
+        "sha256": "0482a5b84600897aa70dca9f7e27e2a0b5ca60f3585d695a8b807f95deed5ba9",
+        "bytes": 895
+      },
+      {
+        "path": "games/skyriver-demo/dist/rundot-game-libraries.manifest.json",
+        "sha256": "fd109ac6f116087d635eff3e76f91f4bb47c73b34405d3dd3f6e82c1234ac6a2",
+        "bytes": 487
+      },
+      {
+        "path": "games/skyriver-demo/dist/thumbnail.jpg",
+        "sha256": "38230b2051fb9fe3d733172c938f8c0372c2fbe9bc0b094bd7342cf6737c4c80",
+        "bytes": 165260
+      }
+    ]
+  },
+  "regimeNote": "Masks use the actual browser layout. The Node layout is saved separately. Seeded presentation heights differ across these runtimes for 30 rows. Identity positions and source dimensions remain explicitly bound.",
+  "selectionNote": "The historical 137 IDs were not preserved. This fixed sample was selected before grading. The full 211 census covers every current tower.",
+  "selected137": {
+    "rule": "floor(k * 211 / 137) for k in 0..136",
+    "count": 137,
+    "indices": [
+      0,
+      1,
+      3,
+      4,
+      6,
+      7,
+      9,
+      10,
+      12,
+      13,
+      15,
+      16,
+      18,
+      20,
+      21,
+      23,
+      24,
+      26,
+      27,
+      29,
+      30,
+      32,
+      33,
+      35,
+      36,
+      38,
+      40,
+      41,
+      43,
+      44,
+      46,
+      47,
+      49,
+      50,
+      52,
+      53,
+      55,
+      56,
+      58,
+      60,
+      61,
+      63,
+      64,
+      66,
+      67,
+      69,
+      70,
+      72,
+      73,
+      75,
+      77,
+      78,
+      80,
+      81,
+      83,
+      84,
+      86,
+      87,
+      89,
+      90,
+      92,
+      93,
+      95,
+      97,
+      98,
+      100,
+      101,
+      103,
+      104,
+      106,
+      107,
+      109,
+      110,
+      112,
+      113,
+      115,
+      117,
+      118,
+      120,
+      121,
+      123,
+      124,
+      126,
+      127,
+      129,
+      130,
+      132,
+      133,
+      135,
+      137,
+      138,
+      140,
+      141,
+      143,
+      144,
+      146,
+      147,
+      149,
+      150,
+      152,
+      154,
+      155,
+      157,
+      158,
+      160,
+      161,
+      163,
+      164,
+      166,
+      167,
+      169,
+      170,
+      172,
+      174,
+      175,
+      177,
+      178,
+      180,
+      181,
+      183,
+      184,
+      186,
+      187,
+      189,
+      190,
+      192,
+      194,
+      195,
+      197,
+      198,
+      200,
+      201,
+      203,
+      204,
+      206,
+      207,
+      209
+    ],
+    "ids": [
+      "tower-0-r41",
+      "tower-1-r41",
+      "tower-3-r41",
+      "tower-4-r41",
+      "tower-6-r41",
+      "tower-7-r41",
+      "tower-9-r41",
+      "tower-10-r41",
+      "tower-12-r41",
+      "tower-13-r41",
+      "tower-15-r41",
+      "tower-16-r41",
+      "tower-18-r41",
+      "tower-20-r41",
+      "tower-21-r41",
+      "tower-23-r41",
+      "tower-24-r41",
+      "tower-26-r41",
+      "tower-27-r41",
+      "tower-29-r41",
+      "tower-30-r41",
+      "tower-32-r41",
+      "tower-33-r41",
+      "tower-35-r41",
+      "tower-36-r41",
+      "tower-38-r41",
+      "tower-40-r41",
+      "tower-41-r41",
+      "tower-43-r41",
+      "tower-44-r41",
+      "tower-46-r41",
+      "tower-47-r41",
+      "tower-49-r41",
+      "tower-50-r41",
+      "tower-52-r41",
+      "tower-53-r41",
+      "tower-55-r41",
+      "tower-56-r41",
+      "tower-58-r41",
+      "tower-60-r41",
+      "tower-61-r41",
+      "tower-63-r41",
+      "tower-64-r41",
+      "tower-66-r41",
+      "tower-67-r41",
+      "tower-69-r41",
+      "tower-70-r41",
+      "tower-72-r41",
+      "tower-73-r41",
+      "tower-75-r41",
+      "tower-77-r41",
+      "tower-78-r41",
+      "tower-80-r41",
+      "tower-81-r41",
+      "tower-83-r41",
+      "tower-84-r41",
+      "tower-86-r41",
+      "tower-87-r41",
+      "tower-89-r41",
+      "tower-90-r41",
+      "tower-92-r41",
+      "tower-93-r41",
+      "tower-95-r41",
+      "tower-97-r41",
+      "tower-98-r41",
+      "tower-100-r41",
+      "tower-101-r41",
+      "tower-103-r41",
+      "tower-104-r41",
+      "tower-106-r41",
+      "tower-107-r41",
+      "tower-109-r41",
+      "tower-110-r41",
+      "tower-112-r41",
+      "tower-113-r41",
+      "tower-115-r41",
+      "tower-117-r41",
+      "tower-118-r41",
+      "tower-120-r41",
+      "tower-121-r41",
+      "tower-123-r41",
+      "tower-124-r41",
+      "tower-126-r41",
+      "tower-127-r41",
+      "tower-129-r41",
+      "tower-130-r41",
+      "tower-132-r41",
+      "tower-133-r41",
+      "tower-135-r41",
+      "tower-137-r41",
+      "tower-138-r41",
+      "tower-140-r41",
+      "tower-141-r41",
+      "tower-143-r41",
+      "tower-144-r41",
+      "tower-146-r41",
+      "tower-147-r41",
+      "tower-149-r41",
+      "tower-150-r41",
+      "tower-152-r41",
+      "tower-154-r41",
+      "tower-155-r41",
+      "tower-157-r41",
+      "tower-158-r41",
+      "tower-160-r41",
+      "tower-161-r41",
+      "tower-163-r41",
+      "tower-164-r41",
+      "tower-166-r41",
+      "tower-167-r41",
+      "tower-169-r41",
+      "tower-170-r41",
+      "tower-172-r41",
+      "tower-174-r41",
+      "tower-175-r41",
+      "tower-177-r41",
+      "tower-178-r41",
+      "tower-180-r41",
+      "tower-181-r41",
+      "tower-183-r41",
+      "tower-184-r41",
+      "tower-186-r41",
+      "tower-187-r41",
+      "tower-189-r41",
+      "tower-190-r41",
+      "tower-192-r41",
+      "tower-194-r41",
+      "tower-195-r41",
+      "tower-197-r41",
+      "tower-198-r41",
+      "tower-200-r41",
+      "tower-201-r41",
+      "tower-203-r41",
+      "tower-204-r41",
+      "tower-206-r41",
+      "tower-207-r41",
+      "tower-209-r41"
+    ]
+  },
+  "baselineFailedIds": [],
+  "baselineResult": {
+    "census211": {
+      "totalCount": 211,
+      "uniqueFingerprints": 211,
+      "duplicateGroupCount": 0,
+      "duplicateCount": 0,
+      "duplicateGroups": [],
+      "failedIds": []
+    },
+    "selected137": {
+      "selectionRule": "floor(k * 211 / 137) for k in 0..136",
+      "totalCount": 137,
+      "uniqueFingerprints": 137,
+      "duplicateGroupCount": 0,
+      "duplicateCount": 0,
+      "duplicateGroups": [],
+      "failedIds": []
+    },
+    "diagnostics": {
+      "nearestDistinctPairIoU": {
+        "towerA": "tower-139-r41",
+        "towerB": "tower-164-r41",
+        "iou": 0.8771186440677966,
+        "sameFingerprint": false
+      },
+      "overallMaxPairIoU": {
+        "towerA": "tower-139-r41",
+        "towerB": "tower-164-r41",
+        "iou": 0.8771186440677966,
+        "sameFingerprint": false
+      }
+    }
+  },
+  "repeatResult": {
+    "all211MasksByteIdentical": true,
+    "changedCoveragePixels": 0
+  },
+  "archive": {
+    "file": "tower-cohort-baseline.zip",
+    "sha256": "cbd4204ae5813341dd8004f2a9735d38f462b6f60a704854ee45aa25a893eac3",
+    "bytes": 4068230,
+    "contents": "Complete baseline captures.json, 211 mask PNGs, fixed cameras, raw instance bytes, source bindings, baseline and repeat metrics."
+  },
+  "rows": [
+    {
+      "id": "tower-0-r41",
+      "seed": 424242,
+      "towerIndex": 0,
+      "key": "-630.00:-6400.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -6400,
+        "width": 216.21881444526662,
+        "depth": 227.66927183041076,
+        "height": 3476.886089061072,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -6400,
+        "width": 216.21881444526662,
+        "depth": 227.66927183041076,
+        "height": 3476.886089061072,
+        "tint": 10133668
+      },
+      "owner": 0.21025606989860535,
+      "baselineFingerprint": "3aac7f482d85af16cd17191416ce001e81db13e8c4a52d7935bd372f03f15650",
+      "maskFile": "tower-0-r41-mask.png",
+      "maskSha256": "1b27297a79f8b7b5c8391c2c9b1347c01ad82e700dcac5d9ff87d4301e059651"
+    },
+    {
+      "id": "tower-1-r41",
+      "seed": 424242,
+      "towerIndex": 1,
+      "key": "-950.00:-6400.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -6400,
+        "width": 187.73482595257607,
+        "depth": 330.7099975431767,
+        "height": 1409.6468425668231,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -6400,
+        "width": 187.73482595257607,
+        "depth": 330.7099975431767,
+        "height": 1409.6468425668231,
+        "tint": 5790816
+      },
+      "owner": 0.5248736143112183,
+      "baselineFingerprint": "cceec96274721c38a06b95b63fdebb0cbbe2e28f7075f298f00a85e6e035b32f",
+      "maskFile": "tower-1-r41-mask.png",
+      "maskSha256": "ca7c085655b92271bedfce8ca7c611415f19cb2e0fe4acbf62ddb2f5655a1972"
+    },
+    {
+      "id": "tower-2-r41",
+      "seed": 424242,
+      "towerIndex": 2,
+      "key": "-1270.00:-6400.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -6400,
+        "width": 116.55095192915178,
+        "depth": 148.30292330033382,
+        "height": 1760.3173987249713,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -6400,
+        "width": 116.55095192915178,
+        "depth": 148.30292330033382,
+        "height": 1760.3173987249713,
+        "tint": 5790816
+      },
+      "owner": 0.985292375087738,
+      "baselineFingerprint": "0a5f10ac03fc0769ec11106848b7afc898989826fc46ec1505ef22cc79e17870",
+      "maskFile": "tower-2-r41-mask.png",
+      "maskSha256": "3eff0082609ce47bb7bbf45a76b030fb91eac7288332dfc12d6fa1accc093a36"
+    },
+    {
+      "id": "tower-3-r41",
+      "seed": 424242,
+      "towerIndex": 3,
+      "key": "-1590.00:-6400.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": -6400,
+        "width": 121.96002671536117,
+        "depth": 240.2657891277391,
+        "height": 2530.834469309863,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": -6400,
+        "width": 121.96002671536117,
+        "depth": 240.2657891277391,
+        "height": 2530.834469309863,
+        "tint": 8027520
+      },
+      "owner": 0.39680027961730957,
+      "baselineFingerprint": "727f4c0a813bfe8450c88c4eecd81f1f6ec4dc36de41bde9dd458c582e34145d",
+      "maskFile": "tower-3-r41-mask.png",
+      "maskSha256": "452488a66625f4655e01a0a47351be91088ae7c941af1192a21f008fd3ed405c"
+    },
+    {
+      "id": "tower-4-r41",
+      "seed": 424242,
+      "towerIndex": 4,
+      "key": "630.00:-6400.00",
+      "sourceTower": {
+        "x": 630,
+        "z": -6400,
+        "width": 120.01523161094956,
+        "depth": 299.1037977641368,
+        "height": 3202.541095869201,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": -6400,
+        "width": 120.01523161094956,
+        "depth": 299.1037977641368,
+        "height": 3202.541095869201,
+        "tint": 6909297
+      },
+      "owner": 0.14784730970859528,
+      "baselineFingerprint": "b9386e9ca9d010df017c23f1bc2020c7a132ed98648c464371a17537ad33e729",
+      "maskFile": "tower-4-r41-mask.png",
+      "maskSha256": "b72f28166cc2dbf16c9a81e821452ee9c5ad937a078d3a0addeb5eddfcad255d"
+    },
+    {
+      "id": "tower-5-r41",
+      "seed": 424242,
+      "towerIndex": 5,
+      "key": "950.00:-6400.00",
+      "sourceTower": {
+        "x": 950,
+        "z": -6400,
+        "width": 133.11183947058746,
+        "depth": 68.82445659109084,
+        "height": 4971.9123496012635,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": -6400,
+        "width": 133.11183947058746,
+        "depth": 68.82445659109084,
+        "height": 4970.409359621296,
+        "tint": 6909297
+      },
+      "owner": 0.1586565524339676,
+      "baselineFingerprint": "290802fb81015b5336ecde02bbc4394f4303f504cf40397a5d69939ff9c39cb4",
+      "maskFile": "tower-5-r41-mask.png",
+      "maskSha256": "57fae16af4f99ed6d6f496ee2960db01932241f90e87476062a96832979ec57f"
+    },
+    {
+      "id": "tower-6-r41",
+      "seed": 424242,
+      "towerIndex": 6,
+      "key": "1270.00:-6400.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": -6400,
+        "width": 167.52513836102295,
+        "depth": 137.32099653667595,
+        "height": 2603.0824735976184,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": -6400,
+        "width": 167.52513836102295,
+        "depth": 137.32099653667595,
+        "height": 2603.0824735987408,
+        "tint": 6909297
+      },
+      "owner": 0.8045927882194519,
+      "baselineFingerprint": "af6b2c6a3d1fa8e3ea226a903be67464b3f25e05a3bad241713e7b23cd59644d",
+      "maskFile": "tower-6-r41-mask.png",
+      "maskSha256": "70c96211dc9fef6283b46df04ed2bfc0f7d3d8a892c1297b689a60b2c044ac08"
+    },
+    {
+      "id": "tower-7-r41",
+      "seed": 424242,
+      "towerIndex": 7,
+      "key": "-630.00:-6080.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -6080,
+        "width": 170.240466114186,
+        "depth": 134.3277542763002,
+        "height": 2993.250953513458,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -6080,
+        "width": 170.240466114186,
+        "depth": 134.3277542763002,
+        "height": 2993.250953513458,
+        "tint": 6909297
+      },
+      "owner": 0.9245783090591431,
+      "baselineFingerprint": "0122b1a0d94c845937d567169edff3b0a1c9edc9532427d45b39e0b6a2b121d8",
+      "maskFile": "tower-7-r41-mask.png",
+      "maskSha256": "499176cb61bc3cb6230a77989307eea1304f3c27333c73fa4fe18f51b1304933"
+    },
+    {
+      "id": "tower-8-r41",
+      "seed": 424242,
+      "towerIndex": 8,
+      "key": "-950.00:-6080.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -6080,
+        "width": 184.05868076933984,
+        "depth": 272.2454739269928,
+        "height": 3518.264797523235,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -6080,
+        "width": 184.05868076933984,
+        "depth": 272.2454739269928,
+        "height": 3518.21355454351,
+        "tint": 10133668
+      },
+      "owner": 0.39603108167648315,
+      "baselineFingerprint": "2ed34768dad63d7f3c0dd2575ccc942fd0e89710f36a9d2f2cc7b5e26a97fddc",
+      "maskFile": "tower-8-r41-mask.png",
+      "maskSha256": "02337cba9b82ee53c0996ef011d06ce350e6c4452e54f4d2fbaaa84959d66b81"
+    },
+    {
+      "id": "tower-9-r41",
+      "seed": 424242,
+      "towerIndex": 9,
+      "key": "-1270.00:-6080.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -6080,
+        "width": 39.45226866358533,
+        "depth": 215.0664491330998,
+        "height": 3573.8981783074632,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -6080,
+        "width": 39.45226866358533,
+        "depth": 215.0664491330998,
+        "height": 3573.8981783074632,
+        "tint": 5790816
+      },
+      "owner": 0.4677426517009735,
+      "baselineFingerprint": "e7caa3e7270c374c2a641b2de9fe09888dd31ba697b33eff23f91252f6dbbe3b",
+      "maskFile": "tower-9-r41-mask.png",
+      "maskSha256": "57fdf4c83eab6fe8e1f93cc30dffc4aa5058a0d45d64f24c062ebb4dd5d05666"
+    },
+    {
+      "id": "tower-10-r41",
+      "seed": 424242,
+      "towerIndex": 10,
+      "key": "-1590.00:-6080.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": -6080,
+        "width": 129.2401331078363,
+        "depth": 128.6564521367279,
+        "height": 1746.0731073549853,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": -6080,
+        "width": 129.2401331078363,
+        "depth": 128.6564521367279,
+        "height": 1746.0731073549853,
+        "tint": 8027520
+      },
+      "owner": 0.35911276936531067,
+      "baselineFingerprint": "0fbc39c3b5e51e040a1837380e964037a697f6fbdda3dcebd5cc110a1f6f1d71",
+      "maskFile": "tower-10-r41-mask.png",
+      "maskSha256": "4374d24a13ed2d999fbcc0144842f7285bc8650726d76959240e449f136d4682"
+    },
+    {
+      "id": "tower-11-r41",
+      "seed": 424242,
+      "towerIndex": 11,
+      "key": "-630.00:-5760.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -5760,
+        "width": 265.651158362499,
+        "depth": 93.96424149921627,
+        "height": 1880.7893258408315,
+        "tint": 9321059
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -5760,
+        "width": 265.651158362499,
+        "depth": 93.96424149921627,
+        "height": 1880.7893258408315,
+        "tint": 9321059
+      },
+      "owner": 0.06884215027093887,
+      "baselineFingerprint": "6462c211d3eac8520c673a76e88af51c0bae711021491e05d92bb3aa68fcf63c",
+      "maskFile": "tower-11-r41-mask.png",
+      "maskSha256": "748b3340039b88a4757191393711f23176e4ea9e8f368ece6cbc2509b82558fa"
+    },
+    {
+      "id": "tower-12-r41",
+      "seed": 424242,
+      "towerIndex": 12,
+      "key": "-950.00:-5760.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -5760,
+        "width": 219.03505907482034,
+        "depth": 168.32997890594774,
+        "height": 1194.8076841322045,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -5760,
+        "width": 219.03505907482034,
+        "depth": 168.32997890594774,
+        "height": 1194.8076841322045,
+        "tint": 9277329
+      },
+      "owner": 0.38630080223083496,
+      "baselineFingerprint": "8700a4f772ff2ff9f5b3062f4a19695e7666f4c539b2bbad22151144c46154f3",
+      "maskFile": "tower-12-r41-mask.png",
+      "maskSha256": "3444e6318d96af5d858441119f0c536e314e9ff0cb7909fb9956d8ea630255c4"
+    },
+    {
+      "id": "tower-13-r41",
+      "seed": 424242,
+      "towerIndex": 13,
+      "key": "-1270.00:-5760.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -5760,
+        "width": 157.52014620916015,
+        "depth": 118.47732756121133,
+        "height": 2793.373568496394,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -5760,
+        "width": 157.52014620916015,
+        "depth": 118.47732756121133,
+        "height": 2793.373568496394,
+        "tint": 6909297
+      },
+      "owner": 0.012434106320142746,
+      "baselineFingerprint": "9d14c2ac0af987cddea6f9b009c8890ef0b764bb146cc03b4630ffa4a40fc8e7",
+      "maskFile": "tower-13-r41-mask.png",
+      "maskSha256": "e476ccc5195ca1038f223e952355e01c2331c1c23e8b164fc3ced6612aa24a5c"
+    },
+    {
+      "id": "tower-14-r41",
+      "seed": 424242,
+      "towerIndex": 14,
+      "key": "-1590.00:-5760.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": -5760,
+        "width": 74.75159352044682,
+        "depth": 332.9790884216568,
+        "height": 2546.552093038496,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": -5760,
+        "width": 74.75159352044682,
+        "depth": 332.9790884216568,
+        "height": 2546.552093038496,
+        "tint": 5790816
+      },
+      "owner": 0.5401421189308167,
+      "baselineFingerprint": "e1458c2ca8424a5b7b65714aa0d8c8bb405e41c6735a2f15def93265c0899ab3",
+      "maskFile": "tower-14-r41-mask.png",
+      "maskSha256": "4c351cdaa6656db076406f6b187011fca167f12ac7457089ccaca7c5d655c893"
+    },
+    {
+      "id": "tower-15-r41",
+      "seed": 424242,
+      "towerIndex": 15,
+      "key": "-630.00:-5440.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -5440,
+        "width": 184.29459278653667,
+        "depth": 99.34435258017494,
+        "height": 4025.453761978804,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -5440,
+        "width": 184.2945927863184,
+        "depth": 99.33672145569679,
+        "height": 4025.473117310173,
+        "tint": 8027520
+      },
+      "owner": 0.792155385017395,
+      "baselineFingerprint": "1219484af18b36e138f7824418ea8f6d20b6ada1f67245d6dc0db700101d399d",
+      "maskFile": "tower-15-r41-mask.png",
+      "maskSha256": "67cfc65ee0485169b1d3c3c3301c159ee9769a0c45029cbfd4f41b89298260a7"
+    },
+    {
+      "id": "tower-16-r41",
+      "seed": 424242,
+      "towerIndex": 16,
+      "key": "-950.00:-5440.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -5440,
+        "width": 160.51851425579224,
+        "depth": 91.10992495664318,
+        "height": 3176.6700347213928,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -5440,
+        "width": 160.51851425579224,
+        "depth": 91.10992495664318,
+        "height": 3176.6700347213928,
+        "tint": 9277329
+      },
+      "owner": 0.6082844138145447,
+      "baselineFingerprint": "0ac05a6ff2013ec26fac393d34574329e1372abdb50d85be029185c5245306d2",
+      "maskFile": "tower-16-r41-mask.png",
+      "maskSha256": "3ae53af7827126a573e33c8dd149b82e07472c067a8e5f9bcf9bae83ad1fbb64"
+    },
+    {
+      "id": "tower-17-r41",
+      "seed": 424242,
+      "towerIndex": 17,
+      "key": "-1270.00:-5440.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -5440,
+        "width": 306.41607422197023,
+        "depth": 54.42462273462313,
+        "height": 3471.4892815769745,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -5440,
+        "width": 306.41607422197023,
+        "depth": 54.42462273462313,
+        "height": 3471.4892815769745,
+        "tint": 8027520
+      },
+      "owner": 0.02642599679529667,
+      "baselineFingerprint": "bd655f33c8f63471953e3654284e1bada4252d006ed6a24cdd96265d059e239b",
+      "maskFile": "tower-17-r41-mask.png",
+      "maskSha256": "d46bc5631771b4925d96071e928cf2de8ff2efbc574950ddefeccfaf2def7671"
+    },
+    {
+      "id": "tower-18-r41",
+      "seed": 424242,
+      "towerIndex": 18,
+      "key": "-1590.00:-5440.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": -5440,
+        "width": 66.27908811075122,
+        "depth": 86.3513003135049,
+        "height": 5772.274015560242,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": -5440,
+        "width": 66.27908811075122,
+        "depth": 86.3513003135049,
+        "height": 5772.274015560242,
+        "tint": 5790816
+      },
+      "owner": 0.9698354005813599,
+      "baselineFingerprint": "245a19da6379c00bd611c7550ecda6accefd1026dbd3ce5619d13b4cc04127c1",
+      "maskFile": "tower-18-r41-mask.png",
+      "maskSha256": "8c2b1519805a683d7abe85ca2e62fb8455b16ddd60fd16a89909f1f5a3585424"
+    },
+    {
+      "id": "tower-19-r41",
+      "seed": 424242,
+      "towerIndex": 19,
+      "key": "-630.00:-5120.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -5120,
+        "width": 119.8009756178595,
+        "depth": 109.32760259748976,
+        "height": 3189.899505039173,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -5120,
+        "width": 119.8009756178595,
+        "depth": 109.32760259748976,
+        "height": 3189.899505039173,
+        "tint": 8027520
+      },
+      "owner": 0.40728530287742615,
+      "baselineFingerprint": "f6d58272c555a043d1b61a58b3ab2e81d9889a5484448496dc7fe7a989262aa6",
+      "maskFile": "tower-19-r41-mask.png",
+      "maskSha256": "99b705cb928edc13d76c6ac2743a7b8195766f700c3d35095138c698d56b3df4"
+    },
+    {
+      "id": "tower-20-r41",
+      "seed": 424242,
+      "towerIndex": 20,
+      "key": "-950.00:-5120.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -5120,
+        "width": 252.170714048859,
+        "depth": 225.5164032426416,
+        "height": 1236.7413062016763,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -5120,
+        "width": 252.170714048859,
+        "depth": 225.5164032426416,
+        "height": 1236.7413062016763,
+        "tint": 5790816
+      },
+      "owner": 0.7234829664230347,
+      "baselineFingerprint": "2f8a4035a814955e6bb630a85a6cb38c8728a90e27bd2f73eda85179857eaf3c",
+      "maskFile": "tower-20-r41-mask.png",
+      "maskSha256": "7c61048cfad749d52cf8851577ddb13352537993ba7d40f2f78a29ae0a3092d1"
+    },
+    {
+      "id": "tower-21-r41",
+      "seed": 424242,
+      "towerIndex": 21,
+      "key": "-1270.00:-5120.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -5120,
+        "width": 192.71705397084585,
+        "depth": 95.36222586799349,
+        "height": 3332.7401110199726,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -5120,
+        "width": 192.71705397084585,
+        "depth": 95.36222586799349,
+        "height": 3332.7401110199726,
+        "tint": 9277329
+      },
+      "owner": 0.7024837732315063,
+      "baselineFingerprint": "0a4ad13558ca3bb2b988ae30b95e5c9d5a3bf4178a384abd35d3d9fc2e9a3f44",
+      "maskFile": "tower-21-r41-mask.png",
+      "maskSha256": "41739cb143f4bfb29c250ead7ac066f1f309d8c41078263eb0beb2373ab306d1"
+    },
+    {
+      "id": "tower-22-r41",
+      "seed": 424242,
+      "towerIndex": 22,
+      "key": "-1590.00:-5120.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": -5120,
+        "width": 120.7865277973964,
+        "depth": 327.706518103938,
+        "height": 1594.840946859146,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": -5120,
+        "width": 120.7865277973964,
+        "depth": 327.706518103938,
+        "height": 1594.840946859146,
+        "tint": 9277329
+      },
+      "owner": 0.29703548550605774,
+      "baselineFingerprint": "55dee0ebaf6ca4a7d2c561c379608bc7527cfcd8cad89f1cfb6e5ca487a11208",
+      "maskFile": "tower-22-r41-mask.png",
+      "maskSha256": "d2a1d518c3aa536d48980aafeb9b505679de089a9fa73e92e5458af29a4d6f59"
+    },
+    {
+      "id": "tower-23-r41",
+      "seed": 424242,
+      "towerIndex": 23,
+      "key": "-630.00:-4800.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -4800,
+        "width": 154.69218420473916,
+        "depth": 322.1096020172066,
+        "height": 3450.731861138859,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -4800,
+        "width": 154.69218420473916,
+        "depth": 322.1096020165527,
+        "height": 3450.731861138859,
+        "tint": 6909297
+      },
+      "owner": 0.48656126856803894,
+      "baselineFingerprint": "bd142aa7fa9e5e6deef2f93bf0c4a64f065762713ff99e175ed7dc07cbad6a91",
+      "maskFile": "tower-23-r41-mask.png",
+      "maskSha256": "375c87edeab29eee315b7de0f4d65f62715610659d236196d7f86fe553503ef0"
+    },
+    {
+      "id": "tower-24-r41",
+      "seed": 424242,
+      "towerIndex": 24,
+      "key": "-950.00:-4800.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -4800,
+        "width": 159.70894517073103,
+        "depth": 113.03521322968531,
+        "height": 2963.0823171605634,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -4800,
+        "width": 159.70894517073103,
+        "depth": 113.03521322968531,
+        "height": 3167.3235813996616,
+        "tint": 6909297
+      },
+      "owner": 0.4342016875743866,
+      "baselineFingerprint": "71250af538b231642d35eccdbba3e469fd6c817a5f978d53baa46523e7ac94c7",
+      "maskFile": "tower-24-r41-mask.png",
+      "maskSha256": "23a852a4fc49112fa9f03bcb9eac424475cac9496c5f331a11bc847a41337895"
+    },
+    {
+      "id": "tower-25-r41",
+      "seed": 424242,
+      "towerIndex": 25,
+      "key": "-1270.00:-4800.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -4800,
+        "width": 314.5182607898456,
+        "depth": 220.7517650508514,
+        "height": 1342.14846711978,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -4800,
+        "width": 314.5182607898456,
+        "depth": 220.7517650508514,
+        "height": 1342.14846711978,
+        "tint": 9277329
+      },
+      "owner": 0.5753105878829956,
+      "baselineFingerprint": "093e4c5ac4bccb80bbda8b26ea08140cf3f3a5c9742c741f09df738e7e391f1a",
+      "maskFile": "tower-25-r41-mask.png",
+      "maskSha256": "f94585cdc256a7050715b6a6e14fbdfef80a4d71d2b8a05da87d7704f1c24c82"
+    },
+    {
+      "id": "tower-26-r41",
+      "seed": 424242,
+      "towerIndex": 26,
+      "key": "-1590.00:-4800.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": -4800,
+        "width": 259.33947301233576,
+        "depth": 203.0586720773645,
+        "height": 1130.342247134577,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": -4800,
+        "width": 259.33947301233576,
+        "depth": 203.0586720773645,
+        "height": 1130.342247134577,
+        "tint": 6909297
+      },
+      "owner": 0.30154556035995483,
+      "baselineFingerprint": "21601a12e980408ec4cc3cbb62ce7dbab9c904e972a9a12890d33d2a160e41ae",
+      "maskFile": "tower-26-r41-mask.png",
+      "maskSha256": "37e753c4adc51e9264fe91b0ed2c8a9d278b11ddd94e240967f555ec25e2a61a"
+    },
+    {
+      "id": "tower-27-r41",
+      "seed": 424242,
+      "towerIndex": 27,
+      "key": "-630.00:-4480.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -4480,
+        "width": 135.85193940820173,
+        "depth": 149.68112220914932,
+        "height": 3025.479893218605,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -4480,
+        "width": 135.85193940820173,
+        "depth": 149.68112220979322,
+        "height": 3025.479893218605,
+        "tint": 8027520
+      },
+      "owner": 0.5871707797050476,
+      "baselineFingerprint": "14ab38de0c7b5acf78ffa4cf44d2013770113d2254327652dba3db1f220f98e9",
+      "maskFile": "tower-27-r41-mask.png",
+      "maskSha256": "96ee4394c1c774f1d4207b3637b6131e47c0c35a3ce8343a6f40bbbd6f58f160"
+    },
+    {
+      "id": "tower-28-r41",
+      "seed": 424242,
+      "towerIndex": 28,
+      "key": "-950.00:-4480.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -4480,
+        "width": 225.97150918182695,
+        "depth": 284.4594316333386,
+        "height": 1319.969273447523,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -4480,
+        "width": 225.97150918182695,
+        "depth": 284.4594316333386,
+        "height": 1319.969273447523,
+        "tint": 5790816
+      },
+      "owner": 0.5583218336105347,
+      "baselineFingerprint": "eb89ed9ac65947a9e672aa23e2928d584653d4276ba5f9c25ec94bb62e8e898b",
+      "maskFile": "tower-28-r41-mask.png",
+      "maskSha256": "87c5d144a2f63ce7a335b15767bd1b650099fec288dca0e6901659091df1b187"
+    },
+    {
+      "id": "tower-29-r41",
+      "seed": 424242,
+      "towerIndex": 29,
+      "key": "-1270.00:-4480.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -4480,
+        "width": 46.76726318459,
+        "depth": 248.63251865350318,
+        "height": 3144.173488630185,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -4480,
+        "width": 46.76726318468443,
+        "depth": 248.6325186540052,
+        "height": 3144.158662172691,
+        "tint": 9277329
+      },
+      "owner": 0.7840060591697693,
+      "baselineFingerprint": "b1c6039c574c8f90c4cbd35a026fbe68e68088b72f3253a5dfeb1d5792faea29",
+      "maskFile": "tower-29-r41-mask.png",
+      "maskSha256": "408192c673def87bc8575924e37302c0de8dc1775632309698747a5e2003625e"
+    },
+    {
+      "id": "tower-30-r41",
+      "seed": 424242,
+      "towerIndex": 30,
+      "key": "-1590.00:-4480.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": -4480,
+        "width": 128.24557633776857,
+        "depth": 122.80108352912329,
+        "height": 1412.1593426060913,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": -4480,
+        "width": 128.24557633776857,
+        "depth": 122.80108352912329,
+        "height": 1412.1593426060913,
+        "tint": 9277329
+      },
+      "owner": 0.9495595693588257,
+      "baselineFingerprint": "c5976090ab973e10a27f4a9b0d857c3fb012daaa06c06f85200fdb81a0f2a0d7",
+      "maskFile": "tower-30-r41-mask.png",
+      "maskSha256": "324494c61773df4f21b5d6c07ae221a0de2f4e0ae32e4c5eeeb70d26a6bfa980"
+    },
+    {
+      "id": "tower-31-r41",
+      "seed": 424242,
+      "towerIndex": 31,
+      "key": "630.00:-4480.00",
+      "sourceTower": {
+        "x": 630,
+        "z": -4480,
+        "width": 135.0513108286641,
+        "depth": 154.7723990805282,
+        "height": 4197.213003099407,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": -4480,
+        "width": 135.0513108286641,
+        "depth": 154.7723990805282,
+        "height": 4197.213003099407,
+        "tint": 5790816
+      },
+      "owner": 0.30456918478012085,
+      "baselineFingerprint": "c51bf46a91dd323ee9ca455154c07db7335b0cf9df8ec87d29f41f6499906108",
+      "maskFile": "tower-31-r41-mask.png",
+      "maskSha256": "490571e147baa5420a88e6fb6f93a860b21469476ccd8e0c2356b45462e5f8f2"
+    },
+    {
+      "id": "tower-32-r41",
+      "seed": 424242,
+      "towerIndex": 32,
+      "key": "-630.00:-4160.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -4160,
+        "width": 226.35047626510644,
+        "depth": 129.91365398114425,
+        "height": 2935.3255537380555,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -4160,
+        "width": 226.35047626510644,
+        "depth": 129.91365398114425,
+        "height": 2935.3255537380555,
+        "tint": 8027520
+      },
+      "owner": 0.5376965999603271,
+      "baselineFingerprint": "6a5ee1187f8ecfc8ed4cb586c83bc85f871042383c64bb3ce6112af5b0a502b4",
+      "maskFile": "tower-32-r41-mask.png",
+      "maskSha256": "a178fbae1a1bf514d5dd83acccf98517dbf212957ebd6fe31c802410166dd0fd"
+    },
+    {
+      "id": "tower-33-r41",
+      "seed": 424242,
+      "towerIndex": 33,
+      "key": "-950.00:-4160.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -4160,
+        "width": 154.6178355724536,
+        "depth": 184.3848901030385,
+        "height": 3095.471767740086,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -4160,
+        "width": 154.6178355724536,
+        "depth": 184.3848901030385,
+        "height": 3095.471767740086,
+        "tint": 9277329
+      },
+      "owner": 0.27646490931510925,
+      "baselineFingerprint": "539691e881c1c67541efe5d80de74f288e74885a3493ecf364ede24c256572d5",
+      "maskFile": "tower-33-r41-mask.png",
+      "maskSha256": "cd99e2635d57e13cc99170f948e9ff7bf5c0072d8ca048294090cdb2b33ce9c4"
+    },
+    {
+      "id": "tower-34-r41",
+      "seed": 424242,
+      "towerIndex": 34,
+      "key": "-1270.00:-4160.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -4160,
+        "width": 130.68700292806824,
+        "depth": 343.2929037899199,
+        "height": 2108.375531614133,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -4160,
+        "width": 130.68700292806824,
+        "depth": 343.2929037899199,
+        "height": 2108.375531614133,
+        "tint": 8027520
+      },
+      "owner": 0.6502767205238342,
+      "baselineFingerprint": "56fea2a53722c29c7685c820309671bfffed8943614946c38cc455d54823a1f1",
+      "maskFile": "tower-34-r41-mask.png",
+      "maskSha256": "0e21614e4283d14495d0a67de7679d7a88017ec6fd1fb10a6d6d7d59149fb632"
+    },
+    {
+      "id": "tower-35-r41",
+      "seed": 424242,
+      "towerIndex": 35,
+      "key": "630.00:-4160.00",
+      "sourceTower": {
+        "x": 630,
+        "z": -4160,
+        "width": 186.00453507376662,
+        "depth": 125.67499298494042,
+        "height": 3286.6081721846513,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": -4160,
+        "width": 186.00453507376662,
+        "depth": 125.67499298494042,
+        "height": 3286.6081721846513,
+        "tint": 8027520
+      },
+      "owner": 0.7375503778457642,
+      "baselineFingerprint": "8babe2d8ad2f7f7937df70ab62d1f82f5a1ec9fc7514892266c1738bc022efb6",
+      "maskFile": "tower-35-r41-mask.png",
+      "maskSha256": "7557e156d5af81654baf6d69b0036d83a77871ea8ae12743f01c83621bdc022e"
+    },
+    {
+      "id": "tower-36-r41",
+      "seed": 424242,
+      "towerIndex": 36,
+      "key": "950.00:-4160.00",
+      "sourceTower": {
+        "x": 950,
+        "z": -4160,
+        "width": 278.6394662904614,
+        "depth": 156.92041863655894,
+        "height": 1670.6305746635337,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": -4160,
+        "width": 278.6394662904614,
+        "depth": 156.92041863655894,
+        "height": 1670.6305746635337,
+        "tint": 6909297
+      },
+      "owner": 0.985528826713562,
+      "baselineFingerprint": "9ab6dd0603b004785c7c885c5724c17a19af245d68e6dee8ecfea1b5eb48ea43",
+      "maskFile": "tower-36-r41-mask.png",
+      "maskSha256": "df97236deabbec6c30d8f58d55eea115e6dcd80a3689ee8d9c5fb6bb0c9eb8cf"
+    },
+    {
+      "id": "tower-37-r41",
+      "seed": 424242,
+      "towerIndex": 37,
+      "key": "1270.00:-4160.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": -4160,
+        "width": 209.8045734558161,
+        "depth": 48.40057068939793,
+        "height": 2929.2504023311876,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": -4160,
+        "width": 209.8045734558161,
+        "depth": 48.40057068939793,
+        "height": 2929.2504023311876,
+        "tint": 8027520
+      },
+      "owner": 0.6287996172904968,
+      "baselineFingerprint": "52d237d2228a8c821b9245bc89f675e17ae9dafbaf55773fb84c3ec6e9803ac0",
+      "maskFile": "tower-37-r41-mask.png",
+      "maskSha256": "1ca5173b9b503e218679ca77e61e85e8d9b0a247364dc06c9dcb515d42d1e827"
+    },
+    {
+      "id": "tower-38-r41",
+      "seed": 424242,
+      "towerIndex": 38,
+      "key": "1590.00:-4160.00",
+      "sourceTower": {
+        "x": 1590,
+        "z": -4160,
+        "width": 181.73431174340195,
+        "depth": 170.37710526407048,
+        "height": 710.2496205616316,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 1590,
+        "z": -4160,
+        "width": 181.73431174340195,
+        "depth": 170.37710526407048,
+        "height": 710.2496205616316,
+        "tint": 6909297
+      },
+      "owner": 0.1463553011417389,
+      "baselineFingerprint": "26244d63900c18921ad70b32d20dd50acbeae4b9ed8b1dd56d19e95c9eb370f2",
+      "maskFile": "tower-38-r41-mask.png",
+      "maskSha256": "d7a2e51eba18ab015d592b54bf1216b375f107e4ef34c398ea8e3f13d762f820"
+    },
+    {
+      "id": "tower-39-r41",
+      "seed": 424242,
+      "towerIndex": 39,
+      "key": "-630.00:-3840.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -3840,
+        "width": 250.0761511021017,
+        "depth": 183.78361472204693,
+        "height": 3126.6358459128182,
+        "tint": 9321059
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -3840,
+        "width": 250.0761511021017,
+        "depth": 183.78361472204693,
+        "height": 3126.6358459128182,
+        "tint": 9321059
+      },
+      "owner": 0.7203065156936646,
+      "baselineFingerprint": "726f05dff3d3ccaaf753219104b15543038704469d1b3ed575d6511e8270380a",
+      "maskFile": "tower-39-r41-mask.png",
+      "maskSha256": "ccbbdaa2d0f115e25114f88d246834a446c6ec86b1cd28a46a2230eb339627dd"
+    },
+    {
+      "id": "tower-40-r41",
+      "seed": 424242,
+      "towerIndex": 40,
+      "key": "-950.00:-3840.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -3840,
+        "width": 258.1160359674127,
+        "depth": 191.15372635591027,
+        "height": 1467.949405349681,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -3840,
+        "width": 258.1160359674127,
+        "depth": 191.15372635591027,
+        "height": 1467.949405349681,
+        "tint": 9277329
+      },
+      "owner": 0.8745326995849609,
+      "baselineFingerprint": "4a8bc8721224f509cb7d6686edb00cc738225fed4d248c92fb28d633b6d2aa5d",
+      "maskFile": "tower-40-r41-mask.png",
+      "maskSha256": "473517fe859636fdfa7e71bd1e229b885cf6afe9ebd663992e0cecbf6e9f81ac"
+    },
+    {
+      "id": "tower-41-r41",
+      "seed": 424242,
+      "towerIndex": 41,
+      "key": "-1270.00:-3840.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -3840,
+        "width": 143.6442733695996,
+        "depth": 193.82509702969688,
+        "height": 1827.1563742058095,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -3840,
+        "width": 143.6442733695996,
+        "depth": 193.82509702969688,
+        "height": 1827.1563742058095,
+        "tint": 6909297
+      },
+      "owner": 0.45624828338623047,
+      "baselineFingerprint": "79953602cd5c184e0d65c30d35f1b413604d296c4845d5b5a56c95e547bf8d12",
+      "maskFile": "tower-41-r41-mask.png",
+      "maskSha256": "a59fbe326775d4ea0b0f001e2d7a84916d8caaf47994b9b82712befb77e22fad"
+    },
+    {
+      "id": "tower-42-r41",
+      "seed": 424242,
+      "towerIndex": 42,
+      "key": "630.00:-3840.00",
+      "sourceTower": {
+        "x": 630,
+        "z": -3840,
+        "width": 207.33279856617372,
+        "depth": 314.3949289493589,
+        "height": 3344.273158064075,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": -3840,
+        "width": 207.33279856617372,
+        "depth": 314.39492894867266,
+        "height": 3344.273158064075,
+        "tint": 5790816
+      },
+      "owner": 0.9884270429611206,
+      "baselineFingerprint": "a3dfbaed5a261b02b5a2d331e0cad503e64bc960756f755b90563e8ed52a8997",
+      "maskFile": "tower-42-r41-mask.png",
+      "maskSha256": "2ffd7cd1e1910b0090924829b5f84bda04d4d22fffd1a90785e817ee87b36fb2"
+    },
+    {
+      "id": "tower-43-r41",
+      "seed": 424242,
+      "towerIndex": 43,
+      "key": "950.00:-3840.00",
+      "sourceTower": {
+        "x": 950,
+        "z": -3840,
+        "width": 128.54888619241464,
+        "depth": 112.3792573248275,
+        "height": 1979.4358994758477,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": -3840,
+        "width": 128.54888619241464,
+        "depth": 112.3792573248275,
+        "height": 1979.435899476849,
+        "tint": 8027520
+      },
+      "owner": 0.3860314190387726,
+      "baselineFingerprint": "299bb91589b60bcf9d26fd2ad5cbf3d398b42171abc1c0e4e981d29c969e0cc4",
+      "maskFile": "tower-43-r41-mask.png",
+      "maskSha256": "ab8a4ce318353ae3647ed099a9227eefd0fa27b347217210e67a9dc3d7b1e7ff"
+    },
+    {
+      "id": "tower-44-r41",
+      "seed": 424242,
+      "towerIndex": 44,
+      "key": "1270.00:-3840.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": -3840,
+        "width": 349.8181346052517,
+        "depth": 60.92780288522208,
+        "height": 3826.146622847186,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": -3840,
+        "width": 349.8181346052517,
+        "depth": 60.92780288522208,
+        "height": 3826.146622847186,
+        "tint": 6909297
+      },
+      "owner": 0.7570286989212036,
+      "baselineFingerprint": "49ea5b14577ab41f6b9ebd6c49ac68d9b7f0595aec9b94b6ee06dd52cc7c6f7b",
+      "maskFile": "tower-44-r41-mask.png",
+      "maskSha256": "1ff32b70cce5eb38acb565ebbed5d0f7b1ef87f769445eaec796542329909489"
+    },
+    {
+      "id": "tower-45-r41",
+      "seed": 424242,
+      "towerIndex": 45,
+      "key": "1590.00:-3840.00",
+      "sourceTower": {
+        "x": 1590,
+        "z": -3840,
+        "width": 120.72058144370386,
+        "depth": 74.79515866095392,
+        "height": 5079.977800160307,
+        "tint": 9321059
+      },
+      "sourceTowerNode": {
+        "x": 1590,
+        "z": -3840,
+        "width": 120.72058144370386,
+        "depth": 74.79515866095392,
+        "height": 5079.977800160307,
+        "tint": 9321059
+      },
+      "owner": 0.2577277421951294,
+      "baselineFingerprint": "5cda1db802c72b3458f11bca8b77da054a1d99a7cfa71896a174c856197a895e",
+      "maskFile": "tower-45-r41-mask.png",
+      "maskSha256": "b3c8e049b32867809c907dc345be3fb71e28301ac606fa9603e56ae4aee2f7a0"
+    },
+    {
+      "id": "tower-46-r41",
+      "seed": 424242,
+      "towerIndex": 46,
+      "key": "-630.00:-3520.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -3520,
+        "width": 168.2512090625669,
+        "depth": 110.43685078291439,
+        "height": 1141.1953632748405,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -3520,
+        "width": 168.2512090625669,
+        "depth": 110.43685078291439,
+        "height": 1141.1953632748405,
+        "tint": 6909297
+      },
+      "owner": 0.8625438213348389,
+      "baselineFingerprint": "de7584a66686a02d7adafc163846f25d58ec7d147cb2f0d64ba388ab3404e9dd",
+      "maskFile": "tower-46-r41-mask.png",
+      "maskSha256": "b3207c95b640eb97f0f2324f75511f43055fc9c20337ff002b8a189bb9bec94e"
+    },
+    {
+      "id": "tower-47-r41",
+      "seed": 424242,
+      "towerIndex": 47,
+      "key": "-950.00:-3520.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -3520,
+        "width": 199.54168910924238,
+        "depth": 309.37527405495007,
+        "height": 1272.5740006506583,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -3520,
+        "width": 199.54168910924238,
+        "depth": 309.37527405495007,
+        "height": 1272.5740006506583,
+        "tint": 10133668
+      },
+      "owner": 0.18837614357471466,
+      "baselineFingerprint": "13d606c2dbac5a4ea1af882e8738f426ab6d9e8d3f86426b9dcaae8a675d375d",
+      "maskFile": "tower-47-r41-mask.png",
+      "maskSha256": "f4f90feaaa549f788d14bbbebc7759cdda58fe839cf993aabaee587b544481bc"
+    },
+    {
+      "id": "tower-48-r41",
+      "seed": 424242,
+      "towerIndex": 48,
+      "key": "-1270.00:-3520.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -3520,
+        "width": 366.12306708027836,
+        "depth": 65.56107901609342,
+        "height": 3283.4206492091903,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -3520,
+        "width": 366.12306708027836,
+        "depth": 65.56107901609342,
+        "height": 3283.4206492091903,
+        "tint": 5790816
+      },
+      "owner": 0.2225385159254074,
+      "baselineFingerprint": "9cefdb9063b455ba34cac587244512ae424c5791525a54e96686157efa57ba64",
+      "maskFile": "tower-48-r41-mask.png",
+      "maskSha256": "fcf9d027c97d8fa4dddea0fa709fa99430604211e951849d1f43118804060906"
+    },
+    {
+      "id": "tower-49-r41",
+      "seed": 424242,
+      "towerIndex": 49,
+      "key": "630.00:-3520.00",
+      "sourceTower": {
+        "x": 630,
+        "z": -3520,
+        "width": 137.82022818849146,
+        "depth": 179.89407096949338,
+        "height": 3380.6826938805416,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": -3520,
+        "width": 137.82022818849146,
+        "depth": 179.89407096949338,
+        "height": 3380.682693881779,
+        "tint": 9277329
+      },
+      "owner": 0.10573393851518631,
+      "baselineFingerprint": "a4e107e830df61877f5029b01f7dd7d145e2fc97a5b02b72fa105a40ea0c30bd",
+      "maskFile": "tower-49-r41-mask.png",
+      "maskSha256": "01ada9220ad488c2716a6656a70014a023339dcace194d2f7a03e1e7e16f81ba"
+    },
+    {
+      "id": "tower-50-r41",
+      "seed": 424242,
+      "towerIndex": 50,
+      "key": "950.00:-3520.00",
+      "sourceTower": {
+        "x": 950,
+        "z": -3520,
+        "width": 223.097998207886,
+        "depth": 274.705583883268,
+        "height": 1604.7434772374222,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": -3520,
+        "width": 223.097998207886,
+        "depth": 274.705583883268,
+        "height": 1604.7434772374222,
+        "tint": 8027520
+      },
+      "owner": 0.6721153259277344,
+      "baselineFingerprint": "f978c1251bff232c9e02dbd3a9353735782a25efc12d75190161509321396cfa",
+      "maskFile": "tower-50-r41-mask.png",
+      "maskSha256": "4a8db43b9c439f23bcab4d660d582479d10a34562b4f5fcef5f0a29c67fb7312"
+    },
+    {
+      "id": "tower-51-r41",
+      "seed": 424242,
+      "towerIndex": 51,
+      "key": "1270.00:-3520.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": -3520,
+        "width": 162.8877524386677,
+        "depth": 157.45108736367055,
+        "height": 3487.7286724121554,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": -3520,
+        "width": 162.8877524386677,
+        "depth": 157.45108736367055,
+        "height": 3487.7286724121554,
+        "tint": 8027520
+      },
+      "owner": 0.03553520888090134,
+      "baselineFingerprint": "fc6b05e3b386e10be1fac967f935a47eac308d877c84c55d404779058157b6f4",
+      "maskFile": "tower-51-r41-mask.png",
+      "maskSha256": "7d199f0aa8274793d3b1ac3d629a10b4ea6bd7f35004ad86862c74c39c1b32bd"
+    },
+    {
+      "id": "tower-52-r41",
+      "seed": 424242,
+      "towerIndex": 52,
+      "key": "1590.00:-3520.00",
+      "sourceTower": {
+        "x": 1590,
+        "z": -3520,
+        "width": 265.5647659598035,
+        "depth": 197.76090051386433,
+        "height": 1260.1932874112204,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": 1590,
+        "z": -3520,
+        "width": 265.5647659598035,
+        "depth": 197.76090051386433,
+        "height": 1260.1932874112204,
+        "tint": 9277329
+      },
+      "owner": 0.46596279740333557,
+      "baselineFingerprint": "78cd933609b0cc9101c08f059c32809f43c352208d1c1053416ee44b703a8515",
+      "maskFile": "tower-52-r41-mask.png",
+      "maskSha256": "ec0863561c9bb6d1e01f8ed47e8c98523284d36ed50c2b94034db491f42e4697"
+    },
+    {
+      "id": "tower-53-r41",
+      "seed": 424242,
+      "towerIndex": 53,
+      "key": "-630.00:-3200.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -3200,
+        "width": 196.57729599234153,
+        "depth": 236.47957452130578,
+        "height": 1138.006747482241,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -3200,
+        "width": 196.57729599234153,
+        "depth": 236.47957452144547,
+        "height": 1138.006747482241,
+        "tint": 10133668
+      },
+      "owner": 0.6515791416168213,
+      "baselineFingerprint": "cbeb11b70a350f1a01f2510f8d37c53c41e11faff9f0572229aee85d6ac71443",
+      "maskFile": "tower-53-r41-mask.png",
+      "maskSha256": "fc3f20613a8e2cd0143d4bbd2265be5325d5510b757be72437bfe94e75283280"
+    },
+    {
+      "id": "tower-54-r41",
+      "seed": 424242,
+      "towerIndex": 54,
+      "key": "-950.00:-3200.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -3200,
+        "width": 156.90751608407584,
+        "depth": 296.29426608342453,
+        "height": 1286.7611356381976,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -3200,
+        "width": 156.90751608407584,
+        "depth": 296.29426608342453,
+        "height": 1286.7611356381976,
+        "tint": 5790816
+      },
+      "owner": 0.42632174491882324,
+      "baselineFingerprint": "f7d5213df05691b64d68cd55169d5e8a116a297f99016174b9164a3c132d71c3",
+      "maskFile": "tower-54-r41-mask.png",
+      "maskSha256": "e69c30b46b98b2bd8c2560048f8e2373c94a3ee306fce3d578d9c02e1d86eb51"
+    },
+    {
+      "id": "tower-55-r41",
+      "seed": 424242,
+      "towerIndex": 55,
+      "key": "-1270.00:-3200.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -3200,
+        "width": 51.43752664315798,
+        "depth": 231.14816620293374,
+        "height": 3074.033647554668,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -3200,
+        "width": 51.43752664315798,
+        "depth": 231.14816620293374,
+        "height": 3074.033647554668,
+        "tint": 5790816
+      },
+      "owner": 0.3977697193622589,
+      "baselineFingerprint": "cb34b8335df54acc1e4d84693247c2491a88ce4e8e350125289ee04e9617b514",
+      "maskFile": "tower-55-r41-mask.png",
+      "maskSha256": "e56ce64a1b7f02de301e4071a38edf1b478c5970bbe7afcb03904caedb3f0404"
+    },
+    {
+      "id": "tower-56-r41",
+      "seed": 424242,
+      "towerIndex": 56,
+      "key": "-1590.00:-3200.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": -3200,
+        "width": 105.26392383413913,
+        "depth": 221.4154312638801,
+        "height": 2253.3565776406917,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": -3200,
+        "width": 105.26392383413913,
+        "depth": 221.4154312638801,
+        "height": 2253.3565776406917,
+        "tint": 8027520
+      },
+      "owner": 0.9614714980125427,
+      "baselineFingerprint": "1045467b700cb670ebf32e5a38905209bbf551e7347be173f911dd1aa09c0da1",
+      "maskFile": "tower-56-r41-mask.png",
+      "maskSha256": "9a750b53174d7685f9a03eac1c11f38c0d88a264fce3354d85d07eaa60680653"
+    },
+    {
+      "id": "tower-57-r41",
+      "seed": 424242,
+      "towerIndex": 57,
+      "key": "630.00:-3200.00",
+      "sourceTower": {
+        "x": 630,
+        "z": -3200,
+        "width": 132.10766062810436,
+        "depth": 146.1997162576617,
+        "height": 3198.2939877134068,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": -3200,
+        "width": 132.1076606282484,
+        "depth": 146.1295246358457,
+        "height": 3198.2521914876143,
+        "tint": 6909297
+      },
+      "owner": 0.6084104776382446,
+      "baselineFingerprint": "99b6579ef1b9dabaca54a48e5abba35f8712f78e8e1239062ab8ac5c93e4c38a",
+      "maskFile": "tower-57-r41-mask.png",
+      "maskSha256": "23d54bfbfe6d3e8454014ebf0dc05a1a20e8c31c144728d18b72f6a630aade3c"
+    },
+    {
+      "id": "tower-58-r41",
+      "seed": 424242,
+      "towerIndex": 58,
+      "key": "950.00:-3200.00",
+      "sourceTower": {
+        "x": 950,
+        "z": -3200,
+        "width": 272.79815930149636,
+        "depth": 298.1862295516328,
+        "height": 1731.3532963195903,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": -3200,
+        "width": 272.79815930149636,
+        "depth": 298.1862295516328,
+        "height": 1731.3532963195903,
+        "tint": 6909297
+      },
+      "owner": 0.5747307538986206,
+      "baselineFingerprint": "dc779f4f58489ad327d08a7080df83674d4cbaa329ce70f394b7037ab8315519",
+      "maskFile": "tower-58-r41-mask.png",
+      "maskSha256": "6b45df34a182dd168fb206cc19ed133c2dd40fd8b301171166854a0189838476"
+    },
+    {
+      "id": "tower-59-r41",
+      "seed": 424242,
+      "towerIndex": 59,
+      "key": "1270.00:-3200.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": -3200,
+        "width": 181.73999612692933,
+        "depth": 202.20820482347614,
+        "height": 2076.529449743948,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": -3200,
+        "width": 181.73999612692933,
+        "depth": 202.20820482347614,
+        "height": 2076.529449743948,
+        "tint": 6909297
+      },
+      "owner": 0.8580613732337952,
+      "baselineFingerprint": "fee705520ef1a55cc28ae7d00f2984d323c0c03bdad94b5d30464f7056910811",
+      "maskFile": "tower-59-r41-mask.png",
+      "maskSha256": "8f1fbb900086109b2aa841e7a34584f6db07269f82a3846bc81743ed307c141b"
+    },
+    {
+      "id": "tower-60-r41",
+      "seed": 424242,
+      "towerIndex": 60,
+      "key": "-630.00:-2880.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -2880,
+        "width": 118.75940328396246,
+        "depth": 131.20120715078681,
+        "height": 3302.716299754771,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -2880,
+        "width": 118.75940328396246,
+        "depth": 131.20120715078681,
+        "height": 3302.716299754771,
+        "tint": 9277329
+      },
+      "owner": 0.8067471385002136,
+      "baselineFingerprint": "f9c1fae4dcc3e6d0e73413c1942028ab1495c5a9bb9351e16efefebe29ab9ced",
+      "maskFile": "tower-60-r41-mask.png",
+      "maskSha256": "0c6ac096698898dbb394eb7c0369ff9ec4e6e8f978eadd9182de48be99b965b6"
+    },
+    {
+      "id": "tower-61-r41",
+      "seed": 424242,
+      "towerIndex": 61,
+      "key": "-950.00:-2880.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -2880,
+        "width": 190.34646666094858,
+        "depth": 32.94350737937536,
+        "height": 3721.215272794657,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -2880,
+        "width": 190.34646666094858,
+        "depth": 32.94350737937536,
+        "height": 3721.215272794657,
+        "tint": 8027520
+      },
+      "owner": 0.6372607350349426,
+      "baselineFingerprint": "39ceec47c500f38a2553abdf0bce3936fcaaebe3d88e21c99ed53368d5ef6e12",
+      "maskFile": "tower-61-r41-mask.png",
+      "maskSha256": "9b095fa30d38a3fc02eb83bc3ec6905e47ccf620412dffcb7e3a412f4469fab0"
+    },
+    {
+      "id": "tower-62-r41",
+      "seed": 424242,
+      "towerIndex": 62,
+      "key": "-1270.00:-2880.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -2880,
+        "width": 189.4829753028971,
+        "depth": 128.62830044409495,
+        "height": 3024.446569531273,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -2880,
+        "width": 189.4829753028971,
+        "depth": 128.62830044409495,
+        "height": 3024.446569531273,
+        "tint": 8027520
+      },
+      "owner": 0.6012088656425476,
+      "baselineFingerprint": "caf863a6aa64db13d40accef43283c06848e227e334614a896068a4fb31d4a33",
+      "maskFile": "tower-62-r41-mask.png",
+      "maskSha256": "ff2beb88d34af63392ec4105e757e8b94eebb12385135f2f69784cf803a1a645"
+    },
+    {
+      "id": "tower-63-r41",
+      "seed": 424242,
+      "towerIndex": 63,
+      "key": "-1590.00:-2880.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": -2880,
+        "width": 215.67827385654073,
+        "depth": 314.43428131685437,
+        "height": 1481.0467883325446,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": -2880,
+        "width": 215.67827385654073,
+        "depth": 314.43428131685437,
+        "height": 1481.0467883310282,
+        "tint": 10133668
+      },
+      "owner": 0.06920358538627625,
+      "baselineFingerprint": "c168ec31a610bf7525169fda3c46742eb07d5b38efc4d405f24ef2c9116e7e23",
+      "maskFile": "tower-63-r41-mask.png",
+      "maskSha256": "147065ba274a49ed0fe56e2e5994e4218ace08308908364a5c1563fd5e1f3c0e"
+    },
+    {
+      "id": "tower-64-r41",
+      "seed": 424242,
+      "towerIndex": 64,
+      "key": "-630.00:-2560.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -2560,
+        "width": 200.22979521674569,
+        "depth": 133.6585768307812,
+        "height": 3289.6797771969677,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -2560,
+        "width": 200.22979521674569,
+        "depth": 133.6585768307812,
+        "height": 3289.6797771969677,
+        "tint": 8027520
+      },
+      "owner": 0.23529276251792908,
+      "baselineFingerprint": "79e80e9e5f627aaf62518ddc7391bf1d1595298aa201f5d9813df5bb87fd55ae",
+      "maskFile": "tower-64-r41-mask.png",
+      "maskSha256": "66daeb5bfee23f1d46079dbe023163448af00bf33dfe2e2932bda1bd89318545"
+    },
+    {
+      "id": "tower-65-r41",
+      "seed": 424242,
+      "towerIndex": 65,
+      "key": "-950.00:-2560.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -2560,
+        "width": 208.47878853043437,
+        "depth": 202.24027454664946,
+        "height": 1800.805406407892,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -2560,
+        "width": 208.47878853043437,
+        "depth": 202.24027454664946,
+        "height": 1800.805406407892,
+        "tint": 8027520
+      },
+      "owner": 0.45507553219795227,
+      "baselineFingerprint": "f41209109718d8dbd94735ef6e6da34bdf843e71da005301fa4dcc9ffbe561eb",
+      "maskFile": "tower-65-r41-mask.png",
+      "maskSha256": "8b479964bc235fe35cd2516931e6ad71676a5916d42243c6eb92f07a1639ff1c"
+    },
+    {
+      "id": "tower-66-r41",
+      "seed": 424242,
+      "towerIndex": 66,
+      "key": "-1270.00:-2560.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -2560,
+        "width": 194.30081663004574,
+        "depth": 282.16978140976624,
+        "height": 1454.3041041390939,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -2560,
+        "width": 194.30081663004574,
+        "depth": 282.16978140976624,
+        "height": 1454.3041041390939,
+        "tint": 5790816
+      },
+      "owner": 0.24387316405773163,
+      "baselineFingerprint": "41d3f0ffa3c20f4e60b6e2c5f71ac5c96f191f4491dd22fe8f0aa688cb2cde7b",
+      "maskFile": "tower-66-r41-mask.png",
+      "maskSha256": "e13e9746ec2a181c325de060a474811a3f63d49e93758944f2a9e8fc30f5a60a"
+    },
+    {
+      "id": "tower-67-r41",
+      "seed": 424242,
+      "towerIndex": 67,
+      "key": "-1590.00:-2560.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": -2560,
+        "width": 234.29180139259333,
+        "depth": 209.92144211391752,
+        "height": 1942.6268427528091,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": -2560,
+        "width": 234.29180139213713,
+        "depth": 209.70663163367158,
+        "height": 1942.7439213835862,
+        "tint": 9277329
+      },
+      "owner": 0.11764770746231079,
+      "baselineFingerprint": "86c2f55583b3ff68c1c22d162ea69ffeb17213301675a5f95a8b745c09ec2f04",
+      "maskFile": "tower-67-r41-mask.png",
+      "maskSha256": "0ddf54bda24cc4ca9daa4b9b2f97827bbf9afb421c0c9044d414845bbb3847bb"
+    },
+    {
+      "id": "tower-68-r41",
+      "seed": 424242,
+      "towerIndex": 68,
+      "key": "-630.00:-2240.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -2240,
+        "width": 185.4858051767951,
+        "depth": 101.96795501583097,
+        "height": 3213.7388460803177,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -2240,
+        "width": 185.4858051767951,
+        "depth": 101.96795501583097,
+        "height": 3213.7388460803177,
+        "tint": 10133668
+      },
+      "owner": 0.5856978893280029,
+      "baselineFingerprint": "2301ad6955c26438582d4de2e19be5adcc35f2767b4ea9ddfb03dba2129b01e2",
+      "maskFile": "tower-68-r41-mask.png",
+      "maskSha256": "cb103c1d488c3e530bdb190aa3078ccf78a864cba11b448b57b4dc48ee4ba232"
+    },
+    {
+      "id": "tower-69-r41",
+      "seed": 424242,
+      "towerIndex": 69,
+      "key": "-950.00:-2240.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -2240,
+        "width": 205.62635067650083,
+        "depth": 132.88957962391268,
+        "height": 2034.1507229517038,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -2240,
+        "width": 205.62635067650083,
+        "depth": 132.88957962391268,
+        "height": 2034.1507229517038,
+        "tint": 9277329
+      },
+      "owner": 0.8675493001937866,
+      "baselineFingerprint": "e9124d06a33c9be817ff8bb52bd2e9b1b5ecadea7b35a27b43a25b7a576d836e",
+      "maskFile": "tower-69-r41-mask.png",
+      "maskSha256": "5f98f692526abfb50e3d79f61b76d4315a5ece684e65babb8a4233235dd00fd8"
+    },
+    {
+      "id": "tower-70-r41",
+      "seed": 424242,
+      "towerIndex": 70,
+      "key": "-1270.00:-2240.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -2240,
+        "width": 290.2415183551379,
+        "depth": 57.05813194901048,
+        "height": 3212.538777241148,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -2240,
+        "width": 290.2415183551379,
+        "depth": 57.05813194901048,
+        "height": 3212.538777241148,
+        "tint": 9277329
+      },
+      "owner": 0.880154013633728,
+      "baselineFingerprint": "11d8de2687f73c03363575a49d98bd6c35d1c1a2f661d323e0ac5cda5865c60b",
+      "maskFile": "tower-70-r41-mask.png",
+      "maskSha256": "1331f59d453bfd263d0252f420c25c43266dcb6d71a60b98d1f85844f0879317"
+    },
+    {
+      "id": "tower-71-r41",
+      "seed": 424242,
+      "towerIndex": 71,
+      "key": "-1590.00:-2240.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": -2240,
+        "width": 183.4308236788711,
+        "depth": 114.92855570088815,
+        "height": 1490.2775878288924,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": -2240,
+        "width": 183.4308236788711,
+        "depth": 114.92855570088815,
+        "height": 1490.2775878288924,
+        "tint": 8027520
+      },
+      "owner": 0.7646531462669373,
+      "baselineFingerprint": "b96240e8a79fd29249d5411350abe8887c7f24589f95c23d5733bec8f07d4f83",
+      "maskFile": "tower-71-r41-mask.png",
+      "maskSha256": "bc3b3865066107e52c564b814474b038a28d8233a229e90601c9d1f9ab02adfb"
+    },
+    {
+      "id": "tower-72-r41",
+      "seed": 424242,
+      "towerIndex": 72,
+      "key": "-630.00:-1920.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -1920,
+        "width": 145.16932557270704,
+        "depth": 143.11479191421074,
+        "height": 1229.4373284058092,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -1920,
+        "width": 145.16932557270704,
+        "depth": 143.11479191421074,
+        "height": 1229.4373284058092,
+        "tint": 8027520
+      },
+      "owner": 0.5068131685256958,
+      "baselineFingerprint": "a9d054186818af941f0a8c73248397c709b0e1ea8c0aff94f1a831274e55d4d2",
+      "maskFile": "tower-72-r41-mask.png",
+      "maskSha256": "634968cff3e5837922400236b1dea7178c030801ed4362a5da970252d814f8c6"
+    },
+    {
+      "id": "tower-73-r41",
+      "seed": 424242,
+      "towerIndex": 73,
+      "key": "-950.00:-1920.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -1920,
+        "width": 142.3321430204436,
+        "depth": 172.10355852268685,
+        "height": 2761.6054144442696,
+        "tint": 9321059
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -1920,
+        "width": 142.3321430204436,
+        "depth": 172.10355852268685,
+        "height": 2761.6054144442696,
+        "tint": 9321059
+      },
+      "owner": 0.05250393971800804,
+      "baselineFingerprint": "b7a23036eafa834de5da8832ffad8740abf21cec45b746187d16de1e45d20231",
+      "maskFile": "tower-73-r41-mask.png",
+      "maskSha256": "460f4d83d5558a11ea452216d3c4ca34b8a53a109c41c0fa8ac755794b146ac4"
+    },
+    {
+      "id": "tower-74-r41",
+      "seed": 424242,
+      "towerIndex": 74,
+      "key": "-1270.00:-1920.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -1920,
+        "width": 183.87917230761843,
+        "depth": 37.72440668092178,
+        "height": 3207.968955188463,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -1920,
+        "width": 183.87917230761843,
+        "depth": 37.72440668092178,
+        "height": 3207.968955188463,
+        "tint": 5790816
+      },
+      "owner": 0.6559613943099976,
+      "baselineFingerprint": "23e77730fd755e16de21b7fa9ecec1472e52199a15cab1eed69e000196a464e4",
+      "maskFile": "tower-74-r41-mask.png",
+      "maskSha256": "9fc5beb8c8d9292c80d425331a8c1f6605a1c6d66fe7ee6923456d99ce3bbde6"
+    },
+    {
+      "id": "tower-75-r41",
+      "seed": 424242,
+      "towerIndex": 75,
+      "key": "-1590.00:-1920.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": -1920,
+        "width": 70.61674415549578,
+        "depth": 324.0984607774332,
+        "height": 2210.8003374694845,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": -1920,
+        "width": 70.61674415549578,
+        "depth": 324.0984607774332,
+        "height": 2210.8003374694845,
+        "tint": 8027520
+      },
+      "owner": 0.086782306432724,
+      "baselineFingerprint": "3286bab493907c56e41a8963a779951565dceff4aac810bc0f228b183f75ad45",
+      "maskFile": "tower-75-r41-mask.png",
+      "maskSha256": "d52374e2e9b133d1f19cf60fc2716288705469a59062cbe4a8a54ced07d7e00e"
+    },
+    {
+      "id": "tower-76-r41",
+      "seed": 424242,
+      "towerIndex": 76,
+      "key": "-630.00:-1600.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -1600,
+        "width": 153,
+        "depth": 267.42824024735756,
+        "height": 1411.5436812936637,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -1600,
+        "width": 153,
+        "depth": 267.42824024735756,
+        "height": 1411.5436812936637,
+        "tint": 9277329
+      },
+      "owner": 0.5945301651954651,
+      "baselineFingerprint": "f7d2bc52dcaea18fd64042910fcbd26dc0283f6c83b862195900920288a3c306",
+      "maskFile": "tower-76-r41-mask.png",
+      "maskSha256": "934c174cb9af9976a3a2caa1186dd23c501b9e0fc4d60c9f15b0dd3403def7dd"
+    },
+    {
+      "id": "tower-77-r41",
+      "seed": 424242,
+      "towerIndex": 77,
+      "key": "-950.00:-1600.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -1600,
+        "width": 61,
+        "depth": 55.25961422739059,
+        "height": 6200,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -1600,
+        "width": 61,
+        "depth": 55.25961422739059,
+        "height": 6200,
+        "tint": 8027520
+      },
+      "owner": 0.6319172978401184,
+      "baselineFingerprint": "272078583749714f1677030a3d45ceda7e45522eee1722324d7f3e232352c256",
+      "maskFile": "tower-77-r41-mask.png",
+      "maskSha256": "106c2d1d3f00eb5a44f1cdf9ae496d5f48cd71a6a2ed4978213e18eb63e3dc39"
+    },
+    {
+      "id": "tower-78-r41",
+      "seed": 424242,
+      "towerIndex": 78,
+      "key": "-1270.00:-1600.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -1600,
+        "width": 131,
+        "depth": 165.47494646463923,
+        "height": 2803.091014641119,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -1600,
+        "width": 131,
+        "depth": 165.47494646463923,
+        "height": 2803.091014641119,
+        "tint": 10133668
+      },
+      "owner": 0.9103600978851318,
+      "baselineFingerprint": "4e67244b27f699210c3ad57cc9b2f35f86cf33235f083ad26d05cd710ae72fea",
+      "maskFile": "tower-78-r41-mask.png",
+      "maskSha256": "1f0880724ce69b0075b4020ab94154a253df8755218e2c0e4bee150ae83f841f"
+    },
+    {
+      "id": "tower-79-r41",
+      "seed": 424242,
+      "towerIndex": 79,
+      "key": "-1590.00:-1600.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": -1600,
+        "width": 150,
+        "depth": 217.6714572905079,
+        "height": 1523.5065988363292,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": -1600,
+        "width": 150,
+        "depth": 217.6714572905079,
+        "height": 1523.5065988363292,
+        "tint": 6909297
+      },
+      "owner": 0.31053102016448975,
+      "baselineFingerprint": "1351e1adb474769be37e3b15242c3888fc7501a0b26a859d4854867902ee3bf5",
+      "maskFile": "tower-79-r41-mask.png",
+      "maskSha256": "a4e75813a06d58eeb39221072b648d05ada6eaf42dec018ef3c2a85df1c1558d"
+    },
+    {
+      "id": "tower-80-r41",
+      "seed": 424242,
+      "towerIndex": 80,
+      "key": "-630.00:-1280.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -1280,
+        "width": 163,
+        "depth": 138.61117276279634,
+        "height": 1608.1640049620019,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -1280,
+        "width": 163,
+        "depth": 138.61117276279634,
+        "height": 1608.1640049620019,
+        "tint": 8027520
+      },
+      "owner": 0.18100880086421967,
+      "baselineFingerprint": "0b2752abf63c32d08396aeb74b539910e020500ecb83b136e650a52a7f6409d7",
+      "maskFile": "tower-80-r41-mask.png",
+      "maskSha256": "2975a13eaa878c8b9ad09302c6354bcdbfe6a04d1c4be3160d432e1b2a254a64"
+    },
+    {
+      "id": "tower-81-r41",
+      "seed": 424242,
+      "towerIndex": 81,
+      "key": "-950.00:-1280.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -1280,
+        "width": 197.10000000000002,
+        "depth": 171.12317370036095,
+        "height": 1162.7758880134197,
+        "tint": 9321059
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -1280,
+        "width": 197.10000000000002,
+        "depth": 171.12317370036095,
+        "height": 1162.7758880134197,
+        "tint": 9321059
+      },
+      "owner": 0.9079273343086243,
+      "baselineFingerprint": "c29092716d4c2f4b2d22bc0f76191abeb5e317b4f3f1f2da23db7173773c7df0",
+      "maskFile": "tower-81-r41-mask.png",
+      "maskSha256": "1f9e6feecfcd3e7b495c14a247a6f7b629c3bfa3d992f5a1ea7649659fa71e09"
+    },
+    {
+      "id": "tower-82-r41",
+      "seed": 424242,
+      "towerIndex": 82,
+      "key": "-1270.00:-1280.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -1280,
+        "width": 137,
+        "depth": 251.86315059247903,
+        "height": 1955.4915035223673,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -1280,
+        "width": 137,
+        "depth": 251.86315059247903,
+        "height": 1955.4915035223673,
+        "tint": 5790816
+      },
+      "owner": 0.19335630536079407,
+      "baselineFingerprint": "e9d6b30229230c545dd8bc5b6e2868adab4a092e09b8270ebbee764ae8e5c555",
+      "maskFile": "tower-82-r41-mask.png",
+      "maskSha256": "7c85a1d78990b1c505bdb07d8ae747f97bc8537aa5930db7b5e4912ff022c762"
+    },
+    {
+      "id": "tower-83-r41",
+      "seed": 424242,
+      "towerIndex": 83,
+      "key": "-1590.00:-1280.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": -1280,
+        "width": 287.55,
+        "depth": 186.17957259534822,
+        "height": 826.5214514226373,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": -1280,
+        "width": 287.55,
+        "depth": 186.17957259534822,
+        "height": 826.8399442653603,
+        "tint": 8027520
+      },
+      "owner": 0.21289166808128357,
+      "baselineFingerprint": "8d3ad4f7fb3787a9dbe0bed8c81828ec638172bc11b03e9f9d9c293d29a5affd",
+      "maskFile": "tower-83-r41-mask.png",
+      "maskSha256": "85f59ecf5ed0de0cc9d46b354e2c8b2afaad43dc265130d632fab1c224b67ee3"
+    },
+    {
+      "id": "tower-84-r41",
+      "seed": 424242,
+      "towerIndex": 84,
+      "key": "630.00:-1280.00",
+      "sourceTower": {
+        "x": 630,
+        "z": -1280,
+        "width": 131,
+        "depth": 271.24924207643284,
+        "height": 1608.1640049620019,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": -1280,
+        "width": 131,
+        "depth": 271.24924207643284,
+        "height": 1608.1640049620019,
+        "tint": 10133668
+      },
+      "owner": 0.44450843334198,
+      "baselineFingerprint": "231450c9eeae75b0174ea6d9407b88ada90429e1abd30e41c782fad7eda1846a",
+      "maskFile": "tower-84-r41-mask.png",
+      "maskSha256": "95757f51b399b824309ac380d582cdc0867da32a5df0c9fe957038dd8ea36732"
+    },
+    {
+      "id": "tower-85-r41",
+      "seed": 424242,
+      "towerIndex": 85,
+      "key": "-630.00:-960.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -960,
+        "width": 200,
+        "depth": 94.57197936902865,
+        "height": 3939.379139348677,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -960,
+        "width": 200,
+        "depth": 94.57197936902865,
+        "height": 3939.379139348677,
+        "tint": 10133668
+      },
+      "owner": 0.06094576045870781,
+      "baselineFingerprint": "5ec6e02642612f794d5c510dcfdd860afcb8f2f8655018e3325a5404013be102",
+      "maskFile": "tower-85-r41-mask.png",
+      "maskSha256": "5b239d701d2a784e1a720cbd6ba70eddf612c9256cc2f8aca2855b8889646757"
+    },
+    {
+      "id": "tower-86-r41",
+      "seed": 424242,
+      "towerIndex": 86,
+      "key": "-950.00:-960.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -960,
+        "width": 205,
+        "depth": 183.39261418822008,
+        "height": 3619.302019363557,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -960,
+        "width": 205,
+        "depth": 183.39261418822008,
+        "height": 3619.302019363557,
+        "tint": 9277329
+      },
+      "owner": 0.09430195391178131,
+      "baselineFingerprint": "5c1efb6c3862ee7c9dccd5e3b3bcba403129cc7ecc8d106c21e1940c3770d777",
+      "maskFile": "tower-86-r41-mask.png",
+      "maskSha256": "dda246b8aba9bb059e47bcd80393f6751c7b496326d832d599dcfbe822ae294f"
+    },
+    {
+      "id": "tower-87-r41",
+      "seed": 424242,
+      "towerIndex": 87,
+      "key": "-1270.00:-960.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -960,
+        "width": 65.61672071056283,
+        "depth": 365.01208095805555,
+        "height": 3322.7138934068143,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -960,
+        "width": 65.61672071056283,
+        "depth": 365.01208095805555,
+        "height": 3322.7138934068143,
+        "tint": 9277329
+      },
+      "owner": 0.6436825394630432,
+      "baselineFingerprint": "d3eda5d9bb4de861a978d27a86191718153a859385cf9f18fa28a16158f57da7",
+      "maskFile": "tower-87-r41-mask.png",
+      "maskSha256": "296828be450203b8b4c05add3745c0eef3fdd8ccc4fcdaf79bd3b272d011f887"
+    },
+    {
+      "id": "tower-88-r41",
+      "seed": 424242,
+      "towerIndex": 88,
+      "key": "630.00:-960.00",
+      "sourceTower": {
+        "x": 630,
+        "z": -960,
+        "width": 140,
+        "depth": 221.31719986344336,
+        "height": 3239.5313686522186,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": -960,
+        "width": 140,
+        "depth": 221.31719986344336,
+        "height": 3239.5313686522186,
+        "tint": 8027520
+      },
+      "owner": 0.19563692808151245,
+      "baselineFingerprint": "bda2344754e7603818c178d5f6f89659efc79ff8197c0e617141d6aac06b42c3",
+      "maskFile": "tower-88-r41-mask.png",
+      "maskSha256": "b1feec9e4bc2a977040e2323859167b2e4d652f6c0728421ec07a58e1fca6357"
+    },
+    {
+      "id": "tower-89-r41",
+      "seed": 424242,
+      "towerIndex": 89,
+      "key": "950.00:-960.00",
+      "sourceTower": {
+        "x": 950,
+        "z": -960,
+        "width": 155,
+        "depth": 178.21023132628375,
+        "height": 3301.4309196560043,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": -960,
+        "width": 155,
+        "depth": 178.21023132628375,
+        "height": 3301.4309196560043,
+        "tint": 8027520
+      },
+      "owner": 0.34258216619491577,
+      "baselineFingerprint": "d744d0244fd0b3e6710d4200161ec393291176f7341b3d56c35b8905b7d00bc2",
+      "maskFile": "tower-89-r41-mask.png",
+      "maskSha256": "d1280c883a0af606f25b14df6a379cdea7d074ed692631f8a8af6b6cca24126c"
+    },
+    {
+      "id": "tower-90-r41",
+      "seed": 424242,
+      "towerIndex": 90,
+      "key": "1270.00:-960.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": -960,
+        "width": 201.24999999999997,
+        "depth": 45.1654593537225,
+        "height": 3042.4412988450304,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": -960,
+        "width": 201.24999999999997,
+        "depth": 45.1654593537225,
+        "height": 3042.4412988450304,
+        "tint": 9277329
+      },
+      "owner": 0.45204946398735046,
+      "baselineFingerprint": "a89dfcc8b13ed5d2db2f78fa353dfba93ae4de74e077f687c20e6fbb67602b7e",
+      "maskFile": "tower-90-r41-mask.png",
+      "maskSha256": "4920290a233c4f57fb3e34d8f445ddfcabd107460fd5cef2d0e326a97bc0fe15"
+    },
+    {
+      "id": "tower-91-r41",
+      "seed": 424242,
+      "towerIndex": 91,
+      "key": "1590.00:-960.00",
+      "sourceTower": {
+        "x": 1590,
+        "z": -960,
+        "width": 153,
+        "depth": 137.81475083258076,
+        "height": 1598.6719721372576,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": 1590,
+        "z": -960,
+        "width": 153,
+        "depth": 137.814750833211,
+        "height": 1598.6719721390857,
+        "tint": 9277329
+      },
+      "owner": 0.5314332246780396,
+      "baselineFingerprint": "4d84af4ce0a163b4ef004c12d17432bef5bc64ccb301ffe2ea72bf6b1ea6a7a0",
+      "maskFile": "tower-91-r41-mask.png",
+      "maskSha256": "8c9f4151f3fd772d600df6d1b0fb09232faa782001635be0589bb3005188c769"
+    },
+    {
+      "id": "tower-92-r41",
+      "seed": 424242,
+      "towerIndex": 92,
+      "key": "-630.00:-640.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -640,
+        "width": 224,
+        "depth": 118.02262527387425,
+        "height": 3252.344255,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -640,
+        "width": 224,
+        "depth": 118.02262527387425,
+        "height": 3252.344255,
+        "tint": 8027520
+      },
+      "owner": 0.5222613215446472,
+      "baselineFingerprint": "d111e5054259507e2a3aa4cf35c84777d75346b70eec54d17bf02d938e0b8f37",
+      "maskFile": "tower-92-r41-mask.png",
+      "maskSha256": "6ff28c646845b4bd00b89265babaac10cdc43939572bd8ea217bd2a20f0c36e6"
+    },
+    {
+      "id": "tower-93-r41",
+      "seed": 424242,
+      "towerIndex": 93,
+      "key": "-950.00:-640.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -640,
+        "width": 217,
+        "depth": 194.02109545131333,
+        "height": 2691.55136,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -640,
+        "width": 217,
+        "depth": 194.02109545131333,
+        "height": 2691.55136,
+        "tint": 8027520
+      },
+      "owner": 0.6083545088768005,
+      "baselineFingerprint": "8f578b801b88ce65dbd4426696f05192c200307af6cf34bb0f473beac3def51f",
+      "maskFile": "tower-93-r41-mask.png",
+      "maskSha256": "866420303f226dddc48fd8728cc3a4ef25965d39b234352db355846be65dd811"
+    },
+    {
+      "id": "tower-94-r41",
+      "seed": 424242,
+      "towerIndex": 94,
+      "key": "-1270.00:-640.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -640,
+        "width": 183,
+        "depth": 164.72448207324126,
+        "height": 1940.5281100000002,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -640,
+        "width": 183,
+        "depth": 164.72448207471888,
+        "height": 1940.5281100000002,
+        "tint": 5790816
+      },
+      "owner": 0.24288611114025116,
+      "baselineFingerprint": "257ceac0b6df222819d1b82b53b8c601c5760a0ed4a3548cd0884ebc1c87a92a",
+      "maskFile": "tower-94-r41-mask.png",
+      "maskSha256": "bd3b9ef9a0e02f80ac8e0bf0dd4cd22ba945a68e72330a5d880d09aeed380acb"
+    },
+    {
+      "id": "tower-95-r41",
+      "seed": 424242,
+      "towerIndex": 95,
+      "key": "630.00:-640.00",
+      "sourceTower": {
+        "x": 630,
+        "z": -640,
+        "width": 214,
+        "depth": 216.21460512592313,
+        "height": 3347.489955,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": -640,
+        "width": 214,
+        "depth": 216.21460512592313,
+        "height": 3347.489955,
+        "tint": 8027520
+      },
+      "owner": 0.1721930205821991,
+      "baselineFingerprint": "bba3b3360597c66c6592f283ae877f703dfdbb0d5e40b26e682815d64471c448",
+      "maskFile": "tower-95-r41-mask.png",
+      "maskSha256": "9d2f18ae18fad54a63672bdb4262c12ee062cff221d8bc38772b6e4fd295f69d"
+    },
+    {
+      "id": "tower-96-r41",
+      "seed": 424242,
+      "towerIndex": 96,
+      "key": "950.00:-640.00",
+      "sourceTower": {
+        "x": 950,
+        "z": -640,
+        "width": 156,
+        "depth": 121.16461483689292,
+        "height": 2928.5423200000005,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": -640,
+        "width": 156,
+        "depth": 121.16461483689292,
+        "height": 2928.5423200000005,
+        "tint": 10133668
+      },
+      "owner": 0.892220675945282,
+      "baselineFingerprint": "955f9d09bb2577455f973f9266e241d0fd4ded2ff8c1a19a99fa7d73f0257254",
+      "maskFile": "tower-96-r41-mask.png",
+      "maskSha256": "fbb05d42dd7118a4a0f4561e123e93d67d32bd8509a3a05b595e5397f75a69f5"
+    },
+    {
+      "id": "tower-97-r41",
+      "seed": 424242,
+      "towerIndex": 97,
+      "key": "1270.00:-640.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": -640,
+        "width": 142,
+        "depth": 175.34249758408382,
+        "height": 2711.4699250000003,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": -640,
+        "width": 142,
+        "depth": 175.34249758408382,
+        "height": 2711.4699250000003,
+        "tint": 10133668
+      },
+      "owner": 0.48805204033851624,
+      "baselineFingerprint": "aa07cc432fca8007df99a562535fbdf7408b6d0872f04701307258ca39a7f22e",
+      "maskFile": "tower-97-r41-mask.png",
+      "maskSha256": "9af3f0586c914a1351b48d4bc01018249a87fd09055fd3ed8764478f5fc41744"
+    },
+    {
+      "id": "tower-98-r41",
+      "seed": 424242,
+      "towerIndex": 98,
+      "key": "1590.00:-640.00",
+      "sourceTower": {
+        "x": 1590,
+        "z": -640,
+        "width": 227,
+        "depth": 179.48822944444504,
+        "height": 2084.2671250000003,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 1590,
+        "z": -640,
+        "width": 227,
+        "depth": 179.48822944444504,
+        "height": 2084.2671250000003,
+        "tint": 8027520
+      },
+      "owner": 0.719418466091156,
+      "baselineFingerprint": "c8b5e9b36667c3aa9bbdacd6c938c25ce7f5e0138a42eeb0e0f9d5bc56de5161",
+      "maskFile": "tower-98-r41-mask.png",
+      "maskSha256": "e36ed4be15a5d9b8409c837b4d23fdaa4ac52cff821e4203f8b6aedfc1e4ffa1"
+    },
+    {
+      "id": "tower-99-r41",
+      "seed": 424242,
+      "towerIndex": 99,
+      "key": "-630.00:-320.00",
+      "sourceTower": {
+        "x": -630,
+        "z": -320,
+        "width": 138,
+        "depth": 81.01306941159714,
+        "height": 3393.40667,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": -320,
+        "width": 138,
+        "depth": 81.01306941159714,
+        "height": 3393.40667,
+        "tint": 9277329
+      },
+      "owner": 0.6780901551246643,
+      "baselineFingerprint": "bf7d093985ef0c9171fcef72e806f751675983483f56fb7e89b2ee297a584db0",
+      "maskFile": "tower-99-r41-mask.png",
+      "maskSha256": "cd5823fe3e2ea4c41cf2dcdd6ef649fc829fe4c88b9ff0948c4c6d51a2f0d2ce"
+    },
+    {
+      "id": "tower-100-r41",
+      "seed": 424242,
+      "towerIndex": 100,
+      "key": "-950.00:-320.00",
+      "sourceTower": {
+        "x": -950,
+        "z": -320,
+        "width": 179,
+        "depth": 177.80533441244324,
+        "height": 2693.7732,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": -320,
+        "width": 179,
+        "depth": 177.80533441244324,
+        "height": 2693.7732,
+        "tint": 8027520
+      },
+      "owner": 0.4785158932209015,
+      "baselineFingerprint": "ac04c35134bae684b406bf67edceea8f98ca342fb7c5ae544af1fdc9256569ad",
+      "maskFile": "tower-100-r41-mask.png",
+      "maskSha256": "961e67435e53778d5e280d58b897ae213d4ed6139a7e21c4c8b47a973d576bb1"
+    },
+    {
+      "id": "tower-101-r41",
+      "seed": 424242,
+      "towerIndex": 101,
+      "key": "-1270.00:-320.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": -320,
+        "width": 165,
+        "depth": 289.5376813252988,
+        "height": 2594.12678,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": -320,
+        "width": 165,
+        "depth": 289.5376813252988,
+        "height": 2594.12678,
+        "tint": 8027520
+      },
+      "owner": 0.10965979099273682,
+      "baselineFingerprint": "c2041741c20ab955022d4daeb6eff8928410c3d0c6cfde97c2dc90bfbfbf42b3",
+      "maskFile": "tower-101-r41-mask.png",
+      "maskSha256": "69e7992c943942212c5e0183e0d2a092c28f77e08dedf4faa31484bb8d762937"
+    },
+    {
+      "id": "tower-102-r41",
+      "seed": 424242,
+      "towerIndex": 102,
+      "key": "630.00:-320.00",
+      "sourceTower": {
+        "x": 630,
+        "z": -320,
+        "width": 150,
+        "depth": 141.48383591030353,
+        "height": 2916.25558,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": -320,
+        "width": 150,
+        "depth": 141.48383591030353,
+        "height": 2916.25558,
+        "tint": 8027520
+      },
+      "owner": 0.7195663452148438,
+      "baselineFingerprint": "0f5c1aa902d23eb727f7ffd0bcc6799ff09c77783d008ba97c2ba11d0dfaa2b2",
+      "maskFile": "tower-102-r41-mask.png",
+      "maskSha256": "430e8da73e59301f7649b271079ae89a14c6b9896c6fc8962cfa611179c50a7f"
+    },
+    {
+      "id": "tower-103-r41",
+      "seed": 424242,
+      "towerIndex": 103,
+      "key": "950.00:-320.00",
+      "sourceTower": {
+        "x": 950,
+        "z": -320,
+        "width": 197,
+        "depth": 205.15572405975809,
+        "height": 2943.2530400000005,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": -320,
+        "width": 197,
+        "depth": 205.15572405975809,
+        "height": 2943.2530400000005,
+        "tint": 5790816
+      },
+      "owner": 0.079422727227211,
+      "baselineFingerprint": "9ccac2cdee9971202db68813ed78d1cbc91a2ac4637fb8e80eb563b1a8590881",
+      "maskFile": "tower-103-r41-mask.png",
+      "maskSha256": "c7cdfb221b8e4aa35803395ee0a087f91632d2671c2ff2cbc5407209f960a2cd"
+    },
+    {
+      "id": "tower-104-r41",
+      "seed": 424242,
+      "towerIndex": 104,
+      "key": "1270.00:-320.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": -320,
+        "width": 164,
+        "depth": 247.86374979431784,
+        "height": 2698.585645,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": -320,
+        "width": 164,
+        "depth": 247.86374979431784,
+        "height": 2698.585645,
+        "tint": 8027520
+      },
+      "owner": 0.17368948459625244,
+      "baselineFingerprint": "db2049f7938457ee1368941943731744c31480a3eaff150a9daf87a888928f03",
+      "maskFile": "tower-104-r41-mask.png",
+      "maskSha256": "875ffbcf30148324610949df44126383f808c3d30b8950286de1decded35f0e5"
+    },
+    {
+      "id": "tower-105-r41",
+      "seed": 424242,
+      "towerIndex": 105,
+      "key": "1590.00:-320.00",
+      "sourceTower": {
+        "x": 1590,
+        "z": -320,
+        "width": 204,
+        "depth": 142.44109959179298,
+        "height": 1886.970365,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": 1590,
+        "z": -320,
+        "width": 204,
+        "depth": 142.44109959179298,
+        "height": 1886.970365,
+        "tint": 10133668
+      },
+      "owner": 0.03599894791841507,
+      "baselineFingerprint": "dd2d5a6599061ad0a7b1155c429922284366b24ade705115b4283ed66700564a",
+      "maskFile": "tower-105-r41-mask.png",
+      "maskSha256": "bea667bccbcfe36aedf5365d48e5cc807dd3ab03bcd56dc943eca9c56ab8d875"
+    },
+    {
+      "id": "tower-106-r41",
+      "seed": 424242,
+      "towerIndex": 106,
+      "key": "-630.00:0.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 0,
+        "width": 215,
+        "depth": 163.75041082280063,
+        "height": 3182.972745,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 0,
+        "width": 215,
+        "depth": 163.75041082280063,
+        "height": 3182.972745,
+        "tint": 10133668
+      },
+      "owner": 0.9390010833740234,
+      "baselineFingerprint": "29e1d38189b0d32eda68f8c200f7234958fb95f50b01e627f0a52f066b8b09d1",
+      "maskFile": "tower-106-r41-mask.png",
+      "maskSha256": "aa88434dc5b88b1e5bd03286d8b227a0b1983f90b42d6191ca5cde19221432fd"
+    },
+    {
+      "id": "tower-107-r41",
+      "seed": 424242,
+      "towerIndex": 107,
+      "key": "-950.00:0.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 0,
+        "width": 123,
+        "depth": 249.06991782720888,
+        "height": 2939.9568799999997,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 0,
+        "width": 123,
+        "depth": 249.06991782720888,
+        "height": 2939.9568799999997,
+        "tint": 5790816
+      },
+      "owner": 0.48203331232070923,
+      "baselineFingerprint": "413dad847418d58d0d53ea0ad1b176d125d9c914087ca996643437abf6366954",
+      "maskFile": "tower-107-r41-mask.png",
+      "maskSha256": "05170ea7a7b23d39055d315d65b367f0f557265e0323fc739f483527a5802850"
+    },
+    {
+      "id": "tower-108-r41",
+      "seed": 424242,
+      "towerIndex": 108,
+      "key": "-1270.00:0.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 0,
+        "width": 136,
+        "depth": 259.6533803161503,
+        "height": 2528.00241,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 0,
+        "width": 136,
+        "depth": 259.6533803161503,
+        "height": 2528.00241,
+        "tint": 5790816
+      },
+      "owner": 0.5425786375999451,
+      "baselineFingerprint": "7b1b14baa39cfa343df26773a5be9ca7bc6deb22126543c5e86e946590d52805",
+      "maskFile": "tower-108-r41-mask.png",
+      "maskSha256": "49c66332f2e275a8198d9be9856a5047af88a2c9ce4ebe173b0f447bfb2cb6e8"
+    },
+    {
+      "id": "tower-109-r41",
+      "seed": 424242,
+      "towerIndex": 109,
+      "key": "-1590.00:0.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": 0,
+        "width": 122,
+        "depth": 182.59071563465181,
+        "height": 1898.4249399999999,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": 0,
+        "width": 122,
+        "depth": 182.59071563465181,
+        "height": 1898.4249399999999,
+        "tint": 8027520
+      },
+      "owner": 0.04240954667329788,
+      "baselineFingerprint": "c492710afd711b1afb485083c5fd7f13e6d66fa3dccb8ae05e3c1b7b38d0ebd2",
+      "maskFile": "tower-109-r41-mask.png",
+      "maskSha256": "a37f61ec78e38e3c0f6828064632c7e1cd291f570d86ddbba3fdb2a9fde416af"
+    },
+    {
+      "id": "tower-110-r41",
+      "seed": 424242,
+      "towerIndex": 110,
+      "key": "630.00:0.00",
+      "sourceTower": {
+        "x": 630,
+        "z": 0,
+        "width": 132,
+        "depth": 272.9073614795958,
+        "height": 3192.7804,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": 0,
+        "width": 132,
+        "depth": 272.9073614795958,
+        "height": 3192.7804,
+        "tint": 6909297
+      },
+      "owner": 0.46737009286880493,
+      "baselineFingerprint": "ccddaa5c9c634d0daf79f336bc534664713303092832fcd797055b8b3b23ba16",
+      "maskFile": "tower-110-r41-mask.png",
+      "maskSha256": "f4c2b234f55fae134c425f71311007a58ad2c118c6243046b9c5fe60254af693"
+    },
+    {
+      "id": "tower-111-r41",
+      "seed": 424242,
+      "towerIndex": 111,
+      "key": "950.00:0.00",
+      "sourceTower": {
+        "x": 950,
+        "z": 0,
+        "width": 238,
+        "depth": 252.18705679021411,
+        "height": 2466.94664,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": 0,
+        "width": 238,
+        "depth": 252.18705679021411,
+        "height": 2466.94664,
+        "tint": 6909297
+      },
+      "owner": 0.8321210145950317,
+      "baselineFingerprint": "6309beb4abf419f1532329a5b18b7bb363a51f8449bc515a53ed007c8349904c",
+      "maskFile": "tower-111-r41-mask.png",
+      "maskSha256": "a5de6367b25b8a069859de5bf7fd2b17c29336481c2d250f7a7f501d325302b1"
+    },
+    {
+      "id": "tower-112-r41",
+      "seed": 424242,
+      "towerIndex": 112,
+      "key": "-630.00:320.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 320,
+        "width": 166,
+        "depth": 192.99965994156875,
+        "height": 2992.102585,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 320,
+        "width": 166,
+        "depth": 192.99965994156875,
+        "height": 2992.102585,
+        "tint": 6909297
+      },
+      "owner": 0.1662653088569641,
+      "baselineFingerprint": "7b789b981d7ad0c19177fe793e967aacb242ed03a0c4fa503013bf564cf9ad4c",
+      "maskFile": "tower-112-r41-mask.png",
+      "maskSha256": "a7d2bf0777b42399098a0a934f92889e682ae249646abe01889905822a543cd9"
+    },
+    {
+      "id": "tower-113-r41",
+      "seed": 424242,
+      "towerIndex": 113,
+      "key": "-950.00:320.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 320,
+        "width": 170,
+        "depth": 280.75505506944313,
+        "height": 2940.9741599999998,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 320,
+        "width": 170,
+        "depth": 280.75505506944313,
+        "height": 2940.9741599999998,
+        "tint": 10133668
+      },
+      "owner": 0.9710478186607361,
+      "baselineFingerprint": "f830f86136390712af7108fe283eca69ebf349f9fc42498b0f91f2d4b8695a97",
+      "maskFile": "tower-113-r41-mask.png",
+      "maskSha256": "10fcc171f645092b8ec26864f85e08206f488a6abf887b2dd21ca83ece0bbb1b"
+    },
+    {
+      "id": "tower-114-r41",
+      "seed": 424242,
+      "towerIndex": 114,
+      "key": "-1270.00:320.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 320,
+        "width": 166,
+        "depth": 132.7603728644837,
+        "height": 2580.19484,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 320,
+        "width": 166,
+        "depth": 132.7603728644837,
+        "height": 2580.19484,
+        "tint": 5790816
+      },
+      "owner": 0.46667057275772095,
+      "baselineFingerprint": "7c86d18ee60cb57ea7fa39de97152ccba775eb8c58d197b9977323409d904d90",
+      "maskFile": "tower-114-r41-mask.png",
+      "maskSha256": "a7019ce5d0b3415b9bdc8653a75e552e430bd5b970ae1703dbfe0877e15f438c"
+    },
+    {
+      "id": "tower-115-r41",
+      "seed": 424242,
+      "towerIndex": 115,
+      "key": "-1590.00:320.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": 320,
+        "width": 135,
+        "depth": 221.37292408423403,
+        "height": 1992.9399899999999,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": 320,
+        "width": 135,
+        "depth": 221.37292408423403,
+        "height": 1992.9399899999999,
+        "tint": 8027520
+      },
+      "owner": 0.6512443423271179,
+      "baselineFingerprint": "65bff60d468909c569283bc31d56429d943c1060b1d8c92b69ae564f14811a69",
+      "maskFile": "tower-115-r41-mask.png",
+      "maskSha256": "421ad6f8b7816ac3294b602fee3db1c3358a8c183becb474a1ba5f6cc75f29a8"
+    },
+    {
+      "id": "tower-116-r41",
+      "seed": 424242,
+      "towerIndex": 116,
+      "key": "-630.00:640.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 640,
+        "width": 237,
+        "depth": 116.55524197777635,
+        "height": 3023.990675,
+        "tint": 9321059
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 640,
+        "width": 237,
+        "depth": 116.55524197777635,
+        "height": 3023.990675,
+        "tint": 9321059
+      },
+      "owner": 0.3257928490638733,
+      "baselineFingerprint": "ae9b48c8f1180eca7887ec1f95315bff5830994d1fb6c658851bd4467ecc3e3a",
+      "maskFile": "tower-116-r41-mask.png",
+      "maskSha256": "591b736909d34ceb02d3c3ec21acde4c980bca155d74c14f4c2fd9bcd4f1c721"
+    },
+    {
+      "id": "tower-117-r41",
+      "seed": 424242,
+      "towerIndex": 117,
+      "key": "-950.00:640.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 640,
+        "width": 175,
+        "depth": 287.81700138129463,
+        "height": 2912.61888,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 640,
+        "width": 175,
+        "depth": 287.81700138129463,
+        "height": 2912.61888,
+        "tint": 9277329
+      },
+      "owner": 0.4728028178215027,
+      "baselineFingerprint": "27f79df9606cba88d493db5f2e0ba0a0082735aaa296c390103ccf0f93d01940",
+      "maskFile": "tower-117-r41-mask.png",
+      "maskSha256": "477a537919c0128fcd9c5aeb037f0957b461e19427ff14da2e319ea174f618d1"
+    },
+    {
+      "id": "tower-118-r41",
+      "seed": 424242,
+      "towerIndex": 118,
+      "key": "-1270.00:640.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 640,
+        "width": 159,
+        "depth": 175.93177916639723,
+        "height": 2718.79908,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 640,
+        "width": 159,
+        "depth": 175.93177916639723,
+        "height": 2718.79908,
+        "tint": 6909297
+      },
+      "owner": 0.6498970985412598,
+      "baselineFingerprint": "813f61d6fc1784e8700ef5218f075256a7c7e9648c0f41ea41164d3f80b769ac",
+      "maskFile": "tower-118-r41-mask.png",
+      "maskSha256": "85157bc29868d46908ce7e55130708db952d3a640f300f4228b3e76869c0bccc"
+    },
+    {
+      "id": "tower-119-r41",
+      "seed": 424242,
+      "towerIndex": 119,
+      "key": "-1590.00:640.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": 640,
+        "width": 228,
+        "depth": 339.1502172051612,
+        "height": 2211.9601350000003,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": 640,
+        "width": 228,
+        "depth": 339.1502172051612,
+        "height": 2211.9601350000003,
+        "tint": 5790816
+      },
+      "owner": 0.6061594486236572,
+      "baselineFingerprint": "c182fe51c276819b8f4c5076af060566c8899d27e6acfa7eba0428207e240363",
+      "maskFile": "tower-119-r41-mask.png",
+      "maskSha256": "db609018ecf5e011ccc928850d6bddd1c95db70eec8926ae8478564d0e807eb4"
+    },
+    {
+      "id": "tower-120-r41",
+      "seed": 424242,
+      "towerIndex": 120,
+      "key": "-630.00:960.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 960,
+        "width": 200,
+        "depth": 85.93316596341944,
+        "height": 3126.5650199329502,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 960,
+        "width": 200,
+        "depth": 85.93316596341944,
+        "height": 3126.5650199329502,
+        "tint": 8027520
+      },
+      "owner": 0.23103182017803192,
+      "baselineFingerprint": "a3e26bc21243b31dea89254a310100a920eca0bda12275168df3dbef00bf170a",
+      "maskFile": "tower-120-r41-mask.png",
+      "maskSha256": "f0615afa76820f38e77bc7f6223e32e54fe0190c6cc8f710e95132ac2ba794d7"
+    },
+    {
+      "id": "tower-121-r41",
+      "seed": 424242,
+      "towerIndex": 121,
+      "key": "-950.00:960.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 960,
+        "width": 163,
+        "depth": 152.95966297160203,
+        "height": 1840.2981670512686,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 960,
+        "width": 163,
+        "depth": 152.95966297160203,
+        "height": 1840.2981670512686,
+        "tint": 9277329
+      },
+      "owner": 0.11835181713104248,
+      "baselineFingerprint": "826ba64dc6ec031210425d34791fe76e0a61a69f6973caeabd6ad300f8b6ef21",
+      "maskFile": "tower-121-r41-mask.png",
+      "maskSha256": "c871fbde5a41c1b1a2f0ced158a056bce2198bf4df43800fdfc4148984837f3f"
+    },
+    {
+      "id": "tower-122-r41",
+      "seed": 424242,
+      "towerIndex": 122,
+      "key": "-1270.00:960.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 960,
+        "width": 63.268991723434354,
+        "depth": 358.49315826277257,
+        "height": 3331.2595922039695,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 960,
+        "width": 63.268991723434354,
+        "depth": 358.49315826277257,
+        "height": 3331.2595922039695,
+        "tint": 8027520
+      },
+      "owner": 0.8481171131134033,
+      "baselineFingerprint": "37b8ae84d83b3f2a35dd08d210d4ab43812788bfb50b0e1f5cb6f3c0b0295484",
+      "maskFile": "tower-122-r41-mask.png",
+      "maskSha256": "d3ab49d6f1f1a04eab2b900c556d169c0874f1e885d5773a37f750082b11fb92"
+    },
+    {
+      "id": "tower-123-r41",
+      "seed": 424242,
+      "towerIndex": 123,
+      "key": "-1590.00:960.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": 960,
+        "width": 153,
+        "depth": 139.49017312522466,
+        "height": 1975.4057092610533,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": 960,
+        "width": 153,
+        "depth": 139.49017312522466,
+        "height": 1975.4057092610533,
+        "tint": 5790816
+      },
+      "owner": 0.2292003035545349,
+      "baselineFingerprint": "99d0bf89268dafe832cfa6b233ff59d7a8c4b7c7000bac00b18139df8df6bde2",
+      "maskFile": "tower-123-r41-mask.png",
+      "maskSha256": "2ef2b39f84bd343bf5029bfab40570599cce0dab560bd05185556aa5070c465d"
+    },
+    {
+      "id": "tower-124-r41",
+      "seed": 424242,
+      "towerIndex": 124,
+      "key": "-630.00:1280.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 1280,
+        "width": 128,
+        "depth": 122.1743127557102,
+        "height": 2977.6749250000003,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 1280,
+        "width": 128,
+        "depth": 122.1743127557102,
+        "height": 2977.6749250000003,
+        "tint": 8027520
+      },
+      "owner": 0.5744690895080566,
+      "baselineFingerprint": "cc5ee3a8a47e948d9f7d5f25ce2269c2ee3954f349397f506b5fffcf15f42241",
+      "maskFile": "tower-124-r41-mask.png",
+      "maskSha256": "b631909f7f58540059cb81ee48299db1b0722d1d761178138044f2a673111f3f"
+    },
+    {
+      "id": "tower-125-r41",
+      "seed": 424242,
+      "towerIndex": 125,
+      "key": "-950.00:1280.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 1280,
+        "width": 183,
+        "depth": 133.14778636840776,
+        "height": 2446.4702439213356,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 1280,
+        "width": 183,
+        "depth": 133.14778636840776,
+        "height": 2446.4702439213356,
+        "tint": 5790816
+      },
+      "owner": 0.27466267347335815,
+      "baselineFingerprint": "19e9fab3fd8ddc13033c31b4011ead99e6a5023fe0744e737921d5cdd82b3f70",
+      "maskFile": "tower-125-r41-mask.png",
+      "maskSha256": "b227b438fdad09f9e17a34ddd8ef97906e82d3073f25dbde5617d474f4d90e64"
+    },
+    {
+      "id": "tower-126-r41",
+      "seed": 424242,
+      "towerIndex": 126,
+      "key": "-1270.00:1280.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 1280,
+        "width": 200,
+        "depth": 95.32398133655481,
+        "height": 1632.559665296183,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 1280,
+        "width": 200,
+        "depth": 95.32398133655481,
+        "height": 1632.559665296183,
+        "tint": 9277329
+      },
+      "owner": 0.09137463569641113,
+      "baselineFingerprint": "7f3e15557580feaa932942c972465e9c630c1eb151146e4598b076cd127bb73e",
+      "maskFile": "tower-126-r41-mask.png",
+      "maskSha256": "fe28771210c55c10dd815abb3b4651267d03d8c44646b3f4d5acb08f2d1bab01"
+    },
+    {
+      "id": "tower-127-r41",
+      "seed": 424242,
+      "towerIndex": 127,
+      "key": "-1590.00:1280.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": 1280,
+        "width": 132,
+        "depth": 145.9999185856336,
+        "height": 2880.40739575625,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": 1280,
+        "width": 132,
+        "depth": 145.9999185856336,
+        "height": 2880.40739575625,
+        "tint": 9277329
+      },
+      "owner": 0.33797141909599304,
+      "baselineFingerprint": "53520a2f52057133e11cdf548e5c67829c4674aa2ea7927866ac002714eda512",
+      "maskFile": "tower-127-r41-mask.png",
+      "maskSha256": "db0af4c6e403793bc77fbe22b2e2c4f452589c6909ff29b0f58cabdcde80541e"
+    },
+    {
+      "id": "tower-128-r41",
+      "seed": 424242,
+      "towerIndex": 128,
+      "key": "-630.00:1600.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 1600,
+        "width": 148,
+        "depth": 286.3539678875798,
+        "height": 2653.409747916787,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 1600,
+        "width": 148,
+        "depth": 286.3539678875798,
+        "height": 2653.409747916787,
+        "tint": 6909297
+      },
+      "owner": 0.7968780398368835,
+      "baselineFingerprint": "e617ecf31cfc6335a3d49e6fa7821a662921f61e8549c97587bf4472c53731d4",
+      "maskFile": "tower-128-r41-mask.png",
+      "maskSha256": "85cedb3f47f47f0c85c4121a1664311ace1495a0d38f0dd12a4ac68780599655"
+    },
+    {
+      "id": "tower-129-r41",
+      "seed": 424242,
+      "towerIndex": 129,
+      "key": "-950.00:1600.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 1600,
+        "width": 167,
+        "depth": 135.6355703960411,
+        "height": 1619.1308602287993,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 1600,
+        "width": 167,
+        "depth": 135.6355703960411,
+        "height": 1619.1308602287993,
+        "tint": 6909297
+      },
+      "owner": 0.636222243309021,
+      "baselineFingerprint": "04892b5ffa4aa0c2d641e3c45f7cf8a8a3ad4d9bdb637a12b2057b0fd7ee3671",
+      "maskFile": "tower-129-r41-mask.png",
+      "maskSha256": "701ecfc4e3d522ff16c545a16c28307d04ad1f2bc92dcb9c1d24754b5eaf69a6"
+    },
+    {
+      "id": "tower-130-r41",
+      "seed": 424242,
+      "towerIndex": 130,
+      "key": "-1270.00:1600.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 1600,
+        "width": 239,
+        "depth": 264.55639204761627,
+        "height": 2819.2797207839358,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 1600,
+        "width": 239,
+        "depth": 264.55639204761627,
+        "height": 2819.2797207839358,
+        "tint": 9277329
+      },
+      "owner": 0.8152909278869629,
+      "baselineFingerprint": "01a9e047a0f6a562c182f2f02b6eb6d575e647489b5bba2ec9ea5a5e96fa555e",
+      "maskFile": "tower-130-r41-mask.png",
+      "maskSha256": "e2788b59579e6016b3006bdeb51b81d3eb8011d4099c62bd2e1a17266ac05e50"
+    },
+    {
+      "id": "tower-131-r41",
+      "seed": 424242,
+      "towerIndex": 131,
+      "key": "-1590.00:1600.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": 1600,
+        "width": 186,
+        "depth": 108.87069401947159,
+        "height": 1524.8349096452437,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": 1600,
+        "width": 186,
+        "depth": 108.87069401947159,
+        "height": 1524.8349096452437,
+        "tint": 6909297
+      },
+      "owner": 0.9371181726455688,
+      "baselineFingerprint": "154bc4a9e660723111081fdf2d84912a0da844713c4f54b509d9246b37b65583",
+      "maskFile": "tower-131-r41-mask.png",
+      "maskSha256": "4d630bf27878035a0b6636074950a05a163c182a2dde8d954121336d54474a07"
+    },
+    {
+      "id": "tower-132-r41",
+      "seed": 424242,
+      "towerIndex": 132,
+      "key": "-630.00:1920.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 1920,
+        "width": 126.84030580576508,
+        "depth": 253.6997799333271,
+        "height": 2996.0728346709457,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 1920,
+        "width": 126.84030580576508,
+        "depth": 253.6997799333271,
+        "height": 2996.0728346709457,
+        "tint": 8027520
+      },
+      "owner": 0.7482054233551025,
+      "baselineFingerprint": "b6d1c667a38ff2a0cce83fadb98f290c40a99bc9b77d1d47d756239f16dcdeca",
+      "maskFile": "tower-132-r41-mask.png",
+      "maskSha256": "14c3ce69a26f9a99ce26591fb4134cdff4a41e8c9381128b3b424a5181150771"
+    },
+    {
+      "id": "tower-133-r41",
+      "seed": 424242,
+      "towerIndex": 133,
+      "key": "-950.00:1920.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 1920,
+        "width": 220.30547373126015,
+        "depth": 46.71490084663173,
+        "height": 3387.2668073685422,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 1920,
+        "width": 220.30547373126015,
+        "depth": 46.71490084663173,
+        "height": 3387.2668073685422,
+        "tint": 5790816
+      },
+      "owner": 0.16551701724529266,
+      "baselineFingerprint": "2ee9b3fbfaef96e6e16259c8d452eeca4c8964364d9fa6635cc4a340e21654e4",
+      "maskFile": "tower-133-r41-mask.png",
+      "maskSha256": "aaf7d52c5d2f50f101f2d696144f00ad67f5eab88309c7675c331fd75b6327b0"
+    },
+    {
+      "id": "tower-134-r41",
+      "seed": 424242,
+      "towerIndex": 134,
+      "key": "-1270.00:1920.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 1920,
+        "width": 45.703488732936194,
+        "depth": 229.26135736166458,
+        "height": 3073.5865078983575,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 1920,
+        "width": 45.703488732936194,
+        "depth": 229.26135736166458,
+        "height": 3073.5865078983575,
+        "tint": 9277329
+      },
+      "owner": 0.1104387491941452,
+      "baselineFingerprint": "f58c349f912e90455f7b3acdb79895cd83d8cc7595d4a01a558401ec90482110",
+      "maskFile": "tower-134-r41-mask.png",
+      "maskSha256": "088758a8f20d09345203ad48538dc72db648f35b6d8596b4c23436bfc67fa0fa"
+    },
+    {
+      "id": "tower-135-r41",
+      "seed": 424242,
+      "towerIndex": 135,
+      "key": "-1590.00:1920.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": 1920,
+        "width": 168.2512230790868,
+        "depth": 214.54444645594026,
+        "height": 935.4795834410447,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": 1920,
+        "width": 168.2512230790868,
+        "depth": 214.54444645594026,
+        "height": 935.4795834421494,
+        "tint": 9277329
+      },
+      "owner": 0.3185768723487854,
+      "baselineFingerprint": "ca5f16e62851de29886131a97db0493f21a9709b6f2f430aa5bd22a23f026fa9",
+      "maskFile": "tower-135-r41-mask.png",
+      "maskSha256": "d69a05cc524806d1bf6626a5a05a2d1dad89155cd96be988c2e17c8a68028376"
+    },
+    {
+      "id": "tower-136-r41",
+      "seed": 424242,
+      "towerIndex": 136,
+      "key": "630.00:1920.00",
+      "sourceTower": {
+        "x": 630,
+        "z": 1920,
+        "width": 123.65859800912558,
+        "depth": 164.33899106338603,
+        "height": 3446.760754922519,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": 1920,
+        "width": 123.65859800912558,
+        "depth": 164.3389910641268,
+        "height": 3446.760754922519,
+        "tint": 5790816
+      },
+      "owner": 0.6922038197517395,
+      "baselineFingerprint": "2603c49ca7449e1751c8d53925d7d1580f09a7ddc104894582ac77f551935a81",
+      "maskFile": "tower-136-r41-mask.png",
+      "maskSha256": "7a6837b927de0361b267712bbdfb4b8921bff4c34a4f2d582029fa5195173cb7"
+    },
+    {
+      "id": "tower-137-r41",
+      "seed": 424242,
+      "towerIndex": 137,
+      "key": "-630.00:2240.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 2240,
+        "width": 229.43677238392414,
+        "depth": 175.9505590332605,
+        "height": 4232.798507695875,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 2240,
+        "width": 229.43677238392414,
+        "depth": 175.9505590332605,
+        "height": 4232.798507695875,
+        "tint": 8027520
+      },
+      "owner": 0.9370070099830627,
+      "baselineFingerprint": "9954bd80a593bbc9a36a7006f140b9c0cf6190a5111a645c63866ae85986dfeb",
+      "maskFile": "tower-137-r41-mask.png",
+      "maskSha256": "d064f2275f3e094d888984238e67254f3b0504379c0703a61093c6665ad38122"
+    },
+    {
+      "id": "tower-138-r41",
+      "seed": 424242,
+      "towerIndex": 138,
+      "key": "-950.00:2240.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 2240,
+        "width": 203.94225776169094,
+        "depth": 153.57098964905458,
+        "height": 1306.5682897744625,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 2240,
+        "width": 203.94225776169094,
+        "depth": 153.57098964905458,
+        "height": 1306.5682897744625,
+        "tint": 9277329
+      },
+      "owner": 0.3945435583591461,
+      "baselineFingerprint": "0bdfd878c2ee62fb15aef5d2bda1f96223a9c4c46d4a55dc2b5ce871b71435f1",
+      "maskFile": "tower-138-r41-mask.png",
+      "maskSha256": "a403ee13ed141a75d3c98e8a551102c7fc5171880f53ff6ccdd1edf181298f05"
+    },
+    {
+      "id": "tower-139-r41",
+      "seed": 424242,
+      "towerIndex": 139,
+      "key": "-1270.00:2240.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 2240,
+        "width": 150.13306210171467,
+        "depth": 316.20712345502443,
+        "height": 1966.0633460119343,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 2240,
+        "width": 150.13306210171467,
+        "depth": 316.20712345502443,
+        "height": 1966.0633460119343,
+        "tint": 8027520
+      },
+      "owner": 0.6540825963020325,
+      "baselineFingerprint": "415d8bff841cc6746d4c6e9353df1ce245a2f516d709605e412c880a5f411439",
+      "maskFile": "tower-139-r41-mask.png",
+      "maskSha256": "248b23dde046fefa6150fc7dd7fa7080f81c491d610e595e4edd390bfd7a780a"
+    },
+    {
+      "id": "tower-140-r41",
+      "seed": 424242,
+      "towerIndex": 140,
+      "key": "630.00:2240.00",
+      "sourceTower": {
+        "x": 630,
+        "z": 2240,
+        "width": 204.42003739205975,
+        "depth": 397.45820728316573,
+        "height": 3233.5660916859424,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": 2240,
+        "width": 204.42003739205975,
+        "depth": 397.45820728316573,
+        "height": 3233.5660916859424,
+        "tint": 8027520
+      },
+      "owner": 0.2702407240867615,
+      "baselineFingerprint": "a7fb54eba2d4e217d9821ffe068c3bb1f01a0041fa2cff757560595a4adf7110",
+      "maskFile": "tower-140-r41-mask.png",
+      "maskSha256": "f9eee348bcb6cd5793e2089d868f37ff5ef84e25702cbcd91d560896b05d6528"
+    },
+    {
+      "id": "tower-141-r41",
+      "seed": 424242,
+      "towerIndex": 141,
+      "key": "950.00:2240.00",
+      "sourceTower": {
+        "x": 950,
+        "z": 2240,
+        "width": 253.3690100273874,
+        "depth": 170.47819509196773,
+        "height": 1454.8656315453632,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": 2240,
+        "width": 253.3690100273874,
+        "depth": 170.47819509196773,
+        "height": 1454.8656315453632,
+        "tint": 6909297
+      },
+      "owner": 0.10070361196994781,
+      "baselineFingerprint": "5a51d726e77dfde3003a25192bf3e4d20507f02f55d88625f7e81ba555a73610",
+      "maskFile": "tower-141-r41-mask.png",
+      "maskSha256": "414a8fa65a7ecc23a728c6e41e3d7dcd6e9da7b9af82a131d470295756a10930"
+    },
+    {
+      "id": "tower-142-r41",
+      "seed": 424242,
+      "towerIndex": 142,
+      "key": "1270.00:2240.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": 2240,
+        "width": 208.1763020094484,
+        "depth": 111.81030079588952,
+        "height": 1871.4568527694498,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": 2240,
+        "width": 208.1763020094484,
+        "depth": 111.81030079588952,
+        "height": 1871.4568527694498,
+        "tint": 8027520
+      },
+      "owner": 0.7517127990722656,
+      "baselineFingerprint": "fe899fa17e604e165f832738d42ee78503f6969cc1f1707337cd741b10b6adc3",
+      "maskFile": "tower-142-r41-mask.png",
+      "maskSha256": "dff9eff8e695f8971fbaac460b962307c933447cb1e4741dba8f374b496f2c61"
+    },
+    {
+      "id": "tower-143-r41",
+      "seed": 424242,
+      "towerIndex": 143,
+      "key": "1590.00:2240.00",
+      "sourceTower": {
+        "x": 1590,
+        "z": 2240,
+        "width": 24.859328137126717,
+        "depth": 141.5162666404717,
+        "height": 2334.0417323443676,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 1590,
+        "z": 2240,
+        "width": 24.859328137158492,
+        "depth": 141.5162666404717,
+        "height": 2334.0417323424863,
+        "tint": 6909297
+      },
+      "owner": 0.7584388852119446,
+      "baselineFingerprint": "b571f69bd7a38fc73ce371fa8ee4fa0406059935a391ec004b811a66453314c5",
+      "maskFile": "tower-143-r41-mask.png",
+      "maskSha256": "a007fa2ace2ecff3ae4b80761c5df2e023f1ebc8682c37658b90f222a0aecec9"
+    },
+    {
+      "id": "tower-144-r41",
+      "seed": 424242,
+      "towerIndex": 144,
+      "key": "-630.00:2560.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 2560,
+        "width": 266.154108181315,
+        "depth": 113.78793173803244,
+        "height": 3216.7048322693863,
+        "tint": 9321059
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 2560,
+        "width": 266.154108181315,
+        "depth": 113.78793173803244,
+        "height": 3216.7048322693863,
+        "tint": 9321059
+      },
+      "owner": 0.4347265660762787,
+      "baselineFingerprint": "7f102ea5ddfce8e5013562b30dd53eaba0bb016f34140dd55485602ffdd2bdf2",
+      "maskFile": "tower-144-r41-mask.png",
+      "maskSha256": "ff45b15cf1f1cc86fe57fd5136da82b0c324b9da07e6e1dd459f080875fbc5ee"
+    },
+    {
+      "id": "tower-145-r41",
+      "seed": 424242,
+      "towerIndex": 145,
+      "key": "-950.00:2560.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 2560,
+        "width": 297.5769927197246,
+        "depth": 66.89128807611014,
+        "height": 3433.294494750221,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 2560,
+        "width": 297.5769927197246,
+        "depth": 66.89128807611014,
+        "height": 3433.294494750221,
+        "tint": 9277329
+      },
+      "owner": 0.7607699036598206,
+      "baselineFingerprint": "d5ece9aa74cfd9d5f45ddd1872efcbec1be3e9de964d305605d932db555d2d19",
+      "maskFile": "tower-145-r41-mask.png",
+      "maskSha256": "c3dec4cac740ad8e7cf8899f0e2041622b0689a11ca1e06ce32d4f88311e3661"
+    },
+    {
+      "id": "tower-146-r41",
+      "seed": 424242,
+      "towerIndex": 146,
+      "key": "-1270.00:2560.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 2560,
+        "width": 145.36034684920597,
+        "depth": 167.06671269107719,
+        "height": 2511.5955936707915,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 2560,
+        "width": 145.36034684920597,
+        "depth": 167.06671269107719,
+        "height": 2511.5955936707915,
+        "tint": 6909297
+      },
+      "owner": 0.6088292598724365,
+      "baselineFingerprint": "ff8832893df4dbca68733ced33b66f1172b8a53db1bc482676f5f179e6aa3b3b",
+      "maskFile": "tower-146-r41-mask.png",
+      "maskSha256": "82d3c5635f1dff19be9b7ce3ef248938870e85af46b575367abd255f4ed976ed"
+    },
+    {
+      "id": "tower-147-r41",
+      "seed": 424242,
+      "towerIndex": 147,
+      "key": "630.00:2560.00",
+      "sourceTower": {
+        "x": 630,
+        "z": 2560,
+        "width": 236.50128580854582,
+        "depth": 346.1506494549844,
+        "height": 2912.1735145685025,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": 2560,
+        "width": 236.50128580854582,
+        "depth": 346.1506494549844,
+        "height": 2912.1735145685025,
+        "tint": 5790816
+      },
+      "owner": 0.28778088092803955,
+      "baselineFingerprint": "5c6d628f31aea8e64f36792069cd3bf31bb01f03839b6556519f48d624b2753e",
+      "maskFile": "tower-147-r41-mask.png",
+      "maskSha256": "8ae01a612a9d2a5f4d02ad147cd65bab2b7eb5fbd62beec924d9dec4c8fb6b28"
+    },
+    {
+      "id": "tower-148-r41",
+      "seed": 424242,
+      "towerIndex": 148,
+      "key": "950.00:2560.00",
+      "sourceTower": {
+        "x": 950,
+        "z": 2560,
+        "width": 155.57098400117468,
+        "depth": 222.46996857428906,
+        "height": 2790.0967370373423,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": 2560,
+        "width": 155.57098400117468,
+        "depth": 222.46996857486025,
+        "height": 2790.0967370373423,
+        "tint": 8027520
+      },
+      "owner": 0.6456497311592102,
+      "baselineFingerprint": "125d601c7ac634e6bd3ab6f6726e48f865d1e7e444459015d03fb36b709b2598",
+      "maskFile": "tower-148-r41-mask.png",
+      "maskSha256": "2561576370e81905c1633c0f5923be86b9578236d6dd418ddfa8c24a82030f6c"
+    },
+    {
+      "id": "tower-149-r41",
+      "seed": 424242,
+      "towerIndex": 149,
+      "key": "1270.00:2560.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": 2560,
+        "width": 166.1311343574911,
+        "depth": 301.61887007563735,
+        "height": 1845.370048525113,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": 2560,
+        "width": 166.1311343574911,
+        "depth": 301.6188700749556,
+        "height": 1845.370048525113,
+        "tint": 6909297
+      },
+      "owner": 0.22840704023838043,
+      "baselineFingerprint": "502b716c2e34f13fa0c61594d86384afe9e347b892edeeefba2c677677f51ddc",
+      "maskFile": "tower-149-r41-mask.png",
+      "maskSha256": "9a7e264872d6b988a6e8adf02076eac23adc55c17898af3b3861a1133545eb89"
+    },
+    {
+      "id": "tower-150-r41",
+      "seed": 424242,
+      "towerIndex": 150,
+      "key": "1590.00:2560.00",
+      "sourceTower": {
+        "x": 1590,
+        "z": 2560,
+        "width": 213.80666256502127,
+        "depth": 126.6967321244679,
+        "height": 1716.62377749485,
+        "tint": 9321059
+      },
+      "sourceTowerNode": {
+        "x": 1590,
+        "z": 2560,
+        "width": 213.80666256502127,
+        "depth": 126.6967321244679,
+        "height": 1716.62377749485,
+        "tint": 9321059
+      },
+      "owner": 0.11167702078819275,
+      "baselineFingerprint": "ea979f256eb51b348aeaaa6e072a84d53c92582c912a199fb792ea083a127d28",
+      "maskFile": "tower-150-r41-mask.png",
+      "maskSha256": "a5d2c26a521f95de2bae10b1bfd2a448237370729cf18619d2c679fdd30be1ba"
+    },
+    {
+      "id": "tower-151-r41",
+      "seed": 424242,
+      "towerIndex": 151,
+      "key": "-630.00:2880.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 2880,
+        "width": 141.66950579368532,
+        "depth": 87.56519965151345,
+        "height": 3282.8119698575347,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 2880,
+        "width": 141.66950579368532,
+        "depth": 87.56519965161797,
+        "height": 3282.8119698575347,
+        "tint": 6909297
+      },
+      "owner": 0.09941577166318893,
+      "baselineFingerprint": "be1555e18a3f10bce76b9505f85c6a3f4522996c9ed265e89d7c95c4cd9d01bf",
+      "maskFile": "tower-151-r41-mask.png",
+      "maskSha256": "3e949a1279d607707b62c80400a1cf7f1e30a1926765082659267db55d5a0097"
+    },
+    {
+      "id": "tower-152-r41",
+      "seed": 424242,
+      "towerIndex": 152,
+      "key": "-950.00:2880.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 2880,
+        "width": 251.4115562517109,
+        "depth": 283.86637731846866,
+        "height": 1271.8395871264809,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 2880,
+        "width": 251.4115562517109,
+        "depth": 283.86637731846866,
+        "height": 1271.8395871264809,
+        "tint": 10133668
+      },
+      "owner": 0.6845653057098389,
+      "baselineFingerprint": "623d3ac40e7dd07ecb2095a443583a87ba3ab560ef9e68fb6a2eaca727989aef",
+      "maskFile": "tower-152-r41-mask.png",
+      "maskSha256": "e0fd1f76e892b460bda1d16c94eeb957857faecd613689253c3addc43ed7e553"
+    },
+    {
+      "id": "tower-153-r41",
+      "seed": 424242,
+      "towerIndex": 153,
+      "key": "-1270.00:2880.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 2880,
+        "width": 182.8559583402195,
+        "depth": 211.50154115636343,
+        "height": 1839.7329312427244,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 2880,
+        "width": 182.85595833985718,
+        "depth": 211.68777002462997,
+        "height": 1839.812522783092,
+        "tint": 5790816
+      },
+      "owner": 0.22078104317188263,
+      "baselineFingerprint": "14b430411a983cba68322896ed5f44aba54323b62f1dd40627cf5092a66dae8d",
+      "maskFile": "tower-153-r41-mask.png",
+      "maskSha256": "f0ba9a194351e02bdfd211fbcb5f429974ce9c94915612a0a14e5c3121ff98f8"
+    },
+    {
+      "id": "tower-154-r41",
+      "seed": 424242,
+      "towerIndex": 154,
+      "key": "630.00:2880.00",
+      "sourceTower": {
+        "x": 630,
+        "z": 2880,
+        "width": 122.05432017826024,
+        "depth": 120.43449179673289,
+        "height": 3340.864676304832,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": 2880,
+        "width": 122.05432017826024,
+        "depth": 120.43449179673289,
+        "height": 3340.864676304832,
+        "tint": 9277329
+      },
+      "owner": 0.2141401618719101,
+      "baselineFingerprint": "6db718a4d566eb72dcce4c37ae4b41b3edcc29fbaaa382c3201ff0b0fda2f243",
+      "maskFile": "tower-154-r41-mask.png",
+      "maskSha256": "228cf2133e04e69715f0772fe620a431990885ce9739d88681137f55308c8907"
+    },
+    {
+      "id": "tower-155-r41",
+      "seed": 424242,
+      "towerIndex": 155,
+      "key": "950.00:2880.00",
+      "sourceTower": {
+        "x": 950,
+        "z": 2880,
+        "width": 166.49489165721536,
+        "depth": 153.22630944964945,
+        "height": 2409.8952217218725,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": 2880,
+        "width": 166.49489165721536,
+        "depth": 153.22630944964945,
+        "height": 2409.8952217231295,
+        "tint": 8027520
+      },
+      "owner": 0.18134671449661255,
+      "baselineFingerprint": "f1c2c138be9b6a9504764b031a660915a7ab881b027ae6dfb12198ea0d3d4aeb",
+      "maskFile": "tower-155-r41-mask.png",
+      "maskSha256": "106f13cd1e4202db41810a1a751a8741aa081bb4d9dac0dc8f6fb41138619339"
+    },
+    {
+      "id": "tower-156-r41",
+      "seed": 424242,
+      "towerIndex": 156,
+      "key": "1270.00:2880.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": 2880,
+        "width": 162.64965975826237,
+        "depth": 116.6167161654477,
+        "height": 2470.7655778895687,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": 2880,
+        "width": 162.64965975826237,
+        "depth": 116.6167161654477,
+        "height": 2470.7655778895687,
+        "tint": 8027520
+      },
+      "owner": 0.4126668870449066,
+      "baselineFingerprint": "734c9285038c1b5ee2accf322397bb1d2b4cbcdcfbff59e83ca8406d51d91924",
+      "maskFile": "tower-156-r41-mask.png",
+      "maskSha256": "6fb4899452be57c5da018468be6ea826c319d655faef629f6d05fd7000ee7055"
+    },
+    {
+      "id": "tower-157-r41",
+      "seed": 424242,
+      "towerIndex": 157,
+      "key": "1590.00:2880.00",
+      "sourceTower": {
+        "x": 1590,
+        "z": 2880,
+        "width": 242.66901288286317,
+        "depth": 123.74263355668253,
+        "height": 1383.8271890795884,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": 1590,
+        "z": 2880,
+        "width": 242.66901288286317,
+        "depth": 123.74263355668253,
+        "height": 1383.8271890795884,
+        "tint": 9277329
+      },
+      "owner": 0.9951233863830566,
+      "baselineFingerprint": "7c38f67f70a09bfba8c574706ac918f9ff749af5f116464fcdeffd74ae879432",
+      "maskFile": "tower-157-r41-mask.png",
+      "maskSha256": "f687fb2bd1d8c81725d150b6121d5b7e8eb67be61887cf0eb2eaf8367b6a2506"
+    },
+    {
+      "id": "tower-158-r41",
+      "seed": 424242,
+      "towerIndex": 158,
+      "key": "-630.00:3200.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 3200,
+        "width": 230.04671132322616,
+        "depth": 167.2644169700519,
+        "height": 2910.9032922503125,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 3200,
+        "width": 230.04671132322616,
+        "depth": 167.2644169700519,
+        "height": 2910.9032922503125,
+        "tint": 10133668
+      },
+      "owner": 0.8096036314964294,
+      "baselineFingerprint": "7b9392f79f05d94ed5a2e22df646007ac4e2fb9d9226bee26e483d30df56a19d",
+      "maskFile": "tower-158-r41-mask.png",
+      "maskSha256": "c4b3cc044257c079b77dfa32e1f66df792a662bf953f89df5da5484496c651e8"
+    },
+    {
+      "id": "tower-159-r41",
+      "seed": 424242,
+      "towerIndex": 159,
+      "key": "-950.00:3200.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 3200,
+        "width": 109.22917010417913,
+        "depth": 235.08634267792826,
+        "height": 2323.0418093553744,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 3200,
+        "width": 109.22917010417913,
+        "depth": 235.08634267792826,
+        "height": 2323.0418093553744,
+        "tint": 5790816
+      },
+      "owner": 0.22480341792106628,
+      "baselineFingerprint": "eacc94ccf50a6c79d600450b6b2e05abd4246f17e247451835ab995f69c9f896",
+      "maskFile": "tower-159-r41-mask.png",
+      "maskSha256": "d18557dea1c9d9082feb845d5397ebe466d6dc0a80024950887208cd6f084a68"
+    },
+    {
+      "id": "tower-160-r41",
+      "seed": 424242,
+      "towerIndex": 160,
+      "key": "-1270.00:3200.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 3200,
+        "width": 148.39884672366895,
+        "depth": 181.57890729557997,
+        "height": 3438.7002394008923,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 3200,
+        "width": 148.39884672366895,
+        "depth": 181.57890729557997,
+        "height": 3438.7002394008923,
+        "tint": 5790816
+      },
+      "owner": 0.798588216304779,
+      "baselineFingerprint": "92daa088f3b6e6d08ca7955ae46eaa0a628062a1a7a3000e75773c84c1564d60",
+      "maskFile": "tower-160-r41-mask.png",
+      "maskSha256": "64cc2fa57376055f565e5b5521ad8fcf38bd1823f701fa9113f41679956fe029"
+    },
+    {
+      "id": "tower-161-r41",
+      "seed": 424242,
+      "towerIndex": 161,
+      "key": "-1590.00:3200.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": 3200,
+        "width": 129.9825472936238,
+        "depth": 141.955754931502,
+        "height": 1668.9422283567174,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": 3200,
+        "width": 129.9825472936238,
+        "depth": 141.955754931502,
+        "height": 1668.9422283567174,
+        "tint": 8027520
+      },
+      "owner": 0.5472525358200073,
+      "baselineFingerprint": "2c179252463bc52e54028cceb2290e596ca2cf28a6ad5e9208fcd396eb98ddb9",
+      "maskFile": "tower-161-r41-mask.png",
+      "maskSha256": "b77af5adc77fc9157dca93757060f5809107cca7b4274a8b550f62fef4e7469c"
+    },
+    {
+      "id": "tower-162-r41",
+      "seed": 424242,
+      "towerIndex": 162,
+      "key": "630.00:3200.00",
+      "sourceTower": {
+        "x": 630,
+        "z": 3200,
+        "width": 144.29832757840487,
+        "depth": 226.66281782879702,
+        "height": 3202.9832003795286,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": 3200,
+        "width": 144.29832757840487,
+        "depth": 226.66281782879702,
+        "height": 3202.9832003795286,
+        "tint": 6909297
+      },
+      "owner": 0.6315186023712158,
+      "baselineFingerprint": "68db8a754ff58c62d983ab38e0cd8e8f665c81b6c348c1a42df3e700b423c33d",
+      "maskFile": "tower-162-r41-mask.png",
+      "maskSha256": "c0bdc04ddfba1af95e6ed594fe44877583aa73bc66737d0620c426a6f8102758"
+    },
+    {
+      "id": "tower-163-r41",
+      "seed": 424242,
+      "towerIndex": 163,
+      "key": "950.00:3200.00",
+      "sourceTower": {
+        "x": 950,
+        "z": 3200,
+        "width": 204.27565704469745,
+        "depth": 142.244542966063,
+        "height": 1903.3742085516121,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": 3200,
+        "width": 204.27565704469745,
+        "depth": 142.244542966063,
+        "height": 1903.3742085516121,
+        "tint": 6909297
+      },
+      "owner": 0.2237132489681244,
+      "baselineFingerprint": "f5c02e5ee30782d2b5e58ce580c5b8be162f161ae428d3e9e1122861b16f8607",
+      "maskFile": "tower-163-r41-mask.png",
+      "maskSha256": "2c150768a28f1b2faa8bf5c91a7e345e7e7a8362fdb3bbaab9b748615357224d"
+    },
+    {
+      "id": "tower-164-r41",
+      "seed": 424242,
+      "towerIndex": 164,
+      "key": "1270.00:3200.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": 3200,
+        "width": 179.75717571062341,
+        "depth": 163.86412380980445,
+        "height": 1834.4866143903262,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": 3200,
+        "width": 179.75717571062341,
+        "depth": 163.86412380980445,
+        "height": 1834.4866143903262,
+        "tint": 6909297
+      },
+      "owner": 0.6639285683631897,
+      "baselineFingerprint": "7293c8d2bb93ee11e1d4e66357e6afde809db6d79879d8f04a6f2cc6a419326e",
+      "maskFile": "tower-164-r41-mask.png",
+      "maskSha256": "b6e3dd53181b0df0a29c55ad6d95e8eb506fec25ffa5b614b38fe9ddd3313369"
+    },
+    {
+      "id": "tower-165-r41",
+      "seed": 424242,
+      "towerIndex": 165,
+      "key": "-630.00:3520.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 3520,
+        "width": 131.25680483961048,
+        "depth": 85.98354581394969,
+        "height": 2909.8751781258406,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 3520,
+        "width": 131.25680483961048,
+        "depth": 85.98354581394969,
+        "height": 2909.8751781258406,
+        "tint": 9277329
+      },
+      "owner": 0.6973793506622314,
+      "baselineFingerprint": "a1185e4984adb01dff1ac65311e76d137d4b972e8b41ef06bb8e4906e1455222",
+      "maskFile": "tower-165-r41-mask.png",
+      "maskSha256": "2f2398a8c5d66fa08c253663147dea133ae4281e067bcb43e72c425452d8bf71"
+    },
+    {
+      "id": "tower-166-r41",
+      "seed": 424242,
+      "towerIndex": 166,
+      "key": "-950.00:3520.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 3520,
+        "width": 92.66780677739335,
+        "depth": 37.57854670696816,
+        "height": 6200,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 3520,
+        "width": 92.66780677739335,
+        "depth": 37.57854670696816,
+        "height": 6200,
+        "tint": 8027520
+      },
+      "owner": 0.5611920952796936,
+      "baselineFingerprint": "d917f86d18ca9774acc6ab2fe6785db43cfb6933df198d30c2b9ffa7dc5599f9",
+      "maskFile": "tower-166-r41-mask.png",
+      "maskSha256": "c94d69039e625b0a8bd4b32beb0199beac05734dc76ad35610c83525bdc6ba8b"
+    },
+    {
+      "id": "tower-167-r41",
+      "seed": 424242,
+      "towerIndex": 167,
+      "key": "-1270.00:3520.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 3520,
+        "width": 156.66959472592862,
+        "depth": 146.52516248330835,
+        "height": 2087.3812878027693,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 3520,
+        "width": 156.66959472592862,
+        "depth": 146.52516248330835,
+        "height": 2087.3812878027693,
+        "tint": 8027520
+      },
+      "owner": 0.32717734575271606,
+      "baselineFingerprint": "bb5e49506dc5e47d1aa2e594dee77ffb1a7948ed3f3c4dbe3df2f157043e2fba",
+      "maskFile": "tower-167-r41-mask.png",
+      "maskSha256": "a5fcb96c8ad1f914ac490991f57f3a8d345acf04f5d79e2dcb08f802f9463ef9"
+    },
+    {
+      "id": "tower-168-r41",
+      "seed": 424242,
+      "towerIndex": 168,
+      "key": "-1590.00:3520.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": 3520,
+        "width": 95.3464628740999,
+        "depth": 146.19815568911994,
+        "height": 3676.166527203989,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": 3520,
+        "width": 95.3464628740999,
+        "depth": 146.19815568911994,
+        "height": 3676.166527203989,
+        "tint": 10133668
+      },
+      "owner": 0.28267577290534973,
+      "baselineFingerprint": "e63d4b9408195586e892ede9861ca999675221d31805546ca585421b50994b1f",
+      "maskFile": "tower-168-r41-mask.png",
+      "maskSha256": "5c4f35ba2445ed3bfaa49f2b7642c7ec2157374315b06b24f4b9d18adca15195"
+    },
+    {
+      "id": "tower-169-r41",
+      "seed": 424242,
+      "towerIndex": 169,
+      "key": "-630.00:3840.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 3840,
+        "width": 199.9596282700775,
+        "depth": 101.27804963536883,
+        "height": 3269.868932717289,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 3840,
+        "width": 199.9596282700775,
+        "depth": 101.27804963536883,
+        "height": 3269.868932717289,
+        "tint": 8027520
+      },
+      "owner": 0.9521030187606812,
+      "baselineFingerprint": "393ed90e1b5affa5813869f3cf39f88381ff66eb2334166681d7c8e6144be1bc",
+      "maskFile": "tower-169-r41-mask.png",
+      "maskSha256": "76fe91112795e9dd848fd3e6299d24ba5a18cb8e847a1dacd78e714f1978f97b"
+    },
+    {
+      "id": "tower-170-r41",
+      "seed": 424242,
+      "towerIndex": 170,
+      "key": "-950.00:3840.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 3840,
+        "width": 242.87911111317771,
+        "depth": 238.42218986232092,
+        "height": 2617.186043743535,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 3840,
+        "width": 242.87911111317771,
+        "depth": 238.42218986232092,
+        "height": 2617.186043743535,
+        "tint": 8027520
+      },
+      "owner": 0.9579454064369202,
+      "baselineFingerprint": "a73b2c969e14ff1b33bfbb399aeb1abe45ce168b39e7e66244b0e3d67b921ee0",
+      "maskFile": "tower-170-r41-mask.png",
+      "maskSha256": "b5d66f35ac7300098ba8a670636b00e8a6fa2de2e4b23b63bcacff07deb7c090"
+    },
+    {
+      "id": "tower-171-r41",
+      "seed": 424242,
+      "towerIndex": 171,
+      "key": "-1270.00:3840.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 3840,
+        "width": 218.61258795140267,
+        "depth": 154.77256307986156,
+        "height": 842.3645265351693,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 3840,
+        "width": 218.61258795140267,
+        "depth": 154.77256307986156,
+        "height": 842.3645265351693,
+        "tint": 5790816
+      },
+      "owner": 0.608479917049408,
+      "baselineFingerprint": "ba3b3271a7c782ce436698e5af622d8ed2bb6d8ca1279c605860a3abbbdeb958",
+      "maskFile": "tower-171-r41-mask.png",
+      "maskSha256": "52474a6d3ded1b2e0943b1b6fe4454c5a9b63d42609b6a2d2941650c1126e2d6"
+    },
+    {
+      "id": "tower-172-r41",
+      "seed": 424242,
+      "towerIndex": 172,
+      "key": "-1590.00:3840.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": 3840,
+        "width": 235.32279683241504,
+        "depth": 214.02119454478358,
+        "height": 1834.133060598381,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": 3840,
+        "width": 235.32279683241504,
+        "depth": 214.02119454478358,
+        "height": 1834.133060598381,
+        "tint": 9277329
+      },
+      "owner": 0.8531044721603394,
+      "baselineFingerprint": "e6304f50b1378e9eab0c52dc7fc75922ef924acc012708c9a5d96c47b8d7bf4c",
+      "maskFile": "tower-172-r41-mask.png",
+      "maskSha256": "c90ebba19a86721b17e964f850160584af6a431344b9960c0d72399653f7acda"
+    },
+    {
+      "id": "tower-173-r41",
+      "seed": 424242,
+      "towerIndex": 173,
+      "key": "-630.00:4160.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 4160,
+        "width": 189.42881303926697,
+        "depth": 204.0987685773857,
+        "height": 3289.8999657784593,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 4160,
+        "width": 189.42881303926697,
+        "depth": 204.0987685773857,
+        "height": 3289.8999657784593,
+        "tint": 10133668
+      },
+      "owner": 0.16174384951591492,
+      "baselineFingerprint": "4e9a848c2cbdff09e30c6c8e52f079803eda42e0cf50efd5c1a1ddc0ef5a3d37",
+      "maskFile": "tower-173-r41-mask.png",
+      "maskSha256": "3444f58708c34b6c47e81ba1445a5cc17f633b20d7ed504d6491495ccdf1350f"
+    },
+    {
+      "id": "tower-174-r41",
+      "seed": 424242,
+      "towerIndex": 174,
+      "key": "-950.00:4160.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 4160,
+        "width": 252.92231494302933,
+        "depth": 160.3316040456827,
+        "height": 1189.9732204632235,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 4160,
+        "width": 252.92231494302933,
+        "depth": 160.3316040456827,
+        "height": 1189.9732204632235,
+        "tint": 9277329
+      },
+      "owner": 0.44724684953689575,
+      "baselineFingerprint": "56bb674f329700779bd51b82c040a9fde46ad00b5b4c5c46e621ea4f82e2272c",
+      "maskFile": "tower-174-r41-mask.png",
+      "maskSha256": "1393ac0b76f7ba5927dbbaf1d38fb874e52d19f66feed4d6bf53a9697e619f67"
+    },
+    {
+      "id": "tower-175-r41",
+      "seed": 424242,
+      "towerIndex": 175,
+      "key": "-1270.00:4160.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 4160,
+        "width": 305.65597668427614,
+        "depth": 266.25919214483883,
+        "height": 1168.463710620567,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 4160,
+        "width": 305.65597668427614,
+        "depth": 266.25919214483883,
+        "height": 1168.463710620567,
+        "tint": 9277329
+      },
+      "owner": 0.19967873394489288,
+      "baselineFingerprint": "e80618dab769960f02a1c5246093061ea4d26c5aadece69116a7017d855afb9e",
+      "maskFile": "tower-175-r41-mask.png",
+      "maskSha256": "ca45cdce558b39fd46c3e9314b36f3abdcb118cb0fd423f7d5f049569342193c"
+    },
+    {
+      "id": "tower-176-r41",
+      "seed": 424242,
+      "towerIndex": 176,
+      "key": "-1590.00:4160.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": 4160,
+        "width": 176.2846319987275,
+        "depth": 117.86790840877501,
+        "height": 1811.9765322574322,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": 4160,
+        "width": 176.2846319987275,
+        "depth": 117.86790840877501,
+        "height": 1811.9765322574322,
+        "tint": 8027520
+      },
+      "owner": 0.119780033826828,
+      "baselineFingerprint": "ed8f1cca7af3243614214de48b07a92a493222ead2d1877beaafc2da8cede6b6",
+      "maskFile": "tower-176-r41-mask.png",
+      "maskSha256": "6df45bd6e6d612b36913bef743c6e3772ba296c7cf17006fc95487db9b6e13b8"
+    },
+    {
+      "id": "tower-177-r41",
+      "seed": 424242,
+      "towerIndex": 177,
+      "key": "-630.00:4480.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 4480,
+        "width": 160.96213473276728,
+        "depth": 82.42145009144348,
+        "height": 2996.144329008126,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 4480,
+        "width": 160.96213473276728,
+        "depth": 82.42145009144348,
+        "height": 2996.144329008126,
+        "tint": 8027520
+      },
+      "owner": 0.606982409954071,
+      "baselineFingerprint": "9f6d3bae3eadb914592a8bdb2ebe1e7b819f0d33d222adcc11afff8b66884e80",
+      "maskFile": "tower-177-r41-mask.png",
+      "maskSha256": "20db43d36af3a1eb50f94efd0c9150f4e191a54f6c18e8b04a9dda0cac285d67"
+    },
+    {
+      "id": "tower-178-r41",
+      "seed": 424242,
+      "towerIndex": 178,
+      "key": "-950.00:4480.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 4480,
+        "width": 46.27591095389338,
+        "depth": 230.8475378893293,
+        "height": 3242.0730581471325,
+        "tint": 9321059
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 4480,
+        "width": 46.27591095389338,
+        "depth": 230.8475378893293,
+        "height": 3242.0730581471325,
+        "tint": 9321059
+      },
+      "owner": 0.04013742879033089,
+      "baselineFingerprint": "c923953cf1929463550232b534c869e470b98859364e6cfa6e2fdf2ea113e0d8",
+      "maskFile": "tower-178-r41-mask.png",
+      "maskSha256": "b561d2e8c626979bfeba2ab97cb9c9a524b91f817617688d8dde996ebd08c12b"
+    },
+    {
+      "id": "tower-179-r41",
+      "seed": 424242,
+      "towerIndex": 179,
+      "key": "-1270.00:4480.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 4480,
+        "width": 176.74327926931008,
+        "depth": 31.98932012355979,
+        "height": 3356.5956377027105,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 4480,
+        "width": 176.74327926931008,
+        "depth": 31.98932012355979,
+        "height": 3356.5956377027105,
+        "tint": 5790816
+      },
+      "owner": 0.7680895328521729,
+      "baselineFingerprint": "8aa9875f442bf9e82605bfcfc7e64f688060ee01b5b8c099c57e315949b720e4",
+      "maskFile": "tower-179-r41-mask.png",
+      "maskSha256": "5b44679fe8d9a76ff75dee5d5a4cf846caccca753e0680b648a46a0c4c8a4179"
+    },
+    {
+      "id": "tower-180-r41",
+      "seed": 424242,
+      "towerIndex": 180,
+      "key": "-1590.00:4480.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": 4480,
+        "width": 189.39686924760392,
+        "depth": 363.0305295326505,
+        "height": 1394.0154565595794,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": 4480,
+        "width": 189.39686924760392,
+        "depth": 363.0305295326505,
+        "height": 1394.0154565595794,
+        "tint": 8027520
+      },
+      "owner": 0.07506760954856873,
+      "baselineFingerprint": "8799cd6274a425f0613c005698671c1bb81c1eb5191bae31596221cce2200fce",
+      "maskFile": "tower-180-r41-mask.png",
+      "maskSha256": "97f99d652e7bac4bf8b30b14d497887a31ca1db41b5128f1dd32cfa2332d78a0"
+    },
+    {
+      "id": "tower-181-r41",
+      "seed": 424242,
+      "towerIndex": 181,
+      "key": "-630.00:4800.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 4800,
+        "width": 166.72300919287918,
+        "depth": 227.01256707333823,
+        "height": 4210.65178900458,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 4800,
+        "width": 166.72300919287918,
+        "depth": 227.01256707333823,
+        "height": 4210.65178900458,
+        "tint": 9277329
+      },
+      "owner": 0.5184104442596436,
+      "baselineFingerprint": "5b614e64276b025d2d1b4b15f2045fd816727f0902143a6302ba5aae1e188527",
+      "maskFile": "tower-181-r41-mask.png",
+      "maskSha256": "a8410c7fa403bdc1641bf6b3150f7148d6dae50bf4bfd9590287ed3bd7171e62"
+    },
+    {
+      "id": "tower-182-r41",
+      "seed": 424242,
+      "towerIndex": 182,
+      "key": "-950.00:4800.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 4800,
+        "width": 111.34569002765056,
+        "depth": 99.39479688104673,
+        "height": 2146.3741851186182,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 4800,
+        "width": 111.34569002765056,
+        "depth": 99.39479688104673,
+        "height": 2146.3741851186182,
+        "tint": 8027520
+      },
+      "owner": 0.44261348247528076,
+      "baselineFingerprint": "ff8f1fe2bc67bcf7d130df4df3b00add2e7131c6ef99797ca4a58d78442e8ed5",
+      "maskFile": "tower-182-r41-mask.png",
+      "maskSha256": "ebf331d65899e9ccd89727f26acfb779064ef0f13e68686e1f7629cd6d4c0dfc"
+    },
+    {
+      "id": "tower-183-r41",
+      "seed": 424242,
+      "towerIndex": 183,
+      "key": "-1270.00:4800.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 4800,
+        "width": 33.489102199175285,
+        "depth": 167.50962018479578,
+        "height": 3563.4055874520436,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 4800,
+        "width": 33.489102199175285,
+        "depth": 167.50962018479578,
+        "height": 3563.4055874520436,
+        "tint": 10133668
+      },
+      "owner": 0.9407315850257874,
+      "baselineFingerprint": "f12f91a5a343e0c044ba2c52c9e07d06d99a11c8a74aa69c9a73049d2acfe031",
+      "maskFile": "tower-183-r41-mask.png",
+      "maskSha256": "d5d45fcd7e2bc66f77c0e2c78d65d2928aaf666c047c44f231688e22861decb3"
+    },
+    {
+      "id": "tower-184-r41",
+      "seed": 424242,
+      "towerIndex": 184,
+      "key": "-1590.00:4800.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": 4800,
+        "width": 164.724509377902,
+        "depth": 235.07289467706113,
+        "height": 1934.9594181465454,
+        "tint": 6909297
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": 4800,
+        "width": 164.724509377902,
+        "depth": 235.07289467706113,
+        "height": 1934.9594181465454,
+        "tint": 6909297
+      },
+      "owner": 0.271854430437088,
+      "baselineFingerprint": "9a73e799b93986a5d4496b528c5e5a3f15d460be4abf4c7c808abe7c1f0ac1bd",
+      "maskFile": "tower-184-r41-mask.png",
+      "maskSha256": "83e65319a68475aba2b72ba7c812060b16dd4c7ef4e055a1e0ae923bb84ade2b"
+    },
+    {
+      "id": "tower-185-r41",
+      "seed": 424242,
+      "towerIndex": 185,
+      "key": "-630.00:5120.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 5120,
+        "width": 157.83952214899435,
+        "depth": 82.95291791478788,
+        "height": 2971.6177575636725,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 5120,
+        "width": 157.83952214899435,
+        "depth": 82.95291791478788,
+        "height": 2971.6177575636725,
+        "tint": 8027520
+      },
+      "owner": 0.40395933389663696,
+      "baselineFingerprint": "fc6517894b58eab75dbb4d055de7750a7b016bd917d1297fec0b6ed53c2b2f06",
+      "maskFile": "tower-185-r41-mask.png",
+      "maskSha256": "6b8383ab97a837027d3c44e06535dee08b4363a1a4e7ccda831c453fcabf653d"
+    },
+    {
+      "id": "tower-186-r41",
+      "seed": 424242,
+      "towerIndex": 186,
+      "key": "-950.00:5120.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 5120,
+        "width": 129.3474992094605,
+        "depth": 271.89969367211063,
+        "height": 3351.145291650217,
+        "tint": 9321059
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 5120,
+        "width": 129.3474992094605,
+        "depth": 271.89969367211063,
+        "height": 3351.145291650217,
+        "tint": 9321059
+      },
+      "owner": 0.5321105122566223,
+      "baselineFingerprint": "7b3eead548c99572c3f78fc7681ccb823e559d47d4c0365d5581ba3ff59f9824",
+      "maskFile": "tower-186-r41-mask.png",
+      "maskSha256": "f8ca2fe60ca202e0f0c1fb45c02718f25b0e00122ddc09e3605f495fdecfbf8a"
+    },
+    {
+      "id": "tower-187-r41",
+      "seed": 424242,
+      "towerIndex": 187,
+      "key": "-1270.00:5120.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 5120,
+        "width": 197.04496925206638,
+        "depth": 175.38009543687065,
+        "height": 1398.8625309076544,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 5120,
+        "width": 197.04496925206638,
+        "depth": 175.38009543687065,
+        "height": 1398.8625309076544,
+        "tint": 5790816
+      },
+      "owner": 0.1478516012430191,
+      "baselineFingerprint": "4c2b3f61829e2ec22f6862b68e8b78be950532b3030564f7ad3f6d739077c9e2",
+      "maskFile": "tower-187-r41-mask.png",
+      "maskSha256": "7474ddd998c9cdb3a17af501a2339ef7301f3230c3022c8dd774e41e2257ce24"
+    },
+    {
+      "id": "tower-188-r41",
+      "seed": 424242,
+      "towerIndex": 188,
+      "key": "-1590.00:5120.00",
+      "sourceTower": {
+        "x": -1590,
+        "z": 5120,
+        "width": 221.65174576568023,
+        "depth": 261.84767135730243,
+        "height": 1292.2611906281998,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1590,
+        "z": 5120,
+        "width": 221.65174576568023,
+        "depth": 261.84767135730243,
+        "height": 1292.2611906281998,
+        "tint": 8027520
+      },
+      "owner": 0.8077048063278198,
+      "baselineFingerprint": "40676262a7b7131773463ac516f1fac8760b8d1c5d77eb56eb986b5abfe29b44",
+      "maskFile": "tower-188-r41-mask.png",
+      "maskSha256": "caab3855723eef60664350abb91554fd80c8280e410bc859871e10b2d3863e88"
+    },
+    {
+      "id": "tower-189-r41",
+      "seed": 424242,
+      "towerIndex": 189,
+      "key": "630.00:5120.00",
+      "sourceTower": {
+        "x": 630,
+        "z": 5120,
+        "width": 128.7120395210826,
+        "depth": 139.43770151646305,
+        "height": 3281.3763840244424,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": 5120,
+        "width": 128.7120395210826,
+        "depth": 139.43770151646305,
+        "height": 3281.3763840244424,
+        "tint": 10133668
+      },
+      "owner": 0.011445500887930393,
+      "baselineFingerprint": "7ab07c44765a6350c4b37d067b9b99d7620890150dc27a50e7e912a7f500f771",
+      "maskFile": "tower-189-r41-mask.png",
+      "maskSha256": "a048ce3b20ae30a8efc32a09691bd3d019b23aa991bce9d3456a42711594ced1"
+    },
+    {
+      "id": "tower-190-r41",
+      "seed": 424242,
+      "towerIndex": 190,
+      "key": "-630.00:5440.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 5440,
+        "width": 208.97214989876375,
+        "depth": 109.634317184637,
+        "height": 3307.4517575488167,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 5440,
+        "width": 208.97214989876375,
+        "depth": 109.634317184637,
+        "height": 3307.4517575488167,
+        "tint": 10133668
+      },
+      "owner": 0.47028353810310364,
+      "baselineFingerprint": "ceb61141578abb9ebeec4db57e9d444db97b4c7c248a29c17a8da7552056411e",
+      "maskFile": "tower-190-r41-mask.png",
+      "maskSha256": "883799107674372f5cb6d4bf7dd9fee1a0c06b8d31bac4984639a65f98e07e84"
+    },
+    {
+      "id": "tower-191-r41",
+      "seed": 424242,
+      "towerIndex": 191,
+      "key": "-950.00:5440.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 5440,
+        "width": 180.47940896957016,
+        "depth": 108.97062882473993,
+        "height": 2527.0060416497604,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 5440,
+        "width": 180.47940896957016,
+        "depth": 108.97062882473993,
+        "height": 2527.0060416497604,
+        "tint": 9277329
+      },
+      "owner": 0.6377449035644531,
+      "baselineFingerprint": "34992ce0f939363b0726aff8e855ae02676677fb4b47420adf470f93ec9b4d5d",
+      "maskFile": "tower-191-r41-mask.png",
+      "maskSha256": "07c55b598a8e2f89ee7a4e4fc2f86babf80760c58f5a1ce794e308a493e3df11"
+    },
+    {
+      "id": "tower-192-r41",
+      "seed": 424242,
+      "towerIndex": 192,
+      "key": "-1270.00:5440.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 5440,
+        "width": 187.77294639765896,
+        "depth": 207.07348412184106,
+        "height": 1704.9927049210262,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 5440,
+        "width": 187.77294639765896,
+        "depth": 207.07348412184106,
+        "height": 1704.9927049210262,
+        "tint": 9277329
+      },
+      "owner": 0.28109219670295715,
+      "baselineFingerprint": "393dcbe6b80ad9415ea8b75222f1f11a77256ac5640c1da408ef182cd1acc40f",
+      "maskFile": "tower-192-r41-mask.png",
+      "maskSha256": "8ede105bb444fd4c3cb964186db428788fd783635b644530b3637bd9df5ded53"
+    },
+    {
+      "id": "tower-193-r41",
+      "seed": 424242,
+      "towerIndex": 193,
+      "key": "630.00:5440.00",
+      "sourceTower": {
+        "x": 630,
+        "z": 5440,
+        "width": 136.45422487254473,
+        "depth": 120.86614185499666,
+        "height": 2409.7550032995878,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": 5440,
+        "width": 136.45422487254473,
+        "depth": 120.8661418550657,
+        "height": 2409.7550032995878,
+        "tint": 8027520
+      },
+      "owner": 0.3460323214530945,
+      "baselineFingerprint": "c75b7dfea0548be9fac42473dff30861dab4943551d9b7deba6752ba804413df",
+      "maskFile": "tower-193-r41-mask.png",
+      "maskSha256": "2a4b0629fa4b47cebac61771382aef76cf88e41383f73c5aa66367b196b59c66"
+    },
+    {
+      "id": "tower-194-r41",
+      "seed": 424242,
+      "towerIndex": 194,
+      "key": "950.00:5440.00",
+      "sourceTower": {
+        "x": 950,
+        "z": 5440,
+        "width": 174.01896868829863,
+        "depth": 348.26476250907007,
+        "height": 2252.9339754842213,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": 5440,
+        "width": 174.01896868829863,
+        "depth": 348.26476250907007,
+        "height": 2252.9339754842213,
+        "tint": 8027520
+      },
+      "owner": 0.02353929542005062,
+      "baselineFingerprint": "762f11dce4ec30f4dcb4274d958ad5753b45e613f32c4ba250c7908ba7703acf",
+      "maskFile": "tower-194-r41-mask.png",
+      "maskSha256": "2fd3df88966edd85e17202a80dc30ae86bc51c11788f08c03bf423692556d847"
+    },
+    {
+      "id": "tower-195-r41",
+      "seed": 424242,
+      "towerIndex": 195,
+      "key": "1270.00:5440.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": 5440,
+        "width": 183.67513231283738,
+        "depth": 212.6070866556527,
+        "height": 3368.751326459636,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": 5440,
+        "width": 183.67513231283738,
+        "depth": 212.6070866556527,
+        "height": 3368.751326459636,
+        "tint": 9277329
+      },
+      "owner": 0.3745654225349426,
+      "baselineFingerprint": "e8a634923dc1ece0b39d9a644f31b8112c22ed14ebf80bd952cae82e3b656cf2",
+      "maskFile": "tower-195-r41-mask.png",
+      "maskSha256": "c8883597e60da871fe38215db13493d4be8067690d5c405bb50d912d773d7509"
+    },
+    {
+      "id": "tower-196-r41",
+      "seed": 424242,
+      "towerIndex": 196,
+      "key": "1590.00:5440.00",
+      "sourceTower": {
+        "x": 1590,
+        "z": 5440,
+        "width": 171.3267674984204,
+        "depth": 84.22431643074333,
+        "height": 1960.9750844669427,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": 1590,
+        "z": 5440,
+        "width": 171.3267674984204,
+        "depth": 84.22431643074333,
+        "height": 1960.9750844669427,
+        "tint": 9277329
+      },
+      "owner": 0.6553143858909607,
+      "baselineFingerprint": "d73a0de0cb12b070f0bf6ec4add6625f199d2aa3118cbb12f76de7256e0cacca",
+      "maskFile": "tower-196-r41-mask.png",
+      "maskSha256": "20c8b9487582d8faaf5dea6b313ecfb9c3c34f2e4e6c09c7e316470c44cba0e5"
+    },
+    {
+      "id": "tower-197-r41",
+      "seed": 424242,
+      "towerIndex": 197,
+      "key": "-630.00:5760.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 5760,
+        "width": 230.09786483325297,
+        "depth": 139.29765360786803,
+        "height": 2366.0681081618172,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 5760,
+        "width": 230.09786483325297,
+        "depth": 139.29765360786803,
+        "height": 2366.0681081618172,
+        "tint": 8027520
+      },
+      "owner": 0.9173378348350525,
+      "baselineFingerprint": "2f2f91dd7e04d3231e6154da8ac928506aebb097825630cdb15c57e1f8aaff33",
+      "maskFile": "tower-197-r41-mask.png",
+      "maskSha256": "a58b781a89eff8a2f734134747895a16a011162345bee2b5d6c199fec1f90621"
+    },
+    {
+      "id": "tower-198-r41",
+      "seed": 424242,
+      "towerIndex": 198,
+      "key": "-950.00:5760.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 5760,
+        "width": 239.3746156200374,
+        "depth": 241.8253655484242,
+        "height": 2410.0731581627756,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 5760,
+        "width": 239.3746156200374,
+        "depth": 241.8253655484242,
+        "height": 2410.0731581627756,
+        "tint": 8027520
+      },
+      "owner": 0.7689582705497742,
+      "baselineFingerprint": "531525e03dd09cf5b1457ddf964d989e2b1a3c254a3cc85ca6b909ece43d2d87",
+      "maskFile": "tower-198-r41-mask.png",
+      "maskSha256": "1955aa868b120b311fee4d038d70d12c6e0578dacf10568eef77f88edc79a5ad"
+    },
+    {
+      "id": "tower-199-r41",
+      "seed": 424242,
+      "towerIndex": 199,
+      "key": "-1270.00:5760.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 5760,
+        "width": 206.64867215593478,
+        "depth": 122.63226474748201,
+        "height": 1244.6868164381,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 5760,
+        "width": 206.64867215593478,
+        "depth": 122.63226474748201,
+        "height": 1244.6868164381,
+        "tint": 5790816
+      },
+      "owner": 0.17189836502075195,
+      "baselineFingerprint": "77f46e3ae57f38e14f8f8d8ce860013f1af4aff7bb1b42f16907565320d85226",
+      "maskFile": "tower-199-r41-mask.png",
+      "maskSha256": "ade306de099c44c382b4bbfa3822897a026d8aaec52392d15b1ea8bc661b8d5c"
+    },
+    {
+      "id": "tower-200-r41",
+      "seed": 424242,
+      "towerIndex": 200,
+      "key": "630.00:5760.00",
+      "sourceTower": {
+        "x": 630,
+        "z": 5760,
+        "width": 219.05542647796685,
+        "depth": 184.7141045247436,
+        "height": 3285.4703650167075,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": 5760,
+        "width": 219.05542647796685,
+        "depth": 184.7141045247436,
+        "height": 3285.4703650167075,
+        "tint": 8027520
+      },
+      "owner": 0.2555876076221466,
+      "baselineFingerprint": "74fcb8fc1a7abab89bd6e1420b4bff3e17232d0465d07868ca1f5de5b593f9ce",
+      "maskFile": "tower-200-r41-mask.png",
+      "maskSha256": "94020d0c5b0a7f5567df98d2f6a9f458e951cd118603ad59f0438b286c2276ee"
+    },
+    {
+      "id": "tower-201-r41",
+      "seed": 424242,
+      "towerIndex": 201,
+      "key": "950.00:5760.00",
+      "sourceTower": {
+        "x": 950,
+        "z": 5760,
+        "width": 137.07016605104872,
+        "depth": 101.66696333042282,
+        "height": 2736.642332618461,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": 5760,
+        "width": 137.07016605104872,
+        "depth": 101.66696333042282,
+        "height": 2736.642332618461,
+        "tint": 10133668
+      },
+      "owner": 0.172604039311409,
+      "baselineFingerprint": "da758b8b112d5d4c073f55de16f6743e694a4a71e2815e90f15f20cd5e794c49",
+      "maskFile": "tower-201-r41-mask.png",
+      "maskSha256": "9bd6884f9b0f5b9b6cd0bd3336c0faa9105fb03b5e87de3bde2a413e8534702c"
+    },
+    {
+      "id": "tower-202-r41",
+      "seed": 424242,
+      "towerIndex": 202,
+      "key": "1270.00:5760.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": 5760,
+        "width": 152.11315414402634,
+        "depth": 304.9795619106847,
+        "height": 2914.5156012225953,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": 5760,
+        "width": 152.11315414418132,
+        "depth": 305.0904246126133,
+        "height": 2914.450719748588,
+        "tint": 10133668
+      },
+      "owner": 0.39677175879478455,
+      "baselineFingerprint": "90125350d9be3d0956e018e1ab861e40f0419c348cc60805418c9b8da3c5e219",
+      "maskFile": "tower-202-r41-mask.png",
+      "maskSha256": "19a84603d51084d44eb4e6b017eef61b6ec413e6dd646ab5146029069affec87"
+    },
+    {
+      "id": "tower-203-r41",
+      "seed": 424242,
+      "towerIndex": 203,
+      "key": "1590.00:5760.00",
+      "sourceTower": {
+        "x": 1590,
+        "z": 5760,
+        "width": 224.52921662103543,
+        "depth": 320.62596992519394,
+        "height": 2127.8285725778574,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 1590,
+        "z": 5760,
+        "width": 224.52921662103543,
+        "depth": 320.62596992519394,
+        "height": 2127.8285725778574,
+        "tint": 8027520
+      },
+      "owner": 0.5976011753082275,
+      "baselineFingerprint": "cd99e9253ae64db10ccbd4f1f2d961bbcb030ea15c22e9ee9e1991c59e030342",
+      "maskFile": "tower-203-r41-mask.png",
+      "maskSha256": "3784e6b8f3df8807b0fbc9a57db3723c84e65046473fee878cf213cec9500ac6"
+    },
+    {
+      "id": "tower-204-r41",
+      "seed": 424242,
+      "towerIndex": 204,
+      "key": "-630.00:6080.00",
+      "sourceTower": {
+        "x": -630,
+        "z": 6080,
+        "width": 133.207366793658,
+        "depth": 135.7114949911868,
+        "height": 3761.0484396781408,
+        "tint": 9277329
+      },
+      "sourceTowerNode": {
+        "x": -630,
+        "z": 6080,
+        "width": 133.207366793658,
+        "depth": 135.7114949911868,
+        "height": 3761.181385230609,
+        "tint": 9277329
+      },
+      "owner": 0.4885869324207306,
+      "baselineFingerprint": "3131168edfb1b55d08562d72b8ce4d56577846601a6dad345bbd7465f222dc9c",
+      "maskFile": "tower-204-r41-mask.png",
+      "maskSha256": "d9b34747adf3317442ee993f507787cf73a9fe5a8bdb0f9a790234b51984e33a"
+    },
+    {
+      "id": "tower-205-r41",
+      "seed": 424242,
+      "towerIndex": 205,
+      "key": "-950.00:6080.00",
+      "sourceTower": {
+        "x": -950,
+        "z": 6080,
+        "width": 215.74008225361322,
+        "depth": 93.78017775908202,
+        "height": 1211.5145486412812,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -950,
+        "z": 6080,
+        "width": 215.74008225361322,
+        "depth": 93.78017775908202,
+        "height": 1211.5145486412812,
+        "tint": 8027520
+      },
+      "owner": 0.22124674916267395,
+      "baselineFingerprint": "e913e374f1649d8da89e8dc17a9c935c853b7becbfa763f352e76746b33d43a5",
+      "maskFile": "tower-205-r41-mask.png",
+      "maskSha256": "f05bab911f842a1ad782a5158ffa21ad0a63970ecbc85a462d7bcf10555dcfd6"
+    },
+    {
+      "id": "tower-206-r41",
+      "seed": 424242,
+      "towerIndex": 206,
+      "key": "-1270.00:6080.00",
+      "sourceTower": {
+        "x": -1270,
+        "z": 6080,
+        "width": 151.30779957091,
+        "depth": 118.12287529018721,
+        "height": 3666.68620473676,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": -1270,
+        "z": 6080,
+        "width": 151.30779957091,
+        "depth": 118.12287529018721,
+        "height": 3666.68620473676,
+        "tint": 8027520
+      },
+      "owner": 0.9661657214164734,
+      "baselineFingerprint": "1dcea81751fdf1bcf0c49743fec2cb00df6d4947d9f79f9173e053b6c468e3b6",
+      "maskFile": "tower-206-r41-mask.png",
+      "maskSha256": "2862cb91981a9b5b1e2ed1bb5efb1458430b523c4280c8e26032a7f487e33be5"
+    },
+    {
+      "id": "tower-207-r41",
+      "seed": 424242,
+      "towerIndex": 207,
+      "key": "630.00:6080.00",
+      "sourceTower": {
+        "x": 630,
+        "z": 6080,
+        "width": 156.3245649965029,
+        "depth": 104.11428005663981,
+        "height": 2308.34273415205,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 630,
+        "z": 6080,
+        "width": 156.3245649965029,
+        "depth": 104.11428005663981,
+        "height": 2308.34273415205,
+        "tint": 8027520
+      },
+      "owner": 0.09150945395231247,
+      "baselineFingerprint": "5001f06cbbd82c943d3fab9da3973e7acb9094c99a74143048f65d51beb56b4b",
+      "maskFile": "tower-207-r41-mask.png",
+      "maskSha256": "978d6d7f6d97aab612f149ff0de8a2077d9ebf71c3a9a7d0ae19a877abe64ec5"
+    },
+    {
+      "id": "tower-208-r41",
+      "seed": 424242,
+      "towerIndex": 208,
+      "key": "950.00:6080.00",
+      "sourceTower": {
+        "x": 950,
+        "z": 6080,
+        "width": 98.55641509503438,
+        "depth": 43.89182168190906,
+        "height": 6200,
+        "tint": 5790816
+      },
+      "sourceTowerNode": {
+        "x": 950,
+        "z": 6080,
+        "width": 98.55641509503438,
+        "depth": 43.89182168190906,
+        "height": 6200,
+        "tint": 5790816
+      },
+      "owner": 0.28991132974624634,
+      "baselineFingerprint": "484f373f4d5190254e7c4bdd207c9ffc684564d813cae1254a7420bc8d25021b",
+      "maskFile": "tower-208-r41-mask.png",
+      "maskSha256": "c8b1218a46cbdade772ba974b157b3f1fba1ab49104a08c0105874f7e30ede56"
+    },
+    {
+      "id": "tower-209-r41",
+      "seed": 424242,
+      "towerIndex": 209,
+      "key": "1270.00:6080.00",
+      "sourceTower": {
+        "x": 1270,
+        "z": 6080,
+        "width": 50.52951706957728,
+        "depth": 226.15813148545578,
+        "height": 3010.559417890088,
+        "tint": 8027520
+      },
+      "sourceTowerNode": {
+        "x": 1270,
+        "z": 6080,
+        "width": 50.52951706946025,
+        "depth": 226.15813148493197,
+        "height": 3010.559417890088,
+        "tint": 8027520
+      },
+      "owner": 0.7979971170425415,
+      "baselineFingerprint": "b75dd7674cfdada5f54bfe8dc5aa645c8bceb4af3325d51d726361b4d714b6fc",
+      "maskFile": "tower-209-r41-mask.png",
+      "maskSha256": "6ec65c2ccdccae369f8722c6c06dc6c2bb324a86351331d277a3b9eae5f5da78"
+    },
+    {
+      "id": "tower-210-r41",
+      "seed": 424242,
+      "towerIndex": 210,
+      "key": "1590.00:6080.00",
+      "sourceTower": {
+        "x": 1590,
+        "z": 6080,
+        "width": 205.51540322272922,
+        "depth": 298.7919030339508,
+        "height": 2549.715084652636,
+        "tint": 10133668
+      },
+      "sourceTowerNode": {
+        "x": 1590,
+        "z": 6080,
+        "width": 205.51540322272922,
+        "depth": 298.7919030339508,
+        "height": 2549.715084652636,
+        "tint": 10133668
+      },
+      "owner": 0.9567829966545105,
+      "baselineFingerprint": "965c6dbd7065b79ba1aedec147b4bdabea38e54759a67a9a8aa042b989e63b73",
+      "maskFile": "tower-210-r41-mask.png",
+      "maskSha256": "51e0c87f8e2d8aef41e46783c2a9ba4ae70498a660e86f6c3d5a2b2f7970cc15"
+    }
+  ]
+}
