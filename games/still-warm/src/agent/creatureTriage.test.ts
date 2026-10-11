@@ -396,13 +396,67 @@ describe("creatureTriage", () => {
 });
 
 describe("fetch narration stays inside hearing", () => {
-  it("never claims where an item was taken from", async () => {
-    const { readFileSync } = await import("node:fs");
-    const source = readFileSync("src/agent/creatureTriage.ts", "utf8");
-    // Items start in different places and move between them, so the reply
-    // must not name a container.
-    expect(source.includes("from the tray")).toBe(false);
-    expect(source.includes("from the cabinet")).toBe(false);
-    expect(source.includes("I hear him gather the")).toBe(true);
+  it("names the item but never claims where it came from", async () => {
+    const base = createInitialState();
+    const store = new GameStore({ ...base, emotion: "focused" });
+    store.start();
+    let tempo: TempoTracker = createInitialTempo("pinned");
+    let lastResponseText = "";
+    let actionSucceeded = false;
+    const executedActions: any[] = [];
+
+    const mockTools = createMockTools(store, (action) => {
+      executedActions.push(action);
+      if (action.kind === "pick_up") actionSucceeded = true;
+    });
+    const triage = createCreatureTriage(mockTools, {
+      store,
+      getTempo: () => tempo,
+      setTempo: (t) => {
+        tempo = t;
+      },
+      getSnapshotBefore: () => store.getSnapshot(),
+      getPlayerInputText: () => "fetch the cloth",
+      isPlayerTurn: () => true,
+      getActionSucceeded: () => actionSucceeded,
+      setActionSucceeded: (s) => {
+        actionSucceeded = s;
+      },
+      getGateFailureReason: () => undefined,
+      setGateFailureReason: () => undefined,
+      onResponse: (text) => {
+        lastResponseText = text;
+      },
+      onTempoChange: (t) => {
+        tempo = t;
+      },
+      onVocalize: vi.fn(),
+      markResponded: () => undefined,
+    });
+
+    const agent = createAgent({
+      model: {
+        stream: async function* () {},
+        complete: async () => ({
+          model: "test",
+          content: [],
+          finishReason: "stop",
+          usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+        }),
+      },
+      models: ["quick"],
+      tools: mockTools,
+      judge: createMockJudge("fetch_cloth"),
+      triage,
+      store: new InMemoryAgentSessionStore(),
+    });
+
+    const session = await agent.createSession();
+    await session.send({ text: "PLAYER COMMAND: fetch the cloth" });
+
+    expect(executedActions.some((a) => a.kind === "pick_up")).toBe(true);
+    expect(lastResponseText).toContain("cloth");
+    // Cloth starts in the cabinet and items move, so no container is named.
+    expect(lastResponseText).not.toMatch(/tray|cabinet|shelf|stand|workbench/i);
   });
 });
