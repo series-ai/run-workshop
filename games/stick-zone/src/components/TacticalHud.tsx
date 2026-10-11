@@ -452,6 +452,30 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
               </span>
             )}
 
+            {sim.squadmate && sim.squadmate.isAlive && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "3px 8px",
+                  background: "rgba(18, 24, 36, 0.85)",
+                  border: "1px solid rgba(81, 229, 240, 0.4)",
+                  borderRadius: "4px",
+                  fontFamily: "monospace",
+                  fontSize: "11px",
+                  fontWeight: 800,
+                  color: "#51E5F0",
+                }}
+              >
+                <span>◇ VIPER-2</span>
+                <span style={{ color: "#64748b" }}>|</span>
+                <span style={{ color: sim.squadmate.health > 40 ? "#72F1A8" : "#FF365E" }}>
+                  {sim.squadmate.health} HP
+                </span>
+              </div>
+            )}
+
             {/* Compact Mobile/Landscape Vitals Pill */}
             <div
               className="tactical-vitals-mobile-pill"

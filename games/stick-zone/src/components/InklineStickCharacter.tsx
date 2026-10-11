@@ -86,6 +86,7 @@ function createBlendedWeaponRunClip(
 
 function LoadedCharacter({
   url,
+  assetKey = "playerStickman",
   weapon = "rifle",
   isMoving,
   isFiring,
@@ -314,11 +315,47 @@ function LoadedCharacter({
       {/* 3D Skeletal Mesh with Cel-Shading and Ink Contours */}
       <primitive object={clonedScene} />
 
-      {/* DISTINCT CHARACTER PROPS & TACTICAL GEAR */}
-      {/* Head Gear: Player Cyber Visor vs Squadmate Recon Beret vs Rival Faceplate */}
+      {/* DISTINCT CHARACTER PROPS & TACTICAL SILHOUETTES */}
+      {/* 1. Head Gear (Class-Stratified 3D Props) */}
       {isAlive && headBone && (
         createPortal(
-          isCurrentPlayer ? (
+          assetKey === "scavBoss" ? (
+            /* Sector Boss Warlord: Cybernetic Horned Helm with Crimson Visor */
+            <group position={[0, 0.12, 0.02]}>
+              <mesh>
+                <cylinderGeometry args={[0.15, 0.14, 0.14, 16]} />
+                <meshStandardMaterial color="#18181b" roughness={0.7} />
+              </mesh>
+              {/* Left Horn */}
+              <mesh position={[-0.14, 0.10, 0]} rotation={[0, 0, 0.35]}>
+                <cylinderGeometry args={[0.015, 0.035, 0.22, 8]} />
+                <meshBasicMaterial color="#FF365E" />
+              </mesh>
+              {/* Right Horn */}
+              <mesh position={[0.14, 0.10, 0]} rotation={[0, 0, -0.35]}>
+                <cylinderGeometry args={[0.015, 0.035, 0.22, 8]} />
+                <meshBasicMaterial color="#FF365E" />
+              </mesh>
+              {/* Glowing Crimson Visor Slit */}
+              <mesh position={[0, -0.02, 0.13]}>
+                <boxGeometry args={[0.18, 0.025, 0.02]} />
+                <meshBasicMaterial color="#FF365E" />
+              </mesh>
+            </group>
+          ) : assetKey === "scavRunner" ? (
+            /* Scavenger Runner: Wrapped Asymmetric Scarf/Hood with Amber Monocle */
+            <group position={[0, 0.06, 0.04]}>
+              <mesh position={[0, -0.06, 0]}>
+                <torusGeometry args={[0.15, 0.05, 8, 16]} />
+                <meshStandardMaterial color="#334155" roughness={0.9} />
+              </mesh>
+              {/* Amber Monocle Lens */}
+              <mesh position={[0.05, 0.02, 0.11]} rotation={[Math.PI / 2, 0, 0]}>
+                <cylinderGeometry args={[0.03, 0.03, 0.02, 12]} />
+                <meshBasicMaterial color="#FFC247" />
+              </mesh>
+            </group>
+          ) : isCurrentPlayer ? (
             /* Player Cyber Visor with Glowing Cyan Lens Band */
             <group position={[0, 0.08, 0.12]}>
               <mesh>
@@ -327,23 +364,25 @@ function LoadedCharacter({
               </mesh>
               <mesh position={[0, 0, 0.045]}>
                 <boxGeometry args={[0.18, 0.03, 0.02]} />
-                <meshBasicMaterial color="#38bdf8" />
+                <meshBasicMaterial color="#51E5F0" />
               </mesh>
-              {/* Comms Boom Mic */}
               <mesh position={[-0.10, -0.04, 0.08]} rotation={[0, 0, -0.2]}>
                 <cylinderGeometry args={[0.008, 0.008, 0.12]} />
                 <meshBasicMaterial color="#475569" />
               </mesh>
             </group>
           ) : (
-            /* Squadmate Recon Beret with Antenna */
-            <group position={[0.04, 0.17, -0.02]} rotation={[0.1, 0, -0.25]}>
+            /* Squadmate Recon Helmet with Antenna & Cyan Visor */
+            <group position={[0, 0.10, 0.02]}>
               <mesh>
-                <cylinderGeometry args={[0.13, 0.11, 0.06, 16]} />
-                <meshStandardMaterial color="#1e3a8a" roughness={0.9} />
+                <sphereGeometry args={[0.16, 16, 16]} />
+                <meshStandardMaterial color="#1e293b" roughness={0.8} />
               </mesh>
-              {/* Recon Antenna */}
-              <mesh position={[-0.10, 0.08, -0.02]} rotation={[0.15, 0, -0.1]}>
+              <mesh position={[0, -0.01, 0.14]}>
+                <boxGeometry args={[0.16, 0.03, 0.02]} />
+                <meshBasicMaterial color="#51E5F0" />
+              </mesh>
+              <mesh position={[-0.12, 0.14, -0.04]} rotation={[0.15, 0, -0.1]}>
                 <cylinderGeometry args={[0.006, 0.006, 0.28]} />
                 <meshBasicMaterial color="#94a3b8" />
               </mesh>
@@ -353,17 +392,46 @@ function LoadedCharacter({
         )
       )}
 
-      {/* Chest Gear: Player Plate Carrier vs Squadmate Radio Pack */}
+      {/* 2. Chest & Shoulder Gear (Class-Stratified 3D Props) */}
       {isAlive && chestBone && (
         createPortal(
-          isCurrentPlayer ? (
-            /* Tactical Plate Harness */
+          assetKey === "scavBoss" ? (
+            /* Boss Heavy Ballistic Armor + Broad Pauldrons */
+            <group position={[0, 0.08, 0.04]}>
+              <mesh>
+                <boxGeometry args={[0.32, 0.26, 0.08]} />
+                <meshStandardMaterial color="#18181b" roughness={0.6} />
+              </mesh>
+              {/* Broad Left Pauldron */}
+              <mesh position={[-0.22, 0.08, 0]} rotation={[0, 0, -0.2]}>
+                <boxGeometry args={[0.14, 0.16, 0.12]} />
+                <meshStandardMaterial color="#27272a" roughness={0.6} />
+              </mesh>
+              {/* Broad Right Pauldron */}
+              <mesh position={[0.22, 0.08, 0]} rotation={[0, 0, 0.2]}>
+                <boxGeometry args={[0.14, 0.16, 0.12]} />
+                <meshStandardMaterial color="#27272a" roughness={0.6} />
+              </mesh>
+            </group>
+          ) : assetKey === "scavRunner" ? (
+            /* Scavenger Diagonal Bandolier & Pouches */
+            <group position={[0, 0.08, 0.06]}>
+              <mesh rotation={[0, 0, 0.6]}>
+                <boxGeometry args={[0.05, 0.36, 0.02]} />
+                <meshStandardMaterial color="#475569" roughness={0.9} />
+              </mesh>
+              <mesh position={[-0.04, 0.02, 0.02]}>
+                <boxGeometry args={[0.06, 0.06, 0.04]} />
+                <meshStandardMaterial color="#52525b" roughness={0.9} />
+              </mesh>
+            </group>
+          ) : isCurrentPlayer ? (
+            /* Player Tactical Plate Harness */
             <group position={[0, 0.08, 0.08]}>
               <mesh>
                 <boxGeometry args={[0.24, 0.22, 0.05]} />
                 <meshStandardMaterial color="#1e293b" roughness={0.7} />
               </mesh>
-              {/* Dual Mag Pouches */}
               <mesh position={[-0.06, -0.02, 0.03]}>
                 <boxGeometry args={[0.06, 0.09, 0.03]} />
                 <meshStandardMaterial color="#334155" roughness={0.8} />
@@ -378,9 +446,8 @@ function LoadedCharacter({
             <group position={[0, 0.08, -0.10]}>
               <mesh>
                 <boxGeometry args={[0.20, 0.24, 0.10]} />
-                <meshStandardMaterial color="#172554" roughness={0.8} />
+                <meshStandardMaterial color="#1e293b" roughness={0.8} />
               </mesh>
-              {/* Radio Antenna */}
               <mesh position={[-0.08, 0.22, -0.02]} rotation={[-0.1, 0, 0.1]}>
                 <cylinderGeometry args={[0.006, 0.006, 0.40]} />
                 <meshBasicMaterial color="#94a3b8" />

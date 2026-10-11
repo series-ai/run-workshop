@@ -489,119 +489,220 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onRe
     return null;
   }
 
+    const survivalSec = Math.floor(sim.tick / 60);
+  const survivalMin = Math.floor(survivalSec / 60);
+  const survivalSecRem = survivalSec % 60;
+  const survivalFormatted = `${survivalMin}:${String(survivalSecRem).padStart(2, "0")}`;
+
+  const lastElimLog = sim.combatLog
+    .slice()
+    .reverse()
+    .find((l) => l.includes("Eliminated") || l.includes("downed") || l.includes("Terminated") || l.includes("WARLORD") || l.includes("Shotgun"));
+  const killerName = lastElimLog ? lastElimLog.replace(/^\[.*?\]\s*/, "") : "SCAV ENFORCER / M590 SHORTBARREL";
+
+  const lostCargoItems = ((sim.player as any).lootItems || []) as any[];
+  const lostCargoCount = lostCargoItems.length;
+  const lostCargoEstVal = lostCargoItems.reduce((acc: number, it: any) => acc + (it.value || 450), 0);
+
   return (
     <div className="exfil-overlay-backdrop">
-      {/* Operative Eliminated (K.I.A.) Screen */}
+      {/* 1. OPERATIVE ELIMINATED (K.I.A.) - 40/60 Full-Screen Manga Split Layout */}
       {activeModalKind === "kia" && (
         <div
           ref={modalRef}
           tabIndex={-1}
-          className="exfil-kia-modal"
+          className="exfil-kia-fullscreen"
           role="dialog"
           aria-modal="true"
           aria-labelledby="kia-dialog-title"
-style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", borderRadius: 12, maxWidth: 480, width: "100%", textAlign: "center", boxShadow: "0 25px 50px -12px rgba(239, 68, 68, 0.25)" }}>
-          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(239, 68, 68, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.4)" }}>
-            <AlertTriangle style={{ width: 28, height: 28 }} />
-          </div>
-          <h1 id="kia-dialog-title" style={{ fontSize: 20, fontWeight: 900, letterSpacing: "2px", color: "#ef4444", textTransform: "uppercase", marginBottom: 8 }}>
-            OPERATIVE ELIMINATED (K.I.A.)
-          </h1>
-          <p style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.6, marginBottom: 16 }}>
-            Sector 7 raid contract terminated. Contracted loadout lost in field.<br />
-            Banked scavenged cash forfeited: <strong style={{ color: "#ef4444" }}>${sim.player.cash.toLocaleString()}</strong>
-          </p>
-          <button
-            onClick={handleRedeploy}
-            disabled={isRestarting}
-            autoFocus
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleRedeploy(); } }}
-            className="redeploy-operative-btn"
-            style={{
-              width: "100%",
-              padding: "12px 0",
-              background: isRestarting ? "#7f1d1d" : "#dc2626",
-              border: "none",
-              borderRadius: 8,
-              color: "#ffffff",
-              fontWeight: 800,
-              fontSize: 13,
-              textTransform: "uppercase",
-              letterSpacing: "1px",
-              cursor: isRestarting ? "not-allowed" : "pointer",
-              opacity: isRestarting ? 0.7 : 1.0,
-            }}
-          >
-            {isRestarting ? "Redeploying..." : "Redeploy Operative"}
-          </button>
-          {restartError && (
-            <div style={{ color: "#ef4444", fontSize: 12, marginTop: 8, textAlign: "center" }}>
-              {restartError}
+        >
+          <div className="kia-split-container">
+            {/* Left Pane: Frozen Combat Frame with Crimson Ink Slash */}
+            <div className="kia-left-panel clip-cut-panel">
+              <div className="kia-slash-overlay" />
+              <div style={{ position: "relative", zIndex: 2, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 68, height: 68, borderRadius: "50%", background: "rgba(255, 54, 94, 0.18)", border: "2px solid #FF365E", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF365E", boxShadow: "0 0 24px rgba(255, 54, 94, 0.5)" }}>
+                  <AlertTriangle style={{ width: 34, height: 34 }} />
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: "2px", color: "#FF365E", fontFamily: "monospace", textTransform: "uppercase" }}>
+                  OPERATIVE NEUTRALIZED
+                </div>
+                <div style={{ fontSize: 11, color: "#94A3B8", fontFamily: "monospace" }}>
+                  BIOMETRIC SIGNAL: TERMINATED<br />
+                  LOCATION: SECTOR 7 DEPOT (LZ-CHARLIE)
+                </div>
+                <div style={{ marginTop: 16, padding: "6px 14px", background: "rgba(15, 23, 42, 0.8)", border: "1px solid #334155", borderRadius: 4, fontSize: 10, color: "#cbd5e1", fontFamily: "monospace" }}>
+                  LOCAL RE-CLONE READY • SAFE FOB RE-ENTRY
+                </div>
+              </div>
             </div>
-          )}
+
+            {/* Right Pane: Brutalist Typography, EKG Flatline, Telemetry & CTAs */}
+            <div className="kia-right-panel clip-cut-panel">
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ fontSize: 11, fontFamily: "monospace", fontWeight: 800, color: "#94A3B8", letterSpacing: "1px" }}>
+                    CONTRACT #{sim.raidId.slice(-8).toUpperCase()} // SECTOR 7
+                  </span>
+                  <span style={{ fontSize: 10, fontFamily: "monospace", fontWeight: 800, color: "#FF365E", background: "rgba(255, 54, 94, 0.15)", padding: "2px 8px", borderRadius: 3, border: "1px solid rgba(255, 54, 94, 0.4)" }}>
+                    K.I.A. VERIFIED
+                  </span>
+                </div>
+
+                <h1 id="kia-dialog-title" className="kia-title-signal">
+                  SIGNAL LOST <span style={{ color: "#FF365E" }}>// FLATLINE</span>
+                </h1>
+
+                {/* Animated SVG EKG Flatline Waveform */}
+                <svg viewBox="0 0 400 30" width="100%" height="28" style={{ margin: "8px 0" }}>
+                  <path
+                    d="M 0 15 L 120 15 L 135 4 L 150 26 L 165 2 L 180 22 L 195 15 L 400 15"
+                    fill="none"
+                    stroke="#FF365E"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    style={{
+                      strokeDasharray: 400,
+                      strokeDashoffset: 0,
+                    }}
+                  />
+                </svg>
+
+                <p style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.5, margin: "6px 0 12px" }}>
+                  Eliminated by: <strong style={{ color: "#ffffff" }}>{killerName}</strong><br />
+                  Fatal trauma: <span style={{ color: "#fca5a5" }}>Thorax / Point-Blank Kinetic Impact</span>
+                </p>
+
+                {/* Telemetry Breakdown Grid */}
+                <div className="kia-telemetry-grid">
+                  <div>
+                    <span style={{ fontSize: 9, color: "#94a3b8", textTransform: "uppercase", fontWeight: 800, display: "block" }}>Damage Taken</span>
+                    <strong style={{ fontSize: 15, color: "#FF365E", fontFamily: "monospace" }}>100+ HP</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: 9, color: "#94a3b8", textTransform: "uppercase", fontWeight: 800, display: "block" }}>Raid Time</span>
+                    <strong style={{ fontSize: 15, color: "#51E5F0", fontFamily: "monospace" }}>{survivalFormatted}</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: 9, color: "#94a3b8", textTransform: "uppercase", fontWeight: 800, display: "block" }}>Contract Status</span>
+                    <strong style={{ fontSize: 13, color: "#f59e0b", fontFamily: "monospace" }}>FORFEITED</strong>
+                  </div>
+                </div>
+
+                {/* Economic Loss Breakdown */}
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", background: "rgba(255, 54, 94, 0.08)", border: "1px solid rgba(255, 54, 94, 0.25)", borderRadius: 4, marginBottom: 18, fontSize: 12 }}>
+                  <div>
+                    <span style={{ color: "#94a3b8", display: "block", fontSize: 10 }}>Scavenged Cash Lost:</span>
+                    <strong style={{ color: "#FF365E", fontSize: 14, fontFamily: "monospace" }}>${sim.player.cash.toLocaleString()}</strong>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <span style={{ color: "#94a3b8", display: "block", fontSize: 10 }}>Cargo Lost in Field:</span>
+                    <strong style={{ color: "#FF365E", fontSize: 14, fontFamily: "monospace" }}>{lostCargoCount} Items (${lostCargoEstVal.toLocaleString()})</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <button
+                  onClick={handleRedeploy}
+                  disabled={isRestarting}
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleRedeploy(); } }}
+                  className="redeploy-operative-btn kia-btn-redeploy clip-cut-btn"
+                >
+                  {isRestarting ? "Re-Cloning Operative..." : "RE-CLONE & REDEPLOY →"}
+                </button>
+                {onReturnToHideout && (
+                  <button
+                    onClick={onReturnToHideout}
+                    className="kia-btn-ghost clip-cut-btn"
+                  >
+                    RETURN TO HIDEOUT & STASH
+                  </button>
+                )}
+                {restartError && (
+                  <div style={{ color: "#FF365E", fontSize: 12, textAlign: "center", marginTop: 4 }}>
+                    {restartError}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* 2500ms Corridor Presentation */}
+      {/* 2. 2500ms Corridor Presentation - Dark Industrial Airlock Sequence */}
       {activeModalKind === "corridor" && (() => {
         const corridorDurationMs = state.kind === "corridor_presentation" ? state.durationMs : 2500;
         return (
           <div
             ref={modalRef}
             tabIndex={-1}
-            className="exfil-corridor-modal"
+            className="exfil-corridor-modal clip-cut-panel"
             role="dialog"
             aria-modal="true"
             aria-labelledby="corridor-dialog-title"
+            style={{
+              background: "rgba(18, 24, 36, 0.95)",
+              border: "2px solid #FFC247",
+              boxShadow: "0 0 35px rgba(255, 194, 71, 0.25)",
+              color: "#f8fafc",
+            }}
           >
-            <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(245, 158, 11, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, color: "#f59e0b" }}>
-              <Lock style={{ width: 24, height: 24 }} />
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(255, 194, 71, 0.15)", border: "1px solid #FFC247", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14, color: "#FFC247" }}>
+              <Lock style={{ width: 26, height: 26 }} />
             </div>
-            <h2 id="corridor-dialog-title" style={{ fontSize: 20, fontWeight: 800, letterSpacing: "2px", color: "#f59e0b", textTransform: "uppercase", marginBottom: 8 }}>
-              Airlock Corridor Presentation
+            <h2 id="corridor-dialog-title" style={{ fontSize: 20, fontWeight: 900, letterSpacing: "1.5px", color: "#FFC247", textTransform: "uppercase", marginBottom: 6 }}>
+              PNEUMATIC AIRLOCK // DEPLOYMENT SEALED
             </h2>
-            <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 24 }}>
-              Input frozen. Closing extraction corridor LZ-Charlie before authoritative ledger settlement.
+            <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 20, maxWidth: "420px" }}>
+              Input locked. Hydraulic brackets engaged on LZ-Charlie corridor. Committing authoritative cryptographic ledger snapshot...
             </p>
-            <div style={{ width: "100%", height: 10, background: "#1e293b", borderRadius: 9999, overflow: "hidden", border: "1px solid #334155", marginBottom: 8 }}>
+            <div style={{ width: "100%", height: 8, background: "#0B0F19", borderRadius: 4, overflow: "hidden", border: "1px solid #334155", marginBottom: 10 }}>
               <div
                 style={{
                   width: `${Math.min(100, (corridorElapsed / corridorDurationMs) * 100)}%`,
                   height: "100%",
-                  background: "#f59e0b",
+                  background: "linear-gradient(90deg, #FFC247 0%, #72F1A8 100%)",
                   transition: "width 75ms linear",
                 }}
               />
             </div>
-            <span style={{ fontSize: 12, color: "#cbd5e1" }}>
-              {Math.max(0, corridorDurationMs - corridorElapsed)}ms remaining
+            <span style={{ fontSize: 12, color: "#51E5F0", fontFamily: "monospace", fontWeight: 800 }}>
+              {(Math.max(0, corridorDurationMs - corridorElapsed) / 1000).toFixed(1)}s REMAINING
             </span>
           </div>
         );
       })()}
 
-      {/* Submitting Settlement */}
+      {/* 3. Submitting Settlement - High-Tech Cipher Commit */}
       {activeModalKind === "submitting" && (
         <div
           ref={modalRef}
           tabIndex={-1}
-          className="exfil-corridor-modal"
+          className="exfil-corridor-modal clip-cut-panel"
           role="dialog"
           aria-modal="true"
           aria-labelledby="settling-dialog-title"
-          style={{ borderColor: "rgba(6, 182, 212, 0.6)" }}
+          style={{
+            background: "rgba(18, 24, 36, 0.95)",
+            border: "2px solid #51E5F0",
+            boxShadow: "0 0 35px rgba(81, 229, 240, 0.3)",
+            color: "#f8fafc",
+          }}
         >
-          <Loader2 style={{ width: 40, height: 40, color: "#06b6d4", animation: "spin 1s linear infinite", marginBottom: 16 }} />
-          <h2 id="settling-dialog-title" style={{ fontSize: 18, fontWeight: 800, color: "#06b6d4", textTransform: "uppercase", marginBottom: 8 }}>
-            Submitting Settlement
+          <Loader2 style={{ width: 44, height: 44, color: "#51E5F0", animation: "spin 1s linear infinite", marginBottom: 16 }} />
+          <h2 id="settling-dialog-title" style={{ fontSize: 18, fontWeight: 900, color: "#51E5F0", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 8 }}>
+            AUTHORITATIVE SETTLEMENT IN PROGRESS
           </h2>
-          <p style={{ fontSize: 12, color: "#94a3b8" }}>
-            Computing SHA-256 digest & committing canonical BigInt ledger revision...
+          <p style={{ fontSize: 12, color: "#94a3b8", fontFamily: "monospace" }}>
+            Computing SHA-256 state digest & committing canonical BigInt ledger revision...
           </p>
         </div>
       )}
 
-      {/* Extracted Receipt Debrief */}
+      {/* 4. Extracted Receipt Debrief - Sleek Contractor Terminal */}
       {activeModalKind === "extracted" && (() => {
         const rawReceipt = (state as any).receipt || (sim as any).lastSettlementReceipt || null;
         const isContentVerified = isReceiptContentVerified(rawReceipt);
@@ -614,149 +715,168 @@ style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", border
           transfers: [],
           participantResults: [{ profileId: sim.player.id || "op_player", activeRaidCleared: true, inventoryRevision: 1 }],
         });
+
+        const securedItems = ((sim.player as any).lootItems || []) as any[];
+
         return (
           <div
             ref={modalRef}
             tabIndex={-1}
-            className="exfil-receipt-modal"
+            className="exfil-receipt-modal clip-cut-panel"
             role="dialog"
             aria-modal="true"
             aria-labelledby="receipt-dialog-title"
+            style={{
+              background: "rgba(18, 24, 36, 0.96)",
+              border: "2px solid #334155",
+              boxShadow: "0 24px 60px rgba(0, 0, 0, 0.7)",
+              color: "#f8fafc",
+            }}
           >
-            <div className="receipt-header">
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", background: isCryptographicallyVerified ? "rgba(34, 197, 94, 0.2)" : "rgba(245, 158, 11, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: isCryptographicallyVerified ? "#22c55e" : "#f59e0b" }}>
-                  <CheckCircle style={{ width: 24, height: 24 }} />
+            {/* Contractor Header */}
+            <div className="receipt-header" style={{ borderBottom: "1px solid #334155" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{ width: 44, height: 44, borderRadius: "50%", background: isCryptographicallyVerified ? "rgba(114, 241, 168, 0.15)" : "rgba(255, 194, 71, 0.15)", border: `1px solid ${isCryptographicallyVerified ? "#72F1A8" : "#FFC247"}`, display: "flex", alignItems: "center", justifyContent: "center", color: isCryptographicallyVerified ? "#72F1A8" : "#FFC247" }}>
+                  <CheckCircle style={{ width: 26, height: 26 }} />
                 </div>
                 <div>
-                  <h1 id="receipt-dialog-title" style={{ fontSize: 19, fontWeight: 800, letterSpacing: "1px", color: isCryptographicallyVerified ? "#22c55e" : "#f59e0b", textTransform: "uppercase" }}>
-                    Raid Extracted — Safe Return
+                  <h1 id="receipt-dialog-title" style={{ fontSize: 20, fontWeight: 900, letterSpacing: "1px", color: "#FFFFFF", textTransform: "uppercase" }}>
+                    EXTRACTION COMPLETE // SAFE RETURN
                   </h1>
                   <span style={{ fontSize: 12, color: "#94a3b8" }}>
-                    {isCryptographicallyVerified ? "Sector 7 Safehouse • Settlement Committed & Verified" : "Sector 7 Safehouse • Local Session Debrief"}
+                    Sector 7 Safehouse • Contractor Settlement Terminal
                   </span>
                 </div>
               </div>
-              {isCryptographicallyVerified ? (
-                <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "rgba(34, 197, 94, 0.1)", border: "1px solid rgba(34, 197, 94, 0.4)", borderRadius: 6, fontSize: 11, fontWeight: 800, color: "#22c55e" }}>
-                  <ShieldCheck style={{ width: 16, height: 16 }} />
-                  <span>CRYPTOGRAPHIC RECEIPT VERIFIED</span>
-                </div>
-              ) : (
-                <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.4)", borderRadius: 6, fontSize: 11, fontWeight: 800, color: "#f59e0b" }}>
-                  <ShieldAlert style={{ width: 16, height: 16 }} />
-                  <span>SETTLEMENT RECORD (LOCAL DEBRIEF)</span>
-                </div>
-              )}
+
+              {/* Cryptographic Laser Stamp Badge */}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 14px",
+                background: isCryptographicallyVerified ? "rgba(114, 241, 168, 0.12)" : "rgba(255, 194, 71, 0.12)",
+                border: `1px solid ${isCryptographicallyVerified ? "#72F1A8" : "#FFC247"}`,
+                borderRadius: 4,
+                fontSize: 11,
+                fontWeight: 900,
+                color: isCryptographicallyVerified ? "#72F1A8" : "#FFC247",
+                animation: "seal-stamp 220ms ease-out both",
+              }}>
+                {isCryptographicallyVerified ? <ShieldCheck style={{ width: 18, height: 18 }} /> : <ShieldAlert style={{ width: 18, height: 18 }} />}
+                <span>{isCryptographicallyVerified ? "✓ CRYPTOGRAPHIC RECEIPT VERIFIED" : "SETTLEMENT AUDIT PENDING"}</span>
+              </div>
             </div>
 
+            {/* Payout Summary Strip */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", background: "rgba(11, 15, 25, 0.8)", border: "1px solid #334155", borderRadius: 4 }}>
+              <div>
+                <span style={{ fontSize: 10, textTransform: "uppercase", color: "#94a3b8", fontWeight: 800 }}>Total Banked Payout</span>
+                <div style={{ fontSize: 24, fontWeight: 900, color: "#72F1A8", fontFamily: "monospace" }}>
+                  ${sim.player.cash.toLocaleString()}
+                </div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <span style={{ fontSize: 10, textTransform: "uppercase", color: "#94a3b8", fontWeight: 800 }}>Cargo Secured</span>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#51E5F0", fontFamily: "monospace" }}>
+                  {securedItems.length} SALVAGED COMPONENTS
+                </div>
+              </div>
+            </div>
+
+            {/* Itemized Secured Cargo Grid */}
+            {securedItems.length > 0 && (
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", color: "#94a3b8", letterSpacing: "1px", marginBottom: 8 }}>
+                  SECURED CARGO MANIFEST
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 8 }}>
+                  {securedItems.map((item: any, idx: number) => (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: "8px 10px",
+                        background: "rgba(15, 23, 42, 0.7)",
+                        border: "1px solid #334155",
+                        borderLeft: `3px solid ${item.rarity === "epic" ? "#BC98FF" : item.rarity === "rare" ? "#51E5F0" : "#72F1A8"}`,
+                        borderRadius: 3,
+                        fontSize: 11,
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: "#ffffff" }}>
+                        <span>{item.icon || "💎"} {item.name || "Component"}</span>
+                      </div>
+                      <span style={{ fontSize: 10, color: "#72F1A8", fontWeight: 800, fontFamily: "monospace" }}>
+                        +${(item.value || 500).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Ledger Reference Cards */}
             <div className="receipt-grid">
-              <div className="receipt-card">
-                <span style={{ color: "#cbd5e1", textTransform: "uppercase", fontSize: 10, fontWeight: 800 }}>Receipt Identifier</span>
-                <span style={{ fontWeight: 800, color: "#e2e8f0", fontSize: 13, wordBreak: "break-all", overflowWrap: "anywhere" }}>{receipt.receiptId}</span>
+              <div className="receipt-card" style={{ background: "rgba(11, 15, 25, 0.7)", borderColor: "#334155" }}>
+                <span style={{ color: "#94a3b8", textTransform: "uppercase", fontSize: 9, fontWeight: 800 }}>Receipt Identifier</span>
+                <span style={{ fontWeight: 800, color: "#e2e8f0", fontSize: 12, wordBreak: "break-all" }}>{receipt.receiptId}</span>
               </div>
-              <div className="receipt-card">
-                <span style={{ color: "#cbd5e1", textTransform: "uppercase", fontSize: 10, fontWeight: 800 }}>Raid Reference</span>
-                <span style={{ fontWeight: 800, color: "#e2e8f0", fontSize: 13, wordBreak: "break-all", overflowWrap: "anywhere" }}>{receipt.raidId}</span>
+              <div className="receipt-card" style={{ background: "rgba(11, 15, 25, 0.7)", borderColor: "#334155" }}>
+                <span style={{ color: "#94a3b8", textTransform: "uppercase", fontSize: 9, fontWeight: 800 }}>Raid Contract Reference</span>
+                <span style={{ fontWeight: 800, color: "#e2e8f0", fontSize: 12, wordBreak: "break-all" }}>{receipt.raidId}</span>
               </div>
             </div>
 
-            <div className="receipt-card">
-              <span style={{ color: "#cbd5e1", textTransform: "uppercase", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", gap: 4 }}>
-                <Database style={{ width: 14, height: 14 }} /> Outcome Digest (SHA-256)
+            <div className="receipt-card" style={{ background: "rgba(11, 15, 25, 0.7)", borderColor: "#334155" }}>
+              <span style={{ color: "#94a3b8", textTransform: "uppercase", fontSize: 9, fontWeight: 800, display: "flex", alignItems: "center", gap: 4 }}>
+                <Database style={{ width: 14, height: 14 }} /> Authoritative Outcome Digest (SHA-256)
               </span>
-              <span style={{ color: "#38bdf8", fontSize: 12, wordBreak: "break-all" }}>{receipt.outcomeDigest}</span>
+              <span style={{ color: "#51E5F0", fontSize: 11, wordBreak: "break-all", fontFamily: "monospace" }}>{receipt.outcomeDigest}</span>
             </div>
 
+            {/* Committed Asset Transfers */}
             <div className="receipt-transfers">
-              <span style={{ fontSize: 11, textTransform: "uppercase", color: "#94a3b8", fontWeight: 800, letterSpacing: "0.5px" }}>
+              <span style={{ fontSize: 10, textTransform: "uppercase", color: "#94a3b8", fontWeight: 800, letterSpacing: "0.5px" }}>
                 Committed Asset Transfers (Canonical BigInt Grammar)
               </span>
               {(receipt.transfers || []).map((t: any, idx: number) => (
-                <div key={idx} className="receipt-transfer-row">
+                <div key={idx} className="receipt-transfer-row" style={{ background: "rgba(11, 15, 25, 0.7)", borderColor: "#334155" }}>
                   <span style={{ color: "#e2e8f0", fontWeight: 700 }}>{t.itemId}</span>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ padding: "2px 8px", background: "#1e293b", borderRadius: 4, color: "#94a3b8", fontWeight: 700 }}>
                       {t.quantity}
                     </span>
                     <ArrowRight style={{ width: 14, height: 14, color: "#cbd5e1" }} />
-                    <span style={{ color: "#22c55e", fontWeight: 800 }}>{t.toProfileId}</span>
+                    <span style={{ color: "#72F1A8", fontWeight: 800 }}>{t.toProfileId}</span>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div style={{ padding: 12, background: "rgba(34, 197, 94, 0.08)", border: "1px solid rgba(34, 197, 94, 0.25)", borderRadius: 8, fontSize: 12 }}>
-              <span style={{ fontWeight: 800, color: "#22c55e", display: "block", marginBottom: 6 }}>
-                Bilateral Custody Invariant Conservation
-              </span>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {(receipt.participantResults || []).map((p: any, idx: number) => (
-                  <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, fontFamily: "ui-monospace, monospace" }}>
-                    <span style={{ color: "#e2e8f0", fontWeight: 700 }}>
-                      {p.profileId}
-                    </span>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <span style={{ color: p.activeRaidCleared ? "#4ade80" : "#fbbf24", fontWeight: 700 }}>
-                        cleared: {String(p.activeRaidCleared)}
-                      </span>
-                      <span style={{ color: "#94a3b8" }}>
-                        rev: {p.inventoryRevision}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={handleRedeploy}
-              disabled={isRestarting}
-              autoFocus
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleRedeploy(); } }}
-              className="deploy-next-raid-btn"
-              style={{
-                width: "100%",
-                padding: "12px 0",
-                background: isRestarting ? "#334155" : "#22c55e",
-                border: "none",
-                borderRadius: 8,
-                color: "#052e16",
-                fontWeight: 800,
-                fontSize: 13,
-                textTransform: "uppercase",
-                letterSpacing: "1px",
-                cursor: isRestarting ? "not-allowed" : "pointer",
-                opacity: isRestarting ? 0.7 : 1,
-                marginTop: 4,
-              }}
-            >
-              {isRestarting ? "Redeploying..." : "Deploy Next Raid"}
-            </button>
-            {onReturnToHideout && (
+            {/* Actions */}
+            <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
               <button
-                onClick={onReturnToHideout}
-                className="return-to-hideout-btn"
-                style={{
-                  width: "100%",
-                  padding: "12px 0",
-                  background: "transparent",
-                  border: "1px solid #22c55e",
-                  borderRadius: 8,
-                  color: "#4ade80",
-                  fontWeight: 800,
-                  fontSize: 13,
-                  textTransform: "uppercase",
-                  letterSpacing: "1px",
-                  cursor: "pointer",
-                  marginTop: 8,
-                }}
+                onClick={handleRedeploy}
+                disabled={isRestarting}
+                autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleRedeploy(); } }}
+                className="deploy-next-raid-btn kia-btn-redeploy clip-cut-btn"
+                style={{ flex: 1.2 }}
               >
-                Return to Hideout & Stash
+                {isRestarting ? "Redeploying..." : "DEPLOY NEXT RAID →"}
               </button>
-            )}
+              {onReturnToHideout && (
+                <button
+                  onClick={onReturnToHideout}
+                  className="return-to-hideout-btn kia-btn-ghost clip-cut-btn"
+                  style={{ flex: 1 }}
+                >
+                  VIEW STASH & HIDEOUT
+                </button>
+              )}
+            </div>
             {restartError && (
-              <div style={{ marginTop: 12, padding: "8px 12px", background: "rgba(239, 68, 68, 0.15)", border: "1px solid #ef4444", borderRadius: 6, color: "#f87171", fontSize: 12 }}>
+              <div style={{ padding: "8px 12px", background: "rgba(239, 68, 68, 0.15)", border: "1px solid #ef4444", borderRadius: 4, color: "#f87171", fontSize: 12 }}>
                 {restartError}
               </div>
             )}
@@ -764,7 +884,7 @@ style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", border
         );
       })()}
 
-      {/* Recoverable Failure State using Official ExfilController Methods */}
+      {/* 5. Recoverable Failure State */}
       {activeModalKind === "failed" && (() => {
         const failReason = state.kind === "failed" ? state.reason : "Settlement pipeline error";
         const canRetry = state.kind === "failed" ? state.canRetry : true;
@@ -772,13 +892,13 @@ style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", border
           <div
             ref={modalRef}
             tabIndex={-1}
-            className="exfil-error-card"
+            className="exfil-error-card clip-cut-panel"
             role="dialog"
             aria-modal="true"
             aria-labelledby="error-dialog-title"
-            style={{ padding: 20, background: "#1c1917", border: "1px solid #ef4444", borderRadius: 10, maxWidth: 440, width: "100%", display: "flex", flexDirection: "column", gap: 12, alignItems: "center", textAlign: "center" }}
+            style={{ padding: 24, background: "rgba(18, 24, 36, 0.96)", border: "2px solid #FF365E", borderRadius: 4, maxWidth: 460, width: "100%", display: "flex", flexDirection: "column", gap: 14, alignItems: "center", textAlign: "center" }}
           >
-            <div id="error-dialog-title" style={{ color: "#ef4444", fontWeight: 800, fontSize: 14, letterSpacing: "1px", textTransform: "uppercase" }}>
+            <div id="error-dialog-title" style={{ color: "#FF365E", fontWeight: 900, fontSize: 16, letterSpacing: "1px", textTransform: "uppercase" }}>
               Settlement Pipeline Error
             </div>
             <div style={{ color: "#fca5a5", fontSize: 12, lineHeight: 1.5 }}>
@@ -790,19 +910,8 @@ style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", border
                   onClick={handleRetry}
                   autoFocus
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleRetry(); } }}
-                  className="exfil-retry-btn"
-                  style={{
-                    flex: 1,
-                    padding: "10px 0",
-                    background: "#dc2626",
-                    border: "none",
-                    borderRadius: 6,
-                    color: "#fff",
-                    fontWeight: 700,
-                    fontSize: 12,
-                    cursor: "pointer",
-                    textTransform: "uppercase",
-                  }}
+                  className="exfil-retry-btn kia-btn-redeploy clip-cut-btn"
+                  style={{ flex: 1 }}
                 >
                   Retry Settlement
                 </button>
@@ -810,21 +919,10 @@ style={{ padding: 28, background: "#090d16", border: "2px solid #ef4444", border
               <button
                 onClick={handleReturnToRaid}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleReturnToRaid(); } }}
-                className="exfil-cancel-btn"
-                style={{
-                  flex: 1,
-                  padding: "10px 0",
-                  background: "#334155",
-                  border: "none",
-                  borderRadius: 6,
-                  color: "#e2e8f0",
-                  fontWeight: 700,
-                  fontSize: 12,
-                  cursor: "pointer",
-                  textTransform: "uppercase",
-                }}
+                className="exfil-cancel-btn kia-btn-ghost clip-cut-btn"
+                style={{ flex: 1 }}
               >
-                Return to Raid
+                Cancel
               </button>
             </div>
           </div>

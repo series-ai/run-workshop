@@ -17,35 +17,32 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
   const isMovingLocallyRef = useRef(false);
   const lastShootTimeRef = useRef(0);
 
+  
+
   const isThreatAI = operative.isAI || operative.badge === "SECTOR BOSS" || operative.badge === "SCAV PATROL";
-  const accentColor = isThreatAI ? "#ff2212" : "#f97316";
+  const isBoss = operative.badge === "SECTOR BOSS";
+  const accentColor = isBoss ? "#FF365E" : isThreatAI ? "#f97316" : "#38bdf8";
 
   useEffect(() => {
+    if (!isBoss) {
+      setLabelTexture(null);
+      return;
+    }
     const canvas = document.createElement("canvas");
-    canvas.width = 384;
-    canvas.height = 72;
+    canvas.width = 320;
+    canvas.height = 48;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, 384, 72);
-    ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
-    ctx.roundRect(4, 4, 376, 64, 8);
-    ctx.fill();
-
-    ctx.strokeStyle = accentColor;
-    ctx.lineWidth = 3;
-    ctx.roundRect(4, 4, 376, 64, 8);
-    ctx.stroke();
-
-    ctx.font = "bold 24px monospace";
-    ctx.fillStyle = "#f8fafc";
+    ctx.clearRect(0, 0, 320, 48);
+    // Only boss gets a minimal transparent crown mark, NO opaque card
+    ctx.font = "900 18px monospace";
+    ctx.fillStyle = "#FF365E";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(operative.name || "OPERATIVE BRAVO", 192, 26);
-
-    ctx.font = "14px monospace";
-    ctx.fillStyle = accentColor;
-    ctx.fillText("HOSTILE SPOKE PRESENCE", 192, 50);
+    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+    ctx.shadowBlur = 6;
+    ctx.fillText("👑 WARLORD (SECTOR BOSS)", 160, 24);
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.needsUpdate = true;
@@ -54,7 +51,7 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
     return () => {
       tex.dispose();
     };
-  }, [operative.name]);
+  }, [isBoss]);
 
   useFrame((state, delta) => {
     if (typeof window !== "undefined" && Boolean((window as any).__STICK_ZONE_TEST__?.isPaused)) return;
@@ -109,16 +106,14 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
 
   return (
     <>
-      <group ref={labelRef}>
-        <mesh>
-          <planeGeometry args={[1.5, 0.28]} />
-          {labelTexture ? (
-            <meshBasicMaterial map={labelTexture} transparent side={THREE.DoubleSide} />
-          ) : (
-            <meshBasicMaterial color="#0f172a" transparent opacity={0.85} side={THREE.DoubleSide} />
-          )}
-        </mesh>
-      </group>
+      {isBoss && labelTexture && (
+        <group ref={labelRef}>
+          <mesh>
+            <planeGeometry args={[1.0, 0.18]} />
+            <meshBasicMaterial map={labelTexture} transparent depthWrite={false} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+      )}
 
       <group ref={rootGroupRef} position={[operative.x, operative.y || 0, operative.z]}>
         {/* Ground Tactical Halo */}

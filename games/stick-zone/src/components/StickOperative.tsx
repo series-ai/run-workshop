@@ -50,27 +50,25 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
   const accentColor = isAlly ? "#38bdf8" : "#f97316";
 
   useEffect(() => {
+    if (isCurrentPlayer) {
+      setLabelTexture(null);
+      return;
+    }
     const canvas = document.createElement("canvas");
-    canvas.width = 384;
-    canvas.height = 72;
+    canvas.width = 320;
+    canvas.height = 48;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, 384, 72);
-    ctx.fillStyle = "rgba(15, 23, 42, 0.55)";
-    ctx.roundRect(48, 14, 288, 44, 22);
-    ctx.fill();
-
-    ctx.strokeStyle = accentColor;
-    ctx.lineWidth = 2.5;
-    ctx.roundRect(48, 14, 288, 44, 22);
-    ctx.stroke();
-
-    ctx.font = "900 20px monospace";
-    ctx.fillStyle = "#ffffff";
+    ctx.clearRect(0, 0, 320, 48);
+    // Sleek cyan text with glowing tactical chevron, NO dark opaque card
+    ctx.font = "900 18px monospace";
+    ctx.fillStyle = "#51E5F0";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(isAlly ? `▼ ${operative.name || "SQUADMATE"}` : `▲ ${operative.name || "HOSTILE"}`, 192, 36);
+    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+    ctx.shadowBlur = 6;
+    ctx.fillText(`◇ ${operative.name || "VIPER-2"}`, 160, 24);
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.needsUpdate = true;
@@ -79,7 +77,7 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
     return () => {
       tex.dispose();
     };
-  }, [operative.name, accentColor]);
+  }, [operative.name, isCurrentPlayer]);
 
   useFrame((state, delta) => {
     if (typeof window !== "undefined" && Boolean((window as any).__STICK_ZONE_TEST__?.isPaused)) return;
@@ -201,7 +199,7 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
     if (labelRef.current) {
       labelRef.current.position.set(
         rootGroupRef.current.position.x,
-        rootGroupRef.current.position.y + 2.5,
+        rootGroupRef.current.position.y + 2.15,
         rootGroupRef.current.position.z
       );
       labelRef.current.quaternion.copy(state.camera.quaternion);
@@ -221,15 +219,11 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
   return (
     <>
       {/* Tactical Label Billboard (Only for squadmates/rivals - never for local player) */}
-      {!isCurrentPlayer && (
+      {!isCurrentPlayer && labelTexture && (
         <group ref={labelRef}>
           <mesh>
-            <planeGeometry args={[1.4, 0.26]} />
-            {labelTexture ? (
-              <meshBasicMaterial map={labelTexture} transparent side={THREE.DoubleSide} />
-            ) : (
-              <meshBasicMaterial color="#0f172a" transparent opacity={0.65} side={THREE.DoubleSide} />
-            )}
+            <planeGeometry args={[0.9, 0.16]} />
+            <meshBasicMaterial map={labelTexture} transparent depthWrite={false} side={THREE.DoubleSide} />
           </mesh>
         </group>
       )}
