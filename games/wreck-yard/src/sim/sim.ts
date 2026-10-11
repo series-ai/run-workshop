@@ -1,5 +1,5 @@
 import type { PhysicsCheckpoint3D } from '@series-inc/rundot-syncplay/physics/3d';
-import { decodeState, encodeState } from './codec';
+import { decodeState, encodeState, encodeChecksumState } from './codec';
 import type { YardInput } from './input';
 import { readWorldState, setBodyNames, type OpenYardPhysicsWorld } from './physics';
 import { createInitialYard } from './presets';
@@ -111,6 +111,21 @@ export class YardSim {
       ? this.physics.world.serializeCheckpoint(save.physics.checkpoint)
       : save.physics.bytes;
     return encodeState({ state: save.state, checkpoint });
+  }
+
+  /** Hash game fields and the SDK checkpoint digest without compressing a late-join packet each tick. */
+  checksumBytes(save: YardSave): Uint8Array {
+    this.#assertLive();
+    this.#assertHeld(save);
+    const checkpoint = save.physics.kind === 'checkpoint'
+      ? save.physics.checkpoint : this.physics.world.importCheckpoint(save.physics.bytes);
+    try {
+      const bytes = new Uint8Array(8);
+      new DataView(bytes.buffer).setBigUint64(0, this.physics.world.digestCheckpoint(checkpoint));
+      return encodeChecksumState({ state: save.state, checkpoint: bytes });
+    } finally {
+      if (save.physics.kind === 'bytes') this.physics.world.releaseCheckpoint(checkpoint);
+    }
   }
 
   dispose(): void {

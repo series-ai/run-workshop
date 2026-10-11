@@ -3,9 +3,10 @@ import { SHELL_BOXES } from './shell';
 import { describe, expect, it } from 'vitest';
 import { makeEmptyVoxelField, stampBox } from 'voxel-kit';
 import { VOXEL_SIZE } from './constants';
-import { NEUTRAL_INPUT } from './input';
+import { NEUTRAL_INPUT, quantizeRay, TOOL } from './input';
 import { bodyMass, cookCenteredCollider, makePhysicsBody, physicsBodyById, readWorldState, removePhysicsBody, voxelStats } from './physics';
 import type { YardBody } from './state';
+import { YardSim } from './sim';
 import { initialState, testSim } from './testSim';
 
 describe('cookCenteredCollider', () => {
@@ -62,8 +63,36 @@ describe('readWorldState', () => {
     sim.step([NEUTRAL_INPUT, NEUTRAL_INPUT]);
     const state = readWorldState(sim.physics);
     expect(state.bodies.map((body) => body.id)).toEqual([...sim.physics.bodyIds.keys()].sort());
-    expect(new Set(state.bodies.map((body) => body.kind))).toEqual(new Set(['static', 'dynamic']));
-    for (const body of state.bodies) expect(body, body.id).toEqual(physicsBodyById(sim.physics, body.id));
+    expect(new Set(state.bodies.map((body) => body.kind))).toEqual(new Set(['static', 'dynamic', 'kinematic']));
+    for (const body of state.bodies) {
+      // The SDK gives counters in the batch output, separate from readMotion.
+      const { teleportCounter, ...motion } = body;
+      expect(Number.isInteger(teleportCounter), body.id).toBe(true);
+      expect(teleportCounter, body.id).toBeGreaterThanOrEqual(0);
+      expect(motion, body.id).toEqual(physicsBodyById(sim.physics, body.id));
+    }
   });
 });
 
+describe('body keys', () => {
+  const unkeyed = (sim: YardSim) => [...sim.physics.bodyIds].filter(([name, id]) => sim.physics.world.resolveKey(name)?.id !== id).map(([name]) => name);
+
+  it('gives every body its yard name as its Syncplay key, after a torch cut, and after a checkpoint round trip', () => {
+    const sim = testSim(1);
+    expect(unkeyed(sim)).toEqual([]);
+    for (let i = 0; i < 5; i += 1) sim.step([NEUTRAL_INPUT]);
+    const gantry = physicsBodyById(sim.physics, 'steel-gantry')!;
+    const target = [gantry.x + 0.2, gantry.y + 0.2, gantry.z] as const;
+    const origin = [target[0], target[1] + 2, target[2] + 0.001] as const;
+    const cut = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...quantizeRay(origin, [target[0] - origin[0], target[1] - origin[1], target[2] - origin[2]]) };
+    for (let i = 0; i < 12; i += 1) sim.step([cut]);
+    expect(sim.state.bodies.filter((body) => body.label === 'Steel Gantry').length).toBeGreaterThan(1);
+    expect(unkeyed(sim)).toEqual([]);
+    const save = sim.save();
+    const bytes = sim.encode(save);
+    sim.release(save);
+    const restored = testSim(1);
+    restored.restore(YardSim.decode(bytes));
+    expect(unkeyed(restored)).toEqual([]);
+  });
+});

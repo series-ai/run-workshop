@@ -52,7 +52,7 @@ try {
     await page.keyboard.up('KeyW');
   };
 
-  // The nearest loose prop to the spawn point that is not the buggy or a drum.
+  // Use a loose prop large enough to keep a heated surface after one cut.
   const target = await page.evaluate(() => {
     const r = window.__WRECK_YARD_CONTROLLER__.getRender();
     const me = r.players.find((p) => p.slot === r.localSlot).position;
@@ -60,6 +60,7 @@ try {
     for (const body of r.bodies) {
       const pose = r.poses.get(body.id);
       if (!pose || body.motion !== 'dynamic' || body.id === 'vehicle-chassis' || body.id.includes('drum')) continue;
+      if (body.voxels.reduce((count, cell) => count + (cell === 0 ? 0 : 1), 0) < 1000) continue;
       const d = Math.hypot(pose.position[0] - me[0], pose.position[2] - me[2]);
       if (!best || d < best.d) best = { d, id: body.id, position: pose.position };
     }
@@ -82,22 +83,23 @@ try {
   const canvas = await page.locator('canvas').first().boundingBox();
   await page.mouse.move(canvas.x + canvas.width / 2, canvas.y + canvas.height / 2);
   await page.mouse.down();
+  let heatedPieces = [];
   for (let i = 0; i < 8; i += 1) {
     await aim(-0.3 + i * 0.04);
-    await page.waitForTimeout(100);
+    const frame = (await bodyInfo(target.id)).frame;
+    await page.waitForFunction((until) => window.__WRECK_YARD_CONTROLLER__.getRender().frame >= until, frame + 3, { timeout: 5000 });
+    heatedPieces = (await bodyInfo(target.id)).pieces.filter((piece) => piece.heat && piece.scorch > 0);
+    if (heatedPieces.length > 0) break;
   }
+  assert.ok(heatedPieces.length > 0, `the torch did not leave a heated surface on ${target.id}`);
   // Watch from the side while the torch is still on: the camera moves, the aim does not.
   const me = await player();
-  const focus = (await bodyInfo(target.id)).pieces[0].position;
+  const focus = heatedPieces[0].position;
   const away = [me[0] - focus[0], me[2] - focus[2]];
   const length = Math.hypot(...away) || 1;
   const side = [-away[1] / length, away[0] / length];
   const camera = [focus[0] + (away[0] / length) * 1.2 + side[0] * 1.0, focus[1] + 1.0, focus[2] + (away[1] / length) * 1.2 + side[1] * 1.0];
   await page.evaluate(([p, l]) => window.__SET_CAMERA_OVERRIDE__(p, l), [camera, focus]);
-  for (let i = 0; i < 6; i += 1) {
-    await aim(0.02 + i * 0.05);
-    await page.waitForTimeout(100);
-  }
   await page.locator('canvas').first().screenshot({ path: `${out}/0-torch-on.png` });
   results.torchOn = await page.evaluate(() => {
     const r = window.__WRECK_YARD_CONTROLLER__.getRender();

@@ -67,7 +67,7 @@ export function createYardRuntime(identity: KinetixRuntimeIdentity, sessionConfi
           if (save.state.frame !== frame) throw new Error(`WRECK_YARD_STATE_FRAME_MISMATCH: bytes ${save.state.frame}, expected ${frame}`);
           return save;
         },
-        checksumStateBytes: (save) => sim.encode(save),
+        checksumStateBytes: (save) => sim.checksumBytes(save),
         readLiveRevision: () => sim.revision,
         projectState: (save) => save.state,
       },

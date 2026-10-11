@@ -18,16 +18,17 @@
     "profile:sim": "esbuild scripts/profile-sim.ts --bundle --platform=node --format=esm --external:@series-inc/* --log-level=warning --outfile=test-results/profile-sim.mjs && node test-results/profile-sim.mjs",
     "identity:generate": "node scripts/generate-identity.mjs",
     "identity:check": "node scripts/generate-identity.mjs --check",
-    "deploy": "npm run build && rundot deploy"
+    "deploy": "npm run build && rundot deploy --orientation Landscape"
   },
   "dependencies": {
     "@react-three/fiber": "^8.18.0",
     "@series-inc/rundot-game-sdk": "5.28.0",
-    "@series-inc/rundot-syncplay": "6.0.0-rc.23",
+    "@series-inc/rundot-syncplay": "6.0.0-rc.40",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": "~0.170.0",
-    "voxel-kit": "file:../../tools/voxel-kit"
+    "voxel-kit": "file:../../tools/voxel-kit",
+    "fflate": "0.8.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.50.0",

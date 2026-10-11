@@ -1,0 +1,146 @@
+Wreck Yard -> Syncplay: rc.39 character lock after landing on props
+
+Status
+- Two controller faults are reproduced with the published rc.39 native WASM.
+- The isolated SDK test has no Wreck Yard imports.
+- The real yard test also reproduces the lock.
+- The published rc.40 package passes all 31 isolated standing cases.
+- All six real yard landing cases allow walking away.
+- Venus PR #5363 adds controller revision 3. Revisions 1 and 2 stay unchanged.
+- The syncplay/v6.0.0-rc.40 tag is published. All publication checks pass.
+- Release: https://github.com/series-ai/venus/releases/tag/syncplay/v6.0.0-rc.40
+- Wreck Yard selects revision 3 with the exact rc.40 npm package.
+- The game identity includes rc.40. All peers must use the same identity.
+- Wreck Yard production version 1.2.0 was deployed on 2026-10-11.
+- The private release uses landscape settings and the rc.40 identity.
+- The live production session advances. The hosted bundle selects revision 3.
+
+Published repair
+- Revision 3 applies clearance to dynamic ground and ground reattachment.
+- It recovers an existing capsule intersection before input movement.
+- Recovery has four passes. Each correction is swept against other solids.
+- Revision 1 stays the default. Its source and replay corpus stay unchanged.
+- Revision 2 stays unchanged.
+- Revision 3 does not add revision 2 support state or portal movement.
+- Deep containment can remain blocked if there is no clear space.
+- The SDK CI suite passes 1,962 tests. Extended suites pass 260 tests.
+- The migration notes are included in the npm package.
+- Wreck Yard passes 315 tests in 50 files, TypeScript, identity, and build.
+- A touch-room test now checks the existing zero-time input scheduling rule.
+- A zero-time update can sample a new input without a simulation step.
+- A second update at the same frontier must clear the current sample.
+
+Repeat the published repair checks from games/wreck-yard
+
+  node scripts/repro-syncplay-kcc-standing.mjs --revision=3 --assert
+  ./node_modules/.bin/esbuild scripts/repro-yard-landings.ts --bundle --platform=node --format=esm '--external:@series-inc/*' --outfile=test-results/repro-yard-landings.mjs
+  node test-results/repro-yard-landings.mjs --assert
+
+Expected with rc.40 and the game revision 3 setting: zero failures.
+
+Historical rc.39 investigation
+The sections below record the original proposal and its evidence.
+The proposal changed revision 1. The published repair uses revision 3.
+Do not apply the historical revision 1 patch to rc.40.
+
+Fault 1: dynamic ground places the capsule too low
+- dynamicGroundUnderKcc uses kccFeetOffset but omits kccSlopeClearance.
+- Static grounding already includes this clearance.
+- A dynamic voxel prop tilted by 0.03 rad is enough to cause the fault.
+- The controller reports grounded. Its capsule still intersects the prop.
+- resolveKccHorizontalMotion rejects the full move and both axis moves.
+- Requested walking becomes zero movement in every tested direction.
+
+Fault 2: revision 1 cannot recover an existing intersection
+- A capsule can intersect a prop after a landing near an edge or corner.
+- The center ground probe can select the lower floor.
+- The capsule side still intersects the prop beside it.
+- Revision 1 rejects walking away as well as walking into the prop.
+- Revision 2 recovers these edge cases, but still overlaps tilted props.
+- A revision 2 switch alone does not resolve both faults.
+
+Isolated SDK fixture
+- Character radius: 0.4 m. Half height: 0.5 m. Skin: 0.005 m.
+- The test uses the same expanded capsule as the controller.
+- Floor top: -0.86 m. Prop top: about 0.64 m.
+- Prop shapes: box, cooked voxels, and a hollow compound roof.
+- Tilt: 0, 0.03, and 0.1 rad. Static and dynamic controls are included.
+- Edge drop: x=1.4 m beside a prop with half width 1.28 m.
+- Corner drop: x=z=1.4 m beside that prop.
+- Settle for 60 ticks. Then move 0.04 m per tick for 14 ticks.
+- A clear walking direction must travel 0.56 m and remain grounded.
+- A direction into the prop must stay blocked.
+- No walking frame may leave the expanded capsule intersecting a solid.
+
+Verified results
+- Released revision 1: 19 failures in 31 isolated standing cases.
+- Proposed revision 1 repair: zero failures in the same 31 cases.
+- Real yard: three of six landing cases lock with the released SDK.
+- Real yard with the isolated repair: all six cases allow walking away.
+- The yard failures are two steel-case edge drops and one ballast-box edge.
+- Center drops on the stacked pallet, shipping container, and car are controls.
+- 18 additional native checks pass with the repair.
+- These checks cover walls, ceilings, sensors, triggers, ignored bodies,
+  collision layers, collision filters, query counts, and repeated checksums.
+- Fast input cannot cross a wall. Recovery cannot cross a separate wall.
+- Independent review verified native contact normal signs and floor filters.
+- The full Wreck Yard suite passes: 315 tests in 50 files.
+- The full suite also passes with the isolated repair selected by Node.
+- Game TypeScript and repair TypeScript checks pass.
+- JSON evidence is saved under test-results: kcc-standing-before.json,
+  kcc-standing-repair.json, yard-landings-before.json,
+  yard-landings-repair.json, and kcc-repair-verification.json.
+
+Repair
+- File: docs/patches/syncplay-rc39-kcc-standing.patch
+- Target: packages/syncplay/src/movement3d-revision1.ts
+- Apply slope clearance to dynamic ground and reattachment.
+- Recover the stored capsule pose before input movement.
+- Do not recover a requested forward pose through an obstacle.
+- Limit recovery to four passes. Sweep each correction against other solids.
+- Preserve ignored bodies, sensor rules, layers, and sorted collision filters.
+- Use native contact normals for ground and recovery filter candidates.
+- Count the added native queries.
+
+Limits
+- This is a repair proposal, not a published SDK fix.
+- Four passes do not guarantee escape from arbitrary deep containment.
+- Recovery can remain blocked if there is no clear space for the capsule.
+- Revision 1 query counts and checksums change.
+- Release it as a new SDK artifact. Update controller baseline fixtures.
+- Upgrade the game identity with the SDK. All peers must use that artifact.
+- Run the SDK controller, portal, and checkpoint suites before publication.
+
+Repeat the released SDK failure from games/wreck-yard
+
+  node scripts/repro-syncplay-kcc-standing.mjs --revision=1 --assert
+
+Expected on rc.39: exit 1, 19 failures. The JSON contains each case.
+
+Repeat the real yard failure
+
+  ./node_modules/.bin/esbuild scripts/repro-yard-landings.ts --bundle --platform=node --format=esm '--external:@series-inc/*' --outfile=test-results/repro-yard-landings.mjs
+  node test-results/repro-yard-landings.mjs --assert
+
+Expected on rc.39: exit 1, three blocked landing cases.
+
+Compile and check the proposed repair without changing the SDK
+
+  node scripts/verify-syncplay-kcc-repair.mjs --sdk-source=/Users/pany/dev/venus/packages/syncplay/src/movement3d-revision1.ts --keep
+
+Use the emitted verificationHook path in the commands below.
+The hook loads the repair only in that Node process and its test workers.
+It does not change the SDK, game source, or a running browser.
+
+  NODE_OPTIONS='--import=<verificationHook path>' node test-results/repro-yard-landings.mjs --assert
+  NODE_OPTIONS='--import=<verificationHook path>' npm test
+
+Expected: zero blocked yard cases and 315 passing tests.
+
+Source and runtime evidence
+- Reviewed proposed source SHA-256:
+  3d2a5eb5a9b202eb93a427a37dcdb4ed11a75389df8b97f86d733c66e1d67917
+- Compiled repaired controller SHA-256:
+  1656a7bbd6cc45a95819131b5b56782ee76cbd0e976a2fa22678b93ccadafb4b
+- Installed rc.39 controller SHA-256, unchanged:
+  64e6ff0ef750b7b817990f7dbcd42007c3308e6d37d93ea91233f308af5b00a6

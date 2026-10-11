@@ -1,0 +1,101 @@
+Returns Department and Perfectly Safe Storage
+
+The local game now has one fixed portal pair and a four-floor freight lift.
+DELIVERY and RETURNS connect opposite ends of the yard. Players, loose props,
+and the buggy can cross. The view shows the linked yard. Bodies that cross
+use clipped copies and interpolation counters.
+
+The storage bay has 400 dynamic shipping crates in ten levels. The receiving
+bay has 36 more. Whole crates use exact native box colliders and two shared
+instanced mesh draws. A cut makes native voxel fragments. The original stack
+starts asleep at touching poses. Tools, forces, support removal, and native
+motion wake its crate assembly. No crate is a fixed visual substitute.
+
+The lift carries a player and loose props. It accelerates, stops at exact
+floor heights, and checks for a rider ceiling or a player below it. Its
+buttons select G, 1, 2, and 3. The same requests drive desktop and touch.
+
+RESTACK requires a clear bay. It checks players and unrelated dynamic props.
+It replaces storage crates and their fragments. It preserves receiving crates
+and other yard props. It clears held references to removed storage bodies.
+
+Checksums include all game fields, the body view, every body grid, and the
+SDK native checkpoint digest. Immutable body records are cached. The state
+codec compresses late-join packets. It does not compress each tick's checksum.
+
+Native evidence
+26 tests cover stability, support removal, grabs, cuts, four lift stops,
+reversal, rider safety, both portal directions, blocked exits, thrown bodies,
+buggy passage, straddlers, RESTACK occupancy, and checkpoint replay.
+The five checksum cases pass with the final cached encoding.
+The final regression run passed all 342 tests across 52 files. The physics
+check includes the kinematic lift and still compares every native pose and
+velocity. It checks the batch-only teleport counter separately.
+
+Browser evidence
+Real Chrome input crosses the player and a held crate through the doors.
+It selects all four lift stops, rides the lift, and presses RESTACK.
+Landscape 844 x 390 and portrait 390 x 844 touch controls pass. The scene
+uses two shared crate meshes for 436 intact crates. No page errors occurred.
+The collision audit includes the native moving lift and its panel. Thin
+lift cables are explicit non-solid decoration. No uncovered solid cluster
+remains. An independent final review found no material blocker.
+
+The regression checks found a shared-clock fault in AtmosphereDust. It
+called getElapsedTime during the frame and reduced the next camera delta.
+It now reads elapsedTime. The buggy camera check passes its original
+0.35 rad limit at 0.13 rad. No camera test limit was increased.
+
+Four-player performance
+The low-load profile ran on an Apple M5 Max with 18 logical CPUs. Host load was
+9.23 to 9.53. Each tick includes step, checkpoint capture, and checksum bytes.
+Rest: median 9.28 ms, p90 10.04 ms, maximum 14.71 ms.
+Collapse: median 21.40 ms, p90 23.42 ms, maximum 28.84 ms.
+No sample exceeded the 33.3 ms budget in either 180-tick sample.
+All 400 crates remained asleep with zero movement at rest. All 40 top crates
+fell more than 0.5 m after their bottom supports were removed.
+Late-join packets were 98,102 bytes at rest and 356,989 bytes after collapse.
+Earlier runs under higher host load exceeded the tick budget. These numbers
+are measured desktop samples. They do not establish a phone hardware budget.
+The repeat after proof recovery ran at host load 31.6. It exceeded the budget:
+rest median 28.83 ms, p90 52.55 ms; collapse median 63.35 ms, p90 102.62 ms.
+Other workspaces had active test jobs. Physical results and packet sizes were
+unchanged. The low-load JSON was recovered from its complete tool output. Its
+separate provenance file identifies the original run. The loaded repeat is
+kept as the current profile artifact. Neither run is a phone speed test.
+
+Render cost
+The render-only sample pauses the solo simulation and forces gl.finish()
+after each of 30 measured frames. It includes the main and linked views.
+Desktop 1440 x 900: storage median 2.7 ms, 147 draws, 100,554 triangles;
+DELIVERY median 12.3 ms, p90 17.0 ms, 524 draws, 362,670 triangles.
+Emulated mobile 844 x 390 low mode: storage median 5.2 ms, 195 draws;
+DELIVERY median 10.4 ms, p90 12.3 ms, 523 draws, 362,517 triangles.
+The mobile layout ran on desktop hardware. It is not a phone speed test.
+Portal-window culling reduced desktop portal draws from 749 to 524. The
+older frame timings included simulation and cannot measure this reduction.
+
+Reproduction
+Start the development server on port 4481.
+Run scripts/verify-attractions.mjs for Chrome controls and images.
+Use --render-only for paused drawing cost. Use --crate-portal-proof for a
+real held crate at the portal plane.
+Run src/sim/attractions.test.ts with Vitest for native physics and replay.
+Bundle scripts/profile-attractions.ts with esbuild and run its output for
+step, checkpoint, checksum, packet size, and restore timings.
+
+Artifacts
+- test-results/attractions/: browser images and results.json.
+- test-results/attractions/render-only-results.json: paused drawing sample.
+- test-results/profile-attractions.json: the native performance sample.
+- test-results/profile-attractions-low-load-transcript.json: the recovered
+  low-load sample, with a separate .provenance.txt file.
+Playwright uses test-results/e2e for its own output. It no longer clears
+the parent evidence folder when a production check starts.
+
+Release status
+The user requested a local commit after verification. No production
+deployment is included. The plan is .plans/wreck-yard-returns-storage.html.
+TypeScript, identity, build, and all seven live checks pass. Production E2E
+passes three tests. The existing style-vista baseline fails: ink fraction
+0.027 is below its 0.03 minimum. Its threshold was not changed.

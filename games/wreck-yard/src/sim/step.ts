@@ -1,3 +1,5 @@
+import type { AttractionState } from './attractions';
+import { applyAttractionRequests, startElevatorStep, finishElevatorStep } from './storageRuntime';
 import { meters, type PhysicsContactEvent3D } from '@series-inc/rundot-syncplay/physics/3d';
 import {
   DT,
@@ -65,11 +67,12 @@ import {
   makePhysicsBody,
   physicsBodyById,
   physicsBodyHandle,
-  physicsBodyName,
+  bodyNameOf,
   poseOf,
   removePhysicsBody,
   replacePhysicsBody,
   setPhysicsBodyMotion,
+  wakeShippingStack,
   setPhysicsBodyLinearDamping,
   setPhysicsBodyVelocity,
   readWorldState,
@@ -104,6 +107,7 @@ interface PendingFracture {
 }
 
 interface Working {
+  attractions: AttractionState;
   readonly physics: OpenYardPhysicsWorld;
   bodies: YardBody[];
   players: PlayerState[];
@@ -131,8 +135,8 @@ function aimRay(w: Working, origin: Vec3, direction: Vec3, maxDistance = MAX_RAY
   const first = hits[0];
   if (!first) return { kind: 'none', point: add(origin, scale(direction, maxDistance)) };
   const point: Vec3 = [first.point.x, first.point.y, first.point.z];
-  const bodyId = physicsBodyName(w.physics, first.bodyId);
-  const body = bodyId === undefined || isShell(bodyId) ? undefined : findBody(w.bodies, bodyId);
+  const bodyId = bodyNameOf(first.bodyKey);
+  const body = isShell(bodyId) ? undefined : findBody(w.bodies, bodyId);
   if (!body) return { kind: 'solid', point };
   return {
     kind: 'body',
@@ -314,6 +318,9 @@ function stepPlayerMovement(player: PlayerState, input: YardInput, w: Working): 
     x,
     y,
     z,
+    portalTeleports: (player.portalTeleports + (moved.portalCrossed ? 1 : 0)) >>> 0,
+    grab: moved.portalCrossed ? null : player.grab,
+    torch: moved.portalCrossed ? null : player.torch,
     vx,
     vy,
     vz,
@@ -337,6 +344,11 @@ function stepHand(
   let grab = player.grab;
   if (grab && !findBody(w.bodies, grab.bodyId)) grab = null;
   let feedback = player.feedback;
+
+  if (input.drop) {
+    return { ...player, grab: null, torch: null, torchTicks: 0,
+      wasPressed: input.pressed, wasSecondaryPressed: input.secondary };
+  }
 
   // Secondary action: Gravity Gun PUNT
   if (input.secondary && !player.wasSecondaryPressed) {
@@ -636,9 +648,9 @@ function queueDrumHits(w: Working, contacts: readonly PhysicsContactEvent3D[], f
     if (contact.type !== 'enter') continue;
     const speed = contact.closingSpeed;
     if (speed < FUEL_DRUM.minHitSpeed) continue;
-    for (const numericId of [contact.bodyA, contact.bodyB]) {
-      const id = physicsBodyName(w.physics, numericId);
-      if (id === undefined || !drumOf(w, id)) continue;
+    for (const [numericId, key] of [[contact.bodyA, contact.bodyKeyA], [contact.bodyB, contact.bodyKeyB]] as const) {
+      const id = bodyNameOf(key);
+      if (!drumOf(w, id)) continue;
       const body = findBody(w.bodies, id);
       if (!body || frame < body.impactCooldownUntil) continue;
       const damage = hitDamage(speed);
@@ -662,7 +674,7 @@ function keepFlameHeat(w: Working, point: Vec3): void {
     shape: { type: 'sphere', radius: meters(FLAME_HEAT_REACH) },
     hitTriggers: false, hitSensors: false,
   });
-  const ids = new Set(near.map((hit) => physicsBodyName(w.physics, hit.bodyId)));
+  const ids = new Set(near.map((hit) => bodyNameOf(hit.bodyKey)));
   w.bodies = w.bodies.map((body) => (body.heat && ids.has(body.id) ? { ...body, heat: { ...body.heat, frame: w.frame } } : body));
 }
 
@@ -931,10 +943,18 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
     players: [...state.players],
     stats: state.stats,
     contraptions: state.contraptions,
+    attractions: state.attractions,
     nextSerial: state.nextSerial,
     fractures: [],
     frame: state.frame + 1,
   };
+
+  for (let slot = 0; slot < w.players.length; slot++) {
+    if (!inputs[slot]) throw new Error(`WRECK_YARD_INPUT_MISSING: slot ${slot}`);
+  }
+  const requested = applyAttractionRequests(w.physics, w.attractions, w.bodies, w.players, inputs, w.frame);
+  w.bodies = requested.bodies;
+  w.attractions = requested.attractions;
 
   for (let slot = 0; slot < w.players.length; slot += 1) {
     const input = inputs[slot];
@@ -942,10 +962,16 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
     w.players[slot] = stepPlayer(w, slot, input);
   }
 
+  for (const bay of ['storage', 'returns']) {
+    const movingCrate = state.world.bodies.find((body) => body.id.startsWith(`shipping-${bay}-`) && Math.hypot(body.vx, body.vy, body.vz) > 0.0003);
+    if (movingCrate) wakeShippingStack(w.physics, movingCrate.id);
+  }
   const driver = w.players.find((player) => player.ridingVehicle);
   const buggy = stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyVehicle);
+  w.attractions = startElevatorStep(w.physics, w.attractions, w.players);
   w.physics.world.step();
   const latest = w.physics.world.latest();
+  w.attractions = finishElevatorStep(w.physics, w.attractions, w.players);
   stepContraptions(w, state.world);
 
   // Sync vehicle riders with the post-step vehicle position
@@ -956,6 +982,7 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
       if (chassis) {
         w.players[slot] = {
           ...p,
+          portalTeleports: (p.portalTeleports + (latest.portalCrossings?.some((crossing) => crossing.bodyId === w.physics.bodyIds.get('vehicle-chassis')) ? 1 : 0)) >>> 0,
           x: chassis.x,
           y: chassis.y + 0.28,
           z: chassis.z + 0.12,
@@ -980,6 +1007,7 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
     players: w.players,
     stats: w.stats,
     contraptions: w.contraptions,
+    attractions: w.attractions,
     nextSerial: w.nextSerial,
   };
 }

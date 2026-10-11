@@ -1,3 +1,5 @@
+import { INITIAL_ATTRACTIONS } from './attractions';
+import { createCrateSpawns, spawnInAttractionZone } from './storage';
 import { isDeterministicMathInstalled } from '@series-inc/rundot-syncplay/core/deterministic-math';
 import { makeEmptyVoxelField, stampBox, stampSphere, type VoxelDims } from 'voxel-kit';
 import { FLOOR_Y, getTerrainHeightAt, TANK, VOXEL_SIZE } from './constants';
@@ -339,7 +341,7 @@ export function createSpawns(): Spawn[] {
     spawn('bowling-pin-6', 'Bowling Pin 6', pin, [-7.6, restY(pin.dims), 15.2], 0.3),
 
     // Astro Bot High-Speed Driving Runway: Teardown-Style Unified Buggy at [14, -12] facing South
-    spawn('vehicle-chassis', 'Sandbox Buggy', buggy, [14.0, FLOOR_Y + getTerrainHeightAt(14, -12) + 1.05, -12.0], 0.25, [0, 1, 0, 0]),
+    spawn('vehicle-chassis', 'Sandbox Buggy', buggy, [14.0, FLOOR_Y + getTerrainHeightAt(14, -12) + 1.45, -12.0], 0.25, [0, 1, 0, 0]),
 
     // Astro Bot Domino Crash Wall (Directly at the Stunt Jump landing zone)
     spawn('domino-crate-1', 'Domino Crate 1', steel, [12.6, steelY, 13.0], 0.1),
@@ -379,7 +381,7 @@ export function createInitialYard(playerCount: number): { readonly physics: Open
   if (!isDeterministicMathInstalled()) {
     throw new Error('WRECK_YARD_DETERMINISTIC_MATH_MISSING: import src/deterministicMath.ts before any sim module');
   }
-  const spawns = createSpawns();
+  const spawns = [...createSpawns().filter((entry) => !spawnInAttractionZone(entry.position, entry.body.dims)), ...createCrateSpawns('storage'), ...createCrateSpawns('returns')];
   const physics = createWorld(
     spawns.map((entry) =>
       makePhysicsBody(entry.body, {
@@ -399,6 +401,7 @@ export function createInitialYard(playerCount: number): { readonly physics: Open
       players: Array.from({ length: playerCount }, (_, slot) => createInitialPlayer(slot)),
       stats: { torchCuts: 0, throws: 0, fractures: 0, dunks: 0, explosions: 0 },
       contraptions: INITIAL_CONTRAPTIONS,
+      attractions: INITIAL_ATTRACTIONS,
       nextSerial: 0,
     },
   };

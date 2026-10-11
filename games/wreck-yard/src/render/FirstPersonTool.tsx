@@ -20,7 +20,6 @@ export function FirstPersonTool({
   // Gravity Gun Refs
   const coreInnerRef = useRef<THREE.Mesh>(null);
   const coreOuterRef = useRef<THREE.Mesh>(null);
-  const coreLightRef = useRef<THREE.PointLight>(null);
   const rotorRing1 = useRef<THREE.Group>(null);
   const rotorRing2 = useRef<THREE.Group>(null);
   const prongGroup = useRef<THREE.Group>(null);
@@ -29,7 +28,6 @@ export function FirstPersonTool({
   const clawRight = useRef<THREE.Group>(null);
 
   // Torch Refs
-  const torchLightRef = useRef<THREE.PointLight>(null);
   const pilotFlameRef = useRef<THREE.Mesh>(null);
   const nozzleGlowRef = useRef<THREE.Mesh>(null);
 
@@ -127,9 +125,6 @@ export function FirstPersonTool({
         const pulseOuter = isGrabbing ? 1.35 + Math.cos(time * 18) * 0.3 : 1.05 + Math.cos(time * 4) * 0.06;
         coreOuterRef.current.scale.set(pulseOuter, pulseOuter, pulseOuter);
       }
-      if (coreLightRef.current) {
-        coreLightRef.current.intensity = isGrabbing ? 4.5 + Math.random() * 0.6 : 0.9;
-      }
 
       // Claw articulators: flare open when tractor lock engages
       const clawTarget = isGrabbing ? 1.35 : 1.0;
@@ -151,7 +146,7 @@ export function FirstPersonTool({
     // OXY-ACETYLENE TORCH DYNAMICS
     // =========================================================================
     if (tool === 'torch') {
-      // A stream lights the nozzle and the scene; a fizzle (nothing in range) only sputters.
+      // A stream increases the nozzle glow. A fizzle makes it flash.
       const visual = render !== null ? torchVisual(localPlayer?.feedback ?? null, render.frame) : null;
       const sputter = visual === 'fizzle' && Math.random() < 0.6;
       if (pilotFlameRef.current) {
@@ -163,12 +158,6 @@ export function FirstPersonTool({
         const mat = nozzleGlowRef.current.material as THREE.MeshBasicMaterial;
         mat.color.set(visual === 'stream' ? '#fff1ca' : sputter ? '#ffb347' : '#ea580c');
       }
-      if (torchLightRef.current) {
-        // A quench still burns in the air above the water, but it is cut short.
-        torchLightRef.current.intensity = visual === 'stream' ? 6.5 + Math.random() * 1.2
-          : visual === 'quench' ? 3 + Math.random() * 0.8
-            : sputter ? 0.8 + Math.random() * 1.4 : 0.5;
-      }
     }
 
   });
@@ -176,10 +165,7 @@ export function FirstPersonTool({
   if (tool === 'orbit') return null;
 
   return (
-    <group ref={root}>
-      {/* Subtle Dedicated Studio Rim Light to make metallic bevels and textures pop */}
-      <pointLight position={[0.25, 0.35, 0.1]} intensity={0.9} distance={1.4} color="#ffffff" />
-
+    <group ref={root} name="first-person-tool" userData={{ portalViewHidden: true }}>
       {tool === 'hand' ? (
         // =========================================================================
         // AAA TEARDOWN HEAVY INDUSTRIAL GRAVITY TRACTOR (GRAVITY GUN)
@@ -300,7 +286,6 @@ export function FirstPersonTool({
               toneMapped={false}
             />
           </mesh>
-          <pointLight ref={coreLightRef} position={[0, 0.01, -0.12]} distance={3.2} color="#f59e0b" />
 
           {/* 3 Heavy Articulating Industrial Claws with Hydraulic Cylinders */}
           <group ref={prongGroup} position={[0, 0.01, -0.27]}>
@@ -480,8 +465,6 @@ export function FirstPersonTool({
           </mesh>
 
           {/* The cutting flame is drawn in world space by TorchJet, as long as the torch reaches. */}
-          {/* Dynamic Light Cast onto Environment Voxels */}
-          <pointLight ref={torchLightRef} position={[0, 0.014, -0.76]} distance={9.0} color="#f97316" />
         </group>
       )}
     </group>

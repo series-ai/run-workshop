@@ -1,3 +1,4 @@
+import { deflateSync, inflateSync } from 'fflate';
 import { canonicalParse, canonicalStringify } from '@series-inc/rundot-syncplay/browser';
 import type { YardPhysicsWorldState } from './physics';
 import type { YardBody, YardState } from './state';
@@ -70,7 +71,7 @@ function voxelRuns(voxels: Uint8Array): Uint8Array {
   return runs;
 }
 
-/** A state with its physics world as native checkpoint bytes: what peers checksum and late joiners load. */
+/** State and native checkpoint bytes for saves and late joins. */
 export interface EncodedYard {
   readonly state: YardState;
   readonly checkpoint: Uint8Array;
@@ -82,13 +83,14 @@ export interface EncodedYard {
  * run-length voxels in header order. Canonical JSON keeps key order stable.
  * Fluid interactions are not encoded: each step makes them again.
  */
-export function encodeState({ state, checkpoint }: EncodedYard): Uint8Array {
+function encodeRawState({ state, checkpoint }: EncodedYard): Uint8Array {
   const header: Header = {
     ...state,
     world: {
       frame: state.world.frame,
       bodies: state.world.bodies,
       bodyIds: state.world.bodyIds,
+      portalStraddlers: state.world.portalStraddlers,
       checkpointBytes: checkpoint.byteLength,
     },
     bodies: state.bodies.map(({ voxels, ...rest }) => ({ ...rest, voxelBytes: voxelRuns(voxels).byteLength })),
@@ -112,7 +114,52 @@ export function encodeState({ state, checkpoint }: EncodedYard): Uint8Array {
   return out;
 }
 
-export function decodeState(bytes: Uint8Array): EncodedYard {
+const bodyChecksumCache = new WeakMap<YardBody, Uint8Array>();
+
+function checksumBody(body: YardBody): Uint8Array {
+  const cached = bodyChecksumCache.get(body);
+  if (cached) return cached;
+  const { voxels, ...metadata } = body;
+  const header = encoder.encode(canonicalStringify(metadata));
+  const runs = voxelRuns(voxels);
+  const bytes = new Uint8Array(4 + header.length + runs.length);
+  new DataView(bytes.buffer).setUint32(0, header.length);
+  bytes.set(header, 4);
+  bytes.set(runs, 4 + header.length);
+  bodyChecksumCache.set(body, bytes);
+  return bytes;
+}
+
+/** Keep all game fields. Reuse immutable body bytes between ticks. */
+export function encodeChecksumState({ state, checkpoint }: EncodedYard): Uint8Array {
+  const { bodies, world, ...game } = state;
+  const header = encoder.encode(canonicalStringify({
+    ...game,
+    world: {
+      frame: world.frame, bodies: world.bodies, bodyIds: world.bodyIds,
+      portalStraddlers: world.portalStraddlers,
+    },
+  }));
+  const encodedBodies = bodies.map(checksumBody);
+  const size = 12 + header.length + checkpoint.length
+    + encodedBodies.reduce((total, body) => total + 4 + body.length, 0);
+  const out = new Uint8Array(size);
+  const view = new DataView(out.buffer);
+  view.setUint32(0, header.length);
+  view.setUint32(4, checkpoint.length);
+  view.setUint32(8, bodies.length);
+  out.set(header, 12);
+  out.set(checkpoint, 12 + header.length);
+  let offset = 12 + header.length + checkpoint.length;
+  for (const body of encodedBodies) {
+    view.setUint32(offset, body.length);
+    out.set(body, offset + 4);
+    offset += 4 + body.length;
+  }
+  return out;
+}
+
+function decodeRawState(bytes: Uint8Array): EncodedYard {
   if (bytes.byteLength < 8) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: too short');
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   if (view.getUint32(0) !== MAGIC) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: bad magic');
@@ -135,4 +182,33 @@ export function decodeState(bytes: Uint8Array): EncodedYard {
   if (offset !== bytes.byteLength) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: trailing bytes');
   const { checkpointBytes: _checkpointBytes, ...world } = header.world;
   return { state: { ...header, world, bodies }, checkpoint };
+}
+
+const COMPRESSED_MAGIC = 0x57594133; // WYA3
+const MAX_STATE_BYTES = 16 * 1024 * 1024;
+
+/** Compress the native checkpoint and repeated body metadata for late joins and saved packets. */
+export function encodeState(state: EncodedYard): Uint8Array {
+  const raw = encodeRawState(state);
+  if (raw.length > MAX_STATE_BYTES) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: state too large');
+  const compressed = deflateSync(raw, { level: 1 });
+  const out = new Uint8Array(compressed.length + 8);
+  const view = new DataView(out.buffer);
+  view.setUint32(0, COMPRESSED_MAGIC);
+  view.setUint32(4, raw.length);
+  out.set(compressed, 8);
+  return out;
+}
+
+export function decodeState(bytes: Uint8Array): EncodedYard {
+  if (bytes.length < 9) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: too short');
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (view.getUint32(0) !== COMPRESSED_MAGIC) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: bad magic');
+  const size = view.getUint32(4);
+  if (size < 8 || size > MAX_STATE_BYTES) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: size out of range');
+  let raw: Uint8Array;
+  try { raw = inflateSync(bytes.subarray(8), { out: new Uint8Array(size) }); }
+  catch { throw new Error('WRECK_YARD_STATE_BYTES_INVALID: compressed data'); }
+  if (raw.length !== size) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: size mismatch');
+  return decodeRawState(raw);
 }

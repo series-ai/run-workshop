@@ -151,7 +151,9 @@ export const InkShader = {
         // Skip sky (depth near 1.0)
         if (dCenterRaw < 0.9999) {
           float dCenter = linearizeDepth(dCenterRaw);
-          vec2 texel = (uInkWidth * (uResolution.y / 1080.0)) / uResolution;
+          // Match the nearest-filtered depth samples to their pixel centers.
+          float samplePixels = max(1.0, floor(uInkWidth * (uResolution.y / 1080.0) + 0.5));
+          vec2 texel = samplePixels / uResolution;
 
           // 4-point cardinal neighbor sampling for silhouettes & cavity
           vec2 offsets[4];
@@ -160,16 +162,11 @@ export const InkShader = {
           offsets[2] = vec2(0.0, texel.y);
           offsets[3] = vec2(0.0, -texel.y);
 
-          float maxDepthDiff = 0.0;
           float d[4];
           for (int i = 0; i < 4; i++) {
             float dRaw = texture2D(tDepth, vUv + offsets[i]).r;
             d[i] = linearizeDepth(dRaw);
-            maxDepthDiff = max(maxDepthDiff, abs(d[i] - dCenter));
           }
-
-          // Relative depth edge calculation
-          float relativeDepthEdge = maxDepthDiff / max(dCenter, 0.01);
 
           // Reconstruct view positions of center and 4 cardinal neighbors
           vec3 pC = reconstructViewPos(vUv, dCenter);
@@ -184,6 +181,13 @@ export const InkShader = {
           vec3 n = cross(dx, dy);
           float nLen = length(n);
           vec3 normal = nLen > 1e-6 ? (n / nLen) : vec3(0.0, 0.0, 1.0);
+
+          // A flat surface has a depth slope but no break in its plane.
+          float planeBreak = max(
+            max(abs(dot(normal, pR - pC)), abs(dot(normal, pL - pC))),
+            max(abs(dot(normal, pU - pC)), abs(dot(normal, pD - pC)))
+          );
+          float relativeDepthEdge = planeBreak / max(dCenter, 0.01);
 
           // Compensate for steep grazing angles (e.g. flat ground plane)
           vec3 viewDir = normalize(-pC);

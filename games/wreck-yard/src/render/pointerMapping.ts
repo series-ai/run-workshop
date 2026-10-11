@@ -54,5 +54,5 @@ export function ignoreUntilRelease(tracker: ButtonTracker, button: number): Butt
  * nothing moves, fires, or thrusts, and a held body is let go.
  */
 export function pausedInput(input: YardInput): YardInput {
-  return { ...input, pressed: false, secondary: false, use: false, jetpack: false, moveX: 0, moveZ: 0 };
+  return { ...input, attraction: 0, pressed: false, secondary: false, use: false, jetpack: false, moveX: 0, moveZ: 0 };
 }

@@ -12,10 +12,10 @@ import {
   perSecond,
   radiansPerSecond,
   setVoxelCell,
+  vec3,
   type PhysicsBodyInput3D,
 } from '@series-inc/rundot-syncplay/physics/3d';
 import { stampBox } from 'voxel-kit';
-import { vec } from './units';
 
 await initPhysics3D();
 
@@ -31,7 +31,7 @@ const FLUID_BOUNDS = {
 function createTestWorld(capacity?: { bodies?: number; joints?: number; fluids?: number; fluidInteractions?: number }) {
   return createPhysicsWorld3D({
     tickRate: 60,
-    initialGravity: vec(metersPerSecondSquared, 0, -10, 0),
+    initialGravity: vec3(metersPerSecondSquared, 0, -10, 0),
     capacity: {
       bodies: capacity?.bodies ?? 64,
       joints: capacity?.joints ?? 16,
@@ -58,10 +58,10 @@ function makeBoxBody(options: {
       halfY: meters(options.halfY ?? 0.5),
       halfZ: meters(options.halfZ ?? 0.5),
     },
-    position: options.position ? vec(meters, options.position.x, options.position.y, options.position.z) : vec(meters, 0, 2, 0),
+    position: options.position ? vec3(meters, options.position.x, options.position.y, options.position.z) : vec3(meters, 0, 2, 0),
     orientation: { x: 0, y: 0, z: 0, w: 1 },
-    linearVelocity: vec(metersPerSecond, 0, 0, 0),
-    angularVelocity: vec(radiansPerSecond, 0, 0, 0),
+    linearVelocity: vec3(metersPerSecond, 0, 0, 0),
+    angularVelocity: vec3(radiansPerSecond, 0, 0, 0),
     mass: kilograms(options.mass ?? 1),
     linearDamping: 0.1,
     angularDamping: 0.1,
@@ -84,7 +84,7 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
         density: kilogramsPerCubicMeter(1),
         linearDragPerSecond: perSecond(2),
         angularDragPerSecond: perSecond(1),
-        flowVelocity: vec(metersPerSecond, 0, 0, 0),
+        flowVelocity: vec3(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),
@@ -108,8 +108,8 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
       const current = world.readBody(body);
       edit.replaceBody(body, {
         ...current,
-        position: vec(meters, 0, 5, 0),
-        linearVelocity: vec(metersPerSecond, 0, 0, 0),
+        position: vec3(meters, 0, 5, 0),
+        linearVelocity: vec3(metersPerSecond, 0, 0, 0),
       });
     });
 
@@ -131,7 +131,7 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
         density: kilogramsPerCubicMeter(1),
         linearDragPerSecond: perSecond(2),
         angularDragPerSecond: perSecond(1),
-        flowVelocity: vec(metersPerSecond, 0, 0, 0),
+        flowVelocity: vec3(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),
@@ -147,8 +147,8 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
       const current = world.readBody(body);
       edit.replaceBody(body, {
         ...current,
-        position: vec(meters, 0, 5, 0),
-        linearVelocity: vec(metersPerSecond, 0, 0, 0),
+        position: vec3(meters, 0, 5, 0),
+        linearVelocity: vec3(metersPerSecond, 0, 0, 0),
       });
     });
 
@@ -170,7 +170,7 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
         density: kilogramsPerCubicMeter(1),
         linearDragPerSecond: perSecond(2),
         angularDragPerSecond: perSecond(1),
-        flowVelocity: vec(metersPerSecond, 0, 0, 0),
+        flowVelocity: vec3(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),
@@ -202,10 +202,10 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
       solidBody: edit.createBody({
         kind: 'dynamic',
         shape: cookedSolid.body.shape,
-        position: vec(meters, -2, -3, 0), // fully submerged below surface (y=0)
+        position: vec3(meters, -2, -3, 0), // fully submerged below surface (y=0)
         orientation: { x: 0, y: 0, z: 0, w: 1 },
-        linearVelocity: vec(metersPerSecond, 0, 0, 0),
-        angularVelocity: vec(radiansPerSecond, 0, 0, 0),
+        linearVelocity: vec3(metersPerSecond, 0, 0, 0),
+        angularVelocity: vec3(radiansPerSecond, 0, 0, 0),
         mass: cookedSolid.body.mass,
         inertia: cookedSolid.body.inertia,
         centerOfMass: cookedSolid.body.centerOfMass,
@@ -219,10 +219,10 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
       hollowBody: edit.createBody({
         kind: 'dynamic',
         shape: cookedHollow.body.shape,
-        position: vec(meters, 2, -3, 0), // fully submerged below surface (y=0)
+        position: vec3(meters, 2, -3, 0), // fully submerged below surface (y=0)
         orientation: { x: 0, y: 0, z: 0, w: 1 },
-        linearVelocity: vec(metersPerSecond, 0, 0, 0),
-        angularVelocity: vec(radiansPerSecond, 0, 0, 0),
+        linearVelocity: vec3(metersPerSecond, 0, 0, 0),
+        angularVelocity: vec3(radiansPerSecond, 0, 0, 0),
         mass: cookedHollow.body.mass,
         inertia: cookedHollow.body.inertia,
         centerOfMass: cookedHollow.body.centerOfMass,
@@ -261,7 +261,7 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
         density: kilogramsPerCubicMeter(1),
         linearDragPerSecond: perSecond(2),
         angularDragPerSecond: perSecond(1),
-        flowVelocity: vec(metersPerSecond, 0, 0, 0),
+        flowVelocity: vec3(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),
@@ -281,10 +281,10 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
       fullBody: edit.createBody({
         kind: 'dynamic',
         shape: cookedFull.body.shape,
-        position: vec(meters, 0, -4, 0),
+        position: vec3(meters, 0, -4, 0),
         orientation: { x: 0, y: 0, z: 0, w: 1 },
-        linearVelocity: vec(metersPerSecond, 0, 0, 0),
-        angularVelocity: vec(radiansPerSecond, 0, 0, 0),
+        linearVelocity: vec3(metersPerSecond, 0, 0, 0),
+        angularVelocity: vec3(radiansPerSecond, 0, 0, 0),
         mass: cookedFull.body.mass,
         inertia: cookedFull.body.inertia,
         centerOfMass: cookedFull.body.centerOfMass,
@@ -324,10 +324,10 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
         pieceA: edit.createBody({
           kind: 'dynamic',
           shape: cookedHalfA.body.shape,
-          position: vec(meters, 0, -3.8, 0),
+          position: vec3(meters, 0, -3.8, 0),
           orientation: { x: 0, y: 0, z: 0, w: 1 },
-          linearVelocity: vec(metersPerSecond, 0, 0, 0),
-          angularVelocity: vec(radiansPerSecond, 0, 0, 0),
+          linearVelocity: vec3(metersPerSecond, 0, 0, 0),
+          angularVelocity: vec3(radiansPerSecond, 0, 0, 0),
           mass: cookedHalfA.body.mass,
           inertia: cookedHalfA.body.inertia,
           centerOfMass: cookedHalfA.body.centerOfMass,
@@ -341,10 +341,10 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
         pieceB: edit.createBody({
           kind: 'dynamic',
           shape: cookedHalfB.body.shape,
-          position: vec(meters, 0, -4.2, 0),
+          position: vec3(meters, 0, -4.2, 0),
           orientation: { x: 0, y: 0, z: 0, w: 1 },
-          linearVelocity: vec(metersPerSecond, 0, 0, 0),
-          angularVelocity: vec(radiansPerSecond, 0, 0, 0),
+          linearVelocity: vec3(metersPerSecond, 0, 0, 0),
+          angularVelocity: vec3(radiansPerSecond, 0, 0, 0),
           mass: cookedHalfB.body.mass,
           inertia: cookedHalfB.body.inertia,
           centerOfMass: cookedHalfB.body.centerOfMass,
@@ -381,7 +381,7 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
         density: kilogramsPerCubicMeter(1),
         linearDragPerSecond: perSecond(2),
         angularDragPerSecond: perSecond(1),
-        flowVelocity: vec(metersPerSecond, 0, 0, 0),
+        flowVelocity: vec3(metersPerSecond, 0, 0, 0),
         layer: 0b01, // Fluid layer 1
         mask: 0b01,  // Fluid mask 1
       }),
@@ -412,7 +412,7 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
         density: kilogramsPerCubicMeter(1),
         linearDragPerSecond: perSecond(2),
         angularDragPerSecond: perSecond(1),
-        flowVelocity: vec(metersPerSecond, 0, 0, 0),
+        flowVelocity: vec3(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),
@@ -436,7 +436,7 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
         density: kilogramsPerCubicMeter(1),
         linearDragPerSecond: perSecond(2),
         angularDragPerSecond: perSecond(1),
-        flowVelocity: vec(metersPerSecond, 0, 0, 0),
+        flowVelocity: vec3(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),
@@ -478,7 +478,7 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
           density: kilogramsPerCubicMeter(1),
           linearDragPerSecond: perSecond(2),
           angularDragPerSecond: perSecond(1),
-          flowVelocity: vec(metersPerSecond, 0, 0, 0),
+          flowVelocity: vec3(metersPerSecond, 0, 0, 0),
           layer: 1,
           mask: 0xffffffff,
         }),
@@ -519,7 +519,7 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
         density: kilogramsPerCubicMeter(1),
         linearDragPerSecond: perSecond(2),
         angularDragPerSecond: perSecond(1),
-        flowVelocity: vec(metersPerSecond, 0, 0, 0),
+        flowVelocity: vec3(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),
@@ -545,7 +545,7 @@ describe('Syncplay 6.0.0-rc.4 Native 3D Fluid Regression', () => {
         density: kilogramsPerCubicMeter(1),
         linearDragPerSecond: perSecond(2),
         angularDragPerSecond: perSecond(1),
-        flowVelocity: vec(metersPerSecond, 0, 0, 0),
+        flowVelocity: vec3(metersPerSecond, 0, 0, 0),
         layer: 1,
         mask: 0xffffffff,
       }),

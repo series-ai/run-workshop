@@ -19,6 +19,8 @@ try {
   report = await page.evaluate(async () => {
     const { FLOOR_Y, ARENA_EXTENT, VOXEL_SIZE } = await import('/src/sim/constants.ts');
     const { SHELL_BOXES } = await import('/src/sim/shell.ts');
+    const { ELEVATOR } = await import('/src/sim/attractions.ts');
+    const { STORAGE_ELEVATOR_CAR_FIXTURE } = await import('/src/sim/storageFixtures.ts');
     const { scene } = window.__DEBUG_THREE__;
     const THREE_Vector3 = scene.position.constructor;
     const render = window.__WRECK_YARD_CONTROLLER__.getRender();
@@ -52,6 +54,23 @@ try {
         inverse: [-qx, -qy, -qz, qw],
       });
     }
+    // The moving lift is a native compound body, separate from voxel bodies.
+    const lift = render.poses.get(ELEVATOR.id);
+    if (!lift) throw new Error('Collision audit has no elevator pose');
+    const [lx, ly, lz, lw] = lift.rotation;
+    const liftRotation = [lx, ly, lz, lw];
+    for (const part of [
+      { id: ELEVATOR.id, center: [0, 0, 0], size: ELEVATOR.size },
+      STORAGE_ELEVATOR_CAR_FIXTURE,
+    ]) {
+      const offset = rotate(part.center, liftRotation);
+      colliders.push({
+        id: part.id,
+        center: lift.position.map((value, axis) => value + offset[axis]),
+        half: part.size.map((value) => value / 2),
+        inverse: [-lx, -ly, -lz, lw],
+      });
+    }
     const TOLERANCE = 0.1;
     const covered = (p) => colliders.some((c) => {
       const local = rotate([p[0] - c.center[0], p[1] - c.center[1], p[2] - c.center[2]], c.inverse);
@@ -70,7 +89,8 @@ try {
     const n = new THREE_Vector3();
     scene.updateMatrixWorld(true);
     scene.traverse((object) => {
-      if (!object.isMesh || object.isInstancedMesh || !visibleChain(object)) return; // instanced meshes are particles
+      if (!object.isMesh || object.isInstancedMesh || !visibleChain(object)) return; // Shared batches have separate native fixture checks.
+      if (object.userData.nonSolidDecoration === true) return; // Thin lift cables do not have contact surfaces.
       const material = Array.isArray(object.material) ? object.material[0] : object.material;
       if (!material || material.type === 'RawShaderMaterial') return; // voxel bodies are physics bodies
       if (material.transparent || material.blending === 2) return; // glass, water, glow cards

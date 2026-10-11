@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TANK, TICK_RATE } from './constants';
 import { NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
-import { physicsStateBodyById, replacePhysicsPose } from './physics';
+import { physicsStateBodyById, replacePhysicsPose, setPhysicsBodyVelocity } from './physics';
 import type { YardSim } from './sim';
 import type { YardState } from './state';
 import { testSim } from './testSim';
@@ -81,6 +81,29 @@ describe('stepYard', () => {
     state = sim.step([{ ...lift, pressed: false }]);
     expect(state.players[0]!.grab).toBeNull();
     expect(state.stats.throws).toBe(1);
+  });
+
+  it('drops a moving held body without the desktop release boost', () => {
+    const sim = testSim(1);
+    const state = run(sim, [NEUTRAL_INPUT], 30);
+    const body = physicsStateBodyById(state.world, 'ballast-box')!;
+    const hold = { ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...rayAt([body.x, body.y, body.z]) };
+    sim.step([hold]);
+    sim.edit((physics) => setPhysicsBodyVelocity(physics, 'ballast-box', [0.1, 0.02, 0]));
+    const save = sim.save();
+    try {
+      const released = sim.step([{ ...hold, pressed: false }]);
+      const boosted = physicsStateBodyById(released.world, 'ballast-box')!;
+      sim.restore(save);
+      const dropped = sim.step([{ ...hold, pressed: false, drop: true }]);
+      expect(dropped.players[0]!.grab).toBeNull();
+      const unboosted = physicsStateBodyById(dropped.world, 'ballast-box')!;
+      sim.restore({ ...save, state: { ...save.state, players: save.state.players.map((p) => ({ ...p, grab: null })) } });
+      const free = sim.step([NEUTRAL_INPUT]);
+      expect(unboosted).toEqual(physicsStateBodyById(free.world, 'ballast-box'));
+      expect(Math.abs(boosted.vx)).toBeGreaterThan(Math.abs(unboosted.vx));
+      expect(unboosted.vx).toBeLessThanOrEqual(0.1);
+    } finally { sim.release(save); }
   });
 
   // Offsets keep the path clear: the fixed gantry spans the space above the tank.

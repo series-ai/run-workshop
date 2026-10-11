@@ -1,0 +1,38 @@
+Camera update and frame budget
+Checked 2026-10-11 with Syncplay 6.0.0-rc.40.
+
+Camera look uses local input on each render frame. It does not wait for a
+simulation tick. Syncplay receives quantized aim at 30 ticks per second.
+Walking uses interpolated player positions from runner.getRenderState().
+
+The browser check stops simulation time and moves the view. Both mouse drag
+and touch drag still turn the camera. Walking moves the camera between ticks.
+The final desktop and mobile-layout samples ran near 60 FPS on this Mac.
+
+Two graphics faults were fixed:
+1. The resolution policy accepted about 30 FPS before it reduced resolution.
+   Its default budget is now 1000 / 60 ms.
+2. Canvas restored its initial resolution after parent renders. YardScene
+   now owns the resolution value. Both Canvas and DynamicDpr use that value.
+
+Under a fixed CPU load, the old policy ran at about 48.5 FPS without reducing
+resolution. The new policy reduced mobile DPR from 1 to 0.85 in about 0.56 s.
+That value stayed in effect through tool changes and recovery. The test adds
+CPU load to one scene render. It does not measure a weak phone GPU.
+
+The policy retains an 8 ms reserve before it increases resolution. A steady
+60 Hz display therefore retains a reduced resolution for the scene session.
+The render loop has no 60 FPS cap. It can update on higher refresh displays.
+
+Run from games/wreck-yard with the dev server on port 4481:
+
+EXPECT_CAMERA_INTERPOLATION=1 CAMERA_RATE_LABEL=final node scripts/verify-camera-rate.mjs
+CAMERA_RATE_MODE=budget EXPECT_DPR_BUDGET=1 CAMERA_RATE_LABEL=final-budget node scripts/verify-camera-rate.mjs
+
+Receipts:
+test-results/camera-rate/final-results.json
+test-results/camera-rate/final-budget-results.json
+test-results/camera-rate/old-budget-main-results.json
+
+TypeScript, the production build, and 31 focused tests passed.
+Physical phone performance and native RUN pointer delivery remain unmeasured.

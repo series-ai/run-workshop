@@ -1,0 +1,859 @@
+{
+  "version": 1,
+  "generator": "scripts/prepare-audio.mjs",
+  "encoderVersion": "ffmpeg version 8.1 Copyright (c) 2000-2026 the FFmpeg developers",
+  "codec": "MPEG Layer III",
+  "totalBytes": 416325,
+  "verification": "FFmpeg decoded output checks. No listening check was done.",
+  "retiredSources": [
+    {
+      "path": "art/audio/raw/yard-ambient.mp3",
+      "receipt": {
+        "generationId": "1909308e-d594-452e-a7d3-be84001eb28c",
+        "prompt": "Quiet instrumental ambient loop for a stylized retro industrial junkyard at dusk. Sparse warm analog synthesizer drone in D minor, faint slow tape shimmer, distant soft machinery pulse. No drums, no beat drop, no vocals, no lead melody, no dramatic rise or ending, no stingers. A restrained unobtrusive background texture that can repeat indefinitely under loud tools and metal impacts. Consistent tone and dynamics, clean dry low end, airy but dark, understated and calm. Begin and end at the same sustained harmony.",
+        "type": "music",
+        "durationSec": 24
+      },
+      "reason": "The user asked for city and industrial sound after the musical bed did not fit."
+    },
+    {
+      "path": "art/audio/raw/retired/robot-step-clicky.mp3",
+      "receipt": {
+        "generationId": "3c1de733-d6d4-417d-92d7-74fdd68eacbe",
+        "prompt": "One small salvage robot foot or wheel touching rough concrete. Quiet mechanical heel clack with a short gritty rubber scuff, light weight, dry close detail, immediate attack, one step only, no repeated walking, no music or voice.",
+        "type": "sfx",
+        "durationSec": 0.6
+      },
+      "reason": "The user asked for a quieter walking sound with less click."
+    }
+  ],
+  "replacementGeneration": {
+    "successfulCalls": 3,
+    "successfulCreditsUsed": 74,
+    "failedCalls": 1,
+    "failedCall": {
+      "kind": "sfx",
+      "durationSeconds": 24,
+      "error": "AUDIO_GEN_UNKNOWN_ERROR",
+      "chargeResult": "Not returned by CLI"
+    }
+  },
+  "walkingReplacementGeneration": {
+    "successfulCalls": 1,
+    "successfulCreditsUsed": 3,
+    "failedCalls": 0
+  },
+  "assets": [
+    {
+      "name": "city-hum",
+      "path": "/audio/city-hum.mp3",
+      "loop": true,
+      "channels": 2,
+      "sampleRate": 32000,
+      "bitrateKbps": 80,
+      "bytes": 200565,
+      "outputSha256": "eeab71575c50d926b32749d909c464456beb4f03fcfe3b0567f92d311199a6a9",
+      "source": {
+        "path": "art/audio/raw/city-hum.mp3",
+        "receiptPath": "art/audio/raw/city-hum.mp3.json",
+        "sha256": "7b83022b7ef2788ba249008bf99766d1585d5b6762c0c48112430c0bffd4d692",
+        "generationId": "be957ce4-dea5-46b1-9a42-bfbf2f75db88",
+        "prompt": "Quiet continuous outdoor industrial city sound in an empty scrap yard. Soft broad air noise and low distant traffic rumble. Very distant mechanical ventilation. Stable quiet level with no foreground events, no passing car, no horn, no siren, no voices, no music, no tune, no beat, no synthetic notes. Natural diffuse air sound. No rising pitch, no dramatic start or ending, no sharp high sounds. Continuous even sound for a seamless background loop.",
+        "type": "sfx",
+        "durationSec": 20,
+        "provider": "elevenlabs",
+        "creditsUsed": 60
+      },
+      "processing": {
+        "tempo": 0.9615384615384615,
+        "crossfadeSeconds": 0.8,
+        "rotationSeconds": 6.235875,
+        "normalizationGain": 6.60529391063298,
+        "targetPeak": 0.18,
+        "filter": "highpass=f=45,equalizer=f=94:t=h:w=30:g=-12,lowpass=f=1600",
+        "targetRms": 0.035
+      },
+      "measurements": {
+        "durationSeconds": 19.9781875,
+        "peak": 0.15893281996250153,
+        "rms": 0.03326490041276972,
+        "rmsDbfs": -29.560275447815314,
+        "seamMaxJump": 0.0009212076911353506,
+        "adjacentDerivativeRms": 0.0016950057037926367,
+        "adjacentDerivativeP99": 0.00467025488615036,
+        "seamToDerivativeP99": 0.19724998176591857,
+        "first25msRms": 0.0227886958433012,
+        "last25msRms": 0.022512308134090702,
+        "edgeRmsRatio": 1.0122771822224643,
+        "spectrum": {
+          "method": "4096 sample Hann windows, no overlap, stereo channels averaged",
+          "windows": 156,
+          "centroidHz": 118.22630058625529,
+          "strongestBinHz": 46.875,
+          "strongestBinPowerFraction": 0.11598940018313553,
+          "bands": [
+            {
+              "lowHz": 0,
+              "highHz": 80,
+              "powerFraction": 0.5902578711382074
+            },
+            {
+              "lowHz": 80,
+              "highHz": 500,
+              "powerFraction": 0.37571263434823954
+            },
+            {
+              "lowHz": 500,
+              "highHz": 2500,
+              "powerFraction": 0.03391199040328349
+            },
+            {
+              "lowHz": 2500,
+              "highHz": 16000,
+              "powerFraction": 0.00011750411026572894
+            }
+          ]
+        },
+        "loudness": {
+          "integratedLufs": -29.58,
+          "truePeakDbtp": -15.98,
+          "loudnessRangeLu": 1.3
+        }
+      }
+    },
+    {
+      "name": "distant-drill",
+      "path": "/audio/distant-drill.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 16749,
+      "outputSha256": "8135ffa8c089db65f940466570bb046118a1b1fbcb578fddef79f45cd357f7bf",
+      "source": {
+        "path": "art/audio/raw/distant-drill.mp3",
+        "receiptPath": "art/audio/raw/distant-drill.mp3.json",
+        "sha256": "5a173733af13e542762928aa2ead36d650e2b9416064e36309bc7cef2f048010",
+        "generationId": "a744aa07-be29-4a4f-a72c-b6bc979ba041",
+        "prompt": "One short quiet pneumatic drill operating far away behind industrial buildings. A muted low mechanical rattling burst, dull and distant through outdoor air. Gentle start and stop, restrained volume, dry city factory detail. No close sharp metal attack, no ringing pitch, no alarm, no siren, no voice, no music, no background, no reverb wash. One isolated short distant drill burst.",
+        "type": "sfx",
+        "durationSec": 2.5,
+        "provider": "elevenlabs",
+        "creditsUsed": 8
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.485,
+        "fadeInSeconds": 0.04,
+        "fadeOutSeconds": 0.08,
+        "normalizationGain": 1.4929661818776574,
+        "targetPeak": 0.3,
+        "filter": "highpass=f=180,lowpass=f=2200",
+        "targetRms": 0.06
+      },
+      "measurements": {
+        "durationSeconds": 1.995,
+        "peak": 0.2661174237728119,
+        "rms": 0.057089078844754795,
+        "rmsDbfs": -24.868939289057952,
+        "seamMaxJump": 0.00020666161566396113,
+        "adjacentDerivativeRms": 0.01974241889010215,
+        "adjacentDerivativeP99": 0.08243371173739433,
+        "seamToDerivativeP99": 0.0025070036433918505,
+        "first25msRms": 0.014572346402772732,
+        "last25msRms": 0.00011003711137323064,
+        "edgeRmsRatio": 132.4311972653058,
+        "spectrum": {
+          "method": "4096 sample Hann windows, no overlap, stereo channels averaged",
+          "windows": 11,
+          "centroidHz": 2155.8734030264786,
+          "strongestBinHz": 1242.1875,
+          "strongestBinPowerFraction": 0.07914184826515026,
+          "bands": [
+            {
+              "lowHz": 0,
+              "highHz": 80,
+              "powerFraction": 0.000033488491683775714
+            },
+            {
+              "lowHz": 80,
+              "highHz": 500,
+              "powerFraction": 0.012157380659150329
+            },
+            {
+              "lowHz": 500,
+              "highHz": 2500,
+              "powerFraction": 0.7224856518364748
+            },
+            {
+              "lowHz": 2500,
+              "highHz": 12000,
+              "powerFraction": 0.2653234790126806
+            }
+          ]
+        },
+        "loudness": {
+          "integratedLufs": -22.22,
+          "truePeakDbtp": -11.49,
+          "loudnessRangeLu": 0
+        }
+      }
+    },
+    {
+      "name": "distant-steam",
+      "path": "/audio/distant-steam.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 16749,
+      "outputSha256": "ffbf18438b761ceb26c0e825e3c16276950cc023729d3fe9f66c6ced0e4426db",
+      "source": {
+        "path": "art/audio/raw/distant-steam.mp3",
+        "receiptPath": "art/audio/raw/distant-steam.mp3.json",
+        "sha256": "291bf04ab9249f94ab7075533eac720f79f2f0c749134f890a6d59b3501af5ca",
+        "generationId": "9c67abb7-17d3-468c-8e92-5a3204cf3d52",
+        "prompt": "One gentle short steam release from a distant industrial pipe outside. Quiet thin air hiss with a faint soft high steam whistle. Muted and far away, no sharp attack, no loud pressure blast. Smooth increase and decrease in level. Natural air noise rather than a clean musical tone. No alarm, no siren, no voice, no music, no background. One isolated subtle distant steam release.",
+        "type": "sfx",
+        "durationSec": 2,
+        "provider": "elevenlabs",
+        "creditsUsed": 6
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0,
+        "fadeInSeconds": 0.04,
+        "fadeOutSeconds": 0.08,
+        "normalizationGain": 6.357371930749955,
+        "targetPeak": 0.18,
+        "filter": "highpass=f=700,lowpass=f=3200,lowpass=f=3200",
+        "targetRms": 0.03
+      },
+      "measurements": {
+        "durationSeconds": 2,
+        "peak": 0.1834845095872879,
+        "rms": 0.022336912533546926,
+        "rmsDbfs": -33.01953712781788,
+        "seamMaxJump": 0.00006542658115904487,
+        "adjacentDerivativeRms": 0.02130019945208415,
+        "adjacentDerivativeP99": 0.0760019700974226,
+        "seamToDerivativeP99": 0.0008608537525432335,
+        "first25msRms": 0.0138330230982455,
+        "last25msRms": 0.00005755302462107167,
+        "edgeRmsRatio": 240.35266937440622,
+        "spectrum": {
+          "method": "4096 sample Hann windows, no overlap, stereo channels averaged",
+          "windows": 11,
+          "centroidHz": 3261.2879115289425,
+          "strongestBinHz": 1599.609375,
+          "strongestBinPowerFraction": 0.013588284159101878,
+          "bands": [
+            {
+              "lowHz": 0,
+              "highHz": 80,
+              "powerFraction": 0.000006779226264343313
+            },
+            {
+              "lowHz": 80,
+              "highHz": 500,
+              "powerFraction": 0.011630678728532632
+            },
+            {
+              "lowHz": 500,
+              "highHz": 2500,
+              "powerFraction": 0.23299656105773345
+            },
+            {
+              "lowHz": 2500,
+              "highHz": 12000,
+              "powerFraction": 0.7553659809874219
+            }
+          ]
+        },
+        "loudness": {
+          "integratedLufs": -28.35,
+          "truePeakDbtp": -14.14,
+          "loudnessRangeLu": 0
+        }
+      }
+    },
+    {
+      "name": "torch",
+      "path": "/audio/torch.mp3",
+      "loop": true,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 32685,
+      "outputSha256": "5490fcb0cabc3be2fd435f5a69e2758c2ef46998745c37760b1713ff14b9b348",
+      "source": {
+        "path": "art/audio/raw/torch.mp3",
+        "receiptPath": "art/audio/raw/torch.mp3.json",
+        "sha256": "d73ab74dfca6403ec9cf01d2a374d342563ef5c1e2b163e16fa0bf199161cc72",
+        "generationId": "e7dd4c0e-d9b0-4a16-abe6-f02f80769e8e",
+        "prompt": "A small handheld plasma cutting torch running continuously. Tight dry pressurized gas hiss with a restrained gritty electrical sizzle. Industrial welding texture, close microphone, no background, no voice, no music, no reverb, constant level, no start or stop, suitable as a seamless gameplay loop.",
+        "type": "sfx",
+        "durationSec": 4
+      },
+      "processing": {
+        "tempo": 0.9523809523809523,
+        "crossfadeSeconds": 0.2,
+        "rotationSeconds": 1.8424583333333333,
+        "normalizationGain": 0.6098082065051336,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 3.9859583333333335,
+        "peak": 0.5734492540359497,
+        "rms": 0.1375549331662715,
+        "rmsDbfs": -17.23047659571176,
+        "seamMaxJump": 0.010724316467531025,
+        "adjacentDerivativeRms": 0.18131678582901525,
+        "adjacentDerivativeP99": 0.47092993557453156,
+        "seamToDerivativeP99": 0.022772636983561953,
+        "first25msRms": 0.12781099552589523,
+        "last25msRms": 0.1185716224353546,
+        "edgeRmsRatio": 1.077922296252444
+      }
+    },
+    {
+      "name": "gravity-loop",
+      "path": "/audio/gravity-loop.mp3",
+      "loop": true,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 24621,
+      "outputSha256": "35a058d05440bfdad79c4b7138a232cc47071bea3b4080e6ecc6708f2e5ceadc",
+      "source": {
+        "path": "art/audio/raw/gravity-loop.mp3",
+        "receiptPath": "art/audio/raw/gravity-loop.mp3.json",
+        "sha256": "2565de5f3a1aa5239ebccaaad33bc260be97cba80a491f74a84b821e8645e214",
+        "generationId": "9efc0c2a-c540-4636-8f55-d42ebc311ca4",
+        "prompt": "A quiet continuous electromagnetic gravity tool holding a heavy object. Warm low analog motor hum with gentle electrical harmonic texture. Dry close game sound, stable pitch and loudness, no pulse attacks, no music or voices, no beginning or ending, seamless loop.",
+        "type": "sfx",
+        "durationSec": 3
+      },
+      "processing": {
+        "tempo": 0.9375,
+        "crossfadeSeconds": 0.2,
+        "rotationSeconds": 2.3807916666666666,
+        "normalizationGain": 0.8142013954892015,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 2.9895416666666668,
+        "peak": 0.614364743232727,
+        "rms": 0.27784245702476007,
+        "rmsDbfs": -11.12402778228615,
+        "seamMaxJump": 0.014590270817279816,
+        "adjacentDerivativeRms": 0.06902295010004098,
+        "adjacentDerivativeP99": 0.176282599568367,
+        "seamToDerivativeP99": 0.0827663697551801,
+        "first25msRms": 0.28416809805592025,
+        "last25msRms": 0.27616989978920625,
+        "edgeRmsRatio": 1.0289611513521888
+      }
+    },
+    {
+      "name": "jet-loop",
+      "path": "/audio/jet-loop.mp3",
+      "loop": true,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 24621,
+      "outputSha256": "a465c91b3c8c4bdecd11aa67ddf18fdb3fd62ba9c1ebffe25dbf1fd421967b44",
+      "source": {
+        "path": "art/audio/raw/jet-loop.mp3",
+        "receiptPath": "art/audio/raw/jet-loop.mp3.json",
+        "sha256": "a21724560647c14a296648efd8de1570fa777ae2b8802d4c96abc73ff31e9b58",
+        "generationId": "87f019ed-1ba6-4173-9a90-81b364c9f3db",
+        "prompt": "Compact robot jetpack continuous thrust. Dry pressurized turbine air with a subtle low combustion flutter, tight clean whoosh, controlled not explosive. Constant steady texture, no start or stop, no voice or music, seamless loop.",
+        "type": "sfx",
+        "durationSec": 3
+      },
+      "processing": {
+        "tempo": 0.9375,
+        "crossfadeSeconds": 0.2,
+        "rotationSeconds": 1.0450833333333334,
+        "normalizationGain": 0.49012298748587974,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 2.985125,
+        "peak": 0.6126636266708374,
+        "rms": 0.14142076202329112,
+        "rmsDbfs": -16.989736539179244,
+        "seamMaxJump": 0.003220360304112546,
+        "adjacentDerivativeRms": 0.10648294218079796,
+        "adjacentDerivativeP99": 0.28165481984615326,
+        "seamToDerivativeP99": 0.011433712747651844,
+        "first25msRms": 0.16015759396052132,
+        "last25msRms": 0.13989454097264925,
+        "edgeRmsRatio": 1.1448452015853405
+      }
+    },
+    {
+      "name": "buggy-loop",
+      "path": "/audio/buggy-loop.mp3",
+      "loop": true,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 32685,
+      "outputSha256": "7a0a5e6c6f4eb8ad3ffb90d5be2c16869c0d1a369a38259202a029a4f58ba46b",
+      "source": {
+        "path": "art/audio/raw/buggy-loop.mp3",
+        "receiptPath": "art/audio/raw/buggy-loop.mp3.json",
+        "sha256": "ea179eb1bbae56508508a2bcff0fa60f628903d74e9c6b1de7d756c9558e6bf7",
+        "generationId": "58591002-7c40-4f22-9bab-0863c3458f4e",
+        "prompt": "Small industrial electric salvage buggy motor idling under load. Low mechanical motor whirr with soft belt rattle and steady gritty gear texture, clean low-mid frequencies. No revving, no acceleration, no wheels squealing, no start or stop, no background, seamless loop.",
+        "type": "sfx",
+        "durationSec": 4
+      },
+      "processing": {
+        "tempo": 0.9523809523809523,
+        "crossfadeSeconds": 0.2,
+        "rotationSeconds": 1.821375,
+        "normalizationGain": 1.2397781648693134,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 3.9895416666666668,
+        "peak": 0.6101176142692566,
+        "rms": 0.07159038365174575,
+        "rmsDbfs": -22.90290620397194,
+        "seamMaxJump": 0.000012536736903712153,
+        "adjacentDerivativeRms": 0.05071627018817618,
+        "adjacentDerivativeP99": 0.1962968222796917,
+        "seamToDerivativeP99": 0.0000638662244152343,
+        "first25msRms": 0.06157830404945005,
+        "last25msRms": 0.05503310511357253,
+        "edgeRmsRatio": 1.1189320305000072
+      }
+    },
+    {
+      "name": "robot-step",
+      "path": "/audio/robot-step.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 2157,
+      "outputSha256": "b6ac69dcc261c2a6ccd6ec5501ef2cb2ae3048ab5b6906bab2ca03ffd06bab3f",
+      "source": {
+        "path": "art/audio/raw/robot-step.mp3",
+        "receiptPath": "art/audio/raw/robot-step.mp3.json",
+        "sha256": "1464d152c8c8c4ae4c75c6edf451593a3d1b5d3ab913ca6be409277e59ef5f50",
+        "generationId": "3e6727b3-1a10-4b62-b465-55b95f5479d5",
+        "prompt": "One single very soft rubber robot boot sole contact on dusty concrete. A rounded muted low thud with a tiny soft rubber scuff. Very quiet padded sole, gentle weight on dusty ground. No hard heel, no sharp attack, no click, no mechanical clack, no metal, no tapping, no squeak, no scrape, no music, no rhythm. One contact at the start, then a short quiet tail. No repeated steps or other contacts. Dry close recording with no background or echo.",
+        "type": "sfx",
+        "durationSec": 0.6,
+        "provider": "elevenlabs",
+        "creditsUsed": 3
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.42,
+        "fadeInSeconds": 0.015,
+        "fadeOutSeconds": 0.04,
+        "maxDurationSeconds": 0.18,
+        "normalizationGain": 17.00541814621519,
+        "targetPeak": 0.22,
+        "filter": "lowpass=f=1000,lowpass=f=1000",
+        "targetRms": 0.025
+      },
+      "measurements": {
+        "durationSeconds": 0.18,
+        "peak": 0.13517145812511444,
+        "rms": 0.02374998770434092,
+        "rmsDbfs": -32.48673221757242,
+        "seamMaxJump": 0.000024071896405075677,
+        "adjacentDerivativeRms": 0.0016427516859106482,
+        "adjacentDerivativeP99": 0.009500191546976566,
+        "seamToDerivativeP99": 0.002533832742849964,
+        "first25msRms": 0.02773052301801536,
+        "last25msRms": 0.0038646316471972137,
+        "edgeRmsRatio": 7.175463420459916,
+        "spectrum": {
+          "method": "4096 sample Hann windows, no overlap, stereo channels averaged",
+          "windows": 1,
+          "centroidHz": 162.6970465495327,
+          "strongestBinHz": 105.46875,
+          "strongestBinPowerFraction": 0.18419587365386533,
+          "bands": [
+            {
+              "lowHz": 0,
+              "highHz": 80,
+              "powerFraction": 0.2764011489498171
+            },
+            {
+              "lowHz": 80,
+              "highHz": 500,
+              "powerFraction": 0.6376385946245974
+            },
+            {
+              "lowHz": 500,
+              "highHz": 2500,
+              "powerFraction": 0.08596018229707422
+            },
+            {
+              "lowHz": 2500,
+              "highHz": 12000,
+              "powerFraction": 7.412850916707884e-8
+            }
+          ]
+        },
+        "loudness": {
+          "integratedLufs": null,
+          "integratedLufsReason": "FFmpeg did not return a finite integrated loudness value.",
+          "truePeakDbtp": -17.38,
+          "loudnessRangeLu": 0
+        }
+      }
+    },
+    {
+      "name": "tool-switch",
+      "path": "/audio/tool-switch.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 4461,
+      "outputSha256": "5e0a762aedde294f981ecc1b993c7d8139811dd7f7c89bb962faff1b01ff89fe",
+      "source": {
+        "path": "art/audio/raw/tool-switch.mp3",
+        "receiptPath": "art/audio/raw/tool-switch.mp3.json",
+        "sha256": "8201546eafc2ae3b9d9b1a9f19e5b08e526855fa5b0a960d5f3163dc134c22ed",
+        "generationId": "a143c301-1409-4b87-9e67-63347915b684",
+        "prompt": "One compact handheld industrial tool being equipped: short tactile latch click with a soft mechanical servo tick. Dry, crisp but not harsh, immediate attack, no ringing, no beep, no music or voice.",
+        "type": "sfx",
+        "durationSec": 0.6
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.13,
+        "normalizationGain": 0.8812505085991336,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 0.47,
+        "peak": 0.6327349543571472,
+        "rms": 0.025263747406542972,
+        "rmsDbfs": -31.950044590044435,
+        "seamMaxJump": 0.0006987196433101417,
+        "adjacentDerivativeRms": 0.0027823314230460217,
+        "adjacentDerivativeP99": 0.013148042606189847,
+        "seamToDerivativeP99": 0.05314248396040319,
+        "first25msRms": 0.00484077783051801,
+        "last25msRms": 0.0005053429432319969,
+        "edgeRmsRatio": 9.579193487017125
+      }
+    },
+    {
+      "name": "metal-impact",
+      "path": "/audio/metal-impact.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 4461,
+      "outputSha256": "c19e17ef1bb88284a4744cf84bd148d959ea9601ea33f663d3f3fe3273f6c4d5",
+      "source": {
+        "path": "art/audio/raw/metal-impact.mp3",
+        "receiptPath": "art/audio/raw/metal-impact.mp3.json",
+        "sha256": "2d94b84fecb2ed45469cadecc1f14df47700f53d7f447b71ee2cc5abb34c4e59",
+        "generationId": "77331870-f233-4fed-9a2d-adc300e31764",
+        "prompt": "One single heavy hollow steel scrap impact on concrete, short low clank with a few tiny metallic rattles decaying naturally. Close dry game sound. Immediate attack, no repeated hits, no room reverb, no voice or music. Weighty but not harsh or piercing.",
+        "type": "sfx",
+        "durationSec": 1.3
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.81,
+        "normalizationGain": 2.0212919416547264,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 0.47,
+        "peak": 0.6333480477333069,
+        "rms": 0.04551749109284202,
+        "rmsDbfs": -26.83643368206773,
+        "seamMaxJump": 0.007062215736368671,
+        "adjacentDerivativeRms": 0.02920204822860816,
+        "adjacentDerivativeP99": 0.12833961844444275,
+        "seamToDerivativeP99": 0.05502755752251087,
+        "first25msRms": 0.16786988258645136,
+        "last25msRms": 0.00036493401774417443,
+        "edgeRmsRatio": 460.00064237401756
+      }
+    },
+    {
+      "name": "wood-impact",
+      "path": "/audio/wood-impact.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 7917,
+      "outputSha256": "cabd3231ea90ec42716c1da629116331fa47053ee1ffa143f08e4241d4d5752f",
+      "source": {
+        "path": "art/audio/raw/wood-impact.mp3",
+        "receiptPath": "art/audio/raw/wood-impact.mp3.json",
+        "sha256": "3c82dda2981f4a11998833407bd79701c2b6503498ba429666380e4454f2e840",
+        "generationId": "936571ad-7de8-4bcf-bf3f-d497dd5bbab9",
+        "prompt": "One single wooden pallet crashing onto concrete, a dry chunky wood knock with a brief splinter crack and soft small debris settling. Immediate attack, short decay, no repeated hits, no room reverb, no voice or music.",
+        "type": "sfx",
+        "durationSec": 1.1
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.18,
+        "normalizationGain": 2.5775190140411475,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 0.9,
+        "peak": 0.6181712746620178,
+        "rms": 0.05612617747799679,
+        "rmsDbfs": -25.016690695511397,
+        "seamMaxJump": 0.0012178887236586888,
+        "adjacentDerivativeRms": 0.02975440168727972,
+        "adjacentDerivativeP99": 0.10786634543910623,
+        "seamToDerivativeP99": 0.011290720184324993,
+        "first25msRms": 0.1714996407820719,
+        "last25msRms": 0.0003971766342377596,
+        "edgeRmsRatio": 431.7969034387054
+      }
+    },
+    {
+      "name": "concrete-impact",
+      "path": "/audio/concrete-impact.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 5421,
+      "outputSha256": "2477aafdc811486add17dea76278b6d023e7cd3b7df73d67605c70fa8b4b6245",
+      "source": {
+        "path": "art/audio/raw/concrete-impact.mp3",
+        "receiptPath": "art/audio/raw/concrete-impact.mp3.json",
+        "sha256": "e50eeaba9f71484a6556f21bc80281ceb47220a9471813444049ad6385ea59f2",
+        "generationId": "39f43c5e-3f1a-468c-b12f-6a91afa7dbca",
+        "prompt": "One single dense concrete block hitting an asphalt floor, blunt heavy dusty thud with a short granular stone crunch. Immediate attack, short clean decay, no repeated impacts, no reverb, no voice or music.",
+        "type": "sfx",
+        "durationSec": 1.2
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.6,
+        "normalizationGain": 0.6660610065804824,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 0.6,
+        "peak": 0.5930664539337158,
+        "rms": 0.045324708270284564,
+        "rmsDbfs": -26.8732996506671,
+        "seamMaxJump": 0.0017906658031279221,
+        "adjacentDerivativeRms": 0.01779083104354002,
+        "adjacentDerivativeP99": 0.08872628211975098,
+        "seamToDerivativeP99": 0.020181909580197655,
+        "first25msRms": 0.18977828287059118,
+        "last25msRms": 0.0005266500263931765,
+        "edgeRmsRatio": 360.34989719892286
+      }
+    },
+    {
+      "name": "water-splash",
+      "path": "/audio/water-splash.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 9837,
+      "outputSha256": "bd7870a6735c5c27234a48d8cd4280c595a553e9d6b1b327543efe6ad26993ac",
+      "source": {
+        "path": "art/audio/raw/water-splash.mp3",
+        "receiptPath": "art/audio/raw/water-splash.mp3.json",
+        "sha256": "78fb31c6908ee60f32d0de71bcbfe76e7cbf7a953ae76f30aaf80ab8e2d2181e",
+        "generationId": "33597b1d-9b9a-45ed-b0fe-b19db060d5be",
+        "prompt": "One heavy object entering a small aquarium tank. Tight detailed water slap and splash with short bubbles settling, close dry microphone. Immediate impact, quick natural decay, no ocean or flowing water ambience, no repeated splashes, no voice or music.",
+        "type": "sfx",
+        "durationSec": 1.4
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.225,
+        "normalizationGain": 2.3611764840888063,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 1.135,
+        "peak": 0.6292709112167358,
+        "rms": 0.06498461932785592,
+        "rmsDbfs": -23.743788415285696,
+        "seamMaxJump": 0.007662986172363162,
+        "adjacentDerivativeRms": 0.03194200350373866,
+        "adjacentDerivativeP99": 0.11005585640668869,
+        "seamToDerivativeP99": 0.06962815448953646,
+        "first25msRms": 0.11373007689241259,
+        "last25msRms": 0.0009285624905900601,
+        "edgeRmsRatio": 122.47972327650473
+      }
+    },
+    {
+      "name": "quench",
+      "path": "/audio/quench.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 9261,
+      "outputSha256": "d70176e5b975a15e4ae7ade139f6cfec102f4efaeb42c84bbf54604b13e7b1a7",
+      "source": {
+        "path": "art/audio/raw/quench.mp3",
+        "receiptPath": "art/audio/raw/quench.mp3.json",
+        "sha256": "69bd2095c2f2a7aebf71a4bff781aa5ca078751260d27a949944d3c963ec5fde",
+        "generationId": "b19d9898-1aa7-462d-8ffa-90bd39dbb8d7",
+        "prompt": "One small cutting torch extinguished in water: immediate short wet steam hiss with tiny close bubbles, soft gas sputter then quick decay. Dry game sound, no long boiling, no music or voices.",
+        "type": "sfx",
+        "durationSec": 1.1
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0,
+        "normalizationGain": 2.7577385775223324,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 1.08,
+        "peak": 0.5417327880859375,
+        "rms": 0.04446398267505637,
+        "rmsDbfs": -27.039832795702942,
+        "seamMaxJump": 0.04239593279999099,
+        "adjacentDerivativeRms": 0.13922150513544998,
+        "adjacentDerivativeP99": 0.5518636703491211,
+        "seamToDerivativeP99": 0.07682319942019446,
+        "first25msRms": 0.17357444478508194,
+        "last25msRms": 0.00026178991340096544,
+        "edgeRmsRatio": 663.0295358982377
+      }
+    },
+    {
+      "name": "gravity-pulse",
+      "path": "/audio/gravity-pulse.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 4077,
+      "outputSha256": "a5f43d8322603179c2d1e2c7a13cb5be3f0112dcf8285f35ad04fcca208c0dd0",
+      "source": {
+        "path": "art/audio/raw/gravity-pulse.mp3",
+        "receiptPath": "art/audio/raw/gravity-pulse.mp3.json",
+        "sha256": "81b260e01fb64447acbc4c8080733b9e5c9d100e5090b5d11d4ccd0282b46ecb",
+        "generationId": "0ea4621f-a690-4319-ab93-c3d20ee04850",
+        "prompt": "One short electromagnetic gravity gun pulse. Soft charged click then a weighty compact low sci-fi pneumatic whomp with a bright restrained electrical snap. Immediate attack and quick tail, dry, no reverb, no weapon gunshot, no music or voice.",
+        "type": "sfx",
+        "durationSec": 0.9
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.46,
+        "normalizationGain": 0.4492704601322583,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 0.42,
+        "peak": 0.6188095808029175,
+        "rms": 0.09903964844331516,
+        "rmsDbfs": -20.083818198344915,
+        "seamMaxJump": 0.002440095558995381,
+        "adjacentDerivativeRms": 0.08888417948070113,
+        "adjacentDerivativeP99": 0.3512890189886093,
+        "seamToDerivativeP99": 0.006946119653898154,
+        "first25msRms": 0.09373191360024899,
+        "last25msRms": 0.0008695379847408654,
+        "edgeRmsRatio": 107.79507651776986
+      }
+    },
+    {
+      "name": "explosion",
+      "path": "/audio/explosion.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 10221,
+      "outputSha256": "91fe09e527f9afa59dcdc3e2d01f627866d53a8d90fb06c0d687cd4beb3c98f7",
+      "source": {
+        "path": "art/audio/raw/explosion.mp3",
+        "receiptPath": "art/audio/raw/explosion.mp3.json",
+        "sha256": "f82147ddb2bcfc7f4563514c05019dbc8326031bb7d74804eb660ef23e9bed34",
+        "generationId": "715ebb34-a094-44c8-a4b4-a4f57ec407e5",
+        "prompt": "One heavy fuel drum explosion for a stylized salvage yard game. Sharp compressed ignition, deep short bass thump, crunchy metal fragments scattering with a clean rapidly decaying tail. Dry close sound, no long rumble, no music or voices, no repeated blasts.",
+        "type": "sfx",
+        "durationSec": 2
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.81,
+        "normalizationGain": 0.48474351004003857,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 1.19,
+        "peak": 0.616310715675354,
+        "rms": 0.14702882014224355,
+        "rmsDbfs": -16.651950556472162,
+        "seamMaxJump": 0.009460412659109352,
+        "adjacentDerivativeRms": 0.03539043231511247,
+        "adjacentDerivativeP99": 0.1225375197827816,
+        "seamToDerivativeP99": 0.07720421203138049,
+        "first25msRms": 0.2914401446269059,
+        "last25msRms": 0.00264107061394038,
+        "edgeRmsRatio": 110.34924363195573
+      }
+    },
+    {
+      "name": "mechanism",
+      "path": "/audio/mechanism.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 9837,
+      "outputSha256": "beded9e35508a31397ece980bf0fe1f90669deab2215b46a0bf9d899d9851753",
+      "source": {
+        "path": "art/audio/raw/mechanism.mp3",
+        "receiptPath": "art/audio/raw/mechanism.mp3.json",
+        "sha256": "f89a96adf8e28fb603b0f5f03a35506a0b7b407612602bf3dc2d6ca82f570366",
+        "generationId": "e9af56af-2021-4816-9800-62134f97aa93",
+        "prompt": "One small industrial mechanism operating: short relay click, tight pneumatic metal lever clunk and a brief servo motor whirr that ends cleanly. Dry close game sound, immediate attack, no music, no voice, no repeating cycle, no room echo.",
+        "type": "sfx",
+        "durationSec": 1.3
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.15,
+        "normalizationGain": 0.9520735503045317,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 1.13,
+        "peak": 0.6293438076972961,
+        "rms": 0.06976986119461054,
+        "rmsDbfs": -23.126642820759585,
+        "seamMaxJump": 0.0004882734468196759,
+        "adjacentDerivativeRms": 0.024547338818250632,
+        "adjacentDerivativeP99": 0.11868355702608824,
+        "seamToDerivativeP99": 0.004114078302458923,
+        "first25msRms": 0.030365611514020934,
+        "last25msRms": 0.000180069377422106,
+        "edgeRmsRatio": 168.6328455661842
+      }
+    }
+  ]
+}

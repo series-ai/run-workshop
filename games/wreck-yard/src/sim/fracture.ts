@@ -182,6 +182,7 @@ export function fractureBody(source: YardBody, pose: BodyPose, contact: Fracture
     const body: YardBody = {
       id,
       label: source.label,
+      ...(source.storageBay ? { storageBay: source.storageBay } : {}),
       dims,
       voxels,
       motion: anchored ? 'fixed' : 'dynamic',

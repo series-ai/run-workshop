@@ -1,0 +1,73 @@
+Wreck Yard -> Syncplay: rc.39 vehicle lock on a conveyor support
+
+Observed in the game
+- Driving near the car under the conveyor can stop the buggy.
+- In our reproduction, the locked chassis contacts the conveyor support
+  and the floor. It does not contact the car.
+- Reverse input reaches the SDK. The vehicle remains active.
+
+Verified against the published 6.0.0-rc.39 SDK
+- The isolated world contains only a floor, a conveyor post, and the original
+  compound chassis. No game tick, input, damage, or grab code runs.
+- Settle for 60 ticks. Drive forward for 90 ticks. Reverse for 120 ticks.
+- Reverse distance: 0.001754 m in 4 seconds.
+- Rear wheels have ground contact and tire forces remain nonzero for all
+  120 reverse ticks. This is not a parked-input or all-airborne state.
+- A box chassis with the same mass, inertia, and vehicle definition reverses
+  43.177 m in the same setup.
+- The isolated car-only sweep reverses in all 24 cases. Removing the car
+  from the conveyor test gives the same locked result.
+
+Confirmed contact-generation fault
+- Conveyor post: box half extents (0.14, 3.1, 0.14), center (-0.5, 2.24, 2.7).
+- Chassis child 0: front bumper box half extents (0.56, 0.08, 0.04),
+  local offset (0, -0.56, -1.48).
+- At a locked pose, a native overlap of that child and the post returns
+  a contact point around world (0.157452, 3.219724, 2.807623).
+- In chassis local space the point is (0.044983, 0.918186, -2.959162).
+  This is outside the bumper bounds by 1.398186 m vertically and 1.439162 m
+  along z. It is also outside the complete chassis voxel bounds.
+- The primitive box overlap already returns the invalid point. The compound
+  merge and event formatter are not its source.
+
+Source path in the rc.39 tarball
+core/native/physics/physics.cpp:
+- 730-736: boxSupport chooses the positive corner for an axis with zero dot.
+  The post contact normal has y=0, so the post support point uses its top.
+- 1037-1047: boxBoxOriented takes the midpoint of two support corners.
+- 822-825: populateBoxContactPoints retains that midpoint for an edge case.
+- 5237-5245 and 7136-7142: the contact response uses that point for its levers.
+The fixture uses the default NativeWorldPose path. It does not use the
+alternate material witness route. The invalid point gives a large false
+lever arm. The movement result after a native fix remains to be checked.
+We have not changed or rebuilt the SDK kernel.
+
+Requested fix
+Compute contacts on the two finite support edges for edge-edge box contacts.
+Use their closest witness points. Keep contacts near both shapes within
+contact tolerance. Cover rotated box children against tall, narrow boxes.
+Do not clear vehicle velocity or remove prop collision to fix this case.
+
+Release gates
+1. The native reproduction reverses more than 1 m after the impact.
+2. All post contact points stay inside the expanded chassis bounds. Add an
+   exact child-bound gate for the front bumper primitive fixture.
+3. Repeat with a yaw offset, side impact, static post, and dynamic car.
+4. Rollback and late join during the contact remain bit-identical.
+5. Existing ramp, airborne momentum, light-scrap, braking, and parking gates pass.
+
+Reproduction files
+- scripts/repro-syncplay-buggy-lock.mjs
+- scripts/fixtures/syncplay-buggy-lock.json
+Run from games/wreck-yard:
+  node scripts/repro-syncplay-buggy-lock.mjs
+It exits 1 on rc.39. Results are in test-results/buggy-car/sdk-repro.json.
+The fixture needs no Wreck Yard runtime modules.
+
+Extra evidence
+- scripts/probe-buggy-car.ts: full game world and actual contact keys.
+- scripts/probe-buggy-car-isolated.ts: fixture extraction and control sweep.
+- test-results/buggy-car/game-probe.json
+- test-results/buggy-car/isolated-conveyor-probe.json
+
+No game or SDK implementation changed. No new deployment was made.

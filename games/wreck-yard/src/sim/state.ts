@@ -1,3 +1,4 @@
+import type { AttractionState } from './attractions';
 import type { DeterministicVehicleState3D } from '@series-inc/rundot-syncplay/physics/3d';
 import type { VoxelDims } from 'voxel-kit';
 import type { Vec3 } from './math';
@@ -7,6 +8,8 @@ export type AnchorFace = '+x' | '-x' | '+y' | '-y' | '+z' | '-z';
 export type BodyMotion = 'dynamic' | 'fixed';
 
 export interface YardBody {
+  readonly renderModel?: 'shipping-crate';
+  readonly storageBay?: 'storage' | 'returns';
   readonly id: string;
   readonly label: string;
   readonly dims: VoxelDims;
@@ -62,6 +65,8 @@ export interface ToolFeedback {
 }
 
 export interface PlayerState {
+  readonly portalTeleports: number;
+  readonly lastAttractionRequest: number;
   readonly slot: number;
   readonly x: number;
   readonly y: number;
@@ -147,6 +152,7 @@ export interface BuggyWheelState {
 }
 
 export interface YardState {
+  readonly attractions: AttractionState;
   readonly buggyWheels?: readonly BuggyWheelState[];
   /** Syncplay's revision 2 vehicle state. Canonical JSON keeps its bigint ids (codec.ts). */
   readonly buggyVehicle?: DeterministicVehicleState3D;
@@ -170,6 +176,8 @@ export function createInitialPlayer(slot = 0): PlayerState {
   const spawn = PLAYER_SPAWN_POINTS[slot % PLAYER_SPAWN_POINTS.length] ?? [0, 0.2, 10];
   return {
     slot,
+    portalTeleports: 0,
+    lastAttractionRequest: 0,
     x: spawn[0],
     y: spawn[1],
     z: spawn[2],

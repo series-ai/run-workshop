@@ -1,15 +1,19 @@
+import type { AttractionState } from '../sim/attractions';
 import type { SyncplayRunnerStatus } from '@series-inc/rundot-syncplay/browser';
 import { lerp, lerpAngle, quatNlerp, type Quat, type Vec3 } from '../sim/math';
 import { isShell } from '../sim/physics';
 import type { BuggyWheelState, ContraptionState, YardBody, YardState, YardStats, ToolFeedback } from '../sim/state';
 import { TANK_SPEC } from '../sim/constants';
+import type { SoundMotion } from '../audio/cues';
 
 export interface RenderPose {
+  readonly teleportCounter?: number;
   readonly position: Vec3;
   readonly rotation: Quat;
 }
 
 export interface PlayerRenderPose {
+  readonly portalTeleports?: number;
   readonly slot: number;
   readonly position: Vec3;
   readonly yaw: number;
@@ -20,9 +24,16 @@ export interface PlayerRenderPose {
   readonly grabbing: string | null;
   readonly ridingVehicle: boolean;
   readonly feedback: ToolFeedback | null;
+  readonly soundPosition?: Vec3;
+  readonly grounded?: boolean;
+  readonly velocity?: Vec3;
 }
 
 export interface YardRender {
+  readonly portalStraddlers?: YardState['world']['portalStraddlers'];
+  readonly attractions: AttractionState;
+  /** Native motion for audio. Interpolation does not change these tick samples. */
+  readonly soundMotions?: ReadonlyMap<string, SoundMotion>;
   readonly buggyWheels?: readonly BuggyWheelState[];
   readonly frame: number;
   readonly bodies: readonly YardBody[];
@@ -36,6 +47,7 @@ export interface YardRender {
 
 export function projectYard(state: YardState, context: { readonly localSlot: number; readonly status: SyncplayRunnerStatus }): YardRender {
   const poses = new Map<string, RenderPose>();
+  const soundMotions = new Map<string, SoundMotion>();
   const submergedBodyIds = new Set<string>();
   if (state.world.fluidInteractions) {
     for (const interaction of state.world.fluidInteractions) {
@@ -51,7 +63,12 @@ export function projectYard(state: YardState, context: { readonly localSlot: num
     const rotation: Quat = physics.orientation
       ? [physics.orientation.x, physics.orientation.y, physics.orientation.z, physics.orientation.w]
       : [0, 0, 0, 1];
-    poses.set(physics.id, { position: [physics.x, physics.y, physics.z], rotation });
+    poses.set(physics.id, { teleportCounter: physics.teleportCounter, position: [physics.x, physics.y, physics.z], rotation });
+    soundMotions.set(physics.id, {
+      position: [physics.x, physics.y, physics.z],
+      velocity: [physics.vx, physics.vy, physics.vz],
+      submerged: submergedBodyIds.has(physics.id),
+    });
     const isSubmerged = submergedBodyIds.size > 0
       ? submergedBodyIds.has(physics.id)
       : (physics.kind === 'dynamic' && physics.y < TANK_SPEC.surfaceY + 0.3 && physics.y > TANK_SPEC.bottomY
@@ -64,7 +81,9 @@ export function projectYard(state: YardState, context: { readonly localSlot: num
 
   const players: PlayerRenderPose[] = state.players.map((p, idx) => ({
     slot: p.slot ?? idx,
+    portalTeleports: p.portalTeleports,
     position: [p.x, p.y, p.z],
+    soundPosition: [p.x, p.y, p.z],
     yaw: p.yaw,
     pitch: p.pitch,
     fuel: p.fuel,
@@ -73,9 +92,13 @@ export function projectYard(state: YardState, context: { readonly localSlot: num
     grabbing: p.grab?.bodyId ?? null,
     ridingVehicle: Boolean(p.ridingVehicle),
     feedback: p.feedback,
+    grounded: p.grounded,
+    velocity: [p.vx, p.vy, p.vz],
   }));
 
   return {
+    soundMotions,
+    portalStraddlers: state.world.portalStraddlers,
     frame: state.frame,
     buggyWheels: state.buggyWheels,
     bodies: state.bodies,
@@ -84,6 +107,7 @@ export function projectYard(state: YardState, context: { readonly localSlot: num
     localSlot: context.localSlot,
     stats: state.stats,
     contraptions: state.contraptions,
+    attractions: state.attractions,
     floating,
   };
 }
@@ -92,7 +116,7 @@ export function interpolateYard(previous: YardRender, current: YardRender, alpha
   const poses = new Map<string, RenderPose>();
   for (const [id, pose] of current.poses) {
     const before = previous.poses.get(id);
-    if (!before) {
+    if (!before || before.teleportCounter !== pose.teleportCounter) {
       poses.set(id, pose);
       continue;
     }
@@ -103,11 +127,12 @@ export function interpolateYard(previous: YardRender, current: YardRender, alpha
         lerp(before.position[2], pose.position[2], alpha),
       ],
       rotation: quatNlerp(before.rotation, pose.rotation, alpha),
+      teleportCounter: pose.teleportCounter,
     });
   }
   const players = current.players.map((curr) => {
     const prev = previous.players?.find((p) => p.slot === curr.slot);
-    if (!prev) return curr;
+    if (!prev || prev.portalTeleports !== curr.portalTeleports) return curr;
     return {
       ...curr,
       position: [

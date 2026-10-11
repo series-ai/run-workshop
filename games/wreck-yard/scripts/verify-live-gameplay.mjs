@@ -32,10 +32,14 @@ try {
     };
     const player = () => page.evaluate(() => window.__WRECK_YARD_CONTROLLER__.getRender().players[0]);
     // A HUD click must not leave the primary tool held.
-    await page.getByRole('button', { name: 'Plasma Torch (2)', exact: true }).click();
+    const torchButton = page.getByRole('button', { name: mobile ? 'Equip torch' : 'Plasma Torch (2)', exact: true });
+    if (mobile) await torchButton.tap();
+    else await torchButton.click();
     await waitTicks(3);
     assert.equal(await page.evaluate(() => window.__WRECK_YARD_CONTROLLER__.input.pressed), false, 'HUD click fired the tool');
-    await page.getByRole('button', { name: 'Gravity Gun (1)', exact: true }).click();
+    const gravityButton = page.getByRole('button', { name: mobile ? 'Equip gravity gun' : 'Gravity Gun (1)', exact: true });
+    if (mobile) await gravityButton.tap();
+    else await gravityButton.click();
     const before = await player();
     await page.keyboard.down('KeyW');
     await waitTicks(12);

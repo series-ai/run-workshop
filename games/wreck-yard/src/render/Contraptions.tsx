@@ -209,7 +209,7 @@ function SkyConveyor({ renderRef }: { renderRef: MutableRefObject<YardRender | n
         <Block key={`${z}${side}`} center={[x + side * 0.9, (-0.86 + topY - 0.3) / 2, z]} size={[0.28, topY - 0.3 + 0.86, 0.28]} color={palette.concreteShade} />
       )))}
       {CONVEYOR.legZ.map((z) => <Block key={z} center={[x, topY - 0.45, z]} size={[2.1, 0.2, 0.3]} color={palette.concreteShade} />)}
-      {/* Feeder housing outside the wall, where crates come from. */}
+      {/* Transfer housing above the belt outside the wall. */}
       <Block center={[x, topY + 2.1, -28]} size={[2.4, 0.2, 2.2]} color={palette.signalOrange} />
       {[-1, 1].map((side) => <Block key={side} center={[x + side * 1.1, topY + 1.0, -28]} size={[0.2, 2.2, 2.2]} color={palette.signalOrange} />)}
       <Block center={[x, topY + 1.9, -26.95]} size={[2.4, 0.2, 0.1]} color={palette.ink} />

@@ -148,6 +148,7 @@ function mapStatus(status: SyncplayRunnerStatus): MatchStatus {
 export class MatchController {
   private readonly runner: SyncplayRunner<YardInput, YardRender, never>;
   private input: YardInput = NEUTRAL_INPUT;
+  private sampled: { readonly input: YardInput; readonly frame: number } | null = null;
   private render: YardRender | null = null;
   private status: MatchStatus = "idle";
   private error: string | null = null;
@@ -173,7 +174,10 @@ export class MatchController {
       defaultInput: NEUTRAL_INPUT,
       encodeInput: encodeYardInput,
       decodeInput: decodeYardInput,
-      localInputForTick: () => this.input,
+      localInputForTick: (_slot, frame) => {
+        this.sampled = { input: this.input, frame };
+        return this.input;
+      },
       presentation: { project: projectYard, interpolate: interpolateYard },
       maxOfflineStepsPerUpdate: 2,
       pacing: { targetLeadTicks: 2, maxStepsPerPump: 2 },
@@ -216,6 +220,12 @@ export class MatchController {
     };
   }
 
+  /** The input that Syncplay read during the last pump, or null if it read none. */
+  get sampledInput(): { readonly input: YardInput; readonly frame: number } | null { return this.sampled; }
+
+  /** A new session clears presentation effects. Rollback keeps this value. */
+  get sessionGeneration(): number { return this.startGeneration; }
+
   setInput(input: YardInput): void {
     this.input = input;
   }
@@ -237,6 +247,7 @@ export class MatchController {
     this.render = null;
     this.roomCode = null;
     this.lastPumpMs = null;
+    this.sampled = null;
     this.paused = false;
     this.solo = request.kind === "solo";
     this.error = null;
@@ -304,6 +315,7 @@ export class MatchController {
 
   /** Advance by wall clock. Returns true when at least one frame was produced. */
   pump(nowMs: number): boolean {
+    this.sampled = null;
     if (this.runner.status === "stopped" || this.paused) {
       // No clock while paused, so the first pump after resume does not catch up.
       this.lastPumpMs = null;
@@ -348,6 +360,7 @@ export class MatchController {
     this.render = null;
     this.roomCode = null;
     this.lastPumpMs = null;
+    this.sampled = null;
     this.paused = false;
     this.solo = false;
     this.status = "idle";

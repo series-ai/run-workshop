@@ -275,7 +275,7 @@ function blockRow(id: string, x: number, z: number, alongX: boolean, count: numb
 }
 
 function slab(id: string, lengthVoxels: number, x: number, z: number, yaw: number): PropSpawn {
-  const preset = blockPreset(lengthVoxels, 12, 9);
+  const preset = blockPreset(lengthVoxels, 4, 9);
   return { id, label: 'Concrete Block', preset, position: [x, restAt(preset), z], rotation: yawQuat(yaw), buoyancy: 0.05 };
 }
 

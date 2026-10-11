@@ -115,8 +115,54 @@ function tankFrameGeometry(thickness: number, height: number, centerY: number) {
   return geometry;
 }
 
-const TANK_WALL_GEOMETRY = tankFrameGeometry(TANK.wallThickness, TANK.surfaceY - TANK.bottomY, (TANK.surfaceY + TANK.bottomY) / 2);
+const AQUARIUM_BASE_HEIGHT = 0.18;
+function aquariumGlassGeometry() {
+  const clearance = 0.004;
+  const bottom = TANK.bottomY + AQUARIUM_BASE_HEIGHT + clearance;
+  const height = TANK.surfaceY - bottom;
+  const parts = openTankFrameBoxes(TANK.innerSize[0], TANK.innerSize[2], TANK.wallThickness, height).map(({ center, size }) => {
+    // Keep each glass panel between the posts and above the lower rail.
+    const panelSize: [number, number, number] = center[2] !== 0
+      ? [TANK.innerSize[0] - clearance * 2, height, size[2]]
+      : [size[0], height, TANK.innerSize[2] - clearance * 2];
+    const panel = new THREE.BoxGeometry(...panelSize);
+    panel.translate(TANK.center[0] + center[0], bottom + height / 2, TANK.center[2] + center[2]);
+    return panel;
+  });
+  const geometry = BufferGeometryUtils.mergeGeometries(parts);
+  parts.forEach((part) => part.dispose());
+  return geometry;
+}
+const TANK_WALL_GEOMETRY = aquariumGlassGeometry();
 const TANK_RIM_GEOMETRY = tankFrameGeometry(TANK_RIM.thickness, TANK_RIM.height, TANK_RIM.centerY);
+const TANK_FLOOR_BOX = (() => {
+  const floor = SHELL_BOXES.find((box) => box.id === 'tank-floor');
+  if (!floor) throw new Error('WRECK_YARD_TANK_FLOOR_MISSING');
+  return floor;
+})();
+
+/** Solid lower rail and corner posts, inside the existing tank walls. */
+function aquariumFrameGeometry() {
+  const baseHeight = AQUARIUM_BASE_HEIGHT;
+  const parts = [tankFrameGeometry(TANK.wallThickness, baseHeight, TANK.bottomY + baseHeight / 2)];
+  const height = TANK.surfaceY - TANK.bottomY;
+  for (const sideX of [-1, 1]) {
+    for (const sideZ of [-1, 1]) {
+      const post = new THREE.BoxGeometry(TANK.wallThickness, height, TANK.wallThickness);
+      post.translate(
+        TANK.center[0] + sideX * (TANK.innerSize[0] + TANK.wallThickness) / 2,
+        (TANK.surfaceY + TANK.bottomY) / 2,
+        TANK.center[2] + sideZ * (TANK.innerSize[2] + TANK.wallThickness) / 2,
+      );
+      parts.push(post);
+    }
+  }
+  const geometry = BufferGeometryUtils.mergeGeometries(parts);
+  parts.forEach((part) => part.dispose());
+  return geometry;
+}
+const AQUARIUM_FRAME_GEOMETRY = aquariumFrameGeometry();
+
 
 function CuttingRigSparks() {
   const geom = useMemo(() => {
@@ -433,6 +479,13 @@ export function YardShell({ renderRef }: { renderRef?: React.MutableRefObject<Ya
         <Toon color={ART_STYLE.palette.ink} />
       </mesh>
 
+      {SHELL_BOXES.filter((box) => box.id.startsWith('plinth-')).map((box) => (
+        <mesh key={box.id} name={box.id} position={[...box.center]} rotation={box.rotation ? [...box.rotation] : undefined} castShadow receiveShadow raycast={noRaycast}>
+          <boxGeometry args={[...box.size]} />
+          <Toon color={ART_STYLE.palette.concreteLit} />
+        </mesh>
+      ))}
+
       {/* Elevated Concrete Loading Deck & Retaining Wall (Astra Round 8 Warm Gray #A69F8B) */}
       <group position={[-21, FLOOR_Y + 0.5, 0]}>
         <mesh receiveShadow castShadow raycast={noRaycast}>
@@ -618,13 +671,20 @@ export function YardShell({ renderRef }: { renderRef?: React.MutableRefObject<Ya
         </mesh>
       </group>
       {/* ========================================================================= */}
-      {/* TEARDOWN WATER BASIN: Translucent Crystal Tank & Luminous Turquoise Water */}
+      {/* Open aquarium tank with a solid base and clear side panels. */}
       {/* ========================================================================= */}
-      <mesh geometry={TANK_WALL_GEOMETRY} raycast={noRaycast}>
-        <meshStandardMaterial color="#94a3b8" transparent opacity={0.16} roughness={0.25} metalness={0.1} depthWrite={false} />
+      <mesh name="aquarium-base" position={[...TANK_FLOOR_BOX.center]} castShadow receiveShadow raycast={noRaycast}>
+        <boxGeometry args={[...TANK_FLOOR_BOX.size]} />
+        <Toon color={ART_STYLE.palette.concreteLit} />
       </mesh>
-      <mesh geometry={TANK_RIM_GEOMETRY} castShadow receiveShadow raycast={noRaycast}>
-        <Toon color={ART_STYLE.palette.concreteShade} />
+      <mesh name="aquarium-frame" geometry={AQUARIUM_FRAME_GEOMETRY} castShadow receiveShadow raycast={noRaycast}>
+        <Toon color={ART_STYLE.palette.metal} />
+      </mesh>
+      <mesh name="aquarium-glass" geometry={TANK_WALL_GEOMETRY} raycast={noRaycast}>
+        <meshStandardMaterial color="#b8e1de" transparent opacity={0.24} roughness={0.18} metalness={0.05} depthWrite={false} />
+      </mesh>
+      <mesh name="aquarium-rim" geometry={TANK_RIM_GEOMETRY} castShadow receiveShadow raycast={noRaycast}>
+        <Toon color={ART_STYLE.palette.metal} />
       </mesh>
       {/* Luminous Subsurface Water Mass */}
       <mesh position={[TANK.center[0], waterLayout.fillCenterY, TANK.center[2]]} raycast={noRaycast}>

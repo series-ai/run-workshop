@@ -61,7 +61,7 @@ export const CONVEYOR = {
   /** Top surface of the belt. */
   topY: FLOOR_Y + 6.5,
   /** The belt runs from zStart (outside the wall) toward +Z and ends at zEnd. */
-  zStart: -29,
+  zStart: -46,
   zEnd: -15,
   width: 1.6,
   /** Belt speed toward +Z (m/s). */
@@ -69,7 +69,7 @@ export const CONVEYOR = {
   legZ: [-22.5, -16.5] as const,
 } as const;
 
-/** New drums appear on the belt outside the wall, in the feeder housing. */
+/** Drums appear under the transfer housing outside the wall. */
 export const DRUM_SPAWN: Vec3 = [CONVEYOR.x, CONVEYOR.topY + 0.52, -27.6];
 /** Ticks between two drums, so one drum clears the spawn point first. */
 export const DROP_COOLDOWN_TICKS = 45;

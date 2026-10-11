@@ -22,6 +22,7 @@ export interface PlayGateApi {
   /** Mobile web: fullscreen without a lock, on and off. */
   toggleFullscreen(): Promise<void>;
   chooseDrag(): void;
+  pause(): void;
   chooseCapture(): Promise<void>;
   setOrbit(on: boolean): void;
   /** Called when held keys and buttons must be dropped. */
@@ -33,8 +34,8 @@ export interface PlayGateApi {
  * port state changes, the match status, and click handlers go in; pointer
  * release, input clearing, and the solo pause come out.
  */
-export function usePlayGate(port: CapturePort, controller: MatchController, match: { readonly status: MatchStatus; readonly modalOpen: boolean }): PlayGateApi {
-  const current = useRef<GateState>(initialGate(port.caps, { active: false, pointerLocked: false }));
+export function usePlayGate(port: CapturePort, controller: MatchController, match: { readonly status: MatchStatus; readonly modalOpen: boolean; readonly touchControls?: boolean }): PlayGateApi {
+  const current = useRef<GateState>(initialGate(port.caps, { active: false, pointerLocked: false }, match.touchControls));
   const [state, setState] = useState(current.current);
   const clearListeners = useRef(new Set<() => void>());
   const nextRequest = useRef(0);
@@ -58,6 +59,9 @@ export function usePlayGate(port: CapturePort, controller: MatchController, matc
       }
     }
   }, [port]);
+  useEffect(() => {
+    if (match.touchControls) dispatch({ type: 'choose-touch' });
+  }, [match.touchControls, dispatch]);
 
   // The port's state is the only truth about capture.
   useEffect(() => {
@@ -85,6 +89,10 @@ export function usePlayGate(port: CapturePort, controller: MatchController, matc
   }, [controller, state, match.status]);
 
   const engage = useCallback(async () => {
+    if (current.current.look === 'drag') {
+      dispatch({ type: 'resume' });
+      return;
+    }
     const call = engageCall(current.current);
     if (call === 'none' || current.current.requestId !== 0) return;
     nextRequest.current += 1;
@@ -120,6 +128,7 @@ export function usePlayGate(port: CapturePort, controller: MatchController, matc
   }, [dispatch, port]);
 
   const chooseDrag = useCallback(() => dispatch({ type: 'choose-drag' }), [dispatch]);
+  const pause = useCallback(() => dispatch({ type: 'pause' }), [dispatch]);
 
   const chooseCapture = useCallback(async () => {
     dispatch({ type: 'choose-capture' });
@@ -134,6 +143,6 @@ export function usePlayGate(port: CapturePort, controller: MatchController, matc
   }, []);
 
   return useMemo(() => ({
-    state, port, engage, engageForMatch, exitFullscreen, toggleFullscreen, chooseDrag, chooseCapture, setOrbit, onClearInput,
-  }), [state, port, engage, engageForMatch, exitFullscreen, toggleFullscreen, chooseDrag, chooseCapture, setOrbit, onClearInput]);
+    state, port, engage, engageForMatch, exitFullscreen, toggleFullscreen, chooseDrag, chooseCapture, pause, setOrbit, onClearInput,
+  }), [state, port, engage, engageForMatch, exitFullscreen, toggleFullscreen, chooseDrag, chooseCapture, pause, setOrbit, onClearInput]);
 }

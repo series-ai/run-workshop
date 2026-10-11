@@ -1,0 +1,43 @@
+Moving line on the ground
+
+Cause
+The ink pass compared raw depth changes between nearby pixels.
+A flat floor has a large depth slope at a shallow viewing angle.
+The pass treated that slope as an edge and applied dark ink.
+The false edge moved with the camera.
+Fractional sample offsets also did not match the depth texture pixel centers.
+
+Fix
+Use distance from the local surface plane to find an actual surface break.
+Use the normal and four depth samples already present in the ink pass.
+Round sample offsets to whole physical pixels.
+No texture reads or render passes were added.
+
+Production
+The fix is deployed as Wreck Yard version 1.2.1 on 2026-10-11.
+
+Verification
+The original shader darkened 44,828 pixels on the first flat-floor GPU case.
+The repaired shader darkens zero pixels on that case.
+All 24 GPU cases pass at desktop and phone resolutions.
+The tests include desktop and mobile-size renderer settings and four-sample MSAA.
+Camera position, height, and pitch change between cases.
+Flat floors have no ink edge. Box outlines remain inside their projected bounds.
+All 92 render tests pass. TypeScript and the production build pass.
+
+Repeat from games/wreck-yard
+
+  node scripts/verify-ground-ink.mjs
+
+Evidence
+- test-results/ground-line/gpu-results.json
+- test-results/ground-line/open-floor-before-844.png
+- test-results/ground-line/open-floor-after-844.png
+- test-results/ground-line/moved-before-844.png
+- test-results/ground-line/moved-after-844.png
+
+Limits
+Desktop Chrome renders the GPU checks at phone dimensions.
+The renderer uses its mobile precision setting. The ink shader still uses highp.
+This does not test shader precision on a physical phone.
+This does not measure performance on a physical phone.

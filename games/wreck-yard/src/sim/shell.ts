@@ -1,6 +1,9 @@
+import { RETURNS_SOLIDS } from './returns';
 import type { WorldOcclusionStaticBox } from 'voxel-kit';
 import { ARENA_EXTENT, FLOOR_Y, TANK } from './constants';
 import type { Quat } from './math';
+import { STORAGE_SOLIDS } from './attractions';
+import { STORAGE_FIXTURE_SOLIDS } from './storageFixtures';
 import { CONTRAPTION_COLLIDERS } from './contraptions';
 import { SET_PIECE_COLLIDERS, VEHICLE_RAMP, type ShellBox } from './setPieces';
 
@@ -28,6 +31,9 @@ export const SHELL_BOXES: readonly ShellBox[] = [
   { id: 'seesaw-pivot', center: [-14, FLOOR_Y + 0.45, -6], size: [1.2, 0.9, 1.2] },
   { id: 'ball-drop-platform', center: [-12, FLOOR_Y + 2.5, 12], size: [4, 5.0, 4] },
   { id: 'vehicle-ramp', center: VEHICLE_RAMP.center, size: VEHICLE_RAMP.size, rotation: [VEHICLE_RAMP.pitch, 0, 0] },
+  ...RETURNS_SOLIDS,
+  ...STORAGE_SOLIDS,
+  ...STORAGE_FIXTURE_SOLIDS,
   ...SET_PIECE_COLLIDERS,
   ...CONTRAPTION_COLLIDERS,
 ];

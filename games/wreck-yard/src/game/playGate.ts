@@ -68,7 +68,10 @@ export type GateEvent =
   | { readonly type: 'match-start' }
   | { readonly type: 'match-settled' }
   | { readonly type: 'choose-drag' }
-  | { readonly type: 'choose-capture' };
+  | { readonly type: 'choose-capture' }
+  | { readonly type: 'choose-touch' }
+  | { readonly type: 'pause' }
+  | { readonly type: 'resume' };
 
 export type GateEffect = 'release-pointer' | 'clear-input';
 
@@ -82,8 +85,8 @@ export function canCapture(caps: SurfaceCaps): boolean {
   return caps.pointerLock && caps.fullscreen !== 'unavailable';
 }
 
-export function initialGate(caps: SurfaceCaps, surface: SurfaceState): GateState {
-  const look: LookMode = canCapture(caps) ? 'capture' : 'drag';
+export function initialGate(caps: SurfaceCaps, surface: SurfaceState, preferDrag = false): GateState {
+  const look: LookMode = !preferDrag && canCapture(caps) ? 'capture' : 'drag';
   return {
     caps,
     look,
@@ -109,9 +112,9 @@ export function inputLive(state: GateState): boolean {
   return (state.view === 'playing' || state.view === 'free-cursor') && !cursorNeededNow(state);
 }
 
-/** Solo stops behind the pause menu and while a resume runs; never before first play, and never in drag mode. */
+/** Solo stops behind the pause menu and while a resume runs. */
 export function soloPaused(state: GateState): boolean {
-  return state.look === 'capture' && state.hasPlayed && !cursorNeededNow(state)
+  return state.hasPlayed && !cursorNeededNow(state)
     && (state.view === 'paused' || state.view === 'engaging');
 }
 
@@ -125,7 +128,7 @@ export function engageCall(state: GateState): EngageCall {
 
 /** Mobile web: fullscreen without a lock, as a toggle. */
 export function fullscreenToggleCall(state: GateState): FullscreenToggleCall {
-  if (state.caps.fullscreen !== 'toggleable' || state.caps.pointerLock) return 'none';
+  if (state.caps.fullscreen !== 'toggleable' || state.look !== 'drag') return 'none';
   return state.surface.active ? 'exit-fullscreen' : 'request-fullscreen';
 }
 
@@ -141,7 +144,7 @@ interface Step {
 
 /** The view the player returns to when the cursor is needed, or after a request. */
 function restingView(state: GateState): GateView {
-  if (state.look === 'drag') return 'playing';
+  if (state.look === 'drag') return state.view === 'paused' ? 'paused' : 'playing';
   return state.hasPlayed ? 'paused' : 'start';
 }
 
@@ -169,7 +172,10 @@ export function reduceGate(state: GateState, event: GateEvent): Step {
   switch (event.type) {
     case 'surface': {
       const next = { ...state, surface: event.state };
-      if (state.look === 'drag') return { state: next, effects };
+      if (state.look === 'drag') {
+        if (event.state.pointerLocked) effects.push('release-pointer');
+        return { state: next, effects };
+      }
       if (cursorNeededNow(state)) {
         if (event.state.pointerLocked) effects.push('release-pointer');
         return { state: next, effects };
@@ -227,16 +233,33 @@ export function reduceGate(state: GateState, event: GateEvent): Step {
     case 'cursor-needed':
       return settleCursorNeed(state, { ...state, cursorNeeded: event.on }, effects);
     case 'match-start':
-      return settleCursorNeed(state, { ...state, matchStarting: true }, effects);
+      return settleCursorNeed(state, { ...state, matchStarting: true, ...(state.look === 'drag' ? { view: 'playing' as const } : {}) }, effects);
     case 'match-settled':
       return settleCursorNeed(state, { ...state, matchStarting: false }, effects);
     case 'choose-drag': {
       if (state.view !== 'start' && state.view !== 'paused') return { state, effects };
       return { state: { ...state, look: 'drag', view: 'playing', notice: null }, effects };
     }
+    case 'choose-touch': {
+      if (state.look === 'drag') return { state, effects };
+      effects.push('clear-input');
+      if (state.surface.pointerLocked) effects.push('release-pointer');
+      return { state: { ...state, look: 'drag', view: state.view === 'paused' ? 'paused' : 'playing', requestId: 0, engagedFrom: null, notice: null }, effects };
+    }
     case 'choose-capture': {
       if (state.look !== 'drag' || !canCapture(state.caps)) return { state, effects };
       return { state: { ...state, look: 'capture', view: 'paused', hasPlayed: true, notice: null }, effects };
+    }
+    case 'pause': {
+      if (!inputLive(state) || state.view !== 'playing') return { state, effects };
+      effects.push('clear-input');
+      if (state.surface.pointerLocked) effects.push('release-pointer');
+      return { state: { ...state, view: 'paused', hasPlayed: true }, effects };
+    }
+    case 'resume': {
+      if (state.look !== 'drag' || state.view !== 'paused' || cursorNeededNow(state)) return { state, effects };
+      effects.push('clear-input');
+      return { state: { ...state, view: 'playing' }, effects };
     }
     default: {
       const unreachable: never = event;

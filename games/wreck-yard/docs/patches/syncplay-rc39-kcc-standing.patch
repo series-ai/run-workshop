@@ -1,0 +1,375 @@
+--- a/packages/syncplay/src/movement3d-revision1.ts
++++ b/packages/syncplay/src/movement3d-revision1.ts
+@@ -1,5 +1,5 @@
+ import { defaultChecksum } from './canonical.js';
+-import type { PhysicsBody3D, PhysicsBodyId3D, PhysicsBodyMotion3D, PhysicsOverlapQuery3D, PhysicsShape3D, PhysicsWorld3D } from './physics/3d.js';
++import type { PhysicsBody3D, PhysicsBodyId3D, PhysicsBodyMotion3D, PhysicsCastHit3D, PhysicsOverlapQuery3D, PhysicsShape3D, PhysicsWorld3D } from './physics/3d.js';
+ import { meters } from './physics/units.js';
+ interface Quat3D { readonly x: number; readonly y: number; readonly z: number; readonly w: number; }
+ type Mat3 = readonly number[];
+@@ -20,6 +20,8 @@
+   readonly shape: PhysicsBodyMotion3D['shape'];
+   readonly layer: number;
+   readonly mask: number;
++  readonly trigger: boolean;
++  readonly sensor: boolean;
+ }
+ 
+ interface ResolvedKccJumpTuning3D {
+@@ -77,6 +79,22 @@
+   let physicsQueryCount = 0;
+   let collisionFilterCalls = 0;
+   let collisionFilterRejectedHits = 0;
++  const queryStats: KccPhysicsQueryStats = { queryCount: 0, collisionFilterCalls: 0, collisionFilterRejectedHits: 0 };
++  const ignoredBodyIds = new Set(options.ignoredPhysicsBodyIds ?? []);
++  const collisionFilters = options.collisionFilters ?? [];
++  const geometry = normalizeKccGeometry3D(next);
++  if (options.physics !== undefined) {
++    // Recover the stored pose before input movement. Do not recover a forward target.
++    const recovered = recoverKccCapsule(options.physics, next, {
++      ignoredBodyIds, previous: next, frame: options.frame, swept: false, sample: 0, collisionFilters,
++    }, queryStats);
++    next = { ...next, x: recovered.x, y: recovered.y, z: recovered.z };
++    correctionCount += recovered.corrections;
++    if (recovered.corrections > 0) events.push('physics-correction');
++  }
++  const queryContext: KccPhysicsOverlapFilterContext = {
++    ignoredBodyIds, previous: next, frame: options.frame, swept: false, sample: 0, collisionFilters,
++  };
+   const externalImpulse = combineExternalKccImpulses(options.externalImpulses ?? []);
+   let coyoteFrames = next.grounded ? jump.coyoteFrames : Math.max(0, next.coyoteFrames - 1);
+   let jumpBufferFrames = input.jumpPressed === true ? jump.bufferFrames : Math.max(0, next.jumpBufferFrames - 1);
+@@ -122,7 +140,6 @@
+   }
+ 
+   const step = findStepAt(world.steps ?? [], x, z);
+-  const geometry = normalizeKccGeometry3D(next);
+   if (step !== undefined && step.height <= world.stepHeight && y <= step.height + 1 && vy <= 0) {
+     if (step.ceilingY !== undefined && step.ceilingY - step.height < geometry.halfHeight * 2 + geometry.skinWidth) {
+       x = next.x;
+@@ -166,11 +183,13 @@
+       new Set(options.ignoredPhysicsBodyIds ?? []),
+       world.stepHeight,
+       world.maxSlopeRisePerUnit,
++      queryContext,
++      queryStats,
+     )
+     : undefined;
+ 
+   if (options.physics !== undefined && options.standOnDynamicBodies === true && vy <= 0) {
+-    const ground = dynamicGroundUnderKcc(options.physics, x, y, z, geometry, new Set(options.ignoredPhysicsBodyIds ?? []));
++    const ground = dynamicGroundUnderKcc(options.physics, x, y, z, geometry, ignoredBodyIds, world.maxSlopeRisePerUnit, queryContext, queryStats);
+     if (ground !== undefined && (staticGround === undefined || ground.topY >= staticGround.topY)) {
+       groundedOnDynamic = true;
+       platformClaimedThisFrame = true;
+@@ -251,7 +270,10 @@
+           y,
+           z,
+           geometry,
+-          new Set(options.ignoredPhysicsBodyIds ?? []),
++          ignoredBodyIds,
++          world.maxSlopeRisePerUnit,
++          queryContext,
++          queryStats,
+         );
+         if (reattached === undefined) {
+           grounded = false;
+@@ -277,6 +299,8 @@
+           new Set(options.ignoredPhysicsBodyIds ?? []),
+           world.stepHeight,
+           world.maxSlopeRisePerUnit,
++          queryContext,
++          queryStats,
+         );
+         if (reground !== undefined) {
+           y = reground.topY;
+@@ -323,6 +347,9 @@
+     jumpBufferFrames,
+   };
+ 
++  physicsQueryCount += queryStats.queryCount;
++  collisionFilterCalls += queryStats.collisionFilterCalls;
++  collisionFilterRejectedHits += queryStats.collisionFilterRejectedHits;
+   return {
+     body: finalBody,
+     events,
+@@ -355,6 +382,8 @@
+     shape: body.shape,
+     layer: body.layer,
+     mask: body.mask,
++    trigger: body.trigger,
++    sensor: body.sensor,
+   };
+ }
+ 
+@@ -442,7 +471,7 @@
+ }
+ 
+ function groundContactTopAt(physics: PhysicsWorld3D, body: KccPhysicsBody3D, x: number, z: number,
+-                           minimumTopY: number, maximumTopY: number): number | undefined {
++                           minimumTopY: number, maximumTopY: number, queryStats?: KccPhysicsQueryStats): number | undefined {
+   const q = body.orientation;
+   const shape = body.shape;
+   if (shape.type !== 'box' && shape.type !== 'sphere' && shape.type !== 'capsule') {
+@@ -452,6 +481,7 @@
+       throw new Error('KCC ground query extent is not finite');
+     }
+     if (distance <= 0) return undefined;
++    if (queryStats !== undefined) queryStats.queryCount += 1;
+     return physics.raycast({ x: meters(x), y: meters(y), z: meters(z), dx: 0, dy: -1, dz: 0, maxDistance: meters(distance),
+       onlyBody: physics.resolveBody(body.id) })[0]?.point.y;
+   }
+@@ -473,16 +503,17 @@
+   geometry: DeterministicKccGeometry3D,
+   maximumRisePerUnit: number,
+   neighbourTopAt?: (sampleX: number, sampleZ: number) => number | undefined,
++  queryStats?: KccPhysicsQueryStats,
+ ): number {
+   const step = geometry.radius + geometry.skinWidth;
+   const minimumTopY = top - step * maximumRisePerUnit;
+   const maximumTopY = top + step * maximumRisePerUnit;
+   const sampleTopAt = (sampleX: number, sampleZ: number): number | undefined => {
+-    const own = groundContactTopAt(physics, body, sampleX, sampleZ, minimumTopY, maximumTopY);
++    const own = groundContactTopAt(physics, body, sampleX, sampleZ, minimumTopY, maximumTopY, queryStats);
+     if (own !== undefined || neighbourTopAt === undefined) {
+       return own;
+     }
+-    return continuousNeighbourTopAt(physics, body, x, z, sampleX, sampleZ, minimumTopY, maximumTopY, neighbourTopAt);
++    return continuousNeighbourTopAt(physics, body, x, z, sampleX, sampleZ, minimumTopY, maximumTopY, neighbourTopAt, queryStats);
+   };
+   const axisGradient = (deltaX: number, deltaZ: number): number => {
+     const ahead = sampleTopAt(x + deltaX, z + deltaZ);
+@@ -515,6 +546,7 @@
+   minimumTopY: number,
+   maximumTopY: number,
+   neighbourTopAt: (sampleX: number, sampleZ: number) => number | undefined,
++  queryStats?: KccPhysicsQueryStats,
+ ): number | undefined {
+   // The centre is on the selected body (its top is what kccSlopeClearance was
+   // given) and the sample is off it, so the ray crosses a footprint edge.
+@@ -522,13 +554,13 @@
+   let outside = 1;
+   for (let i = 0; i < KCC_SEAM_EDGE_BISECTIONS; i += 1) {
+     const mid = (inside + outside) / 2;
+-    if (groundContactTopAt(physics, body, x + (sampleX - x) * mid, z + (sampleZ - z) * mid, minimumTopY, maximumTopY) === undefined) {
++    if (groundContactTopAt(physics, body, x + (sampleX - x) * mid, z + (sampleZ - z) * mid, minimumTopY, maximumTopY, queryStats) === undefined) {
+       outside = mid;
+     } else {
+       inside = mid;
+     }
+   }
+-  const innerTop = groundContactTopAt(physics, body, x + (sampleX - x) * inside, z + (sampleZ - z) * inside, minimumTopY, maximumTopY);
++  const innerTop = groundContactTopAt(physics, body, x + (sampleX - x) * inside, z + (sampleZ - z) * inside, minimumTopY, maximumTopY, queryStats);
+   const outerTop = neighbourTopAt(x + (sampleX - x) * outside, z + (sampleZ - z) * outside);
+   if (innerTop === undefined || outerTop === undefined) {
+     return undefined;
+@@ -557,6 +589,8 @@
+   ignoredBodyIds: ReadonlySet<PhysicsBodyId3D>,
+   snapDistance: number,
+   maximumRisePerUnit: number,
++  context: KccPhysicsOverlapFilterContext,
++  queryStats: KccPhysicsQueryStats,
+ ): { readonly bodyId: string; readonly topY: number } | undefined {
+   const feetY = y - kccFeetOffset(geometry);
+   // Gravity is unbounded (vy -= 1 per frame), so a fast fall can clear the whole
+@@ -574,15 +608,17 @@
+     hitStatics: true,
+     hitDynamics: false,
+     hitKinematics: false,
+-  };
+-  const hitBodies = physics.overlap(probe)
++    layerMask: 0b1111, hitTriggers: false, hitSensors: false, maxPortalDepth: 0,
++  };
++  queryStats.queryCount += 1;
++  const hitBodies = filterKccSolidHits(physics, physics.overlap(probe), context, queryStats, x, y, z)
+     .map((hit) => readKccPhysicsBody(physics, hit.bodyId))
+     .filter((body) => body.kind === 'static' && !ignoredBodyIds.has(body.id));
+   const maximumLift = (geometry.radius + geometry.skinWidth)
+     * (solverSqrt(1 + 2 * maximumRisePerUnit * maximumRisePerUnit) - 1);
+   const grounds = hitBodies
+     .map((body) => ({ body, top: groundContactTopAt(physics, body, x, z,
+-      feetY - snapDistance - maximumLift, previousFeetY + snapDistance) }))
++      feetY - snapDistance - maximumLift, previousFeetY + snapDistance, queryStats) }))
+     .filter((candidate): candidate is { body: KccPhysicsBody3D; top: number } => candidate.top !== undefined)
+     .map((candidate) => ({
+       ...candidate,
+@@ -597,13 +633,13 @@
+           }
+           const top = groundContactTopAt(physics, neighbour, sampleX, sampleZ,
+             candidate.top - (geometry.radius + geometry.skinWidth) * maximumRisePerUnit,
+-            candidate.top + (geometry.radius + geometry.skinWidth) * maximumRisePerUnit);
++            candidate.top + (geometry.radius + geometry.skinWidth) * maximumRisePerUnit, queryStats);
+           if (top !== undefined) {
+             neighbourTop = neighbourTop === undefined ? top : Math.max(neighbourTop, top);
+           }
+         }
+         return neighbourTop;
+-      }),
++      }, queryStats),
+     }))
+     // The band is measured from where the capsule actually STANDS, so a slope
+     // lift bigger than snapDistance cannot drop it out of its own ground the
+@@ -651,6 +687,9 @@
+   z: number,
+   geometry: DeterministicKccGeometry3D,
+   ignoredBodyIds: ReadonlySet<PhysicsBodyId3D>,
++  maximumRisePerUnit: number,
++  context: KccPhysicsOverlapFilterContext,
++  queryStats: KccPhysicsQueryStats,
+ ): { readonly bodyId: string; readonly topY: number; readonly deltaX: number; readonly deltaZ: number } | undefined {
+   const feetY = y - kccFeetOffset(geometry);
+   const probe: PhysicsOverlapQuery3D = {
+@@ -661,14 +700,16 @@
+     hitStatics: false,
+     hitDynamics: true,
+     hitKinematics: false,
++    layerMask: 0b1111, hitTriggers: false, hitSensors: false, maxPortalDepth: 0,
+   };
+   // The KCC must stand OVER the body's horizontal footprint, not beside it —
+   // otherwise walking into a crate's side (a feet-level overlap with a body whose
+   // top towers above the feet) would vault the capsule onto the top.
+-  const grounds = physics.overlap(probe)
++  queryStats.queryCount += 1;
++  const grounds = filterKccSolidHits(physics, physics.overlap(probe), context, queryStats, x, y, z)
+     .map((hit) => readKccPhysicsBody(physics, hit.bodyId))
+     .filter((body) => body.kind === 'dynamic' && !ignoredBodyIds.has(body.id))
+-    .map((body) => ({ body, top: groundContactTopAt(physics, body, x, z, feetY - geometry.radius, feetY + geometry.radius) }))
++    .map((body) => ({ body, top: groundContactTopAt(physics, body, x, z, feetY - geometry.radius, feetY + geometry.radius, queryStats) }))
+     .filter((candidate): candidate is { body: KccPhysicsBody3D; top: number } => candidate.top !== undefined)
+     .sort((left, right) => right.top - left.top || comparePhysicsBodyIds(left.body.id, right.body.id));
+   const ground = grounds[0];
+@@ -678,7 +719,8 @@
+   const fixedDt = physics.info().fixedDt;
+   return {
+     bodyId: `physics:${ground.body.id}`,
+-    topY: ground.top + kccFeetOffset(geometry),
++    topY: ground.top + kccFeetOffset(geometry)
++      + kccSlopeClearance(physics, ground.body, x, z, ground.top, geometry, maximumRisePerUnit, undefined, queryStats),
+     deltaX: ground.body.vx * fixedDt,
+     deltaZ: ground.body.vz * fixedDt,
+   };
+@@ -876,6 +918,7 @@
+     if (sweep.corrected) {
+       return {
+         ...sweep,
++        queryCount: sweep.queryCount + 1,
+         collisionFilterCalls: collisionFilterCalls + sweep.collisionFilterCalls,
+         collisionFilterRejectedHits: collisionFilterRejectedHits + sweep.collisionFilterRejectedHits,
+       };
+@@ -1114,6 +1157,116 @@
+   return Object.assign(overlaps, { collisionFilterCalls, collisionFilterRejectedHits });
+ }
+ 
++
++interface KccPhysicsQueryStats {
++  queryCount: number;
++  collisionFilterCalls: number;
++  collisionFilterRejectedHits: number;
++}
++
++function filterKccSolidHits(
++  physics: PhysicsWorld3D,
++  hits: readonly PhysicsCastHit3D[],
++  context: KccPhysicsOverlapFilterContext,
++  stats: KccPhysicsQueryStats,
++  x: number,
++  y: number,
++  z: number,
++): readonly PhysicsCastHit3D[] {
++  const before = deterministicKccCollisionFiltersStateChecksum(context.collisionFilters);
++  const filters = sortKccCollisionFilters(context.collisionFilters);
++  const accepted: PhysicsCastHit3D[] = [];
++  const ordered = [...hits].sort((left, right) => comparePhysicsBodyIds(left.bodyId, right.bodyId)
++    || left.childIndex - right.childIndex);
++  for (const hit of ordered) {
++    if (context.ignoredBodyIds.has(hit.bodyId)) continue;
++    const body = readKccPhysicsBody(physics, hit.bodyId);
++    if (body.trigger || body.sensor) continue;
++    const candidate = {
++      ...createKccCollisionCandidate(hit.bodyId, body, context, x, y, z),
++      normalX: -hit.normal.x, normalY: -hit.normal.y, normalZ: -hit.normal.z,
++    };
++    let keep = true;
++    for (const filter of filters) {
++      stats.collisionFilterCalls += 1;
++      if (!filter.shouldCollide(candidate)) {
++        stats.collisionFilterRejectedHits += 1;
++        keep = false;
++        break;
++      }
++    }
++    if (keep) accepted.push(hit);
++  }
++  assertKccCollisionFiltersUnchanged(context.collisionFilters, before);
++  return accepted;
++}
++
++function recoverKccCapsule(
++  physics: PhysicsWorld3D,
++  previous: DeterministicKccBody3D,
++  context: KccPhysicsOverlapFilterContext,
++  stats: KccPhysicsQueryStats,
++): { readonly x: number; readonly y: number; readonly z: number; readonly corrections: number } {
++  const geometry = normalizeKccGeometry3D(previous);
++  const shape = {
++    type: 'capsule' as const,
++    radius: meters(geometry.radius + geometry.skinWidth),
++    halfHeight: meters(geometry.halfHeight + geometry.skinWidth),
++  };
++  let { x, y, z } = previous;
++  let corrections = 0;
++  for (let pass = 0; pass < 4; pass += 1) {
++    stats.queryCount += 1;
++    const hits = physics.overlap({
++      shape, x: meters(x), y: meters(y), z: meters(z),
++      layerMask: 0b1111, hitTriggers: false, hitSensors: false, maxPortalDepth: 0,
++    });
++    const accepted = filterKccSolidHits(physics, hits, { ...context, sample: pass }, stats, x, y, z);
++    const separations: {
++      hit: PhysicsCastHit3D; depth: number; nx: number; ny: number; nz: number;
++    }[] = [];
++    for (const hit of accepted) {
++      const length = solverSqrt(hit.normal.x * hit.normal.x + hit.normal.y * hit.normal.y + hit.normal.z * hit.normal.z);
++      if (length < 1e-8) continue;
++      const nx = hit.normal.x / length;
++      const ny = hit.normal.y / length;
++      const nz = hit.normal.z / length;
++      const support = shape.radius + shape.halfHeight * Math.abs(ny);
++      const along = (hit.point.x - x) * nx + (hit.point.y - y) * ny + (hit.point.z - z) * nz;
++      // The native overlap point is the midpoint of the overlap interval.
++      const depth = 2 * (support - along);
++      if (depth > 1e-6) separations.push({ hit, depth, nx, ny, nz });
++    }
++    separations.sort((left, right) => right.depth - left.depth
++      || comparePhysicsBodyIds(left.hit.bodyId, right.hit.bodyId)
++      || left.hit.childIndex - right.hit.childIndex);
++    const best = separations[0];
++    if (best === undefined) break;
++    let distance = best.depth + KCC_GROUND_CLEARANCE;
++    // Stop before a solid that did not overlap this correction's start pose.
++    stats.queryCount += 1;
++    const castHits = physics.shapeCast({
++      shape, x: meters(x), y: meters(y), z: meters(z),
++      dx: -best.nx, dy: -best.ny, dz: -best.nz, maxDistance: meters(distance),
++      layerMask: 0b1111, hitTriggers: false, hitSensors: false, maxPortalDepth: 0,
++    });
++    const blockers = filterKccSolidHits(physics, castHits,
++      { ...context, swept: true, sample: pass }, stats,
++      x - best.nx * distance, y - best.ny * distance, z - best.nz * distance)
++      .filter((hit) => !accepted.some((overlap) => overlap.bodyId === hit.bodyId && overlap.childIndex === hit.childIndex))
++      .sort((left, right) => left.distance - right.distance
++        || comparePhysicsBodyIds(left.bodyId, right.bodyId)
++        || left.childIndex - right.childIndex);
++    if (blockers[0] !== undefined) distance = Math.min(distance, Math.max(0, blockers[0].distance - KCC_GROUND_CLEARANCE));
++    if (distance <= 1e-6) break;
++    x -= best.nx * distance;
++    y -= best.ny * distance;
++    z -= best.nz * distance;
++    corrections += 1;
++  }
++  return { x, y, z, corrections };
++}
++
+ function normalizeKccGeometry3D(body: DeterministicKccBody3D): DeterministicKccGeometry3D {
+   const radius = body.radius ?? 1;
+   const halfHeight = body.halfHeight ?? 2;

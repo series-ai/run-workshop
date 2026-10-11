@@ -1,0 +1,8 @@
+{
+  "tool": "built-in image_gen",
+  "asset": "wreck-yard-thumbnail-512.png",
+  "width": 512,
+  "height": 512,
+  "prompt": "Edit the reference thumbnail into a square 1:1 Wreck Yard game thumbnail. Target delivery is exactly 512 by 512 pixels. Recompose the art for a square, do not stretch the wide image or merely crop its sides. Keep the same orange buggy, one-wheeled orange robot, teal cubic destruction burst, industrial sunset palette and bold ink/cel-shaded style. Place the exact two-line title \"WRECK YARD\" across the upper third, large, warm-white with orange shadow and dark outline. Beneath it, show the orange buggy jumping at the upper right of the action area, the robot lower left using its gravity gun, and the teal crate breaking in the center. Reduce background and ramp detail so all main elements remain clear at 512 pixels. Keep the whole title, buggy and robot safely inside the square frame. Opaque background. No HUD, extra text or watermark.",
+  "export": "sips resample to 512 x 512"
+}

@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { isMobileDevice } from './DynamicDpr';
 
 describe('DynamicDpr device detection', () => {
+  it('detects an iPad with a desktop user agent and a wide screen', () => {
+    expect(isMobileDevice({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', maxTouchPoints: 5, innerWidth: 1024 })).toBe(true);
+  });
   it('detects Android user agents', () => {
     const androidUa = 'Mozilla/5.0 (Linux; Android 12; SM-S908B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Mobile Safari/537.36';
     expect(isMobileDevice({ userAgent: androidUa })).toBe(true);

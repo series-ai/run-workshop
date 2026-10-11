@@ -1,4 +1,6 @@
 import './Hud.css';
+import { AudioControls } from './AudioControls';
+import type { YardAudioControl } from '../audio/useYardAudio';
 import { canExitFullscreen, cursorNeededNow, type GateNotice, type GateState } from '../game/playGate';
 import type { RenderQuality } from '../render/renderQuality';
 import type { PlayGateApi } from './usePlayGate';
@@ -32,7 +34,8 @@ function showDragFallback(notice: GateNotice): boolean {
 
 /** Which plate the gate shows; engaging keeps the plate it started from. */
 function plateFor(state: GateState): 'start' | 'paused' | 'chip' | null {
-  if (state.look !== 'capture' || cursorNeededNow(state)) return null;
+  if (cursorNeededNow(state)) return null;
+  if (state.look === 'drag') return state.view === 'paused' ? 'paused' : null;
   const view = state.view === 'engaging' ? state.engagedFrom : state.view;
   if (view === 'start') return 'start';
   if (view === 'paused') return 'paused';
@@ -44,7 +47,9 @@ function plateFor(state: GateState): 'start' | 'paused' | 'chip' | null {
  * The start plate and the pause menu (spec: .plans/wreck-yard-fullscreen-play-gate.html).
  * It draws nothing while the match menu or an error modal needs the cursor.
  */
-export function PlayGate({ gate, inRoom, quality, onQuality, onLeave }: {
+export function PlayGate({ audio, gate, inRoom, quality, onQuality, onLeave, touchControls = false }: {
+  audio?: YardAudioControl;
+  touchControls?: boolean;
   gate: PlayGateApi;
   inRoom: boolean;
   quality: RenderQuality;
@@ -89,7 +94,7 @@ export function PlayGate({ gate, inRoom, quality, onQuality, onLeave }: {
   const fullscreen = state.surface.active || state.caps.fullscreen === 'always-on';
   return (
     <div className="yard-gate" data-gate-view={state.view}>
-      <section className="yard-plate yard-plate--gate" aria-label="Paused">
+      <section className="yard-plate yard-plate--gate yard-plate--paused" aria-label="Paused">
         <div className="yard-gate__stripe" aria-hidden="true" />
         <h1 className="yard-gate__title yard-gate__title--small">Paused</h1>
         {inRoom
@@ -97,7 +102,7 @@ export function PlayGate({ gate, inRoom, quality, onQuality, onLeave }: {
           : <div className="yard-gate__small">Solo is paused</div>}
         <NoticeLine notice={state.notice} action="Resume" />
         <button type="button" className="yard-button yard-button--primary yard-button--big" disabled={busy} onClick={() => { void gate.engage(); }}>
-          {busy ? <><span className="yard-spinner" aria-hidden="true" />Capturing…</> : fullscreen ? 'Resume' : 'Resume fullscreen'}
+          {busy ? <><span className="yard-spinner" aria-hidden="true" />Capturing…</> : fullscreen || state.look === 'drag' ? 'Resume' : 'Resume fullscreen'}
         </button>
         {showDragFallback(state.notice) ? (
           <button type="button" className="yard-button" onClick={gate.chooseDrag}>Play in a window (drag to look)</button>
@@ -108,11 +113,14 @@ export function PlayGate({ gate, inRoom, quality, onQuality, onLeave }: {
           </button>
           {canExitFullscreen(state) ? (
             <button type="button" className="yard-button" onClick={() => { void gate.exitFullscreen(); }}>Exit fullscreen</button>
+          ) : state.look === 'drag' && state.caps.fullscreen === 'toggleable' ? (
+            <button type="button" className="yard-button" onClick={() => { void gate.toggleFullscreen(); }}>Fullscreen</button>
           ) : null}
         </div>
+        {audio ? <AudioControls audio={audio} /> : null}
         <button type="button" className="yard-button yard-button--danger" onClick={onLeave}>Leave match</button>
         {canExitFullscreen(state) ? <div className="yard-gate__small">Esc again: leave fullscreen</div> : null}
-        <ControlsHint />
+        {touchControls ? <div className="yard-gate__hint">Left pad: move. Right side: drag to look.</div> : <ControlsHint />}
       </section>
     </div>
   );

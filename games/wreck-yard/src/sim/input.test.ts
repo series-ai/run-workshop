@@ -4,9 +4,11 @@ import { decodeRay, decodeYardInput, encodeYardInput, NEUTRAL_INPUT, quantizeRay
 describe('yard input codec', () => {
   it('round trips a full input', () => {
     const input: YardInput = {
+      attraction: 0, attractionRequest: 0,
       tool: TOOL.torch,
       pressed: true,
       secondary: false,
+      drop: true,
       use: true,
       jetpack: true,
       moveX: 1,

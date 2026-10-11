@@ -8,7 +8,8 @@ describe('presentation', () => {
   it('projects one pose per yard body and no shell bodies', () => {
     const state = initialState(1);
     const render = projectYard(state, context);
-    expect(render.poses.size).toBe(state.bodies.length);
+    expect(render.poses.size).toBe(state.bodies.length + 1);
+    expect(render.poses.has('storage-elevator')).toBe(true);
     expect([...render.poses.keys()].some((id) => id.startsWith('shell:'))).toBe(false);
   });
 

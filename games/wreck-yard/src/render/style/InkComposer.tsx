@@ -1,17 +1,25 @@
 import { useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import { ART_STYLE } from './artStyle';
 import { InkShader } from './inkShader';
 import { BloomShader } from './bloomShader';
 import { AmbientOcclusionShader, BloomDownShader, BloomUpShader } from './postShaders';
 import type { RenderQuality } from '../renderQuality';
+import type { YardRender } from '../presentation';
+import {
+  createReturnsPortalHooks,
+  createReturnsPortalSurfaces,
+  renderReturnsPortalViews,
+} from '../portalScene';
 
 export interface InkComposerProps {
   enableInk?: boolean;
   /** MSAA samples for the scene target. Phones use 0 to save fill rate. */
   samples: number;
   quality: RenderQuality;
+  /** Present in the yard scene. Other InkComposer users keep a normal scene pass. */
+  renderRef?: MutableRefObject<YardRender | null>;
 }
 
 /** Bloom chain levels on the high tier: 1/2, 1/4, 1/8, 1/16, 1/32 of the frame. */
@@ -58,15 +66,16 @@ interface Pipeline {
   dispose(): void;
 }
 
-function createPipeline(width: number, height: number, samples: number, quality: RenderQuality): Pipeline {
-  const depth = new THREE.DepthTexture(width, height, THREE.UnsignedIntType);
-  depth.format = THREE.DepthFormat;
+function createPipeline(width: number, height: number, samples: number, quality: RenderQuality, portals: boolean): Pipeline {
+  const depth = new THREE.DepthTexture(width, height, portals ? THREE.UnsignedInt248Type : THREE.UnsignedIntType);
+  depth.format = portals ? THREE.DepthStencilFormat : THREE.DepthFormat;
   const scene = new THREE.WebGLRenderTarget(width, height, {
     format: THREE.RGBAFormat,
     type: THREE.HalfFloatType,
     minFilter: THREE.NearestFilter,
     magFilter: THREE.NearestFilter,
     depthTexture: depth,
+    stencilBuffer: portals,
     samples,
   });
   scene.texture.generateMipmaps = false;
@@ -130,20 +139,27 @@ function createPipeline(width: number, height: number, samples: number, quality:
  * Takes over the frame (priority 1): scene -> HDR target, optional AO and
  * bloom chain, then one composite pass with ink, cavity, bloom, and grade.
  */
-export function InkComposer({ enableInk = false, samples, quality }: InkComposerProps) {
-  const { gl, scene, size } = useThree();
+export function InkComposer({ enableInk = false, samples, quality, renderRef }: InkComposerProps) {
+  const { gl, scene, camera, size } = useThree();
   const dpr = gl.getPixelRatio();
   const width = Math.max(1, Math.floor(size.width * dpr));
   const height = Math.max(1, Math.floor(size.height * dpr));
 
   const pipeline = useMemo(() => {
     try {
-      return createPipeline(width, height, samples, quality);
+      return createPipeline(width, height, samples, quality, Boolean(renderRef));
     } catch (err) {
       throw new Error(`InkComposer: Failed to create WebGL render target or depth texture: ${String(err)}`);
     }
-  }, [width, height, samples, quality]);
+  }, [width, height, samples, quality, renderRef]);
   useEffect(() => () => pipeline.dispose(), [pipeline]);
+
+  const portalSurfaces = useMemo(() => renderRef ? createReturnsPortalSurfaces() : null, [renderRef]);
+  useEffect(() => () => portalSurfaces?.dispose(), [portalSurfaces]);
+  const portalCamera = useMemo(() => new THREE.PerspectiveCamera(), []);
+  const portalHooks = useMemo(() => portalSurfaces
+    ? createReturnsPortalHooks({ renderer: gl, scene, camera: portalCamera, eyeCamera: camera, surfaces: portalSurfaces })
+    : null, [camera, gl, portalCamera, portalSurfaces, scene]);
 
   useFrame(({ gl, camera }) => {
     const perspective = camera as THREE.PerspectiveCamera;
@@ -153,9 +169,21 @@ export function InkComposer({ enableInk = false, samples, quality }: InkComposer
       gl.render(pipeline.passScene, pipeline.passCamera);
     };
 
+    const previousAutoClear = gl.autoClear;
+    const previousLocalClipping = gl.localClippingEnabled;
     gl.setRenderTarget(pipeline.scene);
-    gl.clear();
-    gl.render(scene, camera);
+    try {
+      gl.localClippingEnabled = true;
+      if (portalHooks && renderRef) {
+        renderReturnsPortalViews({ renderer: gl, scene, eyeCamera: camera, hooks: portalHooks });
+      } else {
+        gl.clear(true, true, true);
+        gl.render(scene, camera);
+      }
+    } finally {
+      gl.autoClear = previousAutoClear;
+      gl.localClippingEnabled = previousLocalClipping;
+    }
 
     if (pipeline.ao) {
       const u = pipeline.aoMaterial.uniforms;

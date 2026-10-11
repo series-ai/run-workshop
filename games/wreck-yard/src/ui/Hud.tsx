@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './Hud.css';
 import type { MatchRequest, MatchSnapshot } from '../game/match';
 import { TOOL_KEY_LABELS, type UiTool } from '../render/keyBindings';
@@ -25,13 +25,25 @@ function StatusLamp({ status }: { status: MatchSnapshot['status'] }) {
   );
 }
 
-/** Segmented jet fuel gauge: it dims when idle and full, and flashes when low. */
+/** Show used fuel. Pulse once on full recharge, then hide. */
 function FuelGauge({ fuel, burning }: { fuel: number; burning: boolean }) {
   const lit = Math.round((fuel / 100) * FUEL_SEGMENTS);
   const low = fuel < 25;
-  const resting = !burning && fuel > 99;
+  const full = !burning && fuel >= 100;
+  const [phase, setPhase] = useState<'visible' | 'charged' | 'hidden'>(() => full ? 'hidden' : 'visible');
+  useEffect(() => {
+    setPhase((previous) => {
+      if (!full) return 'visible';
+      return previous === 'visible' ? 'charged' : previous;
+    });
+  }, [full]);
+  const state = full ? phase : 'visible';
   return (
-    <div className={`yard-fuel${low ? ' yard-fuel--low' : ''}${resting ? ' yard-fuel--resting' : ''}`} aria-label={`Jet fuel ${Math.round(fuel)}%`}>
+    <div className={`yard-fuel${low ? ' yard-fuel--low' : ''}`} data-state={state}
+      aria-hidden={state === 'hidden'} aria-label={`Jet fuel ${Math.round(fuel)}%`}
+      onAnimationEnd={(event) => {
+        if (full && phase === 'charged' && event.target === event.currentTarget) setPhase('hidden');
+      }}>
       <span className="yard-fuel__label">Jet</span>
       <span className="yard-fuel__cells" aria-hidden="true">
         {Array.from({ length: FUEL_SEGMENTS }, (_, index) => (
@@ -51,7 +63,8 @@ function Reticle({ tool, grabbing }: { tool: UiTool; grabbing: boolean }) {
   );
 }
 
-export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onStop, onRetry, gate }: {
+export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onStop, onRetry, gate, touchControls = false }: {
+  touchControls?: boolean;
   quality: RenderQuality;
   onQuality: (quality: RenderQuality) => void;
   snapshot: MatchSnapshot;
@@ -81,16 +94,16 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
     : isGrabbing ? 'Punt' : null;
   // The start plate or the pause menu covers the yard (src/ui/PlayGate.tsx): its controls replace these.
   const gateState = gate.state;
-  const behindGate = gateState.look === 'capture' && !cursorNeededNow(gateState)
+  const behindGate = !cursorNeededNow(gateState)
     && (gateState.view === 'start' || gateState.view === 'paused' || gateState.view === 'engaging');
-  const offerCapture = gateState.look === 'drag' && canCapture(gateState.caps);
+  const offerCapture = !touchControls && gateState.look === 'drag' && canCapture(gateState.caps);
   const fullscreenToggle = fullscreenToggleCall(gateState);
   const aiming = live && tool !== 'orbit' && !isRiding && !behindGate;
 
   return (
     <>
-      <div className="yard-hud-top">
-        {live ? (
+      <div className={`yard-hud-top${touchControls ? ' yard-hud-top--touch' : ''}`}>
+        {live && !touchControls ? (
         <section className="yard-plate yard-plate--title">
           <div className="yard-title">
             <span className="yard-title__word">Wreck Yard</span>
@@ -111,20 +124,20 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
         </section>
         ) : null}
 
-        {live && !behindGate ? (
+        {live && !behindGate && !touchControls ? (
           <nav className="yard-toolbar" aria-label="Tools">
             {(['hand', 'torch', 'orbit'] as const).map((entry) => (
               <button
                 key={entry}
                 type="button"
                 className={`yard-tab${tool === entry ? ' yard-tab--on' : ''}${entry === 'orbit' ? ' yard-tab--small' : ''}`}
-                aria-label={`${TOOL_NAMES[entry]} (${TOOL_KEY_LABELS[entry]})`}
+                aria-label={touchControls ? TOOL_NAMES[entry] : `${TOOL_NAMES[entry]} (${TOOL_KEY_LABELS[entry]})`}
                 aria-pressed={tool === entry}
                 onClick={() => onTool(entry)}
                 disabled={isRiding}
               >
                 <Key>{TOOL_KEY_LABELS[entry]}</Key>
-                <span>{TOOL_NAMES[entry]}</span>
+                <span>{touchControls && entry === 'hand' ? 'Grab' : touchControls && entry === 'torch' ? 'Torch' : TOOL_NAMES[entry]}</span>
               </button>
             ))}
           </nav>
@@ -135,16 +148,17 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
             {offerCapture ? (
               <button type="button" className="yard-button" onClick={() => { void gate.chooseCapture(); }}>Capture mouse</button>
             ) : null}
-            {fullscreenToggle !== 'none' ? (
+            {!touchControls && fullscreenToggle !== 'none' ? (
               <button type="button" className="yard-button" aria-pressed={fullscreenToggle === 'exit-fullscreen'} onClick={() => { void gate.toggleFullscreen(); }}>
                 {fullscreenToggle === 'exit-fullscreen' ? 'Exit fullscreen' : 'Fullscreen'}
               </button>
             ) : null}
-            <button type="button" className="yard-switch" aria-pressed={quality === 'high'} onClick={() => onQuality(quality === 'high' ? 'low' : 'high')}>
+            {!touchControls ? <button type="button" className="yard-switch" aria-pressed={quality === 'high'} onClick={() => onQuality(quality === 'high' ? 'low' : 'high')}>
               <span className="yard-switch__label">Graphics</span>
               <span className="yard-switch__track"><span className={quality === 'high' ? 'is-on' : ''}>Hi</span><span className={quality === 'low' ? 'is-on' : ''}>Lo</span></span>
-            </button>
-            <button type="button" className="yard-button yard-button--danger" onClick={onStop}>Leave Match</button>
+            </button> : null}
+            {touchControls ? <button type="button" className="yard-button yard-touch-pause" aria-label="Pause" onClick={gate.pause}><span aria-hidden="true" /></button>
+              : <button type="button" className="yard-button yard-button--danger" onClick={onStop}>Leave Match</button>}
           </div>
         ) : null}
       </div>
@@ -192,19 +206,19 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
         </div>
       ) : null}
 
-      {live && prompt ? (
+      {live && prompt && !touchControls ? (
         <div className="yard-prompt" data-prompt={prompt}>
           {/* E is use (buttons, the buggy); the punt is on the right mouse button. */}
-          {prompt === 'Punt' ? <Key wide>RMB</Key> : <Key>E</Key>}
+          {touchControls ? null : prompt === 'Punt' ? <Key wide>RMB</Key> : <Key>E</Key>}
           <span>{prompt}</span>
         </div>
       ) : null}
 
       {live && tool !== 'orbit' && !isRiding ? (
-        <FuelGauge fuel={localPlayer?.fuel ?? 100} burning={Boolean(localPlayer?.jetpackActive)} />
+        <div className={touchControls ? `yard-touch-fuel${canMountBuggy || reachableButton ? ' yard-touch-fuel--context' : ''}` : undefined}><FuelGauge fuel={localPlayer?.fuel ?? 100} burning={Boolean(localPlayer?.jetpackActive)} /></div>
       ) : null}
 
-      {live ? (
+      {live && !touchControls ? (
         <div className={`yard-legend${isRiding ? ' yard-legend--driving' : ''}`}>
           {isRiding ? (
             <>

@@ -236,6 +236,35 @@ describe('match menu and error modal', () => {
 });
 
 describe('drag-look', () => {
+  it('pauses touch play through fullscreen changes and resumes with clear input', () => {
+    const playing = run(initialGate(DESKTOP, WINDOWED, true), { type: 'cursor-needed', on: false }).state;
+    expect(playing.look).toBe('drag');
+    const paused = run(playing, { type: 'pause' }, { type: 'surface', state: FULL_FREE });
+    expect(paused.effects).toContain('clear-input');
+    expect(inputLive(paused.state)).toBe(false);
+    expect(soloPaused(paused.state)).toBe(true);
+    const windowed = run(paused.state, { type: 'surface', state: WINDOWED });
+    expect(windowed.state.view).toBe('paused');
+    const resumed = run(windowed.state, { type: 'resume' });
+    expect(resumed.effects).toContain('clear-input');
+    expect(inputLive(resumed.state)).toBe(true);
+    expect(soloPaused(resumed.state)).toBe(false);
+  });
+
+  it('releases mouse capture when touch input takes control', () => {
+    const touch = run(playingDesktop(), { type: 'choose-touch' });
+    expect(touch.state).toMatchObject({ look: 'drag', view: 'playing' });
+    expect(touch.effects).toContain('release-pointer');
+    expect(touch.effects).toContain('clear-input');
+  });
+  it('releases a late mouse capture after touch cancels the request', () => {
+    const pending = run(liveDesktop(), { type: 'engage', requestId: 1 }).state;
+    const touch = run(pending, { type: 'choose-touch' }, { type: 'surface', state: FULL_LOCKED });
+    expect(touch.state).toMatchObject({ look: 'drag', view: 'playing', requestId: 0 });
+    expect(touch.effects).toContain('release-pointer');
+    expect(engageCall(touch.state)).toBe('none');
+  });
+
   it('lets the player give up on capture, and take it back', () => {
     const refused = run(liveDesktop(), { type: 'engage', requestId: 1 }, { type: 'engaged', requestId: 1, state: WINDOWED }).state;
     const drag = run(refused, { type: 'choose-drag' }).state;

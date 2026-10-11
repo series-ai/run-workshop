@@ -1,13 +1,14 @@
 import { useFrame } from '@react-three/fiber';
-import { useMemo, useRef, type ReactNode } from 'react';
+import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { pixelText } from '../pixelFont';
 import { getToonGradientMap, Toon } from '../style/toonMaterial';
+import { ROBOT_SLOTS, robotBodyTilt, type RobotId } from './robotSlots';
 
 /**
- * Player avatars: four salvage robots, one per player slot. Mockups for the
- * avatar lab (avatar-lab.html); not wired into the game yet. Each is about
+ * Player avatars: four salvage robots, one per player slot. Used in the game
+ * and in the avatar lab (avatar-lab.html). Each is about
  * 1.5 m tall, faces +Z, and stands on y = 0.
  *
  * Shared design language, so the four read as one crew: the player color on
@@ -32,6 +33,10 @@ export interface RobotPose {
   readonly tool: 'hand' | 'torch';
   /** Seconds, for idle motion. */
   readonly time: number;
+  readonly pitch: number;
+  readonly driving: boolean;
+  /** Signed distance travelled on the ground, in metres. */
+  readonly travel: number;
 }
 
 type V3 = [number, number, number];
@@ -137,36 +142,46 @@ function HazardBand({ radius, height, position }: { radius: number; height: numb
 /** The player number in the yard's 5 x 7 sign font, stenciled in bone on an ink plate. */
 function NumberDecal({ digit, cell = 0.016, position, rotation }: { digit: number; cell?: number; position: V3; rotation?: V3 }) {
   const cells = useMemo(() => pixelText(String(digit)), [digit]);
+  const pixels = useMemo(() => cells.flatMap((row, y) => row.flatMap((on, x) => on ? [[x, y] as const] : [])), [cells]);
+  const ink = useRef<THREE.InstancedMesh>(null);
   const width = cells[0]!.length * cell;
   const height = cells.length * cell;
+  useLayoutEffect(() => {
+    if (!ink.current) return;
+    const matrix = new THREE.Matrix4();
+    pixels.forEach(([x, y], index) => {
+      matrix.makeTranslation((x - (cells[0]!.length - 1) / 2) * cell, ((cells.length - 1) / 2 - y) * cell, 0.001);
+      ink.current!.setMatrixAt(index, matrix);
+    });
+    ink.current.instanceMatrix.needsUpdate = true;
+    ink.current.computeBoundingSphere();
+  }, [pixels, cells, cell]);
   return (
     <group position={position} rotation={rotation}>
       <mesh position={[0, 0, -0.004]}>
         <boxGeometry args={[width + cell * 2, height + cell * 2, 0.006]} />
         <Toon color={INK} />
       </mesh>
-      {cells.flatMap((row, y) => row.map((on, x) => on ? (
-        <mesh key={`${x}-${y}`} position={[(x - (row.length - 1) / 2) * cell, ((cells.length - 1) / 2 - y) * cell, 0.001]}>
-          <boxGeometry args={[cell * 0.9, cell * 0.9, 0.004]} />
-          <Toon color={BONE} />
-        </mesh>
-      ) : null))}
+      <instancedMesh ref={ink} args={[undefined, undefined, pixels.length]}>
+        <boxGeometry args={[cell * 0.9, cell * 0.9, 0.004]} />
+        <Toon color={BONE} />
+      </instancedMesh>
     </group>
   );
 }
 
 /** Jet flame: an outer flame and a white-hot core that flicker. */
-function Flame({ on, color, length = 0.6, radius = 0.1 }: { on: boolean; color: string; length?: number; radius?: number }) {
+function Flame({ pose, color, length = 0.6, radius = 0.1 }: { pose: RobotPose; color: string; length?: number; radius?: number }) {
   const ref = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
     if (!ref.current) return;
     const t = clock.elapsedTime;
     const flicker = 0.85 + 0.12 * Math.sin(t * 47) + 0.08 * Math.sin(t * 23 + 1);
-    ref.current.visible = on;
+    ref.current.visible = pose.jet && !pose.driving;
     ref.current.scale.set(1 + 0.05 * Math.sin(t * 31), flicker, 1 + 0.05 * Math.sin(t * 31));
   });
   return (
-    <group ref={ref}>
+    <group ref={ref} name="robot-jet-flame" visible={false}>
       <mesh position={[0, -length / 2, 0]} rotation={[Math.PI, 0, 0]}>
         <coneGeometry args={[radius, length, 14, 1, true]} />
         <meshBasicMaterial color={color} toneMapped={false} transparent opacity={0.85} depthWrite={false} side={THREE.DoubleSide} />
@@ -201,18 +216,20 @@ function Beacon({ colors, position }: { colors: RobotColors; position: V3 }) {
 }
 
 /** The crew's jet pack: a pack in the slot color, the slot number, two big nozzles. Mount it on the back. */
-function JetPack({ colors, on, number, width = 0.34 }: { colors: RobotColors; on: boolean; number: number; width?: number }) {
+function JetPack({ colors, pose, number, width = 0.34 }: { colors: RobotColors; pose: RobotPose; number: number; width?: number }) {
+  const ref = useRef<THREE.Group>(null);
   const nozzle = width * 0.3;
+  useFrame(() => { if (ref.current) ref.current.visible = !pose.driving; });
   return (
-    <group>
+    <group ref={ref} name="robot-jetpack">
       <Panel size={[width, 0.38, 0.17]} color={colors.paint} radius={0.04} />
       <Panel size={[width + 0.02, 0.06, 0.19]} color={colors.trim} radius={0.015} position={[0, 0.13, 0]} />
       <NumberDecal digit={number} cell={0.02} position={[0, -0.02, -0.088]} rotation={[0, Math.PI, 0]} />
       {[-nozzle, nozzle].map((x) => (
         <group key={x} position={[x, -0.23, 0]}>
           <mesh><cylinderGeometry args={[0.07, 0.095, 0.13, 14]} /><Toon color={INK} /></mesh>
-          <mesh position={[0, -0.05, 0]}><cylinderGeometry args={[0.055, 0.055, 0.04, 14, 1, true]} /><Glow color={on ? colors.flame : STEEL_DARK} /></mesh>
-          <group position={[0, -0.07, 0]}><Flame on={on} color={colors.flame} /></group>
+          <mesh position={[0, -0.05, 0]}><cylinderGeometry args={[0.055, 0.055, 0.04, 14, 1, true]} /><Glow color={colors.flame} /></mesh>
+          <group position={[0, -0.07, 0]}><Flame pose={pose} color={colors.flame} /></group>
         </group>
       ))}
     </group>
@@ -220,17 +237,31 @@ function JetPack({ colors, on, number, width = 0.34 }: { colors: RobotColors; on
 }
 
 /** The held tool, pointing +Z: a glowing barrel and a big tip ring, readable at range. */
-function Tool({ tool }: { tool: RobotPose['tool'] }) {
-  const tip = tool === 'torch' ? '#ff8a3c' : '#5fe0ff';
+function Tool({ pose, design }: { pose: RobotPose; design: RobotId }) {
+  const ref = useRef<THREE.Group>(null);
+  const glow = useRef<THREE.MeshBasicMaterial>(null);
+  const rotation = useMemo(() => ({ euler: new THREE.Euler(), tilt: new THREE.Quaternion(), aim: new THREE.Quaternion() }), []);
+  const material = useMemo(() => new THREE.MeshBasicMaterial({ color: '#5fe0ff', toneMapped: false }), []);
+  useLayoutEffect(() => () => material.dispose(), [material]);
+  useFrame(() => {
+    if (ref.current) {
+      ref.current.visible = !pose.driving;
+      const [x, z] = robotBodyTilt(design, pose.time);
+      rotation.tilt.setFromEuler(rotation.euler.set(x, 0, z));
+      rotation.aim.setFromEuler(rotation.euler.set(-pose.pitch, 0, 0));
+      ref.current.quaternion.copy(rotation.tilt.invert().multiply(rotation.aim));
+    }
+    if (glow.current) glow.current.color.set(pose.tool === 'torch' ? '#ff8a3c' : '#5fe0ff');
+  });
   return (
-    <group>
+    <group ref={ref} name="robot-held-tool">
       <Panel size={[0.1, 0.12, 0.3]} color={STEEL_DARK} radius={0.025} />
       <Panel size={[0.06, 0.14, 0.07]} color={INK} radius={0.015} position={[0, -0.1, -0.07]} rotation={[0.3, 0, 0]} />
-      <mesh position={[0, 0.065, 0.02]}><boxGeometry args={[0.03, 0.012, 0.2]} /><Glow color={tip} /></mesh>
+      <mesh position={[0, 0.065, 0.02]}><boxGeometry args={[0.03, 0.012, 0.2]} /><primitive ref={glow} object={material} attach="material" /></mesh>
       <group position={[0, 0, 0.17]}>
         <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.04, 0.05, 0.1, 14]} /><Toon color={STEEL} /></mesh>
-        <mesh position={[0, 0, 0.06]}><torusGeometry args={[0.04, 0.013, 8, 20]} /><Glow color={tip} /></mesh>
-        <mesh position={[0, 0, 0.05]}><sphereGeometry args={[0.026, 12, 12]} /><Glow color={tip} /></mesh>
+        <mesh name="robot-tool-tip" position={[0, 0, 0.06]}><torusGeometry args={[0.04, 0.013, 8, 20]} /><primitive ref={glow} object={material} attach="material" /></mesh>
+        <mesh position={[0, 0, 0.05]}><sphereGeometry args={[0.026, 12, 12]} /><primitive ref={glow} object={material} attach="material" /></mesh>
       </group>
     </group>
   );
@@ -318,8 +349,8 @@ export function ScrapperBot({ colors, pose, number = 1 }: { colors: RobotColors;
   const antenna = useRef<THREE.Group>(null);
   useFrame(() => {
     const t = pose.time;
-    if (wheel.current) wheel.current.rotation.x = t * 2.4;
-    if (body.current) body.current.rotation.x = Math.sin(t * 1.6) * 0.04 - 0.04;
+    if (wheel.current) wheel.current.rotation.x = pose.travel / 0.3;
+    if (body.current) body.current.rotation.x = robotBodyTilt('scrapper', t)[0];
     // The shutter drops over the lens to blink, and sits half shut now and then (a squint).
     // Blink: the pupil squashes shut; a squint now and then tips the lid hood down.
     const blink = (t % 3.7) < 0.16;
@@ -333,7 +364,7 @@ export function ScrapperBot({ colors, pose, number = 1 }: { colors: RobotColors;
     <group>
       {/* Wheel: wide tire, tread blocks, hub disc in the slot color with a bolt ring */}
       <group position={[0, 0.3, 0]}>
-        <group ref={wheel}>
+        <group name="robot-wheel" ref={wheel}>
           <mesh rotation={[0, Math.PI / 2, 0]} castShadow scale={[1, 1, 1.35]}><torusGeometry args={[0.21, 0.09, 14, 30]} /><Toon color={INK} /></mesh>
           {[-0.115, 0.115].map((x) => (
             <mesh key={x} position={[x, 0, 0]} rotation={[0, Math.PI / 2, 0]}><torusGeometry args={[0.215, 0.014, 6, 30]} /><Toon color={colors.paint} /></mesh>
@@ -368,7 +399,7 @@ export function ScrapperBot({ colors, pose, number = 1 }: { colors: RobotColors;
           <mesh rotation={[Math.PI / 2, 0, 0]} castShadow><cylinderGeometry args={[0.18, 0.19, 0.08, 30]} /><Toon color={STEEL_DARK} /></mesh>
           <mesh position={[0, 0, 0.045]}><torusGeometry args={[0.145, 0.024, 10, 30]} /><Toon color={colors.trim} /></mesh>
           <mesh position={[0, 0, 0.04]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.13, 0.13, 0.01, 30]} /><Toon color={INK} /></mesh>
-          <mesh ref={pupil} position={[0, 0, 0.05]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.075, 0.075, 0.012, 26]} /><Glow color={colors.glow} /></mesh>
+          <mesh name="robot-eyes" ref={pupil} position={[0, 0, 0.05]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.075, 0.075, 0.012, 26]} /><Glow color={colors.glow} /></mesh>
           <mesh position={[0.04, 0.04, 0.058]}><sphereGeometry args={[0.016, 8, 8]} /><Glow color="#ffffff" /></mesh>
           {/* Lid hood: a steel half-shell over the top of the lens */}
           <group ref={lid} position={[0, 0, 0.05]}>
@@ -384,12 +415,12 @@ export function ScrapperBot({ colors, pose, number = 1 }: { colors: RobotColors;
           <Beacon colors={colors} position={[0, 0.27, 0]} />
         </group>
         <Arm shoulder={[RIGHT * 0.31, 0.47, 0.02]} elbow={[RIGHT * 0.4, 0.28, 0.1]} wrist={[RIGHT * 0.38, 0.24, 0.24]} colors={colors}>
-          <Tool tool={pose.tool} />
+          <Tool pose={pose} design="scrapper" />
         </Arm>
         <Arm shoulder={[LEFT * 0.31, 0.47, 0.02]} elbow={[LEFT * 0.42, 0.27, 0.06]} wrist={[LEFT * 0.4, 0.12, 0.16]} colors={colors}>
           <Group rotation={[-0.6, 0, 0]}><Claw color={colors.trim} /></Group>
         </Arm>
-        <Group position={[0, 0.38, -0.29]}><JetPack colors={colors} on={pose.jet} number={number} /></Group>
+        <Group position={[0, 0.38, -0.29]}><JetPack colors={colors} pose={pose} number={number} /></Group>
       </group>
     </group>
   );
@@ -405,6 +436,7 @@ export function DrumBot({ colors, pose, number = 2 }: { colors: RobotColors; pos
   useFrame(() => {
     const t = pose.time;
     if (scope.current) {
+      scope.current.rotation.x = -pose.pitch;
       scope.current.rotation.y = Math.sin(t * 0.7) * 0.5;
       scope.current.position.y = 0.06 + Math.max(0, Math.sin(t * 1.9)) * 0.02;
     }
@@ -454,11 +486,11 @@ export function DrumBot({ colors, pose, number = 2 }: { colors: RobotColors; pos
             ))}
             <Joint position={[side * 0.23, -0.2, 0.17]} radius={0.05} color={colors.paint} />
             {side === RIGHT
-              ? <Group position={[side * 0.25, -0.2, 0.28]}><Tool tool={pose.tool} /></Group>
+              ? <Group position={[side * 0.25, -0.2, 0.28]}><Tool pose={pose} design="drum" /></Group>
               : <Group position={[side * 0.24, -0.25, 0.19]} rotation={[-0.5, 0, 0]}><Claw color={colors.trim} open={0.5} /></Group>}
           </group>
         ))}
-        <Group position={[0, 0.05, -0.4]}><JetPack colors={colors} on={pose.jet} number={number} /></Group>
+        <Group position={[0, 0.05, -0.4]}><JetPack colors={colors} pose={pose} number={number} /></Group>
         {/* Periscope: a big head with a hood and one large lens */}
         <group ref={scope} position={[0, 0.06, 0]}>
           <mesh position={[0, 0.45, 0]}><cylinderGeometry args={[0.055, 0.065, 0.24, 14]} /><Toon color={STEEL_DARK} /></mesh>
@@ -466,7 +498,7 @@ export function DrumBot({ colors, pose, number = 2 }: { colors: RobotColors; pos
           <Panel size={[0.3, 0.24, 0.32]} color={colors.paint} radius={0.06} position={[0, 0.66, 0.06]} />
           <Panel size={[0.32, 0.035, 0.17]} color={colors.trim} radius={0.015} position={[0, 0.785, 0.15]} rotation={[0.28, 0, 0]} />
           <mesh position={[0, 0.65, 0.225]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.1, 0.11, 0.05, 24]} /><Toon color={INK} /></mesh>
-          <mesh ref={lens} position={[0, 0.65, 0.252]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.072, 0.072, 0.008, 24]} /><Glow color={colors.glow} /></mesh>
+          <mesh name="robot-eyes" ref={lens} position={[0, 0.65, 0.252]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.072, 0.072, 0.008, 24]} /><Glow color={colors.glow} /></mesh>
           <mesh position={[0.03, 0.68, 0.258]}><sphereGeometry args={[0.014, 8, 8]} /><Glow color="#ffffff" /></mesh>
           <Beacon colors={colors} position={[0, 0.8, -0.06]} />
         </group>
@@ -485,8 +517,15 @@ const LED_EYES: Record<'open' | 'blink' | 'happy', readonly string[]> = {
 };
 
 /** A track: the belt wraps two end wheels and the road wheels; a guard in the slot color on top. */
-function Track({ side, phase, colors }: { side: number; phase: number; colors: RobotColors }) {
+function Track({ side, pose, colors }: { side: number; pose: RobotPose; colors: RobotColors }) {
   const bars = 14;
+  const belt = useRef<THREE.Group>(null);
+  useFrame(() => {
+    belt.current?.children.forEach((bar, index) => {
+      const u = ((index + pose.travel * bars / 0.54) % bars + bars) % bars / bars;
+      bar.position.z = -0.27 + u * 0.54;
+    });
+  });
   return (
     <group position={[side * 0.26, 0, 0]}>
       <Panel size={[0.17, 0.26, 0.6]} color={INK} radius={0.12} position={[0, 0.14, 0]} />
@@ -496,9 +535,11 @@ function Track({ side, phase, colors }: { side: number; phase: number; colors: R
           <Bolt position={[side * 0.012, 0, 0]} rotation={[0, 0, Math.PI / 2]} size={0.015} />
         </group>
       ))}
-      {Array.from({ length: bars }, (_, i) => ((i + phase) % bars) / bars).map((u, i) => (
+      <group name="robot-track-belt" ref={belt}>
+      {Array.from({ length: bars }, (_, i) => i / bars).map((u, i) => (
         <Panel key={i} size={[0.175, 0.02, 0.03]} color={STEEL_DARK} radius={0.006} position={[0, 0.275, -0.27 + u * 0.54]} />
       ))}
+      </group>
       <Panel size={[0.2, 0.035, 0.5]} color={colors.trim} radius={0.012} position={[0, 0.31, 0]} />
       <Panel size={[0.02, 0.1, 0.5]} color={colors.paint} radius={0.008} position={[side * 0.1, 0.245, 0]} />
     </group>
@@ -508,20 +549,22 @@ function Track({ side, phase, colors }: { side: number; phase: number; colors: R
 export function TreadBot({ colors, pose, number = 3 }: { colors: RobotColors; pose: RobotPose; number?: number }) {
   const head = useRef<THREE.Group>(null);
   const hook = useRef<THREE.Group>(null);
-  const t = pose.time;
-  const face: keyof typeof LED_EYES = (t % 3.4) < 0.14 ? 'blink' : (t % 9) > 7 ? 'happy' : 'open';
+  const eyesRef = useRef<THREE.Group>(null);
   useFrame(() => {
+    const t = pose.time;
+    const face = (t % 3.4) < 0.14 ? 'blink' : (t % 9) > 7 ? 'happy' : 'open';
+    eyesRef.current?.children.forEach(group => { group.visible = group.name === face; });
     if (head.current) {
+      head.current.rotation.x = -pose.pitch;
       head.current.rotation.z = Math.sin(t * 0.9) * 0.06;
       head.current.rotation.y = Math.sin(t * 0.5) * 0.15;
     }
     if (hook.current) hook.current.rotation.x = Math.sin(t * 1.7) * 0.18;
   });
-  const eyes = LED_EYES[face];
   return (
     <group>
-      <Track side={RIGHT} phase={(t * 3) % 14} colors={colors} />
-      <Track side={LEFT} phase={(t * 3) % 14} colors={colors} />
+      <Track side={RIGHT} pose={pose} colors={colors} />
+      <Track side={LEFT} pose={pose} colors={colors} />
       {/* Hull, torso, the crew's hazard belt, chest number */}
       <Panel size={[0.36, 0.14, 0.46]} color={STEEL_DARK} position={[0, 0.36, 0]} />
       <Panel size={[0.54, 0.44, 0.4]} color={colors.paint} radius={0.055} position={[0, 0.64, 0]} />
@@ -539,13 +582,15 @@ export function TreadBot({ colors, pose, number = 3 }: { colors: RobotColors; po
         {[-0.05, 0, 0.05].map((y) => <Panel key={y} size={[0.2, 0.018, 0.01]} color={INK} radius={0.004} position={[0, y, -0.315]} />)}
         <Panel size={[0.53, 0.35, 0.06]} color={STEEL_DARK} radius={0.05} position={[0, 0, 0.14]} />
         <Panel size={[0.47, 0.29, 0.03]} color={INK} radius={0.04} position={[0, 0, 0.16]} />
-        <group position={[0, 0.005, 0.178]}>
+        <group name="robot-eyes" ref={eyesRef} position={[0, 0.005, 0.178]}>
+          {Object.entries(LED_EYES).map(([face, eyes]) => <group key={face} name={face}>
           {eyes.flatMap((row, y) => [...row].map((cell, x) => cell === '#' ? (
             <mesh key={`${x}-${y}`} position={[(x - 4.5) * 0.042, (1.5 - y) * 0.047, 0]}>
               <boxGeometry args={[0.035, 0.039, 0.008]} />
               <Glow color={colors.glow} />
             </mesh>
           ) : null))}
+          </group>)}
         </group>
         {[RIGHT, LEFT].map((side) => (
           <group key={side}>
@@ -559,7 +604,7 @@ export function TreadBot({ colors, pose, number = 3 }: { colors: RobotColors; po
       {/* Right arm holds the tool */}
       <Panel size={[0.13, 0.13, 0.15]} color={STEEL_DARK} radius={0.03} position={[RIGHT * 0.33, 0.74, 0]} />
       <Arm shoulder={[RIGHT * 0.36, 0.72, 0.04]} elbow={[RIGHT * 0.4, 0.55, 0.12]} wrist={[RIGHT * 0.38, 0.52, 0.26]} colors={colors}>
-        <Tool tool={pose.tool} />
+        <Tool pose={pose} design="tread" />
       </Arm>
       {/* Left arm: a crane boom with a pulley and a hook */}
       <Panel size={[0.13, 0.13, 0.15]} color={STEEL_DARK} radius={0.03} position={[LEFT * 0.33, 0.74, 0]} />
@@ -571,7 +616,7 @@ export function TreadBot({ colors, pose, number = 3 }: { colors: RobotColors; po
           <mesh position={[0, -0.34, 0]} rotation={[0, Math.PI / 2, 0]}><torusGeometry args={[0.04, 0.012, 6, 14, Math.PI * 1.5]} /><Toon color={STEEL_DARK} /></mesh>
         </group>
       </group>
-      <Group position={[0, 0.66, -0.29]}><JetPack colors={colors} on={pose.jet} number={number} width={0.46} /></Group>
+      <Group position={[0, 0.66, -0.29]}><JetPack colors={colors} pose={pose} number={number} width={0.46} /></Group>
     </group>
   );
 }
@@ -583,21 +628,23 @@ export function HoverBot({ colors, pose, number = 4 }: { colors: RobotColors; po
   const body = useRef<THREE.Group>(null);
   const mask = useRef<THREE.Group>(null);
   const slit = useRef<THREE.Mesh>(null);
+  const groundGlow = useRef<THREE.MeshBasicMaterial>(null);
   useFrame(() => {
     const t = pose.time;
+    if (groundGlow.current) groundGlow.current.opacity = pose.driving ? 0 : pose.jet ? 0.5 : 0.32;
     if (body.current) {
       body.current.position.y = 0.86 + Math.sin(t * 2.1) * 0.05;
-      body.current.rotation.z = Math.sin(t * 1.3) * 0.04;
+      body.current.rotation.z = robotBodyTilt('hover', t)[1];
     }
     // The mask flips up now and then, like a welder checking the work.
-    if (mask.current) mask.current.rotation.x = (t % 8) > 6.5 ? -1.0 : 0;
+    if (mask.current) mask.current.rotation.x = pose.tool === 'torch' ? 0 : (t % 8) > 6.5 ? -1.0 : 0;
     if (slit.current) slit.current.scale.y = 0.9 + 0.1 * Math.sin(t * 13);
   });
   return (
     <group>
       <mesh position={[0, 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.48, 30]} />
-        <meshBasicMaterial color={colors.flame} transparent opacity={pose.jet ? 0.5 : 0.32} toneMapped={false} depthWrite={false} />
+        <meshBasicMaterial ref={groundGlow} color={colors.flame} transparent opacity={0.32} toneMapped={false} depthWrite={false} />
       </mesh>
       <group ref={body} position={[0, 0.86, 0]}>
         {/* Split shell: top in paint, belly in trim, the crew's hazard belt, a light rim band */}
@@ -625,7 +672,7 @@ export function HoverBot({ colors, pose, number = 4 }: { colors: RobotColors; po
               <mesh position={[0, 0.335, 0]}><cylinderGeometry args={[0.338, 0.338, 0.03, 64, 1, true, -0.88, 1.76]} /><Toon color={STEEL_DARK} side={THREE.DoubleSide} /></mesh>
               <mesh position={[0, 0.045, 0]}><cylinderGeometry args={[0.4, 0.4, 0.03, 64, 1, true, -0.88, 1.76]} /><Toon color={STEEL_DARK} side={THREE.DoubleSide} /></mesh>
               {/* Glowing slit that follows the curve */}
-              <mesh ref={slit} position={[0, 0.2, 0]}><cylinderGeometry args={[0.366, 0.37, 0.065, 48, 1, true, -0.55, 1.1]} /><meshBasicMaterial color={colors.glow} toneMapped={false} side={THREE.DoubleSide} /></mesh>
+              <mesh name="robot-eyes" ref={slit} position={[0, 0.2, 0]}><cylinderGeometry args={[0.366, 0.37, 0.065, 48, 1, true, -0.55, 1.1]} /><meshBasicMaterial color={colors.glow} toneMapped={false} side={THREE.DoubleSide} /></mesh>
             </group>
           </group>
         </group>
@@ -641,7 +688,7 @@ export function HoverBot({ colors, pose, number = 4 }: { colors: RobotColors; po
         <group position={[0, -0.38, 0]}>
           <mesh><cylinderGeometry args={[0.26, 0.22, 0.06, 28]} /><Toon color={STEEL_DARK} /></mesh>
           <mesh position={[0, -0.03, 0]}><cylinderGeometry args={[0.1, 0.12, 0.06, 18]} /><Toon color={INK} /></mesh>
-          <group position={[0, -0.06, 0]}><Flame on={pose.jet} color={colors.flame} length={0.7} radius={0.1} /></group>
+          <group position={[0, -0.06, 0]}><Flame pose={pose} color={colors.flame} length={0.7} radius={0.1} /></group>
           <mesh position={[0, -0.062, 0]} rotation={[Math.PI / 2, 0, 0]}><circleGeometry args={[0.09, 18]} /><Glow color={colors.flame} /></mesh>
           {[0, 1, 2, 3].map((i) => {
             const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
@@ -650,14 +697,14 @@ export function HoverBot({ colors, pose, number = 4 }: { colors: RobotColors; po
                 <mesh><cylinderGeometry args={[0.05, 0.06, 0.08, 12]} /><Toon color={INK} /></mesh>
                 {/* Idle: the nozzle glows; jetting: a flame */}
                 <mesh position={[0, -0.041, 0]} rotation={[Math.PI / 2, 0, 0]}><circleGeometry args={[0.04, 14]} /><Glow color={colors.flame} /></mesh>
-                <group position={[0, -0.04, 0]}><Flame on={pose.jet} color={colors.flame} length={0.45} radius={0.045} /></group>
+                <group position={[0, -0.04, 0]}><Flame pose={pose} color={colors.flame} length={0.45} radius={0.045} /></group>
               </group>
             );
           })}
         </group>
         {/* Floating arms: tool (right), claw (left) */}
         <Arm shoulder={[RIGHT * 0.38, -0.04, 0.08]} elbow={[RIGHT * 0.45, -0.14, 0.17]} wrist={[RIGHT * 0.44, -0.16, 0.3]} colors={colors}>
-          <Tool tool={pose.tool} />
+          <Tool pose={pose} design="hover" />
         </Arm>
         <Arm shoulder={[LEFT * 0.38, -0.04, 0.08]} elbow={[LEFT * 0.46, -0.17, 0.14]} wrist={[LEFT * 0.46, -0.27, 0.22]} colors={colors}>
           <Group rotation={[-0.6, 0, 0]}><Claw color={colors.trim} /></Group>
@@ -668,16 +715,10 @@ export function HoverBot({ colors, pose, number = 4 }: { colors: RobotColors; po
 }
 
 export const ROBOT_DESIGNS = [
-  { id: 'scrapper', name: 'Scrapper', note: 'One wheel, camera eye with a shutter', Component: ScrapperBot },
-  { id: 'drum', name: 'Drum-Bot', note: 'Oil drum on hydraulic legs, periscope head', Component: DrumBot },
-  { id: 'tread', name: 'Tread-Bot', note: 'Tracks, CRT head with LED eyes, crane arm', Component: TreadBot },
-  { id: 'hover', name: 'Hover-Welder', note: 'Floating shell, flip-up welder mask', Component: HoverBot },
+  { ...ROBOT_SLOTS[0], Component: ScrapperBot },
+  { ...ROBOT_SLOTS[1], Component: DrumBot },
+  { ...ROBOT_SLOTS[2], Component: TreadBot },
+  { ...ROBOT_SLOTS[3], Component: HoverBot },
 ] as const;
 
-/** The four player slots: orange, teal, yellow, crimson, spread apart in hue for the dusk light. */
-export const ROBOT_PALETTES: readonly RobotColors[] = [
-  { paint: '#e07a2c', trim: '#8a4218', glow: '#ffd66b', flame: '#ff9a3c' },
-  { paint: '#3f8f84', trim: '#245a53', glow: '#7ff7e1', flame: '#3fd0c0' },
-  { paint: '#dcbd45', trim: '#7d6420', glow: '#ffe066', flame: '#ffc04a' },
-  { paint: '#cc3346', trim: '#6e1824', glow: '#ff9aa6', flame: '#ff5a5a' },
-];
+export const ROBOT_PALETTES = ROBOT_DESIGNS.map(design => design.colors);

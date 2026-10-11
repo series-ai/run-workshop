@@ -1,6 +1,11 @@
 import { useFrame } from '@react-three/fiber';
-import { useRef, type MutableRefObject } from 'react';
+import { useMemo, useRef, useState, type MutableRefObject } from 'react';
 import * as THREE from 'three';
+import {
+  portalExitClipPlane3D,
+  portalTransformMatrix3D,
+  type PortalPlane4,
+} from '@series-inc/rundot-syncplay/physics/3d';
 import { makeDemoMaterialParams, makeDemoPalette } from 'voxel-kit';
 import { ART_STYLE, type PaletteKey } from './style/artStyle';
 import { BuggyWheels } from './BuggyWheels';
@@ -12,6 +17,9 @@ import { VoxelVolumeRenderer } from './VoxelVolumeRenderer';
 import type { YardRender } from './presentation';
 import type { WorldOcclusionRuntime } from './OcclusionUpdater';
 import { COLD_AGE, heatAge, heatedBodies, heatGlow, heatOfBody, type BodyHeatLook } from './heatLook';
+import { RETURNS_PAIR } from '../sim/returns';
+import { portalEndClipPlane } from './portalScene';
+import type { VoxelPortalCopy } from './VoxelVolumeRenderer';
 
 /** Heat lights: a fixed pool, so a new scorch never changes the light count (and recompiles shaders). */
 const HEAT_LIGHTS = 3;
@@ -40,22 +48,68 @@ function VoxelBody({ body, renderRef, worldOcclusion }: {
   worldOcclusion: WorldOcclusionRuntime;
 }) {
   const group = useRef<THREE.Group>(null);
+  const copiedWheels = useRef<THREE.Group>(null);
   const heatRef = useRef<BodyHeatLook>({ age: COLD_AGE, at: [0, 0, 0] });
+  const portalClipRef = useRef<PortalPlane4 | null>(null);
+  const wheelCopyClipRef = useRef<PortalPlane4 | null>(null);
+  const portalCopyRef = useRef<VoxelPortalCopy | null>(null);
+  const portalPieces = useMemo(() => {
+    const ends = ['A', 'B'] as const;
+    const entryClip: Record<(typeof ends)[number], PortalPlane4> = {
+      A: portalEndClipPlane('A'),
+      B: portalEndClipPlane('B'),
+    };
+    const copy: Record<(typeof ends)[number], VoxelPortalCopy> = {} as Record<(typeof ends)[number], VoxelPortalCopy>;
+    for (const end of ends) {
+      const exitPlane = portalExitClipPlane3D(RETURNS_PAIR, end);
+      copy[end] = {
+        transform: new THREE.Matrix4().fromArray(portalTransformMatrix3D(RETURNS_PAIR, end)),
+        // Show the source half that extends through the exit.
+        clipPlane: exitPlane,
+      };
+    }
+    return { copy, entryClip };
+  }, []);
 
   useFrame(() => {
     const render = renderRef.current;
     const heat = render ? heatOfBody(render.bodies, body.id) : null;
     heatRef.current.age = render ? heatAge(render.frame, heat) : COLD_AGE;
     if (heat) heatRef.current.at = [heat.at[0], heat.at[1], heat.at[2]];
+
+    const straddler = render?.portalStraddlers?.find(
+      (entry) => entry.bodyId === body.id && entry.pairId === RETURNS_PAIR.id,
+    );
+    const portalCopy = straddler ? portalPieces.copy[straddler.end] : null;
+    portalClipRef.current = straddler ? portalPieces.entryClip[straddler.end] : null;
+    portalCopyRef.current = portalCopy;
+    wheelCopyClipRef.current = portalCopy?.clipPlane ?? null;
+
     const pose = render?.poses.get(body.id);
     if (!pose || !group.current) return;
     group.current.position.set(pose.position[0], pose.position[1], pose.position[2]);
     group.current.quaternion.set(pose.rotation[0], pose.rotation[1], pose.rotation[2], pose.rotation[3]);
+    group.current.updateMatrix();
+    group.current.updateWorldMatrix(true, true);
+
+    if (copiedWheels.current) {
+      copiedWheels.current.visible = Boolean(portalCopy && body.id === 'vehicle-chassis');
+      if (portalCopy) {
+        copiedWheels.current.matrix.copy(group.current.matrixWorld).invert()
+          .multiply(portalCopy.transform)
+          .multiply(group.current.matrixWorld);
+      }
+    }
   });
 
   return (
     <group ref={group}>
-      {body.id === 'vehicle-chassis' && <BuggyWheels renderRef={renderRef} />}
+      {body.id === 'vehicle-chassis' && <BuggyWheels renderRef={renderRef} clipPlaneRef={portalClipRef} />}
+      {body.id === 'vehicle-chassis' && (
+        <group ref={copiedWheels} matrixAutoUpdate={false} visible={false}>
+          <BuggyWheels renderRef={renderRef} clipPlaneRef={wheelCopyClipRef} />
+        </group>
+      )}
       <VoxelVolumeRenderer
         dims={body.dims}
         voxels={body.voxels}
@@ -64,6 +118,9 @@ function VoxelBody({ body, renderRef, worldOcclusion }: {
         voxelSize={VOXEL_SIZE}
         heatRef={heatRef}
         worldOcclusion={worldOcclusion}
+        portalClipRef={portalClipRef}
+        portalCopyRef={portalCopyRef}
+        portalStraddlerOnly={body.renderModel === 'shipping-crate'}
       />
     </group>
   );
@@ -115,17 +172,33 @@ export function VoxelBodies({ bodies, renderRef, worldOcclusion }: {
   renderRef: MutableRefObject<YardRender | null>;
   worldOcclusion: WorldOcclusionRuntime;
 }) {
+  const [straddlingIds, setStraddlingIds] = useState<ReadonlySet<string>>(() => new Set());
+  const lastStraddlingIds = useRef('');
+  useFrame(() => {
+    const ids = (renderRef.current?.portalStraddlers ?? [])
+      .filter((entry) => entry.pairId === RETURNS_PAIR.id)
+      .map((entry) => entry.bodyId)
+      .sort();
+    const key = ids.join('\u0000');
+    if (key !== lastStraddlingIds.current) {
+      lastStraddlingIds.current = key;
+      setStraddlingIds(new Set(ids));
+    }
+  });
+
   return (
     <>
       <HeatLights renderRef={renderRef} />
-      {bodies.map((body) => (
-        <VoxelBody
-          key={body.id}
-          body={body}
-          renderRef={renderRef}
-          worldOcclusion={worldOcclusion}
-        />
-      ))}
+      {bodies.map((body) => body.renderModel === 'shipping-crate' && !straddlingIds.has(body.id)
+        ? null
+        : (
+          <VoxelBody
+            key={body.id}
+            body={body}
+            renderRef={renderRef}
+            worldOcclusion={worldOcclusion}
+          />
+        ))}
     </>
   );
 }

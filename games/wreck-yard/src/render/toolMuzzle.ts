@@ -1,5 +1,5 @@
 import type * as THREE from 'three';
-import { PLAYER_EYE_OFFSET } from '../sim/constants';
+import { ROBOT_SLOTS, ROBOT_TOOL_LENGTH } from './avatars/robotSlots';
 import type { PlayerRenderPose } from './presentation';
 
 /**
@@ -38,11 +38,11 @@ export function toolMuzzleAndAim(
   }
   const cosPitch = Math.cos(player.pitch);
   aim.set(-Math.sin(player.yaw) * cosPitch, Math.sin(player.pitch), -Math.cos(player.yaw) * cosPitch);
-  const rightX = Math.cos(player.yaw);
-  const rightZ = -Math.sin(player.yaw);
+  const [x, y, z] = ROBOT_SLOTS[player.slot]!.toolGrip;
+  const heading = player.yaw + Math.PI;
   muzzle.set(
-    player.position[0] + aim.x * 0.5 + rightX * 0.25,
-    player.position[1] + PLAYER_EYE_OFFSET - 0.2 + aim.y * 0.5,
-    player.position[2] + aim.z * 0.5 + rightZ * 0.25,
+    player.position[0] + x * Math.cos(heading) + z * Math.sin(heading) + aim.x * ROBOT_TOOL_LENGTH,
+    player.position[1] + y + aim.y * ROBOT_TOOL_LENGTH,
+    player.position[2] - x * Math.sin(heading) + z * Math.cos(heading) + aim.z * ROBOT_TOOL_LENGTH,
   );
 }

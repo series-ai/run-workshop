@@ -66,7 +66,8 @@ export function AtmosphereDust() {
   useFrame(({ camera, clock }, delta) => {
     if (!meshRef.current) return;
 
-    const time = clock.getElapsedTime();
+    // R3F advances this clock once per frame. Read it without another delta.
+    const time = clock.elapsedTime;
     camera.getWorldDirection(viewDir);
     // Forward scattering peak when looking toward the sun
     const sunDot = Math.max(0, viewDir.dot(sunDir));

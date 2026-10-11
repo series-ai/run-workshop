@@ -7,6 +7,8 @@ import { COLD_AGE, HEAT_GLSL, type BodyHeatLook } from './heatLook';
 import { ART_STYLE, YARD_LIGHTING } from './style/artStyle';
 import { toonGlsl } from './style/toonGlsl';
 import { isMobileDevice } from './DynamicDpr';
+import type { PortalPlane4 } from '@series-inc/rundot-syncplay/physics/3d';
+import { markPortalViewClipMaterial, type PortalViewClipUniforms } from './portalScene';
 
 type MeshSurfaceProps = Omit<ThreeElements['mesh'], 'args' | 'material' | 'position' | 'scale'>;
 type VoxelDims = { x: number; y: number; z: number };
@@ -36,7 +38,40 @@ export type VoxelVolumeRendererProps = MeshSurfaceProps & {
     max: [number, number, number];
     sunDirection?: [number, number, number];
   };
+  /** Keep only the positive half-space of this plane while this body straddles a portal. */
+  portalClipRef?: { readonly current: PortalPlane4 | null };
+  /** A clipped copy at the linked end. Geometry and textures stay shared. */
+  portalCopyRef?: { readonly current: VoxelPortalCopy | null };
+  /** Hide the regular model outside a portal crossing. */
+  portalStraddlerOnly?: boolean;
 };
+
+export interface VoxelPortalCopy {
+  readonly transform: THREE.Matrix4;
+  readonly clipPlane: PortalPlane4;
+}
+
+function setObjectClip(material: THREE.RawShaderMaterial, plane: PortalPlane4 | null): void {
+  const uniforms = material.uniforms;
+  const enabled = plane ? 1 : 0;
+  const vector = uniforms.uObjectClipPlane!.value as THREE.Vector4;
+  let changed = uniforms.uObjectClipEnabled!.value !== enabled;
+  uniforms.uObjectClipEnabled!.value = enabled;
+  if (plane) {
+    changed ||= vector.x !== plane[0] || vector.y !== plane[1] || vector.z !== plane[2] || vector.w !== plane[3];
+    vector.set(plane[0], plane[1], plane[2], plane[3]);
+  }
+  if (changed) material.uniformsNeedUpdate = true;
+}
+
+function setViewClip(material: THREE.RawShaderMaterial): PortalViewClipUniforms {
+  const uniforms: PortalViewClipUniforms = {
+    enabled: material.uniforms.uPortalViewClipEnabled!,
+    plane: material.uniforms.uPortalViewClipPlane!,
+  };
+  markPortalViewClipMaterial(material, uniforms);
+  return uniforms;
+}
 
 export function VoxelVolumeRenderer({
   dims,
@@ -47,11 +82,14 @@ export function VoxelVolumeRenderer({
   position = [0, 0, 0],
   heatRef,
   worldOcclusion,
+  portalClipRef,
+  portalCopyRef,
+  portalStraddlerOnly = false,
   ...meshProps
 }: VoxelVolumeRendererProps) {
   const isWebGL2 = useThree((state) => state.gl.capabilities.isWebGL2);
 
-  const { emptyWorldTex, macroVoxelTex, material, materialParamsTex, paletteTex, scale, voxelTex } = useMemo(() => {
+  const { emptyWorldTex, geometry, macroVoxelTex, material, materialParamsTex, paletteTex, portalMaterial, scale, voxelTex } = useMemo(() => {
     if (!isWebGL2) {
       throw new Error('VoxelVolumeRenderer requires WebGL2 for Data3DTexture support.');
     }
@@ -155,6 +193,10 @@ export function VoxelVolumeRenderer({
     uniform float uHeatAge;
     uniform vec3 uHeatCenter;
     uniform vec3 uBurntColor;
+    uniform float uObjectClipEnabled;
+    uniform vec4 uObjectClipPlane;
+    uniform float uPortalViewClipEnabled;
+    uniform vec4 uPortalViewClipPlane;
     uniform vec3 cameraPosition;
     uniform mat4 modelMatrix;
     uniform mat4 viewMatrix;
@@ -198,6 +240,21 @@ export function VoxelVolumeRenderer({
         entryNormal = vec3(0.0, 0.0, -sign(rd.z));
       }
       return true;
+    }
+
+    bool clipRayInterval(inout float tStart, inout float tEnd, vec3 ro, vec3 rd, vec4 plane) {
+      vec3 worldOrigin = (modelMatrix * vec4(ro, 1.0)).xyz;
+      vec3 worldDirection = mat3(modelMatrix) * rd;
+      float originDistance = dot(plane.xyz, worldOrigin) + plane.w;
+      float directionDistance = dot(plane.xyz, worldDirection);
+      if (abs(directionDistance) < 1e-7) return originDistance >= 0.0;
+      float planeHit = -originDistance / directionDistance;
+      if (directionDistance > 0.0) {
+        tStart = max(tStart, planeHit);
+      } else {
+        tEnd = min(tEnd, planeHit);
+      }
+      return tStart <= tEnd;
     }
 
     bool isMacroEmpty(ivec3 cell) {
@@ -297,11 +354,19 @@ export function VoxelVolumeRenderer({
         discard;
       }
 
-      // Convert ray to voxel coordinate space [0, uDims]
+      float tStart = max(0.0, tEntry);
+      float tEnd = tExit;
+      if (uObjectClipEnabled > 0.5 && !clipRayInterval(tStart, tEnd, ro, rd, uObjectClipPlane)) {
+        discard;
+      }
+      if (uPortalViewClipEnabled > 0.5 && !clipRayInterval(tStart, tEnd, ro, rd, uPortalViewClipPlane)) {
+        discard;
+      }
+      if (tStart > tEnd) discard;
+
+      // Clip the raw voxel ray before DDA because this shader writes depth.
       vec3 roVox = (ro + 0.5) * uDims;
       vec3 rdVox = rd * uDims;
-
-      float tStart = max(0.0, tEntry);
       vec3 p = roVox + rdVox * (tStart + 1e-5);
       ivec3 cell = ivec3(clamp(floor(p), vec3(0.0), uDims - vec3(1.0)));
       vec3 faceNormal = tEntry >= 0.0 ? entryNormal : defaultSurfaceNormal(rd);
@@ -324,6 +389,7 @@ export function VoxelVolumeRenderer({
       float tHit = tStart;
       const int MAX_STEPS = 96;
       for (int i = 0; i < MAX_STEPS; i++) {
+        if (tHit > tEnd + 1e-5) break;
         // Hierarchical macro-occupancy acceleration: leapfrog empty 4x4x4 voxel void blocks
         if (isMacroEmpty(cell)) {
           ivec3 macroIdx = cell / int(uMacroCellSize);
@@ -478,6 +544,10 @@ export function VoxelVolumeRenderer({
         uHeatAge: { value: COLD_AGE },
         uHeatCenter: { value: new THREE.Vector3() },
         uBurntColor: { value: new THREE.Color(ART_STYLE.palette.burnt) },
+        uObjectClipEnabled: { value: 0 },
+        uObjectClipPlane: { value: new THREE.Vector4() },
+        uPortalViewClipEnabled: { value: 0 },
+        uPortalViewClipPlane: { value: new THREE.Vector4() },
       },
       side: THREE.BackSide,
       depthTest: true,
@@ -485,20 +555,29 @@ export function VoxelVolumeRenderer({
     });
 
     // Three.js encodes sRGB only for the default framebuffer. This raw shader must match it.
-    shaderMaterial.onBeforeRender = (renderer) => {
+    const updateOutputColorSpace = (target: THREE.RawShaderMaterial, renderer: THREE.WebGLRenderer) => {
       const outputSRGB = renderer.getRenderTarget() === null ? 1 : 0;
-      if (shaderMaterial.uniforms.uOutputSRGB!.value !== outputSRGB) {
-        shaderMaterial.uniforms.uOutputSRGB!.value = outputSRGB;
-        shaderMaterial.uniformsNeedUpdate = true;
+      if (target.uniforms.uOutputSRGB!.value !== outputSRGB) {
+        target.uniforms.uOutputSRGB!.value = outputSRGB;
+        target.uniformsNeedUpdate = true;
       }
     };
+    shaderMaterial.onBeforeRender = (renderer) => updateOutputColorSpace(shaderMaterial, renderer);
+    setViewClip(shaderMaterial);
+
+    const portalMaterial = shaderMaterial.clone() as THREE.RawShaderMaterial;
+    portalMaterial.onBeforeRender = (renderer) => updateOutputColorSpace(portalMaterial, renderer);
+    setViewClip(portalMaterial);
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
 
     return {
       emptyWorldTex,
+      geometry,
       macroVoxelTex,
       material: shaderMaterial,
       materialParamsTex,
       paletteTex,
+      portalMaterial,
       scale: new THREE.Vector3(dims.x * voxelSize, dims.y * voxelSize, dims.z * voxelSize),
       voxelTex,
     };
@@ -517,7 +596,29 @@ export function VoxelVolumeRenderer({
   useFrame(() => {
     const heat = heatRef?.current;
     material.uniforms.uHeatAge!.value = heat?.age ?? COLD_AGE;
-    if (heat) (material.uniforms.uHeatCenter!.value as THREE.Vector3).set(heat.at[0], heat.at[1], heat.at[2]);
+    portalMaterial.uniforms.uHeatAge!.value = heat?.age ?? COLD_AGE;
+    if (heat) {
+      (material.uniforms.uHeatCenter!.value as THREE.Vector3).set(heat.at[0], heat.at[1], heat.at[2]);
+      (portalMaterial.uniforms.uHeatCenter!.value as THREE.Vector3).set(heat.at[0], heat.at[1], heat.at[2]);
+    }
+    setObjectClip(material, portalClipRef?.current ?? null);
+
+    const copyMesh = portalCopyMesh.current;
+    const baseMesh = baseMeshRef.current;
+    const copy = portalCopyRef?.current ?? null;
+    if (copyMesh && baseMesh) {
+      baseMesh.updateWorldMatrix(true, false);
+      copyMesh.visible = Boolean(copy);
+      setObjectClip(portalMaterial, copy?.clipPlane ?? null);
+      if (copy) {
+        copyMesh.matrix.copy(baseMesh.parent?.matrixWorld ?? new THREE.Matrix4()).invert()
+          .multiply(copy.transform)
+          .multiply(baseMesh.matrixWorld);
+      }
+    }
+    if (portalStraddlerOnly && baseMesh) {
+      baseMesh.visible = (meshProps.visible ?? true) && Boolean(portalClipRef?.current);
+    }
   });
 
   useEffect(() => {
@@ -525,15 +626,29 @@ export function VoxelVolumeRenderer({
       emptyWorldTex.dispose();
       macroVoxelTex.dispose();
       material.dispose();
+      portalMaterial.dispose();
+      geometry.dispose();
       materialParamsTex.dispose();
       voxelTex.dispose();
       paletteTex.dispose();
     };
-  }, [emptyWorldTex, macroVoxelTex, material, materialParamsTex, paletteTex, voxelTex]);
+  }, [emptyWorldTex, geometry, macroVoxelTex, material, materialParamsTex, paletteTex, portalMaterial, voxelTex]);
+
+  const baseMeshRef = useMemo(() => ({ current: null as THREE.Mesh | null }), []);
+  const portalCopyMesh = useMemo(() => ({ current: null as THREE.Mesh | null }), []);
+  const visible = (meshProps.visible ?? true) && (!portalStraddlerOnly || Boolean(portalClipRef?.current));
 
   return (
-    <mesh material={material} scale={scale} position={position} {...meshProps}>
-      <boxGeometry args={[1, 1, 1]} />
-    </mesh>
+    <>
+      <mesh ref={baseMeshRef} geometry={geometry} material={material} scale={scale} position={position} {...meshProps} visible={visible} />
+      <mesh
+        ref={portalCopyMesh}
+        geometry={geometry}
+        material={portalMaterial}
+        matrixAutoUpdate={false}
+        frustumCulled={false}
+        visible={false}
+      />
+    </>
   );
 }

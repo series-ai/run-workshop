@@ -1,3 +1,5 @@
+import { elevatorPanelWithinReach, restackWithinReach, type AttractionRequest, type AttractionCommand } from '../sim/attractions';
+import { queueAttraction } from '../ui/AttractionControls';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
@@ -13,6 +15,7 @@ import { isGameKey, isThrusterHeld, toolForKey, type PlayTool, type UiTool } fro
 import { engageCall, inputLive } from '../game/playGate';
 import type { PlayGateApi } from '../ui/usePlayGate';
 import { applyLook, BUTTONS_UP, ignoreUntilRelease, pausedInput, pressButton } from './pointerMapping';
+import { clearTouchInput, consumeTouchSample, syncTouchWeapon, touchPrimary, TOUCH_LOOK_SENSITIVITY, type TouchInput } from '../ui/touchInput';
 
 /** Radians per pixel: captured mouse look, and drag-to-look. */
 const LOOK_SENSITIVITY = 0.0022;
@@ -44,7 +47,11 @@ export function PointerInput({
   renderRef,
   onBodiesChange,
   gate,
+  touchInput,
+  attractionInput,
 }: {
+  attractionInput?: MutableRefObject<AttractionRequest>;
+  touchInput?: MutableRefObject<TouchInput>;
   controller: MatchController;
   tool: UiTool;
   onToolChange?: (tool: UiTool) => void;
@@ -62,6 +69,7 @@ export function PointerInput({
   const buttons = useRef(BUTTONS_UP);
   /** E or F held: use (buttons, the buggy). The right mouse button is the punt. */
   const keyUse = useRef(false);
+  const lastPortalCounter = useRef<number | undefined>(undefined);
   const lastBuggyYaw = useRef<number | null>(null);
   /** performance.now() of the last mouse look, so the chase camera does not fight the player. */
   const lastLookMs = useRef(-Infinity);
@@ -222,6 +230,10 @@ export function PointerInput({
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.code === 'Escape' && !event.repeat && gateRef.current.state.look === 'drag') {
+        gateRef.current.pause();
+        return;
+      }
       if (event.target instanceof HTMLElement && event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
       if (event.code === 'Space' && event.target instanceof HTMLButtonElement) return;
       if (isGameKey(event.code)) event.preventDefault();
@@ -231,6 +243,21 @@ export function PointerInput({
       }
       // Behind the gate or the pause menu the tool does not change (no "resume with orbit on").
       if (event.repeat || !inputLive(gateRef.current.state)) return;
+      const render = renderRef.current;
+      const player = render?.players.find((p) => p.slot === render.localSlot);
+      if (attractionInput && player && render && !player.ridingVehicle) {
+        const floorKeys = ['KeyG', 'Digit1', 'Digit2', 'Digit3'];
+        const floor = floorKeys.indexOf(event.code);
+        if (floor >= 0 && elevatorPanelWithinReach(player.position, render.attractions.elevator.y)) {
+          event.preventDefault();
+          queueAttraction(attractionInput.current, (floor + 1) as AttractionCommand);
+          return;
+        }
+        if (event.code === 'KeyE' && restackWithinReach(player.position)) {
+          queueAttraction(attractionInput.current, 5);
+          return;
+        }
+      }
       const nextTool = toolForKey(event.code, tool, lastPlayTool.current);
       if (nextTool) onToolChange?.(nextTool);
     };
@@ -246,11 +273,17 @@ export function PointerInput({
       keys.current.clear();
       buttons.current = BUTTONS_UP;
       keyUse.current = false;
+      if (attractionInput) attractionInput.current.command = 0;
       isDragging = false;
+      if (touchInput) clearTouchInput(touchInput.current);
+    };
+    const preventTouchMouse = (event: PointerEvent) => {
+      if (event.pointerType === 'touch') event.preventDefault();
     };
     const stopClear = onClearInput(clearInput);
     const onVisibility = () => { if (document.hidden) clearInput(); };
     dom.addEventListener('mousedown', onPointerDown);
+    dom.addEventListener('pointerdown', preventTouchMouse);
     window.addEventListener('blur', clearInput);
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('mouseup', onPointerUp);
@@ -262,6 +295,7 @@ export function PointerInput({
     return () => {
       stopClear();
       dom.removeEventListener('mousedown', onPointerDown);
+      dom.removeEventListener('pointerdown', preventTouchMouse);
       window.removeEventListener('blur', clearInput);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('mouseup', onPointerUp);
@@ -274,7 +308,7 @@ export function PointerInput({
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [gl, tool, onToolChange, onClearInput]);
+  }, [gl, tool, onToolChange, onClearInput, touchInput]);
 
   const euler = useMemo(() => new THREE.Euler(0, 0, 0, 'YXZ'), []);
   const buggyQuat = useMemo(() => new THREE.Quaternion(), []);
@@ -287,6 +321,13 @@ export function PointerInput({
   const updateCamera = (render: YardRender | null, deltaSeconds: number) => {
     const localPlayer = render?.players?.find((p) => p.slot === render?.localSlot);
     const isRiding = Boolean(localPlayer?.ridingVehicle);
+    if (localPlayer && lastPortalCounter.current !== localPlayer.portalTeleports) {
+      chaseFollowing.current = false;
+      lastChassisPosition.current = null;
+      chassisForwardSpeed.current = 0;
+      lastBuggyYaw.current = null;
+      lastPortalCounter.current = localPlayer.portalTeleports;
+    }
     const buggyPose = render?.poses.get('vehicle-chassis');
 
     // Turn camera yaw smoothly with buggy chassis rotation when driving
@@ -313,7 +354,7 @@ export function PointerInput({
         const position = buggyPose.position;
         if (previous && deltaSeconds > 0) {
           const forward = ((position[0] - previous[0]) * -Math.sin(chassisYaw) + (position[2] - previous[2]) * -Math.cos(chassisYaw)) / deltaSeconds;
-          // Poses step at the 30 Hz tick, so smooth the per-frame estimate over about 0.15 s.
+          // Smooth the speed estimate before camera recentering.
           chassisForwardSpeed.current += (forward - chassisForwardSpeed.current) * (1 - Math.exp(-7 * deltaSeconds));
         }
         lastChassisPosition.current = [position[0], position[1], position[2]];
@@ -363,22 +404,35 @@ export function PointerInput({
   };
 
   useFrame((_, deltaSeconds) => {
-    const moveX = (keys.current.has('KeyD') || keys.current.has('ArrowRight') ? 1 : 0) -
-                  (keys.current.has('KeyA') || keys.current.has('ArrowLeft') ? 1 : 0);
-    const moveZ = (keys.current.has('KeyW') || keys.current.has('ArrowUp') ? 1 : 0) -
-                  (keys.current.has('KeyS') || keys.current.has('ArrowDown') ? 1 : 0);
-    const jetpack = isThrusterHeld(keys.current);
+    const touch = touchInput?.current;
+    if (touch && inputLive(gateRef.current.state) && tool !== 'orbit') {
+      if (touch.lookX !== 0 || touch.lookY !== 0) lastLookMs.current = performance.now();
+      const view = applyLook({ yaw: yaw.current, pitch: pitch.current }, touch.lookX, touch.lookY, TOUCH_LOOK_SENSITIVITY);
+      yaw.current = view.yaw;
+      pitch.current = view.pitch;
+    }
+    if (touch) { touch.lookX = 0; touch.lookY = 0; touch.view = { yaw: yaw.current, pitch: pitch.current }; }
+    const shot = touch && !touch.secondaryRearm && !touch.dropQueued ? touch.shots[0] : undefined;
+    const aim = shot?.aim ?? { yaw: yaw.current, pitch: pitch.current };
+    const moveX = THREE.MathUtils.clamp((touch?.moveX ?? 0) + (keys.current.has('KeyD') || keys.current.has('ArrowRight') ? 1 : 0) -
+                  (keys.current.has('KeyA') || keys.current.has('ArrowLeft') ? 1 : 0), -1, 1);
+    const moveZ = THREE.MathUtils.clamp((touch?.moveZ ?? 0) + (keys.current.has('KeyW') || keys.current.has('ArrowUp') ? 1 : 0) -
+                  (keys.current.has('KeyS') || keys.current.has('ArrowDown') ? 1 : 0), -1, 1);
+    const jetpack = isThrusterHeld(keys.current) || Boolean(touch?.jetpack);
 
     const playInput: YardInput = {
+      attraction: attractionInput?.current.command ?? 0,
+      attractionRequest: attractionInput?.current.sequence ?? 0,
       tool: toSimTool(tool),
-      pressed: tool !== 'orbit' && buttons.current.primary,
-      secondary: tool !== 'orbit' && buttons.current.punt,
-      use: keyUse.current,
+      pressed: tool !== 'orbit' && (buttons.current.primary || Boolean(touch && touchPrimary(touch, toSimTool(tool)))),
+      secondary: tool !== 'orbit' && (buttons.current.punt || Boolean(shot)),
+      drop: Boolean(touch?.dropQueued),
+      use: keyUse.current || Boolean(touch?.use || touch?.useQueued),
       jetpack: tool !== 'orbit' && jetpack,
       moveX: tool !== 'orbit' ? moveX : 0,
       moveZ: tool !== 'orbit' ? moveZ : 0,
-      yaw: Math.round(wrapYaw(yaw.current) * 1000),
-      pitch: Math.round(pitch.current * 1000) || 0,
+      yaw: Math.round(wrapYaw(aim.yaw) * 1000),
+      pitch: Math.round(aim.pitch * 1000) || 0,
       ox: 0, oy: 0, oz: 0,
       dx: 0, dy: 0, dz: 0,
     };
@@ -388,6 +442,11 @@ export function PointerInput({
     controller.setInput(input);
     controller.pump(performance.now());
     const nextRender = controller.getRender();
+    // A network pump can schedule input without advancing the render frame.
+    const sampled = controller.sampledInput;
+    if (touch && sampled?.input === input) consumeTouchSample(touch, input, sampled.frame);
+    if (touch && nextRender) syncTouchWeapon(touch, nextRender.frame,
+      nextRender.players.find((player) => player.slot === nextRender.localSlot));
     renderRef.current = nextRender;
     updateCamera(nextRender, deltaSeconds);
     if (nextRender && nextRender.bodies !== lastBodies.current) {

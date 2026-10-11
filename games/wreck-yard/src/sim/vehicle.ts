@@ -13,16 +13,16 @@ import type { BuggyWheelState } from './state';
 import { type YardInput } from './input';
 import { physicsBodyHandle, type OpenYardPhysicsWorld } from './physics';
 
-/** Tuned at chassis mass 3.614: stiffness 220, damping 12. */
+/** Tuned at chassis mass 3.614: stiffness 220, damping 24. */
 const SUSPENSION_STIFFNESS_PER_MASS = 220 / 3.614;
-const SUSPENSION_DAMPING_PER_MASS = 12 / 3.614;
+const SUSPENSION_DAMPING_PER_MASS = 24 / 3.614;
 
 export const BUGGY_WHEELS: readonly DeterministicVehicleWheelDefinition3D[] = [-0.84, 0.84].flatMap((x) =>
   [-0.68, 0.84].map((z) => ({
     id: `wheel ${x} ${z}`,
     localAnchor: { x: meters(x), y: meters(-0.30), z: meters(z) },
     suspensionDirection: { x: 0, y: -1, z: 0 },
-    suspensionRestLength: meters(0.5),
+    suspensionRestLength: meters(0.9),
     suspensionMaximumTravel: meters(0.2),
     radius: meters(0.35),
     // Per unit of chassis mass; stepBuggy scales them, so ride height and
@@ -59,7 +59,7 @@ export function stepBuggy(physics: OpenYardPhysicsWorld, input?: YardInput, prev
       stiffness: newtonsPerMeter(wheel.stiffness * body.mass),
       damping: newtonSecondsPerMeter(wheel.damping * body.mass),
     })),
-    driveForce: newtons(body.mass * 18),
+    driveForce: newtons(body.mass * 13.5),
     brakeForce: newtons(body.mass * 28),
   };
   // A replaced chassis has a new id: its vehicle starts fresh.

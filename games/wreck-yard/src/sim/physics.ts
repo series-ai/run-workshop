@@ -1,9 +1,13 @@
+import { STORAGE_ELEVATOR_CAR_FIXTURE } from './storageFixtures';
+import { ELEVATOR } from './attractions';
+import { createReturnsPair } from './returns';
 import {
   cookVoxelBody,
   createPhysicsWorld3D,
   createVoxelChunk,
   initPhysics3D,
   kilograms,
+  kilogramMetersSquared,
   kilogramsPerCubicMeter,
   meters,
   metersPerSecond,
@@ -13,6 +17,7 @@ import {
   perSecond,
   radiansPerSecond,
   setVoxelCell,
+  vec3,
   type PhysicsBody3D,
   type PhysicsBodyHandle3D,
   type PhysicsBodyId3D,
@@ -39,7 +44,6 @@ import { CAGE_LAYER, CAGE_PANELS, WORLD_LAYER } from './cage';
 import { SHELL_BOXES, shellBoxQuaternion } from './shell';
 import { clamp, lerp, type Quat, type Vec3 } from './math';
 import type { YardBody } from './state';
-import { fromVec3, vec } from './units';
 import { WATER_BOUNDS } from './water';
 
 void setVoxelCell;
@@ -64,6 +68,7 @@ export interface YardPhysicsBodyInput3D {
 }
 
 export interface YardPhysicsBody3D {
+  readonly teleportCounter?: number;
   readonly id: string;
   readonly kind: PhysicsBody3D['kind'];
   readonly x: number;
@@ -89,6 +94,7 @@ export interface YardFluidInteraction {
  * it as a native checkpoint, and the codec adds the checkpoint bytes.
  */
 export interface YardPhysicsWorldState {
+  readonly portalStraddlers?: readonly { readonly bodyId: string; readonly pairId: number; readonly end: 'A' | 'B' }[];
   readonly frame: number;
   readonly bodies: readonly YardPhysicsBody3D[];
   readonly bodyIds: readonly (readonly [string, string])[];
@@ -135,7 +141,7 @@ export const WATER_FLUID_CONFIG: PhysicsFluidInput3D = {
   density: kilogramsPerCubicMeter(1),
   linearDragPerSecond: perSecond(2),
   angularDragPerSecond: perSecond(1),
-  flowVelocity: vec(metersPerSecond, 0, 0, 0),
+  flowVelocity: vec3(metersPerSecond, 0, 0, 0),
   layer: WORLD_LAYER,
   mask: 0xffffffff,
 };
@@ -159,7 +165,7 @@ export function toChunk(voxels: Uint8Array, dims: VoxelDims) {
 }
 
 function originOffset(dims: VoxelDims) {
-  return vec(meters, -(dims.x - 1) * 0.5 * VOXEL_SIZE, -(dims.y - 1) * 0.5 * VOXEL_SIZE, -(dims.z - 1) * 0.5 * VOXEL_SIZE);
+  return vec3(meters, -(dims.x - 1) * 0.5 * VOXEL_SIZE, -(dims.y - 1) * 0.5 * VOXEL_SIZE, -(dims.z - 1) * 0.5 * VOXEL_SIZE);
 }
 
 export function cookCenteredCollider(voxels: Uint8Array, dims: VoxelDims): VoxelCompoundShape {
@@ -180,20 +186,28 @@ export function bodyMass(body: YardBody): number {
 
 export function makePhysicsBody(body: YardBody, pose: BodyPose): YardPhysicsBodyInput3D {
   const mass = bodyMass(body);
-  const cooked = cookVoxelBody(toChunk(body.voxels, body.dims), kilograms(mass), { originOffset: originOffset(body.dims) });
+  const fullCrate = body.renderModel === 'shipping-crate' && voxelStats(body.voxels).occupiedCount === body.voxels.length;
+  const [sx, sy, sz] = [body.dims.x * VOXEL_SIZE, body.dims.y * VOXEL_SIZE, body.dims.z * VOXEL_SIZE];
+  // An intact solid crate has the same surface as a primitive box. Cuts use voxel colliders.
+  const cooked = fullCrate ? { status: 0, body: {
+    shape: { type: 'box' as const, halfX: meters(sx / 2), halfY: meters(sy / 2), halfZ: meters(sz / 2) },
+    mass: kilograms(mass), inertia: { xx: kilogramMetersSquared(mass * (sy * sy + sz * sz) / 12), yy: kilogramMetersSquared(mass * (sx * sx + sz * sz) / 12), zz: kilogramMetersSquared(mass * (sx * sx + sy * sy) / 12) },
+    centerOfMass: vec3(meters, 0, 0, 0),
+  } } : cookVoxelBody(toChunk(body.voxels, body.dims), kilograms(mass), { originOffset: originOffset(body.dims) });
   if (cooked.status !== 0) throw new Error(`WRECK_YARD_VOXEL_BODY_EMPTY: ${body.id}`);
   return {
     id: body.id,
     body: {
       kind: body.motion === 'fixed' ? 'static' : 'dynamic',
       shape: cooked.body.shape,
-      position: fromVec3(meters, pose.position),
-      linearVelocity: body.motion === 'fixed' ? vec(metersPerSecond, 0, 0, 0) : fromVec3(metersPerSecond, pose.linearVelocity, TICK_RATE),
+      position: vec3(meters, pose.position),
+      linearVelocity: body.motion === 'fixed' ? vec3(metersPerSecond, 0, 0, 0) : vec3(metersPerSecond, pose.linearVelocity, TICK_RATE),
       orientation: { x: pose.rotation[0], y: pose.rotation[1], z: pose.rotation[2], w: pose.rotation[3] },
-      angularVelocity: body.motion === 'fixed' ? vec(radiansPerSecond, 0, 0, 0) : fromVec3(radiansPerSecond, pose.angularVelocity, TICK_RATE),
+      angularVelocity: body.motion === 'fixed' ? vec3(radiansPerSecond, 0, 0, 0) : vec3(radiansPerSecond, pose.angularVelocity, TICK_RATE),
       mass: cooked.body.mass,
       inertia: cooked.body.inertia,
       centerOfMass: cooked.body.centerOfMass,
+      sleeping: fullCrate && pose.linearVelocity.every((v) => v === 0) && pose.angularVelocity.every((v) => v === 0),
       linearDamping: LINEAR_DAMPING,
       angularDamping: ANGULAR_DAMPING,
       friction: YARD_MATERIAL.friction,
@@ -209,7 +223,7 @@ export function shellBodies(): YardPhysicsBodyInput3D[] {
     id: `${SHELL_PREFIX}${box.id}`,
     body: {
       kind: 'static' as const,
-      position: fromVec3(meters, box.center),
+      position: vec3(meters, box.center),
       shape: { type: 'box' as const, halfX: meters(box.size[0] * 0.5), halfY: meters(box.size[1] * 0.5), halfZ: meters(box.size[2] * 0.5) },
       orientation: (([x, y, z, w]) => ({ x, y, z, w }))(shellBoxQuaternion(box)),
       friction: YARD_MATERIAL.friction,
@@ -223,7 +237,7 @@ export function shellBodies(): YardPhysicsBodyInput3D[] {
     id: `${SHELL_PREFIX}${panel.id}`,
     body: {
       kind: 'static' as const,
-      position: fromVec3(meters, panel.center),
+      position: vec3(meters, panel.center),
       shape: { type: 'box' as const, halfX: meters(panel.size[0] * 0.5), halfY: meters(panel.size[1] * 0.5), halfZ: meters(panel.size[2] * 0.5) },
       friction: YARD_MATERIAL.friction,
       restitution: YARD_MATERIAL.restitution,
@@ -237,8 +251,9 @@ export function shellBodies(): YardPhysicsBodyInput3D[] {
 export function makeWorld(): PhysicsWorld3D {
   return createPhysicsWorld3D({
     tickRate: TICK_RATE,
-    initialGravity: vec(metersPerSecondSquared, 0, -GRAVITY, 0),
+    initialGravity: vec3(metersPerSecondSquared, 0, -GRAVITY, 0),
     capacity: PHYSICS_CAPACITY,
+    portalProxyCapacity: 256,
   });
 }
 
@@ -274,6 +289,7 @@ const MOTION_BATCH = {
   velocities: new Float64Array(PHYSICS_CAPACITY.bodies * 6),
   ids: new BigUint64Array(PHYSICS_CAPACITY.bodies),
   status: new Uint8Array(PHYSICS_CAPACITY.bodies),
+  teleports: new Uint32Array(PHYSICS_CAPACITY.bodies),
 };
 
 /** Bits 0-1 of the batch status byte are the body kind; higher bits are flags (6.0.0-rc.21 docs). */
@@ -302,6 +318,7 @@ function batchBodyView(name: string, row: number): YardPhysicsBody3D {
   const v = row * 6;
   return {
     id: name,
+    teleportCounter: MOTION_BATCH.teleports[row]!,
     kind,
     x: poses[p]!,
     y: poses[p + 1]!,
@@ -323,11 +340,12 @@ export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): OpenYard
   const open: OpenYardPhysicsWorld = { world: makeWorld(), bodyIds: new Map() };
   let built = false;
   try {
-    addPhysicsBodies(open, [...shellBodies(), ...bodies]);
+    addPhysicsBodies(open, [...shellBodies(), ...bodies, { id: ELEVATOR.id, body: { kind: 'kinematic', position: vec3(meters, ELEVATOR.x, ELEVATOR.floors[0] - ELEVATOR.size[1] / 2, ELEVATOR.z), shape: { type: 'compound', children: [{ shape: { type: 'box', halfX: meters(ELEVATOR.size[0] / 2), halfY: meters(ELEVATOR.size[1] / 2), halfZ: meters(ELEVATOR.size[2] / 2) }, offset: vec3(meters, 0, 0, 0) }, { shape: { type: 'box', halfX: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[0] / 2), halfY: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[1] / 2), halfZ: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[2] / 2) }, offset: vec3(meters, STORAGE_ELEVATOR_CAR_FIXTURE.center) }] }, friction: 0.9, restitution: 0, layer: WORLD_LAYER, mask: 0xffffffff } }]);
+    createReturnsPair(open.world);
     // Conveyor belts. The surface velocity is part of the checkpoint (6.0.0-rc.13), so once is enough.
     for (const box of SHELL_BOXES) {
       if (!box.surfaceVelocity) continue;
-      open.world.setBodySurfaceVelocity(physicsBodyHandle(open, `${SHELL_PREFIX}${box.id}`), fromVec3(metersPerSecond, box.surfaceVelocity));
+      open.world.setBodySurfaceVelocity(physicsBodyHandle(open, `${SHELL_PREFIX}${box.id}`), vec3(metersPerSecond, box.surfaceVelocity));
     }
     open.world.edit((edit) => {
       edit.createFluid(WATER_FLUID_CONFIG);
@@ -350,14 +368,14 @@ export function readWorldState(
   open: OpenYardPhysicsWorld,
   fluidInteractions?: readonly PhysicsFluidInteraction3D[],
 ): YardPhysicsWorldState {
-  const { count } = open.world.writeBodyMotionInto(MOTION_BATCH.poses, MOTION_BATCH.velocities, MOTION_BATCH.ids, MOTION_BATCH.status);
+  const { count } = open.world.writeBodyMotionInto(MOTION_BATCH.poses, MOTION_BATCH.velocities, MOTION_BATCH.ids, MOTION_BATCH.status, MOTION_BATCH.teleports);
   const names = [...open.bodyIds.keys()].sort();
   const bodies = names.map((name) => batchBodyView(name, batchRow(open.bodyIds.get(name)!, count)));
   const interactions: YardFluidInteraction[] = [];
   if (fluidInteractions) {
     for (const item of fluidInteractions) {
-      const name = physicsBodyName(open, item.bodyId);
-      if (name && !isShell(name)) {
+      const name = bodyNameOf(item.bodyKey);
+      if (!isShell(name)) {
         interactions.push({
           bodyId: name,
           submergedVolume: item.submergedVolume,
@@ -369,6 +387,11 @@ export function readWorldState(
   }
   return {
     frame: Number(open.world.info().frame),
+    portalStraddlers: (open.world.latest().portalStraddlers ?? []).map((entry) => {
+      const bodyId = names.find((name) => open.bodyIds.get(name) === entry.bodyId);
+      if (!bodyId) throw new Error('WRECK_YARD_PORTAL_BODY_MISSING');
+      return { bodyId, pairId: entry.pairId, end: entry.end };
+    }),
     bodies,
     bodyIds: names.map((name) => [name, open.bodyIds.get(name)!.toString()] as const),
     fluidInteractions: interactions.length > 0 ? interactions : undefined,
@@ -396,35 +419,58 @@ export function physicsBodyHandle(open: OpenYardPhysicsWorld, id: string): Physi
   return open.world.resolveBody(numericId);
 }
 
-export function physicsBodyName(open: OpenYardPhysicsWorld, id: PhysicsBodyId3D): string | undefined {
-  for (const [name, numericId] of open.bodyIds) if (numericId === id) return name;
-  return undefined;
+/** Name of a body by id: a scan. Hits carry the name as bodyKey; contacts (untyped) and fluid interactions do not. */
+/** The yard name on a hit, a contact, or a fluid interaction: every body's Syncplay key is its name (addPhysicsBodies). */
+export function bodyNameOf(key: string | undefined): string {
+  if (key === undefined) throw new Error('WRECK_YARD_BODY_KEY_MISSING');
+  return key;
 }
 
 export function addPhysicsBodies(open: OpenYardPhysicsWorld, bodies: readonly YardPhysicsBodyInput3D[]): void {
-  const created = open.world.edit((edit) => bodies.map((entry) => ({ id: entry.id, body: edit.createBody(entry.body) }))).created;
+  const created = open.world.edit((edit) => bodies.map((entry) => ({ id: entry.id, body: edit.createBody({ ...entry.body, key: entry.id }) }))).created;
   for (const entry of created) open.bodyIds.set(entry.id, entry.body.id);
 }
 
+/** Wake the connected crate assembly when a support or a tool changes it. */
+export function wakeShippingStack(open: OpenYardPhysicsWorld, id: string): void {
+  const bay = id.startsWith('shipping-storage-') ? 'storage' : id.startsWith('shipping-returns-') ? 'returns' : null;
+  if (!bay) return;
+  const { count } = open.world.writeBodyMotionInto(MOTION_BATCH.poses, MOTION_BATCH.velocities, MOTION_BATCH.ids, MOTION_BATCH.status, MOTION_BATCH.teleports);
+  for (const [name, nativeId] of open.bodyIds) {
+    if (name.startsWith(`shipping-${bay}-`) && (MOTION_BATCH.status[batchRow(nativeId, count)]! & 0x10)) open.world.wakeBody(open.world.resolveBody(nativeId));
+  }
+}
+
+export function removePhysicsBodies(open: OpenYardPhysicsWorld, ids: readonly string[]): void {
+  for (const bay of ['storage', 'returns']) {
+    const first = ids.find((id) => id.startsWith(`shipping-${bay}-`));
+    if (first) wakeShippingStack(open, first);
+  }
+  open.world.edit((edit) => { for (const id of ids) edit.removeBody(physicsBodyHandle(open, id)); });
+  for (const id of ids) open.bodyIds.delete(id);
+}
+
 export function removePhysicsBody(open: OpenYardPhysicsWorld, id: string): void {
-  open.world.edit((edit) => edit.removeBody(physicsBodyHandle(open, id)));
-  open.bodyIds.delete(id);
+  removePhysicsBodies(open, [id]);
 }
 
 export function replacePhysicsBody(open: OpenYardPhysicsWorld, body: YardPhysicsBodyInput3D): void {
+  wakeShippingStack(open, body.id);
   open.world.edit((edit) => edit.replaceBody(physicsBodyHandle(open, body.id), body.body));
 }
 
 /** Sets linear velocity (m/tick) and wakes the body. The SDK setter is ~8x cheaper than a replaceBody edit. */
 export function setPhysicsBodyVelocity(open: OpenYardPhysicsWorld, id: string, velocity: Vec3): void {
-  open.world.setLinearVelocity(physicsBodyHandle(open, id), fromVec3(metersPerSecond, velocity, TICK_RATE));
+  wakeShippingStack(open, id);
+  open.world.setLinearVelocity(physicsBodyHandle(open, id), vec3(metersPerSecond, velocity, TICK_RATE));
 }
 
 /** Sets linear (m/tick) and angular (rad/tick) velocity and wakes the body. */
 export function setPhysicsBodyMotion(open: OpenYardPhysicsWorld, id: string, linear: Vec3, angular: Vec3): void {
+  wakeShippingStack(open, id);
   const handle = physicsBodyHandle(open, id);
-  open.world.setLinearVelocity(handle, fromVec3(metersPerSecond, linear, TICK_RATE));
-  open.world.setAngularVelocity(handle, fromVec3(radiansPerSecond, angular, TICK_RATE));
+  open.world.setLinearVelocity(handle, vec3(metersPerSecond, linear, TICK_RATE));
+  open.world.setAngularVelocity(handle, vec3(radiansPerSecond, angular, TICK_RATE));
 }
 
 /**
@@ -436,9 +482,9 @@ export function launchPhysicsBody(open: OpenYardPhysicsWorld, id: string, positi
   const body = open.world.readBody(handle);
   open.world.edit((edit) => edit.replaceBody(handle, {
     ...body,
-    position: fromVec3(meters, position),
-    linearVelocity: fromVec3(metersPerSecond, velocity),
-    angularVelocity: fromVec3(radiansPerSecond, spin),
+    position: vec3(meters, position),
+    linearVelocity: vec3(metersPerSecond, velocity),
+    angularVelocity: vec3(radiansPerSecond, spin),
     linearDamping,
     sleeping: false,
   }));
@@ -451,7 +497,7 @@ export function setPhysicsBodyLinearDamping(open: OpenYardPhysicsWorld, id: stri
 }
 
 export function setPhysicsBodyAngularVelocity(open: OpenYardPhysicsWorld, id: string, angularVelocity: Vec3): void {
-  open.world.setAngularVelocity(physicsBodyHandle(open, id), fromVec3(radiansPerSecond, angularVelocity, TICK_RATE));
+  open.world.setAngularVelocity(physicsBodyHandle(open, id), vec3(radiansPerSecond, angularVelocity, TICK_RATE));
 }
 
 export function replacePhysicsPose(
@@ -463,7 +509,7 @@ export function replacePhysicsPose(
   const body = open.world.readBody(handle);
   open.world.edit((edit) => edit.replaceBody(handle, {
     ...body,
-    position: vec(meters, pose.x ?? body.position.x, pose.y ?? body.position.y, pose.z ?? body.position.z),
+    position: vec3(meters, pose.x ?? body.position.x, pose.y ?? body.position.y, pose.z ?? body.position.z),
     linearVelocity: {
       x: pose.vx === undefined ? body.linearVelocity.x : metersPerSecond(pose.vx * TICK_RATE),
       y: pose.vy === undefined ? body.linearVelocity.y : metersPerSecond(pose.vy * TICK_RATE),
@@ -483,11 +529,12 @@ export function applyPhysicsForce(
   force: Vec3,
   torque: Vec3 = [0, 0, 0],
 ): void {
+  wakeShippingStack(open, id);
   const handle = physicsBodyHandle(open, id);
   open.world.applyForce(
     handle,
-    fromVec3(newtons, force),
-    fromVec3(newtonMeters, torque),
+    vec3(newtons, force),
+    vec3(newtonMeters, torque),
   );
 }
 
@@ -497,11 +544,12 @@ export function applyPhysicsForceAtPoint(
   force: Vec3,
   point: Vec3,
 ): void {
+  wakeShippingStack(open, id);
   const handle = physicsBodyHandle(open, id);
   open.world.applyForceAtPoint(
     handle,
-    fromVec3(newtons, force),
-    fromVec3(meters, point),
+    vec3(newtons, force),
+    vec3(meters, point),
   );
 }
 

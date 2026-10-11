@@ -60,11 +60,13 @@ try {
     }
     return best.p;
   });
-  await click('gun-grab', 'hand', target);
+  await click('gun-grab', 'hand', target, { release: false });
   // 4. Hold with the tractor beam while swinging the aim: the lagging body bends the beam.
-  await lookAt(target);
-  await page.waitForTimeout(250);
-  await page.evaluate(() => window.__SIMULATE_INPUT__({ tool: 'hand', pressed: true }));
+  // Keep the first grab. A release moves the body away from the saved aim point.
+  await page.waitForFunction(() => {
+    const render = window.__WRECK_YARD_CONTROLLER__.getRender();
+    return render.players.find((player) => player.slot === render.localSlot).grabbing;
+  }, null, { timeout: 5000 });
   await page.waitForTimeout(700);
   const aimNow = await local();
   await page.evaluate(([yaw, pitch]) => window.__SET_LOOK_ANGLES__(yaw + 0.45, pitch + 0.1), [aimNow.yaw, aimNow.pitch]);

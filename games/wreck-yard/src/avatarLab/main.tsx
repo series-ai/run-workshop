@@ -41,7 +41,7 @@ function Lineup() {
       if (group) group.rotation.y = fixedAngle ?? -0.5 + Math.sin(t * 0.4) * 0.9;
     });
   });
-  const pose: RobotPose = { jet, tool, time };
+  const pose: RobotPose = { jet, tool, time, pitch: 0, driving: false, travel: time * 0.4 };
   return (
     <>
       {LINEUP.map(({ design, colors }, index) => (

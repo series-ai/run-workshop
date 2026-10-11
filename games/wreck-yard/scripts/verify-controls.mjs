@@ -52,29 +52,35 @@ try {
   await page.keyboard.press('Digit1');
 
   // Walk to the buggy, mount with E, and check the chase camera.
-  // Walk straight at the buggy; when something tall blocks the way (loose props
-  // move around), sidestep to the left for a moment, as a player would.
-  let last = null;
-  let stalled = 0;
-  let sidestep = 0;
-  for (let step = 0; step < 200; step += 1) {
-    const [player, buggy] = await page.evaluate(() => {
-      const r = window.__WRECK_YARD_CONTROLLER__.getRender();
-      return [r.players.find((p) => p.slot === r.localSlot).position, r.poses.get('vehicle-chassis').position];
-    });
-    const dx = buggy[0] - player[0];
-    const dz = buggy[2] - player[2];
-    if (Math.hypot(dx, dz) < 1.8) break;
-    stalled = last && Math.hypot(player[0] - last[0], player[2] - last[2]) < 0.02 ? stalled + 1 : 0;
-    last = player;
-    if (stalled >= 3) sidestep = 3;
-    const turn = sidestep > 0 ? Math.PI / 2.5 : 0;
-    sidestep = Math.max(0, sidestep - 1);
-    await page.evaluate(([x, z, t]) => window.__SET_LOOK_ANGLES__(Math.atan2(-x, -z) + t, 0), [dx, dz, turn]);
-    await page.keyboard.down('KeyW');
-    await frames(4);
-    await page.keyboard.up('KeyW');
+  // The route goes around the aquarium. Thrust clears loose props.
+  let jetHeld = false;
+  for (const waypoint of [[10, 6], [10, -10], null]) {
+    let last = null;
+    let stalled = 0;
+    let sidestep = 0;
+    for (let step = 0; step < 200; step += 1) {
+      const [player, buggy] = await page.evaluate(() => {
+        const r = window.__WRECK_YARD_CONTROLLER__.getRender();
+        return [r.players.find((p) => p.slot === r.localSlot).position, r.poses.get('vehicle-chassis').position];
+      });
+      const dx = (waypoint?.[0] ?? buggy[0]) - player[0];
+      const dz = (waypoint?.[1] ?? buggy[2]) - player[2];
+      if (Math.hypot(dx, dz) < (waypoint ? 0.5 : 1.8)) break;
+      stalled = last && Math.hypot(player[0] - last[0], player[2] - last[2]) < 0.02 ? stalled + 1 : 0;
+      last = player;
+      if (stalled >= 3) sidestep = 3;
+      if (!jetHeld && stalled >= 3) { await page.keyboard.down('Space'); jetHeld = true; }
+      if (jetHeld && player[1] > 3) { await page.keyboard.up('Space'); jetHeld = false; }
+      const turn = sidestep > 0 ? Math.PI / 2.5 : 0;
+      sidestep = Math.max(0, sidestep - 1);
+      await page.evaluate(([x, z, t]) => window.__SET_LOOK_ANGLES__(Math.atan2(-x, -z) + t, 0), [dx, dz, turn]);
+      await page.keyboard.down('KeyW');
+      await frames(4);
+      await page.keyboard.up('KeyW');
+    }
   }
+  if (jetHeld) await page.keyboard.up('Space');
+  await frames(30);
   results.mountDistance = await page.evaluate(() => {
     const r = window.__WRECK_YARD_CONTROLLER__.getRender();
     const p = r.players.find((q) => q.slot === r.localSlot).position;
@@ -128,8 +134,8 @@ try {
     const toBuggy = [buggy[0] - camera.position.x, buggy[1] - camera.position.y, buggy[2] - camera.position.z];
     const distance = Math.hypot(...toBuggy);
     const facing = (forward.x * toBuggy[0] + forward.y * toBuggy[1] + forward.z * toBuggy[2]) / distance;
-    let avatarVisible = false;
-    scene.traverse((object) => { if (object.isGroup && object.children.some((c) => c.geometry?.type === 'CapsuleGeometry') && object.visible) avatarVisible = true; });
+    const avatar = scene.getObjectByName(`player-robot-${r.localSlot}`);
+    const avatarVisible = Boolean(avatar?.visible && avatar.getObjectByName('robot-eyes'));
     return { distance, facing, cameraAbove: camera.position.y - buggy[1], riding: local.ridingVehicle, avatarVisible };
   });
   results.chase = chase;
